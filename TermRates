@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Xpress Life Quote Builder | Ricky Rampersad Branch</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:     #07131f;
+      --bg2:    #0d2137;
+      --card:   #163553;
+      --card2:  #1b3d61;
+      --gold:   #efc24b;
+      --gold2:  #dca530;
+      --text:   #edf4fb;
+      --muted:  #a9bbcf;
+      --line:   rgba(255,255,255,.08);
+      --teal:   #00C9A7;
+      --teal2:  #00a589;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0,201,167,.08), transparent),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg2) 50%, var(--bg) 100%);
+    }
+
+    .wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 24px 16px 120px;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 28px;
+      animation: fadeUp .5s ease both;
+    }
+
+    .logo {
+      width: 64px; height: 64px;
+      flex-shrink: 0;
+    }
+
+    .header-text .kicker {
+      font-size: 10px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--gold2);
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .header-text h1 {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 800;
+      font-size: clamp(20px, 5vw, 28px);
+      color: var(--gold);
+      line-height: 1.1;
+    }
+
+    .header-text p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: linear-gradient(160deg, var(--card), var(--card2));
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 24px;
+      margin-bottom: 16px;
+      animation: fadeUp .45s ease both;
+    }
+
+    .card:nth-child(2) { animation-delay:.05s }
+    .card:nth-child(3) { animation-delay:.1s }
+    .card:nth-child(4) { animation-delay:.15s }
+
+    .section-label {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(0,201,167,.2);
+    }
+
+    h2 {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 17px;
+      color: var(--text);
+      margin-bottom: 18px;
+    }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      background: rgba(0,0,0,.25);
+      border-radius: 14px;
+      padding: 5px;
+      margin-bottom: 24px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 11px 8px;
+      border-radius: 10px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .22s;
+      text-align: center;
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, rgba(0,201,167,.2), rgba(0,201,167,.08));
+      color: var(--teal);
+      border: 1px solid rgba(0,201,167,.25);
+    }
+
+    /* ── PERSON BLOCK ── */
+    .person-block {
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 14px;
+      position: relative;
+    }
+
+    .person-block.p1 {
+      background: rgba(239,194,75,.04);
+      border: 1px solid rgba(239,194,75,.15);
+    }
+
+    .person-block.p2 {
+      background: rgba(0,201,167,.04);
+      border: 1px solid rgba(0,201,167,.15);
+    }
+
+    .person-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .avatar.gold { background: rgba(239,194,75,.12); border: 1px solid rgba(239,194,75,.25); }
+    .avatar.teal { background: rgba(0,201,167,.12); border: 1px solid rgba(0,201,167,.25); }
+
+    .person-head-info strong {
+      display: block;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .person-head-info span {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ── GRID ── */
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+    @media(max-width:600px) {
+      .grid2, .grid3 { grid-template-columns: 1fr; }
+      .sa-grid { grid-template-columns: repeat(3,1fr) !important; }
+    }
+
+    /* ── FORM CONTROLS ── */
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+    }
+
+    select, input[type="text"] {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.09);
+      background: rgba(0,0,0,.3);
+      color: var(--text);
+      font-size: 14px;
+      font-family: 'DM Sans', sans-serif;
+      appearance: none;
+      cursor: pointer;
+      transition: border-color .2s;
+    }
+
+    select:focus, input:focus {
+      outline: none;
+      border-color: rgba(0,201,167,.4);
+    }
+
+    /* ── SA CARDS ── */
+    .sa-section-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+
+    .sa-grid {
+      display: grid;
+      grid-template-columns: repeat(5,1fr);
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .sa-card {
+      border: 1.5px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      padding: 11px 5px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .18s;
+      background: rgba(255,255,255,.02);
+      user-select: none;
+    }
+
+    .sa-card:hover {
+      border-color: rgba(0,201,167,.35);
+      background: rgba(0,201,167,.06);
+      transform: translateY(-1px);
+    }
+
+    .sa-card.sel {
+      border-color: var(--teal);
+      background: rgba(0,201,167,.12);
+    }
+
+    .sa-card .amt {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .sa-card.sel .amt { color: var(--teal); }
+
+    .sa-card .lbl {
+      font-size: 9px;
+      color: var(--muted);
+      margin-top: 3px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    /* ── PAYMENT MODE ── */
+    .mode-grid {
+      display: grid;
+      grid-template-columns: repeat(4,1fr);
+      gap: 8px;
+      margin-bottom: 0;
+    }
+
+    @media(max-width:600px) { .mode-grid { grid-template-columns: 1fr 1fr; } }
+
+    .mode-card {
+      border: 1.5px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      padding: 12px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .18s;
+      background: rgba(255,255,255,.02);
+      user-select: none;
+    }
+
+    .mode-card:hover {
+      border-color: rgba(239,194,75,.35);
+      background: rgba(239,194,75,.05);
+    }
+
+    .mode-card.sel {
+      border-color: var(--gold);
+      background: rgba(239,194,75,.1);
+    }
+
+    .mode-card .mode-name {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .mode-card.sel .mode-name { color: var(--gold); }
+
+    .mode-card .mode-save {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    /* ── RESULT PANEL ── */
+    .result-panel {
+      background: linear-gradient(135deg, #061a14, #0a2318);
+      border: 1px solid rgba(0,201,167,.2);
+      border-radius: 20px;
+      padding: 24px;
+      margin-top: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .result-panel::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(0,201,167,.1), transparent 70%);
+      pointer-events: none;
+    }
+
+    .result-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .result-premium {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 52px;
+      font-weight: 900;
+      color: var(--teal);
+      line-height: 1;
+    }
+
+    .result-premium-label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+
+    .result-meta {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    @media(max-width:580px) { .result-meta { grid-template-columns: 1fr 1fr; } }
+
+    .meta-item {
+      background: rgba(0,0,0,.2);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+
+    .meta-item .ml {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .meta-item .mv {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    /* ── DEATH BENEFIT ROWS ── */
+    .db-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .db-row {
+      display: grid;
+      grid-template-columns: 70px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 11px 14px;
+      border-radius: 10px;
+      margin-bottom: 7px;
+      font-size: 13px;
+    }
+
+    .db-row.yr1 { background: rgba(248,113,113,.07); border: 1px solid rgba(248,113,113,.15); }
+    .db-row.yr2 { background: rgba(239,194,75,.07); border: 1px solid rgba(239,194,75,.15); }
+    .db-row.yr3 { background: rgba(0,201,167,.07); border: 1px solid rgba(0,201,167,.15); }
+
+    .db-yr { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 11px; }
+    .db-yr1 { color: #f87171; }
+    .db-yr2 { color: var(--gold); }
+    .db-yr3 { color: var(--teal); }
+    .db-desc { color: var(--muted); font-size: 12px; }
+    .db-amt { font-family: 'Montserrat', sans-serif; font-weight: 700; text-align: right; white-space: nowrap; }
+
+    /* ── JOINT COMBINED BOX ── */
+    .joint-combined {
+      background: linear-gradient(135deg, rgba(0,201,167,.14), rgba(0,201,167,.05));
+      border: 1px solid rgba(0,201,167,.3);
+      border-radius: 18px;
+      padding: 22px;
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .jc-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .jc-amount {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 46px;
+      font-weight: 900;
+      color: var(--teal);
+      line-height: 1;
+    }
+
+    .jc-sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 6px;
+      margin-bottom: 14px;
+    }
+
+    .jc-stats {
+      display: flex;
+      justify-content: center;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+
+    .jc-stat .jcs-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .jc-stat .jcs-val { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 15px; color: var(--text); margin-top: 2px; }
+
+    /* ── PERSON SUMMARY CARDS (joint) ── */
+    .p-summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    @media(max-width:500px) { .p-summary-grid { grid-template-columns: 1fr; } }
+
+    .p-summary {
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .p-summary.ps1 { background: rgba(239,194,75,.06); border: 1px solid rgba(239,194,75,.18); }
+    .p-summary.ps2 { background: rgba(0,201,167,.06); border: 1px solid rgba(0,201,167,.18); }
+
+    .ps-name { font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+    .ps-name.c1 { color: var(--gold); }
+    .ps-name.c2 { color: var(--teal); }
+    .ps-details { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .ps-prem { font-family: 'Montserrat', sans-serif; font-size: 20px; font-weight: 800; }
+    .ps-prem.c1 { color: var(--gold); }
+    .ps-prem.c2 { color: var(--teal); }
+    .ps-cover { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+    /* ── FEATURES ── */
+    .features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,.06);
+    }
+
+    .feat {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 50px;
+      padding: 5px 11px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ── CALLOUT BOX ── */
+    .callout {
+      background: rgba(239,194,75,.07);
+      border: 1px solid rgba(239,194,75,.18);
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .callout b { color: var(--gold); }
+
+    .callout-teal {
+      background: rgba(0,201,167,.07);
+      border: 1px solid rgba(0,201,167,.18);
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .callout-teal b { color: var(--teal); }
+
+    /* ── APPLY NOW BUTTON ── */
+    .apply-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 18px 24px;
+      margin-top: 20px;
+      border-radius: 16px;
+      border: none;
+      background: linear-gradient(135deg, var(--teal), var(--teal2));
+      color: #021a14;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: .5px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all .2s;
+      box-shadow: 0 8px 28px rgba(0,201,167,.3);
+    }
+
+    .apply-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 36px rgba(0,201,167,.45);
+      background: linear-gradient(135deg, #00dbb8, var(--teal));
+    }
+
+    .apply-btn:active { transform: translateY(0); }
+
+    .apply-btn .apply-arrow {
+      font-size: 20px;
+      transition: transform .2s;
+    }
+
+    .apply-btn:hover .apply-arrow { transform: translateX(4px); }
+
+    .apply-note {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+
+    /* ── OVERVIEW SECTION ── */
+    .overview-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    @media(max-width:600px) { .overview-grid { grid-template-columns: 1fr; } }
+
+    .ov-item {
+      background: rgba(0,0,0,.2);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .ov-icon {
+      font-size: 22px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .ov-title {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .ov-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .health-q-list {
+      list-style: none;
+      margin-top: 12px;
+    }
+
+    .health-q-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      background: rgba(248,113,113,.05);
+      border: 1px solid rgba(248,113,113,.12);
+      margin-bottom: 7px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .health-q-list li .qnum {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 11px;
+      color: #f87171;
+      flex-shrink: 0;
+      margin-top: 1px;
+      min-width: 20px;
+    }
+
+    .collapse-btn {
+      background: none;
+      border: none;
+      color: var(--teal);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 14px;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+
+    /* ── BOTTOM BAR ── */
+    .bar {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      background: rgba(6,17,29,.97);
+      border-top: 1px solid rgba(255,255,255,.07);
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .bar-left .bar-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .bar-left .bar-total { font-family: 'Montserrat', sans-serif; font-size: 28px; font-weight: 800; color: var(--teal); }
+
+    .bar-right { text-align: right; }
+    .bar-right .bar-daily { font-size: 13px; color: var(--muted); }
+    .bar-right .bar-cover { font-size: 13px; color: var(--text); font-weight: 500; margin-top: 2px; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-panel { animation: fadeUp .3s ease both; }
+
+    /* ── DIVIDER ── */
+    .divider { height: 1px; background: rgba(255,255,255,.07); margin: 18px 0; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div class="header">
+    <svg class="logo" viewBox="0 0 88 88" aria-hidden="true">
+      <defs>
+        <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#f0c448"/>
+          <stop offset="60%" stop-color="#c9942c"/>
+          <stop offset="100%" stop-color="#7a5810"/>
+        </linearGradient>
+      </defs>
+      <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#g1)"/>
+      <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div class="header-text">
+      <div class="kicker">Ricky Rampersad Branch</div>
+      <h1>Xpress Life Quote Builder</h1>
+      <p>Instant issue · No medicals · 5 health questions · Individual or couple</p>
+    </div>
+  </div>
+
+  <!-- PRODUCT OVERVIEW -->
+  <div class="card" style="animation-delay:.08s">
+    <button class="collapse-btn" onclick="toggleOverview(this)">
+      <span id="ovArrow">▼</span> What is Xpress Life? — Product Overview
+    </button>
+    <div id="overviewContent">
+
+      <div class="overview-grid">
+        <div class="ov-item">
+          <div class="ov-icon">⚡</div>
+          <div>
+            <div class="ov-title">Instant Issue — No Medicals</div>
+            <div class="ov-desc">No blood tests, no doctor visits. Just 5 health questions. If all answers are No, the policy is approved immediately.</div>
+          </div>
+        </div>
+        <div class="ov-item">
+          <div class="ov-icon">🛡️</div>
+          <div>
+            <div class="ov-title">Whole Life Coverage</div>
+            <div class="ov-desc">Coverage lasts to age 100. Premiums are paid for 20 years only — then coverage continues for free for the rest of your life.</div>
+          </div>
+        </div>
+        <div class="ov-item">
+          <div class="ov-icon">💰</div>
+          <div>
+            <div class="ov-title">Sum Assured Options</div>
+            <div class="ov-desc">Choose TT$100,000 · $200,000 · $300,000 · $400,000 or $500,000. Maximum total Xpress Life coverage per person is $500,000.</div>
+          </div>
+        </div>
+        <div class="ov-item">
+          <div class="ov-icon">🔒</div>
+          <div>
+            <div class="ov-title">Level Premium — Never Rises</div>
+            <div class="ov-desc">The premium you pay today is the premium you pay for all 20 years. Your age at application locks your rate forever.</div>
+          </div>
+        </div>
+        <div class="ov-item">
+          <div class="ov-icon">💸</div>
+          <div>
+            <div class="ov-title">Return of Premiums in Year 21</div>
+            <div class="ov-desc">At the end of Year 20, you get all your base premiums back — without interest. Coverage continues in full after that.</div>
+          </div>
+        </div>
+        <div class="ov-item">
+          <div class="ov-icon">🌍</div>
+          <div>
+            <div class="ov-title">Worldwide Coverage</div>
+            <div class="ov-desc">Your policy is valid anywhere in the world. Claims are paid regardless of where you are when the event occurs.</div>
+          </div>
+        </div>
+        <div class="ov-item">
+          <div class="ov-icon">📋</div>
+          <div>
+            <div class="ov-title">Optional Riders</div>
+            <div class="ov-desc">Add Accidental Death Benefit (ADB) or Accidental Death & Permanent Disability (ADPDAP) for ages 18–59. Coverage ceases at age 65.</div>
+          </div>
+        </div>
+        <div class="ov-item">
+          <div class="ov-icon">🔄</div>
+          <div>
+            <div class="ov-title">Death Benefit Phases</div>
+            <div class="ov-desc"><b style="color:#f87171">Year 1:</b> Return of premiums paid. <b style="color:var(--gold)">Year 2:</b> 50% of Sum Assured. <b style="color:var(--teal)">Year 3+:</b> 100% full cover.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div style="font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#f87171;margin-bottom:10px">
+        5 Health Questions — All must be answered NO to qualify
+      </div>
+      <ul class="health-q-list">
+        <li><span class="qnum">Q1</span>In the past 5 years, have you been diagnosed with, or received treatment for, heart disease, stroke, or kidney disease?</li>
+        <li><span class="qnum">Q2</span>In the past 5 years, have you been diagnosed with, or received treatment for, cancer?</li>
+        <li><span class="qnum">Q3</span>In the past 5 years, have you been treated for alcohol or drug abuse?</li>
+        <li><span class="qnum">Q4</span>Have you ever been diagnosed with or tested positive for HIV / AIDS?</li>
+        <li><span class="qnum">Q5</span>Have you ever been declined, postponed, or rated for life insurance — or would this policy cause your total Xpress Life coverage to exceed TT$500,000?</li>
+      </ul>
+
+      <div class="divider"></div>
+
+      <div style="font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:10px">
+        What you need to apply
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px">
+        <div class="feat">📝 Completed JotForm application</div>
+        <div class="feat">🪪 Valid photo ID</div>
+        <div class="feat">📄 Proof of address</div>
+        <div class="feat">💳 First month's premium</div>
+        <div class="feat">📋 Future payment form</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+
+  <div class="tabs" style="animation:fadeUp .4s .05s ease both;opacity:0;animation-fill-mode:both">
+    <button class="tab active" onclick="switchTab('individual',this)">👤 Individual</button>
+    <button class="tab" onclick="switchTab('couple',this)">👫 Couple / Joint</button>
+  </div>
+
+  <!-- ═══════════════════ INDIVIDUAL TAB ═══════════════════ -->
+  <div id="tab-individual">
+
+    <div class="card">
+      <div class="section-label">Policy Details</div>
+
+      <div class="callout">
+        <b>Agent script:</b> "This is a whole-life policy that needs no medical exam — just 5 health questions. Premiums are locked for 20 years and the coverage lasts to age 100. Let me build you a quote in 30 seconds."
+      </div>
+
+      <!-- Payment Mode -->
+      <div style="margin-bottom:20px">
+        <label>Payment Mode</label>
+        <div class="mode-grid" id="modeGrid">
+          <div class="mode-card sel" onclick="selMode('Monthly',this)">
+            <div class="mode-name">Monthly</div>
+            <div class="mode-save">Most popular</div>
+          </div>
+          <div class="mode-card" onclick="selMode('Quarterly',this)">
+            <div class="mode-name">Quarterly</div>
+            <div class="mode-save">4× / year</div>
+          </div>
+          <div class="mode-card" onclick="selMode('Semi-Annual',this)">
+            <div class="mode-name">Semi-Ann.</div>
+            <div class="mode-save">2× / year</div>
+          </div>
+          <div class="mode-card" onclick="selMode('Annual',this)">
+            <div class="mode-name">Annual</div>
+            <div class="mode-save">Best rate</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Person inputs -->
+      <div class="grid2" style="margin-bottom:16px">
+        <div>
+          <label>Sex</label>
+          <select id="i1Sex" onchange="calc()">
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+          </select>
+        </div>
+        <div>
+          <label>Age (at next birthday)</label>
+          <select id="i1Age" onchange="calc()">
+            <!-- ages 18-69 -->
+          </select>
+        </div>
+      </div>
+
+      <!-- SA Selector -->
+      <div class="sa-section-label">Sum Assured — select one</div>
+      <div class="sa-grid" id="i1SaGrid">
+        <div class="sa-card" onclick="selSA('i1',100000,this)"><div class="amt">$100K</div><div class="lbl">Starter</div></div>
+        <div class="sa-card" onclick="selSA('i1',200000,this)"><div class="amt">$200K</div><div class="lbl">Family</div></div>
+        <div class="sa-card sel" onclick="selSA('i1',300000,this)"><div class="amt">$300K</div><div class="lbl">Popular</div></div>
+        <div class="sa-card" onclick="selSA('i1',400000,this)"><div class="amt">$400K</div><div class="lbl">Enhanced</div></div>
+        <div class="sa-card" onclick="selSA('i1',500000,this)"><div class="amt">$500K</div><div class="lbl">Maximum</div></div>
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div id="i1Result"></div>
+
+  </div><!-- /individual tab -->
+
+  <!-- ═══════════════════ COUPLE TAB ═══════════════════ -->
+  <div id="tab-couple" style="display:none">
+
+    <div class="card">
+      <div class="section-label">Policy Details</div>
+
+      <div class="callout-teal">
+        <b>Joint close:</b> "Two separate Xpress Life policies — each person owns their own. Your family gets double the permanent protection, both premiums locked in at today's ages. Let me show you the combined number right now."
+      </div>
+
+      <!-- Payment Mode (shared) -->
+      <div style="margin-bottom:20px">
+        <label>Payment Mode (applies to both)</label>
+        <div class="mode-grid" id="modeGridC">
+          <div class="mode-card sel" onclick="selModeC('Monthly',this)">
+            <div class="mode-name">Monthly</div>
+            <div class="mode-save">Most popular</div>
+          </div>
+          <div class="mode-card" onclick="selModeC('Quarterly',this)">
+            <div class="mode-name">Quarterly</div>
+            <div class="mode-save">4× / year</div>
+          </div>
+          <div class="mode-card" onclick="selModeC('Semi-Annual',this)">
+            <div class="mode-name">Semi-Ann.</div>
+            <div class="mode-save">2× / year</div>
+          </div>
+          <div class="mode-card" onclick="selModeC('Annual',this)">
+            <div class="mode-name">Annual</div>
+            <div class="mode-save">Best rate</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Person 1 -->
+      <div class="person-block p1">
+        <div class="person-head">
+          <div class="avatar gold">👤</div>
+          <div class="person-head-info">
+            <strong>Person 1</strong>
+            <span>Primary insured</span>
+          </div>
+        </div>
+        <div class="grid2" style="margin-bottom:14px">
+          <div>
+            <label>Sex</label>
+            <select id="j1Sex" onchange="calc()">
+              <option value="M">Male</option>
+              <option value="F">Female</option>
+            </select>
+          </div>
+          <div>
+            <label>Age</label>
+            <select id="j1Age" onchange="calc()"></select>
+          </div>
+        </div>
+        <div class="sa-section-label">Sum Assured</div>
+        <div class="sa-grid" id="j1SaGrid">
+          <div class="sa-card" onclick="selSA('j1',100000,this)"><div class="amt">$100K</div><div class="lbl">Starter</div></div>
+          <div class="sa-card" onclick="selSA('j1',200000,this)"><div class="amt">$200K</div><div class="lbl">Family</div></div>
+          <div class="sa-card sel" onclick="selSA('j1',300000,this)"><div class="amt">$300K</div><div class="lbl">Popular</div></div>
+          <div class="sa-card" onclick="selSA('j1',400000,this)"><div class="amt">$400K</div><div class="lbl">Enhanced</div></div>
+          <div class="sa-card" onclick="selSA('j1',500000,this)"><div class="amt">$500K</div><div class="lbl">Maximum</div></div>
+        </div>
+      </div>
+
+      <!-- Person 2 -->
+      <div class="person-block p2">
+        <div class="person-head">
+          <div class="avatar teal">👤</div>
+          <div class="person-head-info">
+            <strong style="color:var(--teal)">Person 2</strong>
+            <span>Spouse / partner</span>
+          </div>
+        </div>
+        <div class="grid2" style="margin-bottom:14px">
+          <div>
+            <label>Sex</label>
+            <select id="j2Sex" onchange="calc()">
+              <option value="F">Female</option>
+              <option value="M">Male</option>
+            </select>
+          </div>
+          <div>
+            <label>Age</label>
+            <select id="j2Age" onchange="calc()"></select>
+          </div>
+        </div>
+        <div class="sa-section-label">Sum Assured</div>
+        <div class="sa-grid" id="j2SaGrid">
+          <div class="sa-card" onclick="selSA('j2',100000,this)"><div class="amt">$100K</div><div class="lbl">Starter</div></div>
+          <div class="sa-card" onclick="selSA('j2',200000,this)"><div class="amt">$200K</div><div class="lbl">Family</div></div>
+          <div class="sa-card sel" onclick="selSA('j2',300000,this)"><div class="amt">$300K</div><div class="lbl">Popular</div></div>
+          <div class="sa-card" onclick="selSA('j2',400000,this)"><div class="amt">$400K</div><div class="lbl">Enhanced</div></div>
+          <div class="sa-card" onclick="selSA('j2',500000,this)"><div class="amt">$500K</div><div class="lbl">Maximum</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COUPLE RESULT -->
+    <div id="coupleResult"></div>
+
+  </div><!-- /couple tab -->
+
+</div><!-- /wrap -->
+
+<!-- BOTTOM BAR -->
+<div class="bar">
+  <div class="bar-left">
+    <div class="bar-label" id="barLabel">Monthly Premium</div>
+    <div class="bar-total" id="barTotal">TT$0.00</div>
+  </div>
+  <div class="bar-right">
+    <div class="bar-daily" id="barDaily">TT$0.00 / day</div>
+    <div class="bar-cover" id="barCover">TT$0 cover</div>
+  </div>
+</div>
+
+<script>
+// ── OVERVIEW TOGGLE ──
+function toggleOverview(btn) {
+  const content = document.getElementById('overviewContent');
+  const arrow = document.getElementById('ovArrow');
+  const isHidden = content.style.display === 'none';
+  content.style.display = isHidden ? 'block' : 'none';
+  arrow.textContent = isHidden ? '▼' : '▶';
+}
+
+// ── RATES ──
+const XL_M = {"18":21.87,"19":21.93,"20":21.99,"21":22.05,"22":22.12,"23":22.19,"24":22.26,"25":22.34,"26":22.43,"27":22.52,"28":22.63,"29":22.74,"30":22.87,"31":23.02,"32":23.18,"33":23.36,"34":23.55,"35":23.77,"36":24.01,"37":24.27,"38":24.56,"39":24.88,"40":25.23,"41":25.61,"42":26.09,"43":26.64,"44":27.23,"45":27.87,"46":28.57,"47":29.33,"48":30.15,"49":31.06,"50":32.04,"51":33.11,"52":34.28,"53":35.55,"54":36.94,"55":38.45,"56":40.09,"57":41.86,"58":43.79,"59":45.87,"60":48.10,"61":50.49,"62":53.04,"63":55.74,"64":58.62,"65":61.69,"66":64.96,"67":68.44,"68":72.15,"69":76.12};
+const XL_F = {"18":21.31,"19":21.35,"20":21.39,"21":21.44,"22":21.49,"23":21.55,"24":21.62,"25":21.70,"26":21.78,"27":21.87,"28":21.97,"29":22.08,"30":22.21,"31":22.34,"32":22.49,"33":22.65,"34":22.83,"35":23.03,"36":23.24,"37":23.48,"38":23.73,"39":24.01,"40":24.31,"41":24.64,"42":25.00,"43":25.40,"44":25.86,"45":26.44,"46":27.07,"47":27.76,"48":28.50,"49":29.32,"50":30.20,"51":31.15,"52":32.18,"53":33.29,"54":34.47,"55":35.74,"56":37.10,"57":38.54,"58":40.08,"59":41.71,"60":43.40,"61":45.10,"62":46.82,"63":48.57,"64":50.37,"65":52.23,"66":54.19,"67":56.26,"68":58.49,"69":60.89};
+const MODAL = {Monthly:0.08928, Quarterly:0.25893, "Semi-Annual":0.51785, Annual:1};
+const SUFFIX = {Monthly:"/month", Quarterly:"/quarter", "Semi-Annual":"/6 months", Annual:"/year"};
+const DIVISOR = {Monthly:30, Quarterly:91, "Semi-Annual":182, Annual:365};
+
+// ── STATE ──
+let curTab = 'individual';
+let curMode = 'Monthly';
+let curModeC = 'Monthly';
+const SA = {i1:300000, j1:300000, j2:300000};
+
+// ── INIT AGE SELECTS ──
+function buildAgeSelect(elId, defaultAge) {
+  const el = document.getElementById(elId);
+  for (let a = 18; a <= 69; a++) {
+    const o = document.createElement('option');
+    o.value = a; o.textContent = a;
+    if (a === defaultAge) o.selected = true;
+    el.appendChild(o);
+  }
+}
+
+buildAgeSelect('i1Age', 35);
+buildAgeSelect('j1Age', 35);
+buildAgeSelect('j2Age', 33);
+
+// ── HELPERS ──
+const $ = id => document.getElementById(id);
+const fmt = n => 'TT$' + Number(n).toLocaleString('en-TT', {minimumFractionDigits:2, maximumFractionDigits:2});
+const fmtSA = n => 'TT$' + Number(n).toLocaleString('en-TT', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+function xlAnnual(sex, age, sa) {
+  const tbl = sex === 'M' ? XL_M : XL_F;
+  const r = tbl[String(age)] || 0;
+  return r * (sa / 1000);
+}
+
+function xlPeriod(sex, age, sa, mode) {
+  return xlAnnual(sex, age, sa) * MODAL[mode];
+}
+
+// ── TAB SWITCH ──
+function switchTab(tab, btn) {
+  curTab = tab;
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  $('tab-individual').style.display = tab === 'individual' ? 'block' : 'none';
+  $('tab-couple').style.display = tab === 'couple' ? 'block' : 'none';
+  calc();
+}
+
+// ── SA SELECT ──
+function selSA(key, amount, el) {
+  SA[key] = amount;
+  const grid = $(key + 'SaGrid');
+  grid.querySelectorAll('.sa-card').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  calc();
+}
+
+// ── MODE SELECT ──
+function selMode(mode, el) {
+  curMode = mode;
+  document.querySelectorAll('#modeGrid .mode-card').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  calc();
+}
+
+function selModeC(mode, el) {
+  curModeC = mode;
+  document.querySelectorAll('#modeGridC .mode-card').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  calc();
+}
+
+// ── BUILD INDIVIDUAL RESULT ──
+function buildIndividualResult(sex, age, sa, mode) {
+  const period = xlPeriod(sex, age, sa, mode);
+  const monthly = xlPeriod(sex, age, sa, 'Monthly');
+  const annual = xlAnnual(sex, age, sa);
+  const total20 = annual * 20;
+  const half = sa * 0.5;
+  const suffix = SUFFIX[mode];
+  const sexLabel = sex === 'M' ? 'Male' : 'Female';
+
+  return `
+    <div class="result-panel">
+      <div class="result-top">
+        <div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:5px">${sexLabel}, Age ${age} · TT$${(sa/1000).toFixed(0)}K Sum Assured</div>
+          <div class="result-premium">${fmt(period)}</div>
+          <div class="result-premium-label">${suffix} · level, locked for 20 years</div>
+        </div>
+      </div>
+
+      <div class="result-meta">
+        <div class="meta-item">
+          <div class="ml">Total Cover</div>
+          <div class="mv">${fmtSA(sa)}</div>
+        </div>
+        <div class="meta-item">
+          <div class="ml">Monthly Equiv.</div>
+          <div class="mv">${fmt(monthly)}</div>
+        </div>
+        <div class="meta-item">
+          <div class="ml">Total Paid (20 yrs)</div>
+          <div class="mv">${fmt(total20)}</div>
+        </div>
+        <div class="meta-item">
+          <div class="ml">Per Day</div>
+          <div class="mv">${fmt(monthly/30)}</div>
+        </div>
+        <div class="meta-item">
+          <div class="ml">Premium Paying</div>
+          <div class="mv">20 years</div>
+        </div>
+        <div class="meta-item">
+          <div class="ml">Cover Until</div>
+          <div class="mv">Age 100</div>
+        </div>
+      </div>
+
+      <div class="db-title">Death benefit by policy year</div>
+      <div class="db-row yr1">
+        <div class="db-yr db-yr1">Year 1</div>
+        <div class="db-desc">Return of all base premiums paid</div>
+        <div class="db-amt" style="color:#f87171">≈ ${fmt(monthly * 12)}</div>
+      </div>
+      <div class="db-row yr2">
+        <div class="db-yr db-yr2">Year 2</div>
+        <div class="db-desc">50% of Sum Assured</div>
+        <div class="db-amt" style="color:var(--gold)">${fmt(half)}</div>
+      </div>
+      <div class="db-row yr3">
+        <div class="db-yr db-yr3">Year 3+</div>
+        <div class="db-desc">100% of Sum Assured — full protection</div>
+        <div class="db-amt" style="color:var(--teal)">${fmt(sa)}</div>
+      </div>
+
+      <div class="features">
+        <div class="feat">⚡ Instant approval</div>
+        <div class="feat">🩺 No medical exam</div>
+        <div class="feat">💊 5 health questions only</div>
+        <div class="feat">💸 Premiums returned in Year 21</div>
+        <div class="feat">🔒 Level premium — never rises</div>
+        <div class="feat">🌍 Worldwide coverage</div>
+        <div class="feat">♾️ Cover to age 100</div>
+      </div>
+
+      <a class="apply-btn" href="https://rickyrampersadbranch.com/xpress-life-application" target="_blank" rel="noopener">
+        Apply Now — Xpress Life Application <span class="apply-arrow">→</span>
+      </a>
+      <div class="apply-note">Opens the Xpress Life Application page in a new window · No medical exam required</div>
+    </div>`;
+}
+
+// ── BUILD COUPLE RESULT ──
+function buildCoupleResult(j1, j2, mode) {
+  const suffix = SUFFIX[mode];
+  const joint = j1.period + j2.period;
+  const jointMonthly = j1.monthly + j2.monthly;
+  const joint20 = (j1.annual + j2.annual) * 20;
+  const totalCover = j1.sa + j2.sa;
+
+  const s = sx => sx === 'M' ? 'Male' : 'Female';
+
+  return `
+    <div class="result-panel">
+      <!-- Combined box -->
+      <div class="joint-combined">
+        <div class="jc-label">Combined couple premium</div>
+        <div class="jc-amount">${fmt(joint)}</div>
+        <div class="jc-sub">${suffix} · ${fmtSA(totalCover)} total family cover</div>
+        <div class="jc-stats">
+          <div class="jc-stat">
+            <div class="jcs-label">Monthly equiv.</div>
+            <div class="jcs-val">${fmt(jointMonthly)}/mo</div>
+          </div>
+          <div class="jc-stat">
+            <div class="jcs-label">Per day</div>
+            <div class="jcs-val">${fmt(jointMonthly/30)}/day</div>
+          </div>
+          <div class="jc-stat">
+            <div class="jcs-label">Total paid (20 yrs)</div>
+            <div class="jcs-val">${fmt(joint20)}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Individual summaries -->
+      <div class="p-summary-grid">
+        <div class="p-summary ps1">
+          <div class="ps-name c1">Person 1 · ${s(j1.sex)}, Age ${j1.age}</div>
+          <div class="ps-details">${fmtSA(j1.sa)} Sum Assured</div>
+          <div class="ps-prem c1">${fmt(j1.period)}</div>
+          <div class="ps-cover">${suffix}</div>
+        </div>
+        <div class="p-summary ps2">
+          <div class="ps-name c2">Person 2 · ${s(j2.sex)}, Age ${j2.age}</div>
+          <div class="ps-details">${fmtSA(j2.sa)} Sum Assured</div>
+          <div class="ps-prem c2">${fmt(j2.period)}</div>
+          <div class="ps-cover">${suffix}</div>
+        </div>
+      </div>
+
+      <div class="db-title">What each person receives (by policy year)</div>
+      <div class="db-row yr1">
+        <div class="db-yr db-yr1">Year 1</div>
+        <div class="db-desc">Each: return of their own premiums paid</div>
+        <div class="db-amt" style="color:#f87171">Return of premiums</div>
+      </div>
+      <div class="db-row yr2">
+        <div class="db-yr db-yr2">Year 2</div>
+        <div class="db-desc">Each: 50% of their Sum Assured</div>
+        <div class="db-amt" style="color:var(--gold)">${fmt(j1.sa*.5)} + ${fmt(j2.sa*.5)}</div>
+      </div>
+      <div class="db-row yr3">
+        <div class="db-yr db-yr3">Year 3+</div>
+        <div class="db-desc">Each: 100% of their Sum Assured</div>
+        <div class="db-amt" style="color:var(--teal)">${fmt(j1.sa)} + ${fmt(j2.sa)}</div>
+      </div>
+
+      <div class="features">
+        <div class="feat">👫 Two independent policies</div>
+        <div class="feat">⚡ Both instant approval</div>
+        <div class="feat">🩺 No medicals for either</div>
+        <div class="feat">💸 Both get premiums back in Year 21</div>
+        <div class="feat">🔒 Both premiums locked today</div>
+        <div class="feat">🌍 Worldwide on both policies</div>
+      </div>
+
+      <a class="apply-btn" href="https://rickyrampersadbranch.com/xpress-life-application" target="_blank" rel="noopener">
+        Apply Now — Xpress Life Application <span class="apply-arrow">→</span>
+      </a>
+      <div class="apply-note">Opens the Xpress Life Application page in a new window · Complete one form per person · No medical exam required</div>
+    </div>`;
+}
+
+// ── MAIN CALC ──
+function calc() {
+  if (curTab === 'individual') {
+    const sex = $('i1Sex').value;
+    const age = parseInt($('i1Age').value);
+    const sa  = SA.i1;
+    const mode = curMode;
+
+    const period  = xlPeriod(sex, age, sa, mode);
+    const monthly = xlPeriod(sex, age, sa, 'Monthly');
+
+    $('i1Result').innerHTML = buildIndividualResult(sex, age, sa, mode);
+
+    $('barLabel').textContent  = mode + ' Premium';
+    $('barTotal').textContent  = fmt(period);
+    $('barDaily').textContent  = fmt(monthly / 30) + ' / day';
+    $('barCover').textContent  = fmtSA(sa) + ' cover';
+
+  } else {
+    const j1sex  = $('j1Sex').value;
+    const j1age  = parseInt($('j1Age').value);
+    const j1sa   = SA.j1;
+    const j2sex  = $('j2Sex').value;
+    const j2age  = parseInt($('j2Age').value);
+    const j2sa   = SA.j2;
+    const mode   = curModeC;
+
+    const j1 = {
+      sex: j1sex, age: j1age, sa: j1sa,
+      period:  xlPeriod(j1sex, j1age, j1sa, mode),
+      monthly: xlPeriod(j1sex, j1age, j1sa, 'Monthly'),
+      annual:  xlAnnual(j1sex, j1age, j1sa),
+    };
+    const j2 = {
+      sex: j2sex, age: j2age, sa: j2sa,
+      period:  xlPeriod(j2sex, j2age, j2sa, mode),
+      monthly: xlPeriod(j2sex, j2age, j2sa, 'Monthly'),
+      annual:  xlAnnual(j2sex, j2age, j2sa),
+    };
+
+    $('coupleResult').innerHTML = buildCoupleResult(j1, j2, mode);
+
+    $('barLabel').textContent  = 'Combined ' + mode + ' Premium';
+    $('barTotal').textContent  = fmt(j1.period + j2.period);
+    $('barDaily').textContent  = fmt((j1.monthly + j2.monthly) / 30) + ' / day';
+    $('barCover').textContent  = fmtSA(j1sa + j2sa) + ' total cover';
+  }
+}
+
+calc();
+</script>
+</body>
+</html>
