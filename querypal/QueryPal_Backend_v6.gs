@@ -158,12 +158,78 @@ const AGENT_MANAGER = {
   "fawwaz mohamed":"Akaash.Kalladeen@myguardiangroup.com",
   "daniel bhagwandas":"Akaash.Kalladeen@myguardiangroup.com",
 };
+/* Spelling variants seen on the agent dropdown / in the log, mapped to the key
+   used above. Without these the lookup misses and the CC quietly goes to the
+   branch manager instead of the agent's own manager. */
+const AGENT_MANAGER_ALIAS = {
+  "john boodoo":        "john boodhoo",
+  "felicia rampersad2": "felicia rampersad",
+  "faizal mohammed":    "faizal mohamed",
+  "joy sammah":         "joy barbara sammah"
+};
+
+/* ── TODO (branch): these agents have no manager on the hierarchy yet, so their
+   routed emails CC the branch manager by default. Add each one to AGENT_MANAGER
+   above with the correct manager email:
+       diane lutchman statham · ganesh khodai · jonathan pantin
+       janice phillip · kamla dookran · roberta laltoo
+   Run auditManagerMap() in the editor at any time to re-check.              ── */
+
 const DEFAULT_MANAGER = 'ricky.rampersad@myguardiangroup.com'; // fallback if agent not mapped
 const BRANCH_MANAGER_EMAIL = 'ricky.rampersad@myguardiangroup.com'; // sees everything on the dashboard
+
+function normAgentKey_(s){
+  return String(s||'').toLowerCase()
+    .replace(/[-._]/g,' ')
+    .replace(/[0-9]+/g,' ')          // "Felicia Rampersad2"
+    .replace(/\s+/g,' ').trim();
+}
+/* Returns {email, how} — how is 'exact' | 'alias' | 'name' | 'default'.
+   Reporting how the match was made matters: several agents genuinely report to
+   the branch manager, so the address alone cannot tell a real mapping from a
+   fallback. */
+function managerLookup_(agentName){
+  var key = normAgentKey_(agentName);
+  if (!key) return { email: DEFAULT_MANAGER, how: 'default' };
+  if (AGENT_MANAGER[key]) return { email: AGENT_MANAGER[key], how: 'exact' };
+  var ali = AGENT_MANAGER_ALIAS[key];
+  if (ali && AGENT_MANAGER[ali]) return { email: AGENT_MANAGER[ali], how: 'alias' };
+  // unique first-name + surname match, so a middle name or a doubled consonant
+  // does not cost the agent their manager
+  var parts = key.split(' ');
+  if (parts.length >= 2){
+    var first = parts[0], last = parts[parts.length-1], hit = '', n = 0;
+    for (var k in AGENT_MANAGER){
+      var p = k.split(' ');
+      if (p[0] === first && p[p.length-1] === last){ hit = k; n++; }
+    }
+    if (n === 1) return { email: AGENT_MANAGER[hit], how: 'name' };
+  }
+  return { email: DEFAULT_MANAGER, how: 'default' };
+}
 function managerForAgent(agentName){
   if(!agentName) return DEFAULT_MANAGER;
-  var key = agentName.toLowerCase().replace(/[-.]/g,' ').replace(/\s+/g,' ').trim();
-  return AGENT_MANAGER[key] || DEFAULT_MANAGER;
+  return managerLookup_(agentName).email;
+}
+
+/* Editor helper: lists any agent whose manager is not on the hierarchy map. */
+function auditManagerMap(){
+  var names = [], out = [];
+  try {
+    var tab = codeTable_();
+    for (var i=0;i<tab.length;i++) if (tab[i].name) names.push(tab[i].name);
+  } catch(e){}
+  for (var c in AGENT_ACCESS) if (AGENT_ACCESS[c][0]) names.push(AGENT_ACCESS[c][0]);
+  var seen = {};
+  for (var j=0;j<names.length;j++){
+    var n = names[j], k = normAgentKey_(n);
+    if (seen[k] || !k) continue; seen[k] = 1;
+    if (managerLookup_(n).how === 'default') out.push(n);
+  }
+  var msg = out.length
+    ? 'No manager mapped (CC falls back to the branch manager):\n  ' + out.join('\n  ')
+    : 'Every agent resolves to a named manager.';
+  Logger.log(msg); return msg;
 }
 // Working-day deadline from turnaround (skips Sat/Sun)
 function deadlineFrom(turnaround){
@@ -529,7 +595,9 @@ function autoSweep() {
       continue;
     }
     if (quiet || isClosed) continue;
-    if (status && status.indexOf('open') === -1) continue;   // blank or Open = chase-able
+    // anything not closed is still owed an answer — "In Progress", "Pending",
+    // "Acknowledged" all keep getting chased. Only these opt out.
+    if (/cancel|withdraw|duplicate|on hold/.test(status)) continue;
     var sup = isSupportCase_(row[11], row[12], row[13]);
     var count = Number(row[22] || 0);
     if (count >= (sup ? FOLLOWUP_MAX_SUPPORT : FOLLOWUP_MAX)) continue;
@@ -980,7 +1048,9 @@ function myQueries_(code) {
                   counts: { open: 0, done: 0, total: 0 }, rows: [] });
   }
 
-  var data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 22).getValues();
+  // read through column 27 — Follow-ups (23) and Score (26) live past the base 22
+  var wide = Math.max(22, Math.min(27, sheet.getLastColumn()));
+  var data = sheet.getRange(2, 1, sheet.getLastRow() - 1, wide).getValues();
   var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
   var fmt = function (v, pat) {
     if (v instanceof Date) return Utilities.formatDate(v, tz, pat);

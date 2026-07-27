@@ -5,11 +5,17 @@ Two suites covering photo **and document** attachments.
 ```bash
 cd querypal/tests
 
-# backend: buildAttachments_ in QueryPal_Backend_v6.gs, with Apps Script stubbed
+# attachments — backend blob building, with Apps Script stubbed
 node attachments.backend.test.js
 
-# frontend: drives index.html in Chromium with real PDF / Word / PNG files
+# attachments — drives index.html in Chromium with real PDF / Word / PNG files
 NODE_PATH=/opt/node22/lib/node_modules node attachments.browser.test.mjs
+
+# routing + reminders — manager CC, health override, deadlines, chase rules
+node routing.test.js
+
+# leaderboard — rankings, role gating, time-range interactivity
+NODE_PATH=/opt/node22/lib/node_modules node leaderboard.browser.test.mjs
 ```
 
 Both print `N passed, 0 failed` and exit non-zero on failure. Test fixtures
@@ -33,6 +39,15 @@ docs keep their own type while photos are compressed to JPEG; each file shows
 a chip (icon for documents, thumbnail for photos); rejected files explain
 themselves; individual removal works and a removed file can be re-picked;
 attachments reset when the query type changes; no page errors.
+
+**Routing and reminders** — agents resolve to the right manager despite spelling
+variants, and unknown names fall back visibly rather than silently; only the two
+health query types reroute to Sales Support; working-day deadlines skip weekends;
+the autopilot chases every unresolved status and stops on closed/cancelled.
+
+**Leaderboard** — on-time percentages, averages and CSAT are computed correctly;
+agents see only their own scorecard while managers and branch see rankings; the
+time-range pills move both the board and the stat tiles.
 
 ## Not covered here
 

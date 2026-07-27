@@ -289,6 +289,33 @@
   .drop .di{font-size:24px;}.drop .dt{font-weight:700;color:var(--navy);font-size:13px;margin-top:5px;}.drop .ds{font-size:11px;color:var(--mute);margin-top:3px;}
   .idprev{display:flex;align-items:center;gap:12px;margin-top:10px;background:#f2f9ea;border:1px solid #dcecc6;border-radius:10px;padding:9px;}
   .idprev img{width:54px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #cde0b8;}
+  /* leaderboard */
+  .lbwrap{display:grid;gap:9px;}
+  .lbhead{display:flex;align-items:baseline;gap:8px;margin:14px 0 2px;font-family:var(--font-d);font-size:13px;font-weight:800;color:var(--navy);}
+  .lbhead span{font-size:11px;font-weight:600;color:var(--mute);font-family:var(--font-b);}
+  .lbrow{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px;box-shadow:var(--sh-sm);transition:.25s var(--ease);}
+  .lbrow.me{background:linear-gradient(#f5fbff,#f5fbff) padding-box,var(--grad) border-box;border:1.5px solid transparent;box-shadow:0 6px 20px rgba(11,127,212,.14);}
+  .lbrow .rk{width:28px;height:28px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;background:#eef4fa;color:var(--soft);}
+  .lbrow.g1 .rk{background:linear-gradient(135deg,#f7d774,#e0a921);color:#5b4200;}
+  .lbrow.g2 .rk{background:linear-gradient(135deg,#dfe6ec,#b6c3cf);color:#44535e;}
+  .lbrow.g3 .rk{background:linear-gradient(135deg,#e8b389,#c87f4d);color:#4d2c10;}
+  .lbrow .lbn{flex:1;min-width:0;}
+  .lbrow .lbnm{font-size:13.5px;font-weight:750;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .lbrow .lbsub{font-size:11px;color:var(--mute);margin-top:3px;}
+  .lbrow .lbmet{flex:none;text-align:right;}
+  .lbrow .lbpct{font-size:16px;font-weight:800;color:var(--good);font-family:var(--font-d);line-height:1;}
+  .lbrow .lbpct.warn{color:var(--warn);} .lbrow .lbpct.bad{color:var(--bad);} .lbrow .lbpct.na{color:var(--mute);}
+  .lbrow .lbpl{font-size:10px;color:var(--mute);font-weight:650;margin-top:3px;letter-spacing:.04em;text-transform:uppercase;}
+  .lbbar{height:5px;border-radius:4px;background:#eaf0f6;overflow:hidden;margin-top:7px;}
+  .lbbar i{display:block;height:100%;border-radius:4px;background:var(--grad);}
+  .lbbar i.warn{background:linear-gradient(90deg,#f0b429,#dd7a02);}
+  .lbbar i.bad{background:linear-gradient(90deg,#ef7b72,#e0483e);}
+  .lbbar i.na{background:#cbd8e3;}
+  .lbnote{font-size:11.5px;color:var(--mute);text-align:center;margin:12px 0 2px;line-height:1.5;}
+  .lbhero{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:8px;margin-bottom:4px;}
+  .lbhero .h{background:var(--grad-deep);color:#fff;border-radius:var(--r-sm);padding:13px 10px;text-align:center;box-shadow:var(--sh-md);}
+  .lbhero .h .n{font-family:var(--font-d);font-size:21px;font-weight:800;line-height:1;}
+  .lbhero .h .l{font-size:9.5px;opacity:.82;margin-top:5px;font-weight:650;letter-spacing:.1em;text-transform:uppercase;}
   .idprev .ok{font-size:12px;color:#5b7c2f;font-weight:700;}.idprev .rm{margin-left:auto;background:none;border:none;color:var(--bad);font-size:11.5px;cursor:pointer;text-decoration:underline;}
   .filechip{display:flex;align-items:center;gap:11px;margin-top:8px;background:#f2f9ea;border:1px solid #dcecc6;border-radius:10px;padding:9px 11px;}
   .filechip img{width:52px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #cde0b8;flex:none;}
@@ -640,6 +667,7 @@
       <button class="dtab active" data-t="open" onclick="dashTab('open')">Open</button>
       <button class="dtab" data-t="done" onclick="dashTab('done')">Resolved</button>
       <button class="dtab" data-t="all" onclick="dashTab('all')">All</button>
+      <button class="dtab" data-t="board" onclick="dashTab('board')">🏆 Board</button>
     </div>
     <div class="drow">
       <input id="dashSearch" placeholder="Filter by client, ref or type…" oninput="dashRender()" autocomplete="off">
@@ -821,10 +849,20 @@ function dashPickType(t){
   const s=document.getElementById('dashSearch');
   s.value=(s.value===t?'':t);dashRender();dashMark();
 }
-function dashRangeSet(r){dashRange=(dashRange===r?0:r);dashRender();dashMark();}
+function dashRangeSet(r){dashRange=(dashRange===r?0:r);dashStats();dashRender();dashMark();}
+/* rows inside the selected time window — shared by the stats panel and the board */
+function dashScope(){
+  const rows=(dashData&&dashData.rows)||[];
+  if(!dashRange)return rows;
+  const cut=Date.now()-dashRange*86400000;
+  return rows.filter(r=>{const t=new Date(r.tsIso||'');return !isNaN(t)&&t.getTime()>=cut;});
+}
 function dashStats(){
   const box=document.getElementById('dashStats');if(!box||!dashData)return;
-  const rows=dashData.rows||[],c=dashData.counts||{};
+  const rows=dashScope();
+  const c=dashRange?{open:rows.filter(r=>!dashDone(r.status)).length,
+                     done:rows.filter(r=>dashDone(r.status)).length,
+                     total:rows.length}:(dashData.counts||{});
   const dd=rows.filter(r=>dashDone(r.status)&&r.days!==''&&r.days!==null&&!isNaN(+r.days)).map(r=>+r.days);
   const avg=dd.length?(Math.round(dd.reduce((a,b)=>a+b,0)/dd.length*10)/10):null;
   const over=rows.filter(dashIsOver).length;
@@ -905,8 +943,113 @@ function dashMark(){
   const ov=document.querySelector('#dashStats .st.ov');if(ov)ov.classList.toggle('on',dashOver);
 }
 function dashDone(s){return /closed|resolved|completed/i.test(s||'');}
+
+/* ---------------- leaderboard ----------------
+   On-time = closed within the turnaround promised for that query type.
+   Agents only ever receive their own rows, so they get a personal scorecard;
+   managers see their team and the branch sees everyone.                      */
+function lbOnTime(r){
+  if(!dashDone(r.status))return null;
+  const d=parseInt(r.days),t=parseInt(r.tat);
+  if(isNaN(d))return null;
+  return d<=(isNaN(t)?5:t);
+}
+function lbStats(rows){
+  const done=rows.filter(r=>dashDone(r.status));
+  const rated=rows.map(r=>+r.score).filter(s=>s>0);
+  const timed=rows.map(lbOnTime).filter(v=>v!==null);
+  const days=done.map(r=>parseInt(r.days)).filter(n=>!isNaN(n));
+  return {
+    total:rows.length, open:rows.length-done.length, done:done.length,
+    overdue:rows.filter(dashIsOver).length,
+    onTime:timed.length?Math.round(timed.filter(Boolean).length/timed.length*100):null,
+    avg:days.length?Math.round(days.reduce((a,b)=>a+b,0)/days.length*10)/10:null,
+    csat:rated.length?Math.round(rated.reduce((a,b)=>a+b,0)/rated.length*10)/10:null,
+    chased:rows.reduce((n,r)=>n+(+r.fu||0),0)
+  };
+}
+function lbTone(p){return p===null?'na':(p>=85?'':(p>=60?'warn':'bad'));}
+function lbGroup(rows,key){
+  const m={};
+  rows.forEach(r=>{const k=(r[key]||'').trim();if(k){(m[k]=m[k]||[]).push(r);}});
+  return m;
+}
+function lbRow(rank,name,sub,stats,best,mine){
+  const pct=stats.onTime,tone=lbTone(pct);
+  const medal=rank<=3?('g'+rank):'';
+  const width=best?Math.max(4,Math.round(stats.total/best*100)):0;
+  return '<div class="lbrow '+medal+(mine?' me':'')+'">'
+    +'<div class="rk">'+(rank<=3?['🥇','🥈','🥉'][rank-1]:rank)+'</div>'
+    +'<div class="lbn"><div class="lbnm">'+esc(name)+'</div>'
+    +'<div class="lbsub">'+sub+'</div>'
+    +'<div class="lbbar"><i class="'+tone+'" style="width:'+width+'%"></i></div></div>'
+    +'<div class="lbmet"><div class="lbpct '+tone+'">'+(pct===null?'—':pct+'%')+'</div>'
+    +'<div class="lbpl">on time</div></div></div>';
+}
+function dashBoard(){
+  const rows=dashScope(), role=dashData.role||'agent';
+  if(!rows.length)return '<div class="trackcard">No queries in this period yet — pick a wider range above.</div>';
+  const all=lbStats(rows);
+  const period=dashRange?('last '+dashRange+' days'):'all time';
+
+  let h='<div class="lbhero">'
+    +'<div class="h"><div class="n">'+all.total+'</div><div class="l">Logged</div></div>'
+    +'<div class="h"><div class="n">'+(all.onTime===null?'—':all.onTime+'%')+'</div><div class="l">On time</div></div>'
+    +'<div class="h"><div class="n">'+(all.avg===null?'—':all.avg+'d')+'</div><div class="l">Avg close</div></div>'
+    +(all.csat!==null?'<div class="h"><div class="n">★'+all.csat+'</div><div class="l">Rating</div></div>':'')
+    +(all.chased?'<div class="h"><div class="n">'+all.chased+'</div><div class="l">Auto-chased</div></div>':'')
+    +'</div>';
+
+  if(role==='agent'){
+    h+='<div class="lbhead">Your scorecard <span>'+period+'</span></div>'
+      +lbRow(1,dashData.name||'You',
+             all.done+' resolved · '+all.open+' open'+(all.overdue?' · <b style="color:var(--bad)">'+all.overdue+' overdue</b>':''),
+             all,all.total,true)
+      +'<div class="lbnote">Branch-wide rankings are shown to managers. Keep closing on time and your on-time score climbs.</div>';
+    return h;
+  }
+
+  const byAgent=lbGroup(rows,'agent');
+  const names=Object.keys(byAgent).map(n=>({n:n,s:lbStats(byAgent[n])}))
+    .sort((a,b)=>((b.s.onTime===null?-1:b.s.onTime)-(a.s.onTime===null?-1:a.s.onTime))||(b.s.total-a.s.total));
+  if(names.length){
+    const best=Math.max.apply(null,names.map(x=>x.s.total));
+    h+='<div class="lbhead">Agent leaderboard <span>'+period+' · ranked by on-time delivery</span></div><div class="lbwrap">'
+      +names.map((x,i)=>lbRow(i+1,x.n,
+          x.s.total+' logged · '+x.s.done+' resolved'
+          +(x.s.avg!==null?' · '+x.s.avg+'d avg':'')
+          +(x.s.csat!==null?' · ★'+x.s.csat:'')
+          +(x.s.overdue?' · <b style="color:var(--bad)">'+x.s.overdue+' overdue</b>':''),
+          x.s,best,(dashData.name||'').toLowerCase()===x.n.toLowerCase())).join('')
+      +'</div>';
+  }
+
+  const byDept=lbGroup(rows,'dept');
+  const depts=Object.keys(byDept).map(d=>({n:d,s:lbStats(byDept[d])}))
+    .sort((a,b)=>((b.s.onTime===null?-1:b.s.onTime)-(a.s.onTime===null?-1:a.s.onTime))||(b.s.total-a.s.total));
+  if(depts.length){
+    const best=Math.max.apply(null,depts.map(x=>x.s.total));
+    h+='<div class="lbhead">Department scoreboard <span>who turns work around fastest</span></div><div class="lbwrap">'
+      +depts.map((x,i)=>lbRow(i+1,x.n,
+          x.s.total+' received · '+x.s.done+' resolved'
+          +(x.s.avg!==null?' · '+x.s.avg+'d avg':'')
+          +(x.s.overdue?' · <b style="color:var(--bad)">'+x.s.overdue+' overdue</b>':'')
+          +(x.s.chased?' · '+x.s.chased+' chased':''),
+          x.s,best,false)).join('')
+      +'</div>';
+  }
+  h+='<div class="lbnote">On time = resolved within the turnaround promised for that request type.<br>The bar shows share of volume. Rows with nothing resolved yet show “—”.</div>';
+  return h;
+}
 function dashRender(){
   if(!dashData)return;
+  const drow=document.querySelector('.drow');
+  if(_dashTab==='board'){
+    if(drow)drow.style.display='none';
+    document.getElementById('dashList').innerHTML=dashBoard();
+    return;
+  }
+  if(drow)drow.style.display='';
   const q=(document.getElementById('dashSearch').value||'').trim().toLowerCase();
   const af=document.getElementById('dashAgent').value||'';
   let rows=dashData.rows.filter(r=>_dashTab==='all'?true:(_dashTab==='done'?dashDone(r.status):!dashDone(r.status)));
