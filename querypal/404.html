@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Query Pal | Ricky Rampersad Branch</title>
+<meta name="description" content="Query Pal by Ricky Rampersad Branch — log a policy request, routed to the right department, copied to your agent, tracked to the day.">
+<meta name="theme-color" content="#003457">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0a2138; --navy:#0b355b; --navy2:#155181; --ink2:#31506b;
+    --soft:#5e7a93; --mute:#90a7bb; --line:#e1ebf4; --line2:#d2e2f0;
+    --blue:#0b7fd4; --blue2:#0a66c2; --sky:#37b1ec; --skysoft:#54bce4;
+    --teal:#0fb5a5; --good:#0e9f6e; --warn:#dd7a02; --bad:#e0483e; --gold:#f5b93b;
+    --bg:#eef6fc; --card:#ffffff; --amber:#fff8ec; --amberline:#ffe4b8;
+    --r-xl:26px; --r-lg:20px; --r-md:15px; --r-sm:11px;
+    --sh-sm:0 1px 2px rgba(10,47,82,.05),0 3px 10px rgba(10,47,82,.05);
+    --sh-md:0 2px 6px rgba(10,47,82,.05),0 14px 34px rgba(10,47,82,.10);
+    --sh-lg:0 6px 18px rgba(8,42,76,.10),0 30px 70px rgba(8,42,76,.15);
+    --sh-xl:0 12px 32px rgba(7,38,70,.14),0 48px 110px rgba(7,38,70,.22);
+    --grad:linear-gradient(126deg,var(--sky) -8%,var(--blue) 52%,var(--blue2) 108%);
+    --grad-deep:linear-gradient(128deg,#0a2f4f,#0b6ab4);
+    --ease:cubic-bezier(.16,1,.3,1);
+    --font-d:'Plus Jakarta Sans',Inter,system-ui,-apple-system,sans-serif;
+    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+    --font-m:'JetBrains Mono',Consolas,monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:var(--font-b);color:var(--ink);background:var(--bg);
+    min-height:100vh;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background:
+      radial-gradient(900px 520px at 50% -14%,rgba(84,188,228,.34),transparent 62%),
+      radial-gradient(700px 480px at 108% 12%,rgba(11,127,212,.10),transparent 60%),
+      radial-gradient(640px 460px at -10% 68%,rgba(15,181,165,.07),transparent 60%),
+      linear-gradient(180deg,#f0f8fe 0%,#ffffff 78%);}
+  ::selection{background:rgba(11,127,212,.18);}
+  .wrap{max-width:1040px;margin:0 auto;padding:14px 16px calc(128px + env(safe-area-inset-bottom));}
+
+  /* ---------- entrance motion ---------- */
+  @keyframes rise{from{opacity:0;transform:translateY(16px) scale(.988)}to{opacity:1;transform:none}}
+  section.enter > *{animation:rise .6s var(--ease) both;}
+  section.enter > *:nth-child(2){animation-delay:.06s}
+  section.enter > *:nth-child(3){animation-delay:.12s}
+  section.enter > *:nth-child(4){animation-delay:.18s}
+  section.enter > *:nth-child(5){animation-delay:.24s}
+  section.enter > *:nth-child(6){animation-delay:.30s}
+
+  /* ---------- masthead ---------- */
+  header.top{position:sticky;top:10px;z-index:120;display:flex;align-items:center;gap:13px;
+    background:linear-gradient(128deg,rgba(9,44,76,.94),rgba(10,94,158,.94));
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    color:#fff;padding:14px 20px;border-radius:var(--r-lg);border:1px solid rgba(255,255,255,.14);
+    box-shadow:var(--sh-lg);margin-bottom:6px;overflow:hidden;}
+  header.top::after{content:"";position:absolute;right:-70px;top:-90px;width:260px;height:260px;border-radius:50%;
+    background:radial-gradient(circle,rgba(84,188,228,.30),transparent 68%);}
+  header.top::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);}
+  .logo{width:46px;height:46px;flex:none;z-index:1;filter:drop-shadow(0 4px 10px rgba(0,20,40,.35));}
+  header.top .t1{font-family:var(--font-d);font-size:19px;font-weight:800;letter-spacing:.1px;line-height:1.06;z-index:1;}
+  header.top .t2{font-size:12px;opacity:.86;font-weight:500;z-index:1;margin-top:3px;letter-spacing:.15px;}
+  .hchip{margin-left:auto;z-index:1;font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+    color:#cfeaff;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);
+    padding:6px 11px;border-radius:30px;white-space:nowrap;}
+  @media(max-width:640px){.hchip{display:none;}}
+
+  /* ---------- progress rail ---------- */
+  .steps{display:flex;gap:4px;justify-content:center;align-items:center;margin:18px auto 22px;flex-wrap:nowrap;
+    max-width:640px;background:rgba(255,255,255,.72);border:1px solid var(--line);border-radius:40px;
+    padding:8px 14px;box-shadow:var(--sh-sm);backdrop-filter:blur(8px);}
+  .step{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--mute);font-weight:650;white-space:nowrap;min-width:0;}
+  .step .lab{overflow:hidden;text-overflow:ellipsis;}
+  .dot{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:#e3eef7;color:#89a3b9;
+    font-size:11px;font-weight:800;flex:none;transition:all .4s var(--ease);}
+  .step.active .dot{background:var(--grad);color:#fff;box-shadow:0 0 0 4px rgba(11,127,212,.16),0 4px 12px rgba(11,127,212,.35);transform:scale(1.08);}
+  .step.done .dot{background:var(--good);color:#fff;}
+  .step.active{color:var(--navy);font-weight:750;}
+  .sep{width:16px;height:2px;background:var(--line2);border-radius:2px;flex:none;}
+  @media(max-width:600px){
+    .step:not(.active) .lab{display:none;}
+    .sep{width:10px;}
+    .steps{gap:6px;}
+  }
+
+  h2.q{text-align:center;color:var(--navy);font-family:var(--font-d);font-weight:800;
+    font-size:clamp(23px,5.6vw,28px);margin:10px 0 6px;letter-spacing:-.5px;line-height:1.14;}
+  p.sub{text-align:center;color:var(--soft);margin:0 auto 10px;font-size:14.5px;line-height:1.55;max-width:520px;}
+
+  /* ---------- HERO (step 1) ---------- */
+  .eyebrow{display:flex;justify-content:center;margin:26px 0 12px;}
+  .eyebrow span{font-size:10.5px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--blue2);
+    background:linear-gradient(120deg,#eaf5ff,#f2fbff);border:1px solid #cfe6fa;border-radius:30px;padding:7px 15px;}
+  h2.q.xl{font-size:clamp(30px,8.4vw,46px);letter-spacing:-1.3px;line-height:1.07;margin:0 0 12px;}
+  h2.q.xl em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  p.sub.lead-sub{font-size:15.5px;max-width:560px;margin-bottom:22px;}
+  .trust{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:0 0 26px;}
+  .tpill{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:650;color:var(--ink2);
+    background:rgba(255,255,255,.85);border:1px solid var(--line);border-radius:30px;padding:8px 14px;box-shadow:var(--sh-sm);}
+  .tpill b{color:var(--navy);font-weight:800;}
+  .heronote{text-align:center;color:var(--mute);font-size:12.5px;margin:22px 0 4px;letter-spacing:.1px;}
+  .heronote b{color:var(--soft);font-weight:700;}
+
+  /* ---------- cards ---------- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:13px;margin-top:12px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);padding:18px;cursor:pointer;
+    transition:transform .3s var(--ease),box-shadow .3s var(--ease),border-color .3s var(--ease);
+    box-shadow:var(--sh-sm);text-align:left;position:relative;overflow:hidden;-webkit-tap-highlight-color:transparent;}
+  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--grad);opacity:0;transition:.3s;}
+  .card::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 1px 0 rgba(255,255,255,.9);pointer-events:none;}
+  .card:hover{transform:translateY(-4px);box-shadow:var(--sh-md);border-color:#bcdcf5;}
+  .card:hover::before{opacity:1;}
+  .card:active{transform:translateY(-1px) scale(.992);}
+  .card .ico{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-size:22px;
+    background:linear-gradient(135deg,#eaf5ff,#f4fbff);border:1px solid #d9ecfb;}
+  .card h3{margin:12px 0 3px;font-family:var(--font-d);font-size:15.5px;color:var(--navy);font-weight:750;letter-spacing:-.2px;}
+  .card p{margin:0;font-size:12.5px;color:var(--soft);line-height:1.5;}
+  .card .badge{position:absolute;top:14px;right:14px;background:#eef6ff;color:var(--blue);font-size:11px;font-weight:800;padding:3px 9px;border-radius:20px;border:1px solid #dcecfb;}
+
+  .who{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:4px;}
+  .who .card{flex:1;min-width:255px;max-width:330px;text-align:left;padding:24px 22px 20px;border-radius:var(--r-lg);}
+  .who .card .ico{width:52px;height:52px;font-size:26px;border-radius:16px;}
+  .who .card .ico svg{display:block;}
+  .who .card h3{font-size:19px;margin-top:15px;}
+  .who .card p{font-size:13px;min-height:38px;}
+  .who .go{display:inline-flex;align-items:center;gap:7px;margin-top:14px;font-size:13px;font-weight:800;color:var(--blue);
+    transition:gap .25s var(--ease);}
+  .who .card:hover .go{gap:11px;}
+
+  /* ---------- smart search ---------- */
+  .smartwrap{max-width:620px;margin:20px auto 8px;position:relative;}
+  .smart{display:block;width:100%;padding:18px 58px 18px 54px;border:1.5px solid var(--line2);border-radius:18px;
+    font-size:16px;font-family:var(--font-b);outline:none;transition:.25s var(--ease);color:var(--ink);
+    background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%230b7fd4' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E") no-repeat 19px center;
+    box-shadow:var(--sh-md);}
+  .smart::placeholder{color:#9db3c6;}
+  .smart:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(11,127,212,.14),var(--sh-md);}
+  .smarthint{text-align:center;color:var(--mute);font-size:12.5px;margin-top:10px;}
+  .smarthint b{color:var(--soft);font-weight:650;}
+  .micbtn{position:absolute;right:9px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;
+    border:none;background:linear-gradient(135deg,#eaf5ff,#ddf0ff);color:var(--blue);font-size:17px;cursor:pointer;
+    transition:.25s var(--ease);display:grid;place-items:center;box-shadow:inset 0 0 0 1px #d3e8fa;}
+  .micbtn:hover{background:#d5ebff;}
+  .micbtn.listening{background:var(--bad);color:#fff;box-shadow:none;animation:micpulse 1.1s infinite;}
+  @keyframes micpulse{0%{box-shadow:0 0 0 0 rgba(224,72,62,.45)}70%{box-shadow:0 0 0 10px rgba(224,72,62,0)}100%{box-shadow:0 0 0 0 rgba(224,72,62,0)}}
+
+  /* ---------- query rows ---------- */
+  .qlist{display:grid;gap:10px;max-width:720px;margin:6px auto 0;}
+  .qrow{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border:1px solid var(--line);
+    border-radius:var(--r-md);padding:15px 17px;cursor:pointer;transition:.28s var(--ease);box-shadow:var(--sh-sm);-webkit-tap-highlight-color:transparent;}
+  .qrow:hover{border-color:#a9d4f4;background:#f8fcff;transform:translateX(4px);box-shadow:var(--sh-md);}
+  .qrow:active{transform:translateX(2px) scale(.995);}
+  .qrow .ql{min-width:0;}
+  .qrow .name{font-weight:700;font-size:14.5px;color:var(--ink);letter-spacing:-.1px;}
+  .qrow .tech{font-size:11.5px;color:var(--mute);margin-top:3px;}
+  .qrow .right{display:flex;align-items:center;gap:10px;flex:none;}
+  .tat{font-size:10.5px;font-weight:800;padding:4px 10px;border-radius:20px;white-space:nowrap;letter-spacing:.02em;}
+  .tat.fast{background:#e5f7ef;color:var(--good);}
+  .tat.mid{background:#fdf2e0;color:var(--warn);}
+  .tat.slow{background:#fdeceb;color:var(--bad);}
+  .chev{color:#b6c8d8;font-size:18px;transition:.25s;}
+  .qrow:hover .chev{color:var(--blue);transform:translateX(2px);}
+  .prep-pill{font-size:10px;font-weight:800;color:var(--teal);background:#e4faf6;padding:3px 8px;border-radius:20px;}
+  .qrow.best{border:1.5px solid transparent;background:
+    linear-gradient(#f5fbff,#f5fbff) padding-box,var(--grad) border-box;box-shadow:0 6px 20px rgba(11,127,212,.14);}
+  .bestpill{background:var(--grad);color:#fff;font-size:9.5px;font-weight:800;padding:2.5px 8px;border-radius:12px;margin-right:6px;letter-spacing:.4px;vertical-align:2px;box-shadow:0 3px 8px rgba(11,127,212,.3);}
+
+  /* ---------- step-4 panel ---------- */
+  .panel{background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:var(--r-xl);padding:clamp(18px,4vw,28px);
+    box-shadow:var(--sh-lg);max-width:760px;margin:0 auto;backdrop-filter:blur(6px);}
+  .route{display:flex;align-items:center;gap:14px;background:var(--grad-deep);color:#e8f4ff;
+    border-radius:var(--r-md);padding:16px 18px;margin-bottom:20px;position:relative;overflow:hidden;box-shadow:var(--sh-md);}
+  .route::after{content:"";position:absolute;right:-40px;top:-50px;width:150px;height:150px;border-radius:50%;background:rgba(84,188,228,.22);}
+  .route .rt-ico{width:44px;height:44px;flex:none;border-radius:13px;display:grid;place-items:center;font-size:21px;
+    background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);}
+  .route .rt-txt{font-size:13px;line-height:1.55;z-index:1;}
+  .route b{color:#fff;}
+  .duechip{display:inline-block;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.24);color:#fff;
+    font-size:11px;font-weight:750;padding:4px 11px;border-radius:20px;margin-top:7px;}
+
+  /* prep checklist */
+  .prep{background:linear-gradient(135deg,#fff9ee,#fffdf6);border:1px solid var(--amberline);border-radius:var(--r-md);padding:17px 18px;margin-bottom:20px;box-shadow:var(--sh-sm);}
+  .prep h4{margin:0 0 4px;font-family:var(--font-d);font-size:13.5px;color:#7a5210;display:flex;align-items:center;gap:8px;letter-spacing:-.1px;}
+  .prep .lead{font-size:12.5px;color:#9a7330;margin:0 0 12px;}
+  .prep .col{margin-bottom:10px;}
+  .prep .col:last-child{margin-bottom:0;}
+  .prep .ct{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:#b07d1d;margin-bottom:6px;}
+  .prep ul{margin:0;padding:0;list-style:none;}
+  .prep li{font-size:13px;color:#5b4720;padding:5px 0 5px 26px;position:relative;line-height:1.45;transition:color .25s;}
+  .prep li::before{content:"";position:absolute;left:2px;top:8px;width:14px;height:14px;border-radius:5px;border:2px solid #d8a948;background:#fff;transition:.25s var(--ease);}
+  .prep li.note{padding-left:26px;color:#8a6d2e;font-style:italic;}
+  .prep li.note::before{content:"!";border:none;background:#f0c674;color:#5b4720;font-style:normal;font-weight:800;font-size:10px;display:grid;place-items:center;border-radius:50%;width:15px;height:15px;left:1px;top:7px;}
+  .prep li:not(.note){cursor:pointer;-webkit-tap-highlight-color:transparent;}
+  .prep li.ticked{color:#b3a075;text-decoration:line-through;}
+  .prep li.ticked::before{content:"✓";background:#d8a948;border-color:#d8a948;color:#fff;font-size:10px;font-weight:900;display:grid;place-items:center;transform:scale(1.05);}
+  .prep .ok{font-size:12.5px;color:#557040;background:#f2f9ea;border:1px solid #dcecc6;border-radius:10px;padding:9px 12px;display:flex;gap:8px;align-items:center;}
+
+  /* fields */
+  .field{margin-bottom:16px;text-align:left;position:relative;}
+  .field label{display:block;font-size:11px;font-weight:800;color:var(--ink2);margin-bottom:7px;text-transform:uppercase;letter-spacing:.09em;}
+  .field .req{color:var(--bad);}
+  .field input,.field select,.field textarea{width:100%;padding:13px 15px;border:1.5px solid var(--line);border-radius:var(--r-sm);
+    font-size:15px;font-family:var(--font-b);color:var(--ink);outline:none;transition:.25s var(--ease);background:#fbfdff;}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 4px rgba(11,127,212,.11);}
+  .field textarea{min-height:96px;resize:vertical;line-height:1.55;}
+  .field input.err,.field textarea.err{border-color:var(--bad)!important;box-shadow:0 0 0 3px rgba(224,72,62,.12)!important;}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+  @media(max-width:560px){.two{grid-template-columns:1fr;}}
+  .hint{font-size:11.5px;color:var(--mute);margin-top:6px;}
+  .hintinline{font-weight:500;color:var(--mute);font-size:11.5px;}
+
+  .ac{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--line);border-top:none;border-radius:0 0 var(--r-sm) var(--r-sm);max-height:230px;overflow-y:auto;z-index:20;box-shadow:var(--sh-md);display:none;}
+  .ac.show{display:block;}
+  .ac div{padding:11px 15px;font-size:14px;cursor:pointer;border-bottom:1px solid #f2f7fc;}
+  .ac div:hover{background:#f0f8ff;color:var(--blue);}
+  .ac .em{font-size:11.5px;color:var(--mute);}
+
+  /* buttons */
+  .btn{padding:15px 28px;background:var(--grad);color:#fff;border:none;border-radius:14px;font-size:15.5px;
+    font-family:var(--font-d);font-weight:800;letter-spacing:.1px;cursor:pointer;transition:.28s var(--ease);
+    box-shadow:0 8px 22px rgba(11,127,212,.32),inset 0 1px 0 rgba(255,255,255,.32);}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(11,127,212,.42),inset 0 1px 0 rgba(255,255,255,.32);}
+  .btn:active{transform:translateY(0) scale(.98);}
+  .btn:disabled{opacity:.6;cursor:wait;transform:none;}
+  .btn-ghost{background:#fff;color:var(--navy2);border:1.5px solid var(--line2);box-shadow:var(--sh-sm);font-weight:700;}
+  .btn-ghost:hover{background:#f4faff;border-color:#b9dbf5;transform:none;box-shadow:var(--sh-sm);}
+  .btn-wa{background:linear-gradient(126deg,#1fb355,#25d366);box-shadow:0 8px 22px rgba(37,211,102,.32),inset 0 1px 0 rgba(255,255,255,.3);text-decoration:none;display:inline-block;text-align:center;}
+  .btn-wa:hover{box-shadow:0 14px 30px rgba(37,211,102,.42);}
+  .actions{display:flex;gap:12px;justify-content:space-between;margin-top:14px;flex-wrap:wrap;}
+  .back{display:inline-flex;align-items:center;gap:6px;margin:20px auto 0;background:none;border:none;color:var(--navy2);font-size:13.5px;font-weight:700;cursor:pointer;transition:.2s;}
+  .back:hover{color:var(--blue);}
+  .center{text-align:center;}
+
+  /* ---------- success ---------- */
+  .success{max-width:620px;margin:0 auto;background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:var(--r-xl);padding:40px 26px 30px;text-align:center;box-shadow:var(--sh-lg);}
+  .tick{width:82px;height:82px;border-radius:50%;background:linear-gradient(135deg,var(--good),#2fc98b);display:grid;place-items:center;margin:0 auto 16px;box-shadow:0 12px 30px rgba(14,159,110,.38),inset 0 1px 0 rgba(255,255,255,.35);animation:pop .6s var(--ease);}
+  @keyframes pop{0%{transform:scale(.3);opacity:0}55%{transform:scale(1.12)}100%{transform:scale(1)}}
+  .tick svg{width:40px;height:40px;}
+  .ticketbox{background:var(--grad-deep);border-radius:var(--r-md);padding:20px 18px;margin:22px 0;position:relative;overflow:hidden;box-shadow:var(--sh-md);}
+  .ticketbox::after{content:"";position:absolute;right:-32px;top:-42px;width:130px;height:130px;border-radius:50%;background:rgba(84,188,228,.22);}
+  .ticketbox::before{content:"";position:absolute;left:14px;right:14px;top:50%;border-top:1px dashed rgba(255,255,255,.16);}
+  .ticketbox .lbl{font-size:10px;color:#9fc9ec;font-weight:800;text-transform:uppercase;letter-spacing:.2em;position:relative;}
+  .ticketbox .ref{font-family:var(--font-m);font-size:15.5px;font-weight:700;color:#fff;letter-spacing:.2px;margin-top:8px;word-break:break-word;position:relative;line-height:1.5;}
+  .copybtn{margin-top:12px;font-size:12px;background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.25);padding:7px 15px;border-radius:20px;cursor:pointer;font-weight:700;position:relative;transition:.2s;}
+  .copybtn:hover{background:rgba(255,255,255,.22);}
+  .summ{text-align:left;background:#fafcff;border:1px solid var(--line);border-radius:var(--r-md);padding:16px 17px;margin:18px 0;font-size:13.5px;}
+  .summ .r{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed #ebf2f9;}
+  .summ .r:last-child{border:none;}
+  .summ .k{color:var(--soft);font-weight:600;}
+  .summ .v{color:var(--ink);font-weight:700;text-align:right;}
+  .postbtns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:4px 0 14px;}
+  .postbtns .btn{font-size:14px;padding:12px 18px;}
+
+  .hidden{display:none;}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:rgba(9,38,64,.92);
+    backdrop-filter:blur(10px);color:#fff;padding:13px 24px;border-radius:30px;font-size:13.5px;font-weight:600;
+    border:1px solid rgba(255,255,255,.12);box-shadow:var(--sh-lg);opacity:0;transition:.35s var(--ease);z-index:99;pointer-events:none;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  footer{text-align:center;color:var(--mute);font-size:12px;margin-top:44px;line-height:1.8;padding-top:22px;border-top:1px solid var(--line);}
+  footer a{color:var(--blue);text-decoration:none;font-weight:650;}
+  .credit{margin-top:12px;font-size:9.5px;letter-spacing:.2em;color:#aabecf;font-weight:800;}
+
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+
+  /* ---------- guided form extras ---------- */
+  .formguide{background:linear-gradient(130deg,#effaf7,#f8fffe);border:1px solid #cbeee5;border-radius:var(--r-md);padding:16px 18px;margin-bottom:18px;box-shadow:var(--sh-sm);}
+  .formguide .fh{font-family:var(--font-d);font-size:13px;font-weight:800;color:#0c7a6e;display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+  .formguide .fsub{font-size:12px;color:#3f8c81;margin:0 0 14px;}
+  .ben{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;position:relative;box-shadow:var(--sh-sm);}
+  .ben .bn{position:absolute;top:-9px;left:14px;background:var(--teal);color:#fff;font-size:11px;font-weight:800;padding:2px 10px;border-radius:20px;}
+  .ben .del{position:absolute;top:10px;right:12px;background:#fdecea;color:var(--bad);border:none;width:26px;height:26px;border-radius:50%;cursor:pointer;font-weight:800;}
+  .addben{background:#e9f9f5;color:#0c7a6e;border:1.5px dashed #9fdccf;border-radius:10px;padding:11px;width:100%;font-weight:700;font-size:13px;cursor:pointer;transition:.2s;}
+  .addben:hover{background:#ddf5ed;}
+  .sigwrap{border:1.5px solid var(--line);border-radius:var(--r-sm);overflow:hidden;background:#fff;margin-top:4px;}
+  .sigtabs{display:flex;border-bottom:1px solid var(--line);}
+  .sigtab{flex:1;padding:9px;font-size:11.5px;font-weight:700;color:var(--soft);background:#f7fafd;border:none;cursor:pointer;}
+  .sigtab.active{background:#fff;color:var(--blue);box-shadow:inset 0 -2px 0 var(--blue);}
+  .sigbody{padding:10px;}
+  canvas.sigpad{width:100%;height:110px;border:1px dashed #cdddea;border-radius:8px;background:#fffef9;touch-action:none;display:block;cursor:crosshair;}
+  .sigclear{font-size:11px;color:var(--soft);background:none;border:none;cursor:pointer;margin-top:5px;text-decoration:underline;}
+  .sigtyped{font-family:'Segoe Script','Brush Script MT',cursive;font-size:24px;color:#14315a;padding:12px;text-align:center;border:1px dashed #cdddea;border-radius:8px;background:#fffef9;min-height:56px;}
+  .sigtype-in{width:100%;padding:9px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;margin-top:7px;}
+  .drop{border:2px dashed #c0def6;border-radius:var(--r-sm);padding:20px;text-align:center;background:#f8fcff;cursor:pointer;transition:.25s var(--ease);}
+  .drop:hover{background:#eef7ff;border-color:var(--blue);}
+  .drop .di{font-size:24px;}.drop .dt{font-weight:700;color:var(--navy);font-size:13px;margin-top:5px;}.drop .ds{font-size:11px;color:var(--mute);margin-top:3px;}
+  .idprev{display:flex;align-items:center;gap:12px;margin-top:10px;background:#f2f9ea;border:1px solid #dcecc6;border-radius:10px;padding:9px;}
+  .idprev img{width:54px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #cde0b8;}
+  .idprev .ok{font-size:12px;color:#5b7c2f;font-weight:700;}.idprev .rm{margin-left:auto;background:none;border:none;color:var(--bad);font-size:11.5px;cursor:pointer;text-decoration:underline;}
+
+  /* ---------- RAI ---------- */
+  #raiBtn{position:fixed;bottom:calc(22px + env(safe-area-inset-bottom));right:22px;z-index:200;display:flex;align-items:center;gap:10px;
+    background:var(--grad-deep);color:#fff;border:none;border-radius:50px;padding:12px 20px 12px 14px;
+    box-shadow:0 14px 36px rgba(6,42,76,.42),inset 0 1px 0 rgba(255,255,255,.18);cursor:pointer;font-family:var(--font-d);font-weight:800;font-size:14px;transition:.3s var(--ease);}
+  #raiBtn:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 20px 44px rgba(6,42,76,.5);}
+  #raiBtn .ravatar{width:34px;height:34px;border-radius:50%;background:#fff;display:grid;place-items:center;flex:none;}
+  #raiBtn .ravatar svg{width:22px;height:22px;}
+  #raiBtn .rpulse{position:absolute;top:-3px;right:-3px;width:14px;height:14px;background:#16c273;border:2px solid #fff;border-radius:50%;animation:rp 2s infinite;}
+  @keyframes rp{0%{box-shadow:0 0 0 0 rgba(22,194,115,.5)}70%{box-shadow:0 0 0 8px rgba(22,194,115,0)}100%{box-shadow:0 0 0 0 rgba(22,194,115,0)}}
+  #raiPanel{position:fixed;bottom:calc(84px + env(safe-area-inset-bottom));right:22px;z-index:201;width:360px;max-width:calc(100vw - 36px);height:520px;max-height:calc(100vh - 130px);
+    background:#fff;border-radius:22px;box-shadow:var(--sh-xl);display:none;flex-direction:column;overflow:hidden;border:1px solid var(--line);}
+  #raiPanel.show{display:flex;animation:raiUp .3s var(--ease);}
+  @keyframes raiUp{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
+  .raihead{background:var(--grad-deep);color:#fff;padding:16px 18px;display:flex;align-items:center;gap:12px;}
+  .raihead .ravatar{width:40px;height:40px;border-radius:50%;background:#fff;display:grid;place-items:center;flex:none;}
+  .raihead .ravatar svg{width:26px;height:26px;}
+  .raihead .rt1{font-family:var(--font-d);font-size:15px;font-weight:800;line-height:1.1;}
+  .raihead .rt2{font-size:11.5px;opacity:.85;display:flex;align-items:center;gap:5px;}
+  .raihead .rdot{width:7px;height:7px;background:#34d058;border-radius:50%;display:inline-block;}
+  .raihead .rclose{margin-left:auto;background:rgba(255,255,255,.15);border:none;color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;}
+  .raibody{flex:1;overflow-y:auto;padding:16px;background:#f6fafd;}
+  .rmsg{margin-bottom:12px;display:flex;gap:8px;animation:rise .35s var(--ease);}
+  .rmsg.user{flex-direction:row-reverse;}
+  .rmsg .rb{max-width:78%;padding:11px 14px;border-radius:15px;font-size:13.5px;line-height:1.5;}
+  .rmsg.rai .rb{background:#fff;border:1px solid var(--line);color:var(--ink);border-bottom-left-radius:5px;box-shadow:var(--sh-sm);}
+  .rmsg.user .rb{background:var(--grad);color:#fff;border-bottom-right-radius:5px;}
+  .rmsg .rav{width:28px;height:28px;border-radius:50%;background:var(--grad-deep);flex:none;display:grid;place-items:center;}
+  .rmsg .rav svg{width:18px;height:18px;}
+  .rchips{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px;}
+  .rchip{background:#eaf4ff;color:var(--blue);border:1px solid #cfe6fa;border-radius:20px;padding:8px 13px;font-size:12px;font-weight:650;cursor:pointer;transition:.2s;}
+  .rchip:hover{background:#d8ecff;transform:translateY(-1px);}
+  .raifoot{padding:12px;border-top:1px solid var(--line);background:#fff;display:flex;gap:8px;}
+  .raifoot input{flex:1;padding:11px 14px;border:1.5px solid var(--line);border-radius:22px;font-size:13.5px;font-family:var(--font-b);outline:none;transition:.2s;}
+  .raifoot input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(11,127,212,.1);}
+  .raifoot button{background:var(--grad);color:#fff;border:none;width:42px;height:42px;border-radius:50%;cursor:pointer;font-size:16px;flex:none;box-shadow:0 4px 12px rgba(11,127,212,.3);}
+  .rgoWrap{margin-top:9px;}
+  .rgo{background:var(--grad);color:#fff;border:none;border-radius:20px;padding:9px 16px;font-size:12.5px;font-weight:800;cursor:pointer;box-shadow:0 5px 14px rgba(11,127,212,.3);transition:.2s var(--ease);}
+  .rgo:hover{transform:translateY(-1px);}
+  .rmini{margin-top:9px;font-size:11.5px;color:var(--soft);display:flex;flex-wrap:wrap;gap:5px;align-items:center;}
+
+  /* ---------- modals & sheets ---------- */
+  .modal{position:fixed;inset:0;background:rgba(6,32,56,.5);z-index:300;display:none;align-items:flex-end;justify-content:center;padding:14px;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);}
+  .modal.show{display:flex;animation:raiUp .28s var(--ease);}
+  @media(min-width:560px){.modal{align-items:center;}}
+  .modalcard{background:#fff;border-radius:24px;box-shadow:var(--sh-xl);width:100%;max-width:440px;padding:22px 20px 20px;max-height:88vh;overflow-y:auto;position:relative;}
+  @media(max-width:559px){.modalcard::before{content:"";position:absolute;top:9px;left:50%;transform:translateX(-50%);width:42px;height:4px;border-radius:4px;background:#dbe7f1;}}
+  .mhead{display:flex;align-items:center;justify-content:space-between;font-family:var(--font-d);font-size:16.5px;color:var(--navy);margin:4px 0 4px;font-weight:800;letter-spacing:-.2px;}
+  .mclose{background:#eef4fa;border:none;color:var(--soft);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;transition:.2s;}
+  .mclose:hover{background:#e2edf7;}
+  .msub{font-size:12.5px;color:var(--soft);margin:2px 0 14px;line-height:1.55;}
+  .mrow{display:flex;gap:8px;}
+  .mrow input{flex:1;padding:13px 15px;border:1.5px solid var(--line);border-radius:var(--r-sm);font-size:14px;font-family:var(--font-b);outline:none;min-width:0;transition:.2s;}
+  .mrow input:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(11,127,212,.11);}
+  .mrow .btn{padding:12px 18px;font-size:14px;}
+  #agentNum{text-transform:uppercase;letter-spacing:2.5px;font-family:var(--font-m);font-weight:700;}
+  #agentCode{letter-spacing:2.5px;font-family:var(--font-m);font-weight:700;}
+  #agentNum::placeholder,#agentCode::placeholder{text-transform:none;letter-spacing:0;font-weight:400;font-family:var(--font-b);}
+  .gatewho{display:flex;align-items:center;gap:8px;background:#ecf9f1;border:1px solid #bfe8cb;border-radius:12px;padding:9px 12px;margin-top:10px;font-size:13px;color:#1c6b36;}
+  .gatewho b{color:#14522a;}
+  .trackcard{background:#f7fbff;border:1px solid var(--line);border-radius:var(--r-md);padding:15px 16px;margin-top:14px;font-size:13.5px;color:var(--ink);line-height:1.6;animation:rise .3s var(--ease);}
+  .trow{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed #e6eef6;font-size:13px;}
+  .trow:last-of-type{border:none;}
+  .trow span{color:var(--soft);}
+  .tnote{font-size:12px;color:var(--soft);margin-top:8px;}
+  .statuspill{display:inline-block;font-size:10.5px;font-weight:800;padding:4px 12px;border-radius:20px;margin-bottom:8px;letter-spacing:.03em;}
+  .st-open{background:#fdf2e0;color:var(--warn);}
+  .st-closed{background:#e5f7ef;color:var(--good);}
+  .mbtns{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+  .mbtns .btn{font-size:13px;padding:10px 14px;flex:1;min-width:140px;}
+  .tracklink{color:var(--blue);font-weight:700;font-size:13.5px;text-decoration:none;}
+  .tracklink:hover{text-decoration:underline;}
+
+  /* signed-in bar + dashboard */
+  #agentBar{display:none;align-items:center;gap:8px;background:linear-gradient(120deg,#ecf9f1,#f4fdf7);border:1px solid #c2e8ce;border-radius:14px;
+    padding:10px 13px;margin:0 0 16px;font-size:13px;color:#1c6b36;flex-wrap:wrap;box-shadow:var(--sh-sm);}
+  #agentBar b{color:#14522a;}
+  .abbtn{margin-left:auto;background:var(--grad);color:#fff;border:none;border-radius:11px;padding:8px 14px;
+    font-family:var(--font-d);font-weight:800;font-size:12.5px;cursor:pointer;box-shadow:0 4px 12px rgba(11,127,212,.28);transition:.2s var(--ease);}
+  .abbtn:hover{transform:translateY(-1px);}
+  .dashcard{display:flex;flex-direction:column;max-height:86vh;}
+  .dashsum{font-size:12.5px;color:var(--soft);margin:-2px 0 12px;font-weight:650;}
+  .dtabs{display:flex;gap:6px;margin-bottom:10px;background:#eef4fa;border-radius:12px;padding:4px;}
+  .dtab{flex:1;background:transparent;border:none;color:var(--soft);border-radius:9px;
+    padding:9px 0;font-family:var(--font-d);font-weight:800;font-size:12.5px;cursor:pointer;transition:.25s var(--ease);}
+  .dtab.active{background:#fff;color:var(--navy);box-shadow:var(--sh-sm);}
+  .drow{display:flex;gap:8px;margin-bottom:10px;}
+  .drow input,.drow select{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:var(--r-sm);
+    padding:10px 12px;font-size:13px;font-family:var(--font-b);color:var(--ink);background:#fff;outline:none;transition:.2s;}
+  .drow input:focus,.drow select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(11,127,212,.1);}
+  #dashList{overflow-y:auto;flex:1;min-height:120px;-webkit-overflow-scrolling:touch;}
+  .qcard{background:#fff;border:1px solid var(--line);border-radius:var(--r-md);padding:13px 14px;margin-bottom:9px;box-shadow:var(--sh-sm);animation:rise .3s var(--ease);}
+  .qtop{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px;}
+  .qtop .statuspill{margin-bottom:0;}
+  .qref{font-family:var(--font-m);font-size:10px;color:var(--mute);font-weight:600;letter-spacing:0;text-align:right;word-break:break-all;}
+  .qmain{font-size:13.5px;color:var(--ink);line-height:1.5;margin:5px 0 2px;}
+  .qmeta{font-size:12px;color:var(--soft);line-height:1.55;}
+  .qagent{background:#e9f3fd;color:var(--blue);border-radius:8px;padding:1px 7px;font-weight:700;font-size:11px;}
+  .dfoot{display:flex;justify-content:center;margin-top:10px;}
+  .dbtn{background:#eef4fa;border:1px solid var(--line);color:var(--navy);border-radius:11px;
+    padding:10px 18px;font-family:var(--font-d);font-weight:800;font-size:12.5px;cursor:pointer;transition:.2s;}
+  .dbtn:hover{background:#e3eef8;}
+  /* dashboard insights */
+  .stt{display:flex;gap:8px;margin:0 0 10px;}
+  .st{flex:1;background:#fff;border:1px solid var(--line);border-radius:var(--r-md);padding:12px 8px 10px;text-align:center;box-shadow:var(--sh-sm);}
+  .st .n{font-family:var(--font-d);font-size:22px;font-weight:800;letter-spacing:-.5px;line-height:1;}
+  .st .l{font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin-top:6px;}
+  .st.o .n{color:var(--warn);} .st.d .n{color:var(--good);} .st.a .n{color:var(--blue2);}
+  .agghead{font-size:9.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--mute);margin:2px 2px 7px;}
+  .abar{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 11px;margin-bottom:7px;cursor:pointer;transition:.2s var(--ease);}
+  .abar:hover{border-color:#a9d4f4;}
+  .abar.on{border-color:var(--blue);box-shadow:0 0 0 3px rgba(11,127,212,.13);}
+  .abar .an{font-size:12.5px;font-weight:700;color:var(--ink);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .abar .bar{flex:1;max-width:104px;height:6px;border-radius:6px;background:#eef4fa;overflow:hidden;display:flex;}
+  .abar .bar i{display:block;height:100%;}
+  .abar .bar .bo{background:var(--warn);} .abar .bar .bd{background:var(--good);}
+  .abar .ac2{font-size:10.5px;font-weight:800;color:var(--soft);white-space:nowrap;}
+  .abar .star{font-size:10px;font-weight:800;color:#d98908;white-space:nowrap;}
+  .st.tap{cursor:pointer;transition:.2s var(--ease);}
+  .st.tap:hover{border-color:#a9d4f4;}
+  .st.on{border-color:var(--blue);box-shadow:0 0 0 3px rgba(11,127,212,.13);}
+  .st.ov .n{color:var(--bad);}
+  .st.s .n{color:#d98908;}
+  .rpills{display:flex;gap:6px;margin:0 0 10px;}
+  .rpill{flex:1;background:#fff;border:1px solid var(--line);border-radius:10px;padding:7px 0;text-align:center;
+    font-size:11px;font-weight:800;color:var(--soft);cursor:pointer;transition:.2s var(--ease);}
+  .rpill.on{background:var(--grad);color:#fff;border-color:transparent;box-shadow:0 4px 10px rgba(11,127,212,.28);}
+  .tchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+  .tchip{background:#eaf4ff;color:var(--blue2);border:1px solid #cfe6fa;border-radius:20px;padding:6px 11px;
+    font-size:11px;font-weight:700;cursor:pointer;transition:.2s;}
+  .tchip.on{background:var(--grad);color:#fff;border-color:transparent;}
+  .tchip i{font-style:normal;opacity:.75;font-weight:800;margin-left:4px;}
+  .wkrow{display:flex;gap:5px;align-items:flex-end;height:64px;background:#fff;border:1px solid var(--line);
+    border-radius:var(--r-md);padding:10px 12px 8px;margin-bottom:10px;box-shadow:var(--sh-sm);}
+  .wk{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;height:100%;}
+  .wk i{display:block;width:100%;max-width:26px;background:var(--grad);border-radius:4px 4px 2px 2px;min-height:3px;}
+  .wk b{font-size:8.5px;color:var(--mute);font-weight:800;letter-spacing:.02em;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <svg class="logo" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="rrbgold" x1="14" y1="6" x2="52" y2="58" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#ffd95c"/><stop offset=".55" stop-color="#f2ac1d"/><stop offset="1" stop-color="#d98908"/>
+      </linearGradient></defs>
+      <path d="M32 3L8 12v20c0 16 11 25 24 29 13-4 24-13 24-29V12L32 3z" fill="url(#rrbgold)"/>
+      <path d="M32 3L8 12v20c0 16 11 25 24 29 13-4 24-13 24-29V12L32 3z" stroke="#ffffff" stroke-opacity=".45" stroke-width="2.5"/>
+      <path d="M21 33l8 8 15-16" stroke="#0e2f4a" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div>
+      <div class="t1">Ricky Rampersad Branch</div>
+      <div class="t2">Every request routed right &middot; tracked to the day</div>
+    </div>
+    <div class="hchip">Chaguanas &middot; Trinidad &amp; Tobago</div>
+  </header>
+
+  <div class="steps" id="stepper">
+    <div class="step active" data-s="1"><span class="dot">1</span><span class="lab">Who</span></div>
+    <span class="sep"></span>
+    <div class="step" data-s="2"><span class="dot">2</span><span class="lab">Your request</span></div>
+    <span class="sep"></span>
+    <div class="step" data-s="3"><span class="dot">3</span><span class="lab">Pick it</span></div>
+    <span class="sep"></span>
+    <div class="step" data-s="4"><span class="dot">4</span><span class="lab">Details</span></div>
+    <span class="sep"></span>
+    <div class="step" data-s="5"><span class="dot">5</span><span class="lab">Done</span></div>
+  </div>
+
+  <!-- STEP 1 · HERO -->
+  <section id="s1">
+    <div class="eyebrow"><span>Rampersad Branch 26000 &middot; Trinidad &amp; Tobago</span></div>
+    <h2 class="q xl">Insurance service,<br><em>without the runaround.</em></h2>
+    <p class="sub lead-sub">Tell us what you need once. Query Pal routes it straight to the right department, copies your agent and manager, and hands you a reference you can track to the day.</p>
+    <div class="trust">
+      <span class="tpill">🛡 <b>Branch 26000</b></span>
+      <span class="tpill">⭐ <b>23× MDRT</b>&nbsp;branch</span>
+      <span class="tpill">⏱ <b>Tracked</b>&nbsp;turnarounds</span>
+    </div>
+    <div class="who">
+      <div class="card" onclick="pickWho('Client')">
+        <div class="ico"><svg width="30" height="30" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="17" r="7.5" stroke="#0b6ab4" stroke-width="3"/><path d="M9.5 39c1.8-7.4 7.6-11 14.5-11s12.7 3.6 14.5 11" stroke="#0b6ab4" stroke-width="3" stroke-linecap="round"/><circle cx="33.5" cy="12.5" r="3.2" fill="#f2ac1d"/></svg></div><h3>I'm a Client</h3>
+        <p>I hold a policy and need something handled — a payment, a change, a claim, a document.</p>
+        <span class="go">Start my request →</span>
+      </div>
+      <div class="card" onclick="pickWho('Agent')">
+        <div class="ico"><svg width="30" height="30" viewBox="0 0 48 48" fill="none"><rect x="7" y="15" width="34" height="24" rx="5" stroke="#0b6ab4" stroke-width="3"/><path d="M17 15v-3.5A3.5 3.5 0 0 1 20.5 8h7a3.5 3.5 0 0 1 3.5 3.5V15" stroke="#0b6ab4" stroke-width="3"/><path d="M7 25h34" stroke="#0b6ab4" stroke-width="3"/><rect x="20.5" y="22" width="7" height="6.5" rx="1.8" fill="#f2ac1d"/></svg></div><h3>I'm an Agent</h3>
+        <p>I'm logging on behalf of a client or the branch — with my own dashboard of every request.</p>
+        <span class="go">Sign in &amp; log →</span>
+      </div>
+    </div>
+    <p class="heronote"><b>46 request types</b> &middot; <b>15 departments</b> &middot; one clean reference</p>
+    <p class="center" style="margin-top:6px;"><a href="#" class="tracklink" onclick="openTrack();return false;">🔎 Track an existing request</a></p>
+  </section>
+
+  <!-- STEP 2 -->
+  <section id="s2" class="hidden">
+    <div id="agentBar">🔓 Signed in as <b id="abName"></b><span id="abRole"></span>
+      <button class="abbtn" id="abBtn" onclick="openDash()">My queries</button></div>
+    <h2 class="q">What can we handle for you?</h2>
+    <p class="sub">Say it the way you'd say it — plain words are perfect. Or pick a topic below.</p>
+    <div class="smartwrap">
+      <input class="smart" id="smart" placeholder='Try "I paid but it&apos;s not showing" or "change my address"' oninput="smartSearch(this.value)" autocomplete="off">
+      <button class="micbtn" id="micBtn" type="button" onclick="micToggle()" aria-label="Speak your request" title="Speak your request">🎤</button>
+    </div>
+    <p class="smarthint" id="smartHint"><b>Type it how you'd say it</b> — we understand everyday language, not insurance jargon.</p>
+    <div class="grid" id="catGrid"></div>
+    <div class="center"><button class="back" onclick="goto(1)">← Back</button></div>
+  </section>
+
+  <!-- STEP 3 -->
+  <section id="s3" class="hidden">
+    <h2 class="q" id="catTitle">Pick your request</h2>
+    <p class="sub" id="catSub">Choose the one that fits — we'll show you exactly what to prepare.</p>
+    <div class="qlist" id="qList"></div>
+    <div class="center"><button class="back" onclick="goto(2)">← Back to topics</button></div>
+  </section>
+
+  <!-- STEP 4 -->
+  <section id="s4" class="hidden">
+    <div class="panel">
+      <div class="route">
+        <div class="rt-ico">📨</div>
+        <div class="rt-txt"><b id="rtType">—</b><br>Goes to <b id="rtDept">—</b> &middot; Usually resolved in <b id="rtTat">—</b><br><span class="duechip" id="rtDue"></span></div>
+      </div>
+
+      <div id="prepBox"></div>
+      <div id="formFields"></div>
+      <div id="genAttach"></div>
+
+      <div class="field" id="agentField">
+        <label>Servicing Agent <span class="req">*</span></label>
+        <input id="f_agent" autocomplete="off" placeholder="Start typing the agent's name..." oninput="acAgent(this.value)" onfocus="acAgent(this.value)">
+        <div class="ac" id="agentAC"></div>
+        <div class="hint">Pick from the branch agent list — their email attaches automatically.</div>
+      </div>
+
+      <div class="field">
+        <label id="clientLbl">Client Name <span class="req">*</span></label>
+        <input id="f_client" autocomplete="off" placeholder="Type the client's name..." oninput="buildSubject()">
+        <div class="hint" id="clientHint">The name on the policy.</div>
+      </div>
+
+      <div class="two">
+        <div class="field"><label>Contact Email <span class="req">*</span></label><input id="f_email" type="email" placeholder="So we can update you"></div>
+        <div class="field"><label>Phone</label><input id="f_phone" placeholder="(868) ___-____"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label>Policy / Application No. <span class="req">*</span></label><input id="f_policy" placeholder="e.g. 5003154992" oninput="buildSubject()"></div>
+        <div class="field"><label>How urgent?</label>
+          <select id="f_pri"><option>Normal</option><option>Urgent — client waiting</option><option>Escalation</option></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Subject <span class="req">*</span></label>
+        <input id="f_subject" maxlength="60" placeholder="One line — what this request is about" oninput="buildSubject()">
+        <div class="hint">This becomes the email subject line the department sees.</div>
+      </div>
+      <div class="field">
+        <label>Tell us what you need <span class="req">*</span></label>
+        <textarea id="f_desc" placeholder="The more detail you give, the faster we resolve it first time." oninput="buildSubject()"></textarea>
+      </div>
+
+      <div class="actions">
+        <button class="btn-ghost btn" onclick="goto(3)">← Back</button>
+        <button class="btn" id="submitBtn" onclick="submitQuery()">Send my request →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 5 -->
+  <section id="s5" class="hidden">
+    <div class="success">
+      <div class="tick"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h2 class="q" style="margin-bottom:4px;">You're all set</h2>
+      <p class="sub" style="margin-bottom:0;">Logged, routed, and copied to everyone who needs to see it.</p>
+      <div class="ticketbox">
+        <div class="lbl">Your tracking reference</div>
+        <div class="ref" id="ticketRef">—</div>
+        <button class="copybtn" onclick="copyRef()">📋 Copy reference</button>
+      </div>
+      <div class="summ" id="summBox"></div>
+      <p style="font-size:13px;color:var(--soft);">Usually resolved in <b id="confTat">—</b> — expect an update by <b id="confDue">—</b>. Keep your reference to follow up.</p>
+      <div class="postbtns">
+        <a class="btn btn-wa" href="#" onclick="waShare();return false;">💬 Send copy to WhatsApp</a>
+        <button class="btn btn-ghost" onclick="receiptPDF()">📄 Download receipt</button>
+      </div>
+      <div class="actions" style="justify-content:center;">
+        <button class="btn-ghost btn" id="sameAgentBtn" style="display:none;" onclick="resetKeepAgent()">＋ Log another for this agent</button>
+        <button class="btn-ghost btn" onclick="resetAll()">＋ Log another request</button>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <b style="color:var(--ink2);">Ricky Rampersad Branch</b> &middot; Lots 28&ndash;30 Endeavour Industrial Estate, Chaguanas<br>
+    <a href="mailto:support@rickyrampersadbranch.com">support@rickyrampersadbranch.com</a> &middot; <a href="https://wa.me/18686786921" target="_blank" rel="noopener">WhatsApp 678&#8209;6921</a> &middot; <a href="#" class="tracklink" onclick="openTrack();return false;" style="font-size:12px;">Track a request</a><br>
+    Every request is logged, routed to the right department, and copied to your agent and branch support.
+    <div class="credit">RICKY RAMPERSAD &bull; CFD, MFA &bull; BRANCH MANAGER &bull; 23&times; MDRT</div>
+  </footer>
+</div>
+
+<div class="modal" id="trackModal" onclick="if(event.target===this)closeTrack()">
+  <div class="modalcard">
+    <div class="mhead"><b>🔎 Track a request</b><button class="mclose" onclick="closeTrack()" aria-label="Close">×</button></div>
+    <p class="msub">Paste the reference from your confirmation — it starts like <b>RRB/2026/014/…</b> (the part before the subject is enough).</p>
+    <div class="mrow">
+      <input id="trackRef" placeholder="RRB/2026/..." onkeydown="if(event.key==='Enter')trackGo()">
+      <button class="btn" onclick="trackGo()">Check</button>
+    </div>
+    <div id="trackOut"></div>
+  </div>
+</div>
+
+<!-- Agent sign-in — codes are checked live against the branch list in the Google Sheet -->
+<div class="modal" id="agentGate" onclick="if(event.target===this)closeGate()">
+  <div class="modalcard">
+    <div class="mhead"><b>🔐 Agent access</b><button class="mclose" onclick="closeGate()" aria-label="Close">×</button></div>
+    <p class="msub">Sign in with your <b>agent number</b> and <b>password</b> — both from the branch list.</p>
+    <div class="mrow" style="margin-bottom:8px;">
+      <input id="agentNum" placeholder="Agent number — e.g. A00427" autocomplete="off" autocapitalize="characters" onkeydown="if(event.key==='Enter')document.getElementById('agentCode').focus()">
+    </div>
+    <div class="mrow">
+      <input id="agentCode" type="password" inputmode="text" placeholder="Password" autocomplete="off" onkeydown="if(event.key==='Enter')agentLogin()">
+      <button class="btn" id="agentGo" onclick="agentLogin()">Sign in</button>
+    </div>
+    <div id="gateOut"></div>
+    <p class="msub" style="margin-top:10px;">Don't have yours? <a class="tracklink" href="https://wa.me/18686786921?text=Hi%2C%20I%20need%20my%20Query%20Pal%20agent%20number%20and%20password" target="_blank" rel="noopener">WhatsApp the branch</a> and we'll sort you out.</p>
+  </div>
+</div>
+
+<!-- Query dashboard — what you see depends on your role in the sheet -->
+<div class="modal" id="dashModal" onclick="if(event.target===this)closeDash()">
+  <div class="modalcard dashcard">
+    <div class="mhead"><b id="dashTitle">📋 Your queries</b><button class="mclose" onclick="closeDash()" aria-label="Close">×</button></div>
+    <div class="dashsum" id="dashSum"></div>
+    <div id="dashStats"></div>
+    <div class="dtabs">
+      <button class="dtab active" data-t="open" onclick="dashTab('open')">Open</button>
+      <button class="dtab" data-t="done" onclick="dashTab('done')">Resolved</button>
+      <button class="dtab" data-t="all" onclick="dashTab('all')">All</button>
+    </div>
+    <div class="drow">
+      <input id="dashSearch" placeholder="Filter by client, ref or type…" oninput="dashRender()" autocomplete="off">
+      <select id="dashAgent" onchange="dashRender();dashMark()" style="display:none"></select>
+    </div>
+    <div id="dashList"></div>
+    <div class="dfoot"><button class="dbtn" onclick="dashFetch()">↻ Refresh</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxHFobr89jyLMK-CL5cUxs8GhYtkvTVbbqeDo9L5RgUxMGlbFBKK0vanwEjf49gCakpAw/exec";
+const CC_ALWAYS = ["rickyrampersadsalessupport@myguardiangroup.com","support@rickyrampersadbranch.com"];
+const BRANCH_WA = "18686786921"; // branch WhatsApp — 1-868-678-6921
+const DATA = [{"type": "General Insurance Renewals (Motor&Home)", "tat": "3", "email": "crmsrenewals@myguardiangroup.com", "group": "My Car & Home", "title": "Renew my motor or home insurance", "help": "Renewing your vehicle or property (general) insurance.", "kw": "car motor vehicle auto home house property renew renewal general insurance", "req": null}, {"type": "Query - Health Claim", "tat": "7", "email": "ebcustomercare@myguardiangroup.com", "group": "Health & Medical", "title": "Question about a health claim", "help": "Ask about a medical/health insurance claim already in progress.", "kw": "health medical doctor hospital claim sick reimbursement query question", "req": {"forms": [], "docs": ["Your claim reference or policy number"], "notes": []}}, {"type": "Claims Life&Pension - Submission", "tat": "3", "email": "GLOC.IndividualLifeClaims@myguardiangroup.com", "group": "Claims & Benefits", "title": "Submit a life or pension claim", "help": "File a new claim on a life insurance or pension policy.", "kw": "life pension claim submit death benefit file new payout", "req": {"forms": ["Completed claim forms (we'll specify based on claim type)"], "docs": ["Valid photo ID", "Supporting documents (e.g. death certificate for death claims)"], "notes": []}}, {"type": "Bounce Cheque", "tat": "5", "email": "gloc.premiumquery@myguardiangroup.com", "group": "Payments & Premiums", "title": "My cheque bounced", "help": "A premium cheque didn't clear / bounced.", "kw": "bounce bounced cheque check returned nsf insufficient funds payment failed", "req": null}, {"type": "Direct Debit payment not actioned.", "tat": "1", "email": "gloc.premiumquery@myguardiangroup.com", "group": "Payments & Premiums", "title": "My direct debit didn't go through", "help": "Your scheduled bank/direct-debit payment wasn't taken.", "kw": "direct debit payment not taken missed bank standing order didn't go through failed", "req": null}, {"type": "Future Payments - Recurring Credit Card", "tat": "5", "email": "gloc.premiumquery@myguardiangroup.com", "group": "Payments & Premiums", "title": "Set up credit card auto-payment", "help": "Pay premiums automatically by credit card.", "kw": "credit card recurring auto automatic future payment setup card", "req": null}, {"type": "Non receipt of pension payments or COE", "tat": "2", "email": "gloc.premiumquery@myguardiangroup.com", "group": "My Money & Payouts", "title": "I didn't get my pension payment", "help": "Pension payment or Certificate of Existence not received.", "kw": "pension payment not received missing coe certificate existence retirement didn't get", "req": null}, {"type": "Procedure for processing online banking (health, life and annuity) payments", "tat": "5", "email": "gloc.premiumquery@myguardiangroup.com", "group": "Payments & Premiums", "title": "How do I pay online?", "help": "Steps to pay your premium through online banking.", "kw": "online banking pay payment how procedure internet transfer steps", "req": null}, {"type": "Change in Vesting Dates", "tat": "1", "email": "glocalterations@myguardiangroup.com", "group": "Update My Details", "title": "Change my vesting date", "help": "Adjust the vesting date on a pension/annuity.", "kw": "vesting date change pension annuity maturity adjust retirement", "req": {"forms": ["Written request from the policyowner"], "docs": ["Valid photo ID", "Policy contract", "BIR number (for annuities)"], "notes": ["Annuity amendments also require the policy contract, BIR number and evidence of age."]}}, {"type": "Follow up on status of death claims and in less instances procedure re same", "tat": "2", "email": "glocclaims@myguardiangroup.com", "group": "Claims & Benefits", "title": "Check on a death claim", "help": "Follow up on a death claim already submitted.", "kw": "death claim deceased passed away status follow up payout beneficiary", "req": null}, {"type": "Follow up on status of Annuity surrender", "tat": "1", "email": "gloccorporategroupunit@myguardiangroup.com", "group": "My Money & Payouts", "title": "Check on my annuity payout", "help": "Follow up on an annuity surrender you requested.", "kw": "annuity surrender payout cash status follow up money retirement", "req": null}, {"type": "Assignment And Release", "tat": "2", "email": "gloccustomerservicechaguanassrsc@myguardiangroup.com", "group": "My Policy & Documents", "title": "Assignment or release of policy", "help": "Assign your policy (e.g. to a bank) or release it.", "kw": "assignment release collateral bank loan transfer policy security", "req": {"forms": ["Letter from client OR the relevant assignment/release form"], "docs": ["Valid photo ID", "All required signatures"], "notes": []}}, {"type": "Change in Banking Information - Life and Pension", "tat": "3", "email": "gloccustomerservicechaguanassrsc@myguardiangroup.com", "group": "Update My Details", "title": "Update my bank details", "help": "Change the bank account on file.", "kw": "bank banking account details change update routing number new account", "req": {"forms": ["Completed Direct Debit / banking update form OR written request"], "docs": ["Valid photo ID", "Bank account details (or a void cheque)"], "notes": []}}, {"type": "Change of Address - Life and Pension", "tat": "2", "email": "gloccustomerservicechaguanassrsc@myguardiangroup.com", "group": "Update My Details", "title": "Change my address", "help": "Update the mailing address on your policy.", "kw": "address move moved change update relocate new home mailing", "req": {"forms": ["Completed Change of Address form OR a written request from you"], "docs": ["Proof of address (utility bill, bank statement, etc.)", "Valid photo ID"], "notes": ["An address c/o Guardian Life cannot be used.", "Must be requested in writing by the policyholder."]}}, {"type": "Change of Agent - Life and Pension", "tat": "5", "email": "gloccustomerservicechaguanassrsc@myguardiangroup.com", "group": "Update My Details", "title": "Change my agent / advisor", "help": "Switch the advisor servicing your policy.", "kw": "change agent advisor servicing switch new representative", "req": {"forms": ["Service Questionnaire signed by client, agent and manager"], "docs": ["Valid photo ID"], "notes": ["If the existing agent is still with the company, their manager must also sign.", "If the policy is under 6 months old, both the existing agent and manager must sign."]}}, {"type": "Change of Beneficiary - Life and Pension", "tat": "5", "email": "gloccustomerservicechaguanassrsc@myguardiangroup.com", "group": "Update My Details", "title": "Change my beneficiary", "help": "Update who receives the benefit.", "kw": "beneficiary beneficiaries change update nominee heir who gets benefit add remove change beneficiary", "req": {"forms": ["Completed GLOC Change of Beneficiary form, signed by the policyowner (and absolute beneficiary if any)"], "docs": ["Valid ID for all signatories"], "notes": ["For MPA beneficiaries, two forms are needed — ask and we'll guide you.", "If you're not present, forms must be witnessed and IDs provided for all signatories."]}}, {"type": "Change of Mode - Life and Pension", "tat": "5", "email": "gloccustomerservicechaguanassrsc@myguardiangroup.com", "group": "Update My Details", "title": "Change how often I pay", "help": "Switch payment frequency (monthly, yearly, etc.).", "kw": "mode frequency monthly yearly quarterly how often payment schedule change", "req": {"forms": ["Mode change request form OR a written request"], "docs": ["Valid photo ID"], "notes": ["If changing to monthly, you'll need salary deduction, banker's order, direct debit, or post-dated cheques."]}}, {"type": "Change of Name-Life and Pension", "tat": "5", "email": "gloccustomerservicechaguanassrsc@myguardiangroup.com", "group": "Update My Details", "title": "Change my name", "help": "Update your legal name on the policy.", "kw": "name change married marriage divorce legal update surname", "req": {"forms": ["Written request from the policyowner"], "docs": ["Marriage certificate (if name change by marriage)", "Deed poll or statutory declaration (if applicable)", "Proof of identity"], "notes": ["For a name change by divorce: a divorce decree and statutory declaration are required.", "A deed poll can replace the statutory declaration."]}}, {"type": "Change of Payment Method - Life and Pension", "tat": "3", "email": "gloccustomerservicechaguanassrsc@myguardiangroup.com", "group": "Update My Details", "title": "Change my payment method", "help": "Switch how you pay (card, bank, etc.).", "kw": "payment method change card bank cash switch how pay update", "req": {"forms": ["One of: Direct Debit form, Salary Deduction form, Banker's Order form, or 12 post-dated cheques"], "docs": [], "notes": []}}, {"type": "Changes – name, address, agent, beneficiary, mode", "tat": "5", "email": "gloccustomerservicechaguanassrsc@myguardiangroup.com", "group": "Update My Details", "title": "Update several details at once", "help": "Make multiple changes in one request.", "kw": "multiple several changes various many update at once together combination", "req": null}, {"type": "Confirmation of Funds", "tat": "5", "email": "gloccustomerservicechaguanassrsc@myguardiangroup.com", "group": "My Money & Payouts", "title": "Get a confirmation of funds letter", "help": "Proof-of-funds letter for a bank, embassy, etc.", "kw": "confirmation funds proof money letter bank balance available", "req": {"forms": ["Written request"], "docs": ["Valid photo ID"], "notes": []}}, {"type": "Embassy letters", "tat": "1", "email": "gloccustomerservicechaguanassrsc@myguardiangroup.com", "group": "My Policy & Documents", "title": "I need an embassy letter", "help": "A letter for a visa/embassy application.", "kw": "embassy letter visa travel application immigration proof", "req": null}, {"type": "Integrity letters", "tat": "1", "email": "gloccustomerservicechaguanassrsc@myguardiangroup.com", "group": "My Policy & Documents", "title": "I need an integrity letter", "help": "An official integrity/confirmation letter.", "kw": "integrity letter official confirmation proof verification", "req": null}, {"type": "Premium Histories (Old & New)", "tat": "1", "email": "gloccustomerservicechaguanassrsc@myguardiangroup.com", "group": "Payments & Premiums", "title": "Get my premium payment history", "help": "A record of premiums you've paid.", "kw": "premium history payments record paid history statement list", "req": {"forms": ["A memo, letter, phone request or email is acceptable"], "docs": [], "notes": []}}, {"type": "Query on value of policy or paid to date etc.", "tat": "3", "email": "gloccustomerservicechaguanassrsc@myguardiangroup.com", "group": "My Policy & Documents", "title": "What's my policy worth / paid to date?", "help": "Ask the value or paid-to-date on a policy.", "kw": "value paid to date worth how much policy cash value balance", "req": {"forms": ["A memo, letter, phone request or email is acceptable"], "docs": [], "notes": []}}, {"type": "Refund Cheques", "tat": "5", "email": "gloccustomerservicechaguanassrsc@myguardiangroup.com", "group": "My Money & Payouts", "title": "Ask about a refund", "help": "Question about a refund cheque owed to you.", "kw": "refund cheque check money back overpaid return owed", "req": null}, {"type": "Statements – tax and csv", "tat": "1", "email": "gloccustomerservicechaguanassrsc@myguardiangroup.com", "group": "My Policy & Documents", "title": "Get a tax or policy statement", "help": "Request a tax statement or policy statement.", "kw": "statement tax csv document record annual yearly proof", "req": {"forms": ["A memo, letter, phone request or email is acceptable"], "docs": ["Valid ID/authorization when collecting"], "notes": []}}, {"type": "Status of policies or value", "tat": "1", "email": "gloccustomerservicechaguanassrsc@myguardiangroup.com", "group": "My Policy & Documents", "title": "Check my policy status or value", "help": "See the current status or value of your policy.", "kw": "status value policy current worth how much standing active", "req": {"forms": ["A memo, letter, phone request or email is acceptable"], "docs": ["Valid ID when collecting"], "notes": []}}, {"type": "Surrenders", "tat": "10", "email": "gloccustomerservicechaguanassrsc@myguardiangroup.com", "group": "My Money & Payouts", "title": "Cash in / surrender my policy", "help": "Get the cash value and close a policy (surrender).", "kw": "surrender cash in close cancel value money payout collect funds end policy", "req": {"forms": ["GLOC Request for Surrender form, signed by policyowner (and absolute beneficiary if any)", "Authorization for Surrender form (Life)", "Conservation form (completed by agent, Sales Support or CSR)"], "docs": ["The policy contract", "Valid photo ID", "Discharge Form C if the contract is lost (witnessed by a Commissioner of Affidavits)"], "notes": ["Life surrender: about 5 working days. Annuity surrender: 30–45 days and needs the De-registration form + BIR number.", "A conservation form is required for all surrenders."]}}, {"type": "Withdrawals", "tat": "3", "email": "gloccustomerservicechaguanassrsc@myguardiangroup.com", "group": "My Money & Payouts", "title": "Withdraw money from my policy", "help": "Take some money out of a policy that allows it.", "kw": "withdraw withdrawal take out money cash funds partial collect", "req": {"forms": ["Withdrawal form signed by policyowner (and absolute/MPA beneficiary if any)", "Claim Discharge form"], "docs": ["Valid photo ID"], "notes": ["Conservation form required for cheque requests over $25,000."]}}, {"type": "MPOS", "tat": "5", "email": "GLOCITMORequests@myguardiangroup.com", "group": "Tech Help (Agents)", "title": "MPOS help", "help": "Support for the MPOS tool.", "kw": "mpos tool tablet point of sale agent device app", "req": null}, {"type": "SalesPal", "tat": "1", "email": "GLOCITMORequests@myguardiangroup.com", "group": "Tech Help (Agents)", "title": "SalesPal help", "help": "Support for the SalesPal app.", "kw": "salespal sales pal app tool agent software", "req": null}, {"type": "ScanPal", "tat": "1", "email": "GLOCITMORequests@myguardiangroup.com", "group": "Tech Help (Agents)", "title": "ScanPal help", "help": "Support for the ScanPal app.", "kw": "scanpal scan pal app scanning documents agent tool", "req": null}, {"type": "Online Customer Portal (New)", "tat": "5", "email": "GLOCPhoneCSRs@myguardiangroup.com", "group": "Tech Help", "title": "Help with the online portal / login", "help": "Trouble logging in or using the customer portal.", "kw": "portal login log in website online account password access can't sign in app", "req": null}, {"type": "Direct Debit & Future Payment Methods", "tat": "5", "email": "glocpremium@myguardiangroup.com", "group": "Payments & Premiums", "title": "Set up direct debit / future payments", "help": "Arrange automatic future premium payments from your bank.", "kw": "direct debit future payment method bank automatic setup arrange standing", "req": null}, {"type": "Claims Health - Submission", "tat": "3", "email": "healthclaimstt@myguardiangroup.com", "group": "Health & Medical", "title": "Submit a health claim", "help": "Send in a new medical/health claim for payment.", "kw": "health medical claim submit new file doctor hospital bills reimburse", "req": {"forms": ["Completed health claim form"], "docs": ["Original receipts / invoices", "Supporting medical documents"], "notes": []}}, {"type": "Future Payments - Salary Deduction", "tat": "5", "email": "premiumsapplicationunit@myguardiangroup.com", "group": "Payments & Premiums", "title": "Pay by salary deduction", "help": "Have premiums taken from your salary.", "kw": "salary deduction payroll work employer future payment paycheck", "req": null}, {"type": "Misallocation of premium payments", "tat": "5", "email": "premiumsapplicationunit@myguardiangroup.com", "group": "Payments & Premiums", "title": "My payment went to the wrong place", "help": "A premium you paid was applied to the wrong policy.", "kw": "misallocation wrong policy payment applied premium misapplied mixed up", "req": null}, {"type": "Missing Premiums Individual Life and Pensions", "tat": "5", "email": "premiumsapplicationunit@myguardiangroup.com", "group": "Payments & Premiums", "title": "I paid but it's not showing", "help": "A premium you paid isn't reflected on your policy.", "kw": "missing premium paid not showing not reflected lost payment can't find disappeared", "req": null}, {"type": "Complaint", "tat": "1", "email": "rickyrampersadsalessupport@myguardiangroup.com", "group": "Something's Wrong", "title": "Make a complaint", "help": "Raise a complaint about service or a policy.", "kw": "complain complaint complaints unhappy angry upset problem issue dissatisfied bad service wrong not happy poor", "req": null}, {"type": "Escalations", "tat": "1", "email": "rickyrampersadsalessupport@myguardiangroup.com", "group": "Something's Wrong", "title": "Escalate an unresolved issue", "help": "Push an issue that hasn't been resolved.", "kw": "escalate escalation urgent unresolved stuck no response manager priority", "req": null}, {"type": "Pending Cases that should have settled", "tat": "1", "email": "rickyrampersadsalessupport@myguardiangroup.com", "group": "Something's Wrong", "title": "My case should be settled by now", "help": "A pending application/case that's overdue to settle.", "kw": "pending case settle settled overdue stuck delayed application waiting too long", "req": null}, {"type": "Projection Maturity Annuity", "tat": "1", "email": "rickyrampersadsalessupport@myguardiangroup.com", "group": "Quotes & Projections", "title": "Get an annuity maturity projection", "help": "Projection of an annuity at maturity.", "kw": "projection annuity maturity estimate future value retirement forecast quote", "req": null}, {"type": "Projection Quote Rated Cases", "tat": "1", "email": "rickyrampersadsalessupport@myguardiangroup.com", "group": "Quotes & Projections", "title": "Get a quote for a rated case", "help": "Quote where the case is rated (health-loaded).", "kw": "projection quote rated case loaded health estimate premium", "req": null}, {"type": "Quotes US Econoilife", "tat": "1", "email": "rickyrampersadsalessupport@myguardiangroup.com", "group": "Quotes & Projections", "title": "Get a US Econolife quote", "help": "Quote for the US Econolife product.", "kw": "quote us econolife econoilife dollar usd product estimate", "req": null}, {"type": "Request Info", "tat": "1", "email": "rickyrampersadsalessupport@myguardiangroup.com", "group": "Something's Wrong", "title": "Request information", "help": "Ask for information not covered elsewhere.", "kw": "request information info general question ask other help", "req": null}, {"type": "Scripts Undelivered", "tat": "1", "email": "rickyrampersadsalessupport@myguardiangroup.com", "group": "Something's Wrong", "title": "I didn't get my policy document (script)", "help": "Policy document/script wasn't delivered.", "kw": "script undelivered policy document not received didn't get delivery missing contract", "req": null}, {"type": "Recurring Credit Card Set up and Update", "tat": "3", "email": "RCC@myguardiangroup.com", "group": "Payments & Premiums", "title": "Set up / update recurring credit card", "help": "Pay premiums automatically on a credit card — set up new or update existing card.", "kw": "rcc recurring credit card setup set up update card payment automatic auto monthly charge new card change card visa mastercard"}];
+const ORDER = ["Payments & Premiums", "My Money & Payouts", "Update My Details", "My Policy & Documents", "Claims & Benefits", "Health & Medical", "My Car & Home", "Quotes & Projections", "Tech Help", "Tech Help (Agents)", "Something's Wrong"];
+const GM = {"Payments & Premiums": ["💳", "Paid but not showing, bounced, direct debit, how to pay"], "My Money & Payouts": ["💵", "Cash in, withdraw, surrender, refunds, pension not received"], "Update My Details": ["✏️", "Address, name, beneficiary, agent, bank, how often you pay"], "My Policy & Documents": ["📄", "Statements, policy value, embassy & integrity letters"], "Claims & Benefits": ["🛡️", "Life & pension claims and death-claim follow-ups"], "Health & Medical": ["🏥", "Submit or ask about a health/medical claim"], "My Car & Home": ["🚗", "Renew motor or home (general) insurance"], "Quotes & Projections": ["📈", "Annuity projections and product quotes"], "Tech Help": ["💻", "Trouble with the online customer portal"], "Tech Help (Agents)": ["🛠️", "MPOS, SalesPal, ScanPal — for agents"], "Something's Wrong": ["🚩", "Complaints, escalations, stuck cases, missing documents"]};
+const AGENTS = [{"name": "— I don't have an agent —", "email": ""}, {"name": "Aidan Eugene", "email": "aidan.eugene@myguardiangroup.com"}, {"name": "Alyssa Joseph", "email": "alyssa.joseph@myguardiangroup.com"}, {"name": "Akaash Kalladeen", "email": "Akaash.Kalladeen@myguardiangroup.com"}, {"name": "Anthony Simmons", "email": "anthony.simmons@myguardiangroup.com"}, {"name": "Chris Badaloo", "email": "chris.badaloo@myguardiangroup.com"}, {"name": "Crystal Fraser", "email": "crystal.fraser@myguardiangroup.com"}, {"name": "Daniel Bhagwandas", "email": "daniel.bhagwandas@myguardiangroup.com"}, {"name": "Darryl Manick", "email": "darryl.manick@myguardiangroup.com"}, {"name": "Dhalina Heeraman", "email": "dhalina.heeraman@myguardiangroup.com"}, {"name": "Diane Lutchman statham", "email": "diane.lutchman-statham@myguardiangroup.com"}, {"name": "Faizal Mohammed", "email": "faizal.mohammed@myguardiangroup.com"}, {"name": "Fawwaz Mohamed", "email": "fawwaz.mohamed@myguardiangroup.com"}, {"name": "Felicia Rampersad2", "email": "felicia.rampersad2@myguardiangroup.com"}, {"name": "Ganesh Khodai", "email": "ganesh.khodai@myguardiangroup.com"}, {"name": "Gary Sookdeo", "email": "gary.sookdeo@myguardiangroup.com"}, {"name": "Jesus Boodhoo", "email": "jesus.boodhoo@myguardiangroup.com"}, {"name": "Jonathan Pantin", "email": "jonathan.pantin@myguardiangroup.com"}, {"name": "Janice Phillip", "email": "janice.phillip@myguardiangroup.com"}, {"name": "Jamil Khan", "email": "jamil.khan@myguardiangroup.com"}, {"name": "John Boodoo", "email": "john.boodoo@myguardiangroup.com"}, {"name": "Joy Sammah", "email": "joy.sammah@myguardiangroup.com"}, {"name": "Kamla Dookran", "email": "kamla.dookran@myguardiangroup.com"}, {"name": "Kerwyn Ramroach", "email": "kerwyn.ramroach@myguardiangroup.com"}, {"name": "Malcolm Sooknanan", "email": "malcolm.sooknanan@myguardiangroup.com"}, {"name": "Meera Persad khan", "email": "meera.persad-khan@myguardiangroup.com"}, {"name": "Naila Samuel", "email": "naila.samuel@myguardiangroup.com"}, {"name": "Narissa Mohammed", "email": "narissa.mohammed@myguardiangroup.com"}, {"name": "Neil Ramnanan", "email": "neil.ramnanan@myguardiangroup.com"}, {"name": "Premchand Dookran", "email": "premchand.dookran@myguardiangroup.com"}, {"name": "Randolph Gonzales", "email": "randolph.gonzales@myguardiangroup.com"}, {"name": "Ricky Rampersad", "email": "ricky.rampersad@myguardiangroup.com"}, {"name": "Roberta Laltoo", "email": "roberta.laltoo@myguardiangroup.com"}, {"name": "Stephanie Rajkumar", "email": "stephanie.rajkumar@myguardiangroup.com"}, {"name": "Tricia Baksh", "email": "tricia.baksh@myguardiangroup.com"}, {"name": "Varun Seegolam", "email": "varun.seegolam@myguardiangroup.com"}];
+const CLIENTS = []; // paste Salesforce client export here later for auto-fill
+
+const DEPT={
+ 'rickyrampersadsalessupport@myguardiangroup.com':'RR Branch Sales Support',
+ 'premiumsapplicationunit@myguardiangroup.com':'Premiums Application Unit',
+ 'glocpremium@myguardiangroup.com':'GLOC Premium',
+ 'gloc.premiumquery@myguardiangroup.com':'GLOC Premium Query',
+ 'GLOCPhoneCSRs@myguardiangroup.com':'GLOC Phone CSRs',
+ 'GLOCITMORequests@myguardiangroup.com':'GLOC IT/MO Requests',
+ 'gloccustomerservicechaguanassrsc@myguardiangroup.com':'Customer Service – Chaguanas',
+ 'ebcustomercare@myguardiangroup.com':'EB Customer Care',
+ 'glocclaims@myguardiangroup.com':'GLOC Claims',
+ 'gloccorporategroupunit@myguardiangroup.com':'Corporate Group Unit',
+ 'glocalterations@myguardiangroup.com':'GLOC Alterations',
+ 'crmsrenewals@myguardiangroup.com':'CRMS Renewals',
+ 'healthclaimstt@myguardiangroup.com':'Health Claims TT',
+ 'GLOC.IndividualLifeClaims@myguardiangroup.com':'Individual Life Claims',
+ 'RCC@myguardiangroup.com':'Recurring Credit Card Unit'
+};
+function deptName(e){return DEPT[e]||e;}
+
+let state={who:null,group:null,q:null,agentEmail:""};
+
+function show(id){['s1','s2','s3','s4','s5'].forEach(s=>{const el=document.getElementById(s);el.classList.add('hidden');el.classList.remove('enter');});const t=document.getElementById(id);t.classList.remove('hidden');void t.offsetWidth;t.classList.add('enter');window.scrollTo({top:0,behavior:'smooth'});}
+document.addEventListener('DOMContentLoaded',()=>{const s=document.getElementById('s1');if(s)s.classList.add('enter');});
+function setStep(n){document.querySelectorAll('.step').forEach(el=>{const s=+el.dataset.s;el.classList.remove('active','done');if(s<n)el.classList.add('done');if(s===n)el.classList.add('active');});}
+function goto(n){show('s'+n);setStep(n);}
+
+/* ---- Agent sign-in: one password per agent, checked LIVE by the webhook ----
+   Passwords live in the Apps Script under AGENT ACCESS (with the Agent Codes
+   sheet tab as a second list), so the branch manages access there — nothing
+   in this page's source ever contains a password. */
+let agentAuth=null;            // {code,name,email} — kept for the whole visit
+let _gateTries=0,_gateLockTil=0;
+
+function pickWho(w){
+  if(w==='Agent'&&!agentAuth){window._afterAuth=()=>pickWho('Agent');openGate();return;}
+  state.who=w;
+  document.getElementById('agentField').style.display = (w==='Agent')?'block':'none';
+  document.getElementById('clientLbl').innerHTML = (w==='Client')?'Your Name <span class="req">*</span>':'Client Name <span class="req">*</span>';
+  document.getElementById('f_client').placeholder = (w==='Client')?'Type your name...':"Type the client's name...";
+  if(w==='Agent'&&agentAuth&&agentAuth.name&&!document.getElementById('f_agent').value.trim()){
+    document.getElementById('f_agent').value=agentAuth.name;
+    state.agentEmail=agentAuth.email||((AGENTS.find(a=>a.name===agentAuth.name)||{}).email||'');
+  }
+  updateAgentBar();
+  buildCats();goto(2);
+}
+
+function openGate(){
+  const rp=document.getElementById('raiPanel');if(rp)rp.classList.remove('show');
+  document.getElementById('agentGate').classList.add('show');
+  setTimeout(()=>document.getElementById('agentCode').focus(),80);
+}
+function closeGate(){document.getElementById('agentGate').classList.remove('show');window._afterAuth=null;}
+
+function agentLogin(){
+  const out=document.getElementById('gateOut');
+  const num=document.getElementById('agentNum').value.trim();
+  const pwd=document.getElementById('agentCode').value.trim();
+  if(Date.now()<_gateLockTil){out.innerHTML='<div class="trackcard">Too many attempts — give it a minute, or <a class="tracklink" href="https://wa.me/'+BRANCH_WA+'" target="_blank" rel="noopener">WhatsApp the branch</a>.</div>';return;}
+  if(!num&&!pwd){out.innerHTML='<div class="trackcard">Enter your agent number and password — both are on the branch list.</div>';return;}
+  const btn=document.getElementById('agentGo');btn.disabled=true;btn.textContent='Checking…';
+  const done=()=>{btn.disabled=false;btn.textContent='Sign in';};
+  const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),10000);
+  fetch(SHEET_WEBHOOK_URL+'?action=agentauth&num='+encodeURIComponent(num)+'&pwd='+encodeURIComponent(pwd)+'&code='+encodeURIComponent(num||pwd),{signal:ctl.signal})
+    .then(r=>r.json()).then(d=>{
+      clearTimeout(to);done();
+      if(d&&d.ok===true)gatePass(num||pwd,d.name||'',d.email||'',d.role||'agent');
+      else if(d&&d.ok===false&&d.why==='pwd'){_gateTries++;out.innerHTML='<div class="trackcard">That password doesn\'t match this agent number — check your entry and try again.</div>';if(_gateTries>=5){_gateLockTil=Date.now()+60000;_gateTries=0;}}
+      else if(d&&d.ok===false)gateFail(out);
+      else gateOffline(num||pwd,out);
+    })
+    .catch(()=>{clearTimeout(to);done();gateOffline(num||pwd,out);});
+}
+function gatePass(code,name,email,role){
+  agentAuth={code:code,name:name,email:email,role:(role||'agent')};
+  _gateTries=0;dashData=null;
+  document.getElementById('gateOut').innerHTML='';
+  document.getElementById('agentCode').value='';
+  const _n=document.getElementById('agentNum');if(_n)_n.value='';
+  document.getElementById('agentGate').classList.remove('show');
+  toast(name?('Welcome, '+esc(name.split(' ')[0])+' ✓'):'Agent verified ✓');
+  updateAgentBar();
+  const f=window._afterAuth;window._afterAuth=null;if(f)f();
+}
+
+function updateAgentBar(){
+  const bar=document.getElementById('agentBar');
+  if(!agentAuth||state.who!=='Agent'){bar.style.display='none';return;}
+  document.getElementById('abName').textContent=agentAuth.name||'Agent';
+  const r=agentAuth.role;
+  document.getElementById('abRole').textContent=r==='branch'?' · Branch Manager':(r==='manager'?' · Manager':'');
+  document.getElementById('abBtn').textContent=r==='branch'?'All queries':(r==='manager'?'Team queries':'My queries');
+  bar.style.display='flex';
+}
+
+/* ---- query dashboard: the webhook decides what this code may see ----
+   agent → their own queries · manager → their listed agents · branch → everything */
+let dashData=null,_dashTab='open',_dashBusy=false;
+function openDash(){
+  document.getElementById('dashModal').classList.add('show');
+  if(dashData){dashSetup();dashRender();}else dashFetch();
+}
+function closeDash(){document.getElementById('dashModal').classList.remove('show');}
+function dashTab(t){
+  if(t!=='open')dashOver=false;
+  _dashTab=t;
+  document.querySelectorAll('.dtab').forEach(b=>b.classList.toggle('active',b.dataset.t===t));
+  dashRender();dashMark();
+}
+function dashFetch(){
+  if(_dashBusy||!agentAuth)return;_dashBusy=true;
+  const list=document.getElementById('dashList');
+  list.innerHTML='<div class="trackcard">Loading the list…</div>';
+  document.getElementById('dashSum').textContent='';
+  const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),15000);
+  fetch(SHEET_WEBHOOK_URL+'?action=myqueries&code='+encodeURIComponent(agentAuth.code),{signal:ctl.signal})
+    .then(r=>r.json()).then(d=>{
+      clearTimeout(to);_dashBusy=false;
+      if(d&&d.ok===true&&Array.isArray(d.rows)){dashData=d;dashSetup();dashRender();}
+      else dashErr(list);
+    })
+    .catch(()=>{clearTimeout(to);_dashBusy=false;dashErr(list);});
+}
+function dashErr(list){
+  list.innerHTML='<div class="trackcard"><b>Couldn\'t load the list.</b><br>This view needs the upgraded Apps Script (QueryPal_Backend_v6.gs). If that\'s already installed, check your connection and tap Refresh.</div>';
+}
+function dashSetup(){
+  const role=dashData.role||'agent';
+  document.getElementById('dashTitle').textContent=role==='branch'?'📋 Branch queries':(role==='manager'?'📋 Team queries':'📋 Your queries');
+  const c=dashData.counts||{};
+  document.getElementById('dashSum').textContent=(c.open||0)+' open · '+(c.done||0)+' resolved · '+(c.total||0)+' total';
+  const sel=document.getElementById('dashAgent');
+  const ags=[...new Set(dashData.rows.map(r=>r.agent).filter(Boolean))].sort();
+  if(role!=='agent'&&ags.length>1){
+    sel.style.display='block';
+    sel.innerHTML='<option value="">All agents ('+ags.length+')</option>'+ags.map(a=>'<option>'+esc(a)+'</option>').join('');
+  }else{sel.style.display='none';sel.innerHTML='';}
+  dashDept='';dashRange=0;dashOver=false;
+  dashStats();
+}
+let dashDept='',dashRange=0,dashOver=false;
+function dashDue(r){
+  const t=new Date(r.tsIso||'');if(isNaN(t))return null;
+  let n=parseInt(r.tat);if(isNaN(n))n=5;
+  const d=new Date(t.getTime());let a=0;
+  while(a<n){d.setDate(d.getDate()+1);const w=d.getDay();if(w!==0&&w!==6)a++;}
+  return d;
+}
+function dashIsOver(r){if(dashDone(r.status))return false;const d=dashDue(r);return d?Date.now()>d.getTime():false;}
+function dashTile(k){
+  if(k==='open'){dashOver=false;dashTab('open');return;}
+  if(k==='done'){dashOver=false;dashTab('done');return;}
+  if(k==='overdue'){dashOver=!dashOver;if(dashOver)dashTab('open');else{dashRender();dashMark();}return;}
+}
+function dashPickDept(d){dashDept=(dashDept===d?'':d);dashRender();dashMark();}
+function dashPickType(t){
+  const s=document.getElementById('dashSearch');
+  s.value=(s.value===t?'':t);dashRender();dashMark();
+}
+function dashRangeSet(r){dashRange=(dashRange===r?0:r);dashRender();dashMark();}
+function dashStats(){
+  const box=document.getElementById('dashStats');if(!box||!dashData)return;
+  const rows=dashData.rows||[],c=dashData.counts||{};
+  const dd=rows.filter(r=>dashDone(r.status)&&r.days!==''&&r.days!==null&&!isNaN(+r.days)).map(r=>+r.days);
+  const avg=dd.length?(Math.round(dd.reduce((a,b)=>a+b,0)/dd.length*10)/10):null;
+  const over=rows.filter(dashIsOver).length;
+  const sc=rows.filter(r=>+r.score>0).map(r=>+r.score);
+  const sAvg=sc.length?(Math.round(sc.reduce((a,b)=>a+b,0)/sc.length*10)/10):null;
+  let out='<div class="stt">'
+    +'<div class="st o tap" data-k="open" onclick="dashTile(\'open\')"><div class="n">'+(c.open||0)+'</div><div class="l">Open</div></div>'
+    +'<div class="st ov tap" data-k="overdue" onclick="dashTile(\'overdue\')"><div class="n">'+over+'</div><div class="l">Overdue</div></div>'
+    +'<div class="st d tap" data-k="done" onclick="dashTile(\'done\')"><div class="n">'+(c.done||0)+'</div><div class="l">Resolved</div></div>'
+    +'<div class="st a"><div class="n">'+(avg===null?'—':avg+'d')+'</div><div class="l">Avg close</div></div>'
+    +(sAvg!==null?'<div class="st s"><div class="n">★'+sAvg+'</div><div class="l">Rating</div></div>':'')
+    +'</div>';
+  const lead=(dashData.role||'agent')!=='agent';
+  if(lead){
+    out+='<div class="rpills">'
+      +[[7,'7 days'],[30,'30 days'],[90,'90 days'],[0,'All time']].map(p=>
+        '<div class="rpill" data-r="'+p[0]+'" onclick="dashRangeSet('+p[0]+')">'+p[1]+'</div>').join('')
+      +'</div>';
+    const per={},dep={},typ={},scA={};
+    rows.forEach(r=>{
+      const a=(r.agent||'').trim();
+      if(a){per[a]=per[a]||{o:0,d:0};dashDone(r.status)?per[a].d++:per[a].o++;
+        if(+r.score>0){scA[a]=scA[a]||[];scA[a].push(+r.score);}}
+      const de=(r.dept||'').trim();if(de){dep[de]=(dep[de]||0)+1;}
+      const ty=(r.qtype||'').trim();if(ty){typ[ty]=(typ[ty]||0)+1;}
+    });
+    const names=Object.keys(per).sort((x,y)=>(per[y].o-per[x].o)||(per[y].o+per[y].d-per[x].o-per[x].d));
+    if(names.length>1){
+      out+='<div class="agghead">By agent — open · closed</div>'+names.map(a=>{
+        const p=per[a],t=p.o+p.d||1;
+        const st=scA[a]?('<span class="star">★'+(Math.round(scA[a].reduce((x,y)=>x+y,0)/scA[a].length*10)/10)+'</span>'):'';
+        return '<div class="abar" data-a="'+esc(a)+'" onclick="dashPick(this.dataset.a)">'
+          +'<span class="an">'+esc(a)+'</span>'+st
+          +'<span class="bar"><i class="bo" style="width:'+Math.round(p.o/t*100)+'%"></i><i class="bd" style="width:'+Math.round(p.d/t*100)+'%"></i></span>'
+          +'<span class="ac2">'+p.o+' · '+p.d+'</span></div>';
+      }).join('');
+    }
+    const deps=Object.keys(dep).sort((x,y)=>dep[y]-dep[x]);
+    if(deps.length>1){
+      const mx=dep[deps[0]]||1;
+      out+='<div class="agghead">By department</div>'+deps.map(d=>
+        '<div class="abar dbar" data-d="'+esc(d)+'" onclick="dashPickDept(this.dataset.d)">'
+        +'<span class="an">'+esc(d)+'</span>'
+        +'<span class="bar"><i class="bo" style="width:'+Math.round(dep[d]/mx*100)+'%;background:var(--blue);"></i></span>'
+        +'<span class="ac2">'+dep[d]+'</span></div>').join('');
+    }
+    const typs=Object.keys(typ).sort((x,y)=>typ[y]-typ[x]).slice(0,6);
+    if(typs.length>1){
+      out+='<div class="agghead">Top requests — tap to filter</div><div class="tchips">'
+        +typs.map(t=>'<span class="tchip" data-t="'+esc(t)+'" onclick="dashPickType(this.dataset.t)">'+esc(t)+'<i>'+typ[t]+'</i></span>').join('')
+        +'</div>';
+    }
+    const wk={},now=Date.now();
+    rows.forEach(r=>{const t=new Date(r.tsIso||'');if(isNaN(t))return;
+      const w=Math.floor((now-t.getTime())/(7*86400000));if(w>=0&&w<8)wk[7-w]=(wk[7-w]||0)+1;});
+    if(Object.keys(wk).length){
+      const mx2=Math.max.apply(null,Object.keys(wk).map(k=>wk[k]));
+      out+='<div class="agghead">Volume — last 8 weeks</div><div class="wkrow">';
+      for(let i=0;i<8;i++){const v=wk[i]||0;
+        out+='<div class="wk"><i style="height:'+(v?Math.max(8,Math.round(v/mx2*100)):3)+'%"></i><b>'+(v||'')+'</b></div>';}
+      out+='</div>';
+    }
+  }
+  box.innerHTML=out;dashMark();
+}
+function dashPick(a){
+  const sel=document.getElementById('dashAgent');
+  sel.value=(sel.value===a?'':a);
+  dashRender();dashMark();
+}
+function dashMark(){
+  const v=document.getElementById('dashAgent').value||'';
+  const q=(document.getElementById('dashSearch').value||'').trim();
+  document.querySelectorAll('#dashStats .abar:not(.dbar)').forEach(b=>b.classList.toggle('on',b.dataset.a===v));
+  document.querySelectorAll('#dashStats .dbar').forEach(b=>b.classList.toggle('on',b.dataset.d===dashDept));
+  document.querySelectorAll('#dashStats .rpill').forEach(b=>b.classList.toggle('on',+b.dataset.r===dashRange&&dashRange!==0));
+  document.querySelectorAll('#dashStats .tchip').forEach(b=>b.classList.toggle('on',b.dataset.t===q&&q!==''));
+  const ov=document.querySelector('#dashStats .st.ov');if(ov)ov.classList.toggle('on',dashOver);
+}
+function dashDone(s){return /closed|resolved|completed/i.test(s||'');}
+function dashRender(){
+  if(!dashData)return;
+  const q=(document.getElementById('dashSearch').value||'').trim().toLowerCase();
+  const af=document.getElementById('dashAgent').value||'';
+  let rows=dashData.rows.filter(r=>_dashTab==='all'?true:(_dashTab==='done'?dashDone(r.status):!dashDone(r.status)));
+  if(af)rows=rows.filter(r=>r.agent===af);
+  if(dashDept)rows=rows.filter(r=>r.dept===dashDept);
+  if(dashOver)rows=rows.filter(dashIsOver);
+  if(dashRange){const cut=Date.now()-dashRange*86400000;rows=rows.filter(r=>{const t=new Date(r.tsIso||'');return !isNaN(t)&&t.getTime()>=cut;});}
+  if(q)rows=rows.filter(r=>((r.client||'')+' '+(r.ref||'')+' '+(r.qtype||'')+' '+(r.dept||'')).toLowerCase().indexOf(q)>-1);
+  const list=document.getElementById('dashList');
+  if(!rows.length){
+    list.innerHTML='<div class="trackcard">'+(_dashTab==='open'?'No open queries — all caught up 🎉':'Nothing here yet.')+'</div>';
+    return;
+  }
+  list.innerHTML=rows.map(r=>{
+    const done=dashDone(r.status);
+    const closedBit=done?(' · closed '+esc(r.closed||'—')+((r.days!==''&&r.days!==null&&r.days!==undefined)?(' ('+esc(String(r.days))+'d)'):'')):'';
+    const agentBit=(dashData.role!=='agent'&&r.agent)?(' · <span class="qagent">'+esc(r.agent)+'</span>'):'';
+    return '<div class="qcard">'+
+      '<div class="qtop"><span class="statuspill '+(done?'st-closed':'st-open')+'">'+esc(r.status||'Open')+'</span>'+
+      '<span class="qref">'+esc(r.ref||'')+'</span></div>'+
+      '<div class="qmain"><b>'+esc(r.client||'—')+'</b> · '+esc(r.qtype||'')+'</div>'+
+      '<div class="qmeta">'+esc(r.dept||'')+(r.tat?(' · '+esc(r.tat)):'')+'</div>'+
+      '<div class="qmeta">Logged '+esc(r.ts||'')+closedBit+agentBit+'</div>'+
+    '</div>';
+  }).join('');
+}
+function gateFail(out){
+  _gateTries++;
+  if(_gateTries>=5){
+    _gateLockTil=Date.now()+60000;_gateTries=0;
+    out.innerHTML='<div class="trackcard">Too many attempts — try again in a minute, or <a class="tracklink" href="https://wa.me/'+BRANCH_WA+'" target="_blank" rel="noopener">WhatsApp the branch</a>.</div>';
+    return;
+  }
+  out.innerHTML='<div class="trackcard">That password isn\'t on the branch list — check it and try again (it\'s not case-sensitive).</div>';
+}
+function gateOffline(code,out){
+  /* Old Apps Script deployed (no live check yet): branch master code keeps the team working */
+  if(code.toUpperCase()==='260026'||code.toUpperCase()==='RRB2026'){gatePass(code,'','','branch');return;}
+  out.innerHTML='<div class="trackcard"><b>Live code check isn\'t switched on yet.</b><br>Install the upgraded Apps Script (QueryPal_Backend_v6.gs) to activate it — until then agents can use the branch master code.</div>';
+}
+
+function tatNum(t){const n=parseInt(t);return isNaN(n)?null:n;}
+function tatClass(t){const n=tatNum(t);if(n===null)return 'mid';if(n<=2)return 'fast';if(n<=5)return 'mid';return 'slow';}
+function tatLabel(t){const n=tatNum(t);return n===null?'a few days':(n+' day'+(n>1?'s':''));}
+
+function catCardsHTML(){
+  return ORDER.map(g=>{
+    const items=DATA.filter(d=>d.group===g);if(!items.length)return '';
+    const gm=GM[g]||['📌',''];
+    return `<div class="card" onclick="pickGroup('${g.replace(/'/g,"\\'")}')">
+      <span class="badge">${items.length}</span><div class="ico">${gm[0]}</div>
+      <h3>${g}</h3><p>${gm[1]}</p></div>`;
+  }).join('');
+}
+function buildCats(){
+  const el=document.getElementById('catGrid');
+  el.innerHTML=catCardsHTML();
+  el.style.display='';
+}
+
+function pickGroup(g){
+  state.group=g;
+  document.getElementById('catTitle').textContent=g;
+  document.getElementById('catSub').textContent="Choose the one that fits. We'll show you what to prepare.";
+  buildQList(DATA.filter(d=>d.group===g));goto(3);
+}
+
+function buildQList(list){
+  document.getElementById('qList').innerHTML=list.map(d=>{
+    const idx=DATA.indexOf(d);
+    const showTech = d.title.toLowerCase()!==d.type.toLowerCase();
+    return `<div class="qrow" onclick="pickQ(${idx})">
+      <div class="ql">
+        <div class="name">${d.title}</div>
+        ${showTech?`<div class="tech">${d.type}</div>`:''}
+      </div>
+      <div class="right">
+        ${d.req?'<span class="prep-pill">✓ prep list</span>':''}
+        <span class="tat ${tatClass(d.tat)}">${tatLabel(d.tat)}</span>
+        <span class="chev">›</span>
+      </div></div>`;
+  }).join('');
+}
+
+/* SMART SEARCH — natural language → query types via keyword intelligence
+   v14: synonyms, light stemming, prefix matching, best-match highlight,
+   shared scorer reused by RAI. */
+const SYN={cash:['surrender','withdraw','money','payout'],cashout:['surrender'],money:['payout','funds','cash'],
+  fix:['change','update'],edit:['change','update'],switch:['change'],correct:['change'],
+  dead:['death','claim'],died:['death','claim'],passed:['death','claim'],funeral:['death','claim'],deceased:['death'],
+  sick:['health','medical','claim'],doctor:['health','medical'],hospital:['health','medical'],meds:['health','medical'],surgery:['health','medical'],
+  bank:['banking'],visa:['embassy','card'],travel:['embassy'],abroad:['embassy'],overseas:['embassy'],
+  payout:['surrender','claim','refund'],paid:['premium','payment','missing'],pay:['payment','premium'],owe:['refund'],
+  cheque:['refund','bounce'],bounced:['bounce'],house:['home','property'],land:['property','home'],
+  car:['motor','vehicle'],van:['motor','vehicle'],truck:['motor','vehicle'],bike:['motor','vehicle'],
+  kid:['beneficiary'],kids:['beneficiary'],child:['beneficiary'],children:['beneficiary'],son:['beneficiary'],daughter:['beneficiary'],
+  wife:['beneficiary','name'],husband:['beneficiary','name'],married:['name','beneficiary'],divorce:['name','beneficiary'],
+  moved:['address'],moving:['address'],relocate:['address'],relocated:['address'],
+  login:['portal'],password:['portal','login'],website:['portal'],signin:['portal','login'],
+  stuck:['pending','escalate'],waiting:['pending','status'],late:['pending','escalate'],slow:['escalate','pending'],
+  angry:['complaint'],upset:['complaint'],vex:['complaint'],frustrated:['complaint'],
+  salary:['deduction'],payroll:['salary','deduction'],retire:['pension','annuity','vesting'],retirement:['pension','annuity'],
+  letter:['embassy','integrity','confirmation'],lost:['scripts','undelivered','missing'],
+  worth:['value'],quote:['projection','quotes'],autopay:['recurring','credit','card'],deduct:['deduction'],
+  wrong:['misallocation','complaint'],mixup:['misallocation'],renew:['renewal'],expired:['renewal','status']};
+function stem(w){if(w.length>4){if(w.endsWith('ing'))return w.slice(0,-3);if(w.endsWith('ies'))return w.slice(0,-3)+'y';if(w.endsWith('ed')||w.endsWith('es'))return w.slice(0,-2);if(w.endsWith('s'))return w.slice(0,-1);}return w;}
+function scoreQuery(v){
+  v=(v||'').trim().toLowerCase();
+  const STOP=new Set(['i','a','an','the','to','my','me','is','it','its','it\'s','of','on','in','for','and','or','do','does','did','want','need','have','has','get','got','can','could','would','will','please','help','with','about','am','was','this','that','some','at','be','how','what','when','where','why','who','you','your','still','yet','just','like','know','make','way']);
+  const raw=v.split(/[^a-z0-9']+/).filter(w=>w&&!STOP.has(w));
+  if(!raw.length)return [];
+  const bag=new Set();
+  raw.forEach(w=>{bag.add(w);const st=stem(w);bag.add(st);(SYN[w]||SYN[st]||[]).forEach(x=>bag.add(x));});
+  const words=[...bag].filter(w=>w.length>=3);
+  if(!words.length)return [];
+  return DATA.map((d,idx)=>{
+    const hay=(d.title+' '+d.type+' '+d.help+' '+d.kw+' '+d.group).toLowerCase();
+    const kw=d.kw.toLowerCase();
+    const hayWords=hay.split(/[^a-z0-9]+/);
+    let score=0;
+    words.forEach(w=>{
+      if(hay.includes(w)){score+=(kw.includes(w)?2:1);}
+      else if(w.length>=4&&hayWords.some(h=>h.length>=4&&(h.startsWith(w)||w.startsWith(h)))){score+=1;}
+    });
+    if(v.length>5&&hay.includes(v))score+=3;
+    return {d,idx,score};
+  }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score);
+}
+function smartSearch(v){
+  v=v.trim();
+  const grid=document.getElementById('catGrid');
+  const hint=document.getElementById('smartHint');
+  if(!v){buildCats();hint.innerHTML='<b>Just type how you\'d say it</b> — we understand everyday language, not just insurance terms.';return;}
+  const scored=scoreQuery(v).slice(0,8);
+  if(!scored.length){
+    hint.textContent='Nothing matched exactly — pick a topic below:';
+    grid.style.display='';
+    grid.innerHTML=`<p style="grid-column:1/-1;color:var(--soft);text-align:center;padding:6px 10px;margin:0;">
+      No exact match — try simpler words like <b>"pay"</b>, <b>"address"</b>, <b>"claim"</b> or <b>"refund"</b>, or pick a topic:</p>`+catCardsHTML();
+    return;
+  }
+  hint.textContent='Closest matches to what you typed:';
+  grid.style.display='';
+  grid.innerHTML=`<div style="grid-column:1/-1"><div class="qlist">`+scored.map(({d,idx},i)=>{
+    const showTech=d.title.toLowerCase()!==d.type.toLowerCase();
+    return `<div class="qrow${i===0?' best':''}" onclick="pickQ(${idx})">
+      <div class="ql"><div class="name">${i===0?'<span class="bestpill">Best match</span>':''}${d.title}</div>
+      <div class="tech">${d.group}${showTech?' · '+d.type:''}</div></div>
+      <div class="right">${d.req?'<span class="prep-pill">✓ prep list</span>':''}
+      <span class="tat ${tatClass(d.tat)}">${tatLabel(d.tat)}</span><span class="chev">›</span></div></div>`;
+  }).join('')+`</div></div>`;
+}
+
+function pickQ(idx){
+  state.q=DATA[idx];
+  document.getElementById('rtType').textContent=state.q.title;
+  document.getElementById('rtDept').textContent=deptName(state.q.email);
+  document.getElementById('rtTat').textContent=tatLabel(state.q.tat);
+  document.getElementById('rtDue').textContent='📅 expect an update by '+fmtDue(addWorkDays(tatNum(state.q.tat)));
+  renderPrep(state.q);
+  renderFormFields(state.q);
+  renderGenAttach(state.q);
+  buildSubject();
+  goto(4);
+}
+
+/* PREP CHECKLIST — signature feature, sourced from the Customer Service Guide */
+function renderPrep(q){
+  const box=document.getElementById('prepBox');
+  if(!q.req){
+    box.innerHTML=`<div class="prep"><div class="ok">💬 No special documents needed up front — just describe your request below and we'll take it from there.</div></div>`;
+    return;
+  }
+  const r=q.req;
+  let html=`<div class="prep"><h4>📋 What to have ready</h4>
+    <p class="lead">Having these ready helps us resolve it the first time — no back-and-forth. Tap items to tick them off.</p>`;
+  if(r.forms&&r.forms.length){html+=`<div class="col"><div class="ct">Forms / request</div><ul>`+r.forms.map(x=>`<li onclick="this.classList.toggle('ticked')">${x}</li>`).join('')+`</ul></div>`;}
+  if(r.docs&&r.docs.length){html+=`<div class="col"><div class="ct">Documents</div><ul>`+r.docs.map(x=>`<li onclick="this.classList.toggle('ticked')">${x}</li>`).join('')+`</ul></div>`;}
+  if(r.notes&&r.notes.length){html+=`<div class="col"><div class="ct">Good to know</div><ul>`+r.notes.map(x=>`<li class="note">${x}</li>`).join('')+`</ul></div>`;}
+  html+=`</div>`;
+  box.innerHTML=html;
+}
+
+/* agent typeahead */
+function acAgent(v){
+  const box=document.getElementById('agentAC');v=v.trim().toLowerCase();
+  const list=AGENTS.filter(a=>a.name.toLowerCase().includes(v)||a.email.toLowerCase().includes(v)).slice(0,8);
+  if(!list.length){box.classList.remove('show');return;}
+  box.innerHTML=list.map(a=>`<div onclick="setAgent('${a.name.replace(/'/g,"\\'")}','${a.email}')">${a.name}${a.email?`<div class="em">${a.email}</div>`:''}</div>`).join('');
+  box.classList.add('show');
+}
+function setAgent(name,email){document.getElementById('f_agent').value=name;state.agentEmail=email;document.getElementById('agentAC').classList.remove('show');buildSubject();}
+document.addEventListener('click',e=>{if(!e.target.closest('.field'))document.querySelectorAll('.ac').forEach(a=>a.classList.remove('show'));});
+
+function buildSubject(){/* subject is built at submit; placeholder kept for oninput hooks */}
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2300);}
+function cleanPart(s){return (s||'').toString().replace(/[\/\\]/g,' ').replace(/\s+/g,' ').trim();}
+function esc(s){return (s||'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function sanShort(s,n){return (s||'').toString().replace(/[^A-Za-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim().substring(0,n).trim();}
+function maskPol(p){p=(p||'').toString().trim();return p.length>5?p.substring(0,5)+'XXXXX':p;}
+function addWorkDays(n){const d=new Date();let left=(n===null||isNaN(n))?3:n;while(left>0){d.setDate(d.getDate()+1);const w=d.getDay();if(w!==0&&w!==6)left--;}return d;}
+function fmtDue(d){return d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});}
+function mark(id,on){const el=document.getElementById(id);if(el)el.classList[on?'add':'remove']('err');}
+
+function submitQuery(){
+  if(window._sending)return;
+  const client=document.getElementById('f_client').value.trim();
+  const email=document.getElementById('f_email').value.trim();
+  const policy=document.getElementById('f_policy').value.trim();
+  const subject=document.getElementById('f_subject').value.trim();
+  const desc=document.getElementById('f_desc').value.trim();
+  const agent=document.getElementById('f_agent').value.trim();
+  ['f_agent','f_client','f_email','f_policy','f_subject','f_desc'].forEach(id=>mark(id,false));
+  if(state.who==='Agent'&&!agent){mark('f_agent',true);toast('Please select the servicing agent');return;}
+  if(!client){mark('f_client',true);toast('Please enter the name');return;}
+  if(!email||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){mark('f_email',true);toast('Please enter a valid email');return;}
+  if(!policy){mark('f_policy',true);toast('Policy / application number is required');return;}
+  if(!subject){mark('f_subject',true);toast('Add a short subject line');return;}
+  if(!desc){mark('f_desc',true);toast('Please tell us what you need');return;}
+
+  // If this query needs a guided form, validate it and build attachments
+  const fb=ffValidateAndBuild(state.q);
+  if(!fb.ok)return;
+
+  window._sending=true;
+  const btn=document.getElementById('submitBtn');btn.disabled=true;btn.textContent='Sending...';
+  const cc=[...CC_ALWAYS];if(state.agentEmail)cc.push(state.agentEmail);if(email)cc.push(email);
+  const fullDesc = desc + (fb.attach&&fb.attach.formExtra?('\n\n['+fb.attach.formExtra+']'):'');
+  // Clean subject & reference tag — no raw newlines/slashes leaking into the sheet
+  const emailSubject=cleanPart(subject);
+
+  const payload={
+    timestamp:new Date().toISOString(),loggedBy:state.who,status:'Open',
+    client,name:client,email,phone:document.getElementById('f_phone').value.trim(),
+    policy,agent,agentEmail:state.agentEmail,
+    category:state.q.group,queryType:state.q.type,
+    department:deptName(state.q.email),departmentEmail:state.q.email,
+    turnaround:tatLabel(state.q.tat),priority:document.getElementById('f_pri').value,
+    subject:emailSubject,descFirst10:sanShort(subject,24),description:fullDesc,cc:cc.join(','),
+    agentCode:(state.who==='Agent'&&agentAuth)?agentAuth.code:'',
+    ...(fb.attach||{})
+  };
+  const finish=(ref)=>{window._sending=false;payload.reference=ref||'(assigned)';window._lastPayload=payload;renderSuccess(payload);btn.disabled=false;btn.textContent='Send my request →';};
+  if(SHEET_WEBHOOK_URL){
+    const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),20000);
+    fetch(SHEET_WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),signal:ctl.signal})
+      .then(r=>r.json()).then(d=>{clearTimeout(to);finish(d&&d.reference);})
+      .catch(()=>{clearTimeout(to);finish();});
+  }else{setTimeout(()=>finish('RRB/2026/001/'+cleanPart(client)),400);}
+}
+
+function renderSuccess(p){
+  document.getElementById('ticketRef').textContent=p.reference;
+  document.getElementById('confTat').textContent=p.turnaround;
+  document.getElementById('confDue').textContent=fmtDue(addWorkDays(tatNum(state.q.tat)));
+  document.getElementById('summBox').innerHTML=`
+    <div class="r"><span class="k">Request</span><span class="v">${esc(state.q.title)}</span></div>
+    <div class="r"><span class="k">For</span><span class="v">${esc(p.loggedBy)} — ${esc(p.client)}</span></div>
+    <div class="r"><span class="k">Goes to</span><span class="v">${esc(p.department)}</span></div>
+    ${p.agent?`<div class="r"><span class="k">Agent</span><span class="v">${esc(p.agent)}</span></div>`:''}
+    ${p.policy?`<div class="r"><span class="k">Policy</span><span class="v">${esc(p.policy)}</span></div>`:''}
+    ${p.priority&&p.priority!=='Normal'?`<div class="r"><span class="k">Priority</span><span class="v">${esc(p.priority)}</span></div>`:''}
+    <div class="r"><span class="k">Copied to</span><span class="v">You, agent & branch support</span></div>`;
+  document.getElementById('sameAgentBtn').style.display=(state.who==='Agent'&&document.getElementById('f_agent').value.trim())?'':'none';
+  window._lastRef=p.reference;goto(5);setStep(5);
+}
+function copyRef(){navigator.clipboard.writeText(window._lastRef||'').then(()=>toast('Reference copied ✓'));}
+function resetAll(){state={who:null,group:null,q:null,agentEmail:""};
+  ['f_client','f_email','f_phone','f_policy','f_subject','f_agent','f_desc'].forEach(id=>{const el=document.getElementById(id);el.value='';el.classList.remove('err');});
+  document.getElementById('f_pri').selectedIndex=0;
+  const ff=document.getElementById('formFields');if(ff)ff.innerHTML='';
+  const ga=document.getElementById('genAttach');if(ga)ga.innerHTML='';
+  formState={bens:[],sigs:{owner:null,witness:null,ben:null},id:null,card:null,benCount:0,gen:null};
+  window._lastPayload=null;
+  document.getElementById('smart').value='';goto(1);}
+
+/* keep the agent, clear the rest — for Sales Support logging back-to-back requests */
+function resetKeepAgent(){
+  const ag=document.getElementById('f_agent').value,ae=state.agentEmail;
+  resetAll();
+  state.who='Agent';state.agentEmail=ae;
+  document.getElementById('agentField').style.display='block';
+  document.getElementById('f_agent').value=ag;
+  document.getElementById('clientLbl').innerHTML='Client Name <span class="req">*</span>';
+  document.getElementById('f_client').placeholder="Type the client's name...";
+  buildCats();goto(2);
+}
+
+/* ---- WhatsApp copy of the confirmation (policy number masked) ---- */
+function waShare(){
+  const p=window._lastPayload;
+  if(!p){toast('Submit a request first');return;}
+  const lines=[
+    'Query Pal — request logged ✅',
+    'Ref: '+p.reference,
+    'For: '+p.client,
+    'Request: '+(state.q?state.q.title:p.queryType),
+    'Dept: '+p.department,
+    p.policy?('Policy: '+maskPol(p.policy)):'',
+    'Expected by: '+document.getElementById('confDue').textContent
+  ].filter(Boolean).join('\n');
+  window.open('https://wa.me/'+BRANCH_WA+'?text='+encodeURIComponent(lines),'_blank','noopener');
+}
+
+/* ---- branded PDF receipt of the confirmation ---- */
+function receiptPDF(){
+  if(!window.jspdf){toast('PDF tool is still loading — try again in a second');return;}
+  const p=window._lastPayload;
+  if(!p){toast('Submit a request first');return;}
+  const {jsPDF}=window.jspdf;const doc=new jsPDF({unit:'pt',format:'letter'});
+  const W=612,M=48;let y=0;
+  doc.setFillColor(0,52,87);doc.rect(0,0,W,86,'F');
+  doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(19);doc.text('Query Pal',M,38);
+  doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(190,220,240);
+  doc.text('Ricky Rampersad Branch · Chaguanas, Trinidad & Tobago',M,56);
+  doc.text('Request receipt',W-M,38,{align:'right'});
+  doc.setFontSize(8.5);doc.text(new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}),W-M,54,{align:'right'});
+  y=118;
+  doc.setTextColor(94,125,150);doc.setFontSize(9);doc.text('YOUR TRACKING REFERENCE',M,y);y+=20;
+  doc.setTextColor(10,37,64);doc.setFont('helvetica','bold');doc.setFontSize(15);doc.text(p.reference,M,y);y+=26;
+  doc.setDrawColor(212,231,245);doc.line(M,y,W-M,y);y+=24;
+  const rows=[
+    ['Request',state.q?state.q.title:p.queryType],
+    ['Logged by',p.loggedBy+' — '+p.client],
+    ['Goes to',p.department],
+    p.agent?['Agent',p.agent]:null,
+    p.policy?['Policy / App No.',p.policy]:null,
+    ['Priority',p.priority||'Normal'],
+    ['Turnaround',p.turnaround],
+    ['Expect an update by',document.getElementById('confDue').textContent],
+    ['Copied to','You, your agent & branch support']
+  ].filter(Boolean);
+  doc.setFontSize(10.5);
+  rows.forEach(r=>{
+    doc.setFont('helvetica','normal');doc.setTextColor(94,125,150);doc.text(r[0],M,y);
+    doc.setFont('helvetica','bold');doc.setTextColor(10,37,64);
+    const val=doc.splitTextToSize((r[1]||'').toString(),W-M-190);
+    doc.text(val,M+150,y);y+=Math.max(18,val.length*14+4);
+  });
+  y+=8;
+  if(state.q&&state.q.req){
+    const need=[...(state.q.req.forms||[]),...(state.q.req.docs||[])];
+    if(need.length){
+      doc.setFillColor(255,248,236);doc.setDrawColor(255,225,176);
+      const bh=30+need.length*15;
+      doc.roundedRect(M,y,W-2*M,bh,8,8,'FD');
+      doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(122,82,16);doc.text('Have these ready',M+14,y+19);
+      doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(91,71,32);
+      need.forEach((x,i)=>doc.text('•  '+doc.splitTextToSize(x,W-2*M-40)[0],M+14,y+35+i*15));
+      y+=bh+18;
+    }
+  }
+  doc.setDrawColor(212,231,245);doc.line(M,y,W-M,y);y+=18;
+  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(94,125,150);
+  doc.text('Questions? WhatsApp 1-868-678-6921 · support@rickyrampersadbranch.com',M,y);y+=13;
+  doc.setFontSize(7.5);doc.setTextColor(150,168,184);
+  doc.text('RICKY RAMPERSAD · CFD, MFA · BRANCH MANAGER · 23x MDRT',M,y);
+  doc.save('QueryPal_Receipt_'+p.reference.replace(/[^A-Za-z0-9]+/g,'_')+'.pdf');
+}
+
+/* ---- Track a request (uses the same Apps Script; degrades gracefully) ---- */
+function openTrack(){document.getElementById('trackModal').classList.add('show');setTimeout(()=>document.getElementById('trackRef').focus(),80);}
+function closeTrack(){document.getElementById('trackModal').classList.remove('show');}
+function trackFallback(ref){
+  const wa='https://wa.me/'+BRANCH_WA+'?text='+encodeURIComponent('Hi, following up on my Query Pal request. Ref: '+ref);
+  const ml='mailto:support@rickyrampersadbranch.com?subject='+encodeURIComponent('Follow up — '+ref);
+  return `<div class="trackcard"><b>Live tracking isn't switched on for this reference yet.</b><br>
+    Quote it to the branch and the team will pull it up instantly:
+    <div class="mbtns"><a class="btn btn-wa" href="${wa}" target="_blank" rel="noopener">💬 WhatsApp the branch</a>
+    <a class="btn btn-ghost" href="${ml}">✉️ Email support</a></div></div>`;
+}
+function trackGo(){
+  const ref=document.getElementById('trackRef').value.trim();
+  const out=document.getElementById('trackOut');
+  if(!ref){out.innerHTML='<div class="trackcard">Enter your reference first — it starts with <b>RRB/</b>.</div>';return;}
+  out.innerHTML='<div class="trackcard">Checking…</div>';
+  const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),10000);
+  fetch(SHEET_WEBHOOK_URL+'?action=track&ref='+encodeURIComponent(ref),{signal:ctl.signal})
+    .then(r=>r.json()).then(d=>{
+      clearTimeout(to);
+      if(!d||d.found!==true){
+        out.innerHTML=(d&&d.found===false)
+          ?`<div class="trackcard">Nothing found for <b>${esc(ref)}</b> — check the reference and try again, or use the buttons below.${trackFallback(ref)}</div>`
+          :trackFallback(ref);
+        return;
+      }
+      const open=(d.status||'Open').toLowerCase().indexOf('close')===-1;
+      out.innerHTML=`<div class="trackcard">
+        <span class="statuspill ${open?'st-open':'st-closed'}">${esc(d.status||'Open')}</span>
+        <div class="trow"><span>Request</span><b>${esc(d.queryType||'—')}</b></div>
+        <div class="trow"><span>Department</span><b>${esc(d.department||'—')}</b></div>
+        <div class="trow"><span>Logged</span><b>${esc(d.logged||'—')}</b></div>
+        <div class="trow"><span>Turnaround</span><b>${esc(d.turnaround||'—')}</b></div>
+        ${d.dateClosed?`<div class="trow"><span>Closed</span><b>${esc(d.dateClosed)}</b></div>`:''}
+        ${open?`<div class="tnote">Still with the team — updates come by email. Need it faster? <a class="tracklink" href="https://wa.me/${BRANCH_WA}?text=${encodeURIComponent('Following up on '+ref)}" target="_blank" rel="noopener">WhatsApp the branch</a>.</div>`:''}
+      </div>`;
+    }).catch(()=>{clearTimeout(to);out.innerHTML=trackFallback(ref);});
+}
+
+/* ---- voice input for smart search (hides itself when unsupported) ---- */
+let _rec=null,_recOn=false;
+(function(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  const btn=document.getElementById('micBtn');
+  if(!SR){if(btn)btn.style.display='none';return;}
+  _rec=new SR();_rec.lang='en-GB';_rec.interimResults=true;_rec.continuous=false;
+  _rec.onresult=e=>{let t='';for(const r of e.results)t+=r[0].transcript;const s=document.getElementById('smart');s.value=t;smartSearch(t);};
+  _rec.onend=()=>{_recOn=false;if(btn)btn.classList.remove('listening');};
+  _rec.onerror=()=>{_recOn=false;if(btn)btn.classList.remove('listening');};
+})();
+function micToggle(){
+  if(!_rec){toast('Voice input is not supported on this browser');return;}
+  if(_recOn){try{_rec.stop();}catch(e){}return;}
+  _recOn=true;document.getElementById('micBtn').classList.add('listening');
+  const s=document.getElementById('smart');s.value='';s.focus();
+  try{_rec.start();}catch(e){_recOn=false;document.getElementById('micBtn').classList.remove('listening');}
+}
+</script>
+
+<!-- RAI floating assistant -->
+<button id="raiBtn" onclick="toggleRAI()">
+  <span class="ravatar">
+    <svg viewBox="0 0 64 64" fill="none"><defs><linearGradient id="rgold" x1="14" y1="6" x2="52" y2="58" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffd95c"/><stop offset=".55" stop-color="#f2ac1d"/><stop offset="1" stop-color="#d98908"/></linearGradient></defs><path d="M32 3L8 12v20c0 16 11 25 24 29 13-4 24-13 24-29V12L32 3z" fill="url(#rgold)"/><path d="M21 33l8 8 15-16" stroke="#0e2f4a" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </span>
+  <span>Ask RAI</span>
+  <span class="rpulse"></span>
+</button>
+<div id="raiPanel">
+  <div class="raihead">
+    <span class="ravatar"><svg viewBox="0 0 64 64" fill="none"><defs><linearGradient id="rgold" x1="14" y1="6" x2="52" y2="58" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffd95c"/><stop offset=".55" stop-color="#f2ac1d"/><stop offset="1" stop-color="#d98908"/></linearGradient></defs><path d="M32 3L8 12v20c0 16 11 25 24 29 13-4 24-13 24-29V12L32 3z" fill="url(#rgold)"/><path d="M21 33l8 8 15-16" stroke="#0e2f4a" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    <div><div class="rt1">RAI</div><div class="rt2"><span class="rdot"></span> Ricky Artificial Intelligence · always willing to help</div></div>
+    <button class="rclose" onclick="toggleRAI()">×</button>
+  </div>
+  <div class="raibody" id="raiBody"></div>
+  <div class="raifoot">
+    <input id="raiInput" placeholder="Ask me anything about your query..." onkeydown="if(event.key==='Enter')raiSend()">
+    <button onclick="raiSend()">➤</button>
+  </div>
+</div>
+
+<script>
+/* ============ CONDITIONAL GUIDED FORMS ============ */
+/* Only these query types trigger guided form-fields. Extend as more forms are added. */
+const FORM_QUERIES = {
+  "Change of Beneficiary - Life and Pension": {
+    kind:"beneficiary",
+    title:"Change of Beneficiary form",
+    sub:"We'll build the official form (2000-03-121) from what you enter, with your signature and ID.",
+    needsSig:true, needsID:true
+  },
+  "Recurring Credit Card Set up and Update": {
+    kind:"rcc",
+    title:"Recurring Credit Card",
+    sub:"Upload a clear photo of the credit card to set up or update recurring premium payments.",
+    needsCard:true
+  }
+  // future: "Surrenders":{kind:"surrender",...}, "Change of Address - Life and Pension":{...}
+};
+
+let formState={bens:[],sigs:{owner:null,witness:null,ben:null},id:null,card:null,benCount:0,gen:null};
+
+function renderFormFields(q){
+  const box=document.getElementById('formFields');
+  const cfg=FORM_QUERIES[q.type];
+  if(!cfg){box.innerHTML='';formState={bens:[],sigs:{owner:null,witness:null,ben:null},id:null,card:null,benCount:0,gen:null};return;}
+
+  if(cfg.kind==='beneficiary'){
+    box.innerHTML=`
+      <div class="formguide">
+        <div class="fh">🧾 ${cfg.title}</div>
+        <p class="fsub">${cfg.sub}</p>
+        <div class="field"><label>Life Assured <span class="req">*</span></label><input id="ff_life" placeholder="Name of the person insured"></div>
+        <div style="font-size:12px;font-weight:800;color:#0c7a6e;margin:6px 0 8px;">New beneficiary(ies)</div>
+        <div id="ff_benList"></div>
+        <button class="addben" type="button" onclick="ffAddBen()">＋ Add another beneficiary</button>
+        <div style="font-size:12px;font-weight:800;color:#0c7a6e;margin:16px 0 6px;">Signature of Policy Owner / Trustee <span class="req">*</span></div>
+        <div id="ff_sigOwner"></div>
+        <div class="field" style="margin-top:14px;"><label>Witness name (optional)</label><input id="ff_witness" placeholder="Full name of witness"></div>
+        <div style="font-size:12px;font-weight:800;color:#0c7a6e;margin:6px 0 6px;">Signature of Witness (optional)</div>
+        <div id="ff_sigWitness"></div>
+        <div style="font-size:12px;font-weight:800;color:#0c7a6e;margin:16px 0 8px;">🪪 Valid photo ID <span class="req">*</span></div>
+        <div class="drop" onclick="document.getElementById('ff_id').click()"><div class="di">📷</div><div class="dt">Tap to upload a photo of your ID</div><div class="ds">Driver's permit, passport or national ID — auto-compressed.</div></div>
+        <input type="file" id="ff_id" accept="image/*" style="display:none" onchange="ffHandleID(this)">
+        <div id="ff_idPrev"></div>
+      </div>`;
+    formState={bens:[],sigs:{owner:null,witness:null,ben:null},id:null,card:null,benCount:0,gen:null};
+    ffAddBen();
+    ffMakeSig('ff_sigOwner','owner');
+    ffMakeSig('ff_sigWitness','witness');
+  }
+
+  if(cfg.kind==='rcc'){
+    box.innerHTML=`
+      <div class="formguide">
+        <div class="fh">💳 ${cfg.title}</div>
+        <p class="fsub">${cfg.sub}</p>
+        <div class="field"><label>Name on card <span class="req">*</span></label><input id="ff_cardname" placeholder="Cardholder's full name as printed"></div>
+        <div style="font-size:12px;font-weight:800;color:#0c7a6e;margin:10px 0 8px;">💳 Photo of the credit card <span class="req">*</span></div>
+        <div class="drop" onclick="document.getElementById('ff_card').click()"><div class="di">📷</div><div class="dt">Tap to upload a clear photo of the card</div><div class="ds">Front of the card showing name &amp; number. Auto-compressed &amp; sent securely to the RCC unit only.</div></div>
+        <input type="file" id="ff_card" accept="image/*" style="display:none" onchange="ffHandleCard(this)">
+        <div id="ff_cardPrev"></div>
+        <div style="background:#fff8ec;border:1px solid #ffe1b0;border-radius:9px;padding:9px 12px;margin-top:10px;font-size:11.5px;color:#8a6d2e;">🔒 For your security, the card image is sent only to the Recurring Credit Card unit and is never stored in Salesforce.</div>
+      </div>`;
+    formState={bens:[],sigs:{owner:null,witness:null,ben:null},id:null,card:null,benCount:0,gen:null};
+  }
+}
+
+function ffAddBen(){
+  formState.benCount++;const n=formState.benCount;
+  const d=document.createElement('div');d.className='ben';
+  d.innerHTML='<span class="bn">Beneficiary '+n+'</span>'+
+    (n>1?'<button class="del" type="button" onclick="this.parentNode.remove()">×</button>':'')+
+    '<div class="field" style="margin-top:6px;"><label>Full name</label><input class="ffb-name" placeholder="Beneficiary full name"></div>'+
+    '<div class="two"><div class="field"><label>Date of birth</label><input class="ffb-dob" type="date"></div>'+
+    '<div class="field"><label>Relationship</label><input class="ffb-rel" placeholder="e.g. Spouse, Son"></div></div>';
+  document.getElementById('ff_benList').appendChild(d);
+}
+function ffGetBens(){return [...document.querySelectorAll('#ff_benList .ben')].map(b=>({
+  name:b.querySelector('.ffb-name').value.trim(),dob:b.querySelector('.ffb-dob').value,rel:b.querySelector('.ffb-rel').value.trim()
+})).filter(x=>x.name);}
+
+function ffMakeSig(mountId,key){
+  const m=document.getElementById(mountId);
+  m.innerHTML='<div class="sigwrap"><div class="sigtabs"><button type="button" class="sigtab active" data-t="draw">✍️ Draw</button><button type="button" class="sigtab" data-t="upload">📷 Upload</button><button type="button" class="sigtab" data-t="type">⌨️ Type</button></div><div class="sigbody"><div class="sp-draw"><canvas class="sigpad"></canvas><br><button type="button" class="sigclear">Clear</button></div><div class="sp-upload hidden"><div class="drop" style="padding:12px;"><div class="di" style="font-size:20px;">📷</div><div class="dt" style="font-size:12px;">Upload signature image</div></div><input type="file" accept="image/*" style="display:none"></div><div class="sp-type hidden"><div class="sigtyped"></div><input class="sigtype-in" placeholder="Type your full name"></div></div></div>';
+  const tabs=m.querySelectorAll('.sigtab');
+  const draw=m.querySelector('.sp-draw'),up=m.querySelector('.sp-upload'),ty=m.querySelector('.sp-type');
+  tabs.forEach(t=>t.onclick=()=>{tabs.forEach(x=>x.classList.remove('active'));t.classList.add('active');draw.classList.add('hidden');up.classList.add('hidden');ty.classList.add('hidden');if(t.dataset.t==='draw')draw.classList.remove('hidden');if(t.dataset.t==='upload')up.classList.remove('hidden');if(t.dataset.t==='type')ty.classList.remove('hidden');});
+  const cv=m.querySelector('.sigpad'),ctx=cv.getContext('2d');
+  setTimeout(()=>{const r=cv.getBoundingClientRect();cv.width=r.width*2;cv.height=r.height*2;ctx.scale(2,2);ctx.lineWidth=2;ctx.lineCap='round';ctx.strokeStyle='#14315a';},80);
+  let dr=false;
+  function pos(e){const r=cv.getBoundingClientRect();const t=e.touches?e.touches[0]:e;return{x:t.clientX-r.left,y:t.clientY-r.top};}
+  function st(e){dr=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);e.preventDefault();}
+  function mv(e){if(!dr)return;const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();e.preventDefault();formState.sigs[key]={type:'draw',data:cv.toDataURL('image/png')};}
+  function en(){dr=false;}
+  cv.addEventListener('mousedown',st);cv.addEventListener('mousemove',mv);cv.addEventListener('mouseup',en);cv.addEventListener('mouseleave',en);
+  cv.addEventListener('touchstart',st);cv.addEventListener('touchmove',mv);cv.addEventListener('touchend',en);
+  m.querySelector('.sigclear').onclick=()=>{ctx.clearRect(0,0,cv.width,cv.height);if(formState.sigs[key]&&formState.sigs[key].type==='draw')formState.sigs[key]=null;};
+  const ud=up.querySelector('.drop'),ui=up.querySelector('input');
+  ud.onclick=()=>ui.click();
+  ui.onchange=()=>{const f=ui.files[0];if(!f)return;ffCompress(f,600,r=>{formState.sigs[key]={type:'upload',data:r};ud.innerHTML='<div style="color:#5b7c2f;font-weight:700;font-size:12px;">✓ Signature uploaded</div>';});};
+  const ti=ty.querySelector('.sigtype-in'),to=ty.querySelector('.sigtyped');
+  ti.oninput=()=>{to.textContent=ti.value||'';formState.sigs[key]=ti.value.trim()?{type:'type',data:ti.value.trim()}:null;};
+}
+
+function ffCompress(file,maxW,cb){const r=new FileReader();r.onload=e=>{const img=new Image();img.onload=()=>{let w=img.width,h=img.height;if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);cb(c.toDataURL('image/jpeg',0.72));};img.src=e.target.result;};r.readAsDataURL(file);}
+function ffHandleID(input){const f=input.files[0];if(!f)return;ffCompress(f,1024,r=>{formState.id=r;document.getElementById('ff_idPrev').innerHTML='<div class="idprev"><img src="'+r+'"><span class="ok">✓ ID uploaded &amp; ready</span><button class="rm" type="button" onclick="ffClearID()">remove</button></div>';});}
+function ffClearID(){formState.id=null;document.getElementById('ff_idPrev').innerHTML='';document.getElementById('ff_id').value='';}
+function ffHandleCard(input){const f=input.files[0];if(!f)return;ffCompress(f,1024,r=>{formState.card=r;document.getElementById('ff_cardPrev').innerHTML='<div class="idprev"><img src="'+r+'"><span class="ok">✓ Card photo uploaded &amp; ready</span><button class="rm" type="button" onclick="ffClearCard()">remove</button></div>';});}
+function ffClearCard(){formState.card=null;document.getElementById('ff_cardPrev').innerHTML='';document.getElementById('ff_card').value='';}
+
+/* Optional photo attachment for standard queries (guided forms handle their own uploads) */
+function renderGenAttach(q){
+  const box=document.getElementById('genAttach');
+  if(!box)return;
+  formState.gen=null;
+  if(FORM_QUERIES[q.type]){box.innerHTML='';return;}
+  box.innerHTML=`
+    <div class="field">
+      <label>Attach a photo <span class="hintinline">(optional — receipt, letter or completed form)</span></label>
+      <div class="drop" onclick="document.getElementById('gen_file').click()">
+        <div class="di">📎</div><div class="dt">Tap to attach one clear photo</div>
+        <div class="ds">It travels with your request straight to the department. Auto-compressed.</div>
+      </div>
+      <input type="file" id="gen_file" accept="image/*" style="display:none" onchange="genHandle(this)">
+      <div id="gen_prev"></div>
+    </div>`;
+}
+function genHandle(input){
+  const f=input.files[0];if(!f)return;
+  ffCompress(f,1200,r=>{
+    formState.gen={data:r};
+    document.getElementById('gen_prev').innerHTML='<div class="idprev"><img src="'+r+'"><span class="ok">✓ Photo attached &amp; ready</span><button class="rm" type="button" onclick="genClear()">remove</button></div>';
+  });
+}
+function genClear(){formState.gen=null;document.getElementById('gen_prev').innerHTML='';const i=document.getElementById('gen_file');if(i)i.value='';}
+
+function ffFmtDate(d){if(!d)return '';const x=new Date(d+'T00:00');return x.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}
+
+/* Build the beneficiary PDF (returns dataURI base64) */
+function ffBeneficiaryPDF(){
+  const {jsPDF}=window.jspdf;const doc=new jsPDF({unit:'pt',format:'letter'});
+  const M=48;let y=54;
+  const pol=document.getElementById('f_policy').value.trim();
+  const la=(document.getElementById('ff_life')||{}).value||'';
+  const wit=(document.getElementById('ff_witness')||{}).value||'';
+  const bens=ffGetBens();const today=new Date();
+  doc.setFont('times','bold');doc.setFontSize(14);doc.setTextColor(40,40,106);doc.text('Guardian Group',M,y);
+  doc.setFont('times','normal');doc.setFontSize(8);doc.setTextColor(160,27,74);doc.text('Guardian Life of The Caribbean Limited',M,y+12);
+  doc.setTextColor(60,60,60);doc.setFontSize(7);
+  doc.text('1 Guardian Drive, Westmoorings · P.O. Box 88, Port of Spain, Trinidad & Tobago',612-M,y,{align:'right'});
+  doc.text('Tel: (868) 632-LIFE · Fax: (868) 632-5695',612-M,y+10,{align:'right'});
+  y+=26;doc.setDrawColor(120);doc.line(M,y,612-M,y);y+=24;
+  doc.setFont('times','bold');doc.setFontSize(14);doc.setTextColor(20,20,20);doc.text('REQUEST FOR CHANGE OF BENEFICIARY',306,y,{align:'center'});y+=15;
+  doc.setFont('times','normal');doc.setFontSize(10);doc.setTextColor(85,85,85);doc.text('(Ordinary Policy)',306,y,{align:'center'});y+=28;
+  doc.setFontSize(11);doc.setTextColor(20,20,20);doc.text('Policy No.: '+pol,M,y);doc.text('Life Assured: '+la,330,y);y+=22;
+  doc.setFont('times','bold');doc.text('BENEFICIARY(IES):',M,y);y+=16;
+  doc.setFontSize(9);doc.setTextColor(85,85,85);doc.text('FULL NAME',M,y);doc.text('DATE OF BIRTH',300,y);doc.text('RELATIONSHIP',430,y);
+  y+=4;doc.setDrawColor(150);doc.line(M,y,612-M,y);y+=14;doc.setFont('times','normal');doc.setFontSize(10);doc.setTextColor(20,20,20);
+  bens.forEach(b=>{doc.text(b.name||'',M,y);doc.text(ffFmtDate(b.dob),300,y);doc.text(b.rel||'',430,y);y+=6;doc.setDrawColor(210);doc.line(M,y,612-M,y);y+=16;});
+  y+=8;doc.setFontSize(7.5);doc.setTextColor(70,70,70);
+  const legal='Unless otherwise expressly provided herein, if two or more persons are named as beneficiaries, then such beneficiaries shall share equally in the proceeds and upon the death of one or more of them, payment shall be made to the survivor or survivors. If no beneficiary survives the insured, the proceeds shall be paid in one sum according to the terms of the policy to the estate of the insured. The right to revoke the designation at any time while this policy is in force is hereby reserved in accordance with the provisions of the policy. I, the policy owner, certify that I have not been declared a bankrupt and agree that the provisions of this notice of change in beneficiary shall be subject to any assignment of said Policy.';
+  const ll=doc.splitTextToSize(legal,612-2*M);doc.text(ll,M,y);y+=ll.length*9+16;
+  doc.setFontSize(10);doc.setTextColor(20,20,20);doc.text('Dated this '+today.getDate()+' day of '+today.toLocaleDateString('en-GB',{month:'long'})+', '+today.getFullYear(),M,y);y+=30;
+  function ps(s,x,w){if(!s)return;if(s.type==='type'){doc.setFont('times','italic');doc.setFontSize(15);doc.text(s.data,x,y);doc.setFont('times','normal');}else{try{doc.addImage(s.data,'PNG',x,y-26,w,30);}catch(e){}}}
+  ps(formState.sigs.owner,M,150);ps(formState.sigs.witness,330,150);
+  y+=6;doc.setDrawColor(80);doc.line(M,y,M+170,y);doc.line(330,y,330+170,y);y+=12;
+  doc.setFontSize(9);doc.setTextColor(85,85,85);doc.text('Signature of Policy Owner / Trustee',M,y);doc.text('Signature of Witness'+(wit?' — '+wit:''),330,y);
+  doc.setFontSize(7);doc.setTextColor(150);doc.text('2000-03-121 · Submitted via Ricky Rampersad Branch Query Pal',M,792-30);
+  return doc.output('datauristring');
+}
+
+/* validate guided-form before submit; returns {ok, attach} */
+function genAttachResult(){
+  if(formState.gen){
+    const nm=cleanPart(document.getElementById('f_client').value.trim()).replace(/\s+/g,'_')||'client';
+    return {ok:true,attach:{
+      attachId:formState.gen.data.split(',')[1],
+      attachIdName:'Attachment_'+nm+'.jpg',
+      noSalesforceAttach:true,
+      formExtra:'Photo attachment included'
+    }};
+  }
+  return {ok:true,attach:{}};
+}
+function ffValidateAndBuild(q){
+  const cfg=FORM_QUERIES[q.type];
+  if(!cfg)return genAttachResult();
+  if(cfg.kind==='beneficiary'){
+    if(!(document.getElementById('ff_life')||{}).value.trim()){toast('Enter the life assured');return {ok:false};}
+    if(!ffGetBens().length){toast('Add at least one beneficiary');return {ok:false};}
+    if(cfg.needsSig && !formState.sigs.owner){toast('Policy owner signature is required');return {ok:false};}
+    if(cfg.needsID && !formState.id){toast('Please upload a valid photo ID');return {ok:false};}
+    const pdf=ffBeneficiaryPDF();
+    return {ok:true,attach:{
+      attachPdf:pdf.split(',')[1],
+      attachPdfName:'Change_of_Beneficiary_'+document.getElementById('f_policy').value.trim()+'.pdf',
+      attachId:formState.id?formState.id.split(',')[1]:'',
+      attachIdName:'ID_'+(document.getElementById('f_client').value.trim().replace(/\s+/g,'_'))+'.jpg',
+      noSalesforceAttach:true,
+      formExtra:'Life Assured: '+(document.getElementById('ff_life')||{}).value+' | Beneficiaries: '+ffGetBens().map(b=>b.name+(b.rel?' ('+b.rel+')':'')).join('; ')
+    }};
+  }
+  if(cfg.kind==='rcc'){
+    const cn=(document.getElementById('ff_cardname')||{}).value.trim();
+    if(!cn){toast('Enter the name on the card');return {ok:false};}
+    if(cfg.needsCard && !formState.card){toast('Please upload a photo of the card');return {ok:false};}
+    return {ok:true,attach:{
+      attachId:formState.card?formState.card.split(',')[1]:'',
+      attachIdName:'RCC_Card_'+cn.replace(/\s+/g,'_')+'.jpg',
+      noSalesforceAttach:true,
+      formExtra:'Recurring Credit Card setup/update · Name on card: '+cn
+    }};
+  }
+  return genAttachResult();
+}
+
+/* ============ RAI ASSISTANT ============ */
+/* RAI now runs on two engines:
+   1. LOCAL BRAIN (always on): answers from the full query catalogue — intent
+      detection via the same scorer as smart search, prep lists, turnarounds,
+      and a "Start this request" button that loads the wizard directly.
+   2. LIVE CLAUDE (optional): flip RAI_LIVE to true AFTER upgrading the Apps
+      Script to v2 (see QueryPal_Backend_v6.gs). RAI then POSTs the chat to
+      the same webhook, which proxies Claude with your API key. If the live
+      call fails for any reason, RAI silently falls back to the local brain. */
+const RAI_LIVE = false;                 // ← set true once Apps Script v2 is deployed
+const RAI_API  = "";                    // optional custom endpoint; blank = SHEET_WEBHOOK_URL
+
+const RAI_KB = [
+  {k:["how long","turnaround","how many days","how much time"],a:"Each request shows its turnaround as a badge — green is 1–2 days, amber 3–5, red longer. When you pick one, I'll also show the date to expect an update by."},
+  {k:["beneficiary","change beneficiary"],go:"Change of Beneficiary - Life and Pension",a:"To change a beneficiary, I'll guide you to add each beneficiary, sign on screen and upload your ID — then the official form (2000-03-121) builds itself."},
+  {k:["what id","identification","which id","passport","permit"],a:"For changes like beneficiary or surrender you'll need a valid photo ID — driver's permit, passport or national ID. Just snap a photo; the page compresses it automatically."},
+  {k:["sign","signature"],a:"You can sign three ways: draw with your finger, upload a photo of your signature, or type your name. Any one works."},
+  {k:["surrender","cash in","withdraw"],a:"For cashing in or withdrawing, choose <b>My Money &amp; Payouts</b>. Life surrenders take about 5 working days; annuity surrenders 30–45 days and need a BIR number."},
+  {k:["track","reference","follow up","where is my request","status of my request"],a:"After submitting you get a reference like <b>RRB/2026/014/...</b> — quote it and the team finds your request instantly.<div class=\"rgoWrap\"><button class=\"rgo\" onclick=\"document.getElementById('raiPanel').classList.remove('show');openTrack()\">🔎 Track a request</button></div>"},
+  {k:["who is my agent","my agent"],a:"If you're an agent, start typing your name in the agent box and pick it from the list — your email attaches automatically. Clients can select 'I don't have an agent' if unsure."},
+  {k:["where does it go","route","department","who gets it"],a:"Your request is routed to the correct department automatically, and copied to your agent and branch support — so nothing falls through the cracks."},
+  {k:["paid","not showing","missing premium"],go:"Missing Premiums Individual Life and Pensions",a:"If you paid but it's not reflected, that's a <b>missing premium</b> query. Have your payment proof handy — you can attach a photo of the receipt right in the form."},
+  {k:["complaint","complain","unhappy","escalate","vex"],go:"Complaint",a:"To raise a complaint or escalate, choose <b>Something's Wrong</b>. These go straight to RR Branch Sales Support with a 1-day turnaround."},
+  {k:["rcc","recurring","credit card","auto pay","autopay"],go:"Recurring Credit Card Set up and Update",a:"To set up or update a recurring credit card, you'll upload a clear photo of the <b>front</b> of the card — it goes securely to the RCC unit only, never stored in Salesforce. Turnaround is 3 days."},
+  {k:["safe","secure","security","stored","privacy"],a:"Card and ID photos travel only to the department that needs them — card images go to the Recurring Credit Card unit alone and are never stored in Salesforce. Photograph the <b>front</b> of a card only, and keep the 3-digit code on the back covered."},
+  {k:["human","someone","talk to","speak to","call","phone number","contact","whatsapp"],a:"A real person from the branch team is one tap away: <a href=\"https://wa.me/18686786921\" target=\"_blank\" rel=\"noopener\"><b>WhatsApp 1-868-678-6921</b></a> or email <b>support@rickyrampersadbranch.com</b>."},
+  {k:["hours","open","opening","when are you open"],a:"You can log requests here 24/7 — the branch team actions them during working hours. Fastest follow-up is WhatsApp 1-868-678-6921."},
+  {k:["who are you","what is rai","are you real","robot"],a:"I'm <b>RAI</b> — Ricky Artificial Intelligence, the branch's digital assistant. I route your request to the right department, list what to prepare, and tell you how long things take."},
+  {k:["thank","thanks","appreciate"],a:"Any time! If anything else comes up, I'm right here."},
+  {k:["hello","hi","hey","good morning","good afternoon","good evening","morning","afternoon"],a:"Hi! Tell me what you need in your own words — like <i>\"I paid but it's not showing\"</i> or <i>\"change my address\"</i> — and I'll take you straight there."}
+];
+const RAI_CHIPS=["I paid but it's not showing","Change my beneficiary","Cash in a policy","Track my request","What ID do I need?"];
+
+let raiStarted=false;
+let raiHist=[];
+function toggleRAI(){
+  const p=document.getElementById('raiPanel');
+  p.classList.toggle('show');
+  if(p.classList.contains('show') && !raiStarted){raiStarted=true;raiGreet();}
+}
+function raiGreet(){
+  raiAdd('rai',"Hi! I'm <b>RAI</b> — Ricky Artificial Intelligence. Tell me what you need in plain words and I'll route it, tell you what to prepare, and load the form for you. What's going on?");
+  raiChips();
+}
+function raiChips(){
+  const b=document.getElementById('raiBody');
+  const d=document.createElement('div');d.className='rchips';
+  d.innerHTML=RAI_CHIPS.map(c=>`<span class="rchip" onclick="raiAsk('${c.replace(/'/g,"\\'")}')">${c}</span>`).join('');
+  b.appendChild(d);b.scrollTop=b.scrollHeight;
+}
+function raiAdd(who,html){
+  const b=document.getElementById('raiBody');
+  const m=document.createElement('div');m.className='rmsg '+who;
+  const av=who==='rai'?'<span class="rav"><svg viewBox="0 0 64 64" fill="none"><path d="M21 32l8 8 15-16" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>':'';
+  m.innerHTML=av+'<div class="rb">'+html+'</div>';
+  b.appendChild(m);b.scrollTop=b.scrollHeight;
+}
+function raiAsk(q){raiAdd('user',esc(q));setTimeout(()=>raiAnswer(q),250);}
+function raiSend(){const i=document.getElementById('raiInput');const v=i.value.trim();if(!v)return;i.value='';raiAsk(v);}
+function raiReply(html){raiHist.push({role:'assistant',content:html.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim()});raiAdd('rai',html);}
+function raiGoBtn(idx){return `<div class="rgoWrap"><button class="rgo" onclick="raiGo(${idx})">→ Start this request</button></div>`;}
+
+function raiAnswer(q){
+  raiHist.push({role:'user',content:q});
+  if(RAI_LIVE){raiLive(q);return;}
+  raiLocal(q);
+}
+
+/* LOCAL BRAIN — FAQ layer + full-catalogue intent matching */
+function raiLocal(q){
+  const ql=q.toLowerCase();
+  let best=null,bscore=0;
+  RAI_KB.forEach(item=>{
+    let s=0;
+    item.k.forEach(k=>{
+      const hit=k.length<=3?new RegExp('\\b'+k+'\\b').test(ql):ql.includes(k);
+      if(hit)s+=(k.length>6?3:2);
+    });
+    if(s>bscore){bscore=s;best=item;}
+  });
+  const hits=scoreQuery(ql).slice(0,3);
+  const strong=hits.length&&hits[0].score>=3;
+
+  if(best&&bscore>=2&&!(strong&&hits[0].score>bscore)){
+    let a=best.a;
+    if(best.go){const gi=DATA.findIndex(d=>d.type===best.go);if(gi>-1)a+=raiGoBtn(gi);}
+    raiReply(a);return;
+  }
+  if(hits.length){
+    const h=hits[0];
+    let a=`Sounds like <b>${esc(h.d.title)}</b> — that goes to <b>${esc(deptName(h.d.email))}</b>, usually resolved in <b>${tatLabel(h.d.tat)}</b>.`;
+    if(h.d.req){
+      const need=[...(h.d.req.forms||[]),...(h.d.req.docs||[])].slice(0,2);
+      if(need.length)a+=`<br>Have ready: ${need.map(esc).join(' · ')}.`;
+    }
+    a+=raiGoBtn(h.idx);
+    const alts=hits.slice(1).filter(x=>x.score>=hits[0].score-1);
+    if(alts.length){a+=`<div class="rmini">Not quite it?${alts.map(x=>` <span class="rchip" onclick="raiGo(${x.idx})">${esc(x.d.title)}</span>`).join('')}</div>`;}
+    raiReply(a);return;
+  }
+  if(best&&bscore>0){raiReply(best.a+(best.go?raiGoBtn(DATA.findIndex(d=>d.type===best.go)):''));return;}
+  raiReply("I can point you to the right request, tell you what to prepare, and how long things take. Try one of these:");
+  raiChips();
+}
+
+/* jump from chat straight into the wizard at step 4 */
+function raiGo(idx){
+  if(!state.who){
+    window._pendingQ=idx;
+    raiAdd('rai','One quick thing — who am I logging this for?<div class="rchips"><span class="rchip" onclick="raiWho(\'Client\')">🧍 I\'m the client</span><span class="rchip" onclick="raiWho(\'Agent\')">💼 I\'m an agent</span></div>');
+    return;
+  }
+  document.getElementById('raiPanel').classList.remove('show');
+  pickQ(idx);
+  toast('Loaded — just add your details');
+}
+function raiWho(w){
+  if(w==='Agent'&&!agentAuth){window._afterAuth=()=>raiWho('Agent');openGate();return;}
+  pickWho(w);
+  const idx=window._pendingQ;window._pendingQ=null;
+  document.getElementById('raiPanel').classList.remove('show');
+  if(idx!=null){pickQ(idx);toast('Loaded — just add your details');}
+}
+
+/* LIVE CLAUDE via the Apps Script proxy (v2) — falls back to the local brain */
+function raiLive(q){
+  const api=RAI_API||SHEET_WEBHOOK_URL;
+  const id='raiThink'+Date.now();
+  raiAdd('rai','<i id="'+id+'">Thinking…</i>');
+  const drop=()=>{const th=document.getElementById(id);if(th){const m=th.closest('.rmsg');if(m)m.remove();}};
+  const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),25000);
+  fetch(api,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'rai',messages:raiHist.slice(-12)}),signal:ctl.signal})
+    .then(r=>r.json()).then(d=>{
+      clearTimeout(to);drop();
+      if(d&&d.reply){raiHist.push({role:'assistant',content:d.reply});raiAdd('rai',esc(d.reply).replace(/\n/g,'<br>'));}
+      else raiLocal(q);
+    })
+    .catch(()=>{clearTimeout(to);drop();raiLocal(q);});
+}
+</script>
+
+</body>
+</html>
