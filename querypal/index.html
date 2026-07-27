@@ -290,6 +290,14 @@
   .idprev{display:flex;align-items:center;gap:12px;margin-top:10px;background:#f2f9ea;border:1px solid #dcecc6;border-radius:10px;padding:9px;}
   .idprev img{width:54px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #cde0b8;}
   .idprev .ok{font-size:12px;color:#5b7c2f;font-weight:700;}.idprev .rm{margin-left:auto;background:none;border:none;color:var(--bad);font-size:11.5px;cursor:pointer;text-decoration:underline;}
+  .filechip{display:flex;align-items:center;gap:11px;margin-top:8px;background:#f2f9ea;border:1px solid #dcecc6;border-radius:10px;padding:9px 11px;}
+  .filechip img{width:52px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #cde0b8;flex:none;}
+  .filechip .fi{width:44px;height:40px;border-radius:6px;flex:none;display:grid;place-items:center;font-size:19px;background:#fff;border:1px solid #cde0b8;}
+  .filechip .fm{min-width:0;flex:1;}
+  .filechip .fn{font-size:12.5px;color:#41611f;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .filechip .fs{font-size:11px;color:#7d9459;margin-top:2px;}
+  .filechip .rm{margin-left:auto;background:none;border:none;color:var(--bad);font-size:11.5px;cursor:pointer;text-decoration:underline;flex:none;}
+  .attwarn{font-size:11.5px;color:#a35a08;background:#fff8ec;border:1px solid #ffe4b8;border-radius:9px;padding:8px 10px;margin-top:8px;line-height:1.5;}
 
   /* ---------- RAI ---------- */
   #raiBtn{position:fixed;bottom:calc(22px + env(safe-area-inset-bottom));right:22px;z-index:200;display:flex;align-items:center;gap:10px;
@@ -1172,7 +1180,7 @@ function resetAll(){state={who:null,group:null,q:null,agentEmail:""};
   document.getElementById('f_pri').selectedIndex=0;
   const ff=document.getElementById('formFields');if(ff)ff.innerHTML='';
   const ga=document.getElementById('genAttach');if(ga)ga.innerHTML='';
-  formState={bens:[],sigs:{owner:null,witness:null,ben:null},id:null,card:null,benCount:0,gen:null};
+  formState={bens:[],sigs:{owner:null,witness:null,ben:null},id:null,card:null,benCount:0,gen:[]};
   window._lastPayload=null;
   document.getElementById('smart').value='';goto(1);}
 
@@ -1359,7 +1367,7 @@ const FORM_QUERIES = {
   // future: "Surrenders":{kind:"surrender",...}, "Change of Address - Life and Pension":{...}
 };
 
-let formState={bens:[],sigs:{owner:null,witness:null,ben:null},id:null,card:null,benCount:0,gen:null};
+let formState={bens:[],sigs:{owner:null,witness:null,ben:null},id:null,card:null,benCount:0,gen:[]};
 
 function renderFormFields(q){
   const box=document.getElementById('formFields');
@@ -1385,7 +1393,7 @@ function renderFormFields(q){
         <input type="file" id="ff_id" accept="image/*" style="display:none" onchange="ffHandleID(this)">
         <div id="ff_idPrev"></div>
       </div>`;
-    formState={bens:[],sigs:{owner:null,witness:null,ben:null},id:null,card:null,benCount:0,gen:null};
+    formState={bens:[],sigs:{owner:null,witness:null,ben:null},id:null,card:null,benCount:0,gen:[]};
     ffAddBen();
     ffMakeSig('ff_sigOwner','owner');
     ffMakeSig('ff_sigWitness','witness');
@@ -1403,7 +1411,7 @@ function renderFormFields(q){
         <div id="ff_cardPrev"></div>
         <div style="background:#fff8ec;border:1px solid #ffe1b0;border-radius:9px;padding:9px 12px;margin-top:10px;font-size:11.5px;color:#8a6d2e;">🔒 For your security, the card image is sent only to the Recurring Credit Card unit and is never stored in Salesforce.</div>
       </div>`;
-    formState={bens:[],sigs:{owner:null,witness:null,ben:null},id:null,card:null,benCount:0,gen:null};
+    formState={bens:[],sigs:{owner:null,witness:null,ben:null},id:null,card:null,benCount:0,gen:[]};
   }
 }
 
@@ -1444,37 +1452,110 @@ function ffMakeSig(mountId,key){
   ti.oninput=()=>{to.textContent=ti.value||'';formState.sigs[key]=ti.value.trim()?{type:'type',data:ti.value.trim()}:null;};
 }
 
-function ffCompress(file,maxW,cb){const r=new FileReader();r.onload=e=>{const img=new Image();img.onload=()=>{let w=img.width,h=img.height;if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);cb(c.toDataURL('image/jpeg',0.72));};img.src=e.target.result;};r.readAsDataURL(file);}
+function ffCompress(file,maxW,cb){const r=new FileReader();r.onerror=()=>cb(null,true);r.onload=e=>{const img=new Image();
+  img.onload=()=>{let w=img.width,h=img.height;if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);cb(c.toDataURL('image/jpeg',0.72),false);};
+  img.onerror=()=>cb(e.target.result,true);   /* HEIC & friends: send the original rather than nothing */
+  img.src=e.target.result;};r.readAsDataURL(file);}
+function dataUriMime(s){const m=/^data:([^;,]+)[;,]/.exec(s||'');return m?m[1].toLowerCase():'';}
+function mimeExt(m){return ({'image/jpeg':'jpg','image/png':'png','image/gif':'gif','image/webp':'webp','image/heic':'heic','image/heif':'heif','application/pdf':'pdf'})[String(m||'').toLowerCase()]||'jpg';}
 function ffHandleID(input){const f=input.files[0];if(!f)return;ffCompress(f,1024,r=>{formState.id=r;document.getElementById('ff_idPrev').innerHTML='<div class="idprev"><img src="'+r+'"><span class="ok">✓ ID uploaded &amp; ready</span><button class="rm" type="button" onclick="ffClearID()">remove</button></div>';});}
 function ffClearID(){formState.id=null;document.getElementById('ff_idPrev').innerHTML='';document.getElementById('ff_id').value='';}
 function ffHandleCard(input){const f=input.files[0];if(!f)return;ffCompress(f,1024,r=>{formState.card=r;document.getElementById('ff_cardPrev').innerHTML='<div class="idprev"><img src="'+r+'"><span class="ok">✓ Card photo uploaded &amp; ready</span><button class="rm" type="button" onclick="ffClearCard()">remove</button></div>';});}
 function ffClearCard(){formState.card=null;document.getElementById('ff_cardPrev').innerHTML='';document.getElementById('ff_card').value='';}
 
-/* Optional photo attachment for standard queries (guided forms handle their own uploads) */
+/* ---------- attachments: photos AND documents (PDF, Word, Excel, CSV, text) ----------
+   Guided forms handle their own ID/card capture; this is the general attach box.      */
+const ATT_MAX_FILES = 5;     // per query
+const ATT_MAX_MB    = 8;     // per file
+const ATT_TOTAL_MB  = 10;    // all files together, after compression — keeps us under Gmail's cap
+const ATT_EXT_MIME  = {pdf:'application/pdf',doc:'application/msword',
+  docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xls:'application/vnd.ms-excel',
+  xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  csv:'text/csv',txt:'text/plain',rtf:'application/rtf',
+  odt:'application/vnd.oasis.opendocument.text',
+  jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',gif:'image/gif',
+  webp:'image/webp',heic:'image/heic',heif:'image/heif'};
+const ATT_ACCEPT = 'image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.rtf,.odt,.heic,.heif';
+const ATT_OK_RX  = /^(application\/(pdf|msword|rtf|vnd\.ms-excel|vnd\.openxmlformats-officedocument\.(wordprocessingml\.document|spreadsheetml\.sheet)|vnd\.oasis\.opendocument\.text)|text\/(plain|csv)|image\/(jpeg|png|gif|webp|heic|heif))$/i;
+
+function attExt(n){const m=/\.([A-Za-z0-9]+)$/.exec(n||'');return m?m[1].toLowerCase():'';}
+function attMime(f){return (f.type||ATT_EXT_MIME[attExt(f.name)]||'').toLowerCase();}
+function attIsPhoto(f){const m=attMime(f);return /^image\//.test(m)&&!/heic|heif/.test(m);}
+function attSize(b){return b<1024?b+' B':(b<1048576?(b/1024).toFixed(0)+' KB':(b/1048576).toFixed(1)+' MB');}
+function attBytesOf(uri){const i=(uri||'').indexOf(',');return i<0?0:Math.round((uri.length-i-1)*0.75);}
+function attIcon(mime,ext){
+  if(/^image\//.test(mime))return '🖼️';
+  if(/pdf/.test(mime)||ext==='pdf')return '📕';
+  if(/word|opendocument\.text/.test(mime)||ext==='doc'||ext==='docx'||ext==='odt')return '📘';
+  if(/excel|spreadsheet|csv/.test(mime)||ext==='xls'||ext==='xlsx'||ext==='csv')return '📗';
+  return '📄';
+}
+function attSafeName(orig,who,i){
+  const ext=attExt(orig)||mimeExt(ATT_EXT_MIME[attExt(orig)]||'');
+  let base=(orig||'').replace(/\.[^.]+$/,'').replace(/[^A-Za-z0-9 _-]+/g,' ').replace(/\s+/g,'_').substring(0,40);
+  if(!base)base='Attachment'+(i+1);
+  return (who?who+'_':'')+base+(ext?'.'+ext:'');
+}
+
 function renderGenAttach(q){
   const box=document.getElementById('genAttach');
   if(!box)return;
-  formState.gen=null;
+  formState.gen=[];
   if(FORM_QUERIES[q.type]){box.innerHTML='';return;}
   box.innerHTML=`
     <div class="field">
-      <label>Attach a photo <span class="hintinline">(optional — receipt, letter or completed form)</span></label>
+      <label>Attach files <span class="hintinline">(optional — receipt, letter, completed form or document)</span></label>
       <div class="drop" onclick="document.getElementById('gen_file').click()">
-        <div class="di">📎</div><div class="dt">Tap to attach one clear photo</div>
-        <div class="ds">It travels with your request straight to the department. Auto-compressed.</div>
+        <div class="di">📎</div><div class="dt">Tap to attach photos or documents</div>
+        <div class="ds">PDF, Word, Excel, CSV, text or photos — up to ${ATT_MAX_FILES} files. They travel with your request straight to the department. Photos are auto-compressed.</div>
       </div>
-      <input type="file" id="gen_file" accept="image/*" style="display:none" onchange="genHandle(this)">
+      <input type="file" id="gen_file" accept="${ATT_ACCEPT}" multiple style="display:none" onchange="genHandle(this)">
       <div id="gen_prev"></div>
     </div>`;
 }
+
 function genHandle(input){
-  const f=input.files[0];if(!f)return;
-  ffCompress(f,1200,r=>{
-    formState.gen={data:r};
-    document.getElementById('gen_prev').innerHTML='<div class="idprev"><img src="'+r+'"><span class="ok">✓ Photo attached &amp; ready</span><button class="rm" type="button" onclick="genClear()">remove</button></div>';
-  });
+  const picked=[...input.files];
+  input.value='';                      // so the same file can be re-picked after removal
+  if(picked.length)genAdd(picked,[]);
 }
-function genClear(){formState.gen=null;document.getElementById('gen_prev').innerHTML='';const i=document.getElementById('gen_file');if(i)i.value='';}
+
+function genAdd(queue,warn){
+  if(!queue.length){genRender(warn);return;}
+  const f=queue.shift(), next=()=>genAdd(queue,warn);
+  if(formState.gen.length>=ATT_MAX_FILES){warn.push('“'+f.name+'” skipped — '+ATT_MAX_FILES+' files is the maximum.');return next();}
+  if(!ATT_OK_RX.test(attMime(f))){warn.push('“'+f.name+'” skipped — that file type isn\'t accepted. Use a PDF, Word, Excel, CSV, text file or photo.');return next();}
+  if(f.size>ATT_MAX_MB*1048576){warn.push('“'+f.name+'” is '+attSize(f.size)+' — the limit is '+ATT_MAX_MB+' MB per file.');return next();}
+  const take=(uri,raw)=>{
+    if(!uri){warn.push('“'+f.name+'” could not be read.');return next();}
+    const bytes=attBytesOf(uri);
+    const used=formState.gen.reduce((s,x)=>s+x.bytes,0);
+    if(used+bytes>ATT_TOTAL_MB*1048576){warn.push('“'+f.name+'” skipped — total attachments would pass '+ATT_TOTAL_MB+' MB.');return next();}
+    formState.gen.push({name:f.name,mime:(raw?attMime(f):'image/jpeg')||'application/octet-stream',
+                        data:uri,bytes:bytes,thumb:!raw&&attIsPhoto(f)});
+    next();
+  };
+  if(attIsPhoto(f)){ffCompress(f,1600,take);return;}
+  const r=new FileReader();
+  r.onerror=()=>{warn.push('“'+f.name+'” could not be read.');next();};
+  r.onload=e=>take(e.target.result,true);
+  r.readAsDataURL(f);
+}
+
+function genRender(warn){
+  const box=document.getElementById('gen_prev');if(!box)return;
+  let h=formState.gen.map((f,i)=>
+    '<div class="filechip">'
+    + (f.thumb?'<img src="'+f.data+'" alt="">':'<div class="fi">'+attIcon(f.mime,attExt(f.name))+'</div>')
+    + '<div class="fm"><div class="fn">'+esc(f.name)+'</div><div class="fs">'+attSize(f.bytes)+' · ready to send</div></div>'
+    + '<button class="rm" type="button" onclick="genRemove('+i+')">remove</button></div>').join('');
+  if(warn&&warn.length)h+='<div class="attwarn">'+warn.map(esc).join('<br>')+'</div>';
+  box.innerHTML=h;
+  if(warn&&warn.length)toast(warn.length+' file'+(warn.length>1?'s':'')+' couldn\'t be attached');
+}
+function genRemove(i){formState.gen.splice(i,1);genRender([]);}
+function genClear(){formState.gen=[];const b=document.getElementById('gen_prev');if(b)b.innerHTML='';const i=document.getElementById('gen_file');if(i)i.value='';}
 
 function ffFmtDate(d){if(!d)return '';const x=new Date(d+'T00:00');return x.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}
 
@@ -1513,16 +1594,16 @@ function ffBeneficiaryPDF(){
 
 /* validate guided-form before submit; returns {ok, attach} */
 function genAttachResult(){
-  if(formState.gen){
-    const nm=cleanPart(document.getElementById('f_client').value.trim()).replace(/\s+/g,'_')||'client';
-    return {ok:true,attach:{
-      attachId:formState.gen.data.split(',')[1],
-      attachIdName:'Attachment_'+nm+'.jpg',
-      noSalesforceAttach:true,
-      formExtra:'Photo attachment included'
-    }};
-  }
-  return {ok:true,attach:{}};
+  const picked=formState.gen||[];
+  if(!picked.length)return {ok:true,attach:{}};
+  const nm=cleanPart(document.getElementById('f_client').value.trim()).replace(/\s+/g,'_')||'client';
+  const files=picked.map((f,i)=>({name:attSafeName(f.name,nm,i),mime:f.mime,data:f.data.split(',')[1]}));
+  const att={files:files,noSalesforceAttach:true,
+    formExtra:files.length+' attachment'+(files.length>1?'s':'')+': '+files.map(f=>f.name).join(', ')};
+  /* also fill the old single-file slot, so attachments still arrive if the
+     Apps Script backend has not been redeployed yet */
+  att.attachId=files[0].data; att.attachIdName=files[0].name; att.attachIdMime=files[0].mime;
+  return {ok:true,attach:att};
 }
 function ffValidateAndBuild(q){
   const cfg=FORM_QUERIES[q.type];
@@ -1537,7 +1618,8 @@ function ffValidateAndBuild(q){
       attachPdf:pdf.split(',')[1],
       attachPdfName:'Change_of_Beneficiary_'+document.getElementById('f_policy').value.trim()+'.pdf',
       attachId:formState.id?formState.id.split(',')[1]:'',
-      attachIdName:'ID_'+(document.getElementById('f_client').value.trim().replace(/\s+/g,'_'))+'.jpg',
+      attachIdMime:formState.id?dataUriMime(formState.id):'',
+      attachIdName:'ID_'+(document.getElementById('f_client').value.trim().replace(/\s+/g,'_'))+'.'+mimeExt(dataUriMime(formState.id)),
       noSalesforceAttach:true,
       formExtra:'Life Assured: '+(document.getElementById('ff_life')||{}).value+' | Beneficiaries: '+ffGetBens().map(b=>b.name+(b.rel?' ('+b.rel+')':'')).join('; ')
     }};
@@ -1548,7 +1630,8 @@ function ffValidateAndBuild(q){
     if(cfg.needsCard && !formState.card){toast('Please upload a photo of the card');return {ok:false};}
     return {ok:true,attach:{
       attachId:formState.card?formState.card.split(',')[1]:'',
-      attachIdName:'RCC_Card_'+cn.replace(/\s+/g,'_')+'.jpg',
+      attachIdMime:formState.card?dataUriMime(formState.card):'',
+      attachIdName:'RCC_Card_'+cn.replace(/\s+/g,'_')+'.'+mimeExt(dataUriMime(formState.card)),
       noSalesforceAttach:true,
       formExtra:'Recurring Credit Card setup/update · Name on card: '+cn
     }};
