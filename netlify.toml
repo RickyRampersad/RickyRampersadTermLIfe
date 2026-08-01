@@ -1,0 +1,21 @@
+# Netlify configuration for the renewal portal.
+
+# Short personal links: /r/<token> → renewal portal with the token attached.
+# These are the links stored in the Google Sheet's "Portal Link" column.
+[[redirects]]
+  from = "/r/*"
+  to = "/renewal/?t=:splat"
+  status = 302
+
+# Convenience: /renew also opens the portal.
+[[redirects]]
+  from = "/renew"
+  to = "/renewal/"
+  status = 302
+
+[[headers]]
+  for = "/renewal/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
