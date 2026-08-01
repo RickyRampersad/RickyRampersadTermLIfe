@@ -34,10 +34,8 @@ var CONFIG = {
   AGENT_PHONE: '(868) 678-5921',
 
   // --- Guardian ----------------------------------------------------------
-  // TODO: paste the Guardian renewals email address here when you have it.
-  // While this is blank, instruction emails go only to AGENT_EMAIL so
-  // nothing is lost — you can forward manually until it's set.
-  GUARDIAN_RENEWALS_EMAIL: '',
+  // Renewal instruction emails go here, with AGENT_EMAIL CC'd on every one.
+  GUARDIAN_RENEWALS_EMAIL: 'GuardianGeneralRenewals@myguardiangroup.com',
 
   // --- Portal ------------------------------------------------------------
   // Your Netlify site. The /r/ path redirects to the portal with the token.
