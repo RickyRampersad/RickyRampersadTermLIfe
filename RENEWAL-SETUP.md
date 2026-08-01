@@ -34,9 +34,9 @@ with sample data until Part 2 is done).
    contents of [`apps-script/Code.gs`](apps-script/Code.gs).
 3. At the top of the script, edit `CONFIG`:
    - `PORTAL_BASE` → `https://YOUR-SITE.netlify.app/r/` (your real Netlify name)
-   - `GUARDIAN_RENEWALS_EMAIL` → the Guardian renewals address **(send it to me and
-     I'll wire it in — until it's set, instruction emails go to you only, so nothing
-     is ever lost)**
+   - `GUARDIAN_RENEWALS_EMAIL` is already set to
+     `GuardianGeneralRenewals@myguardiangroup.com` — every instruction email goes
+     there with you CC'd.
    - Check `AGENT_EMAIL` / `AGENT_PHONE` are correct.
 4. Click **Run → setup** once. Approve the permissions when Google asks
    (it needs to read the sheet and send email as you).
@@ -99,7 +99,7 @@ same client account name = same link across all their policies.
 
 ## Still to plug in
 
-- [ ] **Guardian renewals email address** → `GUARDIAN_RENEWALS_EMAIL` in `Code.gs`
+- [x] **Guardian renewals email address** — set to `GuardianGeneralRenewals@myguardiangroup.com`
 - [ ] **Your Netlify site name** → `PORTAL_BASE` in `Code.gs`
 - [ ] **Apps Script `/exec` URL** → `API_URL` in `renewal/index.html`
 - [ ] Optional: motor policy wording PDFs (upload them and we'll link them from the
