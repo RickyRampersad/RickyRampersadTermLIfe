@@ -181,6 +181,7 @@ function sendReminderEmail_(info, daysLeft, isFollowUp) {
       '<ul style="margin:0 0 18px;padding-left:20px;color:#33475b">' +
         '<li>Review your policy and confirm <strong>renew as-is</strong>, or tell us what changed</li>' +
         '<li>Check your <strong>sum insured</strong> is right (we explain the "average clause" — worth 2 minutes!)</li>' +
+        '<li>See your Guardian policy decoded — your No Claim Discount, flood cover (Special Perils) and more, in plain English</li>' +
         '<li>See current offers you may qualify for</li>' +
       '</ul>' +
       button_(info.portalLink, 'Review & Confirm My Renewal') +
