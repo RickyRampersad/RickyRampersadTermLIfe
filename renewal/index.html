@@ -164,6 +164,29 @@
   .t-item h3{font-weight:800;font-size:1rem}
   .t-item p{color:var(--muted);font-size:.9rem}
 
+  /* policy decoded */
+  .ncd-tables{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:28px}
+  .ncd-card{background:#fff;border:1px solid #E3EDF5;border-radius:var(--radius-lg);padding:24px}
+  .ncd-card h3{font-weight:800;font-size:1.02rem;margin-bottom:12px}
+  table.ncd{width:100%;border-collapse:collapse;font-size:.92rem}
+  table.ncd th{background:var(--navy-800);color:#fff;text-align:left;padding:9px 12px;font-size:.8rem;letter-spacing:.04em;text-transform:uppercase}
+  table.ncd td{padding:9px 12px;border-bottom:1px solid #EDF3F8}
+  table.ncd td:last-child{font-weight:800;color:var(--teal-600)}
+  .oeb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:28px}
+  .oeb{background:#fff;border:1px solid #E3EDF5;border-radius:var(--radius-md);padding:18px}
+  .oeb .n{font-size:.7rem;font-weight:800;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+  .oeb h4{font-weight:800;font-size:.96rem;margin:4px 0 5px}
+  .oeb p{font-size:.85rem;color:var(--muted)}
+  .oeb .applies{display:inline-block;margin-top:8px;font-size:.7rem;font-weight:800;letter-spacing:.05em;padding:3px 9px;border-radius:999px;background:var(--teal-50);color:var(--teal-600)}
+  .oeb.hot{border:1.5px solid var(--gold);background:#FFFCF4}
+  .flag-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:28px}
+  .flag{border-radius:var(--radius-lg);padding:24px;border:1px solid #E3EDF5;background:#fff}
+  .flag h3{font-weight:800;font-size:1.02rem;margin-bottom:10px;display:flex;gap:9px;align-items:center}
+  .flag ul{display:grid;gap:8px}
+  .flag li{display:flex;gap:9px;font-size:.9rem;color:var(--ink)}
+  .flag.warn li::before{content:"✕";color:var(--red);font-weight:800;flex:none}
+  .flag.duty li::before{content:"→";color:var(--teal-600);font-weight:800;flex:none}
+
   footer{background:var(--navy-900);color:#B9CFDF;padding:44px 0;font-size:.9rem}
   .foot{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}
   footer strong{color:#fff}
@@ -183,6 +206,7 @@
     <nav class="nav-links">
       <a href="#policy">My Renewal</a>
       <a href="#covers">Know Your Cover</a>
+      <a href="#policy-decoded">Your Guardian Policy</a>
       <a href="#average">The Average Clause</a>
       <a href="#guide">Renewal Guide</a>
       <a href="#campaigns">Offers</a>
@@ -252,6 +276,74 @@
         <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 11 12 4l9 7M5 10v9h14v-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <h3>Home / Household Insurance</h3>
         <p>Your homeowners policy typically covers the <strong>building</strong> (rebuilding cost — not market value) and can cover <strong>contents</strong> (furniture, appliances, electronics). At renewal, ask yourself: have you renovated, extended, or bought big-ticket items this year? If yes, your sums insured probably need updating — and the average clause below applies to home policies too.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="policy-decoded" style="padding-top:0">
+  <div class="wrap">
+    <span class="eyebrow">Inside your Guardian policy</span>
+    <h2 class="h2">What your Guardian motor policy actually says.</h2>
+    <p class="lead">Straight from the Guardian General Private Motor Vehicle Policy wording — the discounts you've earned, the add-ons you can take at renewal, and the fine print that catches people out. <a href="motor-policy.html" style="color:var(--teal-600);font-weight:700">Read the full policy, decoded →</a></p>
+
+    <div class="ncd-tables">
+      <div class="ncd-card">
+        <h3>💰 No Claim Discount — Comprehensive</h3>
+        <table class="ncd">
+          <tr><th>Claim-free period</th><th>Discount</th></tr>
+          <tr><td>1 year</td><td>30%</td></tr>
+          <tr><td>2 consecutive years</td><td>40%</td></tr>
+          <tr><td>3 consecutive years</td><td>50%</td></tr>
+          <tr><td>4+ consecutive years</td><td>60%</td></tr>
+        </table>
+        <p style="font-size:.85rem;color:var(--muted);margin-top:12px"><strong>Step-Back protection:</strong> once you've reached the 3rd-year discount, a single claim doesn't wipe you out — 50% steps back to 30%, 60% to 40%. And after 2+ years at the maximum 60%, one claim doesn't touch your discount at all.</p>
+      </div>
+      <div class="ncd-card">
+        <h3>💰 No Claim Discount — Third Party &amp; TPF&amp;T</h3>
+        <table class="ncd">
+          <tr><th>Claim-free period</th><th>Discount</th></tr>
+          <tr><td>1 year</td><td>15%</td></tr>
+          <tr><td>2 consecutive years</td><td>20%</td></tr>
+          <tr><td>3 consecutive years</td><td>25%</td></tr>
+          <tr><td>4+ consecutive years</td><td>35%</td></tr>
+        </table>
+        <p style="font-size:.85rem;color:var(--muted);margin-top:12px">Each vehicle earns its own discount, even on one policy. Not sure what you've earned? Ask when you confirm your renewal — it directly reduces your premium.</p>
+      </div>
+    </div>
+
+    <h3 style="font-weight:800;font-size:1.15rem;margin-top:40px">Optional Extra Benefits you can add at renewal</h3>
+    <p style="color:var(--muted);font-size:.95rem;margin-top:4px">Renewal is the easiest moment to add these — ask for a price on any of them in the form below.</p>
+    <div class="oeb-grid">
+      <div class="oeb hot"><span class="n">OEB 1 · most recommended</span><h4>🌊 Special Perils</h4><p>Here's the surprise: the standard policy <strong>excludes flood, hurricane, windstorm and earthquake</strong>. OEB 1 removes that exclusion. In Trinidad &amp; Tobago, this one add-on has saved more vehicles than any other.</p><span class="applies">Comprehensive</span></div>
+      <div class="oeb"><span class="n">OEB 2</span><h4>🪟 Windscreen &amp; All Glass</h4><p>Glass-only claims paid with <strong>no excess</strong> and <strong>no effect on your No Claim Discount</strong>, with free reinstatement up to $2,500 once per period.</p><span class="applies">Comprehensive · Fire &amp; Theft</span></div>
+      <div class="oeb"><span class="n">OEB 4</span><h4>🚗 Courtesy Car / Loss of Use</h4><p>While your car is being repaired after a covered claim, Guardian provides a substitute vehicle or up to $100/day toward a rental.</p><span class="applies">Comprehensive</span></div>
+      <div class="oeb"><span class="n">OEB 5</span><h4>📋 Agreed Value</h4><p>Lock in your payout: on a total loss, Guardian pays the Sum Insured (less 15%/yr pro-rata depreciation) instead of arguing market value — requires a valuation from an approved valuator at each renewal.</p><span class="applies">Comprehensive · Fire &amp; Theft</span></div>
+      <div class="oeb"><span class="n">OEB 6</span><h4>🏥 Hospitalisation</h4><p>Up to $15,000 per 12-month period toward hospital bills from injury or sickness — a health top-up living inside your motor policy.</p><span class="applies">Comprehensive</span></div>
+      <div class="oeb"><span class="n">OEB 3 · 7 · 8</span><h4>👥 Passenger PA &amp; Higher Limits</h4><p>Personal accident benefits for your passengers, and increased third-party and legal-defence limits — worth reviewing if you regularly carry others.</p><span class="applies">All cover types</span></div>
+    </div>
+
+    <div class="flag-grid">
+      <div class="flag warn">
+        <h3>⚠️ Not covered — know before you claim</h3>
+        <ul>
+          <li>Flood, hurricane, windstorm, earthquake — unless you add OEB 1 Special Perils</li>
+          <li>Anyone driving who isn't an Authorised Driver on your certificate</li>
+          <li>Driving under the influence of alcohol or drugs</li>
+          <li>Wear &amp; tear, depreciation, and mechanical or electrical breakdown</li>
+          <li>Tyres alone, and glass alone (without OEB 2)</li>
+          <li>Your excess — the first part of every claim is yours</li>
+        </ul>
+      </div>
+      <div class="flag duty">
+        <h3>✅ Your side of the deal</h3>
+        <ul>
+          <li>Never leave keys (or the keyless fob) in an unoccupied vehicle — it can void theft cover</li>
+          <li>Report accidents to Guardian right away; theft goes to the police immediately</li>
+          <li>Never admit fault or promise payment at the scene</li>
+          <li>Tell us about changes: new vehicle, modifications, change of address or use — that's exactly what the form below is for</li>
+          <li>Claims settle at market value or your sum insured, whichever is <em>less</em> — one more reason to insure at the correct value</li>
+        </ul>
       </div>
     </div>
   </div>
@@ -421,6 +513,12 @@ const CONFIG = {
   API_URL: "", // e.g. "https://script.google.com/macros/s/XXXX/exec"
   AGENT_EMAIL: "ricky.rampersad@myguardiangroup.com",
   CAMPAIGNS: [
+    {
+      id: "special-perils",
+      icon: "🌊",
+      title: "Special Perils (flood & hurricane) add-on — OEB 1",
+      text: "Most drivers don't know their standard policy excludes flood, hurricane and earthquake damage. Add Special Perils at renewal and your comprehensive cover protects you through storm season too. Ask for the price — it's smaller than you think."
+    },
     {
       id: "comprehensive-upgrade",
       icon: "🛡️",
