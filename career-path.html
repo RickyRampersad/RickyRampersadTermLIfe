@@ -223,6 +223,35 @@
   .feed-entry .snap{font-size:.78rem;color:var(--muted);margin-top:.15rem}
   .feed-empty{font-size:.85rem;color:var(--muted);font-style:italic}
 
+  /* ===== Learning Hub ===== */
+  .hubteaser{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem}
+  .hubteaser .txt{flex:1;min-width:220px}
+  .hubteaser h3{color:var(--head);font-size:1.02rem;margin-bottom:.15rem}
+  .hubteaser p{font-size:.85rem;color:var(--muted)}
+  .prog{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:1.15rem 1.3rem;margin-bottom:1rem}
+  .prog.focus{border:2px solid var(--gold)}
+  .prog .prog-head{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin-bottom:.35rem}
+  .prog h3{color:var(--head);font-size:1.08rem}
+  .prog .provider{font-size:.78rem;color:var(--muted)}
+  .prog .summary{font-size:.9rem;color:var(--ink);margin-bottom:.6rem}
+  .prog ul.facts{padding-left:1.15rem;font-size:.85rem;color:var(--muted);margin-bottom:.7rem}
+  .prog ul.facts li{margin-bottom:.25rem}
+  .prog .reqfor{font-size:.78rem;color:var(--amber);font-weight:600;margin-bottom:.6rem}
+  .modlist{display:flex;flex-direction:column;gap:.3rem;margin-bottom:.7rem}
+  .modrow{display:flex;align-items:center;gap:.6rem;padding:.42rem .6rem;border:1px solid var(--line);border-radius:9px;background:var(--bg)}
+  .modrow input{width:18px;height:18px;accent-color:var(--green);flex:0 0 auto}
+  .modrow .code{font-weight:700;font-size:.8rem;color:var(--head);min-width:64px;font-variant-numeric:tabular-nums}
+  .modrow .mt{font-size:.86rem;color:var(--ink);flex:1}
+  .modrow.done .mt{color:var(--green)}
+  .modprogress{font-size:.82rem;font-weight:700;color:var(--head);margin-bottom:.5rem}
+  .modprogress .okword{color:var(--green)}
+  .prog .links{display:flex;gap:.5rem;flex-wrap:wrap}
+  .prog .links a{font-size:.8rem;font-weight:600;color:var(--head);border:1.5px solid var(--gold);border-radius:999px;padding:.3rem .75rem;text-decoration:none}
+  .prog .links a:hover{background:var(--gold-soft)}
+  .linklike{background:none;border:none;color:var(--head);font-size:.8rem;font-weight:700;text-decoration:underline;padding:0;margin-top:.35rem;display:inline-block}
+  .linklike:hover{color:var(--gold)}
+  .hub-note{font-size:.75rem;color:var(--muted);font-style:italic;margin-top:.6rem}
+
   footer{max-width:1080px;margin:0 auto;padding:0 1rem 2rem;color:var(--muted);font-size:.75rem;text-align:center}
   .hidden{display:none !important}
   @media (max-width:640px){
@@ -303,6 +332,14 @@
       <div class="goal-status" id="goalStatus"></div>
     </div>
 
+    <div class="card hubteaser">
+      <div class="txt">
+        <h3>📚 Learning Hub — courses, designations &amp; how to get them</h3>
+        <p>FSCP™ modules with tick-off tracking, MDRT qualification levels, CIAM and the management courses, plus Guardian's in-house programs — with links to enrol online.</p>
+      </div>
+      <button class="btn" onclick="showHub()">Open the Learning Hub</button>
+    </div>
+
     <div class="track">
       <div class="track-label"><div class="dot"></div><h3>Professional Sales Track</h3><span>build your practice</span></div>
       <div class="path" id="salesTrack"></div>
@@ -331,6 +368,18 @@
     <div class="card" style="font-size:.85rem;color:var(--muted);margin-top:1.5rem">
       <b style="color:var(--head)">Promotion windows:</b> appointments are announced twice a year — at Blastoff in <b>October</b> (submit by August 31) and at the Mid-Year Meeting in <b>April</b> (submit by February 28). Late submissions are deferred to the next announcement period. All appointments are made by the President in consultation with the VP of Sales and reviewed annually.
     </div>
+  </section>
+
+  <!-- ============ LEARNING HUB ============ -->
+  <section id="viewHub" class="hidden">
+    <div class="backbar"><button onclick="showPath()">&larr; Back to career path</button></div>
+    <div class="pos-head">
+      <div class="crumb">Learning Hub</div>
+      <h2>Courses, Designations &amp; Programs</h2>
+      <p>Everything the career path asks you to study — what each program involves, where to take it (most are online), and tick-off tracking that updates your qualification checklists automatically.</p>
+    </div>
+    <div id="hubList"></div>
+    <p class="hub-note">External program details verified online August 2026 from TTAIFA, CARAIFA, The American College, LIMRA and MDRT. Schedules and fees change — always confirm dates with the provider or your Branch Manager before registering.</p>
   </section>
 
   <!-- ============ POSITION DETAIL ============ -->
@@ -431,7 +480,7 @@ const POSITIONS = [
       {text:"Obtain registration under the Insurance Act before representing Guardian Life in the field", fields:["insuranceAct"], check:p=>!!p.insuranceAct},
       {text:"Complete the State Licensing Examination during your first year (condition to maintain a full-time contract)", note:"It is also recommended to review “An Introduction to Life Underwriting” on the GGLDC site.", fields:["stateLicensing"], check:p=>!!p.stateLicensing},
       {text:"Become a member of TTAIFA", fields:["ttaifaMember"], check:p=>!!p.ttaifaMember},
-      {text:"Commence the FSCP™ (2015) within your 2nd year (view to complete by year 5)", fields:["fscpStarted"], check:p=>!!p.fscpStarted},
+      {text:"Commence the FSCP™ (2015) within your 2nd year (view to complete by year 5)", fields:["fscpStarted"], check:p=>fscpStartedOk(p)},
       {text:"Attend the Company's Intermediate Development Course when entering your 4th year", fields:["intermediateDev"], check:p=>!!p.intermediateDev, optionalBefore:{field:"yearsContracted", value:3, label:"Required from your 4th year"}},
       {text:"Sign appointment letter as acknowledgement of contract terms and conditions", fields:["appointmentLetter"], check:p=>!!p.appointmentLetter},
       {text:"Maintain continuous development credits (TTAIFA and CBTT)", fields:["cpdCredits"], check:p=>!!p.cpdCredits}
@@ -447,7 +496,7 @@ const POSITIONS = [
     benefits:["Additional Administrative/Sales Support (determined by the Branch Manager on merit)","Overriding commissions on your own production up to a maximum of 5%","Private office space, depending on availability and merit"],
     reqs:[
       {text:"Contracted as a Salesperson with Guardian Life for at least 4 years", fields:["yearsContracted"], check:p=>num(p.yearsContracted)>=4, gap:p=>gapYears(p.yearsContracted,4)},
-      {text:"Attained the FSCP™ (2015) or similar insurance designation (e.g. CFP, CLU, ChFC)", fields:["fscpOrDesignation"], check:p=>!!p.fscpOrDesignation},
+      {text:"Attained the FSCP™ (2015) or similar insurance designation (e.g. CFP, CLU, ChFC)", fields:["fscpOrDesignation"], check:p=>hasDesignation(p)},
       {text:"Total production of at least $1,500,000 API over the previous two calendar years", fields:["production24"], check:p=>num(p.production24)>=1500000, gap:p=>gapMoney(p.production24,1500000)},
       {text:"Persistency of at least 90%", fields:["persistency"], check:p=>num(p.persistency)>=90, gap:p=>gapPct(p.persistency,90)},
       {text:"Client base of at least 325 active clients (life + Individual Health), of which at least 275 are active life clients", fields:["clientTotal","clientActiveLife"], check:p=>num(p.clientTotal)>=325&&num(p.clientActiveLife)>=275, gap:p=>gapClients(p)},
@@ -468,7 +517,7 @@ const POSITIONS = [
     reqs:[
       {text:"Held the position of Executive Agent for at least 5 consecutive years at Guardian Life — OR — 10 consecutive years in a senior sales or management position in the Life Insurance industry", fields:["eaYears","industrySeniorYears"], check:p=>num(p.eaYears)>=5||num(p.industrySeniorYears)>=10,
         gap:p=>{const a=num(p.eaYears),b=num(p.industrySeniorYears);return `Need ${(5-a).toFixed(1)} more year(s) as Executive Agent, or ${(10-b).toFixed(1)} more year(s) of senior industry experience.`}},
-      {text:"Attained the FSCP™ (2015) or other insurance designation (e.g. CFP, CLU, ChFC)", fields:["fscpOrDesignation"], check:p=>!!p.fscpOrDesignation},
+      {text:"Attained the FSCP™ (2015) or other insurance designation (e.g. CFP, CLU, ChFC)", fields:["fscpOrDesignation"], check:p=>hasDesignation(p)},
       {text:"Settled at least $2,000,000 in New Gross Annualized Premium Income over the previous 24 months", fields:["production24"], check:p=>num(p.production24)>=2000000, gap:p=>gapMoney(p.production24,2000000)},
       {text:"Average persistency over the last 24 months of at least 90%", fields:["persistency"], check:p=>num(p.persistency)>=90, gap:p=>gapPct(p.persistency,90)},
       {text:"Client base of at least 325 active clients (life + Individual Health), of which at least 275 are active life clients", fields:["clientTotal","clientActiveLife"], check:p=>num(p.clientTotal)>=325&&num(p.clientActiveLife)>=275, gap:p=>gapClients(p)},
@@ -487,7 +536,7 @@ const POSITIONS = [
       {text:"Contracted for at least 4 years", fields:["yearsContracted"], check:p=>num(p.yearsContracted)>=4, gap:p=>gapYears(p.yearsContracted,4)},
       {text:"Client base of at least 325 active clients (life + Individual Health), of which at least 275 are active life clients", fields:["clientTotal","clientActiveLife"], check:p=>num(p.clientTotal)>=325&&num(p.clientActiveLife)>=275, gap:p=>gapClients(p)},
       {text:"Production in line with President's Club qualification in each of the preceding 2 years", fields:["presidentsClub2"], check:p=>!!p.presidentsClub2},
-      {text:"Attained the FSCP™ (2015) or similar insurance designation (e.g. CFP, CLU, ChFC)", fields:["fscpOrDesignation"], check:p=>!!p.fscpOrDesignation},
+      {text:"Attained the FSCP™ (2015) or similar insurance designation (e.g. CFP, CLU, ChFC)", fields:["fscpOrDesignation"], check:p=>hasDesignation(p)},
       {text:"Interest in management and recommendation by your Branch Manager", fields:["bmRecommendation"], check:p=>!!p.bmRecommendation},
       {text:"Complete the POP7 Management Assessment with a favourable score", fields:["pop7"], check:p=>!!p.pop7},
       {text:"Completed the Intermediate Development Course", note:"At this stage the agent should have completed Intermediate Development and the Mentoring Program.", fields:["intermediateDev"], check:p=>!!p.intermediateDev},
@@ -507,7 +556,7 @@ const POSITIONS = [
       {text:"Contracted for at least 5 years", fields:["yearsContracted"], check:p=>num(p.yearsContracted)>=5, gap:p=>gapYears(p.yearsContracted,5)},
       {text:"Client base of at least 325 active clients (life + Individual Health), of which at least 275 are active life clients", fields:["clientTotal","clientActiveLife"], check:p=>num(p.clientTotal)>=325&&num(p.clientActiveLife)>=275, gap:p=>gapClients(p)},
       {text:"Production in line with President's Club qualification in each of the preceding 2 years", fields:["presidentsClub2"], check:p=>!!p.presidentsClub2},
-      {text:"Attained the FSCP™ (2015) or other insurance designation (e.g. CFP, CLU, ChFC)", fields:["fscpOrDesignation"], check:p=>!!p.fscpOrDesignation},
+      {text:"Attained the FSCP™ (2015) or other insurance designation (e.g. CFP, CLU, ChFC)", fields:["fscpOrDesignation"], check:p=>hasDesignation(p)},
       {text:"Recruited at least 2 agents with the assistance of your Manager", fields:["recruits"], check:p=>num(p.recruits)>=2, gap:p=>`Recruit ${2-num(p.recruits)} more agent(s).`},
       {text:"Maintain continuous development credits (TTAIFA and CBTT)", fields:["cpdCredits"], check:p=>!!p.cpdCredits},
       {text:"Sign appointment letter as acknowledgement of terms and conditions", fields:["appointmentLetter"], check:p=>!!p.appointmentLetter}
@@ -569,6 +618,104 @@ const POSITIONS = [
     keep:"To keep the appointment: maintain at least 30 agents net for two consecutive years, at least 85% persistency for two consecutive years, and (after year 3) at least 80% of assigned quota (minimum $12M settled API) for two consecutive calendar years."
   }
 ];
+
+/* =====================================================================
+   LEARNING HUB — real program data researched online (Aug 2026) from
+   TTAIFA, CARAIFA, The American College, LIMRA and MDRT.
+===================================================================== */
+const FSCP_MODULES=[
+  {code:"FA 200",t:"Techniques for Prospecting: Prospect or Perish"},
+  {code:"FA 201",t:"Techniques for Exploring Personal Markets"},
+  {code:"FA 202",t:"Techniques for Meeting Client Needs"},
+  {code:"FA 251",t:"Essentials of Business Insurance"},
+  {code:"FA 257",t:"Essentials of Life Insurance Products"},
+  {code:"FA 261",t:"Foundations of Retirement Planning"},
+  {code:"FA 271",t:"Foundations of Estate Planning"},
+  {code:"FA 290",t:"Ethics for the Financial Services Professional"},
+  {code:"FP 99",t:"FSCP Certification Course & Examination (final step)"}
+];
+const PROGRAMS=[
+  {id:"fscp",icon:"🎓",title:"FSCP™ — Financial Services Certified Professional (2015)",
+   provider:"TTAIFA (online, Trinidad) · CARAIFA · The American College",
+   summary:"The core designation on the career path. Seven courses taken in order, then the FA 290 Ethics module, then the FP 99 Certification Course & Examination. Tick off each module below as you pass it — your qualification checklists update automatically.",
+   facts:[
+     "The seven courses must be completed in order before attempting FP 99.",
+     "5-Year Rule: course credits count toward the designation for up to 5 years after your first course — exactly Guardian's expectation to commence in year 2 and complete by year 5.",
+     "Delivered online through the TTAIFA academy. Register: ttaifa.com · 129–131 Edward Street, Port of Spain · 624-2940 / 624-2608 · info@ttaifa.com",
+     "ELP note: Appendix 3 accepts a minimum of five (5) completed FSCP courses for ELP consideration."
+   ],
+   requiredFor:"Salesperson (commence by year 2) · Executive Agent · Senior Sales Consultant · ELP Candidate · Trainee Manager",
+   modules:FSCP_MODULES,
+   links:[["TTAIFA — FSCP courses & schedule","https://ttaifa.com/courses-home/fscp-courses/"],["CARAIFA — Education","https://caraifa.com/education/"],["The American College — FSCP","https://www.theamericancollege.edu/learn/professional-designations-certifications/fscp"]]},
+  {id:"mdrt",icon:"🏆",title:"MDRT — Million Dollar Round Table",
+   provider:"mdrt.org · qualify on your production year",
+   summary:"Guardian requires MDRT full-member qualification and attendance: at least once every 3 years for Executive Agent, and once every 2 years for Senior Sales Consultant.",
+   facts:[
+     "2026 qualification (based on 2025 production) — meet ONE method: Commission ≥ USD 87,000 · Income ≥ USD 151,000 (min USD 43,500 from new business) · Premium ≥ USD 522,000.",
+     "At least 50% of the base requirement must come from Risk-Protection products before Other Products credit counts.",
+     "Court of the Table ≈ 3× the base requirement; Top of the Table ≈ 6×.",
+     "Production is converted to USD using MDRT's published conversion factor for Trinidad & Tobago — check the current TTD factor and apply by the annual deadline on mdrt.org."
+   ],
+   requiredFor:"Executive Agent (once in 3 yrs) · Senior Sales Consultant (once in 2 yrs)",
+   links:[["MDRT — Join / requirements","https://www.mdrt.org/join"],["MDRT Academy","https://app.mdrtacademy.org/enrollment/overview?locale=en"]]},
+  {id:"ciam",icon:"🎖️",title:"CIAM — Chartered Insurance Agency Manager (and the management courses)",
+   provider:"LIMRA · delivered regionally, online options available",
+   summary:"LIMRA's management designation — and the exact courses the career path requires: Pacesetter, AMTC, MAPS and AES. Complete all four (plus 5 years as a manager and a thesis) and you've earned CIAM, which Branch Manager requires.",
+   facts:[
+     "AMTC (Agency Management Training Course): skills-based program covering 28 management skills across planning & goal-setting, recruiting & selection, training and activity management. Guardian expects it completed by end of your 2nd year as Unit Manager.",
+     "CIAM = Pacesetter + AMTC + AES + MAPS, plus a minimum of 5 years' manager experience (company letter), a thesis paper, and a US$100 processing fee. Diploma, pin and digital badge on approval.",
+     "Assistant Branch Managers must attain CIAM within two years of appointment.",
+     "Ask your Branch Manager / VP–Sales about Guardian's next regional cohort for each course."
+   ],
+   requiredFor:"Unit Manager (AMTC by yr 2, start others) · Assistant Branch Manager (all four courses; CIAM within 2 yrs) · Branch Manager (CIAM attained)",
+   courseFields:["pacesetter","amtc","maps","aes","ciam"],
+   links:[["LIMRA — AMTC","https://www.limra.com/en/solutions-and-services/global/learning-and-development/programs-for-managers/agency-management-training-course-amtc/"],["LIMRA — Pacesetter","https://www.limra.com/en/solutions-and-services/global/learning-and-development/programs-for-managers/pacesetter/"],["LIMRA — MAPS","https://www.limra.com/en/solutions-and-services/global/learning-and-development/programs-for-managers/managing-agency-profitability-maps-seminar/"],["LIMRA — AES","https://www.limra.com/en/solutions-and-services/global/learning-and-development/programs-for-managers/agency-enhancement-series/"],["LIMRA — Designations for managers","https://www.limra.com/en/solutions-and-services/global/learning-and-development/programs-for-managers/designation-programs-for-managers/"]]},
+  {id:"designations",icon:"📜",title:"Alternative designations — CLU · ChFC · CFP · MFA",
+   provider:"The American College and others",
+   summary:"Anywhere the career path asks for \"FSCP™ (2015) or similar designation\", these count. Most agents take the FSCP locally through TTAIFA; these are the recognized alternatives.",
+   facts:[
+     "CLU (Chartered Life Underwriter): 8 courses + exams, 3 years' industry experience — The American College.",
+     "ChFC (Chartered Financial Consultant): 8 required courses (no electives), 3 years' related experience — The American College.",
+     "CFP (Certified Financial Planner) and MFA (Master Financial Advisor) are also accepted per the career path document.",
+     "If you already hold one of these, tick the designation box in your checklist — you don't need the FSCP as well."
+   ],
+   requiredFor:"Accepted wherever FSCP™ is required",
+   links:[["The American College — CLU","https://www.theamericancollege.edu/learn/professional-designations-certifications/clu"],["The American College — all programs","https://www.theamericancollege.edu/learn/browse-all-courses-and-programs"]]},
+  {id:"ttaifa",icon:"🤝",title:"TTAIFA membership & CPD credits",
+   provider:"TTAIFA · Port of Spain · online",
+   summary:"All Salespersons must join TTAIFA, and every level of the career path requires keeping continuous development credits current with TTAIFA and the Central Bank (CBTT).",
+   facts:[
+     "Membership: for anyone selling, directing or assisting in the sale of life insurance and financial services products.",
+     "Join or renew: 624-2940 / 624-2608 · info@ttaifa.com · 129–131 Edward Street, Port of Spain.",
+     "TTAIFA also runs the Professional Development Certificate — five interactive sessions covering the full sales process.",
+     "CBTT registration under the Insurance Act is required before you can represent Guardian Life in the field."
+   ],
+   requiredFor:"Every position on the career path (membership + CPD credits)",
+   links:[["TTAIFA — home","https://ttaifa.com/"],["TTAIFA — courses","https://ttaifa.com/courses-home/"],["Central Bank of Trinidad & Tobago","https://www.central-bank.org.tt/"]]},
+  {id:"internal",icon:"🏢",title:"Guardian in-house programs",
+   provider:"Guardian Life · register through your Branch Manager / GGLDC",
+   summary:"The company-run programs on the career path. These are scheduled internally — speak to your Branch Manager or check the GGLDC site for the next intake.",
+   facts:[
+     "Intermediate Development Course — 4-day program: ethics, emotional intelligence in sales, business communications, business insurance concepts (Key Man, Deferred Compensation, Buy/Sell, Sole Proprietor), personal brand & social selling, wills & trusts, financial statements. Required entering your 4th year.",
+     "Mentoring / Coaching Program — classroom sessions, 1.5 hours once per month; 2-day agenda covering the mentoring relationship, communication and collaboration.",
+     "Emerging Leaders Program (ELP) — 12 monthly sessions (leadership, recruiting & selection, new advisor launch, difficult conversations, practice management). The gateway into management.",
+     "Developing Future Leaders — minimum 6-month coaching program for selected agents on the management track.",
+     "POP7 Management Assessment — required with a favourable score for ELP consideration; arranged by the company.",
+     "GLOC Bootcamp + Induction Program — part of your first 7-month probation as a new Salesperson."
+   ],
+   requiredFor:"Salesperson · Executive Agent · ELP · Trainee Manager · Unit Manager",
+   links:[]}
+];
+const FIELD_PROGRAM={fscpStarted:"fscp",fscpOrDesignation:"fscp",mdrtLast3:"mdrt",mdrtLast2:"mdrt",
+  amtc:"ciam",pacesetter:"ciam",maps:"ciam",aes:"ciam",ciam:"ciam",
+  intermediateDev:"internal",mentoringProgram:"internal",elpCompleted:"internal",futureLeaders:"internal",
+  businessPlanning:"internal",pop7:"internal",ncdCompleted:"internal",probationDone:"internal",
+  ttaifaMember:"ttaifa",cpdCredits:"ttaifa",insuranceAct:"ttaifa"};
+
+/* FSCP module progress — auto-satisfies the checklist requirements */
+function fscpCount(p){const m=p.fscpModules||{};return FSCP_MODULES.filter(x=>m[x.code]).length}
+function fscpStartedOk(p){return !!p.fscpStarted||fscpCount(p)>0}
+function hasDesignation(p){return !!p.fscpOrDesignation||fscpCount(p)>=FSCP_MODULES.length}
 
 /* ===== helpers ===== */
 function num(v){const n=parseFloat(v);return isNaN(n)?0:n}
@@ -830,6 +977,7 @@ function renderReqs(pos){
         ${r.note?`<div class="note">${esc(r.note)}</div>`:""}
         ${gapText?`<div class="gapnote">${esc(gapText)}</div>`:""}
         <div class="reqdate" data-reqdate="${planKey}"></div>
+        ${[...new Set(r.fields.map(f=>FIELD_PROGRAM[f]).filter(Boolean))].map(pid=>`<button class="linklike" onclick="showHub('${pid}')">📚 Course &amp; program details</button>`).join(" ")}
       </div>
       <div class="controls">${controls}</div>`;
     list.appendChild(card);
@@ -957,6 +1105,8 @@ function progressSnapshot(){
     if(days>=0)parts.push(days+" day(s) to target date");
     else parts.push("target date passed");
   }
+  const fc=fscpCount(profile);
+  if(fc>0&&fc<FSCP_MODULES.length)parts.push("FSCP: "+fc+"/"+FSCP_MODULES.length+" modules");
   return parts.join(" · ");
 }
 function checkinDueThisMonth(){
@@ -1012,9 +1162,81 @@ function downloadReminder(){
   document.body.appendChild(a);a.click();a.remove();
 }
 
+/* =====================================================================
+   LEARNING HUB rendering — module tick-offs write straight into the
+   agent's profile so the qualification checklists stay in sync.
+===================================================================== */
+function showHub(focusId){
+  renderHub(focusId);
+  switchView("viewHub");
+  if(focusId){
+    const el=document.getElementById("prog-"+focusId);
+    if(el)setTimeout(()=>el.scrollIntoView({behavior:"smooth",block:"start"}),60);
+  }
+}
+function renderHub(focusId){
+  const list=document.getElementById("hubList");
+  list.innerHTML="";
+  PROGRAMS.forEach(pr=>{
+    const card=document.createElement("div");
+    card.className="prog"+(pr.id===focusId?" focus":"");
+    card.id="prog-"+pr.id;
+    let modules="";
+    if(pr.modules){
+      const done=fscpCount(profile);
+      const total=pr.modules.length;
+      modules+=`<div class="modprogress">${done===total?'<span class="okword">🎓 Curriculum complete — apply for your designation!</span>':done+" of "+total+" modules completed"+(done>=5?' · <span class="okword">meets the 5-course ELP minimum</span>':"")}</div>`;
+      modules+='<div class="modlist">'+pr.modules.map(m=>{
+        const c=(profile.fscpModules||{})[m.code];
+        return `<label class="modrow ${c?"done":""}"><input type="checkbox" data-fscp="${esc(m.code)}" ${c?"checked":""}><span class="code">${esc(m.code)}</span><span class="mt">${esc(m.t)}</span></label>`;
+      }).join("")+"</div>";
+    }
+    if(pr.courseFields){
+      modules+='<div class="modlist">'+pr.courseFields.map(f=>{
+        const c=!!profile[f];
+        return `<label class="modrow ${c?"done":""}"><input type="checkbox" data-cfield="${f}" ${c?"checked":""}><span class="mt">${esc(FIELDS[f].label)}</span></label>`;
+      }).join("")+"</div>";
+    }
+    card.innerHTML=`
+      <div class="prog-head"><h3>${pr.icon} ${esc(pr.title)}</h3><span class="provider">${esc(pr.provider)}</span></div>
+      <div class="summary">${esc(pr.summary)}</div>
+      <div class="reqfor">Required for: ${esc(pr.requiredFor)}</div>
+      <ul class="facts">${pr.facts.map(f=>`<li>${esc(f)}</li>`).join("")}</ul>
+      ${modules}
+      ${pr.links.length?`<div class="links">${pr.links.map(l=>`<a href="${esc(l[1])}" target="_blank" rel="noopener">${esc(l[0])} ↗</a>`).join("")}</div>`:""}`;
+    list.appendChild(card);
+  });
+  list.querySelectorAll("input[data-fscp]").forEach(inp=>{
+    inp.addEventListener("change",()=>{
+      profile.fscpModules=profile.fscpModules||{};
+      const code=inp.dataset.fscp;
+      profile.fscpModules[code]=inp.checked;
+      if(inp.checked){
+        const m=FSCP_MODULES.find(x=>x.code===code);
+        feedAdd("milestone","📚 FSCP module passed: "+code+" — "+(m?m.t:""));
+        if(fscpCount(profile)===FSCP_MODULES.length)feedAdd("milestone","🎓 FSCP curriculum COMPLETE — all 9 modules done. Apply for your designation!");
+      }
+      saveProfile();
+      inp.closest(".modrow").classList.toggle("done",inp.checked);
+      const done=fscpCount(profile),total=FSCP_MODULES.length;
+      const progLine=document.querySelector("#prog-fscp .modprogress");
+      if(progLine)progLine.innerHTML=done===total?'<span class="okword">🎓 Curriculum complete — apply for your designation!</span>':done+" of "+total+" modules completed"+(done>=5?' · <span class="okword">meets the 5-course ELP minimum</span>':"");
+    });
+  });
+  list.querySelectorAll("input[data-cfield]").forEach(inp=>{
+    inp.addEventListener("change",()=>{
+      const f=inp.dataset.cfield;
+      profile[f]=inp.checked;
+      if(inp.checked)feedAdd("milestone","📚 Completed: "+FIELDS[f].label);
+      saveProfile();
+      inp.closest(".modrow").classList.toggle("done",inp.checked);
+    });
+  });
+}
+
 /* ===== view switching ===== */
 function switchView(id){
-  ["viewLogin","viewPath","viewPos"].forEach(v=>document.getElementById(v).classList.toggle("hidden",v!==id));
+  ["viewLogin","viewPath","viewPos","viewHub"].forEach(v=>document.getElementById(v).classList.toggle("hidden",v!==id));
   window.scrollTo({top:0});
 }
 
