@@ -1643,6 +1643,10 @@ renderAgentOptions();
 renderReturning();
 if(location.search.indexOf("intro=auto")>-1){
   playIntro(true);
+}else if(location.search.indexOf("from=launch")>-1){
+  // Arrived from the launch page — they just watched the real video,
+  // so don't play the intro again. Mark it seen for future visits too.
+  try{localStorage.setItem("glcpIntroSeen","1")}catch(e){}
 }else{
   let seen=false;
   try{seen=!!localStorage.getItem("glcpIntroSeen");localStorage.setItem("glcpIntroSeen","1")}catch(e){}
