@@ -128,6 +128,25 @@
   .subhead{color:var(--navy);font-size:1.02rem;margin:1.3rem 0 .7rem;display:flex;align-items:center;gap:.5rem}
   .subhead::after{content:"";flex:1;height:1px;background:var(--line)}
 
+  /* ===== Goal / countdown card ===== */
+  .goalcard{border:2px solid var(--gold);background:linear-gradient(180deg,#fffdf4,#fff);margin-bottom:1.5rem}
+  .goalcard h3{color:var(--navy);font-size:1.05rem;margin-bottom:.2rem;display:flex;align-items:center;gap:.45rem}
+  .goalcard .hint{font-size:.85rem;color:var(--muted);margin-bottom:.9rem}
+  .goal-form{display:flex;gap:.8rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:.9rem}
+  .goal-form .field{margin-bottom:0;flex:1 1 220px}
+  .quickpicks{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.9rem}
+  .quickpicks button{background:#fff;border:1.5px solid var(--gold);color:var(--navy);border-radius:999px;padding:.35rem .8rem;font-size:.8rem;font-weight:600}
+  .quickpicks button:hover{background:var(--gold-soft)}
+  .goal-status{display:flex;gap:1rem;flex-wrap:wrap;align-items:stretch}
+  .countbox{background:var(--navy);color:#fff;border-radius:12px;padding:.9rem 1.2rem;text-align:center;flex:0 0 auto;min-width:130px}
+  .countbox .big{font-size:2.1rem;font-weight:800;color:var(--gold);line-height:1.1}
+  .countbox .lbl{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;opacity:.85}
+  .goal-progress{flex:1;min-width:220px;display:flex;flex-direction:column;justify-content:center;gap:.45rem}
+  .goal-progress .line{font-size:.92rem;font-weight:600;color:var(--navy)}
+  .goal-progress .cheer{font-size:.85rem;color:var(--muted)}
+  .goal-progress .cheer.hot{color:var(--green);font-weight:600}
+  .goal-progress .cheer.late{color:var(--red);font-weight:600}
+
   footer{max-width:1080px;margin:0 auto;padding:0 1rem 2rem;color:var(--muted);font-size:.75rem;text-align:center}
   .hidden{display:none !important}
   @media (max-width:640px){
@@ -146,7 +165,7 @@
     <div class="sub">Guardian Life of the Caribbean &middot; Sales Career Path (Amended April 2026)</div>
   </div>
   <div class="userchip hidden" id="userChip">
-    <span>Agent: <b id="chipName"></b></span>
+    <span><b id="chipName"></b> <span id="chipCode" style="opacity:.7"></span></span>
     <button onclick="logout()">Sign out</button>
   </div>
 </header>
@@ -157,7 +176,11 @@
   <section id="viewLogin" class="login-wrap">
     <div class="card">
       <h2>Agent Sign In</h2>
-      <p>Enter your name to create or open your profile. Your answers are saved on this device so you can return and update them any time.</p>
+      <p>Log in with your agent code. Your career tracker is saved against your code on this device, so you can return and update it any time.</p>
+      <div class="field">
+        <label for="loginCode">Agent code</label>
+        <input type="text" id="loginCode" placeholder="e.g. GL-4527" autocomplete="off" style="text-transform:uppercase">
+      </div>
       <div class="field">
         <label for="loginName">Your name</label>
         <input type="text" id="loginName" placeholder="e.g. Ricky Rampersad" autocomplete="name">
@@ -190,6 +213,23 @@
       <p>These are the available career paths at Guardian Life. Select any position to see exactly what it takes to qualify, enter your own numbers, and instantly see where you stand.</p>
     </div>
 
+    <div class="card goalcard">
+      <h3>🎯 My Career Goal</h3>
+      <div class="hint">Pick the position you're aiming for and a target date — the tracker counts you down to it. Tip: use the quick-picks below to target a real promotion window's submission deadline.</div>
+      <div class="goal-form">
+        <div class="field">
+          <label for="goalPos">Target position</label>
+          <select id="goalPos"><option value="">— choose a position —</option></select>
+        </div>
+        <div class="field">
+          <label for="goalDate">Target date</label>
+          <input type="date" id="goalDate">
+        </div>
+      </div>
+      <div class="quickpicks" id="goalQuick"></div>
+      <div class="goal-status" id="goalStatus"></div>
+    </div>
+
     <div class="track">
       <div class="track-label"><div class="dot"></div><h3>Professional Sales Track</h3><span>build your practice</span></div>
       <div class="path" id="salesTrack"></div>
@@ -218,6 +258,7 @@
       <div class="verdict" id="posVerdict"></div>
       <div class="meter"><div id="posMeter" style="width:0%"></div></div>
       <div class="count" id="posCount"></div>
+      <div class="count" id="posGoalLine" style="color:var(--navy);font-weight:600"></div>
     </div>
 
     <div class="subhead">Requirements — answer each one to check your qualification</div>
@@ -455,63 +496,151 @@ function gapClients(p){
 }
 function esc(s){const d=document.createElement("div");d.textContent=s==null?"":String(s);return d.innerHTML}
 
-/* ===== storage ===== */
-const STORE_KEY="glCareerPathAgents";
+/* ===== storage — profiles are keyed by agent code ===== */
+const STORE_KEY="glCareerPathAgentsV2";
 function loadStore(){try{return JSON.parse(localStorage.getItem(STORE_KEY))||{}}catch(e){return{}}}
 function saveStore(s){localStorage.setItem(STORE_KEY,JSON.stringify(s))}
 
-let currentAgent=null;   // name
-let profile=null;        // answers object
+let currentCode=null;    // agent code (login key)
+let profile=null;        // answers object (includes name, goal)
 let currentPosId=null;
 
 /* ===== login flow ===== */
 function renderReturning(){
   const store=loadStore();
-  const names=Object.keys(store);
+  const codes=Object.keys(store);
   const box=document.getElementById("returningBox");
   const list=document.getElementById("agentList");
-  if(!names.length){box.classList.add("hidden");return}
+  if(!codes.length){box.classList.add("hidden");return}
   box.classList.remove("hidden");
   list.innerHTML="";
-  names.sort().forEach(n=>{
+  codes.sort().forEach(c=>{
+    const p=store[c]||{};
     const row=document.createElement("div");row.className="agent-row";
-    const open=document.createElement("button");open.className="open";open.textContent=n;
-    open.onclick=()=>{openAgent(n)};
+    const open=document.createElement("button");open.className="open";
+    open.textContent=(p.name?p.name+" · ":"")+c;
+    open.onclick=()=>{openAgent(c)};
     const del=document.createElement("button");del.className="del";del.textContent="remove";
-    del.onclick=()=>{if(confirm(`Remove saved profile for ${n}?`)){const s=loadStore();delete s[n];saveStore(s);renderReturning()}};
+    del.onclick=()=>{if(confirm(`Remove saved profile for agent code ${c}?`)){const s=loadStore();delete s[c];saveStore(s);renderReturning()}};
     row.appendChild(open);row.appendChild(del);list.appendChild(row);
   });
 }
 function login(){
+  const code=document.getElementById("loginCode").value.trim().toUpperCase();
   const name=document.getElementById("loginName").value.trim();
-  if(!name){alert("Please enter your name to continue.");return}
+  if(!code){alert("Please enter your agent code to log in.");return}
   const store=loadStore();
-  if(!store[name]){
-    store[name]={currentPosition:document.getElementById("loginPos").value};
+  if(!store[code]){
+    if(!name){alert("First time with this agent code — please enter your name too.");return}
+    store[code]={name:name,currentPosition:document.getElementById("loginPos").value};
     saveStore(store);
+  }else if(name){
+    store[code].name=name;saveStore(store);
   }
-  openAgent(name);
+  openAgent(code);
 }
-function openAgent(name){
+function openAgent(code){
   const store=loadStore();
-  currentAgent=name;
-  profile=store[name]||{};
-  document.getElementById("chipName").textContent=name;
+  currentCode=code;
+  profile=store[code]||{};
+  document.getElementById("chipName").textContent=profile.name||"Agent";
+  document.getElementById("chipCode").textContent="("+code+")";
   document.getElementById("userChip").classList.remove("hidden");
   showPath();
 }
 function logout(){
-  currentAgent=null;profile=null;currentPosId=null;
+  currentCode=null;profile=null;currentPosId=null;
   document.getElementById("userChip").classList.add("hidden");
+  document.getElementById("loginCode").value="";
   document.getElementById("loginName").value="";
   switchView("viewLogin");
   renderReturning();
 }
 function saveProfile(){
-  if(!currentAgent)return;
+  if(!currentCode)return;
   const store=loadStore();
-  store[currentAgent]=profile;
+  store[currentCode]=profile;
   saveStore(store);
+}
+
+/* =====================================================================
+   CAREER GOAL — target position + target date with live countdown.
+   Quick-picks target the real promotion windows:
+   October announcement (Blastoff)  → submit by August 31
+   April announcement (Mid-Year)    → submit by February 28
+===================================================================== */
+function nextWindows(){
+  const today=new Date();today.setHours(0,0,0,0);
+  const wins=[];
+  for(let y=today.getFullYear();y<=today.getFullYear()+2;y++){
+    wins.push({label:"April "+y+" Announcement (Mid-Year)",deadline:new Date(y,1,28),note:"submit by Feb 28, "+y});
+    wins.push({label:"October "+y+" Announcement (Blastoff)",deadline:new Date(y,7,31),note:"submit by Aug 31, "+y});
+  }
+  return wins.filter(w=>w.deadline>=today).slice(0,3);
+}
+function fmtDate(d){return d.toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric"})}
+function isoDate(d){const p=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())}
+function renderGoal(){
+  const sel=document.getElementById("goalPos");
+  if(sel.options.length<=1){
+    POSITIONS.forEach(p=>{const o=document.createElement("option");o.value=p.id;o.textContent=p.short;sel.appendChild(o)});
+    sel.addEventListener("change",()=>{profile.targetPosition=sel.value;saveProfile();renderPath();renderGoalStatus()});
+    document.getElementById("goalDate").addEventListener("change",e=>{profile.targetDate=e.target.value;saveProfile();renderGoalStatus()});
+  }
+  sel.value=profile.targetPosition||"";
+  document.getElementById("goalDate").value=profile.targetDate||"";
+  const quick=document.getElementById("goalQuick");
+  quick.innerHTML="";
+  nextWindows().forEach(w=>{
+    const b=document.createElement("button");
+    b.textContent="🚀 "+w.label+" — "+w.note;
+    b.onclick=()=>{
+      profile.targetDate=isoDate(w.deadline);saveProfile();
+      document.getElementById("goalDate").value=profile.targetDate;
+      renderGoalStatus();
+    };
+    quick.appendChild(b);
+  });
+  renderGoalStatus();
+}
+function renderGoalStatus(){
+  const box=document.getElementById("goalStatus");
+  const posId=profile.targetPosition;
+  const dateStr=profile.targetDate;
+  if(!posId&&!dateStr){box.innerHTML='<div class="goal-progress"><div class="cheer">No goal set yet — choose a target position and date above and start the countdown! 🏁</div></div>';return}
+  const pos=posId?POSITIONS.find(p=>p.id===posId):null;
+  let html="";
+  if(dateStr){
+    const target=new Date(dateStr+"T00:00:00");
+    const today=new Date();today.setHours(0,0,0,0);
+    const days=Math.round((target-today)/86400000);
+    if(days>=0){
+      html+=`<div class="countbox"><div class="big">${days}</div><div class="lbl">day${days===1?"":"s"} to go</div></div>`;
+    }else{
+      html+=`<div class="countbox"><div class="big">⏰</div><div class="lbl">date passed</div></div>`;
+    }
+  }
+  html+='<div class="goal-progress">';
+  if(pos){
+    const s=posScore(pos);
+    const pct=Math.round(s.met/s.total*100);
+    html+=`<div class="line">Target: ${esc(pos.short)} — ${s.met} of ${s.total} requirements met (${pct}%)</div>`;
+    if(dateStr){
+      const target=new Date(dateStr+"T00:00:00");
+      const today=new Date();today.setHours(0,0,0,0);
+      const days=Math.round((target-today)/86400000);
+      if(days<0) html+='<div class="cheer late">Your target date has passed — pick the next promotion window and keep pushing! 🔁</div>';
+      else if(s.met===s.total) html+='<div class="cheer hot">🎉 All requirements met — submit your request through your Branch Manager before the deadline!</div>';
+      else if(days<=30) html+=`<div class="cheer late">Crunch time! ${s.total-s.met} requirement(s) to close in ${days} day(s). You've got this! 💪</div>`;
+      else html+=`<div class="cheer">${s.total-s.met} requirement(s) to go — tap ${esc(pos.short)} below to close the gaps. Keep the streak alive! 🔥</div>`;
+    }else{
+      html+='<div class="cheer">Add a target date to start your countdown — try a quick-pick above. ⏱️</div>';
+    }
+  }else{
+    html+='<div class="line">Countdown running — now choose your target position!</div>';
+  }
+  html+="</div>";
+  box.innerHTML=html;
 }
 
 /* ===== path overview ===== */
@@ -524,7 +653,7 @@ function anyAnswered(pos){
   return pos.reqs.some(r=>r.fields.some(f=>profile[f]!==undefined&&profile[f]!==""&&profile[f]!==false));
 }
 function renderPath(){
-  document.getElementById("welcomeLine").textContent=`Welcome, ${currentAgent}`;
+  document.getElementById("welcomeLine").textContent=`Welcome, ${profile.name||"Agent"}`;
   const sales=document.getElementById("salesTrack");
   const mgmt=document.getElementById("mgmtTrack");
   sales.innerHTML="";mgmt.innerHTML="";
@@ -533,17 +662,19 @@ function renderPath(){
     const isCurrent=profile.currentPosition===pos.id;
     const card=document.createElement("button");
     card.className="step"+(isCurrent?" current":"");
+    const isTarget=profile.targetPosition===pos.id;
     let status;
     if(isCurrent) status='<span class="status here">You are here</span>';
     else if(s.met===s.total) status='<span class="status qualified">Qualified &#10003;</span>';
     else if(anyAnswered(pos)) status=`<span class="status progress">${s.met}/${s.total} requirements met</span>`;
     else status='<span class="status notstarted">Tap to check</span>';
+    if(isTarget&&!isCurrent) status+=' <span class="status progress">🎯 My goal</span>';
     card.innerHTML=`<div class="num">${esc(pos.num)}</div><h4>${esc(pos.short)}</h4><div class="mini">${esc(pos.mini)}</div>${status}`;
     card.onclick=()=>showPos(pos.id);
     (pos.track==="sales"?sales:mgmt).appendChild(card);
   });
 }
-function showPath(){renderPath();switchView("viewPath")}
+function showPath(){renderPath();renderGoal();switchView("viewPath")}
 
 /* ===== position detail ===== */
 function showPos(id){
@@ -555,6 +686,15 @@ function showPos(id){
   const ben=document.getElementById("posBenefits");
   ben.innerHTML="<h3>Benefits of this position</h3><ul>"+pos.benefits.map(b=>`<li>${esc(b)}</li>`).join("")+"</ul>";
   document.getElementById("posKeep").textContent=pos.keep||"";
+  const goalLine=document.getElementById("posGoalLine");
+  if(profile.targetPosition===id&&profile.targetDate){
+    const target=new Date(profile.targetDate+"T00:00:00");
+    const today=new Date();today.setHours(0,0,0,0);
+    const days=Math.round((target-today)/86400000);
+    goalLine.textContent=days>=0?`🎯 ${days} day(s) to your target — ${fmtDate(target)}`:`🎯 Target date passed (${fmtDate(target)})`;
+  }else{
+    goalLine.textContent="";
+  }
   renderReqs(pos);
   switchView("viewPos");
 }
