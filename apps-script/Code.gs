@@ -347,25 +347,35 @@ function sendGuardianInstructions_(p, info) {
 
 function getSchedule_() {
   var ss = SpreadsheetApp.getActive();
-  var sheet = CONFIG.SCHEDULE_SHEET ? ss.getSheetByName(CONFIG.SCHEDULE_SHEET) : ss.getSheets()[0];
-  if (!sheet) throw new Error('Schedule sheet not found');
+  // If no sheet name is configured, scan all tabs and use the one whose
+  // header row contains "Next Due" — the workbook has other tabs (client
+  // master, staff roster) that must never be touched by the automation.
+  var candidates = CONFIG.SCHEDULE_SHEET
+    ? [ss.getSheetByName(CONFIG.SCHEDULE_SHEET)]
+    : ss.getSheets();
 
-  var values = sheet.getRange(1, 1, Math.min(5, sheet.getLastRow()), sheet.getLastColumn()).getValues();
-  var headerRow = -1, col = {};
-  for (var i = 0; i < values.length; i++) {
-    var idx = values[i].indexOf(COL.NEXT_DUE);
-    if (idx !== -1) {
-      headerRow = i + 1; // data starts on the next row (0-based index = headerRow)
+  for (var s = 0; s < candidates.length; s++) {
+    var sheet = candidates[s];
+    if (!sheet || sheet.getLastRow() < 1) continue;
+    var values = sheet.getRange(1, 1, Math.min(5, sheet.getLastRow()), sheet.getLastColumn()).getValues();
+    for (var i = 0; i < values.length; i++) {
+      if (values[i].indexOf(COL.NEXT_DUE) === -1) continue;
+      var col = {};
       values[i].forEach(function (h, c) { if (h) col[String(h).trim()] = c; });
-      break;
+      if (!(COL.TOKEN in col)) continue; // must be the schedule, not a lookalike
+      var headerRow = i + 1; // data starts on the next row (0-based index = headerRow)
+      return checkColumns_({ sheet: sheet, headerRow: headerRow, col: col });
     }
   }
-  if (headerRow === -1) throw new Error('Could not find header row (looking for "' + COL.NEXT_DUE + '")');
+  throw new Error('Could not find the schedule tab (looking for a header row with "' + COL.NEXT_DUE + '" and "' + COL.TOKEN + '")');
+}
+
+function checkColumns_(s) {
   // Verify required columns exist.
   [COL.CLIENT, COL.EMAIL, COL.TOKEN, COL.RENEWAL_STATUS, COL.PORTAL_LINK].forEach(function (h) {
-    if (!(h in col)) throw new Error('Missing column: "' + h + '"');
+    if (!(h in s.col)) throw new Error('Missing column: "' + h + '"');
   });
-  return { sheet: sheet, headerRow: headerRow, col: col };
+  return s;
 }
 
 function rowInfo_(row, s) {
