@@ -137,8 +137,10 @@
   .ring .trk{stroke:var(--ring-track)}
   .ring .bar{stroke:url(#ringgrad);stroke-linecap:round;transition:stroke-dashoffset .7s cubic-bezier(.3,1,.4,1)}
   .ring.full .bar{stroke:url(#ringdone)}
-  .ring .emo{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.5rem}
-  .ring .pct{position:absolute;left:0;right:0;bottom:-2px;text-align:center;font-size:.6rem;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums}
+  .ring .rc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+  .ring .emo{font-size:1.3rem}
+  .ring .pct{font-size:.58rem;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:.12rem}
+  .ring.full .pct{color:var(--green)}
 
   /* ===== Path overview ===== */
   .track{margin-bottom:1.6rem}
@@ -176,7 +178,8 @@
   .scorebar .verdict{font-weight:800;font-size:1.05rem}
   .scorebar .ring{width:76px;height:76px}
   .scorebar .ring svg{width:76px;height:76px}
-  .scorebar .ring .emo{font-size:1.9rem}
+  .scorebar .ring .emo{font-size:1.7rem}
+  .scorebar .ring .pct{font-size:.7rem}
   .scorebar .verdict.ok{color:var(--green)}
   .scorebar .verdict.no{color:var(--accent)}
   .meter{flex:1;min-width:200px;height:14px;border-radius:999px;background:var(--ring-track);overflow:hidden}
@@ -1183,8 +1186,7 @@ function ringSVG(met,total,emoji){
       <circle class="trk" cx="31" cy="31" r="${r}" fill="none" stroke-width="6"/>
       <circle class="bar" cx="31" cy="31" r="${r}" fill="none" stroke-width="6" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/>
     </svg>
-    <div class="emo">${emoji}</div>
-    <div class="pct">${Math.round(pct*100)}%</div>
+    <div class="rc"><span class="emo">${emoji}</span><span class="pct">${Math.round(pct*100)}%</span></div>
   </div>`;
 }
 function renderHeroStats(){
