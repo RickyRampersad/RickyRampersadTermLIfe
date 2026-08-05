@@ -99,7 +99,7 @@
   .btn-gold{background:var(--gold);color:#0e2a47}
   .btn-gold:hover{background:#b8921f}
   .btn-ghost{background:none;border:1px solid var(--line);color:var(--head)}
-  .btn-ghost:hover{border-color:var(--head)}
+  .btn-ghost:hover{background:var(--soft);border-color:var(--head)}
   .returning{margin-top:1.2rem;border-top:1px solid var(--line);padding-top:1rem}
   .returning h3{font-size:.85rem;color:var(--muted);font-weight:600;margin-bottom:.5rem}
   .returning .agent-row{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.45rem .2rem;border-bottom:1px dashed var(--line)}
@@ -191,6 +191,38 @@
   .goal-progress .cheer.hot{color:var(--green);font-weight:600}
   .goal-progress .cheer.late{color:var(--red);font-weight:600}
 
+  /* ===== Requirement dates ===== */
+  .reqdate{font-size:.78rem;margin-top:.3rem;font-weight:600}
+  .reqdate.done{color:var(--green)}
+  .reqdate.overdue{color:var(--red)}
+  .reqdate.planned{color:var(--muted)}
+  .ctrl.plan label{color:var(--head)}
+  .ctrl.plan input[type=date]{padding:.4rem .55rem;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+
+  /* ===== Check-in + progress feed ===== */
+  .feedcard{margin-top:1.5rem}
+  .feedcard h3{color:var(--head);font-size:1.05rem;margin-bottom:.2rem;display:flex;align-items:center;gap:.45rem}
+  .feedcard .hint{font-size:.85rem;color:var(--muted);margin-bottom:.9rem}
+  .checkin-due{background:var(--amber-bg);border:1.5px solid var(--amber);border-radius:12px;padding:.8rem 1rem;margin-bottom:.9rem;font-size:.9rem;color:var(--amber);font-weight:600}
+  .checkin-form{display:flex;flex-direction:column;gap:.6rem;margin-bottom:1.1rem}
+  .checkin-form textarea{width:100%;min-height:70px;padding:.6rem .7rem;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font-family:inherit;font-size:.92rem;resize:vertical}
+  .checkin-form textarea:focus{outline:2px solid var(--gold);border-color:var(--gold)}
+  .checkin-actions{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+  .checkin-actions .last{font-size:.78rem;color:var(--muted)}
+  .feed-list{display:flex;flex-direction:column;gap:.55rem;max-height:420px;overflow-y:auto}
+  .feed-entry{border-left:3px solid var(--line);padding:.35rem .8rem;font-size:.88rem}
+  .feed-entry .meta{display:flex;gap:.5rem;align-items:center;margin-bottom:.1rem}
+  .feed-entry .fdate{font-size:.72rem;color:var(--muted);font-variant-numeric:tabular-nums}
+  .feed-entry .badge{font-size:.66rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border-radius:999px;padding:.08rem .5rem}
+  .feed-entry.checkin{border-left-color:var(--gold)}
+  .feed-entry.checkin .badge{background:var(--gold-soft);color:var(--amber)}
+  .feed-entry.milestone{border-left-color:var(--green)}
+  .feed-entry.milestone .badge{background:var(--green-bg);color:var(--green)}
+  .feed-entry.goal{border-left-color:var(--navy-2)}
+  .feed-entry.goal .badge{background:var(--soft);color:var(--head)}
+  .feed-entry .snap{font-size:.78rem;color:var(--muted);margin-top:.15rem}
+  .feed-empty{font-size:.85rem;color:var(--muted);font-style:italic}
+
   footer{max-width:1080px;margin:0 auto;padding:0 1rem 2rem;color:var(--muted);font-size:.75rem;text-align:center}
   .hidden{display:none !important}
   @media (max-width:640px){
@@ -281,7 +313,22 @@
       <div class="path" id="mgmtTrack"></div>
     </div>
 
-    <div class="card" style="font-size:.85rem;color:var(--muted)">
+    <div class="card feedcard">
+      <h3>📒 My Progress Feed</h3>
+      <div class="hint">Check in every month: say where you are, what you closed, and what's next. Your reply is posted to this feed together with a snapshot of your progress, so you can look back and see how far you've come.</div>
+      <div id="checkinDue"></div>
+      <div class="checkin-form">
+        <textarea id="checkinText" placeholder="e.g. Closed 12 new life clients this month, persistency now at 91%. Booked my POP7 assessment for the 15th."></textarea>
+        <div class="checkin-actions">
+          <button class="btn btn-gold" onclick="postCheckin()">Post my check-in</button>
+          <button class="btn btn-ghost" onclick="downloadReminder()">🗓️ Monthly reminder (.ics)</button>
+          <span class="last" id="lastCheckin"></span>
+        </div>
+      </div>
+      <div class="feed-list" id="feedList"></div>
+    </div>
+
+    <div class="card" style="font-size:.85rem;color:var(--muted);margin-top:1.5rem">
       <b style="color:var(--head)">Promotion windows:</b> appointments are announced twice a year — at Blastoff in <b>October</b> (submit by August 31) and at the Mid-Year Meeting in <b>April</b> (submit by February 28). Late submissions are deferred to the next announcement period. All appointments are made by the President in consultation with the VP of Sales and reviewed annually.
     </div>
   </section>
@@ -629,8 +676,18 @@ function renderGoal(){
   const sel=document.getElementById("goalPos");
   if(sel.options.length<=1){
     POSITIONS.forEach(p=>{const o=document.createElement("option");o.value=p.id;o.textContent=p.short;sel.appendChild(o)});
-    sel.addEventListener("change",()=>{profile.targetPosition=sel.value;saveProfile();renderPath();renderGoalStatus()});
-    document.getElementById("goalDate").addEventListener("change",e=>{profile.targetDate=e.target.value;saveProfile();renderGoalStatus()});
+    sel.addEventListener("change",()=>{
+      const changed=sel.value&&sel.value!==profile.targetPosition;
+      profile.targetPosition=sel.value;saveProfile();
+      if(changed){const p=POSITIONS.find(x=>x.id===sel.value);feedAdd("goal","🎯 New goal set: "+(p?p.short:sel.value));renderFeed()}
+      renderPath();renderGoalStatus();
+    });
+    document.getElementById("goalDate").addEventListener("change",e=>{
+      const changed=e.target.value&&e.target.value!==profile.targetDate;
+      profile.targetDate=e.target.value;saveProfile();
+      if(changed){feedAdd("goal","🗓️ Target date set: "+fmtDate(new Date(e.target.value+"T00:00:00")));renderFeed()}
+      renderGoalStatus();
+    });
   }
   sel.value=profile.targetPosition||"";
   document.getElementById("goalDate").value=profile.targetDate||"";
@@ -640,8 +697,10 @@ function renderGoal(){
     const b=document.createElement("button");
     b.textContent="🚀 "+w.label+" — "+w.note;
     b.onclick=()=>{
+      const changed=isoDate(w.deadline)!==profile.targetDate;
       profile.targetDate=isoDate(w.deadline);saveProfile();
       document.getElementById("goalDate").value=profile.targetDate;
+      if(changed){feedAdd("goal","🗓️ Targeting the "+w.label+" — "+w.note);renderFeed()}
       renderGoalStatus();
     };
     quick.appendChild(b);
@@ -719,7 +778,7 @@ function renderPath(){
     (pos.track==="sales"?sales:mgmt).appendChild(card);
   });
 }
-function showPath(){renderPath();renderGoal();switchView("viewPath")}
+function showPath(){renderPath();renderGoal();renderFeed();switchView("viewPath")}
 
 /* ===== position detail ===== */
 function showPos(id){
@@ -761,17 +820,21 @@ function renderReqs(pos){
         controls+=`<div class="ctrl"><label for="f_${f}_${i}">${esc(def.label)}</label><input type="number" id="f_${f}_${i}" data-field="${f}" value="${val!==undefined?esc(val):""}" min="${def.min??0}" ${def.max!==undefined?`max="${def.max}"`:""} step="${def.step??1}" placeholder="0"></div>`;
       }
     });
+    const planKey=pos.id+":"+i;
+    const plan=(profile.reqPlans||{})[planKey]||{};
+    controls+=`<div class="ctrl plan" data-plan-wrap="${planKey}"><label>My target date for this step</label><input type="date" data-plan="${planKey}" value="${plan.targetDate||""}"></div>`;
     card.innerHTML=`
       <div class="icon">${met?"&#10003;":"&#10007;"}</div>
       <div class="body">
         <div class="text">${esc(r.text)}</div>
         ${r.note?`<div class="note">${esc(r.note)}</div>`:""}
         ${gapText?`<div class="gapnote">${esc(gapText)}</div>`:""}
+        <div class="reqdate" data-reqdate="${planKey}"></div>
       </div>
       <div class="controls">${controls}</div>`;
     list.appendChild(card);
   });
-  list.querySelectorAll("input").forEach(inp=>{
+  list.querySelectorAll("input[data-field]").forEach(inp=>{
     inp.addEventListener("input",()=>{
       const f=inp.dataset.field;
       profile[f]=inp.type==="checkbox"?inp.checked:inp.value;
@@ -783,15 +846,37 @@ function renderReqs(pos){
       refreshStatuses(pos);
     });
   });
+  list.querySelectorAll("input[data-plan]").forEach(inp=>{
+    inp.addEventListener("change",()=>{
+      profile.reqPlans=profile.reqPlans||{};
+      const k=inp.dataset.plan;
+      profile.reqPlans[k]=profile.reqPlans[k]||{};
+      profile.reqPlans[k].targetDate=inp.value;
+      saveProfile();
+      refreshStatuses(pos);
+    });
+  });
   refreshStatuses(pos);
 }
 function refreshStatuses(pos){
   const list=document.getElementById("reqList");
   const cards=list.querySelectorAll(".req");
+  const today=isoDate(new Date());
+  profile.reqPlans=profile.reqPlans||{};
+  profile.reqState=profile.reqState||{};
   let met=0;
   pos.reqs.forEach((r,i)=>{
     const ok=r.check(profile);
     if(ok)met++;
+    const key=pos.id+":"+i;
+    const plan=profile.reqPlans[key]=profile.reqPlans[key]||{};
+    // Record the completion date and post a milestone the first time a step flips to done
+    if(ok&&!plan.doneDate){
+      plan.doneDate=today;
+      if(profile.reqState[key]===false) feedAdd("milestone","✅ Completed a step towards "+pos.short+": "+r.text);
+    }
+    if(!ok&&plan.doneDate) delete plan.doneDate;
+    profile.reqState[key]=ok;
     const card=cards[i];
     card.className="req "+(ok?"met":"unmet");
     card.querySelector(".icon").innerHTML=ok?"&#10003;":"&#10007;";
@@ -802,9 +887,36 @@ function refreshStatuses(pos){
       if(!gapEl){gapEl=document.createElement("div");gapEl.className="gapnote";body.appendChild(gapEl)}
       gapEl.textContent=gapText;
     }else if(gapEl){gapEl.remove()}
+    // Date line + plan input visibility
+    const dateEl=body.querySelector(`[data-reqdate="${key}"]`);
+    const planWrap=card.querySelector(`[data-plan-wrap="${key}"]`);
+    if(ok){
+      dateEl.className="reqdate done";
+      dateEl.textContent="✅ Done — "+fmtDate(new Date(plan.doneDate+"T00:00:00"));
+      if(planWrap)planWrap.style.display="none";
+    }else{
+      if(planWrap)planWrap.style.display="";
+      if(plan.targetDate&&plan.targetDate<today){
+        dateEl.className="reqdate overdue";
+        dateEl.textContent="⏰ Planned for "+fmtDate(new Date(plan.targetDate+"T00:00:00"))+" — overdue, keep pushing!";
+      }else if(plan.targetDate){
+        dateEl.className="reqdate planned";
+        dateEl.textContent="🗓️ Planned: "+fmtDate(new Date(plan.targetDate+"T00:00:00"));
+      }else{
+        dateEl.className="reqdate";
+        dateEl.textContent="";
+      }
+    }
   });
+  saveProfile();
   const total=pos.reqs.length;
   const pct=Math.round(met/total*100);
+  profile.qualLogged=profile.qualLogged||{};
+  if(met===total&&!profile.qualLogged[pos.id]){
+    profile.qualLogged[pos.id]=true;
+    feedAdd("milestone","🎉 All requirements met for "+pos.short+" — ready to submit through your Branch Manager!");
+    saveProfile();
+  }
   const verdict=document.getElementById("posVerdict");
   if(met===total){
     verdict.textContent="🎉 You QUALIFY for "+pos.short+"!";
@@ -817,6 +929,87 @@ function refreshStatuses(pos){
   meter.style.width=pct+"%";
   meter.className=met===total?"full":"";
   document.getElementById("posCount").textContent=`${met} of ${total} met (${pct}%)`;
+}
+
+/* =====================================================================
+   PROGRESS FEED + MONTHLY CHECK-IN
+   Every check-in reply is posted to the agent's feed with an automatic
+   snapshot of where they are. Milestones (steps completed, positions
+   fully qualified, goals set) are logged automatically too.
+===================================================================== */
+function feedAdd(type,text,snap){
+  profile.feed=profile.feed||[];
+  profile.feed.unshift({d:isoDate(new Date()),type:type,text:text,snap:snap||""});
+  if(profile.feed.length>200)profile.feed.length=200;
+  saveProfile();
+}
+function progressSnapshot(){
+  const parts=[];
+  if(profile.targetPosition){
+    const pos=POSITIONS.find(p=>p.id===profile.targetPosition);
+    if(pos){
+      const s=posScore(pos);
+      parts.push("Target: "+pos.short+" — "+s.met+" of "+s.total+" requirements met");
+    }
+  }
+  if(profile.targetDate){
+    const days=Math.round((new Date(profile.targetDate+"T00:00:00")-new Date().setHours(0,0,0,0))/86400000);
+    if(days>=0)parts.push(days+" day(s) to target date");
+    else parts.push("target date passed");
+  }
+  return parts.join(" · ");
+}
+function checkinDueThisMonth(){
+  const ym=isoDate(new Date()).slice(0,7);
+  return !(profile.feed||[]).some(e=>e.type==="checkin"&&e.d.slice(0,7)===ym);
+}
+function postCheckin(){
+  const ta=document.getElementById("checkinText");
+  const text=ta.value.trim();
+  if(!text){ta.focus();ta.placeholder="Write a line or two about your month first, then post…";return}
+  feedAdd("checkin",text,progressSnapshot());
+  ta.value="";
+  renderFeed();
+}
+function renderFeed(){
+  const due=document.getElementById("checkinDue");
+  if(checkinDueThisMonth()){
+    due.innerHTML='<div class="checkin-due">📣 Monthly check-in due — where are you this month? Update your checklist below, then post a quick reply.</div>';
+  }else{
+    due.innerHTML="";
+  }
+  const feed=profile.feed||[];
+  const lastCk=feed.find(e=>e.type==="checkin");
+  document.getElementById("lastCheckin").textContent=lastCk?"Last check-in: "+fmtDate(new Date(lastCk.d+"T00:00:00")):"No check-ins yet";
+  const list=document.getElementById("feedList");
+  if(!feed.length){
+    list.innerHTML='<div class="feed-empty">Your feed is empty. Post your first monthly check-in above — future you will thank you. 📈</div>';
+    return;
+  }
+  const badge={checkin:"Check-in",milestone:"Milestone",goal:"Goal"};
+  list.innerHTML=feed.map(e=>`
+    <div class="feed-entry ${esc(e.type)}">
+      <div class="meta"><span class="fdate">${esc(fmtDate(new Date(e.d+"T00:00:00")))}</span><span class="badge">${badge[e.type]||"Note"}</span></div>
+      <div>${esc(e.text)}</div>
+      ${e.snap?`<div class="snap">${esc(e.snap)}</div>`:""}
+    </div>`).join("");
+}
+function downloadReminder(){
+  const now=new Date();
+  const first=new Date(now.getFullYear(),now.getMonth()+1,1);
+  const stamp=first.getFullYear()+String(first.getMonth()+1).padStart(2,"0")+"01";
+  const ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Guardian Life Career Path//EN",
+    "BEGIN:VEVENT","UID:glcp-checkin-"+Date.now()+"@careerpath",
+    "DTSTAMP:"+stamp+"T090000Z","DTSTART;VALUE=DATE:"+stamp,
+    "RRULE:FREQ=MONTHLY;BYMONTHDAY=1",
+    "SUMMARY:Career Path monthly check-in",
+    "DESCRIPTION:Open your Sales Career Path tracker\\, update your requirement checklist and post your monthly progress to your feed.",
+    "BEGIN:VALARM","TRIGGER:PT9H","ACTION:DISPLAY","DESCRIPTION:Career Path monthly check-in","END:VALARM",
+    "END:VEVENT","END:VCALENDAR"].join("\r\n");
+  const a=document.createElement("a");
+  a.href="data:text/calendar;charset=utf-8,"+encodeURIComponent(ics);
+  a.download="career-path-monthly-checkin.ics";
+  document.body.appendChild(a);a.click();a.remove();
 }
 
 /* ===== view switching ===== */
