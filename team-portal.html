@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team Portal — Ricky Rampersad Branch</title>
+<meta name="description" content="Internal tools for the Ricky Rampersad Branch team.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#06121a">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 3 L57 11.5 V30 C57 46.5 46.5 57 32 61.5 C17.5 57 7 46.5 7 30 V11.5 Z' fill='%2300C9A7' stroke='%2306121a' stroke-width='3'/%3E%3Cpath d='M20.5 32.5 L28.5 41.5 L44 22.5' stroke='%2306121a' stroke-width='7' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#06121a; --bg2:#0a1c26;
+    --gold:#efc24b; --text:#edf4fb; --muted:#a9bbcf;
+    --line:rgba(255,255,255,.08);
+    --teal:#00C9A7; --teal2:#00a589;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;
+    background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(0,201,167,.10),transparent),
+      linear-gradient(180deg,var(--bg) 0%,var(--bg2) 50%,var(--bg) 100%)}
+  a{color:inherit}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 16px}
+
+  /* NAV */
+  .nav{position:sticky;top:0;z-index:40;background:rgba(6,18,26,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .nav-inner{max-width:1060px;margin:0 auto;padding:0 16px;height:62px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+  .nav-brand svg{width:32px;height:32px;flex-shrink:0}
+  .nav-brand span{font-family:'Montserrat',sans-serif;font-weight:800;font-size:15px;letter-spacing:.01em}
+  .nav-back{font-size:14px;color:var(--muted);text-decoration:none;padding:8px 14px;border-radius:8px;border:1px solid var(--line)}
+  .nav-back:hover{color:var(--text);background:rgba(255,255,255,.06)}
+  @media(max-width:560px){.nav-brand span{font-size:13px}}
+
+  /* HEADER */
+  header.page{padding:52px 0 28px;text-align:center}
+  .badge{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--teal);border:1px solid rgba(0,201,167,.35);background:rgba(0,201,167,.08);padding:6px 14px;border-radius:999px}
+  header.page h1{font-family:'Montserrat',sans-serif;font-weight:900;font-size:clamp(28px,6vw,44px);margin:16px 0 10px;letter-spacing:-.01em}
+  header.page p{color:var(--muted);font-size:16px;max-width:56ch;margin:0 auto}
+
+  /* TILES */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;padding:14px 0 60px}
+  .tile{display:flex;flex-direction:column;background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
+    border:1px solid var(--line);border-radius:18px;padding:26px 24px;text-decoration:none;position:relative;overflow:hidden;
+    transition:transform .2s cubic-bezier(.3,1,.4,1),border-color .2s,box-shadow .2s}
+  .tile.live:hover{transform:translateY(-4px);border-color:rgba(0,201,167,.5);box-shadow:0 18px 44px -22px rgba(0,201,167,.7)}
+  .tile::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,var(--teal),#7af0ff);opacity:0;transition:opacity .2s}
+  .tile.live:hover::before{opacity:1}
+  .tile .ico{font-size:34px;line-height:1;margin-bottom:14px}
+  .tile h2{font-family:'Montserrat',sans-serif;font-weight:800;font-size:20px;margin-bottom:8px}
+  .tile p{color:var(--muted);font-size:14.5px;line-height:1.6;flex:1}
+  .tile ul{list-style:none;margin:14px 0 0;display:flex;flex-direction:column;gap:7px}
+  .tile ul li{font-size:13.5px;color:var(--muted);display:flex;gap:8px;align-items:flex-start}
+  .tile .go{margin-top:18px;display:inline-flex;align-items:center;gap:8px;align-self:flex-start;
+    font-family:'Montserrat',sans-serif;font-weight:700;font-size:14px;color:#06121a;
+    background:linear-gradient(135deg,var(--teal),#00dbb8);padding:11px 20px;border-radius:10px}
+  .tile.live:hover .go{filter:brightness(1.07)}
+  .tile.soon{opacity:.72}
+  .tile.soon .go{background:transparent;color:var(--muted);border:1px dashed var(--line);font-weight:600}
+  .pill{position:absolute;top:20px;right:20px;font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+    padding:5px 11px;border-radius:999px}
+  .pill.on{background:rgba(0,201,167,.16);color:var(--teal);border:1px solid rgba(0,201,167,.4)}
+  .pill.off{background:rgba(239,194,75,.12);color:var(--gold);border:1px solid rgba(239,194,75,.32)}
+
+  .note{border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:14px;padding:18px 20px;margin-bottom:44px;
+    font-size:13.5px;color:var(--muted);line-height:1.65}
+  .note b{color:var(--text)}
+
+  footer{border-top:1px solid var(--line);padding:26px 0 40px;text-align:center;color:var(--muted);font-size:12.5px;line-height:1.7}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="/">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M32 3 L57 11.5 V30 C57 46.5 46.5 57 32 61.5 C17.5 57 7 46.5 7 30 V11.5 Z" fill="#00C9A7" stroke="#06121a" stroke-width="3"/>
+        <path d="M20.5 32.5 L28.5 41.5 L44 22.5" stroke="#06121a" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Ricky Rampersad Branch</span>
+    </a>
+    <a class="nav-back" href="/">← Main site</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header class="page">
+    <div class="badge">🛡️ Team Portal</div>
+    <h1>Tools for our team</h1>
+    <p>Internal resources for Ricky Rampersad Branch agents. More is being added — start with your career path.</p>
+  </header>
+
+  <div class="grid">
+
+    <a class="tile live" href="career-path.html">
+      <span class="pill on">Live</span>
+      <div class="ico">🎯</div>
+      <h2>Sales Career Path Tracker</h2>
+      <p>Our revised Sales Career Path (Amended April 2026), digitized. Select your name, put in your numbers, and see exactly where you stand.</p>
+      <ul>
+        <li>✅ Every position and its exact requirements</li>
+        <li>📊 What you've met and what's outstanding</li>
+        <li>⏱️ A realistic timeline to your next promotion window</li>
+        <li>📒 Monthly check-ins and your progress feed</li>
+      </ul>
+      <span class="go">Open the Tracker →</span>
+    </a>
+
+    <div class="tile soon">
+      <span class="pill off">Coming soon</span>
+      <div class="ico">📚</div>
+      <h2>Training Academy</h2>
+      <p>Our branch training courses, all in one place — session schedules, materials, and your completion record, linked to your career path progress.</p>
+      <ul>
+        <li>🎓 Course catalogue and next intakes</li>
+        <li>▶️ Session recordings and materials</li>
+        <li>🏅 Your completions, feeding your tracker</li>
+      </ul>
+      <span class="go">In development</span>
+    </div>
+
+  </div>
+
+  <div class="note">
+    <b>A note on the tracker.</b> It is a self-assessment guide built from the Company's
+    Sales Career Path document. It changes nothing in the policy — all appointments remain
+    at the discretion of the Company and are made by the President in consultation with the
+    VP of Sales. Your entries are saved on your own device only; nobody else sees them.
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    🛡️ Ricky Rampersad Branch · Guardian Life of the Caribbean<br>
+    Internal team resources — please don't share outside the branch.
+  </div>
+</footer>
+
+</body>
+</html>

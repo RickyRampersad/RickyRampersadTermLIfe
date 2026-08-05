@@ -457,9 +457,13 @@
           <div style="font-size:.78rem;color:var(--muted);font-weight:600">Ricky Rampersad Branch · Career Path Tracker</div>
         </div>
       </div>
-      <p>Enter your name to open your career tracker. Your answers are saved on this device so you can return and update them any time.</p>
+      <p>Select your name to open your career tracker. Your answers are saved on this device so you can return and update them any time.</p>
       <div class="field">
-        <label for="loginName">Your name</label>
+        <label for="loginSelect">Your name</label>
+        <select id="loginSelect"></select>
+      </div>
+      <div class="field hidden" id="otherNameField">
+        <label for="loginName">Type your name</label>
         <input type="text" id="loginName" placeholder="e.g. Ricky Rampersad" autocomplete="name">
       </div>
       <div class="field">
@@ -922,6 +926,19 @@ function gapClients(p){
 }
 function esc(s){const d=document.createElement("div");d.textContent=s==null?"":String(s);return d.innerHTML}
 
+/* =====================================================================
+   AGENT LIST  ← EDIT THIS
+   Add or remove names between the quotes, one per line, each ending
+   with a comma. Keep them in the order you want them to appear.
+   Anyone not on the list can still sign in via "My name isn't listed".
+===================================================================== */
+const AGENTS=[
+  "Ricky Rampersad"
+  // "Agent Name",
+  // "Agent Name",
+];
+const OTHER="__other__";
+
 /* ===== storage — profiles are keyed by agent name (demo mode) =====
    Falls back to in-memory storage when localStorage is unavailable
    (e.g. sandboxed previews), so the app always works. */
@@ -959,10 +976,24 @@ function renderReturning(){
     row.appendChild(open);row.appendChild(del);list.appendChild(row);
   });
 }
+function renderAgentOptions(){
+  const sel=document.getElementById("loginSelect");
+  sel.innerHTML='<option value="">— Select your name —</option>'
+    +AGENTS.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("")
+    +`<option value="${OTHER}">My name isn't listed…</option>`;
+  sel.addEventListener("change",()=>{
+    const other=sel.value===OTHER;
+    document.getElementById("otherNameField").classList.toggle("hidden",!other);
+    if(other)document.getElementById("loginName").focus();
+  });
+}
 function login(){
-  const name=document.getElementById("loginName").value.trim();
+  const sel=document.getElementById("loginSelect");
+  const name=sel.value===OTHER
+    ? document.getElementById("loginName").value.trim()
+    : sel.value;
   const err=document.getElementById("loginErr");
-  if(!name){err.textContent="Please enter your name to continue.";return}
+  if(!name){err.textContent=sel.value===OTHER?"Please type your name to continue.":"Please select your name to continue.";return}
   err.textContent="";
   const store=loadStore();
   if(!store[name]){
@@ -983,6 +1014,8 @@ function logout(){
   currentKey=null;profile=null;currentPosId=null;
   document.getElementById("userChip").classList.add("hidden");
   document.getElementById("loginName").value="";
+  document.getElementById("loginSelect").value="";
+  document.getElementById("otherNameField").classList.add("hidden");
   switchView("viewLogin");
   renderReturning();
 }
@@ -1606,6 +1639,7 @@ function endIntro(){
 
 /* ===== init ===== */
 document.getElementById("loginName").addEventListener("keydown",e=>{if(e.key==="Enter")login()});
+renderAgentOptions();
 renderReturning();
 if(location.search.indexOf("intro=auto")>-1){
   playIntro(true);
