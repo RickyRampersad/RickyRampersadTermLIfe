@@ -1,525 +1,1342 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dental Care Today — Restore Your True Smile</title>
-<meta name="description" content="Dental Care Today — modern, gentle dentistry. Using advanced technology, we deliver comprehensive treatments for a healthy, confident smile." />
-<style>
-  :root{
-    --blue-900:#123B63;
-    --blue-800:#1F5A96;
-    --blue-700:#2A6DB0;
-    --blue-500:#3D8CD5;
-    --blue-100:#DCEBF8;
-    --blue-50:#EDF5FC;
-    --ink:#16283B;
-    --muted:#5B7186;
-    --white:#ffffff;
-    --accent:#C6F06E;
-    --accent-ink:#2C4404;
-    --radius-lg:28px;
-    --radius-md:18px;
-    --shadow:0 18px 45px rgba(18,59,99,.14);
-    --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  }
-  *{margin:0;padding:0;box-sizing:border-box}
-  html{scroll-behavior:smooth}
-  body{font-family:var(--font);color:var(--ink);background:var(--white);line-height:1.6;-webkit-font-smoothing:antialiased}
-  img,svg{max-width:100%;display:block}
-  a{text-decoration:none;color:inherit}
-  ul{list-style:none}
-  .wrap{width:min(1160px,92%);margin-inline:auto}
-  section{padding:88px 0}
-  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--blue-700);background:var(--blue-50);border:1px solid var(--blue-100);padding:8px 16px;border-radius:999px;margin-bottom:18px}
-  .h2{font-size:clamp(1.9rem,4vw,2.7rem);font-weight:800;letter-spacing:-.02em;line-height:1.15;margin-bottom:14px}
-  .lead{color:var(--muted);max-width:560px;font-size:1.05rem}
-  .btn{display:inline-flex;align-items:center;gap:10px;font-weight:700;border-radius:999px;padding:14px 26px;border:none;cursor:pointer;font-size:1rem;white-space:nowrap;transition:transform .18s ease, box-shadow .18s ease}
-  .btn:hover{transform:translateY(-2px)}
-  .btn-primary{background:var(--blue-800);color:#fff;box-shadow:0 12px 26px rgba(31,90,150,.35)}
-  .btn-accent{background:var(--accent);color:var(--accent-ink);box-shadow:0 12px 26px rgba(150,190,60,.35)}
-  .btn-ghost{background:rgba(255,255,255,.85);color:var(--blue-900);border:1px solid var(--blue-100)}
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Xpress Life Quote Builder | Ricky Rampersad Branch</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:     #07131f;
+      --bg2:    #0d2137;
+      --card:   #163553;
+      --card2:  #1b3d61;
+      --gold:   #efc24b;
+      --gold2:  #dca530;
+      --text:   #edf4fb;
+      --muted:  #a9bbcf;
+      --line:   rgba(255,255,255,.08);
+      --teal:   #00C9A7;
+      --teal2:  #00a589;
+    }
 
-  /* ---------- NAV ---------- */
-  header{position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);background:rgba(237,245,252,.85);border-bottom:1px solid rgba(31,90,150,.08)}
-  .nav{display:flex;align-items:center;justify-content:space-between;height:72px}
-  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.15rem;letter-spacing:-.01em;color:var(--blue-900)}
-  .logo-badge{width:38px;height:38px;border-radius:12px;background:var(--blue-800);display:grid;place-items:center;color:#fff}
-  .nav-links{display:flex;gap:30px;font-weight:600;color:var(--blue-900)}
-  .nav-links a{opacity:.75;transition:opacity .15s}
-  .nav-links a:hover{opacity:1}
-  .nav-cta{display:flex;align-items:center;gap:14px}
-  .menu-btn{display:none;background:none;border:none;cursor:pointer;padding:8px}
-  .menu-btn span{display:block;width:24px;height:2.5px;background:var(--blue-900);margin:5px 0;border-radius:2px;transition:.25s}
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* ---------- HERO ---------- */
-  .hero{position:relative;overflow:hidden;background:linear-gradient(180deg,#EDF5FC 0%,#D9EAF8 45%,#C9E1F5 100%);padding:64px 0 0}
-  .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center}
-  .hero h1{font-size:clamp(2.6rem,6.4vw,4.6rem);font-weight:800;letter-spacing:-.03em;line-height:1.03;color:var(--blue-900)}
-  .hero h1 .accent-word{color:var(--blue-500)}
-  .hero-sub{margin:26px 0 34px;max-width:440px;color:#3A5570;font-size:1.08rem}
-  .hero-sub strong{color:var(--blue-900)}
-  .avatar-row{display:inline-flex;align-items:center;vertical-align:middle;margin-left:14px}
-  .avatar{width:44px;height:44px;border-radius:50%;border:3px solid #fff;display:grid;place-items:center;font-size:.8rem;font-weight:800;color:#fff;margin-left:-12px;box-shadow:0 4px 10px rgba(18,59,99,.18)}
-  .avatar:first-child{margin-left:0}
-  .av1{background:linear-gradient(135deg,#F2994A,#EB5757)}
-  .av2{background:linear-gradient(135deg,#56CCF2,#2F80ED)}
-  .av3{background:#123B63}
-  .hero-actions{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:44px}
-  .hero-art{position:relative;min-height:480px}
-  .tooth-stage{position:relative;display:grid;place-items:center;height:100%}
-  .tooth-glow{position:absolute;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,#ffffffcc 0%,#ffffff00 65%);filter:blur(6px)}
-  .tooth-svg{width:min(420px,86%);filter:drop-shadow(0 30px 40px rgba(18,59,99,.25));animation:floaty 6s ease-in-out infinite}
-  .spark{position:absolute;border-radius:50%;background:#fff;opacity:.85;animation:twinkle 3.4s ease-in-out infinite}
-  .s1{width:14px;height:14px;top:12%;left:16%}
-  .s2{width:9px;height:9px;top:22%;right:14%;animation-delay:.8s}
-  .s3{width:12px;height:12px;bottom:18%;left:10%;animation-delay:1.6s}
-  .s4{width:8px;height:8px;bottom:26%;right:8%;animation-delay:2.2s}
-  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
-  @keyframes twinkle{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:.95;transform:scale(1.15)}}
-  .stat-card{position:absolute;left:0;bottom:56px;background:rgba(255,255,255,.92);border-radius:22px;padding:20px 24px;box-shadow:var(--shadow);max-width:190px}
-  .stat-card .num{font-size:2.1rem;font-weight:800;color:var(--blue-900);letter-spacing:-.02em}
-  .stat-card .lbl{font-size:.85rem;color:var(--muted);font-weight:600;line-height:1.35}
-  .hero-strip{margin-top:26px;background:rgba(255,255,255,.65);border-top:1px solid rgba(31,90,150,.1);backdrop-filter:blur(8px)}
-  .strip-inner{display:flex;justify-content:space-between;gap:20px;padding:20px 0;flex-wrap:wrap}
-  .strip-item{display:flex;align-items:center;gap:12px;font-weight:700;color:var(--blue-900);font-size:.95rem}
-  .strip-item svg{width:22px;height:22px;flex:none}
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0,201,167,.08), transparent),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg2) 50%, var(--bg) 100%);
+    }
 
-  /* ---------- SERVICES ---------- */
-  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:22px;margin-top:44px}
-  .card{background:var(--blue-50);border:1px solid var(--blue-100);border-radius:var(--radius-lg);padding:30px 26px;transition:transform .2s ease, box-shadow .2s ease}
-  .card:hover{transform:translateY(-6px);box-shadow:var(--shadow)}
-  .card .ico{width:52px;height:52px;border-radius:16px;background:var(--blue-800);display:grid;place-items:center;color:#fff;margin-bottom:18px}
-  .card h3{font-size:1.15rem;font-weight:800;margin-bottom:8px}
-  .card p{color:var(--muted);font-size:.95rem}
+    .wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 24px 16px 120px;
+    }
 
-  /* ---------- RESULTS ---------- */
-  .results{background:linear-gradient(180deg,#123B63,#1F5A96);color:#fff;border-radius:0}
-  .results .h2{color:#fff}
-  .results .lead{color:#BDD7EF}
-  .results-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:22px;margin-top:48px}
-  .r-stat{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:var(--radius-md);padding:30px 24px;text-align:center}
-  .r-stat .num{font-size:2.6rem;font-weight:800;letter-spacing:-.02em}
-  .r-stat .num span{color:#9CD1FF}
-  .r-stat p{color:#BDD7EF;font-weight:600;font-size:.92rem;margin-top:6px}
+    /* ── HEADER ── */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 28px;
+      animation: fadeUp .5s ease both;
+    }
 
-  /* ---------- PRICING ---------- */
-  .price-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:24px;margin-top:48px;align-items:stretch}
-  .price{border:1px solid var(--blue-100);border-radius:var(--radius-lg);padding:34px 30px;display:flex;flex-direction:column;background:#fff;transition:transform .2s ease, box-shadow .2s ease}
-  .price:hover{transform:translateY(-6px);box-shadow:var(--shadow)}
-  .price.featured{background:var(--blue-900);color:#fff;position:relative;overflow:hidden}
-  .price.featured .p-desc,.price.featured li{color:#BDD7EF}
-  .badge-pop{position:absolute;top:20px;right:-38px;background:var(--accent);color:var(--accent-ink);font-size:.72rem;font-weight:800;letter-spacing:.08em;padding:6px 44px;transform:rotate(38deg)}
-  .p-name{font-weight:800;font-size:1.05rem;letter-spacing:.02em;text-transform:uppercase;opacity:.8}
-  .p-amount{font-size:2.5rem;font-weight:800;letter-spacing:-.02em;margin:10px 0 4px}
-  .p-amount small{font-size:1rem;font-weight:600;opacity:.7}
-  .p-desc{color:var(--muted);font-size:.93rem;margin-bottom:22px}
-  .price ul{margin-bottom:28px;display:grid;gap:10px}
-  .price li{display:flex;gap:10px;align-items:flex-start;font-size:.95rem;color:var(--muted)}
-  .price li svg{flex:none;margin-top:3px}
-  .price .btn{margin-top:auto;justify-content:center}
+    .logo {
+      width: 64px; height: 64px;
+      flex-shrink: 0;
+    }
 
-  /* ---------- REVIEWS ---------- */
-  .reviews{background:var(--blue-50)}
-  .review-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin-top:48px}
-  .review{background:#fff;border-radius:var(--radius-lg);padding:30px 28px;box-shadow:0 10px 30px rgba(18,59,99,.07)}
-  .stars{color:#F2B01E;letter-spacing:3px;font-size:1rem;margin-bottom:14px}
-  .review p{color:var(--ink);font-size:.98rem;margin-bottom:20px}
-  .reviewer{display:flex;align-items:center;gap:12px}
-  .reviewer .avatar{margin:0;width:42px;height:42px;border:none}
-  .reviewer b{display:block;font-size:.95rem}
-  .reviewer span{font-size:.82rem;color:var(--muted)}
+    .header-text .kicker {
+      font-size: 10px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--gold2);
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
 
-  /* ---------- CONTACT ---------- */
-  .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;margin-top:44px}
-  .c-info{display:grid;gap:18px}
-  .c-row{display:flex;gap:16px;align-items:flex-start;background:var(--blue-50);border:1px solid var(--blue-100);border-radius:var(--radius-md);padding:18px 20px}
-  .c-row .ico{width:44px;height:44px;border-radius:12px;background:var(--blue-800);color:#fff;display:grid;place-items:center;flex:none}
-  .c-row b{display:block}
-  .c-row span{color:var(--muted);font-size:.93rem}
-  form{display:grid;gap:14px;background:#fff;border:1px solid var(--blue-100);border-radius:var(--radius-lg);padding:30px;box-shadow:var(--shadow)}
-  form label{font-weight:700;font-size:.88rem}
-  form input,form select,form textarea{font:inherit;padding:13px 15px;border:1.5px solid var(--blue-100);border-radius:12px;background:var(--blue-50);width:100%;outline:none;transition:border-color .15s}
-  form input:focus,form select:focus,form textarea:focus{border-color:var(--blue-500);background:#fff}
+    .header-text h1 {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 800;
+      font-size: clamp(20px, 5vw, 28px);
+      color: var(--gold);
+      line-height: 1.1;
+    }
 
-  /* ---------- FOOTER ---------- */
-  footer{background:var(--blue-900);color:#BDD7EF;padding:56px 0 28px}
-  .f-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:40px;margin-bottom:40px}
-  footer .logo{color:#fff;margin-bottom:14px}
-  footer h4{color:#fff;font-size:.95rem;margin-bottom:14px;letter-spacing:.06em;text-transform:uppercase}
-  footer li{margin-bottom:10px;font-size:.94rem}
-  footer a:hover{color:#fff}
-  .f-bottom{border-top:1px solid rgba(255,255,255,.15);padding-top:22px;font-size:.85rem;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .header-text p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
 
-  /* ---------- REVEAL ---------- */
-  .reveal{opacity:0;transform:translateY(26px);transition:opacity .6s ease, transform .6s ease}
-  .reveal.in{opacity:1;transform:none}
+    /* ── CARD ── */
+    .card {
+      background: linear-gradient(160deg, var(--card), var(--card2));
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 24px;
+      margin-bottom: 16px;
+      animation: fadeUp .45s ease both;
+    }
 
-  @media (prefers-reduced-motion: reduce){
-    *{animation:none!important;transition:none!important}
-    .reveal{opacity:1;transform:none}
-    html{scroll-behavior:auto}
-  }
+    .card:nth-child(2) { animation-delay:.05s }
+    .card:nth-child(3) { animation-delay:.1s }
+    .card:nth-child(4) { animation-delay:.15s }
 
-  /* ---------- MOBILE ---------- */
-  @media (max-width: 900px){
-    .nav-links{position:fixed;inset:72px 0 auto 0;background:#fff;flex-direction:column;gap:0;padding:10px 6%;box-shadow:0 24px 40px rgba(18,59,99,.15);display:none}
-    .nav-links.open{display:flex}
-    .nav-links a{padding:14px 0;border-bottom:1px solid var(--blue-50);opacity:1}
-    .menu-btn{display:block}
-    .nav-cta .btn{padding:11px 18px;font-size:.9rem}
-    .hero-grid{grid-template-columns:1fr}
-    .hero-art{min-height:380px}
-    .stat-card{left:4%;bottom:10px}
-    .contact-grid{grid-template-columns:1fr}
-    .f-grid{grid-template-columns:1fr 1fr}
-    section{padding:64px 0}
-  }
-</style>
+    .section-label {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(0,201,167,.2);
+    }
+
+    h2 {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 17px;
+      color: var(--text);
+      margin-bottom: 18px;
+    }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      background: rgba(0,0,0,.25);
+      border-radius: 14px;
+      padding: 5px;
+      margin-bottom: 24px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 11px 8px;
+      border-radius: 10px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .22s;
+      text-align: center;
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, rgba(0,201,167,.2), rgba(0,201,167,.08));
+      color: var(--teal);
+      border: 1px solid rgba(0,201,167,.25);
+    }
+
+    /* ── PERSON BLOCK ── */
+    .person-block {
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 14px;
+      position: relative;
+    }
+
+    .person-block.p1 {
+      background: rgba(239,194,75,.04);
+      border: 1px solid rgba(239,194,75,.15);
+    }
+
+    .person-block.p2 {
+      background: rgba(0,201,167,.04);
+      border: 1px solid rgba(0,201,167,.15);
+    }
+
+    .person-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .avatar.gold { background: rgba(239,194,75,.12); border: 1px solid rgba(239,194,75,.25); }
+    .avatar.teal { background: rgba(0,201,167,.12); border: 1px solid rgba(0,201,167,.25); }
+
+    .person-head-info strong {
+      display: block;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .person-head-info span {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ── GRID ── */
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+    @media(max-width:600px) {
+      .grid2, .grid3 { grid-template-columns: 1fr; }
+      .sa-grid { grid-template-columns: repeat(3,1fr) !important; }
+    }
+
+    /* ── FORM CONTROLS ── */
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+    }
+
+    select, input[type="text"] {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.09);
+      background: rgba(0,0,0,.3);
+      color: var(--text);
+      font-size: 14px;
+      font-family: 'DM Sans', sans-serif;
+      appearance: none;
+      cursor: pointer;
+      transition: border-color .2s;
+    }
+
+    select:focus, input:focus {
+      outline: none;
+      border-color: rgba(0,201,167,.4);
+    }
+
+    /* ── SA CARDS ── */
+    .sa-section-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+
+    .sa-grid {
+      display: grid;
+      grid-template-columns: repeat(5,1fr);
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .sa-card {
+      border: 1.5px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      padding: 11px 5px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .18s;
+      background: rgba(255,255,255,.02);
+      user-select: none;
+    }
+
+    .sa-card:hover {
+      border-color: rgba(0,201,167,.35);
+      background: rgba(0,201,167,.06);
+      transform: translateY(-1px);
+    }
+
+    .sa-card.sel {
+      border-color: var(--teal);
+      background: rgba(0,201,167,.12);
+    }
+
+    .sa-card .amt {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .sa-card.sel .amt { color: var(--teal); }
+
+    .sa-card .lbl {
+      font-size: 9px;
+      color: var(--muted);
+      margin-top: 3px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    /* ── PAYMENT MODE ── */
+    .mode-grid {
+      display: grid;
+      grid-template-columns: repeat(4,1fr);
+      gap: 8px;
+      margin-bottom: 0;
+    }
+
+    @media(max-width:600px) { .mode-grid { grid-template-columns: 1fr 1fr; } }
+
+    .mode-card {
+      border: 1.5px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      padding: 12px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .18s;
+      background: rgba(255,255,255,.02);
+      user-select: none;
+    }
+
+    .mode-card:hover {
+      border-color: rgba(239,194,75,.35);
+      background: rgba(239,194,75,.05);
+    }
+
+    .mode-card.sel {
+      border-color: var(--gold);
+      background: rgba(239,194,75,.1);
+    }
+
+    .mode-card .mode-name {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .mode-card.sel .mode-name { color: var(--gold); }
+
+    .mode-card .mode-save {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    /* ── RESULT PANEL ── */
+    .result-panel {
+      background: linear-gradient(135deg, #061a14, #0a2318);
+      border: 1px solid rgba(0,201,167,.2);
+      border-radius: 20px;
+      padding: 24px;
+      margin-top: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .result-panel::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(0,201,167,.1), transparent 70%);
+      pointer-events: none;
+    }
+
+    .result-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .result-premium {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 52px;
+      font-weight: 900;
+      color: var(--teal);
+      line-height: 1;
+    }
+
+    .result-premium-label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+
+    .result-meta {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    @media(max-width:580px) { .result-meta { grid-template-columns: 1fr 1fr; } }
+
+    .meta-item {
+      background: rgba(0,0,0,.2);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+
+    .meta-item .ml {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .meta-item .mv {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    /* ── DEATH BENEFIT ROWS ── */
+    .db-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .db-row {
+      display: grid;
+      grid-template-columns: 70px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 11px 14px;
+      border-radius: 10px;
+      margin-bottom: 7px;
+      font-size: 13px;
+    }
+
+    .db-row.yr1 { background: rgba(248,113,113,.07); border: 1px solid rgba(248,113,113,.15); }
+    .db-row.yr2 { background: rgba(239,194,75,.07); border: 1px solid rgba(239,194,75,.15); }
+    .db-row.yr3 { background: rgba(0,201,167,.07); border: 1px solid rgba(0,201,167,.15); }
+
+    .db-yr { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 11px; }
+    .db-yr1 { color: #f87171; }
+    .db-yr2 { color: var(--gold); }
+    .db-yr3 { color: var(--teal); }
+    .db-desc { color: var(--muted); font-size: 12px; }
+    .db-amt { font-family: 'Montserrat', sans-serif; font-weight: 700; text-align: right; white-space: nowrap; }
+
+    /* ── JOINT COMBINED BOX ── */
+    .joint-combined {
+      background: linear-gradient(135deg, rgba(0,201,167,.14), rgba(0,201,167,.05));
+      border: 1px solid rgba(0,201,167,.3);
+      border-radius: 18px;
+      padding: 22px;
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .jc-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .jc-amount {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 46px;
+      font-weight: 900;
+      color: var(--teal);
+      line-height: 1;
+    }
+
+    .jc-sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 6px;
+      margin-bottom: 14px;
+    }
+
+    .jc-stats {
+      display: flex;
+      justify-content: center;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+
+    .jc-stat .jcs-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .jc-stat .jcs-val { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 15px; color: var(--text); margin-top: 2px; }
+
+    /* ── PERSON SUMMARY CARDS (joint) ── */
+    .p-summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    @media(max-width:500px) { .p-summary-grid { grid-template-columns: 1fr; } }
+
+    .p-summary {
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .p-summary.ps1 { background: rgba(239,194,75,.06); border: 1px solid rgba(239,194,75,.18); }
+    .p-summary.ps2 { background: rgba(0,201,167,.06); border: 1px solid rgba(0,201,167,.18); }
+
+    .ps-name { font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+    .ps-name.c1 { color: var(--gold); }
+    .ps-name.c2 { color: var(--teal); }
+    .ps-details { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .ps-prem { font-family: 'Montserrat', sans-serif; font-size: 20px; font-weight: 800; }
+    .ps-prem.c1 { color: var(--gold); }
+    .ps-prem.c2 { color: var(--teal); }
+    .ps-cover { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+    /* ── FEATURES ── */
+    .features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,.06);
+    }
+
+    .feat {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 50px;
+      padding: 5px 11px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ── CALLOUT BOX ── */
+    .callout {
+      background: rgba(239,194,75,.07);
+      border: 1px solid rgba(239,194,75,.18);
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .callout b { color: var(--gold); }
+
+    .callout-teal {
+      background: rgba(0,201,167,.07);
+      border: 1px solid rgba(0,201,167,.18);
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .callout-teal b { color: var(--teal); }
+
+    /* ── APPLY NOW BUTTON ── */
+    .apply-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 18px 24px;
+      margin-top: 20px;
+      border-radius: 16px;
+      border: none;
+      background: linear-gradient(135deg, var(--teal), var(--teal2));
+      color: #021a14;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: .5px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all .2s;
+      box-shadow: 0 8px 28px rgba(0,201,167,.3);
+    }
+
+    .apply-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 36px rgba(0,201,167,.45);
+      background: linear-gradient(135deg, #00dbb8, var(--teal));
+    }
+
+    .apply-btn:active { transform: translateY(0); }
+
+    .apply-btn .apply-arrow {
+      font-size: 20px;
+      transition: transform .2s;
+    }
+
+    .apply-btn:hover .apply-arrow { transform: translateX(4px); }
+
+    .apply-note {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+
+    /* ── OVERVIEW SECTION ── */
+    .overview-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    @media(max-width:600px) { .overview-grid { grid-template-columns: 1fr; } }
+
+    .ov-item {
+      background: rgba(0,0,0,.2);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .ov-icon {
+      font-size: 22px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .ov-title {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .ov-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .health-q-list {
+      list-style: none;
+      margin-top: 12px;
+    }
+
+    .health-q-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      background: rgba(248,113,113,.05);
+      border: 1px solid rgba(248,113,113,.12);
+      margin-bottom: 7px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .health-q-list li .qnum {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 11px;
+      color: #f87171;
+      flex-shrink: 0;
+      margin-top: 1px;
+      min-width: 20px;
+    }
+
+    .collapse-btn {
+      background: none;
+      border: none;
+      color: var(--teal);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 14px;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+
+    /* ── BOTTOM BAR ── */
+    .bar {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      background: rgba(6,17,29,.97);
+      border-top: 1px solid rgba(255,255,255,.07);
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .bar-left .bar-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .bar-left .bar-total { font-family: 'Montserrat', sans-serif; font-size: 28px; font-weight: 800; color: var(--teal); }
+
+    .bar-right { text-align: right; }
+    .bar-right .bar-daily { font-size: 13px; color: var(--muted); }
+    .bar-right .bar-cover { font-size: 13px; color: var(--text); font-weight: 500; margin-top: 2px; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-panel { animation: fadeUp .3s ease both; }
+
+    /* ── DIVIDER ── */
+    .divider { height: 1px; background: rgba(255,255,255,.07); margin: 18px 0; }
+  </style>
 </head>
 <body>
+<div class="wrap">
 
-<header>
-  <div class="wrap nav">
-    <a class="logo" href="#top" aria-label="Dental Care Today home">
-      <span class="logo-badge" aria-hidden="true">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2C8 2 5 4.5 5 8c0 2 .6 3.4 1.2 5 .7 1.9 1 4.4 1.3 6.6.1 1 .8 1.6 1.5 1.4.8-.2 1.2-1.2 1.4-2.6.3-2 .7-3.4 1.6-3.4s1.3 1.4 1.6 3.4c.2 1.4.6 2.4 1.4 2.6.7.2 1.4-.4 1.5-1.4.3-2.2.6-4.7 1.3-6.6.6-1.6 1.2-3 1.2-5 0-3.5-3-6-7-6z" fill="currentColor"/></svg>
-      </span>
-      Dental Care Today
-    </a>
-    <nav class="nav-links" id="navLinks" aria-label="Main navigation">
-      <a href="#about">About</a>
-      <a href="#results">Results</a>
-      <a href="#pricing">Pricing</a>
-      <a href="#reviews">Reviews</a>
-      <a href="#contact">Contact</a>
-    </nav>
-    <div class="nav-cta">
-      <a class="btn btn-accent" href="#contact">Book a Visit
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M7 17L17 7M17 7H8M17 7v9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </a>
-      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks">
-        <span></span><span></span><span></span>
-      </button>
+  <!-- HEADER -->
+  <div class="header">
+    <svg class="logo" viewBox="0 0 88 88" aria-hidden="true">
+      <defs>
+        <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#f0c448"/>
+          <stop offset="60%" stop-color="#c9942c"/>
+          <stop offset="100%" stop-color="#7a5810"/>
+        </linearGradient>
+      </defs>
+      <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#g1)"/>
+      <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div class="header-text">
+      <div class="kicker">Ricky Rampersad Branch</div>
+      <h1>Xpress Life Quote Builder</h1>
+      <p>Instant issue · No medicals · 5 health questions · Individual or couple</p>
     </div>
   </div>
-</header>
 
-<!-- HERO -->
-<div class="hero" id="top">
-  <div class="wrap hero-grid">
-    <div>
-      <h1>Restore<br>Your <span class="accent-word">True</span><br>Smile
-        <span class="avatar-row" aria-label="Over 2,000 happy patients">
-          <span class="avatar av1" aria-hidden="true">JD</span>
-          <span class="avatar av2" aria-hidden="true">MK</span>
-          <span class="avatar av3" aria-hidden="true">+2k</span>
-        </span>
-      </h1>
-      <p class="hero-sub">Using <strong>advanced technology</strong>, we deliver comprehensive treatments for a healthy, <strong>confident smile</strong> — gentle care for the whole family.</p>
-      <div class="hero-actions">
-        <a class="btn btn-primary" href="#contact">Book an Appointment</a>
-        <a class="btn btn-ghost" href="#pricing">See Pricing</a>
-      </div>
-    </div>
-    <div class="hero-art" aria-hidden="true">
-      <div class="tooth-stage">
-        <div class="tooth-glow"></div>
-        <span class="spark s1"></span><span class="spark s2"></span><span class="spark s3"></span><span class="spark s4"></span>
-        <svg class="tooth-svg" viewBox="0 0 240 260" fill="none">
-          <defs>
-            <linearGradient id="toothGrad" x1="60" y1="20" x2="190" y2="240" gradientUnits="userSpaceOnUse">
-              <stop stop-color="#FFFFFF"/><stop offset=".55" stop-color="#EDF5FC"/><stop offset="1" stop-color="#C9E1F5"/>
-            </linearGradient>
-            <linearGradient id="shineGrad" x1="80" y1="30" x2="120" y2="120" gradientUnits="userSpaceOnUse">
-              <stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
-            </linearGradient>
-          </defs>
-          <path d="M120 18C86 18 58 40 58 74c0 20 6 33 12 49 7 19 10 45 13 67 1.5 10 8.5 16.5 16 14.5 8-2 12-12 14-26 3-20 8-34 17-34s14 14 17 34c2 14 6 24 14 26 7.5 2 14.5-4.5 16-14.5 3-22 6-48 13-67 6-16 12-29 12-49 0-34-28-56-62-56z" fill="url(#toothGrad)" stroke="#fff" stroke-width="5"/>
-          <ellipse cx="96" cy="72" rx="22" ry="34" fill="url(#shineGrad)" transform="rotate(-18 96 72)"/>
-        </svg>
-        <div class="stat-card">
-          <div class="num">98%</div>
-          <div class="lbl">loyal dental patients recommend us</div>
+  <!-- PRODUCT OVERVIEW -->
+  <div class="card" style="animation-delay:.08s">
+    <button class="collapse-btn" onclick="toggleOverview(this)">
+      <span id="ovArrow">▼</span> What is Xpress Life? — Product Overview
+    </button>
+    <div id="overviewContent">
+
+      <div class="overview-grid">
+        <div class="ov-item">
+          <div class="ov-icon">⚡</div>
+          <div>
+            <div class="ov-title">Instant Issue — No Medicals</div>
+            <div class="ov-desc">No blood tests, no doctor visits. Just 5 health questions. If all answers are No, the policy is approved immediately.</div>
+          </div>
+        </div>
+        <div class="ov-item">
+          <div class="ov-icon">🛡️</div>
+          <div>
+            <div class="ov-title">Whole Life Coverage</div>
+            <div class="ov-desc">Coverage lasts to age 100. Premiums are paid for 20 years only — then coverage continues for free for the rest of your life.</div>
+          </div>
+        </div>
+        <div class="ov-item">
+          <div class="ov-icon">💰</div>
+          <div>
+            <div class="ov-title">Sum Assured Options</div>
+            <div class="ov-desc">Choose TT$100,000 · $200,000 · $300,000 · $400,000 or $500,000. Maximum total Xpress Life coverage per person is $500,000.</div>
+          </div>
+        </div>
+        <div class="ov-item">
+          <div class="ov-icon">🔒</div>
+          <div>
+            <div class="ov-title">Level Premium — Never Rises</div>
+            <div class="ov-desc">The premium you pay today is the premium you pay for all 20 years. Your age at application locks your rate forever.</div>
+          </div>
+        </div>
+        <div class="ov-item">
+          <div class="ov-icon">💸</div>
+          <div>
+            <div class="ov-title">Return of Premiums in Year 21</div>
+            <div class="ov-desc">At the end of Year 20, you get all your base premiums back — without interest. Coverage continues in full after that.</div>
+          </div>
+        </div>
+        <div class="ov-item">
+          <div class="ov-icon">🌍</div>
+          <div>
+            <div class="ov-title">Worldwide Coverage</div>
+            <div class="ov-desc">Your policy is valid anywhere in the world. Claims are paid regardless of where you are when the event occurs.</div>
+          </div>
+        </div>
+        <div class="ov-item">
+          <div class="ov-icon">📋</div>
+          <div>
+            <div class="ov-title">Optional Riders</div>
+            <div class="ov-desc">Add Accidental Death Benefit (ADB) or Accidental Death & Permanent Disability (ADPDAP) for ages 18–59. Coverage ceases at age 65.</div>
+          </div>
+        </div>
+        <div class="ov-item">
+          <div class="ov-icon">🔄</div>
+          <div>
+            <div class="ov-title">Death Benefit Phases</div>
+            <div class="ov-desc"><b style="color:#f87171">Year 1:</b> Return of premiums paid. <b style="color:var(--gold)">Year 2:</b> 50% of Sum Assured. <b style="color:var(--teal)">Year 3+:</b> 100% full cover.</div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-  <div class="hero-strip">
-    <div class="wrap strip-inner">
-      <div class="strip-item">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M12 22c5-3 8-7.5 8-12V6l-8-3-8 3v4c0 4.5 3 9 8 12z" stroke="#1F5A96" stroke-width="2" stroke-linejoin="round"/><path d="M9 11.5l2 2 4-4.5" stroke="#1F5A96" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Insurance Accepted
-      </div>
-      <div class="strip-item">
-        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#1F5A96" stroke-width="2"/><path d="M12 7v5l3.5 2" stroke="#1F5A96" stroke-width="2" stroke-linecap="round"/></svg>
-        Same-Day Emergency Care
-      </div>
-      <div class="strip-item">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#1F5A96" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Pain-Free Modern Dentistry
-      </div>
-      <div class="strip-item">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M12 21s-7.5-4.8-10-9.5C.6 8 2.4 4.5 6 4.5c2.2 0 3.8 1.2 6 3.5 2.2-2.3 3.8-3.5 6-3.5 3.6 0 5.4 3.5 4 7-2.5 4.7-10 9.5-10 9.5z" stroke="#1F5A96" stroke-width="2" stroke-linejoin="round"/></svg>
-        Family Friendly
-      </div>
-    </div>
-  </div>
-</div>
 
-<!-- SERVICES / ABOUT -->
-<section id="about">
-  <div class="wrap">
-    <span class="eyebrow reveal">About Our Care</span>
-    <h2 class="h2 reveal">Complete dentistry,<br>all under one roof</h2>
-    <p class="lead reveal">From routine checkups to full smile makeovers, our team combines gentle chair-side care with the latest dental technology.</p>
-    <div class="cards">
-      <div class="card reveal">
-        <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 3C8.7 3 6.5 5 6.5 7.8c0 1.6.5 2.7 1 4 .6 1.5.8 3.6 1 5.4.1.8.7 1.3 1.3 1.1.6-.2 1-1 1.1-2.1.3-1.6.6-2.7 1.1-2.7s.8 1.1 1.1 2.7c.1 1.1.5 1.9 1.1 2.1.6.2 1.2-.3 1.3-1.1.2-1.8.4-3.9 1-5.4.5-1.3 1-2.4 1-4C17.5 5 15.3 3 12 3z" fill="currentColor"/></svg></div>
-        <h3>General Dentistry</h3>
-        <p>Exams, cleanings, fillings and preventive care that keep your whole family smiling.</p>
+      <div class="divider"></div>
+
+      <div style="font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#f87171;margin-bottom:10px">
+        5 Health Questions — All must be answered NO to qualify
       </div>
-      <div class="card reveal">
-        <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 5.6L20 9l-4.3 4 1 6-4.7-3-4.7 3 1-6L4 9l5.6-1.4L12 2z" fill="currentColor"/></svg></div>
-        <h3>Cosmetic Whitening</h3>
-        <p>Professional whitening and veneers for a brighter, camera-ready smile.</p>
+      <ul class="health-q-list">
+        <li><span class="qnum">Q1</span>In the past 5 years, have you been diagnosed with, or received treatment for, heart disease, stroke, or kidney disease?</li>
+        <li><span class="qnum">Q2</span>In the past 5 years, have you been diagnosed with, or received treatment for, cancer?</li>
+        <li><span class="qnum">Q3</span>In the past 5 years, have you been treated for alcohol or drug abuse?</li>
+        <li><span class="qnum">Q4</span>Have you ever been diagnosed with or tested positive for HIV / AIDS?</li>
+        <li><span class="qnum">Q5</span>Have you ever been declined, postponed, or rated for life insurance — or would this policy cause your total Xpress Life coverage to exceed TT$500,000?</li>
+      </ul>
+
+      <div class="divider"></div>
+
+      <div style="font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:10px">
+        What you need to apply
       </div>
-      <div class="card reveal">
-        <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="4" stroke="currentColor" stroke-width="2"/><path d="M8 12h8M12 8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
-        <h3>Implants & Restoration</h3>
-        <p>Natural-looking implants, crowns and bridges that restore full function.</p>
-      </div>
-      <div class="card reveal">
-        <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M7 4c3 2 7 2 10 0v7c0 5-3 8-5 9-2-1-5-4-5-9V4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></div>
-        <h3>Invisible Aligners</h3>
-        <p>Discreet, comfortable orthodontics that straighten teeth on your schedule.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px">
+        <div class="feat">📝 Completed JotForm application</div>
+        <div class="feat">🪪 Valid photo ID</div>
+        <div class="feat">📄 Proof of address</div>
+        <div class="feat">💳 First month's premium</div>
+        <div class="feat">📋 Future payment form</div>
       </div>
     </div>
   </div>
-</section>
 
-<!-- RESULTS -->
-<section class="results" id="results">
-  <div class="wrap">
-    <span class="eyebrow reveal" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#9CD1FF">Proven Results</span>
-    <h2 class="h2 reveal">Smiles we're proud of</h2>
-    <p class="lead reveal">Numbers that reflect two decades of gentle, high-quality dental care in our community.</p>
-    <div class="results-grid">
-      <div class="r-stat reveal"><div class="num" data-count="15000">0<span>+</span></div><p>Smiles transformed</p></div>
-      <div class="r-stat reveal"><div class="num" data-count="98">0<span>%</span></div><p>Patients recommend us</p></div>
-      <div class="r-stat reveal"><div class="num" data-count="20">0<span>+</span></div><p>Years of experience</p></div>
-      <div class="r-stat reveal"><div class="num" data-count="12">0<span></span></div><p>Specialist dentists on staff</p></div>
-    </div>
+  <!-- TABS -->
+
+  <div class="tabs" style="animation:fadeUp .4s .05s ease both;opacity:0;animation-fill-mode:both">
+    <button class="tab active" onclick="switchTab('individual',this)">👤 Individual</button>
+    <button class="tab" onclick="switchTab('couple',this)">👫 Couple / Joint</button>
   </div>
-</section>
 
-<!-- PRICING -->
-<section id="pricing">
-  <div class="wrap">
-    <span class="eyebrow reveal">Transparent Pricing</span>
-    <h2 class="h2 reveal">Simple plans, no surprises</h2>
-    <p class="lead reveal">Clear pricing with flexible payment options. Most insurance plans accepted.</p>
-    <div class="price-grid">
-      <div class="price reveal">
-        <div class="p-name">Checkup</div>
-        <div class="p-amount">$99<small> /visit</small></div>
-        <p class="p-desc">Everything you need to stay on top of your dental health.</p>
-        <ul>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#3D8CD5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Full dental exam</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#3D8CD5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Professional cleaning</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#3D8CD5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Digital X-rays</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#3D8CD5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Personal care plan</li>
-        </ul>
-        <a class="btn btn-ghost" href="#contact">Book Checkup</a>
-      </div>
-      <div class="price featured reveal">
-        <div class="badge-pop">Popular</div>
-        <div class="p-name" style="color:#9CD1FF">Smile Bright</div>
-        <div class="p-amount">$249<small> /visit</small></div>
-        <p class="p-desc">Our signature whitening package for a visibly brighter smile.</p>
-        <ul>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#C6F06E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Everything in Checkup</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#C6F06E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Professional whitening</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#C6F06E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Polish & fluoride treatment</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#C6F06E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Take-home whitening kit</li>
-        </ul>
-        <a class="btn btn-accent" href="#contact">Book Smile Bright</a>
-      </div>
-      <div class="price reveal">
-        <div class="p-name">Family Plan</div>
-        <div class="p-amount">$39<small> /mo per member</small></div>
-        <p class="p-desc">Year-round coverage for the whole household — no insurance needed.</p>
-        <ul>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#3D8CD5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>2 checkups & cleanings / year</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#3D8CD5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Free emergency exams</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#3D8CD5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>20% off all treatments</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#3D8CD5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Kids under 6 free</li>
-        </ul>
-        <a class="btn btn-ghost" href="#contact">Join the Plan</a>
-      </div>
-    </div>
-  </div>
-</section>
+  <!-- ═══════════════════ INDIVIDUAL TAB ═══════════════════ -->
+  <div id="tab-individual">
 
-<!-- REVIEWS -->
-<section class="reviews" id="reviews">
-  <div class="wrap">
-    <span class="eyebrow reveal">Patient Reviews</span>
-    <h2 class="h2 reveal">Loved by our patients</h2>
-    <p class="lead reveal">Real words from the people behind the 98%.</p>
-    <div class="review-grid">
-      <div class="review reveal">
-        <div class="stars" aria-label="5 out of 5 stars">★★★★★</div>
-        <p>"I used to dread the dentist. The team here is so gentle and patient that my whole family actually looks forward to visits now."</p>
-        <div class="reviewer"><span class="avatar av1">SP</span><div><b>Sarah P.</b><span>Patient for 4 years</span></div></div>
-      </div>
-      <div class="review reveal">
-        <div class="stars" aria-label="5 out of 5 stars">★★★★★</div>
-        <p>"Got the Smile Bright whitening before my wedding — the photos speak for themselves. Professional, quick and totally painless."</p>
-        <div class="reviewer"><span class="avatar av2">MJ</span><div><b>Marcus J.</b><span>Whitening patient</span></div></div>
-      </div>
-      <div class="review reveal">
-        <div class="stars" aria-label="5 out of 5 stars">★★★★★</div>
-        <p>"They fit me in same-day for a cracked tooth and had me fixed within the hour. Transparent pricing, zero surprises on the bill."</p>
-        <div class="reviewer"><span class="avatar av3">AR</span><div><b>Anita R.</b><span>Emergency visit</span></div></div>
-      </div>
-    </div>
-  </div>
-</section>
+    <div class="card">
+      <div class="section-label">Policy Details</div>
 
-<!-- CONTACT -->
-<section id="contact">
-  <div class="wrap">
-    <span class="eyebrow reveal">Book a Visit</span>
-    <h2 class="h2 reveal">Ready for your best smile?</h2>
-    <p class="lead reveal">Request an appointment and our front desk will confirm within one business day.</p>
-    <div class="contact-grid">
-      <div class="c-info">
-        <div class="c-row reveal">
-          <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 21s-7-5.1-7-11a7 7 0 1114 0c0 5.9-7 11-7 11z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="2"/></svg></div>
-          <div><b>Visit us</b><span>123 Bright Smile Ave, Suite 200<br>Toronto, ON</span></div>
-        </div>
-        <div class="c-row reveal">
-          <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 005 5L15 13l5 2v4a2 2 0 01-2 2A15 15 0 013 6a2 2 0 012-2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></div>
-          <div><b>Call us</b><span>(555) 123-4567<br>Mon–Sat, 8am – 6pm</span></div>
-        </div>
-        <div class="c-row reveal">
-          <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="3" stroke="currentColor" stroke-width="2"/><path d="M3 8l9 6 9-6" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></div>
-          <div><b>Email</b><span>hello@dentalcaretoday.com</span></div>
+      <div class="callout">
+        <b>Agent script:</b> "This is a whole-life policy that needs no medical exam — just 5 health questions. Premiums are locked for 20 years and the coverage lasts to age 100. Let me build you a quote in 30 seconds."
+      </div>
+
+      <!-- Payment Mode -->
+      <div style="margin-bottom:20px">
+        <label>Payment Mode</label>
+        <div class="mode-grid" id="modeGrid">
+          <div class="mode-card sel" onclick="selMode('Monthly',this)">
+            <div class="mode-name">Monthly</div>
+            <div class="mode-save">Most popular</div>
+          </div>
+          <div class="mode-card" onclick="selMode('Quarterly',this)">
+            <div class="mode-name">Quarterly</div>
+            <div class="mode-save">4× / year</div>
+          </div>
+          <div class="mode-card" onclick="selMode('Semi-Annual',this)">
+            <div class="mode-name">Semi-Ann.</div>
+            <div class="mode-save">2× / year</div>
+          </div>
+          <div class="mode-card" onclick="selMode('Annual',this)">
+            <div class="mode-name">Annual</div>
+            <div class="mode-save">Best rate</div>
+          </div>
         </div>
       </div>
-      <form class="reveal" onsubmit="return handleBooking(event)">
+
+      <!-- Person inputs -->
+      <div class="grid2" style="margin-bottom:16px">
         <div>
-          <label for="f-name">Full name</label>
-          <input id="f-name" name="name" type="text" placeholder="Jane Doe" required />
-        </div>
-        <div>
-          <label for="f-phone">Phone</label>
-          <input id="f-phone" name="phone" type="tel" placeholder="(555) 000-0000" required />
-        </div>
-        <div>
-          <label for="f-service">Service</label>
-          <select id="f-service" name="service">
-            <option>Checkup & Cleaning</option>
-            <option>Teeth Whitening</option>
-            <option>Implants / Restoration</option>
-            <option>Invisible Aligners</option>
-            <option>Emergency Visit</option>
+          <label>Sex</label>
+          <select id="i1Sex" onchange="calc()">
+            <option value="M">Male</option>
+            <option value="F">Female</option>
           </select>
         </div>
         <div>
-          <label for="f-msg">Anything we should know?</label>
-          <textarea id="f-msg" name="message" rows="3" placeholder="Preferred days, concerns…"></textarea>
+          <label>Age (at next birthday)</label>
+          <select id="i1Age" onchange="calc()">
+            <!-- ages 18-69 -->
+          </select>
         </div>
-        <button class="btn btn-primary" type="submit">Request Appointment</button>
-        <p id="formNote" style="display:none;color:#2E7D32;font-weight:700;font-size:.9rem">✓ Thanks! We'll call you to confirm your visit.</p>
-      </form>
-    </div>
-  </div>
-</section>
+      </div>
 
-<footer>
-  <div class="wrap">
-    <div class="f-grid">
-      <div>
-        <div class="logo">
-          <span class="logo-badge"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2C8 2 5 4.5 5 8c0 2 .6 3.4 1.2 5 .7 1.9 1 4.4 1.3 6.6.1 1 .8 1.6 1.5 1.4.8-.2 1.2-1.2 1.4-2.6.3-2 .7-3.4 1.6-3.4s1.3 1.4 1.6 3.4c.2 1.4.6 2.4 1.4 2.6.7.2 1.4-.4 1.5-1.4.3-2.2.6-4.7 1.3-6.6.6-1.6 1.2-3 1.2-5 0-3.5-3-6-7-6z" fill="currentColor"/></svg></span>
-          Dental Care Today
+      <!-- SA Selector -->
+      <div class="sa-section-label">Sum Assured — select one</div>
+      <div class="sa-grid" id="i1SaGrid">
+        <div class="sa-card" onclick="selSA('i1',100000,this)"><div class="amt">$100K</div><div class="lbl">Starter</div></div>
+        <div class="sa-card" onclick="selSA('i1',200000,this)"><div class="amt">$200K</div><div class="lbl">Family</div></div>
+        <div class="sa-card sel" onclick="selSA('i1',300000,this)"><div class="amt">$300K</div><div class="lbl">Popular</div></div>
+        <div class="sa-card" onclick="selSA('i1',400000,this)"><div class="amt">$400K</div><div class="lbl">Enhanced</div></div>
+        <div class="sa-card" onclick="selSA('i1',500000,this)"><div class="amt">$500K</div><div class="lbl">Maximum</div></div>
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div id="i1Result"></div>
+
+  </div><!-- /individual tab -->
+
+  <!-- ═══════════════════ COUPLE TAB ═══════════════════ -->
+  <div id="tab-couple" style="display:none">
+
+    <div class="card">
+      <div class="section-label">Policy Details</div>
+
+      <div class="callout-teal">
+        <b>Joint close:</b> "Two separate Xpress Life policies — each person owns their own. Your family gets double the permanent protection, both premiums locked in at today's ages. Let me show you the combined number right now."
+      </div>
+
+      <!-- Payment Mode (shared) -->
+      <div style="margin-bottom:20px">
+        <label>Payment Mode (applies to both)</label>
+        <div class="mode-grid" id="modeGridC">
+          <div class="mode-card sel" onclick="selModeC('Monthly',this)">
+            <div class="mode-name">Monthly</div>
+            <div class="mode-save">Most popular</div>
+          </div>
+          <div class="mode-card" onclick="selModeC('Quarterly',this)">
+            <div class="mode-name">Quarterly</div>
+            <div class="mode-save">4× / year</div>
+          </div>
+          <div class="mode-card" onclick="selModeC('Semi-Annual',this)">
+            <div class="mode-name">Semi-Ann.</div>
+            <div class="mode-save">2× / year</div>
+          </div>
+          <div class="mode-card" onclick="selModeC('Annual',this)">
+            <div class="mode-name">Annual</div>
+            <div class="mode-save">Best rate</div>
+          </div>
         </div>
-        <p style="max-width:300px;font-size:.93rem">Modern, gentle dentistry for the whole family. Advanced technology, honest pricing, and smiles that last.</p>
       </div>
-      <div>
-        <h4>Explore</h4>
-        <ul>
-          <li><a href="#about">About</a></li>
-          <li><a href="#results">Results</a></li>
-          <li><a href="#pricing">Pricing</a></li>
-          <li><a href="#reviews">Reviews</a></li>
-        </ul>
+
+      <!-- Person 1 -->
+      <div class="person-block p1">
+        <div class="person-head">
+          <div class="avatar gold">👤</div>
+          <div class="person-head-info">
+            <strong>Person 1</strong>
+            <span>Primary insured</span>
+          </div>
+        </div>
+        <div class="grid2" style="margin-bottom:14px">
+          <div>
+            <label>Sex</label>
+            <select id="j1Sex" onchange="calc()">
+              <option value="M">Male</option>
+              <option value="F">Female</option>
+            </select>
+          </div>
+          <div>
+            <label>Age</label>
+            <select id="j1Age" onchange="calc()"></select>
+          </div>
+        </div>
+        <div class="sa-section-label">Sum Assured</div>
+        <div class="sa-grid" id="j1SaGrid">
+          <div class="sa-card" onclick="selSA('j1',100000,this)"><div class="amt">$100K</div><div class="lbl">Starter</div></div>
+          <div class="sa-card" onclick="selSA('j1',200000,this)"><div class="amt">$200K</div><div class="lbl">Family</div></div>
+          <div class="sa-card sel" onclick="selSA('j1',300000,this)"><div class="amt">$300K</div><div class="lbl">Popular</div></div>
+          <div class="sa-card" onclick="selSA('j1',400000,this)"><div class="amt">$400K</div><div class="lbl">Enhanced</div></div>
+          <div class="sa-card" onclick="selSA('j1',500000,this)"><div class="amt">$500K</div><div class="lbl">Maximum</div></div>
+        </div>
       </div>
-      <div>
-        <h4>Contact</h4>
-        <ul>
-          <li>(555) 123-4567</li>
-          <li>hello@dentalcaretoday.com</li>
-          <li>123 Bright Smile Ave, Toronto</li>
-        </ul>
+
+      <!-- Person 2 -->
+      <div class="person-block p2">
+        <div class="person-head">
+          <div class="avatar teal">👤</div>
+          <div class="person-head-info">
+            <strong style="color:var(--teal)">Person 2</strong>
+            <span>Spouse / partner</span>
+          </div>
+        </div>
+        <div class="grid2" style="margin-bottom:14px">
+          <div>
+            <label>Sex</label>
+            <select id="j2Sex" onchange="calc()">
+              <option value="F">Female</option>
+              <option value="M">Male</option>
+            </select>
+          </div>
+          <div>
+            <label>Age</label>
+            <select id="j2Age" onchange="calc()"></select>
+          </div>
+        </div>
+        <div class="sa-section-label">Sum Assured</div>
+        <div class="sa-grid" id="j2SaGrid">
+          <div class="sa-card" onclick="selSA('j2',100000,this)"><div class="amt">$100K</div><div class="lbl">Starter</div></div>
+          <div class="sa-card" onclick="selSA('j2',200000,this)"><div class="amt">$200K</div><div class="lbl">Family</div></div>
+          <div class="sa-card sel" onclick="selSA('j2',300000,this)"><div class="amt">$300K</div><div class="lbl">Popular</div></div>
+          <div class="sa-card" onclick="selSA('j2',400000,this)"><div class="amt">$400K</div><div class="lbl">Enhanced</div></div>
+          <div class="sa-card" onclick="selSA('j2',500000,this)"><div class="amt">$500K</div><div class="lbl">Maximum</div></div>
+        </div>
       </div>
     </div>
-    <div class="f-bottom">
-      <span>© 2026 Dental Care Today. All rights reserved.</span>
-      <span>Mon–Sat 8am–6pm · Emergency line 24/7</span>
-    </div>
+
+    <!-- COUPLE RESULT -->
+    <div id="coupleResult"></div>
+
+  </div><!-- /couple tab -->
+
+</div><!-- /wrap -->
+
+<!-- BOTTOM BAR -->
+<div class="bar">
+  <div class="bar-left">
+    <div class="bar-label" id="barLabel">Monthly Premium</div>
+    <div class="bar-total" id="barTotal">TT$0.00</div>
   </div>
-</footer>
+  <div class="bar-right">
+    <div class="bar-daily" id="barDaily">TT$0.00 / day</div>
+    <div class="bar-cover" id="barCover">TT$0 cover</div>
+  </div>
+</div>
 
 <script>
-  // Mobile menu
-  const menuBtn = document.getElementById('menuBtn');
-  const navLinks = document.getElementById('navLinks');
-  menuBtn.addEventListener('click', () => {
-    const open = navLinks.classList.toggle('open');
-    menuBtn.setAttribute('aria-expanded', open);
-  });
-  navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
-    navLinks.classList.remove('open');
-    menuBtn.setAttribute('aria-expanded', 'false');
-  }));
+// ── OVERVIEW TOGGLE ──
+function toggleOverview(btn) {
+  const content = document.getElementById('overviewContent');
+  const arrow = document.getElementById('ovArrow');
+  const isHidden = content.style.display === 'none';
+  content.style.display = isHidden ? 'block' : 'none';
+  arrow.textContent = isHidden ? '▼' : '▶';
+}
 
-  // Scroll reveal
-  const io = new IntersectionObserver(entries => {
-    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
-  }, { threshold: 0.15 });
-  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+// ── RATES ──
+const XL_M = {"18":21.87,"19":21.93,"20":21.99,"21":22.05,"22":22.12,"23":22.19,"24":22.26,"25":22.34,"26":22.43,"27":22.52,"28":22.63,"29":22.74,"30":22.87,"31":23.02,"32":23.18,"33":23.36,"34":23.55,"35":23.77,"36":24.01,"37":24.27,"38":24.56,"39":24.88,"40":25.23,"41":25.61,"42":26.09,"43":26.64,"44":27.23,"45":27.87,"46":28.57,"47":29.33,"48":30.15,"49":31.06,"50":32.04,"51":33.11,"52":34.28,"53":35.55,"54":36.94,"55":38.45,"56":40.09,"57":41.86,"58":43.79,"59":45.87,"60":48.10,"61":50.49,"62":53.04,"63":55.74,"64":58.62,"65":61.69,"66":64.96,"67":68.44,"68":72.15,"69":76.12};
+const XL_F = {"18":21.31,"19":21.35,"20":21.39,"21":21.44,"22":21.49,"23":21.55,"24":21.62,"25":21.70,"26":21.78,"27":21.87,"28":21.97,"29":22.08,"30":22.21,"31":22.34,"32":22.49,"33":22.65,"34":22.83,"35":23.03,"36":23.24,"37":23.48,"38":23.73,"39":24.01,"40":24.31,"41":24.64,"42":25.00,"43":25.40,"44":25.86,"45":26.44,"46":27.07,"47":27.76,"48":28.50,"49":29.32,"50":30.20,"51":31.15,"52":32.18,"53":33.29,"54":34.47,"55":35.74,"56":37.10,"57":38.54,"58":40.08,"59":41.71,"60":43.40,"61":45.10,"62":46.82,"63":48.57,"64":50.37,"65":52.23,"66":54.19,"67":56.26,"68":58.49,"69":60.89};
+const MODAL = {Monthly:0.08928, Quarterly:0.25893, "Semi-Annual":0.51785, Annual:1};
+const SUFFIX = {Monthly:"/month", Quarterly:"/quarter", "Semi-Annual":"/6 months", Annual:"/year"};
+const DIVISOR = {Monthly:30, Quarterly:91, "Semi-Annual":182, Annual:365};
 
-  // Animated counters in the Results section
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const counterIO = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      const el = entry.target;
-      counterIO.unobserve(el);
-      const target = +el.dataset.count;
-      const suffix = el.querySelector('span');
-      if (reduceMotion) { el.firstChild.textContent = target.toLocaleString(); return; }
-      const dur = 1400, start = performance.now();
-      const tick = now => {
-        const p = Math.min((now - start) / dur, 1);
-        el.firstChild.textContent = Math.round(target * (1 - Math.pow(1 - p, 3))).toLocaleString();
-        if (p < 1) requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
-    });
-  }, { threshold: 0.4 });
-  document.querySelectorAll('[data-count]').forEach(el => counterIO.observe(el));
+// ── STATE ──
+let curTab = 'individual';
+let curMode = 'Monthly';
+let curModeC = 'Monthly';
+const SA = {i1:300000, j1:300000, j2:300000};
 
-  // Booking form (front-end only — shows confirmation)
-  function handleBooking(e) {
-    e.preventDefault();
-    document.getElementById('formNote').style.display = 'block';
-    e.target.querySelector('button').textContent = 'Request Sent ✓';
-    return false;
+// ── INIT AGE SELECTS ──
+function buildAgeSelect(elId, defaultAge) {
+  const el = document.getElementById(elId);
+  for (let a = 18; a <= 69; a++) {
+    const o = document.createElement('option');
+    o.value = a; o.textContent = a;
+    if (a === defaultAge) o.selected = true;
+    el.appendChild(o);
   }
+}
+
+buildAgeSelect('i1Age', 35);
+buildAgeSelect('j1Age', 35);
+buildAgeSelect('j2Age', 33);
+
+// ── HELPERS ──
+const $ = id => document.getElementById(id);
+const fmt = n => 'TT$' + Number(n).toLocaleString('en-TT', {minimumFractionDigits:2, maximumFractionDigits:2});
+const fmtSA = n => 'TT$' + Number(n).toLocaleString('en-TT', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+function xlAnnual(sex, age, sa) {
+  const tbl = sex === 'M' ? XL_M : XL_F;
+  const r = tbl[String(age)] || 0;
+  return r * (sa / 1000);
+}
+
+function xlPeriod(sex, age, sa, mode) {
+  return xlAnnual(sex, age, sa) * MODAL[mode];
+}
+
+// ── TAB SWITCH ──
+function switchTab(tab, btn) {
+  curTab = tab;
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  $('tab-individual').style.display = tab === 'individual' ? 'block' : 'none';
+  $('tab-couple').style.display = tab === 'couple' ? 'block' : 'none';
+  calc();
+}
+
+// ── SA SELECT ──
+function selSA(key, amount, el) {
+  SA[key] = amount;
+  const grid = $(key + 'SaGrid');
+  grid.querySelectorAll('.sa-card').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  calc();
+}
+
+// ── MODE SELECT ──
+function selMode(mode, el) {
+  curMode = mode;
+  document.querySelectorAll('#modeGrid .mode-card').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  calc();
+}
+
+function selModeC(mode, el) {
+  curModeC = mode;
+  document.querySelectorAll('#modeGridC .mode-card').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  calc();
+}
+
+// ── BUILD INDIVIDUAL RESULT ──
+function buildIndividualResult(sex, age, sa, mode) {
+  const period = xlPeriod(sex, age, sa, mode);
+  const monthly = xlPeriod(sex, age, sa, 'Monthly');
+  const annual = xlAnnual(sex, age, sa);
+  const total20 = annual * 20;
+  const half = sa * 0.5;
+  const suffix = SUFFIX[mode];
+  const sexLabel = sex === 'M' ? 'Male' : 'Female';
+
+  return `
+    <div class="result-panel">
+      <div class="result-top">
+        <div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:5px">${sexLabel}, Age ${age} · TT$${(sa/1000).toFixed(0)}K Sum Assured</div>
+          <div class="result-premium">${fmt(period)}</div>
+          <div class="result-premium-label">${suffix} · level, locked for 20 years</div>
+        </div>
+      </div>
+
+      <div class="result-meta">
+        <div class="meta-item">
+          <div class="ml">Total Cover</div>
+          <div class="mv">${fmtSA(sa)}</div>
+        </div>
+        <div class="meta-item">
+          <div class="ml">Monthly Equiv.</div>
+          <div class="mv">${fmt(monthly)}</div>
+        </div>
+        <div class="meta-item">
+          <div class="ml">Total Paid (20 yrs)</div>
+          <div class="mv">${fmt(total20)}</div>
+        </div>
+        <div class="meta-item">
+          <div class="ml">Per Day</div>
+          <div class="mv">${fmt(monthly/30)}</div>
+        </div>
+        <div class="meta-item">
+          <div class="ml">Premium Paying</div>
+          <div class="mv">20 years</div>
+        </div>
+        <div class="meta-item">
+          <div class="ml">Cover Until</div>
+          <div class="mv">Age 100</div>
+        </div>
+      </div>
+
+      <div class="db-title">Death benefit by policy year</div>
+      <div class="db-row yr1">
+        <div class="db-yr db-yr1">Year 1</div>
+        <div class="db-desc">Return of all base premiums paid</div>
+        <div class="db-amt" style="color:#f87171">≈ ${fmt(monthly * 12)}</div>
+      </div>
+      <div class="db-row yr2">
+        <div class="db-yr db-yr2">Year 2</div>
+        <div class="db-desc">50% of Sum Assured</div>
+        <div class="db-amt" style="color:var(--gold)">${fmt(half)}</div>
+      </div>
+      <div class="db-row yr3">
+        <div class="db-yr db-yr3">Year 3+</div>
+        <div class="db-desc">100% of Sum Assured — full protection</div>
+        <div class="db-amt" style="color:var(--teal)">${fmt(sa)}</div>
+      </div>
+
+      <div class="features">
+        <div class="feat">⚡ Instant approval</div>
+        <div class="feat">🩺 No medical exam</div>
+        <div class="feat">💊 5 health questions only</div>
+        <div class="feat">💸 Premiums returned in Year 21</div>
+        <div class="feat">🔒 Level premium — never rises</div>
+        <div class="feat">🌍 Worldwide coverage</div>
+        <div class="feat">♾️ Cover to age 100</div>
+      </div>
+
+      <a class="apply-btn" href="https://rickyrampersadbranch.com/xpress-life-application" target="_blank" rel="noopener">
+        Apply Now — Xpress Life Application <span class="apply-arrow">→</span>
+      </a>
+      <div class="apply-note">Opens the Xpress Life Application page in a new window · No medical exam required</div>
+    </div>`;
+}
+
+// ── BUILD COUPLE RESULT ──
+function buildCoupleResult(j1, j2, mode) {
+  const suffix = SUFFIX[mode];
+  const joint = j1.period + j2.period;
+  const jointMonthly = j1.monthly + j2.monthly;
+  const joint20 = (j1.annual + j2.annual) * 20;
+  const totalCover = j1.sa + j2.sa;
+
+  const s = sx => sx === 'M' ? 'Male' : 'Female';
+
+  return `
+    <div class="result-panel">
+      <!-- Combined box -->
+      <div class="joint-combined">
+        <div class="jc-label">Combined couple premium</div>
+        <div class="jc-amount">${fmt(joint)}</div>
+        <div class="jc-sub">${suffix} · ${fmtSA(totalCover)} total family cover</div>
+        <div class="jc-stats">
+          <div class="jc-stat">
+            <div class="jcs-label">Monthly equiv.</div>
+            <div class="jcs-val">${fmt(jointMonthly)}/mo</div>
+          </div>
+          <div class="jc-stat">
+            <div class="jcs-label">Per day</div>
+            <div class="jcs-val">${fmt(jointMonthly/30)}/day</div>
+          </div>
+          <div class="jc-stat">
+            <div class="jcs-label">Total paid (20 yrs)</div>
+            <div class="jcs-val">${fmt(joint20)}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Individual summaries -->
+      <div class="p-summary-grid">
+        <div class="p-summary ps1">
+          <div class="ps-name c1">Person 1 · ${s(j1.sex)}, Age ${j1.age}</div>
+          <div class="ps-details">${fmtSA(j1.sa)} Sum Assured</div>
+          <div class="ps-prem c1">${fmt(j1.period)}</div>
+          <div class="ps-cover">${suffix}</div>
+        </div>
+        <div class="p-summary ps2">
+          <div class="ps-name c2">Person 2 · ${s(j2.sex)}, Age ${j2.age}</div>
+          <div class="ps-details">${fmtSA(j2.sa)} Sum Assured</div>
+          <div class="ps-prem c2">${fmt(j2.period)}</div>
+          <div class="ps-cover">${suffix}</div>
+        </div>
+      </div>
+
+      <div class="db-title">What each person receives (by policy year)</div>
+      <div class="db-row yr1">
+        <div class="db-yr db-yr1">Year 1</div>
+        <div class="db-desc">Each: return of their own premiums paid</div>
+        <div class="db-amt" style="color:#f87171">Return of premiums</div>
+      </div>
+      <div class="db-row yr2">
+        <div class="db-yr db-yr2">Year 2</div>
+        <div class="db-desc">Each: 50% of their Sum Assured</div>
+        <div class="db-amt" style="color:var(--gold)">${fmt(j1.sa*.5)} + ${fmt(j2.sa*.5)}</div>
+      </div>
+      <div class="db-row yr3">
+        <div class="db-yr db-yr3">Year 3+</div>
+        <div class="db-desc">Each: 100% of their Sum Assured</div>
+        <div class="db-amt" style="color:var(--teal)">${fmt(j1.sa)} + ${fmt(j2.sa)}</div>
+      </div>
+
+      <div class="features">
+        <div class="feat">👫 Two independent policies</div>
+        <div class="feat">⚡ Both instant approval</div>
+        <div class="feat">🩺 No medicals for either</div>
+        <div class="feat">💸 Both get premiums back in Year 21</div>
+        <div class="feat">🔒 Both premiums locked today</div>
+        <div class="feat">🌍 Worldwide on both policies</div>
+      </div>
+
+      <a class="apply-btn" href="https://rickyrampersadbranch.com/xpress-life-application" target="_blank" rel="noopener">
+        Apply Now — Xpress Life Application <span class="apply-arrow">→</span>
+      </a>
+      <div class="apply-note">Opens the Xpress Life Application page in a new window · Complete one form per person · No medical exam required</div>
+    </div>`;
+}
+
+// ── MAIN CALC ──
+function calc() {
+  if (curTab === 'individual') {
+    const sex = $('i1Sex').value;
+    const age = parseInt($('i1Age').value);
+    const sa  = SA.i1;
+    const mode = curMode;
+
+    const period  = xlPeriod(sex, age, sa, mode);
+    const monthly = xlPeriod(sex, age, sa, 'Monthly');
+
+    $('i1Result').innerHTML = buildIndividualResult(sex, age, sa, mode);
+
+    $('barLabel').textContent  = mode + ' Premium';
+    $('barTotal').textContent  = fmt(period);
+    $('barDaily').textContent  = fmt(monthly / 30) + ' / day';
+    $('barCover').textContent  = fmtSA(sa) + ' cover';
+
+  } else {
+    const j1sex  = $('j1Sex').value;
+    const j1age  = parseInt($('j1Age').value);
+    const j1sa   = SA.j1;
+    const j2sex  = $('j2Sex').value;
+    const j2age  = parseInt($('j2Age').value);
+    const j2sa   = SA.j2;
+    const mode   = curModeC;
+
+    const j1 = {
+      sex: j1sex, age: j1age, sa: j1sa,
+      period:  xlPeriod(j1sex, j1age, j1sa, mode),
+      monthly: xlPeriod(j1sex, j1age, j1sa, 'Monthly'),
+      annual:  xlAnnual(j1sex, j1age, j1sa),
+    };
+    const j2 = {
+      sex: j2sex, age: j2age, sa: j2sa,
+      period:  xlPeriod(j2sex, j2age, j2sa, mode),
+      monthly: xlPeriod(j2sex, j2age, j2sa, 'Monthly'),
+      annual:  xlAnnual(j2sex, j2age, j2sa),
+    };
+
+    $('coupleResult').innerHTML = buildCoupleResult(j1, j2, mode);
+
+    $('barLabel').textContent  = 'Combined ' + mode + ' Premium';
+    $('barTotal').textContent  = fmt(j1.period + j2.period);
+    $('barDaily').textContent  = fmt((j1.monthly + j2.monthly) / 30) + ' / day';
+    $('barCover').textContent  = fmtSA(j1sa + j2sa) + ' total cover';
+  }
+}
+
+calc();
 </script>
 </body>
 </html>
