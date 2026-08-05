@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales Career Path Qualifier — Guardian Life</title>
+<style>
+  :root{
+    --navy:#0e2a47;
+    --navy-2:#163a5f;
+    --gold:#c9a227;
+    --gold-soft:#f3e8c5;
+    --bg:#f4f6f9;
+    --card:#ffffff;
+    --ink:#1c2733;
+    --muted:#5b6b7c;
+    --line:#dfe6ee;
+    --green:#1e7f4f;
+    --green-bg:#e6f4ec;
+    --red:#b3402f;
+    --red-bg:#fbeae7;
+    --amber:#8a6d1a;
+    --amber-bg:#faf3dc;
+    --radius:14px;
+    --shadow:0 2px 10px rgba(14,42,71,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;min-height:100vh}
+  button{font-family:inherit;cursor:pointer}
+  input,select{font-family:inherit;font-size:1rem}
+
+  /* ===== Header ===== */
+  header{background:var(--navy);color:#fff;padding:.9rem 1.2rem;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;position:sticky;top:0;z-index:50;box-shadow:var(--shadow)}
+  header .logo{width:38px;height:38px;border-radius:50%;background:var(--gold);color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.05rem;flex:0 0 auto}
+  header .titles{flex:1;min-width:180px}
+  header h1{font-size:1.05rem;font-weight:700;letter-spacing:.02em}
+  header .sub{font-size:.75rem;opacity:.75}
+  .userchip{display:flex;align-items:center;gap:.6rem;background:var(--navy-2);border:1px solid rgba(255,255,255,.15);padding:.35rem .7rem;border-radius:999px;font-size:.85rem}
+  .userchip b{font-weight:600}
+  .userchip button{background:none;border:none;color:var(--gold);font-size:.8rem;text-decoration:underline;padding:0}
+
+  main{max-width:1080px;margin:0 auto;padding:1.4rem 1rem 4rem}
+
+  /* ===== Login ===== */
+  .login-wrap{max-width:460px;margin:6vh auto 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:1.4rem}
+  .login-wrap h2{color:var(--navy);margin-bottom:.3rem}
+  .login-wrap p{color:var(--muted);font-size:.92rem;margin-bottom:1.1rem}
+  .field{margin-bottom:1rem}
+  .field label{display:block;font-size:.85rem;font-weight:600;color:var(--navy);margin-bottom:.3rem}
+  .field input,.field select{width:100%;padding:.6rem .7rem;border:1px solid var(--line);border-radius:8px;background:#fff}
+  .field input:focus,.field select:focus{outline:2px solid var(--gold);border-color:var(--gold)}
+  .btn{display:inline-block;background:var(--navy);color:#fff;border:none;border-radius:9px;padding:.65rem 1.3rem;font-size:.95rem;font-weight:600}
+  .btn:hover{background:var(--navy-2)}
+  .btn-gold{background:var(--gold);color:var(--navy)}
+  .btn-gold:hover{background:#b8921f}
+  .btn-ghost{background:none;border:1px solid var(--line);color:var(--navy)}
+  .btn-ghost:hover{border-color:var(--navy)}
+  .returning{margin-top:1.2rem;border-top:1px solid var(--line);padding-top:1rem}
+  .returning h3{font-size:.85rem;color:var(--muted);font-weight:600;margin-bottom:.5rem}
+  .returning .agent-row{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.45rem .2rem;border-bottom:1px dashed var(--line)}
+  .returning .agent-row:last-child{border-bottom:none}
+  .returning .agent-row button.open{background:none;border:none;color:var(--navy);font-weight:600;font-size:.95rem;text-align:left;flex:1;padding:.2rem 0}
+  .returning .agent-row button.open:hover{color:var(--gold)}
+  .returning .agent-row .del{background:none;border:none;color:var(--red);font-size:.78rem}
+
+  /* ===== Path overview ===== */
+  .intro{margin-bottom:1.2rem}
+  .intro h2{color:var(--navy);font-size:1.35rem}
+  .intro p{color:var(--muted);font-size:.95rem;max-width:70ch}
+  .track{margin-bottom:1.6rem}
+  .track-label{display:flex;align-items:center;gap:.55rem;margin-bottom:.7rem}
+  .track-label .dot{width:11px;height:11px;border-radius:50%;background:var(--gold)}
+  .track-label h3{color:var(--navy);font-size:1rem;letter-spacing:.03em;text-transform:uppercase}
+  .track-label span{font-size:.8rem;color:var(--muted)}
+  .path{display:flex;gap:.6rem;flex-wrap:wrap}
+  .step{flex:1 1 150px;min-width:150px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:.85rem .9rem;position:relative;box-shadow:var(--shadow);transition:transform .12s, border-color .12s;text-align:left}
+  .step:hover{transform:translateY(-2px);border-color:var(--gold)}
+  .step .num{font-size:.7rem;font-weight:700;color:var(--gold);letter-spacing:.08em;text-transform:uppercase}
+  .step h4{color:var(--navy);font-size:.95rem;margin:.15rem 0 .3rem}
+  .step .mini{font-size:.76rem;color:var(--muted);min-height:2.2em}
+  .step .status{margin-top:.5rem;font-size:.74rem;font-weight:700;border-radius:999px;padding:.14rem .55rem;display:inline-block}
+  .status.here{background:var(--navy);color:#fff}
+  .status.qualified{background:var(--green-bg);color:var(--green)}
+  .status.progress{background:var(--amber-bg);color:var(--amber)}
+  .status.notstarted{background:#eef1f5;color:var(--muted)}
+  .step.current{border:2px solid var(--gold);background:linear-gradient(180deg,#fffdf4,#fff)}
+
+  /* ===== Position detail ===== */
+  .backbar{margin-bottom:1rem}
+  .backbar button{background:none;border:none;color:var(--navy);font-weight:600;font-size:.92rem}
+  .backbar button:hover{color:var(--gold)}
+  .pos-head{background:var(--navy);color:#fff;border-radius:var(--radius);padding:1.3rem 1.4rem;margin-bottom:1.1rem}
+  .pos-head .crumb{font-size:.75rem;letter-spacing:.09em;text-transform:uppercase;color:var(--gold);font-weight:700}
+  .pos-head h2{font-size:1.45rem;margin:.15rem 0 .35rem}
+  .pos-head p{font-size:.92rem;opacity:.85;max-width:75ch}
+  .scorebar{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:1rem 1.2rem;margin-bottom:1.1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+  .scorebar .verdict{font-weight:800;font-size:1.05rem}
+  .scorebar .verdict.ok{color:var(--green)}
+  .scorebar .verdict.no{color:var(--amber)}
+  .meter{flex:1;min-width:200px;height:12px;border-radius:999px;background:#e9edf3;overflow:hidden}
+  .meter>div{height:100%;background:linear-gradient(90deg,var(--gold),#e0bf49);border-radius:999px;transition:width .3s}
+  .meter>div.full{background:linear-gradient(90deg,#2c9663,var(--green))}
+  .scorebar .count{font-size:.85rem;color:var(--muted);white-space:nowrap}
+  .req{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:.95rem 1.1rem;margin-bottom:.75rem;display:flex;gap:.9rem;align-items:flex-start;flex-wrap:wrap}
+  .req.met{border-left-color:var(--green)}
+  .req.unmet{border-left-color:var(--red)}
+  .req .icon{width:26px;height:26px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:800;margin-top:.1rem}
+  .req.met .icon{background:var(--green-bg);color:var(--green)}
+  .req.unmet .icon{background:var(--red-bg);color:var(--red)}
+  .req .body{flex:1;min-width:230px}
+  .req .body .text{font-size:.93rem;font-weight:600;color:var(--ink)}
+  .req .body .note{font-size:.8rem;color:var(--muted);margin-top:.15rem}
+  .req .controls{display:flex;flex-direction:column;gap:.45rem;min-width:210px;flex:0 1 260px}
+  .ctrl{display:flex;flex-direction:column;gap:.15rem}
+  .ctrl label{font-size:.75rem;font-weight:600;color:var(--muted)}
+  .ctrl input[type=number],.ctrl select{padding:.45rem .55rem;border:1px solid var(--line);border-radius:8px;width:100%}
+  .ctrl input:focus,.ctrl select:focus{outline:2px solid var(--gold);border-color:var(--gold)}
+  .ctrl.toggle{flex-direction:row;align-items:center;gap:.5rem}
+  .ctrl.toggle input{width:19px;height:19px;accent-color:var(--green)}
+  .ctrl.toggle label{font-size:.85rem;color:var(--ink);font-weight:500}
+  .gapnote{font-size:.8rem;color:var(--red);font-weight:600;margin-top:.25rem}
+  .benefits{background:var(--gold-soft);border:1px solid #e6d79a;border-radius:var(--radius);padding:1rem 1.2rem;margin-top:1.2rem}
+  .benefits h3{color:var(--navy);font-size:.95rem;margin-bottom:.4rem}
+  .benefits ul{padding-left:1.2rem;font-size:.88rem;color:#4a4a33}
+  .benefits li{margin-bottom:.2rem}
+  .keepnote{font-size:.78rem;color:var(--muted);margin-top:1rem;font-style:italic}
+  .subhead{color:var(--navy);font-size:1.02rem;margin:1.3rem 0 .7rem;display:flex;align-items:center;gap:.5rem}
+  .subhead::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  footer{max-width:1080px;margin:0 auto;padding:0 1rem 2rem;color:var(--muted);font-size:.75rem;text-align:center}
+  .hidden{display:none !important}
+  @media (max-width:640px){
+    .req .controls{flex:1 1 100%}
+    .path{flex-direction:column}
+    .step{min-width:0}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">GL</div>
+  <div class="titles">
+    <h1>Sales Career Path Qualifier</h1>
+    <div class="sub">Guardian Life of the Caribbean &middot; Sales Career Path (Amended April 2026)</div>
+  </div>
+  <div class="userchip hidden" id="userChip">
+    <span>Agent: <b id="chipName"></b></span>
+    <button onclick="logout()">Sign out</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ LOGIN ============ -->
+  <section id="viewLogin" class="login-wrap">
+    <div class="card">
+      <h2>Agent Sign In</h2>
+      <p>Enter your name to create or open your profile. Your answers are saved on this device so you can return and update them any time.</p>
+      <div class="field">
+        <label for="loginName">Your name</label>
+        <input type="text" id="loginName" placeholder="e.g. Ricky Rampersad" autocomplete="name">
+      </div>
+      <div class="field">
+        <label for="loginPos">Your current position</label>
+        <select id="loginPos">
+          <option value="none">New Candidate / Prospective Agent</option>
+          <option value="salesperson">Professional Career Sales Representative (Salesperson)</option>
+          <option value="executive">Executive Agent</option>
+          <option value="ssc">Senior Sales Consultant</option>
+          <option value="trainee">Trainee Manager</option>
+          <option value="unit">Unit Manager</option>
+          <option value="abm">Assistant Branch Manager</option>
+          <option value="bm">Branch Manager</option>
+        </select>
+      </div>
+      <button class="btn btn-gold" onclick="login()">Continue</button>
+      <div class="returning hidden" id="returningBox">
+        <h3>Returning agents on this device</h3>
+        <div id="agentList"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PATH OVERVIEW ============ -->
+  <section id="viewPath" class="hidden">
+    <div class="intro">
+      <h2 id="welcomeLine">Welcome</h2>
+      <p>These are the available career paths at Guardian Life. Select any position to see exactly what it takes to qualify, enter your own numbers, and instantly see where you stand.</p>
+    </div>
+
+    <div class="track">
+      <div class="track-label"><div class="dot"></div><h3>Professional Sales Track</h3><span>build your practice</span></div>
+      <div class="path" id="salesTrack"></div>
+    </div>
+
+    <div class="track">
+      <div class="track-label"><div class="dot"></div><h3>Sales Management Track</h3><span>lead and grow teams</span></div>
+      <div class="path" id="mgmtTrack"></div>
+    </div>
+
+    <div class="card" style="font-size:.85rem;color:var(--muted)">
+      <b style="color:var(--navy)">Promotion windows:</b> appointments are announced twice a year — at Blastoff in <b>October</b> (submit by August 31) and at the Mid-Year Meeting in <b>April</b> (submit by February 28). Late submissions are deferred to the next announcement period. All appointments are made by the President in consultation with the VP of Sales and reviewed annually.
+    </div>
+  </section>
+
+  <!-- ============ POSITION DETAIL ============ -->
+  <section id="viewPos" class="hidden">
+    <div class="backbar"><button onclick="showPath()">&larr; Back to career path</button></div>
+    <div class="pos-head">
+      <div class="crumb" id="posCrumb"></div>
+      <h2 id="posTitle"></h2>
+      <p id="posDesc"></p>
+    </div>
+
+    <div class="scorebar">
+      <div class="verdict" id="posVerdict"></div>
+      <div class="meter"><div id="posMeter" style="width:0%"></div></div>
+      <div class="count" id="posCount"></div>
+    </div>
+
+    <div class="subhead">Requirements — answer each one to check your qualification</div>
+    <div id="reqList"></div>
+
+    <div class="benefits" id="posBenefits"></div>
+    <p class="keepnote" id="posKeep"></p>
+  </section>
+
+</main>
+
+<footer>
+  Based on the Guardian Life Sales Career Path document, amended April 2026. This tool is a self-assessment guide only — all appointments remain at the discretion of the Company and are made by the President in consultation with the VP of Sales.
+</footer>
+
+<script>
+"use strict";
+
+/* =====================================================================
+   FIELD DEFINITIONS — every input an agent can supply.
+   Answers are stored once per agent and reused across positions.
+===================================================================== */
+const FIELDS = {
+  yearsContracted:   {label:"Years contracted with Guardian Life", type:"number", min:0, step:0.5},
+  ncdCompleted:      {label:"Completed the New Candidate Discovery (NCD) Program and accepted by VP – Sales", type:"bool"},
+  probationDone:     {label:"Completed 7-month probation incl. Induction Program & GLOC Bootcamp", type:"bool"},
+  insuranceAct:      {label:"Registered under the Insurance Act", type:"bool"},
+  stateLicensing:    {label:"Passed the State Licensing Examination", type:"bool"},
+  ttaifaMember:      {label:"Member of TTAIFA", type:"bool"},
+  fscpStarted:       {label:"Commenced the FSCP™ (2015) Programme", type:"bool"},
+  fscpOrDesignation: {label:"Attained FSCP™ (2015) or similar designation (CFP, CLU, ChFC)", type:"bool"},
+  intermediateDev:   {label:"Completed the Intermediate Development Course", type:"bool"},
+  mentoringProgram:  {label:"Attended the Company's Mentoring Program", type:"bool"},
+  cpdCredits:        {label:"Continuous development credits current (TTAIFA & CBTT)", type:"bool"},
+  appointmentLetter: {label:"Signed appointment letter (terms & conditions)", type:"bool"},
+  production24:      {label:"Total settled production, last 24 months (API $)", type:"number", min:0, step:10000},
+  persistency:       {label:"Persistency (%)", type:"number", min:0, max:100, step:1},
+  clientTotal:       {label:"Total active clients (life + Individual Health)", type:"number", min:0, step:1},
+  clientActiveLife:  {label:"Active life clients (of the total)", type:"number", min:0, step:1},
+  mdrtLast3:         {label:"Qualified & attended MDRT as a full member within the last 3 years", type:"bool"},
+  mdrtLast2:         {label:"Qualified & attended MDRT as a full member within the last 2 years", type:"bool"},
+  eaYears:           {label:"Consecutive years as Executive Agent", type:"number", min:0, step:0.5},
+  industrySeniorYears:{label:"Consecutive years in a senior sales / management position in the Life Insurance industry", type:"number", min:0, step:0.5},
+  presidentsClub2:   {label:"Production in line with President's Club in each of the preceding 2 years", type:"bool"},
+  bmRecommendation:  {label:"Recommended by your Branch Manager", type:"bool"},
+  pop7:              {label:"Completed POP7 Management Assessment with a favourable score", type:"bool"},
+  elpCompleted:      {label:"Completed the Emerging Leaders Program (ELP)", type:"bool"},
+  recruits:          {label:"Agents you have recruited (with your Manager's assistance)", type:"number", min:0, step:1},
+  recruitsProbation: {label:"Recruited agents who completed the Company's Probation Contract", type:"number", min:0, step:1},
+  businessPlanning:  {label:"Completed Business Planning course", type:"bool"},
+  futureLeaders:     {label:"Completed Developing Future Leaders", type:"bool"},
+  unitApi12:         {label:"Unit production, last 12 months (API $)", type:"number", min:0, step:10000},
+  leaderSharePct:    {label:"Share of Unit production from your own production (%)", type:"number", min:0, max:100, step:1},
+  agentsUnderContract:{label:"Agents under contract in your Unit / Branch", type:"number", min:0, step:1},
+  unitQuotaPct:      {label:"Unit's production quota achieved in EACH of the preceding 2 years (%, enter the lower year)", type:"number", min:0, max:200, step:1},
+  umYears:           {label:"Years in the position of Unit Manager", type:"number", min:0, step:0.5},
+  abmYears:          {label:"Years in the position of Assistant Branch Manager", type:"number", min:0, step:0.5},
+  amtc:              {label:"Completed AMTC", type:"bool"},
+  pacesetter:        {label:"Completed Pacesetter", type:"bool"},
+  maps:              {label:"Completed MAPS (Managing Agency Profitability Seminars)", type:"bool"},
+  aes:               {label:"Completed AES (Agency Enhancement Series)", type:"bool"},
+  agentsQuotaPct:    {label:"Your agents meeting their quota (%)", type:"number", min:0, max:100, step:1},
+  developedUM:       {label:"Developed & appointed one Unit Manager who has held the position for at least 1 year", type:"bool"},
+  ciam:              {label:"Attained the CIAM designation", type:"bool"}
+};
+
+/* =====================================================================
+   POSITIONS — the career path model built from the April 2026 document.
+   Each requirement lists the fields it needs and a check() on the profile.
+===================================================================== */
+const POSITIONS = [
+  {
+    id:"salesperson", track:"sales", num:"Step 1",
+    title:"Professional Career Sales Representative (“Salesperson”)",
+    short:"Salesperson",
+    mini:"Entry to the professional sales career",
+    desc:"The entry position on the Sales Career Path. Complete the NCD Program, probation and licensing to hold a full-time Salesperson contract.",
+    benefits:["Commissions (based on schedule)","Bonuses","Supplemental benefits — non-mandatory health plan and non-contributory pension"],
+    reqs:[
+      {text:"Complete the New Candidate Discovery (NCD) Program and be accepted by the VP – Sales", fields:["ncdCompleted"], check:p=>!!p.ncdCompleted},
+      {text:"Complete the 7-month probation, including the Induction Program and the GLOC Bootcamp Program", fields:["probationDone"], check:p=>!!p.probationDone},
+      {text:"Obtain registration under the Insurance Act before representing Guardian Life in the field", fields:["insuranceAct"], check:p=>!!p.insuranceAct},
+      {text:"Complete the State Licensing Examination during your first year (condition to maintain a full-time contract)", note:"It is also recommended to review “An Introduction to Life Underwriting” on the GGLDC site.", fields:["stateLicensing"], check:p=>!!p.stateLicensing},
+      {text:"Become a member of TTAIFA", fields:["ttaifaMember"], check:p=>!!p.ttaifaMember},
+      {text:"Commence the FSCP™ (2015) within your 2nd year (view to complete by year 5)", fields:["fscpStarted"], check:p=>!!p.fscpStarted},
+      {text:"Attend the Company's Intermediate Development Course when entering your 4th year", fields:["intermediateDev"], check:p=>!!p.intermediateDev, optionalBefore:{field:"yearsContracted", value:3, label:"Required from your 4th year"}},
+      {text:"Sign appointment letter as acknowledgement of contract terms and conditions", fields:["appointmentLetter"], check:p=>!!p.appointmentLetter},
+      {text:"Maintain continuous development credits (TTAIFA and CBTT)", fields:["cpdCredits"], check:p=>!!p.cpdCredits}
+    ],
+    keep:"This appointment is reviewed annually for performance metrics and can be revoked for behaviour that brings the Branch or Company into disrepute."
+  },
+  {
+    id:"executive", track:"sales", num:"Step 2",
+    title:"Executive Agent",
+    short:"Executive Agent",
+    mini:"Proven producer with a strong client base",
+    desc:"A senior sales designation for consistently high-producing agents. If conditions are not maintained for two consecutive calendar years, the appointment may be revoked.",
+    benefits:["Additional Administrative/Sales Support (determined by the Branch Manager on merit)","Overriding commissions on your own production up to a maximum of 5%","Private office space, depending on availability and merit"],
+    reqs:[
+      {text:"Contracted as a Salesperson with Guardian Life for at least 4 years", fields:["yearsContracted"], check:p=>num(p.yearsContracted)>=4, gap:p=>gapYears(p.yearsContracted,4)},
+      {text:"Attained the FSCP™ (2015) or similar insurance designation (e.g. CFP, CLU, ChFC)", fields:["fscpOrDesignation"], check:p=>!!p.fscpOrDesignation},
+      {text:"Total production of at least $1,500,000 API over the previous two calendar years", fields:["production24"], check:p=>num(p.production24)>=1500000, gap:p=>gapMoney(p.production24,1500000)},
+      {text:"Persistency of at least 90%", fields:["persistency"], check:p=>num(p.persistency)>=90, gap:p=>gapPct(p.persistency,90)},
+      {text:"Client base of at least 325 active clients (life + Individual Health), of which at least 275 are active life clients", fields:["clientTotal","clientActiveLife"], check:p=>num(p.clientTotal)>=325&&num(p.clientActiveLife)>=275, gap:p=>gapClients(p)},
+      {text:"Completed the Company's Intermediate Development Course", fields:["intermediateDev"], check:p=>!!p.intermediateDev},
+      {text:"Attended the Company's Mentoring Program", fields:["mentoringProgram"], check:p=>!!p.mentoringProgram},
+      {text:"Continuous professional development in line with the insurance industry", fields:["cpdCredits"], check:p=>!!p.cpdCredits},
+      {text:"Qualified and attended MDRT as a full member at least once within the 3 years prior to appointment", fields:["mdrtLast3"], check:p=>!!p.mdrtLast3}
+    ],
+    keep:"To keep the designation: keep mentoring agents (confirmed quarterly by your Branch Manager), maintain CPD, and qualify & attend MDRT as a full member at least once every 3 years."
+  },
+  {
+    id:"ssc", track:"sales", num:"Step 3",
+    title:"Senior Sales Consultant",
+    short:"Senior Sales Consultant",
+    mini:"The highest position on the professional sales path",
+    desc:"The highest position on Guardian Life's Professional Sales Career Path. Requests go through your Branch Manager to the Vice President – Sales, who makes the final decision. Reviewed bi-annually.",
+    benefits:["Overriding commissions on your own production up to a maximum of 10%","Shared Administrative/Sales Support, depending on availability","Reserved parking space, depending on availability and merit","Retired or reclassified Branch Managers may become Honorary Sales Consultants"],
+    reqs:[
+      {text:"Held the position of Executive Agent for at least 5 consecutive years at Guardian Life — OR — 10 consecutive years in a senior sales or management position in the Life Insurance industry", fields:["eaYears","industrySeniorYears"], check:p=>num(p.eaYears)>=5||num(p.industrySeniorYears)>=10,
+        gap:p=>{const a=num(p.eaYears),b=num(p.industrySeniorYears);return `Need ${(5-a).toFixed(1)} more year(s) as Executive Agent, or ${(10-b).toFixed(1)} more year(s) of senior industry experience.`}},
+      {text:"Attained the FSCP™ (2015) or other insurance designation (e.g. CFP, CLU, ChFC)", fields:["fscpOrDesignation"], check:p=>!!p.fscpOrDesignation},
+      {text:"Settled at least $2,000,000 in New Gross Annualized Premium Income over the previous 24 months", fields:["production24"], check:p=>num(p.production24)>=2000000, gap:p=>gapMoney(p.production24,2000000)},
+      {text:"Average persistency over the last 24 months of at least 90%", fields:["persistency"], check:p=>num(p.persistency)>=90, gap:p=>gapPct(p.persistency,90)},
+      {text:"Client base of at least 325 active clients (life + Individual Health), of which at least 275 are active life clients", fields:["clientTotal","clientActiveLife"], check:p=>num(p.clientTotal)>=325&&num(p.clientActiveLife)>=275, gap:p=>gapClients(p)},
+      {text:"Qualify as a full member and attend MDRT at least once every 2 years", fields:["mdrtLast2"], check:p=>!!p.mdrtLast2}
+    ],
+    keep:"To keep the position: act as a mentor (confirmed quarterly by your Branch Manager), introduce potential recruits, maintain CPD, and attend MDRT as a full member at least once every 2 years. Requirements not maintained for two consecutive years may lead to revocation."
+  },
+  {
+    id:"elp", track:"mgmt", num:"Gateway",
+    title:"Emerging Leaders Program (ELP) Candidate",
+    short:"ELP Candidate",
+    mini:"In-house gateway program into sales management",
+    desc:"The ELP is the in-house program that develops agents aspiring to sales management — the required first step on the Management Track. Sessions run once per month covering leadership, recruiting, selection and practice management.",
+    benefits:["Entry gateway to the Sales Management Track","Monthly leadership development sessions (12-session program)","Prepares you for appointment as Trainee Manager"],
+    reqs:[
+      {text:"Contracted for at least 4 years", fields:["yearsContracted"], check:p=>num(p.yearsContracted)>=4, gap:p=>gapYears(p.yearsContracted,4)},
+      {text:"Client base of at least 325 active clients (life + Individual Health), of which at least 275 are active life clients", fields:["clientTotal","clientActiveLife"], check:p=>num(p.clientTotal)>=325&&num(p.clientActiveLife)>=275, gap:p=>gapClients(p)},
+      {text:"Production in line with President's Club qualification in each of the preceding 2 years", fields:["presidentsClub2"], check:p=>!!p.presidentsClub2},
+      {text:"Attained the FSCP™ (2015) or similar insurance designation (e.g. CFP, CLU, ChFC)", fields:["fscpOrDesignation"], check:p=>!!p.fscpOrDesignation},
+      {text:"Interest in management and recommendation by your Branch Manager", fields:["bmRecommendation"], check:p=>!!p.bmRecommendation},
+      {text:"Complete the POP7 Management Assessment with a favourable score", fields:["pop7"], check:p=>!!p.pop7},
+      {text:"Completed the Intermediate Development Course", note:"At this stage the agent should have completed Intermediate Development and the Mentoring Program.", fields:["intermediateDev"], check:p=>!!p.intermediateDev},
+      {text:"Completed the Mentoring Program", fields:["mentoringProgram"], check:p=>!!p.mentoringProgram}
+    ],
+    keep:""
+  },
+  {
+    id:"trainee", track:"mgmt", num:"Step 1",
+    title:"Trainee Manager",
+    short:"Trainee Manager",
+    mini:"First management appointment (max 2 years)",
+    desc:"Appointed after completing the ELP to the satisfaction of the VP – Sales. Under review for up to 18 months for promotion to Unit Manager; maximum of 2 years in this designation, barring extenuating circumstances.",
+    benefits:["Overriding commissions of 100% of the Development Allowance on business of new agents introduced to the Branch, for the first two years"],
+    reqs:[
+      {text:"Completed the Emerging Leaders Program (ELP)", fields:["elpCompleted"], check:p=>!!p.elpCompleted},
+      {text:"Contracted for at least 5 years", fields:["yearsContracted"], check:p=>num(p.yearsContracted)>=5, gap:p=>gapYears(p.yearsContracted,5)},
+      {text:"Client base of at least 325 active clients (life + Individual Health), of which at least 275 are active life clients", fields:["clientTotal","clientActiveLife"], check:p=>num(p.clientTotal)>=325&&num(p.clientActiveLife)>=275, gap:p=>gapClients(p)},
+      {text:"Production in line with President's Club qualification in each of the preceding 2 years", fields:["presidentsClub2"], check:p=>!!p.presidentsClub2},
+      {text:"Attained the FSCP™ (2015) or other insurance designation (e.g. CFP, CLU, ChFC)", fields:["fscpOrDesignation"], check:p=>!!p.fscpOrDesignation},
+      {text:"Recruited at least 2 agents with the assistance of your Manager", fields:["recruits"], check:p=>num(p.recruits)>=2, gap:p=>`Recruit ${2-num(p.recruits)} more agent(s).`},
+      {text:"Maintain continuous development credits (TTAIFA and CBTT)", fields:["cpdCredits"], check:p=>!!p.cpdCredits},
+      {text:"Sign appointment letter as acknowledgement of terms and conditions", fields:["appointmentLetter"], check:p=>!!p.appointmentLetter}
+    ],
+    keep:"Expected to complete the Management Orientation Program (ELP) and pre-management courses (Developing Future Leaders, Business Planning), keep producing at President's Club level, and maintain high moral and ethical standards."
+  },
+  {
+    id:"unit", track:"mgmt", num:"Step 2",
+    title:"Unit Manager",
+    short:"Unit Manager",
+    mini:"Leads a producing unit of contracted agents",
+    desc:"Promotion from Trainee Manager after demonstrated performance in Planning, Recruiting, Selection, Supervision and Training. Recruiting schedule by tenure: 1–3 yrs → 5 agents; >3–5 → 8; >5–8 → 10; >8–10 → 12; >10 yrs → 15.",
+    benefits:["Overriding commissions and variable allowances","Private office","Shared Administrative/Sales Support at the Manager's discretion","Reserved parking space"],
+    reqs:[
+      {text:"Contracted for at least 6 years", fields:["yearsContracted"], check:p=>num(p.yearsContracted)>=6, gap:p=>gapYears(p.yearsContracted,6)},
+      {text:"Recruited 4 agents who successfully completed the Company's Probation Contract", fields:["recruitsProbation"], check:p=>num(p.recruitsProbation)>=4, gap:p=>`Need ${4-num(p.recruitsProbation)} more recruit(s) past probation.`},
+      {text:"Completed GLOC's pre-management courses — ELP, Business Planning, and Developing Future Leaders", fields:["elpCompleted","businessPlanning","futureLeaders"], check:p=>!!p.elpCompleted&&!!p.businessPlanning&&!!p.futureLeaders},
+      {text:"Maintain continuous development credits (TTAIFA and CBTT)", fields:["cpdCredits"], check:p=>!!p.cpdCredits},
+      {text:"Unit producing at least $1.6M API in the 12 months preceding appointment (October or April promotion)", fields:["unitApi12"], check:p=>num(p.unitApi12)>=1600000, gap:p=>gapMoney(p.unitApi12,1600000,"Unit")},
+      {text:"No more than 40% of the Unit's production coming from your own production", fields:["leaderSharePct"], check:p=>p.leaderSharePct!==undefined&&p.leaderSharePct!==""&&num(p.leaderSharePct)<=40, gap:p=>`Your share is ${num(p.leaderSharePct)}% — it must be 40% or less.`}
+    ],
+    keep:"To keep the appointment: 5 net recruited & retained agents and $2.5M API (excl. your own) by end of year 3; 8 net agents and $3M API by end of year 5; minimum 85% Unit persistency and at least 80% of Unit quota (each judged over two consecutive years). Also complete AMTC by end of year 2 and pursue CIAM courses (Pacesetter, MAPS, AES); ensure 60% of your agents achieve Company quota."
+  },
+  {
+    id:"abm", track:"mgmt", num:"Step 3",
+    title:"Assistant Branch Manager",
+    short:"Asst. Branch Manager",
+    mini:"Senior manager developing a large unit",
+    desc:"Considered from the position of Unit Manager, subject to satisfactory performance across Planning, Recruiting, Selection, Training, Supervision, Motivation and Administration. Recruiting schedule by tenure: 1–3 yrs → 12 agents; >3–5 → 15; >5 yrs → 20.",
+    benefits:["Additional administrative support for the Unit (determined by the Branch Manager)","Reserved parking space","Private office"],
+    reqs:[
+      {text:"At least 12 agents under contract in your Unit", fields:["agentsUnderContract"], check:p=>num(p.agentsUnderContract)>=12, gap:p=>`Need ${12-num(p.agentsUnderContract)} more agent(s) under contract.`},
+      {text:"Met at least 80% of your Unit's production quota for the preceding 2 years", fields:["unitQuotaPct"], check:p=>num(p.unitQuotaPct)>=80, gap:p=>gapPct(p.unitQuotaPct,80)},
+      {text:"In the position of Unit Manager for at least 3 years", fields:["umYears"], check:p=>num(p.umYears)>=3, gap:p=>gapYears(p.umYears,3)},
+      {text:"Successfully completed all recommended Management Training Programs — AMTC, Pacesetter, MAPS and AES", fields:["amtc","pacesetter","maps","aes"], check:p=>!!p.amtc&&!!p.pacesetter&&!!p.maps&&!!p.aes},
+      {text:"60% of your agents meeting their quota in the year prior to appointment", fields:["agentsQuotaPct"], check:p=>num(p.agentsQuotaPct)>=60, gap:p=>gapPct(p.agentsQuotaPct,60)},
+      {text:"Unit production of at least $6,000,000 API in the preceding 12 months (October or April promotion)", fields:["unitApi12"], check:p=>num(p.unitApi12)>=6000000, gap:p=>gapMoney(p.unitApi12,6000000,"Unit")},
+      {text:"No more than 25% of the Unit's production coming from your own production", fields:["leaderSharePct"], check:p=>p.leaderSharePct!==undefined&&p.leaderSharePct!==""&&num(p.leaderSharePct)<=25, gap:p=>`Your share is ${num(p.leaderSharePct)}% — it must be 25% or less.`},
+      {text:"Maintain continuous development credits (TTAIFA and CBTT)", fields:["cpdCredits"], check:p=>!!p.cpdCredits}
+    ],
+    keep:"To keep the appointment: maintain the recruiting schedule, at least 85% persistency and at least 80% of assigned quota (minimum $6M settled production), each over two consecutive years. Attain CIAM within two years of appointment; ensure 60% of agents achieve quota."
+  },
+  {
+    id:"bm", track:"mgmt", num:"Step 4",
+    title:"Branch Manager",
+    short:"Branch Manager",
+    mini:"The top of the sales management track",
+    desc:"Promotion from Assistant Branch Manager, subject to satisfactory performance across all managerial functions. Recruiting schedule by tenure: 1–3 yrs → 30 agents; >3–6 → 40; >6 yrs → 50. Core values: Trust, Integrity, Quality, and Serving People.",
+    benefits:["Leadership of a full Branch","Compensation per Branch Manager contract","Recruiting and development authority for the Branch"],
+    reqs:[
+      {text:"At least 30 agents under contract in your Unit/Branch", fields:["agentsUnderContract"], check:p=>num(p.agentsUnderContract)>=30, gap:p=>`Need ${30-num(p.agentsUnderContract)} more agent(s) under contract.`},
+      {text:"Met at least 80% of your Unit's production quota for the preceding 2 years", fields:["unitQuotaPct"], check:p=>num(p.unitQuotaPct)>=80, gap:p=>gapPct(p.unitQuotaPct,80)},
+      {text:"Production of at least $12,000,000 API in the 12 months prior to appointment (October or April)", fields:["unitApi12"], check:p=>num(p.unitApi12)>=12000000, gap:p=>gapMoney(p.unitApi12,12000000,"Unit")},
+      {text:"In the position of Assistant Branch Manager for at least 3 years", fields:["abmYears"], check:p=>num(p.abmYears)>=3, gap:p=>gapYears(p.abmYears,3)},
+      {text:"Developed and appointed one Unit Manager who has been in the position for at least 1 year", fields:["developedUM"], check:p=>!!p.developedUM},
+      {text:"Attained the CIAM designation", fields:["ciam"], check:p=>!!p.ciam},
+      {text:"Maintain continuous development credits (TTAIFA and CBTT)", fields:["cpdCredits"], check:p=>!!p.cpdCredits}
+    ],
+    keep:"To keep the appointment: maintain at least 30 agents net for two consecutive years, at least 85% persistency for two consecutive years, and (after year 3) at least 80% of assigned quota (minimum $12M settled API) for two consecutive calendar years."
+  }
+];
+
+/* ===== helpers ===== */
+function num(v){const n=parseFloat(v);return isNaN(n)?0:n}
+function money(n){return "$"+Number(n).toLocaleString("en-US")}
+function gapYears(v,t){return `You're at ${num(v)} year(s) — ${(t-num(v)).toFixed(1)} more to go.`}
+function gapMoney(v,t,who){return `${who?who+" is":"You're"} at ${money(num(v))} — ${money(t-num(v))} more needed.`}
+function gapPct(v,t){return `Currently ${num(v)}% — needs to be at least ${t}%.`}
+function gapClients(p){
+  const parts=[];
+  if(num(p.clientTotal)<325)parts.push(`${325-num(p.clientTotal)} more total client(s)`);
+  if(num(p.clientActiveLife)<275)parts.push(`${275-num(p.clientActiveLife)} more active life client(s)`);
+  return parts.length?`Need ${parts.join(" and ")}.`:"";
+}
+function esc(s){const d=document.createElement("div");d.textContent=s==null?"":String(s);return d.innerHTML}
+
+/* ===== storage ===== */
+const STORE_KEY="glCareerPathAgents";
+function loadStore(){try{return JSON.parse(localStorage.getItem(STORE_KEY))||{}}catch(e){return{}}}
+function saveStore(s){localStorage.setItem(STORE_KEY,JSON.stringify(s))}
+
+let currentAgent=null;   // name
+let profile=null;        // answers object
+let currentPosId=null;
+
+/* ===== login flow ===== */
+function renderReturning(){
+  const store=loadStore();
+  const names=Object.keys(store);
+  const box=document.getElementById("returningBox");
+  const list=document.getElementById("agentList");
+  if(!names.length){box.classList.add("hidden");return}
+  box.classList.remove("hidden");
+  list.innerHTML="";
+  names.sort().forEach(n=>{
+    const row=document.createElement("div");row.className="agent-row";
+    const open=document.createElement("button");open.className="open";open.textContent=n;
+    open.onclick=()=>{openAgent(n)};
+    const del=document.createElement("button");del.className="del";del.textContent="remove";
+    del.onclick=()=>{if(confirm(`Remove saved profile for ${n}?`)){const s=loadStore();delete s[n];saveStore(s);renderReturning()}};
+    row.appendChild(open);row.appendChild(del);list.appendChild(row);
+  });
+}
+function login(){
+  const name=document.getElementById("loginName").value.trim();
+  if(!name){alert("Please enter your name to continue.");return}
+  const store=loadStore();
+  if(!store[name]){
+    store[name]={currentPosition:document.getElementById("loginPos").value};
+    saveStore(store);
+  }
+  openAgent(name);
+}
+function openAgent(name){
+  const store=loadStore();
+  currentAgent=name;
+  profile=store[name]||{};
+  document.getElementById("chipName").textContent=name;
+  document.getElementById("userChip").classList.remove("hidden");
+  showPath();
+}
+function logout(){
+  currentAgent=null;profile=null;currentPosId=null;
+  document.getElementById("userChip").classList.add("hidden");
+  document.getElementById("loginName").value="";
+  switchView("viewLogin");
+  renderReturning();
+}
+function saveProfile(){
+  if(!currentAgent)return;
+  const store=loadStore();
+  store[currentAgent]=profile;
+  saveStore(store);
+}
+
+/* ===== path overview ===== */
+function posScore(pos){
+  let met=0;
+  pos.reqs.forEach(r=>{if(r.check(profile))met++});
+  return {met, total:pos.reqs.length};
+}
+function anyAnswered(pos){
+  return pos.reqs.some(r=>r.fields.some(f=>profile[f]!==undefined&&profile[f]!==""&&profile[f]!==false));
+}
+function renderPath(){
+  document.getElementById("welcomeLine").textContent=`Welcome, ${currentAgent}`;
+  const sales=document.getElementById("salesTrack");
+  const mgmt=document.getElementById("mgmtTrack");
+  sales.innerHTML="";mgmt.innerHTML="";
+  POSITIONS.forEach(pos=>{
+    const s=posScore(pos);
+    const isCurrent=profile.currentPosition===pos.id;
+    const card=document.createElement("button");
+    card.className="step"+(isCurrent?" current":"");
+    let status;
+    if(isCurrent) status='<span class="status here">You are here</span>';
+    else if(s.met===s.total) status='<span class="status qualified">Qualified &#10003;</span>';
+    else if(anyAnswered(pos)) status=`<span class="status progress">${s.met}/${s.total} requirements met</span>`;
+    else status='<span class="status notstarted">Tap to check</span>';
+    card.innerHTML=`<div class="num">${esc(pos.num)}</div><h4>${esc(pos.short)}</h4><div class="mini">${esc(pos.mini)}</div>${status}`;
+    card.onclick=()=>showPos(pos.id);
+    (pos.track==="sales"?sales:mgmt).appendChild(card);
+  });
+}
+function showPath(){renderPath();switchView("viewPath")}
+
+/* ===== position detail ===== */
+function showPos(id){
+  currentPosId=id;
+  const pos=POSITIONS.find(p=>p.id===id);
+  document.getElementById("posCrumb").textContent=(pos.track==="sales"?"Professional Sales Track":"Sales Management Track")+" · "+pos.num;
+  document.getElementById("posTitle").textContent=pos.title;
+  document.getElementById("posDesc").textContent=pos.desc;
+  const ben=document.getElementById("posBenefits");
+  ben.innerHTML="<h3>Benefits of this position</h3><ul>"+pos.benefits.map(b=>`<li>${esc(b)}</li>`).join("")+"</ul>";
+  document.getElementById("posKeep").textContent=pos.keep||"";
+  renderReqs(pos);
+  switchView("viewPos");
+}
+function renderReqs(pos){
+  const list=document.getElementById("reqList");
+  list.innerHTML="";
+  pos.reqs.forEach((r,i)=>{
+    const met=r.check(profile);
+    const card=document.createElement("div");
+    card.className="req "+(met?"met":"unmet");
+    const gapText=!met&&r.gap?r.gap(profile):"";
+    let controls="";
+    r.fields.forEach(f=>{
+      const def=FIELDS[f];
+      const val=profile[f];
+      if(def.type==="bool"){
+        controls+=`<div class="ctrl toggle"><input type="checkbox" id="f_${f}_${i}" data-field="${f}" ${val?"checked":""}><label for="f_${f}_${i}">${esc(def.label)}</label></div>`;
+      }else{
+        controls+=`<div class="ctrl"><label for="f_${f}_${i}">${esc(def.label)}</label><input type="number" id="f_${f}_${i}" data-field="${f}" value="${val!==undefined?esc(val):""}" min="${def.min??0}" ${def.max!==undefined?`max="${def.max}"`:""} step="${def.step??1}" placeholder="0"></div>`;
+      }
+    });
+    card.innerHTML=`
+      <div class="icon">${met?"&#10003;":"&#10007;"}</div>
+      <div class="body">
+        <div class="text">${esc(r.text)}</div>
+        ${r.note?`<div class="note">${esc(r.note)}</div>`:""}
+        ${gapText?`<div class="gapnote">${esc(gapText)}</div>`:""}
+      </div>
+      <div class="controls">${controls}</div>`;
+    list.appendChild(card);
+  });
+  list.querySelectorAll("input").forEach(inp=>{
+    inp.addEventListener("input",()=>{
+      const f=inp.dataset.field;
+      profile[f]=inp.type==="checkbox"?inp.checked:inp.value;
+      saveProfile();
+      // Sync duplicate inputs for the same field, then refresh statuses in place
+      list.querySelectorAll(`input[data-field="${f}"]`).forEach(other=>{
+        if(other!==inp){ if(other.type==="checkbox")other.checked=!!profile[f]; else other.value=profile[f]; }
+      });
+      refreshStatuses(pos);
+    });
+  });
+  refreshStatuses(pos);
+}
+function refreshStatuses(pos){
+  const list=document.getElementById("reqList");
+  const cards=list.querySelectorAll(".req");
+  let met=0;
+  pos.reqs.forEach((r,i)=>{
+    const ok=r.check(profile);
+    if(ok)met++;
+    const card=cards[i];
+    card.className="req "+(ok?"met":"unmet");
+    card.querySelector(".icon").innerHTML=ok?"&#10003;":"&#10007;";
+    const body=card.querySelector(".body");
+    let gapEl=body.querySelector(".gapnote");
+    const gapText=!ok&&r.gap?r.gap(profile):"";
+    if(gapText){
+      if(!gapEl){gapEl=document.createElement("div");gapEl.className="gapnote";body.appendChild(gapEl)}
+      gapEl.textContent=gapText;
+    }else if(gapEl){gapEl.remove()}
+  });
+  const total=pos.reqs.length;
+  const pct=Math.round(met/total*100);
+  const verdict=document.getElementById("posVerdict");
+  if(met===total){
+    verdict.textContent="🎉 You QUALIFY for "+pos.short+"!";
+    verdict.className="verdict ok";
+  }else{
+    verdict.textContent="Not yet — "+(total-met)+" requirement(s) outstanding";
+    verdict.className="verdict no";
+  }
+  const meter=document.getElementById("posMeter");
+  meter.style.width=pct+"%";
+  meter.className=met===total?"full":"";
+  document.getElementById("posCount").textContent=`${met} of ${total} met (${pct}%)`;
+}
+
+/* ===== view switching ===== */
+function switchView(id){
+  ["viewLogin","viewPath","viewPos"].forEach(v=>document.getElementById(v).classList.toggle("hidden",v!==id));
+  window.scrollTo({top:0});
+}
+
+/* ===== init ===== */
+renderReturning();
+</script>
+</body>
+</html>
