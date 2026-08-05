@@ -172,24 +172,20 @@
   .subhead{color:var(--head);font-size:1.02rem;margin:1.3rem 0 .7rem;display:flex;align-items:center;gap:.5rem}
   .subhead::after{content:"";flex:1;height:1px;background:var(--line)}
 
-  /* ===== Goal / countdown card ===== */
-  .goalcard{border:2px solid var(--gold);background:linear-gradient(180deg,var(--goal-tint),var(--card));margin-bottom:1.5rem}
-  .goalcard h3{color:var(--head);font-size:1.05rem;margin-bottom:.2rem;display:flex;align-items:center;gap:.45rem}
-  .goalcard .hint{font-size:.85rem;color:var(--muted);margin-bottom:.9rem}
-  .goal-form{display:flex;gap:.8rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:.9rem}
-  .goal-form .field{margin-bottom:0;flex:1 1 220px}
-  .quickpicks{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.9rem}
-  .quickpicks button{background:var(--card);border:1.5px solid var(--gold);color:var(--head);border-radius:999px;padding:.35rem .8rem;font-size:.8rem;font-weight:600}
-  .quickpicks button:hover{background:var(--gold-soft)}
-  .goal-status{display:flex;gap:1rem;flex-wrap:wrap;align-items:stretch}
-  .countbox{background:var(--navy);color:#fff;border-radius:12px;padding:.9rem 1.2rem;text-align:center;flex:0 0 auto;min-width:130px}
-  .countbox .big{font-size:2.1rem;font-weight:800;color:var(--gold);line-height:1.1}
-  .countbox .lbl{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;opacity:.85}
-  .goal-progress{flex:1;min-width:220px;display:flex;flex-direction:column;justify-content:center;gap:.45rem}
-  .goal-progress .line{font-size:.92rem;font-weight:600;color:var(--head)}
-  .goal-progress .cheer{font-size:.85rem;color:var(--muted)}
-  .goal-progress .cheer.hot{color:var(--green);font-weight:600}
-  .goal-progress .cheer.late{color:var(--red);font-weight:600}
+  /* ===== My Status strip ===== */
+  .statuscard{border:2px solid var(--gold);background:linear-gradient(180deg,var(--goal-tint),var(--card));margin-bottom:1.5rem}
+  .status-grid{display:flex;gap:.8rem;flex-wrap:wrap;margin-bottom:.6rem}
+  .status-grid .field{margin-bottom:0;flex:1 1 180px}
+  .status-line{font-size:.95rem;font-weight:600;color:var(--head)}
+  .status-line .aim{color:var(--amber)}
+  /* ===== Position icons ===== */
+  .step .picon{font-size:1.7rem;line-height:1;margin-bottom:.25rem}
+  .goalbtn{background:var(--card);border:1.5px solid var(--gold);color:var(--head);border-radius:999px;padding:.4rem .9rem;font-size:.85rem;font-weight:700;margin-top:.7rem}
+  .goalbtn:hover{background:var(--gold-soft)}
+  .goalbtn.set{background:var(--gold);color:#0e2a47}
+  .eta{font-size:.88rem;font-weight:600;color:var(--head);flex-basis:100%}
+  .eta .drivers{display:block;font-weight:500;color:var(--muted);font-size:.8rem;margin-top:.15rem}
+  .edunote{font-size:.78rem;color:var(--amber);font-weight:600;margin-top:.2rem}
 
   /* ===== Requirement dates ===== */
   .reqdate{font-size:.78rem;margin-top:.3rem;font-weight:600}
@@ -315,21 +311,31 @@
       <p>These are the available career paths at Guardian Life. Select any position to see exactly what it takes to qualify, enter your own numbers, and instantly see where you stand.</p>
     </div>
 
-    <div class="card goalcard">
-      <h3>🎯 My Career Goal</h3>
-      <div class="hint">Pick the position you're aiming for and a target date — the tracker counts you down to it. Tip: use the quick-picks below to target a real promotion window's submission deadline.</div>
-      <div class="goal-form">
+    <div class="card statuscard">
+      <div class="status-grid">
         <div class="field">
-          <label for="goalPos">Target position</label>
-          <select id="goalPos"><option value="">— choose a position —</option></select>
+          <label for="curPos">My current position</label>
+          <select id="curPos">
+            <option value="none">New Candidate / Prospective Agent</option>
+            <option value="salesperson">Salesperson</option>
+            <option value="executive">Executive Agent</option>
+            <option value="ssc">Senior Sales Consultant</option>
+            <option value="trainee">Trainee Manager</option>
+            <option value="unit">Unit Manager</option>
+            <option value="abm">Assistant Branch Manager</option>
+            <option value="bm">Branch Manager</option>
+          </select>
         </div>
         <div class="field">
-          <label for="goalDate">Target date</label>
-          <input type="date" id="goalDate">
+          <label for="posSince">In this position since</label>
+          <input type="date" id="posSince">
+        </div>
+        <div class="field">
+          <label for="curYears">Years with Guardian Life</label>
+          <input type="number" id="curYears" min="0" step="0.5" placeholder="0">
         </div>
       </div>
-      <div class="quickpicks" id="goalQuick"></div>
-      <div class="goal-status" id="goalStatus"></div>
+      <div class="status-line" id="statusLine"></div>
     </div>
 
     <div class="card hubteaser">
@@ -389,16 +395,17 @@
       <div class="crumb" id="posCrumb"></div>
       <h2 id="posTitle"></h2>
       <p id="posDesc"></p>
+      <button class="goalbtn" id="goalBtn" onclick="toggleGoal()">🎯 This is what I want to be</button>
     </div>
 
     <div class="scorebar">
       <div class="verdict" id="posVerdict"></div>
       <div class="meter"><div id="posMeter" style="width:0%"></div></div>
       <div class="count" id="posCount"></div>
-      <div class="count" id="posGoalLine" style="color:var(--head);font-weight:600"></div>
+      <div class="eta" id="posEta"></div>
     </div>
 
-    <div class="subhead">Requirements — answer each one to check your qualification</div>
+    <div class="subhead">The requirements — do you have them?</div>
     <div id="reqList"></div>
 
     <div class="benefits" id="posBenefits"></div>
@@ -495,7 +502,7 @@ const POSITIONS = [
     desc:"A senior sales designation for consistently high-producing agents. If conditions are not maintained for two consecutive calendar years, the appointment may be revoked.",
     benefits:["Additional Administrative/Sales Support (determined by the Branch Manager on merit)","Overriding commissions on your own production up to a maximum of 5%","Private office space, depending on availability and merit"],
     reqs:[
-      {text:"Contracted as a Salesperson with Guardian Life for at least 4 years", fields:["yearsContracted"], check:p=>num(p.yearsContracted)>=4, gap:p=>gapYears(p.yearsContracted,4)},
+      {text:"Contracted as a Salesperson with Guardian Life for at least 4 years", fields:["yearsContracted"], check:p=>num(p.yearsContracted)>=4, gap:p=>gapYears(p.yearsContracted,4), eta:p=>({m:Math.max(0,(4-num(p.yearsContracted))*12),why:"tenure: "+(4-num(p.yearsContracted)).toFixed(1)+" more year(s) contracted"}), eta:p=>({m:Math.max(0,(4-num(p.yearsContracted))*12),why:"tenure: "+(4-num(p.yearsContracted)).toFixed(1)+" more year(s) contracted"})},
       {text:"Attained the FSCP™ (2015) or similar insurance designation (e.g. CFP, CLU, ChFC)", fields:["fscpOrDesignation"], check:p=>hasDesignation(p)},
       {text:"Total production of at least $1,500,000 API over the previous two calendar years", fields:["production24"], check:p=>num(p.production24)>=1500000, gap:p=>gapMoney(p.production24,1500000)},
       {text:"Persistency of at least 90%", fields:["persistency"], check:p=>num(p.persistency)>=90, gap:p=>gapPct(p.persistency,90)},
@@ -515,7 +522,7 @@ const POSITIONS = [
     desc:"The highest position on Guardian Life's Professional Sales Career Path. Requests go through your Branch Manager to the Vice President – Sales, who makes the final decision. Reviewed bi-annually.",
     benefits:["Overriding commissions on your own production up to a maximum of 10%","Shared Administrative/Sales Support, depending on availability","Reserved parking space, depending on availability and merit","Retired or reclassified Branch Managers may become Honorary Sales Consultants"],
     reqs:[
-      {text:"Held the position of Executive Agent for at least 5 consecutive years at Guardian Life — OR — 10 consecutive years in a senior sales or management position in the Life Insurance industry", fields:["eaYears","industrySeniorYears"], check:p=>num(p.eaYears)>=5||num(p.industrySeniorYears)>=10,
+      {text:"Held the position of Executive Agent for at least 5 consecutive years at Guardian Life — OR — 10 consecutive years in a senior sales or management position in the Life Insurance industry", fields:["eaYears","industrySeniorYears"], check:p=>num(p.eaYears)>=5||num(p.industrySeniorYears)>=10, eta:p=>({m:Math.max(0,Math.min((5-num(p.eaYears)),(10-num(p.industrySeniorYears)))*12),why:"tenure: "+Math.min(5-num(p.eaYears),10-num(p.industrySeniorYears)).toFixed(1)+" more year(s) (Executive Agent or senior industry)"}),
         gap:p=>{const a=num(p.eaYears),b=num(p.industrySeniorYears);return `Need ${(5-a).toFixed(1)} more year(s) as Executive Agent, or ${(10-b).toFixed(1)} more year(s) of senior industry experience.`}},
       {text:"Attained the FSCP™ (2015) or other insurance designation (e.g. CFP, CLU, ChFC)", fields:["fscpOrDesignation"], check:p=>hasDesignation(p)},
       {text:"Settled at least $2,000,000 in New Gross Annualized Premium Income over the previous 24 months", fields:["production24"], check:p=>num(p.production24)>=2000000, gap:p=>gapMoney(p.production24,2000000)},
@@ -553,11 +560,11 @@ const POSITIONS = [
     benefits:["Overriding commissions of 100% of the Development Allowance on business of new agents introduced to the Branch, for the first two years"],
     reqs:[
       {text:"Completed the Emerging Leaders Program (ELP)", fields:["elpCompleted"], check:p=>!!p.elpCompleted},
-      {text:"Contracted for at least 5 years", fields:["yearsContracted"], check:p=>num(p.yearsContracted)>=5, gap:p=>gapYears(p.yearsContracted,5)},
+      {text:"Contracted for at least 5 years", fields:["yearsContracted"], check:p=>num(p.yearsContracted)>=5, gap:p=>gapYears(p.yearsContracted,5), eta:p=>({m:Math.max(0,(5-num(p.yearsContracted))*12),why:"tenure: "+(5-num(p.yearsContracted)).toFixed(1)+" more year(s) contracted"})},
       {text:"Client base of at least 325 active clients (life + Individual Health), of which at least 275 are active life clients", fields:["clientTotal","clientActiveLife"], check:p=>num(p.clientTotal)>=325&&num(p.clientActiveLife)>=275, gap:p=>gapClients(p)},
       {text:"Production in line with President's Club qualification in each of the preceding 2 years", fields:["presidentsClub2"], check:p=>!!p.presidentsClub2},
       {text:"Attained the FSCP™ (2015) or other insurance designation (e.g. CFP, CLU, ChFC)", fields:["fscpOrDesignation"], check:p=>hasDesignation(p)},
-      {text:"Recruited at least 2 agents with the assistance of your Manager", fields:["recruits"], check:p=>num(p.recruits)>=2, gap:p=>`Recruit ${2-num(p.recruits)} more agent(s).`},
+      {text:"Recruited at least 2 agents with the assistance of your Manager", fields:["recruits"], check:p=>num(p.recruits)>=2, gap:p=>`Recruit ${2-num(p.recruits)} more agent(s).`, eta:p=>({m:Math.max(0,(2-num(p.recruits))*4),why:"recruiting: "+(2-num(p.recruits))+" more agent(s)"})},
       {text:"Maintain continuous development credits (TTAIFA and CBTT)", fields:["cpdCredits"], check:p=>!!p.cpdCredits},
       {text:"Sign appointment letter as acknowledgement of terms and conditions", fields:["appointmentLetter"], check:p=>!!p.appointmentLetter}
     ],
@@ -571,8 +578,8 @@ const POSITIONS = [
     desc:"Promotion from Trainee Manager after demonstrated performance in Planning, Recruiting, Selection, Supervision and Training. Recruiting schedule by tenure: 1–3 yrs → 5 agents; >3–5 → 8; >5–8 → 10; >8–10 → 12; >10 yrs → 15.",
     benefits:["Overriding commissions and variable allowances","Private office","Shared Administrative/Sales Support at the Manager's discretion","Reserved parking space"],
     reqs:[
-      {text:"Contracted for at least 6 years", fields:["yearsContracted"], check:p=>num(p.yearsContracted)>=6, gap:p=>gapYears(p.yearsContracted,6)},
-      {text:"Recruited 4 agents who successfully completed the Company's Probation Contract", fields:["recruitsProbation"], check:p=>num(p.recruitsProbation)>=4, gap:p=>`Need ${4-num(p.recruitsProbation)} more recruit(s) past probation.`},
+      {text:"Contracted for at least 6 years", fields:["yearsContracted"], check:p=>num(p.yearsContracted)>=6, gap:p=>gapYears(p.yearsContracted,6), eta:p=>({m:Math.max(0,(6-num(p.yearsContracted))*12),why:"tenure: "+(6-num(p.yearsContracted)).toFixed(1)+" more year(s) contracted"})},
+      {text:"Recruited 4 agents who successfully completed the Company's Probation Contract", fields:["recruitsProbation"], check:p=>num(p.recruitsProbation)>=4, gap:p=>`Need ${4-num(p.recruitsProbation)} more recruit(s) past probation.`, eta:p=>({m:Math.max(0,(4-num(p.recruitsProbation))*6),why:"recruiting: "+(4-num(p.recruitsProbation))+" recruit(s) through the 7-month probation"})},
       {text:"Completed GLOC's pre-management courses — ELP, Business Planning, and Developing Future Leaders", fields:["elpCompleted","businessPlanning","futureLeaders"], check:p=>!!p.elpCompleted&&!!p.businessPlanning&&!!p.futureLeaders},
       {text:"Maintain continuous development credits (TTAIFA and CBTT)", fields:["cpdCredits"], check:p=>!!p.cpdCredits},
       {text:"Unit producing at least $1.6M API in the 12 months preceding appointment (October or April promotion)", fields:["unitApi12"], check:p=>num(p.unitApi12)>=1600000, gap:p=>gapMoney(p.unitApi12,1600000,"Unit")},
@@ -588,9 +595,9 @@ const POSITIONS = [
     desc:"Considered from the position of Unit Manager, subject to satisfactory performance across Planning, Recruiting, Selection, Training, Supervision, Motivation and Administration. Recruiting schedule by tenure: 1–3 yrs → 12 agents; >3–5 → 15; >5 yrs → 20.",
     benefits:["Additional administrative support for the Unit (determined by the Branch Manager)","Reserved parking space","Private office"],
     reqs:[
-      {text:"At least 12 agents under contract in your Unit", fields:["agentsUnderContract"], check:p=>num(p.agentsUnderContract)>=12, gap:p=>`Need ${12-num(p.agentsUnderContract)} more agent(s) under contract.`},
+      {text:"At least 12 agents under contract in your Unit", fields:["agentsUnderContract"], check:p=>num(p.agentsUnderContract)>=12, gap:p=>`Need ${12-num(p.agentsUnderContract)} more agent(s) under contract.`, eta:p=>({m:Math.max(0,(12-num(p.agentsUnderContract))*2),why:"build the unit: "+(12-num(p.agentsUnderContract))+" more agent(s) under contract"})},
       {text:"Met at least 80% of your Unit's production quota for the preceding 2 years", fields:["unitQuotaPct"], check:p=>num(p.unitQuotaPct)>=80, gap:p=>gapPct(p.unitQuotaPct,80)},
-      {text:"In the position of Unit Manager for at least 3 years", fields:["umYears"], check:p=>num(p.umYears)>=3, gap:p=>gapYears(p.umYears,3)},
+      {text:"In the position of Unit Manager for at least 3 years", fields:["umYears"], check:p=>num(p.umYears)>=3, gap:p=>gapYears(p.umYears,3), eta:p=>({m:Math.max(0,(3-num(p.umYears))*12),why:"tenure: "+(3-num(p.umYears)).toFixed(1)+" more year(s) as Unit Manager"})},
       {text:"Successfully completed all recommended Management Training Programs — AMTC, Pacesetter, MAPS and AES", fields:["amtc","pacesetter","maps","aes"], check:p=>!!p.amtc&&!!p.pacesetter&&!!p.maps&&!!p.aes},
       {text:"60% of your agents meeting their quota in the year prior to appointment", fields:["agentsQuotaPct"], check:p=>num(p.agentsQuotaPct)>=60, gap:p=>gapPct(p.agentsQuotaPct,60)},
       {text:"Unit production of at least $6,000,000 API in the preceding 12 months (October or April promotion)", fields:["unitApi12"], check:p=>num(p.unitApi12)>=6000000, gap:p=>gapMoney(p.unitApi12,6000000,"Unit")},
@@ -607,10 +614,10 @@ const POSITIONS = [
     desc:"Promotion from Assistant Branch Manager, subject to satisfactory performance across all managerial functions. Recruiting schedule by tenure: 1–3 yrs → 30 agents; >3–6 → 40; >6 yrs → 50. Core values: Trust, Integrity, Quality, and Serving People.",
     benefits:["Leadership of a full Branch","Compensation per Branch Manager contract","Recruiting and development authority for the Branch"],
     reqs:[
-      {text:"At least 30 agents under contract in your Unit/Branch", fields:["agentsUnderContract"], check:p=>num(p.agentsUnderContract)>=30, gap:p=>`Need ${30-num(p.agentsUnderContract)} more agent(s) under contract.`},
+      {text:"At least 30 agents under contract in your Unit/Branch", fields:["agentsUnderContract"], check:p=>num(p.agentsUnderContract)>=30, gap:p=>`Need ${30-num(p.agentsUnderContract)} more agent(s) under contract.`, eta:p=>({m:Math.max(0,(30-num(p.agentsUnderContract))*2),why:"build the branch: "+(30-num(p.agentsUnderContract))+" more agent(s) under contract"})},
       {text:"Met at least 80% of your Unit's production quota for the preceding 2 years", fields:["unitQuotaPct"], check:p=>num(p.unitQuotaPct)>=80, gap:p=>gapPct(p.unitQuotaPct,80)},
       {text:"Production of at least $12,000,000 API in the 12 months prior to appointment (October or April)", fields:["unitApi12"], check:p=>num(p.unitApi12)>=12000000, gap:p=>gapMoney(p.unitApi12,12000000,"Unit")},
-      {text:"In the position of Assistant Branch Manager for at least 3 years", fields:["abmYears"], check:p=>num(p.abmYears)>=3, gap:p=>gapYears(p.abmYears,3)},
+      {text:"In the position of Assistant Branch Manager for at least 3 years", fields:["abmYears"], check:p=>num(p.abmYears)>=3, gap:p=>gapYears(p.abmYears,3), eta:p=>({m:Math.max(0,(3-num(p.abmYears))*12),why:"tenure: "+(3-num(p.abmYears)).toFixed(1)+" more year(s) as Assistant Branch Manager"})},
       {text:"Developed and appointed one Unit Manager who has been in the position for at least 1 year", fields:["developedUM"], check:p=>!!p.developedUM},
       {text:"Attained the CIAM designation", fields:["ciam"], check:p=>!!p.ciam},
       {text:"Maintain continuous development credits (TTAIFA and CBTT)", fields:["cpdCredits"], check:p=>!!p.cpdCredits}
@@ -803,95 +810,160 @@ function saveProfile(){
 }
 
 /* =====================================================================
-   CAREER GOAL — target position + target date with live countdown.
-   Quick-picks target the real promotion windows:
-   October announcement (Blastoff)  → submit by August 31
-   April announcement (Mid-Year)    → submit by February 28
+   MY STATUS + REALISTIC TIME ESTIMATOR
+   Promotion windows: October announcement (Blastoff) → submit by Aug 31
+                      April announcement (Mid-Year)   → submit by Feb 28
 ===================================================================== */
-function nextWindows(){
+function promoWindows(horizonYears){
   const today=new Date();today.setHours(0,0,0,0);
   const wins=[];
-  for(let y=today.getFullYear();y<=today.getFullYear()+2;y++){
+  for(let y=today.getFullYear();y<=today.getFullYear()+(horizonYears||8);y++){
     wins.push({label:"April "+y+" Announcement (Mid-Year)",deadline:new Date(y,1,28),note:"submit by Feb 28, "+y});
     wins.push({label:"October "+y+" Announcement (Blastoff)",deadline:new Date(y,7,31),note:"submit by Aug 31, "+y});
   }
-  return wins.filter(w=>w.deadline>=today).slice(0,3);
+  return wins.filter(w=>w.deadline>=today);
 }
 function fmtDate(d){return d.toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric"})}
 function isoDate(d){const p=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())}
-function renderGoal(){
-  const sel=document.getElementById("goalPos");
-  if(sel.options.length<=1){
-    POSITIONS.forEach(p=>{const o=document.createElement("option");o.value=p.id;o.textContent=p.short;sel.appendChild(o)});
-    sel.addEventListener("change",()=>{
-      const changed=sel.value&&sel.value!==profile.targetPosition;
-      profile.targetPosition=sel.value;saveProfile();
-      if(changed){const p=POSITIONS.find(x=>x.id===sel.value);feedAdd("goal","🎯 New goal set: "+(p?p.short:sel.value));renderFeed()}
-      renderPath();renderGoalStatus();
-    });
-    document.getElementById("goalDate").addEventListener("change",e=>{
-      const changed=e.target.value&&e.target.value!==profile.targetDate;
-      profile.targetDate=e.target.value;saveProfile();
-      if(changed){feedAdd("goal","🗓️ Target date set: "+fmtDate(new Date(e.target.value+"T00:00:00")));renderFeed()}
-      renderGoalStatus();
-    });
-  }
-  sel.value=profile.targetPosition||"";
-  document.getElementById("goalDate").value=profile.targetDate||"";
-  const quick=document.getElementById("goalQuick");
-  quick.innerHTML="";
-  nextWindows().forEach(w=>{
-    const b=document.createElement("button");
-    b.textContent="🚀 "+w.label+" — "+w.note;
-    b.onclick=()=>{
-      const changed=isoDate(w.deadline)!==profile.targetDate;
-      profile.targetDate=isoDate(w.deadline);saveProfile();
-      document.getElementById("goalDate").value=profile.targetDate;
-      if(changed){feedAdd("goal","🗓️ Targeting the "+w.label+" — "+w.note);renderFeed()}
-      renderGoalStatus();
-    };
-    quick.appendChild(b);
-  });
-  renderGoalStatus();
+function fmtMonths(m){
+  if(m<1)return "under a month";
+  if(m<12)return "about "+Math.ceil(m)+" month"+(Math.ceil(m)===1?"":"s");
+  const y=Math.round(m/6)/2;
+  return "about "+(y===Math.floor(y)?y:y.toFixed(1))+" year"+(y>1?"s":"");
 }
-function renderGoalStatus(){
-  const box=document.getElementById("goalStatus");
-  const posId=profile.targetPosition;
-  const dateStr=profile.targetDate;
-  if(!posId&&!dateStr){box.innerHTML='<div class="goal-progress"><div class="cheer">No goal set yet — choose a target position and date above and start the countdown! 🏁</div></div>';return}
-  const pos=posId?POSITIONS.find(p=>p.id===posId):null;
-  let html="";
-  if(dateStr){
-    const target=new Date(dateStr+"T00:00:00");
-    const today=new Date();today.setHours(0,0,0,0);
-    const days=Math.round((target-today)/86400000);
-    if(days>=0){
-      html+=`<div class="countbox"><div class="big">${days}</div><div class="lbl">day${days===1?"":"s"} to go</div></div>`;
-    }else{
-      html+=`<div class="countbox"><div class="big">⏰</div><div class="lbl">date passed</div></div>`;
-    }
+const POS_ICONS={salesperson:"💼",executive:"⭐",ssc:"👑",elp:"🌱",trainee:"🧭",unit:"👥",abm:"🏛️",bm:"🏢"};
+const POS_NAMES={none:"New Candidate",salesperson:"Salesperson",executive:"Executive Agent",ssc:"Senior Sales Consultant",trainee:"Trainee Manager",unit:"Unit Manager",abm:"Assistant Branch Manager",bm:"Branch Manager"};
+
+/* ===== My Status strip ===== */
+let statusBound=false;
+function renderStatus(){
+  const cur=document.getElementById("curPos");
+  const since=document.getElementById("posSince");
+  const yrs=document.getElementById("curYears");
+  if(!statusBound){
+    statusBound=true;
+    cur.addEventListener("change",()=>{profile.currentPosition=cur.value;saveProfile();renderPath();updateStatusLine()});
+    since.addEventListener("change",()=>{profile.positionSince=since.value;saveProfile();updateStatusLine()});
+    yrs.addEventListener("input",()=>{profile.yearsContracted=yrs.value;saveProfile();updateStatusLine()});
   }
-  html+='<div class="goal-progress">';
-  if(pos){
-    const s=posScore(pos);
-    const pct=Math.round(s.met/s.total*100);
-    html+=`<div class="line">Target: ${esc(pos.short)} — ${s.met} of ${s.total} requirements met (${pct}%)</div>`;
-    if(dateStr){
-      const target=new Date(dateStr+"T00:00:00");
-      const today=new Date();today.setHours(0,0,0,0);
-      const days=Math.round((target-today)/86400000);
-      if(days<0) html+='<div class="cheer late">Your target date has passed — pick the next promotion window and keep pushing! 🔁</div>';
-      else if(s.met===s.total) html+='<div class="cheer hot">🎉 All requirements met — submit your request through your Branch Manager before the deadline!</div>';
-      else if(days<=30) html+=`<div class="cheer late">Crunch time! ${s.total-s.met} requirement(s) to close in ${days} day(s). You've got this! 💪</div>`;
-      else html+=`<div class="cheer">${s.total-s.met} requirement(s) to go — tap ${esc(pos.short)} below to close the gaps. Keep the streak alive! 🔥</div>`;
-    }else{
-      html+='<div class="cheer">Add a target date to start your countdown — try a quick-pick above. ⏱️</div>';
-    }
+  cur.value=profile.currentPosition||"none";
+  since.value=profile.positionSince||"";
+  yrs.value=profile.yearsContracted!==undefined?profile.yearsContracted:"";
+  updateStatusLine();
+}
+function tenureText(sinceStr){
+  const since=new Date(sinceStr+"T00:00:00");
+  const now=new Date();
+  let months=(now.getFullYear()-since.getFullYear())*12+(now.getMonth()-since.getMonth());
+  if(now.getDate()<since.getDate())months--;
+  if(months<0)return "";
+  const y=Math.floor(months/12),m=months%12;
+  const parts=[];
+  if(y)parts.push(y+" yr"+(y>1?"s":""));
+  if(m||!y)parts.push(m+" mo"+(m===1?"":"s"));
+  return parts.join(" ");
+}
+function updateStatusLine(){
+  const el=document.getElementById("statusLine");
+  const posName=POS_NAMES[profile.currentPosition||"none"]||"New Candidate";
+  const icon=POS_ICONS[profile.currentPosition]||"🧑‍💼";
+  let line=icon+" "+posName;
+  if(profile.positionSince){const t=tenureText(profile.positionSince);if(t)line+=" · "+t+" in this position"}
+  if(num(profile.yearsContracted)>0)line+=" · "+profile.yearsContracted+" yr"+(num(profile.yearsContracted)>1?"s":"")+" with Guardian Life";
+  if(profile.targetPosition&&profile.targetPosition!==profile.currentPosition){
+    const t=POSITIONS.find(p=>p.id===profile.targetPosition);
+    if(t)line+=`  —  <span class="aim">🎯 aiming for ${esc(t.short)}</span>`;
+  }
+  el.innerHTML=line;
+}
+
+/* ===== "This is what I want to be" toggle ===== */
+function toggleGoal(){
+  if(profile.targetPosition===currentPosId){
+    profile.targetPosition="";
   }else{
-    html+='<div class="line">Countdown running — now choose your target position!</div>';
+    profile.targetPosition=currentPosId;
+    const p=POSITIONS.find(x=>x.id===currentPosId);
+    feedAdd("goal","🎯 New goal: "+(p?p.short:currentPosId));
   }
-  html+="</div>";
-  box.innerHTML=html;
+  saveProfile();
+  updateGoalBtn();
+}
+function updateGoalBtn(){
+  const btn=document.getElementById("goalBtn");
+  if(profile.targetPosition===currentPosId){
+    btn.textContent="★ This is my goal";
+    btn.className="goalbtn set";
+  }else{
+    btn.textContent="🎯 This is what I want to be";
+    btn.className="goalbtn";
+  }
+}
+
+/* ===== Realistic time estimator =====
+   Months-to-close for each unmet requirement, using real program
+   timeframes. The overall estimate is the LONGEST lever (work runs in
+   parallel), mapped to the first reachable promotion window. */
+const EDU_TIME={
+  fscpStarted:p=>fscpStartedOk(p)?null:{m:3,why:"enrol in your first FSCP course at TTAIFA"},
+  fscpOrDesignation:p=>{const r=FSCP_MODULES.length-fscpCount(p);return hasDesignation(p)?null:{m:r*3,why:"FSCP: "+r+" module"+(r===1?"":"s")+" left (~1 per quarter, taken in order)"}},
+  mdrtLast3:()=>({m:12,why:"MDRT qualifies on a full production year"}),
+  mdrtLast2:()=>({m:12,why:"MDRT qualifies on a full production year"}),
+  presidentsClub2:()=>({m:24,why:"President's Club in each of 2 consecutive years"}),
+  unitQuotaPct:()=>({m:24,why:"80% of Unit quota over 2 consecutive years"}),
+  elpCompleted:()=>({m:12,why:"ELP runs as 12 monthly sessions"}),
+  futureLeaders:()=>({m:6,why:"Developing Future Leaders is a ~6-month program"}),
+  businessPlanning:()=>({m:3,why:"Business Planning course — next intake"}),
+  intermediateDev:()=>({m:2,why:"Intermediate Development — next 4-day intake"}),
+  mentoringProgram:()=>({m:2,why:"Mentoring Program — next 2-day session"}),
+  pop7:()=>({m:1,why:"book your POP7 assessment"}),
+  amtc:()=>({m:6,why:"AMTC — next LIMRA cohort"}),
+  pacesetter:()=>({m:6,why:"Pacesetter — next LIMRA cohort"}),
+  maps:()=>({m:3,why:"MAPS seminar"}),
+  aes:()=>({m:3,why:"AES series"}),
+  ciam:()=>({m:12,why:"CIAM: four LIMRA courses + thesis"}),
+  ttaifaMember:()=>({m:1,why:"join TTAIFA (624-2940)"}),
+  cpdCredits:()=>({m:2,why:"bring CPD credits up to date"}),
+  ncdCompleted:()=>({m:2,why:"NCD Program"}),
+  probationDone:()=>({m:7,why:"7-month probation incl. Induction & GLOC Bootcamp"}),
+  insuranceAct:()=>({m:1,why:"CBTT registration"}),
+  stateLicensing:()=>({m:3,why:"State Licensing Examination"}),
+  appointmentLetter:()=>({m:0,why:"sign your appointment letter"}),
+  developedUM:()=>({m:18,why:"develop & appoint a Unit Manager (1 yr in post)"}),
+  production24:()=>({m:12,why:"production builds over the year"}),
+  persistency:()=>({m:12,why:"persistency builds over the year"}),
+  clientTotal:()=>({m:12,why:"client base builds over the year"}),
+  clientActiveLife:()=>({m:12,why:"client base builds over the year"}),
+  unitApi12:()=>({m:12,why:"Unit production builds over the year"}),
+  leaderSharePct:()=>({m:6,why:"grow your agents' share of Unit production"}),
+  agentsQuotaPct:()=>({m:12,why:"coach agents to quota over the year"})
+};
+function reqMonths(r){
+  if(r.eta){const m=r.eta(profile);if(m!==null&&m!==undefined)return m}
+  let best=null;
+  r.fields.forEach(f=>{
+    const fn=EDU_TIME[f];
+    if(!fn)return;
+    const v=fn(profile);
+    if(v&&(best===null||v.m>best.m))best=v;
+  });
+  return best;
+}
+function estimateFor(pos){
+  const gaps=[];
+  pos.reqs.forEach(r=>{
+    if(r.check(profile))return;
+    const v=reqMonths(r);
+    if(v)gaps.push(typeof v==="object"?v:{m:v,why:r.text});
+  });
+  if(!gaps.length)return null;
+  gaps.sort((a,b)=>b.m-a.m);
+  return {months:gaps[0].m,drivers:gaps.slice(0,2)};
+}
+function firstWindowAfter(months){
+  const target=new Date();
+  target.setDate(target.getDate()+Math.round(months*30.44));
+  return promoWindows(9).find(w=>w.deadline>=target)||null;
 }
 
 /* ===== path overview ===== */
@@ -920,32 +992,24 @@ function renderPath(){
     else if(anyAnswered(pos)) status=`<span class="status progress">${s.met}/${s.total} requirements met</span>`;
     else status='<span class="status notstarted">Tap to check</span>';
     if(isTarget&&!isCurrent) status+=' <span class="status progress">🎯 My goal</span>';
-    card.innerHTML=`<div class="num">${esc(pos.num)}</div><h4>${esc(pos.short)}</h4><div class="mini">${esc(pos.mini)}</div>${status}`;
+    card.innerHTML=`<div class="picon">${POS_ICONS[pos.id]||""}</div><div class="num">${esc(pos.num)}</div><h4>${esc(pos.short)}</h4><div class="mini">${esc(pos.mini)}</div>${status}`;
     card.onclick=()=>showPos(pos.id);
     (pos.track==="sales"?sales:mgmt).appendChild(card);
   });
 }
-function showPath(){renderPath();renderGoal();renderFeed();switchView("viewPath")}
+function showPath(){renderStatus();renderPath();renderFeed();switchView("viewPath")}
 
 /* ===== position detail ===== */
 function showPos(id){
   currentPosId=id;
   const pos=POSITIONS.find(p=>p.id===id);
   document.getElementById("posCrumb").textContent=(pos.track==="sales"?"Professional Sales Track":"Sales Management Track")+" · "+pos.num;
-  document.getElementById("posTitle").textContent=pos.title;
+  document.getElementById("posTitle").textContent=(POS_ICONS[pos.id]||"")+" "+pos.title;
   document.getElementById("posDesc").textContent=pos.desc;
   const ben=document.getElementById("posBenefits");
-  ben.innerHTML="<h3>Benefits of this position</h3><ul>"+pos.benefits.map(b=>`<li>${esc(b)}</li>`).join("")+"</ul>";
+  ben.innerHTML="<h3>When completed — what becomes available</h3><ul>"+pos.benefits.map(b=>`<li>${esc(b)}</li>`).join("")+"</ul>";
   document.getElementById("posKeep").textContent=pos.keep||"";
-  const goalLine=document.getElementById("posGoalLine");
-  if(profile.targetPosition===id&&profile.targetDate){
-    const target=new Date(profile.targetDate+"T00:00:00");
-    const today=new Date();today.setHours(0,0,0,0);
-    const days=Math.round((target-today)/86400000);
-    goalLine.textContent=days>=0?`🎯 ${days} day(s) to your target — ${fmtDate(target)}`:`🎯 Target date passed (${fmtDate(target)})`;
-  }else{
-    goalLine.textContent="";
-  }
+  updateGoalBtn();
   renderReqs(pos);
   switchView("viewPos");
 }
@@ -977,6 +1041,7 @@ function renderReqs(pos){
         ${r.note?`<div class="note">${esc(r.note)}</div>`:""}
         ${gapText?`<div class="gapnote">${esc(gapText)}</div>`:""}
         <div class="reqdate" data-reqdate="${planKey}"></div>
+        <div class="edunote" data-edu="${planKey}"></div>
         ${[...new Set(r.fields.map(f=>FIELD_PROGRAM[f]).filter(Boolean))].map(pid=>`<button class="linklike" onclick="showHub('${pid}')">📚 Course &amp; program details</button>`).join(" ")}
       </div>
       <div class="controls">${controls}</div>`;
@@ -1035,6 +1100,12 @@ function refreshStatuses(pos){
       if(!gapEl){gapEl=document.createElement("div");gapEl.className="gapnote";body.appendChild(gapEl)}
       gapEl.textContent=gapText;
     }else if(gapEl){gapEl.remove()}
+    // Educational timeframe note for unmet requirements
+    const eduEl=body.querySelector(`[data-edu="${key}"]`);
+    if(eduEl){
+      const v=ok?null:reqMonths(r);
+      eduEl.textContent=v&&v.m>0?"⏱️ Typical timeframe: "+fmtMonths(v.m)+" — "+v.why:"";
+    }
     // Date line + plan input visibility
     const dateEl=body.querySelector(`[data-reqdate="${key}"]`);
     const planWrap=card.querySelector(`[data-plan-wrap="${key}"]`);
@@ -1077,6 +1148,17 @@ function refreshStatuses(pos){
   meter.style.width=pct+"%";
   meter.className=met===total?"full":"";
   document.getElementById("posCount").textContent=`${met} of ${total} met (${pct}%)`;
+  // Realistic time estimate → first reachable promotion window
+  const etaEl=document.getElementById("posEta");
+  const est=estimateFor(pos);
+  if(!est){
+    const w=promoWindows(2)[0];
+    etaEl.innerHTML=w?`🚀 You meet every requirement now — next submission window: <b>${esc(w.label)}</b> (${esc(w.note)}). Talk to your Branch Manager.`:"";
+  }else{
+    const w=firstWindowAfter(est.months);
+    etaEl.innerHTML=`⏱️ Realistic estimate: <b>${esc(fmtMonths(est.months))}</b>${w?` → earliest window: <b>${esc(w.label)}</b> (${esc(w.note)})`:""}`
+      +`<span class="drivers">Biggest levers: ${est.drivers.map(d=>esc(d.why)).join(" · ")}</span>`;
+  }
 }
 
 /* =====================================================================
@@ -1097,13 +1179,13 @@ function progressSnapshot(){
     const pos=POSITIONS.find(p=>p.id===profile.targetPosition);
     if(pos){
       const s=posScore(pos);
-      parts.push("Target: "+pos.short+" — "+s.met+" of "+s.total+" requirements met");
+      parts.push("Aiming for: "+pos.short+" — "+s.met+" of "+s.total+" requirements met");
     }
   }
-  if(profile.targetDate){
-    const days=Math.round((new Date(profile.targetDate+"T00:00:00")-new Date().setHours(0,0,0,0))/86400000);
-    if(days>=0)parts.push(days+" day(s) to target date");
-    else parts.push("target date passed");
+  if(profile.currentPosition&&profile.currentPosition!=="none"){
+    let cur=POS_NAMES[profile.currentPosition]||profile.currentPosition;
+    if(profile.positionSince){const t=tenureText(profile.positionSince);if(t)cur+=" ("+t+")"}
+    parts.unshift("Current: "+cur);
   }
   const fc=fscpCount(profile);
   if(fc>0&&fc<FSCP_MODULES.length)parts.push("FSCP: "+fc+"/"+FSCP_MODULES.length+" modules");
