@@ -75,7 +75,8 @@
 
   /* ===== Header ===== */
   header{background:var(--navy);color:#fff;padding:.9rem 1.2rem;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;position:sticky;top:0;z-index:50;box-shadow:var(--shadow)}
-  header .logo{width:38px;height:38px;border-radius:50%;background:var(--gold);color:#0e2a47;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.05rem;flex:0 0 auto}
+  .shield{flex:0 0 auto;display:block}
+  header .shield{width:42px;height:42px}
   header .titles{flex:1;min-width:180px}
   header h1{font-size:1.05rem;font-weight:700;letter-spacing:.02em}
   header .sub{font-size:.75rem;opacity:.75}
@@ -248,6 +249,55 @@
   .linklike:hover{color:var(--gold)}
   .hub-note{font-size:.75rem;color:var(--muted);font-style:italic;margin-top:.6rem}
 
+  /* ===== Intro (announcement) ===== */
+  .intro{position:fixed;inset:0;z-index:200;background:radial-gradient(120% 120% at 50% 0%,#1b3f66 0%,#0e2a47 45%,#081726 100%);color:#fff;overflow:hidden}
+  .intro-skip{position:absolute;top:1rem;right:1.2rem;z-index:220;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:999px;padding:.4rem 1rem;font-size:.85rem;font-weight:600}
+  .intro-skip:hover{background:rgba(255,255,255,.22)}
+  .intro.recording .intro-skip{display:none}
+  .islide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem 1.5rem;opacity:0;pointer-events:none;transition:opacity .6s ease}
+  .islide.active{opacity:1;pointer-events:auto}
+  .islide .kicker{font-size:1rem;letter-spacing:.22em;text-transform:uppercase;color:#e0bf49;font-weight:700}
+  .islide h1{font-size:clamp(1.9rem,5.2vw,3.2rem);font-weight:800;line-height:1.15;margin:.6rem 0;text-wrap:balance;max-width:20ch}
+  .islide h1 .gold{color:#e0bf49}
+  .islide .sub{font-size:clamp(.95rem,2.4vw,1.25rem);opacity:.85;max-width:46ch}
+  .islide .a1,.islide .a2,.islide .a3,.islide .a4{opacity:0}
+  .islide.active .a1{animation:fadeUp .8s ease .15s both}
+  .islide.active .a2{animation:fadeUp .8s ease .55s both}
+  .islide.active .a3{animation:fadeUp .8s ease .95s both}
+  .islide.active .a4{animation:fadeUp .8s ease 1.35s both}
+  .islide .bigshield{width:clamp(120px,22vw,170px);height:auto;filter:drop-shadow(0 10px 30px rgba(0,0,0,.45))}
+  .islide.active .bigshield{animation:shieldIn 1s cubic-bezier(.2,1.4,.4,1) both}
+  .islide.active .checkpath{stroke-dasharray:60;stroke-dashoffset:60;animation:drawCheck .8s ease .9s forwards}
+  .icon-parade{display:flex;gap:clamp(.4rem,1.6vw,1.1rem);flex-wrap:wrap;justify-content:center;margin:1.2rem 0}
+  .icon-parade .ip{display:flex;flex-direction:column;align-items:center;gap:.3rem;opacity:0}
+  .islide.active .icon-parade .ip{animation:popIn .55s cubic-bezier(.2,1.4,.4,1) both}
+  .islide.active .icon-parade .ip:nth-child(1){animation-delay:.3s}
+  .islide.active .icon-parade .ip:nth-child(2){animation-delay:.55s}
+  .islide.active .icon-parade .ip:nth-child(3){animation-delay:.8s}
+  .islide.active .icon-parade .ip:nth-child(4){animation-delay:1.05s}
+  .islide.active .icon-parade .ip:nth-child(5){animation-delay:1.3s}
+  .islide.active .icon-parade .ip:nth-child(6){animation-delay:1.55s}
+  .islide.active .icon-parade .ip:nth-child(7){animation-delay:1.8s}
+  .islide.active .icon-parade .ip:nth-child(8){animation-delay:2.05s}
+  .icon-parade .em{font-size:clamp(1.9rem,4.5vw,2.8rem);line-height:1}
+  .icon-parade .nm{font-size:.68rem;letter-spacing:.04em;opacity:.8;max-width:9ch}
+  .featline{display:flex;flex-direction:column;gap:.8rem;align-items:flex-start;text-align:left;font-size:clamp(1rem,2.6vw,1.35rem);font-weight:600}
+  .featline span{display:flex;gap:.6rem;align-items:center}
+  .intro-cta{margin-top:1.6rem;background:#e0bf49;color:#0e2a47;border:none;border-radius:999px;padding:.8rem 2.2rem;font-size:1.05rem;font-weight:800;box-shadow:0 8px 24px rgba(224,191,73,.35)}
+  .intro-cta:hover{background:#f0d268}
+  .intro-dots{position:absolute;bottom:1.4rem;left:0;right:0;display:flex;gap:.5rem;justify-content:center;z-index:210}
+  .intro-dots .d{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.28);transition:background .3s,transform .3s}
+  .intro-dots .d.on{background:#e0bf49;transform:scale(1.25)}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+  @keyframes popIn{0%{opacity:0;transform:scale(.3)}70%{opacity:1;transform:scale(1.18)}100%{opacity:1;transform:scale(1)}}
+  @keyframes shieldIn{from{opacity:0;transform:scale(.55) rotate(-8deg)}to{opacity:1;transform:none}}
+  @keyframes drawCheck{to{stroke-dashoffset:0}}
+  @media (prefers-reduced-motion:reduce){
+    .islide,.islide.active .a1,.islide.active .a2,.islide.active .a3,.islide.active .a4,
+    .islide.active .bigshield,.islide.active .icon-parade .ip{animation:none;opacity:1;transition:none}
+    .islide.active .checkpath{animation:none;stroke-dashoffset:0}
+  }
+
   footer{max-width:1080px;margin:0 auto;padding:0 1rem 2rem;color:var(--muted);font-size:.75rem;text-align:center}
   .hidden{display:none !important}
   @media (max-width:640px){
@@ -259,11 +309,18 @@
 </head>
 <body>
 
+<svg class="hidden" xmlns="http://www.w3.org/2000/svg"><defs>
+  <g id="shieldmark">
+    <path d="M32 3 L57 11.5 V30 C57 46.5 46.5 57 32 61.5 C17.5 57 7 46.5 7 30 V11.5 Z" fill="#e0bf49" stroke="#0e2a47" stroke-width="3"/>
+    <path class="checkpath" d="M20.5 32.5 L28.5 41.5 L44 22.5" stroke="#0e2a47" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</defs></svg>
+
 <header>
-  <div class="logo">GL</div>
+  <svg class="shield" viewBox="0 0 64 64" aria-label="Ricky Rampersad Branch shield"><use href="#shieldmark"/></svg>
   <div class="titles">
-    <h1>Sales Career Path Qualifier</h1>
-    <div class="sub">Guardian Life of the Caribbean &middot; Sales Career Path (Amended April 2026)</div>
+    <h1>Sales Career Path Tracker</h1>
+    <div class="sub">A <b>Ricky Rampersad Branch</b> Initiative &middot; Guardian Life Sales Career Path (Amended April 2026)</div>
   </div>
   <div class="userchip hidden" id="userChip">
     <span>Agent: <b id="chipName"></b></span>
@@ -273,10 +330,77 @@
 
 <main>
 
+  <!-- ============ INTRO / ANNOUNCEMENT ============ -->
+  <div id="intro" class="intro hidden" role="dialog" aria-label="Career path announcement">
+    <button class="intro-skip" onclick="endIntro()">Skip intro ✕</button>
+    <div class="islide" data-s="0">
+      <svg class="bigshield" viewBox="0 0 64 64">
+        <path d="M32 3 L57 11.5 V30 C57 46.5 46.5 57 32 61.5 C17.5 57 7 46.5 7 30 V11.5 Z" fill="#e0bf49" stroke="#0e2a47" stroke-width="3"/>
+        <path class="checkpath" d="M20.5 32.5 L28.5 41.5 L44 22.5" stroke="#0e2a47" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="kicker a1">A Ricky Rampersad Branch Initiative</div>
+      <h1 class="a2">Guardian Life of the Caribbean</h1>
+      <div class="sub a3">Sales Career Path · Amended April 2026</div>
+    </div>
+    <div class="islide" data-s="1">
+      <div class="kicker a1">📣 We are pleased to announce</div>
+      <h1 class="a2">Our <span class="gold">Revised Sales Career Path</span> is here</h1>
+      <div class="sub a3">Fully digitized. No more flipping through a PDF 📄 — one place to log in, see every position, and track exactly where you are. 🚀</div>
+    </div>
+    <div class="islide" data-s="2">
+      <div class="kicker a1">Two tracks · Eight milestones · One journey</div>
+      <div class="icon-parade">
+        <div class="ip"><span class="em">💼</span><span class="nm">Salesperson</span></div>
+        <div class="ip"><span class="em">⭐</span><span class="nm">Executive Agent</span></div>
+        <div class="ip"><span class="em">👑</span><span class="nm">Senior Sales Consultant</span></div>
+        <div class="ip"><span class="em">🌱</span><span class="nm">ELP</span></div>
+        <div class="ip"><span class="em">🧭</span><span class="nm">Trainee Manager</span></div>
+        <div class="ip"><span class="em">👥</span><span class="nm">Unit Manager</span></div>
+        <div class="ip"><span class="em">🏛️</span><span class="nm">Asst. Branch Manager</span></div>
+        <div class="ip"><span class="em">🏢</span><span class="nm">Branch Manager</span></div>
+      </div>
+      <div class="sub a4">Pick the icon of what you want to be — the app shows you the way. 🎯</div>
+    </div>
+    <div class="islide" data-s="3">
+      <div class="kicker a1">How it works</div>
+      <div class="featline">
+        <span class="a1">🔑 Log in with your name</span>
+        <span class="a2">📝 Put in your numbers — clients, production, courses</span>
+        <span class="a3">✅ See instantly which requirements you've met</span>
+        <span class="a4">⏱️ Get a realistic date for your next promotion</span>
+      </div>
+    </div>
+    <div class="islide" data-s="4">
+      <div class="kicker a1">Everything in one place</div>
+      <div class="featline">
+        <span class="a1">🎓 FSCP™ modules — tick them off one by one</span>
+        <span class="a2">🏆 MDRT, CIAM, CLU &amp; every designation decoded</span>
+        <span class="a3">📒 Monthly check-ins &amp; your own progress feed</span>
+        <span class="a4">📚 Learning Hub with links to enrol online</span>
+      </div>
+    </div>
+    <div class="islide" data-s="5">
+      <svg class="bigshield" viewBox="0 0 64 64">
+        <path d="M32 3 L57 11.5 V30 C57 46.5 46.5 57 32 61.5 C17.5 57 7 46.5 7 30 V11.5 Z" fill="#e0bf49" stroke="#0e2a47" stroke-width="3"/>
+        <path class="checkpath" d="M20.5 32.5 L28.5 41.5 L44 22.5" stroke="#0e2a47" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h1 class="a1">Your Career. <span class="gold">Your Path.</span> Your Time. 🚀</h1>
+      <div class="sub a2">Ricky Rampersad Branch · Guardian Life of the Caribbean</div>
+      <button class="intro-cta a3" onclick="endIntro()">Get Started →</button>
+    </div>
+    <div class="intro-dots" id="introDots"></div>
+  </div>
+
   <!-- ============ LOGIN ============ -->
   <section id="viewLogin" class="login-wrap">
     <div class="card">
-      <h2>Agent Sign In</h2>
+      <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:.8rem">
+        <svg class="shield" viewBox="0 0 64 64" style="width:52px;height:52px"><use href="#shieldmark"/></svg>
+        <div>
+          <h2 style="margin:0">Agent Sign In</h2>
+          <div style="font-size:.78rem;color:var(--muted);font-weight:600">Ricky Rampersad Branch · Career Path Tracker</div>
+        </div>
+      </div>
       <p>Enter your name to open your career tracker. Your answers are saved on this device so you can return and update them any time.</p>
       <div class="field">
         <label for="loginName">Your name</label>
@@ -296,6 +420,7 @@
         </select>
       </div>
       <button class="btn btn-gold" onclick="login()">Continue</button>
+      <button class="btn btn-ghost" onclick="playIntro()" style="margin-left:.5rem">▶ Watch the intro</button>
       <div id="loginErr" style="color:var(--red);font-size:.85rem;font-weight:600;margin-top:.6rem"></div>
       <div class="returning hidden" id="returningBox">
         <h3>Returning agents on this device</h3>
@@ -307,7 +432,7 @@
   <!-- ============ PATH OVERVIEW ============ -->
   <section id="viewPath" class="hidden">
     <div class="intro">
-      <h2 id="welcomeLine">Welcome</h2>
+      <h2 id="welcomeLine">👋 Welcome</h2>
       <p>These are the available career paths at Guardian Life. Select any position to see exactly what it takes to qualify, enter your own numbers, and instantly see where you stand.</p>
     </div>
 
@@ -347,12 +472,12 @@
     </div>
 
     <div class="track">
-      <div class="track-label"><div class="dot"></div><h3>Professional Sales Track</h3><span>build your practice</span></div>
+      <div class="track-label"><div class="dot"></div><h3>💼 Professional Sales Track</h3><span>build your practice ⭐→👑</span></div>
       <div class="path" id="salesTrack"></div>
     </div>
 
     <div class="track">
-      <div class="track-label"><div class="dot"></div><h3>Sales Management Track</h3><span>lead and grow teams</span></div>
+      <div class="track-label"><div class="dot"></div><h3>🧭 Sales Management Track</h3><span>lead and grow teams 🌱→🏢</span></div>
       <div class="path" id="mgmtTrack"></div>
     </div>
 
@@ -415,7 +540,7 @@
 </main>
 
 <footer>
-  Based on the Guardian Life Sales Career Path document, amended April 2026. This tool is a self-assessment guide only — all appointments remain at the discretion of the Company and are made by the President in consultation with the VP of Sales.
+  🛡️ A <b>Ricky Rampersad Branch</b> Initiative — the Guardian Life Sales Career Path (Amended April 2026), digitized so every agent can log in and track their progress. This tool is a self-assessment guide only — all appointments remain at the discretion of the Company and are made by the President in consultation with the VP of Sales.
 </footer>
 
 <script>
@@ -976,7 +1101,7 @@ function anyAnswered(pos){
   return pos.reqs.some(r=>r.fields.some(f=>profile[f]!==undefined&&profile[f]!==""&&profile[f]!==false));
 }
 function renderPath(){
-  document.getElementById("welcomeLine").textContent=`Welcome, ${profile.name||"Agent"}`;
+  document.getElementById("welcomeLine").textContent=`👋 Welcome, ${profile.name||"Agent"}`;
   const sales=document.getElementById("salesTrack");
   const mgmt=document.getElementById("mgmtTrack");
   sales.innerHTML="";mgmt.innerHTML="";
@@ -1322,9 +1447,46 @@ function switchView(id){
   window.scrollTo({top:0});
 }
 
+/* =====================================================================
+   INTRO — animated announcement ("video"). Auto-plays on first visit,
+   replayable from the login screen. ?intro=auto forces playback (used
+   for recording the shareable video).
+===================================================================== */
+const INTRO_SLIDES=6;
+const INTRO_DUR=[4200,5200,6200,6200,6200,6000];
+let introTimers=[];
+function playIntro(recording){
+  const box=document.getElementById("intro");
+  box.classList.remove("hidden");
+  box.classList.toggle("recording",!!recording);
+  const dots=document.getElementById("introDots");
+  dots.innerHTML=Array.from({length:INTRO_SLIDES},()=>'<span class="d"></span>').join("");
+  introTimers.forEach(clearTimeout);introTimers=[];
+  let t=0;
+  for(let i=0;i<INTRO_SLIDES;i++){
+    introTimers.push(setTimeout(()=>{
+      box.querySelectorAll(".islide").forEach(s=>s.classList.toggle("active",s.dataset.s==String(i)));
+      dots.querySelectorAll(".d").forEach((d,j)=>d.classList.toggle("on",j===i));
+    },t));
+    t+=INTRO_DUR[i];
+  }
+  if(!recording)introTimers.push(setTimeout(endIntro,t+4000));
+}
+function endIntro(){
+  introTimers.forEach(clearTimeout);introTimers=[];
+  document.getElementById("intro").classList.add("hidden");
+}
+
 /* ===== init ===== */
 document.getElementById("loginName").addEventListener("keydown",e=>{if(e.key==="Enter")login()});
 renderReturning();
+if(location.search.indexOf("intro=auto")>-1){
+  playIntro(true);
+}else{
+  let seen=false;
+  try{seen=!!localStorage.getItem("glcpIntroSeen");localStorage.setItem("glcpIntroSeen","1")}catch(e){}
+  if(!seen)playIntro(false);
+}
 </script>
 </body>
 </html>
