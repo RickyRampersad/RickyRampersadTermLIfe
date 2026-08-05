@@ -6,10 +6,14 @@ A complete renewal system for your motor & home book:
   link, sees their own policies, learns about their cover and the **average clause**
   (with a live calculator), sees current campaigns, and sends renewal instructions
   in two minutes.
-- **Automation** (Google Apps Script inside your "Motor Renewal Book — Schedule"
-  sheet) — emails every client **14 days** before their `Next Due` date (follow-up at
-  **7 days** if no reply), records responses in a `Responses` tab, sends the client an
-  instant acknowledgment, and emails **renewal instructions to Guardian** (CC you).
+- **Manual send from the sheet (default mode)** — a **"📋 Renewals" menu** inside the
+  Google Sheet. Highlight any client row(s) → *Send renewal email* → done. Works even
+  when the renewal date has already passed (the email wording adapts for overdue
+  renewals). There's also a one-click *"Send to everyone due in the next 14 days"*.
+- **Response handling** — submissions are logged to a `Responses` tab, the client gets
+  an instant acknowledgment, and **renewal instructions email Guardian** (CC you).
+- **Optional automation (OFF by default)** — when you're ready, one menu click turns
+  on automatic 14-day reminders with a 7-day follow-up; another click turns it off.
 
 Everything runs on free tiers: Netlify (hosting) + Google Apps Script (emails/API).
 No servers, no monthly cost.
@@ -40,8 +44,9 @@ with sample data until Part 2 is done).
    - Check `AGENT_EMAIL` / `AGENT_PHONE` are correct.
 4. Click **Run → setup** once. Approve the permissions when Google asks
    (it needs to read the sheet and send email as you).
-   This creates the daily 8 a.m. trigger, the `Responses` tab, and fills the
-   `Token` + `Portal Link` columns for every row.
+   This creates the `Responses` tab, fills the `Token` + `Portal Link` columns,
+   and adds the **📋 Renewals menu** to the sheet (reopen the sheet to see it).
+   No automatic emails are scheduled — you're in manual mode.
 5. **Deploy → New deployment → Web app**:
    - Execute as: **Me**
    - Who has access: **Anyone**
@@ -63,26 +68,33 @@ policies. Then submit the form and confirm the emails arrive. You can also run
 
 ---
 
-## How the flow works day-to-day
+## How the flow works day-to-day (manual mode)
 
 ```
-14 days before Next Due ──► client gets a branded reminder email with their personal link
+You highlight a row ──► 📋 Renewals → "Send renewal email — selected row(s)"
+        │                (a confirmation shows exactly who gets emailed;
+        │                 overdue clients get "let's renew right away" wording)
         │
         ├── client clicks ──► portal shows their policies, cover explainers,
         │                     average-clause calculator, campaigns
         │
-        ├── client submits ──► • logged in "Responses" tab
-        │                      • Renewal Status updated on the sheet
-        │                      • instant acknowledgment email to the client
-        │                      • RENEWAL INSTRUCTIONS email to Guardian (CC you)
-        │
-        └── no response by 7 days before ──► automatic follow-up email
+        └── client submits ──► • logged in "Responses" tab
+                               • Renewal Status updated on the sheet
+                               • instant acknowledgment email to the client
+                               • RENEWAL INSTRUCTIONS email to Guardian (CC you)
 ```
 
-The sheet stays the single source of truth: `Days Left` is recalculated daily, and
-`Renewal Status` shows exactly where each client is (`Reminder sent…`, `Follow-up…`,
-`Responded… — Renew as-is`, etc.). Rows without an email address are skipped —
-those clients you call as usual.
+The 📋 Renewals menu also has:
+- **Send to everyone due in the next 14 days** — one-click batch for clients with an
+  email and no Renewal Status yet (with a confirmation before anything sends)
+- **Refresh days left & portal links** — updates the sheet, sends nothing
+- **Preview the email** — sends a sample to your own inbox
+- **Turn automatic reminders ON / OFF** — flip to full automation whenever you're
+  ready; flip back any time
+
+`Renewal Status` shows exactly where each client is (`Invitation sent manually…`,
+`Responded… — Renew as-is`, etc.), and rows without an email address are always
+skipped with a warning — those clients you call as usual.
 
 ## Managing campaigns
 

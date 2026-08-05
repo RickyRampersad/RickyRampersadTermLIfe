@@ -5,17 +5,21 @@
  *  Attach this script to the "Motor Renewal Book — Schedule"
  *  Google Sheet (Extensions → Apps Script → paste this file).
  *
- *  What it does:
- *   1. Every morning, finds policies due in REMINDER_DAYS (14)
- *      days and emails the client their personal portal link.
- *   2. Sends a follow-up at FOLLOWUP_DAYS (7) days if the
- *      client hasn't responded yet.
- *   3. Serves the portal's data lookup (doGet ?token=...).
- *   4. Receives portal submissions (doPost), logs them to a
+ *  What it does — MANUAL MODE (default):
+ *   1. Adds a "📋 Renewals" menu to the spreadsheet. Highlight
+ *      any client row(s) and click "Send renewal email" — works
+ *      even if the renewal date has already passed (the email
+ *      wording adapts for overdue renewals).
+ *   2. Serves the portal's data lookup (doGet ?token=...).
+ *   3. Receives portal submissions (doPost), logs them to a
  *      "Responses" tab, emails the client an acknowledgment,
  *      and emails renewal instructions to Guardian (CC you).
- *   5. Keeps "Days Left", "Renewal Status" and "Portal Link"
- *      columns up to date.
+ *   4. Keeps "Days Left", "Renewal Status" and "Portal Link"
+ *      columns up to date (menu → Refresh).
+ *
+ *  Automatic reminders (14-day / 7-day follow-up) are OFF by
+ *  default. Turn them on any time from the menu:
+ *  📋 Renewals → Turn automatic reminders ON.
  *
  *  ONE-TIME SETUP (see RENEWAL-SETUP.md in the repo):
  *   a. Fill in CONFIG below (especially PORTAL_BASE and
@@ -72,21 +76,167 @@ var COL = {
   TOKEN: 'Token',
 };
 
-/* ======================= SETUP ======================= */
+/* ======================= SETUP & MENU ======================= */
 
-/** Run this ONCE after pasting the script. */
+/** Run this ONCE after pasting the script. Manual mode: no timers are created. */
 function setup() {
   ensureResponsesSheet_();
   fillTokensAndLinks();
+  disableAutomation(); // manual mode — remove any scheduled triggers
+  onOpen();
+  Logger.log('Setup complete in MANUAL mode. Use the "📋 Renewals" menu in the sheet to send emails. Now deploy as a Web App and paste the /exec URL into the portal.');
+}
 
-  // Recreate the daily trigger cleanly.
+/** Builds the in-sheet menu. Runs automatically every time the sheet opens. */
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('📋 Renewals')
+    .addItem('▶ Send renewal email — selected row(s)', 'sendToSelectedRows')
+    .addItem('📤 Send to everyone due in the next ' + CONFIG.REMINDER_DAYS + ' days', 'sendToUpcoming')
+    .addSeparator()
+    .addItem('🔄 Refresh days left & portal links', 'refreshSheet')
+    .addItem('✉ Preview the email (sends a sample to you)', 'testReminderEmail')
+    .addSeparator()
+    .addItem('🤖 Turn automatic reminders ON', 'enableAutomation')
+    .addItem('✋ Turn automatic reminders OFF (current mode)', 'disableAutomation')
+    .addToUi();
+}
+
+/**
+ * MANUAL SEND — highlight one or more client rows on the schedule tab,
+ * then click 📋 Renewals → "Send renewal email — selected row(s)".
+ * Works for overdue renewals too: the email wording adapts.
+ */
+function sendToSelectedRows() {
+  var ui = SpreadsheetApp.getUi();
+  var s = getSchedule_();
+  var active = SpreadsheetApp.getActiveSheet();
+  if (active.getName() !== s.sheet.getName()) {
+    ui.alert('Please select rows on the "' + s.sheet.getName() + '" tab first.');
+    return;
+  }
+
+  // Collect unique data-row numbers from the selection.
+  var rowNums = {};
+  SpreadsheetApp.getActiveRangeList().getRanges().forEach(function (rg) {
+    for (var r = rg.getRow(); r <= rg.getLastRow(); r++) {
+      if (r > s.headerRow) rowNums[r] = true;
+    }
+  });
+  var rows = Object.keys(rowNums).map(Number);
+  if (!rows.length) {
+    ui.alert('Highlight at least one client row (below the header) and try again.');
+    return;
+  }
+
+  fillTokensAndLinks(); // make sure every selected row has a token + link
+  var data = s.sheet.getDataRange().getValues();
+  var preview = rows.map(function (r) {
+    var info = rowInfo_(data[r - 1], s);
+    return '• ' + (info.client || '(no name)') + ' — due ' + prettyDate_(info.due) +
+           (info.email ? '' : '  ⚠ NO EMAIL, will be skipped');
+  }).join('\n');
+
+  var resp = ui.alert('Send renewal email now?',
+    'This will email the personal renewal link to:\n\n' + preview, ui.ButtonSet.OK_CANCEL);
+  if (resp !== ui.Button.OK) return;
+
+  var report = sendRows_(s, data, rows);
+  ui.alert('Done', report, ui.ButtonSet.OK);
+}
+
+/** MANUAL BULK — one click sends to everyone due within REMINDER_DAYS who hasn't been contacted yet. */
+function sendToUpcoming() {
+  var ui = SpreadsheetApp.getUi();
+  fillTokensAndLinks();
+  var s = getSchedule_();
+  var data = s.sheet.getDataRange().getValues();
+  var today = startOfDay_(new Date());
+  var rows = [];
+  for (var r = s.headerRow; r < data.length; r++) {
+    var info = rowInfo_(data[r], s);
+    if (!info.due) continue;
+    var dl = Math.round((startOfDay_(info.due) - today) / 86400000);
+    var status = String(data[r][s.col[COL.RENEWAL_STATUS]] || '');
+    if (dl >= 0 && dl <= CONFIG.REMINDER_DAYS && info.email && !status) rows.push(r + 1);
+  }
+  if (!rows.length) {
+    ui.alert('Nobody to email: every client due in the next ' + CONFIG.REMINDER_DAYS +
+             ' days has either been contacted already or has no email address.');
+    return;
+  }
+  var resp = ui.alert('Send to ' + rows.length + ' client(s)?',
+    'Emails their personal renewal link to everyone due in the next ' + CONFIG.REMINDER_DAYS +
+    ' days who has an email and no Renewal Status yet.', ui.ButtonSet.OK_CANCEL);
+  if (resp !== ui.Button.OK) return;
+  ui.alert('Done', sendRows_(s, data, rows), ui.ButtonSet.OK);
+}
+
+/** Shared sender used by both manual actions. Returns a human-readable report. */
+function sendRows_(s, data, rowNumbers) {
+  var today = startOfDay_(new Date());
+  var sent = [], skipped = [];
+  rowNumbers.sort(function (a, b) { return a - b; }).forEach(function (rowNum) {
+    var row = data[rowNum - 1];
+    var info = rowInfo_(row, s);
+    if (!info.email || /@(example|unknown)/i.test(info.email)) {
+      skipped.push((info.client || 'Row ' + rowNum) + ' — no usable email');
+      return;
+    }
+    if (!info.due) {
+      skipped.push((info.client || 'Row ' + rowNum) + ' — no renewal date');
+      return;
+    }
+    var daysLeft = Math.round((startOfDay_(info.due) - today) / 86400000);
+    try {
+      sendReminderEmail_(info, daysLeft, false);
+      setStatus_(s, rowNum - 1, 'Invitation sent manually ' + isoDate_(new Date()));
+      s.sheet.getRange(rowNum, s.col[COL.DAYS_LEFT] + 1).setValue(daysLeft);
+      sent.push(info.client + ' <' + info.email + '>');
+    } catch (err) {
+      skipped.push((info.client || 'Row ' + rowNum) + ' — error: ' + err);
+    }
+  });
+  return '✅ Sent: ' + sent.length + (sent.length ? '\n' + sent.join('\n') : '') +
+         (skipped.length ? '\n\n⚠ Skipped: ' + skipped.length + '\n' + skipped.join('\n') : '');
+}
+
+/** Recalculates Days Left and fills tokens/links — no emails sent. */
+function refreshSheet() {
+  fillTokensAndLinks();
+  var s = getSchedule_();
+  var data = s.sheet.getDataRange().getValues();
+  var today = startOfDay_(new Date());
+  for (var r = s.headerRow; r < data.length; r++) {
+    var due = parseDate_(data[r][s.col[COL.NEXT_DUE]]);
+    if (due) s.sheet.getRange(r + 1, s.col[COL.DAYS_LEFT] + 1)
+      .setValue(Math.round((startOfDay_(due) - today) / 86400000));
+  }
+  try { SpreadsheetApp.getUi().alert('Refreshed: days left, tokens and portal links are up to date.'); } catch (e) {}
+}
+
+/* --------- Automation switch (OFF by default) --------- */
+
+function enableAutomation() {
+  removeTriggers_();
+  ScriptApp.newTrigger('dailyRenewalCheck')
+    .timeBased().everyDays(1).atHour(CONFIG.DAILY_HOUR).create();
+  try {
+    SpreadsheetApp.getUi().alert('Automatic reminders are ON. Every day around ' + CONFIG.DAILY_HOUR +
+      ':00 clients due in ' + CONFIG.REMINDER_DAYS + ' days get a reminder (follow-up at ' +
+      CONFIG.FOLLOWUP_DAYS + ' days). Turn OFF any time from this menu.');
+  } catch (e) {}
+}
+
+function disableAutomation() {
+  removeTriggers_();
+  try { SpreadsheetApp.getUi().alert('Automatic reminders are OFF. Use "Send renewal email — selected row(s)" to send manually.'); } catch (e) {}
+}
+
+function removeTriggers_() {
   ScriptApp.getProjectTriggers().forEach(function (t) {
     if (t.getHandlerFunction() === 'dailyRenewalCheck') ScriptApp.deleteTrigger(t);
   });
-  ScriptApp.newTrigger('dailyRenewalCheck')
-    .timeBased().everyDays(1).atHour(CONFIG.DAILY_HOUR).create();
-
-  Logger.log('Setup complete. Daily check will run around %s:00. Now deploy as a Web App and paste the /exec URL into the portal.', CONFIG.DAILY_HOUR);
 }
 
 /** Generates a token + portal link for any row missing one. Safe to re-run. */
@@ -114,7 +264,8 @@ function fillTokensAndLinks() {
   }
 }
 
-/* ======================= DAILY AUTOMATION ======================= */
+/* ============ OPTIONAL DAILY AUTOMATION (OFF by default) ============
+   Only runs if you switch it on: 📋 Renewals → Turn automatic reminders ON. */
 
 function dailyRenewalCheck() {
   fillTokensAndLinks();
@@ -153,22 +304,32 @@ function dailyRenewalCheck() {
 
 function sendReminderEmail_(info, daysLeft, isFollowUp) {
   var first = firstName_(info.contact || info.client);
-  var subject = (isFollowUp ? 'Reminder: ' : '') +
-    'Your ' + (info.coverage || 'insurance') + ' renewal is due ' + prettyDate_(info.due) +
-    ' — confirm in 2 minutes';
+  var overdue = daysLeft < 0;
+  var subject = overdue
+    ? 'Action needed: your ' + (info.coverage || 'insurance') + ' renewal was due ' + prettyDate_(info.due) + ' — renew in 2 minutes'
+    : (isFollowUp ? 'Reminder: ' : '') +
+      'Your ' + (info.coverage || 'insurance') + ' renewal is due ' + prettyDate_(info.due) +
+      ' — confirm in 2 minutes';
+
+  var opening;
+  if (overdue) {
+    opening = 'Your <strong>' + esc_(info.coverage || 'insurance') + '</strong> policy' +
+      (info.policyNo ? ' (<strong>' + esc_(info.policyNo) + '</strong>)' : '') +
+      ' came up for renewal on <strong>' + prettyDate_(info.due) + '</strong>. Driving without valid cover is an offence — let\'s get you renewed right away so there\'s no gap in your protection. It takes two minutes online.';
+  } else if (isFollowUp) {
+    opening = 'Just a friendly follow-up — your renewal is now <strong>' + daysLeft + ' days away</strong> and we haven\'t received your instructions yet. It takes two minutes to confirm online.';
+  } else {
+    opening = 'Your <strong>' + esc_(info.coverage || 'insurance') + '</strong> policy' +
+      (info.policyNo ? ' (<strong>' + esc_(info.policyNo) + '</strong>)' : '') +
+      ' comes up for renewal on <strong>' + prettyDate_(info.due) + '</strong> — that\'s ' + daysLeft + ' days from now.';
+  }
 
   var owing = Number(info.balance) > 0.01;
   var html =
     emailShell_(
-      'Your renewal is coming up',
+      overdue ? 'Let\'s get you renewed today' : 'Your renewal is coming up',
       '<p style="margin:0 0 14px">Hi ' + esc_(first) + ',</p>' +
-      '<p style="margin:0 0 14px">' +
-        (isFollowUp
-          ? 'Just a friendly follow-up — your renewal is now <strong>' + daysLeft + ' days away</strong> and we haven\'t received your instructions yet. It takes two minutes to confirm online.'
-          : 'Your <strong>' + esc_(info.coverage || 'insurance') + '</strong> policy' +
-            (info.policyNo ? ' (<strong>' + esc_(info.policyNo) + '</strong>)' : '') +
-            ' comes up for renewal on <strong>' + prettyDate_(info.due) + '</strong> — that\'s ' + daysLeft + ' days from now.') +
-      '</p>' +
+      '<p style="margin:0 0 14px">' + opening + '</p>' +
       statTable_([
         ['Renewal date', prettyDate_(info.due)],
         ['Coverage', info.coverage || '—'],
