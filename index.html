@@ -1,525 +1,800 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dental Care Today — Restore Your True Smile</title>
-<meta name="description" content="Dental Care Today — modern, gentle dentistry. Using advanced technology, we deliver comprehensive treatments for a healthy, confident smile." />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ricky Rampersad Branch | Life, Health, Motor & Property Insurance</title>
+<meta name="description" content="Ricky Rampersad Branch — instant life insurance quotes, online applications, health enrollment, motor & property quotations, and client services. Get covered today."/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --blue-900:#123B63;
-    --blue-800:#1F5A96;
-    --blue-700:#2A6DB0;
-    --blue-500:#3D8CD5;
-    --blue-100:#DCEBF8;
-    --blue-50:#EDF5FC;
-    --ink:#16283B;
-    --muted:#5B7186;
-    --white:#ffffff;
-    --accent:#C6F06E;
-    --accent-ink:#2C4404;
-    --radius-lg:28px;
-    --radius-md:18px;
-    --shadow:0 18px 45px rgba(18,59,99,.14);
-    --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  }
-  *{margin:0;padding:0;box-sizing:border-box}
-  html{scroll-behavior:smooth}
-  body{font-family:var(--font);color:var(--ink);background:var(--white);line-height:1.6;-webkit-font-smoothing:antialiased}
-  img,svg{max-width:100%;display:block}
-  a{text-decoration:none;color:inherit}
-  ul{list-style:none}
-  .wrap{width:min(1160px,92%);margin-inline:auto}
-  section{padding:88px 0}
-  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--blue-700);background:var(--blue-50);border:1px solid var(--blue-100);padding:8px 16px;border-radius:999px;margin-bottom:18px}
-  .h2{font-size:clamp(1.9rem,4vw,2.7rem);font-weight:800;letter-spacing:-.02em;line-height:1.15;margin-bottom:14px}
-  .lead{color:var(--muted);max-width:560px;font-size:1.05rem}
-  .btn{display:inline-flex;align-items:center;gap:10px;font-weight:700;border-radius:999px;padding:14px 26px;border:none;cursor:pointer;font-size:1rem;white-space:nowrap;transition:transform .18s ease, box-shadow .18s ease}
-  .btn:hover{transform:translateY(-2px)}
-  .btn-primary{background:var(--blue-800);color:#fff;box-shadow:0 12px 26px rgba(31,90,150,.35)}
-  .btn-accent{background:var(--accent);color:var(--accent-ink);box-shadow:0 12px 26px rgba(150,190,60,.35)}
-  .btn-ghost{background:rgba(255,255,255,.85);color:var(--blue-900);border:1px solid var(--blue-100)}
-
-  /* ---------- NAV ---------- */
-  header{position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);background:rgba(237,245,252,.85);border-bottom:1px solid rgba(31,90,150,.08)}
-  .nav{display:flex;align-items:center;justify-content:space-between;height:72px}
-  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.15rem;letter-spacing:-.01em;color:var(--blue-900)}
-  .logo-badge{width:38px;height:38px;border-radius:12px;background:var(--blue-800);display:grid;place-items:center;color:#fff}
-  .nav-links{display:flex;gap:30px;font-weight:600;color:var(--blue-900)}
-  .nav-links a{opacity:.75;transition:opacity .15s}
-  .nav-links a:hover{opacity:1}
-  .nav-cta{display:flex;align-items:center;gap:14px}
-  .menu-btn{display:none;background:none;border:none;cursor:pointer;padding:8px}
-  .menu-btn span{display:block;width:24px;height:2.5px;background:var(--blue-900);margin:5px 0;border-radius:2px;transition:.25s}
-
-  /* ---------- HERO ---------- */
-  .hero{position:relative;overflow:hidden;background:linear-gradient(180deg,#EDF5FC 0%,#D9EAF8 45%,#C9E1F5 100%);padding:64px 0 0}
-  .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center}
-  .hero h1{font-size:clamp(2.6rem,6.4vw,4.6rem);font-weight:800;letter-spacing:-.03em;line-height:1.03;color:var(--blue-900)}
-  .hero h1 .accent-word{color:var(--blue-500)}
-  .hero-sub{margin:26px 0 34px;max-width:440px;color:#3A5570;font-size:1.08rem}
-  .hero-sub strong{color:var(--blue-900)}
-  .avatar-row{display:inline-flex;align-items:center;vertical-align:middle;margin-left:14px}
-  .avatar{width:44px;height:44px;border-radius:50%;border:3px solid #fff;display:grid;place-items:center;font-size:.8rem;font-weight:800;color:#fff;margin-left:-12px;box-shadow:0 4px 10px rgba(18,59,99,.18)}
-  .avatar:first-child{margin-left:0}
-  .av1{background:linear-gradient(135deg,#F2994A,#EB5757)}
-  .av2{background:linear-gradient(135deg,#56CCF2,#2F80ED)}
-  .av3{background:#123B63}
-  .hero-actions{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:44px}
-  .hero-art{position:relative;min-height:480px}
-  .tooth-stage{position:relative;display:grid;place-items:center;height:100%}
-  .tooth-glow{position:absolute;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,#ffffffcc 0%,#ffffff00 65%);filter:blur(6px)}
-  .tooth-svg{width:min(420px,86%);filter:drop-shadow(0 30px 40px rgba(18,59,99,.25));animation:floaty 6s ease-in-out infinite}
-  .spark{position:absolute;border-radius:50%;background:#fff;opacity:.85;animation:twinkle 3.4s ease-in-out infinite}
-  .s1{width:14px;height:14px;top:12%;left:16%}
-  .s2{width:9px;height:9px;top:22%;right:14%;animation-delay:.8s}
-  .s3{width:12px;height:12px;bottom:18%;left:10%;animation-delay:1.6s}
-  .s4{width:8px;height:8px;bottom:26%;right:8%;animation-delay:2.2s}
-  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
-  @keyframes twinkle{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:.95;transform:scale(1.15)}}
-  .stat-card{position:absolute;left:0;bottom:56px;background:rgba(255,255,255,.92);border-radius:22px;padding:20px 24px;box-shadow:var(--shadow);max-width:190px}
-  .stat-card .num{font-size:2.1rem;font-weight:800;color:var(--blue-900);letter-spacing:-.02em}
-  .stat-card .lbl{font-size:.85rem;color:var(--muted);font-weight:600;line-height:1.35}
-  .hero-strip{margin-top:26px;background:rgba(255,255,255,.65);border-top:1px solid rgba(31,90,150,.1);backdrop-filter:blur(8px)}
-  .strip-inner{display:flex;justify-content:space-between;gap:20px;padding:20px 0;flex-wrap:wrap}
-  .strip-item{display:flex;align-items:center;gap:12px;font-weight:700;color:var(--blue-900);font-size:.95rem}
-  .strip-item svg{width:22px;height:22px;flex:none}
-
-  /* ---------- SERVICES ---------- */
-  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:22px;margin-top:44px}
-  .card{background:var(--blue-50);border:1px solid var(--blue-100);border-radius:var(--radius-lg);padding:30px 26px;transition:transform .2s ease, box-shadow .2s ease}
-  .card:hover{transform:translateY(-6px);box-shadow:var(--shadow)}
-  .card .ico{width:52px;height:52px;border-radius:16px;background:var(--blue-800);display:grid;place-items:center;color:#fff;margin-bottom:18px}
-  .card h3{font-size:1.15rem;font-weight:800;margin-bottom:8px}
-  .card p{color:var(--muted);font-size:.95rem}
-
-  /* ---------- RESULTS ---------- */
-  .results{background:linear-gradient(180deg,#123B63,#1F5A96);color:#fff;border-radius:0}
-  .results .h2{color:#fff}
-  .results .lead{color:#BDD7EF}
-  .results-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:22px;margin-top:48px}
-  .r-stat{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:var(--radius-md);padding:30px 24px;text-align:center}
-  .r-stat .num{font-size:2.6rem;font-weight:800;letter-spacing:-.02em}
-  .r-stat .num span{color:#9CD1FF}
-  .r-stat p{color:#BDD7EF;font-weight:600;font-size:.92rem;margin-top:6px}
-
-  /* ---------- PRICING ---------- */
-  .price-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:24px;margin-top:48px;align-items:stretch}
-  .price{border:1px solid var(--blue-100);border-radius:var(--radius-lg);padding:34px 30px;display:flex;flex-direction:column;background:#fff;transition:transform .2s ease, box-shadow .2s ease}
-  .price:hover{transform:translateY(-6px);box-shadow:var(--shadow)}
-  .price.featured{background:var(--blue-900);color:#fff;position:relative;overflow:hidden}
-  .price.featured .p-desc,.price.featured li{color:#BDD7EF}
-  .badge-pop{position:absolute;top:20px;right:-38px;background:var(--accent);color:var(--accent-ink);font-size:.72rem;font-weight:800;letter-spacing:.08em;padding:6px 44px;transform:rotate(38deg)}
-  .p-name{font-weight:800;font-size:1.05rem;letter-spacing:.02em;text-transform:uppercase;opacity:.8}
-  .p-amount{font-size:2.5rem;font-weight:800;letter-spacing:-.02em;margin:10px 0 4px}
-  .p-amount small{font-size:1rem;font-weight:600;opacity:.7}
-  .p-desc{color:var(--muted);font-size:.93rem;margin-bottom:22px}
-  .price ul{margin-bottom:28px;display:grid;gap:10px}
-  .price li{display:flex;gap:10px;align-items:flex-start;font-size:.95rem;color:var(--muted)}
-  .price li svg{flex:none;margin-top:3px}
-  .price .btn{margin-top:auto;justify-content:center}
-
-  /* ---------- REVIEWS ---------- */
-  .reviews{background:var(--blue-50)}
-  .review-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin-top:48px}
-  .review{background:#fff;border-radius:var(--radius-lg);padding:30px 28px;box-shadow:0 10px 30px rgba(18,59,99,.07)}
-  .stars{color:#F2B01E;letter-spacing:3px;font-size:1rem;margin-bottom:14px}
-  .review p{color:var(--ink);font-size:.98rem;margin-bottom:20px}
-  .reviewer{display:flex;align-items:center;gap:12px}
-  .reviewer .avatar{margin:0;width:42px;height:42px;border:none}
-  .reviewer b{display:block;font-size:.95rem}
-  .reviewer span{font-size:.82rem;color:var(--muted)}
-
-  /* ---------- CONTACT ---------- */
-  .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;margin-top:44px}
-  .c-info{display:grid;gap:18px}
-  .c-row{display:flex;gap:16px;align-items:flex-start;background:var(--blue-50);border:1px solid var(--blue-100);border-radius:var(--radius-md);padding:18px 20px}
-  .c-row .ico{width:44px;height:44px;border-radius:12px;background:var(--blue-800);color:#fff;display:grid;place-items:center;flex:none}
-  .c-row b{display:block}
-  .c-row span{color:var(--muted);font-size:.93rem}
-  form{display:grid;gap:14px;background:#fff;border:1px solid var(--blue-100);border-radius:var(--radius-lg);padding:30px;box-shadow:var(--shadow)}
-  form label{font-weight:700;font-size:.88rem}
-  form input,form select,form textarea{font:inherit;padding:13px 15px;border:1.5px solid var(--blue-100);border-radius:12px;background:var(--blue-50);width:100%;outline:none;transition:border-color .15s}
-  form input:focus,form select:focus,form textarea:focus{border-color:var(--blue-500);background:#fff}
-
-  /* ---------- FOOTER ---------- */
-  footer{background:var(--blue-900);color:#BDD7EF;padding:56px 0 28px}
-  .f-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:40px;margin-bottom:40px}
-  footer .logo{color:#fff;margin-bottom:14px}
-  footer h4{color:#fff;font-size:.95rem;margin-bottom:14px;letter-spacing:.06em;text-transform:uppercase}
-  footer li{margin-bottom:10px;font-size:.94rem}
-  footer a:hover{color:#fff}
-  .f-bottom{border-top:1px solid rgba(255,255,255,.15);padding-top:22px;font-size:.85rem;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-
-  /* ---------- REVEAL ---------- */
-  .reveal{opacity:0;transform:translateY(26px);transition:opacity .6s ease, transform .6s ease}
-  .reveal.in{opacity:1;transform:none}
-
-  @media (prefers-reduced-motion: reduce){
-    *{animation:none!important;transition:none!important}
-    .reveal{opacity:1;transform:none}
-    html{scroll-behavior:auto}
+  :root {
+    --bg:     #07131f;
+    --bg2:    #0d2137;
+    --card:   #163553;
+    --card2:  #1b3d61;
+    --gold:   #efc24b;
+    --gold2:  #dca530;
+    --text:   #edf4fb;
+    --muted:  #a9bbcf;
+    --line:   rgba(255,255,255,.08);
+    --teal:   #00C9A7;
+    --teal2:  #00a589;
   }
 
-  /* ---------- MOBILE ---------- */
-  @media (max-width: 900px){
-    .nav-links{position:fixed;inset:72px 0 auto 0;background:#fff;flex-direction:column;gap:0;padding:10px 6%;box-shadow:0 24px 40px rgba(18,59,99,.15);display:none}
-    .nav-links.open{display:flex}
-    .nav-links a{padding:14px 0;border-bottom:1px solid var(--blue-50);opacity:1}
-    .menu-btn{display:block}
-    .nav-cta .btn{padding:11px 18px;font-size:.9rem}
-    .hero-grid{grid-template-columns:1fr}
-    .hero-art{min-height:380px}
-    .stat-card{left:4%;bottom:10px}
-    .contact-grid{grid-template-columns:1fr}
-    .f-grid{grid-template-columns:1fr 1fr}
-    section{padding:64px 0}
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0,201,167,.08), transparent),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg2) 50%, var(--bg) 100%);
   }
+
+  a { color: inherit; }
+
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 16px; }
+
+  /* ── NAV ── */
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(6,17,29,.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-inner {
+    max-width: 1060px; margin: 0 auto; padding: 0 16px;
+    display: flex; align-items: center; gap: 14px;
+    height: 64px;
+  }
+  .nav-brand {
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none; margin-right: auto;
+  }
+  .nav-brand svg { width: 34px; height: 34px; flex-shrink: 0; }
+  .nav-brand span {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800; font-size: 15px; color: var(--gold);
+    letter-spacing: .3px; line-height: 1.1;
+  }
+  .nav-links { display: flex; gap: 4px; align-items: center; }
+  .nav-links a {
+    text-decoration: none; color: var(--muted);
+    font-family: 'Montserrat', sans-serif; font-size: 12.5px; font-weight: 600;
+    padding: 8px 12px; border-radius: 10px; transition: all .18s;
+    white-space: nowrap;
+  }
+  .nav-links a:hover { color: var(--text); background: rgba(255,255,255,.06); }
+  .nav-links a.nav-cta {
+    background: linear-gradient(135deg, var(--teal), var(--teal2));
+    color: #021a14; font-weight: 800;
+  }
+  .nav-links a.nav-cta:hover { background: linear-gradient(135deg, #00dbb8, var(--teal)); }
+
+  @media (max-width: 720px) {
+    .nav-inner { height: auto; flex-wrap: wrap; padding: 10px 16px; }
+    .nav-links { width: 100%; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+  }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    padding: 70px 0 60px;
+    overflow: hidden;
+  }
+  .orb {
+    position: absolute; border-radius: 50%; filter: blur(70px);
+    opacity: .5; pointer-events: none; z-index: 0;
+  }
+  .orb-teal {
+    width: 480px; height: 480px; top: -140px; right: -120px;
+    background: radial-gradient(circle, rgba(0,201,167,.35), transparent 70%);
+    animation: drift1 14s ease-in-out infinite;
+  }
+  .orb-gold {
+    width: 420px; height: 420px; bottom: -160px; left: -140px;
+    background: radial-gradient(circle, rgba(239,194,75,.28), transparent 70%);
+    animation: drift2 17s ease-in-out infinite;
+  }
+  @keyframes drift1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-50px,40px)} }
+  @keyframes drift2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(60px,-35px)} }
+
+  .hero-grid {
+    position: relative; z-index: 1;
+    display: grid; grid-template-columns: 1.1fr .9fr;
+    gap: 30px; align-items: center;
+  }
+  @media (max-width: 860px) {
+    .hero-grid { grid-template-columns: 1fr; text-align: center; }
+    .hero-art { order: -1; }
+    .hero-actions, .hero-badges { justify-content: center; }
+  }
+
+  .hero .kicker {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--gold2); font-weight: 600; margin-bottom: 14px;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .kicker .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--teal);
+    box-shadow: 0 0 0 0 rgba(0,201,167,.5);
+    animation: pulse 2s ease-out infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(0,201,167,.5); }
+    70% { box-shadow: 0 0 0 10px rgba(0,201,167,0); }
+    100% { box-shadow: 0 0 0 0 rgba(0,201,167,0); }
+  }
+
+  .hero h1 {
+    font-family: 'Montserrat', sans-serif; font-weight: 900;
+    font-size: clamp(32px, 5.6vw, 54px);
+    line-height: 1.08; margin-bottom: 18px; letter-spacing: -.5px;
+  }
+  .rotator-line { display: block; color: var(--gold); min-height: 1.15em; }
+  .rotator { display: inline-block; transition: opacity .35s ease, transform .35s ease; }
+  .rotator.out { opacity: 0; transform: translateY(12px); }
+
+  .hero p.sub {
+    color: var(--muted); font-size: clamp(14.5px, 2.4vw, 17px);
+    max-width: 460px; margin-bottom: 26px; line-height: 1.7;
+  }
+  @media (max-width: 860px) { .hero p.sub { margin-inline: auto; } }
+
+  .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+    padding: 15px 26px; border-radius: 14px; border: none;
+    font-family: 'Montserrat', sans-serif; font-size: 14.5px; font-weight: 800;
+    letter-spacing: .4px; cursor: pointer; text-decoration: none;
+    transition: all .2s; position: relative; overflow: hidden;
+  }
+  .btn-teal {
+    background: linear-gradient(135deg, var(--teal), var(--teal2));
+    color: #021a14; box-shadow: 0 8px 28px rgba(0,201,167,.3);
+  }
+  .btn-teal:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(0,201,167,.45); }
+  .btn-gold {
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    color: #1d1503; box-shadow: 0 8px 28px rgba(239,194,75,.25);
+  }
+  .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(239,194,75,.4); }
+  .btn-teal::after {
+    content: ''; position: absolute; top: 0; left: -80%;
+    width: 50%; height: 100%;
+    background: linear-gradient(105deg, transparent, rgba(255,255,255,.45), transparent);
+    transform: skewX(-20deg);
+    animation: shine 3.6s ease-in-out infinite;
+  }
+  @keyframes shine { 0%,60% { left: -80%; } 100% { left: 130%; } }
+
+  .hero-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+  .hb {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--muted); font-weight: 500;
+    background: rgba(255,255,255,.04); border: 1px solid var(--line);
+    border-radius: 50px; padding: 6px 13px;
+  }
+  .hb b { color: var(--teal); }
+
+  /* ── HERO ART ── */
+  .hero-art {
+    position: relative; display: flex; align-items: center; justify-content: center;
+    min-height: 340px;
+  }
+  .shield-glow {
+    position: absolute; width: 300px; height: 300px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(239,194,75,.22), transparent 65%);
+    filter: blur(10px);
+    animation: glowPulse 5s ease-in-out infinite;
+  }
+  @keyframes glowPulse { 0%,100%{transform:scale(1);opacity:.8} 50%{transform:scale(1.15);opacity:1} }
+  .hero-shield {
+    width: min(250px, 60%);
+    filter: drop-shadow(0 24px 40px rgba(0,0,0,.5));
+    animation: floaty 6s ease-in-out infinite;
+    position: relative; z-index: 1;
+  }
+  @keyframes floaty { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-16px)} }
+
+  /* orbiting product icons */
+  .orbit {
+    position: absolute; width: 350px; height: 350px;
+    border: 1.5px dashed rgba(255,255,255,.14);
+    border-radius: 50%; z-index: 1;
+    animation: spin 26s linear infinite;
+  }
+  .orbit-ico {
+    position: absolute; width: 46px; height: 46px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    background: rgba(13,33,55,.95); border: 1px solid var(--line);
+    box-shadow: 0 10px 24px rgba(0,0,0,.45);
+    animation: spinBack 26s linear infinite;
+  }
+  .oi1 { top: -23px; left: calc(50% - 23px); border-color: rgba(239,194,75,.4); }
+  .oi2 { top: calc(50% - 23px); right: -23px; border-color: rgba(0,201,167,.4); }
+  .oi3 { bottom: -23px; left: calc(50% - 23px); border-color: rgba(0,201,167,.4); }
+  .oi4 { top: calc(50% - 23px); left: -23px; border-color: rgba(239,194,75,.4); }
+  @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+  @keyframes spinBack { from{transform:rotate(0)} to{transform:rotate(-360deg)} }
+  @media (max-width: 860px) { .orbit { width: 270px; height: 270px; } }
+
+  .spark {
+    position: absolute; border-radius: 50%;
+    background: #fff; opacity: .8; z-index: 1;
+    animation: twinkle 3.4s ease-in-out infinite;
+  }
+  .sp1 { width: 10px; height: 10px; top: 14%; left: 22%; }
+  .sp2 { width: 7px; height: 7px; top: 24%; right: 20%; animation-delay: .8s; background: var(--teal); }
+  .sp3 { width: 9px; height: 9px; bottom: 20%; left: 16%; animation-delay: 1.6s; background: var(--gold); }
+  .sp4 { width: 6px; height: 6px; bottom: 30%; right: 14%; animation-delay: 2.2s; }
+  @keyframes twinkle { 0%,100%{opacity:.2;transform:scale(.7)} 50%{opacity:1;transform:scale(1.2)} }
+
+  .float-card {
+    position: absolute; z-index: 2;
+    background: rgba(13,33,55,.92); backdrop-filter: blur(8px);
+    border: 1px solid var(--line); border-radius: 14px;
+    padding: 12px 16px;
+    box-shadow: 0 16px 36px rgba(0,0,0,.45);
+    animation: floaty 7s ease-in-out infinite;
+  }
+  .fc1 { top: 8%; right: 2%; animation-delay: .8s; }
+  .fc2 { bottom: 6%; left: 0; animation-delay: 1.8s; }
+  .float-card .fc-num {
+    font-family: 'Montserrat', sans-serif; font-weight: 800;
+    font-size: 19px; color: var(--gold); line-height: 1.1;
+  }
+  .fc2 .fc-num { color: var(--teal); }
+  .float-card .fc-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  @media (max-width: 860px) {
+    .float-card { display: none; }
+    .hero-art { min-height: 240px; }
+  }
+
+  /* ── STATS BAR ── */
+  .stats {
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    background: rgba(0,0,0,.22);
+  }
+  .stats-inner {
+    max-width: 1060px; margin: 0 auto; padding: 26px 16px;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    text-align: center;
+  }
+  @media (max-width: 640px) { .stats-inner { grid-template-columns: repeat(2, 1fr); } }
+  .stat .num {
+    font-family: 'Montserrat', sans-serif; font-weight: 900;
+    font-size: clamp(24px, 4vw, 34px); color: var(--text); letter-spacing: -.5px;
+  }
+  .stat .num span { color: var(--teal); }
+  .stat .lbl { font-size: 12px; color: var(--muted); font-weight: 500; margin-top: 3px; }
+
+  /* ── COVERAGE LINES BAND ── */
+  .lines-band { padding: 56px 0 10px; }
+  .lines-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+  }
+  @media (max-width: 820px) { .lines-grid { grid-template-columns: repeat(2, 1fr); } }
+  .line-card {
+    position: relative; overflow: hidden;
+    border-radius: 20px; padding: 24px 20px 22px;
+    text-decoration: none; border: 1px solid var(--line);
+    transition: transform .22s ease, box-shadow .22s ease;
+  }
+  .line-card:hover { transform: translateY(-6px); box-shadow: 0 18px 44px rgba(0,0,0,.45); }
+  .lc-life   { background: linear-gradient(150deg, #3a2b06, #1b1503 70%); border-color: rgba(239,194,75,.35); }
+  .lc-health { background: linear-gradient(150deg, #05302a, #041a17 70%); border-color: rgba(0,201,167,.35); }
+  .lc-motor  { background: linear-gradient(150deg, #0e2a4a, #081627 70%); border-color: rgba(61,140,213,.4); }
+  .lc-prop   { background: linear-gradient(150deg, #33203f, #170e1e 70%); border-color: rgba(178,120,220,.4); }
+  .line-card svg { width: 42px; height: 42px; margin-bottom: 12px; }
+  .line-card h3 {
+    font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 800;
+    color: var(--text); margin-bottom: 5px;
+  }
+  .line-card p { font-size: 12.5px; color: var(--muted); line-height: 1.55; }
+  .line-card .lc-go {
+    display: inline-block; margin-top: 12px;
+    font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .lc-life .lc-go { color: var(--gold); }
+  .lc-health .lc-go { color: var(--teal); }
+  .lc-motor .lc-go { color: #6fb1ee; }
+  .lc-prop .lc-go { color: #c99aec; }
+  .line-card::after {
+    content: ''; position: absolute; top: -40px; right: -40px;
+    width: 120px; height: 120px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,.08), transparent 70%);
+  }
+
+  /* ── HOW IT WORKS ── */
+  .steps {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+    margin-bottom: 30px; counter-reset: step;
+  }
+  @media (max-width: 720px) { .steps { grid-template-columns: 1fr; } }
+  .step {
+    position: relative;
+    background: linear-gradient(160deg, var(--card), var(--card2));
+    border: 1px solid var(--line); border-radius: 18px;
+    padding: 26px 22px 22px;
+  }
+  .step .step-num {
+    font-family: 'Montserrat', sans-serif; font-weight: 900;
+    font-size: 44px; line-height: 1;
+    background: linear-gradient(135deg, var(--gold), rgba(239,194,75,.25));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin-bottom: 12px;
+  }
+  .step h3 {
+    font-family: 'Montserrat', sans-serif; font-size: 15.5px; font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .step p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .step::after {
+    content: '→'; position: absolute; top: 50%; right: -14px;
+    transform: translateY(-50%);
+    color: var(--teal); font-size: 20px; font-weight: 700; z-index: 2;
+  }
+  .step:last-child::after { display: none; }
+  @media (max-width: 720px) { .step::after { display: none; } }
+
+  /* ── SECTIONS ── */
+  section { padding: 56px 0 8px; }
+  .section-label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px; font-weight: 700; letter-spacing: 2.5px;
+    text-transform: uppercase; color: var(--teal);
+    margin-bottom: 8px; display: flex; align-items: center; gap: 10px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: rgba(0,201,167,.2); }
+  section h2 {
+    font-family: 'Montserrat', sans-serif; font-weight: 800;
+    font-size: clamp(20px, 4vw, 28px); margin-bottom: 6px;
+  }
+  .section-sub { color: var(--muted); font-size: 14px; margin-bottom: 24px; max-width: 620px; line-height: 1.6; }
+
+  /* ── CARD GRID ── */
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
+    gap: 14px; margin-bottom: 30px;
+  }
+
+  .tile {
+    display: flex; flex-direction: column; gap: 10px;
+    background: linear-gradient(160deg, var(--card), var(--card2));
+    border: 1px solid var(--line); border-radius: 18px;
+    padding: 22px; text-decoration: none;
+    transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+    position: relative;
+  }
+  .tile:hover { transform: translateY(-5px); border-color: rgba(0,201,167,.45); box-shadow: 0 16px 40px rgba(0,0,0,.4); }
+  .tile .ico {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 21px;
+    background: rgba(0,201,167,.12); border: 1px solid rgba(0,201,167,.25);
+    transition: transform .22s ease;
+  }
+  .tile:hover .ico { transform: scale(1.12) rotate(-4deg); }
+  .tile.gold-tile .ico { background: rgba(239,194,75,.12); border-color: rgba(239,194,75,.25); }
+  .tile h3 {
+    font-family: 'Montserrat', sans-serif; font-size: 15.5px; font-weight: 700;
+    color: var(--text); line-height: 1.3;
+  }
+  .tile p { font-size: 13px; color: var(--muted); line-height: 1.55; flex: 1; }
+  .tile .go {
+    font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 700;
+    color: var(--teal); letter-spacing: .5px; text-transform: uppercase;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .tile.gold-tile .go { color: var(--gold); }
+  .tile:hover .go { gap: 10px; }
+  .tile .go::after { content: '→'; transition: transform .2s; }
+
+  .badge {
+    position: absolute; top: 16px; right: 16px;
+    font-family: 'Montserrat', sans-serif; font-size: 9px; font-weight: 800;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    background: rgba(0,201,167,.15); color: var(--teal);
+    border: 1px solid rgba(0,201,167,.3);
+    padding: 4px 9px; border-radius: 50px;
+  }
+
+  /* ── FEATURED QUOTE BANNER ── */
+  .feature-banner {
+    background: linear-gradient(135deg, rgba(239,194,75,.12), rgba(239,194,75,.04));
+    border: 1px solid rgba(239,194,75,.3); border-radius: 20px;
+    padding: 28px; margin-bottom: 30px;
+    display: flex; align-items: center; gap: 22px; flex-wrap: wrap;
+    position: relative; overflow: hidden;
+  }
+  .feature-banner::before {
+    content: ''; position: absolute; top: -70px; right: -70px;
+    width: 220px; height: 220px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(239,194,75,.15), transparent 70%);
+    pointer-events: none;
+  }
+  .feature-banner .fb-text { flex: 1; min-width: 240px; }
+  .feature-banner h3 {
+    font-family: 'Montserrat', sans-serif; font-weight: 800;
+    font-size: 19px; color: var(--gold); margin-bottom: 6px;
+  }
+  .feature-banner p { font-size: 13.5px; color: var(--muted); line-height: 1.6; }
+
+  /* ── SCROLL REVEAL ── */
+  .reveal { opacity: 0; transform: translateY(26px); transition: opacity .6s ease, transform .6s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+    .reveal { opacity: 1; transform: none; }
+    html { scroll-behavior: auto; }
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    margin-top: 48px; border-top: 1px solid var(--line);
+    background: rgba(0,0,0,.25); padding: 34px 0 44px;
+    text-align: center;
+  }
+  footer .f-brand {
+    font-family: 'Montserrat', sans-serif; font-weight: 800;
+    color: var(--gold); font-size: 15px; margin-bottom: 6px;
+  }
+  footer p { color: var(--muted); font-size: 12.5px; line-height: 1.7; }
+  footer .f-links { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; margin: 14px 0; }
+  footer .f-links a { color: var(--muted); font-size: 12.5px; text-decoration: none; }
+  footer .f-links a:hover { color: var(--teal); }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="wrap nav">
-    <a class="logo" href="#top" aria-label="Dental Care Today home">
-      <span class="logo-badge" aria-hidden="true">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2C8 2 5 4.5 5 8c0 2 .6 3.4 1.2 5 .7 1.9 1 4.4 1.3 6.6.1 1 .8 1.6 1.5 1.4.8-.2 1.2-1.2 1.4-2.6.3-2 .7-3.4 1.6-3.4s1.3 1.4 1.6 3.4c.2 1.4.6 2.4 1.4 2.6.7.2 1.4-.4 1.5-1.4.3-2.2.6-4.7 1.3-6.6.6-1.6 1.2-3 1.2-5 0-3.5-3-6-7-6z" fill="currentColor"/></svg>
-      </span>
-      Dental Care Today
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="#top">
+      <svg viewBox="0 0 88 88" aria-hidden="true">
+        <defs>
+          <linearGradient id="gn" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f0c448"/>
+            <stop offset="60%" stop-color="#c9942c"/>
+            <stop offset="100%" stop-color="#7a5810"/>
+          </linearGradient>
+        </defs>
+        <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#gn)"/>
+        <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Ricky Rampersad<br>Branch</span>
     </a>
-    <nav class="nav-links" id="navLinks" aria-label="Main navigation">
-      <a href="#about">About</a>
-      <a href="#results">Results</a>
-      <a href="#pricing">Pricing</a>
-      <a href="#reviews">Reviews</a>
-      <a href="#contact">Contact</a>
-    </nav>
-    <div class="nav-cta">
-      <a class="btn btn-accent" href="#contact">Book a Visit
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M7 17L17 7M17 7H8M17 7v9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </a>
-      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks">
-        <span></span><span></span><span></span>
-      </button>
+    <div class="nav-links">
+      <a href="#quotes">Quotes</a>
+      <a href="#apply">Apply</a>
+      <a href="#clients">Clients</a>
+      <a href="#careers">Careers</a>
+      <a class="nav-cta" href="https://form.jotform.com/203424506456048" target="_blank" rel="noopener">Apply Online</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero" id="top">
+  <div class="orb orb-teal"></div>
+  <div class="orb orb-gold"></div>
+  <div class="wrap hero-grid">
+    <div>
+      <div class="kicker"><span class="dot"></span>Ricky Rampersad Branch · Online Now</div>
+      <h1>Protecting your
+        <span class="rotator-line"><span class="rotator" id="rotator">family</span></span>
+      </h1>
+      <p class="sub">Life, health, motor and property coverage — with instant online quotes and applications you can finish from your phone in minutes. No medicals for Xpress Life.</p>
+      <div class="hero-actions">
+        <a class="btn btn-teal" href="#quotes">Request a Quote</a>
+        <a class="btn btn-gold" href="https://xpresslifett.com" target="_blank" rel="noopener">Xpress Life ↗</a>
+      </div>
+      <div class="hero-badges">
+        <span class="hb"><b>⚡</b> Instant issue</span>
+        <span class="hb"><b>✓</b> 5 health questions</span>
+        <span class="hb"><b>🔒</b> Rates locked 20 yrs</span>
+      </div>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <div class="shield-glow"></div>
+      <div class="orbit">
+        <span class="orbit-ico oi1">❤️</span>
+        <span class="orbit-ico oi2">🚗</span>
+        <span class="orbit-ico oi3">🏠</span>
+        <span class="orbit-ico oi4">🩺</span>
+      </div>
+      <span class="spark sp1"></span><span class="spark sp2"></span>
+      <span class="spark sp3"></span><span class="spark sp4"></span>
+      <svg class="hero-shield" viewBox="0 0 88 88">
+        <defs>
+          <linearGradient id="gh" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f0c448"/>
+            <stop offset="60%" stop-color="#c9942c"/>
+            <stop offset="100%" stop-color="#7a5810"/>
+          </linearGradient>
+        </defs>
+        <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#gh)"/>
+        <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="float-card fc1">
+        <div class="fc-num">TT$500K</div>
+        <div class="fc-lbl">max Xpress Life cover</div>
+      </div>
+      <div class="float-card fc2">
+        <div class="fc-num">0</div>
+        <div class="fc-lbl">medical exams required</div>
+      </div>
     </div>
   </div>
 </header>
 
-<!-- HERO -->
-<div class="hero" id="top">
-  <div class="wrap hero-grid">
-    <div>
-      <h1>Restore<br>Your <span class="accent-word">True</span><br>Smile
-        <span class="avatar-row" aria-label="Over 2,000 happy patients">
-          <span class="avatar av1" aria-hidden="true">JD</span>
-          <span class="avatar av2" aria-hidden="true">MK</span>
-          <span class="avatar av3" aria-hidden="true">+2k</span>
-        </span>
-      </h1>
-      <p class="hero-sub">Using <strong>advanced technology</strong>, we deliver comprehensive treatments for a healthy, <strong>confident smile</strong> — gentle care for the whole family.</p>
-      <div class="hero-actions">
-        <a class="btn btn-primary" href="#contact">Book an Appointment</a>
-        <a class="btn btn-ghost" href="#pricing">See Pricing</a>
-      </div>
-    </div>
-    <div class="hero-art" aria-hidden="true">
-      <div class="tooth-stage">
-        <div class="tooth-glow"></div>
-        <span class="spark s1"></span><span class="spark s2"></span><span class="spark s3"></span><span class="spark s4"></span>
-        <svg class="tooth-svg" viewBox="0 0 240 260" fill="none">
-          <defs>
-            <linearGradient id="toothGrad" x1="60" y1="20" x2="190" y2="240" gradientUnits="userSpaceOnUse">
-              <stop stop-color="#FFFFFF"/><stop offset=".55" stop-color="#EDF5FC"/><stop offset="1" stop-color="#C9E1F5"/>
-            </linearGradient>
-            <linearGradient id="shineGrad" x1="80" y1="30" x2="120" y2="120" gradientUnits="userSpaceOnUse">
-              <stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
-            </linearGradient>
-          </defs>
-          <path d="M120 18C86 18 58 40 58 74c0 20 6 33 12 49 7 19 10 45 13 67 1.5 10 8.5 16.5 16 14.5 8-2 12-12 14-26 3-20 8-34 17-34s14 14 17 34c2 14 6 24 14 26 7.5 2 14.5-4.5 16-14.5 3-22 6-48 13-67 6-16 12-29 12-49 0-34-28-56-62-56z" fill="url(#toothGrad)" stroke="#fff" stroke-width="5"/>
-          <ellipse cx="96" cy="72" rx="22" ry="34" fill="url(#shineGrad)" transform="rotate(-18 96 72)"/>
-        </svg>
-        <div class="stat-card">
-          <div class="num">98%</div>
-          <div class="lbl">loyal dental patients recommend us</div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="hero-strip">
-    <div class="wrap strip-inner">
-      <div class="strip-item">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M12 22c5-3 8-7.5 8-12V6l-8-3-8 3v4c0 4.5 3 9 8 12z" stroke="#1F5A96" stroke-width="2" stroke-linejoin="round"/><path d="M9 11.5l2 2 4-4.5" stroke="#1F5A96" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Insurance Accepted
-      </div>
-      <div class="strip-item">
-        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#1F5A96" stroke-width="2"/><path d="M12 7v5l3.5 2" stroke="#1F5A96" stroke-width="2" stroke-linecap="round"/></svg>
-        Same-Day Emergency Care
-      </div>
-      <div class="strip-item">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#1F5A96" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Pain-Free Modern Dentistry
-      </div>
-      <div class="strip-item">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M12 21s-7.5-4.8-10-9.5C.6 8 2.4 4.5 6 4.5c2.2 0 3.8 1.2 6 3.5 2.2-2.3 3.8-3.5 6-3.5 3.6 0 5.4 3.5 4 7-2.5 4.7-10 9.5-10 9.5z" stroke="#1F5A96" stroke-width="2" stroke-linejoin="round"/></svg>
-        Family Friendly
-      </div>
-    </div>
+<!-- STATS BAR -->
+<div class="stats">
+  <div class="stats-inner">
+    <div class="stat"><div class="num"><span id="c1" data-count="4">0</span></div><div class="lbl">Lines of coverage</div></div>
+    <div class="stat"><div class="num"><span id="c2" data-count="25">0</span><span>+</span></div><div class="lbl">Online forms & tools</div></div>
+    <div class="stat"><div class="num"><span id="c3" data-count="5">0</span></div><div class="lbl">Health questions — that's all</div></div>
+    <div class="stat"><div class="num">24<span>/7</span></div><div class="lbl">Apply anytime, any device</div></div>
   </div>
 </div>
 
-<!-- SERVICES / ABOUT -->
-<section id="about">
-  <div class="wrap">
-    <span class="eyebrow reveal">About Our Care</span>
-    <h2 class="h2 reveal">Complete dentistry,<br>all under one roof</h2>
-    <p class="lead reveal">From routine checkups to full smile makeovers, our team combines gentle chair-side care with the latest dental technology.</p>
-    <div class="cards">
-      <div class="card reveal">
-        <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 3C8.7 3 6.5 5 6.5 7.8c0 1.6.5 2.7 1 4 .6 1.5.8 3.6 1 5.4.1.8.7 1.3 1.3 1.1.6-.2 1-1 1.1-2.1.3-1.6.6-2.7 1.1-2.7s.8 1.1 1.1 2.7c.1 1.1.5 1.9 1.1 2.1.6.2 1.2-.3 1.3-1.1.2-1.8.4-3.9 1-5.4.5-1.3 1-2.4 1-4C17.5 5 15.3 3 12 3z" fill="currentColor"/></svg></div>
-        <h3>General Dentistry</h3>
-        <p>Exams, cleanings, fillings and preventive care that keep your whole family smiling.</p>
-      </div>
-      <div class="card reveal">
-        <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 5.6L20 9l-4.3 4 1 6-4.7-3-4.7 3 1-6L4 9l5.6-1.4L12 2z" fill="currentColor"/></svg></div>
-        <h3>Cosmetic Whitening</h3>
-        <p>Professional whitening and veneers for a brighter, camera-ready smile.</p>
-      </div>
-      <div class="card reveal">
-        <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="4" stroke="currentColor" stroke-width="2"/><path d="M8 12h8M12 8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
-        <h3>Implants & Restoration</h3>
-        <p>Natural-looking implants, crowns and bridges that restore full function.</p>
-      </div>
-      <div class="card reveal">
-        <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M7 4c3 2 7 2 10 0v7c0 5-3 8-5 9-2-1-5-4-5-9V4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></div>
-        <h3>Invisible Aligners</h3>
-        <p>Discreet, comfortable orthodontics that straighten teeth on your schedule.</p>
-      </div>
+<div class="wrap">
+
+  <!-- COVERAGE LINES -->
+  <div class="lines-band" id="lines">
+    <div class="section-label reveal">What We Cover</div>
+    <h2 class="reveal" style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:clamp(20px,4vw,28px);margin-bottom:6px">Four lines. One branch.</h2>
+    <p class="section-sub reveal">Whatever you're protecting, we have a policy for it — and an online way to start today.</p>
+    <div class="lines-grid">
+      <a class="line-card lc-life reveal" href="https://xpresslifett.com" target="_blank" rel="noopener">
+        <svg viewBox="0 0 48 48" fill="none"><path d="M24 6L40 13v10c0 11-7 17.5-16 21C15 40.5 8 34 8 23V13L24 6z" stroke="#efc24b" stroke-width="2.5" stroke-linejoin="round"/><path d="M24 32s-7-4.4-9.3-8.7c-1.3-2.5.2-5.8 3.4-5.8 2 0 3.5 1.1 5.9 3.2 2.4-2.1 3.9-3.2 5.9-3.2 3.2 0 4.7 3.3 3.4 5.8C31 27.6 24 32 24 32z" fill="#efc24b"/></svg>
+        <h3>Life</h3>
+        <p>Term life protection for your family's future — starting with Xpress Life.</p>
+        <span class="lc-go">Xpress Life ↗</span>
+      </a>
+      <a class="line-card lc-health reveal" href="https://form.jotform.com/210045513264040" target="_blank" rel="noopener">
+        <svg viewBox="0 0 48 48" fill="none"><rect x="8" y="8" width="32" height="32" rx="9" stroke="#00C9A7" stroke-width="2.5"/><path d="M24 16v16M16 24h16" stroke="#00C9A7" stroke-width="3.5" stroke-linecap="round"/></svg>
+        <h3>Health</h3>
+        <p>Individual and group health coverage, with online enrollment and claims.</p>
+        <span class="lc-go">Enroll Online</span>
+      </a>
+      <a class="line-card lc-motor reveal" href="https://form.jotform.com/223376649264061" target="_blank" rel="noopener">
+        <svg viewBox="0 0 48 48" fill="none"><path d="M10 28l3-9c.6-1.8 2.3-3 4.2-3h13.6c1.9 0 3.6 1.2 4.2 3l3 9" stroke="#6fb1ee" stroke-width="2.5" stroke-linecap="round"/><rect x="7" y="27" width="34" height="9" rx="3.5" stroke="#6fb1ee" stroke-width="2.5"/><circle cx="14.5" cy="31.5" r="1.8" fill="#6fb1ee"/><circle cx="33.5" cy="31.5" r="1.8" fill="#6fb1ee"/></svg>
+        <h3>Motor</h3>
+        <p>Cover for your car, van or truck — request your quotation online.</p>
+        <span class="lc-go">Get a Quote</span>
+      </a>
+      <a class="line-card lc-prop reveal" href="https://form.jotform.com/201953408200849" target="_blank" rel="noopener">
+        <svg viewBox="0 0 48 48" fill="none"><path d="M8 22L24 9l16 13" stroke="#c99aec" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 20v16h24V20" stroke="#c99aec" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="20.5" y="26" width="7" height="10" rx="1" fill="#c99aec"/></svg>
+        <h3>Property</h3>
+        <p>Buildings and contents protection for your home or business.</p>
+        <span class="lc-go">Get a Quote</span>
+      </a>
     </div>
   </div>
-</section>
 
-<!-- RESULTS -->
-<section class="results" id="results">
-  <div class="wrap">
-    <span class="eyebrow reveal" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#9CD1FF">Proven Results</span>
-    <h2 class="h2 reveal">Smiles we're proud of</h2>
-    <p class="lead reveal">Numbers that reflect two decades of gentle, high-quality dental care in our community.</p>
-    <div class="results-grid">
-      <div class="r-stat reveal"><div class="num" data-count="15000">0<span>+</span></div><p>Smiles transformed</p></div>
-      <div class="r-stat reveal"><div class="num" data-count="98">0<span>%</span></div><p>Patients recommend us</p></div>
-      <div class="r-stat reveal"><div class="num" data-count="20">0<span>+</span></div><p>Years of experience</p></div>
-      <div class="r-stat reveal"><div class="num" data-count="12">0<span></span></div><p>Specialist dentists on staff</p></div>
-    </div>
-  </div>
-</section>
-
-<!-- PRICING -->
-<section id="pricing">
-  <div class="wrap">
-    <span class="eyebrow reveal">Transparent Pricing</span>
-    <h2 class="h2 reveal">Simple plans, no surprises</h2>
-    <p class="lead reveal">Clear pricing with flexible payment options. Most insurance plans accepted.</p>
-    <div class="price-grid">
-      <div class="price reveal">
-        <div class="p-name">Checkup</div>
-        <div class="p-amount">$99<small> /visit</small></div>
-        <p class="p-desc">Everything you need to stay on top of your dental health.</p>
-        <ul>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#3D8CD5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Full dental exam</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#3D8CD5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Professional cleaning</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#3D8CD5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Digital X-rays</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#3D8CD5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Personal care plan</li>
-        </ul>
-        <a class="btn btn-ghost" href="#contact">Book Checkup</a>
+  <!-- HOW IT WORKS -->
+  <section id="how">
+    <div class="section-label reveal">How It Works</div>
+    <h2 class="reveal">Covered in three simple steps</h2>
+    <p class="section-sub reveal">No office visit needed — everything starts right here on your phone.</p>
+    <div class="steps">
+      <div class="step reveal">
+        <div class="step-num">1</div>
+        <h3>Choose your coverage</h3>
+        <p>Life, health, motor or property — pick the protection you need and open its form.</p>
       </div>
-      <div class="price featured reveal">
-        <div class="badge-pop">Popular</div>
-        <div class="p-name" style="color:#9CD1FF">Smile Bright</div>
-        <div class="p-amount">$249<small> /visit</small></div>
-        <p class="p-desc">Our signature whitening package for a visibly brighter smile.</p>
-        <ul>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#C6F06E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Everything in Checkup</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#C6F06E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Professional whitening</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#C6F06E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Polish & fluoride treatment</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#C6F06E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Take-home whitening kit</li>
-        </ul>
-        <a class="btn btn-accent" href="#contact">Book Smile Bright</a>
+      <div class="step reveal">
+        <div class="step-num">2</div>
+        <h3>Apply or request online</h3>
+        <p>Fill in a short secure form from any device. It goes straight to our branch team.</p>
       </div>
-      <div class="price reveal">
-        <div class="p-name">Family Plan</div>
-        <div class="p-amount">$39<small> /mo per member</small></div>
-        <p class="p-desc">Year-round coverage for the whole household — no insurance needed.</p>
-        <ul>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#3D8CD5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>2 checkups & cleanings / year</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#3D8CD5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Free emergency exams</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#3D8CD5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>20% off all treatments</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#3D8CD5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Kids under 6 free</li>
-        </ul>
-        <a class="btn btn-ghost" href="#contact">Join the Plan</a>
+      <div class="step reveal">
+        <div class="step-num">3</div>
+        <h3>We take it from there</h3>
+        <p>Our team confirms your details, finalizes your premium and gets you covered.</p>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- REVIEWS -->
-<section class="reviews" id="reviews">
-  <div class="wrap">
-    <span class="eyebrow reveal">Patient Reviews</span>
-    <h2 class="h2 reveal">Loved by our patients</h2>
-    <p class="lead reveal">Real words from the people behind the 98%.</p>
-    <div class="review-grid">
-      <div class="review reveal">
-        <div class="stars" aria-label="5 out of 5 stars">★★★★★</div>
-        <p>"I used to dread the dentist. The team here is so gentle and patient that my whole family actually looks forward to visits now."</p>
-        <div class="reviewer"><span class="avatar av1">SP</span><div><b>Sarah P.</b><span>Patient for 4 years</span></div></div>
+  <!-- QUOTES -->
+  <section id="quotes">
+    <div class="section-label reveal">Get a Quote</div>
+    <h2 class="reveal">Know your price before you commit</h2>
+    <p class="section-sub reveal">Free, no-obligation quotations — request yours online and we'll come back to you with your price.</p>
+
+    <div class="feature-banner reveal">
+      <div class="fb-text">
+        <h3>⚡ Xpress Life — Our Flagship Term Life Product</h3>
+        <p>Instant-issue term life with just 5 health questions and no medicals. Xpress Life has its own dedicated site with everything you need to know — or apply directly right now.</p>
       </div>
-      <div class="review reveal">
-        <div class="stars" aria-label="5 out of 5 stars">★★★★★</div>
-        <p>"Got the Smile Bright whitening before my wedding — the photos speak for themselves. Professional, quick and totally painless."</p>
-        <div class="reviewer"><span class="avatar av2">MJ</span><div><b>Marcus J.</b><span>Whitening patient</span></div></div>
-      </div>
-      <div class="review reveal">
-        <div class="stars" aria-label="5 out of 5 stars">★★★★★</div>
-        <p>"They fit me in same-day for a cracked tooth and had me fixed within the hour. Transparent pricing, zero surprises on the bill."</p>
-        <div class="reviewer"><span class="avatar av3">AR</span><div><b>Anita R.</b><span>Emergency visit</span></div></div>
-      </div>
+      <a class="btn btn-gold" href="https://xpresslifett.com" target="_blank" rel="noopener">Visit XpressLifeTT ↗</a>
+      <a class="btn btn-teal" href="https://form.jotform.com/203424506456048" target="_blank" rel="noopener">Apply Now</a>
     </div>
-  </div>
-</section>
 
-<!-- CONTACT -->
-<section id="contact">
-  <div class="wrap">
-    <span class="eyebrow reveal">Book a Visit</span>
-    <h2 class="h2 reveal">Ready for your best smile?</h2>
-    <p class="lead reveal">Request an appointment and our front desk will confirm within one business day.</p>
-    <div class="contact-grid">
-      <div class="c-info">
-        <div class="c-row reveal">
-          <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 21s-7-5.1-7-11a7 7 0 1114 0c0 5.9-7 11-7 11z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="2"/></svg></div>
-          <div><b>Visit us</b><span>123 Bright Smile Ave, Suite 200<br>Toronto, ON</span></div>
-        </div>
-        <div class="c-row reveal">
-          <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 005 5L15 13l5 2v4a2 2 0 01-2 2A15 15 0 013 6a2 2 0 012-2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></div>
-          <div><b>Call us</b><span>(555) 123-4567<br>Mon–Sat, 8am – 6pm</span></div>
-        </div>
-        <div class="c-row reveal">
-          <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="3" stroke="currentColor" stroke-width="2"/><path d="M3 8l9 6 9-6" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></div>
-          <div><b>Email</b><span>hello@dentalcaretoday.com</span></div>
-        </div>
-      </div>
-      <form class="reveal" onsubmit="return handleBooking(event)">
-        <div>
-          <label for="f-name">Full name</label>
-          <input id="f-name" name="name" type="text" placeholder="Jane Doe" required />
-        </div>
-        <div>
-          <label for="f-phone">Phone</label>
-          <input id="f-phone" name="phone" type="tel" placeholder="(555) 000-0000" required />
-        </div>
-        <div>
-          <label for="f-service">Service</label>
-          <select id="f-service" name="service">
-            <option>Checkup & Cleaning</option>
-            <option>Teeth Whitening</option>
-            <option>Implants / Restoration</option>
-            <option>Invisible Aligners</option>
-            <option>Emergency Visit</option>
-          </select>
-        </div>
-        <div>
-          <label for="f-msg">Anything we should know?</label>
-          <textarea id="f-msg" name="message" rows="3" placeholder="Preferred days, concerns…"></textarea>
-        </div>
-        <button class="btn btn-primary" type="submit">Request Appointment</button>
-        <p id="formNote" style="display:none;color:#2E7D32;font-weight:700;font-size:.9rem">✓ Thanks! We'll call you to confirm your visit.</p>
-      </form>
+    <div class="grid">
+      <a class="tile reveal" href="https://form.jotform.com/223376649264061" target="_blank" rel="noopener">
+        <div class="ico">🚗</div>
+        <h3>Motor Quotation</h3>
+        <p>Request a quote to insure your car, van or truck. Tell us about your vehicle and we'll come back with your price.</p>
+        <span class="go">Request Motor Quote</span>
+      </a>
+      <a class="tile reveal" href="https://form.jotform.com/201953408200849" target="_blank" rel="noopener">
+        <div class="ico">🏠</div>
+        <h3>Property Quotation</h3>
+        <p>Protect your home or business property. Request a quotation for buildings and contents coverage.</p>
+        <span class="go">Request Property Quote</span>
+      </a>
+      <a class="tile gold-tile reveal" href="https://form.jotform.com/203424506456048" target="_blank" rel="noopener">
+        <div class="ico">❤️</div>
+        <h3>Life Insurance</h3>
+        <p>Xpress Life term coverage — apply online in minutes and our team will confirm your premium with you.</p>
+        <span class="go">Apply Online</span>
+      </a>
     </div>
-  </div>
-</section>
+  </section>
 
+  <!-- APPLY / ENROLL -->
+  <section id="apply">
+    <div class="section-label reveal">Apply & Enroll</div>
+    <h2 class="reveal">Ready to get covered?</h2>
+    <p class="section-sub reveal">Complete your application online — securely, from any device. Your information goes straight to our branch for processing.</p>
+    <div class="grid">
+      <a class="tile reveal" href="https://form.jotform.com/203424506456048" target="_blank" rel="noopener">
+        <span class="badge">Most Popular</span>
+        <div class="ico">⚡</div>
+        <h3>Xpress Life Application</h3>
+        <p>Apply for instant-issue term life coverage. Five health questions, no medical exams — coverage sorted in one sitting.</p>
+        <span class="go">Apply Now</span>
+      </a>
+      <a class="tile reveal" href="https://form.jotform.com/210045513264040" target="_blank" rel="noopener">
+        <div class="ico">🩺</div>
+        <h3>Health Enrollment</h3>
+        <p>Enroll for health coverage with our online enrollment e-form.</p>
+        <span class="go">Enroll Online</span>
+      </a>
+      <a class="tile reveal" href="https://form.jotform.com/262153130319043" target="_blank" rel="noopener">
+        <div class="ico">🏢</div>
+        <h3>Key Person Protection</h3>
+        <p>Protect your business against the loss of a key employee or partner — client application and full document pack.</p>
+        <span class="go">Start Application</span>
+      </a>
+      <a class="tile reveal" href="https://form.jotform.com/261587989836079" target="_blank" rel="noopener">
+        <div class="ico">📋</div>
+        <h3>OAS Enrollment</h3>
+        <p>Guardian Life OAS enrollment — complete your enrollment form online.</p>
+        <span class="go">Enroll Online</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- EXISTING CLIENTS -->
+  <section id="clients">
+    <div class="section-label reveal">Existing Clients</div>
+    <h2 class="reveal">We're here after the sale too</h2>
+    <p class="section-sub reveal">Already insured with us? File a claim, respond to a premium notice, or tell us how we're doing.</p>
+    <div class="grid">
+      <a class="tile reveal" href="https://form.jotform.com/230135714666051" target="_blank" rel="noopener">
+        <div class="ico">🏥</div>
+        <h3>Health Claim E-Form</h3>
+        <p>Submit your health insurance claim online — no need to visit the branch to hand in paperwork.</p>
+        <span class="go">File a Claim</span>
+      </a>
+      <a class="tile reveal" href="https://form.jotform.com/232374116479056" target="_blank" rel="noopener">
+        <div class="ico">💬</div>
+        <h3>Premium Due Feedback</h3>
+        <p>Received a premium due notice? Let us know your payment status or ask a question about it here.</p>
+        <span class="go">Respond Online</span>
+      </a>
+      <a class="tile reveal" href="https://form.jotform.com/213058098808059" target="_blank" rel="noopener">
+        <div class="ico">⭐</div>
+        <h3>Client Welcome Survey</h3>
+        <p>New to the branch? Tell us about your experience so we can serve you better.</p>
+        <span class="go">Take the Survey</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- CAREERS -->
+  <section id="careers">
+    <div class="section-label reveal">Join Our Team</div>
+    <h2 class="reveal">Build a career with the branch</h2>
+    <p class="section-sub reveal">We're always looking for driven people — whether you're starting out or renewing your agent contract.</p>
+    <div class="grid">
+      <a class="tile reveal" href="https://form.jotform.com/242716704735055" target="_blank" rel="noopener">
+        <div class="ico">💼</div>
+        <h3>Job Application</h3>
+        <p>Apply to join the Ricky Rampersad Branch team. Submit your application and details online.</p>
+        <span class="go">Apply for a Role</span>
+      </a>
+      <a class="tile reveal" href="https://form.jotform.com/223234996117864" target="_blank" rel="noopener">
+        <div class="ico">📝</div>
+        <h3>Salesman Renewal</h3>
+        <p>Existing agents: complete your renewal application as a salesman online.</p>
+        <span class="go">Renew Contract</span>
+      </a>
+    </div>
+  </section>
+
+</div>
+
+<!-- FOOTER -->
 <footer>
   <div class="wrap">
-    <div class="f-grid">
-      <div>
-        <div class="logo">
-          <span class="logo-badge"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2C8 2 5 4.5 5 8c0 2 .6 3.4 1.2 5 .7 1.9 1 4.4 1.3 6.6.1 1 .8 1.6 1.5 1.4.8-.2 1.2-1.2 1.4-2.6.3-2 .7-3.4 1.6-3.4s1.3 1.4 1.6 3.4c.2 1.4.6 2.4 1.4 2.6.7.2 1.4-.4 1.5-1.4.3-2.2.6-4.7 1.3-6.6.6-1.6 1.2-3 1.2-5 0-3.5-3-6-7-6z" fill="currentColor"/></svg></span>
-          Dental Care Today
-        </div>
-        <p style="max-width:300px;font-size:.93rem">Modern, gentle dentistry for the whole family. Advanced technology, honest pricing, and smiles that last.</p>
-      </div>
-      <div>
-        <h4>Explore</h4>
-        <ul>
-          <li><a href="#about">About</a></li>
-          <li><a href="#results">Results</a></li>
-          <li><a href="#pricing">Pricing</a></li>
-          <li><a href="#reviews">Reviews</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4>Contact</h4>
-        <ul>
-          <li>(555) 123-4567</li>
-          <li>hello@dentalcaretoday.com</li>
-          <li>123 Bright Smile Ave, Toronto</li>
-        </ul>
-      </div>
+    <div class="f-brand">Ricky Rampersad Branch</div>
+    <p>Life · Health · Motor · Property</p>
+    <div class="f-links">
+      <a href="https://form.jotform.com/203424506456048" target="_blank" rel="noopener">Xpress Life Application</a>
+      <a href="#quotes">Quotes</a>
+      <a href="#clients">Client Services</a>
+      <a href="#careers">Careers</a>
     </div>
-    <div class="f-bottom">
-      <span>© 2026 Dental Care Today. All rights reserved.</span>
-      <span>Mon–Sat 8am–6pm · Emergency line 24/7</span>
-    </div>
+    <p>© 2026 Ricky Rampersad Branch. All rights reserved.</p>
   </div>
 </footer>
 
 <script>
-  // Mobile menu
-  const menuBtn = document.getElementById('menuBtn');
-  const navLinks = document.getElementById('navLinks');
-  menuBtn.addEventListener('click', () => {
-    const open = navLinks.classList.toggle('open');
-    menuBtn.setAttribute('aria-expanded', open);
-  });
-  navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
-    navLinks.classList.remove('open');
-    menuBtn.setAttribute('aria-expanded', 'false');
-  }));
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Scroll reveal
-  const io = new IntersectionObserver(entries => {
-    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
-  }, { threshold: 0.15 });
-  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
-
-  // Animated counters in the Results section
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const counterIO = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      const el = entry.target;
-      counterIO.unobserve(el);
-      const target = +el.dataset.count;
-      const suffix = el.querySelector('span');
-      if (reduceMotion) { el.firstChild.textContent = target.toLocaleString(); return; }
-      const dur = 1400, start = performance.now();
-      const tick = now => {
-        const p = Math.min((now - start) / dur, 1);
-        el.firstChild.textContent = Math.round(target * (1 - Math.pow(1 - p, 3))).toLocaleString();
-        if (p < 1) requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
-    });
-  }, { threshold: 0.4 });
-  document.querySelectorAll('[data-count]').forEach(el => counterIO.observe(el));
-
-  // Booking form (front-end only — shows confirmation)
-  function handleBooking(e) {
-    e.preventDefault();
-    document.getElementById('formNote').style.display = 'block';
-    e.target.querySelector('button').textContent = 'Request Sent ✓';
-    return false;
+  // Rotating headline word
+  var words = ['family', 'health', 'home', 'business', 'future'];
+  var rotator = document.getElementById('rotator');
+  if (!reduceMotion && rotator) {
+    var wi = 0;
+    setInterval(function () {
+      rotator.classList.add('out');
+      setTimeout(function () {
+        wi = (wi + 1) % words.length;
+        rotator.textContent = words[wi];
+        rotator.classList.remove('out');
+      }, 350);
+    }, 2600);
   }
+
+  // Scroll reveal with stagger
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.12 });
+  var reveals = document.querySelectorAll('.reveal');
+  reveals.forEach(function (el, i) {
+    el.style.transitionDelay = (i % 4) * 0.08 + 's';
+    io.observe(el);
+  });
+
+  // Animated stat counters
+  function animateCount(el) {
+    var target = +el.dataset.count;
+    if (reduceMotion) { el.textContent = target; return; }
+    var dur = 1200, start = performance.now();
+    function tick(now) {
+      var p = Math.min((now - start) / dur, 1);
+      el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+  var statIO = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { animateCount(e.target); statIO.unobserve(e.target); }
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('[data-count]').forEach(function (el) { statIO.observe(el); });
 </script>
 </body>
 </html>
