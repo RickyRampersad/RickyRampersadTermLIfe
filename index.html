@@ -17,8 +17,8 @@
     --text:   #edf4fb;
     --muted:  #a9bbcf;
     --line:   rgba(255,255,255,.08);
-    --teal:   #00C9A7;
-    --teal2:  #00a589;
+    --teal:   #00CFEA;
+    --teal2:  #00A8C5;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -32,7 +32,7 @@
     min-height: 100vh;
     overflow-x: hidden;
     background-image:
-      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0,201,167,.08), transparent),
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0,207,234,.08), transparent),
       linear-gradient(180deg, var(--bg) 0%, var(--bg2) 50%, var(--bg) 100%);
   }
 
@@ -72,9 +72,9 @@
   .nav-links a:hover { color: var(--text); background: rgba(255,255,255,.06); }
   .nav-links a.nav-cta {
     background: linear-gradient(135deg, var(--teal), var(--teal2));
-    color: #021a14; font-weight: 800;
+    color: #02141a; font-weight: 800;
   }
-  .nav-links a.nav-cta:hover { background: linear-gradient(135deg, #00dbb8, var(--teal)); }
+  .nav-links a.nav-cta:hover { background: linear-gradient(135deg, #25E0FF, var(--teal)); }
 
   @media (max-width: 720px) {
     .nav-inner { height: auto; flex-wrap: wrap; padding: 10px 16px; }
@@ -93,7 +93,7 @@
   }
   .orb-teal {
     width: 480px; height: 480px; top: -140px; right: -120px;
-    background: radial-gradient(circle, rgba(0,201,167,.35), transparent 70%);
+    background: radial-gradient(circle, rgba(0,207,234,.35), transparent 70%);
     animation: drift1 14s ease-in-out infinite;
   }
   .orb-gold {
@@ -124,13 +124,13 @@
   .kicker .dot {
     width: 7px; height: 7px; border-radius: 50%;
     background: var(--teal);
-    box-shadow: 0 0 0 0 rgba(0,201,167,.5);
+    box-shadow: 0 0 0 0 rgba(0,207,234,.5);
     animation: pulse 2s ease-out infinite;
   }
   @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(0,201,167,.5); }
-    70% { box-shadow: 0 0 0 10px rgba(0,201,167,0); }
-    100% { box-shadow: 0 0 0 0 rgba(0,201,167,0); }
+    0% { box-shadow: 0 0 0 0 rgba(0,207,234,.5); }
+    70% { box-shadow: 0 0 0 10px rgba(0,207,234,0); }
+    100% { box-shadow: 0 0 0 0 rgba(0,207,234,0); }
   }
 
   .hero h1 {
@@ -159,9 +159,9 @@
   }
   .btn-teal {
     background: linear-gradient(135deg, var(--teal), var(--teal2));
-    color: #021a14; box-shadow: 0 8px 28px rgba(0,201,167,.3);
+    color: #02141a; box-shadow: 0 8px 28px rgba(0,207,234,.3);
   }
-  .btn-teal:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(0,201,167,.45); }
+  .btn-teal:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(0,207,234,.45); }
   .btn-gold {
     background: linear-gradient(135deg, var(--gold), var(--gold2));
     color: #1d1503; box-shadow: 0 8px 28px rgba(239,194,75,.25);
@@ -221,12 +221,27 @@
     animation: spinBack 26s linear infinite;
   }
   .oi1 { top: -23px; left: calc(50% - 23px); border-color: rgba(239,194,75,.4); }
-  .oi2 { top: calc(50% - 23px); right: -23px; border-color: rgba(0,201,167,.4); }
-  .oi3 { bottom: -23px; left: calc(50% - 23px); border-color: rgba(0,201,167,.4); }
+  .oi2 { top: calc(50% - 23px); right: -23px; border-color: rgba(0,207,234,.4); }
+  .oi3 { bottom: -23px; left: calc(50% - 23px); border-color: rgba(0,207,234,.4); }
   .oi4 { top: calc(50% - 23px); left: -23px; border-color: rgba(239,194,75,.4); }
   @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
   @keyframes spinBack { from{transform:rotate(0)} to{transform:rotate(-360deg)} }
-  @media (max-width: 860px) { .orbit { width: 270px; height: 270px; } }
+  .orbit-inner {
+    width: 250px; height: 250px;
+    border-color: rgba(0,207,234,.22);
+    animation: spinRev 19s linear infinite;
+  }
+  .orbit-inner .orbit-ico {
+    width: 38px; height: 38px; font-size: 16px;
+    animation: spinRevBack 19s linear infinite;
+  }
+  .orbit-inner .oi1 { top: -19px; left: calc(50% - 19px); }
+  .orbit-inner .oi2 { top: calc(50% - 19px); right: -19px; }
+  .orbit-inner .oi3 { bottom: -19px; left: calc(50% - 19px); }
+  .orbit-inner .oi4 { top: calc(50% - 19px); left: -19px; }
+  @keyframes spinRev { from{transform:rotate(0)} to{transform:rotate(-360deg)} }
+  @keyframes spinRevBack { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+  @media (max-width: 860px) { .orbit { width: 270px; height: 270px; } .orbit-inner { width: 195px; height: 195px; } }
 
   .spark {
     position: absolute; border-radius: 50%;
@@ -292,7 +307,7 @@
   }
   .line-card:hover { transform: translateY(-6px); box-shadow: 0 18px 44px rgba(0,0,0,.45); }
   .lc-life   { background: linear-gradient(150deg, #3a2b06, #1b1503 70%); border-color: rgba(239,194,75,.35); }
-  .lc-health { background: linear-gradient(150deg, #05302a, #041a17 70%); border-color: rgba(0,201,167,.35); }
+  .lc-health { background: linear-gradient(150deg, #05302a, #041a17 70%); border-color: rgba(0,207,234,.35); }
   .lc-motor  { background: linear-gradient(150deg, #0e2a4a, #081627 70%); border-color: rgba(61,140,213,.4); }
   .lc-prop   { background: linear-gradient(150deg, #33203f, #170e1e 70%); border-color: rgba(178,120,220,.4); }
   .line-card svg { width: 42px; height: 42px; margin-bottom: 12px; }
@@ -356,7 +371,7 @@
     text-transform: uppercase; color: var(--teal);
     margin-bottom: 8px; display: flex; align-items: center; gap: 10px;
   }
-  .section-label::after { content: ''; flex: 1; height: 1px; background: rgba(0,201,167,.2); }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: rgba(0,207,234,.2); }
   section h2 {
     font-family: 'Montserrat', sans-serif; font-weight: 800;
     font-size: clamp(20px, 4vw, 28px); margin-bottom: 6px;
@@ -377,12 +392,12 @@
     transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
     position: relative;
   }
-  .tile:hover { transform: translateY(-5px); border-color: rgba(0,201,167,.45); box-shadow: 0 16px 40px rgba(0,0,0,.4); }
+  .tile:hover { transform: translateY(-5px); border-color: rgba(0,207,234,.45); box-shadow: 0 16px 40px rgba(0,0,0,.4); }
   .tile .ico {
     width: 44px; height: 44px; border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
     font-size: 21px;
-    background: rgba(0,201,167,.12); border: 1px solid rgba(0,201,167,.25);
+    background: rgba(0,207,234,.12); border: 1px solid rgba(0,207,234,.25);
     transition: transform .22s ease;
   }
   .tile:hover .ico { transform: scale(1.12) rotate(-4deg); }
@@ -405,8 +420,8 @@
     position: absolute; top: 16px; right: 16px;
     font-family: 'Montserrat', sans-serif; font-size: 9px; font-weight: 800;
     letter-spacing: 1.5px; text-transform: uppercase;
-    background: rgba(0,201,167,.15); color: var(--teal);
-    border: 1px solid rgba(0,201,167,.3);
+    background: rgba(0,207,234,.15); color: var(--teal);
+    border: 1px solid rgba(0,207,234,.3);
     padding: 4px 9px; border-radius: 50px;
   }
 
@@ -483,7 +498,7 @@
       <a href="#clients">Clients</a>
       <a href="#careers">Careers</a>
       <a href="#portals">Portals</a>
-      <a class="nav-cta" href="#quotes">Get a Quote</a>
+      <a class="nav-cta" href="#" onclick="openProfiler(); return false;">Get a Quote</a>
     </div>
   </div>
 </nav>
@@ -498,15 +513,15 @@
       <h1>Protecting your
         <span class="rotator-line"><span class="rotator" id="rotator">family</span></span>
       </h1>
-      <p class="sub">Life, health, motor and property coverage — with instant online quotes and applications you can finish from your phone in minutes. No medicals for Xpress Life.</p>
+      <p class="sub">Life, critical illness, health, pensions, motor, property and employee benefits — with online quotes and applications you can start from your phone in minutes.</p>
       <div class="hero-actions">
-        <a class="btn btn-teal" href="#quotes">Request a Quote</a>
-        <a class="btn btn-gold" href="https://xpresslifett.com" target="_blank" rel="noopener">Xpress Life ↗</a>
+        <button class="btn btn-teal" onclick="openProfiler()">Request a Quote</button>
+        <a class="btn btn-gold" href="https://factfind360.com" target="_blank" rel="noopener">Needs Analysis ↗</a>
       </div>
       <div class="hero-badges">
-        <span class="hb"><b>⚡</b> Instant issue</span>
-        <span class="hb"><b>✓</b> 5 health questions</span>
-        <span class="hb"><b>🔒</b> Rates locked 20 yrs</span>
+        <span class="hb"><b>⚡</b> Fast online quotes</span>
+        <span class="hb"><b>✓</b> Real advisors behind every policy</span>
+        <span class="hb"><b>🔒</b> Secure online forms</span>
       </div>
     </div>
     <div class="hero-art" aria-hidden="true">
@@ -516,6 +531,12 @@
         <span class="orbit-ico oi2">🚗</span>
         <span class="orbit-ico oi3">🏠</span>
         <span class="orbit-ico oi4">🩺</span>
+      </div>
+      <div class="orbit orbit-inner">
+        <span class="orbit-ico oi1">🎗️</span>
+        <span class="orbit-ico oi2">🏦</span>
+        <span class="orbit-ico oi3">👥</span>
+        <span class="orbit-ico oi4">🎓</span>
       </div>
       <span class="spark sp1"></span><span class="spark sp2"></span>
       <span class="spark sp3"></span><span class="spark sp4"></span>
@@ -532,12 +553,12 @@
         <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
       <div class="float-card fc1">
-        <div class="fc-num">TT$500K</div>
-        <div class="fc-lbl">max Xpress Life cover</div>
+        <div class="fc-num">8+</div>
+        <div class="fc-lbl">product lines covered</div>
       </div>
       <div class="float-card fc2">
-        <div class="fc-num">0</div>
-        <div class="fc-lbl">medical exams required</div>
+        <div class="fc-num">24/7</div>
+        <div class="fc-lbl">start online anytime</div>
       </div>
     </div>
   </div>
@@ -546,9 +567,9 @@
 <!-- STATS BAR -->
 <div class="stats">
   <div class="stats-inner">
-    <div class="stat"><div class="num"><span id="c1" data-count="4">0</span></div><div class="lbl">Lines of coverage</div></div>
+    <div class="stat"><div class="num"><span id="c1" data-count="8">0</span><span>+</span></div><div class="lbl">Product lines</div></div>
     <div class="stat"><div class="num"><span id="c2" data-count="25">0</span><span>+</span></div><div class="lbl">Online forms & tools</div></div>
-    <div class="stat"><div class="num"><span id="c3" data-count="5">0</span></div><div class="lbl">Health questions — that's all</div></div>
+    <div class="stat"><div class="num"><span id="c3" data-count="4">0</span></div><div class="lbl">Quote systems live — more coming</div></div>
     <div class="stat"><div class="num">24<span>/7</span></div><div class="lbl">Apply anytime, any device</div></div>
   </div>
 </div>
@@ -558,8 +579,8 @@
   <!-- COVERAGE LINES -->
   <div class="lines-band" id="lines">
     <div class="section-label reveal">What We Cover</div>
-    <h2 class="reveal" style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:clamp(20px,4vw,28px);margin-bottom:6px">Four lines. One branch.</h2>
-    <p class="section-sub reveal">Whatever you're protecting, we have a policy for it — and an online way to start today.</p>
+    <h2 class="reveal" style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:clamp(20px,4vw,28px);margin-bottom:6px">Every protection. One branch.</h2>
+    <p class="section-sub reveal">Life, critical illness, health, pensions, education, investments, motor, property and employee benefits — whatever you're protecting, we have a policy for it.</p>
     <div class="lines-grid">
       <a class="line-card lc-life reveal" href="https://xpresslifett.com" target="_blank" rel="noopener">
         <svg viewBox="0 0 48 48" fill="none"><path d="M24 6L40 13v10c0 11-7 17.5-16 21C15 40.5 8 34 8 23V13L24 6z" stroke="#efc24b" stroke-width="2.5" stroke-linejoin="round"/><path d="M24 32s-7-4.4-9.3-8.7c-1.3-2.5.2-5.8 3.4-5.8 2 0 3.5 1.1 5.9 3.2 2.4-2.1 3.9-3.2 5.9-3.2 3.2 0 4.7 3.3 3.4 5.8C31 27.6 24 32 24 32z" fill="#efc24b"/></svg>
@@ -568,7 +589,7 @@
         <span class="lc-go">Xpress Life ↗</span>
       </a>
       <a class="line-card lc-health reveal" href="https://form.jotform.com/210045513264040" target="_blank" rel="noopener">
-        <svg viewBox="0 0 48 48" fill="none"><rect x="8" y="8" width="32" height="32" rx="9" stroke="#00C9A7" stroke-width="2.5"/><path d="M24 16v16M16 24h16" stroke="#00C9A7" stroke-width="3.5" stroke-linecap="round"/></svg>
+        <svg viewBox="0 0 48 48" fill="none"><rect x="8" y="8" width="32" height="32" rx="9" stroke="#00CFEA" stroke-width="2.5"/><path d="M24 16v16M16 24h16" stroke="#00CFEA" stroke-width="3.5" stroke-linecap="round"/></svg>
         <h3>Health</h3>
         <p>Individual and group health coverage, with online enrollment and claims.</p>
         <span class="lc-go">Enroll Online</span>
@@ -620,14 +641,13 @@
 
     <div class="feature-banner reveal">
       <div class="fb-text">
-        <h3>⚡ Xpress Life — Our Flagship Term Life Product</h3>
-        <p>Instant-issue term life with just 5 health questions and no medicals. Xpress Life has its own dedicated site with everything you need to know — or apply directly right now.</p>
+        <h3>⚡ Xpress Life — Specialized Instant-Issue Cover</h3>
+        <p>A specialized product for a specific market: fast, simplified term life for qualifying applicants — 5 health questions, no medicals. It has its own dedicated site.</p>
       </div>
       <a class="btn btn-gold" href="https://xpresslifett.com" target="_blank" rel="noopener">Visit XpressLifeTT ↗</a>
-      <a class="btn btn-teal" href="https://form.jotform.com/203424506456048" target="_blank" rel="noopener">Apply Now</a>
     </div>
 
-    <div class="feature-banner reveal" style="background:linear-gradient(135deg, rgba(0,201,167,.12), rgba(0,201,167,.04)); border-color:rgba(0,201,167,.3)">
+    <div class="feature-banner reveal" style="background:linear-gradient(135deg, rgba(0,207,234,.12), rgba(0,207,234,.04)); border-color:rgba(0,207,234,.3)">
       <div class="fb-text">
         <h3 style="color:var(--teal)">🧭 Not sure what coverage you need?</h3>
         <p>FactFind360 is our cutting-edge needs analysis. Answer a few questions about your life, family and finances — it shows you exactly what protection fits and where your gaps are.</p>
@@ -817,11 +837,101 @@
   </div>
 </footer>
 
+<!-- QUOTE PROFILER MODAL -->
+<div id="profiler" style="display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(4,10,17,.82); backdrop-filter:blur(6px); padding:16px;">
+  <div style="width:min(560px,100%); max-height:88vh; overflow-y:auto; background:linear-gradient(160deg,var(--card),var(--card2)); border:1px solid rgba(0,207,234,.3); border-radius:22px; padding:28px;">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+      <button id="pfBack" onclick="pfHome()" style="display:none; background:none; border:none; color:var(--teal); cursor:pointer; font-family:'Montserrat',sans-serif; font-weight:700; font-size:13px;">← Back</button>
+      <button onclick="closeProfiler()" style="margin-left:auto; background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--muted); cursor:pointer; border-radius:50%; width:32px; height:32px; font-size:15px;">✕</button>
+    </div>
+    <h3 id="pfTitle" style="font-family:'Montserrat',sans-serif; font-weight:800; font-size:20px; margin-bottom:4px;"></h3>
+    <p id="pfSub" style="font-size:13px; color:var(--muted); margin-bottom:18px; line-height:1.6;"></p>
+    <div id="pfOptions" style="display:grid; gap:10px;"></div>
+  </div>
+</div>
+
 <script>
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // ── QUOTE PROFILER ──
+  var PF = {
+    home: {
+      title: 'What would you like to protect?',
+      sub: "Pick one and we'll take you straight to the right quote.",
+      options: [
+        { ico: '❤️', label: 'My life & family', desc: 'Life insurance protection', go: 'life' },
+        { ico: '🎗️', label: 'Against critical illness', desc: 'Lump-sum cover if serious illness strikes', url: 'https://form.jotform.com/261288212990057' },
+        { ico: '🩺', label: 'My health', desc: 'Medical & health coverage', go: 'health' },
+        { ico: '🚗', label: 'My vehicle', desc: 'Car, van or truck insurance', url: 'https://form.jotform.com/223376649264061' },
+        { ico: '🏠', label: 'My home or property', desc: 'Buildings & contents cover', url: 'https://form.jotform.com/201953408200849' },
+        { ico: '👥', label: 'My business & employees', desc: 'Key person & group benefits', go: 'business' },
+        { ico: '🏦', label: 'My retirement', desc: 'Pensions & long-term savings', go: 'retirement' }
+      ]
+    },
+    life: {
+      title: 'Life insurance — which fits you?',
+      sub: 'Two ways to get covered, depending on what you need.',
+      options: [
+        { ico: '⚡', label: 'Fast, simplified cover — Xpress Life', desc: 'Specialized instant-issue product: 5 health questions, no medicals. For qualifying applicants.', url: 'https://xpresslifett.com' },
+        { ico: '🧭', label: 'Full life & investment plan', desc: 'Life Evolution and comprehensive planning — start with our FactFind360 needs analysis.', url: 'https://factfind360.com' }
+      ]
+    },
+    health: {
+      title: 'Health coverage',
+      sub: 'Our online health quote system is being rebuilt. In the meantime:',
+      options: [
+        { ico: '🩺', label: 'Enroll for health coverage', desc: 'Complete the health enrollment e-form and our team will guide you.', url: 'https://form.jotform.com/210045513264040' },
+        { ico: '🧭', label: 'Not sure what you need?', desc: 'Run the FactFind360 needs analysis first.', url: 'https://factfind360.com' }
+      ]
+    },
+    business: {
+      title: 'Business & employee protection',
+      sub: 'Protection for your company and your people.',
+      options: [
+        { ico: '🏢', label: 'Key Person Protection', desc: 'Protect the business against the loss of a key employee or partner.', url: 'https://form.jotform.com/262153130319043' },
+        { ico: '👥', label: 'Group Health & Life enrollment', desc: 'Enroll your employees in group coverage.', url: 'https://form.jotform.com/211671623815858' },
+        { ico: '🧭', label: 'Full employee benefits review', desc: 'Quotes system in build — start with a FactFind360 needs analysis.', url: 'https://factfind360.com' }
+      ]
+    },
+    retirement: {
+      title: 'Retirement & pensions',
+      sub: 'Our pension quote system is in build. Start planning today:',
+      options: [
+        { ico: '🧭', label: 'Retirement needs analysis', desc: 'FactFind360 shows your retirement gap and what it takes to close it.', url: 'https://factfind360.com' },
+        { ico: '💬', label: 'Talk to the branch', desc: 'Send us your details through the client welcome form and an advisor will reach out.', url: 'https://form.jotform.com/213058098808059' }
+      ]
+    }
+  };
+
+  function pfRender(key) {
+    var s = PF[key];
+    document.getElementById('pfTitle').textContent = s.title;
+    document.getElementById('pfSub').textContent = s.sub;
+    document.getElementById('pfBack').style.display = key === 'home' ? 'none' : 'inline';
+    var box = document.getElementById('pfOptions');
+    box.innerHTML = '';
+    s.options.forEach(function (o) {
+      var el = document.createElement(o.url ? 'a' : 'button');
+      el.style.cssText = 'display:flex;align-items:center;gap:14px;text-align:left;background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:14px;padding:14px 16px;cursor:pointer;text-decoration:none;color:var(--text);transition:border-color .15s;font-family:inherit;font-size:inherit;width:100%';
+      el.onmouseover = function(){ el.style.borderColor = 'rgba(0,207,234,.5)'; };
+      el.onmouseout = function(){ el.style.borderColor = ''; };
+      if (o.url) { el.href = o.url; el.target = '_blank'; el.rel = 'noopener'; }
+      else { el.onclick = function () { pfRender(o.go); }; }
+      el.innerHTML = '<span style="font-size:22px;flex-shrink:0">' + o.ico + '</span>' +
+        '<span><b style="display:block;font-family:Montserrat,sans-serif;font-size:14px;font-weight:700">' + o.label + '</b>' +
+        '<span style="font-size:12px;color:var(--muted);line-height:1.5">' + o.desc + '</span></span>' +
+        '<span style="margin-left:auto;color:var(--teal);font-weight:700">→</span>';
+      box.appendChild(el);
+    });
+  }
+  function openProfiler() { pfRender('home'); document.getElementById('profiler').style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+  function closeProfiler() { document.getElementById('profiler').style.display = 'none'; document.body.style.overflow = ''; }
+  function pfHome() { pfRender('home'); }
+  document.getElementById('profiler').addEventListener('click', function (e) { if (e.target === this) closeProfiler(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeProfiler(); });
+
   // Rotating headline word
-  var words = ['family', 'health', 'home', 'business', 'future'];
+  var words = ['family', 'home', 'business', 'property', 'employees', 'health', 'future'];
   var rotator = document.getElementById('rotator');
   if (!reduceMotion && rotator) {
     var wi = 0;
