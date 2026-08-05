@@ -165,7 +165,7 @@
     <div class="sub">Guardian Life of the Caribbean &middot; Sales Career Path (Amended April 2026)</div>
   </div>
   <div class="userchip hidden" id="userChip">
-    <span><b id="chipName"></b> <span id="chipCode" style="opacity:.7"></span></span>
+    <span>Agent: <b id="chipName"></b></span>
     <button onclick="logout()">Sign out</button>
   </div>
 </header>
@@ -176,11 +176,7 @@
   <section id="viewLogin" class="login-wrap">
     <div class="card">
       <h2>Agent Sign In</h2>
-      <p>Log in with your agent code. Your career tracker is saved against your code on this device, so you can return and update it any time.</p>
-      <div class="field">
-        <label for="loginCode">Agent code</label>
-        <input type="text" id="loginCode" placeholder="e.g. GL-4527" autocomplete="off" style="text-transform:uppercase">
-      </div>
+      <p>Enter your name to open your career tracker. Your answers are saved on this device so you can return and update them any time.</p>
       <div class="field">
         <label for="loginName">Your name</label>
         <input type="text" id="loginName" placeholder="e.g. Ricky Rampersad" autocomplete="name">
@@ -496,70 +492,64 @@ function gapClients(p){
 }
 function esc(s){const d=document.createElement("div");d.textContent=s==null?"":String(s);return d.innerHTML}
 
-/* ===== storage — profiles are keyed by agent code ===== */
+/* ===== storage — profiles are keyed by agent name (demo mode) ===== */
 const STORE_KEY="glCareerPathAgentsV2";
 function loadStore(){try{return JSON.parse(localStorage.getItem(STORE_KEY))||{}}catch(e){return{}}}
 function saveStore(s){localStorage.setItem(STORE_KEY,JSON.stringify(s))}
 
-let currentCode=null;    // agent code (login key)
+let currentKey=null;     // login key (agent name)
 let profile=null;        // answers object (includes name, goal)
 let currentPosId=null;
 
 /* ===== login flow ===== */
 function renderReturning(){
   const store=loadStore();
-  const codes=Object.keys(store);
+  const keys=Object.keys(store);
   const box=document.getElementById("returningBox");
   const list=document.getElementById("agentList");
-  if(!codes.length){box.classList.add("hidden");return}
+  if(!keys.length){box.classList.add("hidden");return}
   box.classList.remove("hidden");
   list.innerHTML="";
-  codes.sort().forEach(c=>{
-    const p=store[c]||{};
+  keys.sort().forEach(k=>{
+    const p=store[k]||{};
     const row=document.createElement("div");row.className="agent-row";
     const open=document.createElement("button");open.className="open";
-    open.textContent=(p.name?p.name+" · ":"")+c;
-    open.onclick=()=>{openAgent(c)};
+    open.textContent=p.name||k;
+    open.onclick=()=>{openAgent(k)};
     const del=document.createElement("button");del.className="del";del.textContent="remove";
-    del.onclick=()=>{if(confirm(`Remove saved profile for agent code ${c}?`)){const s=loadStore();delete s[c];saveStore(s);renderReturning()}};
+    del.onclick=()=>{if(confirm(`Remove saved profile for ${p.name||k}?`)){const s=loadStore();delete s[k];saveStore(s);renderReturning()}};
     row.appendChild(open);row.appendChild(del);list.appendChild(row);
   });
 }
 function login(){
-  const code=document.getElementById("loginCode").value.trim().toUpperCase();
   const name=document.getElementById("loginName").value.trim();
-  if(!code){alert("Please enter your agent code to log in.");return}
+  if(!name){alert("Please enter your name to continue.");return}
   const store=loadStore();
-  if(!store[code]){
-    if(!name){alert("First time with this agent code — please enter your name too.");return}
-    store[code]={name:name,currentPosition:document.getElementById("loginPos").value};
+  if(!store[name]){
+    store[name]={name:name,currentPosition:document.getElementById("loginPos").value};
     saveStore(store);
-  }else if(name){
-    store[code].name=name;saveStore(store);
   }
-  openAgent(code);
+  openAgent(name);
 }
-function openAgent(code){
+function openAgent(key){
   const store=loadStore();
-  currentCode=code;
-  profile=store[code]||{};
-  document.getElementById("chipName").textContent=profile.name||"Agent";
-  document.getElementById("chipCode").textContent="("+code+")";
+  currentKey=key;
+  profile=store[key]||{};
+  document.getElementById("chipName").textContent=profile.name||key;
   document.getElementById("userChip").classList.remove("hidden");
   showPath();
 }
 function logout(){
-  currentCode=null;profile=null;currentPosId=null;
+  currentKey=null;profile=null;currentPosId=null;
   document.getElementById("userChip").classList.add("hidden");
-  document.getElementById("loginCode").value="";
   document.getElementById("loginName").value="";
   switchView("viewLogin");
   renderReturning();
 }
 function saveProfile(){
-  if(!currentCode)return;
+  if(!currentKey)return;
   const store=loadStore();
-  store[currentCode]=profile;
+  store[currentKey]=profile;
   saveStore(store);
 }
 
