@@ -103,6 +103,48 @@ inside `renewal/index.html`. Add/remove entries — each has an emoji icon, a ti
 and a short pitch. Client interest arrives in the Responses tab and in every
 instruction email.
 
+## Property (home & commercial) renewals
+
+Property lives in the **same schedule tab** as motor — a client with motor and home
+gets **one link showing both** (tokens are shared per client account name).
+
+1. Open [`data/property-schedule.csv`](data/property-schedule.csv) — 44 property
+   risks exported from Salesforce, with the same columns as your schedule (plus
+   `Risk Location` and `SF Last Renewal` at the end for reference).
+2. In the sheet: **File → Import → Upload → Append to current sheet** (with the
+   schedule tab open), or copy-paste the rows below your motor rows.
+3. Run **📋 Renewals → Refresh days left & portal links** — property rows get
+   tokens automatically, matching existing motor tokens where the client account
+   name is identical.
+
+⚠️ Renewal dates that had already passed were **rolled forward one year** (the
+original Salesforce date is in the `SF Last Renewal` column) — please sanity-check
+them, and note most property rows have no email yet (16 of 44 were matched from
+your motor book).
+
+## Corporate fleet portal (RPM, NU-IRON, …)
+
+Corporate clients with multiple vehicles sign in at
+`https://YOUR-SITE.netlify.app/renewal/corporate.html` with their **company access
+code** — the same token as their schedule rows. They see every vehicle (reg, make,
+model, status, premium), renewal history by cycle, upcoming renewals, balances,
+a print/PDF button, and a fleet instruction form that flows to Guardian like
+everything else.
+
+1. In the Google Sheet, create a tab named exactly **`Fleet`**.
+2. Import [`data/fleet-register.csv`](data/fleet-register.csv) into it
+   (File → Import → Upload → Insert new sheet, then rename to `Fleet`) — 400 rows
+   covering RPM Technical Services, RPM Express Couriers and NU-IRON, including
+   multi-year history from Salesforce.
+3. Paste the Apps Script `/exec` URL into `renewal/corporate.html`'s `CONFIG.API_URL`
+   (same URL as `index.html`).
+4. Their access codes are in the schedule's Token column — e.g. give RPM and
+   NU-IRON their codes by email or phone.
+
+Keeping it current: when the fleet changes, just edit the `Fleet` tab — add a row
+per vehicle per renewal cycle. The portal groups history by renewal date
+automatically.
+
 ## Adding new clients / policies
 
 Just add a row to the sheet as you do now. The next daily run (or running

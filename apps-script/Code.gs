@@ -51,8 +51,9 @@ var CONFIG = {
   DAILY_HOUR: 8,       // hour of day (0-23) the daily check runs
 
   // --- Sheet -------------------------------------------------------------
-  SCHEDULE_SHEET: '',        // '' = first sheet in the spreadsheet
+  SCHEDULE_SHEET: '',        // '' = auto-detect the tab with the schedule headers
   RESPONSES_SHEET: 'Responses',
+  FLEET_SHEET: 'Fleet',      // optional tab: per-vehicle register for corporate clients
 };
 
 // Column headers exactly as they appear in the sheet.
@@ -368,11 +369,13 @@ function doGet(e) {
     var data = s.sheet.getDataRange().getValues();
     var policies = [];
     var client = '', contact = '', email = '', mobile = '';
+    var accounts = {};
 
     for (var r = s.headerRow; r < data.length; r++) {
       var row = data[r];
       if (String(row[s.col[COL.TOKEN]] || '').trim() !== token) continue;
       var info = rowInfo_(row, s);
+      if (info.client) accounts[info.client] = true;
       client = client || info.client;
       contact = contact || info.contact;
       email = email || info.email;
@@ -392,6 +395,7 @@ function doGet(e) {
     if (policies.length) {
       policies.sort(function (a, b) { return (a.nextDue || '9999').localeCompare(b.nextDue || '9999'); });
       out = { found: true, client: client, contact: contact, email: email, mobile: mobile, policies: policies };
+      out.fleet = getFleetRows_(Object.keys(accounts)); // [] unless a Fleet tab exists
     }
   }
   return ContentService.createTextOutput(JSON.stringify(out))
@@ -555,6 +559,43 @@ function rowInfo_(row, s) {
     email: String(row[s.col[COL.EMAIL]] || '').trim(),
     portalLink: String(row[s.col[COL.PORTAL_LINK]] || '').trim(),
   };
+}
+
+/**
+ * Reads the optional "Fleet" tab (per-vehicle register for corporate clients).
+ * Expected headers: Client Account | Vehicle Reg | Make | Model | Status |
+ * Renewal Date | Policy # | Premium (TT$). Returns [] if the tab is missing.
+ */
+function getFleetRows_(accountNames) {
+  try {
+    var sh = SpreadsheetApp.getActive().getSheetByName(CONFIG.FLEET_SHEET);
+    if (!sh || sh.getLastRow() < 2) return [];
+    var data = sh.getDataRange().getValues();
+    var idx = {};
+    data[0].forEach(function (h, i) { if (h) idx[String(h).trim()] = i; });
+    if (!('Client Account' in idx)) return [];
+    var wanted = {};
+    (accountNames || []).forEach(function (n) { wanted[String(n).trim().toUpperCase()] = true; });
+    var out = [];
+    for (var r = 1; r < data.length; r++) {
+      var acct = String(data[r][idx['Client Account']] || '').trim();
+      if (!acct || !wanted[acct.toUpperCase()]) continue;
+      var rd = data[r][idx['Renewal Date']];
+      out.push({
+        account: acct,
+        reg: String(data[r][idx['Vehicle Reg']] || ''),
+        make: String(data[r][idx['Make']] || ''),
+        model: String(data[r][idx['Model']] || ''),
+        status: String(data[r][idx['Status']] || ''),
+        renewal: rd instanceof Date ? isoDate_(rd) : String(rd || ''),
+        policyNo: String(data[r][idx['Policy #']] || ''),
+        premium: num_(data[r][idx['Premium (TT$)']]),
+      });
+    }
+    return out;
+  } catch (e) {
+    return [];
+  }
 }
 
 function ensureResponsesSheet_() {
