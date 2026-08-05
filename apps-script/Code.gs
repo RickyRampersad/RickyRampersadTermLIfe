@@ -54,6 +54,7 @@ var CONFIG = {
   SCHEDULE_SHEET: '',        // '' = auto-detect the tab with the schedule headers
   RESPONSES_SHEET: 'Responses',
   FLEET_SHEET: 'Fleet',      // optional tab: per-vehicle register for corporate clients
+  CLIENTS_SHEET: 'Clients',  // client directory: one row per client, holds the access code
 };
 
 // Column headers exactly as they appear in the sheet.
@@ -95,6 +96,7 @@ function onOpen() {
     .addItem('▶ Send renewal email — selected row(s)', 'sendToSelectedRows')
     .addItem('📤 Send to everyone due in the next ' + CONFIG.REMINDER_DAYS + ' days', 'sendToUpcoming')
     .addSeparator()
+    .addItem('👥 Sync client directory', 'syncClients')
     .addItem('🔄 Refresh days left & portal links', 'refreshSheet')
     .addItem('✉ Preview the email (sends a sample to you)', 'testReminderEmail')
     .addSeparator()
@@ -180,6 +182,11 @@ function sendRows_(s, data, rowNumbers) {
   rowNumbers.sort(function (a, b) { return a - b; }).forEach(function (rowNum) {
     var row = data[rowNum - 1];
     var info = rowInfo_(row, s);
+    if (!info.email && info.client) {
+      // Fall back to the client directory's email for this account.
+      var d = lookupClientByAccount_(info.client);
+      if (d && d.email) info.email = d.email;
+    }
     if (!info.email || /@(example|unknown)/i.test(info.email)) {
       skipped.push((info.client || 'Row ' + rowNum) + ' — no usable email');
       return;
@@ -240,29 +247,141 @@ function removeTriggers_() {
   });
 }
 
-/** Generates a token + portal link for any row missing one. Safe to re-run. */
-function fillTokensAndLinks() {
+/** Kept for compatibility — the client directory is now the source of truth. */
+function fillTokensAndLinks() { syncClients(); }
+
+/**
+ * CLIENT DIRECTORY — builds/updates the "Clients" tab from the schedule and
+ * pushes access codes back onto every schedule row. One row per client:
+ *   Client Account | Contact | Email | Mobile | Access Code | Portal Link | Policies
+ *
+ * - New client accounts found in the schedule are added automatically.
+ * - You can also add a client (or fix an email/mobile) directly on the Clients
+ *   tab — the directory's contact details win over the schedule's.
+ * - The Access Code is the client's login for the portal (and the corporate
+ *   fleet portal). Same client account name = same code across motor, property
+ *   and fleet. Safe to re-run any time.
+ */
+function syncClients() {
   var s = getSchedule_();
   var data = s.sheet.getDataRange().getValues();
-  var byClient = {}; // same client account -> same token
+  var cs = ensureClientsSheet_();
+  var cdata = cs.getDataRange().getValues();
+  var cidx = {};
+  cdata[0].forEach(function (h, i) { if (h) cidx[String(h).trim()] = i; });
 
+  // Existing directory rows keyed by uppercased account name.
+  var dir = {}, used = {};
+  for (var r = 1; r < cdata.length; r++) {
+    var a = String(cdata[r][cidx['Client Account']] || '').trim();
+    if (!a) continue;
+    var code = String(cdata[r][cidx['Access Code']] || '').trim();
+    dir[a.toUpperCase()] = { row: r, code: code };
+    if (code) used[code] = true;
+  }
+
+  // Group schedule rows by client account.
+  var groups = {};
   for (var r = s.headerRow; r < data.length; r++) {
     var row = data[r];
-    var client = String(row[s.col[COL.CLIENT]] || '').trim();
-    if (!client && !row[s.col[COL.NEXT_DUE]]) continue;
+    var name = String(row[s.col[COL.CLIENT]] || '').trim();
+    if (!name) continue;
+    var u = name.toUpperCase();
+    var g = groups[u] = groups[u] || { name: name, contact: '', email: '', mobile: '', count: 0, token: '' };
+    g.count++;
+    g.contact = g.contact || String(row[s.col[COL.CONTACT]] || '').trim();
+    g.email = g.email || String(row[s.col[COL.EMAIL]] || '').trim();
+    g.mobile = g.mobile || String(row[s.col[COL.MOBILE]] || '').trim();
+    g.token = g.token || String(row[s.col[COL.TOKEN]] || '').trim();
+  }
 
-    var token = String(row[s.col[COL.TOKEN]] || '').trim();
-    if (!token) {
-      token = byClient[client] || makeToken_();
-      s.sheet.getRange(r + 1, s.col[COL.TOKEN] + 1).setValue(token);
+  // Upsert every client into the directory.
+  Object.keys(groups).forEach(function (u) {
+    var g = groups[u];
+    var code = (dir[u] && dir[u].code) || g.token;
+    if (!code || (used[code] && !(dir[u] && dir[u].code === code))) {
+      do { code = makeToken_(); } while (used[code]);
     }
-    if (client) byClient[client] = token;
+    used[code] = true;
+    g.code = code;
+    var link = CONFIG.PORTAL_BASE + encodeURIComponent(code);
 
-    var link = CONFIG.PORTAL_BASE + encodeURIComponent(token);
-    if (String(row[s.col[COL.PORTAL_LINK]] || '') !== link) {
+    if (dir[u]) {
+      var rr = dir[u].row + 1;
+      if (dir[u].code !== code) cs.getRange(rr, cidx['Access Code'] + 1).setValue(code);
+      cs.getRange(rr, cidx['Portal Link'] + 1).setValue(link);
+      cs.getRange(rr, cidx['Policies'] + 1).setValue(g.count);
+      // Fill blanks only — the directory's own values always win.
+      ['Contact', 'Email', 'Mobile'].forEach(function (h, i) {
+        var v = [g.contact, g.email, g.mobile][i];
+        if (v && !String(cdata[dir[u].row][cidx[h]] || '').trim()) cs.getRange(rr, cidx[h] + 1).setValue(v);
+      });
+    } else {
+      cs.appendRow([g.name, g.contact, g.email, g.mobile, code, link, g.count]);
+    }
+  });
+
+  // Push codes + links back onto the schedule rows.
+  for (var r = s.headerRow; r < data.length; r++) {
+    var name = String(data[r][s.col[COL.CLIENT]] || '').trim();
+    if (!name) continue;
+    var g = groups[name.toUpperCase()];
+    if (!g) continue;
+    if (String(data[r][s.col[COL.TOKEN]] || '').trim() !== g.code) {
+      s.sheet.getRange(r + 1, s.col[COL.TOKEN] + 1).setValue(g.code);
+    }
+    var link = CONFIG.PORTAL_BASE + encodeURIComponent(g.code);
+    if (String(data[r][s.col[COL.PORTAL_LINK]] || '') !== link) {
       s.sheet.getRange(r + 1, s.col[COL.PORTAL_LINK] + 1).setValue(link);
     }
   }
+}
+
+function ensureClientsSheet_() {
+  var ss = SpreadsheetApp.getActive();
+  var sh = ss.getSheetByName(CONFIG.CLIENTS_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(CONFIG.CLIENTS_SHEET);
+    sh.appendRow(['Client Account', 'Contact', 'Email', 'Mobile', 'Access Code', 'Portal Link', 'Policies']);
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+/** Looks up a directory row by client account name. Returns null if not found. */
+function lookupClientByAccount_(account) {
+  var sh = SpreadsheetApp.getActive().getSheetByName(CONFIG.CLIENTS_SHEET);
+  if (!sh || sh.getLastRow() < 2) return null;
+  var data = sh.getDataRange().getValues();
+  var idx = {};
+  data[0].forEach(function (h, i) { if (h) idx[String(h).trim()] = i; });
+  var want = String(account || '').trim().toUpperCase();
+  for (var r = 1; r < data.length; r++) {
+    if (String(data[r][idx['Client Account']] || '').trim().toUpperCase() === want) {
+      return { email: String(data[r][idx['Email']] || '').trim(), mobile: String(data[r][idx['Mobile']] || '').trim() };
+    }
+  }
+  return null;
+}
+
+/** Looks up a directory row by access code. Returns null if not found. */
+function lookupClientByCode_(code) {
+  var sh = SpreadsheetApp.getActive().getSheetByName(CONFIG.CLIENTS_SHEET);
+  if (!sh || sh.getLastRow() < 2) return null;
+  var data = sh.getDataRange().getValues();
+  var idx = {};
+  data[0].forEach(function (h, i) { if (h) idx[String(h).trim()] = i; });
+  for (var r = 1; r < data.length; r++) {
+    if (String(data[r][idx['Access Code']] || '').trim() === code) {
+      return {
+        account: String(data[r][idx['Client Account']] || '').trim(),
+        contact: String(data[r][idx['Contact']] || '').trim(),
+        email: String(data[r][idx['Email']] || '').trim(),
+        mobile: String(data[r][idx['Mobile']] || '').trim(),
+      };
+    }
+  }
+  return null;
 }
 
 /* ============ OPTIONAL DAILY AUTOMATION (OFF by default) ============
@@ -371,9 +490,23 @@ function doGet(e) {
     var client = '', contact = '', email = '', mobile = '';
     var accounts = {};
 
+    // Directory first: an access code maps to a client account, and we return
+    // every schedule row for that account (motor + property), current and past.
+    var dirEntry = lookupClientByCode_(token);
+    var wantAccount = dirEntry ? dirEntry.account.toUpperCase() : null;
+    if (dirEntry) {
+      client = dirEntry.account;
+      contact = dirEntry.contact;
+      email = dirEntry.email;
+      mobile = dirEntry.mobile;
+    }
+
     for (var r = s.headerRow; r < data.length; r++) {
       var row = data[r];
-      if (String(row[s.col[COL.TOKEN]] || '').trim() !== token) continue;
+      var matches = wantAccount
+        ? String(row[s.col[COL.CLIENT]] || '').trim().toUpperCase() === wantAccount
+        : String(row[s.col[COL.TOKEN]] || '').trim() === token;
+      if (!matches) continue;
       var info = rowInfo_(row, s);
       if (info.client) accounts[info.client] = true;
       client = client || info.client;

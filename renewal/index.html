@@ -591,7 +591,12 @@ function renderPolicies(data) {
     $("hero-title").textContent = "Hi " + first.charAt(0) + first.slice(1).toLowerCase() + ", your renewal is coming up.";
   }
 
-  (data.policies || []).forEach((p) => {
+  // Split current/upcoming policies from history (renewals more than 60 days past).
+  const all = data.policies || [];
+  const activeRows = all.filter((p) => { const d = daysUntil(p.nextDue); return d === null || d >= -60; });
+  const historyRows = all.filter((p) => { const d = daysUntil(p.nextDue); return d !== null && d < -60; });
+
+  activeRows.forEach((p) => {
     const dl = daysUntil(p.nextDue);
     const urgent = dl !== null && dl <= 21;
     const owing = Number(p.balance) > 0.01;
@@ -619,6 +624,32 @@ function renderPolicies(data) {
     deck.appendChild(card);
   });
 
+  // History accordion
+  if (historyRows.length) {
+    const h = document.createElement("details");
+    h.style.cssText = "background:#fff;border:1px solid #E3EDF5;border-radius:16px;overflow:hidden";
+    h.innerHTML =
+      '<summary style="cursor:pointer;padding:16px 22px;font-weight:800;list-style:none">📁 Your renewal history (' + historyRows.length + ' earlier ' + (historyRows.length === 1 ? 'record' : 'records') + ')</summary>' +
+      '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.88rem;min-width:560px">' +
+      '<tr style="background:var(--navy-800);color:#fff;text-align:left"><th style="padding:9px 14px">Renewal date</th><th style="padding:9px 14px">Coverage</th><th style="padding:9px 14px">Policy</th><th style="padding:9px 14px;text-align:right">Premium (TT$)</th><th style="padding:9px 14px">Status</th></tr>' +
+      historyRows.map((p) =>
+        '<tr><td style="padding:9px 14px;border-bottom:1px solid #EDF3F8">' + prettyDate(p.nextDue) +
+        '</td><td style="padding:9px 14px;border-bottom:1px solid #EDF3F8">' + esc(p.coverage || "") +
+        '</td><td style="padding:9px 14px;border-bottom:1px solid #EDF3F8">' + esc(p.policyNo || "—") +
+        '</td><td style="padding:9px 14px;border-bottom:1px solid #EDF3F8;text-align:right">' + fmt(p.premium) +
+        '</td><td style="padding:9px 14px;border-bottom:1px solid #EDF3F8">' + esc(p.paymentStatus || "") + '</td></tr>'
+      ).join("") + "</table></div>";
+    deck.appendChild(h);
+  }
+
+  // Corporate clients with a fleet get a pointer to the fleet portal.
+  if ((data.fleet || []).length) {
+    const f = document.createElement("div");
+    f.style.cssText = "background:linear-gradient(135deg,#FFF7E8,#FDEFD1);border:1.5px solid #F4D89A;border-radius:16px;padding:18px 22px;font-weight:600;color:#6B5426";
+    f.innerHTML = '🏢 This account has a vehicle fleet on record — <a href="corporate.html?t=' + encodeURIComponent(getToken()) + '" style="color:#8a5a00">open the Corporate Fleet Portal</a> to see every vehicle and your renewal history by cycle.';
+    deck.appendChild(f);
+  }
+
   // Prefill form
   if (data.contact || data.client) $("f-name").value = data.contact || data.client;
   if (data.email) $("f-email").value = data.email;
@@ -639,7 +670,13 @@ async function loadClient() {
   }
   if (!token) {
     renderPolicies(DEMO_DATA);
-    banner("demo", "🔗 <span>This page works best from the personal link in your renewal email. Showing sample figures — your own details load automatically from your link.</span>");
+    banner("demo",
+      "🔑 <span style='flex:1'>Have an access code? Sign in to see your own policies and history:</span>" +
+      "<span style='display:inline-flex;gap:8px;flex-wrap:wrap'>" +
+      "<input id='login-code' placeholder='ACCESS CODE' style='padding:8px 12px;border-radius:10px;border:none;font-weight:700;letter-spacing:.1em;width:150px;text-transform:none' />" +
+      "<button onclick='portalLogin()' style='padding:8px 16px;border-radius:10px;border:none;background:var(--gold);color:var(--gold-ink);font-weight:800;cursor:pointer'>Sign in</button></span>");
+    const inp = $("login-code");
+    if (inp) inp.addEventListener("keydown", (e) => { if (e.key === "Enter") portalLogin(); });
     return;
   }
 
@@ -658,6 +695,11 @@ async function loadClient() {
     banner("error", "⚠️ <span>We couldn't load your details right now. You can still send your instructions below, or email us directly.</span>");
     renderPolicies(DEMO_DATA);
   }
+}
+
+function portalLogin() {
+  const code = ($("login-code") && $("login-code").value.trim()) || "";
+  if (code) location.search = "?t=" + encodeURIComponent(code);
 }
 
 /* ---------- Average calculator ---------- */

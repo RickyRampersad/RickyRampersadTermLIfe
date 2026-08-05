@@ -103,6 +103,24 @@ inside `renewal/index.html`. Add/remove entries — each has an emoji icon, a ti
 and a short pitch. Client interest arrives in the Responses tab and in every
 instruction email.
 
+## Client directory & client sign-in
+
+The script maintains a **`Clients` tab** — one row per client account:
+`Client Account | Contact | Email | Mobile | Access Code | Portal Link | Policies`.
+
+- **📋 Renewals → Sync client directory** builds it automatically from the
+  schedule (it also runs as part of `setup` and before every send). Existing
+  tokens become the access codes; every schedule row for the same account gets
+  the same code.
+- **This tab is where you manage contacts.** Add or fix an email/mobile here and
+  it wins over whatever is on the schedule rows — manual sends fall back to the
+  directory email when a schedule row has none.
+- **Clients can sign in themselves**: the portal home page has an access-code
+  box, so a client can go to `https://YOUR-SITE.netlify.app/renewal/`, enter
+  their code, and see all their policies — motor **and** property — plus their
+  renewal history (older renewals appear in a collapsible history table).
+  Accounts with a fleet get a link to the corporate portal automatically.
+
 ## Property (home & commercial) renewals
 
 Property lives in the **same schedule tab** as motor — a client with motor and home
