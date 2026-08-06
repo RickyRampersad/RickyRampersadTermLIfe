@@ -569,7 +569,7 @@
   <div class="stats-inner">
     <div class="stat"><div class="num"><span id="c1" data-count="8">0</span><span>+</span></div><div class="lbl">Product lines</div></div>
     <div class="stat"><div class="num"><span id="c2" data-count="25">0</span><span>+</span></div><div class="lbl">Online forms & tools</div></div>
-    <div class="stat"><div class="num"><span id="c3" data-count="6">0</span></div><div class="lbl">Quote systems live — more coming</div></div>
+    <div class="stat"><div class="num"><span id="c3" data-count="7">0</span></div><div class="lbl">Quote systems live — more coming</div></div>
     <div class="stat"><div class="num">24<span>/7</span></div><div class="lbl">Apply anytime, any device</div></div>
   </div>
 </div>
@@ -704,12 +704,13 @@
         <p>Retirement and pension quotations are being added.</p>
         <span class="go" style="color:var(--muted)">Coming Soon</span>
       </div>
-      <div class="tile reveal" style="opacity:.55; cursor:default">
+      <a class="tile reveal" href="https://employeebenefitstt.com/" target="_blank" rel="noopener">
+        <span class="badge">New</span>
         <div class="ico">👥</div>
         <h3>Employee Benefits</h3>
-        <p>Group life, health and benefits quotes for businesses — in build.</p>
-        <span class="go" style="color:var(--muted)">Coming Soon</span>
-      </div>
+        <p>For employers: quote, track and customize your group plan — sent directly to Guardian.</p>
+        <span class="go">Employer Portal ↗</span>
+      </a>
     </div>
   </section>
 
@@ -922,9 +923,9 @@
       title: 'Business & employee protection',
       sub: 'Protection for your company and your people.',
       options: [
+        { ico: '👥', label: 'Employee Benefits — quote & customize', desc: 'Our dedicated employer portal: get a group quote, track it, and customize your plan — direct to Guardian.', url: 'https://employeebenefitstt.com/' },
         { ico: '🏢', label: 'Key Person Protection', desc: 'Protect the business against the loss of a key employee or partner.', url: 'https://form.jotform.com/262153130319043' },
-        { ico: '👥', label: 'Group Health & Life enrollment', desc: 'Enroll your employees in group coverage.', url: 'https://form.jotform.com/211671623815858' },
-        { ico: '🧭', label: 'Full employee benefits review', desc: 'Quotes system in build — start with a FactFind360 needs analysis.', url: 'https://factfind360.com' }
+        { ico: '🧭', label: 'Not sure where to start?', desc: 'Run a FactFind360 needs analysis for your business.', url: 'https://factfind360.com' }
       ]
     },
     retirement: {
@@ -975,6 +976,7 @@
     factfind: { label: '🧭 FactFind360', url: 'https://factfind360.com' },
     ci: { label: '🎗️ Critical Illness Quote', url: 'https://form.jotform.com/261288212990057' },
     pa: { label: '🦺 Personal Accident Quote', url: 'https://personalaccident.netlify.app/' },
+    eb: { label: '👥 Employee Benefits Portal', url: 'https://employeebenefitstt.com/' },
     claim: { label: '🏥 Health Claim E-Form', url: 'https://form.jotform.com/230135714666051' },
     renewal: { label: '🔄 Renewal Portal', url: 'renewal/' },
     premium: { label: '💬 Premium Due Feedback', url: 'https://form.jotform.com/232374116479056' },
@@ -989,6 +991,7 @@
     { keys: ['house', 'home', 'property', 'building', 'contents'], reply: "For your home or business property, request a quotation online.", links: ['property'] },
     { keys: ['critical illness', 'cancer', 'heart', 'stroke', 'illness'], reply: "Critical illness cover pays a lump sum if serious illness strikes. Try our quote engine.", links: ['ci', 'factfind'] },
     { keys: ['accident', 'income protection', 'injury', 'disab'], reply: "Our Personal Accident & Income Protection system can quote you online.", links: ['pa'] },
+    { keys: ['employee benefit', 'employee', 'employer', 'group plan', 'group health', 'group life', 'my staff', 'company plan'], reply: "For employers we have a dedicated Employee Benefits portal — quote, track and customize your group plan, sent directly to Guardian.", links: ['eb'] },
     { keys: ['xpress', 'express'], reply: "Xpress Life is our specialized instant-issue life product — 5 health questions, no medicals, on its own dedicated site.", links: ['xpress'] },
     { keys: ['life insurance', 'life cover', 'life'], reply: "Two paths for life insurance: Xpress Life for fast simplified cover, or a full plan starting with our FactFind360 needs analysis.", links: ['xpress', 'factfind'] },
     { keys: ['pension', 'retire'], reply: "Our pension quote system is in build. Start with a FactFind360 retirement analysis, or log a query and an advisor will contact you.", links: ['factfind', 'query'] },
