@@ -42,8 +42,10 @@ var CONFIG = {
   GUARDIAN_RENEWALS_EMAIL: 'GuardianGeneralRenewals@myguardiangroup.com',
 
   // --- Portal ------------------------------------------------------------
-  // Your Netlify site. The /r/ path redirects to the portal with the token.
-  PORTAL_BASE: 'https://YOUR-SITE-NAME.netlify.app/r/',
+  // The live site (GitHub Pages, custom domain). The client's access code is
+  // appended directly, producing e.g.
+  // https://rickyrampersadbranch.com/renewal/?t=AbCd1234
+  PORTAL_BASE: 'https://rickyrampersadbranch.com/renewal/?t=',
 
   // --- Schedule ----------------------------------------------------------
   REMINDER_DAYS: 14,   // first reminder: 14 days before Next Due
