@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Corporate Fleet Portal — Ricky Rampersad, Guardian Group Agent</title>
+<meta name="description" content="Fleet insurance portal for corporate clients — view every vehicle on your policy, premiums, renewal history, and send fleet renewal instructions." />
+<style>
+  :root{
+    --navy-900:#0E2A47;--navy-800:#14395F;--teal-600:#0E8C8C;--teal-500:#12A5A0;--teal-50:#E9F7F6;
+    --gold:#F2B33D;--gold-ink:#5C3D00;--ink:#152435;--muted:#5B7186;--bg:#F4F8FB;
+    --red:#D64545;--red-50:#FCEDED;--green:#2F9E62;--green-50:#EAF7F0;
+    --radius:18px;--shadow:0 16px 40px rgba(14,42,71,.12);
+    --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:var(--teal-600)}
+  .wrap{width:min(1080px,94%);margin-inline:auto}
+  header{background:linear-gradient(160deg,var(--navy-900),var(--navy-800) 70%,var(--teal-600) 160%);color:#fff;padding:44px 0 40px}
+  header .crumb a{color:#BFD9E8;text-decoration:none;font-size:.85rem}
+  header h1{font-size:clamp(1.6rem,4vw,2.4rem);font-weight:800;letter-spacing:-.02em;margin-top:10px}
+  header p{color:#BFD9E8;margin-top:8px;max-width:640px}
+  main{padding:36px 0 70px}
+  .card{background:#fff;border:1px solid #E3EDF5;border-radius:var(--radius);box-shadow:var(--shadow);padding:28px}
+  .login-card{max-width:460px;margin:0 auto;text-align:center}
+  .login-card h2{font-weight:800;font-size:1.25rem;margin-bottom:6px}
+  .login-card p{color:var(--muted);font-size:.92rem;margin-bottom:18px}
+  .login-card input{width:100%;padding:14px 16px;border:1.5px solid #D7E3EE;border-radius:12px;font-size:1.05rem;text-align:center;letter-spacing:.15em;font-weight:700}
+  .login-card input:focus{outline:none;border-color:var(--teal-500)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;font-weight:700;border-radius:999px;padding:13px 26px;border:none;cursor:pointer;font-size:1rem;text-decoration:none}
+  .btn-gold{background:var(--gold);color:var(--gold-ink)}
+  .btn-navy{background:var(--navy-800);color:#fff}
+  .btn-ghost{background:#fff;color:var(--navy-900);border:1.5px solid #D7E3EE}
+  .err{color:var(--red);font-size:.88rem;font-weight:600;margin-top:12px;display:none}
+  .banner{border-radius:12px;padding:12px 16px;font-size:.9rem;font-weight:600;margin-bottom:20px;background:#FFF7E8;border:1px solid #F4D89A;color:#6B5426}
+  #dashboard{display:none}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin:22px 0}
+  .kpi{background:#fff;border:1px solid #E3EDF5;border-radius:var(--radius);padding:20px}
+  .kpi .v{font-size:1.5rem;font-weight:800;color:var(--navy-900);letter-spacing:-.02em}
+  .kpi .k{font-size:.8rem;color:var(--muted);font-weight:600}
+  h2.sec{font-size:1.2rem;font-weight:800;margin:30px 0 12px}
+  .tbl-wrap{overflow-x:auto;background:#fff;border:1px solid #E3EDF5;border-radius:var(--radius)}
+  table{width:100%;border-collapse:collapse;font-size:.9rem;min-width:640px}
+  th{background:var(--navy-800);color:#fff;text-align:left;padding:10px 14px;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+  td{padding:10px 14px;border-bottom:1px solid #EDF3F8;white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+  th.num{text-align:right}
+  .pill{display:inline-block;font-weight:700;font-size:.75rem;padding:3px 10px;border-radius:999px}
+  .pill.cur{background:var(--green-50);color:var(--green)}
+  .pill.old{background:#EEF3F8;color:var(--muted)}
+  details{background:#fff;border:1px solid #E3EDF5;border-radius:var(--radius);margin-bottom:10px;overflow:hidden}
+  summary{cursor:pointer;padding:14px 18px;font-weight:800;font-size:.95rem;list-style:none;display:flex;justify-content:space-between;gap:12px}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+";color:var(--teal-600);font-weight:800}
+  details[open] summary::after{content:"–"}
+  details .tbl-wrap{border:none;border-top:1px solid #EDF3F8;border-radius:0}
+  .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
+  .field{margin-bottom:14px;text-align:left}
+  .field label{display:block;font-size:.82rem;font-weight:700;color:var(--navy-900);margin-bottom:6px}
+  .field textarea,.field input{width:100%;padding:12px 14px;border:1.5px solid #D7E3EE;border-radius:12px;font-family:inherit;font-size:.95rem}
+  .success{background:var(--green-50);border:1.5px solid #BCE5CE;color:#1F6B43;border-radius:12px;padding:18px;font-weight:600;display:none;margin-top:16px}
+  footer{background:var(--navy-900);color:#7E9AB0;padding:26px 0;font-size:.78rem}
+  @media print{ header,.actions,#fleet-form,footer{display:none} body{background:#fff} .card,.kpi,.tbl-wrap{box-shadow:none} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="crumb"><a href="index.html">← Renewal portal home</a></div>
+    <h1>🏢 Corporate Fleet Portal</h1>
+    <p>Every vehicle on your policy, premiums, and your full renewal history — in one place. Enter your company access code (it's in your renewal email, or ask our office).</p>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div id="banner"></div>
+
+    <div class="card login-card" id="login-card">
+      <h2>Company sign-in</h2>
+      <p>Enter your company access code to view your fleet.</p>
+      <input id="code-input" type="text" placeholder="ACCESS CODE" autocomplete="off" />
+      <div class="err" id="login-err">That code didn't match a company account. Check your renewal email or call us at (868) 678-5921.</div>
+      <div style="margin-top:16px"><button class="btn btn-gold" onclick="tryLogin()" style="width:100%">View My Fleet →</button></div>
+    </div>
+
+    <div id="dashboard">
+      <h2 class="sec" id="co-name" style="font-size:1.5rem;margin-top:0"></h2>
+      <div class="kpis" id="kpis"></div>
+
+      <h2 class="sec">🚚 Current fleet</h2>
+      <div class="tbl-wrap"><table id="fleet-table"></table></div>
+
+      <h2 class="sec">📁 Renewal history</h2>
+      <div id="history"></div>
+
+      <h2 class="sec">📅 Upcoming policy renewals</h2>
+      <div class="tbl-wrap"><table id="policy-table"></table></div>
+
+      <div class="actions">
+        <a class="btn btn-gold" id="renew-link" href="#fleet-form">Confirm Fleet Renewal / Advise Changes</a>
+        <button class="btn btn-ghost" onclick="window.print()">🖨 Print / Save PDF</button>
+      </div>
+
+      <div class="card" id="fleet-form" style="margin-top:26px">
+        <h2 class="sec" style="margin-top:0">Fleet renewal instructions</h2>
+        <div class="field">
+          <label for="ff-changes">Vehicles to add, remove, or change — and anything else we should action</label>
+          <textarea id="ff-changes" rows="4" placeholder="e.g. Renew all vehicles as-is. TEG7960 was sold — please remove. Adding a new Hilux, reg to follow."></textarea>
+        </div>
+        <div class="field"><label for="ff-name">Your name</label><input id="ff-name" /></div>
+        <div class="field"><label for="ff-email">Email</label><input id="ff-email" type="email" /></div>
+        <div class="field"><label for="ff-mobile">Mobile</label><input id="ff-mobile" type="tel" /></div>
+        <button class="btn btn-navy" onclick="submitFleet()" id="ff-btn" style="width:100%">Send Fleet Instructions</button>
+        <div class="success" id="ff-success">✅ Received! We'll confirm by email and send your fleet renewal instructions to Guardian right away.</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    Ricky Rampersad · Guardian Group Agent · (868) 678-5921 · ricky.rampersad@myguardiangroup.com<br/>
+    Figures are from our office records and are indicative; official Guardian policy documents are binding.
+  </div>
+</footer>
+
+<script>
+/* ===== CONFIG — paste the same Apps Script /exec URL as in index.html ===== */
+const CONFIG = {
+  API_URL: "", // e.g. "https://script.google.com/macros/s/XXXX/exec"
+  AGENT_EMAIL: "ricky.rampersad@myguardiangroup.com"
+};
+/* ========================================================================= */
+
+const $ = (id) => document.getElementById(id);
+const fmt = (n) => isFinite(n) && n !== "" ? Number(n).toLocaleString("en-TT",{minimumFractionDigits:2,maximumFractionDigits:2}) : "—";
+const esc = (s) => String(s==null?"":s).replace(/[&<>"']/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let TOKEN = "", DATA = null;
+
+const DEMO = {
+  found:true, client:"SAMPLE LOGISTICS LTD", contact:"Operations", email:"", mobile:"",
+  policies:[{coverage:"Third Party",nextDue:"2026-11-14",premium:48000,paid:20000,balance:28000,paymentStatus:"Balance owing",policyNo:"TTACF0000000"}],
+  fleet:[
+    {account:"SAMPLE LOGISTICS LTD",reg:"TEG2239",make:"Toyota",model:"Hilux Revo",status:"Current",renewal:"2026-11-14",policyNo:"TTACF0000000",premium:1563.50},
+    {account:"SAMPLE LOGISTICS LTD",reg:"TDW7413",make:"Toyota",model:"Hiace",status:"Current",renewal:"2026-11-14",policyNo:"TTACF0000000",premium:1563.50},
+    {account:"SAMPLE LOGISTICS LTD",reg:"TEB6334",make:"Isuzu",model:"Dump Truck",status:"Current",renewal:"2026-11-14",policyNo:"TTACF0000000",premium:6598.99},
+    {account:"SAMPLE LOGISTICS LTD",reg:"TEG7960",make:"Ford",model:"Ranger",status:"Sold",renewal:"2026-11-14",policyNo:"TTACF0000000",premium:1563.50},
+    {account:"SAMPLE LOGISTICS LTD",reg:"TEG2239",make:"Toyota",model:"Hilux Revo",status:"Current",renewal:"2025-11-14",policyNo:"TTACF0000000",premium:1490.00},
+    {account:"SAMPLE LOGISTICS LTD",reg:"TDW7413",make:"Toyota",model:"Hiace",status:"Current",renewal:"2025-11-14",policyNo:"TTACF0000000",premium:1490.00}
+  ]
+};
+
+function banner(html){ $("banner").innerHTML = html ? '<div class="banner">'+html+'</div>' : ''; }
+
+async function tryLogin(){
+  const code = $("code-input").value.trim();
+  if(!code) return;
+  await load(code);
+}
+
+async function load(token){
+  TOKEN = token;
+  if(!CONFIG.API_URL){
+    banner("👋 Preview mode — showing a sample fleet. Once connected, your company code loads your real vehicles.");
+    render(DEMO); return;
+  }
+  banner("⏳ Loading your fleet…");
+  try{
+    const res = await fetch(CONFIG.API_URL + "?token=" + encodeURIComponent(token));
+    const data = await res.json();
+    if(data && data.found && (data.fleet||[]).length){ banner(""); render(data); }
+    else if(data && data.found){ banner(""); render(data); }
+    else { banner(""); $("login-err").style.display="block"; }
+  }catch(e){ banner("⚠️ Couldn't load right now — please try again or call us."); }
+}
+
+function render(data){
+  DATA = data;
+  $("login-card").style.display = "none";
+  $("dashboard").style.display = "block";
+  $("co-name").textContent = data.client || "Your fleet";
+  if(data.contact) $("ff-name").value = data.contact;
+  if(data.email) $("ff-email").value = data.email;
+  if(data.mobile) $("ff-mobile").value = data.mobile;
+
+  const fleet = data.fleet || [];
+  // Latest cycle = most recent renewal date in the register.
+  const dates = [...new Set(fleet.map(f=>f.renewal).filter(Boolean))].sort().reverse();
+  const latest = dates[0] || "";
+  const current = fleet.filter(f=>f.renewal===latest);
+  const active = current.filter(f=>!/sold|deleted|removed/i.test(f.status||""));
+  const totalPrem = current.reduce((s,f)=>s+(Number(f.premium)||0),0);
+  const owing = (data.policies||[]).reduce((s,p)=>s+Math.max(Number(p.balance)||0,0),0);
+  const nextDue = (data.policies||[]).map(p=>p.nextDue).filter(Boolean).sort()[0] || latest;
+
+  $("kpis").innerHTML =
+    kpi(active.length, "Vehicles on cover (latest cycle)") +
+    kpi("TT$ "+fmt(totalPrem), "Fleet premium (latest cycle)") +
+    kpi(nextDue||"—", "Next renewal date") +
+    kpi("TT$ "+fmt(owing), owing>0.01 ? "Balance owing — please settle" : "Balance owing");
+
+  // Current fleet table
+  $("fleet-table").innerHTML = fleetHead() + current
+    .sort((a,b)=>(a.reg||"").localeCompare(b.reg||""))
+    .map(rowHtml).join("");
+
+  // History grouped by cycle (older dates)
+  $("history").innerHTML = dates.slice(1).map(d=>{
+    const rows = fleet.filter(f=>f.renewal===d);
+    const tot = rows.reduce((s,f)=>s+(Number(f.premium)||0),0);
+    return '<details><summary><span>Renewal cycle — '+esc(d)+' ('+rows.length+' vehicles)</span><span>TT$ '+fmt(tot)+'</span></summary>'+
+      '<div class="tbl-wrap"><table>'+fleetHead()+rows.map(rowHtml).join("")+'</table></div></details>';
+  }).join("") || '<p style="color:var(--muted);font-size:.9rem">No earlier cycles on record yet.</p>';
+
+  // Upcoming policy renewals (schedule rows)
+  $("policy-table").innerHTML =
+    '<tr><th>Policy</th><th>Coverage</th><th>Renewal due</th><th class="num">Premium</th><th class="num">Balance</th><th>Status</th></tr>' +
+    (data.policies||[]).map(p=>'<tr><td>'+esc(p.policyNo||"—")+'</td><td>'+esc(p.coverage||"")+'</td><td>'+esc(p.nextDue||"—")+
+      '</td><td class="num">TT$ '+fmt(p.premium)+'</td><td class="num">TT$ '+fmt(Math.max(p.balance,0))+'</td><td>'+esc(p.paymentStatus||"")+'</td></tr>').join("");
+}
+
+function kpi(v,k){ return '<div class="kpi"><div class="v">'+v+'</div><div class="k">'+esc(k)+'</div></div>'; }
+function fleetHead(){ return '<tr><th>Reg #</th><th>Make</th><th>Model</th><th>Status</th><th>Policy</th><th class="num">Premium (TT$)</th></tr>'; }
+function rowHtml(f){
+  const sold = /sold|deleted|removed/i.test(f.status||"");
+  return '<tr><td><strong>'+esc(f.reg||"—")+'</strong></td><td>'+esc(f.make)+'</td><td>'+esc(f.model)+
+    '</td><td><span class="pill '+(sold?"old":"cur")+'">'+esc(f.status||"Current")+'</span></td><td>'+esc(f.policyNo)+
+    '</td><td class="num">'+fmt(f.premium)+'</td></tr>';
+}
+
+async function submitFleet(){
+  const btn=$("ff-btn"); btn.disabled=true; btn.textContent="Sending…";
+  const payload={ action:"submit", token:TOKEN,
+    decision:"Fleet renewal instructions",
+    changes:$("ff-changes").value.trim(),
+    name:$("ff-name").value.trim(), email:$("ff-email").value.trim(), mobile:$("ff-mobile").value.trim(),
+    notes:"Submitted via corporate fleet portal", campaigns:[], page:location.href, submittedAt:new Date().toISOString() };
+  let ok=false;
+  if(CONFIG.API_URL){
+    try{ const r=await fetch(CONFIG.API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
+      const d=await r.json().catch(()=>({})); ok=r.ok&&d.ok!==false; }catch(e){}
+  }
+  if(!ok){
+    location.href="mailto:"+CONFIG.AGENT_EMAIL+"?subject="+encodeURIComponent("Fleet renewal instructions — "+(DATA&&DATA.client||""))+
+      "&body="+encodeURIComponent(payload.changes+"\n\n"+payload.name+" | "+payload.mobile+" | "+payload.email+(TOKEN?"\nRef: "+TOKEN:""));
+  }
+  $("ff-success").style.display="block"; btn.textContent="Sent ✓";
+}
+
+$("code-input").addEventListener("keydown",(e)=>{ if(e.key==="Enter") tryLogin(); });
+const urlToken = new URLSearchParams(location.search).get("t") || new URLSearchParams(location.search).get("token");
+if(urlToken){ $("code-input").value=urlToken; load(urlToken); }
+else if(!CONFIG.API_URL){ /* wait for click in preview */ }
+</script>
+</body>
+</html>
