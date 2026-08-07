@@ -33,6 +33,8 @@
     border:1px solid var(--line);border-radius:22px;padding:34px 28px}
   .join-card svg{width:60px;height:60px;margin:0 auto 14px;display:block}
   .join-card h1{font-family:'Montserrat',sans-serif;font-weight:900;font-size:21px;margin-bottom:6px;color:var(--gold)}
+  .join-card .initiative{font-family:'Montserrat',sans-serif;font-size:9.5px;font-weight:700;
+    letter-spacing:2.2px;text-transform:uppercase;color:var(--gold2);margin-bottom:12px}
   .join-card .sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6}
   .join-card input{width:100%;padding:13px 16px;border-radius:12px;border:1px solid var(--line);
     background:rgba(0,0,0,.3);color:var(--text);font-size:15px;outline:none;margin-bottom:10px;
@@ -186,6 +188,7 @@
       <circle cx="63" cy="32" r="4.5" fill="#07131f"/>
     </svg>
     <h1>Branch Trading League</h1>
+    <p class="initiative">A Ricky Rampersad Initiative</p>
     <p class="sub" id="j-sub">Sign in to see where you stand.</p>
 
     <input id="j-name" type="text" placeholder="Your name" autocomplete="name" maxlength="40"/>
@@ -248,7 +251,7 @@
   <div class="wrap">
 
     <div class="page-head">
-      <div class="kicker">Team Game</div>
+      <div class="kicker">A Ricky Rampersad Initiative</div>
       <h1>Branch Trading League</h1>
       <p id="head-sub">
         You hold a play-money portfolio priced off the real market. Buy the Dow, buy the Nasdaq,
@@ -378,7 +381,7 @@
 
   <footer>
     <div class="wrap">
-      <p><b>Branch Trading League</b> — Ricky Rampersad Branch</p>
+      <p><b>Branch Trading League</b> — a Ricky Rampersad initiative, for the branch team.</p>
       <p class="disclaimer">
         This is a training game played with imaginary money. No funds are collected, held or invested,
         no securities are bought or sold, and no brokerage account exists behind this page. Prices are
@@ -411,6 +414,11 @@ const money = (n) => (n < 0 ? "-$" : "$") + Math.abs(Number(n) || 0)
 const signed = (n) => (n > 0 ? "+" : "") + money(n);
 const pct = (n) => (n > 0 ? "+" : "") + (Number(n) || 0).toFixed(2) + "%";
 const cls = (n) => (n > 0 ? "up" : n < 0 ? "down" : "");
+const ordinal = (n) => {
+  const tens = n % 100;
+  if (tens >= 11 && tens <= 13) return n + "th";
+  return n + ({ 1: "st", 2: "nd", 3: "rd" }[n % 10] || "th");
+};
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g,
   (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -659,7 +667,7 @@ function demoLeague() {
   demoQuotes().instruments.forEach((x) => { q[x.symbol] = x; });
   const store = demoStore();
 
-  // A real account always wins the name — otherwise an agent called
+  // A real account always wins the name — otherwise a player called
   // Anisa would sit on the board twice, beside the stand-in.
   const rows = DEMO.rivals
     .filter((r) => !store.accounts[r.name.toLowerCase()])
@@ -896,10 +904,18 @@ function renderStats() {
   if (!m || !m.ok) return;
 
   const startingCash = (state.league && state.league.startingCash) || DEMO.startingCash;
-  $("who").textContent = (m.player && m.player.name) || "—";
+  const myName = (m.player && m.player.name) || "";
+  $("who").textContent = myName || "—";
 
   $("s-total").textContent = money(m.total);
-  $("s-total-sub").textContent = "Started at " + money(startingCash);
+
+  // Where they stand, right under the number they care about — the
+  // whole point of the league is the comparison.
+  const board = (state.league && state.league.players) || [];
+  const mine = board.filter((p) => p.name === myName)[0];
+  $("s-total-sub").textContent = mine
+    ? ordinal(mine.rank) + " of " + board.length + " · from " + money(startingCash)
+    : "Started at " + money(startingCash);
 
   $("s-pnl").textContent = signed(m.pnl);
   $("s-pnl").className = "v mono " + cls(m.pnl);
