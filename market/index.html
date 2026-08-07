@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Branch Trading League | Ricky Rampersad Branch</title>
+<meta name="robots" content="noindex"/>
+<meta name="description" content="A play-money investing game for the branch team, priced off the real Dow Jones and Nasdaq."/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#07131f; --bg2:#0d2137; --card:#163553; --card2:#1b3d61;
+    --gold:#efc24b; --gold2:#dca530; --text:#edf4fb; --muted:#a9bbcf;
+    --line:rgba(255,255,255,.08); --teal:#00CFEA; --teal2:#00A8C5;
+    --up:#4ade80; --down:#f87171;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+    background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(239,194,75,.07),transparent),
+      linear-gradient(180deg,var(--bg) 0%,var(--bg2) 50%,var(--bg) 100%);
+  }
+  a{color:inherit}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 16px}
+  .mono{font-variant-numeric:tabular-nums}
+  .up{color:var(--up)} .down{color:var(--down)}
+
+  /* ---------- join screen ---------- */
+  #join{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;overflow-y:auto;
+    background:var(--bg);background-image:radial-gradient(ellipse 60% 40% at 50% 25%,rgba(239,194,75,.08),transparent)}
+  .join-card{width:min(400px,92%);text-align:center;margin:auto;
+    background:linear-gradient(160deg,var(--card),var(--card2));
+    border:1px solid var(--line);border-radius:22px;padding:34px 28px}
+  .join-card svg{width:60px;height:60px;margin:0 auto 14px;display:block}
+  .join-card h1{font-family:'Montserrat',sans-serif;font-weight:900;font-size:21px;margin-bottom:6px;color:var(--gold)}
+  .join-card .sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6}
+  .join-card input{width:100%;padding:13px 16px;border-radius:12px;border:1px solid var(--line);
+    background:rgba(0,0,0,.3);color:var(--text);font-size:15px;outline:none;margin-bottom:10px;
+    font-family:'Montserrat',sans-serif;font-weight:600}
+  .join-card input:focus{border-color:rgba(239,194,75,.5)}
+  .join-card input::placeholder{font-weight:400;color:#6e839b}
+  .join-err{color:var(--down);font-size:12px;margin-top:10px;min-height:16px;font-weight:600}
+  .join-note{font-size:11.5px;color:var(--muted);margin-top:18px;line-height:1.6;border-top:1px solid var(--line);padding-top:14px}
+  .join-back{display:inline-block;margin-top:14px;font-size:12px;color:var(--muted);text-decoration:none}
+  .join-back:hover{color:var(--teal)}
+
+  .btn{width:100%;padding:14px;border-radius:12px;border:none;cursor:pointer;
+    background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1d1503;
+    font-family:'Montserrat',sans-serif;font-size:14px;font-weight:800;letter-spacing:.4px}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--muted)}
+  .btn-ghost:hover{color:var(--text);border-color:rgba(239,194,75,.4)}
+
+  /* ---------- shell ---------- */
+  #app{display:none}
+  .nav{position:sticky;top:0;z-index:100;background:rgba(6,17,29,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .nav-inner{max-width:1040px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:12px;height:62px}
+  .nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:auto}
+  .nav-brand svg{width:32px;height:32px;flex-shrink:0}
+  .nav-brand span{font-family:'Montserrat',sans-serif;font-weight:800;font-size:14px;color:var(--gold);line-height:1.15}
+  .nav .who{font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;color:var(--text);
+    background:rgba(255,255,255,.06);padding:7px 12px;border-radius:10px;white-space:nowrap}
+  .nav .link{text-decoration:none;color:var(--muted);font-family:'Montserrat',sans-serif;
+    font-size:12.5px;font-weight:600;padding:8px 10px;border-radius:10px;cursor:pointer;border:none;background:none}
+  .nav .link:hover{color:var(--text);background:rgba(255,255,255,.06)}
+  @media(max-width:560px){.nav-brand span{display:none}}
+
+  /* ---------- index ticker ---------- */
+  .ticker{border-bottom:1px solid var(--line);background:rgba(0,0,0,.22);overflow:hidden}
+  .ticker-inner{max-width:1040px;margin:0 auto;padding:11px 16px;display:flex;gap:26px;overflow-x:auto;scrollbar-width:none}
+  .ticker-inner::-webkit-scrollbar{display:none}
+  .tick{display:flex;align-items:baseline;gap:8px;white-space:nowrap;flex-shrink:0}
+  .tick b{font-family:'Montserrat',sans-serif;font-size:11px;font-weight:800;letter-spacing:1.2px;color:var(--muted)}
+  .tick .lvl{font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700}
+  .tick .chg{font-size:12px;font-weight:600}
+
+  /* ---------- headings ---------- */
+  .page-head{padding:34px 0 4px}
+  .page-head .kicker{font-family:'Montserrat',sans-serif;font-size:11px;letter-spacing:3px;
+    text-transform:uppercase;color:var(--gold2);font-weight:600;margin-bottom:8px}
+  .page-head h1{font-family:'Montserrat',sans-serif;font-weight:900;font-size:clamp(23px,5vw,32px);margin-bottom:8px}
+  .page-head p{color:var(--muted);font-size:14px;max-width:600px;line-height:1.65}
+  section{padding:30px 0 4px}
+  .section-label{font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;letter-spacing:2.5px;
+    text-transform:uppercase;color:var(--gold);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  .section-label::after{content:'';flex:1;height:1px;background:rgba(239,194,75,.2)}
+
+  .card{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:16px}
+
+  /* ---------- portfolio summary ---------- */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:8px}
+  @media(max-width:720px){.stats{grid-template-columns:1fr 1fr}}
+  .stat{padding:16px 16px 14px;background:linear-gradient(160deg,var(--card),var(--card2));
+    border:1px solid var(--line);border-radius:14px}
+  .stat .k{font-family:'Montserrat',sans-serif;font-size:9.5px;font-weight:700;letter-spacing:1.6px;
+    text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+  .stat .v{font-family:'Montserrat',sans-serif;font-size:20px;font-weight:800;line-height:1.15}
+  .stat .s{font-size:11.5px;color:var(--muted);margin-top:4px}
+  .stat.hero{border-color:rgba(239,194,75,.35);background:linear-gradient(160deg,rgba(239,194,75,.11),var(--card2))}
+  .stat.hero .v{color:var(--gold)}
+
+  /* ---------- trade panel ---------- */
+  .trade{padding:18px;display:grid;grid-template-columns:1.4fr .8fr .8fr auto;gap:10px;align-items:end}
+  @media(max-width:760px){
+    .trade{grid-template-columns:1fr 1fr}
+    .trade .field-sym,.trade .actions{grid-column:1/-1}
+    .trade .actions .btn{width:100%}
+  }
+  .field label{display:block;font-family:'Montserrat',sans-serif;font-size:9.5px;font-weight:700;
+    letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .field select,.field input{width:100%;padding:12px 13px;border-radius:11px;border:1px solid var(--line);
+    background:rgba(0,0,0,.32);color:var(--text);font-size:14px;outline:none;
+    font-family:'Montserrat',sans-serif;font-weight:600}
+  .field select:focus,.field input:focus{border-color:rgba(239,194,75,.5)}
+  .field select option{background:#0d2137;color:var(--text)}
+  .field select optgroup{background:#07131f;color:var(--gold);font-style:normal}
+  .seg{display:flex;background:rgba(0,0,0,.32);border:1px solid var(--line);border-radius:11px;padding:3px;gap:3px}
+  .seg button{flex:1;padding:9px 4px;border:none;background:none;border-radius:8px;cursor:pointer;
+    color:var(--muted);font-family:'Montserrat',sans-serif;font-size:12.5px;font-weight:800;letter-spacing:.5px}
+  .seg button.on[data-side="buy"]{background:rgba(74,222,128,.16);color:var(--up)}
+  .seg button.on[data-side="sell"]{background:rgba(248,113,113,.16);color:var(--down)}
+  .actions .btn{padding:12px 22px;width:auto;white-space:nowrap}
+  .trade-foot{padding:0 18px 18px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;
+    font-size:12.5px;color:var(--muted);min-height:20px}
+  .trade-foot .est{font-family:'Montserrat',sans-serif;font-weight:700;color:var(--text)}
+  .trade-msg{font-weight:600}
+
+  /* ---------- tables ---------- */
+  .tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+  .tbl th{font-family:'Montserrat',sans-serif;font-size:9.5px;font-weight:700;letter-spacing:1.4px;
+    text-transform:uppercase;color:var(--muted);text-align:right;padding:12px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+  .tbl th:first-child{text-align:left}
+  .tbl td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.045);text-align:right;white-space:nowrap}
+  .tbl td:first-child{text-align:left;white-space:normal}
+  .tbl tr:last-child td{border-bottom:none}
+  .tbl tbody tr:hover{background:rgba(255,255,255,.03)}
+  .sym{font-family:'Montserrat',sans-serif;font-weight:800;font-size:13px}
+  .sym-name{display:block;font-family:'DM Sans',sans-serif;font-weight:400;font-size:11.5px;color:var(--muted);margin-top:2px}
+  .scroll{overflow-x:auto}
+  .rank{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:7px;
+    background:rgba(255,255,255,.07);font-family:'Montserrat',sans-serif;font-weight:800;font-size:11.5px;margin-right:10px}
+  .rank.r1{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1d1503}
+  .rank.r2{background:rgba(203,213,225,.85);color:#0b1a2a}
+  .rank.r3{background:rgba(180,120,60,.85);color:#150d03}
+  .me-row{background:rgba(239,194,75,.07)}
+  .me-tag{font-family:'Montserrat',sans-serif;font-size:9px;font-weight:800;letter-spacing:1px;
+    color:var(--gold);border:1px solid rgba(239,194,75,.35);border-radius:5px;padding:2px 5px;margin-left:8px}
+  .empty{padding:26px 16px;text-align:center;color:var(--muted);font-size:13px}
+  .pill{display:inline-block;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:800;
+    letter-spacing:.8px;padding:3px 8px;border-radius:6px}
+  .pill.buy{background:rgba(74,222,128,.14);color:var(--up)}
+  .pill.sell{background:rgba(248,113,113,.14);color:var(--down)}
+  .btn-sm{padding:6px 11px;border-radius:8px;border:1px solid var(--line);background:rgba(255,255,255,.05);
+    color:var(--muted);cursor:pointer;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700}
+  .btn-sm:hover{color:var(--gold);border-color:rgba(239,194,75,.4)}
+
+  /* ---------- banners ---------- */
+  .banner{border-radius:12px;padding:13px 16px;font-size:12.5px;line-height:1.6;margin-bottom:16px;
+    border:1px solid rgba(239,194,75,.28);background:rgba(239,194,75,.08);color:#f3e3bd}
+  .banner b{font-family:'Montserrat',sans-serif;font-weight:800;color:var(--gold)}
+  .banner code{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;
+    background:rgba(0,0,0,.32);padding:1px 5px;border-radius:4px}
+
+  footer{margin-top:44px;border-top:1px solid var(--line);background:rgba(0,0,0,.25);padding:24px 0 32px}
+  footer .wrap{text-align:center}
+  footer p{color:var(--muted);font-size:12px;line-height:1.65}
+  footer .disclaimer{font-size:11px;max-width:720px;margin:12px auto 0;color:#7f93a9}
+  footer a{color:var(--teal);text-decoration:none}
+</style>
+</head>
+<body>
+
+<!-- ============ JOIN ============ -->
+<div id="join">
+  <div class="join-card">
+    <svg viewBox="0 0 88 88" aria-hidden="true">
+      <defs><linearGradient id="gj" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
+      </linearGradient></defs>
+      <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#gj)"/>
+      <path d="M25 56L37 43L46 51L63 32" stroke="#07131f" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="63" cy="32" r="4.5" fill="#07131f"/>
+    </svg>
+    <h1>Branch Trading League</h1>
+    <p class="sub">Play money. Real prices.<br>Everyone starts with the same balance — best return wins.</p>
+    <input id="j-name" type="text" placeholder="Your name" autocomplete="name" maxlength="40"/>
+    <input id="j-pin" type="text" placeholder="League code" autocomplete="off" maxlength="24"/>
+    <button class="btn" id="j-go">Join the league</button>
+    <div class="join-err" id="j-err"></div>
+    <p class="join-note">
+      No money changes hands. Nothing here is a real investment, a real account, or advice to buy anything.
+      It is a game for the team.
+    </p>
+    <a class="join-back" href="../index.html">← Back to main site</a>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app">
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="../index.html">
+        <svg viewBox="0 0 88 88" aria-hidden="true">
+          <defs><linearGradient id="gn" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
+          </linearGradient></defs>
+          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#gn)"/>
+          <path d="M25 56L37 43L46 51L63 32" stroke="#07131f" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Ricky Rampersad<br>Branch</span>
+      </a>
+      <span class="who" id="who">—</span>
+      <button class="link" id="refresh">Refresh</button>
+      <button class="link" id="leave">Leave</button>
+    </div>
+  </nav>
+
+  <div class="ticker">
+    <div class="ticker-inner" id="ticker"></div>
+  </div>
+
+  <div class="wrap">
+
+    <div class="page-head">
+      <div class="kicker">Team Game</div>
+      <h1>Branch Trading League</h1>
+      <p id="head-sub">
+        You hold a play-money portfolio priced off the real market. Buy the Dow, buy the Nasdaq,
+        or pick your own names — the leaderboard sorts itself out.
+      </p>
+    </div>
+
+    <div id="mode-banner"></div>
+
+    <!-- portfolio -->
+    <section>
+      <div class="section-label">Your portfolio</div>
+      <div class="stats">
+        <div class="stat hero">
+          <div class="k">Total value</div>
+          <div class="v mono" id="s-total">—</div>
+          <div class="s" id="s-total-sub">&nbsp;</div>
+        </div>
+        <div class="stat">
+          <div class="k">Profit / loss</div>
+          <div class="v mono" id="s-pnl">—</div>
+          <div class="s" id="s-pnl-sub">&nbsp;</div>
+        </div>
+        <div class="stat">
+          <div class="k">Cash to invest</div>
+          <div class="v mono" id="s-cash">—</div>
+          <div class="s" id="s-cash-sub">&nbsp;</div>
+        </div>
+        <div class="stat">
+          <div class="k">Invested</div>
+          <div class="v mono" id="s-inv">—</div>
+          <div class="s" id="s-inv-sub">&nbsp;</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- trade -->
+    <section>
+      <div class="section-label">Place a trade</div>
+      <div class="card">
+        <div class="trade">
+          <div class="field field-sym">
+            <label for="t-sym">Instrument</label>
+            <select id="t-sym"></select>
+          </div>
+          <div class="field">
+            <label>Side</label>
+            <div class="seg" id="t-side">
+              <button data-side="buy" class="on">Buy</button>
+              <button data-side="sell">Sell</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="t-qty">Shares</label>
+            <input id="t-qty" type="number" min="1" step="1" value="10" inputmode="numeric"/>
+          </div>
+          <div class="field actions">
+            <button class="btn" id="t-go">Place order</button>
+          </div>
+        </div>
+        <div class="trade-foot">
+          <span class="est" id="t-est">&nbsp;</span>
+          <span class="trade-msg" id="t-msg"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- holdings -->
+    <section>
+      <div class="section-label">Your holdings</div>
+      <div class="card scroll">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Instrument</th><th>Shares</th><th>Avg cost</th>
+              <th>Price</th><th>Value</th><th>P / L</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="holdings"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- leaderboard -->
+    <section>
+      <div class="section-label">Leaderboard</div>
+      <div class="card scroll">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Player</th><th>Positions</th><th>Cash</th>
+              <th>Invested</th><th>Total</th><th>Return</th>
+            </tr>
+          </thead>
+          <tbody id="board"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- market -->
+    <section>
+      <div class="section-label">Market</div>
+      <div class="card scroll">
+        <table class="tbl">
+          <thead>
+            <tr><th>Instrument</th><th>Price</th><th>Change</th><th>Today</th><th></th></tr>
+          </thead>
+          <tbody id="market"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- history -->
+    <section>
+      <div class="section-label">Your trade history</div>
+      <div class="card scroll">
+        <table class="tbl">
+          <thead>
+            <tr><th>When</th><th>Side</th><th>Instrument</th><th>Shares</th><th>Price</th><th>Value</th></tr>
+          </thead>
+          <tbody id="history"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+  <footer>
+    <div class="wrap">
+      <p><b>Branch Trading League</b> — Ricky Rampersad Branch</p>
+      <p class="disclaimer">
+        This is a training game played with imaginary money. No funds are collected, held or invested,
+        no securities are bought or sold, and no brokerage account exists behind this page. Prices are
+        supplied by Google Finance and are delayed. Nothing shown here is investment advice, a
+        recommendation, an offer, or a solicitation to buy or sell any security, and past or simulated
+        performance says nothing about future results. Ricky Rampersad is an independent agent of
+        Guardian General Insurance Limited; this game is not a Guardian product or service.
+      </p>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+/* ================= CONFIG =================
+   API_URL: the Google Apps Script Web App URL for Market.gs (ends in /exec).
+   Leave "" and the page runs in demo mode on this device with simulated
+   prices, so you can look around before the backend is deployed.        */
+const CONFIG = {
+  API_URL: "" // e.g. "https://script.google.com/macros/s/XXXX/exec"
+};
+/* ========================================== */
+
+const LIVE = !!CONFIG.API_URL;
+const $ = (id) => document.getElementById(id);
+const STORE_TOKEN = "rrb-league-token";
+
+const money = (n) => (n < 0 ? "-$" : "$") + Math.abs(Number(n) || 0)
+  .toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const signed = (n) => (n > 0 ? "+" : "") + money(n);
+const pct = (n) => (n > 0 ? "+" : "") + (Number(n) || 0).toFixed(2) + "%";
+const cls = (n) => (n > 0 ? "up" : n < 0 ? "down" : "");
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g,
+  (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+let state = { token: "", me: null, league: null, quotes: null, side: "buy" };
+
+
+/* ================= DEMO MODE =================
+   Enough of a market to explore the page before the backend exists.
+   Prices drift through the day from a fixed base so the numbers move
+   but stay consistent while you are looking at them.                 */
+const DEMO = {
+  startingCash: 100000,
+  commission: 5,
+  indices: [
+    { symbol: "DJI",  name: "Dow Jones Industrial Average", base: 44100 },
+    { symbol: "IXIC", name: "Nasdaq Composite",             base: 19850 },
+    { symbol: "NDX",  name: "Nasdaq 100",                   base: 21400 },
+    { symbol: "INX",  name: "S&P 500",                      base: 6050 }
+  ],
+  instruments: [
+    { symbol: "DIA",  name: "Dow Jones (DIA fund)",  group: "Index trackers", base: 441 },
+    { symbol: "QQQ",  name: "Nasdaq 100 (QQQ fund)", group: "Index trackers", base: 521 },
+    { symbol: "SPY",  name: "S&P 500 (SPY fund)",    group: "Index trackers", base: 604 },
+    { symbol: "AAPL", name: "Apple",                 group: "Technology", base: 233 },
+    { symbol: "MSFT", name: "Microsoft",             group: "Technology", base: 425 },
+    { symbol: "NVDA", name: "NVIDIA",                group: "Technology", base: 138 },
+    { symbol: "GOOGL",name: "Alphabet (Google)",     group: "Technology", base: 176 },
+    { symbol: "AMZN", name: "Amazon",                group: "Technology", base: 219 },
+    { symbol: "META", name: "Meta (Facebook)",       group: "Technology", base: 592 },
+    { symbol: "TSLA", name: "Tesla",                 group: "Technology", base: 342 },
+    { symbol: "JPM",  name: "JPMorgan Chase",        group: "Financial", base: 243 },
+    { symbol: "BRK.B",name: "Berkshire Hathaway B",  group: "Financial", base: 466 },
+    { symbol: "V",    name: "Visa",                  group: "Financial", base: 313 },
+    { symbol: "GS",   name: "Goldman Sachs",         group: "Financial", base: 578 },
+    { symbol: "JNJ",  name: "Johnson & Johnson",     group: "Healthcare & consumer", base: 146 },
+    { symbol: "KO",   name: "Coca-Cola",             group: "Healthcare & consumer", base: 63 },
+    { symbol: "MCD",  name: "McDonald's",            group: "Healthcare & consumer", base: 292 },
+    { symbol: "WMT",  name: "Walmart",               group: "Healthcare & consumer", base: 91 },
+    { symbol: "DIS",  name: "Walt Disney",           group: "Healthcare & consumer", base: 112 },
+    { symbol: "XOM",  name: "Exxon Mobil",           group: "Energy & industry", base: 108 },
+    { symbol: "CAT",  name: "Caterpillar",           group: "Energy & industry", base: 386 },
+    { symbol: "BA",   name: "Boeing",                group: "Energy & industry", base: 155 }
+  ],
+  // A few colleagues so the leaderboard is not empty on first look.
+  rivals: [
+    { name: "Anisa", drift: 0.061 }, { name: "Kevin", drift: -0.024 },
+    { name: "Shivani", drift: 0.033 }, { name: "Marlon", drift: 0.012 }
+  ]
+};
+
+/* Deterministic hash → the same symbol always wiggles the same way. */
+function seed(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return ((h >>> 0) % 10000) / 10000;
+}
+
+function demoQuote(item) {
+  const now = new Date();
+  const minutes = now.getHours() * 60 + now.getMinutes();
+  const s = seed(item.symbol);
+  // One slow wave over the day plus a faster one, scaled per symbol.
+  const swing = (s - 0.5) * 0.05;
+  const wave = Math.sin((minutes / 1440) * Math.PI * 2 + s * 6.28) * 0.011
+             + Math.sin((minutes / 97) + s * 3.14) * 0.004;
+  const prevClose = item.base * (1 + swing);
+  const price = prevClose * (1 + wave);
+  const change = price - prevClose;
+  return {
+    symbol: item.symbol, name: item.name, group: item.group || "Index",
+    price: Math.round(price * 100) / 100,
+    prevClose: Math.round(prevClose * 100) / 100,
+    change: Math.round(change * 100) / 100,
+    pct: Math.round((change / prevClose) * 10000) / 100
+  };
+}
+
+function demoQuotes() {
+  return {
+    ok: true,
+    indices: DEMO.indices.map(demoQuote),
+    instruments: DEMO.instruments.map(demoQuote),
+    startingCash: DEMO.startingCash,
+    commission: DEMO.commission,
+    demo: true
+  };
+}
+
+/* The demo portfolio lives in this browser only. */
+function demoLoad() {
+  try {
+    const raw = localStorage.getItem("rrb-league-demo");
+    if (raw) return JSON.parse(raw);
+  } catch (err) { /* start fresh below */ }
+  return { name: "", cash: DEMO.startingCash, holdings: {}, trades: [] };
+}
+function demoSave(d) {
+  try { localStorage.setItem("rrb-league-demo", JSON.stringify(d)); } catch (err) { /* private mode */ }
+}
+
+function demoMe() {
+  const d = demoLoad();
+  const q = {};
+  demoQuotes().instruments.forEach((x) => { q[x.symbol] = x; });
+
+  let invested = 0;
+  const positions = Object.keys(d.holdings).map((sym) => {
+    const h = d.holdings[sym];
+    const price = q[sym] ? q[sym].price : 0;
+    const value = h.qty * price;
+    const cost = h.qty * h.avgCost;
+    invested += value;
+    return {
+      symbol: sym, name: q[sym] ? q[sym].name : sym, qty: h.qty,
+      avgCost: h.avgCost, price: price,
+      value: Math.round(value * 100) / 100,
+      pnl: Math.round((value - cost) * 100) / 100,
+      pct: cost > 0 ? Math.round(((value - cost) / cost) * 10000) / 100 : 0
+    };
+  }).sort((a, b) => b.value - a.value);
+
+  const total = d.cash + invested;
+  return {
+    ok: true, demo: true,
+    player: { name: d.name },
+    cash: d.cash, invested: invested, total: total,
+    pnl: total - DEMO.startingCash,
+    pct: ((total - DEMO.startingCash) / DEMO.startingCash) * 100,
+    positions: positions,
+    trades: d.trades.slice(0, 40)
+  };
+}
+
+function demoTrade(side, symbol, qty) {
+  const d = demoLoad();
+  const q = demoQuotes().instruments.filter((x) => x.symbol === symbol)[0];
+  if (!q) return { ok: false, error: "That symbol is not in the league." };
+
+  const value = Math.round(q.price * qty * 100) / 100;
+  const held = d.holdings[symbol];
+
+  if (side === "buy") {
+    const cost = value + DEMO.commission;
+    if (cost > d.cash) {
+      return { ok: false, error: "Not enough cash. That costs " + money(cost) + " and you have " + money(d.cash) + "." };
+    }
+    d.cash = Math.round((d.cash - cost) * 100) / 100;
+    if (held) {
+      const newQty = held.qty + qty;
+      held.avgCost = Math.round((((held.qty * held.avgCost) + value) / newQty) * 100) / 100;
+      held.qty = newQty;
+    } else {
+      d.holdings[symbol] = { qty: qty, avgCost: q.price };
+    }
+  } else {
+    if (!held || held.qty < qty) {
+      return { ok: false, error: "You only hold " + (held ? held.qty : 0) + " share(s) of " + symbol + "." };
+    }
+    d.cash = Math.round((d.cash + value - DEMO.commission) * 100) / 100;
+    held.qty -= qty;
+    if (held.qty === 0) delete d.holdings[symbol];
+  }
+
+  d.trades.unshift({
+    at: new Date().toISOString(), side: side.toUpperCase(),
+    symbol: symbol, qty: qty, price: q.price, value: value
+  });
+  d.trades = d.trades.slice(0, 60);
+  demoSave(d);
+
+  return { ok: true, side: side, symbol: symbol, qty: qty, price: q.price, value: value, cash: d.cash };
+}
+
+function demoLeague() {
+  const me = demoMe();
+  const d = demoLoad();
+  const rows = DEMO.rivals.map((r) => {
+    const total = DEMO.startingCash * (1 + r.drift + (seed(r.name) - 0.5) * 0.02);
+    return {
+      name: r.name, positions: 2 + Math.round(seed(r.name) * 4),
+      cash: total * 0.22, invested: total * 0.78, total: total,
+      pnl: total - DEMO.startingCash,
+      pct: ((total - DEMO.startingCash) / DEMO.startingCash) * 100
+    };
+  });
+  rows.push({
+    name: d.name || "You", positions: me.positions.length, cash: me.cash,
+    invested: me.invested, total: me.total, pnl: me.pnl, pct: me.pct
+  });
+  rows.sort((a, b) => b.total - a.total);
+  rows.forEach((r, i) => { r.rank = i + 1; });
+
+  return { ok: true, demo: true, players: rows, indices: demoQuotes().indices, startingCash: DEMO.startingCash };
+}
+
+
+/* ================= API ================= */
+async function apiGet(action, params) {
+  const qs = new URLSearchParams(Object.assign({ action: action }, params || {}));
+  const res = await fetch(CONFIG.API_URL + "?" + qs.toString());
+  return res.json();
+}
+
+async function apiPost(body) {
+  const res = await fetch(CONFIG.API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" }, // avoids CORS preflight for Apps Script
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+
+/* ================= JOIN ================= */
+async function join() {
+  const name = $("j-name").value.trim();
+  const pin = $("j-pin").value.trim();
+  $("j-err").textContent = "";
+
+  if (name.length < 2) { $("j-err").textContent = "Please enter your name."; return; }
+
+  $("j-go").disabled = true;
+  $("j-go").textContent = "Joining…";
+
+  try {
+    if (!LIVE) {
+      const d = demoLoad();
+      d.name = name;
+      demoSave(d);
+      state.token = "demo";
+      localStorage.setItem(STORE_TOKEN, "demo");
+    } else {
+      const out = await apiPost({ action: "join", name: name, pin: pin });
+      if (!out.ok) { throw new Error(out.error || "Could not join."); }
+      state.token = out.token;
+      localStorage.setItem(STORE_TOKEN, out.token);
+    }
+    await start();
+  } catch (err) {
+    $("j-err").textContent = err.message || "Could not reach the league. Try again.";
+  } finally {
+    $("j-go").disabled = false;
+    $("j-go").textContent = "Join the league";
+  }
+}
+
+function leave() {
+  localStorage.removeItem(STORE_TOKEN);
+  location.reload();
+}
+
+async function start() {
+  $("join").style.display = "none";
+  $("app").style.display = "block";
+  renderBanner();
+  await refresh();
+}
+
+
+/* ================= LOAD & RENDER ================= */
+async function refresh() {
+  try {
+    if (!LIVE) {
+      state.quotes = demoQuotes();
+      state.me = demoMe();
+      state.league = demoLeague();
+    } else {
+      const [quotes, me, league] = await Promise.all([
+        apiGet("quotes"),
+        apiGet("me", { token: state.token }),
+        apiGet("league")
+      ]);
+
+      if (me && me.error === "unknown-player") { leave(); return; }
+
+      state.quotes = quotes;
+      state.me = me;
+      state.league = league;
+    }
+  } catch (err) {
+    $("t-msg").innerHTML = '<span class="down">Could not reach the league — check your connection.</span>';
+    return;
+  }
+
+  renderTicker();
+  renderStats();
+  renderInstrumentList();
+  renderHoldings();
+  renderBoard();
+  renderMarket();
+  renderHistory();
+  updateEstimate();
+}
+
+function renderBanner() {
+  if (LIVE) { $("mode-banner").innerHTML = ""; return; }
+  $("mode-banner").innerHTML =
+    '<div class="banner"><b>Demo mode.</b> Prices are simulated and your portfolio is saved on this device only, ' +
+    'so the leaderboard is not shared yet. Deploy <code>apps-script/Market.gs</code> and paste the web app URL into ' +
+    '<code>CONFIG.API_URL</code> to switch on real prices and a shared team leaderboard.</div>';
+}
+
+function renderTicker() {
+  const list = (state.quotes && state.quotes.indices) || [];
+  $("ticker").innerHTML = list.map((i) =>
+    '<div class="tick"><b>' + esc(shortIndex(i.symbol)) + '</b>' +
+    '<span class="lvl mono">' + i.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</span>' +
+    '<span class="chg mono ' + cls(i.change) + '">' + pct(i.pct) + '</span></div>'
+  ).join("") || '<div class="tick"><b>Loading market…</b></div>';
+}
+
+function shortIndex(sym) {
+  return { DJI: "DOW", IXIC: "NASDAQ", NDX: "NASDAQ 100", INX: "S&P 500" }[sym] || sym;
+}
+
+function renderStats() {
+  const m = state.me;
+  if (!m || !m.ok) return;
+
+  const startingCash = (state.league && state.league.startingCash) || DEMO.startingCash;
+  $("who").textContent = (m.player && m.player.name) || "—";
+
+  $("s-total").textContent = money(m.total);
+  $("s-total-sub").textContent = "Started at " + money(startingCash);
+
+  $("s-pnl").textContent = signed(m.pnl);
+  $("s-pnl").className = "v mono " + cls(m.pnl);
+  $("s-pnl-sub").innerHTML = '<span class="' + cls(m.pnl) + '">' + pct(m.pct) + " return</span>";
+
+  $("s-cash").textContent = money(m.cash);
+  $("s-cash-sub").textContent = m.cash > 0 ? "Ready to put to work" : "Fully invested";
+
+  $("s-inv").textContent = money(m.invested);
+  $("s-inv-sub").textContent = m.positions.length + (m.positions.length === 1 ? " position" : " positions");
+}
+
+function renderInstrumentList() {
+  const sel = $("t-sym");
+  const keep = sel.value;
+  const list = (state.quotes && state.quotes.instruments) || [];
+
+  const groups = [];
+  list.forEach((i) => {
+    let g = groups.filter((x) => x.name === i.group)[0];
+    if (!g) { g = { name: i.group, items: [] }; groups.push(g); }
+    g.items.push(i);
+  });
+
+  sel.innerHTML = groups.map((g) =>
+    '<optgroup label="' + esc(g.name) + '">' +
+    g.items.map((i) =>
+      '<option value="' + esc(i.symbol) + '">' + esc(i.symbol) + " — " + esc(i.name) +
+      "  (" + money(i.price) + ")</option>"
+    ).join("") + "</optgroup>"
+  ).join("");
+
+  if (keep) sel.value = keep;
+}
+
+function renderHoldings() {
+  const rows = (state.me && state.me.positions) || [];
+  if (!rows.length) {
+    $("holdings").innerHTML =
+      '<tr><td colspan="7" class="empty">Nothing held yet. Buying <b>DIA</b> tracks the Dow Jones ' +
+      'and <b>QQQ</b> tracks the Nasdaq 100 — a straightforward first trade.</td></tr>';
+    return;
+  }
+  $("holdings").innerHTML = rows.map((h) =>
+    "<tr>" +
+      '<td><span class="sym">' + esc(h.symbol) + '</span><span class="sym-name">' + esc(h.name) + "</span></td>" +
+      '<td class="mono">' + h.qty.toLocaleString("en-US") + "</td>" +
+      '<td class="mono">' + money(h.avgCost) + "</td>" +
+      '<td class="mono">' + money(h.price) + "</td>" +
+      '<td class="mono">' + money(h.value) + "</td>" +
+      '<td class="mono ' + cls(h.pnl) + '">' + signed(h.pnl) + "<br><span style=\"font-size:11px\">" + pct(h.pct) + "</span></td>" +
+      '<td><button class="btn-sm" data-sell="' + esc(h.symbol) + '" data-qty="' + h.qty + '">Sell</button></td>' +
+    "</tr>"
+  ).join("");
+
+  $("holdings").querySelectorAll("[data-sell]").forEach((b) => {
+    b.addEventListener("click", () => {
+      $("t-sym").value = b.getAttribute("data-sell");
+      $("t-qty").value = b.getAttribute("data-qty");
+      setSide("sell");
+      updateEstimate();
+      $("t-sym").scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  });
+}
+
+function renderBoard() {
+  const rows = (state.league && state.league.players) || [];
+  const myName = (state.me && state.me.player && state.me.player.name) || "";
+
+  if (!rows.length) {
+    $("board").innerHTML = '<tr><td colspan="6" class="empty">Nobody has joined yet. You are first.</td></tr>';
+    return;
+  }
+  $("board").innerHTML = rows.map((p) => {
+    const mine = p.name === myName;
+    return '<tr class="' + (mine ? "me-row" : "") + '">' +
+      '<td><span class="rank r' + (p.rank <= 3 ? p.rank : "") + '">' + p.rank + "</span>" +
+        '<span class="sym">' + esc(p.name) + "</span>" + (mine ? '<span class="me-tag">YOU</span>' : "") + "</td>" +
+      '<td class="mono">' + p.positions + "</td>" +
+      '<td class="mono">' + money(p.cash) + "</td>" +
+      '<td class="mono">' + money(p.invested) + "</td>" +
+      '<td class="mono">' + money(p.total) + "</td>" +
+      '<td class="mono ' + cls(p.pnl) + '">' + pct(p.pct) + "</td>" +
+    "</tr>";
+  }).join("");
+}
+
+function renderMarket() {
+  const rows = (state.quotes && state.quotes.instruments) || [];
+  $("market").innerHTML = rows.map((i) =>
+    "<tr>" +
+      '<td><span class="sym">' + esc(i.symbol) + '</span><span class="sym-name">' + esc(i.name) + "</span></td>" +
+      '<td class="mono">' + money(i.price) + "</td>" +
+      '<td class="mono ' + cls(i.change) + '">' + signed(i.change) + "</td>" +
+      '<td class="mono ' + cls(i.pct) + '">' + pct(i.pct) + "</td>" +
+      '<td><button class="btn-sm" data-buy="' + esc(i.symbol) + '">Buy</button></td>' +
+    "</tr>"
+  ).join("");
+
+  $("market").querySelectorAll("[data-buy]").forEach((b) => {
+    b.addEventListener("click", () => {
+      $("t-sym").value = b.getAttribute("data-buy");
+      setSide("buy");
+      updateEstimate();
+      $("t-sym").scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  });
+}
+
+function renderHistory() {
+  const rows = (state.me && state.me.trades) || [];
+  if (!rows.length) {
+    $("history").innerHTML = '<tr><td colspan="6" class="empty">No trades yet.</td></tr>';
+    return;
+  }
+  $("history").innerHTML = rows.map((t) => {
+    const when = t.at ? new Date(t.at) : null;
+    return "<tr>" +
+      "<td>" + (when ? when.toLocaleDateString("en-GB", { day: "numeric", month: "short" }) +
+                ", " + when.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : "—") + "</td>" +
+      '<td><span class="pill ' + (t.side === "BUY" ? "buy" : "sell") + '">' + esc(t.side) + "</span></td>" +
+      '<td><span class="sym">' + esc(t.symbol) + "</span></td>" +
+      '<td class="mono">' + t.qty.toLocaleString("en-US") + "</td>" +
+      '<td class="mono">' + money(t.price) + "</td>" +
+      '<td class="mono">' + money(t.value) + "</td>" +
+    "</tr>";
+  }).join("");
+}
+
+
+/* ================= TRADING ================= */
+function setSide(side) {
+  state.side = side;
+  $("t-side").querySelectorAll("button").forEach((b) => {
+    b.classList.toggle("on", b.getAttribute("data-side") === side);
+  });
+  $("t-go").textContent = side === "buy" ? "Buy" : "Sell";
+}
+
+function currentQuote() {
+  const sym = $("t-sym").value;
+  const list = (state.quotes && state.quotes.instruments) || [];
+  return list.filter((i) => i.symbol === sym)[0] || null;
+}
+
+function updateEstimate() {
+  const q = currentQuote();
+  const qty = Math.floor(Number($("t-qty").value) || 0);
+  const commission = (state.quotes && state.quotes.commission) || DEMO.commission;
+
+  if (!q || qty <= 0) { $("t-est").innerHTML = "&nbsp;"; return; }
+
+  const value = q.price * qty;
+  const total = state.side === "buy" ? value + commission : value - commission;
+  $("t-est").innerHTML = qty.toLocaleString("en-US") + " × " + money(q.price) + " = " +
+    money(value) + '<span style="color:var(--muted);font-weight:400"> · ' +
+    (state.side === "buy" ? "costs " : "you receive ") + money(total) +
+    " after " + money(commission) + " commission</span>";
+}
+
+async function placeOrder() {
+  const sym = $("t-sym").value;
+  const qty = Math.floor(Number($("t-qty").value) || 0);
+  $("t-msg").innerHTML = "";
+
+  if (!sym) { $("t-msg").innerHTML = '<span class="down">Pick an instrument.</span>'; return; }
+  if (qty <= 0) { $("t-msg").innerHTML = '<span class="down">Enter a whole number of shares.</span>'; return; }
+
+  $("t-go").disabled = true;
+  const label = $("t-go").textContent;
+  $("t-go").textContent = "Working…";
+
+  try {
+    const out = !LIVE
+      ? demoTrade(state.side, sym, qty)
+      : await apiPost({ action: "trade", token: state.token, side: state.side, symbol: sym, qty: qty });
+
+    if (!out.ok) {
+      $("t-msg").innerHTML = '<span class="down">' + esc(out.error || "That order did not go through.") + "</span>";
+    } else {
+      $("t-msg").innerHTML = '<span class="up">' +
+        (out.side === "buy" ? "Bought " : "Sold ") + out.qty.toLocaleString("en-US") +
+        " " + esc(out.symbol) + " at " + money(out.price) + ".</span>";
+      await refresh();
+    }
+  } catch (err) {
+    $("t-msg").innerHTML = '<span class="down">Could not reach the league — try again.</span>';
+  } finally {
+    $("t-go").disabled = false;
+    $("t-go").textContent = label;
+  }
+}
+
+
+/* ================= WIRING ================= */
+$("j-go").addEventListener("click", join);
+$("j-name").addEventListener("keydown", (e) => { if (e.key === "Enter") $("j-pin").focus(); });
+$("j-pin").addEventListener("keydown", (e) => { if (e.key === "Enter") join(); });
+
+$("refresh").addEventListener("click", refresh);
+$("leave").addEventListener("click", leave);
+$("t-go").addEventListener("click", placeOrder);
+$("t-sym").addEventListener("change", updateEstimate);
+$("t-qty").addEventListener("input", updateEstimate);
+$("t-side").querySelectorAll("button").forEach((b) => {
+  b.addEventListener("click", () => { setSide(b.getAttribute("data-side")); updateEstimate(); });
+});
+
+// Demo mode needs no league code — hide the field so it is not confusing.
+if (!LIVE) {
+  $("j-pin").style.display = "none";
+}
+
+// Prices move on their own; keep the page honest without hammering the backend.
+setInterval(() => { if ($("app").style.display === "block") refresh(); }, 60000);
+
+// Already joined on this device? Go straight in.
+(function boot() {
+  const saved = localStorage.getItem(STORE_TOKEN);
+  if (saved) { state.token = saved; start(); }
+  else { $("j-name").focus(); }
+})();
+</script>
+
+</body>
+</html>
