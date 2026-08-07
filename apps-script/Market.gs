@@ -37,12 +37,21 @@
  */
 
 var MARKET = {
-  // Everyone joining the league types this. Keep it simple —
-  // it only keeps strangers out, it is not real security.
+  // Typed once, when an agent creates their account. It stops
+  // strangers opening accounts; it is not the sign-in credential.
   LEAGUE_PIN: 'BRANCH',
 
-  // Lets you reset the league and remove players. Change it.
+  // Yours only. Resets the league and clears a forgotten PIN.
   ADMIN_PIN: 'CHANGE-ME',
+
+  // Each agent picks their own PIN of this length to sign in.
+  PIN_MIN: 4,
+  PIN_MAX: 8,
+
+  // Wrong PIN this many times in a row and the account is held
+  // shut for a while, so nobody can sit and guess four digits.
+  MAX_ATTEMPTS: 5,
+  LOCKOUT_MINUTES: 15,
 
   // Play money each player starts with. No currency conversion
   // happens anywhere — prices are USD, so treat this as USD.
@@ -123,7 +132,13 @@ function setupMarket() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
   ensureTab_(ss, MARKET.TAB_PLAYERS,
-    ['Token', 'Name', 'Email', 'Cash', 'Joined', 'Last seen']);
+    ['Token', 'Name', 'Email', 'Cash', 'Joined', 'Last seen',
+     'PIN hash', 'Salt', 'Failed attempts', 'Locked until']);
+
+  // Adds the sign-in columns to a Players tab built before logins
+  // existed, without disturbing anybody's cash.
+  ensureColumns_(ss, MARKET.TAB_PLAYERS,
+    ['PIN hash', 'Salt', 'Failed attempts', 'Locked until']);
   ensureTab_(ss, MARKET.TAB_HOLDINGS,
     ['Token', 'Symbol', 'Quantity', 'Average cost']);
   ensureTab_(ss, MARKET.TAB_TRADES,
@@ -145,6 +160,23 @@ function ensureTab_(ss, name, headers) {
     s.setFrozenRows(1);
   }
   return s;
+}
+
+/** Appends any of `wanted` that the header row does not already carry. */
+function ensureColumns_(ss, tabName, wanted) {
+  var s = ss.getSheetByName(tabName);
+  if (!s) return;
+
+  var width = Math.max(s.getLastColumn(), 1);
+  var headers = s.getRange(1, 1, 1, width).getValues()[0].map(function (h) {
+    return String(h || '').trim();
+  });
+
+  var missing = wanted.filter(function (w) { return headers.indexOf(w) === -1; });
+  if (!missing.length) return;
+
+  s.getRange(1, width + 1, 1, missing.length).setValues([missing])
+    .setFontWeight('bold').setBackground('#163553').setFontColor('#ffffff');
 }
 
 /**
@@ -269,10 +301,13 @@ function doPost(e) {
   var out;
   try {
     switch (body.action) {
-      case 'join':   out = apiJoin_(body); break;
-      case 'trade':  out = apiTrade_(body); break;
-      case 'reset':  out = apiReset_(body); break;
-      default:       out = { ok: false, error: 'Unknown action' };
+      case 'register':  out = apiRegister_(body); break;
+      case 'login':     out = apiLogin_(body); break;
+      case 'changePin': out = apiChangePin_(body); break;
+      case 'resetPin':  out = apiResetPin_(body); break;
+      case 'trade':     out = apiTrade_(body); break;
+      case 'reset':     out = apiReset_(body); break;
+      default:          out = { ok: false, error: 'Unknown action' };
     }
   } catch (err) {
     out = { ok: false, error: String(err && err.message ? err.message : err) };
@@ -403,36 +438,199 @@ function apiMe_(token) {
 }
 
 
-/** Adds a player, or hands back the existing account for that name. */
-function apiJoin_(body) {
-  var name = String(body.name || '').trim().replace(/\s+/g, ' ');
+/**
+ * Opens an account. Needs the league code once, then the agent
+ * chooses the PIN they will sign in with from then on.
+ */
+function apiRegister_(body) {
+  var name = cleanName_(body.name);
   var email = String(body.email || '').trim();
   var pin = String(body.pin || '').trim();
+  var leaguePin = String(body.leaguePin || '').trim();
 
   if (name.length < 2) return { ok: false, error: 'Please enter your name.' };
-  if (name.length > 40) name = name.slice(0, 40);
-  if (pin.toUpperCase() !== String(MARKET.LEAGUE_PIN).toUpperCase()) {
+  if (leaguePin.toUpperCase() !== String(MARKET.LEAGUE_PIN).toUpperCase()) {
     return { ok: false, error: 'That league code is not right.' };
   }
+
+  var bad = checkPin_(pin);
+  if (bad) return { ok: false, error: bad };
 
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
-    var existing = findPlayerByName_(name);
-    if (existing) {
-      // Same person coming back on a new device — give them their
-      // account rather than a second one under the same name.
-      return { ok: true, token: existing.token, name: existing.name, returning: true };
+    if (findPlayerByName_(name)) {
+      return { ok: false, error: 'There is already an account in that name. Sign in instead, or use your full name.' };
     }
 
     var token = makeToken_();
-    var s = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(MARKET.TAB_PLAYERS);
-    s.appendRow([token, name, email, MARKET.STARTING_CASH, new Date(), new Date()]);
+    var salt = Utilities.getUuid();
+    SpreadsheetApp.getActiveSpreadsheet().getSheetByName(MARKET.TAB_PLAYERS)
+      .appendRow([token, name, email, MARKET.STARTING_CASH, new Date(), new Date(),
+                  hashPin_(pin, salt), salt, 0, '']);
 
-    return { ok: true, token: token, name: name, returning: false };
+    return { ok: true, token: token, name: name };
   } finally {
     lock.releaseLock();
   }
+}
+
+
+/** Signs an existing agent in with their own PIN. */
+function apiLogin_(body) {
+  var name = cleanName_(body.name);
+  var pin = String(body.pin || '').trim();
+
+  if (!name || !pin) return { ok: false, error: 'Enter your name and your PIN.' };
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var player = findPlayerByName_(name);
+
+    // Same message either way, so this cannot be used to find out
+    // who is in the league.
+    var wrong = { ok: false, error: 'That name and PIN do not match.' };
+    if (!player) return wrong;
+
+    if (player.lockedUntil && player.lockedUntil > new Date()) {
+      var mins = Math.ceil((player.lockedUntil - new Date()) / 60000);
+      return { ok: false, error: 'Too many wrong PINs. Try again in ' + mins + ' minute' + (mins === 1 ? '' : 's') + '.' };
+    }
+
+    // An account created before logins existed, or one Ricky has reset.
+    if (!player.pinHash) {
+      return { ok: false, error: 'no-pin-set', name: player.name };
+    }
+
+    if (hashPin_(pin, player.salt) !== player.pinHash) {
+      registerFailure_(player);
+      return wrong;
+    }
+
+    // Fresh token on every sign-in, so an old device stops working
+    // once the agent signs in somewhere else.
+    var token = makeToken_();
+    var s = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(MARKET.TAB_PLAYERS);
+    s.getRange(player.rowIndex, 1).setValue(token);
+    s.getRange(player.rowIndex, 6).setValue(new Date());
+    s.getRange(player.rowIndex, 9, 1, 2).setValues([[0, '']]);
+
+    return { ok: true, token: token, name: player.name };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
+/**
+ * Sets a PIN. Used both to change a known one and to claim an
+ * account whose PIN Ricky has cleared.
+ */
+function apiChangePin_(body) {
+  var name = cleanName_(body.name);
+  var oldPin = String(body.oldPin || '').trim();
+  var newPin = String(body.newPin || '').trim();
+
+  var bad = checkPin_(newPin);
+  if (bad) return { ok: false, error: bad };
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var player = body.token ? findPlayer_(body.token) : findPlayerByName_(name);
+    if (!player) return { ok: false, error: 'That name and PIN do not match.' };
+
+    if (player.pinHash) {
+      if (player.lockedUntil && player.lockedUntil > new Date()) {
+        return { ok: false, error: 'Too many wrong PINs. Try again shortly.' };
+      }
+      if (hashPin_(oldPin, player.salt) !== player.pinHash) {
+        registerFailure_(player);
+        return { ok: false, error: 'That name and PIN do not match.' };
+      }
+    } else {
+      // Claiming an account whose PIN was cleared. Without this the
+      // account would sit unprotected between the reset and the agent
+      // getting to it, and a colleague could take it over by name alone.
+      if (String(body.leaguePin || '').trim().toUpperCase() !== String(MARKET.LEAGUE_PIN).toUpperCase()) {
+        return { ok: false, error: 'Enter the league code to set a new PIN.' };
+      }
+    }
+
+    var salt = Utilities.getUuid();
+    var token = makeToken_();
+    var s = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(MARKET.TAB_PLAYERS);
+    s.getRange(player.rowIndex, 1).setValue(token);
+    s.getRange(player.rowIndex, 7, 1, 4).setValues([[hashPin_(newPin, salt), salt, 0, '']]);
+
+    return { ok: true, token: token, name: player.name };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
+/**
+ * Yours: clears an agent's PIN so they can set a new one at the
+ * next sign-in. Their cash and positions are untouched.
+ */
+function apiResetPin_(body) {
+  if (String(body.adminPin || '') !== String(MARKET.ADMIN_PIN)) {
+    return { ok: false, error: 'Admin code is not right.' };
+  }
+
+  var name = cleanName_(body.name);
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var player = findPlayerByName_(name);
+    if (!player) return { ok: false, error: 'No agent by that name.' };
+
+    SpreadsheetApp.getActiveSpreadsheet().getSheetByName(MARKET.TAB_PLAYERS)
+      .getRange(player.rowIndex, 7, 1, 4).setValues([['', '', 0, '']]);
+
+    return { ok: true, message: player.name + ' can now set a new PIN at sign-in.' };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
+/* ---- sign-in helpers ---- */
+
+function cleanName_(v) {
+  return String(v || '').trim().replace(/\s+/g, ' ').slice(0, 40);
+}
+
+function checkPin_(pin) {
+  if (!/^\d+$/.test(pin)) return 'Your PIN must be numbers only.';
+  if (pin.length < MARKET.PIN_MIN || pin.length > MARKET.PIN_MAX) {
+    return 'Your PIN must be ' + MARKET.PIN_MIN + ' to ' + MARKET.PIN_MAX + ' digits.';
+  }
+  if (/^(\d)\1+$/.test(pin)) return 'Please choose a less obvious PIN.';
+  return '';
+}
+
+/** Salted SHA-256 — the sheet never holds anybody's PIN in the clear. */
+function hashPin_(pin, salt) {
+  var bytes = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256, String(salt) + '::' + String(pin), Utilities.Charset.UTF_8);
+  return bytes.map(function (b) {
+    return ((b < 0 ? b + 256 : b) + 0x100).toString(16).slice(1);
+  }).join('');
+}
+
+function registerFailure_(player) {
+  var s = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(MARKET.TAB_PLAYERS);
+  var failed = player.failed + 1;
+  var until = '';
+
+  if (failed >= MARKET.MAX_ATTEMPTS) {
+    until = new Date(Date.now() + MARKET.LOCKOUT_MINUTES * 60000);
+    failed = 0;
+  }
+  s.getRange(player.rowIndex, 9, 1, 2).setValues([[failed, until]]);
 }
 
 
@@ -543,16 +741,20 @@ function apiReset_(body) {
 function readPlayers_() {
   var s = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(MARKET.TAB_PLAYERS);
   if (!s || s.getLastRow() < 2) return [];
-  return s.getRange(2, 1, s.getLastRow() - 1, 6).getValues().map(function (r, i) {
+  return s.getRange(2, 1, s.getLastRow() - 1, 10).getValues().map(function (r, i) {
     return {
       rowIndex: i + 2,
       token: String(r[0] || ''),
       name: String(r[1] || ''),
       email: String(r[2] || ''),
       cash: num_(r[3]),
-      joined: r[4] ? new Date(r[4]).toISOString() : ''
+      joined: r[4] ? new Date(r[4]).toISOString() : '',
+      pinHash: String(r[6] || ''),
+      salt: String(r[7] || ''),
+      failed: num_(r[8]),
+      lockedUntil: r[9] ? new Date(r[9]) : null
     };
-  }).filter(function (p) { return p.token; });
+  }).filter(function (p) { return p.name; });
 }
 
 function findPlayer_(token) {

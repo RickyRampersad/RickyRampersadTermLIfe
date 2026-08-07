@@ -40,6 +40,10 @@
   .join-card input:focus{border-color:rgba(239,194,75,.5)}
   .join-card input::placeholder{font-weight:400;color:#6e839b}
   .join-err{color:var(--down);font-size:12px;margin-top:10px;min-height:16px;font-weight:600}
+  .join-switch{margin-top:14px;font-size:12.5px;color:var(--muted)}
+  .join-switch button{background:none;border:none;cursor:pointer;padding:0 0 0 5px;
+    color:var(--teal);font-family:'Montserrat',sans-serif;font-size:12.5px;font-weight:700;text-decoration:underline}
+  .join-switch button:hover{color:var(--gold)}
   .join-note{font-size:11.5px;color:var(--muted);margin-top:18px;line-height:1.6;border-top:1px solid var(--line);padding-top:14px}
   .join-back{display:inline-block;margin-top:14px;font-size:12px;color:var(--muted);text-decoration:none}
   .join-back:hover{color:var(--teal)}
@@ -182,12 +186,33 @@
       <circle cx="63" cy="32" r="4.5" fill="#07131f"/>
     </svg>
     <h1>Branch Trading League</h1>
-    <p class="sub">Play money. Real prices.<br>Everyone starts with the same balance — best return wins.</p>
+    <p class="sub" id="j-sub">Sign in to see where you stand.</p>
+
     <input id="j-name" type="text" placeholder="Your name" autocomplete="name" maxlength="40"/>
-    <input id="j-pin" type="text" placeholder="League code" autocomplete="off" maxlength="24"/>
-    <button class="btn" id="j-go">Join the league</button>
+
+    <!-- shown when creating an account -->
+    <input id="j-league" type="text" placeholder="League code" autocomplete="off" maxlength="24" style="display:none"/>
+
+    <input id="j-pin" type="password" placeholder="Your PIN" autocomplete="current-password"
+           inputmode="numeric" maxlength="8"/>
+
+    <!-- shown when creating an account or setting a new PIN -->
+    <input id="j-pin2" type="password" placeholder="Confirm your PIN" autocomplete="new-password"
+           inputmode="numeric" maxlength="8" style="display:none"/>
+
+    <button class="btn" id="j-go">Sign in</button>
     <div class="join-err" id="j-err"></div>
+
+    <div class="join-switch">
+      <span id="j-switch-text">First time here?</span>
+      <button type="button" id="j-switch">Create your account</button>
+    </div>
+
     <p class="join-note">
+      Your PIN is yours — it is stored scrambled and nobody, including Ricky, can read it back.
+      Forgotten it? Ask Ricky to clear it and you can set a new one.
+    </p>
+    <p class="join-note" style="border-top:none;padding-top:0">
       No money changes hands. Nothing here is a real investment, a real account, or advice to buy anything.
       It is a game for the team.
     </p>
@@ -212,7 +237,7 @@
       </a>
       <span class="who" id="who">—</span>
       <button class="link" id="refresh">Refresh</button>
-      <button class="link" id="leave">Leave</button>
+      <button class="link" id="leave">Sign out</button>
     </div>
   </nav>
 
@@ -474,16 +499,86 @@ function demoQuotes() {
   };
 }
 
-/* The demo portfolio lives in this browser only. */
-function demoLoad() {
+/* Demo accounts live in this browser only. Several people can still
+   sign in on the same device, which is enough to show how the
+   standings work before the backend is deployed.                   */
+const DEMO_KEY = "rrb-league-demo";
+
+function demoStore() {
   try {
-    const raw = localStorage.getItem("rrb-league-demo");
-    if (raw) return JSON.parse(raw);
+    const raw = localStorage.getItem(DEMO_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.accounts) return parsed;
+    }
   } catch (err) { /* start fresh below */ }
-  return { name: "", cash: DEMO.startingCash, holdings: {}, trades: [] };
+  return { accounts: {}, current: "" };
 }
-function demoSave(d) {
-  try { localStorage.setItem("rrb-league-demo", JSON.stringify(d)); } catch (err) { /* private mode */ }
+
+function demoStoreSave(store) {
+  try { localStorage.setItem(DEMO_KEY, JSON.stringify(store)); } catch (err) { /* private mode */ }
+}
+
+function blankAccount(name) {
+  return { name: name, pin: "", cash: DEMO.startingCash, holdings: {}, trades: [] };
+}
+
+/** The account currently signed in on this device. */
+function demoLoad() {
+  const store = demoStore();
+  return store.accounts[store.current] || blankAccount("");
+}
+
+function demoSave(acct) {
+  const store = demoStore();
+  const key = (acct.name || "").toLowerCase();
+  if (!key) return;
+  store.accounts[key] = acct;
+  store.current = key;
+  demoStoreSave(store);
+}
+
+/** Mirrors the backend's register / login / setpin, locally. */
+function demoAuth(kind, name, pin) {
+  const store = demoStore();
+  const key = name.toLowerCase();
+  const existing = store.accounts[key];
+
+  if (kind === "register") {
+    if (existing) return { ok: false, error: "There is already an account in that name on this device. Sign in instead." };
+    const acct = blankAccount(name);
+    acct.pin = pin;
+    store.accounts[key] = acct;
+    store.current = key;
+    demoStoreSave(store);
+    return { ok: true, token: "demo:" + key };
+  }
+
+  if (kind === "setpin") {
+    if (!existing) return { ok: false, error: "That name and PIN do not match." };
+    existing.pin = pin;
+    store.current = key;
+    demoStoreSave(store);
+    return { ok: true, token: "demo:" + key };
+  }
+
+  if (!existing) return { ok: false, error: "That name and PIN do not match." };
+  if (!existing.pin) return { ok: false, error: "no-pin-set" };
+  if (existing.pin !== pin) return { ok: false, error: "That name and PIN do not match." };
+
+  store.current = key;
+  demoStoreSave(store);
+  return { ok: true, token: "demo:" + key };
+}
+
+/** Restores the session a saved demo token points at. */
+function demoResume(token) {
+  const key = String(token || "").replace(/^demo:/, "");
+  const store = demoStore();
+  if (!store.accounts[key]) return false;
+  store.current = key;
+  demoStoreSave(store);
+  return true;
 }
 
 function demoMe() {
@@ -560,21 +655,39 @@ function demoTrade(side, symbol, qty) {
 }
 
 function demoLeague() {
-  const me = demoMe();
-  const d = demoLoad();
-  const rows = DEMO.rivals.map((r) => {
-    const total = DEMO.startingCash * (1 + r.drift + (seed(r.name) - 0.5) * 0.02);
-    return {
-      name: r.name, positions: 2 + Math.round(seed(r.name) * 4),
-      cash: total * 0.22, invested: total * 0.78, total: total,
+  const q = {};
+  demoQuotes().instruments.forEach((x) => { q[x.symbol] = x; });
+  const store = demoStore();
+
+  // A real account always wins the name — otherwise an agent called
+  // Anisa would sit on the board twice, beside the stand-in.
+  const rows = DEMO.rivals
+    .filter((r) => !store.accounts[r.name.toLowerCase()])
+    .map((r) => {
+      const total = DEMO.startingCash * (1 + r.drift + (seed(r.name) - 0.5) * 0.02);
+      return {
+        name: r.name, positions: 2 + Math.round(seed(r.name) * 4),
+        cash: total * 0.22, invested: total * 0.78, total: total,
+        pnl: total - DEMO.startingCash,
+        pct: ((total - DEMO.startingCash) / DEMO.startingCash) * 100
+      };
+    });
+
+  Object.keys(store.accounts).forEach((key) => {
+    const a = store.accounts[key];
+    let invested = 0;
+    Object.keys(a.holdings).forEach((sym) => {
+      invested += a.holdings[sym].qty * (q[sym] ? q[sym].price : 0);
+    });
+    const total = a.cash + invested;
+    rows.push({
+      name: a.name, positions: Object.keys(a.holdings).length,
+      cash: a.cash, invested: invested, total: total,
       pnl: total - DEMO.startingCash,
       pct: ((total - DEMO.startingCash) / DEMO.startingCash) * 100
-    };
+    });
   });
-  rows.push({
-    name: d.name || "You", positions: me.positions.length, cash: me.cash,
-    invested: me.invested, total: me.total, pnl: me.pnl, pct: me.pct
-  });
+
   rows.sort((a, b) => b.total - a.total);
   rows.forEach((r, i) => { r.rank = i + 1; });
 
@@ -599,41 +712,118 @@ async function apiPost(body) {
 }
 
 
-/* ================= JOIN ================= */
-async function join() {
+/* ================= SIGN IN =================
+   Three states share one card: signing in, creating an account,
+   and setting a new PIN after Ricky has cleared the old one.   */
+const MODES = {
+  login: {
+    sub: "Sign in to see where you stand.",
+    button: "Sign in",
+    switchText: "First time here?",
+    switchLabel: "Create your account",
+    show: { league: false, confirm: false }
+  },
+  register: {
+    sub: "Pick a PIN you will remember — you will use it every time.",
+    button: "Create my account",
+    switchText: "Already have an account?",
+    switchLabel: "Sign in",
+    show: { league: true, confirm: true }
+  },
+  setpin: {
+    sub: "Your PIN has been cleared. Enter the league code and choose a new one.",
+    button: "Set my PIN",
+    switchText: "Changed your mind?",
+    switchLabel: "Back to sign in",
+    show: { league: true, confirm: true }
+  }
+};
+let mode = "login";
+
+function setMode(next) {
+  mode = next;
+  const m = MODES[next];
+
+  $("j-sub").textContent = m.sub;
+  $("j-go").textContent = m.button;
+  $("j-switch-text").textContent = m.switchText;
+  $("j-switch").textContent = m.switchLabel;
+  $("j-league").style.display = m.show.league ? "" : "none";
+  $("j-pin2").style.display = m.show.confirm ? "" : "none";
+  $("j-pin").placeholder = next === "login" ? "Your PIN" : "Choose a PIN (4–8 digits)";
+  $("j-pin").setAttribute("autocomplete", next === "login" ? "current-password" : "new-password");
+  $("j-err").textContent = "";
+
+  // Demo mode has no league to gate, so never ask for the code.
+  if (!LIVE) $("j-league").style.display = "none";
+}
+
+function localPinError(pin) {
+  if (!/^\d+$/.test(pin)) return "Your PIN must be numbers only.";
+  if (pin.length < 4 || pin.length > 8) return "Your PIN must be 4 to 8 digits.";
+  if (/^(\d)\1+$/.test(pin)) return "Please choose a less obvious PIN.";
+  return "";
+}
+
+async function submitAuth() {
   const name = $("j-name").value.trim();
   const pin = $("j-pin").value.trim();
+  const pin2 = $("j-pin2").value.trim();
+  const league = $("j-league").value.trim();
   $("j-err").textContent = "";
 
   if (name.length < 2) { $("j-err").textContent = "Please enter your name."; return; }
+  if (!pin) { $("j-err").textContent = "Enter your PIN."; return; }
 
+  if (mode !== "login") {
+    const bad = localPinError(pin);
+    if (bad) { $("j-err").textContent = bad; return; }
+    if (pin !== pin2) { $("j-err").textContent = "Those two PINs do not match."; return; }
+  }
+
+  const label = $("j-go").textContent;
   $("j-go").disabled = true;
-  $("j-go").textContent = "Joining…";
+  $("j-go").textContent = "One moment…";
 
   try {
-    if (!LIVE) {
-      const d = demoLoad();
-      d.name = name;
-      demoSave(d);
-      state.token = "demo";
-      localStorage.setItem(STORE_TOKEN, "demo");
-    } else {
-      const out = await apiPost({ action: "join", name: name, pin: pin });
-      if (!out.ok) { throw new Error(out.error || "Could not join."); }
-      state.token = out.token;
-      localStorage.setItem(STORE_TOKEN, out.token);
+    const out = !LIVE
+      ? demoAuth(mode, name, pin)
+      : await apiPost(
+          mode === "login"    ? { action: "login", name: name, pin: pin } :
+          mode === "register" ? { action: "register", name: name, pin: pin, leaguePin: league } :
+                                { action: "changePin", name: name, newPin: pin, leaguePin: league });
+
+    // The account exists but has no PIN yet — send them to set one.
+    if (!out.ok && out.error === "no-pin-set") {
+      setMode("setpin");
+      $("j-pin").value = ""; $("j-pin2").value = "";
+      $("j-err").textContent = "";
+      return;
     }
+    if (!out.ok) { $("j-err").textContent = out.error || "That did not work."; return; }
+
+    state.token = out.token;
+    localStorage.setItem(STORE_TOKEN, out.token);
+    $("j-pin").value = ""; $("j-pin2").value = "";
     await start();
   } catch (err) {
-    $("j-err").textContent = err.message || "Could not reach the league. Try again.";
+    $("j-err").textContent = "Could not reach the league — check your connection.";
   } finally {
     $("j-go").disabled = false;
-    $("j-go").textContent = "Join the league";
+    $("j-go").textContent = label;
   }
 }
 
 function leave() {
   localStorage.removeItem(STORE_TOKEN);
+
+  // Demo portfolios stay on the device, but the session ends so the
+  // next person gets the sign-in screen rather than someone else's book.
+  if (!LIVE) {
+    const store = demoStore();
+    store.current = "";
+    demoStoreSave(store);
+  }
   location.reload();
 }
 
@@ -906,9 +1096,18 @@ async function placeOrder() {
 
 
 /* ================= WIRING ================= */
-$("j-go").addEventListener("click", join);
+$("j-go").addEventListener("click", submitAuth);
+$("j-switch").addEventListener("click", () => {
+  setMode(mode === "login" ? "register" : "login");
+  $("j-pin").value = ""; $("j-pin2").value = "";
+});
 $("j-name").addEventListener("keydown", (e) => { if (e.key === "Enter") $("j-pin").focus(); });
-$("j-pin").addEventListener("keydown", (e) => { if (e.key === "Enter") join(); });
+$("j-pin").addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+  if ($("j-pin2").style.display === "none") submitAuth(); else $("j-pin2").focus();
+});
+$("j-pin2").addEventListener("keydown", (e) => { if (e.key === "Enter") submitAuth(); });
+$("j-league").addEventListener("keydown", (e) => { if (e.key === "Enter") $("j-pin").focus(); });
 
 $("refresh").addEventListener("click", refresh);
 $("leave").addEventListener("click", leave);
@@ -919,19 +1118,21 @@ $("t-side").querySelectorAll("button").forEach((b) => {
   b.addEventListener("click", () => { setSide(b.getAttribute("data-side")); updateEstimate(); });
 });
 
-// Demo mode needs no league code — hide the field so it is not confusing.
-if (!LIVE) {
-  $("j-pin").style.display = "none";
-}
-
 // Prices move on their own; keep the page honest without hammering the backend.
 setInterval(() => { if ($("app").style.display === "block") refresh(); }, 60000);
 
-// Already joined on this device? Go straight in.
+// Already signed in on this device? Go straight in.
 (function boot() {
+  setMode("login");
   const saved = localStorage.getItem(STORE_TOKEN);
-  if (saved) { state.token = saved; start(); }
-  else { $("j-name").focus(); }
+
+  if (saved && (LIVE || demoResume(saved))) {
+    state.token = saved;
+    start();
+  } else {
+    localStorage.removeItem(STORE_TOKEN);
+    $("j-name").focus();
+  }
 })();
 </script>
 

@@ -35,13 +35,15 @@ NVIDIA, Tesla, JPMorgan, Coca-Cola, Boeing and so on. Edit the `UNIVERSE` list i
 
 ## Right now: demo mode
 
-Open `market/index.html` as it stands and it works immediately — simulated prices,
-a portfolio saved in that browser, a sample leaderboard. Good for showing people
-what the game looks like.
+Open `market/index.html` as it stands and it works immediately — simulated prices
+and a full sign-in flow. Several people can create accounts and trade on the same
+device, each with their own PIN and their own book, and they all appear on the
+leaderboard together. Good for showing the team what the game is before you commit
+to setting it up.
 
-The catch is that in demo mode **each person's portfolio lives on their own
-device**, so there is no shared leaderboard. For a real competition, do the setup
-below.
+The catch is that in demo mode **everything lives in that one browser**. There is
+no shared league — your phone and a colleague's phone know nothing about each
+other. For a real competition, do the setup below.
 
 ---
 
@@ -62,15 +64,18 @@ At the top of the script:
 
 ```js
 var MARKET = {
-  LEAGUE_PIN: 'BRANCH',      // what the team types to join
-  ADMIN_PIN:  'CHANGE-ME',   // only you — lets you reset the league
-  STARTING_CASH: 100000,     // play money each player starts with
+  LEAGUE_PIN: 'BRANCH',      // typed once, when an agent opens an account
+  ADMIN_PIN:  'CHANGE-ME',   // yours only — resets the league, clears a PIN
+  STARTING_CASH: 100000,     // play money each agent starts with
   COMMISSION: 5,             // charged per trade
+  PIN_MIN: 4, PIN_MAX: 8,    // length of the PIN each agent chooses
+  MAX_ATTEMPTS: 5,           // wrong PINs before the account is held shut
+  LOCKOUT_MINUTES: 15,
   ...
 ```
 
 Change `ADMIN_PIN` to something only you know. `LEAGUE_PIN` is the code you give
-the team.
+the team — it is needed once, to open an account, not every time they sign in.
 
 ### 3. Build the sheet
 
@@ -113,11 +118,36 @@ Commit and push. The demo banner disappears and everyone shares one live league.
 
 ---
 
-## Running it
+## Signing in
 
-Send the team the link and the league code. They enter a name, and they are in —
-no account, no password, no app to install. Their place is remembered on their
-device.
+Each agent has their own account and their own PIN, so everybody's book is their
+own and the standings mean something.
+
+**First time.** Send the team the link and the league code. Each agent taps
+*Create your account*, enters their name, the league code, and a PIN of their own
+choosing (4–8 digits). The league code is only needed here, once.
+
+**After that.** Name and PIN. Nothing else.
+
+**How the PIN is held.** It is salted and hashed with SHA-256 before it touches
+the spreadsheet, so the sheet holds a scramble, not the PIN. Nobody can read it
+back — not the team, not you. Five wrong PINs in a row and the account is held
+shut for fifteen minutes, so nobody can sit and guess four digits.
+
+**Forgotten PIN.** You clear it, they choose a new one:
+
+```
+POST  {"action":"resetPin","adminPin":"YOUR-ADMIN-CODE","name":"Anisa"}
+```
+
+Or, more simply, open the **Players** tab and blank that agent's *PIN hash* and
+*Salt* cells. Either way their cash, positions and history are untouched — the
+next time they sign in the page asks them to set a new PIN, and they need the
+league code to do it, so a cleared account cannot be claimed by someone else in
+the meantime.
+
+Signing in issues a fresh token, which quietly signs the agent out anywhere else
+they were signed in. Their place is remembered on the device until they sign out.
 
 - **Prices** come from Google Finance and are delayed, typically up to about
   20 minutes for US listings. Everyone trades off the same delayed prices, so the
@@ -144,11 +174,13 @@ settling an argument.
 
 ## Notes
 
-- **Same name = same account.** Someone rejoining on a second device gets their
-  existing portfolio rather than a duplicate. It also means anyone who knows a
-  colleague's name and the league code could trade as them. Among a branch team
-  that is a reasonable trade for having no passwords; if you would rather it were
-  tighter, that is a change worth making before you widen the group.
+- **A PIN is not a password.** Four digits, guarded by a lockout, is the right
+  weight for a play-money game among colleagues and keeps the friction near zero.
+  It is not what you would put in front of anything real. Nothing sensitive lives
+  in this spreadsheet — imaginary balances and a list of first names — so the
+  exposure if a PIN were guessed is that somebody's game gets meddled with.
+- **Names are the identity.** Two agents called Kevin need to be *Kevin B* and
+  *Kevin R*, or the second one cannot open an account.
 - **GOOGLEFINANCE covers US listings well.** It does not cover the Trinidad and
   Tobago Stock Exchange, so a TTSE league is not possible on this setup.
 - **Free and quota-friendly.** No API key, no signup, no billing. Prices come from
