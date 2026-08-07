@@ -37,14 +37,14 @@
  */
 
 var MARKET = {
-  // Typed once, when an agent creates their account. It stops
+  // Typed once, when someone opens an account. It stops
   // strangers opening accounts; it is not the sign-in credential.
   LEAGUE_PIN: 'BRANCH',
 
   // Yours only. Resets the league and clears a forgotten PIN.
   ADMIN_PIN: 'CHANGE-ME',
 
-  // Each agent picks their own PIN of this length to sign in.
+  // Each player picks their own PIN of this length to sign in.
   PIN_MIN: 4,
   PIN_MAX: 8,
 
@@ -439,7 +439,7 @@ function apiMe_(token) {
 
 
 /**
- * Opens an account. Needs the league code once, then the agent
+ * Opens an account. Needs the league code once, then the player
  * chooses the PIN they will sign in with from then on.
  */
 function apiRegister_(body) {
@@ -476,7 +476,7 @@ function apiRegister_(body) {
 }
 
 
-/** Signs an existing agent in with their own PIN. */
+/** Signs an existing player in with their own PIN. */
 function apiLogin_(body) {
   var name = cleanName_(body.name);
   var pin = String(body.pin || '').trim();
@@ -509,7 +509,7 @@ function apiLogin_(body) {
     }
 
     // Fresh token on every sign-in, so an old device stops working
-    // once the agent signs in somewhere else.
+    // once they sign in somewhere else.
     var token = makeToken_();
     var s = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(MARKET.TAB_PLAYERS);
     s.getRange(player.rowIndex, 1).setValue(token);
@@ -551,7 +551,7 @@ function apiChangePin_(body) {
       }
     } else {
       // Claiming an account whose PIN was cleared. Without this the
-      // account would sit unprotected between the reset and the agent
+      // account would sit unprotected between the reset and the player
       // getting to it, and a colleague could take it over by name alone.
       if (String(body.leaguePin || '').trim().toUpperCase() !== String(MARKET.LEAGUE_PIN).toUpperCase()) {
         return { ok: false, error: 'Enter the league code to set a new PIN.' };
@@ -572,7 +572,7 @@ function apiChangePin_(body) {
 
 
 /**
- * Yours: clears an agent's PIN so they can set a new one at the
+ * Yours: clears a player's PIN so they can set a new one at the
  * next sign-in. Their cash and positions are untouched.
  */
 function apiResetPin_(body) {
@@ -585,7 +585,7 @@ function apiResetPin_(body) {
   lock.waitLock(20000);
   try {
     var player = findPlayerByName_(name);
-    if (!player) return { ok: false, error: 'No agent by that name.' };
+    if (!player) return { ok: false, error: 'No one by that name.' };
 
     SpreadsheetApp.getActiveSpreadsheet().getSheetByName(MARKET.TAB_PLAYERS)
       .getRange(player.rowIndex, 7, 1, 4).setValues([['', '', 0, '']]);

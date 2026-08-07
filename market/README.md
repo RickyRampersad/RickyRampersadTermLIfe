@@ -1,5 +1,7 @@
 # Branch Trading League
 
+*A Ricky Rampersad initiative.*
+
 A play-money investing game for the branch team. Everyone starts with the same
 imaginary balance and buys or sells real listed instruments at real (delayed)
 market prices. Highest portfolio value wins.
@@ -64,11 +66,11 @@ At the top of the script:
 
 ```js
 var MARKET = {
-  LEAGUE_PIN: 'BRANCH',      // typed once, when an agent opens an account
+  LEAGUE_PIN: 'BRANCH',      // typed once, when someone opens an account
   ADMIN_PIN:  'CHANGE-ME',   // yours only — resets the league, clears a PIN
-  STARTING_CASH: 100000,     // play money each agent starts with
+  STARTING_CASH: 100000,     // play money each player starts with
   COMMISSION: 5,             // charged per trade
-  PIN_MIN: 4, PIN_MAX: 8,    // length of the PIN each agent chooses
+  PIN_MIN: 4, PIN_MAX: 8,    // length of the PIN each player chooses
   MAX_ATTEMPTS: 5,           // wrong PINs before the account is held shut
   LOCKOUT_MINUTES: 15,
   ...
@@ -120,10 +122,11 @@ Commit and push. The demo banner disappears and everyone shares one live league.
 
 ## Signing in
 
-Each agent has their own account and their own PIN, so everybody's book is their
-own and the standings mean something.
+Anyone on the branch team can play — agents, staff, whoever you invite. Each
+person has their own account and their own PIN, so everybody's book is their own
+and the ranking means something.
 
-**First time.** Send the team the link and the league code. Each agent taps
+**First time.** Send the team the link and the league code. Each person taps
 *Create your account*, enters their name, the league code, and a PIN of their own
 choosing (4–8 digits). The league code is only needed here, once.
 
@@ -140,14 +143,31 @@ shut for fifteen minutes, so nobody can sit and guess four digits.
 POST  {"action":"resetPin","adminPin":"YOUR-ADMIN-CODE","name":"Anisa"}
 ```
 
-Or, more simply, open the **Players** tab and blank that agent's *PIN hash* and
+Or, more simply, open the **Players** tab and blank that person's *PIN hash* and
 *Salt* cells. Either way their cash, positions and history are untouched — the
 next time they sign in the page asks them to set a new PIN, and they need the
 league code to do it, so a cleared account cannot be claimed by someone else in
 the meantime.
 
-Signing in issues a fresh token, which quietly signs the agent out anywhere else
+Signing in issues a fresh token, which quietly signs them out anywhere else
 they were signed in. Their place is remembered on the device until they sign out.
+
+---
+
+## The ranking
+
+Everyone is ranked by what their portfolio is worth right now — cash plus every
+position valued at the current price. The **Leaderboard** on the page lists the
+whole league in order, marks the person looking at it, and shows each player's
+cash, holdings, total and return. Your own standing also sits at the top of the
+page, under your total, so you can see where you are without scrolling.
+
+Because everybody starts at the same balance and trades off the same prices, the
+order is a straight comparison — no handicaps, nothing to configure.
+
+---
+
+## House rules
 
 - **Prices** come from Google Finance and are delayed, typically up to about
   20 minutes for US listings. Everyone trades off the same delayed prices, so the
@@ -179,8 +199,9 @@ settling an argument.
   It is not what you would put in front of anything real. Nothing sensitive lives
   in this spreadsheet — imaginary balances and a list of first names — so the
   exposure if a PIN were guessed is that somebody's game gets meddled with.
-- **Names are the identity.** Two agents called Kevin need to be *Kevin B* and
-  *Kevin R*, or the second one cannot open an account.
+- **Names are the identity**, and they are what the ranking shows. People can
+  enter a full name if you want the board to read that way. Two players called
+  Kevin need to be *Kevin B* and *Kevin R*, or the second cannot open an account.
 - **GOOGLEFINANCE covers US listings well.** It does not cover the Trinidad and
   Tobago Stock Exchange, so a TTSE league is not possible on this setup.
 - **Free and quota-friendly.** No API key, no signup, no billing. Prices come from
