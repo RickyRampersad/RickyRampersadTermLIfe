@@ -78,7 +78,39 @@ var CONFIG = {
 
   // --- Storage -----------------------------------------------------------
   SHEET_NAME: 'Contracting',
+  ACCESS_SHEET: 'Access',
   DRIVE_FOLDER: 'VUMI Contracting',
+
+  // --- Who can sign in ---------------------------------------------------
+  // Everyone signs in with an agent number and a passcode, both kept in the
+  // "Access" tab. setupContracting() seeds the two staff logins below with
+  // random passcodes and prints them; agents get theirs when you invite them.
+  STAFF: [
+    { number: 'RRB-001', name: 'Ricky Rampersad', role: 'manager',
+      email: 'ricky.rampersad@myguardiangroup.com' },
+    { number: 'RRB-002', name: 'Kamla Dookran', role: 'assistant',
+      email: 'kamla.dookran@myguardiangroup.com' },
+  ],
+};
+
+/**
+ * The companies an agent can contract with. Only VUMI has forms behind it
+ * today; the rest are listed so an applicant can see what is coming and so
+ * adding one later is a matter of dropping in its PDFs and a field map.
+ */
+var CARRIERS = [
+  { id: 'vumi', name: 'VUMI® Group', available: true },
+  { id: 'bestdoctors', name: 'Best Doctors Insurance', available: false },
+];
+
+var ACCESS_HEADERS = [
+  'Agent Number', 'Passcode', 'Name', 'Role', 'Email', 'Mobile',
+  'Language', 'Active', 'Token', 'Last Login',
+];
+
+var ACC = {
+  NUMBER: 0, PASSCODE: 1, NAME: 2, ROLE: 3, EMAIL: 4, MOBILE: 5,
+  LANG: 6, ACTIVE: 7, TOKEN: 8, LAST_LOGIN: 9,
 };
 
 /* New columns are appended, never inserted — ensureSheet_ adds any that a
@@ -125,8 +157,20 @@ function stageIndex_(id) {
 function setupContracting() {
   ensureSheet_();
   ensureRootFolder_();
+  var staff = ensureAccessSheet_();
   enableContractingReminders();
   onOpen();
+
+  if (staff.length) {
+    var lines = staff.map(function (person) {
+      return person.name + '  ' + person.number + '  passcode: ' + person.passcode;
+    }).join('\n');
+    Logger.log('Staff logins created:\n' + lines);
+    try {
+      SpreadsheetApp.getUi().alert('Staff logins created\n\n' + lines +
+        '\n\nThese are in the "Access" tab. Change a passcode there any time.');
+    } catch (e) { /* headless */ }
+  }
 }
 
 function onOpen() {
@@ -251,6 +295,7 @@ function doPost(e) {
   try {
     var action = String(payload.action || '');
 
+    if (action === 'login') return json_(signIn_(payload));
     if (action === 'save') return json_(saveProgress_(payload));
     if (action === 'submit') return json_(submitPacket_(payload));
 
@@ -391,11 +436,37 @@ function inviteAgent_(p) {
     ]);
   }
 
-  var lang = p.lang === 'en' ? 'en' : 'es';
+  /* Their sign-in details travel with the invitation — the agent number and
+     passcode are how they get in, the link just saves them typing. */
+  var access = issueAgentAccess_({ name: name, email: email, mobile: p.mobile, lang: p.lang, token: token });
+  if (access.number) {
+    var accessRow = findAccessRow_(access.number);
+    if (accessRow && !normaliseToken_(accessRow.values[ACC.TOKEN])) {
+      accessSheet_().getRange(accessRow.index, ACC.TOKEN + 1).setValue(token);
+    }
+  }
+
+  var lang = p.lang === 'es' ? 'es' : 'en';
   var firstName = firstName_(name);
   var subject = lang === 'es'
     ? 'Su contratación como agente VUMI® — empiece aquí'
     : 'Your VUMI® agent contracting — start here';
+
+  var credentials =
+    '<div style="background:#E9F7F6;border:1px solid #CBEAE8;border-radius:14px;padding:18px;margin:0 0 18px">' +
+      '<div style="font-size:12px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:#0E8C8C;text-align:center">' +
+      (lang === 'es' ? 'Sus datos de acceso' : 'Your sign-in details') + '</div>' +
+      '<table style="width:100%;margin-top:12px;border-collapse:collapse">' +
+        '<tr><td style="padding:6px 0;color:#5B7186;font-size:13px">' +
+          (lang === 'es' ? 'Número de agente' : 'Agent number') + '</td>' +
+          '<td style="padding:6px 0;text-align:right;font-weight:800;font-size:18px;letter-spacing:.08em;color:#0E2A47">' +
+          esc_(access.number) + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#5B7186;font-size:13px">' +
+          (lang === 'es' ? 'Código de acceso' : 'Passcode') + '</td>' +
+          '<td style="padding:6px 0;text-align:right;font-weight:800;font-size:18px;letter-spacing:.18em;color:#0E2A47">' +
+          esc_(access.passcode) + '</td></tr>' +
+      '</table>' +
+    '</div>';
 
   var body = lang === 'es'
     ? '<p style="margin:0 0 14px">Hola ' + esc_(firstName) + ',</p>' +
@@ -428,13 +499,19 @@ function inviteAgent_(p) {
     replyTo: CONFIG.RECRUITER_EMAIL,
     subject: subject,
     htmlBody: emailShell_(subject,
-      body + button_(link, lang === 'es' ? 'Comenzar mi contratación' : 'Start my contracting') +
+      body + credentials +
+      button_(link, lang === 'es' ? 'Comenzar mi contratación' : 'Start my contracting') +
       '<p style="margin:18px 0 0;font-size:13px;color:#7a8ca0">' +
+      (lang === 'es'
+        ? 'Guarde su número de agente y su código — los necesita cada vez que entre.'
+        : 'Keep your agent number and passcode — you need them every time you sign in.') +
+      '</p>' +
+      '<p style="margin:10px 0 0;font-size:13px;color:#7a8ca0">' +
       (lang === 'es' ? '¿Preguntas? Responda a este correo o llame al ' : 'Questions? Reply to this email or call ') +
       esc_(CONFIG.RECRUITER_PHONE) + '.</p>'),
   });
 
-  return { ok: true, token: token, link: link };
+  return { ok: true, token: token, link: link, agentNumber: access.number, passcode: access.passcode };
 }
 
 function nudgeNow_(token) {
@@ -938,6 +1015,158 @@ function ensureSheet_() {
       .setFontWeight('bold');
   }
   return sheet;
+}
+
+/**
+ * The Access tab: one row per person who can sign in. Returns any staff
+ * logins it had to create, so setup can show you their passcodes once.
+ */
+function ensureAccessSheet_() {
+  var ss = SpreadsheetApp.getActive();
+  var sheet = ss.getSheetByName(CONFIG.ACCESS_SHEET);
+  if (!sheet) {
+    sheet = ss.insertSheet(CONFIG.ACCESS_SHEET);
+    sheet.appendRow(ACCESS_HEADERS);
+    sheet.getRange(1, 1, 1, ACCESS_HEADERS.length).setFontWeight('bold');
+    sheet.setFrozenRows(1);
+  }
+
+  var created = [];
+  CONFIG.STAFF.forEach(function (person) {
+    if (findAccessRow_(person.number)) return;
+    var passcode = randomCode_(6);
+    sheet.appendRow([
+      person.number, passcode, person.name, person.role, person.email,
+      '', 'en', 'Yes', '', '',
+    ]);
+    created.push({ name: person.name, number: person.number, passcode: passcode });
+  });
+  return created;
+}
+
+function accessSheet_() {
+  ensureAccessSheet_();
+  return SpreadsheetApp.getActive().getSheetByName(CONFIG.ACCESS_SHEET);
+}
+
+function findAccessRow_(agentNumber) {
+  var wanted = normaliseNumber_(agentNumber);
+  if (!wanted) return null;
+  var ss = SpreadsheetApp.getActive();
+  var sheet = ss.getSheetByName(CONFIG.ACCESS_SHEET);
+  if (!sheet) return null;
+  var values = sheet.getDataRange().getValues();
+  for (var r = 1; r < values.length; r++) {
+    if (normaliseNumber_(values[r][ACC.NUMBER]) === wanted) return { index: r + 1, values: values[r] };
+  }
+  return null;
+}
+
+/** Agent numbers are read aloud and retyped — ignore case, spaces and dashes. */
+function normaliseNumber_(value) {
+  return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+/**
+ * Sign in with an agent number and passcode.
+ *
+ * Staff get the admin key back so the dashboard opens without anyone having
+ * to know or type it. Agents get their application token, which is what
+ * their answers are saved against.
+ */
+function signIn_(p) {
+  var row = findAccessRow_(p.agentNumber);
+  if (!row) return { ok: false, error: 'unknown' };
+
+  if (String(row.values[ACC.ACTIVE] || '').trim().toLowerCase() === 'no') {
+    return { ok: false, error: 'inactive' };
+  }
+  if (String(row.values[ACC.PASSCODE] || '').trim() !== String(p.passcode || '').trim()) {
+    return { ok: false, error: 'passcode' };
+  }
+
+  var sheet = accessSheet_();
+  sheet.getRange(row.index, ACC.LAST_LOGIN + 1).setValue(new Date());
+
+  var role = String(row.values[ACC.ROLE] || 'agent').toLowerCase();
+  var out = {
+    ok: true,
+    role: role,
+    name: row.values[ACC.NAME],
+    agentNumber: row.values[ACC.NUMBER],
+    email: row.values[ACC.EMAIL],
+    lang: row.values[ACC.LANG] || 'en',
+    carriers: CARRIERS,
+  };
+
+  if (role === 'manager' || role === 'assistant') {
+    out.adminKey = CONFIG.ADMIN_KEY;
+    return out;
+  }
+
+  /* An agent signs in to their own application, so make sure they have one
+     and hand back the token their answers are stored against. */
+  var token = normaliseToken_(row.values[ACC.TOKEN]);
+  if (!token) {
+    token = makeToken_();
+    sheet.getRange(row.index, ACC.TOKEN + 1).setValue(token);
+  }
+  if (!findRow_(token)) {
+    ensureSheet_().appendRow([
+      new Date(), token, row.values[ACC.NAME], row.values[ACC.EMAIL], row.values[ACC.MOBILE],
+      out.lang, 'In progress', 0, '', new Date(), '', 0, '', '',
+      CONFIG.PORTAL_BASE + token, '', '', '', '', '', '', '', 0, '',
+    ]);
+  }
+  out.token = token;
+  return out;
+}
+
+/** Give an agent a number and passcode. Reuses theirs if they already have one. */
+function issueAgentAccess_(p) {
+  var sheet = accessSheet_();
+  var existing = p.agentNumber ? findAccessRow_(p.agentNumber) : findAccessByEmail_(p.email);
+  if (existing) {
+    return {
+      number: existing.values[ACC.NUMBER],
+      passcode: existing.values[ACC.PASSCODE],
+      token: normaliseToken_(existing.values[ACC.TOKEN]) || '',
+    };
+  }
+
+  var number = nextAgentNumber_();
+  var passcode = randomCode_(6);
+  sheet.appendRow([
+    number, passcode, p.name || '', 'agent', p.email || '', p.mobile || '',
+    p.lang || 'en', 'Yes', p.token || '', '',
+  ]);
+  return { number: number, passcode: passcode, token: p.token || '' };
+}
+
+function findAccessByEmail_(email) {
+  var wanted = String(email || '').trim().toLowerCase();
+  if (!wanted) return null;
+  var sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG.ACCESS_SHEET);
+  if (!sheet) return null;
+  var values = sheet.getDataRange().getValues();
+  for (var r = 1; r < values.length; r++) {
+    if (String(values[r][ACC.EMAIL] || '').trim().toLowerCase() === wanted) {
+      return { index: r + 1, values: values[r] };
+    }
+  }
+  return null;
+}
+
+/** RRB-003, RRB-004, ... continuing past whatever is already in the sheet. */
+function nextAgentNumber_() {
+  var sheet = accessSheet_();
+  var values = sheet.getDataRange().getValues();
+  var highest = 0;
+  for (var r = 1; r < values.length; r++) {
+    var match = /^RRB-?(\d+)$/i.exec(String(values[r][ACC.NUMBER] || '').trim());
+    if (match) highest = Math.max(highest, parseInt(match[1], 10));
+  }
+  return 'RRB-' + String(highest + 1).padStart(3, '0');
 }
 
 function ensureRootFolder_() {

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Avance de mi contratación | Ricky Rampersad Branch</title>
+<title>Track my contracting | Ricky Rampersad Branch</title>
 <meta name="robots" content="noindex" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2314395F'/%3E%3Ctext x='16' y='22' font-family='Helvetica,Arial' font-size='14' font-weight='bold' fill='white' text-anchor='middle'%3ERR%3C/text%3E%3C/svg%3E" />
 <style>
@@ -91,8 +91,8 @@
       <span>Ricky Rampersad<small data-t="sub">Contratación VUMI®</small></span>
     </a>
     <div class="langtoggle" role="group" aria-label="Language">
-      <button type="button" id="lang-es" aria-pressed="true">ES</button>
-      <button type="button" id="lang-en" aria-pressed="false">EN</button>
+      <button type="button" id="lang-es" aria-pressed="false">ES</button>
+      <button type="button" id="lang-en" aria-pressed="true">EN</button>
     </div>
   </div>
 </header>
@@ -189,7 +189,7 @@
     },
   };
 
-  var lang = 'es';
+  var lang = 'en';
   function t(key, vars) {
     var s = (T[key] && T[key][lang]) || key;
     if (vars) Object.keys(vars).forEach(function (k) { s = s.replace('{' + k + '}', vars[k]); });
@@ -302,7 +302,7 @@
   /* The link in the confirmation email carries the code, so most people
      never type it. A previously used code is remembered on this device. */
   var params = new URLSearchParams(location.search);
-  if (params.get('lang') === 'en') lang = 'en';
+  if (params.get('lang') === 'es') lang = 'es';
   applyLang();
 
   var fromLink = (params.get('c') || params.get('code') || '').trim();

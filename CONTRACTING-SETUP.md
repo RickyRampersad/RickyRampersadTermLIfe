@@ -13,7 +13,7 @@ Once deployed at, say, `vumi-contracting.netlify.app`:
 
 | Page | URL |
 |---|---|
-| The application | `/` — an applicant's personal link is `/c/<token>` |
+| Sign in, then the application | `/` |
 | Progress tracker | `/track` — or `/track/<code>` straight in |
 | Your dashboard | `/admin` |
 
@@ -35,14 +35,50 @@ initials go on all 11 pages of the agreement, dates are split into the
 per-character boxes the forms use, and the finished PDFs are flattened so
 nothing can be altered after signing.
 
+## Signing in
+
+Everyone signs in with an **agent number and a passcode**, both kept in the
+**Access** tab of the sheet.
+
+| Who | Number | Sees |
+|---|---|---|
+| Ricky Rampersad | `RRB-001` | The pipeline, or an application to fill in |
+| Kamla Dookran | `RRB-002` | The same — assistant has the same access |
+| Each agent | `RRB-003`, `RRB-004`, … | Their own application |
+
+`setupContracting()` creates the two staff logins with random passcodes and
+shows them to you once. Change any passcode by typing over it in the Access
+tab; set **Active** to `No` to switch a login off without deleting it.
+
+Agents get their number and passcode automatically when you invite them —
+both are in the invitation email, alongside the link.
+
+Signing in as Ricky or Kamla also unlocks the dashboard, so nobody has to
+know the admin key. It is handed to the browser only after a correct
+passcode, and it is dropped when the tab closes.
+
+**This is a shared-code login, not individual passwords.** Codes sit in the
+sheet in plain text and anyone holding a number and passcode is that person
+as far as the app is concerned. That is the right weight for an internal
+recruiting tool; it is not the right weight for anything else.
+
+## Choosing a company
+
+After signing in, an agent picks who they are contracting with. VUMI is the
+only one with forms behind it today — Best Doctors shows as *Coming soon*.
+To add one, put its PDFs in `contracting/forms/`, map their fields in
+`packet.js`, and flip `available` to `true` in the `CARRIERS` list (in both
+`Contracting.gs` and `contracting/app.js`).
+
 ## Works without a backend
 
-Nothing to configure. Open `/contracting/`, fill it in, download the three
-completed PDFs, email them in. Progress is saved in the applicant's own
-browser, so they can close the tab and come back to the same device.
+Nothing to configure. Open the app, click straight past the sign-in, fill it
+in, download the three completed PDFs and email them in. Progress is saved in
+the applicant's own browser, so they can close the tab and come back to the
+same device.
 
-What you *don't* get: cross-device resume, the recruiter dashboard, and the
-automatic reminders. Those need the Apps Script backend below.
+What you *don't* get: sign-in, cross-device resume, the recruiter dashboard,
+and the automatic reminders. Those need the Apps Script backend below.
 
 ---
 
@@ -88,7 +124,9 @@ through the dashboard.
 
 1. Run `setupContracting()` once and authorise the permissions it asks for
    (Sheets, Drive, Gmail, Triggers). It creates the *Contracting* tab, the
-   *VUMI Contracting* Drive folder and the daily reminder trigger.
+   *Access* tab with the two staff logins, the *VUMI Contracting* Drive
+   folder and the daily reminder trigger. **Write down the passcodes it
+   shows you** — they are also in the Access tab.
 
    Gmail access covers both sending and **reading**. The read scope is what
    lets the script notice that the carrier has answered — it looks only for

@@ -42,6 +42,25 @@
     },
 
     MAX_UPLOAD_MB: 8,
+
+    /* The companies an agent can contract with. Used when there is no
+       backend; when there is one, the sign-in reply supplies the list.
+       Add a carrier here and in packet.js once its forms exist. */
+    CARRIERS: [
+      { id: 'vumi', name: 'VUMI® Group', available: true },
+      { id: 'bestdoctors', name: 'Best Doctors Insurance', available: false },
+    ],
+  };
+
+  var CARRIER_BLURB = {
+    vumi: {
+      en: 'International health and life — the full 11-page packet, beneficiary form and W-8BEN.',
+      es: 'Salud y vida internacional — el paquete completo de 11 páginas, beneficiario y W-8BEN.',
+    },
+    bestdoctors: {
+      en: 'Coming soon — we are preparing their contracting forms.',
+      es: 'Próximamente — estamos preparando sus formularios de contratación.',
+    },
   };
 
   var P = window.VumiPacket;
@@ -50,7 +69,7 @@
   /* ===================== copy ===================== */
 
   var T = {
-    brandSub: { es: 'Contratación VUMI®', en: 'VUMI® contracting' },
+    brandSub: { es: 'Contratación de agentes', en: 'Agent contracting' },
     saved: { es: 'Guardado', en: 'Saved' },
     next: { es: 'Continuar', en: 'Continue' },
     back: { es: 'Atrás', en: 'Back' },
@@ -59,7 +78,6 @@
     complete: { es: '<b>{p}%</b> completado', en: '<b>{p}%</b> complete' },
     required: { es: 'Obligatorio', en: 'Required' },
     savedToast: { es: 'Progreso guardado', en: 'Progress saved' },
-    linkCopied: { es: 'Enlace copiado', en: 'Link copied' },
     generating: { es: 'Generando sus formularios…', en: 'Generating your forms…' },
     genFailed: { es: 'No se pudieron generar los formularios', en: 'Could not generate the forms' },
     sending: { es: 'Enviando…', en: 'Sending…' },
@@ -69,6 +87,60 @@
     clear: { es: 'Borrar', en: 'Clear' },
     yes: { es: 'Sí', en: 'Yes' },
     no: { es: 'No', en: 'No' },
+
+    /* sign in */
+    welcomeTitle: { es: 'Bienvenido a Contratación', en: 'Welcome to Contracting' },
+    welcomeSub: {
+      es: 'Entre con el número de agente y el código que le entregaron.',
+      en: 'Sign in with the agent number and passcode you were given.',
+    },
+    agentNo: { es: 'Número de agente', en: 'Agent number' },
+    passcode: { es: 'Código de acceso', en: 'Passcode' },
+    signIn: { es: 'Entrar', en: 'Sign in' },
+    signingIn: { es: 'Entrando…', en: 'Signing in…' },
+    signOut: { es: 'Salir', en: 'Sign out' },
+    needBoth: { es: 'Escriba su número de agente y su código.', en: 'Enter your agent number and passcode.' },
+    badNumber: { es: 'No reconocemos ese número de agente.', en: "We don't recognise that agent number." },
+    badPasscode: { es: 'Ese código no es correcto.', en: 'That passcode is not right.' },
+    inactive: { es: 'Ese acceso está desactivado. Hable con su gerente.', en: 'That login is switched off. Speak to your manager.' },
+    signOffline: { es: 'No pudimos entrar ahora mismo. Intente de nuevo en un momento.', en: "We couldn't sign you in just now. Try again in a moment." },
+    noAccount: {
+      es: '¿No tiene un número de agente? Escriba a {email} y se lo enviamos.',
+      en: 'No agent number yet? Email {email} and we will send you one.',
+    },
+    noBackend: {
+      es: 'Todavía no hay acceso configurado, así que puede entrar directo a la solicitud.',
+      en: 'No sign-in is configured yet, so you can go straight to the application.',
+    },
+    continueAnyway: { es: 'Continuar a la solicitud', en: 'Continue to the application' },
+
+    /* carrier choice */
+    pickTitle: { es: '¿Con quién desea contratarse?', en: 'Who are you applying to contract with?' },
+    pickSub: {
+      es: 'Elija la compañía. Añadiremos más a medida que estén listas.',
+      en: 'Choose the company. More are being added as they are ready.',
+    },
+    comingSoon: { es: 'Próximamente', en: 'Coming soon' },
+    resume: { es: 'Continuar donde quedó', en: 'Pick up where you left off' },
+    startFresh: { es: 'Comenzar', en: 'Start' },
+    staffTitle: { es: 'Bienvenido de nuevo, {name}', en: 'Welcome back, {name}' },
+    staffSub: {
+      es: '¿Qué desea hacer hoy?',
+      en: 'What would you like to do today?',
+    },
+    openPipeline: { es: 'Ver la lista de contrataciones', en: 'Open the contracting pipeline' },
+    openPipelineSub: {
+      es: 'Quién va por dónde, qué falta y a quién hay que empujar.',
+      en: "Who is where, what's missing, and who needs a push.",
+    },
+    startForAgent: { es: 'Llenar una solicitud', en: 'Fill in an application' },
+    startForAgentSub: {
+      es: 'Complete el paquete de contratación con un agente al lado.',
+      en: 'Work through the contracting packet with an agent beside you.',
+    },
+    roleManager: { es: 'Gerente de sucursal', en: 'Branch manager' },
+    roleAssistant: { es: 'Asistente del gerente', en: "Branch manager's assistant" },
+    roleAgent: { es: 'Agente', en: 'Agent' },
   };
 
   function t(key, vars) {
@@ -379,13 +451,15 @@
   /* ===================== state ===================== */
 
   var state = {
-    lang: 'es',
+    lang: 'en',
     step: 0,
     token: '',
     data: null,
     files: [],
     generated: null,
     submitting: false,
+    session: null,   // { role, name, agentNumber, token, adminKey, carriers }
+    carrier: '',
   };
 
   function blankData() {
@@ -841,28 +915,19 @@
       : 'Set aside about <b>15 minutes</b>. Have your ID, your bank details and two personal and bank references handy. Your progress saves automatically on this device.';
     hero.appendChild(note);
 
-    if (state.token) {
-      var linkNote = el('div', 'note');
-      linkNote.style.marginTop = '10px';
-      linkNote.innerHTML = (state.lang === 'es'
-        ? 'Su enlace personal para continuar más tarde:<br>'
-        : 'Your personal link to continue later:<br>') +
-        '<code style="display:block;font-size:.8rem;word-break:break-all;margin-top:4px">' + esc(myLink()) + '</code>';
-      var copyBtn = el('button', 'btn btn-ghost btn-sm', state.lang === 'es' ? 'Copiar enlace' : 'Copy link');
-      copyBtn.type = 'button';
-      copyBtn.style.marginTop = '10px';
-      copyBtn.addEventListener('click', function () {
-        navigator.clipboard.writeText(myLink()).then(function () { toast(t('linkCopied')); });
-      });
-      linkNote.appendChild(copyBtn);
-      hero.appendChild(linkNote);
+    var session = state.session || {};
+    if (session.agentNumber) {
+      var backNote = el('div', 'note');
+      backNote.style.marginTop = '10px';
+      backNote.innerHTML = state.lang === 'es'
+        ? 'Puede cerrar esta página cuando quiera. Para volver, entre con su número de agente <b>' +
+          esc(session.agentNumber) + '</b> y su código.'
+        : 'Close this page whenever you like. To come back, sign in with your agent number <b>' +
+          esc(session.agentNumber) + '</b> and your passcode.';
+      hero.appendChild(backNote);
     }
 
     card.appendChild(hero);
-  }
-
-  function myLink() {
-    return location.origin + location.pathname + '?t=' + state.token;
   }
 
   /* ===================== step: documents ===================== */
@@ -1414,6 +1479,205 @@
     return btoa(parts.join(''));
   }
 
+  /* ===================== sign in ===================== */
+
+  var SESSION_KEY = 'vumi-contracting-session';
+
+  function loadSession() {
+    try {
+      var raw = sessionStorage.getItem(SESSION_KEY);
+      if (raw) state.session = JSON.parse(raw);
+    } catch (e) { /* ignore */ }
+    return state.session;
+  }
+
+  function storeSession(session) {
+    state.session = session;
+    /* sessionStorage, not localStorage: closing the tab signs you out, which
+       matters on the shared machines these get filled in on. */
+    try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) { /* ignore */ }
+  }
+
+  function signOut() {
+    try { sessionStorage.removeItem(SESSION_KEY); } catch (e) { /* ignore */ }
+    state.session = null;
+    state.carrier = '';
+    location.reload();
+  }
+
+  function showScreen(which) {
+    document.getElementById('gate').style.display = which === 'wizard' ? 'none' : '';
+    document.getElementById('signincard').style.display = which === 'signin' ? '' : 'none';
+    document.getElementById('choosecard').style.display = which === 'choose' ? '' : 'none';
+    document.getElementById('wizard').style.display = which === 'wizard' ? '' : 'none';
+    document.getElementById('footbar').style.display = which === 'wizard' ? '' : 'none';
+  }
+
+  function renderSignIn() {
+    showScreen('signin');
+    var foot = document.getElementById('signfoot');
+    if (CONFIG.API_URL) {
+      foot.innerHTML = t('noAccount', {
+        email: '<a href="mailto:' + esc(CONFIG.RECRUITER_EMAIL) + '">' + esc(CONFIG.RECRUITER_EMAIL) + '</a>',
+      });
+    } else {
+      foot.innerHTML = esc(t('noBackend'));
+      var go = el('button', 'btn btn-ghost', t('continueAnyway'));
+      go.type = 'button';
+      go.style.marginTop = '12px';
+      go.addEventListener('click', function () {
+        storeSession({ role: 'agent', name: '', agentNumber: '', token: state.token });
+        renderChoose();
+      });
+      foot.appendChild(document.createElement('br'));
+      foot.appendChild(go);
+    }
+    document.getElementById('agentno').focus();
+  }
+
+  function doSignIn(e) {
+    if (e) e.preventDefault();
+    var number = document.getElementById('agentno').value.trim();
+    var pass = document.getElementById('passcode').value.trim();
+    var err = document.getElementById('signerr');
+    var btn = document.getElementById('signbtn');
+
+    if (!number || !pass) { err.textContent = t('needBoth'); return; }
+    err.textContent = '';
+    btn.disabled = true;
+    btn.textContent = t('signingIn');
+
+    post({ action: 'login', agentNumber: number, passcode: pass })
+      .then(function (res) {
+        if (!res || !res.ok) {
+          err.textContent = res && res.error === 'passcode' ? t('badPasscode')
+            : res && res.error === 'inactive' ? t('inactive')
+            : t('badNumber');
+          return;
+        }
+        if (res.lang === 'es' || res.lang === 'en') { state.lang = res.lang; applyLang(); }
+        storeSession({
+          role: res.role, name: res.name, agentNumber: res.agentNumber,
+          token: res.token || '', adminKey: res.adminKey || '', carriers: res.carriers || null,
+        });
+        if (res.token) {
+          state.token = res.token;
+          try { localStorage.setItem('vumi-contracting:last', res.token); } catch (e2) { /* ignore */ }
+          state.data = blankData();
+          loadLocal();
+        }
+        document.getElementById('passcode').value = '';
+        renderChoose();
+      })
+      .catch(function () { err.textContent = t('signOffline'); })
+      .then(function () { btn.disabled = false; btn.textContent = t('signIn'); });
+  }
+
+  /* ===================== who you are, and who you're contracting with ===================== */
+
+  function initials(name) {
+    return P.initialsOf(name) || 'RR';
+  }
+
+  function roleLabel(role) {
+    return role === 'manager' ? t('roleManager') : role === 'assistant' ? t('roleAssistant') : t('roleAgent');
+  }
+
+  function renderChoose() {
+    var session = state.session || {};
+    var staff = session.role === 'manager' || session.role === 'assistant';
+    showScreen('choose');
+
+    var who = document.getElementById('whoami');
+    if (session.name || session.agentNumber) {
+      who.style.display = '';
+      who.innerHTML = '<span class="av">' + esc(initials(session.name)) + '</span>' +
+        '<span><b>' + esc(session.name || session.agentNumber) + '</b>' +
+        '<span>' + esc(roleLabel(session.role)) +
+        (session.agentNumber ? ' · ' + esc(session.agentNumber) : '') + '</span></span>';
+      var out = el('button', null, t('signOut'));
+      out.type = 'button';
+      out.addEventListener('click', signOut);
+      who.appendChild(out);
+    } else {
+      who.style.display = 'none';
+    }
+
+    var picker = document.getElementById('picker');
+    picker.innerHTML = '';
+    document.getElementById('choosefoot').textContent = '';
+
+    if (staff) {
+      document.getElementById('choosetitle').textContent = t('staffTitle', { name: firstWord(session.name) });
+      document.getElementById('choosesub').textContent = t('staffSub');
+
+      var pipeline = el('a', 'pick');
+      pipeline.href = 'admin.html';
+      pipeline.innerHTML = '<span class="mark">📋</span><span class="txt"><b>' + esc(t('openPipeline')) +
+        '</b><span>' + esc(t('openPipelineSub')) + '</span></span><span class="arrow">→</span>';
+      picker.appendChild(pipeline);
+
+      var fill = el('button', 'pick');
+      fill.type = 'button';
+      fill.innerHTML = '<span class="mark">✍️</span><span class="txt"><b>' + esc(t('startForAgent')) +
+        '</b><span>' + esc(t('startForAgentSub')) + '</span></span><span class="arrow">→</span>';
+      fill.addEventListener('click', renderCarriers);
+      picker.appendChild(fill);
+      return;
+    }
+
+    renderCarriers();
+  }
+
+  function renderCarriers() {
+    showScreen('choose');
+    document.getElementById('choosetitle').textContent = t('pickTitle');
+    document.getElementById('choosesub').textContent = t('pickSub');
+
+    var carriers = (state.session && state.session.carriers) || CONFIG.CARRIERS;
+    var picker = document.getElementById('picker');
+    picker.innerHTML = '';
+
+    carriers.forEach(function (carrier) {
+      var blurb = (CARRIER_BLURB[carrier.id] && CARRIER_BLURB[carrier.id][state.lang]) || '';
+      var node = el('button', 'pick' + (carrier.available ? '' : ' soon'));
+      node.type = 'button';
+      node.disabled = !carrier.available;
+      node.innerHTML = '<span class="mark">' + esc(shortMark(carrier.name)) + '</span>' +
+        '<span class="txt"><b>' + esc(carrier.name) + '</b><span>' + esc(blurb) + '</span></span>' +
+        (carrier.available
+          ? '<span class="arrow">→</span>'
+          : '<span class="soonchip">' + esc(t('comingSoon')) + '</span>');
+      if (carrier.available) {
+        node.addEventListener('click', function () { openWizard(carrier.id); });
+      }
+      picker.appendChild(node);
+    });
+
+    var progress = P.completeness(state.data, state.lang);
+    document.getElementById('choosefoot').textContent = progress.percent > 0 && progress.percent < 100
+      ? t('resume') + ' — ' + progress.percent + '%'
+      : '';
+  }
+
+  /** "VUMI® Group" → "VUMI", "Best Doctors Insurance" → "BD" */
+  function shortMark(name) {
+    var clean = String(name || '').replace(/[^\w\s]/g, '').trim();
+    var words = clean.split(/\s+/);
+    if (words[0] && words[0].length <= 5) return words[0].toUpperCase();
+    return words.slice(0, 2).map(function (w) { return w.charAt(0); }).join('').toUpperCase();
+  }
+
+  function firstWord(name) {
+    return String(name || '').trim().split(/\s+/)[0] || '';
+  }
+
+  function openWizard(carrierId) {
+    state.carrier = carrierId || 'vumi';
+    showScreen('wizard');
+    render();
+  }
+
   /* ===================== boot ===================== */
 
   function applyLang() {
@@ -1425,8 +1689,17 @@
     });
   }
 
+  /** Redraw whichever screen is up — used after a language change. */
+  function redraw() {
+    if (document.getElementById('wizard').style.display !== 'none') render();
+    else if (document.getElementById('choosecard').style.display !== 'none') renderChoose();
+    else renderSignIn();
+  }
+
   function init() {
     var params = new URLSearchParams(location.search);
+    if (params.get('lang') === 'es') state.lang = 'es';
+
     state.token = (params.get('t') || params.get('token') || '').trim().toUpperCase();
     if (!state.token) {
       state.token = localStorage.getItem('vumi-contracting:last') || makeToken();
@@ -1435,11 +1708,13 @@
 
     state.data = blankData();
     loadLocal();
-    if (params.get('lang') === 'en') state.lang = 'en';
 
-    /* A token in the link may hold progress saved from another device. */
+    loadSession();
+    if (state.session && state.session.token) state.token = state.session.token;
+
+    /* The token may hold progress saved from another device. */
     var ready = Promise.resolve();
-    if (CONFIG.API_URL && params.get('t')) {
+    if (CONFIG.API_URL && state.session && state.session.token) {
       ready = fetch(CONFIG.API_URL + '?action=load&token=' + encodeURIComponent(state.token))
         .then(function (r) { return r.json(); })
         .then(function (res) {
@@ -1453,11 +1728,16 @@
 
     ready.then(function () {
       applyLang();
-      render();
+      if (state.session) renderChoose();
+      else renderSignIn();
     });
 
-    document.getElementById('lang-es').addEventListener('click', function () { state.lang = 'es'; applyLang(); save(); render(); });
-    document.getElementById('lang-en').addEventListener('click', function () { state.lang = 'en'; applyLang(); save(); render(); });
+    document.getElementById('signform').addEventListener('submit', doSignIn);
+    document.getElementById('agentno').addEventListener('input', function () {
+      document.getElementById('signerr').textContent = '';
+    });
+    document.getElementById('lang-es').addEventListener('click', function () { state.lang = 'es'; applyLang(); redraw(); });
+    document.getElementById('lang-en').addEventListener('click', function () { state.lang = 'en'; applyLang(); redraw(); });
     document.getElementById('backbtn').addEventListener('click', function () { goto(state.step - 1); });
     document.getElementById('nextbtn').addEventListener('click', function () { goto(state.step + 1); });
   }

@@ -105,8 +105,8 @@
 
 <div id="gate">
   <div class="gatecard">
-    <h1>Recruiter access</h1>
-    <p>Enter the admin key from your Apps Script configuration.</p>
+    <h1>Manager access</h1>
+    <p>Sign in on the application first and this opens on its own. Otherwise enter the admin key.</p>
     <input type="password" id="gatekey" placeholder="Admin key" autocomplete="current-password" />
     <button class="btn btn-primary" id="gatego" type="button" style="width:100%">Open the pipeline</button>
     <div class="gateerr" id="gateerr"></div>
@@ -492,8 +492,15 @@
 
   $('gatekey').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('gatego').click(); });
 
+  /* A manager or assistant who signed in on the application already proved
+     who they are, and their session carries the admin key — so the pipeline
+     opens straight away instead of asking for a second credential. */
   var remembered = null;
-  try { remembered = sessionStorage.getItem('vumi-contracting-key'); } catch (e) { /* ignore */ }
+  try {
+    var session = JSON.parse(sessionStorage.getItem('vumi-contracting-session') || 'null');
+    if (session && session.adminKey) remembered = session.adminKey;
+    if (!remembered) remembered = sessionStorage.getItem('vumi-contracting-key');
+  } catch (e) { /* ignore */ }
   if (remembered || !CONFIG.API_URL) openPipeline(remembered || '').catch(function () {});
 }());
 </script>
