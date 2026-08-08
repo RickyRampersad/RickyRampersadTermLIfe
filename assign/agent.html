@@ -177,6 +177,7 @@ label.fl{font-size:11px;font-weight:800;letter-spacing:.9px;text-transform:upper
     <div id="mgrMsg"></div>
   </div>
 
+  <div id="truncNote" class="hidden"></div>
   <div id="list" class="clients"></div>
   <div id="emptyState" class="empty hidden"></div>
   <div style="height:50px"></div>
@@ -240,6 +241,17 @@ function render(d) {
       fs('c', 'Contacted', f.contacted) + fs('x', 'Closed', f.closed);
   } else {
     $('#funnelCard').classList.add('hidden');
+  }
+
+  var note = $('#truncNote');
+  if (d.truncated) {
+    note.classList.remove('hidden');
+    note.innerHTML = '<div class="okmsg" style="color:var(--warn);border-color:rgba(255,180,77,.34);' +
+      'background:rgba(255,180,77,.08)">Showing the ' + (d.clients || []).length + ' clients that ' +
+      'need a decision first, out of ' + d.total + ' in the queue. ' + d.truncated +
+      ' more are further down the pipeline — work through these and they\'ll come forward.</div>';
+  } else {
+    note.classList.add('hidden');
   }
 
   var cl = d.clients || [];

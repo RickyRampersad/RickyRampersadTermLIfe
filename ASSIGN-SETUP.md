@@ -16,25 +16,49 @@ No servers, no monthly cost.
 
 ## What it found in your portfolio
 
-Running the detection against the **Branch Portfolio** sheet as it stands today:
+**Run `reportInactiveAgents()` for your real numbers — don't rely on the sample
+below.**
 
-| | |
+The portfolio is roughly **20,000 policies**. Google's file reader would only
+hand over the first ~100 rows, so the only analysis that can be done outside the
+sheet is a sample. From those 100 rows:
+
+| | sample of ~100 rows |
 | --- | --- |
-| People on the active roster (`Users` tab) | **37** |
-| Distinct servicing agents named on policies | **32** |
-| **Agents no longer active** | **10** |
-| **Orphaned clients** (their agent is gone) | **17** |
-| Policies attached to them | **28** |
+| People on the active roster (`Users` tab) | 37 |
+| Distinct servicing agents seen | 32 |
+| Agents no longer active | 10 |
+| Orphaned clients | 17 |
 
-The departed/unrecognised agents, biggest first: Agentsatlange Trinidad,
-Carlton Aloy Wong, Kevin Ragoo, Christalene Beharry, Alm Insurance Services
-Limited, Lulliana Ragunan, Ignatius And Company Limited, Sherwin Mohammed,
-Angela Joseph, Robin Baljohn.
+Departed/unrecognised agents in that sample: Agentsatlange Trinidad, Carlton Aloy
+Wong, Kevin Ragoo, Christalene Beharry, Alm Insurance Services Limited, Lulliana
+Ragunan, Ignatius And Company Limited, Sherwin Mohammed, Angela Joseph, Robin
+Baljohn.
 
-⚠️ **That count is from a partial export.** Google's reader capped the download at
-about 100 policy rows, so treat those numbers as a working sample, not the full
-book. The script re-runs the same analysis **live against every row in the sheet**
-— run `reportInactiveAgents()` (below) to see the real totals.
+If that ratio holds across the full book it implies **a few thousand orphaned
+clients** — but a ratio from 0.5% of the data is a guess, not a finding.
+`reportInactiveAgents()` runs the identical logic across all 20,000 rows inside
+Apps Script and prints the truth: every inactive agent, the orphaned client
+count, how many are reachable by email, how many are phone-only, and the total
+premium sitting under inactive agents.
+
+### Built for the real size
+
+At 20,000 rows the naive approach dies — Apps Script kills anything over six
+minutes. So:
+
+- The portfolio is read **once**, streamed in 2,000-row blocks, and each orphaned
+  client's policies are cached onto their own queue row (`Policies JSON`).
+  Portal loads, emails and dashboards then read only the small `Reassign` tab —
+  none of them ever rescan 20,000 rows.
+- The active/inactive decision is memoised per distinct agent name, turning
+  ~20,000 × 37 comparisons into a few hundred.
+- Invitations are **paced and resumable**: `MAX_INVITES_PER_RUN` (60) per run,
+  and the script checks your remaining Gmail quota before sending, keeping 20
+  back for alerts. Every run picks up exactly where the last stopped, so you can
+  work through thousands of clients a batch at a time without ever double-sending.
+- The manager dashboard shows the clients needing a decision first and tells you
+  how many are queued behind them, rather than trying to render thousands.
 
 ### How "inactive" is decided
 
@@ -182,8 +206,23 @@ Your pages are then live at:
 3. Edit the `Agent Profiles` tab — speciality, a two-line profile, a photo URL
    and a direct line for each agent. **This is what the client sees when they
    are introduced to their new agent**, so it's worth twenty minutes.
-4. Run `sendInvitations` — or better, run `sendInvitations(3)` first and send to
-   just three people before opening the tap.
+4. Run **`sendInvitations(3)`** — three real clients, nothing more. Watch what
+   comes back before you open the tap.
+
+### Then work through the book in batches
+
+With a book this size you are not going to email everyone at once, and you
+shouldn't want to — every reply needs an agent appointed within three days, and
+that promise is only worth making if you can keep it.
+
+Plain `sendInvitations()` sends at most `MAX_INVITES_PER_RUN` (60), stops if your
+Gmail quota is running low, and resumes exactly where it left off next time.
+Send a batch, appoint the agents for whoever replies, then send the next batch.
+Raise or lower the 60 in `CONFIG` to match what the branch can actually service.
+
+If you want it to tick over on its own, set `AUTO_INVITE: true` and the daily
+8am job will release a batch each morning. Leave it off until you've watched a
+few batches land.
 
 ---
 
