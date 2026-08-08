@@ -211,3 +211,113 @@ the tracker's Import button with those seed JSON files directly.
 branch intake is ours, the Guardian Life application is the legal one. If someone completes
 the intake and abandons TalentNest, they have not applied — the acknowledgement email tells
 them so, and the sheet shows you who to chase.
+
+---
+
+# Part 2 — The Branch Portal
+
+Added after the careers site: a shared place where **recruits sign in and see their own
+journey**, and **managers sign in and see their recruits**. Same login box; the account
+decides which app you get.
+
+## Why this needed a backend
+
+The Recruit Tracker keeps files in one browser. That is fine for a manager working alone —
+and impossible the moment a recruit needs to see their own progress, because they are on a
+different device. Shared logins need shared storage.
+
+The portal uses **one Google Sheet behind one Apps Script web app**. Free, no new accounts,
+no hosting bill, and you already run two Apps Scripts. `apps-script/branch-portal-api.gs`
+has the whole setup in its header.
+
+**Be clear-eyed about what this is.** PINs in a spreadsheet are right for twenty people
+sharing progress data and wrong for anything sensitive. Keep ID numbers, medical details and
+financial statements in the Recruit Tracker's selection file, not here.
+
+## What a recruit sees
+
+- Where they are across the eight GSAP stages, and how long they have been at this one
+- Plain-language "what happens next / what you do" for their current stage
+- Discovery: 6 modules, 21 sessions, 96 checkpoints, with a live percentage
+- **Due now** — sessions assigned to them, flagged red once overdue
+- A debrief form for every session they have reached
+- Their scores — but only the ones their manager has released
+- Everything they have done, dated, since the day they applied
+
+## What a manager sees
+
+- Every recruit as a card: stage, days at that stage, Discovery progress, flags
+- **Needs you now** — debriefs waiting, overdue sessions, anyone stalled past 14 days
+- Inside a recruit: the full Discovery grid, every submission with the recruit's actual
+  answers, the history, and a stage selector
+- Score a submission 0–4, write feedback, then **release** it. Nothing reaches the recruit
+  until you release — so a half-finished thought is never visible to them.
+- Their own tick-off of each session's checkpoints, separate from the recruit's
+
+RMs see their own recruits. The BM and BMA see the whole branch.
+
+## The session debrief
+
+This is the form you asked for after each session. It is generated from the curriculum, so
+it is never out of step with the Manager's Guide:
+
+1. **The session's own checkpoints**, ticked by the recruit. The manager ticks their own
+   copy separately — where the two disagree is usually the conversation worth having.
+2. **Module-specific questions**, written against that module's stated objective. Module 3
+   asks how many calls and what happened on the worst one. Module 4 asks whether, having
+   watched it done, they can see themselves doing it. Module 5 asks for the decision in one
+   sentence.
+3. **Confidence, 1–5**, and what they will have done before the next session.
+
+Submit → the RM gets an email, the BM is copied → the manager scores and releases → the
+recruit gets an email and sees the feedback.
+
+## Discovery, as the system holds it
+
+| Module | Sessions | Checkpoints |
+|---|---|---|
+| M1 · A Sales Representative's Week | 4 | 18 |
+| M2 · Identifying Markets | 4 | 17 |
+| M3 · Meeting Your Marketplace | 4 | 17 |
+| M4 · Making a Sales Presentation | 4 | 19 |
+| M5 · Making a Career Decision | 2 | 10 |
+| M6 · Discovery Marketing Plan | 3 | 15 |
+| **Total** | **21** | **96** |
+
+Lifted verbatim from Recruit Tracker v5.6 into `portal/discovery.js`, so the portal, the
+tracker and the Manager's Guide cannot drift apart. Change a session title in one place and
+change it in the other.
+
+## Demo mode
+
+Until you paste your `/exec` URL into `API.BASE` in `portal/api.js`, the portal runs on a
+sample branch — three recruits at three different points, one mid-Discovery with debriefs
+waiting. Sign in as `recruit@demo` or `rm@demo`, any PIN. Nothing is saved. Click through
+both sides before you set anything up.
+
+## The recruiting ad
+
+The main site's careers section now leads with the ad and a QR code. **The QR points at the
+branch intake, not straight at TalentNest** — deliberately. A code that jumps to TalentNest
+throws away everything the intake collects. The intake hands off to TalentNest at the end,
+so the candidate still lands in Head Office's system; you just get the data on the way past.
+
+## Setup for the portal
+
+1. Deploy `apps-script/branch-portal-api.gs` — full instructions in the file header
+2. Set `PORTAL_SECRET` in Script Properties, then run `setupPortal()` once
+3. Paste the `/exec` URL into `API.BASE` at the top of `portal/api.js`
+4. Open the Sheet, People tab: fill in manager emails, **change every seeded PIN**, and add
+   your recruits
+
+## Still open
+
+- **agentmgt.com** — you mentioned it and I do not know what it is. If it is a domain you own
+  and want the portal on, point it at this site and everything works unchanged; nothing is
+  hard-coded to rickyrampersadbranch.com except the QR code's target.
+- **The Jotform library isn't wired in yet.** You have ~25 digital forms. The portal can
+  surface the right one at the right stage — but I need the list of which form belongs to
+  which step before I can place them.
+- **Induction is stubbed.** The probation stage shows in the stage bar and the tracker holds
+  the full contract model, but the portal does not yet show a recruit their API and settled-
+  application numbers against the $105k / 25 targets. That is the natural next build.

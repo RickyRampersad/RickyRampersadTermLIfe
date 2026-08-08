@@ -167,6 +167,50 @@
     color: #1d1503; box-shadow: 0 8px 28px rgba(239,194,75,.25);
   }
   .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(239,194,75,.4); }
+
+  /* ── RECRUITING AD ── */
+  .ad {
+    display: grid; grid-template-columns: 1fr auto; gap: 28px; align-items: center;
+    background: linear-gradient(150deg, var(--card), var(--card2));
+    border: 1px solid rgba(239,194,75,.32); border-radius: 20px;
+    padding: 30px 32px; margin-bottom: 22px; position: relative; overflow: hidden;
+  }
+  .ad::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(600px 300px at 88% -20%, rgba(239,194,75,.14), transparent 62%);
+  }
+  .ad > * { position: relative; }
+  .ad-kick {
+    font-family: 'Montserrat',sans-serif; font-size: 11px; font-weight: 800;
+    letter-spacing: 2.6px; text-transform: uppercase; color: var(--gold);
+    display: flex; align-items: center; gap: 9px; margin-bottom: 12px;
+  }
+  .ad-kick i {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--gold); font-style: normal;
+    box-shadow: 0 0 0 0 rgba(239,194,75,.55); animation: adping 2.2s infinite;
+  }
+  @keyframes adping { 70% { box-shadow: 0 0 0 9px rgba(239,194,75,0) } 100% { box-shadow: 0 0 0 0 rgba(239,194,75,0) } }
+  .ad h3 {
+    font-family: 'Montserrat',sans-serif; font-weight: 900;
+    font-size: clamp(21px,3.6vw,30px); line-height: 1.14; letter-spacing: -.5px; margin-bottom: 10px;
+  }
+  .ad h3 em { font-style: italic; color: var(--gold); }
+  .ad p { color: var(--muted); font-size: 14.5px; line-height: 1.65; max-width: 46ch; margin-bottom: 18px; }
+  .ad-cta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .ad-fine { font-size: 12px; color: var(--muted); margin-top: 14px; margin-bottom: 0; }
+  .ad-qr { text-align: center; width: 168px; }
+  .ad-qr .qr-box { background: #fff; padding: 9px; border-radius: 13px; box-shadow: 0 10px 28px rgba(0,0,0,.4); }
+  .ad-qr .qr-svg { display: block; width: 100%; height: auto; }
+  .ad-qr span {
+    display: block; margin-top: 10px; font-family: 'Montserrat',sans-serif;
+    font-size: 10.5px; font-weight: 700; letter-spacing: 1.4px;
+    text-transform: uppercase; color: var(--muted); line-height: 1.5;
+  }
+  @media (max-width: 700px) {
+    .ad { grid-template-columns: 1fr; padding: 24px 20px; gap: 22px; }
+    .ad-qr { width: 150px; margin: 0 auto; }
+  }
+
   .btn-teal::after {
     content: ''; position: absolute; top: 0; left: -80%;
     width: 50%; height: 100%;
@@ -738,6 +782,12 @@
         <p>Branch operations — registers, log books, approvals and admin. Access code required.</p>
         <span class="go">Staff Sign In</span>
       </a>
+      <a class="tile reveal" href="portal/">
+        <div class="ico">🔑</div>
+        <h3>Recruit &amp; Manager Portal</h3>
+        <p>Recruits track their own selection and Discovery progress. Managers track their recruits. Sign in with the email and PIN the branch gave you.</p>
+        <span class="go">Portal Sign In</span>
+      </a>
       <a class="tile reveal" href="recruiting/">
         <div class="ico">🗂️</div>
         <h3>Recruiting &amp; Selection</h3>
@@ -826,6 +876,22 @@
     <div class="section-label reveal">Join Our Team</div>
     <h2 class="reveal">Build a career with the branch</h2>
     <p class="section-sub reveal">A 23× MDRT branch, 32 years in Trinidad — now selecting advisors. Proven producers move fast; newcomers get built properly.</p>
+    <div class="ad reveal">
+      <div>
+        <div class="ad-kick"><i></i>Now selecting · Chaguanas</div>
+        <h3>We are hiring <em>advisors.</em></h3>
+        <p>A 23&times; MDRT branch, 32 years in Trinidad. Five seats open to proven producers ready for a branch that backs them, and to sharp newcomers ready to be built properly.</p>
+        <div class="ad-cta">
+          <a class="btn btn-gold" href="careers/">See the Selection</a>
+          <a class="btn btn-teal" href="careers/apply.html">Apply &mdash; 2 min</a>
+        </div>
+        <p class="ad-fine">Reviewed within 48 hours &middot; Confidential for practising advisors &middot; Newcomers fully trained</p>
+      </div>
+      <div class="ad-qr">
+        <div class="qr-box"><svg class="qr-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 37 37" shape-rendering="crispEdges" role="img" aria-label="QR code linking to the Ricky Rampersad Branch advisor application"><rect width="37" height="37" fill="#ffffff"/><path d="M2 2h7v1h-7zM10 2h7v1h-7zM19 2h2v1h-2zM28 2h7v1h-7zM2 3h1v1h-1zM8 3h1v1h-1zM10 3h1v1h-1zM12 3h1v1h-1zM15 3h2v1h-2zM20 3h2v1h-2zM24 3h1v1h-1zM28 3h1v1h-1zM34 3h1v1h-1zM2 4h1v1h-1zM4 4h3v1h-3zM8 4h1v1h-1zM10 4h2v1h-2zM13 4h1v1h-1zM15 4h2v1h-2zM21 4h1v1h-1zM23 4h2v1h-2zM26 4h1v1h-1zM28 4h1v1h-1zM30 4h3v1h-3zM34 4h1v1h-1zM2 5h1v1h-1zM4 5h3v1h-3zM8 5h1v1h-1zM13 5h1v1h-1zM16 5h3v1h-3zM20 5h1v1h-1zM22 5h2v1h-2zM25 5h2v1h-2zM28 5h1v1h-1zM30 5h3v1h-3zM34 5h1v1h-1zM2 6h1v1h-1zM4 6h3v1h-3zM8 6h1v1h-1zM10 6h4v1h-4zM17 6h3v1h-3zM23 6h2v1h-2zM28 6h1v1h-1zM30 6h3v1h-3zM34 6h1v1h-1zM2 7h1v1h-1zM8 7h1v1h-1zM11 7h1v1h-1zM13 7h1v1h-1zM15 7h1v1h-1zM17 7h3v1h-3zM21 7h1v1h-1zM23 7h4v1h-4zM28 7h1v1h-1zM34 7h1v1h-1zM2 8h7v1h-7zM10 8h1v1h-1zM12 8h1v1h-1zM14 8h1v1h-1zM16 8h1v1h-1zM18 8h1v1h-1zM20 8h1v1h-1zM22 8h1v1h-1zM24 8h1v1h-1zM26 8h1v1h-1zM28 8h7v1h-7zM13 9h1v1h-1zM15 9h1v1h-1zM17 9h2v1h-2zM20 9h1v1h-1zM26 9h1v1h-1zM2 10h1v1h-1zM5 10h6v1h-6zM12 10h3v1h-3zM16 10h1v1h-1zM18 10h2v1h-2zM27 10h1v1h-1zM30 10h1v1h-1zM32 10h3v1h-3zM4 11h1v1h-1zM6 11h1v1h-1zM10 11h3v1h-3zM14 11h8v1h-8zM23 11h3v1h-3zM30 11h3v1h-3zM2 12h1v1h-1zM5 12h1v1h-1zM8 12h4v1h-4zM14 12h2v1h-2zM17 12h1v1h-1zM23 12h1v1h-1zM25 12h1v1h-1zM28 12h1v1h-1zM30 12h5v1h-5zM3 13h2v1h-2zM6 13h1v1h-1zM10 13h1v1h-1zM13 13h3v1h-3zM18 13h1v1h-1zM20 13h2v1h-2zM26 13h1v1h-1zM28 13h2v1h-2zM32 13h3v1h-3zM2 14h3v1h-3zM6 14h1v1h-1zM8 14h1v1h-1zM12 14h1v1h-1zM15 14h1v1h-1zM19 14h1v1h-1zM21 14h2v1h-2zM24 14h1v1h-1zM28 14h1v1h-1zM4 15h1v1h-1zM6 15h2v1h-2zM11 15h6v1h-6zM20 15h3v1h-3zM25 15h1v1h-1zM29 15h1v1h-1zM32 15h1v1h-1zM2 16h3v1h-3zM6 16h1v1h-1zM8 16h3v1h-3zM13 16h3v1h-3zM17 16h1v1h-1zM19 16h3v1h-3zM23 16h2v1h-2zM26 16h1v1h-1zM28 16h1v1h-1zM30 16h2v1h-2zM2 17h1v1h-1zM6 17h2v1h-2zM11 17h5v1h-5zM18 17h1v1h-1zM20 17h1v1h-1zM26 17h2v1h-2zM29 17h4v1h-4zM34 17h1v1h-1zM5 18h1v1h-1zM8 18h1v1h-1zM14 18h4v1h-4zM21 18h1v1h-1zM24 18h8v1h-8zM3 19h2v1h-2zM13 19h5v1h-5zM19 19h1v1h-1zM21 19h4v1h-4zM27 19h2v1h-2zM30 19h1v1h-1zM32 19h1v1h-1zM34 19h1v1h-1zM3 20h1v1h-1zM6 20h4v1h-4zM11 20h4v1h-4zM16 20h2v1h-2zM19 20h4v1h-4zM25 20h1v1h-1zM27 20h3v1h-3zM31 20h4v1h-4zM3 21h2v1h-2zM6 21h1v1h-1zM9 21h2v1h-2zM12 21h1v1h-1zM14 21h1v1h-1zM17 21h1v1h-1zM22 21h1v1h-1zM25 21h2v1h-2zM30 21h3v1h-3zM34 21h1v1h-1zM3 22h1v1h-1zM8 22h1v1h-1zM11 22h1v1h-1zM15 22h4v1h-4zM20 22h2v1h-2zM27 22h1v1h-1zM29 22h1v1h-1zM31 22h1v1h-1zM34 22h1v1h-1zM2 23h2v1h-2zM10 23h1v1h-1zM12 23h1v1h-1zM21 23h1v1h-1zM23 23h3v1h-3zM29 23h2v1h-2zM32 23h1v1h-1zM2 24h1v1h-1zM6 24h3v1h-3zM10 24h1v1h-1zM14 24h1v1h-1zM16 24h1v1h-1zM20 24h1v1h-1zM23 24h3v1h-3zM28 24h1v1h-1zM32 24h3v1h-3zM2 25h1v1h-1zM4 25h1v1h-1zM6 25h2v1h-2zM9 25h1v1h-1zM11 25h3v1h-3zM17 25h1v1h-1zM19 25h2v1h-2zM22 25h1v1h-1zM25 25h2v1h-2zM28 25h3v1h-3zM32 25h3v1h-3zM2 26h2v1h-2zM5 26h1v1h-1zM8 26h1v1h-1zM11 26h2v1h-2zM14 26h2v1h-2zM18 26h1v1h-1zM25 26h6v1h-6zM33 26h2v1h-2zM10 27h1v1h-1zM13 27h1v1h-1zM15 27h6v1h-6zM23 27h2v1h-2zM26 27h1v1h-1zM30 27h1v1h-1zM32 27h2v1h-2zM2 28h7v1h-7zM10 28h2v1h-2zM13 28h1v1h-1zM16 28h4v1h-4zM21 28h6v1h-6zM28 28h1v1h-1zM30 28h1v1h-1zM32 28h1v1h-1zM2 29h1v1h-1zM8 29h1v1h-1zM10 29h2v1h-2zM13 29h2v1h-2zM17 29h1v1h-1zM19 29h2v1h-2zM24 29h3v1h-3zM30 29h4v1h-4zM2 30h1v1h-1zM4 30h3v1h-3zM8 30h1v1h-1zM10 30h1v1h-1zM12 30h3v1h-3zM16 30h1v1h-1zM18 30h2v1h-2zM22 30h1v1h-1zM24 30h7v1h-7zM33 30h1v1h-1zM2 31h1v1h-1zM4 31h3v1h-3zM8 31h1v1h-1zM10 31h2v1h-2zM16 31h1v1h-1zM18 31h5v1h-5zM26 31h2v1h-2zM29 31h1v1h-1zM31 31h4v1h-4zM2 32h1v1h-1zM4 32h3v1h-3zM8 32h1v1h-1zM11 32h1v1h-1zM15 32h1v1h-1zM17 32h1v1h-1zM19 32h7v1h-7zM27 32h1v1h-1zM29 32h3v1h-3zM33 32h2v1h-2zM2 33h1v1h-1zM8 33h1v1h-1zM11 33h2v1h-2zM14 33h1v1h-1zM21 33h1v1h-1zM29 33h6v1h-6zM2 34h7v1h-7zM10 34h2v1h-2zM13 34h1v1h-1zM17 34h3v1h-3zM21 34h1v1h-1zM25 34h2v1h-2zM28 34h3v1h-3z" fill="#07131f"/></svg></div>
+        <span>Scan to apply<br>from your phone</span>
+      </div>
+    </div>
     <div class="grid">
       <a class="tile gold-tile reveal" href="careers/">
         <span class="badge">Now Selecting</span>
