@@ -1,10 +1,25 @@
-# Agent Contracting — setup
+# Rampersad Private — Contracts
 
-Digitises the VUMI® Producer/Agent packet. An applicant answers each question
-once and the app writes the answers into the carrier's own PDFs — the real
-AcroForm fields, not a look-alike — then sends it to the carrier, chases both
-the applicant and the carrier until it is done, and lets the agent follow
-their own progress with a code.
+*Every contract, seen through.*
+
+The contracting desk for **Ricky Rampersad Private** — the private practice,
+separate from Guardian. Somebody answers each question once and the app
+writes the answers into the partner's own PDFs — the real AcroForm fields,
+not a look-alike — then sends the packet on, chases both sides until it is
+done, and lets the applicant follow their own progress with a code.
+
+**Nothing here is Guardian business.** The international carriers, the
+property work and the financing all run through this desk on their own.
+Everything an applicant or a partner sees carries the private brand and the
+private email address (`CONFIG.RECRUITER_EMAIL`); the only Guardian address
+anywhere is Kamla's, in `COPY_TO`, which is internal and never shown to
+anyone outside. If you would rather it were not there at all, replace it with
+a private address for her.
+
+VUMI® is the line that has forms behind it today. The picker is grouped by
+line of business so real estate and premium financing already have their
+place; adding one means dropping in its PDFs, mapping the fields in
+`packet.js`, and flipping `available` in the `CARRIERS` list.
 
 It is its **own Netlify site**, on its own domain — separate from the branch
 website. Build it with `./build-contracting.sh` and see DEPLOY.md.
@@ -42,9 +57,9 @@ Everyone signs in with an **agent number and a passcode**, both kept in the
 
 | Who | Number | Sees |
 |---|---|---|
-| Ricky Rampersad | `RRB-001` | The pipeline, or an application to fill in |
-| Kamla Dookran | `RRB-002` | The same — assistant has the same access |
-| Each agent | `RRB-003`, `RRB-004`, … | Their own application |
+| Ricky Rampersad | `RRP-001` | The pipeline, or an application to fill in |
+| Kamla Dookran | `RRP-002` | The same — assistant has the same access |
+| Each agent | `RRP-003`, `RRP-004`, … | Their own application |
 
 `setupContracting()` creates the two staff logins with random passcodes and
 shows them to you once. Change any passcode by typing over it in the Access
@@ -72,13 +87,22 @@ sheet in plain text and anyone holding a number and passcode is that person
 as far as the app is concerned. That is the right weight for an internal
 recruiting tool; it is not the right weight for anything else.
 
-## Choosing a company
+## Choosing who the contract is with
 
-After signing in, an agent picks who they are contracting with. VUMI is the
-only one with forms behind it today — Best Doctors shows as *Coming soon*.
-To add one, put its PDFs in `contracting/forms/`, map their fields in
-`packet.js`, and flip `available` to `true` in the `CARRIERS` list (in both
-`Contracting.gs` and `contracting/app.js`).
+After signing in, the applicant picks the partner, grouped by line of
+business:
+
+| Line | Partners |
+|---|---|
+| International Insurance | VUMI® Group · Best Doctors Insurance |
+| Property | Real Estate |
+| Finance | Premium Financing |
+
+Only VUMI has forms behind it; the rest read *Coming soon*, which is honest
+and shows an applicant what is on the way. To bring one live: put its PDFs in
+`contracting/forms/`, map their fields in `packet.js`, and flip `available`
+to `true` in the `CARRIERS` list — which lives in **both** `Contracting.gs`
+and `contracting/app.js`, so change it in both.
 
 ## Works without a backend
 
@@ -109,15 +133,15 @@ At the top of the script:
 
 ```js
 RECRUITER_NAME:  'Ricky Rampersad',
-RECRUITER_EMAIL: 'ricky.rampersad@myguardiangroup.com',
+RECRUITER_EMAIL: 'rampersadricky@gmail.com',   // the From on every letter
 RECRUITER_PHONE: '(868) 678-5921',
+BRAND_NAME:      'Ricky Rampersad Private',
 
 CARRIER_NAME:    'Amalia Suraz',        // where finished packets go
 CARRIER_EMAIL:   'contracts@woagp.com',
-COPY_TO: [                              // everyone copied on every packet
-  'ricky.rampersad@myguardiangroup.com',
-  'kamla.dookran@myguardiangroup.com',
+COPY_TO: [                              // internal copies, never shown outside
   'rampersadricky@gmail.com',
+  'kamla.dookran@myguardiangroup.com',
 ],
 
 // Your contracting site's address — whatever Netlify gave it, or your

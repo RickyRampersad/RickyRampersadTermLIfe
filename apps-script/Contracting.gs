@@ -1,6 +1,6 @@
 /**
  * ============================================================
- *  AGENT CONTRACTING — Ricky Rampersad Branch
+ *  CONTRACTS — Ricky Rampersad Private
  * ============================================================
  *  Backend for /contracting/ — the VUMI® Producer/Agent packet.
  *
@@ -33,10 +33,13 @@
 
 var CONFIG = {
   // --- Your details -----------------------------------------------------
+  // This is the private practice, not the Guardian branch. Everything an
+  // applicant or a partner sees comes from here, so keep it private-side:
+  // RECRUITER_EMAIL is the From and Reply-to on every outgoing letter.
   RECRUITER_NAME: 'Ricky Rampersad',
-  RECRUITER_EMAIL: 'ricky.rampersad@myguardiangroup.com',
+  RECRUITER_EMAIL: 'rampersadricky@gmail.com',
   RECRUITER_PHONE: '(868) 678-5921',
-  BRANCH_NAME: 'the Ricky Rampersad Branch',
+  BRAND_NAME: 'Ricky Rampersad Private',
 
   // --- Where a finished packet goes -------------------------------------
   // The signed forms are emailed here the moment the applicant submits.
@@ -44,10 +47,10 @@ var CONFIG = {
   CARRIER_EMAIL: 'contracts@woagp.com',
 
   // Everyone who gets a copy of each submission and of the chasing.
+  // Internal copies only — these never appear to an applicant or a partner.
   COPY_TO: [
-    'ricky.rampersad@myguardiangroup.com',
-    'kamla.dookran@myguardiangroup.com',
     'rampersadricky@gmail.com',
+    'kamla.dookran@myguardiangroup.com',
   ],
 
   // --- Portal ------------------------------------------------------------
@@ -87,21 +90,29 @@ var CONFIG = {
   // "Access" tab. setupContracting() seeds the two staff logins below with
   // random passcodes and prints them; agents get theirs when you invite them.
   STAFF: [
-    { number: 'RRB-001', name: 'Ricky Rampersad', role: 'manager',
-      email: 'ricky.rampersad@myguardiangroup.com' },
-    { number: 'RRB-002', name: 'Kamla Dookran', role: 'assistant',
+    { number: 'RRP-001', name: 'Ricky Rampersad', role: 'manager',
+      email: 'rampersadricky@gmail.com' },
+    { number: 'RRP-002', name: 'Kamla Dookran', role: 'assistant',
       email: 'kamla.dookran@myguardiangroup.com' },
   ],
 };
 
 /**
- * The companies an agent can contract with. Only VUMI has forms behind it
- * today; the rest are listed so an applicant can see what is coming and so
- * adding one later is a matter of dropping in its PDFs and a field map.
+ * Who a contract can be written with, grouped by line of business.
+ *
+ * This desk is not only insurance — real estate and premium financing run
+ * through it too, and each of those will have its own paperwork. Only VUMI
+ * has forms behind it today; the rest are listed so the shape is visible and
+ * so adding one is a matter of dropping in its PDFs, mapping the fields in
+ * packet.js, and flipping `available`.
+ *
+ * Nothing here is Guardian business.
  */
 var CARRIERS = [
-  { id: 'vumi', name: 'VUMI® Group', available: true },
-  { id: 'bestdoctors', name: 'Best Doctors Insurance', available: false },
+  { id: 'vumi', name: 'VUMI® Group', category: 'International Insurance', available: true },
+  { id: 'bestdoctors', name: 'Best Doctors Insurance', category: 'International Insurance', available: false },
+  { id: 'realestate', name: 'Real Estate', category: 'Property', available: false },
+  { id: 'premiumfinance', name: 'Premium Financing', category: 'Finance', available: false },
 ];
 
 var ACCESS_HEADERS = [
@@ -457,8 +468,8 @@ function inviteAgent_(p) {
   var lang = p.lang === 'es' ? 'es' : 'en';
   var from = String(p.invitedBy || '').trim() || CONFIG.RECRUITER_NAME;
   var subject = lang === 'es'
-    ? 'Invitación para contratarse con VUMI® — ' + CONFIG.BRANCH_NAME
-    : 'Your invitation to contract with VUMI® — ' + CONFIG.BRANCH_NAME;
+    ? 'Invitación para contratarse — ' + CONFIG.BRAND_NAME
+    : 'Your invitation to get contracted — ' + CONFIG.BRAND_NAME;
 
   MailApp.sendEmail({
     to: email,
@@ -466,7 +477,7 @@ function inviteAgent_(p) {
     subject: subject,
     htmlBody: emailShell_(
       lang === 'es' ? 'Invitación a contratarse' : 'An invitation to get contracted',
-      invitationLetter_(name, access, link, from, lang)),
+      invitationLetter_(name, access, link, from, lang, p.partner)),
   });
 
   logActivity_(findRow_(token), lang === 'es' ? 'Invitación enviada por ' + from : 'Invitation sent by ' + from);
@@ -481,8 +492,9 @@ function inviteAgent_(p) {
  * on the table before they start. The sign-in details and the button sit in
  * the middle of that, not instead of it.
  */
-function invitationLetter_(name, access, link, from, lang) {
+function invitationLetter_(name, access, link, from, lang, partner) {
   var firstName = esc_(firstName_(name));
+  var who = esc_(String(partner || '').trim() || 'VUMI® Group');
   var phone = esc_(CONFIG.RECRUITER_PHONE);
   var p = 'margin:0 0 14px';
   var listStyle = 'margin:0 0 18px;padding-left:20px;color:#33475b';
@@ -492,18 +504,18 @@ function invitationLetter_(name, access, link, from, lang) {
     return '' +
       '<p style="' + p + '">Estimado(a) ' + firstName + ',</p>' +
 
-      '<p style="' + p + '">Me complace invitarle a completar su contratación como ' +
-      '<b>Productor/Agente de VUMI® Group</b> a través de ' + esc_(CONFIG.BRANCH_NAME) + '.</p>' +
+      '<p style="' + p + '">Me complace invitarle a completar su contratación con <b>' + who +
+      '</b> a través de ' + esc_(CONFIG.BRAND_NAME) + '.</p>' +
 
-      '<p style="' + p + '">VUMI® es seguro médico privado internacional: el tipo de cobertura que ' +
-      'los clientes conservan durante años y recomiendan a sus conocidos. Contratarse le pone toda ' +
-      'esa línea de productos en las manos, junto a todo lo demás que usted ya coloca.</p>' +
+      '<p style="' + p + '">Esta es una línea privada, independiente de cualquier otra representación ' +
+      'que usted o yo tengamos. Contratarse le pone ese producto en las manos, junto a todo lo demás ' +
+      'que usted ya coloca.</p>' +
 
       '<div style="' + heading + '">Qué implica</div>' +
-      '<p style="' + p + '">Son tres formularios oficiales: la Solicitud de Productor/Agente de once ' +
-      'páginas, el Formulario para Designación de Beneficiario y el W-8BEN del IRS. Usted responde ' +
-      'cada pregunta una sola vez y el sistema los llena los tres por usted — su firma, sus iniciales ' +
-      'en cada página, todo.</p>' +
+      '<p style="' + p + '">Los formularios propios de la compañía — en el caso de VUMI®, la ' +
+      'Solicitud de Productor/Agente de once páginas, el Formulario para Designación de Beneficiario ' +
+      'y el W-8BEN del IRS. Usted responde cada pregunta una sola vez y el sistema los llena todos ' +
+      'por usted — su firma, sus iniciales en cada página, todo.</p>' +
       '<p style="' + p + '">Unos <b>15 minutos</b>. Puede detenerse y seguir después; no se pierde nada.</p>' +
 
       '<div style="' + heading + '">Tenga a mano</div>' +
@@ -516,31 +528,32 @@ function invitationLetter_(name, access, link, from, lang) {
       credentialBlock_(access, lang) +
       button_(link, 'Comenzar mi contratación') +
 
-      '<p style="' + p + '">Cuando lo envíe, su paquete va directo a VUMI® y usted recibe un código ' +
-      'para seguir el avance hasta que le emitan su código de agente.</p>' +
+      '<p style="' + p + '">Cuando lo envíe, su paquete va directo a ' + who + ' y usted recibe un ' +
+      'código para seguir el avance hasta que le emitan su código de agente.</p>' +
 
       '<p style="' + p + '">Si algo se le complica, llámeme al ' + phone + '. Prefiero resolverlo en dos ' +
       'minutos por teléfono que dejarlo a usted atascado.</p>' +
 
       '<p style="margin:22px 0 4px">Bienvenido(a) a bordo,</p>' +
       '<p style="margin:0;font-weight:800;color:#0E2A47">' + esc_(from) + '</p>' +
-      '<p style="margin:2px 0 0;font-size:13px;color:#7a8ca0">' + esc_(CONFIG.BRANCH_NAME) + ' · ' + phone + '</p>';
+      '<p style="margin:2px 0 0;font-size:13px;color:#7a8ca0">' + esc_(CONFIG.BRAND_NAME) + ' · ' + phone + '</p>';
   }
 
   return '' +
     '<p style="' + p + '">Dear ' + firstName + ',</p>' +
 
-    '<p style="' + p + '">I would like to invite you to complete your contracting as a ' +
-    '<b>Producer/Agent with VUMI® Group</b> through ' + esc_(CONFIG.BRANCH_NAME) + '.</p>' +
+    '<p style="' + p + '">I would like to invite you to complete your contracting with <b>' + who +
+    '</b> through ' + esc_(CONFIG.BRAND_NAME) + '.</p>' +
 
-    '<p style="' + p + '">VUMI® is international private medical insurance — the kind of cover ' +
-    'clients hold for years and refer their friends to. Getting contracted puts that whole product ' +
-    'line in your hands, alongside everything else you already write.</p>' +
+    '<p style="' + p + '">This is a private line, independent of any other representation you or I ' +
+    'hold. Getting contracted puts that product in your hands, alongside everything else you ' +
+    'already write.</p>' +
 
     '<div style="' + heading + '">What it involves</div>' +
-    '<p style="' + p + '">Three official forms: the eleven-page Producer/Agent application, the ' +
-    'Beneficiary Designation, and the IRS Form W-8BEN. You answer each question once and the ' +
-    'system fills all three for you — your signature, your initials on every page, the lot.</p>' +
+    '<p style="' + p + '">The partner\'s own forms — for VUMI® that is the eleven-page ' +
+    'Producer/Agent application, the Beneficiary Designation and the IRS Form W-8BEN. You answer ' +
+    'each question once and the system fills every form for you — your signature, your initials on ' +
+    'every page, the lot.</p>' +
     '<p style="' + p + '">About <b>15 minutes</b>. You can stop and pick it up later; nothing is lost.</p>' +
 
     '<div style="' + heading + '">What to have with you</div>' +
@@ -553,7 +566,7 @@ function invitationLetter_(name, access, link, from, lang) {
     credentialBlock_(access, lang) +
     button_(link, 'Start my contracting') +
 
-    '<p style="' + p + '">Once you send it, your packet goes straight to VUMI® and you get a ' +
+    '<p style="' + p + '">Once you send it, your packet goes straight to ' + who + ' and you get a ' +
     'tracking code to follow it through to your agent code.</p>' +
 
     '<p style="' + p + '">If anything gets in the way, call me on ' + phone + '. I would far rather ' +
@@ -561,7 +574,7 @@ function invitationLetter_(name, access, link, from, lang) {
 
     '<p style="margin:22px 0 4px">Welcome aboard,</p>' +
     '<p style="margin:0;font-weight:800;color:#0E2A47">' + esc_(from) + '</p>' +
-    '<p style="margin:2px 0 0;font-size:13px;color:#7a8ca0">' + esc_(CONFIG.BRANCH_NAME) + ' · ' + phone + '</p>';
+    '<p style="margin:2px 0 0;font-size:13px;color:#7a8ca0">' + esc_(CONFIG.BRAND_NAME) + ' · ' + phone + '</p>';
 }
 
 function nudgeNow_(token) {
@@ -1351,10 +1364,10 @@ function nextAgentNumber_() {
   var values = sheet.getDataRange().getValues();
   var highest = 0;
   for (var r = 1; r < values.length; r++) {
-    var match = /^RRB-?(\d+)$/i.exec(String(values[r][ACC.NUMBER] || '').trim());
+    var match = /^RRP-?(\d+)$/i.exec(String(values[r][ACC.NUMBER] || '').trim());
     if (match) highest = Math.max(highest, parseInt(match[1], 10));
   }
-  return 'RRB-' + String(highest + 1).padStart(3, '0');
+  return 'RRP-' + String(highest + 1).padStart(3, '0');
 }
 
 function ensureRootFolder_() {

@@ -4,7 +4,7 @@ This repository holds **two separate sites**, and they deploy independently.
 
 | Site | What it is | Build with | Publish |
 |---|---|---|---|
-| **Contracting app** | The VUMI agent packet, on its own domain | `./build-contracting.sh` | `dist-contracting/` |
+| **Contracts app** | Rampersad Private, on its own domain | `./build-contracting.sh` | `dist-contracting/` |
 | **Branch website** | rickyrampersadbranch.com as it was | nothing, or `./build.sh` | repo root, or `dist/` |
 
 Neither needs a compile step — both are plain HTML, CSS and JS, with pdf-lib
@@ -12,9 +12,10 @@ vendored. The build scripts only decide which files go out.
 
 ---
 
-# 1. The contracting app
+# 1. The contracts app
 
-Its own Netlify site, its own domain, nothing to do with the branch website.
+Its own Netlify site, its own domain. This is Ricky Rampersad Private —
+nothing to do with the Guardian branch website, and it must stay that way.
 
 ```bash
 ./build-contracting.sh

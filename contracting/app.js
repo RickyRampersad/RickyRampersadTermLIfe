@@ -21,7 +21,7 @@
   var CONFIG = {
     API_URL: '', // e.g. "https://script.google.com/macros/s/XXXX/exec"
     RECRUITER_NAME: 'Ricky Rampersad',
-    RECRUITER_EMAIL: 'ricky.rampersad@myguardiangroup.com',
+    RECRUITER_EMAIL: 'rampersadricky@gmail.com',
     RECRUITER_PHONE: '(868) 678-5921',
     RECRUITER_WHATSAPP: '18686785921',
 
@@ -47,8 +47,10 @@
        backend; when there is one, the sign-in reply supplies the list.
        Add a carrier here and in packet.js once its forms exist. */
     CARRIERS: [
-      { id: 'vumi', name: 'VUMI® Group', available: true },
-      { id: 'bestdoctors', name: 'Best Doctors Insurance', available: false },
+      { id: 'vumi', name: 'VUMI® Group', category: 'International Insurance', available: true },
+      { id: 'bestdoctors', name: 'Best Doctors Insurance', category: 'International Insurance', available: false },
+      { id: 'realestate', name: 'Real Estate', category: 'Property', available: false },
+      { id: 'premiumfinance', name: 'Premium Financing', category: 'Finance', available: false },
     ],
   };
 
@@ -58,8 +60,16 @@
       es: 'Salud y vida internacional — el paquete completo de 11 páginas, beneficiario y W-8BEN.',
     },
     bestdoctors: {
-      en: 'Coming soon — we are preparing their contracting forms.',
-      es: 'Próximamente — estamos preparando sus formularios de contratación.',
+      en: 'Coming soon — their contracting forms are being prepared.',
+      es: 'Próximamente — se están preparando sus formularios de contratación.',
+    },
+    realestate: {
+      en: 'Coming soon — listing and referral agreements.',
+      es: 'Próximamente — acuerdos de listado y de referidos.',
+    },
+    premiumfinance: {
+      en: 'Coming soon — lender and facility paperwork.',
+      es: 'Próximamente — documentación de financiamiento.',
     },
   };
 
@@ -69,7 +79,7 @@
   /* ===================== copy ===================== */
 
   var T = {
-    brandSub: { es: 'Firme una vez. Empiece a vender.', en: 'Sign once. Start selling.' },
+    brandSub: { es: 'Cada contrato, hasta el final.', en: 'Every contract, seen through.' },
     saved: { es: 'Guardado', en: 'Saved' },
     next: { es: 'Continuar', en: 'Continue' },
     back: { es: 'Atrás', en: 'Back' },
@@ -114,7 +124,7 @@
     },
     continueAnyway: { es: 'Continuar a la solicitud', en: 'Continue to the application' },
 
-    tagline: { es: 'Firme una vez. Empiece a vender.', en: 'Sign once. Start selling.' },
+    tagline: { es: 'Cada contrato, hasta el final.', en: 'Every contract, seen through.' },
     orNew: { es: 'o', en: 'or' },
     newHere: { es: 'Soy nuevo — quiero mi número de agente', en: "I'm new here — get my agent number" },
     haveNumber: { es: 'Ya tengo un número', en: 'I already have a number' },
@@ -1748,7 +1758,15 @@
     var picker = document.getElementById('picker');
     picker.innerHTML = '';
 
+    /* Grouped by line of business — this desk handles more than insurance,
+       and an empty category still tells an applicant what is coming. */
+    var seen = '';
     carriers.forEach(function (carrier) {
+      var group = carrier.category || '';
+      if (group && group !== seen) {
+        seen = group;
+        picker.appendChild(el('div', 'pickgroup', esc(group)));
+      }
       var blurb = (CARRIER_BLURB[carrier.id] && CARRIER_BLURB[carrier.id][state.lang]) || '';
       var node = el('button', 'pick' + (carrier.available ? '' : ' soon'));
       node.type = 'button';
