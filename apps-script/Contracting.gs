@@ -134,7 +134,7 @@ var HEADERS = [
   'Last Reminder', 'Folder', 'Portal Link', 'Notes',
   'Tracking Code', 'Stage', 'Stage Updated', 'Sent To Carrier',
   'Carrier Ref', 'Carrier Replied', 'Carrier Chases', 'Last Carrier Chase',
-  'Activity',
+  'Activity', 'Partner', 'Agent Number',
 ];
 
 var COL = {
@@ -143,7 +143,7 @@ var COL = {
   LAST_REMINDER: 12, FOLDER: 13, LINK: 14, NOTES: 15,
   CODE: 16, STAGE: 17, STAGE_UPDATED: 18, CARRIER_SENT: 19,
   CARRIER_REF: 20, CARRIER_REPLIED: 21, CARRIER_CHASES: 22, LAST_CHASE: 23,
-  ACTIVITY: 24,
+  ACTIVITY: 24, PARTNER: 25, AGENT_NO: 26,
 };
 
 /**
@@ -246,6 +246,7 @@ function doGet(e) {
 
   try {
     if (action === 'ping') return json_({ ok: true, service: 'contracting' });
+    if (action === 'partners') return json_({ ok: true, carriers: CARRIERS });
 
     if (action === 'load') {
       var token = normaliseToken_(params.token);
@@ -311,6 +312,7 @@ function doPost(e) {
 
     if (action === 'login') return json_(signIn_(payload));
     if (action === 'register') return json_(registerAgent_(payload));
+    if (action === 'openContract') return json_(openContract_(payload));
     if (action === 'save') return json_(saveProgress_(payload));
     if (action === 'submit') return json_(submitPacket_(payload));
 
@@ -355,7 +357,7 @@ function saveProgress_(p) {
     sheet.appendRow([
       now, token, p.name || '', p.email || '', p.mobile || '', p.lang || 'es',
       'In progress', percent, missing, now, '', 0, '', '', CONFIG.PORTAL_BASE + token, '',
-      '', '', '', '', '', '', 0, '', '',
+      '', '', '', '', '', '', 0, '', '', p.partner || '', p.agentNumber || '',
     ]);
     row = findRow_(token);
   } else {
@@ -441,29 +443,21 @@ function inviteAgent_(p) {
   var email = String(p.email || '').trim();
   if (!email) return { ok: false, error: 'no email' };
 
-  var sheet = ensureSheet_();
-  var existing = findRowByEmail_(email);
-  var token = existing ? existing.values[COL.TOKEN] : makeToken_();
-  var link = CONFIG.PORTAL_BASE + token;
-  var now = new Date();
-
-  if (!existing) {
-    sheet.appendRow([
-      now, token, name, email, p.mobile || '', p.lang || 'es',
-      'Invited', 0, '', now, '', 0, '', '', link, p.notes || '',
-      '', '', '', '', '', '', 0, '', '',
-    ]);
-  }
+  /* Which contracts this person is being sent. One application is opened per
+     partner, so the same agent can be contracted with several companies and
+     each one is tracked, chased and submitted on its own. */
+  var partners = (p.partners || []).map(function (x) { return String(x || '').trim(); }).filter(String);
+  if (!partners.length) partners = [availablePartnerNames_()[0] || 'VUMI® Group'];
 
   /* Their sign-in details travel with the invitation — the agent number and
      passcode are how they get in, the link just saves them typing. */
-  var access = issueAgentAccess_({ name: name, email: email, mobile: p.mobile, lang: p.lang, token: token });
-  if (access.number) {
-    var accessRow = findAccessRow_(access.number);
-    if (accessRow && !normaliseToken_(accessRow.values[ACC.TOKEN])) {
-      accessSheet_().getRange(accessRow.index, ACC.TOKEN + 1).setValue(token);
-    }
-  }
+  var access = issueAgentAccess_({ name: name, email: email, mobile: p.mobile, lang: p.lang });
+  var opened = partners.map(function (partner) {
+    return openContract_({ agentNumber: access.number, partner: partner });
+  }).filter(function (r) { return r && r.ok; });
+
+  var token = opened.length ? opened[0].token : '';
+  var link = CONFIG.PORTAL_BASE.replace(/\?t=$/, '');
 
   var lang = p.lang === 'es' ? 'es' : 'en';
   var from = String(p.invitedBy || '').trim() || CONFIG.RECRUITER_NAME;
@@ -477,11 +471,15 @@ function inviteAgent_(p) {
     subject: subject,
     htmlBody: emailShell_(
       lang === 'es' ? 'Invitación a contratarse' : 'An invitation to get contracted',
-      invitationLetter_(name, access, link, from, lang, p.partner)),
+      invitationLetter_(name, access, link, from, lang, partners)),
   });
 
-  logActivity_(findRow_(token), lang === 'es' ? 'Invitación enviada por ' + from : 'Invitation sent by ' + from);
-  return { ok: true, token: token, link: link, agentNumber: access.number, passcode: access.passcode };
+  opened.forEach(function (o) {
+    logActivity_(findRow_(o.token), (lang === 'es' ? 'Invitación enviada por ' : 'Invitation sent by ') +
+      from + ' — ' + partners.length + ' contract' + (partners.length > 1 ? 's' : ''));
+  });
+  return { ok: true, token: token, link: link, partners: partners,
+           agentNumber: access.number, passcode: access.passcode };
 }
 
 /**
@@ -492,9 +490,13 @@ function inviteAgent_(p) {
  * on the table before they start. The sign-in details and the button sit in
  * the middle of that, not instead of it.
  */
-function invitationLetter_(name, access, link, from, lang, partner) {
+function invitationLetter_(name, access, link, from, lang, partners) {
   var firstName = esc_(firstName_(name));
-  var who = esc_(String(partner || '').trim() || 'VUMI® Group');
+  var list = [].concat(partners || []).filter(String);
+  if (!list.length) list = ['VUMI® Group'];
+  var who = esc_(list.length === 1 ? list[0]
+    : list.slice(0, -1).join(', ') + (lang === 'es' ? ' y ' : ' and ') + list[list.length - 1]);
+  var many = list.length > 1;
   var phone = esc_(CONFIG.RECRUITER_PHONE);
   var p = 'margin:0 0 14px';
   var listStyle = 'margin:0 0 18px;padding-left:20px;color:#33475b';
@@ -506,6 +508,8 @@ function invitationLetter_(name, access, link, from, lang, partner) {
 
       '<p style="' + p + '">Me complace invitarle a completar su contratación con <b>' + who +
       '</b> a través de ' + esc_(CONFIG.BRAND_NAME) + '.</p>' +
+      (many ? '<p style="' + p + '">Son ' + list.length + ' contratos. Responda sus datos una vez y ' +
+        'los reutilizamos en los demás — sólo tendrá que revisarlos y firmar cada uno.</p>' : '') +
 
       '<p style="' + p + '">Esta es una línea privada, independiente de cualquier otra representación ' +
       'que usted o yo tengamos. Contratarse le pone ese producto en las manos, junto a todo lo demás ' +
@@ -544,6 +548,8 @@ function invitationLetter_(name, access, link, from, lang, partner) {
 
     '<p style="' + p + '">I would like to invite you to complete your contracting with <b>' + who +
     '</b> through ' + esc_(CONFIG.BRAND_NAME) + '.</p>' +
+    (many ? '<p style="' + p + '">That is ' + list.length + ' contracts. Answer your details once and ' +
+      'we carry them across the rest — you only review them and sign each one.</p>' : '') +
 
     '<p style="' + p + '">This is a private line, independent of any other representation you or I ' +
     'hold. Getting contracted puts that product in your hands, alongside everything else you ' +
@@ -686,6 +692,11 @@ function logActivity_(row, text) {
   sheet.getRange(row.index, COL.ACTIVITY + 1).setValue(updated);
 }
 
+/** Partner names that actually have forms behind them today. */
+function availablePartnerNames_() {
+  return CARRIERS.filter(function (c) { return c.available; }).map(function (c) { return c.name; });
+}
+
 function listApplicants_() {
   var sheet = ensureSheet_();
   var values = sheet.getDataRange().getValues();
@@ -718,6 +729,8 @@ function listApplicants_() {
       carrierChases: Number(row[COL.CARRIER_CHASES]) || 0,
       lastChase: isoOrBlank_(row[COL.LAST_CHASE]),
       activity: String(row[COL.ACTIVITY] || '').split('\n').filter(String),
+      partner: row[COL.PARTNER] || '',
+      agentNumber: row[COL.AGENT_NO] || '',
     });
   }
   out.sort(function (a, b) { return (b.updated || '').localeCompare(a.updated || ''); });
@@ -1200,22 +1213,89 @@ function signIn_(p) {
     return out;
   }
 
-  /* An agent signs in to their own application, so make sure they have one
-     and hand back the token their answers are stored against. */
-  var token = normaliseToken_(row.values[ACC.TOKEN]);
-  if (!token) {
-    token = makeToken_();
-    sheet.getRange(row.index, ACC.TOKEN + 1).setValue(token);
-  }
-  if (!findRow_(token)) {
-    ensureSheet_().appendRow([
-      new Date(), token, row.values[ACC.NAME], row.values[ACC.EMAIL], row.values[ACC.MOBILE],
-      out.lang, 'In progress', 0, '', new Date(), '', 0, '', '',
-      CONFIG.PORTAL_BASE + token, '', '', '', '', '', '', '', 0, '', '',
-    ]);
-  }
-  out.token = token;
+  /* An agent can hold several contracts at once — one application per
+     partner — so hand back the lot with where each one has got to. */
+  out.applications = applicationsFor_(row.values[ACC.NUMBER]);
   return out;
+}
+
+/** Every application belonging to one agent, one per partner. */
+function applicationsFor_(agentNumber) {
+  var wanted = normaliseNumber_(agentNumber);
+  if (!wanted) return [];
+  var values = ensureSheet_().getDataRange().getValues();
+  var out = [];
+  for (var r = 1; r < values.length; r++) {
+    if (normaliseNumber_(values[r][COL.AGENT_NO]) !== wanted) continue;
+    out.push({
+      partner: String(values[r][COL.PARTNER] || ''),
+      token: values[r][COL.TOKEN],
+      status: values[r][COL.STATUS],
+      percent: Number(values[r][COL.PERCENT]) || 0,
+      stage: values[r][COL.STAGE] || '',
+      code: values[r][COL.CODE] || '',
+      submitted: isoOrBlank_(values[r][COL.SUBMITTED]),
+    });
+  }
+  return out;
+}
+
+/**
+ * Open one agent's application for one partner, making it if it is not there.
+ *
+ * A second contract starts from the first: everything the agent already
+ * typed is copied across, so somebody contracting with three companies
+ * answers the personal questions once, not three times. The signature is
+ * deliberately NOT copied — each contract has to be signed on its own.
+ */
+function openContract_(p) {
+  var agentNumber = normaliseNumber_(p.agentNumber);
+  var partner = String(p.partner || '').trim();
+  if (!agentNumber || !partner) return { ok: false, error: 'missing' };
+
+  var access = findAccessRow_(agentNumber);
+  if (!access) return { ok: false, error: 'unknown agent' };
+
+  var mine = applicationsFor_(agentNumber);
+  var existing = mine.filter(function (a) { return a.partner === partner; })[0];
+  if (existing) {
+    var saved = readApplication_(existing.token);
+    return { ok: true, token: existing.token, data: saved.data || null, step: saved.step || 0, created: false };
+  }
+
+  /* Carry over from whichever of their applications is furthest along. */
+  var source = mine.slice().sort(function (a, b) { return b.percent - a.percent; })[0];
+  var carried = null;
+  if (source) {
+    var previous = readApplication_(source.token);
+    if (previous && previous.data) {
+      carried = previous.data;
+      carried.signature = {
+        printedName: (carried.signature && carried.signature.printedName) || '',
+        initials: (carried.signature && carried.signature.initials) || '',
+        place: (carried.signature && carried.signature.place) || '',
+        dataUrl: '', date: '',
+      };
+      delete carried.submittedAt;
+      delete carried.trackingCode;
+    }
+  }
+
+  var token = makeToken_();
+  var now = new Date();
+  ensureSheet_().appendRow([
+    now, token, access.values[ACC.NAME], access.values[ACC.EMAIL], access.values[ACC.MOBILE],
+    access.values[ACC.LANG] || 'en', 'In progress', 0, '', now, '', 0, '', '',
+    CONFIG.PORTAL_BASE + token, '', '', '', '', '', '', '', 0, '', '',
+    partner, access.values[ACC.NUMBER],
+  ]);
+
+  if (carried) writeApplication_(token, { data: carried, step: 0, savedAt: now.toISOString() });
+  logActivity_(findRow_(token), source
+    ? 'Contract with ' + partner + ' opened — details carried over from their ' + source.partner + ' application'
+    : 'Contract with ' + partner + ' opened');
+
+  return { ok: true, token: token, data: carried, step: 0, created: true, carried: !!carried };
 }
 
 /**
@@ -1255,7 +1335,7 @@ function registerAgent_(p) {
   ensureSheet_().appendRow([
     now, token, name, email, p.mobile || '', lang, 'Invited', 0, '', now,
     '', 0, '', '', CONFIG.PORTAL_BASE + token, 'Self-registered',
-    '', '', '', '', '', '', 0, '', '',
+    '', '', '', '', '', '', 0, '', '', '', access.number,
   ]);
 
   sendCredentials_({ name: name, email: email, lang: lang }, access);

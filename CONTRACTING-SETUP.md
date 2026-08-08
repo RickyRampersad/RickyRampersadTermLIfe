@@ -87,10 +87,28 @@ sheet in plain text and anyone holding a number and passcode is that person
 as far as the app is concerned. That is the right weight for an internal
 recruiting tool; it is not the right weight for anything else.
 
+## One agent, several contracts
+
+An agent is not tied to one contract. Ticking three partners when you invite
+someone opens **three applications**, each with its own progress, its own
+submission, its own tracking code and its own follow-ups — and each shows as
+its own row on the dashboard, tagged with the partner.
+
+The work is only done once. The first contract is filled in from scratch;
+every one after it opens **already populated** from whichever of their
+applications is furthest along, so somebody contracting with three companies
+answers the personal questions once and then reviews.
+
+**The signature never carries over.** Each contract is signed on its own,
+which is both what the carriers expect and what makes the packet worth
+anything. Everything else — names, addresses, references, banking,
+disclosures — comes across.
+
 ## Choosing who the contract is with
 
-After signing in, the applicant picks the partner, grouped by line of
-business:
+When you invite someone you tick which contracts to send; the letter names
+them and says how many. After signing in, the agent sees each one with where
+it has got to:
 
 | Line | Partners |
 |---|---|
@@ -99,7 +117,8 @@ business:
 | Finance | Premium Financing |
 
 Only VUMI has forms behind it; the rest read *Coming soon*, which is honest
-and shows an applicant what is on the way. To bring one live: put its PDFs in
+and shows an applicant what is on the way — and they cannot be ticked when
+inviting. To bring one live: put its PDFs in
 `contracting/forms/`, map their fields in `packet.js`, and flip `available`
 to `true` in the `CARRIERS` list — which lives in **both** `Contracting.gs`
 and `contracting/app.js`, so change it in both.

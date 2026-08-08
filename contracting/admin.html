@@ -63,6 +63,8 @@
        animation:riseIn .4s cubic-bezier(.2,.7,.3,1) both}
   .row:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(14,42,71,.09)}
   .who b{font-size:1rem;display:block}
+  .partnertag{font-size:.72rem;font-weight:700;color:var(--teal-600);background:var(--teal-50);
+              border:1px solid #CBEAE8;padding:2px 9px;border-radius:999px;vertical-align:middle;margin-left:6px}
   .who span{font-size:.8rem;color:var(--muted)}
   .meter{height:7px;background:#E9EFF5;border-radius:999px;overflow:hidden;margin-top:9px;max-width:320px}
   .meter i{display:block;height:100%;transition:width .6s cubic-bezier(.2,.7,.3,1);
@@ -101,6 +103,14 @@
   .dlg label{display:block;font-size:.78rem;font-weight:700;margin-bottom:5px}
   .dlg input,.dlg select{width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:10px;font:inherit;margin-bottom:13px}
   .dlg .actions{display:flex;gap:9px;justify-content:flex-end;margin-top:6px}
+  .contractpick{display:grid;gap:8px;margin-bottom:14px}
+  .contractpick label{display:flex;gap:10px;align-items:center;border:1.5px solid var(--line);border-radius:10px;
+                      padding:10px 12px;font-size:.87rem;font-weight:600;cursor:pointer;margin-bottom:0}
+  .contractpick label:has(input:checked){border-color:var(--teal-500);background:var(--teal-50)}
+  .contractpick label.soon{opacity:.5;cursor:not-allowed}
+  .contractpick input{width:17px;height:17px;accent-color:var(--teal-600);margin:0;flex:none}
+  .contractpick .cat{font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+                     color:var(--muted);margin-top:4px}
 
   .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(12px);z-index:90;background:var(--navy-900);color:#fff;
          padding:12px 20px;border-radius:999px;font-size:.87rem;font-weight:600;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s}
@@ -190,7 +200,9 @@
     <label for="imobile">Mobile (optional)</label>
     <input id="imobile" type="tel" />
     <label for="ilang">Language</label>
-    <select id="ilang"><option value="es">Español</option><option value="en">English</option></select>
+    <select id="ilang"><option value="en">English</option><option value="es">Español</option></select>
+    <label>Which contracts to send</label>
+    <div class="contractpick" id="ipartners"></div>
     <div class="actions">
       <button class="btn btn-ghost" value="cancel" type="submit">Cancel</button>
       <button class="btn btn-teal" id="invitego" type="button">Send invitation</button>
@@ -218,7 +230,7 @@
     CARRIER_NAME: 'Amalia Suraz',
   };
 
-  var state = { key: '', applicants: [], filter: 'open', invitedBy: '' };
+  var state = { key: '', applicants: [], filter: 'open', invitedBy: '', carriers: [] };
 
   /* An applicant with a submitted packet is waiting on VUMI, not on us —
      "With VUMI" separates the two so neither queue hides the other. */
@@ -277,6 +289,12 @@
         if (!res || !res.ok) throw new Error(res && res.error ? res.error : 'failed');
         state.applicants = res.applicants || [];
         render();
+        if (!state.carriers.length) {
+          fetch(CONFIG.API_URL + '?action=partners')
+            .then(function (r) { return r.json(); })
+            .then(function (r) { if (r && r.ok) state.carriers = r.carriers || []; })
+            .catch(function () { /* the picker falls back to empty */ });
+        }
       });
   }
 
@@ -371,7 +389,8 @@
 
     return '<div class="row" data-token="' + esc(a.token) + '">' +
       '<div class="who">' +
-        '<b>' + esc(a.name || '(no name yet)') + '</b>' +
+        '<b>' + esc(a.name || '(no name yet)') +
+        (a.partner ? ' <span class="partnertag">' + esc(a.partner) + '</span>' : '') + '</b>' +
         '<span>' + esc(a.email || '—') + (a.mobile ? ' · ' + esc(a.mobile) : '') + '</span>' +
         '<div class="meter"><i style="width:' + barPct + '%"></i></div>' +
         '<div class="tags">' + tags.join('') + '</div>' +
@@ -515,7 +534,26 @@
     loadList().then(function () { toast('Refreshed'); }).catch(function () { toast('Could not refresh', true); });
   });
 
-  $('invitebtn').addEventListener('click', function () { $('invitedlg').showModal(); });
+  /**
+   * Which contracts this invitation covers. One application is opened per
+   * ticked partner, and the agent's details carry across between them — so
+   * sending three contracts still only asks them the questions once.
+   */
+  function renderPartnerPicker() {
+    var box = $('ipartners');
+    if (!box) return;
+    var seen = '';
+    box.innerHTML = (state.carriers || []).map(function (c) {
+      var head = c.category && c.category !== seen ? (seen = c.category,
+        '<div class="cat">' + esc(c.category) + '</div>') : '';
+      return head + '<label' + (c.available ? '' : ' class="soon"') + '>' +
+        '<input type="checkbox" value="' + esc(c.name) + '"' +
+        (c.available ? '' : ' disabled') + (c.id === 'vumi' ? ' checked' : '') + '>' +
+        '<span>' + esc(c.name) + (c.available ? '' : ' — coming soon') + '</span></label>';
+    }).join('');
+  }
+
+  $('invitebtn').addEventListener('click', function () { renderPartnerPicker(); $('invitedlg').showModal(); });
   /* Arriving from the manager's landing screen opens the dialog straight away. */
   if (location.hash === '#invite') {
     var openWhenReady = setInterval(function () {
@@ -530,13 +568,18 @@
     if (!name || !email) { toast('Name and email are required', true); return; }
     var btn = $('invitego');
     btn.disabled = true;
+    var partners = Array.prototype.slice.call($('ipartners').querySelectorAll('input:checked'))
+      .map(function (i) { return i.value; });
+    if (!partners.length) { toast('Tick at least one contract to send', true); btn.disabled = false; return; }
+
     api({ action: 'invite', name: name, email: email, mobile: $('imobile').value.trim(),
-          lang: $('ilang').value, invitedBy: state.invitedBy })
+          lang: $('ilang').value, invitedBy: state.invitedBy, partners: partners })
       .then(function (res) {
         if (!res || !res.ok) throw new Error('failed');
         $('invitedlg').close();
         $('inviteform').reset();
-        toast('Invitation sent to ' + email);
+        toast('Invitation sent to ' + email + ' — ' + partners.length + ' contract' +
+              (partners.length > 1 ? 's' : ''));
         return loadList();
       })
       .catch(function () { toast('Could not send the invitation', true); })

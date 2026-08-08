@@ -60,16 +60,16 @@
       es: 'Salud y vida internacional — el paquete completo de 11 páginas, beneficiario y W-8BEN.',
     },
     bestdoctors: {
-      en: 'Coming soon — their contracting forms are being prepared.',
-      es: 'Próximamente — se están preparando sus formularios de contratación.',
+      en: 'International medical — their producer agreement and tax forms.',
+      es: 'Salud internacional — su acuerdo de productor y formularios fiscales.',
     },
     realestate: {
-      en: 'Coming soon — listing and referral agreements.',
-      es: 'Próximamente — acuerdos de listado y de referidos.',
+      en: 'Listing and referral agreements.',
+      es: 'Acuerdos de listado y de referidos.',
     },
     premiumfinance: {
-      en: 'Coming soon — lender and facility paperwork.',
-      es: 'Próximamente — documentación de financiamiento.',
+      en: 'Lender and facility paperwork.',
+      es: 'Documentación de prestamista y de línea de crédito.',
     },
   };
 
@@ -160,7 +160,21 @@
       en: 'Choose the company. More are being added as they are ready.',
     },
     comingSoon: { es: 'Próximamente', en: 'Coming soon' },
-    resume: { es: 'Continuar donde quedó', en: 'Pick up where you left off' },
+    opening: { es: 'Abriendo su contrato…', en: 'Opening your contract…' },
+    openFailed: { es: 'No pudimos abrir ese contrato. Intente de nuevo.', en: "We couldn't open that contract. Try again." },
+    carriedOver: {
+      es: 'Copiamos sus datos del contrato anterior — revíselos y firme.',
+      en: 'Your details came across from your other contract — check them and sign.',
+    },
+    'cState.notStarted': { es: 'Sin comenzar', en: 'Not started yet' },
+    'cState.partway': { es: 'Va por el {p}% — continúe donde quedó', en: '{p}% done — pick up where you left off' },
+    'cState.ready': { es: 'Completo — falta enviarlo', en: 'Complete — just needs sending' },
+    'cState.submitted': { es: 'Enviado — en revisión', en: 'Sent — under review' },
+    'cState.approved': { es: 'Aprobado — código emitido', en: 'Approved — code issued' },
+    multiNote: {
+      es: 'Sus datos se copian entre contratos — sólo revise y firme cada uno.',
+      en: 'Your details carry across your contracts — you only review and sign each one.',
+    },
     startFresh: { es: 'Comenzar', en: 'Start' },
     staffTitle: { es: 'Bienvenido de nuevo, {name}', en: 'Welcome back, {name}' },
     staffSub: {
@@ -1608,14 +1622,9 @@
         if (res.lang === 'es' || res.lang === 'en') { state.lang = res.lang; applyLang(); }
         storeSession({
           role: res.role, name: res.name, agentNumber: res.agentNumber,
-          token: res.token || '', adminKey: res.adminKey || '', carriers: res.carriers || null,
+          adminKey: res.adminKey || '', carriers: res.carriers || null,
+          applications: res.applications || [],
         });
-        if (res.token) {
-          state.token = res.token;
-          try { localStorage.setItem('vumi-contracting:last', res.token); } catch (e2) { /* ignore */ }
-          state.data = blankData();
-          loadLocal();
-        }
         document.getElementById('passcode').value = '';
         renderChoose();
       })
@@ -1767,25 +1776,46 @@
         seen = group;
         picker.appendChild(el('div', 'pickgroup', esc(group)));
       }
-      var blurb = (CARRIER_BLURB[carrier.id] && CARRIER_BLURB[carrier.id][state.lang]) || '';
+      var mine = applicationFor(carrier.name);
+      var describe = (CARRIER_BLURB[carrier.id] && CARRIER_BLURB[carrier.id][state.lang]) || '';
+      /* A contract they already hold shows where it has got to; one they do
+         not shows what it is. The Coming soon chip carries availability, so
+         the line underneath never has to repeat it. */
+      var blurb = (carrier.available && mine) ? contractState(mine)
+        : describe || (carrier.available ? t('cState.notStarted') : '');
       var node = el('button', 'pick' + (carrier.available ? '' : ' soon'));
       node.type = 'button';
       node.disabled = !carrier.available;
       node.innerHTML = '<span class="mark">' + esc(shortMark(carrier.name)) + '</span>' +
         '<span class="txt"><b>' + esc(carrier.name) + '</b><span>' + esc(blurb) + '</span></span>' +
         (carrier.available
-          ? '<span class="arrow">→</span>'
+          ? (mine && mine.percent ? '<span class="pctchip">' + mine.percent + '%</span>' : '') +
+            '<span class="arrow">→</span>'
           : '<span class="soonchip">' + esc(t('comingSoon')) + '</span>');
       if (carrier.available) {
-        node.addEventListener('click', function () { openWizard(carrier.id); });
+        node.addEventListener('click', function () { openContract(carrier); });
       }
       picker.appendChild(node);
     });
 
-    var progress = P.completeness(state.data, state.lang);
-    document.getElementById('choosefoot').textContent = progress.percent > 0 && progress.percent < 100
-      ? t('resume') + ' — ' + progress.percent + '%'
-      : '';
+    var open = ((state.session && state.session.applications) || []).length;
+    document.getElementById('choosefoot').textContent = open > 1
+      ? t('multiNote') : '';
+  }
+
+  function applicationFor(partnerName) {
+    var apps = (state.session && state.session.applications) || [];
+    for (var i = 0; i < apps.length; i++) if (apps[i].partner === partnerName) return apps[i];
+    return null;
+  }
+
+  /** Where this particular contract has got to, in the applicant's words. */
+  function contractState(app) {
+    if (app.stage === 'approved') return t('cState.approved');
+    if (app.submitted) return t('cState.submitted');
+    if (app.percent >= 100) return t('cState.ready');
+    if (app.percent > 0) return t('cState.partway', { p: app.percent });
+    return t('cState.notStarted');
   }
 
   /** "VUMI® Group" → "VUMI", "Best Doctors Insurance" → "BD" */
@@ -1800,10 +1830,35 @@
     return String(name || '').trim().split(/\s+/)[0] || '';
   }
 
-  function openWizard(carrierId) {
-    state.carrier = carrierId || 'vumi';
-    showScreen('wizard');
-    render();
+  /**
+   * Open one contract. The first one starts empty; every one after it comes
+   * back prefilled from whichever of their applications is furthest along,
+   * so the personal questions are answered once no matter how many companies
+   * they contract with. The signature never carries over — each contract is
+   * signed on its own.
+   */
+  function openContract(carrier) {
+    state.carrier = carrier.id;
+    state.partnerName = carrier.name;
+
+    if (!CONFIG.API_URL) { state.data = state.data || blankData(); showScreen('wizard'); render(); return; }
+
+    var session = state.session || {};
+    toast(t('opening'));
+    post({ action: 'openContract', agentNumber: session.agentNumber, partner: carrier.name })
+      .then(function (res) {
+        if (!res || !res.ok) { toast(t('openFailed'), true); return; }
+        state.token = res.token;
+        try { localStorage.setItem('vumi-contracting:last', res.token); } catch (e) { /* ignore */ }
+        state.data = res.data ? Object.assign(blankData(), res.data) : blankData();
+        state.step = typeof res.step === 'number' ? res.step : 0;
+        state.files = [];
+        loadLocal();
+        if (res.carried) toast(t('carriedOver'));
+        showScreen('wizard');
+        render();
+      })
+      .catch(function () { toast(t('openFailed'), true); });
   }
 
   /* ===================== boot ===================== */
@@ -1840,27 +1895,12 @@
     loadLocal();
 
     loadSession();
-    if (state.session && state.session.token) state.token = state.session.token;
 
-    /* The token may hold progress saved from another device. */
-    var ready = Promise.resolve();
-    if (CONFIG.API_URL && state.session && state.session.token) {
-      ready = fetch(CONFIG.API_URL + '?action=load&token=' + encodeURIComponent(state.token))
-        .then(function (r) { return r.json(); })
-        .then(function (res) {
-          if (res && res.found && res.data) {
-            state.data = Object.assign(blankData(), res.data);
-            if (typeof res.step === 'number') state.step = res.step;
-          }
-        })
-        .catch(function () { /* keep whatever is on this device */ });
-    }
-
-    ready.then(function () {
-      applyLang();
-      if (state.session) renderChoose();
-      else renderSignIn();
-    });
+    /* Nothing is loaded up front any more: an agent may hold several
+       contracts, so the answers arrive when they pick one. */
+    applyLang();
+    if (state.session) renderChoose();
+    else renderSignIn();
 
     document.getElementById('signform').addEventListener('submit', doSignIn);
     document.getElementById('joinform').addEventListener('submit', doJoin);
