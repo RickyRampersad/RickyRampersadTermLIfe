@@ -2,10 +2,12 @@
 
 Digitises the VUMI® Producer/Agent packet. An applicant answers each question
 once and the app writes the answers into the carrier's own PDFs — the real
-AcroForm fields, not a look-alike — then files, emails and chases the packet
-until it is finished.
+AcroForm fields, not a look-alike — then sends it to the carrier, chases both
+the applicant and the carrier until it is done, and lets the agent follow
+their own progress with a code.
 
 - **Applicant:** `https://rickyrampersadbranch.com/contracting/` (or `/c/<token>`)
+- **Progress tracker:** `https://rickyrampersadbranch.com/track` (or `/track/<code>`)
 - **Recruiter:** `https://rickyrampersadbranch.com/contracting/admin.html`
 
 Everything below the "Works without a backend" line is optional. The wizard
@@ -56,7 +58,17 @@ At the top of the script:
 RECRUITER_NAME:  'Ricky Rampersad',
 RECRUITER_EMAIL: 'ricky.rampersad@myguardiangroup.com',
 RECRUITER_PHONE: '(868) 678-5921',
+
+CARRIER_NAME:    'Amalia Suraz',        // where finished packets go
+CARRIER_EMAIL:   'contracts@woagp.com',
+COPY_TO: [                              // everyone copied on every packet
+  'ricky.rampersad@myguardiangroup.com',
+  'kamla.dookran@myguardiangroup.com',
+  'rampersadricky@gmail.com',
+],
+
 PORTAL_BASE:     'https://rickyrampersadbranch.com/contracting/?t=',
+STATUS_BASE:     'https://rickyrampersadbranch.com/contracting/status.html?c=',
 ADMIN_KEY:       'pick-a-long-random-string',
 ```
 
@@ -68,6 +80,12 @@ through the dashboard.
 1. Run `setupContracting()` once and authorise the permissions it asks for
    (Sheets, Drive, Gmail, Triggers). It creates the *Contracting* tab, the
    *VUMI Contracting* Drive folder and the daily reminder trigger.
+
+   Gmail access covers both sending and **reading**. The read scope is what
+   lets the script notice that the carrier has answered — it looks only for
+   the thread carrying that applicant's reference and never opens anything
+   else. Decline it and everything still works; you just mark replies by
+   hand on the dashboard.
 2. **Deploy → New deployment → Web app**
    - Execute as: **Me**
    - Who has access: **Anyone**
@@ -75,10 +93,11 @@ through the dashboard.
 
 ### 4. Point the site at it
 
-Paste the same `/exec` URL into two places:
+Paste the same `/exec` URL into three places:
 
 - `contracting/app.js` → `CONFIG.API_URL`
 - `contracting/admin.html` → `CONFIG.API_URL`
+- `contracting/status.html` → `CONFIG.API_URL`
 
 Commit and deploy. Open the dashboard, enter your admin key, and invite your
 first agent.
@@ -120,7 +139,7 @@ AUTORIZADO" block are always left blank — the carrier fills those.
 
 ---
 
-## How the chasing works
+## Chasing the applicant
 
 `dailyContractingCheck()` runs every morning and emails anyone who is not
 finished. The email names the exact answers still missing, so nobody has to
@@ -158,9 +177,65 @@ many reminders they have had, and what is still missing.
 without disturbing the automatic schedule. *WhatsApp* and *Email* open a
 pre-written message with their link.
 
-**When a packet lands** — the three PDFs and any uploaded documents are filed
-in Drive under *VUMI Contracting → Name — TOKEN*, the applicant gets an
-emailed copy, and you get an alert with a link to the folder.
+**When a packet lands** — see *What happens on submission* below. Nothing
+for you to do unless VUMI asks for something.
+
+**Move someone forward** — *Code issued* on the dashboard marks the
+contracting approved: the agent gets a congratulations email and their
+tracker turns to complete. *VUMI replied* stops the carrier follow-ups
+without approving. *Chase VUMI* sends a follow-up immediately.
+
+---
+
+## What happens on submission
+
+The moment an applicant signs and sends:
+
+1. **The packet goes to the carrier.** All three signed PDFs and every
+   uploaded document are emailed to `CARRIER_EMAIL` (Amalia Suraz at
+   contracts@woagp.com), with everyone in `COPY_TO` copied — so you, Kamla
+   and your gmail all hold the same record.
+2. **It is filed in Drive** under *VUMI Contracting → Name — TOKEN*.
+3. **The applicant is thanked**, gets their own copy of the three forms
+   attached, and is given a **tracking code**.
+
+The carrier email carries a reference like `[VUMI-AB12CD34EF]` in its
+subject. Leave that alone — it is how the script later finds the thread to
+see whether the carrier replied.
+
+## Chasing the carrier
+
+Sending a packet is not the same as it being dealt with, so the same daily
+check that chases applicants also chases VUMI.
+
+- **Follow-ups** go to Amalia 3, 4, 7, 7 then 14 days after the packet was
+  sent (`CONFIG.CARRIER_FOLLOWUP_SPACING`), under the original subject so
+  they thread in her inbox rather than arriving as easy-to-miss new mail.
+- **They stop the moment she replies.** The script looks for a reply on
+  that reference; anything from outside your own addresses counts. You can
+  also press *VUMI replied* on the dashboard.
+- **A hard stop.** After the last follow-up everyone in `COPY_TO` gets one
+  email saying VUMI has not answered on these packets and it is time to
+  call. No more automatic mail on that packet.
+
+## The agent's tracking code
+
+Each submitted applicant gets a six-character code (`K4BQ7X`) and a link to
+`/contracting/status.html`, also reachable at `/track/K4BQ7X`. It shows a
+progress bar over four stages:
+
+| Stage | Set by |
+|---|---|
+| Solicitud recibida y firmada | automatically, on submit |
+| Enviada a VUMI® | automatically, on submit |
+| En revisión por VUMI® | automatically, on submit — where it waits |
+| Código de agente emitido | you, via *Code issued* on the dashboard |
+
+The code is deliberately **not** their application token. It reveals a stage
+and a first name and nothing else — no addresses, no bank details, no
+documents — so it is safe to read down the phone or paste into a chat. Their
+application token still opens their full form, so keep treating that one as
+private.
 
 ---
 
@@ -172,10 +247,11 @@ contracting/
   app.js        wizard logic — steps, autosave, signature, submit
   packet.js     field map + PDF fill engine (also runs under Node)
   admin.html    recruiter dashboard (self-contained)
+  status.html   the agent's progress tracker (self-contained)
   forms/        the three carrier PDFs the app fills
   vendor/       pdf-lib, vendored so the app has no CDN dependency
 apps-script/
-  Contracting.gs   backend: storage, submissions, reminder engine
+  Contracting.gs   backend: storage, submissions, both reminder engines
 ```
 
 ### A note on `forms/`

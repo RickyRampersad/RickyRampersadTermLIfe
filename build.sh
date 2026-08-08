@@ -37,7 +37,7 @@ cp "$ROOT/agent.html"  "$DIST/"
 cp "$ROOT/staff.html"  "$DIST/"
 cp "$ROOT/404.html"    "$DIST/"
 cp -R "$ROOT/renewal"  "$DIST/"
-cp -R "$ROOT/contracting" "$DIST/"
+cp -R "$ROOT/contracting" "$DIST/"   # includes status.html
 
 echo "→ Copying deploy config"
 cp "$ROOT/netlify.toml" "$DIST/"

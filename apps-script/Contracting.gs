@@ -37,10 +37,26 @@ var CONFIG = {
   RECRUITER_EMAIL: 'ricky.rampersad@myguardiangroup.com',
   RECRUITER_PHONE: '(868) 678-5921',
 
+  // --- Where a finished packet goes -------------------------------------
+  // The signed forms are emailed here the moment the applicant submits.
+  CARRIER_NAME: 'Amalia Suraz',
+  CARRIER_EMAIL: 'contracts@woagp.com',
+
+  // Everyone who gets a copy of each submission and of the chasing.
+  COPY_TO: [
+    'ricky.rampersad@myguardiangroup.com',
+    'kamla.dookran@myguardiangroup.com',
+    'rampersadricky@gmail.com',
+  ],
+
   // --- Portal ------------------------------------------------------------
   // The applicant's personal link is this with their token appended:
   // https://rickyrampersadbranch.com/contracting/?t=AB12CD34
   PORTAL_BASE: 'https://rickyrampersadbranch.com/contracting/?t=',
+
+  // Where an applicant tracks progress after submitting, with the short
+  // code they are given. Shows progress only — never their personal data.
+  STATUS_BASE: 'https://rickyrampersadbranch.com/contracting/status.html?c=',
 
   // --- Admin -------------------------------------------------------------
   // Shared secret the recruiter dashboard sends with every request.
@@ -54,22 +70,54 @@ var CONFIG = {
   QUIET_DAYS: 2,     // don't chase someone who edited it in the last 2 days
   DAILY_HOUR: 9,     // hour of day (0-23) the check runs
 
+  // --- Chasing the carrier ----------------------------------------------
+  // Days to wait before each follow-up to the carrier after a packet is
+  // sent, until they reply. Replies are spotted automatically (see
+  // checkCarrierReplies_) or marked by hand from the dashboard.
+  CARRIER_FOLLOWUP_SPACING: [3, 4, 7, 7, 14],
+
   // --- Storage -----------------------------------------------------------
   SHEET_NAME: 'Contracting',
   DRIVE_FOLDER: 'VUMI Contracting',
 };
 
+/* New columns are appended, never inserted — ensureSheet_ adds any that a
+   sheet created by an earlier version is missing, and existing data stays
+   where it is. */
 var HEADERS = [
   'Started', 'Token', 'Name', 'Email', 'Mobile', 'Language', 'Status',
   'Percent', 'Missing', 'Last Update', 'Submitted', 'Reminders Sent',
   'Last Reminder', 'Folder', 'Portal Link', 'Notes',
+  'Tracking Code', 'Stage', 'Stage Updated', 'Sent To Carrier',
+  'Carrier Ref', 'Carrier Replied', 'Carrier Chases', 'Last Carrier Chase',
 ];
 
 var COL = {
   STARTED: 0, TOKEN: 1, NAME: 2, EMAIL: 3, MOBILE: 4, LANG: 5, STATUS: 6,
   PERCENT: 7, MISSING: 8, UPDATED: 9, SUBMITTED: 10, REMINDERS: 11,
   LAST_REMINDER: 12, FOLDER: 13, LINK: 14, NOTES: 15,
+  CODE: 16, STAGE: 17, STAGE_UPDATED: 18, CARRIER_SENT: 19,
+  CARRIER_REF: 20, CARRIER_REPLIED: 21, CARRIER_CHASES: 22, LAST_CHASE: 23,
 };
+
+/**
+ * What the applicant sees on their progress bar, one step per milestone.
+ * Submitting completes the first two in one go — the packet reaches the
+ * carrier the moment it is signed — so a freshly submitted application
+ * lands on "under review" at three of four, which is true: everything the
+ * agent can do is done, and only the carrier's answer is outstanding.
+ */
+var STAGES = [
+  { id: 'received', es: 'Solicitud recibida y firmada', en: 'Application received and signed' },
+  { id: 'sent', es: 'Enviada a VUMI®', en: 'Sent to VUMI®' },
+  { id: 'review', es: 'En revisión por VUMI®', en: 'Under review by VUMI®' },
+  { id: 'approved', es: 'Código de agente emitido', en: 'Agent code issued' },
+];
+
+function stageIndex_(id) {
+  for (var i = 0; i < STAGES.length; i++) if (STAGES[i].id === id) return i;
+  return 0;
+}
 
 /* ======================= SETUP & MENU ======================= */
 
@@ -156,6 +204,31 @@ function doGet(e) {
       });
     }
 
+    /* The applicant's tracking code. Deliberately returns a stage and
+       nothing else — no addresses, no bank details, no documents — so the
+       code is safe to read down the phone or paste into a chat. */
+    if (action === 'status') {
+      var row = findRowByCode_(params.code);
+      if (!row) return json_({ found: false });
+      var lang = String(params.lang || row.values[COL.LANG] || 'es') === 'en' ? 'en' : 'es';
+      var current = stageIndex_(String(row.values[COL.STAGE] || 'received'));
+      return json_({
+        found: true,
+        firstName: firstName_(row.values[COL.NAME]),
+        stage: STAGES[current].id,
+        stageIndex: current,
+        stageLabel: STAGES[current][lang],
+        percent: Math.round(((current + 1) / STAGES.length) * 100),
+        stages: STAGES.map(function (stage, i) {
+          return { id: stage.id, label: stage[lang], done: i <= current };
+        }),
+        submitted: isoOrBlank_(row.values[COL.SUBMITTED]),
+        stageUpdated: isoOrBlank_(row.values[COL.STAGE_UPDATED]),
+        carrierReplied: !!row.values[COL.CARRIER_REPLIED],
+        note: String(row.values[COL.NOTES] || ''),
+      });
+    }
+
     if (action === 'list') {
       if (!authorised_(params.key)) return json_({ ok: false, error: 'unauthorised' });
       return json_({ ok: true, applicants: listApplicants_() });
@@ -186,6 +259,9 @@ function doPost(e) {
     if (action === 'invite') return json_(inviteAgent_(payload));
     if (action === 'nudge') return json_(nudgeNow_(payload.token));
     if (action === 'status') return json_(setStatus_(payload.token, payload.status, payload.notes));
+    if (action === 'stage') return json_(setStage_(payload.token, payload.stage, payload.notes));
+    if (action === 'chase') return json_(chaseCarrierNow_(payload.token));
+    if (action === 'carrierReplied') return json_(markCarrierReplied_(payload.token));
 
     return json_({ ok: false, error: 'unknown action' });
   } catch (err) {
@@ -238,7 +314,10 @@ function saveProgress_(p) {
   return { ok: true };
 }
 
-/** The finished packet: file it, acknowledge it, tell the recruiter. */
+/**
+ * The finished packet: file it in Drive, send it to the carrier with the
+ * team copied, thank the applicant and hand them their tracking code.
+ */
 function submitPacket_(p) {
   var token = normaliseToken_(p.token);
   if (!token) return { ok: false, error: 'no token' };
@@ -248,31 +327,48 @@ function submitPacket_(p) {
   var folder = applicantFolder_(token, p.name);
   var stamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
 
-  (p.pdfs || []).forEach(function (pdf) {
-    if (!pdf || !pdf.base64) return;
-    folder.createFile(Utilities.newBlob(
-      Utilities.base64Decode(pdf.base64), 'application/pdf', stamp + ' ' + pdf.name));
-  });
+  /* Built once: the same blobs are filed in Drive and attached to the
+     emails, so what the carrier receives is what is on record. */
+  var pdfBlobs = (p.pdfs || []).filter(function (pdf) { return pdf && pdf.base64; })
+    .map(function (pdf) {
+      return Utilities.newBlob(Utilities.base64Decode(pdf.base64), 'application/pdf', pdf.name);
+    });
 
-  (p.uploads || []).forEach(function (upload) {
-    if (!upload || !upload.dataUrl) return;
-    var parts = String(upload.dataUrl).split(',');
-    if (parts.length < 2) return;
-    folder.createFile(Utilities.newBlob(
-      Utilities.base64Decode(parts[1]), upload.type || 'application/octet-stream', upload.name || 'documento'));
+  var uploadBlobs = (p.uploads || []).filter(function (upload) { return upload && upload.dataUrl; })
+    .map(function (upload) {
+      var parts = String(upload.dataUrl).split(',');
+      if (parts.length < 2) return null;
+      return Utilities.newBlob(Utilities.base64Decode(parts[1]),
+        upload.type || 'application/octet-stream', upload.name || 'documento');
+    }).filter(Boolean);
+
+  pdfBlobs.forEach(function (blob) {
+    folder.createFile(blob.copyBlob().setName(stamp + ' ' + blob.getName()));
   });
+  uploadBlobs.forEach(function (blob) { folder.createFile(blob.copyBlob()); });
 
   var sheet = ensureSheet_();
   var row = findRow_(token);
+  var now = new Date();
+  var code = row ? String(row.values[COL.CODE] || '') : '';
+  if (!code) code = makeTrackingCode_();
+  var ref = 'VUMI-' + token;
+
   if (row) {
     sheet.getRange(row.index, COL.STATUS + 1).setValue('Submitted');
-    sheet.getRange(row.index, COL.SUBMITTED + 1).setValue(new Date());
+    sheet.getRange(row.index, COL.SUBMITTED + 1).setValue(now);
     sheet.getRange(row.index, COL.FOLDER + 1).setValue(folder.getUrl());
+    sheet.getRange(row.index, COL.CODE + 1).setValue(code);
+    sheet.getRange(row.index, COL.STAGE + 1).setValue('review');
+    sheet.getRange(row.index, COL.STAGE_UPDATED + 1).setValue(now);
+    sheet.getRange(row.index, COL.CARRIER_SENT + 1).setValue(now);
+    sheet.getRange(row.index, COL.CARRIER_REF + 1).setValue(ref);
+    sheet.getRange(row.index, COL.CARRIER_CHASES + 1).setValue(0);
   }
 
-  sendApplicantCopy_(p, folder);
-  sendRecruiterAlert_(p, folder);
-  return { ok: true, folder: folder.getUrl() };
+  sendToCarrier_(p, folder, pdfBlobs.concat(uploadBlobs), ref);
+  sendApplicantThanks_(p, pdfBlobs, code);
+  return { ok: true, folder: folder.getUrl(), code: code };
 }
 
 /* ======================= RECRUITER ACTIONS ======================= */
@@ -357,6 +453,75 @@ function setStatus_(token, status, notes) {
   return { ok: true };
 }
 
+/**
+ * Move an applicant along their progress bar. Reaching "approved" tells
+ * them their code has been issued and closes the carrier follow-ups.
+ */
+function setStage_(token, stage, notes) {
+  var sheet = ensureSheet_();
+  var row = findRow_(normaliseToken_(token));
+  if (!row) return { ok: false, error: 'not found' };
+
+  var valid = STAGES.some(function (s) { return s.id === stage; });
+  if (!valid) return { ok: false, error: 'unknown stage' };
+
+  sheet.getRange(row.index, COL.STAGE + 1).setValue(stage);
+  sheet.getRange(row.index, COL.STAGE_UPDATED + 1).setValue(new Date());
+  if (notes !== undefined && notes !== null) sheet.getRange(row.index, COL.NOTES + 1).setValue(notes);
+
+  if (stage === 'approved') {
+    sheet.getRange(row.index, COL.STATUS + 1).setValue('Approved');
+    if (!row.values[COL.CARRIER_REPLIED]) {
+      sheet.getRange(row.index, COL.CARRIER_REPLIED + 1).setValue(new Date());
+    }
+    sendApprovedEmail_(row);
+  }
+  return { ok: true };
+}
+
+/** Tell the agent their code came through. */
+function sendApprovedEmail_(row) {
+  var email = String(row.values[COL.EMAIL] || '');
+  if (!email) return;
+  var lang = row.values[COL.LANG] === 'en' ? 'en' : 'es';
+  var subject = lang === 'es'
+    ? '¡Su contratación VUMI® fue aprobada! 🎉'
+    : 'Your VUMI® contracting is approved! 🎉';
+
+  MailApp.sendEmail({
+    to: email,
+    replyTo: CONFIG.RECRUITER_EMAIL,
+    subject: subject,
+    htmlBody: emailShell_(subject,
+      '<p style="margin:0 0 14px">' + (lang === 'es' ? 'Hola ' : 'Hi ') +
+      esc_(firstName_(row.values[COL.NAME])) + ',</p>' +
+      '<p style="margin:0 0 14px">' + (lang === 'es'
+        ? 'VUMI® aprobó su contratación y emitió su código de agente. Ya puede empezar a producir.'
+        : 'VUMI® has approved your contracting and issued your agent code. You can start producing.') + '</p>' +
+      '<p style="margin:0 0 14px">' + (lang === 'es'
+        ? esc_(CONFIG.RECRUITER_NAME) + ' le escribirá con su código y los próximos pasos.'
+        : esc_(CONFIG.RECRUITER_NAME) + ' will write to you with your code and the next steps.') + '</p>' +
+      button_(CONFIG.STATUS_BASE + (row.values[COL.CODE] || ''),
+        lang === 'es' ? 'Ver mi contratación' : 'View my contracting')),
+  });
+}
+
+function chaseCarrierNow_(token) {
+  var row = findRow_(normaliseToken_(token));
+  if (!row) return { ok: false, error: 'not found' };
+  if (!parseDate_(row.values[COL.CARRIER_SENT])) return { ok: false, error: 'not sent to the carrier yet' };
+  sendCarrierFollowUp_(row, (Number(row.values[COL.CARRIER_CHASES]) || 0) + 1);
+  return { ok: true };
+}
+
+function markCarrierReplied_(token) {
+  var sheet = ensureSheet_();
+  var row = findRow_(normaliseToken_(token));
+  if (!row) return { ok: false, error: 'not found' };
+  sheet.getRange(row.index, COL.CARRIER_REPLIED + 1).setValue(new Date());
+  return { ok: true };
+}
+
 function listApplicants_() {
   var sheet = ensureSheet_();
   var values = sheet.getDataRange().getValues();
@@ -381,6 +546,13 @@ function listApplicants_() {
       folder: row[COL.FOLDER],
       link: row[COL.LINK] || (CONFIG.PORTAL_BASE + row[COL.TOKEN]),
       notes: row[COL.NOTES],
+      code: row[COL.CODE] || '',
+      stage: row[COL.STAGE] || '',
+      stageUpdated: isoOrBlank_(row[COL.STAGE_UPDATED]),
+      carrierSent: isoOrBlank_(row[COL.CARRIER_SENT]),
+      carrierReplied: isoOrBlank_(row[COL.CARRIER_REPLIED]),
+      carrierChases: Number(row[COL.CARRIER_CHASES]) || 0,
+      lastChase: isoOrBlank_(row[COL.LAST_CHASE]),
     });
   }
   out.sort(function (a, b) { return (b.updated || '').localeCompare(a.updated || ''); });
@@ -424,6 +596,152 @@ function dailyContractingCheck() {
   }
 
   if (stalled.length) notifyRecruiterOfStalled_(stalled);
+
+  /* Submitted packets are the carrier's turn — chase that side too. */
+  checkCarrierReplies_();
+  carrierFollowUpRound_();
+}
+
+/* ------------------- chasing the carrier ------------------- */
+
+/**
+ * Has the carrier answered? Each submission carries a reference in its
+ * subject, so the thread it started can be found again; a message in that
+ * thread from anyone other than us is a reply.
+ *
+ * Best effort — if the mailbox cannot be searched the follow-ups simply
+ * carry on, and marking it replied by hand from the dashboard always works.
+ */
+function checkCarrierReplies_() {
+  var sheet = ensureSheet_();
+  var values = sheet.getDataRange().getValues();
+
+  /* getActiveUser() is empty or throws depending on how the script is
+     running, and it is only ever one more address to ignore — never let it
+     take the daily check down with it. */
+  var own = '';
+  try { own = Session.getActiveUser().getEmail() || ''; } catch (e) { own = ''; }
+  var ourAddresses = CONFIG.COPY_TO.concat([CONFIG.RECRUITER_EMAIL, own])
+    .map(function (address) { return String(address || '').toLowerCase(); })
+    .filter(Boolean);
+
+  for (var r = 1; r < values.length; r++) {
+    var row = values[r];
+    var ref = String(row[COL.CARRIER_REF] || '');
+    if (!ref) continue;
+    if (row[COL.CARRIER_REPLIED]) continue;
+
+    var replied = null;
+    try {
+      GmailApp.search('subject:"' + ref + '"', 0, 5).forEach(function (thread) {
+        thread.getMessages().forEach(function (message) {
+          var from = String(message.getFrom() || '').toLowerCase();
+          var isOurs = ourAddresses.some(function (address) {
+            return address && from.indexOf(address) !== -1;
+          });
+          if (!isOurs && !replied) replied = message.getDate();
+        });
+      });
+    } catch (e) { continue; }
+
+    if (replied) {
+      sheet.getRange(r + 1, COL.CARRIER_REPLIED + 1).setValue(replied);
+      notifyCarrierReplied_({ index: r + 1, values: row });
+    }
+  }
+}
+
+/** Nudge the carrier about every packet they have not answered yet. */
+function carrierFollowUpRound_() {
+  var sheet = ensureSheet_();
+  var values = sheet.getDataRange().getValues();
+  var today = startOfDay_(new Date());
+  var giveUp = [];
+
+  for (var r = 1; r < values.length; r++) {
+    var row = { index: r + 1, values: values[r] };
+    var sent = parseDate_(row.values[COL.CARRIER_SENT]);
+    if (!sent) continue;                            // never went to the carrier
+    if (row.values[COL.CARRIER_REPLIED]) continue;  // they answered
+    if (row.values[COL.STAGE] === 'approved') continue;
+
+    var chases = Number(row.values[COL.CARRIER_CHASES]) || 0;
+    if (chases >= CONFIG.CARRIER_FOLLOWUP_SPACING.length) { giveUp.push(row); continue; }
+
+    var since = parseDate_(row.values[COL.LAST_CHASE]) || sent;
+    if (daysBetween_(startOfDay_(since), today) < CONFIG.CARRIER_FOLLOWUP_SPACING[chases]) continue;
+
+    sendCarrierFollowUp_(row, chases + 1);
+  }
+
+  if (giveUp.length) notifyRecruiterOfCarrierSilence_(giveUp);
+}
+
+function sendCarrierFollowUp_(row, number) {
+  var sheet = ensureSheet_();
+  var name = row.values[COL.NAME] || row.values[COL.TOKEN];
+  var ref = row.values[COL.CARRIER_REF] || ('VUMI-' + row.values[COL.TOKEN]);
+  var sent = parseDate_(row.values[COL.CARRIER_SENT]);
+  var waiting = sent ? daysBetween_(startOfDay_(sent), startOfDay_(new Date())) : 0;
+
+  /* Same subject as the original, so it threads under it in her inbox
+     rather than arriving as a fresh, easily-missed email. */
+  GmailApp.sendEmail(CONFIG.CARRIER_EMAIL,
+    'Nueva contratación de agente — ' + name + ' [' + ref + ']', '', {
+    cc: CONFIG.COPY_TO.join(','),
+    replyTo: CONFIG.RECRUITER_EMAIL,
+    name: CONFIG.RECRUITER_NAME,
+    htmlBody: emailShell_('Seguimiento — contratación de ' + esc_(name),
+      '<p style="margin:0 0 14px">Hola ' + esc_(firstName_(CONFIG.CARRIER_NAME)) + ',</p>' +
+      '<p style="margin:0 0 14px">Damos seguimiento al paquete de contratación de <b>' + esc_(name) +
+      '</b>, enviado hace ' + waiting + ' día' + (waiting === 1 ? '' : 's') + '. ' +
+      'El agente está esperando su código para poder empezar a producir.</p>' +
+      statTable_([
+        ['Agente', name],
+        ['Referencia', ref],
+        ['Enviado', sent ? prettyDate_(sent) : '—'],
+        ['Seguimiento', String(number)],
+      ]) +
+      '<p style="margin:0 0 14px">¿Nos puede confirmar si el paquete está completo o si hace falta algo? ' +
+      'Con gusto lo enviamos de nuevo si es necesario.</p>' +
+      '<p style="margin:0;font-size:13px;color:#7a8ca0">' + esc_(CONFIG.RECRUITER_NAME) + ' · ' +
+      esc_(CONFIG.RECRUITER_PHONE) + '</p>'),
+  });
+
+  sheet.getRange(row.index, COL.CARRIER_CHASES + 1).setValue(number);
+  sheet.getRange(row.index, COL.LAST_CHASE + 1).setValue(new Date());
+}
+
+function notifyCarrierReplied_(row) {
+  MailApp.sendEmail({
+    to: CONFIG.COPY_TO.join(','),
+    subject: 'VUMI replied — ' + (row.values[COL.NAME] || row.values[COL.TOKEN]),
+    htmlBody: emailShell_('The carrier has come back to us',
+      '<p style="margin:0 0 14px">A reply landed on the contracting packet for <b>' +
+      esc_(row.values[COL.NAME] || row.values[COL.TOKEN]) + '</b>, so the automatic follow-ups have stopped.</p>' +
+      '<p style="margin:0 0 14px">Check the thread, then move the applicant to <b>Code issued</b> on the ' +
+      'dashboard once VUMI confirms — that is what turns their progress bar to complete.</p>'),
+  });
+}
+
+function notifyRecruiterOfCarrierSilence_(rows) {
+  var list = rows.map(function (row) {
+    var sent = parseDate_(row.values[COL.CARRIER_SENT]);
+    return '<li><b>' + esc_(row.values[COL.NAME] || row.values[COL.TOKEN]) + '</b> — sent ' +
+      (sent ? prettyDate_(sent) : '—') + ', ' + (Number(row.values[COL.CARRIER_CHASES]) || 0) +
+      ' follow-ups, no reply</li>';
+  }).join('');
+
+  MailApp.sendEmail({
+    to: CONFIG.COPY_TO.join(','),
+    subject: 'VUMI has not replied on ' + rows.length + ' packet(s)',
+    htmlBody: emailShell_('Time to pick up the phone',
+      '<p style="margin:0 0 14px">These packets went to ' + esc_(CONFIG.CARRIER_NAME) + ' at ' +
+      esc_(CONFIG.CARRIER_EMAIL) + ' and have had every automatic follow-up without an answer. ' +
+      'The emails have stopped so they do not become noise.</p>' +
+      '<ul style="margin:0 0 18px;padding-left:20px;color:#33475b">' + list + '</ul>' +
+      '<p style="margin:0 0 14px">The agents are still waiting on their codes.</p>'),
+  });
 }
 
 function sendReminder_(row, manual) {
@@ -510,17 +828,52 @@ function notifyRecruiterOfStalled_(rows) {
 
 /* ======================= EMAILS ======================= */
 
-function sendApplicantCopy_(p, folder) {
+/**
+ * The submission itself. Goes to the carrier with the whole packet attached
+ * and the team copied, so everyone holds the same record.
+ *
+ * Sent through GmailApp rather than MailApp so it lands in the Sent folder,
+ * where checkCarrierReplies_ can later find the thread and see whether the
+ * carrier has answered. The reference in the subject is what ties the two
+ * together — keep it there if you edit this.
+ */
+function sendToCarrier_(p, folder, attachments, ref) {
+  var missing = (p.missing || []);
+  var subject = 'Nueva contratación de agente — ' + (p.name || p.token) + ' [' + ref + ']';
+
+  GmailApp.sendEmail(CONFIG.CARRIER_EMAIL, subject, '', {
+    cc: CONFIG.COPY_TO.join(','),
+    replyTo: CONFIG.RECRUITER_EMAIL,
+    name: CONFIG.RECRUITER_NAME,
+    htmlBody: emailShell_('Nueva solicitud de Productor/Agente',
+      '<p style="margin:0 0 14px">Hola ' + esc_(firstName_(CONFIG.CARRIER_NAME)) + ',</p>' +
+      '<p style="margin:0 0 14px">Adjunto el paquete de contratación completo y firmado de ' +
+      '<b>' + esc_(p.name || '') + '</b>: la Solicitud de Productor/Agente, el Formulario para ' +
+      'Designación de Beneficiario y el W-8BEN.</p>' +
+      statTable_([
+        ['Agente', p.name || '—'],
+        ['Correo electrónico', p.email || '—'],
+        ['Teléfono', p.mobile || '—'],
+        ['Referencia', ref],
+        ['Documentos adjuntos', String(attachments.length)],
+        missing.length ? ['Pendiente en la solicitud', missing.join(', ')] : null,
+      ].filter(Boolean)) +
+      '<p style="margin:0 0 14px">Quedamos atentos a la confirmación y al código de agente. ' +
+      'Si hace falta algún documento adicional, respóndanos a este mismo correo.</p>' +
+      '<p style="margin:0;font-size:13px;color:#7a8ca0">' + esc_(CONFIG.RECRUITER_NAME) + ' · ' +
+      esc_(CONFIG.RECRUITER_PHONE) + '</p>'),
+    attachments: attachments,
+  });
+}
+
+/** Thanks, their copy of the signed forms, and the code to follow progress. */
+function sendApplicantThanks_(p, attachments, code) {
   if (!p.email) return;
   var lang = p.lang === 'en' ? 'en' : 'es';
+  var statusLink = CONFIG.STATUS_BASE + code;
   var subject = lang === 'es'
-    ? 'Recibimos su solicitud de agente VUMI® ✅'
-    : 'We have your VUMI® agent application ✅';
-
-  var attachments = (p.pdfs || []).filter(function (pdf) { return pdf && pdf.base64; })
-    .map(function (pdf) {
-      return Utilities.newBlob(Utilities.base64Decode(pdf.base64), 'application/pdf', pdf.name);
-    });
+    ? '¡Gracias! Su solicitud de agente VUMI® fue enviada ✅'
+    : 'Thank you! Your VUMI® agent application is on its way ✅';
 
   MailApp.sendEmail({
     to: p.email,
@@ -529,15 +882,29 @@ function sendApplicantCopy_(p, folder) {
     htmlBody: emailShell_(subject,
       '<p style="margin:0 0 14px">' + (lang === 'es' ? 'Hola ' : 'Hi ') + esc_(firstName_(p.name)) + ',</p>' +
       '<p style="margin:0 0 14px">' + (lang === 'es'
-        ? 'Su paquete de contratación llegó completo. Adjuntamos su copia de los tres formularios firmados.'
-        : 'Your contracting packet arrived complete. Your copy of all three signed forms is attached.') + '</p>' +
-      '<p style="margin:0 0 10px"><b>' + (lang === 'es' ? 'Qué sigue:' : 'What happens next:') + '</b></p>' +
+        ? 'Gracias por completar su solicitud. Su paquete firmado ya fue enviado a VUMI® y adjuntamos su copia de los tres formularios.'
+        : 'Thank you for completing your application. Your signed packet has already gone to VUMI®, and your copy of all three forms is attached.') + '</p>' +
+
+      '<div style="background:#E9F7F6;border:1px solid #CBEAE8;border-radius:14px;padding:18px;margin:0 0 18px;text-align:center">' +
+        '<div style="font-size:12px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:#0E8C8C">' +
+        (lang === 'es' ? 'Su código de seguimiento' : 'Your tracking code') + '</div>' +
+        '<div style="font-size:30px;font-weight:800;letter-spacing:.18em;color:#0E2A47;margin:8px 0 4px">' + esc_(code) + '</div>' +
+        '<div style="font-size:13px;color:#5B7186">' +
+        (lang === 'es'
+          ? 'Guárdelo. Con este código puede ver en qué punto va su contratación, cuando quiera.'
+          : 'Keep it. This code shows you how far along your contracting is, any time.') +
+        '</div>' +
+      '</div>' +
+
+      button_(statusLink, lang === 'es' ? 'Ver el avance de mi contratación' : 'Track my contracting') +
+
+      '<p style="margin:18px 0 10px"><b>' + (lang === 'es' ? 'Qué sigue:' : 'What happens next:') + '</b></p>' +
       '<ol style="margin:0 0 18px;padding-left:20px;color:#33475b">' +
       (lang === 'es'
-        ? '<li>Revisamos su paquete y lo enviamos a VUMI®.</li>' +
+        ? '<li>VUMI® revisa su paquete.</li>' +
           '<li>Le escribimos si hace falta algún documento de respaldo.</li>' +
           '<li>VUMI® emite su código de agente y queda listo para vender.</li>'
-        : '<li>We review your packet and send it on to VUMI®.</li>' +
+        : '<li>VUMI® reviews your packet.</li>' +
           '<li>We write to you if any supporting document is needed.</li>' +
           '<li>VUMI® issues your agent code and you are ready to sell.</li>') +
       '</ol>' +
@@ -545,23 +912,6 @@ function sendApplicantCopy_(p, folder) {
       (lang === 'es' ? '¿Preguntas? Responda a este correo o llame al ' : 'Questions? Reply to this email or call ') +
       esc_(CONFIG.RECRUITER_PHONE) + '.</p>'),
     attachments: attachments,
-  });
-}
-
-function sendRecruiterAlert_(p, folder) {
-  var missing = (p.missing || []);
-  MailApp.sendEmail({
-    to: CONFIG.RECRUITER_EMAIL,
-    subject: 'New contracting packet — ' + (p.name || p.token),
-    htmlBody: emailShell_('A packet just came in',
-      statTable_([
-        ['Agent', p.name || '—'],
-        ['Email', p.email || '—'],
-        ['Mobile', p.mobile || '—'],
-        ['Completeness', (p.percent || 0) + '%'],
-        missing.length ? ['Still missing', missing.join(', ')] : null,
-      ].filter(Boolean)) +
-      button_(folder.getUrl(), 'Open the Drive folder')),
   });
 }
 
@@ -575,6 +925,17 @@ function ensureSheet_() {
     sheet.appendRow(HEADERS);
     sheet.getRange(1, 1, 1, HEADERS.length).setFontWeight('bold');
     sheet.setFrozenRows(1);
+    return sheet;
+  }
+
+  /* A sheet from an earlier version is missing the newer columns. Append
+     them rather than rebuilding, so rows already in flight keep their data. */
+  var width = sheet.getLastColumn();
+  if (width < HEADERS.length) {
+    var missing = HEADERS.slice(width);
+    sheet.getRange(1, width + 1, 1, missing.length)
+      .setValues([missing])
+      .setFontWeight('bold');
   }
   return sheet;
 }
@@ -622,6 +983,16 @@ function findRow_(token) {
   return null;
 }
 
+function findRowByCode_(code) {
+  var wanted = normaliseToken_(code);
+  if (!wanted) return null;
+  var values = ensureSheet_().getDataRange().getValues();
+  for (var r = 1; r < values.length; r++) {
+    if (normaliseToken_(values[r][COL.CODE]) === wanted) return { index: r + 1, values: values[r] };
+  }
+  return null;
+}
+
 function findRowByEmail_(email) {
   var wanted = String(email || '').trim().toLowerCase();
   if (!wanted) return null;
@@ -639,9 +1010,27 @@ function normaliseToken_(token) {
 }
 
 function makeToken_() {
+  return randomCode_(10);
+}
+
+/**
+ * The code an applicant types in to follow their progress. Short enough to
+ * read down the phone, and separate from their application token — this one
+ * only ever reveals a stage, never their details.
+ */
+function makeTrackingCode_() {
+  for (var attempt = 0; attempt < 12; attempt++) {
+    var code = randomCode_(6);
+    if (!findRowByCode_(code)) return code;
+  }
+  return randomCode_(8);
+}
+
+/** No O/0/I/1 — these get read aloud and written down. */
+function randomCode_(length) {
   var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   var out = '';
-  for (var i = 0; i < 10; i++) out += chars.charAt(Math.floor(Math.random() * chars.length));
+  for (var i = 0; i < length; i++) out += chars.charAt(Math.floor(Math.random() * chars.length));
   return out;
 }
 
@@ -651,6 +1040,9 @@ function parseDate_(value) {
   return isNaN(d.getTime()) ? null : d;
 }
 function startOfDay_(d) { var x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
+function prettyDate_(d) {
+  return d ? Utilities.formatDate(d, Session.getScriptTimeZone(), 'd MMMM yyyy') : '—';
+}
 function daysBetween_(a, b) { return Math.round((b - a) / 86400000); }
 function isoOrBlank_(value) {
   var d = parseDate_(value);

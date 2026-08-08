@@ -1339,8 +1339,9 @@
     }).then(function (res) {
       if (!res || !res.ok) throw new Error(res && res.error ? res.error : 'submit failed');
       state.data.submittedAt = new Date().toISOString();
+      state.data.trackingCode = res.code || '';
       save();
-      renderSubmitted();
+      renderSubmitted(res.code || '');
     }).catch(function () {
       toast(state.lang === 'es'
         ? 'No se pudo enviar. Descargue los formularios y envíelos por correo.'
@@ -1355,26 +1356,54 @@
     });
   }
 
-  function renderSubmitted() {
+  function renderSubmitted(code) {
     var card = document.getElementById('card');
     card.innerHTML = '';
+    var es = state.lang === 'es';
     var box = el('div', 'center');
     box.style.padding = '20px 0';
+
     box.innerHTML =
       '<div style="font-size:3rem;line-height:1">✅</div>' +
-      '<h1 style="margin-top:12px">' + (state.lang === 'es' ? '¡Solicitud enviada!' : 'Application sent!') + '</h1>' +
-      '<p class="lead" style="margin:10px auto 0;max-width:520px">' +
-      (state.lang === 'es'
-        ? 'Recibimos su paquete completo. ' + esc(CONFIG.RECRUITER_NAME) + ' lo revisará y le escribirá si falta algo. Le enviamos una copia a ' + esc(state.data.email) + '.'
-        : 'We have your complete packet. ' + esc(CONFIG.RECRUITER_NAME) + ' will review it and write to you if anything is missing. A copy is on its way to ' + esc(state.data.email) + '.') +
+      '<h1 style="margin-top:12px">' + (es ? '¡Gracias! Su solicitud fue enviada' : 'Thank you! Your application is sent') + '</h1>' +
+      '<p class="lead" style="margin:10px auto 0;max-width:540px">' +
+      (es
+        ? 'Su paquete firmado ya va camino a VUMI®. Le enviamos su copia de los tres formularios a ' + esc(state.data.email) + '.'
+        : 'Your signed packet is already on its way to VUMI®. Your copy of all three forms is on its way to ' + esc(state.data.email) + '.') +
       '</p>';
-    var dl = el('button', 'btn btn-teal', state.lang === 'es' ? 'Descargar mi copia' : 'Download my copy');
+
+    /* The code is the thing they must not lose — give it the whole width. */
+    if (code) {
+      var codeBox = el('div');
+      codeBox.style.cssText = 'background:var(--teal-50);border:1px solid #CBEAE8;border-radius:16px;' +
+        'padding:22px;margin:24px auto 0;max-width:420px';
+      codeBox.innerHTML =
+        '<div style="font-size:.72rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--teal-600)">' +
+        (es ? 'Su código de seguimiento' : 'Your tracking code') + '</div>' +
+        '<div style="font-size:2.1rem;font-weight:800;letter-spacing:.2em;color:var(--navy-900);margin:8px 0 4px">' +
+        esc(code) + '</div>' +
+        '<div style="font-size:.84rem;color:var(--muted)">' +
+        (es ? 'Guárdelo. Con este código puede ver en qué punto va su contratación, cuando quiera.'
+            : 'Keep it. This code shows you how far along your contracting is, any time.') + '</div>';
+      box.appendChild(codeBox);
+
+      var track = el('a', 'btn btn-gold', es ? 'Ver el avance de mi contratación' : 'Track my contracting');
+      track.href = 'status.html?c=' + encodeURIComponent(code) + (es ? '' : '&lang=en');
+      track.style.marginTop = '18px';
+      box.appendChild(track);
+    }
+
+    var actions = el('div');
+    actions.style.cssText = 'display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px';
+    var dl = el('button', 'btn btn-ghost', es ? 'Descargar mi copia' : 'Download my copy');
     dl.type = 'button';
-    dl.style.marginTop = '20px';
     dl.addEventListener('click', downloadAll);
-    box.appendChild(dl);
+    actions.appendChild(dl);
+    box.appendChild(actions);
+
     card.appendChild(box);
     document.getElementById('nextbtn').style.display = 'none';
+    document.getElementById('backbtn').style.visibility = 'hidden';
   }
 
   function bytesToBase64(bytes) {

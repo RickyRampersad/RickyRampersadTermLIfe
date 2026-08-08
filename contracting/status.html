@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Avance de mi contratación | Ricky Rampersad Branch</title>
+<meta name="robots" content="noindex" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2314395F'/%3E%3Ctext x='16' y='22' font-family='Helvetica,Arial' font-size='14' font-weight='bold' fill='white' text-anchor='middle'%3ERR%3C/text%3E%3C/svg%3E" />
+<style>
+  :root{
+    --navy-900:#0E2A47; --navy-800:#14395F; --navy-700:#1C4E80;
+    --teal-600:#0E8C8C; --teal-500:#12A5A0; --teal-50:#E9F7F6;
+    --gold:#F2B33D; --gold-ink:#5C3D00;
+    --ink:#152435; --muted:#5B7186; --bg:#F4F8FB; --line:#D7E3EE;
+    --green:#2F9E62; --red:#D64545;
+    --radius:20px; --shadow:0 16px 40px rgba(14,42,71,.12);
+    --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.6;min-height:100vh}
+  .wrap{width:min(640px,94%);margin-inline:auto}
+
+  header{background:rgba(244,248,251,.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(20,57,95,.09);position:sticky;top:0;z-index:20}
+  .nav{display:flex;align-items:center;gap:12px;height:62px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:.95rem;color:var(--navy-900);text-decoration:none;margin-right:auto}
+  .logo-badge{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,var(--navy-800),var(--teal-600));display:grid;place-items:center;color:#fff;font-size:.82rem;flex:none}
+  .logo small{display:block;font-size:.7rem;font-weight:600;color:var(--muted)}
+  .langtoggle{display:flex;background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px}
+  .langtoggle button{border:none;background:none;font:inherit;font-size:.78rem;font-weight:700;color:var(--muted);padding:5px 12px;border-radius:999px;cursor:pointer}
+  .langtoggle button[aria-pressed="true"]{background:var(--navy-800);color:#fff}
+
+  main{padding:34px 0 60px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:30px 28px}
+  @media(max-width:560px){.card{padding:24px 18px}}
+
+  /* code entry */
+  .lead{color:var(--muted);font-size:.95rem;margin-top:8px}
+  h1{font-size:clamp(1.35rem,4vw,1.7rem);font-weight:800;letter-spacing:-.02em;line-height:1.2}
+  .codebox{margin-top:22px}
+  .codebox label{display:block;font-size:.78rem;font-weight:700;margin-bottom:7px}
+  .codebox input{width:100%;padding:15px 16px;border:1.5px solid var(--line);border-radius:12px;font:inherit;
+                 font-size:1.35rem;font-weight:800;letter-spacing:.24em;text-align:center;text-transform:uppercase}
+  .codebox input:focus{outline:none;border-color:var(--teal-500);box-shadow:0 0 0 3px rgba(18,165,160,.15)}
+  .err{color:var(--red);font-size:.84rem;font-weight:600;min-height:20px;margin-top:9px;text-align:center}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font:inherit;font-weight:700;
+       border-radius:999px;padding:14px 26px;border:none;cursor:pointer;font-size:.95rem;text-decoration:none}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+  .btn-primary{background:var(--navy-800);color:#fff;box-shadow:0 10px 22px rgba(20,57,95,.28)}
+  .btn-ghost{background:#fff;color:var(--navy-900);border:1.5px solid var(--line)}
+  .full{width:100%}
+
+  /* progress */
+  .hello{font-size:.78rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--teal-600)}
+  .pct{font-size:3rem;font-weight:800;letter-spacing:-.03em;line-height:1;margin:12px 0 4px}
+  .stagenow{font-size:1.05rem;font-weight:700}
+  .bar{height:11px;background:#E6EDF4;border-radius:999px;overflow:hidden;margin:20px 0 6px}
+  .bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--teal-500),var(--gold));
+         width:0;transition:width .9s cubic-bezier(.2,.7,.3,1)}
+
+  .steps{list-style:none;margin:26px 0 0;padding:0}
+  .steps li{display:flex;gap:14px;align-items:flex-start;padding-bottom:22px;position:relative}
+  .steps li:last-child{padding-bottom:0}
+  .steps li::before{content:"";position:absolute;left:13px;top:28px;bottom:0;width:2px;background:var(--line)}
+  .steps li:last-child::before{display:none}
+  .steps li.done::before{background:var(--teal-500)}
+  .dot{width:28px;height:28px;border-radius:50%;flex:none;display:grid;place-items:center;
+       border:2px solid var(--line);background:#fff;color:var(--muted);font-size:.8rem;font-weight:800;z-index:1}
+  .steps li.done .dot{background:var(--teal-500);border-color:var(--teal-500);color:#fff}
+  .steps li.current .dot{background:var(--gold);border-color:var(--gold);color:var(--gold-ink);
+                         box-shadow:0 0 0 5px rgba(242,179,61,.22)}
+  .steps .txt b{display:block;font-size:.98rem;font-weight:700}
+  .steps li:not(.done) .txt b{color:var(--muted);font-weight:600}
+  .steps .txt span{font-size:.83rem;color:var(--muted)}
+
+  .note{background:var(--teal-50);border:1px solid #CBEAE8;border-radius:12px;padding:14px 16px;font-size:.88rem;color:#0B5F5F;margin-top:24px}
+  .note.gold{background:#FFF8E8;border-color:#F3DDA6;color:#6B4E12}
+  .meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+  .chip{font-size:.75rem;font-weight:700;padding:5px 12px;border-radius:999px;background:#EEF3F8;color:var(--muted)}
+  .foot{text-align:center;margin-top:26px;font-size:.85rem;color:var(--muted)}
+  .foot a{color:var(--teal-600)}
+  .hide{display:none}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="logo" href="../index.html">
+      <span class="logo-badge">RR</span>
+      <span>Ricky Rampersad<small data-t="sub">Contratación VUMI®</small></span>
+    </a>
+    <div class="langtoggle" role="group" aria-label="Language">
+      <button type="button" id="lang-es" aria-pressed="true">ES</button>
+      <button type="button" id="lang-en" aria-pressed="false">EN</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <!-- code entry -->
+    <section class="card" id="gate">
+      <h1 data-t="gateTitle">Siga su contratación</h1>
+      <p class="lead" data-t="gateLead">Escriba el código que le enviamos por correo cuando firmó su solicitud.</p>
+      <div class="codebox">
+        <label for="code" data-t="codeLabel">Código de seguimiento</label>
+        <input id="code" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC123" />
+      </div>
+      <div class="err" id="err"></div>
+      <button class="btn btn-primary full" id="go" type="button" data-t="check">Ver mi avance</button>
+      <p class="foot" data-t="gateFoot">¿No encuentra su código? Escríbanos y se lo reenviamos.</p>
+    </section>
+
+    <!-- progress -->
+    <section class="card hide" id="panel">
+      <div class="hello" id="hello"></div>
+      <div class="pct" id="pct">0%</div>
+      <div class="stagenow" id="stagenow"></div>
+      <div class="bar"><i id="fill"></i></div>
+      <div class="meta" id="meta"></div>
+      <ol class="steps" id="steps"></ol>
+      <div class="note hide" id="note"></div>
+      <p class="foot" id="panelfoot"></p>
+      <button class="btn btn-ghost full" id="again" type="button" style="margin-top:16px" data-t="another">Consultar otro código</button>
+    </section>
+
+  </div>
+</main>
+
+<script>
+/**
+ * Progress view for an agent who has submitted their contracting packet.
+ *
+ * Their tracking code is deliberately not the same as their application
+ * token: this endpoint returns a stage and nothing else, so the code is safe
+ * to read down the phone. It cannot reach their answers, documents or bank
+ * details.
+ *
+ * API_URL is the same Apps Script /exec URL the wizard uses.
+ */
+(function () {
+  'use strict';
+
+  var CONFIG = {
+    API_URL: '', // e.g. "https://script.google.com/macros/s/XXXX/exec"
+    RECRUITER_NAME: 'Ricky Rampersad',
+    RECRUITER_EMAIL: 'ricky.rampersad@myguardiangroup.com',
+    RECRUITER_PHONE: '(868) 678-5921',
+  };
+
+  var T = {
+    sub: { es: 'Contratación VUMI®', en: 'VUMI® contracting' },
+    gateTitle: { es: 'Siga su contratación', en: 'Track your contracting' },
+    gateLead: {
+      es: 'Escriba el código que le enviamos por correo cuando firmó su solicitud.',
+      en: 'Enter the code we emailed you when you signed your application.',
+    },
+    codeLabel: { es: 'Código de seguimiento', en: 'Tracking code' },
+    check: { es: 'Ver mi avance', en: 'Check my progress' },
+    another: { es: 'Consultar otro código', en: 'Check another code' },
+    gateFoot: { es: '¿No encuentra su código? Escríbanos y se lo reenviamos.', en: "Can't find your code? Write to us and we'll resend it." },
+    enterCode: { es: 'Escriba su código de seguimiento.', en: 'Enter your tracking code.' },
+    notFound: { es: 'No encontramos ese código. Revíselo e intente de nuevo.', en: "We couldn't find that code. Check it and try again." },
+    offline: { es: 'No pudimos consultar ahora mismo. Intente de nuevo en un momento.', en: "We couldn't check just now. Try again in a moment." },
+    notWired: {
+      es: 'El seguimiento en línea todavía no está conectado. Escríbanos y le decimos exactamente en qué punto va.',
+      en: "Online tracking isn't connected yet. Write to us and we'll tell you exactly where things stand.",
+    },
+    hello: { es: 'Hola, {name}', en: 'Hi {name}' },
+    submittedOn: { es: 'Enviada el {date}', en: 'Submitted {date}' },
+    updatedOn: { es: 'Actualizado el {date}', en: 'Updated {date}' },
+    waiting: {
+      es: 'Su paquete está con VUMI®. Le damos seguimiento por usted hasta que respondan — no tiene que hacer nada.',
+      en: "Your packet is with VUMI®. We're chasing it for you until they respond — there's nothing you need to do.",
+    },
+    replied: {
+      es: 'VUMI® ya respondió sobre su solicitud. Estamos atendiendo lo que sigue.',
+      en: 'VUMI® has come back to us on your application. We are handling the next step.',
+    },
+    approved: {
+      es: '¡Felicidades! Su contratación fue aprobada y su código de agente fue emitido.',
+      en: 'Congratulations! Your contracting is approved and your agent code has been issued.',
+    },
+    panelFoot: {
+      es: '¿Preguntas? Escriba a {email} o llame al {phone}.',
+      en: 'Questions? Email {email} or call {phone}.',
+    },
+  };
+
+  var lang = 'es';
+  function t(key, vars) {
+    var s = (T[key] && T[key][lang]) || key;
+    if (vars) Object.keys(vars).forEach(function (k) { s = s.replace('{' + k + '}', vars[k]); });
+    return s;
+  }
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString(lang === 'es' ? 'es-PR' : 'en-GB',
+      { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  function applyLang() {
+    document.documentElement.lang = lang;
+    $('lang-es').setAttribute('aria-pressed', String(lang === 'es'));
+    $('lang-en').setAttribute('aria-pressed', String(lang === 'en'));
+    document.querySelectorAll('[data-t]').forEach(function (node) {
+      node.textContent = t(node.dataset.t);
+    });
+    if (!$('panel').classList.contains('hide') && lastCode) check(lastCode, true);
+  }
+
+  var lastCode = '';
+
+  function check(code, quiet) {
+    code = String(code || '').trim().toUpperCase();
+    if (!code) { $('err').textContent = t('enterCode'); return; }
+
+    if (!CONFIG.API_URL) { $('err').textContent = t('notWired'); return; }
+
+    var btn = $('go');
+    btn.disabled = true;
+    if (!quiet) $('err').textContent = '';
+
+    fetch(CONFIG.API_URL + '?action=status&code=' + encodeURIComponent(code) + '&lang=' + lang)
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (!res || !res.found) { $('err').textContent = t('notFound'); return; }
+        lastCode = code;
+        try { localStorage.setItem('vumi-tracking-code', code); } catch (e) { /* ignore */ }
+        show(res);
+      })
+      .catch(function () { $('err').textContent = t('offline'); })
+      .then(function () { btn.disabled = false; });
+  }
+
+  function show(res) {
+    $('gate').classList.add('hide');
+    $('panel').classList.remove('hide');
+
+    $('hello').textContent = t('hello', { name: res.firstName || '' });
+    $('stagenow').textContent = res.stageLabel || '';
+    $('pct').textContent = (res.percent || 0) + '%';
+    /* Painted on the next frame so the bar animates from empty. */
+    requestAnimationFrame(function () { $('fill').style.width = (res.percent || 0) + '%'; });
+
+    var chips = [];
+    if (res.submitted) chips.push(t('submittedOn', { date: fmtDate(res.submitted) }));
+    if (res.stageUpdated) chips.push(t('updatedOn', { date: fmtDate(res.stageUpdated) }));
+    $('meta').innerHTML = chips.map(function (c) { return '<span class="chip">' + esc(c) + '</span>'; }).join('');
+
+    $('steps').innerHTML = (res.stages || []).map(function (stage, i) {
+      var current = i === res.stageIndex;
+      var cls = (stage.done ? 'done' : '') + (current ? ' current' : '');
+      return '<li class="' + cls + '">' +
+        '<span class="dot">' + (stage.done && !current ? '✓' : i + 1) + '</span>' +
+        '<span class="txt"><b>' + esc(stage.label) + '</b></span>' +
+      '</li>';
+    }).join('');
+
+    var note = $('note');
+    if (res.stage === 'approved') {
+      note.className = 'note';
+      note.textContent = t('approved');
+    } else if (res.carrierReplied) {
+      note.className = 'note';
+      note.textContent = t('replied');
+    } else {
+      note.className = 'note gold';
+      note.textContent = t('waiting');
+    }
+    if (res.note) note.textContent += ' ' + res.note;
+
+    $('panelfoot').innerHTML = t('panelFoot', {
+      email: '<a href="mailto:' + esc(CONFIG.RECRUITER_EMAIL) + '">' + esc(CONFIG.RECRUITER_EMAIL) + '</a>',
+      phone: esc(CONFIG.RECRUITER_PHONE),
+    });
+  }
+
+  $('go').addEventListener('click', function () { check($('code').value); });
+  $('code').addEventListener('keydown', function (e) { if (e.key === 'Enter') check($('code').value); });
+  $('code').addEventListener('input', function () { $('err').textContent = ''; });
+  $('again').addEventListener('click', function () {
+    $('panel').classList.add('hide');
+    $('gate').classList.remove('hide');
+    $('code').value = '';
+    $('code').focus();
+  });
+  $('lang-es').addEventListener('click', function () { lang = 'es'; applyLang(); });
+  $('lang-en').addEventListener('click', function () { lang = 'en'; applyLang(); });
+
+  /* The link in the confirmation email carries the code, so most people
+     never type it. A previously used code is remembered on this device. */
+  var params = new URLSearchParams(location.search);
+  if (params.get('lang') === 'en') lang = 'en';
+  applyLang();
+
+  var fromLink = (params.get('c') || params.get('code') || '').trim();
+  var remembered = '';
+  try { remembered = localStorage.getItem('vumi-tracking-code') || ''; } catch (e) { /* ignore */ }
+  var initial = fromLink || remembered;
+  if (initial) {
+    $('code').value = initial;
+    if (fromLink) check(initial);
+  }
+}());
+</script>
+</body>
+</html>

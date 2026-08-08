@@ -166,18 +166,31 @@
   var CONFIG = {
     API_URL: '', // e.g. "https://script.google.com/macros/s/XXXX/exec"
     PORTAL_BASE: location.origin + location.pathname.replace(/admin\.html$/, '') + '?t=',
+    STATUS_BASE: location.origin + location.pathname.replace(/admin\.html$/, '') + 'status.html?c=',
     RECRUITER_NAME: 'Ricky Rampersad',
+    CARRIER_NAME: 'Amalia Suraz',
   };
 
   var state = { key: '', applicants: [], filter: 'open' };
 
+  /* An applicant with a submitted packet is waiting on VUMI, not on us —
+     "With VUMI" separates the two so neither queue hides the other. */
+  function withCarrier(a) {
+    return !!a.carrierSent && !a.carrierReplied && a.stage !== 'approved';
+  }
+
   var FILTERS = [
-    { id: 'open', label: 'Needs attention', match: function (a) { return a.status !== 'Submitted' && a.status !== 'Withdrawn'; } },
-    { id: 'progress', label: 'In progress', match: function (a) { return a.status === 'In progress'; } },
+    { id: 'open', label: 'Still filling in', match: function (a) {
+      return !a.carrierSent && a.status !== 'Submitted' && a.status !== 'Withdrawn' && a.status !== 'Approved'; } },
+    { id: 'carrier', label: 'With VUMI', match: withCarrier },
     { id: 'stalled', label: 'Stalled', match: function (a) { return a.status === 'Stalled'; } },
-    { id: 'submitted', label: 'Submitted', match: function (a) { return a.status === 'Submitted'; } },
+    { id: 'approved', label: 'Code issued', match: function (a) { return a.stage === 'approved'; } },
     { id: 'all', label: 'Everyone', match: function () { return true; } },
   ];
+
+  var STAGE_LABELS = {
+    received: 'Received', sent: 'Sent to VUMI', review: 'Under VUMI review', approved: 'Code issued',
+  };
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -237,18 +250,20 @@
 
   function render() {
     var list = state.applicants;
-    var open = list.filter(function (a) { return a.status !== 'Submitted' && a.status !== 'Withdrawn'; });
-    var stalled = list.filter(function (a) { return a.status === 'Stalled'; });
-    var submitted = list.filter(function (a) { return a.status === 'Submitted'; });
-    var avg = open.length
-      ? Math.round(open.reduce(function (t, a) { return t + (a.percent || 0); }, 0) / open.length) : 0;
+    var filling = list.filter(FILTERS[0].match);
+    var atCarrier = list.filter(withCarrier);
+    var approved = list.filter(function (a) { return a.stage === 'approved'; });
+    var overdue = atCarrier.filter(function (a) {
+      var days = daysAgo(a.carrierSent);
+      return days !== null && days >= 10;
+    });
 
     $('stats').innerHTML =
       stat(list.length, 'Applicants') +
-      stat(open.length, 'Still open', 'warn') +
-      stat(avg + '%', 'Average progress') +
-      stat(stalled.length, 'Gone quiet', stalled.length ? 'bad' : '') +
-      stat(submitted.length, 'Submitted', 'good');
+      stat(filling.length, 'Still filling in', filling.length ? 'warn' : '') +
+      stat(atCarrier.length, 'With VUMI') +
+      stat(overdue.length, 'No reply 10d+', overdue.length ? 'bad' : '') +
+      stat(approved.length, 'Code issued', 'good');
 
     $('filters').innerHTML = FILTERS.map(function (f) {
       var count = list.filter(f.match).length;
@@ -280,33 +295,69 @@
     var quiet = daysAgo(a.updated);
     var link = a.link || (CONFIG.PORTAL_BASE + a.token);
     var missing = (a.missing || []).filter(String);
+    var atCarrier = withCarrier(a);
+    var carrierDays = daysAgo(a.carrierSent);
+    var stillFilling = !a.carrierSent && a.status !== 'Withdrawn';
+
+    /* Once the packet is with VUMI the bar tracks the contracting stage,
+       not how much of the form is typed in — that part is finished. */
+    var barPct = a.carrierSent ? stagePercent(a.stage) : (a.percent || 0);
+
+    var tags = [
+      '<span class="tag status-' + esc(slug(a.status)) + '">' + esc(a.status || '—') + '</span>',
+    ];
+    if (a.carrierSent) {
+      tags.push('<span class="tag status-in-progress">' + esc(STAGE_LABELS[a.stage] || a.stage || 'Sent') + '</span>');
+      tags.push('<span class="tag">Sent to VUMI ' + esc(ago(a.carrierSent)) + '</span>');
+      if (a.carrierReplied) tags.push('<span class="tag status-submitted">VUMI replied ' + esc(ago(a.carrierReplied)) + '</span>');
+      else if (a.carrierChases) tags.push('<span class="tag">' + a.carrierChases + ' follow-up' + (a.carrierChases > 1 ? 's' : '') + ' sent</span>');
+      if (atCarrier && carrierDays !== null && carrierDays >= 10) {
+        tags.push('<span class="tag status-stalled">no reply in ' + carrierDays + ' days</span>');
+      }
+      if (a.code) tags.push('<span class="tag">code ' + esc(a.code) + '</span>');
+    } else {
+      tags.push('<span class="tag">' + (a.percent || 0) + '% complete</span>');
+      tags.push('<span class="tag">Updated ' + esc(ago(a.updated)) + '</span>');
+      if (a.reminders) tags.push('<span class="tag">' + a.reminders + ' reminder' + (a.reminders > 1 ? 's' : '') + ' sent</span>');
+      if (quiet !== null && quiet >= 7) tags.push('<span class="tag status-stalled">quiet ' + quiet + ' days</span>');
+    }
 
     return '<div class="row" data-token="' + esc(a.token) + '">' +
       '<div class="who">' +
         '<b>' + esc(a.name || '(no name yet)') + '</b>' +
         '<span>' + esc(a.email || '—') + (a.mobile ? ' · ' + esc(a.mobile) : '') + '</span>' +
-        '<div class="meter"><i style="width:' + (a.percent || 0) + '%"></i></div>' +
-        '<div class="tags">' +
-          '<span class="tag status-' + esc(slug(a.status)) + '">' + esc(a.status || '—') + '</span>' +
-          '<span class="tag">' + (a.percent || 0) + '% complete</span>' +
-          '<span class="tag">Updated ' + esc(ago(a.updated)) + '</span>' +
-          (a.reminders ? '<span class="tag">' + a.reminders + ' reminder' + (a.reminders > 1 ? 's' : '') + ' sent</span>' : '') +
-          (quiet !== null && quiet >= 7 && a.status !== 'Submitted' ? '<span class="tag status-stalled">quiet ' + quiet + ' days</span>' : '') +
-        '</div>' +
-        (missing.length && a.status !== 'Submitted'
+        '<div class="meter"><i style="width:' + barPct + '%"></i></div>' +
+        '<div class="tags">' + tags.join('') + '</div>' +
+        (missing.length && stillFilling
           ? '<div class="missing"><b>Waiting on:</b> ' + esc(missing.slice(0, 5).join(', ')) +
             (missing.length > 5 ? ' +' + (missing.length - 5) + ' more' : '') + '</div>'
           : '') +
       '</div>' +
       '<div class="acts">' +
-        '<button class="btn btn-ghost btn-xs" data-act="copy" data-link="' + esc(link) + '">Copy link</button>' +
-        (a.mobile ? '<a class="btn btn-ghost btn-xs" target="_blank" rel="noopener" href="' + esc(waLink(a, link)) + '">WhatsApp</a>' : '') +
-        (a.email ? '<a class="btn btn-ghost btn-xs" href="' + esc(mailLink(a, link)) + '">Email</a>' : '') +
-        (a.status !== 'Submitted' ? '<button class="btn btn-teal btn-xs" data-act="nudge">Nudge now</button>' : '') +
+        (stillFilling
+          ? '<button class="btn btn-ghost btn-xs" data-act="copy" data-link="' + esc(link) + '">Copy link</button>' +
+            (a.mobile ? '<a class="btn btn-ghost btn-xs" target="_blank" rel="noopener" href="' + esc(waLink(a, link)) + '">WhatsApp</a>' : '') +
+            (a.email ? '<a class="btn btn-ghost btn-xs" href="' + esc(mailLink(a, link)) + '">Email</a>' : '') +
+            '<button class="btn btn-teal btn-xs" data-act="nudge">Nudge now</button>'
+          : '') +
+        (atCarrier
+          ? '<button class="btn btn-teal btn-xs" data-act="chase">Chase VUMI</button>' +
+            '<button class="btn btn-ghost btn-xs" data-act="replied">VUMI replied</button>'
+          : '') +
+        (a.carrierSent && a.stage !== 'approved'
+          ? '<button class="btn btn-gold btn-xs" data-act="approve">Code issued</button>' : '') +
+        (a.code ? '<button class="btn btn-ghost btn-xs" data-act="copy" data-link="' +
+          esc(CONFIG.STATUS_BASE + a.code) + '">Copy tracker</button>' : '') +
         (a.folder ? '<a class="btn btn-ghost btn-xs" target="_blank" rel="noopener" href="' + esc(a.folder) + '">Files</a>' : '') +
-        (a.status !== 'Submitted' ? '<button class="btn btn-ghost btn-xs" data-act="withdraw">Close</button>' : '') +
+        (stillFilling ? '<button class="btn btn-ghost btn-xs" data-act="withdraw">Close</button>' : '') +
       '</div>' +
     '</div>';
+  }
+
+  function stagePercent(stage) {
+    var order = ['received', 'sent', 'review', 'approved'];
+    var i = order.indexOf(stage);
+    return i < 0 ? 50 : Math.round(((i + 1) / order.length) * 100);
   }
 
   function waLink(a, link) {
@@ -361,6 +412,35 @@
       api({ action: 'status', token: token, status: 'Withdrawn' })
         .then(loadList)
         .then(function () { toast('Closed'); })
+        .catch(function () { toast('Could not update', true); });
+      return;
+    }
+
+    if (btn.dataset.act === 'chase') {
+      btn.disabled = true;
+      api({ action: 'chase', token: token })
+        .then(function (res) {
+          toast(res && res.ok ? 'Follow-up sent to VUMI' : 'Could not send', !(res && res.ok));
+          return loadList();
+        })
+        .catch(function () { toast('Could not send', true); })
+        .then(function () { btn.disabled = false; });
+      return;
+    }
+
+    if (btn.dataset.act === 'replied') {
+      api({ action: 'carrierReplied', token: token })
+        .then(loadList)
+        .then(function () { toast('Marked as replied — follow-ups stopped'); })
+        .catch(function () { toast('Could not update', true); });
+      return;
+    }
+
+    if (btn.dataset.act === 'approve') {
+      if (!confirm('Mark this agent as approved? They get an email and their tracker shows complete.')) return;
+      api({ action: 'stage', token: token, stage: 'approved' })
+        .then(loadList)
+        .then(function () { toast('Approved — the agent has been told'); })
         .catch(function () { toast('Could not update', true); });
     }
   });
