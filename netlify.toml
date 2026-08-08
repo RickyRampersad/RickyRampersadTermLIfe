@@ -13,9 +13,32 @@
   to = "/renewal/"
   status = 302
 
+# Short contracting links: /c/<token> → the agent packet with the token attached.
+# These are the links the Contracting sheet emails and WhatsApps to applicants.
+[[redirects]]
+  from = "/c/*"
+  to = "/contracting/?t=:splat"
+  status = 302
+
+# Convenience: /contract opens a fresh application.
+[[redirects]]
+  from = "/contract"
+  to = "/contracting/"
+  status = 302
+
 [[headers]]
   for = "/renewal/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer"
+
+# Applicants type their ID, tax and bank details in here — keep it out of
+# frames, out of referrers and off search engines.
+[[headers]]
+  for = "/contracting/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    X-Robots-Tag = "noindex, nofollow"

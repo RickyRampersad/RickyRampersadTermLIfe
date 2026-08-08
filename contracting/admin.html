@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Contracting Pipeline | Ricky Rampersad Branch</title>
+<meta name="robots" content="noindex" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2314395F'/%3E%3Ctext x='16' y='22' font-family='Helvetica,Arial' font-size='14' font-weight='bold' fill='white' text-anchor='middle'%3ERR%3C/text%3E%3C/svg%3E" />
+<style>
+  :root{
+    --navy-900:#0E2A47; --navy-800:#14395F; --navy-700:#1C4E80;
+    --teal-600:#0E8C8C; --teal-500:#12A5A0; --teal-50:#E9F7F6;
+    --gold:#F2B33D; --gold-ink:#5C3D00;
+    --ink:#152435; --muted:#5B7186; --bg:#F4F8FB; --line:#D7E3EE;
+    --red:#D64545; --red-50:#FCEDED; --green:#2F9E62; --green-50:#EAF7F0;
+    --radius:16px; --shadow:0 14px 34px rgba(14,42,71,.11);
+    --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.55}
+  .wrap{width:min(1180px,95%);margin-inline:auto}
+  a{color:var(--teal-600)}
+
+  header{background:linear-gradient(135deg,var(--navy-900),var(--navy-700));color:#fff;padding:22px 0}
+  .nav{display:flex;align-items:center;gap:14px}
+  .logo{display:flex;align-items:center;gap:11px;font-weight:800;color:#fff;text-decoration:none;margin-right:auto}
+  .logo-badge{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.16);display:grid;place-items:center;font-size:.85rem}
+  .logo small{display:block;font-size:.72rem;font-weight:600;color:#BFD9E8}
+
+  /* gate */
+  #gate{display:grid;place-items:center;min-height:70vh}
+  .gatecard{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:32px;width:min(400px,92%);text-align:center}
+  .gatecard h1{font-size:1.25rem;font-weight:800;margin-bottom:6px}
+  .gatecard p{color:var(--muted);font-size:.9rem;margin-bottom:18px}
+  .gatecard input{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;font:inherit;text-align:center;margin-bottom:12px}
+  .gateerr{color:var(--red);font-size:.82rem;font-weight:600;min-height:18px;margin-top:8px}
+
+  main{padding:26px 0 70px;display:none}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+  .stat b{display:block;font-size:1.7rem;font-weight:800;line-height:1.1;letter-spacing:-.02em}
+  .stat span{font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .stat.warn b{color:var(--gold-ink)} .stat.bad b{color:var(--red)} .stat.good b{color:var(--green)}
+
+  .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+  .filters{display:flex;gap:6px;flex-wrap:wrap;margin-right:auto}
+  .filters button{border:1px solid var(--line);background:#fff;color:var(--muted);font:inherit;font-size:.8rem;font-weight:700;
+                  padding:7px 14px;border-radius:999px;cursor:pointer}
+  .filters button[aria-pressed="true"]{background:var(--navy-800);border-color:var(--navy-800);color:#fff}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:700;border-radius:999px;
+       padding:11px 20px;border:none;cursor:pointer;font-size:.88rem;text-decoration:none}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn-primary{background:var(--navy-800);color:#fff}
+  .btn-teal{background:var(--teal-500);color:#fff}
+  .btn-gold{background:var(--gold);color:var(--gold-ink)}
+  .btn-ghost{background:#fff;color:var(--navy-900);border:1.5px solid var(--line)}
+  .btn-xs{padding:6px 12px;font-size:.76rem;border-radius:999px}
+
+  .rows{display:grid;gap:10px}
+  .row{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px;display:grid;
+       grid-template-columns:1fr auto;gap:12px;align-items:center}
+  .who b{font-size:1rem;display:block}
+  .who span{font-size:.8rem;color:var(--muted)}
+  .meter{height:7px;background:#E9EFF5;border-radius:999px;overflow:hidden;margin-top:9px;max-width:320px}
+  .meter i{display:block;height:100%;background:linear-gradient(90deg,var(--teal-500),var(--gold))}
+  .tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+  .tag{font-size:.72rem;font-weight:700;padding:4px 10px;border-radius:999px;background:#EEF3F8;color:var(--muted)}
+  .tag.status-submitted{background:var(--green-50);color:var(--green)}
+  .tag.status-stalled{background:var(--red-50);color:var(--red)}
+  .tag.status-invited{background:#FFF6E3;color:var(--gold-ink)}
+  .tag.status-in-progress{background:var(--teal-50);color:var(--teal-600)}
+  .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  @media(max-width:760px){.row{grid-template-columns:1fr}.acts{justify-content:flex-start}}
+
+  .missing{margin-top:8px;font-size:.79rem;color:var(--muted);max-width:640px}
+  .empty{background:#fff;border:1px dashed var(--line);border-radius:var(--radius);padding:40px;text-align:center;color:var(--muted)}
+
+  dialog{border:none;border-radius:20px;padding:0;box-shadow:var(--shadow);width:min(430px,92%)}
+  dialog::backdrop{background:rgba(14,42,71,.45)}
+  .dlg{padding:26px}
+  .dlg h2{font-size:1.1rem;font-weight:800;margin-bottom:4px}
+  .dlg p{color:var(--muted);font-size:.86rem;margin-bottom:16px}
+  .dlg label{display:block;font-size:.78rem;font-weight:700;margin-bottom:5px}
+  .dlg input,.dlg select{width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:10px;font:inherit;margin-bottom:13px}
+  .dlg .actions{display:flex;gap:9px;justify-content:flex-end;margin-top:6px}
+
+  .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(12px);z-index:90;background:var(--navy-900);color:#fff;
+         padding:12px 20px;border-radius:999px;font-size:.87rem;font-weight:600;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.bad{background:var(--red)}
+  .note{background:#FFF8E8;border:1px solid #F3DDA6;border-radius:12px;padding:13px 15px;font-size:.85rem;color:#6B4E12;margin-bottom:18px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="logo" href="../index.html">
+      <span class="logo-badge">RR</span>
+      <span>Contracting pipeline<small>VUMI® Producer/Agent packets</small></span>
+    </a>
+    <button class="btn btn-gold" id="invitebtn" type="button" style="display:none">+ Invite an agent</button>
+  </div>
+</header>
+
+<div id="gate">
+  <div class="gatecard">
+    <h1>Recruiter access</h1>
+    <p>Enter the admin key from your Apps Script configuration.</p>
+    <input type="password" id="gatekey" placeholder="Admin key" autocomplete="current-password" />
+    <button class="btn btn-primary" id="gatego" type="button" style="width:100%">Open the pipeline</button>
+    <div class="gateerr" id="gateerr"></div>
+    <a href="../index.html" style="display:inline-block;margin-top:14px;font-size:.8rem;color:var(--muted)">← Back to the main site</a>
+  </div>
+</div>
+
+<main id="app">
+  <div class="wrap">
+    <div id="setupnote" class="note" style="display:none">
+      No backend is configured yet. Set <code>CONFIG.API_URL</code> in <code>contracting/admin.html</code> and
+      <code>contracting/app.js</code> to your Apps Script <code>/exec</code> URL — see CONTRACTING-SETUP.md.
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="bar">
+      <div class="filters" id="filters"></div>
+      <button class="btn btn-ghost btn-xs" id="refresh" type="button">Refresh</button>
+    </div>
+
+    <div class="rows" id="rows"></div>
+  </div>
+</main>
+
+<dialog id="invitedlg">
+  <form method="dialog" class="dlg" id="inviteform">
+    <h2>Invite an agent</h2>
+    <p>Creates their personal link and emails it. Reminders start automatically if they go quiet.</p>
+    <label for="iname">Full name</label>
+    <input id="iname" required />
+    <label for="iemail">Email</label>
+    <input id="iemail" type="email" required />
+    <label for="imobile">Mobile (optional)</label>
+    <input id="imobile" type="tel" />
+    <label for="ilang">Language</label>
+    <select id="ilang"><option value="es">Español</option><option value="en">English</option></select>
+    <div class="actions">
+      <button class="btn btn-ghost" value="cancel" type="submit">Cancel</button>
+      <button class="btn btn-teal" id="invitego" type="button">Send invitation</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/**
+ * Recruiter view of the contracting pipeline. Read-only apart from four
+ * actions: invite, nudge, mark status, open the applicant's Drive folder.
+ *
+ * API_URL is the same Apps Script /exec URL the wizard uses.
+ */
+(function () {
+  'use strict';
+
+  var CONFIG = {
+    API_URL: '', // e.g. "https://script.google.com/macros/s/XXXX/exec"
+    PORTAL_BASE: location.origin + location.pathname.replace(/admin\.html$/, '') + '?t=',
+    RECRUITER_NAME: 'Ricky Rampersad',
+  };
+
+  var state = { key: '', applicants: [], filter: 'open' };
+
+  var FILTERS = [
+    { id: 'open', label: 'Needs attention', match: function (a) { return a.status !== 'Submitted' && a.status !== 'Withdrawn'; } },
+    { id: 'progress', label: 'In progress', match: function (a) { return a.status === 'In progress'; } },
+    { id: 'stalled', label: 'Stalled', match: function (a) { return a.status === 'Stalled'; } },
+    { id: 'submitted', label: 'Submitted', match: function (a) { return a.status === 'Submitted'; } },
+    { id: 'all', label: 'Everyone', match: function () { return true; } },
+  ];
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  var toastTimer = null;
+  function toast(msg, bad) {
+    var node = $('toast');
+    node.textContent = msg;
+    node.className = 'toast show' + (bad ? ' bad' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { node.className = 'toast'; }, 2600);
+  }
+
+  function api(payload) {
+    if (!CONFIG.API_URL) return Promise.reject(new Error('no API_URL'));
+    return fetch(CONFIG.API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(Object.assign({ key: state.key }, payload)),
+    }).then(function (r) { return r.json(); });
+  }
+
+  function loadList() {
+    if (!CONFIG.API_URL) {
+      $('setupnote').style.display = '';
+      state.applicants = [];
+      render();
+      return Promise.resolve();
+    }
+    return fetch(CONFIG.API_URL + '?action=list&key=' + encodeURIComponent(state.key))
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (!res || !res.ok) throw new Error(res && res.error ? res.error : 'failed');
+        state.applicants = res.applicants || [];
+        render();
+      });
+  }
+
+  function daysAgo(iso) {
+    if (!iso) return null;
+    var then = new Date(iso);
+    if (isNaN(then.getTime())) return null;
+    return Math.floor((Date.now() - then.getTime()) / 86400000);
+  }
+
+  function ago(iso) {
+    var days = daysAgo(iso);
+    if (days === null) return '—';
+    if (days === 0) return 'today';
+    if (days === 1) return 'yesterday';
+    return days + ' days ago';
+  }
+
+  function render() {
+    var list = state.applicants;
+    var open = list.filter(function (a) { return a.status !== 'Submitted' && a.status !== 'Withdrawn'; });
+    var stalled = list.filter(function (a) { return a.status === 'Stalled'; });
+    var submitted = list.filter(function (a) { return a.status === 'Submitted'; });
+    var avg = open.length
+      ? Math.round(open.reduce(function (t, a) { return t + (a.percent || 0); }, 0) / open.length) : 0;
+
+    $('stats').innerHTML =
+      stat(list.length, 'Applicants') +
+      stat(open.length, 'Still open', 'warn') +
+      stat(avg + '%', 'Average progress') +
+      stat(stalled.length, 'Gone quiet', stalled.length ? 'bad' : '') +
+      stat(submitted.length, 'Submitted', 'good');
+
+    $('filters').innerHTML = FILTERS.map(function (f) {
+      var count = list.filter(f.match).length;
+      return '<button type="button" data-filter="' + f.id + '"' +
+        (state.filter === f.id ? ' aria-pressed="true"' : '') + '>' + esc(f.label) + ' (' + count + ')</button>';
+    }).join('');
+
+    var active = FILTERS.filter(function (f) { return f.id === state.filter; })[0] || FILTERS[0];
+    var shown = list.filter(active.match);
+
+    if (!shown.length) {
+      $('rows').innerHTML = '<div class="empty">' +
+        (CONFIG.API_URL ? 'Nobody here yet. Invite an agent to get started.'
+                        : 'Connect the backend to see your pipeline.') + '</div>';
+      return;
+    }
+
+    $('rows').innerHTML = shown.map(rowHtml).join('');
+  }
+
+  /** 'In progress' → 'in-progress', so it survives as a single CSS class. */
+  function slug(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-'); }
+
+  function stat(value, label, tone) {
+    return '<div class="stat' + (tone ? ' ' + tone : '') + '"><b>' + esc(value) + '</b><span>' + esc(label) + '</span></div>';
+  }
+
+  function rowHtml(a) {
+    var quiet = daysAgo(a.updated);
+    var link = a.link || (CONFIG.PORTAL_BASE + a.token);
+    var missing = (a.missing || []).filter(String);
+
+    return '<div class="row" data-token="' + esc(a.token) + '">' +
+      '<div class="who">' +
+        '<b>' + esc(a.name || '(no name yet)') + '</b>' +
+        '<span>' + esc(a.email || '—') + (a.mobile ? ' · ' + esc(a.mobile) : '') + '</span>' +
+        '<div class="meter"><i style="width:' + (a.percent || 0) + '%"></i></div>' +
+        '<div class="tags">' +
+          '<span class="tag status-' + esc(slug(a.status)) + '">' + esc(a.status || '—') + '</span>' +
+          '<span class="tag">' + (a.percent || 0) + '% complete</span>' +
+          '<span class="tag">Updated ' + esc(ago(a.updated)) + '</span>' +
+          (a.reminders ? '<span class="tag">' + a.reminders + ' reminder' + (a.reminders > 1 ? 's' : '') + ' sent</span>' : '') +
+          (quiet !== null && quiet >= 7 && a.status !== 'Submitted' ? '<span class="tag status-stalled">quiet ' + quiet + ' days</span>' : '') +
+        '</div>' +
+        (missing.length && a.status !== 'Submitted'
+          ? '<div class="missing"><b>Waiting on:</b> ' + esc(missing.slice(0, 5).join(', ')) +
+            (missing.length > 5 ? ' +' + (missing.length - 5) + ' more' : '') + '</div>'
+          : '') +
+      '</div>' +
+      '<div class="acts">' +
+        '<button class="btn btn-ghost btn-xs" data-act="copy" data-link="' + esc(link) + '">Copy link</button>' +
+        (a.mobile ? '<a class="btn btn-ghost btn-xs" target="_blank" rel="noopener" href="' + esc(waLink(a, link)) + '">WhatsApp</a>' : '') +
+        (a.email ? '<a class="btn btn-ghost btn-xs" href="' + esc(mailLink(a, link)) + '">Email</a>' : '') +
+        (a.status !== 'Submitted' ? '<button class="btn btn-teal btn-xs" data-act="nudge">Nudge now</button>' : '') +
+        (a.folder ? '<a class="btn btn-ghost btn-xs" target="_blank" rel="noopener" href="' + esc(a.folder) + '">Files</a>' : '') +
+        (a.status !== 'Submitted' ? '<button class="btn btn-ghost btn-xs" data-act="withdraw">Close</button>' : '') +
+      '</div>' +
+    '</div>';
+  }
+
+  function waLink(a, link) {
+    var digits = String(a.mobile || '').replace(/\D/g, '');
+    var es = (a.lang || 'es') !== 'en';
+    var msg = es
+      ? 'Hola ' + (a.name || '').split(' ')[0] + ', aquí está su enlace para completar la contratación VUMI®: ' + link
+      : 'Hi ' + (a.name || '').split(' ')[0] + ', here is your link to complete your VUMI® contracting: ' + link;
+    return 'https://wa.me/' + digits + '?text=' + encodeURIComponent(msg);
+  }
+
+  function mailLink(a, link) {
+    var es = (a.lang || 'es') !== 'en';
+    var subject = es ? 'Su contratación VUMI®' : 'Your VUMI® contracting';
+    var body = es
+      ? 'Hola ' + (a.name || '').split(' ')[0] + ',\n\nAquí está su enlace para continuar:\n' + link + '\n\n' + CONFIG.RECRUITER_NAME
+      : 'Hi ' + (a.name || '').split(' ')[0] + ',\n\nHere is your link to continue:\n' + link + '\n\n' + CONFIG.RECRUITER_NAME;
+    return 'mailto:' + a.email + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  }
+
+  /* ---------- events ---------- */
+
+  $('filters').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-filter]');
+    if (!btn) return;
+    state.filter = btn.dataset.filter;
+    render();
+  });
+
+  $('rows').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    var token = btn.closest('.row').dataset.token;
+
+    if (btn.dataset.act === 'copy') {
+      navigator.clipboard.writeText(btn.dataset.link).then(function () { toast('Link copied'); });
+      return;
+    }
+    if (btn.dataset.act === 'nudge') {
+      btn.disabled = true;
+      api({ action: 'nudge', token: token })
+        .then(function (res) {
+          toast(res && res.ok ? 'Reminder sent' : 'Could not send', !(res && res.ok));
+          return loadList();
+        })
+        .catch(function () { toast('Could not send', true); })
+        .then(function () { btn.disabled = false; });
+      return;
+    }
+    if (btn.dataset.act === 'withdraw') {
+      if (!confirm('Close this application? Reminders stop and it moves out of your open list.')) return;
+      api({ action: 'status', token: token, status: 'Withdrawn' })
+        .then(loadList)
+        .then(function () { toast('Closed'); })
+        .catch(function () { toast('Could not update', true); });
+    }
+  });
+
+  $('refresh').addEventListener('click', function () {
+    loadList().then(function () { toast('Refreshed'); }).catch(function () { toast('Could not refresh', true); });
+  });
+
+  $('invitebtn').addEventListener('click', function () { $('invitedlg').showModal(); });
+
+  $('invitego').addEventListener('click', function () {
+    var name = $('iname').value.trim();
+    var email = $('iemail').value.trim();
+    if (!name || !email) { toast('Name and email are required', true); return; }
+    var btn = $('invitego');
+    btn.disabled = true;
+    api({ action: 'invite', name: name, email: email, mobile: $('imobile').value.trim(), lang: $('ilang').value })
+      .then(function (res) {
+        if (!res || !res.ok) throw new Error('failed');
+        $('invitedlg').close();
+        $('inviteform').reset();
+        toast('Invitation sent to ' + email);
+        return loadList();
+      })
+      .catch(function () { toast('Could not send the invitation', true); })
+      .then(function () { btn.disabled = false; });
+  });
+
+  /* ---------- gate ---------- */
+
+  function openPipeline(key) {
+    state.key = key;
+    return loadList().then(function () {
+      try { sessionStorage.setItem('vumi-contracting-key', key); } catch (e) { /* ignore */ }
+      $('gate').style.display = 'none';
+      $('app').style.display = 'block';
+      $('invitebtn').style.display = CONFIG.API_URL ? '' : 'none';
+    });
+  }
+
+  $('gatego').addEventListener('click', function () {
+    var key = $('gatekey').value.trim();
+    if (!key && CONFIG.API_URL) { $('gateerr').textContent = 'Enter the admin key.'; return; }
+    $('gateerr').textContent = '';
+    openPipeline(key).catch(function () {
+      $('gateerr').textContent = 'That key was not accepted.';
+    });
+  });
+
+  $('gatekey').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('gatego').click(); });
+
+  var remembered = null;
+  try { remembered = sessionStorage.getItem('vumi-contracting-key'); } catch (e) { /* ignore */ }
+  if (remembered || !CONFIG.API_URL) openPipeline(remembered || '').catch(function () {});
+}());
+</script>
+</body>
+</html>
