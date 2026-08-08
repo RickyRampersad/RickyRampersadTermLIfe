@@ -157,6 +157,11 @@
       es: '¿Qué desea hacer hoy?',
       en: 'What would you like to do today?',
     },
+    inviteAgent: { es: 'Invitar a un agente', en: 'Invite an agent' },
+    inviteAgentSub: {
+      es: 'Le enviamos la carta de invitación con su número y su código.',
+      en: 'Sends the invitation letter with their agent number and passcode.',
+    },
     openPipeline: { es: 'Ver la lista de contrataciones', en: 'Open the contracting pipeline' },
     openPipelineSub: {
       es: 'Quién va por dónde, qué falta y a quién hay que empujar.',
@@ -1715,6 +1720,12 @@
       pipeline.innerHTML = '<span class="mark">📋</span><span class="txt"><b>' + esc(t('openPipeline')) +
         '</b><span>' + esc(t('openPipelineSub')) + '</span></span><span class="arrow">→</span>';
       picker.appendChild(pipeline);
+
+      var invite = el('a', 'pick');
+      invite.href = 'admin.html#invite';
+      invite.innerHTML = '<span class="mark">✉️</span><span class="txt"><b>' + esc(t('inviteAgent')) +
+        '</b><span>' + esc(t('inviteAgentSub')) + '</span></span><span class="arrow">→</span>';
+      picker.appendChild(invite);
 
       var fill = el('button', 'pick');
       fill.type = 'button';

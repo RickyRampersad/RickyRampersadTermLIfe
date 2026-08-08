@@ -77,6 +77,20 @@
   @media(max-width:760px){.row{grid-template-columns:1fr}.acts{justify-content:flex-start}}
 
   .missing{margin-top:8px;font-size:.79rem;color:var(--muted);max-width:640px}
+
+  /* the follow-up trail */
+  .trail{margin-top:10px;max-width:640px}
+  .trail summary{font-size:.78rem;font-weight:700;color:var(--teal-600);cursor:pointer;list-style:none;
+                 display:inline-flex;align-items:center;gap:6px;padding:4px 0}
+  .trail summary::-webkit-details-marker{display:none}
+  .trail summary::before{content:"▸";transition:transform .18s;display:inline-block}
+  .trail[open] summary::before{transform:rotate(90deg)}
+  .trail ul{list-style:none;margin:8px 0 2px;padding:0 0 0 4px;border-left:2px solid var(--line)}
+  .trail li{position:relative;padding:5px 0 5px 16px;font-size:.79rem;color:var(--ink);line-height:1.5}
+  .trail li::before{content:"";position:absolute;left:-5px;top:12px;width:8px;height:8px;border-radius:50%;
+                    background:#fff;border:2px solid var(--teal-500)}
+  .trail li:first-child::before{background:var(--teal-500)}
+  .trail .when{color:var(--muted);font-weight:700;margin-right:7px}
   .empty{background:#fff;border:1px dashed var(--line);border-radius:var(--radius);padding:40px;text-align:center;color:var(--muted)}
 
   dialog{border:none;border-radius:20px;padding:0;box-shadow:var(--shadow);width:min(430px,92%)}
@@ -167,7 +181,8 @@
 <dialog id="invitedlg">
   <form method="dialog" class="dlg" id="inviteform">
     <h2>Invite an agent</h2>
-    <p>Creates their personal link and emails it. Reminders start automatically if they go quiet.</p>
+    <p>Sends them a full invitation letter with their agent number and passcode. If they go quiet,
+       the reminders start on their own — you will see every one on their trail.</p>
     <label for="iname">Full name</label>
     <input id="iname" required />
     <label for="iemail">Email</label>
@@ -203,7 +218,7 @@
     CARRIER_NAME: 'Amalia Suraz',
   };
 
-  var state = { key: '', applicants: [], filter: 'open' };
+  var state = { key: '', applicants: [], filter: 'open', invitedBy: '' };
 
   /* An applicant with a submitted packet is waiting on VUMI, not on us —
      "With VUMI" separates the two so neither queue hides the other. */
@@ -364,6 +379,7 @@
           ? '<div class="missing"><b>Waiting on:</b> ' + esc(missing.slice(0, 5).join(', ')) +
             (missing.length > 5 ? ' +' + (missing.length - 5) + ' more' : '') + '</div>'
           : '') +
+        trailHtml(a) +
       '</div>' +
       '<div class="acts">' +
         (stillFilling
@@ -384,6 +400,24 @@
         (stillFilling ? '<button class="btn btn-ghost btn-xs" data-act="withdraw">Close</button>' : '') +
       '</div>' +
     '</div>';
+  }
+
+  /**
+   * Everything that has happened to this applicant, newest first — the
+   * invitation, every automatic reminder, the submission, every chase at the
+   * carrier. Folded away by default so the pipeline stays scannable.
+   */
+  function trailHtml(a) {
+    var events = (a.activity || []).filter(String);
+    if (!events.length) return '';
+    var items = events.slice().reverse().map(function (line) {
+      var split = line.split(' — ');
+      var when = split.length > 1 ? split.shift() : '';
+      return '<li>' + (when ? '<span class="when">' + esc(when) + '</span>' : '') +
+        esc(split.join(' — ')) + '</li>';
+    }).join('');
+    return '<details class="trail"><summary>Follow-up trail · ' + events.length + ' event' +
+      (events.length > 1 ? 's' : '') + '</summary><ul>' + items + '</ul></details>';
   }
 
   function stagePercent(stage) {
@@ -482,6 +516,13 @@
   });
 
   $('invitebtn').addEventListener('click', function () { $('invitedlg').showModal(); });
+  /* Arriving from the manager's landing screen opens the dialog straight away. */
+  if (location.hash === '#invite') {
+    var openWhenReady = setInterval(function () {
+      if ($('app').style.display !== 'none') { clearInterval(openWhenReady); $('invitedlg').showModal(); }
+    }, 150);
+    setTimeout(function () { clearInterval(openWhenReady); }, 6000);
+  }
 
   $('invitego').addEventListener('click', function () {
     var name = $('iname').value.trim();
@@ -489,7 +530,8 @@
     if (!name || !email) { toast('Name and email are required', true); return; }
     var btn = $('invitego');
     btn.disabled = true;
-    api({ action: 'invite', name: name, email: email, mobile: $('imobile').value.trim(), lang: $('ilang').value })
+    api({ action: 'invite', name: name, email: email, mobile: $('imobile').value.trim(),
+          lang: $('ilang').value, invitedBy: state.invitedBy })
       .then(function (res) {
         if (!res || !res.ok) throw new Error('failed');
         $('invitedlg').close();
@@ -530,7 +572,7 @@
   var remembered = null;
   try {
     var session = JSON.parse(sessionStorage.getItem('vumi-contracting-session') || 'null');
-    if (session && session.adminKey) remembered = session.adminKey;
+    if (session && session.adminKey) { remembered = session.adminKey; state.invitedBy = session.name || ''; }
     if (!remembered) remembered = sessionStorage.getItem('vumi-contracting-key');
   } catch (e) { /* ignore */ }
   if (remembered || !CONFIG.API_URL) openPipeline(remembered || '').catch(function () {});

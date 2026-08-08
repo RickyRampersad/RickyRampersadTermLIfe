@@ -36,6 +36,7 @@ var CONFIG = {
   RECRUITER_NAME: 'Ricky Rampersad',
   RECRUITER_EMAIL: 'ricky.rampersad@myguardiangroup.com',
   RECRUITER_PHONE: '(868) 678-5921',
+  BRANCH_NAME: 'the Ricky Rampersad Branch',
 
   // --- Where a finished packet goes -------------------------------------
   // The signed forms are emailed here the moment the applicant submits.
@@ -122,6 +123,7 @@ var HEADERS = [
   'Last Reminder', 'Folder', 'Portal Link', 'Notes',
   'Tracking Code', 'Stage', 'Stage Updated', 'Sent To Carrier',
   'Carrier Ref', 'Carrier Replied', 'Carrier Chases', 'Last Carrier Chase',
+  'Activity',
 ];
 
 var COL = {
@@ -130,6 +132,7 @@ var COL = {
   LAST_REMINDER: 12, FOLDER: 13, LINK: 14, NOTES: 15,
   CODE: 16, STAGE: 17, STAGE_UPDATED: 18, CARRIER_SENT: 19,
   CARRIER_REF: 20, CARRIER_REPLIED: 21, CARRIER_CHASES: 22, LAST_CHASE: 23,
+  ACTIVITY: 24,
 };
 
 /**
@@ -341,6 +344,7 @@ function saveProgress_(p) {
     sheet.appendRow([
       now, token, p.name || '', p.email || '', p.mobile || '', p.lang || 'es',
       'In progress', percent, missing, now, '', 0, '', '', CONFIG.PORTAL_BASE + token, '',
+      '', '', '', '', '', '', 0, '', '',
     ]);
     row = findRow_(token);
   } else {
@@ -414,6 +418,8 @@ function submitPacket_(p) {
 
   sendToCarrier_(p, folder, pdfBlobs.concat(uploadBlobs), ref);
   sendApplicantThanks_(p, pdfBlobs, code);
+  logActivity_(findRow_(token), 'Signed and submitted — sent to ' + CONFIG.CARRIER_NAME +
+    ' with ' + pdfBlobs.length + ' forms and ' + uploadBlobs.length + ' documents');
   return { ok: true, folder: folder.getUrl(), code: code };
 }
 
@@ -434,6 +440,7 @@ function inviteAgent_(p) {
     sheet.appendRow([
       now, token, name, email, p.mobile || '', p.lang || 'es',
       'Invited', 0, '', now, '', 0, '', '', link, p.notes || '',
+      '', '', '', '', '', '', 0, '', '',
     ]);
   }
 
@@ -448,57 +455,113 @@ function inviteAgent_(p) {
   }
 
   var lang = p.lang === 'es' ? 'es' : 'en';
-  var firstName = firstName_(name);
+  var from = String(p.invitedBy || '').trim() || CONFIG.RECRUITER_NAME;
   var subject = lang === 'es'
-    ? 'Su contratación como agente VUMI® — empiece aquí'
-    : 'Your VUMI® agent contracting — start here';
-
-  var credentials = credentialBlock_(access, lang);
-
-  var body = lang === 'es'
-    ? '<p style="margin:0 0 14px">Hola ' + esc_(firstName) + ',</p>' +
-      '<p style="margin:0 0 14px">Aquí está su enlace para completar su contratación como Productor/Agente VUMI®. ' +
-      'Responde una sola vez y el sistema llena por usted los tres formularios oficiales: la solicitud de 11 páginas, ' +
-      'la designación de beneficiario y el W-8BEN del IRS.</p>' +
-      '<p style="margin:0 0 14px">Toma unos 15 minutos. Puede detenerse cuando quiera y seguir después desde el mismo enlace ' +
-      '— su progreso se guarda solo.</p>' +
-      '<p style="margin:0 0 10px"><b>Tenga a mano:</b></p>' +
-      '<ul style="margin:0 0 18px;padding-left:20px;color:#33475b">' +
-      '<li>Su identificación con foto o pasaporte</li>' +
-      '<li>Sus datos bancarios para el pago de comisiones</li>' +
-      '<li>Dos referencias personales y dos bancarias</li>' +
-      '</ul>'
-    : '<p style="margin:0 0 14px">Hi ' + esc_(firstName) + ',</p>' +
-      '<p style="margin:0 0 14px">Here is your link to complete your VUMI® Producer/Agent contracting. ' +
-      'You answer once and the system fills all three official forms for you: the 11-page application, ' +
-      'the beneficiary designation and the IRS W-8BEN.</p>' +
-      '<p style="margin:0 0 14px">It takes about 15 minutes. Stop whenever you like and pick up from the same link ' +
-      '— your progress saves itself.</p>' +
-      '<p style="margin:0 0 10px"><b>Have handy:</b></p>' +
-      '<ul style="margin:0 0 18px;padding-left:20px;color:#33475b">' +
-      '<li>Your photo ID or passport</li>' +
-      '<li>Your bank details for commission payments</li>' +
-      '<li>Two personal and two bank references</li>' +
-      '</ul>';
+    ? 'Invitación para contratarse con VUMI® — ' + CONFIG.BRANCH_NAME
+    : 'Your invitation to contract with VUMI® — ' + CONFIG.BRANCH_NAME;
 
   MailApp.sendEmail({
     to: email,
     replyTo: CONFIG.RECRUITER_EMAIL,
     subject: subject,
-    htmlBody: emailShell_(subject,
-      body + credentials +
-      button_(link, lang === 'es' ? 'Comenzar mi contratación' : 'Start my contracting') +
-      '<p style="margin:18px 0 0;font-size:13px;color:#7a8ca0">' +
-      (lang === 'es'
-        ? 'Guarde su número de agente y su código — los necesita cada vez que entre.'
-        : 'Keep your agent number and passcode — you need them every time you sign in.') +
-      '</p>' +
-      '<p style="margin:10px 0 0;font-size:13px;color:#7a8ca0">' +
-      (lang === 'es' ? '¿Preguntas? Responda a este correo o llame al ' : 'Questions? Reply to this email or call ') +
-      esc_(CONFIG.RECRUITER_PHONE) + '.</p>'),
+    htmlBody: emailShell_(
+      lang === 'es' ? 'Invitación a contratarse' : 'An invitation to get contracted',
+      invitationLetter_(name, access, link, from, lang)),
   });
 
+  logActivity_(findRow_(token), lang === 'es' ? 'Invitación enviada por ' + from : 'Invitation sent by ' + from);
   return { ok: true, token: token, link: link, agentNumber: access.number, passcode: access.passcode };
+}
+
+/**
+ * The invitation itself — a letter, not a notification.
+ *
+ * Someone deciding whether to take on a new carrier deserves to be told what
+ * they are being offered, what it will cost them in time, and what to have
+ * on the table before they start. The sign-in details and the button sit in
+ * the middle of that, not instead of it.
+ */
+function invitationLetter_(name, access, link, from, lang) {
+  var firstName = esc_(firstName_(name));
+  var phone = esc_(CONFIG.RECRUITER_PHONE);
+  var p = 'margin:0 0 14px';
+  var listStyle = 'margin:0 0 18px;padding-left:20px;color:#33475b';
+  var heading = 'margin:22px 0 8px;font-size:15px;font-weight:800;color:#0E2A47';
+
+  if (lang === 'es') {
+    return '' +
+      '<p style="' + p + '">Estimado(a) ' + firstName + ',</p>' +
+
+      '<p style="' + p + '">Me complace invitarle a completar su contratación como ' +
+      '<b>Productor/Agente de VUMI® Group</b> a través de ' + esc_(CONFIG.BRANCH_NAME) + '.</p>' +
+
+      '<p style="' + p + '">VUMI® es seguro médico privado internacional: el tipo de cobertura que ' +
+      'los clientes conservan durante años y recomiendan a sus conocidos. Contratarse le pone toda ' +
+      'esa línea de productos en las manos, junto a todo lo demás que usted ya coloca.</p>' +
+
+      '<div style="' + heading + '">Qué implica</div>' +
+      '<p style="' + p + '">Son tres formularios oficiales: la Solicitud de Productor/Agente de once ' +
+      'páginas, el Formulario para Designación de Beneficiario y el W-8BEN del IRS. Usted responde ' +
+      'cada pregunta una sola vez y el sistema los llena los tres por usted — su firma, sus iniciales ' +
+      'en cada página, todo.</p>' +
+      '<p style="' + p + '">Unos <b>15 minutos</b>. Puede detenerse y seguir después; no se pierde nada.</p>' +
+
+      '<div style="' + heading + '">Tenga a mano</div>' +
+      '<ul style="' + listStyle + '">' +
+        '<li>Su identificación con foto o pasaporte</li>' +
+        '<li>Sus datos bancarios para el pago de comisiones</li>' +
+        '<li>Dos referencias personales y dos referencias bancarias</li>' +
+      '</ul>' +
+
+      credentialBlock_(access, lang) +
+      button_(link, 'Comenzar mi contratación') +
+
+      '<p style="' + p + '">Cuando lo envíe, su paquete va directo a VUMI® y usted recibe un código ' +
+      'para seguir el avance hasta que le emitan su código de agente.</p>' +
+
+      '<p style="' + p + '">Si algo se le complica, llámeme al ' + phone + '. Prefiero resolverlo en dos ' +
+      'minutos por teléfono que dejarlo a usted atascado.</p>' +
+
+      '<p style="margin:22px 0 4px">Bienvenido(a) a bordo,</p>' +
+      '<p style="margin:0;font-weight:800;color:#0E2A47">' + esc_(from) + '</p>' +
+      '<p style="margin:2px 0 0;font-size:13px;color:#7a8ca0">' + esc_(CONFIG.BRANCH_NAME) + ' · ' + phone + '</p>';
+  }
+
+  return '' +
+    '<p style="' + p + '">Dear ' + firstName + ',</p>' +
+
+    '<p style="' + p + '">I would like to invite you to complete your contracting as a ' +
+    '<b>Producer/Agent with VUMI® Group</b> through ' + esc_(CONFIG.BRANCH_NAME) + '.</p>' +
+
+    '<p style="' + p + '">VUMI® is international private medical insurance — the kind of cover ' +
+    'clients hold for years and refer their friends to. Getting contracted puts that whole product ' +
+    'line in your hands, alongside everything else you already write.</p>' +
+
+    '<div style="' + heading + '">What it involves</div>' +
+    '<p style="' + p + '">Three official forms: the eleven-page Producer/Agent application, the ' +
+    'Beneficiary Designation, and the IRS Form W-8BEN. You answer each question once and the ' +
+    'system fills all three for you — your signature, your initials on every page, the lot.</p>' +
+    '<p style="' + p + '">About <b>15 minutes</b>. You can stop and pick it up later; nothing is lost.</p>' +
+
+    '<div style="' + heading + '">What to have with you</div>' +
+    '<ul style="' + listStyle + '">' +
+      '<li>Photo ID or passport</li>' +
+      '<li>Bank details for your commission payments</li>' +
+      '<li>Two personal references and two bank references</li>' +
+    '</ul>' +
+
+    credentialBlock_(access, lang) +
+    button_(link, 'Start my contracting') +
+
+    '<p style="' + p + '">Once you send it, your packet goes straight to VUMI® and you get a ' +
+    'tracking code to follow it through to your agent code.</p>' +
+
+    '<p style="' + p + '">If anything gets in the way, call me on ' + phone + '. I would far rather ' +
+    'sort it out in two minutes on the phone than leave you stuck.</p>' +
+
+    '<p style="margin:22px 0 4px">Welcome aboard,</p>' +
+    '<p style="margin:0;font-weight:800;color:#0E2A47">' + esc_(from) + '</p>' +
+    '<p style="margin:2px 0 0;font-size:13px;color:#7a8ca0">' + esc_(CONFIG.BRANCH_NAME) + ' · ' + phone + '</p>';
 }
 
 function nudgeNow_(token) {
@@ -512,7 +575,10 @@ function setStatus_(token, status, notes) {
   var sheet = ensureSheet_();
   var row = findRow_(normaliseToken_(token));
   if (!row) return { ok: false, error: 'not found' };
-  if (status) sheet.getRange(row.index, COL.STATUS + 1).setValue(status);
+  if (status) {
+    sheet.getRange(row.index, COL.STATUS + 1).setValue(status);
+    logActivity_(row, 'Status set to ' + status);
+  }
   if (notes !== undefined && notes !== null) sheet.getRange(row.index, COL.NOTES + 1).setValue(notes);
   return { ok: true };
 }
@@ -531,6 +597,7 @@ function setStage_(token, stage, notes) {
 
   sheet.getRange(row.index, COL.STAGE + 1).setValue(stage);
   sheet.getRange(row.index, COL.STAGE_UPDATED + 1).setValue(new Date());
+  logActivity_(row, 'Moved to "' + STAGES[stageIndex_(stage)].en + '"');
   if (notes !== undefined && notes !== null) sheet.getRange(row.index, COL.NOTES + 1).setValue(notes);
 
   if (stage === 'approved') {
@@ -586,6 +653,26 @@ function markCarrierReplied_(token) {
   return { ok: true };
 }
 
+/**
+ * Append one line to an applicant's trail.
+ *
+ * Kept as readable text in a single cell rather than a separate sheet: the
+ * manager can see the whole history of an applicant without leaving their
+ * row, and the dashboard splits it back apart for the timeline.
+ */
+function logActivity_(row, text) {
+  if (!row || !text) return;
+  var sheet = ensureSheet_();
+  var stamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  var existing = String(row.values[COL.ACTIVITY] || '').trim();
+  var line = stamp + ' — ' + text;
+  var updated = existing ? existing + '\n' + line : line;
+  /* A cell tops out at 50k characters; a trail this long means something is
+     wrong anyway, so keep the recent end and drop the oldest. */
+  if (updated.length > 8000) updated = updated.slice(-8000).replace(/^[^\n]*\n/, '');
+  sheet.getRange(row.index, COL.ACTIVITY + 1).setValue(updated);
+}
+
 function listApplicants_() {
   var sheet = ensureSheet_();
   var values = sheet.getDataRange().getValues();
@@ -617,6 +704,7 @@ function listApplicants_() {
       carrierReplied: isoOrBlank_(row[COL.CARRIER_REPLIED]),
       carrierChases: Number(row[COL.CARRIER_CHASES]) || 0,
       lastChase: isoOrBlank_(row[COL.LAST_CHASE]),
+      activity: String(row[COL.ACTIVITY] || '').split('\n').filter(String),
     });
   }
   out.sort(function (a, b) { return (b.updated || '').localeCompare(a.updated || ''); });
@@ -648,6 +736,7 @@ function dailyContractingCheck() {
     var sent = Number(row.values[COL.REMINDERS]) || 0;
     if (sent >= CONFIG.REMINDER_SPACING.length) {
       sheet.getRange(row.index, COL.STATUS + 1).setValue('Stalled');
+      logActivity_(row, 'Marked stalled — reminders exhausted, needs a phone call');
       stalled.push(row);
       continue;
     }
@@ -710,6 +799,7 @@ function checkCarrierReplies_() {
 
     if (replied) {
       sheet.getRange(r + 1, COL.CARRIER_REPLIED + 1).setValue(replied);
+      logActivity_({ index: r + 1, values: row }, CONFIG.CARRIER_NAME + ' replied — follow-ups stopped');
       notifyCarrierReplied_({ index: r + 1, values: row });
     }
   }
@@ -774,6 +864,8 @@ function sendCarrierFollowUp_(row, number) {
 
   sheet.getRange(row.index, COL.CARRIER_CHASES + 1).setValue(number);
   sheet.getRange(row.index, COL.LAST_CHASE + 1).setValue(new Date());
+  logActivity_(row, 'Follow-up ' + number + ' sent to ' + CONFIG.CARRIER_NAME +
+    ' — ' + waiting + ' days without a reply');
 }
 
 function notifyCarrierReplied_(row) {
@@ -871,6 +963,10 @@ function sendReminder_(row, manual) {
 
   sheet.getRange(row.index, COL.REMINDERS + 1).setValue(sent + (manual ? 0 : 1));
   sheet.getRange(row.index, COL.LAST_REMINDER + 1).setValue(new Date());
+  logActivity_(row, manual
+    ? 'Reminder sent by hand — ' + percent + '% done, ' + missing.length + ' answers outstanding'
+    : 'Automatic reminder ' + (sent + 1) + ' sent — ' + percent + '% done, ' +
+      missing.length + ' answers outstanding');
 }
 
 function notifyRecruiterOfStalled_(rows) {
@@ -1102,7 +1198,7 @@ function signIn_(p) {
     ensureSheet_().appendRow([
       new Date(), token, row.values[ACC.NAME], row.values[ACC.EMAIL], row.values[ACC.MOBILE],
       out.lang, 'In progress', 0, '', new Date(), '', 0, '', '',
-      CONFIG.PORTAL_BASE + token, '', '', '', '', '', '', '', 0, '',
+      CONFIG.PORTAL_BASE + token, '', '', '', '', '', '', '', 0, '', '',
     ]);
   }
   out.token = token;
@@ -1146,10 +1242,11 @@ function registerAgent_(p) {
   ensureSheet_().appendRow([
     now, token, name, email, p.mobile || '', lang, 'Invited', 0, '', now,
     '', 0, '', '', CONFIG.PORTAL_BASE + token, 'Self-registered',
-    '', '', '', '', '', '', 0, '',
+    '', '', '', '', '', '', 0, '', '',
   ]);
 
   sendCredentials_({ name: name, email: email, lang: lang }, access);
+  logActivity_(findRow_(token), 'Signed themselves up · ' + access.number);
   MailApp.sendEmail({
     to: CONFIG.COPY_TO.join(','),
     subject: 'New agent signed up — ' + name,

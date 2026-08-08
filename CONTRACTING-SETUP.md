@@ -215,6 +215,12 @@ guess what "incomplete" means.
 The wording adapts to where they are: not started, part-way (with the missing
 list), or filled in but never sent.
 
+**Every one of these is written down.** The invitation, each reminder, the
+submission, each chase at the carrier, the approval — all of it lands on the
+applicant's *Follow-up trail* on the dashboard, newest first, and in the
+**Activity** column of the sheet. You never have to wonder whether the system
+chased someone or how many times.
+
 Turn the whole thing off from the sheet's **📝 Contracting** menu, or with
 `disableContractingReminders()`.
 
@@ -222,9 +228,14 @@ Turn the whole thing off from the sheet's **📝 Contracting** menu, or with
 
 ## Day to day
 
-**Invite someone** — dashboard → *Invite an agent*, or the sheet's
-**📝 Contracting → Invite an agent…** menu. Both create the applicant's
-personal link and email it.
+**Invite someone** — sign in, then *Invite an agent* on your landing screen
+or the button on the dashboard. It sends them a proper letter: what
+contracting with VUMI® means, what the three forms involve, roughly fifteen
+minutes, what to have on the table, their agent number and passcode, and a
+button straight into the application. It is signed by whoever sent it, so an
+invitation from Kamla says Kamla.
+
+The same is on the sheet's **📝 Contracting → Invite an agent…** menu.
 
 **Watch the pipeline** — the dashboard opens on *Needs attention*: everyone
 not yet submitted, with their progress, how long they have been quiet, how
