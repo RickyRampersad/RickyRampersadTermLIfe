@@ -171,6 +171,7 @@
   .gatecard .sub{color:var(--muted);font-size:.96rem;text-align:center;margin-top:10px}
   .signform{margin-top:26px;display:grid;gap:14px}
   .signform label{display:block;font-size:.78rem;font-weight:700;margin-bottom:6px}
+  .fieldhint{display:block;font-size:.75rem;color:var(--muted);margin-top:6px}
   .signform input{width:100%;padding:14px 16px;border:1.5px solid var(--line);border-radius:12px;font:inherit;
                   font-size:1.1rem;font-weight:700;letter-spacing:.12em;text-align:center;text-transform:uppercase}
   .signform input:focus{outline:none;border-color:var(--teal-500);box-shadow:0 0 0 3px rgba(18,165,160,.15)}
@@ -294,11 +295,13 @@
       <form class="signform" id="signform" autocomplete="off">
         <div>
           <label for="agentno" data-t="agentNo">Agent number</label>
-          <input id="agentno" placeholder="RRB-000" autocapitalize="characters" spellcheck="false" />
+          <input id="agentno" placeholder="A00427" autocapitalize="characters" spellcheck="false" />
+          <span class="fieldhint" data-t="agentNoHint">The number on your invitation email</span>
         </div>
         <div>
           <label for="passcode" data-t="passcode">Passcode</label>
           <input id="passcode" type="password" placeholder="••••••" autocomplete="current-password" />
+          <span class="fieldhint" data-t="passcodeHint">The code that came with it</span>
         </div>
         <div class="signerr" id="signerr"></div>
         <button class="btn btn-primary full" id="signbtn" type="submit" data-t="signIn">Sign in</button>

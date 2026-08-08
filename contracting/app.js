@@ -101,9 +101,11 @@
     /* sign in */
     welcomeTitle: { es: 'Bienvenido a Contratación', en: 'Welcome to Contracting' },
     welcomeSub: {
-      es: 'Entre con el número de agente y el código que le entregaron.',
-      en: 'Sign in with the agent number and passcode you were given.',
+      es: 'Entre con su número de agente y su código de acceso.',
+      en: 'Sign in with your agent number and passcode.',
     },
+    agentNoHint: { es: 'El número que aparece en su invitación', en: 'The number on your invitation email' },
+    passcodeHint: { es: 'El código que vino con ella', en: 'The code that came with it' },
     agentNo: { es: 'Número de agente', en: 'Agent number' },
     passcode: { es: 'Código de acceso', en: 'Passcode' },
     signIn: { es: 'Entrar', en: 'Sign in' },
@@ -115,8 +117,8 @@
     inactive: { es: 'Ese acceso está desactivado. Hable con su gerente.', en: 'That login is switched off. Speak to your manager.' },
     signOffline: { es: 'No pudimos entrar ahora mismo. Intente de nuevo en un momento.', en: "We couldn't sign you in just now. Try again in a moment." },
     noAccount: {
-      es: '¿No tiene un número de agente? Escriba a {email} y se lo enviamos.',
-      en: 'No agent number yet? Email {email} and we will send you one.',
+      es: '¿Extravió su código? Escriba a {email} y se lo reenviamos.',
+      en: 'Lost your passcode? Email {email} and we will resend it.',
     },
     noBackend: {
       es: 'Todavía no hay acceso configurado, así que puede entrar directo a la solicitud.',

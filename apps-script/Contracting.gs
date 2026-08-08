@@ -87,12 +87,21 @@ var CONFIG = {
 
   // --- Who can sign in ---------------------------------------------------
   // Everyone signs in with an agent number and a passcode, both kept in the
-  // "Access" tab. setupContracting() seeds the two staff logins below with
-  // random passcodes and prints them; agents get theirs when you invite them.
+  // "Access" tab of the sheet.
+  //
+  // The numbers below are yours to set — use whatever you already answer to.
+  // Passcodes are NOT set here on purpose: this file lives in a git
+  // repository, and a passcode written into it is a passcode published.
+  // setupContracting() generates one for each of you and shows it once; to
+  // choose your own, type it straight into the Access tab, or run
+  // setPasscode('A00427', 'whatever-you-want') from the editor.
+  //
+  // Agents you invite are numbered RRP-001, RRP-002, … — a separate series,
+  // so they can never collide with the numbers below.
   STAFF: [
-    { number: 'RRP-001', name: 'Ricky Rampersad', role: 'manager',
+    { number: 'A00427', name: 'Ricky Rampersad', role: 'manager',
       email: 'rampersadricky@gmail.com' },
-    { number: 'RRP-002', name: 'Kamla Dookran', role: 'assistant',
+    { number: 'A00428', name: 'Kamla Dookran', role: 'assistant',
       email: 'kamla.dookran@myguardiangroup.com' },
   ],
 };
@@ -192,6 +201,7 @@ function onOpen() {
     SpreadsheetApp.getUi()
       .createMenu('📝 Contracting')
       .addItem('Invite an agent…', 'promptInvite')
+      .addItem('Show my sign-in details', 'showLogins')
       .addItem('Send reminders now', 'dailyContractingCheck')
       .addSeparator()
       .addItem('Turn automatic reminders ON', 'enableContractingReminders')
@@ -219,6 +229,38 @@ function removeContractingTriggers_() {
   ScriptApp.getProjectTriggers().forEach(function (trigger) {
     if (trigger.getHandlerFunction() === 'dailyContractingCheck') ScriptApp.deleteTrigger(trigger);
   });
+}
+
+/**
+ * Change somebody's passcode from the editor.
+ *
+ *   setPasscode('A00427', 'my-new-code')
+ *
+ * The same thing happens if you just type over the cell in the Access tab —
+ * this is here for when that is quicker.
+ */
+function setPasscode(agentNumber, newPasscode) {
+  var row = findAccessRow_(agentNumber);
+  if (!row) { Logger.log('No such agent number: %s', agentNumber); return; }
+  var code = String(newPasscode || '').trim();
+  if (!code) { Logger.log('Give a passcode.'); return; }
+  accessSheet_().getRange(row.index, ACC.PASSCODE + 1).setValue(code);
+  Logger.log('%s (%s) can now sign in with: %s', row.values[ACC.NAME], agentNumber, code);
+}
+
+/** Print who can sign in, and with what. Run it any time you forget. */
+function showLogins() {
+  var values = accessSheet_().getDataRange().getValues();
+  var lines = [];
+  for (var r = 1; r < values.length; r++) {
+    if (!values[r][ACC.NUMBER]) continue;
+    if (String(values[r][ACC.ROLE] || '').toLowerCase() === 'agent') continue;
+    lines.push(values[r][ACC.NAME] + '  ' + values[r][ACC.NUMBER] +
+      '  passcode: ' + values[r][ACC.PASSCODE] +
+      (String(values[r][ACC.ACTIVE] || '').toLowerCase() === 'no' ? '  (switched off)' : ''));
+  }
+  Logger.log('Staff logins:\n' + lines.join('\n'));
+  try { SpreadsheetApp.getUi().alert('Staff logins\n\n' + lines.join('\n')); } catch (e) { /* headless */ }
 }
 
 /** Menu helper: invite someone without leaving the sheet. */
@@ -1438,7 +1480,7 @@ function findAccessByEmail_(email) {
   return null;
 }
 
-/** RRB-003, RRB-004, ... continuing past whatever is already in the sheet. */
+/** RRP-001, RRP-002, ... continuing past whatever is already in the sheet. */
 function nextAgentNumber_() {
   var sheet = accessSheet_();
   var values = sheet.getDataRange().getValues();

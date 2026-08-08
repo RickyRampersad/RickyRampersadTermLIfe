@@ -57,13 +57,21 @@ Everyone signs in with an **agent number and a passcode**, both kept in the
 
 | Who | Number | Sees |
 |---|---|---|
-| Ricky Rampersad | `RRP-001` | The pipeline, or an application to fill in |
-| Kamla Dookran | `RRP-002` | The same — assistant has the same access |
-| Each agent | `RRP-003`, `RRP-004`, … | Their own application |
+| Ricky Rampersad | `A00427` | The pipeline, or an application to fill in |
+| Kamla Dookran | `A00428` | The same — assistant has the same access |
+| Each agent | `RRP-001`, `RRP-002`, … | Their own application |
 
-`setupContracting()` creates the two staff logins with random passcodes and
-shows them to you once. Change any passcode by typing over it in the Access
-tab; set **Active** to `No` to switch a login off without deleting it.
+Your two numbers are set in `CONFIG.STAFF` at the top of `Contracting.gs`;
+agents are issued from a separate `RRP-` series, so the two can never collide.
+
+**Passcodes are not in that file, and must not be** — it lives in a git
+repository, and a passcode written into it is a passcode published.
+`setupContracting()` generates one for each of you and shows it once. To pick
+your own, type it straight over the cell in the **Access** tab, or run
+`setPasscode('A00427', 'whatever-you-want')` from the editor. Forgotten which
+is which? **📝 Contracting → Show my sign-in details**.
+
+Set **Active** to `No` to switch a login off without deleting it.
 
 Agents get their number and passcode two ways:
 
@@ -81,6 +89,14 @@ their row in the Access tab and they cannot sign in again.
 Signing in as Ricky or Kamla also unlocks the dashboard, so nobody has to
 know the admin key. It is handed to the browser only after a correct
 passcode, and it is dropped when the tab closes.
+
+**Your two passcodes are the only thing guarding that dashboard**, and the
+dashboard holds every applicant's passport number, date of birth and bank
+details. The sign-in sits on a public web address, so a one-character
+passcode is a door left open — the agent numbers are the easy half to guess,
+and short codes are the other half. Make yours something nobody would try.
+Agents' own passcodes matter less: an agent can only ever see their own
+application.
 
 **This is a shared-code login, not individual passwords.** Codes sit in the
 sheet in plain text and anyone holding a number and passcode is that person
