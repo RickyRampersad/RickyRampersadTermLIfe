@@ -9,8 +9,9 @@ served.
 ./build.sh
 ```
 
-produces `dist/` (the folder to publish) and `rickyrampersadbranch-site.zip`
-(the same thing, zipped for drag-and-drop).
+produces `dist/` (the folder to publish) and `rickyrampersadbranch-contracting-site-<date>.zip`
+(the same thing, zipped for drag-and-drop — date-stamped so you can tell
+successive builds apart).
 
 ## Two ways to deploy
 
@@ -18,7 +19,7 @@ produces `dist/` (the folder to publish) and `rickyrampersadbranch-site.zip`
 
 1. Run `./build.sh`.
 2. Open <https://app.netlify.com/drop>.
-3. Drag in `dist/` — or `rickyrampersadbranch-site.zip`.
+3. Drag in `dist/` — or the `rickyrampersadbranch-contracting-site-*.zip`.
 
 Every later update means running the build and dragging again.
 
