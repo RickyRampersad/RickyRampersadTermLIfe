@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="robots" content="noindex,nofollow"/>
+<title>Reassignment Dashboard · Ricky Rampersad Branch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#07131f; --bg2:#0b1c2e; --card:#0f2438; --card2:#163553;
+  --teal:#00CFEA; --teal-dk:#0E8C8C; --gold:#efc24b;
+  --text:#edf4fb; --muted:#a9bbcf; --line:rgba(255,255,255,.09);
+  --ok:#3ddc97; --warn:#ffb44d; --bad:#ff7a6b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:Manrope,system-ui,-apple-system,sans-serif;
+  line-height:1.6;-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(1000px 560px at 8% -8%,rgba(0,207,234,.13),transparent 60%),
+    radial-gradient(800px 480px at 95% 2%,rgba(14,140,140,.16),transparent 62%);
+  background-attachment:fixed}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--teal)}
+
+.top{border-bottom:1px solid var(--line);background:rgba(7,19,31,.85);backdrop-filter:blur(12px);
+  position:sticky;top:0;z-index:40}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 20px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:800}
+.brand .dot{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--teal),var(--teal-dk));
+  display:grid;place-items:center;color:#04212b;font-size:14px;font-weight:800;flex:none}
+.brand small{display:block;font-weight:600;font-size:11px;color:var(--muted)}
+.who{font-size:13px;color:var(--muted);text-align:right}
+.who b{color:var(--text);display:block}
+.linkbtn{background:none;border:none;color:var(--teal);font:inherit;font-size:12px;cursor:pointer;padding:0;text-decoration:underline}
+
+.card{background:linear-gradient(160deg,var(--card),var(--bg2));border:1px solid var(--line);
+  border-radius:18px;padding:24px;margin:20px 0;box-shadow:0 18px 50px rgba(0,0,0,.4)}
+h1{font-size:clamp(25px,4vw,34px);margin:0 0 6px;letter-spacing:-.7px;font-weight:800}
+h2{font-size:19px;margin:0 0 4px;letter-spacing:-.3px}
+.sub{color:var(--muted);font-size:14px;margin:0 0 18px}
+.sectiontag{font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--teal);margin-bottom:8px}
+
+/* funnel */
+.funnel{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:12px;margin:0 0 6px}
+.fstat{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:14px;padding:15px 16px;
+  border-left:3px solid var(--teal)}
+.fstat .k{font-size:10.5px;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.fstat .v{font-size:27px;font-weight:800;margin-top:3px;letter-spacing:-1px}
+.fstat.q{border-left-color:var(--muted)} .fstat.i{border-left-color:var(--gold)}
+.fstat.r{border-left-color:var(--teal)} .fstat.a{border-left-color:#8b7dff}
+.fstat.c{border-left-color:var(--ok)}  .fstat.x{border-left-color:rgba(255,255,255,.2)}
+
+/* client rows */
+.clients{display:grid;gap:12px}
+.cl{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:15px;overflow:hidden;transition:.15s}
+.cl:hover{border-color:rgba(0,207,234,.32)}
+.clhead{display:grid;grid-template-columns:1fr auto;gap:14px;padding:16px 18px;cursor:pointer;align-items:center}
+.clname{font-weight:800;font-size:15.5px}
+.clmeta{font-size:12.5px;color:var(--muted);margin-top:3px}
+.clright{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.chev{color:var(--muted);font-size:13px;transition:.2s}
+.cl.open .chev{transform:rotate(90deg)}
+.clbody{display:none;padding:0 18px 18px;border-top:1px solid var(--line)}
+.cl.open .clbody{display:block}
+
+.pill{display:inline-block;font-size:10.5px;font-weight:800;padding:4px 11px;border-radius:999px;white-space:nowrap;
+  text-transform:uppercase;letter-spacing:.5px}
+.pill.ok{background:rgba(61,220,151,.14);color:var(--ok)}
+.pill.warn{background:rgba(255,180,77,.15);color:var(--warn)}
+.pill.bad{background:rgba(255,122,107,.15);color:var(--bad)}
+.pill.info{background:rgba(0,207,234,.13);color:var(--teal)}
+.pill.mute{background:rgba(255,255,255,.07);color:var(--muted)}
+.pill.purple{background:rgba(139,125,255,.16);color:#a99cff}
+
+.read{background:rgba(0,207,234,.07);border-left:3px solid var(--teal);border-radius:0 12px 12px 0;
+  padding:13px 16px;margin:16px 0;font-size:13.5px;line-height:1.6}
+.read b{color:var(--teal)}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:14px 0}
+.kv div{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:11px;padding:11px 14px}
+.kv .k{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.kv .v{font-size:13.5px;margin-top:3px}
+.quote{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px;padding:13px 16px;
+  font-style:italic;color:#c9d8e6;font-size:13.5px;margin:12px 0}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:12px 0}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:520px}
+th{background:rgba(255,255,255,.045);text-align:left;padding:10px 13px;font-size:10px;letter-spacing:1px;
+  text-transform:uppercase;color:var(--muted);font-weight:800;white-space:nowrap}
+td{padding:10px 13px;border-top:1px solid var(--line)}
+
+input,select,textarea{width:100%;background:rgba(255,255,255,.04);border:1.5px solid var(--line);
+  border-radius:11px;padding:12px 14px;color:var(--text);font-family:inherit;font-size:14px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal)}
+select option{background:var(--card2);color:var(--text)}
+label.fl{font-size:11px;font-weight:800;letter-spacing:.9px;text-transform:uppercase;color:var(--muted);
+  display:block;margin:0 0 6px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:13px}
+.checkline{display:flex;gap:9px;align-items:center;font-size:13.5px;color:var(--muted);margin:12px 0}
+.checkline input{width:17px;height:17px;accent-color:var(--teal);flex:none}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  background:linear-gradient(135deg,var(--teal),var(--teal-dk));color:#04212b;font-weight:800;font-size:14px;
+  border:none;border-radius:999px;padding:13px 26px;cursor:pointer;font-family:inherit;transition:.15s}
+.btn:hover{transform:translateY(-1px)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn.sm{padding:9px 18px;font-size:12.5px}
+.btn.ghost{background:transparent;border:1.5px solid var(--line);color:var(--text)}
+.btn.gold{background:linear-gradient(135deg,var(--gold),#d9a72e);color:#3a2a00}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+
+.center{text-align:center;padding:70px 20px}
+.spinner{width:38px;height:38px;border:3px solid var(--line);border-top-color:var(--teal);border-radius:50%;
+  animation:spin .85s linear infinite;margin:0 auto 18px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hidden{display:none!important}
+.err{background:rgba(255,122,107,.10);border:1px solid rgba(255,122,107,.34);border-radius:12px;
+  padding:13px 16px;color:var(--bad);font-size:13.5px;margin:14px 0}
+.okmsg{background:rgba(61,220,151,.10);border:1px solid rgba(61,220,151,.34);border-radius:12px;
+  padding:13px 16px;color:var(--ok);font-size:13.5px;margin:14px 0}
+.signin{max-width:410px;margin:60px auto}
+.signin input{text-align:center;font-size:19px;letter-spacing:2.5px;font-weight:700}
+.empty{text-align:center;padding:44px 20px;color:var(--muted);font-size:14px}
+.tabs{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap}
+.tab{background:rgba(255,255,255,.04);border:1.5px solid var(--line);border-radius:999px;padding:9px 20px;
+  font-size:13px;font-weight:700;cursor:pointer;color:var(--muted);font-family:inherit}
+.tab.on{background:rgba(0,207,234,.13);border-color:var(--teal);color:var(--teal)}
+@media(max-width:640px){.clhead{grid-template-columns:1fr}.clright{justify-content:flex-start}}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="wrap">
+  <div class="brand"><div class="dot">RR</div>
+    <div>Reassignment Dashboard<small>Ricky Rampersad Branch</small></div></div>
+  <div class="who" id="who"></div>
+</div></div>
+
+<!-- sign in -->
+<div id="signin" class="wrap">
+  <div class="card signin">
+    <div class="sectiontag">Staff access</div>
+    <h2>Sign in</h2>
+    <p class="sub">Use your branch access code.</p>
+    <input type="password" id="code" placeholder="Access code" autocomplete="current-password"/>
+    <div id="signinErr" class="err hidden"></div>
+    <div style="margin-top:15px"><button class="btn" style="width:100%" id="signinBtn">Sign in →</button></div>
+  </div>
+</div>
+
+<div id="loading" class="center hidden">
+  <div class="spinner"></div><div style="color:var(--muted)">Loading the pipeline…</div>
+</div>
+
+<!-- dashboard -->
+<div id="board" class="wrap hidden">
+  <div style="margin:26px 0 4px">
+    <h1 id="hi">Welcome back</h1>
+    <p class="sub" id="hiSub">Clients whose agent went inactive, and where each one stands.</p>
+  </div>
+
+  <div class="tabs hidden" id="tabs">
+    <button class="tab on" data-view="mine">My clients</button>
+    <button class="tab" data-view="all">Whole branch</button>
+  </div>
+
+  <div class="card hidden" id="funnelCard">
+    <div class="sectiontag">Pipeline</div>
+    <h2>Where the branch stands</h2>
+    <p class="sub">Every orphaned client, by stage.</p>
+    <div class="funnel" id="funnel"></div>
+    <div class="actions">
+      <button class="btn sm ghost" id="rebuildBtn">↻ Re-scan portfolio for inactive agents</button>
+    </div>
+    <div id="mgrMsg"></div>
+  </div>
+
+  <div id="list" class="clients"></div>
+  <div id="emptyState" class="empty hidden"></div>
+  <div style="height:50px"></div>
+</div>
+
+<script>
+/* ================================================================
+   CONFIG — same /exec URL as the client portal.
+   ================================================================ */
+var CONFIG = {
+  API_URL: "PASTE_YOUR_APPS_SCRIPT_EXEC_URL_HERE",
+};
+
+var $ = function (s) { return document.querySelector(s); };
+var CODE = sessionStorage.getItem('rrCode') || '';
+var ME = null, VIEW = 'mine', BOARD = null;
+
+if (CODE) signIn(CODE);
+
+$('#signinBtn').addEventListener('click', function () { signIn($('#code').value.trim()); });
+$('#code').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('#signinBtn').click(); });
+
+function signIn(code) {
+  if (!code) return err('#signinErr', 'Please enter your access code.');
+  if (!configured()) return err('#signinErr', 'This dashboard is not connected yet — paste the Apps Script /exec URL into CONFIG.API_URL.');
+  show('loading');
+  api({ action: 'agentLogin', code: code })
+    .then(function (d) {
+      if (!d.ok) { show('signin'); return err('#signinErr', d.error); }
+      CODE = code; ME = d; sessionStorage.setItem('rrCode', code);
+      $('#who').innerHTML = '<b>' + esc(d.name) + '</b>' + esc(d.role || '') +
+        ' · <button class="linkbtn" onclick="signOut()">Sign out</button>';
+      loadBoard();
+    })
+    .catch(function () { show('signin'); err('#signinErr', 'Could not reach the branch system.'); });
+}
+
+function signOut() { sessionStorage.removeItem('rrCode'); location.reload(); }
+
+function loadBoard() {
+  show('loading');
+  var action = (ME.isManager && VIEW === 'all') ? 'managerBoard' : 'agentBoard';
+  api({ action: action, code: CODE })
+    .then(function (d) {
+      if (!d.ok) { show('board'); $('#list').innerHTML = '<div class="err">' + esc(d.error) + '</div>'; return; }
+      BOARD = d; render(d); show('board');
+    })
+    .catch(function () { show('board'); $('#list').innerHTML = '<div class="err">Could not load the pipeline.</div>'; });
+}
+
+function render(d) {
+  $('#hi').textContent = 'Welcome back, ' + (String(ME.name).replace(/^A\d+\s*-\s*/, '').split(' ')[0] || '');
+  if (ME.isManager) $('#tabs').classList.remove('hidden');
+
+  if (d.funnel) {
+    $('#funnelCard').classList.remove('hidden');
+    var f = d.funnel;
+    $('#funnel').innerHTML =
+      fs('q', 'Queued', f.queued) + fs('i', 'Invited', f.invited) +
+      fs('r', 'Replied', f.responded) + fs('a', 'Agent appointed', f.appointed) +
+      fs('c', 'Contacted', f.contacted) + fs('x', 'Closed', f.closed);
+  } else {
+    $('#funnelCard').classList.add('hidden');
+  }
+
+  var cl = d.clients || [];
+  if (!cl.length) {
+    $('#list').innerHTML = '';
+    $('#emptyState').classList.remove('hidden');
+    $('#emptyState').textContent = ME.isManager && VIEW === 'all'
+      ? 'No orphaned clients in the queue yet. Run "Re-scan portfolio" to build it.'
+      : 'No clients are currently appointed to you. When Ricky appoints one, it appears here.';
+    return;
+  }
+  $('#emptyState').classList.add('hidden');
+  $('#list').innerHTML = cl.map(card).join('');
+}
+
+function fs(cls, k, v) {
+  return '<div class="fstat ' + cls + '"><div class="k">' + k + '</div><div class="v">' + (v || 0) + '</div></div>';
+}
+
+function card(c, i) {
+  var stage = stageOf(c);
+  return '<div class="cl" id="cl' + i + '">' +
+    '<div class="clhead" onclick="document.getElementById(\'cl' + i + '\').classList.toggle(\'open\')">' +
+      '<div><div class="clname">' + esc(c.client) + '</div>' +
+        '<div class="clmeta">Client ' + esc(c.clientNo) + ' · ' + (c.policies || 0) + ' policies · TT$' +
+        money(c.premium) + ' annual · former agent: ' + esc(c.formerAgent || '—') + '</div></div>' +
+      '<div class="clright">' +
+        '<span class="pill ' + stage.tone + '">' + stage.label + '</span>' +
+        (c.appointed ? '<span class="pill purple">' + esc(c.appointed) + '</span>' : '') +
+        '<span class="chev">›</span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="clbody">' + body(c, i) + '</div>' +
+  '</div>';
+}
+
+function stageOf(c) {
+  if (c.closed) return { label: 'Closed', tone: 'mute' };
+  if (c.contactedAt) return { label: 'Agent contacted', tone: 'ok' };
+  if (c.appointed) return { label: 'Awaiting agent call', tone: 'warn' };
+  if (c.responded) return { label: 'Needs an agent', tone: 'bad' };
+  if (c.invited) return { label: 'Invited', tone: 'info' };
+  return { label: 'Queued', tone: 'mute' };
+}
+
+function body(c, i) {
+  var h = '';
+
+  if (c.read) {
+    h += '<div class="read"><b>Read on this client:</b> ' + esc(c.read.summary) +
+         '<br/><b>Churn risk:</b> ' + esc(c.read.risk) + ' &nbsp;·&nbsp; <b>Priority:</b> ' +
+         esc(c.read.priority) + '<br/><b>Suggested speciality:</b> ' + esc(c.read.speciality) + '</div>';
+  }
+
+  var a = c.answers || {};
+  h += '<div class="kv">' +
+    kv('Wants', c.preference || a.preference || 'Not answered yet') +
+    kv('Previous agent did', a.pastService || '—') +
+    kv('Priorities now', a.priorities || '—') +
+    kv('Confidence', a.confidence ? a.confidence + ' / 5' : '—') +
+    kv('Contact by', (a.contactMethod || '—') + (a.contactTime ? ' · ' + a.contactTime : '')) +
+    kv('Phone', c.phone || '—') + kv('Email', c.email || '—') +
+    kv('Replied', c.responded || 'Not yet') +
+  '</div>';
+
+  if (a.notes) h += '<div class="quote">“' + esc(a.notes) + '”</div>';
+
+  if (c.policyList && c.policyList.length) {
+    h += '<div class="tablewrap"><table><thead><tr><th>Policy</th><th>Plan</th><th>Sum assured</th>' +
+      '<th>Premium</th><th>Status</th></tr></thead><tbody>' +
+      c.policyList.map(function (p) {
+        return '<tr><td><b>' + esc(p.policy) + '</b></td><td>' + esc(p.plan || '—') + '</td>' +
+          '<td>' + (p.cover ? 'TT$' + money(p.cover) : '—') + '</td>' +
+          '<td>TT$' + money(p.premium) + '</td>' +
+          '<td><span class="pill ' + tone(p.status) + '">' + esc(p.status) + '</span></td></tr>';
+      }).join('') + '</tbody></table></div>';
+  }
+
+  if (c.update) h += '<div class="okmsg"><b>Last agent update:</b> ' + esc(c.update) + '</div>';
+
+  /* --- manager controls --- */
+  if (ME.isManager && VIEW === 'all') {
+    var opts = (BOARD.agents || []).map(function (ag) {
+      return '<option value="' + esc(ag.name) + '"' + (ag.name === c.appointed ? ' selected' : '') + '>' +
+        esc(ag.name) + ' — ' + esc(ag.role) + '</option>';
+    }).join('');
+    h += '<div class="grid2" style="margin-top:16px">' +
+      '<div><label class="fl">Appoint an agent</label>' +
+        '<select id="ap' + i + '"><option value="">Choose…</option>' + opts + '</select></div>' +
+      '<div style="display:flex;align-items:flex-end;gap:10px">' +
+        '<button class="btn sm" onclick="appoint(' + i + ',\'' + esc(c.clientNo) + '\')">Appoint &amp; notify</button>' +
+        (!c.invited ? '<button class="btn sm ghost" onclick="invite(\'' + esc(c.clientNo) + '\')">Send invitation</button>' : '') +
+      '</div></div>' +
+      '<div id="msg' + i + '"></div>';
+  }
+
+  /* --- agent first-contact report --- */
+  if (!ME.isManager || VIEW === 'mine') {
+    h += '<div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--line)">' +
+      '<div class="sectiontag">First-contact report</div>' +
+      '<div class="grid2">' +
+        '<div><label class="fl">What happened?</label><select id="out' + i + '">' +
+          '<option value="">Choose…</option><option>Spoke to the client</option>' +
+          '<option>Left a message</option><option>No answer — will retry</option>' +
+          '<option>Wrong number / bad contact</option><option>Meeting scheduled</option>' +
+          '<option>Client declined further contact</option></select></div>' +
+        '<div><label class="fl">Client intention</label><select id="int' + i + '">' +
+          '<option value="">Choose…</option><option>Keeping the policy as is</option>' +
+          '<option>Wants a full review</option><option>Wants to increase cover</option>' +
+          '<option>Wants to reduce premium</option><option>Reinstating a lapsed policy</option>' +
+          '<option>Considering cancelling</option><option>Undecided</option></select></div>' +
+        '<div><label class="fl">Follow-up date</label><input type="date" id="fu' + i + '"/></div>' +
+      '</div>' +
+      '<div style="margin-top:12px"><label class="fl">Notes for the manager</label>' +
+        '<textarea id="nt' + i + '" rows="3" placeholder="What did they say? What are you recommending?"></textarea></div>' +
+      '<label class="checkline"><input type="checkbox" id="cls' + i + '"/> This file is now settled — close it</label>' +
+      '<button class="btn sm" onclick="report(' + i + ',\'' + esc(c.clientNo) + '\')">Submit report</button>' +
+      '<div id="rmsg' + i + '"></div></div>';
+  }
+
+  return h;
+}
+
+/* ---------- actions ---------- */
+function appoint(i, clientNo) {
+  var agent = document.getElementById('ap' + i).value;
+  if (!agent) return msg('#msg' + i, 'Choose an agent first.', true);
+  msg('#msg' + i, 'Appointing and sending the emails…', false);
+  post({ action: 'appoint', code: CODE, clientNo: clientNo, agent: agent })
+    .then(function (d) {
+      if (!d.ok) return msg('#msg' + i, d.error || 'Could not appoint.', true);
+      msg('#msg' + i, '✓ Appointed. The client and ' + agent + ' have both been emailed.', false);
+      setTimeout(loadBoard, 1400);
+    })
+    .catch(function () { msg('#msg' + i, 'Network error — please try again.', true); });
+}
+
+function invite(clientNo) {
+  post({ action: 'invite', code: CODE, clientNo: clientNo })
+    .then(function () { loadBoard(); })
+    .catch(function () {});
+}
+
+function report(i, clientNo) {
+  var outcome = document.getElementById('out' + i).value;
+  if (!outcome) return msg('#rmsg' + i, 'Please say what happened.', true);
+  msg('#rmsg' + i, 'Sending…', false);
+  post({
+    action: 'agentReport', code: CODE, clientNo: clientNo, outcome: outcome,
+    intention: document.getElementById('int' + i).value,
+    followUp: document.getElementById('fu' + i).value,
+    notes: document.getElementById('nt' + i).value,
+    closed: document.getElementById('cls' + i).checked,
+  })
+    .then(function (d) {
+      if (!d.ok) return msg('#rmsg' + i, d.error || 'Could not save.', true);
+      msg('#rmsg' + i, '✓ Report filed — Ricky has been notified.', false);
+      setTimeout(loadBoard, 1400);
+    })
+    .catch(function () { msg('#rmsg' + i, 'Network error — please try again.', true); });
+}
+
+$('#rebuildBtn').addEventListener('click', function () {
+  var b = this; b.disabled = true; b.textContent = 'Scanning the portfolio…';
+  post({ action: 'rebuild', code: CODE })
+    .then(function (d) {
+      b.disabled = false; b.textContent = '↻ Re-scan portfolio for inactive agents';
+      msg('#mgrMsg', d && d.added != null
+        ? '✓ Scan complete — ' + d.added + ' newly orphaned client(s) added to the queue.'
+        : '✓ Scan complete.', false);
+      loadBoard();
+    })
+    .catch(function () {
+      b.disabled = false; b.textContent = '↻ Re-scan portfolio for inactive agents';
+      msg('#mgrMsg', 'Could not run the scan.', true);
+    });
+});
+
+document.querySelectorAll('.tab').forEach(function (t) {
+  t.addEventListener('click', function () {
+    document.querySelectorAll('.tab').forEach(function (x) { x.classList.remove('on'); });
+    t.classList.add('on'); VIEW = t.dataset.view; loadBoard();
+  });
+});
+
+/* ---------- plumbing ---------- */
+function configured() { return CONFIG.API_URL && CONFIG.API_URL.indexOf('script.google.com') !== -1; }
+function api(params) {
+  var qs = Object.keys(params).map(function (k) {
+    return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+  }).join('&');
+  return fetch(CONFIG.API_URL + '?' + qs).then(function (r) { return r.json(); });
+}
+function post(payload) {
+  return fetch(CONFIG.API_URL, {
+    method: 'POST', redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload),
+  }).then(function (r) { return r.json(); });
+}
+function show(id) {
+  ['signin', 'loading', 'board'].forEach(function (x) {
+    document.getElementById(x).classList.toggle('hidden', x !== id);
+  });
+}
+function err(sel, m) { var e = $(sel); e.textContent = m; e.classList.remove('hidden'); }
+function msg(sel, m, isErr) {
+  var e = $(sel); if (!e) return;
+  e.innerHTML = '<div class="' + (isErr ? 'err' : 'okmsg') + '">' + esc(m) + '</div>';
+}
+function kv(k, v) {
+  return '<div><div class="k">' + esc(k) + '</div><div class="v">' + esc(v || '—') + '</div></div>';
+}
+function tone(s) {
+  s = String(s || '').toLowerCase();
+  if (/laps|overdue|declin|expire/.test(s)) return 'bad';
+  if (/postpon|incomplete|pending|not proceeded/.test(s)) return 'warn';
+  return 'ok';
+}
+function money(v) {
+  var n = parseFloat(v) || 0;
+  return n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+</script>
+</body>
+</html>

@@ -13,9 +13,32 @@
   to = "/renewal/"
   status = 302
 
+# Agent reassignment programme: /a/<token> → the client's private portal.
+# These are the links stored in the "Reassign" tab's "Portal Link" column.
+[[redirects]]
+  from = "/a/*"
+  to = "/assign/?t=:splat"
+  status = 302
+
+# Convenience: the staff dashboard.
+[[redirects]]
+  from = "/myagent"
+  to = "/assign/"
+  status = 302
+
 [[headers]]
   for = "/renewal/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer"
+
+# The reassignment portal shows client policy data — keep it out of frames,
+# out of search engines, and stop the token leaking through the referer header.
+[[headers]]
+  for = "/assign/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    X-Robots-Tag = "noindex, nofollow"

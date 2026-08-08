@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="robots" content="noindex,nofollow"/>
+<title>Your Guardian Portfolio · Ricky Rampersad Branch</title>
+<meta name="description" content="Review your policies and tell us how you would like to be looked after."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#07131f; --bg2:#0b1c2e; --card:#0f2438; --card2:#163553;
+  --teal:#00CFEA; --teal-dk:#0E8C8C; --gold:#efc24b;
+  --text:#edf4fb; --muted:#a9bbcf; --line:rgba(255,255,255,.09);
+  --ok:#3ddc97; --warn:#ffb44d; --bad:#ff7a6b;
+  --shadow:0 22px 60px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:Manrope,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  line-height:1.6; -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(1100px 620px at 12% -8%, rgba(0,207,234,.16), transparent 60%),
+    radial-gradient(900px 520px at 92% 4%, rgba(14,140,140,.20), transparent 62%);
+  background-attachment:fixed;
+}
+.wrap{max-width:960px;margin:0 auto;padding:0 20px}
+a{color:var(--teal)}
+
+/* ---------- top bar ---------- */
+.top{border-bottom:1px solid var(--line);background:rgba(7,19,31,.82);backdrop-filter:blur(12px);
+  position:sticky;top:0;z-index:40}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:14px;padding-bottom:14px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:.2px}
+.brand .dot{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--teal),var(--teal-dk));
+  display:grid;place-items:center;color:#04212b;font-size:14px;font-weight:800;flex:none}
+.brand small{display:block;font-weight:600;font-size:11px;color:var(--muted);letter-spacing:.4px}
+.tophelp{font-size:12.5px;color:var(--muted);text-align:right;line-height:1.45}
+.tophelp b{color:var(--text)}
+
+/* ---------- hero ---------- */
+.hero{padding:52px 0 20px;position:relative}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:11px;font-weight:800;letter-spacing:1.7px;
+  text-transform:uppercase;color:var(--teal);background:rgba(0,207,234,.10);border:1px solid rgba(0,207,234,.28);
+  padding:7px 15px;border-radius:999px}
+h1{font-size:clamp(29px,5.2vw,45px);line-height:1.12;margin:20px 0 0;font-weight:800;letter-spacing:-.9px}
+h1 .hl{background:linear-gradient(120deg,var(--teal),var(--gold));-webkit-background-clip:text;
+  background-clip:text;-webkit-text-fill-color:transparent}
+.lede{font-size:17px;color:var(--muted);max-width:660px;margin:18px 0 0}
+
+/* ---------- manager intro ---------- */
+.manager{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start;
+  background:linear-gradient(160deg,var(--card),var(--bg2));border:1px solid var(--line);
+  border-radius:20px;padding:24px;margin:30px 0 0;box-shadow:var(--shadow)}
+.avatar{width:74px;height:74px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--teal-dk));
+  display:grid;place-items:center;font-size:25px;font-weight:800;color:#04212b;flex:none}
+.manager h3{margin:0;font-size:18px}
+.manager .role{font-size:12px;color:var(--teal);font-weight:700;text-transform:uppercase;letter-spacing:.9px;margin-top:3px}
+.manager p{margin:12px 0 0;font-size:14.5px;color:var(--muted)}
+.manager .sig{margin-top:14px;font-size:13px;color:var(--muted)}
+.manager .sig b{color:var(--text)}
+
+/* ---------- generic card ---------- */
+.card{background:linear-gradient(160deg,var(--card),var(--bg2));border:1px solid var(--line);
+  border-radius:20px;padding:26px;margin:22px 0;box-shadow:var(--shadow)}
+.card h2{margin:0 0 6px;font-size:20px;letter-spacing:-.3px}
+.card .sub{color:var(--muted);font-size:14px;margin:0 0 20px}
+.sectiontag{font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--teal);margin-bottom:9px}
+
+/* ---------- alert ---------- */
+.alert{display:flex;gap:14px;align-items:flex-start;background:rgba(255,180,77,.09);
+  border:1px solid rgba(255,180,77,.32);border-radius:16px;padding:18px 20px;margin:26px 0 0}
+.alert .ico{font-size:21px;line-height:1.2}
+.alert b{color:var(--gold)}
+.alert p{margin:5px 0 0;font-size:14px;color:var(--muted)}
+
+/* ---------- stats ---------- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:0 0 20px}
+.stat{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:14px;padding:15px 17px}
+.stat .k{font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.stat .v{font-size:22px;font-weight:800;margin-top:5px;letter-spacing:-.5px}
+.stat .v small{font-size:13px;color:var(--muted);font-weight:600}
+
+/* ---------- policy table ---------- */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:560px}
+th{background:rgba(255,255,255,.045);text-align:left;padding:12px 14px;font-size:10.5px;
+  letter-spacing:1.1px;text-transform:uppercase;color:var(--muted);font-weight:800;white-space:nowrap}
+td{padding:12px 14px;border-top:1px solid var(--line);vertical-align:top}
+.pill{display:inline-block;font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.pill.ok{background:rgba(61,220,151,.14);color:var(--ok)}
+.pill.warn{background:rgba(255,180,77,.15);color:var(--warn)}
+.pill.bad{background:rgba(255,122,107,.15);color:var(--bad)}
+
+/* ---------- form ---------- */
+.q{margin:0 0 30px}
+.q:last-of-type{margin-bottom:12px}
+.qhead{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
+.qnum{width:27px;height:27px;border-radius:50%;background:var(--teal);color:#04212b;font-weight:800;
+  font-size:12.5px;display:grid;place-items:center;flex:none;margin-top:2px}
+.qtext{font-size:16.5px;font-weight:700;letter-spacing:-.2px}
+.qhint{font-size:13px;color:var(--muted);font-weight:500;margin-top:4px}
+.opts{display:grid;gap:11px}
+.opts.two{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.opt{position:relative;display:flex;gap:13px;align-items:flex-start;background:rgba(255,255,255,.035);
+  border:1.5px solid var(--line);border-radius:14px;padding:15px 17px;cursor:pointer;transition:.16s}
+.opt:hover{border-color:rgba(0,207,234,.45);background:rgba(0,207,234,.055)}
+.opt input{position:absolute;opacity:0;pointer-events:none}
+.box{width:21px;height:21px;border-radius:7px;border:2px solid rgba(255,255,255,.28);flex:none;
+  display:grid;place-items:center;margin-top:1px;transition:.16s;font-size:12px;color:#04212b;font-weight:800}
+.opt input[type=radio]~.box{border-radius:50%}
+.opt input:checked~.box{background:var(--teal);border-color:var(--teal)}
+.opt input:checked~.box:after{content:"✓"}
+.opt:has(input:checked){border-color:var(--teal);background:rgba(0,207,234,.10)}
+.opt .lbl{font-size:14.5px;font-weight:600;line-height:1.45}
+.opt .desc{font-size:12.5px;color:var(--muted);margin-top:3px;font-weight:500}
+
+/* scale */
+.scale{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+.sc{background:rgba(255,255,255,.035);border:1.5px solid var(--line);border-radius:13px;padding:14px 6px;
+  text-align:center;cursor:pointer;transition:.16s;position:relative}
+.sc:hover{border-color:rgba(0,207,234,.45)}
+.sc input{position:absolute;opacity:0;pointer-events:none}
+.sc .n{font-size:20px;font-weight:800}
+.sc .t{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.3;font-weight:600}
+.sc:has(input:checked){border-color:var(--teal);background:rgba(0,207,234,.12)}
+.sc:has(input:checked) .n{color:var(--teal)}
+
+textarea,select,input[type=text]{width:100%;background:rgba(255,255,255,.04);border:1.5px solid var(--line);
+  border-radius:13px;padding:14px 16px;color:var(--text);font-family:inherit;font-size:14.5px;resize:vertical}
+textarea:focus,select:focus,input:focus{outline:none;border-color:var(--teal)}
+select option{background:var(--card2);color:var(--text)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;
+  background:linear-gradient(135deg,var(--teal),var(--teal-dk));color:#04212b;font-weight:800;font-size:16px;
+  border:none;border-radius:999px;padding:17px 30px;cursor:pointer;font-family:inherit;transition:.16s;
+  box-shadow:0 12px 34px rgba(0,207,234,.26)}
+.btn:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(0,207,234,.34)}
+.btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.btn.ghost{background:transparent;border:1.5px solid var(--line);color:var(--text);box-shadow:none;width:auto}
+.consent{display:flex;gap:11px;align-items:flex-start;font-size:12.5px;color:var(--muted);margin:18px 0 20px}
+.consent input{margin-top:3px;accent-color:var(--teal);width:17px;height:17px;flex:none}
+
+/* ---------- timeline ---------- */
+.tl{display:grid;gap:0;margin:6px 0 0}
+.tl .step{display:grid;grid-template-columns:auto 1fr;gap:16px;position:relative;padding-bottom:26px}
+.tl .step:last-child{padding-bottom:0}
+.tl .step:not(:last-child):before{content:"";position:absolute;left:15px;top:34px;bottom:2px;width:2px;
+  background:var(--line)}
+.tl .step.done:not(:last-child):before{background:linear-gradient(var(--teal),rgba(0,207,234,.25))}
+.tl .bub{width:32px;height:32px;border-radius:50%;border:2px solid var(--line);background:var(--bg2);
+  display:grid;place-items:center;font-size:14px;font-weight:800;color:var(--muted);z-index:1}
+.tl .step.done .bub{background:var(--teal);border-color:var(--teal);color:#04212b}
+.tl .step.now .bub{border-color:var(--teal);color:var(--teal);animation:pulse 1.9s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,207,234,.42)}50%{box-shadow:0 0 0 9px rgba(0,207,234,0)}}
+.tl .ttl{font-weight:700;font-size:15px;padding-top:4px}
+.tl .step:not(.done) .ttl{color:var(--muted)}
+.tl .meta{font-size:12.5px;color:var(--muted);margin-top:2px}
+.tl .meta b{color:var(--teal)}
+
+/* ---------- agent card ---------- */
+.agentcard{display:grid;grid-template-columns:auto 1fr;gap:18px;background:rgba(0,207,234,.07);
+  border:1px solid rgba(0,207,234,.28);border-radius:18px;padding:22px}
+.agentcard .av{width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--teal-dk));
+  display:grid;place-items:center;font-size:26px;font-weight:800;color:#04212b;flex:none;overflow:hidden}
+.agentcard .av img{width:100%;height:100%;object-fit:cover}
+.agentcard h3{margin:0;font-size:19px}
+.agentcard .spec{font-size:12px;color:var(--teal);font-weight:800;text-transform:uppercase;letter-spacing:.9px;margin-top:4px}
+.agentcard p{margin:10px 0 0;font-size:14px;color:var(--muted)}
+.agentcard .contact{margin-top:12px;font-size:13.5px;display:flex;flex-wrap:wrap;gap:8px 20px}
+
+/* ---------- states ---------- */
+.center{text-align:center;padding:70px 20px}
+.spinner{width:40px;height:40px;border:3px solid var(--line);border-top-color:var(--teal);
+  border-radius:50%;animation:spin .85s linear infinite;margin:0 auto 20px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hidden{display:none!important}
+.success{text-align:center;padding:16px 0 4px}
+.success .tick{width:76px;height:76px;border-radius:50%;background:rgba(61,220,151,.14);
+  border:2px solid var(--ok);color:var(--ok);font-size:36px;display:grid;place-items:center;margin:0 auto 20px}
+.err{background:rgba(255,122,107,.10);border:1px solid rgba(255,122,107,.34);border-radius:14px;
+  padding:15px 18px;color:var(--bad);font-size:14px;margin:16px 0}
+
+/* ---------- signin ---------- */
+.signin{max-width:430px;margin:8px auto}
+.signin input{text-align:center;font-size:19px;letter-spacing:2.5px;font-weight:700;text-transform:uppercase}
+
+footer{border-top:1px solid var(--line);margin-top:56px;padding:28px 0 44px;font-size:12.5px;color:var(--muted)}
+footer .wrap{display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between}
+
+@media(max-width:640px){
+  .manager{grid-template-columns:1fr}
+  .agentcard{grid-template-columns:1fr}
+  .scale{grid-template-columns:repeat(5,1fr);gap:6px}
+  .sc{padding:12px 3px}
+  .sc .t{display:none}
+  .hero{padding-top:34px}
+}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="wrap">
+  <div class="brand">
+    <div class="dot">RR</div>
+    <div>Ricky Rampersad Branch<small>Guardian Life of the Caribbean</small></div>
+  </div>
+  <div class="tophelp">Need help? <b id="mgrPhone">(868) 678-5921</b><br/>Speak to the Branch Manager directly</div>
+</div></div>
+
+<!-- ============ LOADING ============ -->
+<div id="loading" class="center">
+  <div class="spinner"></div>
+  <div style="color:var(--muted)">Securely loading your portfolio…</div>
+</div>
+
+<!-- ============ SIGN IN (no token) ============ -->
+<div id="signin" class="wrap hidden">
+  <div class="hero">
+    <span class="eyebrow">◆ Private client access</span>
+    <h1>Welcome back.<br/><span class="hl">Let's find your file.</span></h1>
+    <p class="lede">Enter the access code from your email to review your policies and continue.</p>
+  </div>
+  <div class="card signin">
+    <label class="sectiontag" for="code">Your access code</label>
+    <input type="text" id="code" placeholder="e.g. 4f2a9c1b" autocomplete="off"/>
+    <div id="signinErr" class="err hidden"></div>
+    <div style="margin-top:16px"><button class="btn" id="signinBtn">Open my portfolio →</button></div>
+    <p style="font-size:12.5px;color:var(--muted);margin:16px 0 0;text-align:center">
+      Can't find your code? Call <b id="mgrPhone2">(868) 678-5921</b> and we'll help you straight away.</p>
+  </div>
+</div>
+
+<!-- ============ ERROR ============ -->
+<div id="fatal" class="wrap hidden">
+  <div class="card" style="margin-top:50px">
+    <h2>We couldn't open that link</h2>
+    <p class="sub" id="fatalMsg"></p>
+    <button class="btn ghost" onclick="location.href='?'">Try an access code instead</button>
+  </div>
+</div>
+
+<!-- ============ MAIN ============ -->
+<div id="main" class="hidden">
+
+  <div class="wrap hero">
+    <span class="eyebrow">◆ A personal message from your Branch Manager</span>
+    <h1 id="heroTitle">Your policy is active.<br/><span class="hl">Your agent is not.</span></h1>
+    <p class="lede" id="heroLede">
+      Our records show the agent who was servicing your policy is no longer active with us —
+      which means no one has been formally looking after your file. Your cover has not been
+      affected, and we are putting this right today.
+    </p>
+
+    <div class="alert">
+      <div class="ico">⚠️</div>
+      <div>
+        <b>Former servicing agent: <span id="formerAgent">—</span></b>
+        <p>This person is no longer active with the branch. Nothing about your cover has changed —
+           but the service that should come with it has been missing, and that is on us.</p>
+      </div>
+    </div>
+
+    <div class="manager">
+      <div class="avatar">RR</div>
+      <div>
+        <h3 id="mgrName">Ricky Rampersad</h3>
+        <div class="role" id="mgrRole">Branch Manager · Ricky Rampersad Branch</div>
+        <p id="mgrBlurb">
+          I have spent 35 years in this industry, and in that time I have learned that a policy
+          is only as good as the person standing behind it. I would rather you hear this from me
+          than discover it at claim time. Take ninety seconds to tell me how you would like to be
+          looked after, and I will personally make sure the right person is placed with you.
+        </p>
+        <div class="sig">
+          <b id="mgrName2">Ricky Rampersad</b> · <span id="mgrEmail">ricky.rampersad@myguardiangroup.com</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---- progress ---- -->
+  <div class="wrap"><div class="card">
+    <div class="sectiontag">Where things stand</div>
+    <h2>Your progress</h2>
+    <p class="sub">This page updates itself — check back any time using the same link.</p>
+    <div class="tl" id="timeline"></div>
+  </div></div>
+
+  <!-- ---- appointed agent (only once assigned) ---- -->
+  <div class="wrap hidden" id="agentBlock"><div class="card">
+    <div class="sectiontag">Your appointed agent</div>
+    <h2>Meet the person looking after you</h2>
+    <p class="sub">They have already been briefed on everything you told us.</p>
+    <div class="agentcard" id="agentCard"></div>
+  </div></div>
+
+  <!-- ---- portfolio ---- -->
+  <div class="wrap"><div class="card">
+    <div class="sectiontag">On file with us</div>
+    <h2>Your portfolio</h2>
+    <p class="sub">Everything the branch currently holds in your name. If something here looks
+      wrong, tell us in the form below — that is exactly the sort of thing an active agent catches.</p>
+    <div class="stats" id="stats"></div>
+    <div class="tablewrap"><table id="polTable">
+      <thead><tr><th>Policy</th><th>Plan</th><th>Sum assured</th><th>Premium</th><th>Status</th></tr></thead>
+      <tbody id="polBody"></tbody>
+    </table></div>
+    <p style="font-size:12px;color:var(--muted);margin:14px 0 0">
+      Figures are from our branch records and are indicative. Your official Guardian policy
+      documents remain the binding record of your cover.</p>
+  </div></div>
+
+  <!-- ---- the form ---- -->
+  <div class="wrap" id="formBlock"><div class="card">
+    <div class="sectiontag">Ninety seconds</div>
+    <h2>How would you like to be looked after?</h2>
+    <p class="sub">There are no wrong answers. This is the difference between us guessing and us
+      getting it right first time.</p>
+
+    <form id="form">
+      <!-- Q1 -->
+      <div class="q">
+        <div class="qhead"><div class="qnum">1</div><div>
+          <div class="qtext">Who would you like handling your policy from here?</div>
+          <div class="qhint">The one decision that shapes everything else.</div>
+        </div></div>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="preference" value="Appoint a personal agent to me" required/><span class="box"></span><span>
+            <span class="lbl">Appoint a personal agent to me</span>
+            <span class="desc">One named person who knows my file and whom I can call directly.</span></span></label>
+          <label class="opt"><input type="radio" name="preference" value="Handle it in-house at the branch"/><span class="box"></span><span>
+            <span class="lbl">Handle it in-house at the branch</span>
+            <span class="desc">No individual agent — the Branch Service Desk looks after me, overseen by the Branch Manager.</span></span></label>
+          <label class="opt"><input type="radio" name="preference" value="Recommend what is best for me"/><span class="box"></span><span>
+            <span class="lbl">You recommend what's best for me</span>
+            <span class="desc">Look at what I hold and advise me — I'll take your guidance.</span></span></label>
+        </div>
+      </div>
+
+      <!-- Q2 -->
+      <div class="q">
+        <div class="qhead"><div class="qnum">2</div><div>
+          <div class="qtext">Thinking honestly about your previous agent — what did they actually do for you?</div>
+          <div class="qhint">Tick everything that applies. This tells us the standard you're used to, and the standard we have to beat.</div>
+        </div></div>
+        <div class="opts two">
+          <label class="opt"><input type="checkbox" name="pastService" value="Reviewed my policy with me at least once a year"/><span class="box"></span><span class="lbl">Reviewed my policy with me at least once a year</span></label>
+          <label class="opt"><input type="checkbox" name="pastService" value="Helped me when I had a claim"/><span class="box"></span><span class="lbl">Helped me when I had a claim</span></label>
+          <label class="opt"><input type="checkbox" name="pastService" value="Helped me update beneficiaries or personal details"/><span class="box"></span><span class="lbl">Helped me update beneficiaries or my details</span></label>
+          <label class="opt"><input type="checkbox" name="pastService" value="Only contacted me when a payment was due"/><span class="box"></span><span class="lbl">Only contacted me when a payment was due</span></label>
+          <label class="opt"><input type="checkbox" name="pastService" value="Sold me the policy and I never heard from them again"/><span class="box"></span><span class="lbl">Sold me the policy and I never heard from them again</span></label>
+          <label class="opt"><input type="checkbox" name="pastService" value="I am not sure who my agent was"/><span class="box"></span><span class="lbl">I'm not even sure who my agent was</span></label>
+        </div>
+      </div>
+
+      <!-- Q3 -->
+      <div class="q">
+        <div class="qhead"><div class="qnum">3</div><div>
+          <div class="qtext">What matters most to you over the next twelve months?</div>
+          <div class="qhint">We'll match you with someone whose speciality actually fits this.</div>
+        </div></div>
+        <div class="opts two">
+          <label class="opt"><input type="checkbox" name="priorities" value="Making sure my family is properly covered"/><span class="box"></span><span class="lbl">Making sure my family is properly covered</span></label>
+          <label class="opt"><input type="checkbox" name="priorities" value="Understanding what I actually own"/><span class="box"></span><span class="lbl">Understanding what I actually own</span></label>
+          <label class="opt"><input type="checkbox" name="priorities" value="Reducing or managing what I pay"/><span class="box"></span><span class="lbl">Reducing or managing what I pay</span></label>
+          <label class="opt"><input type="checkbox" name="priorities" value="Reviewing my beneficiaries"/><span class="box"></span><span class="lbl">Reviewing my beneficiaries</span></label>
+          <label class="opt"><input type="checkbox" name="priorities" value="Saving and retirement planning"/><span class="box"></span><span class="lbl">Saving &amp; retirement planning</span></label>
+          <label class="opt"><input type="checkbox" name="priorities" value="Health and critical illness cover"/><span class="box"></span><span class="lbl">Health &amp; critical illness cover</span></label>
+          <label class="opt"><input type="checkbox" name="priorities" value="Support if I need to make a claim"/><span class="box"></span><span class="lbl">Support if I need to make a claim</span></label>
+          <label class="opt"><input type="checkbox" name="priorities" value="Just keeping things simple and paid up"/><span class="box"></span><span class="lbl">Just keeping things simple and paid up</span></label>
+        </div>
+      </div>
+
+      <!-- Q4 -->
+      <div class="q">
+        <div class="qhead"><div class="qnum">4</div><div>
+          <div class="qtext">Right now, how confident do you feel about your cover?</div>
+          <div class="qhint">Be blunt. A low score here tells us to call you first.</div>
+        </div></div>
+        <div class="scale">
+          <label class="sc"><input type="radio" name="confidence" value="1"/><div class="n">1</div><div class="t">Not confident</div></label>
+          <label class="sc"><input type="radio" name="confidence" value="2"/><div class="n">2</div><div class="t">Unsure</div></label>
+          <label class="sc"><input type="radio" name="confidence" value="3"/><div class="n">3</div><div class="t">Neutral</div></label>
+          <label class="sc"><input type="radio" name="confidence" value="4"/><div class="n">4</div><div class="t">Fairly good</div></label>
+          <label class="sc"><input type="radio" name="confidence" value="5"/><div class="n">5</div><div class="t">Very confident</div></label>
+        </div>
+      </div>
+
+      <!-- Q5 -->
+      <div class="q">
+        <div class="qhead"><div class="qnum">5</div><div>
+          <div class="qtext">How and when should we reach you?</div>
+          <div class="qhint">Your new agent will work around you, not the other way round.</div>
+        </div></div>
+        <div class="grid2">
+          <select name="contactMethod">
+            <option value="">Preferred method…</option>
+            <option>Phone call</option><option>WhatsApp</option>
+            <option>Email</option><option>Text message</option>
+            <option>In person at the branch</option>
+          </select>
+          <select name="contactTime">
+            <option value="">Best time…</option>
+            <option>Mornings (8am–12pm)</option><option>Afternoons (12pm–5pm)</option>
+            <option>Evenings (after 5pm)</option><option>Weekends</option>
+            <option>Any time</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Q6 -->
+      <div class="q">
+        <div class="qhead"><div class="qnum">6</div><div>
+          <div class="qtext">Anything you'd like your new agent to know before they call?</div>
+          <div class="qhint">Optional — but this is often the most useful box on the page.</div>
+        </div></div>
+        <textarea name="notes" rows="4" placeholder="A change of address, a question you've been meaning to ask, something that went wrong before…"></textarea>
+      </div>
+
+      <label class="consent">
+        <input type="checkbox" name="consent" checked/>
+        <span>I'm happy for the Ricky Rampersad Branch to contact me about my policies using the
+        details above. Your answers are used only to service your file — never sold or shared
+        outside Guardian.</span>
+      </label>
+
+      <div id="formErr" class="err hidden"></div>
+      <button class="btn" type="submit" id="submitBtn">Send this to Ricky →</button>
+      <p style="font-size:12px;color:var(--muted);text-align:center;margin:14px 0 0">
+        You'll get an instant confirmation, and an agent appointed within
+        <b id="promiseDays">3</b> days.</p>
+    </form>
+  </div></div>
+
+  <!-- ---- thank you ---- -->
+  <div class="wrap hidden" id="thanks"><div class="card">
+    <div class="success">
+      <div class="tick">✓</div>
+      <h2 style="font-size:25px">Thank you — that's exactly what we needed.</h2>
+      <p class="sub" style="max-width:520px;margin:12px auto 0">
+        A confirmation is on its way to your inbox with everything you told us. Ricky has been
+        notified personally, and your agent will be appointed within
+        <b id="promiseDays2">3</b> days — then contact you within one working day.</p>
+    </div>
+    <div style="max-width:420px;margin:26px auto 0">
+      <button class="btn ghost" style="width:100%" onclick="location.reload()">View my progress</button>
+    </div>
+  </div></div>
+
+</div>
+
+<footer><div class="wrap">
+  <div>© <span id="yr"></span> Ricky Rampersad Branch · Guardian Life of the Caribbean Limited</div>
+  <div>This is a private servicing page. Please don't forward your personal link.</div>
+</div></footer>
+
+<script>
+/* ================================================================
+   CONFIG — paste your Apps Script /exec URL here after deploying.
+   ================================================================ */
+var CONFIG = {
+  API_URL: "PASTE_YOUR_APPS_SCRIPT_EXEC_URL_HERE",
+};
+
+var $  = function (s) { return document.querySelector(s); };
+var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+var token = new URLSearchParams(location.search).get('t') ||
+            new URLSearchParams(location.search).get('token') || '';
+var DATA = null;
+
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+/* ---------- boot ---------- */
+if (!configured()) {
+  showFatal('This portal has not been connected to the branch system yet. ' +
+            'Paste the Apps Script /exec URL into CONFIG.API_URL.');
+} else if (!token) {
+  show('signin');
+} else {
+  load(token);
+}
+
+function configured() { return CONFIG.API_URL && CONFIG.API_URL.indexOf('script.google.com') !== -1; }
+
+function show(id) {
+  ['loading', 'signin', 'fatal', 'main'].forEach(function (x) {
+    document.getElementById(x).classList.toggle('hidden', x !== id);
+  });
+}
+function showFatal(msg) { $('#fatalMsg').textContent = msg; show('fatal'); }
+
+function load(t) {
+  show('loading');
+  fetch(CONFIG.API_URL + '?token=' + encodeURIComponent(t))
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (!d.ok) { showFatal(d.error || 'That link was not recognised.'); return; }
+      DATA = d; render(d); show('main');
+    })
+    .catch(function () {
+      showFatal('We could not reach the branch system. Please check your connection and try again.');
+    });
+}
+
+/* ---------- sign-in ---------- */
+$('#signinBtn').addEventListener('click', function () {
+  var v = $('#code').value.trim();
+  if (!v) { $('#signinErr').textContent = 'Please enter your access code.';
+            $('#signinErr').classList.remove('hidden'); return; }
+  location.search = '?t=' + encodeURIComponent(v);
+});
+$('#code').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('#signinBtn').click(); });
+
+/* ---------- render ---------- */
+function render(d) {
+  var m = d.manager || {};
+  setText('mgrName', m.name); setText('mgrName2', m.name); setText('mgrEmail', m.email);
+  setText('mgrPhone', m.phone); setText('mgrPhone2', m.phone);
+  if (m.name && m.title) setText('mgrRole', m.title + ' · ' + (m.branch || ''));
+  if (m.years) {
+    $('#mgrBlurb').innerHTML = 'I have spent <b>' + m.years + ' years</b> in this industry, and in ' +
+      'that time I have learned that a policy is only as good as the person standing behind it. ' +
+      'I would rather you hear this from me than discover it at claim time. Take ninety seconds ' +
+      'to tell me how you would like to be looked after, and I will personally make sure the ' +
+      'right person is placed with you.';
+  }
+  if (d.promise) {
+    setText('promiseDays', d.promise.appointDays); setText('promiseDays2', d.promise.appointDays);
+  }
+
+  var first = (d.client && d.client.name || '').split(/[, ]+/)[0] || '';
+  if (first) {
+    first = first.charAt(0) + first.slice(1).toLowerCase();
+    $('#heroTitle').innerHTML = first + ', your policy is active.<br/><span class="hl">Your agent is not.</span>';
+  }
+  setText('formerAgent', d.formerAgent || 'Not recorded');
+
+  /* stats */
+  var t = d.totals || {};
+  $('#stats').innerHTML =
+    stat('Policies on file', t.policies || (d.policies || []).length) +
+    stat('Annual premium', 'TT$' + money(t.premium)) +
+    stat('Total sum assured', t.cover ? 'TT$' + money(t.cover) : '—') +
+    stat('Client number', d.client && d.client.clientNo || '—');
+
+  /* policies */
+  $('#polBody').innerHTML = (d.policies || []).map(function (p) {
+    return '<tr>' +
+      '<td><b>' + esc(p.policy) + '</b></td>' +
+      '<td>' + esc(p.plan || '—') + '</td>' +
+      '<td>' + (p.cover ? 'TT$' + money(p.cover) : '—') + '</td>' +
+      '<td>TT$' + money(p.premium) + '</td>' +
+      '<td><span class="pill ' + statusTone(p.status) + '">' + esc(p.status) + '</span></td>' +
+    '</tr>';
+  }).join('') || '<tr><td colspan="5" style="color:var(--muted)">No policies found on this file.</td></tr>';
+
+  /* timeline */
+  renderTimeline(d.timeline || []);
+
+  /* appointed agent */
+  if (d.appointedAgent && d.appointedAgent.name) {
+    var a = d.appointedAgent;
+    $('#agentCard').innerHTML =
+      '<div class="av">' + (a.photo ? '<img src="' + esc(a.photo) + '" alt=""/>' : esc(initials(a.name))) + '</div>' +
+      '<div><h3>' + esc(a.name) + '</h3>' +
+      '<div class="spec">' + esc(a.speciality || a.role || 'Servicing agent') + '</div>' +
+      (a.profile ? '<p>' + esc(a.profile) + '</p>' : '') +
+      '<div class="contact">' +
+        (a.phone ? '<span>📞 ' + esc(a.phone) + '</span>' : '') +
+        (a.email ? '<span>✉️ <a href="mailto:' + esc(a.email) + '">' + esc(a.email) + '</a></span>' : '') +
+      '</div></div>';
+    $('#agentBlock').classList.remove('hidden');
+  }
+
+  /* already answered? hide the form */
+  if (d.responded) {
+    $('#formBlock').classList.add('hidden');
+    $('#thanks').classList.remove('hidden');
+    $('#thanks').querySelector('h2').textContent = 'We have your answers, thank you.';
+    $('#thanks').querySelector('.sub').innerHTML =
+      'You told us: <b>' + esc(d.preference || '—') + '</b>. ' +
+      (d.appointedAgent && d.appointedAgent.name
+        ? 'Your agent, <b>' + esc(d.appointedAgent.name) + '</b>, has been appointed and briefed.'
+        : 'We are matching you with the right agent now.');
+    $('#thanks').querySelector('.btn').classList.add('hidden');
+  }
+}
+
+function renderTimeline(steps) {
+  var firstPending = steps.findIndex(function (s) { return !s.done; });
+  $('#timeline').innerHTML = steps.map(function (s, i) {
+    var cls = s.done ? 'done' : (i === firstPending ? 'now' : '');
+    var meta = s.done ? (s.at || 'Done') : (i === firstPending ? 'In progress' : 'Waiting');
+    if (s.detail) meta = (s.at ? s.at + ' · ' : '') + '<b>' + esc(s.detail) + '</b>';
+    return '<div class="step ' + cls + '">' +
+      '<div class="bub">' + (s.done ? '✓' : (i + 1)) + '</div>' +
+      '<div><div class="ttl">' + esc(s.label) + '</div><div class="meta">' + meta + '</div></div>' +
+    '</div>';
+  }).join('');
+}
+
+/* ---------- submit ---------- */
+$('#form').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var btn = $('#submitBtn'), err = $('#formErr');
+  err.classList.add('hidden');
+
+  var fd = new FormData(e.target);
+  var payload = {
+    token: token,
+    preference: fd.get('preference') || '',
+    pastService: fd.getAll('pastService'),
+    priorities: fd.getAll('priorities'),
+    confidence: fd.get('confidence') || '',
+    contactMethod: fd.get('contactMethod') || '',
+    contactTime: fd.get('contactTime') || '',
+    notes: fd.get('notes') || '',
+    consent: !!fd.get('consent'),
+  };
+  if (!payload.preference) {
+    err.textContent = 'Please answer question 1 so we know who should look after you.';
+    err.classList.remove('hidden'); return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Sending…';
+  fetch(CONFIG.API_URL, {
+    method: 'POST', redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },  // avoids the CORS preflight
+    body: JSON.stringify(payload),
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (!d.ok) throw new Error(d.error || 'Something went wrong.');
+      $('#formBlock').classList.add('hidden');
+      $('#thanks').classList.remove('hidden');
+      if (d.timeline) renderTimeline(d.timeline);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    })
+    .catch(function (ex) {
+      err.textContent = ex.message + ' Please try again, or call ' +
+        ((DATA && DATA.manager && DATA.manager.phone) || 'the branch') + '.';
+      err.classList.remove('hidden');
+      btn.disabled = false; btn.textContent = 'Send this to Ricky →';
+    });
+});
+
+/* ---------- helpers ---------- */
+function stat(k, v) {
+  return '<div class="stat"><div class="k">' + esc(k) + '</div><div class="v">' + esc(String(v)) + '</div></div>';
+}
+function statusTone(s) {
+  s = String(s || '').toLowerCase();
+  if (/laps|overdue|declin|expire/.test(s)) return 'bad';
+  if (/postpon|incomplete|pending|not proceeded/.test(s)) return 'warn';
+  return 'ok';
+}
+function money(v) {
+  var n = parseFloat(v) || 0;
+  return n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+function initials(n) {
+  var p = String(n || '').trim().split(/\s+/);
+  return ((p[0] || '')[0] || '') + ((p[p.length - 1] || '')[0] || '');
+}
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+function setText(id, v) { var el = document.getElementById(id); if (el && v) el.textContent = v; }
+</script>
+</body>
+</html>
