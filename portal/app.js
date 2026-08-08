@@ -177,6 +177,8 @@ function renderRecruit() {
       <div class="empty"><b>Not yet.</b><p>Discovery opens once your assessment review is done. Six modules over about seven weeks — you will see every session here when it starts.</p></div>
     </section>`}
 
+    ${inDiscovery ? window.SurveyUI.recruitSection(d, STATE.token) : ''}
+
     ${d.scores.length ? `<section>
       <div class="sec-label">Your scores</div>
       <p class="sec-sub">Only scores your manager has released. Nothing is hidden from you that has been decided.</p>
@@ -201,6 +203,10 @@ function renderRecruit() {
     b.onclick = () => openDebrief(b.getAttribute('data-open')));
   $('view').querySelectorAll('[data-mod]').forEach(b =>
     b.onclick = () => { STATE.openModule = STATE.openModule === b.getAttribute('data-mod') ? null : b.getAttribute('data-mod'); renderRecruit(); });
+  if (inDiscovery) window.SurveyUI.wireRecruitSection(d, STATE.token, async () => {
+    STATE.data = (await window.API.recruitDashboard(STATE.token)).data;
+    renderRecruit();
+  });
 }
 
 function recruitModule(m, d) {
@@ -250,7 +256,21 @@ function openDebrief(sessionId) {
   $('modalTitle').textContent = s.title;
   $('modalSub').textContent = m.title + ' · ' + s.duration;
 
+  /* Module 3's survey session is where the market surveys actually happen —
+     put the briefing and the survey itself in front of them here, not buried
+     in another section of the page. */
+  const isSurveySession = sessionId === 's3_3';
+
   $('modalBody').innerHTML = `
+    ${isSurveySession ? `<div class="banner">
+      <b>This session is the market surveys themselves.</b>
+      Read the briefing before your first one — it is built from what the branch learned across 880 of them.
+      Run as many as you can this week, then come back and submit this debrief.
+      <div class="row" style="display:flex;gap:9px;flex-wrap:wrap;margin-top:12px">
+        <button type="button" class="btn teal" id="dbSurvey" style="padding:10px 18px;font-size:12.5px">Run a survey now</button>
+        <button type="button" class="btn ghost" id="dbBrief" style="padding:10px 18px;font-size:12.5px">How to run one</button>
+      </div>
+    </div>` : ''}
     ${readOnly ? `<div class="banner ${prior.reviewed ? 'ok' : ''}">
       ${prior.reviewed
         ? `<b>Reviewed by your manager.</b> ${prior.managerScore != null && SCALE[prior.managerScore] ? 'Scored: ' + esc(SCALE[prior.managerScore][1]) + '.' : ''} ${esc(prior.managerComments || '')}`
@@ -287,6 +307,17 @@ function openDebrief(sessionId) {
       <button type="button" class="btn teal" id="sendDebrief">Submit to my manager</button>
     </div>`}
   `;
+
+  const dbS = $('dbSurvey');
+  if (dbS) dbS.onclick = () => window.SurveyUI.openSurvey({
+    token: STATE.token,
+    onDone: async () => {
+      STATE.data = (await window.API.recruitDashboard(STATE.token)).data;
+      renderRecruit();
+    }
+  });
+  const dbB = $('dbBrief');
+  if (dbB) dbB.onclick = () => window.SurveyUI.openBriefing();
 
   let scaleVals = {};
   $('modalBody').querySelectorAll('[data-scale]').forEach(g => {
@@ -456,6 +487,8 @@ function renderRecruitDetail() {
       }).join('')}</div>
     </section>
 
+    ${window.SurveyUI.managerSection(d.surveys || [])}
+
     ${d.timeline.length ? `<section>
       <div class="sec-label">History</div>
       <ol class="timeline">${d.timeline.slice().reverse().map(e => `<li>
@@ -473,6 +506,7 @@ function renderRecruitDetail() {
   $('view').querySelectorAll('[data-mark]').forEach(b =>
     b.onclick = () => openMark(b.getAttribute('data-mark'), b.getAttribute('data-mod')));
   wireReviewCards();
+  window.SurveyUI.wireManagerSection(d.surveys || []);
 }
 
 function reviewCard(s) {
@@ -593,6 +627,9 @@ function openMark(sessionId, moduleId) {
 /* ============================================================
    MODAL
    ============================================================ */
+window.__openModal = () => openModal();
+window.__closeModal = () => closeModal();
+
 function openModal() {
   $('modal').hidden = false;
   document.body.style.overflow = 'hidden';

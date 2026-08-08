@@ -40,6 +40,7 @@ window.API = {
   markSession(token, p)      { return this.call('markSession', { token, ...p }); },
   assignSession(token, p)    { return this.call('assignSession', { token, ...p }); },
   reviewSubmission(token, p) { return this.call('reviewSubmission', { token, ...p }); },
+  submitSurvey(token, p)     { return this.call('submitSurvey', { token, ...p }); },
   setStage(token, p)         { return this.call('setStage', { token, ...p }); }
 };
 
@@ -103,6 +104,44 @@ const DEMO = (() => {
     r_2: [], r_3: []
   };
 
+  /* Two real-shaped surveys: one strong with a referral, one that missed the ask. */
+  const surveys = {
+    r_1: [
+      { id:'sv_1', submittedAt:ago(6), prospectName:'Myles Mc Lean', score:88, referralNames:2,
+        answers:{ mode:'Physical', unitManager:'Gary', firstName:'Myles', lastName:'Mc Lean',
+          email:'andalemclean05@example.com', phone:'472-6961', occupation:'Protocol Officer, Airport Authority',
+          address:'Paradise West', source:'Friends of family', income:'$85,000 -$120,000', age:'25 - 34',
+          marital:'Single, Divorced, or Widowed', timeKnown:'Less than 2 years', howWell:'Speaking acquaintance',
+          howOften:'Not at all', couldApproach:'Easily', abilityRefer:'Excellent',
+          savingFor:'A house of his own within three years', wordAssoc:'Security',
+          improveOne:'Communication — he never hears from his agent unless a premium is due',
+          ownsIns:'Yes', insTypes:['Health','Motor& Home','Critical Illness'], confidence:'NotConfident',
+          mostImportant:'Affordable premiums', changes:'Yes', communityOpen:'Yes',
+          bestWay:'In-person visits', communityValues:'Security',
+          advice:'Stay present and do not get complacent. Seek the client\u2019s best interest.',
+          qualities:'Be genuine and offer policies that fit the person in front of you.',
+          willRefer:'Yes',
+          referrals:[{name:'Kenneth Savry',mobile:'868 321 2777',relation:'Colleague'},
+                     {name:'Mike London',mobile:'868 388 2105',relation:'Friend'}],
+          insights:'His health premium has gone up three years running and he is already shopping. He has no relationship with his current agent at all. This is a live prospect the day I am contracted.',
+          consent:{name:'Myles Mc Lean',at:ago(6)}, contactOk:true } },
+      { id:'sv_2', submittedAt:ago(11), prospectName:'Reesha Ali', score:58, referralNames:0,
+        answers:{ mode:'Virtual', unitManager:'Gary', firstName:'Reesha', lastName:'Ali',
+          email:'', phone:'765-2859', occupation:'Assistant Teacher', address:'Princes Town',
+          source:'Known through social groups', income:'Under $25,000', age:'Under 25',
+          marital:'Single, Divorced, or Widowed', timeKnown:'Less than 2 years', howWell:'Close friend',
+          howOften:'More than 5 times', couldApproach:'Easily', abilityRefer:'Excellent',
+          savingFor:'A vehicle', wordAssoc:'Security', improveOne:'Quicker bank transfers',
+          ownsIns:'No', mostImportant:'Reliable advice', changes:'No',
+          communityOpen:'Yes', bestWay:'In-person visits', communityValues:'Security',
+          advice:'Build solid relationships with clients', qualities:'Good listener, empathetic',
+          willRefer:'No', referrals:[],
+          insights:'Young, no cover at all, but no urgency yet. Worth revisiting in a year.',
+          consent:{name:'Reesha Ali',at:ago(11)}, contactOk:false } }
+    ],
+    r_2: [], r_3: []
+  };
+
   const scores = {
     r_1: [
       { key:'formA',  label:'Selection Form A', value:43, max:80, band:'Panel route if unchanged', updatedAt:ago(20) },
@@ -154,6 +193,7 @@ const DEMO = (() => {
         reviewed: s.released
       })),
       scores: scores[id] || [],
+      surveys: surveys[id] || [],
       timeline: events[id] || []
     };
   }
@@ -179,6 +219,7 @@ const DEMO = (() => {
               stage: r.stage, daysInStage: daysSince(r.stageEnteredAt), daysSinceStart: daysSince(r.startedAt),
               sessionsDone: sess.filter(s => s.completedAt).length, sessionsTotal: 21,
               awaitingReview: (submissions[id] || []).filter(s => !s.released).length,
+              surveys: (surveys[id] || []).length,
               overdue: sess.filter(s => !s.completedAt && s.dueAt && new Date(s.dueAt) < new Date()).length,
               rmName: r.rmName
             };
@@ -196,6 +237,21 @@ const DEMO = (() => {
           if (row) row.checkpointsDone = body.checkpointsDone || [];
           (events[session.id] = events[session.id] || []).push({
             at: new Date().toISOString(), actor: session.name, type: 'debrief', detail: body.sessionId + ' submitted' });
+          return { ok: true };
+        }
+        case 'submitSurvey': {
+          const a = body.answers || {};
+          (surveys[session.id] = surveys[session.id] || []).unshift({
+            id: 'sv_' + Object.keys(surveys).length + '_' + (surveys[session.id].length + 1),
+            submittedAt: new Date().toISOString(),
+            prospectName: ((a.firstName || '') + ' ' + (a.lastName || '')).trim(),
+            score: body.score,
+            referralNames: (a.referrals || []).filter(r => r && r.name).length,
+            answers: a
+          });
+          (events[session.id] = events[session.id] || []).push({
+            at: new Date().toISOString(), actor: session.name, type: 'survey',
+            detail: 'Market survey — ' + ((a.firstName || '') + ' ' + (a.lastName || '')).trim() + ' (' + body.score + '/100)' });
           return { ok: true };
         }
         case 'markSession': {

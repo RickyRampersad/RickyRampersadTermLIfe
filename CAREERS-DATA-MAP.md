@@ -321,3 +321,98 @@ so the candidate still lands in Head Office's system; you just get the data on t
 - **Induction is stubbed.** The probation stage shows in the stage bar and the tracker holds
   the full contract model, but the portal does not yet show a recruit their API and settled-
   application numbers against the $105k / 25 targets. That is the natural next build.
+
+---
+
+# Part 3 — The Source Market Survey
+
+The Jotform is now rebuilt inside the portal, so a recruit has one place to work
+instead of a form in another tab. Fields and option labels are copied from the live
+form character for character, so history in the existing sheet stays comparable.
+
+## What the 880 existing submissions actually say
+
+I read the whole sheet before building. Six things worth knowing:
+
+| Finding | Number |
+|---|---|
+| **The referral ask fails two times in three** | Only 280 of 880 surveys came back with a single name |
+| A survey with a referral scores higher | 70.2 average vs 59.8 without |
+| **A third have no signed consent** | 572 of 880 carried a signature |
+| The GSAP qualifier block is the least-completed section | ~75%, despite feeding Form A |
+| Warm prospects already sitting in the sheet | **187** considering a change AND uninsured or not confident |
+| …of those, reachable by email | **169** |
+
+That last row is the headline. There are 169 people in that spreadsheet who told one of
+your recruits they were unhappy with their cover and left an email address. Nobody has
+done anything with them.
+
+## What the market told you
+
+- **50% say the first word they think of is "security".** Only 18% said "expense".
+  Lead with security; the price objection is not the first objection.
+- **39% want reliable advice above all**, against 22% who named affordable premiums.
+  But asked what their *community* values, 36% said affordability and 31% security.
+  People buy on advice and assume everyone else buys on price.
+- **43% are already considering a change** to their cover. 20% own nothing at all.
+- **39% still say an in-person visit is the best way to reach them.** WhatsApp: 9%.
+- The prospects being surveyed are not poor — **88% earn over $50,000**, a third over $120,000.
+- Source is dominated by **friends of family (34%)**, then social groups (14%).
+
+## What changed in the rebuild
+
+**The score is visible while they fill it in.** The old form scored 0–161 with no published
+rubric, so nobody knew what a good survey was until after it was graded. The new one shows a
+live meter out of 100. Filling the nine qualifiers moves it from 18 to 45; adding one referral
+with a phone number moves it from 45 to 88. The recruit learns what matters by watching the
+number move.
+
+**The referral ask gets its own step**, with the question written out to be read aloud, the
+branch's own 31% failure rate stated plainly, and the points shown against each name.
+
+**Consent is mandatory.** No consent, no submission. The typed name and timestamp replace the
+signature image.
+
+**The qualifier block moved to the front**, while the recruit is still fresh.
+
+The rubric was validated against all 880 historical submissions: mean 66 against your 63,
+median 72 against 69, correlation r = 0.74. Scores will feel familiar, not arbitrary.
+
+## The emails
+
+On submit, three things happen:
+
+1. **The Unit Manager gets it, BM copied** — prospect, score, referrals, whether they own
+   cover, whether they are considering changes, and the recruit's own read. Warm prospects
+   are flagged in the subject line.
+2. **The prospect gets a thank-you** — but only if they gave an email *and* the recruit ticked
+   that they agreed to be contacted. It thanks them, explains the recruit is in selection,
+   says nothing was sold, and says that if the recruit is accepted they will be in touch
+   properly licensed. It offers an opt-out by reply.
+3. **It lands on the recruit's file** and counts towards the Income Potential Analysis.
+
+> One thing I added on my own judgement: an explicit "they are happy to be contacted"
+> checkbox. Your consent paragraph promises that nothing was solicited — emailing someone
+> afterwards about future contact sits awkwardly against that unless they actually agreed.
+> The checkbox makes the promise true. Untick it and no email is sent.
+
+## The briefing
+
+A "How to run a Source Market Survey" screen, reachable three ways: from the survey section,
+from inside the wizard at any step, and from the Module 3 session itself — which is where the
+surveys actually happen. It carries the opening script word for word, the six statistics
+above, and the three ways recruits lose marks.
+
+## What the manager sees
+
+Per recruit: referral rate, names captured, warm prospects found, warm-and-contactable, then
+live distribution bars for the four market questions, then every survey with its score and a
+**warm** flag. Opening one shows every answer and the consent record.
+
+## Still open
+
+- **Nothing has been done with the 169 warm prospects** already in the old sheet. They
+  predate the consent checkbox, so I would not email them cold — but they are worth a look.
+- **agentmgt.com** — still don't know what it is.
+- **Your other Jotforms** are not wired in. This one is rebuilt natively because it runs
+  dozens of times per recruit. A form used once per recruit is better left as a link.

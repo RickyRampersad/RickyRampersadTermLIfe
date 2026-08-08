@@ -43,7 +43,9 @@ var TABS = {
   progress:    ['recruitId','moduleId','sessionId','assignedAt','dueAt','completedAt','checkpointsDone','managerScore','managerNotes'],
   submissions: ['id','recruitId','moduleId','sessionId','submittedAt','payload','selfConfidence','managerScore','managerComments','reviewedBy','reviewedAt','released'],
   scores:      ['recruitId','key','label','value','max','band','updatedAt'],
-  events:      ['at','recruitId','actor','type','detail']
+  events:      ['at','recruitId','actor','type','detail'],
+  surveys:     ['id','recruitId','submittedAt','prospectName','prospectEmail','prospectPhone',
+                'score','referralNames','warm','contactOk','consentName','thanked','answers']
 };
 var TOKEN_HOURS = 12;
 
@@ -76,6 +78,7 @@ function route(req) {
     case 'managerDashboard':  return apiManagerDashboard(req);
     case 'recruitDetail':     return apiRecruitDetail(req);
     case 'submitDebrief':     return apiSubmitDebrief(req);
+    case 'submitSurvey':      return apiSubmitSurvey(req);
     case 'markSession':       return apiMarkSession(req);
     case 'assignSession':     return apiAssignSession(req);
     case 'reviewSubmission':  return apiReviewSubmission(req);
@@ -230,6 +233,7 @@ function recruitPayload(recruitId) {
   var subs = readAll('submissions').filter(function (s) { return String(s.recruitId) === String(recruitId); });
   var scores = readAll('scores').filter(function (s) { return String(s.recruitId) === String(recruitId); });
   var events = readAll('events').filter(function (e) { return String(e.recruitId) === String(recruitId); });
+  var surveys = readAll('surveys').filter(function (s) { return String(s.recruitId) === String(recruitId); });
 
   return {
     person: { id: person.id, name: person.name, email: person.email, phone: person.phone },
@@ -261,6 +265,14 @@ function recruitPayload(recruitId) {
     }),
     scores: scores.map(function (s) {
       return { key: s.key, label: s.label, value: s.value, max: s.max, band: s.band, updatedAt: iso(s.updatedAt) };
+    }),
+    surveys: surveys.map(function (s) {
+      return {
+        id: s.id, submittedAt: iso(s.submittedAt), prospectName: s.prospectName,
+        score: Number(s.score) || 0, referralNames: Number(s.referralNames) || 0,
+        warm: String(s.warm).toLowerCase() === 'yes',
+        answers: parseJson(s.answers, {})
+      };
     }),
     timeline: events.slice(-40).map(function (e) {
       return { at: iso(e.at), actor: e.actor, type: e.type, detail: e.detail };
@@ -299,6 +311,7 @@ function apiManagerDashboard(req) {
       ref: r.ref, track: r.track, stage: r.stage || 'firstInterview',
       daysInStage: daysSince(r.stageEnteredAt), daysSinceStart: daysSince(r.startedAt),
       sessionsDone: done, sessionsTotal: 21,
+      surveys: readAll('surveys').filter(function (s) { return String(s.recruitId) === String(r.id); }).length,
       awaitingReview: pending, overdue: overdue,
       rmName: r.rmName
     };
@@ -376,6 +389,112 @@ function notifyManagers(recruitPerson, moduleId, sessionId) {
         '<span style="color:#666;font-size:13px">Ricky Rampersad Branch — recruiting portal</span></div>'
     });
   } catch (err) { /* a failed email must never fail the submission */ }
+}
+
+/* ============================================================
+   MARKET SURVEY
+   The recruit submits; the Unit Manager and BM get it the same
+   day; the prospect gets one short thank-you — and only if they
+   gave an email AND agreed to be contacted.
+   ============================================================ */
+function apiSubmitSurvey(req) {
+  var me = caller(req, ['recruit']);
+  var a = req.answers || {};
+  var refs = (a.referrals || []).filter(function (r) { return r && String(r.name || '').trim(); });
+  var warm = (a.changes === 'Yes' && (a.ownsIns === 'No' || a.confidence === 'NotConfident'));
+  var name = ((a.firstName || '') + ' ' + (a.lastName || '')).trim();
+  var id = newId('sv');
+
+  var thanked = 'no';
+  if (a.contactOk && a.email) {
+    try { thankProspect(me, a); thanked = 'yes'; } catch (err) { thanked = 'failed'; }
+  }
+
+  appendRow('surveys', {
+    id: id, recruitId: me.id, submittedAt: new Date(),
+    prospectName: name, prospectEmail: a.email || '', prospectPhone: a.phone || '',
+    score: req.score || 0, referralNames: refs.length,
+    warm: warm ? 'yes' : 'no', contactOk: a.contactOk ? 'yes' : 'no',
+    consentName: (a.consent && a.consent.name) || '', thanked: thanked,
+    answers: JSON.stringify(a)
+  });
+
+  logEvent(me.id, me.name, 'survey', 'Market survey — ' + name + ' (' + (req.score || 0) + '/100)'
+    + (refs.length ? ', ' + refs.length + ' referral' + (refs.length > 1 ? 's' : '') : ''));
+
+  try { notifySurvey(me, a, req.score || 0, refs, warm); } catch (err) {}
+  return { ok: true, id: id, thanked: thanked };
+}
+
+/* The thank-you the prospect receives. Deliberately short, says exactly
+   what happens next, promises nothing, and sells nothing — the consent
+   they signed says no products were offered, and this must stay true. */
+function thankProspect(recruitPerson, a) {
+  var first = String(a.firstName || '').trim() || 'there';
+  var recruit = recruitPerson.name;
+  MailApp.sendEmail({
+    to: String(a.email).trim(),
+    subject: 'Thank you for speaking with ' + recruit,
+    htmlBody:
+      '<div style="font-family:Arial,sans-serif;max-width:560px;font-size:15px;line-height:1.7;color:#222">' +
+      '<div style="background:#07131f;color:#fff;padding:16px 20px;border-radius:10px 10px 0 0">' +
+        '<div style="font-size:11px;letter-spacing:2px;color:#00CFEA;text-transform:uppercase">Ricky Rampersad Branch</div>' +
+        '<div style="font-size:18px;font-weight:bold;margin-top:3px">Guardian Life of the Caribbean</div></div>' +
+      '<div style="border:1px solid #e2e2e2;border-top:none;padding:20px;border-radius:0 0 10px 10px">' +
+      'Dear ' + first + ',<br><br>' +
+      'Thank you for taking the time to speak with <b>' + recruit + '</b> and for sharing your thoughts on ' +
+      'insurance and financial planning. That conversation was part of our selection process — ' + recruit +
+      ' is currently being considered for an advisor role with our Chaguanas branch, and the exercise is ' +
+      'designed to show us how they handle a real conversation with someone who knows them.<br><br>' +
+      'Nothing was being sold to you, and nothing is being sold to you now.<br><br>' +
+      'You indicated you would be happy to hear from us. If ' + recruit + ' completes the process and we ' +
+      'accept them, they will be in touch — properly licensed, and able to actually advise you rather than ' +
+      'just ask questions. If that takes a while, it is because the process is thorough on purpose.<br><br>' +
+      'If you would rather we did not contact you, simply reply to this email and we will remove your details.<br><br>' +
+      'With thanks,<br><b>' + BRANCH_NAME + '</b><br>' + bmEmail() +
+      '</div></div>'
+  });
+}
+
+function notifySurvey(recruitPerson, a, score, refs, warm) {
+  var people = readAll('people');
+  var rm = people.filter(function (p) { return String(p.id) === String(recruitPerson.managerId); })[0];
+  var bmAddr = bmEmail();
+  var to = rm && rm.email ? String(rm.email) : bmAddr;
+  var cc = rm && rm.email ? bmAddr : '';
+  var name = ((a.firstName || '') + ' ' + (a.lastName || '')).trim();
+
+  MailApp.sendEmail({
+    to: to, cc: cc,
+    subject: '[Survey] ' + recruitPerson.name + ' — ' + name + ' — ' + score + '/100'
+             + (warm ? ' — WARM' : ''),
+    htmlBody:
+      '<div style="font-family:Arial,sans-serif;max-width:600px;font-size:14px;line-height:1.65">' +
+      '<b>' + recruitPerson.name + '</b> submitted a market survey.<br><br>' +
+      '<table style="border-collapse:collapse">' +
+      row('Prospect', name + (a.occupation ? ' — ' + a.occupation : '')) +
+      row('Contact', (a.phone || '—') + (a.email ? ' · ' + a.email : '')) +
+      row('Score', score + '/100') +
+      row('Referrals', refs.length ? refs.map(function (r) {
+        return r.name + (r.mobile ? ' (' + r.mobile + ')' : ''); }).join(', ') : 'none') +
+      row('Owns cover', (a.ownsIns || '—') + (a.confidence ? ' · ' + a.confidence : '')) +
+      row('Considering changes', a.changes || '—') +
+      '</table>' +
+      (warm ? '<div style="margin-top:14px;padding:11px 14px;background:#fff6e6;border-left:3px solid #dca530;' +
+              'border-radius:4px"><b>Warm prospect.</b> Considering a change, and either uninsured or not ' +
+              'confident in what they have.' +
+              (a.contactOk && a.email ? ' They agreed to contact and have been thanked.' : ' No contact consent on file.') +
+              '</div>' : '') +
+      (a.insights ? '<div style="margin-top:14px;padding:12px 14px;background:#f6f8fa;border-left:3px solid #00A8C5;' +
+        'border-radius:4px"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#666;' +
+        'margin-bottom:5px">Their read of it</div>' + a.insights + '</div>' : '') +
+      '</div>'
+  });
+}
+
+function row(k, v) {
+  return '<tr><td style="padding:5px 14px 5px 0;color:#666;white-space:nowrap;vertical-align:top">' + k +
+         '</td><td style="padding:5px 0;color:#111"><b>' + (v || '—') + '</b></td></tr>';
 }
 
 // ============ MANAGER ACTIONS ============
