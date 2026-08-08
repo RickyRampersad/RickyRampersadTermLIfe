@@ -13,7 +13,7 @@
 #
 # Output:
 #   dist/            the folder to publish
-#   contracting.zip  drag this into Netlify
+#   branch-website.zip   drag this into Netlify
 #
 set -euo pipefail
 
@@ -22,7 +22,7 @@ DIST="$ROOT/dist"
 
 # Holds the whole site, not only the contracting pages — a Netlify drop
 # replaces everything at the domain, so the bundle has to carry everything.
-ZIP="$ROOT/contracting.zip"
+ZIP="$ROOT/branch-website.zip"
 
 echo "→ Cleaning dist/ and any earlier bundle"
 rm -rf "$DIST"

@@ -100,7 +100,7 @@ pins the publish directory, so that part is already handled.
 ./build.sh
 ```
 
-produces `dist/` and `contracting.zip`. Drop either onto
+produces `dist/` and `branch-website.zip`. Drop either onto
 <https://app.netlify.com/drop>. Both hold the whole site — a Netlify drop
 replaces everything at the domain, not just the contracting pages.
 
