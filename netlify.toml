@@ -1,4 +1,13 @@
-# Netlify configuration for the renewal portal.
+# Netlify configuration for the Ricky Rampersad Branch site.
+
+# build.sh assembles dist/ from the pages that should be public. Publishing
+# dist/ rather than the repo root keeps the Apps Script source, the setup
+# docs, the DNS record backup and the fleet register off the web — a
+# git-connected deploy and a drag-and-drop deploy then serve exactly the
+# same files.
+[build]
+  command = "./build.sh"
+  publish = "dist"
 
 # Short personal links: /r/<token> → renewal portal with the token attached.
 # These are the links stored in the Google Sheet's "Portal Link" column.
