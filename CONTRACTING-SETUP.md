@@ -50,8 +50,18 @@ Everyone signs in with an **agent number and a passcode**, both kept in the
 shows them to you once. Change any passcode by typing over it in the Access
 tab; set **Active** to `No` to switch a login off without deleting it.
 
-Agents get their number and passcode automatically when you invite them —
-both are in the invitation email, alongside the link.
+Agents get their number and passcode two ways:
+
+- **You invite them** from the dashboard — both details are in the invitation
+  email, alongside the link.
+- **They sign themselves up.** On the sign-in screen there is *I'm new
+  here — get my agent number*: name, email and mobile, and they are issued a
+  number and passcode on the spot, shown on screen and emailed. You get a
+  notification and they appear in your pipeline at 0%, like anyone else.
+
+Signing up approves nothing — it is a way into the paperwork, not into a
+contract. If someone you do not know registers, set **Active** to `No` on
+their row in the Access tab and they cannot sign in again.
 
 Signing in as Ricky or Kamla also unlocks the dashboard, so nobody has to
 know the admin key. It is handed to the browser only after a correct

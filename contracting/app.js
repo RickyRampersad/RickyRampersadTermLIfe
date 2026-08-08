@@ -69,7 +69,7 @@
   /* ===================== copy ===================== */
 
   var T = {
-    brandSub: { es: 'Contratación de agentes', en: 'Agent contracting' },
+    brandSub: { es: 'Firme una vez. Empiece a vender.', en: 'Sign once. Start selling.' },
     saved: { es: 'Guardado', en: 'Saved' },
     next: { es: 'Continuar', en: 'Continue' },
     back: { es: 'Atrás', en: 'Back' },
@@ -113,6 +113,35 @@
       en: 'No sign-in is configured yet, so you can go straight to the application.',
     },
     continueAnyway: { es: 'Continuar a la solicitud', en: 'Continue to the application' },
+
+    tagline: { es: 'Firme una vez. Empiece a vender.', en: 'Sign once. Start selling.' },
+    orNew: { es: 'o', en: 'or' },
+    newHere: { es: 'Soy nuevo — quiero mi número de agente', en: "I'm new here — get my agent number" },
+    haveNumber: { es: 'Ya tengo un número', en: 'I already have a number' },
+    joinTitle: { es: 'Vamos a darle su número', en: "Let's get you a number" },
+    joinSub: {
+      es: 'Tres datos y su número de agente es suyo en segundos.',
+      en: 'Three details and your agent number is yours in seconds.',
+    },
+    fullName: { es: 'Nombre completo', en: 'Full name' },
+    email: { es: 'Correo electrónico', en: 'Email' },
+    mobile: { es: 'Teléfono móvil', en: 'Mobile' },
+    getNumber: { es: 'Obtener mi número de agente', en: 'Get my agent number' },
+    working: { es: 'Un momento…', en: 'One moment…' },
+    joinNeed: { es: 'Escriba su nombre y su correo electrónico.', en: 'Enter your name and your email.' },
+    joinBadEmail: { es: 'Revise su correo electrónico.', en: 'Check your email address.' },
+    joinFailed: { es: 'No pudimos crearlo ahora mismo. Intente de nuevo.', en: "We couldn't set that up just now. Try again." },
+    issuedTitle: { es: '¡Listo, {name}!', en: "You're in, {name}!" },
+    issuedBack: { es: 'Ya tenía un número — aquí está.', en: 'You already had a number — here it is.' },
+    issuedSub: {
+      es: 'Guarde estos datos. Los necesita cada vez que entre. También se los enviamos por correo.',
+      en: 'Keep these. You need them every time you sign in. We have emailed them to you as well.',
+    },
+    issuedGo: { es: 'Comenzar mi contratación', en: 'Start my contracting' },
+    issuedFoot: {
+      es: '¿Perdió su código? Escriba a {email} y se lo reenviamos.',
+      en: 'Lost your passcode? Email {email} and we will resend it.',
+    },
 
     /* carrier choice */
     pickTitle: { es: '¿Con quién desea contratarse?', en: 'Who are you applying to contract with?' },
@@ -1505,10 +1534,14 @@
     location.reload();
   }
 
+  var SCREENS = ['signin', 'join', 'issued', 'choose'];
+
   function showScreen(which) {
     document.getElementById('gate').style.display = which === 'wizard' ? 'none' : '';
-    document.getElementById('signincard').style.display = which === 'signin' ? '' : 'none';
-    document.getElementById('choosecard').style.display = which === 'choose' ? '' : 'none';
+    SCREENS.forEach(function (id) {
+      var node = document.getElementById(id === 'choose' ? 'choosecard' : id === 'signin' ? 'signincard' : id + 'card');
+      if (node) node.style.display = which === id ? '' : 'none';
+    });
     document.getElementById('wizard').style.display = which === 'wizard' ? '' : 'none';
     document.getElementById('footbar').style.display = which === 'wizard' ? '' : 'none';
   }
@@ -1516,6 +1549,8 @@
   function renderSignIn() {
     showScreen('signin');
     var foot = document.getElementById('signfoot');
+    document.getElementById('newhere').style.display = CONFIG.API_URL ? '' : 'none';
+    document.querySelector('.orline').style.display = CONFIG.API_URL ? '' : 'none';
     if (CONFIG.API_URL) {
       foot.innerHTML = t('noAccount', {
         email: '<a href="mailto:' + esc(CONFIG.RECRUITER_EMAIL) + '">' + esc(CONFIG.RECRUITER_EMAIL) + '</a>',
@@ -1571,6 +1606,70 @@
       })
       .catch(function () { err.textContent = t('signOffline'); })
       .then(function () { btn.disabled = false; btn.textContent = t('signIn'); });
+  }
+
+  /* ===================== a new agent signing themselves up ===================== */
+
+  function renderJoin() {
+    showScreen('join');
+    document.getElementById('joinerr').textContent = '';
+    document.getElementById('joinname').focus();
+  }
+
+  function doJoin(e) {
+    if (e) e.preventDefault();
+    var name = document.getElementById('joinname').value.trim();
+    var email = document.getElementById('joinemail').value.trim();
+    var mobile = document.getElementById('joinmobile').value.trim();
+    var err = document.getElementById('joinerr');
+    var btn = document.getElementById('joinbtn');
+
+    if (!name || !email) { err.textContent = t('joinNeed'); return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { err.textContent = t('joinBadEmail'); return; }
+
+    err.textContent = '';
+    btn.disabled = true;
+    btn.textContent = t('working');
+
+    post({ action: 'register', name: name, email: email, mobile: mobile, lang: state.lang })
+      .then(function (res) {
+        if (!res || !res.ok) {
+          err.textContent = res && res.error === 'email' ? t('joinBadEmail') : t('joinFailed');
+          return;
+        }
+        renderIssued(res, name);
+      })
+      .catch(function () { err.textContent = t('signOffline'); })
+      .then(function () { btn.disabled = false; btn.textContent = t('getNumber'); });
+  }
+
+  /** Show the number and passcode once, big, before they go any further. */
+  function renderIssued(res, typedName) {
+    showScreen('issued');
+    document.getElementById('issuedtitle').textContent =
+      t('issuedTitle', { name: firstWord(res.name || typedName) });
+    document.getElementById('issuedsub').textContent =
+      (res.returning ? t('issuedBack') + ' ' : '') + t('issuedSub');
+
+    document.getElementById('creds').innerHTML =
+      '<div class="pair"><span class="k">' + esc(t('agentNo')) + '</span>' +
+      '<span class="v">' + esc(res.agentNumber) + '</span></div>' +
+      '<div class="pair"><span class="k">' + esc(t('passcode')) + '</span>' +
+      '<span class="v">' + esc(res.passcode) + '</span></div>';
+
+    document.getElementById('issuedfoot').innerHTML = t('issuedFoot', {
+      email: '<a href="mailto:' + esc(CONFIG.RECRUITER_EMAIL) + '">' + esc(CONFIG.RECRUITER_EMAIL) + '</a>',
+    });
+
+    var go = document.getElementById('issuedgo');
+    go.textContent = t('issuedGo');
+    go.onclick = function () {
+      /* Straight in — they have just proved the email is theirs, and the
+         passcode is on screen and in their inbox for next time. */
+      document.getElementById('agentno').value = res.agentNumber;
+      document.getElementById('passcode').value = res.passcode;
+      doSignIn();
+    };
   }
 
   /* ===================== who you are, and who you're contracting with ===================== */
@@ -1693,6 +1792,8 @@
   function redraw() {
     if (document.getElementById('wizard').style.display !== 'none') render();
     else if (document.getElementById('choosecard').style.display !== 'none') renderChoose();
+    else if (document.getElementById('joincard').style.display !== 'none') renderJoin();
+    else if (document.getElementById('issuedcard').style.display !== 'none') return; // holding a passcode on screen
     else renderSignIn();
   }
 
@@ -1733,6 +1834,9 @@
     });
 
     document.getElementById('signform').addEventListener('submit', doSignIn);
+    document.getElementById('joinform').addEventListener('submit', doJoin);
+    document.getElementById('newhere').addEventListener('click', renderJoin);
+    document.getElementById('backtosignin').addEventListener('click', renderSignIn);
     document.getElementById('agentno').addEventListener('input', function () {
       document.getElementById('signerr').textContent = '';
     });

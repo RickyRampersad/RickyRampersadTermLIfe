@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Contracting Pipeline | Ricky Rampersad Branch</title>
 <meta name="robots" content="noindex" />
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2314395F'/%3E%3Ctext x='16' y='22' font-family='Helvetica,Arial' font-size='14' font-weight='bold' fill='white' text-anchor='middle'%3ERR%3C/text%3E%3C/svg%3E" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2040%2040%27%3E%3Crect%20width%3D%2740%27%20height%3D%2740%27%20rx%3D%2711%27%20fill%3D%27%2314395F%27%2F%3E%3Cpath%20d%3D%27M13%209.5h8.6l6.4%206.4V30a2%202%200%200%201-2%202H13a2%202%200%200%201-2-2V11.5a2%202%200%200%201%202-2z%27%20fill%3D%27%23ffffff%27%2F%3E%3Cpath%20d%3D%27M14.4%2027.8c2.1-2.9%203.4%201.1%205.2-1.1%201.6-1.9%202.3%202.4%205.9-1.9%27%20stroke%3D%27%23F2B33D%27%20stroke-width%3D%272.1%27%20stroke-linecap%3D%27round%27%20fill%3D%27none%27%2F%3E%3C%2Fsvg%3E" />
 <style>
   :root{
     --navy-900:#0E2A47; --navy-800:#14395F; --navy-700:#1C4E80;
@@ -24,7 +24,7 @@
   header{background:linear-gradient(135deg,var(--navy-900),var(--navy-700));color:#fff;padding:22px 0}
   .nav{display:flex;align-items:center;gap:14px}
   .logo{display:flex;align-items:center;gap:11px;font-weight:800;color:#fff;text-decoration:none;margin-right:auto}
-  .logo-badge{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.16);display:grid;place-items:center;font-size:.85rem}
+  .logo-badge{width:38px;height:38px;border-radius:11px;overflow:hidden}
   .logo small{display:block;font-size:.72rem;font-weight:600;color:#BFD9E8}
 
   /* gate */
@@ -37,7 +37,8 @@
 
   main{padding:26px 0 70px;display:none}
   .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
-  .stat{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;
+        animation:riseIn .4s cubic-bezier(.2,.7,.3,1) both}
   .stat b{display:block;font-size:1.7rem;font-weight:800;line-height:1.1;letter-spacing:-.02em}
   .stat span{font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
   .stat.warn b{color:var(--gold-ink)} .stat.bad b{color:var(--red)} .stat.good b{color:var(--green)}
@@ -58,11 +59,14 @@
 
   .rows{display:grid;gap:10px}
   .row{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px;display:grid;
-       grid-template-columns:1fr auto;gap:12px;align-items:center}
+       grid-template-columns:1fr auto;gap:12px;align-items:center;transition:transform .16s,box-shadow .16s;
+       animation:riseIn .4s cubic-bezier(.2,.7,.3,1) both}
+  .row:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(14,42,71,.09)}
   .who b{font-size:1rem;display:block}
   .who span{font-size:.8rem;color:var(--muted)}
   .meter{height:7px;background:#E9EFF5;border-radius:999px;overflow:hidden;margin-top:9px;max-width:320px}
-  .meter i{display:block;height:100%;background:linear-gradient(90deg,var(--teal-500),var(--gold))}
+  .meter i{display:block;height:100%;transition:width .6s cubic-bezier(.2,.7,.3,1);
+           background:linear-gradient(90deg,var(--teal-500),var(--gold))}
   .tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
   .tag{font-size:.72rem;font-weight:700;padding:4px 10px;border-radius:999px;background:#EEF3F8;color:var(--muted)}
   .tag.status-submitted{background:var(--green-50);color:var(--green)}
@@ -89,15 +93,43 @@
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .toast.bad{background:var(--red)}
   .note{background:#FFF8E8;border:1px solid #F3DDA6;border-radius:12px;padding:13px 15px;font-size:.85rem;color:#6B4E12;margin-bottom:18px}
+
+  .logo-badge .mark-svg,.crest .mark-svg{width:100%;height:100%;display:block}
+
+  /* ---------- motion ---------- */
+  /* A slow drift behind the sign-in so the page is never quite still. */
+  .aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+  .aurora::before,.aurora::after{content:"";position:absolute;border-radius:50%;filter:blur(70px);opacity:.5}
+  .aurora::before{width:60vw;height:60vw;left:-18vw;top:-22vw;background:radial-gradient(circle,#12A5A0 0%,transparent 70%);
+                  animation:drift1 26s ease-in-out infinite}
+  .aurora::after{width:52vw;height:52vw;right:-16vw;bottom:-24vw;background:radial-gradient(circle,#F2B33D 0%,transparent 70%);
+                 opacity:.32;animation:drift2 32s ease-in-out infinite}
+  @keyframes drift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(8vw,6vw) scale(1.12)}}
+  @keyframes drift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-7vw,-5vw) scale(1.1)}}
+
+  @keyframes riseIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .rise{animation:riseIn .5s cubic-bezier(.2,.7,.3,1) both}
+  .rise-1{animation-delay:.05s}.rise-2{animation-delay:.12s}.rise-3{animation-delay:.19s}
+  .rise-4{animation-delay:.26s}.rise-5{animation-delay:.33s}
+
+  /* The progress bar keeps a slow sheen moving over it while work is open. */
+  @keyframes sheen{from{background-position:0 0}to{background-position:200% 0}}
+
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;
+                         transition-duration:.001ms!important}
+    .aurora{display:none}
+  }
 </style>
 </head>
 <body>
+<div class="aurora" aria-hidden="true"></div>
 
 <header>
   <div class="wrap nav">
     <a class="logo" href="../index.html">
-      <span class="logo-badge">RR</span>
-      <span>Contracting pipeline<small>VUMI® Producer/Agent packets</small></span>
+      <span class="logo-badge"><svg class="mark-svg" viewBox="0 0 40 40" fill="none" aria-hidden="true"><defs><linearGradient id="mkc" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#14395F"/><stop offset="100%" stop-color="#0E8C8C"/></linearGradient></defs><rect width="40" height="40" rx="11" fill="url(#mkc)"/><path d="M13 9.5h8.6l6.4 6.4V30a2 2 0 0 1-2 2H13a2 2 0 0 1-2-2V11.5a2 2 0 0 1 2-2z" fill="#fff"/><path d="M21.6 9.5 28 15.9h-6.4z" fill="#B9D8E4"/><rect x="14.4" y="18.4" width="8.6" height="1.5" rx=".75" fill="#A9BFD1"/><rect x="14.4" y="21.6" width="11.2" height="1.5" rx=".75" fill="#A9BFD1"/><path d="M14.4 27.8c2.1-2.9 3.4 1.1 5.2-1.1 1.6-1.9 2.3 2.4 5.9-1.9" stroke="#F2B33D" stroke-width="2.1" stroke-linecap="round"/></svg></span>
+      <span>Contracting<small>Pipeline · Ricky Rampersad Branch</small></span>
     </a>
     <button class="btn btn-gold" id="invitebtn" type="button" style="display:none">+ Invite an agent</button>
   </div>

@@ -6,7 +6,7 @@
 <title>Agent Contracting | Ricky Rampersad Branch</title>
 <meta name="description" content="Complete your agent contracting in one place — the application, beneficiary designation and W-8BEN, filled onto the official forms and ready to sign and send." />
 <meta name="robots" content="noindex" />
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2314395F'/%3E%3Ctext x='16' y='22' font-family='Helvetica,Arial' font-size='14' font-weight='bold' fill='white' text-anchor='middle'%3ERR%3C/text%3E%3C/svg%3E" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2040%2040%27%3E%3Crect%20width%3D%2740%27%20height%3D%2740%27%20rx%3D%2711%27%20fill%3D%27%2314395F%27%2F%3E%3Cpath%20d%3D%27M13%209.5h8.6l6.4%206.4V30a2%202%200%200%201-2%202H13a2%202%200%200%201-2-2V11.5a2%202%200%200%201%202-2z%27%20fill%3D%27%23ffffff%27%2F%3E%3Cpath%20d%3D%27M14.4%2027.8c2.1-2.9%203.4%201.1%205.2-1.1%201.6-1.9%202.3%202.4%205.9-1.9%27%20stroke%3D%27%23F2B33D%27%20stroke-width%3D%272.1%27%20stroke-linecap%3D%27round%27%20fill%3D%27none%27%2F%3E%3C%2Fsvg%3E" />
 <style>
   :root{
     --navy-900:#0E2A47; --navy-800:#14395F; --navy-700:#1C4E80;
@@ -29,7 +29,7 @@
   header{position:sticky;top:0;z-index:60;background:rgba(244,248,251,.94);backdrop-filter:blur(14px);border-bottom:1px solid rgba(20,57,95,.09)}
   .nav{display:flex;align-items:center;gap:14px;height:62px}
   .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:.98rem;color:var(--navy-900);text-decoration:none;margin-right:auto}
-  .logo-badge{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,var(--navy-800),var(--teal-600));display:grid;place-items:center;color:#fff;font-weight:800;font-size:.85rem;flex:none}
+  .logo-badge{width:36px;height:36px;border-radius:11px;flex:none;overflow:hidden}
   .logo small{display:block;font-size:.7rem;font-weight:600;color:var(--muted)}
   .langtoggle{display:flex;background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px;flex:none}
   .langtoggle button{border:none;background:none;font:inherit;font-size:.78rem;font-weight:700;color:var(--muted);padding:5px 12px;border-radius:999px;cursor:pointer}
@@ -39,17 +39,21 @@
   @media(max-width:620px){.savechip{display:none}}
 
   .progressbar{height:5px;background:#E3EBF3}
-  .progressbar span{display:block;height:100%;background:linear-gradient(90deg,var(--teal-500),var(--gold));width:0;transition:width .4s ease}
+  .progressbar span{display:block;height:100%;width:0;transition:width .5s cubic-bezier(.2,.7,.3,1);
+    background:linear-gradient(90deg,var(--teal-500),var(--gold),var(--teal-500));background-size:200% 100%;
+    animation:sheen 3.5s linear infinite}
 
   /* ---------- layout ---------- */
   main{padding:26px 0 120px}
   .stepnav{display:flex;gap:7px;overflow-x:auto;padding-bottom:12px;margin-bottom:18px;scrollbar-width:thin}
-  .stepnav button{flex:none;border:1px solid var(--line);background:#fff;color:var(--muted);font:inherit;font-size:.78rem;font-weight:700;padding:7px 13px;border-radius:999px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px}
+  .stepnav button{flex:none;transition:transform .15s,border-color .15s;border:1px solid var(--line);background:#fff;color:var(--muted);font:inherit;font-size:.78rem;font-weight:700;padding:7px 13px;border-radius:999px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px}
+  .stepnav button:hover{transform:translateY(-1px);border-color:#B9CEE2}
   .stepnav button[aria-current="true"]{background:var(--navy-800);border-color:var(--navy-800);color:#fff}
   .stepnav button .tick{color:var(--green);font-size:.9rem;line-height:1}
   .stepnav button[aria-current="true"] .tick{color:#8BE6B4}
 
-  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:26px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:26px;
+        animation:riseIn .45s cubic-bezier(.2,.7,.3,1) both}
   @media(max-width:620px){.card{padding:20px 16px;border-radius:var(--radius-md)}}
   .card h1{font-size:clamp(1.35rem,3.4vw,1.75rem);font-weight:800;letter-spacing:-.02em;line-height:1.2}
   .card .lead{color:var(--muted);margin-top:8px;font-size:.95rem}
@@ -161,7 +165,7 @@
   .gatecard{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:38px 34px}
   @media(max-width:560px){.gatecard{padding:28px 20px}}
   .gatecard .crest{width:60px;height:60px;border-radius:18px;margin:0 auto 18px;
-                   background:linear-gradient(135deg,var(--navy-800),var(--teal-600));
+                   
                    display:grid;place-items:center;color:#fff;font-weight:800;font-size:1.15rem}
   .gatecard h1{font-size:clamp(1.45rem,4vw,1.95rem);font-weight:800;letter-spacing:-.02em;line-height:1.18;text-align:center}
   .gatecard .sub{color:var(--muted);font-size:.96rem;text-align:center;margin-top:10px}
@@ -173,6 +177,22 @@
   .signerr{color:var(--red);font-size:.85rem;font-weight:600;min-height:20px;text-align:center}
   .gatefoot{text-align:center;font-size:.85rem;color:var(--muted);margin-top:20px;line-height:1.6}
   .gatefoot a{color:var(--teal-600)}
+  .tagline{text-align:center;margin-top:8px;font-size:.9rem;font-weight:800;letter-spacing:.02em;
+           background:linear-gradient(90deg,var(--teal-600),var(--gold));-webkit-background-clip:text;
+           background-clip:text;color:transparent}
+  .orline{display:flex;align-items:center;gap:12px;margin:20px 0 14px;color:var(--muted);font-size:.78rem;
+          font-weight:700;letter-spacing:.09em;text-transform:uppercase}
+  .orline::before,.orline::after{content:"";flex:1;height:1px;background:var(--line)}
+  .signform input.plain{font-size:.98rem;font-weight:500;letter-spacing:normal;text-align:left;text-transform:none}
+  .linkbtn{border:none;background:none;font:inherit;font-size:.85rem;font-weight:700;color:var(--teal-600);cursor:pointer;padding:0}
+  .tick{width:56px;height:56px;border-radius:50%;margin:0 auto 16px;display:grid;place-items:center;
+        background:var(--teal-50);color:var(--teal-600);font-size:1.6rem;font-weight:800;
+        box-shadow:0 0 0 6px rgba(18,165,160,.12)}
+  .creds{background:var(--teal-50);border:1px solid #CBEAE8;border-radius:16px;padding:20px;margin:22px 0 18px}
+  .creds .pair{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0}
+  .creds .pair + .pair{border-top:1px solid rgba(14,140,140,.14)}
+  .creds .k{font-size:.78rem;font-weight:700;color:var(--muted)}
+  .creds .v{font-size:1.35rem;font-weight:800;letter-spacing:.14em;color:var(--navy-900)}
 
   .whoami{display:flex;align-items:center;gap:11px;background:var(--teal-50);border:1px solid #CBEAE8;
           border-radius:14px;padding:13px 16px;margin-bottom:22px}
@@ -198,6 +218,7 @@
   .pick .soonchip{font-size:.7rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
                   background:#EEF3F8;color:var(--muted);padding:5px 10px;border-radius:999px;flex:none}
 
+  .full{width:100%}
   .center{text-align:center}
   .hero-start{text-align:center;padding:8px 0 4px}
   .hero-start .badge{display:inline-flex;align-items:center;gap:8px;background:var(--teal-50);border:1px solid #CBEAE8;color:var(--teal-600);
@@ -208,15 +229,43 @@
   .packlist span{color:var(--muted);font-size:.82rem}
   .num{width:26px;height:26px;border-radius:50%;background:var(--navy-800);color:#fff;display:grid;place-items:center;font-size:.78rem;font-weight:800;flex:none}
   .noscript{padding:60px 20px;text-align:center;color:var(--muted)}
+
+  .logo-badge .mark-svg,.crest .mark-svg{width:100%;height:100%;display:block}
+
+  /* ---------- motion ---------- */
+  /* A slow drift behind the sign-in so the page is never quite still. */
+  .aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+  .aurora::before,.aurora::after{content:"";position:absolute;border-radius:50%;filter:blur(70px);opacity:.5}
+  .aurora::before{width:60vw;height:60vw;left:-18vw;top:-22vw;background:radial-gradient(circle,#12A5A0 0%,transparent 70%);
+                  animation:drift1 26s ease-in-out infinite}
+  .aurora::after{width:52vw;height:52vw;right:-16vw;bottom:-24vw;background:radial-gradient(circle,#F2B33D 0%,transparent 70%);
+                 opacity:.32;animation:drift2 32s ease-in-out infinite}
+  @keyframes drift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(8vw,6vw) scale(1.12)}}
+  @keyframes drift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-7vw,-5vw) scale(1.1)}}
+
+  @keyframes riseIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .rise{animation:riseIn .5s cubic-bezier(.2,.7,.3,1) both}
+  .rise-1{animation-delay:.05s}.rise-2{animation-delay:.12s}.rise-3{animation-delay:.19s}
+  .rise-4{animation-delay:.26s}.rise-5{animation-delay:.33s}
+
+  /* The progress bar keeps a slow sheen moving over it while work is open. */
+  @keyframes sheen{from{background-position:0 0}to{background-position:200% 0}}
+
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;
+                         transition-duration:.001ms!important}
+    .aurora{display:none}
+  }
 </style>
 </head>
 <body>
+<div class="aurora" aria-hidden="true"></div>
 
 <header>
   <div class="wrap nav">
     <a class="logo" href="../index.html">
-      <span class="logo-badge">RR</span>
-      <span>Ricky Rampersad<small data-t="brandSub">Agent contracting</small></span>
+      <span class="logo-badge"><svg class="mark-svg" viewBox="0 0 40 40" fill="none" aria-hidden="true"><defs><linearGradient id="mka" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#14395F"/><stop offset="100%" stop-color="#0E8C8C"/></linearGradient></defs><rect width="40" height="40" rx="11" fill="url(#mka)"/><path d="M13 9.5h8.6l6.4 6.4V30a2 2 0 0 1-2 2H13a2 2 0 0 1-2-2V11.5a2 2 0 0 1 2-2z" fill="#fff"/><path d="M21.6 9.5 28 15.9h-6.4z" fill="#B9D8E4"/><rect x="14.4" y="18.4" width="8.6" height="1.5" rx=".75" fill="#A9BFD1"/><rect x="14.4" y="21.6" width="11.2" height="1.5" rx=".75" fill="#A9BFD1"/><path d="M14.4 27.8c2.1-2.9 3.4 1.1 5.2-1.1 1.6-1.9 2.3 2.4 5.9-1.9" stroke="#F2B33D" stroke-width="2.1" stroke-linecap="round"/></svg></span>
+      <span>Contracting<small data-t="brandSub">Sign once. Start selling.</small></span>
     </a>
     <span class="savechip" id="savechip" data-t="saved">Saved</span>
     <div class="langtoggle" role="group" aria-label="Language">
@@ -231,9 +280,10 @@
 <div id="gate">
   <div class="wrap">
 
-    <div class="gatecard" id="signincard">
-      <div class="crest">RR</div>
+    <div class="gatecard rise" id="signincard">
+      <div class="crest"><svg class="mark-svg" viewBox="0 0 40 40" fill="none" aria-hidden="true"><defs><linearGradient id="mka" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#14395F"/><stop offset="100%" stop-color="#0E8C8C"/></linearGradient></defs><rect width="40" height="40" rx="11" fill="url(#mka)"/><path d="M13 9.5h8.6l6.4 6.4V30a2 2 0 0 1-2 2H13a2 2 0 0 1-2-2V11.5a2 2 0 0 1 2-2z" fill="#fff"/><path d="M21.6 9.5 28 15.9h-6.4z" fill="#B9D8E4"/><rect x="14.4" y="18.4" width="8.6" height="1.5" rx=".75" fill="#A9BFD1"/><rect x="14.4" y="21.6" width="11.2" height="1.5" rx=".75" fill="#A9BFD1"/><path d="M14.4 27.8c2.1-2.9 3.4 1.1 5.2-1.1 1.6-1.9 2.3 2.4 5.9-1.9" stroke="#F2B33D" stroke-width="2.1" stroke-linecap="round"/></svg></div>
       <h1 data-t="welcomeTitle">Welcome to Contracting</h1>
+      <p class="tagline" data-t="tagline">Sign once. Start selling.</p>
       <p class="sub" data-t="welcomeSub">Sign in with the agent number and passcode you were given.</p>
       <form class="signform" id="signform" autocomplete="off">
         <div>
@@ -247,7 +297,43 @@
         <div class="signerr" id="signerr"></div>
         <button class="btn btn-primary full" id="signbtn" type="submit" data-t="signIn">Sign in</button>
       </form>
+      <div class="orline"><span data-t="orNew">or</span></div>
+      <button class="btn btn-ghost full" id="newhere" type="button" data-t="newHere">I'm new here — get my agent number</button>
       <p class="gatefoot" id="signfoot"></p>
+    </div>
+
+    <!-- new agent signing themselves up -->
+    <div class="gatecard rise" id="joincard" style="display:none">
+      <div class="crest"><svg class="mark-svg" viewBox="0 0 40 40" fill="none" aria-hidden="true"><defs><linearGradient id="mkj" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#14395F"/><stop offset="100%" stop-color="#0E8C8C"/></linearGradient></defs><rect width="40" height="40" rx="11" fill="url(#mkj)"/><path d="M13 9.5h8.6l6.4 6.4V30a2 2 0 0 1-2 2H13a2 2 0 0 1-2-2V11.5a2 2 0 0 1 2-2z" fill="#fff"/><path d="M21.6 9.5 28 15.9h-6.4z" fill="#B9D8E4"/><rect x="14.4" y="18.4" width="8.6" height="1.5" rx=".75" fill="#A9BFD1"/><rect x="14.4" y="21.6" width="11.2" height="1.5" rx=".75" fill="#A9BFD1"/><path d="M14.4 27.8c2.1-2.9 3.4 1.1 5.2-1.1 1.6-1.9 2.3 2.4 5.9-1.9" stroke="#F2B33D" stroke-width="2.1" stroke-linecap="round"/></svg></div>
+      <h1 data-t="joinTitle">Let's get you a number</h1>
+      <p class="sub" data-t="joinSub">Three details and your agent number is yours in seconds.</p>
+      <form class="signform" id="joinform" autocomplete="on">
+        <div>
+          <label for="joinname" data-t="fullName">Full name</label>
+          <input id="joinname" class="plain" autocomplete="name" placeholder="Akash Maharaj" />
+        </div>
+        <div>
+          <label for="joinemail" data-t="email">Email</label>
+          <input id="joinemail" class="plain" type="email" autocomplete="email" placeholder="you@example.com" />
+        </div>
+        <div>
+          <label for="joinmobile" data-t="mobile">Mobile</label>
+          <input id="joinmobile" class="plain" type="tel" autocomplete="tel" placeholder="+1 868 000 0000" />
+        </div>
+        <div class="signerr" id="joinerr"></div>
+        <button class="btn btn-primary full" id="joinbtn" type="submit" data-t="getNumber">Get my agent number</button>
+      </form>
+      <p class="gatefoot"><button class="linkbtn" id="backtosignin" type="button" data-t="haveNumber">I already have a number</button></p>
+    </div>
+
+    <!-- the number and passcode we just issued -->
+    <div class="gatecard rise" id="issuedcard" style="display:none">
+      <div class="tick">✓</div>
+      <h1 id="issuedtitle"></h1>
+      <p class="sub" id="issuedsub"></p>
+      <div class="creds" id="creds"></div>
+      <button class="btn btn-primary full" id="issuedgo" type="button"></button>
+      <p class="gatefoot" id="issuedfoot"></p>
     </div>
 
     <div class="gatecard" id="choosecard" style="display:none">

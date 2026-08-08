@@ -296,6 +296,7 @@ function doPost(e) {
     var action = String(payload.action || '');
 
     if (action === 'login') return json_(signIn_(payload));
+    if (action === 'register') return json_(registerAgent_(payload));
     if (action === 'save') return json_(saveProgress_(payload));
     if (action === 'submit') return json_(submitPacket_(payload));
 
@@ -452,21 +453,7 @@ function inviteAgent_(p) {
     ? 'Su contratación como agente VUMI® — empiece aquí'
     : 'Your VUMI® agent contracting — start here';
 
-  var credentials =
-    '<div style="background:#E9F7F6;border:1px solid #CBEAE8;border-radius:14px;padding:18px;margin:0 0 18px">' +
-      '<div style="font-size:12px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:#0E8C8C;text-align:center">' +
-      (lang === 'es' ? 'Sus datos de acceso' : 'Your sign-in details') + '</div>' +
-      '<table style="width:100%;margin-top:12px;border-collapse:collapse">' +
-        '<tr><td style="padding:6px 0;color:#5B7186;font-size:13px">' +
-          (lang === 'es' ? 'Número de agente' : 'Agent number') + '</td>' +
-          '<td style="padding:6px 0;text-align:right;font-weight:800;font-size:18px;letter-spacing:.08em;color:#0E2A47">' +
-          esc_(access.number) + '</td></tr>' +
-        '<tr><td style="padding:6px 0;color:#5B7186;font-size:13px">' +
-          (lang === 'es' ? 'Código de acceso' : 'Passcode') + '</td>' +
-          '<td style="padding:6px 0;text-align:right;font-weight:800;font-size:18px;letter-spacing:.18em;color:#0E2A47">' +
-          esc_(access.passcode) + '</td></tr>' +
-      '</table>' +
-    '</div>';
+  var credentials = credentialBlock_(access, lang);
 
   var body = lang === 'es'
     ? '<p style="margin:0 0 14px">Hola ' + esc_(firstName) + ',</p>' +
@@ -1120,6 +1107,110 @@ function signIn_(p) {
   }
   out.token = token;
   return out;
+}
+
+/**
+ * A new agent signing themselves up.
+ *
+ * This is how someone who has just been recruited gets in without waiting
+ * for an invitation to be typed out: they give their name, email and mobile
+ * and are issued a number and passcode on the spot. Nothing is approved by
+ * doing this — they land in your pipeline at 0% like anyone else, and you
+ * are emailed. Set Active to No in the Access tab to shut one down.
+ */
+function registerAgent_(p) {
+  var name = String(p.name || '').trim();
+  var email = String(p.email || '').trim();
+  if (!name || !email) return { ok: false, error: 'missing' };
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { ok: false, error: 'email' };
+
+  /* Someone coming back a second time gets what they already have rather
+     than a duplicate row and a second number. */
+  var existing = findAccessByEmail_(email);
+  if (existing) {
+    return {
+      ok: true, returning: true,
+      agentNumber: existing.values[ACC.NUMBER],
+      passcode: existing.values[ACC.PASSCODE],
+      name: existing.values[ACC.NAME],
+    };
+  }
+
+  var lang = p.lang === 'es' ? 'es' : 'en';
+  var token = makeToken_();
+  var access = issueAgentAccess_({
+    name: name, email: email, mobile: p.mobile, lang: lang, token: token,
+  });
+
+  var now = new Date();
+  ensureSheet_().appendRow([
+    now, token, name, email, p.mobile || '', lang, 'Invited', 0, '', now,
+    '', 0, '', '', CONFIG.PORTAL_BASE + token, 'Self-registered',
+    '', '', '', '', '', '', 0, '',
+  ]);
+
+  sendCredentials_({ name: name, email: email, lang: lang }, access);
+  MailApp.sendEmail({
+    to: CONFIG.COPY_TO.join(','),
+    subject: 'New agent signed up — ' + name,
+    htmlBody: emailShell_('Someone started their contracting',
+      statTable_([
+        ['Name', name],
+        ['Email', email],
+        ['Mobile', p.mobile || '—'],
+        ['Agent number', access.number],
+      ]) +
+      '<p style="margin:0 0 14px">They registered themselves on the contracting site and have their ' +
+      'sign-in details. They are in your pipeline now — the usual reminders will chase them.</p>' +
+      '<p style="margin:0;font-size:13px;color:#7a8ca0">Not someone you know? Set <b>Active</b> to ' +
+      '<b>No</b> on their row in the Access tab and they cannot sign in again.</p>'),
+  });
+
+  return { ok: true, agentNumber: access.number, passcode: access.passcode, name: name };
+}
+
+/** The "here are your sign-in details" email, shared by invite and sign-up. */
+function sendCredentials_(person, access) {
+  var lang = person.lang === 'es' ? 'es' : 'en';
+  var subject = lang === 'es'
+    ? 'Sus datos de acceso — Contratación'
+    : 'Your sign-in details — Contracting';
+
+  MailApp.sendEmail({
+    to: person.email,
+    replyTo: CONFIG.RECRUITER_EMAIL,
+    subject: subject,
+    htmlBody: emailShell_(subject,
+      '<p style="margin:0 0 14px">' + (lang === 'es' ? 'Hola ' : 'Hi ') +
+      esc_(firstName_(person.name)) + ',</p>' +
+      '<p style="margin:0 0 14px">' + (lang === 'es'
+        ? 'Aquí están sus datos para entrar y completar su contratación.'
+        : 'Here are the details you need to sign in and complete your contracting.') + '</p>' +
+      credentialBlock_(access, lang) +
+      button_(CONFIG.PORTAL_BASE.replace(/\?t=$/, ''),
+        lang === 'es' ? 'Entrar y comenzar' : 'Sign in and start') +
+      '<p style="margin:18px 0 0;font-size:13px;color:#7a8ca0">' +
+      (lang === 'es'
+        ? 'Guarde su número de agente y su código — los necesita cada vez que entre.'
+        : 'Keep your agent number and passcode — you need them every time you sign in.') + '</p>'),
+  });
+}
+
+function credentialBlock_(access, lang) {
+  return '<div style="background:#E9F7F6;border:1px solid #CBEAE8;border-radius:14px;padding:18px;margin:0 0 18px">' +
+    '<div style="font-size:12px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:#0E8C8C;text-align:center">' +
+    (lang === 'es' ? 'Sus datos de acceso' : 'Your sign-in details') + '</div>' +
+    '<table style="width:100%;margin-top:12px;border-collapse:collapse">' +
+      '<tr><td style="padding:6px 0;color:#5B7186;font-size:13px">' +
+        (lang === 'es' ? 'Número de agente' : 'Agent number') + '</td>' +
+        '<td style="padding:6px 0;text-align:right;font-weight:800;font-size:18px;letter-spacing:.08em;color:#0E2A47">' +
+        esc_(access.number) + '</td></tr>' +
+      '<tr><td style="padding:6px 0;color:#5B7186;font-size:13px">' +
+        (lang === 'es' ? 'Código de acceso' : 'Passcode') + '</td>' +
+        '<td style="padding:6px 0;text-align:right;font-weight:800;font-size:18px;letter-spacing:.18em;color:#0E2A47">' +
+        esc_(access.passcode) + '</td></tr>' +
+    '</table>' +
+  '</div>';
 }
 
 /** Give an agent a number and passcode. Reuses theirs if they already have one. */
