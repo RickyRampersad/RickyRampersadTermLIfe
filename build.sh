@@ -35,7 +35,6 @@ cp "$ROOT/agent.html"  "$DIST/"
 cp "$ROOT/staff.html"  "$DIST/"
 cp "$ROOT/404.html"    "$DIST/"
 cp -R "$ROOT/renewal"  "$DIST/"
-cp -R "$ROOT/contracting" "$DIST/"   # includes status.html
 
 echo "→ Copying deploy config"
 cp "$ROOT/netlify.toml" "$DIST/"
@@ -100,6 +99,7 @@ echo
 echo "dist/ is $(du -sh "$DIST" | cut -f1)$( [ -f "$ZIP" ] && echo " · $(basename "$ZIP") is $(du -h "$ZIP" | cut -f1)" )"
 echo
 echo "Deliberately NOT published: apps-script/ (backend source), *.md"
-echo "(setup docs and the DNS record backup), data/ (fleet register)."
+echo "(setup docs and the DNS record backup), data/ (fleet register),"
+echo "contracting/ (its own site — build it with ./build-contracting.sh)."
 echo
 echo "Drag dist/ — or $(basename "$ZIP") — onto https://app.netlify.com/drop"

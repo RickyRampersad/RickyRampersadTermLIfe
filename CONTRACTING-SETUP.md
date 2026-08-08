@@ -6,9 +6,16 @@ AcroForm fields, not a look-alike — then sends it to the carrier, chases both
 the applicant and the carrier until it is done, and lets the agent follow
 their own progress with a code.
 
-- **Applicant:** `https://rickyrampersadbranch.com/contracting/` (or `/c/<token>`)
-- **Progress tracker:** `https://rickyrampersadbranch.com/track` (or `/track/<code>`)
-- **Recruiter:** `https://rickyrampersadbranch.com/contracting/admin.html`
+It is its **own Netlify site**, on its own domain — separate from the branch
+website. Build it with `./build-contracting.sh` and see DEPLOY.md.
+
+Once deployed at, say, `vumi-contracting.netlify.app`:
+
+| Page | URL |
+|---|---|
+| The application | `/` — an applicant's personal link is `/c/<token>` |
+| Progress tracker | `/track` — or `/track/<code>` straight in |
+| Your dashboard | `/admin` |
 
 Everything below the "Works without a backend" line is optional. The wizard
 fills and downloads all three PDFs with no server at all.
@@ -67,8 +74,10 @@ COPY_TO: [                              // everyone copied on every packet
   'rampersadricky@gmail.com',
 ],
 
-PORTAL_BASE:     'https://rickyrampersadbranch.com/contracting/?t=',
-STATUS_BASE:     'https://rickyrampersadbranch.com/contracting/status.html?c=',
+// Your contracting site's address — whatever Netlify gave it, or your
+// own domain. These build the links in every email the script sends.
+PORTAL_BASE:     'https://vumi-contracting.netlify.app/?t=',
+STATUS_BASE:     'https://vumi-contracting.netlify.app/status.html?c=',
 ADMIN_KEY:       'pick-a-long-random-string',
 ```
 
@@ -93,14 +102,14 @@ through the dashboard.
 
 ### 4. Point the site at it
 
-Paste the same `/exec` URL into three places:
+Paste the same `/exec` URL into three places in `contracting/`:
 
-- `contracting/app.js` → `CONFIG.API_URL`
-- `contracting/admin.html` → `CONFIG.API_URL`
-- `contracting/status.html` → `CONFIG.API_URL`
+- `app.js` → `CONFIG.API_URL`
+- `admin.html` → `CONFIG.API_URL`
+- `status.html` → `CONFIG.API_URL`
 
-Commit and deploy. Open the dashboard, enter your admin key, and invite your
-first agent.
+Then rebuild (`./build-contracting.sh`) and redeploy. Open `/admin`, enter
+your admin key, and invite your first agent.
 
 ---
 
@@ -241,9 +250,13 @@ private.
 
 ## Files
 
+The app is edited in `contracting/` and deployed from `dist-contracting/`,
+where `build-contracting.sh` moves it to the site root — so `contracting/`
+in the repo becomes `/` on the live site.
+
 ```
 contracting/
-  index.html    the wizard (applicant-facing, ES/EN)
+  index.html    the wizard (applicant-facing, ES/EN) — becomes / when built
   app.js        wizard logic — steps, autosave, signature, submit
   packet.js     field map + PDF fill engine (also runs under Node)
   admin.html    recruiter dashboard (self-contained)

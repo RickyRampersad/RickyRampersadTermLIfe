@@ -1,4 +1,6 @@
-# Build output — regenerate with ./build.sh
+# Build output — regenerate with ./build.sh or ./build-contracting.sh
 dist/
+dist-contracting/
 contracting.zip
+contracting-app.zip
 rickyrampersadbranch-*.zip

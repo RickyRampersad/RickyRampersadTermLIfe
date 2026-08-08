@@ -1,8 +1,56 @@
 # Deploying to Netlify
 
-There is no build step. The site is plain HTML, CSS and JS — pdf-lib is
-vendored in `contracting/vendor/` — so Netlify publishes the repository root
-as-is and a deploy has nothing that can fail.
+This repository holds **two separate sites**, and they deploy independently.
+
+| Site | What it is | Build with | Publish |
+|---|---|---|---|
+| **Contracting app** | The VUMI agent packet, on its own domain | `./build-contracting.sh` | `dist-contracting/` |
+| **Branch website** | rickyrampersadbranch.com as it was | nothing, or `./build.sh` | repo root, or `dist/` |
+
+Neither needs a compile step — both are plain HTML, CSS and JS, with pdf-lib
+vendored. The build scripts only decide which files go out.
+
+---
+
+# 1. The contracting app
+
+Its own Netlify site, its own domain, nothing to do with the branch website.
+
+```bash
+./build-contracting.sh
+```
+
+produces `dist-contracting/` and `contracting-app.zip`. Drag either onto
+<https://app.netlify.com/drop>, or point a Netlify site at this repo with:
+
+| Setting | Value |
+|---|---|
+| Build command | `./build-contracting.sh` |
+| Publish directory | `dist-contracting` |
+
+The build moves the app up to the site root, so the pages land as:
+
+| URL | Page |
+|---|---|
+| `/` | the application |
+| `/c/<token>` | an applicant's personal link |
+| `/track`, `/track/<code>` | the progress tracker |
+| `/admin` | your pipeline dashboard |
+
+The whole site is `noindex` and `Disallow: /` — it is for invited applicants,
+not for search engines.
+
+Give it a memorable name in **Site configuration → Change site name**, or
+attach a domain of your own. Whatever address it ends up on has to match
+`PORTAL_BASE` and `STATUS_BASE` in `apps-script/Contracting.gs`, since those
+build the links in every email the backend sends.
+
+---
+
+# 2. The branch website
+
+Unchanged, and it no longer carries the contracting app — `/contracting/*`
+is blocked on that domain so there is only ever one live copy of the app.
 
 ## Two ways to deploy
 
@@ -43,11 +91,12 @@ one with a forced 404:
 
 | Blocked | Why |
 |---|---|
+| `/contracting/*` | The app has its own site — this keeps one live copy |
 | `/apps-script/*` | Backend source, including your admin key once you set it |
 | `/data/*` | Client fleet data — no page reads it |
 | `/DNS-BACKUP.md` | Your DNS records |
 | `/CONTRACTING-SETUP.md`, `/RENEWAL-SETUP.md`, `/DEPLOY.md`, `/README.md` | Internal notes |
-| `/build.sh` | Build script |
+| `/build.sh`, `/build-contracting.sh` | Build scripts |
 
 **Add a rule whenever a new private file lands in the repository root** —
 that is the one maintenance cost of publishing the root instead of a build
@@ -71,24 +120,33 @@ DNS points at is the one people see.
 
 ## Short links
 
-`_redirects` and `netlify.toml` both set these up:
+On the branch site:
 
 | Link | Opens |
 |---|---|
 | `/r/<token>` | Renewal portal for that client |
 | `/renew` | Renewal portal |
-| `/c/<token>` | Contracting packet for that applicant |
-| `/contract` | A fresh contracting application |
 
-They only work once deployed to Netlify — opening the files straight off your
-hard drive will not redirect.
+The contracting short links (`/c/<token>`, `/track`, `/admin`) live on the
+contracting site — see section 1.
+
+Redirects only work once deployed to Netlify. Opening the files straight off
+your hard drive will not redirect.
 
 ## After deploying, check
 
-- `/contracting/` loads and moves through the steps.
+On the **contracting site**:
+
+- `/` loads and moves through the steps.
 - The review step generates and previews the three PDFs.
-- `/staff.html` → **Contracting Pipeline** opens the dashboard.
-- `/c/TESTTOKEN` lands on the contracting app with the token filled in.
+- `/admin` asks for your key; `/track` asks for a code.
+- `/c/TESTTOKEN` lands on the application with the token filled in.
+
+On the **branch site**:
+
+- `rickyrampersadbranch.com/DNS-BACKUP.md` shows the 404 page, not the file.
+- `rickyrampersadbranch.com/contracting/` shows the 404 page — the app lives
+  on its own domain now.
 
 The contracting app works with no backend at all — fill in, download, email.
 Wire up the Apps Script backend when you want cross-device resume, the
