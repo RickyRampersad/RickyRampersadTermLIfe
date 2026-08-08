@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Recruiting & Selection | Ricky Rampersad Branch</title>
+<meta name="robots" content="noindex"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#07131f; --bg2:#0d2137; --card:#163553; --card2:#1b3d61;
+    --gold:#efc24b; --gold2:#dca530; --text:#edf4fb; --muted:#a9bbcf;
+    --line:rgba(255,255,255,.08); --teal:#00CFEA; --teal2:#00A8C5;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+    background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(0,207,234,.08),transparent),
+    linear-gradient(180deg,var(--bg) 0%,var(--bg2) 50%,var(--bg) 100%);
+  }
+  a{color:inherit}
+  .wrap{max-width:980px;margin:0 auto;padding:0 16px}
+
+  /* lock screen */
+  #lock{
+    position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;
+    background:var(--bg);
+    background-image:radial-gradient(ellipse 60% 40% at 50% 30%,rgba(0,207,234,.09),transparent);
+  }
+  .lock-card{
+    width:min(380px,90%);text-align:center;
+    background:linear-gradient(160deg,var(--card),var(--card2));
+    border:1px solid var(--line);border-radius:22px;padding:36px 28px;
+  }
+  .lock-card svg{width:64px;height:64px;margin:0 auto 16px}
+  .lock-card h1{font-family:'Montserrat',sans-serif;font-weight:800;font-size:20px;margin-bottom:6px;color:var(--gold)}
+  .lock-card p{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6}
+  .lock-card input{
+    width:100%;padding:13px 16px;border-radius:12px;border:1px solid var(--line);
+    background:rgba(0,0,0,.3);color:var(--text);font-size:15px;text-align:center;
+    letter-spacing:2px;outline:none;margin-bottom:12px;font-family:'Montserrat',sans-serif;font-weight:700;
+  }
+  .lock-card input:focus{border-color:rgba(0,207,234,.5)}
+  .lock-card button{
+    width:100%;padding:14px;border-radius:12px;border:none;cursor:pointer;
+    background:linear-gradient(135deg,var(--teal),var(--teal2));color:#02141a;
+    font-family:'Montserrat',sans-serif;font-size:14px;font-weight:800;letter-spacing:.5px;
+  }
+  .lock-err{color:#f87171;font-size:12px;margin-top:10px;min-height:16px;font-weight:600}
+  .lock-back{display:inline-block;margin-top:16px;font-size:12px;color:var(--muted);text-decoration:none}
+  .lock-back:hover{color:var(--teal)}
+
+  /* portal */
+  #portal{display:none}
+  .nav{position:sticky;top:0;z-index:100;background:rgba(6,17,29,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .nav-inner{max-width:980px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:14px;height:64px}
+  .nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:auto}
+  .nav-brand svg{width:34px;height:34px}
+  .nav-brand span{font-family:'Montserrat',sans-serif;font-weight:800;font-size:15px;color:var(--gold);line-height:1.1}
+  .nav a.link{text-decoration:none;color:var(--muted);font-family:'Montserrat',sans-serif;font-size:12.5px;font-weight:600;padding:8px 12px;border-radius:10px}
+  .nav a.link:hover{color:var(--text);background:rgba(255,255,255,.06)}
+  .page-head{padding:42px 0 6px}
+  .page-head .kicker{font-family:'Montserrat',sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--teal);font-weight:600;margin-bottom:8px}
+  .page-head h1{font-family:'Montserrat',sans-serif;font-weight:900;font-size:clamp(24px,5vw,34px);margin-bottom:8px}
+  .page-head p{color:var(--muted);font-size:14px;max-width:640px;line-height:1.6}
+  section{padding:34px 0 4px}
+  .section-label{font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--teal);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  .section-label::after{content:'';flex:1;height:1px;background:rgba(0,207,234,.2)}
+  .rows{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px}
+  @media(max-width:640px){.rows{grid-template-columns:1fr}}
+  .row{display:flex;align-items:center;gap:14px;background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:14px;padding:14px 16px;text-decoration:none;transition:all .18s}
+  .row:hover{transform:translateY(-2px);border-color:rgba(0,207,234,.4)}
+  .r-ico{width:38px;height:38px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:17px;background:rgba(0,207,234,.1);border:1px solid rgba(0,207,234,.2)}
+  .r-text b{display:block;font-family:'Montserrat',sans-serif;font-size:13.5px;font-weight:700;line-height:1.3}
+  .r-text span{font-size:11.5px;color:var(--muted)}
+  .r-arrow{margin-left:auto;color:var(--teal);font-weight:700}
+  .row.wide{grid-column:1 / -1}
+  .row.gold{border-color:rgba(239,194,75,.28)}
+  .row.gold .r-ico{background:rgba(239,194,75,.1);border-color:rgba(239,194,75,.22)}
+  .row.gold:hover{border-color:rgba(239,194,75,.55)}
+  .row.gold .r-arrow{color:var(--gold)}
+
+  /* pipeline strip */
+  .flow{display:flex;gap:8px;overflow-x:auto;padding:4px 0 14px;margin-bottom:8px}
+  .flow .st{flex:0 0 auto;min-width:132px;background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:12px;padding:11px 13px}
+  .flow .st .n{font-family:'Montserrat',sans-serif;font-size:9.5px;letter-spacing:2px;color:var(--teal);font-weight:700}
+  .flow .st b{display:block;font-family:'Montserrat',sans-serif;font-size:12.5px;margin:3px 0 2px}
+  .flow .st span{font-size:10.5px;color:var(--muted)}
+  .flow .st.tn{border-color:rgba(239,194,75,.3)}
+  .flow .st.tn .n{color:var(--gold)}
+
+  .callout{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);border-left:3px solid var(--teal);border-radius:12px;padding:15px 18px;margin-bottom:22px}
+  .callout b{font-family:'Montserrat',sans-serif;font-size:13px;display:block;margin-bottom:5px}
+  .callout p{font-size:12.8px;color:var(--muted);line-height:1.65}
+  .callout code{background:rgba(0,0,0,.35);padding:2px 7px;border-radius:5px;font-size:11.5px;color:var(--teal);word-break:break-all}
+  footer{margin-top:40px;border-top:1px solid var(--line);background:rgba(0,0,0,.25);padding:26px 0 34px;text-align:center}
+  footer p{color:var(--muted);font-size:12.5px;line-height:1.8}
+  footer a{color:var(--teal);text-decoration:none}
+</style>
+</head>
+<body>
+
+<!-- LOCK SCREEN -->
+<div id="lock">
+  <div class="lock-card">
+    <svg viewBox="0 0 88 88" aria-hidden="true">
+      <defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#5be4f5"/><stop offset="60%" stop-color="#00CFEA"/><stop offset="100%" stop-color="#00738a"/>
+      </linearGradient></defs>
+      <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#g1)"/>
+      <rect x="32" y="38" width="24" height="19" rx="4" fill="#07131f"/>
+      <path d="M37 38v-5a7 7 0 0114 0v5" stroke="#07131f" stroke-width="4.5" fill="none"/>
+      <circle cx="44" cy="47" r="3" fill="#00CFEA"/>
+    </svg>
+    <h1>Recruiting &amp; Selection</h1>
+    <p>For branch managers, unit managers and the BMA.<br>Enter your recruiting access code.</p>
+    <input id="code" type="password" placeholder="ACCESS CODE" autocomplete="off"/>
+    <button onclick="unlock()">Enter</button>
+    <div class="lock-err" id="err"></div>
+    <a class="lock-back" href="/">← Back to main site</a>
+  </div>
+</div>
+
+<!-- PORTAL CONTENT -->
+<div id="portal">
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="/">
+        <svg viewBox="0 0 88 88" aria-hidden="true">
+          <defs><linearGradient id="gn" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
+          </linearGradient></defs>
+          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#gn)"/>
+          <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Ricky Rampersad<br>Branch</span>
+      </a>
+      <a class="link" href="/">Main Site</a>
+      <a class="link" href="/careers/">Careers Ad</a>
+      <a class="link" href="#" onclick="lockOut(); return false;">Sign Out</a>
+    </div>
+  </nav>
+
+  <div class="wrap">
+    <header class="page-head">
+      <div class="kicker">GSAP V4.2 · Selection &amp; Approval</div>
+      <h1>Recruiting &amp; Selection</h1>
+      <p>Everything from the advertisement to the end of probation. Three systems carry a recruit: TalentNest owns the application and POP&nbsp;7.0, the Recruit Tracker owns the GSAP file, and this branch owns everything either of them leaves out.</p>
+    </header>
+
+    <section>
+      <div class="section-label">The pipeline</div>
+      <div class="flow">
+        <div class="st"><div class="n">STEP 0</div><b>Branch intake</b><span>Careers site · our data</span></div>
+        <div class="st tn"><div class="n">STEP 0</div><b>Application</b><span>TalentNest · Head Office</span></div>
+        <div class="st"><div class="n">STEP 1</div><b>First Interview</b><span>Recruiting Manager</span></div>
+        <div class="st"><div class="n">STEP 2</div><b>BM Approval + POP</b><span>Branch Manager</span></div>
+        <div class="st tn"><div class="n">STEP 3</div><b>POP 7.0</b><span>TalentNest · SMG</span></div>
+        <div class="st"><div class="n">STEP 4</div><b>Discovery</b><span>RM · 6 modules</span></div>
+        <div class="st"><div class="n">STEP 5</div><b>Selection File</b><span>BMA · 17 items</span></div>
+        <div class="st"><div class="n">STEP 6</div><b>Approval</b><span>BM / VP / Panel</span></div>
+        <div class="st"><div class="n">STEP 7</div><b>Onboarding</b><span>BMA · CBTT, AML</span></div>
+        <div class="st"><div class="n">STEP 8</div><b>Induction</b><span>7-month probation</span></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-label">Branch Applications</div>
+      <div class="rows">
+        <a class="row wide gold" href="tracker/">
+          <div class="r-ico">🗂️</div>
+          <div class="r-text"><b>Recruit Tracker v5.6</b><span>The GSAP file for every candidate — first interview through probation. Your data stays in this browser.</span></div>
+          <span class="r-arrow">→</span>
+        </a>
+        <a class="row wide" href="onboarding/">
+          <div class="r-ico">🎓</div>
+          <div class="r-text"><b>GSAP V4.2 Manager Onboarding Course</b><span>What the standards require of each role, in the order a recruit actually moves. BM, ABM, UM, TM and BMA.</span></div>
+          <span class="r-arrow">→</span>
+        </a>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-label">Head Office Systems</div>
+      <div class="rows">
+        <a class="row" href="https://guardianlifeofthecaribbean.talentnest.com/" target="_blank" rel="noopener">
+          <div class="r-ico">🏛️</div>
+          <div class="r-text"><b>TalentNest</b><span>Applications, POP 7.0 dispatch, step advancement</span></div>
+          <span class="r-arrow">↗</span>
+        </a>
+        <a class="row" href="https://guardianlifeofthecaribbean.talentnest.com/en/posting/215291/location/287275" target="_blank" rel="noopener">
+          <div class="r-ico">📣</div>
+          <div class="r-text"><b>The live posting</b><span>Advisor posting 215291 · Chaguanas 287275</span></div>
+          <span class="r-arrow">↗</span>
+        </a>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-label">Candidate-facing</div>
+      <div class="rows">
+        <a class="row" href="/careers/">
+          <div class="r-ico">🎯</div>
+          <div class="r-text"><b>The Selection — careers ad</b><span>The public page candidates land on</span></div>
+          <span class="r-arrow">→</span>
+        </a>
+        <a class="row" href="/careers/apply.html">
+          <div class="r-ico">📥</div>
+          <div class="r-text"><b>Branch intake form</b><span>What they fill in before TalentNest</span></div>
+          <span class="r-arrow">→</span>
+        </a>
+        <a class="row" href="https://form.jotform.com/242716704735055" target="_blank" rel="noopener">
+          <div class="r-ico">💼</div>
+          <div class="r-text"><b>Job Application (Jotform)</b><span>General branch roles — non-advisor</span></div>
+          <span class="r-arrow">↗</span>
+        </a>
+        <a class="row" href="https://form.jotform.com/223234996117864" target="_blank" rel="noopener">
+          <div class="r-ico">📝</div>
+          <div class="r-text"><b>Salesman Renewal</b><span>Existing agents renewing their contract</span></div>
+          <span class="r-arrow">↗</span>
+        </a>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-label">Pulling intakes into the tracker</div>
+      <div class="callout">
+        <b>One link, then one click</b>
+        <p>Every branch intake writes a complete Recruit Tracker record. To load the ones you have not pulled yet, open
+          <code>&lt;your Apps Script /exec URL&gt;?export=new&amp;key=&lt;EXPORT_KEY&gt;</code>,
+          save the file, then use <b>Import</b> inside the Recruit Tracker. Candidates arrive with contact details, source,
+          background and five of Form A's eight rows already filled in — from the candidate's own answers, unverified.
+          Setup lives in <code>apps-script/careers-intake.gs</code>.</p>
+      </div>
+      <div class="callout" style="border-left-color:var(--gold)">
+        <b>Where the data actually lives</b>
+        <p>The Recruit Tracker keeps candidate files in <b>this browser only</b> — nothing is uploaded and nothing is stored on the
+          website. That means a file opened on the BMA's laptop is not visible on the BM's phone. Use <b>Export</b> in the tracker to
+          hand a file over, and export a backup before clearing browser data or changing machines.</p>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <div class="wrap">
+      <p><b>Ricky Rampersad Branch</b> · Guardian Life of the Caribbean · Chaguanas Regional Centre<br>
+      Questions: <a href="mailto:Ricky.Rampersad@myguardiangroup.com">Ricky.Rampersad@myguardiangroup.com</a> · 678-5821</p>
+    </div>
+  </footer>
+</div>
+
+<script>
+  var KEY = 'rrb-recruiting-ok';
+  var CODE = 'RECRUIT2026';
+  function showPortal() {
+    document.getElementById('lock').style.display = 'none';
+    document.getElementById('portal').style.display = 'block';
+  }
+  function unlock() {
+    var v = document.getElementById('code').value.trim().toUpperCase();
+    if (v === CODE) { sessionStorage.setItem(KEY, '1'); showPortal(); }
+    else { document.getElementById('err').textContent = 'Incorrect code — please try again.'; }
+  }
+  function lockOut() {
+    sessionStorage.removeItem(KEY);
+    location.href = '/';
+  }
+  document.getElementById('code').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') unlock();
+  });
+  if (sessionStorage.getItem(KEY) === '1') showPortal();
+</script>
+</body>
+</html>

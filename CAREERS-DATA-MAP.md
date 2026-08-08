@@ -1,0 +1,213 @@
+# Careers & Recruiting — how the data flows
+
+Everything the branch runs on recruiting, and what data you actually get at each step.
+
+---
+
+## 1. The three systems, and what each one owns
+
+You now have three systems touching one candidate. Most recruiting messes come from
+being unclear which one is the boss of a given fact. Here is the split.
+
+| System | Owns | You control it? | Where it lives |
+|---|---|---|---|
+| **TalentNest** | The legal application, POP 7.0 dispatch and scoring, step advancement, candidate emails on Guardian branding | No — Head Office | `guardianlifeofthecaribbean.talentnest.com` |
+| **Branch intake** | Everything TalentNest never asks: track, runway, network, vehicle, devices, household backing, source | Yes — entirely | `/careers/apply.html` → your Google Sheet |
+| **Recruit Tracker** | The GSAP V4.2 file: interview scoring, BM approval, POP review, Discovery, the 17-item selection file, approval routing, onboarding, probation | Yes — entirely | Each manager's browser |
+
+**The rule:** if Head Office needs it, TalentNest owns it. If GSAP needs it, the tracker owns it.
+If neither asks for it but you need it to decide, the intake owns it.
+
+---
+
+## 2. The join key
+
+Every intake mints a reference like **`RRB-K4M2XP`**. It is the one string that ties the
+three systems together:
+
+- shown to the candidate on screen and emailed to them
+- carried into the TalentNest handoff as `?ref=RRB-K4M2XP`
+- written to the intake sheet as column A
+- stored on the tracker record at `meta.branchIntake.ref`
+
+When someone phones and says "I applied last week," the reference finds them in all three
+places. Without it you are matching on name spelling, which fails exactly when it matters.
+
+**Codes deliberately exclude I, O, 0 and 1** so they survive being read aloud over the phone.
+
+---
+
+## 3. The candidate's actual path
+
+```
+Sees the ad
+   ↓
+/careers/                      The Selection — hero, two tracks, five gates,
+                               60-second self-test. Test result is remembered.
+   ↓
+/careers/apply.html            Branch intake, 6 steps, ~2 minutes.
+                               → POST to your Apps Script
+                               → row in "Branch Careers Intake" sheet
+                               → briefing email to you, cc the BMA
+                               → acknowledgement email to the candidate
+                               → reference code on screen
+   ↓
+TalentNest posting 215291      The legal application. Head Office's system.
+                               Arrives tagged utm_source=branch_site&ref=RRB-XXXXXX
+   ↓
+Recruiting Manager calls       Within 48 hours, having already read the intake
+   ↓
+Recruit Tracker                Import pulls the file in complete. Stages 1–8 run from here.
+```
+
+There is a **skip link** on the intake page that goes straight to TalentNest. Some people
+will not fill in a branch form and that is fine — we would rather have the application than
+the data. Those arrive tagged `utm_campaign=selection_skipped`, so you can see how many.
+
+---
+
+## 4. What you actually get — field by field
+
+### From the branch intake (all candidates)
+
+| Field | Why it earns its place |
+|---|---|
+| Name, email, mobile | Contact |
+| **Area they live** | Travel time to Chaguanas is a real first-year attrition driver |
+| **Date of birth** | → Form A age band, automatically |
+| **Household status** | → Form A marital row, automatically |
+| **Education** | → Form A education row, automatically |
+| **Track** — experienced vs new | The branch point that decides every later question |
+| Commitment — full-time / transitioning / part-time | Sets the honest expectation conversation |
+| Earliest start | Pipeline planning |
+| **Vehicle** | → Form A car ownership row, automatically |
+| Devices (BYOD) | → selection file `byod` |
+| Household backing | Predicts the spouse interview before you run it |
+| Year-one income needed | The single most common mismatch, surfaced on day zero |
+| Network size / approachability / referral ability | Project 100 proxy, in the market survey's own wording |
+| Source + who referred them | → `meta.sourceType`, and the referrer gets their credit |
+| Self-test score | How they rated themselves before anyone rated them |
+
+### Experienced track adds
+Company · years in industry · **12-month API band** (against the $105k probation standard) ·
+licence status · currently contracted · book portability · why they are looking.
+
+### New-to-industry track adds
+Current occupation · years in role (→ Form A employment row) · **runway if income starts
+slowly** · why this, why now.
+
+> Runway is the question nobody asks early and everybody regrets not asking. Commission income
+> takes roughly 90 days to steady. A candidate with under a month of runway is not a bad
+> candidate — they are a candidate you must plan differently for, and you now know on day zero.
+
+### From TalentNest
+Application ID · Candidate ID · current step · **POP 7.0 report ID and scores** (PS, EP, AP,
+IP, SD, LM, CR) · probability. Record the IDs in the tracker's TalentNest card on the First
+Interview screen so the file links back to the system of record.
+
+### From the Recruit Tracker
+Everything GSAP requires: personal observation scores, the track-specific interview
+dimensions, RM recommendation and BM review, POP review with the score-driven question bank,
+Discovery's six modules and market surveys, the 17-item selection file, approval routing
+(BM 60–80 / VP 50–59 / Panel under 50), onboarding, and the 7-month probation against
+$105k API and 25 settled applications.
+
+---
+
+## 5. Form A prefills itself
+
+The selection Form A scores eight rows. The intake fills five of them, using
+character-identical labels, so they score without anyone retyping anything:
+
+| Row | Source | When |
+|---|---|---|
+| Age | Branch intake (from DOB) | Day zero |
+| Education | Branch intake | Day zero |
+| Employment years | Branch intake | Day zero |
+| Marital status | Branch intake | Day zero |
+| Car ownership | Branch intake | Day zero |
+| Discovery summary | Discovery evaluation | Week 7 |
+| POP 7.0 | TalentNest | After BM authorises |
+| Income potential | Market surveys | During Discovery |
+
+A typical candidate arrives at **35–45 of 80 points before their first interview**. That is
+not a verdict — the three missing rows are the heavy ones — but it does tell you immediately
+whether someone is heading for BM approval or a Selection Panel.
+
+**Every prefilled row is the candidate's own unverified claim.** The tracker labels each one
+"From branch intake RRB-XXXXXX" in its notes field. Vehicle and employment history still get
+verified at inspection. Do not let a prefilled form feel like a checked form.
+
+---
+
+## 6. Pulling intakes into the tracker
+
+Once per morning:
+
+1. Open `<your Apps Script /exec URL>?export=new&key=<EXPORT_KEY>` in a browser
+2. Save the JSON file it returns
+3. In the Recruit Tracker, click **Import** and choose that file
+
+Candidates arrive complete — contact details, source, background notes, five Form A rows, and
+a full intake summary written into the First Interview outcome notes. `export=new` only
+returns candidates you have not pulled before; use `export=all` to re-pull everything, or
+`export=ref&ref=RRB-XXXXXX` for one.
+
+---
+
+## 7. What is on the site now
+
+| Path | What it is | Access |
+|---|---|---|
+| `/careers/` | The Selection — the public recruitment ad | Public |
+| `/careers/apply.html` | Branch intake, 6 steps | Public, not indexed |
+| `/recruiting/` | Manager hub | Code: `RECRUIT2026` |
+| `/recruiting/tracker/` | Recruit Tracker v5.6 (build B5) | Behind the hub |
+| `/recruiting/onboarding/` | GSAP V4.2 Manager Onboarding Course | Behind the hub |
+| `apps-script/careers-intake.gs` | Intake webhook — sheet, emails, tracker export | Deploy to script.google.com |
+| `apps-script/recruit-tracker-webhook.gs` | Tracker's stage-completion emails and log | Deploy separately |
+
+---
+
+## 8. Setup still to do
+
+1. **Deploy `apps-script/careers-intake.gs`** — instructions are in the file header.
+   Paste the `/exec` URL into `CONFIG.WEBHOOK_URL` at the top of `careers/apply.html`.
+   Until you do, the intake still works end to end for the candidate: they get their
+   reference, their acknowledgement screen and the TalentNest handoff. You just do not get
+   the sheet row or the briefing email.
+2. **Set `EXPORT_KEY`** in that script's properties. Without it the export endpoint refuses
+   to serve, which is the safe default — that URL returns candidate data.
+3. **Change the access code** if `RECRUIT2026` is too guessable. It is in
+   `recruiting/index.html`, near the bottom.
+4. **Deploy `apps-script/recruit-tracker-webhook.gs`** separately if you want stage-completion
+   emails, then paste its URL into the tracker's Integrations panel.
+5. **TalentNest API key** — when Head Office provides one, both scripts can send candidate
+   emails through TalentNest on company branding instead of Gmail.
+
+---
+
+## 9. Things worth knowing
+
+**Tracker data is per-browser.** The Recruit Tracker stores candidate files in IndexedDB on
+the machine you open it on. Nothing uploads. A file the BMA builds on her laptop is not
+visible on your phone. Use **Export** to hand a file over, and export a backup before anyone
+clears their browser or changes machines. This is also why putting the tracker on a public
+URL is safe — the app is public, the data never is.
+
+**The AI drill-down does not run here.** The tracker's AI POP analysis calls the Anthropic API
+directly with no key, which only worked in the environment it was authored in. On the branch
+site it returns a plain message saying so. Everything else works normally, including the
+score-driven question bank that the drill-down was summarising.
+
+**Felicia's file was not published.** The demo seed shipped with the tracker was ~5.6 MB of a
+real candidate file. This repository is public, so it was left out. To load it locally, use
+the tracker's Import button with those seed JSON files directly.
+
+**`data/fleet-register.csv` is still in this public repo** and predates this work. Worth a look
+— you removed a client property schedule for the same reason back in April.
+
+**The intake is not the application.** Say it on the phone the way the page says it: the
+branch intake is ours, the Guardian Life application is the legal one. If someone completes
+the intake and abandons TalentNest, they have not applied — the acknowledgement email tells
+them so, and the sheet shows you who to chase.
