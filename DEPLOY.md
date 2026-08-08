@@ -2,10 +2,10 @@
 
 This repository holds **two separate sites**, and they deploy independently.
 
-| Site | What it is | Build with | Publish |
-|---|---|---|---|
-| **Contracts app** | Rampersad Private, on its own domain | `./build-contracting.sh` | `dist-contracting/` |
-| **Branch website** | rickyrampersadbranch.com as it was | nothing, or `./build.sh` | repo root, or `dist/` |
+| Site | What it is | Publish |
+|---|---|---|
+| **Contracts app** | Rampersad Private, on its own domain | `contracting/`, or `dist-contracting/` from `./build-contracting.sh` |
+| **Branch website** | rickyrampersadbranch.com as it was | repo root, or `dist/` from `./build.sh` |
 
 Neither needs a compile step — both are plain HTML, CSS and JS, with pdf-lib
 vendored. The build scripts only decide which files go out.
@@ -17,19 +17,43 @@ vendored. The build scripts only decide which files go out.
 Its own Netlify site, its own domain. This is Ricky Rampersad Private —
 nothing to do with the Guardian branch website, and it must stay that way.
 
+There are two routes to the same site. Both work from a phone.
+
+## A. Connect the repo — redeploys on every push
+
+**Add new site → Import an existing project → GitHub →
+RickyRampersadTermLIfe**, pick the branch, then set **one** thing:
+
+| Setting | Value |
+|---|---|
+| Base directory | `contracting` |
+| Build command | *leave empty* |
+| Publish directory | *leave empty* |
+
+`contracting/` is a finished site — pages, 404, `netlify.toml`, `_redirects`,
+`_headers` and `robots.txt` all sit together in it. Netlify reads
+`contracting/netlify.toml` and publishes the folder as-is.
+
+**There is no build step, so do not set a build command.** If Netlify ever
+reports something like `./build.sh: No such file or directory`, a build
+command has been filled in somewhere — clear it under **Site configuration →
+Build & deploy → Build settings**.
+
+## B. Drag and drop — no GitHub involved
+
 ```bash
 ./build-contracting.sh
 ```
 
-produces `dist-contracting/` and `contracting-app.zip`. Drag either onto
-<https://app.netlify.com/drop>, or point a Netlify site at this repo with:
+produces `dist-contracting/` and `contracting-app.zip`. Drop either onto
+<https://app.netlify.com/drop>. Nothing is compiled — the build only copies
+`contracting/` and checks the site is self-contained. Every later update
+means running it again and re-dropping, which is why route A is the one to
+settle on.
 
-| Setting | Value |
-|---|---|
-| Build command | `./build-contracting.sh` |
-| Publish directory | `dist-contracting` |
+## What lands where
 
-The build moves the app up to the site root, so the pages land as:
+Either route puts the app at the site root, so the pages are:
 
 | URL | Page |
 |---|---|

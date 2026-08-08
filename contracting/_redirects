@@ -1,0 +1,4 @@
+/c/*        /?t=:splat              302
+/track/*    /status.html?c=:splat   302
+/track      /status.html            302
+/admin      /admin.html             302

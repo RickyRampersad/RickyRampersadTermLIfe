@@ -27,83 +27,25 @@ rm -rf "$DIST"
 rm -f "$ZIP"
 mkdir -p "$DIST"
 
+# contracting/ is already a complete site — its own 404, netlify.toml,
+# _redirects, _headers and robots.txt live alongside the pages, so a
+# git-connected deploy needs nothing but "base directory: contracting".
+# This build is the drag-and-drop route to the same site.
 echo "→ Copying the app to the site root"
 cp -R "$SRC"/. "$DIST"/
-cp "$ROOT/404.html" "$DIST/"
-
-# The app normally sits under /contracting/ on the branch site, where the
-# logo points one level up to the homepage. Standing on its own there is no
-# level up, so those links become the app's own front page.
-echo "→ Cutting the links back to the branch site"
-for file in "$DIST"/index.html "$DIST"/admin.html "$DIST"/status.html; do
-  [ -f "$file" ] || continue
-  sed -i 's|href="\.\./index\.html"|href="/"|g' "$file"
-done
-sed -i 's|← Back to the main site|← Back to the application|' "$DIST/admin.html"
-
-echo "→ Writing deploy config"
-cat > "$DIST/netlify.toml" <<'TOML'
-# Standalone contracting app. No build step — plain HTML, CSS and JS with
-# pdf-lib vendored, published exactly as it sits.
-[build]
-  publish = "."
-
-# Short links. /c/<token> is what the invitation emails send an applicant;
-# /track/<code> is what the confirmation email sends them afterwards.
-[[redirects]]
-  from = "/c/*"
-  to = "/?t=:splat"
-  status = 302
-
-[[redirects]]
-  from = "/track/*"
-  to = "/status.html?c=:splat"
-  status = 302
-
-[[redirects]]
-  from = "/track"
-  to = "/status.html"
-  status = 302
-
-[[redirects]]
-  from = "/admin"
-  to = "/admin.html"
-  status = 302
-
-# Applicants type ID, tax and bank details in here.
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "no-referrer"
-    X-Robots-Tag = "noindex, nofollow"
-TOML
-
-# A drag-and-drop deploy is only guaranteed to honour these plain files, so
-# they say the same thing as netlify.toml above.
-cat > "$DIST/_redirects" <<'REDIRECTS'
-/c/*        /?t=:splat              302
-/track/*    /status.html?c=:splat   302
-/track      /status.html            302
-/admin      /admin.html             302
-REDIRECTS
-
-cat > "$DIST/_headers" <<'HEADERS'
-/*
-  X-Frame-Options: DENY
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: no-referrer
-  X-Robots-Tag: noindex, nofollow
-HEADERS
-
-# The whole app is private — invited applicants only.
-cat > "$DIST/robots.txt" <<'ROBOTS'
-User-agent: *
-Disallow: /
-ROBOTS
 
 find "$DIST" \( -name '.DS_Store' -o -name '*~' -o -name '.*.swp' \) -delete
+
+echo "→ Checking the site is self-contained"
+for required in index.html admin.html status.html 404.html \
+                netlify.toml _redirects _headers robots.txt; do
+  [ -f "$DIST/$required" ] || { echo "   missing: $required" >&2; exit 1; }
+done
+if grep -rl 'href="\.\./' "$DIST" --include='*.html' >/dev/null 2>&1; then
+  echo "   a page still links above the site root:" >&2
+  grep -rn 'href="\.\./' "$DIST" --include='*.html' >&2
+  exit 1
+fi
 
 if command -v zip >/dev/null 2>&1; then
   echo "→ Zipping"

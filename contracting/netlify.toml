@@ -1,0 +1,44 @@
+# Standalone contracting app — Ricky Rampersad Private.
+#
+# This file is read when the Netlify site's BASE DIRECTORY is set to
+# "contracting". That is the only setting you have to type: no build command,
+# no publish directory, because there is nothing to compile — plain HTML, CSS
+# and JS with pdf-lib vendored, published exactly as it sits here.
+#
+# (build-contracting.sh produces the same site as a zip for drag-and-drop.
+#  Either route gives an identical site; this one redeploys on every push.)
+
+[build]
+  publish = "."
+  command = ""
+
+# Short links. /c/<token> is what the invitation emails send an applicant;
+# /track/<code> is what the confirmation email sends them afterwards.
+[[redirects]]
+  from = "/c/*"
+  to = "/?t=:splat"
+  status = 302
+
+[[redirects]]
+  from = "/track/*"
+  to = "/status.html?c=:splat"
+  status = 302
+
+[[redirects]]
+  from = "/track"
+  to = "/status.html"
+  status = 302
+
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 302
+
+# Applicants type ID, tax and bank details in here.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    X-Robots-Tag = "noindex, nofollow"
