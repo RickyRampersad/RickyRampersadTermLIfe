@@ -1,63 +1,64 @@
 # Deploying to Netlify
 
-The site is plain HTML, CSS and JS — there is nothing to compile. `build.sh`
-exists only to decide *what gets published*: it copies the public pages into
-`dist/` and leaves behind the things that are in the repo but must never be
-served.
+There is no build step. The site is plain HTML, CSS and JS — pdf-lib is
+vendored in `contracting/vendor/` — so Netlify publishes the repository root
+as-is and a deploy has nothing that can fail.
+
+## Two ways to deploy
+
+### A. Connect the repo — recommended, deploys on every push
+
+In Netlify: **Add new site → Import an existing project → GitHub →
+RickyRampersadTermLIfe**. It reads `netlify.toml`:
+
+| Setting | Value |
+|---|---|
+| Build command | *(none)* |
+| Publish directory | `.` |
+| Branch | whichever you deploy |
+
+If the site was set up earlier with a build command, clear it under
+**Site configuration → Build & deploy → Build settings**. `netlify.toml`
+pins the publish directory, so that part is already handled.
+
+### B. Drag and drop
 
 ```bash
 ./build.sh
 ```
 
-produces `dist/` (the folder to publish) and `rickyrampersadbranch-contracting-site-<date>.zip`
-(the same thing, zipped for drag-and-drop — date-stamped so you can tell
-successive builds apart).
+produces `dist/` and `rickyrampersadbranch-contracting-site-<date>.zip`
+(date-stamped so you can tell successive builds apart). Drop either onto
+<https://app.netlify.com/drop>.
 
-## Two ways to deploy
+`build.sh` is only for this manual route — a git-connected deploy never runs
+it. Every later update means running it again and re-dragging.
 
-### A. Drag and drop — quickest
+## Keeping the private files off the web
 
-1. Run `./build.sh`.
-2. Open <https://app.netlify.com/drop>.
-3. Drag in `dist/` — or the `rickyrampersadbranch-contracting-site-*.zip`.
+The repository holds things that must never be served: the Apps Script
+backends, the setup docs, the DNS record backup, and the client fleet
+register. Publishing the root would serve them, so `netlify.toml` blocks each
+one with a forced 404:
 
-Every later update means running the build and dragging again.
-
-### B. Connect the repo — deploys on every push
-
-In Netlify: **Add new site → Import an existing project → GitHub →
-RickyRampersadTermLIfe**, then confirm the settings it reads from
-`netlify.toml`:
-
-| Setting | Value |
+| Blocked | Why |
 |---|---|
-| Build command | `./build.sh` |
-| Publish directory | `dist` |
-| Branch | `main` (or whichever you deploy) |
+| `/apps-script/*` | Backend source, including your admin key once you set it |
+| `/data/*` | Client fleet data — no page reads it |
+| `/DNS-BACKUP.md` | Your DNS records |
+| `/CONTRACTING-SETUP.md`, `/RENEWAL-SETUP.md`, `/DEPLOY.md`, `/README.md` | Internal notes |
+| `/build.sh` | Build script |
 
-From then on, every push rebuilds and republishes. This is the better option
-if you expect to keep changing the site.
+**Add a rule whenever a new private file lands in the repository root** —
+that is the one maintenance cost of publishing the root instead of a build
+directory.
 
-Both routes publish identical files.
+Worth checking after the first deploy: open
+`rickyrampersadbranch.com/DNS-BACKUP.md`. It should be the 404 page. If it
+serves the file, the rules are not being applied — tell me and I will dig in.
 
-## What is published, and what is not
-
-Published: `index.html`, `agent.html`, `staff.html`, `renewal/`,
-`contracting/`, plus `robots.txt`, `_redirects`, `_headers`, `netlify.toml`
-and `CNAME`.
-
-**Held back on purpose:**
-
-| Left out | Why |
-|---|---|
-| `apps-script/` | Backend source, including your admin key once you set it |
-| `DNS-BACKUP.md` | Your DNS records |
-| `CONTRACTING-SETUP.md`, `RENEWAL-SETUP.md`, `README.md` | Internal setup notes |
-| `data/fleet-register.csv` | Client fleet data — no page reads it |
-
-Worth knowing: if the site is currently deployed from the repository root,
-those files are reachable today at e.g.
-`rickyrampersadbranch.com/DNS-BACKUP.md`. Deploying `dist/` fixes that.
+(The drag-and-drop bundle from `build.sh` leaves these files out altogether,
+so the rules are belt-and-braces there.)
 
 ## Custom domain
 

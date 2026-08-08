@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 #
-# Assemble the deployable site into dist/ and zip it for Netlify.
+# Assemble the site into dist/ and zip it for a drag-and-drop Netlify deploy.
 #
 #   ./build.sh
 #
-# There is no compile step — the site is plain HTML, CSS and JS, and pdf-lib
-# is vendored in contracting/vendor/. This script exists to decide what gets
-# published: everything a visitor needs, and nothing else. Source that is
-# tracked in git but must NOT be served — the Apps Script backends, the setup
-# docs, the DNS record backup, the fleet register — is left behind.
+# NOT required to deploy. A git-connected Netlify deploy publishes the
+# repository root directly and runs no build at all — see netlify.toml. This
+# script is only for the manual route: it copies out the pages a visitor
+# needs and leaves behind the source that is tracked in git but must never be
+# served — the Apps Script backends, the setup docs, the DNS record backup,
+# the fleet register.
 #
 # Output:
 #   dist/  the folder to publish
@@ -34,6 +35,7 @@ echo "→ Copying pages"
 cp "$ROOT/index.html"  "$DIST/"
 cp "$ROOT/agent.html"  "$DIST/"
 cp "$ROOT/staff.html"  "$DIST/"
+cp "$ROOT/404.html"    "$DIST/"
 cp -R "$ROOT/renewal"  "$DIST/"
 cp -R "$ROOT/contracting" "$DIST/"
 

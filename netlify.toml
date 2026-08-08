@@ -1,13 +1,20 @@
 # Netlify configuration for the Ricky Rampersad Branch site.
 
-# build.sh assembles dist/ from the pages that should be public. Publishing
-# dist/ rather than the repo root keeps the Apps Script source, the setup
-# docs, the DNS record backup and the fleet register off the web — a
-# git-connected deploy and a drag-and-drop deploy then serve exactly the
-# same files.
+# No build step. The site is plain HTML/CSS/JS and is published straight
+# from the repository root, so a deploy has nothing that can fail.
+#
+# publish is set explicitly rather than left to the Netlify UI: it pins the
+# directory here in the repo, where it is reviewable, and overrides whatever
+# a previous configuration may have left in the site settings.
+#
+# The private files that sit in this repo — the Apps Script backends, the
+# setup docs, the DNS record backup, the fleet register — are kept off the
+# web by the forced 404 rules below rather than by filtering them out at
+# build time. Same result, nothing to execute.
+#
+# build.sh still exists, for producing the drag-and-drop zip by hand.
 [build]
-  command = "./build.sh"
-  publish = "dist"
+  publish = "."
 
 # Short personal links: /r/<token> → renewal portal with the token attached.
 # These are the links stored in the Google Sheet's "Portal Link" column.
@@ -34,6 +41,58 @@
   from = "/contract"
   to = "/contracting/"
   status = 302
+
+# --- Files that live in the repo but must never be served -------------------
+# force = true so the rule wins over the file actually sitting there.
+# Add a rule here whenever a new private file lands in the repository root.
+
+[[redirects]]
+  from = "/apps-script/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/data/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/build.sh"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/DNS-BACKUP.md"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/RENEWAL-SETUP.md"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/CONTRACTING-SETUP.md"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/DEPLOY.md"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/README.md"
+  to = "/404.html"
+  status = 404
+  force = true
 
 [[headers]]
   for = "/renewal/*"
