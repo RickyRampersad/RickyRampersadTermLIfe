@@ -16,31 +16,66 @@ No servers, no monthly cost.
 
 ## What it found in your portfolio
 
-**Run `reportInactiveAgents()` for your real numbers — don't rely on the sample
-below.**
+Run against the full **Export** tab — all 20,348 policy rows:
 
-The portfolio is roughly **20,000 policies**. Google's file reader would only
-hand over the first ~100 rows, so the only analysis that can be done outside the
-sheet is a sample. From those 100 rows:
-
-| | sample of ~100 rows |
+| | |
 | --- | --- |
-| People on the active roster (`Users` tab) | 37 |
-| Distinct servicing agents seen | 32 |
-| Agents no longer active | 10 |
-| Orphaned clients | 17 |
+| Policy rows | **20,348** |
+| Distinct clients | **10,926** |
+| Active roster (`Users` tab) | **37** |
+| Distinct agents named on policies | **92** |
+| **Agents no longer active** | **59** |
+| **Orphaned clients** | **2,962** |
+| Their policies | **4,348** |
+| **Premium under inactive agents** | **TT$5,086,116** |
+| Clients with an active agent | 7,819 |
 
-Departed/unrecognised agents in that sample: Agentsatlange Trinidad, Carlton Aloy
-Wong, Kevin Ragoo, Christalene Beharry, Alm Insurance Services Limited, Lulliana
-Ragunan, Ignatius And Company Limited, Sherwin Mohammed, Angela Joseph, Robin
-Baljohn.
+The book is concentrated: the ten largest inactive holdings account for roughly
+two thirds of the orphaned clients, and the single biggest holds over 360.
+Run `listInactiveAgents()` for the names and figures — they are deliberately
+kept out of this file, because this repository is public and who left with how
+much premium is not something to publish.
 
-If that ratio holds across the full book it implies **a few thousand orphaned
-clients** — but a ratio from 0.5% of the data is a guess, not a finding.
-`reportInactiveAgents()` runs the identical logic across all 20,000 rows inside
-Apps Script and prints the truth: every inactive agent, the orphaned client
-count, how many are reachable by email, how many are phone-only, and the total
-premium sitting under inactive agents.
+### Two things you need to decide
+
+**1. Five of them are agencies, not people.** Five brokerage/agency channels
+account for **841 clients between them**. They are almost certainly being
+serviced by the broker — just not by one of your agents. They are listed in
+`CONFIG.EXCLUDE_AGENTS` and **excluded** from the outreach, which brings the
+real target down to:
+
+| | excluding broker channels |
+| --- | --- |
+| Orphaned clients | **2,143** |
+| Their policies | 2,990 |
+| Premium | **TT$2,541,691** |
+
+Delete a line from `EXCLUDE_AGENTS` to pull that channel's clients back in.
+Run `listInactiveAgents()` to see all 59 before you decide.
+
+**2. Most of them have no email address.** This is the important one:
+
+| Of the 2,143 orphaned clients | |
+| --- | --- |
+| Reachable by email | **647** (30%) |
+| Phone number only | **1,127** (53%) |
+| No contact details at all | **369** (17%) |
+
+**The email programme reaches fewer than a third of them.** That is a limit of
+the data, not the build — you cannot email 1,127 people whose address you do not
+hold.
+
+So there's a second track. `exportCallList()` builds a **`Reassign Call List`**
+tab: every orphaned client with a phone but no email, **sorted by premium, highest
+first**, with columns for who called and what happened. When staff capture an
+email address, they write it into the `Email` column on the `Reassign` tab and
+that client joins the normal invitation flow on the next run.
+
+Work the top of that call list first — the premium concentration means a few
+hundred calls covers most of the money at risk.
+
+Numbers change as the book changes. `reportInactiveAgents()` re-runs all of this
+live and prints the current truth.
 
 ### Built for the real size
 
@@ -137,9 +172,18 @@ so it cannot collide with whatever is already running on Branch Portfolio.
 
 ### Then look at what it found
 
-Run **`reportInactiveAgents`** and open the log. This changes nothing and sends
-nothing — it just prints the real, full-book analysis: every inactive agent,
-how many policies each is holding, and the total orphaned client count.
+These four change nothing and send nothing — run them and read the log:
+
+- **`listTabs`** — confirms the script is pointed at the right tab.
+  `CONFIG.PORTFOLIO_SHEET` is set to `Export`; this proves it found ~20,000 rows
+  there and not a smaller working copy that shares the same headers.
+- **`reportInactiveAgents`** — the full-book analysis: every inactive agent,
+  orphaned client count, email vs phone-only split, and premium at risk.
+- **`listInactiveAgents`** — all 59 inactive agents with their holdings, so you
+  can decide which are genuinely departed and which are broker channels to add
+  to `CONFIG.EXCLUDE_AGENTS`.
+- **`exportCallList`** — builds the phone-only call list. **This is where most
+  of your orphaned clients are**, so don't skip it.
 
 ---
 

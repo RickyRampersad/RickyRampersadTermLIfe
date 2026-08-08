@@ -76,8 +76,30 @@ var CONFIG = {
   AGENT_CONTACT_DAYS: 1,      // promise: the agent calls within 1 working day
   AGENT_CHASE_DAYS: 3,        // escalate to the manager after this long
 
+  /**
+   * Agency and brokerage channels, not departed individuals.
+   *
+   * The book names these as the "agent" on ~840 clients. They are almost
+   * certainly serviced by the broker, not orphaned — but that is a commercial
+   * judgement, not a data one, so it is yours to make. Names matched here are
+   * treated as SERVICED and left out of the queue entirely.
+   *
+   * Delete a line to pull that channel's clients INTO the outreach.
+   * Run listInactiveAgents() to see the full list before you decide.
+   */
+  EXCLUDE_AGENTS: [
+    'Ignatius And Company Limited',
+    'Alm Insurance Services Limited',
+    'V.I.P.S. Financial Services Ltd',
+    'Agentsatlange Trinidad',
+    'Cera Financial Services Ltd',
+  ],
+
   /* ---- Tabs --------------------------------------------------------- */
-  PORTFOLIO_SHEET: '',              // '' = auto-detect by its headers
+  // The portfolio lives on the "Export" tab (~20,000 rows). Leave this set —
+  // if it is blank the script auto-detects, and auto-detection can land on a
+  // smaller working tab that happens to share the same headers.
+  PORTFOLIO_SHEET: 'Export',
   USERS_SHEET:     'Users',         // existing roster — the source of truth for "active"
   REASSIGN_SHEET:  'Reassign',
   RESPONSES_SHEET: 'Reassign Responses',
@@ -316,6 +338,11 @@ function isActiveAgent_(agentName, roster) {
   var key = nameKey_(agentName);
   if (!key) return false;
   if (CACHE_.activeMemo.hasOwnProperty(key)) return CACHE_.activeMemo[key];
+
+  // Agency/brokerage channels count as serviced — see CONFIG.EXCLUDE_AGENTS.
+  for (var x = 0; x < CONFIG.EXCLUDE_AGENTS.length; x++) {
+    if (nameKey_(CONFIG.EXCLUDE_AGENTS[x]) === key) return (CACHE_.activeMemo[key] = true);
+  }
 
   var parts = key.split(' '), hit = false;
   for (var i = 0; i < roster.length; i++) {
@@ -1147,24 +1174,52 @@ function agentProfile_(name) {
 
 function ss_() { return SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID); }
 
-/** Finds the portfolio tab by its headers so a rename cannot break it. */
+/**
+ * Finds the portfolio tab.
+ *
+ * Prefers the tab named in CONFIG. Falling back to auto-detection, it picks the
+ * LARGEST matching tab, not the first — this workbook has several tabs carrying
+ * the same headers, and landing on a small working copy would silently analyse
+ * a fraction of the book and report it as the whole thing.
+ */
 function portfolioSheet_() {
   var ss = ss_();
   if (CONFIG.PORTFOLIO_SHEET) {
     var named = ss.getSheetByName(CONFIG.PORTFOLIO_SHEET);
     if (named) return named;
+    Logger.log('⚠ No tab named "' + CONFIG.PORTFOLIO_SHEET + '" — falling back to the ' +
+               'largest tab with portfolio headers. Run listTabs() to see the real names.');
   }
-  var sheets = ss.getSheets();
+  var sheets = ss.getSheets(), best = null;
   for (var i = 0; i < sheets.length; i++) {
     if (sheets[i].getLastRow() < 2) continue;
     var h = sheets[i].getRange(1, 1, 1, sheets[i].getLastColumn()).getValues()[0]
       .map(function (x) { return String(x).trim(); });
     if (h.indexOf(P.AGENT) !== -1 && h.indexOf(P.CLIENT_NO) !== -1 && h.indexOf(P.CLIENT) !== -1) {
-      return sheets[i];
+      if (!best || sheets[i].getLastRow() > best.getLastRow()) best = sheets[i];
     }
   }
+  if (best) return best;
   throw new Error('Could not find the portfolio tab (needs "Agent", "Client Number" and ' +
-                  '"Client" headers). Set CONFIG.PORTFOLIO_SHEET to its exact name.');
+                  '"Client" headers). Run listTabs() and set CONFIG.PORTFOLIO_SHEET.');
+}
+
+/** Diagnostic: prints every tab, its size, and whether it looks like the portfolio. */
+function listTabs() {
+  var sheets = ss_().getSheets();
+  Logger.log('Tabs in "' + ss_().getName() + '":');
+  sheets.forEach(function (s) {
+    var h = s.getLastColumn()
+      ? s.getRange(1, 1, 1, s.getLastColumn()).getValues()[0]
+          .map(function (x) { return String(x).trim(); })
+      : [];
+    var isPortfolio = h.indexOf(P.AGENT) !== -1 && h.indexOf(P.CLIENT_NO) !== -1;
+    Logger.log('  ' + (isPortfolio ? '★ ' : '  ') + '"' + s.getName() + '" — ' +
+               (s.getLastRow() - 1) + ' data rows, ' + s.getLastColumn() + ' columns' +
+               (isPortfolio ? '   ← portfolio headers' : ''));
+  });
+  Logger.log('★ = a tab the detector would accept. CONFIG.PORTFOLIO_SHEET is currently "' +
+             (CONFIG.PORTFOLIO_SHEET || '(auto-detect)') + '".');
 }
 
 function ensureReassignSheet_() {
@@ -1566,10 +1621,66 @@ function reportInactiveAgents() {
   Logger.log('Completed in ' + Math.round((new Date().getTime() - t0) / 1000) + 's');
 
   if (mailable > 0) {
-    var days = Math.ceil(mailable / Math.max(1, CONFIG.MAX_INVITES_PER_RUN));
+    var runs = Math.ceil(mailable / Math.max(1, CONFIG.MAX_INVITES_PER_RUN));
     Logger.log('At ' + CONFIG.MAX_INVITES_PER_RUN + ' invitations per run, reaching all ' +
-               mailable + ' takes about ' + days + ' run(s). Check your Gmail daily cap ' +
+               mailable + ' takes about ' + runs + ' run(s). Check your Gmail daily cap ' +
                '(currently ' + MailApp.getRemainingDailyQuota() + ' left today).');
   }
+  if (orphanCount - mailable > 0) {
+    Logger.log('⚠ ' + (orphanCount - mailable) + ' orphaned clients have NO email address. ' +
+               'They cannot be reached by this programme at all — use the "Call list" tab ' +
+               'on the dashboard, or run exportCallList() to get them as a sheet.');
+  }
+  if (CONFIG.EXCLUDE_AGENTS.length) {
+    Logger.log('Note: ' + CONFIG.EXCLUDE_AGENTS.length + ' agency/brokerage channel(s) are ' +
+               'being treated as serviced and excluded — see CONFIG.EXCLUDE_AGENTS.');
+  }
   return { orphans: orphanCount, mailable: mailable, agents: names.length, scanned: scanned };
+}
+
+/**
+ * Builds a "Reassign Call List" tab of every orphaned client with a phone
+ * number but no email — the ones this programme cannot reach.
+ *
+ * Most of the orphaned book falls into this bucket. Staff work the list, and
+ * whenever they capture an email address they write it into the Email column
+ * of the Reassign tab; that client then joins the normal invitation flow on
+ * the next sendInvitations() run.
+ */
+function exportCallList() {
+  var rows = readTable_(ensureReassignSheet_());
+  var out = [];
+  rows.forEach(function (r) {
+    if (isEmail_(r[R.EMAIL]) || r[R.CLOSED]) return;
+    out.push([r[R.CLIENT_NO], r[R.CLIENT], r[R.PHONE] || 'NO PHONE EITHER', r[R.FORMER],
+              num_(r[R.POLICIES]), num_(r[R.PREMIUM]), r[R.STATUS], '', '']);
+  });
+  out.sort(function (a, b) { return b[5] - a[5]; });        // highest premium first
+
+  var ss = ss_(), name = 'Reassign Call List';
+  var sh = ss.getSheetByName(name);
+  if (sh) ss.deleteSheet(sh);
+  sh = ss.insertSheet(name);
+  sh.appendRow(['Client No', 'Client', 'Phone', 'Former Agent', 'Policies',
+                'Annual Premium (TT$)', 'Status', 'Called By / Outcome', 'Email Captured']);
+  sh.setFrozenRows(1);
+  sh.getRange(1, 1, 1, 9).setFontWeight('bold').setBackground('#0E2A47').setFontColor('#ffffff');
+  for (var i = 0; i < out.length; i += 500) {
+    var slice = out.slice(i, i + 500);
+    sh.getRange(sh.getLastRow() + 1, 1, slice.length, slice[0].length).setValues(slice);
+  }
+  Logger.log('Call list built: ' + out.length + ' clients with no email address, ' +
+             'highest premium first. Write any email you capture into the Reassign tab ' +
+             'and they join the normal flow.');
+  log_('CALLLIST', '', '', 'Built call list of ' + out.length + ' clients');
+  return out.length;
+}
+
+/** Diagnostic: every inactive agent, so you can decide who is genuinely gone. */
+function listInactiveAgents() {
+  var res = reportInactiveAgents();
+  Logger.log('Review the list above. Anything that is an agency or brokerage rather than ' +
+             'a departed individual should be added to CONFIG.EXCLUDE_AGENTS — those ' +
+             'clients are being serviced, just not by one of your people.');
+  return res;
 }
