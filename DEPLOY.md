@@ -27,9 +27,9 @@ pins the publish directory, so that part is already handled.
 ./build.sh
 ```
 
-produces `dist/` and `rickyrampersadbranch-contracting-site-<date>.zip`
-(date-stamped so you can tell successive builds apart). Drop either onto
-<https://app.netlify.com/drop>.
+produces `dist/` and `contracting.zip`. Drop either onto
+<https://app.netlify.com/drop>. Both hold the whole site — a Netlify drop
+replaces everything at the domain, not just the contracting pages.
 
 `build.sh` is only for this manual route — a git-connected deploy never runs
 it. Every later update means running it again and re-dragging.

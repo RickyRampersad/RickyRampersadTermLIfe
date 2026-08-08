@@ -12,23 +12,21 @@
 # the fleet register.
 #
 # Output:
-#   dist/  the folder to publish
-#   rickyrampersadbranch-contracting-site-<date>.zip  drag this into Netlify
+#   dist/            the folder to publish
+#   contracting.zip  drag this into Netlify
 #
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DIST="$ROOT/dist"
 
-# Date-stamped so successive downloads are told apart in a Downloads folder.
-# "contracting-site" because that is what this release is about, and because
-# it is the whole site — a Netlify drop replaces everything, not just the
-# contracting pages.
-ZIP="$ROOT/rickyrampersadbranch-contracting-site-$(date +%Y-%m-%d).zip"
+# Holds the whole site, not only the contracting pages — a Netlify drop
+# replaces everything at the domain, so the bundle has to carry everything.
+ZIP="$ROOT/contracting.zip"
 
 echo "→ Cleaning dist/ and any earlier bundle"
 rm -rf "$DIST"
-rm -f "$ROOT"/rickyrampersadbranch-contracting-site-*.zip "$ROOT/rickyrampersadbranch-site.zip"
+rm -f "$ZIP" "$ROOT"/rickyrampersadbranch-*.zip
 mkdir -p "$DIST"
 
 echo "→ Copying pages"

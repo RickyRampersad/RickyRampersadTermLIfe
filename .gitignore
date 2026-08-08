@@ -1,3 +1,4 @@
 # Build output — regenerate with ./build.sh
 dist/
+contracting.zip
 rickyrampersadbranch-*.zip
