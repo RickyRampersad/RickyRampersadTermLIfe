@@ -569,7 +569,7 @@
   <div class="stats-inner">
     <div class="stat"><div class="num"><span id="c1" data-count="8">0</span><span>+</span></div><div class="lbl">Product lines</div></div>
     <div class="stat"><div class="num"><span id="c2" data-count="25">0</span><span>+</span></div><div class="lbl">Online forms & tools</div></div>
-    <div class="stat"><div class="num"><span id="c3" data-count="7">0</span></div><div class="lbl">Quote systems live — more coming</div></div>
+    <div class="stat"><div class="num"><span id="c3" data-count="8">0</span></div><div class="lbl">Quote systems live — more coming</div></div>
     <div class="stat"><div class="num">24<span>/7</span></div><div class="lbl">Apply anytime, any device</div></div>
   </div>
 </div>
@@ -697,6 +697,13 @@
         <h3>Personal Accident</h3>
         <p>Personal accident & income protection — get your quote with our new online system.</p>
         <span class="go">Get PA Quote ↗</span>
+      </a>
+      <a class="tile reveal" href="travel/">
+        <span class="badge">New</span>
+        <div class="ico">✈️</div>
+        <h3>Travel</h3>
+        <p>International travel health insurance from VUMI — instant premium, compare plans and apply online in minutes.</p>
+        <span class="go">Get Travel Quote</span>
       </a>
       <div class="tile reveal" style="opacity:.55; cursor:default">
         <div class="ico">🏦</div>
@@ -899,6 +906,7 @@
         { ico: '🚗', label: 'My vehicle', desc: 'Car, van or truck insurance', url: 'https://form.jotform.com/223376649264061' },
         { ico: '🏠', label: 'My home or property', desc: 'Buildings & contents cover', url: 'https://form.jotform.com/201953408200849' },
         { ico: '🦺', label: 'My income, against accidents', desc: 'Personal accident & income protection', url: 'https://personalaccident.netlify.app/' },
+        { ico: '✈️', label: 'Me, while I travel', desc: 'International travel health insurance — instant quote', url: 'travel/' },
         { ico: '👥', label: 'My business & employees', desc: 'Key person & group benefits', go: 'business' },
         { ico: '🏦', label: 'My retirement', desc: 'Pensions & long-term savings', go: 'retirement' }
       ]
@@ -976,6 +984,7 @@
     factfind: { label: '🧭 FactFind360', url: 'https://factfind360.com' },
     ci: { label: '🎗️ Critical Illness Quote', url: 'https://form.jotform.com/261288212990057' },
     pa: { label: '🦺 Personal Accident Quote', url: 'https://personalaccident.netlify.app/' },
+    travel: { label: '✈️ Travel Insurance Quote', url: 'travel/' },
     eb: { label: '👥 Employee Benefits Portal', url: 'https://employeebenefitstt.com/' },
     claim: { label: '🏥 Health Claim E-Form', url: 'https://form.jotform.com/230135714666051' },
     renewal: { label: '🔄 Renewal Portal', url: 'renewal/' },
@@ -991,6 +1000,7 @@
     { keys: ['house', 'home', 'property', 'building', 'contents'], reply: "For your home or business property, request a quotation online.", links: ['property'] },
     { keys: ['critical illness', 'cancer', 'heart', 'stroke', 'illness'], reply: "Critical illness cover pays a lump sum if serious illness strikes. Try our quote engine.", links: ['ci', 'factfind'] },
     { keys: ['accident', 'income protection', 'injury', 'disab'], reply: "Our Personal Accident & Income Protection system can quote you online.", links: ['pa'] },
+    { keys: ['travel', 'trip', 'vacation', 'holiday', 'abroad', 'overseas', 'flight', 'vumi', 'passport'], reply: "For international travel we place VUMI Travel VIP — up to US$5,000,000 medical cover worldwide, any doctor, any hospital. You can get your premium online in about a minute and apply the same day.", links: ['travel'] },
     { keys: ['employee benefit', 'employee', 'employer', 'group plan', 'group health', 'group life', 'my staff', 'company plan'], reply: "For employers we have a dedicated Employee Benefits portal — quote, track and customize your group plan, sent directly to Guardian.", links: ['eb'] },
     { keys: ['xpress', 'express'], reply: "Xpress Life is our specialized instant-issue life product — 5 health questions, no medicals, on its own dedicated site.", links: ['xpress'] },
     { keys: ['life insurance', 'life cover', 'life'], reply: "Two paths for life insurance: Xpress Life for fast simplified cover, or a full plan starting with our FactFind360 needs analysis.", links: ['xpress', 'factfind'] },
