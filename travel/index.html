@@ -403,6 +403,19 @@
   .reflink b + span { font-size: 13px; color: var(--ink2); line-height: 1.5; }
   .reflink .rl-go { margin-left: auto; color: var(--sea); font-weight: 700; font-size: 17px; flex-shrink: 0; }
 
+  /* ══ OFFICE CARD ══ */
+  .pillflag {
+    display: inline-block; font-size: 10.5px; font-weight: 700;
+    letter-spacing: .06em; text-transform: uppercase;
+    background: var(--sun-lt); color: #96631A;
+    padding: 4px 11px; border-radius: 100px;
+  }
+  .officehead { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+  .officehead .oh-name {
+    font-family: 'Fraunces', serif; font-weight: 600; font-size: 20px; line-height: 1.15;
+  }
+  .officehead .oh-role { font-size: 13.5px; color: var(--ink2); margin-top: 2px; }
+
   /* ══ CONDITIONS LIST ══ */
   ol.conds { list-style: none; counter-reset: c; }
   ol.conds li {
@@ -962,10 +975,20 @@
       </ol>
     </div>
 
-    <div class="card" style="margin-bottom:20px">
-      <h3 style="font-size:19px;margin-bottom:6px">Apply directly with VUMI®</h3>
+    <div class="card" id="officeCard" style="margin-bottom:20px;display:none">
+      <span class="pillflag">Start here</span>
+      <h3 style="font-size:19px;margin:8px 0 6px">Speak to the office that handles it</h3>
       <p class="hint" style="margin-bottom:18px">
-        VUMI® issues the policy, takes the premium and sends your certificate. Nothing on this
+        Travel VIP applications for this region are handled through this office. They'll take your
+        details, confirm the premium and get the policy issued.
+      </p>
+      <div id="officeBody"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px">
+      <h3 style="font-size:19px;margin-bottom:6px">Or go directly to VUMI®</h3>
+      <p class="hint" style="margin-bottom:18px">
+        VUMI® underwrites the policy, takes the premium and issues your certificate. Nothing on this
         website collects your details or your payment.
       </p>
       <div id="refLinks" style="display:grid;gap:11px"></div>
@@ -1246,14 +1269,32 @@ var CONFIG = {
   BRAND_HTML:   'Travel<em>Medical</em>Cover',
 
   /* ── Insurer's own channels — where referral mode sends people ──────── */
-  // ⚠️ Confirm these against VUMI's current material before going live,
-  //    and add the Miami office details you want people directed to.
+  // ⚠️ Confirm these against VUMI's current material before going live.
   VUMI_PORTAL:  "https://www.MyVUMIportal.com",
   VUMI_SITE:    "https://www.vumigroup.com",
   VUMI_EMAIL:   "info@vumigroup.com",
   VUMI_PHONE:   "+1 888 809 3493",          // North America toll free
   VUMI_PHONE2:  "+1 416 744 3870",          // general line
-  VUMI_OFFICE:  "",                          // ← Miami office name / address, if you want it shown
+
+  /* ── The office that handles applications ───────────────────────────── */
+  // Shown first on the "How to apply" step, ahead of the general lines,
+  // because this is where the business actually goes.
+  //
+  // ⚠️ Before this goes live, confirm with Maydel that she is happy to be
+  //    named as the public contact on a website. Her direct mobile is
+  //    deliberately NOT here — a mobile number in an email signature is
+  //    shared with you, not with the whole internet. Add it only if she
+  //    says so.
+  OFFICE: {
+    name:    "World of America",
+    contact: "Maydel Victores",
+    role:    "Corporate Account Manager",
+    phone:   "+1 786 388 8757",
+    ext:     "112",
+    email:   "mv@woagp.com",
+    address: "9100 S Dadeland Blvd, Suite 1705, Miami, FL 33156",
+    site:    "https://woagp.com"
+  },
 
   /* ═════════════════════════════════════════════════════════════════════
      INTERMEDIARY MODE ONLY — deliberately left blank
@@ -2046,7 +2087,47 @@ function openApply() {
   go(3);
 }
 
+function renderOffice() {
+  var o = CONFIG.OFFICE || {};
+  if (!o.name) { $("officeCard").style.display = "none"; return; }
+  $("officeCard").style.display = "";
+
+  var tel = (o.phone || "").replace(/[^0-9+]/g, "");
+  var rows = [];
+  if (o.phone) rows.push({
+    href: "tel:" + tel, ico: "📞",
+    t: o.phone + (o.ext ? " ext. " + o.ext : ""),
+    d: "Ask for " + (o.contact || "the travel desk") + "."
+  });
+  if (o.email) rows.push({
+    href: "mailto:" + o.email + "?subject=" + encodeURIComponent("Travel VIP application"),
+    ico: "✉️", t: o.email, d: "Send your travel dates and travellers."
+  });
+  if (o.site) rows.push({
+    href: o.site, ico: "🔗", t: o.site.replace(/^https?:\/\//, ""), d: "About the office."
+  });
+
+  $("officeBody").innerHTML =
+    '<div class="officehead">' +
+      "<div>" +
+        '<div class="oh-name">' + esc(o.contact || o.name) + "</div>" +
+        '<div class="oh-role">' + esc([o.role, o.name].filter(Boolean).join(" · ")) + "</div>" +
+      "</div>" +
+    "</div>" +
+    (o.address ? '<p class="hint" style="margin:0 0 14px">' + esc(o.address) + "</p>" : "") +
+    '<div style="display:grid;gap:11px">' +
+      rows.map(function (l) {
+        return '<a class="reflink" href="' + esc(l.href) + '"' +
+          (/^https?:/.test(l.href) ? ' target="_blank" rel="noopener"' : "") + ">" +
+          '<span class="rl-ico">' + l.ico + "</span>" +
+          "<span><b>" + esc(l.t) + "</b><span>" + esc(l.d) + "</span></span>" +
+          '<span class="rl-go">→</span></a>';
+      }).join("") +
+    "</div>";
+}
+
 function renderRefLinks() {
+  renderOffice();
   var links = [];
   if (CONFIG.VUMI_PORTAL) links.push({
     href: CONFIG.VUMI_PORTAL, ico: "🌐", t: "MyVUMI™ portal",
@@ -2073,10 +2154,7 @@ function renderRefLinks() {
       '<span class="rl-ico">' + l.ico + "</span>" +
       "<span><b>" + esc(l.t) + "</b><span>" + esc(l.d) + "</span></span>" +
       '<span class="rl-go">→</span></a>';
-  }).join("") +
-  (CONFIG.VUMI_OFFICE
-    ? '<p class="hint" style="margin-top:6px">Placed through ' + esc(CONFIG.VUMI_OFFICE) + ".</p>"
-    : "");
+  }).join("");
 }
 
 function estimateText() {
@@ -2104,7 +2182,20 @@ function estimateText() {
   L.push("It is not a quotation and not an offer of cover. VUMI confirms the");
   L.push("premium and issues the policy.");
   L.push("");
-  L.push("TO APPLY, CONTACT VUMI DIRECTLY:");
+  var o = CONFIG.OFFICE || {};
+  if (o.name) {
+    L.push("TO APPLY — THE OFFICE THAT HANDLES THIS:");
+    L.push("  " + [o.contact, o.role].filter(Boolean).join(", "));
+    L.push("  " + o.name);
+    if (o.phone)   L.push("  Phone:  " + o.phone + (o.ext ? " ext. " + o.ext : ""));
+    if (o.email)   L.push("  Email:  " + o.email);
+    if (o.address) L.push("  " + o.address);
+    if (o.site)    L.push("  " + o.site.replace(/^https?:\/\//, ""));
+    L.push("");
+    L.push("OR VUMI DIRECTLY:");
+  } else {
+    L.push("TO APPLY, CONTACT VUMI DIRECTLY:");
+  }
   if (CONFIG.VUMI_PORTAL) L.push("  Portal: " + CONFIG.VUMI_PORTAL);
   if (CONFIG.VUMI_PHONE)  L.push("  Phone:  " + CONFIG.VUMI_PHONE);
   if (CONFIG.VUMI_EMAIL)  L.push("  Email:  " + CONFIG.VUMI_EMAIL);
