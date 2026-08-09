@@ -1139,16 +1139,23 @@ setInterval(() => { if ($("app").style.display === "block") refresh(); }, 60000)
 
 // Already signed in on this device? Go straight in.
 (function boot() {
-  setMode("login");
   const saved = localStorage.getItem(STORE_TOKEN);
 
   if (saved && (LIVE || demoResume(saved))) {
+    setMode("login");
     state.token = saved;
     start();
-  } else {
-    localStorage.removeItem(STORE_TOKEN);
-    $("j-name").focus();
+    return;
   }
+
+  localStorage.removeItem(STORE_TOKEN);
+
+  // Demo accounts live only on this device, so no saved accounts here
+  // reliably means nobody has used this page yet. Open straight to
+  // account creation instead of a sign-in box with nothing to sign into.
+  const freshDemo = !LIVE && Object.keys(demoStore().accounts).length === 0;
+  setMode(freshDemo ? "register" : "login");
+  $("j-name").focus();
 })();
 </script>
 
