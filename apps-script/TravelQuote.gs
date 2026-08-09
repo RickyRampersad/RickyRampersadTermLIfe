@@ -35,7 +35,7 @@
 var CONFIG = {
   BRAND:       'TravelInsuranceTT',
   EMAIL_TO:    'rampersadricky@gmail.com',
-  EMAIL_CC:    '',                       // ← TODO: Kamla's email address
+  EMAIL_CC:    'kamla.dookran@myguardiangroup.com',
   PHONE:       '(868) 678-5921',
 
   INSURER:     'VUMI® Group, I.I.',
@@ -47,12 +47,13 @@ var CONFIG = {
 
 var HEADERS = [
   'Received', 'Status', 'Urgent', 'Agent Code', 'Applicant', 'Email', 'Mobile',
-  'Passport', 'DOB', 'Age', 'Nationality', 'Address', 'City', 'Country',
+  'Passport', 'DOB', 'Age', 'Address', 'City', 'Country',
   'Structure', 'Annual Plan Days', 'Departure', 'Return', 'Days', 'Annual Start',
   'Non-Medical Rider', 'Trip Cancel Rider',
   'Medical US$', 'Set-up US$', 'NM Rider US$', 'TC Rider US$', 'TOTAL US$',
-  'Rate Card', 'Travellers', 'Other Travellers', 'Health Declaration',
-  'Payment Method', 'Best Time', 'Beneficiary',
+  'Rate Card', 'Travellers', 'Travelling With', 'Health Declaration',
+  'Paid By', 'Payment Method', 'Best Time',
+  'Read Conditions', 'Declaration OK',
   'Trips/Year', 'Prepaid Band', 'Pre-existing', 'Checked Bags'
 ];
 
@@ -115,11 +116,11 @@ function doPost(e) {
 /* ═════════════════════════ SHEET ═════════════════════════ */
 function logRow_(p) {
   var a = p.applicant || {}, q = p.quote || {}, pay = p.payment || {}, ans = p.answers || {};
+  var ack = p.acknowledged || {};
   var others = p.otherTravellers || [];
 
   var othersText = others.map(function (o) {
-    return o.first + ' ' + o.last + ' (DOB ' + o.dob + ', passport ' + o.passport +
-           (o.relationship ? ', ' + o.relationship : '') + ')';
+    return o.first + ' ' + o.last + ' (DOB ' + o.dob + ', passport ' + o.passport + ')';
   }).join(' | ');
 
   getSheet_().appendRow([
@@ -128,7 +129,7 @@ function logRow_(p) {
     (pay.urgent && pay.urgent !== 'No') ? 'YES — 48hrs' : '',
     p.agentCode || CONFIG.AGENT_CODE,
     (a.firstName || '') + ' ' + (a.lastName || ''),
-    a.email, a.phone, a.passport, a.dob, a.age, a.nationality,
+    a.email, a.phone, a.passport, a.dob, a.age,
     a.address, a.city, a.country,
     q.structure, q.annualPlanDays, q.departure, q.returnDate, q.days, q.annualStart,
     q.nonMedicalRider, q.tripCancellationRider,
@@ -136,8 +137,8 @@ function logRow_(p) {
     q.rateCard,
     1 + others.length, othersText,
     p.medicalDeclaration,
-    pay.method, pay.bestTime,
-    (a.beneficiary || '') + (a.beneficiaryRelationship ? ' (' + a.beneficiaryRelationship + ')' : ''),
+    pay.payer, pay.method, pay.bestTime,
+    ack.conditions ? 'YES' : 'no', ack.declaration ? 'YES' : 'no',
     ans.trips, ans.cost, ans.med, ans.bag
   ]);
 }
@@ -167,12 +168,14 @@ function emailBranch_(p) {
   r('Rate card used', q.rateCard);
   r('Agent code', p.agentCode || CONFIG.AGENT_CODE);
 
-  var people = travellerCard_('Main applicant', {
+  var people = travellerCard_('Main traveller', {
     first: a.firstName, last: a.lastName, dob: a.dob, age: a.age, passport: a.passport,
-    nationality: a.nationality, email: a.email, phone: a.phone,
+    email: a.email, phone: a.phone,
     address: [a.address, a.city, a.country].filter(String).join(', ')
   });
   others.forEach(function (o) { people += travellerCard_('Traveller ' + o.index, o); });
+
+  var ack = p.acknowledged || {};
 
   var html =
   '<div style="font-family:-apple-system,Segoe UI,Arial,sans-serif;max-width:660px;color:#10312E">' +
@@ -200,9 +203,16 @@ function emailBranch_(p) {
 
       '<h3 style="margin:24px 0 9px;font-size:14px">Payment</h3>' +
       '<table style="width:100%;border-collapse:collapse;font-size:14px">' +
-        '<tr><td style="padding:7px 0;color:#4A625E;width:200px">Preferred method</td><td style="padding:7px 0;font-weight:bold">' + esc_(pay.method) + '</td></tr>' +
+        '<tr><td style="padding:7px 0;color:#4A625E;width:200px">Paid by</td><td style="padding:7px 0;font-weight:bold">' + esc_(pay.payer) + '</td></tr>' +
+        '<tr><td style="padding:7px 0;color:#4A625E">Preferred method</td><td style="padding:7px 0;font-weight:bold">' + esc_(pay.method) + '</td></tr>' +
         '<tr><td style="padding:7px 0;color:#4A625E">Best time to call</td><td style="padding:7px 0">' + esc_(pay.bestTime) + '</td></tr>' +
       '</table>' +
+
+      '<div style="background:' + (ack.conditions && ack.declaration ? '#E4F0EB' : '#FBEAE5') + ';padding:11px 15px;border-radius:8px;font-size:13px;margin-top:11px">' +
+        (ack.conditions && ack.declaration ? '✓' : '⚠') + ' Client ticked <b>read the five conditions</b>: ' +
+        (ack.conditions ? 'YES' : 'NO') + ' &nbsp;·&nbsp; <b>declaration confirmed</b>: ' + (ack.declaration ? 'YES' : 'NO') +
+        '<br><span style="color:#4A625E">Recorded at ' + esc_(ack.at || p.submittedAt) + '. Keep this email — it is your record that the conditions were shown and accepted.</span>' +
+      '</div>' +
       '<div style="background:#FBF0DC;border:1px solid #E8C88A;padding:12px 15px;border-radius:8px;font-size:13px;margin-top:11px">' +
         '🔒 <b>No card details were collected online.</b> Contact the client through the channel above and take payment ' +
         'through the insurer\'s portal or a hosted payment page. Never accept card numbers by email or WhatsApp.' +
@@ -231,8 +241,6 @@ function travellerCard_(title, t) {
   var bits = [];
   if (t.dob) bits.push('DOB ' + esc_(t.dob) + (t.age != null ? ' (age ' + t.age + ')' : ''));
   if (t.passport) bits.push('Passport <b>' + esc_(t.passport) + '</b>');
-  if (t.nationality) bits.push(esc_(t.nationality));
-  if (t.relationship) bits.push(esc_(t.relationship));
   if (t.email) bits.push(esc_(t.email));
   if (t.phone) bits.push(esc_(t.phone));
 

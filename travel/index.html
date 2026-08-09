@@ -372,6 +372,24 @@
   .advice b { font-weight: 600; }
   .advice .atitle { font-weight: 600; display: block; margin-bottom: 3px; }
 
+  /* ══ CONDITIONS LIST ══ */
+  ol.conds { list-style: none; counter-reset: c; }
+  ol.conds li {
+    counter-increment: c; position: relative;
+    padding: 0 0 15px 42px; margin-bottom: 15px;
+    border-bottom: 1px solid var(--line);
+    font-size: 14.5px; line-height: 1.65; color: var(--ink2);
+  }
+  ol.conds li:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  ol.conds li::before {
+    content: counter(c); position: absolute; left: 0; top: -1px;
+    width: 27px; height: 27px; border-radius: 50%;
+    background: var(--sea); color: #fff;
+    display: grid; place-items: center;
+    font-size: 13px; font-weight: 700; font-family: 'Inter', sans-serif;
+  }
+  ol.conds li b { color: var(--ink); font-weight: 600; }
+
   /* ══ SUMMARY ══ */
   .sum { font-size: 15px; }
   .sum .sr { display: flex; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line); }
@@ -490,7 +508,7 @@
       <h1>Travel well.<br><span class="ital">Come home safely.</span></h1>
       <p class="lede">
         International travel medical insurance for Trinidad &amp; Tobago travellers. Emergency
-        treatment, evacuation and repatriation anywhere in the world — with your own choice of
+        treatment, air ambulance and repatriation while you're abroad — with your own choice of
         doctor and hospital. Price it yourself in about a minute.
       </p>
       <div class="trustrow">
@@ -506,7 +524,14 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4.5 8-11V5l-8-3-8 3v6c0 6.5 8 11 8 11z"/></svg>
           Pre-existing conditions considered
         </span>
+        <span class="trust">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+          Meets Schengen visa requirements
+        </span>
       </div>
+      <p class="hint" style="margin-top:16px;max-width:500px">
+        Cover applies while you are outside Trinidad &amp; Tobago — it does not cover you at home.
+      </p>
     </div>
 
     <aside class="quickcard">
@@ -727,11 +752,6 @@
           <div class="emsg" id="e-aPass">Required — the policy is issued against this.</div>
         </div>
         <div class="fld">
-          <label class="lbl" for="aNat">Nationality <span class="req">*</span></label>
-          <input type="text" id="aNat" value="Trinidad and Tobago">
-          <div class="emsg" id="e-aNat">Required.</div>
-        </div>
-        <div class="fld">
           <label class="lbl" for="aEmail">Email <span class="req">*</span></label>
           <input type="email" id="aEmail" autocomplete="email" placeholder="you@email.com">
           <div class="emsg" id="e-aEmail">Enter a valid email address.</div>
@@ -760,18 +780,6 @@
 
       <div id="othersBox"></div>
 
-      <h3 style="font-size:19px;margin:28px 0 18px;padding-top:24px;border-top:1px solid var(--line)">Beneficiary</h3>
-      <div class="row2">
-        <div class="fld">
-          <label class="lbl" for="aBen">Full name <span class="opt">— optional</span></label>
-          <input type="text" id="aBen" placeholder="Who receives any death benefit">
-        </div>
-        <div class="fld">
-          <label class="lbl" for="aBenRel">Relationship to you <span class="opt">— optional</span></label>
-          <input type="text" id="aBenRel" placeholder="e.g. Spouse, Son, Mother">
-        </div>
-      </div>
-
       <h3 style="font-size:19px;margin:28px 0 18px;padding-top:24px;border-top:1px solid var(--line)">Health declaration</h3>
       <div class="fld">
         <label class="lbl" for="aMed">Anything to declare for anyone on this policy? <span class="req">*</span></label>
@@ -790,6 +798,19 @@
           Card details are never sent by email or stored on this website. Tell us how you'd like to pay and we'll take it through a secure channel.
         </span>
       </div>
+      <div class="fld">
+        <label class="lbl" for="payWho">Who is paying for this policy? <span class="req">*</span></label>
+        <select id="payWho">
+          <option value="self">The main traveller — me</option>
+          <option value="other">Somebody else</option>
+        </select>
+      </div>
+      <div class="fld" id="payerBox" style="display:none">
+        <label class="lbl" for="payName">Name of the person paying <span class="req">*</span></label>
+        <input type="text" id="payName" placeholder="Full name of whoever is paying the premium">
+        <div class="emsg" id="e-payName">Required — the insurer needs to know who is paying.</div>
+      </div>
+
       <div class="row2">
         <div class="fld">
           <label class="lbl" for="payHow">How would you like to pay? <span class="req">*</span></label>
@@ -831,13 +852,53 @@
         ══════════════════════════════════════════════════════════════
       -->
 
-      <div class="fld" style="margin-top:26px;padding-top:24px;border-top:1px solid var(--line)">
+      <h3 style="font-size:19px;margin:28px 0 8px;padding-top:24px;border-top:1px solid var(--line)">Five things to understand before you apply</h3>
+      <p class="hint" style="margin-bottom:16px">
+        These are the conditions people most often get caught out by. Please read them — they decide whether a claim gets paid.
+      </p>
+
+      <ol class="conds">
+        <li>
+          <b>You are not covered in Trinidad &amp; Tobago.</b>
+          Cover is worldwide but <b>excludes your country of residence</b>. This is travel insurance for while you are abroad — it is not a local health plan and it does nothing for you at home.
+        </li>
+        <li>
+          <b>Call the insurer before you are treated, not after.</b>
+          Hospital admission — notify <b>immediately</b>. Anything else needing a doctor — notify within <b>72 hours</b>. Hospital admissions, evacuations, repatriation and major scans (MRI, CT, PET, endoscopy, biopsy) need <b>pre-authorisation at least 72 hours ahead</b> wherever the situation allows. Calling first is what gets the hospital billed directly instead of you.
+        </li>
+        <li>
+          <b>A pre-existing condition must have been stable for six months.</b>
+          No symptoms, no new treatment, no change of medication or dosage in the six months before you travel. If it was diagnosed, treated or re-medicated inside that window it will not be covered — so declare it above and let us check it before you pay anything.
+        </li>
+        <li>
+          <b>Cover does not start when you submit this form.</b>
+          It starts when the premium is received and the insurer issues your certificate. If you are flying soon, say so above and call us.
+        </li>
+        <li>
+          <b>Keep every piece of paper.</b>
+          Claims need itemised bills with proof of payment, boarding passes and travel documents, the airline's original Property Irregularity Report for delayed baggage, and police or accident reports where relevant. No paperwork, no reimbursement.
+        </li>
+      </ol>
+
+      <div class="fld" style="margin-top:22px">
+        <label style="display:flex;gap:13px;align-items:flex-start;cursor:pointer;font-size:14.5px;line-height:1.65;color:var(--ink2)">
+          <input type="checkbox" id="aCond" style="width:20px;height:20px;margin-top:2px;flex-shrink:0;accent-color:#0F6F5C">
+          <span>I have read the five conditions above and I understand them — in particular that I am <b>not covered in my own country</b> and that the insurer must be contacted before treatment. <span class="req">*</span></span>
+        </label>
+        <div class="emsg" id="e-aCond" style="margin-left:33px">Please confirm you've read the conditions.</div>
+      </div>
+
+      <div class="fld" style="margin-top:16px;padding-top:20px;border-top:1px solid var(--line)">
         <label style="display:flex;gap:13px;align-items:flex-start;cursor:pointer;font-size:14.5px;line-height:1.65;color:var(--ink2)">
           <input type="checkbox" id="aOk" style="width:20px;height:20px;margin-top:2px;flex-shrink:0;accent-color:#0F6F5C">
-          <span>I confirm the information above is true and complete, and I authorise this application to be submitted to the insurer on my behalf. I understand cover does not begin until the premium is received and the certificate is issued. <span class="req">*</span></span>
+          <span>I confirm the information above is true and complete, and I authorise this application to be submitted to the insurer on my behalf. I understand that the benefits, limits and exclusions are governed by the policy wording and certificate, and that I may request the full policy wording before paying. <span class="req">*</span></span>
         </label>
         <div class="emsg" id="e-aOk" style="margin-left:33px">Please confirm to continue.</div>
       </div>
+
+      <p class="hint" style="margin-top:14px">
+        Want the full policy wording first? <a href="#" id="askWording" style="color:var(--sea);font-weight:600">Ask us to email it to you</a> — no obligation, and nothing is charged until you say so.
+      </p>
 
       <button class="btn btn-pri btn-lg btn-block" id="submitApp">Submit application</button>
       <button class="btn btn-ghost btn-block" id="backS2" style="margin-top:8px">← Back to my quote</button>
@@ -900,6 +961,30 @@
       If you're somewhere that can't treat you properly, the insurer arranges and pays for emergency medical evacuation to the nearest facility that can — including air ambulance where it's medically necessary.
       <br><br>
       If the worst happens, repatriation of remains is covered, so your family isn't left arranging and funding that from Trinidad. The plan also covers airfare for a family member to fly out and be with you if you're hospitalised abroad, and a return flight home if illness cuts your trip short.
+    </div></div>
+  </div>
+
+  <div class="ac">
+    <div class="ac-h">Where you're covered — and where you're not</div>
+    <div class="ac-b"><div class="ac-b-in">
+      Cover is <b>worldwide, excluding your country of residence</b>. For a traveller living in Trinidad &amp; Tobago that means you are covered the moment you're abroad, and not covered at home. This is travel insurance, not a local health plan — it sits alongside whatever local cover you already have, it doesn't replace it.
+      <br><br>
+      Certain countries may also be excluded to comply with the conditions of coverage — typically places under sanction or subject to official travel warnings. If your itinerary is unusual, ask us to check it before you buy.
+      <br><br>
+      One useful consequence: the plan <b>exceeds the insurance requirements of the Schengen visa</b>, so you don't need a separate policy for a European application.
+    </div></div>
+  </div>
+
+  <div class="ac">
+    <div class="ac-h">Calling before treatment — the rule that decides your claim</div>
+    <div class="ac-b"><div class="ac-b-in">
+      This is the condition people get caught by, so it's worth being precise:
+      <br><br>
+      · <b>Hospital admission</b> — notify the insurer <b>immediately</b>.<br>
+      · <b>Illness or accident not needing admission</b> — notify within <b>72 hours</b>.<br>
+      · <b>Pre-authorisation, at least 72 hours ahead</b> — all hospital admissions, emergency transport, repatriation or evacuation, major procedures (MRI, CT, PET, gastroscopy, colonoscopy, biopsy) and non-emergency benefits such as physiotherapy.
+      <br><br>
+      Notifying first is what allows direct billing to the hospital, so you aren't fronting thousands on a card. If direct payment isn't possible the insurer reimburses at usual, customary and reasonable rates — but you'll need itemised bills with proof of payment, and for baggage claims the airline's original Property Irregularity Report.
     </div></div>
   </div>
 
@@ -1032,7 +1117,7 @@ var CONFIG = {
   // opening the visitor's own mail client with the application pre-filled.
   API_URL:      "",
   EMAIL_TO:     "rampersadricky@gmail.com",
-  EMAIL_CC:     "",                      // ← TODO: Kamla's email address
+  EMAIL_CC:     "kamla.dookran@myguardiangroup.com",
   PHONE:        "(868) 678-5921",
 
   /* ── Insurer / intermediary ─────────────────────────────────────────── */
@@ -1104,35 +1189,60 @@ var SETUP_FEE_BASIS = "policy";           // "policy" | "person"
 var MAX_AGE = 79;
 var MAX_SINGLE_DAYS = 365;
 
-/* Benefit summary shown in the "What you're actually buying" table.
-   ⚠️ Verify against the current policy wording before going live. */
+/* Benefit table — transcribed from the VUMI® Travel VIP Plan Overview (2024).
+   All amounts USD. Benefits are per insured, per policy year unless stated,
+   and are subject to Usual, Customary &amp; Reasonable (UCR) fees for the area
+   where the expense was incurred. */
 var BENEFITS = [
-  ["grp", "Medical"],
-  ["Overall medical maximum — ages 0 to 69",        "US$5,000,000"],
-  ["Overall medical maximum — ages 70 to 79",       "US$500,000"],
-  ["Pre-existing conditions, stable 6 months",      "US$500,000"],
-  ["Emergency treatment &amp; hospitalisation",         "To policy maximum"],
-  ["Emergency medical evacuation",                  "To policy maximum"],
-  ["Repatriation of remains",                       "To policy maximum"],
-  ["Emergency dental treatment",                    "Included"],
-  ["Return flight home due to illness",             "Included"],
-  ["Family member's airfare if you're hospitalised","Included"],
-  ["Second medical opinion",                        "Included on annual plans"],
-  ["Choice of any doctor and hospital worldwide",   "Included"],
-  ["24/7 multilingual emergency assistance",        "Included"],
-  ["Co-insurance",                                  "100% UCR"],
-  ["grp", "Limits &amp; eligibility"],
-  ["Maximum age at entry",                          "79 years"],
-  ["Longest single trip",                           "365 consecutive days"],
-  ["Annual plan — days per trip",                   "30, 45 or 90"],
-  ["grp", "Non-medical benefits rider"],
-  ["Baggage delay and loss",                        "Per rider schedule"],
-  ["Travel delay beyond 5 hours",                   "Per rider schedule"],
-  ["Personal liability — injury &amp; property",        "Per rider schedule"],
-  ["Accidental death &amp; dismemberment",              "Per rider schedule"],
-  ["grp", "Trip cancellation rider"],
-  ["Single trip",                                   "Up to US$2,500"],
-  ["Annual plan, per trip",                         "Up to US$1,500"]
+  ["grp", "General"],
+  ["Area of coverage",                                        "Worldwide, excluding your country of residence"],
+  ["Maximum cover per person, up to age 70",                  "US$5,000,000"],
+  ["Maximum cover per person, age 70 up to 80",               "US$500,000"],
+  ["Age limit to apply",                                      "Up to 79 years old"],
+  ["Schengen visa requirements",                              "Exceeds them"],
+
+  ["grp", "Medical benefits"],
+  ["Pre-existing conditions, stable 6 months",                "Up to US$500,000"],
+  ["Acute or emergency sickness and injury",                  "100% UCR"],
+  ["Treatment by physicians, nurses and specialists",         "100% UCR"],
+  ["Hospitalisation, semi-private room",                      "100% UCR"],
+  ["Surgery and anaesthesiologist fees",                      "100% UCR"],
+  ["Prescribed medication during hospitalisation",            "100% UCR"],
+  ["Medically necessary durable medical equipment",           "100% UCR"],
+  ["Physiotherapy",                                           "Up to US$2,500 per trip"],
+  ["Emergency dental, for immediate relief of pain",          "Up to US$500 per trip"],
+  ["Maternity complications, as defined in the policy",       "Up to US$10,000"],
+
+  ["grp", "Emergency evacuation &amp; repatriation"],
+  ["Ground ambulance",                                        "100% UCR"],
+  ["Air ambulance",                                           "100% UCR"],
+  ["Repatriation or cremation of mortal remains",             "100% UCR"],
+  ["Compassionate emergency visit to an insured",             "100% UCR, one relative"],
+  ["Compassionate emergency repatriation",                    "100% UCR"],
+  ["Repatriation of a summoned relative or fellow traveller", "100% UCR, one person"],
+  ["Return trip after evacuation or repatriation",            "100% UCR"],
+  ["Non-medical evacuation",                                  "100% UCR"],
+  ["Accommodation after acute illness, injury or accident",   "US$300/day, max US$6,000"],
+  ["Baggage transport after evacuation",                      "Up to US$500"],
+  ["Baggage transport after death of the insured",            "Up to US$500"],
+
+  ["grp", "Hobbies &amp; sports (non-professional)"],
+  ["Non-motor activities",                                    "Up to US$500,000"],
+  ["Motor activities",                                        "Up to US$100,000"],
+
+  ["grp", "Non-medical rider — optional"],
+  ["Personal accident, disability and death",                 "Up to US$100,000"],
+  ["Personal liability — bodily injury",                      "Up to US$100,000 per trip"],
+  ["Personal liability — property damage",                    "Up to US$100,000 per trip"],
+  ["Legal assistance and securities",                         "Up to US$10,000 per trip"],
+  ["Property loss or theft",                                  "Up to US$2,000 per trip"],
+  ["Missed flight connection",                                "Up to US$1,000 per trip"],
+  ["Baggage delay",                                           "Up to US$500 per trip"],
+  ["Travel delay",                                            "US$100/day, max US$500"],
+
+  ["grp", "Trip cancellation rider — optional"],
+  ["Single trip plan",                                        "Up to US$2,500 per trip"],
+  ["Annual trip plan",                                        "Up to US$1,500 per trip"]
 ];
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1427,13 +1537,16 @@ function updateProgress() {
   } else if (S.step === 2) {
     pct = 25 + (S.quote && S.quote.ok ? 24 : 0);
   } else if (S.step === 3) {
-    var ids = ["aFirst", "aLast", "aPass", "aNat", "aEmail", "aPhone", "aAddr", "aCity", "aCountry", "aMed"];
+    var ids = ["aFirst", "aLast", "aPass", "aEmail", "aPhone", "aAddr", "aCity", "aCountry", "aMed"];
     var filled = ids.filter(function (id) { var el = $(id); return el && el.value.trim(); }).length;
-    var others = document.querySelectorAll('[data-ot="first"],[data-ot="last"],[data-ot="passport"]');
+    var others = document.querySelectorAll('[data-ot="first"],[data-ot="last"],[data-ot="passport"],[data-ot="dob"]');
     var oFilled = 0;
     others.forEach(function (el) { if (el.value.trim()) oFilled++; });
-    var totalNeed = ids.length + others.length + 1;
-    var totalHave = filled + oFilled + ($("aOk") && $("aOk").checked ? 1 : 0);
+    var payerNeeded = $("payWho").value === "other";
+    var totalNeed = ids.length + others.length + 2 + (payerNeeded ? 1 : 0);
+    var totalHave = filled + oFilled +
+      ($("aOk").checked ? 1 : 0) + ($("aCond").checked ? 1 : 0) +
+      (payerNeeded && $("payName").value.trim() ? 1 : 0);
     pct = 50 + Math.round((totalHave / totalNeed) * 49);
   } else {
     pct = 100;
@@ -1747,24 +1860,21 @@ function openApply() {
 function renderOthers() {
   var host = $("othersBox");
   if (S.travellers.length <= 1) { host.innerHTML = ""; return; }
-  var h = '<h3 style="font-size:19px;margin:28px 0 18px;padding-top:24px;border-top:1px solid var(--line)">Other travellers</h3>';
+  var h = '<h3 style="font-size:19px;margin:28px 0 8px;padding-top:24px;border-top:1px solid var(--line)">Travelling with you</h3>' +
+          '<p class="hint" style="margin-bottom:16px">Everyone below is covered under the main traveller\'s policy. Name, date of birth and passport number is all the insurer needs for them.</p>';
   for (var i = 1; i < S.travellers.length; i++) {
     var t = S.travellers[i];
     h += '<div class="trav" style="background:var(--white)">' +
       '<div class="trav-top"><span class="tn">Traveller ' + (i + 1) + '</span><span class="agepill">Age ' + t.age + "</span></div>" +
-      '<div class="row2">' +
-        '<div class="fld" style="margin-bottom:14px"><label class="lbl" style="font-size:13.5px">First name <span class="req">*</span></label>' +
+      '<div class="row3">' +
+        '<div class="fld" style="margin-bottom:0"><label class="lbl" style="font-size:13.5px">First name <span class="req">*</span></label>' +
           '<input type="text" data-ot="first" data-i="' + i + '" placeholder="As in passport"></div>' +
-        '<div class="fld" style="margin-bottom:14px"><label class="lbl" style="font-size:13.5px">Surname <span class="req">*</span></label>' +
+        '<div class="fld" style="margin-bottom:0"><label class="lbl" style="font-size:13.5px">Surname <span class="req">*</span></label>' +
           '<input type="text" data-ot="last" data-i="' + i + '" placeholder="As in passport"></div>' +
-        '<div class="fld" style="margin-bottom:14px"><label class="lbl" style="font-size:13.5px">Passport number <span class="req">*</span></label>' +
+        '<div class="fld" style="margin-bottom:0"><label class="lbl" style="font-size:13.5px">Passport number <span class="req">*</span></label>' +
           '<input type="text" data-ot="passport" data-i="' + i + '" style="text-transform:uppercase" placeholder="e.g. TA1234567"></div>' +
-        '<div class="fld" style="margin-bottom:14px"><label class="lbl" style="font-size:13.5px">Date of birth</label>' +
-          '<input type="date" data-ot="dob" data-i="' + i + '" value="' + esc(t.dob) + '"></div>' +
-        '<div class="fld" style="margin-bottom:0"><label class="lbl" style="font-size:13.5px">Relationship to main traveller</label>' +
-          '<input type="text" data-ot="rel" data-i="' + i + '" placeholder="e.g. Spouse, Son"></div>' +
-        '<div class="fld" style="margin-bottom:0"><label class="lbl" style="font-size:13.5px">Address if different</label>' +
-          '<input type="text" data-ot="addr" data-i="' + i + '" placeholder="Leave blank if the same"></div>' +
+        '<div class="fld span" style="margin-bottom:0"><label class="lbl" style="font-size:13.5px">Date of birth <span class="req">*</span></label>' +
+          '<input type="date" data-ot="dob" data-i="' + i + '" value="' + esc(t.dob) + '" max="' + todayISO() + '"></div>' +
       "</div></div>";
   }
   host.innerHTML = h;
@@ -1781,31 +1891,56 @@ function collectOthers() {
     out.push({
       index: i + 1, first: g("first"), last: g("last"),
       dob: g("dob") || S.travellers[i].dob, age: S.travellers[i].age,
-      passport: g("passport").toUpperCase(), relationship: g("rel"), address: g("addr")
+      passport: g("passport").toUpperCase()
     });
   }
   return out;
 }
 
-["aFirst","aLast","aPass","aNat","aEmail","aPhone","aAddr","aCity","aCountry","aMed"].forEach(function (id) {
-  $(id).addEventListener("input", updateProgress);
-});
+var REQUIRED = ["aFirst","aLast","aPass","aEmail","aPhone","aAddr","aCity","aCountry","aMed"];
+
+REQUIRED.forEach(function (id) { $(id).addEventListener("input", updateProgress); });
 $("aOk").addEventListener("change", updateProgress);
+$("aCond").addEventListener("change", updateProgress);
+$("payName").addEventListener("input", updateProgress);
+
+$("payWho").addEventListener("change", function () {
+  var other = $("payWho").value === "other";
+  $("payerBox").style.display = other ? "" : "none";
+  if (!other) flag("payName", false);
+  updateProgress();
+});
+
+$("askWording").addEventListener("click", function (e) {
+  e.preventDefault();
+  window.location.href = "mailto:" + recipients() +
+    "?subject=" + encodeURIComponent("Please send me the Travel VIP policy wording") +
+    "&body=" + encodeURIComponent(
+      "Hello,\n\nBefore I pay, please email me the full Travel VIP policy wording and conditions of coverage.\n\n" +
+      "Name: " + ($("aFirst").value.trim() + " " + $("aLast").value.trim()).trim() + "\n" +
+      "Email: " + $("aEmail").value.trim() + "\n");
+});
 
 function validateApply() {
   var ok = true;
-  var req = ["aFirst","aLast","aPass","aNat","aEmail","aPhone","aAddr","aCity","aCountry","aMed"];
-  req.forEach(function (id) {
+  REQUIRED.forEach(function (id) {
     var v = $(id).value.trim(), bad = !v;
     if (id === "aEmail" && v) bad = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
     flag(id, bad); if (bad) ok = false;
   });
+
+  var payerNeeded = $("payWho").value === "other";
+  flag("payName", payerNeeded && !$("payName").value.trim());
+  if (payerNeeded && !$("payName").value.trim()) ok = false;
+
+  flag("aCond", !$("aCond").checked);
+  if (!$("aCond").checked) ok = false;
   flag("aOk", !$("aOk").checked);
   if (!$("aOk").checked) ok = false;
 
   var others = collectOthers();
-  if (others.filter(function (o) { return !o.first || !o.last || !o.passport; }).length) {
-    alert("Please add the name and passport number for every traveller.");
+  if (others.filter(function (o) { return !o.first || !o.last || !o.passport || !o.dob; }).length) {
+    alert("Please add the name, date of birth and passport number for every traveller.");
     ok = false;
   }
   if (!ok) {
@@ -1839,18 +1974,23 @@ function buildPayload() {
     applicant: {
       firstName: $("aFirst").value.trim(), lastName: $("aLast").value.trim(),
       dob: S.travellers[0] ? S.travellers[0].dob : "", age: S.travellers[0] ? S.travellers[0].age : null,
-      passport: $("aPass").value.trim().toUpperCase(), nationality: $("aNat").value.trim(),
+      passport: $("aPass").value.trim().toUpperCase(),
       email: $("aEmail").value.trim(), phone: $("aPhone").value.trim(),
-      address: $("aAddr").value.trim(), city: $("aCity").value.trim(), country: $("aCountry").value.trim(),
-      beneficiary: $("aBen").value.trim(), beneficiaryRelationship: $("aBenRel").value.trim()
+      address: $("aAddr").value.trim(), city: $("aCity").value.trim(), country: $("aCountry").value.trim()
     },
     otherTravellers: collectOthers(),
     medicalDeclaration: $("aMed").value.trim(),
     payment: {
+      payer: $("payWho").value === "other" ? $("payName").value.trim() : "Main traveller",
       method: $("payHow").options[$("payHow").selectedIndex].text,
       bestTime: $("payWhen").options[$("payWhen").selectedIndex].text,
       urgent: $("aUrgent").value === "yes" ? "YES — travelling within 48 hours" : "No",
       note: "No card details collected online (PCI-DSS). Take payment through a secure channel."
+    },
+    acknowledged: {
+      conditions: $("aCond").checked,
+      declaration: $("aOk").checked,
+      at: new Date().toISOString()
     },
     answers: S.guide
   };
@@ -1880,17 +2020,14 @@ function payloadText(p) {
   L.push("Name:          " + a.firstName + " " + a.lastName);
   L.push("Date of birth: " + a.dob + "  (age " + a.age + ")");
   L.push("Passport:      " + a.passport);
-  L.push("Nationality:   " + a.nationality);
   L.push("Email:         " + a.email);
   L.push("Mobile:        " + a.phone);
   L.push("Address:       " + a.address + ", " + a.city + ", " + a.country);
-  L.push("Beneficiary:   " + (a.beneficiary || "-") + (a.beneficiaryRelationship ? " (" + a.beneficiaryRelationship + ")" : ""));
   if (p.otherTravellers.length) {
     L.push("");
-    L.push("--- OTHER TRAVELLERS ---");
+    L.push("--- TRAVELLING WITH THEM ---");
     p.otherTravellers.forEach(function (o) {
-      L.push("#" + o.index + "  " + o.first + " " + o.last + " | DOB " + o.dob + " (age " + o.age + ") | Passport " + o.passport +
-             (o.relationship ? " | " + o.relationship : "") + (o.address ? " | " + o.address : ""));
+      L.push("#" + o.index + "  " + o.first + " " + o.last + " | DOB " + o.dob + " (age " + o.age + ") | Passport " + o.passport);
     });
   }
   L.push("");
@@ -1898,10 +2035,15 @@ function payloadText(p) {
   L.push(p.medicalDeclaration || "None declared");
   L.push("");
   L.push("--- PAYMENT ---");
+  L.push("Paid by:       " + p.payment.payer);
   L.push("Method:        " + p.payment.method);
   L.push("Best time:     " + p.payment.bestTime);
   L.push("Urgent:        " + p.payment.urgent);
   L.push("NOTE: " + p.payment.note);
+  L.push("");
+  L.push("--- ACKNOWLEDGED ---");
+  L.push("Read the 5 conditions:  " + (p.acknowledged.conditions ? "YES" : "no"));
+  L.push("Declaration confirmed:  " + (p.acknowledged.declaration ? "YES" : "no"));
   return L.join("\n");
 }
 
