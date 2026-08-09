@@ -1,24 +1,15 @@
-# Netlify configuration for travelmedicalcover.com
+# Netlify configuration — travelmedicalcover.com
 #
-# This is a SEPARATE Netlify site from rickyrampersadbranch.com, deployed
-# from the same repository with the base directory set to "travel".
-#
-#   Netlify → Add new site → Import an existing project
-#     Repository:       RickyRampersad/RickyRampersadTermLIfe
-#     Base directory:   travel
-#     Publish directory: travel
-#     Build command:    (leave empty — it's a static page)
-#
-# Then Domain management → Add custom domain → travelmedicalcover.com
-# and follow Netlify's DNS instructions at GoDaddy.
+# Static site, no build step. Setup instructions live outside this folder
+# so they are never served to the public.
 
 [build]
   publish = "."
   command = ""
 
 # ── Security headers ─────────────────────────────────────────────────────
-# The page is self-contained apart from Google Fonts, so the CSP can be
-# tight. If you later embed a payment provider or analytics, widen the
+# The page is self-contained apart from Google Fonts, so the policy can be
+# tight. If a payment provider or analytics is added later, widen the
 # relevant directive rather than removing the header.
 [[headers]]
   for = "/*"
@@ -38,8 +29,7 @@
       frame-ancestors 'self'; \
       base-uri 'self'"""
 
-# Long cache for the font files Google serves; the page itself stays fresh
-# so edits show up immediately.
+# The page itself stays fresh so edits appear immediately.
 [[headers]]
   for = "/index.html"
   [headers.values]

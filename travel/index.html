@@ -1255,17 +1255,28 @@ var CONFIG = {
   VUMI_PHONE2:  "+1 416 744 3870",          // general line
   VUMI_OFFICE:  "",                          // ← Miami office name / address, if you want it shown
 
-  /* ── Where applications go (intermediary mode only) ─────────────────── */
-  // Google Apps Script /exec URL. Until this is set, the form falls back to
-  // opening the visitor's own mail client with the application pre-filled.
-  API_URL:      "",
-  EMAIL_TO:     "rampersadricky@gmail.com",
-  EMAIL_CC:     "kamla.dookran@myguardiangroup.com",
-  PHONE:        "(868) 678-5921",
+  /* ═════════════════════════════════════════════════════════════════════
+     INTERMEDIARY MODE ONLY — deliberately left blank
+     ═════════════════════════════════════════════════════════════════════
+     These are empty on purpose. This file is served to the public, so
+     anything written here is visible to anyone who views the page source
+     — even when referral mode never displays it. Personal emails, phone
+     numbers and your agent code do not belong in a published page.
 
-  /* ── Insurer / intermediary ─────────────────────────────────────────── */
+     Fill these in ONLY if you switch MODE to "intermediary", and be aware
+     that doing so publishes them. Better still: when you switch, move the
+     submission to the Apps Script endpoint (API_URL) and leave EMAIL_TO
+     and EMAIL_CC blank — the script holds the addresses server-side where
+     nobody can read them.
+     ═════════════════════════════════════════════════════════════════════ */
+  API_URL:      "",                      // Google Apps Script /exec URL
+  EMAIL_TO:     "",                      // fallback only — publishes the address
+  EMAIL_CC:     "",                      // fallback only — publishes the address
+  PHONE:        "",                      // shown in the footer in intermediary mode
+  AGENT_CODE:   "",                      // your VUMI agent number
+
+  /* ── Insurer ────────────────────────────────────────────────────────── */
   INSURER:      "VUMI® Group, I.I.",
-  AGENT_CODE:   "222525",                // your VUMI agent number — sent with every application
 
   /* ── FX for the indicative TT$ line (display only) ───────────────────── */
   USD_TO_TTD:   6.80,
@@ -1783,6 +1794,19 @@ $("toQuote").addEventListener("click", function () {
 /* ═══════════════════════════════════════════════════════════════════════════
    STEP 2 RENDER
    ═══════════════════════════════════════════════════════════════════════════ */
+/* Who a declined traveller is pointed at. In referral mode that is the
+   insurer — this site never puts an individual's contact details on the page. */
+function declineContactHTML() {
+  if (!REFERRAL && CONFIG.PHONE) {
+    return '<a class="btn btn-pri" href="tel:' + CONFIG.PHONE.replace(/[^0-9+]/g, "") + '">Call ' + esc(CONFIG.PHONE) + "</a>";
+  }
+  if (CONFIG.VUMI_PHONE) {
+    return '<a class="btn btn-pri" href="tel:' + CONFIG.VUMI_PHONE.replace(/[^0-9+]/g, "") +
+           '">Call the insurer ' + esc(CONFIG.VUMI_PHONE) + "</a>";
+  }
+  return "";
+}
+
 function computeQuote() {
   var q = rate({});
   S.quote = q;
@@ -1795,10 +1819,10 @@ function computeQuote() {
       '<b class="atitle">We can\'t price this plan for everyone travelling.</b>' +
       "This cover is available up to age " + MAX_AGE + ", and " + q.declined.length +
       " traveller" + (q.declined.length === 1 ? " is" : "s are") + " above that.<br><br>" +
-      "That doesn't mean there's nothing available — there are other markets for older travellers. " +
-      "Get in touch and we'll look at them with you." +
+      "That doesn't mean there's nothing available — other insurers do cover older travellers. " +
+      "Speak to the insurer directly, or to a broker, about the options." +
       '<div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap">' +
-        '<a class="btn btn-pri" href="tel:' + CONFIG.PHONE.replace(/[^0-9+]/g, "") + '">Call ' + esc(CONFIG.PHONE) + "</a>" +
+        declineContactHTML() +
         '<button class="btn btn-out" onclick="go(1)">← Change travellers</button>' +
       "</div></span></div>";
     $("mbar").classList.remove("show");
