@@ -225,7 +225,10 @@ window.SURVEY = {
     if (t >= 85) return { key:'excellent', label:'Excellent survey' };
     if (t >= 70) return { key:'strong',    label:'Strong survey' };
     if (t >= 50) return { key:'fair',      label:'Fair — gaps to close' };
-    return { key:'weak', label:'Incomplete — this one will not count for much' };
+    /* Below 25 the recruit has usually just opened the form. Telling them at
+       step 1 that it will not count for much is both true and useless. */
+    if (t >= 25) return { key:'weak', label:'Thin — this one will not count for much' };
+    return { key:'start', label:'Just getting started' };
   },
 
   /* A survey with no consent is not a survey. */

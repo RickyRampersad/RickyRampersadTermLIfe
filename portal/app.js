@@ -645,6 +645,12 @@ function closeModal() {
    START
    ============================================================ */
 $('loginForm').onsubmit = doLogin;
+/* Demo shortcuts — typing recruit@demo on a phone keyboard is a chore. */
+document.querySelectorAll('.demo-btn').forEach(b => b.onclick = () => {
+  $('email').value = b.getAttribute('data-as');
+  $('pin').value = '0000';
+  $('loginForm').requestSubmit ? $('loginForm').requestSubmit() : doLogin(new Event('submit'));
+});
 $('signout').onclick = signOut;
 $('modalClose').onclick = closeModal;
 $('modal').onclick = ev => { if (ev.target.id === 'modal') closeModal(); };

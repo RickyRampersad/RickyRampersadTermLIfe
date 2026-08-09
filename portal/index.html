@@ -38,7 +38,9 @@ button,input,select,textarea{font-family:inherit;font-size:inherit}
 .lcard label{display:block;text-align:left;font-family:var(--mont);font-size:10.5px;font-weight:700;
  letter-spacing:.13em;text-transform:uppercase;color:var(--body);margin:0 0 6px}
 .lcard input{width:100%;padding:13px 15px;border-radius:12px;border:1px solid var(--line);
- background:rgba(0,0,0,.32);color:var(--ink);outline:none;margin-bottom:15px}
+ background:rgba(0,0,0,.32);color:var(--ink);outline:none;margin-bottom:15px;
+ /* 16px minimum — iOS Safari zooms the page when a focused field is smaller */
+ font-size:16px}
 .lcard input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,207,234,.16)}
 .lcard button{width:100%;padding:14px;border-radius:12px;border:none;cursor:pointer;
  background:linear-gradient(135deg,var(--teal),var(--teal2));color:var(--onTeal);
@@ -52,6 +54,14 @@ button,input,select,textarea{font-family:inherit;font-size:inherit}
  border:1px solid rgba(239,194,75,.28);font-size:12.5px;color:var(--body);text-align:left;line-height:1.65}
 .demo b{color:var(--gold);font-family:var(--mont);font-size:11px;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:5px}
 .demo code{font-family:ui-monospace,Menlo,Consolas,monospace;background:rgba(0,0,0,.35);padding:1px 6px;border-radius:4px;color:var(--teal)}
+.demo-btns{display:grid;gap:7px;margin:11px 0}
+/* .lcard button is one class + one element and would otherwise win over a
+   bare .demo-btn, painting these the same teal as the primary Sign in. */
+.lcard .demo-btn{width:100%;padding:12px 14px;border-radius:10px;
+ border:1px solid rgba(239,194,75,.45);background:rgba(239,194,75,.12);
+ color:var(--gold);cursor:pointer;font-family:var(--mont);
+ font-size:13px;font-weight:700;letter-spacing:.2px;text-align:center}
+.lcard .demo-btn:hover{background:rgba(239,194,75,.2)}
 
 /* ---------- shell ---------- */
 .nav{position:sticky;top:0;z-index:60;background:rgba(6,17,29,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
@@ -264,8 +274,9 @@ section{margin-bottom:34px}
 .fgroup{margin-bottom:20px}
 .flabel{display:block;font-family:var(--mont);font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--ink);margin-bottom:7px}
 .fhint{font-size:12.5px;color:var(--mut);margin-bottom:9px;line-height:1.55;max-width:64ch}
-textarea,input[type=text],input[type=number]{width:100%;padding:12px 14px;border-radius:11px;border:1px solid var(--line);
- background:rgba(0,0,0,.3);color:var(--ink);outline:none;resize:vertical}
+textarea,input[type=text],input[type=number],input[type=email],input[type=tel],select{
+ width:100%;padding:12px 14px;border-radius:11px;border:1px solid var(--line);
+ background:rgba(0,0,0,.3);color:var(--ink);outline:none;resize:vertical;font-size:16px}
 textarea:focus,input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,207,234,.14)}
 textarea:disabled,input:disabled{opacity:.75;cursor:default}
 .checks{display:grid;gap:7px}
@@ -315,6 +326,8 @@ textarea:disabled,input:disabled{opacity:.75;cursor:default}
 .sv-band{grid-column:1;font-family:var(--mont);font-size:11.5px;font-weight:700;letter-spacing:.04em}
 .sv-band.excellent{color:var(--ok)} .sv-band.strong{color:var(--teal)}
 .sv-band.fair{color:var(--warn)}    .sv-band.weak{color:var(--late)}
+.sv-band.start{color:var(--mut)}
+.sv-score.start b{color:var(--mut)}
 
 .script{margin:0 0 18px;padding:14px 17px;border-radius:12px;background:rgba(239,194,75,.08);
  border:1px solid rgba(239,194,75,.26);border-left:3px solid var(--gold);
@@ -329,7 +342,7 @@ textarea:disabled,input:disabled{opacity:.75;cursor:default}
 .refrow{display:grid;grid-template-columns:1.3fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center}
 @media(max-width:560px){.refrow{grid-template-columns:1fr 1fr;}.refrow select{grid-column:1/2}}
 .refrow input,.refrow select{padding:10px 12px;border-radius:10px;border:1px solid var(--line);
- background:rgba(0,0,0,.3);color:var(--ink);outline:none;min-width:0}
+ background:rgba(0,0,0,.3);color:var(--ink);outline:none;min-width:0;font-size:16px}
 .refrow input:focus,.refrow select:focus{border-color:var(--teal)}
 .refx{background:none;border:1px solid var(--line);color:var(--mut);width:32px;height:32px;
  border-radius:8px;cursor:pointer;font-size:16px;line-height:1}
@@ -418,16 +431,21 @@ textarea:disabled,input:disabled{opacity:.75;cursor:default}
     <p class="lsub">Recruits and managers, one door.<br>Sign in with the email and PIN your branch gave you.</p>
 
     <label for="email">Email</label>
-    <input id="email" type="email" autocomplete="username" placeholder="you@example.com" required>
+    <input id="email" type="email" autocomplete="username" placeholder="you@example.com" required
+           autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next">
     <label for="pin">PIN</label>
-    <input id="pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="••••••" required>
+    <input id="pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="••••••" required
+           autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="go">
     <button type="submit" id="loginBtn">Sign in</button>
     <div class="lerr" id="loginErr"></div>
 
     <div class="demo" id="demoNote" hidden>
       <b>Demo mode</b>
-      No backend connected yet, so this is running on sample data. Sign in as
-      <code>recruit@demo</code> to see a recruit's view, or <code>rm@demo</code> for a manager's.
+      No backend connected yet, so this is running on sample data. Tap one to fill it in:
+      <div class="demo-btns">
+        <button type="button" class="demo-btn" data-as="recruit@demo">Sign in as a recruit</button>
+        <button type="button" class="demo-btn" data-as="rm@demo">Sign in as a manager</button>
+      </div>
       Any PIN works. Nothing is saved.
     </div>
 
