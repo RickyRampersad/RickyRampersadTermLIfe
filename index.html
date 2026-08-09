@@ -456,6 +456,60 @@
     html { scroll-behavior: auto; }
   }
 
+  /* ── SHIELD HELPER ── */
+  #helpBtn {
+    position: fixed; bottom: 20px; right: 20px; z-index: 600;
+    width: 62px; height: 62px; border-radius: 50%; border: none; cursor: pointer;
+    background: rgba(13,33,55,.95);
+    box-shadow: 0 10px 30px rgba(0,0,0,.5), 0 0 0 1px rgba(239,194,75,.35);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  #helpBtn svg { width: 36px; height: 36px; }
+  #helpBtn:hover { transform: scale(1.08); box-shadow: 0 14px 36px rgba(0,0,0,.55), 0 0 0 1px rgba(239,194,75,.7); }
+
+  #helpPanel {
+    display: none;
+    position: fixed; bottom: 94px; right: 20px; z-index: 600;
+    width: min(340px, calc(100vw - 32px));
+    background: linear-gradient(160deg, var(--card), var(--card2));
+    border: 1px solid rgba(239,194,75,.3); border-radius: 20px;
+    overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,.55);
+  }
+  #helpPanel.open { display: block; }
+  .help-head {
+    display: flex; align-items: center; gap: 11px;
+    padding: 14px 16px; background: rgba(0,0,0,.25);
+    border-bottom: 1px solid var(--line);
+  }
+  .help-head svg { width: 30px; height: 30px; flex-shrink: 0; }
+  .help-head b {
+    display: block; font-family: 'Montserrat', sans-serif;
+    font-size: 14px; font-weight: 800; color: var(--text);
+  }
+  .help-head span { font-size: 11px; color: var(--gold); }
+  .help-head > button {
+    margin-left: auto; background: none; border: none;
+    color: var(--muted); cursor: pointer; font-size: 15px; padding: 4px;
+  }
+  .help-body { padding: 10px; display: grid; gap: 7px; }
+  .help-row {
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    background: rgba(0,0,0,.2); border: 1px solid var(--line);
+    border-radius: 13px; padding: 11px 13px;
+    text-align: left; text-decoration: none; cursor: pointer;
+    color: var(--text); font-family: inherit;
+    transition: border-color .15s, transform .15s;
+  }
+  .help-row:hover { border-color: rgba(0,207,234,.5); transform: translateX(2px); }
+  .hr-ico { font-size: 19px; flex-shrink: 0; }
+  .hr-txt b {
+    display: block; font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 700; line-height: 1.3;
+  }
+  .hr-txt span { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+  .hr-go { margin-left: auto; color: var(--teal); font-weight: 700; }
+
   /* ── FOOTER ── */
   footer {
     margin-top: 48px; border-top: 1px solid var(--line);
@@ -853,6 +907,72 @@
   </div>
 </footer>
 
+<!-- SHIELD HELPER -->
+<button id="helpBtn" onclick="helpToggle()" aria-label="How can we help?" title="How can we help?">
+  <svg viewBox="0 0 88 88" aria-hidden="true">
+    <defs>
+      <linearGradient id="ghelp" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
+      </linearGradient>
+    </defs>
+    <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#ghelp)"/>
+    <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</button>
+
+<div id="helpPanel" role="dialog" aria-label="How can we help?">
+  <div class="help-head">
+    <svg viewBox="0 0 88 88" aria-hidden="true">
+      <defs>
+        <linearGradient id="ghead" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
+        </linearGradient>
+      </defs>
+      <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#ghead)"/>
+      <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div>
+      <b>How can we help?</b>
+      <span>Ricky Rampersad Branch</span>
+    </div>
+    <button onclick="helpClose()" aria-label="Close">✕</button>
+  </div>
+  <div class="help-body">
+    <button class="help-row" onclick="helpClose(); openProfiler();">
+      <span class="hr-ico">💬</span>
+      <span class="hr-txt"><b>Get a quote</b><span>Life, health, motor, property & more</span></span>
+      <span class="hr-go">→</span>
+    </button>
+    <a class="help-row" href="https://querymypolicies.netlify.app" target="_blank" rel="noopener">
+      <span class="hr-ico">📨</span>
+      <span class="hr-txt"><b>Log a query</b><span>Question, concern or issue — we track it</span></span>
+      <span class="hr-go">→</span>
+    </a>
+    <a class="help-row" href="renewal/">
+      <span class="hr-ico">🔄</span>
+      <span class="hr-txt"><b>Renew my policy</b><span>Motor & property renewals</span></span>
+      <span class="hr-go">→</span>
+    </a>
+    <a class="help-row" href="https://form.jotform.com/230135714666051" target="_blank" rel="noopener">
+      <span class="hr-ico">🏥</span>
+      <span class="hr-txt"><b>Make a claim</b><span>Health claim e-form</span></span>
+      <span class="hr-go">→</span>
+    </a>
+    <a class="help-row" href="https://factfind360.com" target="_blank" rel="noopener">
+      <span class="hr-ico">🧭</span>
+      <span class="hr-txt"><b>Not sure what I need</b><span>FactFind360 needs analysis</span></span>
+      <span class="hr-go">→</span>
+    </a>
+    <a class="help-row" href="agent.html">
+      <span class="hr-ico">🧑‍💼</span>
+      <span class="hr-txt"><b>Agent &amp; staff sign in</b><span>Portals for our team</span></span>
+      <span class="hr-go">→</span>
+    </a>
+  </div>
+</div>
+
 <!-- QUOTE PROFILER MODAL -->
 <div id="profiler" style="display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(4,10,17,.82); backdrop-filter:blur(6px); padding:16px;">
   <div style="width:min(560px,100%); max-height:88vh; overflow-y:auto; background:linear-gradient(160deg,var(--card),var(--card2)); border:1px solid rgba(0,207,234,.3); border-radius:22px; padding:28px;">
@@ -945,7 +1065,16 @@
   function closeProfiler() { document.getElementById('profiler').style.display = 'none'; document.body.style.overflow = ''; }
   function pfHome() { pfRender('home'); }
   document.getElementById('profiler').addEventListener('click', function (e) { if (e.target === this) closeProfiler(); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeProfiler(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeProfiler(); helpClose(); } });
+
+  // ── SHIELD HELPER ──
+  function helpToggle() { document.getElementById('helpPanel').classList.toggle('open'); }
+  function helpClose() { document.getElementById('helpPanel').classList.remove('open'); }
+  document.addEventListener('click', function (e) {
+    var panel = document.getElementById('helpPanel');
+    var btn = document.getElementById('helpBtn');
+    if (panel.classList.contains('open') && !panel.contains(e.target) && !btn.contains(e.target)) helpClose();
+  });
 
   // Rotating headline word
   var words = ['family', 'home', 'business', 'property', 'employees', 'health', 'future'];
