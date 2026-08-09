@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Travel Insurance TT — International Travel Medical Cover</title>
-<meta name="description" content="International travel medical insurance for Trinidad &amp; Tobago travellers. Instant premium, compare single trip and annual plans, apply online in minutes. Underwritten by VUMI® Group."/>
+<title>Travel Medical Cover — International Travel Insurance Explained</title>
+<meta name="description" content="Understand international travel medical insurance and estimate your premium. Compare single trip and annual plans, then apply directly with the insurer. Travel VIP is underwritten by VUMI® Group."/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -372,6 +372,19 @@
   .advice b { font-weight: 600; }
   .advice .atitle { font-weight: 600; display: block; margin-bottom: 3px; }
 
+  /* ══ REFERRAL LINKS ══ */
+  .reflink {
+    display: flex; align-items: center; gap: 14px;
+    border: 1.5px solid var(--line2); border-radius: 12px; padding: 15px 17px;
+    text-decoration: none; color: var(--ink); transition: all .16s; background: var(--white);
+  }
+  .reflink:hover { border-color: var(--sea); background: var(--sea-lt); transform: translateX(2px); }
+  .reflink .rl-ico { font-size: 20px; flex-shrink: 0; }
+  .reflink > span:nth-child(2) { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .reflink b { font-size: 15px; font-weight: 600; }
+  .reflink b + span { font-size: 13px; color: var(--ink2); line-height: 1.5; }
+  .reflink .rl-go { margin-left: auto; color: var(--sea); font-weight: 700; font-size: 17px; flex-shrink: 0; }
+
   /* ══ CONDITIONS LIST ══ */
   ol.conds { list-style: none; counter-reset: c; }
   ol.conds li {
@@ -507,7 +520,7 @@
       <span class="eyebrow"><span class="pip"></span>Instant online quote</span>
       <h1>Travel well.<br><span class="ital">Come home safely.</span></h1>
       <p class="lede">
-        International travel medical insurance for Trinidad &amp; Tobago travellers. Emergency
+        International travel medical insurance, explained plainly. Emergency
         treatment, air ambulance and repatriation while you're abroad — with your own choice of
         doctor and hospital. Price it yourself in about a minute.
       </p>
@@ -530,7 +543,7 @@
         </span>
       </div>
       <p class="hint" style="margin-top:16px;max-width:500px">
-        Cover applies while you are outside Trinidad &amp; Tobago — it does not cover you at home.
+        Cover applies while you are outside your country of residence — it does not cover you at home.
       </p>
     </div>
 
@@ -773,7 +786,7 @@
         </div>
         <div class="fld">
           <label class="lbl" for="aCountry">Country <span class="req">*</span></label>
-          <input type="text" id="aCountry" value="Trinidad and Tobago" autocomplete="country-name">
+          <input type="text" id="aCountry" placeholder="Country of residence" autocomplete="country-name">
           <div class="emsg" id="e-aCountry">Required.</div>
         </div>
       </div>
@@ -859,7 +872,7 @@
 
       <ol class="conds">
         <li>
-          <b>You are not covered in Trinidad &amp; Tobago.</b>
+          <b>You are not covered in your own country.</b>
           Cover is worldwide but <b>excludes your country of residence</b>. This is travel insurance for while you are abroad — it is not a local health plan and it does nothing for you at home.
         </li>
         <li>
@@ -902,6 +915,89 @@
 
       <button class="btn btn-pri btn-lg btn-block" id="submitApp">Submit application</button>
       <button class="btn btn-ghost btn-block" id="backS2" style="margin-top:8px">← Back to my quote</button>
+    </div>
+  </div>
+
+  <!-- ─────── STEP 3, REFERRAL MODE ─────── -->
+  <div class="view" id="s3ref">
+    <div class="sec-label">Step three</div>
+    <h2>How to apply</h2>
+    <p class="sec-sub" style="margin-bottom:26px">
+      Applications for Travel VIP are handled directly by VUMI®. Take your estimate with you —
+      everything you need is below.
+    </p>
+
+    <div class="advice info" style="margin-bottom:24px">
+      <span class="aic">📋</span>
+      <span id="refSummary"></span>
+    </div>
+
+    <div class="card" style="margin-bottom:20px">
+      <h3 style="font-size:19px;margin-bottom:6px">What you'll need to hand</h3>
+      <p class="hint" style="margin-bottom:18px">The insurer asks for very little. Have this ready and it takes a few minutes.</p>
+      <ol class="conds">
+        <li><b>Who is travelling.</b> Full name exactly as it appears in the passport, for every person on the policy.</li>
+        <li><b>Date of birth and passport number.</b> For each traveller — this is what the policy is issued against.</li>
+        <li><b>Which plan.</b> Single trip for your dates, or the annual plan at 30, 45 or 90 days per trip. Your estimate above tells you which is cheaper.</li>
+        <li><b>Mailing address and email.</b> For the main traveller only.</li>
+        <li><b>Who is paying.</b> The main traveller, or somebody else paying on their behalf.</li>
+      </ol>
+    </div>
+
+    <div class="card" style="margin-bottom:20px">
+      <h3 style="font-size:19px;margin-bottom:6px">Apply directly with VUMI®</h3>
+      <p class="hint" style="margin-bottom:18px">
+        VUMI® issues the policy, takes the premium and sends your certificate. Nothing on this
+        website collects your details or your payment.
+      </p>
+      <div id="refLinks" style="display:grid;gap:11px"></div>
+    </div>
+
+    <div class="advice warn" style="margin-bottom:20px">
+      <span class="aic">⚠️</span>
+      <span>
+        <b class="atitle">Read the conditions before you pay.</b>
+        The five points below decide whether a claim gets paid — especially that you are
+        <b>not covered in your own country</b> and that VUMI® must be contacted before treatment.
+        Ask VUMI® for the full policy wording and conditions of coverage before committing.
+      </span>
+    </div>
+
+    <div class="card" style="margin-bottom:20px">
+      <h3 style="font-size:19px;margin-bottom:6px">Five things to understand first</h3>
+      <p class="hint" style="margin-bottom:18px">These are the conditions travellers most often get caught out by.</p>
+      <ol class="conds">
+        <li>
+          <b>You are not covered in your own country.</b>
+          Cover is worldwide but <b>excludes your country of residence</b>. This is insurance for while you are abroad — it does nothing for you at home and does not replace local health cover.
+        </li>
+        <li>
+          <b>Call the insurer before you are treated, not after.</b>
+          Hospital admission — notify <b>immediately</b>. Anything else needing a doctor — within <b>72 hours</b>. Admissions, evacuations, repatriation and major scans (MRI, CT, PET, endoscopy, biopsy) need <b>pre-authorisation at least 72 hours ahead</b>. Calling first is what gets the hospital billed directly instead of you.
+        </li>
+        <li>
+          <b>A pre-existing condition must have been stable for six months.</b>
+          No symptoms, no new treatment, no change of medication or dosage in the six months before you travel. Declare it — an undeclared condition is the most common reason a claim is refused.
+        </li>
+        <li>
+          <b>Cover starts when the premium is paid and the certificate is issued.</b>
+          Not when you enquire, and not when you fill in a form.
+        </li>
+        <li>
+          <b>Keep every piece of paper.</b>
+          Claims need itemised bills with proof of payment, boarding passes and travel documents, the airline's original Property Irregularity Report for delayed baggage, and police or accident reports where relevant.
+        </li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size:19px;margin-bottom:6px">Take your estimate with you</h3>
+      <p class="hint" style="margin-bottom:18px">Email it to yourself or print it, so you have the figures when you speak to VUMI®.</p>
+      <div class="row2">
+        <button class="btn btn-pri" id="refEmail">Email me this estimate</button>
+        <button class="btn btn-out" id="refPrint">Print it</button>
+      </div>
+      <button class="btn btn-ghost btn-block" id="refBack" style="margin-top:10px">← Back to my estimate</button>
     </div>
   </div>
 
@@ -960,14 +1056,14 @@
     <div class="ac-b"><div class="ac-b-in">
       If you're somewhere that can't treat you properly, the insurer arranges and pays for emergency medical evacuation to the nearest facility that can — including air ambulance where it's medically necessary.
       <br><br>
-      If the worst happens, repatriation of remains is covered, so your family isn't left arranging and funding that from Trinidad. The plan also covers airfare for a family member to fly out and be with you if you're hospitalised abroad, and a return flight home if illness cuts your trip short.
+      If the worst happens, repatriation of remains is covered, so your family isn't left arranging and funding that from home. The plan also covers airfare for a family member to fly out and be with you if you're hospitalised abroad, and a return flight home if illness cuts your trip short.
     </div></div>
   </div>
 
   <div class="ac">
     <div class="ac-h">Where you're covered — and where you're not</div>
     <div class="ac-b"><div class="ac-b-in">
-      Cover is <b>worldwide, excluding your country of residence</b>. For a traveller living in Trinidad &amp; Tobago that means you are covered the moment you're abroad, and not covered at home. This is travel insurance, not a local health plan — it sits alongside whatever local cover you already have, it doesn't replace it.
+      Cover is <b>worldwide, excluding your country of residence</b>. That means you are covered the moment you are abroad, and not covered at home. This is travel insurance, not a local health plan — it sits alongside whatever local cover you already have, it doesn't replace it.
       <br><br>
       Certain countries may also be excluded to comply with the conditions of coverage — typically places under sanction or subject to official travel warnings. If your itinerary is unusual, ask us to check it before you buy.
       <br><br>
@@ -1080,7 +1176,7 @@
     <div class="fgrid">
       <div>
         <div style="font-family:'Fraunces',serif;font-weight:700;font-size:19px;color:#fff;margin-bottom:10px" id="footBrand">TravelInsuranceTT</div>
-        <p style="max-width:340px">International travel medical insurance for travellers from Trinidad &amp; Tobago. Quote online, apply online, covered before you fly.</p>
+        <p style="max-width:340px">International travel medical insurance, explained. Work out what it costs, understand the conditions, then apply directly with the insurer.</p>
       </div>
       <div>
         <h5>Cover</h5>
@@ -1108,11 +1204,40 @@
    CONFIG
    ═══════════════════════════════════════════════════════════════════════════ */
 var CONFIG = {
-  /* ── Brand shown on the site ────────────────────────────────────────── */
-  BRAND:        "TravelInsuranceTT",
-  BRAND_HTML:   'Travel<em>Insurance</em>TT',
+  /* ═════════════════════════════════════════════════════════════════════
+     MODE  —  what this website actually does
+     ═════════════════════════════════════════════════════════════════════
+     "referral"      Information + estimate only. Collects NOTHING. The
+                     Apply step explains how to apply and links straight
+                     to the insurer's own channels. You are not placing
+                     the business, so there is nothing to disclose beyond
+                     naming the insurer.
 
-  /* ── Where applications go ──────────────────────────────────────────── */
+     "intermediary"  The full flow: collects the application, emails it
+                     for keying into the insurer's portal. This IS
+                     intermediation — DISCLOSURE should name the
+                     registered intermediary.
+
+     Referral mode is the low-risk default. Only switch to intermediary
+     once your registration clearly supports placing this business.
+     ═════════════════════════════════════════════════════════════════════ */
+  MODE:         "referral",
+
+  /* ── Brand shown on the site ────────────────────────────────────────── */
+  BRAND:        "Travel Medical Cover",
+  BRAND_HTML:   'Travel<em>Medical</em>Cover',
+
+  /* ── Insurer's own channels — where referral mode sends people ──────── */
+  // ⚠️ Confirm these against VUMI's current material before going live,
+  //    and add the Miami office details you want people directed to.
+  VUMI_PORTAL:  "https://www.MyVUMIportal.com",
+  VUMI_SITE:    "https://www.vumigroup.com",
+  VUMI_EMAIL:   "info@vumigroup.com",
+  VUMI_PHONE:   "+1 888 809 3493",          // North America toll free
+  VUMI_PHONE2:  "+1 416 744 3870",          // general line
+  VUMI_OFFICE:  "",                          // ← Miami office name / address, if you want it shown
+
+  /* ── Where applications go (intermediary mode only) ─────────────────── */
   // Google Apps Script /exec URL. Until this is set, the form falls back to
   // opening the visitor's own mail client with the application pre-filled.
   API_URL:      "",
@@ -1536,6 +1661,8 @@ function updateProgress() {
     pct = Math.min(24, Math.round((have / need) * 24));
   } else if (S.step === 2) {
     pct = 25 + (S.quote && S.quote.ok ? 24 : 0);
+  } else if (S.step === 3 && REFERRAL) {
+    pct = 100;                                  // nothing to fill in — the estimate is the deliverable
   } else if (S.step === 3) {
     var ids = ["aFirst", "aLast", "aPass", "aEmail", "aPhone", "aAddr", "aCity", "aCountry", "aMed"];
     var filled = ids.filter(function (id) { var el = $(id); return el && el.value.trim(); }).length;
@@ -1825,9 +1952,12 @@ function renderBreakdown(q) {
 /* ═══════════════════════════════════════════════════════════════════════════
    NAVIGATION
    ═══════════════════════════════════════════════════════════════════════════ */
+var REFERRAL = CONFIG.MODE !== "intermediary";
+
 function go(n) {
   S.step = n;
-  [1, 2, 3, 4].forEach(function (i) { $("s" + i).classList.toggle("on", i === n); });
+  [1, 2, 3, 4].forEach(function (i) { $("s" + i).classList.toggle("on", i === n && !(i === 3 && REFERRAL)); });
+  $("s3ref").classList.toggle("on", n === 3 && REFERRAL);
   $("mbar").classList.toggle("show", n === 2 && S.quote && S.quote.ok);
   updateProgress();
   jump();
@@ -1836,25 +1966,115 @@ $("backS1").addEventListener("click", function () { go(1); });
 $("backS2").addEventListener("click", function () { go(2); });
 $("toApply").addEventListener("click", openApply);
 $("mApply").addEventListener("click", openApply);
+$("refBack").addEventListener("click", function () { go(2); });
+$("refPrint").addEventListener("click", function () { window.print(); });
+$("refEmail").addEventListener("click", function () {
+  if (!S.quote) return;
+  window.location.href = "mailto:?subject=" +
+    encodeURIComponent("My travel cover estimate — US$" + money(S.quote.total)) +
+    "&body=" + encodeURIComponent(estimateText());
+});
 
 /* ═══════════════════════════════════════════════════════════════════════════
    STEP 3 — APPLICATION
    ═══════════════════════════════════════════════════════════════════════════ */
-function openApply() {
-  if (!S.quote || !S.quote.ok) { alert("Please complete your quote first."); return; }
+function quoteSummaryHTML() {
   var q = S.quote;
   var period = S.tripType === "annual"
     ? "Annual plan, up to " + S.annualPlan + " days per trip, from " + fmtDate(S.annualStart)
     : S.days + " days, " + fmtDate(S.from) + " to " + fmtDate(S.to);
-
-  $("applySummary").innerHTML =
-    '<b class="atitle">' + (S.tripType === "annual" ? "Annual plan" : "Single trip") + " · " + esc(period) + "</b>" +
+  return '<b class="atitle">' + (S.tripType === "annual" ? "Annual plan" : "Single trip") + " · " + esc(period) + "</b>" +
     S.travellers.length + " traveller" + (S.travellers.length === 1 ? "" : "s") +
     (S.riders.nm ? " · non-medical rider" : "") + (S.riders.tc ? " · trip cancellation rider" : "") +
     ' — total <b>US$' + money(q.total) + "</b>";
+}
 
+function openApply() {
+  if (!S.quote || !S.quote.ok) { alert("Please work out your estimate first."); return; }
+
+  if (REFERRAL) {
+    $("refSummary").innerHTML = quoteSummaryHTML();
+    renderRefLinks();
+    go(3);
+    return;
+  }
+
+  $("applySummary").innerHTML = quoteSummaryHTML();
   renderOthers();
   go(3);
+}
+
+function renderRefLinks() {
+  var links = [];
+  if (CONFIG.VUMI_PORTAL) links.push({
+    href: CONFIG.VUMI_PORTAL, ico: "🌐", t: "MyVUMI™ portal",
+    d: "Apply, extend cover, print policy documents and submit claims."
+  });
+  if (CONFIG.VUMI_PHONE) links.push({
+    href: "tel:" + CONFIG.VUMI_PHONE.replace(/[^0-9+]/g, ""), ico: "📞",
+    t: "Call VUMI® " + CONFIG.VUMI_PHONE, d: "North America toll free — fastest way to get a policy issued."
+  });
+  if (CONFIG.VUMI_PHONE2) links.push({
+    href: "tel:" + CONFIG.VUMI_PHONE2.replace(/[^0-9+]/g, ""), ico: "☎️",
+    t: "General line " + CONFIG.VUMI_PHONE2, d: "If you're calling from outside North America."
+  });
+  if (CONFIG.VUMI_EMAIL) links.push({
+    href: "mailto:" + CONFIG.VUMI_EMAIL + "?subject=" + encodeURIComponent("Travel VIP application enquiry"),
+    ico: "✉️", t: CONFIG.VUMI_EMAIL, d: "Email the insurer directly with your travel dates and travellers."
+  });
+  if (CONFIG.VUMI_SITE) links.push({
+    href: CONFIG.VUMI_SITE, ico: "🔗", t: "vumigroup.com", d: "Plan details, policy wording and full conditions of coverage."
+  });
+
+  $("refLinks").innerHTML = links.map(function (l) {
+    return '<a class="reflink" href="' + esc(l.href) + '" target="_blank" rel="noopener">' +
+      '<span class="rl-ico">' + l.ico + "</span>" +
+      "<span><b>" + esc(l.t) + "</b><span>" + esc(l.d) + "</span></span>" +
+      '<span class="rl-go">→</span></a>';
+  }).join("") +
+  (CONFIG.VUMI_OFFICE
+    ? '<p class="hint" style="margin-top:6px">Placed through ' + esc(CONFIG.VUMI_OFFICE) + ".</p>"
+    : "");
+}
+
+function estimateText() {
+  var q = S.quote, L = [];
+  L.push("TRAVEL MEDICAL COVER — YOUR ESTIMATE");
+  L.push("VUMI® Travel VIP · rate table June 2026");
+  L.push("");
+  L.push("Cover:      " + (S.tripType === "annual" ? "Annual plan, up to " + S.annualPlan + " days per trip" : "Single trip"));
+  if (S.tripType === "single") L.push("Dates:      " + fmtDate(S.from) + " to " + fmtDate(S.to) + " (" + S.days + " days)");
+  else L.push("Starting:   " + fmtDate(S.annualStart));
+  L.push("Travellers: " + S.travellers.length);
+  S.travellers.forEach(function (t, i) {
+    L.push("  " + (i + 1) + ". age " + t.age + (t.dob ? "  (born " + t.dob + ")" : ""));
+  });
+  if (S.riders.nm) L.push("Rider:      Non-medical benefits");
+  if (S.riders.tc) L.push("Rider:      Trip cancellation");
+  L.push("");
+  L.push("Medical:    US$" + money(q.medical));
+  if (q.setup) L.push("Set-up fee: US$" + money(q.setup));
+  if (q.nm) L.push("NM rider:   US$" + money(q.nm));
+  if (q.tc) L.push("TC rider:   US$" + money(q.tc));
+  L.push("ESTIMATE:   US$" + money(q.total));
+  L.push("");
+  L.push("This is an estimate calculated from VUMI's published rate table.");
+  L.push("It is not a quotation and not an offer of cover. VUMI confirms the");
+  L.push("premium and issues the policy.");
+  L.push("");
+  L.push("TO APPLY, CONTACT VUMI DIRECTLY:");
+  if (CONFIG.VUMI_PORTAL) L.push("  Portal: " + CONFIG.VUMI_PORTAL);
+  if (CONFIG.VUMI_PHONE)  L.push("  Phone:  " + CONFIG.VUMI_PHONE);
+  if (CONFIG.VUMI_EMAIL)  L.push("  Email:  " + CONFIG.VUMI_EMAIL);
+  L.push("");
+  L.push("BEFORE YOU PAY, UNDERSTAND:");
+  L.push("  1. You are NOT covered in your own country.");
+  L.push("  2. Notify VUMI immediately on hospital admission, within 72 hours");
+  L.push("     otherwise, and 72 hours ahead for pre-authorisation.");
+  L.push("  3. Pre-existing conditions must be stable for 6 months.");
+  L.push("  4. Cover starts when the premium is paid and the certificate issued.");
+  L.push("  5. Keep itemised bills, boarding passes and reports for any claim.");
+  return L.join("\n");
 }
 
 function renderOthers() {
@@ -2117,33 +2337,76 @@ $("mailQuote").addEventListener("click", function () {
   }).join("");
 })();
 
+(function applyMode() {
+  if (!REFERRAL) return;
+
+  // Referral mode: this site informs and refers. It never collects anything.
+  document.querySelectorAll(".pstep").forEach(function (el) {
+    if (el.getAttribute("data-step") === "3") el.querySelector(".txt").textContent = "How to apply";
+    if (el.getAttribute("data-step") === "4") el.style.display = "none";
+  });
+  $("toApply").textContent = "How to apply →";
+  $("mApply").textContent = "How to apply";
+  $("toQuote").textContent = "See my estimate";
+  $("mailQuote").textContent = "Email this estimate to me";
+
+  document.querySelectorAll(".plabel").forEach(function (el) { el.textContent = "Your estimate"; });
+  var mb = document.querySelector(".mbar .ml");
+  if (mb) mb.textContent = "Your estimate";
+
+  var lead = $("s1").querySelector(".sec-sub");
+  if (lead) lead.textContent =
+    "Four things and you'll have an estimate. This site doesn't collect your details — it works out the price and shows you how to apply directly with the insurer.";
+})();
+
 (function renderDisclosure() {
   $("brandName").innerHTML = CONFIG.BRAND_HTML;
   $("footBrand").textContent = CONFIG.BRAND;
-  $("footPhone").href = "tel:" + CONFIG.PHONE.replace(/[^0-9+]/g, "");
-  $("footPhone").textContent = CONFIG.PHONE;
-  $("footEmail").href = "mailto:" + CONFIG.EMAIL_TO;
-  $("footEmail").textContent = CONFIG.EMAIL_TO;
 
-  var who = "";
-  if (CONFIG.DISCLOSURE === "full" && CONFIG.INTERMEDIARY_NAME) {
-    who = "This website is operated by <b>" + esc(CONFIG.INTERMEDIARY_NAME) + "</b>" +
-          (CONFIG.REGISTRATION_NO ? ", registered under the Insurance Act, 2018 (registration " + esc(CONFIG.REGISTRATION_NO) + ")" : "") +
-          ", acting as an insurance intermediary. ";
-  } else if (CONFIG.DISCLOSURE === "full") {
-    who = '<b style="color:#FFB4A4">⚠ Set CONFIG.INTERMEDIARY_NAME, or change CONFIG.DISCLOSURE.</b> ';
+  if (REFERRAL) {
+    // No individual's contact details in referral mode — send people to the insurer.
+    $("footPhone").href = CONFIG.VUMI_PORTAL;
+    $("footPhone").textContent = "MyVUMI™ portal";
+    $("footEmail").href = "mailto:" + CONFIG.VUMI_EMAIL;
+    $("footEmail").textContent = CONFIG.VUMI_EMAIL;
+  } else {
+    $("footPhone").href = "tel:" + CONFIG.PHONE.replace(/[^0-9+]/g, "");
+    $("footPhone").textContent = CONFIG.PHONE;
+    $("footEmail").href = "mailto:" + CONFIG.EMAIL_TO;
+    $("footEmail").textContent = CONFIG.EMAIL_TO;
   }
 
-  var insurer = (CONFIG.DISCLOSURE === "minimal")
-    ? ""
-    : "Cover is underwritten by <b>" + esc(CONFIG.INSURER) + "</b>. ";
+  var body;
+  if (REFERRAL) {
+    body =
+      "This is an information website. It does not sell, place, arrange or administer insurance, " +
+      "it is not an insurer or an insurance intermediary, and it collects no personal information " +
+      "and no payment. Travel VIP is underwritten by <b>" + esc(CONFIG.INSURER) + "</b>, who accept " +
+      "applications, set the premium and issue the policy directly. " +
+      "Figures shown here are <b>estimates</b> calculated from the insurer's published rate table " +
+      "(June 2026) — they are not quotations and not offers of cover. " +
+      "Cover, benefits, limits and exclusions are governed entirely by the policy wording and the " +
+      "certificate issued by the insurer, and no cover exists until the premium is received and a " +
+      "certificate is issued. Always read the policy wording and conditions of coverage before you buy.";
+  } else {
+    var who = "";
+    if (CONFIG.DISCLOSURE === "full" && CONFIG.INTERMEDIARY_NAME) {
+      who = "This website is operated by <b>" + esc(CONFIG.INTERMEDIARY_NAME) + "</b>" +
+            (CONFIG.REGISTRATION_NO ? ", registered under the Insurance Act, 2018 (registration " + esc(CONFIG.REGISTRATION_NO) + ")" : "") +
+            ", acting as an insurance intermediary. ";
+    } else if (CONFIG.DISCLOSURE === "full") {
+      who = '<b style="color:#FFB4A4">⚠ Set CONFIG.INTERMEDIARY_NAME, or change CONFIG.DISCLOSURE.</b> ';
+    }
+    var insurer = (CONFIG.DISCLOSURE === "minimal") ? "" :
+      "Cover is underwritten by <b>" + esc(CONFIG.INSURER) + "</b>. ";
+    body = who + insurer +
+      "This website is not an insurer and does not underwrite insurance. " +
+      "Premiums shown are calculated from the insurer's current rate table and are confirmed by the insurer on application. " +
+      "Cover, benefits, limits and exclusions are governed entirely by the policy wording and the certificate issued by the insurer. " +
+      "Nothing on this page is a contract of insurance or an offer of cover, and no cover exists until the premium is received and a certificate is issued.";
+  }
 
-  $("legalBlock").innerHTML =
-    who + insurer +
-    "This website is not an insurer and does not underwrite insurance. " +
-    "Premiums shown are calculated from the insurer's current rate table and are confirmed by the insurer on application. " +
-    "Cover, benefits, limits and exclusions are governed entirely by the policy wording and the certificate issued by the insurer. " +
-    "Nothing on this page is a contract of insurance or an offer of cover, and no cover exists until the premium is received and a certificate is issued." +
+  $("legalBlock").innerHTML = body +
     '<br><br>© ' + new Date().getFullYear() + " " + esc(CONFIG.BRAND) + ". All rights reserved.";
 })();
 
