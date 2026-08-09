@@ -853,24 +853,6 @@
   </div>
 </footer>
 
-<!-- RIKI AI ASSISTANT -->
-<button onclick="rikiToggle()" aria-label="Chat with Riki, the branch assistant" style="position:fixed;bottom:20px;right:20px;z-index:600;width:60px;height:60px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,var(--teal),var(--teal2));box-shadow:0 10px 30px rgba(0,207,234,.45);display:flex;align-items:center;justify-content:center;font-size:26px;transition:transform .2s" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform=''">🤖</button>
-<div id="rikiPanel" style="display:none;position:fixed;bottom:92px;right:20px;z-index:600;width:min(360px,calc(100vw - 32px));height:min(480px,70vh);flex-direction:column;background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid rgba(0,207,234,.35);border-radius:20px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.55)">
-  <div style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:rgba(0,0,0,.25);border-bottom:1px solid var(--line)">
-    <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--teal2));display:flex;align-items:center;justify-content:center;font-size:18px">🤖</div>
-    <div style="flex:1">
-      <b style="font-family:Montserrat,sans-serif;font-size:14px;display:block">Riki</b>
-      <span style="font-size:11px;color:var(--teal)">● Branch AI Assistant</span>
-    </div>
-    <button onclick="rikiClose()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px">✕</button>
-  </div>
-  <div id="rikiMsgs" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:9px"></div>
-  <div style="display:flex;gap:8px;padding:12px;border-top:1px solid var(--line);background:rgba(0,0,0,.18)">
-    <input id="rikiIn" type="text" placeholder="Ask Riki anything…" onkeydown="if(event.key==='Enter')rikiAsk()" style="flex:1;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.3);color:var(--text);font-size:13px;outline:none;font-family:inherit"/>
-    <button onclick="rikiAsk()" style="padding:11px 16px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--teal),var(--teal2));color:#02141a;font-family:Montserrat,sans-serif;font-weight:800;font-size:13px">Send</button>
-  </div>
-</div>
-
 <!-- QUOTE PROFILER MODAL -->
 <div id="profiler" style="display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(4,10,17,.82); backdrop-filter:blur(6px); padding:16px;">
   <div style="width:min(560px,100%); max-height:88vh; overflow-y:auto; background:linear-gradient(160deg,var(--card),var(--card2)); border:1px solid rgba(0,207,234,.3); border-radius:22px; padding:28px;">
@@ -963,100 +945,7 @@
   function closeProfiler() { document.getElementById('profiler').style.display = 'none'; document.body.style.overflow = ''; }
   function pfHome() { pfRender('home'); }
   document.getElementById('profiler').addEventListener('click', function (e) { if (e.target === this) closeProfiler(); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeProfiler(); rikiClose(); } });
-
-  // ── RIKI AI ASSISTANT ──
-  var RIKI_LINKS = {
-    query: { label: '📨 Log a Query', url: 'https://querymypolicies.netlify.app' },
-    quote: { label: '💬 Get a Quote', fn: function () { rikiClose(); openProfiler(); } },
-    health: { label: '🩺 Health Quote', url: 'https://healthquotee.netlify.app/' },
-    motor: { label: '🚗 Motor Quote', url: 'https://form.jotform.com/223376649264061' },
-    property: { label: '🏠 Property Quote', url: 'https://form.jotform.com/201953408200849' },
-    xpress: { label: '⚡ Xpress Life', url: 'https://xpresslifett.com' },
-    factfind: { label: '🧭 FactFind360', url: 'https://factfind360.com' },
-    ci: { label: '🎗️ Critical Illness Quote', url: 'https://form.jotform.com/261288212990057' },
-    pa: { label: '🦺 Personal Accident Quote', url: 'https://personalaccident.netlify.app/' },
-    eb: { label: '👥 Employee Benefits Portal', url: 'https://www.employeebenefitstt.com/' },
-    claim: { label: '🏥 Health Claim E-Form', url: 'https://form.jotform.com/230135714666051' },
-    renewal: { label: '🔄 Renewal Portal', url: 'renewal/' },
-    premium: { label: '💬 Premium Due Feedback', url: 'https://form.jotform.com/232374116479056' },
-    job: { label: '💼 Job Application', url: 'https://form.jotform.com/242716704735055' },
-    agentportal: { label: '🧑‍💼 Agent Portal', url: 'agent.html' }
-  };
-  var RIKI_BRAIN = [
-    { keys: ['query', 'complaint', 'problem', 'issue', 'concern', 'follow up', 'followup', 'not happy', 'wrong'],
-      reply: "The fastest way to get that resolved is to log it on QueryPal — our query system. The team tracks every query until it's closed.", links: ['query'] },
-    { keys: ['health'], reply: "Our new online health quote system will show you your options in minutes.", links: ['health', 'query'] },
-    { keys: ['car', 'motor', 'vehicle', 'van', 'truck'], reply: "For vehicle coverage, request your motor quotation online and we'll come back with your price.", links: ['motor'] },
-    { keys: ['house', 'home', 'property', 'building', 'contents'], reply: "For your home or business property, request a quotation online.", links: ['property'] },
-    { keys: ['critical illness', 'cancer', 'heart', 'stroke', 'illness'], reply: "Critical illness cover pays a lump sum if serious illness strikes. Try our quote engine.", links: ['ci', 'factfind'] },
-    { keys: ['accident', 'income protection', 'injury', 'disab'], reply: "Our Personal Accident & Income Protection system can quote you online.", links: ['pa'] },
-    { keys: ['employee benefit', 'employee', 'employer', 'group plan', 'group health', 'group life', 'my staff', 'company plan'], reply: "For employers we have a dedicated Employee Benefits portal — quote, track and customize your group plan, sent directly to Guardian.", links: ['eb'] },
-    { keys: ['xpress', 'express'], reply: "Xpress Life is our specialized instant-issue life product — 5 health questions, no medicals, on its own dedicated site.", links: ['xpress'] },
-    { keys: ['life insurance', 'life cover', 'life'], reply: "Two paths for life insurance: Xpress Life for fast simplified cover, or a full plan starting with our FactFind360 needs analysis.", links: ['xpress', 'factfind'] },
-    { keys: ['pension', 'retire'], reply: "Our pension quote system is in build. Start with a FactFind360 retirement analysis, or log a query and an advisor will contact you.", links: ['factfind', 'query'] },
-    { keys: ['claim'], reply: "For health claims, submit the e-form online. For any other claim, log a query and the team will guide you.", links: ['claim', 'query'] },
-    { keys: ['renew'], reply: "Motor or property renewal? Our renewal portal lets you review your cover and send instructions online.", links: ['renewal'] },
-    { keys: ['premium', 'payment', 'pay', 'due', 'owe'], reply: "Got a premium notice or payment question? Use the Premium Due Feedback form, or log a query.", links: ['premium', 'query'] },
-    { keys: ['quote', 'price', 'cost', 'how much'], reply: "Let me route you — tap below and pick what you'd like to protect.", links: ['quote'] },
-    { keys: ['job', 'career', 'work', 'hiring', 'agent contract', 'become an agent'], reply: "We're always looking for driven people! Apply online, or if you're an existing agent, the Agent Portal has your renewals and tools.", links: ['job', 'agentportal'] },
-    { keys: ['agent portal', 'staff', 'team', 'portal', 'log in', 'login', 'sign in'], reply: "Agents and staff sign in through their portals with an access code. Clients don't need a code — everything client-side is open.", links: ['agentportal'] },
-    { keys: ['need', 'not sure', 'help me choose', 'advice', 'analysis', 'gap'], reply: "Not sure what you need? FactFind360 is our needs analysis — it shows exactly what protection fits your life.", links: ['factfind'] },
-    { keys: ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good night', 'good evening'], reply: "Hello! 👋 I'm Riki, the branch's assistant. Ask me about quotes, claims, renewals, premiums — or log a query for the team.", links: ['quote', 'query'] },
-    { keys: ['thank', 'thanks'], reply: "You're most welcome! Anything else I can point you to?", links: ['quote', 'query'] }
-  ];
-  var RIKI_FALLBACK = { reply: "I want to make sure the team gets you a proper answer — the best step is to log your question on QueryPal and we'll follow up. Or try asking me about quotes, claims, renewals or premiums.", links: ['query', 'quote'] };
-
-  function rikiToggle() {
-    var p = document.getElementById('rikiPanel');
-    var open = p.style.display === 'flex';
-    p.style.display = open ? 'none' : 'flex';
-    if (!open && !document.getElementById('rikiMsgs').childElementCount) {
-      rikiSay("Hi, I'm Riki 🤖 — the Ricky Rampersad Branch assistant. Ask me anything: quotes, claims, renewals, premiums, careers… or tap a shortcut below.", ['quote', 'query', 'renewal']);
-    }
-    if (!open) setTimeout(function(){ document.getElementById('rikiIn').focus(); }, 100);
-  }
-  function rikiClose() { document.getElementById('rikiPanel').style.display = 'none'; }
-  function rikiBubble(html, mine) {
-    var m = document.createElement('div');
-    m.style.cssText = 'max-width:85%;padding:10px 13px;border-radius:14px;font-size:13px;line-height:1.55;' +
-      (mine ? 'align-self:flex-end;background:linear-gradient(135deg,var(--teal),var(--teal2));color:#02141a;font-weight:600;'
-            : 'align-self:flex-start;background:rgba(255,255,255,.07);border:1px solid var(--line);color:var(--text);');
-    m.innerHTML = html;
-    var box = document.getElementById('rikiMsgs');
-    box.appendChild(m);
-    box.scrollTop = box.scrollHeight;
-    return m;
-  }
-  function rikiSay(text, linkKeys) {
-    var html = text;
-    if (linkKeys && linkKeys.length) {
-      html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:9px">';
-      linkKeys.forEach(function (k) {
-        var l = RIKI_LINKS[k];
-        if (!l) return;
-        if (l.url) html += '<a href="' + l.url + '" ' + (l.url.indexOf('http') === 0 ? 'target="_blank" rel="noopener"' : '') + ' style="background:rgba(0,207,234,.14);border:1px solid rgba(0,207,234,.35);color:var(--teal);border-radius:50px;padding:5px 11px;font-size:11.5px;font-weight:700;text-decoration:none;font-family:Montserrat,sans-serif">' + l.label + '</a>';
-        else html += '<button onclick="RIKI_LINKS[\'' + k + '\'].fn()" style="background:rgba(0,207,234,.14);border:1px solid rgba(0,207,234,.35);color:var(--teal);border-radius:50px;padding:5px 11px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:Montserrat,sans-serif">' + l.label + '</button>';
-      });
-      html += '</div>';
-    }
-    rikiBubble(html, false);
-  }
-  function rikiAsk() {
-    var inp = document.getElementById('rikiIn');
-    var q = inp.value.trim();
-    if (!q) return;
-    inp.value = '';
-    rikiBubble(q.replace(/</g, '&lt;'), true);
-    var lower = ' ' + q.toLowerCase() + ' ';
-    var hit = null;
-    for (var i = 0; i < RIKI_BRAIN.length; i++) {
-      if (RIKI_BRAIN[i].keys.some(function (k) { return lower.indexOf(k) !== -1; })) { hit = RIKI_BRAIN[i]; break; }
-    }
-    var ans = hit || RIKI_FALLBACK;
-    var typing = rikiBubble('<span style="opacity:.6">Riki is typing…</span>', false);
-    setTimeout(function () { typing.remove(); rikiSay(ans.reply, ans.links); }, 550);
-  }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeProfiler(); });
 
   // Rotating headline word
   var words = ['family', 'home', 'business', 'property', 'employees', 'health', 'future'];
