@@ -3,564 +3,601 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Travel Insurance Quotes | VUMI Travel VIP — Ricky Rampersad Branch</title>
-<meta name="description" content="Instant international travel health insurance quotes from VUMI Travel VIP. Compare single trip and annual multi-trip plans, up to US$5,000,000 medical cover worldwide, and apply online in minutes."/>
-<meta name="robots" content="index,follow"/>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<title>Travel Insurance TT — International Travel Medical Cover</title>
+<meta name="description" content="International travel medical insurance for Trinidad &amp; Tobago travellers. Instant premium, compare single trip and annual plans, apply online in minutes. Underwritten by VUMI® Group."/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:     #07131f;
-    --bg2:    #0d2137;
-    --card:   #163553;
-    --card2:  #1b3d61;
-    --gold:   #efc24b;
-    --gold2:  #dca530;
-    --text:   #edf4fb;
-    --muted:  #a9bbcf;
-    --line:   rgba(255,255,255,.08);
-    --teal:   #00CFEA;
-    --teal2:  #00A8C5;
-    --good:   #3ddc97;
-    --warn:   #ffb454;
-    --bad:    #ff6b6b;
+    --paper:    #FBF8F3;
+    --paper2:   #F4EDE3;
+    --paper3:   #EDE4D6;
+    --ink:      #10312E;
+    --ink2:     #4A625E;
+    --ink3:     #7C918D;
+    --sea:      #0F6F5C;
+    --sea-dk:   #0A5344;
+    --sea-lt:   #E4F0EB;
+    --coral:    #D9503A;
+    --coral-lt: #FBEAE5;
+    --sun:      #E0A03A;
+    --sun-lt:   #FBF0DC;
+    --line:     #E4DACA;
+    --line2:    #D3C5AF;
+    --white:    #FFFFFF;
+    --shadow:   0 1px 2px rgba(16,49,46,.05), 0 8px 24px -12px rgba(16,49,46,.14);
+    --shadow-lg:0 2px 4px rgba(16,49,46,.05), 0 20px 48px -20px rgba(16,49,46,.22);
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 
   body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
     min-height: 100vh;
     overflow-x: hidden;
-    background-image:
-      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0,207,234,.08), transparent),
-      linear-gradient(180deg, var(--bg) 0%, var(--bg2) 50%, var(--bg) 100%);
-    background-attachment: fixed;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
   }
+  /* Fine paper grain — keeps large flat areas from looking flat-digital */
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: .5;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='.045'/%3E%3C/svg%3E");
+  }
+  body > * { position: relative; z-index: 1; }
 
   a { color: inherit; }
-  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 16px; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 22px; }
+  @media (max-width: 620px) { .wrap { padding: 0 16px; } }
 
-  /* ── NAV ── */
+  h1, h2, h3, .display {
+    font-family: 'Fraunces', Georgia, serif;
+    font-variation-settings: 'opsz' 96;
+    letter-spacing: -.015em;
+    line-height: 1.08;
+    font-weight: 600;
+  }
+
+  /* ══ NAV ══ */
   .nav {
-    position: sticky; top: 0; z-index: 100;
-    background: rgba(6,17,29,.92);
-    backdrop-filter: blur(12px);
+    position: sticky; top: 0; z-index: 200;
+    background: rgba(251,248,243,.86);
+    backdrop-filter: saturate(180%) blur(14px);
     border-bottom: 1px solid var(--line);
   }
-  .nav-inner {
-    max-width: 1060px; margin: 0 auto; padding: 0 16px;
-    display: flex; align-items: center; gap: 14px; height: 64px;
+  .nav-in {
+    max-width: 1080px; margin: 0 auto; padding: 0 22px;
+    height: 68px; display: flex; align-items: center; gap: 26px;
   }
-  .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; margin-right: auto; }
-  .nav-brand svg { width: 34px; height: 34px; flex-shrink: 0; }
-  .nav-brand span {
-    font-family: 'Montserrat', sans-serif; font-weight: 800;
-    font-size: 13px; line-height: 1.15; letter-spacing: .3px;
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; margin-right: auto; }
+  .brand-mark {
+    width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+    background: var(--sea); display: grid; place-items: center;
   }
-  .nav-links { display: flex; align-items: center; gap: 20px; }
+  .brand-mark svg { width: 19px; height: 19px; }
+  .brand-name {
+    font-family: 'Fraunces', serif; font-weight: 700; font-size: 17.5px;
+    letter-spacing: -.02em; line-height: 1;
+  }
+  .brand-name em { font-style: normal; color: var(--sea); }
+  .nav-links { display: flex; align-items: center; gap: 24px; }
   .nav-links a {
-    text-decoration: none; font-size: 13.5px; color: var(--muted);
-    transition: color .2s; white-space: nowrap;
+    text-decoration: none; font-size: 14.5px; font-weight: 500; color: var(--ink2);
+    transition: color .16s;
   }
-  .nav-links a:hover { color: var(--teal); }
-  .nav-cta {
-    background: linear-gradient(135deg, var(--gold), var(--gold2));
-    color: #07131f !important; padding: 9px 16px; border-radius: 999px;
-    font-weight: 700; font-size: 13px !important;
-  }
-  @media (max-width: 780px) {
-    .nav-inner { height: 58px; }
-    .nav-links a:not(.nav-cta) { display: none; }
-  }
+  .nav-links a:hover { color: var(--sea); }
+  @media (max-width: 800px) { .nav-links a { display: none; } .nav-in { height: 60px; padding: 0 16px; } }
 
-  /* ── HERO ── */
-  .hero { position: relative; padding: 42px 0 8px; overflow: hidden; }
-  .orb { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .5; pointer-events: none; }
-  .orb-teal { width: 380px; height: 380px; background: rgba(0,207,234,.22); top: -140px; right: -90px; }
-  .orb-gold { width: 300px; height: 300px; background: rgba(239,194,75,.15); bottom: -130px; left: -80px; }
-
-  .kicker {
-    display: inline-flex; align-items: center; gap: 8px;
-    background: rgba(0,207,234,.1); border: 1px solid rgba(0,207,234,.28);
-    color: var(--teal); padding: 6px 13px; border-radius: 999px;
-    font-size: 11.5px; font-weight: 600; letter-spacing: .5px;
-    text-transform: uppercase; margin-bottom: 16px;
-  }
-  .kicker .dot {
-    width: 7px; height: 7px; border-radius: 50%; background: var(--teal);
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
-
-  .hero h1 {
-    font-family: 'Montserrat', sans-serif; font-weight: 900;
-    font-size: clamp(28px, 6vw, 46px); line-height: 1.08;
-    letter-spacing: -.5px; margin-bottom: 14px;
-  }
-  .hero h1 .hl {
-    background: linear-gradient(120deg, var(--gold), #fff0b8, var(--gold2));
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
-  .hero .sub {
-    color: var(--muted); font-size: clamp(14px, 2.4vw, 16.5px);
-    max-width: 620px; line-height: 1.65; margin-bottom: 18px;
-  }
-  .hero-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
-  .hb {
-    background: rgba(255,255,255,.04); border: 1px solid var(--line);
-    padding: 7px 12px; border-radius: 999px; font-size: 12px; color: var(--muted);
-  }
-  .hb b { color: var(--gold); }
-
-  /* ── SECTIONS ── */
-  section { padding: 34px 0; }
-  .section-label {
-    font-size: 11.5px; font-weight: 700; letter-spacing: 1.6px;
-    text-transform: uppercase; color: var(--teal); margin-bottom: 9px;
-  }
-  h2 {
-    font-family: 'Montserrat', sans-serif; font-weight: 800;
-    font-size: clamp(21px, 4.2vw, 30px); line-height: 1.2;
-    letter-spacing: -.3px; margin-bottom: 9px;
-  }
-  .section-sub { color: var(--muted); font-size: 14.5px; line-height: 1.65; max-width: 640px; margin-bottom: 22px; }
-
-  /* ── BUTTONS ── */
+  /* ══ BUTTONS ══ */
   .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 13px 24px; border-radius: 999px; font-weight: 700; font-size: 14.5px;
-    text-decoration: none; border: none; cursor: pointer;
-    font-family: 'DM Sans', sans-serif; transition: transform .18s, box-shadow .18s, opacity .18s;
+    display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+    font-family: 'Inter', sans-serif; font-weight: 600; font-size: 15px;
+    padding: 13px 24px; border-radius: 10px; border: 1px solid transparent;
+    cursor: pointer; text-decoration: none; white-space: nowrap;
+    transition: background .16s, border-color .16s, transform .12s, box-shadow .16s;
   }
-  .btn:hover { transform: translateY(-2px); }
-  .btn:active { transform: translateY(0); }
-  .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
-  .btn-gold { background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #07131f; box-shadow: 0 8px 22px rgba(239,194,75,.24); }
-  .btn-teal { background: linear-gradient(135deg, var(--teal), var(--teal2)); color: #04222b; box-shadow: 0 8px 22px rgba(0,207,234,.22); }
-  .btn-ghost { background: rgba(255,255,255,.05); color: var(--text); border: 1px solid var(--line); }
-  .btn-ghost:hover { border-color: var(--teal); color: var(--teal); }
+  .btn:active { transform: translateY(1px); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-pri { background: var(--sea); color: #fff; box-shadow: 0 1px 2px rgba(10,83,68,.3); }
+  .btn-pri:hover { background: var(--sea-dk); }
+  .btn-coral { background: var(--coral); color: #fff; }
+  .btn-coral:hover { background: #C0432F; }
+  .btn-out { background: var(--white); color: var(--ink); border-color: var(--line2); }
+  .btn-out:hover { border-color: var(--sea); color: var(--sea); }
+  .btn-ghost { background: transparent; color: var(--ink2); }
+  .btn-ghost:hover { color: var(--sea); }
+  .btn-lg { padding: 16px 30px; font-size: 16px; border-radius: 11px; }
   .btn-block { width: 100%; }
-  .btn-lg { padding: 15px 30px; font-size: 15.5px; }
 
-  /* ── CARD / PANEL ── */
-  .panel {
-    background: linear-gradient(160deg, var(--card), var(--card2));
-    border: 1px solid var(--line); border-radius: 18px; padding: 22px;
-  }
-  @media (max-width: 620px) { .panel { padding: 17px; border-radius: 15px; } }
+  /* ══ HERO ══ */
+  .hero { padding: 58px 0 30px; position: relative; overflow: hidden; }
+  .hero-grid { display: grid; grid-template-columns: 1fr 400px; gap: 48px; align-items: start; }
+  @media (max-width: 940px) { .hero-grid { grid-template-columns: 1fr; gap: 30px; } .hero { padding: 36px 0 18px; } }
 
-  /* ── STEPPER ── */
-  .stepper { display: flex; align-items: center; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
-  .stp {
-    display: flex; align-items: center; gap: 7px;
-    font-size: 12px; color: var(--muted); font-weight: 600;
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--sea); background: var(--sea-lt); border: 1px solid rgba(15,111,92,.16);
+    padding: 6px 13px; border-radius: 100px; margin-bottom: 20px;
   }
-  .stp i {
-    width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
-    background: rgba(255,255,255,.06); border: 1px solid var(--line);
-    font-style: normal; font-size: 11.5px; font-weight: 700; flex-shrink: 0;
+  .eyebrow .pip {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--sea);
+    animation: blip 2.4s ease-in-out infinite;
   }
-  .stp.on { color: var(--text); }
-  .stp.on i { background: linear-gradient(135deg, var(--teal), var(--teal2)); color: #04222b; border-color: transparent; }
-  .stp.done i { background: rgba(61,220,151,.16); color: var(--good); border-color: rgba(61,220,151,.35); }
-  .stp-bar { flex: 1; min-width: 12px; height: 1px; background: var(--line); }
-  @media (max-width: 620px) { .stp span { display: none; } .stp-bar { min-width: 8px; } }
+  @keyframes blip { 0%,100% { opacity: 1 } 50% { opacity: .3 } }
 
-  /* ── FORM ── */
-  .fgrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 13px; }
-  .fgrid.c3 { grid-template-columns: repeat(3, 1fr); }
-  .fgrid .full { grid-column: 1 / -1; }
-  @media (max-width: 620px) { .fgrid, .fgrid.c3 { grid-template-columns: 1fr; } }
+  .hero h1 { font-size: clamp(38px, 6.4vw, 66px); font-weight: 600; margin-bottom: 20px; }
+  .hero h1 .ital { font-style: italic; font-weight: 500; color: var(--sea); }
+  .hero .lede { font-size: clamp(16px, 2vw, 18.5px); color: var(--ink2); max-width: 500px; line-height: 1.62; }
 
-  label.fl {
-    display: block; font-size: 12px; font-weight: 600; color: var(--muted);
-    margin-bottom: 6px; letter-spacing: .2px;
+  .trustrow { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 28px; }
+  .trust { display: flex; align-items: center; gap: 9px; font-size: 13.5px; color: var(--ink2); font-weight: 500; }
+  .trust svg { width: 17px; height: 17px; flex-shrink: 0; color: var(--sea); }
+
+  /* Hero side card */
+  .quickcard {
+    background: var(--white); border: 1px solid var(--line);
+    border-radius: 16px; padding: 24px; box-shadow: var(--shadow-lg);
   }
-  label.fl .req { color: var(--gold); }
-  input[type=text], input[type=date], input[type=number], input[type=email],
-  input[type=tel], select, textarea {
-    width: 100%; padding: 12px 13px; border-radius: 11px;
-    background: rgba(7,19,31,.62); border: 1px solid var(--line);
-    color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14.5px;
-    transition: border-color .18s, box-shadow .18s; -webkit-appearance: none; appearance: none;
+  .quickcard h3 { font-size: 20px; margin-bottom: 5px; }
+  .quickcard .qc-sub { font-size: 13.5px; color: var(--ink3); margin-bottom: 18px; }
+  .qc-stat { display: flex; align-items: baseline; gap: 8px; padding: 13px 0; border-top: 1px solid var(--line); }
+  .qc-stat:first-of-type { border-top: none; padding-top: 4px; }
+  .qc-stat .n {
+    font-family: 'Fraunces', serif; font-weight: 700; font-size: 25px; color: var(--sea);
+    letter-spacing: -.02em; line-height: 1; white-space: nowrap; flex-shrink: 0;
+  }
+  .qc-stat .l { font-size: 13px; color: var(--ink2); line-height: 1.4; }
+
+  /* ══ SECTION ══ */
+  section { padding: 46px 0; }
+  .sec-label {
+    font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--coral); margin-bottom: 11px;
+  }
+  h2 { font-size: clamp(27px, 4.2vw, 40px); margin-bottom: 12px; }
+  .sec-sub { font-size: 16.5px; color: var(--ink2); max-width: 620px; line-height: 1.62; }
+
+  /* ══ PROGRESS ══ */
+  .progress-shell {
+    position: sticky; top: 68px; z-index: 150;
+    background: rgba(251,248,243,.94); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line); padding: 13px 0 12px; margin-bottom: 26px;
+  }
+  @media (max-width: 800px) { .progress-shell { top: 60px; } }
+  .pbar-track { height: 5px; background: var(--paper3); border-radius: 100px; overflow: hidden; }
+  .pbar-fill {
+    height: 100%; width: 0%; border-radius: 100px;
+    background: linear-gradient(90deg, var(--sea), #17A184);
+    transition: width .5s cubic-bezier(.4,0,.2,1);
+  }
+  .pbar-steps { display: flex; justify-content: space-between; margin-top: 9px; gap: 6px; }
+  .pstep { display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; color: var(--ink3); }
+  .pstep .dot {
+    width: 19px; height: 19px; border-radius: 50%; flex-shrink: 0;
+    display: grid; place-items: center; font-size: 10.5px; font-weight: 700;
+    background: var(--paper3); color: var(--ink3); transition: all .3s;
+  }
+  .pstep.on { color: var(--ink); }
+  .pstep.on .dot { background: var(--sea); color: #fff; }
+  .pstep.done .dot { background: var(--sea-lt); color: var(--sea); }
+  .pstep.done { color: var(--ink2); }
+  @media (max-width: 640px) { .pstep .txt { display: none; } .pbar-steps { justify-content: space-around; } }
+  .pbar-pct { font-size: 12.5px; color: var(--ink3); font-weight: 600; margin-left: auto; }
+
+  /* ══ CARD ══ */
+  .card {
+    background: var(--white); border: 1px solid var(--line);
+    border-radius: 16px; padding: 30px; box-shadow: var(--shadow);
+  }
+  @media (max-width: 620px) { .card { padding: 20px; border-radius: 13px; } }
+
+  /* ══ FORM ══ */
+  .fld { margin-bottom: 20px; }
+  .fld:last-child { margin-bottom: 0; }
+  label.lbl {
+    display: block; font-size: 14px; font-weight: 600; color: var(--ink);
+    margin-bottom: 8px;
+  }
+  label.lbl .opt { font-weight: 400; color: var(--ink3); font-size: 13px; }
+  .req { color: var(--coral); }
+
+  input[type=text], input[type=date], input[type=email], input[type=tel], select, textarea {
+    width: 100%; padding: 13px 14px; font-size: 15.5px;
+    font-family: 'Inter', sans-serif; color: var(--ink);
+    background: var(--white); border: 1.5px solid var(--line2); border-radius: 10px;
+    transition: border-color .15s, box-shadow .15s;
+    -webkit-appearance: none; appearance: none;
   }
   input:focus, select:focus, textarea:focus {
-    outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(0,207,234,.13);
+    outline: none; border-color: var(--sea); box-shadow: 0 0 0 3.5px rgba(15,111,92,.11);
   }
-  input::placeholder, textarea::placeholder { color: #63798f; }
+  input::placeholder, textarea::placeholder { color: #A9B8B4; }
   select {
-    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23a9bbcf' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: right 13px center; background-size: 11px;
-    padding-right: 34px; cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1.5 1.5L6 6l4.5-4.5' stroke='%234A625E' stroke-width='1.7' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center; background-size: 12px;
+    padding-right: 38px; cursor: pointer;
   }
-  input[type=date] { cursor: pointer; }
-  textarea { resize: vertical; min-height: 74px; }
-  .hint { font-size: 11.5px; color: #7d92a8; margin-top: 5px; line-height: 1.5; }
-  .err { border-color: var(--bad) !important; box-shadow: 0 0 0 3px rgba(255,107,107,.12) !important; }
-  .err-msg { font-size: 11.5px; color: var(--bad); margin-top: 5px; display: none; }
-  .err-msg.show { display: block; }
+  textarea { resize: vertical; min-height: 88px; line-height: 1.55; }
+  .hint { font-size: 13px; color: var(--ink3); margin-top: 7px; line-height: 1.55; }
+  .hint b { color: var(--ink2); font-weight: 600; }
+  .invalid { border-color: var(--coral) !important; box-shadow: 0 0 0 3.5px rgba(217,80,58,.1) !important; }
+  .emsg { font-size: 13px; color: var(--coral); margin-top: 6px; display: none; font-weight: 500; }
+  .emsg.show { display: block; }
 
-  /* ── SEGMENTED CHOICE ── */
-  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .seg-opt {
-    position: relative; border: 1.5px solid var(--line); border-radius: 13px;
-    padding: 14px 14px; cursor: pointer; transition: all .18s;
-    background: rgba(7,19,31,.4);
-  }
-  .seg-opt:hover { border-color: rgba(0,207,234,.4); }
-  .seg-opt.on { border-color: var(--teal); background: rgba(0,207,234,.08); }
-  .seg-opt input { position: absolute; opacity: 0; pointer-events: none; }
-  .seg-opt .t { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 14.5px; margin-bottom: 3px; }
-  .seg-opt .d { font-size: 12px; color: var(--muted); line-height: 1.5; }
-  .seg-opt .tick {
-    position: absolute; top: 12px; right: 12px; width: 17px; height: 17px;
-    border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center;
-  }
-  .seg-opt.on .tick { background: var(--teal); border-color: var(--teal); }
-  .seg-opt.on .tick::after { content: '✓'; font-size: 10px; color: #04222b; font-weight: 900; }
-  @media (max-width: 560px) { .seg { grid-template-columns: 1fr; } }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .row3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .row2 .span, .row3 .span { grid-column: 1 / -1; }
+  @media (max-width: 640px) { .row2, .row3 { grid-template-columns: 1fr; } }
 
-  /* ── CHIPS ── */
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip {
-    padding: 9px 15px; border-radius: 999px; border: 1.5px solid var(--line);
-    background: rgba(7,19,31,.4); cursor: pointer; font-size: 13.5px;
-    font-weight: 600; transition: all .18s; user-select: none;
+  /* ══ CHOICE TILES ══ */
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+  @media (max-width: 620px) { .choices { grid-template-columns: 1fr; } }
+  .choice {
+    position: relative; display: block; cursor: pointer;
+    background: var(--white); border: 1.5px solid var(--line2); border-radius: 13px;
+    padding: 18px 18px 18px 50px; transition: all .16s;
   }
-  .chip:hover { border-color: rgba(0,207,234,.4); }
-  .chip.on { border-color: var(--teal); background: rgba(0,207,234,.1); color: var(--teal); }
+  .choice:hover { border-color: var(--sea); background: #FCFEFD; }
+  .choice.sel { border-color: var(--sea); background: var(--sea-lt); box-shadow: 0 0 0 3px rgba(15,111,92,.09); }
+  .choice input { position: absolute; opacity: 0; pointer-events: none; }
+  .choice .radio {
+    position: absolute; left: 18px; top: 19px;
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 2px solid var(--line2); background: #fff; transition: all .16s;
+  }
+  .choice.sel .radio { border-color: var(--sea); border-width: 6px; }
+  .choice .ct { font-weight: 600; font-size: 15.5px; margin-bottom: 3px; }
+  .choice .cd { font-size: 13.5px; color: var(--ink2); line-height: 1.5; }
+  .choice .flag {
+    position: absolute; top: 14px; right: 14px;
+    font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+    background: var(--sun-lt); color: #96631A; padding: 3px 9px; border-radius: 100px;
+  }
 
-  /* ── TRAVELLER ROWS ── */
+  /* ══ TRAVELLER ══ */
   .trav {
-    background: rgba(7,19,31,.4); border: 1px solid var(--line);
-    border-radius: 13px; padding: 14px; margin-bottom: 10px; position: relative;
+    border: 1px solid var(--line); border-radius: 12px;
+    padding: 17px; margin-bottom: 12px; background: var(--paper);
   }
-  .trav-head {
-    display: flex; align-items: center; gap: 9px; margin-bottom: 12px;
+  .trav-top { display: flex; align-items: center; gap: 10px; margin-bottom: 13px; }
+  .trav-top .tn { font-weight: 600; font-size: 14.5px; }
+  .agepill {
+    margin-left: auto; font-size: 12.5px; font-weight: 600; padding: 4px 11px;
+    border-radius: 100px; background: var(--sea-lt); color: var(--sea-dk);
   }
-  .trav-head .n {
-    font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 13px;
-    letter-spacing: .3px;
+  .agepill.bad { background: var(--coral-lt); color: var(--coral); }
+  .xbtn {
+    background: none; border: none; cursor: pointer; color: var(--ink3);
+    font-size: 19px; line-height: 1; padding: 4px 7px; border-radius: 7px;
   }
-  .trav-head .age-pill {
-    margin-left: auto; font-size: 11.5px; padding: 4px 10px; border-radius: 999px;
-    background: rgba(0,207,234,.1); color: var(--teal); font-weight: 600;
-  }
-  .trav-head .age-pill.free { background: rgba(61,220,151,.14); color: var(--good); }
-  .trav-head .age-pill.over { background: rgba(255,107,107,.14); color: var(--bad); }
-  .trav-del {
-    background: none; border: none; color: var(--muted); cursor: pointer;
-    font-size: 17px; line-height: 1; padding: 3px 5px; border-radius: 6px;
-  }
-  .trav-del:hover { color: var(--bad); background: rgba(255,107,107,.1); }
+  .xbtn:hover { color: var(--coral); background: var(--coral-lt); }
 
-  /* ── QUOTE RESULT ── */
-  .quote-hero {
-    background: linear-gradient(150deg, rgba(0,207,234,.13), rgba(239,194,75,.07));
-    border: 1px solid rgba(0,207,234,.28); border-radius: 18px;
-    padding: 24px; text-align: center; margin-bottom: 18px;
+  /* ══ PREMIUM PANEL ══ */
+  .premium {
+    background: var(--ink); color: #fff; border-radius: 18px;
+    padding: 34px 30px; text-align: center; position: relative; overflow: hidden;
   }
-  .quote-hero .lbl { font-size: 12px; color: var(--muted); letter-spacing: 1.2px; text-transform: uppercase; font-weight: 600; }
-  .quote-hero .amt {
-    font-family: 'Montserrat', sans-serif; font-weight: 900;
-    font-size: clamp(38px, 9vw, 58px); line-height: 1.05; margin: 7px 0 2px;
-    background: linear-gradient(120deg, #fff, var(--gold));
-    -webkit-background-clip: text; background-clip: text; color: transparent;
+  .premium::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(700px 220px at 50% -30%, rgba(23,161,132,.35), transparent 70%);
   }
-  .quote-hero .amt .cur { font-size: .42em; vertical-align: super; letter-spacing: .5px; }
-  .quote-hero .ttd { font-size: 13px; color: var(--muted); }
-  .quote-hero .meta { font-size: 13px; color: var(--muted); margin-top: 10px; line-height: 1.6; }
+  .premium > * { position: relative; z-index: 1; }
+  .premium .plabel {
+    font-size: 12.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: rgba(255,255,255,.6); font-weight: 600;
+  }
+  .premium .pamt {
+    font-family: 'Fraunces', serif; font-weight: 600; font-size: clamp(46px, 10vw, 72px);
+    line-height: 1; margin: 10px 0 4px; letter-spacing: -.03em;
+  }
+  .premium .pamt .cur { font-size: .38em; vertical-align: super; opacity: .75; margin-right: 2px; }
+  .premium .pttd { font-size: 14px; color: rgba(255,255,255,.6); }
+  .premium .pmeta {
+    font-size: 14.5px; color: rgba(255,255,255,.82); margin-top: 16px;
+    line-height: 1.65; max-width: 460px; margin-left: auto; margin-right: auto;
+  }
+  .premium .pmeta b { color: #fff; font-weight: 600; }
 
-  .indic {
-    display: inline-flex; align-items: center; gap: 6px; margin-top: 12px;
-    background: rgba(255,180,84,.11); border: 1px solid rgba(255,180,84,.3);
-    color: var(--warn); font-size: 11.5px; font-weight: 600;
-    padding: 6px 13px; border-radius: 999px;
+  /* ══ PLAN TABLE ══ */
+  .ptable { display: grid; grid-template-columns: repeat(4, 1fr); gap: 13px; }
+  @media (max-width: 900px) { .ptable { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .ptable { grid-template-columns: 1fr; } }
+  .pcard {
+    background: var(--white); border: 1.5px solid var(--line); border-radius: 14px;
+    padding: 20px 18px; cursor: pointer; transition: all .18s; position: relative;
   }
-
-  /* ── PLAN COMPARISON ── */
-  .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; }
-  @media (max-width: 860px) { .plans { grid-template-columns: 1fr; } }
-  .plan {
-    background: linear-gradient(160deg, var(--card), var(--card2));
-    border: 1.5px solid var(--line); border-radius: 16px; padding: 19px;
-    position: relative; transition: all .2s; cursor: pointer;
-  }
-  .plan:hover { border-color: rgba(0,207,234,.45); transform: translateY(-2px); }
-  .plan.on { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(0,207,234,.12); }
-  .plan.rec { border-color: var(--gold); }
-  .plan.rec.on { box-shadow: 0 0 0 3px rgba(239,194,75,.15); }
-  .plan-tag {
+  .pcard:hover { border-color: var(--sea); transform: translateY(-2px); box-shadow: var(--shadow); }
+  .pcard.sel { border-color: var(--sea); background: var(--sea-lt); box-shadow: 0 0 0 3px rgba(15,111,92,.1); }
+  .pcard.best { border-color: var(--sun); }
+  .pcard.best.sel { box-shadow: 0 0 0 3px rgba(224,160,58,.18); }
+  .pcard .bestflag {
     position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
-    background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #07131f;
-    font-size: 10.5px; font-weight: 800; letter-spacing: .7px; text-transform: uppercase;
-    padding: 4px 13px; border-radius: 999px; white-space: nowrap;
+    background: var(--sun); color: #3D2A08; font-size: 10.5px; font-weight: 700;
+    letter-spacing: .05em; text-transform: uppercase; padding: 4px 11px;
+    border-radius: 100px; white-space: nowrap;
   }
-  .plan h3 {
-    font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 16px;
-    margin-bottom: 4px; margin-top: 3px;
+  .pcard h4 { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 600; margin: 4px 0 3px; }
+  .pcard .pdesc { font-size: 12.5px; color: var(--ink3); margin-bottom: 14px; min-height: 34px; line-height: 1.45; }
+  .pcard .pprice {
+    font-family: 'Fraunces', serif; font-weight: 700; font-size: 26px;
+    color: var(--sea-dk); letter-spacing: -.02em; line-height: 1;
   }
-  .plan .ded { font-size: 12.5px; color: var(--muted); margin-bottom: 13px; }
-  .plan .px {
-    font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 28px;
-    color: var(--gold); line-height: 1;
-  }
-  .plan .px .c { font-size: .5em; vertical-align: super; }
-  .plan .px-sub { font-size: 11.5px; color: var(--muted); margin-top: 4px; margin-bottom: 13px; }
-  .plan ul { list-style: none; font-size: 12.5px; color: var(--muted); line-height: 1.85; }
-  .plan ul li::before { content: '✓ '; color: var(--good); font-weight: 700; }
-  .plan ul li.no::before { content: '– '; color: #5b7a94; }
+  .pcard .pprice .c { font-size: .5em; vertical-align: super; }
+  .pcard .pnote { font-size: 12px; color: var(--ink3); margin-top: 6px; }
+  .pcard.unavail { opacity: .45; cursor: not-allowed; }
+  .pcard.unavail:hover { transform: none; border-color: var(--line); box-shadow: none; }
 
-  /* ── BENEFIT TABLE ── */
-  .btbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-  .btbl th, .btbl td { padding: 11px 12px; text-align: left; border-bottom: 1px solid var(--line); }
-  .btbl th {
-    font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 11.5px;
-    letter-spacing: .7px; text-transform: uppercase; color: var(--teal);
+  /* ══ RIDERS ══ */
+  .rider {
+    display: flex; gap: 15px; align-items: flex-start;
+    border: 1.5px solid var(--line2); border-radius: 13px; padding: 18px;
+    cursor: pointer; transition: all .16s; background: var(--white);
   }
-  .btbl td:last-child { text-align: right; font-weight: 600; white-space: nowrap; }
-  .btbl tr:last-child td { border-bottom: none; }
-  .tbl-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-
-  /* ── ACCORDION ── */
-  .acc { border: 1px solid var(--line); border-radius: 13px; overflow: hidden; margin-bottom: 9px; background: rgba(7,19,31,.35); }
-  .acc-h {
-    padding: 15px 17px; cursor: pointer; display: flex; align-items: center; gap: 10px;
-    font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 14px;
-    user-select: none;
+  .rider:hover { border-color: var(--sea); }
+  .rider.sel { border-color: var(--sea); background: var(--sea-lt); }
+  .rider .chk {
+    width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--line2);
+    background: #fff; flex-shrink: 0; margin-top: 2px; display: grid; place-items: center;
+    transition: all .16s;
   }
-  .acc-h::after {
-    content: '+'; margin-left: auto; font-size: 19px; color: var(--teal);
-    font-weight: 400; transition: transform .22s; line-height: 1;
+  .rider.sel .chk { background: var(--sea); border-color: var(--sea); }
+  .rider.sel .chk::after { content: '✓'; color: #fff; font-size: 13px; font-weight: 700; }
+  .rider .rt { font-weight: 600; font-size: 15px; margin-bottom: 4px; display: flex; align-items: baseline; gap: 9px; }
+  .rider .rt .rp { margin-left: auto; font-family: 'Fraunces', serif; font-weight: 700; color: var(--sea-dk); font-size: 16px; white-space: nowrap; }
+  .rider .rd { font-size: 13.5px; color: var(--ink2); line-height: 1.55; }
+
+  /* ══ ADVICE ══ */
+  .advice {
+    display: flex; gap: 14px; align-items: flex-start;
+    border-radius: 12px; padding: 16px 18px; margin-bottom: 11px;
+    font-size: 14.5px; line-height: 1.6;
   }
-  .acc.open .acc-h::after { transform: rotate(45deg); }
-  .acc-b { max-height: 0; overflow: hidden; transition: max-height .3s ease; }
-  .acc.open .acc-b { max-height: 1800px; }
-  .acc-b-in { padding: 0 17px 17px; font-size: 13.5px; color: var(--muted); line-height: 1.75; }
-
-  /* ── NOTICES ── */
-  .notice {
-    border-radius: 13px; padding: 14px 16px; font-size: 13px; line-height: 1.65;
-    display: flex; gap: 11px; align-items: flex-start;
+  .advice .aic {
+    width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+    display: grid; place-items: center; font-size: 15px;
   }
-  .notice .ico { font-size: 16px; line-height: 1.3; flex-shrink: 0; }
-  .notice.warn { background: rgba(255,180,84,.09); border: 1px solid rgba(255,180,84,.26); color: #ffd9a3; }
-  .notice.info { background: rgba(0,207,234,.07); border: 1px solid rgba(0,207,234,.22); color: #b6e9f4; }
-  .notice.bad  { background: rgba(255,107,107,.09); border: 1px solid rgba(255,107,107,.28); color: #ffc0c0; }
-  .notice.good { background: rgba(61,220,151,.08); border: 1px solid rgba(61,220,151,.26); color: #b5f0d6; }
-  .notice b { color: #fff; font-weight: 700; }
+  .advice.good { background: var(--sea-lt); border: 1px solid rgba(15,111,92,.18); }
+  .advice.good .aic { background: rgba(15,111,92,.13); }
+  .advice.warn { background: var(--sun-lt); border: 1px solid rgba(224,160,58,.3); }
+  .advice.warn .aic { background: rgba(224,160,58,.2); }
+  .advice.info { background: var(--white); border: 1px solid var(--line); }
+  .advice.info .aic { background: var(--paper2); }
+  .advice.stop { background: var(--coral-lt); border: 1px solid rgba(217,80,58,.25); }
+  .advice.stop .aic { background: rgba(217,80,58,.14); }
+  .advice b { font-weight: 600; }
+  .advice .atitle { font-weight: 600; display: block; margin-bottom: 3px; }
 
-  /* ── ADVISOR CALLOUT ── */
-  .advisor {
-    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-    background: rgba(239,194,75,.07); border: 1px solid rgba(239,194,75,.24);
-    border-radius: 15px; padding: 16px 18px;
+  /* ══ SUMMARY ══ */
+  .sum { font-size: 15px; }
+  .sum .sr { display: flex; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .sum .sr:last-child { border-bottom: none; }
+  .sum .sk { color: var(--ink2); flex: 1; }
+  .sum .sv { font-weight: 600; text-align: right; }
+  .sum .sr.total { border-top: 2px solid var(--ink); border-bottom: none; margin-top: 6px; padding-top: 15px; }
+  .sum .sr.total .sk { color: var(--ink); font-weight: 600; }
+  .sum .sr.total .sv { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 700; color: var(--sea-dk); }
+
+  /* ══ TABLE ══ */
+  .tscroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -2px; }
+  table.bt { width: 100%; border-collapse: collapse; font-size: 14.5px; min-width: 420px; }
+  table.bt th, table.bt td { padding: 13px 14px; text-align: left; border-bottom: 1px solid var(--line); }
+  table.bt th {
+    font-size: 12px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--ink3); border-bottom: 1.5px solid var(--line2);
   }
-  .advisor .txt { flex: 1; min-width: 200px; font-size: 13.5px; line-height: 1.6; }
-  .advisor .txt b { font-family: 'Montserrat', sans-serif; }
-
-  /* ── SUMMARY LIST ── */
-  .sumlist { font-size: 13.5px; }
-  .sumlist .r { display: flex; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); }
-  .sumlist .r:last-child { border-bottom: none; }
-  .sumlist .k { color: var(--muted); flex: 1; }
-  .sumlist .v { font-weight: 600; text-align: right; }
-  .sumlist .r.tot { border-top: 1.5px solid rgba(239,194,75,.35); margin-top: 5px; padding-top: 13px; }
-  .sumlist .r.tot .v { color: var(--gold); font-size: 17px; font-family: 'Montserrat', sans-serif; font-weight: 800; }
-
-  /* ── STICKY QUOTE BAR (mobile) ── */
-  .stickybar {
-    position: fixed; bottom: 0; left: 0; right: 0; z-index: 90;
-    background: rgba(6,17,29,.96); backdrop-filter: blur(12px);
-    border-top: 1px solid var(--line); padding: 11px 16px;
-    display: none; align-items: center; gap: 12px;
-    box-shadow: 0 -6px 22px rgba(0,0,0,.3);
+  table.bt td:last-child, table.bt th:last-child { text-align: right; font-weight: 600; white-space: nowrap; }
+  table.bt tr.grp td {
+    background: var(--paper2); font-family: 'Fraunces', serif; font-weight: 600;
+    font-size: 13.5px; color: var(--ink);
   }
-  .stickybar.show { display: flex; }
-  .stickybar .sb-px { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 20px; color: var(--gold); line-height: 1.1; }
-  .stickybar .sb-lbl { font-size: 10.5px; color: var(--muted); letter-spacing: .5px; text-transform: uppercase; }
-  .stickybar .btn { margin-left: auto; padding: 11px 20px; font-size: 14px; }
-  @media (min-width: 861px) { .stickybar { display: none !important; } }
+  table.bt tr:last-child td { border-bottom: none; }
 
-  /* ── VIEW SWITCHING ── */
+  /* ══ ACCORDION ══ */
+  .ac { border-bottom: 1px solid var(--line); }
+  .ac-h {
+    padding: 19px 0; cursor: pointer; display: flex; align-items: center; gap: 14px;
+    font-family: 'Fraunces', serif; font-weight: 600; font-size: 17px; user-select: none;
+  }
+  .ac-h .plus {
+    margin-left: auto; width: 26px; height: 26px; flex-shrink: 0; border-radius: 50%;
+    border: 1.5px solid var(--line2); display: grid; place-items: center;
+    font-size: 15px; font-weight: 400; color: var(--sea); transition: all .22s;
+  }
+  .ac.open .ac-h .plus { transform: rotate(45deg); background: var(--sea); border-color: var(--sea); color: #fff; }
+  .ac-b { max-height: 0; overflow: hidden; transition: max-height .32s ease; }
+  .ac.open .ac-b { max-height: 900px; }
+  .ac-b-in { padding-bottom: 21px; font-size: 15px; color: var(--ink2); line-height: 1.72; max-width: 720px; }
+  .ac-b-in b { color: var(--ink); font-weight: 600; }
+
+  /* ══ VIEW ══ */
   .view { display: none; }
-  .view.on { display: block; animation: fadeUp .35s ease; }
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .view.on { display: block; animation: rise .4s cubic-bezier(.16,1,.3,1); }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 
-  /* ── SPINNER ── */
   .spin {
-    width: 15px; height: 15px; border: 2px solid rgba(7,19,31,.3);
-    border-top-color: #07131f; border-radius: 50%;
-    animation: rot .7s linear infinite; display: inline-block;
+    width: 15px; height: 15px; border: 2px solid rgba(255,255,255,.35);
+    border-top-color: #fff; border-radius: 50%; animation: sp .7s linear infinite; display: inline-block;
   }
-  @keyframes rot { to { transform: rotate(360deg); } }
+  @keyframes sp { to { transform: rotate(360deg); } }
 
-  /* ── FOOTER ── */
-  footer {
-    border-top: 1px solid var(--line); margin-top: 40px;
-    padding: 26px 0 90px; text-align: center; color: var(--muted); font-size: 12.5px; line-height: 1.8;
+  /* ══ STICKY MOBILE BAR ══ */
+  .mbar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 180;
+    background: rgba(255,255,255,.97); backdrop-filter: blur(12px);
+    border-top: 1px solid var(--line); padding: 11px 16px;
+    display: none; align-items: center; gap: 14px;
+    box-shadow: 0 -4px 20px rgba(16,49,46,.09);
   }
-  footer .f-links { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; margin: 12px 0; }
-  footer .f-links a { color: var(--muted); text-decoration: none; }
-  footer .f-links a:hover { color: var(--teal); }
-  footer .disc { max-width: 700px; margin: 14px auto 0; font-size: 11.5px; color: #6f8399; line-height: 1.7; }
+  .mbar.show { display: flex; }
+  .mbar .ml { font-size: 11px; color: var(--ink3); text-transform: uppercase; letter-spacing: .07em; font-weight: 600; }
+  .mbar .mp { font-family: 'Fraunces', serif; font-weight: 700; font-size: 21px; color: var(--sea-dk); line-height: 1.1; }
+  .mbar .btn { margin-left: auto; }
+  @media (min-width: 901px) { .mbar { display: none !important; } }
 
-  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+  /* ══ FOOTER ══ */
+  footer { background: var(--ink); color: rgba(255,255,255,.72); margin-top: 60px; padding: 46px 0 100px; font-size: 14px; line-height: 1.7; }
+  footer .fgrid { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 34px; margin-bottom: 32px; }
+  @media (max-width: 760px) { footer .fgrid { grid-template-columns: 1fr; gap: 24px; } }
+  footer h5 {
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .09em;
+    text-transform: uppercase; color: rgba(255,255,255,.45); margin-bottom: 13px;
+  }
+  footer a { color: rgba(255,255,255,.82); text-decoration: none; }
+  footer a:hover { color: #fff; text-decoration: underline; }
+  footer .flinks { display: flex; flex-direction: column; gap: 9px; }
+  footer .legal {
+    border-top: 1px solid rgba(255,255,255,.13); padding-top: 24px;
+    font-size: 12.5px; color: rgba(255,255,255,.5); line-height: 1.75;
+  }
+  footer .legal b { color: rgba(255,255,255,.75); font-weight: 600; }
+
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
 </style>
 </head>
 <body>
 
-<!-- ══════════════ NAV ══════════════ -->
+<!-- ══════════ NAV ══════════ -->
 <nav class="nav">
-  <div class="nav-inner">
-    <a class="nav-brand" href="/">
-      <svg viewBox="0 0 88 88" aria-hidden="true">
-        <defs>
-          <linearGradient id="gn" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
-          </linearGradient>
-        </defs>
-        <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#gn)"/>
-        <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <span>Ricky Rampersad<br>Branch</span>
+  <div class="nav-in">
+    <a class="brand" href="#top">
+      <span class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+          <circle cx="12" cy="12" r="10"/>
+        </svg>
+      </span>
+      <span class="brand-name" id="brandName">Travel<em>Insurance</em>TT</span>
     </a>
     <div class="nav-links">
-      <a href="/">Home</a>
-      <a href="#compare">Compare Plans</a>
-      <a href="#benefits">Benefits</a>
+      <a href="#plans">Plans</a>
+      <a href="#cover">What's covered</a>
       <a href="#faq">FAQ</a>
-      <a class="nav-cta" href="#quote">Get My Quote</a>
     </div>
+    <a class="btn btn-pri" href="#quote" style="padding:10px 19px;font-size:14.5px">Get a quote</a>
   </div>
 </nav>
 
-<!-- ══════════════ HERO ══════════════ -->
-<header class="hero">
-  <div class="orb orb-teal"></div>
-  <div class="orb orb-gold"></div>
-  <div class="wrap">
-    <div class="kicker"><span class="dot"></span>VUMI® Travel VIP · Quote in 60 seconds</div>
-    <h1>Travel the world.<br><span class="hl">Covered to US$5 million.</span></h1>
-    <p class="sub">International travel health insurance from VUMI® — emergency medical care, evacuation and repatriation anywhere in the world, with your free choice of doctor and hospital. Get your premium instantly, compare your options, and apply online.</p>
-    <div class="hero-badges">
-      <span class="hb"><b>⚡</b> Instant premium</span>
-      <span class="hb"><b>🌎</b> Worldwide cover</span>
-      <span class="hb"><b>🏥</b> Any doctor, any hospital</span>
-      <span class="hb"><b>👶</b> Under-2s free</span>
-      <span class="hb"><b>🕐</b> 24/7 emergency assistance</span>
+<!-- ══════════ HERO ══════════ -->
+<header class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow"><span class="pip"></span>Instant online quote</span>
+      <h1>Travel well.<br><span class="ital">Come home safely.</span></h1>
+      <p class="lede">
+        International travel medical insurance for Trinidad &amp; Tobago travellers. Emergency
+        treatment, evacuation and repatriation anywhere in the world — with your own choice of
+        doctor and hospital. Price it yourself in about a minute.
+      </p>
+      <div class="trustrow">
+        <span class="trust">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          Cover to US$5,000,000
+        </span>
+        <span class="trust">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          24/7 emergency assistance
+        </span>
+        <span class="trust">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4.5 8-11V5l-8-3-8 3v6c0 6.5 8 11 8 11z"/></svg>
+          Pre-existing conditions considered
+        </span>
+      </div>
     </div>
+
+    <aside class="quickcard">
+      <h3>Why travellers buy this</h3>
+      <p class="qc-sub">A hospital abroad will ask for payment before treatment.</p>
+      <div class="qc-stat"><span class="n">US$5M</span><span class="l">maximum medical cover per person, ages 0–69</span></div>
+      <div class="qc-stat"><span class="n">365</span><span class="l">days — the longest single trip you can cover</span></div>
+      <div class="qc-stat"><span class="n">79</span><span class="l">maximum age at entry, with cover from birth</span></div>
+      <div class="qc-stat"><span class="n">1 day</span><span class="l">typical turnaround from application to certificate</span></div>
+    </aside>
   </div>
 </header>
 
-<div class="wrap">
-
-<!-- ══════════════ STEPPER ══════════════ -->
-<section id="quote" style="padding-top:20px">
-  <div class="stepper" id="stepper">
-    <div class="stp on" data-s="1"><i>1</i><span>Your trip</span></div>
-    <div class="stp-bar"></div>
-    <div class="stp" data-s="2"><i>2</i><span>Compare &amp; choose</span></div>
-    <div class="stp-bar"></div>
-    <div class="stp" data-s="3"><i>3</i><span>Apply</span></div>
-    <div class="stp-bar"></div>
-    <div class="stp" data-s="4"><i>4</i><span>Done</span></div>
+<!-- ══════════ PROGRESS ══════════ -->
+<div class="progress-shell" id="progressShell">
+  <div class="wrap">
+    <div class="pbar-track"><div class="pbar-fill" id="pbarFill"></div></div>
+    <div class="pbar-steps">
+      <span class="pstep on" data-step="1"><span class="dot">1</span><span class="txt">Your trip</span></span>
+      <span class="pstep" data-step="2"><span class="dot">2</span><span class="txt">Choose a plan</span></span>
+      <span class="pstep" data-step="3"><span class="dot">3</span><span class="txt">Your details</span></span>
+      <span class="pstep" data-step="4"><span class="dot">4</span><span class="txt">Submitted</span></span>
+      <span class="pbar-pct" id="pbarPct">0% complete</span>
+    </div>
   </div>
+</div>
 
-  <!-- ─────────── VIEW 1 — TRIP DETAILS ─────────── -->
-  <div class="view on" id="v1">
-    <div class="panel">
-      <div class="section-label">Step 1 of 3</div>
-      <h2 style="font-size:clamp(19px,3.6vw,25px)">Tell us about your trip</h2>
-      <p class="section-sub" style="margin-bottom:20px">Five quick questions. Your premium appears the moment you finish — no waiting, no phone calls.</p>
+<div class="wrap">
+<section id="quote" style="padding-top:6px">
 
-      <!-- Trip type -->
-      <div style="margin-bottom:18px">
-        <label class="fl">How often are you travelling? <span class="req">*</span></label>
-        <div class="seg" id="tripType">
-          <label class="seg-opt on" data-v="single">
-            <span class="tick"></span>
-            <input type="radio" name="tt" value="single" checked>
-            <div class="t">✈️ One trip</div>
-            <div class="d">A single round trip. Cover for the exact days you're away — up to 365 days.</div>
+  <!-- ─────── STEP 1 ─────── -->
+  <div class="view on" id="s1">
+    <div class="sec-label">Step one</div>
+    <h2>Tell us about the trip</h2>
+    <p class="sec-sub" style="margin-bottom:28px">Four things and you'll have a price. Nothing here commits you to anything.</p>
+
+    <div class="card">
+      <div class="fld">
+        <label class="lbl">How often will you travel? <span class="req">*</span></label>
+        <div class="choices" id="tripTypeSel">
+          <label class="choice sel" data-v="single">
+            <span class="radio"></span>
+            <span class="ct">One trip</span>
+            <span class="cd">A single return journey. Priced per day for exactly the days you're away.</span>
           </label>
-          <label class="seg-opt" data-v="annual">
-            <span class="tick"></span>
-            <input type="radio" name="tt" value="annual">
-            <div class="d" style="position:absolute;top:12px;right:38px;font-size:10px;color:var(--gold);font-weight:700;letter-spacing:.5px">BEST VALUE</div>
-            <div class="t">🌍 Many trips a year</div>
-            <div class="d">Unlimited trips for 12 months. Choose 30, 45 or 90 days maximum per trip.</div>
+          <label class="choice" data-v="annual">
+            <span class="radio"></span>
+            <span class="flag">Frequent flyers</span>
+            <span class="ct">All year</span>
+            <span class="cd">Unlimited trips for 12 months, each up to 30, 45 or 90 days.</span>
           </label>
         </div>
       </div>
 
-      <!-- Destination -->
-      <div style="margin-bottom:18px">
-        <label class="fl">Where are you going? <span class="req">*</span></label>
-        <div class="chips" id="regionChips">
-          <div class="chip on" data-v="worldwide">🌎 Worldwide (includes USA &amp; Canada)</div>
-          <div class="chip" data-v="excl">🌍 Worldwide excluding USA &amp; Canada</div>
-        </div>
-        <div class="hint">The USA and Canada have the highest medical costs in the world, so excluding them lowers your premium. If there is any chance of a US connection or stopover, choose Worldwide.</div>
-      </div>
-
-      <!-- Dates -->
-      <div id="dateBlock">
-        <div class="fgrid" style="margin-bottom:6px">
-          <div>
-            <label class="fl" for="dFrom">Departure date <span class="req">*</span></label>
+      <div id="singleDates">
+        <div class="row2">
+          <div class="fld">
+            <label class="lbl" for="dFrom">Leaving on <span class="req">*</span></label>
             <input type="date" id="dFrom">
-            <div class="err-msg" id="e-dFrom">Please choose your departure date.</div>
+            <div class="emsg" id="e-dFrom">Choose your departure date.</div>
           </div>
-          <div>
-            <label class="fl" for="dTo">Return date <span class="req">*</span></label>
+          <div class="fld">
+            <label class="lbl" for="dTo">Coming back <span class="req">*</span></label>
             <input type="date" id="dTo">
-            <div class="err-msg" id="e-dTo">Return date must be on or after departure.</div>
+            <div class="emsg" id="e-dTo">Return must be on or after departure.</div>
           </div>
         </div>
-        <div class="hint" id="daysHint" style="margin-bottom:18px">Cover runs from the moment you leave until the day you return.</div>
+        <div class="hint" id="dayCount" style="margin-top:-8px;margin-bottom:20px">Cover runs from the day you leave to the day you return.</div>
       </div>
 
-      <!-- Annual trip length -->
-      <div id="annualBlock" style="display:none;margin-bottom:18px">
-        <div class="fgrid">
-          <div>
-            <label class="fl" for="aStart">Start date <span class="req">*</span></label>
-            <input type="date" id="aStart">
-            <div class="err-msg" id="e-aStart">Please choose a start date.</div>
-          </div>
-          <div>
-            <label class="fl">Longest single trip in the year <span class="req">*</span></label>
-            <select id="aTripLen">
-              <option value="30">Up to 30 days per trip</option>
-              <option value="45">Up to 45 days per trip</option>
-              <option value="90">Up to 90 days per trip</option>
-            </select>
-          </div>
+      <div id="annualStartBox" style="display:none">
+        <div class="fld">
+          <label class="lbl" for="aStart">Start the year's cover on <span class="req">*</span></label>
+          <input type="date" id="aStart">
+          <div class="emsg" id="e-aStart">Choose a start date.</div>
+          <div class="hint">You'll pick the maximum length of any single trip at the next step, once we've priced all three options for you.</div>
         </div>
-        <div class="hint" style="margin-top:6px">Covers every international trip you take in the next 12 months. If one trip runs longer than the limit you pick, it can be extended for a small daily premium.</div>
       </div>
 
-      <!-- Travellers -->
-      <div style="margin-bottom:16px">
-        <label class="fl">Who is travelling? <span class="req">*</span></label>
-        <div id="travList"></div>
-        <button class="btn btn-ghost" id="addTrav" style="padding:10px 18px;font-size:13.5px">＋ Add another traveller</button>
-        <div class="hint" style="margin-top:8px">Children under 2 travel free on VUMI Travel VIP. Cover is available up to age 79.</div>
+      <div class="fld">
+        <label class="lbl">Who's travelling? <span class="req">*</span></label>
+        <div id="travellers"></div>
+        <button class="btn btn-out" id="addTrav" style="padding:11px 19px;font-size:14px">＋ Add a traveller</button>
+        <div class="hint" style="margin-top:10px">Everyone on the policy is priced by their age at the start of travel. Cover is available up to age 79.</div>
       </div>
 
-      <!-- Guidance questions -->
-      <div style="border-top:1px solid var(--line);padding-top:17px;margin-bottom:18px">
-        <label class="fl" style="font-size:13px;color:var(--text);margin-bottom:11px">
-          🧭 Help us point you to the right plan <span style="color:var(--muted);font-weight:400">(optional, but worth 20 seconds)</span>
-        </label>
-        <div class="fgrid">
+      <div class="fld" style="border-top:1px solid var(--line);padding-top:22px">
+        <label class="lbl">A few questions so we can point you to the right plan <span class="opt">— optional</span></label>
+        <div class="row2">
           <div>
-            <label class="fl" for="qTrips">Roughly how many trips will you take in the next 12 months?</label>
+            <label class="lbl" for="qTrips" style="font-weight:500;font-size:13.5px;color:var(--ink2)">Trips planned in the next 12 months</label>
             <select id="qTrips">
               <option value="1">Just this one</option>
               <option value="2">2 trips</option>
@@ -569,1630 +606,1414 @@
             </select>
           </div>
           <div>
-            <label class="fl" for="qTripCost">What have you already paid out for this trip? (flights, hotels, tours)</label>
-            <select id="qTripCost">
-              <option value="0">Under US$500 / not booked yet</option>
+            <label class="lbl" for="qCost" style="font-weight:500;font-size:13.5px;color:var(--ink2)">Already paid for flights &amp; hotels</label>
+            <select id="qCost">
+              <option value="0">Under US$500 / not booked</option>
               <option value="1000">US$500 – US$1,500</option>
               <option value="2500">US$1,500 – US$3,000</option>
               <option value="5000">Over US$3,000</option>
             </select>
           </div>
           <div>
-            <label class="fl" for="qPreEx">Does anyone travelling have an ongoing medical condition?</label>
-            <select id="qPreEx">
+            <label class="lbl" for="qMed" style="font-weight:500;font-size:13.5px;color:var(--ink2)">Any ongoing medical condition?</label>
+            <select id="qMed">
               <option value="no">No</option>
-              <option value="stable">Yes — stable for 6+ months</option>
-              <option value="recent">Yes — changed or treated recently</option>
+              <option value="stable">Yes — stable 6 months or more</option>
+              <option value="recent">Yes — treated or changed recently</option>
             </select>
           </div>
           <div>
-            <label class="fl" for="qBudget">What matters most to you?</label>
-            <select id="qBudget">
-              <option value="balance">A sensible balance</option>
-              <option value="cheap">The lowest possible premium</option>
-              <option value="max">The most protection, cost aside</option>
+            <label class="lbl" for="qBag" style="font-weight:500;font-size:13.5px;color:var(--ink2)">Checking bags or connecting flights?</label>
+            <select id="qBag">
+              <option value="no">No — hand luggage, direct flight</option>
+              <option value="yes">Yes</option>
             </select>
           </div>
         </div>
       </div>
 
-      <button class="btn btn-gold btn-lg btn-block" id="goQuote">See My Premium →</button>
-      <div class="hint" style="text-align:center;margin-top:11px">No payment details needed to get your quote.</div>
+      <button class="btn btn-pri btn-lg btn-block" id="toQuote">See my price</button>
+      <p class="hint" style="text-align:center;margin-top:12px">No card details needed for a quote.</p>
     </div>
   </div>
 
-  <!-- ─────────── VIEW 2 — QUOTE & COMPARE ─────────── -->
-  <div class="view" id="v2">
+  <!-- ─────── STEP 2 ─────── -->
+  <div class="view" id="s2">
+    <div id="declined" style="display:none"></div>
 
-    <div id="declineBox" style="display:none;margin-bottom:16px"></div>
-
-    <div id="quoteBody">
-      <!-- Headline premium -->
-      <div class="quote-hero">
-        <div class="lbl">Your VUMI Travel VIP premium</div>
-        <div class="amt"><span class="cur">US$</span><span id="qAmt">0.00</span></div>
-        <div class="ttd" id="qTtd"></div>
-        <div class="meta" id="qMeta"></div>
-        <div class="indic" id="qIndic">⚠️ Indicative — confirmed by VUMI on application</div>
+    <div id="quoteWrap">
+      <div class="premium" style="margin-bottom:26px">
+        <div class="plabel">Your premium</div>
+        <div class="pamt"><span class="cur">US$</span><span id="pAmt">0</span></div>
+        <div class="pttd" id="pTtd"></div>
+        <div class="pmeta" id="pMeta"></div>
       </div>
 
-      <!-- Recommendation -->
-      <div id="recBox" style="margin-bottom:18px"></div>
+      <div id="adviceBox" style="margin-bottom:26px"></div>
 
-      <!-- Plan comparison -->
-      <div class="panel" style="margin-bottom:16px" id="compare">
-        <div class="section-label">Compare your options</div>
-        <h2 style="font-size:clamp(18px,3.4vw,23px)">Choose your excess</h2>
-        <p class="section-sub" style="margin-bottom:18px;font-size:13.5px">
-          The excess (deductible) is what you pay towards a claim before VUMI pays. A higher excess means a lower premium — the cover itself is identical.
+      <div class="sec-label" id="plans">Compare</div>
+      <h2 style="font-size:clamp(24px,3.6vw,33px)">Every option, priced</h2>
+      <p class="sec-sub" style="margin-bottom:22px">Same medical cover on all of them. The only difference is how long you're covered for.</p>
+      <div class="ptable" id="planCards" style="margin-bottom:12px"></div>
+      <p class="hint" style="margin-bottom:30px" id="planFoot"></p>
+
+      <div class="card" style="margin-bottom:24px">
+        <div class="sec-label">Optional</div>
+        <h2 style="font-size:clamp(21px,3vw,27px);margin-bottom:9px">Add the non-medical cover</h2>
+        <p class="sec-sub" style="font-size:15px;margin-bottom:20px">
+          The core plan covers your health. These two cover the rest of what can go wrong.
         </p>
-        <div class="plans" id="planCards"></div>
-        <div class="hint" style="margin-top:13px">Every option above carries the same US$5,000,000 medical maximum, the same worldwide hospital access and the same 24/7 emergency assistance.</div>
+        <div style="display:grid;gap:12px">
+          <div class="rider" id="rNM">
+            <span class="chk"></span>
+            <span style="flex:1">
+              <span class="rt">Non-medical benefits <span class="rp">+US$<span id="nmP">0</span></span></span>
+              <span class="rd">Delayed or lost baggage · travel delay beyond 5 hours, including overnight accommodation and meals · personal liability for injury or property damage · accidental death and dismemberment.</span>
+            </span>
+          </div>
+          <div class="rider" id="rTC">
+            <span class="chk"></span>
+            <span style="flex:1">
+              <span class="rt">Trip cancellation <span class="rp">+US$<span id="tcP">0</span></span></span>
+              <span class="rd">Refunds prepaid, non-refundable trip costs if you have to cancel because of acute illness, injury or death. <span id="tcCap"></span></span>
+            </span>
+          </div>
+        </div>
+        <div id="riderTip" style="margin-top:14px"></div>
       </div>
 
-      <!-- Single vs Annual comparison -->
-      <div class="panel" style="margin-bottom:16px" id="switchBox"></div>
-
-      <!-- Riders -->
-      <div class="panel" style="margin-bottom:16px">
-        <div class="section-label">Optional extras</div>
-        <h2 style="font-size:clamp(18px,3.4vw,23px)">Add the non-medical cover</h2>
-        <p class="section-sub" style="margin-bottom:16px;font-size:13.5px">
-          Travel VIP is a <b style="color:var(--text)">medical</b> plan at its core. These two riders cover the things that go wrong that aren't medical.
-        </p>
-        <div class="seg" style="grid-template-columns:1fr 1fr">
-          <label class="seg-opt" id="riderNM" data-rider="nm">
-            <span class="tick"></span>
-            <div class="t">🧳 Non-Medical Rider</div>
-            <div class="d">
-              Baggage delay &amp; loss · travel delay over 5 hours (hotel &amp; meals) · personal liability for injury and property damage · accidental death &amp; dismemberment.
-            </div>
-            <div style="margin-top:10px;font-family:'Montserrat',sans-serif;font-weight:800;font-size:16px;color:var(--gold)">
-              +US$<span id="nmPx">0.00</span>
-            </div>
-          </label>
-          <label class="seg-opt" id="riderTC" data-rider="tc">
-            <span class="tick"></span>
-            <div class="t">🎫 Trip Cancellation Rider</div>
-            <div class="d">
-              Refunds your prepaid, non-refundable trip costs if you must cancel because of acute illness, injury or death. <span id="tcCap"></span>
-            </div>
-            <div style="margin-top:10px;font-family:'Montserrat',sans-serif;font-weight:800;font-size:16px;color:var(--gold)">
-              +US$<span id="tcPx">0.00</span>
-            </div>
-          </label>
+      <div class="card">
+        <div class="sec-label">Breakdown</div>
+        <h2 style="font-size:clamp(21px,3vw,27px);margin-bottom:18px">What makes up the price</h2>
+        <div class="sum" id="breakdown"></div>
+        <button class="btn btn-pri btn-lg btn-block" id="toApply" style="margin-top:24px">Apply for this cover</button>
+        <div class="row2" style="margin-top:11px">
+          <button class="btn btn-out" id="backS1">← Change the trip</button>
+          <button class="btn btn-out" id="mailQuote">Email this quote to me</button>
         </div>
-        <div id="riderAdvice" style="margin-top:13px"></div>
-      </div>
-
-      <!-- Summary -->
-      <div class="panel" style="margin-bottom:16px">
-        <div class="section-label">Your quote</div>
-        <h2 style="font-size:clamp(18px,3.4vw,23px)">Premium breakdown</h2>
-        <div class="sumlist" id="breakdown" style="margin-top:14px"></div>
-        <button class="btn btn-gold btn-lg btn-block" id="goApply" style="margin-top:18px">Apply for This Cover →</button>
-        <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
-          <button class="btn btn-ghost" id="backTo1" style="flex:1;min-width:140px">← Change trip details</button>
-          <button class="btn btn-ghost" id="emailQuote" style="flex:1;min-width:140px">✉️ Email me this quote</button>
-        </div>
-      </div>
-
-      <div class="advisor">
-        <div style="font-size:26px">👤</div>
-        <div class="txt">
-          <b>Not sure which to pick?</b><br>
-          Talk it through with Ricky before you buy — no obligation, and it costs nothing.
-        </div>
-        <a class="btn btn-teal" id="waHelp" href="#" target="_blank" rel="noopener" style="padding:11px 20px;font-size:13.5px">💬 WhatsApp</a>
       </div>
     </div>
   </div>
 
-  <!-- ─────────── VIEW 3 — APPLICATION ─────────── -->
-  <div class="view" id="v3">
-    <div class="panel">
-      <div class="section-label">Step 3 of 3</div>
-      <h2 style="font-size:clamp(19px,3.6vw,25px)">Your application</h2>
-      <p class="section-sub" style="margin-bottom:20px">
-        This is everything VUMI needs to issue the policy. Ricky and Kamla receive it the moment you submit and put it straight through the VUMI portal.
-      </p>
+  <!-- ─────── STEP 3 ─────── -->
+  <div class="view" id="s3">
+    <div class="sec-label">Step three</div>
+    <h2>Your details</h2>
+    <p class="sec-sub" style="margin-bottom:26px">
+      Everything the insurer needs to issue the policy. Takes about two minutes.
+    </p>
 
-      <!-- Selected cover recap -->
-      <div class="notice info" style="margin-bottom:20px">
-        <span class="ico">📋</span>
-        <div id="applyRecap"></div>
-      </div>
+    <div class="advice info" style="margin-bottom:24px">
+      <span class="aic">📋</span>
+      <span id="applySummary"></span>
+    </div>
 
-      <!-- Main applicant -->
-      <div style="margin-bottom:8px">
-        <label class="fl" style="font-size:13px;color:var(--text);margin-bottom:12px">👤 Main applicant (policyholder)</label>
-      </div>
-      <div class="fgrid" style="margin-bottom:16px">
-        <div>
-          <label class="fl" for="aFirst">First name <span class="req">*</span></label>
-          <input type="text" id="aFirst" autocomplete="given-name" placeholder="As shown on passport">
-          <div class="err-msg" id="e-aFirst">Required.</div>
+    <div class="card">
+      <h3 style="font-size:19px;margin-bottom:18px">Main traveller</h3>
+      <div class="row2">
+        <div class="fld">
+          <label class="lbl" for="aFirst">First name <span class="req">*</span></label>
+          <input type="text" id="aFirst" autocomplete="given-name" placeholder="Exactly as in your passport">
+          <div class="emsg" id="e-aFirst">Required.</div>
         </div>
-        <div>
-          <label class="fl" for="aLast">Surname <span class="req">*</span></label>
-          <input type="text" id="aLast" autocomplete="family-name" placeholder="As shown on passport">
-          <div class="err-msg" id="e-aLast">Required.</div>
+        <div class="fld">
+          <label class="lbl" for="aLast">Surname <span class="req">*</span></label>
+          <input type="text" id="aLast" autocomplete="family-name" placeholder="Exactly as in your passport">
+          <div class="emsg" id="e-aLast">Required.</div>
         </div>
-        <div>
-          <label class="fl" for="aPassport">Passport number <span class="req">*</span></label>
-          <input type="text" id="aPassport" placeholder="e.g. TA1234567" style="text-transform:uppercase">
-          <div class="err-msg" id="e-aPassport">Required — VUMI issues the policy against this number.</div>
+        <div class="fld">
+          <label class="lbl" for="aPass">Passport number <span class="req">*</span></label>
+          <input type="text" id="aPass" placeholder="e.g. TA1234567" style="text-transform:uppercase">
+          <div class="emsg" id="e-aPass">Required — the policy is issued against this.</div>
         </div>
-        <div>
-          <label class="fl" for="aNationality">Nationality <span class="req">*</span></label>
-          <input type="text" id="aNationality" value="Trinidad and Tobago">
-          <div class="err-msg" id="e-aNationality">Required.</div>
+        <div class="fld">
+          <label class="lbl" for="aNat">Nationality <span class="req">*</span></label>
+          <input type="text" id="aNat" value="Trinidad and Tobago">
+          <div class="emsg" id="e-aNat">Required.</div>
         </div>
-        <div>
-          <label class="fl" for="aEmail">Email <span class="req">*</span></label>
+        <div class="fld">
+          <label class="lbl" for="aEmail">Email <span class="req">*</span></label>
           <input type="email" id="aEmail" autocomplete="email" placeholder="you@email.com">
-          <div class="err-msg" id="e-aEmail">Please enter a valid email address.</div>
+          <div class="emsg" id="e-aEmail">Enter a valid email address.</div>
         </div>
-        <div>
-          <label class="fl" for="aPhone">Mobile <span class="req">*</span></label>
+        <div class="fld">
+          <label class="lbl" for="aPhone">Mobile <span class="req">*</span></label>
           <input type="tel" id="aPhone" autocomplete="tel" placeholder="(868) 000-0000">
-          <div class="err-msg" id="e-aPhone">Required.</div>
+          <div class="emsg" id="e-aPhone">Required.</div>
         </div>
-        <div class="full">
-          <label class="fl" for="aAddr">Home address <span class="req">*</span></label>
-          <input type="text" id="aAddr" autocomplete="street-address" placeholder="Street address">
-          <div class="err-msg" id="e-aAddr">Required.</div>
+        <div class="fld span">
+          <label class="lbl" for="aAddr">Home address <span class="req">*</span></label>
+          <input type="text" id="aAddr" autocomplete="street-address" placeholder="Street and number">
+          <div class="emsg" id="e-aAddr">Required.</div>
         </div>
-        <div>
-          <label class="fl" for="aCity">City / Town <span class="req">*</span></label>
+        <div class="fld">
+          <label class="lbl" for="aCity">City or town <span class="req">*</span></label>
           <input type="text" id="aCity" autocomplete="address-level2">
-          <div class="err-msg" id="e-aCity">Required.</div>
+          <div class="emsg" id="e-aCity">Required.</div>
         </div>
-        <div>
-          <label class="fl" for="aCountry">Country <span class="req">*</span></label>
+        <div class="fld">
+          <label class="lbl" for="aCountry">Country <span class="req">*</span></label>
           <input type="text" id="aCountry" value="Trinidad and Tobago" autocomplete="country-name">
-          <div class="err-msg" id="e-aCountry">Required.</div>
+          <div class="emsg" id="e-aCountry">Required.</div>
         </div>
       </div>
 
-      <!-- Other travellers -->
-      <div id="otherTravBlock" style="margin-bottom:16px"></div>
+      <div id="othersBox"></div>
 
-      <!-- Beneficiary -->
-      <div class="fgrid" style="margin-bottom:16px">
-        <div>
-          <label class="fl" for="aBenef">Beneficiary full name</label>
-          <input type="text" id="aBenef" placeholder="Who should receive any death benefit">
+      <h3 style="font-size:19px;margin:28px 0 18px;padding-top:24px;border-top:1px solid var(--line)">Beneficiary</h3>
+      <div class="row2">
+        <div class="fld">
+          <label class="lbl" for="aBen">Full name <span class="opt">— optional</span></label>
+          <input type="text" id="aBen" placeholder="Who receives any death benefit">
         </div>
-        <div>
-          <label class="fl" for="aBenefRel">Relationship to you</label>
-          <input type="text" id="aBenefRel" placeholder="e.g. Spouse, Son, Mother">
+        <div class="fld">
+          <label class="lbl" for="aBenRel">Relationship to you <span class="opt">— optional</span></label>
+          <input type="text" id="aBenRel" placeholder="e.g. Spouse, Son, Mother">
         </div>
       </div>
 
-      <!-- Medical declaration -->
-      <div style="margin-bottom:16px">
-        <label class="fl" for="aMedical">Medical declaration</label>
-        <textarea id="aMedical" placeholder="List any ongoing conditions, medication or treatment in the last 12 months for anyone travelling. Write 'None' if there is nothing to declare."></textarea>
+      <h3 style="font-size:19px;margin:28px 0 18px;padding-top:24px;border-top:1px solid var(--line)">Health declaration</h3>
+      <div class="fld">
+        <label class="lbl" for="aMed">Anything to declare for anyone on this policy? <span class="req">*</span></label>
+        <textarea id="aMed" placeholder="List any ongoing condition, medication or treatment in the last 12 months. Write 'None' if there is nothing to declare."></textarea>
+        <div class="emsg" id="e-aMed">Please answer, even if the answer is "None".</div>
         <div class="hint">
-          Pre-existing conditions that have been <b>stable for 6 months</b> — no symptoms, no change of medication — are covered up to US$500,000. Declaring honestly is what protects your claim; leaving something out is what gets claims declined.
+          A pre-existing condition that has been <b>stable for six months</b> — no symptoms, no new treatment, no change of medication — can be covered. Declaring honestly is what protects your claim; leaving something out is what gets claims declined.
         </div>
       </div>
 
-      <!-- ══ PAYMENT ══ -->
-      <div style="border-top:1px solid var(--line);padding-top:18px;margin-bottom:16px">
-        <label class="fl" style="font-size:13px;color:var(--text);margin-bottom:11px">💳 Payment</label>
-
-        <div class="notice good" style="margin-bottom:14px">
-          <span class="ico">🔒</span>
-          <div>
-            <b>We never ask for card numbers on this page.</b><br>
-            For your security, card details are never sent by email or stored on this website. Choose how you'd like to pay below and we'll take the payment through a secure channel.
-          </div>
+      <h3 style="font-size:19px;margin:28px 0 18px;padding-top:24px;border-top:1px solid var(--line)">Payment</h3>
+      <div class="advice good" style="margin-bottom:18px">
+        <span class="aic">🔒</span>
+        <span>
+          <b class="atitle">We never take card numbers on this page.</b>
+          Card details are never sent by email or stored on this website. Tell us how you'd like to pay and we'll take it through a secure channel.
+        </span>
+      </div>
+      <div class="row2">
+        <div class="fld">
+          <label class="lbl" for="payHow">How would you like to pay? <span class="req">*</span></label>
+          <select id="payHow">
+            <option value="link">Send me a secure payment link — fastest</option>
+            <option value="call">Call me and take the card by phone</option>
+            <option value="transfer">Bank transfer / online banking</option>
+            <option value="office">I'll pay in person</option>
+          </select>
         </div>
-
-        <label class="fl" for="payMethod">How would you like to pay the premium? <span class="req">*</span></label>
-        <select id="payMethod" style="margin-bottom:12px">
-          <option value="link">Send me a secure payment link (card) — fastest</option>
-          <option value="call">Call me and take the card details by phone</option>
-          <option value="transfer">Bank transfer / online banking</option>
-          <option value="office">I'll pay at the office</option>
+        <div class="fld">
+          <label class="lbl" for="payWhen">Best time to reach you</label>
+          <select id="payWhen">
+            <option value="any">Any time</option>
+            <option value="am">Morning (8am – 12pm)</option>
+            <option value="pm">Afternoon (12pm – 4pm)</option>
+            <option value="eve">Evening (4pm – 8pm)</option>
+          </select>
+        </div>
+      </div>
+      <div class="fld">
+        <label class="lbl" for="aUrgent">Are you travelling within the next 48 hours?</label>
+        <select id="aUrgent">
+          <option value="no">No</option>
+          <option value="yes">Yes — please prioritise this</option>
         </select>
-
-        <div class="fgrid">
-          <div>
-            <label class="fl" for="payName">Name on the card / account</label>
-            <input type="text" id="payName" placeholder="Cardholder or account holder name">
-          </div>
-          <div>
-            <label class="fl" for="payBest">Best time to reach you</label>
-            <select id="payBest">
-              <option value="anytime">Any time</option>
-              <option value="morning">Morning (8am – 12pm)</option>
-              <option value="afternoon">Afternoon (12pm – 4pm)</option>
-              <option value="evening">Evening (4pm – 8pm)</option>
-            </select>
-          </div>
-        </div>
-        <div class="hint" style="margin-top:8px">
-          Premiums are payable to VUMI in <b>US dollars</b>. Cover starts once the premium is received and VUMI issues your certificate — usually the same working day.
-        </div>
-        <!--
-          ═══════════════════════════════════════════════════════════════════
-          PAYMENT INTEGRATION SLOT
-          ═══════════════════════════════════════════════════════════════════
-          Do NOT add raw card number / CVV fields to this form. Card data must
-          never be emailed or stored on a static site — that breaches PCI-DSS
-          and creates real liability.
-
-          To take card payment on-page, embed a PCI-compliant hosted field or
-          redirect from a provider here, e.g.:
-            · WiPay (TT)                 https://wipayfinancial.com
-            · First Atlantic Commerce    https://firstatlanticcommerce.com
-            · Stripe Checkout            https://stripe.com/payments/checkout
-          Each of these keeps the card on the provider's servers and returns
-          only a token / receipt reference to you.
-          ═══════════════════════════════════════════════════════════════════
-        -->
       </div>
+      <!--
+        ══════════════════════════════════════════════════════════════
+        PAYMENT INTEGRATION SLOT
+        Do NOT add card number / expiry / CVV fields to this form.
+        Card data must never be emailed or held on a static site —
+        that breaches PCI-DSS and creates real liability.
+        To take card payment on-page, embed a hosted field or redirect
+        from a provider that keeps the card on their servers:
+          · WiPay (TT)              https://wipayfinancial.com
+          · First Atlantic Commerce https://firstatlanticcommerce.com
+          · Stripe Checkout         https://stripe.com/payments/checkout
+        ══════════════════════════════════════════════════════════════
+      -->
 
-      <!-- Consent -->
-      <div style="margin-bottom:18px">
-        <label style="display:flex;gap:11px;align-items:flex-start;cursor:pointer;font-size:13px;line-height:1.65;color:var(--muted)">
-          <input type="checkbox" id="aConsent" style="width:17px;height:17px;margin-top:2px;flex-shrink:0;accent-color:#00CFEA">
-          <span>I confirm the information above is true and complete, and I authorise Ricky Rampersad Branch to submit this application to VUMI® on my behalf. I understand the premium shown is indicative until confirmed by VUMI. <span class="req" style="color:var(--gold)">*</span></span>
+      <div class="fld" style="margin-top:26px;padding-top:24px;border-top:1px solid var(--line)">
+        <label style="display:flex;gap:13px;align-items:flex-start;cursor:pointer;font-size:14.5px;line-height:1.65;color:var(--ink2)">
+          <input type="checkbox" id="aOk" style="width:20px;height:20px;margin-top:2px;flex-shrink:0;accent-color:#0F6F5C">
+          <span>I confirm the information above is true and complete, and I authorise this application to be submitted to the insurer on my behalf. I understand cover does not begin until the premium is received and the certificate is issued. <span class="req">*</span></span>
         </label>
-        <div class="err-msg" id="e-aConsent" style="margin-left:28px">Please confirm to continue.</div>
+        <div class="emsg" id="e-aOk" style="margin-left:33px">Please confirm to continue.</div>
       </div>
 
-      <button class="btn btn-gold btn-lg btn-block" id="submitApp">Submit My Application</button>
-      <button class="btn btn-ghost btn-block" id="backTo2" style="margin-top:10px">← Back to my quote</button>
-      <div class="hint" style="text-align:center;margin-top:11px">
-        Your details go directly to Ricky and Kamla. Nothing is shared with anyone else.
-      </div>
+      <button class="btn btn-pri btn-lg btn-block" id="submitApp">Submit application</button>
+      <button class="btn btn-ghost btn-block" id="backS2" style="margin-top:8px">← Back to my quote</button>
     </div>
   </div>
 
-  <!-- ─────────── VIEW 4 — DONE ─────────── -->
-  <div class="view" id="v4">
-    <div class="panel" style="text-align:center">
-      <div style="font-size:52px;margin-bottom:12px">✅</div>
-      <h2 style="font-size:clamp(21px,4vw,28px)">Application received</h2>
-      <p class="section-sub" style="margin:10px auto 20px;max-width:520px">
-        Thank you — your application is with Ricky and Kamla now. You'll hear back within one working day with your VUMI certificate and payment instructions.
+  <!-- ─────── STEP 4 ─────── -->
+  <div class="view" id="s4">
+    <div class="card" style="text-align:center;padding:48px 30px">
+      <div style="width:64px;height:64px;border-radius:50%;background:var(--sea-lt);display:grid;place-items:center;margin:0 auto 20px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#0F6F5C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="width:30px;height:30px"><path d="M20 6L9 17l-5-5"/></svg>
+      </div>
+      <h2 style="font-size:clamp(26px,4vw,36px)">Application received</h2>
+      <p class="sec-sub" style="margin:12px auto 26px;text-align:left;max-width:480px">
+        We have everything we need. You'll get a reply within one working day with your certificate and payment instructions.
       </p>
-      <div class="sumlist" id="doneSummary" style="text-align:left;max-width:460px;margin:0 auto 22px"></div>
-      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-        <a class="btn btn-teal" id="waDone" href="#" target="_blank" rel="noopener">💬 Message Ricky on WhatsApp</a>
-        <a class="btn btn-ghost" href="/">← Back to the branch</a>
+      <div class="sum" style="text-align:left;max-width:440px;margin:0 auto 26px" id="doneSum"></div>
+      <div class="advice warn" style="text-align:left;max-width:520px;margin:0 auto">
+        <span class="aic">⏳</span>
+        <span><b class="atitle">You are not covered yet.</b>
+        Cover begins once the premium is received and the insurer issues your certificate. If you're travelling within 48 hours, call us so it can be pushed through today.</span>
       </div>
-      <div class="notice warn" style="margin-top:22px;text-align:left">
-        <span class="ico">📄</span>
-        <div>
-          <b>Keep travelling until you hear from us?</b> Your cover is not active until VUMI receives the premium and issues your certificate. If you're travelling within 48 hours, message Ricky directly so it can be pushed through immediately.
-        </div>
-      </div>
+      <a class="btn btn-out" href="#top" style="margin-top:24px">Back to the top</a>
     </div>
   </div>
 </section>
 
-<!-- ══════════════ BENEFITS ══════════════ -->
-<section id="benefits">
-  <div class="section-label">What you're covered for</div>
-  <h2>VUMI® Travel VIP benefits</h2>
-  <p class="section-sub">Travel VIP is a genuine international medical plan, not a basic travel policy. You choose the doctor and the hospital, anywhere in the world, and VUMI pays.</p>
+<!-- ══════════ COVER ══════════ -->
+<section id="cover">
+  <div class="sec-label">The cover</div>
+  <h2>What you're actually buying</h2>
+  <p class="sec-sub" style="margin-bottom:26px">
+    This is a full international medical plan, not a basic travel add-on. You pick the doctor and the hospital, anywhere in the world.
+  </p>
 
-  <div class="panel" style="margin-bottom:14px">
-    <div class="tbl-scroll">
-      <table class="btbl">
-        <thead>
-          <tr><th>Benefit</th><th>Limit</th></tr>
-        </thead>
-        <tbody id="benefitRows"></tbody>
-      </table>
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:20px">
+    <div class="tscroll">
+      <table class="bt"><tbody id="benefitRows"></tbody></table>
     </div>
   </div>
 
-  <div class="notice warn" style="margin-bottom:14px">
-    <span class="ico">⚠️</span>
-    <div>
-      <b>Benefit figures are shown for guidance.</b> The binding benefit schedule is the VUMI® Travel VIP policy wording and certificate issued to you. Where anything here differs from the policy wording, the policy wording governs.
-    </div>
+  <div class="advice warn" style="margin-bottom:30px">
+    <span class="aic">⚠️</span>
+    <span><b class="atitle">This table is a summary.</b>
+    The binding document is the policy wording and the certificate issued to you. Where anything here differs from the policy wording, the policy wording governs. Ask us for the current wording before you buy — we'll send it across.</span>
   </div>
 
-  <div class="acc">
-    <div class="acc-h">🩺 Pre-existing medical conditions</div>
-    <div class="acc-b"><div class="acc-b-in">
-      Travel VIP is unusual among travel plans in that it <b style="color:var(--text)">does</b> cover pre-existing conditions — up to <b style="color:var(--text)">US$500,000</b>. To qualify, the condition must have been stable for at least <b style="color:var(--text)">6 months</b> before you travel: no symptoms, no new treatment and no change in medication or dosage.
+  <div class="ac">
+    <div class="ac-h">Pre-existing medical conditions</div>
+    <div class="ac-b"><div class="ac-b-in">
+      Unusually for a travel plan, pre-existing conditions can be covered — up to <b>US$500,000</b>. The condition must have been stable for at least <b>six months</b> before you travel: no symptoms, no new treatment, and no change to medication or dosage.
       <br><br>
-      If a condition was diagnosed, treated or had medication adjusted inside that 6-month window, it will not be covered. If you're unsure, declare it on the application and let us check it with VUMI before you pay — that's free, and far better than finding out at a hospital.
+      If something was diagnosed, treated, or had its medication adjusted inside that six-month window, it will not be covered. If you're not sure, declare it on the application and let us check it with the insurer before you pay anything. That costs nothing, and it's far better than finding out at a hospital counter.
     </div></div>
   </div>
 
-  <div class="acc">
-    <div class="acc-h">🚁 Evacuation &amp; repatriation</div>
-    <div class="acc-b"><div class="acc-b-in">
-      If you're somewhere that can't treat you properly, VUMI arranges and pays for emergency medical evacuation to the nearest facility that can — including air ambulance where medically necessary.
+  <div class="ac">
+    <div class="ac-h">Evacuation, repatriation and getting home</div>
+    <div class="ac-b"><div class="ac-b-in">
+      If you're somewhere that can't treat you properly, the insurer arranges and pays for emergency medical evacuation to the nearest facility that can — including air ambulance where it's medically necessary.
       <br><br>
-      If the worst happens, repatriation of mortal remains is covered so your family isn't left arranging and funding it from Trinidad. Travel VIP also covers the airfare for a family member to fly out and be with you if you're hospitalised abroad, and a return flight home if illness ends your trip early.
+      If the worst happens, repatriation of remains is covered, so your family isn't left arranging and funding that from Trinidad. The plan also covers airfare for a family member to fly out and be with you if you're hospitalised abroad, and a return flight home if illness cuts your trip short.
     </div></div>
   </div>
 
-  <div class="acc">
-    <div class="acc-h">🕐 The VIP service — what it actually means</div>
-    <div class="acc-b"><div class="acc-b-in">
-      · <b style="color:var(--text)">24/7 emergency assistance</b> — one number, answered any hour, in English or Spanish.<br>
-      · <b style="color:var(--text)">Free choice of provider</b> — no network restrictions. Walk into the hospital you want.<br>
-      · <b style="color:var(--text)">Direct billing</b> — VUMI settles with the hospital where possible, so you're not fronting thousands on a credit card.<br>
-      · <b style="color:var(--text)">Second medical opinion</b> — included on annual plans, from an international specialist panel.<br>
-      · <b style="color:var(--text)">Children under 2 free</b> — infants travel at no premium.
+  <div class="ac">
+    <div class="ac-h">What the 24/7 assistance line actually does</div>
+    <div class="ac-b"><div class="ac-b-in">
+      One number, answered any hour, in English or Spanish. They will find you a hospital, confirm cover to that hospital directly, and where possible settle the bill with the provider so you're not fronting thousands on a credit card in a foreign country.
+      <br><br>
+      Call them <b>before</b> treatment wherever the situation allows — it's the difference between a settled claim and an argument over paperwork weeks later.
     </div></div>
   </div>
 
-  <div class="acc">
-    <div class="acc-h">🚫 What isn't covered</div>
-    <div class="acc-b"><div class="acc-b-in">
-      Common exclusions on travel medical plans include: conditions that weren't stable for the required period; travel undertaken against medical advice or specifically to obtain treatment; pregnancy and childbirth beyond defined limits; self-inflicted injury; injury while under the influence of alcohol or drugs; professional or high-risk sports; war and civil unrest; and claims arising in a country you were advised not to travel to.
+  <div class="ac">
+    <div class="ac-h">What isn't covered</div>
+    <div class="ac-b"><div class="ac-b-in">
+      Typical exclusions include: conditions that weren't stable for the required period; travel undertaken against medical advice or specifically to seek treatment; pregnancy and childbirth beyond defined limits; self-inflicted injury; incidents while under the influence of alcohol or drugs; professional or high-risk sports; war and civil unrest; and claims arising in a country you were officially advised not to travel to.
       <br><br>
-      This is a summary, not the full list. Ask us for the current Travel VIP policy wording before you buy and we'll send it across — you should read the exclusions section properly.
+      That's a summary, not the full list. Read the exclusions section of the policy wording properly before you buy — ask us and we'll send it.
     </div></div>
   </div>
 </section>
 
-<!-- ══════════════ FAQ ══════════════ -->
+<!-- ══════════ FAQ ══════════ -->
 <section id="faq">
-  <div class="section-label">Questions</div>
+  <div class="sec-label">Questions</div>
   <h2>Before you buy</h2>
-  <p class="section-sub">The things people ask us most about travel cover.</p>
+  <p class="sec-sub" style="margin-bottom:22px">The things travellers ask us most.</p>
 
-  <div class="acc">
-    <div class="acc-h">Single trip or annual — which is cheaper for me?</div>
-    <div class="acc-b"><div class="acc-b-in">
-      Rule of thumb: if you'll take <b style="color:var(--text)">two or more international trips</b> in the next 12 months, the annual plan almost always works out cheaper than buying single-trip cover each time — and you never have to think about it again. One trip a year, and single-trip wins. Our quote engine checks both for you automatically and tells you which is better.
+  <div class="ac">
+    <div class="ac-h">One trip or the annual plan — which is cheaper?</div>
+    <div class="ac-b"><div class="ac-b-in">
+      It depends entirely on the days. A single trip is priced <b>per day</b>, so short trips are cheap and long ones add up quickly. The annual plan is a flat price for twelve months of unlimited trips.
+      <br><br>
+      Our quote engine prices both against the trips you told us about and tells you which one wins, in dollars. You don't have to work it out yourself.
     </div></div>
   </div>
 
-  <div class="acc">
-    <div class="acc-h">Do I really need this if my credit card includes travel cover?</div>
-    <div class="acc-b"><div class="acc-b-in">
-      Card cover is usually capped far lower than you'd think — often US$50,000 or less — and typically requires that you booked the whole trip on that card. A single night in a US intensive care unit can run past US$20,000. Read your card's limit; if it's under US$500,000, it will not cover a serious event abroad.
+  <div class="ac">
+    <div class="ac-h">Isn't my credit card cover enough?</div>
+    <div class="ac-b"><div class="ac-b-in">
+      Usually not. Card cover is typically capped far lower than people expect — often US$50,000 or less — and normally requires that you booked the entire trip on that card. A single night in a US intensive care unit can pass US$20,000, and a serious event with an air ambulance home runs into six figures.
+      <br><br>
+      Check your card's actual limit. If it's below US$500,000, it won't carry you through a major medical event abroad.
     </div></div>
   </div>
 
-  <div class="acc">
-    <div class="acc-h">What if my trip runs longer than planned?</div>
-    <div class="acc-b"><div class="acc-b-in">
-      Single-trip cover can be extended as many times as you need, as long as the extensions are consecutive and the total doesn't exceed 365 days. On annual plans, if one trip runs past your 30, 45 or 90-day limit, it can be extended for an additional daily premium. Contact us <b style="color:var(--text)">before</b> the original cover expires — extending is straightforward, restarting after a gap is not.
+  <div class="ac">
+    <div class="ac-h">What if my trip runs longer than planned?</div>
+    <div class="ac-b"><div class="ac-b-in">
+      Single-trip cover can be extended as many times as needed, provided the extensions are consecutive and the total doesn't exceed 365 days. On an annual plan, if one trip runs past your 30, 45 or 90-day limit, it can be extended for an additional daily premium.
+      <br><br>
+      Contact us <b>before</b> the original cover expires. Extending is simple; restarting after a gap is not.
     </div></div>
   </div>
 
-  <div class="acc">
-    <div class="acc-h">Is there an age limit?</div>
-    <div class="acc-b"><div class="acc-b-in">
-      Cover is available up to <b style="color:var(--text)">age 79</b>. Travellers aged 70–79 are covered to a US$500,000 maximum rather than US$5,000,000. Children under 2 are covered free of premium. If you're 80 or over, we have other options — contact Ricky directly and we'll find something.
+  <div class="ac">
+    <div class="ac-h">Is there an age limit?</div>
+    <div class="ac-b"><div class="ac-b-in">
+      Cover is available up to <b>age 79</b>. Travellers aged 70–79 carry a US$500,000 maximum rather than US$5,000,000 — still substantial, but worth knowing if you're travelling to the United States. If you're 80 or over, contact us directly and we'll look at other markets for you.
     </div></div>
   </div>
 
-  <div class="acc">
-    <div class="acc-h">How quickly can I be covered?</div>
-    <div class="acc-b"><div class="acc-b-in">
-      Usually the same working day. Once you submit this application, we key it into the VUMI portal, take the premium, and VUMI issues your certificate by email. If you're travelling within 48 hours, say so on the form and message Ricky — we'll prioritise it.
-    </div></div>
-  </div>
-
-  <div class="acc">
-    <div class="acc-h">Who is VUMI®?</div>
-    <div class="acc-b"><div class="acc-b-in">
-      VIP Universal Medical Insurance Group (VUMI®) is an international health insurance group specialising in premium medical cover for individuals, families and corporations across the Americas, the Caribbean and beyond. Travel VIP is their international travel medical product. Ricky Rampersad Branch places VUMI cover as an appointed intermediary.
+  <div class="ac">
+    <div class="ac-h">How fast can I be covered?</div>
+    <div class="ac-b"><div class="ac-b-in">
+      Usually the same working day. Once you submit, the application goes into the insurer's portal, the premium is taken, and the certificate is emailed to you. If you're flying within 48 hours, say so on the form and we'll prioritise it.
     </div></div>
   </div>
 </section>
 
-<!-- ══════════════ CTA ══════════════ -->
-<section>
-  <div class="panel" style="text-align:center;background:linear-gradient(150deg,rgba(239,194,75,.11),rgba(0,207,234,.07));border-color:rgba(239,194,75,.26)">
-    <h2 style="font-size:clamp(19px,3.6vw,26px)">Travelling soon?</h2>
-    <p class="section-sub" style="margin:9px auto 18px">Get your premium in under a minute — then apply the same day.</p>
-    <a class="btn btn-gold btn-lg" href="#quote">Start My Quote →</a>
+<section style="padding-top:10px">
+  <div class="card" style="text-align:center;background:var(--paper2);border-color:var(--line2)">
+    <h2 style="font-size:clamp(23px,3.4vw,31px)">Travelling soon?</h2>
+    <p class="sec-sub" style="margin:10px auto 22px">Price it in about a minute — then apply the same day.</p>
+    <a class="btn btn-pri btn-lg" href="#quote">Get my quote</a>
   </div>
 </section>
 
 </div><!-- /wrap -->
 
-<!-- ══════════════ STICKY BAR ══════════════ -->
-<div class="stickybar" id="stickybar">
+<!-- ══════════ MOBILE BAR ══════════ -->
+<div class="mbar" id="mbar">
   <div>
-    <div class="sb-lbl">Your premium</div>
-    <div class="sb-px">US$<span id="sbAmt">0.00</span></div>
+    <div class="ml">Your premium</div>
+    <div class="mp">US$<span id="mAmt">0</span></div>
   </div>
-  <button class="btn btn-gold" id="sbApply">Apply →</button>
+  <button class="btn btn-pri" id="mApply">Apply</button>
 </div>
 
-<!-- ══════════════ FOOTER ══════════════ -->
+<!-- ══════════ FOOTER ══════════ -->
 <footer>
   <div class="wrap">
-    <div style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:14px;color:var(--text)">Ricky Rampersad Branch</div>
-    <div class="f-links">
-      <a href="/">Home</a>
-      <a href="/#quotes">All Quotes</a>
-      <a href="/#clients">Client Services</a>
-      <a href="/renewal/">Renewals</a>
-      <a href="#quote">Travel Quote</a>
+    <div class="fgrid">
+      <div>
+        <div style="font-family:'Fraunces',serif;font-weight:700;font-size:19px;color:#fff;margin-bottom:10px" id="footBrand">TravelInsuranceTT</div>
+        <p style="max-width:340px">International travel medical insurance for travellers from Trinidad &amp; Tobago. Quote online, apply online, covered before you fly.</p>
+      </div>
+      <div>
+        <h5>Cover</h5>
+        <div class="flinks">
+          <a href="#quote">Get a quote</a>
+          <a href="#plans">Compare plans</a>
+          <a href="#cover">What's covered</a>
+          <a href="#faq">FAQ</a>
+        </div>
+      </div>
+      <div>
+        <h5>Contact</h5>
+        <div class="flinks">
+          <a id="footPhone" href="#">Phone</a>
+          <a id="footEmail" href="#">Email</a>
+        </div>
+      </div>
     </div>
-    <div>📞 <a href="tel:+18686785921" style="text-decoration:none">(868) 678-5921</a></div>
-    <div class="disc">
-      VUMI® and Travel VIP® are trademarks of VIP Universal Medical Insurance Group. Ricky Rampersad Branch places this cover as an appointed intermediary and is not the insurer.
-      Premiums shown on this page are indicative, generated for guidance only, and are confirmed by VUMI on application. Cover, benefits, limits and exclusions are governed entirely by the policy wording and certificate issued by VUMI. This page is not a contract of insurance and does not constitute an offer of cover.
-    </div>
+    <div class="legal" id="legalBlock"></div>
   </div>
 </footer>
 
 <script>
-/* ══════════════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════════════
    CONFIG
-   ══════════════════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════════════════ */
 var CONFIG = {
-  // Google Apps Script web-app /exec URL that emails the application.
-  // Deploy the script in apps-script/TravelQuote.gs, then paste the URL here.
-  // Until this is filled in, submissions fall back to the visitor's email client.
-  API_URL: "",
+  /* ── Brand shown on the site ────────────────────────────────────────── */
+  BRAND:        "TravelInsuranceTT",
+  BRAND_HTML:   'Travel<em>Insurance</em>TT',
 
-  // Applications are emailed to these addresses.
-  AGENT_EMAIL: "ricky.rampersad@myguardiangroup.com",
-  KAMLA_EMAIL: "",            // ← TODO: Kamla's email address
+  /* ── Where applications go ──────────────────────────────────────────── */
+  // Google Apps Script /exec URL. Until this is set, the form falls back to
+  // opening the visitor's own mail client with the application pre-filled.
+  API_URL:      "",
+  EMAIL_TO:     "rampersadricky@gmail.com",
+  EMAIL_CC:     "",                      // ← TODO: Kamla's email address
+  PHONE:        "(868) 678-5921",
 
-  AGENT_NAME:  "Ricky Rampersad",
-  AGENT_PHONE: "(868) 678-5921",
-  WHATSAPP:    "18686785921", // digits only, country code first
+  /* ── Insurer / intermediary ─────────────────────────────────────────── */
+  INSURER:      "VUMI® Group, I.I.",
+  AGENT_CODE:   "222525",                // your VUMI agent number — sent with every application
 
-  // Display only — used for the "approx TT$" line under the premium.
-  USD_TO_TTD: 6.80
+  /* ── FX for the indicative TT$ line (display only) ───────────────────── */
+  USD_TO_TTD:   6.80,
+
+  /* ═════════════════════════════════════════════════════════════════════
+     REGULATORY DISCLOSURE  —  read the note in the handover before changing
+     ═════════════════════════════════════════════════════════════════════
+     Central Bank market-conduct guidance for insurance intermediaries is
+     that advertising should identify the intermediary and must not give the
+     impression that the intermediary is itself an insurance company.
+
+     "full"    — names the registered intermediary and the insurer (default)
+     "insurer" — names the insurer only, no individual named
+     "minimal" — generic wording, names nobody
+
+     Confirm which is right for you with the Central Bank or your compliance
+     officer before going live. This is a switch, not legal advice.
+     ═════════════════════════════════════════════════════════════════════ */
+  DISCLOSURE:        "full",
+  INTERMEDIARY_NAME: "",                 // registered name, shown when DISCLOSURE = "full"
+  REGISTRATION_NO:   ""                  // Central Bank registration number, if shown
 };
 
-/* ══════════════════════════════════════════════════════════════════════════
-   ⚠️  RATE TABLE — PLACEHOLDER VALUES
-   ══════════════════════════════════════════════════════════════════════════
-   These are NOT VUMI's real rates. They are structured to match how a travel
-   medical rate card is laid out so the real numbers drop straight in.
-
-   TO INSTALL THE REAL VUMI RATES:
-     1. Open the Travel VIP rate table from the VUMI agent portal.
-     2. Replace the numbers in SINGLE.premiums and ANNUAL.premiums below.
-        Each row is an age band; each number lines up with the matching entry
-        in `dayBands` (single trip) or `tripLengths` (annual).
-     3. Update DEDUCTIBLE_FACTOR, REGION_FACTOR and RIDERS to match the rate card.
-     4. Set SHOW_INDICATIVE_BADGE = false to drop the "indicative" warning.
-
-   Premiums are PER PERSON, in US dollars, at the base deductible
-   (DEDUCTIBLE_BASE) for Worldwide including USA & Canada.
-   ══════════════════════════════════════════════════════════════════════════ */
-var SHOW_INDICATIVE_BADGE = true;
-
+/* ═══════════════════════════════════════════════════════════════════════════
+   RATE TABLE — VUMI® TRAVEL VIP, PERIOD JUNE 2026
+   Transcribed from the official VUMI rate card (Travel VIP, June 2026).
+   Single trip is priced PER DAY. Annual plans are a flat 12-month premium.
+   ═══════════════════════════════════════════════════════════════════════════ */
 var RATES = {
-  SINGLE: {
-    // Upper bound of each day band (inclusive). A 14-day trip falls in band "15".
-    dayBands: [7, 15, 21, 31, 45, 60, 90, 120, 180, 270, 365],
+  single: {
+    // Premium per person, PER DAY of travel.
     bands: [
-      { max: 17, label: "0–17",  premiums: [ 18,  26,  34,  44,  60,  76, 108, 138, 196, 272, 348] },
-      { max: 29, label: "18–29", premiums: [ 24,  35,  46,  59,  81, 102, 145, 186, 264, 366, 468] },
-      { max: 39, label: "30–39", premiums: [ 28,  41,  54,  69,  95, 120, 170, 218, 310, 430, 550] },
-      { max: 49, label: "40–49", premiums: [ 35,  51,  67,  86, 118, 149, 212, 272, 386, 536, 686] },
-      { max: 59, label: "50–59", premiums: [ 46,  67,  88, 113, 155, 196, 279, 358, 508, 705, 902] },
-      { max: 64, label: "60–64", premiums: [ 62,  90, 118, 152, 209, 264, 375, 481, 683, 948,1213] },
-      { max: 69, label: "65–69", premiums: [ 84, 122, 160, 206, 283, 358, 508, 652, 926,1285,1644] },
-      { max: 74, label: "70–74", premiums: [126, 183, 240, 309, 425, 537, 762, 978,1389,1928,2466] },
-      { max: 79, label: "75–79", premiums: [178, 258, 339, 436, 600, 758,1076,1381,1961,2722,3482] }
-    ]
+      { max: 16, label: "0–16",  perDay:  3.80 },
+      { max: 39, label: "17–39", perDay:  5.27 },
+      { max: 59, label: "40–59", perDay:  7.20 },
+      { max: 69, label: "60–69", perDay: 10.72 },
+      { max: 79, label: "70–79", perDay: 17.60 }
+    ],
+    riders: { nm: 3.26, tc: 2.70 },      // per person, per day
+    setupFee: 50.00                       // ages 0–79, single trip only
   },
-  ANNUAL: {
-    // Calibrated so an annual plan breaks even at roughly 3 two-week trips —
-    // the shape real multi-trip products price at. Replace with VUMI's table.
-    tripLengths: [30, 45, 90],
+  annual: {
+    plans: [30, 45, 90],                  // maximum consecutive days per trip
     bands: [
-      { max: 17, label: "0–17",  premiums: [  66,   85,  120] },
-      { max: 29, label: "18–29", premiums: [  88,  113,  160] },
-      { max: 39, label: "30–39", premiums: [ 104,  134,  189] },
-      { max: 49, label: "40–49", premiums: [ 128,  165,  232] },
-      { max: 59, label: "50–59", premiums: [ 168,  216,  305] },
-      { max: 64, label: "60–64", premiums: [ 226,  291,  410] },
-      { max: 69, label: "65–69", premiums: [ 306,  394,  555] },
-      { max: 74, label: "70–74", premiums: [ 458,  590,  831] },
-      { max: 79, label: "75–79", premiums: [ 646,  832, 1172] }
-    ]
+      { max: 16, label: "0–16",  premiums: [136.08, 192.51,  263.25] },
+      { max: 39, label: "17–39", premiums: [204.12, 297.46,  411.75] },
+      { max: 59, label: "40–59", premiums: [215.46, 291.87,  438.75] },
+      { max: 69, label: "60–69", premiums: [294.84, 378.81,  614.25] },
+      { max: 79, label: "70–79", premiums: [481.57, 628.87, 1006.95] }
+    ],
+    riders: {
+      nm: [ 82.95, 82.95,  82.95],       // flat across all three annual plans
+      tc: [ 85.32, 85.32, 128.52]
+    }
   }
 };
 
-// Deductible (excess) options. `f` is the multiplier applied to the base premium.
-var DEDUCTIBLE_BASE = 100;
-var DEDUCTIBLES = [
-  { v: 100,   label: "US$100",   f: 1.00 },
-  { v: 250,   label: "US$250",   f: 0.92 },
-  { v: 500,   label: "US$500",   f: 0.85 },
-  { v: 1000,  label: "US$1,000", f: 0.76 },
-  { v: 2500,  label: "US$2,500", f: 0.65 },
-  { v: 5000,  label: "US$5,000", f: 0.55 }
-];
-
-// Region loading. Excluding USA & Canada reduces the premium.
-var REGION_FACTOR = { worldwide: 1.00, excl: 0.75 };
-
-// Optional riders.
-var RIDERS = {
-  // Non-medical rider: per person. Single trip = per-day with a minimum.
-  nm: { singlePerDay: 1.75, singleMin: 14, annual: { 30: 58, 45: 72, 90: 96 } },
-  // Trip cancellation rider: per person.
-  tc: { single: 42, annual: 68, capSingle: 2500, capAnnual: 1500 }
-};
-
-// Policy maximum by age.
-var POLICY_MAX = [
-  { max: 69, amount: 5000000, label: "US$5,000,000" },
-  { max: 79, amount:  500000, label: "US$500,000"   }
-];
+/* The set-up fee is US$50 on the rate card against ages 0–79, single trip.
+   The card doesn't state whether that is charged once per policy or once per
+   insured person. "policy" is the conservative reading for a family quote —
+   confirm with the insurer and flip this if it is per person. */
+var SETUP_FEE_BASIS = "policy";           // "policy" | "person"
 
 var MAX_AGE = 79;
-var FREE_UNDER_AGE = 2;
-var PRE_EX_LIMIT = "US$500,000";
+var MAX_SINGLE_DAYS = 365;
 
-/* Benefit schedule shown in the Benefits table.
-   ⚠️ Verify against the current VUMI Travel VIP benefit table before going live. */
+/* Benefit summary shown in the "What you're actually buying" table.
+   ⚠️ Verify against the current policy wording before going live. */
 var BENEFITS = [
-  ["Overall medical maximum — age 0 to 69",            "US$5,000,000"],
-  ["Overall medical maximum — age 70 to 79",           "US$500,000"],
-  ["Pre-existing conditions (stable 6 months)",         "US$500,000"],
-  ["Emergency medical treatment &amp; hospitalisation",     "Up to policy maximum"],
-  ["Emergency medical evacuation",                      "Up to policy maximum"],
-  ["Repatriation of mortal remains",                    "Up to policy maximum"],
-  ["Emergency dental treatment",                        "Included"],
-  ["Return flight home due to illness",                 "Included"],
-  ["Compassionate visit — family member's airfare",     "Included"],
-  ["Second medical opinion",                            "Included (annual plans)"],
-  ["Children under 2 years",                            "No premium"],
-  ["24/7 multilingual emergency assistance",            "Included"],
-  ["Free choice of doctor &amp; hospital worldwide",        "Included"],
-  ["Co-insurance",                                      "100% UCR"],
-  ["Maximum entry age",                                 "79 years"],
-  ["Maximum single trip duration",                      "365 consecutive days"],
-  ["— Non-Medical Rider —",                             ""],
-  ["Baggage delay &amp; loss",                              "Per rider schedule"],
-  ["Travel delay over 5 hours (hotel &amp; meals)",         "Per rider schedule"],
-  ["Personal liability — injury &amp; property damage",     "Per rider schedule"],
-  ["Accidental death &amp; dismemberment",                  "Per rider schedule"],
-  ["— Trip Cancellation Rider —",                       ""],
-  ["Trip cancellation — single trip",                   "Up to US$2,500"],
-  ["Trip cancellation — annual, per trip",              "Up to US$1,500"]
+  ["grp", "Medical"],
+  ["Overall medical maximum — ages 0 to 69",        "US$5,000,000"],
+  ["Overall medical maximum — ages 70 to 79",       "US$500,000"],
+  ["Pre-existing conditions, stable 6 months",      "US$500,000"],
+  ["Emergency treatment &amp; hospitalisation",         "To policy maximum"],
+  ["Emergency medical evacuation",                  "To policy maximum"],
+  ["Repatriation of remains",                       "To policy maximum"],
+  ["Emergency dental treatment",                    "Included"],
+  ["Return flight home due to illness",             "Included"],
+  ["Family member's airfare if you're hospitalised","Included"],
+  ["Second medical opinion",                        "Included on annual plans"],
+  ["Choice of any doctor and hospital worldwide",   "Included"],
+  ["24/7 multilingual emergency assistance",        "Included"],
+  ["Co-insurance",                                  "100% UCR"],
+  ["grp", "Limits &amp; eligibility"],
+  ["Maximum age at entry",                          "79 years"],
+  ["Longest single trip",                           "365 consecutive days"],
+  ["Annual plan — days per trip",                   "30, 45 or 90"],
+  ["grp", "Non-medical benefits rider"],
+  ["Baggage delay and loss",                        "Per rider schedule"],
+  ["Travel delay beyond 5 hours",                   "Per rider schedule"],
+  ["Personal liability — injury &amp; property",        "Per rider schedule"],
+  ["Accidental death &amp; dismemberment",              "Per rider schedule"],
+  ["grp", "Trip cancellation rider"],
+  ["Single trip",                                   "Up to US$2,500"],
+  ["Annual plan, per trip",                         "Up to US$1,500"]
 ];
 
-/* ══════════════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════════════
    STATE
-   ══════════════════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════════════════ */
 var S = {
+  step: 1,
   tripType: "single",
-  region: "worldwide",
   from: "", to: "", days: 0,
-  annualStart: "", annualLen: 30,
-  travellers: [],          // [{ id, dob, age }]
-  deductible: 100,
+  annualStart: "",
+  annualPlan: 30,
+  travellers: [],
   riders: { nm: false, tc: false },
-  guide: { trips: 1, tripCost: 0, preEx: "no", budget: "balance" },
-  quote: null,
-  step: 1
+  guide: { trips: "1", cost: "0", med: "no", bag: "no" },
+  quote: null
 };
-
 var uid = 0;
 
-/* ══════════════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════════════
    HELPERS
-   ══════════════════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════════════════ */
 function $(id) { return document.getElementById(id); }
-function money(n) { return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-  return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-}); }
-
-function ageAt(dobStr, refStr) {
-  if (!dobStr) return null;
-  var dob = new Date(dobStr + "T00:00:00");
-  var ref = refStr ? new Date(refStr + "T00:00:00") : new Date();
-  if (isNaN(dob.getTime()) || isNaN(ref.getTime())) return null;
-  var a = ref.getFullYear() - dob.getFullYear();
-  var m = ref.getMonth() - dob.getMonth();
-  if (m < 0 || (m === 0 && ref.getDate() < dob.getDate())) a--;
-  return a;
+function money(n) { return Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
 }
-
-function daysBetween(a, b) {
-  if (!a || !b) return 0;
-  var d1 = new Date(a + "T00:00:00"), d2 = new Date(b + "T00:00:00");
-  if (isNaN(d1.getTime()) || isNaN(d2.getTime())) return 0;
-  var diff = Math.round((d2 - d1) / 86400000) + 1;   // inclusive of both days
-  return diff > 0 ? diff : 0;
-}
-
 function todayISO() {
   var d = new Date();
   return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 }
-
+function ageAt(dob, ref) {
+  if (!dob) return null;
+  var b = new Date(dob + "T00:00:00"), r = new Date((ref || todayISO()) + "T00:00:00");
+  if (isNaN(b.getTime()) || isNaN(r.getTime())) return null;
+  var a = r.getFullYear() - b.getFullYear();
+  var m = r.getMonth() - b.getMonth();
+  if (m < 0 || (m === 0 && r.getDate() < b.getDate())) a--;
+  return a;
+}
+function daysBetween(a, b) {
+  if (!a || !b) return 0;
+  var d1 = new Date(a + "T00:00:00"), d2 = new Date(b + "T00:00:00");
+  if (isNaN(d1.getTime()) || isNaN(d2.getTime())) return 0;
+  var n = Math.round((d2 - d1) / 86400000) + 1;
+  return n > 0 ? n : 0;
+}
+function fmtDate(s) {
+  if (!s) return "";
+  var d = new Date(s + "T00:00:00");
+  return isNaN(d.getTime()) ? s : d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
 function bandFor(bands, age) {
   for (var i = 0; i < bands.length; i++) if (age <= bands[i].max) return bands[i];
   return null;
 }
+function refDate() { return S.tripType === "annual" ? (S.annualStart || todayISO()) : (S.from || todayISO()); }
+function policyMax(age) { return age >= 70 ? "US$500,000" : "US$5,000,000"; }
 
-function policyMaxFor(age) {
-  for (var i = 0; i < POLICY_MAX.length; i++) if (age <= POLICY_MAX[i].max) return POLICY_MAX[i];
-  return null;
-}
-
-function dedFactor(v) {
-  for (var i = 0; i < DEDUCTIBLES.length; i++) if (DEDUCTIBLES[i].v === v) return DEDUCTIBLES[i].f;
-  return 1;
-}
-
-function dedLabel(v) {
-  for (var i = 0; i < DEDUCTIBLES.length; i++) if (DEDUCTIBLES[i].v === v) return DEDUCTIBLES[i].label;
-  return "US$" + v;
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   RATING ENGINE
-   ══════════════════════════════════════════════════════════════════════════ */
-
-// Base medical premium for ONE traveller, before deductible/region factors.
-function basePremium(age, tripType, days, annualLen) {
-  if (age == null || age < 0) return null;
-  if (age < FREE_UNDER_AGE) return 0;                    // infants free
-  if (age > MAX_AGE) return null;                        // uninsurable
-
+/* ═══════════════════════════════════════════════════════════════════════════
+   RATING
+   ═══════════════════════════════════════════════════════════════════════════ */
+function ratePerson(age, tripType, days, planIdx) {
+  if (age == null || age < 0 || age > MAX_AGE) return null;
   if (tripType === "annual") {
-    var ab = bandFor(RATES.ANNUAL.bands, age);
-    if (!ab) return null;
-    var li = RATES.ANNUAL.tripLengths.indexOf(Number(annualLen));
-    if (li < 0) li = 0;
-    return ab.premiums[li];
+    var ab = bandFor(RATES.annual.bands, age);
+    return ab ? ab.premiums[planIdx] : null;
   }
-
-  var sb = bandFor(RATES.SINGLE.bands, age);
-  if (!sb) return null;
-  var di = -1;
-  for (var i = 0; i < RATES.SINGLE.dayBands.length; i++) {
-    if (days <= RATES.SINGLE.dayBands[i]) { di = i; break; }
-  }
-  if (di < 0) di = RATES.SINGLE.dayBands.length - 1;      // > 365 days: cap
-  return sb.premiums[di];
+  var sb = bandFor(RATES.single.bands, age);
+  return sb ? sb.perDay * days : null;
 }
 
-// Full quote for the current state, at a given deductible / trip type.
 function rate(opts) {
   opts = opts || {};
-  var tripType  = opts.tripType  || S.tripType;
-  var deduct    = opts.deductible != null ? opts.deductible : S.deductible;
-  var annualLen = opts.annualLen != null ? opts.annualLen : S.annualLen;
-  var days      = opts.days != null ? opts.days : S.days;
-  var withRiders = opts.riders !== false;
-
-  var rf = REGION_FACTOR[S.region] || 1;
-  var df = dedFactor(deduct);
+  var tripType = opts.tripType || S.tripType;
+  var days     = opts.days != null ? opts.days : S.days;
+  var plan     = opts.annualPlan != null ? opts.annualPlan : S.annualPlan;
+  var useRiders = opts.riders !== false;
+  var planIdx  = RATES.annual.plans.indexOf(Number(plan));
+  if (planIdx < 0) planIdx = 0;
 
   var out = {
-    ok: true, medical: 0, nm: 0, tc: 0, total: 0,
-    perTraveller: [], declined: [], freeCount: 0,
-    tripType: tripType, days: days, annualLen: annualLen, deductible: deduct
+    ok: true, medical: 0, nm: 0, tc: 0, setup: 0, total: 0,
+    people: [], declined: [], tripType: tripType, days: days, annualPlan: plan
   };
 
   for (var i = 0; i < S.travellers.length; i++) {
     var t = S.travellers[i];
     if (t.age == null) { out.ok = false; continue; }
-
-    if (t.age > MAX_AGE) {
-      out.declined.push(t);
-      out.ok = false;
-      continue;
-    }
-
-    var base = basePremium(t.age, tripType, days, annualLen);
-    if (base == null) { out.ok = false; continue; }
-
-    if (base === 0) { out.freeCount++; out.perTraveller.push({ t: t, premium: 0, free: true }); continue; }
-
-    var p = base * df * rf;
+    if (t.age > MAX_AGE) { out.declined.push(t); out.ok = false; continue; }
+    var p = ratePerson(t.age, tripType, days, planIdx);
+    if (p == null) { out.ok = false; continue; }
     out.medical += p;
-    out.perTraveller.push({ t: t, premium: p, free: false });
+    out.people.push({ t: t, premium: p });
   }
 
-  // Riders — charged per paying traveller.
-  var paying = out.perTraveller.filter(function (x) { return !x.free; }).length;
-  if (withRiders && paying > 0) {
+  var n = out.people.length;
+  if (useRiders && n > 0) {
     if (S.riders.nm) {
-      out.nm = (tripType === "annual")
-        ? (RIDERS.nm.annual[annualLen] || RIDERS.nm.annual[30]) * paying
-        : Math.max(RIDERS.nm.singleMin, RIDERS.nm.singlePerDay * days) * paying;
+      out.nm = (tripType === "annual") ? RATES.annual.riders.nm[planIdx] * n : RATES.single.riders.nm * days * n;
     }
     if (S.riders.tc) {
-      out.tc = (tripType === "annual" ? RIDERS.tc.annual : RIDERS.tc.single) * paying;
+      out.tc = (tripType === "annual") ? RATES.annual.riders.tc[planIdx] * n : RATES.single.riders.tc * days * n;
     }
   }
 
-  out.total = out.medical + out.nm + out.tc;
+  if (tripType === "single" && n > 0) {
+    out.setup = (SETUP_FEE_BASIS === "person") ? RATES.single.setupFee * n : RATES.single.setupFee;
+  }
+
+  out.total = out.medical + out.nm + out.tc + out.setup;
   return out;
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   RECOMMENDATION ENGINE  —  "guide the person to the right selection"
-   ══════════════════════════════════════════════════════════════════════════ */
-function recommend() {
-  var recs = [];
-  var g = S.guide;
+/* Cheapest structure across single-trip × N and each annual plan. */
+function bestStructure() {
+  var trips = Number(S.guide.trips) || 1;
+  var longest = S.tripType === "single" ? S.days : Number(S.annualPlan);
+  var opts = [];
 
-  // ── Single vs annual ──────────────────────────────────────────────
-  if (S.tripType === "single" && Number(g.trips) >= 2) {
-    var len = S.days <= 30 ? 30 : (S.days <= 45 ? 45 : 90);
-    var singleTotal = rate({ tripType: "single", riders: false }).total * Number(g.trips);
-    var annualTotal = rate({ tripType: "annual", annualLen: len, riders: false }).total;
-    if (annualTotal < singleTotal) {
-      recs.push({
-        kind: "switch", tone: "good", ico: "🌍",
-        title: "Switch to the annual plan and save US$" + money(singleTotal - annualTotal),
-        body: "You told us you're taking " + g.trips + " trips this year. Buying single-trip cover " + g.trips + " times would cost around <b>US$" + money(singleTotal) + "</b>. One annual plan at up to " + len + " days per trip covers all of them for <b>US$" + money(annualTotal) + "</b> — and you never have to buy cover again this year.",
-        action: { label: "Switch to annual →", fn: "switchAnnual", arg: len }
+  var singleOne = rate({ tripType: "single", days: S.days, riders: false });
+  opts.push({ kind: "single", label: "Single trip", plan: null, once: singleOne.total, year: singleOne.total * trips, ok: S.days > 0 && S.days <= MAX_SINGLE_DAYS });
+
+  RATES.annual.plans.forEach(function (p) {
+    var q = rate({ tripType: "annual", annualPlan: p, riders: false });
+    opts.push({ kind: "annual", label: "Annual · " + p + " days", plan: p, once: q.total, year: q.total, ok: p >= longest });
+  });
+
+  var viable = opts.filter(function (o) { return o.ok; });
+  if (!viable.length) return { options: opts, best: null };
+  var best = viable.reduce(function (a, b) { return b.year < a.year ? b : a; });
+  return { options: opts, best: best };
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADVICE
+   ═══════════════════════════════════════════════════════════════════════════ */
+function buildAdvice() {
+  var out = [], g = S.guide;
+  var trips = Number(g.trips) || 1;
+  var bs = bestStructure();
+
+  /* Structure recommendation */
+  if (bs.best) {
+    var cur = S.tripType === "single"
+      ? bs.options[0]
+      : bs.options.filter(function (o) { return o.plan === Number(S.annualPlan); })[0];
+    if (cur && bs.best !== cur && bs.best.year < cur.year - 0.5) {
+      var saving = cur.year - bs.best.year;
+      out.push({
+        tone: "good", ico: "💡",
+        title: "Switch to " + bs.best.label + " and save US$" + money(saving),
+        body: (trips > 1
+          ? "You said " + trips + " trips this year. " + cur.label + " bought " + trips + " times comes to <b>US$" + money(cur.year) + "</b>. "
+          : "For this trip, " + cur.label + " costs <b>US$" + money(cur.year) + "</b>. ") +
+          bs.best.label + " covers the same travel for <b>US$" + money(bs.best.year) + "</b>.",
+        action: bs.best.kind === "single" ? { fn: "pickSingle", arg: null, label: "Use single trip" }
+                                          : { fn: "pickAnnual", arg: bs.best.plan, label: "Use " + bs.best.label }
       });
     }
   }
-  if (S.tripType === "annual" && Number(g.trips) <= 1) {
-    var s1 = rate({ tripType: "single", riders: false }).total;
-    var a1 = rate({ tripType: "annual", riders: false }).total;
-    if (s1 < a1) {
-      recs.push({
-        kind: "switch", tone: "info", ico: "✈️",
-        title: "A single trip plan would be cheaper",
-        body: "For one trip only, single-trip cover costs about <b>US$" + money(s1) + "</b> against <b>US$" + money(a1) + "</b> for the annual plan. Stay on annual only if there's a real chance you'll travel again this year.",
-        action: { label: "Switch to single trip →", fn: "switchSingle" }
-      });
-    }
-  }
 
-  // ── Pre-existing conditions ───────────────────────────────────────
-  if (g.preEx === "stable") {
-    recs.push({
-      kind: "med", tone: "info", ico: "🩺",
-      title: "Take the lowest excess you can afford",
-      body: "With a stable ongoing condition you're covered up to <b>" + PRE_EX_LIMIT + "</b>, but you'll be more likely than most to actually claim. A US$100 or US$250 excess costs a little more up front and saves you far more the first time you use it. Declare the condition fully on the application."
-    });
-  }
-  if (g.preEx === "recent") {
-    recs.push({
-      kind: "med", tone: "warn", ico: "⚠️",
-      title: "Let us check this with VUMI before you pay",
-      body: "A condition treated, diagnosed or re-medicated in the last 6 months will <b>not</b> meet the stability rule, so it would be excluded. That doesn't mean you can't be covered for everything else — but you should know exactly where you stand first. Complete the application, declare it, and we'll confirm with VUMI before taking any premium."
+  /* Trip longer than the annual plan allows */
+  if (S.tripType === "annual" && S.days > Number(S.annualPlan)) {
+    out.push({
+      tone: "warn", ico: "📅",
+      title: "This trip is longer than your annual plan allows",
+      body: "You're looking at a " + S.days + "-day trip but the " + S.annualPlan + "-day plan caps each trip at " + S.annualPlan + " consecutive days. Move up a plan, or extend that one trip for an additional daily premium."
     });
   }
 
-  // ── Trip cancellation rider ───────────────────────────────────────
-  if (Number(g.tripCost) >= 1000 && !S.riders.tc) {
-    recs.push({
-      kind: "rider", tone: "info", ico: "🎫",
-      title: "Consider the Trip Cancellation Rider",
-      body: "You've got real money already committed to this trip. If illness or injury stops you travelling, the medical plan alone won't refund your flights and hotels — the cancellation rider is what does that.",
-      action: { label: "Add trip cancellation →", fn: "addRider", arg: "tc" }
+  /* Long single trip */
+  if (S.tripType === "single" && S.days > 60) {
+    out.push({
+      tone: "info", ico: "🗓️",
+      title: "Long trip — check the annual plan carefully",
+      body: "Single-trip cover is priced per day, so at " + S.days + " days the daily rate adds up. The annual comparison above already accounts for this."
     });
   }
 
-  // ── Non-medical rider ─────────────────────────────────────────────
-  if (S.days >= 10 && !S.riders.nm) {
-    recs.push({
-      kind: "rider", tone: "info", ico: "🧳",
-      title: "Longer trip? The Non-Medical Rider earns its keep",
-      body: "On a " + S.days + "-day trip you're far more likely to hit a delayed connection or delayed baggage. The rider covers overnight accommodation and meals after a 5-hour delay, plus baggage and personal liability.",
-      action: { label: "Add non-medical cover →", fn: "addRider", arg: "nm" }
+  /* Pre-existing */
+  if (g.med === "stable") {
+    out.push({
+      tone: "info", ico: "🩺",
+      title: "Declare the condition in full",
+      body: "A condition stable for six months or more can be covered to <b>US$500,000</b>. Write it out plainly on the application — the declaration is what protects the claim."
+    });
+  }
+  if (g.med === "recent") {
+    out.push({
+      tone: "warn", ico: "⚠️",
+      title: "Let us check this before you pay",
+      body: "A condition diagnosed, treated or re-medicated in the last six months won't meet the stability rule, so it would be excluded. Everything else can still be covered — but you should know exactly where you stand first. Declare it and we'll confirm with the insurer before taking any premium."
     });
   }
 
-  // ── Age-related ───────────────────────────────────────────────────
+  /* Riders */
+  if (Number(g.cost) >= 1000 && !S.riders.tc) {
+    out.push({
+      tone: "info", ico: "🎫",
+      title: "You've got real money committed to this trip",
+      body: "The medical plan won't refund flights and hotels if illness stops you travelling. The cancellation rider is what does that.",
+      action: { fn: "addRider", arg: "tc", label: "Add trip cancellation" }
+    });
+  }
+  if (g.bag === "yes" && !S.riders.nm) {
+    out.push({
+      tone: "info", ico: "🧳",
+      title: "Checked bags and connections",
+      body: "That's exactly what the non-medical rider is for — delayed baggage, and a delay past five hours covering your hotel and meals.",
+      action: { fn: "addRider", arg: "nm", label: "Add non-medical cover" }
+    });
+  }
+
+  /* Age */
   var oldest = 0;
-  for (var i = 0; i < S.travellers.length; i++) if (S.travellers[i].age > oldest) oldest = S.travellers[i].age;
-  if (oldest >= 70 && oldest <= MAX_AGE) {
-    recs.push({
-      kind: "age", tone: "warn", ico: "📌",
-      title: "Note the reduced maximum over 70",
-      body: "Travellers aged 70–79 carry a <b>US$500,000</b> medical maximum rather than US$5,000,000. That is still substantial cover, but if you're travelling to the USA it's worth knowing the ceiling — a major cardiac event or extended ICU stay in the US can approach it."
+  S.travellers.forEach(function (t) { if (t.age > oldest) oldest = t.age; });
+  if (oldest >= 70) {
+    out.push({
+      tone: "warn", ico: "📌",
+      title: "Reduced maximum over 70",
+      body: "Travellers aged 70–79 carry a <b>US$500,000</b> medical maximum rather than US$5,000,000. Still substantial — but worth knowing if the trip involves the United States, where a long intensive-care stay can approach it."
     });
   }
 
-  // ── USA cost warning ──────────────────────────────────────────────
-  if (S.region === "worldwide") {
-    recs.push({
-      kind: "region", tone: "info", ico: "🇺🇸",
-      title: "You're covered for the USA & Canada",
-      body: "Good call if there's any US routing at all — even a connection through Miami counts. American hospitals bill more than anywhere else on earth, and this is where a US$5,000,000 limit stops being theoretical."
-    });
-  } else {
-    recs.push({
-      kind: "region", tone: "warn", ico: "✈️",
-      title: "Double-check your routing",
-      body: "You've excluded the USA and Canada, which is saving you money — but the exclusion applies to any time spent there, <b>including layovers</b>. If your itinerary touches a US or Canadian airport, switch back to Worldwide."
+  /* Setup fee note */
+  if (S.tripType === "single") {
+    out.push({
+      tone: "info", ico: "🧾",
+      title: "A US$50 set-up fee applies to single trips",
+      body: "It's already included in the price above. Annual plans carry no set-up fee, which closes some of the gap on longer trips."
     });
   }
 
-  // ── Budget-driven deductible ──────────────────────────────────────
-  if (g.budget === "cheap" && S.deductible < 1000) {
-    var cheapQ = rate({ deductible: 1000 });
-    var nowQ = rate({});
-    if (cheapQ.total < nowQ.total) {
-      recs.push({
-        kind: "ded", tone: "info", ico: "💰",
-        title: "Lowest premium: take the US$1,000 excess",
-        body: "Moving to a US$1,000 excess brings your premium down to <b>US$" + money(cheapQ.total) + "</b>, a saving of <b>US$" + money(nowQ.total - cheapQ.total) + "</b>. You'd cover the first US$1,000 of any claim yourself — fine if you have that available, painful if you don't.",
-        action: { label: "Use US$1,000 excess →", fn: "setDed", arg: 1000 }
-      });
-    }
-  }
-  if (g.budget === "max" && S.deductible > 100) {
-    recs.push({
-      kind: "ded", tone: "info", ico: "🛡️",
-      title: "Maximum protection: drop to the US$100 excess",
-      body: "You said cover matters more than cost. The US$100 excess means you're out of pocket almost nothing when you claim.",
-      action: { label: "Use US$100 excess →", fn: "setDed", arg: 100 }
-    });
-  }
-
-  return recs;
+  return out;
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   TRAVELLER UI
-   ══════════════════════════════════════════════════════════════════════════ */
-function addTraveller(dob) {
-  S.travellers.push({ id: ++uid, dob: dob || "", age: null });
-  renderTravellers();
-}
-
-function removeTraveller(id) {
-  S.travellers = S.travellers.filter(function (t) { return t.id !== id; });
-  renderTravellers();
-}
-
-function refDate() {
-  return S.tripType === "annual" ? (S.annualStart || todayISO()) : (S.from || todayISO());
-}
+/* ═══════════════════════════════════════════════════════════════════════════
+   TRAVELLERS
+   ═══════════════════════════════════════════════════════════════════════════ */
+function addTraveller(dob) { S.travellers.push({ id: ++uid, dob: dob || "", age: null }); renderTravellers(); }
+function removeTraveller(id) { S.travellers = S.travellers.filter(function (t) { return t.id !== id; }); renderTravellers(); }
 
 function renderTravellers() {
-  var host = $("travList");
+  var host = $("travellers");
   host.innerHTML = "";
   S.travellers.forEach(function (t, i) {
     t.age = ageAt(t.dob, refDate());
-
-    var pill = "", cls = "";
+    var pill = "", bad = false;
     if (t.age != null) {
-      if (t.age < 0) { pill = "Check date"; cls = "over"; }
-      else if (t.age < FREE_UNDER_AGE) { pill = "Travels free"; cls = "free"; }
-      else if (t.age > MAX_AGE) { pill = "Age " + t.age + " — over limit"; cls = "over"; }
-      else { pill = "Age " + t.age; }
+      if (t.age < 0) { pill = "Check the date"; bad = true; }
+      else if (t.age > MAX_AGE) { pill = "Age " + t.age + " — over the limit"; bad = true; }
+      else { pill = "Age " + t.age + " · " + (bandFor(RATES.single.bands, t.age) || {}).label + " band"; }
     }
-
     var d = document.createElement("div");
     d.className = "trav";
     d.innerHTML =
-      '<div class="trav-head">' +
-        '<span class="n">' + (i === 0 ? "Traveller 1 (main applicant)" : "Traveller " + (i + 1)) + '</span>' +
-        (pill ? '<span class="age-pill ' + cls + '">' + esc(pill) + '</span>' : '<span class="age-pill" style="visibility:hidden">–</span>') +
-        (i > 0 ? '<button class="trav-del" data-del="' + t.id + '" aria-label="Remove traveller">✕</button>' : '') +
-      '</div>' +
-      '<label class="fl" for="dob' + t.id + '">Date of birth <span class="req">*</span></label>' +
+      '<div class="trav-top">' +
+        '<span class="tn">' + (i === 0 ? "Main traveller" : "Traveller " + (i + 1)) + "</span>" +
+        (pill ? '<span class="agepill' + (bad ? " bad" : "") + '">' + esc(pill) + "</span>" : "") +
+        (i > 0 ? '<button class="xbtn" data-del="' + t.id + '" aria-label="Remove">×</button>' : "") +
+      "</div>" +
+      '<label class="lbl" for="dob' + t.id + '" style="font-weight:500;font-size:13.5px;color:var(--ink2)">Date of birth <span class="req">*</span></label>' +
       '<input type="date" id="dob' + t.id + '" data-dob="' + t.id + '" value="' + esc(t.dob) + '" max="' + todayISO() + '">';
     host.appendChild(d);
   });
 
   host.querySelectorAll("[data-dob]").forEach(function (el) {
     el.addEventListener("change", function () {
-      var id = Number(el.getAttribute("data-dob"));
-      var t = S.travellers.filter(function (x) { return x.id === id; })[0];
-      if (t) { t.dob = el.value; renderTravellers(); }
+      var t = S.travellers.filter(function (x) { return x.id === Number(el.getAttribute("data-dob")); })[0];
+      if (t) { t.dob = el.value; renderTravellers(); updateProgress(); }
     });
   });
   host.querySelectorAll("[data-del]").forEach(function (el) {
-    el.addEventListener("click", function () { removeTraveller(Number(el.getAttribute("data-del"))); });
+    el.addEventListener("click", function () { removeTraveller(Number(el.getAttribute("data-del"))); updateProgress(); });
   });
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   VIEW 1 — INPUT WIRING
-   ══════════════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════════
+   PROGRESS BAR
+   ═══════════════════════════════════════════════════════════════════════════ */
+function updateProgress() {
+  var pct = 0;
+  if (S.step === 1) {
+    var need = 2 + S.travellers.length;   // trip type counts as done, dates, each DOB
+    var have = 1;
+    if (S.tripType === "single") { if (S.from) have += 0.5; if (S.to && S.days > 0) have += 0.5; }
+    else if (S.annualStart) have += 1;
+    S.travellers.forEach(function (t) { if (t.dob && t.age != null && t.age >= 0) have += 1; });
+    pct = Math.min(24, Math.round((have / need) * 24));
+  } else if (S.step === 2) {
+    pct = 25 + (S.quote && S.quote.ok ? 24 : 0);
+  } else if (S.step === 3) {
+    var ids = ["aFirst", "aLast", "aPass", "aNat", "aEmail", "aPhone", "aAddr", "aCity", "aCountry", "aMed"];
+    var filled = ids.filter(function (id) { var el = $(id); return el && el.value.trim(); }).length;
+    var others = document.querySelectorAll('[data-ot="first"],[data-ot="last"],[data-ot="passport"]');
+    var oFilled = 0;
+    others.forEach(function (el) { if (el.value.trim()) oFilled++; });
+    var totalNeed = ids.length + others.length + 1;
+    var totalHave = filled + oFilled + ($("aOk") && $("aOk").checked ? 1 : 0);
+    pct = 50 + Math.round((totalHave / totalNeed) * 49);
+  } else {
+    pct = 100;
+  }
+  pct = Math.max(0, Math.min(100, pct));
+  $("pbarFill").style.width = pct + "%";
+  $("pbarPct").textContent = pct + "% complete";
+
+  document.querySelectorAll(".pstep").forEach(function (el) {
+    var n = Number(el.getAttribute("data-step"));
+    el.classList.toggle("on", n === S.step);
+    el.classList.toggle("done", n < S.step);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STEP 1 WIRING
+   ═══════════════════════════════════════════════════════════════════════════ */
 function setTripType(v) {
   S.tripType = v;
-  document.querySelectorAll("#tripType .seg-opt").forEach(function (el) {
-    el.classList.toggle("on", el.getAttribute("data-v") === v);
-    var r = el.querySelector("input"); if (r) r.checked = (el.getAttribute("data-v") === v);
+  document.querySelectorAll("#tripTypeSel .choice").forEach(function (el) {
+    el.classList.toggle("sel", el.getAttribute("data-v") === v);
   });
-  $("dateBlock").style.display   = (v === "single") ? "" : "none";
-  $("annualBlock").style.display = (v === "annual") ? "" : "none";
-  renderTravellers();
+  $("singleDates").style.display  = v === "single" ? "" : "none";
+  $("annualStartBox").style.display = v === "annual" ? "" : "none";
+  renderTravellers(); updateProgress();
 }
-
-document.querySelectorAll("#tripType .seg-opt").forEach(function (el) {
+document.querySelectorAll("#tripTypeSel .choice").forEach(function (el) {
   el.addEventListener("click", function () { setTripType(el.getAttribute("data-v")); });
 });
 
-document.querySelectorAll("#regionChips .chip").forEach(function (el) {
-  el.addEventListener("click", function () {
-    S.region = el.getAttribute("data-v");
-    document.querySelectorAll("#regionChips .chip").forEach(function (c) { c.classList.remove("on"); });
-    el.classList.add("on");
-  });
-});
-
-function updateDays() {
-  S.from = $("dFrom").value;
-  S.to   = $("dTo").value;
+function recomputeDays() {
+  S.from = $("dFrom").value; S.to = $("dTo").value;
   S.days = daysBetween(S.from, S.to);
-  var h = $("daysHint");
+  var h = $("dayCount");
   if (S.days > 0) {
-    h.innerHTML = "<b style='color:var(--teal)'>" + S.days + " day" + (S.days === 1 ? "" : "s") + "</b> of cover" +
-      (S.days > 365 ? " — <span style='color:var(--warn)'>single-trip cover maxes out at 365 days</span>" : "") + ".";
+    h.innerHTML = "<b>" + S.days + " day" + (S.days === 1 ? "" : "s") + "</b> of cover" +
+      (S.days > MAX_SINGLE_DAYS ? " — single-trip cover stops at 365 days." : ".");
   } else {
-    h.textContent = "Cover runs from the moment you leave until the day you return.";
+    h.textContent = "Cover runs from the day you leave to the day you return.";
   }
-  renderTravellers();
+  renderTravellers(); updateProgress();
 }
-
 $("dFrom").addEventListener("change", function () {
   if ($("dFrom").value && (!$("dTo").value || $("dTo").value < $("dFrom").value)) $("dTo").value = $("dFrom").value;
   $("dTo").min = $("dFrom").value;
-  updateDays();
+  recomputeDays();
 });
-$("dTo").addEventListener("change", updateDays);
-$("aStart").addEventListener("change", function () { S.annualStart = $("aStart").value; renderTravellers(); });
-$("aTripLen").addEventListener("change", function () { S.annualLen = Number($("aTripLen").value); });
-$("addTrav").addEventListener("click", function () { addTraveller(); });
+$("dTo").addEventListener("change", recomputeDays);
+$("aStart").addEventListener("change", function () { S.annualStart = $("aStart").value; renderTravellers(); updateProgress(); });
+$("addTrav").addEventListener("click", function () { addTraveller(); updateProgress(); });
 
-["qTrips", "qTripCost", "qPreEx", "qBudget"].forEach(function (id) {
+["qTrips", "qCost", "qMed", "qBag"].forEach(function (id) {
   $(id).addEventListener("change", function () {
-    S.guide.trips    = $("qTrips").value;
-    S.guide.tripCost = $("qTripCost").value;
-    S.guide.preEx    = $("qPreEx").value;
-    S.guide.budget   = $("qBudget").value;
+    S.guide = { trips: $("qTrips").value, cost: $("qCost").value, med: $("qMed").value, bag: $("qBag").value };
   });
 });
 
-function markErr(id, on) {
-  var el = $(id), msg = $("e-" + id);
-  if (el) el.classList.toggle("err", !!on);
-  if (msg) msg.classList.toggle("show", !!on);
+function flag(id, on) {
+  var el = $(id), m = $("e-" + id);
+  if (el) el.classList.toggle("invalid", !!on);
+  if (m) m.classList.toggle("show", !!on);
 }
 
-function validateStep1() {
+$("toQuote").addEventListener("click", function () {
   var ok = true;
-  ["dFrom", "dTo", "aStart"].forEach(function (id) { markErr(id, false); });
+  ["dFrom", "dTo", "aStart"].forEach(function (id) { flag(id, false); });
 
   if (S.tripType === "single") {
-    if (!$("dFrom").value) { markErr("dFrom", true); ok = false; }
-    if (!$("dTo").value || S.days <= 0) { markErr("dTo", true); ok = false; }
-  } else {
-    if (!$("aStart").value) { markErr("aStart", true); ok = false; }
-    S.annualLen = Number($("aTripLen").value);
-    S.days = Number(S.annualLen);
-  }
+    if (!$("dFrom").value) { flag("dFrom", true); ok = false; }
+    if (!$("dTo").value || S.days <= 0) { flag("dTo", true); ok = false; }
+  } else if (!$("aStart").value) { flag("aStart", true); ok = false; }
 
-  var missingDob = S.travellers.some(function (t) { return !t.dob || t.age == null || t.age < 0; });
-  if (missingDob) {
-    alert("Please enter a valid date of birth for every traveller.");
+  if (S.travellers.some(function (t) { return !t.dob || t.age == null || t.age < 0; })) {
+    alert("Please enter a valid date of birth for everyone travelling.");
     ok = false;
   }
-  return ok;
-}
+  if (!ok) return;
 
-$("goQuote").addEventListener("click", function () {
-  if (!validateStep1()) return;
   var btn = this;
   btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span> Rating your trip…';
+  btn.innerHTML = '<span class="spin"></span> Pricing…';
   setTimeout(function () {
-    btn.disabled = false;
-    btn.textContent = "See My Premium →";
-    buildQuote();
-    goStep(2);
-  }, 480);
+    btn.disabled = false; btn.textContent = "See my price";
+    computeQuote(); go(2);
+  }, 420);
 });
 
-/* ══════════════════════════════════════════════════════════════════════════
-   VIEW 2 — QUOTE RENDERING
-   ══════════════════════════════════════════════════════════════════════════ */
-function buildQuote() {
+/* ═══════════════════════════════════════════════════════════════════════════
+   STEP 2 RENDER
+   ═══════════════════════════════════════════════════════════════════════════ */
+function computeQuote() {
   var q = rate({});
   S.quote = q;
 
-  // Hard decline — anyone over the age limit
   if (q.declined.length) {
-    $("quoteBody").style.display = "none";
-    var box = $("declineBox");
-    box.style.display = "";
-    box.innerHTML =
-      '<div class="notice bad"><span class="ico">🚫</span><div>' +
-      '<b>We can\'t quote Travel VIP for everyone on this trip.</b><br>' +
-      'VUMI Travel VIP covers travellers up to age ' + MAX_AGE + '. ' +
-      q.declined.length + ' traveller' + (q.declined.length === 1 ? " is" : "s are") + ' above that limit.' +
-      '<br><br>That does not mean there is no cover available — there are other markets for older travellers. ' +
-      'Message Ricky and we will find you something.' +
-      '<div style="margin-top:13px;display:flex;gap:9px;flex-wrap:wrap">' +
-        '<a class="btn btn-teal" style="padding:10px 18px;font-size:13.5px" target="_blank" rel="noopener" href="' + waLink("Hi Ricky, I need international travel insurance but a traveller is over 79. Can you help?") + '">💬 WhatsApp Ricky</a>' +
-        '<button class="btn btn-ghost" style="padding:10px 18px;font-size:13.5px" onclick="goStep(1)">← Change travellers</button>' +
-      '</div></div></div>';
-    $("stickybar").classList.remove("show");
+    $("quoteWrap").style.display = "none";
+    $("declined").style.display = "";
+    $("declined").innerHTML =
+      '<div class="advice stop"><span class="aic">🚫</span><span>' +
+      '<b class="atitle">We can\'t price this plan for everyone travelling.</b>' +
+      "This cover is available up to age " + MAX_AGE + ", and " + q.declined.length +
+      " traveller" + (q.declined.length === 1 ? " is" : "s are") + " above that.<br><br>" +
+      "That doesn't mean there's nothing available — there are other markets for older travellers. " +
+      "Get in touch and we'll look at them with you." +
+      '<div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap">' +
+        '<a class="btn btn-pri" href="tel:' + CONFIG.PHONE.replace(/[^0-9+]/g, "") + '">Call ' + esc(CONFIG.PHONE) + "</a>" +
+        '<button class="btn btn-out" onclick="go(1)">← Change travellers</button>' +
+      "</div></span></div>";
+    $("mbar").classList.remove("show");
     return;
   }
 
-  $("declineBox").style.display = "none";
-  $("quoteBody").style.display = "";
-
+  $("declined").style.display = "none";
+  $("quoteWrap").style.display = "";
   renderPremium(q);
-  renderPlanCards();
-  renderSwitchBox();
+  renderPlans();
   renderRiders();
-  renderRecs();
+  renderAdvice();
   renderBreakdown(q);
-  $("waHelp").href = waLink(quoteMessage());
+}
+
+var animTimer = null;
+function animateTo(el, target) {
+  if (animTimer) clearInterval(animTimer);
+  var start = parseFloat(String(el.textContent).replace(/,/g, "")) || 0;
+  var t0 = Date.now(), dur = 480;
+  animTimer = setInterval(function () {
+    var p = Math.min(1, (Date.now() - t0) / dur);
+    var eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = money(start + (target - start) * eased);
+    if (p >= 1) { clearInterval(animTimer); animTimer = null; el.textContent = money(target); }
+  }, 16);
 }
 
 function renderPremium(q) {
-  $("qAmt").textContent = money(q.total);
-  $("sbAmt").textContent = money(q.total);
-  $("qTtd").textContent = "approx. TT$" + money(q.total * CONFIG.USD_TO_TTD) + " at TT$" + CONFIG.USD_TO_TTD.toFixed(2) + " to US$1";
+  animateTo($("pAmt"), q.total);
+  $("mAmt").textContent = money(q.total);
+  $("pTtd").textContent = "about TT$" + money(q.total * CONFIG.USD_TO_TTD) + " at TT$" + CONFIG.USD_TO_TTD.toFixed(2) + " to US$1";
 
   var oldest = 0;
   S.travellers.forEach(function (t) { if (t.age > oldest) oldest = t.age; });
-  var pm = policyMaxFor(oldest);
-
   var who = S.travellers.length + " traveller" + (S.travellers.length === 1 ? "" : "s");
-  if (q.freeCount) who += " (" + q.freeCount + " under 2, free)";
+  var period = S.tripType === "annual"
+    ? "Annual plan · up to " + S.annualPlan + " days per trip · from " + fmtDate(S.annualStart)
+    : S.days + " day" + (S.days === 1 ? "" : "s") + " · " + fmtDate(S.from) + " to " + fmtDate(S.to);
 
-  var period = (S.tripType === "annual")
-    ? "Annual multi-trip · up to " + S.annualLen + " days per trip · from " + fmtDate(S.annualStart)
-    : S.days + " day" + (S.days === 1 ? "" : "s") + " · " + fmtDate(S.from) + " → " + fmtDate(S.to);
-
-  $("qMeta").innerHTML =
-    esc(who) + " · " + esc(period) + "<br>" +
-    "Medical maximum <b style='color:var(--gold)'>" + pm.label + "</b> · " +
-    dedLabel(S.deductible) + " excess · " +
-    (S.region === "worldwide" ? "Worldwide incl. USA &amp; Canada" : "Worldwide excl. USA &amp; Canada");
-
-  $("qIndic").style.display = SHOW_INDICATIVE_BADGE ? "" : "none";
-  $("stickybar").classList.add("show");
+  $("pMeta").innerHTML = esc(who) + " · " + esc(period) + "<br>Medical maximum <b>" + policyMax(oldest) + "</b> per person";
+  $("mbar").classList.add("show");
 }
 
-function fmtDate(s) {
-  if (!s) return "";
-  var d = new Date(s + "T00:00:00");
-  if (isNaN(d.getTime())) return s;
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-}
-
-function renderPlanCards() {
+function renderPlans() {
+  var bs = bestStructure();
   var host = $("planCards");
   host.innerHTML = "";
+  var trips = Number(S.guide.trips) || 1;
 
-  // Show three excess options: always the one selected, plus the next most
-  // useful from the standard ladder. Deduped and sorted so we never render
-  // the same card twice.
-  var show = [S.deductible];
-  [100, 500, 1000, 2500].forEach(function (v) {
-    if (show.indexOf(v) === -1 && show.length < 3) show.push(v);
-  });
-  show.sort(function (a, b) { return a - b; });
-
-  // Which one do we recommend?
-  var recDed = 500;
-  if (S.guide.budget === "cheap") recDed = 1000;
-  if (S.guide.budget === "max" || S.guide.preEx === "stable") recDed = 100;
-
-  var oldest = 0;
-  S.travellers.forEach(function (t) { if (t.age > oldest) oldest = t.age; });
-  var pm = policyMaxFor(oldest);
-
-  show.forEach(function (dv) {
-    var q = rate({ deductible: dv });
-    var isRec = (dv === recDed);
-    var isOn  = (dv === S.deductible);
+  bs.options.forEach(function (o) {
+    var isSel = (o.kind === "single" && S.tripType === "single") ||
+                (o.kind === "annual" && S.tripType === "annual" && Number(S.annualPlan) === o.plan);
+    var isBest = bs.best && o.label === bs.best.label;
 
     var el = document.createElement("div");
-    el.className = "plan" + (isOn ? " on" : "") + (isRec ? " rec" : "");
-    el.setAttribute("data-ded", dv);
+    el.className = "pcard" + (isSel ? " sel" : "") + (isBest ? " best" : "") + (o.ok ? "" : " unavail");
+    el.setAttribute("data-kind", o.kind);
+    el.setAttribute("data-plan", o.plan == null ? "" : o.plan);
     el.innerHTML =
-      (isRec ? '<div class="plan-tag">Recommended for you</div>' : "") +
-      "<h3>" + dedLabel(dv) + " excess</h3>" +
-      '<div class="ded">You pay the first ' + dedLabel(dv) + ' of a claim</div>' +
-      '<div class="px"><span class="c">US$</span>' + money(q.total) + "</div>" +
-      '<div class="px-sub">' + (S.tripType === "annual" ? "for the full year" : "for the whole trip") +
-        (S.travellers.length > 1 ? " · all " + S.travellers.length + " travellers" : "") + "</div>" +
-      "<ul>" +
-        "<li>" + pm.label + " medical maximum</li>" +
-        "<li>Evacuation &amp; repatriation</li>" +
-        "<li>Any doctor, any hospital</li>" +
-        "<li>Pre-existing to " + PRE_EX_LIMIT + "</li>" +
-        "<li>24/7 emergency assistance</li>" +
-      "</ul>";
+      (isBest ? '<span class="bestflag">Best value</span>' : "") +
+      "<h4>" + esc(o.label) + "</h4>" +
+      '<div class="pdesc">' +
+        (o.kind === "single"
+          ? "Covers this " + S.days + "-day trip only, priced per day."
+          : "Unlimited trips for 12 months, each up to " + o.plan + " days.") +
+      "</div>" +
+      '<div class="pprice"><span class="c">US$</span>' + money(o.once) + "</div>" +
+      '<div class="pnote">' +
+        (o.kind === "single"
+          ? (trips > 1 ? "US$" + money(o.year) + " for " + trips + " trips" : "for the whole trip")
+          : "for the full year") +
+      "</div>" +
+      (o.ok ? "" : '<div class="pnote" style="color:var(--coral);margin-top:7px">Too short for a ' + (S.tripType === "single" ? S.days : S.annualPlan) + "-day trip</div>");
     host.appendChild(el);
   });
 
-  host.querySelectorAll(".plan").forEach(function (el) {
+  host.querySelectorAll(".pcard").forEach(function (el) {
     el.addEventListener("click", function () {
-      S.deductible = Number(el.getAttribute("data-ded"));
-      buildQuote();
+      if (el.classList.contains("unavail")) return;
+      if (el.getAttribute("data-kind") === "single") pickSingle();
+      else pickAnnual(Number(el.getAttribute("data-plan")));
     });
   });
+
+  $("planFoot").innerHTML = trips > 1
+    ? "Single-trip figures show the cost of one trip, with the " + trips + "-trip total underneath. Annual plans cover all of them."
+    : "Prices are for everyone on the policy together. Single-trip cover includes the US$50 set-up fee.";
 }
 
-function renderSwitchBox() {
-  var box = $("switchBox");
-  var len = S.days <= 30 ? 30 : (S.days <= 45 ? 45 : 90);
-  var trips = Number(S.guide.trips) || 1;
-
-  var single = rate({ tripType: "single", riders: false });
-  var annual = rate({ tripType: "annual", annualLen: len, riders: false });
-  var singleXn = single.total * trips;
-
-  box.innerHTML =
-    '<div class="section-label">Single trip vs annual</div>' +
-    '<h2 style="font-size:clamp(18px,3.4vw,23px)">Which structure suits you?</h2>' +
-    '<p class="section-sub" style="margin-bottom:16px;font-size:13.5px">Based on the ' + trips + ' trip' + (trips === 1 ? "" : "s") + ' you told us about.</p>' +
-    '<div class="tbl-scroll"><table class="btbl"><thead><tr>' +
-      "<th>&nbsp;</th><th style='text-align:right'>Single trip</th><th style='text-align:right'>Annual multi-trip</th>" +
-    "</tr></thead><tbody>" +
-      "<tr><td>Cover period</td><td style='text-align:right'>" + S.days + " days, this trip</td><td style='text-align:right'>12 months, unlimited trips</td></tr>" +
-      "<tr><td>Max days per trip</td><td style='text-align:right'>365</td><td style='text-align:right'>" + len + "</td></tr>" +
-      "<tr><td>Second medical opinion</td><td style='text-align:right'>—</td><td style='text-align:right'>Included</td></tr>" +
-      "<tr><td>Trip cancellation cap</td><td style='text-align:right'>US$2,500</td><td style='text-align:right'>US$1,500 per trip</td></tr>" +
-      "<tr><td>Premium (medical only)</td><td style='text-align:right'><b>US$" + money(single.total) + "</b></td><td style='text-align:right'><b>US$" + money(annual.total) + "</b></td></tr>" +
-      "<tr><td>Cost for " + trips + " trip" + (trips === 1 ? "" : "s") + " this year</td>" +
-        "<td style='text-align:right'><b style='color:" + (singleXn <= annual.total ? "var(--good)" : "var(--muted)") + "'>US$" + money(singleXn) + "</b></td>" +
-        "<td style='text-align:right'><b style='color:" + (annual.total < singleXn ? "var(--good)" : "var(--muted)") + "'>US$" + money(annual.total) + "</b></td></tr>" +
-    "</tbody></table></div>" +
-    '<div style="display:flex;gap:9px;margin-top:14px;flex-wrap:wrap">' +
-      '<button class="btn ' + (S.tripType === "single" ? "btn-teal" : "btn-ghost") + '" style="flex:1;min-width:150px;padding:11px 18px;font-size:13.5px" onclick="switchSingle()">✈️ Use single trip</button>' +
-      '<button class="btn ' + (S.tripType === "annual" ? "btn-teal" : "btn-ghost") + '" style="flex:1;min-width:150px;padding:11px 18px;font-size:13.5px" onclick="switchAnnual(' + len + ')">🌍 Use annual</button>' +
-    "</div>";
-}
-
-function switchSingle() {
+function pickSingle() {
   S.tripType = "single";
   setTripType("single");
   if (!S.from) { S.from = todayISO(); $("dFrom").value = S.from; }
   if (!S.to || S.days <= 0) { S.days = 14; }
-  buildQuote();
-  scrollToQuote();
+  computeQuote(); jump();
 }
-
-function switchAnnual(len) {
+function pickAnnual(plan) {
   S.tripType = "annual";
-  S.annualLen = Number(len) || 30;
+  S.annualPlan = Number(plan) || 30;
   setTripType("annual");
-  $("aTripLen").value = String(S.annualLen);
   if (!S.annualStart) { S.annualStart = S.from || todayISO(); $("aStart").value = S.annualStart; }
-  buildQuote();
-  scrollToQuote();
+  computeQuote(); jump();
 }
-
-function setDed(v) { S.deductible = Number(v); buildQuote(); scrollToQuote(); }
-function addRider(k) { S.riders[k] = true; buildQuote(); scrollToQuote(); }
-
-function scrollToQuote() {
-  var el = $("quote");
-  if (el) window.scrollTo({ top: el.offsetTop - 74, behavior: "smooth" });
-}
+function addRider(k) { S.riders[k] = true; computeQuote(); jump(); }
+function jump() { var el = $("quote"); if (el) window.scrollTo({ top: el.offsetTop - 130, behavior: "smooth" }); }
+window.pickSingle = pickSingle; window.pickAnnual = pickAnnual; window.addRider = addRider; window.go = go;
 
 function renderRiders() {
-  var paying = S.quote ? S.quote.perTraveller.filter(function (x) { return !x.free; }).length : 1;
-  if (paying < 1) paying = 1;
+  var n = S.quote ? S.quote.people.length : 1;
+  if (n < 1) n = 1;
+  var idx = RATES.annual.plans.indexOf(Number(S.annualPlan)); if (idx < 0) idx = 0;
 
-  var nmCost = (S.tripType === "annual")
-    ? (RIDERS.nm.annual[S.annualLen] || RIDERS.nm.annual[30]) * paying
-    : Math.max(RIDERS.nm.singleMin, RIDERS.nm.singlePerDay * S.days) * paying;
-  var tcCost = (S.tripType === "annual" ? RIDERS.tc.annual : RIDERS.tc.single) * paying;
+  var nmC = S.tripType === "annual" ? RATES.annual.riders.nm[idx] * n : RATES.single.riders.nm * S.days * n;
+  var tcC = S.tripType === "annual" ? RATES.annual.riders.tc[idx] * n : RATES.single.riders.tc * S.days * n;
 
-  $("nmPx").textContent = money(nmCost);
-  $("tcPx").textContent = money(tcCost);
-  $("tcCap").innerHTML = S.tripType === "annual"
-    ? "Covers up to <b>US$1,500</b> per trip."
-    : "Covers up to <b>US$2,500</b> for this trip.";
+  $("nmP").textContent = money(nmC);
+  $("tcP").textContent = money(tcC);
+  $("tcCap").innerHTML = S.tripType === "annual" ? "Up to <b>US$1,500</b> per trip." : "Up to <b>US$2,500</b> for this trip.";
+  $("rNM").classList.toggle("sel", S.riders.nm);
+  $("rTC").classList.toggle("sel", S.riders.tc);
 
-  $("riderNM").classList.toggle("on", S.riders.nm);
-  $("riderTC").classList.toggle("on", S.riders.tc);
-
-  var advice = "";
-  if (Number(S.guide.tripCost) >= 2500 && !S.riders.tc) {
-    advice = '<div class="notice warn"><span class="ico">💡</span><div>You have over US$1,500 already committed to this trip. Without the cancellation rider, a medical emergency <b>before</b> you fly leaves that money gone.</div></div>';
+  var tip = "";
+  if (Number(S.guide.cost) >= 2500 && !S.riders.tc) {
+    tip = '<div class="advice warn"><span class="aic">💡</span><span>You have more than US$1,500 already committed. Without the cancellation rider, an illness <b>before</b> you fly leaves that money gone.</span></div>';
   } else if (S.riders.nm && S.riders.tc) {
-    advice = '<div class="notice good"><span class="ico">✓</span><div>Both riders added — this is the most complete version of Travel VIP available.</div></div>';
+    tip = '<div class="advice good"><span class="aic">✓</span><span>Both riders added — this is the most complete version of the plan.</span></div>';
   }
-  $("riderAdvice").innerHTML = advice;
+  $("riderTip").innerHTML = tip;
 }
+$("rNM").addEventListener("click", function () { S.riders.nm = !S.riders.nm; computeQuote(); });
+$("rTC").addEventListener("click", function () { S.riders.tc = !S.riders.tc; computeQuote(); });
 
-$("riderNM").addEventListener("click", function () { S.riders.nm = !S.riders.nm; buildQuote(); });
-$("riderTC").addEventListener("click", function () { S.riders.tc = !S.riders.tc; buildQuote(); });
-
-function renderRecs() {
-  var recs = recommend();
-  var host = $("recBox");
-  if (!recs.length) { host.innerHTML = ""; return; }
-
-  host.innerHTML =
-    '<div class="section-label" style="margin-bottom:11px">Our advice for you</div>' +
-    recs.map(function (r) {
-      var act = r.action
-        ? '<div style="margin-top:11px"><button class="btn btn-teal" style="padding:9px 17px;font-size:13px" onclick="' +
-          r.action.fn + "(" + (r.action.arg !== undefined ? JSON.stringify(r.action.arg) : "") + ')">' + esc(r.action.label) + "</button></div>"
+function renderAdvice() {
+  var list = buildAdvice();
+  if (!list.length) { $("adviceBox").innerHTML = ""; return; }
+  $("adviceBox").innerHTML =
+    '<div class="sec-label">Our read on it</div>' +
+    list.map(function (a) {
+      var act = a.action
+        ? '<div style="margin-top:12px"><button class="btn btn-pri" style="padding:9px 17px;font-size:14px" onclick="' +
+          a.action.fn + "(" + (a.action.arg !== null && a.action.arg !== undefined ? JSON.stringify(a.action.arg) : "") + ')">' +
+          esc(a.action.label) + "</button></div>"
         : "";
-      return '<div class="notice ' + r.tone + '" style="margin-bottom:9px">' +
-             '<span class="ico">' + r.ico + "</span><div><b>" + esc(r.title) + "</b><br>" + r.body + act + "</div></div>";
+      return '<div class="advice ' + a.tone + '"><span class="aic">' + a.ico + "</span><span>" +
+             '<b class="atitle">' + esc(a.title) + "</b>" + a.body + act + "</span></div>";
     }).join("");
 }
 
 function renderBreakdown(q) {
   var rows = "";
-  q.perTraveller.forEach(function (p, i) {
-    var name = (i === 0 ? "Traveller 1 (main)" : "Traveller " + (i + 1)) + " · age " + p.t.age;
-    rows += '<div class="r"><div class="k">' + esc(name) + "</div><div class='v'>" +
-            (p.free ? "<span style='color:var(--good)'>Free</span>" : "US$" + money(p.premium)) + "</div></div>";
+  q.people.forEach(function (p, i) {
+    var band = bandFor(RATES.single.bands, p.t.age);
+    var detail = S.tripType === "single"
+      ? "US$" + band.perDay.toFixed(2) + "/day × " + S.days + " days"
+      : "annual, " + S.annualPlan + "-day plan";
+    rows += '<div class="sr"><div class="sk">' +
+            (i === 0 ? "Main traveller" : "Traveller " + (i + 1)) + ", age " + p.t.age +
+            '<br><span style="font-size:13px;color:var(--ink3)">' + esc(detail) + "</span></div>" +
+            '<div class="sv">US$' + money(p.premium) + "</div></div>";
   });
-  if (q.nm) rows += '<div class="r"><div class="k">Non-Medical Rider</div><div class="v">US$' + money(q.nm) + "</div></div>";
-  if (q.tc) rows += '<div class="r"><div class="k">Trip Cancellation Rider</div><div class="v">US$' + money(q.tc) + "</div></div>";
-  rows += '<div class="r"><div class="k">Excess (deductible) you selected</div><div class="v">' + dedLabel(S.deductible) + "</div></div>";
-  rows += '<div class="r tot"><div class="k" style="font-weight:600;color:var(--text)">Total premium</div><div class="v">US$' + money(q.total) + "</div></div>";
+  if (q.setup) rows += '<div class="sr"><div class="sk">Set-up fee</div><div class="sv">US$' + money(q.setup) + "</div></div>";
+  if (q.nm)    rows += '<div class="sr"><div class="sk">Non-medical benefits rider</div><div class="sv">US$' + money(q.nm) + "</div></div>";
+  if (q.tc)    rows += '<div class="sr"><div class="sk">Trip cancellation rider</div><div class="sv">US$' + money(q.tc) + "</div></div>";
+  rows += '<div class="sr total"><div class="sk">Total premium</div><div class="sv">US$' + money(q.total) + "</div></div>";
   $("breakdown").innerHTML = rows;
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════════════
    NAVIGATION
-   ══════════════════════════════════════════════════════════════════════════ */
-function goStep(n) {
+   ═══════════════════════════════════════════════════════════════════════════ */
+function go(n) {
   S.step = n;
-  [1, 2, 3, 4].forEach(function (i) { $("v" + i).classList.toggle("on", i === n); });
-  document.querySelectorAll("#stepper .stp").forEach(function (el) {
-    var s = Number(el.getAttribute("data-s"));
-    el.classList.toggle("on", s === n);
-    el.classList.toggle("done", s < n);
-  });
-  $("stickybar").classList.toggle("show", n === 2);
-  scrollToQuote();
+  [1, 2, 3, 4].forEach(function (i) { $("s" + i).classList.toggle("on", i === n); });
+  $("mbar").classList.toggle("show", n === 2 && S.quote && S.quote.ok);
+  updateProgress();
+  jump();
 }
-window.goStep = goStep;
-window.switchSingle = switchSingle;
-window.switchAnnual = switchAnnual;
-window.setDed = setDed;
-window.addRider = addRider;
+$("backS1").addEventListener("click", function () { go(1); });
+$("backS2").addEventListener("click", function () { go(2); });
+$("toApply").addEventListener("click", openApply);
+$("mApply").addEventListener("click", openApply);
 
-$("backTo1").addEventListener("click", function () { goStep(1); });
-$("backTo2").addEventListener("click", function () { goStep(2); });
-$("goApply").addEventListener("click", function () { openApply(); });
-$("sbApply").addEventListener("click", function () { openApply(); });
-
-/* ══════════════════════════════════════════════════════════════════════════
-   VIEW 3 — APPLICATION
-   ══════════════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════════
+   STEP 3 — APPLICATION
+   ═══════════════════════════════════════════════════════════════════════════ */
 function openApply() {
   if (!S.quote || !S.quote.ok) { alert("Please complete your quote first."); return; }
-
   var q = S.quote;
-  var period = (S.tripType === "annual")
-    ? "Annual multi-trip, up to " + S.annualLen + " days per trip, from " + fmtDate(S.annualStart)
+  var period = S.tripType === "annual"
+    ? "Annual plan, up to " + S.annualPlan + " days per trip, from " + fmtDate(S.annualStart)
     : S.days + " days, " + fmtDate(S.from) + " to " + fmtDate(S.to);
 
-  $("applyRecap").innerHTML =
-    "<b>VUMI Travel VIP · " + (S.tripType === "annual" ? "Annual Multi-Trip" : "Single Trip") + "</b><br>" +
-    esc(period) + "<br>" +
-    dedLabel(S.deductible) + " excess · " +
-    (S.region === "worldwide" ? "Worldwide incl. USA &amp; Canada" : "Worldwide excl. USA &amp; Canada") +
-    (S.riders.nm ? " · + Non-Medical Rider" : "") +
-    (S.riders.tc ? " · + Trip Cancellation Rider" : "") +
-    "<br><b style='color:var(--gold);font-size:15px'>Premium US$" + money(q.total) + "</b>" +
-    (SHOW_INDICATIVE_BADGE ? " <span style='color:var(--warn);font-size:12px'>(indicative)</span>" : "");
+  $("applySummary").innerHTML =
+    '<b class="atitle">' + (S.tripType === "annual" ? "Annual plan" : "Single trip") + " · " + esc(period) + "</b>" +
+    S.travellers.length + " traveller" + (S.travellers.length === 1 ? "" : "s") +
+    (S.riders.nm ? " · non-medical rider" : "") + (S.riders.tc ? " · trip cancellation rider" : "") +
+    ' — total <b>US$' + money(q.total) + "</b>";
 
-  renderOtherTravellers();
-  goStep(3);
+  renderOthers();
+  go(3);
 }
 
-function renderOtherTravellers() {
-  var host = $("otherTravBlock");
+function renderOthers() {
+  var host = $("othersBox");
   if (S.travellers.length <= 1) { host.innerHTML = ""; return; }
-
-  var html = '<div style="border-top:1px solid var(--line);padding-top:18px">' +
-             '<label class="fl" style="font-size:13px;color:var(--text);margin-bottom:12px">👥 Other travellers on this policy</label>';
-
+  var h = '<h3 style="font-size:19px;margin:28px 0 18px;padding-top:24px;border-top:1px solid var(--line)">Other travellers</h3>';
   for (var i = 1; i < S.travellers.length; i++) {
     var t = S.travellers[i];
-    html +=
-      '<div class="trav">' +
-        '<div class="trav-head"><span class="n">Traveller ' + (i + 1) + '</span>' +
-        '<span class="age-pill' + (t.age < FREE_UNDER_AGE ? " free" : "") + '">' +
-        (t.age < FREE_UNDER_AGE ? "Under 2 · free" : "Age " + t.age) + "</span></div>" +
-        '<div class="fgrid">' +
-          '<div><label class="fl">First name <span class="req">*</span></label>' +
-            '<input type="text" data-ot="first" data-i="' + i + '" placeholder="As on passport"></div>' +
-          '<div><label class="fl">Surname <span class="req">*</span></label>' +
-            '<input type="text" data-ot="last" data-i="' + i + '" placeholder="As on passport"></div>' +
-          '<div><label class="fl">Date of birth</label>' +
-            '<input type="date" value="' + esc(t.dob) + '" data-ot="dob" data-i="' + i + '"></div>' +
-          '<div><label class="fl">Passport number <span class="req">*</span></label>' +
-            '<input type="text" data-ot="passport" data-i="' + i + '" style="text-transform:uppercase" placeholder="e.g. TA1234567"></div>' +
-          '<div><label class="fl">Relationship to main applicant</label>' +
-            '<input type="text" data-ot="rel" data-i="' + i + '" placeholder="e.g. Spouse, Son, Daughter"></div>' +
-          '<div><label class="fl">Address (if different)</label>' +
-            '<input type="text" data-ot="addr" data-i="' + i + '" placeholder="Leave blank if same as main applicant"></div>' +
-        "</div>" +
-      "</div>";
+    h += '<div class="trav" style="background:var(--white)">' +
+      '<div class="trav-top"><span class="tn">Traveller ' + (i + 1) + '</span><span class="agepill">Age ' + t.age + "</span></div>" +
+      '<div class="row2">' +
+        '<div class="fld" style="margin-bottom:14px"><label class="lbl" style="font-size:13.5px">First name <span class="req">*</span></label>' +
+          '<input type="text" data-ot="first" data-i="' + i + '" placeholder="As in passport"></div>' +
+        '<div class="fld" style="margin-bottom:14px"><label class="lbl" style="font-size:13.5px">Surname <span class="req">*</span></label>' +
+          '<input type="text" data-ot="last" data-i="' + i + '" placeholder="As in passport"></div>' +
+        '<div class="fld" style="margin-bottom:14px"><label class="lbl" style="font-size:13.5px">Passport number <span class="req">*</span></label>' +
+          '<input type="text" data-ot="passport" data-i="' + i + '" style="text-transform:uppercase" placeholder="e.g. TA1234567"></div>' +
+        '<div class="fld" style="margin-bottom:14px"><label class="lbl" style="font-size:13.5px">Date of birth</label>' +
+          '<input type="date" data-ot="dob" data-i="' + i + '" value="' + esc(t.dob) + '"></div>' +
+        '<div class="fld" style="margin-bottom:0"><label class="lbl" style="font-size:13.5px">Relationship to main traveller</label>' +
+          '<input type="text" data-ot="rel" data-i="' + i + '" placeholder="e.g. Spouse, Son"></div>' +
+        '<div class="fld" style="margin-bottom:0"><label class="lbl" style="font-size:13.5px">Address if different</label>' +
+          '<input type="text" data-ot="addr" data-i="' + i + '" placeholder="Leave blank if the same"></div>' +
+      "</div></div>";
   }
-  html += "</div>";
-  host.innerHTML = html;
+  host.innerHTML = h;
+  host.querySelectorAll("input").forEach(function (el) { el.addEventListener("input", updateProgress); });
 }
 
-function collectOtherTravellers() {
+function collectOthers() {
   var out = [];
   for (var i = 1; i < S.travellers.length; i++) {
-    var get = function (k) {
+    var g = function (k) {
       var el = document.querySelector('[data-ot="' + k + '"][data-i="' + i + '"]');
       return el ? el.value.trim() : "";
     };
     out.push({
-      index: i + 1,
-      first: get("first"), last: get("last"),
-      dob: get("dob") || S.travellers[i].dob,
-      age: S.travellers[i].age,
-      passport: get("passport").toUpperCase(),
-      relationship: get("rel"), address: get("addr")
+      index: i + 1, first: g("first"), last: g("last"),
+      dob: g("dob") || S.travellers[i].dob, age: S.travellers[i].age,
+      passport: g("passport").toUpperCase(), relationship: g("rel"), address: g("addr")
     });
   }
   return out;
 }
 
+["aFirst","aLast","aPass","aNat","aEmail","aPhone","aAddr","aCity","aCountry","aMed"].forEach(function (id) {
+  $(id).addEventListener("input", updateProgress);
+});
+$("aOk").addEventListener("change", updateProgress);
+
 function validateApply() {
   var ok = true;
-  var required = ["aFirst", "aLast", "aPassport", "aNationality", "aEmail", "aPhone", "aAddr", "aCity", "aCountry"];
-  required.forEach(function (id) {
-    var v = $(id).value.trim();
-    var bad = !v;
+  var req = ["aFirst","aLast","aPass","aNat","aEmail","aPhone","aAddr","aCity","aCountry","aMed"];
+  req.forEach(function (id) {
+    var v = $(id).value.trim(), bad = !v;
     if (id === "aEmail" && v) bad = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-    markErr(id, bad);
-    if (bad) ok = false;
+    flag(id, bad); if (bad) ok = false;
   });
+  flag("aOk", !$("aOk").checked);
+  if (!$("aOk").checked) ok = false;
 
-  markErr("aConsent", !$("aConsent").checked);
-  if (!$("aConsent").checked) ok = false;
-
-  // Other travellers need name + passport
-  var others = collectOtherTravellers();
-  var missing = others.filter(function (o) { return !o.first || !o.last || !o.passport; });
-  if (missing.length) {
-    alert("Please complete the name and passport number for every traveller on the policy.");
+  var others = collectOthers();
+  if (others.filter(function (o) { return !o.first || !o.last || !o.passport; }).length) {
+    alert("Please add the name and passport number for every traveller.");
     ok = false;
   }
-
   if (!ok) {
-    var firstErr = document.querySelector(".err");
-    if (firstErr) window.scrollTo({ top: firstErr.getBoundingClientRect().top + window.scrollY - 110, behavior: "smooth" });
+    var f = document.querySelector(".invalid");
+    if (f) window.scrollTo({ top: f.getBoundingClientRect().top + window.scrollY - 140, behavior: "smooth" });
   }
   return ok;
 }
 
 function buildPayload() {
   var q = S.quote;
-  var others = collectOtherTravellers();
   return {
-    type: "travel-vip-application",
+    type: "travel-application",
     submittedAt: new Date().toISOString(),
+    agentCode: CONFIG.AGENT_CODE,
+    insurer: CONFIG.INSURER,
     quote: {
-      product: "VUMI Travel VIP",
-      tripType: S.tripType === "annual" ? "Annual Multi-Trip" : "Single Trip",
-      region: S.region === "worldwide" ? "Worldwide incl. USA & Canada" : "Worldwide excl. USA & Canada",
+      structure: S.tripType === "annual" ? "Annual plan" : "Single trip",
+      annualPlanDays: S.tripType === "annual" ? S.annualPlan : null,
       departure: S.from, returnDate: S.to, days: S.days,
-      annualStart: S.annualStart, maxDaysPerTrip: S.tripType === "annual" ? S.annualLen : null,
-      deductible: dedLabel(S.deductible),
+      annualStart: S.annualStart,
       nonMedicalRider: S.riders.nm ? "Yes" : "No",
       tripCancellationRider: S.riders.tc ? "Yes" : "No",
       medicalPremium: Number(q.medical.toFixed(2)),
+      setupFee: Number(q.setup.toFixed(2)),
       nonMedicalPremium: Number(q.nm.toFixed(2)),
       cancellationPremium: Number(q.tc.toFixed(2)),
       totalPremiumUSD: Number(q.total.toFixed(2)),
-      indicative: SHOW_INDICATIVE_BADGE
+      rateCard: "VUMI Travel VIP — June 2026"
     },
     applicant: {
-      firstName: $("aFirst").value.trim(),
-      lastName:  $("aLast").value.trim(),
-      dob: S.travellers[0] ? S.travellers[0].dob : "",
-      age: S.travellers[0] ? S.travellers[0].age : null,
-      passport: $("aPassport").value.trim().toUpperCase(),
-      nationality: $("aNationality").value.trim(),
-      email: $("aEmail").value.trim(),
-      phone: $("aPhone").value.trim(),
-      address: $("aAddr").value.trim(),
-      city: $("aCity").value.trim(),
-      country: $("aCountry").value.trim(),
-      beneficiary: $("aBenef").value.trim(),
-      beneficiaryRelationship: $("aBenefRel").value.trim()
+      firstName: $("aFirst").value.trim(), lastName: $("aLast").value.trim(),
+      dob: S.travellers[0] ? S.travellers[0].dob : "", age: S.travellers[0] ? S.travellers[0].age : null,
+      passport: $("aPass").value.trim().toUpperCase(), nationality: $("aNat").value.trim(),
+      email: $("aEmail").value.trim(), phone: $("aPhone").value.trim(),
+      address: $("aAddr").value.trim(), city: $("aCity").value.trim(), country: $("aCountry").value.trim(),
+      beneficiary: $("aBen").value.trim(), beneficiaryRelationship: $("aBenRel").value.trim()
     },
-    otherTravellers: others,
-    medicalDeclaration: $("aMedical").value.trim(),
+    otherTravellers: collectOthers(),
+    medicalDeclaration: $("aMed").value.trim(),
     payment: {
-      method: $("payMethod").options[$("payMethod").selectedIndex].text,
-      nameOnCard: $("payName").value.trim(),
-      bestTimeToCall: $("payBest").options[$("payBest").selectedIndex].text,
-      note: "No card details collected on the website — PCI-DSS. Take payment through a secure channel."
+      method: $("payHow").options[$("payHow").selectedIndex].text,
+      bestTime: $("payWhen").options[$("payWhen").selectedIndex].text,
+      urgent: $("aUrgent").value === "yes" ? "YES — travelling within 48 hours" : "No",
+      note: "No card details collected online (PCI-DSS). Take payment through a secure channel."
     },
-    guidance: S.guide
+    answers: S.guide
   };
 }
 
-function payloadToText(p) {
-  var L = [];
-  L.push("VUMI TRAVEL VIP — ONLINE APPLICATION");
+function payloadText(p) {
+  var L = [], a = p.applicant, q = p.quote;
+  L.push("TRAVEL INSURANCE — ONLINE APPLICATION");
+  L.push("Agent code: " + p.agentCode + "   |   Insurer: " + p.insurer);
   L.push("Submitted: " + new Date(p.submittedAt).toLocaleString("en-GB"));
+  if (p.payment.urgent !== "No") L.push("*** " + p.payment.urgent + " ***");
   L.push("");
-  L.push("── COVER ─────────────────────────────");
-  L.push("Product:        " + p.quote.product + " (" + p.quote.tripType + ")");
-  L.push("Region:         " + p.quote.region);
-  if (p.quote.tripType === "Single Trip") {
-    L.push("Travel dates:   " + p.quote.departure + " → " + p.quote.returnDate + "  (" + p.quote.days + " days)");
-  } else {
-    L.push("Start date:     " + p.quote.annualStart);
-    L.push("Max days/trip:  " + p.quote.maxDaysPerTrip);
-  }
-  L.push("Excess:         " + p.quote.deductible);
-  L.push("Non-Medical:    " + p.quote.nonMedicalRider);
-  L.push("Trip Cancel:    " + p.quote.tripCancellationRider);
-  L.push("PREMIUM:        US$" + p.quote.totalPremiumUSD.toFixed(2) + (p.quote.indicative ? "  (INDICATIVE — confirm in portal)" : ""));
+  L.push("--- COVER ---");
+  L.push("Structure:     " + q.structure + (q.annualPlanDays ? " (" + q.annualPlanDays + " days per trip)" : ""));
+  if (q.structure === "Single trip") L.push("Dates:         " + q.departure + " to " + q.returnDate + "  (" + q.days + " days)");
+  else L.push("Start:         " + q.annualStart);
+  L.push("Non-medical:   " + q.nonMedicalRider);
+  L.push("Trip cancel:   " + q.tripCancellationRider);
+  L.push("Medical:       US$" + q.medicalPremium.toFixed(2));
+  if (q.setupFee) L.push("Set-up fee:    US$" + q.setupFee.toFixed(2));
+  if (q.nonMedicalPremium) L.push("NM rider:      US$" + q.nonMedicalPremium.toFixed(2));
+  if (q.cancellationPremium) L.push("TC rider:      US$" + q.cancellationPremium.toFixed(2));
+  L.push("TOTAL:         US$" + q.totalPremiumUSD.toFixed(2));
+  L.push("Rate card:     " + q.rateCard);
   L.push("");
-  L.push("── MAIN APPLICANT ────────────────────");
-  var a = p.applicant;
-  L.push("Name:           " + a.firstName + " " + a.lastName);
-  L.push("Date of birth:  " + a.dob + "  (age " + a.age + ")");
-  L.push("Passport:       " + a.passport);
-  L.push("Nationality:    " + a.nationality);
-  L.push("Email:          " + a.email);
-  L.push("Mobile:         " + a.phone);
-  L.push("Address:        " + a.address + ", " + a.city + ", " + a.country);
-  L.push("Beneficiary:    " + (a.beneficiary || "—") + (a.beneficiaryRelationship ? " (" + a.beneficiaryRelationship + ")" : ""));
+  L.push("--- MAIN APPLICANT ---");
+  L.push("Name:          " + a.firstName + " " + a.lastName);
+  L.push("Date of birth: " + a.dob + "  (age " + a.age + ")");
+  L.push("Passport:      " + a.passport);
+  L.push("Nationality:   " + a.nationality);
+  L.push("Email:         " + a.email);
+  L.push("Mobile:        " + a.phone);
+  L.push("Address:       " + a.address + ", " + a.city + ", " + a.country);
+  L.push("Beneficiary:   " + (a.beneficiary || "-") + (a.beneficiaryRelationship ? " (" + a.beneficiaryRelationship + ")" : ""));
   if (p.otherTravellers.length) {
     L.push("");
-    L.push("── OTHER TRAVELLERS ──────────────────");
+    L.push("--- OTHER TRAVELLERS ---");
     p.otherTravellers.forEach(function (o) {
-      L.push("#" + o.index + "  " + o.first + " " + o.last + "  | DOB " + o.dob + " (age " + o.age + ")  | Passport " + o.passport +
-             (o.relationship ? "  | " + o.relationship : "") + (o.address ? "  | " + o.address : ""));
+      L.push("#" + o.index + "  " + o.first + " " + o.last + " | DOB " + o.dob + " (age " + o.age + ") | Passport " + o.passport +
+             (o.relationship ? " | " + o.relationship : "") + (o.address ? " | " + o.address : ""));
     });
   }
   L.push("");
-  L.push("── MEDICAL DECLARATION ───────────────");
+  L.push("--- HEALTH DECLARATION ---");
   L.push(p.medicalDeclaration || "None declared");
   L.push("");
-  L.push("── PAYMENT ───────────────────────────");
-  L.push("Method:         " + p.payment.method);
-  L.push("Name on card:   " + (p.payment.nameOnCard || "—"));
-  L.push("Best time:      " + p.payment.bestTimeToCall);
+  L.push("--- PAYMENT ---");
+  L.push("Method:        " + p.payment.method);
+  L.push("Best time:     " + p.payment.bestTime);
+  L.push("Urgent:        " + p.payment.urgent);
   L.push("NOTE: " + p.payment.note);
-  L.push("");
-  L.push("── CLIENT'S ANSWERS ──────────────────");
-  L.push("Trips this year: " + p.guidance.trips + " | Prepaid trip cost band: " + p.guidance.tripCost +
-         " | Pre-existing: " + p.guidance.preEx + " | Priority: " + p.guidance.budget);
   return L.join("\n");
 }
 
 function recipients() {
-  var to = [CONFIG.AGENT_EMAIL];
-  if (CONFIG.KAMLA_EMAIL) to.push(CONFIG.KAMLA_EMAIL);
+  var to = [CONFIG.EMAIL_TO];
+  if (CONFIG.EMAIL_CC) to.push(CONFIG.EMAIL_CC);
   return to.join(",");
 }
 
 $("submitApp").addEventListener("click", function () {
   if (!validateApply()) return;
-
   var btn = this;
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span> Submitting…';
+  var p = buildPayload();
 
-  var payload = buildPayload();
-
-  function finish() {
-    btn.disabled = false;
-    btn.textContent = "Submit My Application";
-    renderDone(payload);
-    goStep(4);
+  function done() {
+    btn.disabled = false; btn.textContent = "Submit application";
+    renderDone(p); go(4);
   }
-
-  function fallbackMailto() {
-    var subject = "VUMI Travel VIP application — " + payload.applicant.firstName + " " + payload.applicant.lastName +
-                  " — US$" + payload.quote.totalPremiumUSD.toFixed(2);
-    var body = payloadToText(payload);
-    window.location.href = "mailto:" + recipients() +
-      "?subject=" + encodeURIComponent(subject) +
-      "&body=" + encodeURIComponent(body);
-    finish();
+  function fallback() {
+    var subj = "Travel insurance application — " + p.applicant.firstName + " " + p.applicant.lastName +
+               " — US$" + p.quote.totalPremiumUSD.toFixed(2);
+    window.location.href = "mailto:" + recipients() + "?subject=" + encodeURIComponent(subj) +
+                           "&body=" + encodeURIComponent(payloadText(p));
+    done();
   }
-
-  if (!CONFIG.API_URL) { fallbackMailto(); return; }
-
+  if (!CONFIG.API_URL) { fallback(); return; }
   fetch(CONFIG.API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(payload)
-  }).then(function () { finish(); })
-    .catch(function () { fallbackMailto(); });
+    method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(p)
+  }).then(done).catch(fallback);
 });
 
 function renderDone(p) {
-  var rows =
-    '<div class="r"><div class="k">Applicant</div><div class="v">' + esc(p.applicant.firstName + " " + p.applicant.lastName) + "</div></div>" +
-    '<div class="r"><div class="k">Plan</div><div class="v">' + esc(p.quote.tripType) + "</div></div>" +
-    '<div class="r"><div class="k">Travellers</div><div class="v">' + (1 + p.otherTravellers.length) + "</div></div>" +
-    '<div class="r"><div class="k">Excess</div><div class="v">' + esc(p.quote.deductible) + "</div></div>" +
-    '<div class="r"><div class="k">Payment</div><div class="v">' + esc(p.payment.method) + "</div></div>" +
-    '<div class="r tot"><div class="k" style="color:var(--text);font-weight:600">Premium</div><div class="v">US$' + p.quote.totalPremiumUSD.toFixed(2) + "</div></div>";
-  $("doneSummary").innerHTML = rows;
-  $("waDone").href = waLink("Hi Ricky, I've just submitted my VUMI Travel VIP application online (" +
-    p.applicant.firstName + " " + p.applicant.lastName + ", US$" + p.quote.totalPremiumUSD.toFixed(2) + ").");
-  $("stickybar").classList.remove("show");
+  $("doneSum").innerHTML =
+    '<div class="sr"><div class="sk">Applicant</div><div class="sv">' + esc(p.applicant.firstName + " " + p.applicant.lastName) + "</div></div>" +
+    '<div class="sr"><div class="sk">Cover</div><div class="sv">' + esc(p.quote.structure) + "</div></div>" +
+    '<div class="sr"><div class="sk">Travellers</div><div class="sv">' + (1 + p.otherTravellers.length) + "</div></div>" +
+    '<div class="sr"><div class="sk">Payment</div><div class="sv">' + esc(p.payment.method) + "</div></div>" +
+    '<div class="sr total"><div class="sk">Premium</div><div class="sv">US$' + money(p.quote.totalPremiumUSD) + "</div></div>";
+  $("mbar").classList.remove("show");
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   EMAIL / WHATSAPP HELPERS
-   ══════════════════════════════════════════════════════════════════════════ */
-function waLink(msg) {
-  return "https://wa.me/" + CONFIG.WHATSAPP + "?text=" + encodeURIComponent(msg);
-}
-
-function quoteMessage() {
-  if (!S.quote) return "Hi Ricky, I'd like to ask about travel insurance.";
-  var period = (S.tripType === "annual")
-    ? "annual multi-trip, up to " + S.annualLen + " days per trip"
-    : S.days + " days (" + fmtDate(S.from) + " to " + fmtDate(S.to) + ")";
-  return "Hi Ricky, I got a VUMI Travel VIP quote online: " + period + ", " +
-         S.travellers.length + " traveller(s), " + dedLabel(S.deductible) + " excess — US$" +
-         money(S.quote.total) + ". I'd like to talk it through.";
-}
-
-$("emailQuote").addEventListener("click", function () {
+$("mailQuote").addEventListener("click", function () {
   if (!S.quote) return;
-  var q = S.quote;
-  var lines = [];
-  lines.push("VUMI Travel VIP — your quote");
-  lines.push("");
-  lines.push("Plan:      " + (S.tripType === "annual" ? "Annual Multi-Trip (up to " + S.annualLen + " days per trip)" : "Single Trip"));
-  lines.push("Region:    " + (S.region === "worldwide" ? "Worldwide incl. USA & Canada" : "Worldwide excl. USA & Canada"));
-  if (S.tripType === "single") lines.push("Dates:     " + fmtDate(S.from) + " to " + fmtDate(S.to) + " (" + S.days + " days)");
-  lines.push("Travellers: " + S.travellers.length);
-  lines.push("Excess:    " + dedLabel(S.deductible));
-  if (S.riders.nm) lines.push("Rider:     Non-Medical Rider included");
-  if (S.riders.tc) lines.push("Rider:     Trip Cancellation Rider included");
-  lines.push("");
-  lines.push("TOTAL PREMIUM: US$" + money(q.total) + (SHOW_INDICATIVE_BADGE ? " (indicative)" : ""));
-  lines.push("");
-  lines.push("Apply online: " + window.location.href);
-  lines.push("Questions? " + CONFIG.AGENT_NAME + " — " + CONFIG.AGENT_PHONE);
-
-  window.location.href = "mailto:?subject=" + encodeURIComponent("My VUMI Travel VIP quote — US$" + money(q.total)) +
-                         "&body=" + encodeURIComponent(lines.join("\n"));
+  var q = S.quote, L = [];
+  L.push("Your travel insurance quote");
+  L.push("");
+  L.push("Cover:      " + (S.tripType === "annual" ? "Annual plan, up to " + S.annualPlan + " days per trip" : "Single trip"));
+  if (S.tripType === "single") L.push("Dates:      " + fmtDate(S.from) + " to " + fmtDate(S.to) + " (" + S.days + " days)");
+  L.push("Travellers: " + S.travellers.length);
+  if (S.riders.nm) L.push("Rider:      Non-medical benefits");
+  if (S.riders.tc) L.push("Rider:      Trip cancellation");
+  L.push("");
+  L.push("TOTAL PREMIUM: US$" + money(q.total));
+  L.push("");
+  L.push("Apply online: " + window.location.href);
+  L.push("Questions: " + CONFIG.PHONE);
+  window.location.href = "mailto:?subject=" + encodeURIComponent("My travel insurance quote — US$" + money(q.total)) +
+                         "&body=" + encodeURIComponent(L.join("\n"));
 });
 
-/* ══════════════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════════════
    STATIC CONTENT + INIT
-   ══════════════════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════════════════ */
 (function renderBenefits() {
-  var html = "";
-  BENEFITS.forEach(function (b) {
-    var isHead = b[1] === "";
-    html += isHead
-      ? '<tr><td colspan="2" style="color:var(--teal);font-family:\'Montserrat\',sans-serif;font-weight:700;font-size:11.5px;letter-spacing:.7px;text-transform:uppercase;padding-top:18px">' + b[0].replace(/—/g, "").trim() + "</td></tr>"
+  $("benefitRows").innerHTML = BENEFITS.map(function (b) {
+    return b[0] === "grp"
+      ? '<tr class="grp"><td colspan="2">' + b[1] + "</td></tr>"
       : "<tr><td>" + b[0] + "</td><td>" + b[1] + "</td></tr>";
-  });
-  $("benefitRows").innerHTML = html;
+  }).join("");
 })();
 
-document.querySelectorAll(".acc-h").forEach(function (h) {
+(function renderDisclosure() {
+  $("brandName").innerHTML = CONFIG.BRAND_HTML;
+  $("footBrand").textContent = CONFIG.BRAND;
+  $("footPhone").href = "tel:" + CONFIG.PHONE.replace(/[^0-9+]/g, "");
+  $("footPhone").textContent = CONFIG.PHONE;
+  $("footEmail").href = "mailto:" + CONFIG.EMAIL_TO;
+  $("footEmail").textContent = CONFIG.EMAIL_TO;
+
+  var who = "";
+  if (CONFIG.DISCLOSURE === "full" && CONFIG.INTERMEDIARY_NAME) {
+    who = "This website is operated by <b>" + esc(CONFIG.INTERMEDIARY_NAME) + "</b>" +
+          (CONFIG.REGISTRATION_NO ? ", registered under the Insurance Act, 2018 (registration " + esc(CONFIG.REGISTRATION_NO) + ")" : "") +
+          ", acting as an insurance intermediary. ";
+  } else if (CONFIG.DISCLOSURE === "full") {
+    who = '<b style="color:#FFB4A4">⚠ Set CONFIG.INTERMEDIARY_NAME, or change CONFIG.DISCLOSURE.</b> ';
+  }
+
+  var insurer = (CONFIG.DISCLOSURE === "minimal")
+    ? ""
+    : "Cover is underwritten by <b>" + esc(CONFIG.INSURER) + "</b>. ";
+
+  $("legalBlock").innerHTML =
+    who + insurer +
+    "This website is not an insurer and does not underwrite insurance. " +
+    "Premiums shown are calculated from the insurer's current rate table and are confirmed by the insurer on application. " +
+    "Cover, benefits, limits and exclusions are governed entirely by the policy wording and the certificate issued by the insurer. " +
+    "Nothing on this page is a contract of insurance or an offer of cover, and no cover exists until the premium is received and a certificate is issued." +
+    '<br><br>© ' + new Date().getFullYear() + " " + esc(CONFIG.BRAND) + ". All rights reserved.";
+})();
+
+document.querySelectorAll(".ac-h").forEach(function (h) {
   h.addEventListener("click", function () { h.parentElement.classList.toggle("open"); });
 });
 
 (function init() {
   var t = todayISO();
-  $("dFrom").min = t;
-  $("dTo").min = t;
-  $("aStart").min = t;
+  $("dFrom").min = t; $("dTo").min = t; $("aStart").min = t;
   addTraveller();
-  $("waHelp").href = waLink("Hi Ricky, I'd like to ask about international travel insurance.");
+  updateProgress();
 })();
 </script>
 </body>
