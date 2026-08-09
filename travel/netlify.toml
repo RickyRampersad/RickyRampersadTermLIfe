@@ -1,0 +1,46 @@
+# Netlify configuration for travelmedicalcover.com
+#
+# This is a SEPARATE Netlify site from rickyrampersadbranch.com, deployed
+# from the same repository with the base directory set to "travel".
+#
+#   Netlify → Add new site → Import an existing project
+#     Repository:       RickyRampersad/RickyRampersadTermLIfe
+#     Base directory:   travel
+#     Publish directory: travel
+#     Build command:    (leave empty — it's a static page)
+#
+# Then Domain management → Add custom domain → travelmedicalcover.com
+# and follow Netlify's DNS instructions at GoDaddy.
+
+[build]
+  publish = "."
+  command = ""
+
+# ── Security headers ─────────────────────────────────────────────────────
+# The page is self-contained apart from Google Fonts, so the CSP can be
+# tight. If you later embed a payment provider or analytics, widen the
+# relevant directive rather than removing the header.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=(), payment=()"
+    Content-Security-Policy = """
+      default-src 'self'; \
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; \
+      font-src 'self' https://fonts.gstatic.com; \
+      script-src 'self' 'unsafe-inline'; \
+      img-src 'self' data:; \
+      connect-src 'self'; \
+      form-action 'none'; \
+      frame-ancestors 'self'; \
+      base-uri 'self'"""
+
+# Long cache for the font files Google serves; the page itself stays fresh
+# so edits show up immediately.
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
