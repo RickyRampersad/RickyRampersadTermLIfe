@@ -486,21 +486,62 @@
   }
   .careers-h {
     font-family: 'Montserrat', sans-serif; font-weight: 900;
-    font-size: clamp(28px, 5vw, 46px); line-height: 1.08;
-    letter-spacing: -.5px; margin-bottom: 16px;
+    font-size: clamp(31px, 5.9vw, 56px); line-height: 1.04;
+    letter-spacing: -1.2px; margin-bottom: 18px;
   }
   .careers-h em { font-style: normal; color: var(--gold); }
   .crot {
-    display: inline-block;
-    transition: opacity .32s ease, transform .32s ease, filter .32s ease;
-    text-shadow: 0 0 26px rgba(239,194,75,.28);
+    display: inline-block; position: relative;
+    transition: opacity .26s cubic-bezier(.2,.8,.2,1), transform .26s cubic-bezier(.2,.8,.2,1), filter .26s ease;
+    text-shadow: 0 0 34px rgba(239,194,75,.45);
   }
-  .crot.out { opacity: 0; transform: translateY(14px) scale(.97); filter: blur(2px); }
+  .crot.out { opacity: 0; transform: translateY(-16px) scale(.94); filter: blur(3px); }
+  .crot::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: -.12em; height: .07em;
+    background: linear-gradient(90deg, var(--gold), rgba(239,194,75,.15));
+    border-radius: 2px; transform-origin: left center; transform: scaleX(0);
+    transition: transform .75s cubic-bezier(.2,.8,.2,1) .12s;
+  }
+  .crot:not(.out)::after { transform: scaleX(1); }
   .careers-lead {
     color: var(--muted); font-size: clamp(14px, 2.2vw, 16.5px);
     line-height: 1.75; max-width: 660px; margin-bottom: 30px;
   }
   .careers-lead b { color: var(--text); font-weight: 700; }
+
+  .seats {
+    display: inline-flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    background: rgba(239,194,75,.07); border: 1px solid rgba(239,194,75,.3);
+    border-radius: 50px; padding: 9px 18px; margin-bottom: 30px;
+  }
+  .seat-dots { display: inline-flex; gap: 6px; }
+  .seat-dots i {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    box-shadow: 0 0 10px rgba(239,194,75,.6);
+    animation: seatPulse 2.6s ease-in-out infinite;
+  }
+  .seat-dots i:nth-child(2) { animation-delay: .18s; }
+  .seat-dots i:nth-child(3) { animation-delay: .36s; }
+  .seat-dots i:nth-child(4) { animation-delay: .54s; }
+  .seat-dots i:nth-child(5) { animation-delay: .72s; }
+  @keyframes seatPulse {
+    0%, 100% { opacity: .45; transform: scale(.85); }
+    50% { opacity: 1; transform: scale(1.12); }
+  }
+  .seat-txt { font-size: 12.5px; color: var(--muted); }
+  .seat-txt b { color: var(--gold); font-family: 'Montserrat', sans-serif; font-weight: 800; }
+
+  .careers::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.05) 50%, transparent 65%);
+    background-size: 260% 100%;
+    animation: bandSweep 9s ease-in-out infinite;
+  }
+  @keyframes bandSweep {
+    0%, 72% { background-position: 130% 0; }
+    100% { background-position: -30% 0; }
+  }
 
   .careers-stats {
     display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 34px;
@@ -1085,6 +1126,11 @@
         <b>23&times; MDRT branch</b> with <b>32 years</b> in Trinidad, opening a handful of seats to proven advisors
         ready for a branch that backs them, and to sharp newcomers ready to be built properly.</p>
 
+      <div class="seats reveal">
+        <span class="seat-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+        <span class="seat-txt"><b>Five seats</b> this intake · selection is rolling · reviewed within 48 hours</span>
+      </div>
+
       <div class="careers-stats reveal">
         <div class="cstat"><div class="cs-num"><span data-count="23">0</span>&times;</div><div class="cs-lbl">MDRT branch</div></div>
         <div class="cstat"><div class="cs-num"><span data-count="32">0</span></div><div class="cs-lbl">Years in Trinidad</div></div>
@@ -1408,7 +1454,8 @@
   }
 
   // Careers headline rotator — only runs while the section is on screen
-  var cWords = ['the driven', 'the hungry', 'the resilient', 'the coachable', 'the self-directed', 'the relentless'];
+  var cWords = ['the driven', 'the hungry', 'the underestimated', 'the relentless',
+                'the coachable', 'the under-recognised', 'the resilient', 'the unstoppable'];
   var crot = document.getElementById('crot');
   if (!reduceMotion && crot) {
     var ci = 0, cTimer = null;
@@ -1418,11 +1465,11 @@
         ci = (ci + 1) % cWords.length;
         crot.textContent = cWords[ci];
         crot.classList.remove('out');
-      }, 320);
+      }, 260);
     };
     var cIO = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
-        if (e.isIntersecting && !cTimer) { cTimer = setInterval(cycle, 2400); }
+        if (e.isIntersecting && !cTimer) { cTimer = setInterval(cycle, 2100); }
         else if (!e.isIntersecting && cTimer) { clearInterval(cTimer); cTimer = null; }
       });
     }, { threshold: 0.15 });
