@@ -490,6 +490,12 @@
     letter-spacing: -.5px; margin-bottom: 16px;
   }
   .careers-h em { font-style: normal; color: var(--gold); }
+  .crot {
+    display: inline-block;
+    transition: opacity .32s ease, transform .32s ease, filter .32s ease;
+    text-shadow: 0 0 26px rgba(239,194,75,.28);
+  }
+  .crot.out { opacity: 0; transform: translateY(14px) scale(.97); filter: blur(2px); }
   .careers-lead {
     color: var(--muted); font-size: clamp(14px, 2.2vw, 16.5px);
     line-height: 1.75; max-width: 660px; margin-bottom: 30px;
@@ -1074,7 +1080,7 @@
     <div class="careers-glow"></div>
     <div class="careers-inner">
       <div class="careers-eyebrow reveal"><span class="live-dot"></span>Careers · Now selecting · Chaguanas, Trinidad</div>
-      <h2 class="careers-h reveal">The environment decides.<br><em>We select the driven.</em></h2>
+      <h2 class="careers-h reveal">The environment decides.<br><em>We select <span class="crot" id="crot">the driven</span>.</em></h2>
       <p class="careers-lead reveal">Talent gets you in the game — environment decides how far you go. This is a
         <b>23&times; MDRT branch</b> with <b>32 years</b> in Trinidad, opening a handful of seats to proven advisors
         ready for a branch that backs them, and to sharp newcomers ready to be built properly.</p>
@@ -1399,6 +1405,28 @@
         rotator.classList.remove('out');
       }, 350);
     }, 2600);
+  }
+
+  // Careers headline rotator — only runs while the section is on screen
+  var cWords = ['the driven', 'the hungry', 'the resilient', 'the coachable', 'the self-directed', 'the relentless'];
+  var crot = document.getElementById('crot');
+  if (!reduceMotion && crot) {
+    var ci = 0, cTimer = null;
+    var cycle = function () {
+      crot.classList.add('out');
+      setTimeout(function () {
+        ci = (ci + 1) % cWords.length;
+        crot.textContent = cWords[ci];
+        crot.classList.remove('out');
+      }, 320);
+    };
+    var cIO = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting && !cTimer) { cTimer = setInterval(cycle, 2400); }
+        else if (!e.isIntersecting && cTimer) { clearInterval(cTimer); cTimer = null; }
+      });
+    }, { threshold: 0.15 });
+    cIO.observe(document.getElementById('careers'));
   }
 
   // Scroll reveal with stagger
