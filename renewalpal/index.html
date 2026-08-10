@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>RenewalPal — Your Insurance Renewal Portal</title>
+<meta name="description" content="Review your cover, check your values, and send your renewal instructions in two minutes. A Ricky Rampersad initiative.">
+<style>
+:root{--navy:#003366;--navy2:#0d4479;--gold:#E8A020;--ink:#1a2433;--line:#dde5ee}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:16px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+  background:linear-gradient(165deg,#002a52 0%,var(--navy) 45%,#0a4a7a 100%);color:#fff;
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:22px}
+.box{width:100%;max-width:440px;text-align:center}
+.gmark{width:66px;height:66px;margin:0 auto 16px}
+h1{font-size:26px;letter-spacing:-.02em;margin-bottom:3px}
+h1 .pal{color:var(--gold)}
+.by{font-size:12.5px;color:var(--gold);margin-bottom:6px}
+.by b{color:#fff}
+.tag{font-size:13px;color:#b7c9de;margin-bottom:4px}
+#msg{color:#cfe0ee;font-size:14.5px;margin-top:14px}
+.spin{margin:26px auto 0;width:36px;height:36px;border:4px solid #1c4d80;border-top-color:var(--gold);border-radius:50%;animation:r .9s linear infinite}
+@keyframes r{to{transform:rotate(360deg)}}
+.card{display:none;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);
+  border-radius:16px;padding:24px;margin-top:22px;text-align:left;backdrop-filter:blur(8px)}
+label{display:block;font-size:12px;font-weight:700;color:#b7c9de;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+input{width:100%;border:none;border-radius:11px;padding:14px 16px;font:inherit;font-weight:700;
+  letter-spacing:.14em;text-align:center;color:var(--navy);font-size:17px}
+input:focus{outline:3px solid var(--gold);outline-offset:1px}
+button{width:100%;margin-top:12px;background:var(--gold);color:var(--navy);font-weight:800;font-size:15.5px;
+  border:none;border-radius:11px;padding:14px;cursor:pointer;transition:filter .15s}
+button:hover{filter:brightness(1.07)}
+.err{display:none;background:#7c2420;border-radius:9px;padding:10px 13px;font-size:13px;margin-top:11px;color:#ffd9d6}
+.hint{font-size:12.5px;color:#8fb0cd;margin-top:15px;line-height:1.6;border-top:1px solid rgba(255,255,255,.12);padding-top:14px}
+.hint a{color:var(--gold)}
+.feat{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+.feat span{font-size:11.5px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);
+  padding:6px 12px;border-radius:99px;color:#cfe0ee}
+.foot{margin-top:24px;font-size:11.5px;color:#7e9ab0;line-height:1.6}
+.warn{display:none;background:var(--navy2);border-radius:12px;padding:16px;margin-top:20px;font-size:13.5px}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="gmark"><svg viewBox="0 0 24 24" width="66" height="66" aria-label="Shield with tick"><path d="M12 1.8l8.2 3v6.4c0 5.1-3.5 9.6-8.2 11.3C7.3 20.8 3.8 16.3 3.8 11.2V4.8z" fill="#E8A020"/><path d="M8 12.2l2.9 2.9 5.3-6" stroke="#003366" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <h1>Renewal<span class="pal">Pal</span></h1>
+  <div class="by">A <b>Ricky Rampersad</b> initiative</div>
+  <div class="tag">Guardian Group Agent · Motor · Home · Life · Health</div>
+  <p id="msg">Opening your secure renewal portal…</p>
+  <div class="spin" id="spin"></div>
+
+  <div class="card" id="login">
+    <label for="code">Your access code</label>
+    <input id="code" type="text" placeholder="e.g. 3Ew-v0JD" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <button id="go">Open my renewal portal →</button>
+    <div class="err" id="err">Please enter your access code.</div>
+    <div class="hint">Your code is in your renewal email — or simply click the button in that email and you'll come straight in.<br><br>
+      Don't have it? Call <b>(868) 678-5921</b> or email <a href="mailto:ricky.rampersad@myguardiangroup.com">ricky.rampersad@myguardiangroup.com</a> and we'll send your link.</div>
+  </div>
+
+  <div class="feat" id="feat" style="display:none">
+    <span>🛡 See your cover</span><span>📉 Check your values</span><span>🏆 Your loyalty history</span><span>✅ Renew in 2 minutes</span>
+  </div>
+
+  <div class="warn" id="warn"></div>
+  <div class="foot">Nothing is bound until Guardian confirms your renewal.<br>Never send card numbers by email — our team arranges secure payment with you.</div>
+</div>
+<script>
+/* ============================================================
+   The Apps Script web app that runs the secure client portal.
+   Update this if you ever create a NEW deployment.             */
+var PORTAL_URL = 'https://script.google.com/macros/s/AKfycbwYQlLt1txn4pCWEq3xO_FmmPUfRAUMzey-vzbUe-qDr9tX27BpM0ZbkP5G0WuYQuZJ8g/exec';
+/* ============================================================ */
+
+(function () {
+  var q = location.search || '';
+  var msg = document.getElementById('msg');
+  var spin = document.getElementById('spin');
+  var login = document.getElementById('login');
+
+  if (PORTAL_URL.indexOf('https://') !== 0) {
+    spin.style.display = 'none';
+    msg.textContent = 'This page is not configured yet.';
+    var w = document.getElementById('warn');
+    w.style.display = 'block';
+    w.innerHTML = 'Site owner: paste your Apps Script web app URL into <b>PORTAL_URL</b> in index.html.';
+    return;
+  }
+
+  function open_(query) {
+    location.replace(PORTAL_URL + (PORTAL_URL.indexOf('?') > -1 ? '&' : '?') + query);
+  }
+
+  // Personal link (?t=CODE, and &survey=1 when present) — forward straight through.
+  if (/[?&]t=/.test(q)) { open_(q.slice(1)); return; }
+
+  // No code in the link — show sign-in.
+  spin.style.display = 'none';
+  msg.innerHTML = 'Welcome back. Sign in with your access code to review your policies and renew.';
+  login.style.display = 'block';
+  document.getElementById('feat').style.display = 'flex';
+
+  var code = document.getElementById('code');
+  var err = document.getElementById('err');
+  function submit() {
+    var v = code.value.trim();
+    if (!v) { err.style.display = 'block'; code.focus(); return; }
+    open_('t=' + encodeURIComponent(v));
+  }
+  document.getElementById('go').onclick = submit;
+  code.addEventListener('keydown', function (e) { if (e.key === 'Enter') submit(); });
+  code.focus();
+})();
+</script>
+</body>
+</html>

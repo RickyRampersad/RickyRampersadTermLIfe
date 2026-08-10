@@ -1,0 +1,17 @@
+# Netlify config for renewalpal.com
+# Publish directory is this folder; there is nothing to build.
+
+[build]
+  publish = "."
+
+# Friendly short links: renewalpal.com/r/CODE → the sign-in page with the code
+[[redirects]]
+  from = "/r/*"
+  to = "/?t=:splat"
+  status = 302
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
