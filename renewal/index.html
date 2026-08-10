@@ -1,802 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Policy Renewal Portal — Ricky Rampersad, Guardian Group Agent</title>
-<meta name="description" content="Review your upcoming insurance renewal, understand your cover, check your sum insured, and confirm your renewal instructions in under two minutes." />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Guardian Group — Policy Renewal</title>
 <style>
-  :root{
-    --navy-900:#0E2A47;
-    --navy-800:#14395F;
-    --navy-700:#1C4E80;
-    --teal-600:#0E8C8C;
-    --teal-500:#12A5A0;
-    --teal-50:#E9F7F6;
-    --gold:#F2B33D;
-    --gold-ink:#5C3D00;
-    --ink:#152435;
-    --muted:#5B7186;
-    --bg:#F4F8FB;
-    --white:#ffffff;
-    --red:#D64545;
-    --red-50:#FCEDED;
-    --green:#2F9E62;
-    --green-50:#EAF7F0;
-    --radius-lg:24px;
-    --radius-md:16px;
-    --shadow:0 16px 40px rgba(14,42,71,.12);
-    --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  }
-  *{margin:0;padding:0;box-sizing:border-box}
-  html{scroll-behavior:smooth}
-  body{font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
-  img,svg{max-width:100%;display:block}
-  a{color:inherit}
-  ul{list-style:none}
-  .wrap{width:min(1080px,92%);margin-inline:auto}
-  section{padding:56px 0}
-  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.78rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--teal-600);background:var(--teal-50);border:1px solid #CBEAE8;padding:7px 14px;border-radius:999px;margin-bottom:16px}
-  .h2{font-size:clamp(1.7rem,3.6vw,2.4rem);font-weight:800;letter-spacing:-.02em;line-height:1.18;margin-bottom:12px}
-  .lead{color:var(--muted);max-width:640px;font-size:1.03rem}
-  .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;font-weight:700;border-radius:999px;padding:14px 26px;border:none;cursor:pointer;font-size:1rem;white-space:nowrap;transition:transform .18s ease, box-shadow .18s ease;text-decoration:none}
-  .btn:hover{transform:translateY(-2px)}
-  .btn-primary{background:var(--navy-800);color:#fff;box-shadow:0 12px 26px rgba(20,57,95,.35)}
-  .btn-teal{background:var(--teal-500);color:#fff;box-shadow:0 12px 26px rgba(18,165,160,.35)}
-  .btn-gold{background:var(--gold);color:var(--gold-ink);box-shadow:0 12px 26px rgba(242,179,61,.35)}
-  .btn-ghost{background:#fff;color:var(--navy-900);border:1.5px solid #D7E3EE}
-
-  header{position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);background:rgba(244,248,251,.88);border-bottom:1px solid rgba(20,57,95,.08)}
-  .nav{display:flex;align-items:center;justify-content:space-between;height:70px;gap:16px}
-  .logo{display:flex;align-items:center;gap:11px;font-weight:800;font-size:1.05rem;letter-spacing:-.01em;color:var(--navy-900);text-decoration:none}
-  .logo-badge{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--navy-800),var(--teal-600));display:grid;place-items:center;color:#fff;flex:none}
-  .logo small{display:block;font-size:.72rem;font-weight:600;color:var(--muted);letter-spacing:0}
-  .nav-links{display:flex;gap:24px;font-weight:600;color:var(--navy-900);font-size:.92rem}
-  .nav-links a{opacity:.72;transition:opacity .15s;text-decoration:none}
-  .nav-links a:hover{opacity:1}
-  @media(max-width:840px){.nav-links{display:none}}
-
-  /* HERO / summary */
-  .hero{background:linear-gradient(160deg,var(--navy-900) 0%,var(--navy-700) 60%,var(--teal-600) 130%);color:#fff;padding:56px 0 64px}
-  .hero h1{font-size:clamp(1.9rem,4.6vw,3rem);font-weight:800;letter-spacing:-.02em;line-height:1.12}
-  .hero .sub{color:#BFD9E8;margin-top:12px;max-width:620px;font-size:1.05rem}
-  .chip{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);padding:7px 14px;border-radius:999px;font-size:.82rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:18px}
-  .chip .dot{width:8px;height:8px;border-radius:50%;background:var(--gold)}
-
-  .banner{border-radius:var(--radius-md);padding:14px 18px;font-size:.93rem;font-weight:600;margin:22px 0 0;display:flex;gap:10px;align-items:flex-start}
-  .banner.demo{background:rgba(242,179,61,.15);border:1px solid rgba(242,179,61,.5);color:#FFE3AB}
-  .banner.error{background:rgba(214,69,69,.18);border:1px solid rgba(214,69,69,.5);color:#FFC9C9}
-
-  .policy-deck{margin-top:-34px;position:relative;z-index:5;display:grid;gap:18px}
-  .policy-card{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:26px 28px;display:grid;grid-template-columns:1.4fr 1fr;gap:22px;border:1px solid #E3EDF5}
-  @media(max-width:760px){.policy-card{grid-template-columns:1fr}}
-  .policy-card.due-soon{border:2px solid var(--gold)}
-  .pc-label{font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
-  .pc-name{font-size:1.25rem;font-weight:800;letter-spacing:-.01em}
-  .pc-cover{display:inline-flex;align-items:center;gap:8px;margin-top:8px;background:var(--teal-50);color:var(--teal-600);font-weight:700;font-size:.85rem;padding:5px 12px;border-radius:999px;border:1px solid #CBEAE8}
-  .pc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;margin-top:18px}
-  .pc-stat .v{font-size:1.15rem;font-weight:800;color:var(--navy-900)}
-  .pc-stat .k{font-size:.78rem;color:var(--muted);font-weight:600}
-  .pc-side{display:flex;flex-direction:column;justify-content:center;gap:12px;border-left:1px dashed #D7E3EE;padding-left:22px}
-  @media(max-width:760px){.pc-side{border-left:none;padding-left:0;border-top:1px dashed #D7E3EE;padding-top:18px}}
-  .countdown{display:flex;align-items:baseline;gap:8px}
-  .countdown .num{font-size:2.3rem;font-weight:800;color:var(--navy-900);letter-spacing:-.03em}
-  .countdown .lbl{color:var(--muted);font-weight:600;font-size:.9rem}
-  .countdown.urgent .num{color:var(--red)}
-  .pill{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:.85rem;padding:6px 13px;border-radius:999px}
-  .pill.good{background:var(--green-50);color:var(--green)}
-  .pill.bad{background:var(--red-50);color:var(--red)}
-  .pill.neutral{background:#EEF3F8;color:var(--muted)}
-
-  /* explainer cards */
-  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-top:36px}
-  .card{background:#fff;border:1px solid #E3EDF5;border-radius:var(--radius-lg);padding:28px 26px;transition:transform .2s ease, box-shadow .2s ease;position:relative}
-  .card:hover{transform:translateY(-5px);box-shadow:var(--shadow)}
-  .card .ico{width:50px;height:50px;border-radius:14px;background:linear-gradient(135deg,var(--navy-800),var(--teal-600));display:grid;place-items:center;color:#fff;margin-bottom:16px}
-  .card h3{font-size:1.1rem;font-weight:800;margin-bottom:8px}
-  .card p{color:var(--muted);font-size:.93rem}
-  .card .tag{position:absolute;top:20px;right:20px;background:var(--gold);color:var(--gold-ink);font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px}
-  .card ul{margin-top:12px;display:grid;gap:7px}
-  .card ul li{display:flex;gap:9px;font-size:.9rem;color:var(--ink)}
-  .card ul li::before{content:"✓";color:var(--teal-500);font-weight:800;flex:none}
-  .card ul li.no::before{content:"✕";color:var(--red)}
-
-  /* average section */
-  .avg{background:linear-gradient(180deg,var(--navy-900),var(--navy-800));color:#fff}
-  .avg .h2{color:#fff}
-  .avg .lead{color:#BFD9E8}
-  .avg-grid{display:grid;grid-template-columns:1fr 1fr;gap:34px;margin-top:38px;align-items:start}
-  @media(max-width:840px){.avg-grid{grid-template-columns:1fr}}
-  .avg-copy p{color:#CFE2EE;font-size:.98rem;margin-bottom:14px}
-  .avg-copy strong{color:#fff}
-  .formula{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:var(--radius-md);padding:16px 20px;font-size:.95rem;font-weight:700;color:var(--gold);margin:16px 0}
-  .calc{background:#fff;color:var(--ink);border-radius:var(--radius-lg);padding:28px;box-shadow:var(--shadow)}
-  .calc h3{font-weight:800;font-size:1.1rem;margin-bottom:4px}
-  .calc .hint{color:var(--muted);font-size:.85rem;margin-bottom:18px}
-  .field{margin-bottom:14px}
-  .field label{display:block;font-size:.82rem;font-weight:700;color:var(--navy-900);margin-bottom:6px}
-  .field input,.field select,.field textarea{width:100%;padding:12px 14px;border:1.5px solid #D7E3EE;border-radius:12px;font-family:inherit;font-size:.95rem;background:#FBFDFE;color:var(--ink)}
-  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--teal-500);background:#fff}
-  .calc-result{border-radius:var(--radius-md);padding:18px;margin-top:14px;font-size:.93rem;line-height:1.55}
-  .calc-result.ok{background:var(--green-50);border:1px solid #BCE5CE;color:#1F6B43}
-  .calc-result.warn{background:var(--red-50);border:1px solid #F2C2C2;color:#8F2C2C}
-  .calc-result .big{font-size:1.4rem;font-weight:800;display:block;margin:4px 0}
-
-  /* guide steps */
-  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:20px;margin-top:36px;counter-reset:step}
-  .step{background:#fff;border:1px solid #E3EDF5;border-radius:var(--radius-lg);padding:26px}
-  .step .n{width:40px;height:40px;border-radius:50%;background:var(--teal-50);color:var(--teal-600);display:grid;place-items:center;font-weight:800;margin-bottom:14px;border:1.5px solid #CBEAE8}
-  .step h3{font-size:1.02rem;font-weight:800;margin-bottom:6px}
-  .step p{color:var(--muted);font-size:.9rem}
-
-  /* campaigns */
-  .campaign{background:linear-gradient(135deg,#FFF7E8,#FDEFD1);border:1.5px solid #F4D89A;border-radius:var(--radius-lg);padding:26px;display:flex;gap:18px;align-items:flex-start}
-  .campaign .ico{width:46px;height:46px;border-radius:13px;background:var(--gold);color:var(--gold-ink);display:grid;place-items:center;flex:none}
-  .campaign h3{font-weight:800;margin-bottom:4px}
-  .campaign p{color:#6B5426;font-size:.92rem}
-  .campaign-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-top:32px}
-
-  /* form */
-  .respond{background:#fff}
-  .form-card{background:var(--bg);border:1px solid #E3EDF5;border-radius:var(--radius-lg);padding:34px;max-width:760px;margin:36px auto 0}
-  .choice-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:22px}
-  .choice{position:relative}
-  .choice input{position:absolute;opacity:0}
-  .choice label{display:block;background:#fff;border:2px solid #D7E3EE;border-radius:var(--radius-md);padding:18px 16px;cursor:pointer;transition:.15s;height:100%}
-  .choice label:hover{border-color:var(--teal-500)}
-  .choice input:checked + label{border-color:var(--teal-500);background:var(--teal-50);box-shadow:0 6px 18px rgba(18,165,160,.15)}
-  .choice .t{font-weight:800;font-size:.98rem;display:flex;gap:8px;align-items:center;margin-bottom:4px}
-  .choice .d{font-size:.82rem;color:var(--muted)}
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  @media(max-width:640px){.row2{grid-template-columns:1fr}}
-  .check{display:flex;gap:10px;align-items:flex-start;font-size:.88rem;color:var(--muted);margin:16px 0}
-  .check input{margin-top:4px;accent-color:var(--teal-500);width:17px;height:17px}
-  .form-note{font-size:.82rem;color:var(--muted);margin-top:14px}
-  .success-box{background:var(--green-50);border:1.5px solid #BCE5CE;color:#1F6B43;border-radius:var(--radius-md);padding:26px;text-align:center;font-weight:600;display:none}
-  .success-box .big{font-size:1.3rem;font-weight:800;display:block;margin-bottom:6px}
-
-  /* timeline */
-  .timeline{display:grid;gap:0;margin-top:36px;max-width:640px}
-  .t-item{display:grid;grid-template-columns:44px 1fr;gap:16px;padding-bottom:26px;position:relative}
-  .t-item::before{content:"";position:absolute;left:21px;top:44px;bottom:0;width:2px;background:#D7E3EE}
-  .t-item:last-child::before{display:none}
-  .t-dot{width:44px;height:44px;border-radius:50%;background:#fff;border:2px solid var(--teal-500);color:var(--teal-600);display:grid;place-items:center;font-weight:800;z-index:1}
-  .t-item h3{font-weight:800;font-size:1rem}
-  .t-item p{color:var(--muted);font-size:.9rem}
-
-  /* policy decoded */
-  .ncd-tables{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:28px}
-  .ncd-card{background:#fff;border:1px solid #E3EDF5;border-radius:var(--radius-lg);padding:24px}
-  .ncd-card h3{font-weight:800;font-size:1.02rem;margin-bottom:12px}
-  table.ncd{width:100%;border-collapse:collapse;font-size:.92rem}
-  table.ncd th{background:var(--navy-800);color:#fff;text-align:left;padding:9px 12px;font-size:.8rem;letter-spacing:.04em;text-transform:uppercase}
-  table.ncd td{padding:9px 12px;border-bottom:1px solid #EDF3F8}
-  table.ncd td:last-child{font-weight:800;color:var(--teal-600)}
-  .oeb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:28px}
-  .oeb{background:#fff;border:1px solid #E3EDF5;border-radius:var(--radius-md);padding:18px}
-  .oeb .n{font-size:.7rem;font-weight:800;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
-  .oeb h4{font-weight:800;font-size:.96rem;margin:4px 0 5px}
-  .oeb p{font-size:.85rem;color:var(--muted)}
-  .oeb .applies{display:inline-block;margin-top:8px;font-size:.7rem;font-weight:800;letter-spacing:.05em;padding:3px 9px;border-radius:999px;background:var(--teal-50);color:var(--teal-600)}
-  .oeb.hot{border:1.5px solid var(--gold);background:#FFFCF4}
-  .flag-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:28px}
-  .flag{border-radius:var(--radius-lg);padding:24px;border:1px solid #E3EDF5;background:#fff}
-  .flag h3{font-weight:800;font-size:1.02rem;margin-bottom:10px;display:flex;gap:9px;align-items:center}
-  .flag ul{display:grid;gap:8px}
-  .flag li{display:flex;gap:9px;font-size:.9rem;color:var(--ink)}
-  .flag.warn li::before{content:"✕";color:var(--red);font-weight:800;flex:none}
-  .flag.duty li::before{content:"→";color:var(--teal-600);font-weight:800;flex:none}
-
-  footer{background:var(--navy-900);color:#B9CFDF;padding:44px 0;font-size:.9rem}
-  .foot{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}
-  footer strong{color:#fff}
-  .disclaimer{margin-top:18px;font-size:.78rem;color:#7E9AB0;max-width:820px;line-height:1.6}
+:root{--navy:#003366;--gold:#E8A020;--light:#E8F0F8}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:16px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:var(--navy);color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.box{text-align:center;max-width:420px;width:100%}
+.gmark{width:64px;height:64px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
+h1{font-size:22px;margin-bottom:6px}
+p{color:#b7c9de;font-size:14px}
+.spin{margin:26px auto 0;width:36px;height:36px;border:4px solid #1c4d80;border-top-color:var(--gold);border-radius:50%;animation:r 0.9s linear infinite}
+@keyframes r{to{transform:rotate(360deg)}}
+a{color:var(--gold)}
+.warn{display:none;background:#0d4479;border-radius:12px;padding:16px;margin-top:22px;font-size:13.5px}
+/* access-code sign-in */
+.login{display:none;background:#0d4479;border-radius:14px;padding:22px;margin-top:24px;text-align:left}
+.login label{display:block;font-size:12.5px;font-weight:700;color:#b7c9de;text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px}
+.login input{width:100%;border:none;border-radius:10px;padding:13px 15px;font:inherit;font-weight:700;letter-spacing:.12em;text-align:center;text-transform:none;color:var(--navy)}
+.login button{width:100%;margin-top:11px;background:var(--gold);color:var(--navy);font-weight:800;font-size:15px;border:none;border-radius:10px;padding:13px;cursor:pointer}
+.login button:hover{filter:brightness(1.06)}
+.login .hint{font-size:12.5px;color:#8fb0cd;margin-top:12px;line-height:1.5}
+.login .err{display:none;background:#7c2420;border-radius:8px;padding:9px 12px;font-size:13px;margin-top:10px;color:#ffd9d6}
 </style>
 </head>
 <body>
+<div class="box">
+  <div class="gmark"><svg viewBox="0 0 24 24" width="64" height="64" aria-label="Shield with tick"><path d="M12 1.8l8.2 3v6.4c0 5.1-3.5 9.6-8.2 11.3C7.3 20.8 3.8 16.3 3.8 11.2V4.8z" fill="#E8A020"/><path d="M8 12.2l2.9 2.9 5.3-6" stroke="#003366" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <h1>Guardian Renewals</h1>
+  <p id="msg">Opening your secure renewal portal…</p>
+  <div class="spin" id="spin"></div>
 
-<header>
-  <div class="wrap nav">
-    <a class="logo" href="#top">
-      <span class="logo-badge">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2 4 5.5v5.6c0 4.9 3.4 9.5 8 10.9 4.6-1.4 8-6 8-10.9V5.5L12 2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m8.7 12 2.3 2.3 4.3-4.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </span>
-      <span>Renewal Portal<small>Ricky Rampersad · Guardian Group Agent</small></span>
-    </a>
-    <nav class="nav-links">
-      <a href="#policy">My Renewal</a>
-      <a href="#covers">Know Your Cover</a>
-      <a href="#policy-decoded">Your Guardian Policy</a>
-      <a href="#average">The Average Clause</a>
-      <a href="#guide">Renewal Guide</a>
-      <a href="#campaigns">Offers</a>
-    </nav>
-    <a class="btn btn-teal" href="#respond" style="padding:11px 20px;font-size:.9rem">Confirm My Renewal</a>
+  <div class="login" id="login">
+    <label for="code">Your access code</label>
+    <input id="code" type="text" placeholder="e.g. 3Ew-v0JD" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <button id="go">Open my renewal portal →</button>
+    <div class="err" id="err">Please enter your access code.</div>
+    <div class="hint">Your access code is in your renewal email — or just click the button in that email and you'll come straight in.<br><br>
+      Don't have it? Call <b>(868) 678-5921</b> or email <a href="mailto:ricky.rampersad@myguardiangroup.com">ricky.rampersad@myguardiangroup.com</a> and we'll send your link.<br><br>
+      New to motor cover? <a href="motor-policy.html">Read your Guardian policy explained in plain English →</a></div>
   </div>
-</header>
 
-<section class="hero" id="top">
-  <div class="wrap">
-    <span class="chip"><span class="dot"></span> <span id="chip-text">Upcoming renewal</span></span>
-    <h1 id="hero-title">Your renewal, made simple.</h1>
-    <p class="sub" id="hero-sub">Review your policy details below, make sure your cover still matches your life, and send us your renewal instructions in under two minutes. We handle the rest with Guardian.</p>
-    <div id="status-banner"></div>
-  </div>
-</section>
-
-<div class="wrap policy-deck" id="policy">
-  <!-- policy cards injected here -->
+  <div class="warn" id="warn"></div>
 </div>
-
-<section id="covers">
-  <div class="wrap">
-    <span class="eyebrow">Know your cover</span>
-    <h2 class="h2">Understand exactly what you're paying for.</h2>
-    <p class="lead">Most people renew on autopilot. Two minutes here means you renew with confidence — and never discover a gap on the day of a claim.</p>
-
-    <div class="cards">
-      <div class="card">
-        <span class="tag">Best protection</span>
-        <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2 4 5.5v5.6c0 4.9 3.4 9.5 8 10.9 4.6-1.4 8-6 8-10.9V5.5L12 2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></div>
-        <h3>Comprehensive</h3>
-        <p>The fullest motor cover available. Protects other people <em>and</em> your own vehicle.</p>
-        <ul>
-          <li>Damage to third parties (people &amp; property)</li>
-          <li>Accident damage to <strong>your own</strong> vehicle</li>
-          <li>Fire, theft &amp; attempted theft</li>
-          <li>Usually required if your vehicle is financed</li>
-        </ul>
-      </div>
-      <div class="card">
-        <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M5 7l7-4 7 4M5 7v6c0 4 3 7 7 8 4-1 7-4 7-8V7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <h3>Third Party, Fire &amp; Theft</h3>
-        <p>The middle option — third party cover plus protection if your vehicle is stolen or burns.</p>
-        <ul>
-          <li>Damage to third parties</li>
-          <li>Fire damage to your vehicle</li>
-          <li>Theft of your vehicle</li>
-          <li class="no">Accident damage to your own vehicle</li>
-        </ul>
-      </div>
-      <div class="card">
-        <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v4l2.5 2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
-        <h3>Third Party Only</h3>
-        <p>The legal minimum to drive in Trinidad &amp; Tobago. It protects everyone <em>except</em> your own vehicle.</p>
-        <ul>
-          <li>Injury to other people</li>
-          <li>Damage to other people's property</li>
-          <li class="no">Your own vehicle — any damage</li>
-          <li class="no">Fire or theft of your vehicle</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="cards" style="margin-top:20px">
-      <div class="card" style="grid-column:1/-1">
-        <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 11 12 4l9 7M5 10v9h14v-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <h3>Home / Household Insurance</h3>
-        <p>Your homeowners policy typically covers the <strong>building</strong> (rebuilding cost — not market value) and can cover <strong>contents</strong> (furniture, appliances, electronics). At renewal, ask yourself: have you renovated, extended, or bought big-ticket items this year? If yes, your sums insured probably need updating — and the average clause below applies to home policies too.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="policy-decoded" style="padding-top:0">
-  <div class="wrap">
-    <span class="eyebrow">Inside your Guardian policy</span>
-    <h2 class="h2">What your Guardian motor policy actually says.</h2>
-    <p class="lead">Straight from the Guardian General Private Motor Vehicle Policy wording — the discounts you've earned, the add-ons you can take at renewal, and the fine print that catches people out. <a href="motor-policy.html" style="color:var(--teal-600);font-weight:700">Read the full policy, decoded →</a></p>
-
-    <div class="ncd-tables">
-      <div class="ncd-card">
-        <h3>💰 No Claim Discount — Comprehensive</h3>
-        <table class="ncd">
-          <tr><th>Claim-free period</th><th>Discount</th></tr>
-          <tr><td>1 year</td><td>30%</td></tr>
-          <tr><td>2 consecutive years</td><td>40%</td></tr>
-          <tr><td>3 consecutive years</td><td>50%</td></tr>
-          <tr><td>4+ consecutive years</td><td>60%</td></tr>
-        </table>
-        <p style="font-size:.85rem;color:var(--muted);margin-top:12px"><strong>Step-Back protection:</strong> once you've reached the 3rd-year discount, a single claim doesn't wipe you out — 50% steps back to 30%, 60% to 40%. And after 2+ years at the maximum 60%, one claim doesn't touch your discount at all.</p>
-      </div>
-      <div class="ncd-card">
-        <h3>💰 No Claim Discount — Third Party &amp; TPF&amp;T</h3>
-        <table class="ncd">
-          <tr><th>Claim-free period</th><th>Discount</th></tr>
-          <tr><td>1 year</td><td>15%</td></tr>
-          <tr><td>2 consecutive years</td><td>20%</td></tr>
-          <tr><td>3 consecutive years</td><td>25%</td></tr>
-          <tr><td>4+ consecutive years</td><td>35%</td></tr>
-        </table>
-        <p style="font-size:.85rem;color:var(--muted);margin-top:12px">Each vehicle earns its own discount, even on one policy. Not sure what you've earned? Ask when you confirm your renewal — it directly reduces your premium.</p>
-      </div>
-    </div>
-
-    <h3 style="font-weight:800;font-size:1.15rem;margin-top:40px">Optional Extra Benefits you can add at renewal</h3>
-    <p style="color:var(--muted);font-size:.95rem;margin-top:4px">Renewal is the easiest moment to add these — ask for a price on any of them in the form below.</p>
-    <div class="oeb-grid">
-      <div class="oeb hot"><span class="n">OEB 1 · most recommended</span><h4>🌊 Special Perils</h4><p>Here's the surprise: the standard policy <strong>excludes flood, hurricane, windstorm and earthquake</strong>. OEB 1 removes that exclusion. In Trinidad &amp; Tobago, this one add-on has saved more vehicles than any other.</p><span class="applies">Comprehensive</span></div>
-      <div class="oeb"><span class="n">OEB 2</span><h4>🪟 Windscreen &amp; All Glass</h4><p>Glass-only claims paid with <strong>no excess</strong> and <strong>no effect on your No Claim Discount</strong>, with free reinstatement up to $2,500 once per period.</p><span class="applies">Comprehensive · Fire &amp; Theft</span></div>
-      <div class="oeb"><span class="n">OEB 4</span><h4>🚗 Courtesy Car / Loss of Use</h4><p>While your car is being repaired after a covered claim, Guardian provides a substitute vehicle or up to $100/day toward a rental.</p><span class="applies">Comprehensive</span></div>
-      <div class="oeb"><span class="n">OEB 5</span><h4>📋 Agreed Value</h4><p>Lock in your payout: on a total loss, Guardian pays the Sum Insured (less 15%/yr pro-rata depreciation) instead of arguing market value — requires a valuation from an approved valuator at each renewal.</p><span class="applies">Comprehensive · Fire &amp; Theft</span></div>
-      <div class="oeb"><span class="n">OEB 6</span><h4>🏥 Hospitalisation</h4><p>Up to $15,000 per 12-month period toward hospital bills from injury or sickness — a health top-up living inside your motor policy.</p><span class="applies">Comprehensive</span></div>
-      <div class="oeb"><span class="n">OEB 3 · 7 · 8</span><h4>👥 Passenger PA &amp; Higher Limits</h4><p>Personal accident benefits for your passengers, and increased third-party and legal-defence limits — worth reviewing if you regularly carry others.</p><span class="applies">All cover types</span></div>
-    </div>
-
-    <div class="flag-grid">
-      <div class="flag warn">
-        <h3>⚠️ Not covered — know before you claim</h3>
-        <ul>
-          <li>Flood, hurricane, windstorm, earthquake — unless you add OEB 1 Special Perils</li>
-          <li>Anyone driving who isn't an Authorised Driver on your certificate</li>
-          <li>Driving under the influence of alcohol or drugs</li>
-          <li>Wear &amp; tear, depreciation, and mechanical or electrical breakdown</li>
-          <li>Tyres alone, and glass alone (without OEB 2)</li>
-          <li>Your excess — the first part of every claim is yours</li>
-        </ul>
-      </div>
-      <div class="flag duty">
-        <h3>✅ Your side of the deal</h3>
-        <ul>
-          <li>Never leave keys (or the keyless fob) in an unoccupied vehicle — it can void theft cover</li>
-          <li>Report accidents to Guardian right away; theft goes to the police immediately</li>
-          <li>Never admit fault or promise payment at the scene</li>
-          <li>Tell us about changes: new vehicle, modifications, change of address or use — that's exactly what the form below is for</li>
-          <li>Claims settle at market value or your sum insured, whichever is <em>less</em> — one more reason to insure at the correct value</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="avg" id="average">
-  <div class="wrap">
-    <span class="eyebrow" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:var(--gold)">The most important 2 minutes on this page</span>
-    <h2 class="h2">"Average" — the clause that decides what a claim really pays.</h2>
-    <p class="lead">Nearly every comprehensive motor and home policy contains a <strong>condition of average</strong>. If you insure for less than the true value, the insurer treats you as self-insuring the difference — and every claim is reduced in proportion.</p>
-
-    <div class="avg-grid">
-      <div class="avg-copy">
-        <p><strong>How it works:</strong> if your vehicle is worth $100,000 but you insure it for $70,000, you are only covered for 70% of its value. Have a $20,000 accident, and the insurer pays 70% of it — <strong>$14,000</strong> — leaving you to find the other $6,000 yourself (before any excess).</p>
-        <div class="formula">Claim payment = (Sum Insured ÷ Actual Value) × Loss</div>
-        <p><strong>Why it matters at renewal:</strong> vehicle values shift every year and construction costs rise. Renewal is exactly the moment to reset your sum insured to the correct value — insuring for the right amount is almost always cheaper than discovering a shortfall after a loss.</p>
-        <p><strong>The flip side:</strong> over-insuring doesn't help either — you pay extra premium, but the insurer never pays more than the actual value. The goal is <em>accurate</em>, not high.</p>
-      </div>
-      <div class="calc">
-        <h3>Try it yourself</h3>
-        <p class="hint">Enter your numbers and see exactly what a claim would pay.</p>
-        <div class="field">
-          <label for="c-value">Actual value of vehicle / property (TT$)</label>
-          <input id="c-value" type="number" inputmode="numeric" placeholder="e.g. 100000" value="100000" />
-        </div>
-        <div class="field">
-          <label for="c-insured">Sum insured on your policy (TT$)</label>
-          <input id="c-insured" type="number" inputmode="numeric" placeholder="e.g. 70000" value="70000" />
-        </div>
-        <div class="field">
-          <label for="c-loss">Example claim / loss amount (TT$)</label>
-          <input id="c-loss" type="number" inputmode="numeric" placeholder="e.g. 20000" value="20000" />
-        </div>
-        <div id="c-result" class="calc-result warn"></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="guide">
-  <div class="wrap">
-    <span class="eyebrow">Renewal guide</span>
-    <h2 class="h2">How to renew right — in five steps.</h2>
-    <p class="lead">This is the same checklist we walk through with every client. Do these five things and you'll renew at the correct value, at the right price, with zero surprises.</p>
-    <div class="steps">
-      <div class="step"><div class="n">1</div><h3>Check your sum insured</h3><p>Get a current valuation for comprehensive cover (Guardian may request one). For home, use rebuilding cost — not what the property would sell for.</p></div>
-      <div class="step"><div class="n">2</div><h3>Review who drives &amp; what changed</h3><p>New drivers, a new address, modifications to the vehicle, renovations at home — small changes can affect your cover and must be declared.</p></div>
-      <div class="step"><div class="n">3</div><h3>Protect your no-claim discount</h3><p>Claim-free years earn a meaningful discount on motor premiums. Ask us where you stand and how it changes your renewal price.</p></div>
-      <div class="step"><div class="n">4</div><h3>Clear any balance owing</h3><p>An outstanding balance can hold up your renewal. Your balance (if any) is shown above — settle it before the due date and everything flows smoothly.</p></div>
-      <div class="step"><div class="n">5</div><h3>Send your instructions early</h3><p>Reply through this page at least a week before your due date. Driving without valid cover is an offence — never let a certificate lapse.</p></div>
-    </div>
-  </div>
-</section>
-
-<section id="campaigns" style="padding-top:0">
-  <div class="wrap">
-    <span class="eyebrow">Current offers</span>
-    <h2 class="h2">Campaigns you can take advantage of right now.</h2>
-    <div class="campaign-grid" id="campaign-grid"><!-- injected --></div>
-  </div>
-</section>
-
-<section class="respond" id="respond">
-  <div class="wrap">
-    <span class="eyebrow">Your renewal instructions</span>
-    <h2 class="h2">Tell us how to proceed — it takes two minutes.</h2>
-    <p class="lead">Choose an option below. We'll confirm receipt immediately, prepare everything with Guardian, and keep you updated until your new certificate is in hand.</p>
-
-    <form class="form-card" id="renewal-form" onsubmit="return submitResponse(event)">
-      <div class="choice-grid">
-        <div class="choice">
-          <input type="radio" name="decision" id="d1" value="Renew as-is" checked />
-          <label for="d1"><span class="t">✅ Renew as-is</span><span class="d">Everything is the same — same vehicle/property, same drivers, same cover.</span></label>
-        </div>
-        <div class="choice">
-          <input type="radio" name="decision" id="d2" value="Renew with changes" />
-          <label for="d2"><span class="t">✏️ I have changes</span><span class="d">Update sum insured, drivers, contact info, or other details before renewing.</span></label>
-        </div>
-        <div class="choice">
-          <input type="radio" name="decision" id="d3" value="Upgrade / quote requested" />
-          <label for="d3"><span class="t">⬆️ Upgrade my cover</span><span class="d">Quote me for comprehensive or additional benefits before I decide.</span></label>
-        </div>
-        <div class="choice">
-          <input type="radio" name="decision" id="d4" value="Call me first" />
-          <label for="d4"><span class="t">📞 Call me first</span><span class="d">I'd like to speak with Ricky before confirming anything.</span></label>
-        </div>
-      </div>
-
-      <div id="changes-wrap" style="display:none">
-        <div class="field">
-          <label for="f-changes">What's changing? (sum insured, drivers, vehicle, address, renovations…)</label>
-          <textarea id="f-changes" rows="3" placeholder="e.g. New valuation is TT$95,000 — please adjust the sum insured. My daughter (25, full licence) now drives the car too."></textarea>
-        </div>
-      </div>
-
-      <div class="row2">
-        <div class="field">
-          <label for="f-name">Your name</label>
-          <input id="f-name" type="text" autocomplete="name" required />
-        </div>
-        <div class="field">
-          <label for="f-mobile">Mobile</label>
-          <input id="f-mobile" type="tel" autocomplete="tel" required />
-        </div>
-      </div>
-      <div class="field">
-        <label for="f-email">Email</label>
-        <input id="f-email" type="email" autocomplete="email" required />
-      </div>
-      <div class="field">
-        <label for="f-notes">Anything else we should know? (optional)</label>
-        <textarea id="f-notes" rows="2" placeholder="Questions, preferred payment method, best time to call…"></textarea>
-      </div>
-
-      <div id="campaign-optins"><!-- injected checkboxes --></div>
-
-      <label class="check">
-        <input type="checkbox" id="f-consent" required />
-        <span>I confirm the information above is accurate and I authorise Ricky Rampersad (Guardian Group agent) to act on these renewal instructions on my behalf.</span>
-      </label>
-
-      <button class="btn btn-gold" type="submit" id="submit-btn" style="width:100%">Send My Renewal Instructions</button>
-      <p class="form-note">You'll get an instant confirmation email. Your instructions go straight to our office and on to Guardian — we'll keep you updated at every step.</p>
-    </form>
-
-    <div class="form-card success-box" id="success-box">
-      <span class="big">🎉 Instructions received!</span>
-      Check your inbox for a confirmation. We're on it — you'll hear from us as Guardian processes your renewal.
-    </div>
-  </div>
-</section>
-
-<section style="padding-top:0">
-  <div class="wrap">
-    <span class="eyebrow">What happens next</span>
-    <h2 class="h2">We keep you updated at every step.</h2>
-    <div class="timeline">
-      <div class="t-item"><div class="t-dot">1</div><div><h3>You confirm (today)</h3><p>Submit your instructions above — you get an instant email confirmation.</p></div></div>
-      <div class="t-item"><div class="t-dot">2</div><div><h3>We prepare your renewal</h3><p>We review your details, apply any changes, and send formal renewal instructions to Guardian.</p></div></div>
-      <div class="t-item"><div class="t-dot">3</div><div><h3>Guardian processes it</h3><p>We track it and update you if anything is needed — valuation, documents, or payment.</p></div></div>
-      <div class="t-item"><div class="t-dot">4</div><div><h3>You're covered</h3><p>Your new certificate and schedule are issued before your current cover expires. No gaps, no stress.</p></div></div>
-    </div>
-  </div>
-</section>
-
-<footer>
-  <div class="wrap">
-    <div class="foot">
-      <div>
-        <strong>Ricky Rampersad</strong> — Guardian Group Agent<br/>
-        Motor · Home · Life · Health
-      </div>
-      <div>
-        📧 <a href="mailto:ricky.rampersad@myguardiangroup.com">ricky.rampersad@myguardiangroup.com</a><br/>
-        📱 <a href="tel:+18686785921">(868) 678-5921</a><br/>
-        🏢 <a href="corporate.html">Corporate fleet clients — sign in here</a>
-      </div>
-    </div>
-    <p class="disclaimer">This portal is provided by Ricky Rampersad, an independent agent of Guardian General Insurance Limited, for the convenience of his clients. Figures shown are taken from our office records and are indicative — your official renewal notice, policy schedule and certificate issued by Guardian are the binding documents. Cover explanations on this page are general summaries only; your policy wording governs. Submitting this form sends renewal instructions to our office; cover is only bound once confirmed by Guardian.</p>
-  </div>
-</footer>
-
 <script>
-/* ================= CONFIG =================
-   API_URL: your Google Apps Script Web App URL (ends in /exec).
-   Leave "" to run the portal in demo mode with sample data.       */
-const CONFIG = {
-  API_URL: "", // e.g. "https://script.google.com/macros/s/XXXX/exec"
-  AGENT_EMAIL: "ricky.rampersad@myguardiangroup.com",
-  CAMPAIGNS: [
-    {
-      id: "special-perils",
-      icon: "🌊",
-      title: "Special Perils (flood & hurricane) add-on — OEB 1",
-      text: "Most drivers don't know their standard policy excludes flood, hurricane and earthquake damage. Add Special Perils at renewal and your comprehensive cover protects you through storm season too. Ask for the price — it's smaller than you think."
-    },
-    {
-      id: "comprehensive-upgrade",
-      icon: "🛡️",
-      title: "Third Party → Comprehensive upgrade review",
-      text: "Renewing on third party? Ask for a free comprehensive quote at renewal — many clients are surprised how affordable full protection is, especially with a clean claims record."
-    },
-    {
-      id: "home-bundle",
-      icon: "🏠",
-      title: "Motor + Home bundle check",
-      text: "Insure your home and vehicle through our office and we'll review both at every renewal — one call, one renewal date strategy, correct values on both policies."
-    },
-    {
-      id: "family-referral",
-      icon: "👨‍👩‍👧",
-      title: "Family & referral programme",
-      text: "Refer a family member or friend before your renewal date and we'll prioritise a full portfolio review for both of you — motor, home, life and health."
-    }
-  ]
-};
-/* =========================================== */
+/* ============================================================
+   EDIT THIS ONE LINE if you ever redeploy the Apps Script web
+   app (Deploy > New deployment > Web app > copy the /exec URL): */
+var PORTAL_URL = 'https://script.google.com/macros/s/AKfycbwYQlLt1txn4pCWEq3xO_FmmPUfRAUMzey-vzbUe-qDr9tX27BpM0ZbkP5G0WuYQuZJ8g/exec';
+/* ============================================================ */
 
-const $ = (id) => document.getElementById(id);
-const fmt = (n) => isFinite(n) ? Number(n).toLocaleString("en-TT", {minimumFractionDigits: 2, maximumFractionDigits: 2}) : "—";
+(function(){
+  var q = location.search || '';
+  var msg = document.getElementById('msg');
+  var spin = document.getElementById('spin');
+  var login = document.getElementById('login');
 
-const DEMO_DATA = {
-  found: true,
-  demo: true,
-  client: "ALEXANDER, JORDAN HH",
-  contact: "Jordan",
-  email: "",
-  mobile: "",
-  policies: [
-    { coverage: "Comprehensive", nextDue: "2026-08-15", premium: 10649.31, paid: 5000, balance: 5649.31,
-      paymentStatus: "Balance owing", policyNo: "TTMV1600000", sumInsured: 255000 },
-    { coverage: "Third Party", nextDue: "2026-11-02", premium: 2603.63, paid: 2603.63, balance: 0,
-      paymentStatus: "Paid up", policyNo: "TTAPU0000000", sumInsured: "" }
-  ]
-};
-
-function getToken() {
-  const p = new URLSearchParams(location.search);
-  return (p.get("t") || p.get("token") || "").trim();
-}
-
-function daysUntil(dateStr) {
-  if (!dateStr) return null;
-  const d = new Date(dateStr + "T00:00:00");
-  if (isNaN(d)) return null;
-  const today = new Date(); today.setHours(0,0,0,0);
-  return Math.round((d - today) / 86400000);
-}
-
-function prettyDate(dateStr) {
-  const d = new Date(dateStr + "T00:00:00");
-  if (isNaN(d)) return dateStr || "—";
-  return d.toLocaleDateString("en-TT", { day: "numeric", month: "long", year: "numeric" });
-}
-
-function banner(kind, html) {
-  $("status-banner").innerHTML = '<div class="banner ' + kind + '">' + html + "</div>";
-}
-
-function renderPolicies(data) {
-  const deck = $("policy");
-  deck.innerHTML = "";
-  const first = (data.contact || data.client || "").split(/[ ,]/)[0];
-  if (first) {
-    $("hero-title").textContent = "Hi " + first.charAt(0) + first.slice(1).toLowerCase() + ", your renewal is coming up.";
-  }
-
-  // Split current/upcoming policies from history (renewals more than 60 days past).
-  const all = data.policies || [];
-  const activeRows = all.filter((p) => { const d = daysUntil(p.nextDue); return d === null || d >= -60; });
-  const historyRows = all.filter((p) => { const d = daysUntil(p.nextDue); return d !== null && d < -60; });
-
-  activeRows.forEach((p) => {
-    const dl = daysUntil(p.nextDue);
-    const urgent = dl !== null && dl <= 21;
-    const owing = Number(p.balance) > 0.01;
-    const card = document.createElement("div");
-    card.className = "policy-card" + (urgent ? " due-soon" : "");
-    card.innerHTML =
-      '<div>' +
-        '<div class="pc-label">Policyholder</div>' +
-        '<div class="pc-name">' + esc(data.client || "—") + '</div>' +
-        '<span class="pc-cover">🛡 ' + esc(p.coverage || "Motor") + (p.policyNo ? ' · ' + esc(p.policyNo) : '') + '</span>' +
-        '<div class="pc-grid">' +
-          '<div class="pc-stat"><div class="v">TT$ ' + fmt(p.premium) + '</div><div class="k">Annual premium</div></div>' +
-          (p.sumInsured ? '<div class="pc-stat"><div class="v">TT$ ' + fmt(p.sumInsured) + '</div><div class="k">Sum insured</div></div>' : '') +
-          '<div class="pc-stat"><div class="v">TT$ ' + fmt(p.paid) + '</div><div class="k">Paid to date</div></div>' +
-          '<div class="pc-stat"><div class="v" style="color:' + (owing ? "var(--red)" : "var(--green)") + '">TT$ ' + fmt(Math.max(p.balance,0)) + '</div><div class="k">Balance owing</div></div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="pc-side">' +
-        '<div><div class="pc-label">Renewal due</div><div style="font-weight:800;font-size:1.05rem">' + prettyDate(p.nextDue) + '</div></div>' +
-        (dl === null ? "" :
-          '<div class="countdown' + (urgent ? " urgent" : "") + '"><span class="num">' + (dl < 0 ? "0" : dl) + '</span><span class="lbl">' + (dl < 0 ? "days — renewal date has passed, act now" : "days left") + '</span></div>') +
-        '<span class="pill ' + (owing ? "bad" : "good") + '">' + (owing ? "● Balance owing — please settle before renewal" : "● " + esc(p.paymentStatus || "Paid up")) + '</span>' +
-        '<a class="btn btn-primary" href="#respond" style="margin-top:4px">Confirm this renewal</a>' +
-      '</div>';
-    deck.appendChild(card);
-  });
-
-  // History accordion
-  if (historyRows.length) {
-    const h = document.createElement("details");
-    h.style.cssText = "background:#fff;border:1px solid #E3EDF5;border-radius:16px;overflow:hidden";
-    h.innerHTML =
-      '<summary style="cursor:pointer;padding:16px 22px;font-weight:800;list-style:none">📁 Your renewal history (' + historyRows.length + ' earlier ' + (historyRows.length === 1 ? 'record' : 'records') + ')</summary>' +
-      '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.88rem;min-width:560px">' +
-      '<tr style="background:var(--navy-800);color:#fff;text-align:left"><th style="padding:9px 14px">Renewal date</th><th style="padding:9px 14px">Coverage</th><th style="padding:9px 14px">Policy</th><th style="padding:9px 14px;text-align:right">Premium (TT$)</th><th style="padding:9px 14px">Status</th></tr>' +
-      historyRows.map((p) =>
-        '<tr><td style="padding:9px 14px;border-bottom:1px solid #EDF3F8">' + prettyDate(p.nextDue) +
-        '</td><td style="padding:9px 14px;border-bottom:1px solid #EDF3F8">' + esc(p.coverage || "") +
-        '</td><td style="padding:9px 14px;border-bottom:1px solid #EDF3F8">' + esc(p.policyNo || "—") +
-        '</td><td style="padding:9px 14px;border-bottom:1px solid #EDF3F8;text-align:right">' + fmt(p.premium) +
-        '</td><td style="padding:9px 14px;border-bottom:1px solid #EDF3F8">' + esc(p.paymentStatus || "") + '</td></tr>'
-      ).join("") + "</table></div>";
-    deck.appendChild(h);
-  }
-
-  // Corporate clients with a fleet get a pointer to the fleet portal.
-  if ((data.fleet || []).length) {
-    const f = document.createElement("div");
-    f.style.cssText = "background:linear-gradient(135deg,#FFF7E8,#FDEFD1);border:1.5px solid #F4D89A;border-radius:16px;padding:18px 22px;font-weight:600;color:#6B5426";
-    f.innerHTML = '🏢 This account has a vehicle fleet on record — <a href="corporate.html?t=' + encodeURIComponent(getToken()) + '" style="color:#8a5a00">open the Corporate Fleet Portal</a> to see every vehicle and your renewal history by cycle.';
-    deck.appendChild(f);
-  }
-
-  // Prefill form
-  if (data.contact || data.client) $("f-name").value = data.contact || data.client;
-  if (data.email) $("f-email").value = data.email;
-  if (data.mobile) $("f-mobile").value = data.mobile;
-}
-
-function esc(s) {
-  return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
-}
-
-async function loadClient() {
-  const token = getToken();
-
-  if (!CONFIG.API_URL) {
-    renderPolicies(DEMO_DATA);
-    banner("demo", "👋 <span>Portal preview mode — showing sample data. Once connected to our records, this page shows each client their own policies via their personal link.</span>");
-    return;
-  }
-  if (!token) {
-    renderPolicies(DEMO_DATA);
-    banner("demo",
-      "🔑 <span style='flex:1'>Have an access code? Sign in to see your own policies and history:</span>" +
-      "<span style='display:inline-flex;gap:8px;flex-wrap:wrap'>" +
-      "<input id='login-code' placeholder='ACCESS CODE' style='padding:8px 12px;border-radius:10px;border:none;font-weight:700;letter-spacing:.1em;width:150px;text-transform:none' />" +
-      "<button onclick='portalLogin()' style='padding:8px 16px;border-radius:10px;border:none;background:var(--gold);color:var(--gold-ink);font-weight:800;cursor:pointer'>Sign in</button></span>");
-    const inp = $("login-code");
-    if (inp) inp.addEventListener("keydown", (e) => { if (e.key === "Enter") portalLogin(); });
+  if (PORTAL_URL.indexOf('https://') !== 0) {
+    spin.style.display = 'none';
+    msg.textContent = 'This page is not configured yet.';
+    var w = document.getElementById('warn');
+    w.style.display = 'block';
+    w.innerHTML = 'Site owner: open <b>renewal/index.html</b> in the repository and paste your Apps Script web app URL into <b>PORTAL_URL</b>.';
     return;
   }
 
-  banner("demo", "⏳ <span>Loading your renewal details…</span>");
-  try {
-    const res = await fetch(CONFIG.API_URL + "?token=" + encodeURIComponent(token));
-    const data = await res.json();
-    if (data && data.found) {
-      $("status-banner").innerHTML = "";
-      renderPolicies(data);
-    } else {
-      banner("error", "⚠️ <span>We couldn't match that link to a policy. Please use the exact link from your renewal email, or contact us at <a href='mailto:" + CONFIG.AGENT_EMAIL + "' style='color:#fff'>" + CONFIG.AGENT_EMAIL + "</a>.</span>");
-      renderPolicies(DEMO_DATA);
-    }
-  } catch (err) {
-    banner("error", "⚠️ <span>We couldn't load your details right now. You can still send your instructions below, or email us directly.</span>");
-    renderPolicies(DEMO_DATA);
+  function open_(query){ location.replace(PORTAL_URL + (PORTAL_URL.indexOf('?') > -1 ? '&' : '?') + query); }
+
+  // Personal link used (?t=CODE, plus &survey=1 when present) — forward straight through.
+  if (/[?&]t=/.test(q)) { open_(q.slice(1)); return; }
+
+  // No token: show the access-code sign-in.
+  spin.style.display = 'none';
+  msg.innerHTML = 'Welcome back. Sign in with your access code to review your policies and renew.';
+  login.style.display = 'block';
+
+  var code = document.getElementById('code');
+  var err = document.getElementById('err');
+  function submit(){
+    var v = code.value.trim();
+    if (!v) { err.style.display = 'block'; code.focus(); return; }
+    open_('t=' + encodeURIComponent(v));
   }
-}
-
-function portalLogin() {
-  const code = ($("login-code") && $("login-code").value.trim()) || "";
-  if (code) location.search = "?t=" + encodeURIComponent(code);
-}
-
-/* ---------- Average calculator ---------- */
-function calcAverage() {
-  const v = parseFloat($("c-value").value) || 0;
-  const s = parseFloat($("c-insured").value) || 0;
-  const l = parseFloat($("c-loss").value) || 0;
-  const out = $("c-result");
-  if (v <= 0 || l <= 0) { out.className = "calc-result warn"; out.innerHTML = "Enter your values above to see the result."; return; }
-  const ratio = Math.min(s / v, 1);
-  const payout = Math.min(l * ratio, s);
-  const shortfall = l - payout;
-  if (s >= v) {
-    out.className = "calc-result ok";
-    out.innerHTML = "✅ You're insured at (or above) full value — average doesn't bite.<span class='big'>Claim pays: TT$ " + fmt(Math.min(l, s)) + "</span>Every dollar of this loss is covered (subject to your excess)." + (s > v ? "<br/><br/>⚠️ Note: you're insured <strong>above</strong> actual value — the insurer still only ever pays up to actual value, so ask us about trimming the sum insured (and the premium) to the correct figure." : "");
-  } else {
-    out.className = "calc-result warn";
-    out.innerHTML = "⚠️ You'd be treated as self-insuring <strong>" + Math.round((1 - ratio) * 100) + "%</strong> of every claim.<span class='big'>Claim pays: TT$ " + fmt(payout) + "</span>You'd cover the remaining <strong>TT$ " + fmt(shortfall) + "</strong> out of pocket (before any excess). Fix this at renewal — update your sum insured to TT$ " + fmt(v) + ".";
-  }
-}
-
-/* ---------- Campaigns ---------- */
-function renderCampaigns() {
-  $("campaign-grid").innerHTML = CONFIG.CAMPAIGNS.map((c) =>
-    '<div class="campaign"><div class="ico">' + c.icon + '</div><div><h3>' + esc(c.title) + '</h3><p>' + esc(c.text) + '</p></div></div>'
-  ).join("");
-  $("campaign-optins").innerHTML =
-    '<div class="field"><label>Interested in any current offers? (optional)</label>' +
-    CONFIG.CAMPAIGNS.map((c) =>
-      '<label class="check" style="margin:6px 0"><input type="checkbox" name="campaign" value="' + esc(c.title) + '"/><span>' + c.icon + " " + esc(c.title) + "</span></label>"
-    ).join("") + "</div>";
-}
-
-/* ---------- Form ---------- */
-document.addEventListener("change", (e) => {
-  if (e.target.name === "decision") {
-    const v = document.querySelector('input[name="decision"]:checked').value;
-    $("changes-wrap").style.display = (v === "Renew with changes" || v === "Upgrade / quote requested") ? "block" : "none";
-  }
-});
-
-async function submitResponse(e) {
-  e.preventDefault();
-  const btn = $("submit-btn");
-  btn.disabled = true; btn.textContent = "Sending…";
-
-  const payload = {
-    action: "submit",
-    token: getToken(),
-    decision: document.querySelector('input[name="decision"]:checked').value,
-    changes: $("f-changes").value.trim(),
-    name: $("f-name").value.trim(),
-    mobile: $("f-mobile").value.trim(),
-    email: $("f-email").value.trim(),
-    notes: $("f-notes").value.trim(),
-    campaigns: Array.from(document.querySelectorAll('input[name="campaign"]:checked')).map((c) => c.value),
-    page: location.href,
-    submittedAt: new Date().toISOString()
-  };
-
-  let sent = false;
-  if (CONFIG.API_URL) {
-    try {
-      const res = await fetch(CONFIG.API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" }, // avoids CORS preflight for Apps Script
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json().catch(() => ({}));
-      sent = res.ok && data.ok !== false;
-    } catch (err) { sent = false; }
-  }
-
-  if (!sent) {
-    // Fallback: open a pre-filled email so the client can still respond.
-    const body = encodeURIComponent(
-      "RENEWAL INSTRUCTIONS\n\nDecision: " + payload.decision +
-      "\nName: " + payload.name + "\nMobile: " + payload.mobile + "\nEmail: " + payload.email +
-      (payload.changes ? "\nChanges: " + payload.changes : "") +
-      (payload.notes ? "\nNotes: " + payload.notes : "") +
-      (payload.campaigns.length ? "\nInterested in: " + payload.campaigns.join(", ") : "") +
-      (payload.token ? "\nRef: " + payload.token : "")
-    );
-    location.href = "mailto:" + CONFIG.AGENT_EMAIL + "?subject=" + encodeURIComponent("Renewal instructions — " + payload.name) + "&body=" + body;
-  }
-
-  $("renewal-form").style.display = "none";
-  $("success-box").style.display = "block";
-  $("success-box").scrollIntoView({ behavior: "smooth", block: "center" });
-  return false;
-}
-
-/* ---------- init ---------- */
-["c-value","c-insured","c-loss"].forEach((id) => $(id).addEventListener("input", calcAverage));
-calcAverage();
-renderCampaigns();
-loadClient();
+  document.getElementById('go').onclick = submit;
+  code.addEventListener('keydown', function(e){ if (e.key === 'Enter') submit(); });
+  code.focus();
+})();
 </script>
 </body>
 </html>
