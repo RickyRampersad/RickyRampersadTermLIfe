@@ -456,6 +456,307 @@
     html { scroll-behavior: auto; }
   }
 
+  /* ── CAREERS ── */
+  .careers {
+    position: relative; overflow: hidden;
+    margin: 60px -16px 0; padding: 64px 16px 58px;
+    background:
+      radial-gradient(ellipse 70% 60% at 20% 0%, rgba(239,194,75,.10), transparent 70%),
+      linear-gradient(165deg, #0b1b2c 0%, #10263d 55%, #0a1725 100%);
+    border-top: 1px solid rgba(239,194,75,.22);
+    border-bottom: 1px solid rgba(239,194,75,.22);
+  }
+  .careers-glow {
+    position: absolute; width: 520px; height: 520px; right: -180px; top: -180px;
+    border-radius: 50%; pointer-events: none;
+    background: radial-gradient(circle, rgba(239,194,75,.14), transparent 70%);
+    filter: blur(50px); animation: drift2 18s ease-in-out infinite;
+  }
+  .careers-inner { position: relative; z-index: 1; max-width: 1000px; margin: 0 auto; }
+  .careers-eyebrow {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-family: 'Montserrat', sans-serif; font-size: 10.5px; font-weight: 700;
+    letter-spacing: 2.2px; text-transform: uppercase; color: var(--gold);
+    background: rgba(239,194,75,.09); border: 1px solid rgba(239,194,75,.28);
+    border-radius: 50px; padding: 7px 15px; margin-bottom: 18px;
+  }
+  .live-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--teal);
+    box-shadow: 0 0 0 0 rgba(0,207,234,.5); animation: pulse 2s ease-out infinite;
+  }
+  .careers-h {
+    font-family: 'Montserrat', sans-serif; font-weight: 900;
+    font-size: clamp(31px, 5.9vw, 56px); line-height: 1.04;
+    letter-spacing: -1.2px; margin-bottom: 18px;
+  }
+  .careers-h em { font-style: normal; color: var(--gold); }
+  .crot {
+    display: inline-block; position: relative;
+    transition: opacity .26s cubic-bezier(.2,.8,.2,1), transform .26s cubic-bezier(.2,.8,.2,1), filter .26s ease;
+    text-shadow: 0 0 34px rgba(239,194,75,.45);
+  }
+  .crot.out { opacity: 0; transform: translateY(-16px) scale(.94); filter: blur(3px); }
+  .crot::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: -.12em; height: .07em;
+    background: linear-gradient(90deg, var(--gold), rgba(239,194,75,.15));
+    border-radius: 2px; transform-origin: left center; transform: scaleX(0);
+    transition: transform .75s cubic-bezier(.2,.8,.2,1) .12s;
+  }
+  .crot:not(.out)::after { transform: scaleX(1); }
+  .careers-lead {
+    color: var(--muted); font-size: clamp(14px, 2.2vw, 16.5px);
+    line-height: 1.75; max-width: 660px; margin-bottom: 30px;
+  }
+  .careers-lead b { color: var(--text); font-weight: 700; }
+
+  .seats {
+    display: inline-flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    background: rgba(239,194,75,.07); border: 1px solid rgba(239,194,75,.3);
+    border-radius: 50px; padding: 9px 18px; margin-bottom: 30px;
+  }
+  .seat-dots { display: inline-flex; gap: 6px; }
+  .seat-dots i {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    box-shadow: 0 0 10px rgba(239,194,75,.6);
+    animation: seatPulse 2.6s ease-in-out infinite;
+  }
+  .seat-dots i:nth-child(2) { animation-delay: .18s; }
+  .seat-dots i:nth-child(3) { animation-delay: .36s; }
+  .seat-dots i:nth-child(4) { animation-delay: .54s; }
+  .seat-dots i:nth-child(5) { animation-delay: .72s; }
+  @keyframes seatPulse {
+    0%, 100% { opacity: .45; transform: scale(.85); }
+    50% { opacity: 1; transform: scale(1.12); }
+  }
+  .seat-txt { font-size: 12.5px; color: var(--muted); }
+  .seat-txt b { color: var(--gold); font-family: 'Montserrat', sans-serif; font-weight: 800; }
+
+  .careers::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.05) 50%, transparent 65%);
+    background-size: 260% 100%;
+    animation: bandSweep 9s ease-in-out infinite;
+  }
+  @keyframes bandSweep {
+    0%, 72% { background-position: 130% 0; }
+    100% { background-position: -30% 0; }
+  }
+
+  .careers-stats {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 34px;
+  }
+  @media (max-width: 700px) { .careers-stats { grid-template-columns: repeat(2, 1fr); } }
+  .cstat {
+    background: rgba(255,255,255,.04); border: 1px solid rgba(239,194,75,.18);
+    border-radius: 16px; padding: 18px 14px; text-align: center;
+  }
+  .cs-num {
+    font-family: 'Montserrat', sans-serif; font-weight: 900;
+    font-size: clamp(22px, 3.4vw, 30px); color: var(--gold); line-height: 1;
+  }
+  .cs-lbl { font-size: 11.5px; color: var(--muted); margin-top: 6px; font-weight: 500; }
+
+  .careers-why {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(228px, 1fr));
+    gap: 13px; margin-bottom: 34px;
+  }
+  .why-card {
+    background: rgba(255,255,255,.035); border: 1px solid var(--line);
+    border-radius: 17px; padding: 20px 18px;
+    transition: transform .2s ease, border-color .2s ease;
+  }
+  .why-card:hover { transform: translateY(-4px); border-color: rgba(239,194,75,.4); }
+  .why-ico { font-size: 24px; margin-bottom: 10px; }
+  .why-card h3 {
+    font-family: 'Montserrat', sans-serif; font-size: 14.5px; font-weight: 800;
+    margin-bottom: 7px; color: var(--text);
+  }
+  .why-card p { font-size: 12.8px; color: var(--muted); line-height: 1.6; }
+
+  .roads { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 34px; }
+  @media (max-width: 760px) { .roads { grid-template-columns: 1fr; } }
+  .road {
+    background: linear-gradient(160deg, rgba(239,194,75,.07), rgba(239,194,75,.02));
+    border: 1px solid rgba(239,194,75,.25); border-radius: 19px; padding: 22px 20px;
+  }
+  .road-lead {
+    background: linear-gradient(160deg, rgba(0,207,234,.07), rgba(0,207,234,.02));
+    border-color: rgba(0,207,234,.28);
+  }
+  .road-tag {
+    font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 800;
+    letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 6px;
+  }
+  .road-lead .road-tag { color: var(--teal); }
+  .road h3 {
+    font-family: 'Montserrat', sans-serif; font-size: 17px; font-weight: 800; margin-bottom: 14px;
+  }
+  .road-steps { list-style: none; counter-reset: rung; display: grid; gap: 10px; }
+  .road-steps li {
+    counter-increment: rung; position: relative; padding-left: 32px;
+    font-family: 'Montserrat', sans-serif; font-size: 13.5px; font-weight: 700; color: var(--text);
+  }
+  .road-steps li::before {
+    content: counter(rung); position: absolute; left: 0; top: -1px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(239,194,75,.15); border: 1px solid rgba(239,194,75,.4);
+    color: var(--gold); font-size: 11px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .road-lead .road-steps li::before {
+    background: rgba(0,207,234,.15); border-color: rgba(0,207,234,.4); color: var(--teal);
+  }
+  .road-steps li span {
+    display: block; font-family: 'DM Sans', sans-serif; font-size: 11.5px;
+    font-weight: 400; color: var(--muted); margin-top: 3px;
+  }
+
+  .gates {
+    background: rgba(0,0,0,.22); border: 1px solid var(--line);
+    border-radius: 19px; padding: 20px; margin-bottom: 30px;
+  }
+  .gates-title {
+    font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 800;
+    letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 15px;
+  }
+  .gates-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  @media (max-width: 780px) { .gates-row { grid-template-columns: repeat(2, 1fr); } }
+  .gate { display: flex; align-items: center; gap: 9px; }
+  .gate b {
+    width: 26px; height: 26px; flex-shrink: 0; border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #1d1503;
+    font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .gate span { font-size: 12px; color: var(--text); font-weight: 500; line-height: 1.35; }
+
+  .bm-quote {
+    border-left: 3px solid var(--gold);
+    background: linear-gradient(100deg, rgba(239,194,75,.07), transparent 70%);
+    border-radius: 0 16px 16px 0; padding: 22px 24px; margin-bottom: 32px;
+  }
+  .bm-quote blockquote {
+    font-family: 'Montserrat', sans-serif; font-weight: 600;
+    font-size: clamp(15px, 2.3vw, 19px); line-height: 1.55;
+    color: var(--text); margin-bottom: 14px; letter-spacing: -.2px;
+  }
+  .bm-quote blockquote em { font-style: normal; color: var(--gold); }
+  .bm-quote figcaption { display: flex; align-items: center; gap: 11px; }
+  .bm-quote figcaption svg { width: 30px; height: 30px; flex-shrink: 0; }
+  .bm-quote figcaption b {
+    display: block; font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 800; color: var(--gold);
+  }
+  .bm-quote figcaption span { font-size: 11.5px; color: var(--muted); }
+
+  .objections {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 13px; margin-bottom: 28px;
+  }
+  .obj {
+    background: rgba(255,255,255,.035); border: 1px solid var(--line);
+    border-radius: 16px; padding: 18px;
+  }
+  .obj h4 {
+    font-family: 'Montserrat', sans-serif; font-size: 13.5px; font-weight: 800;
+    color: var(--gold); margin-bottom: 8px; line-height: 1.35;
+  }
+  .obj p { font-size: 12.7px; color: var(--muted); line-height: 1.6; }
+
+  .apply-flow {
+    background: linear-gradient(135deg, rgba(0,207,234,.07), rgba(0,207,234,.02));
+    border: 1px solid rgba(0,207,234,.25); border-radius: 19px;
+    padding: 20px; margin-bottom: 26px;
+  }
+  .af-title {
+    font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 800;
+    letter-spacing: 2px; text-transform: uppercase; color: var(--teal); margin-bottom: 15px;
+  }
+  .af-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .af-step { display: flex; align-items: flex-start; gap: 10px; flex: 1; min-width: 190px; }
+  .af-step b {
+    width: 26px; height: 26px; flex-shrink: 0; border-radius: 50%;
+    background: linear-gradient(135deg, var(--teal), var(--teal2)); color: #02141a;
+    font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .af-step strong {
+    display: block; font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.3;
+  }
+  .af-step span { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+  .af-arrow { color: var(--teal); font-size: 17px; font-weight: 700; flex-shrink: 0; }
+  @media (max-width: 780px) { .af-arrow { display: none; } .af-row { gap: 14px; } }
+
+  .btn-ghost-line {
+    background: rgba(255,255,255,.05); color: var(--text);
+    border: 1px solid rgba(255,255,255,.18);
+  }
+  .btn-ghost-line:hover { background: rgba(255,255,255,.1); transform: translateY(-2px); }
+
+  .careers-cta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .btn-outline {
+    background: rgba(0,207,234,.08); color: var(--teal);
+    border: 1px solid rgba(0,207,234,.45);
+  }
+  .btn-outline:hover { background: rgba(0,207,234,.16); transform: translateY(-2px); }
+  .careers-note { font-size: 12px; color: var(--muted); }
+
+  /* ── SHIELD HELPER ── */
+  #helpBtn {
+    position: fixed; bottom: 20px; right: 20px; z-index: 600;
+    width: 62px; height: 62px; border-radius: 50%; border: none; cursor: pointer;
+    background: rgba(13,33,55,.95);
+    box-shadow: 0 10px 30px rgba(0,0,0,.5), 0 0 0 1px rgba(239,194,75,.35);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  #helpBtn svg { width: 36px; height: 36px; }
+  #helpBtn:hover { transform: scale(1.08); box-shadow: 0 14px 36px rgba(0,0,0,.55), 0 0 0 1px rgba(239,194,75,.7); }
+
+  #helpPanel {
+    display: none;
+    position: fixed; bottom: 94px; right: 20px; z-index: 600;
+    width: min(340px, calc(100vw - 32px));
+    background: linear-gradient(160deg, var(--card), var(--card2));
+    border: 1px solid rgba(239,194,75,.3); border-radius: 20px;
+    overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,.55);
+  }
+  #helpPanel.open { display: block; }
+  .help-head {
+    display: flex; align-items: center; gap: 11px;
+    padding: 14px 16px; background: rgba(0,0,0,.25);
+    border-bottom: 1px solid var(--line);
+  }
+  .help-head svg { width: 30px; height: 30px; flex-shrink: 0; }
+  .help-head b {
+    display: block; font-family: 'Montserrat', sans-serif;
+    font-size: 14px; font-weight: 800; color: var(--text);
+  }
+  .help-head span { font-size: 11px; color: var(--gold); }
+  .help-head > button {
+    margin-left: auto; background: none; border: none;
+    color: var(--muted); cursor: pointer; font-size: 15px; padding: 4px;
+  }
+  .help-body { padding: 10px; display: grid; gap: 7px; }
+  .help-row {
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    background: rgba(0,0,0,.2); border: 1px solid var(--line);
+    border-radius: 13px; padding: 11px 13px;
+    text-align: left; text-decoration: none; cursor: pointer;
+    color: var(--text); font-family: inherit;
+    transition: border-color .15s, transform .15s;
+  }
+  .help-row:hover { border-color: rgba(0,207,234,.5); transform: translateX(2px); }
+  .hr-ico { font-size: 19px; flex-shrink: 0; }
+  .hr-txt b {
+    display: block; font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 700; line-height: 1.3;
+  }
+  .hr-txt span { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+  .hr-go { margin-left: auto; color: var(--teal); font-weight: 700; }
+
   /* ── FOOTER ── */
   footer {
     margin-top: 48px; border-top: 1px solid var(--line);
@@ -569,7 +870,7 @@
   <div class="stats-inner">
     <div class="stat"><div class="num"><span id="c1" data-count="8">0</span><span>+</span></div><div class="lbl">Product lines</div></div>
     <div class="stat"><div class="num"><span id="c2" data-count="25">0</span><span>+</span></div><div class="lbl">Online forms & tools</div></div>
-    <div class="stat"><div class="num"><span id="c3" data-count="4">0</span></div><div class="lbl">Quote systems live — more coming</div></div>
+    <div class="stat"><div class="num"><span id="c3" data-count="7">0</span></div><div class="lbl">Quote systems live — more coming</div></div>
     <div class="stat"><div class="num">24<span>/7</span></div><div class="lbl">Apply anytime, any device</div></div>
   </div>
 </div>
@@ -588,11 +889,11 @@
         <p>Term life protection for your family's future — starting with Xpress Life.</p>
         <span class="lc-go">Xpress Life ↗</span>
       </a>
-      <a class="line-card lc-health reveal" href="https://form.jotform.com/210045513264040" target="_blank" rel="noopener">
+      <a class="line-card lc-health reveal" href="https://healthquotee.netlify.app/" target="_blank" rel="noopener">
         <svg viewBox="0 0 48 48" fill="none"><rect x="8" y="8" width="32" height="32" rx="9" stroke="#00CFEA" stroke-width="2.5"/><path d="M24 16v16M16 24h16" stroke="#00CFEA" stroke-width="3.5" stroke-linecap="round"/></svg>
         <h3>Health</h3>
-        <p>Individual and group health coverage, with online enrollment and claims.</p>
-        <span class="lc-go">Enroll Online</span>
+        <p>Individual and group health coverage — quote online with our new health system.</p>
+        <span class="lc-go">Get a Quote ↗</span>
       </a>
       <a class="line-card lc-motor reveal" href="https://form.jotform.com/223376649264061" target="_blank" rel="noopener">
         <svg viewBox="0 0 48 48" fill="none"><path d="M10 28l3-9c.6-1.8 2.3-3 4.2-3h13.6c1.9 0 3.6 1.2 4.2 3l3 9" stroke="#6fb1ee" stroke-width="2.5" stroke-linecap="round"/><rect x="7" y="27" width="34" height="9" rx="3.5" stroke="#6fb1ee" stroke-width="2.5"/><circle cx="14.5" cy="31.5" r="1.8" fill="#6fb1ee"/><circle cx="33.5" cy="31.5" r="1.8" fill="#6fb1ee"/></svg>
@@ -684,30 +985,33 @@
         <p>Protect your home or business property. Request a quotation for buildings and contents coverage.</p>
         <span class="go">Request Property Quote</span>
       </a>
-      <div class="tile reveal" style="opacity:.55; cursor:default">
+      <a class="tile reveal" href="https://healthquotee.netlify.app/" target="_blank" rel="noopener">
+        <span class="badge">New</span>
         <div class="ico">🩺</div>
         <h3>Health</h3>
-        <p>Our online health quote system is being rebuilt right now.</p>
-        <span class="go" style="color:var(--muted)">Coming Soon</span>
-      </div>
-      <div class="tile reveal" style="opacity:.55; cursor:default">
+        <p>Our brand-new online health quote system — get your health coverage quote in minutes.</p>
+        <span class="go">Get Health Quote ↗</span>
+      </a>
+      <a class="tile reveal" href="https://personalaccident.netlify.app/" target="_blank" rel="noopener">
+        <span class="badge">New</span>
         <div class="ico">🦺</div>
         <h3>Personal Accident</h3>
-        <p>Personal accident quotes are on the way — the system is in build.</p>
-        <span class="go" style="color:var(--muted)">Coming Soon</span>
-      </div>
+        <p>Personal accident & income protection — get your quote with our new online system.</p>
+        <span class="go">Get PA Quote ↗</span>
+      </a>
       <div class="tile reveal" style="opacity:.55; cursor:default">
         <div class="ico">🏦</div>
         <h3>Pension</h3>
         <p>Retirement and pension quotations are being added.</p>
         <span class="go" style="color:var(--muted)">Coming Soon</span>
       </div>
-      <div class="tile reveal" style="opacity:.55; cursor:default">
+      <a class="tile reveal" href="https://www.employeebenefitstt.com/" target="_blank" rel="noopener">
+        <span class="badge">New</span>
         <div class="ico">👥</div>
         <h3>Employee Benefits</h3>
-        <p>Group life, health and benefits quotes for businesses — in build.</p>
-        <span class="go" style="color:var(--muted)">Coming Soon</span>
-      </div>
+        <p>For employers: quote, track and customize your group plan — sent directly to Guardian.</p>
+        <span class="go">Employer Portal ↗</span>
+      </a>
     </div>
   </section>
 
@@ -751,11 +1055,11 @@
         <p>Apply for instant-issue term life coverage. Five health questions, no medical exams — coverage sorted in one sitting.</p>
         <span class="go">Apply Now</span>
       </a>
-      <a class="tile reveal" href="https://form.jotform.com/210045513264040" target="_blank" rel="noopener">
+      <a class="tile reveal" href="https://healthquotee.netlify.app/" target="_blank" rel="noopener">
         <div class="ico">🩺</div>
-        <h3>Health Enrollment</h3>
-        <p>Enroll for health coverage with our online enrollment e-form.</p>
-        <span class="go">Enroll Online</span>
+        <h3>Health Coverage</h3>
+        <p>Quote and start your health coverage with our new online health system.</p>
+        <span class="go">Start Online ↗</span>
       </a>
       <a class="tile reveal" href="https://form.jotform.com/262153130319043" target="_blank" rel="noopener">
         <div class="ico">🏢</div>
@@ -796,27 +1100,155 @@
         <p>New to the branch? Tell us about your experience so we can serve you better.</p>
         <span class="go">Take the Survey</span>
       </a>
+      <a class="tile gold-tile reveal" href="https://querymypolicies.netlify.app" target="_blank" rel="noopener">
+        <span class="badge">Fast Response</span>
+        <div class="ico">📨</div>
+        <h3>Log a Query — QueryPal</h3>
+        <p>Have a question, concern or issue? Log it on QueryPal and our team tracks it until it's resolved.</p>
+        <span class="go">Log My Query ↗</span>
+      </a>
+      <a class="tile reveal" href="renewal/" >
+        <div class="ico">🔄</div>
+        <h3>Policy Renewals</h3>
+        <p>Motor or property policy coming up for renewal? Review your cover and send your renewal instructions online.</p>
+        <span class="go">Open Renewal Portal</span>
+      </a>
     </div>
   </section>
 
   <!-- CAREERS -->
-  <section id="careers">
-    <div class="section-label reveal">Join Our Team</div>
-    <h2 class="reveal">Build a career with the branch</h2>
-    <p class="section-sub reveal">We're always looking for driven people — whether you're starting out or renewing your agent contract.</p>
-    <div class="grid">
-      <a class="tile reveal" href="https://form.jotform.com/242716704735055" target="_blank" rel="noopener">
-        <div class="ico">💼</div>
-        <h3>Job Application</h3>
-        <p>Apply to join the Ricky Rampersad Branch team. Submit your application and details online.</p>
-        <span class="go">Apply for a Role</span>
-      </a>
-      <a class="tile reveal" href="https://form.jotform.com/223234996117864" target="_blank" rel="noopener">
-        <div class="ico">📝</div>
-        <h3>Salesman Renewal</h3>
-        <p>Existing agents: complete your renewal application as a salesman online.</p>
-        <span class="go">Renew Contract</span>
-      </a>
+  <section id="careers" class="careers">
+    <div class="careers-glow"></div>
+    <div class="careers-inner">
+      <div class="careers-eyebrow reveal"><span class="live-dot"></span>Careers · Now selecting · Chaguanas, Trinidad</div>
+      <h2 class="careers-h reveal">The environment decides.<br><em>We select <span class="crot" id="crot">the driven</span>.</em></h2>
+      <p class="careers-lead reveal">Talent gets you in the game — environment decides how far you go. This is a
+        <b>23&times; MDRT branch</b> with <b>32 years</b> in Trinidad, opening a handful of seats to proven advisors
+        ready for a branch that backs them, and to sharp newcomers ready to be built properly.</p>
+
+      <div class="seats reveal">
+        <span class="seat-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+        <span class="seat-txt"><b>Five seats</b> this intake · selection is rolling · reviewed within 48 hours</span>
+      </div>
+
+      <div class="careers-stats reveal">
+        <div class="cstat"><div class="cs-num"><span data-count="23">0</span>&times;</div><div class="cs-lbl">MDRT branch</div></div>
+        <div class="cstat"><div class="cs-num"><span data-count="32">0</span></div><div class="cs-lbl">Years in Trinidad</div></div>
+        <div class="cstat"><div class="cs-num">2 min</div><div class="cs-lbl">To apply online</div></div>
+        <div class="cstat"><div class="cs-num">48 h</div><div class="cs-lbl">Max wait for review</div></div>
+      </div>
+
+      <figure class="bm-quote reveal">
+        <blockquote>“Talent is everywhere in Trinidad. Environments that turn talent into <em>MDRT qualifiers</em> are not. That's the difference we sell — to our advisors first.”</blockquote>
+        <figcaption>
+          <svg viewBox="0 0 88 88" aria-hidden="true">
+            <defs><linearGradient id="gq" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
+            </linearGradient></defs>
+            <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#gq)"/>
+            <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div><b>Ricky Rampersad</b><span>Branch Manager · Guardian Life of the Caribbean, Chaguanas</span></div>
+        </figcaption>
+      </figure>
+
+      <div class="careers-why reveal">
+        <div class="why-card">
+          <div class="why-ico">🏆</div>
+          <h3>A living MDRT culture</h3>
+          <p>Twenty-three qualifications aren't luck — they're a system. When qualification is normal around you, it becomes normal for you.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-ico">🤝</div>
+          <h3>Mentorship by design</h3>
+          <p>Our Executive Agents and Senior Sales Consultants are required to mentor. You sit beside people who've already done it.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-ico">🎯</div>
+          <h3>A Branch Manager in your corner</h3>
+          <p>Every advisor here was interviewed and selected personally — then coached after. 32 years of market knowledge, applied to your book.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-ico">🎖️</div>
+          <h3>Recognition on a schedule</h3>
+          <p>Wins don't vanish into a WhatsApp group. Promotions and qualifications are announced on stage — Blastoff in January, Mid-Year in July.</p>
+        </div>
+      </div>
+
+      <div class="roads reveal">
+        <div class="road">
+          <div class="road-tag">Professional</div>
+          <h3>Master the craft</h3>
+          <ol class="road-steps">
+            <li>Career Sales Representative</li>
+            <li>Executive Agent <span>overrides to 5% · private office</span></li>
+            <li>Senior Sales Consultant <span>overrides to 10% · reserved parking</span></li>
+          </ol>
+        </div>
+        <div class="road road-lead">
+          <div class="road-tag">Leadership</div>
+          <h3>Build the next ones</h3>
+          <ol class="road-steps">
+            <li>Emerging Leaders Program</li>
+            <li>Trainee &rarr; Unit Manager <span>overrides &amp; allowances</span></li>
+            <li>Assistant Branch &rarr; Branch Manager <span>lead a branch of your own</span></li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="gates reveal">
+        <div class="gates-title">The Selection — five gates, deliberately</div>
+        <div class="gates-row">
+          <div class="gate"><b>1</b><span>Apply &amp; screen</span></div>
+          <div class="gate"><b>2</b><span>Meet the Branch Manager</span></div>
+          <div class="gate"><b>3</b><span>Discovery sessions</span></div>
+          <div class="gate"><b>4</b><span>Scientific assessment</span></div>
+          <div class="gate"><b>5</b><span>Final selection</span></div>
+        </div>
+      </div>
+
+      <div class="apply-flow reveal">
+        <div class="af-title">What happens when you apply</div>
+        <div class="af-row">
+          <div class="af-step">
+            <b>1</b>
+            <div><strong>The Selection</strong><span>See the branch, take the 60-second profile test</span></div>
+          </div>
+          <div class="af-arrow">→</div>
+          <div class="af-step">
+            <b>2</b>
+            <div><strong>Guardian's official role</strong><span>Read the Sales Representative job description</span></div>
+          </div>
+          <div class="af-arrow">→</div>
+          <div class="af-step">
+            <b>3</b>
+            <div><strong>Apply Now</strong><span>Your application reaches us — reviewed within 48 hours</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="objections reveal">
+        <div class="obj">
+          <h4>“I have no insurance experience.”</h4>
+          <p>That's normal here. Newcomers get full training, induction and boot camp before they're contracted and in the field.</p>
+        </div>
+        <div class="obj">
+          <h4>“I'm already contracted elsewhere.”</h4>
+          <p>Production follows environment. If you're carrying your numbers despite your room, a better room changes the maths. Conversations are fully confidential.</p>
+        </div>
+        <div class="obj">
+          <h4>“Is the income really uncapped?”</h4>
+          <p>Yes — commission-based, so it scales with your activity and skill, with overrides at senior ranks. The first months take real work. We're upfront about both sides.</p>
+        </div>
+      </div>
+
+      <div class="careers-cta reveal">
+        <a class="btn btn-gold" href="https://agentmgt.com/" target="_blank" rel="noopener">Start the Selection — 2 min ↗</a>
+        <a class="btn btn-outline" href="https://agentmgt.com/#quiz" target="_blank" rel="noopener">Take the 60-second test ↗</a>
+        <a class="btn btn-ghost-line" href="https://careerpathrrb.netlify.app/" target="_blank" rel="noopener">See the career path ↗</a>
+      </div>
+      <p class="careers-note reveal">Confidential for practising advisors · Reviewed within 48 hours · Newcomers fully trained · Applications are received through Guardian Life of the Caribbean</p>
     </div>
   </section>
 
@@ -836,6 +1268,72 @@
     <p>© 2026 Ricky Rampersad Branch. All rights reserved.</p>
   </div>
 </footer>
+
+<!-- SHIELD HELPER -->
+<button id="helpBtn" onclick="helpToggle()" aria-label="How can we help?" title="How can we help?">
+  <svg viewBox="0 0 88 88" aria-hidden="true">
+    <defs>
+      <linearGradient id="ghelp" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
+      </linearGradient>
+    </defs>
+    <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#ghelp)"/>
+    <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</button>
+
+<div id="helpPanel" role="dialog" aria-label="How can we help?">
+  <div class="help-head">
+    <svg viewBox="0 0 88 88" aria-hidden="true">
+      <defs>
+        <linearGradient id="ghead" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
+        </linearGradient>
+      </defs>
+      <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#ghead)"/>
+      <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div>
+      <b>How can we help?</b>
+      <span>Ricky Rampersad Branch</span>
+    </div>
+    <button onclick="helpClose()" aria-label="Close">✕</button>
+  </div>
+  <div class="help-body">
+    <button class="help-row" onclick="helpClose(); openProfiler();">
+      <span class="hr-ico">💬</span>
+      <span class="hr-txt"><b>Get a quote</b><span>Life, health, motor, property & more</span></span>
+      <span class="hr-go">→</span>
+    </button>
+    <a class="help-row" href="https://querymypolicies.netlify.app" target="_blank" rel="noopener">
+      <span class="hr-ico">📨</span>
+      <span class="hr-txt"><b>Log a query</b><span>Question, concern or issue — we track it</span></span>
+      <span class="hr-go">→</span>
+    </a>
+    <a class="help-row" href="renewal/">
+      <span class="hr-ico">🔄</span>
+      <span class="hr-txt"><b>Renew my policy</b><span>Motor & property renewals</span></span>
+      <span class="hr-go">→</span>
+    </a>
+    <a class="help-row" href="https://form.jotform.com/230135714666051" target="_blank" rel="noopener">
+      <span class="hr-ico">🏥</span>
+      <span class="hr-txt"><b>Make a claim</b><span>Health claim e-form</span></span>
+      <span class="hr-go">→</span>
+    </a>
+    <a class="help-row" href="https://factfind360.com" target="_blank" rel="noopener">
+      <span class="hr-ico">🧭</span>
+      <span class="hr-txt"><b>Not sure what I need</b><span>FactFind360 needs analysis</span></span>
+      <span class="hr-go">→</span>
+    </a>
+    <a class="help-row" href="agent.html">
+      <span class="hr-ico">🧑‍💼</span>
+      <span class="hr-txt"><b>Agent &amp; staff sign in</b><span>Portals for our team</span></span>
+      <span class="hr-go">→</span>
+    </a>
+  </div>
+</div>
 
 <!-- QUOTE PROFILER MODAL -->
 <div id="profiler" style="display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(4,10,17,.82); backdrop-filter:blur(6px); padding:16px;">
@@ -864,6 +1362,7 @@
         { ico: '🩺', label: 'My health', desc: 'Medical & health coverage', go: 'health' },
         { ico: '🚗', label: 'My vehicle', desc: 'Car, van or truck insurance', url: 'https://form.jotform.com/223376649264061' },
         { ico: '🏠', label: 'My home or property', desc: 'Buildings & contents cover', url: 'https://form.jotform.com/201953408200849' },
+        { ico: '🦺', label: 'My income, against accidents', desc: 'Personal accident & income protection', url: 'https://personalaccident.netlify.app/' },
         { ico: '👥', label: 'My business & employees', desc: 'Key person & group benefits', go: 'business' },
         { ico: '🏦', label: 'My retirement', desc: 'Pensions & long-term savings', go: 'retirement' }
       ]
@@ -878,9 +1377,9 @@
     },
     health: {
       title: 'Health coverage',
-      sub: 'Our online health quote system is being rebuilt. In the meantime:',
+      sub: 'Get your quote with our new online health system.',
       options: [
-        { ico: '🩺', label: 'Enroll for health coverage', desc: 'Complete the health enrollment e-form and our team will guide you.', url: 'https://form.jotform.com/210045513264040' },
+        { ico: '🩺', label: 'Get a health quote', desc: 'Our brand-new online health quote system — see your options in minutes.', url: 'https://healthquotee.netlify.app/' },
         { ico: '🧭', label: 'Not sure what you need?', desc: 'Run the FactFind360 needs analysis first.', url: 'https://factfind360.com' }
       ]
     },
@@ -888,9 +1387,9 @@
       title: 'Business & employee protection',
       sub: 'Protection for your company and your people.',
       options: [
+        { ico: '👥', label: 'Employee Benefits — quote & customize', desc: 'Our dedicated employer portal: get a group quote, track it, and customize your plan — direct to Guardian.', url: 'https://www.employeebenefitstt.com/' },
         { ico: '🏢', label: 'Key Person Protection', desc: 'Protect the business against the loss of a key employee or partner.', url: 'https://form.jotform.com/262153130319043' },
-        { ico: '👥', label: 'Group Health & Life enrollment', desc: 'Enroll your employees in group coverage.', url: 'https://form.jotform.com/211671623815858' },
-        { ico: '🧭', label: 'Full employee benefits review', desc: 'Quotes system in build — start with a FactFind360 needs analysis.', url: 'https://factfind360.com' }
+        { ico: '🧭', label: 'Not sure where to start?', desc: 'Run a FactFind360 needs analysis for your business.', url: 'https://factfind360.com' }
       ]
     },
     retirement: {
@@ -928,7 +1427,16 @@
   function closeProfiler() { document.getElementById('profiler').style.display = 'none'; document.body.style.overflow = ''; }
   function pfHome() { pfRender('home'); }
   document.getElementById('profiler').addEventListener('click', function (e) { if (e.target === this) closeProfiler(); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeProfiler(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeProfiler(); helpClose(); } });
+
+  // ── SHIELD HELPER ──
+  function helpToggle() { document.getElementById('helpPanel').classList.toggle('open'); }
+  function helpClose() { document.getElementById('helpPanel').classList.remove('open'); }
+  document.addEventListener('click', function (e) {
+    var panel = document.getElementById('helpPanel');
+    var btn = document.getElementById('helpBtn');
+    if (panel.classList.contains('open') && !panel.contains(e.target) && !btn.contains(e.target)) helpClose();
+  });
 
   // Rotating headline word
   var words = ['family', 'home', 'business', 'property', 'employees', 'health', 'future'];
@@ -943,6 +1451,29 @@
         rotator.classList.remove('out');
       }, 350);
     }, 2600);
+  }
+
+  // Careers headline rotator — only runs while the section is on screen
+  var cWords = ['the driven', 'the hungry', 'the underestimated', 'the relentless',
+                'the coachable', 'the under-recognised', 'the resilient', 'the unstoppable'];
+  var crot = document.getElementById('crot');
+  if (!reduceMotion && crot) {
+    var ci = 0, cTimer = null;
+    var cycle = function () {
+      crot.classList.add('out');
+      setTimeout(function () {
+        ci = (ci + 1) % cWords.length;
+        crot.textContent = cWords[ci];
+        crot.classList.remove('out');
+      }, 260);
+    };
+    var cIO = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting && !cTimer) { cTimer = setInterval(cycle, 2100); }
+        else if (!e.isIntersecting && cTimer) { clearInterval(cTimer); cTimer = null; }
+      });
+    }, { threshold: 0.15 });
+    cIO.observe(document.getElementById('careers'));
   }
 
   // Scroll reveal with stagger
