@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<style>
+:root{--navy:#003366;--blue:#005EB8;--gold:#E8A020;--light:#E8F0F8;--ink:#1a2433;--ink2:#5a6b80;--line:#dde5ee}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:15px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:var(--ink);background:#f4f7fa;padding-bottom:60px}
+.head{background:var(--navy);color:#fff;padding:22px 18px}
+.head .in{max-width:680px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.gmark{width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.head h1{font-size:19px}
+.head .sub{font-size:12.5px;color:#b7c9de}
+.wrap{max-width:680px;margin:0 auto;padding:18px 14px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+.card h2{font-size:16px;color:var(--navy);margin-bottom:4px}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;vertical-align:middle}
+.b-comp{background:#e3f2ea;color:#1e7d4f}.b-tp{background:#e5eefb;color:var(--blue)}
+.due{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;background:#fdf1dc;color:#a05e03;margin-left:4px}
+.due.over{background:#fbe9e7;color:#b3261e}
+.facts{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
+.facts td{padding:7px 10px;border:1px solid #eef2f7}
+.facts td:first-child{background:#f7fafd;color:var(--ink2);width:44%}
+.owing{background:#fbe9e7;border-left:4px solid #b3261e;border-radius:0 10px 10px 0;padding:11px 14px;margin:10px 0;font-size:13.5px}
+.edu{background:#fdf6e9;border-left:4px solid var(--gold);border-radius:0 10px 10px 0;padding:12px 15px;margin:12px 0;font-size:13.5px}
+.edu b{color:#a05e03}
+.benefits{background:var(--light);border-radius:12px;padding:14px 16px;margin:12px 0;font-size:13.5px}
+.benefits h3{font-size:13px;color:var(--navy);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.benefits ul{padding-left:18px}
+.benefits li{margin:5px 0}
+.step{font-size:12px;font-weight:800;color:var(--blue);text-transform:uppercase;letter-spacing:.07em;margin:18px 0 6px}
+label{display:block;font-size:13px;color:var(--ink2);font-weight:600;margin:12px 0 4px}
+input[type=text],input[type=email],textarea,select{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font:inherit;background:#fff}
+textarea{min-height:64px;resize:vertical}
+.opt{display:flex;gap:10px;align-items:flex-start;border:1.5px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:8px;cursor:pointer;background:#fff}
+.opt:hover{border-color:var(--blue)}
+.opt.sel{border-color:var(--blue);background:var(--light)}
+.opt input{margin-top:4px}
+.opt b{display:block;font-size:14px}
+.opt span{font-size:12.5px;color:var(--ink2)}
+.check{display:flex;gap:10px;align-items:flex-start;background:var(--light);border-radius:10px;padding:11px 13px;margin:10px 0;cursor:pointer;font-size:13.5px}
+.check input{margin-top:3px}
+.btn{width:100%;background:var(--gold);color:var(--navy);font-weight:800;font-size:15px;border:none;border-radius:10px;padding:14px;cursor:pointer;margin-top:14px}
+.btn:hover{filter:brightness(1.05)}
+.btn:disabled{opacity:.5;cursor:wait}
+.ok{background:#e3f2ea;border:1px solid #bfe3d0;color:#1e7d4f;border-radius:10px;padding:14px;margin-top:12px;font-weight:600;display:none}
+.err{background:#fbe9e7;border:1px solid #f0c4c0;color:#b3261e;border-radius:10px;padding:14px;margin-top:12px;display:none}
+.hist td,.hist th{padding:8px 10px;border-bottom:1px solid #eef2f7;font-size:13px;text-align:left}
+.hist th{color:var(--navy);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.vhist{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}
+.vhist td,.vhist th{padding:6px 10px;border:1px solid #eef2f7;text-align:left}
+.vhist th{background:#f7fafd;color:var(--ink2);font-size:11px;text-transform:uppercase}
+details{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:10px 0;background:#fff}
+details summary{cursor:pointer;font-weight:700;color:var(--navy);font-size:13.5px}
+details[open]{background:#fbfdff}
+.foot{max-width:680px;margin:6px auto;padding:0 14px;font-size:11.5px;color:#8a97a8}
+.nf{max-width:560px;margin:60px auto;text-align:center;padding:20px}
+.stars{display:flex;gap:6px;margin:6px 0 2px}
+.stars button{font-size:30px;background:none;border:none;cursor:pointer;color:#d5dde8;line-height:1}
+.stars button.on{color:var(--gold)}
+.note{font-size:12px;color:var(--ink2)}
+</style>
+</head>
+<body>
+<div class="head"><div class="in">
+  <div class="gmark"><svg viewBox="0 0 24 24" width="44" height="44" aria-label="Shield with tick"><path d="M12 1.8l8.2 3v6.4c0 5.1-3.5 9.6-8.2 11.3C7.3 20.8 3.8 16.3 3.8 11.2V4.8z" fill="#E8A020"/><path d="M8 12.2l2.9 2.9 5.3-6" stroke="#003366" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <div><h1>Guardian Renewals</h1><div class="sub">Motor renewal portal · by Ricky Rampersad</div></div>
+</div></div>
+
+<div id="app" class="wrap"></div>
+<div class="foot">This portal is a plain-language summary for your information — full terms are set out in your policy wording and schedule, which govern in all cases. Nothing is bound until Guardian confirms your renewal. Never send card numbers through this portal or by email — our team will arrange secure payment with you.</div>
+
+<script>
+const DATA = JSON.parse(<?!= JSON.stringify(payload) ?>);
+const $ = s => document.querySelector(s);
+const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = v => { const n=Number(v); return (!v&&v!==0)||isNaN(n) ? esc(v) : 'TT$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+
+const BENEFITS_COMP = [
+  '<b>Your own vehicle covered</b> — accident, fire and theft, not just other people’s',
+  '<b>Liability to others</b> — injury to third parties and damage to their property',
+  '<b>Damage to your garage by fire</b> — even though it’s not the vehicle',
+  '<b>Medical expenses</b> after an accident, for you, your driver or passengers',
+  '<b>Personal accident benefit</b> for you and your spouse, including weekly payments while disabled',
+  '<b>No Claim Discount up to 60%</b> after 4 claim-free years — with step-back protection so one claim doesn’t erase it',
+];
+const BENEFITS_TP = [
+  '<b>Liability to others</b> — injury to third parties and damage to their property',
+  '<b>Legal defence costs</b> connected to a covered accident',
+  '<b>No Claim Discount up to 35%</b> after 4 claim-free years',
+  '<b>🆕 Windscreen cover now available</b> — new from Guardian General, third-party policies can now add windscreen protection (see Step 2)',
+];
+
+function dueChip(p){
+  if(p.days===null||p.days===undefined) return '';
+  if(p.days<0) return `<span class="due over">${Math.abs(p.days)} day${Math.abs(p.days)===1?'':'s'} overdue</span>`;
+  if(p.days===0) return `<span class="due over">renews today</span>`;
+  if(p.days<=30) return `<span class="due">${p.days} day${p.days===1?'':'s'} to go</span>`;
+  return '';
+}
+
+function render(){
+  const app = $('#app');
+  if(!DATA.ok){
+    app.innerHTML = `<div class="nf"><h2 style="color:var(--navy)">We couldn't find your policy</h2>
+      <p style="margin-top:10px;color:var(--ink2)">Please open the personal link from your renewal email, or contact ${esc(DATA.agent.name)} for a fresh link.</p></div>`;
+    return;
+  }
+  if(DATA.survey){ renderSurvey(app); return; }
+
+  let html = `<div class="card"><h2>Welcome, ${esc(DATA.firstName)} 👋</h2>
+    <p style="font-size:13.5px;color:var(--ink2)">Here ${DATA.policies.length===1?'is your motor policy':'are your '+DATA.policies.length+' motor policies'} with us. Three quick steps for each: <b>check your benefits</b>, <b>tell us about changes</b>, and <b>send your instruction</b>.</p></div>`;
+
+  DATA.policies.forEach((p,i)=>{
+    const comp = p.comp;
+    const owing = Number(p.balance)>0;
+    const benefits = comp ? BENEFITS_COMP : BENEFITS_TP;
+    html += `<div class="card" id="pol${i}">
+      <h2>Motor Policy <span class="badge ${comp?'b-comp':'b-tp'}">${comp?'COMPREHENSIVE':'THIRD PARTY'}</span>${dueChip(p)}</h2>
+      <table class="facts">
+        ${p.policy?`<tr><td>Policy #</td><td><b>${esc(p.policy)}</b></td></tr>`:''}
+        <tr><td>Renewal date</td><td><b>${esc(p.nextDue)}</b></td></tr>
+        ${p.premium?`<tr><td>Current premium</td><td><b>${money(p.premium)}</b> <span style="color:#8a97a8">(renewal terms may vary)</span></td></tr>`:''}
+        ${comp&&p.sumInsured?`<tr><td>Vehicle insured for</td><td><b>${money(p.sumInsured)}</b></td></tr>`:''}
+        <tr><td>Payment status</td><td>${esc(p.payStatus||'—')}</td></tr>
+      </table>
+      ${owing?`<div class="owing">A balance of <b>${money(p.balance)}</b> shows on this policy. Renewal completes once it's settled — use the payment section below or choose "Please call me".</div>`:''}
+
+      <div class="step">Step 1 · Know what you have</div>
+      <div class="benefits"><h3>🛡 Your Guardian MotorGuard benefits</h3>
+        <ul>${benefits.map(b=>`<li>${b}</li>`).join('')}</ul>
+        ${comp?'':'<div style="margin-top:8px;padding-top:8px;border-top:1px solid #d5e2f0">Third party protects <b>others</b> — not your own vehicle. Upgrading to comprehensive adds accident, fire &amp; theft cover for your car and a bigger NCD scale (60% vs 35%). Tick the box in Step 3 for a free comparison quote.</div>'}
+      </div>
+
+      ${comp?`
+      <div class="step">Step 2 · Keep your value current</div>
+      <div class="edu"><b>💡 Vehicles depreciate.</b> Your vehicle is insured for ${p.sumInsured?money(p.sumInsured):'its declared value'}. Updating it to today's realistic market value keeps your premium fair — you shouldn't pay to insure value that no longer exists.</div>
+      ${p.valueHistory && p.valueHistory.length?`<details><summary>📉 Your adjusted-value history (${p.valueHistory.length})</summary>
+        <table class="vhist"><tr><th>Date requested</th><th>Requested value</th></tr>
+        ${p.valueHistory.map(v=>`<tr><td>${esc(v.when)}</td><td>${esc(v.value)}</td></tr>`).join('')}</table>
+        <div class="note">Requested adjustments apply from your renewal once confirmed by Guardian.</div></details>`:''}
+      <label>Updated vehicle market value (TT$) — optional</label>
+      <input type="text" id="val${i}" inputmode="numeric" placeholder="e.g. 180000">
+      <div class="note" style="margin-top:4px">We'll prepare your Guardian General value-confirmation letter automatically — it comes back to you pre-filled for one signature.</div>
+
+      <div class="edu" style="margin-top:14px"><b>⚠️ Important change: Waiver of Excess.</b><br>
+      Guardian General no longer includes the waiver of excess free after three claim-free years — it's now an optional benefit you purchase. With it, <b>you pay no excess when you claim</b>; without it, the excess in your schedule comes out of your pocket on every claim.</div>
+      <label class="check"><input type="checkbox" id="waiv${i}" checked> <span><b>Yes — add the Waiver of Excess to my renewal (recommended).</b> Include the premium difference in my renewal terms and confirm the amount with me.</span></label>`
+      :`<div class="step">Step 2 · Worth considering</div>
+      <div class="edu"><b>🆕 New: windscreen cover for third-party policies.</b><br>
+      Until now, a cracked or shattered windscreen on a third-party policy came entirely out of your pocket. Guardian General now lets you add windscreen cover to your policy.</div>
+      <label class="check"><input type="checkbox" id="ws${i}"> <span><b>Yes — add windscreen cover to my renewal.</b> Include the premium difference in my renewal terms and confirm the amount with me.</span></label>`}
+      ${comp?'':'<label class="check"><input type="checkbox" id="comp'+i+'"> <span><b>Yes — send me a free comprehensive quote</b> with my renewal, no obligation.</span></label>'}
+
+      <div class="step">Step 3 · Your renewal instruction</div>
+      <label class="opt"><input type="radio" name="inst${i}" value="RENEW — proceed">
+        <div><b>✅ Renew my policy</b><span>Proceed with my renewal${comp?' (with my updated value above, if given)':''}</span></div></label>
+      <label class="opt"><input type="radio" name="inst${i}" value="RENEW WITH CHANGES">
+        <div><b>✏️ Renew with changes</b><span>I've described the changes in the notes box</span></div></label>
+      <label class="opt"><input type="radio" name="inst${i}" value="PLEASE CALL ME">
+        <div><b>📞 Please call me first</b><span>I'd like to discuss before renewing${owing?' (or arrange the balance)':''}</span></div></label>
+
+      <label>How will you pay?</label>
+      <select id="pay${i}">
+        <option value="">Choose one (optional)</option>
+        <option>Bank transfer</option>
+        <option>LINX / debit at branch</option>
+        <option>Credit card (we'll call you — never email card numbers)</option>
+        <option>Cheque</option>
+        <option>Salary deduction</option>
+        <option>Already paid — reference below</option>
+      </select>
+      <label>Payment reference / receipt # — optional</label>
+      <input type="text" id="payref${i}" placeholder="e.g. transfer reference or receipt number">
+
+      <label>Changes or notes for us — optional</label>
+      <textarea id="notes${i}" placeholder="New address, sold the vehicle, added a driver, questions…"></textarea>
+      <label>Best email</label><input type="email" id="email${i}" value="${esc(p.email)}">
+      <label>Best mobile</label><input type="text" id="mob${i}" value="${esc(p.mobile)}">
+      <button class="btn" data-submit="${i}">Send my renewal instruction</button>
+      <div class="ok" id="ok${i}">✓ Sent! Our renewals team has your instruction — a confirmation email is on its way.</div>
+      <div class="err" id="err${i}"></div>
+    </div>`;
+  });
+
+  if (DATA.vehicles && DATA.vehicles.length){
+    html += `<div class="card"><h2>🚗 Your vehicle details on record</h2>
+      <p class="note" style="margin-top:2px">Please check these carefully — if anything is wrong or has changed (sold, new engine, modifications), tell us in the notes box above. Undisclosed changes can affect a claim.</p>
+      ${DATA.vehicles.map(v=>`
+        <table class="facts" style="margin-top:12px">
+          <tr><td>Registration</td><td><b>${esc(v.reg||'—')}</b>${v.cover?` <span class="badge ${v.comp?'b-comp':'b-tp'}" style="margin-left:6px">${esc(v.cover.toUpperCase())}</span>`:''}</td></tr>
+          ${v.make||v.model||v.year?`<tr><td>Vehicle</td><td><b>${esc([v.make,v.model,v.year].filter(Boolean).join(' '))}</b></td></tr>`:''}
+          ${v.chassis?`<tr><td>Chassis #</td><td>${esc(v.chassis)}</td></tr>`:''}
+          ${v.engine?`<tr><td>Engine #</td><td>${esc(v.engine)}</td></tr>`:''}
+          ${v.value?`<tr><td>Insured value</td><td><b>${money(v.value)}</b></td></tr>`:''}
+          ${v.since?`<tr><td>Insured with us since</td><td><b>${esc(v.since)}</b>${v.years?` — <b>${esc(v.years)} year${Number(v.years)===1?'':'s'}</b> of loyalty, thank you 🏆`:''}</td></tr>`:''}
+          ${v.ncd?`<tr><td>No Claim Discount</td><td><b>${esc(v.ncd)}%</b> — protect it: it's real money off every renewal</td></tr>`:''}
+          ${v.windscreen?`<tr><td>Windscreen limit</td><td>${money(v.windscreen)}</td></tr>`:''}
+          ${v.policy?`<tr><td>Policy #</td><td>${esc(v.policy)}${v.carrier?' · '+esc(v.carrier):''}</td></tr>`:''}
+        </table>
+        ${v.valueHistory && v.valueHistory.length>1?`<details><summary>📉 ${esc(v.reg)} — insured value over time (${v.valueHistory.length} renewals)</summary>
+          <table class="vhist"><tr><th>Period ending</th><th>Insured value</th></tr>
+          ${v.valueHistory.map(h=>`<tr><td>${esc(h.when)}</td><td>${esc(h.value)}</td></tr>`).join('')}</table>
+          <div class="note">Your insured value steps down as the vehicle depreciates — that's how your premium stays fair. If you've added accessories or the market moved, request an adjustment above.</div></details>`:''}
+      `).join('')}
+    </div>`;
+  }
+  html += `<div class="card"><h2>Your renewal history</h2><div id="hist">${histTable(DATA.history)}</div></div>`;
+  app.innerHTML = html;
+
+  document.querySelectorAll('.opt input').forEach(r=>r.addEventListener('change',e=>{
+    const wrap = e.target.closest('.card');
+    wrap.querySelectorAll('.opt').forEach(o=>o.classList.toggle('sel', o.querySelector('input').checked));
+  }));
+  document.querySelectorAll('[data-submit]').forEach(b=>b.onclick=()=>submit(Number(b.dataset.submit), b));
+}
+
+function histTable(h){
+  if(!h||!h.length) return '<p style="font-size:13px;color:var(--ink2)">No submissions yet — your instructions will appear here.</p>';
+  return `<table class="hist" width="100%"><tr><th>Date</th><th>Policy</th><th>Instruction</th><th>Status</th></tr>
+    ${h.map(r=>`<tr><td>${esc(r.when)}</td><td>${esc(r.policy)}</td><td>${esc(r.instruction)}${r.value?' · value '+esc(r.value):''}${r.payMethod?' · '+esc(r.payMethod):''}</td><td>${esc(r.status)}</td></tr>`).join('')}</table>`;
+}
+
+function submit(i, btn){
+  const p = DATA.policies[i];
+  const sel = document.querySelector(`input[name="inst${i}"]:checked`);
+  const err = document.getElementById('err'+i);
+  err.style.display='none';
+  if(!sel){ err.textContent='Please choose an instruction (renew, renew with changes, or call me).'; err.style.display='block'; return; }
+  btn.disabled = true; btn.textContent = 'Sending…';
+  const valEl = document.getElementById('val'+i), compEl = document.getElementById('comp'+i);
+  google.script.run
+    .withSuccessHandler(res=>{
+      btn.textContent='Send my renewal instruction'; btn.disabled=false;
+      document.getElementById('ok'+i).style.display='block';
+      if(res && res.history) document.getElementById('hist').innerHTML = histTable(res.history);
+      window.scrollTo({top: document.getElementById('ok'+i).offsetTop-120, behavior:'smooth'});
+    })
+    .withFailureHandler(e=>{
+      btn.textContent='Send my renewal instruction'; btn.disabled=false;
+      err.textContent = 'Something went wrong: '+(e && e.message ? e.message : e)+' — please try again or reply to your renewal email.';
+      err.style.display='block';
+    })
+    .submitInstruction({
+      token: DATA.token, rowIndex: p.rowIndex,
+      instruction: sel.value,
+      newValue: valEl ? valEl.value : '',
+      wantsComp: compEl ? compEl.checked : false,
+      waiver: (document.getElementById('waiv'+i)||{}).checked || false,
+      windscreen: (document.getElementById('ws'+i)||{}).checked || false,
+      payMethod: document.getElementById('pay'+i).value,
+      payRef: document.getElementById('payref'+i).value,
+      notes: document.getElementById('notes'+i).value,
+      email: document.getElementById('email'+i).value,
+      mobile: document.getElementById('mob'+i).value,
+    });
+}
+
+/* ---------- survey mode ---------- */
+let surveyScores = { sat: 0, ease: 0 };
+function renderSurvey(app){
+  app.innerHTML = `<div class="card">
+    <h2>How did we do, ${esc(DATA.firstName)}?</h2>
+    <p style="font-size:13.5px;color:var(--ink2)">Your renewal is complete — thank you for staying with Guardian. 30 seconds of honest feedback helps us serve you better.</p>
+    <label>How satisfied are you with your renewal experience?</label>
+    <div class="stars" data-k="sat">${[1,2,3,4,5].map(n=>`<button data-n="${n}">★</button>`).join('')}</div>
+    <label>How easy was it to renew?</label>
+    <div class="stars" data-k="ease">${[1,2,3,4,5].map(n=>`<button data-n="${n}">★</button>`).join('')}</div>
+    <label>Anything we should know — good or bad? (optional)</label>
+    <textarea id="svComments" placeholder="Tell us what stood out, or what we could do better…"></textarea>
+    <button class="btn" id="svSend">Send my feedback</button>
+    <div class="ok" id="svOk">✓ Thank you! Your feedback goes straight to the team.</div>
+    <div class="err" id="svErr"></div>
+  </div>`;
+  document.querySelectorAll('.stars').forEach(row=>{
+    row.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+      surveyScores[row.dataset.k] = Number(b.dataset.n);
+      row.querySelectorAll('button').forEach(x=>x.classList.toggle('on', Number(x.dataset.n)<=Number(b.dataset.n)));
+    });
+  });
+  $('#svSend').onclick = ()=>{
+    const err=$('#svErr'); err.style.display='none';
+    if(!surveyScores.sat||!surveyScores.ease){ err.textContent='Please tap a star rating for both questions.'; err.style.display='block'; return; }
+    const btn=$('#svSend'); btn.disabled=true; btn.textContent='Sending…';
+    google.script.run
+      .withSuccessHandler(()=>{ btn.style.display='none'; $('#svOk').style.display='block'; })
+      .withFailureHandler(e=>{ btn.disabled=false; btn.textContent='Send my feedback'; err.textContent='Something went wrong: '+(e&&e.message?e.message:e); err.style.display='block'; })
+      .submitSurvey({ token: DATA.token, sat: surveyScores.sat, ease: surveyScores.ease, comments: $('#svComments').value });
+  };
+}
+render();
+</script>
+</body>
+</html>

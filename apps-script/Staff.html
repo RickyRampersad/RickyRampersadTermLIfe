@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<style>
+:root{--navy:#003366;--blue:#005EB8;--gold:#E8A020;--light:#E8F0F8;--ink:#1a2433;--ink2:#5a6b80;--ink3:#8a97a8;--line:#dde5ee;--green:#1e7d4f;--red:#b3261e;--amber:#a05e03}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:14px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:var(--ink);background:#f4f7fa;padding-bottom:70px}
+.head{background:var(--navy);color:#fff;padding:14px 18px;position:sticky;top:0;z-index:30}
+.head .in{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.gmark{width:38px;height:38px;display:flex;align-items:center;justify-content:center}
+.head h1{font-size:16px}
+.head .sub{font-size:11.5px;color:#b7c9de}
+.head .me{margin-left:auto;font-size:12.5px;color:#b7c9de}
+.head .me b{color:#fff}
+.wrap{max-width:1180px;margin:0 auto;padding:16px 14px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer}
+.kpi.active{border-color:var(--blue);box-shadow:0 0 0 2px #e5eefb}
+.kpi .n{font-size:23px;font-weight:800;color:var(--navy)}
+.kpi.warn .n{color:var(--red)}
+.kpi.gold .n{color:var(--amber)}
+.kpi .l{font-size:11.5px;color:var(--ink2)}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.bar input[type=search]{flex:1;min-width:180px;border:1px solid var(--line);border-radius:9px;padding:9px 12px;font:inherit}
+.abtn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 13px;font-size:13px;font-weight:600;color:var(--navy);cursor:pointer}
+.abtn:hover{border-color:var(--blue);background:var(--light)}
+.abtn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
+.abtn.gold{background:var(--gold);border-color:var(--gold);color:var(--navy)}
+.abtn.sm{padding:5px 10px;font-size:12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:14px;overflow:hidden}
+.card h2{font-size:12.5px;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em;padding:12px 16px;border-bottom:1px solid #eef2f7}
+table{width:100%;border-collapse:collapse}
+th{background:var(--light);color:var(--navy);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;text-align:left;padding:9px 12px;white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid #f0f4f8;font-size:13px;vertical-align:middle}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:#f7fafd}
+.chip{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.c-over{background:#fbe9e7;color:var(--red)}
+.c-due{background:#fdf1dc;color:var(--amber)}
+.c-wait{background:#e5eefb;color:var(--blue)}
+.c-done{background:#e3f2ea;color:var(--green)}
+.c-up{background:#eef2f7;color:var(--ink2)}
+.mini{font-size:11px;color:var(--ink3)}
+.login{max-width:420px;margin:70px auto;background:#fff;border:1px solid var(--line);border-radius:14px;padding:26px}
+.login h2{color:var(--navy);margin-bottom:6px}
+.login p{font-size:13px;color:var(--ink2);margin-bottom:14px}
+.login input{width:100%;border:1px solid var(--line);border-radius:9px;padding:11px 12px;font:inherit;margin-bottom:10px}
+.err{background:#fbe9e7;color:var(--red);border-radius:9px;padding:10px 13px;margin-top:10px;font-size:13px;display:none}
+/* drawer */
+.ov{position:fixed;inset:0;background:rgba(10,25,45,.4);z-index:40;display:none}
+.ov.open{display:block}
+.dr{position:fixed;top:0;right:-540px;width:540px;max-width:96vw;height:100vh;background:#fff;z-index:50;box-shadow:-8px 0 30px rgba(0,20,40,.2);transition:right .2s;display:flex;flex-direction:column}
+.dr.open{right:0}
+.dr .dh{background:var(--navy);color:#fff;padding:16px 20px}
+.dr .dh h3{font-size:16px}
+.dr .db{flex:1;overflow-y:auto;padding:16px 20px 40px}
+.sec{margin-bottom:18px}
+.sec h4{font-size:11.5px;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;font-size:13px}
+.kv .k{color:var(--ink3);font-size:11px;text-transform:uppercase}
+.kv .v{font-weight:600}
+.tl{border-left:2px solid var(--line);padding-left:12px}
+.tl .it{margin-bottom:9px;font-size:12.5px}
+.tl .it .w{color:var(--ink3);font-size:11px}
+textarea,select,input[type=text],input[type=date],input[type=email]{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;background:#fff}
+textarea{min-height:56px;resize:vertical}
+label{display:block;font-size:12px;color:var(--ink2);font-weight:600;margin:9px 0 3px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.task{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--line);border-radius:9px;padding:8px 11px;margin-bottom:6px;font-size:13px}
+.task.over{border-color:#f0c4c0;background:#fdf6f5}
+.task .t{flex:1}
+.modal{position:fixed;inset:0;z-index:60;background:rgba(10,25,45,.5);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px}
+.modal.open{display:flex}
+.mw{background:#fff;border-radius:14px;max-width:520px;width:100%;padding:22px}
+.mw h3{color:var(--navy);margin-bottom:12px}
+.grid2col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:900px){.grid2col{grid-template-columns:1fr}}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 20px;border-radius:99px;font-size:13px;z-index:80;display:none}
+</style>
+</head>
+<body>
+<div class="head"><div class="in">
+  <div class="gmark"><svg viewBox="0 0 24 24" width="38" height="38" aria-label="Shield with tick"><path d="M12 1.8l8.2 3v6.4c0 5.1-3.5 9.6-8.2 11.3C7.3 20.8 3.8 16.3 3.8 11.2V4.8z" fill="#E8A020"/><path d="M8 12.2l2.9 2.9 5.3-6" stroke="#003366" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <div><h1>Guardian Renewals — Staff</h1><div class="sub" id="subT">Motor renewal operations · a Ricky Rampersad initiative</div></div>
+  <div class="me" id="meBox"></div>
+</div></div>
+<div id="app"></div>
+<div class="ov" id="ov"></div>
+<aside class="dr" id="dr"></aside>
+<div class="modal" id="modal"><div class="mw" id="mw"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const BOOT = JSON.parse(<?!= JSON.stringify(payload) ?>);
+const $ = s => document.querySelector(s);
+const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = v => { const n=Number(v); return (!v&&v!==0)||isNaN(n) ? esc(v) : 'TT$'+n.toLocaleString('en-US',{maximumFractionDigits:0}); };
+let D = null, ME = localStorage.getItem('gg_staff_email')||'', FILTER='action', Q='';
+
+function toast(m){ const t=$('#toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
+
+function statusOf(r){
+  if(/RENEWED/i.test(r.renewalStatus)||r.renewedDate) return {k:'done',label:'Renewed',cls:'c-done',ord:5};
+  if(/—/.test(r.renewalStatus)) return {k:'instructed',label:'⚡ Client instructed',cls:'c-wait',ord:0};
+  if(r.days===null) return {k:'nodate',label:'No date',cls:'c-up',ord:6};
+  if(r.days<0) return {k:'overdue',label:'Overdue '+Math.abs(r.days)+'d',cls:'c-over',ord:1};
+  if(r.days<=7) return {k:'due7',label:'Due '+r.days+'d',cls:'c-due',ord:2};
+  if(r.days<=14) return {k:'due14',label:'Due '+r.days+'d',cls:'c-due',ord:3};
+  if(r.days<=30) return {k:'due30',label:'Due '+r.days+'d',cls:'c-up',ord:4};
+  return {k:'up',label:'Upcoming',cls:'c-up',ord:6};
+}
+
+function boot(){
+  if(!BOOT.ok){ $('#app').innerHTML = `<div class="login"><h2>Staff access</h2><p>This staff link is invalid. Ask an admin for the current staff dashboard link.</p></div>`; return; }
+  if(!ME){ renderLogin(); } else { load(); }
+}
+function renderLogin(msg){
+  $('#app').innerHTML = `<div class="login"><h2>Staff sign-in</h2>
+    <p>Enter your work email. It must be listed on the <b>Staff</b> tab of the renewals sheet — every action you take is logged under this identity.</p>
+    <input type="email" id="lEmail" placeholder="you@myguardiangroup.com" value="${esc(ME)}">
+    <button class="abtn primary" style="width:100%;padding:11px" id="lGo">Enter dashboard</button>
+    <div class="err" id="lErr" ${msg?'style="display:block"':''}>${esc(msg||'')}</div></div>`;
+  $('#lGo').onclick = ()=>{ ME = $('#lEmail').value.trim().toLowerCase(); if(!ME) return; localStorage.setItem('gg_staff_email',ME); load(); };
+}
+function load(){
+  $('#subT').textContent = 'Loading…';
+  google.script.run
+    .withSuccessHandler(d=>{ D=d; $('#subT').textContent='Motor renewal operations'; renderApp(); })
+    .withFailureHandler(e=>{ ME=''; localStorage.removeItem('gg_staff_email'); renderLogin(e&&e.message?e.message:String(e)); $('#subT').textContent='Motor renewal operations'; })
+    .staffData(BOOT.key, ME);
+}
+function act(action, params, okMsg){
+  google.script.run
+    .withSuccessHandler(d=>{ D=d; renderApp(); if(okMsg) toast(okMsg); })
+    .withFailureHandler(e=>toast('⚠ '+(e&&e.message?e.message:e)))
+    .staffAction(BOOT.key, ME, action, params||{});
+}
+
+function filtered(){
+  let rows = D.renewals.map(r=>({...r, st:statusOf(r)}));
+  if(FILTER==='action') rows = rows.filter(r=>['instructed','overdue','due7','due14'].includes(r.st.k));
+  else if(FILTER==='instructed') rows = rows.filter(r=>r.st.k==='instructed');
+  else if(FILTER==='overdue') rows = rows.filter(r=>r.st.k==='overdue');
+  else if(FILTER==='due14') rows = rows.filter(r=>['due7','due14'].includes(r.st.k));
+  else if(FILTER==='renewed') rows = rows.filter(r=>r.st.k==='done');
+  if(Q) rows = rows.filter(r=>(r.client+' '+r.policy+' '+r.coverage+' '+r.assignedTo).toLowerCase().includes(Q));
+  rows.sort((a,b)=>a.st.ord-b.st.ord || (a.days??999)-(b.days??999));
+  return rows;
+}
+
+function renderApp(){
+  $('#meBox').innerHTML = `Signed in as <b>${esc(D.me.name)}</b> · <a href="#" id="lo" style="color:#b7c9de">switch</a>`;
+  const rows = D.renewals.map(r=>({...r, st:statusOf(r)}));
+  const n = k => rows.filter(r=>r.st.k===k).length;
+  const myTasks = D.tasks.filter(t=>t.status==='Open' && (t.assignee||'').toLowerCase()===ME).length;
+  const openTasks = D.tasks.filter(t=>t.status==='Open');
+  const renewedMonth = rows.filter(r=>r.st.k==='done').length;
+
+  $('#app').innerHTML = `<div class="wrap">
+    <div class="kpis">
+      ${kpi('instructed','⚡ '+n('instructed'),'Client instructed — process now','warn')}
+      ${kpi('overdue',n('overdue'),'Overdue','warn')}
+      ${kpi('due14',n('due7')+n('due14'),'Due in 14 days','gold')}
+      ${kpi('renewed',renewedMonth,'Renewed','')}
+      <div class="kpi ${myTasks?'gold':''}" id="kTasks"><div class="n">${myTasks}</div><div class="l">My open tasks</div></div>
+      <div class="kpi"><div class="n">${D.surveys.count?D.surveys.avgSat+'★':'—'}</div><div class="l">Avg satisfaction (${D.surveys.count})</div></div>
+    </div>
+
+    <div class="bar">
+      <input type="search" id="q" placeholder="Search client, policy, staff…" value="${esc(Q)}">
+      <button class="abtn ${FILTER==='action'?'primary':''}" data-f="action">Needs action</button>
+      <button class="abtn ${FILTER==='all'?'primary':''}" data-f="all">All</button>
+      <button class="abtn gold" id="addBtn">＋ Add renewal</button>
+    </div>
+
+    <div class="grid2col">
+      <div>
+        <div class="card"><h2>Renewal pipeline (${filtered().length})</h2>
+          <div style="overflow-x:auto"><table><thead><tr><th>Client</th><th>Coverage</th><th>Due</th><th>Status</th><th>Assigned</th><th>Last touch</th></tr></thead>
+          <tbody>${filtered().slice(0,150).map(r=>`<tr data-row="${r.rowIndex}">
+            <td><b>${esc(r.client)}</b><div class="mini">${esc(r.policy||'')}</div></td>
+            <td>${esc(r.coverage.replace(' (assumed)',''))}</td>
+            <td>${esc(r.nextDue)}</td>
+            <td><span class="chip ${r.st.cls}">${r.st.label}</span></td>
+            <td class="mini">${esc((r.assignedTo||'').split('@')[0]||'—')}</td>
+            <td class="mini">${D.lastTouch[r.token]?esc(D.lastTouch[r.token].when+' · '+D.lastTouch[r.token].by.split('@')[0]):'—'}</td>
+          </tr>`).join('')}</tbody></table></div>
+        </div>
+      </div>
+      <div>
+        <div class="card"><h2>Open tasks (${openTasks.length})</h2><div style="padding:12px 14px">
+          ${openTasks.length?openTasks.slice(0,20).map(t=>`
+            <div class="task ${t.dueDays!==null&&t.dueDays<0?'over':''}">
+              <div class="t"><b>${esc(t.title)}</b><div class="mini">${esc(t.client||'')} · ${t.assignee?esc(t.assignee.split('@')[0]):'unassigned'}${t.due?' · due '+esc(t.due):''} · by ${esc(t.createdBy.split('@')[0])}</div></div>
+              <button class="abtn sm" data-done="${t.id}">✓ Done</button>
+            </div>`).join(''):'<p class="mini">No open tasks — nice.</p>'}
+        </div></div>
+        <div class="card"><h2>Recent activity — the accountability trail</h2><div style="padding:12px 16px" class="tl">
+          ${D.feed.slice(0,18).map(a=>`<div class="it"><b>${esc(a.by.split('@')[0])}</b> · ${esc(a.type)} — ${esc(a.client)}<div class="w">${esc(a.when)} · ${esc(a.details.slice(0,90))}</div></div>`).join('')||'<p class="mini">No activity yet.</p>'}
+        </div></div>
+        ${D.surveys.recent.length?`<div class="card"><h2>Latest client feedback</h2><div style="padding:12px 16px">
+          ${D.surveys.recent.map(s=>`<div class="task"><div class="t"><b>${'★'.repeat(s.sat)}${'☆'.repeat(5-s.sat)}</b> ${esc(s.client)}<div class="mini">${esc(s.when)}${s.comments?' · "'+esc(s.comments.slice(0,100))+'"':''}</div></div></div>`).join('')}
+        </div></div>`:''}
+      </div>
+    </div>
+  </div>`;
+
+  function kpi(f,nv,l,cls){ return `<div class="kpi ${cls} ${FILTER===f?'active':''}" data-f="${f}"><div class="n">${nv}</div><div class="l">${l}</div></div>`; }
+  document.querySelectorAll('[data-f]').forEach(el=>el.onclick=()=>{ FILTER=el.dataset.f; renderApp(); });
+  $('#q').oninput = e=>{ Q=e.target.value.toLowerCase(); renderApp(); const qq=$('#q'); qq.focus(); qq.setSelectionRange(qq.value.length,qq.value.length); };
+  $('#addBtn').onclick = addRenewalModal;
+  $('#lo').onclick = e=>{ e.preventDefault(); ME=''; localStorage.removeItem('gg_staff_email'); renderLogin(); };
+  document.querySelectorAll('[data-done]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); act('completeTask',{id:b.dataset.done},'Task completed'); });
+  document.querySelectorAll('tbody tr').forEach(tr=>tr.onclick=()=>openDetail(Number(tr.dataset.row)));
+  $('#kTasks').onclick=()=>{ Q=ME.split('@')[0]; renderApp(); };
+}
+
+function openDetail(rowIndex){
+  const r = D.renewals.find(x=>x.rowIndex===rowIndex); if(!r) return;
+  const st = statusOf(r);
+  const acts = D.feed.filter(a=>a.client===r.client).slice(0,12);
+  const tasks = D.tasks.filter(t=>t.token===r.token && t.status==='Open');
+  const link = D.portalBase ? D.portalBase + (D.portalBase.includes('?')?'&':'?') + 't=' + encodeURIComponent(r.token) : '';
+  $('#dr').innerHTML = `
+    <div class="dh"><h3>${esc(r.client)} <span class="chip ${st.cls}" style="vertical-align:middle">${st.label}</span></h3>
+    <div style="font-size:12px;color:#b7c9de">${esc(r.coverage)} · ${esc(r.policy||'no policy #')} · due ${esc(r.nextDue)}</div></div>
+    <div class="db">
+      <div class="sec"><div class="kv">
+        <div><div class="k">Premium</div><div class="v">${money(r.premium)}</div></div>
+        <div><div class="k">Balance owing</div><div class="v">${money(r.balance)}</div></div>
+        <div><div class="k">Payment status</div><div class="v">${esc(r.payStatus||'—')}</div></div>
+        <div><div class="k">Renewal status</div><div class="v">${esc(r.renewalStatus||'—')}</div></div>
+        <div><div class="k">Email</div><div class="v">${esc(r.email||'—')}</div></div>
+        <div><div class="k">Mobile</div><div class="v">${esc(r.mobile||'—')}</div></div>
+        <div><div class="k">Reminders sent</div><div class="v" style="font-weight:400;font-size:11.5px">${esc(r.remindersSent||'none yet')}</div></div>
+        <div><div class="k">Assigned to</div><div class="v">
+          <select id="dAssign">${['',...D.staff.map(s=>s.email)].map(e=>`<option ${e===(r.assignedTo||'').toLowerCase()?'selected':''}>${e}</option>`).join('')}</select>
+        </div></div>
+      </div></div>
+      ${(D.vehicles && D.vehicles[r.token] ? `<div class="sec"><h4>Vehicles on record (${D.vehicles[r.token].length})</h4>
+        ${D.vehicles[r.token].map(v=>`<div class="task"><div class="t"><b>${esc(v.reg||'—')}</b> ${esc([v.make,v.model,v.year].filter(Boolean).join(' '))}
+          <div class="mini">${esc(v.cover||'')}${v.value?' · insured '+money(v.value):''}${v.ncd?' · NCD '+esc(v.ncd)+'%':''}${v.years?' · with us '+esc(v.years)+'y':''}${v.chassis?' · chassis '+esc(v.chassis):''}${v.engine?' · engine '+esc(v.engine):''}</div>
+          ${v.address?`<div class="mini">📍 ${esc(v.address)}</div>`:''}
+        </div></div>`).join('')}</div>` : '')}
+      <div class="sec" style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="abtn primary" id="dRenewed">✓ Mark renewed</button>
+        <button class="abtn" id="dInvite">✉ Send/resend invite</button>
+        ${link?`<button class="abtn" id="dLink">⧉ Copy portal link</button>`:''}
+      </div>
+      <div class="sec"><h4>Open tasks (${tasks.length})</h4>
+        ${tasks.map(t=>`<div class="task"><div class="t"><b>${esc(t.title)}</b><div class="mini">${t.assignee?esc(t.assignee.split('@')[0]):'unassigned'}</div></div><button class="abtn sm" data-ddone="${t.id}">✓</button></div>`).join('')||'<p class="mini">None.</p>'}
+        <label>New task</label><input type="text" id="dTaskT" placeholder="e.g. Call re updated vehicle value">
+        <div class="row2"><div><label>Assign to</label><select id="dTaskA">${D.staff.map(s=>`<option value="${esc(s.email)}" ${s.email===ME?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
+        <div><label>Due</label><input type="date" id="dTaskD"></div></div>
+        <button class="abtn sm" id="dTaskAdd" style="margin-top:8px">＋ Add task</button>
+      </div>
+      <div class="sec"><h4>Comments & history</h4>
+        <div class="tl">${acts.map(a=>`<div class="it"><b>${esc(a.by.split('@')[0])}</b> · ${esc(a.type)}<div class="w">${esc(a.when)} · ${esc(a.details.slice(0,120))}</div></div>`).join('')||'<p class="mini">No activity yet.</p>'}</div>
+        <label>Add comment</label><textarea id="dCom" placeholder="Spoke to client, awaiting docs…"></textarea>
+        <button class="abtn sm" id="dComAdd" style="margin-top:8px">＋ Comment</button>
+      </div>
+    </div>`;
+  $('#ov').classList.add('open'); $('#dr').classList.add('open');
+  $('#dRenewed').onclick=()=>{ closeDr(); act('markRenewed',{rowIndex:r.rowIndex,token:r.token,client:r.client},'Marked renewed — survey follows in 7 days'); };
+  $('#dInvite').onclick=()=>act('resendInvite',{rowIndex:r.rowIndex},'Invite sent to '+r.email);
+  const lk=$('#dLink'); if(lk) lk.onclick=async()=>{ try{ await navigator.clipboard.writeText(link); toast('Portal link copied'); }catch(e){ prompt('Copy the link:', link); } };
+  $('#dAssign').onchange=e=>act('assign',{rowIndex:r.rowIndex,token:r.token,client:r.client,assignee:e.target.value},'Assigned');
+  $('#dTaskAdd').onclick=()=>{ const t=$('#dTaskT').value.trim(); if(!t) return; closeDr(); act('addTask',{title:t,assignee:$('#dTaskA').value,due:$('#dTaskD').value,client:r.client,token:r.token},'Task created'); };
+  $('#dComAdd').onclick=()=>{ const t=$('#dCom').value.trim(); if(!t) return; closeDr(); act('comment',{token:r.token,client:r.client,text:t},'Comment logged'); };
+  document.querySelectorAll('[data-ddone]').forEach(b=>b.onclick=()=>{ closeDr(); act('completeTask',{id:b.dataset.ddone},'Task completed'); });
+}
+function closeDr(){ $('#ov').classList.remove('open'); $('#dr').classList.remove('open'); }
+$('#ov').onclick=closeDr;
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeDr(); $('#modal').classList.remove('open'); } });
+
+function addRenewalModal(){
+  $('#mw').innerHTML = `<h3>Add a renewal</h3>
+    <label>Client / account name *</label><input type="text" id="aClient">
+    <label>Contact person</label><input type="text" id="aContact">
+    <div class="row2">
+      <div><label>Coverage *</label><select id="aCov"><option>Third Party</option><option>Comprehensive</option><option>Third Party Fire & Theft</option></select></div>
+      <div><label>Renewal date *</label><input type="date" id="aDue"></div>
+    </div>
+    <div class="row2">
+      <div><label>Premium (TT$)</label><input type="text" id="aPrem" inputmode="numeric"></div>
+      <div><label>Sum insured (TT$, comp only)</label><input type="text" id="aSum" inputmode="numeric"></div>
+    </div>
+    <label>Policy #</label><input type="text" id="aPol">
+    <div class="row2">
+      <div><label>Email</label><input type="email" id="aEmail"></div>
+      <div><label>Mobile</label><input type="text" id="aMob"></div>
+    </div>
+    <label>Assign to</label><select id="aAssign">${D.staff.map(s=>`<option value="${esc(s.email)}" ${s.email===ME?'selected':''}>${esc(s.name)}</option>`).join('')}</select>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="abtn primary" id="aGo" style="flex:1">Add renewal</button>
+      <button class="abtn" id="aX">Cancel</button>
+    </div>
+    <p class="mini" style="margin-top:10px">A personal portal token & link are generated automatically. The reminder automation picks the row up from the next daily run.</p>`;
+  $('#modal').classList.add('open');
+  $('#aX').onclick=()=>$('#modal').classList.remove('open');
+  $('#aGo').onclick=()=>{
+    const client=$('#aClient').value.trim(), due=$('#aDue').value;
+    if(!client||!due){ toast('Client and renewal date are required'); return; }
+    $('#modal').classList.remove('open');
+    act('addRenewal',{client:client,contact:$('#aContact').value,coverage:$('#aCov').value,nextDue:due,
+      premium:$('#aPrem').value,sumInsured:$('#aSum').value,policy:$('#aPol').value,
+      email:$('#aEmail').value,mobile:$('#aMob').value,assignee:$('#aAssign').value},'Renewal added for '+client);
+  };
+}
+boot();
+</script>
+</body>
+</html>
