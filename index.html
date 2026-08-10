@@ -584,6 +584,37 @@
   }
   .gate span { font-size: 12px; color: var(--text); font-weight: 500; line-height: 1.35; }
 
+  .apply-flow {
+    background: linear-gradient(135deg, rgba(0,207,234,.07), rgba(0,207,234,.02));
+    border: 1px solid rgba(0,207,234,.25); border-radius: 19px;
+    padding: 20px; margin-bottom: 26px;
+  }
+  .af-title {
+    font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 800;
+    letter-spacing: 2px; text-transform: uppercase; color: var(--teal); margin-bottom: 15px;
+  }
+  .af-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .af-step { display: flex; align-items: flex-start; gap: 10px; flex: 1; min-width: 190px; }
+  .af-step b {
+    width: 26px; height: 26px; flex-shrink: 0; border-radius: 50%;
+    background: linear-gradient(135deg, var(--teal), var(--teal2)); color: #02141a;
+    font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .af-step strong {
+    display: block; font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.3;
+  }
+  .af-step span { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+  .af-arrow { color: var(--teal); font-size: 17px; font-weight: 700; flex-shrink: 0; }
+  @media (max-width: 780px) { .af-arrow { display: none; } .af-row { gap: 14px; } }
+
+  .btn-ghost-line {
+    background: rgba(255,255,255,.05); color: var(--text);
+    border: 1px solid rgba(255,255,255,.18);
+  }
+  .btn-ghost-line:hover { background: rgba(255,255,255,.1); transform: translateY(-2px); }
+
   .careers-cta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
   .btn-outline {
     background: rgba(0,207,234,.08); color: var(--teal);
@@ -1077,11 +1108,32 @@
         </div>
       </div>
 
+      <div class="apply-flow reveal">
+        <div class="af-title">What happens when you apply</div>
+        <div class="af-row">
+          <div class="af-step">
+            <b>1</b>
+            <div><strong>The Selection</strong><span>See the branch, take the 60-second profile test</span></div>
+          </div>
+          <div class="af-arrow">→</div>
+          <div class="af-step">
+            <b>2</b>
+            <div><strong>Guardian's official role</strong><span>Read the Sales Representative job description</span></div>
+          </div>
+          <div class="af-arrow">→</div>
+          <div class="af-step">
+            <b>3</b>
+            <div><strong>Apply Now</strong><span>Your application reaches us — reviewed within 48 hours</span></div>
+          </div>
+        </div>
+      </div>
+
       <div class="careers-cta reveal">
         <a class="btn btn-gold" href="https://agentmgt.com/" target="_blank" rel="noopener">Start the Selection — 2 min ↗</a>
         <a class="btn btn-outline" href="https://careerpathrrb.netlify.app/" target="_blank" rel="noopener">Explore the Career Path ↗</a>
+        <a class="btn btn-ghost-line" href="https://guardianlifeofthecaribbean.talentnest.com/en/posting/215291/location/287275" target="_blank" rel="noopener">Go straight to the role &amp; apply ↗</a>
       </div>
-      <p class="careers-note reveal">Confidential for practising advisors · Reviewed within 48 hours · Newcomers fully trained</p>
+      <p class="careers-note reveal">Confidential for practising advisors · Reviewed within 48 hours · Newcomers fully trained · Applications are received through Guardian Life of the Caribbean</p>
     </div>
   </section>
 
