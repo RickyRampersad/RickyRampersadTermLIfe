@@ -330,6 +330,45 @@ body{background:linear-gradient(180deg,#081020 0,#0e1a30 152px,transparent 152px
 .benpct.bad{color:#bd2438;border-color:#f1c6cc;background:#fdf0f1}
 .ptbl td b{color:#101b33}
 .ptbl .mk{color:#13845b;font-weight:700;white-space:nowrap}
+/* ---- who is signing in ----
+   Same language as the rest of the app: a dark branded band across the top,
+   the work itself on light. */
+.door{position:fixed;inset:0;z-index:200;overflow-y:auto;display:none;
+  background:radial-gradient(760px 300px at 82% 0,rgba(212,175,55,.22),transparent 70%),linear-gradient(180deg,#081020 0,#0e1a30 236px,#f6f7fa 236px),#f6f7fa}
+.door.on{display:block}
+.doorbox{max-width:840px;margin:0 auto;padding:38px 16px 34px;text-align:center}
+.doorbox h1{font-family:"Fraunces",Georgia,serif;font-size:27px;font-weight:700;letter-spacing:-.3px;line-height:1.15;color:#fff}
+.doorbox h1 span{display:block;font-family:"Inter",sans-serif;font-size:11px;font-weight:500;color:#9fb0d0;letter-spacing:.4px;margin-top:7px}
+.doorq{margin:22px 0 15px;font-size:11.5px;color:#e6c75a;font-weight:700;letter-spacing:.9px;text-transform:uppercase}
+.doors{display:grid;gap:12px;text-align:left}
+@media(min-width:760px){ .doors{grid-template-columns:repeat(3,1fr)} }
+.doorcard{display:flex;flex-direction:column;gap:8px;background:#fff;border:1px solid #e4e8f1;border-radius:16px;padding:20px 19px;cursor:pointer;font-family:inherit;text-align:left;
+  box-shadow:0 8px 26px rgba(16,27,51,.09);transition:border-color .15s,transform .12s,box-shadow .15s}
+.doorcard:hover{border-color:#c9a227;transform:translateY(-2px);box-shadow:0 12px 32px rgba(16,27,51,.14)}
+.doorcard:active{transform:translateY(0)}
+.doorcard .ico{font-size:23px;line-height:1}
+.doorcard b{font-family:"Fraunces",Georgia,serif;font-size:16.5px;font-weight:600;color:#101b33}
+.doorcard .d{font-size:12px;color:#64718e;line-height:1.6;flex:1}
+.doorcard .go{font-size:11.5px;font-weight:700;color:#8a6d1f;margin-top:4px}
+.doorfoot{margin-top:26px;font-size:11px;color:#64718e;line-height:1.75}
+.doorfoot a{color:#8a6d1f}
+/* the strip that says which door you came through */
+.rolebar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;background:var(--navy2);border:1px solid var(--line);border-radius:11px;padding:8px 12px;margin-bottom:12px;font-size:11.5px;color:var(--muted)}
+.rolebar b{color:var(--gold2)}
+.rolebar button{margin-left:auto;background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:5px 10px;font-size:10.5px;font-weight:600;cursor:pointer;font-family:inherit}
+.rolebar button:hover{color:var(--txt);border-color:var(--gold)}
+/* employer / employee reading views */
+.roleview{display:none}
+.roleview.on{display:block}
+.roleview .rp{font-size:13px;line-height:1.65;color:#3d4a68;margin-bottom:10px}
+.roleview .rp b{color:#101b33}
+.roleview .rl{margin:0 0 10px 18px;font-size:13px;line-height:1.7;color:#3d4a68}
+.roleview .rl b{color:#101b33}
+.roleview .rrow{padding:9px 0;border-bottom:1px solid #eef1f7;font-size:12.5px;line-height:1.6}
+.roleview .rrow:last-child{border-bottom:none}
+.roleview .rrow b{display:block;color:#101b33;margin-bottom:2px}
+.roleview .rrow span{color:#64718e}
+a.btn{display:inline-block;text-decoration:none;text-align:center}
 /* ---- the computation, drawn ----
    Two figures on a light card, matching the printed forms. Colours are the two
    poles of one diverging idea — money added to the assessment (gold) against
@@ -385,12 +424,50 @@ table.ptt td:first-child{width:38%;padding-right:12px;color:#64718e;font-weight:
 </style>
 </head>
 <body>
+
+<!-- ============ WHO IS SIGNING IN ============ -->
+<div class="door" id="door">
+  <div class="doorbox">
+    <svg class="shield" viewBox="0 0 48 54" style="width:52px;height:58px;margin-bottom:14px"><defs><linearGradient id="dg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0d066"/><stop offset="1" stop-color="#b8941f"/></linearGradient></defs>
+      <path d="M24 2 L46 9 V26 C46 40 36 49 24 52 C12 49 2 40 2 26 V9 Z" fill="url(#dg)"/><path d="M24 5.5 L42.5 11.5 V26 C42.5 38 33.5 46.5 24 49 C14.5 46.5 5.5 38 5.5 26 V11.5 Z" fill="#0a1228"/><path d="M15 27 L21 34 L34 19" fill="none" stroke="#f0d066" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <h1>Company pensions<span>Rampersad Branch · Guardian Life of the Caribbean</span></h1>
+    <p class="doorq">Who’s signing in?</p>
+    <div class="doors">
+      <button class="doorcard" onclick="setRole('agent')">
+        <span class="ico">📋</span>
+        <b>I’m the agent</b>
+        <span class="d">Work a case end to end — the Section 134 computation, the plans, every form, and the package for Head Office.</span>
+        <span class="go">Open the wizard →</span>
+      </button>
+      <button class="doorcard" onclick="setRole('employer')">
+        <span class="ico">🏢</span>
+        <b>I’m the employer</b>
+        <span class="d">What a company-owned pension costs, what you can deduct, what you sign, and what it does for keeping your people.</span>
+        <span class="go">What this means for my company →</span>
+      </button>
+      <button class="doorcard" onclick="setRole('employee')">
+        <span class="ico">👤</span>
+        <b>I’m the employee</b>
+        <span class="d">Your employer is setting up a pension for you. Here is what it is, what you signed, and what you’re entitled to ask.</span>
+        <span class="go">Explain my pension →</span>
+      </button>
+    </div>
+    <p class="doorfoot">Ricky Rampersad · CFD, MFA · Branch Manager · 23× MDRT<br>
+      <a href="mailto:support@rickyrampersadbranch.com">support@rickyrampersadbranch.com</a> · (868) 678-5921</p>
+  </div>
+</div>
+
 <div class="wrap">
 
   <div class="hd noprint">
     <svg class="shield" viewBox="0 0 48 54"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0d066"/><stop offset="1" stop-color="#b8941f"/></linearGradient></defs>
       <path d="M24 2 L46 9 V26 C46 40 36 49 24 52 C12 49 2 40 2 26 V9 Z" fill="url(#g)"/><path d="M24 5.5 L42.5 11.5 V26 C42.5 38 33.5 46.5 24 49 C14.5 46.5 5.5 38 5.5 26 V11.5 Z" fill="#0a1228"/><path d="M15 27 L21 34 L34 19" fill="none" stroke="#f0d066" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <div><h1>Pension Application <span class="goldgrad">Wizard</span></h1><p><b class="rname">RICKY RAMPERSAD</b> <span class="rsep">•</span> CFD, MFA <span class="rsep">•</span> Branch Manager <span class="rsep">•</span> <span class="mdrt">23× MDRT</span></p></div>
+  </div>
+
+  <div class="rolebar noprint" id="roleBar" style="display:none">
+    <b>Agent view</b><span>· not you?</span>
+    <button type="button" onclick="openDoor()">Switch</button>
   </div>
 
   <div class="casebar noprint">
@@ -402,6 +479,74 @@ table.ptt td:first-child{width:38%;padding-right:12px;color:#64718e;font-weight:
     </div>
     <input type="file" id="caseFile" accept="application/json,.json" hidden onchange="importCase(this)">
   </div>
+
+  <!-- ============ EMPLOYER VIEW ============ -->
+  <section class="roleview" id="viewEmployer">
+    <div class="shead"><div class="k">For the employer</div><h2>A pension your company owns, and deducts</h2><p>What it costs, what you can put in, and what you sign.</p></div>
+
+    <div class="card"><h3><span class="n">1</span>What it is</h3>
+      <p class="rp">Under <b>Section 134 of the Income Tax Act</b>, your company can take out a pension policy on an employee’s life, pay the premiums, and <b>deduct what it pays</b>. The company owns the policy; the employee is the person it pays out to. It is held in trust for them and their estate.</p>
+      <p class="rp">It is the standard way to reward and hold on to the people you cannot afford to lose — the value builds for them, funded by the company, at a cost the company writes off.</p>
+    </div>
+
+    <div class="card"><h3><span class="n">2</span>How much you may put in</h3>
+      <p class="rp">There is a ceiling, and it is not a flat percentage. The maximum is the <b>greater</b> of:</p>
+      <ul class="rl">
+        <li><b>One third of the employee’s chargeable income</b>, or</li>
+        <li><b>20% of their total emolument income</b>.</li>
+      </ul>
+      <p class="rp">The contribution itself counts as part of that income before the limits are worked out, so the two move together — which is why the figure has to be solved rather than simply multiplied out. Your agent works it out exactly and prints the BIR approval request that goes with it.</p>
+      <div class="btnrow" style="margin-top:12px"><button class="btn sm" onclick="setRole('agent')">Work out the maximum for one employee →</button></div>
+    </div>
+
+    <div class="card"><h3><span class="n">3</span>What the company signs</h3>
+      <div class="rrow"><b>BIR Section 134 request</b><span>The approval request, signed by the company, with the computation overleaf. It goes with an original or certified pay slip and a copy of the approved TD1.</span></div>
+      <div class="rrow"><b>Declaration 2 — third party</b><span>Because the company owns the policy. The company signs and <b>stamps</b> on top; the employee signs underneath.</span></div>
+      <div class="rrow"><b>Company documents</b><span>Certified formation documents, plus ID for every director and any shareholder holding 10% or more.</span></div>
+    </div>
+
+    <div class="card"><h3><span class="n">4</span>Your cases</h3>
+      <div class="info show">To see where your company’s applications stand — who is enrolled, what is contributed and what is outstanding — ask the branch. We will send you a personal link. <b>Nothing about your employees is stored in this browser or on this site.</b></div>
+      <div class="btnrow" style="margin-top:11px"><a class="btn sm" href="mailto:support@rickyrampersadbranch.com?subject=Company%20pension%20—%20our%20cases">Ask the branch for our summary</a></div>
+    </div>
+  </section>
+
+  <!-- ============ EMPLOYEE VIEW ============ -->
+  <section class="roleview" id="viewEmployee">
+    <div class="shead"><div class="k">For the employee</div><h2>Your employer is building you a pension</h2><p>What it is, what you signed, and what you’re entitled to ask.</p></div>
+
+    <div class="card"><h3><span class="n">1</span>What has been set up</h3>
+      <p class="rp">Your employer has taken out a pension policy under <b>Section 134 of the Income Tax Act</b>. The company pays into it and can deduct what it pays. <b>The company owns the policy — you are the person it pays out to</b>, and it is held for you and your estate.</p>
+      <p class="rp">You may also be putting in something of your own on top, taken from your salary. That part is <b>your</b> money and it lowers the income tax you pay.</p>
+    </div>
+
+    <div class="card"><h3><span class="n">2</span>The papers you signed</h3>
+      <div class="rrow"><b>Declaration 1</b><span>Your own declaration — your details and who you want the money to go to.</span></div>
+      <div class="rrow"><b>Declaration 2</b><span>The company’s declaration, because the company owns the policy. You sign underneath it.</span></div>
+      <div class="rrow"><b>Salary deduction</b><span>Only if you are contributing yourself. It authorises the amount to come out of your salary.</span></div>
+      <div class="rrow"><b>Nothing there is your policy number</b><span>Guardian issues that once the application is approved.</span></div>
+    </div>
+
+    <div class="card"><h3><span class="n">3</span>Ask — that is what it’s for</h3>
+      <p class="rp">These are fair questions, and you should have the answers <b>before</b> the policy is issued rather than after:</p>
+      <ul class="rl">
+        <li>What will this be worth when I retire, and how much of that is guaranteed?</li>
+        <li>What happens to it if I leave this employer?</li>
+        <li>If I die before retiring, who receives it, and how much?</li>
+        <li>Can I change my own contribution later, or pause it?</li>
+        <li>Can I change my retirement age, or who I have named?</li>
+        <li>What do the charges cost me?</li>
+      </ul>
+      <div class="btnrow" style="margin-top:12px">
+        <button class="btn sm" onclick="toggleFable()">Ask RIA now →</button>
+        <a class="btn ghost sm" href="mailto:support@rickyrampersadbranch.com?subject=A%20question%20about%20my%20pension">Email the branch</a>
+      </div>
+    </div>
+
+    <div class="card"><h3><span class="n">4</span>Your own pack</h3>
+      <div class="info show">Your agent can send you a short pack with <b>your</b> figures in it — the plan the company chose, your own contribution, who you named, and what happens next. Ask them for it, or email the branch and we will send it.</div>
+    </div>
+  </section>
 
   <div class="rail noprint" id="rail"></div>
   <div class="bar noprint"><i id="barFill"></i></div>
@@ -651,7 +796,16 @@ table.ptt td:first-child{width:38%;padding-right:12px;color:#64718e;font-weight:
       <div class="pvwrap" id="pv-pkg" style="margin-top:10px"><div class="pvload">Tap “Preview package” to build the full PDF here.</div></div>
     </div>
     <div class="card">
-      <h3><span class="n">2</span>Send to Rampersad Branch</h3>
+      <h3><span class="n">2</span>The employee’s own copy</h3>
+      <div class="info show" style="margin-bottom:11px"><b>What the employee gets.</b> Their own plain-language pack: the plan the company set up for them, their own plan if they are contributing, who their beneficiaries are, what they signed, and where to ask a question. No BIR workings, no ID copies — just their side of it.</div>
+      <div class="btnrow" style="margin-bottom:10px">
+        <button class="btn sm" onclick="downloadEmployeePack()">⤓ Download the employee pack</button>
+        <button class="btn ghost sm" onclick="emailEmployeePack()">✉ Email it to them</button>
+      </div>
+      <div class="status" id="st-emp"></div>
+    </div>
+    <div class="card">
+      <h3><span class="n">3</span>Send to Rampersad Branch</h3>
       <button class="btn" onclick="submitToBranch()">Email to Branch — support@rickyrampersadbranch.com</button>
       <div class="status" id="st-submit"></div>
       <div class="info show" style="margin-top:10px;font-size:11.5px"><b>Where does it go?</b> Straight to the Rampersad Branch inbox — <b>support@rickyrampersadbranch.com</b>. The button opens the email on this device with the full case summary written in; attach the downloaded package PDF, press Send, and it lands with the branch.</div>
@@ -2013,6 +2167,193 @@ async function downloadPackage(){
   await dl(pkgBytes,'RRB_Pension_Package_'+((d.empName||'case').replace(/\s+/g,'_'))+'.pdf');
   var st=document.getElementById('st-pkg'); st.textContent='\u2713 Package downloaded \u2014 attach it to the branch email.'; st.className='status ok';
 }
+/* ===================== THE EMPLOYEE'S OWN PACK =====================
+   The branch package is an internal submission — BIR workings, ID copies,
+   declarations. This is the other side of it: what the employee is entitled to
+   understand about their own pension, in their own language, with somewhere to
+   take a question. Both plans are described from the contract terms already
+   verified in PLANS, so this pack and the agent's advice cannot diverge. */
+function planByName(n){ for(var i=0;i<PLANS.length;i++) if(PLANS[i].n===n) return PLANS[i]; return null; }
+
+async function buildEmployeePack(){
+  var d=bridgeLoad();
+  var doc=await PDFLib.PDFDocument.create();
+  var helv=await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+  var bold=await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+  var ink=PDFLib.rgb(0.06,0.11,0.2), gold=PDFLib.rgb(0.66,0.52,0.11),
+      grey=PDFLib.rgb(0.42,0.47,0.58), navy=PDFLib.rgb(0.04,0.24,0.57);
+  var W=612,H=792,L=54,RGT=W-54, page=null, y=0;
+
+  function newPage(title){
+    page=doc.addPage([W,H]);
+    page.drawRectangle({x:0,y:H-40,width:W,height:40,color:PDFLib.rgb(0.055,0.102,0.188)});
+    page.drawText('YOUR PENSION — RAMPERSAD BRANCH',{x:L,y:H-26,size:12,font:bold,color:PDFLib.rgb(0.83,0.69,0.22)});
+    y=H-72;
+    if(title){ page.drawText(title,{x:L,y:y,size:15,font:bold,color:navy}); y-=24; }
+  }
+  /* word-wrapped paragraph — nothing in this pack may run off the page */
+  function para(t,opts){
+    opts=opts||{};
+    var size=opts.size||10.5, font=opts.bold?bold:helv, colour=opts.colour||ink, maxW=RGT-L;
+    var words=String(t).split(/\s+/), line='';
+    for(var i=0;i<words.length;i++){
+      var test=line?line+' '+words[i]:words[i];
+      if(font.widthOfTextAtSize(test,size)>maxW && line){
+        if(y<70){ newPage(null); }
+        page.drawText(line,{x:L,y:y,size:size,font:font,color:colour}); y-=size*1.45; line=words[i];
+      } else line=test;
+    }
+    if(line){ if(y<70){ newPage(null); } page.drawText(line,{x:L,y:y,size:size,font:font,color:colour}); y-=size*1.45; }
+    y-=(opts.gap==null?8:opts.gap);
+  }
+  function heading(t){ if(y<120) newPage(null); y-=4; page.drawText(t,{x:L,y:y,size:11.5,font:bold,color:gold}); y-=17; }
+  function row(k,v){
+    if(y<70) newPage(null);
+    page.drawText(k,{x:L,y:y,size:10,font:helv,color:grey});
+    var vs=String(v==null?'':v), maxW=RGT-(L+170);
+    /* never cut a client's figure without saying so */
+    if(bold.widthOfTextAtSize(vs,10)>maxW){
+      while(bold.widthOfTextAtSize(vs+'…',10)>maxW && vs.length>4) vs=vs.slice(0,-2);
+      vs+='…';
+    }
+    page.drawText(vs,{x:L+170,y:y,size:10,font:bold,color:ink}); y-=16;
+  }
+  function planBlock(p,heading2,extra){
+    if(!p) return;
+    heading(heading2);
+    para(p.insight||p.s,{size:10.5});
+    (p.facts||[]).slice(0,4).forEach(function(f){
+      if(y<70) newPage(null);
+      page.drawText('•',{x:L+2,y:y,size:10,font:helv,color:gold});
+      var words=String(f).split(/\s+/), line='', x=L+14, maxW=RGT-x;
+      for(var i=0;i<words.length;i++){
+        var test=line?line+' '+words[i]:words[i];
+        if(helv.widthOfTextAtSize(test,9.5)>maxW && line){
+          page.drawText(line,{x:x,y:y,size:9.5,font:helv,color:ink}); y-=14; line=words[i];
+          if(y<70) newPage(null);
+        } else line=test;
+      }
+      if(line){ page.drawText(line,{x:x,y:y,size:9.5,font:helv,color:ink}); y-=14; }
+      y-=3;
+    });
+    if(extra){ y-=2; para(extra,{size:9.5,colour:grey}); }
+    y-=6;
+  }
+
+  var empName=(d.empName||'').trim()||'—';
+  var coName=(d.coName||'').trim()||'your employer';
+  var coYear=pnum(d.co6a)+pnum(d.co6b);
+  var empMonthly=pnum(d.empPortion);
+  var employerPlan=planByName(d.employerPlan), employeePlan=planByName(d.employeePlan);
+
+  /* --- page 1: what has been set up --- */
+  newPage('Your pension, in plain language');
+  para('Prepared for '+empName+' on '+todayDMY()+' by '+(d.agentName||'Ricky Rampersad')+', Rampersad Branch, Guardian Life of the Caribbean.',{size:9.5,colour:grey});
+  para(coName+' is setting up a pension for you under Section 134 of the Income Tax Act. The company owns the policy and pays into it for you; you are the person it pays out to. This pack explains what has been arranged, what you have signed, and how to ask a question about it.');
+
+  heading('What the company is putting in');
+  row('Employer', coName);
+  row('For', empName);
+  if(coYear) row('Company contribution', '$'+pmoney(coYear)+' a year');
+  if(d.employerPlan) row('The plan', d.employerPlan);
+  if(d.employerVestAge) row('Maturity age', d.employerVestAge);
+  if(d.employerGuarantee!=null&&d.employerGuarantee!=='') row('Guarantee period', d.employerGuarantee==='0'?'None':d.employerGuarantee+' years');
+  if(d.planStart) row('Starts', d.planStart);
+  y-=6;
+  para('The company can deduct what it pays in, and the contribution is added to your income for the year before the limits are worked out — so the amount above was chosen to sit inside what the Board of Inland Revenue permits.',{size:9.5,colour:grey});
+
+  planBlock(employerPlan,'The company’s plan — '+(d.employerPlan||''),
+    employerPlan&&employerPlan.src==='contract'?'These points come from the policy contract itself.':null);
+
+  /* --- your own side --- */
+  if(empMonthly>0||employeePlan){
+    heading('What you are putting in');
+    if(empMonthly>0){
+      row('Your contribution','$'+money2(empMonthly)+' a month');
+      row('How it is paid','Deducted from your salary');
+    }
+    if(d.employeePlan) row('Your plan', d.employeePlan);
+    if(d.empRetAge) row('Retirement age', d.empRetAge);
+    if(d.empGuarantee!=null&&d.empGuarantee!=='') row('Guarantee period', d.empGuarantee==='0'?'None':d.empGuarantee+' years');
+    y-=6;
+    if(empMonthly>0) para('Your own contribution is deductible against your income tax at Line 6(a)(iii) — it lowers the tax you pay. It is separate from the company’s contribution and belongs to you.',{size:9.5,colour:grey});
+    planBlock(employeePlan,'Your plan — '+(d.employeePlan||''),null);
+  }
+
+  /* --- beneficiaries --- */
+  var bl=benList();
+  if(bl.length){
+    heading('Who receives it if you die');
+    bl.forEach(function(b){ row((b.name||'—')+(b.rel?' ('+b.rel+')':''), (b.pct||'0')+'%'); });
+    y-=4;
+    para('Tell the branch whenever this should change — it is your decision and it can be updated at any time.',{size:9.5,colour:grey});
+  }
+
+  /* --- page 2: what you signed and where to ask --- */
+  newPage('What you have signed, and what happens next');
+  para('You signed three things. None of them commits you to anything beyond what is set out above.');
+  heading('The documents');
+  row('Declaration 1','Your own declaration — your details and your beneficiaries.');
+  row('Declaration 2','The company’s declaration, because the company owns the policy.');
+  row('Salary deduction', empMonthly>0?('Authorises $'+money2(empMonthly)+' a month from your salary.'):'Authorises any deduction from your salary.');
+  row('BIR request','Sent by the company for approval of the contribution.');
+  y-=8;
+  para('Guardian will review the application and issue the policy. Your policy number arrives once it is issued — nothing on these forms is your policy number yet.',{size:9.5,colour:grey});
+
+  heading('Questions you are entitled to ask');
+  [ 'What will this be worth when I retire, and what is guaranteed?',
+    'What happens to it if I leave this employer?',
+    'What happens if I die before I retire — who gets what?',
+    'Can I change my own contribution later, or pause it?',
+    'Can I change my retirement age, or my beneficiaries?',
+    'What do the charges on my plan actually cost me?'
+  ].forEach(function(q){
+    if(y<90) newPage(null);
+    page.drawText('•',{x:L+2,y:y,size:10,font:helv,color:gold});
+    page.drawText(q,{x:L+14,y:y,size:10,font:helv,color:ink}); y-=17;
+  });
+  y-=8;
+  para('There is no bad question here. If any of this is unclear, ask before the policy is issued rather than after.',{size:9.5,colour:grey});
+
+  heading('Where to ask');
+  row('Your agent',(d.agentName||'Ricky Rampersad')+(d.agentNo?'  ·  '+d.agentNo:''));
+  row('Branch email','support@rickyrampersadbranch.com');
+  row('Branch phone','(868) 678-5921');
+  row('Online','pensionplantt.com');
+  y-=10;
+  para('Ricky Rampersad · CFD, MFA · Branch Manager · 23× MDRT · Guardian Life of the Caribbean',{size:8.5,colour:grey,gap:2});
+  para('This pack summarises your application in plain language. The policy contract, once issued, is the document that governs your pension.',{size:8,colour:grey});
+
+  return await doc.save();
+}
+
+async function downloadEmployeePack(){
+  stat('st-emp','Building…');
+  try{
+    var d=bridgeLoad();
+    var bytes=await buildEmployeePack();
+    await dl(bytes,'Your_Pension_'+((d.empName||'employee').replace(/\s+/g,'_'))+'.pdf');
+    stat('st-emp','✓ Employee pack downloaded — send it to '+((d.empName||'the employee'))+'.','ok');
+  }catch(e){ stat('st-emp','Could not build the pack: '+e.message,'err'); }
+}
+function emailEmployeePack(){
+  var d=bridgeLoad();
+  var to=(d.empEmail||'').trim();
+  var L2=[];
+  L2.push('Hi '+((d.empName||'').split(/\s+/)[0]||'there')+',');
+  L2.push('');
+  L2.push((d.coName||'Your employer')+' has set up a pension for you through Guardian Life of the Caribbean, and I have attached a short pack explaining it — the plan the company chose, your own contribution if you are making one, your beneficiaries, what you signed, and the questions you are entitled to ask.');
+  L2.push('');
+  L2.push('Have a read, and reply to this email or call the branch with anything at all you would like explained. Better to ask now than after the policy is issued.');
+  L2.push('');
+  L2.push((d.agentName||'Ricky Rampersad'));
+  L2.push('Rampersad Branch · Guardian Life of the Caribbean');
+  L2.push('support@rickyrampersadbranch.com · (868) 678-5921 · pensionplantt.com');
+  var sub='Your pension — '+(d.coName||'')+(d.empName?(' · '+d.empName):'');
+  location.href='mailto:'+encodeURIComponent(to)+'?subject='+encodeURIComponent(sub)+'&body='+encodeURIComponent(L2.join('\n'));
+  stat('st-emp', to?('✓ Email opened to '+to+' — attach the pack PDF before sending.'):'✓ Email opened — add the employee’s address and attach the pack PDF.','ok');
+}
+
 function validateCase(){
   var d=bridgeLoad(); var out=[];
   function err(m){ out.push({lv:'err',m:m}); }
@@ -2093,6 +2434,45 @@ function submitToBranch(){
 benMigrate(); loadInitial(); calc(); renderRail(); show(0); if(!bridgeLoad().agentName) bridgeSet('agentName','Ricky Rampersad'); if(!bridgeLoad().agentNo) bridgeSet('agentNo','A00427'); updateVStatus(); schedulePreviews();
 // restore checks
 (function(){ try{ const a=JSON.parse(bridgeLoad().checks||'[]'); document.querySelectorAll('.chkrow').forEach((r,i)=>{ if(a[i]) r.classList.add('on'); }); }catch(e){} })();
+
+/* ===================== WHO IS SIGNING IN =====================
+   Three doors onto the same page. The agent gets the wizard; the employer and
+   the employee get the part that concerns them, written for them. The choice is
+   remembered so an agent is not asked twice, and the strip at the top always
+   says which door you came through and offers the way back. */
+var ROLE_KEY='rrb_pension_role';
+var ROLE_LABEL={agent:'Agent view', employer:'Employer view', employee:'Employee view'};
+function setRole(role,remember){
+  try{ if(remember!==false) localStorage.setItem(ROLE_KEY,role); }catch(e){}
+  var door=document.getElementById('door');
+  var isAgent=role==='agent';
+  door.classList.remove('on');
+  ['viewEmployer','viewEmployee'].forEach(function(id){ var el=document.getElementById(id); if(el) el.classList.remove('on'); });
+  /* the wizard's own furniture only belongs to the agent */
+  ['rail','barFill'].forEach(function(id){ var el=document.getElementById(id); if(el) el.closest('div').style.display=isAgent?'':'none'; });
+  document.querySelectorAll('section.step').forEach(function(s){ s.style.display=isAgent?'':'none'; });
+  var nav=document.querySelector('.nav'); if(nav) nav.style.display=isAgent?'':'none';
+  var cb=document.querySelector('.casebar'); if(cb) cb.style.display=isAgent?'':'none';
+  if(!isAgent){
+    var el=document.getElementById(role==='employer'?'viewEmployer':'viewEmployee');
+    if(el) el.classList.add('on');
+  }else{
+    show(cur);   // restore the wizard's own step visibility
+  }
+  var bar=document.getElementById('roleBar');
+  if(bar){ bar.style.display='flex'; bar.querySelector('b').textContent=ROLE_LABEL[role]||role; }
+  window.scrollTo({top:0,behavior:'auto'});
+}
+function openDoor(){
+  try{ localStorage.removeItem(ROLE_KEY); }catch(e){}
+  document.getElementById('door').classList.add('on');
+  window.scrollTo({top:0,behavior:'auto'});
+}
+(function(){
+  var saved=null; try{ saved=localStorage.getItem(ROLE_KEY); }catch(e){}
+  if(saved==='agent'||saved==='employer'||saved==='employee') setRole(saved,false);
+  else document.getElementById('door').classList.add('on');
+})();
 
 /* ===================== THE CASE FILE — save state, export, import, reset =====================
    Everything typed lives in this browser's localStorage and nowhere else. Export
