@@ -1,6 +1,18 @@
 # Query Pal attachment tests
 
-Eight suites covering attachments, routing, reminders, the leaderboard, security and the wall.
+Eight suites. Two run against the live build today; the rest skip with a reason
+until their code is ported onto it.
+
+| suite | status |
+|---|---|
+| `attachments.browser` | **runs** — 26 assertions on the live `index.html` |
+| `wall.browser` | **runs** — 33 assertions on `wall.html` |
+| `attachments.backend`, `routing`, `security`, `wall` | skip — need `QueryPal_Backend_v10.gs` |
+| `leaderboard.browser`, `signin.browser` | skip — features not yet ported to the live `index.html` |
+
+The repo was seeded from an old archive (frontend v27.2, script v6.9-COLOR-CODE)
+while production runs v10.2-CLIENT-PORTAL. The frontend has since been replaced
+with the live 11 Aug build; the Apps Script still needs exporting from the editor.
 
 ```bash
 cd querypal/tests

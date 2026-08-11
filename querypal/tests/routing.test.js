@@ -1,7 +1,16 @@
 /* Routing + reminder rules: manager CC resolution, health override, deadlines,
    and which statuses the autopilot will chase. */
+const _fs = require('fs'), _p = require('path');
+const _gs = _p.join(__dirname, '..', 'QueryPal_Backend_v10.gs');
+if (!_fs.existsSync(_gs)) {
+  console.log('  SKIPPED — needs QueryPal_Backend_v10.gs in querypal/.');
+  console.log('  The archive this repo started from carried v6.9; production runs v10.2.');
+  console.log('  Export the live script from the Apps Script editor to run this suite.');
+  process.exit(0);
+}
+
 const fs = require('fs'), path = require('path');
-const gs = fs.readFileSync(path.join(__dirname, '..', 'QueryPal_Backend_v6.gs'), 'utf8');
+const gs = fs.readFileSync(path.join(__dirname, '..', 'QueryPal_Backend_v10.gs'), 'utf8');
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const grab = re => gs.match(re)[0].replace(/^const /, 'var ');
 eval(grab(/const AGENT_MANAGER = \{[\s\S]*?\n\};/));

@@ -1,5 +1,13 @@
 /* Drives the real dashboard with a seeded feed: leaderboard maths, role gating,
    time-range interactivity. */
+import { existsSync, readFileSync } from 'fs';
+const _idx = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+if (!_idx.includes('dashBoard')) {
+  console.log('  SKIPPED — this feature is not in the live build yet (the Board tab / leaderboard).');
+  console.log('  Port it onto the current index.html first, then re-run.');
+  process.exit(0);
+}
+
 import { createRequire } from 'module';
 import path from 'path';
 const { chromium } = createRequire(import.meta.url)('/opt/node22/lib/node_modules/playwright');

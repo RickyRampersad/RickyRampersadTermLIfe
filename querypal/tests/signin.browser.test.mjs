@@ -1,5 +1,13 @@
 /* The sign-in flow in a real browser with the webhook intercepted: verifies
    credentials leave over POST (not in the URL) and the token drives the dash. */
+import { existsSync, readFileSync } from 'fs';
+const _idx = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+if (!_idx.includes("action:'agentauth'")) {
+  console.log('  SKIPPED — this feature is not in the live build yet (POST sign-in with a session token).');
+  console.log('  Port it onto the current index.html first, then re-run.');
+  process.exit(0);
+}
+
 import { createRequire } from 'module';
 import path from 'path';
 const { chromium } = createRequire(import.meta.url)('/opt/node22/lib/node_modules/playwright');

@@ -4,7 +4,16 @@ global.Utilities = {
   base64Decode: s => { if (!/^[A-Za-z0-9+/]*={0,2}$/.test(s)) throw new Error('bad base64'); return Buffer.from(s, 'base64'); },
   newBlob: (bytes, mime, name) => ({ bytes, mime, name, getName: () => name })
 };
-const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'QueryPal_Backend_v6.gs'), 'utf8');
+const _fs = require('fs'), _p = require('path');
+const _gs = _p.join(__dirname, '..', 'QueryPal_Backend_v10.gs');
+if (!_fs.existsSync(_gs)) {
+  console.log('  SKIPPED — needs QueryPal_Backend_v10.gs in querypal/.');
+  console.log('  The archive this repo started from carried v6.9; production runs v10.2.');
+  console.log('  Export the live script from the Apps Script editor to run this suite.');
+  process.exit(0);
+}
+
+const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'QueryPal_Backend_v10.gs'), 'utf8');
 // pull out just the helpers we want to test
 eval(src.slice(src.indexOf('var ATTACH_OK_RX'), src.indexOf('function sendRoutedEmail')));
 

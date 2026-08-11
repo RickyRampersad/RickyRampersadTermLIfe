@@ -1,7 +1,16 @@
 /* wallStats_ aggregation, with the Spreadsheet/Cache/Utilities services stubbed
    and a seeded sheet. Verifies the numbers the wall panels are drawn from. */
+const _fs = require('fs'), _p = require('path');
+const _gs = _p.join(__dirname, '..', 'QueryPal_Backend_v10.gs');
+if (!_fs.existsSync(_gs)) {
+  console.log('  SKIPPED — needs QueryPal_Backend_v10.gs in querypal/.');
+  console.log('  The archive this repo started from carried v6.9; production runs v10.2.');
+  console.log('  Export the live script from the Apps Script editor to run this suite.');
+  process.exit(0);
+}
+
 const fs=require('fs'), path=require('path'), crypto=require('crypto');
-const gs=fs.readFileSync(path.join(__dirname,'..','QueryPal_Backend_v6.gs'),'utf8');
+const gs=fs.readFileSync(path.join(__dirname,'..','QueryPal_Backend_v10.gs'),'utf8');
 
 const TZ='America/Port_of_Spain';
 let SHEET=[];
