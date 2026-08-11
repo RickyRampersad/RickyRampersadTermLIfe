@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- A screen that runs for months will happily serve a cached copy of itself
+     forever. These stop the browser holding an old build after a deploy. -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>RR Branch — Live</title>
 <style>
   :root{
@@ -437,7 +442,13 @@ function rotate(){
 $('p0').classList.add('on'); $('k0').classList.add('on');
 tick(); poll();
 setInterval(tick,1000); setInterval(poll,POLL_MS); setInterval(rotate,ROTATE_MS);
-setInterval(function(){ if(new Date().getHours()===4) location.reload(); },3600000);
+setInterval(function(){
+  if(new Date().getHours()!==4) return;
+  // location.reload() can be served from cache, which would pin this screen to
+  // an old build indefinitely. Re-request with a fresh stamp instead.
+  var u=location.href.split('#')[0].replace(/[?&]v=\d+/,'');
+  location.replace(u+(u.indexOf('?')>-1?'&':'?')+'v='+Date.now());
+},3600000);
 </script>
 </body>
 </html>
