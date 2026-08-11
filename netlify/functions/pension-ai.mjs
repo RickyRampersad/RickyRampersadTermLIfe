@@ -81,6 +81,8 @@ function originAllowed(req) {
   allowed.add(new URL(req.url).host.toLowerCase());
   allowed.add('rickyrampersadbranch.com');
   allowed.add('www.rickyrampersadbranch.com');
+  allowed.add('pensionplantt.com');
+  allowed.add('www.pensionplantt.com');
   return allowed.has(host) || host.endsWith('.netlify.app');
 }
 
