@@ -853,21 +853,36 @@ const CLIENT_QUESTIONS=[
     {k:'month',lab:'Later this month'},
     {k:'other',lab:'I will confirm when I reply'}]}
 ];
-/* What a manager must answer. Previously two free-text fields, which came back
-   blank on 78 of 106 filed cases. */
+/* What a manager answers from day 60. Split in two because the client is copied
+   on those emails: MANAGER_QUESTIONS is what a policyholder sees being asked —
+   all service, all dated. MANAGER_PRIVATE is the commercial and compliance
+   decision, answered here in the engine and never rendered into an email the
+   client is on. Keys must match apps-script/PremiumDueTemplates.gs. */
 const MANAGER_QUESTIONS=[
-  {k:'mcontact',q:'Have you personally contacted this client?',opts:[
-    {k:'yes',lab:'Yes — I have spoken with them'},{k:'attempted',lab:'Attempted — no response yet'},
-    {k:'notyet',lab:'Not yet — I will do so today'}]},
-  /* Asked in the client's own vocabulary, so the manager's account of the call
-     and the client's own answer are directly comparable — and so a client who
-     never opened an email still has a recorded position. */
-  {k:'mclientsays',q:'What did the client tell you?',opts:[
-    {k:'clear',lab:'They will clear it'},{k:'lower',lab:'They need a smaller premium'},
-    {k:'date',lab:'They need a different payment date'},{k:'bank',lab:'Their bank instruction failed'},
-    {k:'pause',lab:'They asked for a short pause'},{k:'end',lab:'They no longer want the cover'},
-    {k:'nocontact',lab:'I have not been able to speak with them'}]},
-  {k:'mdecision',q:'What is your decision on this case?',opts:[
+  {k:'mcontact',q:'Have you spoken with the client?',opts:[
+    {k:'yes',lab:'Yes — we have spoken'},{k:'attempted',lab:'Attempted — no answer yet'},
+    {k:'today',lab:'Not yet — I am calling today'}]},
+  {k:'moutcome',q:'What was the outcome?',opts:[
+    {k:'settle',lab:'They will settle it'},{k:'review',lab:'They need the premium reviewed'},
+    {k:'billing',lab:'Payment date or bank details to change'},{k:'hold',lab:'They asked for a short pause'},
+    {k:'end',lab:'They do not wish to continue'},{k:'none',lab:'Not reached yet'}]},
+  {k:'magent',q:'Have you spoken with the advisor about this policy?',opts:[
+    {k:'yes',lab:'Yes — we have discussed it'},{k:'today',lab:'Not yet — today'},
+    {k:'noagent',lab:'No advisor is servicing this policy'}]},
+  {k:'mfactfind',q:'Have you reviewed the fact find?',opts:[
+    {k:'yes',lab:'Yes — complete and acceptable'},{k:'returned',lab:'Returned to the advisor to complete'},
+    {k:'none',lab:'None attached'}]},
+  {k:'mvalue',q:'What is the non-forfeiture position on this policy?',opts:[
+    {k:'novalue',lab:'No accrued value — it lapses outright at day 90'},
+    {k:'apl',lab:'An automatic premium loan is running against the value'},
+    {k:'value',lab:'It has value; cover can be sustained from it for a period'},
+    {k:'checking',lab:'Confirming with the carrier'}]},
+  {k:'mwhen',q:'By when will this be resolved?',opts:[
+    {k:'today',lab:'Today'},{k:'week',lab:'This week'},
+    {k:'d75',lab:'Before day 75'},{k:'d88',lab:'Before day 88'}]}
+];
+const MANAGER_PRIVATE=[
+  {k:'mdecision',q:'Your decision on this case',opts:[
     {k:'retention',lab:'Approve the retention plan as proposed'},
     {k:'payplan',lab:'Approve a payment plan'},
     {k:'reduce',lab:'Approve a premium reduction or benefit alteration'},
@@ -875,60 +890,45 @@ const MANAGER_QUESTIONS=[
     {k:'replacement',lab:'Investigate possible replacement of in-force cover'},
     {k:'reassign',lab:'Reassign — orphan or wrong agent'},
     {k:'lapse',lab:'Allow the policy to lapse — documented'}]},
-  {k:'mvalue',q:'What is the non-forfeiture position on this policy?',opts:[
-    {k:'novalue',lab:'No accrued value — it lapses outright at day 90'},
-    {k:'apl',lab:'An automatic premium loan is running against the value'},
-    {k:'value',lab:'It has value; cover can be sustained from it for a period'},
-    {k:'checking',lab:'Confirming with the carrier — I will come back on this'}]},
-  {k:'mfactfind',q:'Is the fact find complete and acceptable?',opts:[
-    {k:'yes',lab:'Yes — complete'},{k:'returned',lab:'No — returned to the agent for completion'},
-    {k:'none',lab:'No fact find was attached'}]},
   {k:'moutlook',q:'How likely is this policy to be saved?',opts:[
     {k:'high',lab:'High — the client is engaged'},{k:'mod',lab:'Moderate — depends on the concession'},
     {k:'low',lab:'Low — prepare for lapse'}]},
   {k:'msupport',q:'Do you need the branch manager involved?',opts:[
-    {k:'no',lab:'No — I have this'},{k:'yes',lab:'Yes — please escalate to the branch manager'}]},
-  {k:'mwhen',q:'By when will this be resolved?',opts:[
-    {k:'today',lab:'Today'},{k:'week',lab:'Within this week'},
-    {k:'d75',lab:'Before day 75'},{k:'d88',lab:'Before day 88 — the final notice'}]}
+    {k:'no',lab:'No — I have this'},{k:'yes',lab:'Yes — please escalate'}]}
 ];
-/* Day 88. A different letter needs different questions: by then we have asked
-   what would help twice, and asking a third time reads as though nobody was
-   listening. These ask about us instead — starting with the one the branch has
-   never put to a lapsing client, and which 47 of 137 JotForm respondents
-   answered without being asked. */
+/* Day 90, 95 and 100. The grace period has run out, so the questions change:
+   what would you like to happen, and how did the two people responsible do. */
 const CLOSING_QUESTIONS=[
-  {k:'reached',q:'Has anyone from the branch spoken with you about this?',opts:[
-    {k:'agent',lab:'Yes — my advisor'},{k:'manager',lab:'Yes — a manager'},
-    {k:'letters',lab:'No — only these letters'},
-    {k:'other',lab:'I would rather explain — please call me'}]},
-  {k:'decide',q:'What would you like to happen with the policy?',opts:[
-    {k:'settle',lab:'Keep it — I will settle the premium'},
-    {k:'review',lab:'Keep it, with the premium reviewed'},
-    {k:'talk',lab:'Hold it — I would like to speak with someone first'},
-    {k:'end',lab:'I would prefer to end the cover'},
-    {k:'other',lab:'Something else — I will reply and explain'}]},
-  {k:'better',q:'Is there anything we could have done better?',opts:[
-    {k:'nothing',lab:'No — this was handled well'},
-    {k:'clarity',lab:'Explained more clearly what would happen'},
-    {k:'person',lab:'Been easier to reach a person'},
-    {k:'followup',lab:'Followed up on something I asked for'},
-    {k:'other',lab:'I would rather explain — please call me'}]}
+  {k:'decide',q:'What would you like to happen?',opts:[
+    {k:'settle',lab:'Restore it — I will settle'},{k:'review',lab:'Restore it — review my premium'},
+    {k:'talk',lab:'Call me before anything else'},{k:'end',lab:'Leave it ended'},
+    {k:'other',lab:'Something else'}]},
+  {k:'rateagent',q:'How would you rate your advisor?',opts:[
+    {k:'excellent',lab:'★★★★★  Excellent'},{k:'good',lab:'★★★★  Good'},
+    {k:'fair',lab:'★★★  Fair'},{k:'poor',lab:'★★  Poor'},{k:'never',lab:'★  Never heard from them'}]},
+  {k:'ratemanager',q:'And the manager who handled it?',opts:[
+    {k:'excellent',lab:'★★★★★  Excellent'},{k:'good',lab:'★★★★  Good'},
+    {k:'fair',lab:'★★★  Fair'},{k:'poor',lab:'★★  Poor'},{k:'never',lab:'★  Never heard from them'}]},
+  {k:'better',q:'What would have made the difference?',opts:[
+    {k:'nothing',lab:'Nothing — you did what you could'},{k:'earlier',lab:'Reaching me earlier'},
+    {k:'person',lab:'Speaking to a person, not emails'},{k:'clarity',lab:'Explaining my options more clearly'},
+    {k:'money',lab:'It was money — nothing would have'},{k:'other',lab:'Something else'}]}
 ];
 const ANSWER_BY_KEY={};
-[CLIENT_QUESTIONS,MANAGER_QUESTIONS,CLOSING_QUESTIONS].forEach(set=>set.forEach(q=>q.opts.forEach(o=>{
+[CLIENT_QUESTIONS,MANAGER_QUESTIONS,MANAGER_PRIVATE,CLOSING_QUESTIONS].forEach(set=>set.forEach(q=>q.opts.forEach(o=>{
   ANSWER_BY_KEY[q.k+':'+o.k]={q:q.q,lab:o.lab,qk:q.k,
-    set:set===MANAGER_QUESTIONS?'mgr':set===CLOSING_QUESTIONS?'closing':'client'};})));
+    set:(set===MANAGER_QUESTIONS||set===MANAGER_PRIVATE)?'mgr':set===CLOSING_QUESTIONS?'closing':'client'};})));
 /* Which set a question belongs to, so a returning tap offers the right
    remaining questions rather than the day-45 ones. */
 function questionSet(name){
-  return name==='mgr'?MANAGER_QUESTIONS:name==='closing'?CLOSING_QUESTIONS:CLIENT_QUESTIONS;
+  return name==='mgr'?MANAGER_QUESTIONS.concat(MANAGER_PRIVATE)
+       :name==='closing'?CLOSING_QUESTIONS:CLIENT_QUESTIONS;
 }
 /* Answers that mean the client intends to keep paying, for the odds model. */
 /* Any answer at all is a good sign — these weight how good. */
 const POSITIVE_ANSWERS={'help:settle':1,'help:billing':1,'when:now':1,'when:payday':1,
   'decide:settle':1,'decide:review':1};
-const NEGATIVE_ANSWERS={'help:hold':1,'when:other':1,'decide:end':1};
+const NEGATIVE_ANSWERS={'help:hold':1,'when:other':1,'decide:end':1,'rateagent:never':1,'ratemanager:never':1};
 function answerLink(c,kind,qk,ak){
   return `${location.origin}${location.pathname}#${kind}=${c.Policy}&q=${qk}&a=${ak}`;
 }
@@ -937,32 +937,30 @@ function answerLink(c,kind,qk,ak){
    The client-facing message for each point on the lapse clock. Kept in step with
    apps-script/PremiumDueTemplates.gs — that file sends them on the daily run,
    this one is what an agent copies when they'd rather reach out personally.
-   One channel, one record: a letter that is also a WhatsApp message is two
-   versions of the branch's position, and the one nobody logged is the one the
-   client remembers. */
+   One channel, one record. Two versions of the branch's position going out on
+   two channels means the one nobody logged is the one the client remembers. */
 const BRANCH_PHONE='(868) 678-5921';
 const OUT_TPL={
-  od:{lab:'Overdue nudge',subject:c=>`A premium on policy ${c.Policy} hasn't reached us`,
-    msg:c=>`Hi ${first(c)}, this is the Ricky Rampersad Branch. A premium of ${money(c.Premium)} on policy ${c.Policy} hasn't reached us. Your cover is still active — usually it's just a bank or card change. Can you let me know what suits you?${surveyTail(c)}`},
-  s45:{lab:'45-day letter',subject:c=>`Policy No. ${c.Policy} — premium outstanding ${c.DaysArrears||0} days`,
-    msg:c=>`Good day ${first(c)}, this is the Ricky Rampersad Branch regarding policy ${c.Policy}. The premium is ${c.DaysArrears||0} days outstanding and cover would end in about ${toLapse(c)} days. Before it gets there we would rather understand your situation than assume it — there are more options than most people realise. Three quick questions:${surveyTail(c)} Or reply here and we will take it from there.`},
-  s45r:{lab:'Survey reminder',subject:c=>`Still here when you are — policy ${c.Policy}`,
-    msg:c=>`Hi ${first(c)}, just following up on policy ${c.Policy}. Cover ends in about ${toLapse(c)} days. Even if the answer is you want to stop it, tell me — I'd rather sort it properly than let it lapse.${surveyTail(c)}`},
-  /* There is no 60-day client message any more. Day 60 is the handover: the
-     client leaves the letter sequence and the manager telephones them. The
-     reminder below is what they get in the meantime, and it says so. */
-  chase:{lab:'Reminder (no reply)',subject:c=>`Policy No. ${c.Policy} — reminder, ${toLapse(c)} days to lapse`,
-    msg:c=>`Good day ${first(c)}, Ricky Rampersad Branch following up on policy ${c.Policy}. It is ${c.DaysArrears||0} days outstanding with ${toLapse(c)} days before cover ends. ${(c.DaysArrears||0)>=SLA.RETENTION_OPENS&&managerOf(c.Agent)?`${managerOf(c.Agent)}, the manager responsible for your agent, has been asked to call you personally. `:''}Even a one-line reply — including that you want to stop it — lets us act properly rather than let it lapse.`},
-  s75:{lab:'75-day — from the manager',subject:c=>`Policy No. ${c.Policy} — ${toLapse(c)} days remaining, from ${managerOf(c.Agent)||'the branch'}`,
-    msg:c=>`Good day ${first(c)}. This is ${managerOf(c.Agent)||'the manager'}, the manager at the Ricky Rampersad Branch responsible for your agent. We have written about policy ${c.Policy} and I wanted to reach you myself. There are ${toLapse(c)} days left before it reaches the end of its grace period. Tell me what would help — clearing it, a smaller amount, a different payment date, fixing the bank instruction, or a short pause — and I will handle it personally.`},
-  s88:{lab:'Final notice + full record',subject:c=>`Final notice — policy ${c.Policy}, ${toLapse(c)} days remaining, and the full record`,
-    msg:c=>`Good day ${first(c)} — final notice on policy ${c.Policy}. It reaches the end of its grace period in ${toLapse(c)} day${toLapse(c)===1?'':'s'}. I have sent you the complete record of everything on this policy — every letter, every reply, and what we did about it. Two things I want to ask you directly: did anyone from us actually call you, and what would you like to happen with the policy? Call ${BRANCH_PHONE} or reply here.`},
+  od:{lab:'Overdue nudge',subject:c=>`Policy ${c.Policy} — a premium has not reached us`,
+    msg:c=>`Dear ${esc(c.Client)},\n\nA premium of ${money(c.Premium)} on the above policy has not reached us. Your cover remains in force.\n\nIn most cases this is a change of bank or card rather than anything else, and it is a short conversation to put right. Please reply to this email or call ${BRANCH_PHONE} and we will deal with it.\n\nYours sincerely,\n${esc(c.Agent||'Ricky Rampersad Branch')}\nRicky Rampersad Branch`},
+  s45:{lab:'45-day letter',subject:c=>`Policy ${c.Policy} — premium outstanding ${c.DaysArrears||0} days`,
+    msg:c=>`Dear ${esc(c.Client)},\n\nThe premium on the above policy is ${c.DaysArrears||0} days outstanding. Your cover is still in force and we would like to keep it that way.\n\nThere are more options available than most policyholders realise, and we would rather find the right one with you than assume anything about your circumstances. Whichever suits you:\n\n  · Settle it now\n  · Review the premium\n  · Change the payment date or bank details\n  · Pause briefly, keeping the cover in place\n  · Speak with someone\n\nReply with whichever fits, or call ${BRANCH_PHONE}.\n\nYours sincerely,\n${esc(c.Agent||'Ricky Rampersad Branch')}\nRicky Rampersad Branch`},
+  s45r:{lab:'45-day reminder',subject:c=>`Policy ${c.Policy} — ${toLapse(c)} days remaining`,
+    msg:c=>`Dear ${esc(c.Client)},\n\nWe wrote recently about the premium on the above policy and have not yet had your instruction. Cover ends in approximately ${toLapse(c)} days.\n\nIf your decision is to discontinue, please tell us and we will record it properly. We would far rather that than let the policy lapse by silence.\n\nYours sincerely,\n${esc(c.Agent||'Ricky Rampersad Branch')}\nRicky Rampersad Branch`},
+  chase:{lab:'Reminder (no reply)',subject:c=>`Policy ${c.Policy} — reminder, ${toLapse(c)} days remaining`,
+    msg:c=>`Dear ${esc(c.Client)},\n\nWe wrote on day 45 about the premium on the above policy and have not yet had your instruction. It is now ${c.DaysArrears||0} days outstanding and cover ends in ${toLapse(c)} days.\n\n${(c.DaysArrears||0)>=SLA.RETENTION_OPENS&&managerOf(c.Agent)?`${managerOf(c.Agent)}, the manager responsible for your advisor, has been asked to telephone you personally.\n\n`:''}Even a one-line reply — including that you wish to discontinue — allows us to act properly.\n\nYours sincerely,\n${esc(c.Agent||'Ricky Rampersad Branch')}\nRicky Rampersad Branch`},
+  s75:{lab:'75-day — from the manager',subject:c=>`Policy ${c.Policy} — a personal note from ${managerOf(c.Agent)||'the branch'}`,
+    msg:c=>`Dear ${esc(c.Client)},\n\nI am ${managerOf(c.Agent)||'the manager'}, the manager responsible for your advisor's work at this branch. I am writing personally because we have not managed to reach you, and there are ${toLapse(c)} days left before this policy reaches the end of its grace period.\n\nTell me which of these suits and I will handle it myself: settling it, reviewing the premium, changing the payment date or bank details, or a short pause keeping the cover in place.\n\n${BRANCH_PHONE}, quoting policy ${c.Policy}.\n\nYours sincerely,\n${managerOf(c.Agent)||'Ricky Rampersad Branch'}\nRicky Rampersad Branch`},
+  s88:{lab:'Final notice',subject:c=>`Final notice — policy ${c.Policy}, ${toLapse(c)} days remaining`,
+    msg:c=>`Dear ${esc(c.Client)},\n\nThis is the last notice before the above policy reaches the end of its grace period, in ${toLapse(c)} day${toLapse(c)===1?'':'s'}. There is still time.\n\nPlease reply with whichever applies, or call ${BRANCH_PHONE} quoting policy ${c.Policy}:\n\n  · Settle it now\n  · Review the premium\n  · Change the payment date or bank details\n  · Speak with someone first\n\nYours sincerely,\n${esc(c.Agent||'Ricky Rampersad Branch')}\nRicky Rampersad Branch`},
+  close:{lab:'Closing letter — how did we do?',subject:c=>`Policy ${c.Policy} — how did we do?`,
+    msg:c=>`Dear ${esc(c.Client)},\n\nThe grace period on the above policy has now run out. Before we close the file, we would like you to see exactly what was done and to hear how it felt from your side.\n\nFour questions, and two of them are about us:\n\n  · What would you like to happen — restore it, or leave it ended?\n  · How would you rate your advisor, out of five?\n  · And the manager who handled it?\n  · What would have made the difference?\n\nWhatever you tell us goes to the branch manager directly. If you would rather say it out loud, call ${BRANCH_PHONE} and ask for him by name.\n\nYours sincerely,\n${esc(c.Agent||'Ricky Rampersad Branch')}\nRicky Rampersad Branch`},
   winback:{lab:'Win-back',subject:c=>`Policy ${c.Policy} can still be restored`,
-    msg:c=>`Hi ${first(c)}, Ricky Rampersad Branch here. Policy ${c.Policy} lapsed ${c.LapseDate?('on '+c.LapseDate):((c.DaysArrears||0)+' days ago')}, so there's no cover in place right now. It can still be reinstated — it keeps its original age and terms, so it's usually cheaper than starting fresh. Want me to check what it would take?`},
-  pend:{lab:'Requirements chase',subject:c=>`Your application needs one more thing — policy ${c.Policy}`,
-    msg:c=>`Hi ${first(c)}, your application on policy ${c.Policy} has been in underwriting ${c.DaysArrears||0} days waiting on requirements. Worth knowing: you're not covered until it completes. Usually it's a medical or one form — can I call you to sort it?`},
-  thanks:{lab:'Payment received',subject:c=>`Thank you — policy ${c.Policy} is up to date`,
-    msg:c=>`Hi ${first(c)} — payment received, policy ${c.Policy} is up to date and your cover continues. Thank you. If a different payment date would suit you better, just say.`}
+    msg:c=>`Dear ${esc(c.Client)},\n\nThe above policy lapsed ${c.LapseDate?('on '+c.LapseDate):((c.DaysArrears||0)+' days ago')}, which means there is no cover in place today.\n\nReinstatement is usually simpler than starting again: the policy keeps its original age and terms, so the premium is normally lower than the same cover bought today. The window does not stay open indefinitely — the longer it runs, the more evidence the insurer asks for.\n\nOne call tells you exactly what it would take: ${BRANCH_PHONE}.\n\nYours sincerely,\n${esc(c.Agent||'Ricky Rampersad Branch')}\nRicky Rampersad Branch`},
+  pend:{lab:'Requirements chase',subject:c=>`Your application — outstanding requirements, policy ${c.Policy}`,
+    msg:c=>`Dear ${esc(c.Client)},\n\nYour application has been with underwriting for ${c.DaysArrears||0} days and is waiting on outstanding requirements.\n\nUntil this is complete you are not yet covered. That is the part worth knowing — an application in progress is not a policy in force.\n\nIt is usually a medical appointment, a form, or one document. Reply to this email or call ${BRANCH_PHONE} and we will tell you exactly what is outstanding.\n\nYours sincerely,\n${esc(c.Agent||'Ricky Rampersad Branch')}\nRicky Rampersad Branch`},
+  thanks:{lab:'Premium received',subject:c=>`Policy ${c.Policy} is up to date — thank you`,
+    msg:c=>`Dear ${esc(c.Client)},\n\nYour premium has been received and the above policy is up to date. Your cover continues without a break and the benefits you have built stay intact.\n\nThank you for settling it, and for staying with us.\n\nIf a different payment date or arrangement would suit you better, say the word — it is far easier to change than to catch up.\n\nYours sincerely,\n${esc(c.Agent||'Ricky Rampersad Branch')}\nRicky Rampersad Branch`}
 };
 function first(c){return String(c.Client||'').replace(/\s*\(client\)/i,'').trim().split(/\s+/)[0]||'there';}
 function toLapse(c){return Math.max(0,90-(Number(c.DaysArrears)||0));}
@@ -971,7 +969,7 @@ function surveyTail(c){const l=surveyLink(c);return l?(' '+l):'';}
 function defaultTpl(c){
   const d=Number(c.DaysArrears)||0;
   if(c.stage==='pend')return 'pend';
-  if(c.stage==='s90')return c.lapsed?'winback':'s88';
+  if(c.stage==='s90')return d>=90&&d<=101?'close':(c.lapsed?'winback':'s88');
   if(c.stage==='s60')return d>=88?'s88':d>=75?'s75':'chase';
   if(c.stage==='s45')return d>=52?'s45r':'s45';
   if(c.stage==='od')return 'od';

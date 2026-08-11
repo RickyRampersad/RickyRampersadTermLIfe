@@ -76,17 +76,27 @@ milestones, a reminder every 5 days while the client has said nothing; it stops
 on any answer. Day 75 is signed by the unit manager personally. The final notice
 sends at day 88 so it lands before the cliff, not on it.
 
-**Day 60 is the one milestone the client does not receive as a letter.** It is
-the handover: the policy becomes the manager's, and the next contact the client
-gets is the one that manager makes. See below.
+**At day 60 one email goes to the manager with the client copied**, and repeats
+every three days until the manager has answered. **At day 90, 95 and 100** the
+client gets the closing letter, which asks them to rate the advisor and the
+manager. See below.
 
 | Stage | Trigger | What's due |
 |-------|---------|-----------|
 | Overdue | Status 2, 1–44 days | Nothing automated — agent contact only |
 | 45-Day | Status 2, 45–59 days | First letter: two questions, answered by tapping |
-| 60-Day | Status 2, 60–89 days | Handed to the manager, who calls · manager answers within 3 days · agent files by day 65 |
-| 90-Day | Status 2 at 90+, or Status 1 | Reinstatement or win-back |
+| 60-Day | Status 2, 60–89 days | One email to the manager, **cc advisor + client**, repeating every 3 days until answered · advisor files by day 65 |
+| 88 | Status 2, 88–89 days | Short final notice |
+| 90 / 95 / 100 | Any status | The closing letter, with service ratings. Three sends, then it stops |
+| Win-back | Status 1, from day 110 | Reinstatement, once the closing sequence has finished |
 | Pending | Status 3 / underwriting incomplete | New business chase |
+
+### Colour
+
+`PD_THEME` at the top of `PremiumDueTemplates.gs` — `'navy'` (default, from the
+branch site), `'teal'` (Guardian corporate) or `'charcoal'` (most formal). Every
+letter, badge, table header and rule follows it; the gold, the crest and the
+layout are shared. All three clear 3.2:1 on every text node.
 
 ### Short letters
 
@@ -143,9 +153,11 @@ retention negotiation.
 
 ### One channel
 
-There is no WhatsApp variant. A letter that is also a WhatsApp message is two
-versions of the branch's position, and the one nobody logged is the one the
-client remembers.
+**Email only**, everywhere — the templates, the engine's outreach panel and the
+brief. Two versions of the branch's position going out on two channels means the
+one nobody logged is the one the client remembers, and the engine's copy-out
+messages are written as letters rather than as text messages for the same
+reason.
 
 ### Contact data
 
@@ -222,7 +234,48 @@ inference: once a manager has confirmed the position, the client's day-88 letter
 says *"we have checked the position on this policy — confirmed by [manager]"*
 rather than *"your agent will confirm"*.
 
-### Day 60 — the handover
+### Day 60 — one email, and the client is on it
+
+**The day-60 email is addressed to the manager and copied to the advisor, the
+branch manager and the client.** That last one is the design, not an oversight.
+Up to day 60 the policyholder is asked to act and hears nothing back but
+reminders; from day 60 they watch the branch work — who holds the policy, what
+they have been asked, and by when.
+
+It repeats **every three days** until every question has an answer, and each
+repeat asks only what is still outstanding while showing what has already been
+answered. `pdOutstandingQuestions_` does the filtering, `state.rounds` numbers
+the reminders.
+
+Because a client reads these, the manager's questions are split in two:
+
+| | Asked in the email | |
+|---|---|---|
+| `MANAGER_QUESTIONS` | **Yes** | Have you spoken with the client · What was the outcome · Have you spoken with the advisor · Have you reviewed the fact find · What is the non-forfeiture position · By when will this be resolved |
+| `MANAGER_PRIVATE` | **Never** | The commercial decision (including *allow the policy to lapse*), the outlook, and whether the BM is needed |
+
+Putting "allow the policy to lapse — documented" in front of a policyholder as a
+menu option would be indefensible. Those three are answered in the engine.
+
+`pdWhatWeHave_` carries the day-45 answer into the email — **or says plainly
+that there was no reply**, which is the sentence that makes a manager pick up
+the phone.
+
+### Day 90, 95, 100 — the closing letter
+
+The grace period has run out. `PD_TEMPLATES.close` sets out every follow-up,
+every answer, and everything the manager recorded, then asks four questions —
+two of which are **star ratings for the advisor and for the manager**. It goes
+at day 90, again at 95, again at 100, and then never again; a fourth letter
+asking a lapsed policyholder to rate us would be the branch talking to itself.
+Any answer to a closing question stops it (`state.closingAnswered`).
+
+**Win-back is held back to day 110** (`OUT.WIN_BACK_OPENS`). Without that gate
+the lapse status flips at day 90 and win-back interleaves with the closing
+letters — closing on 90, win-back on 92, closing on 95 — and the closing letter
+already offers reinstatement.
+
+### The old day-60 handover
 
 **Day 60 sends the client nothing.** It sends the *manager* the brief, and asks
 them to telephone. `pdInternalChase_` fires `pdManagerLetter_(p, s, {activation:
