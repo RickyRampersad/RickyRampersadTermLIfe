@@ -188,7 +188,7 @@ function pdWrap_(inner, tag) {
         '<span style="color:#BFD8D3;font-size:12px">' + pdEsc_(tag || 'Policy services') + '</span></td>' +
       '</tr></table>' +
     '</div>' +
-    '<div style="border:1px solid ' + PD_BRAND.line + ';border-top:none;padding:20px 22px;border-radius:0 0 10px 10px;background:#FBFAF6">' +
+    '<div style="border:1px solid ' + PD_BRAND.line + ';border-top:none;padding:20px 22px;border-radius:0 0 10px 10px;background:#FBFAF6;color:' + PD_BRAND.ink + '">' +
       inner +
       '<p style="color:#8A8578;font-size:11px;border-top:1px solid #E8E3D8;padding-top:11px;margin-top:20px">' +
       'This notice relates to the premium on your policy. Your policy contract and schedule govern in all cases. ' +
@@ -203,12 +203,18 @@ function pdBtn_(link, label) {
 }
 function pdNote_(html, colour) {
   return '<div style="background:#F6ECD4;border-left:4px solid ' + (colour || PD_BRAND.gold) +
-    ';padding:12px 15px;margin:14px 0">' + html + '</div>';
+    ';padding:12px 15px;margin:14px 0;color:' + PD_BRAND.ink + '">' + html + '</div>';
 }
 function pdFacts_(p) {
+  // Every cell states its own colour and background. Table colour inheritance is
+  // unreliable across mail clients — Outlook and Gmail's dark mode in particular —
+  // so a cell that only sets a background renders as invisible text often enough
+  // to matter when the thing being hidden is the policy number.
   var row = function (k, v) {
-    return '<tr><td style="padding:7px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:170px;color:#5A6B7B">' +
-      k + '</td><td style="padding:7px 12px;border:1px solid #E8E3D8">' + v + '</td></tr>';
+    return '<tr>' +
+      '<td style="padding:7px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:170px;color:#5A6B7B">' + k + '</td>' +
+      '<td style="padding:7px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:' + PD_BRAND.ink + '">' + v + '</td>' +
+      '</tr>';
   };
   return '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:14px 0;font-size:13px">' +
     row('Policy', '<b>' + pdEsc_(p.Policy) + '</b>') +
@@ -433,15 +439,20 @@ function pdRender(stageKey, policy) {
 /* The engine's retention form says "Sends to <manager>" but only ever wrote a
    row. This is the send. Call it from doPost when type === 'retention'. */
 
+function pdKv_(k, v) {
+  return '<tr>' +
+    '<td style="padding:6px 12px;background:#F3F0E9;border:1px solid #E8E3D8;color:#5A6B7B">' + k + '</td>' +
+    '<td style="padding:6px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:' + PD_BRAND.ink + '">' + v + '</td>' +
+    '</tr>';
+}
+
 function pdEscalateRetention_(d) {
   if (!OUT.ESCALATE_CC.length) return;
   var body =
     '<p><b>' + pdEsc_(d.author) + '</b> filed a 75-day retention case and needs your response.</p>' +
     '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:13px;margin:12px 0">' +
-    '<tr><td style="padding:6px 12px;background:#F3F0E9;border:1px solid #E8E3D8">Client</td><td style="padding:6px 12px;border:1px solid #E8E3D8">' + pdEsc_(d.client) + '</td></tr>' +
-    '<tr><td style="padding:6px 12px;background:#F3F0E9;border:1px solid #E8E3D8">Policy</td><td style="padding:6px 12px;border:1px solid #E8E3D8">' + pdEsc_(d.policy) + '</td></tr>' +
-    '<tr><td style="padding:6px 12px;background:#F3F0E9;border:1px solid #E8E3D8">Agent</td><td style="padding:6px 12px;border:1px solid #E8E3D8">' + pdEsc_(d.agent) + '</td></tr>' +
-    '<tr><td style="padding:6px 12px;background:#F3F0E9;border:1px solid #E8E3D8">Reason</td><td style="padding:6px 12px;border:1px solid #E8E3D8">' + pdEsc_(d.reason) + '</td></tr>' +
+    pdKv_('Client', pdEsc_(d.client)) + pdKv_('Policy', pdEsc_(d.policy)) +
+    pdKv_('Agent',  pdEsc_(d.agent))  + pdKv_('Reason', pdEsc_(d.reason)) +
     '</table>' +
     '<p>' + pdEsc_(d.body) + '</p>' +
     (d.factFind ? '<p><b>Fact find:</b> ' + pdEsc_(d.factFind) + '</p>' : '') +

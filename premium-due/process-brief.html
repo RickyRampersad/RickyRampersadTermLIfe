@@ -1,0 +1,422 @@
+<title>Premium Due — The Revised Process</title>
+<style>
+:root{
+  --paper:#F3F0E9; --card:#FBFAF6; --card-2:#F7F4ED;
+  --ink:#0B1B2B; --ink-2:#1C3145; --slate:#5A6B7B; --mut:#82909C;
+  --line:#DFD9CC; --line-2:#EBE6DB;
+  --teal:#0E6E64; --teal-2:#0A524A; --teal-soft:#E2EFEC;
+  --gold:#B0851F; --gold-soft:#F6ECD4;
+  --red:#A6362F; --red-soft:#F5E4E2;
+  --amber:#B0691F; --amber-soft:#F8E9D8;
+  --green:#356F47; --green-soft:#E2EFE5;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --serif:ui-serif,Georgia,"Times New Roman",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0E1519; --card:#161F24; --card-2:#1B252A;
+  --ink:#E8EDEC; --ink-2:#C6D2D0; --slate:#93A3A4; --mut:#75858A;
+  --line:#26333A; --line-2:#1F2B31;
+  --teal:#4FB3A5; --teal-2:#6FC7BA; --teal-soft:#15302E;
+  --gold:#D3A544; --gold-soft:#2E2617;
+  --red:#E08A80; --red-soft:#331F1D;
+  --amber:#D8974E; --amber-soft:#2F2418;
+  --green:#77C096; --green-soft:#162C22;
+}}
+:root[data-theme="dark"]{
+  --paper:#0E1519; --card:#161F24; --card-2:#1B252A;
+  --ink:#E8EDEC; --ink-2:#C6D2D0; --slate:#93A3A4; --mut:#75858A;
+  --line:#26333A; --line-2:#1F2B31;
+  --teal:#4FB3A5; --teal-2:#6FC7BA; --teal-soft:#15302E;
+  --gold:#D3A544; --gold-soft:#2E2617;
+  --red:#E08A80; --red-soft:#331F1D;
+  --amber:#D8974E; --amber-soft:#2F2418;
+  --green:#77C096; --green-soft:#162C22;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;padding:0 20px 90px}
+.wrap{max-width:1020px;margin:0 auto;display:flex;flex-direction:column;gap:46px}
+.wrap > section > p, .wrap > header > p{margin:0}
+
+.mast{padding:54px 0 0;display:flex;flex-direction:column;gap:16px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand svg{width:42px;height:42px;flex:0 0 auto}
+.brand .k{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal);font-weight:700}
+.brand .n{font-family:var(--serif);font-size:18px;font-weight:600;line-height:1.1}
+h1{font-family:var(--serif);font-size:clamp(31px,4.8vw,48px);line-height:1.05;letter-spacing:-.02em;
+  margin:0;font-weight:600;text-wrap:balance;max-width:19ch}
+.stand{font-size:18px;color:var(--ink-2);max-width:62ch;line-height:1.58;margin:0}
+.meta{font-family:var(--mono);font-size:11px;color:var(--mut);letter-spacing:.03em;
+  display:flex;flex-wrap:wrap;gap:5px 18px;border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
+
+section{display:flex;flex-direction:column;gap:20px}
+.sh{display:flex;flex-direction:column;gap:8px;padding-bottom:13px;border-bottom:2px solid var(--ink)}
+.sh .e{font-family:var(--mono);font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--teal);font-weight:700}
+.sh h2{font-family:var(--serif);font-size:28px;letter-spacing:-.02em;font-weight:600;margin:0;text-wrap:balance}
+.sh p{color:var(--slate);font-size:15.5px;max-width:68ch;margin:0}
+.prose{display:flex;flex-direction:column;gap:14px;max-width:68ch;font-size:16px;color:var(--ink-2)}
+.prose p{margin:0}
+.prose strong{color:var(--ink);font-weight:650}
+code{font-family:var(--mono);font-size:.86em;background:var(--card-2);border:1px solid var(--line-2);
+  padding:1.5px 5px;border-radius:3px;color:var(--ink)}
+a{color:var(--teal);text-decoration:underline;text-underline-offset:2px}
+
+/* before / after */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.ba{grid-template-columns:1fr}}
+.ba > div{border:1px solid var(--line);border-radius:9px;padding:17px 19px;background:var(--card);display:flex;flex-direction:column;gap:9px}
+.ba .lab{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.ba .old .lab{color:var(--mut)} .ba .new .lab{color:var(--teal)}
+.ba .new{border-color:var(--teal)}
+.ba h3{font-family:var(--serif);font-size:20px;font-weight:600;margin:0;letter-spacing:-.01em}
+.ba ul{margin:0;padding-left:17px;display:flex;flex-direction:column;gap:6px}
+.ba li{font-size:14.4px;color:var(--ink-2);line-height:1.5}
+
+/* timeline */
+.tl{display:flex;flex-direction:column;gap:2px;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.ev{display:grid;grid-template-columns:78px 1fr;gap:16px;padding:13px 17px;background:var(--card);border-left:5px solid var(--line)}
+.ev.c-client{border-left-color:var(--teal)}
+.ev.c-int{border-left-color:var(--amber)}
+.ev.c-end{border-left-color:var(--red)}
+.ev .d{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink);padding-top:2px;white-space:nowrap}
+.ev .b{display:flex;flex-direction:column;gap:4px}
+.ev .t{font-weight:650;font-size:15.2px;color:var(--ink)}
+.ev .s{font-size:14.2px;color:var(--ink-2);max-width:66ch}
+.ev .w{font-family:var(--mono);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700}
+.ev.c-client .w{color:var(--teal)} .ev.c-int .w{color:var(--amber)} .ev.c-end .w{color:var(--red)}
+
+/* email previews */
+.mail{border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--card)}
+.mail + .mail{margin-top:14px}
+.mh{padding:13px 17px;border-bottom:1px solid var(--line-2);display:flex;flex-direction:column;gap:6px;background:var(--card-2)}
+.mh .row{display:flex;gap:10px;flex-wrap:wrap;align-items:baseline}
+.mh .day{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  background:var(--teal);color:#fff;padding:3px 8px;border-radius:4px;white-space:nowrap}
+.mh .subj{font-weight:650;font-size:15px;color:var(--ink)}
+.mh .cc{font-family:var(--mono);font-size:11px;color:var(--mut)}
+.mh .cc b{color:var(--amber)}
+.wa{padding:12px 17px;border-bottom:1px solid var(--line-2);display:flex;gap:11px;align-items:flex-start}
+.wa .tag{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  background:#25D366;color:#08351C;padding:3px 7px;border-radius:4px;flex:0 0 auto;margin-top:1px}
+.wa .txt{font-size:13.6px;color:var(--ink-2);line-height:1.55}
+details{border-top:0}
+summary{padding:10px 17px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--teal);cursor:pointer;font-weight:700;user-select:none}
+summary:hover{background:var(--teal-soft)}
+.frame{padding:18px;background:#E9E6DE;overflow-x:auto}
+.frame > div{margin:0 auto}
+.frame table{border-collapse:collapse}
+
+/* role grid */
+.roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(262px,1fr));gap:14px}
+.role{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:18px;display:flex;flex-direction:column;gap:10px}
+.role h3{font-family:var(--serif);font-size:19px;font-weight:600;margin:0}
+.role .sub{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);font-weight:700}
+.role ul{margin:0;padding-left:17px;display:flex;flex-direction:column;gap:6px}
+.role li{font-size:14.3px;color:var(--ink-2);line-height:1.5}
+.role li b{color:var(--ink);font-weight:650}
+
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:9px;background:var(--card)}
+.tw table{border-collapse:collapse;width:100%;font-size:14.4px;min-width:520px}
+.tw th{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);
+  text-align:left;padding:11px 15px;background:var(--card-2);border-bottom:1px solid var(--line);white-space:nowrap}
+.tw td{padding:11px 15px;border-bottom:1px solid var(--line-2);color:var(--ink-2);vertical-align:top}
+.tw tr:last-child td{border-bottom:none}
+.tw td b{color:var(--ink);font-weight:650}
+.tw td.m{font-family:var(--mono);font-size:12.5px;color:var(--ink)}
+
+.call{border-radius:9px;padding:16px 19px;display:flex;flex-direction:column;gap:8px;border:1px solid}
+.call .lab{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.call p{font-size:15px;margin:0}
+.call.warn{background:var(--red-soft);border-color:var(--red)} .call.warn .lab{color:var(--red)}
+.call.note{background:var(--gold-soft);border-color:var(--gold)} .call.note .lab{color:var(--gold)}
+.call.good{background:var(--green-soft);border-color:var(--green)} .call.good .lab{color:var(--green)}
+
+.asks{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.ask{background:var(--card);padding:15px 18px;display:grid;grid-template-columns:26px 1fr auto;gap:15px;align-items:start}
+.ask .n{font-family:var(--mono);font-size:12px;font-weight:700;color:#fff;background:var(--teal);
+  width:24px;height:24px;border-radius:4px;display:flex;align-items:center;justify-content:center}
+.ask .b{display:flex;flex-direction:column;gap:4px}
+.ask .t{font-weight:650;font-size:15.2px;color:var(--ink)}
+.ask .s{font-size:14.2px;color:var(--slate);max-width:64ch}
+.ask .who{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);white-space:nowrap;padding-top:4px}
+
+footer{border-top:1px solid var(--line);padding-top:20px;font-family:var(--mono);font-size:11px;
+  color:var(--mut);line-height:1.9;letter-spacing:.02em}
+@media(max-width:620px){.ev{grid-template-columns:1fr;gap:6px}.ask{grid-template-columns:24px 1fr}.ask .who{grid-column:2}}
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <div class="brand"><svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M24 3l16 5v12c0 11.5-7 19.5-16 23-9-3.5-16-11.5-16-23V8l16-5z" fill="#0E6E64"/><path d="M15 24l6.5 6.5L34 17" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 3l16 5v3L24 6 8 11V8l16-5z" fill="#C9972B" opacity=".9"/></svg><div><div class="k">Ricky Rampersad Branch</div><div class="n">Premium Due Engine</div></div></div>
+  <h1>The revised premium due process</h1>
+  <p class="stand">Retention now opens at day 60 instead of 75, the client is given a way to answer in one tap, and both the agent and the manager are on a clock. This is what changes, what your clients will receive, and what each of us has to do differently.</p>
+  <p class="meta"><span>FOR THE FULL BRANCH TEAM</span><span>BRANCH 26000</span><span>REPLACES THE TWO JOTFORMS AND THE PREMIUM DUE STATUS COLUMNS</span></p>
+</header>
+
+<section>
+  <div class="sh"><span class="e">The change in one line</span><h2>Fifteen days was never enough</h2></div>
+  <div class="ba">
+    <div class="old">
+      <span class="lab">Until now</span>
+      <h3>Retention opened at day 75</h3>
+      <ul>
+        <li>Fifteen days to find the client, file a case, get a decision and act on it</li>
+        <li>The client's only route back was to phone us</li>
+        <li>A case could sit unanswered with nobody named</li>
+        <li>History lived in a JotForm, a spreadsheet column and somebody's inbox</li>
+      </ul>
+    </div>
+    <div class="new">
+      <span class="lab">From now</span>
+      <h3>Retention opens at day 60</h3>
+      <ul>
+        <li><b>Thirty days</b> of runway, and the manager is in it early enough to matter</li>
+        <li>The client answers in <b>one tap</b> — six options, no form, no password</li>
+        <li>Every open case names <b>exactly who is holding it</b></li>
+        <li>Everything attaches to the policy, where the next person can read it</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sh"><span class="e">Where the data lives</span><h2>Two sheets, and only two</h2>
+    <p>Nothing is stored anywhere else. If it is not in one of these, it did not happen.</p></div>
+  <div class="tw"><table>
+    <thead><tr><th>Sheet</th><th>What it does</th><th>Who writes to it</th></tr></thead>
+    <tbody>
+      <tr><td class="m"><a href="https://docs.google.com/spreadsheets/d/1T1SG3mgs5QV5LuF3JTpmn1zFldhGjOQNoe0YCMhWxjs/edit">Branch Portfolio</a></td>
+          <td><b>Read only.</b> The premium due status tab — every policy, its status, days in arrears and the client's contact details. The engine reads it; it never writes back.</td>
+          <td>Nobody, through the engine</td></tr>
+      <tr><td class="m"><a href="https://docs.google.com/spreadsheets/d/1OuVG4NIsOd_O1LmmZ2gUYXCr1R59Atsfqv0yOvqFVgo/edit">Premium Due Tracker</a></td>
+          <td><b>The record.</b> Every comment, survey answer, client reply, retention case and manager response — one row each, tied to the policy. Also holds the staff roster.</td>
+          <td>Everyone, through the engine</td></tr>
+    </tbody>
+  </table></div>
+  <div class="prose">
+    <p>The Branch Portfolio stays exactly as it is — keep updating it the way you do now. What changes is that the arrears conversation stops living in email and starts living against the policy.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sh"><span class="e">The workflow</span><h2>What happens, and when</h2>
+    <p>The clock runs from the missed premium. Everything below is automatic unless it says otherwise.</p></div>
+  <div class="tl"><div class="ev c-client"><span class="d">Day 30</span><div class="b"><span class="w">Client</span><span class="t">Overdue nudge</span><span class="s">A premium hasn&#x27;t reached us. Cover is still active — usually a bank or card change. No alarm, just a prompt.</span></div></div><div class="ev c-client"><span class="d">Day 45</span><div class="b"><span class="w">Client</span><span class="t">The 45-day survey</span><span class="s">Three questions, thirty seconds, no login. Why is it behind, where do they stand, anything we should know.</span></div></div><div class="ev c-client"><span class="d">Day 52</span><div class="b"><span class="w">Client</span><span class="t">Survey reminder</span><span class="s">Only if they said nothing. One follow-up, then we stop asking until day 60.</span></div></div><div class="ev c-client"><span class="d">Day 60</span><div class="b"><span class="w">Client + the chain</span><span class="t">The retention notice — the new centrepiece</span><span class="s">Refers back to the 45-day email and gives the client six one-click choices. The agent, their unit manager and the branch manager are all copied, so whichever the client picks, somebody is already across it.</span></div></div><div class="ev c-int"><span class="d">Day 65</span><div class="b"><span class="w">Agent</span><span class="t">Retention case due</span><span class="s">The agent files the case with the fact find attached. Miss it and the agent is emailed with their manager copied, the case reads &quot;Waiting on [agent]&quot;, and it appears on their sign-in gate.</span></div></div><div class="ev c-int"><span class="d">+5 days</span><div class="b"><span class="w">Manager</span><span class="t">Manager response due</span><span class="s">Five days from the case landing, the manager must respond. Miss it and they are emailed every 3 days, with the branch manager copied from the second reminder — and they meet a gate of their own at sign-in.</span></div></div><div class="ev c-client"><span class="d">Every 5</span><div class="b"><span class="w">Client</span><span class="t">Chase, while there is silence</span><span class="s">Days 65, 70, 75, 80, 85. Each repeats the choices and tells the client their manager will reach out too. Stops the moment they pick anything.</span></div></div><div class="ev c-end"><span class="d">Day 88</span><div class="b"><span class="w">Client</span><span class="t">Final notice</span><span class="s">Last message before the policy lapses.</span></div></div><div class="ev c-end"><span class="d">Day 90</span><div class="b"><span class="w">—</span><span class="t">Cover ends</span><span class="s">Reinstatement only. Recent lapses get a win-back; the older ones are a different conversation.</span></div></div></div>
+  <div class="call note">
+    <span class="lab">Nothing fires into a vacuum</span>
+    <p>Every sequence stops the moment it should: the client picks an option, the manager answers, or the premium is paid. Nobody gets chased for something they have already done.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sh"><span class="e">What the client receives</span><h2>Read these before they land</h2>
+    <p>These are the actual messages, not summaries. Each goes out as an email, and the WhatsApp version is what you copy from the engine when you would rather reach out yourself.</p></div>
+
+  <div class="mail">
+  <div class="mh">
+    <div class="row"><span class="day">Day 30</span><span class="subj">A premium on policy 5004310044 hasn&#x27;t reached us</span></div>
+    <div class="cc">To the client</div>
+    
+  </div>
+  <div class="wa"><span class="tag">WhatsApp</span><span class="txt">Hi Saira, this is Ricky Rampersad Branch. A premium of $538.90 on policy 5004310044 hasn&#x27;t reached us. Your cover is still active. Usually it&#x27;s a bank or card change — can you let me know what suits you? https://rrb-premium-due.netlify.app/#survey=5004310044</span></div>
+  <details><summary>▸ See the email as the client gets it</summary>
+    <div class="frame"><div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#0B1B2B;max-width:620px"><div style="background:#0E6E64;color:#fff;padding:18px 22px;border-radius:10px 10px 0 0"><table width="100%"><tr><td width="44" valign="middle"><div style="width:36px;height:36px;background:#C9972B;border-radius:8px 8px 16px 16px;text-align:center;line-height:36px;font-size:20px;font-weight:bold;color:#0A524A">✓</div></td><td valign="middle" style="padding-left:11px"><b style="font-size:17px">Ricky Rampersad Branch</b><br><span style="color:#BFD8D3;font-size:12px">Premium reminder</span></td></tr></table></div><div style="border:1px solid #D9D3C6;border-top:none;padding:20px 22px;border-radius:0 0 10px 10px;background:#FBFAF6;color:#0B1B2B"><p>Dear Saira,</p><p>A premium of <b>$538.90</b> on your policy has not reached us yet. It is usually something small — a change of bank, a card that expired, or a payment we simply have not matched up.</p><table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:14px 0;font-size:13px"><tr><td style="padding:7px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:170px;color:#5A6B7B">Policy</td><td style="padding:7px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:#0B1B2B"><b>5004310044</b></td></tr><tr><td style="padding:7px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:170px;color:#5A6B7B">Premium</td><td style="padding:7px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:#0B1B2B">$538.90</td></tr><tr><td style="padding:7px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:170px;color:#5A6B7B">Cover ends</td><td style="padding:7px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:#0B1B2B">19 Jun 2026</td></tr></table><p>Your cover is <b>still in force</b>. Bringing the premium up to date keeps it that way, and keeps the benefits you have already built.</p><p style="text-align:center;margin:22px 0"><a href="https://rrb-premium-due.netlify.app/#survey=5004310044" style="background:#C9972B;color:#0B1B2B;text-decoration:none;font-weight:bold;padding:13px 28px;border-radius:8px;display:inline-block">Tell us what happened</a></p><p>If you have already paid, thank you — nothing further is needed.</p><p style="margin-top:18px">Warm regards,<br><b>Ricky Rampersad Branch</b><br>(868) 678-5921<br>support@rickyrampersadbranch.com</p><p style="color:#8A8578;font-size:11px;border-top:1px solid #E8E3D8;padding-top:11px;margin-top:20px">This notice relates to the premium on your policy. Your policy contract and schedule govern in all cases. If you have already paid, please ignore this — payments can take a few days to reflect.</p></div></div></div>
+  </details>
+</div>
+  <div class="mail">
+  <div class="mh">
+    <div class="row"><span class="day">Day 45</span><span class="subj">Saira, we would like to understand — policy 5004310044</span></div>
+    <div class="cc">To the client</div>
+    <div class="cc" style="color:var(--slate)">Carries the survey link.</div>
+  </div>
+  <div class="wa"><span class="tag">WhatsApp</span><span class="txt">Hi Saira, it&#x27;s Ricky Rampersad Branch. Your premium on policy 5004310044 has been outstanding about 6 weeks, and cover would end in roughly 45 days if nothing changes. Before that happens I&#x27;d like to understand what&#x27;s going on — 3 quick questions, 30 seconds: https://rrb-premium-due.netlify.app/#survey=5004310044 Or just reply here and we can sort it out.</span></div>
+  <details><summary>▸ See the email as the client gets it</summary>
+    <div class="frame"><div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#0B1B2B;max-width:620px"><div style="background:#0E6E64;color:#fff;padding:18px 22px;border-radius:10px 10px 0 0"><table width="100%"><tr><td width="44" valign="middle"><div style="width:36px;height:36px;background:#C9972B;border-radius:8px 8px 16px 16px;text-align:center;line-height:36px;font-size:20px;font-weight:bold;color:#0A524A">✓</div></td><td valign="middle" style="padding-left:11px"><b style="font-size:17px">Ricky Rampersad Branch</b><br><span style="color:#BFD8D3;font-size:12px">45-day review</span></td></tr></table></div><div style="border:1px solid #D9D3C6;border-top:none;padding:20px 22px;border-radius:0 0 10px 10px;background:#FBFAF6;color:#0B1B2B"><p>Dear Saira,</p><p>The premium on your policy has been outstanding for about six weeks. Before this goes any further we would rather hear from you than guess.</p><table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:14px 0;font-size:13px"><tr><td style="padding:7px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:170px;color:#5A6B7B">Policy</td><td style="padding:7px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:#0B1B2B"><b>5004310044</b></td></tr><tr><td style="padding:7px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:170px;color:#5A6B7B">Premium</td><td style="padding:7px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:#0B1B2B">$538.90</td></tr><tr><td style="padding:7px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:170px;color:#5A6B7B">Cover ends</td><td style="padding:7px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:#0B1B2B">19 Jun 2026</td></tr></table><p><b>Thirty seconds, three questions.</b> Whatever the reason — money is tight, the billing broke, or the policy is no longer what you need — tell us and we will work with it. There are more options than most people realise, and they all need you to still be inside the window.</p><p style="text-align:center;margin:22px 0"><a href="https://rrb-premium-due.netlify.app/#survey=5004310044" style="background:#C9972B;color:#0B1B2B;text-decoration:none;font-weight:bold;padding:13px 28px;border-radius:8px;display:inline-block">Answer 3 quick questions</a></p><div style="background:#F6ECD4;border-left:4px solid #C9972B;padding:12px 15px;margin:14px 0;color:#0B1B2B"><b>Where this is heading:</b> if nothing changes, cover ends in about <b>45 days</b>. From that point a claim would not be paid, and restoring the policy needs a fresh application — sometimes fresh medical evidence.</div><p>Prefer to talk? Reply to this email or call (868) 678-5921.</p><p style="margin-top:18px">Warm regards,<br><b>Ricky Rampersad Branch</b><br>(868) 678-5921<br>support@rickyrampersadbranch.com</p><p style="color:#8A8578;font-size:11px;border-top:1px solid #E8E3D8;padding-top:11px;margin-top:20px">This notice relates to the premium on your policy. Your policy contract and schedule govern in all cases. If you have already paid, please ignore this — payments can take a few days to reflect.</p></div></div></div>
+  </details>
+</div>
+  <div class="mail">
+  <div class="mh">
+    <div class="row"><span class="day">Day 52</span><span class="subj">Still here when you are — policy 5004310044</span></div>
+    <div class="cc">To the client</div>
+    <div class="cc" style="color:var(--slate)">Only sent if the survey went unanswered.</div>
+  </div>
+  <div class="wa"><span class="tag">WhatsApp</span><span class="txt">Hi Saira, just following up on policy 5004310044. Cover ends in about 38 days. Even if the answer is you want to stop it, tell me — I&#x27;d rather sort it properly than let it lapse. https://rrb-premium-due.netlify.app/#survey=5004310044</span></div>
+  <details><summary>▸ See the email as the client gets it</summary>
+    <div class="frame"><div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#0B1B2B;max-width:620px"><div style="background:#0E6E64;color:#fff;padding:18px 22px;border-radius:10px 10px 0 0"><table width="100%"><tr><td width="44" valign="middle"><div style="width:36px;height:36px;background:#C9972B;border-radius:8px 8px 16px 16px;text-align:center;line-height:36px;font-size:20px;font-weight:bold;color:#0A524A">✓</div></td><td valign="middle" style="padding-left:11px"><b style="font-size:17px">Ricky Rampersad Branch</b><br><span style="color:#BFD8D3;font-size:12px">45-day review</span></td></tr></table></div><div style="border:1px solid #D9D3C6;border-top:none;padding:20px 22px;border-radius:0 0 10px 10px;background:#FBFAF6;color:#0B1B2B"><p>Dear Saira,</p><p>We wrote last week about the outstanding premium on policy <b>5004310044</b> and have not heard back. That is completely fine — life gets busy. We are following up once, then we will leave you alone.</p><div style="background:#F6ECD4;border-left:4px solid #C9972B;padding:12px 15px;margin:14px 0;color:#0B1B2B">Cover ends in about <b>38 days</b> if the premium stays outstanding.</div><p style="text-align:center;margin:22px 0"><a href="https://rrb-premium-due.netlify.app/#survey=5004310044" style="background:#C9972B;color:#0B1B2B;text-decoration:none;font-weight:bold;padding:13px 28px;border-radius:8px;display:inline-block">Take 30 seconds now</a></p><p>If the honest answer is that you want to stop the policy, tell us that too. We would rather close it properly than have it lapse quietly.</p><p style="margin-top:18px">Warm regards,<br><b>Ricky Rampersad Branch</b><br>(868) 678-5921<br>support@rickyrampersadbranch.com</p><p style="color:#8A8578;font-size:11px;border-top:1px solid #E8E3D8;padding-top:11px;margin-top:20px">This notice relates to the premium on your policy. Your policy contract and schedule govern in all cases. If you have already paid, please ignore this — payments can take a few days to reflect.</p></div></div></div>
+  </details>
+</div>
+  <div class="mail">
+  <div class="mh">
+    <div class="row"><span class="day">Day 60</span><span class="subj">Following up on our last message — policy 5004310044</span></div>
+    <div class="cc">To the client · <b>cc the agent, their unit manager and the branch manager</b></div>
+    <div class="cc" style="color:var(--slate)">The one to read properly. Six one-click choices, and the whole chain copied.</div>
+  </div>
+  <div class="wa"><span class="tag">WhatsApp</span><span class="txt">Hi Saira — Ricky Rampersad Branch. We wrote around day 45 about policy 5004310044 and haven&#x27;t heard back. It&#x27;s now 60 days behind, so cover ends in about 30 days. Your agent, their manager and the branch manager are all across this — we would rather fix it than lose it. Which fits: pay in full, a payment plan, a lower premium, a bank detail change, or a call back?</span></div>
+  <details open><summary>▸ See the email as the client gets it</summary>
+    <div class="frame"><div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#0B1B2B;max-width:620px"><div style="background:#0E6E64;color:#fff;padding:18px 22px;border-radius:10px 10px 0 0"><table width="100%"><tr><td width="44" valign="middle"><div style="width:36px;height:36px;background:#C9972B;border-radius:8px 8px 16px 16px;text-align:center;line-height:36px;font-size:20px;font-weight:bold;color:#0A524A">✓</div></td><td valign="middle" style="padding-left:11px"><b style="font-size:17px">Ricky Rampersad Branch</b><br><span style="color:#BFD8D3;font-size:12px">60-day retention</span></td></tr></table></div><div style="border:1px solid #D9D3C6;border-top:none;padding:20px 22px;border-radius:0 0 10px 10px;background:#FBFAF6;color:#0B1B2B"><p>Dear Saira,</p><p>We wrote to you around day 45 asking what was happening with the premium on policy <b>5004310044</b>, and we have not heard back. We are not writing to chase you — we are writing because the window to fix this without consequences is closing.</p><table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:14px 0;font-size:13px"><tr><td style="padding:7px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:170px;color:#5A6B7B">Policy</td><td style="padding:7px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:#0B1B2B"><b>5004310044</b></td></tr><tr><td style="padding:7px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:170px;color:#5A6B7B">Premium</td><td style="padding:7px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:#0B1B2B">$538.90</td></tr><tr><td style="padding:7px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:170px;color:#5A6B7B">Cover ends</td><td style="padding:7px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:#0B1B2B">19 Jun 2026</td></tr></table><div style="background:#F6ECD4;border-left:4px solid #C9972B;padding:12px 15px;margin:14px 0;color:#0B1B2B">The premium is now <b>60 days</b> outstanding. Cover ends in about <b>30 days</b>.</div><p><b>Tell us which of these fits and we will do the rest.</b> Every one of them keeps your policy alive — even the last one gets you a proper conversation rather than a silent lapse.</p><table cellpadding="0" cellspacing="0" style="width:100%;margin:16px 0"><tr><td style="padding:5px 0"><a href="https://rrb-premium-due.netlify.app/#respond=5004310044&opt=pay" style="display:block;padding:12px 16px;background:#fff;border:1px solid #0E6E64;border-radius:9px;color:#0A524A;text-decoration:none;font-weight:600;font-size:14px">I'll pay the full amount</a></td></tr><tr><td style="padding:5px 0"><a href="https://rrb-premium-due.netlify.app/#respond=5004310044&opt=plan" style="display:block;padding:12px 16px;background:#fff;border:1px solid #0E6E64;border-radius:9px;color:#0A524A;text-decoration:none;font-weight:600;font-size:14px">I need a payment plan</a></td></tr><tr><td style="padding:5px 0"><a href="https://rrb-premium-due.netlify.app/#respond=5004310044&opt=reduce" style="display:block;padding:12px 16px;background:#fff;border:1px solid #0E6E64;border-radius:9px;color:#0A524A;text-decoration:none;font-weight:600;font-size:14px">Reduce my premium — I can't manage this amount</a></td></tr><tr><td style="padding:5px 0"><a href="https://rrb-premium-due.netlify.app/#respond=5004310044&opt=bank" style="display:block;padding:12px 16px;background:#fff;border:1px solid #0E6E64;border-radius:9px;color:#0A524A;text-decoration:none;font-weight:600;font-size:14px">My bank or card details changed</a></td></tr><tr><td style="padding:5px 0"><a href="https://rrb-premium-due.netlify.app/#respond=5004310044&opt=call" style="display:block;padding:12px 16px;background:#fff;border:1px solid #0E6E64;border-radius:9px;color:#0A524A;text-decoration:none;font-weight:600;font-size:14px">Please call me to discuss</a></td></tr><tr><td style="padding:5px 0"><a href="https://rrb-premium-due.netlify.app/#respond=5004310044&opt=cancel" style="display:block;padding:12px 16px;background:#fff;border:1px solid #0E6E64;border-radius:9px;color:#0A524A;text-decoration:none;font-weight:600;font-size:14px">I want to cancel the policy</a></td></tr></table><p style="font-size:12px;color:#7C8794;text-align:center;margin-top:-4px">One tap. No form, no password — it just tells us how to help.</p><p style="font-size:13px;color:#5A6B7B">Your agent <b>Tricia Baksh</b>, their manager <b>Gary Sookdeo</b> and the branch manager are all copied on this message, so whichever you pick, somebody will act on it.</p><p>Or simply call (868) 678-5921.</p><p style="margin-top:18px">Warm regards,<br><b>Ricky Rampersad Branch</b><br>(868) 678-5921<br>support@rickyrampersadbranch.com</p><p style="color:#8A8578;font-size:11px;border-top:1px solid #E8E3D8;padding-top:11px;margin-top:20px">This notice relates to the premium on your policy. Your policy contract and schedule govern in all cases. If you have already paid, please ignore this — payments can take a few days to reflect.</p></div></div></div>
+  </details>
+</div>
+  <div class="mail">
+  <div class="mh">
+    <div class="row"><span class="day">Every 5 days</span><span class="subj">Still no word — policy 5004310044, 20 days left</span></div>
+    <div class="cc">To the client · <b>cc the agent, their unit manager and the branch manager</b></div>
+    <div class="cc" style="color:var(--slate)">Days 65, 70, 75, 80, 85 — while the client stays silent.</div>
+  </div>
+  <div class="wa"><span class="tag">WhatsApp</span><span class="txt">Hi Saira, following up again on policy 5004310044. It is 70 days behind and cover ends in about 20 days. I don&#x27;t want this to lapse by silence — even one line back, including &quot;I want to stop it&quot;, lets me act.</span></div>
+  <details><summary>▸ See the email as the client gets it</summary>
+    <div class="frame"><div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#0B1B2B;max-width:620px"><div style="background:#0E6E64;color:#fff;padding:18px 22px;border-radius:10px 10px 0 0"><table width="100%"><tr><td width="44" valign="middle"><div style="width:36px;height:36px;background:#C9972B;border-radius:8px 8px 16px 16px;text-align:center;line-height:36px;font-size:20px;font-weight:bold;color:#0A524A">✓</div></td><td valign="middle" style="padding-left:11px"><b style="font-size:17px">Ricky Rampersad Branch</b><br><span style="color:#BFD8D3;font-size:12px">Follow-up</span></td></tr></table></div><div style="border:1px solid #D9D3C6;border-top:none;padding:20px 22px;border-radius:0 0 10px 10px;background:#FBFAF6;color:#0B1B2B"><p>Dear Saira,</p><p>We have written before and have not been able to reach you. Policy <b>5004310044</b> is now <b>70 days</b> behind, and cover ends in about <b>20 days</b>.</p><div style="background:#F6ECD4;border-left:4px solid #C9972B;padding:12px 15px;margin:14px 0;color:#0B1B2B">We do not want this to lapse by silence. If the answer is that you want to stop the policy, tell us that — we will close it properly and make sure you understand what you are giving up.</div><table cellpadding="0" cellspacing="0" style="width:100%;margin:16px 0"><tr><td style="padding:5px 0"><a href="https://rrb-premium-due.netlify.app/#respond=5004310044&opt=pay" style="display:block;padding:12px 16px;background:#fff;border:1px solid #0E6E64;border-radius:9px;color:#0A524A;text-decoration:none;font-weight:600;font-size:14px">I'll pay the full amount</a></td></tr><tr><td style="padding:5px 0"><a href="https://rrb-premium-due.netlify.app/#respond=5004310044&opt=plan" style="display:block;padding:12px 16px;background:#fff;border:1px solid #0E6E64;border-radius:9px;color:#0A524A;text-decoration:none;font-weight:600;font-size:14px">I need a payment plan</a></td></tr><tr><td style="padding:5px 0"><a href="https://rrb-premium-due.netlify.app/#respond=5004310044&opt=reduce" style="display:block;padding:12px 16px;background:#fff;border:1px solid #0E6E64;border-radius:9px;color:#0A524A;text-decoration:none;font-weight:600;font-size:14px">Reduce my premium — I can't manage this amount</a></td></tr><tr><td style="padding:5px 0"><a href="https://rrb-premium-due.netlify.app/#respond=5004310044&opt=bank" style="display:block;padding:12px 16px;background:#fff;border:1px solid #0E6E64;border-radius:9px;color:#0A524A;text-decoration:none;font-weight:600;font-size:14px">My bank or card details changed</a></td></tr><tr><td style="padding:5px 0"><a href="https://rrb-premium-due.netlify.app/#respond=5004310044&opt=call" style="display:block;padding:12px 16px;background:#fff;border:1px solid #0E6E64;border-radius:9px;color:#0A524A;text-decoration:none;font-weight:600;font-size:14px">Please call me to discuss</a></td></tr><tr><td style="padding:5px 0"><a href="https://rrb-premium-due.netlify.app/#respond=5004310044&opt=cancel" style="display:block;padding:12px 16px;background:#fff;border:1px solid #0E6E64;border-radius:9px;color:#0A524A;text-decoration:none;font-weight:600;font-size:14px">I want to cancel the policy</a></td></tr></table><p style="font-size:12px;color:#7C8794;text-align:center;margin-top:-4px">One tap. No form, no password — it just tells us how to help.</p><p style="font-size:13px;color:#5A6B7B"><b>Gary Sookdeo</b> has been asked to reach out to you directly as well.</p><p>Call (868) 678-5921 any time.</p><p style="margin-top:18px">Warm regards,<br><b>Ricky Rampersad Branch</b><br>(868) 678-5921<br>support@rickyrampersadbranch.com</p><p style="color:#8A8578;font-size:11px;border-top:1px solid #E8E3D8;padding-top:11px;margin-top:20px">This notice relates to the premium on your policy. Your policy contract and schedule govern in all cases. If you have already paid, please ignore this — payments can take a few days to reflect.</p></div></div></div>
+  </details>
+</div>
+  <div class="mail">
+  <div class="mh">
+    <div class="row"><span class="day">Day 88</span><span class="subj">Final notice — policy 5004310044 lapses in 2 days</span></div>
+    <div class="cc">To the client</div>
+    
+  </div>
+  <div class="wa"><span class="tag">WhatsApp</span><span class="txt">Hi Saira — final notice on policy 5004310044. It lapses in 2 days and after that a claim is not payable. If there is any way to keep it — smaller premium, payment plan, different date — call me today on (868) 678-5921.</span></div>
+  <details><summary>▸ See the email as the client gets it</summary>
+    <div class="frame"><div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#0B1B2B;max-width:620px"><div style="background:#0E6E64;color:#fff;padding:18px 22px;border-radius:10px 10px 0 0"><table width="100%"><tr><td width="44" valign="middle"><div style="width:36px;height:36px;background:#C9972B;border-radius:8px 8px 16px 16px;text-align:center;line-height:36px;font-size:20px;font-weight:bold;color:#0A524A">✓</div></td><td valign="middle" style="padding-left:11px"><b style="font-size:17px">Ricky Rampersad Branch</b><br><span style="color:#BFD8D3;font-size:12px">Final notice</span></td></tr></table></div><div style="border:1px solid #D9D3C6;border-top:none;padding:20px 22px;border-radius:0 0 10px 10px;background:#FBFAF6;color:#0B1B2B"><p>Dear Saira,</p><p>This is the last notice we will send before your policy lapses.</p><table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:14px 0;font-size:13px"><tr><td style="padding:7px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:170px;color:#5A6B7B">Policy</td><td style="padding:7px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:#0B1B2B"><b>5004310044</b></td></tr><tr><td style="padding:7px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:170px;color:#5A6B7B">Premium</td><td style="padding:7px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:#0B1B2B">$538.90</td></tr><tr><td style="padding:7px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:170px;color:#5A6B7B">Cover ends</td><td style="padding:7px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:#0B1B2B">19 Jun 2026</td></tr></table><div style="background:#F6ECD4;border-left:4px solid #B23A3A;padding:12px 15px;margin:14px 0;color:#0B1B2B">Once the policy lapses, the cover stops and any claim from that date is not payable. Everything you have paid into it stops working for you.</div><p>If there is any way we can keep this in place — a smaller premium, a payment plan, a different date — call (868) 678-5921 today. It takes one conversation.</p><p style="margin-top:18px">Warm regards,<br><b>Ricky Rampersad Branch</b><br>(868) 678-5921<br>support@rickyrampersadbranch.com</p><p style="color:#8A8578;font-size:11px;border-top:1px solid #E8E3D8;padding-top:11px;margin-top:20px">This notice relates to the premium on your policy. Your policy contract and schedule govern in all cases. If you have already paid, please ignore this — payments can take a few days to reflect.</p></div></div></div>
+  </details>
+</div>
+  <div class="mail">
+  <div class="mh">
+    <div class="row"><span class="day">Recently lapsed</span><span class="subj">Policy 5004310044 can still be restored</span></div>
+    <div class="cc">To the client</div>
+    <div class="cc" style="color:var(--slate)">Only inside 180 days. We do not write to someone who lapsed in 2014.</div>
+  </div>
+  <div class="wa"><span class="tag">WhatsApp</span><span class="txt">Hi Saira, Ricky Rampersad Branch here. Policy 5004310044 lapsed on 19 Jun 2026, so there&#x27;s no cover in place right now. It can still be reinstated — it keeps its original age and terms, so it&#x27;s usually cheaper than starting fresh. Want me to check what it would take?</span></div>
+  <details><summary>▸ See the email as the client gets it</summary>
+    <div class="frame"><div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#0B1B2B;max-width:620px"><div style="background:#0E6E64;color:#fff;padding:18px 22px;border-radius:10px 10px 0 0"><table width="100%"><tr><td width="44" valign="middle"><div style="width:36px;height:36px;background:#C9972B;border-radius:8px 8px 16px 16px;text-align:center;line-height:36px;font-size:20px;font-weight:bold;color:#0A524A">✓</div></td><td valign="middle" style="padding-left:11px"><b style="font-size:17px">Ricky Rampersad Branch</b><br><span style="color:#BFD8D3;font-size:12px">Reinstatement</span></td></tr></table></div><div style="border:1px solid #D9D3C6;border-top:none;padding:20px 22px;border-radius:0 0 10px 10px;background:#FBFAF6;color:#0B1B2B"><p>Dear Saira,</p><p>Your policy lapsed on <b>19 Jun 2026</b>, which means there is no cover in place today. We are writing because it is not too late to put it back.</p><table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:14px 0;font-size:13px"><tr><td style="padding:7px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:170px;color:#5A6B7B">Policy</td><td style="padding:7px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:#0B1B2B"><b>5004310044</b></td></tr><tr><td style="padding:7px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:170px;color:#5A6B7B">Premium</td><td style="padding:7px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:#0B1B2B">$538.90</td></tr><tr><td style="padding:7px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:170px;color:#5A6B7B">Cover ends</td><td style="padding:7px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:#0B1B2B">19 Jun 2026</td></tr></table><p>Reinstatement is usually simpler than starting again: the policy keeps its original age and terms, so the premium is normally lower than a brand-new policy bought today. The window does not stay open indefinitely — the longer it runs, the more evidence the insurer asks for.</p><p style="text-align:center;margin:22px 0"><a href="https://rrb-premium-due.netlify.app/#survey=5004310044" style="background:#C9972B;color:#0B1B2B;text-decoration:none;font-weight:bold;padding:13px 28px;border-radius:8px;display:inline-block">Ask us about restoring it</a></p><p>One call tells you exactly what it would take: (868) 678-5921.</p><p style="margin-top:18px">Warm regards,<br><b>Ricky Rampersad Branch</b><br>(868) 678-5921<br>support@rickyrampersadbranch.com</p><p style="color:#8A8578;font-size:11px;border-top:1px solid #E8E3D8;padding-top:11px;margin-top:20px">This notice relates to the premium on your policy. Your policy contract and schedule govern in all cases. If you have already paid, please ignore this — payments can take a few days to reflect.</p></div></div></div>
+  </details>
+</div>
+  <div class="mail">
+  <div class="mh">
+    <div class="row"><span class="day">Pending 21 days</span><span class="subj">Your application needs one more thing — policy 5004310044</span></div>
+    <div class="cc">To the client</div>
+    <div class="cc" style="color:var(--slate)">New business stuck in underwriting.</div>
+  </div>
+  <div class="wa"><span class="tag">WhatsApp</span><span class="txt">Hi Saira, your application on policy 5004310044 has been in underwriting 22 days waiting on requirements. Worth knowing: you&#x27;re not covered until it completes. Usually it&#x27;s a medical or one form — can I call you to sort it?</span></div>
+  <details><summary>▸ See the email as the client gets it</summary>
+    <div class="frame"><div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#0B1B2B;max-width:620px"><div style="background:#0E6E64;color:#fff;padding:18px 22px;border-radius:10px 10px 0 0"><table width="100%"><tr><td width="44" valign="middle"><div style="width:36px;height:36px;background:#C9972B;border-radius:8px 8px 16px 16px;text-align:center;line-height:36px;font-size:20px;font-weight:bold;color:#0A524A">✓</div></td><td valign="middle" style="padding-left:11px"><b style="font-size:17px">Ricky Rampersad Branch</b><br><span style="color:#BFD8D3;font-size:12px">Application in progress</span></td></tr></table></div><div style="border:1px solid #D9D3C6;border-top:none;padding:20px 22px;border-radius:0 0 10px 10px;background:#FBFAF6;color:#0B1B2B"><p>Dear Saira,</p><p>Your application has been with underwriting for <b>22 days</b> and is waiting on outstanding requirements — <i>Underwriting incomplete. Missing Reqts</i>.</p><table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:14px 0;font-size:13px"><tr><td style="padding:7px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:170px;color:#5A6B7B">Policy</td><td style="padding:7px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:#0B1B2B"><b>5004310044</b></td></tr><tr><td style="padding:7px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:170px;color:#5A6B7B">Premium</td><td style="padding:7px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:#0B1B2B">$538.90</td></tr><tr><td style="padding:7px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:170px;color:#5A6B7B">Cover ends</td><td style="padding:7px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:#0B1B2B">19 Jun 2026</td></tr></table><div style="background:#F6ECD4;border-left:4px solid #C9972B;padding:12px 15px;margin:14px 0;color:#0B1B2B">Until this is complete <b>you are not yet covered</b>. That is the part worth knowing — an application in progress is not a policy in force.</div><p>Usually it is a medical appointment, a form, or a document. Reply to this email or call (868) 678-5921 and we will tell you exactly what is outstanding and take it from there.</p><p style="margin-top:18px">Warm regards,<br><b>Ricky Rampersad Branch</b><br>(868) 678-5921<br>support@rickyrampersadbranch.com</p><p style="color:#8A8578;font-size:11px;border-top:1px solid #E8E3D8;padding-top:11px;margin-top:20px">This notice relates to the premium on your policy. Your policy contract and schedule govern in all cases. If you have already paid, please ignore this — payments can take a few days to reflect.</p></div></div></div>
+  </details>
+</div>
+  <div class="mail">
+  <div class="mh">
+    <div class="row"><span class="day">On payment</span><span class="subj">Thank you — policy 5004310044 is up to date</span></div>
+    <div class="cc">To the client</div>
+    <div class="cc" style="color:var(--slate)">Closes the loop and offers to change the date so it does not recur.</div>
+  </div>
+  <div class="wa"><span class="tag">WhatsApp</span><span class="txt">Hi Saira — payment received, policy 5004310044 is up to date and your cover continues. Thank you. If a different payment date would suit you better, just say.</span></div>
+  <details><summary>▸ See the email as the client gets it</summary>
+    <div class="frame"><div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#0B1B2B;max-width:620px"><div style="background:#0E6E64;color:#fff;padding:18px 22px;border-radius:10px 10px 0 0"><table width="100%"><tr><td width="44" valign="middle"><div style="width:36px;height:36px;background:#C9972B;border-radius:8px 8px 16px 16px;text-align:center;line-height:36px;font-size:20px;font-weight:bold;color:#0A524A">✓</div></td><td valign="middle" style="padding-left:11px"><b style="font-size:17px">Ricky Rampersad Branch</b><br><span style="color:#BFD8D3;font-size:12px">Payment received</span></td></tr></table></div><div style="border:1px solid #D9D3C6;border-top:none;padding:20px 22px;border-radius:0 0 10px 10px;background:#FBFAF6;color:#0B1B2B"><p>Dear Saira,</p><p>Your premium has been received and policy <b>5004310044</b> is up to date. Your cover continues without a break, and the benefits you have built stay intact.</p><p>Thank you for sorting it out — and for staying with us.</p><p>If the payment date or amount would work better differently, say the word. It is easier to change than to catch up.</p><p style="margin-top:18px">Warm regards,<br><b>Ricky Rampersad Branch</b><br>(868) 678-5921<br>support@rickyrampersadbranch.com</p><p style="color:#8A8578;font-size:11px;border-top:1px solid #E8E3D8;padding-top:11px;margin-top:20px">This notice relates to the premium on your policy. Your policy contract and schedule govern in all cases. If you have already paid, please ignore this — payments can take a few days to reflect.</p></div></div></div>
+  </details>
+</div>
+</section>
+
+<section>
+  <div class="sh"><span class="e">The six choices</span><h2>What one tap actually does</h2></div>
+  <div class="tw"><table>
+    <thead><tr><th>The client taps</th><th>What we do</th></tr></thead>
+    <tbody>
+      <tr><td><b>I'll pay the full amount</b></td><td>We watch for it and confirm when it lands. Retention odds jump.</td></tr>
+      <tr><td><b>I need a payment plan</b></td><td>Agent and manager call to agree one.</td></tr>
+      <tr><td><b>Reduce my premium</b></td><td>We look at a lower premium or an adjusted benefit and come back with options.</td></tr>
+      <tr><td><b>My bank details changed</b></td><td>New mandate form out. This one usually fixes several policies at once.</td></tr>
+      <tr><td><b>Please call me</b></td><td>Agent calls. If they cannot reach them, the manager does.</td></tr>
+      <tr><td><b>I want to cancel</b></td><td>A manager speaks to them before anything closes.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="call good">
+    <span class="lab">Why cancel is on the list</span>
+    <p>Because a client who tells us beats a client who goes quiet. A stated intention to cancel is a conversation we can still win, and if we cannot, we close it properly instead of watching it lapse. Silence is the outcome we have no answer to.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sh"><span class="e">Accountability</span><h2>Both sides are on a clock now</h2>
+    <p>When a policy lapses, two explanations usually arrive at once: the agent let it go, and the manager never came back to me. Only one of them is ever true.</p></div>
+  <div class="tw"><table>
+    <thead><tr><th>Clock</th><th>Deadline</th><th>If it is missed</th></tr></thead>
+    <tbody>
+      <tr><td><b>Client responds</b></td><td>Any time after day 60</td><td>Chased every 5 days, manager asked to reach out. Stops on any answer.</td></tr>
+      <tr><td><b>Agent files the case</b></td><td>Day 65</td><td>Emailed with the manager copied. Case reads <b>Waiting on [agent]</b>. Appears on their sign-in gate.</td></tr>
+      <tr><td><b>Manager responds</b></td><td>5 days from filing</td><td>Emailed every 3 days, branch manager copied from the second. Appears on <b>their</b> sign-in gate.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="call warn">
+    <span class="lab">Managers meet a gate too</span>
+    <p>An agent who files on time and then waits three weeks for an answer has been let down, not the other way round. So a manager with overdue responses does not reach their dashboard either until they commit to clearing them — and that commitment is written to the case under their name, exactly as it is for agents.</p>
+    <p>Before you attribute a lapse to anyone, look at the <b>Late — either side</b> filter. It splits the count into manager-side and agent-side. A unit with six late cases where five are sitting on a manager's desk is not an agent performance problem.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sh"><span class="e">By role</span><h2>What changes for you</h2></div>
+  <div class="roles">
+    <div class="role"><span class="sub">Agent</span><h3>You own the contact</h3><ul>
+      <li>Survey out inside the 45-day window — don't wait until 59</li>
+      <li><b>File the retention case by day 65</b>, fact find attached. That date is now measured</li>
+      <li>Log every contact, including the ones that went nowhere</li>
+      <li>Check the thread before you reach out — if the client answered two days ago, a chase reads as though nobody is listening</li>
+    </ul></div>
+    <div class="role"><span class="sub">Unit Manager · ABM</span><h3>You own the decision</h3><ul>
+      <li><b>Answer within 5 days of filing.</b> Past that you are chased every 3 days and the BM is copied</li>
+      <li>You are copied on every 60-day email for a reason — reach out to those clients yourself</li>
+      <li>Give an instruction and a deadline, not just approval</li>
+      <li>Watch for cases that are always filed at day 88</li>
+    </ul></div>
+    <div class="role"><span class="sub">Sales Support</span><h3>You own the flow</h3><ul>
+      <li>Route incoming surveys and client replies to the right agent the same day</li>
+      <li>Chase pending underwriting — <b>that is written business sitting in suspense</b></li>
+      <li>Flag recent lapses for win-back while the window is open</li>
+      <li>Spot the multi-policy clusters: one failed mandate, not four separate problems</li>
+    </ul></div>
+    <div class="role"><span class="sub">Branch Manager</span><h3>You own the pattern</h3><ul>
+      <li>The scorecard shows who works the funnel and who lets it age</li>
+      <li>Premium in arrears is renewable income walking out</li>
+      <li>Repeated <b>Allow lapse — documented</b> from one unit is a conversation</li>
+      <li>The late split is the fastest read on whether the branch is responsive</li>
+    </ul></div>
+  </div>
+</section>
+
+<section>
+  <div class="sh"><span class="e">Before we switch it on</span><h2>What I need from you</h2>
+    <p>Short list, and most of it is one reply.</p></div>
+  <div class="asks">
+    <div class="ask"><span class="n">1</span><div class="b"><span class="t">Confirm your email address and who you report to</span>
+      <span class="s">This is what puts you on the copy line for your clients' 60-day emails and routes retention cases to the right manager. If it is wrong, you simply will not be copied — nothing will error.</span></div><span class="who">Everyone</span></div>
+    <div class="ask"><span class="n">2</span><div class="b"><span class="t">Check your client contact details in the Branch Portfolio</span>
+      <span class="s">A policy with no email gets no automated message at all — it becomes a phone call somebody has to remember to make. Clean contact data is the difference between the system working and the system looking like it works.</span></div><span class="who">Agents</span></div>
+    <div class="ask"><span class="n">3</span><div class="b"><span class="t">Read the day-60 email above properly</span>
+      <span class="s">Your clients will receive it, with you copied. You should not be reading it for the first time when one of them replies to you about it.</span></div><span class="who">Everyone</span></div>
+    <div class="ask"><span class="n">4</span><div class="b"><span class="t">Tell me if any wording does not sound like us</span>
+      <span class="s">These go out over the branch's name. If a line would land wrong with your clients, say so now — it is far easier to change before the first send than after.</span></div><span class="who">Everyone</span></div>
+    <div class="ask"><span class="n">5</span><div class="b"><span class="t">Clear anything already past day 60</span>
+      <span class="s">When this switches on, cases already in the window start their clocks immediately. Better to walk in with a clean book than to meet the gate on day one.</span></div><span class="who">Agents · Managers</span></div>
+  </div>
+  <div class="call note">
+    <span class="lab">A note on the first run</span>
+    <p>The first cycle runs in preview: it writes down every message it <em>would</em> send, and sends nothing. We read that together before a single client hears from it. Nobody's book gets emailed by surprise.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sh"><span class="e">The point</span><h2>Ninety days is not very long</h2></div>
+  <div class="prose">
+    <p>A policy that lapses is not a number coming off a report. It is a family that thought they were covered and finds out they are not, usually at the worst possible moment. Everything they paid in stops working for them, and where health has changed since they took it out, the cover they had may not be available again at any price.</p>
+    <p>Almost none of these are lost because the client wanted to stop. They are lost to a bank mandate that failed, a card that expired, a bad month, a message that went to an inbox nobody reads.</p>
+    <p><strong>All of those are fixable, and only inside the window.</strong> That is the whole job, and thirty days is a great deal more room to do it in than fifteen.</p>
+  </div>
+</section>
+
+<footer>
+  Ricky Rampersad Branch · Premium Due Engine · Revised process brief<br>
+  45 / 60 / 90-day persistency control · Branch 26000<br>
+  Questions to Ricky Rampersad before go-live.
+</footer>
+
+</div>

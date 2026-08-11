@@ -9,7 +9,8 @@ and the "Premium Due Status" comment columns.
 | File | What it is |
 |------|-----------|
 | `index.html` | The whole app — login, dashboards, case threads, client outreach |
-| `staff-manual.html` | Staff manual. Open it in a browser or host it; send the link to the team |
+| `staff-manual.html` | Staff manual — the day-to-day reference |
+| `process-brief.html` | Rollout brief for the team: the workflow, the actual client emails rendered, and what each role does differently |
 | `../apps-script/PremiumDue.gs` | Backend — reads the portfolio, stores the log |
 | `../apps-script/PremiumDueAuth.gs` | Sign-in, the roster tab, tokens and scope |
 | `../apps-script/PremiumDueTemplates.gs` | Client email + WhatsApp templates and the daily send |
@@ -18,9 +19,14 @@ and the "Premium Due Status" comment columns.
 
 | Sheet | Role |
 |-------|------|
-| **Branch Portfolio** | Read-only source. Tab `gid=0` = "Premium Due status". Set as `PORTFOLIO_ID` |
-| **Premium Due Tracker** | Write target. Holds the `PremiumDueLog` tab. Bind the Apps Script to this one |
+| [**Branch Portfolio**](https://docs.google.com/spreadsheets/d/1T1SG3mgs5QV5LuF3JTpmn1zFldhGjOQNoe0YCMhWxjs/edit) | Read-only source. Tab `gid=0` = "Premium Due status". Set as `PORTFOLIO_ID` |
+| [**Premium Due Tracker**](https://docs.google.com/spreadsheets/d/1OuVG4NIsOd_O1LmmZ2gUYXCr1R59Atsfqv0yOvqFVgo/edit) | Write target. Holds `PremiumDueLog` and `Roster`. Bind the Apps Script to this one |
 | Motor Renewal Book — Schedule | A different system (`Code.gs`). Not used here |
+
+Note both files are written in Artifact format — no `<!DOCTYPE>`, since the
+artifact host supplies one. Served straight from this repo a browser falls into
+quirks mode; the styling is explicit enough to survive it, but publish them as
+artifacts or add a doctype if you host them yourself.
 
 ## ⚠️ The copy in this repository is a demo
 
