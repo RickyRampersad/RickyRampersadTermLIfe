@@ -126,9 +126,9 @@ The script maintains a **`Clients` tab** — one row per client account:
 Property lives in the **same schedule tab** as motor — a client with motor and home
 gets **one link showing both** (tokens are shared per client account name).
 
-1. Open [`data/property-schedule.csv`](data/property-schedule.csv) — 44 property
-   risks exported from Salesforce, with the same columns as your schedule (plus
-   `Risk Location` and `SF Last Renewal` at the end for reference).
+1. Export the 44 property risks from Salesforce with the same columns as your
+   schedule (plus `Risk Location` and `SF Last Renewal` at the end for reference).
+   The CSV is no longer kept in this repository — see **Client data** below.
 2. In the sheet: **File → Import → Upload → Append to current sheet** (with the
    schedule tab open), or copy-paste the rows below your motor rows.
 3. Run **📋 Renewals → Refresh days left & portal links** — property rows get
@@ -150,10 +150,10 @@ a print/PDF button, and a fleet instruction form that flows to Guardian like
 everything else.
 
 1. In the Google Sheet, create a tab named exactly **`Fleet`**.
-2. Import [`data/fleet-register.csv`](data/fleet-register.csv) into it
-   (File → Import → Upload → Insert new sheet, then rename to `Fleet`) — 400 rows
-   covering RPM Technical Services, RPM Express Couriers and NU-IRON, including
-   multi-year history from Salesforce.
+2. Import your fleet register export into it (File → Import → Upload → Insert new
+   sheet, then rename to `Fleet`) — 400 rows covering RPM Technical Services, RPM
+   Express Couriers and NU-IRON, including multi-year history from Salesforce.
+   The CSV is no longer kept in this repository — see **Client data** below.
 3. Paste the Apps Script `/exec` URL into `renewal/corporate.html`'s `CONFIG.API_URL`
    (same URL as `index.html`).
 4. Their access codes are in the schedule's Token column — e.g. give RPM and
@@ -162,6 +162,29 @@ everything else.
 Keeping it current: when the fleet changes, just edit the `Fleet` tab — add a row
 per vehicle per renewal cycle. The portal groups history by renewal date
 automatically.
+
+## Client data — never commit it here
+
+**This repository is public and publishes to rickyrampersadbranch.com. Every file
+in it is downloadable by anyone.**
+
+Client exports (schedules, risk details, fleet registers) carry names, email
+addresses, mobile numbers, home addresses, chassis and engine numbers. They must
+never be committed. Import them into the Google Sheet directly from your local
+download — the sheet is the store, the repo is not.
+
+Removed for this reason:
+
+| File | Rows | Removed in |
+|------|------|-----------|
+| `data/property-schedule.csv` | 44 | `0dfd536` |
+| `data/risk-details.csv` | 495 | this change |
+| `data/fleet-register.csv` | 400 | this change |
+
+Deleting a file does not remove it from git history — earlier commits stay
+reachable on a public repo. Making the repository private is the only complete
+close-out. (Note: GitHub Pages on a custom domain requires a paid plan to keep
+serving once the repo is private.)
 
 ## Adding new clients / policies
 
