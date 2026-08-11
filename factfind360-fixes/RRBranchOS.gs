@@ -690,6 +690,24 @@ function rrbUnitsUnder_(key) {
   return out;
 }
 
+
+/**
+ * A person's OWN unit key.
+ *
+ * This distinction matters and got it wrong once already. For an agent, the
+ * Unit column names their manager, so it IS their unit. For a manager, the Unit
+ * column names their PARENT — so reading their own unit from it would make a
+ * Unit Manager who reports to the Branch Manager inherit branch-level
+ * visibility. A manager's own unit therefore comes from their NAME.
+ */
+function rrbOwnUnitKey_(name, unitValue, role) {
+  if (/manager/i.test(String(role || ''))) {
+    var mine = rrbUnitKeyForName_(name);
+    if (mine) return mine;
+  }
+  return rrbUnitKeyForName_(unitValue);
+}
+
 /**
  * The scope a person gets. Only the root sees {kind:'branch'}; every other
  * manager gets {kind:'units', unitKeys:[...]} covering themselves and anyone
