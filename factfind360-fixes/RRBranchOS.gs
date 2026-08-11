@@ -754,6 +754,34 @@ function rrbSecurityCheck() {
     }
   } catch (err) { Logger.log('4. could not mint a test token: %s', err.message); }
   Logger.log('=== 1-3 must all be refused, 4 must be allowed ===');
+  rrbMailCheck_();
+}
+
+/**
+ * Is mail actually leaving the building?
+ *
+ * A test-harness flag left on sent every client message to the log instead of
+ * the client, and it went unnoticed for weeks because the manager and approval
+ * emails take a different path and kept arriving. Nothing checked the flags, so
+ * nothing caught it. This does, and it runs as part of the security check so it
+ * cannot be forgotten.
+ */
+function rrbMailCheck_() {
+  Logger.log('=== mail delivery ===');
+  var dry = (typeof RRB_DRY_RUN !== 'undefined') && RRB_DRY_RUN;
+  var redirect = (typeof RRB_REDIRECT_MAIL_TO !== 'undefined') ? _str(RRB_REDIRECT_MAIL_TO) : '';
+  Logger.log('5. dry run         -> %s %s', dry,
+             dry ? '*** NOTHING IS BEING SENT — client mail is going to the log ***'
+                 : '(live, correct)');
+  Logger.log('6. redirect        -> %s %s', redirect || '(none)',
+             redirect ? '*** ALL MAIL IS GOING HERE, NOT TO CLIENTS ***'
+                      : '(real recipients, correct)');
+  var quota = -1;
+  try { quota = MailApp.getRemainingDailyQuota(); } catch (e) {}
+  Logger.log('7. daily quota     -> %s remaining %s', quota,
+             quota === 0 ? '*** EXHAUSTED — mail is being dropped silently ***' : '(ok)');
+  Logger.log('=== 5 and 6 must both be off, 7 must be above zero ===');
+  return { dryRun: dry, redirect: redirect, quota: quota };
 }
 
 
