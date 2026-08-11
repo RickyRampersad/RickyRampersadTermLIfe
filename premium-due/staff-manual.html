@@ -1,0 +1,402 @@
+<title>Premium Due Engine — Staff Manual</title>
+<style>
+:root{
+  --paper:#F3F0E9; --card:#FBFAF6; --card-2:#F7F4ED;
+  --ink:#0B1B2B; --ink-2:#1C3145; --slate:#5A6B7B; --mut:#82909C;
+  --line:#DFD9CC; --line-2:#EBE6DB;
+  --teal:#0E6E64; --teal-2:#0A524A; --teal-soft:#E2EFEC;
+  --gold:#B0851F; --gold-soft:#F6ECD4;
+  --red:#A6362F; --red-soft:#F5E4E2;
+  --amber:#B0691F; --amber-soft:#F8E9D8;
+  --green:#356F47; --green-soft:#E2EFE5;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --serif:ui-serif,Georgia,"Times New Roman",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0E1519; --card:#161F24; --card-2:#1B252A;
+    --ink:#E8EDEC; --ink-2:#C6D2D0; --slate:#93A3A4; --mut:#75858A;
+    --line:#26333A; --line-2:#1F2B31;
+    --teal:#4FB3A5; --teal-2:#6FC7BA; --teal-soft:#15302E;
+    --gold:#D3A544; --gold-soft:#2E2617;
+    --red:#E08A80; --red-soft:#331F1D;
+    --amber:#D8974E; --amber-soft:#2F2418;
+    --green:#77C096; --green-soft:#162C22;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0E1519; --card:#161F24; --card-2:#1B252A;
+  --ink:#E8EDEC; --ink-2:#C6D2D0; --slate:#93A3A4; --mut:#75858A;
+  --line:#26333A; --line-2:#1F2B31;
+  --teal:#4FB3A5; --teal-2:#6FC7BA; --teal-soft:#15302E;
+  --gold:#D3A544; --gold-soft:#2E2617;
+  --red:#E08A80; --red-soft:#331F1D;
+  --amber:#D8974E; --amber-soft:#2F2418;
+  --green:#77C096; --green-soft:#162C22;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;padding:0 20px 90px}
+.wrap{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:46px}
+p{margin:0}
+
+/* masthead */
+.mast{padding:54px 0 0;display:flex;flex-direction:column;gap:16px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand svg{width:42px;height:42px;flex:0 0 auto}
+.brand .k{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal);font-weight:700}
+.brand .n{font-family:var(--serif);font-size:18px;font-weight:600;line-height:1.1}
+h1{font-family:var(--serif);font-size:clamp(32px,5vw,50px);line-height:1.04;letter-spacing:-.02em;
+  margin:0;font-weight:600;text-wrap:balance;max-width:17ch}
+.stand{font-size:18px;color:var(--ink-2);max-width:60ch;line-height:1.58}
+.meta{font-family:var(--mono);font-size:11px;color:var(--mut);letter-spacing:.03em;
+  display:flex;flex-wrap:wrap;gap:5px 18px;border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
+
+/* sections */
+section{display:flex;flex-direction:column;gap:20px}
+.sh{display:flex;flex-direction:column;gap:8px;padding-bottom:13px;border-bottom:2px solid var(--ink)}
+.sh .e{font-family:var(--mono);font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--teal);font-weight:700}
+.sh h2{font-family:var(--serif);font-size:29px;letter-spacing:-.02em;font-weight:600;margin:0;text-wrap:balance}
+.sh p{color:var(--slate);font-size:15.5px;max-width:66ch}
+.prose{display:flex;flex-direction:column;gap:14px;max-width:68ch;font-size:16px;color:var(--ink-2)}
+.prose strong{color:var(--ink);font-weight:650}
+code{font-family:var(--mono);font-size:.86em;background:var(--card-2);border:1px solid var(--line-2);
+  padding:1.5px 5px;border-radius:3px;color:var(--ink)}
+
+/* the clock */
+.clock{display:flex;flex-direction:column;gap:2px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.stage{background:var(--card);padding:17px 19px;display:grid;grid-template-columns:118px 1fr;gap:18px;
+  border-left:5px solid var(--line)}
+.stage.s-od{border-left-color:var(--amber)} .stage.s-45{border-left-color:var(--amber)}
+.stage.s-75{border-left-color:var(--red)} .stage.s-90{border-left-color:var(--red)}
+.stage.s-pd{border-left-color:var(--gold)} .stage.s-ok{border-left-color:var(--green)}
+.stage .when{display:flex;flex-direction:column;gap:3px}
+.stage .day{font-family:var(--serif);font-size:22px;font-weight:600;line-height:1;letter-spacing:-.02em}
+.stage .win{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.stage .what{display:flex;flex-direction:column;gap:6px}
+.stage .t{font-weight:650;font-size:16px;color:var(--ink)}
+.stage .d{font-size:14.6px;color:var(--ink-2);max-width:64ch}
+.stage .who{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--teal);font-weight:700}
+
+/* role cards */
+.roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:14px}
+.role{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:19px;display:flex;flex-direction:column;gap:11px}
+.role h3{font-family:var(--serif);font-size:19px;font-weight:600;margin:0;letter-spacing:-.01em}
+.role .sub{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);font-weight:700}
+.role ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px}
+.role li{font-size:14.6px;color:var(--ink-2);line-height:1.5}
+.role li b{color:var(--ink);font-weight:650}
+
+/* tables */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:14.6px;min-width:540px}
+th{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);
+  text-align:left;padding:11px 15px;background:var(--card-2);border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:11px 15px;border-bottom:1px solid var(--line-2);color:var(--ink-2);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td b{color:var(--ink);font-weight:650}
+td.m{font-family:var(--mono);font-size:12.5px;color:var(--ink);white-space:nowrap}
+
+/* callouts */
+.call{border-radius:8px;padding:16px 19px;display:flex;flex-direction:column;gap:8px;border:1px solid}
+.call .lab{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.call p{font-size:15px}
+.call.warn{background:var(--red-soft);border-color:var(--red)} .call.warn .lab{color:var(--red)}
+.call.note{background:var(--gold-soft);border-color:var(--gold)} .call.note .lab{color:var(--gold)}
+.call.good{background:var(--green-soft);border-color:var(--green)} .call.good .lab{color:var(--green)}
+
+/* record types */
+.recs{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:12px}
+.rec{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:8px;
+  border-top:3px solid var(--line)}
+.rec.r1{border-top-color:var(--slate)} .rec.r2{border-top-color:var(--teal)}
+.rec.r3{border-top-color:var(--amber)} .rec.r4{border-top-color:var(--gold)}
+.rec .k{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--mut)}
+.rec .t{font-weight:650;font-size:15.5px;color:var(--ink)}
+.rec .d{font-size:14px;color:var(--ink-2);line-height:1.5}
+
+/* rhythm */
+.rhythm{display:flex;flex-direction:column;gap:10px}
+.beat{display:grid;grid-template-columns:96px 1fr;gap:16px;align-items:start;
+  background:var(--card);border:1px solid var(--line);border-radius:8px;padding:15px 18px}
+.beat .w{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--teal);font-weight:700;padding-top:2px}
+.beat .b{font-size:15px;color:var(--ink-2)}
+.beat .b b{color:var(--ink);font-weight:650}
+
+footer{border-top:1px solid var(--line);padding-top:20px;font-family:var(--mono);font-size:11px;
+  color:var(--mut);line-height:1.9;letter-spacing:.02em}
+@media (max-width:620px){
+  .stage{grid-template-columns:1fr;gap:9px}
+  .beat{grid-template-columns:1fr;gap:6px}
+}
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <div class="brand">
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M24 3l16 5v12c0 11.5-7 19.5-16 23-9-3.5-16-11.5-16-23V8l16-5z" fill="#0E6E64"/><path d="M15 24l6.5 6.5L34 17" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 3l16 5v3L24 6 8 11V8l16-5z" fill="#C9972B" opacity=".9"/></svg>
+    <div><div class="k">Ricky Rampersad Branch</div><div class="n">Premium Due Engine</div></div>
+  </div>
+  <h1>Staff manual</h1>
+  <p class="stand">Every premium in arrears, every 45-day survey, every 75-day retention case and every manager response — in one place, against the policy, where the next person can see it.</p>
+  <p class="meta"><span>FOR AGENTS · UNIT MANAGERS · ABM · SALES SUPPORT · BM</span><span>BRANCH 26000</span></p>
+</header>
+
+<section>
+  <div class="sh">
+    <span class="e">Why this exists</span>
+    <h2>The email chain was the filing system</h2>
+  </div>
+  <div class="prose">
+    <p>Until now a premium in arrears lived in three places at once: a JotForm somebody submitted, a column in a spreadsheet somebody updated, and an email chain somebody remembered. When an agent moved, went on leave, or simply forgot, the history went with them. The policy lapsed and nobody could say what had been tried.</p>
+    <p>The engine replaces all three. <strong>Everything attaches to the policy.</strong> The client's survey answer, the agent's retention case, the manager's decision, and every note in between sit on one thread that anybody with the right access can read — today, or in eight months when the client calls back.</p>
+    <p>It is not extra admin on top of the work. It <em>is</em> the work, written down once instead of three times.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sh">
+    <span class="e">Signing in</span>
+    <h2>Your code, and what it opens</h2>
+    <p>Everyone signs in with their own name and personal code — your initials plus three digits, issued by the branch. What you see is set by your role.</p>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Role</th><th>You see</th><th>You can</th></tr></thead>
+      <tbody>
+        <tr><td><b>Agent</b></td><td>Your own clients only</td><td>Comment, run the 45-day survey, file a 75-day retention case, message the client</td></tr>
+        <tr><td><b>Unit Manager</b></td><td>Your unit's whole book</td><td>Everything an agent can, plus respond to your unit's retention cases</td></tr>
+        <tr><td><b>ABM</b></td><td>Your reporting line, all the way down</td><td>Everything, plus respond to any case in your line</td></tr>
+        <tr><td><b>Sales Support</b></td><td>The full branch</td><td>Route surveys, chase requirements, comment on any policy</td></tr>
+        <tr><td><b>Branch Manager</b></td><td>The full branch, plus the manager queue and scorecard</td><td>Everything</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="call warn">
+    <span class="lab">The accountability gate — agents</span>
+    <p>If you have <strong>75-day cases with no retention form</strong>, or <strong>90-day lapses with nothing logged against them</strong>, you will not reach your dashboard until you have typed what you are going to do about them. It is not a formality — what you write is posted to those policies under your name, and your manager sees it.</p>
+    <p>If your book is clean you go straight in and the gate never appears. That is the point of it.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sh">
+    <span class="e">The clock</span>
+    <h2>What is due, and when</h2>
+    <p>A premium-paying policy runs on a 90-day clock from the missed premium. The engine stages every policy automatically — you never work this out yourself.</p>
+  </div>
+  <div class="clock">
+    <div class="stage s-ok">
+      <div class="when"><span class="day">0–29</span><span class="win">Current</span></div>
+      <div class="what"><span class="t">Nothing due</span><span class="d">Premium paying and up to date. These do not appear in your working list.</span></div>
+    </div>
+    <div class="stage s-od">
+      <div class="when"><span class="day">1–44</span><span class="win">Overdue</span></div>
+      <div class="what">
+        <span class="who">Agent</span>
+        <span class="t">Make contact and log what you find</span>
+        <span class="d">Most of these are a bank change, an expired card, or a payment not yet matched. One message usually settles it. Use the <b>Overdue nudge</b> template and write down what the client said.</span>
+      </div>
+    </div>
+    <div class="stage s-45">
+      <div class="when"><span class="day">45–74</span><span class="win">Survey window</span></div>
+      <div class="what">
+        <span class="who">Agent · Sales Support</span>
+        <span class="t">Send the 45-day client survey</span>
+        <span class="d">Three questions, thirty seconds, no login for the client. You cannot save a policy until you know why it is behind — hardship, a billing failure and dissatisfaction all need completely different answers. Send the link, or complete it with the client on the phone.</span>
+      </div>
+    </div>
+    <div class="stage s-75">
+      <div class="when"><span class="day">75–89</span><span class="win">Retention</span></div>
+      <div class="what">
+        <span class="who">Agent files · Manager responds</span>
+        <span class="t">File the 75-day retention case</span>
+        <span class="d">Document the situation, attach the fact find, recommend a save, and submit it to your manager. Fifteen days left. This is the last window where the policy can be kept rather than rebuilt.</span>
+      </div>
+    </div>
+    <div class="stage s-90">
+      <div class="when"><span class="day">90+</span><span class="win">Lapse / win-back</span></div>
+      <div class="what">
+        <span class="who">Agent · Sales Support</span>
+        <span class="t">Reinstatement, or document the loss</span>
+        <span class="d">Cover has ended. Reinstatement keeps the policy's original age and terms, so it is usually cheaper for the client than a new policy — but the longer it runs the more evidence the insurer wants. Recent lapses are live conversations; act on them first.</span>
+      </div>
+    </div>
+    <div class="stage s-pd">
+      <div class="when"><span class="day">Pending</span><span class="win">New business</span></div>
+      <div class="what">
+        <span class="who">Sales Support · Agent</span>
+        <span class="t">Chase the outstanding requirements</span>
+        <span class="d">Underwriting incomplete. The client is <b>not covered yet</b> and often does not realise it. This is also written API sitting in suspense — it counts for nobody until it completes.</span>
+      </div>
+    </div>
+  </div>
+  <div class="call note">
+    <span class="lab">One thing worth knowing</span>
+    <p>For a policy marked <strong>Premium Paying</strong>, the Days column in the portfolio is how long it has been on the books — not how far behind it is. The engine knows the difference and stages off the status flag instead. If you have ever seen a healthy policy show a four-figure day count, that is why, and you can ignore it.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sh">
+    <span class="e">Recording</span>
+    <h2>Four things you can put on a policy</h2>
+    <p>Open any case and you get four tabs. Everything you write lands on one thread in date order.</p>
+  </div>
+  <div class="recs">
+    <div class="rec r1"><span class="k">Anyone</span><span class="t">Comment</span><span class="d">What is happening and what you are doing next. This replaces the email chain — write it as if the next person to open this policy has never spoken to the client.</span></div>
+    <div class="rec r2"><span class="k">Client answers</span><span class="t">45-Day survey</span><span class="d">Why the premium is behind, where the client stands on keeping it, and anything they want you to know. Send the link or fill it in together on the phone.</span></div>
+    <div class="rec r3"><span class="k">Agent files</span><span class="t">75-Day retention</span><span class="d">The reason, the full situation, your recommended save, and the fact-find link. Goes to your manager for a decision.</span></div>
+    <div class="rec r4"><span class="k">Manager only</span><span class="t">Manager response</span><span class="d">Approve the plan, approve a payment plan, escalate to reinstatement, allow the lapse on record, investigate replacement, or reassign. Opens once the agent has filed.</span></div>
+  </div>
+  <div class="call good">
+    <span class="lab">Write it for the next person</span>
+    <p>"Called, no answer" tells nobody anything. <strong>"Called twice Tue/Thu, went to voicemail both times. WhatsApp delivered but unread. Trying her work number Monday — if nothing by 12 Sep this goes to lapse and I'll say so."</strong> tells your manager whether to step in, tells whoever covers your leave exactly where to pick up, and protects you if the policy lapses anyway.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sh">
+    <span class="e">Reaching the client</span>
+    <h2>The Reach client tab</h2>
+    <p>Every case card carries the message that fits where the policy actually sits. The engine picks it for you — you can change it, and you should edit it before it goes.</p>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Template</th><th>Use it when</th><th>The message does</th></tr></thead>
+      <tbody>
+        <tr><td class="m">Overdue nudge</td><td>1–44 days behind</td><td>Says a premium hasn't reached us, reassures that cover is still active, asks what suits them</td></tr>
+        <tr><td class="m">45-day survey</td><td>45+ days, no survey yet</td><td>Asks to understand, states plainly how many days are left, links the survey</td></tr>
+        <tr><td class="m">Survey reminder</td><td>~52 days, still no answer</td><td>One follow-up, and invites them to say if they want to stop — better than a silent lapse</td></tr>
+        <tr><td class="m">75-day retention</td><td>75–89 days</td><td>Explains what ending cover really means, and that a call is coming with real options</td></tr>
+        <tr><td class="m">Final notice</td><td>88–89 days</td><td>Last call before lapse</td></tr>
+        <tr><td class="m">Win-back</td><td>Recently lapsed</td><td>Reinstatement keeps original age and terms — usually cheaper than starting fresh</td></tr>
+        <tr><td class="m">Requirements chase</td><td>Pending underwriting</td><td>Makes clear they are not covered yet, and what is outstanding</td></tr>
+        <tr><td class="m">Payment received</td><td>They sorted it</td><td>Thanks them and offers to change the date so it doesn't recur</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prose">
+    <p><strong>WhatsApp opens with the message already written.</strong> Email opens your mail app with the subject and body filled in. Copy text puts it on your clipboard for anywhere else. Whichever you use, the message is written to the policy thread under your name — so the record shows not just that you made contact, but what you actually said.</p>
+    <p>Edit before you send. The template gets the facts and the deadline right; you know the client. A line that sounds like you will always beat a line that sounds like a system.</p>
+  </div>
+  <div class="call warn">
+    <span class="lab">Do not send the same thing twice</span>
+    <p>Check the thread before you reach out. If the client answered the survey three days ago saying they'll pay at month end, the 75-day notice will read as though nobody is listening — and that is how you lose a client who was already staying.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sh">
+    <span class="e">Flags</span>
+    <h2>Duplicate and churn</h2>
+    <p>The engine groups every policy by Client Number, which surfaces two patterns you would otherwise miss.</p>
+  </div>
+  <div class="prose">
+    <p><strong>Duplicate flag</strong> — the same client holds more than one policy on the same plan code. Sometimes that is legitimate. Sometimes it is a replacement written over cover that was already in force, which costs the client and creates a conduct problem. Check before you assume.</p>
+    <p><strong>Churn flag</strong> — the client has an active policy <em>and</em> a lapsed one. They have let cover go before. The active policy is more fragile than it looks, and it deserves attention before it follows the same path.</p>
+    <p>There is a third pattern the flags will show you: one client with several policies all overdue on the same day. That is almost never four problems. It is one failed bank mandate, and fixing the mandate fixes all four. Look at the client, not the policy.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sh">
+    <span class="e">By role</span>
+    <h2>What is actually yours</h2>
+  </div>
+  <div class="roles">
+    <div class="role">
+      <span class="sub">Agent</span><h3>You own the contact</h3>
+      <ul>
+        <li>Clear the gate honestly — <b>write what you'll really do</b>, not what sounds good</li>
+        <li>Work <b>closest to lapse first</b>. The list is already sorted that way</li>
+        <li>Get the survey out in the 45-day window. Don't wait until 74</li>
+        <li>File the 75-day case <b>with the fact find attached</b> — without it your manager cannot decide</li>
+        <li>Log every contact, including the ones that went nowhere</li>
+      </ul>
+    </div>
+    <div class="role">
+      <span class="sub">Unit Manager · ABM</span><h3>You own the decision</h3>
+      <ul>
+        <li>Clear the <b>Awaiting manager</b> queue daily — a case sitting three days is three days closer to lapse</li>
+        <li>Give an instruction and a deadline, not just approval</li>
+        <li>Watch for agents whose 75-day cases are always filed at day 88</li>
+        <li>Use the churn and duplicate flags in one-to-ones — they show selling behaviour, not just persistency</li>
+      </ul>
+    </div>
+    <div class="role">
+      <span class="sub">Sales Support</span><h3>You own the flow</h3>
+      <ul>
+        <li>Route incoming surveys to the right agent the same day</li>
+        <li>Chase pending underwriting requirements — <b>that is written API in suspense</b></li>
+        <li>Flag recent lapses for win-back while the window is still open</li>
+        <li>Spot the multi-policy clusters and tell the agent it is one mandate, not four cases</li>
+      </ul>
+    </div>
+    <div class="role">
+      <span class="sub">Branch Manager</span><h3>You own the pattern</h3>
+      <ul>
+        <li>The scorecard shows who is working the funnel and who is letting it age</li>
+        <li>Premium in arrears is the number that matters — it is renewable income leaving</li>
+        <li>Repeated <b>Allow lapse — documented</b> from one unit is a conversation, not a statistic</li>
+        <li>The manager queue is the fastest read on whether the branch is responsive</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sh">
+    <span class="e">Rhythm</span>
+    <h2>How it fits into the week</h2>
+    <p>It is not a system you visit. It is where the arrears work happens.</p>
+  </div>
+  <div class="rhythm">
+    <div class="beat"><span class="w">Every day</span><span class="b">Agents sign in, clear the gate, and work the top of the list — <b>closest to lapse first</b>. Managers clear the awaiting-response queue.</span></div>
+    <div class="beat"><span class="w">Twice a week</span><span class="b">Sales support sweeps <b>Pending</b> for outstanding requirements and recent lapses for win-back.</span></div>
+    <div class="beat"><span class="w">Weekly</span><span class="b">Unit meeting opens on the ribbon: how many in the 45-day window, how many at 75, how many crossed to lapse this week — and <b>why each one crossed</b>.</span></div>
+    <div class="beat"><span class="w">Monthly</span><span class="b">BM reviews the scorecard and the duplicate/churn flags with each unit manager. Persistency is a leading indicator; treat it like one.</span></div>
+  </div>
+</section>
+
+<section>
+  <div class="sh">
+    <span class="e">When something looks wrong</span>
+    <h2>Common questions</h2>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>What you see</th><th>What it means</th></tr></thead>
+      <tbody>
+        <tr><td><b>"Sample data" in the top bar</b></td><td>You are on the demo copy, not the live one. Real figures only appear when the top bar says <b>Live portfolio</b>. Ask for the correct link.</td></tr>
+        <tr><td><b>A client you know is missing</b></td><td>Search finds any policy, including lapsed ones. If it still isn't there, the policy is under an agent outside your line — ask support or the BM.</td></tr>
+        <tr><td><b>A healthy policy shows a huge day count</b></td><td>That is days on book, not arrears. The engine already ignores it — the stage is what counts.</td></tr>
+        <tr><td><b>Your code is rejected</b></td><td>Codes are initials plus three digits and are case-insensitive. If it still fails, your name may not be on the roster yet — tell the BM.</td></tr>
+        <tr><td><b>The manager response tab is missing</b></td><td>It only opens once an agent has filed a retention case, and only for managers.</td></tr>
+        <tr><td><b>You posted something wrong</b></td><td>Nothing is deleted — that is deliberate. Post a correcting comment; the thread reads in order and the correction sits with it.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="sh">
+    <span class="e">The point</span>
+    <h2>Ninety days is not very long</h2>
+  </div>
+  <div class="prose">
+    <p>A policy that lapses is not a number coming off a report. It is a family that thought they were covered and finds out they are not — usually at the worst possible moment. Everything the client paid in stops working for them, and where health has changed since they took it out, the cover they had may not be available again at any price.</p>
+    <p>Most of the policies in this system can still be saved. Almost all of them are lost for reasons that had nothing to do with the client wanting to stop: a bank mandate that failed, a card that expired, a bad month, a message that went to an inbox nobody reads.</p>
+    <p><strong>Those are all fixable, and they are only fixable inside the window.</strong> That is the whole job.</p>
+  </div>
+</section>
+
+<footer>
+  Ricky Rampersad Branch · Premium Due Engine · Staff Manual<br>
+  Branch 26000 · 45 / 75 / 90-day persistency intelligence<br>
+  Kept in the repository at premium-due/staff-manual.html — update it there so it cannot be lost again.
+</footer>
+
+</div>

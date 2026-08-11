@@ -331,6 +331,27 @@ select.f-line{background:#fff}
 .opt-pick .dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--line);flex:0 0 auto}
 .opt-pick.on .dot{border-color:var(--teal);background:var(--teal);box-shadow:inset 0 0 0 3px #fff}
 
+/* ===== OUTREACH ===== */
+.out-pick{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.out-pick button{padding:6px 11px;border:1px solid var(--line);border-radius:20px;background:#fff;font-size:11.5px;font-weight:600;color:var(--slate)}
+.out-pick button.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+.out-pick button:hover:not(.on){border-color:var(--slate)}
+.out-subj{font-size:12.5px;color:var(--slate);margin-bottom:9px}
+.out-subj b{color:var(--ink-2);font-weight:600}
+.out-msg{width:100%;min-height:112px;padding:12px;border:1px solid var(--line);border-radius:9px;background:#fff;
+  font-size:13px;line-height:1.55;color:var(--ink-2);resize:vertical;font-family:inherit}
+.out-msg:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-soft)}
+.out-acts{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px;align-items:center}
+.out-btn{padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;border:1px solid transparent}
+.out-wa{background:#25D366;color:#0B3D22}
+.out-wa:hover{background:#1FB855}
+.out-em{background:var(--teal);color:#fff}
+.out-em:hover{background:var(--teal-2)}
+.out-cp{background:#fff;border-color:var(--line);color:var(--ink-2)}
+.out-cp:hover{border-color:var(--slate)}
+.out-none{font-size:12px;color:var(--mut);font-style:italic}
+.out-warn{font-size:11.5px;color:var(--amber);background:var(--amber-soft);border-radius:7px;padding:7px 10px;margin-top:10px}
+
 /* copy-link row */
 .copyrow{display:flex;gap:8px;align-items:center;margin-top:10px;background:var(--paper-2);border:1px solid var(--line);border-radius:9px;padding:8px 10px}
 .copyrow code{flex:1;font-family:var(--mono);font-size:11px;color:var(--teal-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -684,6 +705,64 @@ const SURVEY_CONTACT=['Confirmed will pay','Wants to keep','Needs payment plan',
 const RET_REASONS=['Client confirmed payment','Payment plan agreed','Billing corrected','Reinstatement in progress','Client wants to cancel','Replacement disclosed','Unable to contact','Hardship — escalate'];
 const VERDICTS=['Approve retention plan','Approve payment plan','Escalate to reinstatement','Allow lapse — documented','Investigate replacement','Reassign / orphan review'];
 
+/* ===== CLIENT OUTREACH TEMPLATES =====
+   The client-facing message for each point on the lapse clock. Kept in step with
+   apps-script/PremiumDueTemplates.gs — that file sends them on the daily run,
+   this one is what an agent copies when they'd rather reach out personally.
+   WhatsApp text first: in this market it gets read when an email doesn't. */
+const BRANCH_PHONE='(868) 678-5921';
+const OUT_TPL={
+  od:{lab:'Overdue nudge',subject:c=>`A premium on policy ${c.Policy} hasn't reached us`,
+    msg:c=>`Hi ${first(c)}, this is the Ricky Rampersad Branch. A premium of ${money(c.Premium)} on policy ${c.Policy} hasn't reached us. Your cover is still active — usually it's just a bank or card change. Can you let me know what suits you?${surveyTail(c)}`},
+  s45:{lab:'45-day survey',subject:c=>`${first(c)}, we would like to understand — policy ${c.Policy}`,
+    msg:c=>`Hi ${first(c)}, it's the Ricky Rampersad Branch. Your premium on policy ${c.Policy} has been outstanding about 6 weeks, and cover would end in roughly ${toLapse(c)} days if nothing changes. Before that happens I'd like to understand what's going on — 3 quick questions, 30 seconds:${surveyTail(c)} Or just reply here and we can sort it out.`},
+  s45r:{lab:'Survey reminder',subject:c=>`Still here when you are — policy ${c.Policy}`,
+    msg:c=>`Hi ${first(c)}, just following up on policy ${c.Policy}. Cover ends in about ${toLapse(c)} days. Even if the answer is you want to stop it, tell me — I'd rather sort it properly than let it lapse.${surveyTail(c)}`},
+  s75:{lab:'75-day retention',subject:c=>`Action needed — cover on policy ${c.Policy} ends in ${toLapse(c)} days`,
+    msg:c=>`Hi ${first(c)} — Ricky Rampersad Branch. Policy ${c.Policy} is ${c.DaysArrears||0} days behind and cover ends in about ${toLapse(c)} days. After that a claim wouldn't be paid, and restarting means new underwriting. I'd like to call you today — we can look at a lower premium, a different payment date, or a catch-up plan. When suits you?`},
+  s88:{lab:'Final notice',subject:c=>`Final notice — policy ${c.Policy} lapses in ${toLapse(c)} days`,
+    msg:c=>`Hi ${first(c)} — final notice on policy ${c.Policy}. It lapses in ${toLapse(c)} day${toLapse(c)===1?'':'s'} and after that a claim is not payable. If there is any way to keep it — smaller premium, payment plan, different date — call me today on ${BRANCH_PHONE}.`},
+  winback:{lab:'Win-back',subject:c=>`Policy ${c.Policy} can still be restored`,
+    msg:c=>`Hi ${first(c)}, Ricky Rampersad Branch here. Policy ${c.Policy} lapsed ${c.LapseDate?('on '+c.LapseDate):((c.DaysArrears||0)+' days ago')}, so there's no cover in place right now. It can still be reinstated — it keeps its original age and terms, so it's usually cheaper than starting fresh. Want me to check what it would take?`},
+  pend:{lab:'Requirements chase',subject:c=>`Your application needs one more thing — policy ${c.Policy}`,
+    msg:c=>`Hi ${first(c)}, your application on policy ${c.Policy} has been in underwriting ${c.DaysArrears||0} days waiting on requirements. Worth knowing: you're not covered until it completes. Usually it's a medical or one form — can I call you to sort it?`},
+  thanks:{lab:'Payment received',subject:c=>`Thank you — policy ${c.Policy} is up to date`,
+    msg:c=>`Hi ${first(c)} — payment received, policy ${c.Policy} is up to date and your cover continues. Thank you. If a different payment date would suit you better, just say.`}
+};
+function first(c){return String(c.Client||'').replace(/\s*\(client\)/i,'').trim().split(/\s+/)[0]||'there';}
+function toLapse(c){return Math.max(0,90-(Number(c.DaysArrears)||0));}
+function surveyTail(c){const l=surveyLink(c);return l?(' '+l):'';}
+/* Which message fits where this policy actually sits. */
+function defaultTpl(c){
+  if(c.stage==='pend')return 'pend';
+  if(c.stage==='s90')return c.lapsed?'winback':'s88';
+  if(c.stage==='s75')return 's75';
+  if(c.stage==='s45')return (c.DaysArrears||0)>=52?'s45r':'s45';
+  if(c.stage==='od')return 'od';
+  return 'thanks';
+}
+function waNumber(c){const d=String(c.Phone||'').replace(/[^0-9]/g,'');if(!d)return '';return d.length===7?('1868'+d):d.length===10?('1'+d):d.length===11?d:d;}
+function hasEmail(c){const e=String(c.Email||'').trim();return (!e||/not available/i.test(e))?'':e;}
+
+function outreachPanel(c){
+  const keys=Object.keys(OUT_TPL), def=defaultTpl(c);
+  const picks=keys.map(k=>`<button type="button" data-otpl="${k}" class="${k===def?'on':''}">${esc(OUT_TPL[k].lab)}</button>`).join('');
+  const wa=waNumber(c), em=hasEmail(c);
+  const warn=(!wa&&!em)?`<div class="out-warn">No phone or email on file for this client — the message is here to copy, but you'll need another way to reach them.</div>`
+    :(!em?`<div class="out-warn">No email on file — WhatsApp only.</div>`
+    :(!wa?`<div class="out-warn">No phone on file — email only.</div>`:''));
+  return `<h4>📤 Reach the client</h4>
+    <div class="note">Pick the message that fits, edit it if you want, then send. Whatever you send is logged against the policy.</div>
+    <div class="out-pick" data-opick>${picks}</div>
+    <div class="out-subj" data-osubj></div>
+    <textarea class="out-msg" data-omsg></textarea>
+    <div class="out-acts">
+      <button class="out-btn out-wa" data-osend="wa" type="button">WhatsApp</button>
+      <button class="out-btn out-em" data-osend="em" type="button">Email</button>
+      <button class="out-btn out-cp" data-osend="cp" type="button">Copy text</button>
+    </div>${warn}`;
+}
+
 /* ===== CASE CARD ===== */
 function stagePill(c){
   const m=c.stageMeta;
@@ -739,6 +818,7 @@ function caseCard(c){
 function actionPanel(c, st){
   const tabs=[];
   tabs.push(`<button class="stage-tab on" data-stab="comment">Comment</button>`);
+  tabs.push(`<button class="stage-tab" data-stab="outreach">Reach client</button>`);
   // 45-day survey: available from overdue onward
   if(['od','s45','s75','s90'].includes(c.stage)) tabs.push(`<button class="stage-tab" data-stab="survey">45-Day survey${st.survey?' ✓':''}</button>`);
   // 75-day retention: agent fills, available 75+ (and pending escalations)
@@ -749,6 +829,7 @@ function actionPanel(c, st){
 
   return `<div class="stage-tabs">${tabs.join('')}</div>
     <div data-stagepane="comment">${commentForm(c)}</div>
+    <div data-stagepane="outreach" class="hidden">${outreachPanel(c)}</div>
     <div data-stagepane="survey" class="hidden">${surveyForm(c, st)}</div>
     <div data-stagepane="retention" class="hidden">${retentionForm(c, st)}</div>
     <div data-stagepane="verdict" class="hidden">${verdictForm(c, st)}</div>
@@ -881,10 +962,51 @@ function wireCases(scope){
       commit(policy,{kind:'verdict',managerVerdict:verdict,body});
       refreshCard(card,policy);toast('Response posted — loop closed');
     });
+    // outreach
+    wireOutreach(card,policy);
     // survey open / copy
     const os=card.querySelector('[data-opensurvey]');if(os)os.addEventListener('click',()=>openSurvey(policy));
     const cl=card.querySelector('[data-copylink]');if(cl)cl.addEventListener('click',()=>{const c=ALL_CASES.find(x=>x.Policy===policy);navigator.clipboard&&navigator.clipboard.writeText(surveyLink(c));toast('Survey link copied');});
   });
+}
+function wireOutreach(card,policy){
+  const pick=card.querySelector('[data-opick]');if(!pick)return;
+  const c=ALL_CASES.find(x=>x.Policy===policy);if(!c)return;
+  const msg=card.querySelector('[data-omsg]'),subj=card.querySelector('[data-osubj]');
+  let key=defaultTpl(c);
+  function paint(){
+    const t=OUT_TPL[key];
+    msg.value=t.msg(c);
+    subj.innerHTML=`<b>Email subject:</b> ${esc(t.subject(c))}`;
+  }
+  paint();
+  pick.querySelectorAll('[data-otpl]').forEach(b=>b.addEventListener('click',()=>{
+    pick.querySelectorAll('[data-otpl]').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');key=b.dataset.otpl;paint();
+  }));
+  card.querySelectorAll('[data-osend]').forEach(b=>b.addEventListener('click',()=>{
+    const how=b.dataset.osend,text=msg.value.trim();
+    if(!text){toast('Nothing to send');return;}
+    const t=OUT_TPL[key];
+    if(how==='wa'){
+      const n=waNumber(c);
+      if(!n){toast('No phone number on file');return;}
+      window.open('https://wa.me/'+n+'?text='+encodeURIComponent(text),'_blank');
+    }else if(how==='em'){
+      const e=hasEmail(c);
+      if(!e){toast('No email on file');return;}
+      window.open('mailto:'+encodeURIComponent(e)+'?subject='+encodeURIComponent(t.subject(c))+'&body='+encodeURIComponent(text),'_blank');
+    }else{
+      if(navigator.clipboard)navigator.clipboard.writeText(text);
+      toast('Message copied');
+    }
+    // the record is the point — an outreach nobody can see didn't happen
+    commit(policy,{kind:'comment',reason:'CLIENT CONTACT · '+t.lab.toUpperCase(),
+      body:(how==='wa'?'WhatsApp':how==='em'?'Email':'Copied')+' to '+c.Client+': '+text});
+    refreshThread(card,policy);
+    if(how==='cp')return;
+    toast(how==='wa'?'WhatsApp opened — logged':'Email opened — logged');
+  }));
 }
 function refreshThread(card,policy){const t=card.querySelector('[data-thread]');if(t)t.innerHTML=threadHtml(policy);}
 function refreshCard(card,policy){
@@ -967,7 +1089,11 @@ function applyFilter(cases){
   if(FILTER.chip==='s75')r=r.filter(c=>c.stage==='s75');
   if(FILTER.chip==='s90')r=r.filter(c=>c.stage==='s90');
   if(FILTER.chip==='pend')r=r.filter(c=>c.stage==='pend');
-  if(FILTER.chip==='all' && !RIB.on)r=r.filter(c=>c.stage!=='closed' && !c.lapsed);
+  // The default view hides the historic lapsed book — but only when nobody is
+  // searching. Applying it to a query too meant typing a lapsed policy number
+  // returned "no results" while the policy sat right there, which made the
+  // win-back work unreachable from search.
+  if(FILTER.chip==='all' && !RIB.on && !FILTER.q)r=r.filter(c=>c.stage!=='closed' && !c.lapsed);
   if(FILTER.chip==='await')r=r.filter(c=>{const st=policyState(c.Policy);return st.retention&&!st.verdict;});
   if(FILTER.chip==='dup')r=r.filter(c=>c.cf.duplicateRisk||c.cf.churnRisk);
   if(FILTER.q){const q=FILTER.q.toLowerCase();r=r.filter(c=>c.Client.toLowerCase().includes(q)||c.Policy.includes(q)||String(c.ClientNo).includes(q)||c.Agent.toLowerCase().includes(q)||(c.PlanCode||'').toLowerCase().includes(q));}

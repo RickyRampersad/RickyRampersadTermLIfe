@@ -5,7 +5,20 @@ Tracks every premium in arrears through the 45 / 75 / 90-day lapse funnel: the
 response, and every status comment against the policy. Replaces the two JotForms
 and the "Premium Due Status" comment columns.
 
-`index.html` is the whole app. `../apps-script/PremiumDue.gs` is the backend.
+| File | What it is |
+|------|-----------|
+| `index.html` | The whole app — login, dashboards, case threads, client outreach |
+| `staff-manual.html` | Staff manual. Open it in a browser or host it; send the link to the team |
+| `../apps-script/PremiumDue.gs` | Backend — reads the portfolio, stores the log |
+| `../apps-script/PremiumDueTemplates.gs` | Client email + WhatsApp templates and the daily send |
+
+## Which sheet is which
+
+| Sheet | Role |
+|-------|------|
+| **Branch Portfolio** | Read-only source. Tab `gid=0` = "Premium Due status". Set as `PORTFOLIO_ID` |
+| **Premium Due Tracker** | Write target. Holds the `PremiumDueLog` tab. Bind the Apps Script to this one |
+| Motor Renewal Book — Schedule | A different system (`Code.gs`). Not used here |
 
 ## ⚠️ The copy in this repository is a demo
 
@@ -85,10 +98,11 @@ Tracked in the build review; none of these are fixed here.
   repository, but a signed-in user can still read every code from the page.
   The fix is a `?type=auth` endpoint in the Apps Script that returns a session
   and scope, so the roster never reaches the browser.
-- **No outbound automation.** The survey is delivered by an agent copying a
-  link. There is no email, WhatsApp or SMS template and no reminder schedule —
-  unlike the renewal backend (`../apps-script/Code.gs`), which runs a six-stage
-  sequence. This is the piece that would make it actually automate dues.
+- **The daily send has never run live.** `PremiumDueTemplates.gs` ships with
+  `OUT.DRY_RUN = true`, so it writes an `outbound-dry` plan to the log and emails
+  nobody. Read a full dry run before setting it false — the book holds ~6,000
+  lapsed policies and a misconfigured live run would mail all of them. The cap
+  (`MAX_SENDS_PER_RUN`) and the win-back age limit exist for the same reason.
 - **Survey links use bare policy numbers**, so anyone who guesses one can file a
   response as that client. Signed short tokens (the `/r/<token>` pattern the
   renewal portal already uses) would close it.
