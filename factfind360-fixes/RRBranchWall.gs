@@ -162,6 +162,31 @@ function rrbWall(e) {
 
   // Fourteen dated buckets, pre-seeded so quiet days are drawn as gaps rather
   // than skipped — a chart that silently omits its zeros tells a lie.
+  // Every day of the current month, and of the current week, so the board can
+  // show WHEN the work happened. A branch that only writes up on a Friday
+  // afternoon is writing from memory, and that is invisible in a monthly total.
+  var mdays = {}, mOrder = [];
+  var dim = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  for (var dd = 1; dd <= dim; dd++) {
+    var day = new Date(now.getFullYear(), now.getMonth(), dd);
+    var mk = Utilities.formatDate(day, tz, 'yyyy-MM-dd');
+    mdays[mk] = { d: mk, dom: dd, dow: day.getDay(), n: 0, a: 0,
+                  future: day > now };
+    mOrder.push(mk);
+  }
+  var wdays = {}, wOrder = [];
+  for (var wd = 0; wd < 7; wd++) {
+    var wday = new Date(startOfWeek.getTime() + wd * 86400000);
+    var wk = Utilities.formatDate(wday, tz, 'yyyy-MM-dd');
+    wdays[wk] = { d: wk, dow: wday.getDay(),
+                  lbl: Utilities.formatDate(wday, tz, 'EEE'),
+                  dom: Utilities.formatDate(wday, tz, 'd'),
+                  n: 0, api: 0, future: wday > now,
+                  today: Utilities.formatDate(wday, tz, 'yyyy-MM-dd') ===
+                         Utilities.formatDate(now, tz, 'yyyy-MM-dd') };
+    wOrder.push(wk);
+  }
+
   var series = {}, seriesOrder = [];
   for (var back = 13; back >= 0; back--) {
     var dd = new Date(startOfDay.getTime() - back * 86400000);
@@ -228,6 +253,8 @@ function rrbWall(e) {
 
       var dk = Utilities.formatDate(sub, tz, 'yyyy-MM-dd');
       if (series[dk]) series[dk].n++;
+      if (mdays[dk]) mdays[dk].n++;
+      if (wdays[dk]) { wdays[dk].n++; wdays[dk].api += apiTaken; }
       var wd = sub.getDay(), isWeekend = (wd === 0 || wd === 6);
 
       var need = rrbNum_(get(row, 'insuranceNeed_calc'));
@@ -420,6 +447,15 @@ function rrbWall(e) {
       products: Object.keys(products).map(function (k) {
         return { name: k, apps: products[k].apps, api: Math.round(products[k].api) };
       }).sort(function (a, b) { return b.api - a.api; }).slice(0, 8)
+    },
+    calendar: {
+      month: mOrder.map(function (k) { return mdays[k]; }),
+      week:  wOrder.map(function (k) { return wdays[k]; }),
+      monthLabel: Utilities.formatDate(now, tz, 'MMMM yyyy'),
+      daysWorkedWeek:  wOrder.filter(function (k) { return wdays[k].n > 0; }).length,
+      daysElapsedWeek: wOrder.filter(function (k) { return !wdays[k].future; }).length,
+      daysWorkedMonth: mOrder.filter(function (k) { return mdays[k].n > 0; }).length,
+      daysElapsedMonth: mOrder.filter(function (k) { return !mdays[k].future; }).length
     },
     year: { submitted: year.submitted, need: Math.round(year.need),
             cover: Math.round(year.cover), api: Math.round(year.api),

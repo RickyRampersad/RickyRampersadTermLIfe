@@ -57,3 +57,27 @@ the advisor proposed. Both are shown because the difference is the coaching
 conversation — an advisor recommending TT$4.2M and closing TT$2.85M is doing
 something different from one recommending TT$1.5M and closing TT$610k, even
 though both "converted about two thirds".
+
+## Days worked
+
+Every fact find carries the date it was completed, so the board can show the
+one thing a total never shows: **whether the week was worked evenly or rescued
+on Friday.**
+
+Two calendars, both built from the same dates:
+
+- **The week strip** — seven tiles, Sunday first, each with that day's fact
+  finds and the API taken on them. Today is ringed, days still to come are
+  dimmed, weekends are marked so a Saturday that produced reads as the effort
+  it was.
+- **The month grid** — a full calendar for the month, each day tinted by how
+  many fact finds landed on it. Quiet days are gaps, not missing squares.
+
+Both are pre-seeded with every day in the period before anything is counted.
+A day with no activity has to render as an empty square — if quiet days simply
+vanished, a week with two days worked and a week with five would look
+identical, which is the exact comparison the calendar exists to make.
+
+Beside each: **days worked of days elapsed**. Not days in the month — days
+that have actually happened. Comparing four days worked against a 31-day month
+on the 11th is a scoreboard nobody can win, and one nobody reads twice.

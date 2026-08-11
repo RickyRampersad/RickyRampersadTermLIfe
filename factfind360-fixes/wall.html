@@ -299,6 +299,39 @@
   .phd .fn3 .st i{font-style:normal; font-size:.6em; letter-spacing:.13em;
                   text-transform:uppercase; color:var(--ink-3); font-weight:800}
   .phd .fn3 .ar{opacity:0}
+  /* ── days worked ─────────────────────────────────────────────────────── */
+  .wkstrip{display:grid; grid-template-columns:repeat(7,1fr); gap:.5em}
+  .wd{background:var(--panel-2); border:1px solid var(--line); border-radius:.55em;
+      padding:.55em .3em; text-align:center; position:relative; overflow:hidden}
+  .wd .dw{font-size:.62em; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+          color:var(--ink-4)}
+  .wd .dn{font-size:1.7em; font-weight:800; line-height:1.05; margin-top:.1em;
+          font-variant-numeric:tabular-nums; color:var(--ink-3)}
+  .wd .dd{font-size:.58em; color:var(--ink-4); font-weight:700; margin-top:.1em}
+  .wd.on{border-color:rgba(45,212,191,.42); background:linear-gradient(160deg,rgba(45,212,191,.13),var(--panel))}
+  .wd.on .dn{color:var(--teal)} .wd.on .dw{color:var(--teal)}
+  .wd.we{border-style:dashed}
+  .wd.we.on{border-color:rgba(245,185,53,.5);
+            background:linear-gradient(160deg,rgba(245,185,53,.14),var(--panel))}
+  .wd.we.on .dn, .wd.we.on .dw{color:var(--gold)}
+  .wd.today{box-shadow:0 0 0 1.5px var(--teal), 0 0 1.6em rgba(45,212,191,.25)}
+  .wd.fut{opacity:.32}
+  .wd .api{font-size:.56em; font-weight:800; color:var(--gold); margin-top:.15em}
+
+  /* month calendar */
+  .cal{display:grid; grid-template-columns:repeat(7,1fr); gap:.32em}
+  .cal .hdd{font-size:.58em; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+            color:var(--ink-4); text-align:center; padding-bottom:.2em}
+  .cal .cd{border-radius:.32em; aspect-ratio:1.5/1; display:grid; place-items:center;
+           font-size:.78em; font-weight:700; font-variant-numeric:tabular-nums;
+           background:rgba(255,255,255,.035); color:var(--ink-4); position:relative}
+  .cal .cd.has{color:#04120F; font-weight:800}
+  .cal .cd.fut{opacity:.22}
+  .cal .cd .cn{position:absolute; top:.1em; right:.25em; font-size:.62em; opacity:.75}
+  .calnote{display:flex; gap:1.2em; align-items:baseline; margin-top:.6em;
+           font-size:.72em; color:var(--ink-3); font-weight:700}
+  .calnote b{color:var(--ink); font-size:1.3em}
+
   .more{font-size:.66em; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
         color:var(--ink-4); padding:0 .7em; line-height:1.3}
   .phd .r{text-align:right}
@@ -476,6 +509,12 @@
       <div class="stat v"><div class="k">In pipeline</div><div class="val num" id="prPipe">—</div><div class="s" id="prPipeSub">said yes, not yet picked up</div></div>
       <div class="stat"><div class="k">API recommended</div><div class="val num" id="prSub2">—</div><div class="s" id="prSubSub">to satisfy the need found</div></div>
     </div>
+    <div class="cols" style="flex:1; min-height:0; grid-template-columns:21em minmax(0,1fr)">
+    <div class="card" style="min-width:0">
+      <h2><span id="calTitle">Calendar</span><em id="calNote"></em></h2>
+      <div class="cal" id="calGrid"></div>
+      <div class="calnote" id="calSummary"></div>
+    </div>
     <div class="card grow">
       <div class="pbar"><span class="t">Producer board</span>
         <span class="pper"><i>This week</i><i class="on" id="prSub">Month</i><i>Year</i></span></div>
@@ -486,6 +525,7 @@
           <span class="st"><i>API rec</i></span></span>
         <span class="r">API picked up</span></div>
       <div class="rows grow" id="prProd" style="margin-top:.4em"></div>
+    </div>
     </div>
   </section>
 
@@ -517,6 +557,10 @@
       <div class="stat g"><div class="k">API picked up</div><div class="val num" id="wkApi">—</div><div class="s" id="wkApiSub">this week</div></div>
       <div class="stat v"><div class="k">In pipeline</div><div class="val num" id="wkPipe">—</div><div class="s" id="wkPipeSub">taken, not yet picked up</div></div>
       <div class="stat"><div class="k">API recommended</div><div class="val num" id="wkRec">—</div><div class="s" id="wkRecSub">this week</div></div>
+    </div>
+    <div class="card" style="margin-bottom:.9em">
+      <h2><span>Days worked</span><em id="dwNote"></em></h2>
+      <div class="wkstrip" id="wkStrip"></div>
     </div>
     <div class="card grow">
       <div class="pbar"><span class="t">Producer board</span>
@@ -852,6 +896,22 @@ function render(d){
   setText('wkApiSub', (WP.apps||0)+' app'+((WP.apps||0)===1?'':'s')+' picked up this week');
   setText('wkPipeSub', (WP.clients||0)+' client'+((WP.clients||0)===1?'':'s')+' taking cover');
   setText('wkRecSub', (W.submitted||0)+' fact find'+((W.submitted||0)===1?'':'s')+' · '+big(W.need||0)+' need found');
+  /* Days worked this week — which days the branch actually turned up. */
+  var CAL=d.calendar||{};
+  var wdz=CAL.week||[];
+  $('wkStrip').innerHTML = wdz.length ? wdz.map(function(x){
+    var we=(x.dow===0||x.dow===6);
+    return '<div class="wd'+(x.n?' on':'')+(we?' we':'')+(x.today?' today':'')+(x.future?' fut':'')+'">'+
+      '<div class="dw">'+x.lbl+'</div>'+
+      '<div class="dn">'+(x.future?'·':x.n)+'</div>'+
+      '<div class="dd">'+x.dom+'</div>'+
+      (x.api? '<div class="api">'+big(x.api)+'</div>':'')+
+    '</div>';
+  }).join('') : '<div class="empty">No week data yet.</div>';
+  var dw=CAL.daysWorkedWeek||0, de=CAL.daysElapsedWeek||0;
+  setText('dwNote', dw+' of '+de+' day'+(de===1?'':'s')+' so far'+
+    (dw===de&&de>0? ' — every day worked' : ''));
+
   producerRows(d.leaders||[], $('mRace'), 'wk', 'pickedUp');
 
 
@@ -897,6 +957,30 @@ function render(d){
     ((MT.subCases>0)?', '+MT.subCases+' with head office':'')+
     ((MT.staleCases>0)?' · '+big(MT.stale)+' over 14 days':''));
   setText('prCliSub', (MT.clients||0)+' clients · '+(MT.cases||0)+' fact finds');
+  /* Month calendar — the rhythm of the month, one square a day. */
+  var mdz=(d.calendar||{}).month||[];
+  if(mdz.length){
+    var mx=Math.max.apply(null,[1].concat(mdz.map(function(x){return x.n;})));
+    var lead=mdz[0].dow;
+    var cells=['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+      .map(function(h){return '<div class="hdd">'+h[0]+'</div>';}).join('');
+    for(var b=0;b<lead;b++) cells+='<div></div>';
+    cells+=mdz.map(function(x){
+      var o=x.n? (0.2+ (x.n/mx)*0.8) : 0;
+      var bg=x.n? 'rgba(45,212,191,'+o.toFixed(2)+')' : '';
+      return '<div class="cd'+(x.n?' has':'')+(x.future?' fut':'')+'"'+
+        (bg?' style="background:'+bg+'"':'')+'>'+x.dom+
+        (x.n>1?'<span class="cn">'+x.n+'</span>':'')+'</div>';
+    }).join('');
+    $('calGrid').innerHTML=cells;
+    setText('calTitle', (d.calendar||{}).monthLabel||'Calendar');
+    setText('calNote', 'fact finds per day');
+    var mw=(d.calendar||{}).daysWorkedMonth||0, me=(d.calendar||{}).daysElapsedMonth||0;
+    $('calSummary').innerHTML='<span><b>'+mw+'</b> days worked</span>'+
+      '<span>of <b>'+me+'</b> so far</span>'+
+      '<span><b>'+(me? Math.round(mw/me*100):0)+'%</b> of days active</span>';
+  }
+
   producerRows(d.monthLeaders||[], $('prProd'), 'mo', 'pickedUp');
   setText('prSub', M.label||'Month');
 
