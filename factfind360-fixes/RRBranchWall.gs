@@ -139,6 +139,10 @@ function rrbWall(e) {
   var startOfWeek = new Date(startOfDay.getTime() - dow * 86400000);
   var startOfLastWeek = new Date(startOfWeek.getTime() - 7 * 86400000);
   var startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  // The producer board is read for the year as much as the week — an advisor's
+  // year is the number that decides qualification, and it is invisible on a
+  // board that only ever looks back a month.
+  var startOfYear = new Date(now.getFullYear(), 0, 1);
 
   var tz = Session.getScriptTimeZone();
   var today = { submitted: 0, approved: 0 };
@@ -146,6 +150,7 @@ function rrbWall(e) {
   var lastWeek = { submitted: 0 };
   var month = { submitted: 0, approved: 0, premium: 0, need: 0, cover: 0,
                 api: 0, apiAssumed: 0 };
+  var year  = { submitted: 0, need: 0, cover: 0, api: 0, pickedUp: 0 };
   // Sunday counts. A branch that works the weekend should see it said out loud.
   var weekend = { week: 0, month: 0 }, weekendWho = {};
   // The production board: applications taken, clients, products and API.
@@ -153,7 +158,7 @@ function rrbWall(e) {
                       pipeline: 0, stale: 0, staleCases: 0, open: 0, assumed: 0, cases: 0 },
                wtd: { apps: 0, clients: 0, api: 0, pipeline: 0, assumed: 0, cases: 0 } };
   var products = {};
-  var agents = {}, monthAgents = {}, managers = {}, approvals = [];
+  var agents = {}, monthAgents = {}, yearAgents = {}, managers = {}, approvals = [];
 
   // Fourteen dated buckets, pre-seeded so quiet days are drawn as gaps rather
   // than skipped — a chart that silently omits its zeros tells a lie.
@@ -226,6 +231,21 @@ function rrbWall(e) {
       var wd = sub.getDay(), isWeekend = (wd === 0 || wd === 6);
 
       var need = rrbNum_(get(row, 'insuranceNeed_calc'));
+
+      if (sub >= startOfYear) {
+        year.submitted++; year.need += need; year.cover += amt; year.api += api;
+        if (isClosed) year.pickedUp += apiTaken;
+        if (agent) {
+          if (!yearAgents[agent]) yearAgents[agent] =
+            { name: agent, count: 0, need: 0, cover: 0, sold: 0,
+              apiRec: 0, pickedUp: 0, pipeline: 0, apps: 0, premium: 0 };
+          var ya = yearAgents[agent];
+          ya.count++; ya.need += need; ya.cover += amt; ya.sold += sold;
+          ya.apiRec += api; ya.apps += apps;
+          if (isClosed) ya.pickedUp += apiTaken;
+          else if (!isLost) ya.pipeline += apiTaken;
+        }
+      }
 
       if (sub >= startOfMonth) {
         month.need += need; month.cover += amt; month.api += api;
@@ -401,6 +421,11 @@ function rrbWall(e) {
         return { name: k, apps: products[k].apps, api: Math.round(products[k].api) };
       }).sort(function (a, b) { return b.api - a.api; }).slice(0, 8)
     },
+    year: { submitted: year.submitted, need: Math.round(year.need),
+            cover: Math.round(year.cover), api: Math.round(year.api),
+            pickedUp: Math.round(year.pickedUp),
+            label: Utilities.formatDate(now, tz, 'yyyy') },
+    yearLeaders: toList(yearAgents, 'pickedUp').slice(0, 8),
     series: seriesOrder.map(function (k) { return series[k]; }),
     leaders: toList(agents, 'count').slice(0, 8),
     monthLeaders: toList(monthAgents, 'count').slice(0, 8),

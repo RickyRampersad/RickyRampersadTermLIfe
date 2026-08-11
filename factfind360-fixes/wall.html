@@ -91,6 +91,20 @@
        transition:transform .7s cubic-bezier(.2,.7,.3,1)}
   .rank{font-size:.95em; font-weight:800; color:var(--ink-3); width:1.5em; text-align:right}
   .row.lead .rank{color:var(--gold)}
+  /* Position should be visible before any number is read. Gold, silver, bronze,
+     then cooling — the same order every day, so a move up the board is felt. */
+  .prow.r1 .rank{color:#F5B935} .prow.r2 .rank{color:#CBD5E1} .prow.r3 .rank{color:#D08A4E}
+  .prow.r1 .bar i{background:linear-gradient(90deg,#B98216,#F5B935)}
+  .prow.r2 .bar i{background:linear-gradient(90deg,#64748B,#CBD5E1)}
+  .prow.r3 .bar i{background:linear-gradient(90deg,#8A5A2B,#D08A4E)}
+  .prow.r4 .bar i{background:linear-gradient(90deg,#0D9488,#2DD4BF)}
+  .prow.r5 .bar i{background:linear-gradient(90deg,#155E75,#38BDF8); opacity:.85}
+  .prow.r6 .bar i{background:linear-gradient(90deg,#334155,#64748B); opacity:.75}
+  .prow.r1 .av{box-shadow:0 0 0 .16em rgba(245,185,53,.5), 0 0 1.4em rgba(245,185,53,.28)}
+  .prow.r2 .av{box-shadow:0 0 0 .14em rgba(203,213,225,.4)}
+  .prow.r3 .av{box-shadow:0 0 0 .14em rgba(208,138,78,.4)}
+  .prow.r1 .who{color:#FDF6E4}
+  .prow.r1 .met.api b{color:#F5B935; font-size:1.5em}
   .av{width:2.3em; height:2.3em; border-radius:50%; display:grid; place-items:center;
       font-size:.82em; font-weight:800; color:#061018; letter-spacing:-.02em}
   .row.lead .av{box-shadow:0 0 0 .16em rgba(245,185,53,.5), 0 0 1.4em rgba(245,185,53,.3)}
@@ -210,10 +224,25 @@
      the header small here made its columns 97px against the rows' 157px, so
      nothing lined up. The container keeps the row's font-size and only the
      label text is shrunk. */
+  /* Heading block. The card title and the period sit on one line above a ruled
+     column header; the header's own baseline is what the numbers hang from, so
+     it gets its own rule and its own breathing room. */
+  .pbar{display:flex; align-items:baseline; justify-content:space-between;
+        gap:1em; padding-bottom:.55em; margin-bottom:.15em}
+  .pbar .t{font-size:.86em; font-weight:800; letter-spacing:.16em; text-transform:uppercase;
+           color:var(--ink-2)}
+  .pbar .pper{display:flex; gap:.45em; align-items:baseline}
+  .pbar .pper i{font-style:normal; font-size:.66em; font-weight:800; letter-spacing:.13em;
+             text-transform:uppercase; color:var(--ink-4); padding:.25em .6em;
+             border:1px solid var(--line-2); border-radius:.35em}
+  .pbar .pper i.on{color:var(--teal); border-color:rgba(45,212,191,.45);
+                background:rgba(45,212,191,.09)}
   .phead{display:grid; grid-template-columns:1.5em 2.5em 1fr repeat(7,6.3em);
-         gap:.7em; padding:0 0 .5em; border-bottom:1px solid var(--line-2)}
+         gap:.7em; padding:0 0 .55em; border-bottom:1px solid var(--line-2);
+         align-items:end}
   .phead > div{font-size:.62em; letter-spacing:.14em; text-transform:uppercase;
-               color:var(--ink-3); font-weight:800; align-self:end}
+               color:var(--ink-3); font-weight:800; line-height:1.25}
+  .phead > div:nth-child(n+4){text-align:right}
   .phead div:nth-child(n+4){text-align:right}
   .lhead{display:grid; grid-template-columns:1.5em 2.5em 1fr repeat(3,minmax(4.6em,auto));
          gap:.8em; font-size:.6em; letter-spacing:.14em; text-transform:uppercase;
@@ -343,10 +372,30 @@
       <div class="stat"><div class="k">API recommended</div><div class="val num" id="prSub2">—</div><div class="s" id="prSubSub">to satisfy the need found</div></div>
     </div>
     <div class="card grow">
-      <h2><span>Producer board</span><em id="prSub">month to date</em></h2>
-      <div class="phead"><div></div><div></div><div>Advisor</div><div>Fact finds</div>
-        <div>Need found</div><div>Recommended</div><div>Sold</div><div>API</div><div>Pipeline</div><div>Picked up</div></div>
-      <div class="rows grow" id="prProd" style="margin-top:.35em"></div>
+      <div class="pbar"><span class="t">Producer board</span>
+        <span class="pper"><i>This week</i><i class="on" id="prSub">Month</i><i>Year</i></span></div>
+      <div class="phead"><div></div><div></div><div>Advisor</div><div>Fact<br>finds</div>
+        <div>Need<br>found</div><div>Cover<br>recommended</div><div>Cover<br>sold</div>
+        <div>API<br>recommended</div><div>In<br>pipeline</div><div>API<br>picked up</div></div>
+      <div class="rows grow" id="prProd" style="margin-top:.4em"></div>
+    </div>
+  </section>
+
+  <!-- 9 · THE YEAR -->
+  <section class="panel" id="p8">
+    <div class="ptitle"><h1 id="t_p8"></h1><span class="tag">The year</span></div>
+    <div class="stats">
+      <div class="stat g"><div class="k">API picked up</div><div class="val num" id="yApi">—</div><div class="s" id="yApiSub">year to date</div></div>
+      <div class="stat v"><div class="k">API recommended</div><div class="val num" id="yRec">—</div><div class="s">across the year</div></div>
+      <div class="stat"><div class="k">Fact finds</div><div class="val num" id="ySub">0</div><div class="s" id="ySubSub">since January</div></div>
+    </div>
+    <div class="card grow">
+      <div class="pbar"><span class="t">Producer board</span>
+        <span class="pper"><i>This week</i><i>Month</i><i class="on" id="yLbl">Year</i></span></div>
+      <div class="phead"><div></div><div></div><div>Advisor</div><div>Fact<br>finds</div>
+        <div>Need<br>found</div><div>Cover<br>recommended</div><div>Cover<br>sold</div>
+        <div>API<br>recommended</div><div>In<br>pipeline</div><div>API<br>picked up</div></div>
+      <div class="rows grow" id="yRace" style="margin-top:.4em"></div>
     </div>
   </section>
 
@@ -354,10 +403,12 @@
   <section class="panel" id="p5">
     <div class="ptitle"><h1 id="t_p5"></h1><span class="tag">The month</span></div>
     <div class="card grow">
-      <h2><span>Producer board</span><em id="mRaceSub">this week</em></h2>
-      <div class="phead"><div></div><div></div><div>Advisor</div><div>Fact finds</div>
-        <div>Need found</div><div>Recommended</div><div>Sold</div><div>API</div><div>Pipeline</div><div>Picked up</div></div>
-      <div class="rows grow" id="mRace" style="margin-top:.35em"></div>
+      <div class="pbar"><span class="t">Producer board</span>
+        <span class="pper"><i class="on">This week</i><i id="wkM">Month</i><i id="wkY">Year</i></span></div>
+      <div class="phead"><div></div><div></div><div>Advisor</div><div>Fact<br>finds</div>
+        <div>Need<br>found</div><div>Cover<br>recommended</div><div>Cover<br>sold</div>
+        <div>API<br>recommended</div><div>In<br>pipeline</div><div>API<br>picked up</div></div>
+      <div class="rows grow" id="mRace" style="margin-top:.4em"></div>
     </div>
   </section>
 
@@ -376,7 +427,7 @@
   </section>
 </main>
 
-<div class="ticks"><span class="tk" id="k0"></span><span class="tk" id="k1"></span><span class="tk" id="k2"></span><span class="tk" id="k3"></span><span class="tk" id="k4"></span><span class="tk" id="k5"></span><span class="tk" id="k6"></span><span class="tk" id="k7"></span></div>
+<div class="ticks"><span class="tk" id="k0"></span><span class="tk" id="k1"></span><span class="tk" id="k2"></span><span class="tk" id="k3"></span><span class="tk" id="k4"></span><span class="tk" id="k5"></span><span class="tk" id="k6"></span><span class="tk" id="k7"></span><span class="tk" id="k8"></span></div>
 <div id="burst"></div>
 
 <script>
@@ -384,7 +435,7 @@
 var ENDPOINT = 'https://script.google.com/macros/s/AKfycbyUnSnQtumx9emW_LsWQf6QKZFBGGnaTn3-PfAZDfjtZuBUSha-OuIXPT30qkMrXMoczA/exec';
 var WALL_KEY = '8ef87867eacb4812b455fb3124dde161';
 
-var POLL_MS = 40000, ROTATE_MS = 15000, STALE_MS = 150000, PANELS = 8;
+var POLL_MS = 40000, ROTATE_MS = 15000, STALE_MS = 150000, PANELS = 9;
 var lastGood=null, lastAt=0, panel=0, lastJustIn='', prevRank={}, seenApprovals={}, firstPaint=true;
 
 function $(id){ return document.getElementById(id); }
@@ -515,7 +566,8 @@ function producerRows(list, box, key, rankOn){
     var mv = was===undefined ? (firstPaint?'':'<span class="mv n">NEW</span>')
            : was>i ? '<span class="mv u">▲'+(was-i)+'</span>'
            : was<i ? '<span class="mv d">▼'+(i-was)+'</span>' : '';
-    return '<div class="prow'+(i===0?' lead':'')+'">'+
+    var rk = 'r' + Math.min(6, i + 1);
+    return '<div class="prow '+rk+(i===0?' lead':'')+'">'+
       '<div class="rank num">'+(i+1)+'</div>'+
       '<div class="av" style="background:'+av2.bg+'">'+av2.ini+'</div>'+
       '<div><div class="who"><span class="nm"></span>'+mv+'</div>'+
@@ -585,6 +637,10 @@ function headlines(d){
   set('t_p6', WK.week>0 ? '<b>'+WK.week+'</b> done at the weekend'
                         : (W.submitted? '<b>'+W.submitted+'</b> this week' : 'A fresh week'));
   var PR=(d.production&&d.production.mtd)||{api:0,apps:0};
+  var YY=d.year||{};
+  set('t_p8', YY.pickedUp>0 ? '<b>'+big(YY.pickedUp)+'</b> picked up in '+(YY.label||'the year')
+                            : (YY.submitted? '<b>'+YY.submitted+'</b> fact finds this year'
+                                           : 'The year starts here'));
   set('t_p7', PR.api>0 ? '<b>'+big(PR.api)+'</b> of API picked up this month'
              : (PR.pipeline>0 ? '<b>'+big(PR.pipeline)+'</b> in pipeline, none picked up yet'
                               : 'Production opens with the first application'));
@@ -614,7 +670,7 @@ function render(d){
 
   /* 6 · the month race */
   producerRows(d.leaders||[], $('mRace'), 'wk', 'pickedUp');
-  setText('mRaceSub', 'this week · ranked on API closed');
+
 
   /* 7 · the week */
   countTo($('wSub'), W.submitted||0);
@@ -659,7 +715,19 @@ function render(d){
     ((MT.staleCases>0)?' · '+big(MT.stale)+' over 14 days':''));
   setText('prCliSub', (MT.clients||0)+' clients · '+(MT.cases||0)+' fact finds');
   producerRows(d.monthLeaders||[], $('prProd'), 'mo', 'pickedUp');
-  setText('prSub', (M.label||'month to date')+' · ranked on API closed');
+  setText('prSub', M.label||'Month');
+
+  /* 9 · the year */
+  var Y=d.year||{};
+  countTo($('yApi'), Y.pickedUp||0, big);
+  countTo($('yRec'), Y.api||0, big);
+  countTo($('ySub'), Y.submitted||0);
+  setText('yApiSub', (Y.label||'')+' to date');
+  setText('ySubSub', big(Y.need||0)+' of need found');
+  setText('yLbl', Y.label||'Year');
+  setText('wkY', Y.label||'Year');
+  setText('wkM', M.label||'Month');
+  producerRows(d.yearLeaders||[], $('yRace'), 'yr', 'pickedUp');
 
   /* 3 · recognition */
   renderSpotlight(d);
