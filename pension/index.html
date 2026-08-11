@@ -1,0 +1,1762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a1228">
+<meta name="description" content="Company-owned pension application wizard — Section 134 computation, Guardian declarations, salary deduction and KYC, built by the Ricky Rampersad Branch.">
+<title>Company-Owned Pension — Application Wizard · Rampersad Branch</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Vendor libraries are served as separate cacheable files (pdf-lib 1.17.1, pdf.js 3.x - Apache 2.0, (c) Mozilla Foundation) -->
+<script src="assets/pdf-lib.min.js"></script>
+<script>if(typeof PDFLib==='undefined'){document.write('<scr'+'ipt src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></scr'+'ipt>');}</script>
+<script src="assets/pdf.min.js"></script>
+<script>
+try{ pdfjsLib.GlobalWorkerOptions.workerSrc="assets/pdf.worker.min.js"; }catch(e){}
+</script>
+<style>
+:root{--navy:#0a1228;--navy2:#0f1a3a;--card:#131f44;--card2:#0e1838;--gold:#d4af37;--gold2:#f0d066;--orange:#ff7a45;--txt:#eef2ff;--muted:#8a98c4;--line:#22305c;--green:#3fcf8e;--red:#ff5d6c;--blue:#5b8def;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--navy);color:var(--txt);font-family:"Inter",-apple-system,BlinkMacSystemFont,sans-serif}
+body{min-height:100vh;background:radial-gradient(1200px 800px at 80% -10%,rgba(212,175,55,.08),transparent),radial-gradient(900px 700px at -10% 110%,rgba(255,122,69,.07),transparent),var(--navy)}
+.serif{font-family:"Fraunces",Georgia,serif}.mono{font-family:"JetBrains Mono",monospace}
+.wrap{max-width:760px;margin:0 auto;padding:16px 14px 120px}
+.hd{display:flex;align-items:center;gap:13px;padding:6px 0 12px}
+.shield{width:42px;height:48px;flex:none;filter:drop-shadow(0 4px 12px rgba(212,175,55,.4))}
+.hd h1{font-family:"Fraunces",serif;font-weight:700;font-size:21px;line-height:1.08;letter-spacing:-.2px}
+.hd h1 span{color:var(--gold)}
+.hd p{color:var(--muted);font-size:11px;margin-top:2px}
+.badge{margin-left:auto;font-family:"JetBrains Mono",monospace;font-size:9.5px;color:var(--gold);border:1px solid var(--line);padding:5px 8px;border-radius:8px;background:rgba(212,175,55,.06);text-align:right;line-height:1.4}
+/* progress rail */
+.rail{display:flex;gap:5px;margin:10px 0 6px;overflow-x:auto;padding-bottom:4px}
+.rail::-webkit-scrollbar{display:none}
+.pchip{flex:none;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;min-width:60px}
+.pchip .num{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:700;border:2px solid var(--line);background:var(--card2);color:var(--muted);transition:.2s}
+.pchip.on .num{border-color:var(--gold);background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1407}
+.pchip.done .num{border-color:var(--green);background:var(--green);color:#06231a}
+.pchip .lbl{font-size:8.5px;color:var(--muted);text-align:center;line-height:1.15;max-width:64px}
+.pchip.on .lbl{color:var(--gold2)}
+.bar{height:6px;background:var(--card2);border-radius:4px;overflow:hidden;border:1px solid var(--line);margin-bottom:16px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width .4s ease}
+/* steps */
+.step{display:none;animation:fade .25s ease}
+.step.on{display:block}
+.qopts{display:flex;flex-direction:column;gap:8px}
+.qopt{text-align:left;background:var(--navy2);border:1px solid var(--line);color:var(--txt);border-radius:11px;padding:13px 14px;font-size:13.5px;font-weight:500;cursor:pointer;font-family:inherit;transition:.15s}
+.qopt:active{transform:translateY(1px)}
+.qopt.on{background:linear-gradient(135deg,rgba(212,175,55,.18),rgba(212,175,55,.06));border-color:var(--gold);color:var(--gold2);font-weight:600}
+.bestfit{font-size:9px;color:var(--gold);border:1px solid var(--gold);border-radius:5px;padding:1px 5px;margin-left:4px;font-weight:700;letter-spacing:.5px}
+.pvcap{font-size:11px;color:var(--muted);margin-bottom:10px}
+.pvwrap{background:#fff;border-radius:12px;padding:8px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.pvwrap canvas{width:100%!important;height:auto!important;display:block;border-radius:6px}
+.pvwrap canvas+canvas{margin-top:8px;border-top:1px solid #ddd;padding-top:8px}
+.pvload{color:#888;font-size:12px;text-align:center;padding:30px 10px;font-family:"Inter",sans-serif}
+
+/* ===== Fable AI guide ===== */
+.fab{position:fixed;right:16px;bottom:88px;z-index:60;width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1407;font-size:22px;font-weight:700;box-shadow:0 8px 24px rgba(212,175,55,.45);display:grid;place-items:center}
+.fab:active{transform:scale(.96)}
+.aipanel{position:fixed;left:0;right:0;bottom:0;z-index:70;max-width:760px;margin:0 auto;background:linear-gradient(180deg,var(--card),var(--navy2));border:1px solid var(--line);border-bottom:none;border-radius:20px 20px 0 0;box-shadow:0 -12px 40px rgba(0,0,0,.55);display:none;flex-direction:column;max-height:78vh}
+.aipanel.open{display:flex}
+.aihd{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.aihd .dot{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:grid;place-items:center;color:#1a1407;font-weight:800;font-size:15px;flex:none}
+.aihd .t{font-family:"Fraunces",serif;font-weight:600;font-size:15px}
+.aihd .s{font-size:10.5px;color:var(--muted)}
+.aihd .x{margin-left:auto;background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:4px 8px}
+.aimsgs{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-height:120px}
+.aim{max-width:88%;padding:10px 13px;border-radius:14px;font-size:13px;line-height:1.55;white-space:pre-wrap}
+.aim.user{align-self:flex-end;background:linear-gradient(135deg,rgba(212,175,55,.25),rgba(212,175,55,.12));border:1px solid rgba(212,175,55,.4);color:var(--gold2);border-bottom-right-radius:4px}
+.aim.bot{align-self:flex-start;background:var(--card2);border:1px solid var(--line);border-bottom-left-radius:4px}
+.aim.bot b{color:var(--gold2)}
+.aim.think{color:var(--muted);font-style:italic}
+.aichips{display:flex;gap:7px;padding:0 16px 10px;flex-wrap:wrap}
+.aichip{background:var(--navy2);border:1px solid var(--line);color:var(--gold);border-radius:999px;padding:7px 12px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit}
+.aichip:active{transform:translateY(1px)}
+.airow{display:flex;gap:8px;padding:10px 14px 16px;border-top:1px solid var(--line)}
+.airow input{flex:1;background:var(--navy2);border:1px solid var(--line);border-radius:11px;color:var(--txt);font-size:14px;padding:12px 13px;outline:none;font-family:inherit}
+.airow input:focus{border-color:var(--gold)}
+.airow button{border:none;border-radius:11px;padding:0 18px;font-weight:700;font-size:14px;cursor:pointer;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1407}
+.ainote{font-size:9.5px;color:#5f6f9c;text-align:center;padding:0 16px 10px}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.shead{margin-bottom:14px}
+.shead .k{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase}
+.shead h2{font-family:"Fraunces",serif;font-size:23px;font-weight:600;margin-top:3px;line-height:1.1}
+.shead p{color:var(--muted);font-size:12.5px;margin-top:5px;line-height:1.5}
+.card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:16px;padding:16px 15px;margin-bottom:13px}
+.card h3{font-family:"Fraunces",serif;font-size:15px;font-weight:600;margin-bottom:11px;display:flex;align-items:center;gap:8px}
+.card h3 .n{font-family:monospace;font-size:11px;color:var(--navy);background:var(--gold);width:21px;height:21px;border-radius:6px;display:grid;place-items:center;font-weight:700;flex:none}
+.field{margin-bottom:11px}
+.field label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:5px;font-weight:500}
+.field .hint{color:#5f6f9c;font-size:10.5px}
+.field input,.field select{width:100%;background:var(--navy2);border:1px solid var(--line);border-radius:10px;color:var(--txt);font-size:15px;padding:11px 12px;outline:none;font-family:"Inter",sans-serif}
+.field input:focus,.field select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,175,55,.12)}
+.inp{position:relative}.inp .cur{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px}
+.inp input{padding-left:26px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:520px){.row2{grid-template-columns:1fr}}
+.seg{display:flex;gap:6px;margin-bottom:11px}
+.seg button{flex:1;background:var(--navy2);border:1px solid var(--line);color:var(--muted);border-radius:9px;padding:9px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit}
+.seg button.on{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1407;border-color:var(--gold)}
+/* hero */
+.hero{background:linear-gradient(135deg,rgba(212,175,55,.14),rgba(255,122,69,.06));border:1px solid rgba(212,175,55,.35);border-radius:16px;padding:16px;text-align:center;margin-bottom:13px}
+.hero .lab{font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:1px;font-weight:700}
+.hero .big{font-family:"JetBrains Mono",monospace;font-size:33px;font-weight:700;color:var(--gold2);margin:5px 0;line-height:1}
+.hero .note{font-size:11px;color:var(--muted)}
+.brk{font-size:12.5px}
+.brk .ln{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line)}
+.brk .ln:last-child{border-bottom:none}
+.brk .ln.tot{font-weight:700;color:var(--gold2);border-top:1px solid var(--line);margin-top:3px;padding-top:8px}
+.brk .l{color:var(--muted)}.brk .v{font-family:"JetBrains Mono",monospace}
+.brk .v.win{color:var(--green);font-weight:700}.brk .v.dim{color:#5f6f9c}
+.verdict{display:flex;gap:9px;margin:11px 0}
+.verdict .vc{flex:1;background:var(--navy2);border:1px solid var(--line);border-radius:11px;padding:10px;text-align:center}
+.verdict .vc .q{font-size:10px;color:var(--muted);margin-bottom:5px;line-height:1.3}
+.verdict .vc .a{font-family:monospace;font-weight:700;font-size:15px;padding:3px;border-radius:6px}
+.verdict .vc .a.yes{color:var(--orange);background:rgba(255,122,69,.12)}
+.verdict .vc .a.no{color:var(--green);background:rgba(63,207,142,.12)}
+.warn,.info{border-radius:11px;padding:11px 13px;font-size:12px;margin:10px 0;display:none;line-height:1.5}
+.warn{background:rgba(255,93,108,.1);border:1px solid rgba(255,93,108,.35);color:#ffc0c6}
+.warn.show,.info.show{display:block}
+.info{background:rgba(63,207,142,.08);border:1px solid rgba(63,207,142,.3);color:#bff0d8}
+.warn b,.info b{color:#fff}
+.guide{background:rgba(63,207,142,.07);border:1px solid rgba(63,207,142,.28);border-radius:12px;padding:13px 15px;margin-bottom:13px}
+.guide h4{font-family:"Fraunces",serif;font-size:13.5px;color:var(--green);margin-bottom:7px}
+.guide ol,.guide ul{margin-left:17px;font-size:12.5px;line-height:1.6}.guide b{color:var(--gold2)}
+.btn{width:100%;border:none;border-radius:12px;padding:14px;font-weight:700;font-size:14px;cursor:pointer;font-family:"Inter",sans-serif;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1407;transition:.15s}
+.btn:active{transform:translateY(1px)}.btn.ghost{background:var(--navy2);color:var(--gold);border:1px solid var(--line);font-weight:600}
+.btn.sm{padding:12px;font-size:13px}
+.btnrow{display:flex;gap:9px}
+.status{text-align:center;font-size:12px;margin-top:10px;min-height:16px;color:var(--muted)}
+.status.ok{color:var(--green)}.status.err{color:var(--red)}
+.chkrow{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-bottom:1px dashed var(--line);cursor:pointer}
+.chkrow:last-child{border-bottom:none}
+.chkbox{width:24px;height:24px;flex:none;border:2px solid var(--line);border-radius:7px;display:grid;place-items:center;background:var(--card2);transition:.15s}
+.chkrow.on .chkbox{background:var(--green);border-color:var(--green)}
+.chkbox svg{width:13px;height:13px;opacity:0}.chkrow.on .chkbox svg{opacity:1}
+.chkrow .ct{font-size:13px;line-height:1.45}.chkrow .ct b{color:var(--gold2)}
+.chkrow.on .ct{color:var(--muted)}
+/* plan cards */
+.plan{background:var(--navy2);border:1px solid var(--line);border-radius:13px;padding:13px 14px;margin-bottom:10px;cursor:pointer;transition:.15s}
+.plan.sel{border-color:var(--gold);background:rgba(212,175,55,.08)}
+.plan .pn{font-family:"Fraunces",serif;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:space-between}
+.plan .ps{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4}
+.plan .tick{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center}
+.plan.sel .tick{background:var(--gold);border-color:var(--gold)}
+.plan .tick svg{width:12px;height:12px;opacity:0}.plan.sel .tick svg{opacity:1}
+/* nav */
+.nav{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(180deg,rgba(10,18,40,.4),var(--navy) 40%);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:12px 14px;display:flex;gap:10px;max-width:760px;margin:0 auto}
+.nav button{flex:1;border:none;border-radius:12px;padding:14px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit}
+.nav .back{background:var(--navy2);color:var(--muted);border:1px solid var(--line);flex:0 0 34%}
+.nav .next{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1407}
+.nav .next:disabled{opacity:.4}
+/* print form host */
+#formHost{display:none}
+.formdoc{background:#fff;color:#111;border-radius:14px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.5);font-family:"Times New Roman",Georgia,serif}
+.page{padding:34px 40px 40px;border-bottom:14px solid #0a1228}
+.page:last-child{border-bottom:none}
+.crest{text-align:center;margin-bottom:6px}
+.crest svg{width:46px;height:54px}
+.gov{text-align:center;font-size:12.5px;font-weight:700}
+.req{text-align:center;font-size:15px;font-weight:700;margin-bottom:10px}
+.cdup{font-size:10.5px;font-weight:700}
+.det{text-align:center;font-size:11px;margin:2px 0}
+.note{font-size:9.5px;margin-top:10px;line-height:1.45}
+.note .ni{display:flex;gap:8px;margin-bottom:3px}
+.note .ni b{flex:none;width:26px}
+.iy{font-size:11px;font-weight:700;margin:14px 0 10px}
+.frow{display:flex;align-items:flex-end;gap:8px;font-size:11.5px;margin-bottom:14px}
+.frow .nm{flex:none;width:18px}
+.frow .lb{flex:none}
+.frow .vl{flex:1;border-bottom:1px solid #222;font-weight:700;color:#0b3d91;padding:0 6px 1px;min-height:17px}
+.hr{border-top:1.5px solid #000;margin:6px 0 14px}
+.litem{display:flex;font-size:11.5px;margin-bottom:9px;align-items:flex-start;gap:6px;line-height:1.4}
+.litem .n{flex:none;width:24px}
+.litem .t{flex:1}
+.litem .t .dots{color:#888}
+.litem .amt{flex:none;width:120px;text-align:right;font-weight:700;color:#0b3d91;border-bottom:1px solid #999;padding-bottom:1px}
+.litem .amt2{flex:none;width:120px;text-align:right;font-weight:700;color:#0b3d91}
+.ynbox{flex:none;display:flex;gap:18px;align-items:center;font-size:11px}
+.ynbox .opt{font-weight:700}
+.nb{font-size:11px;font-weight:700;margin:18px 0}
+.sig{font-size:10.5px;margin-top:26px}
+.sig .line{border-top:1px solid #000;width:230px;margin-bottom:3px}
+.eic{text-align:center;font-weight:700;font-size:12px;margin-bottom:1px}
+.eicx{text-align:center;font-style:italic;font-size:10px;margin-bottom:14px}
+@page{ size: A4 portrait; margin: 12mm; }
+@media print{
+  /* hide all wizard UI; show only the BIR form */
+  .wrap > *{display:none!important}
+  #formHost{display:block!important}
+  html,body{background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .wrap{max-width:none;padding:0;margin:0}
+  .noprint{display:none!important}
+  #formView{display:block!important}
+  .formdoc{box-shadow:none;border-radius:0;overflow:visible}
+  /* each page fills a full sheet; content spreads top-to-bottom */
+  .page{
+    border-bottom:none;
+    page-break-after:always;
+    break-after:page;
+    padding:4mm 2mm;
+    min-height:258mm;            /* A4 height minus @page margins */
+    display:flex;
+    flex-direction:column;
+  }
+  .page:last-child{page-break-after:auto;break-after:auto}
+  /* breathing room so the form occupies the whole sheet */
+  .frow{margin-bottom:22px;font-size:12.5px}
+  .litem{margin-bottom:15px;font-size:12.5px}
+  .iy{margin:20px 0 18px}
+  .hr{margin:12px 0 20px}
+  .note{font-size:10.5px}
+  .nb{margin:26px 0}
+  .sig{margin-top:40px}
+  /* push the signature block to the bottom of the sheet */
+  .page .sig{margin-top:auto}
+}
+</style>
+
+<style>
+/* ===== PREMIUM LIGHT THEME v2 ===== */
+:root{--navy:#f7f8fb;--navy2:#f0f2f7;--card:#ffffff;--card2:#fcfdfe;--gold:#a8851c;--gold2:#c9a227;--txt:#101b33;--muted:#64718e;--line:#e4e8f1;--ink:#101b33;}
+html,body{background:#f7f8fb;color:var(--txt)}
+body{background:linear-gradient(180deg,#081020 0,#0e1a30 152px,transparent 152px),radial-gradient(900px 500px at 90% -5%,rgba(212,175,55,.26),transparent),#f6f7fa}
+.hd h1{color:#fff}
+.hd h1 span{color:#e6c75a}
+.hd p{color:#9fb0d0;font-size:11px;margin-top:3px;letter-spacing:.4px}
+.goldgrad{background:linear-gradient(105deg,#e9cd6a,#c9a227 55%,#f4e3a1);-webkit-background-clip:text;background-clip:text;color:transparent}
+.rname{color:#f0d985;font-weight:800;letter-spacing:1.1px;font-size:11.5px}
+.rsep{color:#3d4f78}
+.mdrt{white-space:nowrap;display:inline-block;color:#e6c75a;border:1px solid rgba(212,175,55,.5);border-radius:6px;padding:1px 6px;font-size:9.5px;font-weight:700;letter-spacing:.8px}
+.badge{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.22);color:#e6c75a}
+.shield{filter:drop-shadow(0 4px 12px rgba(0,0,0,.4))}
+.pchip .num{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.28);color:#cdd8ec}
+.pchip.on .num{background:linear-gradient(135deg,#d4af37,#edd47a);border-color:#edd47a;color:#33270a}
+.pchip.done .num{background:var(--green);border-color:var(--green);color:#06231a}
+.pchip .lbl{color:#9fb0d0}
+.pchip.on .lbl{color:#edd47a}
+.bar{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.18)}
+.shead .k{color:#a8851c;letter-spacing:2px}
+.shead h2{color:#0c1730;font-size:27px;letter-spacing:-.4px;font-weight:700}
+.shead p{color:#64718e}
+.card{background:#fff;border:1px solid #e4e8f1;border-radius:18px;box-shadow:0 4px 18px rgba(16,27,51,.06)}
+.card h3{color:#101b33}
+.card h3 .n{color:#fff;background:linear-gradient(135deg,#a8851c,#c9a227);border-radius:7px}
+.field label{color:#64718e;font-weight:600;letter-spacing:.2px}
+.field input,.field select{background:#fbfcfe;border:1.5px solid #dde3ee;color:#101b33;border-radius:11px}
+.field input:focus,.field select:focus{border-color:#c9a227;box-shadow:0 0 0 3px rgba(201,162,39,.14);background:#fff}
+.field .hint{color:#9aa6c0}
+.seg button{background:#fbfcfe;border:1.5px solid #dde3ee;color:#64718e}
+.seg button.on{background:linear-gradient(135deg,#d4af37,#e9cd6a);color:#33270a;border-color:#d4af37}
+.hero{background:linear-gradient(135deg,#0a1430,#1d3158);border:1px solid rgba(212,175,55,.45);border-radius:18px;box-shadow:0 8px 24px rgba(10,20,48,.25)}
+.hero .lab{color:#e6c75a}
+.hero .big{color:#fff}
+.hero .note{color:#9fb0d0}
+.hero .serif{color:#e6c75a!important}
+.brk .l{color:#64718e}.brk .v{color:#101b33}
+.brk .ln{border-bottom:1px dashed #e4e8f1}
+.brk .ln.tot{color:#a8851c;border-top:1px solid #e4e8f1}
+.brk .v.win{color:#13845b}.brk .v.dim{color:#9aa6c0}
+.verdict .vc{background:#fbfcfe;border:1px solid #e4e8f1;border-radius:13px}
+.verdict .vc .q{color:#64718e}
+.verdict .vc .a.yes{color:#bb5a18;background:rgba(255,140,80,.13)}
+.verdict .vc .a.no{color:#13845b;background:rgba(40,190,126,.13)}
+.warn{background:#fdf0f1;border:1px solid #f1c6cc;color:#962033}
+.warn b{color:#751226}
+.info{background:#f0f8f4;border:1px solid #c7e7d6;color:#1c6a47}
+.info b{color:#0e5435}
+.guide{background:#f0f9f4;border:1px solid #cbe9d8;border-radius:13px}
+.guide h4{color:#13845b}
+.guide ol,.guide ul{color:#2c4569}
+.guide b{color:#a8851c}
+.btn{background:linear-gradient(135deg,#b8941f,#e3c558);color:#2b2106;border-radius:13px;box-shadow:0 6px 18px rgba(184,148,31,.42);letter-spacing:.2px}
+.btn.ghost{background:#fff;color:#a8851c;border:1.5px solid #dde3ee;box-shadow:none}
+.chkbox{background:#fbfcfe;border-color:#cfd8e8}
+.chkrow .ct{color:#2c4569}
+.chkrow.on .ct{color:#9aa6c0}
+.plan{background:#fff;border:1.5px solid #e4e8f1;border-radius:14px}
+.plan.sel{border-color:#c9a227;background:linear-gradient(135deg,rgba(212,175,55,.10),rgba(212,175,55,.03));box-shadow:0 2px 12px rgba(201,162,39,.18)}
+.plan .pn{color:#101b33}
+.plan .ps{color:#64718e}
+.plan .tick{border-color:#cfd8e8}
+.qopt{background:#fbfcfe;border:1.5px solid #dde3ee;color:#2c4569;border-radius:12px}
+.qopt.on{background:linear-gradient(135deg,rgba(212,175,55,.2),rgba(212,175,55,.07));border-color:#c9a227;color:#73590f;font-weight:700}
+.bestfit{color:#a8851c;border-color:#c9a227;background:rgba(212,175,55,.1)}
+.nav{background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-top:1px solid #e4e8f1;box-shadow:0 -4px 20px rgba(16,27,51,.06)}
+.nav .back{background:#fff;color:#64718e;border:1.5px solid #dde3ee}
+.nav .next{background:linear-gradient(135deg,#c9a227,#e3c558);color:#33270a}
+.status{color:#64718e}.status.ok{color:#13845b}.status.err{color:#bd2438}
+.fab{background:linear-gradient(135deg,#c9a227,#e9cd6a);color:#33270a;box-shadow:0 8px 24px rgba(168,133,28,.5)}
+.aipanel{background:#fff;border-color:#e4e8f1;box-shadow:0 -12px 40px rgba(16,27,51,.22);border-radius:22px 22px 0 0}
+.aihd{border-bottom:1px solid #e4e8f1}
+.aihd .dot{background:linear-gradient(135deg,#0e1a30,#1b2c4f);color:#e6c75a}
+.aihd .t{color:#101b33}.aihd .s{color:#64718e}
+.aim.user{background:linear-gradient(135deg,rgba(212,175,55,.22),rgba(212,175,55,.09));border-color:rgba(168,133,28,.4);color:#664d0d}
+.aim.bot{background:#f4f6fb;border:1px solid #e4e8f1;color:#2c4569}
+.aim.bot b{color:#a8851c}
+.aichip{background:#fff;border:1.5px solid #dde3ee;color:#a8851c}
+.airow{border-top:1px solid #e4e8f1}
+.airow input{background:#fbfcfe;border:1.5px solid #dde3ee;color:#101b33}
+.airow button{background:linear-gradient(135deg,#c9a227,#e3c558);color:#33270a}
+.ainote{color:#9aa6c0}
+.pvwrap{box-shadow:inset 0 0 0 1px #e4e8f1;border-radius:14px}
+.pvload{color:#9aa6c0}
+.pvcap{color:#64718e}
+/* plan comparison table */
+.ptblwrap{overflow-x:auto;border:1px solid #e4e8f1;border-radius:13px;margin-top:10px}
+.ptbl{border-collapse:collapse;width:100%;min-width:760px;font-size:11.5px}
+.ptbl th{background:#0e1a30;color:#e6c75a;text-align:left;padding:9px 11px;font-weight:600;white-space:nowrap}
+.ptbl td{padding:9px 11px;border-top:1px solid #eef1f7;color:#2c4569;vertical-align:top}
+.ptbl tr.best td{background:rgba(212,175,55,.09)}
+.ptbl tr.selrow td{background:rgba(40,190,126,.10)}
+.ptbl td.selc{color:#13845b;font-weight:700}
+.card2chart{background:#fbfcfe;border:1px solid #e4e8f1;border-radius:13px;padding:13px;margin:0 0 10px}
+.mrow{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.mname{flex:0 0 165px;font-size:11px;color:#2c4569;line-height:1.2}
+.mtrack{flex:1;height:11px;background:#edf0f7;border-radius:6px;overflow:hidden}
+.mfill{height:100%;background:linear-gradient(90deg,#9fb0d0,#64718e);border-radius:6px}
+.mfill.top{background:linear-gradient(90deg,#c9a227,#e9cd6a)}
+.mpct{flex:0 0 32px;font-family:"JetBrains Mono",monospace;font-size:10.5px;color:#64718e;text-align:right}
+.uprow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed #e4e8f1}
+.uprow:last-child{border-bottom:none}
+.uplbl{flex:1;font-size:13px;color:#2c4569;font-weight:600}
+.upbtn{background:linear-gradient(135deg,#b8941f,#e3c558);color:#2b2106;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer}
+.upst{font-size:11px;color:#64718e;min-width:64px;text-align:right}
+.upst.ok{color:#13845b;font-weight:700}
+.benpct{font-size:11.5px;font-weight:700;padding:6px 11px;border-radius:9px;border:1px solid #e4e8f1;color:#64718e}
+.benpct.ok{color:#13845b;border-color:#bfe6d2;background:#f0f8f4}
+.benpct.bad{color:#bd2438;border-color:#f1c6cc;background:#fdf0f1}
+.ptbl td b{color:#101b33}
+.ptbl .mk{color:#13845b;font-weight:700;white-space:nowrap}
+@media print{ html,body{background:#fff!important} }
+/* ---- case toolbar (save state / export / import / new) ---- */
+.casebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 10px}
+.savedot{font-size:10.5px;color:var(--muted);display:inline-flex;align-items:center;gap:6px;font-family:"JetBrains Mono",monospace}
+.savedot:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green);opacity:.55;transition:opacity .25s,transform .25s}
+.savedot.flash:before{opacity:1;transform:scale(1.5)}
+.casebtns{margin-left:auto;display:flex;gap:6px}
+.casebtns button{background:var(--navy2);border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit}
+.casebtns button:hover{color:var(--txt);border-color:var(--gold)}
+.casebtns button.danger:hover{color:var(--red);border-color:var(--red)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hd noprint">
+    <svg class="shield" viewBox="0 0 48 54"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0d066"/><stop offset="1" stop-color="#b8941f"/></linearGradient></defs>
+      <path d="M24 2 L46 9 V26 C46 40 36 49 24 52 C12 49 2 40 2 26 V9 Z" fill="url(#g)"/><path d="M24 5.5 L42.5 11.5 V26 C42.5 38 33.5 46.5 24 49 C14.5 46.5 5.5 38 5.5 26 V11.5 Z" fill="#0a1228"/><path d="M15 27 L21 34 L34 19" fill="none" stroke="#f0d066" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div><h1>Pension Application <span class="goldgrad">Wizard</span></h1><p><b class="rname">RICKY RAMPERSAD</b> <span class="rsep">•</span> CFD, MFA <span class="rsep">•</span> Branch Manager <span class="rsep">•</span> <span class="mdrt">23× MDRT</span></p></div>
+  </div>
+
+  <div class="casebar noprint">
+    <span class="savedot" id="saveDot">Saved on this device</span>
+    <div class="casebtns">
+      <button type="button" onclick="exportCase()">Export case</button>
+      <button type="button" onclick="document.getElementById('caseFile').click()">Import</button>
+      <button type="button" class="danger" onclick="newCase()">New case</button>
+    </div>
+    <input type="file" id="caseFile" accept="application/json,.json" hidden onchange="importCase(this)">
+  </div>
+
+  <div class="rail noprint" id="rail"></div>
+  <div class="bar noprint"><i id="barFill"></i></div>
+
+  <!-- ============ STEP 1: 134 COMPUTATION ============ -->
+  <section class="step on" data-step="0">
+    <div class="shead"><div class="k">Step 1 of 5</div><h2>Section 134 Computation</h2><p>Type the case details once — they fill every form for you.</p></div>
+    <div class="info show" style="margin-bottom:13px"><b>Why this step:</b> it works out the most the company is allowed to contribute tax-free for the employee, and prints the BIR approval form that starts the whole application.</div>
+
+    <div class="card">
+      <h3><span class="n">A</span>Case details</h3>
+      <div class="row2">
+        <div class="field"><label>Company / employer (Proposer)</label><input id="coName" oninput="bridgeSave()"></div>
+        <div class="field"><label>Date of incorporation</label><input id="coInc" placeholder="dd/mm/yyyy" oninput="bridgeSave()"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Employee (Life Assured / Annuitant)</label><input id="empName" oninput="bridgeSave()"></div>
+        <div class="field"><label>Employee date of birth</label><input id="empDob" placeholder="dd/mm/yyyy" oninput="bridgeSave()"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Employer B.I.R. file no.</label><input id="coBir" oninput="bridgeSave()"></div>
+        <div class="field"><label>Employee B.I.R. file no.</label><input id="empBir" oninput="bridgeSave()"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Employer address</label><input id="coAddr" oninput="bridgeSave()"></div>
+        <div class="field"><label>Employee mailing address <span class="hint">must match utility bill (&lt;3 months)</span></label><input id="empAddr" oninput="bridgeSave()"></div>
+      </div>
+      <div class="field"><label>Commencement date of plan</label><input id="planStart" placeholder="dd/mm/yyyy" oninput="bridgeSave()"></div>
+      <div class="row2">
+        <div class="field"><label>Agent</label><select id="agentName" onchange="bridgeSave()">
+          <!-- AGENT LIST: add branch agents here as <option> lines -->
+          <option selected>Ricky Rampersad</option>
+        </select></div>
+        <div class="field"><label>Agent number</label><input id="agentNo" value="A00427" oninput="bridgeSave()"></div>
+        <div class="field"><label>Income year</label><input id="incYear" value="2026" oninput="bridgeSave()"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><span class="n">B</span>Mode</h3>
+      <div class="seg"><button id="mFwd" class="on" onclick="setMode('fwd')">Forward check</button><button id="mRev" onclick="setMode('rev')">Reverse / max</button></div>
+      <div class="field"><label>Annual salary <span class="hint">must match payslip · incl. BIK</span></label><div class="inp"><span class="cur">$</span><input id="salary" inputmode="numeric" placeholder="0"></div></div>
+      <div class="field"><label>Other income (net)</label><div class="inp"><span class="cur">$</span><input id="other" inputmode="numeric" placeholder="0"></div></div>
+      <div class="seg" style="margin-top:4px"><span style="align-self:center;font-size:11.5px;color:var(--muted);margin-right:6px">Resident?</span><button id="resYes" class="on" onclick="setRes(true)">Yes ($90k PA)</button><button id="resNo" onclick="setRes(false)">No</button></div>
+    </div>
+
+    <div class="card" id="fwdCard">
+      <h3><span class="n">C</span>Company contribution — Line 6</h3>
+      <div class="row2">
+        <div class="field"><label>6(a) Employer premium <span class="hint">annual · min $200/month</span></label><div class="inp"><span class="cur">$</span><input id="co6a" inputmode="numeric" placeholder="0"></div></div>
+        <div class="field"><label>6(b) Lump sum</label><div class="inp"><span class="cur">$</span><input id="co6b" inputmode="numeric" placeholder="0"></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><span class="n">D</span>Deductions — Line 6 (existing plans)</h3>
+      <div class="field"><label>Tertiary education <span class="hint">cap $60k</span></label><div class="inp"><span class="cur">$</span><input id="tertiary" inputmode="numeric" placeholder="0"></div></div>
+      <div class="field"><label>First-time home owner <span class="hint">cap $25k</span></label><div class="inp"><span class="cur">$</span><input id="fthome" inputmode="numeric" placeholder="0"></div></div>
+      <div class="field"><label>Govt Widows & Orphans — 6(a)(i)</label><div class="inp"><span class="cur">$</span><input id="wof" inputmode="numeric" placeholder="0"></div></div>
+      <div class="field"><label>Approved Pension Fund — 6(a)(ii) <span class="hint">other company-owned pension</span></label><div class="inp"><span class="cur">$</span><input id="pension" inputmode="numeric" placeholder="0"></div></div>
+      <div class="field"><label>Approved Deferred Annuity — 6(a)(iii) <span class="hint">personally-owned</span></label><div class="inp"><span class="cur">$</span><input id="annuity" inputmode="numeric" placeholder="0"></div></div>
+      <div class="seg"><span style="align-self:center;font-size:11.5px;color:var(--muted);margin-right:6px">NIS 70%</span><button id="nisAuto" class="on" onclick="setNisMode('auto')">Auto</button><button id="nisMan" onclick="setNisMode('man')">Manual</button><button id="nisOff" onclick="setNisMode('off')">Exclude</button></div>
+      <div class="field" id="nisManWrap" style="display:none"><label>NIS 70% (manual)</label><div class="inp"><span class="cur">$</span><input id="nisVal" inputmode="numeric" placeholder="0"></div></div>
+    </div>
+
+    <div class="hero">
+      <div class="lab" id="heroLab">Max Allowable Contribution</div>
+      <div class="big mono" id="maxOut">$0</div>
+      <div class="note" id="heroNote">Greater of ⅓ Chargeable Income or 20% Emolument Income</div>
+    </div>
+
+    <div class="info" id="vStatus" style="margin:0 0 10px"></div>
+    <div class="verdict" id="verdictWrap">
+      <div class="vc"><div class="q">Line 10 — exceed ⅓ Chargeable?</div><div class="a no" id="v10"><span id="v10t">No</span></div></div>
+      <div class="vc"><div class="q">Line 12 — exceed 20% Emolument?</div><div class="a no" id="v12"><span id="v12t">No</span></div></div>
+    </div>
+    <div class="warn" id="warn"></div>
+    <div class="info" id="info"></div>
+
+    <div class="card">
+      <h3><span class="n">E</span>Computation breakdown</h3>
+      <div class="brk">
+        <div class="ln"><span class="l">Total Emolument (Line 1)</span><span class="v" id="o_emol">$0</span></div>
+        <div class="ln"><span class="l">Other income (Line 2)</span><span class="v" id="o_other">$0</span></div>
+        <div class="ln"><span class="l">Net income (Line 3)</span><span class="v" id="o_net">$0</span></div>
+        <div class="ln"><span class="l">Personal allowance</span><span class="v" id="o_pa">$0</span></div>
+        <div class="ln"><span class="l">Tertiary</span><span class="v" id="o_ter">$0</span></div>
+        <div class="ln"><span class="l">First-time home</span><span class="v" id="o_fth">$0</span></div>
+        <div class="ln"><span class="l">Assessable (Line 5)</span><span class="v" id="o_ass">$0</span></div>
+        <div class="ln"><span class="l">NIS <span id="o_nisclass" style="color:#5f6f9c"></span></span><span class="v" id="o_nis">$0</span></div>
+        <div class="ln"><span class="l">Line 7 deductions</span><span class="v" id="o_ded">$0</span></div>
+        <div class="ln"><span class="l">Chargeable (Line 8)</span><span class="v" id="o_chg">$0</span></div>
+        <div class="ln"><span class="l">⅓ Chargeable (Line 9)</span><span class="v" id="o_l9">$0</span></div>
+        <div class="ln"><span class="l">20% Emolument (Line 11)</span><span class="v" id="o_l11">$0</span></div>
+        <div class="ln"><span class="l">Total contributions (Line 8 front)</span><span class="v" id="o_l8c">$0</span></div>
+        <div class="ln tot"><span class="l">Maximum Contribution <span id="basis" style="font-weight:400;color:var(--muted);font-size:10.5px"></span></span><span class="v" id="o_max">$0</span></div>
+      </div>
+      <div class="btnrow" style="margin-top:12px">
+        <button class="btn sm" onclick="printBIR()">Print BIR form</button>
+      </div>
+    </div>
+    <div class="card"><h3><span class="n">E2</span>Employer’s Plan — selection</h3>
+      <div class="info show" style="margin-bottom:12px"><b>The contribution above funds this plan.</b> The company answers, RIA recommends, you confirm.</div>
+      <div id="empPlanFlow"></div>
+    </div>
+    <div class="card"><h3><span class="n">F</span>Your BIR form — live preview</h3>
+      <div class="pvcap">This is the exact form that prints. It updates as you type.</div>
+      <div class="pvwrap" id="birPreview"></div>
+    </div>
+  </section>
+
+  <!-- ============ STEP 2: DECLARATION 1 ============ -->
+  <section class="step" data-step="1">
+    <div class="shead"><div class="k">Step 2 of 5</div><h2>Employee — Declaration 1</h2><p>Everything about the employee: their details, contribution, plan, beneficiary — and the Declaration 1 form.</p></div>
+    <div class="info show" style="margin-bottom:13px"><b>Why this section:</b> Declaration 1 is the employee’s part of the application. Their personal details support underwriting and KYC; their contribution is their own tax deduction; the beneficiary receives the benefit.</div>
+    <div class="card"><h3><span class="n">A</span>Employee details</h3>
+      <div class="info show" style="margin-bottom:12px"><b>Why we ask:</b> the address must match the utility bill (KYC); occupation and salary must match the payslip the BIR sees; marital status guides the beneficiary advice.</div>
+      <div class="row2">
+        <div class="field"><label>Employee name <span class="hint">rolled over</span></label><input id="ed_name" oninput="mirror('ed_name','empName')"></div>
+        <div class="field"><label>Employee B.I.R. # <span class="hint">rolled over</span></label><input id="ed_bir" oninput="mirror('ed_bir','empBir')"></div>
+      </div>
+      <div class="field"><label>Mailing address <span class="hint">rolled over · must match utility bill</span></label><input id="ed_addr" oninput="mirror('ed_addr','empAddr')"></div>
+      <div class="row2">
+        <div class="field"><label>Employee phone #(s)</label><input id="empPhone" inputmode="tel" oninput="bridgeSave()"></div>
+        <div class="field"><label>Employee email</label><input id="empEmail" inputmode="email" oninput="bridgeSave()"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Marital status</label><select id="empMarital" onchange="bridgeSave()"><option value=""></option><option>Single</option><option>Married</option><option>Divorced</option><option>Widowed</option><option>Common-law</option></select></div>
+        <div class="field"><label>Occupation <span class="hint">as on payslip</span></label><input id="empJob" oninput="bridgeSave()"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Employment date</label><input id="empEmpDate" placeholder="dd/mm/yyyy" oninput="bridgeSave()"></div>
+        <div class="field"><label>Department <span class="hint">for the salary form</span></label><input id="empDept" oninput="bridgeSave()"></div>
+      </div>
+    </div>
+    <div id="planFlow"></div>
+    <div class="guide"><h4>How the employee completes it</h4><ol>
+      <li>Proposer block auto-fills (name, surname, DOB).</li>
+      <li><b>A and B come pre-circled</b> on Part 1.E, and the date is prefilled.</li>
+      <li>The employee just <b>signs</b> Part 1.E, then signs <b>page 5 item 7</b>.</li>
+    </ol></div>
+    <div class="card">
+      <div class="row2">
+        <div class="field"><label>Employee name</label><input id="d1_name" oninput="mirror('d1_name','empName')"></div>
+        <div class="field"><label>Date of birth</label><input id="d1_dob" placeholder="dd/mm/yyyy" oninput="mirror('d1_dob','empDob')"></div>
+      </div>
+      <div class="field"><label>Branch number</label><input id="d1_branch" value="26000"></div>
+      <button class="btn" onclick="fillD1()">Download filled Declaration 1 PDF</button>
+      <div class="status" id="st-d1"></div>
+    </div>
+    <div class="card"><h3><span class="n">F</span>The actual Guardian form — live preview</h3>
+      <div class="pvcap">Exactly what downloads — the genuine PDF with your details filled in.</div>
+      <div class="pvwrap" id="pv-d1"><div class="pvload">Building preview…</div></div>
+    </div>
+  </section>
+
+  <!-- ============ STEP 3: DECLARATION 2 ============ -->
+  <section class="step" data-step="2">
+    <div class="shead"><div class="k">Step 3 of 5</div><h2>Declaration 2 — Third Party</h2><p>The company’s declaration (it owns the policy).</p></div>
+    <div class="info show" style="margin-bottom:13px"><b>Why this form:</b> because the company — not the employee — owns a TopHat policy, the law requires a third-party declaration where the company commits as Proposer.</div>
+    <div class="guide"><h4>How it's completed (company-owned)</h4><ol>
+      <li><b>Company name</b> → Proposer First-Name + Legal Entity; <b>incorporation date</b> in the date field.</li>
+      <li>Employee → Annuitant / Life-Assured block.</li>
+      <li><b>A and B come pre-circled</b> on Part 2.D.</li>
+      <li><b>Company signs &amp; stamps on top</b>; <b>employee signs underneath</b> — on 2.D and page 5 item 7.</li>
+    </ol></div>
+    <div class="card">
+      <div class="row2">
+        <div class="field"><label>Company (Proposer)</label><input id="d2_co" oninput="mirror('d2_co','coName')"></div>
+        <div class="field"><label>Incorporation date</label><input id="d2_inc" placeholder="dd/mm/yyyy" oninput="mirror('d2_inc','coInc')"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Employee (Annuitant)</label><input id="d2_name" oninput="mirror('d2_name','empName')"></div>
+        <div class="field"><label>Employee DOB</label><input id="d2_dob" placeholder="dd/mm/yyyy" oninput="mirror('d2_dob','empDob')"></div>
+      </div>
+      <div class="field"><label>Branch number</label><input id="d2_branch" value="26000"></div>
+      <button class="btn" onclick="fillD2()">Download filled Declaration 2 PDF</button>
+      <div class="status" id="st-d2"></div>
+    </div>
+    <div class="card"><h3><span class="n">F</span>The actual Guardian form — live preview</h3>
+      <div class="pvcap">Exactly what downloads — the genuine PDF with your details filled in.</div>
+      <div class="pvwrap" id="pv-d2"><div class="pvload">Building preview…</div></div>
+    </div>
+  </section>
+
+  <!-- ============ STEP 4: SALARY DEDUCTION ============ -->
+  
+
+  <!-- ============ STEP 5: PLAN SELECTION ============ -->
+  <!-- ============ STEP 6: KYC ============ -->
+  <section class="step" data-step="3">
+    <div class="shead"><div class="k">Step 4 of 5</div><h2>KYC Documents</h2><p>Two documents — tick them off as collected.</p></div>
+    <div class="info show" style="margin-bottom:13px"><b>Why:</b> the law requires identity and address verification before any policy can be issued. Missing KYC is the #1 cause of delays.</div>
+    <div class="card" id="kycCard">
+      <div class="chkrow" onclick="kyc(this)"><div class="chkbox"><svg viewBox="0 0 24 24" fill="none" stroke="#06231a" stroke-width="3.5" stroke-linecap="round"><path d="M4 12 L10 18 L20 6"/></svg></div><div class="ct"><b>Photo ID</b> — driver's permit or national ID card.</div></div>
+      <div class="chkrow" onclick="kyc(this)"><div class="chkbox"><svg viewBox="0 0 24 24" fill="none" stroke="#06231a" stroke-width="3.5" stroke-linecap="round"><path d="M4 12 L10 18 L20 6"/></svg></div><div class="ct"><b>Proof of address</b> — utility bill in the client's name (under 6 months old).</div></div>
+      <div class="chkrow" onclick="kyc(this)"><div class="chkbox"><svg viewBox="0 0 24 24" fill="none" stroke="#06231a" stroke-width="3.5" stroke-linecap="round"><path d="M4 12 L10 18 L20 6"/></svg></div><div class="ct"><b>Recent pay slip</b> — must match the salary entered (BIR requires the original or a certified copy).</div></div>
+      <div id="kycBenRows"></div>
+    </div>
+    <div class="card">
+      <h3><span class="n">↑</span>Upload the documents — they go INTO the package PDF</h3>
+      <div class="info show" style="margin-bottom:12px"><b>Snap or choose a photo of each document.</b> Each one becomes a page in the Full Package PDF on the Review step — one file, everything inside.</div>
+      <div class="uprow"><div class="uplbl">Client photo ID</div><label class="upbtn">Choose / camera<input type="file" accept="image/*" hidden onchange="kycUp(this,'id')"></label><span class="upst" id="up-id">—</span></div>
+      <div class="field" style="margin:2px 0 8px"><label>Client ID expiry date (dd/mm/yyyy)</label><input id="idExpiry" placeholder="dd/mm/yyyy" oninput="bridgeSave();expiryFlag()"><div class="hint" id="idExpFlag" style="font-size:10.5px;margin-top:4px"></div></div>
+      <div class="uprow"><div class="uplbl">Utility bill (&lt;6 months)</div><label class="upbtn">Choose / camera<input type="file" accept="image/*" hidden onchange="kycUp(this,'bill')"></label><span class="upst" id="up-bill">—</span></div>
+      <div class="uprow"><div class="uplbl">Recent pay slip</div><label class="upbtn">Choose / camera<input type="file" accept="image/*" hidden onchange="kycUp(this,'payslip')"></label><span class="upst" id="up-payslip">—</span></div>
+      <div id="kycBenUploads"></div>
+    </div>
+    <div class="guide"><h4>Company proposer also requires</h4><ul>
+      <li>Certified company formation documents.</li>
+      <li>Identity verification of directors and 10%+ shareholders.</li>
+    </ul></div>
+  </section>
+
+  <!-- ============ STEP 7: REVIEW ============ -->
+  <section class="step" data-step="4">
+    <div class="shead"><div class="k">Step 5 of 5</div><h2>Review &amp; Submit</h2><p>Confirm everything is in order before submission to Head Office.</p></div>
+    <div class="card"><div id="reviewList"></div></div>
+    <div class="guide"><h4>How submission works</h4><ul>
+      <li>Tap <b>Email to Branch</b> below — it opens an email to <b>support@rickyrampersadbranch.com</b> with the full case summary.</li>
+      <li><b>Attach the downloaded PDFs</b> (Declarations, Salary Deduction) and the printed BIR form scan before sending.</li>
+      <li>Original or certified pay slip + approved TD1 copy accompany the BIR request.</li>
+    </ul></div>
+    <div class="card">
+      <h3><span class="n">✓</span>System checks</h3>
+      <div id="sysChecks"></div>
+    </div>
+    <div class="card">
+      <h3><span class="n">1</span>The Full Package — one PDF, every form</h3>
+      <div class="pvcap">One PDF: cover sheet + Declaration 1 + Declaration 2 + Salary Deduction + your uploaded KYC documents — all filled, every page visible below before anything is sent.</div>
+      <div class="btnrow" style="margin-bottom:10px">
+        <button class="btn sm" onclick="previewPackage()">▶ PREVIEW the full package (PDF)</button>
+        <button class="btn ghost sm" onclick="downloadPackage()">⤓ Download the PDF</button>
+      </div>
+      <div class="status" id="st-pkg"></div>
+      <div class="pvwrap" id="pv-pkg" style="margin-top:10px"><div class="pvload">Tap “Preview package” to build the full PDF here.</div></div>
+    </div>
+    <div class="card">
+      <h3><span class="n">2</span>Send to Rampersad Branch</h3>
+      <button class="btn" onclick="submitToBranch()">Email to Branch — support@rickyrampersadbranch.com</button>
+      <div class="status" id="st-submit"></div>
+      <div class="info show" style="margin-top:10px;font-size:11.5px"><b>Where does it go?</b> Straight to the Rampersad Branch inbox — <b>support@rickyrampersadbranch.com</b>. The button opens the email on this device with the full case summary written in; attach the downloaded package PDF, press Send, and it lands with the branch.</div>
+    </div>
+    <div class="card">
+      <div class="chkrow" onclick="kyc(this)"><div class="chkbox"><svg viewBox="0 0 24 24" fill="none" stroke="#06231a" stroke-width="3.5" stroke-linecap="round"><path d="M4 12 L10 18 L20 6"/></svg></div><div class="ct">Package assembled and ready to submit to Head Office.</div></div>
+    </div>
+  </section>
+
+  <div id="formHost"><div class="formdoc" id="formdoc"></div></div>
+</div>
+
+<button class="fab noprint" id="fabBtn" onclick="toggleFable()" title="Ask RIA">&#10022;</button>
+
+<div class="aipanel noprint" id="aiPanel">
+  <div class="aihd">
+    <div class="dot">R</div>
+    <div><div class="t">RIA</div><div class="s">Rampersad Intelligent Assistant &middot; knows this step &amp; your numbers</div></div>
+    <button class="x" onclick="toggleFable()">&times;</button>
+  </div>
+  <div class="aimsgs" id="aiMsgs"></div>
+  <div class="aichips" id="aiChips"></div>
+  <div class="airow">
+    <input id="aiInput" placeholder="Ask RIA anything about this step&hellip;" onkeydown="if(event.key==='Enter')sendFable()">
+    <button onclick="sendFable()">Ask</button>
+  </div>
+  <div class="ainote">AI guidance for explanation only &mdash; confirm specifics with branch standards &amp; Head Office.</div>
+</div>
+
+<div class="credit noprint" style="text-align:center;font-size:10px;color:#9aa6c0;padding:6px 0 2px">Designed &amp; built by <b style="color:#a8851c">RICKY RAMPERSAD</b>, CFD, MFA · Branch Manager · 23× MDRT · Rampersad Branch 26000</div>
+<div class="nav noprint">
+  <button class="back" id="navBack" onclick="go(-1)">‹ Back</button>
+  <button class="next" id="navNext" onclick="go(1)">Next ›</button>
+</div>
+
+
+<script>
+const COA="data:image/jpeg;base64,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AO6uBRHjePhvytsSRtEMB+RoaPmP+ralyu7Xj4MyNF1Km3FQjjC3936hERSSKEREAREQBERAEREAREQBERAEREAREQBERAF4XqsduExv7H1a4erT9V7ovGk1hnqbTyjSw8fjjb0m1I5vfsWhavIcKrTt+WxJ1OeCTr0ClyLVK3pyWGjPmz9SLN4VShqSxVLMtaeVvTJOwfM4ewUZtcAzUAlrU8zNPVmcC9smgrPRYytab7HnMecvcguK8OMfWsV7M1qV5jaGviI+V32Wdb4jKG6oZaxXHV+RrRrSliL39NSxjBlz6mepE5ONT1yDE5t13r1TfLo/stJkeLOZJ8RPCYpHnt5I6t/qrHRYStKbM43M0QKybDqAo1687Z5h0F5Z2bvttRnB+FmYpWrLX5SQRTvLzKCOoE++lceh9EWMbKC3e4lcSawuhTFfwqyf8QZZt5GRsVUOdGWEFzj6jakVfGtmiiM7bTZG93AR9i76qxU0PoElZU302CuZIhFTjjPhminQi8vqJ/mEtOye50t1UwGo2+fO7R/NGB8v6Leos4WlOPbJhKtKRpRxXAiwZxjo/MI0T39FrMl4f4G3J1Rw/DNd3e1g7PPsSpai2ujTaxgwc5PqyH4/w8wVaw+WdhtBzekNkHYBb52CxRhji+CiDYgQz5fy7WyRI0oR2SMTTf4YwrpYppaMUk0X5XkaK9JuO4aZxdJRjcT+q2qLLgj0weqTXQ8qteGrA2CBgZG0aDR7L1RFkeBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQH//2Q==";
+
+/* ---------- blank Guardian forms ----------
+   Served as separate PDF files so the browser caches them once instead of
+   re-downloading 1.9 MB of base64 inside the page on every visit.        */
+const PDF_FILES={ d1:"assets/RRB_Declaration1_blank.pdf", d2:"assets/RRB_Declaration2_blank.pdf", sal:"assets/RRB_Salary_blank.pdf" };
+const PDF_CACHE={};
+async function fetchBlank(key){
+  if(PDF_CACHE[key]) return PDF_CACHE[key];
+  const url=PDF_FILES[key]; if(!url) throw new Error('Unknown form: '+key);
+  const res=await fetch(url,{cache:'force-cache'});
+  if(!res.ok) throw new Error('Could not load '+url+' ('+res.status+')');
+  PDF_CACHE[key]=await res.arrayBuffer();
+  return PDF_CACHE[key];
+}
+/* warm the cache in the background so the first Download is instant */
+window.addEventListener('load',function(){ setTimeout(function(){ Object.keys(PDF_FILES).forEach(function(k){ fetchBlank(k).catch(function(){}); }); }, 1200); });
+
+function b64ToBytes(b64){const bin=atob(b64);const len=bin.length;const a=new Uint8Array(len);for(let i=0;i<len;i++)a[i]=bin.charCodeAt(i);return a.buffer;}
+
+/* ---------- shared bridge ---------- */
+const RRB_KEY="rrb_case";
+function bridgeLoad(){try{return JSON.parse(localStorage.getItem(RRB_KEY))||{};}catch(e){return{};}}
+function bridgeWrite(d){try{localStorage.setItem(RRB_KEY,JSON.stringify(d));}catch(e){}}
+function bridgeSet(k,v){const d=bridgeLoad();d[k]=v;bridgeWrite(d);}
+const BRIDGE_FIELDS=['coName','coInc','coBir','coAddr','empName','empDob','empBir','empAddr','empPhone','empEmail','empMarital','empJob','empEmpDate','empDept','planStart','idExpiry','agentName','agentNo','incYear','salary','co6a','co6b','empDept','freq','firstPay','empPortion'];
+function bridgeSave(){const d=bridgeLoad();BRIDGE_FIELDS.forEach(id=>{const e=document.getElementById(id);if(e)d[id]=e.value;});bridgeWrite(d);syncMirrors();}
+function mirror(srcId,bridgeKey){const v=document.getElementById(srcId).value;bridgeSet(bridgeKey,v);const m=document.getElementById(bridgeKey);if(m)m.value=v;syncMirrors();}
+function syncMirrors(){
+  const d=bridgeLoad();
+  const map={ed_name:'empName',ed_addr:'empAddr',ed_bir:'empBir',d1_name:'empName',d1_dob:'empDob',d2_co:'coName',d2_inc:'coInc',d2_name:'empName',d2_dob:'empDob',
+             s_emp:'empName',s_co:'coName',s_job:'empJob',s_dept:'empDept',s_addr:'coAddr',s_id:'empBir',
+             s_freq:'freq',s_first:'firstPay'};
+  for(const[el,k] of Object.entries(map)){const e=document.getElementById(el);if(e&&!e.matches(':focus')&&d[k]!=null&&d[k]!=='')e.value=d[k];}
+  salTot(); buildReview();
+  renderKycBens(); expiryFlag();
+}
+function loadInitial(){
+  const d=bridgeLoad();
+  ['coName','coInc','coBir','coAddr','empName','empDob','empBir','empAddr','empPhone','empEmail','empMarital','empJob','empEmpDate','empDept','planStart','idExpiry','agentName','agentNo','incYear','salary','co6a','co6b'].forEach(id=>{
+    const e=document.getElementById(id); if(e&&d[id]!=null&&d[id]!=='') e.value=d[id];
+  });
+  syncMirrors();
+}
+
+const NIS=[[10404,531.44],[17676,775.32],[23400,1041.04],[31716,1346.80],[39516,1659.84],[48360,2016.56],[58236,2376.92],[67596,2740.92],[77484,3144.96],[88920,3556.28],[99324,3982.16],[111276,4440.80],[123756,4924.92],[136764,5456.36],[151836,5955.04],[163200,6169.80]];
+const NIS_CLASS=["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII","XIII","XIV","XV","XVI"];
+function nisLookup(s){ if(s<NIS[0][0]) return {amt:0,cls:"—"}; let i=0; for(let k=0;k<NIS.length;k++){ if(NIS[k][0]<=s) i=k; else break; } return {amt:NIS[i][1],cls:NIS_CLASS[i]}; }
+
+let mode='fwd', resident=true, nisMode='auto';
+const num=id=>{const el=document.getElementById(id);if(!el)return 0;let v=(el.value||'').replace(/[^0-9.]/g,'');return v===''?0:parseFloat(v)||0;};
+const money=n=>(n<0?'-$':'$')+Math.round(Math.abs(n)).toLocaleString('en-US');
+const setT=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+
+function setMode(m){mode=m;document.getElementById('mFwd').classList.toggle('on',m==='fwd');document.getElementById('mRev').classList.toggle('on',m==='rev');
+  document.getElementById('fwdCard').style.display=m==='fwd'?'':'none';
+  document.getElementById('verdictWrap').style.display=m==='fwd'?'flex':'none';
+  document.getElementById('heroLab').textContent=m==='fwd'?'Max Allowable Contribution':'Maximum Company Contribution';
+  calc();}
+function setRes(v){resident=v;document.getElementById('resYes').classList.toggle('on',v);document.getElementById('resNo').classList.toggle('on',!v);calc();}
+function setNisMode(m){nisMode=m;
+  document.getElementById('nisAuto').classList.toggle('on',m==='auto');
+  document.getElementById('nisMan').classList.toggle('on',m==='man');
+  document.getElementById('nisOff').classList.toggle('on',m==='off');
+  document.getElementById('nisManWrap').style.display=m==='man'?'block':'none';
+  calc();}
+
+let R={};
+function calc(){
+  const salary=num('salary'), other=num('other');
+  const tertiary=Math.min(num('tertiary'),60000), fthome=Math.min(num('fthome'),25000);
+  const pa=resident?90000:0;
+  const wof=num('wof'), pension=num('pension'), annuity=num('annuity');
+  const nis = nisMode==='off'?{amt:0,cls:"—"} : nisMode==='man'?{amt:num('nisVal'),cls:"(manual)"} : nisLookup(salary);
+
+  const co6a = mode==='fwd' ? num('co6a') : 0;
+  const co6b = mode==='fwd' ? num('co6b') : 0;
+  let coContrib = co6a + co6b;
+  // Existing approved plans + NIS (the deduction AND part of total contributions), cap $60k
+  const fL7=Math.min(wof+pension+annuity+nis.amt,60000);
+  const existingPlans = wof+pension+annuity+nis.amt; // uncapped, for total contributions
+  let revMax=0, revBasis='';
+  // Solve the maximum company contribution C (fixed point: C sits inside emolument).
+  // At the ceiling, total contributions = the GREATER line and must not exceed the other
+  // (so at most one of Line 10 / Line 12 reads Yes — never both).
+  function solveMaxContribution(){
+    const existCap=Math.min(existingPlans,60000);
+    const cL11=(0.2*salary - existCap)/0.8;                         // total = 20% emolument
+    const cL9 =((salary-pa-tertiary-fthome-fL7) - 3*existCap)/2;    // total = 1/3 chargeable
+    let best=0, bestBasis='—';
+    [[cL11,'20% Emolument Income (Line 11)'],[cL9,'⅓ Chargeable Income (Line 9)']]
+      .sort((a,b)=>b[0]-a[0]).forEach(([C,bz])=>{
+        if(best>0||C<0) return;
+        const emol=salary+C, chg=emol-pa-tertiary-fthome-fL7;
+        const L9=chg/3, L11=emol*0.2, tot=C+existCap;
+        if(!((tot>L9+0.01)&&(tot>L11+0.01))){ best=C; bestBasis=bz; }   // at most one Yes
+      });
+    return {co:Math.max(0,best), basis:bestBasis};
+  }
+  const maxSolve = solveMaxContribution();
+
+  if(mode==='rev'){
+    revMax = maxSolve.co;
+    revBasis = maxSolve.basis;
+    coContrib = revMax;
+  }
+
+  // Emolument ALWAYS includes the company 134(6) contribution (Line 1b).
+  const emolContrib = coContrib;
+  const fEmol=salary+emolContrib, fNet=fEmol+other, fAss=fNet-pa-tertiary-fthome;
+  const fChg=fAss-fL7;
+  const fL9=fChg/3, fL11=fEmol*0.2;
+  // Maximum allowable contribution = GREATER of Line 9 or Line 11 (form N.B. rule)
+  const fMax=Math.max(fL9,fL11);
+  const totalContrib = coContrib + Math.min(existingPlans,60000); // Line 8 = Line 6 + Line 7
+
+  setT('o_emol',money(fEmol)); setT('o_other',money(other)); setT('o_net',money(fNet));
+  setT('o_pa','−'+money(pa)); setT('o_ter','−'+money(tertiary)); setT('o_fth','−'+money(fthome));
+  setT('o_ass',money(fAss)); setT('o_ded','−'+money(fL7)); setT('o_chg',money(fChg));
+  setT('o_l9',money(fL9)); setT('o_l11',money(fL11));
+  setT('o_nisclass',nis.cls==="—"?"—":(nis.cls==="(manual)"?"manual":("Class "+nis.cls)));
+  setT('o_nis',money(nis.amt)); setT('o_l7',money(fL7)); setT('o_l8c',money(totalContrib));
+
+  // Maximum company contribution = the solved one-Yes-max ceiling
+  setT('o_max',money(maxSolve.co));
+
+  const shown = maxSolve.co;
+  document.getElementById('maxOut').textContent=money(shown);
+
+  const l9el=document.getElementById('o_l9'), l11el=document.getElementById('o_l11');
+  l9el.className='v'; l11el.className='v';
+  let basis='awaiting input';
+  if(salary>0||other>0||coContrib>0){
+    // binding line is the GREATER one (the maximum permitted)
+    if(fL9>=fL11){l9el.classList.add('win');l11el.classList.add('dim');basis='maximum: ⅓ Chargeable Income (Line 9)';}
+    else{l11el.classList.add('win');l9el.classList.add('dim');basis='maximum: 20% Emolument Income (Line 11)';}
+  }
+  document.getElementById('basis').textContent = basis;
+  document.getElementById('heroNote').textContent = 'Greater of ⅓ Chargeable Income or 20% Emolument Income';
+
+  if(mode==='fwd'){
+    setVerdict('v10','v10t', totalContrib>fL9);
+    setVerdict('v12','v12t', totalContrib>fL11);
+  }
+
+  const w=document.getElementById('warn'), inf=document.getElementById('info');
+  w.classList.remove('show'); inf.classList.remove('show');
+  if(mode==='fwd' && coContrib>0){
+    const allowedCo = maxSolve.co;
+    const twoYes = (totalContrib>fL9) && (totalContrib>fL11);   // exceeds BOTH = over max
+    if(twoYes){ w.classList.add('show'); w.innerHTML='⚠ <b>Over the maximum.</b> Total contributions <b>'+money(totalContrib)+'</b> exceed BOTH Line 9 ('+money(fL9)+') and Line 11 ('+money(fL11)+') — Lines 10 &amp; 12 would both read Yes, which is not permitted. The maximum company contribution is <b>'+money(allowedCo)+'</b>.'; }
+    else { inf.classList.add('show'); inf.innerHTML='✓ Within limits. Lines 10 &amp; 12 are valid (at most one Yes). Maximum company contribution is <b>'+money(allowedCo)+'</b> — headroom of <b>'+money(allowedCo-coContrib)+'</b> remaining.'; }
+  } else if(mode==='rev' && shown>0){
+    inf.classList.add('show'); inf.innerHTML='✓ Maximum company contribution: <b>'+money(shown)+'</b> — set so total contributions reach the '+(revBasis||'—')+' limit without exceeding both lines (at most one Yes).';
+  }
+  if(fChg<0 && salary>0){ w.classList.add('show'); w.innerHTML='⚠ Chargeable income is negative — allowances exceed income. The 20% Emolument basis (Line 11) governs the maximum.'; }
+  if(existingPlans>60000){ inf.classList.add('show'); inf.innerHTML='ℹ Existing premiums + NIS exceed the $60,000 deduction cap — Line 7 capped at $60,000.'; }
+
+  R={salary,other,pa,tertiary,fthome,wof,pension,annuity,nis,coContrib,co6a,co6b,emolContrib,fEmol,fNet,fAss,fL7,fChg,fL9,fL11,fMax,totalContrib,existingPlans,
+     exceeds9: totalContrib>fL9, exceeds11: totalContrib>fL11, mode, revBasis};
+}
+function setVerdict(chipId,txtId,isYes){
+  const a=document.getElementById(chipId); a.className='a '+(isYes?'yes':'no');
+  document.getElementById(txtId).textContent=isYes?'Yes':'No';
+}
+
+['salary','other','tertiary','fthome','wof','pension','annuity','nisVal','co6a','co6b'].forEach(id=>{
+  const el=document.getElementById(id); if(!el)return;
+  el.addEventListener('input',()=>{calc(); if(['salary','co6a','co6b'].includes(id)) bridgeSet(id, el.value.replace(/,/g,''));});
+  el.addEventListener('focus',()=>{el.value=el.value.replace(/,/g,'');});
+  el.addEventListener('blur',()=>{let v=el.value.replace(/[^0-9.]/g,'');if(v!=='')el.value=Math.round(parseFloat(v)).toLocaleString('en-US');calc(); if(['salary','co6a','co6b'].includes(id)) bridgeSet(id, v);});
+});
+
+/* ---------- BIR form (folded from calculator) ---------- */
+function fld(id){const e=document.getElementById(id);return e?(e.value||'').trim():'';}
+function _calcToggleForm_unused(){const fv=document.getElementById('formView');const show=fv.style.display!=='block';buildForm();fv.style.display=show?'block':'none';fv.scrollIntoView({behavior:'smooth'});}
+function buildForm(){
+  calc();
+  const y=fld('incYear')||'2026'; const m=money;
+  // ENFORCE: a valid form can never show two Yes. If the entered contribution exceeds the
+  // maximum (greater of L9/L11), cap the company contribution for the printed form.
+  const F=Object.assign({},R);
+  let capNote='';
+  if(R.mode==='fwd' && (R.totalContrib>R.fL9) && (R.totalContrib>R.fL11)){
+    // Solve the ceiling contribution as a fixed point (contribution sits inside emolument).
+    // total(C) must equal the GREATER line and not exceed the other -> at most one Yes.
+    const fL7=R.fL7, existCap=Math.min(R.existingPlans,60000);
+    const cL11=(0.2*R.salary - existCap)/0.8;            // total = 20% emolument
+    const cL9 =((R.salary-R.pa-R.tertiary-R.fthome-fL7) - 3*existCap)/2; // total = 1/3 chargeable
+    let allowedCo=0;
+    [cL11,cL9].sort((a,b)=>b-a).forEach(C=>{
+      if(allowedCo>0||C<0) return;
+      const emol=R.salary+C, chg=emol-R.pa-R.tertiary-R.fthome-fL7;
+      const L9=chg/3, L11=emol*0.2, tot=C+existCap;
+      if(!((tot>L9+0.01)&&(tot>L11+0.01))) allowedCo=C;   // at most one Yes
+    });
+    allowedCo=Math.max(0,allowedCo);
+    const scale = R.coContrib>0 ? allowedCo/R.coContrib : 0;
+    F.co6a=R.co6a*scale; F.co6b=R.co6b*scale; F.coContrib=allowedCo; F.emolContrib=allowedCo;
+    F.fEmol=R.salary+allowedCo; F.fNet=F.fEmol+R.other; F.fAss=F.fNet-R.pa-R.tertiary-R.fthome;
+    F.fChg=F.fAss-fL7; F.fL9=F.fChg/3; F.fL11=F.fEmol*0.2; F.fMax=Math.max(F.fL9,F.fL11);
+    F.totalContrib=allowedCo+existCap;
+    F.exceeds9=F.totalContrib>F.fL9+0.01; F.exceeds11=F.totalContrib>F.fL11+0.01;
+    capNote=' (capped to maximum — entered '+money(R.coContrib)+')';
+  }
+  const yn=(isYes)=>`<span class="opt">( ${isYes?'X':'&nbsp;'} ) Yes</span><span class="opt">( ${isYes?'&nbsp;':'X'} ) No</span>`;
+  const crest=`<div class="crest"><img src="${COA}" alt="Trinidad and Tobago Coat of Arms" style="width:120px;height:auto;display:inline-block"></div>`;
+
+  const p1=`<div class="page">
+    ${crest}
+    <div class="gov">GOVERNMENT OF THE REPUBLIC OF TRINIDAD AND TOBAGO</div>
+    <div class="req">REQUEST FOR BOARD OF INLAND REVENUE APPROVAL</div>
+    <div class="cdup">Complete in Duplicate</div>
+    <div class="det">DETAILS OF CONTRIBUTIONS TO FUND OR CONTRACT IN ACCORDANCE</div>
+    <div class="det">WITH SECTION 134(6A) AND (6B) OF THE INCOME TAX ACT CHAPTER 75:01</div>
+    <div class="note">
+      <div class="cdup">NOTE:</div>
+      <div class="ni"><b>(i)</b><span>The Board of Inland Revenue hereby requires you to give the following information pursuant to Section 117 of the Income Tax Act, Chapter 75:01.</span></div>
+      <div class="ni"><b>(ii)</b><span>Section 119 of the Income Tax Act, Chapter 75:01 provides that any person who makes a false declaration is liable on summary conviction to a fine of Eight Thousand Dollars ($8,000.00) or imprisonment of three (3) years, or to both such fine and imprisonment.</span></div>
+      <div class="ni"><b>(iii)</b><span>If there are changes in Income or Contribution, the Board of Inland Revenue must be informed immediately.</span></div>
+      <div class="ni"><b>(iv)</b><span>Original or certified pay slip and Copy of TD1 approved by the Board must be submitted with request.</span></div>
+    </div>
+    <div class="iy">INCOME YEAR ${y}</div>
+    <div class="frow"><span class="nm">1</span><span class="lb">NAME OF EMPLOYER —</span><span class="vl">${fld('coName')}</span></div>
+    <div class="frow"><span class="nm">2</span><span class="lb">ADDRESS OF EMPLOYER —</span><span class="vl">${fld('coAddr')}</span></div>
+    <div class="frow"><span class="nm">3</span><span class="lb">EMPLOYER'S B.I.R. FILE NO.</span><span class="vl">${fld('coBir')}</span></div>
+    <div class="frow"><span class="nm">4</span><span class="lb">NAME OF EMPLOYEE —</span><span class="vl">${fld('empName')}</span></div>
+    <div class="frow"><span class="nm">5</span><span class="lb">ADDRESS OF EMPLOYEE —</span><span class="vl">${fld('empAddr')}</span></div>
+    <div class="hr"></div>
+    <div class="litem"><span class="n">6</span><span class="t">Annual Contributions to be made in respect of employee to;<br>&nbsp;&nbsp;Company&nbsp;&nbsp;(a) premium <span class="dots">…………………</span></span><span class="amt">${m(F.co6a)}</span></div>
+    <div class="litem"><span class="n"></span><span class="t">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(b) lump sum <span class="dots">…………………</span></span><span class="amt">${m(F.co6b)}</span><span class="amt2">${m(F.coContrib)}${capNote}</span></div>
+    <div class="litem"><span class="n">7</span><span class="t">Annual Contributions made by employee to Approved Plan(s)<br><span style="font-size:9.5px">(Total of Lines 6 (a) (i) to (iii) and 6 (b) overleaf)</span></span><span class="amt2">${m(F.fL7)}</span></div>
+    <div class="litem"><span class="n">8</span><span class="t">Total Contributions — Lines (6) and (7)</span><span class="amt2">${m(F.totalContrib)}</span></div>
+    <div class="litem"><span class="n">9</span><span class="t"><b>One third (1/3) Chargeable Income)</b> as per overleaf (Line 9)</span><span class="amt2">${m(F.fL9)}</span></div>
+    <div class="litem"><span class="n">10</span><span class="t">Do the Total Contributions (Line 8) exceed one third (1/3) Chargeable Income)</span><span class="ynbox">${yn(F.exceeds9)}</span></div>
+    <div class="litem"><span class="n">11</span><span class="t"><b>20 per cent of Emolument Income</b> — as per overleaf (Line 10)</span><span class="amt2">${m(F.fL11)}</span></div>
+    <div class="litem"><span class="n">12</span><span class="t">Do the Total Contribution at (Line 8) exceed the 20 % of Emolument Income — Line 11.</span><span class="ynbox">${yn(F.exceeds11)}</span></div>
+    <div class="nb">N.B.&nbsp;&nbsp;&nbsp;&nbsp;Maximum Contributions to be made are the greater of Line 9 OR Line 11.</div>
+    <div class="sig"><div class="line"></div>Signature of Employer &amp; Company's Stamp</div>
+  </div>`;
+
+  const p2=`<div class="page">
+    <div class="eic">EMOLUMENT INCOME COMPUTATION</div>
+    <div class="eicx">Round figures to the nearest dollar, omit cents</div>
+    <div class="litem"><span class="n">1</span><span class="t">Emolument Income<br><span style="font-size:9.5px">&nbsp;(Inclusive of contributions to S.134 (6) plans)</span></span><span class="amt2"></span></div>
+    <div class="litem"><span class="n"></span><span class="t">&nbsp;&nbsp;&nbsp;&nbsp;(a)</span><span class="amt">${m(F.salary)}</span></div>
+    <div class="litem"><span class="n"></span><span class="t">&nbsp;&nbsp;&nbsp;&nbsp;(b)</span><span class="amt">${m(F.emolContrib)}</span></div>
+    <div class="litem"><span class="n"></span><span class="t"><b>TOTAL EMOLUMENT INCOME</b></span><span class="amt2">${m(F.fEmol)}</span></div>
+    <div class="litem"><span class="n">2</span><span class="t">Add: Other Income (Net)</span><span class="amt2">${m(F.other)}</span></div>
+    <div class="litem"><span class="n">3</span><span class="t"><b>TOTAL NET INCOME</b></span><span class="amt2">${m(F.fNet)}</span></div>
+    <div class="litem"><span class="n">4</span><span class="t">Deduct: (1) Personal Allowance (Residents only - $90,000.)</span><span class="amt">${m(F.pa)}</span></div>
+    <div class="litem"><span class="n"></span><span class="t">&nbsp;&nbsp;&nbsp;(2) Tertiary Education Expenses (Limited to $60,000)</span><span class="amt">${m(F.tertiary)}</span></div>
+    <div class="litem"><span class="n"></span><span class="t">&nbsp;&nbsp;&nbsp;(3) First Time Home Owner (Limited to $25,000)</span><span class="amt">${m(F.fthome)}</span></div>
+    <div class="litem"><span class="n">5</span><span class="t"><b>Assessable Income</b></span><span class="amt2">${m(F.fAss)}</span></div>
+    <div class="litem"><span class="n">6</span><span class="t">Deduct: (a) Contributions/Premiums Paid<br>&nbsp;&nbsp;&nbsp;(i) Government Widows and Orphans Fund</span><span class="amt">${m(F.wof)}</span></div>
+    <div class="litem"><span class="n"></span><span class="t">&nbsp;&nbsp;&nbsp;(ii) Approved Pension Fund Plan</span><span class="amt">${m(F.pension)}</span></div>
+    <div class="litem"><span class="n"></span><span class="t">&nbsp;&nbsp;&nbsp;(iii) Approved Deferred Annuity Plan</span><span class="amt">${m(F.annuity)}</span></div>
+    <div class="litem"><span class="n"></span><span class="t">&nbsp;&nbsp;&nbsp;(b) N.I.S. (70%)</span><span class="amt">${m(F.nis.amt)}</span></div>
+    <div class="litem"><span class="n">7</span><span class="t">Total Lines 6(a)(i) to (iii) and (b) limited to $60,000</span><span class="amt2">${m(F.fL7)}</span></div>
+    <div class="litem"><span class="n">8</span><span class="t">Chargeable Income (Line 5 minus Line 7)</span><span class="amt2">${m(F.fChg)}</span></div>
+    <div class="litem"><span class="n">9</span><span class="t"><b>One third (1/3) Chargeable Income</b></span><span class="amt2">${m(F.fL9)}</span></div>
+    <div class="litem"><span class="n">10</span><span class="t">Twenty (20) % of Line (1) Total Emolument Income</span><span class="amt2">${m(F.fL11)}</span></div>
+    <div class="sig" style="margin-top:36px"><div class="line"></div>Employee&rsquo;s Signature/Date</div>
+    <div class="sig" style="margin-top:24px"><b style="color:#0b3d91;font-size:11.5px">${fld('empBir')}&nbsp;</b><br>Employee&rsquo;s B.I.R. File No.</div>
+  </div>`;
+  document.getElementById('formdoc').innerHTML=p1+p2;
+}
+
+function previewBIR(){ buildForm(); const h=document.getElementById('formHost'); h.style.display='block'; h.scrollIntoView({behavior:'smooth'}); }
+function printBIR(){ buildForm(); window.print(); }
+
+/* ---------- PDF fill (real Guardian forms) ---------- */
+function nameSplit(n){const p=(n||'').trim().split(/\s+/);return p.length>1?[p.slice(0,-1).join(' '),p.slice(-1)[0]]:[n||'',''];}
+function pnum(v){v=(v||'').replace(/[^0-9.]/g,'');return v===''?0:parseFloat(v)||0;}
+function pmoney(n){return Math.round(n).toLocaleString('en-US');}
+async function loadPdf(key){ const buf=await fetchBlank(key); return buf.slice(0); }
+function setText(form,name,val,size){try{const f=form.getTextField(name);f.setText(String(val||''));f.setFontSize(size||10);}catch(e){}}
+function setCheck(form,name){try{form.getCheckBox(name).check();}catch(e){}}
+async function dl(bytes,fn){const blob=new Blob([bytes],{type:'application/pdf'});const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=fn;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(u);a.remove();},1500);}
+function stat(id,m,c){const e=document.getElementById(id);e.textContent=m;e.className='status'+(c?' '+c:'');}
+
+function benList(){ try{ var l=JSON.parse(bridgeLoad().beneficiaries||'[]'); return Array.isArray(l)?l:[]; }catch(e){ return []; } }
+function benSave(l){ bridgeSet('beneficiaries',JSON.stringify(l)); }
+function benMigrate(){ var d=bridgeLoad(); if(benList().length===0 && (d.benName||'').trim()){ benSave([{name:d.benName||'',rel:d.benRel||'',addr:d.benAddr||'',dob:d.benDob||'',pct:'100',idExp:''}]); } }
+function benAdd(){ var l=benList(); l.push({name:'',rel:'',addr:'',dob:'',pct:l.length===0?'100':'',idExp:''}); benSave(l); renderPlans(); buildReview(); }
+function benDel(i){ var l=benList(); l.splice(i,1); benSave(l); renderPlans(); buildReview(); }
+function benSet(i,k,v){ var l=benList(); if(!l[i]) return; l[i][k]=v; benSave(l); benBadge(); }
+function benPctTotal(){ return benList().reduce(function(s,b){return s+(parseFloat(b.pct)||0);},0); }
+function benBadge(){ var e=document.getElementById('benPct'); if(!e) return; var t=benPctTotal();
+  e.textContent='Shares total: '+t+'%'; e.className='benpct '+(Math.abs(t-100)<0.01?'ok':'bad'); }
+function dmyToDate(s){ var m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec((s||'').trim()); if(!m) return null; var d=new Date(+m[3],+m[2]-1,+m[1]); return isNaN(d)?null:d; }
+function todayDMY(){ var t=new Date(); var p=function(n){return (n<10?'0':'')+n;}; return p(t.getDate())+'/'+p(t.getMonth()+1)+'/'+t.getFullYear(); }
+function circleAB(pdf,pageIdx,topY,xs){
+  try{
+    var pg=pdf.getPages()[pageIdx]; var H=pg.getHeight();
+    xs.forEach(function(cx){
+      pg.drawEllipse({x:cx,y:H-topY,xScale:11,yScale:8.5,borderColor:PDFLib.rgb(0.05,0.1,0.2),borderWidth:1.7,opacity:0,borderOpacity:1});
+    });
+  }catch(e){}
+}
+async function buildD1(){
+  const pdf=await PDFLib.PDFDocument.load(await loadPdf('d1')); const form=pdf.getForm();
+  const helv=await pdf.embedFont(PDFLib.StandardFonts.Helvetica);
+  const d=bridgeLoad(); const [fn,sn]=nameSplit(d.empName);
+  setText(form,'Branch Code',(document.getElementById('d1_branch')||{}).value||'26000',10);
+  setText(form,'First Name',fn,11); setText(form,'Surname',sn,11);
+  setText(form,'Textfield-10',d.empDob||'',11);
+  var ag=nameSplit(d.agentName||'Ricky Rampersad');
+  setText(form,'Agents First Name',ag[0],10);
+  setText(form,'Agents Last Name',ag[1],10);
+  setText(form,'Agent Number',d.agentNo||'A00427',10);
+  setText(form,'Date',todayDMY(),10);            /* 1.E date — prepopulated */
+  form.updateFieldAppearances(helv);
+  circleAB(pdf,2,71.7,[226.4,262.2]);            /* pre-circle A and B on 1.E */
+  try{ var wp=pdf.getPages()[2];
+    wp.drawText((d.agentName||'Ricky Rampersad').toUpperCase(),{x:268,y:wp.getHeight()-349,size:10,font:helv,color:PDFLib.rgb(0.05,0.1,0.2)});
+  }catch(e){}                                     /* Name of Witness (block letters) */
+  return await pdf.save();
+}
+async function fillD1(){ stat('st-d1','Building…'); try{
+  await dl(await buildD1(),'Declaration1_OwnLife_filled.pdf');
+  stat('st-d1','✓ Downloaded — circle A & B on 1.E, sign 1.E and page 5 item 7.','ok');
+}catch(e){ stat('st-d1','⚠ '+e.message,'err'); } }
+
+async function buildD2(){
+  const pdf=await PDFLib.PDFDocument.load(await loadPdf('d2')); const form=pdf.getForm();
+  const helv=await pdf.embedFont(PDFLib.StandardFonts.Helvetica);
+  const d=bridgeLoad(); const [fn,sn]=nameSplit(d.empName);
+  setText(form,'Branch Code',(document.getElementById('d2_branch')||{}).value||'26000',10);
+  setText(form,'First Name',fn,11); setText(form,'Surname',sn,11);
+  setText(form,'Textfield-10',d.empDob||'',11);
+  setText(form,'First Name-0',d.coName||'',11);
+  setText(form,'Surname  Legal Entity Name',d.coName||'',11);
+  setText(form,'Textfield-18',d.coInc||'',11);
+  var ag=nameSplit(d.agentName||'Ricky Rampersad');
+  setText(form,'Agents First Name',ag[0],10);
+  setText(form,'Agents Last Name',ag[1],10);
+  setText(form,'Agent Number',d.agentNo||'A00427',10);
+  form.updateFieldAppearances(helv);
+  circleAB(pdf,2,72.5,[195.7,231.4]);            /* pre-circle A and B on 2.D */
+  return await pdf.save();
+}
+async function fillD2(){ stat('st-d2','Building…'); try{
+  await dl(await buildD2(),'Declaration2_ThirdParty_filled.pdf');
+  stat('st-d2','✓ Downloaded — company circles A & B, signs & stamps on top; employee underneath.','ok');
+}catch(e){ stat('st-d2','⚠ '+e.message,'err'); } }
+
+function salTot(){ const d=bridgeLoad(); const t=pnum(d.empPortion); const e=document.getElementById('s_total'); if(e) e.textContent='$'+money2(t); return t; }
+function numWords(n){
+  n=Math.floor(Math.abs(n)); if(n===0) return 'Zero';
+  const ones=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const tens=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  function u100(x){ if(x<20) return ones[x]; const t=Math.floor(x/10), o=x%10; return tens[t]+(o?'-'+ones[o]:''); }
+  function u1000(x){ const hd=Math.floor(x/100), r=x%100; return (hd?ones[hd]+' Hundred'+(r?' ':''):'')+(r?u100(r):''); }
+  let out=[], units=[[1000000,'Million'],[1000,'Thousand'],[1,'']];
+  for(const [v,lbl] of units){ if(n>=v){ const q=Math.floor(n/v); n=n%v; out.push(u1000(q)+(lbl?' '+lbl:'')); } }
+  return out.join(' ').trim();
+}
+function money2(n){ return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+async function buildSal(){
+  const pdf=await PDFLib.PDFDocument.load(await loadPdf('sal')); const form=pdf.getForm();
+  const helv=await pdf.embedFont(PDFLib.StandardFonts.Helvetica);
+  const d=bridgeLoad();
+  const t=pnum(d.empPortion);                       /* EMPLOYEE side only */
+  const dollars=Math.floor(t), cents=Math.round((t-dollars)*100).toString().padStart(2,'0');
+  setText(form,'To','Guardian Life of the Caribbean Limited',9);
+  setText(form,'FromClient Name',d.empName||'',10); setText(form,'MinistryFirm',d.coName||'',10);
+  setText(form,'Job Title',d.empJob||'',10); setText(form,'Address',d.coAddr||'',10); setText(form,'Department',d.empDept||'',10);
+  setText(form,'Employee ID',d.empBir||'',10);
+  setCheck(form,'MONTH');                            /* deduct monthly */
+  setText(form,'the sum of dollars',numWords(dollars),9);
+  setText(form,'cents',cents,10);
+  setText(form,'Figures',money2(t),10);
+  /* commencement: parse dd/mm/yyyy plan start → month name + year */
+  var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var mo='',yr='';
+  var pd=dmyToDate(d.planStart||d.firstPay||'');
+  if(pd){ mo=MONTHS[pd.getMonth()]; yr=String(pd.getFullYear()); }
+  else { var fp=(d.firstPay||'').split(/\s+/); mo=fp[0]||''; yr=fp[1]||''; }
+  setCheck(form,'MONTH of'); setText(form,'MONTH of-0',mo,10); setText(form,'year-1',yr,10);
+  /* Client # and Policy # do not exist until Guardian issues them — left blank */
+  setText(form,'Payor Name',d.empName||'',10);
+  setText(form,'Amount',money2(t),10);
+  /* page 2 — monthly premium row */
+  setText(form,'Owner Name 1',d.empName||'',9);
+  setText(form,'Textfield-19',pmoney(dollars),10);  /* PREMIUM $ */
+  setText(form,'Textfield-20',cents,10);            /* PREMIUM c */
+  setText(form,'Textfield-25',pmoney(dollars),10);  /* TOTAL $  */
+  setText(form,'Textfield-26',cents,10);            /* TOTAL c  */
+  /* TOTALS row at the foot of the grid — tallied */
+  setText(form,'Textfield-350',pmoney(dollars),10); /* PREMIUM total $ */
+  setText(form,'C-1',cents,10);
+  setText(form,'Textfield-353',pmoney(dollars),10); /* GRAND TOTAL $ */
+  setText(form,'C-4',cents,10);
+  form.updateFieldAppearances(helv);
+  return {bytes:await pdf.save(), total:t};
+}
+async function fillSal(){ stat('st-sal','Building…'); try{
+  const r=await buildSal();
+  await dl(r.bytes,'SalaryDeduction_filled.pdf');
+  stat('st-sal','✓ Downloaded — total $'+money2(r.total)+' (in words on the form). Sign & date.','ok');
+}catch(e){ stat('st-sal','⚠ '+e.message,'err'); } }
+
+/* ---------- plans ---------- */
+const PLANS=[
+  {n:"TopHat Special Edition",s:"Section 134 company-owned \u00b7 unit-linked",insight:"The company saves for your retirement and writes it off \u2014 contributions grow in your choice of three investment funds.",tags:{own:"company",goal:"growth",style:"regular",tier:"core"},type:"Unit-linked (3 funds)",min:"$200/mo",entry:"18\u201360",guar:"Per contract",tax:"Company deducts (S.134)",best:"Growth on company contributions",
+   facts:["Entry age 18\u201360","Minimum premium $200/month \u2014 no maximum","Unit-linked: Aggressive / Lifestyle / Conservative funds","One free fund transfer per year after year 1","Company contributions tax-deductible under Section 134"]},
+  {n:"TopHat Executive Retirement",s:"Section 134 executive retirement build-up",insight:"A company-funded retirement pot built specifically for key executives, with flexible top-ups.",tags:{own:"company",goal:"retire",style:"flex",tier:"mid"},type:"Flexible premium",min:"Flexible",entry:"18\u201360",guar:"Guaranteed annuity rate if better",tax:"Company deducts (S.134)",best:"Key-executive retirement",
+   facts:["Designed for key executives \u2014 company-owned","Flexible planned premiums","Annuity at vesting with guaranteed annuity rate if better"]},
+  {n:"TopHat Elite",s:"Section 134 elite \u00b7 highest tier",insight:"The heavyweight: built for the largest tax-deductible company contributions and lump sums, with a 10-year payout guarantee.",tags:{own:"company",goal:"tax",style:"lump",tier:"high"},type:"Premium tier",min:"High",entry:"18\u201360",guar:"10-yr from vesting",tax:"Company deducts (S.134)",best:"Largest deductible contributions & lump sums",
+   facts:["Built for large contributions and lump sums","10-year guarantee period from the Annuity Vesting Date","Maximises the Section 134 deductible contribution"]},
+  {n:"Life Secure Corporate",s:"Company-owned \u00b7 guaranteed credited interest rate",insight:"The company saves for you at a guaranteed interest rate \u2014 the value only ever goes up, and the employer gets a 100% tax credit.",tags:{own:"company",goal:"safety",style:"regular",tier:"core"},type:"Guaranteed rate",min:"$300/mo",entry:"18\u201360",guar:"Credited rate guaranteed",tax:"100% employer tax credit",best:"Zero market risk for the company",
+   facts:["Entry age 18\u201360","Minimum premium $300/month \u2014 no maximum","Guaranteed credited interest rate \u2014 no market risk","100% tax credit to the employer on premium contributions","Premium decreases allowed after year 2"]},
+  {n:"Life Secure",s:"Personal \u00b7 guaranteed credited interest rate",insight:"Your own pension that grows at a guaranteed rate \u2014 no market risk, from $300 a month.",tags:{own:"personal",goal:"safety",style:"regular",tier:"core"},type:"Guaranteed rate",min:"$300/mo",entry:"18\u201360",guar:"Credited rate guaranteed",tax:"Employee deducts 6(a)(iii)",best:"Safest personal accumulation",
+   facts:["Entry age 18\u201360","Minimum premium $300/month","Guaranteed credited rate \u2014 no market risk","Single-premium option up to $60,000/yr (incl. all pensions + NIS)","Waiver of Premium available (entry to age 49)"]},
+  {n:"Lifestyle Pension Plan",s:"Personal \u00b7 flexible premium deferred annuity",insight:"A flexible investment-linked annuity \u2014 pay what suits your cash flow, and start your pension any age from 50 to 70.",tags:{own:"personal",goal:"flexible",style:"flex",tier:"core"},type:"Flexible premium",min:"Flexible",entry:"18\u201360",guar:"Optional 0\u201315 yrs",tax:"Employee deducts 6(a)(iii)",best:"Premiums that move with cash flow",
+   facts:["Flexible premiums that can vary with cash flow","Registered deferred annuity \u2014 deductible up to the personal limit"]},
+  {n:"Lifestyle Special Edition",s:"Personal \u00b7 enhanced allocation",insight:"The growth version of Lifestyle \u2014 more of every dollar goes into the fund, pension from any age 50 to 70.",tags:{own:"personal",goal:"growth",style:"flex",tier:"mid"},type:"Enhanced allocation",min:"Flexible",entry:"18\u201360",guar:"Optional 0\u201315 yrs",tax:"Employee deducts 6(a)(iii)",best:"Stronger personal growth",
+   facts:["Enhanced premium allocation to the fund","Growth-oriented accumulation"]},
+  {n:"Lifestyle Privilege",s:"Personal \u00b7 privilege tier for high contributions",insight:"The premium tier for serious savers ($50k+/yr) \u2014 available as Privilege 10 or 20 depending on years to retirement (ages 52\u201370).",tags:{own:"personal",goal:"growth",style:"lump",tier:"high"},type:"Privilege tier",min:"$50k+/yr",entry:"18\u201360",guar:"Optional 0\u201315 yrs",tax:"Employee deducts 6(a)(iii)",best:"High-net-worth personal saving",
+   facts:["Privilege tier \u2014 built for large annual premiums","Fund allocation under the policyowner\u2019s instruction"]}
+];
+const EMP_Q=[
+  {id:"goal",q:"What does the COMPANY want most from this plan?",opts:[["tax","Maximise the tax-deductible contribution"],["safety","Guaranteed, zero-risk accumulation"],["growth","Growth on the contributions (unit-linked)"],["retire","An executive retirement build-up"]]},
+  {id:"style",q:"How will the company contribute?",opts:[["regular","Steady regular premiums"],["flex","Varying amounts year to year"],["lump","Large lump sums"]]},
+  {id:"tier",q:"Contribution level?",opts:[["core","Standard"],["mid","Enhanced"],["high","Premium / very large"]]}
+];
+const IND_Q=[
+  {id:"goal",q:"What matters most to the employee?",opts:[["safety","Guaranteed, safe growth"],["growth","Higher growth potential"],["flexible","Flexible premiums"]]},
+  {id:"style",q:"How will they contribute?",opts:[["regular","Steady monthly amounts"],["flex","Varying amounts"],["lump","Occasional large deposits"]]}
+];
+function qaGet(key){ try{return JSON.parse(bridgeLoad()[key]||'{}');}catch(e){return {};} }
+function qaSet(key,qid,val){ var a=qaGet(key); a[qid]=val; bridgeSet(key,JSON.stringify(a)); renderPlans(); }
+function scorePlans(a,pool){
+  return pool.map(function(p){ var s=0; for(var k in a){ if(a[k]&&p.tags[k]===a[k]) s++; } return {p:p,s:s}; })
+    .sort(function(x,y){return y.s-x.s;});
+}
+function reasonsFor(a,p,who){
+  var r=[];
+  if(who==='emp') r.push('Company-owned: contributions come from the Section 134 amount computed in Step 1 and are tax-deductible to the company.');
+  else r.push('Personally-owned: the employee pays and claims the deduction on their own return (Line 6(a)(iii)).');
+  if(a.goal==='tax'&&p.tags.goal==='tax') r.push('Built to maximise the deductible contribution \u2014 the Elite tier.');
+  if(a.goal==='safety'&&p.tags.goal==='safety') r.push('Guaranteed credited interest rate \u2014 the value never falls with the market.');
+  if(a.goal==='growth'&&p.tags.goal==='growth') r.push('Growth-oriented \u2014 stronger upside on contributions.');
+  if(a.goal==='retire'&&p.tags.goal==='retire') r.push('Purpose-built executive retirement accumulation.');
+  if(a.goal==='flexible'&&p.tags.goal==='flexible') r.push('Premiums flex with cash flow.');
+  if(a.style&&p.tags.style===a.style) r.push(a.style==='lump'?'Handles large lump-sum deposits well.':a.style==='flex'?'Allows varying contribution amounts.':'Suits steady regular premiums.');
+  if(a.tier&&p.tags.tier===a.tier) r.push(a.tier==='high'?'Premium tier for very large contributions.':a.tier==='mid'?'Enhanced tier matching the level.':'Standard tier \u2014 simple and efficient.');
+  if(r.length<2) r.push('Closest overall match to the answers given.');
+  return r.slice(0,3);
+}
+function qBlock(key,Q,a){
+  return Q.map(function(q){
+    return '<div style="margin-bottom:12px"><div style="font-size:12.5px;font-weight:700;color:#101b33;margin-bottom:7px">'+q.q+'</div><div class="qopts">'+
+      q.opts.map(function(o){ return '<button class="qopt '+(a[q.id]===o[0]?'on':'')+'" onclick="qaSet(&quot;'+key+'&quot;,&quot;'+q.id+'&quot;,&quot;'+o[0]+'&quot;)">'+o[1]+'</button>'; }).join('')+
+      '</div></div>';
+  }).join('');
+}
+function planTable(ranked,topName,selKey,sel){
+  var selCol=!!selKey;
+  var rows=ranked.map(function(rp){
+    var p=rp.p, mk=''; for(var i=0;i<rp.s;i++) mk+='\u2713';
+    var pick=selCol?('<td class="selc" style="text-align:center;font-size:15px">'+(p.n===sel?'\u2611':'\u2610')+'</td>'):'';
+    var attrs=selCol?(' style="cursor:pointer" onclick="pickPlanFor(&quot;'+selKey+'&quot;,&quot;'+p.n+'&quot;)"'):'';
+    return '<tr class="'+((p.n===topName?'best ':'')+(p.n===sel?'selrow':''))+'"'+attrs+'>'+pick+'<td><b>'+p.n+'</b>'+(p.n===topName?' <span class="bestfit">BEST FIT</span>':'')+'</td><td>'+p.type+'</td><td>'+p.min+'</td><td>'+(p.entry||'\u2014')+'</td><td>'+(p.guar||'\u2014')+'</td><td>'+(p.tax||'\u2014')+'</td><td>'+p.best+'</td><td class="mk">'+(mk||'\u2014')+'</td></tr>';
+  }).join('');
+  return '<div class="ptblwrap"><table class="ptbl"><tr>'+(selCol?'<th>Select</th>':'')+'<th>Plan</th><th>Type</th><th>Min premium</th><th>Entry age</th><th>Guarantee</th><th>Tax treatment</th><th>Best for</th><th>Match</th></tr>'+rows+'</table></div>';
+}
+function recBlock(a,pool,who,selKey,sel){
+  if(!a.goal) return '<div class="info show">Answer the questions above \u2014 the best-fit plan, the reasons, and the comparison table appear here.</div>';
+  var ranked=scorePlans(a,pool), top=ranked[0];
+  var html='<div class="hero" style="margin-top:2px"><div class="lab">Recommended '+(who==='emp'?'employer plan':'personal plan')+'</div>'+
+    '<div class="serif" style="font-size:20px;margin:6px 0">'+top.p.n+'</div><div class="note" style="font-size:12.5px;line-height:1.5">'+(top.p.insight||top.p.s)+'</div></div>';
+  html+='<div class="guide" style="margin:10px 0"><h4>Why this plan</h4><ul>'+reasonsFor(a,top.p,who).map(function(r){return '<li>'+r+'</li>';}).join('')+'</ul></div>';
+  /* match chart \u2014 how every plan scored */
+  var maxS=Math.max(1,ranked[0].s);
+  html+='<div class="card2chart"><div style="font-size:12px;font-weight:700;color:#101b33;margin-bottom:8px">How each plan matched the answers</div>'+
+    ranked.map(function(rp){ var pc=Math.round(rp.s/maxS*100);
+      return '<div class="mrow"><div class="mname">'+rp.p.n+'</div><div class="mtrack"><div class="mfill'+(rp.p.n===top.p.n?' top':'')+'" style="width:'+Math.max(6,pc)+'%"></div></div><div class="mpct">'+rp.s+'/'+maxS+'</div></div>';
+    }).join('')+'</div>';
+  html+='<div class="info show" style="margin:0 0 10px"><b>From the contract:</b><ul style="margin:6px 0 0 17px">'+(top.p.facts||[]).slice(0,3).map(function(f){return '<li>'+f+'</li>';}).join('')+'</ul></div>';
+  if(who==='ind'){
+    html+='<div style="font-size:11.5px;color:#64718e;margin:4px 0 6px">Tap a row to select the employee\u2019s plan \u2014 the \u2611 marks the choice.</div>';
+    html+=planTable(ranked,top.p.n,selKey,sel);
+  }else{
+    html+=planTable(ranked,top.p.n);
+    html+='<div style="margin-top:11px">'+ranked.map(function(rp){var p=rp.p;
+      return '<div class="plan '+(p.n===sel?'sel':'')+'" onclick="pickPlanFor(&quot;'+selKey+'&quot;,&quot;'+p.n+'&quot;)"><div class="pn">'+p.n+
+      '<span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="#33270a" stroke-width="3.5" stroke-linecap="round"><path d="M4 12 L10 18 L20 6"/></svg></span></div><div class="ps">'+p.s+'</div></div>';
+    }).join('')+'</div>';
+  }
+  return html;
+}
+function pickPlanFor(key,n){ bridgeSet(key,n); renderPlans(); buildReview(); }
+function setEmpOwn(v){ bridgeSet('empOwnPlan',v); renderPlans(); buildReview(); }
+function setIndSel(k,v){ bridgeSet(k,v); buildReview(); }
+function renderPlans(){
+  var d=bridgeLoad();
+  /* ----- EMPLOYER (lives on Step 1) ----- */
+  var eh=document.getElementById('empPlanFlow');
+  if(eh){
+    var aE=qaGet('planQA_emp');
+    var coAmt=pnum(d.co6a)+pnum(d.co6b);
+    var ehtml=qBlock('planQA_emp',EMP_Q,aE)+
+      '<div class="field" style="margin-bottom:12px"><label>Vesting / retirement age for the employer plan</label><select onchange="setIndSel(&quot;employerVestAge&quot;,this.value)">'+
+        ['','50','55','60','65','70'].map(function(v){return '<option value="'+v+'" '+((d.employerVestAge||'')===v?'selected':'')+'>'+(v?('Age '+v):'Choose\u2026')+'</option>';}).join('')+
+      '</select><div class="hint" style="font-size:10.5px;color:#9aa6c0;margin-top:4px">Maturity age \u2014 by law not before 50. Choose 50 / 55 / 60 / 65 / 70.</div></div>'+
+      '<div class="field" style="margin-bottom:12px"><label>Guarantee period (employer plan)</label><select onchange="setIndSel(&quot;employerGuarantee&quot;,this.value)">'+
+        ['','0','5','10','15'].map(function(v){return '<option value="'+v+'" '+((d.employerGuarantee||'')===v?'selected':'')+'>'+(v===''?'Choose\u2026':(v==='0'?'None':v+' years'))+'</option>';}).join('')+
+      '</select><div class="hint" style="font-size:10.5px;color:#9aa6c0;margin-top:4px">If death occurs after vesting, payments continue at least this long.</div></div>'+
+      recBlock(aE,PLANS.filter(function(p){return p.tags.own==='company';}),'emp','employerPlan',d.employerPlan||'');
+    eh.innerHTML=ehtml;
+  }
+  /* ----- EMPLOYEE (Step 5) ----- */
+  var host=document.getElementById('planFlow');
+  if(host){
+    var aI=qaGet('planQA_ind');
+    var html='<div class="card"><h3><span class="n">B</span>Employee\u2019s contribution</h3>'+
+      '<div class="field"><label>Amount the employee contributes ($ per period)</label><input inputmode="numeric" placeholder="0" value="'+(d.empPortion||'')+'" oninput="bridgeSet(&quot;empPortion&quot;,this.value)">'+
+      '<div class="hint" style="font-size:10.5px;color:#9aa6c0;margin-top:4px">Minimum $200/month. Goes onto the Salary Deduction form in the final package automatically. Deductible on the employee\u2019s own return \u2014 Line 6(a)(iii).</div></div></div>';
+    html+='<div class="card"><h3><span class="n">C</span>Employee\u2019s plan</h3>'+
+      qBlock('planQA_ind',IND_Q,aI)+
+      '<div class="row2" style="margin-bottom:12px">'+
+        '<div class="field"><label>Target retirement age</label><select onchange="setIndSel(&quot;empRetAge&quot;,this.value)">'+
+          ['','50','55','60','65'].map(function(v){return '<option value="'+v+'" '+((d.empRetAge||'')===v?'selected':'')+'>'+(v?('Age '+v):'Choose\u2026')+'</option>';}).join('')+
+        '</select><div class="hint" style="font-size:10.5px;color:#9aa6c0;margin-top:4px">When their pension starts \u2014 not before age 50.</div></div>'+
+        '<div class="field"><label>Guarantee period</label><select onchange="setIndSel(&quot;empGuarantee&quot;,this.value)">'+
+          ['','0','5','10','15'].map(function(v){return '<option value="'+v+'" '+((d.empGuarantee||'')===v?'selected':'')+'>'+(v===''?'Choose\u2026':(v==='0'?'None':v+' years'))+'</option>';}).join('')+
+        '</select><div class="hint" style="font-size:10.5px;color:#9aa6c0;margin-top:4px">If death occurs after vesting, payments continue at least this long to the beneficiary.</div></div>'+
+      '</div>'+
+      recBlock(aI,PLANS.filter(function(p){return p.tags.own==='personal';}),'ind','employeePlan',d.employeePlan||'')+
+    '</div>';
+    html+='<div class="card"><h3><span class="n">D</span>Beneficiaries</h3>'+
+      '<div class="info show" style="margin-bottom:12px"><b>Who receives the benefit \u2014 and how it is shared.</b> Add one or more beneficiaries; the percentage shares must total <b>100%</b>. Every beneficiary named needs a <b>photo ID</b> (uploaded on the KYC step).</div>'+
+      benList().map(function(bn,i){
+        return '<div class="benrow" style="border:1px solid #e4e8f1;border-radius:13px;padding:12px;margin-bottom:10px">'+
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b style="font-size:12.5px;color:#101b33">Beneficiary '+(i+1)+'</b><button class="qopt" style="padding:5px 10px;font-size:11px" onclick="benDel('+i+')">Remove</button></div>'+
+          '<div class="row2">'+
+            '<div class="field"><label>Full name</label><input value="'+(bn.name||'').replace(/"/g,'&quot;')+'" oninput="benSet('+i+',&quot;name&quot;,this.value)"></div>'+
+            '<div class="field"><label>Relationship</label><select onchange="benSet('+i+',&quot;rel&quot;,this.value);">'+
+              ['','Spouse','Child','Parent','Sibling','Other'].map(function(v){return '<option value="'+v+'" '+((bn.rel||'')===v?'selected':'')+'>'+(v||'Choose\u2026')+'</option>';}).join('')+
+            '</select></div>'+
+          '</div>'+
+          '<div class="field"><label>Address</label><input value="'+(bn.addr||'').replace(/"/g,'&quot;')+'" oninput="benSet('+i+',&quot;addr&quot;,this.value)"></div>'+
+          '<div class="row2">'+
+            '<div class="field"><label>Date of birth (dd/mm/yyyy)</label><input value="'+(bn.dob||'')+'" placeholder="dd/mm/yyyy" oninput="benSet('+i+',&quot;dob&quot;,this.value)"></div>'+
+            '<div class="field"><label>Share %</label><input inputmode="numeric" value="'+(bn.pct||'')+'" placeholder="e.g. 50" oninput="benSet('+i+',&quot;pct&quot;,this.value)"></div>'+
+          '</div>'+
+        '</div>';
+      }).join('')+
+      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
+        '<button class="qopt" style="font-weight:700" onclick="benAdd()">+ Add beneficiary</button>'+
+        '<span id="benPct" class="benpct"></span>'+
+      '</div>'+
+    '</div>';
+    host.innerHTML=html;
+    benBadge();
+  }
+}
+
+/* ---------- KYC / checkboxes ---------- */
+function kyc(el){ el.classList.toggle('on'); saveChecks(); }
+function saveChecks(){ const arr=[...document.querySelectorAll('.chkrow')].map(r=>r.classList.contains('on')); bridgeSet('checks',JSON.stringify(arr)); }
+
+/* ---------- review ---------- */
+function buildReview(){
+  const d=bridgeLoad();
+  const rows=[
+    ['Company (Proposer)',d.coName],['Incorporation',d.coInc],
+    ['Employee (Annuitant)',d.empName],['Employee DOB',d.empDob],
+    ['Annual emolument',d.salary?'$'+Number((d.salary+'').replace(/[^0-9.]/g,'')).toLocaleString('en-US'):''],
+    ['Company contribution 6(a)+6(b)', (pnum(d.co6a)+pnum(d.co6b))?'$'+pmoney(pnum(d.co6a)+pnum(d.co6b)):''],
+    ['Employer plan (Section 134)',(d.employerPlan||'')+(d.employerVestAge?(' \u00b7 vests age '+d.employerVestAge):'')],
+    ['Employee contribution',d.empPortion?('$'+d.empPortion+' / period'):''],
+    ['Employee plan',(d.employeePlan||'')+(d.empRetAge?(' \u00b7 retires '+d.empRetAge):'')+(d.empGuarantee?(' \u00b7 '+(d.empGuarantee==='0'?'no guarantee':d.empGuarantee+'-yr guarantee')):'')],
+    ['Occupation / employment date',(d.empJob||'')+(d.empEmpDate?(' \u00b7 since '+d.empEmpDate):'')],
+    ['Plan commencement',d.planStart],
+    ['Beneficiaries',benList().length?benList().map(function(b){return (b.name||'?')+' ('+(b.rel||'')+') \u2014 '+(b.pct||'0')+'%';}).join(' \u00b7 ')+' \u2014 photo IDs required':'None named'],
+    ['Agent',d.agentName]
+  ];
+  const el=document.getElementById('reviewList'); if(!el) return;
+  el.innerHTML=rows.map(([k,v])=>`<div class="brk"><div class="ln"><span class="l">${k}</span><span class="v" style="${v?'':'color:#5f6f9c'}">${v||'—'}</span></div></div>`).join('');
+}
+
+/* ---------- wizard nav ---------- */
+let cur=0; const TOTAL=5;
+const RAIL=[['1','134 + Plan'],['2','Employee'],['3','Decl 2'],['4','KYC'],['5','Review']];
+function renderRail(){
+  document.getElementById('rail').innerHTML=RAIL.map((r,i)=>`
+    <div class="pchip ${i===cur?'on':''}" onclick="jump(${i})"><div class="num">${r[0]}</div><div class="lbl">${r[1]}</div></div>`).join('');
+  document.getElementById('barFill').style.width=((cur+1)/TOTAL*100)+'%';
+}
+function show(i){
+  cur=Math.max(0,Math.min(TOTAL-1,i));
+  document.querySelectorAll('.step').forEach(s=>{
+    const on=(parseInt(s.dataset.step,10)===cur);
+    s.classList.toggle('on',on);
+    s.style.display = on ? 'block' : 'none';   // force, don't rely on class CSS alone
+  });
+  document.getElementById('navBack').style.visibility=cur===0?'hidden':'visible';
+  document.getElementById('navNext').textContent=cur===TOTAL-1?'Done':'Next ›';
+  renderRail(); window.scrollTo({top:0,behavior:'smooth'});
+  renderPlans();
+  if(cur===4){ buildReview(); renderChecks(); }
+  syncMirrors();
+}
+function go(d){ show(cur+d); }
+function jump(i){ show(i); }
+
+/* ---------- boot ---------- */
+
+/* ===================== FABLE — AI guide ===================== */
+/* The model and the branch system prompt live in the Netlify function
+   (netlify/functions/pension-ai.mjs) so the API key never reaches the browser.
+   If the endpoint is missing (e.g. served from plain static hosting) RIA falls
+   back to the built-in answers below and the wizard keeps working. */
+var RIA_ENDPOINT='/api/pension-ai';
+var fableHist=[];   // {role, content}
+var fableOpened=false;
+
+var STEP_INFO=[
+ {name:'Section 134 Computation + Employer Plan', gist:'computing the maximum tax-deductible company contribution under Section 134, printing the BIR approval form, and selecting the EMPLOYER plan (company pool) with maturity age, guarantee period and commencement date'},
+ {name:'Employee - Declaration 1', gist:'the employee section: personal details (address must match the utility bill, occupation/salary must match the payslip), the employee own contribution (min $200/month, deductible at Line 6(a)(iii), flows automatically onto the Salary Deduction form in the final package), the employee personal plan with retirement age and guarantee period, the beneficiary (photo ID required if named), and the Declaration 1 form: A and B pre-circled on 1.E, dated, witness name printed; employee just signs 1.E and page 5 item 7'},
+ {name:'Declaration 2 - Third Party', gist:'the company-owned declaration: company name in Proposer fields with incorporation date; employee is the Annuitant; A and B pre-circled on 2.D; company signs and stamps on top, employee signs underneath, same on page 5 item 7'},
+ {name:'KYC Documents', gist:'photo ID plus utility bill under 6 months; company proposer adds certified formation documents and ID for directors and 10%+ shareholders; beneficiary photo ID if named; uploads become pages inside the Full Package PDF'},
+ {name:'Review & Submit', gist:'preview the Full Package PDF (cover + Declaration 1 + Declaration 2 + Salary Deduction + KYC images), download it, then email it to support@rickyrampersadbranch.com \u2014 the Salary Deduction form is fully auto-built from the data, nothing to fill'}
+];
+
+function initials(n){ if(!n) return ''; return n.trim().split(/\s+/).map(function(w){return w[0]?w[0].toUpperCase()+'.':''}).join(''); }
+
+function fableContext(){
+  var d=bridgeLoad();
+  var lines=[];
+  lines.push('You are RIA (Rampersad Intelligent Assistant), the friendly expert guide inside the Rampersad Branch (Guardian Life of the Caribbean, Trinidad & Tobago) pension application wizard.');
+  lines.push('The user is currently on step '+(cur+1)+' of 7: "'+STEP_INFO[cur].name+'" - '+STEP_INFO[cur].gist+'.');
+  lines.push('Key facts you must respect: Only the company 134(6) contribution (6a premium + 6b lump sum) is added to emolument income. Personal deferred annuities and other pensions are Line 6 deductions only. The maximum permitted contribution is the GREATER of one-third of chargeable income (Line 9) or 20% of total emolument (Line 11). Lines 10 and 12 are independent checks and can never both be Yes. NIS 70% lookup uses the base salary, not the contribution-inclusive total.');
+  var emolument=d.salary?('Salary entered: $'+d.salary):'';
+  var contrib=(pnum(d.co6a)+pnum(d.co6b))?('Company contribution 6a+6b: $'+pmoney(pnum(d.co6a)+pnum(d.co6b))):'';
+  var who=[];
+  if(d.coName) who.push('Company: '+initials(d.coName)+' (initials only)');
+  if(d.empName) who.push('Employee: '+initials(d.empName)+' (initials only)');
+  if(d.plan) who.push('Selected plan: '+d.plan);
+  var ctx=[emolument,contrib].concat(who).filter(Boolean).join('. ');
+  if(ctx) lines.push('Case context: '+ctx+'.');
+  if(cur===0||cur===1){
+    lines.push('PLAN KNOWLEDGE (from the actual Guardian contracts):');
+    PLANS.forEach(function(p){ lines.push('- '+p.n+' ['+(p.tags.own==='company'?'COMPANY-owned':'INDIVIDUAL')+']: '+p.s+'. '+(p.facts||[]).join('; ')+'.'); });
+    lines.push('Rule: company/corporate cases use COMPANY-owned plans (TopHat family or Life Secure Corporate). Individuals use the personal plans (Life Secure, Lifestyle family). Guaranteed credited rate = Life Secure / Life Secure Corporate; unit-linked growth = TopHat Special Edition; biggest tax-deductible contributions and lump sums = TopHat Elite; executive retirement = TopHat Executive.');
+    var dd=bridgeLoad();
+    lines.push('Structure: Step 1 = Section 134 computation + the EMPLOYER plan (company pool) with maturity age and guarantee. Step 2 = the EMPLOYEE section inside Declaration 1: details, own contribution, personal plan with retirement age and guarantee, and beneficiary (photo ID required if named).');
+    var aE=qaGet('planQA_emp'), aI=qaGet('planQA_ind');
+    if(Object.keys(aE).length) lines.push('Employer answers: '+JSON.stringify(aE)+(dd.employerPlan?(' \u2014 selected: '+dd.employerPlan):''));
+    if(dd.empOwnPlan) lines.push('Employee own plan: '+dd.empOwnPlan+(Object.keys(aI).length?(' \u2014 answers: '+JSON.stringify(aI)):'')+(dd.employeePlan?(' \u2014 selected: '+dd.employeePlan):'')+(dd.empRetAge?(' \u2014 retirement age '+dd.empRetAge):'')+(dd.empGuarantee?(' \u2014 guarantee '+dd.empGuarantee+' yrs'):''));
+    lines.push('Recommend concretely for whichever part they ask about and say why.');
+  }
+  lines.push('Answer in short, plain Caribbean-friendly language an insured person can follow. Be concrete and step-specific. Never invent figures; use only the context provided. Keep answers under 120 words unless asked for detail.');
+  return lines.join('\n');
+}
+
+function fableChipSet(){
+  var per=[
+    ['What is this computation for?','What does Line 9 vs Line 11 mean?','Which employer plan and why?','Guaranteed rate vs unit-linked?'],
+    ['Which plan suits the employee?','What retirement age should they pick?','Why does the beneficiary need ID?','Where does the salary deduction go?'],
+    ['Why does the company sign on top?','Where does the company name go?','Who is the Annuitant?'],
+    ['Which documents do I need?','How recent must the utility bill be?','What extra does a company need?'],
+    ['What is in the package PDF?','Where does the email go?','Am I missing anything?']
+  ];
+  return per[cur]||per[0];
+}
+
+function renderFableChips(){
+  var c=document.getElementById('aiChips'); if(!c) return;
+  c.innerHTML=fableChipSet().map(function(q){
+    return '<button class="aichip" onclick="askChip(this)">'+q+'</button>';
+  }).join('');
+}
+function askChip(btn){ document.getElementById('aiInput').value=btn.textContent; sendFable(); }
+
+function pushMsg(role,text,think){
+  var m=document.getElementById('aiMsgs');
+  var div=document.createElement('div');
+  div.className='aim '+(role==='user'?'user':'bot')+(think?' think':'');
+  div.textContent=text;
+  m.appendChild(div); m.scrollTop=m.scrollHeight;
+  return div;
+}
+
+function toggleFable(){
+  var p=document.getElementById('aiPanel');
+  var open=!p.classList.contains('open');
+  p.classList.toggle('open',open);
+  if(open){
+    renderFableChips();
+    if(!fableOpened){
+      fableOpened=true;
+      pushMsg('bot','Hi, I\u2019m RIA \u2014 the Rampersad Branch assistant. I\u2019m here to make this application easy. I can explain any step in plain language. Tap a question below or ask me anything.');
+    }
+  }
+}
+
+/* built-in expert fallback when the API is unreachable (e.g. Netlify static hosting) */
+function fableFallback(q){
+  var t=(q||'').toLowerCase();
+  var s=cur;
+  if(s===0){
+    if(t.indexOf('line 9')>=0||t.indexOf('line 11')>=0||t.indexOf('maximum')>=0) return 'Line 9 is one-third of your chargeable income. Line 11 is 20% of your total emolument. Your maximum allowable contribution is the GREATER of the two \u2014 the form\u2019s N.B. says so. The calculator already solves this for you, including the circular effect where the contribution itself increases emolument.';
+    if(t.indexOf('10')>=0&&t.indexOf('12')>=0) return 'Lines 10 and 12 are two separate checks: does the total exceed one-third of chargeable income (Line 10), and does it exceed 20% of emolument (Line 11/12)? Because the maximum is the GREATER of the two limits, a valid contribution can exceed one limit but never both \u2014 so you can have one Yes, but never two.';
+    return 'This step works out the maximum tax-deductible pension contribution the company can make for the employee under Section 134 of the Income Tax Act, and prints the BIR approval form. Enter the case details once \u2014 they flow to every other form automatically.';
+  }
+  if(s===1){
+    if(t.indexOf('plan')>=0||t.indexOf('retire')>=0||t.indexOf('guarantee')>=0) return 'Employee plan: guaranteed = Life Secure ($300/mo min); flexible = Lifestyle family; growth = Lifestyle Special Edition; high contributions = Lifestyle Privilege. Retirement age cannot be before 50 \u2014 most choose 60 or 65. The guarantee period (0/5/10/15 yrs) keeps payments going to the beneficiary if death occurs after vesting.';
+    if(t.indexOf('detail')>=0||t.indexOf('why')>=0) return 'The details have purposes: smoker status sets the premium rates; the mailing address must match the utility bill (KYC); occupation and salary must match the payslip the BIR will see; marital status and children guide who should be the beneficiary.';
+    if(t.indexOf('salary')>=0||t.indexOf('deduction')>=0) return 'Nothing to fill \u2014 the Salary Deduction form is built automatically from this data and appears inside the Full Package PDF on the Review step: the employee\u2019s monthly premium in words on page 1, the premium and tallied totals in the grid on page 2.';
+    if(t.indexOf('benefici')>=0||t.indexOf('id')>=0) return 'If a beneficiary is named, the law requires identity verification \u2014 collect their photo ID. The KYC checklist updates automatically with their name.';
+    return 'This is the employee\u2019s section. Complete their details, their own contribution (min $200/month \u2014 their tax deduction at Line 6(a)(iii)), their plan with retirement age and guarantee period, and the beneficiary. Then for Declaration 1: circle A and B in Part 1.E, sign 1.E and page 5 item 7. The agent cannot witness a relative\u2019s signature.';
+  }
+  if(s===2) return 'Declaration 2 is used because the COMPANY owns the policy (a third-party application). The company\u2019s name goes in the Proposer First Name and Legal Entity fields with its incorporation date; the employee is the Annuitant/Life Assured. On Part 2.D the company circles A and B, signs and STAMPS on top, and the employee signs underneath \u2014 the same on page 5 item 7.';
+  if(s===3) return 'Two documents: a government photo ID (driver\u2019s permit or national ID) and a utility bill in the client\u2019s name not older than 6 months. Because the proposer is a company, also provide certified formation documents and ID for every director and any shareholder holding 10% or more.';
+  return 'Before submitting: BIR printed and signed, employee section complete (details, contribution, plan, beneficiary), both declarations signed (company stamp on Declaration 2), salary deduction signed, plan selected, KYC documents copied. The BIR request goes with an original or certified pay slip and a copy of the approved TD1.';
+}
+
+var riaBusy=false;
+async function sendFable(){
+  if(riaBusy) return;
+  var inp=document.getElementById('aiInput');
+  var q=(inp.value||'').trim(); if(!q) return;
+  inp.value='';
+  riaBusy=true;
+  pushMsg('user',q);
+  fableHist.push({role:'user',content:q});
+  var thinking=pushMsg('bot','RIA is thinking\u2026',true);
+  var bubble=null, text='';
+  var msgBox=document.getElementById('aiMsgs');
+  function grow(chunk){
+    text+=chunk;
+    if(!bubble){ thinking.remove(); bubble=pushMsg('bot',''); }
+    bubble.textContent=text;
+    msgBox.scrollTop=msgBox.scrollHeight;
+  }
+  try{
+    var resp=await fetch(RIA_ENDPOINT,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ context:fableContext(), messages:fableHist.slice(-8) })
+    });
+    if(!resp.ok||!resp.body) throw new Error('RIA '+resp.status);
+    /* the function streams newline-delimited JSON: {"t":"..."} per chunk, {"error":"..."} on failure */
+    var reader=resp.body.getReader(), dec=new TextDecoder(), buf='';
+    for(;;){
+      var r=await reader.read(); if(r.done) break;
+      buf+=dec.decode(r.value,{stream:true});
+      var nl;
+      while((nl=buf.indexOf('\n'))>=0){
+        var line=buf.slice(0,nl); buf=buf.slice(nl+1);
+        if(!line.trim()) continue;
+        var ev; try{ ev=JSON.parse(line); }catch(err){ continue; }
+        if(ev.error) throw new Error(ev.error);
+        if(ev.t) grow(ev.t);
+      }
+    }
+    if(!text.trim()) throw new Error('empty');
+    fableHist.push({role:'assistant',content:text});
+  }catch(e){
+    if(text.trim()){
+      /* the stream broke mid-answer - keep what arrived and say so */
+      grow('\n\n(Connection interrupted \u2014 ask again if that answer looks cut short.)');
+      fableHist.push({role:'assistant',content:text});
+    }else{
+      if(bubble) bubble.remove(); else thinking.remove();
+      var fb=fableFallback(q);
+      pushMsg('bot',fb);
+      fableHist.push({role:'assistant',content:fb});
+    }
+  }finally{ riaBusy=false; }
+}
+/* refresh chips when step changes */
+var _showOrig=show;
+show=function(i){ _showOrig(i); if(document.getElementById('aiPanel').classList.contains('open')) renderFableChips(); };
+
+
+/* ===================== LIVE PREVIEWS ===================== */
+if(typeof pdfjsLib!=='undefined'){ try{ pdfjsLib.GlobalWorkerOptions.workerSrc='assets/pdf.worker.min.js'; }catch(e){} }
+
+function updateBirPreview(){
+  var host=document.getElementById('birPreview'); if(!host) return;
+  try{
+    buildForm();
+    var src=document.getElementById('formdoc');
+    var W=host.clientWidth-16; if(W<100) return;
+    var DOCW=794; var s=W/DOCW;
+    host.innerHTML='<div class="pvbir" style="width:'+DOCW+'px;transform:scale('+s+');transform-origin:top left">'+src.innerHTML+'</div>';
+    var inner=host.firstChild;
+    requestAnimationFrame(function(){ host.style.height=(inner.offsetHeight*s+16)+'px'; });
+  }catch(e){ host.innerHTML='<div class="pvload">Preview unavailable</div>'; }
+}
+
+var pvBusy={};
+async function renderPdfPreview(which){
+  var host=document.getElementById('pv-'+which); if(!host) return;
+  if(typeof pdfjsLib==='undefined'){ host.innerHTML='<div class="pvload">Preview engine not loaded — use the Download button; the PDF itself is exact.</div>'; return; }
+  if(pvBusy[which]) return; pvBusy[which]=true;
+  try{
+    var bytes;
+    if(which==='d1') bytes=await buildD1();
+    else if(which==='d2') bytes=await buildD2();
+    else bytes=(await buildSal()).bytes;
+    var doc=await pdfjsLib.getDocument({data:bytes.slice(0),verbosity:0}).promise;
+    var total=doc.numPages;                       // EVERY page — nothing cut
+    host.innerHTML='';
+    var W=host.clientWidth-16;
+    for(var i=1;i<=total;i++){
+      var page=await doc.getPage(i);
+      var vp1=page.getViewport({scale:1});
+      var scale=Math.min(2,(W/vp1.width)*(total>2?1.6:2));
+      var vp=page.getViewport({scale:scale});
+      var c=document.createElement('canvas');
+      c.width=vp.width; c.height=vp.height;
+      host.appendChild(c);
+      await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+      var tag=document.createElement('div');
+      tag.style.cssText='font-size:10px;color:#9aa6c0;text-align:center;padding:3px 0 7px;font-family:Inter,sans-serif';
+      tag.textContent='Page '+i+' of '+total;
+      host.appendChild(tag);
+    }
+  }catch(e){
+    host.innerHTML='<div class="pvload">Preview unavailable ('+e.message+') — the Download button still produces the exact PDF.</div>';
+  }finally{ pvBusy[which]=false; }
+}
+
+var pvTimer=null;
+function schedulePreviews(){
+  clearTimeout(pvTimer);
+  pvTimer=setTimeout(function(){
+    if(cur===0) updateBirPreview();
+    if(cur===1) renderPdfPreview('d1');
+    if(cur===2) renderPdfPreview('d2');
+  }, 600);
+}
+document.addEventListener('input', function(){ if(cur<=2) schedulePreviews(); });
+
+/* refresh preview when arriving on a step */
+var _showPv=show;
+show=function(i){ _showPv(i); schedulePreviews(); };
+
+/* ===================== VERDICT VALIDITY BANNER ===================== */
+function updateVStatus(){
+  var el=document.getElementById('vStatus'); if(!el) return;
+  var y10=(document.getElementById('v10t')||{}).textContent==='Yes';
+  var y12=(document.getElementById('v12t')||{}).textContent==='Yes';
+  el.classList.add('show');
+  if(y10&&y12){
+    el.className='warn show';
+    el.innerHTML='<b>\u2717 Not allowed:</b> the total exceeds BOTH limits (Lines 10 and 12 are both Yes). The BIR will not approve this \u2014 reduce the contribution to the computed maximum.';
+  }else if(y10||y12){
+    el.className='info show';
+    el.innerHTML='<b>\u2713 Valid:</b> exactly one limit is exceeded \u2014 that is allowed, because the maximum is the GREATER of Line 9 or Line 11. One Yes and one No is correct.';
+  }else{
+    el.className='info show';
+    el.innerHTML='<b>\u2713 Within both limits:</b> Lines 10 and 12 are both No. The contribution fits comfortably under the maximum.';
+  }
+}
+var _calcV=calc;
+calc=function(){ _calcV(); try{updateVStatus();}catch(e){} if(cur===0) schedulePreviews(); };
+
+
+var KYC_IMGS={};
+function expiredStr(s){ var dt=dmyToDate(s); if(!dt) return null; var t=new Date(); t.setHours(0,0,0,0); return dt<t; }
+function expiryFlag(){
+  var f=document.getElementById('idExpFlag'); if(!f) return;
+  var v=(bridgeLoad().idExpiry||'').trim();
+  if(!v){ f.textContent=''; return; }
+  var ex=expiredStr(v);
+  if(ex===null){ f.textContent='Use dd/mm/yyyy'; f.style.color='#bd2438'; }
+  else if(ex){ f.textContent='\u26a0 THIS ID IS EXPIRED \u2014 collect a valid ID before submitting'; f.style.color='#bd2438'; f.style.fontWeight='700'; }
+  else { f.textContent='\u2713 Valid'; f.style.color='#13845b'; f.style.fontWeight='700'; }
+}
+function renderKycBens(){
+  var rows=document.getElementById('kycBenRows'), ups=document.getElementById('kycBenUploads');
+  var l=benList();
+  if(rows) rows.innerHTML=l.map(function(b,i){
+    return '<div class="chkrow" onclick="kyc(this)"><div class="chkbox"><svg viewBox="0 0 24 24" fill="none" stroke="#06231a" stroke-width="3.5" stroke-linecap="round"><path d="M4 12 L10 18 L20 6"/></svg></div><div class="ct"><b>Photo ID \u2014 '+(b.name||('Beneficiary '+(i+1)))+'</b> ('+(b.pct||'0')+'% share).</div></div>';
+  }).join('');
+  if(ups) ups.innerHTML=l.map(function(b,i){
+    var st=KYC_IMGS['benid_'+i]?'\u2713 attached':'\u2014';
+    var cls=KYC_IMGS['benid_'+i]?'upst ok':'upst';
+    var ex=expiredStr(b.idExp||'');
+    var flag=(b.idExp||'').trim()?(ex===null?'<span style="color:#bd2438"> \u00b7 use dd/mm/yyyy</span>':(ex?'<span style="color:#bd2438;font-weight:700"> \u00b7 \u26a0 EXPIRED</span>':'<span style="color:#13845b;font-weight:700"> \u00b7 \u2713 valid</span>')):'';
+    return '<div class="uprow"><div class="uplbl">ID \u2014 '+(b.name||('Beneficiary '+(i+1)))+flag+'</div><label class="upbtn">Choose<input type="file" accept="image/*" hidden onchange="kycUp(this,&quot;benid_'+i+'&quot;);renderKycBens()"></label><span class="'+cls+'">'+st+'</span></div>'+
+      '<div class="field" style="margin:2px 0 8px"><label>Expiry (dd/mm/yyyy)</label><input value="'+(b.idExp||'')+'" placeholder="dd/mm/yyyy" oninput="benSet('+i+',&quot;idExp&quot;,this.value)" onblur="renderKycBens()"></div>';
+  }).join('');
+}
+   /* in-memory uploads: id, bill, benid */
+function kycUp(inp,key){
+  var f=inp.files&&inp.files[0]; if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){ KYC_IMGS[key]={data:r.result,name:f.name,type:f.type};
+    var st=document.getElementById('up-'+key); if(st){ st.textContent='\u2713 attached'; st.className='upst ok'; } };
+  r.readAsDataURL(f);
+}
+async function buildPackage(){
+  var d=bridgeLoad();
+  var out=await PDFLib.PDFDocument.create();
+  var helv=await out.embedFont(PDFLib.StandardFonts.Helvetica);
+  var bold=await out.embedFont(PDFLib.StandardFonts.HelveticaBold);
+  /* cover sheet */
+  var pg=out.addPage([612,792]); var y=742;
+  function line(t,size,font,color,dy){ pg.drawText(String(t||''),{x:54,y:y,size:size||10,font:font||helv,color:color||PDFLib.rgb(0.06,0.11,0.2)}); y-=(dy||16); }
+  pg.drawRectangle({x:0,y:752,width:612,height:40,color:PDFLib.rgb(0.055,0.102,0.188)});
+  pg.drawText('RAMPERSAD BRANCH \u00b7 26000 \u2014 PENSION APPLICATION PACKAGE',{x:54,y:766,size:13,font:bold,color:PDFLib.rgb(0.83,0.69,0.22)});
+  y=720;
+  line('Prepared '+todayDMY()+'  \u00b7  Agent: '+(d.agentName||'Ricky Rampersad')+' ('+(d.agentNo||'A00427')+')',10,helv,null,22);
+  line('EMPLOYER',11,bold,PDFLib.rgb(0.66,0.52,0.11),16);
+  line('Company: '+(d.coName||'')+'   Incorporated: '+(d.coInc||'')+'   BIR#: '+(d.coBir||''));
+  line('Address: '+(d.coAddr||''));
+  line('Employer plan: '+(d.employerPlan||'')+'   Maturity age: '+(d.employerVestAge||'')+'   Guarantee: '+(d.employerGuarantee?(d.employerGuarantee==='0'?'None':d.employerGuarantee+' yrs'):''));
+  line('Commencement: '+(d.planStart||'')+'   Employer contribution 6(a)+6(b): $'+pmoney(pnum(d.co6a)+pnum(d.co6b))+'/yr',10,helv,null,22);
+  line('EMPLOYEE',11,bold,PDFLib.rgb(0.66,0.52,0.11),16);
+  line('Name: '+(d.empName||'')+'   DOB: '+(d.empDob||'')+'   BIR#: '+(d.empBir||''));
+  line('Address: '+(d.empAddr||''));
+  line('Phone: '+(d.empPhone||'')+'   Email: '+(d.empEmail||''));
+  line('Marital: '+(d.empMarital||'')+'   Occupation: '+(d.empJob||'')+'   Employed since: '+(d.empEmpDate||''));
+  line('Annual salary: $'+(d.salary||'')+'   Employee monthly premium: $'+money2(pnum(d.empPortion)));
+  line('Employee plan: '+(d.employeePlan||'')+'   Retirement age: '+(d.empRetAge||'')+'   Guarantee: '+(d.empGuarantee?(d.empGuarantee==='0'?'None':d.empGuarantee+' yrs'):''),10,helv,null,22);
+  line('BENEFICIARIES'+(benList().length?' \u2014 shares total '+benPctTotal()+'%':''),11,bold,PDFLib.rgb(0.66,0.52,0.11),16);
+  if(benList().length){ benList().forEach(function(b,i){
+    line((i+1)+'. '+(b.name||'')+' ('+(b.rel||'')+')  '+(b.pct||'0')+'%   DOB: '+(b.dob||'')+'   '+(b.addr||''));
+  }); } else { line('None named'); }
+  y-=6;
+  line('CONTENTS',11,bold,PDFLib.rgb(0.66,0.52,0.11),16);
+  line('1. Declaration 1 \u2014 Own Life (A & B pre-circled, dated, witness '+((d.agentName||'Ricky Rampersad').toUpperCase())+')');
+  line('2. Declaration 2 \u2014 Third Party (A & B pre-circled, company stamps on top)');
+  line('3. Salary Deduction \u2014 employee monthly premium $'+money2(pnum(d.empPortion)));
+  line('4. KYC images (ID, utility bill, pay slip, beneficiary IDs) \u2014 pages in this package');
+  line('5. Printed BIR Section 134 form + certified pay slip + TD1 copy (separate)',10,helv,null,20);
+  line('Signatures required before submission. Send to support@rickyrampersadbranch.com',9,helv,PDFLib.rgb(0.4,0.45,0.55));
+  /* merge the three filled forms */
+  var parts=[await buildD1(),await buildD2(),(await buildSal()).bytes];
+  for(var i=0;i<parts.length;i++){
+    var src=await PDFLib.PDFDocument.load(parts[i]);
+    var pages=await out.copyPages(src,src.getPageIndices());
+    pages.forEach(function(p){ out.addPage(p); });
+  }
+  /* KYC document images as pages */
+  var kycLabels={id:'CLIENT PHOTO ID',bill:'UTILITY BILL (PROOF OF ADDRESS)',payslip:'PAY SLIP'};
+  benList().forEach(function(b,i){ kycLabels['benid_'+i]='BENEFICIARY ID \u2014 '+((b.name||('BENEFICIARY '+(i+1))).toUpperCase()); });
+  for(var key in kycLabels){
+    var item=KYC_IMGS[key]; if(!item) continue;
+    try{
+      var b64=item.data.split(',')[1];
+      var bin=Uint8Array.from(atob(b64),function(c){return c.charCodeAt(0);});
+      var img=(item.type==='image/png')?await out.embedPng(bin):await out.embedJpg(bin);
+      var kp=out.addPage([612,792]);
+      kp.drawRectangle({x:0,y:752,width:612,height:40,color:PDFLib.rgb(0.055,0.102,0.188)});
+      kp.drawText('KYC \u2014 '+kycLabels[key],{x:54,y:766,size:13,font:bold,color:PDFLib.rgb(0.83,0.69,0.22)});
+      var maxW=512, maxH=640;
+      var s=Math.min(maxW/img.width,maxH/img.height,1);
+      kp.drawImage(img,{x:(612-img.width*s)/2,y:(742-img.height*s)-10,width:img.width*s,height:img.height*s});
+    }catch(e){}
+  }
+  return await out.save();
+}
+var pkgBytes=null;
+async function previewPackage(){
+  var st=document.getElementById('st-pkg'); st.textContent='Building package\u2026'; st.className='status';
+  try{
+    pkgBytes=await buildPackage();
+    var host=document.getElementById('pv-pkg'); host.innerHTML='';
+    var doc=await pdfjsLib.getDocument({data:pkgBytes.slice(0),verbosity:0}).promise;
+    var W=host.clientWidth-16;
+    for(var i=1;i<=doc.numPages;i++){
+      var page=await doc.getPage(i);
+      var vp1=page.getViewport({scale:1});
+      var vp=page.getViewport({scale:(W/vp1.width)*1.5});
+      var c=document.createElement('canvas'); c.width=vp.width; c.height=vp.height; host.appendChild(c);
+      await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+      var tag=document.createElement('div'); tag.style.cssText='font-size:10px;color:#9aa6c0;text-align:center;padding:3px 0 7px;font-family:Inter,sans-serif'; tag.textContent='Page '+i+' of '+doc.numPages; host.appendChild(tag);
+    }
+    st.textContent='\u2713 Package ready \u2014 '+doc.numPages+' pages. Review above, download, then email.'; st.className='status ok';
+  }catch(e){ st.textContent='\u26a0 '+e.message; st.className='status err'; }
+}
+async function downloadPackage(){
+  if(!pkgBytes) pkgBytes=await buildPackage();
+  var d=bridgeLoad();
+  await dl(pkgBytes,'RRB_Pension_Package_'+((d.empName||'case').replace(/\s+/g,'_'))+'.pdf');
+  var st=document.getElementById('st-pkg'); st.textContent='\u2713 Package downloaded \u2014 attach it to the branch email.'; st.className='status ok';
+}
+function validateCase(){
+  var d=bridgeLoad(); var out=[];
+  function err(m){ out.push({lv:'err',m:m}); }
+  function warn(m){ out.push({lv:'warn',m:m}); }
+  if(!(d.coName||'').trim()) err('Employer name missing (Step 1).');
+  if(!(d.coBir||'').trim()) err('Employer B.I.R. file number missing (Step 1) \u2014 required on the BIR form.');
+  if(!(d.coAddr||'').trim()) warn('Employer address missing (Step 1).');
+  if(!(d.empName||'').trim()) err('Employee name missing (Step 1).');
+  if(!(d.empDob||'').trim()) err('Employee date of birth missing (Step 1).');
+  else if(!dmyToDate(d.empDob)) err('Employee DOB is not a valid dd/mm/yyyy date.');
+  if(!(d.empBir||'').trim()) warn('Employee B.I.R. number missing \u2014 needed on the BIR form.');
+  if(!(d.empAddr||'').trim()) warn('Employee mailing address missing \u2014 must match the utility bill.');
+  if(!pnum(d.salary)) err('Annual salary missing (Step 1) \u2014 must match the pay slip.');
+  if(!(d.employerPlan||'').trim()) warn('No employer plan selected (Step 1).');
+  if(!(d.planStart||'').trim()) warn('Commencement date of plan missing (Step 1) \u2014 the salary form month comes from it.');
+  else if(!dmyToDate(d.planStart)) err('Commencement date is not a valid dd/mm/yyyy date.');
+  var ep=pnum(d.empPortion);
+  if(ep>0 && ep<200) err('Employee contribution $'+money2(ep)+' is below the $200/month minimum.');
+  if(ep>0 && !(d.employeePlan||'').trim()) warn('Employee contributes but no employee plan is selected (Step 2).');
+  var bl=benList();
+  if(bl.length){
+    var t=benPctTotal();
+    if(Math.abs(t-100)>0.01) err('Beneficiary shares total '+t+'% \u2014 must total exactly 100%.');
+    bl.forEach(function(b,i){
+      if(!(b.name||'').trim()) err('Beneficiary '+(i+1)+' has no name.');
+      if(!(b.rel||'').trim()) warn('Beneficiary '+(i+1)+' ('+(b.name||'')+') has no relationship.');
+      if((b.idExp||'').trim() && expiredStr(b.idExp)) err('Beneficiary ID for '+(b.name||('#'+(i+1)))+' is EXPIRED \u2014 collect a valid ID.');
+      if(!KYC_IMGS['benid_'+i]) warn('Photo ID for beneficiary '+(b.name||('#'+(i+1)))+' not uploaded yet.');
+    });
+  }
+  if((d.idExpiry||'').trim() && expiredStr(d.idExpiry)) err('CLIENT ID IS EXPIRED \u2014 collect a valid ID before submitting.');
+  if(!KYC_IMGS.id) warn('Client photo ID not uploaded yet.');
+  if(!KYC_IMGS.bill) warn('Utility bill not uploaded yet.');
+  if(!KYC_IMGS.payslip) warn('Pay slip not uploaded yet \u2014 BIR requires it with the request.');
+  return out;
+}
+function renderChecks(){
+  var host=document.getElementById('sysChecks'); if(!host) return;
+  var v=validateCase();
+  var errs=v.filter(function(x){return x.lv==='err';}), warns=v.filter(function(x){return x.lv==='warn';});
+  var html='';
+  if(!v.length) html='<div class="info show"><b>\u2713 All system checks passed.</b> The case is complete and consistent.</div>';
+  else{
+    if(errs.length) html+='<div class="warn show" style="margin-bottom:9px"><b>'+errs.length+' must-fix issue'+(errs.length>1?'s':'')+':</b><ul style="margin:6px 0 0 17px">'+errs.map(function(x){return '<li>'+x.m+'</li>';}).join('')+'</ul></div>';
+    if(warns.length) html+='<div class="info show" style="background:#fdf7e8;border-color:#ecd9a0;color:#7a5f12"><b>'+warns.length+' to review:</b><ul style="margin:6px 0 0 17px">'+warns.map(function(x){return '<li>'+x.m+'</li>';}).join('')+'</ul></div>';
+  }
+  host.innerHTML=html;
+}
+function submitToBranch(){
+  var d=bridgeLoad();
+  var L=[];
+  L.push('NEW PENSION APPLICATION \u2014 '+(d.coName||'(company)')+' / '+(d.empName||'(employee)'));
+  L.push('');
+  L.push('=== EMPLOYER ===');
+  L.push('Company: '+(d.coName||'')); L.push('Incorporated: '+(d.coInc||'')); L.push('BIR#: '+(d.coBir||'')); L.push('Address: '+(d.coAddr||''));
+  L.push('Employer plan: '+(d.employerPlan||'')+' | Maturity age: '+(d.employerVestAge||'')+' | Guarantee: '+(d.employerGuarantee===''?'':(d.employerGuarantee==='0'?'None':(d.employerGuarantee||'')+' yrs')));
+  L.push('Commencement: '+(d.planStart||''));
+  L.push('Employer contribution 6(a)+6(b): $'+pmoney(pnum(d.co6a)+pnum(d.co6b))+'/yr');
+  L.push('');
+  L.push('=== EMPLOYEE ===');
+  L.push('Name: '+(d.empName||'')+' | DOB: '+(d.empDob||'')+' | BIR#: '+(d.empBir||''));
+  L.push('Address: '+(d.empAddr||'')+' | Phone: '+(d.empPhone||'')+' | Email: '+(d.empEmail||''));
+  L.push('Smoker: '+(d.empSmoker||'')+' | Marital: '+(d.empMarital||'')+' | Children: '+(d.empChildren||''));
+  L.push('Occupation: '+(d.empJob||'')+' | Employed since: '+(d.empEmpDate||'')+' | Salary: $'+(d.salary||''));
+  L.push('Employee contribution: $'+(d.empPortion||'0')+'/period');
+  L.push('Employee plan: '+(d.employeePlan||'')+' | Retirement age: '+(d.empRetAge||'')+' | Guarantee: '+(d.empGuarantee===''?'':(d.empGuarantee==='0'?'None':(d.empGuarantee||'')+' yrs')));
+  L.push('');
+  L.push('=== BENEFICIARIES (shares total '+benPctTotal()+'%) ===');
+  if(benList().length){ benList().forEach(function(b,i){ L.push((i+1)+'. '+(b.name||'')+' ('+(b.rel||'')+') '+(b.pct||'0')+'% | DOB: '+(b.dob||'')+' | '+(b.addr||'')); }); } else L.push('None named');
+  L.push('');
+  L.push('Agent: '+(d.agentName||'Ricky Rampersad'));
+  L.push('Attachments: BIR form, Declaration 1, Declaration 2, Salary Deduction, KYC copies');
+  var sub='Pension Application \u2014 '+(d.coName||'')+' / '+(d.empName||'')+' \u2014 '+(d.agentName||'Ricky Rampersad');
+  var url='mailto:support@rickyrampersadbranch.com?subject='+encodeURIComponent(sub)+'&body='+encodeURIComponent(L.join('\n'));
+  location.href=url;
+  var st=document.getElementById('st-submit'); if(st){ st.textContent='\u2713 Email opened \u2014 attach the downloaded PDFs before sending.'; st.className='status ok'; }
+}
+benMigrate(); loadInitial(); calc(); renderRail(); show(0); if(!bridgeLoad().agentName) bridgeSet('agentName','Ricky Rampersad'); if(!bridgeLoad().agentNo) bridgeSet('agentNo','A00427'); updateVStatus(); schedulePreviews();
+// restore checks
+(function(){ try{ const a=JSON.parse(bridgeLoad().checks||'[]'); document.querySelectorAll('.chkrow').forEach((r,i)=>{ if(a[i]) r.classList.add('on'); }); }catch(e){} })();
+
+/* ===================== THE CASE FILE — save state, export, import, reset =====================
+   Everything typed lives in this browser's localStorage and nowhere else. Export
+   writes it to a file so a case can be backed up or carried to another device;
+   the uploaded ID photos stay in memory only and are never written to the file. */
+var saveTimer=null, saveMsgTimer=null;
+function saveFlash(msg){
+  var el=document.getElementById('saveDot'); if(!el) return;
+  el.textContent=msg||'Saved on this device';
+  el.classList.add('flash');
+  clearTimeout(saveTimer); saveTimer=setTimeout(function(){ el.classList.remove('flash'); },600);
+  if(msg){ clearTimeout(saveMsgTimer); saveMsgTimer=setTimeout(function(){ el.textContent='Saved on this device'; },6000); }
+}
+(function(){ var _write=bridgeWrite; bridgeWrite=function(d){ _write(d); saveFlash(); }; })();
+
+function caseFileName(){
+  var d=bridgeLoad();
+  var who=(d.empName||d.coName||'case').trim().replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+  return 'RRB_Pension_Case_'+(who||'case')+'.json';
+}
+function exportCase(){
+  var payload={ format:'rrb-pension-case', version:1, savedAt:new Date().toISOString(), data:bridgeLoad() };
+  var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  var u=URL.createObjectURL(blob), a=document.createElement('a');
+  a.href=u; a.download=caseFileName(); document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(u); a.remove(); },1500);
+  saveFlash('Case exported — ID photos are not in the file');
+}
+function importCase(input){
+  var f=input.files&&input.files[0]; input.value='';
+  if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){
+    var parsed=null;
+    try{ parsed=JSON.parse(r.result); }catch(e){}
+    var data=(parsed&&parsed.format==='rrb-pension-case')?parsed.data:null;
+    if(!data||typeof data!=='object'||Array.isArray(data)){ alert('That file is not a saved pension case.'); return; }
+    if(!confirm('Open this case? It replaces the case currently on this device — export that one first if you still need it.')) return;
+    bridgeWrite(data);
+    location.reload();
+  };
+  r.onerror=function(){ alert('That file could not be read.'); };
+  r.readAsText(f);
+}
+function newCase(){
+  if(!confirm('Start a new, empty case?\n\nThe case currently open is cleared from this device. Export it first if you need to keep it.')) return;
+  try{ localStorage.removeItem(RRB_KEY); }catch(e){}
+  location.reload();
+}
+
+/* Field kit: cache the wizard and the blank forms so it still works where the
+   signal does not. Registration is best-effort and never blocks the page. */
+if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){
+  window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
+}
+</script>
+</body>
+</html>

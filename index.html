@@ -796,6 +796,7 @@
     <div class="nav-links">
       <a href="#quotes">Quotes</a>
       <a href="#apply">Apply</a>
+      <a href="/pension/">Pension</a>
       <a href="#clients">Clients</a>
       <a href="#careers">Careers</a>
       <a href="#portals">Portals</a>
@@ -999,12 +1000,13 @@
         <p>Personal accident & income protection — get your quote with our new online system.</p>
         <span class="go">Get PA Quote ↗</span>
       </a>
-      <div class="tile reveal" style="opacity:.55; cursor:default">
+      <a class="tile reveal" href="/pension/">
+        <span class="badge">New</span>
         <div class="ico">🏦</div>
         <h3>Pension</h3>
-        <p>Retirement and pension quotations are being added.</p>
-        <span class="go" style="color:var(--muted)">Coming Soon</span>
-      </div>
+        <p>Company-owned pension: work out the Section 134 maximum, pick the plan and build the whole application in minutes.</p>
+        <span class="go">Open Pension Wizard →</span>
+      </a>
       <a class="tile reveal" href="https://www.employeebenefitstt.com/" target="_blank" rel="noopener">
         <span class="badge">New</span>
         <div class="ico">👥</div>
@@ -1394,8 +1396,9 @@
     },
     retirement: {
       title: 'Retirement & pensions',
-      sub: 'Our pension quote system is in build. Start planning today:',
+      sub: 'Company-owned pensions are live. Personal retirement planning starts with a needs analysis.',
       options: [
+        { ico: '🏦', label: 'Company-owned pension — start the application', desc: 'Section 134 computation, plan selection and the full Guardian application, built as you type.', url: '/pension/' },
         { ico: '🧭', label: 'Retirement needs analysis', desc: 'FactFind360 shows your retirement gap and what it takes to close it.', url: 'https://factfind360.com' },
         { ico: '💬', label: 'Talk to the branch', desc: 'Send us your details through the client welcome form and an advisor will reach out.', url: 'https://form.jotform.com/213058098808059' }
       ]

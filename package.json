@@ -1,0 +1,10 @@
+{
+  "name": "rickyrampersadbranch-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Ricky Rampersad Branch website. Static pages plus Netlify functions (the pension wizard's RIA assistant).",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.116.0"
+  }
+}

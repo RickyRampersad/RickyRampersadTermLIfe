@@ -1,4 +1,10 @@
-# Netlify configuration for the renewal portal.
+# Netlify configuration for the Ricky Rampersad Branch site.
+
+# Static site: the repository root is published as-is. The only server-side
+# code is in netlify/functions (see PENSION-SETUP.md).
+[build]
+  publish = "."
+  functions = "netlify/functions"
 
 # Short personal links: /r/<token> → renewal portal with the token attached.
 # These are the links stored in the Google Sheet's "Portal Link" column.
@@ -13,9 +19,31 @@
   to = "/renewal/"
   status = 302
 
+# Convenience: /pension opens the pension application wizard.
+[[redirects]]
+  from = "/pension"
+  to = "/pension/"
+  status = 301
+
 [[headers]]
   for = "/renewal/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer"
+
+# The wizard holds client data in the browser only — keep it out of frames and
+# out of referrer headers.
+[[headers]]
+  for = "/pension/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+
+# The blank Guardian forms and the PDF engine are ~2.9 MB and never change
+# without a filename change, so let the browser keep them for a year.
+[[headers]]
+  for = "/pension/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

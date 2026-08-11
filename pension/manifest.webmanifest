@@ -1,0 +1,19 @@
+{
+  "name": "RRB Pension Application Wizard",
+  "short_name": "RRB Pension",
+  "description": "Section 134 computation, Guardian declarations, salary deduction and KYC — Ricky Rampersad Branch.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0a1228",
+  "theme_color": "#0a1228",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
