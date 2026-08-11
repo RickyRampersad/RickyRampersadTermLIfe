@@ -753,18 +753,22 @@ function agentLogin(){
   const btn=document.getElementById('agentGo');btn.disabled=true;btn.textContent='Checking…';
   const done=()=>{btn.disabled=false;btn.textContent='Sign in';};
   const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),10000);
-  fetch(SHEET_WEBHOOK_URL+'?action=agentauth&num='+encodeURIComponent(num)+'&pwd='+encodeURIComponent(pwd)+'&code='+encodeURIComponent(num||pwd),{signal:ctl.signal})
+  /* POST, so the password never lands in a URL, a proxy log or browser history */
+  fetch(SHEET_WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({action:'agentauth',num:num,pwd:pwd,code:num||pwd}),signal:ctl.signal})
     .then(r=>r.json()).then(d=>{
       clearTimeout(to);done();
-      if(d&&d.ok===true)gatePass(num||pwd,d.name||'',d.email||'',d.role||'agent');
+      if(d&&d.ok===true)gatePass(num||pwd,d.name||'',d.email||'',d.role||'agent',d.token||'');
       else if(d&&d.ok===false&&d.why==='pwd'){_gateTries++;out.innerHTML='<div class="trackcard">That password doesn\'t match this agent number — check your entry and try again.</div>';if(_gateTries>=5){_gateLockTil=Date.now()+60000;_gateTries=0;}}
+      else if(d&&d.ok===false&&d.why==='rate'){out.innerHTML='<div class="trackcard">Too many sign-in attempts for that number — give it ten minutes, or <a class="tracklink" href="https://wa.me/'+BRANCH_WA+'" target="_blank" rel="noopener">WhatsApp the branch</a>.</div>';}
+      else if(d&&d.ok===false&&d.why==='nopw'){out.innerHTML='<div class="trackcard">No password is set for that agent number yet — <a class="tracklink" href="https://wa.me/'+BRANCH_WA+'" target="_blank" rel="noopener">WhatsApp the branch</a> to get yours.</div>';}
       else if(d&&d.ok===false)gateFail(out);
       else gateOffline(num||pwd,out);
     })
     .catch(()=>{clearTimeout(to);done();gateOffline(num||pwd,out);});
 }
-function gatePass(code,name,email,role){
-  agentAuth={code:code,name:name,email:email,role:(role||'agent')};
+function gatePass(code,name,email,role,token){
+  agentAuth={code:code,name:name,email:email,role:(role||'agent'),token:token||''};
   _gateTries=0;dashData=null;
   document.getElementById('gateOut').innerHTML='';
   document.getElementById('agentCode').value='';
@@ -805,7 +809,8 @@ function dashFetch(){
   list.innerHTML='<div class="trackcard">Loading the list…</div>';
   document.getElementById('dashSum').textContent='';
   const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),15000);
-  fetch(SHEET_WEBHOOK_URL+'?action=myqueries&code='+encodeURIComponent(agentAuth.code),{signal:ctl.signal})
+  fetch(SHEET_WEBHOOK_URL+'?action=myqueries&token='+encodeURIComponent(agentAuth.token||'')
+        +'&code='+encodeURIComponent(agentAuth.code),{signal:ctl.signal})
     .then(r=>r.json()).then(d=>{
       clearTimeout(to);_dashBusy=false;
       if(d&&d.ok===true&&Array.isArray(d.rows)){dashData=d;dashSetup();dashRender();}

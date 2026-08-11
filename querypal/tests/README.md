@@ -1,6 +1,6 @@
 # Query Pal attachment tests
 
-Two suites covering photo **and document** attachments.
+Six suites covering attachments, routing, reminders, the leaderboard and security.
 
 ```bash
 cd querypal/tests
@@ -16,9 +16,15 @@ node routing.test.js
 
 # leaderboard — rankings, role gating, time-range interactivity
 NODE_PATH=/opt/node22/lib/node_modules node leaderboard.browser.test.mjs
+
+# security — routing lookup, escaping, rate limits, password hashing, tokens
+node security.test.js
+
+# sign-in — credentials leave over POST, token drives the dashboard
+NODE_PATH=/opt/node22/lib/node_modules node signin.browser.test.mjs
 ```
 
-Both print `N passed, 0 failed` and exit non-zero on failure. Test fixtures
+Each prints `N passed, 0 failed` and exit non-zero on failure. Test fixtures
 (PDF, .docx, PNG, a rejected .exe, an oversized file) are generated into
 `fixtures/` on each run, so no binaries live in the repo — `fixtures/` is
 disposable and git-ignored.
@@ -48,6 +54,17 @@ the autopilot chases every unresolved status and stops on closed/cancelled.
 **Leaderboard** — on-time percentages, averages and CSAT are computed correctly;
 agents see only their own scorecard while managers and branch see rankings; the
 time-range pills move both the board and the stat tiles.
+
+**Security** — the department is chosen server-side from the query type and an
+unknown type is refused rather than relayed; client text is HTML-escaped before
+it reaches the routed email; rate limits hold for sign-in, submissions and the
+assistant proxy; passwords are salted-hashed and never stored in clear; session
+tokens are random, per-login and carry no agent code; the reference number is
+allocated under a lock that spans the row append.
+
+**Sign-in** — credentials go out in a POST body and appear nowhere in the URL;
+the token is stored and used for dashboard calls; a rejected sign-in leaves no
+session; throttle and missing-password responses each explain themselves.
 
 ## Not covered here
 
