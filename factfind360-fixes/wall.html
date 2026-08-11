@@ -53,6 +53,12 @@
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(45,212,191,.65)}70%{box-shadow:0 0 0 .8em rgba(45,212,191,0)}100%{box-shadow:0 0 0 0 rgba(45,212,191,0)}}
   .clock{font-size:1.42em; font-weight:750} .clock span{color:var(--ink-3); font-size:.6em; margin-left:.45em}
 
+  .ptitle{display:flex; align-items:baseline; gap:.7em; margin-bottom:.15em}
+  .ptitle h1{font-size:1.55em; font-weight:800; letter-spacing:-.02em; line-height:1.15}
+  .ptitle h1 b{color:var(--teal); font-weight:800}
+  .ptitle h1 i{font-style:normal; color:var(--gold)}
+  .ptitle .tag{font-size:.62em; letter-spacing:.2em; text-transform:uppercase; font-weight:800;
+               color:var(--ink-4); padding:.25em .6em; border:1px solid var(--line-2); border-radius:.35em}
   main{position:relative; height:calc(100vh - 5.1em)}
   .panel{position:absolute; inset:0; padding:1.25em 1.5em; display:flex; flex-direction:column; gap:.95em;
          opacity:0; transform:translateY(.7em) scale(.995); pointer-events:none;
@@ -151,6 +157,54 @@
   @keyframes fall{0%{transform:translateY(-12vh) rotate(0); opacity:1}
                   100%{transform:translateY(104vh) rotate(680deg); opacity:0}}
 
+  /* the hero — the number that should stop someone mid-corridor */
+  .hero{display:grid; grid-template-columns:1.15fr 1fr; gap:.9em; align-items:stretch}
+  .hbox{background:linear-gradient(150deg,rgba(45,212,191,.16),rgba(13,148,136,.05));
+        border:1px solid rgba(45,212,191,.32); border-radius:.8em; padding:.9em 1.2em;
+        display:flex; flex-direction:column; justify-content:center; position:relative; overflow:hidden}
+  .hbox::after{content:''; position:absolute; right:-3em; top:-3em; width:9em; height:9em;
+               border-radius:50%; background:radial-gradient(circle,var(--teal-glow),transparent 68%)}
+  .hbox .k{font-size:.72em; letter-spacing:.17em; text-transform:uppercase; color:var(--teal); font-weight:800}
+  .hbox .v{font-size:3.5em; font-weight:800; line-height:1.02; margin-top:.04em}
+  .hbox .s{font-size:.8em; color:var(--ink-2); margin-top:.2em}
+  .hsplit{display:grid; grid-template-rows:1fr 1fr; gap:.9em}
+  .hmini{background:linear-gradient(160deg,var(--panel-2),var(--panel)); border:1px solid var(--line);
+         border-radius:.8em; padding:.7em 1.1em; display:flex; align-items:center; justify-content:space-between; gap:1em}
+  .hmini .k{font-size:.7em; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); font-weight:800}
+  .hmini .v{font-size:1.9em; font-weight:800}
+
+  /* leaderboard rows carrying the real numbers */
+  .lrow{display:grid; grid-template-columns:1.5em 2.5em 1fr repeat(3,minmax(4.6em,auto));
+        align-items:center; gap:.8em; padding:.42em 0}
+  .lrow + .lrow{border-top:1px solid rgba(255,255,255,.045)}
+  .lrow .met{text-align:right}
+  .lrow .met b{display:block; font-size:1.12em; font-weight:800; line-height:1.1}
+  .lrow .met span{display:block; font-size:.6em; color:var(--ink-3); font-weight:700;
+                  letter-spacing:.07em; text-transform:uppercase; margin-top:.1em}
+  .lrow.lead .met b{color:var(--gold)}
+  .lhead{display:grid; grid-template-columns:1.5em 2.5em 1fr repeat(3,minmax(4.6em,auto));
+         gap:.8em; font-size:.6em; letter-spacing:.14em; text-transform:uppercase;
+         color:var(--ink-4); font-weight:800; padding-bottom:.35em; border-bottom:1px solid var(--line)}
+  .lhead div:nth-child(n+4){text-align:right}
+
+  /* congratulations */
+  .spot{display:grid; grid-template-columns:auto 1fr; gap:1.2em; align-items:center;
+        background:linear-gradient(120deg,rgba(245,185,53,.15),rgba(245,185,53,.02));
+        border:1px solid rgba(245,185,53,.32); border-radius:.8em; padding:1em 1.3em}
+  .spot .big{width:4.4em; height:4.4em; border-radius:50%; display:grid; place-items:center;
+             font-size:1.5em; font-weight:800; color:#061018; box-shadow:0 0 2em rgba(245,185,53,.35)}
+  .spot .k{font-size:.7em; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); font-weight:800}
+  .spot .n{font-size:2em; font-weight:800; line-height:1.1; margin-top:.05em}
+  .spot .s{font-size:.88em; color:var(--ink-2); margin-top:.25em}
+  .cheer{display:flex; flex-direction:column; gap:.5em; margin-top:.9em}
+  .cline{display:grid; grid-template-columns:auto 1fr; gap:.75em; align-items:center;
+         background:var(--panel-2); border:1px solid var(--line); border-radius:.55em; padding:.55em .85em}
+  .cline .em{font-size:1.15em}
+  .cline .tx{font-size:.95em; font-weight:600}
+  .cline .tx b{color:var(--teal); font-weight:800}
+  .motto{text-align:center; font-size:1.05em; font-weight:650; color:var(--ink-2);
+         padding:.7em 0 0; font-style:italic}
+
   .ticks{display:flex; gap:.4em; justify-content:center; padding:.55em 0 0}
   .tk{width:2.4em; height:.2em; border-radius:.1em; background:var(--line-2); transition:background .4s}
   .tk.on{background:var(--teal)}
@@ -170,19 +224,29 @@
 <main>
   <!-- 1 · TODAY -->
   <section class="panel" id="p0">
-    <div class="stats">
-      <div class="stat"><div class="k">Today</div><div class="val num" id="tToday">0</div><div class="s">fact finds</div></div>
-      <div class="stat"><div class="k">This week</div><div class="val num" id="tWeek">0</div><div class="s" id="tWeekCmp">—</div></div>
-      <div class="stat g"><div class="k">Recommended</div><div class="val num" id="tPrem">—</div><div class="s">monthly premium, week to date</div></div>
+    <div class="ptitle"><h1 id="t_p0"></h1><span class="tag">The money</span></div>
+    <div class="hero">
+      <div class="hbox">
+        <div class="k">Protection identified this month</div>
+        <div class="v num" id="hNeed">—</div>
+        <div class="s" id="hNeedSub">the gap this branch has found and documented</div>
+      </div>
+      <div class="hsplit">
+        <div class="hmini"><div><div class="k">Cover recommended</div><div class="s" style="font-size:.72em;color:var(--ink-3)">month to date</div></div><div class="v num t" id="hCover">—</div></div>
+        <div class="hmini"><div><div class="k">Monthly premium</div><div class="s" style="font-size:.72em;color:var(--ink-3)">month to date</div></div><div class="v num" style="color:var(--gold)" id="hPrem">—</div></div>
+      </div>
     </div>
     <div class="card grow">
-      <h2><span>Leaderboard</span><em id="wkLbl">week to date</em></h2>
-      <div class="rows grow" id="leaders"><div class="empty">Waiting for the first fact find of the week.</div></div>
+      <h2><span>Leaderboard</span><em id="wkLbl">this week</em></h2>
+      <div class="lhead"><div></div><div></div><div>Advisor</div><div>Fact finds</div><div>Need found</div><div>Cover</div></div>
+      <div class="rows grow" id="leaders" style="margin-top:.35em"></div>
+      <div class="motto" id="motto"></div>
     </div>
   </section>
 
   <!-- 2 · MOMENTUM -->
   <section class="panel" id="p1">
+    <div class="ptitle"><h1 id="t_p1"></h1><span class="tag">Momentum</span></div>
     <div class="stats">
       <div class="stat v"><div class="k" id="mLbl">This month</div><div class="val num" id="mSub">0</div><div class="s">fact finds submitted</div></div>
       <div class="stat"><div class="k">Approved</div><div class="val num" id="mApp">0</div><div class="s">signed off this month</div></div>
@@ -201,8 +265,19 @@
     </div>
   </section>
 
-  <!-- 3 · BRANCH -->
+  <!-- 3 · CONGRATULATIONS -->
   <section class="panel" id="p2">
+    <div class="ptitle"><h1 id="t_p2"></h1><span class="tag">Recognition</span></div>
+    <div class="spot" id="spot"></div>
+    <div class="card grow" style="margin-top:.9em">
+      <h2><span>Worth saying out loud</span><em id="cheerSub"></em></h2>
+      <div class="cheer" id="cheer"></div>
+    </div>
+  </section>
+
+  <!-- 4 · BRANCH -->
+  <section class="panel" id="p3">
+    <div class="ptitle"><h1 id="t_p3"></h1><span class="tag">The branch</span></div>
     <div class="stats">
       <div class="stat"><div class="k">Awaiting review</div><div class="val num" id="qPending">0</div><div class="s">with a manager now</div></div>
       <div class="stat"><div class="k">Oldest</div><div class="val num" id="qOldest">—</div><div class="s" id="qOldestWho">—</div></div>
@@ -214,7 +289,8 @@
     </div>
   </section>
   <!-- 4 · HOW MANAGERS MANAGE -->
-  <section class="panel" id="p3">
+  <section class="panel" id="p4">
+    <div class="ptitle"><h1 id="t_p4"></h1><span class="tag">The managers</span></div>
     <div class="stats">
       <div class="stat"><div class="k">Median turnaround</div><div class="val num" id="pMed">—</div><div class="s">days, submitted to decided</div></div>
       <div class="stat"><div class="k">Approved</div><div class="val num" id="pApp">0</div><div class="s">cases signed off</div></div>
@@ -227,7 +303,31 @@
   </section>
 </main>
 
-<div class="ticks"><span class="tk" id="k0"></span><span class="tk" id="k1"></span><span class="tk" id="k2"></span><span class="tk" id="k3"></span></div>
+  <!-- 6 · THE MONTH -->
+  <section class="panel" id="p5">
+    <div class="ptitle"><h1 id="t_p5"></h1><span class="tag">The month</span></div>
+    <div class="card grow">
+      <h2><span>Month to date</span><em id="mRaceSub"></em></h2>
+      <div class="lhead"><div></div><div></div><div>Advisor</div><div>Fact finds</div><div>Need found</div><div>Cover</div></div>
+      <div class="rows grow" id="mRace" style="margin-top:.35em"></div>
+    </div>
+  </section>
+
+  <!-- 7 · THE WEEK -->
+  <section class="panel" id="p6">
+    <div class="ptitle"><h1 id="t_p6"></h1><span class="tag">The week</span></div>
+    <div class="stats">
+      <div class="stat"><div class="k">This week</div><div class="val num" id="wSub">0</div><div class="s" id="wCmp">—</div></div>
+      <div class="stat g"><div class="k">Weekend work</div><div class="val num" id="wWknd">0</div><div class="s">Saturday &amp; Sunday</div></div>
+      <div class="stat v"><div class="k">Need found</div><div class="val num" id="wNeed">—</div><div class="s">this week</div></div>
+    </div>
+    <div class="cols">
+      <div class="card"><h2><span>Day by day</span><em>this week</em></h2><div class="chart" id="wChart"></div></div>
+      <div class="card"><h2><span>Working the weekend</span><em>who turned up</em></h2><div class="cheer" id="wWho"></div></div>
+    </div>
+  </section>
+
+<div class="ticks"><span class="tk" id="k0"></span><span class="tk" id="k1"></span><span class="tk" id="k2"></span><span class="tk" id="k3"></span><span class="tk" id="k4"></span><span class="tk" id="k5"></span><span class="tk" id="k6"></span></div>
 <div id="burst"></div>
 
 <script>
@@ -235,7 +335,7 @@
 var ENDPOINT = 'https://script.google.com/macros/s/AKfycbyUnSnQtumx9emW_LsWQf6QKZFBGGnaTn3-PfAZDfjtZuBUSha-OuIXPT30qkMrXMoczA/exec';
 var WALL_KEY = '8ef87867eacb4812b455fb3124dde161';
 
-var POLL_MS = 45000, ROTATE_MS = 24000, STALE_MS = 150000, PANELS = 4;
+var POLL_MS = 40000, ROTATE_MS = 15000, STALE_MS = 150000, PANELS = 7;
 var lastGood=null, lastAt=0, panel=0, lastJustIn='', prevRank={}, seenApprovals={}, firstPaint=true;
 
 function $(id){ return document.getElementById(id); }
@@ -314,17 +414,145 @@ function leaderRows(list, box, rankKey){
   });
 }
 
+/* Big money reads better rounded hard — TT$4.2M, not TT$4,187,300. */
+function big(n){ n=Math.round(n);
+  if(n>=1e6) return 'TT$'+(n/1e6).toFixed(n>=1e7?1:2)+'M';
+  if(n>=1e3) return 'TT$'+Math.round(n/1e3)+'k';
+  return 'TT$'+n; }
+
+/* A leaderboard row carrying what the work is actually worth. */
+function richRows(list, box, key){
+  if(!list.length){ box.innerHTML='<div class="empty">Nothing yet — first one on the board sets the pace.</div>'; return; }
+  var top=list[0].count||1;
+  box.innerHTML=list.slice(0,7).map(function(a,i){
+    var av2=avatar(a.name), was=prevRank[key+a.name];
+    var mv = was===undefined ? (firstPaint?'':'<span class="mv n">NEW</span>')
+           : was>i ? '<span class="mv u">▲'+(was-i)+'</span>'
+           : was<i ? '<span class="mv d">▼'+(i-was)+'</span>' : '';
+    return '<div class="lrow'+(i===0?' lead':'')+'">'+
+      '<div class="rank num">'+(i+1)+'</div>'+
+      '<div class="av" style="background:'+av2.bg+'">'+av2.ini+'</div>'+
+      '<div><div class="who"><span class="nm"></span>'+mv+'</div>'+
+        '<div class="bar"><i data-w="'+Math.max(5,Math.round(a.count/top*100))+'"></i></div></div>'+
+      '<div class="met"><b>'+a.count+'</b><span>found</span></div>'+
+      '<div class="met"><b>'+big(a.need||0)+'</b><span>need</span></div>'+
+      '<div class="met"><b>'+big(a.cover||0)+'</b><span>cover</span></div></div>';
+  }).join('');
+  var nm=box.querySelectorAll('.nm');
+  list.slice(0,7).forEach(function(a,i){ if(nm[i]) nm[i].textContent=a.name; prevRank[key+a.name]=i; });
+  requestAnimationFrame(function(){ box.querySelectorAll('.bar i').forEach(function(b,i){
+    setTimeout(function(){ b.style.width=b.dataset.w+'%'; },55*i); }); });
+}
+
+/* Recognition: who led, and what is genuinely worth saying. */
+function renderSpotlight(d){
+  var wk=(d.leaders||[]), mo=(d.monthLeaders||[]), star=wk[0]||mo[0];
+  if(star){ var a=avatar(star.name);
+    $('spot').innerHTML='<div class="big" style="background:'+a.bg+'">'+a.ini+'</div>'+
+      '<div><div class="k">Leading this week</div><div class="n"><span class="sn"></span></div>'+
+      '<div class="s">'+star.count+' fact find'+(star.count===1?'':'s')+
+      (star.need? ' · '+big(star.need)+' of need identified':'')+'</div></div>';
+    $('spot').querySelector('.sn').textContent=star.name;
+  } else {
+    $('spot').innerHTML='<div class="big" style="background:linear-gradient(145deg,#334,#223)">—</div>'+
+      '<div><div class="k">This week</div><div class="n">Still open</div>'+
+      '<div class="s">First fact find of the week takes the lead.</div></div>';
+  }
+
+  var lines=[], M=d.month||{}, W=d.week||{}, WK=d.weekend||{week:0,who:[]};
+  if(M.need>0) lines.push(['🛡️','The branch has identified <b>'+big(M.need)+'</b> of unmet protection this month.']);
+  if(M.approved>0) lines.push(['✅','<b>'+M.approved+'</b> plan'+(M.approved===1?'':'s')+' approved and moving.']);
+  if(WK.week>0) lines.push(['🔥','<b>'+WK.week+'</b> fact find'+(WK.week===1?'':'s')+' done at the weekend. That is choosing to show up.']);
+  if(W.submitted>W.lastWeek && W.lastWeek>0) lines.push(['📈','Ahead of last week by <b>'+(W.submitted-W.lastWeek)+'</b> already.']);
+  mo.slice(0,3).forEach(function(a){ if(a.count>=5)
+    lines.push(['🏅','<b>'+a.name+'</b> has '+a.count+' this month — that is a habit, not a run of luck.']); });
+  (d.approvals||[]).slice(0,2).forEach(function(x){
+    lines.push(['👏','Congratulations <b>'+x.agent+'</b> — approved and ready to present.']); });
+  if(!lines.length) lines.push(['🌅','A clean sheet. The first fact find of the day sets the tone.']);
+
+  $('cheer').innerHTML=lines.slice(0,6).map(function(l){
+    return '<div class="cline"><div class="em">'+l[0]+'</div><div class="tx">'+l[1]+'</div></div>'; }).join('');
+  $('cheerSub').textContent=(d.month&&d.month.label)||'';
+}
+
+/* Headline per panel — the number leads, not the label. */
+function headlines(d){
+  var M=d.month||{}, W=d.week||{}, WK=d.weekend||{week:0}, q=d.queue||{}, L=(d.leaders||[])[0];
+  var mp=(d.managerPerf||[]).filter(function(x){return x.reviewed>0;});
+  var ds=mp.map(function(m){return m.medianDays;}).filter(function(x){return x!==null;}).sort(function(a,b){return a-b;});
+  var md=ds.length? ds[Math.floor(ds.length/2)] : null;
+  var set=function(id,html){ var el=$(id); if(el) el.innerHTML=html; };
+  set('t_p0', M.need>0 ? '<b>'+big(M.need)+'</b> of protection found this month'
+                       : 'The board is open');
+  set('t_p1', M.submitted? '<b>'+M.submitted+'</b> fact finds in '+(M.label||'this month')
+                         : 'Momentum starts today');
+  set('t_p2', L? 'Leading the week: <i>'+esc(L.name)+'</i>' : 'Recognition');
+  set('t_p3', q.pending? '<b>'+q.pending+'</b> waiting on a manager'
+                       : 'The queue is <b>clear</b>');
+  set('t_p4', md!==null? 'Managers decide in <b>'+md+' days</b>' : 'How managers are managing');
+  set('t_p5', (d.monthLeaders||[]).length? '<b>'+esc(d.monthLeaders[0].name)+'</b> leads '+(M.label||'the month')
+                                         : 'The month ahead');
+  set('t_p6', WK.week>0 ? '<b>'+WK.week+'</b> done at the weekend'
+                        : (W.submitted? '<b>'+W.submitted+'</b> this week' : 'A fresh week'));
+}
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+/* A closing line that reflects where the branch actually is. */
+function motto(d){
+  var M=d.month||{}, q=d.queue||{};
+  if((M.need||0)>1e6) return '“Every number here started as a conversation somebody chose to have.”';
+  if(q.pending>10) return '“The work is done. Now it needs a decision.”';
+  if((M.submitted||0)===0) return '“The first one is always the hardest. Somebody take it.”';
+  return '“Find the need, and the sale takes care of itself.”';
+}
+
 function render(d){
-  /* 1 · today */
-  countTo($('tToday'), d.today.submitted);
-  countTo($('tWeek'), d.week.submitted);
-  countTo($('tPrem'), d.week.premium, money);
-  var diff=d.week.submitted-d.week.lastWeek, c=$('tWeekCmp');
-  if(!d.week.lastWeek && !d.week.submitted){ c.textContent='no fact finds yet this week'; c.className='s'; }
+  var M=d.month||{}, W=d.week||{}, WK=d.weekend||{week:0,month:0,who:[]};
+
+  /* 1 · the money */
+  countTo($('hNeed'), M.need||0, big);
+  countTo($('hCover'), M.cover||0, big);
+  countTo($('hPrem'), M.premium||0, money);
+  $('hNeedSub').textContent = (M.submitted||0)+' fact finds this month have documented this much unmet need';
+  richRows(d.leaders||[], $('leaders'), 'w');
+  $('motto').textContent = motto(d);
+
+  /* 6 · the month race */
+  richRows(d.monthLeaders||[], $('mRace'), 'm');
+  $('mRaceSub').textContent=(M.label||'')+' · '+(M.submitted||0)+' fact finds';
+
+  /* 7 · the week */
+  countTo($('wSub'), W.submitted||0);
+  countTo($('wWknd'), WK.week||0);
+  countTo($('wNeed'), W.need||0, big);
+  var diff=(W.submitted||0)-(W.lastWeek||0), c=$('wCmp');
+  if(!W.lastWeek && !W.submitted){ c.textContent='nothing yet this week'; c.className='s'; }
   else if(diff>0){ c.textContent='▲ '+diff+' ahead of last week'; c.className='s up'; }
-  else if(diff<0){ c.textContent='▼ '+Math.abs(diff)+' behind last week at this point'; c.className='s down'; }
+  else if(diff<0){ c.textContent='▼ '+Math.abs(diff)+' behind at this point'; c.className='s down'; }
   else { c.textContent='level with last week'; c.className='s'; }
-  leaderRows(d.leaders||[], $('leaders'), 'w');
+
+  var wk=(d.series||[]).slice(-7), wmx=Math.max(1,Math.max.apply(null,wk.map(function(x){return x.n;})));
+  $('wChart').innerHTML=wk.map(function(x,i){
+    var we=(x.lbl==='Sat'||x.lbl==='Sun');
+    return '<div class="col'+(i===wk.length-1?' today':'')+'">'+
+      '<div class="top num">'+(x.n?x.n:'')+'</div><div class="stack">'+
+      '<div class="seg '+(we?'a':'n')+'" data-h="'+(x.n/wmx*100)+'"></div></div>'+
+      '<div class="lbl"'+(we?' style="color:var(--gold)"':'')+'>'+x.lbl+'</div></div>';
+  }).join('');
+  requestAnimationFrame(function(){ $('wChart').querySelectorAll('.seg').forEach(function(g,i){
+    setTimeout(function(){ g.style.height=g.dataset.h+'%'; },45*i); }); });
+
+  $('wWho').innerHTML = (WK.who&&WK.who.length)
+    ? WK.who.map(function(w){ var a=avatar(w.name);
+        return '<div class="cline"><div class="av" style="background:'+a.bg+'">'+a.ini+'</div>'+
+          '<div class="tx"><span class="wn"></span> &mdash; <b>'+w.n+'</b> at the weekend</div></div>'; }).join('')
+    : '<div class="empty">Nobody worked this weekend. Monday is a fresh start.</div>';
+  var wns=$('wWho').querySelectorAll('.wn');
+  (WK.who||[]).forEach(function(w,i){ if(wns[i]) wns[i].textContent=w.name; });
+
+  /* 3 · recognition */
+  renderSpotlight(d);
 
   /* 2 · momentum */
   $('mLbl').textContent=(d.month&&d.month.label)||'This month';
@@ -414,6 +642,7 @@ function render(d){
     if(!firstPaint && mins<30) celebrate(d.justIn.agent);
     lastJustIn=d.justIn.at;
   }
+  headlines(d);
   firstPaint=false;
 }
 

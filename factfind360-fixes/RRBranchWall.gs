@@ -109,9 +109,11 @@ function rrbWall(e) {
 
   var tz = Session.getScriptTimeZone();
   var today = { submitted: 0, approved: 0 };
-  var week  = { submitted: 0, approved: 0, premium: 0 };
+  var week  = { submitted: 0, approved: 0, premium: 0, need: 0, cover: 0 };
   var lastWeek = { submitted: 0 };
-  var month = { submitted: 0, approved: 0, premium: 0 };
+  var month = { submitted: 0, approved: 0, premium: 0, need: 0, cover: 0 };
+  // Sunday counts. A branch that works the weekend should see it said out loud.
+  var weekend = { week: 0, month: 0 }, weekendWho = {};
   var agents = {}, monthAgents = {}, managers = {}, approvals = [];
 
   // Fourteen dated buckets, pre-seeded so quiet days are drawn as gaps rather
@@ -157,17 +159,33 @@ function rrbWall(e) {
 
       var dk = Utilities.formatDate(sub, tz, 'yyyy-MM-dd');
       if (series[dk]) series[dk].n++;
+      var wd = sub.getDay(), isWeekend = (wd === 0 || wd === 6);
 
-      if (sub >= startOfMonth && agent) {
-        if (!monthAgents[agent]) monthAgents[agent] = { name: agent, count: 0, premium: 0 };
-        monthAgents[agent].count++;
-        monthAgents[agent].premium += prem;
+      var need = rrbNum_(get(row, 'insuranceNeed_calc'));
+
+      if (sub >= startOfMonth) {
+        month.need += need; month.cover += amt;
+        if (isWeekend) weekend.month++;
+        if (agent) {
+          if (!monthAgents[agent]) monthAgents[agent] =
+            { name: agent, count: 0, premium: 0, cover: 0, need: 0 };
+          monthAgents[agent].count++;
+          monthAgents[agent].premium += prem;
+          monthAgents[agent].cover   += amt;
+          monthAgents[agent].need    += need;
+        }
       }
-      if (sub >= startOfWeek && agent) {
-        if (!agents[agent]) agents[agent] = { name: agent, count: 0, premium: 0, cover: 0 };
-        agents[agent].count++;
-        agents[agent].premium += prem;
-        agents[agent].cover   += amt;
+      if (sub >= startOfWeek) {
+        week.need += need; week.cover += amt;
+        if (isWeekend) { weekend.week++; if (agent) weekendWho[agent] = (weekendWho[agent] || 0) + 1; }
+        if (agent) {
+          if (!agents[agent]) agents[agent] =
+            { name: agent, count: 0, premium: 0, cover: 0, need: 0 };
+          agents[agent].count++;
+          agents[agent].premium += prem;
+          agents[agent].cover   += amt;
+          agents[agent].need    += need;
+        }
       }
       if (!justIn || sub > new Date(justIn.at)) {
         justIn = { agent: agent || 'an advisor', at: sub.toISOString() };
@@ -251,9 +269,15 @@ function rrbWall(e) {
     asOf: now.toISOString(),
     today: today,
     week: { submitted: week.submitted, approved: week.approved,
-            premium: Math.round(week.premium), lastWeek: lastWeek.submitted },
+            premium: Math.round(week.premium), lastWeek: lastWeek.submitted,
+            need: Math.round(week.need), cover: Math.round(week.cover) },
+    weekend: { week: weekend.week, month: weekend.month,
+               who: Object.keys(weekendWho).map(function (k) {
+                 return { name: k, n: weekendWho[k] }; })
+                 .sort(function (a, b) { return b.n - a.n; }) },
     month: { submitted: month.submitted, approved: month.approved,
-             premium: Math.round(month.premium),
+             premium: Math.round(month.premium), need: Math.round(month.need),
+             cover: Math.round(month.cover),
              label: Utilities.formatDate(now, tz, 'MMMM') },
     series: seriesOrder.map(function (k) { return series[k]; }),
     leaders: toList(agents, 'count').slice(0, 8),
