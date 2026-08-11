@@ -106,3 +106,41 @@ longer than one A4 sheet. That is real content, not a blank.
 The split currently lands mid-heading, so the addendum title is clipped at the
 top of page 8. Shortening that section, or introducing a break within it, would
 tidy it. Cosmetic only.
+
+---
+
+# Submit speed
+
+Once the PDF actually contained something, submission got slow — it had been
+fast only because it was uploading a blank 4KB file.
+
+Measured end-to-end on a real fact find:
+
+| | PDF | Uploaded (base64) | Render |
+|---|---|---|---|
+| scale 2, quality 0.92 | 2.61 MB | 3.47 MB | 15.1s |
+| **scale 1.25, quality 0.80** | **1.02 MB** | **1.40 MB** | 14.0s |
+
+Now uses the lighter setting on both PDF paths. Page 1 was checked visually at
+the new quality — these pages are text and rules, not photographs, so there is
+no visible loss.
+
+Note the render time barely moved. The ~15 seconds is html2canvas walking the
+DOM, not pixel count, so quality settings cannot fix it. What the change buys is
+the upload, which is where the time actually goes on branch mobile data.
+
+## Progress feedback
+
+Fifteen silent seconds reads as a hung page, and agents press submit twice. The
+submit step now counts elapsed seconds, states the expected duration, and shows
+the payload size while uploading.
+
+## Not done: non-blocking submit
+
+Making submit feel instant means POSTing the fact find first and sending the PDF
+in a second request. That needs a new server-side stage: `ffProcessAgentSubmit`
+currently sends the manager and client emails in the same call, so splitting it
+naively either sends them with no PDF attached or sends them twice.
+
+Worth doing, but it is a server change with an email-timing failure mode — not
+the small tweak it first looked like.
