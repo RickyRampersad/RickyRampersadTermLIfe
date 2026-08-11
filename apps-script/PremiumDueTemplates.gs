@@ -12,7 +12,7 @@
  *    day 45   survey invite        the 45-day survey link
  *    day 52   survey reminder      only if they haven't answered
  *    day 60   RETENTION NOTICE     references the 45-day email, gives the
- *                                  client six one-click choices, and copies
+ *                                  client ten grouped one-click options, and copies
  *                                  the agent, their manager and the BM
  *    every 5 days after 60         client chase, while there is no reply
  *    day 88   final notice         last call before lapse
@@ -101,18 +101,48 @@ var SLA = {
   MANAGER_CHASE_EVERY: 3
 };
 
-/* The six choices the 60-day email puts in front of the client. Clicking one
-   records the answer against the policy and stops the chase. */
+/* The options the 60-day letter puts in front of the client, grouped so the list
+   reads as a considered set rather than a wall of buttons. Selecting one records
+   the answer against the policy and stops the reminder sequence.
+
+   Every option is a route that keeps the policy alive or ends it properly. There
+   is no option that leads nowhere, which is the point — a client who tells us
+   anything is a client we can still act for. */
 var CLIENT_CHOICES = [
-  { k: 'pay',    lab: "I'll pay the full amount" },
-  { k: 'plan',   lab: 'I need a payment plan' },
-  { k: 'reduce', lab: "Reduce my premium — I can't manage this amount" },
-  { k: 'bank',   lab: 'My bank or card details changed' },
-  { k: 'call',   lab: 'Please call me to discuss' },
-  { k: 'cancel', lab: 'I want to cancel the policy' }
+  { k: 'pay',       g: 'Settling the amount', lab: 'I will pay the full outstanding amount',
+    next: 'We will watch for it and write to confirm the moment it reaches us.' },
+  { k: 'paid',      g: 'Settling the amount', lab: 'I have already paid — I will send the reference',
+    next: 'Reply to this email with the reference or a photo of the receipt and we will trace it.' },
+  { k: 'plan',      g: 'Settling the amount', lab: 'I need to pay it in instalments',
+    next: 'Your agent and their manager will contact you to agree a schedule you can hold to.' },
+  { k: 'bank',      g: 'Settling the amount', lab: 'My bank or card details have changed',
+    next: 'We will send you a new mandate to sign. This is also worth checking against any other policies you hold with us.' },
+
+  { k: 'reduce',    g: 'Affordability',       lab: 'The premium is more than I can manage — please reduce it',
+    next: 'We will look at lowering the premium or adjusting the benefit and come back to you with written options.' },
+  { k: 'income',    g: 'Affordability',       lab: 'My income has changed and I need to discuss my options',
+    next: 'A manager will review the policy with you personally. There are provisions for exactly this situation.' },
+
+  { k: 'explain',   g: 'The policy itself',   lab: 'Please explain what this policy actually covers',
+    next: 'Your agent will take you through the benefits, the cash value and what you would lose, before you decide anything.' },
+  { k: 'elsewhere', g: 'The policy itself',   lab: 'I believe I have this cover somewhere else',
+    next: 'We will compare the two side by side with you. Replacing cover is sometimes right and sometimes costly — you should see both before choosing.' },
+
+  { k: 'call',      g: 'Speak with us',       lab: 'Please call me to discuss',
+    next: 'Your agent will call you. If they cannot reach you, their manager will.' },
+  { k: 'cancel',    g: 'Speak with us',       lab: 'I want to cancel the policy',
+    next: 'A manager will speak with you before anything is cancelled, so that you know exactly what you would be giving up.' }
 ];
 
-var PD_BRAND = { teal: '#0E6E64', teal2: '#0A524A', gold: '#C9972B', ink: '#0B1B2B', line: '#D9D3C6' };
+/* The three questions the 45-day email asks. Quoted back verbatim at day 60, so
+   the client sees the same words twice rather than a paraphrase. */
+var SURVEY_QUESTIONS = [
+  'What is the main reason the premium is behind?',
+  'Where do you stand on keeping the policy?',
+  'Is there anything you would like us to know?'
+];
+
+var PD_BRAND = { teal: '#0E6E64', teal2: '#0A524A', gold: '#C9972B', ink: '#0B1B2B', line: '#D9D3C6', red: '#B23A3A' };
 
 /* ============================ small helpers ============================ */
 
@@ -159,21 +189,62 @@ function pdChainCc_(p) {
   return out;
 }
 
-/** The six one-click options, as a block of buttons. */
+/** The options, grouped under their headings. */
 function pdChoiceBlock_(p) {
   if (!OUT.ENGINE_URL) {
-    return pdNote_('<b>Reply to this email</b> and tell us which of these fits: pay in full · a payment plan · ' +
-      'a lower premium · your bank details changed · you would like a call.');
+    var flat = CLIENT_CHOICES.map(function (o) { return '<li style="margin-bottom:5px">' + pdEsc_(o.lab) + '</li>'; }).join('');
+    return pdNote_('<b>Please reply to this email</b> indicating which of the following applies:' +
+      '<ul style="margin:9px 0 0;padding-left:20px">' + flat + '</ul>');
   }
-  var rows = CLIENT_CHOICES.map(function (o) {
-    return '<tr><td style="padding:5px 0">' +
-      '<a href="' + pdRespondLink_(p.Policy, o.k) + '" style="display:block;padding:12px 16px;' +
-      'background:#fff;border:1px solid ' + PD_BRAND.teal + ';border-radius:9px;color:' + PD_BRAND.teal2 +
-      ';text-decoration:none;font-weight:600;font-size:14px">' + pdEsc_(o.lab) + '</a></td></tr>';
-  }).join('');
-  return '<table cellpadding="0" cellspacing="0" style="width:100%;margin:16px 0">' + rows + '</table>' +
-    '<p style="font-size:12px;color:#7C8794;text-align:center;margin-top:-4px">' +
-    'One tap. No form, no password — it just tells us how to help.</p>';
+  var out = '', lastGroup = '';
+  for (var i = 0; i < CLIENT_CHOICES.length; i++) {
+    var o = CLIENT_CHOICES[i];
+    if (o.g !== lastGroup) {
+      if (lastGroup) out += '</table>';
+      out += '<div style="font-size:11px;font-weight:bold;letter-spacing:.08em;text-transform:uppercase;' +
+             'color:#7C8794;margin:16px 0 6px">' + pdEsc_(o.g) + '</div>' +
+             '<table cellpadding="0" cellspacing="0" style="width:100%">';
+      lastGroup = o.g;
+    }
+    out += '<tr><td style="padding:4px 0">' +
+      '<a href="' + pdRespondLink_(p.Policy, o.k) + '" style="display:block;padding:11px 15px;' +
+      'background:#FFFFFF;border:1px solid ' + PD_BRAND.teal + ';border-radius:7px;color:' + PD_BRAND.teal2 +
+      ';text-decoration:none;font-weight:600;font-size:13.5px">' + pdEsc_(o.lab) + '</a></td></tr>';
+  }
+  out += '</table>';
+  return out + '<p style="font-size:12px;color:#7C8794;margin:12px 0 0">' +
+    'Selecting an option records your instruction against the policy immediately. ' +
+    'There is no form to complete and no password required.</p>';
+}
+
+/** What the client told us at 45 days, quoted back. */
+function pdPriorExchange_(p, state) {
+  var s = state && state.survey;
+  var qs = '<ol style="margin:6px 0 0;padding-left:20px;color:#5A6B7B">' +
+    SURVEY_QUESTIONS.map(function (q) { return '<li style="margin-bottom:3px">' + pdEsc_(q) + '</li>'; }).join('') +
+    '</ol>';
+
+  if (!s) {
+    return '<p>On or about day 45 we wrote to you asking three questions about this policy:</p>' + qs +
+      pdNote_('<b>We have not received a reply.</b> That is why this letter sets out the position in full, ' +
+              'and why it is copied to your agent&rsquo;s manager and to the branch manager.');
+  }
+
+  var row = function (k, v) {
+    return '<tr>' +
+      '<td style="padding:7px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:190px;color:#5A6B7B;vertical-align:top">' + k + '</td>' +
+      '<td style="padding:7px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:' + PD_BRAND.ink + '">' + v + '</td>' +
+      '</tr>';
+  };
+  return '<p>On ' + (s.ts ? '<b>' + pdDateOf_(s.ts) + '</b>' : 'or about day 45') +
+    ' we wrote asking three questions about this policy. You replied, and we have your answers on file:</p>' +
+    '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:12px 0;font-size:13px">' +
+      row(pdEsc_(SURVEY_QUESTIONS[0]), pdEsc_(s.surveyReason || '—')) +
+      row(pdEsc_(SURVEY_QUESTIONS[1]), pdEsc_(s.surveyContact || '—')) +
+      (s.surveyPromise ? row(pdEsc_(SURVEY_QUESTIONS[2]), pdEsc_(s.surveyPromise)) : '') +
+    '</table>' +
+    pdNote_('We took you at your word and held the policy on that basis. The premium is still outstanding, ' +
+            'so we are writing again — this time with the full timeline, so nothing about what happens next comes as a surprise.');
 }
 
 /* ============================ email chrome ============================ */
@@ -182,9 +253,10 @@ function pdWrap_(inner, tag) {
   return '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:' + PD_BRAND.ink + ';max-width:620px">' +
     '<div style="background:' + PD_BRAND.teal + ';color:#fff;padding:18px 22px;border-radius:10px 10px 0 0">' +
       '<table width="100%"><tr>' +
-      '<td width="44" valign="middle"><div style="width:36px;height:36px;background:' + PD_BRAND.gold +
+      '<td width="44" valign="middle" style="color:#FFFFFF"><div style="width:36px;height:36px;background:' + PD_BRAND.gold +
         ';border-radius:8px 8px 16px 16px;text-align:center;line-height:36px;font-size:20px;font-weight:bold;color:' + PD_BRAND.teal2 + '">✓</div></td>' +
-      '<td valign="middle" style="padding-left:11px"><b style="font-size:17px">' + pdEsc_(OUT.BRANCH_NAME) + '</b><br>' +
+      '<td valign="middle" style="padding-left:11px;color:#FFFFFF">' +
+        '<b style="font-size:17px;color:#FFFFFF">' + pdEsc_(OUT.BRANCH_NAME) + '</b><br>' +
         '<span style="color:#BFD8D3;font-size:12px">' + pdEsc_(tag || 'Policy services') + '</span></td>' +
       '</tr></table>' +
     '</div>' +
@@ -222,6 +294,78 @@ function pdFacts_(p) {
     (p.LapseDate ? row('Cover ends', pdEsc_(p.LapseDate)) : '') +
     '</table>';
 }
+/* ===================== standard letter furniture =====================
+   Every message uses the same blocks in the same order: reference, numbered
+   sections, timeline where relevant, signature. Consistency is what makes a
+   sequence read as a branch process rather than as somebody's individual email. */
+
+function pdToday_() {
+  return Utilities.formatDate(new Date(), 'America/Port_of_Spain', 'd MMMM yyyy');
+}
+function pdDateOf_(ts) {
+  return ts ? Utilities.formatDate(new Date(Number(ts)), 'America/Port_of_Spain', 'd MMMM yyyy') : '';
+}
+/**
+ * Formal salutation using the full name. Deliberately not "Dear Mr Ramnarine" —
+ * the portfolio carries no title and no way to infer one, and addressing a
+ * client by the wrong one on a letter about their lapsing policy is a poor
+ * way to open. Full name is formal enough and always correct.
+ */
+function pdSalutation_(name) {
+  var n = String(name || '').replace(/\s*\(client\)/i, '').trim();
+  return n ? 'Dear ' + n : 'Dear Policyholder';
+}
+
+/** Date and reference line, as on a letter. */
+function pdRefBlock_(p, subject) {
+  return '<table cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 18px;font-size:13px">' +
+    '<tr><td style="padding:0 0 4px;color:#5A6B7B">' + pdToday_() + '</td></tr>' +
+    '<tr><td style="padding:0;color:' + PD_BRAND.ink + '"><b>Re: Policy No. ' + pdEsc_(p.Policy) +
+      ' — ' + pdEsc_(subject) + '</b></td></tr>' +
+    (p.ClientNo ? '<tr><td style="padding:3px 0 0;color:#5A6B7B">Client reference ' + pdEsc_(p.ClientNo) + '</td></tr>' : '') +
+    '</table>';
+}
+
+/** A numbered section heading with its body. */
+function pdSection_(n, title, body) {
+  return '<div style="margin:18px 0 0">' +
+    '<div style="font-size:13px;font-weight:bold;color:' + PD_BRAND.teal2 + ';margin-bottom:6px">' +
+      n + '. ' + pdEsc_(title) + '</div>' +
+    '<div style="color:' + PD_BRAND.ink + '">' + body + '</div></div>';
+}
+
+/** What happens next, with dates rather than adjectives. */
+function pdTimeline_(p) {
+  var d = Number(p.DaysArrears) || 0;
+  var row = function (when, what, emphasis) {
+    return '<tr>' +
+      '<td style="padding:8px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:118px;white-space:nowrap;color:' +
+        (emphasis ? PD_BRAND.red : '#5A6B7B') + ';font-weight:' + (emphasis ? 'bold' : 'normal') + '">' + when + '</td>' +
+      '<td style="padding:8px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:' + PD_BRAND.ink + '">' + what + '</td>' +
+      '</tr>';
+  };
+  return '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:10px 0;font-size:13px">' +
+    row('Today', 'Day <b>' + d + '</b> — the premium is outstanding and your cover remains in force.') +
+    row('Within 5 days', 'Your agent submits a retention case to their manager, so that any concession you need is formally on record.') +
+    row('Day 75', 'If we have still not heard from you, your agent&rsquo;s manager contacts you directly.') +
+    row('Day 88', 'Final written notice.') +
+    row('Day 90', 'Cover ends. From that date a claim is not payable and reinstatement requires a fresh application.', true) +
+    '</table>';
+}
+
+/** Named signatories, so the client knows exactly who is accountable. */
+function pdSignature_(p) {
+  var mgr = pdManagerOf_(p.Agent);
+  return '<table cellpadding="0" cellspacing="0" style="width:100%;margin:22px 0 0;font-size:13px">' +
+    '<tr><td style="padding:14px 0 0;border-top:1px solid #E8E3D8;color:' + PD_BRAND.ink + '">' +
+      'Yours sincerely,<br><br>' +
+      '<b>' + pdEsc_(p.Agent || OUT.BRANCH_NAME) + '</b><br>' +
+      '<span style="color:#5A6B7B">Financial Advisor' + (mgr ? ' &middot; reporting to ' + pdEsc_(mgr) : '') + '</span><br>' +
+      '<b>' + pdEsc_(OUT.BRANCH_NAME) + '</b><br>' +
+      '<span style="color:#5A6B7B">' + pdEsc_(OUT.BRANCH_PHONE) + ' &middot; ' + pdEsc_(OUT.BRANCH_EMAIL) + '</span>' +
+    '</td></tr></table>';
+}
+
 function pdSig_() {
   return '<p style="margin-top:18px">Warm regards,<br><b>' + pdEsc_(OUT.BRANCH_NAME) + '</b>' +
     (OUT.BRANCH_PHONE ? '<br>' + pdEsc_(OUT.BRANCH_PHONE) : '') +
@@ -255,26 +399,59 @@ var PD_TEMPLATES = {
     };
   },
 
-  /* ---- day 45: ask why, don't lecture. This is the survey. ---- */
+  /* ---- day 45: ask the questions, and remind them what they own ---- */
   s45: function (p) {
     var first = pdFirst_(p.Client), link = pdSurveyLink_(p.Policy), left = pdDaysToLapse_(p);
+    var d = Number(p.DaysArrears) || 0;
+    var sa = Number(p.SumAssured) || 0;
+    var qs = '<ol style="margin:8px 0 0;padding-left:20px">' +
+      SURVEY_QUESTIONS.map(function (q) {
+        return '<li style="margin-bottom:5px;color:' + PD_BRAND.ink + '">' + pdEsc_(q) + '</li>';
+      }).join('') + '</ol>';
+
     return {
-      subject: first + ', we would like to understand — policy ' + p.Policy,
+      subject: 'Policy No. ' + p.Policy + ' — premium outstanding ' + d + ' days',
       html: pdWrap_(
-        '<p>Dear ' + pdEsc_(first) + ',</p>' +
-        '<p>The premium on your policy has been outstanding for about six weeks. Before this goes any further we would rather hear from you than guess.</p>' +
-        pdFacts_(p) +
-        '<p><b>Thirty seconds, three questions.</b> Whatever the reason — money is tight, the billing broke, or the policy is no longer what you need — ' +
-        'tell us and we will work with it. There are more options than most people realise, and they all need you to still be inside the window.</p>' +
-        pdBtn_(link, 'Answer 3 quick questions') +
-        pdNote_('<b>Where this is heading:</b> if nothing changes, cover ends in about <b>' + left + ' days</b>. ' +
-                'From that point a claim would not be paid, and restoring the policy needs a fresh application — sometimes fresh medical evidence.') +
-        '<p>Prefer to talk? Reply to this email or call ' + pdEsc_(OUT.BRANCH_PHONE) + '.</p>' + pdSig_(),
+        pdRefBlock_(p, 'Premium Outstanding') +
+        '<p>' + pdSalutation_(p.Client) + ',</p>' +
+        '<p>The premium on the above policy has been outstanding for <b>' + d + ' days</b>. ' +
+        'Your cover remains in force, and we are writing at this point specifically so that it stays that way.</p>' +
+
+        pdSection_(1, 'Your policy as it stands', pdFacts_(p)) +
+
+        pdSection_(2, 'What this policy does for you',
+          '<p>It is worth restating plainly, because it is easy to lose sight of when a payment slips.</p>' +
+          (sa > 0
+            ? '<p>This policy pays <b>' + pdMoney_(sa) + '</b> to the people who depend on you, at the moment they would ' +
+              'otherwise be facing that loss and a financial one together. It cannot be replaced by savings at short notice, ' +
+              'and it cost you less to put in place then than it would cost to arrange now.</p>'
+            : '<p>This policy pays a benefit to the people who depend on you, at the moment they would otherwise be ' +
+              'facing that loss and a financial one together.</p>') +
+          '<p>It was also underwritten on your health <b>as it was at the time you applied</b>. That is the part most ' +
+          'people do not weigh: if the policy lapses and you later reapply, you are underwritten on your health as it ' +
+          'is then. Where anything has changed in between, the same cover may cost considerably more, or may not be ' +
+          'available at all.</p>') +
+
+        pdSection_(3, 'Three questions, and why we are asking',
+          '<p>We would rather understand your situation than assume it. There are more options available than most ' +
+          'policyholders realise — reduced premiums, altered benefits, payment schedules — but every one of them ' +
+          'requires us to know which problem we are solving.</p>' + qs +
+          pdBtn_(link, 'Answer the three questions') +
+          '<p style="font-size:13px;color:#5A6B7B">It takes about thirty seconds. There is no form to complete and no password.</p>') +
+
+        pdSection_(4, 'If we do not hear from you',
+          pdNote_('Cover ends <b>' + left + ' days</b> from today if the premium remains outstanding. From that date a ' +
+                  'claim is not payable. We will write again at day 60 setting out the full position, and your agent&rsquo;s ' +
+                  'manager will be copied at that stage.')) +
+
+        '<p style="margin-top:18px">If you would prefer to talk it through, reply to this email or call ' +
+        pdEsc_(OUT.BRANCH_PHONE) + '.</p>' +
+        pdSignature_(p),
         '45-day review'),
-      whatsapp: 'Hi ' + first + ", it's " + OUT.BRANCH_NAME + '. Your premium on policy ' + p.Policy +
-        ' has been outstanding about 6 weeks, and cover would end in roughly ' + left +
-        " days if nothing changes. Before that happens I'd like to understand what's going on — 3 quick questions, 30 seconds: " +
-        (link ? link : '') + ' Or just reply here and we can sort it out.'
+      whatsapp: 'Good day ' + first + ', this is ' + OUT.BRANCH_NAME + ' regarding policy ' + p.Policy +
+        '. The premium is ' + d + ' days outstanding and cover would end in about ' + left + ' days. ' +
+        'Before it gets there we would rather understand your situation than assume it — there are more options than ' +
+        'most people realise. Three quick questions: ' + (link ? link : '') + ' Or reply here and we will take it from there.'
     };
   },
 
@@ -296,56 +473,85 @@ var PD_TEMPLATES = {
     };
   },
 
-  /* ---- day 60: refers back to the 45-day email, offers a way out, and puts
-         the agent, their manager and the BM on the thread ---- */
-  s60: function (p) {
+  /* ---- day 60: the formal position. Quotes the 45-day exchange back, sets out
+         the timeline with dates, and puts the whole chain on the record. ---- */
+  s60: function (p, state) {
     var first = pdFirst_(p.Client), left = pdDaysToLapse_(p), d = Number(p.DaysArrears) || 0;
     var mgr = pdManagerOf_(p.Agent);
+    var answered = !!(state && state.survey);
     return {
-      subject: 'Following up on our last message — policy ' + p.Policy,
+      subject: 'Policy No. ' + p.Policy + ' — 60 days outstanding, ' + left + ' days to lapse',
       cc: pdChainCc_(p),
       html: pdWrap_(
-        '<p>Dear ' + pdEsc_(first) + ',</p>' +
-        '<p>We wrote to you around day 45 asking what was happening with the premium on policy <b>' +
-        pdEsc_(p.Policy) + '</b>, and we have not heard back. We are not writing to chase you — we are writing because ' +
-        'the window to fix this without consequences is closing.</p>' +
-        pdFacts_(p) +
-        pdNote_('The premium is now <b>' + d + ' days</b> outstanding. Cover ends in about <b>' + left + ' days</b>.') +
-        '<p><b>Tell us which of these fits and we will do the rest.</b> Every one of them keeps your policy alive — ' +
-        'even the last one gets you a proper conversation rather than a silent lapse.</p>' +
-        pdChoiceBlock_(p) +
-        '<p style="font-size:13px;color:#5A6B7B">Your agent <b>' + pdEsc_(p.Agent) + '</b>' +
-        (mgr ? ', their manager <b>' + pdEsc_(mgr) + '</b>' : '') +
-        ' and the branch manager are all copied on this message, so whichever you pick, somebody will act on it.</p>' +
-        '<p>Or simply call ' + pdEsc_(OUT.BRANCH_PHONE) + '.</p>' + pdSig_(),
+        pdRefBlock_(p, 'Premium Outstanding — 60 Days') +
+        '<p>' + pdSalutation_(p.Client) + ',</p>' +
+        '<p>We are writing formally regarding the premium on the above policy, which is now <b>' + d +
+        ' days</b> outstanding. This letter is copied to your agent, to their manager and to the branch manager, ' +
+        'so that everyone who can act on your behalf is working from the same information.</p>' +
+
+        pdSection_(1, 'Our previous correspondence', pdPriorExchange_(p, state)) +
+
+        pdSection_(2, 'Your policy as it stands', pdFacts_(p)) +
+
+        pdSection_(3, 'What happens from here', pdTimeline_(p)) +
+
+        pdSection_(4, 'What we need from you',
+          '<p>Please select whichever of the following describes your position. ' +
+          (answered
+            ? 'If your circumstances have changed since you last wrote to us, this is the point to say so.'
+            : 'If none of them is quite right, select the closest and add a note when you reply.') +
+          '</p>' + pdChoiceBlock_(p)) +
+
+        pdSection_(5, 'Who is handling this',
+          '<p style="font-size:13.5px">Your agent <b>' + pdEsc_(p.Agent) + '</b>' +
+          (mgr ? ' and their manager <b>' + pdEsc_(mgr) + '</b>' : '') +
+          ' are both accountable for this policy, and the branch manager is copied. Whichever option you select is ' +
+          'recorded against the policy immediately and assigned to them. You do not need to chase anybody.</p>' +
+          '<p style="font-size:13.5px">If you would rather speak to someone directly, call <b>' +
+          pdEsc_(OUT.BRANCH_PHONE) + '</b> and quote policy number ' + pdEsc_(p.Policy) + '.</p>') +
+
+        pdSignature_(p),
         '60-day retention'),
-      whatsapp: 'Hi ' + first + ' — ' + OUT.BRANCH_NAME + '. We wrote around day 45 about policy ' + p.Policy +
-        " and haven't heard back. It's now " + d + ' days behind, so cover ends in about ' + left +
-        ' days. Your agent, their manager and the branch manager are all across this — we would rather fix it than lose it. ' +
-        'Which fits: pay in full, a payment plan, a lower premium, a bank detail change, or a call back?'
+      whatsapp: 'Good day ' + first + ', ' + OUT.BRANCH_NAME + ' regarding policy ' + p.Policy + '. ' +
+        (answered
+          ? 'Thank you for replying to us earlier — we held the policy on that basis, but the premium is still outstanding. '
+          : 'We wrote at day 45 and have not had a reply. ') +
+        'It is now ' + d + ' days outstanding and cover ends in ' + left + ' days. ' +
+        'A formal letter is with you setting out the timeline and your options, copied to your agent, their manager and the branch manager. ' +
+        'Please open it and select an option, or call ' + OUT.BRANCH_PHONE + '.'
     };
   },
 
   /* ---- every 5 days after 60, while the client has said nothing ---- */
-  chase: function (p) {
+  chase: function (p, state) {
     var first = pdFirst_(p.Client), left = pdDaysToLapse_(p), d = Number(p.DaysArrears) || 0;
     var mgr = pdManagerOf_(p.Agent);
     return {
-      subject: 'Still no word — policy ' + p.Policy + ', ' + left + ' days left',
+      subject: 'Policy No. ' + p.Policy + ' — reminder, ' + left + ' days to lapse',
       cc: pdChainCc_(p),
       html: pdWrap_(
-        '<p>Dear ' + pdEsc_(first) + ',</p>' +
-        '<p>We have written before and have not been able to reach you. Policy <b>' + pdEsc_(p.Policy) +
-        '</b> is now <b>' + d + ' days</b> behind, and cover ends in about <b>' + left + ' days</b>.</p>' +
-        pdNote_('We do not want this to lapse by silence. If the answer is that you want to stop the policy, ' +
-                'tell us that — we will close it properly and make sure you understand what you are giving up.') +
-        pdChoiceBlock_(p) +
-        (mgr ? '<p style="font-size:13px;color:#5A6B7B"><b>' + pdEsc_(mgr) + '</b> has been asked to reach out to you directly as well.</p>' : '') +
-        '<p>Call ' + pdEsc_(OUT.BRANCH_PHONE) + ' any time.</p>' + pdSig_(),
-        'Follow-up'),
-      whatsapp: 'Hi ' + first + ', following up again on policy ' + p.Policy + '. It is ' + d +
-        ' days behind and cover ends in about ' + left +
-        " days. I don't want this to lapse by silence — even one line back, including \"I want to stop it\", lets me act."
+        pdRefBlock_(p, 'Premium Outstanding — Reminder') +
+        '<p>' + pdSalutation_(p.Client) + ',</p>' +
+        '<p>We wrote to you at day 60 setting out the position on this policy and have not yet had your instruction. ' +
+        'The premium is now <b>' + d + ' days</b> outstanding and cover ends in <b>' + left + ' days</b>.</p>' +
+
+        pdSection_(1, 'The remaining timeline', pdTimeline_(p)) +
+
+        pdSection_(2, 'Please select an option',
+          '<p>Any one of these keeps the matter open and puts it in front of someone who can act. ' +
+          'Selecting the last one is a decision we will respect — but we would rather record it properly than ' +
+          'let the policy lapse by silence.</p>' + pdChoiceBlock_(p)) +
+
+        (mgr ? pdNote_('<b>' + pdEsc_(mgr) + '</b> has been asked to contact you directly in addition to this letter.') : '') +
+
+        '<p style="margin-top:18px">Call <b>' + pdEsc_(OUT.BRANCH_PHONE) + '</b> at any time and quote policy number ' +
+        pdEsc_(p.Policy) + '.</p>' +
+        pdSignature_(p),
+        'Reminder'),
+      whatsapp: 'Good day ' + first + ', ' + OUT.BRANCH_NAME + ' following up on policy ' + p.Policy + '. It is ' + d +
+        ' days outstanding with ' + left + ' days before cover ends. ' +
+        (mgr ? mgr + ' has also been asked to contact you. ' : '') +
+        'Even a one-line reply — including that you want to stop it — lets us act properly rather than let it lapse.'
     };
   },
 
@@ -429,10 +635,15 @@ var PD_TEMPLATES = {
   }
 };
 
-/** The one call the engine UI and the daily run both use. */
-function pdRender(stageKey, policy) {
+/**
+ * The one call the engine UI and the daily run both use.
+ * state carries what we already know about the case — the 45-day survey answers
+ * in particular, so the 60-day letter can quote them back rather than pretend
+ * the earlier exchange never happened.
+ */
+function pdRender(stageKey, policy, state) {
   var fn = PD_TEMPLATES[stageKey];
-  return fn ? fn(policy) : null;
+  return fn ? fn(policy, state) : null;
 }
 
 /* ==================== internal: escalate to the manager ==================== */
@@ -512,7 +723,10 @@ function pdCaseState_() {
   for (var i = 1; i < v.length; i++) {
     var policy = String(v[i][2] || ''); if (!policy) continue;
     var type = String(v[i][10] || ''), ts = Number(v[i][0]) || 0;
-    var s = map[policy] || (map[policy] = { responded: false, retentionTs: 0, verdict: false, chases: {} });
+    var s = map[policy] || (map[policy] = { responded: false, retentionTs: 0, verdict: false, chases: {}, survey: null });
+    if (type === 'survey') {
+      s.survey = { ts: ts, surveyReason: v[i][15], surveyContact: v[i][16], surveyPromise: v[i][17] };
+    }
     if (type === 'response') s.responded = true;
     else if (type === 'retention') s.retentionTs = Math.max(s.retentionTs, ts);
     else if (type === 'verdict') s.verdict = true;
@@ -640,7 +854,7 @@ function dailyPremiumDueRun() {
   for (var i = 0; i < payload.policies.length; i++) {
     if (count >= OUT.MAX_SENDS_PER_RUN) break;
     var p = payload.policies[i];
-    var s = states[String(p.Policy)] || { responded: false, retentionTs: 0, verdict: false, chases: {} };
+    var s = states[String(p.Policy)] || { responded: false, retentionTs: 0, verdict: false, chases: {}, survey: null };
 
     internal += pdInternalChase_(p, s);          // agent / manager accountability
 
@@ -651,7 +865,7 @@ function dailyPremiumDueRun() {
     if (stageKey === 'chase' && sent[String(p.Policy) + '|chase|' + (Number(p.DaysArrears) || 0)]) continue;
     if ((Number(p.Premium) || 0) < OUT.MIN_PREMIUM) continue;
 
-    var tpl = pdRender(stageKey, p);
+    var tpl = pdRender(stageKey, p, s);
     if (!tpl) continue;
     var to = pdValidEmail_(p.Email);
     planned++;
@@ -696,8 +910,10 @@ function pdPreview() {
     Premium: 538.90, Status: 2, DaysArrears: 78, LapseDate: '19 Jun 2026',
     Email: 'saira.ramnarine@example.com', StatusDesc: 'Premium Paying'
   };
+  var demoState = { survey: { ts: Date.now() - 15 * 86400000, surveyReason: 'Financial difficulty',
+    surveyContact: 'Wants to keep', surveyPromise: 'I can resume payments from September salary' } };
   ['od', 's45', 's45r', 's60', 'chase', 's88', 'winback', 'pend', 'thanks'].forEach(function (k) {
-    var t = pdRender(k, demo);
+    var t = pdRender(k, demo, demoState);
     Logger.log('--- %s ---\nSUBJECT: %s\nWHATSAPP: %s\n', k, t.subject, t.whatsapp);
   });
 }

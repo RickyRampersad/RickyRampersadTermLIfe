@@ -336,6 +336,8 @@ select.f-line{background:#fff}
 .choice-row{display:flex;align-items:center;gap:10px;padding:8px 11px;border-bottom:1px solid var(--line-2);background:var(--paper-2)}
 .choice-row:last-child{border-bottom:none}
 .choice-row .cl{flex:1;font-size:12.5px;color:var(--ink-2)}
+.choice-g{padding:8px 11px 4px;font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--mut);background:var(--paper-2);border-bottom:1px solid var(--line-2)}
 
 /* ===== ESCALATION LADDER ===== */
 .ladder{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:14px;background:var(--paper-2)}
@@ -829,19 +831,30 @@ const VERDICTS=['Approve retention plan','Approve payment plan','Escalate to rei
    The 60-day email carries these as one-click links. A client who picks one has
    told us how to save the policy without having to phone anybody — and the
    chase sequence stops the moment they do. */
+/* Kept in step with CLIENT_CHOICES in apps-script/PremiumDueTemplates.gs — the
+   keys must match, because that file sends the links and this one records what
+   comes back. Grouped so the letter reads as a considered set. */
 const CLIENT_CHOICES=[
-  {k:'pay',    lab:"I'll pay the full amount",
-   next:"We'll watch for it and confirm the moment it reaches us."},
-  {k:'plan',   lab:'I need a payment plan',
-   next:'Your agent and their manager will call you to agree one that works.'},
-  {k:'reduce', lab:"Reduce my premium — I can't manage this amount",
-   next:"We'll look at lowering the premium or adjusting the benefit, and come back to you with options."},
-  {k:'bank',   lab:'My bank or card details changed',
-   next:"We'll send a new mandate form to sign — that usually fixes it for good."},
-  {k:'call',   lab:'Please call me to discuss',
-   next:"Your agent will call you. If they can't reach you, their manager will."},
-  {k:'cancel', lab:'I want to cancel the policy',
-   next:'Before anything is cancelled a manager will speak with you, so you know exactly what you would be giving up.'}
+  {k:'pay',      g:'Settling the amount', lab:'I will pay the full outstanding amount',
+   next:'We will watch for it and write to confirm the moment it reaches us.'},
+  {k:'paid',     g:'Settling the amount', lab:'I have already paid — I will send the reference',
+   next:'Reply to the email with the reference or a photo of the receipt and we will trace it.'},
+  {k:'plan',     g:'Settling the amount', lab:'I need to pay it in instalments',
+   next:'Your agent and their manager will contact you to agree a schedule you can hold to.'},
+  {k:'bank',     g:'Settling the amount', lab:'My bank or card details have changed',
+   next:'We will send you a new mandate to sign. Worth checking against any other policies you hold with us.'},
+  {k:'reduce',   g:'Affordability',       lab:'The premium is more than I can manage — please reduce it',
+   next:'We will look at lowering the premium or adjusting the benefit and come back to you with written options.'},
+  {k:'income',   g:'Affordability',       lab:'My income has changed and I need to discuss my options',
+   next:'A manager will review the policy with you personally. There are provisions for exactly this situation.'},
+  {k:'explain',  g:'The policy itself',   lab:'Please explain what this policy actually covers',
+   next:'Your agent will take you through the benefits, the cash value and what you would lose, before you decide anything.'},
+  {k:'elsewhere',g:'The policy itself',   lab:'I believe I have this cover somewhere else',
+   next:'We will compare the two side by side with you. Replacing cover is sometimes right and sometimes costly.'},
+  {k:'call',     g:'Speak with us',       lab:'Please call me to discuss',
+   next:'Your agent will call you. If they cannot reach you, their manager will.'},
+  {k:'cancel',   g:'Speak with us',       lab:'I want to cancel the policy',
+   next:'A manager will speak with you before anything is cancelled, so that you know exactly what you would be giving up.'}
 ];
 const CHOICE_BY_KEY={}; CLIENT_CHOICES.forEach(o=>CHOICE_BY_KEY[o.k]=o);
 function responseLink(c,key){
@@ -857,14 +870,17 @@ const BRANCH_PHONE='(868) 678-5921';
 const OUT_TPL={
   od:{lab:'Overdue nudge',subject:c=>`A premium on policy ${c.Policy} hasn't reached us`,
     msg:c=>`Hi ${first(c)}, this is the Ricky Rampersad Branch. A premium of ${money(c.Premium)} on policy ${c.Policy} hasn't reached us. Your cover is still active — usually it's just a bank or card change. Can you let me know what suits you?${surveyTail(c)}`},
-  s45:{lab:'45-day survey',subject:c=>`${first(c)}, we would like to understand — policy ${c.Policy}`,
-    msg:c=>`Hi ${first(c)}, it's the Ricky Rampersad Branch. Your premium on policy ${c.Policy} has been outstanding about 6 weeks, and cover would end in roughly ${toLapse(c)} days if nothing changes. Before that happens I'd like to understand what's going on — 3 quick questions, 30 seconds:${surveyTail(c)} Or just reply here and we can sort it out.`},
+  s45:{lab:'45-day letter',subject:c=>`Policy No. ${c.Policy} — premium outstanding ${c.DaysArrears||0} days`,
+    msg:c=>`Good day ${first(c)}, this is the Ricky Rampersad Branch regarding policy ${c.Policy}. The premium is ${c.DaysArrears||0} days outstanding and cover would end in about ${toLapse(c)} days. Before it gets there we would rather understand your situation than assume it — there are more options than most people realise. Three quick questions:${surveyTail(c)} Or reply here and we will take it from there.`},
   s45r:{lab:'Survey reminder',subject:c=>`Still here when you are — policy ${c.Policy}`,
     msg:c=>`Hi ${first(c)}, just following up on policy ${c.Policy}. Cover ends in about ${toLapse(c)} days. Even if the answer is you want to stop it, tell me — I'd rather sort it properly than let it lapse.${surveyTail(c)}`},
-  s60:{lab:'60-day retention',subject:c=>`Following up on our last message — policy ${c.Policy}`,
-    msg:c=>`Hi ${first(c)} — Ricky Rampersad Branch. We wrote about policy ${c.Policy} around day 45 and haven't heard back. It's now ${c.DaysArrears||0} days behind, so cover ends in about ${toLapse(c)} days. Your agent, their manager and the branch manager are all copied on this — we'd rather fix it than lose it. Tell me which of these fits and we'll take it from there: pay in full, a payment plan, a lower premium, a bank detail change, or a call back.`},
-  chase:{lab:'Chase (no reply)',subject:c=>`Still no word — policy ${c.Policy}, ${toLapse(c)} days left`,
-    msg:c=>`Hi ${first(c)}, following up again on policy ${c.Policy}. It's ${c.DaysArrears||0} days behind and cover ends in about ${toLapse(c)} days. I haven't been able to reach you and I don't want this to lapse by silence. Even one line back — including "I want to stop it" — lets me act. ${managerOf(c.Agent)} is copied and will reach out as well.`},
+  s60:{lab:'60-day letter',subject:c=>`Policy No. ${c.Policy} — 60 days outstanding, ${toLapse(c)} days to lapse`,
+    msg:c=>{const st=policyState(c.Policy);
+      return `Good day ${first(c)}, Ricky Rampersad Branch regarding policy ${c.Policy}. ${st.survey
+        ?'Thank you for replying to us earlier — we held the policy on that basis, but the premium is still outstanding. '
+        :'We wrote at day 45 and have not had a reply. '}It is now ${c.DaysArrears||0} days outstanding and cover ends in ${toLapse(c)} days. A formal letter is with you setting out the timeline and your options, copied to your agent, their manager and the branch manager. Please open it and select an option, or call ${BRANCH_PHONE}.`;}},
+  chase:{lab:'Reminder (no reply)',subject:c=>`Policy No. ${c.Policy} — reminder, ${toLapse(c)} days to lapse`,
+    msg:c=>`Good day ${first(c)}, Ricky Rampersad Branch following up on policy ${c.Policy}. It is ${c.DaysArrears||0} days outstanding with ${toLapse(c)} days before cover ends. ${managerOf(c.Agent)} has also been asked to contact you. Even a one-line reply — including that you want to stop it — lets us act properly rather than let it lapse.`},
   s88:{lab:'Final notice',subject:c=>`Final notice — policy ${c.Policy} lapses in ${toLapse(c)} days`,
     msg:c=>`Hi ${first(c)} — final notice on policy ${c.Policy}. It lapses in ${toLapse(c)} day${toLapse(c)===1?'':'s'} and after that a claim is not payable. If there is any way to keep it — smaller premium, payment plan, different date — call me today on ${BRANCH_PHONE}.`},
   winback:{lab:'Win-back',subject:c=>`Policy ${c.Policy} can still be restored`,
@@ -892,9 +908,13 @@ function hasEmail(c){const e=String(c.Email||'').trim();return (!e||/not availab
 /* The six one-click links that go into the 60-day email. */
 function choiceLinksHtml(c){
   if(c.stage!=='s60'&&c.stage!=='s45')return '';
-  return `<div class="note" style="margin-top:12px"><b>One-click options for the client.</b> These go in the 60-day email — clicking one records the answer and stops the chase.</div>
-    <div class="choice-list">${CLIENT_CHOICES.map(o=>
-      `<div class="choice-row"><span class="cl">${esc(o.lab)}</span><button class="btn-sm btn-save" data-copychoice="${esc(o.k)}" type="button">Copy link</button></div>`).join('')}</div>`;
+  let out='',g='';
+  CLIENT_CHOICES.forEach(o=>{
+    if(o.g!==g){g=o.g;out+=`<div class="choice-g">${esc(g)}</div>`;}
+    out+=`<div class="choice-row"><span class="cl">${esc(o.lab)}</span><button class="btn-sm btn-save" data-copychoice="${esc(o.k)}" type="button">Copy link</button></div>`;
+  });
+  return `<div class="note" style="margin-top:12px"><b>The client's options.</b> These are the links in the 60-day letter — selecting one records the answer against the policy and stops the reminders.</div>
+    <div class="choice-list">${out}</div>`;
 }
 function outreachPanel(c){
   const keys=Object.keys(OUT_TPL), def=defaultTpl(c);

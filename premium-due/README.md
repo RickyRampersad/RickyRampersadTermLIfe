@@ -81,7 +81,9 @@ thousands of healthy policies into the lapse funnel.
 ### The 60-day escalation
 
 Day 60 the client gets an email referring back to the 45-day message, carrying
-six one-click choices, with the agent, their unit manager and the BM copied.
+ten one-click choices in four groups, with the agent, their unit manager and
+the BM copied. It quotes the day-45 questions and the client's own answers back
+to them, and sets out the remaining timeline with dates.
 No reply → chased every 5 days. Two internal clocks run alongside it:
 
 | Clock | Deadline | Missed |
