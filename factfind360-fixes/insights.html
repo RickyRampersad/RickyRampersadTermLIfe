@@ -106,6 +106,35 @@
   .arow .t1{font-size:12.5px;font-weight:650} .arow .t2{font-size:11px;color:var(--ink-3);margin-top:1px}
   .arow .n{font-size:16px;font-weight:800}
 
+  /* branch funnel — the narrowing, drawn */
+  .bf{display:flex;flex-direction:column;gap:9px}
+  .bfr .lb{font-size:12px;font-weight:650;color:var(--ink-2)}
+  .bfr .hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .bfr .vl{font-size:13.5px;font-weight:800;font-variant-numeric:tabular-nums}
+  .bfr .tr{height:22px;border-radius:5px;background:rgba(255,255,255,.045);overflow:hidden;margin-top:4px}
+  .bfr .tr i{display:block;height:100%;width:0;border-radius:5px;transition:width .9s cubic-bezier(.2,.75,.3,1)}
+  .bfr .dp{font-size:10.5px;color:var(--ink-4);font-weight:700}
+
+  /* producer board on the dashboard */
+  .pbt{width:100%;border-collapse:collapse;font-size:12.5px}
+  .pbt th{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);
+          font-weight:800;text-align:right;padding:0 0 7px 12px;white-space:nowrap}
+  .pbt th:first-child{text-align:left;padding-left:0}
+  .pbt td{padding:7px 0 7px 12px;border-top:1px solid var(--line);text-align:right;white-space:nowrap;
+          font-variant-numeric:tabular-nums}
+  .pbt td:first-child{text-align:left;width:99%;padding-left:0}
+  .pbt tbody tr{cursor:pointer;transition:background .12s}
+  .pbt tbody tr:hover{background:rgba(45,212,191,.06)}
+  .pbt .up{font-weight:800}
+  .pbt tr.k1 .up{color:#F5B935} .pbt tr.k2 .up{color:#DCE3EC} .pbt tr.k3 .up{color:#E0975A}
+  .pbt tr.k4 .up{color:var(--teal)} .pbt tr.k5 .up{color:#60A5FA} .pbt tr.k6 .up{color:var(--ink-3)}
+  .pbt .rkn{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;
+            font-size:9.5px;font-weight:800;border:1px solid var(--line-2);color:var(--ink-3);margin-right:8px}
+  .pbt tr.k1 .rkn{border-color:#F5B935;color:#F5B935} .pbt tr.k2 .rkn{border-color:#DCE3EC;color:#DCE3EC}
+  .pbt tr.k3 .rkn{border-color:#E0975A;color:#E0975A}
+  .pbt .mini2{height:4px;border-radius:2px;background:rgba(255,255,255,.06);
+              overflow:hidden;margin-top:4px;display:flex}
+  .pbt .mini2 i{display:block;height:100%}
   .empty{color:var(--ink-4);font-size:12px;padding:14px 0;text-align:center}
   .note{font-size:11px;color:var(--ink-4);margin-top:9px;line-height:1.45}
   #tip{position:fixed;z-index:80;background:#0A1220;border:1px solid var(--line-2);border-radius:7px;
@@ -143,8 +172,8 @@
   <span class="who" id="whoami"></span>
   <div id="filters"></div>
   <div class="seg" id="rangeSeg">
-    <button data-r="7">7d</button><button data-r="30" class="on">30d</button>
-    <button data-r="90">90d</button><button data-r="0">Since launch</button>
+    <button data-r="week">This week</button><button data-r="month" class="on">This month</button>
+    <button data-r="ytd">Year to date</button><button data-r="all">Since launch</button>
   </div>
 </header>
 
@@ -166,6 +195,9 @@
   <div class="card c4"><h3><span>Production by product</span><em>API taken</em></h3><div id="products"></div></div>
   <div class="card c4"><h3><span>When fact finds land</span><em>day × hour</em></h3><div id="heat"></div></div>
 
+  <div class="card c5"><h3><span>Branch funnel</span><em id="funNote"></em></h3><div id="bfunnel"></div></div>
+  <div class="card c7"><h3><span>Producer board</span><em id="pbNote"></em></h3><div id="prodBoard"></div></div>
+
   <div class="card c12"><h3><span>Needs attention</span><em>named, oldest first</em></h3><div class="att" id="attention"></div></div>
 </div>
 
@@ -173,8 +205,11 @@
 
 <script>
 var ENDPOINT='https://script.google.com/macros/s/AKfycbyUnSnQtumx9emW_LsWQf6QKZFBGGnaTn3-PfAZDfjtZuBUSha-OuIXPT30qkMrXMoczA/exec';
-var ROWS=[], ME=null, RANGE=30, FILTER={agent:null,manager:null};
+var ROWS=[], ME=null, RANGE='month', FILTER={agent:null,manager:null};
 var $=function(i){return document.getElementById(i);};
+/* Same guard as the wallboard: writing into an element that no longer exists
+   throws, and one throw takes the whole page down. */
+function setText(id,s){ var el=$(id); if(el) el.textContent=s; }
 var TOK_KEY='rrb_insights_token';
 
 /* ── helpers ───────────────────────────────────────────────────────────── */
@@ -229,7 +264,9 @@ function shape(raw){
         apps++;
         var dp=num(r['dec'+i+'Prem'])||rp;
         apiTaken+=dp*mult;
-        var pl=str(r['dec'+i+'Plan'])||p; if(pl) taken.push({plan:pl, api:dp*mult});
+        var pl=str(r['dec'+i+'Plan'])||p;
+        var damt=num(r['dec'+i+'Amt'])||num(r['rec'+i+'Amt']);
+        if(pl) taken.push({plan:pl, api:dp*mult, amt:damt});
       }
     }
     var sub=d(r.submittedAt), rev=d(r.mgrReviewedAt), app=d(r.approvedAt), iv=d(r.interviewDate);
@@ -238,14 +275,35 @@ function shape(raw){
       status:str(r.status).toLowerCase(), advice:/^advice$/i.test(str(r.appType)),
       sub:sub, rev:rev, app:app, iv:iv, recs:recs, prem:prem, cover:cover,
       api:api, apiTaken:apiTaken, apps:apps, assumed:assumed, taken:taken,
+      closed:/^picked up$/i.test(str(r.caseOutcome)),
+      lost:/^not proceeding$/i.test(str(r.caseOutcome)),
       need:num(r.insuranceNeed_calc), surplus:num(r.cashSurplus_calc),
       rep:/^(y|yes|true|1)$/i.test(str(r.repDetected)),
       client:str(r.clientName)||str(r.fullName)||'(client)' };
   }).filter(function(r){ return r.sub; })
     .sort(function(a,b){ return b.sub-a.sub; });
 }
+/* Calendar periods, not rolling windows. 'This month' has to mean the month
+   the branch is actually in, or it will not reconcile with anything anybody
+   else reports. The week starts Sunday, as the branch counts it. */
+function periodStart(){
+  var n=new Date();
+  if(RANGE==='week'){ var d=new Date(n.getFullYear(),n.getMonth(),n.getDate());
+    d.setDate(d.getDate()-d.getDay()); return d; }
+  if(RANGE==='month') return new Date(n.getFullYear(),n.getMonth(),1);
+  if(RANGE==='ytd')   return new Date(n.getFullYear(),0,1);
+  return null;
+}
+function periodLabel(){
+  var n=new Date();
+  return RANGE==='week' ? 'this week'
+       : RANGE==='month'? n.toLocaleDateString(undefined,{month:'long'})
+       : RANGE==='ytd'  ? String(n.getFullYear())+' to date'
+       : 'since launch';
+}
 function inRange(r){
-  if(RANGE && days(r.sub,new Date())>RANGE) return false;
+  var s=periodStart();
+  if(s && r.sub<s) return false;
   if(FILTER.agent && r.agent!==FILTER.agent) return false;
   if(FILTER.manager && r.manager!==FILTER.manager) return false;
   return true;
@@ -283,8 +341,8 @@ function kpi(el,label,value,detail,cls,vals,color){
 /* ── render ────────────────────────────────────────────────────────────── */
 function render(){
   var all=ROWS, rows=ROWS.filter(inRange);
-  var win=RANGE||Math.max(14,Math.ceil(days(all.length?all[all.length-1].sub:new Date(),new Date())));
-  var spDays=Math.min(60,Math.max(14,RANGE||60));
+  var pstart=periodStart();
+  var spDays=Math.min(90,Math.max(14, pstart? Math.ceil(days(pstart,new Date()))+1 : 60));
 
   /* KPI row */
   var approved=rows.filter(function(r){return r.status==='approved';});
@@ -295,7 +353,7 @@ function render(){
   var full=rows.filter(function(r){return !r.advice&&r.need>0&&r.cover>0;});
   var ratio=full.length? Math.round(full.reduce(function(a,r){return a+r.cover/r.need;},0)/full.length*100):null;
 
-  kpi($('k_sub'),'Fact finds',rows.length,RANGE?('last '+RANGE+' days'):'since launch','',dailySeries(rows,spDays,function(r){return r.sub;}),'#2DD4BF');
+  kpi($('k_sub'),'Fact finds',rows.length,periodLabel(),'',dailySeries(rows,spDays,function(r){return r.sub;}),'#2DD4BF');
   kpi($('k_app'),'Approved',approved.length,
       rows.length?Math.round(approved.length/rows.length*100)+'% of submitted':'none yet','g',
       dailySeries(approved,spDays,function(r){return r.app||r.rev;}),'#34D399');
@@ -401,7 +459,7 @@ function render(){
   /* Managers */
   (function(){
     var by={};
-    ROWS.filter(function(r){ return (!RANGE||days(r.sub,new Date())<=RANGE); }).forEach(function(r){
+    ROWS.filter(function(r){ var s=periodStart(); return !s || r.sub>=s; }).forEach(function(r){
       var m=by[r.manager]=by[r.manager]||{name:r.manager,app:0,ret:0,pend:0,ds:[],oldest:0};
       if(r.rev&&r.status==='approved'){ m.app++; m.ds.push(days(r.sub,r.rev)); }
       else if(r.rev&&r.status==='changes_requested'){ m.ret++; m.ds.push(days(r.sub,r.rev)); }
@@ -515,6 +573,77 @@ function render(){
       ' more of the same kinds not shown — open the range or filter to an agent to see them all.</div>';
   })();
 
+  /* Branch funnel — need found narrowing to money collected. Five stages, each
+     bar scaled against the first, with the drop between them stated. */
+  (function(){
+    var need=rows.reduce(function(a,r){return a+r.need;},0);
+    var recC=rows.reduce(function(a,r){return a+r.cover;},0);
+    var sold=rows.reduce(function(a,r){return a+r.taken.reduce(function(x,y){return x+(y.amt||0);},0);},0);
+    var apiR=rows.reduce(function(a,r){return a+r.api;},0);
+    var apiP=rows.reduce(function(a,r){return a+(r.closed?r.apiTaken:0);},0);
+    var pipe=rows.reduce(function(a,r){return a+(r.closed||r.lost?0:r.apiTaken);},0);
+
+    var st=[['Need found',need,'#60A5FA'],['Cover recommended',recC,'#A78BFA'],
+            ['Cover sold',sold,'#2DD4BF']];
+    var st2=[['API recommended',apiR,'#93A7C4'],['API picked up',apiP,'#F5B935']];
+    var mx=Math.max(1,need), mx2=Math.max(1,apiR);
+    function bars(list,scale){
+      return list.map(function(s,i){
+        var prev=i?list[i-1][1]:null;
+        var drop=prev!==null&&prev>0? Math.round((prev-s[1])/prev*100):null;
+        return '<div class="bfr"><div class="hd"><span class="lb">'+s[0]+'</span>'+
+          '<span class="vl" style="color:'+s[2]+'">'+money(s[1])+'</span></div>'+
+          '<div class="tr"><i data-w="'+Math.max(2,Math.round(s[1]/scale*100))+'" style="background:'+s[2]+'"></i></div>'+
+          (drop!==null? '<div class="dp">'+(drop>0? '&minus;'+drop+'% from above':'all carried')+'</div>':'')+
+          '</div>';
+      }).join('');
+    }
+    $('bfunnel').innerHTML = need||apiR
+      ? bars(st,mx)+'<div style="height:1px;background:var(--line);margin:4px 0"></div>'+bars(st2,mx2)+
+        '<div class="note">Annualised. '+money(pipe)+' more is sitting in pipeline &mdash; taken by the client, not yet picked up.</div>'
+      : '<div class="empty">Nothing in this period yet.</div>';
+    setText('funNote', periodLabel());
+    requestAnimationFrame(function(){ $('bfunnel').querySelectorAll('.tr i').forEach(function(b,i){
+      setTimeout(function(){ b.style.width=b.dataset.w+'%'; },70*i); }); });
+  })();
+
+  /* Producer board — the same funnel, per advisor, ranked on what was collected. */
+  (function(){
+    var by={};
+    rows.forEach(function(r){
+      var a=by[r.agent]=by[r.agent]||{name:r.agent,n:0,need:0,cover:0,sold:0,apiRec:0,
+                                      up:0,pipe:0,apps:0,appsUp:0};
+      a.n++; a.need+=r.need; a.cover+=r.cover; a.apiRec+=r.api; a.apps+=r.apps;
+      a.sold+=r.taken.reduce(function(x,y){return x+(y.amt||0);},0);
+      if(r.closed){ a.up+=r.apiTaken; a.appsUp+=r.apps; }
+      else if(!r.lost) a.pipe+=r.apiTaken;
+    });
+    var list=Object.keys(by).map(function(k){return by[k];})
+      .sort(function(a,b){return b.up-a.up || b.apiRec-a.apiRec;});
+    if(!list.length){ $('prodBoard').innerHTML='<div class="empty">Nobody submitted in this period.</div>'; return; }
+    var top=Math.max.apply(null,[1].concat(list.map(function(x){return x.up+x.pipe;})));
+    $('prodBoard').innerHTML='<table class="pbt"><thead><tr><th>Advisor</th><th>Fact finds</th>'+
+      '<th>Need found</th><th>Cover sold</th><th>API rec</th><th>Pipeline</th><th>Apps</th><th>API picked up</th>'+
+      '</tr></thead><tbody>'+
+      list.map(function(a,i){
+        var pct=a.apiRec>0? Math.round(a.up/a.apiRec*100):null;
+        return '<tr class="k'+Math.min(6,i+1)+'" data-agent="'+esc(a.name)+'">'+
+          '<td><span class="rkn">'+(i+1)+'</span>'+av(a.name)+esc(a.name)+
+            '<div class="mini2"><i style="width:'+Math.round(a.up/top*100)+'%;background:#F5B935"></i>'+
+            '<i style="width:'+Math.round(a.pipe/top*100)+'%;background:rgba(167,139,250,.6)"></i></div></td>'+
+          '<td>'+a.n+'</td><td>'+money(a.need)+'</td><td style="color:var(--teal)">'+money(a.sold)+'</td>'+
+          '<td>'+money(a.apiRec)+'</td><td style="color:var(--violet)">'+money(a.pipe)+'</td>'+
+          '<td>'+a.appsUp+' / '+a.apps+'</td>'+
+          '<td class="up">'+money(a.up)+(pct===null?'':' <span style="font-size:10px;color:var(--ink-4)">'+pct+'%</span>')+'</td></tr>';
+      }).join('')+'</tbody></table>'+
+      '<div class="note">Ranked on API picked up. Apps shows picked up against written. '+
+      'Click a row to filter the whole page to that advisor.</div>';
+    setText('pbNote', periodLabel()+' · '+list.length+' advisors');
+    $('prodBoard').querySelectorAll('tbody tr').forEach(function(tr){
+      tr.onclick=function(){ var a=tr.dataset.agent; FILTER.agent = FILTER.agent===a?null:a; draw(); };
+    });
+  })();
+
   /* filter chips */
   var f=[];
   if(FILTER.agent) f.push('<span class="chip" data-clear="agent"><b>'+esc(FILTER.agent)+'</b><span>✕</span></span>');
@@ -557,7 +686,7 @@ function signIn(){
 }
 $('rangeSeg').querySelectorAll('button').forEach(function(b){
   b.onclick=function(){ $('rangeSeg').querySelectorAll('button').forEach(function(x){x.classList.remove('on');});
-    b.classList.add('on'); RANGE=+b.dataset.r; draw(); };
+    b.classList.add('on'); RANGE=b.dataset.r; draw(); };
 });
 $('gPass').addEventListener('keydown',function(e){ if(e.key==='Enter') signIn(); });
 
