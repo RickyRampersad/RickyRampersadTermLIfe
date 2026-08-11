@@ -2856,7 +2856,7 @@ const RAI_MASCOT = `<svg class="rai-avatar" viewBox="0 0 64 64" xmlns="http://ww
           </tr></thead>
           <tbody>
             <tr>
-              <td><input type="text" data-field="ins1Co"></td>
+              <td><select data-field="ins1Co" onchange="insCoPick(this)"><option value=""></option><option>NONE</option><option>Guardian Life</option><option>Sagicor</option><option>Maritime</option><option>Tatil Life</option><option>Beacon</option><option>Pan-American (PALIG)</option><option>Colonial Fire (CLICO)</option><option>Scotia Insurance</option><option>Republic Bank</option><option>NLIC</option><option>FOREIGN</option><option value="__other">Other — type it…</option></select></td>
               <td><select data-field="ins1Owner"><option value="">—</option><option>Client</option><option>Spouse</option><option>Joint</option><option>Child</option></select></td>
               <td><input type="text" data-field="ins1Type"></td>
               <td><input type="number" data-field="ins1Sum" class="num-input" inputmode="decimal" min="0"></td>
@@ -2866,7 +2866,7 @@ const RAI_MASCOT = `<svg class="rai-avatar" viewBox="0 0 64 64" xmlns="http://ww
               <td><select data-field="ins1Status"><option value="">—</option><option>Active</option><option>Lapsed</option><option>Paid-Up</option><option>Surrendered</option></select></td>
             </tr>
             <tr>
-              <td><input type="text" data-field="ins2Co"></td>
+              <td><select data-field="ins2Co" onchange="insCoPick(this)"><option value=""></option><option>NONE</option><option>Guardian Life</option><option>Sagicor</option><option>Maritime</option><option>Tatil Life</option><option>Beacon</option><option>Pan-American (PALIG)</option><option>Colonial Fire (CLICO)</option><option>Scotia Insurance</option><option>Republic Bank</option><option>NLIC</option><option>FOREIGN</option><option value="__other">Other — type it…</option></select></td>
               <td><select data-field="ins2Owner"><option value="">—</option><option>Client</option><option>Spouse</option><option>Joint</option><option>Child</option></select></td>
               <td><input type="text" data-field="ins2Type"></td>
               <td><input type="number" data-field="ins2Sum" class="num-input" inputmode="decimal" min="0"></td>
@@ -2876,7 +2876,7 @@ const RAI_MASCOT = `<svg class="rai-avatar" viewBox="0 0 64 64" xmlns="http://ww
               <td><select data-field="ins2Status"><option value="">—</option><option>Active</option><option>Lapsed</option><option>Paid-Up</option><option>Surrendered</option></select></td>
             </tr>
             <tr>
-              <td><input type="text" data-field="ins3Co"></td>
+              <td><select data-field="ins3Co" onchange="insCoPick(this)"><option value=""></option><option>NONE</option><option>Guardian Life</option><option>Sagicor</option><option>Maritime</option><option>Tatil Life</option><option>Beacon</option><option>Pan-American (PALIG)</option><option>Colonial Fire (CLICO)</option><option>Scotia Insurance</option><option>Republic Bank</option><option>NLIC</option><option>FOREIGN</option><option value="__other">Other — type it…</option></select></td>
               <td><select data-field="ins3Owner"><option value="">—</option><option>Client</option><option>Spouse</option><option>Joint</option><option>Child</option></select></td>
               <td><input type="text" data-field="ins3Type"></td>
               <td><input type="number" data-field="ins3Sum" class="num-input" inputmode="decimal" min="0"></td>
@@ -2886,7 +2886,7 @@ const RAI_MASCOT = `<svg class="rai-avatar" viewBox="0 0 64 64" xmlns="http://ww
               <td><select data-field="ins3Status"><option value="">—</option><option>Active</option><option>Lapsed</option><option>Paid-Up</option><option>Surrendered</option></select></td>
             </tr>
             <tr>
-              <td><input type="text" data-field="ins4Co"></td>
+              <td><select data-field="ins4Co" onchange="insCoPick(this)"><option value=""></option><option>NONE</option><option>Guardian Life</option><option>Sagicor</option><option>Maritime</option><option>Tatil Life</option><option>Beacon</option><option>Pan-American (PALIG)</option><option>Colonial Fire (CLICO)</option><option>Scotia Insurance</option><option>Republic Bank</option><option>NLIC</option><option>FOREIGN</option><option value="__other">Other — type it…</option></select></td>
               <td><select data-field="ins4Owner"><option value="">—</option><option>Client</option><option>Spouse</option><option>Joint</option><option>Child</option></select></td>
               <td><input type="text" data-field="ins4Type"></td>
               <td><input type="number" data-field="ins4Sum" class="num-input" inputmode="decimal" min="0"></td>
@@ -3628,7 +3628,7 @@ const RAI_MASCOT = `<svg class="rai-avatar" viewBox="0 0 64 64" xmlns="http://ww
               <td style="background:#F0FDFA"><input type="text" data-field="rec1Rec"></td>
               <td style="background:#F0FDFA"><input type="text" data-field="rec1Amt" placeholder="TT$"></td>
               <td style="background:#F0FDFA"><input type="text" data-field="rec1Gap" placeholder="Gap"></td>
-              <td style="background:#F0FDFA"><input type="text" data-field="rec1Prem" placeholder="$/mo"></td>
+              <td style="background:#F0FDFA"><input type="text" data-field="rec1Prem" placeholder="$/mo"><!-- Premium mode. RAI asks the advisor to confirm it suits cash flow, and until now there was nowhere to record the answer. Surfaced as a dropdown on the card. --><input type="hidden" data-field="rec1Mode"></td>
               <td style="background:#FFFBEB"><input type="text" data-field="dec1Plan" placeholder="(same)"></td>
               <td style="background:#FFFBEB"><input type="text" data-field="dec1Amt" placeholder="(same)"></td>
               <td style="background:#FFFBEB"><input type="text" data-field="dec1Prem" placeholder="(same)"></td>
@@ -3641,7 +3641,7 @@ const RAI_MASCOT = `<svg class="rai-avatar" viewBox="0 0 64 64" xmlns="http://ww
               <td style="background:#F0FDFA"><input type="text" data-field="rec2Rec"></td>
               <td style="background:#F0FDFA"><input type="text" data-field="rec2Amt" placeholder="TT$"></td>
               <td style="background:#F0FDFA"><input type="text" data-field="rec2Gap" placeholder="Gap"></td>
-              <td style="background:#F0FDFA"><input type="text" data-field="rec2Prem" placeholder="$/mo"></td>
+              <td style="background:#F0FDFA"><input type="text" data-field="rec2Prem" placeholder="$/mo"><!-- Premium mode. RAI asks the advisor to confirm it suits cash flow, and until now there was nowhere to record the answer. Surfaced as a dropdown on the card. --><input type="hidden" data-field="rec2Mode"></td>
               <td style="background:#FFFBEB"><input type="text" data-field="dec2Plan" placeholder="(same)"></td>
               <td style="background:#FFFBEB"><input type="text" data-field="dec2Amt" placeholder="(same)"></td>
               <td style="background:#FFFBEB"><input type="text" data-field="dec2Prem" placeholder="(same)"></td>
@@ -3654,7 +3654,7 @@ const RAI_MASCOT = `<svg class="rai-avatar" viewBox="0 0 64 64" xmlns="http://ww
               <td style="background:#F0FDFA"><input type="text" data-field="rec3Rec"></td>
               <td style="background:#F0FDFA"><input type="text" data-field="rec3Amt" placeholder="TT$"></td>
               <td style="background:#F0FDFA"><input type="text" data-field="rec3Gap" placeholder="Gap"></td>
-              <td style="background:#F0FDFA"><input type="text" data-field="rec3Prem" placeholder="$/mo"></td>
+              <td style="background:#F0FDFA"><input type="text" data-field="rec3Prem" placeholder="$/mo"><!-- Premium mode. RAI asks the advisor to confirm it suits cash flow, and until now there was nowhere to record the answer. Surfaced as a dropdown on the card. --><input type="hidden" data-field="rec3Mode"></td>
               <td style="background:#FFFBEB"><input type="text" data-field="dec3Plan" placeholder="(same)"></td>
               <td style="background:#FFFBEB"><input type="text" data-field="dec3Amt" placeholder="(same)"></td>
               <td style="background:#FFFBEB"><input type="text" data-field="dec3Prem" placeholder="(same)"></td>
@@ -3667,7 +3667,7 @@ const RAI_MASCOT = `<svg class="rai-avatar" viewBox="0 0 64 64" xmlns="http://ww
               <td style="background:#F0FDFA"><input type="text" data-field="rec4Rec"></td>
               <td style="background:#F0FDFA"><input type="text" data-field="rec4Amt" placeholder="TT$"></td>
               <td style="background:#F0FDFA"><input type="text" data-field="rec4Gap" placeholder="Gap"></td>
-              <td style="background:#F0FDFA"><input type="text" data-field="rec4Prem" placeholder="$/mo"></td>
+              <td style="background:#F0FDFA"><input type="text" data-field="rec4Prem" placeholder="$/mo"><!-- Premium mode. RAI asks the advisor to confirm it suits cash flow, and until now there was nowhere to record the answer. Surfaced as a dropdown on the card. --><input type="hidden" data-field="rec4Mode"></td>
               <td style="background:#FFFBEB"><input type="text" data-field="dec4Plan" placeholder="(same)"></td>
               <td style="background:#FFFBEB"><input type="text" data-field="dec4Amt" placeholder="(same)"></td>
               <td style="background:#FFFBEB"><input type="text" data-field="dec4Prem" placeholder="(same)"></td>
@@ -3680,7 +3680,7 @@ const RAI_MASCOT = `<svg class="rai-avatar" viewBox="0 0 64 64" xmlns="http://ww
               <td style="background:#F0FDFA"><input type="text" data-field="rec5Rec"></td>
               <td style="background:#F0FDFA"><input type="text" data-field="rec5Amt" placeholder="TT$"></td>
               <td style="background:#F0FDFA"><input type="text" data-field="rec5Gap" placeholder="Gap"></td>
-              <td style="background:#F0FDFA"><input type="text" data-field="rec5Prem" placeholder="$/mo"></td>
+              <td style="background:#F0FDFA"><input type="text" data-field="rec5Prem" placeholder="$/mo"><!-- Premium mode. RAI asks the advisor to confirm it suits cash flow, and until now there was nowhere to record the answer. Surfaced as a dropdown on the card. --><input type="hidden" data-field="rec5Mode"></td>
               <td style="background:#FFFBEB"><input type="text" data-field="dec5Plan" placeholder="(same)"></td>
               <td style="background:#FFFBEB"><input type="text" data-field="dec5Amt" placeholder="(same)"></td>
               <td style="background:#FFFBEB"><input type="text" data-field="dec5Prem" placeholder="(same)"></td>
@@ -3693,7 +3693,7 @@ const RAI_MASCOT = `<svg class="rai-avatar" viewBox="0 0 64 64" xmlns="http://ww
               <td style="background:#F0FDFA"><input type="text" data-field="rec6Rec"></td>
               <td style="background:#F0FDFA"><input type="text" data-field="rec6Amt" placeholder="TT$"></td>
               <td style="background:#F0FDFA"><input type="text" data-field="rec6Gap" placeholder="Gap"></td>
-              <td style="background:#F0FDFA"><input type="text" data-field="rec6Prem" placeholder="$/mo"></td>
+              <td style="background:#F0FDFA"><input type="text" data-field="rec6Prem" placeholder="$/mo"><!-- Premium mode. RAI asks the advisor to confirm it suits cash flow, and until now there was nowhere to record the answer. Surfaced as a dropdown on the card. --><input type="hidden" data-field="rec6Mode"></td>
               <td style="background:#FFFBEB"><input type="text" data-field="dec6Plan" placeholder="(same)"></td>
               <td style="background:#FFFBEB"><input type="text" data-field="dec6Amt" placeholder="(same)"></td>
               <td style="background:#FFFBEB"><input type="text" data-field="dec6Prem" placeholder="(same)"></td>
@@ -8134,6 +8134,7 @@ function renderRecCards(openRow){
     var need=(recF(i,'Need')||{}).value||'', who=(recF(i,'Who')||{}).value||'Client';
     var plan=(recF(i,'Rec')||{}).value||'', amt=(recF(i,'Amt')||{}).value||'';
     var gap=(recF(i,'Gap')||{}).value||'', prem=(recF(i,'Prem')||{}).value||'';
+    var mode=(recF(i,'Mode')||{}).value||'';
     var go=(decF(i,'Go')||{}).value||'';
     var NEEDS = recOptions(i, 'Need', REC_NEEDS);
     var PLANS = recOptions(i, 'Rec', []);
@@ -8178,9 +8179,15 @@ function renderRecCards(openRow){
         '<div class="rc-f"><label>Sum assured</label>'+
           '<input type="text" value="'+esc(amt)+'" placeholder="TT$" '+
           'oninput="recWrite('+i+',\'Amt\',this.value)"></div>'+
-        '<div class="rc-f"><label>Premium a month</label>'+
-          '<input type="text" value="'+esc(prem)+'" placeholder="TT$/mo" '+
+        '<div class="rc-f"><label>Premium</label>'+
+          '<input type="text" value="'+esc(prem)+'" placeholder="TT$" '+
           'oninput="recWrite('+i+',\'Prem\',this.value)"></div>'+
+        '<div class="rc-f"><label>Paid</label>'+
+          '<select onchange="recWrite('+i+',\'Mode\',this.value)">'+
+            ['','Monthly','Quarterly','Semi-Annual','Annual'].map(function(md){
+              return '<option value="'+md+'"'+(md===mode?' selected':'')+'>'+
+                     (md||'— how often? —')+'</option>'; }).join('')+
+          '</select></div>'+
         '<div class="rc-f"><label>Gap it closes</label>'+
           '<input type="text" value="'+esc(gap)+'" placeholder="optional" '+
           'oninput="recWrite('+i+',\'Gap\',this.value)"></div>'+
@@ -8215,6 +8222,23 @@ function recNeedPick(i, sel){
   if(typeof refreshPlanForRow==='function'){ try{ refreshPlanForRow(i); }catch(e){} }
   renderRecCards();
 }
+/* An insurer not on the list. Swap in a text box carrying the same
+   data-field, so state, the printed form and the sheet are unaffected. */
+function insCoPick(sel){
+  if(sel.value !== '__other') return;
+  var f = sel.getAttribute('data-field');
+  var inp = document.createElement('input');
+  inp.type = 'text'; inp.setAttribute('data-field', f);
+  inp.placeholder = 'Insurer name'; inp.className = sel.className || '';
+  sel.parentNode.replaceChild(inp, sel);
+  inp.focus();
+  inp.addEventListener('input', function(){
+    if (typeof state === 'object') state[f] = this.value;
+    if (typeof calc === 'function') calc();
+    if (typeof debouncedSave === 'function') debouncedSave();
+  });
+}
+
 /* Typing must not re-render — that would steal focus mid-word. Only writes. */
 function recWrite(i, field, val){ recSet(recF(i,field), val); }
 function recWriteDec(i, field, val){ recSet(decF(i,field), val); }

@@ -187,9 +187,24 @@ function rrbSendAgentCopy_(d, nextReviewer, skipped) {
  * missing client email is logged rather than silent. Call this from
  * ffProcessAgentSubmit — see INSTALL (c).
  */
+/** Every field the client's address can arrive in. */
+function rrbClientEmail_(d) {
+  // A Specific Need Only case captures the client in section 1, so the address
+  // lands in adviceClientEmail and neither of the other two is set. Reading
+  // only email and clientEmail meant every limited-scope client silently got
+  // nothing — the fact find sent, the manager was told, and the person it was
+  // about heard nothing.
+  var tries = [d.email, d.clientEmail, d.adviceClientEmail, d.clientEmailAddress];
+  for (var i = 0; i < tries.length; i++) {
+    var v = _str(tries[i]);
+    if (v && v.indexOf('@') > 0) return v;
+  }
+  return '';
+}
+
 function rrbSendClientDraftNow_(d) {
-  var to = _str(d.email) || _str(d.clientEmail);
-  if (!to || to.indexOf('@') < 0) {
+  var to = rrbClientEmail_(d);
+  if (!to) {
     Logger.log('rrbSendClientDraftNow_: no client email on %s — nothing sent. ' +
                'Capture the client email on the fact find to close this gap.', d.submissionId);
     return;
@@ -542,7 +557,8 @@ function rrbChecks_(d) {
     }
   }
 
-  return { bio: bio, concerns: concerns, adviceOnly: adviceOnly };
+  return { bio: bio, concerns: concerns, adviceOnly: adviceOnly,
+           clientEmail: rrbClientEmail_(d) };
 }
 
 /** The bio-data card. Shown on every review, whatever the scope. */
@@ -555,7 +571,17 @@ function rrbBioBlock_(chk) {
          '<td style="padding:4px 0;font-size:13px;font-weight:600;color:' + (b.missing ? '#94A3B8' : '#0F172A') + '">' +
          rrbEsc_(b.v) + '</td></tr>';
   });
-  return h + '</table></div>';
+  h += '</table>';
+  // Whether the person this is all about actually received their copy. A
+  // manager approving a plan should not have to wonder.
+  h += '<div style="margin-top:9px;padding:8px 11px;border-radius:7px;font-size:12px;' +
+       (chk.clientEmail
+         ? 'background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46">Draft copy sent to the client at ' +
+           rrbEsc_(chk.clientEmail) + '.'
+         : 'background:#FEF2F2;border:1px solid #FCA5A5;color:#991B1B"><strong>The client has been sent nothing.</strong> ' +
+           'No email address was captured, so they are waiting on a copy that will never arrive.') +
+       '</div>';
+  return h + '</div>';
 }
 
 /** Concerns only. Silence when there is nothing wrong is the point. */
