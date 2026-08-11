@@ -259,3 +259,141 @@ function rrbEmailTest(to) {
     htmlBody: rrbWithDraft_(rrbClientDraftHtml_(d)), name: 'RR Branch Fact Find' });
   Logger.log('Three test emails sent to %s using submission %s.', to, d.submissionId);
 }
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SPECIFIC NEED ONLY
+//
+// A client may ask to be advised on one need without disclosing their whole
+// financial position. The Insurance Act 2018, Schedule 11 allows it, and the
+// form already honours it — sections 2-9 are hidden and their validation is
+// waived.
+//
+// The emails did not honour it. They ran the full needs analysis over a client
+// who disclosed nothing, so the manager received "no sums assured entered",
+// "occupation not recorded", "$0 income" — every one of them presented as a
+// failing by the advisor, when in fact each one is the client's recorded
+// choice. That is what made these reviews confusing to answer.
+//
+// So the scope overrides everything downstream of it, the same way it
+// overrides the form.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** True when the client elected Specific Need Only. */
+function rrbIsAdviceOnly_(d) {
+  return /^advice$/i.test(_str(d && d.appType));
+}
+
+/**
+ * The review subject line. A manager triaging an inbox should be able to tell
+ * a limited-scope approval from a full one without opening anything.
+ */
+function rrbReviewSubject_(d) {
+  var client  = _str(d.clientName) || _str(d.fullName) || 'Client';
+  var advisor = _str(d.advisorName) || _str(d.agentCode) || '';
+  var who     = advisor ? ' (' + advisor + ')' : '';
+  return rrbIsAdviceOnly_(d)
+    ? '[DRAFT] Specific Need Only — approval required — ' + client + who
+    : '[DRAFT] Fact find for review — ' + client + who;
+}
+
+/** The recommendation lines, as entered by the advisor. */
+function rrbRecLines_(d) {
+  var out = [];
+  for (var i = 1; i <= 6; i++) {
+    var plan = _str(d['rec' + i + 'Rec']);
+    if (!plan) continue;
+    out.push({
+      need:   _str(d['rec' + i + 'Need']),
+      plan:   plan,
+      reason: _str(d['rec' + i + 'Reason']),
+      amt:    rrbNum_(d['rec' + i + 'Amt']),
+      prem:   rrbNum_(d['rec' + i + 'Prem'])
+    });
+  }
+  return out;
+}
+
+/**
+ * The manager's review email for a Specific Need Only case.
+ *
+ * Deliberately short. There is no needs analysis to check the recommendation
+ * against, so presenting dials and shortfalls would be presenting zeroes as
+ * findings. What is left is the only question that can actually be answered:
+ * does this product suit the need the client described, and is the reason on
+ * file good enough to stand behind.
+ */
+function rrbAdviceReviewHtml_(d, link) {
+  var mgrFirst = _str(d.reviewerName).split(' ')[0] || 'there';
+  var client   = _str(d.clientName) || _str(d.adviceClientName) || '(client)';
+  var advisor  = _str(d.advisorName) || '(advisor)';
+  var advFirst = advisor.split(' ')[0] || 'the advisor';
+  var recs     = rrbRecLines_(d);
+
+  var h = rrbHead_(client + ' &mdash; Specific Need Only',
+                   'From ' + advisor + ' &middot; due back by ' + rrbDueDate_(d.submittedAt));
+  h += '<p style="margin:0 0 15px">Hi ' + mgrFirst + ',</p>';
+
+  // ── Why this review looks different from the others in the inbox.
+  h += '<div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:11px;' +
+       'padding:13px 16px;margin-bottom:15px;font-size:13.5px;color:#78350F;line-height:1.6">' +
+       '<strong>The client declined full financial disclosure.</strong> Under the Insurance ' +
+       'Act 2018, Schedule 11, a client may ask to be advised on one specific need without ' +
+       'disclosing their wider position. ' + client + ' chose that, so sections 2&ndash;9 were ' +
+       'not completed.' +
+       '<div style="margin-top:8px">That is a client decision on the record &mdash; not a gap ' +
+       'in ' + advFirst + '&rsquo;s work. There is no needs analysis here to check the ' +
+       'recommendation against, so please do not read the blank sections as findings.</div>' +
+       '</div>';
+
+  // ── The whole substance of the case.
+  if (!recs.length) {
+    h += '<div style="background:#fff;border:1px solid #FCA5A5;border-radius:11px;padding:14px 16px;' +
+         'margin-bottom:15px;font-size:13.5px;color:#991B1B">' +
+         'No recommendation has been recorded. A Specific Need Only case is <em>only</em> the ' +
+         'need, the product and the reason &mdash; with none of them entered there is nothing ' +
+         'to approve. Worth sending back to ' + advFirst + '.</div>';
+  } else {
+    var premTotal = 0;
+    h += '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:11px;padding:4px 16px 14px;margin-bottom:15px">' +
+         '<div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#94A3B8;' +
+         'font-weight:700;margin:13px 0 4px">What is being recommended</div>';
+    recs.forEach(function (r, i) {
+      premTotal += r.prem;
+      h += '<div style="padding:11px 0' + (i ? '' : '') +
+           ';border-top:1px solid ' + (i ? '#F1F5F9' : 'transparent') + '">' +
+           '<div style="font-size:15px;font-weight:700;color:#0F172A">' + r.plan +
+             (r.amt ? ' <span style="font-weight:600;color:#0F766E">' + rrbMoney_(r.amt) + '</span>' : '') +
+           '</div>' +
+           (r.need ? '<div style="font-size:13px;color:#475569;margin-top:3px">For: ' + r.need + '</div>' : '') +
+           (r.prem ? '<div style="font-size:13px;color:#475569;margin-top:2px">Premium: ' + rrbMoney_(r.prem) + ' a month</div>' : '') +
+           '<div style="font-size:13px;color:' + (r.reason ? '#334155' : '#B45309') + ';margin-top:6px;line-height:1.55">' +
+             (r.reason ? '<strong style="color:#64748B;font-weight:600">Reason given:</strong> ' + r.reason
+                       : 'No reason recorded for this recommendation &mdash; that is the one thing a limited-scope file must carry.') +
+           '</div></div>';
+    });
+    if (premTotal) {
+      h += '<div style="border-top:1px solid #E2E8F0;padding-top:10px;margin-top:4px;font-size:13.5px;color:#0F172A">' +
+           '<strong>Total premium: ' + rrbMoney_(premTotal) + ' a month.</strong> ' +
+           '<span style="color:#64748B">Affordability cannot be checked here &mdash; the client ' +
+           'did not disclose income or outgoings.</span></div>';
+    }
+    h += '</div>';
+  }
+
+  // ── What the manager is actually being asked to attest to.
+  h += '<div style="background:#F8FAFC;border-left:4px solid #0D9488;border-radius:0 10px 10px 0;' +
+       'padding:13px 16px;margin-bottom:6px;font-size:13.5px;color:#134E4A;line-height:1.65">' +
+       '<strong>Three things to satisfy yourself on:</strong>' +
+       '<div style="margin-top:7px">1. The product suits the need the client actually described.</div>' +
+       '<div style="margin-top:4px">2. The client was told that a policy bought without a full ' +
+       'fact find may not suit their wider needs (Market Conduct Guideline).</div>' +
+       '<div style="margin-top:4px">3. The reason on file would stand up if this case were ' +
+       'inspected.</div></div>';
+
+  h += rrbButton_('Approve this recommendation', link);
+  h += '<p style="text-align:center;font-size:12.5px;color:#64748B;margin:2px 0 0">' +
+       'Limited scope &mdash; the review is short.</p>';
+  h += rrbFoot_(_str(d.submissionId));
+  return h;
+}
