@@ -558,7 +558,7 @@ const SLA={
   RETENTION_OPENS: 60,     // arrears day the 60-day window opens
   LAPSE: 90,
   AGENT_FILE_BY: 65,       // agent files the retention case by this arrears day
-  MANAGER_REPLY_DAYS: 5,   // manager answers within 5 days of the case landing
+  MANAGER_REPLY_DAYS: 3,   // the branch's documented TAT, per the Premium Due Guidelines
   MANAGER_REPLY_BY: 65,    // ...and never later than this arrears day
   CLIENT_CHASE_EVERY: 5,   // client chased every 5 days after day 60
   MANAGER_CHASE_EVERY: 3   // manager chased every 3 days once they are late
@@ -1071,7 +1071,7 @@ function ladderHtml(c){
       !!st.retention&&!st.verdict&&bl&&bl.who==='manager'&&bl.late,
       !!st.retention&&!st.verdict,
       st.verdict?`<b>${esc(st.verdict.author)}</b> responded — ${esc(st.verdict.managerVerdict||'')}`
-                :`<b>${esc(mgr)}</b> to respond within ${SLA.MANAGER_REPLY_DAYS} days of filing`,
+                :`<b>${esc(mgr)}</b> to respond within ${SLA.MANAGER_REPLY_DAYS} working days of filing`,
       st.verdict?timeAgo(st.verdict.ts):(bl&&bl.who==='manager'?`${bl.since}d waiting`:'not yet filed'))
   ];
   const w=bl?bl.who:'done';

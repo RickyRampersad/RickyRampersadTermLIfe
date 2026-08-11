@@ -78,6 +78,26 @@ thousands of healthy policies into the lapse funnel.
 | 90-Day | Status 2 at 90+, or Status 1 | Reinstatement or win-back |
 | Pending | Status 3 / underwriting incomplete | New business chase |
 
+### Answers need no browser
+
+Every answer in every letter is a link. With `OUT.ENGINE_URL` set it is a
+one-tap link that records instantly. With it blank — the state this ships in —
+it is a `mailto:` that pre-fills the policy number, the question and the answer,
+addressed to the branch with sales support copied, so the client taps and
+presses send. Two taps, no website, no password, works on any phone.
+
+That is not a stopgap. A share of clients will not open a web page from an
+email, and the branch's own submissions show a third were never reached at all.
+
+Questions and answer wording come from the two live JotForms — *Premium Due
+Feedback From (clients)* (152 responses since Aug 2023) and *Premium Dues Status
+Update (agents)* (106 since Oct 2025) — so answers stay comparable with the
+existing history. The `From` and `CC` addresses match the Salesforce macro
+*Premium Due 75 Days Client Comm*.
+
+The answers are the **first section** of every letter. Nobody scrolls past a
+formal preamble to reach them.
+
 ### The 60-day escalation
 
 Day 60 the client gets an email referring back to the 45-day message, carrying
@@ -89,7 +109,7 @@ No reply → chased every 5 days. Two internal clocks run alongside it:
 | Clock | Deadline | Missed |
 |-------|----------|--------|
 | Agent files the case | day 65 | Emailed, manager copied; shows as *Waiting on [agent]*; hits their sign-in gate |
-| Manager answers | 5 days from filing | Emailed every 3 days, BM copied from the second; hits **their** sign-in gate |
+| Manager answers | 3 working days from filing | Emailed every 3 days, BM copied from the second; hits **their** sign-in gate |
 
 `blocker(c)` names the single person holding each case. It runs only inside the
 60-day window — a policy that lapsed in 2014 has nobody late on it, and counting
@@ -137,7 +157,7 @@ the browser claimed, so a posted record cannot be attributed to someone else.
 The **accountability gate** cuts both ways. An agent with cases past day 65 and
 no retention form, or 90-day lapses with nothing logged, must type a commitment
 (15 characters minimum) before reaching their dashboard. A **manager with
-responses past the 5-day window meets the same gate** — an agent who files on
+responses past the 3-day TAT meets the same gate** — an agent who files on
 time and waits three weeks has been let down, not the other way round. Either
 way the commitment is written to the policy thread under that person's name,
 once per policy per day.

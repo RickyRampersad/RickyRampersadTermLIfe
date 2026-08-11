@@ -63,6 +63,9 @@ var OUT = {
   BRANCH_NAME: 'Ricky Rampersad Branch',
   BRANCH_PHONE: '(868) 678-5921',
   BRANCH_EMAIL: 'support@rickyrampersadbranch.com',
+  // The Salesforce macro "Premium Due 75 Days Client Comm" sends from the branch
+  // address and copies sales support. Same here, so the trail stays in one place.
+  SALES_SUPPORT_EMAIL: 'RickyRampersadSalesSupport@myguardiangroup.com',
 
   // Where the client survey lives. This must be the PRIVATE engine
   // deployment; the copy in the public repository is a demo.
@@ -96,7 +99,7 @@ var SLA = {
   RETENTION_OPENS: 60,
   LAPSE: 90,
   AGENT_FILE_BY: 65,
-  MANAGER_REPLY_DAYS: 5,
+  MANAGER_REPLY_DAYS: 3,          // the branch's documented TAT, per the Premium Due Guidelines
   CLIENT_CHASE_EVERY: 5,
   MANAGER_CHASE_EVERY: 3
 };
@@ -257,7 +260,42 @@ function pdChainCc_(p) {
   add(pdStaffEmail_(p.Agent));
   add(pdStaffEmail_(pdManagerOf_(p.Agent)));
   add(OUT.BRANCH_MANAGER_EMAIL);
+  add(OUT.SALES_SUPPORT_EMAIL);
   return out;
+}
+
+/**
+ * The link behind one answer.
+ *
+ * With the engine deployed this is a one-tap link that records the answer and
+ * needs nothing else. Without it — which is the situation today — it is a
+ * mailto with the subject and body already written, so the client taps the
+ * answer, their mail app opens filled in, and they press send. Two taps, no
+ * browser, no form, no password, and it works from any phone on any network.
+ *
+ * The mailto is not a downgrade to tolerate. It is the version that keeps
+ * working when someone is on a bad connection or will not open a web page from
+ * an email, which is a large share of the people we are trying to reach.
+ */
+function pdAnswerHref_(p, q, o, kind) {
+  if (OUT.ENGINE_URL) {
+    var base = OUT.ENGINE_URL.replace(/#.*$/, '');
+    base = base + (base.slice(-1) === '/' ? '' : '/');
+    return base + '#' + kind + '=' + encodeURIComponent(p.Policy) +
+           '&q=' + encodeURIComponent(q.k) + '&a=' + encodeURIComponent(o.k);
+  }
+  var to = OUT.BRANCH_EMAIL;
+  var subj = 'Policy ' + p.Policy + ' — ' + o.lab;
+  var body = 'Policy No. ' + p.Policy + '\n' +
+             (p.ClientNo ? 'Client reference ' + p.ClientNo + '\n' : '') +
+             (p.Client ? p.Client + '\n' : '') + '\n' +
+             q.q + '\n' + o.lab + '\n\n' +
+             'Anything you would like to add:\n\n\n' +
+             '— sent from the premium notice for policy ' + p.Policy;
+  return 'mailto:' + encodeURIComponent(to) +
+         '?cc=' + encodeURIComponent(OUT.SALES_SUPPORT_EMAIL || '') +
+         '&subject=' + encodeURIComponent(subj) +
+         '&body=' + encodeURIComponent(body);
 }
 
 /**
@@ -266,17 +304,6 @@ function pdChainCc_(p) {
  * difference between the two — same shape, same one-click contract.
  */
 function pdQuestionBlock_(p, questions, kind) {
-  if (!OUT.ENGINE_URL) {
-    var txt = questions.map(function (q) {
-      return '<p style="margin:12px 0 4px;font-weight:bold;color:' + PD_BRAND.ink + '">' + pdEsc_(q.q) + '</p>' +
-        '<ul style="margin:0;padding-left:20px;color:' + PD_BRAND.ink + '">' +
-        q.opts.map(function (o) { return '<li style="margin-bottom:3px">' + pdEsc_(o.lab) + '</li>'; }).join('') +
-        '</ul>';
-    }).join('');
-    return pdNote_('<b>Please reply to this email</b> with your answers to the following:' + txt);
-  }
-  var base = OUT.ENGINE_URL.replace(/#.*$/, '');
-  base = base + (base.slice(-1) === '/' ? '' : '/');
   var out = '';
   for (var i = 0; i < questions.length; i++) {
     var q = questions[i];
@@ -286,8 +313,7 @@ function pdQuestionBlock_(p, questions, kind) {
       '<table cellpadding="0" cellspacing="0" style="width:100%">';
     for (var j = 0; j < q.opts.length; j++) {
       var o = q.opts[j];
-      var href = base + '#' + kind + '=' + encodeURIComponent(p.Policy) +
-                 '&q=' + encodeURIComponent(q.k) + '&a=' + encodeURIComponent(o.k);
+      var href = pdAnswerHref_(p, q, o, kind);
       out += '<tr><td style="padding:3px 0">' +
         '<a href="' + href + '" style="display:block;padding:10px 14px;background:#FFFFFF;border:1px solid ' +
         PD_BRAND.teal + ';border-radius:7px;color:' + PD_BRAND.teal2 +
@@ -296,8 +322,9 @@ function pdQuestionBlock_(p, questions, kind) {
     out += '</table></div>';
   }
   return out + '<p style="font-size:12px;color:#7C8794;margin:14px 0 0">' +
-    'Each answer is recorded against the policy the moment you tap it. ' +
-    'You can answer one question or all of them, in any order, and you never leave this email to do it.</p>';
+    (OUT.ENGINE_URL
+      ? 'Each answer is recorded against the policy the moment you tap it. You can answer one question or all of them, in any order, and you never leave this email to do it.'
+      : 'Tapping an answer opens a reply that is already written for you — just press send. Nothing to fill in, no website to visit, no password.') + '</p>';
 }
 
 /** The short form — just the "what will you do" question, for reminder messages. */
@@ -443,7 +470,7 @@ function pdTimeline_(p) {
   };
   return '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:10px 0;font-size:13px">' +
     row('Today', 'Day <b>' + d + '</b> — the premium is outstanding and your cover remains in force.') +
-    row('Within 5 days', 'Your agent submits a retention case to their manager, so that any concession you need is formally on record.') +
+    row('Within 3 days', 'Your agent submits a retention case to their manager, who must respond within three working days &mdash; the branch standard.') +
     row('Day 75', 'If we have still not heard from you, your agent&rsquo;s manager contacts you directly.') +
     row('Day 88', 'Final written notice.') +
     row('Day 90', 'Cover ends. From that date a claim is not payable and reinstatement requires a fresh application.', true) +
@@ -509,9 +536,15 @@ var PD_TEMPLATES = {
         '<p>The premium on the above policy has been outstanding for <b>' + d + ' days</b>. ' +
         'Your cover remains in force, and we are writing at this point specifically so that it stays that way.</p>' +
 
-        pdSection_(1, 'Your policy as it stands', pdFacts_(p)) +
+        pdSection_(1, 'Please answer here — it takes one tap',
+          '<p>We would rather understand your situation than assume it, and there are more options ' +
+          'available than most policyholders realise. Every one of them needs us to know which problem ' +
+          'we are solving.</p>' +
+          pdQuestionBlock_(p, CLIENT_QUESTIONS, 'respond')) +
 
-        pdSection_(2, 'What this policy does for you',
+        pdSection_(2, 'Your policy as it stands', pdFacts_(p)) +
+
+        pdSection_(3, 'What this policy does for you',
           '<p>It is worth restating plainly, because it is easy to lose sight of when a payment slips.</p>' +
           (sa > 0
             ? '<p>This policy pays <b>' + pdMoney_(sa) + '</b> to the people who depend on you, at the moment they would ' +
@@ -523,13 +556,6 @@ var PD_TEMPLATES = {
           'people do not weigh: if the policy lapses and you later reapply, you are underwritten on your health as it ' +
           'is then. Where anything has changed in between, the same cover may cost considerably more, or may not be ' +
           'available at all.</p>') +
-
-        pdSection_(3, 'Please answer these below',
-          '<p>We would rather understand your situation than assume it. There are more options available than most ' +
-          'policyholders realise — reduced premiums, altered benefits, payment schedules — but every one of them ' +
-          'requires us to know which problem we are solving.</p>' +
-          '<p><b>Simply tap your answers.</b> There is no form to fill in, no password, and nothing to download.</p>' +
-          pdQuestionBlock_(p, CLIENT_QUESTIONS, 'respond')) +
 
         pdSection_(4, 'If we do not hear from you',
           pdNote_('Cover ends <b>' + left + ' days</b> from today if the premium remains outstanding. From that date a ' +
@@ -581,18 +607,17 @@ var PD_TEMPLATES = {
         ' days</b> outstanding. This letter is copied to your agent, to their manager and to the branch manager, ' +
         'so that everyone who can act on your behalf is working from the same information.</p>' +
 
-        pdSection_(1, 'Our previous correspondence', pdPriorExchange_(p, state)) +
-
-        pdSection_(2, 'Your policy as it stands', pdFacts_(p)) +
-
-        pdSection_(3, 'What happens from here', pdTimeline_(p)) +
-
-        pdSection_(4, 'What we need from you',
-          '<p>Please tap your answers below. ' +
-          (answered
-            ? 'If your circumstances have changed since you last wrote to us, this is the point to say so.'
+        pdSection_(1, 'What we need from you',
+          '<p>' + (answered
+            ? 'You wrote to us before and we acted on it. If your circumstances have changed since, this is the point to say so.'
             : 'Answer one question or all of them — each one on its own tells us how to help.') +
           '</p>' + pdQuestionBlock_(p, CLIENT_QUESTIONS, 'respond')) +
+
+        pdSection_(2, 'Our previous correspondence', pdPriorExchange_(p, state)) +
+
+        pdSection_(3, 'Your policy as it stands', pdFacts_(p)) +
+
+        pdSection_(4, 'What happens from here', pdTimeline_(p)) +
 
         pdSection_(5, 'Who is handling this',
           '<p style="font-size:13.5px">Your agent <b>' + pdEsc_(p.Agent) + '</b>' +
@@ -829,21 +854,22 @@ function pdManagerLetter_(p, state, opts) {
         : '<p><b>' + pdEsc_(p.Agent) + '</b> has filed a retention case on this policy and needs your decision. ' +
           'The policy lapses in <b>' + pdDaysToLapse_(p) + ' days</b>.</p>') +
 
-      pdSection_(1, 'The policy', pdFacts_(p)) +
+      pdSection_(1, 'Your response — tap your answers',
+        '<p>Each one records against the policy immediately and your agent sees it at once. ' +
+        'The detail behind the case is below if you want it, but you do not need to read it first.</p>' +
+        pdQuestionBlock_(p, MANAGER_QUESTIONS, 'mgr')) +
 
-      pdSection_(2, 'What the client has told us', pdClientSaidBlock_(state)) +
+      pdSection_(2, 'The policy', pdFacts_(p)) +
 
-      pdSection_(3, 'What your agent has said',
+      pdSection_(3, 'What the client has told us', pdClientSaidBlock_(state)) +
+
+      pdSection_(4, 'What your agent has said',
         (state && state.retentionBody
           ? '<p style="font-style:italic;padding:12px 15px;background:#F3F0E9;border-left:3px solid ' +
             PD_BRAND.teal + ';color:' + PD_BRAND.ink + '">' + pdEsc_(state.retentionBody) + '</p>' +
             (state.factFind ? '<p style="font-size:13px">Fact find: ' + pdEsc_(state.factFind) + '</p>'
                             : '<p style="font-size:13px;color:' + PD_BRAND.red + '">No fact find was attached.</p>')
           : '<p style="color:#5A6B7B">No detail recorded.</p>')) +
-
-      pdSection_(4, 'Your response',
-        '<p>Tap your answers. Each one is recorded against the policy immediately and your agent sees it at once.</p>' +
-        pdQuestionBlock_(p, MANAGER_QUESTIONS, 'mgr')) +
 
       pdSection_(5, 'You are also asked to contact the client',
         '<p>The 60-day letter told <b>' + pdEsc_(p.Client) + '</b> that their agent&rsquo;s manager would be in touch. ' +
