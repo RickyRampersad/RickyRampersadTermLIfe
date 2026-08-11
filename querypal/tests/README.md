@@ -1,6 +1,6 @@
 # Query Pal attachment tests
 
-Six suites covering attachments, routing, reminders, the leaderboard and security.
+Eight suites covering attachments, routing, reminders, the leaderboard, security and the wall.
 
 ```bash
 cd querypal/tests
@@ -22,6 +22,12 @@ node security.test.js
 
 # sign-in — credentials leave over POST, token drives the dashboard
 NODE_PATH=/opt/node22/lib/node_modules node signin.browser.test.mjs
+
+# wall — server-side aggregation over a seeded sheet
+node wall.test.js
+
+# wall — all seven panels rendered in Chromium, gating and range switching
+NODE_PATH=/opt/node22/lib/node_modules node wall.browser.test.mjs
 ```
 
 Each prints `N passed, 0 failed` and exit non-zero on failure. Test fixtures
@@ -65,6 +71,14 @@ allocated under a lock that spans the row append.
 **Sign-in** — credentials go out in a POST body and appear nowhere in the URL;
 the token is stored and used for dashboard calls; a rejected sign-in leaves no
 session; throttle and missing-password responses each explain themselves.
+
+**Wall** — aggregates are computed over every row (not the dashboard's 300-row
+page): totals, on-time, ageing buckets that reconcile with the open count,
+12-week volume, per-department and per-agent breakdowns, rating distribution
+and time windows. The payload carries no client names, references or request
+text. In the browser: the wall is gated behind sign-in, all seven panels render,
+volume bars have real height, ranks are ordered by on-time as the caption
+claims, switching the range reloads, and an agent sees only their own scorecard.
 
 ## Not covered here
 

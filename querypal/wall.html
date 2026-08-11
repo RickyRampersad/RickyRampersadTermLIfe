@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Query Pal Wall | Ricky Rampersad Branch</title>
+<meta name="description" content="Live service insights for the Ricky Rampersad Branch — volume, turnaround, department performance and client satisfaction.">
+<meta name="theme-color" content="#061c31">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
+    --blue:#37b1ec; --blue2:#0b7fd4; --teal:#0fb5a5;
+    --good:#34d399; --warn:#fbbf24; --bad:#fb7185; --gold:#f5b93b;
+    --grad:linear-gradient(120deg,#37b1ec,#0b7fd4);
+    --r:18px; --ease:cubic-bezier(.16,1,.3,1);
+    --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:var(--font-b);color:var(--ink);background:#061c31;
+    min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:
+      radial-gradient(1200px 700px at 12% -8%,rgba(55,177,236,.22),transparent 60%),
+      radial-gradient(900px 600px at 92% 4%,rgba(11,127,212,.20),transparent 62%),
+      radial-gradient(800px 700px at 60% 108%,rgba(15,181,165,.13),transparent 60%),
+      linear-gradient(165deg,#061c31 0%,#08243f 55%,#061a2d 100%);}
+
+  .wrap{max-width:1680px;margin:0 auto;padding:18px 20px 34px;}
+
+  /* ---------- masthead ---------- */
+  header{display:flex;align-items:center;gap:15px;padding:15px 20px;margin-bottom:16px;
+    background:rgba(255,255,255,.055);border:1px solid var(--line);border-radius:var(--r);
+    backdrop-filter:blur(12px);}
+  header .mark{width:46px;height:46px;flex:none;border-radius:13px;background:var(--grad);
+    display:grid;place-items:center;font-family:var(--font-d);font-weight:800;font-size:15px;color:#04223b;
+    box-shadow:0 6px 20px rgba(11,127,212,.45);}
+  header h1{margin:0;font-family:var(--font-d);font-size:20px;font-weight:800;letter-spacing:-.3px;}
+  header .sub{font-size:12.5px;color:var(--dim);margin-top:3px;}
+  header .right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+  .rng{display:flex;gap:4px;background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:30px;padding:4px;}
+  .rng button{border:none;background:none;color:var(--dim);font:inherit;font-size:12px;font-weight:650;
+    padding:6px 13px;border-radius:24px;cursor:pointer;transition:.25s var(--ease);white-space:nowrap;}
+  .rng button:hover{color:var(--ink);}
+  .rng button.on{background:var(--grad);color:#04223b;font-weight:750;}
+  .live{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--dim);white-space:nowrap;}
+  .live i{width:8px;height:8px;border-radius:50%;background:var(--good);animation:pulse 2.2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(52,211,153,.5)}50%{opacity:.55;box-shadow:0 0 0 7px rgba(52,211,153,0)}}
+
+  /* ---------- grid ---------- */
+  .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;
+    backdrop-filter:blur(10px);position:relative;overflow:hidden;
+    animation:rise .55s var(--ease) both;}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .panel:nth-child(2){animation-delay:.05s}.panel:nth-child(3){animation-delay:.10s}
+  .panel:nth-child(4){animation-delay:.15s}.panel:nth-child(5){animation-delay:.20s}
+  .panel:nth-child(6){animation-delay:.25s}.panel:nth-child(7){animation-delay:.30s}
+  .panel h2{margin:0 0 3px;font-family:var(--font-d);font-size:13px;font-weight:750;letter-spacing:.02em;}
+  .panel .cap{font-size:11.5px;color:var(--faint);margin-bottom:15px;line-height:1.45;}
+
+  .p-pulse{grid-column:span 12;}
+  .p-trend{grid-column:span 7;}
+  .p-age{grid-column:span 5;}
+  .p-dept{grid-column:span 7;}
+  .p-agent{grid-column:span 5;}
+  .p-mix{grid-column:span 7;}
+  .p-csat{grid-column:span 5;}
+  @media(max-width:1180px){
+    .p-trend,.p-dept,.p-mix{grid-column:span 12;}
+    .p-age,.p-agent,.p-csat{grid-column:span 12;}
+  }
+
+  /* ---------- panel 1: pulse ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;}
+  .kpi{background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:14px;padding:15px 16px;position:relative;overflow:hidden;}
+  .kpi::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--grad);opacity:.85;}
+  .kpi .n{font-family:var(--font-d);font-size:clamp(26px,3vw,36px);font-weight:800;line-height:1;letter-spacing:-1px;}
+  .kpi .l{font-size:10.5px;color:var(--faint);margin-top:7px;font-weight:650;letter-spacing:.12em;text-transform:uppercase;}
+  .kpi.good .n{color:var(--good)} .kpi.good::after{background:var(--good)}
+  .kpi.warn .n{color:var(--warn)} .kpi.warn::after{background:var(--warn)}
+  .kpi.bad  .n{color:var(--bad)}  .kpi.bad::after{background:var(--bad)}
+  .kpi .sub{font-size:11px;color:var(--faint);margin-top:5px;}
+
+  /* ---------- panel 2: trend ---------- */
+  .bars{display:flex;align-items:stretch;gap:7px;height:200px;padding-top:8px;}
+  .bars .b{flex:1;height:100%;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;}
+  .bars .b .col{flex:1;width:100%;display:flex;align-items:flex-end;}
+  .bars .b i{display:block;width:100%;border-radius:6px 6px 3px 3px;background:var(--grad);
+    transition:height .8s var(--ease);min-height:3px;}
+  .bars .b.now i{background:linear-gradient(120deg,var(--teal),var(--good));}
+  .bars .b b{font-size:11.5px;font-weight:700;color:var(--ink);}
+  .bars .b span{font-size:9.5px;color:var(--faint);white-space:nowrap;}
+
+  /* ---------- panel 3: ageing ---------- */
+  .age{display:grid;gap:11px;}
+  .agerow{display:flex;align-items:center;gap:12px;}
+  .agerow .dot{width:11px;height:11px;border-radius:50%;flex:none;}
+  .agerow .lab{font-size:12.5px;font-weight:600;flex:1;min-width:0;}
+  .agerow .val{font-family:var(--font-d);font-size:19px;font-weight:800;}
+  .agetrack{height:9px;border-radius:6px;background:rgba(255,255,255,.09);overflow:hidden;display:flex;margin-top:4px;}
+  .agetrack i{display:block;height:100%;transition:width .8s var(--ease);}
+  .agenote{font-size:11.5px;color:var(--faint);margin-top:14px;line-height:1.5;}
+
+  /* ---------- rank rows (dept + agent) ---------- */
+  .ranks{display:grid;gap:9px;}
+  .rank{display:flex;align-items:center;gap:12px;}
+  .rank .rk{width:23px;height:23px;flex:none;border-radius:50%;display:grid;place-items:center;
+    font-size:10.5px;font-weight:800;background:rgba(255,255,255,.09);color:var(--dim);}
+  .rank.t1 .rk{background:linear-gradient(135deg,#f7d774,#e0a921);color:#4a3400;}
+  .rank.t2 .rk{background:linear-gradient(135deg,#dfe6ec,#aebbc7);color:#33404a;}
+  .rank.t3 .rk{background:linear-gradient(135deg,#e8b389,#c07747);color:#3c200c;}
+  .rank .nm{flex:1;min-width:0;}
+  .rank .nm b{display:block;font-size:12.5px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .rank .nm .meta{font-size:10.5px;color:var(--faint);margin-top:3px;}
+  .rank .track{width:34%;flex:none;height:7px;border-radius:5px;background:rgba(255,255,255,.09);overflow:hidden;}
+  .rank .track i{display:block;height:100%;border-radius:5px;transition:width .8s var(--ease);}
+  .rank .pc{width:52px;flex:none;text-align:right;font-family:var(--font-d);font-size:14.5px;font-weight:800;}
+  @media(max-width:520px){.rank .track{display:none;}}
+
+  /* ---------- panel 6: mix ---------- */
+  .mix{display:grid;gap:8px;}
+  .mixrow{display:flex;align-items:center;gap:11px;}
+  .mixrow .nm{flex:1;min-width:0;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .mixrow .track{width:45%;flex:none;height:8px;border-radius:5px;background:rgba(255,255,255,.09);overflow:hidden;}
+  .mixrow .track i{display:block;height:100%;border-radius:5px;background:var(--grad);transition:width .8s var(--ease);}
+  .mixrow .n{width:34px;flex:none;text-align:right;font-size:12.5px;font-weight:750;color:var(--dim);}
+
+  /* ---------- panel 7: satisfaction ---------- */
+  .csat{display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+  .csatbig{font-family:var(--font-d);font-size:48px;font-weight:800;line-height:1;letter-spacing:-2px;color:var(--gold);}
+  .csatbig small{display:block;font-size:11px;color:var(--faint);font-weight:650;letter-spacing:.12em;
+    text-transform:uppercase;margin-top:8px;font-family:var(--font-b);}
+  .stars{flex:1;min-width:180px;display:grid;gap:5px;}
+  .starrow{display:flex;align-items:center;gap:9px;font-size:11.5px;}
+  .starrow .s{width:38px;color:var(--gold);flex:none;letter-spacing:-1px;}
+  .starrow .track{flex:1;height:7px;border-radius:5px;background:rgba(255,255,255,.09);overflow:hidden;}
+  .starrow .track i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,#f5b93b,#e0a921);transition:width .8s var(--ease);}
+  .starrow .n{width:26px;text-align:right;color:var(--faint);flex:none;}
+  .quotes{margin-top:15px;display:grid;gap:8px;}
+  .quote{font-size:11.5px;color:var(--dim);background:rgba(255,255,255,.045);border-left:2px solid var(--gold);
+    border-radius:0 9px 9px 0;padding:9px 12px;line-height:1.5;}
+  .quote b{color:var(--gold);font-weight:700;}
+
+  /* ---------- states ---------- */
+  .gate{max-width:400px;margin:9vh auto;background:rgba(255,255,255,.06);border:1px solid var(--line);
+    border-radius:22px;padding:32px 28px;text-align:center;backdrop-filter:blur(12px);}
+  .gate .mark{width:54px;height:54px;margin:0 auto 16px;border-radius:16px;background:var(--grad);
+    display:grid;place-items:center;font-family:var(--font-d);font-weight:800;color:#04223b;font-size:17px;}
+  .gate h1{font-family:var(--font-d);font-size:21px;margin:0 0 6px;font-weight:800;}
+  .gate p{font-size:13px;color:var(--dim);margin:0 0 20px;line-height:1.55;}
+  .gate input{width:100%;padding:13px 15px;margin-bottom:10px;border-radius:12px;font:inherit;font-size:15px;
+    border:1px solid var(--line);background:rgba(0,0,0,.25);color:var(--ink);outline:none;transition:.2s;}
+  .gate input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,177,236,.18);}
+  .gate input::placeholder{color:var(--faint);}
+  .gate button{width:100%;padding:13px;border:none;border-radius:12px;background:var(--grad);color:#04223b;
+    font:inherit;font-size:15px;font-weight:750;cursor:pointer;transition:.25s var(--ease);}
+  .gate button:hover{filter:brightness(1.08);} .gate button:disabled{opacity:.6;cursor:default;}
+  .gate .err{font-size:12.5px;color:var(--bad);margin-top:12px;min-height:17px;line-height:1.5;}
+  .empty{text-align:center;padding:34px 18px;color:var(--faint);font-size:13px;line-height:1.6;}
+  .foot{text-align:center;color:var(--faint);font-size:11px;margin-top:22px;line-height:1.7;}
+  .hidden{display:none !important;}
+  @media(prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important;}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- sign in -->
+  <div id="gate" class="gate">
+    <div class="mark">RRB</div>
+    <h1>Query Pal Wall</h1>
+    <p>Live service insights for the branch. Sign in with your agent number and password.</p>
+    <input id="gNum" placeholder="Agent number" autocomplete="username">
+    <input id="gPwd" type="password" placeholder="Password" autocomplete="current-password">
+    <button id="gGo" onclick="signIn()">Show the wall</button>
+    <div class="err" id="gErr"></div>
+  </div>
+
+  <!-- wall -->
+  <div id="wall" class="hidden">
+    <header>
+      <div class="mark">RRB</div>
+      <div>
+        <h1>Query Pal Wall</h1>
+        <div class="sub" id="scope">Ricky Rampersad Branch</div>
+      </div>
+      <div class="right">
+        <div class="rng" id="rng">
+          <button data-d="7">7 days</button>
+          <button data-d="30">30 days</button>
+          <button data-d="90">90 days</button>
+          <button data-d="0" class="on">All time</button>
+        </div>
+        <span class="live"><i></i><span id="stamp">updating…</span></span>
+      </div>
+    </header>
+    <div class="grid" id="grid"></div>
+    <div class="foot" id="foot"></div>
+  </div>
+
+</div>
+
+<script>
+/* The wall reads aggregates only — no client names, policy numbers or request
+   text leave the sheet for this view. Everything below renders what the
+   ?action=wall endpoint returns. */
+const WEBHOOK = "https://script.google.com/macros/s/AKfycbxHFobr89jyLMK-CL5cUxs8GhYtkvTVbbqeDo9L5RgUxMGlbFBKK0vanwEjf49gCakpAw/exec";
+const REFRESH_MS = 5 * 60 * 1000;      // a wall display should stay current on its own
+let auth = null, range = 0, timer = null, data = null;
+
+const $  = id => document.getElementById(id);
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pct = v => v===null||v===undefined ? '—' : v+'%';
+const tone = v => v===null||v===undefined ? '' : (v>=85?'good':(v>=60?'warn':'bad'));
+const toneCol = v => v===null||v===undefined ? 'rgba(255,255,255,.28)'
+  : (v>=85?'var(--good)':(v>=60?'var(--warn)':'var(--bad)'));
+
+/* ---------------- sign in ---------------- */
+function signIn(){
+  const num=$('gNum').value.trim(), pwd=$('gPwd').value.trim(), err=$('gErr'), btn=$('gGo');
+  if(!num&&!pwd){err.textContent='Enter your agent number and password.';return;}
+  btn.disabled=true; btn.textContent='Checking…'; err.textContent='';
+  const done=()=>{btn.disabled=false;btn.textContent='Show the wall';};
+  fetch(WEBHOOK,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({action:'agentauth',num:num,pwd:pwd,code:num||pwd})})
+    .then(r=>r.json()).then(d=>{
+      done();
+      if(d&&d.ok===true){
+        auth={code:num||pwd,token:d.token||'',name:d.name||'',role:d.role||'agent'};
+        $('gate').classList.add('hidden'); $('wall').classList.remove('hidden');
+        $('scope').textContent = auth.role==='branch' ? 'Ricky Rampersad Branch — every request'
+          : (auth.role==='manager' ? ('Team view — '+(auth.name||'your unit')) : ('Your requests — '+(auth.name||'')));
+        load(); timer=setInterval(load,REFRESH_MS);
+      }
+      else if(d&&d.why==='pwd')  err.textContent="That password doesn't match this agent number.";
+      else if(d&&d.why==='rate') err.textContent='Too many attempts — give it ten minutes.';
+      else if(d&&d.why==='nopw') err.textContent='No password is set for that number yet — contact the branch.';
+      else err.textContent='That agent number is not on the branch list.';
+    })
+    .catch(()=>{done();err.textContent="Couldn't reach the branch server — check your connection.";});
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!$('gate').classList.contains('hidden')) signIn(); });
+
+/* ---------------- load ---------------- */
+function load(){
+  if(!auth)return;
+  fetch(WEBHOOK+'?action=wall&days='+range+'&token='+encodeURIComponent(auth.token)+'&code='+encodeURIComponent(auth.code))
+    .then(r=>r.json()).then(d=>{
+      if(!d||d.ok!==true){$('grid').innerHTML='<div class="panel p-pulse"><div class="empty">Couldn\'t load the numbers. This wall needs the upgraded Apps Script (v7.2 or later).</div></div>';return;}
+      data=d; $('stamp').textContent=d.generated||'updated'; render();
+    })
+    .catch(()=>{$('stamp').textContent='offline — retrying';});
+}
+$('rng').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  range=+b.dataset.d;
+  [...$('rng').children].forEach(x=>x.classList.toggle('on',x===b));
+  load();
+});
+
+/* ---------------- render ---------------- */
+function render(){
+  if(!data)return;
+  if(data.empty||!data.totals||!data.totals.total){
+    $('grid').innerHTML='<div class="panel p-pulse"><div class="empty">No requests logged in this period yet.<br>Pick a wider range above.</div></div>';
+    $('foot').textContent=''; return;
+  }
+  $('grid').innerHTML = [pulse(),trend(),ageing(),depts(),agents(),mix(),csat()].join('');
+  const period = range?('last '+range+' days'):'all time';
+  $('foot').innerHTML='Query Pal · Ricky Rampersad Branch · showing '+period
+    +' · refreshes every 5 minutes<br>On time means resolved within the turnaround promised for that request type.';
+}
+
+/* panel 1 — the pulse */
+function pulse(){
+  const t=data.totals;
+  const kpi=(n,l,cls,sub)=>'<div class="kpi '+(cls||'')+'"><div class="n">'+n+'</div><div class="l">'+l+'</div>'
+    +(sub?'<div class="sub">'+sub+'</div>':'')+'</div>';
+  return '<div class="panel p-pulse"><h2>Branch pulse</h2>'
+    +'<div class="cap">Everything logged through Query Pal '+(range?('in the last '+range+' days'):'since day one')+'.</div>'
+    +'<div class="kpis">'
+    + kpi(t.total,'Requests logged')
+    + kpi(t.open,'Still open', t.overdue?'warn':'')
+    + kpi(t.overdue,'Past deadline', t.overdue?'bad':'good')
+    + kpi(pct(t.onTime),'Resolved on time', tone(t.onTime))
+    + kpi(t.avg===null?'—':t.avg+'d','Average close')
+    + kpi(t.csat===null?'—':'★'+t.csat,'Client rating','', t.rated?(t.rated+' rated'):'awaiting ratings')
+    + kpi(t.chased,'Auto follow-ups','', 'sent without anyone asking')
+    +'</div></div>';
+}
+
+/* panel 2 — volume trend */
+function trend(){
+  const w=data.weeks||[], max=Math.max.apply(null,w.concat([1]));
+  const bars=w.map((v,i)=>{
+    const wksAgo=w.length-1-i;
+    const lab = wksAgo===0?'now':(wksAgo+'w');
+    return '<div class="b'+(wksAgo===0?' now':'')+'"><b>'+(v||'')+'</b>'
+      +'<div class="col"><i style="height:'+(v?Math.max(4,Math.round(v/max*100)):1)+'%"></i></div>'
+      +'<span>'+lab+'</span></div>';
+  }).join('');
+  const recent=w.slice(-4).reduce((a,b)=>a+b,0), prior=w.slice(-8,-4).reduce((a,b)=>a+b,0);
+  let move='';
+  if(prior>0){
+    const ch=Math.round((recent-prior)/prior*100);
+    move = ch===0 ? 'Level with the previous four weeks.'
+      : (ch>0 ? ('Up '+ch+'% on the previous four weeks.') : ('Down '+Math.abs(ch)+'% on the previous four weeks.'));
+  }
+  return '<div class="panel p-trend"><h2>Request volume</h2>'
+    +'<div class="cap">Last 12 weeks. '+esc(move)+'</div>'
+    +'<div class="bars">'+bars+'</div></div>';
+}
+
+/* panel 3 — what is open, and how urgent */
+function ageing(){
+  const a=data.age||{ok:0,soon:0,late:0}, tot=a.ok+a.soon+a.late;
+  const seg=(n,c)=>'<i style="width:'+(tot?(n/tot*100):0)+'%;background:'+c+'"></i>';
+  const row=(dot,lab,n)=>'<div class="agerow"><span class="dot" style="background:'+dot+'"></span>'
+    +'<span class="lab">'+lab+'</span><span class="val">'+n+'</span></div>';
+  return '<div class="panel p-age"><h2>Open work right now</h2>'
+    +'<div class="cap">Every unresolved request, measured against its promised turnaround.</div>'
+    +'<div class="agetrack">'+seg(a.ok,'var(--good)')+seg(a.soon,'var(--warn)')+seg(a.late,'var(--bad)')+'</div>'
+    +'<div class="age" style="margin-top:15px">'
+    + row('var(--good)','On track',a.ok)
+    + row('var(--warn)','Due today or tomorrow',a.soon)
+    + row('var(--bad)','Past deadline',a.late)
+    +'</div>'
+    +'<div class="agenote">'+(a.late
+        ? 'The '+a.late+' past deadline '+(a.late===1?'is':'are')+' being chased automatically until a department replies.'
+        : 'Nothing is past its deadline. ')+'</div></div>';
+}
+
+/* shared rank list for panels 4 and 5 */
+function byOnTime(list){
+  return list.slice().sort((a,b)=>
+    ((b.onTime===null||b.onTime===undefined?-1:b.onTime)-(a.onTime===null||a.onTime===undefined?-1:a.onTime))
+    || (b.n-a.n));
+}
+function rankList(items,cls,title,cap,metaFn){
+  if(!items.length)return '<div class="panel '+cls+'"><h2>'+title+'</h2><div class="empty">Nothing to rank yet.</div></div>';
+  const best=Math.max.apply(null,items.map(x=>x.n).concat([1]));
+  const rows=items.map((x,i)=>
+    '<div class="rank'+(i<3?' t'+(i+1):'')+'">'
+    +'<span class="rk">'+(i+1)+'</span>'
+    +'<span class="nm"><b>'+esc(x.name)+'</b><span class="meta">'+metaFn(x)+'</span></span>'
+    +'<span class="track"><i style="width:'+Math.max(3,Math.round(x.n/best*100))+'%;background:'+toneCol(x.onTime)+'"></i></span>'
+    +'<span class="pc" style="color:'+toneCol(x.onTime)+'">'+pct(x.onTime)+'</span></div>').join('');
+  return '<div class="panel '+cls+'"><h2>'+title+'</h2><div class="cap">'+cap+'</div>'
+    +'<div class="ranks">'+rows+'</div></div>';
+}
+
+/* panel 4 — which departments deliver */
+function depts(){
+  return rankList(byOnTime(data.depts||[]).slice(0,8),'p-dept','Department performance',
+    'Ranked by on-time delivery. The bar shows share of the volume they receive.',
+    x=>[x.n+' received', x.done+' resolved', x.avg!==null?(x.avg+'d avg'):null,
+        x.late?('<b style="color:var(--bad)">'+x.late+' overdue</b>'):null].filter(Boolean).join(' · '));
+}
+
+/* panel 5 — who is logging and closing */
+function agents(){
+  if((data.role||'agent')==='agent'){
+    const t=data.totals;
+    return '<div class="panel p-agent"><h2>Your scorecard</h2>'
+      +'<div class="cap">Branch-wide rankings are shown to managers.</div>'
+      +'<div class="ranks"><div class="rank t1"><span class="rk">★</span>'
+      +'<span class="nm"><b>'+esc(data.name||'You')+'</b><span class="meta">'
+      +t.done+' resolved · '+t.open+' open'+(t.avg!==null?(' · '+t.avg+'d avg'):'')+'</span></span>'
+      +'<span class="track"><i style="width:100%;background:'+toneCol(t.onTime)+'"></i></span>'
+      +'<span class="pc" style="color:'+toneCol(t.onTime)+'">'+pct(t.onTime)+'</span></div></div></div>';
+  }
+  return rankList(byOnTime(data.agents||[]).slice(0,8),'p-agent','Agent leaderboard',
+    'Ranked by on-time delivery on the requests they logged.',
+    x=>[x.n+' logged', x.done+' resolved', x.csat!==null?('★'+x.csat):null,
+        x.late?('<b style="color:var(--bad)">'+x.late+' overdue</b>'):null].filter(Boolean).join(' · '));
+}
+
+/* panel 6 — what clients actually ask for */
+function mix(){
+  const t=data.types||[];
+  if(!t.length)return '<div class="panel p-mix"><h2>What clients ask for</h2><div class="empty">Nothing yet.</div></div>';
+  const max=t[0].n||1;
+  const rows=t.map(x=>'<div class="mixrow"><span class="nm">'+esc(x.name)+'</span>'
+    +'<span class="track"><i style="width:'+Math.max(3,Math.round(x.n/max*100))+'%"></i></span>'
+    +'<span class="n">'+x.n+'</span></div>').join('');
+  const top=t[0], share=data.totals.total?Math.round(top.n/data.totals.total*100):0;
+  return '<div class="panel p-mix"><h2>What clients ask for</h2>'
+    +'<div class="cap">Top requests by volume. “'+esc(top.name)+'” alone is '+share+'% of everything logged'
+    +(share>=20?' — worth a standing answer on the website.':'.')+'</div>'
+    +'<div class="mix">'+rows+'</div></div>';
+}
+
+/* panel 7 — how it felt to the client */
+function csat(){
+  const t=data.totals, d=data.scoreDist||{}, notes=data.notes||[];
+  const tot=[1,2,3,4,5].reduce((a,k)=>a+(d[k]||0),0);
+  const stars=[5,4,3,2,1].map(k=>{
+    const n=d[k]||0;
+    return '<div class="starrow"><span class="s">'+'★'.repeat(k)+'</span>'
+      +'<span class="track"><i style="width:'+(tot?Math.round(n/tot*100):0)+'%"></i></span>'
+      +'<span class="n">'+n+'</span></div>';
+  }).join('');
+  const quotes=notes.map(n=>'<div class="quote"><b>'+'★'.repeat(Math.max(1,Math.min(5,n.score)))+'</b> '+esc(n.text)+'</div>').join('');
+  const body = tot
+    ? '<div class="csat"><div class="csatbig">'+(t.csat===null?'—':t.csat)+'<small>out of 5</small></div>'
+      +'<div class="stars">'+stars+'</div></div>'+(quotes?('<div class="quotes">'+quotes+'</div>'):'')
+    : '<div class="empty">No ratings yet. Every request that closes sends the client a one-tap rating — these fill in as work completes.</div>';
+  return '<div class="panel p-csat"><h2>Client satisfaction</h2>'
+    +'<div class="cap">'+(tot?(tot+' client'+(tot===1?'':'s')+' rated the service after their request closed.'):'Collected automatically when a request closes.')+'</div>'
+    +body+'</div>';
+}
+</script>
+</body>
+</html>
