@@ -154,7 +154,7 @@ function rrbWall(e) {
   // Sunday counts. A branch that works the weekend should see it said out loud.
   var weekend = { week: 0, month: 0 }, weekendWho = {};
   // The production board: applications taken, clients, products and API.
-  var prod = { mtd: { apps: 0, clients: 0, api: 0, apiRec: 0, subCases: 0,
+  var prod = { mtd: { apps: 0, appsUp: 0, clients: 0, api: 0, apiRec: 0, subCases: 0,
                       pipeline: 0, stale: 0, staleCases: 0, open: 0, assumed: 0, cases: 0 },
                wtd: { apps: 0, clients: 0, api: 0, pipeline: 0, assumed: 0, cases: 0 } };
   var products = {};
@@ -238,11 +238,11 @@ function rrbWall(e) {
         if (agent) {
           if (!yearAgents[agent]) yearAgents[agent] =
             { name: agent, count: 0, need: 0, cover: 0, sold: 0,
-              apiRec: 0, pickedUp: 0, pipeline: 0, apps: 0, premium: 0 };
+              apiRec: 0, pickedUp: 0, pipeline: 0, apps: 0, appsUp: 0, premium: 0 };
           var ya = yearAgents[agent];
           ya.count++; ya.need += need; ya.cover += amt; ya.sold += sold;
           ya.apiRec += api; ya.apps += apps;
-          if (isClosed) ya.pickedUp += apiTaken;
+          if (isClosed) { ya.pickedUp += apiTaken; ya.appsUp += apps; }
           else if (!isLost) ya.pipeline += apiTaken;
         }
       }
@@ -252,7 +252,7 @@ function rrbWall(e) {
         month.apiAssumed += assumed;
         if (apps && !isLost) {
           prod.mtd.apps += apps; prod.mtd.clients++;
-          if (isClosed) prod.mtd.api += apiTaken;
+          if (isClosed) { prod.mtd.api += apiTaken; prod.mtd.appsUp += apps; }
           else {
             if (isSubmitted) prod.mtd.subCases++;
             prod.mtd.pipeline += apiTaken;
@@ -272,7 +272,7 @@ function rrbWall(e) {
         if (agent) {
           if (!monthAgents[agent]) monthAgents[agent] =
             { name: agent, count: 0, premium: 0, cover: 0, need: 0,
-              apiRec: 0, pickedUp: 0, pipeline: 0, apps: 0, sold: 0 };
+              apiRec: 0, pickedUp: 0, pipeline: 0, apps: 0, appsUp: 0, sold: 0 };
           monthAgents[agent].count++;
           monthAgents[agent].apiRec  += api;
           monthAgents[agent].sold    += sold;
@@ -282,7 +282,7 @@ function rrbWall(e) {
           // Submitted is not a separate column any more — an application with
           // head office is still money that has not arrived, so it sits in
           // pipeline until it is picked up.
-          if (isClosed) monthAgents[agent].pickedUp += apiTaken;
+          if (isClosed) { monthAgents[agent].pickedUp += apiTaken; monthAgents[agent].appsUp += apps; }
           else if (!isLost) monthAgents[agent].pipeline += apiTaken;
           monthAgents[agent].apps    += apps;
         }
@@ -298,7 +298,7 @@ function rrbWall(e) {
         if (agent) {
           if (!agents[agent]) agents[agent] =
             { name: agent, count: 0, premium: 0, cover: 0, need: 0,
-              apiRec: 0, pickedUp: 0, pipeline: 0, apps: 0, sold: 0 };
+              apiRec: 0, pickedUp: 0, pipeline: 0, apps: 0, appsUp: 0, sold: 0 };
           agents[agent].count++;
           agents[agent].apiRec  += api;
           agents[agent].sold    += sold;
@@ -308,7 +308,7 @@ function rrbWall(e) {
           // Submitted is not a separate column any more — an application with
           // head office is still money that has not arrived, so it sits in
           // pipeline until it is picked up.
-          if (isClosed) agents[agent].pickedUp += apiTaken;
+          if (isClosed) { agents[agent].pickedUp += apiTaken; agents[agent].appsUp += apps; }
           else if (!isLost) agents[agent].pipeline += apiTaken;
           agents[agent].apps    += apps;
         }
@@ -408,7 +408,7 @@ function rrbWall(e) {
              label: Utilities.formatDate(now, tz, 'MMMM') },
     // The production board. API is annualised from the premium mode.
     production: {
-      mtd: { apps: prod.mtd.apps, clients: prod.mtd.clients,
+      mtd: { apps: prod.mtd.apps, appsUp: prod.mtd.appsUp, clients: prod.mtd.clients,
              api: Math.round(prod.mtd.api), apiRec: Math.round(prod.mtd.apiRec),
              subCases: prod.mtd.subCases,
              pipeline: Math.round(prod.mtd.pipeline),
