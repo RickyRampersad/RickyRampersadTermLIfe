@@ -75,10 +75,34 @@ before and after:
 After generation, `body.className` and the element's inline style both return to
 their original values, on both the success and error paths.
 
-## Known cosmetic issue, not fixed
+## Page breaks — also fixed
 
-At each page boundary the next page's header bleeds in slightly. html2pdf slices
-one tall canvas at fixed A4 intervals, and the real page-break rules only apply
-under `@media print`. Forcing `pagebreak: { before: '.pf-page' }` produced 9
-pages with blanks inserted, which is worse, so it was left alone. Every page's
-own content is complete — this is a trim issue, not a content one.
+Initially each page boundary bled the next page's header onto the one before.
+Same root shape as the main bug: the layout already declares what it wants,
+
+```css
+.pf-page { page-break-after: always; }
+```
+
+but that rule lives inside `@media print`, so on screen it computes to `auto`.
+html2pdf's `css` break mode found nothing to break on and sliced one tall canvas
+at fixed A4 intervals instead — 1123px slices against ~1085px pages, so every
+page drifted.
+
+Fix: set `pageBreakAfter = 'always'` inline on each `.pf-page` except the last
+during generation, and clear it in `restoreLayout()`. Page 1 then ends cleanly at
+its own footer.
+
+Two alternatives were tried and rejected: `pagebreak: { before: '.pf-page' }`
+alone behaved identically, and combining it with the inline rule produced 14
+pages with blanks inserted.
+
+## Expect 8 pages, not 7
+
+The Guardian form is 7 pages. The 8th is the **RR Branch Addendum overflowing** —
+the RAI Branch Manager Intelligence section plus the Sales Support checklist run
+longer than one A4 sheet. That is real content, not a blank.
+
+The split currently lands mid-heading, so the addendum title is clipped at the
+top of page 8. Shortening that section, or introducing a break within it, would
+tidy it. Cosmetic only.
