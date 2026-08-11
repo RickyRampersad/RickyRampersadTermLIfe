@@ -731,7 +731,8 @@ function retainProbability(c){
   if(st.survey){ p+= (st.survey.surveyContact==='Confirmed will pay'?22: st.survey.surveyContact==='Wants to keep'?12: st.survey.surveyContact==='Financial difficulty'?-6: -2); }
   if(st.retention) p+=6;
   // a client who chose a path is a client still in the conversation
-  if(st.response) p+= (st.response.optKey==='cancel'?-25: st.response.optKey==='pay'?24: 14);
+  if(st.response){const k=st.response.optKey||'';
+    p+= NEGATIVE_ANSWERS[k]?-25: POSITIVE_ANSWERS[k]?22: 12;}
   const bl=blocker(c); if(bl&&bl.late) p-=8;   // a late case decays
   if(st.verdict && st.verdict.managerVerdict==='Approve retention plan') p+=10;
   return Math.max(3,Math.min(97,Math.round(p)));
@@ -831,34 +832,70 @@ const VERDICTS=['Approve retention plan','Approve payment plan','Escalate to rei
    The 60-day email carries these as one-click links. A client who picks one has
    told us how to save the policy without having to phone anybody — and the
    chase sequence stops the moment they do. */
-/* Kept in step with CLIENT_CHOICES in apps-script/PremiumDueTemplates.gs — the
-   keys must match, because that file sends the links and this one records what
-   comes back. Grouped so the letter reads as a considered set. */
-const CLIENT_CHOICES=[
-  {k:'pay',      g:'Settling the amount', lab:'I will pay the full outstanding amount',
-   next:'We will watch for it and write to confirm the moment it reaches us.'},
-  {k:'paid',     g:'Settling the amount', lab:'I have already paid — I will send the reference',
-   next:'Reply to the email with the reference or a photo of the receipt and we will trace it.'},
-  {k:'plan',     g:'Settling the amount', lab:'I need to pay it in instalments',
-   next:'Your agent and their manager will contact you to agree a schedule you can hold to.'},
-  {k:'bank',     g:'Settling the amount', lab:'My bank or card details have changed',
-   next:'We will send you a new mandate to sign. Worth checking against any other policies you hold with us.'},
-  {k:'reduce',   g:'Affordability',       lab:'The premium is more than I can manage — please reduce it',
-   next:'We will look at lowering the premium or adjusting the benefit and come back to you with written options.'},
-  {k:'income',   g:'Affordability',       lab:'My income has changed and I need to discuss my options',
-   next:'A manager will review the policy with you personally. There are provisions for exactly this situation.'},
-  {k:'explain',  g:'The policy itself',   lab:'Please explain what this policy actually covers',
-   next:'Your agent will take you through the benefits, the cash value and what you would lose, before you decide anything.'},
-  {k:'elsewhere',g:'The policy itself',   lab:'I believe I have this cover somewhere else',
-   next:'We will compare the two side by side with you. Replacing cover is sometimes right and sometimes costly.'},
-  {k:'call',     g:'Speak with us',       lab:'Please call me to discuss',
-   next:'Your agent will call you. If they cannot reach you, their manager will.'},
-  {k:'cancel',   g:'Speak with us',       lab:'I want to cancel the policy',
-   next:'A manager will speak with you before anything is cancelled, so that you know exactly what you would be giving up.'}
+/* The questions, lifted from the branch's two live JotForms — "Premium Due
+   Feedback From (clients)" (152 responses since Aug 2023) and "Premium Dues
+   Status Update (agents)" (106 since Oct 2025). Kept in step with
+   apps-script/PremiumDueTemplates.gs; the keys must match, because that file
+   sends the links and this one records what comes back. */
+const CLIENT_QUESTIONS=[
+  {k:'intent',q:'Was the delay in payment intentional?',opts:[
+    {k:'no',lab:'No — it was not intentional'},{k:'yes',lab:'Yes — it was a decision I made'}]},
+  {k:'reason',q:'What is the main reason for the delay?',opts:[
+    {k:'financial',lab:'Financial difficulties'},
+    {k:'payfail',lab:'My payment method failed — bank, card or salary deduction'},
+    {k:'oversight',lab:'Oversight — I simply missed it'},
+    {k:'income',lab:'My income changed — job loss, retirement or reduced hours'},
+    {k:'illness',lab:'Illness'},{k:'travel',lab:'Travel or time out of the country'},
+    {k:'dispute',lab:'I have a question or dispute about the policy'},
+    {k:'elsewhere',lab:'I took cover elsewhere'}]},
+  {k:'steps',q:'What do you plan to do to bring the account up to date?',opts:[
+    {k:'paynow',lab:'Pay the overdue amount immediately'},
+    {k:'paid',lab:'I have already paid — I will send the reference'},
+    {k:'plan',lab:'Set up a payment plan'},
+    {k:'needmore',lab:'I need more time — please contact me'},
+    {k:'reduce',lab:'Reduce the premium so I can keep the policy'},
+    {k:'explain',lab:'Explain what I am covered for before I decide'},
+    {k:'cancel',lab:'I want to cancel the policy'}]},
+  {k:'contact',q:'Would you like someone to contact you to discuss your options?',opts:[
+    {k:'yes',lab:'Yes, please contact me'},{k:'no',lab:'No, I have what I need'}]},
+  {k:'prefer',q:'How would you prefer we remind you in future?',opts:[
+    {k:'email',lab:'Email'},{k:'text',lab:'Text message'},
+    {k:'call',lab:'Phone call'},{k:'whatsapp',lab:'WhatsApp'}]}
 ];
-const CHOICE_BY_KEY={}; CLIENT_CHOICES.forEach(o=>CHOICE_BY_KEY[o.k]=o);
-function responseLink(c,key){
-  return `${location.origin}${location.pathname}#respond=${c.Policy}&opt=${key}`;
+/* What a manager must answer. Previously two free-text fields, which came back
+   blank on 78 of 106 filed cases. */
+const MANAGER_QUESTIONS=[
+  {k:'mcontact',q:'Have you personally contacted this client?',opts:[
+    {k:'yes',lab:'Yes — I have spoken with them'},{k:'attempted',lab:'Attempted — no response yet'},
+    {k:'notyet',lab:'Not yet — I will do so today'}]},
+  {k:'mdecision',q:'What is your decision on this case?',opts:[
+    {k:'retention',lab:'Approve the retention plan as proposed'},
+    {k:'payplan',lab:'Approve a payment plan'},
+    {k:'reduce',lab:'Approve a premium reduction or benefit alteration'},
+    {k:'reinstate',lab:'Escalate to reinstatement'},
+    {k:'replacement',lab:'Investigate possible replacement of in-force cover'},
+    {k:'reassign',lab:'Reassign — orphan or wrong agent'},
+    {k:'lapse',lab:'Allow the policy to lapse — documented'}]},
+  {k:'mfactfind',q:'Is the fact find complete and acceptable?',opts:[
+    {k:'yes',lab:'Yes — complete'},{k:'returned',lab:'No — returned to the agent for completion'},
+    {k:'none',lab:'No fact find was attached'}]},
+  {k:'moutlook',q:'How likely is this policy to be saved?',opts:[
+    {k:'high',lab:'High — the client is engaged'},{k:'mod',lab:'Moderate — depends on the concession'},
+    {k:'low',lab:'Low — prepare for lapse'}]},
+  {k:'msupport',q:'Do you need the branch manager involved?',opts:[
+    {k:'no',lab:'No — I have this'},{k:'yes',lab:'Yes — please escalate to the branch manager'}]},
+  {k:'mwhen',q:'By when will this be resolved?',opts:[
+    {k:'today',lab:'Today'},{k:'week',lab:'Within this week'},
+    {k:'d75',lab:'Before day 75'},{k:'d88',lab:'Before day 88 — the final notice'}]}
+];
+const ANSWER_BY_KEY={};
+[CLIENT_QUESTIONS,MANAGER_QUESTIONS].forEach(set=>set.forEach(q=>q.opts.forEach(o=>{
+  ANSWER_BY_KEY[q.k+':'+o.k]={q:q.q,lab:o.lab,qk:q.k,set:set===MANAGER_QUESTIONS?'mgr':'client'};})));
+/* Answers that mean the client intends to keep paying, for the odds model. */
+const POSITIVE_ANSWERS={'steps:paynow':1,'steps:paid':1,'steps:plan':1,'steps:reduce':1,'contact:yes':1};
+const NEGATIVE_ANSWERS={'steps:cancel':1,'reason:elsewhere':1,'reason:dispute':1};
+function answerLink(c,kind,qk,ak){
+  return `${location.origin}${location.pathname}#${kind}=${c.Policy}&q=${qk}&a=${ak}`;
 }
 
 /* ===== CLIENT OUTREACH TEMPLATES =====
@@ -908,13 +945,12 @@ function hasEmail(c){const e=String(c.Email||'').trim();return (!e||/not availab
 /* The six one-click links that go into the 60-day email. */
 function choiceLinksHtml(c){
   if(c.stage!=='s60'&&c.stage!=='s45')return '';
-  let out='',g='';
-  CLIENT_CHOICES.forEach(o=>{
-    if(o.g!==g){g=o.g;out+=`<div class="choice-g">${esc(g)}</div>`;}
-    out+=`<div class="choice-row"><span class="cl">${esc(o.lab)}</span><button class="btn-sm btn-save" data-copychoice="${esc(o.k)}" type="button">Copy link</button></div>`;
-  });
-  return `<div class="note" style="margin-top:12px"><b>The client's options.</b> These are the links in the 60-day letter — selecting one records the answer against the policy and stops the reminders.</div>
-    <div class="choice-list">${out}</div>`;
+  const rows=CLIENT_QUESTIONS.map(q=>
+    `<div class="choice-g">${esc(q.q)}</div>`+q.opts.map(o=>
+      `<div class="choice-row"><span class="cl">${esc(o.lab)}</span><button class="btn-sm btn-save" data-copyq="${esc(q.k)}" data-copya="${esc(o.k)}" type="button">Copy</button></div>`).join('')
+  ).join('');
+  return `<div class="note" style="margin-top:12px"><b>The questions in the client's letter.</b> Every answer is a link — the client taps it in the email and never opens a browser form. These are the same questions the branch has been asking since 2023.</div>
+    <div class="choice-list">${rows}</div>`;
 }
 function outreachPanel(c){
   const keys=Object.keys(OUT_TPL), def=defaultTpl(c);
@@ -1194,10 +1230,10 @@ function wireOutreach(card,policy){
     pick.querySelectorAll('[data-otpl]').forEach(x=>x.classList.remove('on'));
     b.classList.add('on');key=b.dataset.otpl;paint();
   }));
-  card.querySelectorAll('[data-copychoice]').forEach(b=>b.addEventListener('click',()=>{
-    const link=responseLink(c,b.dataset.copychoice);
+  card.querySelectorAll('[data-copyq]').forEach(b=>b.addEventListener('click',()=>{
+    const link=answerLink(c,'respond',b.dataset.copyq,b.dataset.copya);
     if(navigator.clipboard)navigator.clipboard.writeText(link);
-    toast('Option link copied');
+    toast('Answer link copied');
   }));
   card.querySelectorAll('[data-osend]').forEach(b=>b.addEventListener('click',()=>{
     const how=b.dataset.osend,text=msg.value.trim();
@@ -1720,48 +1756,70 @@ setInterval(async()=>{
   if((ok&&LAST_SYNC_N!==beforeLog)||POLICY_N!==beforePol){toast('Synced with the sheet');refreshView();}
 },LOG_POLL_MS);
 
-/* ===== CLIENT ONE-CLICK REPLY (#respond=POLICY&opt=KEY) =====
-   The 60-day email carries six links, one per option. Clicking one records the
-   client's choice against the policy and stops the chase sequence — no login,
-   no form, no phone call needed to tell us they are still there. */
-async function handleHashRespond(){
-  const m=location.hash.match(/respond=([0-9A-Za-z]+)&opt=([a-z]+)/);
+/* ===== ONE-CLICK ANSWERS =====
+   #respond=POLICY&q=QUESTION&a=ANSWER   the client, from their letter
+   #mgr=POLICY&q=QUESTION&a=ANSWER       the manager, from theirs
+
+   Neither signs in. The client has no account and should not need one; the
+   manager is answering from an email on their phone, which is the whole point —
+   Approval Status came back blank on 78 of 106 cases when answering meant
+   opening a form. */
+async function handleHashAnswer(){
+  const m=location.hash.match(/(respond|mgr)=([0-9A-Za-z]+)&q=([a-z]+)&a=([a-z0-9]+)/i);
   if(!m)return false;
-  const policy=m[1], key=m[2];
+  const [,kind,policy,qk,ak]=m;
   history.replaceState(null,'',location.pathname);
   if(SHEET_URL&&POLICY_SRC!=='live')await policyLoad();
   const c=ALL_CASES.find(x=>x.Policy===String(policy));
-  const opt=CHOICE_BY_KEY[key];
-  if(!opt){openPublicSurvey(policy);return true;}   // unknown option — fall back to the survey
+  const key=qk+':'+ak, ans=ANSWER_BY_KEY[key];
+  if(!ans){openPublicSurvey(policy);return true;}
 
+  const isMgr=kind.toLowerCase()==='mgr';
   const login=document.getElementById('login'); if(login)login.style.display='none';
   const app=document.getElementById('app'); if(app)app.classList.remove('on');
-  const nm=c?first(c):'there';
+
   const ts=Date.now();
-  const rec={kind:'response',author:(c?c.Client+' ':'')+'(client)',code:'',role:'Client',
-    stage:c?stageOf(c):'s60',reason:'CLIENT REPLY',body:opt.lab,optKey:key,
-    surveyReason:'',surveyContact:opt.lab,surveyPromise:'',factFind:'',managerVerdict:'',ts};
+  const rec=isMgr
+    ? {kind:'verdict',author:(c?managerOf(c.Agent):'Manager'),code:'',role:'Manager',
+       stage:c?stageOf(c):'s60',reason:ans.q,body:ans.lab,optKey:key,
+       managerVerdict:ans.lab,surveyReason:'',surveyContact:'',surveyPromise:'',factFind:'',ts}
+    : {kind:'response',author:(c?c.Client+' ':'')+'(client)',code:'',role:'Client',
+       stage:c?stageOf(c):'s60',reason:ans.q,body:ans.lab,optKey:key,
+       surveyReason:'',surveyContact:ans.lab,surveyPromise:'',factFind:'',managerVerdict:'',ts};
   pushRecord(policy,rec);
   sheetLog({ts,policy,client:c?c.Client:'',clientNo:c?c.ClientNo:'',agent:c?c.Agent:'',
-    author:rec.author,code:'',role:'Client',stage:rec.stage,type:'response',reason:'CLIENT REPLY',
-    body:opt.lab,retainProb:c?retainProbability(c):'',tone:'',surveyReason:'',surveyContact:opt.lab,
-    surveyPromise:'',factFind:'',managerVerdict:''});
+    author:rec.author,code:'',role:rec.role,stage:rec.stage,type:rec.kind,reason:ans.q,
+    body:ans.lab,retainProb:c?retainProbability(c):'',tone:'',surveyReason:'',
+    surveyContact:isMgr?'':ans.lab,surveyPromise:'',factFind:'',managerVerdict:isMgr?ans.lab:''});
 
+  const nm=c?first(c):'there';
+  const remaining=(isMgr?MANAGER_QUESTIONS:CLIENT_QUESTIONS).filter(q=>q.k!==qk);
   $('#surveyX').style.display='none';
-  $('#surveyTitle').textContent=`Thank you, ${nm}.`;
-  $('#surveySub').textContent=c?`Policy ${c.Policy}`:'';
-  $('#surveyBody').innerHTML=`<div style="text-align:center;padding:14px 6px">
-    <div style="width:52px;height:52px;margin:0 auto 14px">${SHIELD}</div>
-    <div style="font-size:13px;color:var(--mut);margin-bottom:6px">You told us:</div>
-    <div style="font-family:var(--disp);font-size:20px;font-weight:600;margin-bottom:14px;line-height:1.25">${esc(opt.lab)}</div>
-    <p style="color:var(--slate);max-width:38ch;margin:0 auto 14px;line-height:1.6">${esc(opt.next)}</p>
-    <div style="background:var(--teal-soft);border-radius:9px;padding:12px 14px;font-size:12.5px;color:var(--teal-2);max-width:40ch;margin:0 auto">
-      Your agent${c?` (${esc(c.Agent)})`:''} and their manager have both been notified. You will not get any more reminder emails about this.</div>
-    <p style="font-size:11px;color:var(--mut);margin-top:14px">You can close this page.</p></div>`;
+  $('#surveyTitle').textContent=isMgr?'Recorded — thank you.':`Thank you, ${nm}.`;
+  $('#surveySub').textContent=c?`Policy ${c.Policy}${isMgr?' · '+c.Client:''}`:'';
+  $('#surveyBody').innerHTML=`<div style="text-align:center;padding:12px 6px 4px">
+      <div style="width:48px;height:48px;margin:0 auto 12px">${SHIELD}</div>
+      <div style="font-size:12.5px;color:var(--mut);margin-bottom:5px">${esc(ans.q)}</div>
+      <div style="font-family:var(--disp);font-size:19px;font-weight:600;line-height:1.3;margin-bottom:12px">${esc(ans.lab)}</div>
+      <p style="color:var(--slate);max-width:40ch;margin:0 auto 14px;line-height:1.55">${isMgr
+        ? `Recorded against the policy under your name. ${c?esc(c.Agent):'The agent'} can see it now.`
+        : `Recorded against your policy. Your agent${c?` (${esc(c.Agent)})`:''} and their manager have both been notified, and you will not receive further reminders about this.`}</p>
+    </div>
+    ${remaining.length?`<div style="border-top:1px solid var(--line);padding-top:14px">
+      <div style="font-size:12.5px;color:var(--slate);margin-bottom:10px;text-align:center">
+        ${isMgr?'While you are here — the rest of your response:':'Anything else you would like to tell us?'}</div>
+      ${remaining.map(q=>`<div style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:6px">${esc(q.q)}</div>
+        <div class="opt-stack">${q.opts.map(o=>
+          `<button class="opt-pick" data-ansq="${esc(q.k)}" data-ansa="${esc(o.k)}" type="button"><span class="dot"></span>${esc(o.lab)}</button>`).join('')}</div>
+      </div>`).join('')}</div>`:''}`;
+  $('#surveyBody').querySelectorAll('[data-ansq]').forEach(btn=>btn.addEventListener('click',()=>{
+    location.hash=`${isMgr?'mgr':'respond'}=${policy}&q=${btn.dataset.ansq}&a=${btn.dataset.ansa}`;
+  }));
   $('#surveyModal').classList.add('on');
   return true;
 }
-window.addEventListener('hashchange',handleHashRespond);
+window.addEventListener('hashchange',handleHashAnswer);
 
 /* deep-link client survey (#survey=POLICY) */
 async function handleHashSurvey(){
@@ -1838,7 +1896,7 @@ function openPublicSurvey(policy){
   else { seedDemoRecords(); }
   updatePolicyBadge();
   if(SESS) refreshView();
-  if(!(await handleHashRespond())) await handleHashSurvey();
+  if(!(await handleHashAnswer())) await handleHashSurvey();
 })();
 </script>
 </body>
