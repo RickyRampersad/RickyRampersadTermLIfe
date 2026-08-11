@@ -477,6 +477,119 @@ function pdTimeline_(p) {
     '</table>';
 }
 
+/* ===================== THE WHOLE RELATIONSHIP =====================
+   55% of the clients in the 45/60 window hold more than one policy with us, and
+   27% of their cover — $191m across the book — sits on the policies that are
+   NOT the one in arrears. Writing to them about a single policy number, as if
+   that were the whole relationship, throws all of that away.
+
+   It also tells us which conversation to have. 60 clients are behind on one
+   policy while paying another perfectly well: that is a failed mandate, not
+   affordability, and saying so is the difference between being helpful and
+   sounding like a collections notice. 137 have already lost a policy to lapse
+   and are on course to do it again. */
+
+function pdFamily_(p, family) {
+  return (family && family.length) ? family : [p];
+}
+
+/** Total cover the client holds with us, across everything still in force. */
+function pdTotalCover_(family) {
+  var t = 0;
+  for (var i = 0; i < family.length; i++) {
+    var f = family[i];
+    if (Number(f.Status) === 1) continue;               // already lapsed, not at stake
+    t += Number(f.SumAssured) || 0;
+  }
+  return t;
+}
+
+/** How this client's situation reads, so the letter can say the true thing. */
+function pdRelationship_(p, family) {
+  var payingOthers = 0, lapsedBefore = 0, alsoBehind = 0, others = 0;
+  for (var i = 0; i < family.length; i++) {
+    var f = family[i];
+    if (String(f.Policy) === String(p.Policy)) continue;
+    others++;
+    var st = Number(f.Status), desc = String(f.StatusDesc || '').toLowerCase();
+    if (st === 1 || desc === 'lapsed') lapsedBefore++;
+    else if (st === 2) alsoBehind++;
+    else if (desc === 'premium paying') payingOthers++;
+  }
+  return { others: others, payingOthers: payingOthers, lapsedBefore: lapsedBefore,
+           alsoBehind: alsoBehind, cover: pdTotalCover_(family) };
+}
+
+/** Every policy the client holds, with the one in arrears marked. */
+function pdPolicyTable_(p, family) {
+  if (family.length < 2) return '';
+  var rows = '';
+  for (var i = 0; i < family.length; i++) {
+    var f = family[i];
+    var here = String(f.Policy) === String(p.Policy);
+    var st = Number(f.Status), desc = String(f.StatusDesc || '');
+    var label = here ? 'This letter' : (st === 1 ? 'Lapsed' : st === 2 ? 'Behind' :
+                 st === 3 ? 'In underwriting' : desc || 'In force');
+    var colour = here ? PD_BRAND.red : (st === 1 ? '#8A8578' : st === 2 ? PD_BRAND.gold : PD_BRAND.teal);
+    rows += '<tr>' +
+      '<td style="padding:8px 11px;border:1px solid #E8E3D8;background:' + (here ? '#F6ECD4' : '#FFFFFF') +
+        ';color:' + PD_BRAND.ink + ';font-weight:' + (here ? 'bold' : 'normal') + '">' + pdEsc_(f.Policy) + '</td>' +
+      '<td style="padding:8px 11px;border:1px solid #E8E3D8;background:' + (here ? '#F6ECD4' : '#FFFFFF') +
+        ';color:' + PD_BRAND.ink + '">' + pdEsc_(f.PlanCode || '—') + '</td>' +
+      '<td style="padding:8px 11px;border:1px solid #E8E3D8;background:' + (here ? '#F6ECD4' : '#FFFFFF') +
+        ';color:' + PD_BRAND.ink + ';text-align:right">' +
+        (Number(f.SumAssured) > 0 ? pdMoney_(f.SumAssured) : '—') + '</td>' +
+      '<td style="padding:8px 11px;border:1px solid #E8E3D8;background:' + (here ? '#F6ECD4' : '#FFFFFF') +
+        ';color:' + colour + ';font-weight:600;white-space:nowrap">' + pdEsc_(label) + '</td>' +
+      '</tr>';
+  }
+  return '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:10px 0;font-size:13px">' +
+    '<tr>' +
+      '<th style="padding:7px 11px;background:#F3F0E9;border:1px solid #E8E3D8;color:#5A6B7B;text-align:left;font-weight:600">Policy</th>' +
+      '<th style="padding:7px 11px;background:#F3F0E9;border:1px solid #E8E3D8;color:#5A6B7B;text-align:left;font-weight:600">Plan</th>' +
+      '<th style="padding:7px 11px;background:#F3F0E9;border:1px solid #E8E3D8;color:#5A6B7B;text-align:right;font-weight:600">Benefit</th>' +
+      '<th style="padding:7px 11px;background:#F3F0E9;border:1px solid #E8E3D8;color:#5A6B7B;text-align:left;font-weight:600">Standing</th>' +
+    '</tr>' + rows + '</table>';
+}
+
+/**
+ * The opening line, chosen from what is actually true of this client.
+ * The research on lapse behaviour is consistent on one point: a loss reads about
+ * twice as strongly as the equivalent gain, so what is stated first should be
+ * what they stand to lose — in figures, not adjectives.
+ */
+function pdStakeOpening_(p, family) {
+  var r = pdRelationship_(p, family);
+  var cover = r.cover > 0 ? pdMoney_(r.cover) : null;
+
+  if (r.payingOthers > 0) {
+    return '<p>You hold <b>' + (r.others + 1) + ' policies</b> with us and you are paying ' +
+      (r.payingOthers === 1 ? 'another one' : r.payingOthers + ' of them') + ' without any difficulty. ' +
+      'That is usually the sign that this is a <b>banking problem rather than a money problem</b> — a mandate ' +
+      'that stopped, a card that expired, a deduction that was never set up. It is normally a five-minute fix, ' +
+      'and it is worth making because ' + (cover ? '<b>' + cover + '</b> of cover' : 'your cover') +
+      ' is sitting behind these policies.</p>';
+  }
+  if (r.lapsedBefore > 0) {
+    return '<p>Our records show ' + (r.lapsedBefore === 1 ? 'a policy of yours has' : r.lapsedBefore + ' of your policies have') +
+      ' already lapsed. We do not raise that to embarrass anybody — we raise it because ' +
+      'it means you have been here before, and the policy in this letter is heading the same way. ' +
+      (cover ? 'You still hold <b>' + cover + '</b> of cover with us. ' : '') +
+      'This is the point where that can still be stopped.</p>';
+  }
+  if (r.others > 0) {
+    return '<p>You hold <b>' + (r.others + 1) + ' policies</b> with us, together worth ' +
+      (cover ? '<b>' + cover + '</b> of cover' : 'a substantial benefit') +
+      ' to the people who depend on you. One of them is behind, and if nothing changes that part of the ' +
+      'protection ends — the rest continues, but the gap is permanent.</p>';
+  }
+  return '<p>' + (cover
+    ? 'This policy pays <b>' + cover + '</b> to the people who depend on you. '
+    : 'This policy protects the people who depend on you. ') +
+    'It was underwritten on your health as it was when you applied, not as it is today, which is the part ' +
+    'most people do not weigh until it is gone.</p>';
+}
+
 /** Named signatories, so the client knows exactly who is accountable. */
 function pdSignature_(p) {
   var mgr = pdManagerOf_(p.Agent);
@@ -524,17 +637,18 @@ var PD_TEMPLATES = {
   },
 
   /* ---- day 45: ask the questions, and remind them what they own ---- */
-  s45: function (p) {
-    var first = pdFirst_(p.Client), link = pdSurveyLink_(p.Policy), left = pdDaysToLapse_(p);
+  s45: function (p, state) {
+    var first = pdFirst_(p.Client), left = pdDaysToLapse_(p);
     var d = Number(p.DaysArrears) || 0;
-    var sa = Number(p.SumAssured) || 0;
+    var family = pdFamily_(p, state && state.family);
     return {
       subject: 'Policy No. ' + p.Policy + ' — premium outstanding ' + d + ' days',
       html: pdWrap_(
         pdRefBlock_(p, 'Premium Outstanding') +
         '<p>' + pdSalutation_(p.Client) + ',</p>' +
         '<p>The premium on the above policy has been outstanding for <b>' + d + ' days</b>. ' +
-        'Your cover remains in force, and we are writing at this point specifically so that it stays that way.</p>' +
+        'Your cover remains in force, and we are writing now specifically so that it stays that way.</p>' +
+        pdStakeOpening_(p, family) +
 
         pdSection_(1, 'Please answer here — it takes one tap',
           '<p>We would rather understand your situation than assume it, and there are more options ' +
@@ -542,20 +656,18 @@ var PD_TEMPLATES = {
           'we are solving.</p>' +
           pdQuestionBlock_(p, CLIENT_QUESTIONS, 'respond')) +
 
-        pdSection_(2, 'Your policy as it stands', pdFacts_(p)) +
+        pdSection_(2, (family.length > 1 ? 'Everything you hold with us' : 'Your policy as it stands'),
+          (family.length > 1
+            ? '<p>So that you can see the whole picture, not one line of it:</p>' + pdPolicyTable_(p, family) +
+              '<p style="font-size:13px;color:#5A6B7B">The highlighted row is the policy this letter is about.</p>'
+            : pdFacts_(p))) +
 
-        pdSection_(3, 'What this policy does for you',
-          '<p>It is worth restating plainly, because it is easy to lose sight of when a payment slips.</p>' +
-          (sa > 0
-            ? '<p>This policy pays <b>' + pdMoney_(sa) + '</b> to the people who depend on you, at the moment they would ' +
-              'otherwise be facing that loss and a financial one together. It cannot be replaced by savings at short notice, ' +
-              'and it cost you less to put in place then than it would cost to arrange now.</p>'
-            : '<p>This policy pays a benefit to the people who depend on you, at the moment they would otherwise be ' +
-              'facing that loss and a financial one together.</p>') +
-          '<p>It was also underwritten on your health <b>as it was at the time you applied</b>. That is the part most ' +
-          'people do not weigh: if the policy lapses and you later reapply, you are underwritten on your health as it ' +
-          'is then. Where anything has changed in between, the same cover may cost considerably more, or may not be ' +
-          'available at all.</p>') +
+        pdSection_(3, 'Why this one matters',
+          '<p>This policy was underwritten on your health <b>as it was when you applied</b>. That is the part most ' +
+          'people do not weigh until it is gone: if it lapses and you later reapply, you are underwritten on your ' +
+          'health as it is then. Where anything has changed in between, the same cover may cost considerably more, ' +
+          'or may not be available at all.</p>' +
+          '<p>Nothing you have paid into it transfers anywhere. It simply stops working.</p>') +
 
         pdSection_(4, 'If we do not hear from you',
           pdNote_('Cover ends <b>' + left + ' days</b> from today if the premium remains outstanding. From that date a ' +
@@ -568,8 +680,9 @@ var PD_TEMPLATES = {
         '45-day review'),
       whatsapp: 'Good day ' + first + ', this is ' + OUT.BRANCH_NAME + ' regarding policy ' + p.Policy +
         '. The premium is ' + d + ' days outstanding and cover would end in about ' + left + ' days. ' +
-        'Before it gets there we would rather understand your situation than assume it — there are more options than ' +
-        'most people realise. Three quick questions: ' + (link ? link : '') + ' Or reply here and we will take it from there.'
+        (family.length > 1 ? 'You hold ' + family.length + ' policies with us, so I want to make sure this one does not slip. ' : '') +
+        'Just reply with whichever fits and I will take it from there: paying now / already paid / need a payment plan / ' +
+        'my bank details changed / premium is too much / please call me.'
     };
   },
 
@@ -597,6 +710,7 @@ var PD_TEMPLATES = {
     var first = pdFirst_(p.Client), left = pdDaysToLapse_(p), d = Number(p.DaysArrears) || 0;
     var mgr = pdManagerOf_(p.Agent);
     var answered = !!(state && state.survey);
+    var family = pdFamily_(p, state && state.family);
     return {
       subject: 'Policy No. ' + p.Policy + ' — 60 days outstanding, ' + left + ' days to lapse',
       cc: pdChainCc_(p),
@@ -606,6 +720,7 @@ var PD_TEMPLATES = {
         '<p>We are writing formally regarding the premium on the above policy, which is now <b>' + d +
         ' days</b> outstanding. This letter is copied to your agent, to their manager and to the branch manager, ' +
         'so that everyone who can act on your behalf is working from the same information.</p>' +
+        pdStakeOpening_(p, family) +
 
         pdSection_(1, 'What we need from you',
           '<p>' + (answered
@@ -615,7 +730,12 @@ var PD_TEMPLATES = {
 
         pdSection_(2, 'Our previous correspondence', pdPriorExchange_(p, state)) +
 
-        pdSection_(3, 'Your policy as it stands', pdFacts_(p)) +
+        pdSection_(3, (family.length > 1 ? 'Everything you hold with us' : 'Your policy as it stands'),
+          (family.length > 1
+            ? pdPolicyTable_(p, family) +
+              '<p style="font-size:13px;color:#5A6B7B">The highlighted row is the policy this letter is about. ' +
+              'The others are shown so that you can see what the relationship looks like as a whole.</p>'
+            : pdFacts_(p))) +
 
         pdSection_(4, 'What happens from here', pdTimeline_(p)) +
 
@@ -1055,6 +1175,11 @@ function dailyPremiumDueRun() {
 
   var sent = pdAlreadySent_();
   var states = pdCaseState_();
+  var byClient = {};
+  for (var b = 0; b < payload.policies.length; b++) {
+    var bp = payload.policies[b];
+    (byClient[String(bp.ClientNo)] = byClient[String(bp.ClientNo)] || []).push(bp);
+  }
   var count = 0, skippedNoEmail = 0, planned = 0, internal = 0;
 
   for (var i = 0; i < payload.policies.length; i++) {
@@ -1071,6 +1196,7 @@ function dailyPremiumDueRun() {
     if (stageKey === 'chase' && sent[String(p.Policy) + '|chase|' + (Number(p.DaysArrears) || 0)]) continue;
     if ((Number(p.Premium) || 0) < OUT.MIN_PREMIUM) continue;
 
+    s.family = byClient[String(p.ClientNo)] || [p];        // the whole relationship, not one line of it
     var tpl = pdRender(stageKey, p, s);
     if (!tpl) continue;
     var to = pdValidEmail_(p.Email);
