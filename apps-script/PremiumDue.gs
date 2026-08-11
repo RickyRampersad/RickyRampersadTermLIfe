@@ -192,7 +192,8 @@ function mapPolicy_(row) {
     DaysArrears: num_(row[8]), InsType: row[9], PaidToDate: row[10] || '',
     SumAssured: num_(row[12]), PlanCode: row[13] || '', Billing: row[14] || '',
     Mode: row[15] || '', APLAmount: num_(row[16]), StatusDesc: row[17] || '',
-    LapseDate: row[18] || '', Phone: row[21] || '', Email: row[22] || ''
+    LapseDate: row[18] || '', AmountBilled: num_(row[19]), Address: row[20] || '',
+    Phone: row[21] || '', Email: row[22] || '', SendFlag: String(row[23] == null ? '' : row[23]).trim()
   };
 }
 

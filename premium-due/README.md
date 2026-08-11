@@ -70,13 +70,36 @@ Off the **status flags**, not a raw day count — for a Status 0 "Premium Paying
 policy the Days column is age-on-book, not arrears, and would otherwise drag
 thousands of healthy policies into the lapse funnel.
 
+**The cycle is 45 / 60 / 75 / 90.** Nothing goes out before day 45 — a premium a
+few days late is a banking timing difference, not a conversation. Between the
+milestones, a reminder every 5 days while the client has said nothing; it stops
+on any answer. Day 75 is signed by the unit manager personally. The final notice
+sends at day 88 so it lands before the cliff, not on it.
+
 | Stage | Trigger | What's due |
 |-------|---------|-----------|
-| Overdue | Status 2, 1–44 days | Comment / contact |
-| 45-Day | Status 2, 45–59 days | Client survey |
+| Overdue | Status 2, 1–44 days | Nothing automated — agent contact only |
+| 45-Day | Status 2, 45–59 days | First letter: two questions, answered by tapping |
 | 60-Day | Status 2, 60–89 days | Client picks an option · agent files by day 65 · manager answers within 5 days |
 | 90-Day | Status 2 at 90+, or Status 1 | Reinstatement or win-back |
 | Pending | Status 3 / underwriting incomplete | New business chase |
+
+### Contact data
+
+`pdValidEmail_` strips whitespace before validating. **1,288 addresses in the
+book are broken by a single stray space** — `AFISHALEWISNAILS@GMAIL.CO M` — an
+export artefact. Repairing them takes email reach in the save window from 51% to
+69%, which is 132 more clients we simply were not writing to. The repair is
+whitespace only; nothing is guessed and no domain is corrected.
+
+`pdMayEmail_` honours the portfolio's **Send Y or N** column. Anything explicitly
+N is suppressed and no sequence overrides it.
+
+Coverage in the 45/60 window: 93% have a usable phone, 69% a usable email after
+repair, and **7% (52 policies) have neither** — those are a phone call somebody
+has to make, and the log records them as unreachable rather than skipping quietly.
+
+`Address`, `AmountBilled`, `PaidToDate` and `Mode` are now mapped too.
 
 ### Answers need no browser
 

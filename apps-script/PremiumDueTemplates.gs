@@ -221,10 +221,30 @@ function pdMoney_(v) {
   var n = Number(v) || 0;
   return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+/*
+ * Address hygiene, which turns out to matter more than it sounds.
+ *
+ * 1,288 addresses in the book are broken by a single stray space —
+ * "AFISHALEWISNAILS@GMAIL.CO M" — almost certainly a fixed-width export
+ * artefact. Stripping whitespace repairs 132 of them inside the current save
+ * window alone, taking email reach there from 51% to 69%. Those are real
+ * clients we simply were not writing to.
+ *
+ * The repair is deliberately conservative: whitespace only. Nothing is guessed,
+ * no domain is corrected, and anything still malformed after the strip is
+ * treated as no address at all.
+ */
 function pdValidEmail_(e) {
-  e = String(e || '').trim();
-  if (!e || /not available/i.test(e)) return '';
+  e = String(e || '').replace(/\s+/g, '');
+  if (!e || /notavailable/i.test(e)) return '';
   return /^[^@\s]+@[^@\s.]+\.[^@\s]+$/.test(e) ? e : '';
+}
+
+/* The portfolio's "Send Y or N" column. Anything explicitly N is a client who
+   has asked not to be written to, and no sequence overrides that. */
+function pdMayEmail_(p) {
+  var f = String(p.SendFlag == null ? '' : p.SendFlag).trim().toUpperCase();
+  return f !== 'N' && f !== 'NO' && f !== 'FALSE';
 }
 function pdSurveyLink_(policy) {
   if (!OUT.ENGINE_URL) return '';
@@ -395,12 +415,11 @@ function pdChoiceBlock_(p) {
    that ignores them. */
 
 var TRAIL_LABEL = {
-  od:      'We wrote about the premium on this policy',
-  s45:     'We asked what would help',
-  s45r:    'We followed up, having had no reply',
+  s45:     'We wrote asking what would help',
   s60:     'We wrote formally, copying your agent and their managers',
-  chase:   'We followed up again',
-  s88:     'Final notice',
+  chase:   'We followed up, having had no reply',
+  s75:     'Your agent&rsquo;s manager wrote to you personally',
+  s90:     'Final notice',
   winback: 'We wrote about restoring the policy',
   pend:    'We wrote about the outstanding requirements'
 };
@@ -704,25 +723,6 @@ function pdSig_() {
 
 var PD_TEMPLATES = {
 
-  /* ---- day 30: a premium missed, said plainly and without alarm ---- */
-  od: function (p) {
-    var first = pdFirst_(p.Client), link = pdSurveyLink_(p.Policy);
-    return {
-      subject: 'A premium on policy ' + p.Policy + " hasn't reached us",
-      html: pdWrap_(
-        '<p>Dear ' + pdEsc_(first) + ',</p>' +
-        '<p>A premium of <b>' + pdMoney_(p.Premium) + '</b> on your policy has not reached us yet. ' +
-        'It is usually something small — a change of bank, a card that expired, or a payment we simply have not matched up.</p>' +
-        pdFacts_(p) +
-        '<p>Your cover is <b>still in force</b>. Bringing the premium up to date keeps it that way, and keeps the benefits you have already built.</p>' +
-        pdBtn_(link, 'Tell us what happened') +
-        '<p>If you have already paid, thank you — nothing further is needed.</p>' + pdSig_(),
-        'Premium reminder'),
-      whatsapp: 'Hi ' + first + ', this is ' + OUT.BRANCH_NAME + '. A premium of ' + pdMoney_(p.Premium) +
-        ' on policy ' + p.Policy + " hasn't reached us. Your cover is still active. Usually it's a bank or card change — can you let me know what suits you? " +
-        (link ? link : '')
-    };
-  },
 
   /* ---- day 45: ask the questions, and remind them what they own ---- */
   s45: function (p, state) {
@@ -773,23 +773,6 @@ var PD_TEMPLATES = {
     };
   },
 
-  /* ---- day 52: they didn't answer. One nudge, then we stop asking. ---- */
-  s45r: function (p) {
-    var first = pdFirst_(p.Client), link = pdSurveyLink_(p.Policy), left = pdDaysToLapse_(p);
-    return {
-      subject: 'Still here when you are — policy ' + p.Policy,
-      html: pdWrap_(
-        '<p>Dear ' + pdEsc_(first) + ',</p>' +
-        '<p>We wrote last week about the outstanding premium on policy <b>' + pdEsc_(p.Policy) + '</b> and have not heard back. ' +
-        'That is completely fine — life gets busy. We are following up once, then we will leave you alone.</p>' +
-        pdNote_('Cover ends in about <b>' + left + ' days</b> if the premium stays outstanding.') +
-        pdBtn_(link, 'Take 30 seconds now') +
-        '<p>If the honest answer is that you want to stop the policy, tell us that too. We would rather close it properly than have it lapse quietly.</p>' + pdSig_(),
-        '45-day review'),
-      whatsapp: 'Hi ' + first + ", just following up on policy " + p.Policy + '. Cover ends in about ' + left +
-        " days. Even if the answer is you want to stop it, tell me — I'd rather sort it properly than let it lapse. " + (link ? link : '')
-    };
-  },
 
   /* ---- day 60: the formal position. Quotes the 45-day exchange back, sets out
          the timeline with dates, and puts the whole chain on the record. ---- */
@@ -881,22 +864,64 @@ var PD_TEMPLATES = {
   },
 
   /* ---- day 88: last call ---- */
-  s88: function (p) {
+  s90: function (p, state) {
+    var family = pdFamily_(p, state && state.family);
     var first = pdFirst_(p.Client), left = pdDaysToLapse_(p);
     return {
-      subject: 'Final notice — policy ' + p.Policy + ' lapses in ' + left + ' day' + (left === 1 ? '' : 's'),
+      subject: 'Final notice — policy ' + p.Policy + ', ' + left + ' day' + (left === 1 ? '' : 's') + ' remaining',
       html: pdWrap_(
         '<p>Dear ' + pdEsc_(first) + ',</p>' +
         '<p>This is the last notice we will send before your policy lapses.</p>' +
         pdFacts_(p) +
-        pdNote_('Once the policy lapses, the cover stops and any claim from that date is not payable. ' +
-                'Everything you have paid into it stops working for you.', '#B23A3A') +
+        pdNote_(pdLapseMeaning_(p), PD_BRAND.red) +
         '<p>If there is any way we can keep this in place — a smaller premium, a payment plan, a different date — ' +
         'call ' + pdEsc_(OUT.BRANCH_PHONE) + ' today. It takes one conversation.</p>' + pdSig_(),
         'Final notice'),
       whatsapp: 'Hi ' + first + ' — final notice on policy ' + p.Policy + '. It lapses in ' + left + ' day' + (left === 1 ? '' : 's') +
         ' and after that a claim is not payable. If there is any way to keep it — smaller premium, payment plan, different date — call me today on ' +
         OUT.BRANCH_PHONE + '.'
+    };
+  },
+
+  /* ---- day 75: the manager writes, in their own name. Fifteen days left, and
+         the two letters before this one did not land. A different signature from
+         a different person is the last lever before the final notice. ---- */
+  s75: function (p, state) {
+    var first = pdFirst_(p.Client), left = pdDaysToLapse_(p), d = Number(p.DaysArrears) || 0;
+    var mgr = pdManagerOf_(p.Agent) || OUT.BRANCH_NAME;
+    var family = pdFamily_(p, state && state.family);
+    return {
+      subject: 'Policy No. ' + p.Policy + ' — ' + left + ' days remaining, from ' + mgr,
+      cc: pdChainCc_(p),
+      html: pdWrap_(
+        pdRefBlock_(p, 'Premium Outstanding — 75 Days') +
+        '<p>' + pdSalutation_(p.Client) + ',</p>' +
+        '<p>I am <b>' + pdEsc_(mgr) + '</b>, the manager responsible for your agent&rsquo;s work at this branch. ' +
+        'I am writing personally because we have now written to you twice about this policy and have not been ' +
+        'able to reach you, and there are <b>' + left + ' days</b> left before it reaches the end of its grace period.</p>' +
+        pdStakeOpening_(p, family) +
+
+        pdSection_(1, 'One tap is all this needs',
+          '<p>You do not need to write anything or call anybody. Choose whichever is closest and I will personally ' +
+          'make sure it is dealt with.</p>' + pdQuestionBlock_(p, CLIENT_QUESTIONS, 'respond')) +
+
+        pdSection_(2, 'What we have sent, and what you told us', pdTrail_(p, state)) +
+
+        pdSection_(3, 'What happens at day 90', pdTimeline_(p) +
+          '<div style="margin-top:12px">' + pdNote_(pdLapseMeaning_(p)) + '</div>') +
+
+        pdSection_(4, 'My commitment to you',
+          '<p>If none of the options above fits, reply to this email with a single line and I will call you myself. ' +
+          'I would rather spend ten minutes on the phone than write to you again.</p>' +
+          '<p style="font-size:14px"><b>' + pdEsc_(OUT.BRANCH_PHONE) + '</b> &middot; quote policy ' + pdEsc_(p.Policy) + '</p>') +
+
+        pdSignature_(p),
+        '75-day — manager'),
+      whatsapp: 'Good day ' + first + '. This is ' + mgr + ', the manager at ' + OUT.BRANCH_NAME +
+        ' responsible for your agent. We have written twice about policy ' + p.Policy + ' and I wanted to reach you myself. ' +
+        'There are ' + left + ' days left before it reaches the end of its grace period. ' +
+        'Tell me what would help — clearing it, a smaller amount, a different payment date, fixing the bank instruction, ' +
+        'or a short pause — and I will handle it personally.'
     };
   },
 
@@ -1105,20 +1130,22 @@ function pdStageDue_(p, state) {
   if (st === 1 || desc === 'lapsed') return d <= OUT.WIN_BACK_MAX_DAYS ? 'winback' : '';
   if (st !== 2) return '';                       // premium paying / terminal — nothing to send
 
-  if (d >= 88 && d < 90) return 's88';
+  /* The cycle is 45 / 60 / 75 / 90 — four milestones, each a real change in
+     what happens rather than another reminder. Between them, a chase every five
+     days while the client has said nothing. Nothing before day 45: a premium
+     one day late is a banking timing difference, not a conversation. */
+  if (state && state.responded && d < 88) return '';        // they answered — the sequence stops
 
-  // the 60-day notice, then a chase every 5 days while the client says nothing
-  if (d >= SLA.RETENTION_OPENS) {
-    if (state && state.responded) return '';     // they answered — stop
-    if (d < SLA.RETENTION_OPENS + 3) return 's60';
-    var since = d - SLA.RETENTION_OPENS;
-    if (since % SLA.CLIENT_CHASE_EVERY === 0) return 'chase';
-    return '';
-  }
-
-  if (d >= 52 && d < 55) return 's45r';
+  if (d >= 88 && d < 90) return 's90';                      // lands before the cliff, not on it
+  if (d >= 75 && d < 78) return 's75';
+  if (d >= SLA.RETENTION_OPENS && d < SLA.RETENTION_OPENS + 3) return 's60';
   if (d >= 45 && d < 48) return 's45';
-  if (d >= 30 && d < 33) return 'od';
+
+  // between the milestones, while there is still silence
+  if (d > 45 && d < SLA.LAPSE) {
+    var since = d - 45;
+    if (since % SLA.CLIENT_CHASE_EVERY === 0) return 'chase';
+  }
   return '';
 }
 
@@ -1292,6 +1319,10 @@ function dailyPremiumDueRun() {
     var tpl = pdRender(stageKey, p, s);
     if (!tpl) continue;
     var to = pdValidEmail_(p.Email);
+    if (!pdMayEmail_(p)) {                                  // the client asked us not to
+      pdLogSend_(p, stageKey, tpl, false);
+      continue;
+    }
     planned++;
 
     if (!to) {                                                      // no email: log it so an agent can call
@@ -1336,7 +1367,7 @@ function pdPreview() {
   };
   var demoState = { survey: { ts: Date.now() - 15 * 86400000, surveyReason: 'Financial difficulty',
     surveyContact: 'Wants to keep', surveyPromise: 'I can resume payments from September salary' } };
-  ['od', 's45', 's45r', 's60', 'chase', 's88', 'winback', 'pend', 'thanks'].forEach(function (k) {
+  ['s45', 's60', 'chase', 's75', 's90', 'winback', 'pend', 'thanks'].forEach(function (k) {
     var t = pdRender(k, demo, demoState);
     Logger.log('--- %s ---\nSUBJECT: %s\nWHATSAPP: %s\n', k, t.subject, t.whatsapp);
   });
