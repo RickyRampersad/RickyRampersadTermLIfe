@@ -182,6 +182,19 @@
   .lrow .met span{display:block; font-size:.6em; color:var(--ink-3); font-weight:700;
                   letter-spacing:.07em; text-transform:uppercase; margin-top:.1em}
   .lrow.lead .met b{color:var(--gold)}
+  .prow{display:grid; grid-template-columns:1.5em 2.5em 1fr repeat(6,minmax(4.4em,auto));
+        align-items:center; gap:.7em; padding:.42em 0}
+  .prow + .prow{border-top:1px solid rgba(255,255,255,.045)}
+  .prow .met{text-align:right}
+  .prow .met b{display:block; font-size:1.05em; font-weight:800; line-height:1.1}
+  .prow .met span{display:block; font-size:.56em; color:var(--ink-3); font-weight:700;
+                  letter-spacing:.06em; text-transform:uppercase; margin-top:.1em}
+  .prow .met.sold b{color:var(--teal)}
+  .prow .met.api b{color:var(--gold)}
+  .phead{display:grid; grid-template-columns:1.5em 2.5em 1fr repeat(6,minmax(4.4em,auto));
+         gap:.7em; font-size:.56em; letter-spacing:.13em; text-transform:uppercase;
+         color:var(--ink-4); font-weight:800; padding-bottom:.35em; border-bottom:1px solid var(--line)}
+  .phead div:nth-child(n+4){text-align:right}
   .lhead{display:grid; grid-template-columns:1.5em 2.5em 1fr repeat(3,minmax(4.6em,auto));
          gap:.8em; font-size:.6em; letter-spacing:.14em; text-transform:uppercase;
          color:var(--ink-4); font-weight:800; padding-bottom:.35em; border-bottom:1px solid var(--line)}
@@ -310,8 +323,10 @@
       <div class="stat v"><div class="k">Clients</div><div class="val num" id="prCli">0</div><div class="s" id="prCliSub">of cases written</div></div>
     </div>
     <div class="card grow">
-      <h2><span>By product</span><em>annualised</em></h2>
-      <div class="rows grow" id="prProd"></div>
+      <h2><span>Producer board</span><em id="prSub">month to date</em></h2>
+      <div class="phead"><div></div><div></div><div>Advisor</div><div>Fact finds</div>
+        <div>Need found</div><div>Recommended</div><div>Sold</div><div>Apps</div><div>API</div></div>
+      <div class="rows grow" id="prProd" style="margin-top:.35em"></div>
     </div>
   </section>
 
@@ -319,8 +334,9 @@
   <section class="panel" id="p5">
     <div class="ptitle"><h1 id="t_p5"></h1><span class="tag">The month</span></div>
     <div class="card grow">
-      <h2><span>Month to date</span><em id="mRaceSub"></em></h2>
-      <div class="lhead"><div></div><div></div><div>Advisor</div><div>Fact finds</div><div>Need found</div><div>Cover</div></div>
+      <h2><span>Producer board</span><em id="mRaceSub">this week</em></h2>
+      <div class="phead"><div></div><div></div><div>Advisor</div><div>Fact finds</div>
+        <div>Need found</div><div>Recommended</div><div>Sold</div><div>Apps</div><div>API</div></div>
       <div class="rows grow" id="mRace" style="margin-top:.35em"></div>
     </div>
   </section>
@@ -457,6 +473,39 @@ function richRows(list, box, key){
     setTimeout(function(){ b.style.width=b.dataset.w+'%'; },55*i); }); });
 }
 
+/* The producer board. One advisor, the whole funnel: what they found, what
+   they recommended, what the client took, and what it is worth annualised. */
+function producerRows(list, box, key, rankOn){
+  if(!list.length){
+    box.innerHTML='<div class="empty">Nothing on the board yet. First one up sets the pace.</div>';
+    return;
+  }
+  var sorted=list.slice().sort(function(a,b){
+    return (b[rankOn]||0)-(a[rankOn]||0) || (b.count||0)-(a.count||0); });
+  var top=sorted[0][rankOn]||sorted[0].count||1;
+  box.innerHTML=sorted.slice(0,7).map(function(a,i){
+    var av2=avatar(a.name), was=prevRank[key+a.name];
+    var mv = was===undefined ? (firstPaint?'':'<span class="mv n">NEW</span>')
+           : was>i ? '<span class="mv u">▲'+(was-i)+'</span>'
+           : was<i ? '<span class="mv d">▼'+(i-was)+'</span>' : '';
+    return '<div class="prow'+(i===0?' lead':'')+'">'+
+      '<div class="rank num">'+(i+1)+'</div>'+
+      '<div class="av" style="background:'+av2.bg+'">'+av2.ini+'</div>'+
+      '<div><div class="who"><span class="nm"></span>'+mv+'</div>'+
+        '<div class="bar"><i data-w="'+Math.max(4,Math.round(((a[rankOn]||0)/top)*100))+'"></i></div></div>'+
+      '<div class="met"><b>'+(a.count||0)+'</b><span>fact finds</span></div>'+
+      '<div class="met"><b>'+big(a.need||0)+'</b><span>need found</span></div>'+
+      '<div class="met"><b>'+big(a.cover||0)+'</b><span>recommended</span></div>'+
+      '<div class="met sold"><b>'+big(a.sold||0)+'</b><span>sold</span></div>'+
+      '<div class="met"><b>'+(a.apps||0)+'</b><span>apps</span></div>'+
+      '<div class="met api"><b>'+big(a.api||0)+'</b><span>API</span></div></div>';
+  }).join('');
+  var nm=box.querySelectorAll('.nm');
+  sorted.slice(0,7).forEach(function(a,i){ if(nm[i]) nm[i].textContent=a.name; prevRank[key+a.name]=i; });
+  requestAnimationFrame(function(){ box.querySelectorAll('.bar i').forEach(function(b,i){
+    setTimeout(function(){ b.style.width=b.dataset.w+'%'; },55*i); }); });
+}
+
 /* Recognition: who led, and what is genuinely worth saying. */
 function renderSpotlight(d){
   var wk=(d.leaders||[]), mo=(d.monthLeaders||[]), star=wk[0]||mo[0];
@@ -535,8 +584,8 @@ function render(d){
   $('motto').textContent = motto(d);
 
   /* 6 · the month race */
-  richRows(d.monthLeaders||[], $('mRace'), 'm');
-  $('mRaceSub').textContent=(M.label||'')+' · '+(M.submitted||0)+' fact finds';
+  producerRows(d.leaders||[], $('mRace'), 'wk', 'api');
+  $('mRaceSub').textContent='this week · ranked on API closed';
 
   /* 7 · the week */
   countTo($('wSub'), W.submitted||0);
@@ -575,19 +624,8 @@ function render(d){
   $('prApiSub').textContent='annual premium income · '+(M.label||'month to date')+
     ((M.apiAssumed>0)?' · '+M.apiAssumed+' line(s) assumed monthly':'');
   $('prCliSub').textContent=(MT.cases||0)+' fact finds written';
-  var pr=(P.products||[]), pmx=Math.max.apply(null,[1].concat(pr.map(function(x){return x.api;})));
-  $('prProd').innerHTML = pr.length ? pr.map(function(x,i){
-    return '<div class="lrow" style="grid-template-columns:1.5em 1fr repeat(2,minmax(4.6em,auto))">'+
-      '<div class="rank num">'+(i+1)+'</div>'+
-      '<div><div class="who"><span class="pn"></span></div>'+
-        '<div class="bar"><i data-w="'+Math.max(5,Math.round(x.api/pmx*100))+'"></i></div></div>'+
-      '<div class="met"><b>'+x.apps+'</b><span>apps</span></div>'+
-      '<div class="met"><b>'+big(x.api)+'</b><span>API</span></div></div>';
-  }).join('') : '<div class="empty">Nothing taken up yet this month. API appears here as clients accept.</div>';
-  var pns=$('prProd').querySelectorAll('.pn');
-  pr.forEach(function(x,i){ if(pns[i]) pns[i].textContent=x.name; });
-  requestAnimationFrame(function(){ $('prProd').querySelectorAll('.bar i').forEach(function(b,i){
-    setTimeout(function(){ b.style.width=b.dataset.w+'%'; },55*i); }); });
+  producerRows(d.monthLeaders||[], $('prProd'), 'mo', 'api');
+  $('prSub').textContent=(M.label||'month to date')+' · ranked on API closed';
 
   /* 3 · recognition */
   renderSpotlight(d);

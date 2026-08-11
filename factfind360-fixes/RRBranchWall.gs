@@ -29,6 +29,7 @@ var WALL_FIELDS = [
   // What the client actually took, which is the production number. Amounts and
   // a yes/no — still nothing that identifies anybody.
   'dec1Prem','dec2Prem','dec3Prem','dec4Prem','dec5Prem','dec6Prem',
+  'dec1Amt','dec2Amt','dec3Amt','dec4Amt','dec5Amt','dec6Amt',
   'dec1Go','dec2Go','dec3Go','dec4Go','dec5Go','dec6Go',
   'dec1Plan','dec2Plan','dec3Plan','dec4Plan','dec5Plan','dec6Plan',
   'rec1Rec','rec2Rec','rec3Rec','rec4Rec','rec5Rec','rec6Rec'
@@ -179,7 +180,7 @@ function rrbWall(e) {
     var sub    = subAt ? new Date(subAt) : null;
     if (sub && isNaN(sub.getTime())) sub = null;
 
-    var prem = 0, amt = 0, api = 0, apiTaken = 0, apps = 0, assumed = 0;
+    var prem = 0, amt = 0, api = 0, apiTaken = 0, apps = 0, assumed = 0, sold = 0;
     var prodSeen = {};
     for (var i = 1; i <= 6; i++) {
       var rp = rrbNum_(get(row, 'rec' + i + 'Prem'));
@@ -196,6 +197,7 @@ function rrbWall(e) {
       if (/^yes$/i.test(go)) {
         apps++;
         var dp = rrbNum_(get(row, 'dec' + i + 'Prem')) || rp;
+        sold += rrbNum_(get(row, 'dec' + i + 'Amt')) || rrbNum_(get(row, 'rec' + i + 'Amt'));
         apiTaken += dp * mult;
         var pl = _str(get(row, 'dec' + i + 'Plan')) || _str(get(row, 'rec' + i + 'Rec'));
         if (pl) prodSeen[pl] = (prodSeen[pl] || 0) + dp * mult;
@@ -226,8 +228,9 @@ function rrbWall(e) {
         if (isWeekend) weekend.month++;
         if (agent) {
           if (!monthAgents[agent]) monthAgents[agent] =
-            { name: agent, count: 0, premium: 0, cover: 0, need: 0, api: 0, apps: 0 };
+            { name: agent, count: 0, premium: 0, cover: 0, need: 0, api: 0, apps: 0, sold: 0 };
           monthAgents[agent].count++;
+          monthAgents[agent].sold    += sold;
           monthAgents[agent].premium += prem;
           monthAgents[agent].cover   += amt;
           monthAgents[agent].need    += need;
@@ -242,8 +245,9 @@ function rrbWall(e) {
         if (isWeekend) { weekend.week++; if (agent) weekendWho[agent] = (weekendWho[agent] || 0) + 1; }
         if (agent) {
           if (!agents[agent]) agents[agent] =
-            { name: agent, count: 0, premium: 0, cover: 0, need: 0, api: 0, apps: 0 };
+            { name: agent, count: 0, premium: 0, cover: 0, need: 0, api: 0, apps: 0, sold: 0 };
           agents[agent].count++;
+          agents[agent].sold    += sold;
           agents[agent].premium += prem;
           agents[agent].cover   += amt;
           agents[agent].need    += need;
