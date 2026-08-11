@@ -1019,3 +1019,235 @@ function rrbClientRate(e) {
       'border-radius:9px;padding:13px;font-size:14.5px;font-weight:800;cursor:pointer">Send</button>' +
     '</form>', stars >= 3 ? 'ok' : 'bad');
 }
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PIPELINE → CLOSED
+//
+// A client saying "I'll take it" at the kitchen table is an intention. The
+// application still has to be written, underwritten, issued and paid. Counting
+// that as production overstates the branch by everything that never completes,
+// and the first time the board is challenged against head office figures it
+// loses its credibility permanently.
+//
+// So the premium sits in PIPELINE until an advisor confirms otherwise. The
+// confirmation is one tap in an email that chases itself — nobody has to
+// remember to go and update anything.
+// ═══════════════════════════════════════════════════════════════════════════
+
+var RRB_CHASE_AFTER_DAYS = 14;   // how long a case may sit unanswered
+var RRB_CHASE_EVERY_DAYS = 7;    // and how often to ask again after that
+
+/** One tap from the advisor: issued, still working, or not proceeding. */
+function rrbCaseOutcome(e) {
+  var p = (e && e.parameter) || {};
+  var v = _str(p.v).toLowerCase();
+  var chk = rrbVerifyToken(p.t);
+  if (!chk.ok) {
+    return rrbPage_('Link expired',
+      '<div style="font-size:19px;font-weight:800;margin-bottom:8px">This link has already been used</div>' +
+      '<p style="color:#475569;margin:0">Each update link works once. The next chase email will carry a fresh one.</p>',
+      'err');
+  }
+  var sheet = ffGetOrCreateRevisedTab_();
+  var headers = ffEnsureHeaders_(sheet);
+  var row = ffFindRowBySubmissionId_(sheet, headers, chk.payload.id);
+  if (!row) return rrbPage_('Not found', '<p>That case is no longer on the sheet.</p>', 'err');
+  var d = ffReadRow_(sheet, headers, row);
+
+  var label = v === 'issued' ? 'Issued' : v === 'lost' ? 'Not proceeding' : 'Still working';
+  var now = new Date().toISOString();
+  var merged = {};
+  Object.keys(d).forEach(function (k) { merged[k] = d[k]; });
+  merged.caseOutcome   = label;
+  merged.caseOutcomeAt = now;
+  merged.caseOutcomeBy = _str(chk.payload.nm) || _str(d.advisorName);
+  merged.lastUpdated   = now;
+  ffWriteRow_(sheet, headers, merged, row);
+  rrbMarkTokenUsed_(chk.row);
+
+  var client = rrbEsc_(_str(d.clientName) || 'this client');
+
+  if (v === 'issued') {
+    // A policy number is what makes this reconcilable against head office.
+    var noteTok = '';
+    try { noteTok = rrbMintToken(chk.payload.id, 'policy',
+      { name: merged.caseOutcomeBy, email: _str(d.agentEmail) }); } catch (err) {}
+    return rrbPage_('Recorded',
+      '<div style="font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#0F766E">Issued</div>' +
+      '<div style="font-size:21px;font-weight:800;margin:6px 0 4px">' + client + '</div>' +
+      '<p style="color:#475569;margin:0 0 16px;font-size:14px">This has moved from pipeline into ' +
+      'closed API on the branch board.</p>' +
+      (noteTok
+        ? '<form action="' + rrbAppUrl_() + '" method="get" style="margin:0">' +
+          '<input type="hidden" name="action" value="outcome">' +
+          '<input type="hidden" name="v" value="policy">' +
+          '<input type="hidden" name="t" value="' + rrbEsc_(noteTok) + '">' +
+          '<label style="display:block;font-size:13px;font-weight:700;color:#334155;margin-bottom:6px">' +
+            'Policy number (optional, but it is what lets this be checked against head office)</label>' +
+          '<input name="note" type="text" style="width:100%;box-sizing:border-box;border:1px solid #CBD5E1;' +
+            'border-radius:9px;padding:11px;font:15px inherit" placeholder="Policy number">' +
+          '<button type="submit" style="width:100%;margin-top:10px;background:#0D9488;color:#fff;border:0;' +
+            'border-radius:9px;padding:13px;font-size:15px;font-weight:800;cursor:pointer">Save it</button>' +
+          '</form>'
+        : ''), 'ok');
+  }
+
+  if (v === 'policy') {
+    var m2 = {};
+    Object.keys(d).forEach(function (k) { m2[k] = d[k]; });
+    m2.policyNumber = _str(p.note);
+    m2.lastUpdated = now;
+    ffWriteRow_(sheet, headers, m2, row);
+    return rrbPage_('Saved',
+      '<div style="font-size:20px;font-weight:800;margin-bottom:6px">Saved</div>' +
+      '<p style="color:#475569;margin:0;font-size:14.5px">Policy ' + rrbEsc_(_str(p.note)) +
+      ' recorded against ' + client + '.</p>', 'ok');
+  }
+
+  return rrbPage_(label,
+    '<div style="font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:' +
+      (v === 'lost' ? '#B45309' : '#475569') + '">' + rrbEsc_(label) + '</div>' +
+    '<div style="font-size:21px;font-weight:800;margin:6px 0 4px">' + client + '</div>' +
+    '<p style="color:#475569;margin:0;font-size:14px">' +
+    (v === 'lost'
+      ? 'Recorded. The premium comes out of the branch pipeline, which keeps the board honest.'
+      : 'Recorded. It stays in pipeline and we will check again in a week.') +
+    '</p>', v === 'lost' ? 'bad' : 'ok');
+}
+
+/**
+ * The chase. Runs daily; emails an advisor about any case where the client
+ * said yes and nobody has confirmed what happened since.
+ *
+ * Install with rrbInstallChase(). Nobody has to remember anything — that is
+ * the whole point, because "remember to update the system" is exactly the
+ * instruction that never survives a busy fortnight.
+ */
+function rrbChaseOpenCases() {
+  var sheet = ffGetOrCreateRevisedTab_();
+  var headers = ffEnsureHeaders_(sheet);
+  var last = sheet.getLastRow();
+  if (last < 2) { Logger.log('Nothing to chase.'); return; }
+
+  var now = new Date(), byAgent = {}, checked = 0;
+  for (var r = 2; r <= last; r++) {
+    var d = ffReadRow_(sheet, headers, r);
+    if (!d || !d.submissionId) continue;
+
+    // Only cases the client actually said yes to.
+    var apps = 0, api = 0;
+    for (var i = 1; i <= 6; i++) {
+      if (!/^yes$/i.test(_str(d['dec' + i + 'Go']))) continue;
+      apps++;
+      var pr = rrbNum_(d['dec' + i + 'Prem']) || rrbNum_(d['rec' + i + 'Prem']);
+      api += pr * rrbApiMultiplier_(d['rec' + i + 'Mode']);
+    }
+    if (!apps) continue;
+
+    var outcome = _str(d.caseOutcome);
+    if (/^issued$/i.test(outcome) || /^not proceeding$/i.test(outcome)) continue;
+
+    var sub = d.submittedAt ? new Date(d.submittedAt) : null;
+    if (!sub || isNaN(sub.getTime())) continue;
+    var age = Math.floor((now.getTime() - sub.getTime()) / 86400000);
+    if (age < RRB_CHASE_AFTER_DAYS) continue;
+
+    var lastChased = d.caseChasedAt ? new Date(d.caseChasedAt) : null;
+    if (lastChased && !isNaN(lastChased.getTime())) {
+      var since = Math.floor((now.getTime() - lastChased.getTime()) / 86400000);
+      if (since < RRB_CHASE_EVERY_DAYS) continue;
+    }
+
+    var to = _str(d.agentEmail);
+    if (!to) continue;
+    if (!byAgent[to]) byAgent[to] = { name: _str(d.advisorName), rows: [] };
+    byAgent[to].rows.push({ row: r, d: d, age: age, api: api, apps: apps });
+    checked++;
+  }
+
+  Object.keys(byAgent).forEach(function (to) {
+    var a = byAgent[to];
+    try {
+      MailApp.sendEmail({
+        to: to,
+        cc: [_str(a.rows[0].d.reviewerEmail), RRB_ALWAYS_CC].filter(String).join(','),
+        subject: a.rows.length === 1
+          ? 'Did this close? ' + (_str(a.rows[0].d.clientName) || 'one case') + ' — ' + a.rows[0].age + ' days'
+          : a.rows.length + ' cases waiting on an answer — did they close?',
+        htmlBody: rrbChaseHtml_(a),
+        name: 'RR Branch Fact Find'
+      });
+      // Stamp them so nobody is asked again for a week.
+      a.rows.forEach(function (x) {
+        var m = {};
+        Object.keys(x.d).forEach(function (k) { m[k] = x.d[k]; });
+        m.caseChasedAt = new Date().toISOString();
+        m.caseChaseCount = String((parseInt(_str(x.d.caseChaseCount), 10) || 0) + 1);
+        ffWriteRow_(sheet, headers, m, x.row);
+      });
+    } catch (err) { Logger.log('chase to %s failed: %s', to, err && err.message); }
+  });
+
+  Logger.log('Chased %s case(s) across %s advisor(s).', checked, Object.keys(byAgent).length);
+}
+
+function rrbChaseHtml_(a) {
+  var first = (a.name || '').split(' ')[0] || 'there';
+  var total = a.rows.reduce(function (s, x) { return s + x.api; }, 0);
+  var h = rrbHead_(a.rows.length === 1 ? 'Did this one close?' : a.rows.length + ' cases need an answer',
+                   big_(total) + ' of premium is sitting in pipeline against your name');
+  h += '<p style="margin:0 0 14px">Hi ' + rrbEsc_(first) + ',</p>';
+  h += '<p style="margin:0 0 16px;font-size:14px;color:#475569;line-height:1.6">' +
+       'Your client said yes to these, and nothing has told us what happened since. ' +
+       'Until somebody says, the branch board has to count them as pipeline rather than ' +
+       'production &mdash; so one tap each keeps the numbers real.</p>';
+
+  a.rows.forEach(function (x) {
+    var base = '';
+    try {
+      base = rrbAppUrl_() + '?action=outcome&t=' +
+             encodeURIComponent(rrbMintToken(x.d.submissionId, 'outcome',
+               { name: a.name, email: _str(x.d.agentEmail) })) + '&v=';
+    } catch (err) { return; }
+    h += '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:11px;padding:13px 15px;margin-bottom:11px">' +
+      '<div style="font-size:15.5px;font-weight:800">' + rrbEsc_(_str(x.d.clientName) || 'Client') + '</div>' +
+      '<div style="font-size:12.5px;color:#64748B;margin-top:2px">' + x.apps + ' application' +
+        (x.apps === 1 ? '' : 's') + ' &middot; ' + big_(x.api) + ' API &middot; ' +
+        x.age + ' days since the fact find</div>' +
+      '<table role="presentation" width="100%" style="border-collapse:collapse;margin-top:11px"><tr>' +
+        '<td width="34%" style="padding-right:4px"><a href="' + base + 'issued" ' +
+          'style="display:block;text-align:center;background:#0F766E;color:#fff;padding:11px 4px;' +
+          'border-radius:8px;text-decoration:none;font-weight:800;font-size:13.5px">Issued</a></td>' +
+        '<td width="33%" style="padding:0 4px"><a href="' + base + 'pending" ' +
+          'style="display:block;text-align:center;background:#fff;color:#475569;border:2px solid #CBD5E1;' +
+          'padding:9px 4px;border-radius:8px;text-decoration:none;font-weight:800;font-size:13.5px">Still working</a></td>' +
+        '<td width="33%" style="padding-left:4px"><a href="' + base + 'lost" ' +
+          'style="display:block;text-align:center;background:#fff;color:#B45309;border:2px solid #F59E0B;' +
+          'padding:9px 4px;border-radius:8px;text-decoration:none;font-weight:800;font-size:13.5px">Not proceeding</a></td>' +
+      '</tr></table></div>';
+  });
+
+  h += '<p style="font-size:12.5px;color:#64748B;margin:14px 0 0">Nothing here is a reprimand. ' +
+       '"Not proceeding" is a perfectly good answer and takes the premium out of the pipeline, ' +
+       'which is what keeps the branch numbers worth reading.</p>';
+  h += rrbFoot_('');
+  return h;
+}
+
+function big_(n) {
+  n = Math.round(n || 0);
+  if (n >= 1000000) return 'TT$' + (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return 'TT$' + Math.round(n / 1000) + 'k';
+  return 'TT$' + n;
+}
+
+/** Install the daily chase. Safe to run more than once. */
+function rrbInstallChase() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'rrbChaseOpenCases') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('rrbChaseOpenCases').timeBased().atHour(9).everyDays(1).create();
+  Logger.log('Chase installed — runs daily at 9am, asking about anything older than %s days.',
+             RRB_CHASE_AFTER_DAYS);
+}

@@ -32,7 +32,10 @@ var WALL_FIELDS = [
   'dec1Amt','dec2Amt','dec3Amt','dec4Amt','dec5Amt','dec6Amt',
   'dec1Go','dec2Go','dec3Go','dec4Go','dec5Go','dec6Go',
   'dec1Plan','dec2Plan','dec3Plan','dec4Plan','dec5Plan','dec6Plan',
-  'rec1Rec','rec2Rec','rec3Rec','rec4Rec','rec5Rec','rec6Rec'
+  'rec1Rec','rec2Rec','rec3Rec','rec4Rec','rec5Rec','rec6Rec',
+  // Whether the case actually completed. Without this every intention counts
+  // as production and the board overstates the branch permanently.
+  'caseOutcome', 'caseOutcomeAt'
 ];
 
 /**
@@ -146,8 +149,9 @@ function rrbWall(e) {
   // Sunday counts. A branch that works the weekend should see it said out loud.
   var weekend = { week: 0, month: 0 }, weekendWho = {};
   // The production board: applications taken, clients, products and API.
-  var prod = { mtd: { apps: 0, clients: 0, api: 0, assumed: 0, cases: 0 },
-               wtd: { apps: 0, clients: 0, api: 0, assumed: 0, cases: 0 } };
+  var prod = { mtd: { apps: 0, clients: 0, api: 0, pipeline: 0, stale: 0,
+                      staleCases: 0, open: 0, assumed: 0, cases: 0 },
+               wtd: { apps: 0, clients: 0, api: 0, pipeline: 0, assumed: 0, cases: 0 } };
   var products = {};
   var agents = {}, monthAgents = {}, managers = {}, approvals = [];
 
@@ -181,6 +185,9 @@ function rrbWall(e) {
     if (sub && isNaN(sub.getTime())) sub = null;
 
     var prem = 0, amt = 0, api = 0, apiTaken = 0, apps = 0, assumed = 0, sold = 0;
+    var outcome = _str(get(row, 'caseOutcome'));
+    var isClosed = /^issued$/i.test(outcome);
+    var isLost   = /^not proceeding$/i.test(outcome);
     var prodSeen = {};
     for (var i = 1; i <= 6; i++) {
       var rp = rrbNum_(get(row, 'rec' + i + 'Prem'));
@@ -198,7 +205,7 @@ function rrbWall(e) {
         apps++;
         var dp = rrbNum_(get(row, 'dec' + i + 'Prem')) || rp;
         sold += rrbNum_(get(row, 'dec' + i + 'Amt')) || rrbNum_(get(row, 'rec' + i + 'Amt'));
-        apiTaken += dp * mult;
+        apiTaken += dp * mult;   // intention — pipeline until confirmed
         var pl = _str(get(row, 'dec' + i + 'Plan')) || _str(get(row, 'rec' + i + 'Rec'));
         if (pl) prodSeen[pl] = (prodSeen[pl] || 0) + dp * mult;
       }
@@ -219,7 +226,17 @@ function rrbWall(e) {
       if (sub >= startOfMonth) {
         month.need += need; month.cover += amt; month.api += api;
         month.apiAssumed += assumed;
-        if (apps) { prod.mtd.apps += apps; prod.mtd.clients++; prod.mtd.api += apiTaken; }
+        if (apps && !isLost) {
+          prod.mtd.apps += apps; prod.mtd.clients++;
+          if (isClosed) prod.mtd.api += apiTaken;
+          else {
+            prod.mtd.pipeline += apiTaken;
+            prod.mtd.open++;
+            // How much has been sitting unanswered too long to still be believed.
+            var ageD = Math.floor((now.getTime() - sub.getTime()) / 86400000);
+            if (ageD >= 14) { prod.mtd.stale += apiTaken; prod.mtd.staleCases++; }
+          }
+        }
         prod.mtd.cases++;
         Object.keys(prodSeen).forEach(function (k) {
           if (!products[k]) products[k] = { name: k, apps: 0, api: 0 };
@@ -228,30 +245,37 @@ function rrbWall(e) {
         if (isWeekend) weekend.month++;
         if (agent) {
           if (!monthAgents[agent]) monthAgents[agent] =
-            { name: agent, count: 0, premium: 0, cover: 0, need: 0, api: 0, apps: 0, sold: 0 };
+            { name: agent, count: 0, premium: 0, cover: 0, need: 0,
+              api: 0, pipeline: 0, apps: 0, sold: 0 };
           monthAgents[agent].count++;
           monthAgents[agent].sold    += sold;
           monthAgents[agent].premium += prem;
           monthAgents[agent].cover   += amt;
           monthAgents[agent].need    += need;
-          monthAgents[agent].api     += apiTaken;
+          if (isClosed) monthAgents[agent].api += apiTaken;
+          else if (!isLost) monthAgents[agent].pipeline += apiTaken;
           monthAgents[agent].apps    += apps;
         }
       }
       if (sub >= startOfWeek) {
         week.need += need; week.cover += amt; week.api += api;
-        if (apps) { prod.wtd.apps += apps; prod.wtd.clients++; prod.wtd.api += apiTaken; }
+        if (apps && !isLost) {
+          prod.wtd.apps += apps; prod.wtd.clients++;
+          if (isClosed) prod.wtd.api += apiTaken; else prod.wtd.pipeline += apiTaken;
+        }
         prod.wtd.cases++;
         if (isWeekend) { weekend.week++; if (agent) weekendWho[agent] = (weekendWho[agent] || 0) + 1; }
         if (agent) {
           if (!agents[agent]) agents[agent] =
-            { name: agent, count: 0, premium: 0, cover: 0, need: 0, api: 0, apps: 0, sold: 0 };
+            { name: agent, count: 0, premium: 0, cover: 0, need: 0,
+              api: 0, pipeline: 0, apps: 0, sold: 0 };
           agents[agent].count++;
           agents[agent].sold    += sold;
           agents[agent].premium += prem;
           agents[agent].cover   += amt;
           agents[agent].need    += need;
-          agents[agent].api     += apiTaken;
+          if (isClosed) agents[agent].api += apiTaken;
+          else if (!isLost) agents[agent].pipeline += apiTaken;
           agents[agent].apps    += apps;
         }
       }
@@ -351,9 +375,12 @@ function rrbWall(e) {
     // The production board. API is annualised from the premium mode.
     production: {
       mtd: { apps: prod.mtd.apps, clients: prod.mtd.clients,
-             api: Math.round(prod.mtd.api), cases: prod.mtd.cases },
+             api: Math.round(prod.mtd.api), pipeline: Math.round(prod.mtd.pipeline),
+             stale: Math.round(prod.mtd.stale), staleCases: prod.mtd.staleCases,
+             open: prod.mtd.open, cases: prod.mtd.cases },
       wtd: { apps: prod.wtd.apps, clients: prod.wtd.clients,
-             api: Math.round(prod.wtd.api), cases: prod.wtd.cases },
+             api: Math.round(prod.wtd.api), pipeline: Math.round(prod.wtd.pipeline),
+             cases: prod.wtd.cases },
       products: Object.keys(products).map(function (k) {
         return { name: k, apps: products[k].apps, api: Math.round(products[k].api) };
       }).sort(function (a, b) { return b.api - a.api; }).slice(0, 8)
