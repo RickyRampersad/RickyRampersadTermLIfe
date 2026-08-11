@@ -91,7 +91,59 @@ how it speaks.
 
 ---
 
-## Part 3 — Maintenance
+## Part 3 — pensionplantt.com
+
+The wizard has its own GoDaddy domain. Point it at the Netlify site built from
+**this repository** — not at a separate hand-uploaded copy — so the domain
+always shows the current wizard and RIA works (functions only run on Netlify).
+
+### Step 1 — add the domain in Netlify
+
+**Site configuration → Domain management → Add a domain** → `pensionplantt.com`.
+Netlify will also offer `www.pensionplantt.com`; add both. Netlify then shows
+the exact DNS records to create — use the values it gives you if they differ
+from the ones below.
+
+### Step 2 — the GoDaddy records
+
+In GoDaddy: **My Products → Domains → pensionplantt.com → DNS → Manage Zones**.
+
+| Type | Name | Value | TTL |
+| --- | --- | --- | --- |
+| A | @ | `75.2.60.5` | 1 hour |
+| CNAME | www | `<your-site-name>.netlify.app` | 1 hour |
+
+Delete GoDaddy's default parking records for `@` and `www` first, or the domain
+will keep resolving to the parked page. Leave every other record alone —
+particularly MX and TXT records if email is on this domain.
+
+DNS usually propagates within an hour. Netlify issues the HTTPS certificate
+automatically once the records resolve.
+
+> **Do not point this domain at `rickyrampersadbranch.com`'s records.** That
+> domain resolves to GitHub Pages (see `DNS-BACKUP.md`), where Netlify
+> functions do not exist and RIA would fall back to its built-in answers.
+
+### Step 3 — nothing else
+
+`netlify.toml` already contains the rules that serve `/pension/` at the root of
+`pensionplantt.com` and route RIA's endpoint on that domain. The address bar
+keeps showing `pensionplantt.com` — the rewrite is invisible to the client.
+
+Check afterwards: `pensionplantt.com` loads the wizard, `pensionplantt.com/api/pension-ai`
+returns a JSON error rather than the wizard's HTML (that means it reached the
+function), and RIA answers a question.
+
+### If a separate Netlify site already exists
+
+`section134planscalculation.netlify.app` runs the original single-file build.
+Once `pensionplantt.com` serves from this repository, that site is a stale copy
+with a broken assistant — retire it, or leave it as an archive but do not give
+the address to clients.
+
+---
+
+## Part 4 — Maintenance
 
 ### Replacing a blank Guardian form
 
@@ -108,6 +160,57 @@ name**, so if Guardian reissues a form with renamed fields, the matching
 `setText(...)` calls in `buildD1` / `buildD2` / `buildSal` inside
 `pension/index.html` need updating too. Bump `CACHE` in `pension/sw.js` after
 any asset change so devices that cached the old form pick up the new one.
+
+### What is calculated, and where each figure lands
+
+Everything is computed once in `calc()` and held in `R`; every document reads
+from there, so the forms cannot disagree with the screen.
+
+**BIR Section 134 form — front page** (built by `buildForm()`, printed from
+Step 1):
+
+| Line | Figure |
+| --- | --- |
+| 1–5 | Employer name, address and B.I.R. file no.; employee name and address |
+| 6 (a) | Company annual premium |
+| 6 (b) | Company lump sum |
+| 7 | Employee's own contributions to approved plans (capped $60,000) |
+| 8 | Total contributions — Line 6 + Line 7 |
+| 9 | One third of chargeable income |
+| 10 | Does Line 8 exceed Line 9? — Yes/No |
+| 11 | 20% of emolument income |
+| 12 | Does Line 8 exceed Line 11? — Yes/No |
+
+**BIR form — overleaf:** salary (1a), company contribution (1b), total
+emolument income, other income (2), total net income (3), personal allowance,
+tertiary education and first-time-home deductions (4), assessable income (5),
+Widows & Orphans / approved pension / approved deferred annuity / NIS 70%
+(6a i–iii and 6b), total deductions capped at $60,000 (7), chargeable income
+(8), one third of chargeable income (9), 20% of emolument (10).
+
+Two rules are enforced rather than left to the agent: the company contribution
+is always added into emolument income before the limits are worked out, and if
+the entered contribution would make **both** Line 10 and Line 12 read Yes, the
+printed form is scaled back to the maximum and the screen says what was
+entered instead.
+
+**Salary Deduction form** (`buildSal()`): employer and employee details, the
+deduction frequency, the month and year taken from the commencement date, and
+the employee's own contribution written three ways — in words, in cents, and in
+figures — with the premium row and both totals rows tallied. Client # and
+Policy # are deliberately blank: Guardian assigns them.
+
+**Declaration 1** (`buildD1()`): branch code, employee first name and surname,
+date of birth, agent name and number, the Part 1.E date, A and B pre-circled,
+and the witness name in block letters.
+
+**Declaration 2** (`buildD2()`): the same, plus the company name in both the
+Proposer First Name and Legal Entity fields and its incorporation date.
+
+The address, identification and expiry fields that sit unfilled on page 3 of
+both declarations belong to the *"declaration in case where the proposer is
+illiterate"* block — they identify the attesting witness in that specific
+case, not the client, and must stay blank on an ordinary application.
 
 ### The plan knowledge
 

@@ -25,6 +25,41 @@
   to = "/pension/"
   status = 301
 
+# ── pensionplantt.com ────────────────────────────────────────────────────────
+# The pension wizard has its own domain. Add pensionplantt.com and
+# www.pensionplantt.com to this Netlify site (Domain management → Add domain),
+# and these rules serve the wizard at the root of that domain while the rest of
+# the site stays on its own domain. See PENSION-SETUP.md for the DNS records.
+#
+# RIA's endpoint has to be matched FIRST — the catch-all below would otherwise
+# rewrite /api/pension-ai into /pension/api/pension-ai and the assistant would
+# 404 on this domain only.
+[[redirects]]
+  from = "https://pensionplantt.com/api/pension-ai"
+  to = "/.netlify/functions/pension-ai"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "https://www.pensionplantt.com/api/pension-ai"
+  to = "/.netlify/functions/pension-ai"
+  status = 200
+  force = true
+
+# Everything else on the domain is the wizard. status 200 rewrites rather than
+# redirects, so the address bar keeps showing pensionplantt.com.
+[[redirects]]
+  from = "https://pensionplantt.com/*"
+  to = "/pension/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "https://www.pensionplantt.com/*"
+  to = "/pension/:splat"
+  status = 200
+  force = true
+
 [[headers]]
   for = "/renewal/*"
   [headers.values]
