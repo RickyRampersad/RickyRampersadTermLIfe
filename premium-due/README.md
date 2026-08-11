@@ -89,11 +89,18 @@ presses send. Two taps, no website, no password, works on any phone.
 That is not a stopgap. A share of clients will not open a web page from an
 email, and the branch's own submissions show a third were never reached at all.
 
-Questions and answer wording come from the two live JotForms — *Premium Due
-Feedback From (clients)* (152 responses since Aug 2023) and *Premium Dues Status
-Update (agents)* (106 since Oct 2025) — so answers stay comparable with the
-existing history. The `From` and `CC` addresses match the Salesforce macro
-*Premium Due 75 Days Client Comm*.
+The questions are deliberately **not** the old JotForm's. That form ran three
+years, drew 152 responses, and its top answer to "what steps do you plan to
+take" was *Other* — it read like an audit. Two questions now, and neither asks
+why: *What would help most right now?* (seven answers, every one a service we
+provide) and *When would suit you?* (a commitment device). Nobody is asked to
+account for a failure before being offered anything.
+
+The 60-day letter carries the full **correspondence trail** — every letter sent,
+whether the client replied, what they chose, and the fact find where one is
+attached — so the last letter in a sequence reads like someone has been paying
+attention. The `From` and `CC` addresses match the Salesforce macro *Premium Due
+75 Days Client Comm*.
 
 The answers are the **first section** of every letter. Nobody scrolls past a
 formal preamble to reach them.

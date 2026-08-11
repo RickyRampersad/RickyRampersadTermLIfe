@@ -104,62 +104,49 @@ var SLA = {
   MANAGER_CHASE_EVERY: 3
 };
 
-/* ===================== THE QUESTIONS =====================
-   Lifted from the two JotForms the branch has been running, not invented here:
+/* ===================== WHAT WE ASK THE CLIENT =====================
+   Deliberately NOT the questions from the old JotForm. That form ran for three
+   years and drew 152 responses, and its top answer to "what steps do you plan to
+   take" was "Other" — because it read like an audit. It asked whether the delay
+   was intentional, what the reason was, and what steps the client planned to
+   take to bring the account current. Every one of those asks a person to account
+   for a failure before we offer them anything.
 
-     "Premium Due Feedback From (clients)"   — live since Aug 2023, 152 responses
-     "Premium Dues Status Update (agents)"   — live since Oct 2025, 106 responses
+   These two ask something different. Every answer is a service we provide, not
+   a shortcoming they admit. Nobody is asked why they are late, because the
+   answer rarely changes what we can do, and asking makes it likelier they say
+   nothing at all.
 
-   The option wording is the wording clients have already been answering, so the
-   answers stay comparable with three years of history instead of starting a new
-   vocabulary alongside the old one.
+   The evidence behind the shape:
 
-   Two things those submissions showed, which shaped what follows:
+     Empathetic framing rather than demand framing raises voluntary payment by
+     up to 20% (CFPB, on debt collection communications).
 
-     - "Other" was the top answer to "what steps do you plan to take" (68 of 133).
-       The option set was too narrow, so people fell through to free text that
-       nobody could count. The list below closes the common gaps.
-     - Approval Status was blank on 78 of 106 agent submissions. The manager
-       never answered on three quarters of the cases an agent filed. That is
-       what the manager questions and the 3-day chase exist to fix.
+     A stated commitment — "when would suit you?" — lifts response by about
+     5 percentage points over a reminder alone.
 
-   Everything is a click. The client answers inside the email; nothing sends
-   them to a browser form, because a form is where the 34% who said their agent
-   never contacted them were being lost. */
+     A loss reads roughly twice as strongly as an equivalent gain
+     (Kahneman and Tversky), which is why the letter states what is at stake
+     before it asks anything, and why one of the options is simply
+     "show me exactly what I'd be giving up".
+
+   Two questions. One tap each. No reason required, no browser, no form. */
 
 var CLIENT_QUESTIONS = [
-  { k: 'intent', q: 'Was the delay in payment intentional?', opts: [
-    { k: 'no',  lab: 'No — it was not intentional' },
-    { k: 'yes', lab: 'Yes — it was a decision I made' } ] },
+  { k: 'help', q: 'What would help most right now?', opts: [
+    { k: 'settle',  lab: "Nothing — I'll clear it. Just tell me the amount." },
+    { k: 'lower',   lab: 'A smaller monthly amount I can actually keep up with' },
+    { k: 'date',    lab: 'Move the payment date to match my payday' },
+    { k: 'bank',    lab: "Fix the bank instruction — it isn't going through" },
+    { k: 'pause',   lab: 'A short pause, without losing the cover' },
+    { k: 'talk',    lab: 'A conversation with someone before I decide anything' },
+    { k: 'show',    lab: "Show me exactly what I'd be giving up" } ] },
 
-  { k: 'reason', q: 'What is the main reason for the delay?', opts: [
-    { k: 'financial', lab: 'Financial difficulties' },
-    { k: 'payfail',   lab: 'My payment method failed — bank, card or salary deduction' },
-    { k: 'oversight', lab: 'Oversight — I simply missed it' },
-    { k: 'income',    lab: 'My income changed — job loss, retirement or reduced hours' },
-    { k: 'illness',   lab: 'Illness' },
-    { k: 'travel',    lab: 'Travel or time out of the country' },
-    { k: 'dispute',   lab: 'I have a question or dispute about the policy' },
-    { k: 'elsewhere', lab: 'I took cover elsewhere' } ] },
-
-  { k: 'steps', q: 'What do you plan to do to bring the account up to date?', opts: [
-    { k: 'paynow',  lab: 'Pay the overdue amount immediately' },
-    { k: 'paid',    lab: 'I have already paid — I will send the reference' },
-    { k: 'plan',    lab: 'Set up a payment plan' },
-    { k: 'needmore',lab: 'I need more time — please contact me' },
-    { k: 'reduce',  lab: 'Reduce the premium so I can keep the policy' },
-    { k: 'explain', lab: 'Explain what I am covered for before I decide' },
-    { k: 'cancel',  lab: 'I want to cancel the policy' } ] },
-
-  { k: 'contact', q: 'Would you like someone to contact you to discuss your options?', opts: [
-    { k: 'yes', lab: 'Yes, please contact me' },
-    { k: 'no',  lab: 'No, I have what I need' } ] },
-
-  { k: 'prefer', q: 'How would you prefer we remind you in future?', opts: [
-    { k: 'email', lab: 'Email' },
-    { k: 'text',  lab: 'Text message' },
-    { k: 'call',  lab: 'Phone call' },
-    { k: 'whatsapp', lab: 'WhatsApp' } ] }
+  { k: 'when', q: 'When would suit you?', opts: [
+    { k: 'today',  lab: 'I can deal with it today' },
+    { k: 'payday', lab: 'On my next payday' },
+    { k: 'weeks',  lab: 'Within the next couple of weeks' },
+    { k: 'call',   lab: "I'm not sure yet — please call me" } ] }
 ];
 
 /* The questions a manager must answer once an agent files a retention case.
@@ -201,9 +188,6 @@ var MANAGER_QUESTIONS = [
     { k: 'd75',   lab: 'Before day 75' },
     { k: 'd88',   lab: 'Before day 88 — the final notice' } ] }
 ];
-
-/* The question wording, for quoting the day-45 exchange back at day 60. */
-var SURVEY_QUESTIONS = CLIENT_QUESTIONS.map(function (q) { return q.q; });
 
 /* Flat lookup, so a returning click can be named without walking the sets. */
 var ANSWER_BY_KEY = (function () {
@@ -333,42 +317,75 @@ function pdChoiceBlock_(p) {
   return pdQuestionBlock_(p, steps, 'respond');
 }
 
-/** A question's wording by key, so quoting back never drifts from what was asked. */
-function pdQ_(key) {
-  for (var i = 0; i < CLIENT_QUESTIONS.length; i++) {
-    if (CLIENT_QUESTIONS[i].k === key) return pdEsc_(CLIENT_QUESTIONS[i].q);
-  }
-  return pdEsc_(key);
+/* ===================== THE CORRESPONDENCE TRAIL =====================
+   Every letter we sent, whether they answered, what they chose, and anything
+   attached — in date order. It is in the client's letter and not just our file
+   for two reasons: it shows we have been keeping track, which changes how the
+   last letter in a sequence reads; and where a client did answer and we acted
+   on it, saying so is the difference between a follow-up and a form letter
+   that ignores them. */
+
+var TRAIL_LABEL = {
+  od:      'We wrote about the premium on this policy',
+  s45:     'We asked what would help',
+  s45r:    'We followed up, having had no reply',
+  s60:     'We wrote formally, copying your agent and their managers',
+  chase:   'We followed up again',
+  s88:     'Final notice',
+  winback: 'We wrote about restoring the policy',
+  pend:    'We wrote about the outstanding requirements'
+};
+
+function pdTrailRow_(when, what, mine) {
+  return '<tr>' +
+    '<td style="padding:7px 11px;border:1px solid #E8E3D8;background:#F3F0E9;color:#5A6B7B;' +
+      'white-space:nowrap;width:120px;vertical-align:top">' + when + '</td>' +
+    '<td style="padding:7px 11px;border:1px solid #E8E3D8;background:#FFFFFF;color:' +
+      (mine ? PD_BRAND.teal2 : PD_BRAND.ink) + ';font-weight:' + (mine ? '600' : 'normal') + '">' + what + '</td>' +
+    '</tr>';
 }
 
-/** What the client told us at 45 days, quoted back. */
-function pdPriorExchange_(p, state) {
-  var s = state && state.survey;
-  var qs = '<ol style="margin:6px 0 0;padding-left:20px;color:#5A6B7B">' +
-    SURVEY_QUESTIONS.map(function (q) { return '<li style="margin-bottom:3px">' + pdEsc_(q) + '</li>'; }).join('') +
-    '</ol>';
+function pdTrail_(p, state) {
+  var events = (state && state.trail) ? state.trail.slice() : [];
 
-  if (!s) {
-    return '<p>On or about day 45 we wrote to you asking three questions about this policy:</p>' + qs +
-      pdNote_('<b>We have not received a reply.</b> That is why this letter sets out the position in full, ' +
-              'and why it is copied to your agent&rsquo;s manager and to the branch manager.');
+  if (state && state.replies) {
+    for (var i = 0; i < state.replies.length; i++) {
+      var r = state.replies[i];
+      events.push({ ts: r.ts, mine: true, what: 'You told us: <b>' + pdEsc_(r.lab || '') + '</b>' });
+    }
+  }
+  if (state && state.survey && state.survey.ts) {
+    events.push({ ts: state.survey.ts, mine: true,
+      what: 'You replied to us' + (state.survey.surveyReason ? ': <b>' + pdEsc_(state.survey.surveyReason) + '</b>' : '') });
+  }
+  if (state && state.retentionTs) {
+    events.push({ ts: state.retentionTs, mine: false,
+      what: 'Your agent prepared a written case for their manager' +
+            (state.factFind ? ', with a completed fact find attached' : '') });
+  }
+  events.sort(function (x, y) { return (x.ts || 0) - (y.ts || 0); });
+
+  if (!events.length) {
+    return pdNote_('<b>We have written to you about this policy and have had no reply.</b> ' +
+      'That is why this letter is more formal than the last one, and why it is copied to your ' +
+      'agent&rsquo;s manager and to the branch manager.');
   }
 
-  var row = function (k, v) {
-    return '<tr>' +
-      '<td style="padding:7px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:190px;color:#5A6B7B;vertical-align:top">' + k + '</td>' +
-      '<td style="padding:7px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:' + PD_BRAND.ink + '">' + v + '</td>' +
-      '</tr>';
-  };
-  return '<p>On ' + (s.ts ? '<b>' + pdDateOf_(s.ts) + '</b>' : 'or about day 45') +
-    ' we wrote asking three questions about this policy. You replied, and we have your answers on file:</p>' +
-    '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:12px 0;font-size:13px">' +
-      row(pdQ_('reason'),  pdEsc_(s.surveyReason  || '—')) +
-      row(pdQ_('steps'),   pdEsc_(s.surveyContact || '—')) +
-      (s.surveyPromise ? row('In their own words', pdEsc_(s.surveyPromise)) : '') +
-    '</table>' +
-    pdNote_('We took you at your word and held the policy on that basis. The premium is still outstanding, ' +
-            'so we are writing again — this time with the full timeline, so nothing about what happens next comes as a surprise.');
+  var rows = '';
+  for (var j = 0; j < events.length; j++) rows += pdTrailRow_(pdDateOf_(events[j].ts), events[j].what, events[j].mine);
+  rows += pdTrailRow_('Today', 'This letter', false);
+
+  var answered = false;
+  for (var m = 0; m < events.length; m++) if (events[m].mine) answered = true;
+
+  return '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:8px 0;font-size:13px">' +
+      rows + '</table>' +
+    (answered
+      ? pdNote_('You did come back to us, and we acted on what you said. The premium is still outstanding, ' +
+          'so we are writing again — this time with the full timeline, so nothing about what happens next ' +
+          'comes as a surprise.')
+      : pdNote_('<b>We have had no reply to any of the above.</b> If our letters have been going to the ' +
+          'wrong address, or if there is a reason it has been hard to respond, tell us and we will work around it.'));
 }
 
 /* ============================ email chrome ============================ */
@@ -728,7 +745,7 @@ var PD_TEMPLATES = {
             : 'Answer one question or all of them — each one on its own tells us how to help.') +
           '</p>' + pdQuestionBlock_(p, CLIENT_QUESTIONS, 'respond')) +
 
-        pdSection_(2, 'Our previous correspondence', pdPriorExchange_(p, state)) +
+        pdSection_(2, 'What we have sent, and what you told us', pdTrail_(p, state)) +
 
         pdSection_(3, (family.length > 1 ? 'Everything you hold with us' : 'Your policy as it stands'),
           (family.length > 1
@@ -1050,19 +1067,23 @@ function pdCaseState_() {
   for (var i = 1; i < v.length; i++) {
     var policy = String(v[i][2] || ''); if (!policy) continue;
     var type = String(v[i][10] || ''), ts = Number(v[i][0]) || 0;
-    var s = map[policy] || (map[policy] = { responded: false, retentionTs: 0, verdict: false, chases: {}, survey: null });
+    var s = map[policy] || (map[policy] = { responded: false, retentionTs: 0, verdict: false, chases: {}, survey: null, trail: [] });
     if (type === 'survey') {
       s.survey = { ts: ts, surveyReason: v[i][15], surveyContact: v[i][16], surveyPromise: v[i][17] };
     }
     if (type === 'response') {
       s.responded = true;
-      (s.replies = s.replies || []).push({ q: v[i][11], lab: v[i][12] });
+      (s.replies = s.replies || []).push({ ts: ts, q: v[i][11], lab: v[i][12] });
     }
     else if (type === 'retention') {
       s.retentionTs = Math.max(s.retentionTs, ts);
       s.retentionBody = v[i][12]; s.factFind = v[i][18];
     }
     else if (type === 'verdict') s.verdict = true;
+    else if (type.indexOf('outbound') === 0) {
+      var stg = String(v[i][11] || '');
+      if (TRAIL_LABEL[stg]) (s.trail = s.trail || []).push({ ts: ts, mine: false, what: TRAIL_LABEL[stg] });
+    }
     else if (type.indexOf('internal') === 0) {
       var key = String(v[i][11] || '');
       s.chases[key] = Math.max(s.chases[key] || 0, ts);
@@ -1185,7 +1206,7 @@ function dailyPremiumDueRun() {
   for (var i = 0; i < payload.policies.length; i++) {
     if (count >= OUT.MAX_SENDS_PER_RUN) break;
     var p = payload.policies[i];
-    var s = states[String(p.Policy)] || { responded: false, retentionTs: 0, verdict: false, chases: {}, survey: null };
+    var s = states[String(p.Policy)] || { responded: false, retentionTs: 0, verdict: false, chases: {}, survey: null, trail: [] };
 
     internal += pdInternalChase_(p, s);          // agent / manager accountability
 

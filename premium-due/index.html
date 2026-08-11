@@ -832,35 +832,26 @@ const VERDICTS=['Approve retention plan','Approve payment plan','Escalate to rei
    The 60-day email carries these as one-click links. A client who picks one has
    told us how to save the policy without having to phone anybody — and the
    chase sequence stops the moment they do. */
-/* The questions, lifted from the branch's two live JotForms — "Premium Due
-   Feedback From (clients)" (152 responses since Aug 2023) and "Premium Dues
-   Status Update (agents)" (106 since Oct 2025). Kept in step with
-   apps-script/PremiumDueTemplates.gs; the keys must match, because that file
-   sends the links and this one records what comes back. */
+/* Deliberately NOT the old JotForm questions. That form ran three years, drew
+   152 responses, and its top answer to "what steps do you plan to take" was
+   "Other" — it read like an audit. Every answer here is a service we provide,
+   not a shortcoming the client admits, and nobody is asked why they are late.
+   Kept in step with apps-script/PremiumDueTemplates.gs — the keys must match,
+   because that file sends the links and this one records what comes back. */
 const CLIENT_QUESTIONS=[
-  {k:'intent',q:'Was the delay in payment intentional?',opts:[
-    {k:'no',lab:'No — it was not intentional'},{k:'yes',lab:'Yes — it was a decision I made'}]},
-  {k:'reason',q:'What is the main reason for the delay?',opts:[
-    {k:'financial',lab:'Financial difficulties'},
-    {k:'payfail',lab:'My payment method failed — bank, card or salary deduction'},
-    {k:'oversight',lab:'Oversight — I simply missed it'},
-    {k:'income',lab:'My income changed — job loss, retirement or reduced hours'},
-    {k:'illness',lab:'Illness'},{k:'travel',lab:'Travel or time out of the country'},
-    {k:'dispute',lab:'I have a question or dispute about the policy'},
-    {k:'elsewhere',lab:'I took cover elsewhere'}]},
-  {k:'steps',q:'What do you plan to do to bring the account up to date?',opts:[
-    {k:'paynow',lab:'Pay the overdue amount immediately'},
-    {k:'paid',lab:'I have already paid — I will send the reference'},
-    {k:'plan',lab:'Set up a payment plan'},
-    {k:'needmore',lab:'I need more time — please contact me'},
-    {k:'reduce',lab:'Reduce the premium so I can keep the policy'},
-    {k:'explain',lab:'Explain what I am covered for before I decide'},
-    {k:'cancel',lab:'I want to cancel the policy'}]},
-  {k:'contact',q:'Would you like someone to contact you to discuss your options?',opts:[
-    {k:'yes',lab:'Yes, please contact me'},{k:'no',lab:'No, I have what I need'}]},
-  {k:'prefer',q:'How would you prefer we remind you in future?',opts:[
-    {k:'email',lab:'Email'},{k:'text',lab:'Text message'},
-    {k:'call',lab:'Phone call'},{k:'whatsapp',lab:'WhatsApp'}]}
+  {k:'help',q:'What would help most right now?',opts:[
+    {k:'settle',lab:"Nothing — I'll clear it. Just tell me the amount."},
+    {k:'lower',lab:'A smaller monthly amount I can actually keep up with'},
+    {k:'date',lab:'Move the payment date to match my payday'},
+    {k:'bank',lab:"Fix the bank instruction — it isn't going through"},
+    {k:'pause',lab:'A short pause, without losing the cover'},
+    {k:'talk',lab:'A conversation with someone before I decide anything'},
+    {k:'show',lab:"Show me exactly what I'd be giving up"}]},
+  {k:'when',q:'When would suit you?',opts:[
+    {k:'today',lab:'I can deal with it today'},
+    {k:'payday',lab:'On my next payday'},
+    {k:'weeks',lab:'Within the next couple of weeks'},
+    {k:'call',lab:"I'm not sure yet — please call me"}]}
 ];
 /* What a manager must answer. Previously two free-text fields, which came back
    blank on 78 of 106 filed cases. */
@@ -892,8 +883,9 @@ const ANSWER_BY_KEY={};
 [CLIENT_QUESTIONS,MANAGER_QUESTIONS].forEach(set=>set.forEach(q=>q.opts.forEach(o=>{
   ANSWER_BY_KEY[q.k+':'+o.k]={q:q.q,lab:o.lab,qk:q.k,set:set===MANAGER_QUESTIONS?'mgr':'client'};})));
 /* Answers that mean the client intends to keep paying, for the odds model. */
-const POSITIVE_ANSWERS={'steps:paynow':1,'steps:paid':1,'steps:plan':1,'steps:reduce':1,'contact:yes':1};
-const NEGATIVE_ANSWERS={'steps:cancel':1,'reason:elsewhere':1,'reason:dispute':1};
+/* Any answer at all is a good sign — these weight how good. */
+const POSITIVE_ANSWERS={'help:settle':1,'help:bank':1,'help:date':1,'when:today':1,'when:payday':1};
+const NEGATIVE_ANSWERS={'help:show':1,'when:call':1};
 function answerLink(c,kind,qk,ak){
   return `${location.origin}${location.pathname}#${kind}=${c.Policy}&q=${qk}&a=${ak}`;
 }
