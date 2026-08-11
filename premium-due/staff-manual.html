@@ -69,7 +69,7 @@ code{font-family:var(--mono);font-size:.86em;background:var(--card-2);border:1px
 .stage{background:var(--card);padding:17px 19px;display:grid;grid-template-columns:118px 1fr;gap:18px;
   border-left:5px solid var(--line)}
 .stage.s-od{border-left-color:var(--amber)} .stage.s-45{border-left-color:var(--amber)}
-.stage.s-75{border-left-color:var(--red)} .stage.s-90{border-left-color:var(--red)}
+.stage.s-60{border-left-color:var(--red)} .stage.s-90{border-left-color:var(--red)}
 .stage.s-pd{border-left-color:var(--gold)} .stage.s-ok{border-left-color:var(--green)}
 .stage .when{display:flex;flex-direction:column;gap:3px}
 .stage .day{font-family:var(--serif);font-size:22px;font-weight:600;line-height:1;letter-spacing:-.02em}
@@ -140,7 +140,7 @@ footer{border-top:1px solid var(--line);padding-top:20px;font-family:var(--mono)
     <div><div class="k">Ricky Rampersad Branch</div><div class="n">Premium Due Engine</div></div>
   </div>
   <h1>Staff manual</h1>
-  <p class="stand">Every premium in arrears, every 45-day survey, every 75-day retention case and every manager response — in one place, against the policy, where the next person can see it.</p>
+  <p class="stand">Every premium in arrears, every 45-day survey, every 60-day retention case and every manager response — in one place, against the policy, where the next person can see it.</p>
   <p class="meta"><span>FOR AGENTS · UNIT MANAGERS · ABM · SALES SUPPORT · BM</span><span>BRANCH 26000</span></p>
 </header>
 
@@ -166,7 +166,7 @@ footer{border-top:1px solid var(--line);padding-top:20px;font-family:var(--mono)
     <table>
       <thead><tr><th>Role</th><th>You see</th><th>You can</th></tr></thead>
       <tbody>
-        <tr><td><b>Agent</b></td><td>Your own clients only</td><td>Comment, run the 45-day survey, file a 75-day retention case, message the client</td></tr>
+        <tr><td><b>Agent</b></td><td>Your own clients only</td><td>Comment, run the 45-day survey, file a 60-day retention case, message the client</td></tr>
         <tr><td><b>Unit Manager</b></td><td>Your unit's whole book</td><td>Everything an agent can, plus respond to your unit's retention cases</td></tr>
         <tr><td><b>ABM</b></td><td>Your reporting line, all the way down</td><td>Everything, plus respond to any case in your line</td></tr>
         <tr><td><b>Sales Support</b></td><td>The full branch</td><td>Route surveys, chase requirements, comment on any policy</td></tr>
@@ -176,7 +176,7 @@ footer{border-top:1px solid var(--line);padding-top:20px;font-family:var(--mono)
   </div>
   <div class="call warn">
     <span class="lab">The accountability gate — agents</span>
-    <p>If you have <strong>75-day cases with no retention form</strong>, or <strong>90-day lapses with nothing logged against them</strong>, you will not reach your dashboard until you have typed what you are going to do about them. It is not a formality — what you write is posted to those policies under your name, and your manager sees it.</p>
+    <p>If you have <strong>cases past day 65 with no retention form</strong>, or <strong>90-day lapses with nothing logged against them</strong>, you will not reach your dashboard until you have typed what you are going to do about them. It is not a formality — what you write is posted to those policies under your name, and your manager sees it.</p>
     <p>If your book is clean you go straight in and the gate never appears. That is the point of it.</p>
   </div>
 </section>
@@ -205,15 +205,16 @@ footer{border-top:1px solid var(--line);padding-top:20px;font-family:var(--mono)
       <div class="what">
         <span class="who">Agent · Sales Support</span>
         <span class="t">Send the 45-day client survey</span>
-        <span class="d">Three questions, thirty seconds, no login for the client. You cannot save a policy until you know why it is behind — hardship, a billing failure and dissatisfaction all need completely different answers. Send the link, or complete it with the client on the phone.</span>
+        <span class="d">Three questions, thirty seconds, no login for the client. You cannot save a policy until you know why it is behind — hardship, a billing failure and dissatisfaction all need completely different answers. Send the link, or complete it with the client on the phone. If they don't answer, one reminder goes at about day 52 and then we stop asking until day 60.</span>
       </div>
     </div>
-    <div class="stage s-75">
-      <div class="when"><span class="day">75–89</span><span class="win">Retention</span></div>
+    <div class="stage s-60">
+      <div class="when"><span class="day">60–89</span><span class="win">Retention</span></div>
       <div class="what">
-        <span class="who">Agent files · Manager responds</span>
-        <span class="t">File the 75-day retention case</span>
-        <span class="d">Document the situation, attach the fact find, recommend a save, and submit it to your manager. Fifteen days left. This is the last window where the policy can be kept rather than rebuilt.</span>
+        <span class="who">Client chooses · Agent files · Manager responds</span>
+        <span class="t">The 60-day notice goes out, and the case gets filed</span>
+        <span class="d">On day 60 the client gets an email that <b>refers back to the 45-day message</b> and offers six one-click choices — pay in full, a payment plan, a lower premium, a bank change, a call back, or cancel. The agent, their unit manager and the branch manager are all copied, so whichever the client picks, somebody is already across it.</span>
+        <span class="d">If the client says nothing, they are chased <b>every 5 days</b>. The agent files the retention case <b>by day 65</b>; the manager answers it <b>within 5 days</b>. Thirty days of runway instead of fifteen — and the manager is in it while their decision can still change the outcome.</span>
       </div>
     </div>
     <div class="stage s-90">
@@ -241,6 +242,36 @@ footer{border-top:1px solid var(--line);padding-top:20px;font-family:var(--mono)
 
 <section>
   <div class="sh">
+    <span class="e">Accountability</span>
+    <h2>Both clocks, and why they exist</h2>
+    <p>When a policy lapses, two explanations usually arrive at once: the agent let it go, and the manager never came back to me. Only one of them is ever true, and until now nobody could prove which.</p>
+  </div>
+  <div class="prose">
+    <p>Every case in the 60-day window has exactly one person holding it at any moment, and the engine says who. Open any case and the <strong>escalation ladder</strong> across the top shows four rungs — survey answered, client picked an option, retention case filed, manager responded — with the day count and, in plain words, who is being waited on.</p>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Clock</th><th>Deadline</th><th>If it is missed</th></tr></thead>
+      <tbody>
+        <tr><td><b>Client responds</b></td><td>Any time after the day-60 email</td><td>Chased every 5 days automatically, with the manager asked to reach out. Stops the instant they pick an option.</td></tr>
+        <tr><td><b>Agent files the case</b></td><td>By day 65</td><td>The agent is emailed with their manager copied, and the case shows <b>Waiting on [agent]</b> to everyone who can see it. It appears on their sign-in gate.</td></tr>
+        <tr><td><b>Manager responds</b></td><td>Within 5 days of filing</td><td>The manager is emailed every 3 days, with the branch manager copied from the second reminder. It appears on <b>their</b> sign-in gate.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="call good">
+    <span class="lab">Managers meet a gate too</span>
+    <p>An agent who files on time and then waits three weeks for an answer has been let down, not the other way round. So the gate cuts both ways: <strong>a manager with overdue responses does not reach their dashboard either</strong> until they have committed to clearing them, and that commitment is written to the case under their name — exactly as it is for agents.</p>
+    <p>That is the whole design. Neither side can quietly wait out the clock while the other carries the blame.</p>
+  </div>
+  <div class="call note">
+    <span class="lab">Read the flags before you judge</span>
+    <p>The branch view carries a <strong>Late — either side</strong> filter and a stat that splits the count into manager-side and agent-side. Look at the split before a unit meeting. A unit with six late cases where five are sitting on the manager's desk is not an agent performance problem.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sh">
     <span class="e">Recording</span>
     <h2>Four things you can put on a policy</h2>
     <p>Open any case and you get four tabs. Everything you write lands on one thread in date order.</p>
@@ -248,8 +279,9 @@ footer{border-top:1px solid var(--line);padding-top:20px;font-family:var(--mono)
   <div class="recs">
     <div class="rec r1"><span class="k">Anyone</span><span class="t">Comment</span><span class="d">What is happening and what you are doing next. This replaces the email chain — write it as if the next person to open this policy has never spoken to the client.</span></div>
     <div class="rec r2"><span class="k">Client answers</span><span class="t">45-Day survey</span><span class="d">Why the premium is behind, where the client stands on keeping it, and anything they want you to know. Send the link or fill it in together on the phone.</span></div>
-    <div class="rec r3"><span class="k">Agent files</span><span class="t">75-Day retention</span><span class="d">The reason, the full situation, your recommended save, and the fact-find link. Goes to your manager for a decision.</span></div>
+    <div class="rec r3"><span class="k">Agent files</span><span class="t">60-Day retention</span><span class="d">The reason, the full situation, your recommended save, and the fact-find link. Goes to your manager for a decision.</span></div>
     <div class="rec r4"><span class="k">Manager only</span><span class="t">Manager response</span><span class="d">Approve the plan, approve a payment plan, escalate to reinstatement, allow the lapse on record, investigate replacement, or reassign. Opens once the agent has filed.</span></div>
+    <div class="rec r2"><span class="k">Client clicks</span><span class="t">Client reply</span><span class="d">The option the client picked from the 60-day email — one tap, no login. Recorded against the policy, and it stops the chase sequence immediately.</span></div>
   </div>
   <div class="call good">
     <span class="lab">Write it for the next person</span>
@@ -270,7 +302,8 @@ footer{border-top:1px solid var(--line);padding-top:20px;font-family:var(--mono)
         <tr><td class="m">Overdue nudge</td><td>1–44 days behind</td><td>Says a premium hasn't reached us, reassures that cover is still active, asks what suits them</td></tr>
         <tr><td class="m">45-day survey</td><td>45+ days, no survey yet</td><td>Asks to understand, states plainly how many days are left, links the survey</td></tr>
         <tr><td class="m">Survey reminder</td><td>~52 days, still no answer</td><td>One follow-up, and invites them to say if they want to stop — better than a silent lapse</td></tr>
-        <tr><td class="m">75-day retention</td><td>75–89 days</td><td>Explains what ending cover really means, and that a call is coming with real options</td></tr>
+        <tr><td class="m">60-day retention</td><td>60–64 days</td><td>Refers back to the 45-day email, offers six one-click choices, copies the agent, unit manager and BM</td></tr>
+        <tr><td class="m">Chase (no reply)</td><td>Every 5 days after 60</td><td>Repeats the choices, says the manager will reach out too, and invites an honest "I want to stop it"</td></tr>
         <tr><td class="m">Final notice</td><td>88–89 days</td><td>Last call before lapse</td></tr>
         <tr><td class="m">Win-back</td><td>Recently lapsed</td><td>Reinstatement keeps original age and terms — usually cheaper than starting fresh</td></tr>
         <tr><td class="m">Requirements chase</td><td>Pending underwriting</td><td>Makes clear they are not covered yet, and what is outstanding</td></tr>
@@ -284,7 +317,7 @@ footer{border-top:1px solid var(--line);padding-top:20px;font-family:var(--mono)
   </div>
   <div class="call warn">
     <span class="lab">Do not send the same thing twice</span>
-    <p>Check the thread before you reach out. If the client answered the survey three days ago saying they'll pay at month end, the 75-day notice will read as though nobody is listening — and that is how you lose a client who was already staying.</p>
+    <p>Check the thread before you reach out. If the client answered the survey three days ago saying they'll pay at month end, a chase email will read as though nobody is listening — and that is how you lose a client who was already staying.</p>
   </div>
 </section>
 
@@ -313,16 +346,18 @@ footer{border-top:1px solid var(--line);padding-top:20px;font-family:var(--mono)
         <li>Clear the gate honestly — <b>write what you'll really do</b>, not what sounds good</li>
         <li>Work <b>closest to lapse first</b>. The list is already sorted that way</li>
         <li>Get the survey out in the 45-day window. Don't wait until 74</li>
-        <li>File the 75-day case <b>with the fact find attached</b> — without it your manager cannot decide</li>
+        <li>File the 60-day case <b>by day 65, with the fact find attached</b> — without it your manager cannot decide, and the delay is recorded against you</li>
         <li>Log every contact, including the ones that went nowhere</li>
       </ul>
     </div>
     <div class="role">
       <span class="sub">Unit Manager · ABM</span><h3>You own the decision</h3>
       <ul>
+        <li>Answer within <b>5 days of filing</b>. Past that you are chased every 3 days and the BM is copied</li>
         <li>Clear the <b>Awaiting manager</b> queue daily — a case sitting three days is three days closer to lapse</li>
+        <li>Reach out to the client yourself on the 60-day cases. You are copied on that email for a reason</li>
         <li>Give an instruction and a deadline, not just approval</li>
-        <li>Watch for agents whose 75-day cases are always filed at day 88</li>
+        <li>Watch for agents whose cases are always filed at day 88</li>
         <li>Use the churn and duplicate flags in one-to-ones — they show selling behaviour, not just persistency</li>
       </ul>
     </div>
@@ -342,6 +377,7 @@ footer{border-top:1px solid var(--line);padding-top:20px;font-family:var(--mono)
         <li>Premium in arrears is the number that matters — it is renewable income leaving</li>
         <li>Repeated <b>Allow lapse — documented</b> from one unit is a conversation, not a statistic</li>
         <li>The manager queue is the fastest read on whether the branch is responsive</li>
+        <li>Check the <b>late split</b> — manager-side versus agent-side — before you attribute a lapse to anyone</li>
       </ul>
     </div>
   </div>
@@ -354,9 +390,9 @@ footer{border-top:1px solid var(--line);padding-top:20px;font-family:var(--mono)
     <p>It is not a system you visit. It is where the arrears work happens.</p>
   </div>
   <div class="rhythm">
-    <div class="beat"><span class="w">Every day</span><span class="b">Agents sign in, clear the gate, and work the top of the list — <b>closest to lapse first</b>. Managers clear the awaiting-response queue.</span></div>
+    <div class="beat"><span class="w">Every day</span><span class="b">Agents sign in, clear the gate, and work the top of the list — <b>closest to lapse first</b>. Managers clear the awaiting-response queue, and clear their own gate if anything has gone past 5 days.</span></div>
     <div class="beat"><span class="w">Twice a week</span><span class="b">Sales support sweeps <b>Pending</b> for outstanding requirements and recent lapses for win-back.</span></div>
-    <div class="beat"><span class="w">Weekly</span><span class="b">Unit meeting opens on the ribbon: how many in the 45-day window, how many at 75, how many crossed to lapse this week — and <b>why each one crossed</b>.</span></div>
+    <div class="beat"><span class="w">Weekly</span><span class="b">Unit meeting opens on the ribbon: how many in the 45-day window, how many at 60, how many crossed to lapse this week — and <b>why each one crossed</b>, with the late split on screen.</span></div>
     <div class="beat"><span class="w">Monthly</span><span class="b">BM reviews the scorecard and the duplicate/churn flags with each unit manager. Persistency is a leading indicator; treat it like one.</span></div>
   </div>
 </section>
@@ -375,6 +411,8 @@ footer{border-top:1px solid var(--line);padding-top:20px;font-family:var(--mono)
         <tr><td><b>A healthy policy shows a huge day count</b></td><td>That is days on book, not arrears. The engine already ignores it — the stage is what counts.</td></tr>
         <tr><td><b>Your code is rejected</b></td><td>Codes are initials plus three digits and are case-insensitive. If it still fails, your name may not be on the roster yet — tell the BM.</td></tr>
         <tr><td><b>The manager response tab is missing</b></td><td>It only opens once an agent has filed a retention case, and only for managers.</td></tr>
+        <tr><td><b>The client stopped getting chase emails</b></td><td>They picked one of the six options. Check the ladder — their choice is recorded there, and it is now yours to act on.</td></tr>
+        <tr><td><b>You are named as the blocker but you did reply</b></td><td>A reply only counts when it is posted as a <b>Manager response</b> on the case. A WhatsApp to the agent does not close the loop or clear the record.</td></tr>
         <tr><td><b>You posted something wrong</b></td><td>Nothing is deleted — that is deliberate. Post a correcting comment; the thread reads in order and the correction sits with it.</td></tr>
       </tbody>
     </table>

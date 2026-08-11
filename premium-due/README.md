@@ -1,8 +1,9 @@
 # Premium Due Engine
 
-Tracks every premium in arrears through the 45 / 75 / 90-day lapse funnel: the
-45-day client survey, the 75-day agent retention case with fact find, the manager
-response, and every status comment against the policy. Replaces the two JotForms
+Tracks every premium in arrears through the 45 / 60 / 90-day lapse funnel: the
+45-day client survey, the 60-day retention notice with one-click client choices,
+the agent's retention case, the manager response, and every status comment
+against the policy. Replaces the two JotForms
 and the "Premium Due Status" comment columns.
 
 | File | What it is |
@@ -67,10 +68,28 @@ thousands of healthy policies into the lapse funnel.
 | Stage | Trigger | What's due |
 |-------|---------|-----------|
 | Overdue | Status 2, 1–44 days | Comment / contact |
-| 45-Day | Status 2, 45–74 days | Client survey |
-| 75-Day | Status 2, 75–89 days | Agent retention case + fact find → manager |
+| 45-Day | Status 2, 45–59 days | Client survey |
+| 60-Day | Status 2, 60–89 days | Client picks an option · agent files by day 65 · manager answers within 5 days |
 | 90-Day | Status 2 at 90+, or Status 1 | Reinstatement or win-back |
 | Pending | Status 3 / underwriting incomplete | New business chase |
+
+### The 60-day escalation
+
+Day 60 the client gets an email referring back to the 45-day message, carrying
+six one-click choices, with the agent, their unit manager and the BM copied.
+No reply → chased every 5 days. Two internal clocks run alongside it:
+
+| Clock | Deadline | Missed |
+|-------|----------|--------|
+| Agent files the case | day 65 | Emailed, manager copied; shows as *Waiting on [agent]*; hits their sign-in gate |
+| Manager answers | 5 days from filing | Emailed every 3 days, BM copied from the second; hits **their** sign-in gate |
+
+`blocker(c)` names the single person holding each case. It runs only inside the
+60-day window — a policy that lapsed in 2014 has nobody late on it, and counting
+those would bury the live cases under thousands of historic ones.
+
+The constants live in `SLA` in `index.html` and `SLA` in
+`PremiumDueTemplates.gs`. **Change both** — they are not shared.
 
 Duplicate and churn detection keys on **Client Number**: several policies under
 one client on the same plan code flags a possible replacement written over
@@ -85,10 +104,13 @@ in-force cover; an active policy alongside a lapsed one flags repeat churn.
 | ABM | Their reporting line, resolved recursively |
 | Sales Support / BM | The whole branch + manager queue + scorecard |
 
-The **accountability gate** stops an agent at sign-in if they have 75-day cases
-with no retention form or 90-day lapses with nothing logged. They must type a
-commitment (15 characters minimum) to enter, and it is written to the policy
-thread — once per policy per day, not once per sign-in.
+The **accountability gate** cuts both ways. An agent with cases past day 65 and
+no retention form, or 90-day lapses with nothing logged, must type a commitment
+(15 characters minimum) before reaching their dashboard. A **manager with
+responses past the 5-day window meets the same gate** — an agent who files on
+time and waits three weeks has been let down, not the other way round. Either
+way the commitment is written to the policy thread under that person's name,
+once per policy per day.
 
 ## Known gaps
 
@@ -109,6 +131,11 @@ Tracked in the build review; none of these are fixed here.
 - **The roster covers 25 people; the live book names 89 agents.** 61 of them,
   holding ~3,260 policies, sit outside every agent and unit view, and 8 people
   who appear in `UNITS`/`HIERARCHY` have no code and cannot sign in at all.
-- **The branch view opens on everything** and truncates at 300 rows with no
-  indication of what's behind it. Most of the book is historic lapses; the live
-  save work is the ~750 cases in the 45 and 75-day windows.
+- **The branch view truncates at 300 rows** with no indication of what's behind
+  it. It already hides lapsed policies by default, so it opens on roughly 4,000 —
+  still more than ten times the cap.
+- **The engine's `SLA` and the Apps Script's `SLA` are separate copies.** They
+  must be changed together; nothing enforces that.
+- **`MANAGER_OF` and `STAFF_EMAIL` in the templates file are hand-maintained**
+  mirrors of `UNITS`/`HIERARCHY` in the engine. A missing entry means that
+  person is silently not copied — no error, just no email.

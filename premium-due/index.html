@@ -166,7 +166,7 @@ input,select,textarea{font-family:inherit;font-size:14px}
 .case{background:var(--paper-2);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;transition:.15s}
 .case:hover{border-color:var(--slate);box-shadow:var(--shadow)}
 .case.stg-s45{border-left:4px solid var(--amber)}
-.case.stg-s75{border-left:4px solid var(--red)}
+.case.stg-s60{border-left:4px solid var(--red)}
 .case.stg-s90{border-left:4px solid var(--red-2)}
 .case.stg-dup{border-left:4px solid var(--gold)}
 .case-top{display:grid;grid-template-columns:1fr auto;gap:14px;padding:15px 17px;cursor:pointer;align-items:center}
@@ -185,7 +185,7 @@ input,select,textarea{font-family:inherit;font-size:14px}
 .pill.dup{background:var(--gold-soft);color:#8A6A1C}
 .pill.lapse{background:var(--red-soft);color:var(--red)}
 .pill.stage{background:var(--amber-soft);color:var(--amber)}
-.pill.stage.s75{background:var(--red-soft);color:var(--red)}
+.pill.stage.s60{background:var(--red-soft);color:var(--red)}
 .pill.stage.s90{background:#EADCDC;color:var(--red-2)}
 .pill.stage.cur{background:var(--teal-soft);color:var(--teal-2)}
 .pill.plan{background:#EAE6DC;color:var(--ink-2);font-family:var(--mono)}
@@ -276,9 +276,9 @@ select.f-line{background:#fff}
 .rib-k{font-size:9.5px;font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:600}
 .rib-n{font-family:var(--disp);font-size:26px;font-weight:600;line-height:1;margin:6px 0 3px}
 .rib-d{font-size:10px;color:var(--slate)}
-.rib.cur .rib-n{color:var(--teal)} .rib.s45 .rib-n{color:var(--amber)} .rib.s75 .rib-n{color:var(--red)} .rib.s90 .rib-n{color:var(--red-2)} .rib.dup .rib-n{color:var(--gold)} .rib.od .rib-n{color:var(--amber)} .rib.pend .rib-n{color:var(--teal)}
+.rib.cur .rib-n{color:var(--teal)} .rib.s45 .rib-n{color:var(--amber)} .rib.s60 .rib-n{color:var(--red)} .rib.s90 .rib-n{color:var(--red-2)} .rib.dup .rib-n{color:var(--gold)} .rib.od .rib-n{color:var(--amber)} .rib.pend .rib-n{color:var(--teal)}
 .rib .rib-bar{position:absolute;left:0;right:0;bottom:0;height:3px}
-.rib.cur .rib-bar{background:var(--teal)} .rib.s45 .rib-bar{background:var(--amber)} .rib.s75 .rib-bar{background:var(--red)} .rib.s90 .rib-bar{background:var(--red-2)} .rib.dup .rib-bar{background:var(--gold)} .rib.od .rib-bar{background:var(--amber)} .rib.pend .rib-bar{background:var(--teal)}
+.rib.cur .rib-bar{background:var(--teal)} .rib.s45 .rib-bar{background:var(--amber)} .rib.s60 .rib-bar{background:var(--red)} .rib.s90 .rib-bar{background:var(--red-2)} .rib.dup .rib-bar{background:var(--gold)} .rib.od .rib-bar{background:var(--amber)} .rib.pend .rib-bar{background:var(--teal)}
 @media(max-width:680px){.ribbon{grid-template-columns:repeat(2,1fr)}}
 
 /* leaderboard / agent table */
@@ -330,6 +330,35 @@ select.f-line{background:#fff}
 .opt-pick.on{border-color:var(--teal);background:var(--teal-soft);color:var(--teal-2);font-weight:600}
 .opt-pick .dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--line);flex:0 0 auto}
 .opt-pick.on .dot{border-color:var(--teal);background:var(--teal);box-shadow:inset 0 0 0 3px #fff}
+
+/* choice links */
+.choice-list{margin-top:9px;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.choice-row{display:flex;align-items:center;gap:10px;padding:8px 11px;border-bottom:1px solid var(--line-2);background:var(--paper-2)}
+.choice-row:last-child{border-bottom:none}
+.choice-row .cl{flex:1;font-size:12.5px;color:var(--ink-2)}
+
+/* ===== ESCALATION LADDER ===== */
+.ladder{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:14px;background:var(--paper-2)}
+.ladder-h{padding:9px 13px;background:linear-gradient(180deg,#fff,var(--paper-2));border-bottom:1px solid var(--line-2);
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.ladder-h .t{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;font-weight:700;color:var(--slate)}
+.ladder-h .who{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  padding:3px 8px;border-radius:5px;margin-left:auto}
+.who.w-agent{background:var(--amber-soft);color:var(--amber)}
+.who.w-manager{background:var(--red-soft);color:var(--red)}
+.who.w-done{background:var(--green-soft);color:var(--green)}
+.rungs{display:flex;flex-direction:column}
+.rung{display:grid;grid-template-columns:20px 1fr auto;gap:10px;align-items:start;padding:9px 13px;border-bottom:1px solid var(--line-2)}
+.rung:last-child{border-bottom:none}
+.rung .dot{width:11px;height:11px;border-radius:50%;margin-top:4px;border:2px solid var(--line);background:#fff}
+.rung.on .dot{background:var(--green);border-color:var(--green)}
+.rung.late .dot{background:var(--red);border-color:var(--red)}
+.rung.next .dot{background:var(--gold);border-color:var(--gold)}
+.rung .lb{font-size:12.5px;color:var(--ink-2);line-height:1.45}
+.rung .lb b{color:var(--ink);font-weight:650}
+.rung.off .lb{color:var(--mut)}
+.rung .tm{font-family:var(--mono);font-size:10px;color:var(--mut);white-space:nowrap;padding-top:2px}
+.rung.late .tm{color:var(--red);font-weight:700}
 
 /* ===== OUTREACH ===== */
 .out-pick{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
@@ -461,7 +490,7 @@ select.f-line{background:#fff}
 /* ============================================================
    RRB PREMIUM DUE ENGINE — core logic
    Lifecycle: Current → Overdue → 45-Day (client survey) →
-   75-Day (agent retention + fact find) → 90-Day Lapse.
+   60-Day (agent retention + fact find, manager responds) → 90-Day Lapse.
    Plus duplicate-policy & churn intelligence on Client Number.
    ============================================================ */
 
@@ -503,7 +532,7 @@ function directReports(mgr){const n=HIERARCHY[mgr];return n?(n.reports||[]):[];}
    policy range that cannot collide with a real policy. Replaced at runtime by
    the live Branch Portfolio as soon as a sheet is connected. */
 const SEED = [{"Agent": "Gary Sookdeo", "Policy": "9004100001", "ClientNo": "900101", "Client": "Anisa Boodram", "Premium": 250.42, "Status": 2, "StatusH": "Overdue", "DaysArrears": 29, "InsType": 2, "PlanCode": "LIFEV1", "Billing": "Bankers Order", "StatusDesc": "Premium Paying", "LapseDate": "10 Sep 2026", "Email": "anisa.boodram@example.com", "Phone": "868-555-0101", "SumAssured": 500000, "id": 1}, {"Agent": "Gary Sookdeo", "Policy": "9004100002", "ClientNo": "900101", "Client": "Anisa Boodram", "Premium": 384.9, "Status": 2, "StatusH": "Overdue", "DaysArrears": 37, "InsType": 2, "PlanCode": "CR3RP1", "Billing": "Bankers Order", "StatusDesc": "Premium Paying", "LapseDate": "10 Sep 2026", "Email": "anisa.boodram@example.com", "Phone": "868-555-0101", "SumAssured": 500000, "id": 2}, {"Agent": "Gary Sookdeo", "Policy": "9004100003", "ClientNo": "900101", "Client": "Anisa Boodram", "Premium": 481.31, "Status": 2, "StatusH": "Overdue", "DaysArrears": 37, "InsType": 2, "PlanCode": "ECT651", "Billing": "Bankers Order", "StatusDesc": "Premium Paying", "LapseDate": "10 Sep 2026", "Email": "anisa.boodram@example.com", "Phone": "868-555-0101", "SumAssured": 500000, "id": 3}, {"Agent": "Gary Sookdeo", "Policy": "9004100004", "ClientNo": "900101", "Client": "Anisa Boodram", "Premium": 500.0, "Status": 2, "StatusH": "Overdue", "DaysArrears": 44, "InsType": 2, "PlanCode": "LS2651", "Billing": "Bankers Order", "StatusDesc": "Premium Paying", "LapseDate": "10 Sep 2026", "Email": "anisa.boodram@example.com", "Phone": "868-555-0101", "SumAssured": 0, "id": 4}, {"Agent": "Anthony Simmons", "Policy": "9004100005", "ClientNo": "900110", "Client": "Terrence Cudjoe", "Premium": 248.54, "Status": 2, "StatusH": "Overdue", "DaysArrears": 1, "InsType": 2, "PlanCode": "LIFEV1", "Billing": "Direct Bill", "StatusDesc": "Premium Paying", "LapseDate": "22 Sep 2026", "Email": "terrence.cudjoe@example.com", "Phone": "868-555-0110", "SumAssured": 250000, "id": 5}, {"Agent": "Tricia Baksh", "Policy": "9004100006", "ClientNo": "900111", "Client": "Shivani Maharaj", "Premium": 500.0, "Status": 2, "StatusH": "Overdue", "DaysArrears": 2, "InsType": 2, "PlanCode": "LFSC 1", "Billing": "Direct Bill", "StatusDesc": "Premium Paying", "LapseDate": "21 Sep 2026", "Email": "shivani.maharaj@example.com", "Phone": "868-555-0111", "SumAssured": 0, "id": 6}, {"Agent": "John Boodhoo", "Policy": "9004100007", "ClientNo": "900112", "Client": "Roger Alleyne", "Premium": 285.25, "Status": 2, "StatusH": "Overdue", "DaysArrears": 28, "InsType": 2, "PlanCode": "CRIEV1", "Billing": "Direct Bill", "StatusDesc": "Premium Paying", "LapseDate": "26 Aug 2026", "Email": "roger.alleyne@example.com", "Phone": "868-555-0112", "SumAssured": 100000, "id": 7}, {"Agent": "Fawwaz Mohamed", "Policy": "9004100010", "ClientNo": "900113", "Client": "Nadia Sookram", "Premium": 331.75, "Status": 2, "StatusH": "Overdue", "DaysArrears": 42, "InsType": 2, "PlanCode": "CRIEV1", "Billing": "Direct Bill", "StatusDesc": "Premium Paying", "LapseDate": "12 Aug 2026", "Email": "nadia.sookram@example.com", "Phone": "868-555-0113", "SumAssured": 300000, "id": 8}, {"Agent": "Tricia Baksh", "Policy": "9004100008", "ClientNo": "900103", "Client": "Kavita Ramsingh", "Premium": 287.72, "Status": 2, "StatusH": "Overdue", "DaysArrears": 19, "InsType": 2, "PlanCode": "LIFEV1", "Billing": "Direct Bill", "StatusDesc": "Premium Paying", "LapseDate": "4 Sep 2026", "Email": "kavita.ramsingh@example.com", "Phone": "868-555-0103", "SumAssured": 100000, "id": 9}, {"Agent": "Tricia Baksh", "Policy": "9004100009", "ClientNo": "900103", "Client": "Kavita Ramsingh", "Premium": 301.15, "Status": 2, "StatusH": "Overdue", "DaysArrears": 19, "InsType": 2, "PlanCode": "LIFEV1", "Billing": "Direct Bill", "StatusDesc": "Premium Paying", "LapseDate": "4 Sep 2026", "Email": "kavita.ramsingh@example.com", "Phone": "868-555-0103", "SumAssured": 150000, "id": 10}, {"Agent": "Anthony Simmons", "Policy": "9004100011", "ClientNo": "900114", "Client": "Anush Ramkissoon", "Premium": 312.4, "Status": 2, "StatusH": "Overdue", "DaysArrears": 48, "InsType": 2, "PlanCode": "CR3RP1", "Billing": "Direct Bill", "StatusDesc": "Premium Paying", "LapseDate": "20 Jul 2026", "Email": "anush.ramkissoon@example.com", "Phone": "868-555-0114", "SumAssured": 350000, "id": 11}, {"Agent": "Naila Samuel", "Policy": "9004100012", "ClientNo": "900115", "Client": "Reshma Khan", "Premium": 426.18, "Status": 2, "StatusH": "Overdue", "DaysArrears": 61, "InsType": 2, "PlanCode": "LIFEV1", "Billing": "Direct Bill", "StatusDesc": "Premium Paying", "LapseDate": "6 Jul 2026", "Email": "reshma.khan@example.com", "Phone": "868-555-0115", "SumAssured": 500000, "id": 12}, {"Agent": "Gary Sookdeo", "Policy": "9004100013", "ClientNo": "900116", "Client": "Marlon Boodoosingh", "Premium": 289.75, "Status": 2, "StatusH": "Overdue", "DaysArrears": 67, "InsType": 2, "PlanCode": "CR2RP1", "Billing": "Direct Bill", "StatusDesc": "Premium Paying", "LapseDate": "30 Jun 2026", "Email": "marlon.boodoosingh@example.com", "Phone": "868-555-0116", "SumAssured": 250000, "id": 13}, {"Agent": "Malcolm Sooknanan", "Policy": "9004100014", "ClientNo": "900117", "Client": "Sherry-Ann Baptiste", "Premium": 265.9, "Status": 2, "StatusH": "Overdue", "DaysArrears": 52, "InsType": 2, "PlanCode": "LIFEV1", "Billing": "Direct Bill", "StatusDesc": "Premium Paying", "LapseDate": "16 Jul 2026", "Email": "sherry.ann.baptiste@example.com", "Phone": "868-555-0117", "SumAssured": 200000, "id": 14}, {"Agent": "Alyssa Joseph", "Policy": "9004100015", "ClientNo": "900118", "Client": "Curtis Phillip", "Premium": 512.0, "Status": 2, "StatusH": "Overdue", "DaysArrears": 70, "InsType": 2, "PlanCode": "ECT651", "Billing": "Direct Bill", "StatusDesc": "Premium Paying", "LapseDate": "27 Jun 2026", "Email": "curtis.phillip@example.com", "Phone": "868-555-0118", "SumAssured": 750000, "id": 15}, {"Agent": "Aidan Eugene", "Policy": "9004100016", "ClientNo": "900119", "Client": "Anisha Persad", "Premium": 240.1, "Status": 2, "StatusH": "Overdue", "DaysArrears": 45, "InsType": 2, "PlanCode": "CR2RP1", "Billing": "Direct Bill", "StatusDesc": "Premium Paying", "LapseDate": "23 Jul 2026", "Email": "anisha.persad@example.com", "Phone": "868-555-0119", "SumAssured": 200000, "id": 16}, {"Agent": "Tricia Baksh", "Policy": "9004100017", "ClientNo": "900120", "Client": "Saira Ramnarine", "Premium": 538.9, "Status": 2, "StatusH": "Overdue", "DaysArrears": 78, "InsType": 2, "PlanCode": "ECT651", "Billing": "Direct Bill", "StatusDesc": "Premium Paying", "LapseDate": "19 Jun 2026", "Email": "saira.ramnarine@example.com", "Phone": "868-555-0120", "SumAssured": 750000, "id": 17}, {"Agent": "Premchand Dookran", "Policy": "9004100018", "ClientNo": "900102", "Client": "Devon Marcelle", "Premium": 401.33, "Status": 2, "StatusH": "Overdue", "DaysArrears": 83, "InsType": 2, "PlanCode": "LIFEV1", "Billing": "Direct Bill", "StatusDesc": "Premium Paying", "LapseDate": "14 Jun 2026", "Email": "devon.marcelle@example.com", "Phone": "868-555-0102", "SumAssured": 400000, "id": 18}, {"Agent": "John Boodhoo", "Policy": "9004100019", "ClientNo": "900121", "Client": "Kavita Boodoo", "Premium": 355.6, "Status": 2, "StatusH": "Overdue", "DaysArrears": 88, "InsType": 2, "PlanCode": "CR3RP1", "Billing": "Direct Bill", "StatusDesc": "Premium Paying", "LapseDate": "9 Jun 2026", "Email": "kavita.boodoo@example.com", "Phone": "868-555-0121", "SumAssured": 300000, "id": 19}, {"Agent": "Dhalina Heeraman", "Policy": "9004100020", "ClientNo": "900122", "Client": "Ryan Seepersad", "Premium": 289.4, "Status": 2, "StatusH": "Overdue", "DaysArrears": 76, "InsType": 2, "PlanCode": "LIFEV1", "Billing": "Direct Bill", "StatusDesc": "Premium Paying", "LapseDate": "21 Jun 2026", "Email": "ryan.seepersad@example.com", "Phone": "868-555-0122", "SumAssured": 250000, "id": 20}, {"Agent": "Stephanie Rajkumar", "Policy": "9004100021", "ClientNo": "900123", "Client": "Michelle Ali", "Premium": 372.15, "Status": 2, "StatusH": "Overdue", "DaysArrears": 85, "InsType": 2, "PlanCode": "CRIEV1", "Billing": "Direct Bill", "StatusDesc": "Premium Paying", "LapseDate": "12 Jun 2026", "Email": "michelle.ali@example.com", "Phone": "868-555-0123", "SumAssured": 300000, "id": 21}, {"Agent": "Anthony Simmons", "Policy": "9004100022", "ClientNo": "900124", "Client": "Hannah Mohan", "Premium": 364.2, "Status": 1, "StatusH": "Lapse", "DaysArrears": 26, "InsType": 2, "PlanCode": "CR3RP1", "Billing": "Direct Bill", "StatusDesc": "Lapsed", "LapseDate": "31 May 2026", "Email": "hannah.mohan@example.com", "Phone": "868-555-0124", "SumAssured": 300000, "id": 22}, {"Agent": "Premchand Dookran", "Policy": "9004100023", "ClientNo": "900102", "Client": "Devon Marcelle", "Premium": 1642.9, "Status": 1, "StatusH": "Lapse", "DaysArrears": 1224, "InsType": 2, "PlanCode": "CR2RP1", "Billing": "Direct Bill", "StatusDesc": "Lapsed", "LapseDate": "18 May 2023", "Email": "devon.marcelle@example.com", "Phone": "868-555-0102", "SumAssured": 0, "id": 23}, {"Agent": "Malcolm Sooknanan", "Policy": "9004100024", "ClientNo": "900125", "Client": "Rajesh Bissoon", "Premium": 548.75, "Status": 1, "StatusH": "Lapse", "DaysArrears": 1339, "InsType": 2, "PlanCode": "CRIEV1", "Billing": "Direct Bill", "StatusDesc": "Lapsed", "LapseDate": "23 Jan 2023", "Email": "rajesh.bissoon@example.com", "Phone": "868-555-0125", "SumAssured": 0, "id": 24}, {"Agent": "Kerwyn Ramroach", "Policy": "9004100025", "ClientNo": "900126", "Client": "Abdul Rahim", "Premium": 578.02, "Status": 1, "StatusH": "Lapse", "DaysArrears": 4521, "InsType": 2, "PlanCode": "LIFEV1", "Billing": "Direct Bill", "StatusDesc": "Lapsed", "LapseDate": "8 May 2014", "Email": "abdul.rahim@example.com", "Phone": "868-555-0126", "SumAssured": 0, "id": 25}, {"Agent": "Narissa Mohammed", "Policy": "9004100026", "ClientNo": "900127", "Client": "Cheryl-Ann Joseph", "Premium": 230.83, "Status": 1, "StatusH": "Lapse", "DaysArrears": 2096, "InsType": 2, "PlanCode": "LB75 1", "Billing": "Direct Bill", "StatusDesc": "Lapsed", "LapseDate": "27 Dec 2020", "Email": "cheryl.ann.joseph@example.com", "Phone": "868-555-0127", "SumAssured": 0, "id": 26}, {"Agent": "Akaash Kalladeen", "Policy": "9004100027", "ClientNo": "900128", "Client": "Vijay Bharath", "Premium": 2998.75, "Status": 1, "StatusH": "Lapse", "DaysArrears": 2616, "InsType": 2, "PlanCode": "LB85 1", "Billing": "Direct Bill", "StatusDesc": "Lapsed", "LapseDate": "26 Jul 2019", "Email": "vijay.bharath@example.com", "Phone": "868-555-0128", "SumAssured": 0, "id": 27}, {"Agent": "Varun Seegolam", "Policy": "9004100028", "ClientNo": "900129", "Client": "Renuka Singh", "Premium": 310.0, "Status": 1, "StatusH": "Lapse", "DaysArrears": 410, "InsType": 2, "PlanCode": "LIFEV1", "Billing": "Direct Bill", "StatusDesc": "Lapsed", "LapseDate": "27 Jun 2025", "Email": "renuka.singh@example.com", "Phone": "868-555-0129", "SumAssured": 0, "id": 28}, {"Agent": "Malcolm Sooknanan", "Policy": "9004100029", "ClientNo": "900130", "Client": "Aadam Deen", "Premium": 3120.0, "Status": 3, "StatusH": "Pending", "DaysArrears": 55, "InsType": 2, "PlanCode": "IHLCP1", "Billing": "Direct Bill", "StatusDesc": "Underwriting incomplete. Missing Reqts", "LapseDate": "", "Email": "aadam.deen@example.com", "Phone": "868-555-0130", "SumAssured": 250000, "id": 29}, {"Agent": "Naila Samuel", "Policy": "9004100030", "ClientNo": "900131", "Client": "Adrian Toussaint", "Premium": 331.7, "Status": 3, "StatusH": "Pending", "DaysArrears": 22, "InsType": 2, "PlanCode": "CR2RP1", "Billing": "Direct Bill", "StatusDesc": "Underwriting incomplete", "LapseDate": "", "Email": "adrian.toussaint@example.com", "Phone": "868-555-0131", "SumAssured": 500000, "id": 30}, {"Agent": "Naila Samuel", "Policy": "9004100031", "ClientNo": "900131", "Client": "Adrian Toussaint", "Premium": 632.1, "Status": 3, "StatusH": "Pending", "DaysArrears": 22, "InsType": 2, "PlanCode": "FCT601", "Billing": "Direct Bill", "StatusDesc": "Underwriting incomplete", "LapseDate": "", "Email": "adrian.toussaint@example.com", "Phone": "868-555-0131", "SumAssured": 3000000, "id": 31}, {"Agent": "Felicia Rampersad", "Policy": "9004100032", "ClientNo": "900132", "Client": "Trisha Balkaran", "Premium": 284.5, "Status": 3, "StatusH": "Pending", "DaysArrears": 12, "InsType": 2, "PlanCode": "CR3RP1", "Billing": "Direct Bill", "StatusDesc": "Underwriting incomplete", "LapseDate": "", "Email": "trisha.balkaran@example.com", "Phone": "868-555-0132", "SumAssured": 250000, "id": 32}, {"Agent": "Premchand Dookran", "Policy": "9004100033", "ClientNo": "900102", "Client": "Devon Marcelle", "Premium": 565.7, "Status": 0, "StatusH": "", "DaysArrears": 1228, "InsType": 2, "PlanCode": "FCT651", "Billing": "Direct Bill", "StatusDesc": "Premium Paying", "LapseDate": "26 Sep 2026", "Email": "devon.marcelle@example.com", "Phone": "868-555-0102", "SumAssured": 2000000, "id": 33}, {"Agent": "Premchand Dookran", "Policy": "9004100034", "ClientNo": "900102", "Client": "Devon Marcelle", "Premium": 1320.3, "Status": 0, "StatusH": "", "DaysArrears": 1228, "InsType": 2, "PlanCode": "CR4RP1", "Billing": "Direct Bill", "StatusDesc": "Premium Paying", "LapseDate": "26 Sep 2026", "Email": "devon.marcelle@example.com", "Phone": "868-555-0102", "SumAssured": 1000000, "id": 34}, {"Agent": "Anthony Simmons", "Policy": "9004100035", "ClientNo": "900110", "Client": "Terrence Cudjoe", "Premium": 430.87, "Status": 0, "StatusH": "", "DaysArrears": 296, "InsType": 2, "PlanCode": "ECT651", "Billing": "Direct Bill", "StatusDesc": "Premium Paying", "LapseDate": "7 Oct 2026", "Email": "terrence.cudjoe@example.com", "Phone": "868-555-0110", "SumAssured": 500000, "id": 35}, {"Agent": "Varun Seegolam", "Policy": "9004100036", "ClientNo": "900129", "Client": "Renuka Singh", "Premium": 199.58, "Status": 0, "StatusH": "", "DaysArrears": 605, "InsType": 2, "PlanCode": "CR2RP1", "Billing": "Direct Bill", "StatusDesc": "Premium Paying", "LapseDate": "11 Oct 2026", "Email": "renuka.singh@example.com", "Phone": "868-555-0129", "SumAssured": 250000, "id": 36}];
-const SEED_RECORDS = {"9004100013": [{"kind": "survey", "author": "Marlon Boodoosingh (client)", "code": "", "role": "Client", "stage": "s45", "reason": "", "body": "", "surveyReason": "Financial difficulty", "surveyContact": "Wants to keep", "surveyPromise": "Lost the overtime contract in March, can resume from September salary", "factFind": "", "managerVerdict": "", "_dago": 34}, {"kind": "comment", "author": "Sasha Lalla-Jagassar", "code": "SL-000", "role": "Sales Support", "stage": "s45", "reason": "45-DAY SURVEY IN", "body": "Client returned the 45-day survey \u2014 hardship, still wants the cover. Routed to Gary for retention before it lapses.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "", "managerVerdict": "", "_dago": 33}, {"kind": "retention", "author": "Gary Sookdeo", "code": "GS-000", "role": "Unit Manager", "stage": "s75", "reason": "Payment plan agreed", "body": "Spoke with client. Proposing a reduced face amount plus a bankers-order restart from September salary. Fact find updated and attached.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "https://example.com/factfind/900116", "managerVerdict": "", "_dago": 21}, {"kind": "verdict", "author": "Ricky Rampersad", "code": "RR-000", "role": "Branch Manager", "stage": "s75", "reason": "", "body": "Approved. Reduce to $150k, restart bankers order 01 Sep, review persistency at 3 months. Good save.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "", "managerVerdict": "Approve retention plan", "_dago": 15}], "9004100011": [{"kind": "survey", "author": "Anush Ramkissoon (client)", "code": "", "role": "Client", "stage": "s45", "reason": "", "body": "", "surveyReason": "Forgot / overlooked", "surveyContact": "Confirmed will pay", "surveyPromise": "Paying online this week", "factFind": "", "managerVerdict": "", "_dago": 5}, {"kind": "comment", "author": "Sasha Lalla-Jagassar", "code": "SL-000", "role": "Sales Support", "stage": "s45", "reason": "45-DAY SURVEY IN", "body": "Simple oversight \u2014 client paying online this week. Low lapse risk, no retention form needed unless it slips past 60 days.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "", "managerVerdict": "", "_dago": 4}], "9004100017": [{"kind": "survey", "author": "Saira Ramnarine (client)", "code": "", "role": "Client", "stage": "s45", "reason": "", "body": "", "surveyReason": "Dissatisfied with policy", "surveyContact": "Considering cancelling", "surveyPromise": "Feels the return is low against what was sold", "factFind": "", "managerVerdict": "", "_dago": 22}, {"kind": "comment", "author": "Azariah Griffith", "code": "AG-000", "role": "Sales Support", "stage": "s45", "reason": "45-DAY SURVEY IN", "body": "Survey flags dissatisfaction \u2014 possible mis-set expectation at point of sale. Escalating to Tricia for a retention conversation.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "", "managerVerdict": "", "_dago": 20}, {"kind": "retention", "author": "Tricia Baksh", "code": "TB-000", "role": "Agent", "stage": "s75", "reason": "Client wants to cancel", "body": "Met client, walked through the actual benefit and cash value schedule. She will stay if we add a paid-up option review. Requesting BM guidance. Fact find attached.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "https://example.com/factfind/900120", "managerVerdict": "", "_dago": 8}], "9004100018": [{"kind": "retention", "author": "Premchand Dookran", "code": "PD-000", "role": "Agent", "stage": "s75", "reason": "Hardship \u2014 escalate", "body": "Client lost overtime income. Wants to drop the rider to lower the premium and keep the base. Need approval on the alteration. Fact find attached.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "https://example.com/factfind/900102", "managerVerdict": "", "_dago": 3}], "9004100019": [{"kind": "retention", "author": "John Boodhoo", "code": "JB-000", "role": "Agent", "stage": "s75", "reason": "Billing corrected", "body": "Bankers order bounced 3 cycles \u2014 client changed banks. New mandate form signed today, submitting to reinstate before day 90. Fact find attached.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "https://example.com/factfind/900121", "managerVerdict": "", "_dago": 2}], "9004100004": [{"kind": "comment", "author": "Gary Sookdeo", "code": "GS-000", "role": "Unit Manager", "stage": "od", "reason": "CHURN CLUSTER", "body": "Same client has 4 policies all overdue together \u2014 a single bankers-order mandate failed across all of them. Contacting client to update one mandate; that fixes all four.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "", "managerVerdict": "", "_dago": 3}], "9004100022": [{"kind": "comment", "author": "Ashley Rondon", "code": "AR-000", "role": "Sales Support", "stage": "s90", "reason": "WIN-BACK", "body": "Lapsed only 26 days ago \u2014 inside the easy reinstatement window. Flagged to Anthony for a quick win-back call before it ages.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "", "managerVerdict": "", "_dago": 4}], "9004100029": [{"kind": "comment", "author": "Kamla Dookran", "code": "KD-000", "role": "Sales Support", "stage": "pend", "reason": "UW REQUIREMENTS", "body": "Single-premium IHL ($3,120) stuck 55 days \u2014 missing requirements. This is real API sitting in suspense. Escalating to Malcolm and Akaash.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "", "managerVerdict": "", "_dago": 6}], "9004100030": [{"kind": "comment", "author": "Azariah Griffith", "code": "AG-000", "role": "Sales Support", "stage": "pend", "reason": "UW REQUIREMENTS", "body": "UW incomplete 22 days \u2014 medical and financial questionnaire outstanding on both policies. Chasing client.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "", "managerVerdict": "", "_dago": 2}, {"kind": "comment", "author": "Naila Samuel", "code": "NS-000", "role": "Agent", "stage": "pend", "reason": "UW REQUIREMENTS", "body": "Client booked medical for Friday. Financial questionnaire collected, submitting tomorrow.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "", "managerVerdict": "", "_dago": 1}]};
+const SEED_RECORDS = {"9004100013": [{"kind": "survey", "author": "Marlon Boodoosingh (client)", "code": "", "role": "Client", "stage": "s45", "reason": "", "body": "", "surveyReason": "Financial difficulty", "surveyContact": "Wants to keep", "surveyPromise": "Lost the overtime contract in March, can resume from September salary", "factFind": "", "managerVerdict": "", "_dago": 34}, {"kind": "comment", "author": "Sasha Lalla-Jagassar", "code": "SL-000", "role": "Sales Support", "stage": "s45", "reason": "45-DAY SURVEY IN", "body": "Client returned the 45-day survey \u2014 hardship, still wants the cover. Routed to Gary for retention before it lapses.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "", "managerVerdict": "", "_dago": 33}, {"kind": "retention", "author": "Gary Sookdeo", "code": "GS-000", "role": "Unit Manager", "stage": "s60", "reason": "Payment plan agreed", "body": "Spoke with client. Proposing a reduced face amount plus a bankers-order restart from September salary. Fact find updated and attached.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "https://example.com/factfind/900116", "managerVerdict": "", "_dago": 21}, {"kind": "verdict", "author": "Ricky Rampersad", "code": "RR-000", "role": "Branch Manager", "stage": "s60", "reason": "", "body": "Approved. Reduce to $150k, restart bankers order 01 Sep, review persistency at 3 months. Good save.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "", "managerVerdict": "Approve retention plan", "_dago": 15}], "9004100011": [{"kind": "survey", "author": "Anush Ramkissoon (client)", "code": "", "role": "Client", "stage": "s45", "reason": "", "body": "", "surveyReason": "Forgot / overlooked", "surveyContact": "Confirmed will pay", "surveyPromise": "Paying online this week", "factFind": "", "managerVerdict": "", "_dago": 5}, {"kind": "comment", "author": "Sasha Lalla-Jagassar", "code": "SL-000", "role": "Sales Support", "stage": "s45", "reason": "45-DAY SURVEY IN", "body": "Simple oversight \u2014 client paying online this week. Low lapse risk, no retention form needed unless it slips past 60 days.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "", "managerVerdict": "", "_dago": 4}], "9004100017": [{"kind": "survey", "author": "Saira Ramnarine (client)", "code": "", "role": "Client", "stage": "s45", "reason": "", "body": "", "surveyReason": "Dissatisfied with policy", "surveyContact": "Considering cancelling", "surveyPromise": "Feels the return is low against what was sold", "factFind": "", "managerVerdict": "", "_dago": 22}, {"kind": "comment", "author": "Azariah Griffith", "code": "AG-000", "role": "Sales Support", "stage": "s45", "reason": "45-DAY SURVEY IN", "body": "Survey flags dissatisfaction \u2014 possible mis-set expectation at point of sale. Escalating to Tricia for a retention conversation.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "", "managerVerdict": "", "_dago": 20}, {"kind": "retention", "author": "Tricia Baksh", "code": "TB-000", "role": "Agent", "stage": "s60", "reason": "Client wants to cancel", "body": "Met client, walked through the actual benefit and cash value schedule. She will stay if we add a paid-up option review. Requesting BM guidance. Fact find attached.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "https://example.com/factfind/900120", "managerVerdict": "", "_dago": 8}], "9004100018": [{"kind": "retention", "author": "Premchand Dookran", "code": "PD-000", "role": "Agent", "stage": "s60", "reason": "Hardship \u2014 escalate", "body": "Client lost overtime income. Wants to drop the rider to lower the premium and keep the base. Need approval on the alteration. Fact find attached.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "https://example.com/factfind/900102", "managerVerdict": "", "_dago": 3}], "9004100019": [{"kind": "retention", "author": "John Boodhoo", "code": "JB-000", "role": "Agent", "stage": "s60", "reason": "Billing corrected", "body": "Bankers order bounced 3 cycles \u2014 client changed banks. New mandate form signed today, submitting to reinstate before day 90. Fact find attached.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "https://example.com/factfind/900121", "managerVerdict": "", "_dago": 2}], "9004100004": [{"kind": "comment", "author": "Gary Sookdeo", "code": "GS-000", "role": "Unit Manager", "stage": "od", "reason": "CHURN CLUSTER", "body": "Same client has 4 policies all overdue together \u2014 a single bankers-order mandate failed across all of them. Contacting client to update one mandate; that fixes all four.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "", "managerVerdict": "", "_dago": 3}], "9004100022": [{"kind": "comment", "author": "Ashley Rondon", "code": "AR-000", "role": "Sales Support", "stage": "s90", "reason": "WIN-BACK", "body": "Lapsed only 26 days ago \u2014 inside the easy reinstatement window. Flagged to Anthony for a quick win-back call before it ages.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "", "managerVerdict": "", "_dago": 4}], "9004100029": [{"kind": "comment", "author": "Kamla Dookran", "code": "KD-000", "role": "Sales Support", "stage": "pend", "reason": "UW REQUIREMENTS", "body": "Single-premium IHL ($3,120) stuck 55 days \u2014 missing requirements. This is real API sitting in suspense. Escalating to Malcolm and Akaash.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "", "managerVerdict": "", "_dago": 6}], "9004100030": [{"kind": "comment", "author": "Azariah Griffith", "code": "AG-000", "role": "Sales Support", "stage": "pend", "reason": "UW REQUIREMENTS", "body": "UW incomplete 22 days \u2014 medical and financial questionnaire outstanding on both policies. Chasing client.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "", "managerVerdict": "", "_dago": 2}, {"kind": "comment", "author": "Naila Samuel", "code": "NS-000", "role": "Agent", "stage": "pend", "reason": "UW REQUIREMENTS", "body": "Client booked medical for Friday. Financial questionnaire collected, submitting tomorrow.", "surveyReason": "", "surveyContact": "", "surveyPromise": "", "factFind": "", "managerVerdict": "", "_dago": 1}]};
 /* Seed prior interaction history (survey/retention/verdict/comments) so timelines populate
    for testing. _dago = days ago. When a sheet is connected, sheetLoad() overrides these. */
 function seedDemoRecords(){
@@ -517,6 +546,24 @@ function seedDemoRecords(){
   });
 }
 
+/* ===== SERVICE CLOCKS =====
+   Retention opens at day 60, not 75. That turns a 15-day scramble into 30 days
+   of runway — and, more importantly, it puts the manager in the conversation
+   while there is still time for their decision to change the outcome.
+
+   Every number below is a point at which somebody is late. The engine names
+   them: the agent for not filing, the manager for not answering. Neither can
+   quietly wait the clock out while the other is blamed. */
+const SLA={
+  RETENTION_OPENS: 60,     // arrears day the 60-day window opens
+  LAPSE: 90,
+  AGENT_FILE_BY: 65,       // agent files the retention case by this arrears day
+  MANAGER_REPLY_DAYS: 5,   // manager answers within 5 days of the case landing
+  MANAGER_REPLY_BY: 65,    // ...and never later than this arrears day
+  CLIENT_CHASE_EVERY: 5,   // client chased every 5 days after day 60
+  MANAGER_CHASE_EVERY: 3   // manager chased every 3 days once they are late
+};
+
 /* ===== LIFECYCLE STAGING ===== */
 /* Stage from arrears days + status. Premium-paying clock:
    0–29 current · 30–44 overdue · 45–74 survey window · 75–89 retention window · 90+ lapse.
@@ -525,7 +572,7 @@ const STAGE_META = {
   cur :{key:'cur', lab:'Current',  desc:'premium paying', cls:'cur'},
   od  :{key:'od',  lab:'Overdue',  desc:'1–44 days', cls:'s45'},
   s45 :{key:'s45', lab:'45-Day',   desc:'survey due', cls:'s45'},
-  s75 :{key:'s75', lab:'75-Day',   desc:'retention',  cls:'s75'},
+  s60 :{key:'s60', lab:'60-Day',   desc:'retention',  cls:'s60'},
   s90 :{key:'s90', lab:'90-Day',   desc:'lapsing/lapsed', cls:'s90'},
   pend:{key:'pend',lab:'Pending',  desc:'new business', cls:'dup'},
   closed:{key:'closed',lab:'Closed', desc:'surrendered/expired', cls:'cur'}
@@ -541,13 +588,13 @@ function stageOf(c){
   if(c.Status===2 || c.StatusH==='Overdue'){
     const d=c.DaysArrears||0;
     if(d>=90) return 's90';
-    if(d>=75) return 's75';
+    if(d>=SLA.RETENTION_OPENS) return 's60';
     if(d>=45) return 's45';
     return 'od';
   }
   return 'cur';
 }
-function dayClass(stage){return (stage==='s90'||stage==='s75')?'d-crit':(stage==='s45'||stage==='od')?'d-warn':'d-ok';}
+function dayClass(stage){return (stage==='s90'||stage==='s60')?'d-crit':(stage==='s45'||stage==='od')?'d-warn':'d-ok';}
 
 /* ===== DUPLICATE / CHURN INTELLIGENCE (per Client Number) =====
    Same client number selling multiple policies = potential duplicate/replacement.
@@ -583,8 +630,48 @@ function policyState(policy){
     survey:   r.filter(x=>x.kind==='survey').slice(-1)[0]||null,
     retention:r.filter(x=>x.kind==='retention').slice(-1)[0]||null,
     verdict:  r.filter(x=>x.kind==='verdict').slice(-1)[0]||null,
+    response: r.filter(x=>x.kind==='response').slice(-1)[0]||null,   // client's one-click reply
     comments: r.filter(x=>x.kind==='comment')
   };
+}
+
+/* ===== WHO IS HOLDING THIS UP =====
+   Every open 60-day case has exactly one owner at any moment. Naming it is the
+   whole point: without this, a lapsed policy is "the agent's fault" by default
+   even when the retention case sat unanswered on a manager's desk for a fortnight. */
+function blocker(c){
+  // Only inside the 60-day window. A policy that lapsed in 2014 has nobody
+  // "late" on it — that is win-back work, not a retention SLA, and counting it
+  // would bury the handful of live cases under thousands of historic ones.
+  if(c.stage!=='s60') return null;
+  const st=policyState(c.Policy), d=Number(c.DaysArrears)||0;
+  if(!st.retention){
+    return {who:'agent', name:c.Agent, late:d>=SLA.AGENT_FILE_BY,
+      what:'No retention case filed', since:d-SLA.RETENTION_OPENS};
+  }
+  if(!st.verdict){
+    const daysWaiting=Math.floor((Date.now()-st.retention.ts)/86400000);
+    return {who:'manager', name:managerOf(c.Agent),
+      late:(daysWaiting>=SLA.MANAGER_REPLY_DAYS)||(d>=SLA.MANAGER_REPLY_BY),
+      what:'Retention case awaiting response', since:daysWaiting};
+  }
+  return {who:'done', name:'', late:false, what:'Manager has responded', since:0};
+}
+/* Chase schedule. Returns what is due today, or null. */
+function chaseDue(c){
+  const st=policyState(c.Policy), d=Number(c.DaysArrears)||0;
+  if(c.stage!=='s60') return null;
+  const out=[];
+  if(!st.response && d>=SLA.RETENTION_OPENS){
+    const since=d-SLA.RETENTION_OPENS;
+    if(since>0 && since%SLA.CLIENT_CHASE_EVERY===0) out.push({kind:'client',day:d});
+  }
+  if(st.retention && !st.verdict){
+    const waiting=Math.floor((Date.now()-st.retention.ts)/86400000);
+    if(waiting>=SLA.MANAGER_REPLY_DAYS && (waiting-SLA.MANAGER_REPLY_DAYS)%SLA.MANAGER_CHASE_EVERY===0)
+      out.push({kind:'manager',day:d,waiting});
+  }
+  return out.length?out:null;
 }
 
 /* ===== build case objects ===== */
@@ -636,12 +723,15 @@ function updatePolicyBadge(){
 function retainProbability(c){
   const st=policyState(c.Policy);
   let p=60;
-  if(c.stage==='s90') p-=35; else if(c.stage==='s75') p-=20; else if(c.stage==='s45') p-=8;
+  if(c.stage==='s90') p-=35; else if(c.stage==='s60') p-=20; else if(c.stage==='s45') p-=8;
   if(c.cf.churnRisk) p-=12;
   if(c.cf.duplicateRisk) p-=6;
   if(c.Billing==='Salary Deduction'||c.Billing==='Bankers Order') p+=8; // sticky billing
   if(st.survey){ p+= (st.survey.surveyContact==='Confirmed will pay'?22: st.survey.surveyContact==='Wants to keep'?12: st.survey.surveyContact==='Financial difficulty'?-6: -2); }
   if(st.retention) p+=6;
+  // a client who chose a path is a client still in the conversation
+  if(st.response) p+= (st.response.optKey==='cancel'?-25: st.response.optKey==='pay'?24: 14);
+  const bl=blocker(c); if(bl&&bl.late) p-=8;   // a late case decays
   if(st.verdict && st.verdict.managerVerdict==='Approve retention plan') p+=10;
   return Math.max(3,Math.min(97,Math.round(p)));
 }
@@ -705,6 +795,29 @@ const SURVEY_CONTACT=['Confirmed will pay','Wants to keep','Needs payment plan',
 const RET_REASONS=['Client confirmed payment','Payment plan agreed','Billing corrected','Reinstatement in progress','Client wants to cancel','Replacement disclosed','Unable to contact','Hardship — escalate'];
 const VERDICTS=['Approve retention plan','Approve payment plan','Escalate to reinstatement','Allow lapse — documented','Investigate replacement','Reassign / orphan review'];
 
+/* ===== WHAT THE CLIENT CAN CHOOSE =====
+   The 60-day email carries these as one-click links. A client who picks one has
+   told us how to save the policy without having to phone anybody — and the
+   chase sequence stops the moment they do. */
+const CLIENT_CHOICES=[
+  {k:'pay',    lab:"I'll pay the full amount",
+   next:"We'll watch for it and confirm the moment it reaches us."},
+  {k:'plan',   lab:'I need a payment plan',
+   next:'Your agent and their manager will call you to agree one that works.'},
+  {k:'reduce', lab:"Reduce my premium — I can't manage this amount",
+   next:"We'll look at lowering the premium or adjusting the benefit, and come back to you with options."},
+  {k:'bank',   lab:'My bank or card details changed',
+   next:"We'll send a new mandate form to sign — that usually fixes it for good."},
+  {k:'call',   lab:'Please call me to discuss',
+   next:"Your agent will call you. If they can't reach you, their manager will."},
+  {k:'cancel', lab:'I want to cancel the policy',
+   next:'Before anything is cancelled a manager will speak with you, so you know exactly what you would be giving up.'}
+];
+const CHOICE_BY_KEY={}; CLIENT_CHOICES.forEach(o=>CHOICE_BY_KEY[o.k]=o);
+function responseLink(c,key){
+  return `${location.origin}${location.pathname}#respond=${c.Policy}&opt=${key}`;
+}
+
 /* ===== CLIENT OUTREACH TEMPLATES =====
    The client-facing message for each point on the lapse clock. Kept in step with
    apps-script/PremiumDueTemplates.gs — that file sends them on the daily run,
@@ -718,8 +831,10 @@ const OUT_TPL={
     msg:c=>`Hi ${first(c)}, it's the Ricky Rampersad Branch. Your premium on policy ${c.Policy} has been outstanding about 6 weeks, and cover would end in roughly ${toLapse(c)} days if nothing changes. Before that happens I'd like to understand what's going on — 3 quick questions, 30 seconds:${surveyTail(c)} Or just reply here and we can sort it out.`},
   s45r:{lab:'Survey reminder',subject:c=>`Still here when you are — policy ${c.Policy}`,
     msg:c=>`Hi ${first(c)}, just following up on policy ${c.Policy}. Cover ends in about ${toLapse(c)} days. Even if the answer is you want to stop it, tell me — I'd rather sort it properly than let it lapse.${surveyTail(c)}`},
-  s75:{lab:'75-day retention',subject:c=>`Action needed — cover on policy ${c.Policy} ends in ${toLapse(c)} days`,
-    msg:c=>`Hi ${first(c)} — Ricky Rampersad Branch. Policy ${c.Policy} is ${c.DaysArrears||0} days behind and cover ends in about ${toLapse(c)} days. After that a claim wouldn't be paid, and restarting means new underwriting. I'd like to call you today — we can look at a lower premium, a different payment date, or a catch-up plan. When suits you?`},
+  s60:{lab:'60-day retention',subject:c=>`Following up on our last message — policy ${c.Policy}`,
+    msg:c=>`Hi ${first(c)} — Ricky Rampersad Branch. We wrote about policy ${c.Policy} around day 45 and haven't heard back. It's now ${c.DaysArrears||0} days behind, so cover ends in about ${toLapse(c)} days. Your agent, their manager and the branch manager are all copied on this — we'd rather fix it than lose it. Tell me which of these fits and we'll take it from there: pay in full, a payment plan, a lower premium, a bank detail change, or a call back.`},
+  chase:{lab:'Chase (no reply)',subject:c=>`Still no word — policy ${c.Policy}, ${toLapse(c)} days left`,
+    msg:c=>`Hi ${first(c)}, following up again on policy ${c.Policy}. It's ${c.DaysArrears||0} days behind and cover ends in about ${toLapse(c)} days. I haven't been able to reach you and I don't want this to lapse by silence. Even one line back — including "I want to stop it" — lets me act. ${managerOf(c.Agent)} is copied and will reach out as well.`},
   s88:{lab:'Final notice',subject:c=>`Final notice — policy ${c.Policy} lapses in ${toLapse(c)} days`,
     msg:c=>`Hi ${first(c)} — final notice on policy ${c.Policy}. It lapses in ${toLapse(c)} day${toLapse(c)===1?'':'s'} and after that a claim is not payable. If there is any way to keep it — smaller premium, payment plan, different date — call me today on ${BRANCH_PHONE}.`},
   winback:{lab:'Win-back',subject:c=>`Policy ${c.Policy} can still be restored`,
@@ -736,7 +851,7 @@ function surveyTail(c){const l=surveyLink(c);return l?(' '+l):'';}
 function defaultTpl(c){
   if(c.stage==='pend')return 'pend';
   if(c.stage==='s90')return c.lapsed?'winback':'s88';
-  if(c.stage==='s75')return 's75';
+  if(c.stage==='s60')return policyState(c.Policy).response?'s60':((c.DaysArrears||0)>=SLA.RETENTION_OPENS+SLA.CLIENT_CHASE_EVERY?'chase':'s60');
   if(c.stage==='s45')return (c.DaysArrears||0)>=52?'s45r':'s45';
   if(c.stage==='od')return 'od';
   return 'thanks';
@@ -744,6 +859,13 @@ function defaultTpl(c){
 function waNumber(c){const d=String(c.Phone||'').replace(/[^0-9]/g,'');if(!d)return '';return d.length===7?('1868'+d):d.length===10?('1'+d):d.length===11?d:d;}
 function hasEmail(c){const e=String(c.Email||'').trim();return (!e||/not available/i.test(e))?'':e;}
 
+/* The six one-click links that go into the 60-day email. */
+function choiceLinksHtml(c){
+  if(c.stage!=='s60'&&c.stage!=='s45')return '';
+  return `<div class="note" style="margin-top:12px"><b>One-click options for the client.</b> These go in the 60-day email — clicking one records the answer and stops the chase.</div>
+    <div class="choice-list">${CLIENT_CHOICES.map(o=>
+      `<div class="choice-row"><span class="cl">${esc(o.lab)}</span><button class="btn-sm btn-save" data-copychoice="${esc(o.k)}" type="button">Copy link</button></div>`).join('')}</div>`;
+}
 function outreachPanel(c){
   const keys=Object.keys(OUT_TPL), def=defaultTpl(c);
   const picks=keys.map(k=>`<button type="button" data-otpl="${k}" class="${k===def?'on':''}">${esc(OUT_TPL[k].lab)}</button>`).join('');
@@ -760,7 +882,7 @@ function outreachPanel(c){
       <button class="out-btn out-wa" data-osend="wa" type="button">WhatsApp</button>
       <button class="out-btn out-em" data-osend="em" type="button">Email</button>
       <button class="out-btn out-cp" data-osend="cp" type="button">Copy text</button>
-    </div>${warn}`;
+    </div>${warn}${choiceLinksHtml(c)}`;
 }
 
 /* ===== CASE CARD ===== */
@@ -772,7 +894,7 @@ function stagePill(c){
 function caseCard(c){
   const st=policyState(c.Policy);
   const cf=c.cf;
-  const flag=c.stage==='s90'?'stg-s90':c.stage==='s75'?'stg-s75':c.stage==='s45'?'stg-s45':(cf.duplicateRisk||cf.churnRisk)?'stg-dup':'';
+  const flag=c.stage==='s90'?'stg-s90':c.stage==='s60'?'stg-s60':c.stage==='s45'?'stg-s45':(cf.duplicateRisk||cf.churnRisk)?'stg-dup':'';
   const prob=retainProbability(c);
   const probCls=prob>=60?'risk-lo':prob>=35?'risk-md':'risk-hi';
   const dupPill=cf.duplicateRisk?`<span class="pill dup">⚠ ${cf.samePlan.length+1}× ${esc(c.PlanCode)} — duplicate?</span>`:'';
@@ -820,20 +942,58 @@ function actionPanel(c, st){
   tabs.push(`<button class="stage-tab on" data-stab="comment">Comment</button>`);
   tabs.push(`<button class="stage-tab" data-stab="outreach">Reach client</button>`);
   // 45-day survey: available from overdue onward
-  if(['od','s45','s75','s90'].includes(c.stage)) tabs.push(`<button class="stage-tab" data-stab="survey">45-Day survey${st.survey?' ✓':''}</button>`);
+  if(['od','s45','s60','s90'].includes(c.stage)) tabs.push(`<button class="stage-tab" data-stab="survey">45-Day survey${st.survey?' ✓':''}</button>`);
   // 75-day retention: agent fills, available 75+ (and pending escalations)
-  if(['s75','s90'].includes(c.stage)) tabs.push(`<button class="stage-tab" data-stab="retention">75-Day retention${st.retention?' ✓':''}</button>`);
+  if(['s60','s90'].includes(c.stage)) tabs.push(`<button class="stage-tab" data-stab="retention">60-Day retention${st.retention?' ✓':''}</button>`);
   // manager verdict: only managers, and only once a retention form exists
   const isMgr=SESS&&['bm','abm','unit'].includes(SESS.role);
   if(isMgr && st.retention) tabs.push(`<button class="stage-tab" data-stab="verdict">Manager response${st.verdict?' ✓':''}</button>`);
 
   return `<div class="stage-tabs">${tabs.join('')}</div>
+    ${ladderHtml(c)}
     <div data-stagepane="comment">${commentForm(c)}</div>
     <div data-stagepane="outreach" class="hidden">${outreachPanel(c)}</div>
     <div data-stagepane="survey" class="hidden">${surveyForm(c, st)}</div>
     <div data-stagepane="retention" class="hidden">${retentionForm(c, st)}</div>
     <div data-stagepane="verdict" class="hidden">${verdictForm(c, st)}</div>
     <div class="thread" data-thread>${threadHtml(c.Policy)}</div>`;
+}
+
+/* The escalation ladder — where this case actually stands and who owes the next
+   move. Shown on every 60-day and lapsed case so nobody has to reconstruct it
+   from the thread. */
+function ladderHtml(c){
+  if(c.stage!=='s60'&&c.stage!=='s90') return '';
+  const st=policyState(c.Policy), d=Number(c.DaysArrears)||0, bl=blocker(c);
+  const mgr=managerOf(c.Agent);
+  const rung=(done,late,next,label,when)=>
+    `<div class="rung ${done?'on':late?'late':next?'next':'off'}"><span class="dot"></span>
+      <span class="lb">${label}</span><span class="tm">${when||''}</span></div>`;
+  const rows=[
+    rung(!!st.survey,false,!st.survey&&d>=45,
+      st.survey?`<b>Client answered the 45-day survey</b> — ${esc(st.survey.surveyReason||'')}`:'45-day survey — no answer from the client',
+      st.survey?timeAgo(st.survey.ts):(d>=45?'overdue':'')),
+    rung(!!st.response,false,!st.response&&d>=SLA.RETENTION_OPENS,
+      st.response?`<b>Client chose:</b> ${esc(st.response.body||'')}`
+                 :`60-day email — client has not picked an option${d>SLA.RETENTION_OPENS?`, chased every ${SLA.CLIENT_CHASE_EVERY} days`:''}`,
+      st.response?timeAgo(st.response.ts):''),
+    rung(!!st.retention, !st.retention&&d>=SLA.AGENT_FILE_BY, !st.retention,
+      st.retention?`<b>${esc(c.Agent)}</b> filed the retention case — ${esc(st.retention.reason||'')}`
+                  :`<b>${esc(c.Agent)}</b> to file the retention case by day ${SLA.AGENT_FILE_BY}`,
+      st.retention?timeAgo(st.retention.ts):(d>=SLA.AGENT_FILE_BY?`${d-SLA.AGENT_FILE_BY}d late`:`day ${d}`)),
+    rung(!!st.verdict,
+      !!st.retention&&!st.verdict&&bl&&bl.who==='manager'&&bl.late,
+      !!st.retention&&!st.verdict,
+      st.verdict?`<b>${esc(st.verdict.author)}</b> responded — ${esc(st.verdict.managerVerdict||'')}`
+                :`<b>${esc(mgr)}</b> to respond within ${SLA.MANAGER_REPLY_DAYS} days of filing`,
+      st.verdict?timeAgo(st.verdict.ts):(bl&&bl.who==='manager'?`${bl.since}d waiting`:'not yet filed'))
+  ];
+  const w=bl?bl.who:'done';
+  const wl=w==='agent'?`Waiting on ${c.Agent}`:w==='manager'?`Waiting on ${mgr}`:'Loop closed';
+  return `<div class="ladder">
+    <div class="ladder-h"><span class="t">Escalation · day ${d} of ${SLA.LAPSE}</span>
+      <span class="who w-${w}">${esc(wl)}</span></div>
+    <div class="rungs">${rows.join('')}</div></div>`;
 }
 
 function commentForm(c){
@@ -858,8 +1018,8 @@ function surveyForm(c, st){
 function retentionForm(c, st){
   const done=st.retention;
   const reasons=RET_REASONS.map(o=>`<button class="reason-opt ${done&&done.reason===o?'on':''}" data-retreason="${esc(o)}" type="button">${esc(o)}</button>`).join('');
-  return `<h4>🛟 75-Day retention case</h4>
-    <div class="note">Policy lapses at 90 days. Document the situation, attach the fact find, and submit to your manager for a response.</div>
+  return `<h4>🛟 60-Day retention case</h4>
+    <div class="note">Policy lapses at 90 days — you have ${toLapse(c)} left. File by day ${SLA.AGENT_FILE_BY} so ${esc(managerOf(c.Agent))} has time to respond and their decision can still change the outcome.</div>
     <div class="flabel">Retention reason</div>
     <div class="reason-grid">${reasons}</div>
     <div class="flabel">Detail — what's happening & your recommended save</div>
@@ -901,7 +1061,7 @@ function threadHtml(policy){
 }
 function recHtml(t){
   const kindMap={comment:'k-comment',survey:'k-survey',retention:'k-retention',verdict:'k-verdict'};
-  const kindLab={comment:'COMMENT',survey:'45-DAY SURVEY',retention:'75-DAY RETENTION',verdict:'MANAGER'};
+  const kindLab={comment:'COMMENT',survey:'45-DAY SURVEY',retention:'60-DAY RETENTION',verdict:'MANAGER',response:'CLIENT REPLY'};
   let body='';
   if(t.kind==='survey'){
     body=`<span class="row"><b>Reason:</b> ${esc(t.surveyReason||'—')}</span><span class="row"><b>Outcome:</b> ${esc(t.surveyContact||'—')}</span>${t.surveyPromise?`<span class="row"><b>Promise:</b> ${esc(t.surveyPromise)}</span>`:''}${t.body?`<span class="row">${esc(t.body)}</span>`:''}`;
@@ -984,6 +1144,11 @@ function wireOutreach(card,policy){
     pick.querySelectorAll('[data-otpl]').forEach(x=>x.classList.remove('on'));
     b.classList.add('on');key=b.dataset.otpl;paint();
   }));
+  card.querySelectorAll('[data-copychoice]').forEach(b=>b.addEventListener('click',()=>{
+    const link=responseLink(c,b.dataset.copychoice);
+    if(navigator.clipboard)navigator.clipboard.writeText(link);
+    toast('Option link copied');
+  }));
   card.querySelectorAll('[data-osend]').forEach(b=>b.addEventListener('click',()=>{
     const how=b.dataset.osend,text=msg.value.trim();
     if(!text){toast('Nothing to send');return;}
@@ -1025,18 +1190,27 @@ function wireOneCard(card){ // re-wire just this card's panel after refresh
 function rickyInsights(cases){
   const out=[];
   const s90=cases.filter(c=>c.stage==='s90');
-  const s75=cases.filter(c=>c.stage==='s75');
+  const s60=cases.filter(c=>c.stage==='s60');
   const s45=cases.filter(c=>c.stage==='s45');
   const dup=cases.filter(c=>c.cf.duplicateRisk);
   const churn=cases.filter(c=>c.cf.churnRisk);
   const awaitMgr=cases.filter(c=>{const st=policyState(c.Policy);return st.retention&&!st.verdict;});
+  // who is actually holding things up — the number that ends the blame argument
+  const blocked=cases.map(c=>({c,b:blocker(c)})).filter(x=>x.b&&x.b.late);
+  const byAgent=blocked.filter(x=>x.b.who==='agent');
+  const byMgr=blocked.filter(x=>x.b.who==='manager');
+  const noReply=s60.filter(c=>!policyState(c.Policy).response);
   const noSurvey=s45.filter(c=>!policyState(c.Policy).survey);
+  void s60;
   if(s90.length)out.push({mk:'crit',t:`<b>${s90.length} ${s90.length===1?'policy is':'policies are'} at the 90-day lapse line.</b> Reinstatement only from here — pursue today or document the loss.`});
   if(noSurvey.length)out.push({mk:'warn',t:`<b>${noSurvey.length} of ${s45.length} cases in the 45-day window have no client survey yet.</b> Send the survey — you can't save what you don't understand.`});
-  if(awaitMgr.length)out.push({mk:'go',t:`<b>${awaitMgr.length} retention ${awaitMgr.length===1?'case is':'cases are'} waiting on a manager response.</b> Each day of silence is a day closer to lapse.`});
+  if(byMgr.length)out.push({mk:'crit',t:`<b>${byMgr.length} ${byMgr.length===1?'case is':'cases are'} late on the manager's side.</b> The agent did their part — ${esc([...new Set(byMgr.map(x=>x.b.name))].slice(0,3).join(', '))} ${byMgr.length===1?'owes':'owe'} a response. Longest waiting: ${Math.max(...byMgr.map(x=>x.b.since))} days.`});
+  if(byAgent.length)out.push({mk:'warn',t:`<b>${byAgent.length} ${byAgent.length===1?'case has':'cases have'} passed day ${SLA.AGENT_FILE_BY} with no retention form.</b> ${esc([...new Set(byAgent.map(x=>x.c.Agent))].slice(0,3).join(', '))} — the manager cannot decide on a case that was never filed.`});
+  if(noReply.length)out.push({mk:'go',t:`<b>${noReply.length} client${noReply.length===1?'':'s'} in the 60-day window ${noReply.length===1?'has':'have'} not picked an option.</b> They are being chased every ${SLA.CLIENT_CHASE_EVERY} days automatically — a call from a manager beats another email.`});
+  if(awaitMgr.length&&!byMgr.length)out.push({mk:'go',t:`<b>${awaitMgr.length} retention ${awaitMgr.length===1?'case is':'cases are'} with a manager</b>, all still inside the ${SLA.MANAGER_REPLY_DAYS}-day response window.`});
   if(dup.length)out.push({mk:'warn',t:`<b>${dup.length} possible duplicate ${dup.length===1?'policy':'policies'}</b> — same client, same plan code. Confirm none is a replacement written over in-force cover.`});
   if(churn.length)out.push({mk:'crit',t:`<b>${churn.length} ${churn.length===1?'client has':'clients have'} prior lapses.</b> Repeat churn — protect the active policy before it follows the pattern.`});
-  if(!out.length)out.push({mk:'good',t:'This view is current — nothing in the 45/75/90 windows and no duplicate or churn flags. Strong persistency.'});
+  if(!out.length)out.push({mk:'good',t:`This view is current — nothing in the 45/60/90 windows, no late responses on either side, and no duplicate or churn flags. Strong persistency.`});
   return out;
 }
 function rickyBanner(cases,headline){
@@ -1048,13 +1222,16 @@ function rickyBanner(cases,headline){
 function statStrip(cases){
   const arrears=cases.filter(c=>c.stage!=='cur'&&c.stage!=='pend').reduce((s,c)=>s+(Number(c.Premium)||0),0);
   const s90=cases.filter(c=>c.stage==='s90').length;
-  const s75=cases.filter(c=>c.stage==='s75').length;
+  const s60=cases.filter(c=>c.stage==='s60').length;
   const dup=cases.filter(c=>c.cf.duplicateRisk).length;
+  const lateList=cases.map(c=>blocker(c)).filter(b=>b&&b.late);
+  const late=lateList.length, lateMgr=lateList.filter(b=>b.who==='manager').length;
   return `<div class="stats">
     <div class="stat t-teal"><div class="bar"></div><div class="lab">Tracked policies</div><div class="val">${cases.length}</div><div class="delta">${cases.filter(c=>c.stage!=='cur').length} need attention</div></div>
-    <div class="stat t-warn"><div class="bar"></div><div class="lab">75-day retention</div><div class="val">${s75}</div><div class="delta">fact find + manager due</div></div>
+    <div class="stat t-warn"><div class="bar"></div><div class="lab">60-day retention</div><div class="val">${s60}</div><div class="delta">fact find + manager due</div></div>
     <div class="stat t-crit"><div class="bar"></div><div class="lab">90-day lapse line</div><div class="val">${s90}</div><div class="delta">reinstatement window</div></div>
     <div class="stat t-gold"><div class="bar"></div><div class="lab">Duplicate flags</div><div class="val">${dup}</div><div class="delta">same client + plan</div></div>
+    <div class="stat t-crit"><div class="bar"></div><div class="lab">Late responses</div><div class="val">${late}</div><div class="delta">${lateMgr} manager · ${late-lateMgr} agent</div></div>
     <div class="stat t-good"><div class="bar"></div><div class="lab">Premium in arrears</div><div class="val" style="font-size:22px">${money(arrears)||'$0'}</div><div class="delta">at risk across view</div></div>
   </div>`;
 }
@@ -1065,7 +1242,7 @@ function ribbon(cases){
   const cells=[
     ['od','Overdue',count('od'),'1–44 days'],
     ['s45','45-Day',count('s45'),'survey window'],
-    ['s75','75-Day',count('s75'),'retention'],
+    ['s60','60-Day',count('s60'),'retention'],
     ['s90','90 / Lapsed',count('s90'),'win-back'],
     ['pend','Pending',count('pend'),'new business']
   ];
@@ -1078,7 +1255,7 @@ let FILTER={q:'',chip:'all',sort:'days'};
 function filterBar(){return `<div class="toolbar">
   <div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="fq" placeholder="Search client, policy, client #, agent or plan…" value="${esc(FILTER.q)}"></div>
   <select class="fselect" id="fsort"><option value="days">Sort: Closest to lapse</option><option value="prem">Sort: Highest premium</option><option value="prob">Sort: Lowest retention odds</option><option value="name">Sort: Client A–Z</option></select>
-</div><div class="chips" id="chips">${chip('all','All')}${chip('s45','45-day survey')}${chip('s75','75-day retention')}${chip('s90','90-day / lapsed')}${chip('pend','Pending')}${chip('await','Awaiting manager')}${chip('dup','Duplicate/churn')}</div>`;}
+</div><div class="chips" id="chips">${chip('all','All')}${chip('s45','45-day survey')}${chip('s60','60-day retention')}${chip('s90','90-day / lapsed')}${chip('pend','Pending')}${chip('await','Awaiting manager')}${chip('late','Late — either side')}${chip('dup','Duplicate/churn')}</div>`;}
 function chip(k,label){return `<button class="chip ${FILTER.chip===k?'on':''}" data-chip="${k}">${label} <span class="ct" data-ct="${k}"></span></button>`;}
 function applyFilter(cases){
   let r=cases.slice();
@@ -1086,7 +1263,8 @@ function applyFilter(cases){
   else if(RIB.on==='dup')r=r.filter(c=>c.cf.duplicateRisk||c.cf.churnRisk);
   else if(RIB.on)r=r.filter(c=>c.stage===RIB.on);
   if(FILTER.chip==='s45')r=r.filter(c=>c.stage==='s45');
-  if(FILTER.chip==='s75')r=r.filter(c=>c.stage==='s75');
+  if(FILTER.chip==='s60')r=r.filter(c=>c.stage==='s60');
+  if(FILTER.chip==='late')r=r.filter(c=>{const b=blocker(c);return b&&b.late;});
   if(FILTER.chip==='s90')r=r.filter(c=>c.stage==='s90');
   if(FILTER.chip==='pend')r=r.filter(c=>c.stage==='pend');
   // The default view hides the historic lapsed book — but only when nobody is
@@ -1103,7 +1281,7 @@ function applyFilter(cases){
   if(FILTER.sort==='name')r.sort((a,b)=>a.Client.localeCompare(b.Client));
   return r;
 }
-function rank(c){const o={cur:0,od:1,s45:2,s75:3,s90:4,pend:1};return (o[c.stage]||0)*100000 + (c.DaysArrears||0);}
+function rank(c){const o={cur:0,od:1,s45:2,s60:3,s90:4,pend:1};return (o[c.stage]||0)*100000 + (c.DaysArrears||0);}
 function wireFilter(cases,rerender){
   const fq=$('#fq');if(fq){fq.addEventListener('input',e=>{FILTER.q=e.target.value;rerender();const n=$('#fq');if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length);}});}
   const fs=$('#fsort');if(fs){fs.value=FILTER.sort;fs.addEventListener('change',e=>{FILTER.sort=e.target.value;rerender();});}
@@ -1111,7 +1289,8 @@ function wireFilter(cases,rerender){
   document.querySelectorAll('#ribbon .rib').forEach(r=>r.addEventListener('click',()=>{RIB.on=RIB.on===r.dataset.rib?'':r.dataset.rib;rerender();}));
   document.querySelectorAll('[data-ct]').forEach(el=>{const k=el.dataset.ct;let n;
     if(k==='all')n=cases.length;else if(k==='s45')n=cases.filter(c=>c.stage==='s45').length;
-    else if(k==='s75')n=cases.filter(c=>c.stage==='s75').length;else if(k==='s90')n=cases.filter(c=>c.stage==='s90').length;
+    else if(k==='s60')n=cases.filter(c=>c.stage==='s60').length;else if(k==='s90')n=cases.filter(c=>c.stage==='s90').length;
+    else if(k==='late')n=cases.filter(c=>{const b=blocker(c);return b&&b.late;}).length;
     else if(k==='pend')n=cases.filter(c=>c.stage==='pend').length;
     else if(k==='await')n=cases.filter(c=>{const st=policyState(c.Policy);return st.retention&&!st.verdict;}).length;
     else if(k==='dup')n=cases.filter(c=>c.cf.duplicateRisk||c.cf.churnRisk).length;el.textContent=n;});
@@ -1121,13 +1300,13 @@ function wireFilter(cases,rerender){
 function nextStep(cases){
   const await_=cases.filter(c=>{const st=policyState(c.Policy);return st.retention&&!st.verdict;});
   const s90=cases.filter(c=>c.stage==='s90');
-  const s75noForm=cases.filter(c=>c.stage==='s75'&&!policyState(c.Policy).retention);
+  const s60noForm=cases.filter(c=>c.stage==='s60'&&!policyState(c.Policy).retention);
   const s45noSurvey=cases.filter(c=>c.stage==='s45'&&!policyState(c.Policy).survey);
   let pick,verb;
   const isMgr=SESS&&['bm','abm','unit'].includes(SESS.role);
   if(isMgr&&await_.length){pick=await_[0];verb='A retention case is waiting on your response — respond now to keep it alive.';}
   else if(s90.length){pick=s90.sort((a,b)=>(b.DaysArrears||0)-(a.DaysArrears||0))[0];verb='At the lapse line — act today or document the loss.';}
-  else if(s75noForm.length){pick=s75noForm[0];verb='75 days in arrears and no retention case yet — complete the form and attach the fact find.';}
+  else if(s60noForm.length){pick=s60noForm[0];verb=`${s60noForm[0].DaysArrears||0} days in arrears and no retention case yet — file it so your manager can still act.`;}
   else if(s45noSurvey.length){pick=s45noSurvey[0];verb='45 days in arrears — send the client survey to understand the reason.';}
   else return '';
   return `<div class="nextstep"><div class="ic">→</div><div class="body"><div class="lab">Ricky AI · Next step</div><div class="txt"><b>${esc(pick.Client)}</b> (${esc(pick.Policy)}, ${pick.stage==='pend'?'pending':pick.DaysArrears+'d'}) — ${verb}</div></div><button class="go" data-nextjump="${esc(pick.Policy)}">Open case</button></div>`;
@@ -1170,7 +1349,7 @@ function managerQueue(cases){
     .sort((a,b)=>rank(b)-rank(a));
   if(!q.length)return `<div class="empty-state" style="padding:30px"><div class="shield">${SHIELD}</div><p>No retention cases awaiting your response. The queue is clear.</p></div>`;
   return `<table class="lbtable"><thead><tr><th>Client / policy</th><th>Agent</th><th>Stage</th><th>Reason</th><th>Submitted</th><th></th></tr></thead><tbody>
-    ${q.map(c=>{const st=policyState(c.Policy);return `<tr data-qjump="${esc(c.Policy)}" style="cursor:pointer"><td><div class="ag">${esc(c.Client)}</div><div class="mono" style="font-size:11px;color:var(--mut)">${esc(c.Policy)}</div></td><td>${esc(c.Agent)}</td><td><span class="pill stage ${c.stage==='s90'?'s90':'s75'}">${esc(c.stageMeta.lab)}</span></td><td style="font-size:12px">${esc(st.retention.reason||'—')}</td><td class="mono" style="font-size:11px">${timeAgo(st.retention.ts)}</td><td><span class="await-tag">Respond</span></td></tr>`;}).join('')}
+    ${q.map(c=>{const st=policyState(c.Policy);return `<tr data-qjump="${esc(c.Policy)}" style="cursor:pointer"><td><div class="ag">${esc(c.Client)}</div><div class="mono" style="font-size:11px;color:var(--mut)">${esc(c.Policy)}</div></td><td>${esc(c.Agent)}</td><td><span class="pill stage ${c.stage==='s90'?'s90':'s60'}">${esc(c.stageMeta.lab)}</span></td><td style="font-size:12px">${esc(st.retention.reason||'—')}</td><td class="mono" style="font-size:11px">${timeAgo(st.retention.ts)}</td><td><span class="await-tag">Respond</span></td></tr>`;}).join('')}
   </tbody></table>`;
 }
 
@@ -1180,15 +1359,16 @@ function agentScorecard(cases){
   const rows=agents.map(a=>{
     const ac=cases.filter(c=>c.Agent===a);
     const s90=ac.filter(c=>c.stage==='s90').length;
-    const s75=ac.filter(c=>c.stage==='s75').length;
+    const s60=ac.filter(c=>c.stage==='s60').length;
     const surveyed=ac.filter(c=>c.stage==='s45'&&policyState(c.Policy).survey).length;
     const s45=ac.filter(c=>c.stage==='s45').length;
     const dup=ac.filter(c=>c.cf.duplicateRisk).length;
     const avgProb=Math.round(ac.reduce((s,c)=>s+retainProbability(c),0)/ac.length);
-    return {a,n:ac.length,s90,s75,s45,surveyed,dup,avgProb};
-  }).sort((x,y)=>(y.s90+y.s75)-(x.s90+x.s75)||x.avgProb-y.avgProb);
-  return `<table class="lbtable"><thead><tr><th>Agent</th><th>Tracked</th><th>45-day surveyed</th><th>75-day</th><th>90-day</th><th>Dup flags</th><th>Avg retention odds</th></tr></thead><tbody>
-    ${rows.map(r=>`<tr data-agentjump="${esc(r.a)}" style="cursor:pointer"><td class="ag">${esc(r.a)}</td><td class="num">${r.n}</td><td class="num">${r.s45?`${r.surveyed}/${r.s45}`:'—'}</td><td class="num ${r.s75?'risk-md':''}">${r.s75||'—'}</td><td class="num ${r.s90?'risk-hi':''}">${r.s90||'—'}</td><td class="num ${r.dup?'risk-md':''}">${r.dup||'—'}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="minibar"><i style="width:${r.avgProb}%;background:${r.avgProb>=60?'var(--green)':r.avgProb>=35?'var(--amber)':'var(--red)'}"></i></div><span class="num ${r.avgProb>=60?'risk-lo':r.avgProb>=35?'risk-md':'risk-hi'}">${r.avgProb}%</span></div></td></tr>`).join('')}
+    const lateOwn=ac.filter(c=>{const b=blocker(c);return b&&b.late&&b.who==='agent';}).length;
+    return {a,n:ac.length,s90,s60,s45,surveyed,dup,avgProb,lateOwn};
+  }).sort((x,y)=>(y.s90+y.s60)-(x.s90+x.s60)||x.avgProb-y.avgProb);
+  return `<table class="lbtable"><thead><tr><th>Agent</th><th>Tracked</th><th>45-day surveyed</th><th>60-day</th><th>Late</th><th>90-day</th><th>Dup flags</th><th>Avg retention odds</th></tr></thead><tbody>
+    ${rows.map(r=>`<tr data-agentjump="${esc(r.a)}" style="cursor:pointer"><td class="ag">${esc(r.a)}</td><td class="num">${r.n}</td><td class="num">${r.s45?`${r.surveyed}/${r.s45}`:'—'}</td><td class="num ${r.s60?'risk-md':''}">${r.s60||'—'}</td><td class="num ${r.lateOwn?'risk-hi':''}">${r.lateOwn||'—'}</td><td class="num ${r.s90?'risk-hi':''}">${r.s90||'—'}</td><td class="num ${r.dup?'risk-md':''}">${r.dup||'—'}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="minibar"><i style="width:${r.avgProb}%;background:${r.avgProb>=60?'var(--green)':r.avgProb>=35?'var(--amber)':'var(--red)'}"></i></div><span class="num ${r.avgProb>=60?'risk-lo':r.avgProb>=35?'risk-md':'risk-hi'}">${r.avgProb}%</span></div></td></tr>`).join('')}
   </tbody></table>`;
 }
 
@@ -1299,24 +1479,48 @@ function roleKey(role){if(role==='Branch Manager')return 'bm';if(role==='ABM / B
    Flags: 75-day cases with no retention form filed, and 90-day lapses with no action. */
 function agentOffences(name){
   const mine=ALL_CASES.filter(c=>c.Agent===name);
-  const s75NoForm=mine.filter(c=>c.stage==='s75'&&!policyState(c.Policy).retention);
+  const s60NoForm=mine.filter(c=>c.stage==='s60'&&(c.DaysArrears||0)>=SLA.AGENT_FILE_BY&&!policyState(c.Policy).retention);
   const s90NoAction=mine.filter(c=>c.stage==='s90'&&recordsFor(c.Policy).length===0);
   const dup=mine.filter(c=>c.cf.duplicateRisk);
-  return {mine,s75NoForm,s90NoAction,dup,total:s75NoForm.length+s90NoAction.length};
+  return {mine,s60NoForm,s90NoAction,dup,total:s60NoForm.length+s90NoAction.length};
+}
+
+/* The manager's side of the same bargain. An agent who files on time and then
+   waits three weeks for an answer has been let down, not the other way round —
+   so managers meet a gate too. */
+function managerOffences(name){
+  const scope=visibleAgents(name);
+  const mine=ALL_CASES.filter(c=>scope.has(c.Agent));
+  const lateReplies=mine.filter(c=>{const b=blocker(c);return b&&b.who==='manager'&&b.late&&b.name===name;});
+  const unanswered=mine.filter(c=>{const st=policyState(c.Policy);return st.retention&&!st.verdict;});
+  return {mine,lateReplies,unanswered,total:lateReplies.length};
 }
 let GATE_REQUIRED=false;
 function showGate(name){
   const r=BY_NAME[name];const rk=roleKey(r.role);
   const gate=$('#gate'),clean=$('#gateClean'),btn=$('#loginBtn');
   gate.classList.remove('on');clean.classList.remove('on');GATE_REQUIRED=false;
-  if(rk!=='agent'){btn.textContent='Enter workspace →';btn.disabled=false;return;}
+  if(rk==='support'){btn.textContent='Enter workspace →';btn.disabled=false;return;}
+  if(rk!=='agent'){
+    const mo=managerOffences(name);
+    if(mo.total===0){clean.classList.add('on');btn.textContent='Enter workspace →';btn.disabled=false;return;}
+    GATE_REQUIRED=true;
+    $('#gateTitle').textContent=`${name.split(' ')[0]}, ${mo.total} case${mo.total!==1?'s are':' is'} waiting on you`;
+    $('#gateSub').textContent='Your agents filed. The response is overdue.';
+    const longest=Math.max(...mo.lateReplies.map(c=>blocker(c).since));
+    $('#gateOffences').innerHTML=
+      `<div class="gate-shame">These agents did their part and are <b>waiting on your decision</b>. A retention case with no response is a policy drifting to lapse with nobody able to act. Longest wait: <b>${longest} days</b>.</div>`+
+      `<div class="offence-row"><span class="mk aged">RESPONSE DUE</span><div class="ot"><b>${mo.lateReplies.length} retention case${mo.lateReplies.length!==1?'s':''} past the ${SLA.MANAGER_REPLY_DAYS}-day response window.</b> ${esc(mo.lateReplies.slice(0,3).map(c=>c.Client+' ('+c.Agent+')').join(', '))}${mo.lateReplies.length>3?'…':''}</div><div class="oc aged">${mo.lateReplies.length}</div></div>`;
+    gate.classList.add('on');btn.textContent='Commit & enter →';btn.disabled=true;validateCommit();
+    return;
+  }
   const off=agentOffences(name);
   if(off.total===0){clean.classList.add('on');btn.textContent='Enter workspace →';btn.disabled=false;return;}
   GATE_REQUIRED=true;
   $('#gateTitle').textContent=`${name.split(' ')[0]}, ${off.total} policy ${off.total!==1?'saves':'save'} on the line`;
   $('#gateSub').textContent='These are heading to lapse with no action from you. Commit before you enter.';
   const rows=[`<div class="gate-shame">These policies are <b>days from lapsing</b> with no retention case or action logged against your name. Each one is renewable premium walking out the door. Commit to saving them.</div>`];
-  if(off.s75NoForm.length)rows.push(`<div class="offence-row"><span class="mk aged">75-DAY</span><div class="ot"><b>${off.s75NoForm.length} case${off.s75NoForm.length!==1?'s':''} at 75 days with no retention form.</b> ${esc(off.s75NoForm.slice(0,3).map(c=>c.Client).join(', '))}${off.s75NoForm.length>3?'…':''} — fact find + manager response overdue.</div><div class="oc aged">${off.s75NoForm.length}</div></div>`);
+  if(off.s60NoForm.length)rows.push(`<div class="offence-row"><span class="mk aged">60-DAY</span><div class="ot"><b>${off.s60NoForm.length} case${off.s60NoForm.length!==1?'s':''} past day ${SLA.AGENT_FILE_BY} with no retention form.</b> ${esc(off.s60NoForm.slice(0,3).map(c=>c.Client).join(', '))}${off.s60NoForm.length>3?'…':''} — your manager cannot decide on a case you have not filed.</div><div class="oc aged">${off.s60NoForm.length}</div></div>`);
   if(off.s90NoAction.length)rows.push(`<div class="offence-row"><span class="mk cash">90-DAY</span><div class="ot"><b>${off.s90NoAction.length} policy${off.s90NoAction.length!==1?'ies':''} at the lapse line, untouched.</b> ${esc(off.s90NoAction.slice(0,3).map(c=>c.Client).join(', '))}${off.s90NoAction.length>3?'…':''} — reinstatement only from here.</div><div class="oc cash">${off.s90NoAction.length}</div></div>`);
   $('#gateOffences').innerHTML=rows.join('');
   gate.classList.add('on');btn.textContent='Commit & enter →';btn.disabled=true;validateCommit();
@@ -1342,9 +1546,16 @@ async function doLogin(){
   SESS={role:rk,roleLabel:r.role,displayName:name,code:codeFor(name),match:name,firstName:name.split(/\s+/)[0],commitment:GATE_REQUIRED?$('#commit').value.trim():null};
   if(SHEET_URL){await policyLoad();await sheetLoad();}
   updatePolicyBadge();
-  if(GATE_REQUIRED){
+  if(GATE_REQUIRED&&rk!=='agent'&&rk!=='support'){
+    const mo=managerOffences(name);const seenM=new Set();
+    mo.lateReplies.forEach(c=>{
+      if(seenM.has(c.Policy)||committedToday(c.Policy))return;seenM.add(c.Policy);
+      commit(c.Policy,{kind:'comment',reason:'MANAGER COMMITMENT',body:SESS.commitment});
+    });
+  }
+  if(GATE_REQUIRED&&rk==='agent'){
     const off=agentOffences(name);const seen=new Set();
-    [...off.s75NoForm,...off.s90NoAction].forEach(c=>{
+    [...off.s60NoForm,...off.s90NoAction].forEach(c=>{
       if(seen.has(c.Policy))return;seen.add(c.Policy);
       if(committedToday(c.Policy))return;   // one commitment per policy per day, not one per sign-in
       commit(c.Policy,{kind:'comment',reason:'LOGIN COMMITMENT',body:SESS.commitment});
@@ -1385,6 +1596,49 @@ setInterval(async()=>{
   const ok=await sheetLoad();
   if((ok&&LAST_SYNC_N!==beforeLog)||POLICY_N!==beforePol){toast('Synced with the sheet');refreshView();}
 },LOG_POLL_MS);
+
+/* ===== CLIENT ONE-CLICK REPLY (#respond=POLICY&opt=KEY) =====
+   The 60-day email carries six links, one per option. Clicking one records the
+   client's choice against the policy and stops the chase sequence — no login,
+   no form, no phone call needed to tell us they are still there. */
+async function handleHashRespond(){
+  const m=location.hash.match(/respond=([0-9A-Za-z]+)&opt=([a-z]+)/);
+  if(!m)return false;
+  const policy=m[1], key=m[2];
+  history.replaceState(null,'',location.pathname);
+  if(SHEET_URL&&POLICY_SRC!=='live')await policyLoad();
+  const c=ALL_CASES.find(x=>x.Policy===String(policy));
+  const opt=CHOICE_BY_KEY[key];
+  if(!opt){openPublicSurvey(policy);return true;}   // unknown option — fall back to the survey
+
+  const login=document.getElementById('login'); if(login)login.style.display='none';
+  const app=document.getElementById('app'); if(app)app.classList.remove('on');
+  const nm=c?first(c):'there';
+  const ts=Date.now();
+  const rec={kind:'response',author:(c?c.Client+' ':'')+'(client)',code:'',role:'Client',
+    stage:c?stageOf(c):'s60',reason:'CLIENT REPLY',body:opt.lab,optKey:key,
+    surveyReason:'',surveyContact:opt.lab,surveyPromise:'',factFind:'',managerVerdict:'',ts};
+  pushRecord(policy,rec);
+  sheetLog({ts,policy,client:c?c.Client:'',clientNo:c?c.ClientNo:'',agent:c?c.Agent:'',
+    author:rec.author,code:'',role:'Client',stage:rec.stage,type:'response',reason:'CLIENT REPLY',
+    body:opt.lab,retainProb:c?retainProbability(c):'',tone:'',surveyReason:'',surveyContact:opt.lab,
+    surveyPromise:'',factFind:'',managerVerdict:''});
+
+  $('#surveyX').style.display='none';
+  $('#surveyTitle').textContent=`Thank you, ${nm}.`;
+  $('#surveySub').textContent=c?`Policy ${c.Policy}`:'';
+  $('#surveyBody').innerHTML=`<div style="text-align:center;padding:14px 6px">
+    <div style="width:52px;height:52px;margin:0 auto 14px">${SHIELD}</div>
+    <div style="font-size:13px;color:var(--mut);margin-bottom:6px">You told us:</div>
+    <div style="font-family:var(--disp);font-size:20px;font-weight:600;margin-bottom:14px;line-height:1.25">${esc(opt.lab)}</div>
+    <p style="color:var(--slate);max-width:38ch;margin:0 auto 14px;line-height:1.6">${esc(opt.next)}</p>
+    <div style="background:var(--teal-soft);border-radius:9px;padding:12px 14px;font-size:12.5px;color:var(--teal-2);max-width:40ch;margin:0 auto">
+      Your agent${c?` (${esc(c.Agent)})`:''} and their manager have both been notified. You will not get any more reminder emails about this.</div>
+    <p style="font-size:11px;color:var(--mut);margin-top:14px">You can close this page.</p></div>`;
+  $('#surveyModal').classList.add('on');
+  return true;
+}
+window.addEventListener('hashchange',handleHashRespond);
 
 /* deep-link client survey (#survey=POLICY) */
 async function handleHashSurvey(){
@@ -1455,7 +1709,7 @@ function openPublicSurvey(policy){
   else { seedDemoRecords(); }
   updatePolicyBadge();
   if(SESS) refreshView();
-  await handleHashSurvey();
+  if(!(await handleHashRespond())) await handleHashSurvey();
 })();
 </script>
 </body>
