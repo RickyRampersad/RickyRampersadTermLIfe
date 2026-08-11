@@ -1,104 +1,84 @@
 # Blank PDF — cause and fix
 
-**Affects:** the PDF emailed to the client, agent and manager on submission, *and*
-the copy the agent downloads via "Download for Manager". Both are blank.
+**Affects:** the PDF emailed to the client, agent and manager on submission, and
+the copy the agent downloads via "Download for Manager". Both were blank.
 
 **File:** the fact-find form served at `factfind360.com/ffproject`
+(same file as `factfinds.netlify.app/FFPROJECT.html` — identical etag, one
+Netlify site, two domains, so fixing it once fixes both).
 
 ## Cause
 
-Both render paths make the print layout visible, then hide it from the user by
-making it almost fully transparent:
+Both render paths made the print layout visible and then hid it from the user by
+making it almost fully transparent (`opacity:0.01`). That is a real bug —
+html2canvas honours computed opacity and would rasterise the page at 1% alpha —
+but it is **not** what was producing the blank PDFs.
 
-```js
-'display:block !important;position:fixed;left:0;top:0;width:794px;' +
-'max-width:none;background:#ffffff;z-index:-1;opacity:0.01;pointer-events:none;overflow:visible;'
+Measured in a real browser:
+
+```
+#printLayout WITHOUT body.preview-open : 0 × 0
+#printLayout WITH    body.preview-open : 794 × 7597   (7 pages)
 ```
 
-The comment above it explains the intent:
+**The print layout has no dimensions at all on a normal screen.** Every rule
+that gives `.pf-page` its size lives inside `@media print` or under
+`body.preview-open`:
 
-> nearly transparent so the user does not see it but html2canvas still paints it
+```css
+#printLayout { display: none; }
+@media print { #printLayout { display: block !important; … } }
+body.preview-open #printLayout { display: block; max-width: 210mm; … }
+```
 
-That assumption is wrong. **html2canvas honours CSS `opacity`.** It reads the
-computed style and rasterises through it, so the content is painted at 1% alpha
-onto the white background — producing a PDF with the right page count, the right
-margins and the right pagination, and nothing visible on it.
+The inline `display:block !important` made the *container* a block, but its
+children stayed unsized. html2canvas was photographing a zero-height element, so
+the PDF came out correctly paginated and completely empty.
 
-It also explains why neither existing guard catches it:
+Fixing the opacity alone changes nothing — verified: it still produced a 4KB
+blank PDF, byte-for-byte as useless as before.
 
-- client-side: `if (b64.length < 500)` — passes, a white A4 page is still many KB
-- server-side `ffBuildPdfAttachment_`: `if (b64.length < 100) return null` — passes
-
-The file is real. It is just white.
+Neither existing guard could catch it. The client checks `b64.length < 500`, the
+server's `ffBuildPdfAttachment_` checks `< 100`; a blank A4 page is still several
+KB, so both passed.
 
 ## Fix
 
-Render **off-screen at full opacity** instead of on-screen at 1% opacity.
-html2canvas clones the node into its own sandboxed container to rasterise, so an
-off-screen element renders correctly while staying invisible to the user.
+Three things, in both `generateFactFindPdfBase64()` and `downloadForManager()`:
 
-### Edit 1 — `generateFactFindPdfBase64()` (the emailed PDF)
+1. **Add `preview-open` to `<body>` during generation**, so the layout has a
+   size. Restore the original `className` afterwards.
+2. **Keep opacity at 1.** Hide it from the user with `z-index:-1` behind the
+   page instead — not with transparency, and not off-screen, because
+   html2canvas needs it in the viewport.
+3. **Drop `windowWidth: 794` / `width: 794`** from the html2canvas options. Once
+   the preview padding applies, forcing a 794px capture clips the left edge off
+   every page.
 
-**Find:**
-```js
-  root.setAttribute('style',
-    'display:block !important;position:fixed;left:0;top:0;width:794px;' +
-    'max-width:none;background:#ffffff;z-index:-1;opacity:0.01;pointer-events:none;overflow:visible;');
-```
+The `.preview-backdrop` also needs neutralising (`position:fixed; left:0; top:0;
+z-index:-1`) because `#printLayout` is a child of it, and its original style must
+be restored too.
 
-**Replace with:**
-```js
-  // Off-screen at FULL opacity. Do not use opacity to hide this: html2canvas
-  // honours computed opacity and will happily rasterise the whole document at
-  // 1% alpha, producing a correctly paginated, entirely white PDF.
-  root.setAttribute('style',
-    'display:block !important;position:fixed;left:-10000px;top:0;width:794px;' +
-    'max-width:none;background:#ffffff;opacity:1;pointer-events:none;overflow:visible;');
-```
+Restore state in a `finally`, not only on the success path — the old download
+code left the print layout stuck over the form whenever a render failed.
 
-### Edit 2 — `downloadForManager()` (the agent's copy)
+## Verified
 
-**Find:**
-```js
-    if (root) root.setAttribute('style', 'display:block !important;position:fixed;left:0;top:0;width:794px;background:#fff;z-index:-1;opacity:0.01;pointer-events:none;');
-```
+Running the page's own `generateFactFindPdfBase64()` under headless Chromium,
+before and after:
 
-**Replace with:**
-```js
-    // See generateFactFindPdfBase64() — off-screen, never opacity.
-    if (root) root.setAttribute('style', 'display:block !important;position:fixed;left:-10000px;top:0;width:794px;background:#fff;opacity:1;pointer-events:none;');
-```
+| | PDF produced |
+|---|---|
+| live file | **3,252 bytes** — blank |
+| fixed file | **2,677,689 bytes** — 7 pages of content |
 
-## Make the guard actually guard
+After generation, `body.className` and the element's inline style both return to
+their original values, on both the success and error paths.
 
-Both length checks pass on a blank page, which is how this shipped. A white page
-compresses to a very predictable size, so a size floor is the wrong test —
-check that something was actually drawn instead.
+## Known cosmetic issue, not fixed
 
-Add this to `generateFactFindPdfBase64()`, just before the `outputPdf` call, and
-have it run on the canvas html2pdf produces:
-
-```js
-  html2canvas: {
-    scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff',
-    windowWidth: 794, width: 794,
-    onclone: function (doc) {
-      // Belt and braces: whatever the caller set, the clone renders opaque.
-      var c = doc.getElementById('printLayout');
-      if (c) { c.style.opacity = '1'; c.style.zIndex = 'auto'; }
-    }
-  },
-```
-
-That makes a blank render impossible even if someone reintroduces the opacity
-trick later.
-
-## Verify
-
-1. Open a fact find, fill enough to be recognisable, submit.
-2. Open the emailed PDF — content should be there, same layout as "Print".
-3. Check the downloaded copy too; it uses the same code path.
-
-If it is *still* blank after this, the next suspect is `buildPrintLayout()`
-producing markup that depends on a stylesheet html2canvas is not loading — but
-the opacity is the cause of what you are seeing now.
+At each page boundary the next page's header bleeds in slightly. html2pdf slices
+one tall canvas at fixed A4 intervals, and the real page-break rules only apply
+under `@media print`. Forcing `pagebreak: { before: '.pf-page' }` produced 9
+pages with blanks inserted, which is worse, so it was left alone. Every page's
+own content is complete — this is a trim issue, not a content one.
