@@ -750,7 +750,7 @@ const ALL_INC={"keyperson": {"prev": 371381, "size": 157, "root": "1 0", "fields
 <script>
 /* ═══════════ state ═══════════ */
 const LS='keymanAssistant_v1';
-let S={theme:'light',q:{},v:{attr:50,salMult:10},lives:[{name:'',role:'',age:'',sum:60000000,ci:true}],polType:'Whole Life with Critical Illness',rate:5,checks:{},client:{}};
+let S={theme:'light',tab:'training',q:{},v:{attr:50,salMult:10},lives:[{name:'',role:'',age:'',sum:60000000,ci:true}],polType:'Whole Life with Critical Illness',rate:5,checks:{},client:{}};
 try{const saved=JSON.parse(localStorage.getItem(LS));if(saved)S=Object.assign(S,saved);}catch(e){}
 const save=()=>localStorage.setItem(LS,JSON.stringify(S));
 const $=id=>document.getElementById(id);
@@ -767,6 +767,10 @@ document.querySelectorAll('.tab-btn').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.tabpane').forEach(x=>x.classList.remove('active'));
   b.classList.add('active');$(b.dataset.tab).classList.add('active');
   if(b.dataset.tab==='brief')renderBrief();
+  /* remember where this agent works, and keep the URL shareable */
+  S.tab=b.dataset.tab;save();
+  try{const u=new URL(location.href);u.searchParams.set('tab',S.tab);
+      history.replaceState(null,'',u);}catch(err){}
   window.scrollTo({top:0,behavior:'smooth'});
 });
 
@@ -1694,7 +1698,10 @@ renderQ();scoreQ();loadV();renderLives();$('polType').value=S.polType;$('bRate')
     document.querySelectorAll('[data-a]').forEach(el=>{const pth=el.dataset.a.split('.');const v=pth.reduce((o,k)=>o==null?o:o[k],A);
       if(el.type==='checkbox')el.checked=!!v;else if(v!=null)el.value=v;});}
   if(q.get('demo')==='training'){$('loadExample').click();}
-  if(q.get('tab')){const b=document.querySelector('[data-tab="'+q.get('tab')+'"]');if(b)b.click();}
+  /* an explicit ?tab= wins; otherwise resume where this agent left off */
+  const want=q.get('tab')||S.tab;
+  if(want&&want!=='training'){
+    const b=document.querySelector('.tab-btn[data-tab="'+want+'"]');if(b)b.click();}
   if(q.get('dossier')){setTimeout(()=>{document.open();document.write(dossierHtml());document.close();},300);}
 })();
 </script>

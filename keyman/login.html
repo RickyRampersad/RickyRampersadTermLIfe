@@ -72,15 +72,17 @@ button:active{transform:scale(.985)}
 <script>
 var CODE = 'RRB2026';
 var APP  = 'assistant-9f4c2e7b81.html';
+/* carry ?tab= and any hash through the gate so deep links survive sign-in */
+var DEST = APP + location.search + location.hash;
 var f=document.getElementById('f'), c=document.getElementById('c'), e=document.getElementById('e');
-if (localStorage.getItem('rrb-app') === CODE) location.replace(APP);
+if (localStorage.getItem('rrb-app') === CODE) location.replace(DEST);
 f.addEventListener('submit', function(ev){
   ev.preventDefault();
   var v = (c.value||'').trim().toUpperCase();
   if (v === CODE) {
     localStorage.setItem('rrb-app', CODE);
     e.style.color = '#34d399'; e.textContent = 'Opening…';
-    location.href = APP;
+    location.href = DEST;
   } else {
     e.textContent = 'That code is not recognised.';
     document.querySelector('.box').classList.remove('shake');
