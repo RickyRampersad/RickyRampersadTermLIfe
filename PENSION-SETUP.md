@@ -194,6 +194,18 @@ the entered contribution would make **both** Line 10 and Line 12 read Yes, the
 printed form is scaled back to the maximum and the screen says what was
 entered instead.
 
+**How far this is verified.** Every figure above was checked against an
+implementation written independently from the rules printed on the form, over
+twelve cases — non-resident, other income, the $60,000 deduction cap, the
+tertiary and first-time-home caps, negative chargeable income — and all twelve
+agree. The reverse solver was checked against the property it must hold (at the
+ceiling, total contributions may exceed at most one of Line 9 or Line 11) over
+forty salary and deduction combinations, and holds in every one. The N.I.S.
+table is the one input that comes from outside the Income Tax Act; it was
+checked against the branch's NIB sheet in August 2026 and agreed. **Re-check it
+whenever NIB revises its rates** — see the note above the table in
+`pension/index.html`.
+
 **Salary Deduction form** (`buildSal()`): employer and employee details, the
 deduction frequency, the month and year taken from the commencement date, and
 the employee's own contribution written three ways — in words, in cents, and in
