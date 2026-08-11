@@ -438,12 +438,234 @@ function postToSheet(req,d){
     benefits:req.lines||[],
     structure:req.forfeiture===true?'Trust plan (group-owned)':req.forfeiture===false?'Section 134 (individually-owned)':'Undecided',
     via:req.via, enteredBy:req.enteredBy||'', agentName:req.agentName||'', notes:req.notes||'',
+    coverLevels:coverSummaryText(req),
+    ratingBasis:req.basis?`${req.basis.source==='census'?'From census':'Estimated'} · ${req.basis.lives} lives · avg age ${req.basis.avgAge.toFixed(1)} · payroll ${Math.round(req.basis.payroll)}`+
+      (req.basis.lifeSA?` · total sum assured ${Math.round(req.basis.lifeSA)}`:''):'',
     censusB64:censusB64
   };
   try{
     fetch(SHEET_WEBHOOK,{method:'POST',mode:'no-cors',
       headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)}).catch(function(){});
   }catch(e){}
+}
+
+/* ── INDICATIVE PRICING ────────────────────────────────────────────
+   Every rate below is deliberately null. While they are null the
+   portal shows the client the *basis* of their quote — lives per age
+   band, insured payroll, total sum assured, family split — and says
+   plainly that the adviser returns the priced quotation.
+
+   Fill a rate in and the cost panel switches itself on. Nothing else
+   in this file needs changing.
+
+   Units:
+     bands[].life / bands[].ci   TT$ per month, per TT$1,000 of sum assured
+     ip                          TT$ per month, per TT$100 of MONTHLY benefit
+     tpdFactor                   share of the group life premium (e.g. 0.15)
+     health / dental             TT$ per member, per month
+     maxLifeSum, freeCover[].fcl TT$ (null = no limit applied)
+     occLoadPerFieldPct          extra load per 1% of field/manual roles
+                                 (e.g. 0.004 = +40% at 100% field staff)
+   ─────────────────────────────────────────────────────────────────── */
+const PRICING={
+  bands:[
+    {key:'18-24',lo:18,hi:24,life:null,ci:null},
+    {key:'25-29',lo:25,hi:29,life:null,ci:null},
+    {key:'30-34',lo:30,hi:34,life:null,ci:null},
+    {key:'35-39',lo:35,hi:39,life:null,ci:null},
+    {key:'40-44',lo:40,hi:44,life:null,ci:null},
+    {key:'45-49',lo:45,hi:49,life:null,ci:null},
+    {key:'50-54',lo:50,hi:54,life:null,ci:null},
+    {key:'55-59',lo:55,hi:59,life:null,ci:null},
+    {key:'60-64',lo:60,hi:64,life:null,ci:null},
+    {key:'65-69',lo:65,hi:69,life:null,ci:null}
+  ],
+  ip:null, tpdFactor:null,
+  health:{ quantum:null, provisor:null },   // {emp,plus1,fam} each
+  dental:null,                              // {emp,plus1,fam}
+  maxLifeSum:null,
+  occLoadPerFieldPct:null,
+  sizeCredit:[ {min:0,max:9,f:1},{min:10,max:24,f:1},{min:25,max:49,f:1},
+               {min:50,max:99,f:1},{min:100,max:249,f:1},{min:250,max:1e9,f:1} ],
+  freeCover:[ {min:0,max:9,fcl:null},{min:10,max:24,fcl:null},{min:25,max:49,fcl:null},
+              {min:50,max:99,fcl:null},{min:100,max:249,fcl:null},{min:250,max:1e9,fcl:null} ]
+};
+
+const HEALTH_PLANS={
+  quantum :{name:'Quantum',  blurb:'You pay the provider and claim the cost back. Widest choice of doctors — staff are not tied to a network.'},
+  provisor:{name:'Provisor', blurb:'A network of 450+ providers where staff pay only a co-payment at the counter. No claim forms, no waiting for reimbursement.'}
+};
+
+/* A line can be priced only when the rates it needs are present. */
+function ratesFor(line){
+  const anyBand=k=>PRICING.bands.some(b=>b[k]!=null);
+  if(line==='life')    return anyBand('life');
+  if(line==='ci')      return anyBand('ci');
+  if(line==='ip')      return PRICING.ip!=null;
+  if(line==='health')  return !!(PRICING.health.quantum||PRICING.health.provisor);
+  if(line==='dental')  return !!PRICING.dental;
+  if(line==='pension') return true;                 // a % of payroll needs no rate table
+  return false;
+}
+const anyRates=()=>['life','ci','ip','health'].some(ratesFor);
+
+/* Cover levels the employer chooses — the wizard never asked before,
+   and Guardian cannot quote group life without the multiple. */
+const COVER_DEFAULTS={lifeMult:2,ciSum:100000,ipPct:70,ipWait:26,healthPlan:'provisor',dental:false};
+const coverOf=d=>Object.assign({},COVER_DEFAULTS,d.cover||{});
+
+/* One line for the branch Sheet and the underwriting email — without the
+   cover level Guardian cannot rate group life or income protection. */
+function coverSummaryText(req){
+  const c=req.cover||COVER_DEFAULTS, L=req.lines||[], has=n=>L.includes(n), out=[];
+  if(has('Group Life'))         out.push('Life '+c.lifeMult+'× salary');
+  if(has('Critical Illness'))   out.push('CI '+money(c.ciSum)+' each');
+  if(has('Income Protection'))  out.push('IP '+c.ipPct+'% after '+c.ipWait+' weeks');
+  if(has('Group Health'))       out.push('Health '+((HEALTH_PLANS[c.healthPlan]||{}).name||c.healthPlan)+(c.dental?' + dental/vision':''));
+  if(has('Pension'))            out.push('Pension '+(req.erPct||0)+'% employer');
+  return out.join(' · ');
+}
+
+/* Normal CDF (Abramowitz & Stegun 7.1.26) — spreads a headcount across
+   age bands when there is no census to read real ages from. */
+function normCdf(x,mu,sd){
+  const z=(x-mu)/(sd*Math.SQRT2), s=z<0?-1:1, a=Math.abs(z);
+  const t=1/(1+0.3275911*a);
+  const y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-a*a);
+  return 0.5*(1+s*y);
+}
+function largestRemainder(weights,total){
+  const raw=weights.map(w=>w*total), counts=raw.map(Math.floor);
+  let left=total-counts.reduce((a,b)=>a+b,0);
+  const order=raw.map((v,i)=>({i,frac:v-Math.floor(v)})).sort((a,b)=>b.frac-a.frac);
+  for(let k=0;left>0&&k<order.length;k++,left--) counts[order[k].i]++;
+  if(left>0) counts[0]+=left;
+  return counts;
+}
+
+/* The rating basis — exact when a census was uploaded, modelled when not. */
+function ratingBasis(d){
+  const cover=coverOf(d);
+  const cap=PRICING.maxLifeSum;
+  const capped=sa=>cap?Math.min(sa,cap):sa;
+  let rows,source;
+
+  if(d.census&&d.census.length){
+    source='census';
+    rows=PRICING.bands.map(b=>({...b,count:0,payroll:0}));
+    d.census.forEach(e=>{
+      const b=rows.find(x=>e.age>=x.lo&&e.age<=x.hi)
+            ||(e.age<rows[0].lo?rows[0]:rows[rows.length-1]);
+      b.count++; b.payroll+=e.salaryAnnual;
+    });
+  }else{
+    source='estimate';
+    const n=Math.max(0,Math.round(+d.staff||0)), avg=+d.avgAge||38, sal=+d.salary||0;
+    const w=PRICING.bands.map(b=>Math.max(0,normCdf(b.hi+1,avg,9)-normCdf(b.lo,avg,9)));
+    const tot=w.reduce((a,b)=>a+b,0)||1;
+    const counts=largestRemainder(w.map(x=>x/tot),n);
+    rows=PRICING.bands.map((b,i)=>({...b,count:counts[i],payroll:counts[i]*sal}));
+  }
+
+  const lives=rows.reduce((s,r)=>s+r.count,0);
+  const payroll=rows.reduce((s,r)=>s+r.payroll,0);
+
+  // family split: exact from the census, modelled from "% with dependants" otherwise
+  let tiers;
+  if(source==='census'){
+    tiers={emp:d.census.filter(e=>e.tier==='single').length,
+           plus1:d.census.filter(e=>e.tier==='plus1').length,
+           fam:d.census.filter(e=>e.tier==='family').length};
+  }else{
+    const dep=Math.min(100,Math.max(0,+d.depPct||0))/100;
+    const c=largestRemainder([1-dep,dep*0.4,dep*0.6],lives);
+    tiers={emp:c[0],plus1:c[1],fam:c[2]};
+  }
+
+  // sums assured
+  const lifeSA=source==='census'
+    ? d.census.reduce((s,e)=>s+capped(e.salaryAnnual*cover.lifeMult),0)
+    : rows.reduce((s,r)=>s+r.count*capped((+d.salary||0)*cover.lifeMult),0);
+  const ipMonthly=payroll/12*(cover.ipPct/100);
+
+  const size=PRICING.sizeCredit.find(s=>lives>=s.min&&lives<=s.max)||{f:1};
+  const fclRow=PRICING.freeCover.find(s=>lives>=s.min&&lives<=s.max)||{fcl:null};
+  let overFCL=0;
+  if(fclRow.fcl&&source==='census')
+    overFCL=d.census.filter(e=>capped(e.salaryAnnual*cover.lifeMult)>fclRow.fcl).length;
+
+  const fieldPct=Math.min(100,Math.max(0,+d.fieldPct||0));
+  const occLoad=PRICING.occLoadPerFieldPct!=null?1+fieldPct*PRICING.occLoadPerFieldPct:1;
+  // exact when we have real dates of birth; band midpoints only when modelling
+  const avgAge=!lives?0
+    :source==='census'?d.census.reduce((s,e)=>s+e.age,0)/d.census.length
+    :rows.reduce((s,r)=>s+r.count*((r.lo+r.hi)/2),0)/lives;
+
+  return {source,rows,lives,payroll,tiers,lifeSA,ipMonthly,cover,
+          size,fcl:fclRow.fcl,overFCL,occLoad,avgAge,
+          avgSalary:lives?payroll/lives:0,
+          ciSA:lives*cover.ciSum, capped};
+}
+
+/* Indicative monthly premium per line. Returns {priced:false} for any
+   line whose rates have not been entered yet. */
+function estimateCost(basis,d){
+  const chosen=(d.incl||[]).slice();
+  const want=k=>chosen.includes(LINE_NAMES[k]);
+  const cover=basis.cover, risk=basis.size.f*basis.occLoad, out=[];
+  const add=(key,label,level,monthly,priced)=>out.push({key,label,level,monthly,priced});
+
+  if(want('life')){
+    const priced=ratesFor('life');
+    let m=null;
+    if(priced){
+      m=basis.rows.reduce((s,r)=>{
+        if(!r.count||r.life==null) return s;
+        const sa=basis.source==='census'
+          ? d.census.filter(e=>e.age>=r.lo&&e.age<=r.hi)
+                    .reduce((t,e)=>t+basis.capped(e.salaryAnnual*cover.lifeMult),0)
+          : r.count*basis.capped((+d.salary||0)*cover.lifeMult);
+        return s+(sa/1000)*r.life;
+      },0)*risk;
+      if(PRICING.tpdFactor!=null) m*=1+PRICING.tpdFactor;
+    }
+    add('life','Group Life',cover.lifeMult+'× annual salary — '+money(Math.round(basis.lifeSA))+' total sum assured',m,priced);
+  }
+  if(want('ci')){
+    const priced=ratesFor('ci');
+    let m=null;
+    if(priced) m=basis.rows.reduce((s,r)=>
+      (!r.count||r.ci==null)?s:s+r.count*(cover.ciSum/1000)*r.ci,0)*risk;
+    add('ci','Critical Illness',money(cover.ciSum)+' lump sum each',m,priced);
+  }
+  if(want('ip')){
+    const priced=ratesFor('ip');
+    const m=priced?(basis.ipMonthly/100)*PRICING.ip*risk:null;
+    add('ip','Income Protection',cover.ipPct+'% of salary after '+cover.ipWait+' weeks — '+
+        money(Math.round(basis.ipMonthly))+'/mo of benefit',m,priced);
+  }
+  if(want('health')){
+    const priced=ratesFor('health');
+    const t=PRICING.health[cover.healthPlan];
+    const m=(priced&&t)?(basis.tiers.emp*t.emp+basis.tiers.plus1*t.plus1+basis.tiers.fam*t.fam)*basis.size.f:null;
+    add('health','Group Health — '+HEALTH_PLANS[cover.healthPlan].name,
+        basis.tiers.emp+' single · '+basis.tiers.plus1+' +1 · '+basis.tiers.fam+' family',m,priced&&!!t);
+  }
+  if(cover.dental&&want('health')){
+    const priced=ratesFor('dental'), t=PRICING.dental;
+    const m=priced?(basis.tiers.emp*t.emp+basis.tiers.plus1*t.plus1+basis.tiers.fam*t.fam)*basis.size.f:null;
+    add('dental','Dental & Vision','Rider on the health plan',m,priced);
+  }
+  if(want('pension')){
+    const pct=+d.erPct||0;
+    add('pension','Pension',pct+'% of salary, employer contribution',basis.payroll/12*(pct/100),pct>0);
+  }
+
+  const pricedLines=out.filter(l=>l.priced&&l.monthly!=null);
+  return {lines:out,
+          total:pricedLines.reduce((s,l)=>s+l.monthly,0),
+          allPriced:out.length>0&&pricedLines.length===out.length,
+          anyPriced:pricedLines.length>0};
 }
 
 /* ---------------- working days (TT) ---------------- */
@@ -482,7 +704,7 @@ function loadSampleForm(){
     census:rows, censusText:text,
     notes:'Sample only — this is where your notes to the adviser appear.'
   };
-  WIZ={step:6, data:d, sample:true};
+  WIZ={step:7, data:d, sample:true};
   WIZ.rec=recommend(d);
   d.incl=Object.keys(WIZ.rec).filter(k=>['essential','recommended'].includes(WIZ.rec[k].v)).map(k=>LINE_NAMES[k]);
   screen='new'; render();
@@ -967,7 +1189,8 @@ function saveStep(){
   const d=WIZ.data, s=WIZ.step;
   if(s===1){ d.org=wizVal('w_org'); d.industry=wizVal('w_industry'); d.contact=wizVal('w_contact'); d.email=wizVal('w_email'); d.phone=wizVal('w_phone'); d.agentName=wizVal('w_agent')||'Ricky Rampersad'; }
   if(s===2){ d.staff=+wizVal('w_staff')||0; d.salary=+wizVal('w_salary')||0; d.contractPct=+wizVal('w_contract')||0;
-             d.turnover=+wizVal('w_turnover')||0; d.fieldPct=+wizVal('w_field')||0; d.depPct=+wizVal('w_dep')||0; }
+             d.turnover=+wizVal('w_turnover')||0; d.fieldPct=+wizVal('w_field')||0; d.depPct=+wizVal('w_dep')||0;
+             d.avgAge=+wizVal('w_avgage')||0; }
   if(s===3){ d.hasHealth=wizChk('w_hasHealth'); d.hasLife=wizChk('w_hasLife'); d.hasPension=wizChk('w_hasPension');
              d.hasIP=wizChk('w_hasIP'); d.hasCI=wizChk('w_hasCI');
              d.healthMandatory=wizRadio('w_hmand')==='yes'; d.sickPay=+wizRadio('w_sick')||0; }
@@ -976,20 +1199,31 @@ function saveStep(){
              const tr=wizRadio('w_trustee'); d.trustee=tr==='yes'?true:tr==='no'?false:null;
              const un=wizRadio('w_union'); d.union=un==='yes'?true:un==='no'?false:null; }
   if(s===5){ d.incl=[...document.querySelectorAll('[name="w_incl"]:checked')].map(i=>i.value); }
-  if(s===6){ const n=wizVal('w_notes'); if(n!==undefined) d.notes=n; }
+  if(s===6){
+    // Only touch a control that is actually on screen — lines the client did
+    // not ask for render no control, and must keep whatever they had.
+    const c=coverOf(d);
+    const setNum=(id,k)=>{const v=wizVal(id); if(v!==undefined&&v!=='') c[k]=+v;};
+    setNum('w_lifeMult','lifeMult'); setNum('w_ciSum','ciSum'); setNum('w_ipPct','ipPct');
+    const w=wizRadio('w_ipWait'); if(w) c.ipWait=+w;
+    const hp=wizVal('w_healthPlan'); if(hp) c.healthPlan=hp;
+    const dv=wizChk('w_dental'); if(dv!==undefined) c.dental=dv;
+    d.cover=c;
+  }
+  if(s===7){ const n=wizVal('w_notes'); if(n!==undefined) d.notes=n; }
 }
 
 function newRequest(){
   const staffMode = role!=='client';
   const d=WIZ.data;
-  const steps=['Who it is for','The workforce','What is in place','Retirement structure','Recommendation','Review & submit'];
+  const steps=['Who it is for','The workforce','What is in place','Retirement structure','Recommendation','Cover levels & what it costs','Review & submit'];
   const head=`${WIZ.sample?`<div class="ok" style="border-color:var(--gold);background:#FDF0D822">
       <b>Sample form.</b> This is exactly what a completed request looks like at the final step —
       filled with example data, nothing sent. Use the Edit buttons to look inside each step, or
       start your own request when ready.</div>`:''}
     <div><span class="label">${WIZ.sample?'Sample':staffMode?'New request — entered for a client':'New request'} · step ${WIZ.step} of ${steps.length}</span>
     <h1 class="page">${steps[WIZ.step-1]}</h1></div>
-    <div class="stepper">${['Who','Workforce','In place','Structure','Recommend','Review'].map((s,i)=>{
+    <div class="stepper">${['Who','Workforce','In place','Structure','Recommend','Cover & cost','Review'].map((s,i)=>{
       const st=i+1<WIZ.step?'done':i+1===WIZ.step?'cur':'';
       return `<div class="step ${st}"><div class="dot">${i+1<WIZ.step?'✓':i+1}</div><div class="slabel">${s}</div></div>`;}).join('')}</div>`;
   const nav=(last)=>WIZ.sample&&last
@@ -1047,12 +1281,13 @@ Employee, Date of Birth, Gender, Annual Salary, Dependants, Employment Type">${e
       <div class="fgrid">
         <label class="f"><span class="label">Number of employees</span><input class="inp" type="number" id="w_staff" min="1" value="${v(d.staff,50)}"></label>
         <label class="f"><span class="label">Average salary (TT$)</span><input class="inp" type="number" id="w_salary" step="1000" value="${v(d.salary,90000)}"></label>
+        <label class="f"><span class="label">Average age${c?' (read from your file)':''}</span><input class="inp" type="number" id="w_avgage" min="18" max="69" ${c?'disabled':''} value="${c?Math.round(c.reduce((s,e)=>s+e.age,0)/c.length):v(d.avgAge,38)}"></label>
         <label class="f"><span class="label">On contract (%)</span><input class="inp" type="number" id="w_contract" min="0" max="100" value="${v(d.contractPct,20)}"></label>
         <label class="f"><span class="label">Annual staff turnover (%)</span><input class="inp" type="number" id="w_turnover" min="0" max="100" value="${v(d.turnover,12)}"></label>
         <label class="f"><span class="label">Field / manual roles (%)</span><input class="inp" type="number" id="w_field" min="0" max="100" value="${v(d.fieldPct,30)}"></label>
         <label class="f"><span class="label">Staff with dependants (%)</span><input class="inp" type="number" id="w_dep" min="0" max="100" value="${v(d.depPct,50)}"></label>
       </div>
-      <p class="note">Field and manual share decides how hard we push income protection — those roles carry the disability exposure. Dependants decide how much life cover matters.</p>
+      <p class="note">Field and manual share decides how hard we push income protection — those roles carry the disability exposure. Dependants decide how much life cover matters. Age drives the price of life and critical illness more than anything else, so a census beats an average every time.</p>
     </div>`;
   }
   if(WIZ.step===3){
@@ -1137,6 +1372,129 @@ Employee, Date of Birth, Gender, Annual Salary, Dependants, Employment Type">${e
     </div>`;
   }
   if(WIZ.step===6){
+    const basis=ratingBasis(d), cost=estimateCost(basis,d), cover=basis.cover;
+    const want=k=>(d.incl||[]).includes(LINE_NAMES[k]);
+    const maxBand=Math.max(1,...basis.rows.map(r=>r.count));
+    const nothing=!(d.incl&&d.incl.length);
+
+    const controls=[
+      want('life')?`<label class="f"><span class="label">Group life — multiple of annual salary</span>
+          <select class="inp" id="w_lifeMult">${[1,1.5,2,2.5,3,4,5].map(m=>
+            `<option value="${m}" ${cover.lifeMult===m?'selected':''}>${m}× salary</option>`).join('')}</select>
+          <span class="note">Most groups here settle at 2× or 3×. At ${cover.lifeMult}× this scheme insures <b>${money(Math.round(basis.lifeSA))}</b> in total.</span></label>`:'',
+      want('ci')?`<label class="f"><span class="label">Critical illness — lump sum each</span>
+          <select class="inp" id="w_ciSum">${[50000,75000,100000,150000,200000,250000].map(s=>
+            `<option value="${s}" ${cover.ciSum===s?'selected':''}>${money(s)}</option>`).join('')}</select>
+          <span class="note">Paid on diagnosis and spendable on anything — treatment abroad, the mortgage, a spouse's lost income.</span></label>`:'',
+      want('ip')?`<label class="f"><span class="label">Income protection — share of salary replaced</span>
+          <select class="inp" id="w_ipPct">${[50,60,66.67,70,75].map(p=>
+            `<option value="${p}" ${Math.abs(cover.ipPct-p)<0.01?'selected':''}>${p===66.67?'66⅔':p}% of salary</option>`).join('')}</select>
+          <span class="note">About <b>${money(Math.round(basis.ipMonthly))}</b> a month of benefit across the group.</span></label>`:'',
+      want('health')?`<label class="f"><span class="label">Health plan style</span>
+          <select class="inp" id="w_healthPlan">${Object.keys(HEALTH_PLANS).map(k=>
+            `<option value="${k}" ${cover.healthPlan===k?'selected':''}>${HEALTH_PLANS[k].name}</option>`).join('')}</select>
+          <span class="note">${HEALTH_PLANS[cover.healthPlan].blurb}</span></label>`:''
+    ].filter(Boolean).join('');
+
+    const extras=[
+      want('ip')?`<div class="decisive"><span class="label">Income protection starts paying after…</span>
+          <div style="margin-top:.4rem;font-size:14px">${[[13,'13 weeks'],[26,'26 weeks'],[52,'52 weeks']].map(([val,l])=>
+            `<label style="margin-right:1rem"><input type="radio" name="w_ipWait" value="${val}" ${cover.ipWait===val?'checked':''}> ${l}</label>`).join('')}</div>
+          <p class="note" style="margin-top:.35rem">A longer wait is cheaper, but the company carries the salary until it starts.</p></div>`:'',
+      want('health')?`<label class="check" style="align-items:flex-start"><input type="checkbox" id="w_dental" ${cover.dental?'checked':''}>
+          <span><b>Add dental &amp; vision</b><small>Routine dental, an eye test and a frames allowance, as a rider on the health plan. Small money, and the benefit staff notice every year.</small></span></label>`:''
+    ].filter(Boolean).join('');
+
+    const bandRows=basis.rows.filter(r=>r.count>0).map(r=>`<tr>
+        <td class="mono">${r.key}</td>
+        <td class="r mono">${r.count}</td>
+        <td style="width:52%"><div style="background:var(--surface2);border-radius:3px;height:14px;overflow:hidden">
+          <div style="width:${Math.round(r.count/maxBand*100)}%;height:100%;background:var(--blue)"></div></div></td>
+        <td class="r mono">${r.count?money(Math.round(r.payroll/r.count)):'—'}</td>
+      </tr>`).join('');
+
+    const costRows=cost.lines.map(l=>`<tr>
+        <td><b>${esc(l.label)}</b></td>
+        <td class="note">${esc(l.level)}</td>
+        <td class="r mono">${l.priced&&l.monthly!=null
+          ? money(Math.round(l.monthly))+'<span class="note"> /mo</span>'
+          : '<span class="pill age-ok">Priced by your adviser</span>'}</td>
+      </tr>`).join('');
+
+    body=`<div class="stack">
+      ${nothing?`<div class="alert"><b>No benefits selected.</b> Go back a step and tick at least one line to quote —
+        there is nothing to set a cover level on yet.</div>`:`
+      <div class="card stack">
+        <div>
+          <h2 style="font-size:1.05rem;color:var(--navy)">How much cover?</h2>
+          <p class="note" style="max-width:64ch">You picked <em>what</em> to quote. This is <em>how much</em> — and Guardian
+          cannot price group life or income protection without it. The defaults are what most employers here choose;
+          change anything and the basis below updates with it.</p>
+        </div>
+        <div class="fgrid">${controls}</div>
+        ${extras?`<div class="fgrid">${extras}</div>`:''}
+      </div>
+
+      <div class="card stack">
+        <div>
+          <h2 style="font-size:1.05rem;color:var(--navy)">The basis of your quote</h2>
+          <p class="note" style="max-width:66ch">${basis.source==='census'
+            ? `Read straight from the <b>${basis.lives}</b> employees in your file — real ages, real salaries, real dependants. This is exactly what Guardian rates against, so nothing here is a guess.`
+            : `Modelled from the averages you gave. <b>Upload your employee list at step 2</b> and every figure below becomes exact — age is the single biggest driver of what life and critical illness cost.`}</p>
+        </div>
+        <div class="stats">
+          <div class="card"><span class="label">Lives to insure</span><div class="v">${basis.lives}</div></div>
+          <div class="card"><span class="label">Insured payroll</span><div class="v" style="font-size:1.3rem">${money(Math.round(basis.payroll))}</div></div>
+          <div class="card"><span class="label">Average age</span><div class="v">${basis.avgAge?basis.avgAge.toFixed(1):'—'}</div></div>
+          ${want('life')?`<div class="card"><span class="label">Total sum assured</span><div class="v" style="font-size:1.3rem">${money(Math.round(basis.lifeSA))}</div></div>`:''}
+        </div>
+
+        <div>
+          <span class="label">Age distribution${basis.source==='estimate'?' (modelled)':''}</span>
+          <div class="tw" style="margin-top:.4rem">
+            <table><thead><tr><th>Band</th><th class="r">Staff</th><th>Spread</th><th class="r">Avg salary</th></tr></thead>
+            <tbody>${bandRows||'<tr><td colspan="4" class="note">No employee numbers yet.</td></tr>'}</tbody></table>
+          </div>
+        </div>
+
+        ${want('health')?`<div>
+          <span class="label">Who the health plan covers${basis.source==='census'?' (from your dependant column)':' (modelled from % with dependants)'}</span>
+          <p style="font-size:14px;margin-top:.3rem"><b>${basis.tiers.emp}</b> employee only ·
+             <b>${basis.tiers.plus1}</b> employee +1 · <b>${basis.tiers.fam}</b> family</p>
+        </div>`:''}
+
+        ${basis.fcl&&want('life')?`<div class="decisive"><span class="label">Free cover limit</span>
+          <p style="font-size:14px;margin-top:.3rem">${basis.overFCL
+            ? `<b>${basis.overFCL}</b> ${basis.overFCL===1?'employee is':'employees are'} insured above the ${money(basis.fcl)} free cover limit and would complete a short health declaration. Everyone else goes on risk from day one.`
+            : `Every employee sits under the ${money(basis.fcl)} free cover limit — the whole scheme goes on risk with no medical questions.`}</p></div>`:''}
+      </div>
+
+      <div class="card stack">
+        <div>
+          <h2 style="font-size:1.05rem;color:var(--navy)">What it costs</h2>
+          <p class="note" style="max-width:66ch">${cost.allPriced
+            ? 'An indicative monthly figure on the basis above. It is a budgeting number, not a quotation — the real one comes back from Guardian underwriting.'
+            : 'Everything going to Guardian, and the cover level each line is quoted at.'}</p>
+        </div>
+        <div class="tw">
+          <table><thead><tr><th>Benefit</th><th>Cover level</th><th class="r">Indicative cost</th></tr></thead>
+          <tbody>${costRows}</tbody>
+          ${cost.allPriced?`<tfoot><tr><td colspan="2"><b>Total</b></td>
+            <td class="r mono"><b>${money(Math.round(cost.total))}</b><span class="note"> /mo</span></td></tr></tfoot>`:''}
+          </table>
+        </div>
+        ${cost.allPriced?`<p class="note">Indicative only. Final rates depend on Guardian's underwriting of your actual
+          census, claims experience and plan wording, and will differ. No cover exists until a policy is issued and the
+          first premium paid.</p>`:''}
+        ${cost.allPriced?'':`
+        <div class="ok"><b>Your adviser returns the priced quotation.</b> Guardian rates a group on its real census —
+          ages, salaries, dependants and occupations — so the honest answer for the insured benefits is the basis above,
+          not a number we made up here. Everything you have set is on its way to them; the quotation comes back benefit
+          by benefit, and you approve it line by line.</div>`}
+      </div>`}
+    </div>`;
+  }
+  if(WIZ.step===7){
     const R=WIZ.rec||{};
     const yn=(x)=>x===true?'Yes':x===false?'No':'Not sure';
     const sick={0:'No formal policy',1:'About a month',3:'About 3 months',6:'6 months or more'}[v(d.sickPay,0)]||'—';
@@ -1192,12 +1550,25 @@ Employee, Date of Birth, Gender, Annual Salary, Dependants, Employment Type">${e
       ['Willing trustees',yn(d.trustee)],['Union / tender requires a plan',yn(d.union)]])}
     ${sec('To be quoted',5,[
       ['Lines',(d.incl&&d.incl.length)?d.incl.map(l=>`<span class="pill s-assigned" style="margin-right:.3rem">${l}</span>`).join(''):'<span class="pill age-warn">Nothing selected</span>']])}
+    ${(()=>{
+      const cv=coverOf(d), w=k=>(d.incl||[]).includes(LINE_NAMES[k]), bs=ratingBasis(d), rows=[];
+      if(w('life'))   rows.push(['Group life',cv.lifeMult+'× salary — '+money(Math.round(bs.lifeSA))+' total sum assured']);
+      if(w('ci'))     rows.push(['Critical illness',money(cv.ciSum)+' lump sum each']);
+      if(w('ip'))     rows.push(['Income protection',cv.ipPct+'% of salary, after '+cv.ipWait+' weeks']);
+      if(w('health')) rows.push(['Health plan',HEALTH_PLANS[cv.healthPlan].name+(cv.dental?' + dental &amp; vision':'')]);
+      if(w('pension'))rows.push(['Pension',(v(d.erPct,0))+'% employer contribution']);
+      if(!rows.length) return '';
+      rows.push(['Rating basis',bs.source==='census'
+        ? `<b style="color:var(--go)">${bs.lives} lives from your census</b> — average age ${bs.avgAge.toFixed(1)}, insured payroll ${money(Math.round(bs.payroll))}`
+        : `Modelled from averages — ${bs.lives} lives, average age ${bs.avgAge.toFixed(1)}`]);
+      return sec('Cover levels',6,rows);
+    })()}
     <div class="card">
       <label class="f"><span class="label">Anything else the adviser should know?</span>
         <textarea class="inp" id="w_notes" placeholder="Renewal dates, current provider, what is prompting the review.">${esc(v(d.notes,''))}</textarea></label>
     </div>`;
   }
-  return `<div class="stack">${head}${body}${nav(WIZ.step===6)}</div>`;
+  return `<div class="stack">${head}${body}${nav(WIZ.step===7)}</div>`;
 }
 
 function submitWizard(){
@@ -1228,6 +1599,9 @@ function submitWizard(){
     forfeiture:d.forfeiture, existing:d.existing||'none', union:d.union, trustee:d.trustee,
     erPct:d.erPct, eePct:null, turnover:d.turnover||null,
     fieldPct:d.fieldPct, depPct:d.depPct, sickPay:d.sickPay, rec:WIZ.rec,
+    cover:coverOf(d), basis:(()=>{const b=ratingBasis(d);
+      return {source:b.source,lives:b.lives,payroll:b.payroll,avgAge:b.avgAge,
+              lifeSA:b.lifeSA,ipMonthly:b.ipMonthly,tiers:b.tiers,fcl:b.fcl,overFCL:b.overFCL};})(),
     notes:d.notes||'',
     events: staffMode
       ? [{k:'created',b:`Entered by ${ME[role].name} on behalf of ${d.contact||'the client'}.`,d:new Date(),vis:true},
@@ -1405,6 +1779,7 @@ function detail(){
         <div class="card">
           <h2 style="font-size:1.1rem;color:var(--navy)">What they asked for</h2>
           <p style="margin-top:.4rem;font-size:14px">${r.lines.join(' · ')}</p>
+          ${r.cover&&coverSummaryText(r)?`<p class="note" style="margin-top:.35rem"><b>At these levels:</b> ${esc(coverSummaryText(r))}</p>`:''}
           <dl class="kv">
             <div><dt class="label">Employees</dt><dd class="mono">${r.staff}</dd></div>
             <div><dt class="label">Average salary</dt><dd class="mono">${money(r.salary)}</dd></div>
@@ -1412,6 +1787,8 @@ function detail(){
             <div><dt class="label">Annual turnover</dt><dd class="mono">${r.turnover}%</dd></div>
             <div><dt class="label">Age split</dt><dd class="mono">${r.ages.join('/')}</dd></div>
             <div><dt class="label">Tiers (1/+1/fam)</dt><dd class="mono">${r.tiers.join('/')}</dd></div>
+            ${r.basis?`<div><dt class="label">Rating basis</dt><dd class="mono">${r.basis.source==='census'?'Census':'Estimated'} · avg age ${r.basis.avgAge.toFixed(1)}</dd></div>`:''}
+            ${r.basis&&r.basis.lifeSA?`<div><dt class="label">Total sum assured</dt><dd class="mono">${money(Math.round(r.basis.lifeSA))}</dd></div>`:''}
           </dl>
         </div>
         ${r.census?`<div class="card">
@@ -1520,7 +1897,7 @@ const RAI_KB=[
  {k:['minimum','how many','small company','staff size','qualify'],
   a:'Guardian\'s group plans start at 10 employees for both health and life cover. Smaller than that? Individually-owned plans (like Section 134 retirement contracts) have no minimum — worth a conversation with the adviser about what fits.'},
  {k:['cost','price','premium','how much','expensive','rate'],
-  a:'Premiums depend on your workforce — ages, salaries, dependants, and which benefits you choose — so I can\'t quote a number here. That\'s exactly what the request produces: submit your details (or upload your census for precision) and your adviser returns a full quotation with options. Seeing the number costs nothing and commits you to nothing.'},
+  a:'Premiums depend on your workforce — ages, salaries, dependants — and on the cover levels you choose. Step 6 of the request, "Cover levels & what it costs", shows you exactly what Guardian rates against: how many staff sit in each age band, your insured payroll, the total sum assured at the multiple you picked, and how many take single, +1 or family cover. Upload your census at step 2 and every one of those figures is read from your real data rather than modelled. Your adviser then returns the priced quotation on that basis, benefit by benefit. Seeing the number costs nothing and commits you to nothing.'},
  {k:['human','person','adviser','talk','call','contact','ricky','agent'],
   a:'Of course — real people are the point. Your request is handled by the Ricky Rampersad Branch of Guardian Life in Chaguanas. Submit and an adviser contacts you directly, or add a note asking for a call and they\'ll ring you. I\'m just here for the quick questions in between.'},
 ];
