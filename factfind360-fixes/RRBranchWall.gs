@@ -149,10 +149,9 @@ function rrbWall(e) {
   // Sunday counts. A branch that works the weekend should see it said out loud.
   var weekend = { week: 0, month: 0 }, weekendWho = {};
   // The production board: applications taken, clients, products and API.
-  var prod = { mtd: { apps: 0, clients: 0, api: 0, submitted: 0, subCases: 0,
+  var prod = { mtd: { apps: 0, clients: 0, api: 0, apiRec: 0, subCases: 0,
                       pipeline: 0, stale: 0, staleCases: 0, open: 0, assumed: 0, cases: 0 },
-               wtd: { apps: 0, clients: 0, api: 0, submitted: 0, pipeline: 0,
-                      assumed: 0, cases: 0 } };
+               wtd: { apps: 0, clients: 0, api: 0, pipeline: 0, assumed: 0, cases: 0 } };
   var products = {};
   var agents = {}, monthAgents = {}, managers = {}, approvals = [];
 
@@ -234,8 +233,8 @@ function rrbWall(e) {
         if (apps && !isLost) {
           prod.mtd.apps += apps; prod.mtd.clients++;
           if (isClosed) prod.mtd.api += apiTaken;
-          else if (isSubmitted) { prod.mtd.submitted += apiTaken; prod.mtd.subCases++; }
           else {
+            if (isSubmitted) prod.mtd.subCases++;
             prod.mtd.pipeline += apiTaken;
             prod.mtd.open++;
             // How much has been sitting unanswered too long to still be believed.
@@ -243,6 +242,7 @@ function rrbWall(e) {
             if (ageD >= 14) { prod.mtd.stale += apiTaken; prod.mtd.staleCases++; }
           }
         }
+        prod.mtd.apiRec += api;
         prod.mtd.cases++;
         Object.keys(prodSeen).forEach(function (k) {
           if (!products[k]) products[k] = { name: k, apps: 0, api: 0 };
@@ -252,14 +252,17 @@ function rrbWall(e) {
         if (agent) {
           if (!monthAgents[agent]) monthAgents[agent] =
             { name: agent, count: 0, premium: 0, cover: 0, need: 0,
-              api: 0, submitted: 0, pipeline: 0, apps: 0, sold: 0 };
+              apiRec: 0, pickedUp: 0, pipeline: 0, apps: 0, sold: 0 };
           monthAgents[agent].count++;
+          monthAgents[agent].apiRec  += api;
           monthAgents[agent].sold    += sold;
           monthAgents[agent].premium += prem;
           monthAgents[agent].cover   += amt;
           monthAgents[agent].need    += need;
-          if (isClosed) monthAgents[agent].api += apiTaken;
-          else if (isSubmitted) monthAgents[agent].submitted += apiTaken;
+          // Submitted is not a separate column any more — an application with
+          // head office is still money that has not arrived, so it sits in
+          // pipeline until it is picked up.
+          if (isClosed) monthAgents[agent].pickedUp += apiTaken;
           else if (!isLost) monthAgents[agent].pipeline += apiTaken;
           monthAgents[agent].apps    += apps;
         }
@@ -268,23 +271,24 @@ function rrbWall(e) {
         week.need += need; week.cover += amt; week.api += api;
         if (apps && !isLost) {
           prod.wtd.apps += apps; prod.wtd.clients++;
-          if (isClosed) prod.wtd.api += apiTaken;
-          else if (isSubmitted) prod.wtd.submitted += apiTaken;
-          else prod.wtd.pipeline += apiTaken;
+          if (isClosed) prod.wtd.api += apiTaken; else prod.wtd.pipeline += apiTaken;
         }
         prod.wtd.cases++;
         if (isWeekend) { weekend.week++; if (agent) weekendWho[agent] = (weekendWho[agent] || 0) + 1; }
         if (agent) {
           if (!agents[agent]) agents[agent] =
             { name: agent, count: 0, premium: 0, cover: 0, need: 0,
-              api: 0, submitted: 0, pipeline: 0, apps: 0, sold: 0 };
+              apiRec: 0, pickedUp: 0, pipeline: 0, apps: 0, sold: 0 };
           agents[agent].count++;
+          agents[agent].apiRec  += api;
           agents[agent].sold    += sold;
           agents[agent].premium += prem;
           agents[agent].cover   += amt;
           agents[agent].need    += need;
-          if (isClosed) agents[agent].api += apiTaken;
-          else if (isSubmitted) agents[agent].submitted += apiTaken;
+          // Submitted is not a separate column any more — an application with
+          // head office is still money that has not arrived, so it sits in
+          // pipeline until it is picked up.
+          if (isClosed) agents[agent].pickedUp += apiTaken;
           else if (!isLost) agents[agent].pipeline += apiTaken;
           agents[agent].apps    += apps;
         }
@@ -385,13 +389,13 @@ function rrbWall(e) {
     // The production board. API is annualised from the premium mode.
     production: {
       mtd: { apps: prod.mtd.apps, clients: prod.mtd.clients,
-             api: Math.round(prod.mtd.api),
-             submitted: Math.round(prod.mtd.submitted), subCases: prod.mtd.subCases,
+             api: Math.round(prod.mtd.api), apiRec: Math.round(prod.mtd.apiRec),
+             subCases: prod.mtd.subCases,
              pipeline: Math.round(prod.mtd.pipeline),
              stale: Math.round(prod.mtd.stale), staleCases: prod.mtd.staleCases,
              open: prod.mtd.open, cases: prod.mtd.cases },
       wtd: { apps: prod.wtd.apps, clients: prod.wtd.clients,
-             api: Math.round(prod.wtd.api), submitted: Math.round(prod.wtd.submitted),
+             api: Math.round(prod.wtd.api),
              pipeline: Math.round(prod.wtd.pipeline), cases: prod.wtd.cases },
       products: Object.keys(products).map(function (k) {
         return { name: k, apps: products[k].apps, api: Math.round(products[k].api) };
