@@ -1,0 +1,274 @@
+# Query Pal — patching v10.2 → v10.3-HARDENED
+
+Your `Code.gs` is the source of truth and stays yours. Nothing below replaces it;
+every change is a small find-and-replace, and all the new code lives in a separate
+file so the logo array and the 1,500 lines around it are never touched.
+
+**Step 1.** In the Apps Script editor: `+` → `Script` → name it **`QueryPalPatch`**.
+Paste the whole of `QueryPalPatch.gs` into it. Save.
+
+**Step 2.** Make the nine edits below in `Code.gs`.
+
+**Step 3.** Deploy → Manage deployments → pencil → Version: **New version** → Deploy.
+
+**Step 4.** Run `qpSelfCheck()` in the editor. It changes nothing and prints what loaded.
+
+---
+
+## The nine edits
+
+### 1 — `getVersion` (line ~30)
+
+```js
+function getVersion(){ return 'v10.2-CLIENT-PORTAL'; }
+```
+becomes
+```js
+function getVersion(){ return 'v10.3-HARDENED'; }
+```
+
+---
+
+### 2 — `doPost`: route on the server, and take sign-in off the URL
+
+Find, near the top of `doPost`:
+```js
+    const d = JSON.parse(e.postData.contents);
+    if (d.action === 'rai') return raiProxy_(d);           // optional AI assistant proxy
+```
+Replace with:
+```js
+    const d = JSON.parse(e.postData.contents);
+    if (d.action === 'rai') return raiProxy_(d);           // optional AI assistant proxy
+    if (d.action === 'agentauth') return qpAgentAuthPost_(d);   // sign-in, so no password rides in the URL
+
+    // Decide the destination here, from the query type. Whatever department the
+    // browser claimed is discarded — the webhook is public and its URL is in the page.
+    if (!qpApplyRoute_(d)) return json({ ok:false, error:'Unknown query type — nothing was sent.' });
+    if (!qpRateLimit_('post', 30, 60)) return json({ ok:false, error:'Too many requests just now — try again in a minute.' });
+```
+
+---
+
+### 3 — `doPost`: stop two submissions taking the same reference
+
+The next number is read under a lock that is released before the row is written,
+so two people submitting at once can get the same one.
+
+Find:
+```js
+    const runNo = nextRunNo(sh);
+```
+Replace with:
+```js
+    const qpLock = LockService.getScriptLock();
+    qpLock.waitLock(20000);
+    const runNo = nextRunNo(sh);
+```
+
+Then find the end of that block:
+```js
+    d.reference = reference;
+    if (SEND_EMAIL && d.departmentEmail) sendRoutedEmail(d);
+```
+Replace with:
+```js
+    SpreadsheetApp.flush();
+    qpLock.releaseLock();
+
+    d.reference = reference;
+    if (SEND_EMAIL && d.departmentEmail) sendRoutedEmail(d);
+```
+
+---
+
+### 4 — `doGet`: add the wall, and pass a session token to the dashboard
+
+Find:
+```js
+  if (p.action === 'myqueries') return myQueries_(p.code);
+```
+Replace with:
+```js
+  if (p.action === 'myqueries') return myQueries_(p.token ? (qpAgentFromToken_(p.token)||{}).code || p.code : p.code);
+  if (p.action === 'wall')      return wallStats_(p.code, p.token, p.days);
+```
+
+---
+
+### 5 — `sendRoutedEmail`: attach documents, and list them properly
+
+Find:
+```js
+  var attachNote = '';
+  if (d.attachPdf || d.attachId){
+    var parts = [];
+    if (d.attachPdf) parts.push('the completed, signed form');
+    if (d.attachId) parts.push((d.attachIdName && d.attachIdName.indexOf('RCC_Card')===0) ? 'a photo of the credit card' : 'a valid photo ID');
+    attachNote = row('Attached', '&#128206; ' + parts.join(' and '));
+  }
+```
+Replace with:
+```js
+  var qpAtt = qpBuildAttachments_(d);
+  var attachNote = qpAttachNote_(d, qpAtt, row);
+```
+
+Then find, further down:
+```js
+  // Attachments
+  var attachments = [];
+  if (d.attachPdf){ try{ attachments.push(Utilities.newBlob(Utilities.base64Decode(d.attachPdf),'application/pdf', d.attachPdfName||'form.pdf')); }catch(e){} }
+  if (d.attachId){ try{ attachments.push(Utilities.newBlob(Utilities.base64Decode(d.attachId),'image/jpeg', d.attachIdName||'ID.jpg')); }catch(e){} }
+```
+Replace with:
+```js
+  var attachments = qpAtt.blobs;      // built above — documents as well as photos
+```
+
+---
+
+### 6 — `sendRoutedEmail`: escape what people typed
+
+Names, subjects and policy numbers go into the HTML body unescaped, so a stray
+`<` in a client name breaks the layout of what the department receives. Find:
+```js
+  +     row('Subject', d.subject)
+  +     row('Logged by', d.loggedBy + (d.client||d.name ? ' &mdash; '+(d.client||d.name) : ''))
+  +     row('Policy / App', d.policy)
+  +     row('Servicing agent', d.agent)
+```
+Replace with:
+```js
+  +     row('Subject', esc(d.subject))
+  +     row('Logged by', esc(d.loggedBy) + (d.client||d.name ? ' &mdash; '+esc(d.client||d.name) : ''))
+  +     row('Policy / App', esc(d.policy))
+  +     row('Servicing agent', esc(d.agent))
+```
+
+And the description, which currently escapes `<` only:
+```js
+white-space:pre-wrap;">'+ (d.description||'').replace(/</g,'&lt;') +'</div>'
+```
+becomes
+```js
+white-space:pre-wrap;">'+ esc(d.description) +'</div>'
+```
+
+---
+
+### 7 — `managerForAgent`: reach the ten agents it currently misses
+
+Find the whole function:
+```js
+function managerForAgent(agentName){
+  if(!agentName) return DEFAULT_MANAGER;
+  var key = agentName.toLowerCase().replace(/[-.]/g,' ').replace(/\s+/g,' ').trim();
+  return AGENT_MANAGER[key] || DEFAULT_MANAGER;
+}
+```
+Replace with:
+```js
+function managerForAgent(agentName){
+  return qpManagerFor_(agentName);          // alias-aware — see QueryPalPatch
+}
+```
+
+---
+
+### 8 — `agentAuth_`: require the password, throttle the guessing
+
+Find the whole function:
+```js
+function agentAuth_(code, pwd) {
+  var me = findAgent_(code);
+  if (!me && pwd) me = findAgent_(pwd);          // master code typed in the password box
+  if (!me) return json({ ok: false });
+  if (me.src === 'tab') {                        // sheet rows need the matching password
+    var want = String(me.pwd || '').trim().toUpperCase();
+    var got = String(pwd || '').trim().toUpperCase();
+    if (want && got !== want) return json({ ok: false, why: 'pwd' });
+  }
+  return json({ ok: true, code: me.code, name: me.name, email: me.email, role: me.role });
+}
+```
+Replace with:
+```js
+function agentAuth_(code, pwd) {
+  var tried = String(code || pwd || '').toUpperCase().substring(0, 24);
+  if (!qpRateLimit_('auth_' + tried, QP_AUTH_MAX, QP_AUTH_WIN)) return json({ ok: false, why: 'rate' });
+
+  var me = findAgent_(code);
+  if (!me && pwd) me = findAgent_(pwd);          // master code typed in the password box
+  if (!me) return json({ ok: false });
+  if (me.src === 'tab') {                        // sheet rows carry their own password
+    var want = String(me.pwd || '').trim().toUpperCase();
+    var got = String(pwd || '').trim().toUpperCase();
+    if (want && got !== want) return json({ ok: false, why: 'pwd' });
+  } else {
+    var why = qpCheckPassword_(me, pwd);         // script-list codes: hashed password
+    if (why) return json({ ok: false, why: why });
+  }
+  return json({ ok: true, token: qpIssueToken_(me), code: me.code, name: me.name, email: me.email, role: me.role });
+}
+```
+
+---
+
+### 9 — `autoSweep`: keep chasing work that is in progress
+
+A query moved to "In Progress", "Pending" or "Acknowledged" is never chased
+again and never surveyed — it sits silently forever. Find:
+```js
+    if (status && status.indexOf('open') === -1) continue;   // blank or Open = live case
+```
+Replace with:
+```js
+    // anything not closed is still owed an answer — "In Progress", "Pending" and
+    // "Acknowledged" all keep getting chased. Only these opt out.
+    if (/cancel|withdraw|duplicate|on hold/.test(status)) continue;
+```
+
+---
+
+## Two more worth doing, not required
+
+**`raiProxy_`** — the assistant endpoint is unauthenticated and spends your
+Anthropic credits. Right after `try {`, add:
+```js
+    if (!qpRateLimit_('rai_all', 200, 3600)) return json({ reply: null, why: 'rate' });
+```
+And the model id `claude-sonnet-4-6` should be `claude-sonnet-5`.
+
+**The duplicate `normName_`.** It is declared twice — once near the roles section
+and again in the v8.1 block as `replace(/[^a-z]/g,'')`. The second wins
+everywhere, so `"Ricky Rampersad"` normalises to `rickyrampersad` with no space,
+while `roleFromHierarchy_` and the manager branch of `myQueries_` compare against
+`mv.split('@')[0].replace(/\./g,' ')`, which keeps the space. Those comparisons
+can never match, so a manager whose codes row has no email never resolves their
+team. Deleting the **second** definition restores the intended behaviour — but
+check your codes tab first, since some matching may have grown to depend on the
+stricter version.
+
+---
+
+## After deploying
+
+1. Open the webhook URL — it should say `v10.3-HARDENED`.
+2. Run `qpSelfCheck()` — confirms 60 routes, lists any agent still without a manager.
+3. Set `TEST_MODE = true`, send one query with a PDF attached, confirm it arrives, set it back.
+4. Passwords, when you are ready: run `bootstrapAgentPasswords()` (prints every
+   password **once**), hand them out, then set `QP_REQUIRE_PASSWORD = true` in
+   QueryPalPatch and redeploy. Until that flag flips, anyone without a password
+   signs in exactly as before, so nobody is locked out mid-rollout.
+5. Six agents still have no manager on the hierarchy — Diane Lutchman-Statham,
+   Ganesh Khodai, Jonathan Pantin, Janice Phillip, Kamla Dookran, Roberta Laltoo.
+   Add them to `AGENT_MANAGER` and their routed emails will copy the right person.
+
+## One small thing on the site
+
+`Motor or Home Claim - Follow-up` routes to `GGILPCClaims@myguardiangroup.com`,
+which has no entry in the `DEPT` map in `index.html` — so that request type
+currently shows the raw email address as its department name. Adding
+`'GGILPCClaims@myguardiangroup.com':'GGIL P&C Claims',` to that map fixes it.
+The patch file already carries the name for the emails it sends.

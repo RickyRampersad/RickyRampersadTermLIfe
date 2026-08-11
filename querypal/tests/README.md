@@ -7,7 +7,8 @@ until their code is ported onto it.
 |---|---|
 | `attachments.browser` | **runs** — 26 assertions on the live `index.html` |
 | `wall.browser` | **runs** — 33 assertions on `wall.html` |
-| `attachments.backend`, `routing`, `security`, `wall` | skip — need `QueryPal_Backend_v10.gs` |
+| `patch` | **runs** — 46 assertions on `QueryPalPatch.gs` with the real agent tables |
+| `attachments.backend`, `routing`, `security`, `wall` | skip — superseded by `patch.test.js`; kept for the full-file port |
 | `leaderboard.browser`, `signin.browser` | skip — features not yet ported to the live `index.html` |
 
 The repo was seeded from an old archive (frontend v27.2, script v6.9-COLOR-CODE)
@@ -40,6 +41,9 @@ node wall.test.js
 
 # wall — all seven panels rendered in Chromium, gating and range switching
 NODE_PATH=/opt/node22/lib/node_modules node wall.browser.test.mjs
+
+# patch file — routing table vs the live catalog, attachments, managers, passwords
+node patch.test.js
 ```
 
 Each prints `N passed, 0 failed` and exit non-zero on failure. Test fixtures
