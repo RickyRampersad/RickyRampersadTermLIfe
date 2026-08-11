@@ -183,7 +183,8 @@
                   letter-spacing:.07em; text-transform:uppercase; margin-top:.1em}
   .lrow.lead .met b{color:var(--gold)}
   .prow .met.pipe b{color:var(--violet)}
-  .prow{display:grid; grid-template-columns:1.5em 2.5em 1fr repeat(7,minmax(4.2em,auto));
+  .prow .met.subm b{color:var(--blue)}
+  .prow{display:grid; grid-template-columns:1.4em 2.3em 1fr repeat(8,minmax(3.9em,auto));
         align-items:center; gap:.7em; padding:.42em 0}
   .prow + .prow{border-top:1px solid rgba(255,255,255,.045)}
   .prow .met{text-align:right}
@@ -192,7 +193,7 @@
                   letter-spacing:.06em; text-transform:uppercase; margin-top:.1em}
   .prow .met.sold b{color:var(--teal)}
   .prow .met.api b{color:var(--gold)}
-  .phead{display:grid; grid-template-columns:1.5em 2.5em 1fr repeat(7,minmax(4.2em,auto));
+  .phead{display:grid; grid-template-columns:1.4em 2.3em 1fr repeat(8,minmax(3.9em,auto));
          gap:.7em; font-size:.56em; letter-spacing:.13em; text-transform:uppercase;
          color:var(--ink-4); font-weight:800; padding-bottom:.35em; border-bottom:1px solid var(--line)}
   .phead div:nth-child(n+4){text-align:right}
@@ -321,12 +322,12 @@
     <div class="stats">
       <div class="stat g"><div class="k">API closed</div><div class="val num" id="prApi">—</div><div class="s" id="prApiSub">confirmed issued</div></div>
       <div class="stat v"><div class="k">In pipeline</div><div class="val num" id="prPipe">—</div><div class="s" id="prPipeSub">client said yes, not yet confirmed</div></div>
-      <div class="stat"><div class="k">Applications</div><div class="val num" id="prApps">0</div><div class="s" id="prCliSub">across the month</div></div>
+      <div class="stat"><div class="k">Submitted</div><div class="val num" id="prSub2">—</div><div class="s" id="prSubSub">with head office, not yet picked up</div></div>
     </div>
     <div class="card grow">
       <h2><span>Producer board</span><em id="prSub">month to date</em></h2>
       <div class="phead"><div></div><div></div><div>Advisor</div><div>Fact finds</div>
-        <div>Need found</div><div>Recommended</div><div>Sold</div><div>Apps</div><div>Pipeline</div><div>API closed</div></div>
+        <div>Need found</div><div>Recommended</div><div>Sold</div><div>Apps</div><div>Pipeline</div><div>Submitted</div><div>Picked up</div></div>
       <div class="rows grow" id="prProd" style="margin-top:.35em"></div>
     </div>
   </section>
@@ -337,7 +338,7 @@
     <div class="card grow">
       <h2><span>Producer board</span><em id="mRaceSub">this week</em></h2>
       <div class="phead"><div></div><div></div><div>Advisor</div><div>Fact finds</div>
-        <div>Need found</div><div>Recommended</div><div>Sold</div><div>Apps</div><div>Pipeline</div><div>API closed</div></div>
+        <div>Need found</div><div>Recommended</div><div>Sold</div><div>Apps</div><div>Pipeline</div><div>Submitted</div><div>Picked up</div></div>
       <div class="rows grow" id="mRace" style="margin-top:.35em"></div>
     </div>
   </section>
@@ -369,6 +370,10 @@ var POLL_MS = 40000, ROTATE_MS = 15000, STALE_MS = 150000, PANELS = 8;
 var lastGood=null, lastAt=0, panel=0, lastJustIn='', prevRank={}, seenApprovals={}, firstPaint=true;
 
 function $(id){ return document.getElementById(id); }
+/* Writing text into an element that no longer exists throws, and on a wall
+   that runs unattended one throw blanks every panel. Renaming a tile has now
+   done this twice, so it goes through here instead. */
+function setText(id, s){ var el=$(id); if(el) el.textContent=s; }
 function money(n){
   if(!n) return 'TT$0';
   if(n>=1000000) return 'TT$'+(n/1000000).toFixed(n>=10000000?0:1)+'M';
@@ -398,11 +403,11 @@ function tick(){
   var d=new Date(), h=d.getHours(), m=String(d.getMinutes()).padStart(2,'0');
   var ap=h>=12?'pm':'am'; h=h%12||12;
   $('clock').firstChild.nodeValue=h+':'+m;
-  $('date').textContent=ap+' · '+d.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'});
+  setText('date', ap+' · '+d.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'}));
   var age=Date.now()-lastAt, dot=$('dot');
-  if(!lastGood){dot.className='dot dead'; $('liveTxt').textContent='Connecting';}
-  else if(age>STALE_MS){dot.className='dot stale'; $('liveTxt').textContent='Reconnecting';}
-  else {dot.className='dot'; $('liveTxt').textContent='Live';}
+  if(!lastGood){dot.className='dot dead'; setText('liveTxt', 'Connecting');}
+  else if(age>STALE_MS){dot.className='dot stale'; setText('liveTxt', 'Reconnecting');}
+  else {dot.className='dot'; setText('liveTxt', 'Live');}
 }
 
 function celebrate(name){
@@ -503,7 +508,8 @@ function producerRows(list, box, key, rankOn){
       '<div class="met sold"><b>'+big(a.sold||0)+'</b><span>sold</span></div>'+
       '<div class="met"><b>'+(a.apps||0)+'</b><span>apps</span></div>'+
       '<div class="met pipe"><b>'+big(a.pipeline||0)+'</b><span>pipeline</span></div>'+
-      '<div class="met api"><b>'+big(a.api||0)+'</b><span>API closed</span></div></div>';
+      '<div class="met subm"><b>'+big(a.submitted||0)+'</b><span>submitted</span></div>'+
+      '<div class="met api"><b>'+big(a.api||0)+'</b><span>picked up</span></div></div>';
   }).join('');
   var nm=box.querySelectorAll('.nm');
   sorted.slice(0,7).forEach(function(a,i){ if(nm[i]) nm[i].textContent=a.name; prevRank[key+a.name]=i; });
@@ -539,7 +545,7 @@ function renderSpotlight(d){
 
   $('cheer').innerHTML=lines.slice(0,6).map(function(l){
     return '<div class="cline"><div class="em">'+l[0]+'</div><div class="tx">'+l[1]+'</div></div>'; }).join('');
-  $('cheerSub').textContent=(d.month&&d.month.label)||'';
+  setText('cheerSub', (d.month&&d.month.label)||'');
 }
 
 /* Headline per panel — the number leads, not the label. */
@@ -562,9 +568,10 @@ function headlines(d){
   set('t_p6', WK.week>0 ? '<b>'+WK.week+'</b> done at the weekend'
                         : (W.submitted? '<b>'+W.submitted+'</b> this week' : 'A fresh week'));
   var PR=(d.production&&d.production.mtd)||{api:0,apps:0};
-  set('t_p7', PR.api>0 ? '<b>'+big(PR.api)+'</b> of API closed this month'
+  set('t_p7', PR.api>0 ? '<b>'+big(PR.api)+'</b> of API picked up this month'
+             : (PR.submitted>0 ? '<b>'+big(PR.submitted)+'</b> submitted, none picked up yet'
              : (PR.pipeline>0 ? '<b>'+big(PR.pipeline)+'</b> sitting in pipeline'
-                              : 'Production opens with the first application'));
+                              : 'Production opens with the first application')));
 }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){
   return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
@@ -585,13 +592,13 @@ function render(d){
   countTo($('hNeed'), M.need||0, big);
   countTo($('hCover'), M.cover||0, big);
   countTo($('hPrem'), M.premium||0, money);
-  $('hNeedSub').textContent = (M.submitted||0)+' fact finds this month have documented this much unmet need';
+  setText('hNeedSub', (M.submitted||0)+' fact finds this month have documented this much unmet need');
   richRows(d.leaders||[], $('leaders'), 'w');
-  $('motto').textContent = motto(d);
+  setText('motto', motto(d));
 
   /* 6 · the month race */
   producerRows(d.leaders||[], $('mRace'), 'wk', 'api');
-  $('mRaceSub').textContent='this week · ranked on API closed';
+  setText('mRaceSub', 'this week · ranked on API closed');
 
   /* 7 · the week */
   countTo($('wSub'), W.submitted||0);
@@ -628,18 +635,20 @@ function render(d){
   countTo($('prApps'), MT.apps||0);
 
   countTo($('prPipe'), MT.pipeline||0, big);
-  $('prApiSub').textContent='confirmed issued · '+(M.label||'month to date');
-  $('prPipeSub').textContent=(MT.open||0)+' case(s) awaiting an answer'+
-    ((MT.staleCases>0)?' · '+big(MT.stale)+' over 14 days':'');
-  $('prCliSub').textContent=(MT.clients||0)+' clients · '+(MT.cases||0)+' fact finds';
+  countTo($('prSub2'), MT.submitted||0, big);
+  setText('prSubSub', (MT.subCases||0)+' case(s) with head office');
+  setText('prApiSub', 'confirmed issued · '+(M.label||'month to date'));
+  setText('prPipeSub', (MT.open||0)+' case(s) awaiting an answer'+
+    ((MT.staleCases>0)?' · '+big(MT.stale)+' over 14 days':''));
+  setText('prCliSub', (MT.clients||0)+' clients · '+(MT.cases||0)+' fact finds');
   producerRows(d.monthLeaders||[], $('prProd'), 'mo', 'api');
-  $('prSub').textContent=(M.label||'month to date')+' · ranked on API closed';
+  setText('prSub', (M.label||'month to date')+' · ranked on API closed');
 
   /* 3 · recognition */
   renderSpotlight(d);
 
   /* 2 · momentum */
-  $('mLbl').textContent=(d.month&&d.month.label)||'This month';
+  setText('mLbl', (d.month&&d.month.label)||'This month');
   countTo($('mSub'), d.month.submitted);
   countTo($('mApp'), d.month.approved||0);
   countTo($('mPrem'), d.month.premium, money);
@@ -673,8 +682,8 @@ function render(d){
   /* 3 · branch */
   var q=d.queue;
   countTo($('qPending'), q.pending);
-  $('qOldest').textContent=q.pending? q.oldestDays+'d' : '—';
-  $('qOldestWho').textContent=q.pending? 'with '+q.oldestWho : 'nothing waiting';
+  setText('qOldest', q.pending? q.oldestDays+'d' : '—');
+  setText('qOldestWho', q.pending? 'with '+q.oldestWho : 'nothing waiting');
   countTo($('qBreach'), q.breaching);
   $('qBreach').className='val num'+(q.breaching?' bad':'');
 
@@ -702,9 +711,9 @@ function render(d){
   mp.forEach(function(m){ tApp+=m.approved; tRet+=m.returned; if(m.medianDays!==null) allD.push(m.medianDays); });
   allD.sort(function(a,b){return a-b;});
   var med = allD.length ? (allD.length%2 ? allD[(allD.length-1)/2] : (allD[allD.length/2-1]+allD[allD.length/2])/2) : null;
-  $('pMed').textContent = med===null ? '—' : (Math.round(med*10)/10)+'d';
+  setText('pMed', med===null ? '—' : (Math.round(med*10)/10)+'d');
   countTo($('pApp'), tApp); countTo($('pRet'), tRet);
-  $('pRetPct').textContent = (tApp+tRet) ? Math.round(tRet/(tApp+tRet)*100)+'% of decided cases' : 'for changes';
+  setText('pRetPct', (tApp+tRet) ? Math.round(tRet/(tApp+tRet)*100)+'% of decided cases' : 'for changes');
 
   $('perf').innerHTML = mp.length ? mp.map(function(m){
     var av=avatar(m.name);

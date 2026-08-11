@@ -1055,7 +1055,14 @@ function rrbCaseOutcome(e) {
   if (!row) return rrbPage_('Not found', '<p>That case is no longer on the sheet.</p>', 'err');
   var d = ffReadRow_(sheet, headers, row);
 
-  var label = v === 'issued' ? 'Issued' : v === 'lost' ? 'Not proceeding' : 'Still working';
+  // Three real stages, because submitted and picked up are not the same thing.
+  // An application with head office is not money; a policy delivered and paid
+  // for is. Counting the first as production is how a branch reports a number
+  // it later has to walk back.
+  var label = v === 'pickedup' ? 'Picked up'
+            : v === 'submitted' ? 'Submitted'
+            : v === 'lost' ? 'Not proceeding'
+            : 'Still working';
   var now = new Date().toISOString();
   var merged = {};
   Object.keys(d).forEach(function (k) { merged[k] = d[k]; });
@@ -1068,15 +1075,15 @@ function rrbCaseOutcome(e) {
 
   var client = rrbEsc_(_str(d.clientName) || 'this client');
 
-  if (v === 'issued') {
+  if (v === 'pickedup') {
     // A policy number is what makes this reconcilable against head office.
     var noteTok = '';
     try { noteTok = rrbMintToken(chk.payload.id, 'policy',
       { name: merged.caseOutcomeBy, email: _str(d.agentEmail) }); } catch (err) {}
     return rrbPage_('Recorded',
-      '<div style="font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#0F766E">Issued</div>' +
+      '<div style="font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#0F766E">Picked up</div>' +
       '<div style="font-size:21px;font-weight:800;margin:6px 0 4px">' + client + '</div>' +
-      '<p style="color:#475569;margin:0 0 16px;font-size:14px">This has moved from pipeline into ' +
+      '<p style="color:#475569;margin:0 0 16px;font-size:14px">Delivered and paid. This is now ' +
       'closed API on the branch board.</p>' +
       (noteTok
         ? '<form action="' + rrbAppUrl_() + '" method="get" style="margin:0">' +
@@ -1105,15 +1112,18 @@ function rrbCaseOutcome(e) {
       ' recorded against ' + client + '.</p>', 'ok');
   }
 
+  var says = v === 'submitted'
+      ? 'Recorded as with head office. It counts as submitted, not yet as API &mdash; ' +
+        'we will ask again once it should have been delivered.'
+    : v === 'lost'
+      ? 'Recorded. The premium comes out of the branch pipeline, which keeps the board honest.'
+      : 'Recorded. It stays in pipeline and we will check again in a week.';
   return rrbPage_(label,
     '<div style="font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:' +
-      (v === 'lost' ? '#B45309' : '#475569') + '">' + rrbEsc_(label) + '</div>' +
+      (v === 'lost' ? '#B45309' : v === 'submitted' ? '#0369A1' : '#475569') + '">' + rrbEsc_(label) + '</div>' +
     '<div style="font-size:21px;font-weight:800;margin:6px 0 4px">' + client + '</div>' +
-    '<p style="color:#475569;margin:0;font-size:14px">' +
-    (v === 'lost'
-      ? 'Recorded. The premium comes out of the branch pipeline, which keeps the board honest.'
-      : 'Recorded. It stays in pipeline and we will check again in a week.') +
-    '</p>', v === 'lost' ? 'bad' : 'ok');
+    '<p style="color:#475569;margin:0;font-size:14px">' + says + '</p>',
+    v === 'lost' ? 'bad' : 'ok');
 }
 
 /**
@@ -1146,7 +1156,10 @@ function rrbChaseOpenCases() {
     if (!apps) continue;
 
     var outcome = _str(d.caseOutcome);
-    if (/^issued$/i.test(outcome) || /^not proceeding$/i.test(outcome)) continue;
+    // Picked up is finished. Not proceeding is finished. Submitted is not —
+    // an application sitting with head office still needs to be delivered, and
+    // that is exactly where cases quietly die.
+    if (/^picked up$/i.test(outcome) || /^not proceeding$/i.test(outcome)) continue;
 
     var sub = d.submittedAt ? new Date(d.submittedAt) : null;
     if (!sub || isNaN(sub.getTime())) continue;
@@ -1216,16 +1229,23 @@ function rrbChaseHtml_(a) {
         (x.apps === 1 ? '' : 's') + ' &middot; ' + big_(x.api) + ' API &middot; ' +
         x.age + ' days since the fact find</div>' +
       '<table role="presentation" width="100%" style="border-collapse:collapse;margin-top:11px"><tr>' +
-        '<td width="34%" style="padding-right:4px"><a href="' + base + 'issued" ' +
+        '<td width="50%" style="padding-right:4px"><a href="' + base + 'pickedup" ' +
           'style="display:block;text-align:center;background:#0F766E;color:#fff;padding:11px 4px;' +
-          'border-radius:8px;text-decoration:none;font-weight:800;font-size:13.5px">Issued</a></td>' +
-        '<td width="33%" style="padding:0 4px"><a href="' + base + 'pending" ' +
+          'border-radius:8px;text-decoration:none;font-weight:800;font-size:13.5px">Picked up</a></td>' +
+        '<td width="50%" style="padding-left:4px"><a href="' + base + 'submitted" ' +
+          'style="display:block;text-align:center;background:#fff;color:#0369A1;border:2px solid #7DD3FC;' +
+          'padding:9px 4px;border-radius:8px;text-decoration:none;font-weight:800;font-size:13.5px">Submitted</a></td>' +
+      '</tr><tr>' +
+        '<td style="padding:6px 4px 0 0"><a href="' + base + 'pending" ' +
           'style="display:block;text-align:center;background:#fff;color:#475569;border:2px solid #CBD5E1;' +
-          'padding:9px 4px;border-radius:8px;text-decoration:none;font-weight:800;font-size:13.5px">Still working</a></td>' +
-        '<td width="33%" style="padding-left:4px"><a href="' + base + 'lost" ' +
+          'padding:9px 4px;border-radius:8px;text-decoration:none;font-weight:700;font-size:12.5px">Still working</a></td>' +
+        '<td style="padding:6px 0 0 4px"><a href="' + base + 'lost" ' +
           'style="display:block;text-align:center;background:#fff;color:#B45309;border:2px solid #F59E0B;' +
-          'padding:9px 4px;border-radius:8px;text-decoration:none;font-weight:800;font-size:13.5px">Not proceeding</a></td>' +
-      '</tr></table></div>';
+          'padding:9px 4px;border-radius:8px;text-decoration:none;font-weight:700;font-size:12.5px">Not proceeding</a></td>' +
+      '</tr></table>' +
+      '<div style="font-size:11.5px;color:#94A3B8;margin-top:8px;line-height:1.45">' +
+        '<strong>Submitted</strong> means it is with head office. <strong>Picked up</strong> means ' +
+        'the client has taken delivery and paid &mdash; only that counts as API.</div></div>';
   });
 
   h += '<p style="font-size:12.5px;color:#64748B;margin:14px 0 0">Nothing here is a reprimand. ' +
