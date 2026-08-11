@@ -20,6 +20,14 @@
  *   7 days after "renewed", the client gets the QA survey.
  */
 
+/* Secrets live in Script Properties, not in this file — the repository is
+   public. Returns '' when unset, which fails closed: staff links stop working
+   rather than silently accepting an empty key. */
+function cfgProp_(name) {
+  try { return PropertiesService.getScriptProperties().getProperty(name) || ''; }
+  catch (e) { return ''; }
+}
+
 var CONFIG = {
   RENEWALS_GID: 2062860621,
 
@@ -36,11 +44,16 @@ var CONFIG = {
   AGENT_PHONE: '(868) 678-5921',
 
   // Deployed Apps Script web app (Deploy > New deployment > Web app).
-  WEBAPP_URL: 'https://script.google.com/macros/s/AKfycbwYQlLt1txn4pCWEq3xO_FmmPUfRAUMzey-vzbUe-qDr9tX27BpM0ZbkP5G0WuYQuZJ8g/exec',
+  // Read from Script Properties — this repository is public, and the URL plus
+  // the staff key together open the staff dashboard to anyone who reads it.
+  //   Apps Script -> Project Settings -> Script Properties:
+  //     WEBAPP_URL = https://script.google.com/macros/s/…/exec
+  //     STAFF_KEY  = a long random string
+  WEBAPP_URL: cfgProp_('WEBAPP_URL'),
 
   // Staff access key — the staff dashboard link is WEBAPP_URL?staff=THIS_KEY.
-  // Change it to something long and private before going live.
-  STAFF_KEY: 'RRB-stf-x92Kq4mVp7-2026',
+  // Never commit the real value. Rotate it if it has ever been committed.
+  STAFF_KEY: cfgProp_('STAFF_KEY'),
 
   RESPONSES_SHEET: 'Renewal Responses',
   STAFF_SHEET: 'Staff',
@@ -433,7 +446,7 @@ function clientPage_(p) {
 
 function staffPage_(p) {
   var t = HtmlService.createTemplateFromFile('Staff');
-  var authorized = String(p.staff) === CONFIG.STAFF_KEY;
+  var authorized = !!CONFIG.STAFF_KEY && String(p.staff) === CONFIG.STAFF_KEY;
   t.payload = JSON.stringify({ ok: authorized, key: authorized ? CONFIG.STAFF_KEY : '' });
   return t.evaluate().setTitle('Guardian Renewals — Staff')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
@@ -572,6 +585,7 @@ function staffList_() {
 }
 
 function requireStaff_(key, me) {
+  if (!CONFIG.STAFF_KEY) throw new Error('STAFF_KEY is not set in Script Properties.');
   if (String(key) !== CONFIG.STAFF_KEY) throw new Error('Invalid staff link.');
   me = String(me || '').trim().toLowerCase();
   var found = staffList_().filter(function (s) { return s.email === me; })[0];

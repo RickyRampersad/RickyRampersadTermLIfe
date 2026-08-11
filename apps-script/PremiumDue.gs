@@ -24,10 +24,14 @@
  *     or set DEPLOY.SHEET_URL in premium-due/index.html on the
  *     private build.
  *
- * NOTE ON ACCESS: "Anyone" means anyone with the URL can read the
- * whole funnel, unauthenticated. Treat the /exec URL as a secret —
- * never commit it to this public repository. Adding a shared-key
- * check to doGet is the next hardening step.
+ * ACCESS: the deployment must be readable by "Anyone" so that clients
+ * can answer a survey without a Google account. That does NOT mean the
+ * data is open — every read that returns client information requires a
+ * signed token from PremiumDueAuth.gs, and returns only the policies
+ * inside that person's scope. The two unauthenticated endpoints are
+ * ?type=roster (names and roles, no codes) and the client survey POST.
+ *
+ * Treat the /exec URL as private anyway, and never commit it here.
  ******************************************************************/
 
 var SHEET_NAME = 'PremiumDueLog';
@@ -65,27 +69,59 @@ function getSheet_() {
    ?type=policies returns the live portfolio */
 function doGet(e) {
   try {
-    if (e && e.parameter && e.parameter.type === 'policies') return getPolicies_();
+    var p = (e && e.parameter) || {};
+
+    // --- open, and deliberately so ---
+    if (p.type === 'roster') return pdPublicRoster_();          // names + roles, no codes
+    if (p.type === 'auth')   return pdAuth_(p.name, p.code);
+
+    // --- everything below returns client data and needs a token ---
+    var who = pdVerifyToken_(p.token);
+    if (!who) return json_({ ok: false, error: 'auth', message: 'Sign in again.' });
+
+    if (p.type === 'policies') return getPolicies_(who.scope);
+
     var sh = getSheet_();
     var values = sh.getDataRange().getValues();
+    var inScope = pdScopeIndex_(who.scope);
     var out = [];
     for (var i = 1; i < values.length; i++) {
       var row = values[i];
-      if (!row[2] && !row[12]) continue; // skip blanks (no policy & no body)
+      if (!row[2] && !row[12]) continue;                        // blank row
+      if (inScope && !inScope[String(row[5] || '')]) continue;   // not this person's agent
       var obj = {};
       for (var c = 0; c < HEADERS.length; c++) obj[HEADERS[c]] = row[c];
       out.push(obj);
     }
-    return json_({ ok: true, rows: out });
+    return json_({ ok: true, rows: out, scopedTo: who.name });
   } catch (err) {
     return json_({ ok: false, error: String(err) });
   }
+}
+
+/** null scope means the whole branch; otherwise a {agentName: true} lookup. */
+function pdScopeIndex_(scope) {
+  if (scope === null) return null;
+  var ix = {};
+  for (var i = 0; i < (scope || []).length; i++) ix[scope[i]] = true;
+  return ix;
 }
 
 /* WRITE — appends one comment / survey / retention / verdict row */
 function doPost(e) {
   try {
     var d  = JSON.parse(e.postData.contents);
+
+    // A client answering a survey or clicking a 60-day option has no token,
+    // and should not need one. Everything a staff member writes does.
+    var clientWrite = (d.role === 'Client') && (d.type === 'survey' || d.type === 'response');
+    if (!clientWrite) {
+      var who = pdVerifyToken_(d.token);
+      if (!who) return json_({ ok: false, error: 'auth', message: 'Sign in again.' });
+      d.author = who.name;                       // the signer, not whatever was posted
+      d.role   = who.role;
+    }
+
     var sh = getSheet_();
     var ts = d.ts || Date.now();
     sh.appendRow([
@@ -110,6 +146,7 @@ function doPost(e) {
       d.factFind       || '',
       d.managerVerdict || ''
     ]);
+    if (d.type === 'retention' && typeof pdEscalateRetention_ === 'function') pdEscalateRetention_(d);
     return json_({ ok: true });
   } catch (err) {
     return json_({ ok: false, error: String(err) });
@@ -151,8 +188,9 @@ function mapPolicy_(row) {
   };
 }
 
-function getPolicies_() {
+function getPolicies_(scope) {
   try {
+    var inScope = pdScopeIndex_(scope === undefined ? null : scope);
     var ss = SpreadsheetApp.openById(PORTFOLIO_ID);
     var sh = portfolioSheet_(ss);
     var v  = sh.getDataRange().getValues();
@@ -175,9 +213,11 @@ function getPolicies_() {
       var desc = String(row[17] || '');
       var isFunnel  = (s === 1 || s === 2 || s === 3);
       var isContext = (s === 0 && desc === 'Premium Paying' && funnelClients[cn]);
-      if (isFunnel || isContext) { var p = mapPolicy_(row); p.id = id++; out.push(p); }
+      if (!(isFunnel || isContext)) continue;
+      if (inScope && !inScope[String(row[0] || '')]) continue;   // outside this person's book
+      var p = mapPolicy_(row); p.id = id++; out.push(p);
     }
-    return json_({ ok: true, policies: out, total: out.length });
+    return json_({ ok: true, policies: out, total: out.length, scoped: !!inScope });
   } catch (err) {
     return json_({ ok: false, error: String(err) });
   }

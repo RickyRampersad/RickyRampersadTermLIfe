@@ -11,6 +11,7 @@ and the "Premium Due Status" comment columns.
 | `index.html` | The whole app — login, dashboards, case threads, client outreach |
 | `staff-manual.html` | Staff manual. Open it in a browser or host it; send the link to the team |
 | `../apps-script/PremiumDue.gs` | Backend — reads the portfolio, stores the log |
+| `../apps-script/PremiumDueAuth.gs` | Sign-in, the roster tab, tokens and scope |
 | `../apps-script/PremiumDueTemplates.gs` | Client email + WhatsApp templates and the daily send |
 
 ## Which sheet is which
@@ -46,18 +47,16 @@ while the repository is public.**
 2. Create a **private** Netlify site (Site settings → Access control → password,
    or Identity) from this directory. Do not serve the engine from
    rickyrampersadbranch.com — that domain is public.
-3. On that build only, fill in the `DEPLOY` block at the top of the `<script>`:
+3. Run `pdSetupRoster()` once, fill in the `Roster` tab, and re-deploy.
+4. On that build only, set the one field:
 
    ```js
-   const DEPLOY = {
-     SHEET_URL: 'https://script.google.com/macros/s/…/exec',
-     CODES: { 'Ricky Rampersad': 'RR-123', 'Anthony Simmons': 'AS-456', … }
-   };
+   const DEPLOY = { SHEET_URL: 'https://script.google.com/macros/s/…/exec', CODES: {} };
    ```
 
-   With `CODES` filled in the demo banner disappears and real codes apply.
-   Alternatively leave the file alone and use **Connect sheet** in the top bar,
-   which stores the URL in that browser's localStorage only.
+   Leave `CODES` empty — with a sheet connected the engine asks the server and
+   never holds a code. Alternatively leave the file alone and use **Connect
+   sheet** in the top bar, which stores the URL in that browser only.
 
 ## How it stages a policy
 
@@ -95,14 +94,37 @@ Duplicate and churn detection keys on **Client Number**: several policies under
 one client on the same plan code flags a possible replacement written over
 in-force cover; an active policy alongside a lapsed one flags repeat churn.
 
-## Roles
+## Sign-in and scope
 
-| Role | Sees |
-|------|------|
-| Agent | Their own book, behind the accountability gate |
-| Unit Manager | Their unit's book + manager queue |
-| ABM | Their reporting line, resolved recursively |
-| Sales Support / BM | The whole branch + manager queue + scorecard |
+The roster lives in a **`Roster`** tab in the same sheet — name, role, agentId,
+code, manager, active. Run `pdSetupRoster()` once to create it.
+
+The browser never receives anybody's code. It fetches `?type=roster` for names
+and roles to build the dropdown, posts the typed code to `?type=auth`, and gets
+back a signed token. Every read that returns client data carries that token, and
+**the server decides what comes back**:
+
+| Role | Sees | Typical payload |
+|------|------|-----------------|
+| Agent | Their own book, behind the accountability gate | tens of policies |
+| Unit Manager | Their unit, resolved down the `manager` column | hundreds |
+| ABM | Their whole reporting line | hundreds |
+| Sales Support / BM | The whole branch + manager queue + scorecard | all of it |
+
+That scoping is why the payload problem went away as well as the security one —
+an agent downloads their own book rather than 3.67 MB of the branch's.
+
+Set `active` to `FALSE` to revoke someone. It takes effect on their next request;
+role and scope are looked up fresh each time rather than baked into the token.
+Tokens last 12 hours and live in `sessionStorage`, so closing the tab ends it.
+
+Two endpoints are deliberately open, because a client has no sign-in and should
+not need one: `?type=roster` (names and roles, no codes) and a survey or
+one-click reply POST. Everything else returns `{ok:false, error:'auth'}` without
+a valid token, and the engine drops back to the login card when it sees that.
+
+On a staff write the server takes the author from the token and ignores whatever
+the browser claimed, so a posted record cannot be attributed to someone else.
 
 The **accountability gate** cuts both ways. An agent with cases past day 65 and
 no retention form, or 90-day lapses with nothing logged, must type a commitment
@@ -116,10 +138,10 @@ once per policy per day.
 
 Tracked in the build review; none of these are fixed here.
 
-- **Authentication is browser-side.** `DEPLOY.CODES` keeps codes out of this
-  repository, but a signed-in user can still read every code from the page.
-  The fix is a `?type=auth` endpoint in the Apps Script that returns a session
-  and scope, so the roster never reaches the browser.
+- **A code is still a shared secret typed into a browser.** Server-side sign-in
+  stops code harvesting and out-of-scope reads; it does not stop someone using a
+  code they were given, or one they were shown. Google sign-in is the right end
+  state if this ever holds more than it does now.
 - **The daily send has never run live.** `PremiumDueTemplates.gs` ships with
   `OUT.DRY_RUN = true`, so it writes an `outbound-dry` plan to the log and emails
   nobody. Read a full dry run before setting it false — the book holds ~6,000

@@ -510,11 +510,9 @@ const DEPLOY = {
   // the whole live portfolio to anyone who opens this page, before login.
   SHEET_URL: '',
 
-  // Real access codes, keyed by the exact name in ROSTER:
-  //   {'Ricky Rampersad':'RR-123', 'Anthony Simmons':'AS-456', ...}
-  // Left blank on purpose. Note this is still a browser-side check — it keeps
-  // codes out of the public repo, it does not make them secret from a signed-in
-  // user. Moving auth into the Apps Script is the real fix.
+  // Fallback codes for running WITHOUT a sheet. When SHEET_URL is set the
+  // engine ignores this entirely and asks the server, which never sends
+  // anybody's code to the browser. Leave it empty.
   CODES: {}
 };
 const DEMO_MODE = Object.keys(DEPLOY.CODES).length === 0;
@@ -701,9 +699,10 @@ async function policyLoad(){
   if(!SHEET_URL) return false;
   LAST_POLICY_PULL=Date.now();
   try{
-    const res=await fetch(SHEET_URL+(SHEET_URL.includes('?')?'&':'?')+'type=policies&t='+Date.now());
+    const res=await fetch(q(SHEET_URL,authed({type:'policies'})));
     if(!res.ok) throw new Error('http '+res.status);
     const data=await res.json();
+    if(data.error==='auth'){onAuthFail();return false;}
     if(!data.ok || !Array.isArray(data.policies)) throw new Error('bad payload');
     if(!data.policies.length) throw new Error('empty portfolio');
     loadPolicies(data.policies);
@@ -748,6 +747,32 @@ const SHEET_KEY='rrb_premdue_url';
 const SHEET_URL_DEFAULT=DEPLOY.SHEET_URL;
 let SHEET_URL=(function(){try{return localStorage.getItem(SHEET_KEY)||SHEET_URL_DEFAULT;}catch(e){return SHEET_URL_DEFAULT;}})();
 let SHEET_OK=false, LAST_SYNC=0, LAST_SYNC_N=0, LAST_POLICY_PULL=0;
+
+/* ===== SESSION =====
+   The token is minted by the Apps Script and proves who is asking. Every read
+   that returns client data carries it, and the server decides what comes back —
+   an agent is sent their own book, not the branch's, so scope is enforced where
+   it cannot be edited from a console. */
+let AUTH=null;
+const AUTH_KEY='rrb_premdue_auth';
+function loadAuth(){try{const s=sessionStorage.getItem(AUTH_KEY);if(!s)return null;
+  const a=JSON.parse(s);return (a&&a.expires>Date.now())?a:null;}catch(e){return null;}}
+function saveAuth(a){AUTH=a;try{a?sessionStorage.setItem(AUTH_KEY,JSON.stringify(a)):sessionStorage.removeItem(AUTH_KEY);}catch(e){}}
+function q(url,params){
+  const u=url+(url.includes('?')?'&':'?')+Object.entries(params||{})
+    .filter(([,v])=>v!==undefined&&v!==null&&v!=='')
+    .map(([k,v])=>encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&');
+  return u;
+}
+function authed(params){return Object.assign({t:Date.now()},params||{},AUTH?{token:AUTH.token}:{});}
+/* A token that has expired or been revoked should drop you back to the login
+   card, not leave you looking at a dashboard that has quietly stopped updating. */
+function onAuthFail(){
+  if(!AUTH)return;
+  saveAuth(null);SESS=null;
+  $('#app').classList.remove('on');$('#login').style.display='flex';
+  $('#loginErr').textContent='Your session expired. Sign in again.';
+}
 function setSheetUrl(u){SHEET_URL=(u||'').trim();try{localStorage.setItem(SHEET_KEY,SHEET_URL);}catch(e){}updateConnBadge();}
 function syncAgoTxt(){if(!LAST_SYNC)return '';const s=Math.round((Date.now()-LAST_SYNC)/1000);if(s<60)return 'just now';if(s<3600)return Math.floor(s/60)+'m ago';return Math.floor(s/3600)+'h ago';}
 function updateConnBadge(){
@@ -759,14 +784,19 @@ function updateConnBadge(){
 }
 function sheetLog(rec){
   if(!SHEET_URL)return;
-  try{fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(rec)});SHEET_OK=true;updateConnBadge();}catch(e){}
+  // Client survey and one-click replies post without a token — a client has no
+  // sign-in and should not need one. Staff writes carry it, and the server takes
+  // the author from the token rather than trusting whatever was posted.
+  const body=Object.assign({},rec,AUTH?{token:AUTH.token}:{});
+  try{fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});SHEET_OK=true;updateConnBadge();}catch(e){}
 }
 async function sheetLoad(){
   if(!SHEET_URL)return false;
   try{
-    const res=await fetch(SHEET_URL+(SHEET_URL.includes('?')?'&':'?')+'t='+Date.now());
+    const res=await fetch(q(SHEET_URL,authed({})));
     if(!res.ok)throw new Error('http '+res.status);
     const data=await res.json();
+    if(data.error==='auth'){onAuthFail();return false;}
     if(!data.ok||!Array.isArray(data.rows))throw new Error('bad payload');
     const fresh={};
     data.rows.forEach(r=>{
@@ -1457,8 +1487,26 @@ function wireTabs(view,cases,rerender){
 function refreshView(){if(!SESS)return;const rk=SESS.role;if(rk==='bm')renderBM();else if(rk==='abm')renderABM();else if(rk==='support')renderSupport();else if(rk==='unit')renderUnit();else renderAgent();}
 
 /* ===== LOGIN ===== */
+/* The dropdown is built from the server when a sheet is connected, so the page
+   receives names and roles and never a single access code. */
+let SERVER_ROSTER=null;
+async function loadRoster(){
+  if(!SHEET_URL)return false;
+  try{
+    const res=await fetch(q(SHEET_URL,{type:'roster',t:Date.now()}));
+    const data=await res.json();
+    if(!data.ok||!Array.isArray(data.roster)||!data.roster.length)return false;
+    SERVER_ROSTER=data.roster;
+    ROSTER.length=0;data.roster.forEach(r=>ROSTER.push({name:r.name,role:r.role,agentid:r.agentId||'',code:''}));
+    Object.keys(BY_NAME).forEach(k=>delete BY_NAME[k]);
+    ROSTER.forEach(r=>BY_NAME[r.name]=r);
+    populateLogin();
+    return true;
+  }catch(e){return false;}
+}
 function populateLogin(){
   const sel=$('#who');
+  sel.innerHTML='<option value="">Select your name…</option>';
   const groups=[['Branch Management',['Branch Manager','ABM / Branch Manager']],['Unit Managers',['Unit Manager']],['Sales Support',['Sales Support']],['Agents',['Agent']]];
   groups.forEach(([label,roles])=>{
     const people=ROSTER.filter(r=>roles.includes(r.role));if(!people.length)return;
@@ -1496,27 +1544,20 @@ function managerOffences(name){
   return {mine,lateReplies,unanswered,total:lateReplies.length};
 }
 let GATE_REQUIRED=false;
-function showGate(name){
-  const r=BY_NAME[name];const rk=roleKey(r.role);
-  const gate=$('#gate'),clean=$('#gateClean'),btn=$('#loginBtn');
-  gate.classList.remove('on');clean.classList.remove('on');GATE_REQUIRED=false;
-  if(rk==='support'){btn.textContent='Enter workspace →';btn.disabled=false;return;}
+/* Rendered after authentication, from the scoped data the server returned. */
+function renderGate(name,rk,off){
+  const gate=$('#gate'),btn=$('#loginBtn');
+  $('#gateClean').classList.remove('on');
   if(rk!=='agent'){
-    const mo=managerOffences(name);
-    if(mo.total===0){clean.classList.add('on');btn.textContent='Enter workspace →';btn.disabled=false;return;}
-    GATE_REQUIRED=true;
-    $('#gateTitle').textContent=`${name.split(' ')[0]}, ${mo.total} case${mo.total!==1?'s are':' is'} waiting on you`;
+    $('#gateTitle').textContent=`${name.split(' ')[0]}, ${off.total} case${off.total!==1?'s are':' is'} waiting on you`;
     $('#gateSub').textContent='Your agents filed. The response is overdue.';
-    const longest=Math.max(...mo.lateReplies.map(c=>blocker(c).since));
+    const longest=Math.max(...off.lateReplies.map(c=>blocker(c).since));
     $('#gateOffences').innerHTML=
       `<div class="gate-shame">These agents did their part and are <b>waiting on your decision</b>. A retention case with no response is a policy drifting to lapse with nobody able to act. Longest wait: <b>${longest} days</b>.</div>`+
-      `<div class="offence-row"><span class="mk aged">RESPONSE DUE</span><div class="ot"><b>${mo.lateReplies.length} retention case${mo.lateReplies.length!==1?'s':''} past the ${SLA.MANAGER_REPLY_DAYS}-day response window.</b> ${esc(mo.lateReplies.slice(0,3).map(c=>c.Client+' ('+c.Agent+')').join(', '))}${mo.lateReplies.length>3?'…':''}</div><div class="oc aged">${mo.lateReplies.length}</div></div>`;
+      `<div class="offence-row"><span class="mk aged">RESPONSE DUE</span><div class="ot"><b>${off.lateReplies.length} retention case${off.lateReplies.length!==1?'s':''} past the ${SLA.MANAGER_REPLY_DAYS}-day response window.</b> ${esc(off.lateReplies.slice(0,3).map(c=>c.Client+' ('+c.Agent+')').join(', '))}${off.lateReplies.length>3?'…':''}</div><div class="oc aged">${off.lateReplies.length}</div></div>`;
     gate.classList.add('on');btn.textContent='Commit & enter →';btn.disabled=true;validateCommit();
     return;
   }
-  const off=agentOffences(name);
-  if(off.total===0){clean.classList.add('on');btn.textContent='Enter workspace →';btn.disabled=false;return;}
-  GATE_REQUIRED=true;
   $('#gateTitle').textContent=`${name.split(' ')[0]}, ${off.total} policy ${off.total!==1?'saves':'save'} on the line`;
   $('#gateSub').textContent='These are heading to lapse with no action from you. Commit before you enter.';
   const rows=[`<div class="gate-shame">These policies are <b>days from lapsing</b> with no retention case or action logged against your name. Each one is renewable premium walking out the door. Commit to saving them.</div>`];
@@ -1533,46 +1574,108 @@ function committedToday(policy){
 }
 function validateCommit(){if(!GATE_REQUIRED)return;const v=$('#commit').value.trim();$('#commitCnt').textContent=`${v.length} characters · minimum 15`;$('#loginBtn').disabled=v.length<15;}
 
-async function doLogin(){
-  const name=$('#who').value, code=$('#pass').value.trim().toUpperCase();
-  const err=$('#loginErr');err.textContent='';
-  if(!name){err.textContent='Select your name to continue.';return;}
-  const r=BY_NAME[name];
-  if(code!==codeFor(name)){err.textContent=DEMO_MODE
-    ?'This is the demo build. Sign in with '+DEMO_CODE+' to look around — it shows invented data only.'
-    :'That code doesn\u2019t match this name. Use your issued initials + 3-digit code.';return;}
-  if(GATE_REQUIRED){const c=$('#commit').value.trim();if(c.length<15){err.textContent='Type your commitment to save these policies before entering.';return;}}
-  const rk=roleKey(r.role);
-  SESS={role:rk,roleLabel:r.role,displayName:name,code:codeFor(name),match:name,firstName:name.split(/\s+/)[0],commitment:GATE_REQUIRED?$('#commit').value.trim():null};
-  if(SHEET_URL){await policyLoad();await sheetLoad();}
-  updatePolicyBadge();
-  if(GATE_REQUIRED&&rk!=='agent'&&rk!=='support'){
+/* Sign-in runs in two phases now, because the accountability gate cannot be
+   built until the server has told us what this person's book looks like:
+
+     1. authenticate, then pull the scoped policies and log
+     2. if anything is outstanding, hold at the gate until they commit
+
+   The old flow computed offences from data already sitting in the page, which
+   only worked because the page held the whole branch. It no longer does. */
+let PENDING=null;
+
+async function serverAuth(name,code){
+  const res=await fetch(q(SHEET_URL,{type:'auth',name,code}));
+  const data=await res.json();
+  if(!data.ok)return {error:data.error||'That name and code do not match.'};
+  return {auth:{token:data.token,name:data.name,role:data.role,roleKey:data.roleKey,
+    expires:data.expires,wholeBranch:data.wholeBranch,scopeCount:data.scopeCount}};
+}
+
+function enterApp(){
+  $('#login').style.display='none';$('#app').classList.add('on');
+  $('#tbName').textContent=SESS.displayName;
+  $('#tbCode').textContent=AUTH?'SIGNED IN':codeFor(SESS.displayName);
+  $('#tbRole').textContent=SESS.roleLabel.toUpperCase();
+  FILTER={q:'',chip:'all',sort:'days'};RIB={on:''};
+  refreshView();window.scrollTo(0,0);
+  handleHashSurvey();
+}
+
+function writeCommitments(){
+  const rk=SESS.role, name=SESS.displayName;
+  if(rk!=='agent'&&rk!=='support'){
     const mo=managerOffences(name);const seenM=new Set();
     mo.lateReplies.forEach(c=>{
       if(seenM.has(c.Policy)||committedToday(c.Policy))return;seenM.add(c.Policy);
       commit(c.Policy,{kind:'comment',reason:'MANAGER COMMITMENT',body:SESS.commitment});
     });
   }
-  if(GATE_REQUIRED&&rk==='agent'){
+  if(rk==='agent'){
     const off=agentOffences(name);const seen=new Set();
     [...off.s60NoForm,...off.s90NoAction].forEach(c=>{
       if(seen.has(c.Policy))return;seen.add(c.Policy);
-      if(committedToday(c.Policy))return;   // one commitment per policy per day, not one per sign-in
+      if(committedToday(c.Policy))return;   // one per policy per day, not one per sign-in
       commit(c.Policy,{kind:'comment',reason:'LOGIN COMMITMENT',body:SESS.commitment});
     });
   }
-  $('#login').style.display='none';$('#app').classList.add('on');
-  $('#tbName').textContent=name;$('#tbCode').textContent=codeFor(name);$('#tbRole').textContent=r.role.toUpperCase();
-  FILTER={q:'',chip:'all',sort:'days'};RIB={on:''};
-  refreshView();window.scrollTo(0,0);
-  // honor a #survey= deep link arriving with a logged-in session
-  handleHashSurvey();
 }
-$('#who').addEventListener('change',e=>{$('#loginErr').textContent='';if(e.target.value)showGate(e.target.value);else{$('#gate').classList.remove('on');$('#gateClean').classList.remove('on');$('#loginBtn').textContent='Select your name to begin';$('#loginBtn').disabled=false;}});
+
+async function doLogin(){
+  const err=$('#loginErr');err.textContent='';
+
+  // phase 2 — authenticated already, waiting on the commitment
+  if(PENDING){
+    const c=$('#commit').value.trim();
+    if(c.length<15){err.textContent='Type your commitment before entering.';return;}
+    SESS=PENDING;SESS.commitment=c;PENDING=null;GATE_REQUIRED=false;
+    writeCommitments();enterApp();return;
+  }
+
+  const name=$('#who').value, code=$('#pass').value.trim().toUpperCase();
+  if(!name){err.textContent='Select your name to continue.';return;}
+  const r=BY_NAME[name];if(!r){err.textContent='Select your name to continue.';return;}
+
+  const btn=$('#loginBtn');btn.disabled=true;const was=btn.textContent;btn.textContent='Signing in…';
+  try{
+    if(SHEET_URL){
+      const out=await serverAuth(name,code);
+      if(out.error){err.textContent=out.error;return;}
+      saveAuth(out.auth);
+    }else if(code!==codeFor(name)){
+      err.textContent=DEMO_MODE
+        ?'This is the demo build. Sign in with '+DEMO_CODE+' to look around — it shows invented data only.'
+        :'That code doesn\u2019t match this name. Use your issued initials + 3-digit code.';
+      return;
+    }
+
+    const rk=AUTH?AUTH.roleKey:roleKey(r.role);
+    const sess={role:rk,roleLabel:AUTH?AUTH.role:r.role,displayName:name,
+      code:AUTH?'':codeFor(name),match:name,firstName:name.split(/\s+/)[0],commitment:null};
+
+    if(SHEET_URL){await policyLoad();await sheetLoad();}
+    updatePolicyBadge();
+
+    // the gate is built from what the server just sent, not from a guess
+    SESS=sess;
+    const off=(rk==='agent')?agentOffences(name):(rk==='support'?null:managerOffences(name));
+    SESS=null;
+    if(off&&off.total){PENDING=sess;GATE_REQUIRED=true;renderGate(name,rk,off);return;}
+    SESS=sess;enterApp();
+  }finally{
+    if(!PENDING){btn.disabled=false;btn.textContent=was;}
+  }
+}
+$('#who').addEventListener('change',e=>{
+  $('#loginErr').textContent='';PENDING=null;GATE_REQUIRED=false;
+  $('#gate').classList.remove('on');$('#gateClean').classList.remove('on');
+  $('#loginBtn').textContent=e.target.value?'Sign in →':'Select your name to begin';
+  $('#loginBtn').disabled=false;
+});
 $('#commit').addEventListener('input',validateCommit);
 $('#loginBtn').addEventListener('click',doLogin);
 $('#pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-$('#logout').addEventListener('click',()=>{SESS=null;$('#app').classList.remove('on');$('#login').style.display='flex';$('#who').value='';$('#pass').value='';$('#commit').value='';$('#gate').classList.remove('on');$('#gateClean').classList.remove('on');$('#loginBtn').textContent='Select your name to begin';$('#loginBtn').disabled=false;GATE_REQUIRED=false;});
+$('#logout').addEventListener('click',()=>{saveAuth(null);PENDING=null;SESS=null;$('#app').classList.remove('on');$('#login').style.display='flex';$('#who').value='';$('#pass').value='';$('#commit').value='';$('#gate').classList.remove('on');$('#gateClean').classList.remove('on');$('#loginBtn').textContent='Select your name to begin';$('#loginBtn').disabled=false;GATE_REQUIRED=false;});
 
 /* connect-sheet */
 const _connBtn=document.getElementById('connBtn');
@@ -1705,7 +1808,13 @@ function openPublicSurvey(policy){
 /* boot */
 (async function boot(){
   updateConnBadge(); updatePolicyBadge();
-  if(SHEET_URL){ await policyLoad(); await sheetLoad(); }
+  AUTH=loadAuth();
+  if(SHEET_URL){
+    await loadRoster();
+    // the portfolio needs a token now, so it waits until somebody signs in
+    if(AUTH){ await policyLoad(); await sheetLoad(); }
+    else { seedDemoRecords(); }
+  }
   else { seedDemoRecords(); }
   updatePolicyBadge();
   if(SESS) refreshView();
