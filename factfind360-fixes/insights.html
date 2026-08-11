@@ -128,9 +128,10 @@
 
 <div id="gate"><div class="box">
   <h1>Branch Insights</h1>
-  <p>Sign in with the same details you use for the dashboard.</p>
-  <input id="gEmail" type="text" placeholder="Your name or email" autocomplete="username">
-  <input id="gPass" type="password" placeholder="Password" autocomplete="current-password">
+  <p>Your agent number and access code — the same as the dashboard.</p>
+  <input id="gEmail" type="text" placeholder="Agent number, e.g. A10024"
+         autocomplete="username" autocapitalize="characters">
+  <input id="gPass" type="password" placeholder="Access code" autocomplete="current-password">
   <button onclick="signIn()">Sign in</button>
   <div class="err" id="gErr"></div>
 </div></div>
@@ -504,10 +505,14 @@ function load(token){
     });
 }
 function signIn(){
-  var e=$('gEmail').value.trim(), p=$('gPass').value;
-  if(!e||!p){ $('gErr').textContent='Enter both.'; return; }
+  var e=$('gEmail').value.trim().toUpperCase(), p=$('gPass').value;
+  $('gEmail').value=e;
+  if(!e||!p){ $('gErr').textContent='Enter your agent number and access code.'; return; }
   $('gErr').textContent='Signing in…';
-  fetch(ENDPOINT+'?action=login&email='+encodeURIComponent(e)+'&password='+encodeURIComponent(p))
+  // The server reads `code` and `pw`. This sent `email` and `password`, so
+  // this sign-in could never have succeeded — every attempt looked like a
+  // wrong password.
+  fetch(ENDPOINT+'?action=login&code='+encodeURIComponent(e.toUpperCase())+'&pw='+encodeURIComponent(p))
     .then(function(r){return r.json();})
     .then(function(j){
       if(!j||j.ok===false) throw new Error((j&&j.error)||'Sign-in failed.');

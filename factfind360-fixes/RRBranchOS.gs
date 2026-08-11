@@ -1016,3 +1016,67 @@ function rrbAccessAudit() {
     .forEach(function (p) {
       Logger.log('   %s  %-28s %s fact find(s)', p.code, p.name, used[_str(p.code).toUpperCase()]); });
 }
+
+
+/**
+ * The state of columns C and D on the Access tab — agent number and access
+ * code — without ever printing a password.
+ *
+ * Sign-in is now agent number plus access code. The number is printed on every
+ * fact find, so it is not a secret; the code in column D is the only thing
+ * standing between a stranger and a client's ID number, income and health
+ * answers. This says how strong that is, per row, in a form safe to paste back.
+ */
+function rrbPasswordAudit() {
+  var people = rrbAccessSheet_();
+  var on = people.filter(function (p) { return p.active; });
+
+  var noCode = [], noPw = [], weak = [], fine = [];
+  on.forEach(function (p) {
+    var code = _str(p.code);
+    var pw = String(p.pw == null ? '' : p.pw).trim();
+    if (!code) { noCode.push(p); return; }
+    if (!pw) { noPw.push(p); return; }
+    if (/^\d+$/.test(pw) || pw.length < 8) weak.push({ p: p, len: pw.length, digits: /^\d+$/.test(pw) });
+    else fine.push(p);
+  });
+
+  Logger.log('=== Access tab: agent number (C) and access code (D) ===');
+  Logger.log('active rows      : %s', on.length);
+  Logger.log('ready to sign in : %s', on.length - noCode.length - noPw.length);
+  Logger.log('');
+
+  if (noCode.length) {
+    Logger.log('NO AGENT NUMBER in column C — these people cannot sign in at all (%s):', noCode.length);
+    noCode.forEach(function (p) { Logger.log('   %s', p.name); });
+    Logger.log('');
+  }
+  if (noPw.length) {
+    Logger.log('NO ACCESS CODE in column D — sign-in will refuse them (%s):', noPw.length);
+    noPw.forEach(function (p) { Logger.log('   %s  %s', p.code, p.name); });
+    Logger.log('');
+  }
+  if (weak.length) {
+    Logger.log('GUESSABLE ACCESS CODES (%s) — all digits, or under 8 characters:', weak.length);
+    weak.forEach(function (w) {
+      Logger.log('   %s  %-28s %s character%s%s', w.p.code, w.p.name, w.len,
+                 w.len === 1 ? '' : 's', w.digits ? ', all digits' : '');
+    });
+    Logger.log('');
+    Logger.log('   The agent number is printed on every fact find, so it is not a secret.');
+    Logger.log('   A code of one or two digits leaves roughly nothing to guess. The');
+    Logger.log('   sign-in lockout now allows five attempts an hour, which is the only');
+    Logger.log('   thing making that survivable.');
+  }
+  if (fine.length) Logger.log('SOUND ACCESS CODES: %s', fine.length);
+
+  Logger.log('');
+  Logger.log('Passwords are never printed here. Column D is readable in the sheet');
+  Logger.log('itself if you need to check one.');
+  Logger.log('');
+  Logger.log('After editing column D, run rrbSyncAccessPasswords() — sign-in checks a');
+  Logger.log('hash held in script storage, not the cell, so an edit does nothing until');
+  Logger.log('it is synced.');
+  return { active: on.length, noCode: noCode.length, noPw: noPw.length,
+           weak: weak.length, fine: fine.length };
+}
