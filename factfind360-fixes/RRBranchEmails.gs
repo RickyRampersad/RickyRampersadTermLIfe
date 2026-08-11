@@ -211,7 +211,7 @@ function rrbSendClientDraftNow_(d) {
   }
   var adv = _str(d.advisorName).split(' ')[0] || 'your advisor';
   var subject = '[DRAFT] Thank you for meeting ' + adv + ' — your plan is being reviewed';
-  var html = rrbWithDraft_(rrbClientDraftHtml_(d),
+  var html = rrbWithDraft_(rrbClientDraftHtml_(d) + rrbClientConfirmBlock_(d),
     'This is a summary of what you discussed with ' + adv + '. It is being reviewed by a ' +
     'branch manager and is not final. You will receive the approved version once that review is complete.');
   rrbMail_(to, subject, html, RRB_ALWAYS_CC);
@@ -777,4 +777,245 @@ function rrbDecideNote(e) {
       rrbEsc_(_str(d.advisorName) || 'the advisor') + ' with the decision.</p>' +
     '<div style="background:#F8FAFC;border-left:3px solid #0D9488;padding:10px 13px;border-radius:0 8px 8px 0;' +
       'font-size:13.5px;color:#334155;white-space:pre-wrap">' + rrbEsc_(note) + '</div>', 'ok');
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// THE CLIENT'S SIDE
+//
+// Two emails reach a client: the draft when the advisor submits, and the
+// approval once a manager signs it off. Both were one-way — the client could
+// read them and had no way to say "that isn't what I said" or "that advisor
+// was excellent".
+//
+// The draft now asks them to confirm the record is right, which is worth more
+// than politeness: a client who has confirmed the facts in writing is the
+// strongest evidence there is that the advice was based on what they actually
+// told us. The approval asks what they thought of the service.
+//
+// Both use the same single-use signed links as the manager's buttons.
+// ═══════════════════════════════════════════════════════════════════════════
+
+function rrbClientLink_(d, action) {
+  var tok;
+  try {
+    tok = rrbMintToken(d.submissionId, 'client',
+      { name: _str(d.clientName), email: rrbClientEmail_(d) });
+  } catch (err) {
+    Logger.log('rrbClientLink_: no token (%s)', err && err.message);
+    return '';
+  }
+  return rrbAppUrl_() + '?action=' + action + '&t=' + encodeURIComponent(tok) + '&v=';
+}
+
+/** "Is this right?" — two buttons on the draft. */
+function rrbClientConfirmBlock_(d) {
+  var base = rrbClientLink_(d, 'cconfirm');
+  if (!base) return '';
+  return '<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:11px;' +
+    'padding:15px 17px;margin:18px 0 4px">' +
+    '<div style="font-size:15px;font-weight:800;margin-bottom:4px">Is this right?</div>' +
+    '<div style="font-size:13.5px;color:#475569;line-height:1.55;margin-bottom:12px">' +
+      'Please check the details above are what you told us. Advice is only as good as the ' +
+      'information behind it, so if anything is wrong or missing we would rather know now ' +
+      'than after a plan is in place.</div>' +
+    '<table role="presentation" width="100%" style="border-collapse:collapse"><tr>' +
+      '<td width="50%" style="padding-right:5px"><a href="' + base + 'ok" ' +
+        'style="display:block;text-align:center;background:#0F766E;color:#fff;padding:13px 8px;' +
+        'border-radius:9px;text-decoration:none;font-weight:800;font-size:14.5px">Yes, that\'s correct</a></td>' +
+      '<td width="50%" style="padding-left:5px"><a href="' + base + 'changes" ' +
+        'style="display:block;text-align:center;background:#fff;color:#B45309;border:2px solid #F59E0B;' +
+        'padding:11px 8px;border-radius:9px;text-decoration:none;font-weight:800;font-size:14.5px">Something needs changing</a></td>' +
+    '</tr></table></div>';
+}
+
+/** Five stars on the approval email. */
+function rrbClientRateBlock_(d) {
+  var base = rrbClientLink_(d, 'crate');
+  if (!base) return '';
+  var adv = _str(d.advisorName) || 'your advisor';
+  var star = function (n) {
+    return '<td style="padding:0 3px"><a href="' + base + n + '" ' +
+      'style="display:block;width:44px;height:44px;line-height:44px;text-align:center;' +
+      'border:1px solid #E2E8F0;border-radius:9px;text-decoration:none;font-size:20px;' +
+      'background:#fff;color:#F5B935">&#9733;</a>' +
+      '<div style="text-align:center;font-size:10px;color:#94A3B8;margin-top:3px">' + n + '</div></td>';
+  };
+  return '<div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:11px;' +
+    'padding:15px 17px;margin:18px 0 4px;text-align:center">' +
+    '<div style="font-size:15px;font-weight:800;margin-bottom:3px">How did ' + rrbEsc_(adv) + ' do?</div>' +
+    '<div style="font-size:13px;color:#78350F;margin-bottom:11px">One tap. It goes to the branch manager, ' +
+      'and it genuinely counts.</div>' +
+    '<table role="presentation" align="center" style="border-collapse:collapse;margin:0 auto"><tr>' +
+      star(1) + star(2) + star(3) + star(4) + star(5) +
+    '</tr></table></div>';
+}
+
+/** The client says the record is right, or asks for a change. */
+function rrbClientConfirm(e) {
+  var p = (e && e.parameter) || {};
+  var v = _str(p.v);
+  var wantsChange = /^chang/i.test(v);
+  var saving      = /^save$/i.test(v);
+  var chk = rrbVerifyToken(p.t);
+  if (!chk.ok) {
+    return rrbPage_('Link expired',
+      '<div style="font-size:19px;font-weight:800;margin-bottom:8px">This link has already been used</div>' +
+      '<p style="color:#475569;margin:0">If you still need to change something, please reply to the ' +
+      'email or call your advisor directly.</p>', 'err');
+  }
+
+  var sheet = ffGetOrCreateRevisedTab_();
+  var headers = ffEnsureHeaders_(sheet);
+  var row = ffFindRowBySubmissionId_(sheet, headers, chk.payload.id);
+  if (!row) return rrbPage_('Not found', '<p>We could not find that record.</p>', 'err');
+  var d = ffReadRow_(sheet, headers, row);
+  var now = new Date().toISOString();
+
+  // The client sent their words. Record them, tell the advisor and the manager.
+  if (saving) {
+    var note = _str(p.note);
+    var m2 = {};
+    Object.keys(d).forEach(function (k) { m2[k] = d[k]; });
+    m2.clientConfirmed  = 'Changes requested';
+    m2.clientConfirmedAt = now;
+    m2.clientChangeNote = note;
+    m2.lastUpdated = now;
+    ffWriteRow_(sheet, headers, m2, row);
+    rrbMarkTokenUsed_(chk.row);
+
+    try {
+      var who = [_str(d.agentEmail), _str(d.reviewerEmail)].filter(String).join(',');
+      if (who) rrbMail_(who,
+        'Client asked for a change — ' + (_str(d.clientName) || 'client'),
+        rrbHead_('The client has asked for a change',
+                 (_str(d.clientName) || 'The client') + ' reviewed their draft') +
+        '<p style="margin:0 0 12px">In their own words:</p>' +
+        '<div style="background:#FFFBEB;border-left:4px solid #F59E0B;padding:12px 15px;' +
+          'border-radius:0 9px 9px 0;font-size:14px;color:#78350F;white-space:pre-wrap">' +
+          rrbEsc_(note || '(nothing written)') + '</div>' +
+        '<p style="margin:14px 0 0;font-size:13.5px;color:#475569">The fact find has not been ' +
+          'changed automatically. Please correct it and resubmit.</p>' +
+        rrbFoot_(_str(d.submissionId)), RRB_ALWAYS_CC);
+    } catch (err) { Logger.log('client-change notice failed: %s', err && err.message); }
+
+    return rrbPage_('Sent',
+      '<div style="font-size:21px;font-weight:800;margin-bottom:8px">Thank you &mdash; that is on its way</div>' +
+      '<p style="color:#475569;margin:0;font-size:14.5px">' +
+      rrbEsc_(_str(d.advisorName) || 'Your advisor') + ' and the branch manager have both been told. ' +
+      'Nothing will go ahead until it is right.</p>', 'ok');
+  }
+
+  if (!wantsChange) {
+    var merged = {};
+    Object.keys(d).forEach(function (k) { merged[k] = d[k]; });
+    merged.clientConfirmed = 'Yes';
+    merged.clientConfirmedAt = now;
+    merged.lastUpdated = now;
+    ffWriteRow_(sheet, headers, merged, row);
+    rrbMarkTokenUsed_(chk.row);
+    return rrbPage_('Thank you',
+      '<div style="font-size:21px;font-weight:800;margin-bottom:8px">Thank you</div>' +
+      '<p style="color:#475569;margin:0 0 12px;font-size:14.5px">You have confirmed the details are ' +
+      'correct. ' + rrbEsc_(_str(d.advisorName) || 'Your advisor') + ' will be in touch once the ' +
+      'branch has completed its review.</p>' +
+      '<p style="color:#64748B;font-size:13px;margin:0">Nothing is final yet — you are not committed ' +
+      'to anything by confirming this.</p>', 'ok');
+  }
+
+  // Asking for a change needs their words, so the token stays alive for the form.
+  return rrbPage_('What needs changing?',
+    '<div style="font-size:20px;font-weight:800;margin-bottom:6px">What needs changing?</div>' +
+    '<p style="color:#475569;margin:0 0 14px;font-size:14px">Tell us in your own words. This goes ' +
+    'straight to ' + rrbEsc_(_str(d.advisorName) || 'your advisor') + ' and the branch manager.</p>' +
+    '<form action="' + rrbAppUrl_() + '" method="get" style="margin:0">' +
+    '<input type="hidden" name="action" value="cconfirm">' +
+    '<input type="hidden" name="v" value="save">' +
+    '<input type="hidden" name="t" value="' + rrbEsc_(_str(p.t)) + '">' +
+    '<textarea name="note" rows="5" style="width:100%;box-sizing:border-box;border:1px solid #CBD5E1;' +
+      'border-radius:9px;padding:11px;font:15px/1.5 inherit;resize:vertical" ' +
+      'placeholder="For example: my income is different, or I have cover you did not list&hellip;"></textarea>' +
+    '<button type="submit" style="width:100%;margin-top:10px;background:#B45309;color:#fff;border:0;' +
+      'border-radius:9px;padding:14px;font-size:15px;font-weight:800;cursor:pointer">Send this</button>' +
+    '</form>', 'bad');
+}
+
+/** The optional words after a star rating. Rated by id — the star link was
+ *  single-use and is already spent by the time this form appears. */
+function rrbClientRateNote(e) {
+  var p = (e && e.parameter) || {};
+  var note = _str(p.note), id = _str(p.id);
+  if (!note || !id) {
+    return rrbPage_('Thank you',
+      '<div style="font-size:20px;font-weight:800">Thank you</div>' +
+      '<p style="color:#475569;margin:8px 0 0">Your rating is recorded.</p>', 'ok');
+  }
+  var sheet = ffGetOrCreateRevisedTab_();
+  var headers = ffEnsureHeaders_(sheet);
+  var row = ffFindRowBySubmissionId_(sheet, headers, id);
+  if (!row) return rrbPage_('Thank you', '<p>Your rating is recorded.</p>', 'ok');
+  var d = ffReadRow_(sheet, headers, row);
+  // Only accept words against a rating that exists, so this cannot be used to
+  // write comments onto arbitrary cases by guessing an id.
+  if (!_str(d.clientRating)) {
+    return rrbPage_('Thank you', '<p>Your rating is recorded.</p>', 'ok');
+  }
+  var merged = {};
+  Object.keys(d).forEach(function (k) { merged[k] = d[k]; });
+  merged.clientFeedback = note;
+  merged.lastUpdated = new Date().toISOString();
+  ffWriteRow_(sheet, headers, merged, row);
+  return rrbPage_('Thank you',
+    '<div style="font-size:20px;font-weight:800;margin-bottom:6px">Thank you</div>' +
+    '<p style="color:#475569;margin:0 0 12px;font-size:14.5px">The branch manager will read this.</p>' +
+    '<div style="background:#F8FAFC;border-left:3px solid #0D9488;padding:10px 13px;' +
+      'border-radius:0 8px 8px 0;font-size:13.5px;color:#334155;white-space:pre-wrap">' +
+      rrbEsc_(note) + '</div>', 'ok');
+}
+
+/** The client's rating of the advisor. */
+function rrbClientRate(e) {
+  var p = (e && e.parameter) || {};
+  var stars = parseInt(_str(p.v), 10);
+  if (!(stars >= 1 && stars <= 5)) stars = 0;
+  var chk = rrbVerifyToken(p.t);
+  if (!chk.ok) {
+    return rrbPage_('Already answered',
+      '<div style="font-size:19px;font-weight:800;margin-bottom:8px">Thank you &mdash; we already have your rating</div>' +
+      '<p style="color:#475569;margin:0">This link can only be used once.</p>', 'err');
+  }
+  var sheet = ffGetOrCreateRevisedTab_();
+  var headers = ffEnsureHeaders_(sheet);
+  var row = ffFindRowBySubmissionId_(sheet, headers, chk.payload.id);
+  if (!row) return rrbPage_('Not found', '<p>We could not find that record.</p>', 'err');
+  var d = ffReadRow_(sheet, headers, row);
+  var now = new Date().toISOString();
+
+  var merged = {};
+  Object.keys(d).forEach(function (k) { merged[k] = d[k]; });
+  merged.clientRating = String(stars);
+  merged.clientRatingAt = now;
+  merged.lastUpdated = now;
+  ffWriteRow_(sheet, headers, merged, row);
+  rrbMarkTokenUsed_(chk.row);
+
+  var adv = rrbEsc_(_str(d.advisorName) || 'your advisor');
+  var line = stars >= 4 ? 'That means a great deal to ' + adv + ' and to the branch.'
+           : stars === 3 ? 'Thank you for being straight with us — it is how we improve.'
+           : 'Thank you for telling us. The branch manager will look into this personally.';
+  return rrbPage_('Thank you',
+    '<div style="font-size:34px;color:#F5B935;letter-spacing:3px;margin-bottom:6px">' +
+      new Array(stars + 1).join('&#9733;') + '</div>' +
+    '<div style="font-size:20px;font-weight:800;margin-bottom:6px">Thank you</div>' +
+    '<p style="color:#475569;margin:0 0 14px;font-size:14.5px">' + line + '</p>' +
+    '<form action="' + rrbAppUrl_() + '" method="get" style="margin:0">' +
+    '<input type="hidden" name="action" value="crate_note">' +
+    '<input type="hidden" name="id" value="' + rrbEsc_(_str(chk.payload.id)) + '">' +
+    '<label style="display:block;font-size:13px;font-weight:700;color:#334155;margin-bottom:6px">' +
+      'Anything you would like to add? (optional)</label>' +
+    '<textarea name="note" rows="3" style="width:100%;box-sizing:border-box;border:1px solid #CBD5E1;' +
+      'border-radius:9px;padding:11px;font:15px/1.5 inherit"></textarea>' +
+    '<button type="submit" style="width:100%;margin-top:9px;background:#0D9488;color:#fff;border:0;' +
+      'border-radius:9px;padding:13px;font-size:14.5px;font-weight:800;cursor:pointer">Send</button>' +
+    '</form>', stars >= 3 ? 'ok' : 'bad');
 }
