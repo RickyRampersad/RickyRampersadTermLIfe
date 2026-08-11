@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Employee Enrollment — Ricky Rampersad Branch</title>
+<style>
+  :root{--navy:#0B3C46;--navy2:#04252C;--blue:#0E8FA3;--aqua:#16A5BB;--gold:#F08A24;--gold2:#FFB558;
+        --surface:#ffffff;--line:#dde3ea;--slate:#5a6a7a;--ok:#3d8b4f;--stop:#b23a3a;--wash:#f2f7f8}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Georgia,'Times New Roman',serif;color:#1c2733;background:var(--wash)}
+  header{background:linear-gradient(135deg,#11525F,var(--navy) 60%,var(--navy2));color:#fff;padding:1.4rem 1rem;text-align:center}
+  header h1{font-size:1.3rem;margin:.5rem 0 .1rem}
+  header p{margin:0;font-size:.85rem;color:#B7DEE2}
+  .wrap{max-width:760px;margin:1.2rem auto 3rem;padding:0 1rem}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:1.2rem 1.3rem;margin-bottom:1rem}
+  h2{font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);border-bottom:2px solid var(--gold);padding-bottom:.35rem;margin:0 0 .9rem}
+  label{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--slate);display:block;margin-bottom:.2rem}
+  .inp{width:100%;padding:.55rem .7rem;border:1.5px solid var(--line);border-radius:7px;font:inherit;font-size:14.5px;background:#fff}
+  .inp:focus{outline:none;border-color:var(--aqua)}
+  .row{display:grid;gap:.7rem;margin-bottom:.7rem}
+  .c2{grid-template-columns:1fr 1fr}.c3{grid-template-columns:1fr 1fr 1fr}.c4{grid-template-columns:2fr 1fr 1fr 1fr}
+  @media(max-width:560px){.c2,.c3,.c4{grid-template-columns:1fr}}
+  .chk{display:flex;align-items:center;gap:.45rem;font-size:14px;padding:.45rem .6rem;border:1.5px solid var(--line);border-radius:7px;cursor:pointer;background:#fff}
+  .chk input{accent-color:var(--gold);width:17px;height:17px}
+  .note{font-size:12px;color:var(--slate)}
+  .btn{background:var(--gold);color:var(--navy2);border:0;border-radius:999px;padding:.8rem 1.6rem;font:800 15px Georgia;letter-spacing:.04em;cursor:pointer}
+  .btn.ghost{background:#fff;color:var(--blue);border:1.5px solid var(--line)}
+  .err{display:none;font-weight:700;color:var(--stop);margin:.6rem 0 0;font-size:.9rem}
+  .stepper{display:flex;margin:0 0 .45rem}
+  .stp{flex:1;text-align:center;position:relative;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--slate);font-weight:700}
+  .stp::before{content:'';position:absolute;top:13px;left:-50%;width:100%;height:3px;background:var(--line);z-index:0}
+  .stp:first-child::before{display:none}
+  .stp .dot{position:relative;z-index:1;width:27px;height:27px;border-radius:50%;background:#fff;border:2.5px solid var(--line);display:flex;align-items:center;justify-content:center;margin:0 auto .3rem;font-size:12px;color:var(--slate);font-weight:800;transition:all .25s}
+  .stp.cur .dot{border-color:var(--blue);color:var(--blue);transform:scale(1.12)}
+  .stp.done .dot{background:var(--gold);border-color:var(--gold);color:var(--navy2)}
+  .stp.done::before,.stp.cur::before{background:var(--gold)}
+  .pbar{height:7px;border-radius:4px;background:var(--line);overflow:hidden;margin:0 0 1rem}
+  .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--aqua),var(--gold));border-radius:4px;transition:width .3s}
+  .navbar{display:flex;gap:.6rem;justify-content:space-between;align-items:center;flex-wrap:wrap}
+  @media(max-width:560px){.stp{font-size:8.5px}}
+  .dep-table{width:100%;border-collapse:collapse;font-size:13px}
+  .dep-table th{text-align:left;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--slate);padding:.25rem .3rem}
+  .dep-table td{padding:.2rem .3rem}
+  .dep-table .inp{padding:.4rem .5rem;font-size:13.5px}
+  /* ── print view (filled GIO001 replica) ── */
+  #printview{display:none}
+  .gio{background:#fff;max-width:820px;margin:0 auto;padding:28px 34px;border:1px solid var(--line);font-family:Arial,Helvetica,sans-serif;font-size:11.5px;color:#111}
+  .gio h3{text-align:center;font-size:15px;margin:.2rem 0 .6rem;letter-spacing:.02em}
+  .gio .sec{background:#e9edf2;font-weight:700;text-align:center;padding:3px;border:1px solid #999;border-bottom:0;font-size:11px}
+  .gio table{width:100%;border-collapse:collapse;margin-bottom:8px}
+  .gio td,.gio th{border:1px solid #999;padding:4px 6px;text-align:left;font-weight:normal;vertical-align:top}
+  .gio .lbl{color:#444;font-size:9.5px;text-transform:uppercase;letter-spacing:.03em}
+  .gio b{font-size:12px;text-transform:uppercase}
+  .gio .sig td{height:38px;vertical-align:bottom}
+  .gio .brandbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .toolbar{max-width:820px;margin:0 auto 1rem;display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap}
+  .pb{margin-top:18px}\n  @media print{.pb{page-break-before:always;margin:0}
+    body{background:#fff}
+    header,.toolbar,#formview{display:none!important}
+    #printview{display:block!important}
+    .gio{border:0;padding:0;max-width:none}
+  }
+</style></head><body>
+
+<header>
+  <svg width="54" height="54" viewBox="0 0 64 64" aria-label="Ricky Rampersad Branch">
+    <defs>
+      <linearGradient id="eN" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0D5361"/><stop offset="1" stop-color="#04252C"/></linearGradient>
+      <linearGradient id="eB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16A5BB"/><stop offset="1" stop-color="#086274"/></linearGradient>
+      <linearGradient id="eG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFB558"/><stop offset="1" stop-color="#DE6F0E"/></linearGradient>
+    </defs>
+    <path d="M32 4 L56 12.5 V30 C56 45.5 46 56.5 32 61 C18 56.5 8 45.5 8 30 V12.5 Z" fill="url(#eN)"/>
+    <path d="M32 9.5 L50.7 16.2 V30 C50.7 42.4 42.5 51.6 32 55.5 C21.5 51.6 13.3 42.4 13.3 30 V16.2 Z" fill="url(#eB)" stroke="#F08A24" stroke-width="1.1"/>
+    <g fill="#BDEBEA"><circle cx="22.3" cy="26.8" r="3.3"/><path d="M17.1 42.6 v-1.9 a5.2 5.2 0 0 1 10.4 0 v1.9 Z"/><circle cx="41.7" cy="26.8" r="3.3"/><path d="M36.5 42.6 v-1.9 a5.2 5.2 0 0 1 10.4 0 v1.9 Z"/></g>
+    <g fill="url(#eG)"><circle cx="32" cy="25" r="4.8"/><path d="M24.2 46 v-2.7 a7.8 7.8 0 0 1 15.6 0 v2.7 Z"/></g>
+  </svg>
+  <h1>Group Health &amp; Life — Employee Enrollment</h1>
+  <p>One form per employee · takes about 3 minutes · produces the official Guardian application ready to sign</p>
+</header>
+
+<div class="wrap" id="formview">
+  <div class="card" style="background:#eef7f8;border-color:#bfe0e6">
+    <b style="font-size:14.5px;color:var(--navy)">Employer / HR?</b>
+    <span class="note"> Send this page to your staff — each employee fills in their own details, and your company name travels with the link. Every submission lands with the branch and generates the signed-ready Guardian form.</span>
+    <div style="display:flex;gap:.5rem;margin-top:.65rem;flex-wrap:wrap">
+      <button type="button" class="btn ghost" id="copylink" style="padding:.55rem 1.1rem;font-size:13px">📋 Copy enrollment link</button>
+      <a class="btn ghost" id="walink" target="_blank" rel="noopener" style="padding:.55rem 1.1rem;font-size:13px;text-decoration:none">💬 Share via WhatsApp</a>
+    </div>
+    <p class="note" id="copymsg" style="display:none;color:var(--ok);font-weight:700;margin-top:.4rem">✓ Link copied — paste it in your staff WhatsApp group or email.</p>
+  </div>
+  <div class="stepper" id="stepper">
+    <div class="stp" data-s="1"><span class="dot">1</span>Employee</div>
+    <div class="stp" data-s="2"><span class="dot">2</span>Dependents</div>
+    <div class="stp" data-s="3"><span class="dot">3</span>Beneficiaries</div>
+    <div class="stp" data-s="4"><span class="dot">4</span>Health</div>
+    <div class="stp" data-s="5"><span class="dot">5</span>Employer</div>
+    <div class="stp" data-s="6"><span class="dot">6</span>Review</div>
+  </div>
+  <div class="pbar"><i id="pfill"></i></div>
+  <form id="f">
+    <div class="card" data-step="1">
+      <h2>Section A — Employee information</h2>
+      <div class="row c2">
+        <div><label>Company (policyholder) *</label><input class="inp" id="company" required></div>
+        <div><label>Employee full name *</label><input class="inp" id="empname" required></div>
+      </div>
+      <div class="row c3">
+        <div><label>Date of birth *</label><input class="inp" id="dob" type="date" required></div>
+        <div><label>Gender *</label><select class="inp" id="gender"><option value="">—</option><option>Male</option><option>Female</option></select></div>
+        <div><label>Marital status</label><select class="inp" id="marital"><option>Single</option><option>Married</option><option>Common Law</option><option>Divorced</option><option>Widowed</option></select></div>
+      </div>
+      <div class="row c2">
+        <div><label>Email (confirmation goes here) *</label><input class="inp" id="email" type="email" required></div>
+        <div><label>Occupation</label><input class="inp" id="occupation"></div>
+      </div>
+      <div class="row" style="grid-template-columns:1fr">
+        <div><label>Home address</label><input class="inp" id="address" placeholder="Street, town"></div>
+      </div>
+      <div class="row c3">
+        <div><label>Phone — cellular</label><input class="inp" id="cell"></div>
+        <div><label>Phone — home</label><input class="inp" id="home"></div>
+        <div><label>Phone — work / ext</label><input class="inp" id="work"></div>
+      </div>
+      <div class="row c2">
+        <div><label>ID type</label><select class="inp" id="idtype"><option>National ID</option><option>Driver's Permit</option><option>Passport</option></select></div>
+        <div><label>ID number</label><input class="inp" id="idnum"></div>
+      </div>
+      <label style="margin-top:.4rem">Type of coverage *</label>
+      <div class="row c2">
+        <label class="chk"><input type="checkbox" id="covHealth" checked> Group Health</label>
+        <label class="chk"><input type="checkbox" id="covLife"> Group Life</label>
+      </div>
+      <label>Extra coverage (if applicable)</label>
+      <div class="row c2">
+        <label class="chk"><input type="checkbox" id="xVol"> Voluntary Life</label>
+        <label class="chk"><input type="checkbox" id="xDep"> Dependent Life</label>
+      </div>
+      <p class="note">A copy of the ID must be attached to the signed form.</p>
+    </div>
+
+    <div class="card" data-step="2">
+      <h2>Section B — Coordination of benefits</h2>
+      <label class="chk" style="margin-bottom:.7rem"><input type="checkbox" id="otherPlan"> The employee or their spouse is covered by another medical / health plan</label>
+      <div class="row c2" id="otherPlanRow" style="display:none">
+        <div><label>Name of plan</label><input class="inp" id="planName"></div>
+        <div><label>Insurance company</label><input class="inp" id="planCo"></div>
+      </div>
+    </div>
+
+    <div class="card" data-step="2">
+      <h2>Section C — Dependents to be covered</h2>
+      <table class="dep-table"><thead><tr><th style="width:22%">Relationship</th><th>Name</th><th style="width:13%">Gender</th><th style="width:20%">Date of birth</th><th style="width:20%">Country</th></tr></thead>
+      <tbody id="deps">
+        <tr><td>Spouse</td><td><input class="inp" data-d="name"></td><td><select class="inp" data-d="g"><option></option><option>M</option><option>F</option></select></td><td><input class="inp" type="date" data-d="dob"></td><td><input class="inp" data-d="ctry" placeholder="Trinidad &amp; Tobago"></td></tr>
+        <tr><td>Child</td><td><input class="inp" data-d="name"></td><td><select class="inp" data-d="g"><option></option><option>M</option><option>F</option></select></td><td><input class="inp" type="date" data-d="dob"></td><td><input class="inp" data-d="ctry"></td></tr>
+        <tr><td>Child</td><td><input class="inp" data-d="name"></td><td><select class="inp" data-d="g"><option></option><option>M</option><option>F</option></select></td><td><input class="inp" type="date" data-d="dob"></td><td><input class="inp" data-d="ctry"></td></tr>
+        <tr><td>Child</td><td><input class="inp" data-d="name"></td><td><select class="inp" data-d="g"><option></option><option>M</option><option>F</option></select></td><td><input class="inp" type="date" data-d="dob"></td><td><input class="inp" data-d="ctry"></td></tr>
+        <tr><td>Child</td><td><input class="inp" data-d="name"></td><td><select class="inp" data-d="g"><option></option><option>M</option><option>F</option></select></td><td><input class="inp" type="date" data-d="dob"></td><td><input class="inp" data-d="ctry"></td></tr>
+      </tbody></table>
+      <p class="note">Children 22–25 in full-time tertiary school need a school letter each academic year.</p>
+    </div>
+
+    <div class="card" data-step="3">
+      <h2>Section D — Beneficiaries (Group Life only)</h2>
+      <table class="dep-table"><thead><tr><th style="width:22%">Relationship</th><th>Name</th><th style="width:13%">Gender</th><th style="width:20%">Date of birth</th><th style="width:12%">%</th></tr></thead>
+      <tbody id="bens">
+        <tr><td><input class="inp" data-b="rel"></td><td><input class="inp" data-b="name"></td><td><select class="inp" data-b="g"><option></option><option>M</option><option>F</option></select></td><td><input class="inp" type="date" data-b="dob"></td><td><input class="inp" data-b="pct" inputmode="numeric" placeholder="100"></td></tr>
+        <tr><td><input class="inp" data-b="rel"></td><td><input class="inp" data-b="name"></td><td><select class="inp" data-b="g"><option></option><option>M</option><option>F</option></select></td><td><input class="inp" type="date" data-b="dob"></td><td><input class="inp" data-b="pct" inputmode="numeric"></td></tr>
+        <tr><td><input class="inp" data-b="rel"></td><td><input class="inp" data-b="name"></td><td><select class="inp" data-b="g"><option></option><option>M</option><option>F</option></select></td><td><input class="inp" type="date" data-b="dob"></td><td><input class="inp" data-b="pct" inputmode="numeric"></td></tr>
+      </tbody></table>
+      <p class="note">Percentages should total 100%.</p>
+    </div>
+
+    <div class="card" data-step="4">
+      <h2>Declaration of Insurability — health details</h2>
+      <p class="note" style="margin-top:0"><b>Confidential.</b> These answers are <b>never stored online or shared with your employer</b> — they appear only on the printed declaration you sign, which goes to Guardian. Answer for every person to be covered.</p>
+      <div id="healthhost"></div>
+    </div>
+
+    <div class="card" data-step="5">
+      <h2>Section F — Completed by the employer</h2>
+      <div class="row c3">
+        <div><label>Date employed</label><input class="inp" id="dateEmp" type="date"></div>
+        <div><label>Date of confirmation</label><input class="inp" id="dateConf" type="date"></div>
+        <div><label>Coverage effective date</label><input class="inp" id="dateEff" type="date"></div>
+      </div>
+      <div class="row c3">
+        <div><label>Coverage tier *</label><select class="inp" id="tier"><option value="">—</option><option>Single</option><option>Employee + One</option><option>Employee + Family</option></select></div>
+        <div><label>Annual salary (TT$, if Group Life)</label><input class="inp" id="salary" inputmode="numeric"></div>
+        <div><label>Plan administrator name</label><input class="inp" id="admin"></div>
+      </div>
+      <div class="row" style="grid-template-columns:1fr">
+        <div><label>Company address</label><input class="inp" id="coAddress" placeholder="Street, town — appears on the Guardian declaration"></div>
+      </div>
+      <p class="note"><b>Bank details for claims (Section E)</b> are completed by hand on the printed form only — they are never stored online.</p>
+    </div>
+
+    <div class="card" data-step="6">
+      <h2>Review — the Guardian pack exactly as it will print</h2>
+      <div class="gio" id="previewbox" style="max-width:none;overflow-x:auto;padding:16px 18px"></div>
+      <p class="note" style="margin-top:.6rem">Both pages are shown — the application and the signed declaration. Use Back to fix anything, then confirm.</p>
+    </div>
+
+    <div class="navbar">
+      <button class="btn ghost" type="button" id="backbtn" style="visibility:hidden">← Back</button>
+      <p class="err" id="err" style="margin:0"></p>
+      <button class="btn" type="button" id="nextbtn">Next →</button>
+      <button class="btn" type="submit" id="submitbtn" style="display:none">✓ Confirm &amp; submit</button>
+    </div>
+    <p class="note" style="text-align:center;margin-top:.8rem">On submit: logged with the branch, email confirmation to the employee, and the filled Guardian application ready to print for signature and company stamp.</p>
+  </form>
+</div>
+
+<div id="printview">
+  <div class="toolbar">
+    <button class="btn" onclick="window.print()">🖨️ Print the Guardian form</button>
+    <button class="btn ghost" onclick="location.reload()">＋ Enroll another employee</button>
+  </div>
+  <div class="gio" id="gio"></div>
+  <p class="note" style="text-align:center;margin:1rem 0 2.5rem">Print → employee signs → plan administrator signs &amp; stamps → attach ID copy → send to the branch. Reference is logged with the branch already.</p>
+</div>
+
+<script>
+const GUARDIAN_LOGO='data:image/jpeg;base64,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';
+const WEBHOOK='https://script.google.com/macros/s/AKfycbxMuWSrsMPhvF4Al19q87S545ocCeI5VptX8lPoke7eNe__gomBx2vWsqZHTLJhryBbrw/exec';
+const $=id=>document.getElementById(id);
+
+/* Employer sends a link like  /enroll.html?co=Company — those details arrive pre-filled. */
+(function(){
+  const q=new URLSearchParams(location.search);
+  if(q.get('co'))    $('company').value=q.get('co');
+  if(q.get('admin')) $('admin').value=q.get('admin');
+  if(q.get('eff'))   $('dateEff').value=q.get('eff');
+})();
+function shareLink(){
+  const q=new URLSearchParams();
+  if($('company').value.trim()) q.set('co',$('company').value.trim());
+  if($('admin').value.trim())   q.set('admin',$('admin').value.trim());
+  if($('dateEff').value)        q.set('eff',$('dateEff').value);
+  const qs=q.toString();
+  return location.origin+location.pathname+(qs?'?'+qs:'');
+}
+function refreshWa(){
+  const co=$('company').value.trim();
+  const msg='Hi team — please complete your Group Health'+(co?' enrollment for '+co:' enrollment')+
+    ' here (takes 3 minutes on your phone): '+shareLink();
+  $('walink').href='https://wa.me/?text='+encodeURIComponent(msg);
+}
+['company','admin','dateEff'].forEach(id=>$(id).addEventListener('input',refreshWa));
+refreshWa();
+$('copylink').addEventListener('click',function(){
+  const link=shareLink();
+  const done=()=>{ $('copymsg').style.display='block'; setTimeout(()=>$('copymsg').style.display='none',4000); };
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(link).then(done,()=>prompt('Copy this link:',link));
+  else prompt('Copy this link:',link);
+});
+$('otherPlan').addEventListener('change',e=>{$('otherPlanRow').style.display=e.target.checked?'grid':'none'});
+
+function fmt(d){ if(!d) return ''; const p=d.split('-'); return p.length===3?(p[2]+'/'+p[1]+'/'+p[0]):d; }
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+function box(on){return '<span style="font-family:Arial">'+(on?'☑':'☐')+'</span>';}
+
+function getDeps(){
+  return [...document.querySelectorAll('#deps tr')].map(tr=>{
+    const g=s=>tr.querySelector('[data-d="'+s+'"]').value.trim();
+    return {rel:tr.cells[0].textContent,name:g('name'),g:g('g'),dob:g('dob'),ctry:g('ctry')};
+  }).filter(d=>d.name);
+}
+function getBens(){
+  return [...document.querySelectorAll('#bens tr')].map(tr=>{
+    const g=s=>tr.querySelector('[data-b="'+s+'"]').value.trim();
+    return {rel:g('rel'),name:g('name'),g:g('g'),dob:g('dob'),pct:g('pct')};
+  }).filter(b=>b.name);
+}
+/* One reference per sitting — the preview and the submission carry the same number. */
+let REF=null;
+function theRef(){
+  if(!REF){ const now=new Date();
+    REF='EN-'+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0')+'-'+String(Date.now()).slice(-4); }
+  return REF;
+}
+function collect(){
+  const deps=getDeps(), bens=getBens();
+  const d={
+    kind:'enrollment', ref:theRef(),
+    company:$('company').value.trim(), employee:$('empname').value.trim(),
+    dob:fmt($('dob').value), gender:$('gender').value, marital:$('marital').value,
+    email:$('email').value.trim(), occupation:$('occupation').value.trim(),
+    address:$('address').value.trim(),
+    phones:['Cell: '+$('cell').value,'Home: '+$('home').value,'Work: '+$('work').value].filter(p=>p.split(': ')[1]).join(' · '),
+    phCell:$('cell').value.trim(), phHome:$('home').value.trim(), phWork:$('work').value.trim(),
+    idKind:({"Driver's Permit":'DP','Passport':'PP','National ID':'ID'})[$('idtype').value]||'ID',
+    idNumber:$('idnum').value.trim(),
+    idinfo:$('idtype').value+($('idnum').value?' — '+$('idnum').value.trim():''),
+    coverage:[$('covHealth').checked?'Group Health':'',$('covLife').checked?'Group Life':''].filter(Boolean).join(' + '),
+    extra:[$('xVol').checked?'Voluntary Life':'',$('xDep').checked?'Dependent Life':''].filter(Boolean).join(' + '),
+    otherPlan:$('otherPlan').checked?(($('planName').value||'Yes')+($('planCo').value?' ('+$('planCo').value+')':'')):'No',
+    dependents:deps.map(x=>x.rel+': '+x.name+' ('+x.g+', '+fmt(x.dob)+(x.ctry?', '+x.ctry:'')+')').join(' | '),
+    beneficiaries:bens.map(x=>(x.rel?x.rel+': ':'')+x.name+' ('+(x.g||'')+', '+fmt(x.dob)+') '+(x.pct||'')+'%').join(' | '),
+    tier:$('tier').value, salary:$('salary').value.trim(),
+    dateEmployed:fmt($('dateEmp').value), dateConfirmed:fmt($('dateConf').value), dateEffective:fmt($('dateEff').value),
+    planAdmin:$('admin').value.trim(), companyAddress:$('coAddress').value.trim(),
+    declaration:'Completed digitally; signed on screen; printed for records', via:'enroll-page'
+  };
+  return {d:d,deps:deps,bens:bens};
+}
+
+/* ── step engine ── */
+let step=1; const LAST=6;
+function stepError(m){ $('err').textContent=m; $('err').style.display='block'; }
+function validateStep(n){
+  if(n===1){
+    if(!$('company').value.trim()) return 'Missing: company name.';
+    if(!$('empname').value.trim()) return 'Missing: employee name.';
+    if(!$('dob').value) return 'Missing: date of birth.';
+    if(!/@/.test($('email').value)) return 'A valid email is needed for the confirmation.';
+    if(!$('gender').value) return 'Missing: gender.';
+    if(!$('covHealth').checked && !$('covLife').checked) return 'Tick at least one coverage type (Group Health / Group Life).';
+  }
+  if(n===3 && $('covLife').checked){
+    const bens=getBens();
+    if(bens.length){ const tot=bens.reduce((t,b)=>t+(parseFloat(b.pct)||0),0);
+      if(Math.round(tot)!==100) return 'Beneficiary percentages total '+tot+'% — they must total 100%.'; }
+  }
+  if(n===4){ const m=validateHealth(); if(m) return m; }
+  if(n===5 && !$('tier').value) return 'Missing: coverage tier.';
+  return null;
+}
+function showStep(n){
+  step=n;
+  document.querySelectorAll('#f .card[data-step]').forEach(c=>{c.style.display=(+c.dataset.step===n)?'':'none';});
+  document.querySelectorAll('#stepper .stp').forEach(el=>{
+    const k=+el.dataset.s;
+    el.classList.toggle('cur',k===n); el.classList.toggle('done',k<n);
+    el.querySelector('.dot').textContent=k<n?'✓':k;
+  });
+  $('pfill').style.width=((n-1)/(LAST-1)*100)+'%';
+  $('backbtn').style.visibility=n===1?'hidden':'visible';
+  $('nextbtn').style.display=n===LAST?'none':'';
+  $('submitbtn').style.display=n===LAST?'':'none';
+  const share=document.querySelector('#formview > .card:not([data-step])');
+  if(share) share.style.display=n===1?'':'none';
+  $('err').style.display='none';
+  if(n===4) buildHealth();
+  if(n===LAST){ const c=collect(); renderGio(c.d,c.deps,c.bens,'previewbox'); }
+  window.scrollTo(0,0);
+}
+$('nextbtn').addEventListener('click',function(){
+  const m=validateStep(step); if(m){stepError(m);return;}
+  showStep(step+1);
+});
+$('backbtn').addEventListener('click',function(){ showStep(step-1); });
+
+document.getElementById('f').addEventListener('submit',function(e){
+  e.preventDefault();
+  for(const n of [1,3,4,5]){ const m=validateStep(n); if(m){ stepError(m); return; } }
+  const c=collect();
+  try{
+    fetch(WEBHOOK,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(c.d)}).catch(function(){});
+  }catch(ex){}
+  renderGio(c.d,c.deps,c.bens,'gio');
+  $('formview').style.display='none';
+  $('printview').style.display='block';
+  window.scrollTo(0,0);
+});
+
+/* ── Declaration of Insurability (2005-09-EB012) — browser-only, never posted ── */
+const QA=[
+ ['a','Disorder of eyes, ears, nose or throat?'],
+ ['b','Dizziness, fainting, convulsions, headache, speech defect, paralysis or stroke, mental or nervous disorder?'],
+ ['c','Shortness of breath, persistent hoarseness or cough, blood spitting, bronchitis, pleurisy, asthma, emphysema, tuberculosis or chronic respiratory disorder?'],
+ ['d','Chest pain, palpitation, high blood pressure, rheumatic fever, heart murmur, heart attack or other disorder of the heart or blood vessels?'],
+ ['e','Jaundice, intestinal bleeding, ulcer, hernia, appendicitis, colitis, diverticulitis, hemorrhoids, recurrent indigestion or other disorder of the stomach, intestine, liver or gallbladder?'],
+ ['f','Sugar, albumin, blood or pus in urine, venereal disease, stone or other disorder of the kidney, bladder, prostate, or reproductive organs?'],
+ ['g','Diabetes, thyroid or other endocrine disorders?'],
+ ['h','Gout, neuritis, sciatica, rheumatism, arthritis, or disorder of the muscles or bones, including the spine, back or joints?'],
+ ['i','Deformity, lameness, amputation?'],
+ ['j','AIDS (Acquired Immune Deficiency Syndrome), ARC (Aids Related Complex) or any other immunological disorder?'],
+ ['k','Enlargement of lymph nodes, glands, chronic diarrhoea, unusual skin lesions, cyst, tumor, cancer or unexplained infections?'],
+ ['l','Allergies, anaemia, or other disorder of the blood?']];
+const QB=[
+ ['ba','Had a check-up, consultation, illness, injury or surgery?'],
+ ['bb','Had any mental or physical disorder not listed above?'],
+ ['bc','Been advised to have any diagnostic test, hospitalization, or surgery which was not completed?']];
+const MED={answers:{},hw:{},preg:{},medUse:null,physicians:[],detailNote:'',medNote:''};
+const SIG={emp:null,spouse:null};
+
+function healthPersons(){
+  const ps=[{key:'emp',label:$('empname').value.trim()||'Employee',fem:$('gender').value==='Female'}];
+  getDeps().forEach(function(x,i){
+    ps.push({key:'d'+i,label:x.name+(x.rel==='Spouse'?' (Spouse)':' (Child)'),fem:x.g==='F'});
+  });
+  return ps;
+}
+function buildHealth(){
+  const ps=healthPersons();
+  let h='';
+  ps.forEach(function(p){
+    if(!MED.answers[p.key]) MED.answers[p.key]={};
+    const a=MED.answers[p.key];
+    h+='<div style="border:1.5px solid var(--line);border-radius:9px;padding: .8rem .9rem;margin-bottom:.8rem">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.5rem">'+
+      '<b style="font-size:14px;color:var(--navy)">'+p.label.replace(/</g,'&lt;')+'</b>'+
+      '<button type="button" class="btn ghost" data-allno="'+p.key+'" style="padding:.35rem .8rem;font-size:11.5px">All answers are No</button></div>'+
+      '<div class="row c2" style="margin-bottom:.5rem">'+
+      '<div><label>Height</label><input class="inp" data-hw="'+p.key+'|h" value="'+((MED.hw[p.key]||{}).h||'')+'" placeholder="e.g. 5ft 8in"></div>'+
+      '<div><label>Weight</label><input class="inp" data-hw="'+p.key+'|w" value="'+((MED.hw[p.key]||{}).w||'')+'" placeholder="e.g. 170 lb"></div></div>';
+    QA.concat(QB).forEach(function(q){
+      const v=a[q[0]];
+      h+='<div style="display:flex;gap:.6rem;align-items:flex-start;padding:.28rem 0;border-top:1px dashed var(--line)">'+
+        '<span style="flex:1;font-size:12.5px;line-height:1.35">'+(q[0].length===1?'('+q[0]+') ':'')+q[1]+'</span>'+
+        '<label style="font-size:12px;display:flex;gap:.25rem;align-items:center"><input type="radio" name="q_'+p.key+'_'+q[0]+'" value="Y"'+(v==='Y'?' checked':'')+'>Yes</label>'+
+        '<label style="font-size:12px;display:flex;gap:.25rem;align-items:center"><input type="radio" name="q_'+p.key+'_'+q[0]+'" value="N"'+(v==='N'?' checked':'')+'>No</label></div>';
+    });
+    if(p.fem){
+      h+='<div style="display:flex;gap:.6rem;align-items:center;padding:.35rem 0;border-top:1px dashed var(--line)">'+
+        '<span style="flex:1;font-size:12.5px">(m) Are you pregnant? If yes, how far advanced (months)?</span>'+
+        '<input class="inp" data-preg="'+p.key+'" value="'+(MED.preg[p.key]||'')+'" style="width:90px" placeholder="No / 4"></div>';
+    }
+    h+='</div>';
+  });
+  h+='<div style="border:1.5px solid var(--line);border-radius:9px;padding:.8rem .9rem;margin-bottom:.8rem">'+
+    '<b style="font-size:13.5px;color:var(--navy)">If any answer above is Yes</b>'+
+    '<div style="margin-top:.4rem"><label>Details — who, diagnosis, dates, treatment, recovery (full/partial)</label>'+
+    '<textarea class="inp" id="detailNote" style="min-height:70px" placeholder="e.g. Maria Gomez — asthma, 2019 to present, inhaler as needed, full control">'+MED.detailNote+'</textarea></div>'+
+    '<div style="display:flex;gap:.6rem;align-items:center;margin-top:.6rem;flex-wrap:wrap">'+
+    '<span style="font-size:12.5px;flex:1">Is anyone listed using, or expected to use, medication or serum in the next three months?</span>'+
+    '<label style="font-size:12px"><input type="radio" name="medUse" value="Y"'+(MED.medUse==='Y'?' checked':'')+'> Yes</label>'+
+    '<label style="font-size:12px"><input type="radio" name="medUse" value="N"'+(MED.medUse==='N'?' checked':'')+'> No</label></div>'+
+    '<div id="medWrap" style="display:'+(MED.medUse==='Y'?'block':'none')+';margin-top:.5rem"><label>Medication details — person, drug, monthly cost, strength, daily dosage, how long</label>'+
+    '<textarea class="inp" id="medNote" style="min-height:60px">'+MED.medNote+'</textarea></div>'+
+    '<div style="margin-top:.6rem"><label>Personal physician(s) — name, address, date last consulted, reason (optional)</label>'+
+    '<textarea class="inp" id="physNote" style="min-height:55px">'+(MED.physNote||'')+'</textarea></div>'+
+    '</div>';
+  const hasSpouse=getDeps().some(function(x){return x.rel==='Spouse';});
+  h+='<div style="border:1.5px solid var(--line);border-radius:9px;padding:.8rem .9rem;margin-bottom:.4rem">'+
+    '<b style="font-size:13.5px;color:var(--navy)">Sign the declaration</b>'+
+    '<p class="note" style="margin:.3rem 0 .5rem">Sign with your finger or mouse — your signature appears on the printed Guardian declaration. It is never stored online.</p>'+
+    '<label>Signature of Insured *</label>'+
+    '<canvas id="sig_emp" width="560" height="130" style="width:100%;max-width:560px;height:130px;border:1.5px dashed var(--aqua);border-radius:8px;background:#fff;touch-action:none;display:block"></canvas>'+
+    '<button type="button" class="btn ghost" data-sigclear="emp" style="padding:.3rem .8rem;font-size:11px;margin-top:.3rem">Clear</button>'+
+    (hasSpouse?
+      '<div style="margin-top:.7rem"><label>Signature of Spouse *</label>'+
+      '<canvas id="sig_spouse" width="560" height="130" style="width:100%;max-width:560px;height:130px;border:1.5px dashed var(--aqua);border-radius:8px;background:#fff;touch-action:none;display:block"></canvas>'+
+      '<button type="button" class="btn ghost" data-sigclear="spouse" style="padding:.3rem .8rem;font-size:11px;margin-top:.3rem">Clear</button></div>'
+      :'')+
+    '</div>';
+  $('healthhost').innerHTML=h;
+  sigPad('sig_emp','emp');
+  if(hasSpouse) sigPad('sig_spouse','spouse');
+  $('healthhost').querySelectorAll('[data-sigclear]').forEach(function(b){
+    b.addEventListener('click',function(){
+      const k=b.getAttribute('data-sigclear');
+      SIG[k]=null;
+      const c=$('sig_'+k); c.getContext('2d').clearRect(0,0,c.width,c.height);
+    });
+  });
+  $('healthhost').querySelectorAll('[data-allno]').forEach(function(b){
+    b.addEventListener('click',function(){
+      const k=b.getAttribute('data-allno');
+      QA.concat(QB).forEach(function(q){
+        const r=document.querySelector('input[name="q_'+k+'_'+q[0]+'"][value="N"]'); if(r) r.checked=true;
+      });
+      captureHealth();
+    });
+  });
+  $('healthhost').addEventListener('change',captureHealth);
+}
+function sigPad(id,key){
+  const c=$(id); if(!c) return;
+  const ctx=c.getContext('2d');
+  ctx.lineWidth=2.2; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#1c2733';
+  if(SIG[key]){ const img=new Image(); img.onload=function(){ctx.drawImage(img,0,0);}; img.src=SIG[key]; }
+  let drawing=false,last=null;
+  function pos(e){ const r=c.getBoundingClientRect();
+    const t=e.touches?e.touches[0]:e;
+    return {x:(t.clientX-r.left)*c.width/r.width, y:(t.clientY-r.top)*c.height/r.height}; }
+  function down(e){ drawing=true; last=pos(e); e.preventDefault(); }
+  function move(e){ if(!drawing) return; const p2=pos(e);
+    ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+    last=p2; e.preventDefault(); }
+  function up(){ if(drawing){ drawing=false; SIG[key]=c.toDataURL('image/png'); } }
+  c.addEventListener('mousedown',down); c.addEventListener('mousemove',move);
+  window.addEventListener('mouseup',up);
+  c.addEventListener('touchstart',down,{passive:false});
+  c.addEventListener('touchmove',move,{passive:false});
+  c.addEventListener('touchend',up);
+}
+
+function captureHealth(){
+  healthPersons().forEach(function(p){
+    if(!MED.answers[p.key]) MED.answers[p.key]={};
+    QA.concat(QB).forEach(function(q){
+      const r=document.querySelector('input[name="q_'+p.key+'_'+q[0]+'"]:checked');
+      if(r) MED.answers[p.key][q[0]]=r.value;
+    });
+    const hEl=document.querySelector('[data-hw="'+p.key+'|h"]'), wEl=document.querySelector('[data-hw="'+p.key+'|w"]');
+    if(hEl) MED.hw[p.key]={h:hEl.value.trim(),w:wEl.value.trim()};
+    const pg=document.querySelector('[data-preg="'+p.key+'"]'); if(pg) MED.preg[p.key]=pg.value.trim();
+  });
+  const mu=document.querySelector('input[name="medUse"]:checked'); MED.medUse=mu?mu.value:null;
+  if($('medWrap')) $('medWrap').style.display=MED.medUse==='Y'?'block':'none';
+  if($('detailNote')) MED.detailNote=$('detailNote').value.trim();
+  if($('medNote')) MED.medNote=$('medNote').value.trim();
+  if($('physNote')) MED.physNote=$('physNote').value.trim();
+}
+function validateHealth(){
+  captureHealth();
+  const ps=healthPersons();
+  for(const p of ps){
+    const a=MED.answers[p.key]||{};
+    for(const q of QA.concat(QB)){
+      if(a[q[0]]!=='Y'&&a[q[0]]!=='N') return 'Health declaration: answer every question for '+p.label+' (or tap "All answers are No").';
+    }
+  }
+  const anyYes=ps.some(p=>QA.concat(QB).some(q=>(MED.answers[p.key]||{})[q[0]]==='Y'));
+  if(anyYes&&!MED.detailNote) return 'You answered Yes to a health question — add the details (who, diagnosis, dates, treatment).';
+  if(MED.medUse===null) return 'Answer the medication / serum question.';
+  if(MED.medUse==='Y'&&!MED.medNote) return 'Add the medication details.';
+  if(!SIG.emp) return 'The insured must sign the declaration — sign in the box.';
+  if(getDeps().some(function(x){return x.rel==='Spouse';})&&!SIG.spouse) return 'The spouse is covered — their signature is needed too.';
+  return null;
+}
+function renderDecl(d){
+  const ps=healthPersons();
+  const deps=getDeps();
+  const spouse=deps.find(x=>x.rel==='Spouse')||null;
+  const kids=deps.filter(x=>x.rel==='Child');
+  // Fixed grid exactly as the form: EMP | SPOUSE | CHILD | CHILD
+  const grid=[
+    {label:'EMP',   key:'emp',                 exists:true},
+    {label:'SPOUSE',key:spouse?('d'+deps.indexOf(spouse)):null, exists:!!spouse},
+    {label:'CHILD', key:kids[0]?('d'+deps.indexOf(kids[0])):null, exists:!!kids[0]},
+    {label:'CHILD', key:kids[1]?('d'+deps.indexOf(kids[1])):null, exists:!!kids[1]},
+  ];
+  const tick=(g,q,v)=>{ if(!g.exists||!g.key) return '';
+    return ((MED.answers[g.key]||{})[q]===v)?'✓':''; };
+  const age=iso=>{ if(!iso) return ''; const b=new Date(iso); if(isNaN(b)) return '';
+    return String(Math.floor((Date.now()-b.getTime())/(365.25*24*3600*1000))); };
+  const splitName=full=>{ const t=String(full||'').trim().split(/\s+/);
+    return t.length>1?{last:t[t.length-1],first:t.slice(0,-1).join(' ')}:{last:'',first:full||''}; };
+  // Part B rows: Insured + Spouse + 6 Dependant lines, exactly as the form
+  const en=splitName(d.employee);
+  const rowsB=[['Insured',en.last,en.first,(d.gender||'').charAt(0),d.dob||'',age($('dob').value),(MED.hw.emp||{}).h||'',(MED.hw.emp||{}).w||'']];
+  const sp=spouse?splitName(spouse.name):null;
+  rowsB.push(['Spouse',sp?sp.last:'',sp?sp.first:'',spouse?spouse.g:'',spouse?fmt(spouse.dob):'',spouse?age(spouse.dob):'',spouse?((MED.hw['d'+deps.indexOf(spouse)]||{}).h||''):'',spouse?((MED.hw['d'+deps.indexOf(spouse)]||{}).w||''):'']);
+  for(let i=0;i<6;i++){
+    const k=kids[i];
+    rowsB.push(['Dependant',k?splitName(k.name).last:'',k?splitName(k.name).first:'',k?k.g:'',k?fmt(k.dob):'',k?age(k.dob):'',k?((MED.hw['d'+deps.indexOf(k)]||{}).h||''):'',k?((MED.hw['d'+deps.indexOf(k)]||{}).w||''):'']);
+  }
+  const partB=rowsB.map(r=>'<tr><td class="lbl" style="width:11%">'+r[0]+'</td>'+r.slice(1).map((v,i)=>'<td style="font-size:9.5px'+(i<2?'':';text-align:center')+'">'+esc(v)+'</td>').join('')+'</tr>').join('');
+  // Part C grids — checkmarks in Yes/No boxes, form layout untouched
+  const gridHead=
+    '<tr><th class="lbl" style="width:44%;border-bottom:0"></th>'+grid.map(()=>'<th style="width:7%;text-align:center;font-size:8.5px">Yes</th><th style="width:7%;text-align:center;font-size:8.5px">No</th>').join('')+'</tr>'+
+    '<tr><th class="lbl" style="border-top:0"></th>'+grid.map(g=>'<th colspan="2" style="text-align:center;font-size:8px">'+g.label+'</th>').join('')+'</tr>';
+  const qRow=q=>'<tr><td style="font-size:9px">'+(q[0].length===1?'('+q[0]+') ':'')+q[1]+'</td>'+
+    grid.map(g=>'<td style="text-align:center;font-size:10px">'+tick(g,q[0],'Y')+'</td><td style="text-align:center;font-size:10px">'+tick(g,q[0],'N')+'</td>').join('')+'</tr>';
+  const secA=QA.map(qRow).join('');
+  const secB=QB.map(qRow).join('');
+  const pregLines=ps.filter(p2=>p2.fem&&MED.preg[p2.key]).map(p2=>esc(p2.label)+': '+esc(MED.preg[p2.key])).join(' · ');
+  const extraKids=kids.slice(2);
+  const today=new Date();
+  const dated=String(today.getDate()).padStart(2,'0')+' / '+String(today.getMonth()+1).padStart(2,'0')+' / '+today.getFullYear();
+  const sigCell=(img,who)=>'<td style="width:50%;vertical-align:bottom"><span class="lbl">Signature of '+who+'</span><br>'+
+    (img?'<img src="'+img+'" style="height:42px;display:block;margin:2px 0">':'<div style="height:44px"></div>')+
+    '<span style="border-top:1px dotted #555;display:block;width:88%"></span>'+
+    '<span class="lbl">Dated: '+(img?dated:'____ / ____ / ______')+'</span></td>';
+  return '<div class="pb"></div>'+
+  '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:2px">'+
+    '<img src="'+GUARDIAN_LOGO+'" alt="Guardian Group" style="height:52px;flex:none">'+
+    '<div style="flex:1;text-align:center;padding-top:8px"><b style="font-size:12.5px;text-transform:none">GUARDIAN LIFE OF THE CARIBBEAN LIMITED<br>GROUP HEALTH PLAN<br>DECLARATION OF INSURABILITY</b></div>'+
+    '<div style="width:100px;flex:none"></div></div>'+
+  '<table style="margin-bottom:4px"><tr><td class="lbl" style="border:0;padding-left:0;width:50%">PLAN# ____________________</td><td class="lbl" style="border:0">CERT# ____________________</td></tr></table>'+
+  '<div class="sec">PART A - GENERAL INFORMATION</div>'+
+  '<table>'+
+  '<tr><td colspan="2"><span class="lbl">POLICY HOLDER</span><br><b>'+esc(d.company)+'</b></td><td style="width:30%"><span class="lbl">Business Telephone No.</span><br><b>'+esc(d.phWork||'')+'</b></td></tr>'+
+  '<tr><td colspan="2"><span class="lbl">Address</span><br><b style="text-transform:none">'+esc(d.companyAddress||'')+'</b></td><td><span class="lbl">DATE EMPLOYED:</span> <b>'+esc(d.dateEmployed||'')+'</b></td></tr>'+
+  '<tr><td><span class="lbl">INSURED:</span> <b>'+esc(d.employee)+'</b></td>'+
+  '<td><span class="lbl">MARITAL STATUS</span> '+box(d.marital==='Single')+' Single &nbsp; '+box(d.marital==='Married')+' Married</td>'+
+  '<td><span class="lbl">Home Telephone No.</span><br><b>'+esc(d.phHome||d.phCell||'')+'</b></td></tr></table>'+
+  '<div class="sec">PART B - PERSONS TO BE COVERED</div>'+
+  '<table><tr><td colspan="8" style="font-size:8.5px;font-style:italic">Provide first name of insured and all family members to be covered plus last name of any member if different from the insured\'s</td></tr>'+
+  '<tr><th class="lbl"></th><th class="lbl">LAST NAME</th><th class="lbl">FIRST NAME</th><th class="lbl" style="text-align:center">SEX</th><th class="lbl" style="text-align:center">BIRTH DATE</th><th class="lbl" style="text-align:center">AGE</th><th class="lbl" style="text-align:center">HEIGHT</th><th class="lbl" style="text-align:center">WEIGHT</th></tr>'+partB+'</table>'+
+  '<table><tr><th class="lbl" style="width:22%">NAME OF PERSONAL PHYSICIANS</th><th class="lbl">ADDRESS</th><th class="lbl" style="width:16%">DATE LAST CONSULTED</th><th class="lbl" style="width:26%">REASON AND TREATMENT GIVEN</th></tr>'+
+  '<tr><td colspan="4" style="height:30px;font-size:9.5px"><b style="text-transform:none">'+esc(MED.physNote||'')+'</b></td></tr></table>'+
+  '<div class="sec">PART C - MEDICAL QUESTIONNAIRE FOR APPLICANT AND DEPENDANTS</div>'+
+  '<table style="margin-bottom:2px"><tr><td style="border:0;padding-left:0;font-size:9px"><b style="text-transform:none">SECTION A - CHECK EACH ITEM YES OR NO. ( INSERT ONE TICK PER CHILD )</b><br>Have you or any person in this application ever been treated for or ever had any known indication of:</td></tr></table>'+
+  '<table>'+gridHead+secA+
+  '<tr><td style="font-size:9px">(m) Females only: Are you pregnant? If "YES", how far advanced?</td><td colspan="8" style="font-size:9.5px">'+ (pregLines||'') +'</td></tr>'+
+  '</table>'+
+  '<table style="margin-bottom:2px"><tr><td style="border:0;padding-left:0;font-size:9px"><b style="text-transform:none">SECTION B</b> - in addition to the conditions listed in SECTION A, to the best of your knowledge and belief has any person named in this application:</td></tr></table>'+
+  '<table>'+gridHead+secB+'</table>'+
+  (extraKids.length?'<table><tr><td style="font-size:9px"><span class="lbl">ADDITIONAL DEPENDANTS (answers per attached continuation sheet):</span> <b>'+esc(extraKids.map(k=>k.name).join(', '))+'</b></td></tr></table>':'')+
+  '<table><tr><td><span class="lbl">SECTION C - IF ANY ANSWER IS "YES": DIAGNOSIS / SYMPTOM, DURATION DATES, DETAILS, RECOVERY (FULL / PARTIAL)</span><br><b style="text-transform:none">'+esc(MED.detailNote||'None')+'</b></td></tr>'+
+  '<tr><td><span class="lbl">2. Are you or any dependant listed as using or expected to be using medication or serum in the next three months?</span> '+box(MED.medUse==='Y')+' YES &nbsp;'+box(MED.medUse==='N')+' NO'+
+  (MED.medUse==='Y'?'<br><b style="text-transform:none">'+esc(MED.medNote)+'</b>':'')+'</td></tr></table>'+
+  '<table><tr><td style="font-size:8.5px;color:#333"><b style="font-size:9.5px;text-transform:none">DECLARATION — All applicants must complete. NOTE THE INFORMATION ON THIS FORM IS TO BE CONSIDERED CONFIDENTIAL.</b><br>'+
+  'I/We hereby declare that the answers given and recorded herein are, to the best of my/our knowledge, complete and true at this date. '+
+  'I/We hereby authorize any licensed physician, medical practitioner, hospital, clinic, medical facility or organization which has records of my/our health to release such information to Guardian Life of the Caribbean Limited. A photocopy of this signed authorization shall be as valid as the original. '+
+  'I/We understand and agree that any injury that occured on or before the date of this application or any sickness, the signs of which first appeared on or before the date of this application, are not covered by this contract unless fully disclosed on this application. Failure to disclose such information could result in denial of a claim and the cancellation of coverage. '+
+  'I/We understand and agree that coverage shall not become effective until approved by Guardian Life of the Caribbean Limited.</td></tr>'+
+  '<tr>'+sigCell(SIG.emp,'Insured')+sigCell(SIG.spouse,'Spouse')+'</tr></table>'+
+  '<div style="display:flex;justify-content:flex-end;margin-top:6px"><span style="border:1px solid #999;padding:2px 12px;font-size:10px">2005-09-EB012</span></div>';
+}
+
+function renderGio(d,deps,bens,target){
+  const depRows=['SPOUSE','CHILD','CHILD','CHILD','CHILD'].map((rel,i)=>{
+    const x=deps.filter(v=>rel==='SPOUSE'?v.rel==='Spouse':v.rel==='Child')[rel==='SPOUSE'?0:i-1]||{};
+    return '<tr><td class="lbl" style="width:14%">'+rel+'</td><td>'+esc(x.name||'')+'</td><td style="width:9%">'+esc(x.g||'')+'</td><td style="width:15%">'+fmt(x.dob||'')+'</td><td style="width:15%">'+(x.name?fmt(d.dateEffective||''):'')+'</td><td style="width:18%">'+esc(x.ctry||'')+'</td></tr>';
+  }).join('');
+  const benRows=[0,1,2].map(i=>{const x=bens[i]||{};
+    return '<tr><td style="width:18%">'+esc(x.rel||'')+'</td><td>'+esc(x.name||'')+'</td><td style="width:9%">'+esc(x.g||'')+'</td><td style="width:16%">'+fmt(x.dob||'')+'</td><td style="width:12%">'+esc(x.pct?x.pct+'%':'')+'</td></tr>';}).join('');
+  $(target||'gio').innerHTML=
+  '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:2px">'+
+    '<img src="'+GUARDIAN_LOGO+'" alt="Guardian Group" style="height:56px;flex:none">'+
+    '<div style="flex:1;text-align:center;padding-top:16px"><b style="font-size:14px;text-transform:none">GROUP HEALTH AND LIFE APPLICATION FORM</b></div>'+
+    '<div style="width:110px;flex:none"></div>'+
+  '</div>'+
+  '<table style="margin-bottom:4px"><tr>'+
+    '<td class="lbl" style="border:0;padding-left:0;width:32%"><b style="font-size:10px;text-transform:none">PLEASE COMPLETE IN BLOCK LETTERS</b></td>'+
+    '<td class="lbl" style="border:0">POLICY NO. LIFE ____________________</td>'+
+    '<td class="lbl" style="border:0">POLICY NO. HEALTH ____________________</td>'+
+  '</tr></table>'+
+  '<div class="sec">SECTION A – APPLICANT INFORMATION</div>'+
+  '<table>'+
+  '<tr><td colspan="2"><span class="lbl">NAME OF POLICYHOLDER:</span> <b>'+esc(d.company)+'</b></td></tr>'+
+  '<tr><td><span class="lbl">NAME OF EMPLOYEE/INSURED:</span> <b>'+esc(d.employee)+'</b></td><td style="width:32%"><span class="lbl">DATE OF BIRTH:</span> <b>'+esc(d.dob)+'</b></td></tr>'+
+  '<tr><td><span class="lbl">EMAIL ADDRESS:</span> <b style="text-transform:none">'+esc(d.email)+'</b></td><td><span class="lbl">GENDER:</span> '+box(d.gender==='Male')+' MALE &nbsp; '+box(d.gender==='Female')+' FEMALE</td></tr>'+
+  '<tr><td colspan="2"><span class="lbl">TELEPHONE (Home):</span> <b>'+esc(d.phHome||'')+'</b> &nbsp;<span class="lbl">(Work):</span> <b>'+esc(d.phWork||'')+'</b> &nbsp;<span class="lbl">(Cellular):</span> <b>'+esc(d.phCell||'')+'</b></td></tr>'+
+  '<tr><td><span class="lbl">MARITAL STATUS:</span> '+['Single','Married','Common Law','Divorced','Widowed'].map(function(m){return box(d.marital===m)+' <span style="font-size:10px">'+m+'</span>';}).join(' ')+'</td>'+
+  '<td><span class="lbl">OCCUPATION:</span> <b>'+esc(d.occupation||'')+'</b></td></tr>'+
+  '<tr><td><span class="lbl">IDENTIFICATION</span> <span style="font-size:9px;font-style:italic">(tick one)</span> '+box(d.idKind==='DP')+' <span style="font-size:10px">DP</span> &nbsp;'+box(d.idKind==='PP')+' <span style="font-size:10px">PP</span> &nbsp;'+box(d.idKind==='ID')+' <span style="font-size:10px">ID</span>'+
+  '<br><span class="lbl" style="font-style:italic">(Please attach a copy)</span> <span class="lbl">Number:</span> <b>'+esc(d.idNumber||'')+'</b></td>'+
+  '<td></td></tr>'+
+  '<tr><td><span class="lbl">TYPE OF COVERAGE:</span> '+box(/Health/.test(d.coverage))+' GROUP HEALTH &nbsp; '+box(/Life/.test(d.coverage))+' GROUP LIFE</td>'+
+  '<td><span class="lbl">EXTRA:</span> '+box(/Voluntary/.test(d.extra))+' VOLUNTARY LIFE &nbsp; '+box(/Dependent/.test(d.extra))+' DEPENDENT LIFE</td></tr>'+
+  '</table>'+
+  '<div class="sec">SECTION B – CO-ORDINATION OF BENEFITS</div>'+
+  '<table><tr><td>Covered by any other Medical or Health Plan? '+box(d.otherPlan!=='No')+' Yes &nbsp; '+box(d.otherPlan==='No')+' No'+(d.otherPlan!=='No'?' &nbsp; <b>'+esc(d.otherPlan)+'</b>':'')+'</td></tr></table>'+
+  '<div class="sec">SECTION C – EMPLOYEE\'S DEPENDENTS TO BE COVERED</div>'+
+  '<table style="margin-bottom:0"><tr><th class="lbl">RELATIONSHIP</th><th class="lbl">NAME OF DEPENDENT/S</th><th class="lbl">GENDER (M/F)</th><th class="lbl">DATE OF BIRTH</th><th class="lbl">EFFECTIVE DATE</th><th class="lbl">COUNTRY OF RESIDENCE</th></tr>'+depRows+'</table>'+
+  '<div style="border:1px solid #999;border-top:0;padding:2px 6px;font-size:9px;font-style:italic;margin-bottom:8px">A school letter is required every academic year for children attending full-time Tertiary school from age 22 to attainment of age 25.</div>'+
+  '<div class="sec">SECTION D – BENEFICIARY INFORMATION (GROUP LIFE ONLY)</div>'+
+  '<table><tr><th class="lbl">RELATIONSHIP</th><th class="lbl">NAME</th><th class="lbl">M/F</th><th class="lbl">DATE OF BIRTH</th><th class="lbl">%</th></tr>'+benRows+'</table>'+
+  '<div class="sec">SECTION E – ACCOUNT INFORMATION FOR PAYMENT OF CLAIMS <span style="font-weight:normal">(complete by hand)</span></div>'+
+  '<table><tr><td style="width:55%"><span class="lbl">ACCOUNT NUMBER:</span> □□□□□□□□□□□□ <span class="lbl">(attach bank statement copy)</span></td><td><span class="lbl">BANK / BRANCH:</span> ______________________</td></tr>'+
+  '<tr><td colspan="2"><span class="lbl">ACCOUNT TYPE:</span> ☐ SAVINGS &nbsp; ☐ CHEQUING</td></tr></table>'+
+  '<table><tr><td style="font-size:9.5px;color:#333">I hereby apply for Registration as a Member of the Group Health Plan and/or Group Life Plan of the above Policyholder/Group and authorize deductions to be made by the Policyholder for contributions required to be paid by me in accordance with the terms and conditions of the Plan. I am familiar with the terms and conditions of the Plan and agree to be bound thereby. I also declare that the above information is true and complete and shall form part of my application to Guardian Life of the Caribbean Limited.</td></tr>'+
+  '<tr class="sig"><td><span class="lbl">EMPLOYEE SIGNATURE: ______________________________ &nbsp; DATE: ____________</span></td></tr></table>'+
+  '<div class="sec">SECTION F – FOR OFFICIAL USE ONLY (POLICYHOLDER)</div>'+
+  '<table>'+
+  '<tr><td><span class="lbl">DATE EMPLOYED:</span> <b>'+esc(d.dateEmployed||'')+'</b></td><td><span class="lbl">DATE OF CONFIRMATION:</span> <b>'+esc(d.dateConfirmed||'')+'</b></td><td><span class="lbl">EFFECTIVE DATE OF COVERAGE:</span> <b>'+esc(d.dateEffective||'')+'</b></td></tr>'+
+  '<tr><td colspan="2"><span class="lbl">COVERAGE TIER:</span> '+box(d.tier==='Single')+' SINGLE &nbsp; '+box(d.tier==='Employee + One')+' EMPLOYEE + ONE &nbsp; '+box(d.tier==='Employee + Family')+' EMPLOYEE + FAMILY</td>'+
+  '<td><span class="lbl">IF GROUP LIFE, ANNUAL SALARY:</span> <b>'+(d.salary?'TT$'+esc(d.salary):'')+'</b></td></tr>'+
+  '<tr class="sig"><td colspan="2"><span class="lbl">PLAN ADMINISTRATOR:</span> <b>'+esc(d.planAdmin||'')+'</b><br><span class="lbl">SIGNATURE: ______________________________ &nbsp; DATE: ____________</span></td><td style="height:56px"><span class="lbl">PLACE COMPANY STAMP HERE:</span></td></tr>'+
+  '</table>'+
+  '<div style="display:flex;justify-content:flex-end;margin-top:8px"><span style="border:1px solid #999;padding:2px 12px;font-size:10px">GIO001 – V.1/10-2016</span></div>'+
+  '<div style="text-align:center;font-size:9px;color:#888;margin-top:6px">Completed digitally via employeebenefitstt.com · Branch ref '+esc(d.ref)+'</div>'+
+  renderDecl(d);
+}
+showStep(1);
+</script>
+</body></html>
