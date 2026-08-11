@@ -168,6 +168,12 @@ var MANAGER_QUESTIONS = [
     { k: 'reassign',    lab: 'Reassign — orphan or wrong agent' },
     { k: 'lapse',       lab: 'Allow the policy to lapse — documented' } ] },
 
+  { k: 'mvalue', q: 'What is the non-forfeiture position on this policy?', opts: [
+    { k: 'novalue',  lab: 'No accrued value — it lapses outright at day 90' },
+    { k: 'apl',      lab: 'An automatic premium loan is running against the value' },
+    { k: 'value',    lab: 'It has value; cover can be sustained from it for a period' },
+    { k: 'checking', lab: 'Confirming with the carrier — I will come back on this' } ] },
+
   { k: 'mfactfind', q: 'Is the fact find complete and acceptable?', opts: [
     { k: 'yes',      lab: 'Yes — complete' },
     { k: 'returned', lab: 'No — returned to the agent for completion' },
@@ -225,6 +231,69 @@ function pdSurveyLink_(policy) {
   var base = OUT.ENGINE_URL.replace(/#.*$/, '');
   return base + (base.slice(-1) === '/' ? '' : '/') + '#survey=' + encodeURIComponent(policy);
 }
+/* ===================== WHAT ACTUALLY HAPPENS AT DAY 90 =====================
+   Not the same thing for every policy, and saying otherwise is a misstatement
+   about somebody's contract.
+
+   A policy with no accrued value lapses: the cover genuinely ends. In practice
+   that is the early years — the first two or so — before any value has built.
+
+   A policy that has built a value does not simply stop. Under the contract's
+   non-forfeiture provisions the cost of cover can continue to be met out of
+   that value, and an automatic premium loan may already be running against it.
+   The cover continues, but it is being paid for out of what the client has
+   already put in, and it continues only until that value is exhausted.
+
+   That second case is the more motivating message, and it has the advantage of
+   being true: the client is not about to lose their cover this month, they are
+   quietly spending the savings inside their own policy to keep it.
+
+   The engine cannot compute a surrender value — that comes from the contract
+   and the carrier. It can tell which conversation applies, and it asks the
+   manager to state the position definitively in their response. */
+
+var VALUE_UNKNOWN = 'unknown', VALUE_NONE = 'none', VALUE_LIKELY = 'likely', VALUE_APL = 'apl';
+
+function pdYearsSinceIssue_(p) {
+  if (!p.IssueDate) return null;
+  var d = new Date(p.IssueDate);
+  if (isNaN(d.getTime())) return null;
+  return (Date.now() - d.getTime()) / (365.25 * 86400000);
+}
+
+/** Which of the three conversations this policy is in. */
+function pdValueStatus_(p) {
+  if ((Number(p.APLAmount) || 0) > 0) return VALUE_APL;      // a loan is already running
+  var yrs = pdYearsSinceIssue_(p);
+  if (yrs === null) return VALUE_UNKNOWN;
+  return yrs < 2 ? VALUE_NONE : VALUE_LIKELY;
+}
+
+/** What day 90 means for this policy, in the client's own terms. */
+function pdLapseMeaning_(p) {
+  switch (pdValueStatus_(p)) {
+    case VALUE_APL:
+      return '<b>Your policy has been paying for itself.</b> Because it has built a value, the cost of your ' +
+        'cover has been coming out of that value rather than lapsing the policy — there is currently ' +
+        (Number(p.APLAmount) > 0 ? 'a loan of <b>' + pdMoney_(p.APLAmount) + '</b> against it. ' : 'a loan against it. ') +
+        'You are not about to lose your cover this month. You are steadily spending what you have already ' +
+        'paid in to keep it, and when that value is used up the cover does end.';
+    case VALUE_LIKELY:
+      return 'This policy has been in force long enough that it may have built a value. Where that is the case, ' +
+        'the cover does not simply stop — under the contract the cost can be met from that value for a period, ' +
+        'which means you would be paying for your own cover out of your own savings inside the policy. ' +
+        '<b>Your agent will confirm exactly where this policy stands</b>, because the position depends on the ' +
+        'contract terms and the value actually accrued.';
+    case VALUE_NONE:
+      return 'This policy is still in its early years and has not yet built a value to fall back on. ' +
+        'That means it would <b>lapse outright</b>: the cover ends, and everything paid in stops working for you.';
+    default:
+      return 'What happens next depends on whether this policy has built a value. Where it has, the cost of ' +
+        'cover can be met from that value for a period; where it has not, the policy lapses outright. ' +
+        '<b>Your agent will confirm which applies here.</b>';
+  }
+}
+
 /** Days left before the 90-day lapse line. */
 function pdDaysToLapse_(p) { return Math.max(0, SLA.LAPSE - (Number(p.DaysArrears) || 0)); }
 
@@ -490,7 +559,9 @@ function pdTimeline_(p) {
     row('Within 3 days', 'Your agent submits a retention case to their manager, who must respond within three working days &mdash; the branch standard.') +
     row('Day 75', 'If we have still not heard from you, your agent&rsquo;s manager contacts you directly.') +
     row('Day 88', 'Final written notice.') +
-    row('Day 90', 'Cover ends. From that date a claim is not payable and reinstatement requires a fresh application.', true) +
+    row('Day 90', (pdValueStatus_(p) === VALUE_NONE
+      ? 'The policy lapses. Cover ends, a claim is not payable from that date, and restoring it needs a fresh application.'
+      : 'The policy reaches the end of its grace period. What happens then depends on the value it has built — see below.'), true) +
     '</table>';
 }
 
@@ -679,12 +750,11 @@ var PD_TEMPLATES = {
               '<p style="font-size:13px;color:#5A6B7B">The highlighted row is the policy this letter is about.</p>'
             : pdFacts_(p))) +
 
-        pdSection_(3, 'Why this one matters',
-          '<p>This policy was underwritten on your health <b>as it was when you applied</b>. That is the part most ' +
-          'people do not weigh until it is gone: if it lapses and you later reapply, you are underwritten on your ' +
-          'health as it is then. Where anything has changed in between, the same cover may cost considerably more, ' +
-          'or may not be available at all.</p>' +
-          '<p>Nothing you have paid into it transfers anywhere. It simply stops working.</p>') +
+        pdSection_(3, 'What happens if this is not settled',
+          '<p>' + pdLapseMeaning_(p) + '</p>' +
+          '<p>Either way, this policy was underwritten on your health <b>as it was when you applied</b>. If it ends ' +
+          'and you later reapply, you are underwritten on your health as it is then. Where anything has changed in ' +
+          'between, the same cover may cost considerably more, or may not be available at all.</p>') +
 
         pdSection_(4, 'If we do not hear from you',
           pdNote_('Cover ends <b>' + left + ' days</b> from today if the premium remains outstanding. From that date a ' +
@@ -754,7 +824,8 @@ var PD_TEMPLATES = {
               'The others are shown so that you can see what the relationship looks like as a whole.</p>'
             : pdFacts_(p))) +
 
-        pdSection_(4, 'What happens from here', pdTimeline_(p)) +
+        pdSection_(4, 'What happens from here', pdTimeline_(p) +
+          '<div style="margin-top:12px">' + pdNote_(pdLapseMeaning_(p)) + '</div>') +
 
         pdSection_(5, 'Who is handling this',
           '<p style="font-size:13.5px">Your agent <b>' + pdEsc_(p.Agent) + '</b>' +

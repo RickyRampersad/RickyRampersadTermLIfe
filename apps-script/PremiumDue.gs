@@ -176,14 +176,22 @@ function portfolioSheet_(ss) {
 function num_(x) { var n = Number(x); return isNaN(n) ? 0 : n; }
 
 function mapPolicy_(row) {
-  // A0 Agent | B1 Number | C2 ClientNo | D3 Client | E4 Premium | G6 Status | H7 Status(2)
-  // I8 Days | J9 InsType | M12 SumAssured | N13 PlanCode | O14 Billing | R17 StatusDesc
-  // S18 ProjLapse | V21 Phone | W22 email
+  // A0 Agent | B1 Number | C2 ClientNo | D3 Client | E4 Premium | F5 IssueDate | G6 Status
+  // H7 Status(2) | I8 Days | J9 InsType | K10 PaidToDate | M12 SumAssured | N13 PlanCode
+  // O14 Billing | P15 Mode | Q16 APLamount | R17 StatusDesc | S18 ProjLapse | V21 Phone | W22 email
+  //
+  // IssueDate and APLamount matter more than their absence suggested. A policy
+  // does not simply stop at 90 days if it has built a value: under the contract's
+  // non-forfeiture terms the cost of cover can be met from that value, and an
+  // automatic premium loan may already be running. Writing "your cover ends" to
+  // the holder of such a policy is not a hard truth, it is the wrong one.
   return {
     Agent: row[0], Policy: String(row[1]), ClientNo: String(row[2] == null ? '' : row[2]),
-    Client: row[3], Premium: num_(row[4]), Status: num_(row[6]), StatusH: row[7] || '',
-    DaysArrears: num_(row[8]), InsType: row[9], SumAssured: num_(row[12]),
-    PlanCode: row[13] || '', Billing: row[14] || '', StatusDesc: row[17] || '',
+    Client: row[3], Premium: num_(row[4]), IssueDate: row[5] || '',
+    Status: num_(row[6]), StatusH: row[7] || '',
+    DaysArrears: num_(row[8]), InsType: row[9], PaidToDate: row[10] || '',
+    SumAssured: num_(row[12]), PlanCode: row[13] || '', Billing: row[14] || '',
+    Mode: row[15] || '', APLAmount: num_(row[16]), StatusDesc: row[17] || '',
     LapseDate: row[18] || '', Phone: row[21] || '', Email: row[22] || ''
   };
 }

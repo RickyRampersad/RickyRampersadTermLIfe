@@ -105,6 +105,23 @@ attention. The `From` and `CC` addresses match the Salesforce macro *Premium Due
 The answers are the **first section** of every letter. Nobody scrolls past a
 formal preamble to reach them.
 
+### Day 90 is not the same for every policy
+
+**Cover does not simply end if the policy has built a value.** Under the
+contract's non-forfeiture terms the cost of cover can be met from that value,
+and an automatic premium loan may already be running. Saying "your cover ends"
+to that client is a misstatement about their contract.
+
+`pdValueStatus_` reads **Issue Date** and **APLamount** from the portfolio and
+picks one of four positions — `none` (under ~2 years, lapses outright), `likely`
+(old enough to have value, agent confirms), `apl` (a loan is already running,
+named with its amount), `unknown` (no issue date). `pdLapseMeaning_` writes the
+matching paragraph, and the day-90 timeline row changes with it.
+
+The engine cannot compute a surrender value — that comes from the contract and
+the carrier. **The manager is required to state the position** as one of their
+seven questions, so the definitive answer is on the record rather than assumed.
+
 ### The 60-day escalation
 
 Day 60 the client gets an email referring back to the 45-day message, carrying

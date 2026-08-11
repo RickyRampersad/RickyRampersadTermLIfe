@@ -867,6 +867,11 @@ const MANAGER_QUESTIONS=[
     {k:'replacement',lab:'Investigate possible replacement of in-force cover'},
     {k:'reassign',lab:'Reassign — orphan or wrong agent'},
     {k:'lapse',lab:'Allow the policy to lapse — documented'}]},
+  {k:'mvalue',q:'What is the non-forfeiture position on this policy?',opts:[
+    {k:'novalue',lab:'No accrued value — it lapses outright at day 90'},
+    {k:'apl',lab:'An automatic premium loan is running against the value'},
+    {k:'value',lab:'It has value; cover can be sustained from it for a period'},
+    {k:'checking',lab:'Confirming with the carrier — I will come back on this'}]},
   {k:'mfactfind',q:'Is the fact find complete and acceptable?',opts:[
     {k:'yes',lab:'Yes — complete'},{k:'returned',lab:'No — returned to the agent for completion'},
     {k:'none',lab:'No fact find was attached'}]},
