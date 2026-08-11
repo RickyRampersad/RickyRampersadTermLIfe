@@ -374,8 +374,6 @@ select.f-line{background:#fff}
 .out-msg:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-soft)}
 .out-acts{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px;align-items:center}
 .out-btn{padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;border:1px solid transparent}
-.out-wa{background:#25D366;color:#0B3D22}
-.out-wa:hover{background:#1FB855}
 .out-em{background:var(--teal);color:#fff}
 .out-em:hover{background:var(--teal-2)}
 .out-cp{background:#fff;border-color:var(--line);color:var(--ink-2)}
@@ -842,19 +840,18 @@ const VERDICTS=['Approve retention plan','Approve payment plan','Escalate to rei
    Kept in step with apps-script/PremiumDueTemplates.gs — the keys must match,
    because that file sends the links and this one records what comes back. */
 const CLIENT_QUESTIONS=[
-  {k:'help',q:'What would help most right now?',opts:[
-    {k:'settle',lab:"Nothing — I'll clear it. Just tell me the amount."},
-    {k:'lower',lab:'A smaller monthly amount I can actually keep up with'},
-    {k:'date',lab:'Move the payment date to match my payday'},
-    {k:'bank',lab:"Fix the bank instruction — it isn't going through"},
-    {k:'pause',lab:'A short pause, without losing the cover'},
-    {k:'talk',lab:'A conversation with someone before I decide anything'},
-    {k:'show',lab:"Show me exactly what I'd be giving up"}]},
-  {k:'when',q:'When would suit you?',opts:[
-    {k:'today',lab:'I can deal with it today'},
-    {k:'payday',lab:'On my next payday'},
-    {k:'weeks',lab:'Within the next couple of weeks'},
-    {k:'call',lab:"I'm not sure yet — please call me"}]}
+  {k:'help',q:'How would you like us to handle this?',opts:[
+    {k:'settle',lab:'I will settle it — please confirm the amount'},
+    {k:'review',lab:'I would like the premium reviewed'},
+    {k:'billing',lab:'Change the payment date, or the bank details'},
+    {k:'hold',lab:'Hold the payments briefly, keeping the cover in place'},
+    {k:'talk',lab:'I would prefer to speak with someone'},
+    {k:'other',lab:'Something else — I will reply and explain'}]},
+  {k:'when',q:'When would you like us to action it?',opts:[
+    {k:'now',lab:'This week'},
+    {k:'payday',lab:'On my next pay date'},
+    {k:'month',lab:'Later this month'},
+    {k:'other',lab:'I will confirm when I reply'}]}
 ];
 /* What a manager must answer. Previously two free-text fields, which came back
    blank on 78 of 106 filed cases. */
@@ -901,22 +898,22 @@ const MANAGER_QUESTIONS=[
    never put to a lapsing client, and which 47 of 137 JotForm respondents
    answered without being asked. */
 const CLOSING_QUESTIONS=[
-  {k:'reached',q:'Before anything else — did anyone from us actually reach you?',opts:[
-    {k:'agent',lab:'Yes — my agent spoke with me'},{k:'manager',lab:'Yes — a manager called me'},
-    {k:'letters',lab:'Only these letters. Nobody called.'},
-    {k:'nothing',lab:'This is the first I am hearing of it'}]},
-  {k:'decide',q:'What would you like to happen with this policy?',opts:[
-    {k:'clear',lab:"Keep it — I'll clear the premium"},
-    {k:'afford',lab:'Keep it, at an amount I can manage'},
-    {k:'talk',lab:'Hold it — I want to speak to someone first'},
-    {k:'explain',lab:"I'm ready to let it go, but tell me what I lose"},
-    {k:'end',lab:'End it. I have decided.'}]},
-  {k:'us',q:'If we got something wrong, what was it?',opts:[
-    {k:'nothing',lab:'Nothing — this was handled well'},
-    {k:'unclear',lab:'Nobody explained what would actually happen'},
-    {k:'nobody',lab:'It was too hard to reach a person'},
-    {k:'unmet',lab:'I asked for something and never got an answer'},
-    {k:'money',lab:'The problem was money, and nothing offered helped'}]}
+  {k:'reached',q:'Has anyone from the branch spoken with you about this?',opts:[
+    {k:'agent',lab:'Yes — my advisor'},{k:'manager',lab:'Yes — a manager'},
+    {k:'letters',lab:'No — only these letters'},
+    {k:'other',lab:'I would rather explain — please call me'}]},
+  {k:'decide',q:'What would you like to happen with the policy?',opts:[
+    {k:'settle',lab:'Keep it — I will settle the premium'},
+    {k:'review',lab:'Keep it, with the premium reviewed'},
+    {k:'talk',lab:'Hold it — I would like to speak with someone first'},
+    {k:'end',lab:'I would prefer to end the cover'},
+    {k:'other',lab:'Something else — I will reply and explain'}]},
+  {k:'better',q:'Is there anything we could have done better?',opts:[
+    {k:'nothing',lab:'No — this was handled well'},
+    {k:'clarity',lab:'Explained more clearly what would happen'},
+    {k:'person',lab:'Been easier to reach a person'},
+    {k:'followup',lab:'Followed up on something I asked for'},
+    {k:'other',lab:'I would rather explain — please call me'}]}
 ];
 const ANSWER_BY_KEY={};
 [CLIENT_QUESTIONS,MANAGER_QUESTIONS,CLOSING_QUESTIONS].forEach(set=>set.forEach(q=>q.opts.forEach(o=>{
@@ -929,8 +926,9 @@ function questionSet(name){
 }
 /* Answers that mean the client intends to keep paying, for the odds model. */
 /* Any answer at all is a good sign — these weight how good. */
-const POSITIVE_ANSWERS={'help:settle':1,'help:bank':1,'help:date':1,'when:today':1,'when:payday':1};
-const NEGATIVE_ANSWERS={'help:show':1,'when:call':1};
+const POSITIVE_ANSWERS={'help:settle':1,'help:billing':1,'when:now':1,'when:payday':1,
+  'decide:settle':1,'decide:review':1};
+const NEGATIVE_ANSWERS={'help:hold':1,'when:other':1,'decide:end':1};
 function answerLink(c,kind,qk,ak){
   return `${location.origin}${location.pathname}#${kind}=${c.Policy}&q=${qk}&a=${ak}`;
 }
@@ -939,7 +937,9 @@ function answerLink(c,kind,qk,ak){
    The client-facing message for each point on the lapse clock. Kept in step with
    apps-script/PremiumDueTemplates.gs — that file sends them on the daily run,
    this one is what an agent copies when they'd rather reach out personally.
-   WhatsApp text first: in this market it gets read when an email doesn't. */
+   One channel, one record: a letter that is also a WhatsApp message is two
+   versions of the branch's position, and the one nobody logged is the one the
+   client remembers. */
 const BRANCH_PHONE='(868) 678-5921';
 const OUT_TPL={
   od:{lab:'Overdue nudge',subject:c=>`A premium on policy ${c.Policy} hasn't reached us`,
@@ -977,7 +977,6 @@ function defaultTpl(c){
   if(c.stage==='od')return 'od';
   return 'thanks';
 }
-function waNumber(c){const d=String(c.Phone||'').replace(/[^0-9]/g,'');if(!d)return '';return d.length===7?('1868'+d):d.length===10?('1'+d):d.length===11?d:d;}
 function hasEmail(c){const e=String(c.Email||'').trim();return (!e||/not available/i.test(e))?'':e;}
 
 /* The six one-click links that go into the 60-day email. */
@@ -996,17 +995,16 @@ function choiceLinksHtml(c){
 function outreachPanel(c){
   const keys=Object.keys(OUT_TPL), def=defaultTpl(c);
   const picks=keys.map(k=>`<button type="button" data-otpl="${k}" class="${k===def?'on':''}">${esc(OUT_TPL[k].lab)}</button>`).join('');
-  const wa=waNumber(c), em=hasEmail(c);
-  const warn=(!wa&&!em)?`<div class="out-warn">No phone or email on file for this client — the message is here to copy, but you'll need another way to reach them.</div>`
-    :(!em?`<div class="out-warn">No email on file — WhatsApp only.</div>`
-    :(!wa?`<div class="out-warn">No phone on file — email only.</div>`:''));
+  const ph=String(c.Phone||'').trim(), em=hasEmail(c);
+  const warn=(!ph&&!em)?`<div class="out-warn">No phone or email on file for this client — copy the message, but you will need the address in the portfolio to reach them.</div>`
+    :(!em?`<div class="out-warn">No email on file — call ${esc(ph)}.</div>`
+    :(!ph?`<div class="out-warn">No phone on file — email only.</div>`:''));
   return `<h4>📤 Reach the client</h4>
     <div class="note">Pick the message that fits, edit it if you want, then send. Whatever you send is logged against the policy.</div>
     <div class="out-pick" data-opick>${picks}</div>
     <div class="out-subj" data-osubj></div>
     <textarea class="out-msg" data-omsg></textarea>
     <div class="out-acts">
-      <button class="out-btn out-wa" data-osend="wa" type="button">WhatsApp</button>
       <button class="out-btn out-em" data-osend="em" type="button">Email</button>
       <button class="out-btn out-cp" data-osend="cp" type="button">Copy text</button>
     </div>${warn}${choiceLinksHtml(c)}`;
@@ -1288,11 +1286,7 @@ function wireOutreach(card,policy){
     const how=b.dataset.osend,text=msg.value.trim();
     if(!text){toast('Nothing to send');return;}
     const t=OUT_TPL[key];
-    if(how==='wa'){
-      const n=waNumber(c);
-      if(!n){toast('No phone number on file');return;}
-      window.open('https://wa.me/'+n+'?text='+encodeURIComponent(text),'_blank');
-    }else if(how==='em'){
+    if(how==='em'){
       const e=hasEmail(c);
       if(!e){toast('No email on file');return;}
       window.open('mailto:'+encodeURIComponent(e)+'?subject='+encodeURIComponent(t.subject(c))+'&body='+encodeURIComponent(text),'_blank');
@@ -1302,10 +1296,10 @@ function wireOutreach(card,policy){
     }
     // the record is the point — an outreach nobody can see didn't happen
     commit(policy,{kind:'comment',reason:'CLIENT CONTACT · '+t.lab.toUpperCase(),
-      body:(how==='wa'?'WhatsApp':how==='em'?'Email':'Copied')+' to '+c.Client+': '+text});
+      body:(how==='em'?'Email':'Copied')+' to '+c.Client+': '+text});
     refreshThread(card,policy);
     if(how==='cp')return;
-    toast(how==='wa'?'WhatsApp opened — logged':'Email opened — logged');
+    toast('Email opened — logged');
   }));
 }
 function refreshThread(card,policy){const t=card.querySelector('[data-thread]');if(t)t.innerHTML=threadHtml(policy);}

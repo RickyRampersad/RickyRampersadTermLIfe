@@ -13,7 +13,7 @@ file. Replaces the two JotForms and the "Premium Due Status" comment columns.
 | `process-brief.html` | Rollout brief for the team: the workflow, the actual client emails rendered, and what each role does differently |
 | `../apps-script/PremiumDue.gs` | Backend — reads the portfolio, stores the log |
 | `../apps-script/PremiumDueAuth.gs` | Sign-in, the roster tab, tokens and scope |
-| `../apps-script/PremiumDueTemplates.gs` | Client email + WhatsApp templates and the daily send |
+| `../apps-script/PremiumDueTemplates.gs` | The letters, the manager brief and the daily send |
 
 ## Which sheet is which
 
@@ -88,6 +88,65 @@ gets is the one that manager makes. See below.
 | 90-Day | Status 2 at 90+, or Status 1 | Reinstatement or win-back |
 | Pending | Status 3 / underwriting incomplete | New business chase |
 
+### Short letters
+
+Every client letter fits roughly two screens. The day-45 letter is a greeting, a
+three-figure strip, the choices, the cover table and one paragraph on what
+happens next — half the length it was, because the version before it was
+accurate and nobody would have read it.
+
+`pdGlance_` is the strip: **amount outstanding**, premium and frequency, and
+premiums paid to, at 20px across the top. If those three are not legible in two
+seconds the rest of the letter does not get read either.
+
+Answer labels are deliberately short — *Settle it now · Review my premium ·
+Change my payment date or bank details · Pause briefly, keep the cover · Have
+someone call me · Something else*. A choice you have to read twice is a choice
+nobody taps.
+
+### The letterhead
+
+Navy field, the gold shield with a heart, the branch name over **Guardian Life
+of the Caribbean · Chaguanas, Trinidad**, and a gold rule — taken from
+rickyrampersadbranch.com rather than invented, so a client who has seen the
+website recognises the letter as the same house.
+
+Top right is a **status badge**: `PREMIUM DUE · 45 DAYS OVERDUE`, in the day
+count off the portfolio, going amber at 75 and red at `FINAL NOTICE`. A letter
+about a lapsing policy should say what it is before a word of it has been read.
+
+The crest is built from HTML, not SVG. **Gmail strips inline SVG and Outlook
+does not render it at all**, so an SVG crest is a blank space in the two clients
+most of this book reads mail in. Gold takes dark type and never white — white on
+this gold is 2.7:1.
+
+### What the letter carries from the portfolio
+
+Fields that were already mapped and never reached a client. Each answers a
+question they would otherwise telephone to ask:
+
+| In the letter | From | Why |
+|---|---|---|
+| **Amount outstanding** | `AmountBilled` | The commonest thing a policyholder wants is the figure. The letter used to make them ask, and asking is where people stop |
+| **Premiums paid to** | `PaidToDate` | Where the cover actually stands today |
+| **Collected by** | `Billing` | The most useful field in the book — see below |
+| Frequency | `Mode` | Changes what a payment plan can even look like |
+| **Years in force** | `IssueDate` | "In force 15 years" is what they are being asked to give up |
+| Plan, benefit, total cover | `PlanCode` `SumAssured` `InsType` | In the table, with a **total in force** line |
+| Postal address | `Address` | On the manager's day-60 brief — for the 52 policies with neither phone nor email it is the only channel left |
+
+`pdBillingNote_` is the one that pays for the rest. **"This premium is collected
+by bankers order"** turns a missed payment into a stopped instruction, which for
+the **60 clients behind on one policy while paying another** is what actually
+happened. It offers to re-lodge the mandate — a five-minute fix rather than a
+retention negotiation.
+
+### One channel
+
+There is no WhatsApp variant. A letter that is also a WhatsApp message is two
+versions of the branch's position, and the one nobody logged is the one the
+client remembers.
+
 ### Contact data
 
 `pdValidEmail_` strips whitespace before validating. **1,288 addresses in the
@@ -119,17 +178,23 @@ email, and the branch's own submissions show a third were never reached at all.
 The questions are deliberately **not** the old JotForm's. That form ran three
 years, drew 152 responses, and its top answer to "what steps do you plan to
 take" was *Other* — it read like an audit. Two questions now, and neither asks
-why: *What would help most right now?* (seven answers, every one a service we
-provide) and *When would suit you?* (a commitment device). Nobody is asked to
-account for a failure before being offered anything.
+why: *How would you like us to handle this?* and *When would you like us to
+action it?*
 
-**Day 88 asks a different three**, because by then we have asked what would help
-twice and a manager has been asked to telephone; a third round of the same
-questions reads as though nobody had been listening to the first two. So the
-last letter asks about us: *did anyone from us actually reach you?* (the one
-nobody in this branch has ever put to a lapsing client — 47 of 137 volunteered
-it unasked), *what would you like to happen with this policy?*, and *if we got
-something wrong, what was it?*
+Nothing is worded so that choosing it is an admission — "I would like the
+premium reviewed", not "a smaller amount I can keep up with". **Every question
+ends in an open option** ("Something else — I will reply and explain"), because
+a list without an escape forces anybody who does not fit it into a wrong answer
+or none at all, and **no question runs past six options**, which is where
+accuracy peaks before people start picking at random.
+
+**Day 88 asks a different three**, because by then we have asked twice and a
+manager has been asked to telephone; a third round of the same questions reads
+as though nobody had been listening. So the last letter asks about us: *has
+anyone from the branch spoken with you about this?* (the one nobody here has
+ever put to a lapsing client — 47 of 137 volunteered it unasked), *what would
+you like to happen with the policy?*, and *is there anything we could have done
+better?*
 
 The `From` and `CC` addresses match the Salesforce macro *Premium Due 75 Days
 Client Comm*.
