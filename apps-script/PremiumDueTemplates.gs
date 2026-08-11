@@ -336,23 +336,29 @@ function pdDecodeAnswer_(questionText, label) {
    Three schemes. Set PD_THEME to whichever you want and every letter, badge,
    table header and rule follows it — nothing else to change.
 
-     'navy'     Navy and gold. Taken from rickyrampersadbranch.com, so a client
-                who has seen the website recognises the letter as the same
-                house. This is the default.
-     'teal'     Guardian's corporate teal with the same gold. Use this if the
-                branch letters should sit closer to head office than to the
-                branch site.
-     'charcoal' Charcoal and gold. The most formal and the most neutral —
-                closest to a bank statement, and the safest on a bad screen.
+     'navy'      Navy and gold. Taken from rickyrampersadbranch.com, so a client
+                 who has seen the website recognises the letter as the same
+                 house. This is the default.
+     'teal'      Guardian's corporate teal with the same gold — closer to head
+                 office than to the branch site.
+     'charcoal'  Charcoal and gold. The most neutral: closest to a bank
+                 statement, and the safest on a poor screen.
+     'burgundy'  Oxblood and antique gold. The most traditional — reads like a
+                 solicitor's letter.
+     'forest'    Deep green and gold. Warmer than navy without losing weight.
+     'slate'     Blue-grey and copper. The most contemporary of the six.
 
    All three share the gold, the crest and the layout. Only the dark field
    changes, and every combination in each has been checked to clear 3.2:1. */
 var PD_THEME = 'navy';
 
 var PD_THEMES = {
-  navy:     { dark: '#0B2035', dark2: '#123050', mid: '#2C4A6B' },
-  teal:     { dark: '#0A403B', dark2: '#0E6E64', mid: '#2C6660' },
-  charcoal: { dark: '#22262B', dark2: '#343A42', mid: '#4A525C' }
+  navy:     { dark: '#0B2035', dark2: '#123050', mid: '#2C4A6B', accent: '#C9942C', accent2: '#F0C448' },
+  teal:     { dark: '#0A403B', dark2: '#0E6E64', mid: '#2C6660', accent: '#C9942C', accent2: '#F0C448' },
+  charcoal: { dark: '#22262B', dark2: '#343A42', mid: '#4A525C', accent: '#C9942C', accent2: '#F0C448' },
+  burgundy: { dark: '#3A1620', dark2: '#5A2333', mid: '#7A3A4B', accent: '#C08A3E', accent2: '#E8C07A' },
+  forest:   { dark: '#152A1E', dark2: '#24422F', mid: '#3E6248', accent: '#C9942C', accent2: '#EFD08A' },
+  slate:    { dark: '#1E2A38', dark2: '#2E4054', mid: '#4A5D74', accent: '#B87333', accent2: '#E0A96D' }
 };
 
 var PD_BRAND = (function () {
@@ -361,8 +367,8 @@ var PD_BRAND = (function () {
     navy:  t.dark,       // the letterhead field
     navy2: t.dark2,      // headings and table headers
     navy3: t.mid,        // secondary text on white
-    gold:  '#C9942C',    // the rule, the crest, every accent
-    gold2: '#F0C448',    // gold on the dark field only — it disappears on white
+    gold:  t.accent,     // the rule, the crest, every accent
+    gold2: t.accent2,    // accent on the dark field only — it disappears on white
     goldDeep: '#7A5810',
     ink:   '#101A24',
     mute:  '#5C6B7A',
@@ -374,6 +380,14 @@ var PD_BRAND = (function () {
     paper: '#FFFFFF'     // white, not cream. A cream body reads as a photocopy;
   };                     // white with warm panels reads as stationery.
 })();
+
+/* Georgia for display, Arial for body. Both are on effectively every device
+   that opens mail, which is the only test that matters here — a webfont in an
+   email is a webfont that does not load. A serif masthead and serif section
+   headings are what make correspondence read as correspondence rather than as
+   a notification. */
+var PD_SERIF = 'Georgia,\'Times New Roman\',Times,serif';
+var PD_SANS  = 'Arial,Helvetica,sans-serif';
 
 var PD_ORG = { branch: 'Ricky Rampersad Branch', carrier: 'Guardian Life of the Caribbean',
                place: 'Chaguanas, Trinidad' };
@@ -641,25 +655,26 @@ function pdQuestionBlock_(p, questions, kind) {
        by "1., 2., 3." in larger type — reads as though the section headings
        were the sub-headings. Where another part of a letter needs to point at
        one of these, it names it. */
-    out += '<div style="margin:20px 0 0">' +
-      '<div style="font-size:14.5px;font-weight:bold;color:' + PD_BRAND.navy + ';margin-bottom:9px;' +
-        'letter-spacing:-.005em">' + pdEsc_(q.q) + '</div>' +
+    out += '<div style="margin:' + (i ? '22px' : '4px') + ' 0 0">' +
+      '<div style="font-size:14px;font-weight:bold;color:' + PD_BRAND.ink + ';margin-bottom:10px">' +
+        pdEsc_(q.q) + '</div>' +
       '<table cellpadding="0" cellspacing="0" style="width:100%">';
     for (var j = 0; j < q.opts.length; j++) {
       var o = q.opts[j];
       var href = pdAnswerHref_(p, q, o, kind);
-      out += '<tr><td style="padding:4px 0">' +
-        '<table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate"><tr>' +
-        '<td style="background:' + PD_BRAND.gold + ';width:4px;border-radius:6px 0 0 6px;font-size:0;line-height:0">&nbsp;</td>' +
-        '<td style="background:' + PD_BRAND.panel + ';border:1px solid ' + PD_BRAND.line + ';border-left:none;' +
-          'border-radius:0 6px 6px 0">' +
-          '<a href="' + href + '" style="display:block;padding:12px 15px;color:' + PD_BRAND.navy2 +
-          ';text-decoration:none;font-weight:bold;font-size:13.5px;line-height:1.4">' + pdEsc_(o.lab) + '</a>' +
-        '</td></tr></table></td></tr>';
+      out += '<tr><td style="padding:0 0 6px">' +
+        '<a href="' + href + '" style="display:block;text-decoration:none;border:1px solid ' + PD_BRAND.line +
+          ';border-left:3px solid ' + PD_BRAND.gold + ';background:#FFFFFF">' +
+          '<table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse"><tr>' +
+            '<td style="padding:12px 16px;color:' + PD_BRAND.navy2 + ';font-size:14px;line-height:1.4">' +
+              pdEsc_(o.lab) + '</td>' +
+            '<td width="26" align="right" style="padding:12px 14px 12px 0;color:' + PD_BRAND.navy3 +
+              ';font-size:15px">&rsaquo;</td>' +
+          '</tr></table></a></td></tr>';
     }
     out += '</table></div>';
   }
-  return out + '<p style="font-size:12px;color:#7C8794;margin:14px 0 0">' +
+  return out + '<p style="font-size:11.5px;color:#8A8578;margin:16px 0 0;line-height:1.55">' +
     (OUT.ENGINE_URL
       ? 'Each answer is recorded against the policy the moment you tap it. You can answer one question or all of them, in any order, and you never leave this email to do it.'
       : 'Tapping an answer opens a reply that is already written for you — just press send. Nothing to fill in, no website to visit, no password.') + '</p>';
@@ -905,34 +920,39 @@ function pdWrap_(inner, tag, internal) {
     : 'This notice relates to the premium on your policy. Your policy contract and schedule govern in all cases. ' +
       'If you have already paid, please ignore this — payments can take a few days to reflect.';
   var badge = pdBadge_(tag && tag.kind, tag && tag.days);
-  return '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14.5px;line-height:1.62;color:' +
+  return '<div style="font-family:' + PD_SANS + ';font-size:14.5px;line-height:1.65;color:' +
       PD_BRAND.ink + ';max-width:640px;background:' + PD_BRAND.paper + '">' +
 
     /* letterhead */
     '<table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;background:' +
-        PD_BRAND.navy + ';border-radius:9px 9px 0 0">' +
-      '<tr><td style="padding:22px 24px 20px">' +
+        PD_BRAND.navy + '">' +
+      '<tr><td style="padding:24px 30px 22px">' +
         '<table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse"><tr>' +
-          '<td width="44" valign="top" style="width:44px">' + pdCrest_() + '</td>' +
-          '<td valign="top" style="padding:2px 12px 0 14px;color:#FFFFFF">' +
-            '<div style="font-size:18px;font-weight:bold;letter-spacing:.055em;color:#FFFFFF;line-height:1.25">' +
-              pdEsc_(PD_ORG.branch).toUpperCase() + '</div>' +
-            '<div style="font-size:12px;color:' + PD_BRAND.gold2 + ';padding-top:4px;letter-spacing:.02em">' +
-              pdEsc_(PD_ORG.carrier) + '</div>' +
-            '<div style="font-size:11.5px;color:#8FA6BE;padding-top:2px">' + pdEsc_(PD_ORG.place) + '</div>' +
+          '<td width="42" valign="top" style="width:42px">' + pdCrest_() + '</td>' +
+          '<td valign="top" style="padding:1px 14px 0 15px;color:#FFFFFF">' +
+            '<div style="font-family:' + PD_SERIF + ';font-size:20px;color:#FFFFFF;line-height:1.2;' +
+              'letter-spacing:.005em">' + pdEsc_(PD_ORG.branch) + '</div>' +
+            '<div style="font-size:11px;color:' + PD_BRAND.gold2 + ';padding-top:5px;letter-spacing:.13em">' +
+              pdEsc_(PD_ORG.carrier).toUpperCase() + '</div>' +
           '</td>' +
-          (badge ? '<td valign="top" align="right" style="padding-top:2px">' + badge + '</td>' : '') +
+          (badge ? '<td valign="top" align="right" style="padding-top:1px">' + badge + '</td>' : '') +
         '</tr></table>' +
       '</td></tr>' +
-      /* the gold rule — the one line that makes it read as letterhead */
-      '<tr><td style="height:4px;line-height:4px;font-size:0;background:' + PD_BRAND.gold + '">&nbsp;</td></tr>' +
+      /* a hairline, not a band — a 4px stripe reads like a web banner */
+      '<tr><td style="height:2px;line-height:2px;font-size:0;background:' + PD_BRAND.gold + '">&nbsp;</td></tr>' +
     '</table>' +
 
-    '<div style="border:1px solid ' + PD_BRAND.line + ';border-top:none;padding:24px 24px 20px;' +
-        'border-radius:0 0 9px 9px;background:' + PD_BRAND.paper + ';color:' + PD_BRAND.ink + '">' +
+    '<div style="border:1px solid ' + PD_BRAND.line + ';border-top:none;padding:30px;background:' +
+        PD_BRAND.paper + ';color:' + PD_BRAND.ink + '">' +
       inner +
-      '<p style="color:#8A8578;font-size:11px;line-height:1.55;border-top:1px solid ' + PD_BRAND.line + ';padding-top:12px;margin-top:22px">' +
-      foot + '</p>' +
+      '<table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:28px 0 0">' +
+        '<tr><td style="border-top:1px solid ' + PD_BRAND.line + ';padding:12px 0 0">' +
+          '<div style="font-size:11px;line-height:1.6;color:#6F6A60">' +
+            '<b style="color:' + PD_BRAND.mute + '">' + pdEsc_(PD_ORG.branch) + '</b> &middot; ' +
+            pdEsc_(PD_ORG.carrier) + ' &middot; ' + pdEsc_(PD_ORG.place) + '<br>' +
+            pdEsc_(OUT.BRANCH_PHONE) + ' &middot; ' + pdEsc_(OUT.BRANCH_EMAIL) + '</div>' +
+          '<div style="font-size:10.5px;line-height:1.55;color:#7E796E;padding-top:8px">' + foot + '</div>' +
+        '</td></tr></table>' +
     '</div></div>';
 }
 function pdBtn_(link, label) {
@@ -944,9 +964,9 @@ function pdBtn_(link, label) {
 function pdNote_(html, colour) {
   var c = colour || PD_BRAND.gold;
   var bg = (c === PD_BRAND.red) ? '#FBEDEC' : PD_BRAND.wash;
-  return '<table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:15px 0">' +
-    '<tr><td style="width:4px;background:' + c + ';font-size:0;line-height:0">&nbsp;</td>' +
-    '<td style="background:' + bg + ';padding:13px 16px;color:' + PD_BRAND.ink + ';font-size:13.8px;line-height:1.6">' +
+  return '<table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:16px 0">' +
+    '<tr><td style="width:3px;background:' + c + ';font-size:0;line-height:0">&nbsp;</td>' +
+    '<td style="background:' + bg + ';padding:14px 18px;color:' + PD_BRAND.ink + ';font-size:13.5px;line-height:1.65">' +
       html + '</td></tr></table>';
 }
 /**
@@ -1001,16 +1021,17 @@ function pdGlance_(p) {
 
   var w = Math.floor(100 / cells.length), out = '';
   for (var i = 0; i < cells.length; i++) {
-    out += '<td width="' + w + '%" valign="top" style="padding:14px 16px;background:#FFFFFF;border:1px solid ' +
-      PD_BRAND.line + (i ? ';border-left:none' : '') + '">' +
-      '<div style="font-size:9.5px;letter-spacing:.11em;color:' + PD_BRAND.mute + ';font-weight:bold">' +
+    out += '<td width="' + w + '%" valign="top" style="padding:15px 18px 15px ' + (i ? '18px' : '0') +
+      ';border-left:' + (i ? '1px solid ' + PD_BRAND.line : 'none') + '">' +
+      '<div style="font-size:9.5px;letter-spacing:.13em;color:' + PD_BRAND.mute + ';font-weight:bold">' +
         cells[i].k + '</div>' +
-      '<div style="font-size:20px;font-weight:bold;color:' + cells[i].c + ';padding-top:3px;letter-spacing:-.01em">' +
-        cells[i].v + '</div></td>';
+      '<div style="font-family:' + PD_SERIF + ';font-size:22px;color:' + cells[i].c +
+        ';padding-top:5px;line-height:1.2">' + cells[i].v + '</div></td>';
   }
-  return '<table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:18px 0">' +
+  return '<table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:20px 0 6px;' +
+      'border-top:1px solid ' + PD_BRAND.line + ';border-bottom:1px solid ' + PD_BRAND.line + '">' +
     '<tr>' + out + '</tr></table>' +
-    (p.Billing ? '<div style="font-size:12px;color:' + PD_BRAND.mute + ';margin:-8px 0 0">Collected by ' +
+    (p.Billing ? '<div style="font-size:12px;color:' + PD_BRAND.mute + ';margin:0 0 4px">Collected by ' +
       pdEsc_(p.Billing) + (p.IssueDate && pdIssueYear_(p) ? ' &middot; in force since ' + pdIssueYear_(p) : '') +
       '</div>' : '');
 }
@@ -1076,20 +1097,31 @@ function pdSalutation_(name) {
 
 /** Date and reference line, as on a letter. */
 function pdRefBlock_(p, subject) {
-  var cell = function (k, v, w) {
-    return '<td width="' + w + '%" valign="top" style="padding:0 12px 0 0">' +
-      '<div style="font-size:9.5px;letter-spacing:.11em;color:#8A8578;font-weight:bold">' + k + '</div>' +
-      '<div style="font-size:13.5px;color:' + PD_BRAND.ink + ';font-weight:bold;padding-top:2px">' + v + '</div></td>';
-  };
-  return '<div style="font-size:19px;font-weight:bold;color:' + PD_BRAND.ink +
-      ';line-height:1.3;margin:0 0 14px;letter-spacing:-.01em">' + pdEsc_(subject) + '</div>' +
-    '<table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;' +
-      'background:' + PD_BRAND.panel + ';border:1px solid ' + PD_BRAND.line + ';border-radius:6px;margin:0 0 20px">' +
-    '<tr><td style="padding:11px 14px"><table cellpadding="0" cellspacing="0" width="100%"><tr>' +
-      cell('POLICY NUMBER', pdEsc_(p.Policy), 34) +
-      (p.ClientNo ? cell('CLIENT REFERENCE', pdEsc_(p.ClientNo), 33) : '') +
-      cell('DATE', pdToday_(), 33) +
-    '</tr></table></td></tr></table>';
+  /* Date, addressee, reference, subject — in that order, as on a letter. The
+     addressee block is the single thing that most separates correspondence
+     from a notification, and the portfolio has carried the address all along. */
+  var addr = String(p.Address || '').split(/\s*,\s*/).filter(Boolean);
+  var addrHtml = '';
+  for (var i = 0; i < addr.length; i++) {
+    addrHtml += '<div style="color:' + PD_BRAND.ink + '">' + pdEsc_(addr[i]) + '</div>';
+  }
+  return '<div style="font-size:13px;color:' + PD_BRAND.mute + ';margin:0 0 20px">' + pdToday_() + '</div>' +
+
+    '<div style="font-size:13.5px;line-height:1.5;margin:0 0 20px">' +
+      '<div style="color:' + PD_BRAND.ink + ';font-weight:bold">' + pdEsc_(p.Client) + '</div>' +
+      addrHtml +
+    '</div>' +
+
+    '<table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 22px">' +
+      '<tr><td style="border-top:2px solid ' + PD_BRAND.navy + ';border-bottom:1px solid ' + PD_BRAND.line +
+        ';padding:12px 0">' +
+        '<div style="font-family:' + PD_SERIF + ';font-size:19px;color:' + PD_BRAND.navy +
+          ';line-height:1.25">' + pdEsc_(subject) + '</div>' +
+        '<div style="font-size:12px;color:' + PD_BRAND.mute + ';padding-top:6px;letter-spacing:.02em">' +
+          'Policy <b style="color:' + PD_BRAND.ink + '">' + pdEsc_(p.Policy) + '</b>' +
+          (p.ClientNo ? '&nbsp;&nbsp;&middot;&nbsp;&nbsp;Client reference <b style="color:' + PD_BRAND.ink +
+            '">' + pdEsc_(p.ClientNo) + '</b>' : '') + '</div>' +
+      '</td></tr></table>';
 }
 
 /**
@@ -1101,13 +1133,12 @@ function pdRefBlock_(p, subject) {
  * navigational job and looks like correspondence rather than paperwork.
  */
 function pdSection_(title, body) {
-  return '<div style="margin:26px 0 0">' +
-    '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:9px"><tr>' +
-      '<td style="width:22px;height:3px;line-height:3px;font-size:0;background:' + PD_BRAND.gold + '">&nbsp;</td>' +
-    '</tr></table>' +
-    '<div style="font-size:15.5px;font-weight:bold;color:' + PD_BRAND.ink + ';margin-bottom:8px;letter-spacing:-.005em">' +
-      pdEsc_(title) + '</div>' +
-    '<div style="color:' + PD_BRAND.ink + '">' + body + '</div></div>';
+  return '<table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:28px 0 0">' +
+    '<tr><td style="border-bottom:1px solid ' + PD_BRAND.line + ';padding:0 0 7px">' +
+      '<span style="font-family:' + PD_SERIF + ';font-size:16px;color:' + PD_BRAND.navy + '">' +
+        pdEsc_(title) + '</span>' +
+    '</td></tr>' +
+    '<tr><td style="padding:13px 0 0;color:' + PD_BRAND.ink + '">' + body + '</td></tr></table>';
 }
 
 /**
@@ -1297,7 +1328,8 @@ function pdSignature_(p, opts) {
   opts = opts || {};
   var mgr = opts.manager || pdManagerOf_(p.Agent);
   var line = function (name, role) {
-    return '<b>' + pdEsc_(name) + '</b><br><span style="color:' + PD_BRAND.mute + '">' + role + '</span>';
+    return '<span style="font-family:' + PD_SERIF + ';font-size:15.5px;color:' + PD_BRAND.ink + '">' +
+      pdEsc_(name) + '</span><br><span style="color:' + PD_BRAND.mute + ';font-size:12.5px">' + role + '</span>';
   };
   var who = (opts.both && mgr)
     ? '<table cellpadding="0" cellspacing="0" style="width:100%"><tr>' +
@@ -1308,12 +1340,9 @@ function pdSignature_(p, opts) {
       '</tr></table><br>'
     : line(p.Agent || OUT.BRANCH_NAME,
            'Financial Advisor' + (mgr ? ' &middot; reporting to ' + pdEsc_(mgr) : '')) + '<br>';
-  return '<table cellpadding="0" cellspacing="0" style="width:100%;margin:22px 0 0;font-size:13px">' +
-    '<tr><td style="padding:14px 0 0;border-top:1px solid ' + PD_BRAND.line + ';color:' + PD_BRAND.ink + '">' +
-      'Yours sincerely,<br><br>' + who +
-      '<b>' + pdEsc_(OUT.BRANCH_NAME) + '</b><br>' +
-      '<span style="color:' + PD_BRAND.mute + '">' + pdEsc_(OUT.BRANCH_PHONE) + ' &middot; ' + pdEsc_(OUT.BRANCH_EMAIL) + '</span>' +
-    '</td></tr></table>';
+  return '<table cellpadding="0" cellspacing="0" style="width:100%;margin:30px 0 0;font-size:13px">' +
+    '<tr><td style="color:' + PD_BRAND.ink + '">Yours sincerely,</td></tr>' +
+    '<tr><td style="padding:22px 0 0">' + who + '</td></tr></table>';
 }
 
 /** Internal mail is from the branch, not from somebody's advisor. */

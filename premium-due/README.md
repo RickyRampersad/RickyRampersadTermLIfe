@@ -11,6 +11,7 @@ file. Replaces the two JotForms and the "Premium Due Status" comment columns.
 | `index.html` | The whole app — login, dashboards, case threads, client outreach |
 | `staff-manual.html` | Staff manual — the day-to-day reference |
 | `process-brief.html` | Rollout brief for the team: the workflow, the actual client emails rendered, and what each role does differently |
+| `letter-preview.html` | The day-45 letter in all six colour schemes, with a picker |
 | `../apps-script/PremiumDue.gs` | Backend — reads the portfolio, stores the log |
 | `../apps-script/PremiumDueAuth.gs` | Sign-in, the roster tab, tokens and scope |
 | `../apps-script/PremiumDueTemplates.gs` | The letters, the manager brief and the daily send |
@@ -91,12 +92,44 @@ manager. See below.
 | Win-back | Status 1, from day 110 | Reinstatement, once the closing sequence has finished |
 | Pending | Status 3 / underwriting incomplete | New business chase |
 
-### Colour
+### Colour — six schemes, one switch
 
-`PD_THEME` at the top of `PremiumDueTemplates.gs` — `'navy'` (default, from the
-branch site), `'teal'` (Guardian corporate) or `'charcoal'` (most formal). Every
-letter, badge, table header and rule follows it; the gold, the crest and the
-layout are shared. All three clear 3.2:1 on every text node.
+`PD_THEME` at the top of `PremiumDueTemplates.gs`:
+
+| | | |
+|---|---|---|
+| `navy` | Navy & gold | From the branch website. **Default.** |
+| `teal` | Teal & gold | Guardian corporate — closer to head office |
+| `charcoal` | Charcoal & gold | Most neutral; closest to a bank statement |
+| `burgundy` | Oxblood & antique gold | Most traditional; reads like a solicitor's letter |
+| `forest` | Forest & gold | Warmer than navy without losing weight |
+| `slate` | Slate & copper | Most contemporary |
+
+Every letter, badge, table header and rule follows it; the crest, the layout and
+the wording are shared. All six clear 3.2:1 on every text node.
+
+**`letter-preview.html`** renders the same day-45 letter in all six with a
+picker — open it, tap through, choose.
+
+### The letter as a letter
+
+It is laid out as correspondence, not as a notification:
+
+- **Serif masthead** (Georgia) over the carrier in letterspaced small caps. A
+  webfont in an email is a webfont that does not load, so both faces are ones
+  every device already has.
+- **Date, then the addressee block** — name and postal address, from the
+  portfolio's `Address` column. This is the single thing that most separates a
+  letter from a system email, and the data was there all along.
+- **A rule, then the subject in serif**, with the policy number and client
+  reference beneath it — the "Re:" line of a real letter.
+- **Section headings in serif over hairlines**, not tinted boxes.
+- **Options as quiet rows** with a gold left edge and a chevron. The previous
+  version put a slab of gold beside every one of ten choices, which is what a
+  form looks like, not a letter.
+- **Figures set in serif** at 22px across a hairline strip.
+- **A signature block and a branch footer** — name, title, branch, carrier,
+  place, telephone, email.
 
 ### Short letters
 
