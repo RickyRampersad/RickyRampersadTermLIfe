@@ -555,12 +555,11 @@ function seedDemoRecords(){
    them: the agent for not filing, the manager for not answering. Neither can
    quietly wait the clock out while the other is blamed. */
 const SLA={
-  RETENTION_OPENS: 60,     // arrears day the 60-day window opens
+  RETENTION_OPENS: 60,     // the handover — the policy becomes the manager's and the client comes off the sequence
   LAPSE: 90,
   AGENT_FILE_BY: 65,       // agent files the retention case by this arrears day
   MANAGER_REPLY_DAYS: 3,   // the branch's documented TAT, per the Premium Due Guidelines
-  MANAGER_REPLY_BY: 65,    // ...and never later than this arrears day
-  CLIENT_CHASE_EVERY: 5,   // client chased every 5 days after day 60
+  CLIENT_CHASE_EVERY: 5,   // client reminded every 5 days after day 45, while they have said nothing
   MANAGER_CHASE_EVERY: 3   // manager chased every 3 days once they are late
 };
 
@@ -572,7 +571,7 @@ const STAGE_META = {
   cur :{key:'cur', lab:'Current',  desc:'premium paying', cls:'cur'},
   od  :{key:'od',  lab:'Overdue',  desc:'1–44 days', cls:'s45'},
   s45 :{key:'s45', lab:'45-Day',   desc:'survey due', cls:'s45'},
-  s60 :{key:'s60', lab:'60-Day',   desc:'retention',  cls:'s60'},
+  s60 :{key:'s60', lab:'60-Day',   desc:'manager owns it',  cls:'s60'},
   s90 :{key:'s90', lab:'90-Day',   desc:'lapsing/lapsed', cls:'s90'},
   pend:{key:'pend',lab:'Pending',  desc:'new business', cls:'dup'},
   closed:{key:'closed',lab:'Closed', desc:'surrendered/expired', cls:'cur'}
@@ -645,15 +644,19 @@ function blocker(c){
   // would bury the handful of live cases under thousands of historic ones.
   if(c.stage!=='s60') return null;
   const st=policyState(c.Policy), d=Number(c.DaysArrears)||0;
+  // The manager owns the policy from day 60 — that is what the handover means,
+  // and it is why they are named first. Waiting for the agent to file before
+  // anybody was accountable is the pattern that let cases sit: the agent had
+  // until 65, the manager three days after that, and a client who heard from
+  // nobody was the ordinary outcome rather than the failure case.
+  if(!st.verdict){
+    const since=Math.max(0,d-SLA.RETENTION_OPENS);
+    return {who:'manager', name:managerOf(c.Agent), late:since>=SLA.MANAGER_REPLY_DAYS,
+      what:'Handed over at day 60 — no response recorded', since};
+  }
   if(!st.retention){
     return {who:'agent', name:c.Agent, late:d>=SLA.AGENT_FILE_BY,
-      what:'No retention case filed', since:d-SLA.RETENTION_OPENS};
-  }
-  if(!st.verdict){
-    const daysWaiting=Math.floor((Date.now()-st.retention.ts)/86400000);
-    return {who:'manager', name:managerOf(c.Agent),
-      late:(daysWaiting>=SLA.MANAGER_REPLY_DAYS)||(d>=SLA.MANAGER_REPLY_BY),
-      what:'Retention case awaiting response', since:daysWaiting};
+      what:'No retention case filed', since:Math.max(0,d-SLA.RETENTION_OPENS)};
   }
   return {who:'done', name:'', late:false, what:'Manager has responded', since:0};
 }
@@ -859,6 +862,14 @@ const MANAGER_QUESTIONS=[
   {k:'mcontact',q:'Have you personally contacted this client?',opts:[
     {k:'yes',lab:'Yes — I have spoken with them'},{k:'attempted',lab:'Attempted — no response yet'},
     {k:'notyet',lab:'Not yet — I will do so today'}]},
+  /* Asked in the client's own vocabulary, so the manager's account of the call
+     and the client's own answer are directly comparable — and so a client who
+     never opened an email still has a recorded position. */
+  {k:'mclientsays',q:'What did the client tell you?',opts:[
+    {k:'clear',lab:'They will clear it'},{k:'lower',lab:'They need a smaller premium'},
+    {k:'date',lab:'They need a different payment date'},{k:'bank',lab:'Their bank instruction failed'},
+    {k:'pause',lab:'They asked for a short pause'},{k:'end',lab:'They no longer want the cover'},
+    {k:'nocontact',lab:'I have not been able to speak with them'}]},
   {k:'mdecision',q:'What is your decision on this case?',opts:[
     {k:'retention',lab:'Approve the retention plan as proposed'},
     {k:'payplan',lab:'Approve a payment plan'},
@@ -884,9 +895,38 @@ const MANAGER_QUESTIONS=[
     {k:'today',lab:'Today'},{k:'week',lab:'Within this week'},
     {k:'d75',lab:'Before day 75'},{k:'d88',lab:'Before day 88 — the final notice'}]}
 ];
+/* Day 88. A different letter needs different questions: by then we have asked
+   what would help twice, and asking a third time reads as though nobody was
+   listening. These ask about us instead — starting with the one the branch has
+   never put to a lapsing client, and which 47 of 137 JotForm respondents
+   answered without being asked. */
+const CLOSING_QUESTIONS=[
+  {k:'reached',q:'Before anything else — did anyone from us actually reach you?',opts:[
+    {k:'agent',lab:'Yes — my agent spoke with me'},{k:'manager',lab:'Yes — a manager called me'},
+    {k:'letters',lab:'Only these letters. Nobody called.'},
+    {k:'nothing',lab:'This is the first I am hearing of it'}]},
+  {k:'decide',q:'What would you like to happen with this policy?',opts:[
+    {k:'clear',lab:"Keep it — I'll clear the premium"},
+    {k:'afford',lab:'Keep it, at an amount I can manage'},
+    {k:'talk',lab:'Hold it — I want to speak to someone first'},
+    {k:'explain',lab:"I'm ready to let it go, but tell me what I lose"},
+    {k:'end',lab:'End it. I have decided.'}]},
+  {k:'us',q:'If we got something wrong, what was it?',opts:[
+    {k:'nothing',lab:'Nothing — this was handled well'},
+    {k:'unclear',lab:'Nobody explained what would actually happen'},
+    {k:'nobody',lab:'It was too hard to reach a person'},
+    {k:'unmet',lab:'I asked for something and never got an answer'},
+    {k:'money',lab:'The problem was money, and nothing offered helped'}]}
+];
 const ANSWER_BY_KEY={};
-[CLIENT_QUESTIONS,MANAGER_QUESTIONS].forEach(set=>set.forEach(q=>q.opts.forEach(o=>{
-  ANSWER_BY_KEY[q.k+':'+o.k]={q:q.q,lab:o.lab,qk:q.k,set:set===MANAGER_QUESTIONS?'mgr':'client'};})));
+[CLIENT_QUESTIONS,MANAGER_QUESTIONS,CLOSING_QUESTIONS].forEach(set=>set.forEach(q=>q.opts.forEach(o=>{
+  ANSWER_BY_KEY[q.k+':'+o.k]={q:q.q,lab:o.lab,qk:q.k,
+    set:set===MANAGER_QUESTIONS?'mgr':set===CLOSING_QUESTIONS?'closing':'client'};})));
+/* Which set a question belongs to, so a returning tap offers the right
+   remaining questions rather than the day-45 ones. */
+function questionSet(name){
+  return name==='mgr'?MANAGER_QUESTIONS:name==='closing'?CLOSING_QUESTIONS:CLIENT_QUESTIONS;
+}
 /* Answers that mean the client intends to keep paying, for the odds model. */
 /* Any answer at all is a good sign — these weight how good. */
 const POSITIVE_ANSWERS={'help:settle':1,'help:bank':1,'help:date':1,'when:today':1,'when:payday':1};
@@ -908,15 +948,15 @@ const OUT_TPL={
     msg:c=>`Good day ${first(c)}, this is the Ricky Rampersad Branch regarding policy ${c.Policy}. The premium is ${c.DaysArrears||0} days outstanding and cover would end in about ${toLapse(c)} days. Before it gets there we would rather understand your situation than assume it — there are more options than most people realise. Three quick questions:${surveyTail(c)} Or reply here and we will take it from there.`},
   s45r:{lab:'Survey reminder',subject:c=>`Still here when you are — policy ${c.Policy}`,
     msg:c=>`Hi ${first(c)}, just following up on policy ${c.Policy}. Cover ends in about ${toLapse(c)} days. Even if the answer is you want to stop it, tell me — I'd rather sort it properly than let it lapse.${surveyTail(c)}`},
-  s60:{lab:'60-day letter',subject:c=>`Policy No. ${c.Policy} — 60 days outstanding, ${toLapse(c)} days to lapse`,
-    msg:c=>{const st=policyState(c.Policy);
-      return `Good day ${first(c)}, Ricky Rampersad Branch regarding policy ${c.Policy}. ${st.survey
-        ?'Thank you for replying to us earlier — we held the policy on that basis, but the premium is still outstanding. '
-        :'We wrote at day 45 and have not had a reply. '}It is now ${c.DaysArrears||0} days outstanding and cover ends in ${toLapse(c)} days. A formal letter is with you setting out the timeline and your options, copied to your agent, their manager and the branch manager. Please open it and select an option, or call ${BRANCH_PHONE}.`;}},
+  /* There is no 60-day client message any more. Day 60 is the handover: the
+     client leaves the letter sequence and the manager telephones them. The
+     reminder below is what they get in the meantime, and it says so. */
   chase:{lab:'Reminder (no reply)',subject:c=>`Policy No. ${c.Policy} — reminder, ${toLapse(c)} days to lapse`,
-    msg:c=>`Good day ${first(c)}, Ricky Rampersad Branch following up on policy ${c.Policy}. It is ${c.DaysArrears||0} days outstanding with ${toLapse(c)} days before cover ends. ${managerOf(c.Agent)} has also been asked to contact you. Even a one-line reply — including that you want to stop it — lets us act properly rather than let it lapse.`},
-  s88:{lab:'Final notice',subject:c=>`Final notice — policy ${c.Policy} lapses in ${toLapse(c)} days`,
-    msg:c=>`Hi ${first(c)} — final notice on policy ${c.Policy}. It lapses in ${toLapse(c)} day${toLapse(c)===1?'':'s'} and after that a claim is not payable. If there is any way to keep it — smaller premium, payment plan, different date — call me today on ${BRANCH_PHONE}.`},
+    msg:c=>`Good day ${first(c)}, Ricky Rampersad Branch following up on policy ${c.Policy}. It is ${c.DaysArrears||0} days outstanding with ${toLapse(c)} days before cover ends. ${(c.DaysArrears||0)>=SLA.RETENTION_OPENS&&managerOf(c.Agent)?`${managerOf(c.Agent)}, the manager responsible for your agent, has been asked to call you personally. `:''}Even a one-line reply — including that you want to stop it — lets us act properly rather than let it lapse.`},
+  s75:{lab:'75-day — from the manager',subject:c=>`Policy No. ${c.Policy} — ${toLapse(c)} days remaining, from ${managerOf(c.Agent)||'the branch'}`,
+    msg:c=>`Good day ${first(c)}. This is ${managerOf(c.Agent)||'the manager'}, the manager at the Ricky Rampersad Branch responsible for your agent. We have written about policy ${c.Policy} and I wanted to reach you myself. There are ${toLapse(c)} days left before it reaches the end of its grace period. Tell me what would help — clearing it, a smaller amount, a different payment date, fixing the bank instruction, or a short pause — and I will handle it personally.`},
+  s88:{lab:'Final notice + full record',subject:c=>`Final notice — policy ${c.Policy}, ${toLapse(c)} days remaining, and the full record`,
+    msg:c=>`Good day ${first(c)} — final notice on policy ${c.Policy}. It reaches the end of its grace period in ${toLapse(c)} day${toLapse(c)===1?'':'s'}. I have sent you the complete record of everything on this policy — every letter, every reply, and what we did about it. Two things I want to ask you directly: did anyone from us actually call you, and what would you like to happen with the policy? Call ${BRANCH_PHONE} or reply here.`},
   winback:{lab:'Win-back',subject:c=>`Policy ${c.Policy} can still be restored`,
     msg:c=>`Hi ${first(c)}, Ricky Rampersad Branch here. Policy ${c.Policy} lapsed ${c.LapseDate?('on '+c.LapseDate):((c.DaysArrears||0)+' days ago')}, so there's no cover in place right now. It can still be reinstated — it keeps its original age and terms, so it's usually cheaper than starting fresh. Want me to check what it would take?`},
   pend:{lab:'Requirements chase',subject:c=>`Your application needs one more thing — policy ${c.Policy}`,
@@ -929,10 +969,11 @@ function toLapse(c){return Math.max(0,90-(Number(c.DaysArrears)||0));}
 function surveyTail(c){const l=surveyLink(c);return l?(' '+l):'';}
 /* Which message fits where this policy actually sits. */
 function defaultTpl(c){
+  const d=Number(c.DaysArrears)||0;
   if(c.stage==='pend')return 'pend';
   if(c.stage==='s90')return c.lapsed?'winback':'s88';
-  if(c.stage==='s60')return policyState(c.Policy).response?'s60':((c.DaysArrears||0)>=SLA.RETENTION_OPENS+SLA.CLIENT_CHASE_EVERY?'chase':'s60');
-  if(c.stage==='s45')return (c.DaysArrears||0)>=52?'s45r':'s45';
+  if(c.stage==='s60')return d>=88?'s88':d>=75?'s75':'chase';
+  if(c.stage==='s45')return d>=52?'s45r':'s45';
   if(c.stage==='od')return 'od';
   return 'thanks';
 }
@@ -941,12 +982,15 @@ function hasEmail(c){const e=String(c.Email||'').trim();return (!e||/not availab
 
 /* The six one-click links that go into the 60-day email. */
 function choiceLinksHtml(c){
-  if(c.stage!=='s60'&&c.stage!=='s45')return '';
-  const rows=CLIENT_QUESTIONS.map(q=>
+  if(c.stage!=='s60'&&c.stage!=='s45'&&c.stage!=='s90')return '';
+  const d=Number(c.DaysArrears)||0, closing=d>=88||c.stage==='s90';
+  const rows=(closing?CLOSING_QUESTIONS:CLIENT_QUESTIONS).map(q=>
     `<div class="choice-g">${esc(q.q)}</div>`+q.opts.map(o=>
       `<div class="choice-row"><span class="cl">${esc(o.lab)}</span><button class="btn-sm btn-save" data-copyq="${esc(q.k)}" data-copya="${esc(o.k)}" type="button">Copy</button></div>`).join('')
   ).join('');
-  return `<div class="note" style="margin-top:12px"><b>The questions in the client's letter.</b> Every answer is a link — the client taps it in the email and never opens a browser form. These are the same questions the branch has been asking since 2023.</div>
+  return `<div class="note" style="margin-top:12px"><b>The questions in the client's letter.</b> Every answer is a link — the client taps it in the email and never opens a browser form. ${closing
+    ?'At day 88 the questions change: the letter carries the whole record of this policy back to the client, and asks them directly whether anyone from us actually reached them.'
+    :'Nobody is asked why they are late — every answer is a service we provide.'}</div>
     <div class="choice-list">${rows}</div>`;
 }
 function outreachPanel(c){
@@ -1052,24 +1096,32 @@ function ladderHtml(c){
   const rung=(done,late,next,label,when)=>
     `<div class="rung ${done?'on':late?'late':next?'next':'off'}"><span class="dot"></span>
       <span class="lb">${label}</span><span class="tm">${when||''}</span></div>`;
+  const handed=d>=SLA.RETENTION_OPENS;
   const rows=[
-    rung(!!st.survey,false,!st.survey&&d>=45,
-      st.survey?`<b>Client answered the 45-day survey</b> — ${esc(st.survey.surveyReason||'')}`:'45-day survey — no answer from the client',
-      st.survey?timeAgo(st.survey.ts):(d>=45?'overdue':'')),
-    rung(!!st.response,false,!st.response&&d>=SLA.RETENTION_OPENS,
-      st.response?`<b>Client chose:</b> ${esc(st.response.body||'')}`
-                 :`60-day email — client has not picked an option${d>SLA.RETENTION_OPENS?`, chased every ${SLA.CLIENT_CHASE_EVERY} days`:''}`,
-      st.response?timeAgo(st.response.ts):''),
-    rung(!!st.retention, !st.retention&&d>=SLA.AGENT_FILE_BY, !st.retention,
+    rung(!!st.survey||!!st.response,false,!st.survey&&!st.response&&d>=45,
+      st.survey?`<b>Client answered the 45-day letter</b> — ${esc(st.survey.surveyReason||'')}`
+       :st.response?`<b>Client chose:</b> ${esc(st.response.body||'')}`
+       :`45-day letter — no answer${d>45?`, reminded every ${SLA.CLIENT_CHASE_EVERY} days`:''}`,
+      st.survey?timeAgo(st.survey.ts):st.response?timeAgo(st.response.ts):(d>=45?`day ${d}`:'')),
+    // Day 60 is the handover, not a letter. The client comes off the sequence
+    // and the policy becomes the manager's — the next contact they get is the
+    // one this manager makes.
+    rung(handed,false,!handed,
+      handed?`<b>Handed to ${esc(mgr)}</b> — client off the letter sequence until day 88`
+            :`Day ${SLA.RETENTION_OPENS} — handover to <b>${esc(mgr)}</b>, who calls the client personally`,
+      handed?`day ${SLA.RETENTION_OPENS}`:`day ${d}`),
+    rung(!!st.verdict, handed&&!st.verdict&&bl&&bl.who==='manager'&&bl.late, handed&&!st.verdict,
+      st.verdict?`<b>${esc(st.verdict.author)}</b> responded — ${esc(st.verdict.managerVerdict||'')}`
+                :`<b>${esc(mgr)}</b> to call the client and record their answers, within ${SLA.MANAGER_REPLY_DAYS} working days`,
+      st.verdict?timeAgo(st.verdict.ts):(handed?`${Math.max(0,d-SLA.RETENTION_OPENS)}d waiting`:'')),
+    rung(!!st.retention, !st.retention&&d>=SLA.AGENT_FILE_BY, !st.retention&&handed,
       st.retention?`<b>${esc(c.Agent)}</b> filed the retention case — ${esc(st.retention.reason||'')}`
                   :`<b>${esc(c.Agent)}</b> to file the retention case by day ${SLA.AGENT_FILE_BY}`,
       st.retention?timeAgo(st.retention.ts):(d>=SLA.AGENT_FILE_BY?`${d-SLA.AGENT_FILE_BY}d late`:`day ${d}`)),
-    rung(!!st.verdict,
-      !!st.retention&&!st.verdict&&bl&&bl.who==='manager'&&bl.late,
-      !!st.retention&&!st.verdict,
-      st.verdict?`<b>${esc(st.verdict.author)}</b> responded — ${esc(st.verdict.managerVerdict||'')}`
-                :`<b>${esc(mgr)}</b> to respond within ${SLA.MANAGER_REPLY_DAYS} working days of filing`,
-      st.verdict?timeAgo(st.verdict.ts):(bl&&bl.who==='manager'?`${bl.since}d waiting`:'not yet filed'))
+    rung(d>=88,false,d>=75&&d<88,
+      d>=88?'<b>Final notice sent</b> — with the full record of this policy'
+           :'Day 88 — final notice, carrying every interaction on this policy back to the client',
+      d>=88?`day ${d}`:'')
   ];
   const w=bl?bl.who:'done';
   const wl=w==='agent'?`Waiting on ${c.Agent}`:w==='manager'?`Waiting on ${mgr}`:'Loop closed';
@@ -1277,20 +1329,19 @@ function rickyInsights(cases){
   const s45=cases.filter(c=>c.stage==='s45');
   const dup=cases.filter(c=>c.cf.duplicateRisk);
   const churn=cases.filter(c=>c.cf.churnRisk);
-  const awaitMgr=cases.filter(c=>{const st=policyState(c.Policy);return st.retention&&!st.verdict;});
   // who is actually holding things up — the number that ends the blame argument
   const blocked=cases.map(c=>({c,b:blocker(c)})).filter(x=>x.b&&x.b.late);
   const byAgent=blocked.filter(x=>x.b.who==='agent');
   const byMgr=blocked.filter(x=>x.b.who==='manager');
-  const noReply=s60.filter(c=>!policyState(c.Policy).response);
-  const noSurvey=s45.filter(c=>!policyState(c.Policy).survey);
-  void s60;
+  // Handed to a manager at day 60, and the manager has recorded nothing at all.
+  // Not "no reply from the client" — that is no longer anybody's excuse.
+  const silent=s60.filter(c=>{const st=policyState(c.Policy);return !st.verdict;});
+  const noSurvey=s45.filter(c=>{const st=policyState(c.Policy);return !st.survey&&!st.response;});
   if(s90.length)out.push({mk:'crit',t:`<b>${s90.length} ${s90.length===1?'policy is':'policies are'} at the 90-day lapse line.</b> Reinstatement only from here — pursue today or document the loss.`});
-  if(noSurvey.length)out.push({mk:'warn',t:`<b>${noSurvey.length} of ${s45.length} cases in the 45-day window have no client survey yet.</b> Send the survey — you can't save what you don't understand.`});
-  if(byMgr.length)out.push({mk:'crit',t:`<b>${byMgr.length} ${byMgr.length===1?'case is':'cases are'} late on the manager's side.</b> The agent did their part — ${esc([...new Set(byMgr.map(x=>x.b.name))].slice(0,3).join(', '))} ${byMgr.length===1?'owes':'owe'} a response. Longest waiting: ${Math.max(...byMgr.map(x=>x.b.since))} days.`});
-  if(byAgent.length)out.push({mk:'warn',t:`<b>${byAgent.length} ${byAgent.length===1?'case has':'cases have'} passed day ${SLA.AGENT_FILE_BY} with no retention form.</b> ${esc([...new Set(byAgent.map(x=>x.c.Agent))].slice(0,3).join(', '))} — the manager cannot decide on a case that was never filed.`});
-  if(noReply.length)out.push({mk:'go',t:`<b>${noReply.length} client${noReply.length===1?'':'s'} in the 60-day window ${noReply.length===1?'has':'have'} not picked an option.</b> They are being chased every ${SLA.CLIENT_CHASE_EVERY} days automatically — a call from a manager beats another email.`});
-  if(awaitMgr.length&&!byMgr.length)out.push({mk:'go',t:`<b>${awaitMgr.length} retention ${awaitMgr.length===1?'case is':'cases are'} with a manager</b>, all still inside the ${SLA.MANAGER_REPLY_DAYS}-day response window.`});
+  if(noSurvey.length)out.push({mk:'warn',t:`<b>${noSurvey.length} of ${s45.length} cases in the 45-day window have had no answer from the client.</b> They are reminded every ${SLA.CLIENT_CHASE_EVERY} days automatically until day 60, when the policy becomes a manager's to telephone.`});
+  if(byMgr.length)out.push({mk:'crit',t:`<b>${byMgr.length} ${byMgr.length===1?'policy has':'policies have'} been with a manager past the ${SLA.MANAGER_REPLY_DAYS}-day standard with nothing recorded.</b> ${esc([...new Set(byMgr.map(x=>x.b.name))].slice(0,3).join(', '))} ${byMgr.length===1?'owes':'owe'} a call and an answer. Longest waiting: ${Math.max(...byMgr.map(x=>x.b.since))} days. Every one of these clients reads it at day 88.`});
+  if(byAgent.length)out.push({mk:'warn',t:`<b>${byAgent.length} ${byAgent.length===1?'case has':'cases have'} passed day ${SLA.AGENT_FILE_BY} with no retention form.</b> ${esc([...new Set(byAgent.map(x=>x.c.Agent))].slice(0,3).join(', '))} — the manager is already working the policy, but the written case is still owed.`});
+  if(silent.length&&!byMgr.length)out.push({mk:'go',t:`<b>${silent.length} ${silent.length===1?'policy is':'policies are'} with a manager</b> after the day-60 handover, all still inside the ${SLA.MANAGER_REPLY_DAYS}-day standard. A call now is worth more than anything the sequence sends next.`});
   if(dup.length)out.push({mk:'warn',t:`<b>${dup.length} possible duplicate ${dup.length===1?'policy':'policies'}</b> — same client, same plan code. Confirm none is a replacement written over in-force cover.`});
   if(churn.length)out.push({mk:'crit',t:`<b>${churn.length} ${churn.length===1?'client has':'clients have'} prior lapses.</b> Repeat churn — protect the active policy before it follows the pattern.`});
   if(!out.length)out.push({mk:'good',t:`This view is current — nothing in the 45/60/90 windows, no late responses on either side, and no duplicate or churn flags. Strong persistency.`});
@@ -1311,7 +1362,7 @@ function statStrip(cases){
   const late=lateList.length, lateMgr=lateList.filter(b=>b.who==='manager').length;
   return `<div class="stats">
     <div class="stat t-teal"><div class="bar"></div><div class="lab">Tracked policies</div><div class="val">${cases.length}</div><div class="delta">${cases.filter(c=>c.stage!=='cur').length} need attention</div></div>
-    <div class="stat t-warn"><div class="bar"></div><div class="lab">60-day retention</div><div class="val">${s60}</div><div class="delta">fact find + manager due</div></div>
+    <div class="stat t-warn"><div class="bar"></div><div class="lab">60-day · manager owns</div><div class="val">${s60}</div><div class="delta">a call and an answer due</div></div>
     <div class="stat t-crit"><div class="bar"></div><div class="lab">90-day lapse line</div><div class="val">${s90}</div><div class="delta">reinstatement window</div></div>
     <div class="stat t-gold"><div class="bar"></div><div class="lab">Duplicate flags</div><div class="val">${dup}</div><div class="delta">same client + plan</div></div>
     <div class="stat t-crit"><div class="bar"></div><div class="lab">Late responses</div><div class="val">${late}</div><div class="delta">${lateMgr} manager · ${late-lateMgr} agent</div></div>
@@ -1325,7 +1376,7 @@ function ribbon(cases){
   const cells=[
     ['od','Overdue',count('od'),'1–44 days'],
     ['s45','45-Day',count('s45'),'survey window'],
-    ['s60','60-Day',count('s60'),'retention'],
+    ['s60','60-Day',count('s60'),'manager owns it'],
     ['s90','90 / Lapsed',count('s90'),'win-back'],
     ['pend','Pending',count('pend'),'new business']
   ];
@@ -1338,7 +1389,7 @@ let FILTER={q:'',chip:'all',sort:'days'};
 function filterBar(){return `<div class="toolbar">
   <div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="fq" placeholder="Search client, policy, client #, agent or plan…" value="${esc(FILTER.q)}"></div>
   <select class="fselect" id="fsort"><option value="days">Sort: Closest to lapse</option><option value="prem">Sort: Highest premium</option><option value="prob">Sort: Lowest retention odds</option><option value="name">Sort: Client A–Z</option></select>
-</div><div class="chips" id="chips">${chip('all','All')}${chip('s45','45-day survey')}${chip('s60','60-day retention')}${chip('s90','90-day / lapsed')}${chip('pend','Pending')}${chip('await','Awaiting manager')}${chip('late','Late — either side')}${chip('dup','Duplicate/churn')}</div>`;}
+</div><div class="chips" id="chips">${chip('all','All')}${chip('s45','45-day letter')}${chip('s60','60-day · manager')}${chip('s90','90-day / lapsed')}${chip('pend','Pending')}${chip('await','Awaiting manager')}${chip('late','Late — either side')}${chip('dup','Duplicate/churn')}</div>`;}
 function chip(k,label){return `<button class="chip ${FILTER.chip===k?'on':''}" data-chip="${k}">${label} <span class="ct" data-ct="${k}"></span></button>`;}
 function applyFilter(cases){
   let r=cases.slice();
@@ -1355,7 +1406,7 @@ function applyFilter(cases){
   // returned "no results" while the policy sat right there, which made the
   // win-back work unreachable from search.
   if(FILTER.chip==='all' && !RIB.on && !FILTER.q)r=r.filter(c=>c.stage!=='closed' && !c.lapsed);
-  if(FILTER.chip==='await')r=r.filter(c=>{const st=policyState(c.Policy);return st.retention&&!st.verdict;});
+  if(FILTER.chip==='await')r=r.filter(c=>c.stage==='s60'&&!policyState(c.Policy).verdict);
   if(FILTER.chip==='dup')r=r.filter(c=>c.cf.duplicateRisk||c.cf.churnRisk);
   if(FILTER.q){const q=FILTER.q.toLowerCase();r=r.filter(c=>c.Client.toLowerCase().includes(q)||c.Policy.includes(q)||String(c.ClientNo).includes(q)||c.Agent.toLowerCase().includes(q)||(c.PlanCode||'').toLowerCase().includes(q));}
   if(FILTER.sort==='days')r.sort((a,b)=>rank(b)-rank(a));
@@ -1375,22 +1426,31 @@ function wireFilter(cases,rerender){
     else if(k==='s60')n=cases.filter(c=>c.stage==='s60').length;else if(k==='s90')n=cases.filter(c=>c.stage==='s90').length;
     else if(k==='late')n=cases.filter(c=>{const b=blocker(c);return b&&b.late;}).length;
     else if(k==='pend')n=cases.filter(c=>c.stage==='pend').length;
-    else if(k==='await')n=cases.filter(c=>{const st=policyState(c.Policy);return st.retention&&!st.verdict;}).length;
+    else if(k==='await')n=cases.filter(c=>c.stage==='s60'&&!policyState(c.Policy).verdict).length;
     else if(k==='dup')n=cases.filter(c=>c.cf.duplicateRisk||c.cf.churnRisk).length;el.textContent=n;});
 }
 
 /* ===== NEXT STEP ===== */
 function nextStep(cases){
-  const await_=cases.filter(c=>{const st=policyState(c.Policy);return st.retention&&!st.verdict;});
+  const mine=cases.filter(c=>c.stage==='s60'&&!policyState(c.Policy).verdict);
   const s90=cases.filter(c=>c.stage==='s90');
   const s60noForm=cases.filter(c=>c.stage==='s60'&&!policyState(c.Policy).retention);
-  const s45noSurvey=cases.filter(c=>c.stage==='s45'&&!policyState(c.Policy).survey);
+  const s45noSurvey=cases.filter(c=>c.stage==='s45'&&!policyState(c.Policy).survey&&!policyState(c.Policy).response);
+  /* A policy that lapsed in 2014 is not "act today", and sorting the 90-day
+     bucket by days descending picks exactly that one every time. Prefer cover
+     still in force at the line, then the freshest lapse — the only one where
+     reinstatement is realistic. */
+  const live90=s90.filter(c=>!c.lapsed).sort((a,b)=>(b.DaysArrears||0)-(a.DaysArrears||0));
+  const fresh90=s90.filter(c=>c.lapsed&&(Number(c.DaysArrears)||0)<=180)
+                   .sort((a,b)=>(a.DaysArrears||0)-(b.DaysArrears||0));
   let pick,verb;
   const isMgr=SESS&&['bm','abm','unit'].includes(SESS.role);
-  if(isMgr&&await_.length){pick=await_[0];verb='A retention case is waiting on your response — respond now to keep it alive.';}
-  else if(s90.length){pick=s90.sort((a,b)=>(b.DaysArrears||0)-(a.DaysArrears||0))[0];verb='At the lapse line — act today or document the loss.';}
-  else if(s60noForm.length){pick=s60noForm[0];verb=`${s60noForm[0].DaysArrears||0} days in arrears and no retention case yet — file it so your manager can still act.`;}
-  else if(s45noSurvey.length){pick=s45noSurvey[0];verb='45 days in arrears — send the client survey to understand the reason.';}
+  if(isMgr&&mine.length){pick=mine[0];
+    verb=`Handed to you at day 60 and nothing is recorded. Call them, then tap your answers — the client reads this record at day 88.`;}
+  else if(live90.length){pick=live90[0];verb='At the lapse line — act today or document the loss.';}
+  else if(fresh90.length){pick=fresh90[0];verb=`Lapsed ${fresh90[0].DaysArrears||0} days ago — still inside the reinstatement window, where it keeps its original age and terms.`;}
+  else if(s60noForm.length){pick=s60noForm[0];verb=`${s60noForm[0].DaysArrears||0} days in arrears and no retention case yet — file it by day ${SLA.AGENT_FILE_BY}.`;}
+  else if(s45noSurvey.length){pick=s45noSurvey[0];verb='45 days in arrears and no answer from the client — reach them before day 60, when it leaves your desk.';}
   else return '';
   return `<div class="nextstep"><div class="ic">→</div><div class="body"><div class="lab">Ricky AI · Next step</div><div class="txt"><b>${esc(pick.Client)}</b> (${esc(pick.Policy)}, ${pick.stage==='pend'?'pending':pick.DaysArrears+'d'}) — ${verb}</div></div><button class="go" data-nextjump="${esc(pick.Policy)}">Open case</button></div>`;
 }
@@ -1425,14 +1485,22 @@ function closeSurvey(){$('#surveyModal').classList.remove('on');SURVEY_POLICY=nu
 $('#surveyX').addEventListener('click',closeSurvey);
 $('#surveyModal').addEventListener('click',e=>{if(e.target.id==='surveyModal')closeSurvey();});
 
-function footer(){return `<div class="foot"><div class="shield">${SHIELD}</div><div>Ricky Rampersad Branch · Premium Due Engine</div><div class="mono" style="margin-top:4px;font-size:10.5px">Branch 26000 · 45 / 75 / 90-day persistency intelligence</div></div>`;}
-/* ===== MANAGER QUEUE (retention cases awaiting response) ===== */
+function footer(){return `<div class="foot"><div class="shield">${SHIELD}</div><div>Ricky Rampersad Branch · Premium Due Engine</div><div class="mono" style="margin-top:4px;font-size:10.5px">Branch 26000 · 45 / 60 / 75 / 90-day persistency intelligence</div></div>`;}
+/* ===== MANAGER QUEUE =====
+   Everything handed over at day 60 with nothing recorded against it — not only
+   the cases an agent got round to filing. Waiting for the filing before the
+   policy appeared in a manager's queue is precisely how a client ends up
+   hearing from nobody: the agent is late, so the manager never sees it, so the
+   manager is not late either, and the policy lapses with two clean records. */
 function managerQueue(cases){
-  const q=cases.filter(c=>{const st=policyState(c.Policy);return st.retention&&!st.verdict;})
+  const q=cases.filter(c=>c.stage==='s60'&&!policyState(c.Policy).verdict)
     .sort((a,b)=>rank(b)-rank(a));
-  if(!q.length)return `<div class="empty-state" style="padding:30px"><div class="shield">${SHIELD}</div><p>No retention cases awaiting your response. The queue is clear.</p></div>`;
-  return `<table class="lbtable"><thead><tr><th>Client / policy</th><th>Agent</th><th>Stage</th><th>Reason</th><th>Submitted</th><th></th></tr></thead><tbody>
-    ${q.map(c=>{const st=policyState(c.Policy);return `<tr data-qjump="${esc(c.Policy)}" style="cursor:pointer"><td><div class="ag">${esc(c.Client)}</div><div class="mono" style="font-size:11px;color:var(--mut)">${esc(c.Policy)}</div></td><td>${esc(c.Agent)}</td><td><span class="pill stage ${c.stage==='s90'?'s90':'s60'}">${esc(c.stageMeta.lab)}</span></td><td style="font-size:12px">${esc(st.retention.reason||'—')}</td><td class="mono" style="font-size:11px">${timeAgo(st.retention.ts)}</td><td><span class="await-tag">Respond</span></td></tr>`;}).join('')}
+  if(!q.length)return `<div class="empty-state" style="padding:30px"><div class="shield">${SHIELD}</div><p>Nothing is waiting on you. Every policy handed over at day 60 has your answer against it.</p></div>`;
+  return `<table class="lbtable"><thead><tr><th>Client / policy</th><th>Agent</th><th>Stage</th><th>What you have</th><th>Waiting</th><th></th></tr></thead><tbody>
+    ${q.map(c=>{const st=policyState(c.Policy),d=Number(c.DaysArrears)||0,w=Math.max(0,d-SLA.RETENTION_OPENS);
+      const what=st.retention?esc(st.retention.reason||'Case filed')
+        :`<span style="color:var(--red)">No case filed${d>=SLA.AGENT_FILE_BY?` — ${d-SLA.AGENT_FILE_BY}d late`:''}</span>`;
+      return `<tr data-qjump="${esc(c.Policy)}" style="cursor:pointer"><td><div class="ag">${esc(c.Client)}</div><div class="mono" style="font-size:11px;color:var(--mut)">${esc(c.Policy)}</div></td><td>${esc(c.Agent)}</td><td><span class="pill stage ${c.stage==='s90'?'s90':'s60'}">${esc(c.stageMeta.lab)}</span></td><td style="font-size:12px">${what}</td><td class="mono" style="font-size:11px">${w}d since handover</td><td><span class="await-tag">${w>=SLA.MANAGER_REPLY_DAYS?'Overdue':'Call + answer'}</span></td></tr>`;}).join('')}
   </tbody></table>`;
 }
 
@@ -1790,7 +1858,10 @@ async function handleHashAnswer(){
     surveyContact:isMgr?'':ans.lab,surveyPromise:'',factFind:'',managerVerdict:isMgr?ans.lab:''});
 
   const nm=c?first(c):'there';
-  const remaining=(isMgr?MANAGER_QUESTIONS:CLIENT_QUESTIONS).filter(q=>q.k!==qk);
+  // The remaining questions come from the set this one belongs to. Offering the
+  // day-45 questions to someone who just answered the day-88 letter is the kind
+  // of thing that makes a client sure nobody is reading.
+  const remaining=questionSet(ans.set).filter(q=>q.k!==qk);
   $('#surveyX').style.display='none';
   $('#surveyTitle').textContent=isMgr?'Recorded — thank you.':`Thank you, ${nm}.`;
   $('#surveySub').textContent=c?`Policy ${c.Policy}${isMgr?' · '+c.Client:''}`:'';

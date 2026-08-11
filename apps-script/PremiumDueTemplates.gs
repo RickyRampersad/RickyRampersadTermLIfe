@@ -159,6 +159,19 @@ var MANAGER_QUESTIONS = [
     { k: 'attempted', lab: 'Attempted — no response yet' },
     { k: 'notyet',    lab: 'Not yet — I will do so today' } ] },
 
+  /* The one that makes the call worth making. A client who never opened an
+     email still has a position, and this is where it gets recorded — in the
+     same vocabulary the client is offered, so the two are comparable and the
+     day-90 letter can quote it back accurately. */
+  { k: 'mclientsays', q: 'What did the client tell you?', opts: [
+    { k: 'clear',     lab: 'They will clear it' },
+    { k: 'lower',     lab: 'They need a smaller premium' },
+    { k: 'date',      lab: 'They need a different payment date' },
+    { k: 'bank',      lab: 'Their bank instruction failed' },
+    { k: 'pause',     lab: 'They asked for a short pause' },
+    { k: 'end',       lab: 'They no longer want the cover' },
+    { k: 'nocontact', lab: 'I have not been able to speak with them' } ] },
+
   { k: 'mdecision', q: 'What is your decision on this case?', opts: [
     { k: 'retention',   lab: 'Approve the retention plan as proposed' },
     { k: 'payplan',     lab: 'Approve a payment plan' },
@@ -195,16 +208,85 @@ var MANAGER_QUESTIONS = [
     { k: 'd88',   lab: 'Before day 88 — the final notice' } ] }
 ];
 
+/* ===================== WHAT WE ASK AT DAY 90 =====================
+   A different letter needs different questions. By day 88 the premium has been
+   outstanding for three months, we have written three times and a manager has
+   been asked to telephone. Asking "what would help right now?" a fourth time
+   would read as though nobody had been listening to the first three.
+
+   So this set asks about us, not about them. The service-recovery evidence is
+   consistent that once a sequence has failed, what recovers the relationship is
+   acknowledging the failure rather than repeating the request — and the
+   branch's own submissions say why that matters here: 47 of 137 clients
+   reported that their agent never contacted them at all. If that is what
+   happened on this policy, day 88 is the last moment it can surface while the
+   cover is still in force and something can still be done about it.
+
+   Three questions. Accountability, then the decision, then the one nobody in
+   this branch has ever put to a lapsing client. */
+var CLOSING_QUESTIONS = [
+  { k: 'reached', q: 'Before anything else — did anyone from us actually reach you?', opts: [
+    { k: 'agent',   lab: 'Yes — my agent spoke with me' },
+    { k: 'manager', lab: 'Yes — a manager called me' },
+    { k: 'letters', lab: 'Only these letters. Nobody called.' },
+    { k: 'nothing', lab: 'This is the first I am hearing of it' } ] },
+
+  { k: 'decide', q: 'What would you like to happen with this policy?', opts: [
+    { k: 'clear',   lab: "Keep it — I'll clear the premium" },
+    { k: 'afford',  lab: 'Keep it, at an amount I can manage' },
+    { k: 'talk',    lab: 'Hold it — I want to speak to someone first' },
+    { k: 'explain', lab: "I'm ready to let it go, but tell me what I lose" },
+    { k: 'end',     lab: 'End it. I have decided.' } ] },
+
+  { k: 'us', q: 'If we got something wrong, what was it?', opts: [
+    { k: 'nothing', lab: 'Nothing — this was handled well' },
+    { k: 'unclear', lab: 'Nobody explained what would actually happen' },
+    { k: 'nobody',  lab: 'It was too hard to reach a person' },
+    { k: 'unmet',   lab: 'I asked for something and never got an answer' },
+    { k: 'money',   lab: 'The problem was money, and nothing offered helped' } ] }
+];
+
 /* Flat lookup, so a returning click can be named without walking the sets. */
 var ANSWER_BY_KEY = (function () {
   var m = {};
-  [CLIENT_QUESTIONS, MANAGER_QUESTIONS].forEach(function (set) {
+  [CLIENT_QUESTIONS, MANAGER_QUESTIONS, CLOSING_QUESTIONS].forEach(function (set) {
     set.forEach(function (q) {
       q.opts.forEach(function (o) { m[q.k + ':' + o.k] = { q: q.q, lab: o.lab, qk: q.k }; });
     });
   });
   return m;
 })();
+
+/* The log stores the question TEXT (the 'reason' column) and the answer LABEL
+   (the 'body' column), not the keys — that is what the engine has always
+   written, and rewriting the schema would orphan every row already in the
+   sheet. These two maps read it back: question text -> question key, and
+   question key + label -> answer key. Everything downstream works in keys. */
+var PD_QKEY_BY_TEXT = (function () {
+  var m = {};
+  [CLIENT_QUESTIONS, MANAGER_QUESTIONS, CLOSING_QUESTIONS].forEach(function (set) {
+    set.forEach(function (q) { m[q.q] = q.k; });
+  });
+  return m;
+})();
+
+var PD_AKEY_BY_LABEL = (function () {
+  var m = {};
+  [CLIENT_QUESTIONS, MANAGER_QUESTIONS, CLOSING_QUESTIONS].forEach(function (set) {
+    set.forEach(function (q) {
+      q.opts.forEach(function (o) { m[q.k + '|' + o.lab] = o.k; });
+    });
+  });
+  return m;
+})();
+
+/** {qk, ak} for a logged row, or null if it is not one of our question sets. */
+function pdDecodeAnswer_(questionText, label) {
+  var qk = PD_QKEY_BY_TEXT[String(questionText || '').trim()];
+  if (!qk) return null;
+  var ak = PD_AKEY_BY_LABEL[qk + '|' + String(label || '').trim()];
+  return { qk: qk, ak: ak || '', lab: String(label || '') };
+}
 
 var PD_BRAND = { teal: '#0E6E64', teal2: '#0A524A', gold: '#C9972B', ink: '#0B1B2B', line: '#D9D3C6', red: '#B23A3A' };
 
@@ -314,6 +396,43 @@ function pdLapseMeaning_(p) {
   }
 }
 
+/**
+ * The same paragraph, but preferring the manager's stated position over the
+ * engine's inference.
+ *
+ * pdValueStatus_ guesses from the issue date and the APL amount. It is a good
+ * guess and it is never better than a guess. The manager is required to state
+ * the position as one of their questions, and once they have, that answer is
+ * the one that belongs in the client's letter — it came from the contract and
+ * the carrier rather than from a date column. Writing "your agent will confirm"
+ * to a client after the manager has already confirmed it is exactly the kind of
+ * thing that makes a sequence read as automated.
+ */
+function pdLapseMeaningFor_(p, state) {
+  var m = state && state.mgr && state.mgr.mvalue;
+  if (!m || !m.ak || m.ak === 'checking') return pdLapseMeaning_(p);
+  var by = state.mgrName ? ' — confirmed by <b>' + pdEsc_(state.mgrName) + '</b>' : '';
+  switch (m.ak) {
+    case 'novalue':
+      return 'We have checked the position on this policy' + by + '. It has <b>not built a value</b> to fall ' +
+        'back on, so at day 90 it lapses outright: the cover ends, a claim is not payable from that date, ' +
+        'and everything paid in stops working for you.';
+    case 'apl':
+      return 'We have checked the position on this policy' + by + '. <b>An automatic premium loan is already ' +
+        'running against its value</b>' +
+        (Number(p.APLAmount) > 0 ? ' — currently <b>' + pdMoney_(p.APLAmount) + '</b>' : '') +
+        ', which is why the cover has stayed in force. You are not about to lose it this month. You are ' +
+        'spending what you have already paid in to keep it, and when that value is used up the cover does end.';
+    case 'value':
+      return 'We have checked the position on this policy' + by + '. It <b>has built a value</b>, and under the ' +
+        'contract the cost of your cover can be met from that value for a period rather than the policy ' +
+        'simply lapsing. That is worth knowing and it is worth acting on: the cover continues, but it is ' +
+        'being paid for out of your own savings inside the policy.';
+    default:
+      return pdLapseMeaning_(p);
+  }
+}
+
 /** Days left before the 90-day lapse line. */
 function pdDaysToLapse_(p) { return Math.max(0, SLA.LAPSE - (Number(p.DaysArrears) || 0)); }
 
@@ -380,9 +499,14 @@ function pdQuestionBlock_(p, questions, kind) {
   var out = '';
   for (var i = 0; i < questions.length; i++) {
     var q = questions[i];
+    /* Questions are not numbered. They sit inside a numbered section, and two
+       competing sets of numerals in one letter — "1. Three questions" followed
+       by "1., 2., 3." in larger type — reads as though the section headings
+       were the sub-headings. Where another part of a letter needs to point at
+       one of these, it names it. */
     out += '<div style="margin:18px 0 0">' +
       '<div style="font-size:13.5px;font-weight:bold;color:' + PD_BRAND.ink + ';margin-bottom:7px">' +
-        (i + 1) + '. ' + pdEsc_(q.q) + '</div>' +
+        pdEsc_(q.q) + '</div>' +
       '<table cellpadding="0" cellspacing="0" style="width:100%">';
     for (var j = 0; j < q.opts.length; j++) {
       var o = q.opts[j];
@@ -416,10 +540,10 @@ function pdChoiceBlock_(p) {
 
 var TRAIL_LABEL = {
   s45:     'We wrote asking what would help',
-  s60:     'We wrote formally, copying your agent and their managers',
+  s60:     'We wrote formally, copying your agent and their managers',   // retired — historic rows only
   chase:   'We followed up, having had no reply',
   s75:     'Your agent&rsquo;s manager wrote to you personally',
-  s90:     'Final notice',
+  s90:     'Final notice, with the full record',
   winback: 'We wrote about restoring the policy',
   pend:    'We wrote about the outstanding requirements'
 };
@@ -476,9 +600,167 @@ function pdTrail_(p, state) {
           'wrong address, or if there is a reason it has been hard to respond, tell us and we will work around it.'));
 }
 
+/* ===================== THE FULL INTERACTION LOG =====================
+   What the day-88 letter carries: everything on this policy's file, in date
+   order — every letter, every answer the client gave, the day the case moved to
+   a manager, what that manager recorded, and what was decided.
+
+   Showing a client their own file is unusual and it is the point. Three months
+   of a branch process happen entirely out of their sight; the one thing they
+   experience is letters arriving. If work was done, this is where they see it.
+   If it was not, this is where that shows too — and that is the version worth
+   sending, because a client who was never called deserves to be the one who
+   tells us so while the cover is still in force. */
+
+/* Client-safe phrasings for what a manager recorded. A whitelist on purpose.
+   The internal record also holds compliance and staffing decisions — a possible
+   replacement of in-force cover, an orphan policy being reassigned, a
+   documented decision to let it go — which are ours to act on and not a
+   client's to read about in a letter. What appears below is what was done for
+   them, and what they were told. */
+var MGR_SAID_CLIENT = {
+  'mcontact:yes':        'Your agent&rsquo;s manager recorded that they spoke with you',
+  'mcontact:attempted':  'Your agent&rsquo;s manager recorded an attempt to reach you',
+  'mcontact:notyet':     'Your agent&rsquo;s manager recorded that they would contact you',
+  'mclientsays:clear':   'You told them you would clear the premium',
+  'mclientsays:lower':   'You told them you needed a smaller premium',
+  'mclientsays:date':    'You told them you needed a different payment date',
+  'mclientsays:bank':    'You told them your bank instruction had failed',
+  'mclientsays:pause':   'You asked for a short pause',
+  'mclientsays:end':     'You told them you no longer wanted the cover',
+  'mdecision:retention': 'A retention plan was approved for this policy',
+  'mdecision:payplan':   'A payment plan was approved for this policy',
+  'mdecision:reduce':    'A reduced premium, or an alteration to the benefit, was approved',
+  'mdecision:reinstate': 'The case was escalated for reinstatement',
+  'mvalue:novalue':      'The position on this policy&rsquo;s value was confirmed',
+  'mvalue:apl':          'It was confirmed that a premium loan is running against the policy&rsquo;s value',
+  'mvalue:value':        'It was confirmed that this policy has built a value',
+  'msupport:yes':        'The case was escalated to the branch manager'
+};
+
+/* Rows are told apart by their background, not by the colour of the text.
+   PD_BRAND.gold reads at 2.6:1 on white — fine as a rule or a button, not as a
+   sentence somebody has to read on a phone in daylight. Every value below is
+   above 4.5:1 against the background it sits on, and each states both. */
+var PD_LOG_TINT = {
+  you: { fg: '#0A524A', bg: '#F1F7F5', weight: '600' },     // the client's own words
+  mgr: { fg: '#6B4E0A', bg: '#FBF4E4', weight: '600' },     // a manager acted
+  us:  { fg: '#0B1B2B', bg: '#FFFFFF', weight: 'normal' }   // we wrote
+};
+
+function pdLogRow_(when, who, what, kind) {
+  var t = PD_LOG_TINT[kind] || PD_LOG_TINT.us;
+  return '<tr>' +
+    '<td style="padding:8px 11px;border:1px solid #E8E3D8;background:#F3F0E9;color:#5A6B7B;' +
+      'white-space:nowrap;width:104px;vertical-align:top;font-size:12px">' + when + '</td>' +
+    '<td style="padding:8px 11px;border:1px solid #E8E3D8;background:' + t.bg + ';color:#5A6B7B;' +
+      'white-space:nowrap;width:88px;vertical-align:top;font-size:12px">' + who + '</td>' +
+    '<td style="padding:8px 11px;border:1px solid #E8E3D8;background:' + t.bg + ';color:' + t.fg +
+      ';font-weight:' + t.weight + '">' + what + '</td>' +
+    '</tr>';
+}
+
+/** Every event on the file, client-safe, in date order. */
+function pdInteractionLog_(p, state) {
+  var ev = [], i;
+  var mgrName = (state && state.mgrName) || pdManagerOf_(p.Agent) || 'the manager';
+
+  var trail = (state && state.trail) || [];
+  for (i = 0; i < trail.length; i++) ev.push({ ts: trail[i].ts, who: 'We wrote', what: trail[i].what, kind: 'us' });
+
+  var replies = (state && state.replies) || [];
+  for (i = 0; i < replies.length; i++) {
+    ev.push({ ts: replies[i].ts, who: 'You', what: 'You answered: <b>' + pdEsc_(replies[i].lab || '') + '</b>', kind: 'you' });
+  }
+  if (state && state.survey && state.survey.ts) {
+    ev.push({ ts: state.survey.ts, who: 'You',
+      what: 'You replied to us' + (state.survey.surveyReason ? ': <b>' + pdEsc_(state.survey.surveyReason) + '</b>' : ''),
+      kind: 'you' });
+  }
+  if (state && state.retentionTs) {
+    ev.push({ ts: state.retentionTs, who: pdEsc_(pdFirst_(p.Agent)) || 'Your agent',
+      what: 'Your agent prepared a written case for their manager' +
+            (state.factFind ? ', with a completed fact find attached' : ''), kind: 'us' });
+  }
+  if (state && state.activatedTs) {
+    ev.push({ ts: state.activatedTs, who: 'Handover',
+      what: '<b>' + pdEsc_(mgrName) + '</b> was formally asked to take personal responsibility for this ' +
+            'policy and to contact you directly', kind: 'mgr' });
+  }
+
+  var mgr = (state && state.mgr) || {};
+  for (var qk in mgr) {
+    if (!Object.prototype.hasOwnProperty.call(mgr, qk)) continue;
+    var said = MGR_SAID_CLIENT[qk + ':' + mgr[qk].ak];
+    if (!said) continue;                                     // internal-only answer
+    ev.push({ ts: mgr[qk].ts, who: pdEsc_(pdFirst_(mgrName)) || 'Manager', what: said,
+              kind: qk === 'mclientsays' ? 'you' : 'mgr' });
+  }
+
+  ev.sort(function (a, b) { return (a.ts || 0) - (b.ts || 0); });
+
+  var rows = '';
+  for (i = 0; i < ev.length; i++) rows += pdLogRow_(pdDateOf_(ev[i].ts), ev[i].who, ev[i].what, ev[i].kind);
+  rows += pdLogRow_('Today', 'We wrote', 'This letter — the final notice', 'us');
+
+  var table = '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:10px 0;font-size:13px">' +
+    '<tr>' +
+      '<th style="padding:7px 11px;background:#F3F0E9;border:1px solid #E8E3D8;color:#5A6B7B;text-align:left;font-weight:600;font-size:12px">Date</th>' +
+      '<th style="padding:7px 11px;background:#F3F0E9;border:1px solid #E8E3D8;color:#5A6B7B;text-align:left;font-weight:600;font-size:12px">Who</th>' +
+      '<th style="padding:7px 11px;background:#F3F0E9;border:1px solid #E8E3D8;color:#5A6B7B;text-align:left;font-weight:600;font-size:12px">What happened</th>' +
+    '</tr>' + rows + '</table>';
+
+  /* Internal notes are counted, not quoted. They are working notes between
+     colleagues and can carry a judgement about the client that nobody wrote
+     expecting them to read it. The count is the honest disclosure; the notes
+     themselves are available on request, which is the correct way round. */
+  var notes = (state && state.noteCount) || 0;
+  if (notes) {
+    table += '<p style="font-size:12.5px;color:#7C8794;margin:8px 0 0">Your file also carries <b>' + notes +
+      '</b> internal working note' + (notes === 1 ? '' : 's') + ' from the branch about this policy. ' +
+      'They are working notes between colleagues rather than correspondence, but you are entitled to them — ' +
+      'ask and we will send them.</p>';
+  }
+
+  var heardFromYou = false, managerActed = false;
+  for (i = 0; i < ev.length; i++) {
+    if (ev[i].kind === 'you') heardFromYou = true;
+    if (ev[i].kind === 'mgr') managerActed = true;
+  }
+
+  if (!managerActed) {
+    /* The uncomfortable one, and the reason the log is in the letter at all.
+       If nobody at this branch has recorded a single act on this policy in
+       three months, the client should be told that by us, before they work it
+       out for themselves. */
+    table += pdNote_('<b>Reading that back, we do not think we did enough.</b> The record above shows letters ' +
+      'from us and little else. If nobody from this branch spoke to you about this policy, say so in the first ' +
+      'question above — it goes to the branch manager directly, and it will be dealt with whatever you decide ' +
+      'about the cover.', PD_BRAND.red);
+  } else if (!heardFromYou) {
+    table += pdNote_('We have had no reply from you at any point above. That is not a complaint — it is the ' +
+      'reason this letter exists. If our letters have been going to the wrong address, or something about ' +
+      'this has been hard to answer, one tap on any question above tells us and we will work around it.');
+  }
+  return table;
+}
+
 /* ============================ email chrome ============================ */
 
-function pdWrap_(inner, tag) {
+/**
+ * inner, a header tag, and — for staff mail — internal:true.
+ *
+ * The footer is not decoration. "Your policy contract and schedule govern in
+ * all cases. If you have already paid, please ignore this" is addressed to a
+ * policyholder, and it was appearing at the bottom of every email sent to a
+ * manager about their own client.
+ */
+function pdWrap_(inner, tag, internal) {
+  var foot = internal
+    ? 'Internal — Ricky Rampersad Branch. Generated by the Premium Due Engine from the branch portfolio and the ' +
+      'policy log. Everything you record against this policy forms part of the client&rsquo;s day-88 letter.'
+    : 'This notice relates to the premium on your policy. Your policy contract and schedule govern in all cases. ' +
+      'If you have already paid, please ignore this — payments can take a few days to reflect.';
   return '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:' + PD_BRAND.ink + ';max-width:620px">' +
     '<div style="background:' + PD_BRAND.teal + ';color:#fff;padding:18px 22px;border-radius:10px 10px 0 0">' +
       '<table width="100%"><tr>' +
@@ -492,8 +774,7 @@ function pdWrap_(inner, tag) {
     '<div style="border:1px solid ' + PD_BRAND.line + ';border-top:none;padding:20px 22px;border-radius:0 0 10px 10px;background:#FBFAF6;color:' + PD_BRAND.ink + '">' +
       inner +
       '<p style="color:#8A8578;font-size:11px;border-top:1px solid #E8E3D8;padding-top:11px;margin-top:20px">' +
-      'This notice relates to the premium on your policy. Your policy contract and schedule govern in all cases. ' +
-      'If you have already paid, please ignore this — payments can take a few days to reflect.</p>' +
+      foot + '</p>' +
     '</div></div>';
 }
 function pdBtn_(link, label) {
@@ -563,9 +844,14 @@ function pdSection_(n, title, body) {
     '<div style="color:' + PD_BRAND.ink + '">' + body + '</div></div>';
 }
 
-/** What happens next, with dates rather than adjectives. */
+/**
+ * What happens next, with dates rather than adjectives — and only what is still
+ * ahead. A timeline that lists steps already behind the client reads as filler;
+ * every row here is something that has not happened yet and will.
+ */
 function pdTimeline_(p) {
   var d = Number(p.DaysArrears) || 0;
+  var mgr = pdManagerOf_(p.Agent);
   var row = function (when, what, emphasis) {
     return '<tr>' +
       '<td style="padding:8px 12px;background:#F3F0E9;border:1px solid #E8E3D8;width:118px;white-space:nowrap;color:' +
@@ -573,15 +859,26 @@ function pdTimeline_(p) {
       '<td style="padding:8px 12px;background:#FFFFFF;border:1px solid #E8E3D8;color:' + PD_BRAND.ink + '">' + what + '</td>' +
       '</tr>';
   };
+  var out = row('Today', 'Day <b>' + d + '</b> — the premium is outstanding and your cover remains in force.');
+
+  if (d < SLA.RETENTION_OPENS) {
+    out += row('Day ' + SLA.RETENTION_OPENS, 'This stops being a letter. ' +
+      (mgr ? '<b>' + pdEsc_(mgr) + '</b>, your agent&rsquo;s manager, ' : 'Your agent&rsquo;s manager ') +
+      'takes personal responsibility for the policy and contacts you directly.');
+  }
+  if (d < 75) {
+    out += row('Day 75', 'If we still have not managed to reach you, that manager writes to you in their own name.');
+  }
+  if (d < 88) {
+    out += row('Day 88', 'Final notice — with the complete record of everything that has happened on this policy, ' +
+      'including what we did and did not do.');
+  }
+  out += row('Day 90', (pdValueStatus_(p) === VALUE_NONE
+    ? 'The policy lapses. Cover ends, a claim is not payable from that date, and restoring it needs a fresh application.'
+    : 'The policy reaches the end of its grace period. What happens then depends on the value it has built — see below.'), true);
+
   return '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:10px 0;font-size:13px">' +
-    row('Today', 'Day <b>' + d + '</b> — the premium is outstanding and your cover remains in force.') +
-    row('Within 3 days', 'Your agent submits a retention case to their manager, who must respond within three working days &mdash; the branch standard.') +
-    row('Day 75', 'If we have still not heard from you, your agent&rsquo;s manager contacts you directly.') +
-    row('Day 88', 'Final written notice.') +
-    row('Day 90', (pdValueStatus_(p) === VALUE_NONE
-      ? 'The policy lapses. Cover ends, a claim is not payable from that date, and restoring it needs a fresh application.'
-      : 'The policy reaches the end of its grace period. What happens then depends on the value it has built — see below.'), true) +
-    '</table>';
+    out + '</table>';
 }
 
 /* ===================== THE WHOLE RELATIONSHIP =====================
@@ -697,16 +994,43 @@ function pdStakeOpening_(p, family) {
     'most people do not weigh until it is gone.</p>';
 }
 
-/** Named signatories, so the client knows exactly who is accountable. */
-function pdSignature_(p) {
-  var mgr = pdManagerOf_(p.Agent);
+/**
+ * Named signatories, so the client knows exactly who is accountable.
+ *
+ * both:true names the agent and the manager side by side. That is the right
+ * form for the day-88 letter, which asks the client whether anyone from this
+ * branch actually contacted them: signing that question with one name, from
+ * someone who may be the person who did not call, is the wrong way round.
+ */
+function pdSignature_(p, opts) {
+  opts = opts || {};
+  var mgr = opts.manager || pdManagerOf_(p.Agent);
+  var line = function (name, role) {
+    return '<b>' + pdEsc_(name) + '</b><br><span style="color:#5A6B7B">' + role + '</span>';
+  };
+  var who = (opts.both && mgr)
+    ? '<table cellpadding="0" cellspacing="0" style="width:100%"><tr>' +
+        '<td style="padding:0 14px 0 0;vertical-align:top;color:' + PD_BRAND.ink + '">' +
+          line(p.Agent || OUT.BRANCH_NAME, 'Financial Advisor') + '</td>' +
+        '<td style="padding:0;vertical-align:top;color:' + PD_BRAND.ink + '">' +
+          line(mgr, 'Manager &middot; accountable for this policy since day 60') + '</td>' +
+      '</tr></table><br>'
+    : line(p.Agent || OUT.BRANCH_NAME,
+           'Financial Advisor' + (mgr ? ' &middot; reporting to ' + pdEsc_(mgr) : '')) + '<br>';
   return '<table cellpadding="0" cellspacing="0" style="width:100%;margin:22px 0 0;font-size:13px">' +
     '<tr><td style="padding:14px 0 0;border-top:1px solid #E8E3D8;color:' + PD_BRAND.ink + '">' +
-      'Yours sincerely,<br><br>' +
-      '<b>' + pdEsc_(p.Agent || OUT.BRANCH_NAME) + '</b><br>' +
-      '<span style="color:#5A6B7B">Financial Advisor' + (mgr ? ' &middot; reporting to ' + pdEsc_(mgr) : '') + '</span><br>' +
+      'Yours sincerely,<br><br>' + who +
       '<b>' + pdEsc_(OUT.BRANCH_NAME) + '</b><br>' +
       '<span style="color:#5A6B7B">' + pdEsc_(OUT.BRANCH_PHONE) + ' &middot; ' + pdEsc_(OUT.BRANCH_EMAIL) + '</span>' +
+    '</td></tr></table>';
+}
+
+/** Internal mail is from the branch, not from somebody's advisor. */
+function pdSigInternal_() {
+  return '<table cellpadding="0" cellspacing="0" style="width:100%;margin:22px 0 0;font-size:13px">' +
+    '<tr><td style="padding:14px 0 0;border-top:1px solid #E8E3D8;color:#5A6B7B">' +
+      '<b style="color:' + PD_BRAND.ink + '">' + pdEsc_(OUT.BRANCH_NAME) + '</b> &middot; Premium Due Engine<br>' +
+      pdEsc_(OUT.BRANCH_PHONE) + ' &middot; ' + pdEsc_(OUT.BRANCH_EMAIL) +
     '</td></tr></table>';
 }
 
@@ -757,9 +1081,12 @@ var PD_TEMPLATES = {
           'between, the same cover may cost considerably more, or may not be available at all.</p>') +
 
         pdSection_(4, 'If we do not hear from you',
-          pdNote_('Cover ends <b>' + left + ' days</b> from today if the premium remains outstanding. From that date a ' +
-                  'claim is not payable. We will write again at day 60 setting out the full position, and your agent&rsquo;s ' +
-                  'manager will be copied at that stage.')) +
+          pdNote_('Cover ends <b>' + left + ' days</b> from today if the premium remains outstanding, and from that ' +
+                  'date a claim is not payable. If we have not heard from you by <b>day 60</b>, this stops being a ' +
+                  'letter: ' + (pdManagerOf_(p.Agent) ? '<b>' + pdEsc_(pdManagerOf_(p.Agent)) + '</b>, your agent&rsquo;s manager'
+                                                      : 'your agent&rsquo;s manager') +
+                  ', takes personal responsibility for the policy and contacts you directly. ' +
+                  'One tap above is enough to make that unnecessary.')) +
 
         '<p style="margin-top:18px">If you would prefer to talk it through, reply to this email or call ' +
         pdEsc_(OUT.BRANCH_PHONE) + '.</p>' +
@@ -774,83 +1101,50 @@ var PD_TEMPLATES = {
   },
 
 
-  /* ---- day 60: the formal position. Quotes the 45-day exchange back, sets out
-         the timeline with dates, and puts the whole chain on the record. ---- */
-  s60: function (p, state) {
-    var first = pdFirst_(p.Client), left = pdDaysToLapse_(p), d = Number(p.DaysArrears) || 0;
-    var mgr = pdManagerOf_(p.Agent);
-    var answered = !!(state && state.survey);
-    var family = pdFamily_(p, state && state.family);
-    return {
-      subject: 'Policy No. ' + p.Policy + ' — 60 days outstanding, ' + left + ' days to lapse',
-      cc: pdChainCc_(p),
-      html: pdWrap_(
-        pdRefBlock_(p, 'Premium Outstanding — 60 Days') +
-        '<p>' + pdSalutation_(p.Client) + ',</p>' +
-        '<p>We are writing formally regarding the premium on the above policy, which is now <b>' + d +
-        ' days</b> outstanding. This letter is copied to your agent, to their manager and to the branch manager, ' +
-        'so that everyone who can act on your behalf is working from the same information.</p>' +
-        pdStakeOpening_(p, family) +
+  /* ---- day 60 has no client template, deliberately ----------------------
+     It used to be the big formal letter: the timeline, the whole chain copied,
+     ten one-click options. It was the third piece of paper in a fortnight, and
+     a fourth well-written letter is not what moves someone who has ignored
+     three.
 
-        pdSection_(1, 'What we need from you',
-          '<p>' + (answered
-            ? 'You wrote to us before and we acted on it. If your circumstances have changed since, this is the point to say so.'
-            : 'Answer one question or all of them — each one on its own tells us how to help.') +
-          '</p>' + pdQuestionBlock_(p, CLIENT_QUESTIONS, 'respond')) +
+     What happens at day 60 now is that the case leaves the mailing list. The
+     manager is sent the structured brief in pdManagerLetter_ with
+     opts.activation, is asked to answer it by tapping, and is asked to
+     telephone the client personally. The branch's own submissions are the whole
+     argument: 47 of 137 clients said nobody had contacted them. A call from a
+     manager is the intervention. Another letter is the thing we do instead of
+     the intervention.
 
-        pdSection_(2, 'What we have sent, and what you told us', pdTrail_(p, state)) +
+     The client hears from us again in their own name at day 75 (from that
+     manager) and at day 88, with the full record. ---- */
 
-        pdSection_(3, (family.length > 1 ? 'Everything you hold with us' : 'Your policy as it stands'),
-          (family.length > 1
-            ? pdPolicyTable_(p, family) +
-              '<p style="font-size:13px;color:#5A6B7B">The highlighted row is the policy this letter is about. ' +
-              'The others are shown so that you can see what the relationship looks like as a whole.</p>'
-            : pdFacts_(p))) +
-
-        pdSection_(4, 'What happens from here', pdTimeline_(p) +
-          '<div style="margin-top:12px">' + pdNote_(pdLapseMeaning_(p)) + '</div>') +
-
-        pdSection_(5, 'Who is handling this',
-          '<p style="font-size:13.5px">Your agent <b>' + pdEsc_(p.Agent) + '</b>' +
-          (mgr ? ' and their manager <b>' + pdEsc_(mgr) + '</b>' : '') +
-          ' are both accountable for this policy, and the branch manager is copied. Whichever option you select is ' +
-          'recorded against the policy immediately and assigned to them. You do not need to chase anybody.</p>' +
-          '<p style="font-size:13.5px">If you would rather speak to someone directly, call <b>' +
-          pdEsc_(OUT.BRANCH_PHONE) + '</b> and quote policy number ' + pdEsc_(p.Policy) + '.</p>') +
-
-        pdSignature_(p),
-        '60-day retention'),
-      whatsapp: 'Good day ' + first + ', ' + OUT.BRANCH_NAME + ' regarding policy ' + p.Policy + '. ' +
-        (answered
-          ? 'Thank you for replying to us earlier — we held the policy on that basis, but the premium is still outstanding. '
-          : 'We wrote at day 45 and have not had a reply. ') +
-        'It is now ' + d + ' days outstanding and cover ends in ' + left + ' days. ' +
-        'A formal letter is with you setting out the timeline and your options, copied to your agent, their manager and the branch manager. ' +
-        'Please open it and select an option, or call ' + OUT.BRANCH_PHONE + '.'
-    };
-  },
-
-  /* ---- every 5 days after 60, while the client has said nothing ---- */
+  /* ---- every 5 days, while the client has said nothing ---- */
   chase: function (p, state) {
     var first = pdFirst_(p.Client), left = pdDaysToLapse_(p), d = Number(p.DaysArrears) || 0;
     var mgr = pdManagerOf_(p.Agent);
+    var escalated = d >= SLA.RETENTION_OPENS;
     return {
       subject: 'Policy No. ' + p.Policy + ' — reminder, ' + left + ' days to lapse',
       cc: pdChainCc_(p),
       html: pdWrap_(
         pdRefBlock_(p, 'Premium Outstanding — Reminder') +
         '<p>' + pdSalutation_(p.Client) + ',</p>' +
-        '<p>We wrote to you at day 60 setting out the position on this policy and have not yet had your instruction. ' +
+        '<p>We wrote to you at day 45 about this policy and have not yet had your instruction. ' +
         'The premium is now <b>' + d + ' days</b> outstanding and cover ends in <b>' + left + ' days</b>.</p>' +
 
-        pdSection_(1, 'The remaining timeline', pdTimeline_(p)) +
+        (escalated
+          ? pdNote_('<b>This is no longer sitting with your agent alone.</b> ' +
+              (mgr ? '<b>' + pdEsc_(mgr) + '</b>, their manager, has' : 'Their manager has') +
+              ' been formally asked to take this policy on and to telephone you personally. ' +
+              'If you would rather not wait for that call, one tap below settles it now.')
+          : '') +
 
-        pdSection_(2, 'Please select an option',
+        pdSection_(1, 'Please select an option',
           '<p>Any one of these keeps the matter open and puts it in front of someone who can act. ' +
           'Selecting the last one is a decision we will respect — but we would rather record it properly than ' +
           'let the policy lapse by silence.</p>' + pdChoiceBlock_(p)) +
 
-        (mgr ? pdNote_('<b>' + pdEsc_(mgr) + '</b> has been asked to contact you directly in addition to this letter.') : '') +
+        pdSection_(2, 'The remaining timeline', pdTimeline_(p)) +
 
         '<p style="margin-top:18px">Call <b>' + pdEsc_(OUT.BRANCH_PHONE) + '</b> at any time and quote policy number ' +
         pdEsc_(p.Policy) + '.</p>' +
@@ -858,28 +1152,73 @@ var PD_TEMPLATES = {
         'Reminder'),
       whatsapp: 'Good day ' + first + ', ' + OUT.BRANCH_NAME + ' following up on policy ' + p.Policy + '. It is ' + d +
         ' days outstanding with ' + left + ' days before cover ends. ' +
-        (mgr ? mgr + ' has also been asked to contact you. ' : '') +
+        (escalated && mgr ? mgr + ', the manager responsible for your agent, has been asked to call you personally. ' : '') +
         'Even a one-line reply — including that you want to stop it — lets us act properly rather than let it lapse.'
     };
   },
 
-  /* ---- day 88: last call ---- */
+  /* ---- day 88: the final notice, and the client's own file ----------------
+     The last letter is the one that has to carry the whole thing. It opens with
+     three questions, then shows the client every event on this policy in date
+     order — what we sent, what they answered, the day it went to a manager,
+     what that manager recorded and what was decided.
+
+     Two reasons to send someone their own file. Where the branch did the work,
+     it is the only place the client ever sees it: three months of process
+     happen out of their sight and all they experience is post arriving. Where
+     the branch did not, the record says so plainly, and the first question
+     invites them to confirm it while the cover is still in force. A client who
+     was never called should not have to discover that after the policy has
+     gone. ---- */
   s90: function (p, state) {
     var family = pdFamily_(p, state && state.family);
-    var first = pdFirst_(p.Client), left = pdDaysToLapse_(p);
+    var left = pdDaysToLapse_(p);
+    var mgr = (state && state.mgrName) || pdManagerOf_(p.Agent);
     return {
-      subject: 'Final notice — policy ' + p.Policy + ', ' + left + ' day' + (left === 1 ? '' : 's') + ' remaining',
+      subject: 'Final notice — policy ' + p.Policy + ', ' + left + ' day' + (left === 1 ? '' : 's') +
+        ' remaining, and the full record',
+      cc: pdChainCc_(p),
       html: pdWrap_(
-        '<p>Dear ' + pdEsc_(first) + ',</p>' +
-        '<p>This is the last notice we will send before your policy lapses.</p>' +
-        pdFacts_(p) +
-        pdNote_(pdLapseMeaning_(p), PD_BRAND.red) +
-        '<p>If there is any way we can keep this in place — a smaller premium, a payment plan, a different date — ' +
-        'call ' + pdEsc_(OUT.BRANCH_PHONE) + ' today. It takes one conversation.</p>' + pdSig_(),
+        pdRefBlock_(p, 'Final Notice — Premium Outstanding') +
+        '<p>' + pdSalutation_(p.Client) + ',</p>' +
+        '<p>This is the last notice we will send before this policy reaches the end of its grace period, in <b>' +
+        left + ' day' + (left === 1 ? '' : 's') + '</b>. Everything this branch has recorded about it is set out ' +
+        'below — what we sent, what you told us, and what was done about it.</p>' +
+
+        pdSection_(1, 'Three questions, one tap each',
+          '<p>We have asked you what would help twice already, so we are not asking a third time. These are ' +
+          'different questions, and the first two matter more than anything else in this letter.</p>' +
+          pdQuestionBlock_(p, CLOSING_QUESTIONS, 'respond')) +
+
+        pdSection_(2, 'Everything that has happened on this policy', pdInteractionLog_(p, state)) +
+
+        pdSection_(3, (family.length > 1 ? 'Everything you hold with us' : 'The policy'),
+          (family.length > 1
+            ? pdPolicyTable_(p, family) +
+              '<p style="font-size:13px;color:#5A6B7B">The highlighted row is the policy this letter is about. ' +
+              'Nothing here affects the others.</p>'
+            : pdFacts_(p))) +
+
+        pdSection_(4, 'What day 90 actually means for this policy',
+          pdNote_(pdLapseMeaningFor_(p, state), PD_BRAND.red) +
+          '<p style="font-size:13.5px">Whatever it is worth today, this policy was underwritten on your health ' +
+          '<b>as it was when you applied</b>. If it ends and you later reapply, you are underwritten on your ' +
+          'health as it is then — and where something has changed in between, the same cover may cost ' +
+          'considerably more, or may not be available at all. That is the part that cannot be bought back.</p>') +
+
+        pdSection_(5, 'If you would rather just talk to someone',
+          '<p>Call <b>' + pdEsc_(OUT.BRANCH_PHONE) + '</b> and quote policy number ' + pdEsc_(p.Policy) + '. ' +
+          (mgr ? 'Ask for <b>' + pdEsc_(mgr) + '</b> — this policy is theirs. ' : '') +
+          'There is still time for one conversation to change the outcome, and if the answer is that you want ' +
+          'it to end, we would rather hear it from you than record it as silence.</p>') +
+
+        pdSignature_(p, { both: !!(state && (state.activatedTs || state.mgrName)), manager: state && state.mgrName }),
         'Final notice'),
-      whatsapp: 'Hi ' + first + ' — final notice on policy ' + p.Policy + '. It lapses in ' + left + ' day' + (left === 1 ? '' : 's') +
-        ' and after that a claim is not payable. If there is any way to keep it — smaller premium, payment plan, different date — call me today on ' +
-        OUT.BRANCH_PHONE + '.'
+      whatsapp: 'Good day ' + pdFirst_(p.Client) + ' — final notice on policy ' + p.Policy + '. It reaches the end of its ' +
+        'grace period in ' + left + ' day' + (left === 1 ? '' : 's') + '. I have sent you the complete record of ' +
+        'everything on this policy — every letter, every reply, and what we did about it. ' +
+        'Two things I want to ask you directly: did anyone from us actually call you, and what would you like ' +
+        'to happen with the policy? Call ' + OUT.BRANCH_PHONE + ' or reply here.'
     };
   },
 
@@ -1055,66 +1394,143 @@ function pdEscalateRetention_(d) {
       to: OUT.ESCALATE_CC.join(','),
       name: OUT.FROM_NAME,
       subject: 'Retention case awaiting your response — ' + d.client + ' (' + d.policy + ')',
-      htmlBody: pdWrap_(body, 'Manager escalation')
+      htmlBody: pdWrap_(body, 'Manager escalation', true)
     });
   } catch (err) { /* never let a mail failure lose the record */ }
 }
 
 /* ===================== the manager's email =====================
-   Sent when a retention case lands, and again on the 3-day chase. The manager
-   answers by tapping, exactly as the client does — because Approval Status came
-   back blank on 78 of 106 submissions when the only way to answer was to open a
-   form and type. */
+   Sent in three situations, all the same letter with a different opening:
+
+     activation — day 60. The client comes off the letter sequence and this
+                  policy becomes the manager's, whether or not the agent has
+                  filed anything.
+     filing     — the agent filed a retention case and needs a decision.
+     chasing    — three days have passed and the manager has not answered.
+
+   The manager answers by tapping, exactly as the client does. Approval Status
+   came back blank on 78 of 106 filed cases when the only way to answer was to
+   open a form and type; the fix is not to ask people to try harder. */
+
+/** How to reach this client — everything the portfolio holds, in one block. */
+function pdContactBlock_(p) {
+  var rows = '';
+  if (p.Phone) rows += pdKv_('Telephone', '<b>' + pdEsc_(p.Phone) + '</b>');
+  var em = pdValidEmail_(p.Email);
+  rows += pdKv_('Email', em ? pdEsc_(em) : '<span style="color:' + PD_BRAND.red + '">none on file</span>');
+  if (p.Address) rows += pdKv_('Address', pdEsc_(p.Address));
+  if (!pdMayEmail_(p)) {
+    rows += pdKv_('Consent', '<span style="color:' + PD_BRAND.red + '">Marked <b>do not email</b> in the portfolio — ' +
+      'telephone or visit only</span>');
+  }
+  if (!p.Phone && !em) {
+    return pdNote_('<b>We hold no telephone number and no usable email address for this client.</b> ' +
+      (p.Address ? 'The address on file is <b>' + pdEsc_(p.Address) + '</b>. ' : '') +
+      'They cannot be reached by the automated sequence at all — if this policy is going to be saved, ' +
+      'it is going to be saved by you.', PD_BRAND.red);
+  }
+  return '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:10px 0;font-size:13px">' +
+    rows + '</table>';
+}
 
 function pdManagerLetter_(p, state, opts) {
   opts = opts || {};
   var mgr = pdManagerOf_(p.Agent), d = Number(p.DaysArrears) || 0;
   var waiting = opts.waiting || 0;
   var chasing = !!opts.chasing;
+  var activation = !!opts.activation;
+  var filed = !!(state && state.retentionTs);
+
+  var subject = activation
+    ? 'Day ' + d + ' — this policy is now yours: ' + p.Client + ' (Policy ' + p.Policy + ')'
+    : (chasing ? 'REMINDER ' + waiting + ' days — ' : '') +
+      'Your response is required — ' + p.Client + ' (Policy ' + p.Policy + ')';
+
+  var opening;
+  if (activation) {
+    opening =
+      pdNote_('<b>This policy has reached day ' + d + ' and has come off the client letter sequence.</b> ' +
+        '<b>' + pdEsc_(p.Client) + '</b> will not receive another letter from us until day 88. ' +
+        'Between now and then the contact they get is the contact <b>you</b> make — that is the whole design, ' +
+        'and it is why this email exists.') +
+      '<p>The premium is <b>' + d + ' days</b> outstanding and the policy reaches the end of its grace period in <b>' +
+      pdDaysToLapse_(p) + ' days</b>. ' +
+      (filed ? 'Your agent <b>' + pdEsc_(p.Agent) + '</b> has already filed a retention case, set out below.'
+             : 'Your agent <b>' + pdEsc_(p.Agent) + '</b> has not filed a retention case yet and has until day ' +
+               SLA.AGENT_FILE_BY + '. Do not wait for it — the two things run in parallel.') + '</p>';
+  } else if (chasing) {
+    opening = pdNote_('<b>This is reminder ' + Math.max(1, Math.ceil(waiting / SLA.MANAGER_CHASE_EVERY)) +
+      '.</b> This policy came to you <b>' + waiting + ' days ago</b> and nothing has been recorded against it. ' +
+      (filed ? '<b>' + pdEsc_(p.Agent) + '</b> filed the case and cannot offer the client anything until you answer — ' +
+               'the case is with you, not with them. '
+             : '') +
+      'The policy lapses in <b>' + pdDaysToLapse_(p) + ' days</b>.', PD_BRAND.red);
+  } else {
+    opening = '<p><b>' + pdEsc_(p.Agent) + '</b> has filed a retention case on this policy and needs your decision. ' +
+      'The policy lapses in <b>' + pdDaysToLapse_(p) + ' days</b>.</p>';
+  }
 
   return {
-    subject: (chasing ? 'REMINDER ' + waiting + ' days — ' : '') +
-      'Your response is required — ' + p.Client + ' (Policy ' + p.Policy + ')',
+    subject: subject,
     html: pdWrap_(
-      pdRefBlock_(p, 'Retention Case — Manager Response Required') +
+      pdRefBlock_(p, activation ? 'Day 60 — Manager Ownership' : 'Retention Case — Manager Response Required') +
       '<p>' + (mgr ? 'Dear ' + pdEsc_(mgr) : 'Dear Manager') + ',</p>' +
 
-      (chasing
-        ? pdNote_('<b>This is reminder ' + Math.max(1, Math.ceil(waiting / SLA.MANAGER_CHASE_EVERY)) +
-            '.</b> <b>' + pdEsc_(p.Agent) + '</b> filed this case <b>' + waiting +
-            ' days ago</b> and is still waiting on you. Until you answer, they cannot offer the client anything — ' +
-            'the case is with you, not with them.', PD_BRAND.red)
-        : '<p><b>' + pdEsc_(p.Agent) + '</b> has filed a retention case on this policy and needs your decision. ' +
-          'The policy lapses in <b>' + pdDaysToLapse_(p) + ' days</b>.</p>') +
+      opening +
 
-      pdSection_(1, 'Your response — tap your answers',
+      pdSection_(1, 'Call this client — then record what happened',
+        '<p>Across this branch, <b>47 of 137</b> clients whose policies were in arrears reported that nobody had ' +
+        'contacted them at all. That is the single number this whole process exists to change, and a call from a ' +
+        'manager is what changes it. Not another letter.</p>' +
+        pdContactBlock_(p)) +
+
+      pdSection_(2, 'Your response — tap your answers',
         '<p>Each one records against the policy immediately and your agent sees it at once. ' +
-        'The detail behind the case is below if you want it, but you do not need to read it first.</p>' +
+        '<b>&ldquo;What did the client tell you?&rdquo;</b> is their answer from the call, offered in the same ' +
+        'words the client is offered themselves, so the two are directly comparable. ' +
+        '<b>&ldquo;What is the non-forfeiture position?&rdquo;</b> goes into the client&rsquo;s day-88 letter ' +
+        '<b>as your answer</b>, replacing what the engine infers from the issue date — so it needs to be right.</p>' +
         pdQuestionBlock_(p, MANAGER_QUESTIONS, 'mgr')) +
 
-      pdSection_(2, 'The policy', pdFacts_(p)) +
+      pdSection_(3, 'The policy', pdFacts_(p)) +
 
-      pdSection_(3, 'What the client has told us', pdClientSaidBlock_(state)) +
+      pdSection_(4, 'What the client has told us', pdClientSaidBlock_(state)) +
 
-      pdSection_(4, 'What your agent has said',
+      pdSection_(5, 'What your agent has said',
         (state && state.retentionBody
           ? '<p style="font-style:italic;padding:12px 15px;background:#F3F0E9;border-left:3px solid ' +
             PD_BRAND.teal + ';color:' + PD_BRAND.ink + '">' + pdEsc_(state.retentionBody) + '</p>' +
             (state.factFind ? '<p style="font-size:13px">Fact find: ' + pdEsc_(state.factFind) + '</p>'
                             : '<p style="font-size:13px;color:' + PD_BRAND.red + '">No fact find was attached.</p>')
-          : '<p style="color:#5A6B7B">No detail recorded.</p>')) +
+          : '<p style="color:#5A6B7B">Nothing filed yet' +
+            (d < SLA.AGENT_FILE_BY ? ' — due by day ' + SLA.AGENT_FILE_BY + '.' : ', and it is past day ' +
+             SLA.AGENT_FILE_BY + '.') + '</p>')) +
 
-      pdSection_(5, 'You are also asked to contact the client',
-        '<p>The 60-day letter told <b>' + pdEsc_(p.Client) + '</b> that their agent&rsquo;s manager would be in touch. ' +
-        'Across the branch, roughly a third of clients in arrears report that nobody contacted them at all — ' +
-        'a call from you is frequently the thing that changes the outcome.</p>' +
-        (p.Phone ? '<p style="font-size:14px"><b>' + pdEsc_(p.Phone) + '</b>' +
-                   (pdValidEmail_(p.Email) ? ' &middot; ' + pdEsc_(p.Email) : '') + '</p>' : '')) +
+      pdSection_(6, 'What the client sees next',
+        '<p style="font-size:13.5px">At <b>day 75</b> a letter goes to ' + pdEsc_(p.Client) + ' <b>over your name</b>. ' +
+        'At <b>day 88</b> they receive the final notice, and it carries the complete record of this policy — ' +
+        'every letter, every reply, the day it came to you, and everything you record above. ' +
+        'It also asks them directly whether anyone from this branch actually called them.</p>') +
 
-      pdSignature_(p),
-      'Manager response required'),
-    cc: chasing && waiting >= SLA.MANAGER_REPLY_DAYS + SLA.MANAGER_CHASE_EVERY
-        ? [pdValidEmail_(OUT.BRANCH_MANAGER_EMAIL)].filter(Boolean) : []
+      pdSigInternal_(),
+      activation ? 'Day 60 — manager ownership' : 'Manager response required', true),
+
+    /* The agent is copied when the case is handed over, so they know it left
+       their desk. The branch manager joins from the second chase onward — one
+       missed reply is a busy week, two is a pattern. */
+    cc: (function () {
+      var out = [];
+      if (activation) out.push(pdStaffEmail_(p.Agent));
+      if (chasing && waiting >= SLA.MANAGER_REPLY_DAYS + SLA.MANAGER_CHASE_EVERY) {
+        out.push(pdStaffEmail_(p.Agent));
+        out.push(pdValidEmail_(OUT.BRANCH_MANAGER_EMAIL));
+      }
+      var seen = {}, dedup = [];
+      for (var i = 0; i < out.length; i++) {
+        if (out[i] && !seen[out[i]]) { seen[out[i]] = 1; dedup.push(out[i]); }
+      }
+      return dedup;
+    })()
   };
 }
 
@@ -1130,15 +1546,22 @@ function pdStageDue_(p, state) {
   if (st === 1 || desc === 'lapsed') return d <= OUT.WIN_BACK_MAX_DAYS ? 'winback' : '';
   if (st !== 2) return '';                       // premium paying / terminal — nothing to send
 
-  /* The cycle is 45 / 60 / 75 / 90 — four milestones, each a real change in
-     what happens rather than another reminder. Between them, a chase every five
-     days while the client has said nothing. Nothing before day 45: a premium
-     one day late is a banking timing difference, not a conversation. */
-  if (state && state.responded && d < 88) return '';        // they answered — the sequence stops
+  /* The cycle is 45 / 60 / 75 / 90 — four milestones, each a real change in what
+     happens rather than another reminder. Nothing before day 45: a premium one
+     day late is a banking timing difference, not a conversation.
 
-  if (d >= 88 && d < 90) return 's90';                      // lands before the cliff, not on it
+     Day 60 is not in this list on purpose. It is the one milestone the client
+     does not receive as a letter — it is where the case is handed to the
+     manager, who is asked to telephone. pdInternalChase_ sends that. What the
+     client gets between 60 and 75 is the ordinary five-day reminder, which says
+     so.
+
+     Day 88 always sends, answered or not: it is the final notice and the
+     client's own record, and someone who answered at day 46 and still has an
+     outstanding premium at day 88 needs it more than anybody. */
+  if (d >= 88 && d < 91) return 's90';                      // lands before the cliff, not on it
+  if (state && state.responded) return '';                  // they answered — the sequence stops
   if (d >= 75 && d < 78) return 's75';
-  if (d >= SLA.RETENTION_OPENS && d < SLA.RETENTION_OPENS + 3) return 's60';
   if (d >= 45 && d < 48) return 's45';
 
   // between the milestones, while there is still silence
@@ -1165,7 +1588,9 @@ function pdCaseState_() {
   for (var i = 1; i < v.length; i++) {
     var policy = String(v[i][2] || ''); if (!policy) continue;
     var type = String(v[i][10] || ''), ts = Number(v[i][0]) || 0;
-    var s = map[policy] || (map[policy] = { responded: false, retentionTs: 0, verdict: false, chases: {}, survey: null, trail: [] });
+    var s = map[policy] || (map[policy] = { responded: false, retentionTs: 0, verdict: false, chases: {},
+                                            survey: null, trail: [], mgr: {}, mgrTs: 0, mgrName: '',
+                                            activatedTs: 0, noteCount: 0 });
     if (type === 'survey') {
       s.survey = { ts: ts, surveyReason: v[i][15], surveyContact: v[i][16], surveyPromise: v[i][17] };
     }
@@ -1177,7 +1602,20 @@ function pdCaseState_() {
       s.retentionTs = Math.max(s.retentionTs, ts);
       s.retentionBody = v[i][12]; s.factFind = v[i][18];
     }
-    else if (type === 'verdict') s.verdict = true;
+    else if (type === 'verdict') {
+      /* A manager's tapped answer arrives here: 'reason' holds the question
+         text and 'body' the answer label, which is what the engine has always
+         written. pdDecodeAnswer_ turns that back into keys so the day-88 letter
+         can quote it and pdLapseMeaningFor_ can act on it. A verdict that
+         decodes to nothing is an old-style free-text response — still a
+         response, just not a structured one. */
+      s.verdict = true;
+      s.mgrTs = Math.max(s.mgrTs, ts);
+      if (v[i][6]) s.mgrName = String(v[i][6]);
+      var a = pdDecodeAnswer_(v[i][11], v[i][12]);
+      if (a && a.ak) s.mgr[a.qk] = { ak: a.ak, lab: a.lab, ts: ts };
+    }
+    else if (type === 'comment') s.noteCount++;
     else if (type.indexOf('outbound') === 0) {
       var stg = String(v[i][11] || '');
       if (TRAIL_LABEL[stg]) (s.trail = s.trail || []).push({ ts: ts, mine: false, what: TRAIL_LABEL[stg] });
@@ -1185,9 +1623,21 @@ function pdCaseState_() {
     else if (type.indexOf('internal') === 0) {
       var key = String(v[i][11] || '');
       s.chases[key] = Math.max(s.chases[key] || 0, ts);
+      /* activatedTs counts SENT handovers only, never the dry-run plan. If a
+         dry row set it, every policy planned during testing would be treated
+         as already handed over on the day you go live, and no manager would
+         ever be told. The dry rows still throttle re-planning through
+         s.chases, so a dry run does not write the same line daily. */
+      if (key === 'manager-60' && type === 'internal') s.activatedTs = Math.max(s.activatedTs, ts);
     }
   }
   return map;
+}
+
+/** The shape pdCaseState_ produces, for a policy that has no log rows yet. */
+function pdEmptyState_() {
+  return { responded: false, retentionTs: 0, verdict: false, chases: {}, survey: null, trail: [],
+           mgr: {}, mgrTs: 0, mgrName: '', activatedTs: 0, noteCount: 0 };
 }
 
 function pdDaysSince_(ts) { return ts ? Math.floor((Date.now() - ts) / 86400000) : 0; }
@@ -1202,16 +1652,47 @@ function pdLogInternal_(p, kind, to, note, sent) {
   ]);
 }
 
-/** Nudge whoever is holding the case up. Returns 1 if something was sent. */
+/** Hand over at day 60, then nudge whoever is holding the case up. Returns 1 if something was sent. */
 function pdInternalChase_(p, s) {
   var d = Number(p.DaysArrears) || 0;
+  if (Number(p.Status) !== 2) return 0;                  // live arrears only — a 2014 lapse has nobody late on it
   if (d < SLA.RETENTION_OPENS || d >= SLA.LAPSE) return 0;
   var mgrName = pdManagerOf_(p.Agent);
 
-  // --- the agent has not filed ---
-  if (!s.retentionTs) {
-    if (d < SLA.AGENT_FILE_BY) return 0;
-    if (pdDaysSince_(s.chases['agent-file']) < SLA.MANAGER_CHASE_EVERY && s.chases['agent-file']) return 0;
+  /* --- day 60: the handover ------------------------------------------------
+     The client comes off the letter sequence here and the policy becomes the
+     manager's, whether or not the agent has filed. Waiting for the filing was
+     the old design and it is why cases sat: the agent had until day 65, the
+     manager had three days after that, and a client who never heard from
+     anybody was the normal outcome rather than the exception. */
+  if (!s.activatedTs) {
+    var lastPlan = s.chases['manager-60'];
+    if (!lastPlan || pdDaysSince_(lastPlan) >= SLA.MANAGER_CHASE_EVERY) {
+      var mTo0 = pdStaffEmail_(mgrName);
+      var note0 = 'Day ' + d + ' — handover to ' + (mgrName || 'NO MANAGER MAPPED') +
+                  '; client leaves the letter sequence until day 88';
+      if (!mTo0 || OUT.DRY_RUN) { pdLogInternal_(p, 'manager-60', mTo0, note0, false); return 0; }
+      var act = pdManagerLetter_(p, s, { activation: true });
+      MailApp.sendEmail({
+        to: mTo0, cc: act.cc.join(','), name: OUT.FROM_NAME,
+        subject: act.subject, htmlBody: act.html
+      });
+      pdLogInternal_(p, 'manager-60', mTo0, note0, true);
+      return 1;
+    }
+    return 0;
+  }
+
+  /* --- the agent has not filed ---
+     Note the fall-through. The two clocks are independent now: the manager owns
+     the policy from day 60 whether or not a case was ever filed, so an agent
+     who is not yet late must not swallow the manager's deadline on the way
+     past. Before the handover existed the manager clock only started at filing
+     and an early return here was harmless. It is not harmless now. */
+  var due = function (key) {
+    return !s.chases[key] || pdDaysSince_(s.chases[key]) >= SLA.MANAGER_CHASE_EVERY;
+  };
+  if (!s.retentionTs && d >= SLA.AGENT_FILE_BY && due('agent-file')) {
     var aTo = pdStaffEmail_(p.Agent);
     var note = 'Retention case not filed — day ' + d + ' of ' + SLA.LAPSE;
     if (!aTo || OUT.DRY_RUN) { pdLogInternal_(p, 'agent-file', aTo, note, false); return 0; }
@@ -1223,18 +1704,25 @@ function pdInternalChase_(p, s) {
         ' days</b> in arrears and no retention case has been filed. It lapses in ' + pdDaysToLapse_(p) + ' days.</p>' +
         pdNote_('Your manager cannot decide on a case that was never filed. File it with the fact find attached and the ' +
                 'decision still has time to change the outcome.') +
-        '<p>' + (mgrName ? pdEsc_(mgrName) + ' is copied.' : '') + '</p>', 'Agent — action overdue')
+        '<p>' + (mgrName ? pdEsc_(mgrName) + ' is copied.' : '') + '</p>' + pdSigInternal_(), 'Agent — action overdue', true)
     });
     pdLogInternal_(p, 'agent-file', aTo, note, true);
     return 1;
   }
 
-  // --- the manager has not answered ---
+  /* --- the manager has not answered ---
+     The clock runs from whichever came first: the day-60 handover or the day
+     the agent filed. Before, it ran only from the filing, so a manager who was
+     handed a case and never received one from their agent had no deadline at
+     all. */
   if (s.verdict) return 0;
-  var waiting = pdDaysSince_(s.retentionTs);
+  var startedTs = (s.activatedTs && s.retentionTs) ? Math.min(s.activatedTs, s.retentionTs)
+                                                   : (s.activatedTs || s.retentionTs);
+  if (!startedTs) return 0;
+  var waiting = pdDaysSince_(startedTs);
   if (waiting < SLA.MANAGER_REPLY_DAYS) return 0;
+  if (!due('manager-reply')) return 0;
   var lastChase = s.chases['manager-reply'];
-  if (lastChase && pdDaysSince_(lastChase) < SLA.MANAGER_CHASE_EVERY) return 0;
 
   var mTo = pdStaffEmail_(mgrName);
   var note2 = 'Manager response ' + waiting + ' days outstanding — day ' + d + ' of ' + SLA.LAPSE;
@@ -1304,7 +1792,7 @@ function dailyPremiumDueRun() {
   for (var i = 0; i < payload.policies.length; i++) {
     if (count >= OUT.MAX_SENDS_PER_RUN) break;
     var p = payload.policies[i];
-    var s = states[String(p.Policy)] || { responded: false, retentionTs: 0, verdict: false, chases: {}, survey: null, trail: [] };
+    var s = states[String(p.Policy)] || pdEmptyState_();
 
     internal += pdInternalChase_(p, s);          // agent / manager accountability
 
@@ -1363,12 +1851,26 @@ function pdPreview() {
   var demo = {
     Policy: '9004100017', Client: 'Saira Ramnarine', ClientNo: '900120', Agent: 'Tricia Baksh',
     Premium: 538.90, Status: 2, DaysArrears: 78, LapseDate: '19 Jun 2026',
-    Email: 'saira.ramnarine@example.com', StatusDesc: 'Premium Paying'
+    Email: 'saira.ramnarine@example.com', Phone: '(868) 555-0143',
+    Address: '14 Mount Pleasant Road, San Fernando', StatusDesc: 'Premium Paying'
   };
-  var demoState = { survey: { ts: Date.now() - 15 * 86400000, surveyReason: 'Financial difficulty',
-    surveyContact: 'Wants to keep', surveyPromise: 'I can resume payments from September salary' } };
-  ['s45', 's60', 'chase', 's75', 's90', 'winback', 'pend', 'thanks'].forEach(function (k) {
+  var now = Date.now(), day = 86400000;
+  var demoState = pdEmptyState_();
+  demoState.survey = { ts: now - 30 * day, surveyReason: 'Financial difficulty',
+    surveyContact: 'Wants to keep', surveyPromise: 'I can resume payments from September salary' };
+  demoState.trail = [{ ts: now - 33 * day, mine: false, what: TRAIL_LABEL.s45 },
+                     { ts: now - 23 * day, mine: false, what: TRAIL_LABEL.chase }];
+  demoState.activatedTs = now - 18 * day;
+  demoState.mgrName = 'Gary Sookdeo';
+  demoState.mgr = { mcontact:    { ak: 'yes',  lab: 'Yes — I have spoken with them', ts: now - 16 * day },
+                    mclientsays: { ak: 'lower', lab: 'They need a smaller premium',  ts: now - 16 * day },
+                    mvalue:      { ak: 'value', lab: 'It has value; cover can be sustained from it for a period', ts: now - 15 * day } };
+  demoState.noteCount = 2;
+
+  ['s45', 'chase', 's75', 's90', 'winback', 'pend', 'thanks'].forEach(function (k) {
     var t = pdRender(k, demo, demoState);
     Logger.log('--- %s ---\nSUBJECT: %s\nWHATSAPP: %s\n', k, t.subject, t.whatsapp);
   });
+  Logger.log('--- manager day-60 handover ---\nSUBJECT: %s',
+    pdManagerLetter_(demo, demoState, { activation: true }).subject);
 }

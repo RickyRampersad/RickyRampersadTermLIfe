@@ -1,10 +1,10 @@
 # Premium Due Engine
 
-Tracks every premium in arrears through the 45 / 60 / 90-day lapse funnel: the
-45-day client survey, the 60-day retention notice with one-click client choices,
-the agent's retention case, the manager response, and every status comment
-against the policy. Replaces the two JotForms
-and the "Premium Due Status" comment columns.
+Tracks every premium in arrears through the 45 / 60 / 75 / 90-day lapse funnel:
+the 45-day client letter, the day-60 handover that makes the policy a manager's,
+the agent's retention case, the manager's structured response, the day-75 letter
+the manager signs, and the day-88 final notice that hands the client their own
+file. Replaces the two JotForms and the "Premium Due Status" comment columns.
 
 | File | What it is |
 |------|-----------|
@@ -76,11 +76,15 @@ milestones, a reminder every 5 days while the client has said nothing; it stops
 on any answer. Day 75 is signed by the unit manager personally. The final notice
 sends at day 88 so it lands before the cliff, not on it.
 
+**Day 60 is the one milestone the client does not receive as a letter.** It is
+the handover: the policy becomes the manager's, and the next contact the client
+gets is the one that manager makes. See below.
+
 | Stage | Trigger | What's due |
 |-------|---------|-----------|
 | Overdue | Status 2, 1–44 days | Nothing automated — agent contact only |
 | 45-Day | Status 2, 45–59 days | First letter: two questions, answered by tapping |
-| 60-Day | Status 2, 60–89 days | Client picks an option · agent files by day 65 · manager answers within 5 days |
+| 60-Day | Status 2, 60–89 days | Handed to the manager, who calls · manager answers within 3 days · agent files by day 65 |
 | 90-Day | Status 2 at 90+, or Status 1 | Reinstatement or win-back |
 | Pending | Status 3 / underwriting incomplete | New business chase |
 
@@ -119,11 +123,16 @@ why: *What would help most right now?* (seven answers, every one a service we
 provide) and *When would suit you?* (a commitment device). Nobody is asked to
 account for a failure before being offered anything.
 
-The 60-day letter carries the full **correspondence trail** — every letter sent,
-whether the client replied, what they chose, and the fact find where one is
-attached — so the last letter in a sequence reads like someone has been paying
-attention. The `From` and `CC` addresses match the Salesforce macro *Premium Due
-75 Days Client Comm*.
+**Day 88 asks a different three**, because by then we have asked what would help
+twice and a manager has been asked to telephone; a third round of the same
+questions reads as though nobody had been listening to the first two. So the
+last letter asks about us: *did anyone from us actually reach you?* (the one
+nobody in this branch has ever put to a lapsing client — 47 of 137 volunteered
+it unasked), *what would you like to happen with this policy?*, and *if we got
+something wrong, what was it?*
+
+The `From` and `CC` addresses match the Salesforce macro *Premium Due 75 Days
+Client Comm*.
 
 The answers are the **first section** of every letter. Nobody scrolls past a
 formal preamble to reach them.
@@ -143,24 +152,79 @@ matching paragraph, and the day-90 timeline row changes with it.
 
 The engine cannot compute a surrender value — that comes from the contract and
 the carrier. **The manager is required to state the position** as one of their
-seven questions, so the definitive answer is on the record rather than assumed.
+eight questions, and `pdLapseMeaningFor_` prefers that answer over the
+inference: once a manager has confirmed the position, the client's day-88 letter
+says *"we have checked the position on this policy — confirmed by [manager]"*
+rather than *"your agent will confirm"*.
 
-### The 60-day escalation
+### Day 60 — the handover
 
-Day 60 the client gets an email referring back to the 45-day message, carrying
-ten one-click choices in four groups, with the agent, their unit manager and
-the BM copied. It quotes the day-45 questions and the client's own answers back
-to them, and sets out the remaining timeline with dates.
-No reply → chased every 5 days. Two internal clocks run alongside it:
+**Day 60 sends the client nothing.** It sends the *manager* the brief, and asks
+them to telephone. `pdInternalChase_` fires `pdManagerLetter_(p, s, {activation:
+true})` once per policy, logged as `manager-60`, and it fires **whether or not
+the agent has filed a retention case**.
+
+That last part is the fix. Under the old design a manager only saw a policy once
+an agent filed on it, so a case nobody filed reached nobody: the agent was late,
+the manager never saw it, the manager was therefore not late either, and the
+policy lapsed with two clean records. The branch's own submissions are what this
+is answering — **47 of 137 clients said nobody had contacted them at all**, and
+a fourth well-written letter is what we do instead of the intervention.
+
+The handover email carries the client's phone, email **and address**, flags a
+`Send = N` consent suppression, and says plainly that the client will not
+receive another letter until day 88.
+
+Two internal clocks run from there:
 
 | Clock | Deadline | Missed |
 |-------|----------|--------|
+| Manager calls and answers | 3 working days from the **handover** | Emailed every 3 days, BM copied from the second; hits **their** sign-in gate; shows in the client's day-88 letter as a record with nothing in it |
 | Agent files the case | day 65 | Emailed, manager copied; shows as *Waiting on [agent]*; hits their sign-in gate |
-| Manager answers | 3 working days from filing | Emailed every 3 days, BM copied from the second; hits **their** sign-in gate |
 
-`blocker(c)` names the single person holding each case. It runs only inside the
+The two are independent — the agent's clock must not swallow the manager's on
+the way past, which is what an early `return` in `pdInternalChase_` used to do.
+
+`blocker(c)` names the single person holding each case, and now names the
+**manager first**: from day 60 the policy is theirs. It runs only inside the
 60-day window — a policy that lapsed in 2014 has nobody late on it, and counting
-those would bury the live cases under thousands of historic ones.
+those would bury the live cases under thousands of historic ones. The manager
+queue is likewise every handed-over policy with no response, not only the cases
+an agent got round to filing.
+
+### Day 88 — the client's own file
+
+The final notice carries `pdInteractionLog_`: every letter sent, every answer the
+client gave, the day the policy went to a manager, and everything that manager
+recorded — in date order, with three tinted row types (us / you / a manager
+acted). Then the three closing questions.
+
+Sending a client their own file is unusual and that is the point. Where the
+branch did the work it is the only place the client ever sees it; three months of
+process happen entirely out of their sight and all they experience is post
+arriving. Where the branch did not, the letter says so, in a red box, over both
+names:
+
+> **Reading that back, we do not think we did enough.** The record above shows
+> letters from us and little else. If nobody from this branch spoke to you about
+> this policy, say so in the first question above.
+
+Three things are deliberately withheld:
+
+- **Internal working notes are counted, not quoted.** The client is told how many
+  are on the file and that they can ask for them. They are notes between
+  colleagues and can carry a judgement nobody wrote expecting the client to read.
+- **`MGR_SAID_CLIENT` is a whitelist.** Compliance and staffing decisions —
+  possible replacement of in-force cover, reassigning an orphan, a documented
+  decision to allow the lapse — never appear.
+- The letter is signed by the **agent and the manager side by side**. Asking
+  "did anyone from us reach you?" under the single name of the person who may not
+  have called is the wrong way round.
+
+Log rows store the question *text* and the answer *label*, not keys — that is
+what the engine has always written. `pdDecodeAnswer_` reads them back into keys
+via `PD_QKEY_BY_TEXT` / `PD_AKEY_BY_LABEL`, so nothing already in the sheet is
+orphaned.
 
 The constants live in `SLA` in `index.html` and `SLA` in
 `PremiumDueTemplates.gs`. **Change both** — they are not shared.
@@ -225,6 +289,14 @@ Tracked in the build review; none of these are fixed here.
 - **Survey links use bare policy numbers**, so anyone who guesses one can file a
   response as that client. Signed short tokens (the `/r/<token>` pattern the
   renewal portal already uses) would close it.
+- **The day-88 interaction log is only as complete as the log.** With
+  `OUT.ENGINE_URL` blank — the state this ships in — a client's answers arrive as
+  email to the branch and never reach `PremiumDueLog`, so the record shows the
+  letters we sent and the manager's tapped answers but not the client's replies,
+  and the letter will say *"we have had no reply from you"* to someone who did
+  reply by email. **Deploy the engine and set `ENGINE_URL` before day 88 letters
+  go live**, or route those inbound replies into the log by hand. The manager's
+  side is unaffected — managers answer from a link that records directly.
 - **The roster covers 25 people; the live book names 89 agents.** 61 of them,
   holding ~3,260 policies, sit outside every agent and unit view, and 8 people
   who appear in `UNITS`/`HIERARCHY` have no code and cannot sign in at all.
