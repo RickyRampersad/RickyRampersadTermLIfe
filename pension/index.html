@@ -697,6 +697,19 @@ function loadInitial(){
   syncMirrors();
 }
 
+/* N.I.S. earnings classes I–XVI.
+   [ annual earnings at which the class starts , the amount written on the BIR
+   form's "N.I.S. (70%)" line for that class ].
+
+   The class floors are the standard NIB earnings classes expressed annually —
+   Class I starts at $867 a month ($200.08 a week), Class XVI at $13,600 a month
+   ($3,138.46 a week).
+
+   IMPORTANT: the second number must ALREADY be the 70% deductible figure.
+   Nothing in this file multiplies it by 0.7 — it goes straight onto Line 6(b)
+   and therefore straight into chargeable income. If this table is ever
+   refreshed from an NIB schedule, take 70% of the employee's contribution
+   before putting it here, or every chargeable income will be overstated. */
 const NIS=[[10404,531.44],[17676,775.32],[23400,1041.04],[31716,1346.80],[39516,1659.84],[48360,2016.56],[58236,2376.92],[67596,2740.92],[77484,3144.96],[88920,3556.28],[99324,3982.16],[111276,4440.80],[123756,4924.92],[136764,5456.36],[151836,5955.04],[163200,6169.80]];
 const NIS_CLASS=["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII","XIII","XIV","XV","XVI"];
 function nisLookup(s){ if(s<NIS[0][0]) return {amt:0,cls:"—"}; let i=0; for(let k=0;k<NIS.length;k++){ if(NIS[k][0]<=s) i=k; else break; } return {amt:NIS[i][1],cls:NIS_CLASS[i]}; }
