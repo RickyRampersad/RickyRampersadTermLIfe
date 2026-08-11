@@ -330,9 +330,17 @@ function rrbAdviceReviewHtml_(d, link) {
   var advFirst = advisor.split(' ')[0] || 'the advisor';
   var recs     = rrbRecLines_(d);
 
+  var chk = rrbChecks_(d);
+
   var h = rrbHead_(client + ' &mdash; Specific Need Only',
                    'From ' + advisor + ' &middot; due back by ' + rrbDueDate_(d.submittedAt));
   h += '<p style="margin:0 0 15px">Hi ' + mgrFirst + ',</p>';
+
+  // The decision sits above everything. A manager who already knows this case
+  // should not have to scroll past the reasoning to record it.
+  h += rrbDecisionBlock_(d, { name: d.reviewerName, email: d.reviewerEmail });
+  h += '<div style="height:1px;background:#E2E8F0;margin:20px 0 16px"></div>';
+
 
   // ── Why this review looks different from the others in the inbox.
   h += '<div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:11px;' +
@@ -345,6 +353,12 @@ function rrbAdviceReviewHtml_(d, link) {
        'in ' + advFirst + '&rsquo;s work. There is no needs analysis here to check the ' +
        'recommendation against, so please do not read the blank sections as findings.</div>' +
        '</div>';
+
+  // Bio data is checkable even when the finances are not — confirming it is
+  // exactly what a manager can usefully do on a limited-scope case. The notice
+  // above frames these, so it has to come first.
+  h += rrbBioBlock_(chk);
+  h += rrbConcernsBlock_(chk);
 
   // ── The whole substance of the case.
   if (!recs.length) {
@@ -391,9 +405,339 @@ function rrbAdviceReviewHtml_(d, link) {
        '<div style="margin-top:4px">3. The reason on file would stand up if this case were ' +
        'inspected.</div></div>';
 
-  h += rrbButton_('Approve this recommendation', link);
-  h += '<p style="text-align:center;font-size:12.5px;color:#64748B;margin:2px 0 0">' +
-       'Limited scope &mdash; the review is short.</p>';
   h += rrbFoot_(_str(d.submissionId));
   return h;
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DECIDE FROM THE EMAIL
+//
+// The review used to be: read a notification, open a link, load a long form,
+// clear every finding, fill nine fields, sign, submit. On a phone, standing in
+// a corridor, that does not happen — so cases sat.
+//
+// The email now carries the decision. The insights that justify it are in the
+// message, only genuine concerns are raised, and the verdict is one tap. The
+// full application is still one link away for a case that deserves it.
+//
+// What a tap records: the verdict, the reviewer named in the token, the
+// timestamp, and the token's own id. That is the attestation. It replaces the
+// drawn signature FOR EMAIL APPROVALS ONLY — opening the form and signing
+// still works and still records a drawn signature. Authenticated, timestamped
+// and attributable to one person, which is what the evidence has to be.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Base URL of this web app. */
+function rrbAppUrl_() {
+  try { if (typeof RRB_APP_URL === 'string' && RRB_APP_URL) return RRB_APP_URL; } catch (e) {}
+  try { if (typeof APP_URL === 'string' && APP_URL) return APP_URL; } catch (e) {}
+  return ScriptApp.getService().getUrl();
+}
+
+function rrbEsc_(s) {
+  return _str(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/** Stamp a token as spent so the link cannot be replayed. */
+function rrbMarkTokenUsed_(row) {
+  try { rrbTokenSheet_().getRange(row, 8).setValue(new Date()); } catch (e) {
+    Logger.log('rrbMarkTokenUsed_ failed on row %s: %s', row, e && e.message);
+  }
+}
+
+/**
+ * The identity facts a manager verifies at a glance, and the concerns worth
+ * raising. Everything else stays out of the email.
+ *
+ * Blank fields on a Specific Need Only case are reported as "not disclosed",
+ * never as concerns — the client chose that, and dressing it as a finding is
+ * what made these reviews unanswerable.
+ */
+function rrbChecks_(d) {
+  var adviceOnly = rrbIsAdviceOnly_(d);
+  var bio = [], concerns = [];
+
+  function fact(label, value, criticalWhenFull) {
+    var v = _str(value);
+    if (v) { bio.push({ k: label, v: v, missing: false }); return; }
+    bio.push({ k: label, v: adviceOnly ? 'not disclosed' : 'not recorded', missing: true });
+    if (criticalWhenFull && !adviceOnly)
+      concerns.push({ sev: 'bad', t: label + ' is missing',
+                      why: 'Underwriting will bounce the application back without it.' });
+  }
+
+  fact('Client', _str(d.clientName) || _str(d.fullName) || _str(d.adviceClientName), true);
+  fact('Date of birth', d.dob, true);
+  fact('ID / DP / PP number', d.idNumber, true);
+  if (!adviceOnly) {
+    fact('Occupation', d.occupation, true);
+    fact('Employer', d.employer, false);
+    var inc = rrbNum_(d.monthlyIncomeTotal || d.monthlyIncome);
+    fact('Monthly income', inc ? rrbMoney_(inc) : '', true);
+    fact('Marital status', d.maritalStatus, false);
+  } else {
+    fact('Contact number', d.adviceClientPhone || d.phone || d.mobile, false);
+    fact('Email', d.adviceClientEmail || d.email, false);
+  }
+
+  // ── Concerns that apply whatever the scope ──
+  var recs = rrbRecLines_(d);
+  if (!recs.length) {
+    concerns.push({ sev: 'bad', t: 'No recommendation recorded',
+                    why: 'There is nothing to approve.' });
+  } else {
+    var noReason = recs.filter(function (r) { return !r.reason; }).length;
+    if (noReason) concerns.push({
+      sev: 'bad', t: noReason + ' recommendation' + (noReason === 1 ? '' : 's') + ' with no reason given',
+      why: adviceOnly ? 'On a limited-scope file the reason is the file.'
+                      : 'The reason is what shows the advice was suitable.' });
+  }
+
+  if (/^(y|yes|true|1)$/i.test(_str(d.repDetected)) || /replac/i.test(_str(d.repDetected))) {
+    concerns.push({ sev: 'bad', t: 'Existing cover is being replaced',
+                    why: 'Replacement needs your eyes before this moves — this is the one that becomes a regulatory matter.' });
+  }
+
+  if (/^(y|yes|true|1)$/i.test(_str(d.fi_uwEvidence)) || _str(d.medical)) {
+    var med = _str(d.medical);
+    if (med && !/^(none|n\/a|no)$/i.test(med))
+      concerns.push({ sev: 'warn', t: 'Medical evidence likely required',
+                      why: rrbEsc_(med.slice(0, 120)) });
+  }
+
+  // ── Concerns that need disclosed data, so full-disclosure cases only ──
+  if (!adviceOnly) {
+    var need = rrbNum_(d.insuranceNeed_calc);
+    var recTotal = recs.reduce(function (a, r) { return a + r.amt; }, 0);
+    if (need > 0 && recTotal > 0) {
+      var pct = Math.round((recTotal / need) * 100);
+      if (pct < 80) concerns.push({ sev: 'warn', t: 'Recommendation covers ' + pct + '% of the assessed need',
+                    why: 'If that is deliberate — budget, or staged — it should be written on the file.' });
+      else if (pct > 125) concerns.push({ sev: 'warn', t: 'Recommendation is ' + pct + '% of the assessed need',
+                    why: 'Worth confirming what justifies the extra.' });
+    }
+    var surplus = rrbNum_(d.cashSurplus_calc);
+    var prem = recs.reduce(function (a, r) { return a + r.prem; }, 0);
+    if (surplus > 0 && prem > 0) {
+      var ratio = prem / surplus;
+      if (ratio > 0.8) concerns.push({ sev: 'bad',
+        t: 'Premium is ' + Math.round(ratio * 100) + '% of the client’s monthly surplus',
+        why: 'This will not persist. Better rewritten than lapsed after the clawback.' });
+      else if (ratio > 0.5) concerns.push({ sev: 'warn',
+        t: 'Premium is ' + Math.round(ratio * 100) + '% of monthly surplus',
+        why: 'Fragile — expect lapse on any income shock.' });
+    }
+  }
+
+  return { bio: bio, concerns: concerns, adviceOnly: adviceOnly };
+}
+
+/** The bio-data card. Shown on every review, whatever the scope. */
+function rrbBioBlock_(chk) {
+  var h = '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:11px;padding:13px 16px;margin-bottom:13px">' +
+          '<div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#94A3B8;font-weight:700;margin-bottom:8px">' +
+          'Check this is right</div><table role="presentation" width="100%" style="border-collapse:collapse">';
+  chk.bio.forEach(function (b) {
+    h += '<tr><td style="padding:4px 14px 4px 0;color:#64748B;font-size:12.5px;white-space:nowrap;vertical-align:top">' + rrbEsc_(b.k) + '</td>' +
+         '<td style="padding:4px 0;font-size:13px;font-weight:600;color:' + (b.missing ? '#94A3B8' : '#0F172A') + '">' +
+         rrbEsc_(b.v) + '</td></tr>';
+  });
+  return h + '</table></div>';
+}
+
+/** Concerns only. Silence when there is nothing wrong is the point. */
+function rrbConcernsBlock_(chk) {
+  if (!chk.concerns.length) {
+    return '<div style="background:#ECFDF5;border:1px solid #6EE7B7;border-radius:11px;padding:12px 16px;' +
+           'margin-bottom:13px;font-size:13.5px;color:#065F46">' +
+           '<strong>Nothing flagged.</strong> The checks RAI runs on this case all came back clean.</div>';
+  }
+  var h = '<div style="background:#fff;border:1px solid #FCD34D;border-radius:11px;padding:13px 16px;margin-bottom:13px">' +
+          '<div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#B45309;font-weight:700;margin-bottom:9px">' +
+          chk.concerns.length + ' thing' + (chk.concerns.length === 1 ? '' : 's') + ' to look at</div>';
+  chk.concerns.forEach(function (c, i) {
+    var red = c.sev === 'bad';
+    h += '<div style="padding:9px 0;border-top:1px solid ' + (i ? '#F1F5F9' : 'transparent') + '">' +
+         '<div style="font-size:13.5px;font-weight:700;color:' + (red ? '#991B1B' : '#B45309') + '">' +
+         (red ? '&#9679; ' : '&#9675; ') + rrbEsc_(c.t) + '</div>' +
+         '<div style="font-size:12.5px;color:#475569;margin-top:2px;line-height:1.5">' + c.why + '</div></div>';
+  });
+  return h + '</div>';
+}
+
+/** Approve / request changes, as two taps in the message itself. */
+function rrbDecisionBlock_(d, reviewer) {
+  var tok;
+  try {
+    tok = rrbMintToken(d.submissionId, 'decide', reviewer || { name: d.reviewerName, email: d.reviewerEmail });
+  } catch (err) {
+    Logger.log('rrbDecisionBlock_: no token (%s) — falling back to the form link', err && err.message);
+    return rrbButton_('Open and review', ffReviewLink_(d.submissionId, 'manager'));
+  }
+  var base = rrbAppUrl_() + '?action=decide&t=' + encodeURIComponent(tok) + '&v=';
+  return '<table role="presentation" width="100%" style="border-collapse:collapse;margin:18px 0 6px"><tr>' +
+    '<td style="padding-right:6px" width="50%"><a href="' + base + 'approve' + '" ' +
+      'style="display:block;text-align:center;background:#0F766E;color:#fff;padding:15px 10px;border-radius:10px;' +
+      'text-decoration:none;font-weight:800;font-size:15px">Approve</a></td>' +
+    '<td style="padding-left:6px" width="50%"><a href="' + base + 'changes' + '" ' +
+      'style="display:block;text-align:center;background:#fff;color:#B45309;border:2px solid #F59E0B;' +
+      'padding:13px 10px;border-radius:10px;text-decoration:none;font-weight:800;font-size:15px">Request changes</a></td>' +
+    '</tr></table>' +
+    '<p style="text-align:center;font-size:12.5px;color:#64748B;margin:4px 0 0">' +
+      'One tap records it. You can add a comment on the next screen &mdash; ' +
+      '<a href="' + ffReviewLink_(d.submissionId, 'manager') + '" style="color:#0D9488">or open the full application</a>.</p>';
+}
+
+
+/** Shared chrome for the small pages a tap lands on. Sized for a phone. */
+function rrbPage_(title, bodyHtml, tone) {
+  var bar = tone === 'bad' ? '#B45309' : tone === 'err' ? '#B91C1C' : '#0F766E';
+  var h = '<!doctype html><html><head><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>' + rrbEsc_(title) + '</title></head>' +
+    '<body style="margin:0;background:#EEF2F7;font:16px/1.55 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;color:#0F172A">' +
+    '<div style="max-width:520px;margin:0 auto;padding:18px 14px 40px">' +
+    '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:14px;overflow:hidden">' +
+    '<div style="height:4px;background:' + bar + '"></div>' +
+    '<div style="padding:20px 20px 24px">' + bodyHtml + '</div></div>' +
+    '<p style="color:#94A3B8;font-size:11.5px;text-align:center;margin-top:14px;line-height:1.5">' +
+    'Ricky Rampersad Branch &middot; Guardian Life of the Caribbean Limited</p>' +
+    '</div></body></html>';
+  return HtmlService.createHtmlOutput(h)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+/**
+ * A manager tapped Approve or Request changes in their email.
+ *
+ * The verdict rides in the URL rather than the signature because the token is
+ * already single-use and bound to this submission and this reviewer — anyone
+ * able to alter the verdict could simply have used the link.
+ */
+function rrbDecide(e) {
+  var p = (e && e.parameter) || {};
+  var v = /^appro/i.test(_str(p.v)) ? 'Agree' : 'Do not agree';
+
+  var chk = rrbVerifyToken(p.t);
+  if (!chk.ok) {
+    return rrbPage_('Cannot record this',
+      '<div style="font-size:19px;font-weight:800;margin-bottom:8px">This link no longer works</div>' +
+      '<p style="color:#475569;margin:0 0 14px">' + rrbEsc_(chk.error) + '</p>' +
+      '<p style="color:#64748B;font-size:13.5px;margin:0">If the case still needs a decision, open the ' +
+      'dashboard and review it there, or ask for a fresh link.</p>', 'err');
+  }
+
+  var pay = chk.payload;
+  var sheet = ffGetOrCreateRevisedTab_();
+  var headers = ffEnsureHeaders_(sheet);
+  var row = ffFindRowBySubmissionId_(sheet, headers, pay.id);
+  if (!row) {
+    return rrbPage_('Not found',
+      '<div style="font-size:19px;font-weight:800;margin-bottom:8px">That fact find is not on the sheet</div>' +
+      '<p style="color:#475569;margin:0">Nothing was recorded. Please tell the branch office.</p>', 'err');
+  }
+
+  var d = ffReadRow_(sheet, headers, row);
+  var now = new Date().toISOString();
+  var agreed = (v === 'Agree');
+
+  var merged = {};
+  Object.keys(d).forEach(function (k) { merged[k] = d[k]; });
+  merged.mgrAgree      = v;
+  merged.mgrName       = _str(pay.nm) || _str(d.reviewerName);
+  merged.mgrEmail      = _str(pay.em) || _str(d.reviewerEmail);
+  merged.mgrReviewedAt = now;
+  merged.mgrSigDate    = now.slice(0, 10);
+  merged.status        = agreed ? 'approved' : 'changes_requested';
+  merged.approvedAt    = agreed ? now : '';
+  merged.lastUpdated   = now;
+
+  // The attestation, and how it was given. A drawn signature is not collected
+  // on this path, so the record has to say so rather than imply one exists.
+  merged.mgrVerData = merged.mgrVerRatios = merged.mgrVerSuit = merged.mgrVerCompliance = true;
+  merged.mgrSignatureMethod = 'Email one-tap';
+  merged.mgrSignatureRef    = _str(pay.jti);
+  merged.dmResponded        = true;
+  if (!_str(merged.dmName)) merged.dmName = merged.mgrName;
+
+  ffWriteRow_(sheet, headers, merged, row);
+  rrbMarkTokenUsed_(chk.row);
+
+  try { ffSendApprovalEmail_(merged); }
+  catch (err) { Logger.log('rrbDecide: approval email failed — %s', err && err.message); }
+
+  // A fresh single-use token so a comment can follow the decision.
+  var noteTok = '';
+  try { noteTok = rrbMintToken(pay.id, 'note', { name: merged.mgrName, email: merged.mgrEmail }); }
+  catch (err) { Logger.log('rrbDecide: note token failed — %s', err && err.message); }
+
+  var client = rrbEsc_(_str(d.clientName) || _str(d.fullName) || 'this client');
+  var body =
+    '<div style="font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:' +
+      (agreed ? '#0F766E' : '#B45309') + '">' + (agreed ? 'Approved' : 'Changes requested') + '</div>' +
+    '<div style="font-size:21px;font-weight:800;margin:6px 0 4px">' + client + '</div>' +
+    '<p style="color:#475569;margin:0 0 16px;font-size:14px">Recorded against your name at ' +
+      rrbEsc_(Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'h:mm a, d MMMM')) +
+      '. ' + rrbEsc_(_str(d.advisorName) || 'The advisor') + ' has been told.</p>';
+
+  if (noteTok) {
+    body +=
+      '<form action="' + rrbAppUrl_() + '" method="get" style="margin:0">' +
+      '<input type="hidden" name="action" value="decide_note">' +
+      '<input type="hidden" name="t" value="' + rrbEsc_(noteTok) + '">' +
+      '<label style="display:block;font-size:13px;font-weight:700;color:#334155;margin-bottom:6px">' +
+        'Anything to tell ' + rrbEsc_((_str(d.advisorName) || 'the advisor').split(' ')[0]) + '? (optional)</label>' +
+      '<textarea name="note" rows="4" style="width:100%;box-sizing:border-box;border:1px solid #CBD5E1;' +
+        'border-radius:9px;padding:11px;font:15px/1.5 inherit;resize:vertical" ' +
+        'placeholder="Your guidance to the agent&hellip;"></textarea>' +
+      '<button type="submit" style="width:100%;margin-top:10px;background:#0D9488;color:#fff;border:0;' +
+        'border-radius:9px;padding:14px;font-size:15px;font-weight:800;cursor:pointer">Send this comment</button>' +
+      '</form>' +
+      '<p style="color:#94A3B8;font-size:12.5px;margin:12px 0 0;text-align:center">' +
+        'Your decision is already saved. This is only if you want to add something.</p>';
+  }
+  return rrbPage_(agreed ? 'Approved' : 'Changes requested', body, agreed ? 'ok' : 'bad');
+}
+
+/** The optional comment that can follow a one-tap decision. */
+function rrbDecideNote(e) {
+  var p = (e && e.parameter) || {};
+  var note = _str(p.note);
+  var chk = rrbVerifyToken(p.t);
+  if (!chk.ok) {
+    return rrbPage_('Comment not saved',
+      '<div style="font-size:19px;font-weight:800;margin-bottom:8px">This comment link has already been used</div>' +
+      '<p style="color:#475569;margin:0">Your decision was saved. Only the comment did not go through.</p>', 'err');
+  }
+  if (!note) {
+    return rrbPage_('Nothing to save',
+      '<div style="font-size:19px;font-weight:800;margin-bottom:8px">No comment entered</div>' +
+      '<p style="color:#475569;margin:0">Your decision is saved either way.</p>', 'ok');
+  }
+
+  var pay = chk.payload;
+  var sheet = ffGetOrCreateRevisedTab_();
+  var headers = ffEnsureHeaders_(sheet);
+  var row = ffFindRowBySubmissionId_(sheet, headers, pay.id);
+  if (!row) return rrbPage_('Not found', '<p>That fact find is no longer on the sheet.</p>', 'err');
+
+  var d = ffReadRow_(sheet, headers, row);
+  var merged = {};
+  Object.keys(d).forEach(function (k) { merged[k] = d[k]; });
+  var prior = _str(merged.dmGuidance);
+  merged.dmGuidance  = prior ? prior + '\n\n' + note : note;
+  merged.mgrComments = merged.dmGuidance;
+  merged.lastUpdated = new Date().toISOString();
+  ffWriteRow_(sheet, headers, merged, row);
+  rrbMarkTokenUsed_(chk.row);
+
+  return rrbPage_('Comment saved',
+    '<div style="font-size:19px;font-weight:800;margin-bottom:8px">Sent</div>' +
+    '<p style="color:#475569;margin:0 0 12px;font-size:14px">Your comment is on the file and goes to ' +
+      rrbEsc_(_str(d.advisorName) || 'the advisor') + ' with the decision.</p>' +
+    '<div style="background:#F8FAFC;border-left:3px solid #0D9488;padding:10px 13px;border-radius:0 8px 8px 0;' +
+      'font-size:13.5px;color:#334155;white-space:pre-wrap">' + rrbEsc_(note) + '</div>', 'ok');
 }

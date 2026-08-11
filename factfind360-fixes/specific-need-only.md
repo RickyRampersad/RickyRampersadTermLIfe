@@ -120,3 +120,90 @@ or counts, so branch-level metrics — recommend-ratio in particular — mix
 limited-scope cases in with full ones and understate the ratio. Those cases
 have no assessed shortfall to divide by. Worth excluding them from that metric
 rather than letting it drift.
+
+---
+
+# The email became the review
+
+The review used to be: read a notification, open a link, load a long form,
+clear every finding, fill nine fields, sign, submit. On a phone, between
+appointments, that does not happen — so cases sat in `pending_review` and the
+median climbed.
+
+The email now carries the decision. **Approve** and **Request changes** are two
+taps at the top of the message, above the reasoning rather than below it. The
+full application is still one link away for a case that deserves the long look.
+
+## What is in the message now
+
+| Block | Shown when | Why |
+|---|---|---|
+| Approve / Request changes | always | the decision, before the reading |
+| Check this is right | always, both scopes | bio data is verifiable even when the finances are not |
+| Concerns | only when there are any | silence when a case is clean is the point |
+| The recommendation | always | need, product, sum, premium, reason |
+
+On a clean case the concerns block says so in one green line. Managers stop
+reading a page that cries wolf, and a branch where every case shows six amber
+findings has effectively no flags at all.
+
+### Concerns are computed, not listed
+
+| Concern | Severity | Scope |
+|---|---|---|
+| No recommendation recorded | red | both |
+| Recommendation with no reason given | red | both |
+| Existing cover being replaced | red | both |
+| Premium over 80% of monthly surplus | red | full only |
+| Premium 50–80% of surplus | amber | full only |
+| Recommendation under 80% / over 125% of assessed need | amber | full only |
+| Medical evidence likely required | amber | both |
+| Missing DOB, ID, occupation or income | red | full only |
+
+The scope split matters. On a Specific Need Only case there is no disclosed
+income to divide a premium into, so those tests do not run — and a blank field
+is reported as "not disclosed" rather than "not recorded", because one is the
+client's decision and the other is an omission.
+
+## What a tap records
+
+Verdict, the reviewer named in the token, the timestamp, and the token's own
+id — written to `mgrSignatureMethod` and `mgrSignatureRef`, two new schema
+columns. Both were needed: `ffWriteRow_` iterates the schema and silently drops
+any key without a column, so without adding them the attestation trail would
+have looked fine in code and written nothing.
+
+**This replaces the drawn signature on the email path only.** Opening the form
+and signing still works and still records a drawn signature. The record says
+which method was used rather than leaving a blank that reads like a missing
+signature.
+
+The link is a single-use HMAC token bound to that submission and that reviewer,
+expiring, revocable, and marked spent the moment it is used. The verdict rides
+in the URL rather than the signature because anyone able to alter it could
+simply have used the link instead.
+
+After the decision is saved, the confirmation page offers an optional comment
+box backed by a fresh single-use token. The decision lands whether or not the
+comment is ever typed.
+
+## Verified
+
+Concerns computed against three shaped cases:
+
+```
+advice        — 5 bio facts, 0 concerns
+full (bad)    — 7 bio facts, 3 concerns
+                  RED    Existing cover is being replaced
+                  amber  Recommendation covers 50% of the assessed need
+                  RED    Premium is 87% of the client's monthly surplus
+full (clean)  — 7 bio facts, 0 concerns
+```
+
+One token minted per email — not one per button.
+
+## Not done
+
+The dashboard still does not show how a case was signed off, so a manager
+looking at the branch view cannot tell a one-tap approval from a fully signed
+form. The data is now there to show it.
