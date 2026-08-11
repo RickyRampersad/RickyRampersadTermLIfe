@@ -14,6 +14,15 @@
 //     (a) Code.gs — function ffLoadRoster_()  →  replace its ENTIRE body with:
 //             return rrbRosterFromAccess_();
 //
+//     (b) RRB_Additions.gs — function rrbData(e)  →  replace its ENTIRE body with:
+//             return rrbDataSecure_(e);
+//
+//     (c) RRB_Additions.gs — function rrbRoster(e)  →  replace its ENTIRE body with:
+//             return rrbRosterSecure_(e);
+//
+//     (d) RRB_Additions.gs — function rrbLogin(e), in the `return {` block at
+//         the very end, add ONE line directly after `ok: true,` :
+//             token:   rrbMintSession_(email, person),
 //
 //  3. Deploy ▸ Manage deployments ▸ Edit (pencil) ▸ New version ▸ Deploy.
 //     Keep the SAME deployment so the /exec URL does not change.
@@ -585,6 +594,166 @@ function rrbSetup() {
   rrbAuditRouting();
 
   Logger.log('=== done. Run rrbMdPreview() to see the digest numbers without emailing. ===');
+}
+
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  PART 5 — sign-in actually protects the data
+// ═════════════════════════════════════════════════════════════════════════════
+//
+// rrbData and rrbRoster used to resolve the caller from ?code=, and never
+// checked that the caller had passed rrbCheckPassword_. Since ?action=
+// access_names publishes every active agent code with no authentication, the
+// "credential" was printed on the front page: anyone could read any agent's
+// clients — names, ID numbers, dates of birth, income, medical — without a
+// password.
+//
+// rrbLogin itself was sound. What was missing was anything downstream requiring
+// that login to have happened. A code says who you CLAIM to be; only a token
+// minted by rrbLogin proves you passed the password check.
+//
+// Stateless on purpose. Unlike the review links in section 3 these are issued
+// constantly and never need revoking one at a time, so a signature check is
+// enough — no sheet row to write or read. Rotating RRB_PROP_SECRET invalidates
+// every outstanding session at once, which is what you want in an emergency.
+// It also invalidates every outstanding review link, so do not rotate casually.
+
+var RRB_SESSION_HOURS = 12;   // a working day; the page holds it in memory only
+
+function rrbMintSession_(email, person) {
+  var payload = {
+    em:  _str(email).toLowerCase(),
+    cd:  _str(person && person.code).toUpperCase(),
+    exp: Date.now() + RRB_SESSION_HOURS * 3600000
+  };
+  var body = Utilities.base64EncodeWebSafe(JSON.stringify(payload)).replace(/=+$/, '');
+  return body + '.' + rrbSign_(body);
+}
+
+/** {email, code} for a valid, unexpired session — otherwise null. */
+function rrbReadSession_(token) {
+  if (!token) return null;
+  var parts = String(token).split('.');
+  if (parts.length !== 2) return null;
+
+  // Constant-time compare, same as rrbVerifyToken().
+  var expected = rrbSign_(parts[0]);
+  if (parts[1].length !== expected.length) return null;
+  var diff = 0;
+  for (var i = 0; i < expected.length; i++) diff |= (parts[1].charCodeAt(i) ^ expected.charCodeAt(i));
+  if (diff !== 0) return null;
+
+  var payload;
+  try {
+    payload = JSON.parse(Utilities.newBlob(Utilities.base64DecodeWebSafe(parts[0])).getDataAsString());
+  } catch (err) { return null; }
+  if (!payload.exp || Date.now() > payload.exp) return null;
+  return { email: _str(payload.em).toLowerCase(), code: _str(payload.cd).toUpperCase() };
+}
+
+/**
+ * The single access check for every endpoint returning branch data. Resolves
+ * the caller from their SESSION TOKEN only — never from ?code=, which is
+ * public. Returns the shape rrbData/rrbRoster expect, or null.
+ */
+function rrbAuthorize_(e) {
+  var sess = rrbReadSession_(e && e.parameter && e.parameter.token);
+  if (!sess) return null;
+
+  var me = rrbFindPerson_(sess.email);
+  if (me) return me;
+
+  // Same Access-tab fallback rrbLogin uses, so anyone who can sign in can read
+  // their own figures even if they are not in MAIL_CONFIG.
+  try {
+    var acc = rrbFindByCode_(sess.code, sess.email);
+    if (!acc) return null;
+    var role = acc.role || 'Agent';
+    return {
+      name: acc.name, code: acc.code, unit: acc.unit, role: role,
+      unitKey: rrbUnitKeyForName_(acc.unit),
+      scope: rrbScopeForRole_(role, rrbOwnUnitKey_(acc.name, acc.unit, role), acc.code)
+    };
+  } catch (err) { return null; }
+}
+
+var RRB_EXPIRED = { ok: false, expired: true,
+                    error: 'Your session has expired. Please sign in again.' };
+
+/** Rows for the dashboard, scoped server-side. Body of rrbData(e). */
+function rrbDataSecure_(e) {
+  var me = rrbAuthorize_(e);
+  if (!me) return RRB_EXPIRED;
+
+  var sheet = ffGetOrCreateRevisedTab_();
+  var headers = ffEnsureHeaders_(sheet);
+  var last = sheet.getLastRow();
+  if (last < 2) return { ok: true, rows: [] };
+
+  var rows = [];
+  for (var r = 2; r <= last; r++) {
+    var d = ffReadRow_(sheet, headers, r);
+    if (!d || !d.submissionId) continue;
+    var code = _str(d.agentCode).toUpperCase();
+    var rowUnit = ffLookupDirectManager_(code);
+    if (me.scope.kind === 'agent') {
+      if (code !== _str(me.code).toUpperCase()) continue;
+    } else if (!rrbScopeHasUnit_(me.scope, rowUnit)) continue;
+    d.unitKey = rowUnit;
+    d.unit    = (MAIL_CONFIG.managers[d.unitKey] || {}).name || '';
+    rows.push(d);
+  }
+  return { ok: true, rows: rows };
+}
+
+/** Scoped staff list. Body of rrbRoster(e). */
+function rrbRosterSecure_(e) {
+  var me = rrbAuthorize_(e);
+  if (!me) return RRB_EXPIRED;
+
+  var out = [];
+  for (var k in MAIL_CONFIG.managers) {
+    var mgr = MAIL_CONFIG.managers[k];
+    out.push({ email: mgr.email, code: rrbCodeForEmail_(mgr.email), name: mgr.name,
+               role: k === 'ricky' ? 'Branch Manager'
+                   : k === 'kerwyn' ? 'Assistant Branch Manager' : 'Unit Manager',
+               unitKey: k });
+  }
+  var roster = ffLoadRoster_();
+  for (var c in roster) {
+    out.push({ email: roster[c].email, code: c, name: roster[c].name,
+               role: 'Agent', unitKey: ffLookupDirectManager_(c) });
+  }
+  var visible = out.filter(function (p) {
+    if (me.scope.kind === 'agent') return _str(p.code).toUpperCase() === _str(me.code).toUpperCase();
+    return rrbScopeHasUnit_(me.scope, p.unitKey);
+  });
+  return { ok: true, roster: visible };
+}
+
+/** Confirms the lock actually holds. Run after deploying. */
+function rrbSecurityCheck() {
+  Logger.log('=== security check ===');
+  var noToken = rrbDataSecure_({ parameter: {} });
+  Logger.log('1. no token        -> ok=%s %s', noToken.ok,
+             noToken.ok ? '*** STILL OPEN ***' : '(refused, correct)');
+  var codeOnly = rrbDataSecure_({ parameter: { code: 'A10024', email: 'x@y.z' } });
+  Logger.log('2. agent code only -> ok=%s %s', codeOnly.ok,
+             codeOnly.ok ? '*** STILL OPEN — this was the hole ***' : '(refused, correct)');
+  var junk = rrbDataSecure_({ parameter: { token: 'abc.def' } });
+  Logger.log('3. forged token    -> ok=%s %s', junk.ok,
+             junk.ok ? '*** SIGNATURE NOT CHECKED ***' : '(refused, correct)');
+  try {
+    var acc = rrbAccessSheet_().filter(function (p) { return p.active; })[0];
+    if (acc) {
+      var t = rrbMintSession_(acc.email, { code: acc.code });
+      var good = rrbDataSecure_({ parameter: { token: t } });
+      Logger.log('4. real token (%s) -> ok=%s rows=%s %s', acc.code, good.ok,
+                 good.rows ? good.rows.length : '-',
+                 good.ok ? '(allowed, correct)' : '*** LOCKED OUT — investigate ***');
+    }
+  } catch (err) { Logger.log('4. could not mint a test token: %s', err.message); }
+  Logger.log('=== 1-3 must all be refused, 4 must be allowed ===');
 }
 
 
