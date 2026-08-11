@@ -198,6 +198,80 @@
   .lrow .met span{display:block; font-size:.6em; color:var(--ink-3); font-weight:700;
                   letter-spacing:.07em; text-transform:uppercase; margin-top:.1em}
   .lrow.lead .met b{color:var(--gold)}
+
+  /* ── PRODUCER ROW ──────────────────────────────────────────────────────
+     Seven equal columns made every figure shout at the same volume, so the
+     eye had nothing to land on and the story — need found narrowing down to
+     money collected — was left for the reader to assemble.
+     Three zones instead: who, the funnel, the money. ─────────────────── */
+  .pr{display:grid; grid-template-columns:1.6em 2.6em minmax(9em,1fr) auto minmax(8.5em,auto);
+      align-items:center; gap:1.1em; padding:.62em .7em; border-radius:.6em}
+  .pr + .pr{border-top:1px solid rgba(255,255,255,.055)}
+  .pr .rk{font-size:1.15em; font-weight:800; color:var(--ink-4); text-align:right;
+          font-variant-numeric:tabular-nums}
+  .pr .nm2{font-size:1.22em; font-weight:750; white-space:nowrap; overflow:hidden;
+           text-overflow:ellipsis; line-height:1.2}
+  .pr .sub{font-size:.68em; color:var(--ink-4); font-weight:700; letter-spacing:.05em;
+           text-transform:uppercase; margin-top:.18em}
+
+  /* the funnel: three stages, narrowing, with the drop shown between them */
+  .fn3{display:flex; align-items:center; gap:.55em}
+  /* Fixed, not minimum: a number wider than the minimum grows its own box and
+     the column drifts away from its heading. */
+  .fn3 .st{text-align:right; width:6.3em; flex:0 0 6.3em; font-size:1em}
+  .fn3 .st b{display:block; font-size:1.16em; font-weight:800; line-height:1.1;
+             font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:var(--ink-2)}
+  .fn3 .st i{display:block; font-style:normal; font-size:.6em; font-weight:700;
+             letter-spacing:.09em; text-transform:uppercase; color:var(--ink-4); margin-top:.15em}
+  .fn3 .st.sold b{color:var(--teal)}
+  /* The separator has to occupy the same width in the header as in the row,
+     or every stage drifts a few pixels further from its heading than the last. */
+  .fn3 .ar{color:var(--ink-4); font-size:.9em; opacity:.55;
+           width:1.1em; flex:0 0 1.1em; text-align:center}
+
+  /* the money: what the row is finally worth */
+  .mny{text-align:right; padding-left:.4em}
+  .mny b{display:block; font-size:1.75em; font-weight:800; line-height:1.05;
+         font-variant-numeric:tabular-nums; letter-spacing:-.025em; color:var(--gold)}
+  .mny .pl{display:block; font-size:.72em; font-weight:700; color:var(--violet); margin-top:.12em}
+  .mny .pl.none{color:var(--ink-4)}
+
+  /* conversion — the one figure that was arithmetic before */
+  .cv{display:inline-block; font-size:.66em; font-weight:800; padding:.16em .5em;
+      border-radius:.3em; letter-spacing:.04em; margin-left:.5em; vertical-align:.15em}
+  .cv.hi{background:rgba(52,211,153,.16); color:var(--green)}
+  .cv.mid{background:rgba(251,191,36,.16); color:var(--amber)}
+  .cv.lo{background:rgba(251,113,133,.16); color:var(--red)}
+  .cv.zero{background:rgba(148,163,184,.12); color:var(--ink-3)}
+
+  .pr .track{height:.36em; border-radius:.18em; background:rgba(255,255,255,.055);
+             overflow:hidden; margin-top:.34em; display:flex}
+  .pr .track i{display:block; height:100%; width:0; transition:width .9s cubic-bezier(.2,.75,.3,1)}
+  .pr .track .w1{background:linear-gradient(90deg,#0D9488,#2DD4BF)}
+  .pr .track .w2{background:rgba(167,139,250,.55)}
+
+  .pr.p1{background:linear-gradient(90deg,rgba(245,185,53,.09),transparent 55%)}
+  .pr.p1 .rk{color:#F5B935} .pr.p2 .rk{color:#CBD5E1} .pr.p3 .rk{color:#D08A4E}
+  .pr.p1 .av{box-shadow:0 0 0 .15em rgba(245,185,53,.5), 0 0 1.5em rgba(245,185,53,.3)}
+  .pr.p2 .av{box-shadow:0 0 0 .13em rgba(203,213,225,.4)}
+  .pr.p3 .av{box-shadow:0 0 0 .13em rgba(208,138,78,.42)}
+  .pr.p1 .mny b{font-size:2.05em}
+  .pr.p1 .nm2{color:#FDF6E4}
+
+  .phd{display:grid; grid-template-columns:1.6em 2.6em minmax(9em,1fr) auto minmax(8.5em,auto);
+       gap:1.1em; padding:0 .7em .5em; border-bottom:1px solid var(--line-2); align-items:end}
+  .phd > span{font-size:.6em; letter-spacing:.15em; text-transform:uppercase;
+              color:var(--ink-3); font-weight:800}
+  /* min-width resolves against the element's OWN font-size, so a header label
+     set small computes a narrower box and stops sitting over its number. The
+     box stays at the row's size; only the text inside it shrinks. */
+  .phd > span.fn3{font-size:inherit}
+  .phd .fn3 .st{font-size:1em; width:6.3em; flex:0 0 6.3em; text-align:right}
+  .phd .fn3 .st i{font-style:normal; font-size:.6em; letter-spacing:.13em;
+                  text-transform:uppercase; color:var(--ink-3); font-weight:800}
+  .phd .fn3 .ar{opacity:0}
+  .phd .r{text-align:right}
+
   .prow .met.pipe b{color:var(--violet)}
   /* Only the two that matter carry colour, so the eye lands on them. */
   .prow .met.subm b{color:var(--ink)}
@@ -374,9 +448,12 @@
     <div class="card grow">
       <div class="pbar"><span class="t">Producer board</span>
         <span class="pper"><i>This week</i><i class="on" id="prSub">Month</i><i>Year</i></span></div>
-      <div class="phead"><div></div><div></div><div>Advisor</div><div>Fact<br>finds</div>
-        <div>Need<br>found</div><div>Cover<br>recommended</div><div>Cover<br>sold</div>
-        <div>API<br>recommended</div><div>In<br>pipeline</div><div>API<br>picked up</div></div>
+      <div class="phd"><span></span><span></span><span>Advisor</span>
+        <span class="fn3"><span class="st"><i>Need found</i></span><span class="ar">&#9656;</span>
+          <span class="st"><i>Cover rec</i></span><span class="ar">&#9656;</span>
+          <span class="st"><i>Cover sold</i></span><span class="ar">&#9656;</span>
+          <span class="st"><i>API rec</i></span></span>
+        <span class="r">API picked up</span></div>
       <div class="rows grow" id="prProd" style="margin-top:.4em"></div>
     </div>
   </section>
@@ -392,9 +469,12 @@
     <div class="card grow">
       <div class="pbar"><span class="t">Producer board</span>
         <span class="pper"><i>This week</i><i>Month</i><i class="on" id="yLbl">Year</i></span></div>
-      <div class="phead"><div></div><div></div><div>Advisor</div><div>Fact<br>finds</div>
-        <div>Need<br>found</div><div>Cover<br>recommended</div><div>Cover<br>sold</div>
-        <div>API<br>recommended</div><div>In<br>pipeline</div><div>API<br>picked up</div></div>
+      <div class="phd"><span></span><span></span><span>Advisor</span>
+        <span class="fn3"><span class="st"><i>Need found</i></span><span class="ar">&#9656;</span>
+          <span class="st"><i>Cover rec</i></span><span class="ar">&#9656;</span>
+          <span class="st"><i>Cover sold</i></span><span class="ar">&#9656;</span>
+          <span class="st"><i>API rec</i></span></span>
+        <span class="r">API picked up</span></div>
       <div class="rows grow" id="yRace" style="margin-top:.4em"></div>
     </div>
   </section>
@@ -405,9 +485,12 @@
     <div class="card grow">
       <div class="pbar"><span class="t">Producer board</span>
         <span class="pper"><i class="on">This week</i><i id="wkM">Month</i><i id="wkY">Year</i></span></div>
-      <div class="phead"><div></div><div></div><div>Advisor</div><div>Fact<br>finds</div>
-        <div>Need<br>found</div><div>Cover<br>recommended</div><div>Cover<br>sold</div>
-        <div>API<br>recommended</div><div>In<br>pipeline</div><div>API<br>picked up</div></div>
+      <div class="phd"><span></span><span></span><span>Advisor</span>
+        <span class="fn3"><span class="st"><i>Need found</i></span><span class="ar">&#9656;</span>
+          <span class="st"><i>Cover rec</i></span><span class="ar">&#9656;</span>
+          <span class="st"><i>Cover sold</i></span><span class="ar">&#9656;</span>
+          <span class="st"><i>API rec</i></span></span>
+        <span class="r">API picked up</span></div>
       <div class="rows grow" id="mRace" style="margin-top:.4em"></div>
     </div>
   </section>
@@ -560,30 +643,52 @@ function producerRows(list, box, key, rankOn){
   }
   var sorted=list.slice().sort(function(a,b){
     return (b[rankOn]||0)-(a[rankOn]||0) || (b.count||0)-(a.count||0); });
-  var top=sorted[0][rankOn]||sorted[0].count||1;
+  var top=Math.max.apply(null,[1].concat(sorted.map(function(x){
+    return (x.pickedUp||0)+(x.pipeline||0); })));
+
   box.innerHTML=sorted.slice(0,7).map(function(a,i){
     var av2=avatar(a.name), was=prevRank[key+a.name];
     var mv = was===undefined ? (firstPaint?'':'<span class="mv n">NEW</span>')
            : was>i ? '<span class="mv u">▲'+(was-i)+'</span>'
            : was<i ? '<span class="mv d">▼'+(i-was)+'</span>' : '';
-    var rk = 'r' + Math.min(6, i + 1);
-    return '<div class="prow '+rk+(i===0?' lead':'')+'">'+
-      '<div class="rank num">'+(i+1)+'</div>'+
+
+    // Conversion: of the API this advisor recommended, how much has been
+    // collected. It was arithmetic the reader had to do; now it is a chip.
+    var rec=a.apiRec||0, got=a.pickedUp||0, pipe=a.pipeline||0;
+    var pct = rec>0 ? Math.round(got/rec*100) : null;
+    var band = pct===null ? 'zero' : pct>=50 ? 'hi' : pct>=25 ? 'mid' : pct>0 ? 'lo' : 'zero';
+    var chip = pct===null ? '' : '<span class="cv '+band+'">'+pct+'% closed</span>';
+
+    var wGot=Math.round(got/top*100), wPipe=Math.round(pipe/top*100);
+
+    return '<div class="pr p'+Math.min(6,i+1)+'">'+
+      '<div class="rk">'+(i+1)+'</div>'+
       '<div class="av" style="background:'+av2.bg+'">'+av2.ini+'</div>'+
-      '<div><div class="who"><span class="nm"></span>'+mv+'</div>'+
-        '<div class="bar"><i data-w="'+Math.max(4,Math.round(((a[rankOn]||0)/top)*100))+'"></i></div></div>'+
-      '<div class="met"><b>'+(a.count||0)+'</b></div>'+
-      '<div class="met"><b>'+big(a.need||0)+'</b></div>'+
-      '<div class="met"><b>'+big(a.cover||0)+'</b></div>'+
-      '<div class="met sold"><b>'+big(a.sold||0)+'</b><span>'+(a.apps||0)+' apps</span></div>'+
-      '<div class="met subm"><b>'+big(a.apiRec||0)+'</b></div>'+
-      '<div class="met pipe"><b>'+big(a.pipeline||0)+'</b></div>'+
-      '<div class="met api"><b>'+big(a.pickedUp||0)+'</b></div></div>';
+      '<div><div class="nm2"><span class="nmx"></span>'+mv+'</div>'+
+        '<div class="sub">'+(a.count||0)+' fact finds &middot; '+(a.apps||0)+' apps'+chip+'</div>'+
+        '<div class="track"><i class="w1" data-w="'+wGot+'"></i><i class="w2" data-w="'+wPipe+'"></i></div>'+
+      '</div>'+
+      '<div class="fn3">'+
+        '<div class="st"><b>'+big(a.need||0)+'</b></div>'+
+        '<span class="ar">&#9656;</span>'+
+        '<div class="st"><b>'+big(a.cover||0)+'</b></div>'+
+        '<span class="ar">&#9656;</span>'+
+        '<div class="st sold"><b>'+big(a.sold||0)+'</b></div>'+
+        '<span class="ar">&#9656;</span>'+
+        '<div class="st"><b>'+big(rec)+'</b></div>'+
+      '</div>'+
+      '<div class="mny"><b>'+big(got)+'</b>'+
+        '<span class="pl'+(pipe?'':' none')+'">'+(pipe? big(pipe)+' in pipeline':'nothing pending')+'</span>'+
+      '</div></div>';
   }).join('');
-  var nm=box.querySelectorAll('.nm');
+
+  var nm=box.querySelectorAll('.nmx');
   sorted.slice(0,7).forEach(function(a,i){ if(nm[i]) nm[i].textContent=a.name; prevRank[key+a.name]=i; });
-  requestAnimationFrame(function(){ box.querySelectorAll('.bar i').forEach(function(b,i){
-    setTimeout(function(){ b.style.width=b.dataset.w+'%'; },55*i); }); });
+  requestAnimationFrame(function(){
+    box.querySelectorAll('.track i').forEach(function(b,i){
+      setTimeout(function(){ b.style.width=b.dataset.w+'%'; }, 40*i);
+    });
+  });
 }
 
 /* Recognition: who led, and what is genuinely worth saying. */
