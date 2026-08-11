@@ -925,3 +925,94 @@ function rrbShowHierarchy() {
                'role=' + pad(role, 27) + 'sees: ' + sees);
   }
 }
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// WHO IS IN THE SIGN-IN DROPDOWN, AND WHY
+//
+// The dropdown filters on the Access tab's Active column. The filter is real,
+// but it has a silent failure: if no column is headed exactly "active", the
+// code cannot find it and lets everybody through. From the outside that looks
+// identical to every row being marked Yes, so guessing wastes a round trip.
+//
+// Run rrbAccessAudit(). It says exactly which columns were found, who is in
+// the dropdown, and — by checking ffRevised — who has never submitted a fact
+// find and is therefore a candidate to switch off.
+// ═══════════════════════════════════════════════════════════════════════════
+
+function rrbAccessAudit() {
+  var sh = SpreadsheetApp.openById(RRB_ACCESS_SHEET_ID).getSheetByName(RRB_ACCESS_TAB);
+  if (!sh) { Logger.log('No "%s" tab found.', RRB_ACCESS_TAB); return; }
+  var values = sh.getDataRange().getValues();
+  var head = values[0].map(function (h) { return _str(h); });
+
+  Logger.log('=== Access tab: %s rows below the header ===', values.length - 1);
+  Logger.log('columns found: %s', head.map(function (h, i) {
+    return String.fromCharCode(65 + i) + '="' + h + '"'; }).join('  '));
+
+  var norm = head.map(function (h) { return h.toLowerCase().trim(); });
+  var iAct = norm.indexOf('active');
+  if (iAct < 0) {
+    Logger.log('');
+    Logger.log('*** THERE IS NO COLUMN HEADED EXACTLY "Active". ***');
+    Logger.log('    That is why every name shows. The code looks for a header');
+    Logger.log('    that reads "Active" (any case, spaces trimmed) and finds none,');
+    Logger.log('    so it cannot filter and lets everyone through.');
+    Logger.log('    Fix: rename the column to Active, or add one, then put Yes or No in it.');
+  } else {
+    Logger.log('Active column is column %s.', String.fromCharCode(65 + iAct));
+  }
+
+  var people = rrbAccessSheet_();
+  var on  = people.filter(function (p) { return p.active; });
+  var off = people.filter(function (p) { return !p.active; });
+  Logger.log('');
+  Logger.log('in the dropdown : %s', on.length);
+  Logger.log('switched off    : %s', off.length);
+
+  if (iAct >= 0) {
+    var vals = {};
+    for (var r = 1; r < values.length; r++) {
+      var v = _str(values[r][iAct]) || '(blank)';
+      vals[v] = (vals[v] || 0) + 1;
+    }
+    Logger.log('values in that column: %s', Object.keys(vals).map(function (k) {
+      return '"' + k + '" x' + vals[k]; }).join(', '));
+    Logger.log('Only Yes, Active or True count. Anything else — including blank — is off.');
+  }
+
+  // Who has actually used the system. This is the list worth acting on.
+  var used = {};
+  try {
+    var ss = SpreadsheetApp.openById(FF_SHEET_ID).getSheetByName(FF_REVISED_TAB);
+    var fv = ss.getDataRange().getValues();
+    var fh = fv[0].map(function (h) { return _str(h); });
+    var maps = _ffSchemaMaps();
+    var ci = fh.indexOf(maps.k2l['agentCode']);
+    if (ci >= 0) for (var i = 1; i < fv.length; i++) {
+      var c = _str(fv[i][ci]).toUpperCase(); if (c) used[c] = (used[c] || 0) + 1;
+    }
+  } catch (err) { Logger.log('could not read ffRevised: %s', err && err.message); }
+
+  var never = on.filter(function (p) {
+    return !used[_str(p.code).toUpperCase()] && !/manager/i.test(p.role);
+  });
+  var managers = on.filter(function (p) { return /manager/i.test(p.role); });
+
+  Logger.log('');
+  Logger.log('=== IN THE DROPDOWN BUT HAS NEVER SUBMITTED A FACT FIND (%s) ===', never.length);
+  never.forEach(function (p) { Logger.log('   %s  %s', p.code || '(no code)', p.name); });
+  Logger.log('Set Active = No against those to clear them out of the dropdown.');
+
+  Logger.log('');
+  Logger.log('=== KEEP THESE — managers, they sign in to review (%s) ===', managers.length);
+  managers.forEach(function (p) { Logger.log('   %s  %s (%s)', p.code || '—', p.name, p.role); });
+
+  var actives = on.filter(function (p) { return used[_str(p.code).toUpperCase()]; });
+  Logger.log('');
+  Logger.log('=== ACTUALLY USING IT (%s) ===', actives.length);
+  actives.sort(function (a, b) {
+    return used[_str(b.code).toUpperCase()] - used[_str(a.code).toUpperCase()]; })
+    .forEach(function (p) {
+      Logger.log('   %s  %-28s %s fact find(s)', p.code, p.name, used[_str(p.code).toUpperCase()]); });
+}
