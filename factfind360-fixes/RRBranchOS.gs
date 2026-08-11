@@ -8,15 +8,12 @@
 //  1. Apps Script ▸ "RR Branch FF System" ▸ Files ▸ + ▸ Script.
 //     Name it  RRBranchOS  and paste this whole file in.
 //
-//  2. In Code.gs, find  function ffLoadRoster_()  and replace its ENTIRE body
-//     with one line, so it becomes exactly this:
+//  2. Make FOUR small edits to existing functions. In each case keep the
+//     function name and replace only what is described.
 //
-//         function ffLoadRoster_() {
-//           return rrbRosterFromAccess_();
-//         }
+//     (a) Code.gs — function ffLoadRoster_()  →  replace its ENTIRE body with:
+//             return rrbRosterFromAccess_();
 //
-//     (Delete everything else that was inside it. Keep the function name — all
-//     twelve callers keep working, and the return shape is identical.)
 //
 //  3. Deploy ▸ Manage deployments ▸ Edit (pencil) ▸ New version ▸ Deploy.
 //     Keep the SAME deployment so the /exec URL does not change.
@@ -24,8 +21,11 @@
 //  4. Run  rrbSetup()  once from the editor and read the log. It clears the
 //     stale cache, installs the 5pm trigger, and prints a health check.
 //
-//  Nothing else in Code.gs changes. ffLookupDirectManager_ is left alone on
-//  purpose — see PART 1.
+//  5. Publish the updated site (index.html) from the zip supplied alongside
+//     this file. Order does not matter — the new page sends a token AND the
+//     old parameters, so it works against either version of the server.
+//
+//  ffLookupDirectManager_ is left alone on purpose — see PART 1.
 // ═════════════════════════════════════════════════════════════════════════════
 
 
@@ -549,7 +549,11 @@ function rrbSetup() {
   // 1. The old code cached an EMPTY roster for 30 minutes. Until that is
   //    cleared the new code returns the same empty result and nothing looks
   //    fixed. This is the step everyone skips.
-  try { CacheService.getScriptCache().remove('rrb_ff_roster'); Logger.log('1. roster cache cleared'); }
+  try {
+    CacheService.getScriptCache().remove('rrb_ff_roster');
+    CacheService.getScriptCache().remove('rrb_unit_parent');
+    Logger.log('1. roster + hierarchy caches cleared');
+  }
   catch (e) { Logger.log('1. cache clear failed: %s', e.message); }
 
   // 2. Roster health
@@ -572,9 +576,161 @@ function rrbSetup() {
     .atHour(17).everyDays(1).inTimezone('America/Port_of_Spain').create();
   Logger.log('4. digest scheduled 17:00 daily (America/Port_of_Spain)');
 
-  // 5. Audit sheet vs hardcoded map
-  Logger.log('5. routing audit:');
+  // 5. Reporting hierarchy, as read from the Access tab
+  Logger.log('5. reporting hierarchy:');
+  rrbShowHierarchy();
+
+  // 6. Audit sheet vs hardcoded map
+  Logger.log('6. routing audit:');
   rrbAuditRouting();
 
   Logger.log('=== done. Run rrbMdPreview() to see the digest numbers without emailing. ===');
+}
+
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  PART 6 — who reports to whom
+// ═════════════════════════════════════════════════════════════════════════════
+//
+// The code used to treat "Assistant Branch Manager" as branch-wide, identical
+// to the Branch Manager. That is not the structure: an ABM sees their own unit
+// and the units beneath them, not the whole branch.
+//
+// Set the parent of each unit here. A manager sees their own unit plus every
+// unit under them, to any depth. Ricky is the root and therefore sees all.
+//
+//   *** CONFIRM AKAASH ***  He is currently set to report to Ricky. If his unit
+//   sits under Kerwyn instead, change 'ricky' to 'kerwyn' on that line and
+//   nothing else needs touching.
+
+// The Unit column on the Access tab already means "who I report to". For an
+// agent it names their manager. Applying the SAME meaning to a manager's own
+// row gives the whole reporting tree from the sheet, with no new column and no
+// code change when someone is hired or moved:
+//
+//   Ricky   Branch Manager             Unit = Ricky Rampersad    (self = root)
+//   Kerwyn  Assistant Branch Manager   Unit = Ricky Rampersad    (reports to Ricky)
+//   Gary    Unit Manager               Unit = Kerwyn Ramroach    (reports to Kerwyn)
+//   Akaash  Unit Manager               Unit = Ricky Rampersad    (reports to Ricky)
+//   agents  Agent                      Unit = their manager
+//
+// A manager whose Unit names themselves is a root and sees only their own unit
+// and whatever sits beneath them. Change a manager's Unit on the sheet and the
+// hierarchy changes on the next cache expiry — nothing here needs editing.
+
+// Used only when the sheet cannot be read or describes no managers at all.
+var RRB_UNIT_PARENT_FALLBACK = {
+  ricky:  null,
+  kerwyn: 'ricky',
+  gary:   'kerwyn',
+  akaash: 'ricky'
+};
+
+/**
+ * Builds {unitKey: parentUnitKey|null} from the Access tab. Cached for 30
+ * minutes alongside the roster; rrbSetup() clears both.
+ */
+function rrbUnitParent_() {
+  var cache = CacheService.getScriptCache();
+  var cached = cache.get('rrb_unit_parent');
+  if (cached) { try { return JSON.parse(cached); } catch (e) {} }
+
+  var tree = {};
+  try {
+    rrbAccessSheet_().forEach(function (p) {
+      if (!p.active) return;
+      if (!/manager/i.test(_str(p.role))) return;          // only managers form the tree
+      var mine = rrbUnitKeyForName_(p.name);
+      if (!mine) return;
+      var parent = rrbUnitKeyForName_(p.unit);
+      tree[mine] = (!parent || parent === mine) ? null : parent;
+    });
+  } catch (err) {
+    Logger.log('rrbUnitParent_: cannot read the Access tab (%s) — using the built-in default.',
+               err && err.message);
+    return RRB_UNIT_PARENT_FALLBACK;
+  }
+
+  if (!Object.keys(tree).length) {
+    Logger.log('rrbUnitParent_: no manager rows found on the Access tab — using the built-in default. ' +
+               'Check the Role column says "Manager" for your managers.');
+    return RRB_UNIT_PARENT_FALLBACK;
+  }
+
+  // A cycle (two managers pointing at each other) would hang rrbUnitsUnder_.
+  // Break it by rooting anyone whose chain does not terminate.
+  Object.keys(tree).forEach(function (k) {
+    var seen = {}, cur = k;
+    while (cur && tree[cur]) {
+      if (seen[cur]) {
+        Logger.log('rrbUnitParent_: reporting loop involving "%s" — rooting it. ' +
+                   'Two managers list each other in the Unit column.', k);
+        tree[k] = null;
+        return;
+      }
+      seen[cur] = 1; cur = tree[cur];
+    }
+  });
+
+  try { cache.put('rrb_unit_parent', JSON.stringify(tree), 1800); } catch (e) {}
+  return tree;
+}
+
+/** A unit key plus every unit beneath it, to any depth. */
+function rrbUnitsUnder_(key) {
+  var parent = rrbUnitParent_();
+  var out = [key];
+  var grew = true;
+  while (grew) {
+    grew = false;
+    for (var k in parent) {
+      if (out.indexOf(k) < 0 && out.indexOf(parent[k]) > -1) { out.push(k); grew = true; }
+    }
+  }
+  return out;
+}
+
+/**
+ * The scope a person gets. Only the root sees {kind:'branch'}; every other
+ * manager gets {kind:'units', unitKeys:[...]} covering themselves and anyone
+ * beneath them. Agents see only their own cases.
+ */
+function rrbScopeForRole_(role, unitKey, code) {
+  role = String(role || '');
+  if (/branch manager/i.test(role) && !/assistant/i.test(role)) return { kind: 'branch' };
+  if (/manager/i.test(role)) {
+    // Branch-wide comes from the ROLE above, never from the tree. That keeps
+    // the Branch Manager correct even while every manager still points at
+    // themselves on the sheet — which is how it stands today.
+    var parent = rrbUnitParent_();
+    var key = unitKey || '';
+    if (!key || !(key in parent)) return { kind: 'unit', unitKey: key };
+    return { kind: 'units', unitKeys: rrbUnitsUnder_(key) };
+  }
+  return { kind: 'agent', code: code || '' };
+}
+
+/** Does this scope include a given unit? Understands every scope shape. */
+function rrbScopeHasUnit_(scope, unitKey) {
+  if (!scope) return false;
+  if (scope.kind === 'branch') return true;
+  if (scope.kind === 'units')  return (scope.unitKeys || []).indexOf(unitKey) > -1;
+  if (scope.kind === 'unit')   return unitKey === scope.unitKey;
+  return false;
+}
+
+/** Prints the resulting visibility for each manager. Run after changing the map. */
+function rrbShowHierarchy() {
+  var PARENT = rrbUnitParent_();
+  Logger.log('=== unit hierarchy (from the Access tab) ===');
+  for (var k in PARENT) {
+    var parent = PARENT[k] || '(root)';
+    var role = (k === 'ricky') ? 'Branch Manager'
+             : (k === 'kerwyn') ? 'Assistant Branch Manager' : 'Unit Manager';
+    var sc = rrbScopeForRole_(role, k, '');
+    var sees = sc.kind === 'branch' ? 'the whole branch'
+             : sc.kind === 'units'  ? sc.unitKeys.join(' + ')
+                                    : sc.unitKey;
+    Logger.log('  %-8s reports to %-8s role=%-26s sees: %s', k, parent, role, sees);
+  }
 }
