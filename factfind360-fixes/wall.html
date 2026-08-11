@@ -301,7 +301,19 @@
       <div class="grow" id="perf"></div>
     </div>
   </section>
-</main>
+  <!-- 8 · PRODUCTION -->
+  <section class="panel" id="p7">
+    <div class="ptitle"><h1 id="t_p7"></h1><span class="tag">Production</span></div>
+    <div class="stats">
+      <div class="stat g"><div class="k">API</div><div class="val num" id="prApi">—</div><div class="s" id="prApiSub">annual premium income, month to date</div></div>
+      <div class="stat"><div class="k">Applications</div><div class="val num" id="prApps">0</div><div class="s">plans the client is taking</div></div>
+      <div class="stat v"><div class="k">Clients</div><div class="val num" id="prCli">0</div><div class="s" id="prCliSub">of cases written</div></div>
+    </div>
+    <div class="card grow">
+      <h2><span>By product</span><em>annualised</em></h2>
+      <div class="rows grow" id="prProd"></div>
+    </div>
+  </section>
 
   <!-- 6 · THE MONTH -->
   <section class="panel" id="p5">
@@ -326,8 +338,9 @@
       <div class="card"><h2><span>Working the weekend</span><em>who turned up</em></h2><div class="cheer" id="wWho"></div></div>
     </div>
   </section>
+</main>
 
-<div class="ticks"><span class="tk" id="k0"></span><span class="tk" id="k1"></span><span class="tk" id="k2"></span><span class="tk" id="k3"></span><span class="tk" id="k4"></span><span class="tk" id="k5"></span><span class="tk" id="k6"></span></div>
+<div class="ticks"><span class="tk" id="k0"></span><span class="tk" id="k1"></span><span class="tk" id="k2"></span><span class="tk" id="k3"></span><span class="tk" id="k4"></span><span class="tk" id="k5"></span><span class="tk" id="k6"></span><span class="tk" id="k7"></span></div>
 <div id="burst"></div>
 
 <script>
@@ -335,7 +348,7 @@
 var ENDPOINT = 'https://script.google.com/macros/s/AKfycbyUnSnQtumx9emW_LsWQf6QKZFBGGnaTn3-PfAZDfjtZuBUSha-OuIXPT30qkMrXMoczA/exec';
 var WALL_KEY = '8ef87867eacb4812b455fb3124dde161';
 
-var POLL_MS = 40000, ROTATE_MS = 15000, STALE_MS = 150000, PANELS = 7;
+var POLL_MS = 40000, ROTATE_MS = 15000, STALE_MS = 150000, PANELS = 8;
 var lastGood=null, lastAt=0, panel=0, lastJustIn='', prevRank={}, seenApprovals={}, firstPaint=true;
 
 function $(id){ return document.getElementById(id); }
@@ -494,6 +507,9 @@ function headlines(d){
                                          : 'The month ahead');
   set('t_p6', WK.week>0 ? '<b>'+WK.week+'</b> done at the weekend'
                         : (W.submitted? '<b>'+W.submitted+'</b> this week' : 'A fresh week'));
+  var PR=(d.production&&d.production.mtd)||{api:0,apps:0};
+  set('t_p7', PR.api>0 ? '<b>'+big(PR.api)+'</b> of API written this month'
+                       : 'Production opens with the first application');
 }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){
   return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
@@ -550,6 +566,28 @@ function render(d){
     : '<div class="empty">Nobody worked this weekend. Monday is a fresh start.</div>';
   var wns=$('wWho').querySelectorAll('.wn');
   (WK.who||[]).forEach(function(w,i){ if(wns[i]) wns[i].textContent=w.name; });
+
+  /* 8 · production */
+  var P=(d.production||{}), MT=(P.mtd||{apps:0,clients:0,api:0,cases:0});
+  countTo($('prApi'), MT.api||0, big);
+  countTo($('prApps'), MT.apps||0);
+  countTo($('prCli'), MT.clients||0);
+  $('prApiSub').textContent='annual premium income · '+(M.label||'month to date')+
+    ((M.apiAssumed>0)?' · '+M.apiAssumed+' line(s) assumed monthly':'');
+  $('prCliSub').textContent=(MT.cases||0)+' fact finds written';
+  var pr=(P.products||[]), pmx=Math.max.apply(null,[1].concat(pr.map(function(x){return x.api;})));
+  $('prProd').innerHTML = pr.length ? pr.map(function(x,i){
+    return '<div class="lrow" style="grid-template-columns:1.5em 1fr repeat(2,minmax(4.6em,auto))">'+
+      '<div class="rank num">'+(i+1)+'</div>'+
+      '<div><div class="who"><span class="pn"></span></div>'+
+        '<div class="bar"><i data-w="'+Math.max(5,Math.round(x.api/pmx*100))+'"></i></div></div>'+
+      '<div class="met"><b>'+x.apps+'</b><span>apps</span></div>'+
+      '<div class="met"><b>'+big(x.api)+'</b><span>API</span></div></div>';
+  }).join('') : '<div class="empty">Nothing taken up yet this month. API appears here as clients accept.</div>';
+  var pns=$('prProd').querySelectorAll('.pn');
+  pr.forEach(function(x,i){ if(pns[i]) pns[i].textContent=x.name; });
+  requestAnimationFrame(function(){ $('prProd').querySelectorAll('.bar i').forEach(function(b,i){
+    setTimeout(function(){ b.style.width=b.dataset.w+'%'; },55*i); }); });
 
   /* 3 · recognition */
   renderSpotlight(d);

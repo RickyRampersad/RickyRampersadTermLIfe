@@ -24,8 +24,37 @@ var WALL_FIELDS = [
   'submittedAt', 'mgrReviewedAt', 'appType', 'repDetected', 'fi_uwEvidence',
   'insuranceNeed_calc', 'cashSurplus_calc',
   'rec1Amt','rec2Amt','rec3Amt','rec4Amt','rec5Amt','rec6Amt',
-  'rec1Prem','rec2Prem','rec3Prem','rec4Prem','rec5Prem','rec6Prem'
+  'rec1Prem','rec2Prem','rec3Prem','rec4Prem','rec5Prem','rec6Prem',
+  'rec1Mode','rec2Mode','rec3Mode','rec4Mode','rec5Mode','rec6Mode',
+  // What the client actually took, which is the production number. Amounts and
+  // a yes/no — still nothing that identifies anybody.
+  'dec1Prem','dec2Prem','dec3Prem','dec4Prem','dec5Prem','dec6Prem',
+  'dec1Go','dec2Go','dec3Go','dec4Go','dec5Go','dec6Go',
+  'dec1Plan','dec2Plan','dec3Plan','dec4Plan','dec5Plan','dec6Plan',
+  'rec1Rec','rec2Rec','rec3Rec','rec4Rec','rec5Rec','rec6Rec'
 ];
+
+/**
+ * Annual Premium Income.
+ *
+ * A premium means nothing until you know how often it is paid — $500 monthly
+ * and $500 annually are the same figure and twelve times the business. This
+ * annualises by mode.
+ *
+ * Mode is a new field, so every case written before it existed has none. Those
+ * are annualised as monthly, which is how premiums are quoted here, and the
+ * count of assumed rows travels with the total so nobody mistakes an
+ * assumption for a fact.
+ */
+function rrbApiMultiplier_(mode) {
+  var m = _str(mode).toLowerCase();
+  if (/annual/.test(m) && !/semi/.test(m)) return 1;
+  if (/semi/.test(m)) return 2;
+  if (/quarter/.test(m)) return 4;
+  if (/month/.test(m)) return 12;
+  return 12;                       // unstated — treated as monthly
+}
+function rrbApiAssumed_(mode) { return _str(mode) === ''; }
 
 /** One-time setup. Prints the URL to open on the TV. */
 function rrbWallSetup() {
@@ -109,11 +138,16 @@ function rrbWall(e) {
 
   var tz = Session.getScriptTimeZone();
   var today = { submitted: 0, approved: 0 };
-  var week  = { submitted: 0, approved: 0, premium: 0, need: 0, cover: 0 };
+  var week  = { submitted: 0, approved: 0, premium: 0, need: 0, cover: 0, api: 0 };
   var lastWeek = { submitted: 0 };
-  var month = { submitted: 0, approved: 0, premium: 0, need: 0, cover: 0 };
+  var month = { submitted: 0, approved: 0, premium: 0, need: 0, cover: 0,
+                api: 0, apiAssumed: 0 };
   // Sunday counts. A branch that works the weekend should see it said out loud.
   var weekend = { week: 0, month: 0 }, weekendWho = {};
+  // The production board: applications taken, clients, products and API.
+  var prod = { mtd: { apps: 0, clients: 0, api: 0, assumed: 0, cases: 0 },
+               wtd: { apps: 0, clients: 0, api: 0, assumed: 0, cases: 0 } };
+  var products = {};
   var agents = {}, monthAgents = {}, managers = {}, approvals = [];
 
   // Fourteen dated buckets, pre-seeded so quiet days are drawn as gaps rather
@@ -145,10 +179,27 @@ function rrbWall(e) {
     var sub    = subAt ? new Date(subAt) : null;
     if (sub && isNaN(sub.getTime())) sub = null;
 
-    var prem = 0, amt = 0;
+    var prem = 0, amt = 0, api = 0, apiTaken = 0, apps = 0, assumed = 0;
+    var prodSeen = {};
     for (var i = 1; i <= 6; i++) {
-      prem += rrbNum_(get(row, 'rec' + i + 'Prem'));
+      var rp = rrbNum_(get(row, 'rec' + i + 'Prem'));
+      var md = get(row, 'rec' + i + 'Mode');
+      var mult = rrbApiMultiplier_(md);
+      prem += rp;
       amt  += rrbNum_(get(row, 'rec' + i + 'Amt'));
+      if (rp > 0) {
+        api += rp * mult;
+        if (rrbApiAssumed_(md)) assumed++;
+      }
+      // Production: what the client is actually taking.
+      var go = _str(get(row, 'dec' + i + 'Go'));
+      if (/^yes$/i.test(go)) {
+        apps++;
+        var dp = rrbNum_(get(row, 'dec' + i + 'Prem')) || rp;
+        apiTaken += dp * mult;
+        var pl = _str(get(row, 'dec' + i + 'Plan')) || _str(get(row, 'rec' + i + 'Rec'));
+        if (pl) prodSeen[pl] = (prodSeen[pl] || 0) + dp * mult;
+      }
     }
 
     if (sub) {
@@ -164,27 +215,40 @@ function rrbWall(e) {
       var need = rrbNum_(get(row, 'insuranceNeed_calc'));
 
       if (sub >= startOfMonth) {
-        month.need += need; month.cover += amt;
+        month.need += need; month.cover += amt; month.api += api;
+        month.apiAssumed += assumed;
+        if (apps) { prod.mtd.apps += apps; prod.mtd.clients++; prod.mtd.api += apiTaken; }
+        prod.mtd.cases++;
+        Object.keys(prodSeen).forEach(function (k) {
+          if (!products[k]) products[k] = { name: k, apps: 0, api: 0 };
+          products[k].api += prodSeen[k]; products[k].apps++;
+        });
         if (isWeekend) weekend.month++;
         if (agent) {
           if (!monthAgents[agent]) monthAgents[agent] =
-            { name: agent, count: 0, premium: 0, cover: 0, need: 0 };
+            { name: agent, count: 0, premium: 0, cover: 0, need: 0, api: 0, apps: 0 };
           monthAgents[agent].count++;
           monthAgents[agent].premium += prem;
           monthAgents[agent].cover   += amt;
           monthAgents[agent].need    += need;
+          monthAgents[agent].api     += apiTaken;
+          monthAgents[agent].apps    += apps;
         }
       }
       if (sub >= startOfWeek) {
-        week.need += need; week.cover += amt;
+        week.need += need; week.cover += amt; week.api += api;
+        if (apps) { prod.wtd.apps += apps; prod.wtd.clients++; prod.wtd.api += apiTaken; }
+        prod.wtd.cases++;
         if (isWeekend) { weekend.week++; if (agent) weekendWho[agent] = (weekendWho[agent] || 0) + 1; }
         if (agent) {
           if (!agents[agent]) agents[agent] =
-            { name: agent, count: 0, premium: 0, cover: 0, need: 0 };
+            { name: agent, count: 0, premium: 0, cover: 0, need: 0, api: 0, apps: 0 };
           agents[agent].count++;
           agents[agent].premium += prem;
           agents[agent].cover   += amt;
           agents[agent].need    += need;
+          agents[agent].api     += apiTaken;
+          agents[agent].apps    += apps;
         }
       }
       if (!justIn || sub > new Date(justIn.at)) {
@@ -277,8 +341,19 @@ function rrbWall(e) {
                  .sort(function (a, b) { return b.n - a.n; }) },
     month: { submitted: month.submitted, approved: month.approved,
              premium: Math.round(month.premium), need: Math.round(month.need),
-             cover: Math.round(month.cover),
+             cover: Math.round(month.cover), api: Math.round(month.api),
+             apiAssumed: month.apiAssumed,
              label: Utilities.formatDate(now, tz, 'MMMM') },
+    // The production board. API is annualised from the premium mode.
+    production: {
+      mtd: { apps: prod.mtd.apps, clients: prod.mtd.clients,
+             api: Math.round(prod.mtd.api), cases: prod.mtd.cases },
+      wtd: { apps: prod.wtd.apps, clients: prod.wtd.clients,
+             api: Math.round(prod.wtd.api), cases: prod.wtd.cases },
+      products: Object.keys(products).map(function (k) {
+        return { name: k, apps: products[k].apps, api: Math.round(products[k].api) };
+      }).sort(function (a, b) { return b.api - a.api; }).slice(0, 8)
+    },
     series: seriesOrder.map(function (k) { return series[k]; }),
     leaders: toList(agents, 'count').slice(0, 8),
     monthLeaders: toList(monthAgents, 'count').slice(0, 8),

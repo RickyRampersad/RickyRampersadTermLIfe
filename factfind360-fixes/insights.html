@@ -163,7 +163,7 @@
   <div class="card c5"><h3><span>Managers</span><em>median days to decide</em></h3><div id="mgrs"></div></div>
 
   <div class="card c4"><h3><span>Time to decision</span><em>days, distribution</em></h3><div id="cycle"></div></div>
-  <div class="card c4"><h3><span>Products recommended</span><em>share of lines</em></h3><div id="products"></div></div>
+  <div class="card c4"><h3><span>Production by product</span><em>API taken</em></h3><div id="products"></div></div>
   <div class="card c4"><h3><span>When fact finds land</span><em>day × hour</em></h3><div id="heat"></div></div>
 
   <div class="card c12"><h3><span>Needs attention</span><em>named, oldest first</em></h3><div class="att" id="attention"></div></div>
@@ -180,6 +180,18 @@ var TOK_KEY='rrb_insights_token';
 /* ── helpers ───────────────────────────────────────────────────────────── */
 function num(v){ var n=parseFloat(String(v==null?'':v).replace(/[^0-9.\-]/g,'')); return isFinite(n)?n:0; }
 function str(v){ return v==null?'':String(v).trim(); }
+/* Annual Premium Income. A premium is meaningless until you know how often it
+   is paid — $500 monthly and $500 annually are the same figure and twelve
+   times the business. Mode is a new field, so cases written before it existed
+   have none; those annualise as monthly, which is how premiums are quoted
+   here, and the count of assumed lines is reported rather than buried. */
+function apiMult(mode){
+  var m=str(mode).toLowerCase();
+  if(/annual/.test(m) && !/semi/.test(m)) return 1;
+  if(/semi/.test(m)) return 2;
+  if(/quarter/.test(m)) return 4;
+  return 12;
+}
 function money(n){ if(!n) return 'TT$0';
   if(n>=1e6) return 'TT$'+(n/1e6).toFixed(n>=1e7?0:1)+'M';
   if(n>=1e3) return 'TT$'+Math.round(n/1e3)+'k'; return 'TT$'+Math.round(n); }
@@ -207,14 +219,25 @@ function bindTip(el,text){ el.addEventListener('mousemove',function(e){
 /* ── data shaping ──────────────────────────────────────────────────────── */
 function shape(raw){
   return raw.map(function(r){
-    var recs=[], prem=0, cover=0;
-    for(var i=1;i<=6;i++){ var p=str(r['rec'+i+'Rec']); if(!p) continue;
-      recs.push(p); prem+=num(r['rec'+i+'Prem']); cover+=num(r['rec'+i+'Amt']); }
+    var recs=[], prem=0, cover=0, api=0, apiTaken=0, apps=0, assumed=0, taken=[];
+    for(var i=1;i<=6;i++){
+      var p=str(r['rec'+i+'Rec']); var rp=num(r['rec'+i+'Prem']);
+      var mult=apiMult(r['rec'+i+'Mode']);
+      if(p){ recs.push(p); prem+=rp; cover+=num(r['rec'+i+'Amt']); }
+      if(rp>0){ api+=rp*mult; if(!str(r['rec'+i+'Mode'])) assumed++; }
+      if(/^yes$/i.test(str(r['dec'+i+'Go']))){
+        apps++;
+        var dp=num(r['dec'+i+'Prem'])||rp;
+        apiTaken+=dp*mult;
+        var pl=str(r['dec'+i+'Plan'])||p; if(pl) taken.push({plan:pl, api:dp*mult});
+      }
+    }
     var sub=d(r.submittedAt), rev=d(r.mgrReviewedAt), app=d(r.approvedAt), iv=d(r.interviewDate);
     return { id:str(r.submissionId), agent:title(r.advisorName)||str(r.agentCode)||'Unknown',
       code:str(r.agentCode).toUpperCase(), manager:title(r.reviewerName)||title(r.mgrName)||'Unassigned',
       status:str(r.status).toLowerCase(), advice:/^advice$/i.test(str(r.appType)),
       sub:sub, rev:rev, app:app, iv:iv, recs:recs, prem:prem, cover:cover,
+      api:api, apiTaken:apiTaken, apps:apps, assumed:assumed, taken:taken,
       need:num(r.insuranceNeed_calc), surplus:num(r.cashSurplus_calc),
       rep:/^(y|yes|true|1)$/i.test(str(r.repDetected)),
       client:str(r.clientName)||str(r.fullName)||'(client)' };
@@ -280,7 +303,11 @@ function render(){
   kpi($('k_cyc'),'Median decision',m===null?'—':(Math.round(m*10)/10)+'d',
       decided.length+' decided', m===null?'':(m>=7?'r':m>=3?'a':'g'));
   kpi($('k_act'),'Active agents',Object.keys(activeAgents).length,'submitted in range','t');
-  kpi($('k_prem'),'Recommended',money(prem),'monthly premium','vi');
+  var apiW = rows.reduce(function(a,r){return a+r.apiTaken;},0);
+  var appsW = rows.reduce(function(a,r){return a+r.apps;},0);
+  var asum = rows.reduce(function(a,r){return a+r.assumed;},0);
+  kpi($('k_prem'),'API written',money(apiW),
+      appsW+' application'+(appsW===1?'':'s')+(asum?' · '+asum+' assumed monthly':''),'vi');
   kpi($('k_ratio'),'Recommend ratio',ratio===null?'—':ratio+'%',
       full.length?'cover vs need, '+full.length+' cases':'needs full-disclosure cases',
       ratio===null?'':(ratio<60?'r':ratio<80?'a':'g'));
@@ -340,8 +367,9 @@ function render(){
   (function(){
     var by={};
     rows.forEach(function(r){
-      var a=by[r.agent]=by[r.agent]||{name:r.agent,n:0,app:0,prem:0,adv:0,last:null,cov:0,need:0};
-      a.n++; a.prem+=r.prem; if(r.status==='approved') a.app++; if(r.advice) a.adv++;
+      var a=by[r.agent]=by[r.agent]||{name:r.agent,n:0,app:0,prem:0,adv:0,last:null,cov:0,need:0,api:0,apps:0};
+      a.n++; a.prem+=r.prem; a.api+=r.apiTaken; a.apps+=r.apps;
+      if(r.status==='approved') a.app++; if(r.advice) a.adv++;
       if(!a.last||r.sub>a.last) a.last=r.sub;
       if(!r.advice&&r.need>0&&r.cover>0){ a.cov+=r.cover; a.need+=r.need; }
     });
@@ -349,7 +377,7 @@ function render(){
     if(!list.length){ $('agents').innerHTML='<div class="empty">Nobody submitted in this range.</div>'; return; }
     list.sort(function(a,b){return b.n-a.n;});
     $('agents').innerHTML='<table><thead><tr><th>Agent</th><th>Fact finds</th><th>Approved</th>'+
-      '<th>Ratio</th><th>Premium</th><th>Last seen</th><th style="width:96px">Trend</th></tr></thead><tbody>'+
+      '<th>Ratio</th><th>Apps</th><th>API</th><th>Last seen</th><th style="width:96px">Trend</th></tr></thead><tbody>'+
       list.map(function(a){
         var q=Math.round(days(a.last,new Date()));
         var rt=a.need? Math.round(a.cov/a.need*100):null;
@@ -358,7 +386,8 @@ function render(){
           '<td>'+av(a.name)+esc(a.name)+(a.adv?' <span class="pill mute">'+a.adv+' limited</span>':'')+'</td>'+
           '<td class="num">'+a.n+'</td><td class="num">'+a.app+'</td>'+
           '<td>'+(rt===null?'<span class="pill mute">—</span>':'<span class="pill '+(rt<60?'bad':rt<80?'warn':'ok')+'">'+rt+'%</span>')+'</td>'+
-          '<td class="num">'+money(a.prem)+'</td>'+
+          '<td class="num">'+a.apps+'</td>'+
+          '<td class="num">'+money(a.api)+'</td>'+
           '<td><span class="pill '+(q>14?'bad':q>7?'warn':'mute')+'">'+(q<1?'today':q+'d')+'</span></td>'+
           '<td><div class="mini">'+spark(s,'#2DD4BF',26)+'</div></td></tr>';
       }).join('')+'</tbody></table>'+
@@ -415,17 +444,21 @@ function render(){
 
   /* Product mix */
   (function(){
+    // Production, not intention — what the client actually took, annualised.
     var c={}, tot=0;
-    rows.forEach(function(r){ r.recs.forEach(function(p){ c[p]=(c[p]||0)+1; tot++; }); });
-    var list=Object.keys(c).map(function(k){return {p:k,n:c[k]};}).sort(function(a,b){return b.n-a.n;}).slice(0,7);
+    rows.forEach(function(r){ r.taken.forEach(function(x){
+      c[x.plan]=(c[x.plan]||0)+x.api; tot+=x.api; }); });
+    var list=Object.keys(c).map(function(k){return {p:k,n:c[k]};})
+      .sort(function(a,b){return b.n-a.n;}).slice(0,7);
     if(!list.length){ $('products').innerHTML='<div class="empty">No recommendations recorded in this range.</div>'; return; }
     var mx=list[0].n, pal=['#2DD4BF','#60A5FA','#A78BFA','#F5B935','#34D399','#FB7185','#93A7C4'];
     $('products').innerHTML=list.map(function(x,i){
       return '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11.5px;font-weight:650;margin-bottom:3px;gap:8px">'+
         '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(x.p)+'</span>'+
-        '<span class="num" style="color:var(--ink-3)">'+Math.round(x.n/tot*100)+'%</span></div>'+
+        '<span class="num" style="color:var(--ink-3)">'+money(x.n)+'</span></div>'+
         '<div class="bar"><i data-w="'+Math.round(x.n/mx*100)+'" style="background:'+pal[i%pal.length]+'"></i></div></div>';
-    }).join('')+'<div class="note">Recommended, not sold — this system records advice, not issued policies.</div>';
+    }).join('')+'<div class="note">Annual Premium Income from what the client accepted. '+
+      'Still what was <em>taken on the fact find</em>, not what underwriting issued.</div>';
     requestAnimationFrame(function(){ $('products').querySelectorAll('.bar i').forEach(function(b,i){
       setTimeout(function(){ b.style.width=b.dataset.w+'%'; },55*i); }); });
   })();
