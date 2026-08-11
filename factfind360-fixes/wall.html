@@ -95,6 +95,8 @@
       font-size:.82em; font-weight:800; color:#061018; letter-spacing:-.02em}
   .row.lead .av{box-shadow:0 0 0 .16em rgba(245,185,53,.5), 0 0 1.4em rgba(245,185,53,.3)}
   .who{font-size:1.04em; font-weight:650; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .prow .who{font-size:1.18em; font-weight:700}
+  .prow .bar{height:.34em; margin-top:.32em; opacity:.72}
   .mv{font-size:.72em; font-weight:800; margin-left:.4em}
   .mv.u{color:var(--teal)} .mv.d{color:var(--red)} .mv.n{color:var(--gold)}
   .bar{height:.52em; border-radius:.26em; background:rgba(255,255,255,.06); overflow:hidden; margin-top:.28em}
@@ -183,19 +185,35 @@
                   letter-spacing:.07em; text-transform:uppercase; margin-top:.1em}
   .lrow.lead .met b{color:var(--gold)}
   .prow .met.pipe b{color:var(--violet)}
+  /* Only the two that matter carry colour, so the eye lands on them. */
+  .prow .met.subm b{color:var(--ink)}
+  .prow .met b{color:var(--ink-2)}
+  .prow .met.sold b, .prow .met.api b, .prow .met.pipe b{font-weight:800}
   .prow .met.subm b{color:var(--blue)}
-  .prow{display:grid; grid-template-columns:1.5em 2.5em 1fr repeat(7,minmax(4.2em,auto));
+  .prow{display:grid; grid-template-columns:1.5em 2.5em 1fr repeat(7,6.3em);
         align-items:center; gap:.7em; padding:.42em 0}
-  .prow + .prow{border-top:1px solid rgba(255,255,255,.045)}
+  .prow + .prow{border-top:1px solid rgba(255,255,255,.06)}
+  .prow{padding:.62em 0}
+  .prow.lead{background:linear-gradient(90deg,rgba(245,185,53,.07),transparent 60%);
+             border-radius:.5em; padding-left:.5em; margin-left:-.5em}
   .prow .met{text-align:right}
-  .prow .met b{display:block; font-size:1.05em; font-weight:800; line-height:1.1}
-  .prow .met span{display:block; font-size:.56em; color:var(--ink-3); font-weight:700;
-                  letter-spacing:.06em; text-transform:uppercase; margin-top:.1em}
+  /* The column heading says what this is. Repeating it under all forty numbers
+     on the screen was the loudest thing on the panel and carried no
+     information at all. */
+  .prow .met b{display:block; font-size:1.32em; font-weight:800; line-height:1.05;
+               font-variant-numeric:tabular-nums; letter-spacing:-.02em}
+  .prow .met span{display:block; font-size:.6em; color:var(--ink-4); font-weight:700;
+                  margin-top:.05em}
   .prow .met.sold b{color:var(--teal)}
   .prow .met.api b{color:var(--gold)}
-  .phead{display:grid; grid-template-columns:1.5em 2.5em 1fr repeat(7,minmax(4.2em,auto));
-         gap:.7em; font-size:.56em; letter-spacing:.13em; text-transform:uppercase;
-         color:var(--ink-4); font-weight:800; padding-bottom:.35em; border-bottom:1px solid var(--line)}
+  /* Track widths in em resolve against the grid CONTAINER's font-size. Setting
+     the header small here made its columns 97px against the rows' 157px, so
+     nothing lined up. The container keeps the row's font-size and only the
+     label text is shrunk. */
+  .phead{display:grid; grid-template-columns:1.5em 2.5em 1fr repeat(7,6.3em);
+         gap:.7em; padding:0 0 .5em; border-bottom:1px solid var(--line-2)}
+  .phead > div{font-size:.62em; letter-spacing:.14em; text-transform:uppercase;
+               color:var(--ink-3); font-weight:800; align-self:end}
   .phead div:nth-child(n+4){text-align:right}
   .lhead{display:grid; grid-template-columns:1.5em 2.5em 1fr repeat(3,minmax(4.6em,auto));
          gap:.8em; font-size:.6em; letter-spacing:.14em; text-transform:uppercase;
@@ -502,13 +520,13 @@ function producerRows(list, box, key, rankOn){
       '<div class="av" style="background:'+av2.bg+'">'+av2.ini+'</div>'+
       '<div><div class="who"><span class="nm"></span>'+mv+'</div>'+
         '<div class="bar"><i data-w="'+Math.max(4,Math.round(((a[rankOn]||0)/top)*100))+'"></i></div></div>'+
-      '<div class="met"><b>'+(a.count||0)+'</b><span>fact finds</span></div>'+
-      '<div class="met"><b>'+big(a.need||0)+'</b><span>need found</span></div>'+
-      '<div class="met"><b>'+big(a.cover||0)+'</b><span>recommended</span></div>'+
-      '<div class="met sold"><b>'+big(a.sold||0)+'</b><span>sold &middot; '+(a.apps||0)+' apps</span></div>'+
-      '<div class="met subm"><b>'+big(a.apiRec||0)+'</b><span>API</span></div>'+
-      '<div class="met pipe"><b>'+big(a.pipeline||0)+'</b><span>pipeline</span></div>'+
-      '<div class="met api"><b>'+big(a.pickedUp||0)+'</b><span>picked up</span></div></div>';
+      '<div class="met"><b>'+(a.count||0)+'</b></div>'+
+      '<div class="met"><b>'+big(a.need||0)+'</b></div>'+
+      '<div class="met"><b>'+big(a.cover||0)+'</b></div>'+
+      '<div class="met sold"><b>'+big(a.sold||0)+'</b><span>'+(a.apps||0)+' apps</span></div>'+
+      '<div class="met subm"><b>'+big(a.apiRec||0)+'</b></div>'+
+      '<div class="met pipe"><b>'+big(a.pipeline||0)+'</b></div>'+
+      '<div class="met api"><b>'+big(a.pickedUp||0)+'</b></div></div>';
   }).join('');
   var nm=box.querySelectorAll('.nm');
   sorted.slice(0,7).forEach(function(a,i){ if(nm[i]) nm[i].textContent=a.name; prevRank[key+a.name]=i; });
