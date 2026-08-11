@@ -440,9 +440,9 @@ table.ptt td:first-child{width:38%;padding-right:12px;color:#64718e;font-weight:
     </div>
 
     <div class="hero">
-      <div class="lab" id="heroLab">Max Allowable Contribution</div>
+      <div class="lab" id="heroLab">Maximum company contribution</div>
       <div class="big mono" id="maxOut">$0</div>
-      <div class="note" id="heroNote">Greater of ⅓ Chargeable Income or 20% Emolument Income</div>
+      <div class="note" id="heroNote">The most the company may contribute — solved so Lines 10 and 12 never both read Yes</div>
     </div>
 
     <div class="info" id="vStatus" style="margin:0 0 10px"></div>
@@ -469,11 +469,13 @@ table.ptt td:first-child{width:38%;padding-right:12px;color:#64718e;font-weight:
         <div class="ln"><span class="l">⅓ Chargeable (Line 9)</span><span class="v" id="o_l9">$0</span></div>
         <div class="ln"><span class="l">20% Emolument (Line 11)</span><span class="v" id="o_l11">$0</span></div>
         <div class="ln"><span class="l">Total contributions (Line 8 front)</span><span class="v" id="o_l8c">$0</span></div>
-        <div class="ln tot"><span class="l">Maximum Contribution <span id="basis" style="font-weight:400;color:var(--muted);font-size:10.5px"></span></span><span class="v" id="o_max">$0</span></div>
+        <div class="ln tot"><span class="l">Maximum company contribution <span id="basis" style="font-weight:400;color:var(--muted);font-size:10.5px"></span></span><span class="v" id="o_max">$0</span></div>
       </div>
       <div class="btnrow" style="margin-top:12px">
         <button class="btn sm" onclick="printBIR()">Print BIR form</button>
+        <button class="btn sm" onclick="fillBIR()">Download BIR form PDF</button>
       </div>
+      <div class="status" id="st-bir"></div>
     </div>
     <div class="card"><h3><span class="n">E2</span>Employer’s Plan — selection</h3>
       <div class="info show" style="margin-bottom:12px"><b>The contribution above funds this plan.</b> The company answers, RIA recommends, you confirm.</div>
@@ -707,7 +709,7 @@ const setT=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
 function setMode(m){mode=m;document.getElementById('mFwd').classList.toggle('on',m==='fwd');document.getElementById('mRev').classList.toggle('on',m==='rev');
   document.getElementById('fwdCard').style.display=m==='fwd'?'':'none';
   document.getElementById('verdictWrap').style.display=m==='fwd'?'flex':'none';
-  document.getElementById('heroLab').textContent=m==='fwd'?'Max Allowable Contribution':'Maximum Company Contribution';
+  document.getElementById('heroLab').textContent='Maximum company contribution';
   calc();}
 function setRes(v){resident=v;document.getElementById('resYes').classList.toggle('on',v);document.getElementById('resNo').classList.toggle('on',!v);calc();}
 function setNisMode(m){nisMode=m;
@@ -788,12 +790,13 @@ function calc(){
     else{l11el.classList.add('win');l9el.classList.add('dim');basis='maximum: 20% Emolument Income (Line 11)';}
   }
   document.getElementById('basis').textContent = basis;
-  document.getElementById('heroNote').textContent = 'Greater of ⅓ Chargeable Income or 20% Emolument Income';
+  document.getElementById('heroNote').textContent = 'The most the company may contribute \u2014 the contribution itself raises emolument income, so this is solved, not simply the greater line.';
 
-  if(mode==='fwd'){
-    setVerdict('v10','v10t', totalContrib>fL9);
-    setVerdict('v12','v12t', totalContrib>fL11);
-  }
+  /* Lines 10 and 12 describe whatever is on screen — in reverse mode that is the
+     solved maximum, so refresh them there too rather than leaving the previous
+     forward-mode answer showing. */
+  setVerdict('v10','v10t', totalContrib>fL9);
+  setVerdict('v12','v12t', totalContrib>fL11);
 
   const w=document.getElementById('warn'), inf=document.getElementById('info');
   w.classList.remove('show'); inf.classList.remove('show');
@@ -805,8 +808,19 @@ function calc(){
   } else if(mode==='rev' && shown>0){
     inf.classList.add('show'); inf.innerHTML='✓ Maximum company contribution: <b>'+money(shown)+'</b> — set so total contributions reach the '+(revBasis||'—')+' limit without exceeding both lines (at most one Yes).';
   }
+  /* No room at all: the employee's own approved plans + NIS already exceed both
+     limits, so no company contribution can be approved. Adding one makes it
+     worse — the total rises by the full contribution while Line 9 rises by only
+     a third of it and Line 11 by a fifth. Say so plainly. */
+  if(maxSolve.co<=0 && salary>0 && Math.min(existingPlans,60000)>0){
+    const ex=Math.min(existingPlans,60000);
+    if(ex>fL9+0.01 && ex>fL11+0.01){
+      w.classList.add('show');
+      w.innerHTML='⚠ <b>No company contribution is possible for this employee.</b> Their own approved plans and NIS already come to <b>'+money(ex)+'</b> (Line 7), which exceeds BOTH ⅓ of chargeable income ('+money(fL9)+') and 20% of emolument ('+money(fL11)+'). Any company contribution would push Lines 10 and 12 to both read Yes. Reduce the existing deferred annuity or pension premiums first, or the salary must rise.';
+    }
+  }
   if(fChg<0 && salary>0){ w.classList.add('show'); w.innerHTML='⚠ Chargeable income is negative — allowances exceed income. The 20% Emolument basis (Line 11) governs the maximum.'; }
-  if(existingPlans>60000){ inf.classList.add('show'); inf.innerHTML='ℹ Existing premiums + NIS exceed the $60,000 deduction cap — Line 7 capped at $60,000.'; }
+  if(existingPlans>60000 && !w.classList.contains('show')){ inf.classList.add('show'); inf.innerHTML='ℹ Existing premiums + NIS exceed the $60,000 deduction cap — Line 7 capped at $60,000.'; }
 
   R={salary,other,pa,tertiary,fthome,wof,pension,annuity,nis,coContrib,co6a,co6b,emolContrib,fEmol,fNet,fAss,fL7,fChg,fL9,fL11,fMax,totalContrib,existingPlans,
      exceeds9: totalContrib>fL9, exceeds11: totalContrib>fL11, mode, revBasis};
@@ -826,13 +840,14 @@ function setVerdict(chipId,txtId,isYes){
 /* ---------- BIR form (folded from calculator) ---------- */
 function fld(id){const e=document.getElementById(id);return e?(e.value||'').trim():'';}
 function _calcToggleForm_unused(){const fv=document.getElementById('formView');const show=fv.style.display!=='block';buildForm();fv.style.display=show?'block':'none';fv.scrollIntoView({behavior:'smooth'});}
-function buildForm(){
+/* The figures that go on the BIR form. Shared by the printed form and the PDF
+   so the two can never drift apart. */
+function birFigures(){
   calc();
-  const y=fld('incYear')||'2026'; const m=money;
-  // ENFORCE: a valid form can never show two Yes. If the entered contribution exceeds the
-  // maximum (greater of L9/L11), cap the company contribution for the printed form.
   const F=Object.assign({},R);
   let capNote='';
+  // ENFORCE: a valid form can never show two Yes. If the entered contribution exceeds the
+  // maximum (greater of L9/L11), cap the company contribution for the printed form.
   if(R.mode==='fwd' && (R.totalContrib>R.fL9) && (R.totalContrib>R.fL11)){
     // Solve the ceiling contribution as a fixed point (contribution sits inside emolument).
     // total(C) must equal the GREATER line and not exceed the other -> at most one Yes.
@@ -855,6 +870,11 @@ function buildForm(){
     F.exceeds9=F.totalContrib>F.fL9+0.01; F.exceeds11=F.totalContrib>F.fL11+0.01;
     capNote=' (capped to maximum — entered '+money(R.coContrib)+')';
   }
+  return {F:F,capNote:capNote};
+}
+function buildForm(){
+  const bf=birFigures(), F=bf.F, capNote=bf.capNote;
+  const y=fld('incYear')||'2026'; const m=money;
   const yn=(isYes)=>`<span class="opt">( ${isYes?'X':'&nbsp;'} ) Yes</span><span class="opt">( ${isYes?'&nbsp;':'X'} ) No</span>`;
   const crest=`<div class="crest"><img src="${COA}" alt="Trinidad and Tobago Coat of Arms" style="width:120px;height:auto;display:inline-block"></div>`;
 
@@ -920,6 +940,144 @@ function buildForm(){
 
 function previewBIR(){ buildForm(); const h=document.getElementById('formHost'); h.style.display='block'; h.scrollIntoView({behavior:'smooth'}); }
 function printBIR(){ buildForm(); window.print(); }
+
+/* ---------- BIR Section 134 form as a real PDF ----------
+   Two pages: the request the employer signs, and the chargeable-income
+   computation overleaf. Same figures as the printed form (birFigures), so the
+   PDF in the package and the sheet on screen always agree. */
+async function buildBIR(){
+  const bf=birFigures(), F=bf.F, capNote=bf.capNote;
+  const doc=await PDFLib.PDFDocument.create();
+  const helv=await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+  const bold=await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+  const ink=PDFLib.rgb(0.06,0.11,0.2), navy=PDFLib.rgb(0.04,0.24,0.57), grey=PDFLib.rgb(0.42,0.47,0.58);
+  const W=612, H=792, L=54, RGT=W-54;
+  const m=money;   /* money() already carries the $ */
+
+  function page(){ const p=doc.addPage([W,H]); return p; }
+  function txt(p,s,x,y,size,font,color){ p.drawText(String(s==null?'':s),{x:x,y:y,size:size||9.5,font:font||helv,color:color||ink}); }
+  function rightTxt(p,s,xRight,y,size,font,color){
+    s=String(s==null?'':s); size=size||9.5; font=font||helv;
+    txt(p,s,xRight-font.widthOfTextAtSize(s,size),y,size,font,color);
+  }
+  function centre(p,s,y,size,font,color){
+    s=String(s==null?'':s); size=size||9.5; font=font||helv;
+    txt(p,s,(W-font.widthOfTextAtSize(s,size))/2,y,size,font,color);
+  }
+  function rule(p,y,x1,x2,thick,color){ p.drawLine({start:{x:x1||L,y:y},end:{x:x2||RGT,y:y},thickness:thick||0.6,color:color||PDFLib.rgb(0.75,0.78,0.85)}); }
+  /* a numbered line with a dotted leader and a right-aligned amount */
+  function item(p,y,n,label,amount,opt){
+    opt=opt||{};
+    if(n) txt(p,n+'.',L,y,9.5,bold);
+    var x=L+(n?20:32);
+    txt(p,label,x,y,opt.size||9.5,opt.bold?bold:helv);
+    if(amount!=null){
+      var lw=(opt.bold?bold:helv).widthOfTextAtSize(label,opt.size||9.5);
+      var dotsFrom=x+lw+6, dotsTo=RGT-78;
+      if(dotsTo>dotsFrom) p.drawLine({start:{x:dotsFrom,y:y+2.5},end:{x:dotsTo,y:y+2.5},thickness:0.5,color:PDFLib.rgb(0.8,0.83,0.89),dashArray:[1,2]});
+      rightTxt(p,amount,RGT,y,9.5,opt.amtBold===false?helv:bold,navy);
+    }
+    return y-(opt.gap||17);
+  }
+  function yesNo(p,y,n,label,isYes){
+    txt(p,n+'.',L,y,9.5,bold);
+    txt(p,label,L+20,y,9.5);
+    var bx=RGT-96;
+    txt(p,'( '+(isYes?'X':' ')+' ) Yes',bx,y,9.5,isYes?bold:helv);
+    txt(p,'( '+(isYes?' ':'X')+' ) No',bx+52,y,9.5,isYes?helv:bold);
+    return y-17;
+  }
+  function signature(p,y,caption){
+    p.drawLine({start:{x:L,y:y},end:{x:L+250,y:y},thickness:0.8,color:ink});
+    txt(p,caption,L,y-12,8.5,helv,grey);
+    return y-34;
+  }
+
+  /* ---- page 1: the request ---- */
+  var p1=page(), y=H-56;
+  centre(p1,'GOVERNMENT OF THE REPUBLIC OF TRINIDAD AND TOBAGO',y,10.5,bold); y-=16;
+  centre(p1,'REQUEST FOR BOARD OF INLAND REVENUE APPROVAL',y,11.5,bold,navy); y-=14;
+  centre(p1,'OF CONTRIBUTIONS TO AN APPROVED PENSION FUND PLAN / DEFERRED ANNUITY',y,9,helv,grey); y-=12;
+  centre(p1,'Section 134(6) of the Income Tax Act, Chapter 75:01',y,9,helv,grey); y-=10;
+  rule(p1,y); y-=20;
+  rightTxt(p1,'Income Year: '+(fld('incYear')||'2026'),RGT,y,9.5,bold); y-=18;
+
+  y=item(p1,y,1,'NAME OF EMPLOYER',fld('coName')||'—',{amtBold:false});
+  y=item(p1,y,2,'ADDRESS OF EMPLOYER',fld('coAddr')||'—',{amtBold:false});
+  y=item(p1,y,3,"EMPLOYER'S B.I.R. FILE NO.",fld('coBir')||'—',{amtBold:false});
+  y=item(p1,y,4,'NAME OF EMPLOYEE',fld('empName')||'—',{amtBold:false});
+  y=item(p1,y,5,'ADDRESS OF EMPLOYEE',fld('empAddr')||'—',{amtBold:false});
+  y-=4; rule(p1,y); y-=18;
+
+  txt(p1,'6.',L,y,9.5,bold);
+  txt(p1,'Annual Contributions to be made in respect of employee to:',L+20,y,9.5); y-=17;
+  y=item(p1,y,null,'Company   (a) premium',m(F.co6a));
+  y=item(p1,y,null,'                 (b) lump sum',m(F.co6b));
+  y=item(p1,y,7,'Annual Contributions made by employee to Approved Plan(s)',m(F.fL7),{gap:12});
+  txt(p1,'(Total of Lines 6 (a) (i) to (iii) and 6 (b) overleaf, limited to $60,000)',L+20,y,8,helv,grey); y-=18;
+  rule(p1,y+6);
+  y=item(p1,y,8,'Total Contributions — Lines (6) and (7)',m(F.totalContrib),{bold:true});
+  y=item(p1,y,9,'One third (1/3) Chargeable Income — as per overleaf (Line 9)',m(F.fL9),{bold:true});
+  y=yesNo(p1,y,10,'Do the Total Contributions (Line 8) exceed one third (1/3) Chargeable Income?',F.exceeds9);
+  y=item(p1,y,11,'20 per cent of Emolument Income — as per overleaf (Line 10)',m(F.fL11),{bold:true});
+  y=yesNo(p1,y,12,'Do the Total Contributions (Line 8) exceed 20% of Emolument Income (Line 11)?',F.exceeds11);
+  y-=6; rule(p1,y); y-=16;
+  txt(p1,'N.B.    Maximum Contributions to be made are the greater of Line 9 OR Line 11.',L,y,9,bold); y-=16;
+  if(capNote){
+    txt(p1,'Note: the contribution shown has been capped to the maximum permitted'+capNote.replace(' (capped to maximum — entered',' — entered').replace(')',')'),L,y,8,helv,PDFLib.rgb(0.65,0.25,0.15));
+    y-=16;
+  }
+  y-=24;
+  y=signature(p1,y,"Signature of Employer & Company's Stamp");
+  rightTxt(p1,'Rampersad Branch · 26000 · '+(fld('agentName')||'Ricky Rampersad'),RGT,56,8,helv,grey);
+  rightTxt(p1,'Page 1 of 2',RGT,44,8,helv,grey);
+
+  /* ---- page 2: the chargeable income computation ---- */
+  var p2=page(); y=H-56;
+  centre(p2,'COMPUTATION OF CHARGEABLE INCOME',y,11.5,bold,navy); y-=14;
+  centre(p2,'Income Year '+(fld('incYear')||'2026')+' — '+(fld('empName')||'employee'),y,9,helv,grey); y-=10;
+  rule(p2,y); y-=20;
+
+  y=item(p2,y,1,'Total Emolument Income',null);
+  y=item(p2,y,null,'(a) Salary / wages (as per pay slip)',m(F.salary));
+  y=item(p2,y,null,'(b) Company contribution — Section 134(6)',m(F.emolContrib));
+  y=item(p2,y,null,'TOTAL EMOLUMENT INCOME',m(F.fEmol),{bold:true});
+  y=item(p2,y,2,'Add: Other Income (Net)',m(F.other));
+  y=item(p2,y,3,'TOTAL NET INCOME',m(F.fNet),{bold:true});
+  y=item(p2,y,4,'Deduct: (1) Personal Allowance (residents only — $90,000)',m(F.pa));
+  y=item(p2,y,null,'(2) Tertiary Education Expenses (limited to $60,000)',m(F.tertiary));
+  y=item(p2,y,null,'(3) First Time Home Owner (limited to $25,000)',m(F.fthome));
+  y=item(p2,y,5,'Assessable Income',m(F.fAss),{bold:true});
+  y=item(p2,y,6,'Deduct: (a) Contributions / Premiums Paid',null);
+  y=item(p2,y,null,'(i) Government Widows and Orphans Fund',m(F.wof));
+  y=item(p2,y,null,'(ii) Approved Pension Fund Plan',m(F.pension));
+  y=item(p2,y,null,'(iii) Approved Deferred Annuity Plan',m(F.annuity));
+  y=item(p2,y,null,'(b) N.I.S. (70%)'+(F.nis&&F.nis.cls&&F.nis.cls!=='—'?'   Class '+F.nis.cls:''),m(F.nis?F.nis.amt:0));
+  y=item(p2,y,7,'Total Lines 6(a)(i) to (iii) and (b), limited to $60,000',m(F.fL7),{bold:true});
+  y=item(p2,y,8,'Chargeable Income (Line 5 minus Line 7)',m(F.fChg),{bold:true});
+  y-=4; rule(p2,y+8); y-=6;
+  y=item(p2,y,9,'One third (1/3) Chargeable Income',m(F.fL9),{bold:true});
+  y=item(p2,y,10,'Twenty (20) % of Line (1) Total Emolument Income',m(F.fL11),{bold:true});
+  y-=8;
+  txt(p2,'Maximum total contributions permitted — the greater of Line 9 or Line 11:',L,y,9,bold);
+  rightTxt(p2,m(Math.max(F.fL9,F.fL11)),RGT,y,10.5,bold,navy); y-=34;
+
+  y=signature(p2,y,"Employee's Signature / Date");
+  txt(p2,(fld('empBir')||'—'),L,y,9.5,bold,navy);
+  txt(p2,"Employee's B.I.R. File No.",L,y-12,8.5,helv,grey);
+  rightTxt(p2,'Page 2 of 2',RGT,44,8,helv,grey);
+
+  return await doc.save();
+}
+async function fillBIR(){
+  stat('st-bir','Building…');
+  try{
+    const bytes=await buildBIR();
+    const d=bridgeLoad();
+    await dl(bytes,'RRB_BIR_Section134_'+((d.empName||'case').replace(/\s+/g,'_'))+'.pdf');
+    stat('st-bir','✓ BIR Section 134 form downloaded (2 pages).','ok');
+  }catch(e){ stat('st-bir','Could not build the form: '+e.message,'err'); }
+}
 
 /* ---------- PDF fill (real Guardian forms) ---------- */
 function nameSplit(n){const p=(n||'').trim().split(/\s+/);return p.length>1?[p.slice(0,-1).join(' '),p.slice(-1)[0]]:[n||'',''];}
@@ -1312,7 +1470,7 @@ var STEP_INFO=[
  {name:'Employee - Declaration 1', gist:'the employee section: personal details (address must match the utility bill, occupation/salary must match the payslip), the employee own contribution (min $200/month, deductible at Line 6(a)(iii), flows automatically onto the Salary Deduction form in the final package), the employee personal plan with retirement age and guarantee period, the beneficiary (photo ID required if named), and the Declaration 1 form: A and B pre-circled on 1.E, dated, witness name printed; employee just signs 1.E and page 5 item 7'},
  {name:'Declaration 2 - Third Party', gist:'the company-owned declaration: company name in Proposer fields with incorporation date; employee is the Annuitant; A and B pre-circled on 2.D; company signs and stamps on top, employee signs underneath, same on page 5 item 7'},
  {name:'KYC Documents', gist:'photo ID plus utility bill under 6 months; company proposer adds certified formation documents and ID for directors and 10%+ shareholders; beneficiary photo ID if named; uploads become pages inside the Full Package PDF'},
- {name:'Review & Submit', gist:'preview the Full Package PDF (cover + Declaration 1 + Declaration 2 + Salary Deduction + KYC images), download it, then email it to support@rickyrampersadbranch.com \u2014 the Salary Deduction form is fully auto-built from the data, nothing to fill'}
+ {name:'Review & Submit', gist:'preview the Full Package PDF (cover + BIR Section 134 request and chargeable-income computation + Declaration 1 + Declaration 2 + Salary Deduction + KYC images), download it, then email it to support@rickyrampersadbranch.com \u2014 the Salary Deduction form is fully auto-built from the data, nothing to fill'}
 ];
 
 function initials(n){ if(!n) return ''; return n.trim().split(/\s+/).map(function(w){return w[0]?w[0].toUpperCase()+'.':''}).join(''); }
@@ -1410,7 +1568,7 @@ function fableFallback(q){
   }
   if(s===2) return 'Declaration 2 is used because the COMPANY owns the policy (a third-party application). The company\u2019s name goes in the Proposer First Name and Legal Entity fields with its incorporation date; the employee is the Annuitant/Life Assured. On Part 2.D the company circles A and B, signs and STAMPS on top, and the employee signs underneath \u2014 the same on page 5 item 7.';
   if(s===3) return 'Two documents: a government photo ID (driver\u2019s permit or national ID) and a utility bill in the client\u2019s name not older than 6 months. Because the proposer is a company, also provide certified formation documents and ID for every director and any shareholder holding 10% or more.';
-  return 'Before submitting: BIR printed and signed, employee section complete (details, contribution, plan, beneficiary), both declarations signed (company stamp on Declaration 2), salary deduction signed, plan selected, KYC documents copied. The BIR request goes with an original or certified pay slip and a copy of the approved TD1.';
+  return 'Before submitting: BIR form signed by the employer and the employee (it is page 1-2 of the package, and downloads on its own from Step 1), employee section complete (details, contribution, plan, beneficiary), both declarations signed (company stamp on Declaration 2), salary deduction signed, plan selected, KYC documents copied. The BIR request goes with an original or certified pay slip and a copy of the approved TD1.';
 }
 
 var riaBusy=false;
@@ -1621,14 +1779,15 @@ async function buildPackage(){
   }); } else { line('None named'); }
   y-=6;
   line('CONTENTS',11,bold,PDFLib.rgb(0.66,0.52,0.11),16);
-  line('1. Declaration 1 \u2014 Own Life (A & B pre-circled, dated, witness '+((d.agentName||'Ricky Rampersad').toUpperCase())+')');
-  line('2. Declaration 2 \u2014 Third Party (A & B pre-circled, company stamps on top)');
-  line('3. Salary Deduction \u2014 employee monthly premium $'+money2(pnum(d.empPortion)));
-  line('4. KYC images (ID, utility bill, pay slip, beneficiary IDs) \u2014 pages in this package');
-  line('5. Printed BIR Section 134 form + certified pay slip + TD1 copy (separate)',10,helv,null,20);
+  line('1. BIR Section 134 request + computation of chargeable income (2 pages)');
+  line('2. Declaration 1 \u2014 Own Life (A & B pre-circled, dated, witness '+((d.agentName||'Ricky Rampersad').toUpperCase())+')');
+  line('3. Declaration 2 \u2014 Third Party (A & B pre-circled, company stamps on top)');
+  line('4. Salary Deduction \u2014 employee monthly premium $'+money2(pnum(d.empPortion)));
+  line('5. KYC images (ID, utility bill, pay slip, beneficiary IDs) \u2014 pages in this package');
+  line('Still to attach: original or certified pay slip and a copy of the approved TD1.',10,helv,null,20);
   line('Signatures required before submission. Send to support@rickyrampersadbranch.com',9,helv,PDFLib.rgb(0.4,0.45,0.55));
-  /* merge the three filled forms */
-  var parts=[await buildD1(),await buildD2(),(await buildSal()).bytes];
+  /* merge the filled forms \u2014 the BIR request leads, as it does in the submission */
+  var parts=[await buildBIR(),await buildD1(),await buildD2(),(await buildSal()).bytes];
   for(var i=0;i<parts.length;i++){
     var src=await PDFLib.PDFDocument.load(parts[i]);
     var pages=await out.copyPages(src,src.getPageIndices());
@@ -1749,7 +1908,7 @@ function submitToBranch(){
   if(benList().length){ benList().forEach(function(b,i){ L.push((i+1)+'. '+(b.name||'')+' ('+(b.rel||'')+') '+(b.pct||'0')+'% | DOB: '+(b.dob||'')+' | '+(b.addr||'')); }); } else L.push('None named');
   L.push('');
   L.push('Agent: '+(d.agentName||'Ricky Rampersad'));
-  L.push('Attachments: BIR form, Declaration 1, Declaration 2, Salary Deduction, KYC copies');
+  L.push('Attachments: Full Package PDF - BIR Section 134 request + chargeable income computation, Declaration 1, Declaration 2, Salary Deduction, KYC copies');
   var sub='Pension Application \u2014 '+(d.coName||'')+' / '+(d.empName||'')+' \u2014 '+(d.agentName||'Ricky Rampersad');
   var url='mailto:support@rickyrampersadbranch.com?subject='+encodeURIComponent(sub)+'&body='+encodeURIComponent(L.join('\n'));
   location.href=url;
