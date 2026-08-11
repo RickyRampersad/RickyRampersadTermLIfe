@@ -109,6 +109,31 @@ name**, so if Guardian reissues a form with renamed fields, the matching
 `pension/index.html` need updating too. Bump `CACHE` in `pension/sw.js` after
 any asset change so devices that cached the old form pick up the new one.
 
+### The plan knowledge
+
+`PLANS` near the top of the script in `pension/index.html` is the single source
+of truth for plan advice: it drives the recommendation, the comparison table,
+the "Contract terms" panel under it, and everything RIA says about a plan.
+
+Each plan carries a `src` field:
+
+| `src` | Meaning | Shown as |
+| --- | --- | --- |
+| `"contract"` | Every figure is taken from the Guardian policy contract or quick-reference guide held by the branch. | "From the contract" |
+| `"branch"` | Branch product notes, not yet checked against a contract. | "From the branch product notes" plus an amber *not yet checked* badge |
+
+Verified against contracts: **TopHat Special Edition**, **TopHat Executive
+Retirement**, **TopHat Elite**, **Lifestyle Pension Plan**. Still on branch
+notes: **Life Secure**, **Life Secure Corporate**, **Lifestyle Special
+Edition**, **Lifestyle Privilege** — send the contracts for those four and they
+can be raised to `"contract"` the same way.
+
+To update a plan: edit its `facts` (the short selling points) and `terms` (the
+label/value rows in the panel), and set `src` correctly. RIA picks the change up
+on the next question — nothing else to update. Charges in the contracts are
+"current" figures the Company may alter, so both the panel and RIA present them
+as the basis for advice rather than as a quotation.
+
 ### Adding an agent to the dropdown
 
 In `pension/index.html`, find `<!-- AGENT LIST -->` in Step 1 and add an

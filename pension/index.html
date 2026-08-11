@@ -330,6 +330,20 @@ body{background:linear-gradient(180deg,#081020 0,#0e1a30 152px,transparent 152px
 .benpct.bad{color:#bd2438;border-color:#f1c6cc;background:#fdf0f1}
 .ptbl td b{color:#101b33}
 .ptbl .mk{color:#13845b;font-weight:700;white-space:nowrap}
+/* ---- contract terms behind the comparison table ---- */
+.srcwarn{font-size:10px;font-weight:700;color:#8a6d1f;background:#fdf7e8;border:1px solid #ecd9a0;border-radius:5px;padding:1px 6px;white-space:nowrap}
+.pterms{margin-top:11px;border:1px solid #e4e8f1;border-radius:12px;background:#fff;overflow:hidden}
+.pterms>summary{cursor:pointer;padding:11px 14px;font-size:12.5px;font-weight:700;color:#101b33;list-style:none}
+.pterms>summary::-webkit-details-marker{display:none}
+.pterms>summary:before{content:"▸ ";color:#8a6d1f}
+.pterms[open]>summary:before{content:"▾ "}
+.pterms[open]>summary{border-bottom:1px solid #e4e8f1}
+.ptblock{padding:12px 14px;border-bottom:1px solid #f0f2f7}
+.ptblock h5{font-family:"Fraunces",Georgia,serif;font-size:13.5px;color:#101b33;margin-bottom:7px}
+table.ptt{width:100%;border-collapse:collapse;font-size:11.5px;line-height:1.5}
+table.ptt td{padding:4px 0;vertical-align:top;color:#3d4a68}
+table.ptt td:first-child{width:38%;padding-right:12px;color:#64718e;font-weight:600}
+.ptnote{padding:10px 14px;font-size:10.5px;color:#64718e;line-height:1.5;background:#fafbfd}
 @media print{ html,body{background:#fff!important} }
 /* ---- case toolbar (save state / export / import / new) ---- */
 .casebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 10px}
@@ -1040,23 +1054,44 @@ async function fillSal(){ stat('st-sal','Building…'); try{
 }catch(e){ stat('st-sal','⚠ '+e.message,'err'); } }
 
 /* ---------- plans ---------- */
+/* PLAN KNOWLEDGE
+   src:"contract"  — every figure below is taken from the Guardian policy
+                     contract / quick-reference guide held by the branch.
+   src:"branch"    — branch product notes, not yet checked against a contract.
+   Charges and rates are "current" figures the Company may alter; treat them as
+   the basis for advice, not as a quotation. */
 const PLANS=[
-  {n:"TopHat Special Edition",s:"Section 134 company-owned \u00b7 unit-linked",insight:"The company saves for your retirement and writes it off \u2014 contributions grow in your choice of three investment funds.",tags:{own:"company",goal:"growth",style:"regular",tier:"core"},type:"Unit-linked (3 funds)",min:"$200/mo",entry:"18\u201360",guar:"Per contract",tax:"Company deducts (S.134)",best:"Growth on company contributions",
-   facts:["Entry age 18\u201360","Minimum premium $200/month \u2014 no maximum","Unit-linked: Aggressive / Lifestyle / Conservative funds","One free fund transfer per year after year 1","Company contributions tax-deductible under Section 134"]},
-  {n:"TopHat Executive Retirement",s:"Section 134 executive retirement build-up",insight:"A company-funded retirement pot built specifically for key executives, with flexible top-ups.",tags:{own:"company",goal:"retire",style:"flex",tier:"mid"},type:"Flexible premium",min:"Flexible",entry:"18\u201360",guar:"Guaranteed annuity rate if better",tax:"Company deducts (S.134)",best:"Key-executive retirement",
-   facts:["Designed for key executives \u2014 company-owned","Flexible planned premiums","Annuity at vesting with guaranteed annuity rate if better"]},
-  {n:"TopHat Elite",s:"Section 134 elite \u00b7 highest tier",insight:"The heavyweight: built for the largest tax-deductible company contributions and lump sums, with a 10-year payout guarantee.",tags:{own:"company",goal:"tax",style:"lump",tier:"high"},type:"Premium tier",min:"High",entry:"18\u201360",guar:"10-yr from vesting",tax:"Company deducts (S.134)",best:"Largest deductible contributions & lump sums",
-   facts:["Built for large contributions and lump sums","10-year guarantee period from the Annuity Vesting Date","Maximises the Section 134 deductible contribution"]},
-  {n:"Life Secure Corporate",s:"Company-owned \u00b7 guaranteed credited interest rate",insight:"The company saves for you at a guaranteed interest rate \u2014 the value only ever goes up, and the employer gets a 100% tax credit.",tags:{own:"company",goal:"safety",style:"regular",tier:"core"},type:"Guaranteed rate",min:"$300/mo",entry:"18\u201360",guar:"Credited rate guaranteed",tax:"100% employer tax credit",best:"Zero market risk for the company",
-   facts:["Entry age 18\u201360","Minimum premium $300/month \u2014 no maximum","Guaranteed credited interest rate \u2014 no market risk","100% tax credit to the employer on premium contributions","Premium decreases allowed after year 2"]},
-  {n:"Life Secure",s:"Personal \u00b7 guaranteed credited interest rate",insight:"Your own pension that grows at a guaranteed rate \u2014 no market risk, from $300 a month.",tags:{own:"personal",goal:"safety",style:"regular",tier:"core"},type:"Guaranteed rate",min:"$300/mo",entry:"18\u201360",guar:"Credited rate guaranteed",tax:"Employee deducts 6(a)(iii)",best:"Safest personal accumulation",
-   facts:["Entry age 18\u201360","Minimum premium $300/month","Guaranteed credited rate \u2014 no market risk","Single-premium option up to $60,000/yr (incl. all pensions + NIS)","Waiver of Premium available (entry to age 49)"]},
-  {n:"Lifestyle Pension Plan",s:"Personal \u00b7 flexible premium deferred annuity",insight:"A flexible investment-linked annuity \u2014 pay what suits your cash flow, and start your pension any age from 50 to 70.",tags:{own:"personal",goal:"flexible",style:"flex",tier:"core"},type:"Flexible premium",min:"Flexible",entry:"18\u201360",guar:"Optional 0\u201315 yrs",tax:"Employee deducts 6(a)(iii)",best:"Premiums that move with cash flow",
-   facts:["Flexible premiums that can vary with cash flow","Registered deferred annuity \u2014 deductible up to the personal limit"]},
-  {n:"Lifestyle Special Edition",s:"Personal \u00b7 enhanced allocation",insight:"The growth version of Lifestyle \u2014 more of every dollar goes into the fund, pension from any age 50 to 70.",tags:{own:"personal",goal:"growth",style:"flex",tier:"mid"},type:"Enhanced allocation",min:"Flexible",entry:"18\u201360",guar:"Optional 0\u201315 yrs",tax:"Employee deducts 6(a)(iii)",best:"Stronger personal growth",
-   facts:["Enhanced premium allocation to the fund","Growth-oriented accumulation"]},
-  {n:"Lifestyle Privilege",s:"Personal \u00b7 privilege tier for high contributions",insight:"The premium tier for serious savers ($50k+/yr) \u2014 available as Privilege 10 or 20 depending on years to retirement (ages 52\u201370).",tags:{own:"personal",goal:"growth",style:"lump",tier:"high"},type:"Privilege tier",min:"$50k+/yr",entry:"18\u201360",guar:"Optional 0\u201315 yrs",tax:"Employee deducts 6(a)(iii)",best:"High-net-worth personal saving",
-   facts:["Privilege tier \u2014 built for large annual premiums","Fund allocation under the policyowner\u2019s instruction"]}
+  {n:"TopHat Special Edition",s:"Section 134 company-owned · unit-linked",insight:"The company saves for your retirement and writes it off — and more of every early dollar reaches the fund than any other TopHat.",tags:{own:"company",goal:"growth",style:"regular",tier:"core"},type:"Unit-linked (3 funds)",min:"$200/mo",entry:"18–60",guar:"0/5/10/15 yrs",tax:"Company deducts (S.134)",best:"Growth on company contributions",src:"contract",
+   facts:["Entry age 18–60; the pension can start at any anniversary from age 50 and must start by 70","Minimum $200/month with no maximum; unscheduled deposits from $500","The only TopHat with three funds — Aggressive, Lifestyle and Conservative, minimum $25 in each","Front-end charge of just 10% in years 1–2, 5% in year 3 and nothing after — the best early allocation in the family","At retirement, up to 25% of the fund as tax-free cash, then a level or 5%-per-year increasing annuity"],
+   terms:[["Minimum premium","$200/month · no maximum · increases from $25/month any time"],["Premium decreases","Allowed after the first 2 years, not below the minimum"],["Unscheduled deposits","$500 minimum, any time"],["Year 1–2 charge","10% of premium"],["Year 3 charge","5% of premium"],["Year 4 onwards","No allocation charge"],["Purchase charge","102% of fund index"],["Management charge","1.25% a year of fund value"],["Policy fee","About $40 a month while premiums are being paid"],["Funds","Aggressive · Lifestyle (Original) · Conservative — minimum $25 each"],["Fund transfers","Allowed after year 1: one free a year, then $25 each"],["Fund guarantees","Conservative: never less than premiums paid less termination charges. Lifestyle: floor calculated at 1% a year. Aggressive: no guarantee."],["Termination charge","Years 1–6: 60% · 50% · 40% · 30% · 20% · none"],["Death before vesting","Fund value to the beneficiary"],["Death after vesting","Remaining instalments to the end of the guarantee period"],["At retirement","Level annuity, or one increasing 5% a year; up to 25% as tax-free cash and a reduced annuity"],["Restrictions","Cannot be surrendered and cannot be re-dated"],["Tax","Company deducts under S.134 · up to 20% of gross pay or ⅓ of chargeable income, whichever is higher"]]},
+
+  {n:"TopHat Executive Retirement",s:"Section 134 company-owned · executive build-up",insight:"A company-funded retirement pot for key executives that rewards staying the course — the loyalty credit grows the longer premiums are paid.",tags:{own:"company",goal:"retire",style:"flex",tier:"mid"},type:"Flexible premium",min:"$200/mo",entry:"18–60",guar:"Guaranteed annuity rate if better",tax:"Company deducts (S.134)",best:"Key-executive retirement",src:"contract",
+   facts:["Death before retirement pays the greater of every premium paid or the fund value — the money cannot go backwards","Year-1 allocation climbs with the premium: 10% at $200/month up to 45% at $2,000+/month, then 100% from year 2","Loyalty credit after 5 years of premiums — 1% of the monthly premium, rising to 5% at 25 years","At retirement the annuity uses the current rate, or the guaranteed rate if that is better","Termination charge applies in year 1 only, then $200 in year 2 and nothing after"],
+   terms:[["Minimum premium","$200/month (premiums under $200 get no year-1 allocation)"],["Year 1 allocation","$200–299: 10% · $300–499: 20% · $500–699: 30% · $700–999: 35% · $1,000–1,499: 40% · $1,500–1,999: 42.5% · $2,000+: 45%"],["Year 2 onwards","100% of planned premiums allocated"],["Loyalty credit","Policy years 5–9: 1% · 10–14: 2% · 15–19: 3% · 20–24: 4% · 25+: 5% of the monthly premium"],["Premium increases","45% allocated in the year of increase, 100% after"],["Unscheduled deposits","95% allocated"],["Management charge","1.25% a year of fund value"],["Policy fee","$36.50 a month"],["Funds","Original (1% a year floor) · International (no floor)"],["Termination charge","Year 1: 70% of the premiums outstanding to the end of that year · Year 2: $200 · Year 3 onwards: none"],["Death before vesting","The greater of total premiums paid and the fund value"],["At retirement","Current immediate annuity rate, or the guaranteed rate if better"],["Ownership","Trust policy — the company holds it for the benefit of the employee and their estate"]]},
+
+  {n:"TopHat Elite",s:"Section 134 company-owned · enhanced unit-linked",insight:"The strongest unit purchase rate in the family and a death benefit that never falls below what was paid in — and it starts at the same $200 a month as the rest.",tags:{own:"company",goal:"tax",style:"lump",tier:"high"},type:"Unit-linked · enhanced",min:"$200/mo",entry:"18–60",guar:"Chosen at issue (10 yrs typical)",tax:"Company deducts (S.134)",best:"Large contributions & lump sums",src:"contract",
+   facts:["Minimum $200 a month — despite the name, the entry point is the same as the rest of the TopHat family","Premiums buy units at 103% of the fund index — the best purchase rate of the three TopHats","Year-1 allocation of 60–75% by annual premium, 100% after twelve months, and 100% of every lump sum","Death before retirement pays the greater of every basic premium paid or the fund value","Up to 25% of the fund as tax-free cash at retirement, with the rest buying a reduced annuity"],
+   terms:[["Minimum premium","$200/month · minimum fund value $1,000"],["Unscheduled deposits","$500 or more, any time — 100% allocated"],["Year 1 allocation","Annual premium $2,400–3,599: 60% · $3,600–4,799: 65% · $4,800–5,999: 70% · $6,000+: 75%"],["After 12 months","100% of planned premiums allocated"],["Premium increases","First 12 months by years to retirement — 0–20 yrs: 80% · 21–30: 60% · 31+: 40%, then 100%"],["Purchase charge","103% of fund index"],["Management charge","1.25% a year of fund value"],["Policy fee","$36.50 a month ($18.25 if made paid-up)"],["Funds","Original (1% a year floor) · International (no floor)"],["Termination charge","Runs 8 years: 45% · 40% · 35% · 30% · 25% · 20% · 15% · 10% of fund value, none after"],["Death before vesting","The greater of total basic premiums paid and the fund value; up to 25% as a lump sum, the rest buys the beneficiary an annuity"],["At retirement","Up to 25% as tax-free cash plus a reduced annuity, at the then-current rate"],["Restrictions","Cannot be surrendered or assigned; can be made reduced paid-up"],["Approval","Written for approval under S.134(6b) · trust policy held for the employee"]]},
+
+  {n:"Life Secure Corporate",s:"Company-owned · guaranteed credited interest rate",insight:"The company saves for you at a guaranteed interest rate — the value only ever goes up, and the employer gets a 100% tax credit.",tags:{own:"company",goal:"safety",style:"regular",tier:"core"},type:"Guaranteed rate",min:"$300/mo",entry:"18–60",guar:"Credited rate guaranteed",tax:"100% employer tax credit",best:"Zero market risk for the company",src:"branch",
+   facts:["Entry age 18–60","Minimum premium $300/month — no maximum","Guaranteed credited interest rate — no market risk","100% tax credit to the employer on premium contributions","Premium decreases allowed after year 2"],
+   terms:[]},
+
+  {n:"Life Secure",s:"Personal · guaranteed credited interest rate",insight:"Your own pension that grows at a guaranteed rate — no market risk, from $300 a month.",tags:{own:"personal",goal:"safety",style:"regular",tier:"core"},type:"Guaranteed rate",min:"$300/mo",entry:"18–60",guar:"Credited rate guaranteed",tax:"Employee deducts 6(a)(iii)",best:"Safest personal accumulation",src:"branch",
+   facts:["Entry age 18–60","Minimum premium $300/month","Guaranteed credited rate — no market risk","Single-premium option up to $60,000/yr (incl. all pensions + NIS)","Waiver of Premium available (entry to age 49)"],
+   terms:[]},
+
+  {n:"Lifestyle Pension Plan",s:"Personal · flexible premium deferred annuity",insight:"Your own flexible pension — pay what suits your cash flow, and start the pension at any anniversary from 50.",tags:{own:"personal",goal:"flexible",style:"flex",tier:"core"},type:"Flexible premium",min:"$200/mo",entry:"18–60",guar:"0/5/10/15 yrs",tax:"Employee deducts 6(a)(iii)",best:"Premiums that move with cash flow",src:"contract",
+   facts:["Owned by you, not the company — proceeds go to you or your legal personal representative","Death before retirement pays the greater of every premium paid or the fund value","The pension can start at any anniversary from age 50 and must start by 70","Year-1 allocation climbs with the premium: 10% at $200/month up to 45% at $2,000+/month, then 100% from year 2","Termination charge applies in year 1 only, then $200 in year 2 and nothing after"],
+   terms:[["Minimum premium","$200/month (premiums under $200 get no year-1 allocation)"],["Year 1 allocation","$200–299: 10% · $300–499: 20% · $500–699: 30% · $700–999: 35% · $1,000–1,499: 40% · $1,500–1,999: 42.5% · $2,000+: 45%"],["Year 2 onwards","100% of planned premiums allocated"],["Management charge","1.25% a year of fund value"],["Policy fee","$36.50 a month"],["Funds","Original (1% a year floor) · International (no floor)"],["Termination charge","Year 1: 80% of the premiums outstanding to the end of that year · Year 2: $200 · Year 3 onwards: none"],["Death before vesting","The greater of total premiums paid and the fund value"],["Retirement age","Any policy anniversary from age 50; the annuity must start by age 70"],["At retirement","Current immediate annuity rate, or the guaranteed rate if better"],["Small annuities","An annuity under $65 a month may be commuted to a lump sum"],["Ownership","Personally owned — payable to the annuitant or their legal personal representative"]]},
+
+  {n:"Lifestyle Special Edition",s:"Personal · enhanced allocation",insight:"The growth version of Lifestyle — more of every dollar goes into the fund, and it opens the Aggressive and Conservative funds.",tags:{own:"personal",goal:"growth",style:"flex",tier:"mid"},type:"Enhanced allocation",min:"Flexible",entry:"18–60",guar:"0/5/10/15 yrs",tax:"Employee deducts 6(a)(iii)",best:"Stronger personal growth",src:"branch",
+   facts:["Enhanced premium allocation to the fund","One of only two plans that can hold the Aggressive and Conservative funds (with TopHat Special Edition)","Growth-oriented accumulation"],
+   terms:[]},
+
+  {n:"Lifestyle Privilege",s:"Personal · privilege tier for high contributions",insight:"The premium tier for serious savers ($50k+/yr) — available as Privilege 10 or 20 depending on years to retirement (ages 52–70).",tags:{own:"personal",goal:"growth",style:"lump",tier:"high"},type:"Privilege tier",min:"$50k+/yr",entry:"18–60",guar:"0/5/10/15 yrs",tax:"Employee deducts 6(a)(iii)",best:"High-net-worth personal saving",src:"branch",
+   facts:["Privilege tier — built for large annual premiums","Fund allocation under the policyowner’s instruction"],
+   terms:[]}
 ];
 const EMP_Q=[
   {id:"goal",q:"What does the COMPANY want most from this plan?",opts:[["tax","Maximise the tax-deductible contribution"],["safety","Guaranteed, zero-risk accumulation"],["growth","Growth on the contributions (unit-linked)"],["retire","An executive retirement build-up"]]},
@@ -1102,7 +1137,20 @@ function planTable(ranked,topName,selKey,sel){
     var attrs=selCol?(' style="cursor:pointer" onclick="pickPlanFor(&quot;'+selKey+'&quot;,&quot;'+p.n+'&quot;)"'):'';
     return '<tr class="'+((p.n===topName?'best ':'')+(p.n===sel?'selrow':''))+'"'+attrs+'>'+pick+'<td><b>'+p.n+'</b>'+(p.n===topName?' <span class="bestfit">BEST FIT</span>':'')+'</td><td>'+p.type+'</td><td>'+p.min+'</td><td>'+(p.entry||'\u2014')+'</td><td>'+(p.guar||'\u2014')+'</td><td>'+(p.tax||'\u2014')+'</td><td>'+p.best+'</td><td class="mk">'+(mk||'\u2014')+'</td></tr>';
   }).join('');
-  return '<div class="ptblwrap"><table class="ptbl"><tr>'+(selCol?'<th>Select</th>':'')+'<th>Plan</th><th>Type</th><th>Min premium</th><th>Entry age</th><th>Guarantee</th><th>Tax treatment</th><th>Best for</th><th>Match</th></tr>'+rows+'</table></div>';
+  return '<div class="ptblwrap"><table class="ptbl"><tr>'+(selCol?'<th>Select</th>':'')+'<th>Plan</th><th>Type</th><th>Min premium</th><th>Entry age</th><th>Guarantee</th><th>Tax treatment</th><th>Best for</th><th>Match</th></tr>'+rows+'</table></div>'+planTerms(ranked);
+}
+/* The contract terms behind the table — charges, allocation, death benefit —
+   so the agent can answer "what does it actually cost" without leaving the page. */
+function planTerms(ranked){
+  var withTerms=ranked.filter(function(rp){ return (rp.p.terms||[]).length; });
+  if(!withTerms.length) return '';
+  return '<details class="pterms"><summary>Contract terms — charges, allocation and benefits ('+withTerms.length+' plans)</summary>'+
+    withTerms.map(function(rp){ var p=rp.p;
+      return '<div class="ptblock"><h5>'+p.n+'</h5><table class="ptt">'+
+        p.terms.map(function(t){ return '<tr><td>'+t[0]+'</td><td>'+t[1]+'</td></tr>'; }).join('')+
+        '</table></div>';
+    }).join('')+
+    '<p class="ptnote">Taken from the Guardian policy contracts and quick-reference guides held by the branch. Charges shown as "current" may be altered by the Company — use them to advise, not as a quotation.</p></details>';
 }
 function recBlock(a,pool,who,selKey,sel){
   if(!a.goal) return '<div class="info show">Answer the questions above \u2014 the best-fit plan, the reasons, and the comparison table appear here.</div>';
@@ -1116,7 +1164,10 @@ function recBlock(a,pool,who,selKey,sel){
     ranked.map(function(rp){ var pc=Math.round(rp.s/maxS*100);
       return '<div class="mrow"><div class="mname">'+rp.p.n+'</div><div class="mtrack"><div class="mfill'+(rp.p.n===top.p.n?' top':'')+'" style="width:'+Math.max(6,pc)+'%"></div></div><div class="mpct">'+rp.s+'/'+maxS+'</div></div>';
     }).join('')+'</div>';
-  html+='<div class="info show" style="margin:0 0 10px"><b>From the contract:</b><ul style="margin:6px 0 0 17px">'+(top.p.facts||[]).slice(0,3).map(function(f){return '<li>'+f+'</li>';}).join('')+'</ul></div>';
+  var srcLabel=top.p.src==='contract'?'From the contract:':'From the branch product notes:';
+  html+='<div class="info show" style="margin:0 0 10px"><b>'+srcLabel+'</b>'+
+    (top.p.src==='contract'?'':' <span class="srcwarn">not yet checked against a policy contract</span>')+
+    '<ul style="margin:6px 0 0 17px">'+(top.p.facts||[]).map(function(f){return '<li>'+f+'</li>';}).join('')+'</ul></div>';
   if(who==='ind'){
     html+='<div style="font-size:11.5px;color:#64718e;margin:4px 0 6px">Tap a row to select the employee\u2019s plan \u2014 the \u2611 marks the choice.</div>';
     html+=planTable(ranked,top.p.n,selKey,sel);
@@ -1281,9 +1332,14 @@ function fableContext(){
   var ctx=[emolument,contrib].concat(who).filter(Boolean).join('. ');
   if(ctx) lines.push('Case context: '+ctx+'.');
   if(cur===0||cur===1){
-    lines.push('PLAN KNOWLEDGE (from the actual Guardian contracts):');
-    PLANS.forEach(function(p){ lines.push('- '+p.n+' ['+(p.tags.own==='company'?'COMPANY-owned':'INDIVIDUAL')+']: '+p.s+'. '+(p.facts||[]).join('; ')+'.'); });
+    lines.push('PLAN KNOWLEDGE. Entries marked [CONTRACT] are taken from the Guardian policy contracts and quick-reference guides; entries marked [BRANCH NOTES] are not yet verified against a contract - say so if you quote a figure from one.');
+    PLANS.forEach(function(p){
+      lines.push('- '+p.n+' ['+(p.tags.own==='company'?'COMPANY-owned':'INDIVIDUAL')+']['+(p.src==='contract'?'CONTRACT':'BRANCH NOTES')+']: '+p.s+'. '+(p.facts||[]).join('; ')+'.');
+      if((p.terms||[]).length) lines.push('  Terms: '+p.terms.map(function(t){ return t[0]+' = '+t[1]; }).join(' | '));
+    });
+    lines.push('Charges quoted in the contracts are "current" figures the Company may alter, so present them as the basis for advice and never as a quotation. Do not quote a premium or a projected fund value - the branch illustrates those.');
     lines.push('Rule: company/corporate cases use COMPANY-owned plans (TopHat family or Life Secure Corporate). Individuals use the personal plans (Life Secure, Lifestyle family). Guaranteed credited rate = Life Secure / Life Secure Corporate; unit-linked growth = TopHat Special Edition; biggest tax-deductible contributions and lump sums = TopHat Elite; executive retirement = TopHat Executive.');
+    lines.push('What actually separates the three TopHats, from the contracts: SPECIAL EDITION has much the best early allocation (a 10% charge in years 1-2, 5% in year 3, nothing after) and is the only one offering three funds, but death before retirement pays only the fund value. ELITE buys units at 103% (the best rate), allocates 100% of lump sums, and pays the greater of premiums paid or fund value on death - its trade-off is termination charges running a full 8 years. EXECUTIVE has the same premium-protected death benefit and a loyalty credit that grows from 1% at 5 years to 5% at 25, but its year-1 allocation is the weakest (10-45% by premium size). All three start at $200/month - Elite is not a bigger-premium-only plan.');
     var dd=bridgeLoad();
     lines.push('Structure: Step 1 = Section 134 computation + the EMPLOYER plan (company pool) with maturity age and guarantee. Step 2 = the EMPLOYEE section inside Declaration 1: details, own contribution, personal plan with retirement age and guarantee, and beneficiary (photo ID required if named).');
     var aE=qaGet('planQA_emp'), aI=qaGet('planQA_ind');
@@ -1346,7 +1402,7 @@ function fableFallback(q){
     return 'This step works out the maximum tax-deductible pension contribution the company can make for the employee under Section 134 of the Income Tax Act, and prints the BIR approval form. Enter the case details once \u2014 they flow to every other form automatically.';
   }
   if(s===1){
-    if(t.indexOf('plan')>=0||t.indexOf('retire')>=0||t.indexOf('guarantee')>=0) return 'Employee plan: guaranteed = Life Secure ($300/mo min); flexible = Lifestyle family; growth = Lifestyle Special Edition; high contributions = Lifestyle Privilege. Retirement age cannot be before 50 \u2014 most choose 60 or 65. The guarantee period (0/5/10/15 yrs) keeps payments going to the beneficiary if death occurs after vesting.';
+    if(t.indexOf('plan')>=0||t.indexOf('retire')>=0||t.indexOf('guarantee')>=0) return 'Employee plan: guaranteed = Life Secure ($300/mo min); flexible = Lifestyle family; growth = Lifestyle Special Edition; high contributions = Lifestyle Privilege. The pension can start at any policy anniversary from age 50 and must start by 70 \u2014 most choose 60 or 65. The guarantee period (0/5/10/15 yrs) keeps payments going to the beneficiary if death occurs after vesting. At retirement up to 25% of the fund can be taken as tax-free cash, with the rest buying a reduced annuity.';
     if(t.indexOf('detail')>=0||t.indexOf('why')>=0) return 'The details have purposes: smoker status sets the premium rates; the mailing address must match the utility bill (KYC); occupation and salary must match the payslip the BIR will see; marital status and children guide who should be the beneficiary.';
     if(t.indexOf('salary')>=0||t.indexOf('deduction')>=0) return 'Nothing to fill \u2014 the Salary Deduction form is built automatically from this data and appears inside the Full Package PDF on the Review step: the employee\u2019s monthly premium in words on page 1, the premium and tallied totals in the grid on page 2.';
     if(t.indexOf('benefici')>=0||t.indexOf('id')>=0) return 'If a beneficiary is named, the law requires identity verification \u2014 collect their photo ID. The KYC checklist updates automatically with their name.';
