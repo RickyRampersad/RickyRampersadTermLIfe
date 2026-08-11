@@ -186,6 +186,10 @@ function rrbWall(e) {
                          Utilities.formatDate(now, tz, 'yyyy-MM-dd') };
     wOrder.push(wk);
   }
+  // The same month, cut by advisor. A branch total says how much; this says who
+  // works steadily and who works in bursts, which is the thing one advisor can
+  // actually learn from another.
+  var mAgents = {};
 
   var series = {}, seriesOrder = [];
   for (var back = 13; back >= 0; back--) {
@@ -253,7 +257,13 @@ function rrbWall(e) {
 
       var dk = Utilities.formatDate(sub, tz, 'yyyy-MM-dd');
       if (series[dk]) series[dk].n++;
-      if (mdays[dk]) mdays[dk].n++;
+      if (mdays[dk]) {
+        mdays[dk].n++;
+        var an = agent || 'Unassigned';
+        if (!mAgents[an]) mAgents[an] = { n: an, d: {}, t: 0 };
+        mAgents[an].d[dk] = (mAgents[an].d[dk] || 0) + 1;
+        mAgents[an].t++;
+      }
       if (wdays[dk]) { wdays[dk].n++; wdays[dk].api += apiTaken; }
       var wd = sub.getDay(), isWeekend = (wd === 0 || wd === 6);
 
@@ -455,7 +465,16 @@ function rrbWall(e) {
       daysWorkedWeek:  wOrder.filter(function (k) { return wdays[k].n > 0; }).length,
       daysElapsedWeek: wOrder.filter(function (k) { return !wdays[k].future; }).length,
       daysWorkedMonth: mOrder.filter(function (k) { return mdays[k].n > 0; }).length,
-      daysElapsedMonth: mOrder.filter(function (k) { return !mdays[k].future; }).length
+      daysElapsedMonth: mOrder.filter(function (k) { return !mdays[k].future; }).length,
+      // Counts aligned to `month` above, so the client renders a row by index
+      // and never has to match dates. Busiest advisor first.
+      agents: Object.keys(mAgents).map(function (k) {
+        var a = mAgents[k], worked = 0;
+        var d = mOrder.map(function (mk) {
+          var c = a.d[mk] || 0; if (c) worked++; return c;
+        });
+        return { n: a.n, d: d, t: a.t, w: worked };
+      }).sort(function (x, y) { return y.t - x.t || y.w - x.w; })
     },
     year: { submitted: year.submitted, need: Math.round(year.need),
             cover: Math.round(year.cover), api: Math.round(year.api),

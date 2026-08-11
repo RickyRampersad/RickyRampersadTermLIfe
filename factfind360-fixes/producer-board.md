@@ -81,3 +81,53 @@ identical, which is the exact comparison the calendar exists to make.
 Beside each: **days worked of days elapsed**. Not days in the month — days
 that have actually happened. Comparing four days worked against a 31-day month
 on the 11th is a scoreboard nobody can win, and one nobody reads twice.
+
+## The working rhythm panel
+
+The month calendar has its own panel now rather than a corner of the producer
+board, which gives the producer board its full width back and the calendar room
+to be read.
+
+**The count is the hero.** Each day square leads with the number of fact finds;
+the date is a small caption on it. A calendar that shouts the date is a wall
+planner — this one is a chart, and the reader's eye should land on volume.
+
+**Four colour steps, with a legend that names them.** Quiet to busy, one hue,
+getting lighter with volume. The earlier version ramped opacity continuously,
+which looks precise and tells the viewer nothing they can actually read off:
+there is no way to look at a half-tinted square and say what it means. Four
+steps can be labelled, so they are.
+
+### Who worked which days
+
+Under it, the same month cut by advisor: one row each, one cell per day, tinted
+in that advisor's own colour. Read across a row and you see how somebody works
+— steadily, or in bursts before a deadline, or in one heroic week. Read down
+the column and you see the days the whole branch turned up.
+
+That comparison is the point. A producer board ranks people on output; this
+shows the working pattern that produced it, which is the part another advisor
+can actually copy.
+
+Three rules the colours follow:
+
+- **Assigned alphabetically, never by rank.** An advisor who slips from first
+  to fifth keeps their colour. If colour tracked position, every reshuffle
+  would repaint the board and the eye would read it as different people.
+- **One hue per advisor; only lightness carries volume.** Identity and
+  magnitude never compete for the same channel.
+- **Every row is named as well as coloured**, so the colour reinforces
+  identity rather than carrying it alone.
+
+The eight advisor hues and the four calendar steps were both checked against
+this board's own background for colour-blind separation and contrast, rather
+than picked by eye.
+
+### Which day the branch writes on
+
+The month summed by weekday. A branch that writes on Tuesdays and dies on
+Thursdays cannot see that in a monthly total, and neither can the advisor doing
+it. Weekends are marked in gold, consistent with the week strip.
+
+Below: days worked, the busiest single day, and the **longest unbroken run of
+days worked** — consistency, which a total is specifically designed to hide.

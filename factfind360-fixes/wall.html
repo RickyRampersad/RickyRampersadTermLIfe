@@ -332,6 +332,88 @@
            font-size:.72em; color:var(--ink-3); font-weight:700}
   .calnote b{color:var(--ink); font-size:1.3em}
 
+  /* The big calendar. The COUNT is the hero — the date is a caption on it.
+     A calendar that shouts the date is a wall planner; this one is a chart. */
+  /* minmax(0,1fr), not 1fr: a plain 1fr track floors at the cell's min-content,
+     and the big count inside made that wider than the card. */
+  .cal.big{gap:.4em; grid-template-columns:repeat(7,minmax(0,1fr));
+           grid-auto-rows:minmax(0,1fr); align-content:stretch; overflow:hidden}
+  .cal.big .hdd{font-size:.66em; padding-bottom:.35em}
+  .cal.big .cd{place-items:stretch; padding:.2em .3em; min-height:0; min-width:0;
+               border:1px solid rgba(255,255,255,.05)}
+  .cal.big .cd .dm{position:absolute; top:.16em; left:.4em; font-size:.6em;
+                   font-weight:700; opacity:.5}
+  .cal.big .cd .bn{align-self:center; justify-self:center; font-size:1.5em;
+                   font-weight:900; line-height:1; letter-spacing:-.02em}
+  .cal.big .cd.zero .bn{opacity:.16; font-weight:800}
+  .cal.big .cd.wknd{border-style:dashed; border-color:rgba(245,185,53,.28)}
+  .cal.big .cd.today{outline:2px solid var(--teal); outline-offset:1px}
+  .cal.big .cd.has .dm{opacity:.62; color:#04120F}
+  /* Sequential ramp — one hue, dark→light by volume, validated on this surface. */
+  .cal.big .cd.q1{background:#1A6B62; color:#CFFAF3}
+  .cal.big .cd.q2{background:#12A594; color:#04211D}
+  .cal.big .cd.q3{background:#3DDCC7; color:#04211D}
+  .cal.big .cd.q4{background:#8FF2E2; color:#04211D}
+  .calkey{display:flex; align-items:center; gap:.5em; margin-top:.7em;
+          font-size:.62em; font-weight:800; letter-spacing:.06em;
+          text-transform:uppercase; color:var(--ink-4)}
+  .calkey i{width:2.1em; height:1.05em; border-radius:.22em; display:inline-block}
+  .calkey .lb{color:var(--ink-3); letter-spacing:.02em; text-transform:none;
+              font-size:1.05em}
+
+  /* Agent × day. One row per advisor, one column per day of the month, each
+     row in that advisor's own colour so the rhythms compare at a glance. */
+  .agrid{display:flex; flex-direction:column; overflow:hidden; flex:1.55; min-height:0}
+  .ag{display:grid; grid-template-columns:2.1em 9.6em minmax(0,1fr) 7em;
+      gap:.6em; align-items:center; flex:1; min-height:0; max-height:4.6em;
+      border-top:1px solid var(--line)}
+  .ag:first-of-type{border-top:0}
+  .ag .ai{width:2.1em; height:2.1em; border-radius:.5em; display:grid;
+          place-items:center; font-size:.6em; font-weight:900; color:#06101C}
+  .ag .an{font-size:.8em; font-weight:800; white-space:nowrap;
+          overflow:hidden; text-overflow:ellipsis}
+  .ag .ad{display:grid; gap:.14em; grid-auto-flow:column;
+          grid-auto-columns:1fr; height:100%; padding:.42em 0; min-height:0}
+  .ag .ac{border-radius:.22em; background:rgba(255,255,255,.05); min-height:0}
+  .ag .ac.we{background:rgba(245,185,53,.07)}
+  .ag .ac.fut{background:rgba(255,255,255,.015)}
+  .ag .at{font-size:.7em; font-weight:800; color:var(--ink-3); text-align:right;
+          font-variant-numeric:tabular-nums; white-space:nowrap}
+  .ag .at b{color:var(--ink); font-size:1.2em}
+  .agh{display:grid; grid-template-columns:2.1em 9.6em minmax(0,1fr) 7em;
+       gap:.6em; font-size:.58em; font-weight:800; letter-spacing:.09em;
+       text-transform:uppercase; color:var(--ink-4); align-items:end;
+       padding-bottom:.3em; border-bottom:1px solid var(--line-2)}
+  .agh .r{text-align:right}
+  /* A day ruler on the same 31 tracks as the rows below, so a mark can be
+     placed in the month rather than just counted. */
+  .agr{display:grid; gap:.14em; grid-auto-flow:column; grid-auto-columns:1fr;
+       letter-spacing:0; text-transform:none; font-size:.95em}
+  .agr span{text-align:center; color:transparent}
+  .agr span.t{color:var(--ink-4)}
+
+  /* Which weekday the branch actually writes on. One measure, so one hue —
+     colouring these by value would spend the identity channel re-saying the
+     height. The best day is called out by label, not by a second colour. */
+  .dowp{display:flex; flex-direction:column; margin-top:.9em;
+        border-top:1px solid var(--line); padding-top:.7em; min-height:0}
+  .dowp .dh{font-size:.58em; font-weight:800; letter-spacing:.09em;
+            text-transform:uppercase; color:var(--ink-4); display:flex;
+            justify-content:space-between; margin-bottom:.5em}
+  .dowp .dh b{color:var(--teal); letter-spacing:.02em}
+  .dowb{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:.7em;
+        flex:1; min-height:0; align-items:end}
+  .dowb .db{display:flex; flex-direction:column; justify-content:flex-end;
+            height:100%; gap:.35em; min-height:0}
+  .dowb .db i{display:block; background:var(--teal-deep); border-radius:.28em .28em 0 0;
+              min-height:.18em; transition:height .8s cubic-bezier(.2,.8,.2,1)}
+  .dowb .db.we i{background:var(--gold-deep)}
+  .dowb .db .dv{font-size:.72em; font-weight:900; text-align:center;
+                font-variant-numeric:tabular-nums}
+  .dowb .db .dl{font-size:.58em; font-weight:800; letter-spacing:.08em;
+                text-transform:uppercase; color:var(--ink-4); text-align:center}
+  .dowb .db.we .dl{color:var(--gold)}
+
   .more{font-size:.66em; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
         color:var(--ink-4); padding:0 .7em; line-height:1.3}
   .phd .r{text-align:right}
@@ -509,12 +591,6 @@
       <div class="stat v"><div class="k">In pipeline</div><div class="val num" id="prPipe">—</div><div class="s" id="prPipeSub">said yes, not yet picked up</div></div>
       <div class="stat"><div class="k">API recommended</div><div class="val num" id="prSub2">—</div><div class="s" id="prSubSub">to satisfy the need found</div></div>
     </div>
-    <div class="cols" style="flex:1; min-height:0; grid-template-columns:21em minmax(0,1fr)">
-    <div class="card" style="min-width:0">
-      <h2><span id="calTitle">Calendar</span><em id="calNote"></em></h2>
-      <div class="cal" id="calGrid"></div>
-      <div class="calnote" id="calSummary"></div>
-    </div>
     <div class="card grow">
       <div class="pbar"><span class="t">Producer board</span>
         <span class="pper"><i>This week</i><i class="on" id="prSub">Month</i><i>Year</i></span></div>
@@ -526,6 +602,29 @@
         <span class="r">API picked up</span></div>
       <div class="rows grow" id="prProd" style="margin-top:.4em"></div>
     </div>
+  </section>
+
+  <!-- 10 · THE WORKING RHYTHM — when the work actually happened, and by whom -->
+  <section class="panel" id="p9">
+    <div class="ptitle"><h1 id="t_p9"></h1><span class="tag">Working rhythm</span></div>
+    <div style="flex:1; min-height:0; display:grid; grid-template-rows:minmax(0,1fr) auto; gap:.7em">
+      <div class="cols" style="grid-template-columns:28em minmax(0,1fr); align-items:stretch; min-height:0">
+        <div class="card" style="min-width:0; display:flex; flex-direction:column">
+          <h2><span id="calTitle">Calendar</span><em id="calNote">fact finds per day</em></h2>
+          <div class="cal big" id="calGrid" style="flex:1; min-height:0"></div>
+          <div class="calkey" id="calKey"></div>
+        </div>
+        <div class="card" style="min-width:0; display:flex; flex-direction:column">
+          <h2>Who worked which days<em id="rhSub"></em></h2>
+          <div class="agrid" id="agGrid"></div>
+          <div class="dowp" id="dowProfile" style="flex:1; min-height:0"></div>
+        </div>
+      </div>
+      <div class="stats tight">
+        <div class="stat"><div class="k">Days worked</div><div class="val num" id="rhDays">—</div><div class="s" id="rhDaysSub">of the month so far</div></div>
+        <div class="stat g"><div class="k">Busiest day</div><div class="val num" id="rhBest">—</div><div class="s" id="rhBestSub">&nbsp;</div></div>
+        <div class="stat v"><div class="k">Longest run</div><div class="val num" id="rhStreak">—</div><div class="s" id="rhStreakSub">consecutive days worked</div></div>
+      </div>
     </div>
   </section>
 
@@ -590,7 +689,7 @@
   </section>
 </main>
 
-<div class="ticks"><span class="tk" id="k0"></span><span class="tk" id="k1"></span><span class="tk" id="k2"></span><span class="tk" id="k3"></span><span class="tk" id="k4"></span><span class="tk" id="k5"></span><span class="tk" id="k6"></span><span class="tk" id="k7"></span><span class="tk" id="k8"></span></div>
+<div class="ticks"><span class="tk" id="k0"></span><span class="tk" id="k1"></span><span class="tk" id="k2"></span><span class="tk" id="k3"></span><span class="tk" id="k4"></span><span class="tk" id="k5"></span><span class="tk" id="k6"></span><span class="tk" id="k7"></span><span class="tk" id="k8"></span><span class="tk" id="k9"></span></div>
 <div id="burst"></div>
 
 <script>
@@ -598,7 +697,23 @@
 var ENDPOINT = 'https://script.google.com/macros/s/AKfycbyUnSnQtumx9emW_LsWQf6QKZFBGGnaTn3-PfAZDfjtZuBUSha-OuIXPT30qkMrXMoczA/exec';
 var WALL_KEY = '8ef87867eacb4812b455fb3124dde161';
 
-var POLL_MS = 40000, ROTATE_MS = 15000, STALE_MS = 150000, PANELS = 9;
+var POLL_MS = 40000, ROTATE_MS = 15000, STALE_MS = 150000, PANELS = 10;
+var DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+/* Calendar volume: one hue, dark to light. Validated as an ordinal ramp against
+   this surface — monotone lightness, every step clear of the card behind it. */
+var QC = ['#1A6B62','#12A594','#3DDCC7','#8FF2E2'];
+/* Advisor identity: eight fixed hues in a fixed order. Assigned alphabetically,
+   NOT by rank — an advisor who slips from first to fifth must not change colour,
+   or the eye reads the repaint as a different person. Validated on this surface
+   for colour-blind separation; every row is named as well, so colour reinforces
+   identity rather than carrying it alone. */
+var AGC = ['#3987e5','#d95926','#199e70','#c98500',
+           '#d55181','#008300','#9085e9','#e66767'];
+function agColours(names){
+  var slot={}, sorted=names.slice().sort();
+  sorted.forEach(function(n,i){ slot[n]=AGC[i%AGC.length]; });
+  return slot;
+}
 var lastGood=null, lastAt=0, panel=0, lastJustIn='', prevRank={}, seenApprovals={}, firstPaint=true;
 
 function $(id){ return document.getElementById(id); }
@@ -606,6 +721,7 @@ function $(id){ return document.getElementById(id); }
    that runs unattended one throw blanks every panel. Renaming a tile has now
    done this twice, so it goes through here instead. */
 function setText(id, s){ var el=$(id); if(el) el.textContent=s; }
+function setHTML(id, h){ var el=$(id); if(el) el.innerHTML=h; }
 function money(n){
   if(!n) return 'TT$0';
   if(n>=1000000) return 'TT$'+(n/1000000).toFixed(n>=10000000?0:1)+'M';
@@ -957,32 +1073,115 @@ function render(d){
     ((MT.subCases>0)?', '+MT.subCases+' with head office':'')+
     ((MT.staleCases>0)?' · '+big(MT.stale)+' over 14 days':''));
   setText('prCliSub', (MT.clients||0)+' clients · '+(MT.cases||0)+' fact finds');
-  /* Month calendar — the rhythm of the month, one square a day. */
-  var mdz=(d.calendar||{}).month||[];
-  if(mdz.length){
-    var mx=Math.max.apply(null,[1].concat(mdz.map(function(x){return x.n;})));
-    var lead=mdz[0].dow;
-    var cells=['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
-      .map(function(h){return '<div class="hdd">'+h[0]+'</div>';}).join('');
-    for(var b=0;b<lead;b++) cells+='<div></div>';
-    cells+=mdz.map(function(x){
-      var o=x.n? (0.2+ (x.n/mx)*0.8) : 0;
-      var bg=x.n? 'rgba(45,212,191,'+o.toFixed(2)+')' : '';
-      return '<div class="cd'+(x.n?' has':'')+(x.future?' fut':'')+'"'+
-        (bg?' style="background:'+bg+'"':'')+'>'+x.dom+
-        (x.n>1?'<span class="cn">'+x.n+'</span>':'')+'</div>';
-    }).join('');
-    $('calGrid').innerHTML=cells;
-    setText('calTitle', (d.calendar||{}).monthLabel||'Calendar');
-    setText('calNote', 'fact finds per day');
-    var mw=(d.calendar||{}).daysWorkedMonth||0, me=(d.calendar||{}).daysElapsedMonth||0;
-    $('calSummary').innerHTML='<span><b>'+mw+'</b> days worked</span>'+
-      '<span>of <b>'+me+'</b> so far</span>'+
-      '<span><b>'+(me? Math.round(mw/me*100):0)+'%</b> of days active</span>';
-  }
-
   producerRows(d.monthLeaders||[], $('prProd'), 'mo', 'pickedUp');
   setText('prSub', M.label||'Month');
+
+  /* 10 · the working rhythm — the days the work happened, and whose days they were */
+  var CALM=d.calendar||{}, mdz=CALM.month||[];
+  if(mdz.length){
+    var mx=Math.max.apply(null,[1].concat(mdz.map(function(x){return x.n;})));
+    /* Four buckets, so the legend can name what a colour means. A continuous
+       alpha ramp looks precise and tells the viewer nothing they can read off. */
+    var qOf=function(n){ if(!n) return 0;
+      return Math.min(4, Math.max(1, Math.ceil(n/mx*4))); };
+    var lead=mdz[0].dow;
+    var cells=['S','M','T','W','T','F','S']
+      .map(function(h){return '<div class="hdd">'+h+'</div>';}).join('');
+    for(var b=0;b<lead;b++) cells+='<div></div>';
+    cells+=mdz.map(function(x){
+      var q=qOf(x.n), we=(x.dow===0||x.dow===6);
+      return '<div class="cd'+(x.n?' has q'+q:' zero')+(x.future?' fut':'')+
+        (we?' wknd':'')+(x.today?' today':'')+'">'+
+        '<span class="dm">'+x.dom+'</span>'+
+        '<span class="bn">'+(x.n||'·')+'</span></div>';
+    }).join('');
+    $('calGrid').innerHTML=cells;
+    setText('calTitle', CALM.monthLabel||'Calendar');
+    setText('calNote', 'fact finds per day');
+    var kq=[1,2,3,4].map(function(q){
+      return '<i class="q'+q+'" style="background:'+QC[q-1]+'"></i>';}).join('');
+    $('calKey').innerHTML='<span>Quiet</span>'+kq+'<span>Busy</span>'+
+      '<span class="lb" style="margin-left:auto">'+mx+' on the best day</span>';
+
+    var mw=CALM.daysWorkedMonth||0, me=CALM.daysElapsedMonth||0;
+    countTo($('rhDays'), mw);
+    setText('rhDaysSub', 'of '+me+' so far · '+(me?Math.round(mw/me*100):0)+'% of days active');
+    var best=mdz.reduce(function(a,x){return (x.n>(a?a.n:0))?x:a;},null);
+    if(best&&best.n){ countTo($('rhBest'), best.n);
+      setText('rhBestSub', DOW[best.dow]+' '+best.dom+' · '+
+        (best.n===1?'1 fact find':best.n+' fact finds')); }
+    /* Longest unbroken run of worked days — consistency, which a total hides. */
+    var run=0, bestRun=0;
+    mdz.forEach(function(x){ if(x.future) return;
+      run = x.n ? run+1 : 0; if(run>bestRun) bestRun=run; });
+    countTo($('rhStreak'), bestRun);
+    setText('rhStreakSub', bestRun===1?'consecutive day worked':'consecutive days worked');
+
+    /* Agent × day. Each advisor keeps one hue across the row; within the row the
+       cell only gets lighter with volume, so identity and magnitude never fight. */
+    var ags=(CALM.agents||[]).slice(0,7), extra=(CALM.agents||[]).length-ags.length;
+    var amx=Math.max.apply(null,[1].concat(ags.map(function(a){
+      return Math.max.apply(null,[0].concat(a.d));})));
+    var CMAP=agColours(ags.map(function(a){return a.n;}));
+    var ruler=mdz.map(function(x){
+      var t=(x.dom===1||x.dom%5===0);
+      return '<span'+(t?' class="t"':'')+'>'+x.dom+'</span>';}).join('');
+    $('agGrid').innerHTML = ags.length ?
+      ('<div class="agh"><span></span><span>Advisor</span>'+
+       '<span class="agr">'+ruler+'</span><span class="r">Days · FF</span></div>'+
+       ags.map(function(a){
+        var c=CMAP[a.n], av=avatar(a.n);
+        var strip=a.d.map(function(n,j){
+          var f=mdz[j]||{}, we=(f.dow===0||f.dow===6);
+          if(!n) return '<div class="ac'+(f.future?' fut':(we?' we':''))+'"></div>';
+          var o=(0.34+(n/amx)*0.66).toFixed(2);
+          return '<div class="ac" style="background:'+c+'; opacity:'+o+'"></div>';
+        }).join('');
+        return '<div class="ag">'+
+          '<div class="ai" style="background:'+c+'">'+av.ini+'</div>'+
+          '<div class="an">'+esc(a.n)+'</div>'+
+          '<div class="ad">'+strip+'</div>'+
+          '<div class="at"><b>'+a.w+'</b> d · '+a.t+'</div></div>';
+       }).join('')+
+       (extra>0?'<div class="more">+ '+extra+' more advisor'+(extra>1?'s':'')+'</div>':''))
+      : '<div class="empty">No fact finds yet this month</div>';
+    setText('rhSub', ags.length? ags.length+' advisors · '+(CALM.monthLabel||'') : '');
+
+    /* Weekday profile — the same month summed by day of the week. A branch that
+       writes on Tuesdays and dies on Thursdays cannot see that in a total. */
+    var dsum=[0,0,0,0,0,0,0];
+    mdz.forEach(function(x){ dsum[x.dow]+=x.n; });
+    var dmx=Math.max.apply(null,[1].concat(dsum));
+    var bestDow=dsum.indexOf(Math.max.apply(null,dsum));
+    $('dowProfile').innerHTML=
+      '<div class="dh"><span>Which day the branch writes on</span>'+
+      '<span>strongest &middot; <b>'+DOW[bestDow]+'</b></span></div>'+
+      '<div class="dowb">'+dsum.map(function(v,i){
+        var we=(i===0||i===6);
+        return '<div class="db'+(i===bestDow?' best':'')+(we?' we':'')+'">'+
+          '<div class="dv">'+v+'</div>'+
+          '<i data-h="'+Math.round(v/dmx*100)+'" style="height:0"></i>'+
+          '<div class="dl">'+DOW[i]+'</div></div>';
+      }).join('')+'</div>';
+    requestAnimationFrame(function(){
+      var bs=document.querySelectorAll('#dowProfile .db i');
+      for(var i=0;i<bs.length;i++) bs[i].style.height=bs[i].getAttribute('data-h')+'%';
+    });
+  }
+  else {
+    /* The calendar comes from the wall feed. If the site is republished before
+       the script is redeployed, say so plainly rather than showing empty cards
+       that read as a branch which did no work. */
+    setHTML('calGrid','');
+    setHTML('calKey','');
+    setHTML('agGrid','<div class="empty">Waiting on the wall feed &mdash; '+
+      'redeploy the Apps Script to fill this in</div>');
+    setHTML('dowProfile','');
+  }
+  setHTML('t_p9', mdz.length
+    ? '<b>'+(CALM.daysWorkedMonth||0)+'</b> days worked in '+
+      ((CALM.monthLabel||'').split(' ')[0]||'the month')
+    : 'The working rhythm');
 
   /* 9 · the year */
   var Y=d.year||{};
@@ -1106,9 +1305,12 @@ function poll(){
 }
 function rotate(){
   panel=(panel+1)%PANELS;
+  /* Adding a panel and forgetting its tick used to throw here and freeze the
+     board on whatever was showing. Missing elements are now skipped. */
   for(var i=0;i<PANELS;i++){
-    $('p'+i).classList.toggle('on', i===panel);
-    $('k'+i).classList.toggle('on', i===panel);
+    var pn=$('p'+i), kk=$('k'+i);
+    if(pn) pn.classList.toggle('on', i===panel);
+    if(kk) kk.classList.toggle('on', i===panel);
   }
   // re-run the entry animations for the panel coming into view
   if(lastGood) render(lastGood);
