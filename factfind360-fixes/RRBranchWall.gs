@@ -20,7 +20,7 @@ var RRB_WALL_TTL      = 45;   // seconds — the screen polls slower than this
 
 /** The ONLY columns the wallboard may read. Nothing here identifies a client. */
 var WALL_FIELDS = [
-  'agentCode', 'advisorName', 'reviewerName', 'reviewerKey', 'status',
+  'agentCode', 'advisorName', 'reviewerName', 'reviewerKey', 'mgrName', 'status',
   'submittedAt', 'mgrReviewedAt', 'appType', 'repDetected', 'fi_uwEvidence',
   'insuranceNeed_calc', 'cashSurplus_calc',
   'rec1Amt','rec2Amt','rec3Amt','rec4Amt','rec5Amt','rec6Amt',
@@ -49,6 +49,17 @@ function rrbWallSetup() {
 function rrbWallRotateKey() {
   PropertiesService.getScriptProperties().deleteProperty(RRB_WALL_KEY_PROP);
   return rrbWallSetup();
+}
+
+/** The sheet holds a mix of RAJIV SOODOO and Varun Seegolam. On a wall that
+ *  reads as a fault, so names are normalised on the way out. */
+function rrbWallName_(s) {
+  var v = _str(s);
+  if (!v) return '';
+  if (v !== v.toUpperCase() && v !== v.toLowerCase()) return v;   // already mixed
+  return v.toLowerCase().replace(/(^|[\s'\-])([a-z])/g, function (m, p, c) {
+    return p + c.toUpperCase();
+  });
 }
 
 function rrbWallDays_(from, to) {
@@ -91,23 +102,42 @@ function rrbWall(e) {
 
   var now = new Date();
   var startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  var dow = (now.getDay() + 6) % 7;                       // Monday = 0
+  var dow = now.getDay();                                // Sunday = 0 — the branch week
   var startOfWeek = new Date(startOfDay.getTime() - dow * 86400000);
   var startOfLastWeek = new Date(startOfWeek.getTime() - 7 * 86400000);
   var startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
+  var tz = Session.getScriptTimeZone();
   var today = { submitted: 0, approved: 0 };
   var week  = { submitted: 0, approved: 0, premium: 0 };
   var lastWeek = { submitted: 0 };
-  var month = { submitted: 0, premium: 0 };
-  var agents = {}, managers = {};
+  var month = { submitted: 0, approved: 0, premium: 0 };
+  var agents = {}, monthAgents = {}, managers = {}, approvals = [];
+
+  // Fourteen dated buckets, pre-seeded so quiet days are drawn as gaps rather
+  // than skipped — a chart that silently omits its zeros tells a lie.
+  var series = {}, seriesOrder = [];
+  for (var back = 13; back >= 0; back--) {
+    var dd = new Date(startOfDay.getTime() - back * 86400000);
+    var kk = Utilities.formatDate(dd, tz, 'yyyy-MM-dd');
+    series[kk] = { d: kk, lbl: Utilities.formatDate(dd, tz, 'EEE'),
+                   dom: Utilities.formatDate(dd, tz, 'd'), n: 0, a: 0 };
+    seriesOrder.push(kk);
+  }
   var queue = { pending: 0, oldestDays: 0, oldestWho: '', breaching: 0 };
+  // How managers manage: turnaround, and what they send back.
+  var mgrPerf = {};
+  var mgrOf = function (n) {
+    if (!mgrPerf[n]) mgrPerf[n] = { name: n, approved: 0, returned: 0, days: [], pending: 0 };
+    return mgrPerf[n];
+  };
+  var returned = [];
   var flags = { replacements: 0, overCommitted: 0, evidence: 0 };
   var justIn = null;
 
   for (var r = 1; r < values.length; r++) {
     var row = values[r];
-    var agent  = _str(get(row, 'advisorName')) || _str(get(row, 'agentCode'));
+    var agent  = rrbWallName_(get(row, 'advisorName')) || _str(get(row, 'agentCode'));
     var status = _str(get(row, 'status')).toLowerCase();
     var subAt  = get(row, 'submittedAt');
     var sub    = subAt ? new Date(subAt) : null;
@@ -125,6 +155,14 @@ function rrbWall(e) {
       else if (sub >= startOfLastWeek) { lastWeek.submitted++; }
       if (sub >= startOfMonth) { month.submitted++; month.premium += prem; }
 
+      var dk = Utilities.formatDate(sub, tz, 'yyyy-MM-dd');
+      if (series[dk]) series[dk].n++;
+
+      if (sub >= startOfMonth && agent) {
+        if (!monthAgents[agent]) monthAgents[agent] = { name: agent, count: 0, premium: 0 };
+        monthAgents[agent].count++;
+        monthAgents[agent].premium += prem;
+      }
       if (sub >= startOfWeek && agent) {
         if (!agents[agent]) agents[agent] = { name: agent, count: 0, premium: 0, cover: 0 };
         agents[agent].count++;
@@ -136,12 +174,41 @@ function rrbWall(e) {
       }
     }
 
+    // Reviewed either way — approved or sent back — is a manager acting.
+    if (status === 'approved' || status === 'changes_requested') {
+      var rvw = get(row, 'mgrReviewedAt');
+      var rvD = rvw ? new Date(rvw) : null;
+      var who = rrbWallName_(get(row, 'reviewerName')) || rrbWallName_(get(row, 'mgrName'));
+      if (who && rvD && !isNaN(rvD.getTime())) {
+        var mp = mgrOf(who);
+        if (status === 'approved') mp.approved++; else mp.returned++;
+        if (sub) {
+          var turn = (rvD.getTime() - sub.getTime()) / 86400000;
+          if (turn >= 0 && turn < 400) mp.days.push(turn);
+        }
+      }
+      if (status === 'changes_requested' && rvD && !isNaN(rvD.getTime())) {
+        // Deliberately no reason text. dmGuidance and mgrComments are free
+        // prose about a client's case — they can name the client, quote their
+        // income, or describe their health. That belongs on the signed-in
+        // dashboard, never on a screen in the waiting area. The wall shows
+        // THAT a case went back and who sent it; the why is a click away.
+        returned.push({ manager: who || 'unknown', agent: agent || 'an advisor',
+                        at: rvD.toISOString() });
+      }
+    }
+
     if (status === 'approved') {
       var rev = get(row, 'mgrReviewedAt');
       var revD = rev ? new Date(rev) : null;
       if (revD && !isNaN(revD.getTime())) {
         if (revD >= startOfDay)  today.approved++;
         if (revD >= startOfWeek) week.approved++;
+        if (revD >= startOfMonth) month.approved++;
+        var ak = Utilities.formatDate(revD, tz, 'yyyy-MM-dd');
+        if (series[ak]) series[ak].a++;
+        if (revD >= startOfWeek && agent)
+          approvals.push({ agent: agent, at: revD.toISOString() });
       }
     }
 
@@ -151,19 +218,23 @@ function rrbWall(e) {
       if (age !== null) {
         if (age > queue.oldestDays) {
           queue.oldestDays = age;
-          queue.oldestWho  = _str(get(row, 'reviewerName')) || 'unassigned';
+          queue.oldestWho  = rrbWallName_(get(row, 'reviewerName')) || 'unassigned';
         }
         if (age >= 3) queue.breaching++;
       }
-      var mgr = _str(get(row, 'reviewerName')) || 'Unassigned';
+      var mgr = rrbWallName_(get(row, 'reviewerName')) || 'Unassigned';
+      mgrOf(mgr).pending++;
       if (!managers[mgr]) managers[mgr] = { name: mgr, count: 0, oldestDays: 0 };
       managers[mgr].count++;
       if (age !== null && age > managers[mgr].oldestDays) managers[mgr].oldestDays = age;
 
       var rep = _str(get(row, 'repDetected'));
       if (rep && !/^(n|no|false|0)$/i.test(rep)) flags.replacements++;
+      // Was: any non-empty value. That fired on 10 of 14 pending cases, which
+      // is noise, and a flag nobody believes is worse than no flag. Affirmative
+      // values only — under-reporting beats crying wolf on a wall.
       var ev = _str(get(row, 'fi_uwEvidence'));
-      if (ev && !/^(n|no|false|0)$/i.test(ev)) flags.evidence++;
+      if (/^(y|yes|true|1|required)$/i.test(ev)) flags.evidence++;
       var surplus = rrbNum_(get(row, 'cashSurplus_calc'));
       if (surplus > 0 && prem > 0 && (prem / surplus) > 0.8) flags.overCommitted++;
     }
@@ -181,11 +252,36 @@ function rrbWall(e) {
     today: today,
     week: { submitted: week.submitted, approved: week.approved,
             premium: Math.round(week.premium), lastWeek: lastWeek.submitted },
-    month: { submitted: month.submitted, premium: Math.round(month.premium) },
+    month: { submitted: month.submitted, approved: month.approved,
+             premium: Math.round(month.premium),
+             label: Utilities.formatDate(now, tz, 'MMMM') },
+    series: seriesOrder.map(function (k) { return series[k]; }),
     leaders: toList(agents, 'count').slice(0, 8),
+    monthLeaders: toList(monthAgents, 'count').slice(0, 8),
+    approvals: approvals.sort(function (x, y) {
+      return new Date(y.at).getTime() - new Date(x.at).getTime();
+    }).slice(0, 6),
     queue: queue,
     managers: toList(managers, 'count').slice(0, 6),
     flags: flags,
+    // How managers manage. Median, not mean — one case stuck 54 days drags a
+    // mean into fiction and the manager stops believing the number.
+    managerPerf: Object.keys(mgrPerf).map(function (k) {
+      var m = mgrPerf[k], ds = m.days.slice().sort(function (a, b) { return a - b; });
+      var med = ds.length ? (ds.length % 2 ? ds[(ds.length - 1) / 2]
+                : (ds[ds.length / 2 - 1] + ds[ds.length / 2]) / 2) : null;
+      var done = m.approved + m.returned;
+      return { name: m.name, approved: m.approved, returned: m.returned, pending: m.pending,
+               medianDays: med === null ? null : Math.round(med * 10) / 10,
+               returnRate: done ? Math.round(m.returned / done * 100) : null, reviewed: done };
+    }).sort(function (a, b) { return b.reviewed - a.reviewed; }),
+    // Sent back, and the reason the manager gave. Truncated — this is a wall,
+    // and the full guidance lives on the case.
+    returned: returned.sort(function (x, y) {
+      return new Date(y.at).getTime() - new Date(x.at).getTime();
+    }).slice(0, 5).map(function (r) {
+      return { manager: r.manager, agent: r.agent, at: r.at };
+    }),
     justIn: justIn
   };
 
