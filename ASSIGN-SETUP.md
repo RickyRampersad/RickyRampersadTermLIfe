@@ -159,8 +159,8 @@ so it cannot collide with whatever is already running on Branch Portfolio.
 4. Edit `CONFIG` at the top:
    - `SPREADSHEET_ID` — already set to your Branch Portfolio sheet. Only change
      it if you move to a different workbook.
-   - **`SALES_SUPPORT_EMAIL`** — ⚠️ currently empty. Until you set it, every
-     client submission goes to you instead of the support team.
+   - `SALES_SUPPORT_EMAIL` — set to `rickyrampersadsalessupport@myguardiangroup.com`.
+     Every client submission goes there, with you CC'd.
    - Check `MANAGER_YEARS: 35` reads the way you want it to in the letter.
    - Leave `TEST_MODE: true` for now.
 5. **Run → `setup`**, and approve the permissions Google asks for (it needs to
@@ -246,11 +246,10 @@ Your pages are then live at:
 **Go live** when you're happy:
 
 1. Set `TEST_MODE: false` in the script and save.
-2. Fill in `SALES_SUPPORT_EMAIL`.
-3. Edit the `Agent Profiles` tab — speciality, a two-line profile, a photo URL
+2. Edit the `Agent Profiles` tab — speciality, a two-line profile, a photo URL
    and a direct line for each agent. **This is what the client sees when they
    are introduced to their new agent**, so it's worth twenty minutes.
-4. Run **`sendInvitations(3)`** — three real clients, nothing more. Watch what
+3. Run **`sendInvitations(3)`** — three real clients, nothing more. Watch what
    comes back before you open the tap.
 
 ### Then work through the book in batches
@@ -332,7 +331,7 @@ and actual intelligence.
 
 ## Still to plug in
 
-- [ ] `SALES_SUPPORT_EMAIL` in `AgentAssign.gs`
+- [x] `SALES_SUPPORT_EMAIL` — set to rickyrampersadsalessupport@myguardiangroup.com
 - [ ] The `/exec` URL into `CONFIG.API_URL` in both HTML pages
 - [ ] Run `rotateAccessCodes` before anyone signs in
 - [ ] Fill in the `Agent Profiles` tab (speciality, bio, photo)

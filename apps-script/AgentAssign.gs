@@ -52,8 +52,8 @@ var CONFIG = {
   BRANCH_AREA:   'Chaguanas, Trinidad',
 
   /* ---- Where the internal notifications go -------------------------- */
-  // ⚠ SET THIS. Every client submission is emailed here for action.
-  SALES_SUPPORT_EMAIL: '',    // e.g. 'branchsupport@myguardiangroup.com'
+  // Every client submission is emailed here for action, with MANAGER_EMAIL CC'd.
+  SALES_SUPPORT_EMAIL: 'rickyrampersadsalessupport@myguardiangroup.com',
 
   /* ---- The website -------------------------------------------------- */
   // The client's token is appended, producing e.g.
