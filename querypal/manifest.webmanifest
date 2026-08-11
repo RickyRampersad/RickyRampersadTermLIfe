@@ -1,0 +1,10 @@
+{
+  "name": "Query Pal | Ricky Rampersad Branch",
+  "short_name": "Query Pal",
+  "description": "Log, route and track policy service requests.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#FAF6EF",
+  "theme_color": "#1B2A4A",
+  "icons": [{"src":"querypal-icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}
