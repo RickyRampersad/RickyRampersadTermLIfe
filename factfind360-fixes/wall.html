@@ -512,7 +512,12 @@
 
   <!-- 6 · THE MONTH -->
   <section class="panel" id="p5">
-    <div class="ptitle"><h1 id="t_p5"></h1><span class="tag">The month</span></div>
+    <div class="ptitle"><h1 id="t_p5"></h1><span class="tag">The week</span></div>
+    <div class="stats tight">
+      <div class="stat g"><div class="k">API picked up</div><div class="val num" id="wkApi">—</div><div class="s" id="wkApiSub">this week</div></div>
+      <div class="stat v"><div class="k">In pipeline</div><div class="val num" id="wkPipe">—</div><div class="s" id="wkPipeSub">taken, not yet picked up</div></div>
+      <div class="stat"><div class="k">API recommended</div><div class="val num" id="wkRec">—</div><div class="s" id="wkRecSub">this week</div></div>
+    </div>
     <div class="card grow">
       <div class="pbar"><span class="t">Producer board</span>
         <span class="pper"><i class="on">This week</i><i id="wkM">Month</i><i id="wkY">Year</i></span></div>
@@ -797,8 +802,11 @@ function headlines(d){
   set('t_p3', q.pending? '<b>'+q.pending+'</b> waiting on a manager'
                        : 'The queue is <b>clear</b>');
   set('t_p4', md!==null? 'Managers decide in <b>'+md+' days</b>' : 'How managers are managing');
-  set('t_p5', (d.monthLeaders||[]).length? '<b>'+esc(d.monthLeaders[0].name)+'</b> leads '+(M.label||'the month')
-                                         : 'The month ahead');
+  var WPP=(d.production&&d.production.wtd)||{api:0,pipeline:0};
+  set('t_p5', WPP.api>0 ? '<b>'+big(WPP.api)+'</b> picked up this week'
+            : (WPP.pipeline>0 ? '<b>'+big(WPP.pipeline)+'</b> in pipeline this week'
+            : ((d.leaders||[]).length? '<b>'+esc(d.leaders[0].name)+'</b> leads the week'
+                                     : 'A fresh week')));
   set('t_p6', WK.week>0 ? '<b>'+WK.week+'</b> done at the weekend'
                         : (W.submitted? '<b>'+W.submitted+'</b> this week' : 'A fresh week'));
   var PR=(d.production&&d.production.mtd)||{api:0,apps:0};
@@ -834,6 +842,16 @@ function render(d){
   setText('motto', motto(d));
 
   /* 6 · the month race */
+  // Read straight off the payload — P is declared further down in this
+  // function, and depending on statement order inside one long render is how
+  // a panel throws and takes the whole screen with it.
+  var WP=((d.production||{}).wtd)||{api:0,pipeline:0,apps:0,clients:0,cases:0};
+  countTo($('wkApi'), WP.api||0, big);
+  countTo($('wkPipe'), WP.pipeline||0, big);
+  countTo($('wkRec'), W.api||0, big);
+  setText('wkApiSub', (WP.apps||0)+' app'+((WP.apps||0)===1?'':'s')+' picked up this week');
+  setText('wkPipeSub', (WP.clients||0)+' client'+((WP.clients||0)===1?'':'s')+' taking cover');
+  setText('wkRecSub', (W.submitted||0)+' fact find'+((W.submitted||0)===1?'':'s')+' · '+big(W.need||0)+' need found');
   producerRows(d.leaders||[], $('mRace'), 'wk', 'pickedUp');
 
 
