@@ -918,6 +918,10 @@ function rrbShowHierarchy() {
     var sees = sc.kind === 'branch' ? 'the whole branch'
              : sc.kind === 'units'  ? sc.unitKeys.join(' + ')
                                     : sc.unitKey;
-    Logger.log('  %-8s reports to %-8s role=%-26s sees: %s', k, parent, role, sees);
+    // Logger.log does not honour %-8s padding — it printed the format string
+    // verbatim and the hierarchy was unreadable. Pad before formatting.
+    var pad = function (s, n) { s = String(s); return s + Array(Math.max(1, n - s.length + 1)).join(' '); };
+    Logger.log('  ' + pad(k, 9) + 'reports to ' + pad(parent, 9) +
+               'role=' + pad(role, 27) + 'sees: ' + sees);
   }
 }

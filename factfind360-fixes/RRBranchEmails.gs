@@ -430,9 +430,20 @@ function rrbAdviceReviewHtml_(d, link) {
 
 /** Base URL of this web app. */
 function rrbAppUrl_() {
-  try { if (typeof RRB_APP_URL === 'string' && RRB_APP_URL) return RRB_APP_URL; } catch (e) {}
-  try { if (typeof APP_URL === 'string' && APP_URL) return APP_URL; } catch (e) {}
-  return ScriptApp.getService().getUrl();
+  // APP_URL and RRB_APP_URL both point at the Netlify FORM — correct for a
+  // review link a manager opens, wrong for anything that calls this script.
+  // Trusting them sent the Approve buttons to Netlify, where they did nothing.
+  // The running deployment is the authority; a constant is used only if it
+  // actually looks like a web-app URL.
+  var isExec = function (u) {
+    return typeof u === 'string' &&
+           /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec/.test(u);
+  };
+  try { var u = ScriptApp.getService().getUrl(); if (isExec(u)) return u; } catch (e) {}
+  try { if (isExec(RRB_APP_URL)) return RRB_APP_URL; } catch (e) {}
+  try { if (isExec(APP_URL))     return APP_URL; } catch (e) {}
+  try { return ScriptApp.getService().getUrl(); } catch (e) {}
+  return '';
 }
 
 function rrbEsc_(s) {
