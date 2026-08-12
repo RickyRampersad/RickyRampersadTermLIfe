@@ -195,6 +195,16 @@ select option{background:var(--surface);color:var(--text)}
 .code-chip{background:rgba(255,255,255,.14);border:1.5px dashed rgba(255,255,255,.6);border-radius:12px;
   font:800 24px/1 var(--head);letter-spacing:.24em;padding:13px 18px 12px;color:#fff}
 .code-card .btn{background:#fff;color:#5E141F;border:none}
+.bio-card{display:flex;gap:18px;align-items:flex-start;background:linear-gradient(135deg,#8C2230,#5E141F);
+  color:#fff;border-radius:18px;padding:24px 24px;margin-top:20px}
+.bio-mark{flex:0 0 auto}
+.bio-mark svg{width:52px;height:52px}
+.bio-eyebrow{font:700 10.5px var(--head);letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-bottom:5px}
+.bio-card h3{font-family:var(--head);font-size:19px;color:#fff;margin-bottom:2px}
+.bio-title{font-size:12px;color:rgba(255,255,255,.75);margin-bottom:9px}
+.bio-card p{font-size:13.4px;line-height:1.6;color:rgba(255,255,255,.88)}
+.bio-close{margin-top:9px;font-weight:600;color:#fff !important}
+@media (max-width:560px){.bio-card{flex-direction:column;gap:12px}}
 #doneArea{display:none;padding:40px 0 20px}
 .done-mark{width:72px;height:72px;border-radius:50%;background:var(--emerald);display:flex;align-items:center;justify-content:center;font-size:36px;color:#FFFFFF;margin-bottom:20px;animation:pop .55s cubic-bezier(.2,1.3,.4,1)}
 @keyframes pop{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
@@ -281,9 +291,9 @@ select option{background:var(--surface);color:var(--text)}
         <span class="go">Start my review →</span>
       </button>
       <button class="card-btn warm" onclick="startForm('group')">
-        <div class="ci">🏢</div><h3>My company's plan</h3>
-        <p>Employee benefits — group life, health, pension. For HR, finance or a director.</p>
-        <span class="go">Review our plan →</span>
+        <div class="ci">🏢</div><h3>Corporate &amp; company plans</h3>
+        <p>Employee benefits — group life, health, pension. For HR, finance or a director. A short, guided set of questions.</p>
+        <span class="go">Start our corporate review →</span>
       </button>
     </div>
     <div class="promises">
@@ -345,6 +355,15 @@ const CONFIG = {
     email:    "ricky.rampersad@myguardiangroup.com",
     phone:    "(868) 678-5921",
     whatsapp: "18686785921",
+
+    /* The onboarding bio — shown when the review completes, so every client,
+       personal or corporate, sees exactly who they are now dealing with. */
+    bioTitle:  "Branch Manager · Ricky Rampersad Branch · Guardian Life of the Caribbean Limited",
+    bio: "A registered Guardian Life agent leading a branch built on one idea: nobody who holds a policy " +
+         "should ever feel forgotten. The branch pairs old-fashioned service — a person who answers, visits " +
+         "and follows through — with tools most agencies don't have: guided digital reviews, documents " +
+         "populated for digital signature, live progress tracking, and an update every 2 days until the work " +
+         "is done.",
   },
 };
 const B = CONFIG.BRAND;
@@ -601,7 +620,7 @@ const INDIVIDUAL = [
 const GROUP = [
 
 { step: "Your company", title: "Let's find your plan",
-  blurb: "You don't need the policy number to start." },
+  blurb: "The short version — a few minutes for HR, finance or a director. You don't need the policy number to start." },
 
   { id: "companyName", label: "Company name", type: "text", required: true },
   { id: "knowsPolicy", label: "Do you have the group policy number?", type: "choice",
@@ -612,8 +631,8 @@ const GROUP = [
               "Beacon", "British American", "Pan-American Life", "Another company", "Not sure"] },
   { id: "lives", label: "How many employees are covered?", type: "choice",
     options: ["Under 10", "10–24", "25–49", "50–99", "100–249", "250–499", "500+"] },
-  { id: "renewalDate", label: "Plan renewal date", type: "date", help: "If you know it — it's how we time your review." },
-  { id: "companyAddress", label: "Company address", type: "textarea" },
+  { id: "renewalDate", label: "Plan renewal date", type: "date", showIf: AGENT_ONLY, help: "If you know it — it's how we time your review." },
+  { id: "companyAddress", label: "Company address", type: "textarea", showIf: AGENT_ONLY },
 
   { id: "contactName", label: "Your name", type: "text", required: true },
   { id: "contactTitle", label: "Your job title", type: "text", placeholder: "e.g. HR Manager, Financial Controller, Director" },
@@ -632,7 +651,7 @@ const GROUP = [
   { id: "lastContact", label: "When did anyone last sit down with you about this plan?", type: "choice",
     options: ["Within the last year", "1–2 years ago", "3–5 years ago", "More than 5 years ago", "Never"], required: true },
 
-  { id: "satisfaction", label: "How satisfied are you with how the plan is serviced?", type: "scale5" },
+  { id: "satisfaction", label: "How satisfied are you with how the plan is serviced?", type: "scale5", showIf: AGENT_ONLY },
 
   { id: "listingCurrent", label: "Is your member listing fully up to date?", type: "yesnona",
     note: { kind: "warn", text: "<b>This one costs real money every month.</b> An employee who left is often still being billed; one who joined may not be covered at all. We'll reconcile the listing for you as part of the review." } },
@@ -643,10 +662,10 @@ const GROUP = [
   { id: "billingWhat", label: "What's going wrong with the billing?", type: "textarea",
     showIf: { id: "billingOk", not: "Yes" }, flag: "urgent" },
 
-  { id: "claimsOk", label: "How are claims being handled for your staff?", type: "choice",
+  { id: "claimsOk", label: "How are claims being handled for your staff?", type: "choice", showIf: AGENT_ONLY,
     options: ["Well — no complaints", "Slow but they get paid", "Poorly — it's a regular problem", "We don't really know"] },
 
-  { id: "membersKnowClaim", label: "Do your employees know how to make a claim?", type: "yesnona" },
+  { id: "membersKnowClaim", label: "Do your employees know how to make a claim?", type: "yesnona", showIf: AGENT_ONLY },
 
   { id: "unresolved", label: "Is anything outstanding right now?", type: "yesno",
     help: "A claim, an invoice dispute, a member who should be covered and isn't." },
@@ -657,7 +676,7 @@ const GROUP = [
     flag: "urgent",
     note: { kind: "warn", text: "<b>This escalates immediately</b>, with a response due within one business day." } },
 
-  { id: "feelHeard", label: "Anything you'd like to say about the service you've had?", type: "textarea",
+  { id: "feelHeard", label: "Anything you'd like to say about the service you've had?", type: "textarea", showIf: AGENT_ONLY,
     placeholder: "Optional, and we won't be defensive about it." },
 
 /* ── benefits: AGENT-SENT ONLY ─────────────────────────────────────── */
@@ -1368,7 +1387,7 @@ function renderDone(ref, sent, code) {
   }
   if (c.handledBy === "Direct — in-house team") {
     next.push("<b>You chose direct — " + esc(B.agent) + "'s in-house team now looks after you.</b> " +
-      (g ? "Your change of agent letter is on its way, filled in and ready for your letterhead — print it, apply the company stamp, sign it and send it back. We've started the request today so nothing waits on the post."
+      (g ? "Your change of agent letter is on its way, filled in and ready for your letterhead."
          : "Your signed request has gone to Customer Service. It usually takes 5 to 10 working days and the insurer confirms it to you in writing. Your policy, premium and cover are untouched."));
   } else if (c.handledBy === "Matched agent") {
     const brief = Array.isArray(a.wantInAgent) && a.wantInAgent.length
@@ -1381,6 +1400,12 @@ function renderDone(ref, sent, code) {
       ? "<b>Your change of agent letter is on its way</b>, filled in and ready for your letterhead. Print it, apply the company stamp, sign it and send it back. We've started the request today so nothing waits on the post."
       : "<b>Your request to appoint " + esc(B.agent) + " has gone to Customer Service.</b> It usually takes 5 to 10 working days and the insurer confirms it to you in writing. Your policy, premium and cover are untouched.");
   }
+  if (g && c.changeAgent) {
+    next.push("<b>Print it. Stamp it. Sign it. Send it back.</b> The insurer requires the letter on your company " +
+      "letterhead with the company stamp — reply to your confirmation email with a photo or scan, or hand it to us. " +
+      "<b>Until we receive it, we will write to you every 2 days, referencing our previous correspondence</b>, " +
+      "so it never slips through — that's part of our onboarding, and it stops the moment the letter is in.");
+  }
   if (c.wantsCall) next.push("<b>We'll call you before anything else happens.</b> No paperwork, no forms — just a conversation so you can decide.");
 
   const recs = [];
@@ -1388,7 +1413,7 @@ function renderDone(ref, sent, code) {
   if (a.dobOk && a.dobOk !== "Yes") recs.push("your date of birth");
   if (a.beneficiaryOk && a.beneficiaryOk !== "Yes") recs.push("who the money goes to");
   if (a.paperless === "Yes") next.push("<b>We're switching you to e-documents</b> — statements and letters by email, nothing lost in the post.");
-  if (a.listingCurrent && a.listingCurrent !== "Yes") recs.push("reconciling your member listing");
+  if (a.listingCurrent && a.listingCurrent !== "Yes") recs.push("your member listing");
   if (a.billingOk && a.billingOk !== "Yes") recs.push("your billing");
   if (recs.length) next.push("<b>We're correcting " + esc(recs.join(", ")) + ".</b> Where the insurer needs your " +
     "signature — a beneficiary change always does — the form comes to you already filled in.");
@@ -1438,6 +1463,20 @@ function renderDone(ref, sent, code) {
       '<a class="btn btn-line" href="https://wa.me/' + esc(B.whatsapp) + "?text=" + encodeURIComponent("Hi, I just completed my policy review — reference " + ref) + '" target="_blank" rel="noopener">💬 WhatsApp</a>' +
       '<a class="btn btn-line" href="mailto:' + esc(B.email) + "?subject=" + encodeURIComponent("Policy review " + ref) + '">✉️ Email</a>' +
     "</div></div>";
+
+  /* the onboarding moment: who they are now dealing with */
+  h += '<div class="bio-card"><div class="bio-mark"><svg viewBox="0 0 88 88" aria-hidden="true">' +
+      '<path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="#5E141F"/>' +
+      '<path d="M28 44L39 55L60 31" stroke="#F4F5F7" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '</svg></div>' +
+    '<div class="bio-body"><div class="bio-eyebrow">Who you\u2019re dealing with</div>' +
+    "<h3>" + esc(B.agent) + "</h3>" +
+    '<div class="bio-title">' + esc(B.bioTitle) + "</div>" +
+    "<p>" + esc(B.bio) + "</p>" +
+    '<p class="bio-close">' + (g
+      ? "This review is the first step of your company\u2019s onboarding. From here, you\u2019re dealing with " + esc(B.agent) + " and his team."
+      : "This review is the first step of your onboarding. From here, you\u2019re dealing with " + esc(B.agent) + " and his team.") +
+    "</p></div></div>";
 
   h += '<div class="done-actions no-print" style="margin-top:18px">' +
     '<button class="btn btn-amber" onclick="window.print()">🖨️ Print / save my copy</button>' +

@@ -320,6 +320,19 @@ h2.sec-h em { font-style: normal; color: var(--gold); }
 /* ── who ────────────────────────────────────────────────────────────── */
 .who { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 @media (max-width: 860px) { .who { grid-template-columns: 1fr; } }
+.mgr { display: flex; gap: 26px; align-items: flex-start; background: linear-gradient(135deg, #8C2230, #5E141F);
+  color: #fff; border-radius: var(--rl); padding: 30px 28px; }
+.mgr-mark { flex: 0 0 auto; text-align: center; }
+.mgr-mark svg { width: 74px; height: 74px; margin: 0 auto 10px; }
+.mgr-mark span { display: block; font: 800 13.5px var(--head); line-height: 1.3; color: #fff; }
+.mgr-mark i { font: 600 10.5px var(--head); font-style: normal; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.65); }
+.mgr-body p { font-size: 14.6px; line-height: 1.65; color: rgba(255,255,255,.88); margin-bottom: 11px; }
+.mgr-body b { color: #fff; }
+.mgr-body ul { list-style: none; display: grid; gap: 7px; margin: 0 0 13px; }
+.mgr-body li { font-size: 13.8px; color: rgba(255,255,255,.88); padding-left: 22px; position: relative; }
+.mgr-body li::before { content: "✓"; position: absolute; left: 0; color: #fff; font-weight: 800; }
+.mgr-close { font-weight: 600; color: #fff !important; margin-bottom: 0 !important; }
+@media (max-width: 640px) { .mgr { flex-direction: column; gap: 16px; } }
 .who-card { background: linear-gradient(158deg, var(--card), var(--card2)); border: 1px solid var(--line); border-radius: var(--rl); padding: 28px 26px; transition: border-color .2s, transform .2s; }
 .who-card:hover { border-color: var(--line2); transform: translateY(-3px); }
 .who-card .wi { width: 46px; height: 46px; border-radius: 13px; background: var(--gold-soft); border: 1px solid rgba(140,34,48,.32); display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
@@ -767,7 +780,42 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
           <li><svg style="color:var(--gold)"><use href="#i-check"/></svg>Benchmark your benefits before renewal</li>
           <li><svg style="color:var(--gold)"><use href="#i-check"/></svg>Change of agent handled on your letterhead</li>
         </ul>
-        <a class="btn btn-line" href="review.html?from=client&amp;type=group&amp;insurer=Guardian%20Life%20of%20the%20Caribbean">Review our company plan →</a>
+        <a class="btn btn-line" href="review.html?from=client&amp;type=group&amp;insurer=Guardian%20Life%20of%20the%20Caribbean">Start our corporate review →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ THE MANAGER ══════════ -->
+<section class="alt">
+  <div class="wrap">
+    <div class="sec-label rv">Who is behind this</div>
+    <h2 class="sec-h rv">You're dealing with <em>Ricky Rampersad</em> — and his team.</h2>
+    <p class="sec-sub rv">This review is the first step of an onboarding, not a form into a void. It ends with a
+      name, a number, and a branch that answers.</p>
+
+    <div class="mgr rv">
+      <div class="mgr-mark" aria-hidden="true">
+        <svg viewBox="0 0 88 88">
+          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="#5E141F"/>
+          <path d="M28 44L39 55L60 31" stroke="#F4F5F7" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Ricky Rampersad<br><i>Branch Manager</i></span>
+      </div>
+      <div class="mgr-body">
+        <p><b>Branch Manager, Ricky Rampersad Branch · Guardian Life of the Caribbean Limited.</b>
+          A registered Guardian Life agent leading a branch built on one idea: nobody who holds a policy should
+          ever feel forgotten.</p>
+        <p>The branch pairs old-fashioned service — a person who answers, visits and follows through — with tools
+          most agencies don't have:</p>
+        <ul>
+          <li>Guided digital reviews, for a person or a whole company</li>
+          <li>Documents populated for you, sent for digital signature</li>
+          <li>Live progress tracking with your own access code</li>
+          <li>An update every 2 days until the work is done — automatic, not remembered</li>
+        </ul>
+        <p class="mgr-close">Whether it's your family's policy or your company's plan, from the moment you press
+          send you are dealing with Ricky and his team.</p>
       </div>
     </div>
   </div>

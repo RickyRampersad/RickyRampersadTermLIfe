@@ -450,6 +450,12 @@ function saveRow_(isGroup, ref, priority, now, body, accessCode) {
        or an agent matched to the brief they wrote. Drives the assignment. */
     'Looked after by': c.handledBy || '',
 
+    /* Group change of agent needs the physical letter back — letterhead and
+       company stamp. While this starts with YES, the every-2-day note chases
+       the letter, referencing the previous correspondence, until support
+       replaces it (e.g. "Received 15 Aug") or marks the row Handled. */
+    'Letter outstanding': (isGroup && c.changeAgent) ? 'YES — awaiting stamped letter' : '',
+
     /* The code that lets the client (and only the client) watch this row's
        progress from the website. Released with the reference, never alone. */
     'Access code': accessCode || '',
@@ -649,9 +655,11 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf, accessCode) 
       : '';
     next.push('<b>Your agent appointment goes direct to ' + esc_(SVC.AGENT_NAME) + ' and the branch team.</b>' + brief);
     next.push(isGroup
-      ? '<b>Your change of agent request is attached as a letter.</b> Guardian needs it on your company ' +
-        'letterhead with your stamp — print the attachment on your letterhead, stamp and sign it, and send it back ' +
-        'to us. We have already started the request at Customer Service so nothing waits on the post.'
+      ? '<b>Your change of agent request is attached as a letter — print it, stamp it, sign it, send it back.</b> ' +
+        'Guardian needs it on your company letterhead with the company stamp. Reply to this email with a photo or ' +
+        'scan, or hand it to us. <b>Until we receive it we will write to you every ' + SVC.CLIENT_UPDATE_DAYS +
+        ' days, referencing our previous correspondence</b>, so it never slips through — the reminders stop the ' +
+        'moment the letter is in. We have already started the request at Customer Service so nothing waits on the post.'
       : '<b>Your change of servicing agent request has gone to Customer Service</b>, signed and attached here for ' +
         'your records. It usually takes 5 to 10 working days and Guardian confirms the change to you in writing. ' +
         'Your policy, your premium and your cover are not affected in any way.');
@@ -663,7 +671,7 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf, accessCode) 
   if (a.beneficiaryOk && a.beneficiaryOk !== 'Yes') recs.push('your beneficiary designation');
   if (a.premiumOk === 'No') recs.push('how you pay your premium');
   if (a.paperless === 'Yes') next.push('<b>We are switching you to e-documents</b> — statements and letters by email, nothing lost in the post.');
-  if (a.listingCurrent && a.listingCurrent !== 'Yes') recs.push('reconciling your member listing');
+  if (a.listingCurrent && a.listingCurrent !== 'Yes') recs.push('your member listing');
   if (a.billingOk && a.billingOk !== 'Yes') recs.push('your billing');
   if (recs.length) {
     next.push('<b>We are updating ' + esc_(recs.join(', ')) + '.</b> Where Guardian needs your signature — a ' +
@@ -696,6 +704,16 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf, accessCode) 
           'it is simply what we would look at together first.'
         : 'Everything we look at is in good order. We will confirm the details and keep it that way.'));
   }
+
+  var bio = box_('tip',
+    '<b style="color:#a05e03">Who you\u2019re dealing with.</b><br>' +
+    '<b>' + esc_(SVC.AGENT_NAME) + '</b> — Branch Manager, Ricky Rampersad Branch \u00b7 Guardian Life of the ' +
+    'Caribbean Limited. A registered Guardian Life agent leading a branch built on one idea: nobody who holds a ' +
+    'policy should ever feel forgotten. The branch pairs old-fashioned service — a person who answers, visits and ' +
+    'follows through — with tools most agencies don\u2019t have: guided digital reviews, documents populated for ' +
+    'digital signature, live progress tracking, and an update every ' + SVC.CLIENT_UPDATE_DAYS + ' days until the ' +
+    'work is done. This review is the first step of your onboarding — from here, you are dealing with ' +
+    esc_(SVC.AGENT_NAME) + ' and his team.');
 
   var track = '';
   var id0 = identity_(body);
@@ -732,6 +750,7 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf, accessCode) 
     '</ol>' +
     box_('good', 'Nothing on this list needs you to do anything. If a form needs signing, it comes to you. ' +
       'If a person needs to call you, they call you.') +
+    bio +
     '<p style="margin-top:18px">If anything above looks wrong, just reply to this email and we will put it right.</p>' +
     sig_(),
     isGroup ? 'Group plan review' : id.tag, id);
@@ -1623,8 +1642,10 @@ function clientPatiencePass_() {
       iUp = headers.length - 1;
     }
 
+    var iLo = headers.indexOf('Letter outstanding');
     var rows = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
     var sent = 0;
+    var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
 
     rows.forEach(function (r, idx) {
       if (String(r[iSt] || '').toLowerCase() !== 'open') return;
@@ -1641,27 +1662,50 @@ function clientPatiencePass_() {
 
       var ref = String(r[iRef] || '');
       var first = String(r[iCl] || '').trim().split(/\s+/)[0] || 'there';
+      var prevDate = Utilities.formatDate(last, tz, 'd MMMM yyyy');
+
+      /* Two different notes. A company that owes us the stamped letter is
+         chased for the letter, referencing the previous correspondence, until
+         support records it received. Everyone else gets the patience note. */
+      var chasingLetter = iLo > -1 && String(r[iLo] || '').indexOf('YES') === 0;
+
+      var subject, html;
+      if (chasingLetter) {
+        subject = 'Awaiting your stamped letter — further to our correspondence (' + ref + ')';
+        html = wrap_(
+          '<p>Dear ' + esc_(first) + ',</p>' +
+          '<p><b>Further to our email of ' + esc_(prevDate) + '</b> regarding your group change of agent ' +
+          '(reference <b style="color:' + SB.navy + '">' + esc_(ref) + '</b>), we have not yet received the ' +
+          'signed letter, and we don\u2019t want it to slip through.</p>' +
+          '<p>Three steps and it\u2019s done:</p>' +
+          '<ol style="padding-left:20px;line-height:1.8;font-size:13.8px">' +
+          '<li><b>Print</b> the letter we sent you on your company letterhead.</li>' +
+          '<li><b>Stamp and sign it</b> — the insurer requires the company stamp beside the signature.</li>' +
+          '<li><b>Send it back</b> — reply to this email with a photo or scan, or hand it to us.</li></ol>' +
+          '<p>We\u2019ll keep this gentle reminder coming every ' + SVC.CLIENT_UPDATE_DAYS + ' days until it\u2019s ' +
+          'in, referencing our previous correspondence each time — it stops the moment we receive it. ' +
+          'Lost the letter? Reply and we resend it the same day.</p>' + sig_(),
+          'Awaiting your letter');
+      } else {
+        subject = 'Still on it — your request ' + ref;
+        html = wrap_(
+          '<p>Dear ' + esc_(first) + ',</p>' +
+          '<p><b>Further to our email of ' + esc_(prevDate) + ' — thank you for your patience. Your request is ' +
+          'being worked on right now.</b> Our support team has it, and nothing is stuck: this note is simply the ' +
+          'promise we made that you would never be left wondering.</p>' +
+          '<p>Your reference is <b style="color:' + SB.navy + '">' + esc_(ref) + '</b>. ' +
+          'The moment it is complete you will hear from us properly.</p>' +
+          '<p>If anything has changed on your side in the meantime, just reply to this email or call ' +
+          esc_(SVC.AGENT_PHONE) + ' and quote the reference.</p>' +
+          sig_(),
+          'Working on it');
+      }
 
       try {
-        MailApp.sendEmail({
-          to: email,
-          name: SVC.FROM_NAME,
-          replyTo: SVC.AGENT_EMAIL,
-          subject: 'Still on it — your request ' + ref,
-          htmlBody: wrap_(
-            '<p>Dear ' + esc_(first) + ',</p>' +
-            '<p><b>Thank you for your patience — your request is being worked on right now.</b> ' +
-            'Our support team has it, and nothing is stuck: this note is simply the promise we made that ' +
-            'you would never be left wondering.</p>' +
-            '<p>Your reference is <b style="color:' + SB.navy + '">' + esc_(ref) + '</b>. ' +
-            'The moment it is complete you will hear from us properly.</p>' +
-            '<p>If anything has changed on your side in the meantime, just reply to this email or call ' +
-            esc_(SVC.AGENT_PHONE) + ' and quote the reference.</p>' +
-            sig_(),
-            'Working on it'),
-        });
+        MailApp.sendEmail({ to: email, name: SVC.FROM_NAME, replyTo: SVC.AGENT_EMAIL, subject: subject, htmlBody: html });
         sh.getRange(idx + 2, iUp + 1).setValue(new Date());
-        log_(ref, 'client-updated', 'automatic ' + SVC.CLIENT_UPDATE_DAYS + '-day patience note to ' + email);
+        log_(ref, chasingLetter ? 'letter-chased' : 'client-updated',
+             'automatic ' + SVC.CLIENT_UPDATE_DAYS + '-day note to ' + email);
         sent++;
       } catch (err) {
         log_(ref, 'client-update-failed', String(err));
