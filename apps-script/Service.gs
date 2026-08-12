@@ -821,10 +821,10 @@ function paperCss_() {
     'td{border:none;padding:0;vertical-align:bottom}' +
     '.lbl{white-space:nowrap;padding-right:5px}' +
     '.ldr{width:100%;border-bottom:1px dotted #000;height:1.05em}' +
-    '.typed{font-family:"Courier New",monospace;font-size:9.6pt;padding:0 3px;white-space:nowrap}' +
-    '.typed.fit{white-space:nowrap;font-size:6.6pt}' +
+    '.typed{font-family:"Courier New",monospace;font-size:9.6pt;font-weight:bold;padding:0 3px;white-space:nowrap}' +
+    '.typed.fit{white-space:nowrap;font-size:6.2pt;font-weight:bold}' +
     '.cap{font-size:8pt}' +
-    '.qs td{padding:4.2px 0}' +
+    '.qs td{padding:3.8px 0}' +
     '.qs tr.gap td{padding-top:9px}' +
     '.qs td.qt{white-space:nowrap;padding-right:5px}' +
     '.qs td.bx{width:.92in;text-align:center;padding-left:.1in}' +
@@ -843,10 +843,11 @@ function paperCss_() {
     '.p2s{font-size:8pt;color:#333;border-bottom:1px solid #000;padding-bottom:5px;margin-bottom:9px;line-height:1.35}' +
     '.p2t{font-size:8.4pt;font-weight:bold;letter-spacing:.7px;text-transform:uppercase;' +
       'margin:9px 0 3px;border-bottom:1px solid #999;padding-bottom:2px}' +
-    'table.cd{width:100%;border-collapse:collapse;font-size:7.6pt;line-height:1.25}' +
-    'table.cd td{border-bottom:1px solid #ddd;padding:1.6px 4px;vertical-align:top}' +
+    'table.cd{width:100%;border-collapse:collapse;font-size:7.2pt;line-height:1.22}' +
+    'table.cd td{border-bottom:1px solid #ddd;padding:1.3px 4px;vertical-align:top}' +
     'table.cd td.n{width:16px;text-align:right;font-weight:bold;color:#555}' +
-    'table.cd td.k{width:42%;color:#333}' +
+    'table.cd td.k{width:42%;color:#333;font-weight:normal}' +
+    'table.cd td.v{font-weight:bold}' +
     '.p2f{font-size:7.4pt;color:#333;border-top:1px solid #000;padding-top:5px;margin-top:10px;line-height:1.4}';
 }
 
@@ -1081,7 +1082,7 @@ function paperFacsimilePdf_(ref, priority, now, body) {
   var half = Math.ceil(rest.length / 2);
   var col = function (list) {
     return list.map(function (f) {
-      return '<tr><td class="k">' + esc_(f.label) + '</td><td>' + esc_(f.value) + '</td></tr>';
+      return '<tr><td class="k">' + esc_(f.label) + '</td><td class="v">' + esc_(f.value) + '</td></tr>';
     }).join('');
   };
 
@@ -1101,7 +1102,7 @@ function paperFacsimilePdf_(ref, priority, now, body) {
     h += '<div class="p2t">Against the numbered questions</div><table class="cd">' +
       notes.map(function (x) {
         return '<tr><td class="n">' + x.n + '</td><td class="k">' + esc_(x.t) +
-               '</td><td>' + esc_(x.v) + '</td></tr>';
+               '</td><td class="v">' + esc_(x.v) + '</td></tr>';
       }).join('') + '</table>';
   }
 
@@ -1164,7 +1165,7 @@ function answerTables_(body) {
       section = f.section;
       out += '<h3>' + esc_(section) + '</h3><table class="ans">';
     }
-    out += '<tr><td class="k">' + esc_(f.label) + '</td><td>' + esc_(f.value) + '</td></tr>';
+    out += '<tr><td class="k">' + esc_(f.label) + '</td><td class="v">' + esc_(f.value) + '</td></tr>';
   });
   if (section) out += '</table>';
   return out;
