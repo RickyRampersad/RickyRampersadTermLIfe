@@ -627,9 +627,11 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf, accessCode) 
 
   var next = [];
 
-  next.push('<b>Our support team has your file, and verification starts now.</b> They check your answers, then ' +
-    'populate your documents for your <b>digital signature</b> — anything that needs signing arrives ready-made. ' +
-    'Nothing to print, nothing to fill in twice.');
+  next.push('<b>Our support team has your file, and verification starts now.</b> They check your answers, ' +
+    (isGroup ? 'prepare your letter with every detail filled in, '
+             : 'trace and <b>fill in all the policy numbers for you</b>, ') +
+    'then populate your documents for your <b>digital signature</b> — anything that needs signing arrives ' +
+    'ready-made. Nothing to print, nothing to fill in twice.');
 
   if (c.handledBy === 'Matched agent') {
     next.push('<b>We are matching your agent now.</b> Once your answers are verified, we assign the agent who fits ' +

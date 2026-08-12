@@ -399,6 +399,12 @@ const INDIVIDUAL = [
 { step: "Your policy", title: "Let's find your policy",
   blurb: "You don't need the policy number. Most people don't have it, and that's the normal condition — only about 15% of policyholders say they fully understand what they own." },
 
+  { id: "howItWorks", type: "statement", label: "How this works — you do the easy part",
+    text: "<b>You fill in the basics. We do the rest.</b> Our support team verifies your answers, traces and " +
+      "<b>fills in all the policy numbers for you</b>, and populates every document that needs your signature. " +
+      "It comes back to you by email, ready to <b>sign digitally on your phone</b> — nothing to print, nothing " +
+      "typed twice." },
+
   { id: "knowsPolicy", label: "Do you have your policy number to hand?", type: "choice",
     options: ["Yes, I have it", "No — please trace it for me"], required: true,
     note: { kind: "good", text: "<b>Either answer is fine.</b> Your name and date of birth are enough for us to find a record. Nobody is going to make you dig through a drawer." } },
@@ -621,6 +627,12 @@ const GROUP = [
 
 { step: "Your company", title: "Let's find your plan",
   blurb: "The short version — a few minutes for HR, finance or a director. You don't need the policy number to start." },
+
+  { id: "howItWorksG", type: "statement", label: "How this works — you do the easy part",
+    text: "<b>You fill in this short set. We do the rest.</b> Our office prepares your change of agent letter with " +
+      "every detail filled in, ready for your <b>letterhead and company stamp</b>. You print it, stamp it, sign it " +
+      "and send it back — and <b>we follow up every 2 days, referencing our previous correspondence, until we " +
+      "receive it</b>. It never slips through." },
 
   { id: "companyName", label: "Company name", type: "text", required: true },
   { id: "knowsPolicy", label: "Do you have the group policy number?", type: "choice",
@@ -1371,9 +1383,10 @@ function renderDone(ref, sent, code) {
   const g = state.kind === "group";
   const next = [];
 
-  next.push("<b>Our support team has your file, and verification starts now.</b> They check your answers, then " +
-    "populate your documents for your <b>digital signature</b> — anything that needs signing arrives ready-made, " +
-    "and your " + (c.handledBy === "Matched agent" ? "agent match" : "choice of who looks after you") +
+  next.push("<b>Our support team has your file, and verification starts now.</b> They check your answers, " +
+    (g ? "prepare your letter with every detail filled in, " : "trace and <b>fill in all the policy numbers for you</b>, ") +
+    "then populate your documents for your <b>digital signature</b> — anything that needs signing arrives " +
+    "ready-made, and your " + (c.handledBy === "Matched agent" ? "agent match" : "choice of who looks after you") +
     " is confirmed shortly after.");
   if (c.needsTracing) {
     next.push("<b>We're tracing your " + (g ? "plan" : "policy") + " now.</b> Your name and date of birth are " +

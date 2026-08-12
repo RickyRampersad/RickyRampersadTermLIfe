@@ -320,6 +320,44 @@ h2.sec-h em { font-style: normal; color: var(--gold); }
 /* ── who ────────────────────────────────────────────────────────────── */
 .who { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 @media (max-width: 860px) { .who { grid-template-columns: 1fr; } }
+.lanes { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.lanes > * { min-width: 0; }
+@media (max-width: 760px) { .lanes { grid-template-columns: 1fr; } }
+.lane { background: linear-gradient(158deg, var(--card), var(--card2)); border: 1px solid var(--line);
+  border-radius: var(--rl); padding: 26px 24px; display: flex; flex-direction: column; }
+.lane:hover { border-color: var(--line2); }
+.lane-head { display: flex; gap: 14px; align-items: center; margin-bottom: 18px; }
+.lane-head > div { min-width: 0; }
+.lane .wi { width: 46px; height: 46px; border-radius: 13px; background: var(--gold-soft);
+  border: 1px solid rgba(140,34,48,.32); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.lane .wi svg { width: 23px; height: 23px; }
+.lane-head h3 { font-size: 19px; font-weight: 800; }
+.lane-head p { font-size: 13px; color: var(--muted); }
+.steps { position: relative; flex: 1; margin-bottom: 20px; }
+.steps::before { content: ""; position: absolute; left: 17px; top: 14px; bottom: 14px; width: 2px;
+  background: linear-gradient(180deg, var(--gold) 0%, rgba(140,34,48,.15) 100%); }
+.stp { position: relative; display: flex; gap: 13px; padding: 0 0 20px 0; align-items: flex-start; }
+.stp:last-child { padding-bottom: 0; }
+.sic { position: relative; z-index: 1; flex: 0 0 36px; width: 36px; height: 36px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center; }
+.sic svg { width: 19px; height: 19px; }
+.stp.you .sic { background: var(--card); border: 1.6px solid rgba(140,34,48,.45); color: var(--gold); }
+.stp.us .sic { background: var(--gold); border: 1.6px solid var(--gold); color: #fff; }
+.stp .tag { position: absolute; left: 40px; top: -7px; font: 800 9px var(--head); letter-spacing: .14em;
+  text-transform: uppercase; padding: 2px 8px; border-radius: 99px; background: var(--card);
+  border: 1px solid rgba(140,34,48,.4); color: var(--gold); }
+.stp .tag.us-t { background: var(--gold); color: #fff; border-color: var(--gold); }
+.stp > div { padding-top: 6px; min-width: 0; }
+.stp b { display: block; font-family: var(--head); font-size: 14.6px; margin-bottom: 3px; }
+.stp p { font-size: 13px; color: var(--muted); line-height: 1.55; }
+.stp p b { display: inline; font-family: var(--body); font-size: inherit; color: var(--text); }
+.lane .btn { width: 100%; }
+/* staggered entrance for the steps */
+.lane.rv .stp { opacity: 0; transform: translateX(-10px); transition: opacity .5s ease, transform .5s ease; }
+.lane.rv.in .stp { opacity: 1; transform: none; }
+.lane.rv.in .stp:nth-child(1) { transition-delay: .1s } .lane.rv.in .stp:nth-child(2) { transition-delay: .25s }
+.lane.rv.in .stp:nth-child(3) { transition-delay: .4s } .lane.rv.in .stp:nth-child(4) { transition-delay: .55s }
+@media (prefers-reduced-motion: reduce) { .lane.rv .stp { opacity: 1; transform: none; transition: none; } }
 .mgr { display: flex; gap: 26px; align-items: flex-start; background: linear-gradient(135deg, #8C2230, #5E141F);
   color: #fff; border-radius: var(--rl); padding: 30px 28px; }
 .mgr-mark { flex: 0 0 auto; text-align: center; }
@@ -430,6 +468,12 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
   <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2l8 3.5v6c0 5.2-3.4 8.6-8 10.5-4.6-1.9-8-5.3-8-10.5v-6z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"/></symbol>
   <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.1"/><path d="M12 7v5.5l3.5 2" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/></symbol>
   <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3v18M5 7h14M7.5 7l-3 6h6zM16.5 7l-3 6h6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-form" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 8h7M8.5 11.5h7M8.5 15h4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-prep" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="5.6" fill="none" stroke="currentColor" stroke-width="2.1"/><path d="M15 15l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M8.2 10.5h4.6M10.5 8.2v4.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+  <symbol id="i-signph" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9.5 13.5c1.2-2.4 2.2-2.6 2.8-1 .6 1.6 1.4 1.6 2.7-.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M11 18.4h2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-stamp" viewBox="0 0 24 24"><path d="M9 10V5.8A2.8 2.8 0 0112 3a2.8 2.8 0 013 2.8V10" fill="none" stroke="currentColor" stroke-width="2.1"/><path d="M5.5 14c0-2.2 2.9-4 6.5-4s6.5 1.8 6.5 4v1.5h-13z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4.5 19.5h15" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-loop" viewBox="0 0 24 24"><path d="M4.5 10a8 8 0 0114-2.5M19.5 14a8 8 0 01-14 2.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M18.5 3.5v4h-4M5.5 20.5v-4h4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-shieldck" viewBox="0 0 24 24"><path d="M12 2l8 3.5v6c0 5.2-3.4 8.6-8 10.5-4.6-1.9-8-5.3-8-10.5v-6z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 12l2.6 2.6 4.6-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3l9.5 17H2.5z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"/><path d="M12 9.5v4.5M12 17.2v.1" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/></symbol>
 </defs></svg>
 
@@ -751,35 +795,60 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
   </div>
 </section>
 
-<!-- ══════════ WHO ══════════ -->
+<!-- ══════════ WHO — THE TWO LANES ══════════ -->
 <section>
   <div class="wrap">
-    <div class="sec-label rv">Two situations</div>
-    <h2 class="sec-h rv">A person, or <em>a whole company</em></h2>
-    <p class="sec-sub rv">Group plans get orphaned exactly the same way, and it costs a great deal more.</p>
-    <div class="who">
-      <div class="who-card rv">
-        <div class="wi" style="color:var(--gold)"><svg><use href="#i-person"/></svg></div>
-        <h3>Individual &amp; family policies</h3>
-        <p>Your own life, health or retirement cover — for you, your spouse, your children.</p>
-        <ul>
-          <li><svg style="color:var(--gold)"><use href="#i-check"/></svg>Confirm your records and beneficiaries</li>
-          <li><svg style="color:var(--gold)"><use href="#i-check"/></svg>Understand what you actually own</li>
-          <li><svg style="color:var(--gold)"><use href="#i-check"/></svg>Check nothing has been left unclaimed</li>
-          <li><svg style="color:var(--gold)"><use href="#i-check"/></svg>Appoint a servicing agent, if you want one</li>
-        </ul>
+    <div class="sec-label rv">How it works</div>
+    <h2 class="sec-h rv">You do the easy part. <em>We do the rest.</em></h2>
+    <p class="sec-sub rv">Two lanes, one rule: the paperwork is our job, not yours. Watch who does what.</p>
+
+    <div class="lanes">
+
+      <!-- individual lane -->
+      <div class="lane rv">
+        <div class="lane-head">
+          <div class="wi" style="color:var(--gold)"><svg><use href="#i-person"/></svg></div>
+          <div><h3>Individuals &amp; families</h3>
+          <p>You don't even need your policy number.</p></div>
+        </div>
+        <div class="steps">
+          <div class="stp you"><span class="tag">You</span><span class="sic"><svg><use href="#i-form"/></svg></span>
+            <div><b>Fill the basic questionnaire</b>
+            <p>Plain questions, about 4 minutes, skip anything. No policy number needed.</p></div></div>
+          <div class="stp us"><span class="tag us-t">Us</span><span class="sic"><svg><use href="#i-prep"/></svg></span>
+            <div><b>We prepare everything</b>
+            <p>Our support team verifies your answers, traces and <b>fills in all the policy numbers</b>, and populates every document for you.</p></div></div>
+          <div class="stp you"><span class="tag">You</span><span class="sic"><svg><use href="#i-signph"/></svg></span>
+            <div><b>Sign digitally, on your phone</b>
+            <p>Your papers arrive ready-made. Nothing to print, nothing typed twice.</p></div></div>
+          <div class="stp us"><span class="tag us-t">Us</span><span class="sic"><svg><use href="#i-shieldck"/></svg></span>
+            <div><b>Filed, tracked, confirmed</b>
+            <p>Watch it move with your access code — and hear from us every 2 days until it's done.</p></div></div>
+        </div>
         <a class="btn btn-go" href="review.html?from=client&amp;type=individual&amp;insurer=Guardian%20Life%20of%20the%20Caribbean">Start my review →</a>
       </div>
-      <div class="who-card rv">
-        <div class="wi" style="color:var(--gold)"><svg><use href="#i-building"/></svg></div>
-        <h3>Group &amp; company plans</h3>
-        <p>Employee benefits with no account executive: nobody visits, nobody reconciles the member listing, nobody answers HR.</p>
-        <ul>
-          <li><svg style="color:var(--gold)"><use href="#i-check"/></svg>Reconcile members you're still being billed for</li>
-          <li><svg style="color:var(--gold)"><use href="#i-check"/></svg>Check claims turnaround and billing accuracy</li>
-          <li><svg style="color:var(--gold)"><use href="#i-check"/></svg>Benchmark your benefits before renewal</li>
-          <li><svg style="color:var(--gold)"><use href="#i-check"/></svg>Change of agent handled on your letterhead</li>
-        </ul>
+
+      <!-- corporate lane -->
+      <div class="lane rv">
+        <div class="lane-head">
+          <div class="wi" style="color:var(--gold)"><svg><use href="#i-building"/></svg></div>
+          <div><h3>Corporate &amp; company plans</h3>
+          <p>A short set for HR, finance or a director.</p></div>
+        </div>
+        <div class="steps">
+          <div class="stp you"><span class="tag">You</span><span class="sic"><svg><use href="#i-form"/></svg></span>
+            <div><b>Fill the short corporate set</b>
+            <p>Company, contact, where the plan stands. A few minutes, mostly taps.</p></div></div>
+          <div class="stp us"><span class="tag us-t">Us</span><span class="sic"><svg><use href="#i-prep"/></svg></span>
+            <div><b>We prepare your letter</b>
+            <p>Your change of agent letter arrives by email, every detail filled in, ready for your letterhead.</p></div></div>
+          <div class="stp you"><span class="tag">You</span><span class="sic"><svg><use href="#i-stamp"/></svg></span>
+            <div><b>Print · stamp · sign · send back</b>
+            <p>The insurer requires the company stamp on your letterhead. Reply with a photo or scan, or hand it to us.</p></div></div>
+          <div class="stp us"><span class="tag us-t">Us</span><span class="sic"><svg><use href="#i-loop"/></svg></span>
+            <div><b>We follow up until it's in</b>
+            <p>Every 2 days, referencing our previous correspondence — it never slips through, and it stops the moment we receive it.</p></div></div>
+        </div>
         <a class="btn btn-line" href="review.html?from=client&amp;type=group&amp;insurer=Guardian%20Life%20of%20the%20Caribbean">Start our corporate review →</a>
       </div>
     </div>
