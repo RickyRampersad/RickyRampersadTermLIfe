@@ -747,6 +747,109 @@ function reportFailure_(err, body) {
 
 /* ============================ PDFs ============================ */
 
+/* ── The paper form, line by line ──────────────────────────────────────────
+   Form 2000-03-147 has twenty numbered questions in a fixed order, each with
+   a YES and a NO box. This table is that form: the wording is transcribed
+   from the printed sheet, and `yes` / `no` list the online answers that put a
+   tick in each box. Anything else — "Not sure", or a question the paper form
+   asked without giving anywhere to write the answer — leaves both boxes empty
+   and prints the client's actual words on the dotted line, which is exactly
+   what an agent does with a pen.
+
+   `write` names a question whose answer belongs on the line rather than in a
+   box. `note` pulls the detail behind a Yes onto the line beside it.        */
+var PAPER_Q = [
+  { n: 1,  t: 'Are you satisfied with the service provided by Guardian Life?',
+    from: 'satisfaction', yes: ['4', '5'], no: ['1', '2'], note: 'satisfaction' },
+  { n: 2,  t: 'Do you need any clarification on your policy(ies)?',
+    from: 'needClarify', yes: ['Yes'], no: ['No'], note: 'clarifyWhat' },
+  { n: 3,  t: 'Are you satisfied with the explanation given?',
+    from: 'explainOk', yes: ['Yes'], no: ['No'], note: 'explainWhat' },
+  { n: 4,  t: 'Are you satisfied with your existing policy(ies) and the method of premium payments?',
+    from: 'premiumOk', yes: ['Yes'], no: ['No'], note: 'premiumNote' },
+  { n: 5,  t: 'Have you had any problems that have not been resolved to your satisfaction?',
+    from: 'unresolved', yes: ['Yes'], no: ['No'], note: 'unresolvedWhat' },
+  { n: 6,  t: 'How often would you like your agent to contact you, every 3 mths, 6 mths, 12 mths?',
+    write: 'contactFreq' },
+  { n: 7,  t: 'Do you or your Spouse own any other Policies with the Company?',
+    from: 'otherGuardian', yes: ['Yes'], no: ['No'], note: 'otherGuardianWhat' },
+  { n: 8,  t: 'Do you own any other Policies?',
+    from: 'otherCompany', yes: ['Yes'], no: ['No'], note: 'otherCompanyWhat' },
+  { n: 9,  t: 'Are Name and Address correct?',
+    from: 'nameAddrOk', yes: ['Yes'], no: ['No'], note: 'newAddress' },
+  { n: 10, t: 'Is Date of Birth correct?',
+    from: 'dobOk', yes: ['Yes'], no: ['No'], note: 'correctDob' },
+  { n: 11, t: 'Is the Beneficiary Designation correct?',
+    from: 'beneficiaryOk', yes: ['Yes'], no: ['No'], note: 'benName' },
+  { n: 12, t: 'Does your Beneficiary Know where to locate your Policies?',
+    from: 'benKnows', yes: ['Yes'], no: ['No'] },
+  { n: 13, t: 'Do you have a Will?  (Explain the importance of a current Will)',
+    from: 'hasWill', yes: ["Yes, and it's up to date", "Yes, but it's out of date"],
+    no: ['No'], note: 'hasWill' },
+  { n: 14, t: 'Do you participate in a Company Group Life or Health Plan?',
+    from: 'groupPlan', yes: ['Yes'], no: ['No'], note: 'groupEmployer' },
+  { n: 15, t: 'Have you made arrangements to replace your Income in the event of accident or disability?',
+    from: 'incomeProtection', yes: ['Yes'], no: ['No'] },
+  { n: 16, t: 'Do you own your own Home?',
+    from: 'homeStatus', yes: ['Own it outright', 'Own it with a mortgage'],
+    no: ['Renting', 'Living with family'], note: 'homeStatus' },
+  { n: 17, t: 'When last has your financial security programme been reviewed?',
+    write: 'lastReview' },
+  { n: 18, t: 'Have you a Friend or Relative to whom I may be of service?',
+    from: 'referral', yes: ['Yes'], no: ['No'], note: 'referralWho' },
+  { n: 19, t: 'Have you a Friend or Relative who might be interested in a career in Life Insurance?',
+    from: 'career', yes: ['Yes'], no: ['No'], note: 'careerWho' },
+  { n: 20, t: 'Have you any questions?',
+    from: 'questions', filled: true, note: 'questions' }
+];
+
+/* The facsimile stylesheet — Times, dot leaders, ruled boxes, the lot. */
+function paperCss_() {
+  return 'body{font-family:"Times New Roman",Times,Georgia,serif;font-size:10.4pt;color:#000;' +
+      'margin:0;padding:26px 34px 18px;line-height:1.34}' +
+    '.ttl{text-align:center;font-size:15.5pt;letter-spacing:.2px;margin:0}' +
+    '.ttl2{text-align:center;font-size:14pt;margin:1px 0 16px}' +
+    '.hdr{width:100%;border-collapse:collapse;margin-bottom:2px}' +
+    '.hdr td{padding:1px 0;vertical-align:bottom;border:none}' +
+    '.cap{font-size:7.4pt;letter-spacing:.2px}' +
+    '.dot{border-bottom:1px dotted #000;display:inline-block;vertical-align:bottom}' +
+    '.fill{display:inline-block;vertical-align:bottom;border-bottom:1px dotted #000;' +
+      'font-family:"Courier New",monospace;font-size:9.4pt;padding:0 3px 1px}' +
+    '.qs{width:100%;border-collapse:collapse;margin-top:4px}' +
+    '.qs td{border:none;padding:2.1px 0;vertical-align:bottom;font-size:10.2pt}' +
+    '.qs td.lead{width:auto}' +
+    '.qs td.bx{width:56px;text-align:center}' +
+    '.yn{font-size:11pt;letter-spacing:.5px;text-align:center;padding-bottom:2px}' +
+    '.box{display:inline-block;width:30px;height:14px;border:1.4px solid #000;border-radius:3px;' +
+      'text-align:center;line-height:13px;font-size:11pt;font-weight:bold}' +
+    '.leader{display:inline-block;border-bottom:1px dotted #000;min-width:8px}' +
+    '.note{font-family:"Courier New",monospace;font-size:8.2pt;padding-left:12px;color:#111}' +
+    '.cut{border:none;border-top:1.4px dashed #000;margin:13px 0 11px}' +
+    'p{margin:0 0 7px}' +
+    '.blk{margin-top:9px}' +
+    '.sigimg{max-height:40px;vertical-align:bottom;margin-bottom:-11px}' +
+    '.sigrule{border-bottom:1px solid #000;display:inline-block;min-width:190px;text-align:center}' +
+    '.sigline{border-bottom:1px solid #000;display:inline-block}' +
+    '.foot{font-size:8pt;margin-top:12px}' +
+    '.code{font-size:9pt;margin-top:10px}' +
+    '.stamp{position:fixed;top:8px;right:12px;font-family:Arial,sans-serif;font-size:7.2pt;color:#444}' +
+    '.pg{page-break-before:always}' +
+    'h3{font-size:9.5pt;text-transform:uppercase;letter-spacing:1px;color:#000;' +
+      'margin:15px 0 5px;border-bottom:1px solid #000;padding-bottom:2px}' +
+    'table.ans{width:100%;border-collapse:collapse;font-size:9.4pt}' +
+    'table.ans td{padding:3.5px 7px;border:1px solid #999;vertical-align:top}' +
+    'table.ans td.k{width:47%;background:#f2f2f2}';
+}
+
+/* A value typed onto a dotted line, sized to the space the paper leaves. */
+function onLine_(v, width) {
+  var w = width || 240;
+  if (v === undefined || v === null || String(v) === '') {
+    return '<span class="dot" style="width:' + w + 'px">&nbsp;</span>';
+  }
+  return '<span class="fill" style="min-width:' + w + 'px">' + esc_(String(v)) + '</span>';
+}
+
 function pdfShell_(title, subtitle, inner) {
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><style>' +
     'body{font-family:Georgia,"Times New Roman",serif;font-size:11.5pt;color:#111;margin:34px 40px;line-height:1.5}' +
@@ -776,11 +879,196 @@ function toPdf_(html, name) {
   }
 }
 
-/** The completed questionnaire — a drop-in replacement for the paper form,
- *  so it can be filed exactly where the paper one was filed. */
+/**
+ * The completed questionnaire.
+ *
+ * For an individual this is a facsimile of form 2000-03-147 — the same title,
+ * the same twenty questions in the same order and the same words, the same
+ * YES/NO boxes, the same change-of-servicing-agent request underneath the
+ * dashed rule, down to the form number in the corner. Ticked and typed from
+ * what the client answered online, so it can be filed exactly where the paper
+ * one was filed, and read by anyone who has read the paper one.
+ *
+ * Everything the paper form has no room for follows on a second page.
+ */
 function questionnairePdf_(ref, priority, now, body) {
+  /* Only the branch questionnaire is form 2000-03-147. A donthaveanagent.com
+     review asks different questions and must not masquerade as that form. */
+  if (body.kind !== 'group' && !identity_(body).dhaa) {
+    return paperFacsimilePdf_(ref, priority, now, body);
+  }
+  return groupQuestionnairePdf_(ref, priority, now, body);
+}
+
+function paperFacsimilePdf_(ref, priority, now, body) {
+  var a = answersById_(body);   /* the printable sentence */
+  var r = rawById_(body);       /* the answer itself, for the tick boxes */
   var c = body.core || {};
-  var isGroup = body.kind === 'group';
+  var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
+  var d  = new Date(now);
+  var dd = Utilities.formatDate(d, tz, 'd');
+  var mm = Utilities.formatDate(d, tz, 'MMMM');
+  var yy = Utilities.formatDate(d, tz, 'yyyy');
+
+  /* header ------------------------------------------------------------- */
+  var h =
+    '<div class="stamp">Ref ' + esc_(ref) + ' · ' + esc_(priority) + '</div>' +
+    '<div class="ttl">GUARDIAN LIFE OF THE CARIBBEAN LIMITED</div>' +
+    '<div class="ttl2">SERVICE QUESTIONNAIRE</div>' +
+    '<table class="hdr"><tr>' +
+      '<td style="width:62%">LIFE ASSURED ' + onLine_(a.lifeAssured || c.clientName, 250) + '</td>' +
+      '<td>POLICY NO(S) ' + onLine_(a.policyNos || c.policyNos, 170) + '</td>' +
+    '</tr></table>' +
+    '<table class="hdr"><tr>' +
+      '<td style="width:62%">PROPOSER ' + onLine_(a.proposer, 240) +
+        '<div class="cap" style="text-align:center;width:330px">(If different from Life Assured)</div></td>' +
+      '<td style="text-align:right">Dated this ' + onLine_(dd, 34) + ' day of ' +
+        onLine_(mm, 74) + ' ' + onLine_(yy, 42) +
+        '<div class="cap" style="text-align:right;padding-right:2px">' +
+        '<span style="display:inline-block;width:96px">day</span>' +
+        '<span style="display:inline-block;width:84px">month</span>' +
+        '<span style="display:inline-block;width:42px">year</span></div></td>' +
+    '</tr></table>';
+
+  /* the twenty questions ------------------------------------------------ */
+  var rows = '<tr><td class="lead"></td>' +
+             '<td class="bx yn">YES</td><td class="bx yn">NO</td></tr>';
+
+  PAPER_Q.forEach(function (q) {
+    var yes = '', no = '', trail = '';
+
+    if (q.write) {                                   /* an answer, not a tick */
+      trail = ' ' + onLine_(a[q.write] || '', 150);
+    } else if (q.filled) {                           /* Q20 — any text means yes */
+      var t = a[q.from] || '';
+      if (String(t) !== '') yes = '\u2713'; else no = '\u2713';
+    } else {
+      var v = String(r[q.from] === undefined ? '' : r[q.from]);
+      if (indexOf_(q.yes, v) > -1) yes = '\u2713';
+      else if (indexOf_(q.no, v) > -1) no = '\u2713';
+      else if (v !== '') trail = ' ' + onLine_(v, 120);   /* "Not sure" etc. */
+    }
+
+    rows += '<tr>' +
+      '<td class="lead">' + esc_(q.t) + ' <span class="leader" style="width:' +
+        Math.max(20, 470 - q.t.length * 4.6) + 'px">&nbsp;</span>' + trail + '</td>' +
+      '<td class="bx"><span class="box">' + yes + '</span></td>' +
+      '<td class="bx"><span class="box">' + no + '</span></td></tr>';
+
+    /* the detail behind the answer, in the agent's hand */
+    var n = q.note ? a[q.note] : '';
+    if (n && String(n) !== '' && String(n) !== String(a[q.from])) {
+      rows += '<tr><td colspan="3" class="note">↳ ' + esc_(String(n)) + '</td></tr>';
+    } else if (q.note && q.note === q.from && a[q.from] &&
+               indexOf_(['Yes', 'No'], String(a[q.from])) === -1) {
+      rows += '<tr><td colspan="3" class="note">↳ ' + esc_(String(a[q.from])) + '</td></tr>';
+    }
+  });
+
+  h += '<table class="qs">' + rows + '</table><hr class="cut">';
+
+  /* change of servicing agent — the bottom half of the same sheet -------- */
+  var wants = String(a.changeAgent || '').indexOf('Yes') === 0;
+  h +=
+    '<p>The Manager<br>Customer Service Department<br>' +
+    '<b><u>GUARDIAN LIFE OF THE CARIBBEAN LIMITED</u></b></p>' +
+    '<p class="blk">Dear Sir/Madam</p>' +
+    '<p>After completing your Service Questionnaire and reviewing my policy(ies) no(s) ' +
+      onLine_(wants ? (a.coaPolicies || a.policyNos || c.policyNos) : '', 210) + '</p>' +
+    '<p>with Mr./Mrs./Miss ' + onLine_(wants ? SVC.AGENT_NAME : '', 430) + '</p>' +
+    '<p>I am requesting that he/she be appointed my Servicing Agent with immediate effect.</p>' +
+    '<p class="blk">NAME OF POLICYOWNER IN BLOCK LETTERS ' +
+      onLine_(wants ? String(a.coaOwnerName || c.clientName || '').toUpperCase() : '', 300) + '</p>' +
+    '<table class="hdr"><tr>' +
+      '<td style="width:56%">SIGNATURE OF POLICYOWNER ' +
+        (wants && body.signature
+          ? '<span class="sigrule"><img class="sigimg" src="' + body.signature + '"></span>'
+          : (wants && body.signatureTyped
+              ? '<span class="fill" style="min-width:180px;font-style:italic">' +
+                esc_(body.signatureTyped) + '</span>'
+              : onLine_('', 200))) + '</td>' +
+      '<td style="text-align:right">Dated this ' + onLine_(wants ? dd : '', 34) + ' day of ' +
+        onLine_(wants ? mm : '', 74) + ' ' + onLine_(wants ? yy : '', 42) +
+        '<div class="cap" style="text-align:right">' +
+        '<span style="display:inline-block;width:96px">day</span>' +
+        '<span style="display:inline-block;width:84px">month</span>' +
+        '<span style="display:inline-block;width:42px">year</span></div></td>' +
+    '</tr></table>' +
+    '<table class="hdr" style="margin-top:6px"><tr>' +
+      '<td style="width:54%">ADDRESS (HOME) ' + onLine_(a.coaHomeAddress || a.newAddress, 210) +
+        '<div class="cap" style="padding-left:14px">(and mailing)</div></td>' +
+      '<td>(WORK) ' + onLine_(a.coaWorkAddress, 230) + '</td>' +
+    '</tr></table>' +
+    '<table class="hdr" style="margin-top:6px"><tr>' +
+      '<td style="width:54%">TELEPHONE (HOME) ' + onLine_(a.coaHomePhone || c.phone, 190) + '</td>' +
+      '<td>(WORK) ' + onLine_(a.coaWorkPhone, 230) + '</td>' +
+    '</tr></table>' +
+    '<p class="blk">AGENT\'S COMMENTS ' + onLine_(a.agentComments, 420) + '</p>' +
+    '<table class="hdr" style="margin-top:6px"><tr>' +
+      '<td style="width:56%">SERVICING AGENT\'S NAME ' +
+        onLine_(wants ? SVC.AGENT_NAME.toUpperCase() : '', 210) +
+        '<div class="cap" style="padding-left:14px">(in block letters)</div></td>' +
+      '<td>AGENT\'S NO. ' + onLine_(SVC.AGENT_NO, 190) + '</td>' +
+    '</tr></table>' +
+    '<table class="hdr" style="margin-top:26px"><tr>' +
+      '<td style="width:46%;text-align:center"><span class="sigline" style="width:100%">&nbsp;</span>' +
+        '<div style="font-weight:bold;font-size:9.6pt">SIGNATURE OF AGENT</div></td>' +
+      '<td style="width:8%"></td>' +
+      '<td style="width:46%;text-align:center"><span class="sigline" style="width:100%">&nbsp;</span>' +
+        '<div style="font-weight:bold;font-size:9.6pt">SIGNATURE OF MANAGER</div></td>' +
+    '</tr></table>' +
+    '<div class="code">2000 - 03 - 147</div>';
+
+  /* page two — everything the paper form has nowhere to put -------------- */
+  h += '<div class="pg"></div>' +
+    '<div class="ttl" style="font-size:13pt">SERVICE QUESTIONNAIRE — ANSWERS IN FULL</div>' +
+    '<div class="ttl2" style="font-size:10pt">' + esc_(a.lifeAssured || c.clientName || '') +
+      ' · reference ' + esc_(ref) + ' · ' + esc_(Utilities.formatDate(d, tz, 'd MMMM yyyy, h:mm a')) +
+      (c.score !== '' && c.score !== undefined
+        ? ' · Protection Score ' + esc_(c.score) + '/100' : '') + '</div>' +
+    '<p style="font-size:9pt">Page 1 is the questionnaire exactly as form 2000-03-147 prints it. ' +
+      'Everything below is what the client actually said — the detail the boxes on that sheet ' +
+      'have nowhere to hold.</p>' +
+    answerTables_(body) +
+    consentFoot_(body, ref);
+
+  return toPdf_('<!DOCTYPE html><html><head><meta charset="utf-8"><style>' + paperCss_() +
+                '</style></head><body>' + h + '</body></html>',
+                'Service Questionnaire ' + ref);
+}
+
+/** Every answer, section by section — shared by both questionnaire PDFs. */
+function answerTables_(body) {
+  var out = '', section = '';
+  (body.fields || []).forEach(function (f) {
+    if (f.section !== section) {
+      if (section) out += '</table>';
+      section = f.section;
+      out += '<h3>' + esc_(section) + '</h3><table class="ans">';
+    }
+    out += '<tr><td class="k">' + esc_(f.label) + '</td><td>' + esc_(f.value) + '</td></tr>';
+  });
+  if (section) out += '</table>';
+  return out;
+}
+
+/** The compliance record: what they declared, and what they agreed to. */
+function consentFoot_(body, ref) {
+  var con = body.consent || {};
+  return '<div class="foot">' +
+    'Declared true and correct: <b>' + (con['true'] ? 'Yes' : 'No') + '</b> · ' +
+    'Consent to service and update records: <b>' + (con.use ? 'Yes' : 'No') + '</b> · ' +
+    'Marketing consent: <b>' + (con.marketing ? 'Yes' : 'No') + '</b><br>' +
+    'Completed online at ' + esc_(SVC.FORM_URL) + ' · reference ' + esc_(ref) + '. ' +
+    'Changes to policy records are effective only once processed and confirmed in writing by ' +
+    'Guardian Life of the Caribbean Limited.</div>';
+}
+
+/** Group has no printed questionnaire — the EBD process is the letter alone —
+ *  so the group document is the answers, set out to file alongside it. */
+function groupQuestionnairePdf_(ref, priority, now, body) {
+  var c = body.core || {};
+  var isGroup = true;
   var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
 
   var inner = '<div class="meta">' +
@@ -833,57 +1121,84 @@ function agentLetterPdf_(ref, now, body) {
   var a = answersById_(body);
   var c = body.core || {};
   var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
-  var d = Utilities.formatDate(now, tz, 'd MMMM yyyy');
-
-  var val = function (v) { return v ? esc_(v) : '<span class="line">&nbsp;</span>'; };
+  var d  = new Date(now);
+  var dd = Utilities.formatDate(d, tz, 'd');
+  var mm = Utilities.formatDate(d, tz, 'MMMM');
+  var yy = Utilities.formatDate(d, tz, 'yyyy');
+  var owner = String(a.coaOwnerName || c.clientName || '').toUpperCase();
 
   var inner =
-    '<p style="margin:0 0 14px">The Manager<br>Customer Service Department<br>' +
+    '<div class="stamp">Ref ' + esc_(ref) + '</div>' +
+    '<div class="ttl">GUARDIAN LIFE OF THE CARIBBEAN LIMITED</div>' +
+    '<div class="ttl2">REQUEST FOR CHANGE OF SERVICING AGENT</div>' +
+
+    '<p class="blk">The Manager<br>Customer Service Department<br>' +
     '<b><u>GUARDIAN LIFE OF THE CARIBBEAN LIMITED</u></b></p>' +
 
-    '<p>Dear Sir/Madam</p>' +
+    '<p class="blk">Dear Sir/Madam</p>' +
 
-    '<p style="line-height:1.9">After completing your Service Questionnaire and reviewing my policy(ies) no(s) ' +
-    val(a.coaPolicies || c.policyNos || 'all policies held') +
-    ' with Mr./Mrs./Miss ' + val(SVC.AGENT_NAME) +
-    ' I am requesting that he/she be appointed my Servicing Agent with immediate effect.</p>' +
+    '<p>After completing your Service Questionnaire and reviewing my policy(ies) no(s) ' +
+      onLine_(a.coaPolicies || a.policyNos || c.policyNos || 'all policies held', 230) + '</p>' +
+    '<p>with Mr./Mrs./Miss ' + onLine_(SVC.AGENT_NAME, 430) + '</p>' +
+    '<p>I am requesting that he/she be appointed my Servicing Agent with immediate effect.</p>' +
 
-    '<table style="margin-top:18px">' +
-      '<tr><td class="k">NAME OF POLICYOWNER IN BLOCK LETTERS</td><td><b>' +
-        esc_(String(a.coaOwnerName || c.clientName || '').toUpperCase()) + '</b></td></tr>' +
-      '<tr><td class="k">DATED THIS</td><td>' + esc_(d) + '</td></tr>' +
-      '<tr><td class="k">ADDRESS (HOME) (and mailing)</td><td>' + esc_(a.coaHomeAddress || '') + '</td></tr>' +
-      '<tr><td class="k">ADDRESS (WORK)</td><td>' + esc_(a.coaWorkAddress || '') + '</td></tr>' +
-      '<tr><td class="k">TELEPHONE (HOME)</td><td>' + esc_(a.coaHomePhone || c.phone || '') + '</td></tr>' +
-      '<tr><td class="k">TELEPHONE (WORK)</td><td>' + esc_(a.coaWorkPhone || '') + '</td></tr>' +
-      '<tr><td class="k">EMAIL</td><td>' + esc_(c.email || '') + '</td></tr>' +
-      '<tr><td class="k">AGENT\'S COMMENTS</td><td>' + esc_(a.agentComments || '') + '</td></tr>' +
-      '<tr><td class="k">SERVICING AGENT\'S NAME (in block letters)</td><td><b>' +
-        esc_(SVC.AGENT_NAME.toUpperCase()) + '</b></td></tr>' +
-      '<tr><td class="k">AGENT\'S NO.</td><td>' + esc_(SVC.AGENT_NO || '') + '</td></tr>' +
-    '</table>' +
+    '<p class="blk">NAME OF POLICYOWNER IN BLOCK LETTERS ' + onLine_(owner, 300) + '</p>' +
 
-    '<h3 style="margin-top:26px">Signature of policyowner</h3>' +
-    (body.signature ? '<p><img class="sig" src="' + body.signature + '"></p>' : '') +
-    (body.signatureTyped ? '<p>Signed electronically: <b>' + esc_(body.signatureTyped) + '</b></p>' : '') +
-    '<p style="font-size:9.5pt;color:#5a6b80">Captured electronically at ' +
-      Utilities.formatDate(now, tz, 'd MMM yyyy, h:mm a') + ' · reference ' + esc_(ref) + '</p>' +
+    '<table class="hdr" style="margin-top:10px"><tr>' +
+      '<td style="width:56%">SIGNATURE OF POLICYOWNER ' +
+        (body.signature
+          ? '<span class="sigrule"><img class="sigimg" src="' + body.signature + '"></span>'
+          : (body.signatureTyped
+              ? '<span class="fill" style="min-width:180px;font-style:italic">' +
+                esc_(body.signatureTyped) + '</span>'
+              : onLine_('', 200))) + '</td>' +
+      '<td style="text-align:right">Dated this ' + onLine_(dd, 34) + ' day of ' +
+        onLine_(mm, 74) + ' ' + onLine_(yy, 42) +
+        '<div class="cap" style="text-align:right">' +
+        '<span style="display:inline-block;width:96px">day</span>' +
+        '<span style="display:inline-block;width:84px">month</span>' +
+        '<span style="display:inline-block;width:42px">year</span></div></td>' +
+    '</tr></table>' +
 
-    '<table style="margin-top:30px;border:none">' +
-      '<tr><td style="border:none;border-top:1px solid #333;width:46%;text-align:center;font-size:9.5pt">' +
-        'SIGNATURE OF AGENT</td>' +
-      '<td style="border:none;width:8%"></td>' +
-      '<td style="border:none;border-top:1px solid #333;width:46%;text-align:center;font-size:9.5pt">' +
-        'SIGNATURE OF MANAGER</td></tr>' +
-    '</table>' +
+    '<table class="hdr" style="margin-top:12px"><tr>' +
+      '<td style="width:54%">ADDRESS (HOME) ' + onLine_(a.coaHomeAddress || a.newAddress, 210) +
+        '<div class="cap" style="padding-left:14px">(and mailing)</div></td>' +
+      '<td>(WORK) ' + onLine_(a.coaWorkAddress, 230) + '</td>' +
+    '</tr></table>' +
 
-    '<div class="foot">Generated from the online Service Questionnaire at ' + esc_(SVC.FORM_URL) +
-    '. Reference ' + esc_(ref) + '. The change of servicing agent takes effect once processed and confirmed by ' +
-    'Guardian Life of the Caribbean Limited; the policy, its premium and its benefits are unaffected.</div>';
+    '<table class="hdr" style="margin-top:12px"><tr>' +
+      '<td style="width:54%">TELEPHONE (HOME) ' + onLine_(a.coaHomePhone || c.phone, 190) + '</td>' +
+      '<td>(WORK) ' + onLine_(a.coaWorkPhone, 230) + '</td>' +
+    '</tr></table>' +
 
-  return toPdf_(
-    pdfShell_('GUARDIAN LIFE OF THE CARIBBEAN LIMITED', 'REQUEST FOR CHANGE OF SERVICING AGENT', inner),
-    'Change of Servicing Agent ' + ref);
+    '<p class="blk">EMAIL ' + onLine_(c.email, 380) + '</p>' +
+    '<p class="blk">AGENT\'S COMMENTS ' + onLine_(a.agentComments, 420) + '</p>' +
+
+    '<table class="hdr" style="margin-top:12px"><tr>' +
+      '<td style="width:56%">SERVICING AGENT\'S NAME ' + onLine_(SVC.AGENT_NAME.toUpperCase(), 210) +
+        '<div class="cap" style="padding-left:14px">(in block letters)</div></td>' +
+      '<td>AGENT\'S NO. ' + onLine_(SVC.AGENT_NO, 190) + '</td>' +
+    '</tr></table>' +
+
+    '<table class="hdr" style="margin-top:44px"><tr>' +
+      '<td style="width:46%;text-align:center"><span class="sigline" style="width:100%">&nbsp;</span>' +
+        '<div style="font-weight:bold;font-size:9.6pt">SIGNATURE OF AGENT</div></td>' +
+      '<td style="width:8%"></td>' +
+      '<td style="width:46%;text-align:center"><span class="sigline" style="width:100%">&nbsp;</span>' +
+        '<div style="font-weight:bold;font-size:9.6pt">SIGNATURE OF MANAGER</div></td>' +
+    '</tr></table>' +
+
+    '<div class="foot">Signed electronically at ' +
+      esc_(Utilities.formatDate(d, tz, 'd MMMM yyyy, h:mm a')) + ' through ' + esc_(SVC.FORM_URL) +
+      ' \u00b7 reference ' + esc_(ref) + '. The wording above is the change of servicing agent request ' +
+      'printed on form 2000-03-147. The change takes effect once processed and confirmed by Guardian ' +
+      'Life of the Caribbean Limited; the policy, its premium and its benefits are unaffected.</div>' +
+    '<div class="code">2000 - 03 - 147</div>';
+
+  return toPdf_('<!DOCTYPE html><html><head><meta charset="utf-8"><style>' + paperCss_() +
+                'body{padding:44px 52px}.ttl{font-size:14pt}.ttl2{font-size:11.5pt;margin-bottom:26px}' +
+                '</style></head><body>' + inner + '</body></html>',
+                'Change of Servicing Agent ' + ref);
 }
 
 /**
@@ -896,58 +1211,102 @@ function groupAgentLetterPdf_(ref, now, body) {
   var a = answersById_(body);
   var c = body.core || {};
   var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
-  var eff = prettyDate_(a.coaEffective);
+
+  /* An underscore rule the length the Word document uses, with the answer
+     typed on it. Empty falls back to the blank rule, so an unanswered field
+     prints exactly as the original does. */
+  var rule = function (v, w) {
+    if (v === undefined || v === null || String(v) === '') {
+      return '<span class="ul" style="width:' + w + 'px">&nbsp;</span>';
+    }
+    return '<span class="ul typed" style="min-width:' + w + 'px">' + esc_(String(v)) + '</span>';
+  };
 
   var inner =
-    '<p style="text-align:center;font-size:9.5pt;color:#b3261e;letter-spacing:1px;margin:0 0 22px">' +
-    'PLEASE PRINT ON COMPANY LETTER HEAD</p>' +
+    '<div class="stamp">Ref ' + esc_(ref) + '</div>' +
+    '<p class="please">PLEASE PRINT ON COMPANY LETTER HEAD</p>' +
 
-    '<p>Date: ' + esc_(Utilities.formatDate(now, tz, 'd MMMM yyyy')) + '</p>' +
+    '<p>Date:' + rule(Utilities.formatDate(new Date(now), tz, 'd MMMM yyyy'), 210) + '</p>' +
 
-    '<p style="margin-top:20px">The Manager<br>Customer Service Department<br>' +
+    '<p class="gap">The Manager<br>Customer Service Department<br>' +
     'Guardian Life of the Caribbean<br>1 Guardian Drive<br>West Moorings</p>' +
 
-    '<p style="margin-top:20px">Dear Sir/Madam,</p>' +
+    '<p class="gap">Dear Sir/Madam,</p>' +
 
-    '<p><b><u>RE: Request for Change of Agent – GROUP LIFE POLICY#&nbsp;' +
-    esc_(a.coaPolicyNo || c.policyNos || '') + '</u></b></p>' +
+    '<p class="gap">RE: Request for Change of Agent \u2013 GROUP LIFE POLICY#' +
+      rule(a.coaPolicyNo || a.groupPolicyNo || c.policyNos, 200) + '</p>' +
 
-    '<p>This letter serves to inform you that I would like to request a change of Agent as follows:</p>' +
+    '<p class="gap">This letter serves to inform you that I would like to request a change of ' +
+      'Agent as follows:</p>' +
 
-    '<table style="margin:16px 0">' +
-      '<tr><td class="k">FROM:</td><td>' + esc_(a.coaFrom || '') + '</td></tr>' +
-      '<tr><td class="k">TO:</td><td><b>' + esc_(a.coaTo || SVC.AGENT_NAME) + '</b></td></tr>' +
-      '<tr><td class="k">EFFECTIVE DATE:</td><td>' + esc_(eff) + '</td></tr>' +
-    '</table>' +
+    '<table class="ff"><tr><td class="lb">FROM:</td><td>' + rule(a.coaFrom, 380) + '</td></tr>' +
+    '<tr><td class="lb">TO:</td><td>' + rule(a.coaTo || SVC.AGENT_NAME, 380) + '</td></tr>' +
+    '<tr><td class="lb">EFFECTIVE DATE:</td><td>' + rule(prettyDate_(a.coaEffective), 370) +
+      '</td></tr></table>' +
 
-    '<p>Any courtesy extended in facilitating this request will be highly appreciated.</p>' +
+    '<p class="gap">Any courtesy extended in facilitating this request will be highly appreciated.</p>' +
     '<p>Thank you for your kind assistance in this matter.</p>' +
 
-    '<p style="margin-top:26px">Yours respectfully,</p>' +
+    '<p class="gap">Yours respectfully,</p>' +
 
-    (body.signature ? '<p style="margin:6px 0"><img class="sig" src="' + body.signature + '"></p>'
-                    : '<p style="margin:34px 0 4px">&nbsp;</p>') +
-    (body.signatureTyped && !body.signature
-      ? '<p style="margin:6px 0;font-style:italic">Signed electronically: ' + esc_(body.signatureTyped) + '</p>' : '') +
+    (body.signature
+      ? '<p style="margin:6px 0 -18px 14px"><img class="sigimg" src="' + body.signature + '"></p>'
+      : (body.signatureTyped
+          ? '<p style="margin:20px 0 -6px 14px;font-style:italic;font-family:\'Courier New\',monospace;' +
+            'font-size:10.4pt">' + esc_(body.signatureTyped) + '</p>'
+          : '<p style="margin:30px 0 0">&nbsp;</p>')) +
 
-    '<p style="border-top:1px solid #333;display:inline-block;padding-top:4px;min-width:280px;margin:0">' +
-    '<b>' + esc_(a.coaDirector || '') + '</b>' +
-    (a.coaDirectorTitle ? '<br>' + esc_(a.coaDirectorTitle) : '') +
-    (c.companyName ? '<br>' + esc_(c.companyName) : '') +
-    '<br><span style="font-size:9.5pt;color:#5a6b80">Director\'s Name &amp; Company Stamp</span></p>' +
+    '<p style="margin:0"><span class="ul" style="width:230px">&nbsp;</span></p>' +
+    '<p style="margin:1px 0 0">Director\'s Name &amp; Company Stamp</p>' +
+    (a.coaDirector
+      ? '<p class="typedblk">' + esc_(a.coaDirector) +
+        (a.coaDirectorTitle ? ' &middot; ' + esc_(a.coaDirectorTitle) : '') +
+        (c.companyName ? '<br>' + esc_(c.companyName) : '') + '</p>'
+      : '') +
 
-    '<div style="border:1px dashed #b3261e;padding:11px 14px;margin-top:28px;font-size:9.5pt;color:#7a2018">' +
-    '<b>Before you send this back:</b> print it on your company letterhead, apply the company stamp beside the ' +
-    'signature, and sign it. Guardian Life requires both the letterhead and the stamp on a group change of agent ' +
-    'request. Email the stamped copy to ' + esc_(SVC.AGENT_EMAIL) + ' or hand it to your agent — the request has ' +
-    'already been logged at Customer Service under reference ' + esc_(ref) + ', so nothing is waiting on the post.' +
-    '</div>' +
+    '<div class="beforeyou"><b>Before you send this back:</b> print it on your company letterhead, ' +
+    'apply the company stamp beside the signature, and sign it. Guardian Life requires both the ' +
+    'letterhead and the stamp on a group change of agent request. Email the stamped copy to ' +
+    esc_(SVC.AGENT_EMAIL) + ' or hand it to your agent \u2014 the request has already been logged at ' +
+    'Customer Service under reference ' + esc_(ref) + ', so nothing is waiting on the post.</div>';
 
-    '<div class="foot">Generated from the online Group Service Questionnaire at ' + esc_(SVC.FORM_URL) +
-    '. Reference ' + esc_(ref) + '.</div>';
+  var css = 'body{font-family:"Times New Roman",Times,Georgia,serif;font-size:12pt;color:#000;' +
+      'margin:0;padding:52px 62px;line-height:1.5}' +
+    'p{margin:0 0 4px}' +
+    '.gap{margin-top:17px}' +
+    '.please{text-align:center;font-weight:bold;letter-spacing:.4px;margin-bottom:26px}' +
+    '.ul{display:inline-block;border-bottom:1px solid #000;vertical-align:bottom}' +
+    '.typed{font-family:"Courier New",monospace;font-size:10.6pt;padding:0 4px 1px}' +
+    '.ff{border-collapse:collapse;margin:2px 0 0}' +
+    '.ff td{border:none;padding:3px 0;vertical-align:bottom}' +
+    '.ff td.lb{padding-right:26px;white-space:nowrap}' +
+    '.sigimg{max-height:52px}' +
+    '.typedblk{margin:2px 0 0;font-family:"Courier New",monospace;font-size:9.6pt}' +
+    '.stamp{position:fixed;top:10px;right:14px;font-family:Arial,sans-serif;font-size:7.4pt;color:#555}' +
+    '.beforeyou{border:1px dashed #b3261e;padding:11px 14px;margin-top:34px;font-family:Arial,sans-serif;' +
+      'font-size:8.6pt;line-height:1.55;color:#7a2018}';
 
-  return toPdf_(pdfShell_('REQUEST FOR CHANGE OF AGENT', 'GROUP LIFE POLICY', inner),
+  return toPdf_('<!DOCTYPE html><html><head><meta charset="utf-8"><style>' + css +
+                '</style></head><body>' + inner + '</body></html>',
                 'Group Change of Agent ' + ref);
+}
+
+/** { questionId: raw answer } — the answer itself, not the sentence the review
+ *  screen prints. "4" rather than "4 of 5", so a tick box can be decided. */
+function rawById_(body) {
+  var out = {};
+  (body.fields || []).forEach(function (f) {
+    if (!f.id) return;
+    out[f.id] = (f.raw === undefined || f.raw === null || f.raw === '') ? f.value : f.raw;
+  });
+  return out;
+}
+
+/** Array indexOf that tolerates a missing list. */
+function indexOf_(arr, v) {
+  if (!arr || !arr.length) return -1;
+  for (var i = 0; i < arr.length; i++) if (String(arr[i]) === String(v)) return i;
+  return -1;
 }
 
 /** { questionId: value } — handy for the specific answers the emails key off. */
