@@ -773,7 +773,7 @@ var PAPER_Q = [
     from: 'unresolved', yes: ['Yes'], no: ['No'], note: 'unresolvedWhat' },
   { n: 6,  t: 'How often would you like your agent to contact you, every 3 mths, 6 mths, 12 mths?',
     write: 'contactFreq' },
-  { n: 7,  t: 'Do you or your Spouse own any other Policies with the Company?',
+  { gap: true, n: 7,  t: 'Do you or your Spouse own any other Policies with the Company?',
     from: 'otherGuardian', yes: ['Yes'], no: ['No'], note: 'otherGuardianWhat' },
   { n: 8,  t: 'Do you own any other Policies?',
     from: 'otherCompany', yes: ['Yes'], no: ['No'], note: 'otherCompanyWhat' },
@@ -790,56 +790,49 @@ var PAPER_Q = [
     no: ['No'], note: 'hasWill' },
   { n: 14, t: 'Do you participate in a Company Group Life or Health Plan?',
     from: 'groupPlan', yes: ['Yes'], no: ['No'], note: 'groupEmployer' },
-  { n: 15, t: 'Have you made arrangements to replace your Income in the event of accident or disability?',
+  { gap: true, n: 15, t: 'Have you made arrangements to replace your Income in the event of accident or disability?',
     from: 'incomeProtection', yes: ['Yes'], no: ['No'] },
   { n: 16, t: 'Do you own your own Home?',
     from: 'homeStatus', yes: ['Own it outright', 'Own it with a mortgage'],
     no: ['Renting', 'Living with family'], note: 'homeStatus' },
   { n: 17, t: 'When last has your financial security programme been reviewed?',
     write: 'lastReview' },
-  { n: 18, t: 'Have you a Friend or Relative to whom I may be of service?',
+  { gap: true, n: 18, t: 'Have you a Friend or Relative to whom I may be of service?',
     from: 'referral', yes: ['Yes'], no: ['No'], note: 'referralWho' },
   { n: 19, t: 'Have you a Friend or Relative who might be interested in a career in Life Insurance?',
     from: 'career', yes: ['Yes'], no: ['No'], note: 'careerWho' },
-  { n: 20, t: 'Have you any questions?',
+  { gap: true, n: 20, t: 'Have you any questions?',
     from: 'questions', filled: true, note: 'questions' }
 ];
 
 /* The facsimile stylesheet — Times, dot leaders, ruled boxes, the lot. */
 function paperCss_() {
-  return 'body{font-family:"Times New Roman",Times,Georgia,serif;font-size:10.4pt;color:#000;' +
-      'margin:0;padding:14px 30px 6px;line-height:1.15}' +
-    '.ttl{text-align:center;font-size:15pt;letter-spacing:.2px;margin:0}' +
-    '.ttl2{text-align:center;font-size:13.5pt;margin:1px 0 11px}' +
-    '.hdr{width:100%;border-collapse:collapse;margin-bottom:2px}' +
-    '.hdr td{padding:1px 0;vertical-align:bottom;border:none}' +
-    '.cap{font-size:7.4pt;letter-spacing:.2px}' +
-    '.dot{border-bottom:1px dotted #000;display:inline-block;vertical-align:bottom}' +
-    '.fill{display:inline-block;vertical-align:bottom;border-bottom:1px dotted #000;' +
-      'font-family:"Courier New",monospace;font-size:9.4pt;padding:0 3px 1px}' +
-    '.qs{width:100%;border-collapse:collapse;margin-top:4px}' +
-    '.qs td{border:none;padding:1.15px 0;vertical-align:bottom;font-size:10.1pt}' +
-    '.qs td.lead{width:auto}' +
-    '.qs td.bx{width:56px;text-align:center}' +
-    '.yn{font-size:11pt;letter-spacing:.5px;text-align:center;padding-bottom:2px}' +
-    '.box{display:inline-block;width:30px;height:14px;border:1.4px solid #000;border-radius:3px;' +
-      'text-align:center;line-height:13px;font-size:11pt;font-weight:bold}' +
-    '.leader{display:inline-block;border-bottom:1px dotted #000;min-width:8px}' +
-    '.note{font-family:"Courier New",monospace;font-size:8.2pt;padding-left:12px;color:#111}' +
-    '.cut{border:none;border-top:1.4px dashed #000;margin:9px 0 8px}' +
-    'p{margin:0 0 4px}' +
-    '.blk{margin-top:7px}' +
-    '.sigimg{max-height:32px;vertical-align:bottom;margin-bottom:-9px}' +
-    '.sigrule{border-bottom:1px solid #000;display:inline-block;min-width:190px;text-align:center}' +
-    '.sigline{border-bottom:1px solid #000;display:inline-block}' +
-    '.foot{font-size:8pt;margin-top:12px}' +
-    '.code{font-size:9pt;margin-top:3px}' +
-    '.pg{page-break-before:always}' +
-    'h3{font-size:9.5pt;text-transform:uppercase;letter-spacing:1px;color:#000;' +
-      'margin:15px 0 5px;border-bottom:1px solid #000;padding-bottom:2px}' +
-    'table.ans{width:100%;border-collapse:collapse;font-size:9.4pt}' +
-    'table.ans td{padding:3.5px 7px;border:1px solid #999;vertical-align:top}' +
-    'table.ans td.k{width:47%;background:#f2f2f2}';
+  return '@page{size:8.5in 14in;margin:0}' +
+    'body{font-family:"Times New Roman",Times,serif;font-size:11pt;color:#000;margin:0;' +
+      'padding:.4in .55in .2in;line-height:1.18}' +
+    '.ttl{text-align:center;font-size:19pt;letter-spacing:.6px;margin:0}' +
+    '.ttl2{text-align:center;font-size:17pt;letter-spacing:.6px;margin:2px 0 0}' +
+    'table{border-collapse:collapse;width:100%}' +
+    'td{border:none;padding:0;vertical-align:bottom}' +
+    '.lbl{white-space:nowrap;padding-right:5px}' +
+    '.ldr{width:100%;border-bottom:1px dotted #000;height:1.05em}' +
+    '.typed{font-family:"Courier New",monospace;font-size:9.6pt;padding:0 3px;white-space:nowrap}' +
+    '.typed.fit{white-space:nowrap;font-size:6.6pt}' +
+    '.cap{font-size:8pt}' +
+    '.qs td{padding:4.2px 0}' +
+    '.qs tr.gap td{padding-top:9px}' +
+    '.qs td.qt{white-space:nowrap;padding-right:5px}' +
+    '.qs td.bx{width:.92in;text-align:center;padding-left:.1in}' +
+    '.yn{font-size:14pt;text-align:center;padding-bottom:3px}' +
+    '.box{display:inline-block;width:.42in;height:.19in;border:1.6px solid #000;' +
+      'border-radius:4px;text-align:center;line-height:.17in;font-size:13pt;font-weight:bold}' +
+    '.cut{border:none;border-top:0;height:0;margin:14px 0 0;' +
+      'background-image:linear-gradient(to right,#000 62%,transparent 0%);' +
+      'background-size:7px 1.6px;background-repeat:repeat-x;background-position:0 0;padding-top:1.6px}' +
+    'p{margin:0}' +
+    '.sigimg{max-height:.34in;vertical-align:bottom;margin-bottom:-3px}' +
+    '.dotline{border-bottom:1px dotted #000;height:.9em}' +
+    '.code{font-size:12pt}';
 }
 
 /* A value typed onto a dotted line, sized to the space the paper leaves. */
@@ -911,108 +904,140 @@ function paperFacsimilePdf_(ref, priority, now, body) {
   var mm = Utilities.formatDate(d, tz, 'MMMM');
   var yy = Utilities.formatDate(d, tz, 'yyyy');
 
-  /* header ------------------------------------------------------------- */
+  /* A dotted leader that fills whatever width is left, with the answer typed
+     on it. Blank prints as the bare leader — exactly as the sheet prints. */
+  var L = function (v, w, wrap) {
+    return '<td class="ldr"' + (w ? ' style="width:' + w + '"' : '') + '>' +
+           (v ? '<span class="typed' + (wrap ? ' fit' : '') + '">' + esc_(String(v)) + '</span>'
+              : '&nbsp;') + '</td>';
+  };
+  /* The three little rules of "Dated this ___ day of ___ ___" */
+  var dated = function (on) {
+    return '<table><tr>' +
+      '<td class="lbl">Dated this</td>' + L(on ? dd : '', '13%') +
+      '<td class="lbl">&nbsp;day of</td>' + L(on ? mm : '', '20%') + L(on ? yy : '', '12%') +
+      '</tr><tr><td></td><td class="cap" style="text-align:center">day</td><td></td>' +
+      '<td class="cap" style="text-align:center">month</td>' +
+      '<td class="cap" style="text-align:center">year</td></tr></table>';
+  };
+
   var h =
     '<div class="ttl">GUARDIAN LIFE OF THE CARIBBEAN LIMITED</div>' +
     '<div class="ttl2">SERVICE QUESTIONNAIRE</div>' +
-    '<table class="hdr"><tr>' +
-      '<td style="width:62%">LIFE ASSURED ' + onLine_(a.lifeAssured || c.clientName, 250) + '</td>' +
-      '<td>POLICY NO(S) ' + onLine_(a.policyNos || c.policyNos, 170) + '</td>' +
+
+    '<table style="margin-top:0.265in"><tr>' +
+      '<td class="lbl">LIFE ASSURED</td>' + L(a.lifeAssured || c.clientName, '40%') +
+      '<td class="lbl">&nbsp;&nbsp;POLICY NO(S)</td>' + L(a.policyNos || c.policyNos, '32%') +
     '</tr></table>' +
-    '<table class="hdr"><tr>' +
-      '<td style="width:62%">PROPOSER ' + onLine_(a.proposer, 240) +
-        '<div class="cap" style="text-align:center;width:330px">(If different from Life Assured)</div></td>' +
-      '<td style="text-align:right">Dated this ' + onLine_(dd, 34) + ' day of ' +
-        onLine_(mm, 74) + ' ' + onLine_(yy, 42) +
-        '<div class="cap" style="text-align:right;padding-right:2px">' +
-        '<span style="display:inline-block;width:96px">day</span>' +
-        '<span style="display:inline-block;width:84px">month</span>' +
-        '<span style="display:inline-block;width:42px">year</span></div></td>' +
+
+    '<table style="margin-top:0.12in"><tr>' +
+      '<td style="width:57%"><table><tr><td class="lbl">PROPOSER</td>' +
+        L(a.proposer) + '</tr></table>' +
+        '<div class="cap" style="text-align:center">(If different from Life Assured)</div></td>' +
+      '<td style="width:4%"></td>' +
+      '<td style="vertical-align:top">' + dated(true) + '</td>' +
     '</tr></table>';
 
   /* the twenty questions ------------------------------------------------ */
-  var rows = '<tr><td class="lead"></td>' +
+  var rows = '<tr><td></td>' +
              '<td class="bx yn">YES</td><td class="bx yn">NO</td></tr>';
 
   PAPER_Q.forEach(function (q) {
-    var yes = '', no = '', trail = '';
+    var yes = '', no = '', typed = '';
 
     if (q.write) {                                   /* an answer, not a tick */
-      trail = ' ' + onLine_(a[q.write] || '', 150);
+      typed = a[q.write] || '';
     } else if (q.filled) {                           /* Q20 — any text means yes */
-      var t = a[q.from] || '';
-      if (String(t) !== '') yes = '\u2713'; else no = '\u2713';
+      if (String(a[q.from] || '') !== '') yes = '✓'; else no = '✓';
     } else {
       var v = String(r[q.from] === undefined ? '' : r[q.from]);
-      if (indexOf_(q.yes, v) > -1) yes = '\u2713';
-      else if (indexOf_(q.no, v) > -1) no = '\u2713';
-      else if (v !== '') trail = ' ' + onLine_(v, 120);   /* "Not sure" etc. */
+      if (indexOf_(q.yes, v) > -1) yes = '✓';
+      else if (indexOf_(q.no, v) > -1) no = '✓';
     }
 
-    rows += '<tr>' +
-      '<td class="lead">' + esc_(q.t) + ' <span class="leader" style="width:' +
-        Math.max(20, 470 - q.t.length * 4.6) + 'px">&nbsp;</span>' + trail + '</td>' +
+    rows += '<tr' + (q.gap ? ' class="gap"' : '') + '>' +
+      '<td><table><tr><td class="qt">' + esc_(q.t) + '</td>' + L(typed) + '</tr></table></td>' +
       '<td class="bx"><span class="box">' + yes + '</span></td>' +
       '<td class="bx"><span class="box">' + no + '</span></td></tr>';
-
-    /* Nothing else goes on this sheet. The detail behind an answer — the reason
-       for a "No", the new beneficiary, the life changes — is in answersPdf_.
-       The form is reproduced as printed and is not written on. */
   });
 
-  h += '<table class="qs">' + rows + '</table><hr class="cut">';
+  h += '<table class="qs" style="margin-top:0.165in">' + rows + '</table>' +
+       '<div class="cut"></div>';
 
   /* change of servicing agent — the bottom half of the same sheet -------- */
   var wants = String(a.changeAgent || '').indexOf('Yes') === 0;
+  var w = function (v) { return wants ? v : ''; };
+
   h +=
-    '<p>The Manager<br>Customer Service Department<br>' +
+    '<p style="margin-top:0.325in">The Manager<br>Customer Service Department<br>' +
     '<b><u>GUARDIAN LIFE OF THE CARIBBEAN LIMITED</u></b></p>' +
-    '<p class="blk">Dear Sir/Madam</p>' +
-    '<p>After completing your Service Questionnaire and reviewing my policy(ies) no(s) ' +
-      onLine_(wants ? (a.coaPolicies || a.policyNos || c.policyNos) : '', 210) + '</p>' +
-    '<p>with Mr./Mrs./Miss ' + onLine_(wants ? SVC.AGENT_NAME : '', 430) + '</p>' +
-    '<p>I am requesting that he/she be appointed my Servicing Agent with immediate effect.</p>' +
-    '<p class="blk">NAME OF POLICYOWNER IN BLOCK LETTERS ' +
-      onLine_(wants ? String(a.coaOwnerName || c.clientName || '').toUpperCase() : '', 300) + '</p>' +
-    '<table class="hdr"><tr>' +
-      '<td style="width:56%">SIGNATURE OF POLICYOWNER ' +
+
+    '<p style="margin-top:0.225in">Dear Sir/Madam</p>' +
+
+    '<table style="margin-top:0.185in"><tr>' +
+      '<td class="lbl">After completing your Service Questionnaire and reviewing my policy(ies) no(s)</td>' +
+      L(w(a.coaPolicies || a.policyNos || c.policyNos)) + '</tr></table>' +
+
+    '<table style="margin-top:0.155in"><tr><td class="lbl">withMr./Mrs./Miss</td>' +
+      L(w(SVC.AGENT_NAME)) + '</tr></table>' +
+
+    '<p style="margin-top:0.155in">I am requesting that he/she be appointed my Servicing Agent ' +
+    'with immediate effect.</p>' +
+
+    '<table style="margin-top:0.165in"><tr>' +
+      '<td class="lbl">NAME OF POLICYOWNER IN BLOCK LETTERS</td>' +
+      L(w(String(a.coaOwnerName || c.clientName || '').toUpperCase())) + '</tr></table>' +
+
+    '<table style="margin-top:0.185in"><tr>' +
+      '<td style="width:57%"><table><tr><td class="lbl">SIGNATURE OF POLICYOWNER</td>' +
         (wants && body.signature
-          ? '<span class="sigrule"><img class="sigimg" src="' + body.signature + '"></span>'
-          : (wants && body.signatureTyped
-              ? '<span class="fill" style="min-width:180px;font-style:italic">' +
-                esc_(body.signatureTyped) + '</span>'
-              : onLine_('', 200))) + '</td>' +
-      '<td style="text-align:right">Dated this ' + onLine_(wants ? dd : '', 34) + ' day of ' +
-        onLine_(wants ? mm : '', 74) + ' ' + onLine_(wants ? yy : '', 42) +
-        '<div class="cap" style="text-align:right">' +
-        '<span style="display:inline-block;width:96px">day</span>' +
-        '<span style="display:inline-block;width:84px">month</span>' +
-        '<span style="display:inline-block;width:42px">year</span></div></td>' +
+          ? '<td class="ldr"><img class="sigimg" src="' + body.signature + '"></td>'
+          : L(w(body.signatureTyped))) + '</tr></table></td>' +
+      '<td style="width:4%"></td>' +
+      '<td style="vertical-align:top">' + dated(wants) + '</td>' +
     '</tr></table>' +
-    '<table class="hdr" style="margin-top:6px"><tr>' +
-      '<td style="width:54%">ADDRESS (HOME) ' + onLine_(a.coaHomeAddress || a.newAddress, 210) +
-        '<div class="cap" style="padding-left:14px">(and mailing)</div></td>' +
-      '<td>(WORK) ' + onLine_(a.coaWorkAddress, 230) + '</td>' +
+
+    '<table style="margin-top:0.215in"><tr>' +
+      '<td style="width:52%"><table><tr><td class="lbl">ADDRESS (HOME)</td>' +
+        L(a.coaHomeAddress || a.newAddress, '', true) + '</tr></table>' +
+        '<div class="cap" style="padding-left:.14in">(and mailing)</div></td>' +
+      '<td style="width:3%"></td>' +
+      '<td><table><tr><td class="lbl">(WORK)</td>' + L(a.coaWorkAddress, '', true) + '</tr></table></td>' +
     '</tr></table>' +
-    '<table class="hdr" style="margin-top:6px"><tr>' +
-      '<td style="width:54%">TELEPHONE (HOME) ' + onLine_(a.coaHomePhone || c.phone, 190) + '</td>' +
-      '<td>(WORK) ' + onLine_(a.coaWorkPhone, 230) + '</td>' +
+
+    '<table style="margin-top:0.125in"><tr>' +
+      '<td style="width:52%"><div class="dotline">&nbsp;</div></td>' +
+      '<td style="width:3%"></td>' +
+      '<td><div class="dotline">&nbsp;</div></td>' +
     '</tr></table>' +
-    '<p class="blk">AGENT\'S COMMENTS ' + onLine_(a.agentComments, 420) + '</p>' +
-    '<table class="hdr" style="margin-top:6px"><tr>' +
-      '<td style="width:56%">SERVICING AGENT\'S NAME ' +
-        onLine_(wants ? SVC.AGENT_NAME.toUpperCase() : '', 210) +
-        '<div class="cap" style="padding-left:14px">(in block letters)</div></td>' +
-      '<td>AGENT\'S NO. ' + onLine_(SVC.AGENT_NO, 190) + '</td>' +
+
+    '<table style="margin-top:0.245in"><tr>' +
+      '<td style="width:52%"><table><tr><td class="lbl">TELEPHONE (HOME)</td>' +
+        L(a.coaHomePhone || c.phone) + '</tr></table></td>' +
+      '<td style="width:3%"></td>' +
+      '<td><table><tr><td class="lbl">(WORK)</td>' + L(a.coaWorkPhone) + '</tr></table></td>' +
     '</tr></table>' +
-    '<table class="hdr" style="margin-top:11px"><tr>' +
-      '<td style="width:46%;text-align:center"><span class="sigline" style="width:100%">&nbsp;</span>' +
-        '<div style="font-weight:bold;font-size:9.6pt">SIGNATURE OF AGENT</div></td>' +
+
+    '<table style="margin-top:0.245in"><tr><td class="lbl">AGENT\'S COMMENTS</td>' +
+      L(a.agentComments, '', true) + '</tr></table>' +
+
+    '<table style="margin-top:0.245in"><tr>' +
+      '<td style="width:55%"><table><tr><td class="lbl">SERVICING AGENT\'S NAME</td>' +
+        L(w(SVC.AGENT_NAME.toUpperCase())) + '</tr></table>' +
+        '<div class="cap" style="padding-left:.14in">(in block letters)</div></td>' +
+      '<td style="width:3%"></td>' +
+      '<td><table><tr><td class="lbl">AGENT\'S NO.</td>' + L(SVC.AGENT_NO) + '</tr></table></td>' +
+    '</tr></table>' +
+
+    '<table style="margin-top:.3in"><tr>' +
+      '<td style="width:42%"><div class="dotline">&nbsp;</div>' +
+        '<div style="text-align:center;font-weight:bold">SIGNATURE OF AGENT</div></td>' +
       '<td style="width:8%"></td>' +
-      '<td style="width:46%;text-align:center"><span class="sigline" style="width:100%">&nbsp;</span>' +
-        '<div style="font-weight:bold;font-size:9.6pt">SIGNATURE OF MANAGER</div></td>' +
+      '<td><div class="dotline">&nbsp;</div>' +
+        '<div style="text-align:center;font-weight:bold">SIGNATURE OF MANAGER</div></td>' +
     '</tr></table>' +
-    '<div class="code">2000 - 03 - 147</div>';
+
+    '<div class="code" style="margin-top:.14in">2000 - 03 - 147</div>';
 
   return toPdf_('<!DOCTYPE html><html><head><meta charset="utf-8"><style>' + paperCss_() +
                 '</style></head><body>' + h + '</body></html>',
@@ -1212,8 +1237,9 @@ function groupAgentLetterPdf_(ref, now, body) {
 
     '';
 
-  var css = 'body{font-family:"Times New Roman",Times,Georgia,serif;font-size:12pt;color:#000;' +
-      'margin:0;padding:52px 62px;line-height:1.5}' +
+  var css = '@page{size:8.5in 11in;margin:0}' +
+    'body{font-family:"Times New Roman",Times,Georgia,serif;font-size:12pt;color:#000;' +
+      'margin:0;padding:1in;line-height:1.5}' +
     'p{margin:0 0 4px}' +
     '.gap{margin-top:17px}' +
     '.please{text-align:center;font-weight:bold;letter-spacing:.4px;margin-bottom:26px}' +
