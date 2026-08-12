@@ -290,8 +290,14 @@ function sheetFor_(isGroup) {
   if (!sh) {
     sh = ss_().insertSheet(name);
     sh.appendRow(['Reference', 'Timestamp', 'Priority', 'Status', 'Handled by', 'Handled on',
-                  'Client', 'Company', 'Email', 'Phone', 'Policy #', 'Score', 'Minutes taken',
-                  'Source', 'Arrived via', 'Sent by', 'Link ref', 'Needs tracing']);
+                  'Client', 'Company', 'Email', 'Phone', 'Insurer', 'Policy #', 'Score', 'Minutes taken',
+                  'Source', 'Arrived via', 'Sent by', 'Link ref', 'Needs tracing',
+                  // Compliance record. These four are the auditable trail for a
+                  // registered agent: what the client declared, what they agreed
+                  // we could do with it, whether they opted into marketing, and
+                  // which version of the form they were actually served.
+                  'Declared true', 'Consent to service', 'Marketing consent',
+                  'Coverage questions asked']);
     sh.setFrozenRows(1);
     sh.getRange(1, 1, 1, sh.getLastColumn()).setFontWeight('bold').setBackground(SB.light);
   }
@@ -333,8 +339,11 @@ function saveRow_(isGroup, ref, priority, now, body) {
     'Company': c.companyName || '',
     'Email': c.email || '',
     'Phone': c.phone || '',
+    'Insurer': c.insurer || '',
     'Policy #': c.policyNos || '',
-    'Score': c.score === '' ? '' : c.score,
+    /* donthaveanagent.com doesn't compute a score, so this must stay blank
+       rather than writing the string "undefined" into the sheet. */
+    'Score': (c.score === '' || c.score === undefined || c.score === null) ? '' : c.score,
     'Minutes taken': body.minutesTaken || '',
 
     /* Where it came from. The service questionnaire on the branch site and
@@ -356,7 +365,16 @@ function saveRow_(isGroup, ref, priority, now, body) {
     if (head) vals[head] = f.value;
   });
 
-  vals['Marketing consent'] = c.consentMarketing ? 'Yes' : 'No';
+  /* The compliance record, written from the consent block the client actually
+     ticked rather than inferred from anything. "Declared true" and "Consent to
+     service" are mandatory on the form, so a No here means something went
+     wrong and the row should be treated as unusable until it's checked. */
+  var con = body.consent || {};
+  vals['Declared true'] = con['true'] ? 'Yes' : 'No';
+  vals['Consent to service'] = con.use ? 'Yes' : 'No';
+  vals['Marketing consent'] = (con.marketing || c.consentMarketing) ? 'Yes' : 'No';
+  vals['Coverage questions asked'] = body.coverageAsked === undefined
+    ? '' : (body.coverageAsked ? 'Yes' : 'No — sales-free version served');
   vals['Signed'] = body.signature ? 'Drawn' : (body.signatureTyped ? 'Typed: ' + body.signatureTyped : '');
 
   var headers = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0].map(String);

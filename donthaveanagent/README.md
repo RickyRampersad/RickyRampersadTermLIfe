@@ -54,7 +54,47 @@ every competitor in this category shouts.
 | `RESEARCH.md` | The research brief with sources. |
 
 The backend is shared with the branch site: `../apps-script/Service.gs`. One backend, two
-front doors, one worklist — a `Source` and an `Arrived via` column tell them apart.
+front doors, one worklist.
+
+---
+
+## Where the data goes
+
+Every submission writes **one row** to a Google Sheet — `Service Questionnaires` for
+individuals, `Group Service Questionnaires` for company plans — plus a line in
+`Service Activity`. Each question becomes its own column, and a question added to the form
+tomorrow becomes a new column on its own, because the form sends its labels along with the
+answers.
+
+**Fixed columns, in order:**
+
+| Column | What it holds |
+|---|---|
+| `Reference` | `DHA-260812-0007` (individual) / `DHAG-…` (group). The prefix says which front door. |
+| `Timestamp` · `Priority` · `Status` | Filed time, URGENT/HIGH/ACTION/NORMAL, and Open/Filed/Handled |
+| `Handled by` · `Handled on` | **You fill these in.** The accountability trail. |
+| `Client` · `Company` · `Email` · `Phone` | Who it is and how to reach them |
+| `Insurer` · `Policy #` | Which carrier, and the number if they had one |
+| `Score` | Blank for donthaveanagent.com — only the branch service form scores |
+| `Minutes taken` | How long the client spent |
+| `Source` | `donthaveanagent.com` or `branch site` |
+| `Arrived via` | "Agent sent the link" or "Client came on their own" |
+| `Sent by` · `Link ref` | Which agent generated the link, and its reference |
+| `Needs tracing` | `YES — no policy number`, so tracing work can be filtered |
+| **`Declared true`** | The client's declaration that the information is correct |
+| **`Consent to service`** | Their agreement that we may use it to service the policy |
+| **`Marketing consent`** | Separate and optional |
+| **`Coverage questions asked`** | `Yes` or `No — sales-free version served` |
+| `Signed` | Whether the signature was drawn or typed |
+
+The last four are the **compliance record**. A registered agent should be able to show, per
+submission, what the client declared, what they agreed to, whether they opted into
+marketing, and which version of the form they were actually served. `Declared true` and
+`Consent to service` are mandatory on the form, so a `No` in either means something went
+wrong and that row should be treated as unusable until it is checked.
+
+Then the emails go out — the client's copy, and the routing email to Customer Service with
+the completed questionnaire and any change-of-agent letter attached as PDFs.
 
 ---
 

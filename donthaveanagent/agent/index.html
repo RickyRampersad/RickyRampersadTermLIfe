@@ -6,7 +6,7 @@
 <title>Agent console — Don't Have An Agent</title>
 <meta name="robots" content="noindex"/>
 <meta name="theme-color" content="#07131f"/>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='27' fill='none' stroke='%23efc24b' stroke-width='4' stroke-dasharray='7 6' stroke-linecap='round'/%3E%3Ccircle cx='30' cy='27' r='8' fill='%23edf4fb'/%3E%3Cpath d='M16 47c0-7.7 6.3-14 14-14s14 6.3 14 14' fill='%23edf4fb'/%3E%3Ccircle cx='50' cy='48' r='13' fill='%2300CFEA'/%3E%3Cpath d='M44 48l4.5 4.5L57 43' stroke='%2307131f' stroke-width='4.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 88'%3E%3Cpath d='M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z' fill='%23dca530'/%3E%3Ccircle cx='44' cy='41' r='19' fill='none' stroke='%2307131f' stroke-width='3.4'/%3E%3Ccircle cx='44' cy='35' r='7.2' fill='%2307131f'/%3E%3Cpath d='M32 54a12 12 0 0124 0' fill='%2307131f'/%3E%3Ccircle cx='70' cy='66' r='14' fill='%2300CFEA' stroke='%2307131f' stroke-width='3.5'/%3E%3Cpath d='M63.5 66l4 4 8-8.5' stroke='%2307131f' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"/>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -29,9 +29,10 @@ a{color:var(--emerald)}
 .nav-in{max-width:1020px;margin:0 auto;padding:0 18px;height:62px;display:flex;align-items:center;gap:11px}
 .logo{display:flex;align-items:center;gap:10px}
 .logo svg{width:32px;height:32px}
-.logo-word{font-family:var(--head);font-weight:800;font-size:13.5px;letter-spacing:-.035em;white-space:nowrap}
-.logo-word .dim{color:var(--muted2);font-weight:600}
-.logo-word .dot{color:var(--emerald);font-weight:600;font-size:11.5px}
+.logo-word{font-family:var(--head);display:flex;flex-direction:column;line-height:1;white-space:nowrap}
+.logo-word .l1{font-size:9px;font-weight:600;letter-spacing:.17em;text-transform:uppercase;color:var(--muted2);margin-bottom:3px}
+.logo-word .l2{font-size:15px;font-weight:800;letter-spacing:-.025em}
+.logo-word .dot{color:var(--emerald);font-weight:600;font-size:11.5px;margin-left:1px}
 .nav-tag{margin-left:auto;font-size:11.5px;color:var(--amber);background:var(--amber-soft);border:1px solid rgba(239,194,75,.3);padding:5px 12px;border-radius:99px;font-weight:600}
 
 /* gate */
@@ -144,14 +145,18 @@ select option{background:var(--surface);color:var(--text)}
 <nav class="nav">
   <div class="nav-in">
     <a class="logo" href="../index.html">
-      <svg viewBox="0 0 64 64" aria-hidden="true">
-        <circle cx="32" cy="32" r="27" fill="none" stroke="#00CFEA" stroke-width="4" stroke-linecap="round"/>
-        <circle cx="30" cy="27" r="8" fill="#edf4fb"/>
-        <path d="M16 47c0-7.7 6.3-14 14-14s14 6.3 14 14" fill="#edf4fb"/>
-        <circle cx="50" cy="48" r="13" fill="#00CFEA"/>
-        <path d="M44 48l4.5 4.5L57 43" stroke="#07131f" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <svg viewBox="0 0 88 88" aria-hidden="true">
+        <defs><linearGradient id="lgG10" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#f0c448"/><stop offset="55%" stop-color="#dca530"/><stop offset="100%" stop-color="#a97c1d"/>
+        </linearGradient></defs>
+        <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#lgG10)"/>
+        <circle cx="44" cy="41" r="19" fill="none" stroke="#07131f" stroke-width="3.4" stroke-linecap="round" opacity=".78"/>
+        <circle cx="44" cy="35" r="7.2" fill="#07131f"/>
+        <path d="M32 54a12 12 0 0124 0" fill="#07131f"/>
+        <circle cx="70" cy="66" r="14" fill="#00CFEA" stroke="#07131f" stroke-width="3.5"/>
+        <path d="M63.5 66l4 4 8-8.5" stroke="#07131f" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <span class="logo-word"><span class="dim">don't have</span> an agent<span class="dot">.com</span></span>
+      <span class="logo-word"><span class="l1">don't have</span><span class="l2">an agent<span class="dot">.com</span></span></span>
     </a>
     <span class="nav-tag" id="navTag">Agent console</span>
   </div>
@@ -161,11 +166,17 @@ select option{background:var(--surface);color:var(--text)}
 
   <!-- ══ GATE ══ -->
   <div class="gate" id="gate">
-    <svg viewBox="0 0 64 64" aria-hidden="true">
-      <circle cx="32" cy="32" r="27" fill="none" stroke="#efc24b" stroke-width="4" stroke-dasharray="7 6" stroke-linecap="round"/>
-      <circle cx="30" cy="27" r="8" fill="#edf4fb"/>
-      <path d="M16 47c0-7.7 6.3-14 14-14s14 6.3 14 14" fill="#edf4fb"/>
-    </svg>
+    <svg viewBox="0 0 88 88" aria-hidden="true">
+        <defs><linearGradient id="lgG21" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#f0c448"/><stop offset="55%" stop-color="#dca530"/><stop offset="100%" stop-color="#a97c1d"/>
+        </linearGradient></defs>
+        <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#lgG21)"/>
+        <circle cx="44" cy="41" r="19" fill="none" stroke="#07131f" stroke-width="3.4" stroke-linecap="round" opacity=".78"/>
+        <circle cx="44" cy="35" r="7.2" fill="#07131f"/>
+        <path d="M32 54a12 12 0 0124 0" fill="#07131f"/>
+        <circle cx="70" cy="66" r="14" fill="#00CFEA" stroke="#07131f" stroke-width="3.5"/>
+        <path d="M63.5 66l4 4 8-8.5" stroke="#07131f" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
     <h1>Agent console</h1>
     <p>Generate a personal review link for a client and send it in one tap.</p>
     <input id="gateCode" type="text" placeholder="ACCESS CODE" autocomplete="off" spellcheck="false">
