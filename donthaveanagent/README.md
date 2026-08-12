@@ -50,7 +50,8 @@ every competitor in this category shouts.
 | `index.html` | The landing page. Logo, the live 60-second self-check, attributed statistics, the "what quietly goes wrong" timeline, the promise/not-promise columns, local law, FAQ. |
 | **Logo** | A doubled apostrophe in an oxblood tile. An apostrophe is the punctuation mark for something *omitted* — which is exactly the product — and doubled it also reads as a speech mark: somebody answers. Two meanings in one shape, and it holds at 16px. |
 | **Endorsement** | "A **Ricky Rampersad Branch** initiative" sits in the nav as a proper endorsement lockup with the branch shield — not a footnote — and stays visible down to 360px. |
-| `review.html` | The review itself. Both origins, both plan types, policy tracing, signature, change of agent. |
+| `review.html` | The review itself. Both origins, both plan types, policy tracing, the direct-team / matched-agent choice with the client's own agent brief, a document preview before send, signature on the direct path, change of agent. |
+| `status.html` | The progress tracker. A client logs in with their reference and access code and watches the request move — received, verifying, documents populated, digital signature, done. Status only, never the answers. |
 | `agent/index.html` | Agent console — generate a prefilled link and send it in one tap. |
 | `netlify.toml` | Deploy config and short links. |
 | `RESEARCH.md` | The research brief with sources. |
@@ -217,10 +218,11 @@ The branch site (`rickyrampersadbranch.com`) publishes from the repo root and is
 ### The backend
 
 `../apps-script/Service.gs` serves both sites. Follow [the setup guide](../service/README.md),
-then paste the deployed `/exec` URL into `CONFIG.API_URL` in **both**:
+then paste the deployed `/exec` URL into `CONFIG.API_URL` in **all three**:
 
 - `service/index.html`
 - `donthaveanagent/review.html`
+- `donthaveanagent/status.html` (the progress tracker)
 
 Until you do, nothing breaks — the review falls back to a pre-filled email so no client is
 ever turned away.

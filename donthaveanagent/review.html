@@ -160,6 +160,41 @@ select option{background:var(--surface);color:var(--text)}
 .check input{width:19px;height:19px;margin-top:1px;flex-shrink:0;accent-color:var(--emerald);cursor:pointer}
 
 /* done */
+.preview-cta{display:flex;align-items:center;gap:14px;justify-content:space-between;flex-wrap:wrap;
+  background:var(--card);border:1px solid var(--line2);border-radius:14px;padding:15px 17px;margin-bottom:16px}
+.preview-cta b{font-family:var(--head);font-size:14.5px}
+.preview-cta span{color:var(--muted);font-size:12.8px}
+#pvOverlay{position:fixed;inset:0;z-index:300;background:rgba(26,22,24,.55);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;padding:18px}
+.pv-frame{background:var(--bg);border-radius:18px;max-width:760px;width:100%;max-height:92vh;
+  display:flex;flex-direction:column;overflow:hidden;box-shadow:0 30px 80px rgba(26,22,24,.4)}
+.pv-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 18px;
+  font:600 12px var(--head);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);
+  border-bottom:1px solid var(--line)}
+.pv-x{background:none;border:none;font-size:17px;cursor:pointer;color:var(--muted);padding:4px 8px}
+.pv-scroll{overflow-y:auto;padding:20px;background:var(--bg2)}
+.pv-sheet{background:#fff;border:1px solid rgba(26,22,24,.14);box-shadow:0 8px 30px rgba(26,22,24,.12);
+  padding:34px 36px;font-family:Georgia,'Times New Roman',serif;color:#111;font-size:13.5px;line-height:1.5}
+.pv-head{text-align:center;font-size:16.5px;letter-spacing:.4px;font-weight:bold}
+.pv-sub{text-align:center;font-size:11px;color:#555;margin:3px 0 14px}
+.pv-route{border:1.4px solid #8C2230;color:#8C2230;font-size:11.5px;letter-spacing:.04em;
+  padding:7px 11px;margin:0 0 8px;font-weight:bold}
+.pv-sec{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid #999;
+  margin:16px 0 6px;padding-bottom:3px;color:#333}
+.pv-row{display:flex;gap:14px;padding:4.5px 0;border-bottom:1px dotted #ddd}
+.pv-q{flex:0 0 46%;color:#444}
+.pv-a{font-family:'Courier New',monospace;font-size:12px;font-weight:bold;word-break:break-word}
+.pv-note{font-size:12px;color:#333;padding-top:4px}
+.pv-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;padding:13px 18px;border-top:1px solid var(--line);background:var(--bg)}
+@media (max-width:560px){.pv-sheet{padding:22px 18px}.pv-row{flex-direction:column;gap:2px}.pv-q{flex:none}}
+.code-card{background:linear-gradient(135deg,#8C2230,#5E141F);color:#fff;border-radius:18px;
+  padding:22px 22px;margin:18px 0}
+.code-card h3{font-family:var(--head);font-size:15px;margin-bottom:4px;color:#fff}
+.code-card p{font-size:13px;color:rgba(255,255,255,.85);line-height:1.55}
+.code-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:13px}
+.code-chip{background:rgba(255,255,255,.14);border:1.5px dashed rgba(255,255,255,.6);border-radius:12px;
+  font:800 24px/1 var(--head);letter-spacing:.24em;padding:13px 18px 12px;color:#fff}
+.code-card .btn{background:#fff;color:#5E141F;border:none}
 #doneArea{display:none;padding:40px 0 20px}
 .done-mark{width:72px;height:72px;border-radius:50%;background:var(--emerald);display:flex;align-items:center;justify-content:center;font-size:36px;color:#FFFFFF;margin-bottom:20px;animation:pop .55s cubic-bezier(.2,1.3,.4,1)}
 @keyframes pop{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
@@ -329,6 +364,14 @@ const YESNONA = ["Yes", "No", "Not sure"];
    who typed the domain in after years of being ignored gets the sales-free
    version unless an agent has deliberately decided otherwise for that person. */
 const AGENT_ONLY = { id: "__sell", is: "yes" };
+
+/* The two ways of being looked after. Direct is Ricky's own office — named, so
+   the appointment can be signed today. Matched is one of the branch's skilled
+   agents, assigned against the client's own brief after the answers are
+   verified, with the papers arriving populated for digital signature. */
+const DIRECT_OPT  = "Direct — " + B.agent + "'s in-house team";
+const MATCHED_OPT = "Appoint an agent matched to me";
+const MATCHED_OPT_G = "Appoint an agent matched to our company";
 const CLIENT_ONLY = { id: "__sell", is: "no" };
 
 /* ══════════════════ INDIVIDUAL ══════════════════ */
@@ -500,23 +543,41 @@ const INDIVIDUAL = [
     note: { kind: "good", text: "<b>No sales questions on this path.</b> You arrived on your own, so we've left them out entirely. If you ever want that conversation you can ask for it — and until you do, we won't." } },
 
 /* ── the agent ─────────────────────────────────────────────────────── */
-{ step: "Your agent", title: "Would you like a servicing agent?",
-  blurb: "This is optional, and \"no\" is a real answer we're happy with." },
+{ step: "Your agent", title: "Who should look after you from here?",
+  blurb: "Your choice, and every option is free — agents are paid by the insurer, never by you." },
 
-  { id: "wantAgent", label: "Shall we appoint " + B.agent + " as your servicing agent?", type: "choice", stack: true,
-    options: ["Yes — please appoint " + B.agent, "No — just fix my records and answer my questions",
+  { id: "wantAgent", label: "How would you like to be looked after?", type: "choice", stack: true,
+    options: [DIRECT_OPT, MATCHED_OPT,
+              "No one for now — just fix my records and answer my questions",
               "I'd like to speak to someone first"], required: true,
-    help: "A servicing agent is who looks after you: your reviews, your claims, your questions.",
-    note: { kind: "tip", text: "<b>This does not change your policy in any way</b> — not the cover, not the premium, not one benefit. It only changes who is responsible for looking after you. And it costs you nothing: agents are paid by the insurer, not by you." } },
+    help: "Direct means " + B.agent + "'s own office handles you. Matched means we assign one of our skilled agents — and you tell us below exactly what to look for.",
+    note: { kind: "tip", text: "<b>Neither choice changes your policy in any way</b> — not the cover, not the premium, not one benefit. It only changes who is responsible for looking after you. We verify your answers first, then confirm your choice in writing." } },
 
+  /* ── the matched path: their words become the assignment brief ── */
+  { id: "wantInAgent", label: "What matters most to you in an agent?", type: "multi", flag: "agent",
+    showIf: { id: "wantAgent", is: MATCHED_OPT },
+    help: "Pick up to three. This becomes the brief we assign your agent on — and hold them to.",
+    options: ["Answers when I call", "Explains things in plain language", "Checks in regularly — not just to sell",
+              "Fast, hands-on help with claims", "Available on WhatsApp", "Will visit me at home or at work",
+              "Evenings or weekends", "Reviews everything I hold once a year"] },
+  { id: "wantInAgentWhy", label: "Anything else your ideal agent should know about you?", type: "textarea", flag: "agent",
+    showIf: { id: "wantAgent", is: MATCHED_OPT },
+    placeholder: "In your own words — how you like to be looked after." },
+  { id: "matchedNote", type: "statement", showIf: { id: "wantAgent", is: MATCHED_OPT },
+    label: "What happens with your match",
+    text: "Our office verifies your answers, assigns the agent who fits your brief, and prepares your " +
+      "appointment papers with that agent's name already filled in. <b>They arrive by email for your digital " +
+      "signature</b> — nothing to print, nothing to fill in twice — together with who we chose and why." },
+
+  /* ── the direct path: Ricky is named, so it can be signed today ── */
   { id: "coaOwnerName", label: "Your name IN BLOCK LETTERS", type: "text", required: true,
-    showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent }, flag: "agent", uppercase: true },
+    showIf: { id: "wantAgent", is: DIRECT_OPT }, flag: "agent", uppercase: true },
   { id: "coaAddress", label: "Home address (and mailing)", type: "textarea", required: true,
-    showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent } },
+    showIf: { id: "wantAgent", is: DIRECT_OPT } },
   { id: "coaPhone", label: "Telephone", type: "tel",
-    showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent } },
+    showIf: { id: "wantAgent", is: DIRECT_OPT } },
 
-  { id: "coaDeclare", type: "statement", showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent },
+  { id: "coaDeclare", type: "statement", showIf: { id: "wantAgent", is: DIRECT_OPT },
     label: "What you are signing",
     text: "\"After completing my Service Questionnaire and reviewing my policy(ies), I am requesting that " +
       B.agent + " be appointed my Servicing Agent with immediate effect.\"<br><br>" +
@@ -524,7 +585,7 @@ const INDIVIDUAL = [
       "Department processes it — usually within 5 to 10 working days — and confirms it to you in writing.</span>" },
 
   { id: "coaSignature", label: "Your signature", type: "signature", required: true,
-    showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent },
+    showIf: { id: "wantAgent", is: DIRECT_OPT },
     help: "Sign with your finger, your mouse, or type your name — all three are accepted." },
 
   { id: "callFirst", label: "When would suit for a call?", type: "choice",
@@ -649,30 +710,46 @@ const GROUP = [
   { id: "questionsFor", label: "Anything specific you'd like to ask?", type: "textarea", showIf: CLIENT_ONLY },
 
 /* ── change of agent ───────────────────────────────────────────────── */
-{ step: "Your agent", title: "Would you like a servicing agent?",
-  blurb: "Optional. Guardian requires a group change of agent on your company letterhead with your stamp — we'll prepare the letter for you.", },
+{ step: "Your agent", title: "Who should look after your plan from here?",
+  blurb: "Your choice, and every option is free. Guardian requires a group change of agent on your company letterhead with your stamp — we'll prepare the letter for you.", },
 
-  { id: "wantAgent", label: "Shall we appoint " + B.agent + " as your servicing agent?", type: "choice", stack: true,
-    options: ["Yes — please appoint " + B.agent, "No — just help with what we've asked",
+  { id: "wantAgent", label: "How would your company like to be looked after?", type: "choice", stack: true,
+    options: [DIRECT_OPT, MATCHED_OPT_G,
+              "No one for now — just help with what we've asked",
               "We'd like to meet first"], required: true,
-    note: { kind: "tip", text: "<b>This changes who services your plan, nothing else</b> — not your benefits, your rates or your renewal date. And it costs the company nothing." } },
+    help: "Direct means " + B.agent + "'s own office handles the plan. Matched means we assign one of our skilled agents — and you tell us below what to look for.",
+    note: { kind: "tip", text: "<b>Neither choice changes your plan, nothing else does either</b> — not your benefits, your rates or your renewal date. We verify your answers first, then confirm your choice in writing." } },
+
+  { id: "wantInAgent", label: "What matters most to your company in an agent?", type: "multi", flag: "agent",
+    showIf: { id: "wantAgent", is: MATCHED_OPT_G },
+    help: "Pick up to three. This becomes the brief your agent is assigned on — and held to.",
+    options: ["A named person who answers the phone", "On-site visits to our office", "Fast escalation when a claim stalls",
+              "Communication our employees actually understand", "Hands-on support at renewal", "Training and support for our HR team"] },
+  { id: "wantInAgentWhy", label: "Anything else your ideal agent should know about your company?", type: "textarea", flag: "agent",
+    showIf: { id: "wantAgent", is: MATCHED_OPT_G },
+    placeholder: "In your own words — how your company likes to be looked after." },
+  { id: "matchedNote", type: "statement", showIf: { id: "wantAgent", is: MATCHED_OPT_G },
+    label: "What happens with your match",
+    text: "Our office verifies your answers, assigns the agent who fits your brief, and prepares the change of " +
+      "agent letter with that agent's name already filled in. <b>It arrives by email ready for your letterhead, " +
+      "stamp and signature</b> — together with who we chose and why." },
 
   { id: "coaPolicyNo", label: "GROUP LIFE POLICY #", type: "text",
-    showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent }, flag: "agent",
+    showIf: { id: "wantAgent", is: DIRECT_OPT }, flag: "agent",
     help: "Leave blank if you don't have it — we'll fill it in once we trace the plan." },
   { id: "coaFrom", label: "FROM — current agent or agency", type: "text",
-    showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent }, flag: "agent",
+    showIf: { id: "wantAgent", is: DIRECT_OPT }, flag: "agent",
     placeholder: "If you don't know, write \"unknown\"" },
   { id: "coaTo", label: "TO — new agent", type: "text", required: true, prefill: B.agent,
-    showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent }, flag: "agent" },
+    showIf: { id: "wantAgent", is: DIRECT_OPT }, flag: "agent" },
   { id: "coaEffective", label: "EFFECTIVE DATE", type: "date", required: true,
-    showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent }, flag: "agent" },
+    showIf: { id: "wantAgent", is: DIRECT_OPT }, flag: "agent" },
   { id: "coaDirector", label: "Director's / authorised officer's name", type: "text", required: true,
-    showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent }, flag: "agent" },
+    showIf: { id: "wantAgent", is: DIRECT_OPT }, flag: "agent" },
   { id: "coaDirectorTitle", label: "Title / position", type: "text",
-    showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent }, placeholder: "e.g. Managing Director" },
+    showIf: { id: "wantAgent", is: DIRECT_OPT }, placeholder: "e.g. Managing Director" },
 
-  { id: "coaLetterNote", type: "statement", showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent },
+  { id: "coaLetterNote", type: "statement", showIf: { id: "wantAgent", is: DIRECT_OPT },
     label: "About the letter and the company stamp",
     text: "Your insurer requires this request on your <b>company letterhead with the company stamp</b>.<br><br>" +
       "When you send this, we email you a ready-to-print letter with every detail already filled in — you print it " +
@@ -680,7 +757,7 @@ const GROUP = [
       "so nothing waits on the post." },
 
   { id: "coaSignature", label: "Signature of director / authorised officer", type: "signature", required: true,
-    showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent },
+    showIf: { id: "wantAgent", is: DIRECT_OPT },
     help: "Sign with your finger, your mouse, or type your name." },
 
   { id: "callFirst", label: "When would suit for a meeting?", type: "choice",
@@ -1044,6 +1121,12 @@ function renderReview() {
       "<span>I'm happy to receive occasional useful information. <span style='color:var(--muted)'>(Optional. Saying no changes nothing about your service — and we mean that.)</span></span></label>" +
     "</div>";
 
+  h += '<div class="preview-cta no-print">' +
+    '<div><b>See it before you send it.</b><br><span>Preview the exact document our support team receives ' +
+    'and populates for your digital signature.</span></div>' +
+    '<button type="button" class="btn btn-line" onclick="openDocPreview()">📄 Preview my document</button>' +
+    '</div>';
+
   const noSell = state.sell !== "yes";
   h += '<div class="note ' + (noSell ? "good" : "tip") + '">' +
     (noSell
@@ -1051,6 +1134,61 @@ function renderReview() {
       : "<b>What happens when you press send.</b> Your review reaches the office immediately, a copy lands in your inbox, and anything unresolved is flagged to a service manager with a one-business-day response promised.") +
     "</div>";
   return h;
+}
+
+/* ══ document preview ══
+   The exact package the support team receives, shown as a paper document —
+   white sheet, typed answers — so "send" is never a leap of faith. */
+function openDocPreview() {
+  const c = core();
+  const d = new Date();
+  const route = state.answers.wantAgent === DIRECT_OPT ? "Direct — " + B.agent + "'s in-house team"
+              : (state.answers.wantAgent === MATCHED_OPT || state.answers.wantAgent === MATCHED_OPT_G)
+                ? "Matched agent — assigned to your brief after verification" : "";
+
+  let doc = '<div class="pv-sheet">' +
+    '<div class="pv-head">POLICY REVIEW — ' + esc(B.product.toUpperCase()) + '</div>' +
+    '<div class="pv-sub">' + esc(c.companyName || c.clientName || "") +
+      (c.policyNos ? ' &nbsp;·&nbsp; policy ' + esc(c.policyNos) : ' &nbsp;·&nbsp; policy to be traced') +
+      ' &nbsp;·&nbsp; ' + d.toLocaleDateString("en-TT", { day: "numeric", month: "long", year: "numeric" }) + '</div>';
+
+  if (route) doc += '<div class="pv-route">LOOKED AFTER BY: <b>' + esc(route) + '</b></div>';
+
+  let sec = "";
+  collect().forEach((r) => {
+    if (r.section !== sec) { sec = r.section; doc += '<div class="pv-sec">' + esc(sec) + '</div>'; }
+    doc += '<div class="pv-row"><span class="pv-q">' + esc(r.label) + '</span>' +
+           '<span class="pv-a">' + esc(r.value) + '</span></div>';
+  });
+
+  const sig = state.answers.coaSignature || {};
+  doc += '<div class="pv-sec">What happens to this document</div>' +
+    '<div class="pv-note">' +
+      (sig.img || sig.typed
+        ? 'Signed on screen today. '
+        : '') +
+      'On send, this reaches our support team, who verify the answers and populate your papers for ' +
+      '<b>digital signature</b>' + (route.indexOf("Matched") === 0 ? ' with your assigned agent\u2019s name filled in' : '') +
+      '. Nothing goes to the insurer until it is checked.</div>' +
+    '</div>';
+
+  const wrap = document.createElement("div");
+  wrap.id = "pvOverlay";
+  wrap.innerHTML = '<div class="pv-frame">' +
+    '<div class="pv-bar"><span>Document preview — nothing has been sent</span>' +
+      '<button type="button" class="pv-x" onclick="closeDocPreview()" aria-label="Close preview">✕</button></div>' +
+    '<div class="pv-scroll">' + doc + '</div>' +
+    '<div class="pv-actions">' +
+      '<button type="button" class="btn btn-line" onclick="closeDocPreview()">← Back to edit</button>' +
+      '<button type="button" class="btn btn-amber" onclick="closeDocPreview(); goNext();">Looks right — send to our support team →</button>' +
+    '</div></div>';
+  document.body.appendChild(wrap);
+  document.body.style.overflow = "hidden";
+}
+function closeDocPreview() {
+  const el = document.getElementById("pvOverlay");
+  if (el) el.remove();
+  document.body.style.overflow = "";
 }
 
 /* ══ validation ══ */
@@ -1116,7 +1254,11 @@ function core() {
     satisfaction: a.satisfaction || a.understand || "",
     unresolved: a.unresolved === "Yes",
     unresolvedUrgency: a.unresolvedUrgency || "",
-    changeAgent: String(a.wantAgent || "").indexOf("Yes") === 0,
+    changeAgent: a.wantAgent === DIRECT_OPT || a.wantAgent === MATCHED_OPT || a.wantAgent === MATCHED_OPT_G ||
+                 String(a.wantAgent || "").indexOf("Yes") === 0,
+    handledBy: a.wantAgent === DIRECT_OPT ? "Direct — in-house team"
+             : (a.wantAgent === MATCHED_OPT || a.wantAgent === MATCHED_OPT_G) ? "Matched agent"
+             : "",
     wantsCall: String(a.wantAgent || "").indexOf("speak") > -1 || String(a.wantAgent || "").indexOf("meet") > -1,
     consentMarketing: !!a.consentMarketing,
   };
@@ -1165,7 +1307,7 @@ async function submitAll() {
   btn.disabled = true; btn.textContent = "Sending…";
   state.submitting = true;
   const body = payload();
-  let ref = "", sent = false;
+  let ref = "", sent = false, code = "";
   if (CONFIG.API_URL) {
     try {
       const res = await fetch(CONFIG.API_URL, {
@@ -1176,12 +1318,13 @@ async function submitAll() {
       const data = await res.json().catch(() => ({}));
       sent = res.ok && data.ok !== false;
       ref = data.ref || "";
+      code = data.accessCode || "";
     } catch (e) { sent = false; }
   }
   if (!ref) ref = localRef();
   if (!sent) mailFallback(body, ref);
   clearDraft(false);
-  renderDone(ref, sent);
+  renderDone(ref, sent, code);
 }
 
 function mailFallback(body, ref) {
@@ -1203,12 +1346,16 @@ function mailFallback(body, ref) {
 }
 
 /* ══ done ══ */
-function renderDone(ref, sent) {
+function renderDone(ref, sent, code) {
   const a = state.answers, c = core();
   const first = String(c.clientName || "").trim().split(/\s+/)[0] || "";
   const g = state.kind === "group";
   const next = [];
 
+  next.push("<b>Our support team has your file, and verification starts now.</b> They check your answers, then " +
+    "populate your documents for your <b>digital signature</b> — anything that needs signing arrives ready-made, " +
+    "and your " + (c.handledBy === "Matched agent" ? "agent match" : "choice of who looks after you") +
+    " is confirmed shortly after.");
   if (c.needsTracing) {
     next.push("<b>We're tracing your " + (g ? "plan" : "policy") + " now.</b> Your name and date of birth are " +
       "usually enough. If we can't find it with " + esc(c.insurer || "the insurer") + " we'll check the others, and " +
@@ -1219,7 +1366,17 @@ function renderDone(ref, sent) {
       (c.unresolvedUrgency ? ", marked &ldquo;" + esc(c.unresolvedUrgency) + "&rdquo;" : "") +
       ". You'll hear from a person within one business day — or call " + esc(B.phone) + " and quote the reference.");
   }
-  if (c.changeAgent) {
+  if (c.handledBy === "Direct — in-house team") {
+    next.push("<b>You chose direct — " + esc(B.agent) + "'s in-house team now looks after you.</b> " +
+      (g ? "Your change of agent letter is on its way, filled in and ready for your letterhead — print it, apply the company stamp, sign it and send it back. We've started the request today so nothing waits on the post."
+         : "Your signed request has gone to Customer Service. It usually takes 5 to 10 working days and the insurer confirms it to you in writing. Your policy, premium and cover are untouched."));
+  } else if (c.handledBy === "Matched agent") {
+    const brief = Array.isArray(a.wantInAgent) && a.wantInAgent.length
+      ? " Your brief — <b>" + esc(a.wantInAgent.slice(0, 3).join(" · ")) + "</b> — is exactly what we match on, and hold them to." : "";
+    next.push("<b>We're matching your agent now.</b> Our office verifies your answers first, assigns the agent who fits, " +
+      "and your appointment papers arrive by email <b>populated for your digital signature</b>, with that agent's name " +
+      "filled in and a note on who we chose and why." + brief);
+  } else if (c.changeAgent) {
     next.push(g
       ? "<b>Your change of agent letter is on its way</b>, filled in and ready for your letterhead. Print it, apply the company stamp, sign it and send it back. We've started the request today so nothing waits on the post."
       : "<b>Your request to appoint " + esc(B.agent) + " has gone to Customer Service.</b> It usually takes 5 to 10 working days and the insurer confirms it to you in writing. Your policy, premium and cover are untouched.");
@@ -1230,7 +1387,7 @@ function renderDone(ref, sent) {
   if (a.nameAddrOk && a.nameAddrOk !== "Yes") recs.push("your address");
   if (a.dobOk && a.dobOk !== "Yes") recs.push("your date of birth");
   if (a.beneficiaryOk && a.beneficiaryOk !== "Yes") recs.push("who the money goes to");
-  if (a.paperless === "Yes") recs.push("switching you to e-documents");
+  if (a.paperless === "Yes") next.push("<b>We're switching you to e-documents</b> — statements and letters by email, nothing lost in the post.");
   if (a.listingCurrent && a.listingCurrent !== "Yes") recs.push("reconciling your member listing");
   if (a.billingOk && a.billingOk !== "Yes") recs.push("your billing");
   if (recs.length) next.push("<b>We're correcting " + esc(recs.join(", ")) + ".</b> Where the insurer needs your " +
@@ -1242,6 +1399,8 @@ function renderDone(ref, sent) {
   if (a.wantAnalysis === "Yes") next.push("<b>Your free needs analysis is booked in.</b> We bring the numbers; you decide what, if anything, to do with them.");
   if (a.wantBenchmark === "Yes") next.push("<b>We'll prepare your market comparison</b> ahead of renewal.");
   if (a.questionsFor || a.feelHeard) next.push("<b>What you wrote gets read by a person</b>, and answered in writing. Not a template.");
+  next.push("<b>You will never be left wondering.</b> Until everything here is closed we send you an update every " +
+    "2 days — and you can check progress yourself, any time, with your access code below.");
   next.push("<b>A copy of everything is in your inbox</b> at " + esc(c.email || "your email address") + ".");
 
   let h = '<div class="done-mark">✓</div><h1>Thank you' + (first ? ", " + esc(first) : "") + ".</h1>";
@@ -1253,6 +1412,15 @@ function renderDone(ref, sent) {
   if (!sent) h += '<div class="note warn" style="margin-bottom:18px"><b>One more tap.</b> Your mail app should have ' +
     'opened with your answers written out. Press send there, or <a href="#" onclick="if(window._fallbackMail)location.href=window._fallbackMail;return false">tap here to open it again</a>. ' +
     "Nothing is lost — you can also print this page.</div>";
+
+  if (sent && code) {
+    const trackUrl = "status.html?ref=" + encodeURIComponent(ref) + "&code=" + encodeURIComponent(code);
+    h += '<div class="code-card"><h3>🔐 Your access code</h3>' +
+      "<p>Log back into " + esc(B.product) + " any time to watch your request move — verification, your documents, " +
+      "your digital signature, done. Keep this code private; it's also in your confirmation email.</p>" +
+      '<div class="code-row"><span class="code-chip">' + esc(code) + "</span>" +
+      '<a class="btn" href="' + trackUrl + '">Track my progress →</a></div></div>';
+  }
 
   if (state.sell !== "yes") {
     h += '<div class="note good" style="margin-bottom:16px"><b>And to be clear about what happens next:</b> ' +

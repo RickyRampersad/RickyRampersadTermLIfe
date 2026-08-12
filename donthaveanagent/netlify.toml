@@ -30,6 +30,17 @@
   to = "/review.html?from=client&type=group"
   status = 302
 
+# Where a client goes to watch their request move — reference + access code.
+[[redirects]]
+  from = "/track"
+  to = "/status.html"
+  status = 302
+
+[[redirects]]
+  from = "/status"
+  to = "/status.html"
+  status = 302
+
 # ── security headers ──────────────────────────────────────────────────────
 # The review carries client records and a signature. no-referrer also stops a
 # policy number in the query string leaking through the Referer header when

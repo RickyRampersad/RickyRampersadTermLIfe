@@ -139,11 +139,69 @@ function doGet(e) {
   if (p.action === 'ping') {
     return json_({ ok: true, service: 'Service Questionnaire', configured: !!SVC.CS_EMAIL });
   }
+  if (p.action === 'status') {
+    return json_(statusFor_(p.ref, p.code));
+  }
   /* Anyone who lands on the /exec URL directly gets pointed at the form. */
   return HtmlService.createHtmlOutput(
     '<meta http-equiv="refresh" content="0;url=' + SVC.FORM_URL + '">' +
     '<p style="font:15px sans-serif">Taking you to the service questionnaire… ' +
     '<a href="' + SVC.FORM_URL + '">continue</a>.</p>');
+}
+
+/**
+ * Progress for one submission, released only to someone holding BOTH the
+ * reference and the access code generated for it. What comes back is status
+ * metadata — never the answers themselves.
+ */
+function statusFor_(ref, code) {
+  ref = String(ref || '').trim().toUpperCase();
+  code = String(code || '').trim().toUpperCase();
+  if (!ref || !code) return { ok: false, error: 'Enter your reference and your access code.' };
+
+  var names = [SVC.IND_SHEET, SVC.GRP_SHEET];
+  for (var n = 0; n < names.length; n++) {
+    var sh = ss_().getSheetByName(names[n]);
+    if (!sh || sh.getLastRow() < 2) continue;
+    var headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+    var col = function (h) { return headers.indexOf(h); };
+    var iRef = col('Reference'), iCode = col('Access code');
+    if (iRef < 0 || iCode < 0) continue;
+
+    var rows = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      if (String(r[iRef] || '').trim().toUpperCase() !== ref) continue;
+      if (String(r[iCode] || '').trim().toUpperCase() !== code) {
+        return { ok: false, error: 'That access code does not match this reference. Check your confirmation email — the code is printed under your reference.' };
+      }
+
+      var status = String(r[col('Status')] || '');
+      var done = /handled/i.test(status);
+      var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
+      var fmt = function (v) {
+        if (!v) return '';
+        var d = new Date(v);
+        return isNaN(d.getTime()) ? '' : Utilities.formatDate(d, tz, 'd MMMM yyyy');
+      };
+
+      return {
+        ok: true,
+        ref: r[iRef],
+        kind: names[n] === SVC.GRP_SHEET ? 'group' : 'individual',
+        who: String(r[col('Company')] || r[col('Client')] || ''),
+        filed: fmt(r[col('Timestamp')]),
+        status: done ? 'Completed' : 'In progress',
+        stage: done ? 4 : 2,   /* 1 received · 2 verifying & populating · 3 signature out · 4 done */
+        route: col('Looked after by') > -1 ? String(r[col('Looked after by')] || '') : '',
+        lastUpdate: col('Last client update') > -1 ? fmt(r[col('Last client update')]) : '',
+        handledOn: col('Handled on') > -1 ? fmt(r[col('Handled on')]) : '',
+        signed: col('Signed') > -1 ? !!String(r[col('Signed')] || '') : false,
+        updateEveryDays: SVC.CLIENT_UPDATE_DAYS,
+      };
+    }
+  }
+  return { ok: false, error: 'We could not find that reference. Check it against your confirmation email, or call ' + SVC.AGENT_PHONE + '.' };
 }
 
 function json_(obj) {
@@ -196,10 +254,11 @@ function handleSubmission_(body) {
   var fields = body.fields || [];
   var ref = nextRef_(isGroup, body);
   var priority = computePriority_(body);
+  var accessCode = accessCode_();
   var now = new Date();
 
   /* 1 — file it */
-  saveRow_(isGroup, ref, priority, now, body);
+  saveRow_(isGroup, ref, priority, now, body, accessCode);
 
   /* 2 — build the paperwork once, attach it to both emails */
   var attachments = [];
@@ -213,8 +272,12 @@ function handleSubmission_(body) {
     if (answersDoc) attachments.push(answersDoc);
   }
 
+  /* The change-of-agent letter is generated only when there is a signature to
+     carry — a matched-agent appointment has no named agent yet, so support
+     populates that letter after verification and assignment, and it goes out
+     with the digital signature package instead. */
   var letterPdf = null;
-  if (core.changeAgent) {
+  if (core.changeAgent && (body.signature || body.signatureTyped)) {
     letterPdf = isGroup ? groupAgentLetterPdf_(ref, now, body) : agentLetterPdf_(ref, now, body);
     if (letterPdf) attachments.push(letterPdf);
   }
@@ -223,7 +286,7 @@ function handleSubmission_(body) {
   var clientEmailed = false;
   if (core.email) {
     try {
-      sendClientThanks_(ref, priority, body, formPdf, letterPdf);
+      sendClientThanks_(ref, priority, body, formPdf, letterPdf, accessCode);
       clientEmailed = true;
     } catch (err) {
       log_(ref, 'client-email-failed', String(err));
@@ -240,9 +303,18 @@ function handleSubmission_(body) {
     ok: true,
     ref: ref,
     priority: priority,
+    accessCode: accessCode,
     clientEmailed: clientEmailed,
     slaDays: SVC.SLA_BUSINESS_DAYS,
   };
+}
+
+/** Six characters a person can read down a phone line — no 0/O, no 1/I/L. */
+function accessCode_() {
+  var abc = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  var out = '';
+  for (var i = 0; i < 6; i++) out += abc.charAt(Math.floor(Math.random() * abc.length));
+  return out;
 }
 
 
@@ -341,7 +413,7 @@ function log_(ref, event, details) {
  * reason the front end sends labels along with answers: nobody has to keep
  * two lists of questions in step by hand.
  */
-function saveRow_(isGroup, ref, priority, now, body) {
+function saveRow_(isGroup, ref, priority, now, body, accessCode) {
   var sh = sheetFor_(isGroup);
   var c = body.core || {};
 
@@ -373,6 +445,14 @@ function saveRow_(isGroup, ref, priority, now, body) {
     'Sent by': (body.sentBy && body.sentBy.name) || '',
     'Link ref': body.linkRef || '',
     'Needs tracing': c.needsTracing ? 'YES — no policy number' : '',
+
+    /* Who the client chose to be looked after by — the in-house team direct,
+       or an agent matched to the brief they wrote. Drives the assignment. */
+    'Looked after by': c.handledBy || '',
+
+    /* The code that lets the client (and only the client) watch this row's
+       progress from the website. Released with the reference, never alone. */
+    'Access code': accessCode || '',
 
     /* Stamped by the watchdog each time the client is sent a "still working
        on it" note, so the every-2-days promise is measured, not guessed. */
@@ -533,7 +613,7 @@ function answerTables_(body) {
    happens next, in their case, with dates and a name attached. Vague
    reassurance is what makes people ring back a week later to check.        */
 
-function sendClientThanks_(ref, priority, body, formPdf, letterPdf) {
+function sendClientThanks_(ref, priority, body, formPdf, letterPdf, accessCode) {
   var c = body.core || {};
   var a = answersById_(body);
   var isGroup = body.kind === 'group';
@@ -541,8 +621,18 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf) {
 
   var next = [];
 
-  next.push('<b>Our support team has your file.</b> They now populate your documents for your digital ' +
-    'signature — anything that needs signing comes to you ready-made. Nothing to print, nothing to fill in twice.');
+  next.push('<b>Our support team has your file, and verification starts now.</b> They check your answers, then ' +
+    'populate your documents for your <b>digital signature</b> — anything that needs signing arrives ready-made. ' +
+    'Nothing to print, nothing to fill in twice.');
+
+  if (c.handledBy === 'Matched agent') {
+    next.push('<b>We are matching your agent now.</b> Once your answers are verified, we assign the agent who fits ' +
+      'the brief you wrote, and your appointment papers arrive by email populated for your digital signature — ' +
+      'with that agent\'s name filled in, and a note on who we chose and why.');
+  } else if (c.handledBy === 'Direct — in-house team') {
+    next.push('<b>You chose direct.</b> ' + esc_(SVC.AGENT_NAME) + '\'s in-house team looks after you from here — ' +
+      'one office, one number, no hand-offs.');
+  }
 
   if (c.unresolved) {
     next.push('<b>The problem you told us about is already flagged.</b> It has gone straight to a service ' +
@@ -572,7 +662,7 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf) {
   if (a.dobOk === 'No') recs.push('your date of birth');
   if (a.beneficiaryOk && a.beneficiaryOk !== 'Yes') recs.push('your beneficiary designation');
   if (a.premiumOk === 'No') recs.push('how you pay your premium');
-  if (a.paperless === 'Yes') recs.push('switching you to e-documents');
+  if (a.paperless === 'Yes') next.push('<b>We are switching you to e-documents</b> — statements and letters by email, nothing lost in the post.');
   if (a.listingCurrent && a.listingCurrent !== 'Yes') recs.push('reconciling your member listing');
   if (a.billingOk && a.billingOk !== 'Yes') recs.push('your billing');
   if (recs.length) {
@@ -607,6 +697,18 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf) {
         : 'Everything we look at is in good order. We will confirm the details and keep it that way.'));
   }
 
+  var track = '';
+  var id0 = identity_(body);
+  if (id0.dhaa && accessCode) {
+    var trackUrl = 'https://donthaveanagent.com/status.html?ref=' + encodeURIComponent(ref);
+    track = box_('tip',
+      '<b style="color:#a05e03">Watch your request move.</b> Log in any time at ' +
+      '<a href="' + trackUrl + '">donthaveanagent.com</a> with your reference and this access code:' +
+      '<div style="font-size:22px;font-weight:800;letter-spacing:.22em;margin:10px 0 4px;color:#5E141F">' +
+      esc_(accessCode) + '</div>' +
+      '<span style="font-size:12px">Keep it private — anyone holding it can see the status (never the answers) of this request.</span>');
+  }
+
   var id = identity_(body);
   var opener = id.dhaa
     ? (body.origin === 'client'
@@ -622,6 +724,7 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf) {
     '<p>Dear ' + esc_(first) + ',</p>' +
     '<p>' + opener + '</p>' +
     '<p>Your reference is <b style="color:' + SB.navy + '">' + esc_(ref) + '</b>.</p>' +
+    track +
     scoreBlock +
     '<h3 style="font-size:15px;color:' + SB.navy + ';margin:22px 0 6px">What happens next</h3>' +
     '<ol style="padding-left:20px;margin:0;font-size:13.8px;line-height:1.65">' +
@@ -733,10 +836,20 @@ function routeToService_(ref, priority, now, body, attachments, clientEmailed) {
           'the deadline gets chased automatically.')
       : '') +
 
+    (c.handledBy
+      ? box_('warn', '<b>THE CLIENT CHOSE: ' + esc_(String(c.handledBy).toUpperCase()) + '.</b> ' +
+          (c.handledBy === 'Matched agent'
+            ? 'Verify the answers, assign the agent who fits the brief below, populate the appointment papers with ' +
+              'that agent\'s name, and send them for digital signature.'
+            : 'Verify the answers and the in-house team takes it from here. The signed appointment is attached.'))
+      : '') +
     (c.changeAgent
       ? box_('tip', '<b>Agent appointment — direct to ' + esc_(SVC.AGENT_NAME) + ' and the team.</b> ' +
-          'The signed request is attached' +
-          (isGroup ? ', drafted for the client\'s letterhead — they have been asked to print, stamp and return it.' : '.') +
+          ((body.signature || body.signatureTyped)
+            ? 'The signed request is attached' +
+              (isGroup ? ', drafted for the client\'s letterhead — they have been asked to print, stamp and return it.' : '.')
+            : 'No letter is attached yet — it is populated after verification and assignment, and goes out for ' +
+              'digital signature.') +
           (av.wantInAgent
             ? '<br><br><b>The client\'s brief — what they want in an agent:</b> ' + esc_(String(av.wantInAgent)) +
               (av.wantInAgentWhy ? '<br><i>&ldquo;' + esc_(String(av.wantInAgentWhy)) + '&rdquo;</i>' : '') +

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Track my request | donthaveanagent.com</title>
+<meta name="description" content="Log in with your reference and access code to watch your policy review move — verification, your documents, your digital signature, done."/>
+<meta name="robots" content="noindex"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 88'%3E%3Crect x='2' y='2' width='84' height='84' rx='23' fill='%238C2230'/%3E%3Cpath d='M33 24a12.5 12.5 0 100 25 12.5 12.5 0 000-25z' fill='%23fff'/%3E%3Cpath d='M21 43.5c0 12 7.5 20 19 23l2.5-9.5c-6.5-2-10-7-10-13.5z' fill='%23fff'/%3E%3Cpath d='M60 24a12.5 12.5 0 100 25 12.5 12.5 0 000-25z' fill='%23fff'/%3E%3Cpath d='M48 43.5c0 12 7.5 20 19 23l2.5-9.5c-6.5-2-10-7-10-13.5z' fill='%23fff'/%3E%3C/svg%3E"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#F4F5F7;--ink2:#ECEEF1;--surface:#FFFFFF;--surface2:#FAFAFC;
+  --line:rgba(26,22,24,.10);--line2:rgba(140,34,48,.30);
+  --text:#1A1618;--muted:#565056;--muted2:#87828A;
+  --amber:#A65A15;--oxblood:#8C2230;--oxblood2:#5E141F;--red:#D93025;--slate:#9B96A0;
+  --ox-soft:rgba(140,34,48,.10);--good:#1E7A4C;
+  --head:'Montserrat',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --body:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--body);background:var(--ink);color:var(--text);line-height:1.6;min-height:100vh;
+  background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(140,34,48,.09),transparent),
+  linear-gradient(180deg,var(--ink) 0%,var(--ink2) 55%,var(--ink) 100%);background-attachment:fixed}
+a{color:inherit}
+h1,h2,h3{font-family:var(--head);letter-spacing:-.02em;line-height:1.16}
+
+.nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.nav-in{max-width:720px;margin:0 auto;padding:0 18px;height:64px;display:flex;align-items:center;gap:12px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:auto}
+.logo svg{width:34px;height:34px}
+.logo-word{display:flex;flex-direction:column;line-height:1}
+.logo-word .l1{font:600 8.5px var(--head);letter-spacing:.2em;text-transform:uppercase;color:var(--muted2);margin-bottom:3px}
+.logo-word .l2{font:800 16.5px var(--head);letter-spacing:-.03em}
+.logo-word .dot{color:var(--oxblood);font-size:12px}
+.nav-safe{font-size:11.5px;color:var(--muted)}
+.nav-safe b{color:var(--good)}
+
+.wrap{max-width:720px;margin:0 auto;padding:34px 18px 90px}
+.eyebrow{font:800 11.5px var(--head);letter-spacing:.16em;text-transform:uppercase;color:var(--oxblood);margin-bottom:9px}
+h1{font-size:clamp(26px,6vw,36px);font-weight:900;margin-bottom:10px}
+.lead{color:var(--muted);font-size:15px;max-width:56ch}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px 20px;margin-top:22px}
+label{display:block;font:700 13px var(--head);margin:14px 0 6px}
+input{width:100%;font:inherit;font-size:17px;letter-spacing:.14em;text-transform:uppercase;color:var(--text);
+  background:var(--surface2);border:1.5px solid var(--line);border-radius:12px;padding:13px 15px}
+input:focus{outline:none;border-color:var(--oxblood)}
+input::placeholder{color:var(--muted2);letter-spacing:.05em}
+.hint{font-size:12.3px;color:var(--muted2);margin-top:5px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:700 14.5px var(--head);
+  border:none;border-radius:12px;padding:14px 22px;cursor:pointer;text-decoration:none;transition:transform .15s}
+.btn:hover{transform:translateY(-1px)}
+.btn-go{background:var(--oxblood);color:#fff;width:100%;margin-top:18px}
+.btn-line{background:none;border:1.5px solid var(--line);color:var(--text);padding:11px 16px;font-size:13px}
+.err{display:none;background:rgba(217,48,37,.07);border:1px solid rgba(217,48,37,.4);color:#8a1d15;
+  border-radius:12px;padding:12px 14px;font-size:13.5px;margin-top:14px}
+.note{font-size:13px;color:var(--muted);background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:14px}
+
+/* ── the progress view ── */
+#progressView{display:none}
+.who{font-size:14px;color:var(--muted);margin-bottom:2px}
+.refline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0 4px}
+.ref-chip{font:800 14px var(--head);letter-spacing:.06em;background:var(--ox-soft);border:1px solid var(--line2);
+  color:var(--oxblood2);border-radius:99px;padding:7px 15px}
+.route-chip{font:700 12px var(--head);background:var(--surface);border:1.5px solid var(--oxblood);color:var(--oxblood);
+  border-radius:99px;padding:6px 13px}
+.state-line{font-size:13.5px;color:var(--muted);margin-top:6px}
+.state-line b.ok{color:var(--good)}
+
+.timeline{margin-top:24px;position:relative;padding-left:34px}
+.timeline::before{content:"";position:absolute;left:12px;top:10px;bottom:10px;width:2px;
+  background:linear-gradient(180deg,var(--oxblood) var(--fill,0%),var(--line) var(--fill,0%));transition:--fill 1s}
+.tstep{position:relative;padding:0 0 26px}
+.tstep:last-child{padding-bottom:0}
+.tdot{position:absolute;left:-34px;top:2px;width:26px;height:26px;border-radius:50%;
+  background:var(--surface);border:2px solid var(--line);display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:var(--muted2);transition:all .4s}
+.tstep.done .tdot{background:var(--oxblood);border-color:var(--oxblood);color:#fff}
+.tstep.active .tdot{border-color:var(--oxblood);color:var(--oxblood);box-shadow:0 0 0 5px var(--ox-soft);animation:pulse 2.2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 4px var(--ox-soft)}50%{box-shadow:0 0 0 9px rgba(140,34,48,.05)}}
+@media (prefers-reduced-motion:reduce){.tstep.active .tdot{animation:none}}
+.tstep h3{font-size:15.5px;font-weight:800}
+.tstep.pending h3{color:var(--muted2);font-weight:700}
+.tstep p{font-size:13.3px;color:var(--muted);margin-top:3px;max-width:52ch}
+.tstep .when{display:inline-block;font:700 11px var(--head);letter-spacing:.05em;text-transform:uppercase;
+  color:var(--oxblood);background:var(--ox-soft);border-radius:99px;padding:3px 10px;margin-top:7px}
+.tstep.active .when{color:var(--amber);background:rgba(166,90,21,.1)}
+
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+.foot{max-width:720px;margin:0 auto;padding:26px 18px 40px;font-size:11.8px;color:var(--muted);border-top:1px solid var(--line)}
+.foot a{color:var(--oxblood)}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-in">
+    <a class="logo" href="index.html">
+      <svg viewBox="0 0 88 88" aria-hidden="true">
+        <rect x="2" y="2" width="84" height="84" rx="23" fill="#8C2230"/>
+        <path d="M33 24a12.5 12.5 0 100 25 12.5 12.5 0 000-25z" fill="#FFFFFF"/><path d="M21 43.5c0 12 7.5 20 19 23l2.5-9.5c-6.5-2-10-7-10-13.5z" fill="#FFFFFF"/>
+        <path d="M60 24a12.5 12.5 0 100 25 12.5 12.5 0 000-25z" fill="#FFFFFF"/><path d="M48 43.5c0 12 7.5 20 19 23l2.5-9.5c-6.5-2-10-7-10-13.5z" fill="#FFFFFF"/>
+      </svg>
+      <span class="logo-word"><span class="l1">don't have</span><span class="l2">an agent<span class="dot">.com</span></span></span>
+    </a>
+    <div class="nav-safe">🔒 <b>Private</b> · status only, never your answers</div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <!-- ══ login ══ -->
+  <section id="loginView">
+    <div class="eyebrow">Track my request</div>
+    <h1>See exactly where things stand.</h1>
+    <p class="lead">Your reference and access code are in your confirmation email — the code is the six
+      characters under your reference. What you see here is the status of your request, never the answers.</p>
+
+    <div class="card">
+      <label for="fRef">Your reference</label>
+      <input id="fRef" placeholder="DHA-260812-0007" autocomplete="off" autocapitalize="characters">
+      <div class="hint">Starts with DHA (or DHAG for a company plan).</div>
+
+      <label for="fCode">Your access code</label>
+      <input id="fCode" placeholder="6 CHARACTERS" maxlength="6" autocomplete="off" autocapitalize="characters">
+
+      <button class="btn btn-go" id="goBtn" onclick="check()">Show my progress →</button>
+      <div class="err" id="errBox"></div>
+      <div class="note">Can't find your code? Call <a href="tel:+18686785921">(868) 678-5921</a> or
+        <a href="https://wa.me/18686785921" target="_blank" rel="noopener">WhatsApp us</a> and quote your reference —
+        a person will tell you where things stand.</div>
+    </div>
+  </section>
+
+  <!-- ══ progress ══ -->
+  <section id="progressView">
+    <div class="eyebrow">Your request</div>
+    <h1 id="pvTitle">Here's where you are.</h1>
+    <div class="who" id="pvWho"></div>
+    <div class="refline">
+      <span class="ref-chip" id="pvRef"></span>
+      <span class="route-chip" id="pvRoute" style="display:none"></span>
+    </div>
+    <div class="state-line" id="pvState"></div>
+
+    <div class="card">
+      <div class="timeline" id="pvTimeline"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-line" onclick="check(true)">↻ Check again</button>
+      <a class="btn btn-line" href="tel:+18686785921">📞 (868) 678-5921</a>
+      <a class="btn btn-line" id="pvWa" href="#" target="_blank" rel="noopener">💬 WhatsApp</a>
+      <button class="btn btn-line" onclick="logout()">Not you? Log out</button>
+    </div>
+  </section>
+</div>
+
+<div class="foot">
+  donthaveanagent.com · a <b>Ricky Rampersad Branch</b> initiative · Guardian Life of the Caribbean Limited ·
+  Trinidad &amp; Tobago. This page shows the processing status of a submitted review. Changes to policy records are
+  effective only once processed and confirmed in writing by the insurer.
+  <a href="index.html">Back to the site</a>
+</div>
+
+<script>
+/* Same backend as the review — paste the same /exec URL here. */
+const CONFIG = { API_URL: "" };
+
+const $ = (s) => document.querySelector(s);
+const P = new URLSearchParams(location.search);
+const KEY = "dhaa-track";
+
+/* The five stages we can honestly report. The server sends stage 2 while the
+   row is open and 4 when it is handled; signature state refines stage 3. */
+const STAGES = [
+  { h: "Received", p: "Your review reached our support team and was filed under your reference." },
+  { h: "Verifying your answers", p: "A person checks what you told us — records, requests, and your choice of who looks after you. Nothing goes to the insurer unchecked." },
+  { h: "Your documents, populated", p: "Everything that needs your signature is prepared for you — filled in, nothing to print, nothing typed twice." },
+  { h: "Digital signature", p: "Your package arrives by email ready to sign on your phone." },
+  { h: "Done — and confirmed in writing", p: "Your requests are with the insurer and your confirmation is on its way." },
+];
+
+function fmtErr(m) { const e = $("#errBox"); e.textContent = m; e.style.display = "block"; }
+
+async function check(again) {
+  const ref = ($("#fRef").value || "").trim().toUpperCase();
+  const code = ($("#fCode").value || "").trim().toUpperCase();
+  $("#errBox").style.display = "none";
+  if (!ref || !code) { fmtErr("Enter both your reference and your access code."); return; }
+
+  if (!CONFIG.API_URL) {
+    fmtErr("Online tracking switches on when our office confirms your submission. Until then, call or WhatsApp us with your reference — a person will tell you exactly where things stand.");
+    return;
+  }
+
+  const btn = $("#goBtn"); btn.disabled = true; btn.textContent = "Checking…";
+  try {
+    const res = await fetch(CONFIG.API_URL + "?action=status&ref=" + encodeURIComponent(ref) + "&code=" + encodeURIComponent(code));
+    const d = await res.json();
+    if (!d.ok) { fmtErr(d.error || "We couldn't check that just now — please try again."); return; }
+    localStorage.setItem(KEY, JSON.stringify({ ref, code }));
+    render(d);
+  } catch (e) {
+    fmtErr("We couldn't reach the office system just now. Try again in a minute, or call and quote your reference.");
+  } finally {
+    btn.disabled = false; btn.textContent = "Show my progress →";
+  }
+}
+
+function render(d) {
+  $("#loginView").style.display = "none";
+  $("#progressView").style.display = "block";
+
+  const first = String(d.who || "").trim().split(/\s+/)[0];
+  $("#pvTitle").textContent = d.status === "Completed"
+    ? (first ? first + ", it's done." : "It's done.")
+    : (first ? first + ", it's moving." : "It's moving.");
+  $("#pvWho").textContent = d.kind === "group" ? "Company plan review" : "Policy review";
+  $("#pvRef").textContent = d.ref;
+  if (d.route) { const r = $("#pvRoute"); r.textContent = d.route; r.style.display = "inline-block"; }
+
+  const done = d.status === "Completed";
+  $("#pvState").innerHTML = done
+    ? "Completed" + (d.handledOn ? " on <b class='ok'>" + esc(d.handledOn) + "</b>" : "") + "."
+    : "Filed " + esc(d.filed || "") +
+      (d.lastUpdate ? " · last update sent " + esc(d.lastUpdate) : "") +
+      " · next automatic update within <b>" + (d.updateEveryDays || 2) + " days</b>." +
+      " Status: <b class='ok'>in progress</b> — nothing is stuck.";
+
+  /* Which stage each row is in. While open: received done, verifying active,
+     populate/signature pending (signature done already if signed on screen). */
+  const rows = STAGES.map((s, i) => {
+    let cls = "pending", when = "";
+    if (done) { cls = "done"; if (i === 4 && d.handledOn) when = d.handledOn; }
+    else if (i === 0) { cls = "done"; when = d.filed || ""; }
+    else if (i === 1) { cls = "active"; when = "happening now"; }
+    else if (i === 3 && d.signed) { cls = "done"; when = "signed on screen"; }
+    return { s, cls, when };
+  });
+
+  $("#pvTimeline").innerHTML = rows.map((r, i) =>
+    '<div class="tstep ' + r.cls + '">' +
+      '<span class="tdot">' + (r.cls === "done" ? "✓" : i + 1) + "</span>" +
+      "<h3>" + esc(r.s.h) + "</h3><p>" + esc(r.s.p) + "</p>" +
+      (r.when ? '<span class="when">' + esc(r.when) + "</span>" : "") +
+    "</div>").join("");
+
+  const fillPct = done ? 100 : 34;
+  $("#pvTimeline").style.setProperty("--fill", fillPct + "%");
+
+  $("#pvWa").href = "https://wa.me/18686785921?text=" +
+    encodeURIComponent("Hi, checking on my review — reference " + d.ref);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function logout() {
+  localStorage.removeItem(KEY);
+  $("#progressView").style.display = "none";
+  $("#loginView").style.display = "block";
+  $("#fRef").value = ""; $("#fCode").value = "";
+}
+
+function esc(s) { const d = document.createElement("div"); d.textContent = String(s == null ? "" : s); return d.innerHTML; }
+
+(function boot() {
+  const qRef = P.get("ref"), qCode = P.get("code");
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) {}
+  const ref = qRef || (saved && saved.ref) || "";
+  const code = qCode || (saved && saved.code) || "";
+  if (ref) $("#fRef").value = ref;
+  if (code) $("#fCode").value = code;
+  if (ref && code && CONFIG.API_URL) check();
+  ["fRef", "fCode"].forEach((id) => $("#" + id).addEventListener("keydown", (e) => { if (e.key === "Enter") check(); }));
+})();
+</script>
+</body>
+</html>
