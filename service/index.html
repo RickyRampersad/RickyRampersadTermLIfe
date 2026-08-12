@@ -1,0 +1,1742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Service Questionnaire | Ricky Rampersad Branch</title>
+<meta name="description" content="Your policy service review — confirm your records, tell us how we're doing, and get your free Protection Score. Individual and group plans. Takes about 4 minutes."/>
+<meta name="robots" content="noindex"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:     #07131f;
+    --bg2:    #0d2137;
+    --card:   #163553;
+    --card2:  #1b3d61;
+    --gold:   #efc24b;
+    --gold2:  #dca530;
+    --text:   #edf4fb;
+    --muted:  #a9bbcf;
+    --line:   rgba(255,255,255,.08);
+    --teal:   #00CFEA;
+    --teal2:  #00A8C5;
+    --good:   #3ddc97;
+    --warn:   #ffb454;
+    --bad:    #ff6b6b;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0,207,234,.08), transparent),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg2) 50%, var(--bg) 100%);
+    background-attachment: fixed;
+  }
+
+  a { color: var(--teal); }
+  h1, h2, h3, h4 { font-family: 'Montserrat', sans-serif; }
+
+  /* ── NAV ── */
+  .nav { position: sticky; top: 0; z-index: 100; background: rgba(6,17,29,.94); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+  .nav-inner { max-width: 800px; margin: 0 auto; padding: 0 16px; display: flex; align-items: center; gap: 12px; height: 62px; }
+  .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; margin-right: auto; }
+  .nav-brand svg { width: 32px; height: 32px; flex-shrink: 0; }
+  .nav-brand span { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 12.5px; line-height: 1.15; letter-spacing: .02em; }
+  .nav-secure { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .nav-secure b { color: var(--good); }
+
+  /* ── SHELL ── */
+  .wrap { max-width: 800px; margin: 0 auto; padding: 0 16px 80px; }
+  .eyebrow { font-family: 'Montserrat', sans-serif; font-size: 11.5px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--teal); margin-bottom: 10px; }
+  .lead { color: var(--muted); font-size: 15.5px; line-height: 1.65; }
+
+  /* ── CHOOSER ── */
+  #chooser { padding: 46px 0 20px; }
+  #chooser h1 { font-size: clamp(27px, 6vw, 40px); font-weight: 900; line-height: 1.12; letter-spacing: -.02em; margin-bottom: 12px; }
+  #chooser h1 em { font-style: normal; color: var(--gold); }
+  .choose-grid { display: grid; gap: 14px; grid-template-columns: 1fr 1fr; margin: 26px 0 18px; }
+  @media (max-width: 620px) { .choose-grid { grid-template-columns: 1fr; } }
+  .choose {
+    text-align: left; cursor: pointer; font: inherit; color: inherit;
+    background: linear-gradient(160deg, var(--card), var(--card2));
+    border: 1px solid var(--line); border-radius: 18px; padding: 22px 20px;
+    transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+  }
+  .choose:hover { transform: translateY(-3px); border-color: rgba(0,207,234,.45); box-shadow: 0 14px 34px rgba(0,0,0,.32); }
+  .choose .ico { font-size: 28px; margin-bottom: 10px; }
+  .choose h3 { font-size: 17px; font-weight: 800; margin-bottom: 6px; }
+  .choose p { font-size: 13.5px; color: var(--muted); line-height: 1.55; }
+  .choose .go { display: inline-block; margin-top: 12px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 12.5px; color: var(--teal); }
+  .promises { display: grid; gap: 10px; grid-template-columns: repeat(3, 1fr); margin-top: 26px; }
+  @media (max-width: 620px) { .promises { grid-template-columns: 1fr; } }
+  .promise { background: rgba(255,255,255,.03); border: 1px solid var(--line); border-radius: 13px; padding: 13px 15px; font-size: 12.8px; color: var(--muted); line-height: 1.5; }
+  .promise b { display: block; color: var(--text); font-family: 'Montserrat', sans-serif; font-size: 13px; margin-bottom: 3px; }
+  .resume { background: rgba(239,194,75,.1); border: 1px solid rgba(239,194,75,.4); border-radius: 14px; padding: 15px 17px; margin-bottom: 22px; font-size: 14px; display: none; }
+  .resume b { color: var(--gold); }
+  .resume .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 11px; }
+
+  /* ── PROGRESS ── */
+  #formArea { display: none; padding-top: 22px; }
+  .prog-shell { position: sticky; top: 62px; z-index: 60; background: rgba(7,19,31,.95); backdrop-filter: blur(10px); padding: 13px 0 12px; margin: 0 -16px 20px; border-bottom: 1px solid var(--line); }
+  .prog-inner { max-width: 800px; margin: 0 auto; padding: 0 16px; }
+  .prog-top { display: flex; align-items: center; gap: 12px; margin-bottom: 9px; }
+  .prog-label { font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--teal); }
+  .prog-count { margin-left: auto; font-size: 11.5px; color: var(--muted); }
+  .prog-bar { height: 6px; border-radius: 99px; background: rgba(255,255,255,.09); overflow: hidden; }
+  .prog-fill { height: 100%; width: 0%; border-radius: 99px; background: linear-gradient(90deg, var(--teal2), var(--teal)); transition: width .35s cubic-bezier(.4,0,.2,1); }
+
+  /* ── STEP ── */
+  .step-head { margin-bottom: 20px; }
+  .step-head h2 { font-size: clamp(21px, 4.6vw, 28px); font-weight: 800; letter-spacing: -.01em; line-height: 1.2; margin-bottom: 7px; }
+  .step-head p { color: var(--muted); font-size: 14.5px; line-height: 1.6; }
+
+  .q { background: linear-gradient(160deg, rgba(22,53,83,.72), rgba(27,61,97,.5)); border: 1px solid var(--line); border-radius: 15px; padding: 17px 18px; margin-bottom: 13px; }
+  .q.kid { border-left: 2px solid rgba(0,207,234,.55); background: rgba(0,207,234,.05); margin-left: 12px; }
+  .q.err { border-color: rgba(255,107,107,.65); }
+  .q > label.qlabel, .q > .qlabel { display: block; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 15px; line-height: 1.45; margin-bottom: 4px; }
+  .q .req { color: var(--gold); }
+  .q .help { font-size: 12.8px; color: var(--muted); line-height: 1.5; margin-bottom: 11px; }
+  .q .help.only { margin-bottom: 0; }
+  .q .errmsg { display: none; color: var(--bad); font-size: 12.5px; margin-top: 8px; font-weight: 500; }
+  .q.err .errmsg { display: block; }
+
+  /* controls */
+  .ctl { margin-top: 11px; }
+  input[type=text], input[type=email], input[type=tel], input[type=date], input[type=number], textarea, select {
+    width: 100%; font: inherit; font-size: 15px; color: var(--text);
+    background: rgba(7,19,31,.62); border: 1px solid rgba(255,255,255,.14);
+    border-radius: 11px; padding: 12px 14px; transition: border-color .16s ease;
+  }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--teal); }
+  input::placeholder, textarea::placeholder { color: #6c839c; }
+  textarea { min-height: 92px; resize: vertical; line-height: 1.55; }
+  select { appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%23a9bbcf' stroke-width='2' fill='none' stroke-linecap='round'/></svg>"); background-repeat: no-repeat; background-position: right 15px center; padding-right: 38px; }
+  select option { background: var(--bg2); color: var(--text); }
+  .pair { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
+  @media (max-width: 560px) { .pair { grid-template-columns: 1fr; } }
+
+  .pills { display: flex; flex-wrap: wrap; gap: 9px; }
+  .pill {
+    font: inherit; font-size: 14px; cursor: pointer; color: var(--text);
+    background: rgba(255,255,255,.04); border: 1.5px solid var(--line);
+    border-radius: 11px; padding: 11px 17px; transition: all .16s ease;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .pill:hover { border-color: rgba(0,207,234,.45); }
+  .pill.on { border-color: var(--teal); background: rgba(0,207,234,.14); color: #fff; font-weight: 600; }
+  .pill.on::before { content: "✓"; color: var(--teal); font-weight: 800; font-size: 12px; }
+  .pills.stack { flex-direction: column; align-items: stretch; }
+  .pills.stack .pill { justify-content: flex-start; text-align: left; }
+
+  .faces { display: flex; gap: 8px; }
+  .face {
+    flex: 1; font: inherit; cursor: pointer; color: var(--muted);
+    background: rgba(255,255,255,.04); border: 1.5px solid var(--line);
+    border-radius: 13px; padding: 12px 5px 10px; text-align: center; transition: all .16s ease;
+  }
+  .face:hover { border-color: rgba(0,207,234,.45); transform: translateY(-2px); }
+  .face .em { font-size: 24px; display: block; line-height: 1.25; }
+  .face .tx { font-size: 10.5px; font-weight: 600; letter-spacing: .01em; margin-top: 3px; display: block; }
+  .face.on { border-color: var(--teal); background: rgba(0,207,234,.14); color: #fff; }
+
+  .nps { display: flex; gap: 5px; flex-wrap: wrap; }
+  .nps button {
+    font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; color: var(--muted);
+    width: 42px; height: 42px; background: rgba(255,255,255,.04);
+    border: 1.5px solid var(--line); border-radius: 10px; transition: all .16s ease;
+  }
+  .nps button:hover { border-color: rgba(0,207,234,.45); }
+  .nps button.on { border-color: var(--teal); background: var(--teal); color: #06121e; }
+  .nps-ends { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); margin-top: 7px; }
+
+  .matrix-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .matrix-row:last-child { border-bottom: none; }
+  .matrix-row .mlabel { flex: 1 1 190px; font-size: 14px; }
+  .matrix-row .mstars { display: flex; gap: 4px; }
+  .matrix-row .mstars button {
+    font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; color: var(--muted);
+    min-width: 34px; height: 34px; background: rgba(255,255,255,.04);
+    border: 1.5px solid var(--line); border-radius: 9px; transition: all .16s ease;
+  }
+  .matrix-row .mstars button.on { border-color: var(--teal); background: rgba(0,207,234,.16); color: #fff; }
+
+  /* signature */
+  .sig-wrap { border: 1.5px dashed rgba(255,255,255,.22); border-radius: 13px; background: rgba(255,255,255,.96); position: relative; overflow: hidden; }
+  .sig-wrap canvas { display: block; width: 100%; height: 168px; touch-action: none; cursor: crosshair; }
+  .sig-hint { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #94a6ba; font-size: 13.5px; pointer-events: none; }
+  .sig-line { position: absolute; left: 22px; right: 22px; bottom: 38px; border-bottom: 1px solid #c3d0dd; pointer-events: none; }
+  .sig-tools { display: flex; gap: 9px; margin-top: 9px; flex-wrap: wrap; align-items: center; }
+
+  /* notes / education */
+  .note { border-radius: 0 12px 12px 0; padding: 12px 15px; margin-top: 12px; font-size: 13.2px; line-height: 1.6; }
+  .note.tip  { background: rgba(239,194,75,.09);  border-left: 3px solid var(--gold); }
+  .note.warn { background: rgba(255,107,107,.09); border-left: 3px solid var(--bad); }
+  .note.good { background: rgba(61,220,151,.09);  border-left: 3px solid var(--good); }
+  .note b { color: var(--text); }
+
+  /* buttons */
+  .btn {
+    font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 14.5px; cursor: pointer;
+    border: none; border-radius: 12px; padding: 14px 26px; transition: all .18s ease;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;
+  }
+  .btn-go { background: linear-gradient(135deg, var(--teal), var(--teal2)); color: #06121e; }
+  .btn-go:hover { background: linear-gradient(135deg, #25E0FF, var(--teal)); transform: translateY(-1px); }
+  .btn-go:disabled { opacity: .55; cursor: default; transform: none; }
+  .btn-gold { background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #1a1405; }
+  .btn-gold:hover { transform: translateY(-1px); }
+  .btn-ghost { background: rgba(255,255,255,.05); border: 1px solid var(--line); color: var(--muted); }
+  .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,.25); }
+  .btn-sm { padding: 9px 16px; font-size: 13px; border-radius: 10px; }
+  .nav-row { display: flex; gap: 11px; align-items: center; margin-top: 22px; flex-wrap: wrap; }
+  .nav-row .spacer { flex: 1; }
+  .saved { font-size: 11.8px; color: var(--muted); }
+
+  /* score card */
+  .score-card { background: linear-gradient(160deg, rgba(22,53,83,.9), rgba(27,61,97,.7)); border: 1px solid rgba(0,207,234,.28); border-radius: 18px; padding: 20px; margin-bottom: 16px; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  .ring { width: 96px; height: 96px; flex-shrink: 0; position: relative; }
+  .ring svg { transform: rotate(-90deg); }
+  .ring .val { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .ring .val b { font-family: 'Montserrat', sans-serif; font-size: 24px; font-weight: 900; line-height: 1; }
+  .ring .val span { font-size: 9.5px; color: var(--muted); letter-spacing: .09em; text-transform: uppercase; margin-top: 2px; }
+  .score-txt { flex: 1 1 220px; }
+  .score-txt h3 { font-size: 16.5px; font-weight: 800; margin-bottom: 5px; }
+  .score-txt p { font-size: 13.4px; color: var(--muted); line-height: 1.6; }
+  .pillars { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
+  .pillar { font-size: 11.5px; padding: 5px 10px; border-radius: 99px; border: 1px solid var(--line); background: rgba(255,255,255,.03); color: var(--muted); }
+  .pillar.on { border-color: rgba(61,220,151,.5); background: rgba(61,220,151,.11); color: #b6f0d5; }
+  .pillar.off { border-color: rgba(255,180,84,.42); background: rgba(255,180,84,.09); color: #ffdaa8; }
+
+  /* review */
+  .rev-sec { margin-bottom: 16px; }
+  .rev-sec h4 { font-size: 12px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; color: var(--teal); margin-bottom: 9px; display: flex; align-items: center; gap: 10px; }
+  .rev-sec h4 button { margin-left: auto; }
+  .rev-tbl { width: 100%; border-collapse: collapse; font-size: 13.6px; }
+  .rev-tbl td { padding: 9px 12px; border: 1px solid var(--line); vertical-align: top; line-height: 1.5; }
+  .rev-tbl td:first-child { width: 48%; color: var(--muted); background: rgba(255,255,255,.025); }
+  .rev-tbl td:last-child { font-weight: 500; }
+  .consent { background: rgba(255,255,255,.03); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin: 16px 0; }
+  .check { display: flex; gap: 11px; align-items: flex-start; font-size: 13.6px; line-height: 1.55; margin-bottom: 12px; cursor: pointer; }
+  .check:last-child { margin-bottom: 0; }
+  .check input { width: 19px; height: 19px; margin-top: 1px; flex-shrink: 0; accent-color: var(--teal); cursor: pointer; }
+
+  /* done */
+  #doneArea { display: none; padding: 40px 0 20px; }
+  .done-mark { width: 74px; height: 74px; border-radius: 50%; background: linear-gradient(135deg, var(--good), #2bb883); display: flex; align-items: center; justify-content: center; font-size: 38px; color: #06121e; margin-bottom: 20px; animation: pop .55s cubic-bezier(.2,1.3,.4,1); }
+  @keyframes pop { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  #doneArea h1 { font-size: clamp(25px, 5.5vw, 34px); font-weight: 900; line-height: 1.15; margin-bottom: 11px; }
+  .ref-chip { display: inline-block; font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 13px; letter-spacing: .07em; background: rgba(239,194,75,.13); border: 1px solid rgba(239,194,75,.42); color: var(--gold); border-radius: 99px; padding: 7px 16px; margin: 6px 0 20px; }
+  .next-list { list-style: none; margin: 6px 0 0; }
+  .next-list li { display: flex; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--line); font-size: 14.2px; line-height: 1.55; }
+  .next-list li:last-child { border-bottom: none; }
+  .next-list .n { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: rgba(0,207,234,.14); border: 1px solid rgba(0,207,234,.4); color: var(--teal); font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; font-family: 'Montserrat', sans-serif; }
+  .next-list b { color: var(--text); }
+  .done-card { background: linear-gradient(160deg, var(--card), var(--card2)); border: 1px solid var(--line); border-radius: 18px; padding: 20px 22px; margin-bottom: 16px; }
+  .done-card h3 { font-size: 16px; font-weight: 800; margin-bottom: 10px; }
+  .done-actions { display: flex; gap: 11px; flex-wrap: wrap; margin-top: 8px; }
+
+  .foot { border-top: 1px solid var(--line); margin-top: 40px; padding: 22px 0 40px; font-size: 11.8px; color: #7a8da0; line-height: 1.65; }
+  .foot a { color: var(--muted); }
+
+  @media print {
+    .nav, .prog-shell, .nav-row, .done-actions, .foot, .no-print { display: none !important; }
+    body { background: #fff; color: #111; }
+    .q, .done-card, .score-card, .rev-tbl td { background: #fff !important; border-color: #ccc !important; color: #111 !important; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="/">
+      <svg viewBox="0 0 88 88" aria-hidden="true">
+        <defs>
+          <linearGradient id="gn" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f0c448"/>
+            <stop offset="60%" stop-color="#c9942c"/>
+            <stop offset="100%" stop-color="#7a5810"/>
+          </linearGradient>
+        </defs>
+        <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#gn)"/>
+        <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Ricky Rampersad<br>Branch</span>
+    </a>
+    <div class="nav-secure">🔒 <b>Private</b> · goes to our office only</div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <!-- ══════════ 1. CHOOSER ══════════ -->
+  <section id="chooser">
+    <div class="resume" id="resumeBox">
+      <b>Welcome back.</b> We saved your answers on this device — pick up where you left off.
+      <div class="row">
+        <button class="btn btn-gold btn-sm" onclick="resumeDraft()">Continue my questionnaire</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearDraft(true)">Start fresh</button>
+      </div>
+    </div>
+
+    <div class="eyebrow">Policy Service Review</div>
+    <h1>Ten minutes of your time.<br><em>A lifetime of getting it right.</em></h1>
+    <p class="lead">
+      This is your service review — the same questionnaire we've always used, now online.
+      Confirm your records are correct, tell us honestly how we're doing, and see where your
+      protection stands today. Your answers reach our office the moment you press send.
+    </p>
+
+    <div class="choose-grid">
+      <button class="choose" onclick="startForm('individual')">
+        <div class="ico">👤</div>
+        <h3>Individual &amp; Family</h3>
+        <p>Your personal life, health or retirement policies — for you, your spouse and your children.</p>
+        <span class="go">Start my review →</span>
+      </button>
+      <button class="choose" onclick="startForm('group')">
+        <div class="ico">🏢</div>
+        <h3>Group &amp; Company Plan</h3>
+        <p>Employee benefits — group life, health, pension. For HR, finance and company directors.</p>
+        <span class="go">Start our plan review →</span>
+      </button>
+    </div>
+
+    <div class="promises">
+      <div class="promise"><b>About 4 minutes</b>Short, plain questions. Skip anything you'd rather discuss in person.</div>
+      <div class="promise"><b>Saved as you go</b>Close the page and come back — this device remembers your answers.</div>
+      <div class="promise"><b>A real reply</b>You get a written confirmation, and anything unresolved goes straight to a service manager.</div>
+    </div>
+
+    <div class="note tip" style="margin-top:26px">
+      <b>💡 What you'll get back.</b> At the end we show you a free <b>Protection Score</b> —
+      a plain-English read on where your cover is strong and where the gaps are. No jargon, no obligation.
+    </div>
+  </section>
+
+  <!-- ══════════ 2. FORM ══════════ -->
+  <section id="formArea">
+    <div class="prog-shell">
+      <div class="prog-inner">
+        <div class="prog-top">
+          <span class="prog-label" id="progLabel">Step 1</span>
+          <span class="prog-count" id="progCount"></span>
+        </div>
+        <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+      </div>
+    </div>
+
+    <div id="stepHost"></div>
+
+    <div class="nav-row">
+      <button class="btn btn-ghost" id="backBtn" onclick="goBack()">← Back</button>
+      <button class="btn btn-go" id="nextBtn" onclick="goNext()">Continue →</button>
+      <span class="spacer"></span>
+      <span class="saved" id="savedNote"></span>
+    </div>
+  </section>
+
+  <!-- ══════════ 3. DONE ══════════ -->
+  <section id="doneArea"></section>
+
+  <div class="foot">
+    Ricky Rampersad Branch · Guardian Life of the Caribbean Limited · Chaguanas, Trinidad &amp; Tobago<br>
+    This service questionnaire is provided by Ricky Rampersad for the convenience of clients. Information you give here
+    is used to service your policy, update our records and follow up on your requests. Changes to policy records —
+    beneficiary, address, date of birth, servicing agent — are only effective once processed and confirmed in writing by
+    Guardian Life of the Caribbean Limited. Your policy contract governs in all cases.
+    <br><br>
+    Questions? <a href="tel:+18686785921">(868) 678-5921</a> ·
+    <a href="mailto:ricky.rampersad@myguardiangroup.com">ricky.rampersad@myguardiangroup.com</a> ·
+    <a href="/">Back to the branch site</a>
+  </div>
+</div>
+
+<script>
+/* ============================================================================
+   SERVICE QUESTIONNAIRE — Ricky Rampersad Branch
+   ----------------------------------------------------------------------------
+   The paper Guardian Life "Service Questionnaire" (form 2000-03-147) and the
+   EBD "Group Change of Agent Request" letter, rebuilt as one guided online
+   review. Every question from both paper forms is here, in the same order and
+   meaning, plus the questions a good advisor asks that the 1990s form never did.
+
+   HOW IT WORKS
+     1. The client picks Individual or Group.
+     2. QUESTIONS below drives everything — the wizard, validation, the review
+        screen, the emails and the PDF are all rendered from this one list.
+        Add a question here and it appears everywhere. No other file to touch.
+     3. On submit we POST to the Apps Script web app (apps-script/Service.gs),
+        which writes the answers to the Google Sheet, emails the client a
+        thank-you with their own copy, and routes the whole thing to Customer
+        Service with a priority flag on anything unresolved.
+     4. If the endpoint isn't set (or the network fails) nothing is lost: we
+        fall back to a pre-filled email and an on-screen printable copy.
+   ========================================================================== */
+
+const CONFIG = {
+  /* The deployed Apps Script web app for Service.gs (Deploy → New deployment →
+     Web app → Execute as: Me → Who has access: Anyone). Ends in /exec.
+     Leave "" and the form still works — it falls back to email. */
+  API_URL: "",
+
+  AGENT_NAME:   "Ricky Rampersad",
+  AGENT_NO:     "",                       // Guardian agent number — fills the form's "AGENT'S NO."
+  AGENT_EMAIL:  "ricky.rampersad@myguardiangroup.com",
+  AGENT_PHONE:  "(868) 678-5921",
+  AGENT_WHATSAPP: "18686785921",
+  SUPPORT_EMAIL: "support@rickyrampersadbranch.com",
+};
+
+/* ─────────────────────────── question types ───────────────────────────
+   text · email · tel · date · number · textarea · select
+   yesno      — Yes / No
+   yesnona    — Yes / No / Not sure
+   choice     — one of options
+   multi      — any of options
+   scale5     — five faces, 1 (poor) to 5 (excellent)
+   nps        — 0 to 10 "would you recommend us"
+   matrix     — several rows, each rated 1-5 or N/A
+   signature  — draw or type a signature
+   statement  — no input, just something worth reading
+   ------------------------------------------------------------------------
+   showIf : { id, is } | { id, in:[…] } | { id, has:'option' } | { id, not:'x' }
+   score  : { pillar, good } — feeds the Protection Score ring
+   flag   : 'urgent' | 'records' | 'agent' | 'lead' — how the office routes it
+   ------------------------------------------------------------------------- */
+
+const YESNO   = ["Yes", "No"];
+const YESNONA = ["Yes", "No", "Not sure"];
+
+/* ══════════════════ INDIVIDUAL / FAMILY ══════════════════
+   Original paper questions are marked with their form line, e.g. [paper Q5],
+   so anyone comparing the two documents can see nothing was dropped.        */
+const INDIVIDUAL = [
+
+/* ── Step 1 ────────────────────────────────────────────────────────────── */
+{ step: "About you", title: "Let's start with you",
+  blurb: "So we can find your record and get back to you the way you prefer." },
+
+  { id: "lifeAssured", label: "Your full name (Life Assured)", type: "text", required: true,
+    placeholder: "As it appears on your policy", paper: "LIFE ASSURED" },
+
+  { id: "policyNos", label: "Policy number(s)", type: "text",
+    help: "Don't have them handy? Leave this blank — we'll look you up by name and date of birth.",
+    placeholder: "e.g. 1234567, 7654321", paper: "POLICY NO(S)" },
+
+  { id: "proposer", label: "Policy owner's name, if different from you", type: "text",
+    help: "Only if someone else owns and pays for the policy on your life.",
+    placeholder: "Leave blank if this is your own policy", paper: "PROPOSER" },
+
+  { id: "dob", label: "Your date of birth", type: "date", required: true,
+    help: "Used to match you to the right record — nothing else." },
+
+  { id: "email", label: "Email address", type: "email", required: true,
+    placeholder: "you@example.com", help: "Your confirmation and a copy of your answers go here." },
+
+  { id: "mobile", label: "Mobile number", type: "tel", required: true, placeholder: "868 000 0000" },
+
+  { id: "prefContact", label: "How would you prefer we reach you?", type: "choice",
+    options: ["WhatsApp", "Phone call", "Email", "Text message"], required: true },
+
+  { id: "prefTime", label: "Best time to reach you", type: "choice",
+    options: ["Morning", "Afternoon", "Evening", "Weekends", "Anytime"] },
+
+/* ── Step 2 ────────────────────────────────────────────────────────────── */
+{ step: "How we're doing", title: "How are we doing?",
+  blurb: "Be straight with us. A five is lovely, but a two tells us where to fix things — and we'd rather know." },
+
+  { id: "satisfaction", label: "Overall, how satisfied are you with the service you receive from Guardian Life?",
+    type: "scale5", required: true, paper: "Q1 — Are you satisfied with the service provided by Guardian Life?" },
+
+  { id: "nps", label: "How likely are you to recommend us to a friend or family member?",
+    type: "nps", help: "0 means not at all likely, 10 means you'd recommend us tomorrow.", isNew: true },
+
+  { id: "needClarify", label: "Do you need clarification on any of your policies?", type: "yesno",
+    paper: "Q2 — Do you need any clarification on your policy(ies)?" },
+  { id: "clarifyWhat", label: "What would you like explained?", type: "textarea", showIf: { id: "needClarify", is: "Yes" },
+    placeholder: "e.g. what my cash value is, what's covered, how my premium is calculated…",
+    help: "Plain question, plain answer — that's the deal.", flag: "service" },
+
+  { id: "explainOk", label: "Are you satisfied with the explanations you've been given so far?", type: "yesno",
+    paper: "Q3 — Are you satisfied with the explanation given?" },
+  { id: "explainWhat", label: "What's still unclear?", type: "textarea", showIf: { id: "explainOk", is: "No" }, flag: "service" },
+
+  { id: "premiumOk", label: "Are you satisfied with your policies and the way you pay your premiums?", type: "yesno",
+    paper: "Q4 — Are you satisfied with your existing policy(ies) and the method of premium payments?" },
+  { id: "payMethod", label: "How would you prefer to pay?", type: "choice", showIf: { id: "premiumOk", is: "No" },
+    options: ["Salary deduction", "Credit card", "Direct debit / standing order", "Bank transfer", "Online banking", "At the branch"], flag: "records" },
+  { id: "payFreq", label: "How often?", type: "choice", showIf: { id: "premiumOk", is: "No" },
+    options: ["Monthly", "Quarterly", "Half-yearly", "Yearly"], flag: "records" },
+  { id: "premiumNote", label: "Anything else about your premium we should know?", type: "textarea",
+    showIf: { id: "premiumOk", is: "No" }, placeholder: "e.g. the amount is a stretch right now, the date doesn't suit my pay cycle…",
+    help: "If affordability is the issue, say so. There are usually options — reducing, pausing or restructuring beats letting a policy lapse." },
+
+  { id: "unresolved", label: "Have you had any problem that was NOT resolved to your satisfaction?", type: "yesno",
+    paper: "Q5 — Have you had any problems that have not been resolved to your satisfaction?" },
+  { id: "unresolvedWhat", label: "Tell us what happened", type: "textarea", showIf: { id: "unresolved", is: "Yes" },
+    required: true, placeholder: "What happened, roughly when, and who you dealt with if you remember.", flag: "urgent" },
+  { id: "unresolvedUrgency", label: "How urgent is it?", type: "choice", showIf: { id: "unresolved", is: "Yes" },
+    options: ["Urgent — I need help today", "Important — this week", "Not urgent, but please fix it"], flag: "urgent",
+    note: { kind: "warn", text: "<b>This goes to the top of the pile.</b> Anything unresolved is flagged to a service manager the moment you press send, and you'll hear from a person — not an auto-reply — within one business day." } },
+
+  { id: "contactFreq", label: "How often would you like your agent to check in with you?", type: "choice",
+    options: ["Every 3 months", "Every 6 months", "Once a year", "Only when I reach out"], required: true,
+    paper: "Q6 — How often would you like your agent to contact you, every 3 mths, 6 mths, 12 mths?",
+    help: "We'll set the reminder in our system — and actually keep it." },
+
+  { id: "serveBetter", label: "What is the one thing we could do to serve you better?", type: "textarea", isNew: true,
+    placeholder: "Anything. Small things count.", help: "Optional — but this is the answer we read first." },
+
+/* ── Step 3 ────────────────────────────────────────────────────────────── */
+{ step: "Your records", title: "Let's make sure our records are right",
+  blurb: "Most claim delays trace back to something small being out of date. Two minutes here saves your family a headache later." },
+
+  { id: "nameAddrOk", label: "Are your name and mailing address correct on the policy?", type: "yesno",
+    paper: "Q9 — Are Name and Address correct?" },
+  { id: "newName", label: "Correct name", type: "text", showIf: { id: "nameAddrOk", is: "No" }, flag: "records",
+    help: "If your name changed by marriage or deed poll, we'll send you the change-of-name form." },
+  { id: "newAddress", label: "Correct mailing address", type: "textarea", showIf: { id: "nameAddrOk", is: "No" }, flag: "records",
+    placeholder: "Street, town, country" },
+
+  { id: "dobOk", label: "Is your date of birth correct on the policy?", type: "yesno",
+    paper: "Q10 — Is Date of Birth correct?",
+    note: { kind: "tip", text: "<b>Why we ask.</b> Your premium is calculated on your age. A wrong date of birth found at claim time can reduce what's paid out — it's worth correcting now." } },
+  { id: "correctDob", label: "Your correct date of birth", type: "date", showIf: { id: "dobOk", is: "No" }, flag: "records" },
+
+  { id: "beneficiaryOk", label: "Is your beneficiary designation still correct?", type: "yesnona",
+    paper: "Q11 — Is the Beneficiary Designation correct?",
+    help: "Life moves — marriage, children, a passing. The policy pays who is named, not who you meant." },
+  { id: "benName", label: "New beneficiary — full name", type: "text", showIf: { id: "beneficiaryOk", not: "Yes" }, flag: "records" },
+  { id: "benRel", label: "Relationship to you", type: "text", showIf: { id: "beneficiaryOk", not: "Yes" }, placeholder: "e.g. spouse, son, mother" },
+  { id: "benShare", label: "Share of benefit", type: "text", showIf: { id: "beneficiaryOk", not: "Yes" }, placeholder: "e.g. 100%, or 50/50 with…" },
+  { id: "benOthers", label: "Any other beneficiaries or contingent beneficiaries?", type: "textarea",
+    showIf: { id: "beneficiaryOk", not: "Yes" }, placeholder: "Name, relationship and share for each",
+    help: "A contingent beneficiary is the backup — who gets it if the first person can't. Naming one avoids a lot of trouble.",
+    note: { kind: "tip", text: "We'll send you the official Change of Beneficiary form to sign — Guardian needs your signature to make it legal, but this gets it started today." } },
+
+  { id: "benKnows", label: "Does your beneficiary know where to find your policy documents?", type: "yesnona",
+    paper: "Q12 — Does your Beneficiary Know where to locate your Policies?", score: { pillar: "Family knows", good: ["Yes"] } },
+  { id: "wantLocator", label: "Would you like us to send you a free Policy Location Record?", type: "yesno",
+    showIf: { id: "benKnows", not: "Yes" }, isNew: true,
+    help: "A one-page sheet listing every policy, the numbers and who to call — you fill it in and give it to your family. It's the single most useful piece of paper in a difficult week." },
+
+  { id: "hasWill", label: "Do you have a current, valid Will?", type: "choice",
+    options: ["Yes, and it's up to date", "Yes, but it's out of date", "No", "I'm not sure"],
+    paper: "Q13 — Do you have a Will? (Explain the importance of a current Will)",
+    score: { pillar: "Will", good: ["Yes, and it's up to date"] },
+    note: { kind: "tip", text: "<b>Why a Will matters.</b> Without one, the law decides who gets what — not you. It can take years and cost your family legal fees to release assets. Your life insurance can pay straight to a named beneficiary without waiting on the estate, which is exactly why the beneficiary question above matters so much." } },
+  { id: "willHelp", label: "Would you like information on making or updating a Will?", type: "yesno",
+    showIf: { id: "hasWill", in: ["Yes, but it's out of date", "No", "I'm not sure"] }, isNew: true, flag: "lead" },
+
+  { id: "trustedContact", label: "Is there a trusted contact we may reach if we can't reach you?", type: "text",
+    isNew: true, placeholder: "Name and phone number — optional",
+    help: "Not a beneficiary and no authority over your policy. Just someone we can call if mail bounces or your phone changes." },
+
+  { id: "paperless", label: "Would you like your documents and statements by email instead of post?", type: "yesno",
+    isNew: true, flag: "records", help: "Faster, and nothing gets lost in the mail." },
+
+/* ── Step 4 ────────────────────────────────────────────────────────────── */
+{ step: "Your protection", title: "The full picture",
+  blurb: "These are the questions that find the gaps. Answer what you can — 'not sure' is a perfectly good answer." },
+
+  { id: "otherGuardian", label: "Do you or your spouse own any other policies with Guardian Life?", type: "yesnona",
+    paper: "Q7 — Do you or your Spouse own any other Policies with the Company?" },
+  { id: "otherGuardianWhat", label: "Which ones?", type: "text", showIf: { id: "otherGuardian", is: "Yes" },
+    placeholder: "Policy numbers or type — whatever you remember" },
+
+  { id: "otherCompany", label: "Do you own policies with any other insurance company?", type: "yesnona",
+    paper: "Q8 — Do you own any other Policies?" },
+  { id: "otherCompanyWhat", label: "With whom, and what type?", type: "text", showIf: { id: "otherCompany", is: "Yes" },
+    placeholder: "e.g. Sagicor — life; Maritime — health" },
+
+  { id: "groupPlan", label: "Are you covered under a company Group Life or Health plan?", type: "yesnona",
+    paper: "Q14 — Do you participate in a Company Group Life or Health Plan?",
+    note: { kind: "warn", text: "<b>Worth knowing.</b> Group cover belongs to your employer, not to you. It usually ends the day you leave, retire or are made redundant — often at the age when replacing it is most expensive. Cover you own personally goes with you." } },
+  { id: "groupEmployer", label: "Which employer?", type: "text", showIf: { id: "groupPlan", is: "Yes" } },
+
+  { id: "incomeProtection", label: "Have you made arrangements to replace your income if an accident or illness stopped you working?",
+    type: "yesnona", paper: "Q15 — Have you made arrangements to replace your Income in the event of accident or disability?",
+    score: { pillar: "Income protected", good: ["Yes"] } },
+
+  { id: "homeStatus", label: "Do you own your own home?", type: "choice",
+    options: ["Own it outright", "Own it with a mortgage", "Renting", "Living with family"],
+    paper: "Q16 — Do you own your own Home?" },
+  { id: "mortgageProtected", label: "Is the mortgage protected by life cover, so your family keeps the house?",
+    type: "yesnona", showIf: { id: "homeStatus", is: "Own it with a mortgage" }, isNew: true,
+    score: { pillar: "Mortgage covered", good: ["Yes"] } },
+  { id: "homeInsured", label: "Is the home and its contents insured?", type: "yesnona", isNew: true,
+    showIf: { id: "homeStatus", in: ["Own it outright", "Own it with a mortgage"] } },
+
+  { id: "lastReview", label: "When was your financial security programme last reviewed?", type: "choice",
+    options: ["Within the last 12 months", "1–2 years ago", "3–5 years ago", "More than 5 years ago", "Never"],
+    paper: "Q17 — When last has your financial security programme been reviewed?",
+    score: { pillar: "Recently reviewed", good: ["Within the last 12 months", "1–2 years ago"] } },
+
+  { id: "lifeChanges", label: "Has any of this happened in the last 12 months?", type: "multi", isNew: true,
+    options: ["Married or moved in together", "New baby or adopted a child", "Bought a home", "Moved house",
+              "New job, promotion or salary change", "Started a business", "Child started school or university",
+              "Separated or divorced", "A death in the family", "A serious illness or diagnosis",
+              "Retired, or retiring soon", "Caring for a parent", "None of these"],
+    help: "Tick anything that applies. These are the moments when cover written years ago quietly stops fitting.",
+    note: { kind: "tip", text: "<b>Why this question is here and not on the old form.</b> Nothing changes an insurance need faster than a life event. A new baby or a new mortgage can double what your family would need — and most people never think to tell their agent." } },
+
+  { id: "goals", label: "What matters most to you right now?", type: "multi", isNew: true,
+    options: ["Protecting my family's income", "Paying off the mortgage if something happens", "Children's education",
+              "Retirement income", "Critical illness / medical bills", "Funeral and final expenses",
+              "Building savings and investments", "Protecting my business", "Leaving something behind"],
+    help: "Pick as many as you like — this tells us what to talk about first." },
+
+  { id: "runway", label: "If you couldn't work tomorrow, how long could your household manage financially?",
+    type: "choice", isNew: true,
+    options: ["Less than a month", "1–3 months", "3–6 months", "6–12 months", "More than a year", "I'm not sure"],
+    score: { pillar: "Emergency fund", good: ["3–6 months", "6–12 months", "More than a year"] },
+    help: "An honest answer here is worth more than a perfect one." },
+
+  { id: "medical", label: "Do you have medical or health insurance?", type: "choice", isNew: true,
+    options: ["Yes — with Guardian", "Yes — with another company", "Only through my job", "No", "Not sure"],
+    score: { pillar: "Health cover", good: ["Yes — with Guardian", "Yes — with another company"] } },
+
+  { id: "criticalIllness", label: "Do you have critical illness cover — a lump sum if you're diagnosed with cancer, a heart attack or a stroke?",
+    type: "yesnona", isNew: true, score: { pillar: "Critical illness", good: ["Yes"] } },
+
+  { id: "retirement", label: "Do you have a pension or annuity for retirement, beyond NIS?", type: "yesnona", isNew: true,
+    score: { pillar: "Retirement plan", good: ["Yes"] } },
+
+  { id: "wantAnalysis", label: "Would you like a free, no-obligation needs analysis?", type: "yesno", isNew: true, flag: "lead",
+    help: "We put your numbers side by side with what you'd actually need, and you decide what to do with it. No pressure, no cost." },
+
+/* ── Step 5 ────────────────────────────────────────────────────────────── */
+{ step: "Anything else", title: "How else can we help?",
+  blurb: "The last few — including the two questions that have been on this form since 2000." },
+
+  { id: "questions", label: "Do you have any questions for us right now?", type: "textarea",
+    paper: "Q20 — Have you any questions?", placeholder: "Ask anything. We answer every one.",
+    help: "Every question here gets a written answer, not a brochure." },
+
+  { id: "referral", label: "Is there a friend or relative I may be of service to?", type: "yesno",
+    paper: "Q18 — Have you a Friend or Relative to whom I may be of service?" },
+  { id: "referralWho", label: "Who should we look after?", type: "textarea", showIf: { id: "referral", is: "Yes" },
+    placeholder: "Name, relationship and the best number or email", flag: "lead" },
+  { id: "referralConsent", label: "Do you confirm you have their permission to share their contact details with us?",
+    type: "yesno", showIf: { id: "referral", is: "Yes" }, isNew: true,
+    note: { kind: "good", text: "We ask because it's their information, not ours. We won't contact anyone who hasn't agreed to hear from us." } },
+
+  { id: "career", label: "Do you know anyone who might be interested in a career in life insurance?", type: "yesno",
+    paper: "Q19 — Have you a Friend or Relative who might be interested in a career in Life Insurance?" },
+  { id: "careerWho", label: "Tell us about them", type: "textarea", showIf: { id: "career", is: "Yes" },
+    placeholder: "Name and contact — or just their first name and we'll ask you to introduce us", flag: "lead" },
+
+  { id: "bookReview", label: "Would you like to book your next review now?", type: "choice", isNew: true,
+    options: ["Yes — call me to arrange a time", "Yes — I'll pick a date below", "No, I'll reach out when I'm ready"] },
+  { id: "reviewDate", label: "Preferred date", type: "date", showIf: { id: "bookReview", is: "Yes — I'll pick a date below" } },
+
+  { id: "anythingElse", label: "Anything else you'd like us to know?", type: "textarea", isNew: true },
+
+/* ── Step 6 ────────────────────────────────────────────────────────────── */
+{ step: "Servicing agent", title: "Your servicing agent",
+  blurb: "The bottom half of the paper form — the part that tells Guardian who looks after you. Skip it if nothing's changing.",
+  paperNote: true },
+
+  { id: "changeAgent", label: "Would you like " + CONFIG.AGENT_NAME + " appointed as your Servicing Agent?", type: "choice",
+    options: ["Yes — please appoint him", "He is already my servicing agent", "No — no change"],
+    paper: "Change of Servicing Agent request",
+    help: "Your servicing agent is the person responsible for your policy: your reviews, your claims, your questions.",
+    note: { kind: "tip", text: "This does not change your policy, your premium or your cover in any way. It only changes who looks after you." } },
+
+  { id: "coaPolicies", label: "Policy number(s) this applies to", type: "text",
+    showIf: { id: "changeAgent", is: "Yes — please appoint him" }, flag: "agent",
+    help: "Leave blank to apply it to every policy you hold." },
+  { id: "coaOwnerName", label: "Name of policy owner IN BLOCK LETTERS", type: "text", required: true,
+    showIf: { id: "changeAgent", is: "Yes — please appoint him" }, flag: "agent",
+    paper: "NAME OF POLICYOWNER IN BLOCK LETTERS", uppercase: true },
+  { id: "coaHomeAddress", label: "Home address (and mailing)", type: "textarea", required: true,
+    showIf: { id: "changeAgent", is: "Yes — please appoint him" }, paper: "ADDRESS (HOME)" },
+  { id: "coaWorkAddress", label: "Work address", type: "textarea",
+    showIf: { id: "changeAgent", is: "Yes — please appoint him" }, paper: "ADDRESS (WORK)" },
+  { id: "coaHomePhone", label: "Telephone (home)", type: "tel",
+    showIf: { id: "changeAgent", is: "Yes — please appoint him" }, paper: "TELEPHONE (HOME)" },
+  { id: "coaWorkPhone", label: "Telephone (work)", type: "tel",
+    showIf: { id: "changeAgent", is: "Yes — please appoint him" }, paper: "TELEPHONE (WORK)" },
+
+  { id: "coaDeclare", type: "statement", showIf: { id: "changeAgent", is: "Yes — please appoint him" },
+    label: "What you are signing",
+    text: "\"After completing my Service Questionnaire and reviewing my policy(ies), I am requesting that " +
+          CONFIG.AGENT_NAME + " be appointed my Servicing Agent with immediate effect.\"<br><br>" +
+          "<span style='color:#a9bbcf;font-size:12.5px'>This is the same wording as the paper request. Guardian Life's Customer Service Department processes it — usually within 5 to 10 working days — and confirms the change to you in writing.</span>" },
+
+  { id: "coaSignature", label: "Signature of policy owner", type: "signature", required: true,
+    showIf: { id: "changeAgent", is: "Yes — please appoint him" }, paper: "SIGNATURE OF POLICYOWNER",
+    help: "Sign with your finger, your mouse, or type your name — all three are accepted." },
+
+  { id: "agentComments", label: "Agent's comments", type: "textarea", agentOnly: true,
+    paper: "AGENT'S COMMENTS", help: "Only visible when the agent opens this form (add ?agent=1 to the link)." },
+
+/* ── Step 7 ────────────────────────────────────────────────────────────── */
+{ step: "Review", title: "Check it over and send", blurb: "Nothing has been sent yet. Edit anything that isn't right." },
+];
+
+/* ══════════════════ GROUP / COMPANY PLAN ══════════════════
+   Built for the person who actually administers the plan — HR, finance or a
+   director — and it ends with the EBD Group Change of Agent request letter.  */
+const GROUP = [
+
+{ step: "Your company", title: "Your company and your plan",
+  blurb: "Who you are and which plan we're reviewing." },
+
+  { id: "companyName", label: "Company name", type: "text", required: true, placeholder: "As it appears on the policy" },
+  { id: "groupPolicyNo", label: "Group policy number(s)", type: "text", placeholder: "Leave blank if you don't have it to hand" },
+  { id: "industry", label: "Industry", type: "select",
+    options: ["Manufacturing", "Retail / Distribution", "Energy", "Construction", "Financial services", "Professional services",
+              "Healthcare", "Education", "Hospitality / Tourism", "Transport / Logistics", "Agriculture", "Technology",
+              "Government / State enterprise", "Non-profit", "Other"] },
+  { id: "lives", label: "How many employees are covered?", type: "choice",
+    options: ["Under 10", "10–24", "25–49", "50–99", "100–249", "250–499", "500+"] },
+  { id: "companyAddress", label: "Company address", type: "textarea" },
+  { id: "renewalDate", label: "Plan renewal date", type: "date", help: "If you know it — it's how we time your market review." },
+
+  { id: "contactName", label: "Your name", type: "text", required: true },
+  { id: "contactTitle", label: "Your job title", type: "text", placeholder: "e.g. HR Manager, Financial Controller, Director" },
+  { id: "contactEmail", label: "Your email", type: "email", required: true, help: "Your confirmation and a copy of this review go here." },
+  { id: "contactPhone", label: "Direct phone or mobile", type: "tel", required: true },
+  { id: "altContact", label: "Anyone else who should receive plan communications?", type: "text",
+    placeholder: "Name and email — optional", isNew: true },
+  { id: "prefContact", label: "How would you prefer we reach you?", type: "choice",
+    options: ["Email", "Phone call", "WhatsApp", "In-person visit"], required: true },
+
+{ step: "How we're doing", title: "How is the plan being serviced?",
+  blurb: "Rate us honestly. This is how we find out what to fix before renewal, not after." },
+
+  { id: "satisfaction", label: "Overall, how satisfied are you with the service you receive from Guardian Life?",
+    type: "scale5", required: true, paper: "Q1 — Are you satisfied with the service provided by Guardian Life?" },
+
+  { id: "nps", label: "How likely are you to recommend Guardian Life to another company?", type: "nps", isNew: true },
+
+  { id: "serviceRatings", label: "Rate each part of the service", type: "matrix", isNew: true,
+    rows: ["Claims turnaround time", "Responsiveness of your service team", "Accuracy of invoices and billing",
+           "Ease of adding and removing members", "Quality of communication to your employees",
+           "Online portal experience", "Support at renewal"],
+    help: "1 is poor, 5 is excellent. Tick N/A for anything you don't use." },
+
+  { id: "needClarify", label: "Do you need clarification on any part of the plan?", type: "yesno",
+    paper: "Q2 — Do you need any clarification on your policy(ies)?" },
+  { id: "clarifyWhat", label: "What would you like explained?", type: "textarea", showIf: { id: "needClarify", is: "Yes" },
+    placeholder: "e.g. how the benefit schedule works, what's excluded, how premiums are rated…", flag: "service" },
+
+  { id: "billingOk", label: "Are your premium invoices accurate and arriving on time?", type: "yesnona",
+    paper: "Q4 — Are you satisfied with your existing policy(ies) and the method of premium payments?" },
+  { id: "billingWhat", label: "What's going wrong with the billing?", type: "textarea",
+    showIf: { id: "billingOk", not: "Yes" }, flag: "urgent" },
+
+  { id: "unresolved", label: "Are there any issues still unresolved — claims, service, administration?", type: "yesno",
+    paper: "Q5 — Have you had any problems that have not been resolved to your satisfaction?" },
+  { id: "unresolvedWhat", label: "Tell us what's outstanding", type: "textarea", showIf: { id: "unresolved", is: "Yes" },
+    required: true, placeholder: "Include member names or claim numbers if it helps us move faster.", flag: "urgent" },
+  { id: "unresolvedUrgency", label: "How urgent is it?", type: "choice", showIf: { id: "unresolved", is: "Yes" },
+    options: ["Urgent — an employee is affected right now", "Important — this week", "Not urgent, but please resolve it"],
+    flag: "urgent",
+    note: { kind: "warn", text: "<b>This escalates immediately.</b> Outstanding group items are flagged to a service manager the moment you send this, with a response due within one business day." } },
+
+  { id: "contactFreq", label: "How often would you like your account executive to meet with you?", type: "choice",
+    options: ["Monthly", "Quarterly", "Half-yearly", "Annually", "Only when we ask"], required: true,
+    paper: "Q6 — How often would you like your agent to contact you, every 3 mths, 6 mths, 12 mths?" },
+  { id: "meetFormat", label: "Preferred format", type: "choice", options: ["In person at our office", "Virtual meeting", "Either"], isNew: true },
+
+  { id: "serveBetter", label: "What is the one thing we could do to serve your company better?", type: "textarea", isNew: true,
+    help: "Optional — and the first thing we'll read." },
+
+{ step: "Administration", title: "Running the plan day to day",
+  blurb: "The admin questions. Getting these right is what stops small things becoming complaints." },
+
+  { id: "listingCurrent", label: "Is your member listing fully up to date?", type: "yesnona", isNew: true,
+    score: { pillar: "Listing current", good: ["Yes"] } },
+  { id: "pendingChanges", label: "Roughly how many additions or deletions are pending?", type: "text",
+    showIf: { id: "listingCurrent", not: "Yes" }, placeholder: "e.g. 3 to add, 1 to remove", flag: "records",
+    note: { kind: "warn", text: "<b>This one costs real money.</b> An employee who left months ago is still being billed; an employee who joined isn't covered if something happens. We'll reconcile the listing for you." } },
+
+  { id: "membersKnowClaim", label: "Do your employees know how to submit a claim?", type: "yesnona", isNew: true,
+    score: { pillar: "Members informed", good: ["Yes"] } },
+  { id: "portalAccess", label: "Do you use the online employer portal?", type: "choice", isNew: true,
+    options: ["Yes, regularly", "Yes, occasionally", "No — we don't have access", "No — we prefer email"],
+    score: { pillar: "Portal in use", good: ["Yes, regularly", "Yes, occasionally"] } },
+  { id: "portalHelp", label: "Would you like us to set up and walk your team through portal access?", type: "yesno",
+    showIf: { id: "portalAccess", is: "No — we don't have access" }, flag: "service" },
+
+  { id: "adminNeeds", label: "What would help your team right now?", type: "multi", isNew: true,
+    options: ["Claim forms and instructions", "Member ID cards", "Benefit booklets for staff", "A digital benefits guide",
+              "A named contact for urgent claims", "Help reconciling the member listing", "Training for our HR team",
+              "Nothing right now"] },
+
+  { id: "adminBurden", label: "How much of your team's time does administering this plan take each month?", type: "choice", isNew: true,
+    options: ["Almost none", "A few hours", "A day or so", "Several days — it's a burden"] },
+
+{ step: "The benefits", title: "Do the benefits still fit?",
+  blurb: "Plans get set up once and then quietly stop matching the company. This is where we check." },
+
+  { id: "currentBenefits", label: "Which benefits does your plan include today?", type: "multi",
+    options: ["Group Life", "Group Health / Medical", "Dental", "Vision", "Critical Illness", "Personal Accident",
+              "Short-term Disability", "Long-term Disability", "Pension / Deferred Annuity", "Key Person cover",
+              "Travel", "Funeral / Last Expense", "Not sure"],
+    paper: "Q14 — Do you participate in a Company Group Life or Health Plan?" },
+
+  { id: "interestedBenefits", label: "Which would you like to explore?", type: "multi", isNew: true,
+    options: ["Group Life", "Group Health / Medical", "Dental", "Vision", "Critical Illness", "Personal Accident",
+              "Disability / income protection", "Pension / Deferred Annuity", "Key Person cover", "Travel",
+              "Funeral / Last Expense", "Employee wellness programme", "None right now"], flag: "lead" },
+
+  { id: "sumAssuredOk", label: "Is the sum assured — usually a multiple of salary — still appropriate?", type: "yesnona", isNew: true,
+    score: { pillar: "Cover adequate", good: ["Yes"] },
+    note: { kind: "tip", text: "<b>Worth checking.</b> If the multiple was set years ago and salaries have moved, the benefit your employees think they have may be well short of what their families would need." } },
+
+  { id: "keyPerson", label: "If a director or key employee died tomorrow, is the business itself protected?",
+    type: "yesnona", isNew: true, score: { pillar: "Key person", good: ["Yes"] },
+    help: "Key person cover pays the company, not the family — it buys time to recruit, reassure the bank and keep trading." },
+
+  { id: "employeeFeedback", label: "Have you had feedback or complaints from employees about the plan?", type: "yesno", isNew: true },
+  { id: "employeeFeedbackWhat", label: "What are they saying?", type: "textarea",
+    showIf: { id: "employeeFeedback", is: "Yes" }, flag: "service" },
+
+  { id: "headcountChange", label: "Has your headcount changed in the last 12 months?", type: "choice", isNew: true,
+    options: ["Grown significantly", "Grown slightly", "About the same", "Reduced slightly", "Reduced significantly"] },
+
+  { id: "excludedStaff", label: "Is there any group of staff not covered who probably should be?", type: "yesnona", isNew: true,
+    help: "Contract staff, part-timers, a new branch, directors — these get missed all the time." },
+
+  { id: "costPressure", label: "Is cost pressure a concern going into renewal?", type: "yesnona", isNew: true,
+    help: "If it is, say so early. There's usually more room to restructure than to renegotiate at the last minute." },
+
+  { id: "wantBenchmark", label: "Would you like a market comparison before your renewal?", type: "yesno", isNew: true, flag: "lead",
+    help: "We put your plan beside what comparable companies in your industry are providing and paying." },
+
+{ step: "Your people", title: "Your employees' experience",
+  blurb: "A benefit nobody understands is a cost, not a benefit. This is where a plan turns into something staff actually value." },
+
+  { id: "engagement", label: "Which of these would your company like us to run?", type: "multi", isNew: true,
+    options: ["Benefits orientation session for staff", "On-site enrolment day", "Wellness day or health fair",
+              "Financial literacy sessions", "Retirement planning workshop", "One-on-one financial reviews for employees",
+              "A claims clinic — help staff with claims in person", "Digital benefits guide for your intranet",
+              "None right now"],
+    help: "All of these are provided at no cost to your company.",
+    note: { kind: "good", text: "<b>This is the part companies tell us they value most.</b> Employees who understand their benefits use them, appreciate them, and stay. We bring the team to you." } },
+
+  { id: "engagementTiming", label: "When would suit?", type: "choice", isNew: true,
+    options: ["As soon as possible", "Next month", "Next quarter", "Around our renewal", "Let's discuss"] },
+
+  { id: "employeeReviews", label: "Would you like your employees offered individual financial reviews?", type: "yesno", isNew: true,
+    flag: "lead", help: "Private, voluntary, and on company time only if you allow it." },
+
+  { id: "questions", label: "Do you have any questions for us right now?", type: "textarea",
+    paper: "Q20 — Have you any questions?" },
+
+  { id: "referral", label: "Is there another company or business owner we may be of service to?", type: "yesno",
+    paper: "Q18 — Have you a Friend or Relative to whom I may be of service?" },
+  { id: "referralWho", label: "Who should we speak to?", type: "textarea", showIf: { id: "referral", is: "Yes" },
+    placeholder: "Company, contact name and how to reach them", flag: "lead" },
+  { id: "referralConsent", label: "Do you confirm you have their permission to share their details?", type: "yesno",
+    showIf: { id: "referral", is: "Yes" }, isNew: true },
+
+  { id: "career", label: "Do you know anyone who might be interested in a career in life insurance?", type: "yesno",
+    paper: "Q19 — Have you a Friend or Relative who might be interested in a career in Life Insurance?" },
+  { id: "careerWho", label: "Tell us about them", type: "textarea", showIf: { id: "career", is: "Yes" }, flag: "lead" },
+
+{ step: "Servicing agent", title: "Change of servicing agent",
+  blurb: "The EBD Group Change of Agent request, done online. Skip it if nothing is changing.", paperNote: true },
+
+  { id: "changeAgent", label: "Does your company wish to change the servicing agent on the group policy?", type: "choice",
+    options: ["Yes — appoint " + CONFIG.AGENT_NAME, "He is already our servicing agent", "No — no change"],
+    note: { kind: "tip", text: "This changes who services your plan. It does not change your policy, your benefits, your rates or your renewal date." } },
+
+  { id: "coaPolicyNo", label: "GROUP LIFE POLICY #", type: "text", required: true,
+    showIf: { id: "changeAgent", is: "Yes — appoint " + CONFIG.AGENT_NAME }, flag: "agent",
+    paper: "RE: Request for Change of Agent – GROUP LIFE POLICY#" },
+  { id: "coaFrom", label: "FROM — current agent or agency", type: "text", required: true,
+    showIf: { id: "changeAgent", is: "Yes — appoint " + CONFIG.AGENT_NAME }, flag: "agent", paper: "FROM:" },
+  { id: "coaTo", label: "TO — new agent", type: "text", required: true,
+    showIf: { id: "changeAgent", is: "Yes — appoint " + CONFIG.AGENT_NAME }, flag: "agent", paper: "TO:",
+    prefill: CONFIG.AGENT_NAME },
+  { id: "coaEffective", label: "EFFECTIVE DATE", type: "date", required: true,
+    showIf: { id: "changeAgent", is: "Yes — appoint " + CONFIG.AGENT_NAME }, flag: "agent", paper: "EFFECTIVE DATE:" },
+  { id: "coaDirector", label: "Director's / authorised officer's name", type: "text", required: true,
+    showIf: { id: "changeAgent", is: "Yes — appoint " + CONFIG.AGENT_NAME }, flag: "agent",
+    paper: "Director's Name & Company Stamp" },
+  { id: "coaDirectorTitle", label: "Title / position", type: "text",
+    showIf: { id: "changeAgent", is: "Yes — appoint " + CONFIG.AGENT_NAME }, placeholder: "e.g. Managing Director" },
+
+  { id: "coaLetterNote", type: "statement", showIf: { id: "changeAgent", is: "Yes — appoint " + CONFIG.AGENT_NAME },
+    label: "What happens with the letter",
+    text: "Guardian requires this request on your <b>company letterhead with the company stamp</b>.<br><br>" +
+          "When you send this, we email you a ready-to-print letter with all of these details already filled in — " +
+          "you print it on your letterhead, stamp it, sign it and send it back. Your digital request below starts the " +
+          "process at Customer Service the same day, so nothing waits on the post." },
+
+  { id: "coaSignature", label: "Signature of director / authorised officer", type: "signature", required: true,
+    showIf: { id: "changeAgent", is: "Yes — appoint " + CONFIG.AGENT_NAME },
+    help: "Sign with your finger, your mouse, or type your name." },
+
+  { id: "agentComments", label: "Agent's comments", type: "textarea", agentOnly: true, paper: "AGENT'S COMMENTS" },
+
+{ step: "Review", title: "Check it over and send", blurb: "Nothing has been sent yet. Edit anything that isn't right." },
+];
+
+/* ══════════════════════════ state ══════════════════════════ */
+const DRAFT_KEY = "rrb-service-draft-v1";
+const state = {
+  kind: "",          // 'individual' | 'group'
+  answers: {},
+  step: 0,
+  startedAt: null,
+  agentMode: new URLSearchParams(location.search).get("agent") === "1",
+};
+let SCHEMA = [];     // the active list (INDIVIDUAL or GROUP)
+let STEPS  = [];     // [{ title, blurb, items:[…] }]
+
+const $  = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const esc = (s) => String(s == null ? "" : s)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+  .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+
+/* Break the flat schema into steps at each { step } marker. */
+function buildSteps(schema) {
+  const out = [];
+  schema.forEach((item) => {
+    if (item.step) { out.push({ title: item.title, name: item.step, blurb: item.blurb, items: [] }); return; }
+    if (item.agentOnly && !state.agentMode) return;
+    if (out.length) out[out.length - 1].items.push(item);
+  });
+  return out;
+}
+
+/* ══════════════════════════ draft storage ══════════════════════════ */
+function saveDraft() {
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({
+      kind: state.kind, answers: state.answers, step: state.step,
+      startedAt: state.startedAt, at: Date.now(),
+    }));
+    const n = $("#savedNote");
+    if (n) { n.textContent = "✓ Saved"; clearTimeout(n._t); n._t = setTimeout(() => { n.textContent = ""; }, 1800); }
+  } catch (e) { /* private browsing — the form still works, it just won't remember */ }
+}
+function loadDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const d = JSON.parse(raw);
+    /* A draft older than 30 days is almost certainly abandoned. */
+    if (!d || !d.kind || (Date.now() - (d.at || 0)) > 30 * 864e5) return null;
+    return d;
+  } catch (e) { return null; }
+}
+function clearDraft(hide) {
+  try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+  if (hide) $("#resumeBox").style.display = "none";
+}
+function resumeDraft() {
+  const d = loadDraft();
+  if (!d) return;
+  state.kind = d.kind; state.answers = d.answers || {}; state.startedAt = d.startedAt || Date.now();
+  SCHEMA = d.kind === "group" ? GROUP : INDIVIDUAL;
+  STEPS = buildSteps(SCHEMA);
+  state.step = Math.min(d.step || 0, STEPS.length - 1);
+  showForm();
+}
+
+/* ══════════════════════════ start ══════════════════════════ */
+function startForm(kind) {
+  state.kind = kind;
+  state.answers = {};
+  state.step = 0;
+  state.startedAt = Date.now();
+  SCHEMA = kind === "group" ? GROUP : INDIVIDUAL;
+  STEPS = buildSteps(SCHEMA);
+  prefillFromLink();
+  showForm();
+}
+
+/* A link like /service/?name=Jane%20Doe&policy=123456&email=… arrives prefilled.
+   That is the difference between a client starting cold and a client starting
+   halfway done — and it roughly doubles how many people finish. */
+function prefillFromLink() {
+  const p = new URLSearchParams(location.search);
+  const map = state.kind === "group"
+    ? { name: "contactName", company: "companyName", policy: "groupPolicyNo", email: "contactEmail", phone: "contactPhone" }
+    : { name: "lifeAssured", policy: "policyNos", email: "email", phone: "mobile", mobile: "mobile" };
+  Object.keys(map).forEach((k) => { if (p.get(k)) state.answers[map[k]] = p.get(k); });
+  SCHEMA.forEach((q) => { if (q.prefill && !state.answers[q.id]) state.answers[q.id] = q.prefill; });
+}
+
+function showForm() {
+  $("#chooser").style.display = "none";
+  $("#doneArea").style.display = "none";
+  $("#formArea").style.display = "block";
+  renderStep();
+}
+
+/* ══════════════════════════ visibility ══════════════════════════ */
+function visible(q) {
+  if (q.agentOnly && !state.agentMode) return false;
+  const c = q.showIf;
+  if (!c) return true;
+  const v = state.answers[c.id];
+  if (c.is  !== undefined) return v === c.is;
+  if (c.not !== undefined) return v !== undefined && v !== "" && v !== c.not;
+  if (c.in  !== undefined) return c.in.indexOf(v) > -1;
+  if (c.has !== undefined) return Array.isArray(v) && v.indexOf(c.has) > -1;
+  return true;
+}
+
+/* ══════════════════════════ rendering ══════════════════════════ */
+function renderStep() {
+  const step = STEPS[state.step];
+  const isReview = step.name === "Review";
+  const host = $("#stepHost");
+
+  $("#progLabel").textContent = step.name;
+  $("#progCount").textContent = "Step " + (state.step + 1) + " of " + STEPS.length;
+  $("#progFill").style.width = Math.round(((state.step) / (STEPS.length - 1)) * 100) + "%";
+
+  let html = '<div class="step-head"><h2>' + esc(step.title) + "</h2>" +
+             (step.blurb ? "<p>" + step.blurb + "</p>" : "") + "</div>";
+
+  if (isReview) {
+    html += renderReview();
+  } else {
+    if (step.paperNote) {
+      html += '<div class="note tip" style="margin-bottom:16px">This section is optional. If your servicing agent isn\'t changing, ' +
+              'choose "no change" and carry on.</div>';
+    }
+    step.items.forEach((q) => { html += renderQuestion(q); });
+    /* The score ring appears once there's something meaningful to show. */
+    if (state.step >= 2) html = scoreCardHtml() + html;
+  }
+
+  host.innerHTML = html;
+  bindStep();
+
+  $("#backBtn").style.visibility = state.step === 0 ? "hidden" : "visible";
+  $("#nextBtn").innerHTML = isReview
+    ? "Send my questionnaire →"
+    : (state.step === STEPS.length - 2 ? "Review my answers →" : "Continue →");
+  $("#nextBtn").className = isReview ? "btn btn-gold" : "btn btn-go";
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function renderQuestion(q) {
+  if (!visible(q)) return "";
+  const kid = q.showIf ? " kid" : "";
+  const req = q.required ? ' <span class="req">*</span>' : "";
+  let h = '<div class="q' + kid + '" data-q="' + esc(q.id) + '">';
+
+  if (q.type === "statement") {
+    h += '<div class="qlabel">' + esc(q.label) + "</div>";
+    h += '<div class="note tip" style="margin-top:10px">' + q.text + "</div></div>";
+    return h;
+  }
+
+  h += '<div class="qlabel">' + esc(q.label) + req + "</div>";
+  if (q.help) h += '<div class="help">' + q.help + "</div>";
+  h += '<div class="ctl">' + control(q) + "</div>";
+  if (q.note) h += '<div class="note ' + q.note.kind + '">' + q.note.text + "</div>";
+  h += '<div class="errmsg">Please answer this one so we can help you properly.</div>';
+  h += "</div>";
+  return h;
+}
+
+function control(q) {
+  const v = state.answers[q.id];
+  const id = esc(q.id);
+
+  switch (q.type) {
+    case "text": case "email": case "tel": case "date": case "number":
+      return '<input type="' + q.type + '" data-in="' + id + '" value="' + esc(v || "") + '"' +
+             (q.placeholder ? ' placeholder="' + esc(q.placeholder) + '"' : "") +
+             (q.uppercase ? ' style="text-transform:uppercase"' : "") + ">";
+
+    case "textarea":
+      return '<textarea data-in="' + id + '"' + (q.placeholder ? ' placeholder="' + esc(q.placeholder) + '"' : "") +
+             ">" + esc(v || "") + "</textarea>";
+
+    case "select":
+      return '<select data-in="' + id + '"><option value="">Choose one…</option>' +
+             q.options.map((o) => '<option' + (v === o ? " selected" : "") + ">" + esc(o) + "</option>").join("") + "</select>";
+
+    case "yesno":   return pills(q, YESNO);
+    case "yesnona": return pills(q, YESNONA);
+    case "choice":  return pills(q, q.options, q.options.some((o) => o.length > 26));
+    case "multi":   return pills(q, q.options, false, true);
+
+    case "scale5": {
+      const faces = [
+        { n: 1, em: "😞", tx: "Poor" }, { n: 2, em: "😕", tx: "Fair" }, { n: 3, em: "😐", tx: "OK" },
+        { n: 4, em: "🙂", tx: "Good" }, { n: 5, em: "😃", tx: "Excellent" },
+      ];
+      return '<div class="faces" data-scale="' + id + '">' + faces.map((f) =>
+        '<button type="button" class="face' + (Number(v) === f.n ? " on" : "") + '" data-v="' + f.n + '">' +
+        '<span class="em">' + f.em + '</span><span class="tx">' + f.tx + "</span></button>").join("") + "</div>";
+    }
+
+    case "nps": {
+      let out = '<div class="nps" data-nps="' + id + '">';
+      for (let i = 0; i <= 10; i++) out += '<button type="button" class="' + (String(v) === String(i) ? "on" : "") + '" data-v="' + i + '">' + i + "</button>";
+      return out + '</div><div class="nps-ends"><span>Not at all likely</span><span>Extremely likely</span></div>';
+    }
+
+    case "matrix": {
+      const cur = v || {};
+      return '<div data-matrix="' + id + '">' + q.rows.map((row) =>
+        '<div class="matrix-row"><span class="mlabel">' + esc(row) + '</span><span class="mstars">' +
+        [1, 2, 3, 4, 5, "N/A"].map((n) =>
+          '<button type="button" class="' + (String(cur[row]) === String(n) ? "on" : "") + '" data-row="' + esc(row) + '" data-v="' + n + '">' + n + "</button>"
+        ).join("") + "</span></div>").join("") + "</div>";
+    }
+
+    case "signature":
+      return '<div class="sig-wrap"><canvas data-sig="' + id + '"></canvas>' +
+             '<div class="sig-line"></div>' +
+             '<div class="sig-hint"' + (v && v.img ? ' style="display:none"' : "") + ">Sign here</div></div>" +
+             '<div class="sig-tools">' +
+             '<button type="button" class="btn btn-ghost btn-sm" data-sigclear="' + id + '">Clear</button>' +
+             '<span style="color:var(--muted);font-size:12.5px">or type your name:</span>' +
+             '<input type="text" data-sigtype="' + id + '" value="' + esc((v && v.typed) || "") + '" ' +
+             'placeholder="Type your full name" style="flex:1;min-width:170px">' +
+             "</div>";
+  }
+  return "";
+}
+
+function pills(q, options, stack, multi) {
+  const v = state.answers[q.id];
+  const on = (o) => multi ? (Array.isArray(v) && v.indexOf(o) > -1) : (v === o);
+  return '<div class="pills' + (stack ? " stack" : "") + '" data-pills="' + esc(q.id) + '"' + (multi ? ' data-multi="1"' : "") + ">" +
+    options.map((o) => '<button type="button" class="pill' + (on(o) ? " on" : "") + '" data-v="' + esc(o) + '">' + esc(o) + "</button>").join("") +
+    "</div>";
+}
+
+/* ══════════════════════════ input binding ══════════════════════════ */
+function bindStep() {
+  const host = $("#stepHost");
+
+  $$("[data-in]", host).forEach((el) => {
+    el.addEventListener("input", () => { setAnswer(el.dataset.in, el.value); });
+    el.addEventListener("change", () => { setAnswer(el.dataset.in, el.value); });
+  });
+
+  $$("[data-pills]", host).forEach((box) => {
+    const key = box.dataset.pills, multi = box.dataset.multi === "1";
+    $$("button", box).forEach((b) => b.addEventListener("click", () => {
+      const val = b.dataset.v;
+      if (multi) {
+        let cur = Array.isArray(state.answers[key]) ? state.answers[key].slice() : [];
+        /* "None of these" and "Nothing right now" are exclusive — ticking one clears the rest. */
+        const exclusive = /^(none|nothing|not sure)/i.test(val);
+        if (exclusive) cur = cur.indexOf(val) > -1 ? [] : [val];
+        else {
+          cur = cur.filter((x) => !/^(none|nothing)/i.test(x));
+          cur = cur.indexOf(val) > -1 ? cur.filter((x) => x !== val) : cur.concat([val]);
+        }
+        setAnswer(key, cur, true);
+      } else {
+        setAnswer(key, state.answers[key] === val ? "" : val, true);
+      }
+    }));
+  });
+
+  $$("[data-scale]", host).forEach((box) => $$("button", box).forEach((b) =>
+    b.addEventListener("click", () => setAnswer(box.dataset.scale, Number(b.dataset.v), true))));
+
+  $$("[data-nps]", host).forEach((box) => $$("button", box).forEach((b) =>
+    b.addEventListener("click", () => setAnswer(box.dataset.nps, Number(b.dataset.v), true))));
+
+  $$("[data-matrix]", host).forEach((box) => $$("button", box).forEach((b) =>
+    b.addEventListener("click", () => {
+      const key = box.dataset.matrix;
+      const cur = Object.assign({}, state.answers[key] || {});
+      cur[b.dataset.row] = b.dataset.v;
+      setAnswer(key, cur, true);
+    })));
+
+  $$("[data-sig]", host).forEach(initSignature);
+  $$("[data-sigtype]", host).forEach((el) => el.addEventListener("input", () => {
+    const key = el.dataset.sigtype;
+    const cur = Object.assign({}, state.answers[key] || {});
+    cur.typed = el.value;
+    setAnswer(key, cur);
+  }));
+  $$("[data-sigclear]", host).forEach((b) => b.addEventListener("click", () => {
+    const key = b.dataset.sigclear;
+    const cv = $('[data-sig="' + key + '"]', host);
+    if (cv) { cv.getContext("2d").clearRect(0, 0, cv.width, cv.height); }
+    const tp = $('[data-sigtype="' + key + '"]', host);
+    if (tp) tp.value = "";
+    setAnswer(key, "");
+    const hint = cv && cv.parentNode.querySelector(".sig-hint");
+    if (hint) hint.style.display = "";
+  }));
+
+  $$("[data-edit]", host).forEach((b) => b.addEventListener("click", () => {
+    state.step = Number(b.dataset.edit); renderStep();
+  }));
+
+  $$("[data-consent]", host).forEach((el) => el.addEventListener("change", () => {
+    state.answers[el.dataset.consent] = el.checked; saveDraft();
+  }));
+}
+
+/* Setting an answer can reveal or hide follow-up questions, so anything that
+   another question keys off re-renders the step. Free text does not — you
+   don't want the page rebuilding under your fingers while you type. */
+function setAnswer(key, val, rerender) {
+  state.answers[key] = val;
+  saveDraft();
+  const q = SCHEMA.find((x) => x.id === key);
+  if (q) {
+    const box = $('[data-q="' + key + '"]');
+    if (box) box.classList.remove("err");
+  }
+  const gates = SCHEMA.some((x) => x.showIf && x.showIf.id === key);
+  if (rerender || gates) {
+    const y = window.scrollY;
+    renderStepInPlace();
+    window.scrollTo({ top: y });
+  } else {
+    updateScoreCard();
+  }
+}
+
+/* Re-render without the scroll-to-top that renderStep() does. */
+function renderStepInPlace() {
+  const step = STEPS[state.step];
+  const host = $("#stepHost");
+  let html = '<div class="step-head"><h2>' + esc(step.title) + "</h2>" + (step.blurb ? "<p>" + step.blurb + "</p>" : "") + "</div>";
+  if (step.name === "Review") html += renderReview();
+  else {
+    if (step.paperNote) html += '<div class="note tip" style="margin-bottom:16px">This section is optional. If your servicing agent isn\'t changing, choose "no change" and carry on.</div>';
+    step.items.forEach((q) => { html += renderQuestion(q); });
+    if (state.step >= 2) html = scoreCardHtml() + html;
+  }
+  host.innerHTML = html;
+  bindStep();
+}
+
+/* ══════════════════════════ signature pad ══════════════════════════ */
+function initSignature(canvas) {
+  const key = canvas.dataset.sig;
+  const ratio = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * ratio;
+  canvas.height = 168 * ratio;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(ratio, ratio);
+  ctx.lineWidth = 2.2; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = "#16202c";
+
+  const saved = state.answers[key];
+  if (saved && saved.img) {
+    const im = new Image();
+    im.onload = () => ctx.drawImage(im, 0, 0, rect.width, 168);
+    im.src = saved.img;
+  }
+
+  let drawing = false, dirty = false;
+  const pos = (e) => {
+    const r = canvas.getBoundingClientRect();
+    const t = e.touches ? e.touches[0] : e;
+    return { x: t.clientX - r.left, y: t.clientY - r.top };
+  };
+  const start = (e) => {
+    e.preventDefault(); drawing = true;
+    const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y);
+    const hint = canvas.parentNode.querySelector(".sig-hint");
+    if (hint) hint.style.display = "none";
+  };
+  const move = (e) => { if (!drawing) return; e.preventDefault(); const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); dirty = true; };
+  const end = () => {
+    if (!drawing) return;
+    drawing = false;
+    if (!dirty) return;
+    const cur = Object.assign({}, state.answers[key] || {});
+    cur.img = canvas.toDataURL("image/png");
+    state.answers[key] = cur;
+    saveDraft();
+    const box = $('[data-q="' + key + '"]');
+    if (box) box.classList.remove("err");
+  };
+
+  canvas.addEventListener("mousedown", start);
+  canvas.addEventListener("mousemove", move);
+  window.addEventListener("mouseup", end);
+  canvas.addEventListener("touchstart", start, { passive: false });
+  canvas.addEventListener("touchmove", move, { passive: false });
+  canvas.addEventListener("touchend", end);
+}
+
+/* ══════════════════════════ protection score ══════════════════════════
+   Eight pillars, each worth the same. This is the piece the client gets back
+   for their four minutes — a plain read on where they stand, with no selling
+   attached to it. It only counts pillars they've actually answered, so the
+   number climbs honestly as they go rather than starting at zero.          */
+function computeScore() {
+  const pillars = [];
+  SCHEMA.forEach((q) => {
+    if (!q.score) return;
+    const v = state.answers[q.id];
+    const answered = v !== undefined && v !== "" && !(Array.isArray(v) && !v.length);
+    if (!answered) return;
+    pillars.push({ name: q.score.pillar, ok: q.score.good.indexOf(String(v)) > -1 });
+  });
+  const total = pillars.length;
+  const good = pillars.filter((p) => p.ok).length;
+  const pct = total ? Math.round((good / total) * 100) : 0;
+  return { pillars, total, good, pct };
+}
+
+function scoreLabel(pct, total) {
+  if (!total) return { word: "Building…", line: "Answer a few more and we'll show you where you stand.", col: "var(--muted)" };
+  if (pct >= 80) return { word: "Strong", line: "You're in good shape. We'll confirm the details and keep it that way.", col: "var(--good)" };
+  if (pct >= 55) return { word: "Solid, with gaps", line: "The foundations are there. A couple of things are worth a conversation.", col: "var(--teal)" };
+  if (pct >= 30) return { word: "Some real gaps", line: "Nothing alarming — but there's work to do, and now you can see where.", col: "var(--warn)" };
+  return { word: "Needs attention", line: "Worth a proper sit-down. The good news is you've just started.", col: "var(--bad)" };
+}
+
+function scoreCardHtml() {
+  const s = computeScore();
+  const lab = scoreLabel(s.pct, s.total);
+  const C = 2 * Math.PI * 40;
+  const dash = (s.pct / 100) * C;
+  const title = state.kind === "group" ? "Your Plan Health Score" : "Your Protection Score";
+  return '<div class="score-card" id="scoreCard">' +
+    '<div class="ring"><svg width="96" height="96" viewBox="0 0 96 96">' +
+      '<circle cx="48" cy="48" r="40" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="8"/>' +
+      (dash > 0 ? '<circle cx="48" cy="48" r="40" fill="none" stroke="' + lab.col + '" stroke-width="8" stroke-linecap="round" ' +
+        'stroke-dasharray="' + dash.toFixed(1) + " " + C.toFixed(1) + '" style="transition:stroke-dasharray .5s ease"/>' : "") +
+    '</svg><div class="val"><b>' + (s.total ? s.pct : "—") + '</b><span>' + (s.total ? "of 100" : "so far") + "</span></div></div>" +
+    '<div class="score-txt"><h3>' + title + " · " + lab.word + "</h3><p>" + lab.line + "</p>" +
+      (s.pillars.length ? '<div class="pillars">' + s.pillars.map((p) =>
+        '<span class="pillar ' + (p.ok ? "on" : "off") + '">' + (p.ok ? "✓ " : "• ") + esc(p.name) + "</span>").join("") + "</div>" : "") +
+    "</div></div>";
+}
+
+function updateScoreCard() {
+  const card = $("#scoreCard");
+  if (card) card.outerHTML = scoreCardHtml();
+}
+
+/* ══════════════════════════ answers → readable list ══════════════════════════
+   One function turns the state into the list used by the review screen, the
+   email, the PDF and the sheet. Everything downstream reads the same thing. */
+function collect() {
+  const out = [];
+  let section = "";
+  SCHEMA.forEach((q) => {
+    if (q.step) { section = q.step; return; }
+    if (q.type === "statement") return;
+    if (!visible(q)) return;
+    const v = state.answers[q.id];
+    if (v === undefined || v === "" || (Array.isArray(v) && !v.length)) return;
+
+    let text;
+    if (q.type === "signature") text = (v.img ? "Signed on screen" : "") + (v.typed ? (v.img ? " · typed: " : "Typed: ") + v.typed : "");
+    else if (q.type === "matrix") text = Object.keys(v).map((k) => k + ": " + (v[k] === "N/A" ? "N/A" : v[k] + "/5")).join(" · ");
+    else if (q.type === "scale5") text = v + " of 5";
+    else if (q.type === "nps") text = v + " of 10";
+    else if (Array.isArray(v)) text = v.join(", ");
+    else text = String(v);
+    if (!text) return;
+
+    out.push({ section: section, id: q.id, label: q.label, value: text, paper: q.paper || "", flag: q.flag || "" });
+  });
+  return out;
+}
+
+/* ══════════════════════════ review screen ══════════════════════════ */
+function renderReview() {
+  const rows = collect();
+  const stepIndexOf = (sectionName) => STEPS.findIndex((s) => s.name === sectionName);
+  const sections = [];
+  rows.forEach((r) => {
+    let s = sections.find((x) => x.name === r.section);
+    if (!s) { s = { name: r.section, rows: [] }; sections.push(s); }
+    s.rows.push(r);
+  });
+
+  let h = scoreCardHtml();
+
+  h += '<div class="note good" style="margin-bottom:18px"><b>Almost there.</b> Have a quick look, then press send. ' +
+       "You'll get a copy of all of this by email — keep it, it's a useful record.</div>";
+
+  sections.forEach((s) => {
+    const idx = stepIndexOf(s.name);
+    h += '<div class="rev-sec"><h4>' + esc(s.name) +
+         (idx > -1 ? '<button class="btn btn-ghost btn-sm" data-edit="' + idx + '">Edit</button>' : "") + "</h4>" +
+         '<table class="rev-tbl">' + s.rows.map((r) =>
+           "<tr><td>" + esc(r.label) + "</td><td>" + esc(r.value) + "</td></tr>").join("") + "</table></div>";
+  });
+
+  if (!rows.length) h += '<div class="note warn">You haven\'t answered anything yet. Use Back to go through the questions.</div>';
+
+  h += '<div class="consent">' +
+    '<label class="check"><input type="checkbox" data-consent="consentTrue"' + (state.answers.consentTrue ? " checked" : "") + ">" +
+      "<span>The information I've given here is true and correct to the best of my knowledge.</span></label>" +
+    '<label class="check"><input type="checkbox" data-consent="consentUse"' + (state.answers.consentUse ? " checked" : "") + ">" +
+      "<span>I agree that " + esc(CONFIG.AGENT_NAME) + " and Guardian Life of the Caribbean Limited may use this information to service my " +
+      (state.kind === "group" ? "company's plan" : "policies") + ", update records and follow up on the requests I've made above.</span></label>" +
+    '<label class="check"><input type="checkbox" data-consent="consentMarketing"' + (state.answers.consentMarketing ? " checked" : "") + ">" +
+      "<span>I'm happy to receive occasional useful information about products and reviews. <span style='color:var(--muted)'>(Optional — say no and nothing changes about your service.)</span></span></label>" +
+    "</div>";
+
+  h += '<div class="note tip"><b>What happens the moment you press send.</b><br>' +
+       "1. Your answers land in our office system and a copy goes to your inbox.<br>" +
+       "2. Anything unresolved is flagged to a service manager — response due within one business day.<br>" +
+       "3. Record changes go to Guardian Life's Customer Service Department" +
+       (needsChangeOfAgent() ? ", together with your change of servicing agent request" : "") + ".<br>" +
+       "4. " + esc(CONFIG.AGENT_NAME) + " personally reviews every questionnaire that comes in.</div>";
+
+  return h;
+}
+
+function needsChangeOfAgent() {
+  const v = state.answers.changeAgent || "";
+  return v.indexOf("Yes") === 0;
+}
+
+/* ══════════════════════════ validation ══════════════════════════ */
+function validateStep() {
+  const step = STEPS[state.step];
+  let firstBad = null;
+
+  if (step.name === "Review") {
+    if (!state.answers.consentTrue || !state.answers.consentUse) {
+      alert("Please tick the two confirmation boxes so we can act on your answers.");
+      return false;
+    }
+    return true;
+  }
+
+  step.items.forEach((q) => {
+    if (!visible(q) || !q.required) return;
+    const v = state.answers[q.id];
+    let ok = !(v === undefined || v === "" || (Array.isArray(v) && !v.length));
+    if (ok && q.type === "signature") ok = !!(v.img || (v.typed || "").trim().length > 1);
+    if (ok && q.type === "email") ok = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(v));
+    if (ok && q.type === "tel") ok = String(v).replace(/\D/g, "").length >= 7;
+    const box = $('[data-q="' + q.id + '"]');
+    if (!ok) {
+      if (box) {
+        box.classList.add("err");
+        const msg = box.querySelector(".errmsg");
+        if (msg) {
+          msg.textContent = q.type === "email" ? "That email doesn't look right — we need it to send your copy."
+            : q.type === "tel" ? "Please give us a number we can reach you on."
+            : q.type === "signature" ? "Please sign, or type your full name."
+            : "Please answer this one so we can help you properly.";
+        }
+      }
+      if (!firstBad) firstBad = box;
+    } else if (box) box.classList.remove("err");
+  });
+
+  if (firstBad) { firstBad.scrollIntoView({ behavior: "smooth", block: "center" }); return false; }
+  return true;
+}
+
+/* ══════════════════════════ navigation ══════════════════════════ */
+function goNext() {
+  if (!validateStep()) return;
+  if (STEPS[state.step].name === "Review") { submitAll(); return; }
+  state.step = Math.min(state.step + 1, STEPS.length - 1);
+  saveDraft();
+  renderStep();
+}
+function goBack() {
+  state.step = Math.max(0, state.step - 1);
+  saveDraft();
+  renderStep();
+}
+
+/* ══════════════════════════ submit ══════════════════════════ */
+function core() {
+  const a = state.answers;
+  const s = computeScore();
+  const isGroup = state.kind === "group";
+  return {
+    clientName:  isGroup ? (a.contactName || "") : (a.lifeAssured || ""),
+    companyName: isGroup ? (a.companyName || "") : "",
+    email:       isGroup ? (a.contactEmail || "") : (a.email || ""),
+    phone:       isGroup ? (a.contactPhone || "") : (a.mobile || ""),
+    policyNos:   isGroup ? (a.groupPolicyNo || "") : (a.policyNos || ""),
+    prefContact: a.prefContact || "",
+    satisfaction: a.satisfaction || "",
+    nps:          a.nps === undefined ? "" : a.nps,
+    unresolved:   a.unresolved === "Yes",
+    unresolvedUrgency: a.unresolvedUrgency || "",
+    contactFreq:  a.contactFreq || "",
+    changeAgent:  needsChangeOfAgent(),
+    wantsFollowUp: a.wantAnalysis === "Yes" || a.wantBenchmark === "Yes" || a.employeeReviews === "Yes",
+    score: s.total ? s.pct : "",
+    scoreGaps: s.pillars.filter((p) => !p.ok).map((p) => p.name),
+    consentMarketing: !!a.consentMarketing,
+  };
+}
+
+/* Priority is worked out here and again on the server — the server's answer is
+   the one that counts, but computing it here means the client sees the same
+   promise on screen that the office sees in its inbox. */
+function priority() {
+  const c = core();
+  if (c.unresolved && /Urgent/i.test(c.unresolvedUrgency)) return "URGENT";
+  if (c.unresolved) return "HIGH";
+  if (Number(c.satisfaction) && Number(c.satisfaction) <= 2) return "HIGH";
+  if (c.nps !== "" && Number(c.nps) <= 6) return "HIGH";
+  if (c.changeAgent) return "ACTION";
+  if (collect().some((r) => r.flag === "records")) return "ACTION";
+  return "NORMAL";
+}
+
+function payload() {
+  return {
+    action: "service",
+    kind: state.kind,
+    submittedAt: new Date().toISOString(),
+    page: location.href,
+    agentMode: state.agentMode,
+    minutesTaken: state.startedAt ? Math.round((Date.now() - state.startedAt) / 60000) : "",
+    core: core(),
+    priority: priority(),
+    fields: collect(),
+    signature: (state.answers.coaSignature && state.answers.coaSignature.img) || "",
+    signatureTyped: (state.answers.coaSignature && state.answers.coaSignature.typed) || "",
+    consent: {
+      true: !!state.answers.consentTrue,
+      use: !!state.answers.consentUse,
+      marketing: !!state.answers.consentMarketing,
+    },
+  };
+}
+
+function localRef() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  return (state.kind === "group" ? "GSQ-" : "SQ-") + String(d.getFullYear()).slice(2) + p(d.getMonth() + 1) + p(d.getDate()) +
+         "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
+}
+
+async function submitAll() {
+  const btn = $("#nextBtn");
+  btn.disabled = true;
+  btn.textContent = "Sending…";
+  /* Stops the "are you sure you want to leave?" prompt from ambushing the
+     client at the one moment they've done everything right. */
+  state.submitting = true;
+
+  const body = payload();
+  let ref = "", sent = false;
+
+  if (CONFIG.API_URL) {
+    try {
+      const res = await fetch(CONFIG.API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" }, // avoids the CORS preflight Apps Script can't answer
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      sent = res.ok && data.ok !== false;
+      ref = data.ref || "";
+    } catch (e) { sent = false; }
+  }
+
+  if (!ref) ref = localRef();
+
+  /* Nothing is ever lost. If the endpoint isn't live yet, or the client is on a
+     patchy connection, we hand them a pre-filled email instead — the answers
+     still reach the office, just by a different road. */
+  if (!sent) openMailFallback(body, ref);
+
+  clearDraft(false);
+  renderDone(ref, sent);
+}
+
+function mailBody(body, ref) {
+  const c = body.core;
+  let t = (state.kind === "group" ? "GROUP SERVICE QUESTIONNAIRE" : "SERVICE QUESTIONNAIRE") + "\n";
+  t += "Reference: " + ref + "\nPriority: " + body.priority + "\n";
+  t += "Submitted: " + new Date().toLocaleString() + "\n";
+  if (c.score !== "") t += (state.kind === "group" ? "Plan health score: " : "Protection score: ") + c.score + "/100\n";
+  t += "\n";
+  let sec = "";
+  body.fields.forEach((f) => {
+    if (f.section !== sec) { sec = f.section; t += "\n── " + sec.toUpperCase() + " ──\n"; }
+    t += f.label + "\n   " + f.value + "\n";
+  });
+  if (body.signatureTyped) t += "\nSigned (typed): " + body.signatureTyped + "\n";
+  if (body.signature) t += "\n[A drawn signature was captured on screen — ask the client to resend from a connected device if the letter needs it.]\n";
+  return t;
+}
+
+function openMailFallback(body, ref) {
+  const subject = "[" + body.priority + "] " + (state.kind === "group" ? "Group " : "") +
+                  "Service Questionnaire — " + (body.core.companyName || body.core.clientName || "client") + " (" + ref + ")";
+  const to = CONFIG.AGENT_EMAIL + (CONFIG.SUPPORT_EMAIL ? "," + CONFIG.SUPPORT_EMAIL : "");
+  const href = "mailto:" + to + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(mailBody(body, ref));
+  /* A hidden anchor rather than location.href — it doesn't blank the page if
+     the device has no mail client set up. */
+  const a = document.createElement("a");
+  a.href = href; a.style.display = "none";
+  document.body.appendChild(a); a.click();
+  setTimeout(() => a.remove(), 1000);
+  window._fallbackMail = href;
+}
+
+/* ══════════════════════════ done screen ══════════════════════════ */
+function renderDone(ref, sent) {
+  const a = state.answers, c = core(), s = computeScore(), lab = scoreLabel(s.pct, s.total);
+  const first = (c.clientName || "").trim().split(/\s+/)[0] || "";
+  const isGroup = state.kind === "group";
+
+  /* What happens next is assembled from what they actually told us — a real
+     answer to a real person, not one generic paragraph for everybody. */
+  const next = [];
+  if (c.unresolved) {
+    next.push("<b>Your outstanding issue is already flagged.</b> A service manager has it now" +
+      (c.unresolvedUrgency ? ", marked &ldquo;" + esc(c.unresolvedUrgency) + "&rdquo;" : "") +
+      ". You'll hear from a person, not an auto-reply, within one business day — and if you'd rather not wait, call " +
+      esc(CONFIG.AGENT_PHONE) + " and quote the reference above.");
+  }
+  if (c.changeAgent) {
+    next.push(isGroup
+      ? "<b>Your change of agent request is on its way.</b> Watch your inbox for the letterhead-ready letter — print it, stamp it, sign it and send it back. Customer Service typically completes the change in 5 to 10 working days and confirms in writing."
+      : "<b>Your change of servicing agent request has gone to Customer Service.</b> It usually takes 5 to 10 working days, and Guardian confirms the change to you in writing. Your policy, premium and cover are untouched.");
+  }
+  const recordBits = [];
+  if (a.nameAddrOk === "No") recordBits.push("your name and address");
+  if (a.dobOk === "No") recordBits.push("your date of birth");
+  if (a.beneficiaryOk && a.beneficiaryOk !== "Yes") recordBits.push("your beneficiary");
+  if (a.premiumOk === "No") recordBits.push("how you pay your premium");
+  if (a.paperless === "Yes") recordBits.push("switching you to e-documents");
+  if (a.listingCurrent && a.listingCurrent !== "Yes") recordBits.push("reconciling your member listing");
+  if (a.billingOk && a.billingOk !== "Yes") recordBits.push("your billing");
+  if (recordBits.length) {
+    next.push("<b>We're updating " + recordBits.join(", ") + ".</b> Where Guardian needs your signature — beneficiary changes always do — the form comes to you by email, already filled in.");
+  }
+  if (a.wantLocator === "Yes") next.push("<b>Your Policy Location Record is on the way</b> — the one-page sheet your family will be glad you filled in.");
+  if (a.willHelp === "Yes") next.push("<b>We're sending you our plain-English guide to making a Will</b>, and we can point you to an attorney if you'd like one.");
+  if (a.wantAnalysis === "Yes") next.push("<b>Your free needs analysis is booked in.</b> We'll bring the numbers; you decide what, if anything, to do with them.");
+  if (a.wantBenchmark === "Yes") next.push("<b>We'll prepare your market comparison</b> ahead of renewal — your plan beside what comparable companies provide and pay.");
+  if (Array.isArray(a.engagement) && a.engagement.length && a.engagement[0] !== "None right now") {
+    next.push("<b>We'll be in touch about your employee sessions</b> (" + esc(a.engagement.slice(0, 3).join(", ")) + "). No cost to your company.");
+  }
+  if (a.employeeReviews === "Yes") next.push("<b>We'll set up individual employee reviews</b> — private, voluntary, and at times that suit your operation.");
+  if (a.referral === "Yes") next.push("<b>Thank you for the introduction.</b> We'll treat them exactly as we treat you — and we'll let you know how it goes.");
+  if (a.career === "Yes") next.push("<b>Thank you for thinking of us on the career side.</b> We'll reach out with a proper conversation, not a pitch.");
+  if (c.contactFreq) {
+    next.push("<b>Your next check-in is set: " + esc(String(c.contactFreq).toLowerCase()) + ".</b> It's in the system now, so it doesn't depend on anyone remembering.");
+  }
+  if (a.questions && String(a.questions).trim()) next.push("<b>Your question gets a written answer</b>, not a brochure. Give us a day or two to do it properly.");
+  next.push("<b>A copy of everything you've told us is in your inbox</b> at " + esc(c.email || "your email address") + ". Keep it — it's a useful record of where things stood today.");
+
+  const gaps = s.pillars.filter((p) => !p.ok).slice(0, 3);
+
+  let h = '<div class="done-mark">✓</div>';
+  h += "<h1>Thank you" + (first ? ", " + esc(first) : "") + ".</h1>";
+  h += '<p class="lead" style="margin-bottom:6px">' +
+    (sent
+      ? "Your " + (isGroup ? "plan review" : "service questionnaire") + " is in. Here's exactly what happens next — no mystery, no waiting to wonder."
+      : "Your answers are ready to send. We've opened an email with everything in it — <b>please press send in your mail app</b> and it's done. If nothing opened, use the button below.") +
+    "</p>";
+  h += '<div class="ref-chip">Reference ' + esc(ref) + "</div>";
+
+  if (!sent) {
+    h += '<div class="note warn" style="margin-bottom:18px"><b>One more tap needed.</b> ' +
+         "Your mail app should have opened with your answers already written out. Press send there, or " +
+         '<a href="#" onclick="if(window._fallbackMail){location.href=window._fallbackMail}return false">tap here to open it again</a>. ' +
+         "Nothing is lost — you can also print this page and bring it in.</div>";
+  }
+
+  if (s.total) {
+    const C = 2 * Math.PI * 40, dash = (s.pct / 100) * C;
+    h += '<div class="score-card" style="margin:20px 0 18px">' +
+      '<div class="ring"><svg width="96" height="96" viewBox="0 0 96 96">' +
+        '<circle cx="48" cy="48" r="40" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="8"/>' +
+        (dash > 0 ? '<circle cx="48" cy="48" r="40" fill="none" stroke="' + lab.col + '" stroke-width="8" stroke-linecap="round" stroke-dasharray="' + dash.toFixed(1) + " " + C.toFixed(1) + '"/>' : "") +
+      '</svg><div class="val"><b>' + s.pct + "</b><span>of 100</span></div></div>" +
+      '<div class="score-txt"><h3>' + (isGroup ? "Plan Health Score" : "Protection Score") + " · " + lab.word + "</h3><p>" + lab.line + "</p>" +
+      (gaps.length ? "<p style='margin-top:9px'><b style='color:var(--gold)'>Worth talking about:</b> " +
+        gaps.map((g) => esc(g.name)).join(" · ") + "</p>" : "") +
+      "</div></div>";
+  }
+
+  h += '<div class="done-card"><h3>What happens next</h3><ul class="next-list">' +
+    next.map((n, i) => '<li><span class="n">' + (i + 1) + "</span><span>" + n + "</span></li>").join("") + "</ul></div>";
+
+  h += '<div class="done-card"><h3>Need us before then?</h3>' +
+    '<p style="color:var(--muted);font-size:14px;line-height:1.6">Quote your reference and whoever picks up will know exactly where you are.</p>' +
+    '<div class="done-actions">' +
+      '<a class="btn btn-go" href="tel:' + esc(CONFIG.AGENT_PHONE.replace(/\D/g, "")) + '">📞 Call ' + esc(CONFIG.AGENT_PHONE) + "</a>" +
+      '<a class="btn btn-ghost" href="https://wa.me/' + esc(CONFIG.AGENT_WHATSAPP) + "?text=" + encodeURIComponent("Hi, I just completed my service questionnaire — reference " + ref) + '" target="_blank" rel="noopener">💬 WhatsApp</a>' +
+      '<a class="btn btn-ghost" href="mailto:' + esc(CONFIG.AGENT_EMAIL) + "?subject=" + encodeURIComponent("Service questionnaire " + ref) + '">✉️ Email</a>' +
+    "</div></div>";
+
+  h += '<div class="done-actions no-print" style="margin-top:18px">' +
+    '<button class="btn btn-gold" onclick="window.print()">🖨️ Print / save my copy</button>' +
+    '<a class="btn btn-ghost" href="/">← Back to the branch site</a>' +
+    "</div>";
+
+  /* A printable copy of everything they answered, hidden on screen but there
+     when they hit print. */
+  h += '<div id="printCopy" style="display:none">' + printableHtml(ref) + "</div>";
+  h += "<style>@media print{#printCopy{display:block !important}}</style>";
+
+  $("#formArea").style.display = "none";
+  $("#chooser").style.display = "none";
+  const done = $("#doneArea");
+  done.innerHTML = h;
+  done.style.display = "block";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function printableHtml(ref) {
+  const rows = collect();
+  let h = '<hr style="margin:26px 0"><h3 style="font-size:16px;margin-bottom:4px">' +
+    (state.kind === "group" ? "Group Service Questionnaire" : "Service Questionnaire") + "</h3>" +
+    '<p style="font-size:12px;color:#555;margin-bottom:12px">Reference ' + esc(ref) + " · " + new Date().toLocaleString() +
+    " · Ricky Rampersad Branch, Guardian Life of the Caribbean Limited</p>";
+  let sec = "";
+  rows.forEach((r) => {
+    if (r.section !== sec) {
+      sec = r.section;
+      h += '<h4 style="font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin:16px 0 6px">' + esc(sec) + "</h4>";
+    }
+    h += '<div style="font-size:12.5px;padding:5px 0;border-bottom:1px solid #eee">' +
+         "<b>" + esc(r.label) + "</b><br>" + esc(r.value) + "</div>";
+  });
+  return h;
+}
+
+/* ══════════════════════════ boot ══════════════════════════ */
+(function boot() {
+  const d = loadDraft();
+  if (d) $("#resumeBox").style.display = "block";
+
+  /* /service/?type=group or ?type=individual jumps straight in — this is the
+     link the agent sends a client directly. */
+  const t = new URLSearchParams(location.search).get("type");
+  if (t === "group" || t === "individual") startForm(t);
+
+  /* Don't let someone lose ten minutes of answers to a stray back-swipe. */
+  window.addEventListener("beforeunload", (e) => {
+    if (state.submitting) return;
+    const busy = $("#formArea").style.display === "block" && Object.keys(state.answers).length > 2;
+    if (busy) { e.preventDefault(); e.returnValue = ""; }
+  });
+})();
+</script>
+</body>
+</html>

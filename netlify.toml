@@ -13,8 +13,35 @@
   to = "/renewal/"
   status = 302
 
+# Short links for the service questionnaire — these are what an agent texts or
+# WhatsApps a client. /sq/individual and /sq/group skip the chooser screen.
+[[redirects]]
+  from = "/sq"
+  to = "/service/"
+  status = 302
+
+[[redirects]]
+  from = "/sq/individual"
+  to = "/service/?type=individual"
+  status = 302
+
+[[redirects]]
+  from = "/sq/group"
+  to = "/service/?type=group"
+  status = 302
+
 [[headers]]
   for = "/renewal/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+
+# The service questionnaire carries client records and a signature — same
+# treatment. no-referrer also stops policy numbers leaking through the
+# Referer header if a client taps a link from the page.
+[[headers]]
+  for = "/service/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
