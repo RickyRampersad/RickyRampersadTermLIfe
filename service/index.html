@@ -654,16 +654,20 @@ const INDIVIDUAL = [
 
   { id: "coaPolicies", label: "Policy number(s) this applies to", type: "text",
     showIf: { id: "changeAgent", is: "Yes — please appoint him" }, flag: "agent",
+    carry: "policyNos",
     help: "Leave blank to apply it to every policy you hold." },
   { id: "coaOwnerName", label: "Name of policy owner IN BLOCK LETTERS", type: "text", required: true,
     showIf: { id: "changeAgent", is: "Yes — please appoint him" }, flag: "agent",
+    carry: "lifeAssured",
     paper: "NAME OF POLICYOWNER IN BLOCK LETTERS", uppercase: true },
   { id: "coaHomeAddress", label: "Home address (and mailing)", type: "textarea", required: true,
-    showIf: { id: "changeAgent", is: "Yes — please appoint him" }, paper: "ADDRESS (HOME)" },
+    showIf: { id: "changeAgent", is: "Yes — please appoint him" }, carry: "newAddress",
+    paper: "ADDRESS (HOME)" },
   { id: "coaWorkAddress", label: "Work address", type: "textarea",
     showIf: { id: "changeAgent", is: "Yes — please appoint him" }, paper: "ADDRESS (WORK)" },
   { id: "coaHomePhone", label: "Telephone (home)", type: "tel",
-    showIf: { id: "changeAgent", is: "Yes — please appoint him" }, paper: "TELEPHONE (HOME)" },
+    showIf: { id: "changeAgent", is: "Yes — please appoint him" }, carry: "mobile",
+    paper: "TELEPHONE (HOME)" },
   { id: "coaWorkPhone", label: "Telephone (work)", type: "tel",
     showIf: { id: "changeAgent", is: "Yes — please appoint him" }, paper: "TELEPHONE (WORK)" },
 
@@ -856,6 +860,7 @@ const GROUP = [
 
   { id: "coaPolicyNo", label: "GROUP LIFE POLICY #", type: "text", required: true,
     showIf: { id: "changeAgent", is: "Yes — appoint " + CONFIG.AGENT_NAME }, flag: "agent",
+    carry: "groupPolicyNo",
     paper: "RE: Request for Change of Agent – GROUP LIFE POLICY#" },
   { id: "coaFrom", label: "FROM — current agent or agency", type: "text", required: true,
     showIf: { id: "changeAgent", is: "Yes — appoint " + CONFIG.AGENT_NAME }, flag: "agent", paper: "FROM:" },
@@ -994,6 +999,24 @@ function visible(q) {
   return true;
 }
 
+/* The change-of-agent section repeats details the client already gave earlier
+   on the same form. Nobody should type their policy number twice, so seed each
+   field from the answer it duplicates the first time the section appears. Only
+   ever fills a blank — anything typed stands, and every field stays editable.
+   Deliberately NOT carried: the group director's name. That letter has to be
+   signed by a director, and the person filling the form often isn't one. */
+function carryForward(items) {
+  items.forEach((q) => {
+    if (!q.carry || !visible(q)) return;
+    const cur = state.answers[q.id];
+    if (cur !== undefined && cur !== "") return;
+    const src = state.answers[q.carry];
+    if (typeof src === "string" && src.trim() !== "") {
+      state.answers[q.id] = q.uppercase ? src.toUpperCase() : src;
+    }
+  });
+}
+
 /* ══════════════════════════ rendering ══════════════════════════ */
 function renderStep() {
   const step = STEPS[state.step];
@@ -1014,6 +1037,7 @@ function renderStep() {
       html += '<div class="note tip" style="margin-bottom:16px">This section is optional. If your servicing agent isn\'t changing, ' +
               'choose "no change" and carry on.</div>';
     }
+    carryForward(step.items);
     step.items.forEach((q) => { html += renderQuestion(q); });
     /* The score ring appears once there's something meaningful to show. */
     if (state.step >= 2) html = scoreCardHtml() + html;
@@ -1221,6 +1245,7 @@ function renderStepInPlace() {
   if (step.name === "Review") html += renderReview();
   else {
     if (step.paperNote) html += '<div class="note tip" style="margin-bottom:16px">This section is optional. If your servicing agent isn\'t changing, choose "no change" and carry on.</div>';
+    carryForward(step.items);
     step.items.forEach((q) => { html += renderQuestion(q); });
     if (state.step >= 2) html = scoreCardHtml() + html;
   }
