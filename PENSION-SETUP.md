@@ -209,6 +209,20 @@ script is redeployed: **Deploy → Manage deployments → edit → Version: New
 version → Deploy**. Until that is done the site says *"the branch may need to
 republish it"* rather than showing data.
 
+### The three addresses
+
+| Address | What it is | Who gets it |
+| --- | --- | --- |
+| `pensionplantt.com` | The app. Asks who is signing in, then the wizard or the register. | Agents, and anyone with a code |
+| `pensionplantt.com/launch` | **The launch page.** The film, then the three sign-in steps for employers and the three for employees. | **This is the link to send a company or its staff.** |
+| `pensionplantt.com/film` | The two-minute film on its own, full screen. | A meeting, a screen in reception |
+
+`/start` is kept as an alias of `/launch`, so any link already handed out keeps
+working. The film is also a plain file at
+`pension/assets/RRB-Company-Pensions.mp4` — send it on WhatsApp, put it on the
+branch's social accounts, play it from a laptop with no signal. It is captioned
+throughout and needs no sound.
+
 ### Step 4 — give out the codes
 
 Either tell the client their code, or send the link that fills it in:

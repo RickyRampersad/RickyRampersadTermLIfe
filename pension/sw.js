@@ -14,7 +14,7 @@ const ASSETS = [
   './',
   './index.html',
   './how-it-works.html',   // the film — an agent shows it in a boardroom, where the signal is worst
-  './start.html',          // the launch page, minus its video
+  './launch.html',         // the launch page, minus its video
   './assets/film-poster.jpg',
   './manifest.webmanifest',
   /* The .mp4 and .webm are deliberately NOT here. They are 11 MB together, and

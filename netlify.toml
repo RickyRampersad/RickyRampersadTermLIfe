@@ -27,7 +27,7 @@
 
 # The short links for the launch page and the film are defined per domain
 # below — a path-only rule here would match pensionplantt.com first and send it
-# back through the catch-all as /pension/pension/start.html.
+# back through the catch-all as /pension/pension/launch.html.
 
 # ── pensionplantt.com ────────────────────────────────────────────────────────
 # The pension wizard has its own domain. Add pensionplantt.com and
@@ -50,18 +50,31 @@
   status = 200
   force = true
 
-# pensionplantt.com/start and /film — the two links the branch hands out. These
-# are rewrites, so the short address stays in the bar, and they must be matched
-# before the catch-all below.
+# pensionplantt.com/launch and /film — the two links the branch hands out.
+# These are rewrites, so the short address stays in the bar, and they must be
+# matched before the catch-all below. /start is kept as an alias so any link
+# already given out keeps working.
+[[redirects]]
+  from = "https://pensionplantt.com/launch"
+  to = "/pension/launch.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "https://www.pensionplantt.com/launch"
+  to = "/pension/launch.html"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "https://pensionplantt.com/start"
-  to = "/pension/start.html"
+  to = "/pension/launch.html"
   status = 200
   force = true
 
 [[redirects]]
   from = "https://www.pensionplantt.com/start"
-  to = "/pension/start.html"
+  to = "/pension/launch.html"
   status = 200
   force = true
 
@@ -91,11 +104,16 @@
   status = 200
   force = true
 
-# The same two short links on the branch's own domain, where nothing rewrites
-# the root and a plain redirect is right.
+# The same short links on the branch's own domain, where nothing rewrites the
+# root and a plain redirect is right.
+[[redirects]]
+  from = "/launch"
+  to = "/pension/launch.html"
+  status = 301
+
 [[redirects]]
   from = "/start"
-  to = "/pension/start.html"
+  to = "/pension/launch.html"
   status = 301
 
 [[redirects]]
