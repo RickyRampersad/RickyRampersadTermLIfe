@@ -8,13 +8,18 @@
  * the next online visit), cache-first for the versioned static assets.
  * Bump CACHE when the wizard changes.
  */
-const CACHE = 'rrb-pension-v3';
+const CACHE = 'rrb-pension-v4';
 
 const ASSETS = [
   './',
   './index.html',
   './how-it-works.html',   // the film — an agent shows it in a boardroom, where the signal is worst
+  './start.html',          // the launch page, minus its video
+  './assets/film-poster.jpg',
   './manifest.webmanifest',
+  /* The .mp4 and .webm are deliberately NOT here. They are 11 MB together, and
+     precaching them would spend that on every device that ever opens the
+     wizard. The animated film above covers the no-signal case. */
   './assets/pdf-lib.min.js',
   './assets/pdf.min.js',
   './assets/pdf.worker.min.js',

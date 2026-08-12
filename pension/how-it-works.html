@@ -142,7 +142,23 @@ em{font-style:italic;color:var(--gold)}
 #tc{font-family:'GroteskF';font-size:14px;letter-spacing:.08em;color:var(--dim);font-variant-numeric:tabular-nums;flex:0 0 auto}
 #hint{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);font-family:'GroteskF';font-size:13px;
   letter-spacing:.18em;text-transform:uppercase;color:var(--dim2);pointer-events:none;transition:opacity .4s}
+/* A 16:9 stage on a portrait phone is a letterbox strip. Say so, and offer the
+   video, which a phone plays properly and full-screen. */
+#small{position:fixed;left:0;right:0;top:0;z-index:12;display:none;gap:10px;align-items:center;justify-content:center;
+  padding:13px 16px;background:rgba(14,26,48,.96);border-bottom:1px solid #22314f;
+  font-family:'GroteskF';font-size:12.5px;letter-spacing:.04em;color:var(--dim);text-align:center}
+#small a{color:var(--gold);font-weight:700;text-decoration:none;border-bottom:1px solid rgba(240,208,102,.45);white-space:nowrap}
+@media (max-width:820px) and (orientation:portrait){ #small{display:flex;flex-wrap:wrap} }
+/* A phone has no hover, so the controls must simply be there. */
+@media (hover:none),(pointer:coarse){#ctl{opacity:1}}
 @media (prefers-reduced-motion:reduce){#ctl{opacity:1}}
+/* Whenever the film is not running there is one obvious thing to press. */
+#bigplay{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:168px;height:168px;border-radius:50%;
+  display:none;place-items:center;cursor:pointer;z-index:8;border:2px solid rgba(240,208,102,.55);
+  background:rgba(6,11,22,.62);backdrop-filter:blur(3px);box-shadow:0 24px 70px rgba(0,0,0,.5)}
+#bigplay.on{display:grid}
+#bigplay svg{width:64px;height:64px;margin-left:10px;fill:var(--gold)}
+#bigplay:hover{border-color:var(--gold);background:rgba(6,11,22,.78)}
 </style>
 </head>
 <body>
@@ -393,12 +409,16 @@ em{font-style:italic;color:var(--gold)}
     </div>
   </section>
 
+  <div id="bigplay" class="on" role="button" tabindex="0" aria-label="Play the film">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+  </div>
   <div id="chap"></div>
   <div id="clock"></div>
   <div id="rail"><i></i></div>
 </div>
 </div>
 
+<div id="small">Turn your phone sideways for this one — or <a href="start.html">watch the video instead&nbsp;→</a></div>
 <div id="hint">Click to play</div>
 <div id="ctl">
   <button id="bPlay" aria-label="Play or pause">▶</button>
@@ -509,9 +529,13 @@ function tick(now){
   render(T); sync(); raf=requestAnimationFrame(tick);
 }
 function sync(){ seek.value=String(Math.round(T/total*1000)); tc.textContent=mmss(T)+' / '+mmss(total); }
-function play(){ if(T>=total) T=0; playing=true; bPlay.textContent='❚❚'; last=performance.now(); raf=requestAnimationFrame(tick); hint.style.opacity=0; }
-function pause(){ playing=false; bPlay.textContent='▶'; if(raf) cancelAnimationFrame(raf); }
+var bigplay=document.getElementById('bigplay');
+function play(){ if(T>=total) T=0; playing=true; bPlay.textContent='❚❚'; last=performance.now(); raf=requestAnimationFrame(tick);
+  hint.style.opacity=0; bigplay.classList.remove('on'); }
+function pause(){ playing=false; bPlay.textContent='▶'; if(raf) cancelAnimationFrame(raf); bigplay.classList.add('on'); }
 function toggle(){ playing?pause():play(); }
+bigplay.addEventListener('click',function(e){ e.stopPropagation(); play(); });
+bigplay.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); play(); } });
 
 bPlay.addEventListener('click',toggle);
 document.getElementById('bBack').addEventListener('click',function(){
@@ -537,11 +561,15 @@ render(0); sync();
 /* The renderer that makes the MP4 drives these; a human never sees them. */
 window.FILM={ seek:function(t){ pause(); T=t; render(t); sync(); }, total:total, pause:pause };
 
-var auto=!/[?&]still=1/.test(location.search);
-if(auto && !window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-  setTimeout(play,600);
+var still=/[?&]still=1/.test(location.search);
+if(still){
+  /* the frame renderer drives the clock itself and wants a clean frame */
+  bigplay.classList.remove('on'); hint.style.display='none';
+}else if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+  /* someone who asked for less motion gets the film only when they ask for it */
+  hint.textContent='Press play';
 }else{
-  hint.textContent='Click to play';
+  setTimeout(play,600);
 }
 })();
 </script>

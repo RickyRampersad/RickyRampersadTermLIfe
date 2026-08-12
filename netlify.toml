@@ -25,6 +25,10 @@
   to = "/pension/"
   status = 301
 
+# The short links for the launch page and the film are defined per domain
+# below — a path-only rule here would match pensionplantt.com first and send it
+# back through the catch-all as /pension/pension/start.html.
+
 # ── pensionplantt.com ────────────────────────────────────────────────────────
 # The pension wizard has its own domain. Add pensionplantt.com and
 # www.pensionplantt.com to this Netlify site (Domain management → Add domain),
@@ -46,6 +50,33 @@
   status = 200
   force = true
 
+# pensionplantt.com/start and /film — the two links the branch hands out. These
+# are rewrites, so the short address stays in the bar, and they must be matched
+# before the catch-all below.
+[[redirects]]
+  from = "https://pensionplantt.com/start"
+  to = "/pension/start.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "https://www.pensionplantt.com/start"
+  to = "/pension/start.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "https://pensionplantt.com/film"
+  to = "/pension/how-it-works.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "https://www.pensionplantt.com/film"
+  to = "/pension/how-it-works.html"
+  status = 200
+  force = true
+
 # Everything else on the domain is the wizard. status 200 rewrites rather than
 # redirects, so the address bar keeps showing pensionplantt.com.
 [[redirects]]
@@ -59,6 +90,18 @@
   to = "/pension/:splat"
   status = 200
   force = true
+
+# The same two short links on the branch's own domain, where nothing rewrites
+# the root and a plain redirect is right.
+[[redirects]]
+  from = "/start"
+  to = "/pension/start.html"
+  status = 301
+
+[[redirects]]
+  from = "/film"
+  to = "/pension/how-it-works.html"
+  status = 301
 
 [[headers]]
   for = "/renewal/*"
