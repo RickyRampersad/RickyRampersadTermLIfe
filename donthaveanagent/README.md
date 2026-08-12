@@ -48,7 +48,8 @@ every competitor in this category shouts.
 | File | What it is |
 |---|---|
 | `index.html` | The landing page. Logo, the live 60-second self-check, attributed statistics, the "what quietly goes wrong" timeline, the promise/not-promise columns, local law, FAQ. |
-| **Logo** | A speech bubble with a person in it — the promise (*somebody answers*) rather than the product. The branch shield appears separately, monochrome, as the "a Ricky Rampersad Branch initiative" co-brand. |
+| **Logo** | A doubled apostrophe in an oxblood tile. An apostrophe is the punctuation mark for something *omitted* — which is exactly the product — and doubled it also reads as a speech mark: somebody answers. Two meanings in one shape, and it holds at 16px. |
+| **Endorsement** | "A **Ricky Rampersad Branch** initiative" sits in the nav as a proper endorsement lockup with the branch shield — not a footnote — and stays visible down to 360px. |
 | `review.html` | The review itself. Both origins, both plan types, policy tracing, signature, change of agent. |
 | `agent/index.html` | Agent console — generate a prefilled link and send it in one tap. |
 | `netlify.toml` | Deploy config and short links. |
@@ -230,16 +231,17 @@ ever turned away.
 
 Three edits re-skin the whole product:
 
-1. **`:root` in each file's stylesheet** — the colour tokens. The palette is **Ivory &
-   Forest**: warm paper `#F6F3EC`, deep green `#1E6F52`, clay `#B4522F` as the warm
-   secondary, Montserrat + DM Sans. Deliberately **no yellow and no blue**. **Green means
-   resolved, slate `#9AA9A1` means the empty agent slot** — the design uses that pairing as
-   a narrative, so keep them semantically opposed.
+1. **`:root` in each file's stylesheet** — the colour tokens. The palette is **Porcelain &
+   Oxblood**: cool porcelain `#F4F5F7`, oxblood `#8C2230`, burnt amber `#A65A15` as the warm
+   secondary, Montserrat + DM Sans. Deliberately **no yellow and no blue**. **Oxblood means
+   resolved, slate `#9B96A0` means the empty agent slot** — keep that pairing opposed.
 
-   Re-theming is that one block in each of the three files and nothing else. Three
-   alternates were built and previewed — Porcelain & Oxblood (light, formal), Graphite &
-   Coral (dark, warm) and Ink & Champagne (dark, understated) — and any of them is a
-   token-block swap away.
+   Note the alert colour is a brighter scarlet `#D93025`, deliberately *not* the brand red —
+   an error state has to be distinguishable from the brand on a red-branded site.
+
+   Re-theming is that one block in each of the three files and nothing else. Alternates were
+   built and previewed — Ivory & Forest (light, calm), Graphite & Coral (dark, warm) and Ink
+   & Champagne (dark, understated) — and any of them is a token-block swap away.
 
    If you switch to a **dark** palette, three rules also need flipping back: the
    translucent overlays are currently `rgba(21,32,27,…)` (ink on paper) and would become
