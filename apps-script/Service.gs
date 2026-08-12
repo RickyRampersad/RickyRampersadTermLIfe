@@ -195,6 +195,8 @@ function handleSubmission_(body) {
   var attachments = [];
   var formPdf = questionnairePdf_(ref, priority, now, body);
   if (formPdf) attachments.push(formPdf);
+  var answersDoc = answersPdf_(ref, priority, now, body);
+  if (answersDoc) attachments.push(answersDoc);
 
   var letterPdf = null;
   if (core.changeAgent) {
@@ -806,9 +808,9 @@ var PAPER_Q = [
 /* The facsimile stylesheet — Times, dot leaders, ruled boxes, the lot. */
 function paperCss_() {
   return 'body{font-family:"Times New Roman",Times,Georgia,serif;font-size:10.4pt;color:#000;' +
-      'margin:0;padding:26px 34px 18px;line-height:1.34}' +
-    '.ttl{text-align:center;font-size:15.5pt;letter-spacing:.2px;margin:0}' +
-    '.ttl2{text-align:center;font-size:14pt;margin:1px 0 16px}' +
+      'margin:0;padding:14px 30px 6px;line-height:1.15}' +
+    '.ttl{text-align:center;font-size:15pt;letter-spacing:.2px;margin:0}' +
+    '.ttl2{text-align:center;font-size:13.5pt;margin:1px 0 11px}' +
     '.hdr{width:100%;border-collapse:collapse;margin-bottom:2px}' +
     '.hdr td{padding:1px 0;vertical-align:bottom;border:none}' +
     '.cap{font-size:7.4pt;letter-spacing:.2px}' +
@@ -816,7 +818,7 @@ function paperCss_() {
     '.fill{display:inline-block;vertical-align:bottom;border-bottom:1px dotted #000;' +
       'font-family:"Courier New",monospace;font-size:9.4pt;padding:0 3px 1px}' +
     '.qs{width:100%;border-collapse:collapse;margin-top:4px}' +
-    '.qs td{border:none;padding:2.1px 0;vertical-align:bottom;font-size:10.2pt}' +
+    '.qs td{border:none;padding:1.15px 0;vertical-align:bottom;font-size:10.1pt}' +
     '.qs td.lead{width:auto}' +
     '.qs td.bx{width:56px;text-align:center}' +
     '.yn{font-size:11pt;letter-spacing:.5px;text-align:center;padding-bottom:2px}' +
@@ -824,15 +826,14 @@ function paperCss_() {
       'text-align:center;line-height:13px;font-size:11pt;font-weight:bold}' +
     '.leader{display:inline-block;border-bottom:1px dotted #000;min-width:8px}' +
     '.note{font-family:"Courier New",monospace;font-size:8.2pt;padding-left:12px;color:#111}' +
-    '.cut{border:none;border-top:1.4px dashed #000;margin:13px 0 11px}' +
-    'p{margin:0 0 7px}' +
-    '.blk{margin-top:9px}' +
-    '.sigimg{max-height:40px;vertical-align:bottom;margin-bottom:-11px}' +
+    '.cut{border:none;border-top:1.4px dashed #000;margin:9px 0 8px}' +
+    'p{margin:0 0 4px}' +
+    '.blk{margin-top:7px}' +
+    '.sigimg{max-height:32px;vertical-align:bottom;margin-bottom:-9px}' +
     '.sigrule{border-bottom:1px solid #000;display:inline-block;min-width:190px;text-align:center}' +
     '.sigline{border-bottom:1px solid #000;display:inline-block}' +
     '.foot{font-size:8pt;margin-top:12px}' +
-    '.code{font-size:9pt;margin-top:10px}' +
-    '.stamp{position:fixed;top:8px;right:12px;font-family:Arial,sans-serif;font-size:7.2pt;color:#444}' +
+    '.code{font-size:9pt;margin-top:3px}' +
     '.pg{page-break-before:always}' +
     'h3{font-size:9.5pt;text-transform:uppercase;letter-spacing:1px;color:#000;' +
       'margin:15px 0 5px;border-bottom:1px solid #000;padding-bottom:2px}' +
@@ -897,7 +898,7 @@ function questionnairePdf_(ref, priority, now, body) {
   if (body.kind !== 'group' && !identity_(body).dhaa) {
     return paperFacsimilePdf_(ref, priority, now, body);
   }
-  return groupQuestionnairePdf_(ref, priority, now, body);
+  return null;   /* everything else is covered by answersPdf_ */
 }
 
 function paperFacsimilePdf_(ref, priority, now, body) {
@@ -912,7 +913,6 @@ function paperFacsimilePdf_(ref, priority, now, body) {
 
   /* header ------------------------------------------------------------- */
   var h =
-    '<div class="stamp">Ref ' + esc_(ref) + ' · ' + esc_(priority) + '</div>' +
     '<div class="ttl">GUARDIAN LIFE OF THE CARIBBEAN LIMITED</div>' +
     '<div class="ttl2">SERVICE QUESTIONNAIRE</div>' +
     '<table class="hdr"><tr>' +
@@ -955,14 +955,9 @@ function paperFacsimilePdf_(ref, priority, now, body) {
       '<td class="bx"><span class="box">' + yes + '</span></td>' +
       '<td class="bx"><span class="box">' + no + '</span></td></tr>';
 
-    /* the detail behind the answer, in the agent's hand */
-    var n = q.note ? a[q.note] : '';
-    if (n && String(n) !== '' && String(n) !== String(a[q.from])) {
-      rows += '<tr><td colspan="3" class="note">↳ ' + esc_(String(n)) + '</td></tr>';
-    } else if (q.note && q.note === q.from && a[q.from] &&
-               indexOf_(['Yes', 'No'], String(a[q.from])) === -1) {
-      rows += '<tr><td colspan="3" class="note">↳ ' + esc_(String(a[q.from])) + '</td></tr>';
-    }
+    /* Nothing else goes on this sheet. The detail behind an answer — the reason
+       for a "No", the new beneficiary, the life changes — is in answersPdf_.
+       The form is reproduced as printed and is not written on. */
   });
 
   h += '<table class="qs">' + rows + '</table><hr class="cut">';
@@ -1010,7 +1005,7 @@ function paperFacsimilePdf_(ref, priority, now, body) {
         '<div class="cap" style="padding-left:14px">(in block letters)</div></td>' +
       '<td>AGENT\'S NO. ' + onLine_(SVC.AGENT_NO, 190) + '</td>' +
     '</tr></table>' +
-    '<table class="hdr" style="margin-top:26px"><tr>' +
+    '<table class="hdr" style="margin-top:11px"><tr>' +
       '<td style="width:46%;text-align:center"><span class="sigline" style="width:100%">&nbsp;</span>' +
         '<div style="font-weight:bold;font-size:9.6pt">SIGNATURE OF AGENT</div></td>' +
       '<td style="width:8%"></td>' +
@@ -1019,22 +1014,38 @@ function paperFacsimilePdf_(ref, priority, now, body) {
     '</tr></table>' +
     '<div class="code">2000 - 03 - 147</div>';
 
-  /* page two — everything the paper form has nowhere to put -------------- */
-  h += '<div class="pg"></div>' +
-    '<div class="ttl" style="font-size:13pt">SERVICE QUESTIONNAIRE — ANSWERS IN FULL</div>' +
-    '<div class="ttl2" style="font-size:10pt">' + esc_(a.lifeAssured || c.clientName || '') +
-      ' · reference ' + esc_(ref) + ' · ' + esc_(Utilities.formatDate(d, tz, 'd MMMM yyyy, h:mm a')) +
+  return toPdf_('<!DOCTYPE html><html><head><meta charset="utf-8"><style>' + paperCss_() +
+                '</style></head><body>' + h + '</body></html>',
+                'Service Questionnaire ' + ref);
+}
+
+/**
+ * Everything the client told us, as a separate document.
+ *
+ * It is separate on purpose. Form 2000-03-147 is reproduced exactly and nothing
+ * is added to it, so the detail that sheet has no room for — the reason behind
+ * a "No", the new beneficiary, the life changes — lives here instead.
+ */
+function answersPdf_(ref, priority, now, body) {
+  var c = body.core || {};
+  var isGroup = body.kind === 'group';
+  var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
+
+  var h = '<div class="ttl" style="font-size:13pt">' +
+      (isGroup ? 'GROUP SERVICE REVIEW' : 'SERVICE REVIEW') + ' \u2014 ANSWERS IN FULL</div>' +
+    '<div class="ttl2" style="font-size:10pt">' +
+      esc_(c.companyName || c.clientName || '') + ' \u00b7 reference ' + esc_(ref) +
+      ' \u00b7 ' + esc_(Utilities.formatDate(new Date(now), tz, 'd MMMM yyyy, h:mm a')) +
+      ' \u00b7 ' + esc_(priority) +
       (c.score !== '' && c.score !== undefined
-        ? ' · Protection Score ' + esc_(c.score) + '/100' : '') + '</div>' +
-    '<p style="font-size:9pt">Page 1 is the questionnaire exactly as form 2000-03-147 prints it. ' +
-      'Everything below is what the client actually said — the detail the boxes on that sheet ' +
-      'have nowhere to hold.</p>' +
+        ? ' \u00b7 ' + (isGroup ? 'Plan Health Score ' : 'Protection Score ') + esc_(c.score) + '/100'
+        : '') + '</div>' +
     answerTables_(body) +
     consentFoot_(body, ref);
 
   return toPdf_('<!DOCTYPE html><html><head><meta charset="utf-8"><style>' + paperCss_() +
                 '</style></head><body>' + h + '</body></html>',
-                'Service Questionnaire ' + ref);
+                (isGroup ? 'Group Service Review ' : 'Service Review ') + ref);
 }
 
 /** Every answer, section by section — shared by both questionnaire PDFs. */
@@ -1064,59 +1075,6 @@ function consentFoot_(body, ref) {
     'Guardian Life of the Caribbean Limited.</div>';
 }
 
-/** Group has no printed questionnaire — the EBD process is the letter alone —
- *  so the group document is the answers, set out to file alongside it. */
-function groupQuestionnairePdf_(ref, priority, now, body) {
-  var c = body.core || {};
-  var isGroup = true;
-  var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
-
-  var inner = '<div class="meta">' +
-    'Reference <b>' + esc_(ref) + '</b> · ' + Utilities.formatDate(now, tz, 'd MMMM yyyy, h:mm a') +
-    ' · Priority ' + esc_(priority) + '<br>' +
-    esc_(SVC.AGENT_NAME) + ' · Guardian Life of the Caribbean Limited' +
-    (c.score !== '' && c.score !== undefined
-      ? '<br>' + (isGroup ? 'Plan health score' : 'Protection score') + ': <b>' + esc_(c.score) + '/100</b>'
-      : '') +
-    '</div>';
-
-  var section = '';
-  (body.fields || []).forEach(function (f) {
-    if (f.section !== section) {
-      if (section) inner += '</table>';
-      section = f.section;
-      inner += '<h3>' + esc_(section) + '</h3><table>';
-    }
-    inner += '<tr><td class="k">' + esc_(f.label) + '</td><td>' + esc_(f.value) + '</td></tr>';
-  });
-  if (section) inner += '</table>';
-
-  if (body.signature) {
-    inner += '<h3>Signature</h3><p><img class="sig" src="' + body.signature + '"></p>';
-  }
-  if (body.signatureTyped) {
-    inner += '<p style="font-size:10pt">Typed signature: <b>' + esc_(body.signatureTyped) + '</b></p>';
-  }
-
-  var con = body.consent || {};
-  inner += '<div class="foot">' +
-    'Declared true and correct: ' + (con['true'] ? 'Yes' : 'No') + ' · ' +
-    'Consent to service and update records: ' + (con.use ? 'Yes' : 'No') + ' · ' +
-    'Marketing consent: ' + (con.marketing ? 'Yes' : 'No') + '<br>' +
-    'Completed online at ' + esc_(SVC.FORM_URL) + '. This is the client\'s own record of their answers. ' +
-    'Changes to policy records are effective only once processed and confirmed in writing by Guardian Life of the ' +
-    'Caribbean Limited.</div>';
-
-  return toPdf_(
-    pdfShell_('GUARDIAN LIFE OF THE CARIBBEAN LIMITED',
-              isGroup ? 'GROUP SERVICE QUESTIONNAIRE' : 'SERVICE QUESTIONNAIRE', inner),
-    'Service Questionnaire ' + ref);
-}
-
-/**
- * Individual change of servicing agent — the bottom half of form 2000-03-147,
- * word for word, filled in from what the client answered.
- */
 function agentLetterPdf_(ref, now, body) {
   var a = answersById_(body);
   var c = body.core || {};
@@ -1128,7 +1086,6 @@ function agentLetterPdf_(ref, now, body) {
   var owner = String(a.coaOwnerName || c.clientName || '').toUpperCase();
 
   var inner =
-    '<div class="stamp">Ref ' + esc_(ref) + '</div>' +
     '<div class="ttl">GUARDIAN LIFE OF THE CARIBBEAN LIMITED</div>' +
     '<div class="ttl2">REQUEST FOR CHANGE OF SERVICING AGENT</div>' +
 
@@ -1171,7 +1128,6 @@ function agentLetterPdf_(ref, now, body) {
       '<td>(WORK) ' + onLine_(a.coaWorkPhone, 230) + '</td>' +
     '</tr></table>' +
 
-    '<p class="blk">EMAIL ' + onLine_(c.email, 380) + '</p>' +
     '<p class="blk">AGENT\'S COMMENTS ' + onLine_(a.agentComments, 420) + '</p>' +
 
     '<table class="hdr" style="margin-top:12px"><tr>' +
@@ -1188,11 +1144,6 @@ function agentLetterPdf_(ref, now, body) {
         '<div style="font-weight:bold;font-size:9.6pt">SIGNATURE OF MANAGER</div></td>' +
     '</tr></table>' +
 
-    '<div class="foot">Signed electronically at ' +
-      esc_(Utilities.formatDate(d, tz, 'd MMMM yyyy, h:mm a')) + ' through ' + esc_(SVC.FORM_URL) +
-      ' \u00b7 reference ' + esc_(ref) + '. The wording above is the change of servicing agent request ' +
-      'printed on form 2000-03-147. The change takes effect once processed and confirmed by Guardian ' +
-      'Life of the Caribbean Limited; the policy, its premium and its benefits are unaffected.</div>' +
     '<div class="code">2000 - 03 - 147</div>';
 
   return toPdf_('<!DOCTYPE html><html><head><meta charset="utf-8"><style>' + paperCss_() +
@@ -1223,7 +1174,6 @@ function groupAgentLetterPdf_(ref, now, body) {
   };
 
   var inner =
-    '<div class="stamp">Ref ' + esc_(ref) + '</div>' +
     '<p class="please">PLEASE PRINT ON COMPANY LETTER HEAD</p>' +
 
     '<p>Date:' + rule(Utilities.formatDate(new Date(now), tz, 'd MMMM yyyy'), 210) + '</p>' +
@@ -1258,17 +1208,9 @@ function groupAgentLetterPdf_(ref, now, body) {
 
     '<p style="margin:0"><span class="ul" style="width:230px">&nbsp;</span></p>' +
     '<p style="margin:1px 0 0">Director\'s Name &amp; Company Stamp</p>' +
-    (a.coaDirector
-      ? '<p class="typedblk">' + esc_(a.coaDirector) +
-        (a.coaDirectorTitle ? ' &middot; ' + esc_(a.coaDirectorTitle) : '') +
-        (c.companyName ? '<br>' + esc_(c.companyName) : '') + '</p>'
-      : '') +
 
-    '<div class="beforeyou"><b>Before you send this back:</b> print it on your company letterhead, ' +
-    'apply the company stamp beside the signature, and sign it. Guardian Life requires both the ' +
-    'letterhead and the stamp on a group change of agent request. Email the stamped copy to ' +
-    esc_(SVC.AGENT_EMAIL) + ' or hand it to your agent \u2014 the request has already been logged at ' +
-    'Customer Service under reference ' + esc_(ref) + ', so nothing is waiting on the post.</div>';
+
+    '';
 
   var css = 'body{font-family:"Times New Roman",Times,Georgia,serif;font-size:12pt;color:#000;' +
       'margin:0;padding:52px 62px;line-height:1.5}' +
@@ -1282,9 +1224,7 @@ function groupAgentLetterPdf_(ref, now, body) {
     '.ff td.lb{padding-right:26px;white-space:nowrap}' +
     '.sigimg{max-height:52px}' +
     '.typedblk{margin:2px 0 0;font-family:"Courier New",monospace;font-size:9.6pt}' +
-    '.stamp{position:fixed;top:10px;right:14px;font-family:Arial,sans-serif;font-size:7.4pt;color:#555}' +
-    '.beforeyou{border:1px dashed #b3261e;padding:11px 14px;margin-top:34px;font-family:Arial,sans-serif;' +
-      'font-size:8.6pt;line-height:1.55;color:#7a2018}';
+'';
 
   return toPdf_('<!DOCTYPE html><html><head><meta charset="utf-8"><style>' + css +
                 '</style></head><body>' + inner + '</body></html>',
