@@ -38,6 +38,9 @@ connection, the form falls back to a pre-filled email and an on-screen printable
 | Score shown | Protection Score | Plan Health Score |
 | Sheet tab | `Service Questionnaires` | `Group Service Questionnaires` |
 
+> **See [PAPER-MAPPING.md](PAPER-MAPPING.md)** for the full line-by-line table — every element
+> of both documents against the question that carries it, generated from the live schema.
+
 ### Every paper question is still there
 
 All twenty numbered questions from the paper form are in the individual questionnaire, in
