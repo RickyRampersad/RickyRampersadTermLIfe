@@ -1,0 +1,49 @@
+# Netlify config for donthaveanagent.com
+# Publish directory is this folder; there is nothing to build.
+#
+# In Netlify: New site → import this repo → set the base/publish directory to
+# "donthaveanagent", then add donthaveanagent.com as the custom domain.
+
+[build]
+  publish = "."
+
+# ── short links an agent can text or say out loud ──────────────────────────
+# donthaveanagent.com/r/DHA-260812-A1B2 → the review with the reference attached
+[[redirects]]
+  from = "/r/*"
+  to = "/review.html?from=agent&k=:splat"
+  status = 302
+
+# The two doors, as links you can print or read down a phone
+[[redirects]]
+  from = "/start"
+  to = "/review.html?from=client"
+  status = 302
+
+[[redirects]]
+  from = "/me"
+  to = "/review.html?from=client&type=individual"
+  status = 302
+
+[[redirects]]
+  from = "/company"
+  to = "/review.html?from=client&type=group"
+  status = 302
+
+# ── security headers ──────────────────────────────────────────────────────
+# The review carries client records and a signature. no-referrer also stops a
+# policy number in the query string leaking through the Referer header when
+# somebody taps an outbound link.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    X-Frame-Options = "DENY"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=(), interest-cohort=()"
+
+# The agent console is for staff, never for search engines.
+[[headers]]
+  for = "/agent/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"

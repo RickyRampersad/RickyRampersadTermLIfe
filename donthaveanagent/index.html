@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Don't Have An Agent — your policy still counts</title>
+<meta name="description" content="Your agent left. Your policy didn't. A free four-minute review for policyholders nobody has called in years — check your records, name a real person, no cost and no obligation."/>
+<meta property="og:title" content="Don't Have An Agent"/>
+<meta property="og:description" content="Your agent left. Your policy didn't. Free four-minute policy review — no cost, no obligation."/>
+<meta property="og:type" content="website"/>
+<meta name="theme-color" content="#0A1017"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='27' fill='none' stroke='%23F5A623' stroke-width='4' stroke-dasharray='7 6' stroke-linecap='round'/%3E%3Ccircle cx='30' cy='27' r='8' fill='%23EEF3F8'/%3E%3Cpath d='M16 47c0-7.7 6.3-14 14-14s14 6.3 14 14' fill='%23EEF3F8'/%3E%3Ccircle cx='50' cy='48' r='13' fill='%2322C482'/%3E%3Cpath d='M44 48l4.5 4.5L57 43' stroke='%230A1017' stroke-width='4.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   BRAND TOKENS — everything visual lives here.
+   This product is built to be white-labelled and sold. Changing these ten
+   values, the logo colours and the BRAND block in the script at the bottom
+   re-skins the entire site for another agency or another market.
+   ═══════════════════════════════════════════════════════════════════════ */
+:root {
+  --ink:      #0A1017;   /* page base                          */
+  --ink2:     #0E1620;   /* section alternate                  */
+  --surface:  #151F2B;   /* cards                              */
+  --surface2: #1B2836;   /* card gradient end                  */
+  --line:     rgba(255,255,255,.075);
+  --line2:    rgba(255,255,255,.14);
+  --text:     #EEF3F8;
+  --muted:    #93A5B8;
+  --muted2:   #6B7F94;
+
+  /* The two signal colours carry the whole story:
+     amber = unassigned, nobody watching · emerald = assigned, resolved */
+  --amber:    #F5A623;
+  --amber2:   #D98A0C;
+  --emerald:  #22C482;
+  --emerald2: #17A76B;
+  --emerald-soft: rgba(34,196,130,.12);
+  --amber-soft:   rgba(245,166,35,.11);
+
+  --head: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --r:  16px;
+  --rl: 24px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--body);
+  background: var(--ink);
+  color: var(--text);
+  line-height: 1.65;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4, .num { font-family: var(--head); letter-spacing: -.022em; line-height: 1.14; }
+a { color: inherit; text-decoration: none; }
+img, svg { display: block; }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 22px; }
+.narrow { max-width: 780px; margin: 0 auto; }
+
+/* ── logo ───────────────────────────────────────────────────────────── */
+.logo { display: flex; align-items: center; gap: 11px; }
+.logo-mark { width: 38px; height: 38px; flex-shrink: 0; }
+.logo-mark .ring { transform-origin: 32px 32px; }
+.logo-word { font-family: var(--head); font-weight: 800; font-size: 15.5px; letter-spacing: -.035em; line-height: 1.05; white-space: nowrap; }
+.logo-word .dim { color: var(--muted2); font-weight: 600; }
+.logo-word .dot { color: var(--emerald); font-weight: 600; font-size: 13px; }
+
+/* the mark tells the story: dashed & searching → solid & claimed */
+@keyframes spin  { to { transform: rotate(360deg); } }
+@keyframes pop   { 0% { transform: scale(0); opacity: 0; } 70% { transform: scale(1.16); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes solidify { to { stroke-dasharray: 170 0; stroke: var(--emerald); } }
+.hero-mark .ring  { animation: spin 9s linear 0s 2, solidify .7s ease 2.2s forwards; }
+.hero-mark .badge { opacity: 0; animation: pop .55s cubic-bezier(.2,1.5,.4,1) 2.6s forwards; }
+
+/* ── nav ────────────────────────────────────────────────────────────── */
+.nav { position: sticky; top: 0; z-index: 90; background: rgba(10,16,23,.86); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
+.nav-in { max-width: 1120px; margin: 0 auto; padding: 0 22px; height: 68px; display: flex; align-items: center; gap: 26px; }
+.nav-links { display: flex; gap: 24px; margin-left: auto; align-items: center; }
+.nav-links a { font-size: 14px; color: var(--muted); font-weight: 500; transition: color .16s; }
+.nav-links a:hover { color: var(--text); }
+@media (max-width: 860px) { .nav-links a:not(.btn) { display: none; } }
+
+/* ── buttons ────────────────────────────────────────────────────────── */
+.btn {
+  font-family: var(--head); font-weight: 700; font-size: 15px; cursor: pointer;
+  border: none; border-radius: 13px; padding: 14px 26px; transition: all .18s ease;
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+}
+.btn-go { background: var(--emerald); color: #06120C; box-shadow: 0 6px 22px rgba(34,196,130,.22); }
+.btn-go:hover { background: #2FDD93; transform: translateY(-2px); box-shadow: 0 10px 30px rgba(34,196,130,.3); }
+.btn-line { background: transparent; border: 1.5px solid var(--line2); color: var(--text); }
+.btn-line:hover { border-color: var(--emerald); background: var(--emerald-soft); }
+.btn-sm { padding: 10px 18px; font-size: 13.5px; border-radius: 11px; }
+
+/* ── hero ───────────────────────────────────────────────────────────── */
+.hero { position: relative; padding: 72px 0 60px; overflow: hidden; }
+.hero::before {
+  content: ""; position: absolute; inset: -30% 0 auto 0; height: 620px; pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 55% at 22% 0%, rgba(245,166,35,.10), transparent 70%),
+    radial-gradient(ellipse 55% 50% at 82% 12%, rgba(34,196,130,.11), transparent 70%);
+}
+.hero-in { position: relative; display: grid; grid-template-columns: 1.15fr .85fr; gap: 54px; align-items: center; }
+@media (max-width: 940px) { .hero-in { grid-template-columns: 1fr; gap: 38px; } }
+
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 9px; font-size: 12.5px; font-weight: 600;
+  color: var(--amber); background: var(--amber-soft); border: 1px solid rgba(245,166,35,.26);
+  padding: 7px 15px; border-radius: 99px; margin-bottom: 22px; font-family: var(--head);
+}
+.eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--amber); animation: pulse 2.2s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .45; transform: scale(1.5); } }
+
+h1.hero-h { font-size: clamp(37px, 6.4vw, 62px); font-weight: 800; margin-bottom: 20px; }
+h1.hero-h .dim { color: var(--muted2); }
+/* An underline, never a strikethrough. Striking through "your policy didn't"
+   reads as cancelling the very reassurance the line exists to give. */
+h1.hero-h em { font-style: normal; color: var(--emerald); position: relative; display: inline-block; }
+h1.hero-h em::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -.06em; height: 4px;
+  background: var(--amber); border-radius: 3px; transform: scaleX(0); transform-origin: left;
+  animation: underline .7s cubic-bezier(.5,0,.3,1) .55s forwards;
+}
+@keyframes underline { to { transform: scaleX(1); } }
+
+.hero-sub { font-size: clamp(16px, 2vw, 18.5px); color: var(--muted); max-width: 560px; margin-bottom: 14px; }
+.hero-sub b { color: var(--text); font-weight: 600; }
+.hero-note { font-size: 13.5px; color: var(--muted2); max-width: 540px; margin-bottom: 30px; }
+.hero-note a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ── the two doors ──────────────────────────────────────────────────── */
+.doors { display: grid; gap: 14px; grid-template-columns: 1fr 1fr; margin-bottom: 22px; }
+@media (max-width: 620px) { .doors { grid-template-columns: 1fr; } }
+.door {
+  position: relative; text-align: left; font: inherit; color: inherit; cursor: pointer;
+  background: linear-gradient(158deg, var(--surface), var(--surface2));
+  border: 1px solid var(--line); border-radius: var(--rl); padding: 22px 21px;
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+  overflow: hidden;
+}
+.door::after {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 3px;
+  background: linear-gradient(90deg, var(--emerald), var(--amber)); opacity: 0; transition: opacity .2s;
+}
+.door:hover { transform: translateY(-4px); border-color: var(--line2); box-shadow: 0 18px 44px rgba(0,0,0,.42); }
+.door:hover::after { opacity: 1; }
+.door .di { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 13px; }
+.door.a .di { background: var(--emerald-soft); border: 1px solid rgba(34,196,130,.3); }
+.door.b .di { background: var(--amber-soft);   border: 1px solid rgba(245,166,35,.3); }
+.door h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+.door p { font-size: 13.6px; color: var(--muted); line-height: 1.55; }
+.door .go { display: inline-flex; align-items: center; gap: 6px; margin-top: 13px; font-family: var(--head); font-weight: 700; font-size: 13.5px; }
+.door.a .go { color: var(--emerald); }
+.door.b .go { color: var(--amber); }
+
+.trust-strip { display: flex; flex-wrap: wrap; gap: 8px; }
+.trust-strip span { font-size: 12.5px; color: var(--muted); background: rgba(255,255,255,.035); border: 1px solid var(--line); padding: 7px 13px; border-radius: 99px; }
+.trust-strip b { color: var(--emerald); font-weight: 600; }
+
+/* ── hero card: the live check ──────────────────────────────────────── */
+.check-card {
+  background: linear-gradient(158deg, var(--surface), var(--surface2));
+  border: 1px solid var(--line); border-radius: var(--rl); padding: 24px 22px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.4);
+}
+.check-card h3 { font-size: 16.5px; font-weight: 700; margin-bottom: 4px; }
+.check-card .cc-sub { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
+.cq { margin-bottom: 15px; }
+.cq p { font-size: 13.6px; font-weight: 500; margin-bottom: 9px; }
+.cq-opts { display: flex; gap: 7px; flex-wrap: wrap; }
+.cq-opts button {
+  font: inherit; font-size: 12.8px; cursor: pointer; color: var(--muted);
+  background: rgba(255,255,255,.04); border: 1.5px solid var(--line);
+  border-radius: 10px; padding: 8px 13px; transition: all .15s ease;
+}
+.cq-opts button:hover { border-color: var(--line2); color: var(--text); }
+.cq-opts button.on { background: var(--emerald-soft); border-color: var(--emerald); color: var(--text); font-weight: 600; }
+.cq-opts button.on.warn { background: var(--amber-soft); border-color: var(--amber); }
+
+.gauge { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
+.gauge-bar { height: 8px; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; margin-bottom: 12px; }
+.gauge-fill { height: 100%; width: 0%; border-radius: 99px; background: linear-gradient(90deg, var(--emerald), var(--amber)); transition: width .5s cubic-bezier(.4,0,.2,1); }
+.gauge-txt { font-size: 13.4px; color: var(--muted); line-height: 1.6; min-height: 42px; }
+.gauge-txt b { color: var(--text); }
+.gauge .btn { width: 100%; margin-top: 13px; }
+
+/* ── sections ───────────────────────────────────────────────────────── */
+section { padding: 84px 0; }
+.alt { background: var(--ink2); border-block: 1px solid var(--line); }
+.sec-label { font-family: var(--head); font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--emerald); margin-bottom: 14px; }
+h2.sec-h { font-size: clamp(27px, 4.4vw, 41px); font-weight: 800; margin-bottom: 16px; }
+h2.sec-h em { font-style: normal; color: var(--amber); }
+.sec-sub { font-size: 16.5px; color: var(--muted); max-width: 660px; margin-bottom: 44px; }
+
+/* ── stats ──────────────────────────────────────────────────────────── */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+@media (max-width: 900px) { .stats { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 520px) { .stats { grid-template-columns: 1fr; } }
+.stat { background: linear-gradient(158deg, var(--surface), var(--surface2)); border: 1px solid var(--line); border-radius: var(--r); padding: 24px 20px; }
+.stat .num { font-size: 44px; font-weight: 800; color: var(--amber); line-height: 1; margin-bottom: 9px; }
+.stat p { font-size: 14px; color: var(--text); line-height: 1.5; margin-bottom: 9px; }
+.stat cite { font-size: 11.5px; color: var(--muted2); font-style: normal; }
+
+/* ── timeline ───────────────────────────────────────────────────────── */
+.tl-tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+.tl-tabs button {
+  font-family: var(--head); font-weight: 700; font-size: 13.5px; cursor: pointer; color: var(--muted);
+  background: rgba(255,255,255,.04); border: 1.5px solid var(--line); border-radius: 11px; padding: 10px 18px; transition: all .16s;
+}
+.tl-tabs button:hover { color: var(--text); border-color: var(--line2); }
+.tl-tabs button.on { background: var(--amber-soft); border-color: var(--amber); color: var(--text); }
+.tl-body { background: linear-gradient(158deg, var(--surface), var(--surface2)); border: 1px solid var(--line); border-radius: var(--rl); padding: 28px 26px; min-height: 208px; }
+.tl-body h3 { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+.tl-body h3 span { color: var(--amber); }
+.tl-body p { font-size: 15px; color: var(--muted); margin-bottom: 16px; max-width: 640px; }
+.tl-body ul { list-style: none; display: grid; gap: 9px; }
+.tl-body li { display: flex; gap: 11px; font-size: 14.2px; color: var(--text); align-items: flex-start; }
+.tl-body li::before { content: "→"; color: var(--amber); flex-shrink: 0; font-weight: 700; }
+.tl-fade { animation: fade .35s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+
+/* ── promise / not ──────────────────────────────────────────────────── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 820px) { .two-col { grid-template-columns: 1fr; } }
+.panel { border-radius: var(--rl); padding: 26px 24px; border: 1px solid var(--line); }
+.panel.yes { background: linear-gradient(158deg, rgba(34,196,130,.09), rgba(34,196,130,.03)); border-color: rgba(34,196,130,.24); }
+.panel.no  { background: linear-gradient(158deg, rgba(255,255,255,.03), rgba(255,255,255,.012)); }
+.panel h3 { font-size: 17.5px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 9px; }
+.panel ul { list-style: none; display: grid; gap: 13px; }
+.panel li { display: flex; gap: 12px; font-size: 14.5px; line-height: 1.55; align-items: flex-start; }
+.panel li i { font-style: normal; flex-shrink: 0; font-weight: 800; }
+.panel.yes li i { color: var(--emerald); }
+.panel.no  li i { color: var(--muted2); }
+.panel li b { display: block; margin-bottom: 2px; }
+.panel li span { color: var(--muted); font-size: 13.6px; }
+
+/* ── who cards ──────────────────────────────────────────────────────── */
+.who { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 820px) { .who { grid-template-columns: 1fr; } }
+.who-card { background: linear-gradient(158deg, var(--surface), var(--surface2)); border: 1px solid var(--line); border-radius: var(--rl); padding: 28px 26px; transition: border-color .2s, transform .2s; }
+.who-card:hover { border-color: var(--line2); transform: translateY(-3px); }
+.who-card .wi { font-size: 26px; margin-bottom: 14px; }
+.who-card h3 { font-size: 19px; font-weight: 700; margin-bottom: 8px; }
+.who-card > p { font-size: 14.4px; color: var(--muted); margin-bottom: 16px; }
+.who-card ul { list-style: none; display: grid; gap: 8px; margin-bottom: 20px; }
+.who-card li { font-size: 13.6px; color: var(--muted); display: flex; gap: 9px; }
+.who-card li::before { content: "✓"; color: var(--emerald); font-weight: 800; flex-shrink: 0; }
+
+/* ── local trust ────────────────────────────────────────────────────── */
+.local { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+@media (max-width: 820px) { .local { grid-template-columns: 1fr; } }
+.local-item { background: rgba(255,255,255,.03); border: 1px solid var(--line); border-radius: var(--r); padding: 22px 20px; }
+.local-item h4 { font-size: 15.5px; font-weight: 700; margin-bottom: 7px; }
+.local-item p { font-size: 13.6px; color: var(--muted); line-height: 1.6; }
+
+/* ── faq ────────────────────────────────────────────────────────────── */
+.faq { display: grid; gap: 10px; max-width: 820px; }
+.faq details { background: linear-gradient(158deg, var(--surface), var(--surface2)); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; transition: border-color .18s; }
+.faq details[open] { border-color: var(--line2); }
+.faq summary { cursor: pointer; padding: 18px 22px; font-family: var(--head); font-weight: 600; font-size: 15.5px; list-style: none; display: flex; align-items: center; gap: 14px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; margin-left: auto; color: var(--emerald); font-size: 21px; font-weight: 400; transition: transform .22s; flex-shrink: 0; }
+.faq details[open] summary::after { transform: rotate(45deg); }
+.faq .a { padding: 0 22px 20px; font-size: 14.6px; color: var(--muted); line-height: 1.7; }
+.faq .a b { color: var(--text); }
+
+/* ── final cta ──────────────────────────────────────────────────────── */
+.cta-box { position: relative; text-align: center; background: linear-gradient(158deg, var(--surface), var(--surface2)); border: 1px solid rgba(34,196,130,.24); border-radius: 28px; padding: 54px 32px; overflow: hidden; }
+.cta-box::before { content: ""; position: absolute; inset: -60% 0 auto 0; height: 300px; background: radial-gradient(ellipse 50% 60% at 50% 100%, rgba(34,196,130,.14), transparent 70%); pointer-events: none; }
+.cta-box h2 { position: relative; font-size: clamp(26px, 4vw, 38px); font-weight: 800; margin-bottom: 14px; }
+.cta-box p { position: relative; font-size: 16.5px; color: var(--muted); max-width: 520px; margin: 0 auto 28px; }
+.cta-actions { position: relative; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* ── footer ─────────────────────────────────────────────────────────── */
+footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: var(--ink2); }
+.foot-top { display: flex; justify-content: space-between; gap: 30px; flex-wrap: wrap; margin-bottom: 30px; }
+.foot-links { display: flex; gap: 26px; flex-wrap: wrap; }
+.foot-links a { font-size: 14px; color: var(--muted); }
+.foot-links a:hover { color: var(--text); }
+.legal { font-size: 12px; color: var(--muted2); line-height: 1.75; max-width: 900px; }
+.legal a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+
+/* ── sticky bar ─────────────────────────────────────────────────────── */
+.sticky { position: fixed; left: 0; right: 0; bottom: 0; z-index: 80; background: rgba(10,16,23,.95); backdrop-filter: blur(14px); border-top: 1px solid var(--line); padding: 12px 0; transform: translateY(105%); transition: transform .3s ease; }
+.sticky.on { transform: none; }
+.sticky-in { max-width: 1120px; margin: 0 auto; padding: 0 22px; display: flex; align-items: center; gap: 16px; }
+.sticky-txt { font-size: 14px; font-weight: 500; }
+.sticky-txt span { color: var(--muted); font-size: 13px; display: block; }
+.sticky .btn { margin-left: auto; flex-shrink: 0; }
+@media (max-width: 560px) { .sticky-txt span { display: none; } .sticky-txt { font-size: 13px; } }
+
+/* ── reveal ─────────────────────────────────────────────────────────── */
+.rv { opacity: 0; transform: translateY(20px); transition: opacity .6s ease, transform .6s ease; }
+.rv.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .rv { opacity: 1; transform: none; transition: none; }
+  *, *::before, *::after { animation-duration: .001s !important; transition-duration: .05s !important; }
+}
+
+/* ── modal ──────────────────────────────────────────────────────────── */
+.modal { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(4,8,12,.84); backdrop-filter: blur(7px); align-items: center; justify-content: center; padding: 20px; }
+.modal.on { display: flex; }
+.modal-box { width: min(500px, 100%); background: linear-gradient(158deg, var(--surface), var(--surface2)); border: 1px solid var(--line2); border-radius: var(--rl); padding: 30px 28px; max-height: 90vh; overflow-y: auto; animation: fade .28s ease; }
+.modal-box h3 { font-size: 21px; font-weight: 800; margin-bottom: 8px; }
+.modal-box > p { font-size: 14.5px; color: var(--muted); margin-bottom: 20px; }
+.modal-box label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin: 14px 0 6px; }
+.modal-box input {
+  width: 100%; font: inherit; font-size: 15px; color: var(--text); background: rgba(0,0,0,.28);
+  border: 1px solid var(--line2); border-radius: 11px; padding: 12px 14px;
+}
+.modal-box input:focus { outline: none; border-color: var(--emerald); }
+.modal-box .btn { width: 100%; margin-top: 18px; }
+.modal-x { float: right; background: rgba(255,255,255,.06); border: 1px solid var(--line); color: var(--muted); cursor: pointer; border-radius: 50%; width: 32px; height: 32px; font-size: 15px; }
+.or { text-align: center; font-size: 13px; color: var(--muted2); margin: 16px 0 4px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════ NAV ══════════ -->
+<nav class="nav">
+  <div class="nav-in">
+    <a class="logo" href="#top">
+      <svg class="logo-mark" viewBox="0 0 64 64" aria-hidden="true">
+        <circle class="ring" cx="32" cy="32" r="27" fill="none" stroke="#F5A623" stroke-width="4" stroke-dasharray="7 6" stroke-linecap="round"/>
+        <circle cx="30" cy="27" r="8" fill="#EEF3F8"/>
+        <path d="M16 47c0-7.7 6.3-14 14-14s14 6.3 14 14" fill="#EEF3F8"/>
+        <circle class="badge" cx="50" cy="48" r="13" fill="#22C482"/>
+        <path class="badge" d="M44 48l4.5 4.5L57 43" stroke="#0A1017" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="logo-word"><span class="dim">don't have</span> an agent<span class="dot">.com</span></span>
+    </a>
+    <div class="nav-links">
+      <a href="#check">The 60-second check</a>
+      <a href="#truth">Why it matters</a>
+      <a href="#promise">What we do</a>
+      <a href="#faq">Questions</a>
+      <a class="btn btn-go btn-sm" href="review.html?from=client">Start free review</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════ HERO ══════════ -->
+<div id="top"></div>
+<header class="hero">
+  <div class="wrap hero-in">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>For policyholders nobody has called in years</div>
+
+      <h1 class="hero-h"><span class="dim">Your agent left.</span><br><em>Your policy didn't.</em></h1>
+
+      <p class="hero-sub">
+        If the person who sold you your policy has retired, resigned or simply stopped calling,
+        you have an <b>orphan policy</b>. It is not rare and it is not your fault —
+        <b>more than 40% of life insurance policies</b> have no active agent behind them.
+        Let's close the gap.
+      </p>
+      <p class="hero-note">
+        Your cover is still completely valid. The insurance company's obligations never depended on
+        one person staying in the job. What you've lost isn't the policy — it's the human being who
+        was supposed to check it still fits.
+        <a href="#truth">Here's what that quietly costs.</a>
+      </p>
+
+      <div class="doors">
+        <button class="door a" onclick="openAgentLink()">
+          <div class="di">🔗</div>
+          <h3>My agent sent me</h3>
+          <p>You have a link, a code, or someone asked you to complete this. Your details are already filled in.</p>
+          <span class="go">Continue with my link →</span>
+        </button>
+        <button class="door b" onclick="location.href='review.html?from=client'">
+          <div class="di">🙋</div>
+          <h3>I'm here on my own</h3>
+          <p>Nobody sent you. You have a policy somewhere and no idea who looks after it. Start here.</p>
+          <span class="go">Claim my policy review →</span>
+        </button>
+      </div>
+
+      <div class="trust-strip">
+        <span><b>✓</b> No cost, ever</span>
+        <span><b>✓</b> No obligation to buy</span>
+        <span><b>✓</b> About 4 minutes</span>
+        <span><b>✓</b> No policy number needed</span>
+      </div>
+    </div>
+
+    <!-- the live check -->
+    <div class="check-card rv" id="check">
+      <svg class="logo-mark hero-mark" viewBox="0 0 64 64" style="width:44px;height:44px;margin-bottom:14px" aria-hidden="true">
+        <circle class="ring" cx="32" cy="32" r="27" fill="none" stroke="#F5A623" stroke-width="4" stroke-dasharray="7 6" stroke-linecap="round"/>
+        <circle cx="30" cy="27" r="8" fill="#EEF3F8"/>
+        <path d="M16 47c0-7.7 6.3-14 14-14s14 6.3 14 14" fill="#EEF3F8"/>
+        <circle class="badge" cx="50" cy="48" r="13" fill="#22C482"/>
+        <path class="badge" d="M44 48l4.5 4.5L57 43" stroke="#0A1017" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h3>Are you an orphan policyholder?</h3>
+      <p class="cc-sub">Four taps. Nothing is sent anywhere — this runs entirely in your browser.</p>
+      <div id="checkQs"></div>
+      <div class="gauge">
+        <div class="gauge-bar"><div class="gauge-fill" id="gaugeFill"></div></div>
+        <div class="gauge-txt" id="gaugeTxt">Answer the four above and we'll tell you straight.</div>
+        <a class="btn btn-go" id="gaugeCta" href="review.html?from=client" style="display:none">Start my free review →</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════ THE NUMBERS ══════════ -->
+<section class="alt" id="truth">
+  <div class="wrap">
+    <div class="sec-label rv">The evidence</div>
+    <h2 class="sec-h rv">It isn't just you. <em>It's most people.</em></h2>
+    <p class="sec-sub rv">
+      Every number here comes from published industry research, and every one is attributed.
+      We'd rather show you the sources than ask you to take our word for it.
+    </p>
+    <div class="stats">
+      <div class="stat rv"><div class="num" data-count="40" data-suffix="%">0%</div>
+        <p>of life insurance policies have <b>no active agent</b> servicing them.</p>
+        <cite>ThinkAdvisor, reported by Sureify</cite></div>
+      <div class="stat rv"><div class="num" data-count="43" data-suffix="%">0%</div>
+        <p>of policyholders have had <b>no contact at all</b> from an agent or adviser in over three years.</p>
+        <cite>J.D. Power, 2025 U.S. Individual Life Insurance Study</cite></div>
+      <div class="stat rv"><div class="num" data-count="19" data-suffix="%">0%</div>
+        <p>— only this many — describe their relationship with their adviser as <b>trusted</b>.</p>
+        <cite>J.D. Power, 2025</cite></div>
+      <div class="stat rv"><div class="num" data-count="90" data-prefix="" data-suffix="%">0%</div>
+        <p>never updated their cover after a <b>major life change</b> — a marriage, a baby, a mortgage.</p>
+        <cite>Western &amp; Southern survey, n=1,009</cite></div>
+    </div>
+    <p class="legal rv" style="margin-top:22px">
+      These are United States figures — the largest published research available on this subject — and they
+      describe a pattern our industry shares, not a Trinidad &amp; Tobago statistic. The local position is
+      further down the page. Full sources are in our
+      <a href="RESEARCH.md">research brief</a>.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════ TIMELINE ══════════ -->
+<section>
+  <div class="wrap">
+    <div class="sec-label rv">The slow part</div>
+    <h2 class="sec-h rv">Nothing breaks on day one.<br><em>That's exactly the problem.</em></h2>
+    <p class="sec-sub rv">
+      An unwatched policy doesn't fail loudly. It drifts. Pick a point on the clock and see what
+      is usually true by then.
+    </p>
+    <div class="tl-tabs rv" id="tlTabs"></div>
+    <div class="tl-body rv" id="tlBody"></div>
+  </div>
+</section>
+
+<!-- ══════════ PROMISE ══════════ -->
+<section class="alt" id="promise">
+  <div class="wrap">
+    <div class="sec-label rv">Straight answers</div>
+    <h2 class="sec-h rv">What this is — <em>and what it isn't</em></h2>
+    <p class="sec-sub rv">
+      You have every right to assume this is a way to sell you something. So here it is in two columns,
+      before you give us a single detail.
+    </p>
+    <div class="two-col">
+      <div class="panel yes rv">
+        <h3>✓ What you actually get</h3>
+        <ul>
+          <li><i>✓</i><span><b>A named human being.</b> Not a call centre. One person, with a direct number, who is responsible for your policy.</span></li>
+          <li><i>✓</i><span><b>Your records checked and corrected.</b> Address, date of birth, beneficiary, how you pay — the small things that delay claims.</span></li>
+          <li><i>✓</i><span><b>A plain-English read on what you own.</b> What it pays, when, and to whom. Only 15% of policyholders can say that today.</span></li>
+          <li><i>✓</i><span><b>A Policy Location Record.</b> One page your family can find, listing what exists and who to call. Free, whether or not you ever speak to us again.</span></li>
+          <li><i>✓</i><span><b>A date for the next review</b> — set in our system, not dependent on anyone remembering.</span></li>
+        </ul>
+      </div>
+      <div class="panel no rv">
+        <h3>✕ What this is not</h3>
+        <ul>
+          <li><i>✕</i><span><b>Not a cost.</b> There is no fee for a service review. There never has been.</span></li>
+          <li><i>✕</i><span><b>Not a change to your policy.</b> Nothing here alters your cover, your premium or your benefits. A servicing agent is who looks after you, not what you own.</span></li>
+          <li><i>✕</i><span><b>Not a cancellation.</b> We will never suggest replacing a policy that is doing its job. Older policies are often better than anything sold today.</span></li>
+          <li><i>✕</i><span><b>Not a sales call in disguise.</b> If you arrive here on your own, the product questions are switched off entirely. You get asked one thing: what would you like help with.</span></li>
+          <li><i>✕</i><span><b>Not a data grab.</b> No ID numbers, no bank details, no medical history. None of it belongs in a service review.</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ WHO ══════════ -->
+<section>
+  <div class="wrap">
+    <div class="sec-label rv">Two situations</div>
+    <h2 class="sec-h rv">A person, or <em>a whole company</em></h2>
+    <p class="sec-sub rv">Group plans get orphaned exactly the same way, and it costs a great deal more.</p>
+    <div class="who">
+      <div class="who-card rv">
+        <div class="wi">👤</div>
+        <h3>Individual &amp; family policies</h3>
+        <p>Your own life, health or retirement cover — for you, your spouse, your children.</p>
+        <ul>
+          <li>Confirm your records and beneficiaries</li>
+          <li>Understand what you actually own</li>
+          <li>Check nothing has been left unclaimed</li>
+          <li>Appoint a servicing agent, if you want one</li>
+        </ul>
+        <a class="btn btn-go" href="review.html?from=client&amp;type=individual">Start my review →</a>
+      </div>
+      <div class="who-card rv">
+        <div class="wi">🏢</div>
+        <h3>Group &amp; company plans</h3>
+        <p>Employee benefits with no account executive: nobody visits, nobody reconciles the member listing, nobody answers HR.</p>
+        <ul>
+          <li>Reconcile members you're still being billed for</li>
+          <li>Check claims turnaround and billing accuracy</li>
+          <li>Benchmark your benefits before renewal</li>
+          <li>Change of agent handled on your letterhead</li>
+        </ul>
+        <a class="btn btn-line" href="review.html?from=client&amp;type=group">Review our company plan →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ LOCAL ══════════ -->
+<section class="alt">
+  <div class="wrap">
+    <div class="sec-label rv">Trinidad &amp; Tobago</div>
+    <h2 class="sec-h rv">Where you stand <em>under local law</em></h2>
+    <p class="sec-sub rv">
+      Your rights don't depend on your agent turning up. They're written into the Insurance Act, 2018.
+    </p>
+    <div class="local">
+      <div class="local-item rv">
+        <h4>Your policy is with the company</h4>
+        <p>Not with an individual. When an agent leaves, the insurer's obligations — collecting premiums, servicing the policy, paying claims — carry on exactly as before.</p>
+      </div>
+      <div class="local-item rv">
+        <h4>Money can sit unclaimed for years</h4>
+        <p>Under section 197 of the Insurance Act, 2018, sums payable but unclaimed for <b>seven years</b> after maturity are reported to the Central Bank as unclaimed monies. A matured policy nobody told you about is exactly how that happens.</p>
+      </div>
+      <div class="local-item rv">
+        <h4>You may appoint who services you</h4>
+        <p>Choosing a servicing agent is your decision, and it changes nothing about your cover, premium or benefits. If you'd rather stay with the company directly, that's a perfectly good answer too.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ FAQ ══════════ -->
+<section id="faq">
+  <div class="wrap">
+    <div class="sec-label rv">Before you start</div>
+    <h2 class="sec-h rv">The questions <em>you're actually thinking</em></h2>
+    <p class="sec-sub rv">Including the awkward ones.</p>
+    <div class="faq">
+      <details class="rv"><summary>What if I don't know my policy number?</summary>
+        <div class="a">Then don't give us one. Most people don't have it, and the form never requires it —
+        that's a deliberate design decision, not an oversight. Your name, date of birth and a contact number
+        are enough for us to trace a policy. <b>Not knowing what you own is the normal condition</b>, not an
+        embarrassing one: only 15% of policyholders say they completely understand their policy.</div></details>
+
+      <details class="rv"><summary>Is this really free? What's the catch?</summary>
+        <div class="a">It's free, and the catch is the honest one: we're an agency, and a proportion of people
+        we help will eventually ask us to do more. That's the whole business model. <b>What we don't do is
+        make the review conditional on it.</b> You can complete this, take your Policy Location Record, get
+        your records fixed, and never speak to us again. That happens regularly and it's fine.</div></details>
+
+      <details class="rv"><summary>Will this change my policy or my premium?</summary>
+        <div class="a">No. A servicing agent is <b>who looks after you</b>, not <b>what you own</b>. Your
+        cover, premium, benefits, maturity date and every guarantee in your contract are untouched. If you
+        also ask us to change something — a beneficiary, an address, how you pay — that's a separate,
+        explicit request, and the insurer confirms it to you in writing before it takes effect.</div></details>
+
+      <details class="rv"><summary>Are you going to try to sell me a new policy?</summary>
+        <div class="a">If you came here on your own, the product questions are <b>switched off entirely</b> —
+        the form doesn't ask what you'd like to buy, only what you'd like help with. If your agent sent you
+        the link, the coverage questions are included, because a relationship already exists and a review
+        without them isn't much of a review. Either way: <b>we will never advise you to cancel or replace a
+        policy that's doing its job.</b> Old policies are frequently better than what's sold today.</div></details>
+
+      <details class="rv"><summary>Nobody has called me in years. Why should I trust this?</summary>
+        <div class="a">That's fair, and we won't argue you out of it. The industry earned that.
+        What we'd say is: judge it by what happens next rather than by what we claim here. You'll get a
+        written confirmation with a reference number, a named person and a response time. If we miss it,
+        you have it in writing — and our own system chases us when we're late.</div></details>
+
+      <details class="rv"><summary>What happens to my information?</summary>
+        <div class="a">It goes to our office to service your policy and to the insurer's customer service
+        department for anything that needs their action — a record correction, a change of servicing agent.
+        Nowhere else. We don't ask for ID numbers, bank details or medical history, and we don't sell data.
+        Marketing consent is a separate, optional tick that changes nothing about your service if you decline.</div></details>
+
+      <details class="rv"><summary>My agent died, or I genuinely don't know who they were.</summary>
+        <div class="a">This is more common than you'd think, and it's exactly who this is for. Start the
+        review, say so in the "what would you like help with" box, and we'll trace the policy from your name
+        and date of birth. If you're a family member who's found paperwork for someone who has passed away,
+        say that too — <b>we'll help you either way, and there's no charge for looking.</b></div></details>
+
+      <details class="rv"><summary>I'm an agent. Can I use this for my own clients?</summary>
+        <div class="a">Yes — that's the other half of the product. The <a href="agent/">agent console</a>
+        generates a personal, prefilled link for each client and a ready-to-send message. Reviews come back
+        tagged to you, with the coverage questions switched on.</div></details>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ CTA ══════════ -->
+<section class="alt">
+  <div class="wrap">
+    <div class="cta-box rv">
+      <h2>Four minutes. No cost.<br>Somebody who answers.</h2>
+      <p>You've already paid for the policy. This is about making sure it does what you bought it to do.</p>
+      <div class="cta-actions">
+        <a class="btn btn-go" href="review.html?from=client">Claim my policy review →</a>
+        <button class="btn btn-line" onclick="openAgentLink()">I have a link from my agent</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ FOOTER ══════════ -->
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <a class="logo" href="#top">
+        <svg class="logo-mark" viewBox="0 0 64 64" aria-hidden="true">
+          <circle cx="32" cy="32" r="27" fill="none" stroke="#22C482" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="30" cy="27" r="8" fill="#EEF3F8"/>
+          <path d="M16 47c0-7.7 6.3-14 14-14s14 6.3 14 14" fill="#EEF3F8"/>
+          <circle cx="50" cy="48" r="13" fill="#22C482"/>
+          <path d="M44 48l4.5 4.5L57 43" stroke="#0A1017" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="logo-word"><span class="dim">don't have</span> an agent<span class="dot">.com</span></span>
+      </a>
+      <div class="foot-links">
+        <a href="review.html?from=client">Start a review</a>
+        <a href="#faq">Questions</a>
+        <a href="RESEARCH.md">Our research</a>
+        <a href="agent/">For agents</a>
+        <a id="footMail" href="#">Contact</a>
+      </div>
+    </div>
+    <p class="legal" id="legal"></p>
+  </div>
+</footer>
+
+<!-- ══════════ STICKY ══════════ -->
+<div class="sticky" id="sticky">
+  <div class="sticky-in">
+    <div class="sticky-txt">Still have an unwatched policy?<span>Four minutes, no cost, no obligation.</span></div>
+    <a class="btn btn-go btn-sm" href="review.html?from=client">Start free review →</a>
+  </div>
+</div>
+
+<!-- ══════════ AGENT-LINK MODAL ══════════ -->
+<div class="modal" id="linkModal" onclick="if(event.target===this)closeAgentLink()">
+  <div class="modal-box">
+    <button class="modal-x" onclick="closeAgentLink()">✕</button>
+    <h3>Continue with your link</h3>
+    <p>Your agent will have sent you a personal link by email or WhatsApp — it opens this review with your
+       details already filled in. Can't find it? Either option below works just as well.</p>
+
+    <label for="mCode">Reference code from your message</label>
+    <input id="mCode" type="text" placeholder="e.g. DHA-4821" autocomplete="off">
+    <button class="btn btn-go" onclick="goWithCode()">Continue →</button>
+
+    <div class="or">— or —</div>
+    <a class="btn btn-line" style="width:100%" href="review.html?from=agent">I don't have the code, start anyway</a>
+    <p style="font-size:12.5px;color:var(--muted2);margin-top:16px;text-align:center">
+      Nothing is lost either way. We match you by name and date of birth.</p>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   DON'T HAVE AN AGENT — landing page
+   ---------------------------------------------------------------------
+   Built to be white-labelled: everything agency-specific is in BRAND
+   below, and every colour is a CSS custom property at the top of the
+   stylesheet. Re-skinning this for another agency is two edits.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const BRAND = {
+  agency:   "Ricky Rampersad Branch",
+  agent:    "Ricky Rampersad",
+  carrier:  "Guardian Life of the Caribbean Limited",
+  email:    "ricky.rampersad@myguardiangroup.com",
+  phone:    "(868) 678-5921",
+  country:  "Trinidad & Tobago",
+  regulator:"the Central Bank of Trinidad and Tobago",
+};
+
+/* ── the 60-second check ────────────────────────────────────────────────
+   Deliberately four questions, deliberately in-browser only. Nothing is
+   transmitted. Somebody who has been ignored for six years is not going to
+   hand over an email address to find out whether they've been ignored.  */
+const CHECK = [
+  { q: "When did someone last review this policy with you?",
+    opts: [ { t: "Within a year", s: 0 }, { t: "1–3 years", s: 1 }, { t: "Over 3 years", s: 2 }, { t: "Never", s: 3 } ] },
+  { q: "Do you know who your servicing agent is today?",
+    opts: [ { t: "Yes", s: 0 }, { t: "I know the name, but not how to reach them", s: 2 }, { t: "No idea", s: 3 } ] },
+  { q: "Could you say what your policy pays, and to whom?",
+    opts: [ { t: "Confidently", s: 0 }, { t: "Roughly", s: 1 }, { t: "Not really", s: 3 } ] },
+  { q: "Has anything big changed since you took it out?",
+    opts: [ { t: "Nothing much", s: 0 }, { t: "One or two things", s: 2 }, { t: "A lot", s: 3 } ] },
+];
+
+const answers = {};
+
+function renderCheck() {
+  document.getElementById("checkQs").innerHTML = CHECK.map((c, i) =>
+    '<div class="cq"><p>' + (i + 1) + ". " + c.q + '</p><div class="cq-opts" data-q="' + i + '">' +
+    c.opts.map((o, j) =>
+      '<button type="button" data-j="' + j + '" class="' +
+      (answers[i] === j ? "on" + (o.s >= 2 ? " warn" : "") : "") + '">' + o.t + "</button>").join("") +
+    "</div></div>").join("");
+
+  document.querySelectorAll("#checkQs .cq-opts").forEach((box) => {
+    box.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+      answers[box.dataset.q] = Number(b.dataset.j);
+      renderCheck();
+      scoreCheck();
+    }));
+  });
+}
+
+function scoreCheck() {
+  const done = Object.keys(answers).length;
+  const max = CHECK.reduce((t, c) => t + Math.max.apply(null, c.opts.map((o) => o.s)), 0);
+  const score = Object.keys(answers).reduce((t, i) => t + CHECK[i].opts[answers[i]].s, 0);
+  const pct = Math.round((score / max) * 100);
+
+  document.getElementById("gaugeFill").style.width = pct + "%";
+  const txt = document.getElementById("gaugeTxt");
+  const cta = document.getElementById("gaugeCta");
+
+  if (done < CHECK.length) {
+    txt.innerHTML = "Answer the four above and we'll tell you straight. <b>" + done + " of 4.</b>";
+    cta.style.display = "none";
+    return;
+  }
+  cta.style.display = "";
+
+  if (pct >= 65) {
+    txt.innerHTML = "<b>You're an orphan policyholder.</b> Nobody is watching this policy, and on the numbers " +
+      "you're in the largest group there is. Nothing is broken — but nothing is being checked either.";
+  } else if (pct >= 35) {
+    txt.innerHTML = "<b>You're drifting.</b> There's a relationship on paper, but it isn't doing much. " +
+      "That's usually where the small, expensive gaps open up.";
+  } else if (pct > 0) {
+    txt.innerHTML = "<b>You're in decent shape.</b> Somebody is paying attention. A four-minute check " +
+      "still costs you nothing, and it's how you find the one thing that's slipped.";
+  } else {
+    txt.innerHTML = "<b>Genuinely well looked after.</b> That puts you in the 19%. Keep whoever is doing it.";
+  }
+}
+
+/* ── what goes wrong, over time ───────────────────────────────────────── */
+const TIMELINE = [
+  { k: "Year 1", h: "Nothing at all", lead: "And this is why it's so easy to leave alone.",
+    items: ["Premiums keep collecting, cover keeps running.",
+            "Your policy is completely valid — the contract is with the insurer, not the agent.",
+            "You may not even know your agent has gone. Most people find out by trying to call."] },
+  { k: "Year 3", h: "The record drifts", lead: "Small things go out of date, and nobody is checking them.",
+    items: ["You move house. The insurer's post goes to the old address.",
+            "A marriage, a baby, a mortgage — the cover was sized for a different life. Over 90% never update it.",
+            "The beneficiary is whoever you named years ago. Policies pay who is named, not who you meant.",
+            "A premium bounces after a bank change and the notice goes to the old address."] },
+  { k: "Year 5", h: "Money starts being left behind", lead: "Now it's costing something real.",
+    items: ["Benefits you're entitled to sit unused because nobody told you they existed.",
+            "A policy matures and the cheque goes nowhere — under T&amp;T law it can sit seven years before it's reported unclaimed.",
+            "Cover that should have been increased at each life stage never was.",
+            "You'd have qualified for better terms after quitting smoking, or worse ones are locked in unnecessarily."] },
+  { k: "Year 10+", h: "Your family finds out the hard way", lead: "This is the part that actually matters.",
+    items: ["Only 29% of beneficiaries know the name of the insurance company.",
+            "Only 25% know the benefit amount. Fewer still know where the documents are.",
+            "One in every 600 policies is never claimed at all when the insured dies.",
+            "The claim that does get made is delayed for weeks by a wrong date of birth or an out-of-date beneficiary — corrections that take four minutes while you're alive."] },
+];
+
+let tlAt = 0;
+function renderTimeline() {
+  document.getElementById("tlTabs").innerHTML = TIMELINE.map((t, i) =>
+    '<button class="' + (i === tlAt ? "on" : "") + '" data-i="' + i + '">' + t.k + "</button>").join("");
+  document.querySelectorAll("#tlTabs button").forEach((b) => b.addEventListener("click", () => {
+    tlAt = Number(b.dataset.i); renderTimeline();
+  }));
+  const t = TIMELINE[tlAt];
+  document.getElementById("tlBody").innerHTML =
+    '<div class="tl-fade"><h3><span>' + t.k + "</span> · " + t.h + "</h3><p>" + t.lead + "</p><ul>" +
+    t.items.map((i) => "<li>" + i + "</li>").join("") + "</ul></div>";
+}
+
+/* ── counters ──────────────────────────────────────────────────────────
+   Held at zero until the card is actually on screen, then counted up —
+   the movement is what makes somebody read a number instead of skim it. */
+function runCounter(el) {
+  if (el._done) return;
+  el._done = true;
+  const target = Number(el.dataset.count);
+  const suffix = el.dataset.suffix || "";
+  const dur = 1100;
+  const t0 = performance.now();
+  (function frame(now) {
+    const p = Math.min(1, (now - t0) / dur);
+    const eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(target * eased) + suffix;
+    if (p < 1) requestAnimationFrame(frame);
+  })(t0);
+}
+
+/* ── reveal + counters on scroll ───────────────────────────────────── */
+const io = new IntersectionObserver((entries) => {
+  entries.forEach((e) => {
+    if (!e.isIntersecting) return;
+    e.target.classList.add("in");
+    e.target.querySelectorAll("[data-count]").forEach(runCounter);
+    io.unobserve(e.target);
+  });
+}, { threshold: 0.16, rootMargin: "0px 0px -40px 0px" });
+
+/* ── agent-link modal ──────────────────────────────────────────────── */
+function openAgentLink()  { document.getElementById("linkModal").classList.add("on"); setTimeout(() => document.getElementById("mCode").focus(), 60); }
+function closeAgentLink() { document.getElementById("linkModal").classList.remove("on"); }
+function goWithCode() {
+  const c = document.getElementById("mCode").value.trim();
+  location.href = "review.html?from=agent" + (c ? "&k=" + encodeURIComponent(c) : "");
+}
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeAgentLink();
+  if (e.key === "Enter" && document.getElementById("linkModal").classList.contains("on")) goWithCode();
+});
+
+/* ── sticky bar after the hero ─────────────────────────────────────── */
+const stickyIo = new IntersectionObserver((es) => {
+  document.getElementById("sticky").classList.toggle("on", !es[0].isIntersecting);
+}, { threshold: 0 });
+
+/* ── boot ──────────────────────────────────────────────────────────── */
+(function boot() {
+  renderCheck();
+  renderTimeline();
+  document.querySelectorAll(".rv").forEach((el) => io.observe(el));
+  stickyIo.observe(document.querySelector(".hero"));
+
+  document.getElementById("footMail").href = "mailto:" + BRAND.email;
+  document.getElementById("legal").innerHTML =
+    "donthaveanagent.com is a service of <b>" + BRAND.agency + "</b>, " + BRAND.country + ". " +
+    "Reviews are carried out by " + BRAND.agent + ", an agent of " + BRAND.carrier + ". " +
+    "A policy service review is free and carries no obligation. Nothing on this page changes your policy, " +
+    "premium or benefits — changes to policy records, including a change of servicing agent, take effect only " +
+    "once processed and confirmed in writing by your insurer, and your policy contract governs in all cases. " +
+    "Research figures are attributed on the page and sourced in full in our research brief; United States " +
+    "figures are cited to describe an industry pattern and are not " + BRAND.country + " statistics. " +
+    "Statutory references are to the Insurance Act, 2018, administered by " + BRAND.regulator + ".<br><br>" +
+    "Contact: <a href='mailto:" + BRAND.email + "'>" + BRAND.email + "</a> · " +
+    "<a href='tel:+" + BRAND.phone.replace(/\D/g, "") + "'>" + BRAND.phone + "</a>";
+})();
+</script>
+</body>
+</html>

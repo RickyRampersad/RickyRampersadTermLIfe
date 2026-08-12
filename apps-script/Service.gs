@@ -7,8 +7,14 @@
  *  The paper Guardian Life "Service Questionnaire" (form 2000-03-147)
  *  and the EBD "Group Change of Agent Request" letter, automated.
  *
- *  WHAT THIS SCRIPT DOES, every time a client presses send on
- *  /service/ (service/index.html):
+ *  It serves TWO front doors and keeps one worklist:
+ *    · service/index.html          — the branch site's service questionnaire
+ *    · donthaveanagent/review.html — donthaveanagent.com, for orphan policies
+ *  A "Source" and an "Arrived via" column tell them apart in the sheet, and
+ *  identity_() below makes each client's confirmation email look like the
+ *  product they actually used.
+ *
+ *  WHAT THIS SCRIPT DOES, every time a client presses send:
  *
  *    1. Files the answers in a Google Sheet — one tab for individual
  *       clients, one for group plans, a column per question. New
@@ -178,7 +184,7 @@ function handleSubmission_(body) {
   var isGroup = body.kind === 'group';
   var core = body.core || {};
   var fields = body.fields || [];
-  var ref = nextRef_(isGroup);
+  var ref = nextRef_(isGroup, body);
   var priority = computePriority_(body);
   var now = new Date();
 
@@ -236,7 +242,14 @@ function computePriority_(body) {
   if (c.unresolved) return 'HIGH';
   if (Number(c.satisfaction) && Number(c.satisfaction) <= 2) return 'HIGH';
   if (c.nps !== '' && c.nps !== undefined && Number(c.nps) <= 6) return 'HIGH';
+
+  /* donthaveanagent.com — somebody who has not been contacted in over five
+     years and has finally raised their hand is not a routine filing. If we
+     leave that one sitting in a queue we have proved their point for them. */
+  if (/more than 5 years|never/i.test(String(c.lastContact || ''))) return 'HIGH';
+
   if (c.changeAgent) return 'ACTION';
+  if (c.needsTracing) return 'ACTION';
   if (fields.some(function (f) { return f.flag === 'records'; })) return 'ACTION';
   return 'NORMAL';
 }
@@ -252,6 +265,10 @@ function priorityReason_(body) {
   var bits = [];
   if (c.unresolved) bits.push('an unresolved problem the client says was never fixed' +
     (c.unresolvedUrgency ? ' (' + c.unresolvedUrgency + ')' : ''));
+  if (/more than 5 years|never/i.test(String(c.lastContact || '')))
+    bits.push('nobody has reviewed this policy with them in ' +
+      (/never/i.test(String(c.lastContact)) ? 'their entire time as a policyholder' : 'over five years'));
+  if (c.needsTracing) bits.push('a policy that needs tracing — they do not have the number');
   if (Number(c.satisfaction) && Number(c.satisfaction) <= 2) bits.push('a satisfaction score of ' + c.satisfaction + '/5');
   if (c.nps !== '' && c.nps !== undefined && Number(c.nps) <= 6) bits.push('a recommend score of ' + c.nps + '/10');
   if (c.changeAgent) bits.push('a change of servicing agent request');
@@ -273,7 +290,8 @@ function sheetFor_(isGroup) {
   if (!sh) {
     sh = ss_().insertSheet(name);
     sh.appendRow(['Reference', 'Timestamp', 'Priority', 'Status', 'Handled by', 'Handled on',
-                  'Client', 'Company', 'Email', 'Phone', 'Policy #', 'Score', 'Minutes taken']);
+                  'Client', 'Company', 'Email', 'Phone', 'Policy #', 'Score', 'Minutes taken',
+                  'Source', 'Arrived via', 'Sent by', 'Link ref', 'Needs tracing']);
     sh.setFrozenRows(1);
     sh.getRange(1, 1, 1, sh.getLastColumn()).setFontWeight('bold').setBackground(SB.light);
   }
@@ -318,6 +336,17 @@ function saveRow_(isGroup, ref, priority, now, body) {
     'Policy #': c.policyNos || '',
     'Score': c.score === '' ? '' : c.score,
     'Minutes taken': body.minutesTaken || '',
+
+    /* Where it came from. The service questionnaire on the branch site and
+       donthaveanagent.com both land here — same work, one worklist — and
+       these columns are how you tell them apart when you report on it. */
+    'Source': body.source || 'branch site',
+    'Arrived via': body.origin === 'agent' ? 'Agent sent the link'
+                 : body.origin === 'client' ? 'Client came on their own'
+                 : '',
+    'Sent by': (body.sentBy && body.sentBy.name) || '',
+    'Link ref': body.linkRef || '',
+    'Needs tracing': c.needsTracing ? 'YES — no policy number' : '',
   };
 
   (body.fields || []).forEach(function (f) {
@@ -351,13 +380,34 @@ function saveRow_(isGroup, ref, priority, now, body) {
   } catch (e) {}
 }
 
-/** SQ-260812-0007 — dated, sequential, and easy to read down a phone line. */
-function nextRef_(isGroup) {
+/**
+ * Which product the client thinks they used.
+ *
+ * Two front doors share this backend, and a client who filled in a form
+ * branded donthaveanagent.com should not get a confirmation headed "Service
+ * Questionnaire" from a company they've never heard of. The reference prefix,
+ * the email header and the subject line all follow from here.
+ */
+function identity_(body) {
+  var dhaa = /donthaveanagent/i.test(String((body && body.source) || ''));
+  return dhaa
+    ? { dhaa: true,  name: "Don't Have An Agent", tag: 'Policy review',
+        prefix: 'DHA', groupPrefix: 'DHAG',
+        thing: 'policy review', subject: 'Your policy review is in' }
+    : { dhaa: false, name: 'Service Questionnaire', tag: 'Policy service review',
+        prefix: 'SQ', groupPrefix: 'GSQ',
+        thing: 'service questionnaire', subject: 'Thank you — your service questionnaire is in' };
+}
+
+/** DHA-260812-0007 — dated, sequential, and easy to read down a phone line.
+ *  The prefix says which front door it came through. */
+function nextRef_(isGroup, body) {
   var sh = sheetFor_(isGroup);
   var n = Math.max(0, sh.getLastRow() - 1) + 1;
   var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
-  return (isGroup ? 'GSQ-' : 'SQ-') + Utilities.formatDate(new Date(), tz, 'yyMMdd') +
-         '-' + ('000' + n).slice(-4);
+  var id = identity_(body);
+  return (isGroup ? id.groupPrefix : id.prefix) + '-' +
+         Utilities.formatDate(new Date(), tz, 'yyMMdd') + '-' + ('000' + n).slice(-4);
 }
 
 
@@ -378,15 +428,21 @@ function prettyDate_(s) {
   return Utilities.formatDate(d, tz, 'd MMMM yyyy');
 }
 
-function wrap_(inner, tag) {
+function wrap_(inner, tag, id) {
+  id = id || identity_(null);
+  /* donthaveanagent.com has its own colours — a client who used that product
+     should recognise the email as coming from it. */
+  var bg = id.dhaa ? '#0A1017' : SB.navy;
+  var chip = id.dhaa ? '#22C482' : SB.gold;
+  var chipInk = id.dhaa ? '#06120C' : SB.navy;
   return '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:' + SB.ink + ';max-width:660px">' +
-    '<div style="background:' + SB.navy + ';color:#fff;padding:18px 22px;border-radius:10px 10px 0 0">' +
+    '<div style="background:' + bg + ';color:#fff;padding:18px 22px;border-radius:10px 10px 0 0">' +
       '<table width="100%" cellpadding="0" cellspacing="0"><tr>' +
       '<td width="46" valign="middle"><table cellpadding="0" cellspacing="0"><tr>' +
-        '<td style="width:38px;height:38px;background:' + SB.gold + ';border-radius:8px 8px 14px 14px;' +
-        'text-align:center;font-size:22px;font-weight:bold;color:' + SB.navy + '">✓</td></tr></table></td>' +
-      '<td valign="middle" style="padding-left:10px"><b style="font-size:18px">Service Questionnaire</b><br>' +
-        '<span style="color:#b7c9de;font-size:12px">' + esc_(tag || 'Policy service review') +
+        '<td style="width:38px;height:38px;background:' + chip + ';border-radius:8px 8px 14px 14px;' +
+        'text-align:center;font-size:22px;font-weight:bold;color:' + chipInk + '">✓</td></tr></table></td>' +
+      '<td valign="middle" style="padding-left:10px"><b style="font-size:18px">' + esc_(id.name) + '</b><br>' +
+        '<span style="color:#b7c9de;font-size:12px">' + esc_(tag || id.tag) +
         ' · ' + esc_(SVC.AGENT_NAME) + '</span></td>' +
       '</tr></table></div>' +
     '<div style="border:1px solid #dde5ee;border-top:none;padding:22px;border-radius:0 0 10px 10px">' + inner +
@@ -501,11 +557,20 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf) {
         : 'Everything we look at is in good order. We will confirm the details and keep it that way.'));
   }
 
+  var id = identity_(body);
+  var opener = id.dhaa
+    ? (body.origin === 'client'
+        ? 'Thank you for getting in touch. You did the hard part — most people in your position never do, ' +
+          'because they assume being forgotten was somehow their own fault. It wasn\'t.'
+        : 'Thank you for completing your policy review. It is genuinely useful — most of what we get wrong in ' +
+          'this business, we get wrong because nobody told us anything had changed.')
+    : 'Thank you for completing your ' + (isGroup ? 'plan service review' : 'service questionnaire') +
+      '. It is genuinely useful — most of what we get wrong in this business, we get wrong because nobody told ' +
+      'us anything had changed.';
+
   var html = wrap_(
     '<p>Dear ' + esc_(first) + ',</p>' +
-    '<p>Thank you for completing your ' + (isGroup ? 'plan service review' : 'service questionnaire') +
-    '. It is genuinely useful — most of what we get wrong in this business, we get wrong because nobody told us ' +
-    'anything had changed.</p>' +
+    '<p>' + opener + '</p>' +
     '<p>Your reference is <b style="color:' + SB.navy + '">' + esc_(ref) + '</b>.</p>' +
     scoreBlock +
     '<h3 style="font-size:15px;color:' + SB.navy + ';margin:22px 0 6px">What happens next</h3>' +
@@ -516,7 +581,7 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf) {
       'If a person needs to call you, they call you.') +
     '<p style="margin-top:18px">If anything above looks wrong, just reply to this email and we will put it right.</p>' +
     sig_(),
-    isGroup ? 'Group plan service review' : 'Policy service review');
+    isGroup ? 'Group plan review' : id.tag, id);
 
   var atts = [];
   if (formPdf) atts.push(formPdf);
@@ -526,7 +591,7 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf) {
     to: c.email,
     name: SVC.FROM_NAME,
     replyTo: SVC.AGENT_EMAIL,
-    subject: 'Thank you — your service questionnaire is in (' + ref + ')',
+    subject: id.subject + ' (' + ref + ')',
     htmlBody: html,
     attachments: atts,
   });
@@ -538,6 +603,7 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf) {
 function routeToService_(ref, priority, now, body, attachments, clientEmailed) {
   var c = body.core || {};
   var isGroup = body.kind === 'group';
+  var id = identity_(body);
 
   var to = [];
   if (SVC.CS_EMAIL) to.push(SVC.CS_EMAIL);
@@ -555,6 +621,16 @@ function routeToService_(ref, priority, now, body, attachments, clientEmailed) {
     'Set <code>SVC.CS_EMAIL</code> in Service.gs and redeploy to route these to Guardian Life Customer Service.');
 
   var actions = [];
+  if (c.needsTracing) {
+    actions.push('🔍 <b>Trace the policy first.</b> They do not have the number' +
+      (c.insurer ? ' — they think it is with <b>' + esc_(c.insurer) + '</b>' : '') +
+      '. Search on name and date of birth' +
+      (c.clientName ? ': <b>' + esc_(c.clientName) + '</b>' : '') + '.');
+  }
+  if (body.origin === 'client') {
+    actions.push('🤝 <b>No product questions were asked</b> — they came to us unprompted. ' +
+      'Answer exactly what they asked for and nothing more; a sales approach here loses them for good.');
+  }
   (body.fields || []).forEach(function (f) {
     if (f.flag === 'urgent')  actions.push('🔴 <b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
     if (f.flag === 'records') actions.push('📝 <b>Record change:</b> ' + esc_(f.label) + ' — ' + esc_(f.value));
@@ -574,6 +650,10 @@ function routeToService_(ref, priority, now, body, attachments, clientEmailed) {
     '<table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:13.5px">' +
       tr_('Reference', ref) +
       tr_('Received', Utilities.formatDate(now, tz, 'EEE d MMM yyyy, h:mm a')) +
+      tr_('Came from', (body.source || 'branch site') +
+        (body.origin === 'agent' ? ' · agent sent the link' + ((body.sentBy && body.sentBy.name) ? ' (' + body.sentBy.name + ')' : '')
+       : body.origin === 'client' ? ' · client arrived on their own — no product questions were asked'
+       : '')) +
       tr_(isGroup ? 'Company' : 'Client', (isGroup ? c.companyName : c.clientName) || '—') +
       (isGroup ? tr_('Contact', c.clientName || '—') : '') +
       tr_('Email', c.email || '—') +
@@ -611,14 +691,14 @@ function routeToService_(ref, priority, now, body, attachments, clientEmailed) {
     '<p style="color:#8a97a8;font-size:11.5px;border-top:1px solid #e3eaf2;padding-top:12px;margin-top:22px">' +
     'Submitted through ' + esc_(SVC.FORM_URL) + (body.agentMode ? ' (agent-assisted)' : '') +
     (body.minutesTaken ? ' · took the client about ' + esc_(body.minutesTaken) + ' minutes' : '') + '.</p>',
-    isGroup ? 'Group plan review' : 'Policy service review');
+    isGroup ? 'Group plan review' : id.tag, id);
 
   MailApp.sendEmail({
     to: to.join(','),
     cc: cc.join(','),
     name: SVC.FROM_NAME,
     replyTo: c.email || SVC.AGENT_EMAIL,
-    subject: '[' + priority + '] ' + (isGroup ? 'Group ' : '') + 'Service Questionnaire — ' +
+    subject: '[' + priority + '] ' + (isGroup ? 'Group ' : '') + id.name + ' — ' +
              (c.companyName || c.clientName || 'client') + ' (' + ref + ')',
     htmlBody: html,
     attachments: attachments,

@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Your policy review — Don't Have An Agent</title>
+<meta name="description" content="A free four-minute policy review for policyholders without an active agent. No cost, no obligation, no policy number needed."/>
+<meta name="robots" content="noindex"/>
+<meta name="theme-color" content="#0A1017"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='27' fill='none' stroke='%23F5A623' stroke-width='4' stroke-dasharray='7 6' stroke-linecap='round'/%3E%3Ccircle cx='30' cy='27' r='8' fill='%23EEF3F8'/%3E%3Cpath d='M16 47c0-7.7 6.3-14 14-14s14 6.3 14 14' fill='%23EEF3F8'/%3E%3Ccircle cx='50' cy='48' r='13' fill='%2322C482'/%3E%3Cpath d='M44 48l4.5 4.5L57 43' stroke='%230A1017' stroke-width='4.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:#0A1017; --ink2:#0E1620; --surface:#151F2B; --surface2:#1B2836;
+  --line:rgba(255,255,255,.075); --line2:rgba(255,255,255,.14);
+  --text:#EEF3F8; --muted:#93A5B8; --muted2:#6B7F94;
+  --amber:#F5A623; --emerald:#22C482; --emerald2:#17A76B; --red:#FF6B6B;
+  --emerald-soft:rgba(34,196,130,.12); --amber-soft:rgba(245,166,35,.11);
+  --head:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--body);background:var(--ink);color:var(--text);line-height:1.65;overflow-x:hidden;-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(ellipse 70% 40% at 50% -10%,rgba(34,196,130,.06),transparent 70%);background-attachment:fixed}
+h1,h2,h3{font-family:var(--head);letter-spacing:-.02em;line-height:1.16}
+a{color:var(--emerald)}
+.wrap{max-width:760px;margin:0 auto;padding:0 18px 90px}
+
+/* nav */
+.nav{position:sticky;top:0;z-index:90;background:rgba(10,16,23,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.nav-in{max-width:760px;margin:0 auto;padding:0 18px;height:62px;display:flex;align-items:center;gap:11px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo svg{width:32px;height:32px;flex-shrink:0}
+.logo-word{font-family:var(--head);font-weight:800;font-size:13.5px;letter-spacing:-.035em;white-space:nowrap}
+.logo-word .dim{color:var(--muted2);font-weight:600}
+.logo-word .dot{color:var(--emerald);font-weight:600;font-size:11.5px}
+.nav-safe{margin-left:auto;font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:5px;white-space:nowrap}
+.nav-safe b{color:var(--emerald)}
+
+/* progress */
+.prog{position:sticky;top:62px;z-index:80;background:rgba(10,16,23,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:12px 0 11px;display:none}
+.prog-in{max-width:760px;margin:0 auto;padding:0 18px}
+.prog-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.prog-label{font-family:var(--head);font-size:11.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--emerald)}
+.prog-count{margin-left:auto;font-size:11.5px;color:var(--muted)}
+.prog-bar{height:5px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.prog-fill{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--emerald2),var(--emerald));transition:width .35s cubic-bezier(.4,0,.2,1)}
+
+/* intro / chooser */
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--head);font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--emerald);margin-bottom:14px}
+h1.big{font-size:clamp(28px,5.5vw,42px);font-weight:800;margin-bottom:14px}
+h1.big em{font-style:normal;color:var(--emerald)}
+.lead{color:var(--muted);font-size:16px;max-width:620px}
+.choose{display:grid;gap:13px;grid-template-columns:1fr 1fr;margin:28px 0 18px}
+@media(max-width:600px){.choose{grid-template-columns:1fr}}
+.card-btn{text-align:left;font:inherit;color:inherit;cursor:pointer;background:linear-gradient(158deg,var(--surface),var(--surface2));
+  border:1px solid var(--line);border-radius:20px;padding:22px 20px;transition:transform .18s,border-color .18s,box-shadow .18s}
+.card-btn:hover{transform:translateY(-3px);border-color:var(--line2);box-shadow:0 16px 40px rgba(0,0,0,.4)}
+.card-btn .ci{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:12px;background:var(--emerald-soft);border:1px solid rgba(34,196,130,.28)}
+.card-btn.warm .ci{background:var(--amber-soft);border-color:rgba(245,166,35,.3)}
+.card-btn h3{font-size:16.5px;font-weight:700;margin-bottom:5px}
+.card-btn p{font-size:13.4px;color:var(--muted);line-height:1.55}
+.card-btn .go{display:inline-block;margin-top:11px;font-family:var(--head);font-weight:700;font-size:13px;color:var(--emerald)}
+.card-btn.warm .go{color:var(--amber)}
+.promises{display:grid;gap:9px;grid-template-columns:repeat(3,1fr);margin-top:22px}
+@media(max-width:600px){.promises{grid-template-columns:1fr}}
+.promise{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:13px;padding:13px 15px;font-size:12.6px;color:var(--muted);line-height:1.5}
+.promise b{display:block;color:var(--text);font-family:var(--head);font-size:12.8px;margin-bottom:3px}
+.resume{background:var(--amber-soft);border:1px solid rgba(245,166,35,.4);border-radius:14px;padding:15px 17px;margin-bottom:20px;font-size:14px;display:none}
+.resume b{color:var(--amber)}
+.resume .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:11px}
+
+/* steps */
+#formArea{display:none;padding-top:22px}
+.step-head{margin-bottom:20px}
+.step-head h2{font-size:clamp(21px,4.4vw,29px);font-weight:800;margin-bottom:7px}
+.step-head p{color:var(--muted);font-size:14.6px;line-height:1.6}
+.q{background:linear-gradient(158deg,rgba(21,31,43,.8),rgba(27,40,54,.55));border:1px solid var(--line);border-radius:16px;padding:17px 18px;margin-bottom:12px}
+.q.kid{border-left:2px solid rgba(34,196,130,.5);background:rgba(34,196,130,.04);margin-left:12px}
+.q.err{border-color:rgba(255,107,107,.6)}
+.q .qlabel{display:block;font-family:var(--head);font-weight:700;font-size:15px;line-height:1.45;margin-bottom:4px}
+.q .req{color:var(--amber)}
+.q .help{font-size:12.8px;color:var(--muted);line-height:1.55;margin-bottom:10px}
+.q .errmsg{display:none;color:var(--red);font-size:12.5px;margin-top:8px;font-weight:500}
+.q.err .errmsg{display:block}
+.ctl{margin-top:10px}
+input[type=text],input[type=email],input[type=tel],input[type=date],textarea,select{
+  width:100%;font:inherit;font-size:15px;color:var(--text);background:rgba(0,0,0,.3);
+  border:1px solid var(--line2);border-radius:11px;padding:12px 14px;transition:border-color .16s}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--emerald)}
+input::placeholder,textarea::placeholder{color:#5d7185}
+textarea{min-height:92px;resize:vertical;line-height:1.55}
+select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%2393A5B8' stroke-width='2' fill='none' stroke-linecap='round'/></svg>");background-repeat:no-repeat;background-position:right 15px center;padding-right:38px}
+select option{background:var(--surface);color:var(--text)}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pill{font:inherit;font-size:14px;cursor:pointer;color:var(--text);background:rgba(255,255,255,.04);
+  border:1.5px solid var(--line);border-radius:11px;padding:11px 16px;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.pill:hover{border-color:var(--line2)}
+.pill.on{border-color:var(--emerald);background:var(--emerald-soft);font-weight:600}
+.pill.on::before{content:"✓";color:var(--emerald);font-weight:800;font-size:12px}
+.pills.stack{flex-direction:column;align-items:stretch}
+.pills.stack .pill{justify-content:flex-start;text-align:left}
+.faces{display:flex;gap:7px}
+.face{flex:1;font:inherit;cursor:pointer;color:var(--muted);background:rgba(255,255,255,.04);
+  border:1.5px solid var(--line);border-radius:13px;padding:12px 4px 10px;text-align:center;transition:all .15s}
+.face:hover{border-color:var(--line2);transform:translateY(-2px)}
+.face .em{font-size:23px;display:block;line-height:1.25}
+.face .tx{font-size:10.5px;font-weight:600;margin-top:3px;display:block}
+.face.on{border-color:var(--emerald);background:var(--emerald-soft);color:var(--text)}
+.note{border-radius:0 12px 12px 0;padding:12px 15px;margin-top:11px;font-size:13.2px;line-height:1.6}
+.note.tip{background:var(--amber-soft);border-left:3px solid var(--amber)}
+.note.warn{background:rgba(255,107,107,.09);border-left:3px solid var(--red)}
+.note.good{background:var(--emerald-soft);border-left:3px solid var(--emerald)}
+.note b{color:var(--text)}
+
+/* policy finder */
+.finder{background:linear-gradient(158deg,var(--surface),var(--surface2));border:1px solid rgba(34,196,130,.24);border-radius:18px;padding:20px;margin-bottom:14px}
+.finder h3{font-size:16px;font-weight:700;margin-bottom:5px}
+.finder > p{font-size:13.4px;color:var(--muted);margin-bottom:14px}
+.finder-tabs{display:flex;gap:8px;margin-bottom:15px;flex-wrap:wrap}
+.finder-tabs button{font-family:var(--head);font-weight:700;font-size:13px;cursor:pointer;color:var(--muted);
+  background:rgba(255,255,255,.04);border:1.5px solid var(--line);border-radius:11px;padding:9px 15px;transition:all .15s}
+.finder-tabs button.on{background:var(--emerald-soft);border-color:var(--emerald);color:var(--text)}
+
+/* signature */
+.sig-wrap{border:1.5px dashed var(--line2);border-radius:13px;background:#fbfdff;position:relative;overflow:hidden}
+.sig-wrap canvas{display:block;width:100%;height:160px;touch-action:none;cursor:crosshair}
+.sig-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#93a6ba;font-size:13.5px;pointer-events:none}
+.sig-line{position:absolute;left:22px;right:22px;bottom:36px;border-bottom:1px solid #ccd7e2;pointer-events:none}
+.sig-tools{display:flex;gap:9px;margin-top:9px;flex-wrap:wrap;align-items:center}
+
+/* buttons */
+.btn{font-family:var(--head);font-weight:700;font-size:14.5px;cursor:pointer;border:none;border-radius:12px;
+  padding:14px 25px;transition:all .18s;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.btn-go{background:var(--emerald);color:#06120C}
+.btn-go:hover{background:#2FDD93;transform:translateY(-1px)}
+.btn-go:disabled{opacity:.55;cursor:default;transform:none}
+.btn-amber{background:var(--amber);color:#1a1204}
+.btn-line{background:rgba(255,255,255,.05);border:1px solid var(--line2);color:var(--muted)}
+.btn-line:hover{color:var(--text)}
+.btn-sm{padding:9px 15px;font-size:13px;border-radius:10px}
+.nav-row{display:flex;gap:11px;align-items:center;margin-top:22px;flex-wrap:wrap}
+.nav-row .spacer{flex:1}
+.saved{font-size:11.5px;color:var(--muted2)}
+
+/* review */
+.rev-sec{margin-bottom:16px}
+.rev-sec h4{font-size:11.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--emerald);margin-bottom:9px;display:flex;align-items:center;gap:10px}
+.rev-sec h4 button{margin-left:auto}
+.rev-tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.rev-tbl td{padding:9px 12px;border:1px solid var(--line);vertical-align:top;line-height:1.5}
+.rev-tbl td:first-child{width:48%;color:var(--muted);background:rgba(255,255,255,.025)}
+.consent{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:16px 0}
+.check{display:flex;gap:11px;align-items:flex-start;font-size:13.6px;line-height:1.55;margin-bottom:12px;cursor:pointer}
+.check:last-child{margin-bottom:0}
+.check input{width:19px;height:19px;margin-top:1px;flex-shrink:0;accent-color:var(--emerald);cursor:pointer}
+
+/* done */
+#doneArea{display:none;padding:40px 0 20px}
+.done-mark{width:72px;height:72px;border-radius:50%;background:var(--emerald);display:flex;align-items:center;justify-content:center;font-size:36px;color:#06120C;margin-bottom:20px;animation:pop .55s cubic-bezier(.2,1.3,.4,1)}
+@keyframes pop{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
+#doneArea h1{font-size:clamp(25px,5.5vw,35px);font-weight:800;margin-bottom:11px}
+.ref-chip{display:inline-block;font-family:var(--head);font-weight:800;font-size:13px;letter-spacing:.06em;background:var(--amber-soft);
+  border:1px solid rgba(245,166,35,.42);color:var(--amber);border-radius:99px;padding:7px 16px;margin:6px 0 20px}
+.done-card{background:linear-gradient(158deg,var(--surface),var(--surface2));border:1px solid var(--line);border-radius:20px;padding:22px;margin-bottom:15px}
+.done-card h3{font-size:16px;font-weight:700;margin-bottom:10px}
+.next-list{list-style:none}
+.next-list li{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);font-size:14.2px;line-height:1.55}
+.next-list li:last-child{border-bottom:none}
+.next-list .n{flex-shrink:0;width:25px;height:25px;border-radius:50%;background:var(--emerald-soft);border:1px solid rgba(34,196,130,.4);
+  color:var(--emerald);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;font-family:var(--head)}
+.done-actions{display:flex;gap:11px;flex-wrap:wrap;margin-top:8px}
+.foot{border-top:1px solid var(--line);margin-top:40px;padding:22px 0 40px;font-size:11.6px;color:var(--muted2);line-height:1.7}
+.foot a{color:var(--muted)}
+@media print{.nav,.prog,.nav-row,.done-actions,.foot,.no-print{display:none!important}
+  body{background:#fff;color:#111}.q,.done-card,.rev-tbl td{background:#fff!important;border-color:#ccc!important;color:#111!important}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001s!important;transition-duration:.05s!important}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-in">
+    <a class="logo" href="index.html">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <circle cx="32" cy="32" r="27" fill="none" stroke="#22C482" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="30" cy="27" r="8" fill="#EEF3F8"/>
+        <path d="M16 47c0-7.7 6.3-14 14-14s14 6.3 14 14" fill="#EEF3F8"/>
+        <circle cx="50" cy="48" r="13" fill="#22C482"/>
+        <path d="M44 48l4.5 4.5L57 43" stroke="#0A1017" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="logo-word"><span class="dim">don't have</span> an agent<span class="dot">.com</span></span>
+    </a>
+    <div class="nav-safe">🔒 <b>Private</b></div>
+  </div>
+</nav>
+
+<div class="prog" id="prog">
+  <div class="prog-in">
+    <div class="prog-top"><span class="prog-label" id="progLabel">Step 1</span><span class="prog-count" id="progCount"></span></div>
+    <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ══ ORIGIN CHOOSER ══ -->
+  <section id="originArea" style="padding:44px 0 20px">
+    <div class="resume" id="resumeBox">
+      <b>Welcome back.</b> We saved your answers on this device.
+      <div class="row">
+        <button class="btn btn-amber btn-sm" onclick="resumeDraft()">Continue where I left off</button>
+        <button class="btn btn-line btn-sm" onclick="clearDraft(true)">Start fresh</button>
+      </div>
+    </div>
+    <div class="eyebrow">Free policy review</div>
+    <h1 class="big">First — <em>how did you get here?</em></h1>
+    <p class="lead">It changes what we ask you. If you came on your own we leave the product questions
+      out entirely; if your agent invited you to a review, they belong in it.</p>
+    <div class="choose">
+      <button class="card-btn" onclick="setOrigin('agent')">
+        <div class="ci">🔗</div><h3>My agent sent me</h3>
+        <p>Someone gave you a link, a code, or asked you to complete this. A full review, coverage questions included.</p>
+        <span class="go">That's me →</span>
+      </button>
+      <button class="card-btn warm" onclick="setOrigin('client')">
+        <div class="ci">🙋</div><h3>I came on my own</h3>
+        <p>Nobody sent you. Records, beneficiaries and a named person to call — and nothing you didn't ask for.</p>
+        <span class="go">That's me →</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ══ TYPE CHOOSER ══ -->
+  <section id="typeArea" style="display:none;padding:44px 0 20px">
+    <div class="eyebrow" id="typeEyebrow">Free policy review</div>
+    <h1 class="big">Is this <em>yours</em>, or <em>your company's</em>?</h1>
+    <p class="lead">Group plans get orphaned exactly the same way — nobody visits, nobody reconciles the
+      member list, nobody answers HR.</p>
+    <div class="choose">
+      <button class="card-btn" onclick="startForm('individual')">
+        <div class="ci">👤</div><h3>Mine or my family's</h3>
+        <p>Your own life, health or retirement policies.</p>
+        <span class="go">Start my review →</span>
+      </button>
+      <button class="card-btn warm" onclick="startForm('group')">
+        <div class="ci">🏢</div><h3>My company's plan</h3>
+        <p>Employee benefits — group life, health, pension. For HR, finance or a director.</p>
+        <span class="go">Review our plan →</span>
+      </button>
+    </div>
+    <div class="promises">
+      <div class="promise"><b>No cost, ever</b>A service review has never carried a fee.</div>
+      <div class="promise"><b>No policy number needed</b>Most people don't have it. We'll trace it.</div>
+      <div class="promise"><b>Saved as you go</b>Close the page and come back to it.</div>
+    </div>
+    <div class="nav-row"><button class="btn btn-line btn-sm" onclick="backToOrigin()">← Back</button></div>
+  </section>
+
+  <!-- ══ FORM ══ -->
+  <section id="formArea">
+    <div id="stepHost"></div>
+    <div class="nav-row">
+      <button class="btn btn-line" id="backBtn" onclick="goBack()">← Back</button>
+      <button class="btn btn-go" id="nextBtn" onclick="goNext()">Continue →</button>
+      <span class="spacer"></span><span class="saved" id="savedNote"></span>
+    </div>
+  </section>
+
+  <!-- ══ DONE ══ -->
+  <section id="doneArea"></section>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   DON'T HAVE AN AGENT — the review
+   ---------------------------------------------------------------------
+   Two doors into one form.
+
+     from=agent   an agent sent a prefilled link. A relationship exists and
+                  the client expects advice, so the coverage and cross-sell
+                  questions are switched ON.
+     from=client  they arrived on their own, usually after being ignored for
+                  years. Trust is zero. Asking "would you like a retirement
+                  plan?" in the first four minutes confirms exactly what they
+                  suspected — so those questions are switched OFF and replaced
+                  by one open question: what would you like help with.
+
+   That single rule is the reason this converts, and it is not a setting we
+   let anyone flip on for convenience.
+
+   Link parameters (all optional):
+     from=agent|client · type=individual|group · k=REF
+     name= policy= email= phone= company= agentname= agentemail=
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const CONFIG = {
+  /* Apps Script web app for Service.gs. Empty is safe — the form falls back
+     to a pre-filled email so nobody is ever turned away. */
+  API_URL: "",
+  BRAND: {
+    product:  "donthaveanagent.com",
+    agency:   "Ricky Rampersad Branch",
+    agent:    "Ricky Rampersad",
+    carrier:  "Guardian Life of the Caribbean Limited",
+    email:    "ricky.rampersad@myguardiangroup.com",
+    phone:    "(868) 678-5921",
+    whatsapp: "18686785921",
+  },
+};
+const B = CONFIG.BRAND;
+
+const YESNO = ["Yes", "No"];
+const YESNONA = ["Yes", "No", "Not sure"];
+
+/* Origin is stored as a normal answer under __origin, so any question can
+   gate on it with showIf: { id:"__origin", is:"agent" }. */
+const AGENT_ONLY = { id: "__origin", is: "agent" };
+const CLIENT_ONLY = { id: "__origin", is: "client" };
+
+/* ══════════════════ INDIVIDUAL ══════════════════ */
+const INDIVIDUAL = [
+
+{ step: "Your policy", title: "Let's find your policy",
+  blurb: "You don't need the policy number. Most people don't have it, and that's the normal condition — only about 15% of policyholders say they fully understand what they own." },
+
+  { id: "knowsPolicy", label: "Do you have your policy number to hand?", type: "choice",
+    options: ["Yes, I have it", "No — please trace it for me"], required: true,
+    note: { kind: "good", text: "<b>Either answer is fine.</b> Your name and date of birth are enough for us to find a record. Nobody is going to make you dig through a drawer." } },
+
+  { id: "policyNos", label: "Policy number(s)", type: "text", showIf: { id: "knowsPolicy", is: "Yes, I have it" },
+    placeholder: "e.g. 1234567", help: "More than one? Separate them with commas." },
+
+  { id: "insurer", label: "Which company is the policy with?", type: "select",
+    options: ["Guardian Life of the Caribbean", "Sagicor", "Maritime Life", "Tatil Life", "Colonial Life (CLICO)",
+              "Beacon", "British American", "Pan-American Life", "Another company", "I'm honestly not sure"],
+    help: "If you're not sure, say so — we can trace it from your name and date of birth." },
+
+  { id: "approxYear", label: "Roughly when did you take it out?", type: "choice",
+    showIf: { id: "knowsPolicy", is: "No — please trace it for me" },
+    options: ["In the last 5 years", "5–10 years ago", "10–20 years ago", "Over 20 years ago", "No idea"],
+    help: "A rough decade is enough to narrow a search." },
+
+  { id: "lifeAssured", label: "Your full name", type: "text", required: true,
+    placeholder: "As it would appear on the policy",
+    help: "If the name has changed since — marriage, deed poll — give us the current one and mention the old one below." },
+
+  { id: "formerName", label: "Any former name the policy might be under?", type: "text",
+    placeholder: "Optional — maiden name, previous name" },
+
+  { id: "dob", label: "Your date of birth", type: "date", required: true,
+    help: "This is what actually finds you in the system. It is used for nothing else." },
+
+  { id: "email", label: "Email address", type: "email", required: true, placeholder: "you@example.com",
+    help: "Your confirmation and a copy of your answers go here." },
+
+  { id: "mobile", label: "Mobile number", type: "tel", required: true, placeholder: "868 000 0000" },
+
+  { id: "prefContact", label: "How would you prefer we reach you?", type: "choice",
+    options: ["WhatsApp", "Phone call", "Email", "Text message"], required: true },
+
+  { id: "prefTime", label: "Best time to reach you", type: "choice",
+    options: ["Morning", "Afternoon", "Evening", "Weekends", "Anytime"] },
+
+/* ── what happened ─────────────────────────────────────────────────── */
+{ step: "What happened", title: "Tell us where things stand",
+  blurb: "No wrong answers here, and nothing you say reflects badly on you. We're establishing how long this policy has been on its own." },
+
+  { id: "agentStatus", label: "What happened to the agent who sold you this?", type: "choice", stack: true,
+    options: ["They retired", "They left the company", "They passed away", "They're still around but I never hear from them",
+              "I never had an agent — I bought it directly", "I genuinely don't know"], required: true,
+    note: { kind: "tip", text: "<b>Whatever the answer, your policy is unaffected.</b> Your contract is with the insurance company, not with an individual. Premiums, servicing and claims all continue exactly as before." } },
+
+  { id: "lastContact", label: "When did somebody last review this policy with you?", type: "choice",
+    options: ["Within the last year", "1–3 years ago", "3–5 years ago", "More than 5 years ago", "Never — not once"],
+    required: true },
+
+  { id: "understand", label: "How well do you feel you understand what you own?", type: "scale5",
+    help: "Be honest. A low score here is the most useful thing you can tell us." },
+
+  { id: "knowValue", label: "Do you know what your policy would pay, and to whom?", type: "yesnona" },
+
+  { id: "stillPaying", label: "Are you still paying premiums on it?", type: "choice",
+    options: ["Yes", "No — it's paid up", "No — I stopped paying", "I'm not sure"] },
+  { id: "stoppedWhy", label: "What happened with the premiums?", type: "textarea",
+    showIf: { id: "stillPaying", is: "No — I stopped paying" },
+    placeholder: "It's more common than you'd think, and it's often fixable.",
+    note: { kind: "tip", text: "<b>A lapsed policy is not always gone.</b> Depending on how long ago and what type it is, it may be reinstated, or it may have built a value that is still yours. It costs nothing to find out." } },
+
+  { id: "unresolved", label: "Is there anything outstanding that was never sorted out?", type: "yesno",
+    help: "A claim, a query, a letter nobody answered." },
+  { id: "unresolvedWhat", label: "Tell us what happened", type: "textarea", showIf: { id: "unresolved", is: "Yes" },
+    required: true, placeholder: "What happened, roughly when, and who you dealt with if you remember.", flag: "urgent" },
+  { id: "unresolvedUrgency", label: "How urgent is it?", type: "choice", showIf: { id: "unresolved", is: "Yes" },
+    options: ["Urgent — I need help today", "Important — this week", "Not urgent, but please fix it"], flag: "urgent",
+    note: { kind: "warn", text: "<b>This goes straight to the top.</b> It is flagged to a service manager the moment you press send, and you will hear from a person — not an auto-reply — within one business day." } },
+
+  { id: "feelHeard", label: "Anything you'd like to say about how you've been treated?", type: "textarea",
+    placeholder: "Optional. If nobody has called you in six years, you're allowed to say so.",
+    help: "We read every one of these, and we don't defend the industry when it deserves the criticism." },
+
+/* ── records ───────────────────────────────────────────────────────── */
+{ step: "Your records", title: "The things that delay claims",
+  blurb: "Almost every claim that gets held up traces back to something small being out of date. This is the part that genuinely protects your family." },
+
+  { id: "nameAddrOk", label: "Is the insurer's address for you still correct?", type: "yesnona",
+    help: "If you've moved, their letters have been going somewhere else — which is often why contact stopped." },
+  { id: "newAddress", label: "Your correct address", type: "textarea", showIf: { id: "nameAddrOk", not: "Yes" },
+    flag: "records", placeholder: "Street, town, country" },
+
+  { id: "dobOk", label: "Is your date of birth correct on the policy?", type: "yesnona",
+    note: { kind: "tip", text: "<b>Why this matters.</b> Premiums are calculated on age. A wrong date of birth discovered at claim time can reduce what gets paid — worth correcting while it's easy." } },
+
+  { id: "beneficiaryOk", label: "Is the person named to receive the money still the right person?", type: "yesnona",
+    help: "Marriages, separations, children, a death in the family. The policy pays who is named — not who you meant.", flag: "records" },
+  { id: "benName", label: "Who should it be?", type: "text", showIf: { id: "beneficiaryOk", not: "Yes" }, flag: "records" },
+  { id: "benRel", label: "Their relationship to you", type: "text", showIf: { id: "beneficiaryOk", not: "Yes" },
+    placeholder: "e.g. spouse, son, mother",
+    note: { kind: "tip", text: "We'll send you the official change of beneficiary form to sign — the insurer needs your signature to make it legal, but this starts it today." } },
+
+  { id: "benKnows", label: "Would that person know this policy exists, and where to find it?", type: "yesnona",
+    note: { kind: "warn", text: "<b>This is the one that costs families real money.</b> Only 29% of beneficiaries know the name of the insurance company, and only 25% know the benefit amount. Around one policy in every 600 is never claimed at all." } },
+  { id: "wantLocator", label: "Shall we send you a free Policy Location Record?", type: "yesno",
+    showIf: { id: "benKnows", not: "Yes" },
+    help: "One page listing what exists, the numbers and who to call. You fill it in and give it to your family. Free whether or not we ever speak again." },
+
+  { id: "otherPolicies", label: "Do you think there are other policies you've lost track of?", type: "yesnona",
+    help: "Old work policies, something a parent took out for you, a policy from a company that has since been bought.",
+    note: { kind: "tip", text: "<b>Worth asking.</b> Under section 197 of the Insurance Act 2018, money payable but unclaimed for seven years after maturity is reported to the Central Bank as unclaimed monies. A matured policy nobody told you about is exactly how that happens." } },
+  { id: "otherPoliciesWhat", label: "Anything you remember about them", type: "textarea",
+    showIf: { id: "otherPolicies", not: "No" }, placeholder: "A company name, roughly when, who arranged it — anything at all.", flag: "records" },
+
+  { id: "paperless", label: "Would you like documents by email rather than post?", type: "yesno", flag: "records" },
+
+/* ── coverage: AGENT-SENT ONLY ─────────────────────────────────────── */
+{ step: "The bigger picture", title: "While we're here", showIf: AGENT_ONLY,
+  blurb: "Your agent asked for a full review, so these are the questions that find the gaps. Answer what you like — \"not sure\" is a perfectly good answer, and skipping is fine." },
+
+  { id: "lifeChanges", label: "Has any of this happened since you took the policy out?", type: "multi", showIf: AGENT_ONLY,
+    options: ["Married or moved in together", "New baby or adopted a child", "Bought a home", "Moved house",
+              "New job or salary change", "Started a business", "Child started school or university",
+              "Separated or divorced", "A death in the family", "A serious illness or diagnosis",
+              "Retired, or retiring soon", "Caring for a parent", "None of these"],
+    note: { kind: "tip", text: "<b>This is the highest-value question on the form.</b> Over 90% of people never update their cover after a life change like these — and these are exactly the events that change what a family would need." } },
+
+  { id: "goals", label: "What matters most to you right now?", type: "multi", showIf: AGENT_ONLY,
+    options: ["Protecting my family's income", "Paying off the mortgage if something happens", "Children's education",
+              "Retirement income", "Critical illness / medical bills", "Funeral and final expenses",
+              "Building savings and investments", "Protecting my business", "Leaving something behind"] },
+
+  { id: "runway", label: "If you couldn't work tomorrow, how long could your household manage?", type: "choice", showIf: AGENT_ONLY,
+    options: ["Less than a month", "1–3 months", "3–6 months", "6–12 months", "More than a year", "I'm not sure"] },
+
+  { id: "incomeProtection", label: "Have you made arrangements to replace your income if illness or accident stopped you working?",
+    type: "yesnona", showIf: AGENT_ONLY },
+
+  { id: "medical", label: "Do you have medical or health insurance?", type: "choice", showIf: AGENT_ONLY,
+    options: ["Yes — through this insurer", "Yes — with another company", "Only through my job", "No", "Not sure"] },
+
+  { id: "retirement", label: "Do you have a pension or annuity beyond NIS?", type: "yesnona", showIf: AGENT_ONLY },
+
+  { id: "homeStatus", label: "Do you own your home?", type: "choice", showIf: AGENT_ONLY,
+    options: ["Own it outright", "Own it with a mortgage", "Renting", "Living with family"] },
+  { id: "mortgageProtected", label: "Is the mortgage covered by life insurance, so your family keeps the house?",
+    type: "yesnona", showIf: { id: "homeStatus", is: "Own it with a mortgage" } },
+
+  { id: "hasWill", label: "Do you have a current, valid Will?", type: "choice", showIf: AGENT_ONLY,
+    options: ["Yes, and it's up to date", "Yes, but it's out of date", "No", "I'm not sure"] },
+
+  { id: "wantAnalysis", label: "Would you like a free needs analysis alongside the review?", type: "yesno",
+    showIf: AGENT_ONLY, flag: "lead",
+    help: "Your numbers beside what you'd actually need. No cost, and you decide what to do with it." },
+
+/* ── the soft ask: CLIENT-DIRECT ONLY ──────────────────────────────── */
+{ step: "How we can help", title: "What would you like us to do?", showIf: CLIENT_ONLY,
+  blurb: "You came to us, so we're not going to spend your time asking what you might like to buy. One question instead." },
+
+  { id: "helpWith", label: "What would you like help with?", type: "multi", showIf: CLIENT_ONLY,
+    options: ["Just tell me what I own and what it pays", "Find a policy I've lost track of", "Fix my records",
+              "Update who the money goes to", "Sort out a problem nobody resolved", "Work out whether I'm paying too much",
+              "Check whether there's money owed to me", "Give me a person I can actually call",
+              "I'd like advice on whether I have enough cover"],
+    help: "Tick anything. The last one is the only one that leads to any kind of recommendation — and only if you tick it." },
+
+  { id: "questionsFor", label: "Is there something specific you want to ask?", type: "textarea", showIf: CLIENT_ONLY,
+    placeholder: "Ask anything. Every question gets a written answer.",
+    note: { kind: "good", text: "<b>No sales questions on this path.</b> You arrived on your own, so we've left them out entirely. If you ever want that conversation you can ask for it — and until you do, we won't." } },
+
+/* ── the agent ─────────────────────────────────────────────────────── */
+{ step: "Your agent", title: "Would you like a servicing agent?",
+  blurb: "This is optional, and \"no\" is a real answer we're happy with." },
+
+  { id: "wantAgent", label: "Shall we appoint " + B.agent + " as your servicing agent?", type: "choice", stack: true,
+    options: ["Yes — please appoint " + B.agent, "No — just fix my records and answer my questions",
+              "I'd like to speak to someone first"], required: true,
+    help: "A servicing agent is who looks after you: your reviews, your claims, your questions.",
+    note: { kind: "tip", text: "<b>This does not change your policy in any way</b> — not the cover, not the premium, not one benefit. It only changes who is responsible for looking after you. And it costs you nothing: agents are paid by the insurer, not by you." } },
+
+  { id: "coaOwnerName", label: "Your name IN BLOCK LETTERS", type: "text", required: true,
+    showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent }, flag: "agent", uppercase: true },
+  { id: "coaAddress", label: "Home address (and mailing)", type: "textarea", required: true,
+    showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent } },
+  { id: "coaPhone", label: "Telephone", type: "tel",
+    showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent } },
+
+  { id: "coaDeclare", type: "statement", showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent },
+    label: "What you are signing",
+    text: "\"After completing my Service Questionnaire and reviewing my policy(ies), I am requesting that " +
+      B.agent + " be appointed my Servicing Agent with immediate effect.\"<br><br>" +
+      "<span style='color:#93A5B8;font-size:12.5px'>This is the standard wording. Your insurer's Customer Service " +
+      "Department processes it — usually within 5 to 10 working days — and confirms it to you in writing.</span>" },
+
+  { id: "coaSignature", label: "Your signature", type: "signature", required: true,
+    showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent },
+    help: "Sign with your finger, your mouse, or type your name — all three are accepted." },
+
+  { id: "callFirst", label: "When would suit for a call?", type: "choice",
+    showIf: { id: "wantAgent", is: "I'd like to speak to someone first" },
+    options: ["As soon as possible", "This week", "Next week", "Just email me first"] },
+
+  { id: "agentComments", label: "Agent's comments", type: "textarea", agentOnly: true },
+
+{ step: "Review", title: "Check it over and send", blurb: "Nothing has been sent yet." },
+];
+
+/* ══════════════════ GROUP ══════════════════ */
+const GROUP = [
+
+{ step: "Your company", title: "Let's find your plan",
+  blurb: "You don't need the policy number to start." },
+
+  { id: "companyName", label: "Company name", type: "text", required: true },
+  { id: "knowsPolicy", label: "Do you have the group policy number?", type: "choice",
+    options: ["Yes, I have it", "No — please trace it"], required: true },
+  { id: "policyNos", label: "Group policy number(s)", type: "text", showIf: { id: "knowsPolicy", is: "Yes, I have it" } },
+  { id: "insurer", label: "Which company is the plan with?", type: "select",
+    options: ["Guardian Life of the Caribbean", "Sagicor", "Maritime Life", "Tatil Life", "Colonial Life (CLICO)",
+              "Beacon", "British American", "Pan-American Life", "Another company", "Not sure"] },
+  { id: "lives", label: "How many employees are covered?", type: "choice",
+    options: ["Under 10", "10–24", "25–49", "50–99", "100–249", "250–499", "500+"] },
+  { id: "renewalDate", label: "Plan renewal date", type: "date", help: "If you know it — it's how we time your review." },
+  { id: "companyAddress", label: "Company address", type: "textarea" },
+
+  { id: "contactName", label: "Your name", type: "text", required: true },
+  { id: "contactTitle", label: "Your job title", type: "text", placeholder: "e.g. HR Manager, Financial Controller, Director" },
+  { id: "contactEmail", label: "Your email", type: "email", required: true },
+  { id: "contactPhone", label: "Direct phone or mobile", type: "tel", required: true },
+  { id: "prefContact", label: "How would you prefer we reach you?", type: "choice",
+    options: ["Email", "Phone call", "WhatsApp", "In-person visit"], required: true },
+
+{ step: "What happened", title: "Where does the plan stand?",
+  blurb: "An orphaned group plan is more expensive than an orphaned personal one, because it quietly bills you for people who left." },
+
+  { id: "agentStatus", label: "What happened to the agent or broker who set this up?", type: "choice", stack: true,
+    options: ["They retired", "They left the company", "They're still listed but we never see them",
+              "We've never had a dedicated contact", "We don't know who it is"], required: true },
+
+  { id: "lastContact", label: "When did anyone last sit down with you about this plan?", type: "choice",
+    options: ["Within the last year", "1–2 years ago", "3–5 years ago", "More than 5 years ago", "Never"], required: true },
+
+  { id: "satisfaction", label: "How satisfied are you with how the plan is serviced?", type: "scale5" },
+
+  { id: "listingCurrent", label: "Is your member listing fully up to date?", type: "yesnona",
+    note: { kind: "warn", text: "<b>This one costs real money every month.</b> An employee who left is often still being billed; one who joined may not be covered at all. We'll reconcile the listing for you as part of the review." } },
+  { id: "pendingChanges", label: "Roughly how many additions or deletions are outstanding?", type: "text",
+    showIf: { id: "listingCurrent", not: "Yes" }, placeholder: "e.g. 3 to add, 6 to remove", flag: "records" },
+
+  { id: "billingOk", label: "Are your invoices accurate and arriving on time?", type: "yesnona" },
+  { id: "billingWhat", label: "What's going wrong with the billing?", type: "textarea",
+    showIf: { id: "billingOk", not: "Yes" }, flag: "urgent" },
+
+  { id: "claimsOk", label: "How are claims being handled for your staff?", type: "choice",
+    options: ["Well — no complaints", "Slow but they get paid", "Poorly — it's a regular problem", "We don't really know"] },
+
+  { id: "membersKnowClaim", label: "Do your employees know how to make a claim?", type: "yesnona" },
+
+  { id: "unresolved", label: "Is anything outstanding right now?", type: "yesno",
+    help: "A claim, an invoice dispute, a member who should be covered and isn't." },
+  { id: "unresolvedWhat", label: "Tell us what's outstanding", type: "textarea", showIf: { id: "unresolved", is: "Yes" },
+    required: true, placeholder: "Member names or claim numbers help us move faster.", flag: "urgent" },
+  { id: "unresolvedUrgency", label: "How urgent is it?", type: "choice", showIf: { id: "unresolved", is: "Yes" },
+    options: ["Urgent — an employee is affected right now", "Important — this week", "Not urgent, but please resolve it"],
+    flag: "urgent",
+    note: { kind: "warn", text: "<b>This escalates immediately</b>, with a response due within one business day." } },
+
+  { id: "feelHeard", label: "Anything you'd like to say about the service you've had?", type: "textarea",
+    placeholder: "Optional, and we won't be defensive about it." },
+
+/* ── benefits: AGENT-SENT ONLY ─────────────────────────────────────── */
+{ step: "The benefits", title: "Do the benefits still fit?", showIf: AGENT_ONLY,
+  blurb: "Your agent asked for a full review, so this is where we check the plan against the company you are now." },
+
+  { id: "currentBenefits", label: "Which benefits does the plan include today?", type: "multi", showIf: AGENT_ONLY,
+    options: ["Group Life", "Group Health / Medical", "Dental", "Vision", "Critical Illness", "Personal Accident",
+              "Short-term Disability", "Long-term Disability", "Pension / Deferred Annuity", "Key Person cover",
+              "Travel", "Funeral / Last Expense", "Not sure"] },
+
+  { id: "interestedBenefits", label: "Anything you'd like to explore?", type: "multi", showIf: AGENT_ONLY, flag: "lead",
+    options: ["Group Life", "Group Health / Medical", "Dental", "Vision", "Critical Illness", "Personal Accident",
+              "Disability / income protection", "Pension / Deferred Annuity", "Key Person cover", "Travel",
+              "Funeral / Last Expense", "Employee wellness programme", "None right now"] },
+
+  { id: "sumAssuredOk", label: "Is the sum assured — usually a multiple of salary — still appropriate?",
+    type: "yesnona", showIf: AGENT_ONLY,
+    note: { kind: "tip", text: "If the multiple was set years ago and salaries have moved, the benefit your staff think they have may be well short of it." } },
+
+  { id: "keyPerson", label: "If a director or key employee died tomorrow, is the business itself protected?",
+    type: "yesnona", showIf: AGENT_ONLY,
+    help: "Key person cover pays the company, not the family — it buys time to recruit and reassure the bank." },
+
+  { id: "headcountChange", label: "Has your headcount changed in the last 12 months?", type: "choice", showIf: AGENT_ONLY,
+    options: ["Grown significantly", "Grown slightly", "About the same", "Reduced slightly", "Reduced significantly"] },
+
+  { id: "costPressure", label: "Is cost pressure a concern going into renewal?", type: "yesnona", showIf: AGENT_ONLY },
+
+  { id: "wantBenchmark", label: "Would you like a market comparison before renewal?", type: "yesno",
+    showIf: AGENT_ONLY, flag: "lead",
+    help: "Your plan beside what comparable companies in your industry provide and pay." },
+
+  { id: "engagement", label: "Would your company like any of these for staff?", type: "multi", showIf: AGENT_ONLY,
+    options: ["Benefits orientation session", "On-site enrolment day", "Wellness day or health fair",
+              "Financial literacy sessions", "Retirement planning workshop", "One-on-one employee reviews",
+              "A claims clinic", "Digital benefits guide", "None right now"],
+    help: "All provided at no cost to your company." },
+
+/* ── the soft ask: CLIENT-DIRECT ONLY ──────────────────────────────── */
+{ step: "How we can help", title: "What would you like us to do?", showIf: CLIENT_ONLY,
+  blurb: "You came to us, so we won't spend your time asking what you might like to buy." },
+
+  { id: "helpWith", label: "What would you like help with?", type: "multi", showIf: CLIENT_ONLY,
+    options: ["Reconcile our member listing", "Sort out billing", "Chase outstanding claims",
+              "Explain what our plan actually covers", "Get our staff educated on their benefits",
+              "Give us a person who answers the phone", "Review whether the plan still fits us"],
+    help: "The last one is the only one that leads to any kind of recommendation, and only if you tick it." },
+
+  { id: "questionsFor", label: "Anything specific you'd like to ask?", type: "textarea", showIf: CLIENT_ONLY },
+
+/* ── change of agent ───────────────────────────────────────────────── */
+{ step: "Your agent", title: "Would you like a servicing agent?",
+  blurb: "Optional. Guardian requires a group change of agent on your company letterhead with your stamp — we'll prepare the letter for you.", },
+
+  { id: "wantAgent", label: "Shall we appoint " + B.agent + " as your servicing agent?", type: "choice", stack: true,
+    options: ["Yes — please appoint " + B.agent, "No — just help with what we've asked",
+              "We'd like to meet first"], required: true,
+    note: { kind: "tip", text: "<b>This changes who services your plan, nothing else</b> — not your benefits, your rates or your renewal date. And it costs the company nothing." } },
+
+  { id: "coaPolicyNo", label: "GROUP LIFE POLICY #", type: "text",
+    showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent }, flag: "agent",
+    help: "Leave blank if you don't have it — we'll fill it in once we trace the plan." },
+  { id: "coaFrom", label: "FROM — current agent or agency", type: "text",
+    showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent }, flag: "agent",
+    placeholder: "If you don't know, write \"unknown\"" },
+  { id: "coaTo", label: "TO — new agent", type: "text", required: true, prefill: B.agent,
+    showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent }, flag: "agent" },
+  { id: "coaEffective", label: "EFFECTIVE DATE", type: "date", required: true,
+    showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent }, flag: "agent" },
+  { id: "coaDirector", label: "Director's / authorised officer's name", type: "text", required: true,
+    showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent }, flag: "agent" },
+  { id: "coaDirectorTitle", label: "Title / position", type: "text",
+    showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent }, placeholder: "e.g. Managing Director" },
+
+  { id: "coaLetterNote", type: "statement", showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent },
+    label: "About the letter and the company stamp",
+    text: "Your insurer requires this request on your <b>company letterhead with the company stamp</b>.<br><br>" +
+      "When you send this, we email you a ready-to-print letter with every detail already filled in — you print it " +
+      "on your letterhead, stamp it, sign it and send it back. Your digital request starts the process the same day, " +
+      "so nothing waits on the post." },
+
+  { id: "coaSignature", label: "Signature of director / authorised officer", type: "signature", required: true,
+    showIf: { id: "wantAgent", is: "Yes — please appoint " + B.agent },
+    help: "Sign with your finger, your mouse, or type your name." },
+
+  { id: "callFirst", label: "When would suit for a meeting?", type: "choice",
+    showIf: { id: "wantAgent", is: "We'd like to meet first" },
+    options: ["As soon as possible", "This week", "Next week", "Around our renewal", "Just email me first"] },
+
+  { id: "agentComments", label: "Agent's comments", type: "textarea", agentOnly: true },
+
+{ step: "Review", title: "Check it over and send", blurb: "Nothing has been sent yet." },
+];
+
+/* ══════════════════ state ══════════════════ */
+const DRAFT_KEY = "dhaa-draft-v1";
+const P = new URLSearchParams(location.search);
+const state = {
+  kind: "", origin: "", answers: {}, step: 0, startedAt: null, submitting: false,
+  agentMode: P.get("agent") === "1",
+  ref: P.get("k") || "",
+  sentBy: { name: P.get("agentname") || "", email: P.get("agentemail") || "" },
+};
+let SCHEMA = [], STEPS = [];
+
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+  .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+
+/* ══ visibility ══ */
+function cond(c) {
+  if (!c) return true;
+  const v = state.answers[c.id];
+  if (c.is !== undefined) return v === c.is;
+  if (c.not !== undefined) return v !== undefined && v !== "" && v !== c.not;
+  if (c.in !== undefined) return c.in.indexOf(v) > -1;
+  if (c.has !== undefined) return Array.isArray(v) && v.indexOf(c.has) > -1;
+  return true;
+}
+function visible(q) {
+  if (q.agentOnly && !state.agentMode) return false;
+  return cond(q.showIf);
+}
+
+/* Step markers can carry showIf too — that's how a whole section of coverage
+   questions disappears for somebody who arrived on their own. */
+function buildSteps(schema) {
+  const out = [];
+  let skipping = false;
+  schema.forEach((item) => {
+    if (item.step) {
+      skipping = !cond(item.showIf);
+      if (!skipping) out.push({ name: item.step, title: item.title, blurb: item.blurb, items: [] });
+      return;
+    }
+    if (skipping) return;
+    if (q_hidden(item)) return;
+    if (out.length) out[out.length - 1].items.push(item);
+  });
+  return out;
+}
+function q_hidden(q) { return q.agentOnly && !state.agentMode; }
+
+/* ══ draft ══ */
+function saveDraft() {
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({
+      kind: state.kind, origin: state.origin, answers: state.answers,
+      step: state.step, startedAt: state.startedAt, at: Date.now(),
+    }));
+    const n = $("#savedNote");
+    if (n) { n.textContent = "✓ Saved"; clearTimeout(n._t); n._t = setTimeout(() => { n.textContent = ""; }, 1800); }
+  } catch (e) {}
+}
+function loadDraft() {
+  try {
+    const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+    if (!d || !d.kind || (Date.now() - (d.at || 0)) > 30 * 864e5) return null;
+    return d;
+  } catch (e) { return null; }
+}
+function clearDraft(hide) {
+  try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+  if (hide) $("#resumeBox").style.display = "none";
+}
+function resumeDraft() {
+  const d = loadDraft();
+  if (!d) return;
+  state.kind = d.kind; state.origin = d.origin; state.answers = d.answers || {};
+  state.startedAt = d.startedAt || Date.now();
+  state.answers.__origin = d.origin;
+  SCHEMA = d.kind === "group" ? GROUP : INDIVIDUAL;
+  STEPS = buildSteps(SCHEMA);
+  state.step = Math.min(d.step || 0, STEPS.length - 1);
+  showForm();
+}
+
+/* ══ start ══ */
+function setOrigin(o) {
+  state.origin = o;
+  state.answers.__origin = o;
+  $("#originArea").style.display = "none";
+  $("#typeArea").style.display = "block";
+  $("#typeEyebrow").textContent = o === "agent" ? "Sent by your agent · full review" : "Your own review · no sales questions";
+  const t = P.get("type");
+  if (t === "group" || t === "individual") startForm(t);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+function backToOrigin() {
+  $("#typeArea").style.display = "none";
+  $("#originArea").style.display = "block";
+}
+function startForm(kind) {
+  state.kind = kind;
+  state.step = 0;
+  state.startedAt = state.startedAt || Date.now();
+  SCHEMA = kind === "group" ? GROUP : INDIVIDUAL;
+  STEPS = buildSteps(SCHEMA);
+  prefill();
+  showForm();
+}
+function prefill() {
+  const map = state.kind === "group"
+    ? { name: "contactName", company: "companyName", policy: "policyNos", email: "contactEmail", phone: "contactPhone" }
+    : { name: "lifeAssured", policy: "policyNos", email: "email", phone: "mobile", mobile: "mobile" };
+  Object.keys(map).forEach((k) => { if (P.get(k) && !state.answers[map[k]]) state.answers[map[k]] = P.get(k); });
+  if (P.get("policy")) state.answers.knowsPolicy = "Yes, I have it";
+  if (P.get("insurer")) state.answers.insurer = P.get("insurer");
+  SCHEMA.forEach((q) => { if (q.prefill && !state.answers[q.id]) state.answers[q.id] = q.prefill; });
+}
+function showForm() {
+  $("#originArea").style.display = "none";
+  $("#typeArea").style.display = "none";
+  $("#doneArea").style.display = "none";
+  $("#formArea").style.display = "block";
+  $("#prog").style.display = "block";
+  renderStep();
+}
+
+/* ══ render ══ */
+function renderStep(keepScroll) {
+  const step = STEPS[state.step];
+  const isReview = step.name === "Review";
+  $("#progLabel").textContent = step.name;
+  $("#progCount").textContent = "Step " + (state.step + 1) + " of " + STEPS.length;
+  $("#progFill").style.width = Math.round((state.step / (STEPS.length - 1)) * 100) + "%";
+
+  let html = '<div class="step-head"><h2>' + esc(step.title) + "</h2>" +
+             (step.blurb ? "<p>" + step.blurb + "</p>" : "") + "</div>";
+  html += isReview ? renderReview() : step.items.map(renderQuestion).join("");
+
+  const y = window.scrollY;
+  $("#stepHost").innerHTML = html;
+  bindStep();
+
+  $("#backBtn").style.visibility = state.step === 0 ? "hidden" : "visible";
+  $("#nextBtn").textContent = isReview ? "Send my review →"
+    : (state.step === STEPS.length - 2 ? "Review my answers →" : "Continue →");
+  $("#nextBtn").className = isReview ? "btn btn-amber" : "btn btn-go";
+
+  if (keepScroll) window.scrollTo({ top: y });
+  else window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function renderQuestion(q) {
+  if (!visible(q)) return "";
+  let h = '<div class="q' + (q.showIf ? " kid" : "") + '" data-q="' + esc(q.id) + '">';
+  if (q.type === "statement") {
+    return h + '<div class="qlabel">' + esc(q.label) + '</div><div class="note tip" style="margin-top:10px">' + q.text + "</div></div>";
+  }
+  h += '<div class="qlabel">' + esc(q.label) + (q.required ? ' <span class="req">*</span>' : "") + "</div>";
+  if (q.help) h += '<div class="help">' + q.help + "</div>";
+  h += '<div class="ctl">' + control(q) + "</div>";
+  if (q.note) h += '<div class="note ' + q.note.kind + '">' + q.note.text + "</div>";
+  return h + '<div class="errmsg">Please answer this one so we can help you properly.</div></div>';
+}
+
+function control(q) {
+  const v = state.answers[q.id], id = esc(q.id);
+  switch (q.type) {
+    case "text": case "email": case "tel": case "date":
+      return '<input type="' + q.type + '" data-in="' + id + '" value="' + esc(v || "") + '"' +
+        (q.placeholder ? ' placeholder="' + esc(q.placeholder) + '"' : "") +
+        (q.uppercase ? ' style="text-transform:uppercase"' : "") + ">";
+    case "textarea":
+      return '<textarea data-in="' + id + '"' + (q.placeholder ? ' placeholder="' + esc(q.placeholder) + '"' : "") + ">" + esc(v || "") + "</textarea>";
+    case "select":
+      return '<select data-in="' + id + '"><option value="">Choose one…</option>' +
+        q.options.map((o) => '<option' + (v === o ? " selected" : "") + ">" + esc(o) + "</option>").join("") + "</select>";
+    case "yesno":   return pills(q, YESNO);
+    case "yesnona": return pills(q, YESNONA);
+    case "choice":  return pills(q, q.options, q.stack || q.options.some((o) => o.length > 30));
+    case "multi":   return pills(q, q.options, false, true);
+    case "scale5": {
+      const f = [{ n: 1, e: "😞", t: "Not at all" }, { n: 2, e: "😕", t: "A little" }, { n: 3, e: "😐", t: "Somewhat" },
+                 { n: 4, e: "🙂", t: "Fairly well" }, { n: 5, e: "😃", t: "Completely" }];
+      return '<div class="faces" data-scale="' + id + '">' + f.map((x) =>
+        '<button type="button" class="face' + (Number(v) === x.n ? " on" : "") + '" data-v="' + x.n + '">' +
+        '<span class="em">' + x.e + '</span><span class="tx">' + x.t + "</span></button>").join("") + "</div>";
+    }
+    case "signature":
+      return '<div class="sig-wrap"><canvas data-sig="' + id + '"></canvas><div class="sig-line"></div>' +
+        '<div class="sig-hint"' + (v && v.img ? ' style="display:none"' : "") + ">Sign here</div></div>" +
+        '<div class="sig-tools"><button type="button" class="btn btn-line btn-sm" data-sigclear="' + id + '">Clear</button>' +
+        '<span style="color:var(--muted);font-size:12.5px">or type your name:</span>' +
+        '<input type="text" data-sigtype="' + id + '" value="' + esc((v && v.typed) || "") +
+        '" placeholder="Type your full name" style="flex:1;min-width:165px"></div>';
+  }
+  return "";
+}
+
+function pills(q, options, stack, multi) {
+  const v = state.answers[q.id];
+  const on = (o) => multi ? (Array.isArray(v) && v.indexOf(o) > -1) : (v === o);
+  return '<div class="pills' + (stack ? " stack" : "") + '" data-pills="' + esc(q.id) + '"' + (multi ? ' data-multi="1"' : "") + ">" +
+    options.map((o) => '<button type="button" class="pill' + (on(o) ? " on" : "") + '" data-v="' + esc(o) + '">' + esc(o) + "</button>").join("") + "</div>";
+}
+
+/* ══ binding ══ */
+function bindStep() {
+  const host = $("#stepHost");
+  $$("[data-in]", host).forEach((el) => {
+    const h = () => setAnswer(el.dataset.in, el.value);
+    el.addEventListener("input", h); el.addEventListener("change", h);
+  });
+  $$("[data-pills]", host).forEach((box) => {
+    const key = box.dataset.pills, multi = box.dataset.multi === "1";
+    $$("button", box).forEach((b) => b.addEventListener("click", () => {
+      const val = b.dataset.v;
+      if (multi) {
+        let cur = Array.isArray(state.answers[key]) ? state.answers[key].slice() : [];
+        const exclusive = /^(none|nothing|not sure)/i.test(val);
+        if (exclusive) cur = cur.indexOf(val) > -1 ? [] : [val];
+        else {
+          cur = cur.filter((x) => !/^(none|nothing)/i.test(x));
+          cur = cur.indexOf(val) > -1 ? cur.filter((x) => x !== val) : cur.concat([val]);
+        }
+        setAnswer(key, cur, true);
+      } else setAnswer(key, state.answers[key] === val ? "" : val, true);
+    }));
+  });
+  $$("[data-scale]", host).forEach((box) => $$("button", box).forEach((b) =>
+    b.addEventListener("click", () => setAnswer(box.dataset.scale, Number(b.dataset.v), true))));
+  $$("[data-sig]", host).forEach(initSignature);
+  $$("[data-sigtype]", host).forEach((el) => el.addEventListener("input", () => {
+    const cur = Object.assign({}, state.answers[el.dataset.sigtype] || {});
+    cur.typed = el.value; setAnswer(el.dataset.sigtype, cur);
+  }));
+  $$("[data-sigclear]", host).forEach((b) => b.addEventListener("click", () => {
+    const key = b.dataset.sigclear, cv = $('[data-sig="' + key + '"]', host);
+    if (cv) cv.getContext("2d").clearRect(0, 0, cv.width, cv.height);
+    const tp = $('[data-sigtype="' + key + '"]', host); if (tp) tp.value = "";
+    setAnswer(key, "");
+    const hint = cv && cv.parentNode.querySelector(".sig-hint"); if (hint) hint.style.display = "";
+  }));
+  $$("[data-edit]", host).forEach((b) => b.addEventListener("click", () => { state.step = Number(b.dataset.edit); renderStep(); }));
+  $$("[data-consent]", host).forEach((el) => el.addEventListener("change", () => {
+    state.answers[el.dataset.consent] = el.checked; saveDraft();
+  }));
+}
+
+function setAnswer(key, val, rerender) {
+  state.answers[key] = val;
+  saveDraft();
+  const box = $('[data-q="' + key + '"]'); if (box) box.classList.remove("err");
+  const gates = SCHEMA.some((x) => x.showIf && x.showIf.id === key);
+  if (rerender || gates) renderStep(true);
+}
+
+/* ══ signature ══ */
+function initSignature(canvas) {
+  const key = canvas.dataset.sig;
+  const ratio = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * ratio; canvas.height = 160 * ratio;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(ratio, ratio);
+  ctx.lineWidth = 2.2; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = "#16202c";
+  const saved = state.answers[key];
+  if (saved && saved.img) { const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, rect.width, 160); im.src = saved.img; }
+
+  let drawing = false, dirty = false;
+  const pos = (e) => { const r = canvas.getBoundingClientRect(); const t = e.touches ? e.touches[0] : e;
+    return { x: t.clientX - r.left, y: t.clientY - r.top }; };
+  const start = (e) => { e.preventDefault(); drawing = true; const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y);
+    const hint = canvas.parentNode.querySelector(".sig-hint"); if (hint) hint.style.display = "none"; };
+  const move = (e) => { if (!drawing) return; e.preventDefault(); const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); dirty = true; };
+  const end = () => {
+    if (!drawing) return; drawing = false; if (!dirty) return;
+    const cur = Object.assign({}, state.answers[key] || {});
+    cur.img = canvas.toDataURL("image/png");
+    state.answers[key] = cur; saveDraft();
+    const box = $('[data-q="' + key + '"]'); if (box) box.classList.remove("err");
+  };
+  canvas.addEventListener("mousedown", start); canvas.addEventListener("mousemove", move);
+  window.addEventListener("mouseup", end);
+  canvas.addEventListener("touchstart", start, { passive: false });
+  canvas.addEventListener("touchmove", move, { passive: false });
+  canvas.addEventListener("touchend", end);
+}
+
+/* ══ collect ══ */
+function collect() {
+  const out = [];
+  let section = "", skipping = false;
+  SCHEMA.forEach((q) => {
+    if (q.step) { skipping = !cond(q.showIf); section = q.step; return; }
+    if (skipping || q.type === "statement" || !visible(q)) return;
+    const v = state.answers[q.id];
+    if (v === undefined || v === "" || (Array.isArray(v) && !v.length)) return;
+    let text;
+    if (q.type === "signature") text = (v.img ? "Signed on screen" : "") + (v.typed ? (v.img ? " · typed: " : "Typed: ") + v.typed : "");
+    else if (q.type === "scale5") text = v + " of 5";
+    else if (Array.isArray(v)) text = v.join(", ");
+    else text = String(v);
+    if (!text) return;
+    out.push({ section: section, id: q.id, label: q.label, value: text, flag: q.flag || "" });
+  });
+  return out;
+}
+
+/* ══ review ══ */
+function renderReview() {
+  const rows = collect();
+  const sections = [];
+  rows.forEach((r) => {
+    let s = sections.find((x) => x.name === r.section);
+    if (!s) { s = { name: r.section, rows: [] }; sections.push(s); }
+    s.rows.push(r);
+  });
+
+  let h = '<div class="note good" style="margin-bottom:18px"><b>Almost done.</b> Have a quick look, then press send. ' +
+    "A copy of all of this goes to your inbox — it's a useful record to keep.</div>";
+
+  sections.forEach((s) => {
+    const idx = STEPS.findIndex((x) => x.name === s.name);
+    h += '<div class="rev-sec"><h4>' + esc(s.name) +
+      (idx > -1 ? '<button class="btn btn-line btn-sm" data-edit="' + idx + '">Edit</button>' : "") + "</h4>" +
+      '<table class="rev-tbl">' + s.rows.map((r) => "<tr><td>" + esc(r.label) + "</td><td>" + esc(r.value) + "</td></tr>").join("") +
+      "</table></div>";
+  });
+
+  h += '<div class="consent">' +
+    '<label class="check"><input type="checkbox" data-consent="consentTrue"' + (state.answers.consentTrue ? " checked" : "") + ">" +
+      "<span>What I've said here is true and correct as far as I know.</span></label>" +
+    '<label class="check"><input type="checkbox" data-consent="consentUse"' + (state.answers.consentUse ? " checked" : "") + ">" +
+      "<span>I agree that " + esc(B.agency) + " may use this to trace and service my " +
+      (state.kind === "group" ? "company's plan" : "policies") + ", and may pass what's needed to my insurer's customer service department to action my requests.</span></label>" +
+    '<label class="check"><input type="checkbox" data-consent="consentMarketing"' + (state.answers.consentMarketing ? " checked" : "") + ">" +
+      "<span>I'm happy to receive occasional useful information. <span style='color:var(--muted)'>(Optional. Saying no changes nothing about your service — and we mean that.)</span></span></label>" +
+    "</div>";
+
+  const noSell = state.origin === "client";
+  h += '<div class="note ' + (noSell ? "good" : "tip") + '">' +
+    (noSell
+      ? "<b>A reminder of what you're not signing up for.</b> You came here on your own, so there were no product questions in this form and there will be no sales call. You'll get your answers, your records fixed, and a name and number. That's it."
+      : "<b>What happens when you press send.</b> Your review reaches the office immediately, a copy lands in your inbox, and anything unresolved is flagged to a service manager with a one-business-day response promised.") +
+    "</div>";
+  return h;
+}
+
+/* ══ validation ══ */
+function validateStep() {
+  const step = STEPS[state.step];
+  if (step.name === "Review") {
+    if (!state.answers.consentTrue || !state.answers.consentUse) {
+      alert("Please tick the first two boxes so we're allowed to act on your answers.");
+      return false;
+    }
+    return true;
+  }
+  let firstBad = null;
+  step.items.forEach((q) => {
+    if (!visible(q) || !q.required) return;
+    const v = state.answers[q.id];
+    let ok = !(v === undefined || v === "" || (Array.isArray(v) && !v.length));
+    if (ok && q.type === "signature") ok = !!(v.img || (v.typed || "").trim().length > 1);
+    if (ok && q.type === "email") ok = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(v));
+    if (ok && q.type === "tel") ok = String(v).replace(/\D/g, "").length >= 7;
+    const box = $('[data-q="' + q.id + '"]');
+    if (!ok) {
+      if (box) {
+        box.classList.add("err");
+        const m = box.querySelector(".errmsg");
+        if (m) m.textContent = q.type === "email" ? "We need a working email to send your copy."
+          : q.type === "tel" ? "Please give us a number we can reach you on."
+          : q.type === "signature" ? "Please sign, or type your full name."
+          : "Please answer this one so we can help you properly.";
+      }
+      if (!firstBad) firstBad = box;
+    } else if (box) box.classList.remove("err");
+  });
+  if (firstBad) { firstBad.scrollIntoView({ behavior: "smooth", block: "center" }); return false; }
+  return true;
+}
+
+function goNext() {
+  if (!validateStep()) return;
+  if (STEPS[state.step].name === "Review") { submitAll(); return; }
+  state.step = Math.min(state.step + 1, STEPS.length - 1);
+  saveDraft(); renderStep();
+}
+function goBack() {
+  if (state.step === 0) { $("#formArea").style.display = "none"; $("#prog").style.display = "none"; backToOrigin(); return; }
+  state.step--; saveDraft(); renderStep();
+}
+
+/* ══ submit ══ */
+function core() {
+  const a = state.answers, g = state.kind === "group";
+  return {
+    clientName: g ? (a.contactName || "") : (a.lifeAssured || ""),
+    companyName: g ? (a.companyName || "") : "",
+    email: g ? (a.contactEmail || "") : (a.email || ""),
+    phone: g ? (a.contactPhone || "") : (a.mobile || ""),
+    policyNos: a.policyNos || "",
+    insurer: a.insurer || "",
+    needsTracing: a.knowsPolicy && a.knowsPolicy.indexOf("No") === 0,
+    prefContact: a.prefContact || "",
+    agentStatus: a.agentStatus || "",
+    lastContact: a.lastContact || "",
+    satisfaction: a.satisfaction || a.understand || "",
+    unresolved: a.unresolved === "Yes",
+    unresolvedUrgency: a.unresolvedUrgency || "",
+    changeAgent: String(a.wantAgent || "").indexOf("Yes") === 0,
+    wantsCall: String(a.wantAgent || "").indexOf("speak") > -1 || String(a.wantAgent || "").indexOf("meet") > -1,
+    consentMarketing: !!a.consentMarketing,
+  };
+}
+function priority() {
+  const c = core();
+  if (c.unresolved && /Urgent/i.test(c.unresolvedUrgency)) return "URGENT";
+  if (c.unresolved) return "HIGH";
+  if (/More than 5 years|Never/i.test(c.lastContact)) return "HIGH";
+  if (c.changeAgent || c.needsTracing) return "ACTION";
+  if (collect().some((r) => r.flag === "records")) return "ACTION";
+  return "NORMAL";
+}
+function payload() {
+  return {
+    action: "service",
+    source: "donthaveanagent.com",
+    origin: state.origin,
+    kind: state.kind,
+    submittedAt: new Date().toISOString(),
+    page: location.href,
+    agentMode: state.agentMode,
+    sentBy: state.sentBy,
+    linkRef: state.ref,
+    minutesTaken: state.startedAt ? Math.round((Date.now() - state.startedAt) / 60000) : "",
+    core: core(),
+    priority: priority(),
+    fields: collect(),
+    signature: (state.answers.coaSignature && state.answers.coaSignature.img) || "",
+    signatureTyped: (state.answers.coaSignature && state.answers.coaSignature.typed) || "",
+    consent: { true: !!state.answers.consentTrue, use: !!state.answers.consentUse, marketing: !!state.answers.consentMarketing },
+  };
+}
+function localRef() {
+  const d = new Date(), p = (n) => String(n).padStart(2, "0");
+  /* Matches the server's format so a reference looks the same however it was
+     produced — DHAG for a group plan, DHA for an individual. */
+  return (state.kind === "group" ? "DHAG-" : "DHA-") +
+    String(d.getFullYear()).slice(2) + p(d.getMonth() + 1) + p(d.getDate()) +
+    "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
+}
+
+async function submitAll() {
+  const btn = $("#nextBtn");
+  btn.disabled = true; btn.textContent = "Sending…";
+  state.submitting = true;
+  const body = payload();
+  let ref = "", sent = false;
+  if (CONFIG.API_URL) {
+    try {
+      const res = await fetch(CONFIG.API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },  // no CORS preflight for Apps Script
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      sent = res.ok && data.ok !== false;
+      ref = data.ref || "";
+    } catch (e) { sent = false; }
+  }
+  if (!ref) ref = localRef();
+  if (!sent) mailFallback(body, ref);
+  clearDraft(false);
+  renderDone(ref, sent);
+}
+
+function mailFallback(body, ref) {
+  const c = body.core;
+  let t = "POLICY REVIEW — donthaveanagent.com\nReference: " + ref + "\nPriority: " + body.priority +
+    "\nArrived: " + (body.origin === "agent" ? "sent by an agent" : "direct from the client") + "\n\n";
+  let sec = "";
+  body.fields.forEach((f) => {
+    if (f.section !== sec) { sec = f.section; t += "\n── " + sec.toUpperCase() + " ──\n"; }
+    t += f.label + "\n   " + f.value + "\n";
+  });
+  if (body.signatureTyped) t += "\nSigned (typed): " + body.signatureTyped + "\n";
+  const subject = "[" + body.priority + "] Policy review — " + (c.companyName || c.clientName || "client") + " (" + ref + ")";
+  const a = document.createElement("a");
+  a.href = "mailto:" + B.email + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(t);
+  a.style.display = "none"; document.body.appendChild(a); a.click();
+  setTimeout(() => a.remove(), 1000);
+  window._fallbackMail = a.href;
+}
+
+/* ══ done ══ */
+function renderDone(ref, sent) {
+  const a = state.answers, c = core();
+  const first = String(c.clientName || "").trim().split(/\s+/)[0] || "";
+  const g = state.kind === "group";
+  const next = [];
+
+  if (c.needsTracing) {
+    next.push("<b>We're tracing your " + (g ? "plan" : "policy") + " now.</b> Your name and date of birth are " +
+      "usually enough. If we can't find it with " + esc(c.insurer || "the insurer") + " we'll check the others, and " +
+      "we'll tell you either way — including if the answer is that nothing turns up.");
+  }
+  if (c.unresolved) {
+    next.push("<b>Your outstanding issue is flagged.</b> A service manager has it now" +
+      (c.unresolvedUrgency ? ", marked &ldquo;" + esc(c.unresolvedUrgency) + "&rdquo;" : "") +
+      ". You'll hear from a person within one business day — or call " + esc(B.phone) + " and quote the reference.");
+  }
+  if (c.changeAgent) {
+    next.push(g
+      ? "<b>Your change of agent letter is on its way</b>, filled in and ready for your letterhead. Print it, apply the company stamp, sign it and send it back. We've started the request today so nothing waits on the post."
+      : "<b>Your request to appoint " + esc(B.agent) + " has gone to Customer Service.</b> It usually takes 5 to 10 working days and the insurer confirms it to you in writing. Your policy, premium and cover are untouched.");
+  }
+  if (c.wantsCall) next.push("<b>We'll call you before anything else happens.</b> No paperwork, no forms — just a conversation so you can decide.");
+
+  const recs = [];
+  if (a.nameAddrOk && a.nameAddrOk !== "Yes") recs.push("your address");
+  if (a.dobOk && a.dobOk !== "Yes") recs.push("your date of birth");
+  if (a.beneficiaryOk && a.beneficiaryOk !== "Yes") recs.push("who the money goes to");
+  if (a.paperless === "Yes") recs.push("switching you to e-documents");
+  if (a.listingCurrent && a.listingCurrent !== "Yes") recs.push("reconciling your member listing");
+  if (a.billingOk && a.billingOk !== "Yes") recs.push("your billing");
+  if (recs.length) next.push("<b>We're correcting " + esc(recs.join(", ")) + ".</b> Where the insurer needs your " +
+    "signature — a beneficiary change always does — the form comes to you already filled in.");
+
+  if (a.wantLocator === "Yes") next.push("<b>Your free Policy Location Record is on its way</b> — the one page your family will be glad exists.");
+  if (a.otherPolicies && a.otherPolicies !== "No") next.push("<b>We'll search for the policies you've lost track of</b>, and check whether anything has been sitting unclaimed.");
+  if (Array.isArray(a.helpWith) && a.helpWith.length) next.push("<b>Everything you asked for is on the list</b>: " + esc(a.helpWith.slice(0, 4).join("; ")) + ".");
+  if (a.wantAnalysis === "Yes") next.push("<b>Your free needs analysis is booked in.</b> We bring the numbers; you decide what, if anything, to do with them.");
+  if (a.wantBenchmark === "Yes") next.push("<b>We'll prepare your market comparison</b> ahead of renewal.");
+  if (a.questionsFor || a.feelHeard) next.push("<b>What you wrote gets read by a person</b>, and answered in writing. Not a template.");
+  next.push("<b>A copy of everything is in your inbox</b> at " + esc(c.email || "your email address") + ".");
+
+  let h = '<div class="done-mark">✓</div><h1>Thank you' + (first ? ", " + esc(first) : "") + ".</h1>";
+  h += '<p class="lead" style="margin-bottom:8px">' + (sent
+    ? "You're no longer an orphan policyholder. Here's exactly what happens next — no mystery, no waiting to wonder."
+    : "Your answers are ready to send. We've opened an email with everything in it — <b>press send in your mail app</b> and it's done.") + "</p>";
+  h += '<div class="ref-chip">Reference ' + esc(ref) + "</div>";
+
+  if (!sent) h += '<div class="note warn" style="margin-bottom:18px"><b>One more tap.</b> Your mail app should have ' +
+    'opened with your answers written out. Press send there, or <a href="#" onclick="if(window._fallbackMail)location.href=window._fallbackMail;return false">tap here to open it again</a>. ' +
+    "Nothing is lost — you can also print this page.</div>";
+
+  if (state.origin === "client") {
+    h += '<div class="note good" style="margin-bottom:16px"><b>And to be clear about what happens next:</b> ' +
+      "nobody is going to ring you up to sell you something. You asked for help with specific things and that is " +
+      "what you'll get. If you ever want the wider conversation, you'll have to ask us for it.</div>";
+  }
+
+  h += '<div class="done-card"><h3>What happens next</h3><ul class="next-list">' +
+    next.map((n, i) => '<li><span class="n">' + (i + 1) + "</span><span>" + n + "</span></li>").join("") + "</ul></div>";
+
+  h += '<div class="done-card"><h3>Need us before then?</h3>' +
+    '<p style="color:var(--muted);font-size:14px">Quote your reference and whoever answers will know exactly where you are.</p>' +
+    '<div class="done-actions">' +
+      '<a class="btn btn-go" href="tel:' + esc(B.phone.replace(/\D/g, "")) + '">📞 ' + esc(B.phone) + "</a>" +
+      '<a class="btn btn-line" href="https://wa.me/' + esc(B.whatsapp) + "?text=" + encodeURIComponent("Hi, I just completed my policy review — reference " + ref) + '" target="_blank" rel="noopener">💬 WhatsApp</a>' +
+      '<a class="btn btn-line" href="mailto:' + esc(B.email) + "?subject=" + encodeURIComponent("Policy review " + ref) + '">✉️ Email</a>' +
+    "</div></div>";
+
+  h += '<div class="done-actions no-print" style="margin-top:18px">' +
+    '<button class="btn btn-amber" onclick="window.print()">🖨️ Print / save my copy</button>' +
+    '<a class="btn btn-line" href="index.html">← Back to donthaveanagent.com</a></div>';
+
+  h += '<div id="printCopy" style="display:none">' + printable(ref) + '</div>' +
+       "<style>@media print{#printCopy{display:block !important}}</style>";
+
+  $("#formArea").style.display = "none";
+  $("#prog").style.display = "none";
+  const d = $("#doneArea"); d.innerHTML = h; d.style.display = "block";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function printable(ref) {
+  let h = '<hr style="margin:26px 0"><h3 style="font-size:16px">Policy review — ' + esc(B.product) + "</h3>" +
+    '<p style="font-size:12px;color:#555;margin-bottom:12px">Reference ' + esc(ref) + " · " + new Date().toLocaleString() + "</p>";
+  let sec = "";
+  collect().forEach((r) => {
+    if (r.section !== sec) { sec = r.section; h += '<h4 style="font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin:16px 0 6px">' + esc(sec) + "</h4>"; }
+    h += '<div style="font-size:12.5px;padding:5px 0;border-bottom:1px solid #eee"><b>' + esc(r.label) + "</b><br>" + esc(r.value) + "</div>";
+  });
+  return h;
+}
+
+/* ══ boot ══ */
+(function boot() {
+  $("#foot").innerHTML =
+    esc(B.product) + " is a service of <b>" + esc(B.agency) + "</b>. Reviews are carried out by " + esc(B.agent) +
+    ", an agent of " + esc(B.carrier) + ". A policy service review is free and carries no obligation.<br><br>" +
+    "Nothing here changes your policy, premium or benefits. Changes to policy records — beneficiary, address, date of " +
+    "birth, servicing agent — take effect only once processed and confirmed in writing by your insurer, and your policy " +
+    "contract governs in all cases. We do not ask for national ID numbers, bank details or medical history.<br><br>" +
+    '<a href="tel:+' + B.phone.replace(/\D/g, "") + '">' + esc(B.phone) + "</a> · " +
+    '<a href="mailto:' + esc(B.email) + '">' + esc(B.email) + "</a> · " +
+    '<a href="index.html">Back to ' + esc(B.product) + "</a>";
+
+  if (loadDraft()) $("#resumeBox").style.display = "block";
+
+  const from = P.get("from");
+  if (from === "agent" || from === "client") setOrigin(from);
+
+  window.addEventListener("beforeunload", (e) => {
+    if (state.submitting) return;
+    if ($("#formArea").style.display === "block" && Object.keys(state.answers).length > 3) {
+      e.preventDefault(); e.returnValue = "";
+    }
+  });
+})();
+</script>
+</body>
+</html>

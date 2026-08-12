@@ -93,6 +93,12 @@ The backend is `../apps-script/Service.gs`. It is **its own Apps Script project 
 spreadsheet** — the same arrangement as `Market.gs`. It cannot touch or break the renewal
 platform in `Code.gs`.
 
+It also serves **[donthaveanagent.com](../donthaveanagent/README.md)** — one backend, two
+front doors, one worklist. Paste the same `/exec` URL into `CONFIG.API_URL` in both
+`service/index.html` and `donthaveanagent/review.html`. Submissions are told apart by the
+`Source` and `Arrived via` columns, and each client's confirmation email is branded as the
+product they actually used (`SQ-`/`GSQ-` references from here, `DHA-`/`DHAG-` from there).
+
 1. Create a Google Sheet called **Service Questionnaires**.
 2. **Extensions → Apps Script**. Paste in `apps-script/Service.gs`. Save.
 3. Fill in the `SVC` block at the top — see **The one setting that matters** below.

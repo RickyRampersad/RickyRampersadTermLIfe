@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Agent console — Don't Have An Agent</title>
+<meta name="robots" content="noindex"/>
+<meta name="theme-color" content="#0A1017"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='27' fill='none' stroke='%23F5A623' stroke-width='4' stroke-dasharray='7 6' stroke-linecap='round'/%3E%3Ccircle cx='30' cy='27' r='8' fill='%23EEF3F8'/%3E%3Cpath d='M16 47c0-7.7 6.3-14 14-14s14 6.3 14 14' fill='%23EEF3F8'/%3E%3Ccircle cx='50' cy='48' r='13' fill='%2322C482'/%3E%3Cpath d='M44 48l4.5 4.5L57 43' stroke='%230A1017' stroke-width='4.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0A1017;--ink2:#0E1620;--surface:#151F2B;--surface2:#1B2836;
+  --line:rgba(255,255,255,.075);--line2:rgba(255,255,255,.14);
+  --text:#EEF3F8;--muted:#93A5B8;--muted2:#6B7F94;
+  --amber:#F5A623;--emerald:#22C482;--red:#FF6B6B;
+  --emerald-soft:rgba(34,196,130,.12);--amber-soft:rgba(245,166,35,.11);
+  --head:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--body);background:var(--ink);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(ellipse 70% 40% at 50% -10%,rgba(34,196,130,.06),transparent 70%);background-attachment:fixed}
+h1,h2,h3{font-family:var(--head);letter-spacing:-.02em;line-height:1.18}
+a{color:var(--emerald)}
+.wrap{max-width:1020px;margin:0 auto;padding:0 18px 80px}
+
+.nav{position:sticky;top:0;z-index:90;background:rgba(10,16,23,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.nav-in{max-width:1020px;margin:0 auto;padding:0 18px;height:62px;display:flex;align-items:center;gap:11px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo svg{width:32px;height:32px}
+.logo-word{font-family:var(--head);font-weight:800;font-size:13.5px;letter-spacing:-.035em;white-space:nowrap}
+.logo-word .dim{color:var(--muted2);font-weight:600}
+.logo-word .dot{color:var(--emerald);font-weight:600;font-size:11.5px}
+.nav-tag{margin-left:auto;font-size:11.5px;color:var(--amber);background:var(--amber-soft);border:1px solid rgba(245,166,35,.3);padding:5px 12px;border-radius:99px;font-weight:600}
+
+/* gate */
+.gate{max-width:410px;margin:70px auto;text-align:center}
+.gate svg{width:56px;height:56px;margin:0 auto 18px}
+.gate h1{font-size:25px;font-weight:800;margin-bottom:8px}
+.gate p{color:var(--muted);font-size:14.5px;margin-bottom:22px}
+.gate input{width:100%;font:inherit;font-size:17px;font-weight:700;letter-spacing:.16em;text-align:center;
+  color:var(--text);background:rgba(0,0,0,.3);border:1px solid var(--line2);border-radius:12px;padding:14px}
+.gate input:focus{outline:none;border-color:var(--emerald)}
+.gate .btn{width:100%;margin-top:12px}
+.gate .err{display:none;background:rgba(255,107,107,.12);border:1px solid rgba(255,107,107,.4);color:#ffc9c9;
+  border-radius:10px;padding:10px 13px;font-size:13px;margin-top:12px}
+
+#app{display:none}
+.head{padding:34px 0 8px}
+.eyebrow{font-family:var(--head);font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--emerald);margin-bottom:12px}
+.head h1{font-size:clamp(26px,4.5vw,36px);font-weight:800;margin-bottom:10px}
+.head h1 em{font-style:normal;color:var(--emerald)}
+.head p{color:var(--muted);font-size:15.5px;max-width:640px}
+
+.grid{display:grid;grid-template-columns:1.05fr .95fr;gap:20px;margin-top:28px;align-items:start}
+/* Grid items default to min-width:auto, so one long unbreakable URL in the
+   link box would otherwise blow the whole column out of the viewport. */
+.grid>*{min-width:0}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.card{background:linear-gradient(158deg,var(--surface),var(--surface2));border:1px solid var(--line);border-radius:20px;padding:24px 22px}
+.card h2{font-size:17px;font-weight:700;margin-bottom:4px}
+.card .sub{font-size:13.2px;color:var(--muted);margin-bottom:18px}
+.sticky-side{position:sticky;top:82px}
+
+label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:15px 0 6px}
+label:first-of-type{margin-top:0}
+label .opt{color:var(--muted2);font-weight:400}
+input[type=text],input[type=email],input[type=tel],select,textarea{
+  width:100%;font:inherit;font-size:14.8px;color:var(--text);background:rgba(0,0,0,.28);
+  border:1px solid var(--line2);border-radius:11px;padding:11px 13px;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--emerald)}
+input::placeholder,textarea::placeholder{color:#5d7185}
+select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%2393A5B8' stroke-width='2' fill='none' stroke-linecap='round'/></svg>");
+  background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+select option{background:var(--surface);color:var(--text)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+@media(max-width:560px){.pair{grid-template-columns:1fr}}
+
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{flex:1;min-width:120px;font:inherit;font-size:13.8px;cursor:pointer;color:var(--muted);
+  background:rgba(255,255,255,.04);border:1.5px solid var(--line);border-radius:11px;padding:11px 13px;transition:all .15s;text-align:left}
+.seg button:hover{border-color:var(--line2);color:var(--text)}
+.seg button.on{border-color:var(--emerald);background:var(--emerald-soft);color:var(--text);font-weight:600}
+.seg button b{display:block;font-size:13.8px}
+.seg button span{display:block;font-size:11.6px;color:var(--muted);font-weight:400;margin-top:2px}
+.seg button.on span{color:#a9c9ba}
+
+.toggle{display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,.03);border:1px solid var(--line);
+  border-radius:13px;padding:14px 15px;cursor:pointer;margin-top:11px;transition:border-color .15s}
+.toggle:hover{border-color:var(--line2)}
+.toggle.on{border-color:var(--emerald);background:var(--emerald-soft)}
+.toggle input{width:19px;height:19px;margin-top:2px;flex-shrink:0;accent-color:var(--emerald);cursor:pointer}
+.toggle b{display:block;font-size:14px;font-family:var(--head);font-weight:700}
+.toggle span{font-size:12.6px;color:var(--muted);line-height:1.5}
+
+.note{border-radius:0 12px 12px 0;padding:12px 15px;margin-top:14px;font-size:12.9px;line-height:1.6}
+.note.tip{background:var(--amber-soft);border-left:3px solid var(--amber)}
+.note.good{background:var(--emerald-soft);border-left:3px solid var(--emerald)}
+.note b{color:var(--text)}
+
+/* link preview */
+.linkbox{background:rgba(0,0,0,.34);border:1px solid var(--line2);border-radius:12px;padding:13px 14px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.2px;color:var(--emerald);
+  word-break:break-all;overflow-wrap:anywhere;line-height:1.6;max-height:120px;overflow-y:auto}
+.msgbox{background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:12px;padding:14px;
+  font-size:13.4px;color:var(--text);white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6;
+  max-height:290px;overflow-y:auto}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin:13px 0}
+.chip{font-size:11.5px;padding:5px 11px;border-radius:99px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--muted)}
+.chip.on{border-color:rgba(34,196,130,.45);background:var(--emerald-soft);color:#b6f0d5}
+.chip.warm{border-color:rgba(245,166,35,.42);background:var(--amber-soft);color:#ffdaa8}
+
+.btn{font-family:var(--head);font-weight:700;font-size:14px;cursor:pointer;border:none;border-radius:12px;padding:12px 20px;
+  transition:all .16s;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.btn-go{background:var(--emerald);color:#06120C}
+.btn-go:hover{background:#2FDD93;transform:translateY(-1px)}
+.btn-go:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn-line{background:rgba(255,255,255,.05);border:1px solid var(--line2);color:var(--text)}
+.btn-line:hover{border-color:var(--emerald)}
+.btn-sm{padding:9px 15px;font-size:12.8px;border-radius:10px}
+.send-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+@media(max-width:560px){.send-row{grid-template-columns:1fr}}
+
+/* recent */
+.recent{margin-top:20px}
+.recent h2{font-size:15.5px;font-weight:700;margin-bottom:12px}
+.ritem{display:flex;gap:12px;align-items:center;background:rgba(255,255,255,.03);border:1px solid var(--line);
+  border-radius:13px;padding:12px 14px;margin-bottom:8px;font-size:13.4px}
+.ritem .rname{font-weight:600}
+.ritem .rmeta{font-size:11.8px;color:var(--muted2)}
+.ritem .ract{margin-left:auto;display:flex;gap:7px;flex-shrink:0}
+.empty{font-size:13.4px;color:var(--muted2);padding:16px 0}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,120%);background:var(--emerald);color:#06120C;
+  font-family:var(--head);font-weight:700;font-size:14px;padding:13px 24px;border-radius:12px;z-index:200;transition:transform .3s cubic-bezier(.2,1.2,.4,1)}
+.toast.on{transform:translate(-50%,0)}
+.foot{border-top:1px solid var(--line);margin-top:34px;padding:20px 0 40px;font-size:11.6px;color:var(--muted2);line-height:1.7}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001s!important;transition-duration:.05s!important}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-in">
+    <a class="logo" href="../index.html">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <circle cx="32" cy="32" r="27" fill="none" stroke="#22C482" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="30" cy="27" r="8" fill="#EEF3F8"/>
+        <path d="M16 47c0-7.7 6.3-14 14-14s14 6.3 14 14" fill="#EEF3F8"/>
+        <circle cx="50" cy="48" r="13" fill="#22C482"/>
+        <path d="M44 48l4.5 4.5L57 43" stroke="#0A1017" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="logo-word"><span class="dim">don't have</span> an agent<span class="dot">.com</span></span>
+    </a>
+    <span class="nav-tag" id="navTag">Agent console</span>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <!-- ══ GATE ══ -->
+  <div class="gate" id="gate">
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <circle cx="32" cy="32" r="27" fill="none" stroke="#F5A623" stroke-width="4" stroke-dasharray="7 6" stroke-linecap="round"/>
+      <circle cx="30" cy="27" r="8" fill="#EEF3F8"/>
+      <path d="M16 47c0-7.7 6.3-14 14-14s14 6.3 14 14" fill="#EEF3F8"/>
+    </svg>
+    <h1>Agent console</h1>
+    <p>Generate a personal review link for a client and send it in one tap.</p>
+    <input id="gateCode" type="text" placeholder="ACCESS CODE" autocomplete="off" spellcheck="false">
+    <button class="btn btn-go" onclick="tryGate()">Enter →</button>
+    <div class="err" id="gateErr">That code isn't right. Check with the branch.</div>
+    <p style="font-size:12px;color:var(--muted2);margin-top:20px">
+      Not an agent? <a href="../index.html">Go to donthaveanagent.com</a>
+    </p>
+  </div>
+
+  <!-- ══ APP ══ -->
+  <div id="app">
+    <div class="head">
+      <div class="eyebrow">Send a review</div>
+      <h1>Fill in what you know.<br><em>They fill in the rest.</em></h1>
+      <p>Every field is optional except a way to reach them. Whatever you enter arrives prefilled,
+         which is the difference between a client starting cold and starting halfway done.</p>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT: the form -->
+      <div class="card">
+        <h2>The client</h2>
+        <p class="sub">Prefilled details save them typing — and make the link feel personal rather than mass-sent.</p>
+
+        <label>Who is this for?</label>
+        <div class="seg" id="segType">
+          <button data-v="individual" class="on"><b>👤 Individual</b><span>A person or a family</span></button>
+          <button data-v="group"><b>🏢 Group / company</b><span>Employee benefits plan</span></button>
+        </div>
+
+        <div id="fIndividual">
+          <label>Client's full name</label>
+          <input id="fName" type="text" placeholder="e.g. Anisa Mohammed">
+        </div>
+        <div id="fGroup" style="display:none">
+          <label>Company name</label>
+          <input id="fCompany" type="text" placeholder="e.g. Trinidad Steel Works Limited">
+          <label>Contact person <span class="opt">— HR, finance or a director</span></label>
+          <input id="fContact" type="text" placeholder="e.g. Marcus Beharry">
+        </div>
+
+        <label>Policy number <span class="opt">— optional, they can start without it</span></label>
+        <input id="fPolicy" type="text" placeholder="e.g. 4471902">
+
+        <label>Insurer</label>
+        <select id="fInsurer">
+          <option value="">Not specified</option>
+          <option>Guardian Life of the Caribbean</option>
+          <option>Sagicor</option><option>Maritime Life</option><option>Tatil Life</option>
+          <option>Colonial Life (CLICO)</option><option>Beacon</option><option>British American</option>
+          <option>Pan-American Life</option><option>Another company</option>
+        </select>
+
+        <div class="pair">
+          <div><label>Email</label><input id="fEmail" type="email" placeholder="them@example.com"></div>
+          <div><label>Mobile <span class="opt">— for WhatsApp</span></label><input id="fPhone" type="tel" placeholder="8681234567"></div>
+        </div>
+
+        <h2 style="margin-top:26px">Your choices</h2>
+        <p class="sub">These change what the client is actually asked.</p>
+
+        <label class="toggle on" id="tSell">
+          <input type="checkbox" id="cSell" checked>
+          <span><b>Include the coverage questions</b>
+          <span>Life changes, goals, income protection, retirement — the questions that surface real need.
+          On by default for a link you send, because a relationship already exists and the client expects a proper review.
+          Untick it and they get the short version: records, beneficiaries and one open question.</span></span>
+        </label>
+
+        <label class="toggle" id="tAssist">
+          <input type="checkbox" id="cAssist">
+          <span><b>I'm completing this with them</b>
+          <span>Opens the form in agent-assisted mode with the <b>Agent's comments</b> field visible.
+          Use it when you're on the phone or sitting with the client, not when you're sending a link.</span></span>
+        </label>
+
+        <div class="note tip" id="sellNote">
+          <b>Worth knowing.</b> A client who arrives at the site on their own never sees the coverage
+          questions — that path is deliberately sales-free, and it is the reason people finish it.
+          This toggle only applies to links you send.
+        </div>
+      </div>
+
+      <!-- RIGHT: the output -->
+      <div class="sticky-side">
+        <div class="card">
+          <h2>Their link</h2>
+          <p class="sub">Updates as you type. Reference <b id="refOut">—</b></p>
+          <div class="chips" id="chips"></div>
+          <div class="linkbox" id="linkOut">—</div>
+
+          <div class="send-row">
+            <button class="btn btn-go" id="btnWa" onclick="sendWhatsApp()">💬 WhatsApp</button>
+            <button class="btn btn-line" id="btnMail" onclick="sendEmail()">✉️ Email</button>
+            <button class="btn btn-line" onclick="copyLink()">🔗 Copy link</button>
+            <button class="btn btn-line" onclick="openPreview()">👁 Open it myself</button>
+          </div>
+
+          <h2 style="margin-top:24px">The message</h2>
+          <p class="sub">Written to be forwarded as-is. Edit it if you'd rather sound like yourself.</p>
+          <div class="msgbox" id="msgOut"></div>
+          <button class="btn btn-line btn-sm" style="margin-top:11px" onclick="copyMsg()">Copy message</button>
+        </div>
+
+        <div class="recent card" style="margin-top:18px">
+          <h2>Recently sent</h2>
+          <p class="sub">Kept on this device only, so you can re-copy a link.</p>
+          <div id="recentList"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot" id="foot"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Copied</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   DON'T HAVE AN AGENT — agent console
+   ---------------------------------------------------------------------
+   The agent's half of the product. Fill in what you know about a client,
+   and it produces a personal prefilled link plus a message written to be
+   forwarded as-is.
+
+   The important control here is "include the coverage questions". It is on
+   for links an agent sends and permanently OFF for clients who arrive on
+   their own — the site has no switch for that, by design. Selling to
+   somebody who came looking for help after years of being ignored is the
+   fastest way to lose them.
+
+   ON THE ACCESS CODE: this is a doorway, not a lock. Everything on this
+   page runs in the browser, so treat the code as "keeps the console out of
+   the way of clients", not as security. Nothing secret is behind it — no
+   client data is stored here beyond the recent-links list on this device.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const CONFIG = {
+  /* Change before you hand this to anyone. */
+  ACCESS_CODE: "DHAA-2026",
+
+  /* Where the review lives. Leave BASE empty to use the current host, which
+     is what you want on donthaveanagent.com. */
+  BASE: "",
+
+  BRAND: {
+    product:  "donthaveanagent.com",
+    agency:   "Ricky Rampersad Branch",
+    agent:    "Ricky Rampersad",
+    carrier:  "Guardian Life of the Caribbean Limited",
+    email:    "ricky.rampersad@myguardiangroup.com",
+    phone:    "(868) 678-5921",
+  },
+};
+const B = CONFIG.BRAND;
+const KEY = "dhaa-agent-recent-v1";
+const GATE_KEY = "dhaa-agent-ok";
+
+const $ = (s) => document.querySelector(s);
+const val = (id) => ($(id) ? $(id).value.trim() : "");
+
+let kind = "individual";
+let ref = newRef();
+
+function newRef() {
+  const d = new Date(), p = (n) => String(n).padStart(2, "0");
+  return "DHA-" + String(d.getFullYear()).slice(2) + p(d.getMonth() + 1) + p(d.getDate()) +
+    "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
+}
+
+/* ── gate ── */
+function tryGate() {
+  const c = $("#gateCode").value.trim();
+  if (c.toUpperCase() === CONFIG.ACCESS_CODE.toUpperCase()) {
+    try { sessionStorage.setItem(GATE_KEY, "1"); } catch (e) {}
+    openApp();
+  } else {
+    $("#gateErr").style.display = "block";
+    $("#gateCode").value = "";
+    $("#gateCode").focus();
+  }
+}
+function openApp() {
+  $("#gate").style.display = "none";
+  $("#app").style.display = "block";
+  render();
+  renderRecent();
+}
+
+/* ── build the link ── */
+function buildLink() {
+  const base = CONFIG.BASE || (location.origin + location.pathname.replace(/agent\/?(index\.html)?$/, ""));
+  const p = new URLSearchParams();
+  p.set("from", "agent");
+  p.set("type", kind);
+  p.set("k", ref);
+  if (kind === "group") {
+    if (val("#fCompany")) p.set("company", val("#fCompany"));
+    if (val("#fContact")) p.set("name", val("#fContact"));
+  } else if (val("#fName")) p.set("name", val("#fName"));
+  if (val("#fPolicy")) p.set("policy", val("#fPolicy"));
+  if (val("#fInsurer")) p.set("insurer", val("#fInsurer"));
+  if (val("#fEmail")) p.set("email", val("#fEmail"));
+  if (val("#fPhone")) p.set("phone", val("#fPhone"));
+  if (!$("#cSell").checked) p.set("from", "client");   // short version, no coverage questions
+  if ($("#cAssist").checked) p.set("agent", "1");
+  p.set("agentname", B.agent);
+  p.set("agentemail", B.email);
+  return base + "review.html?" + p.toString();
+}
+
+function firstName() {
+  const n = kind === "group" ? val("#fContact") : val("#fName");
+  return (n || "").split(/\s+/)[0] || "there";
+}
+
+function buildMessage() {
+  const link = buildLink();
+  const who = kind === "group" ? (val("#fCompany") || "your company's plan") : "your policy";
+  const pol = val("#fPolicy") ? " (policy " + val("#fPolicy") + ")" : "";
+  return "Hi " + firstName() + ",\n\n" +
+    "It's " + B.agent + ". I've taken over the servicing of " + who + pol + " and I'd like to make sure " +
+    "everything on it is still correct — your details, who the benefit goes to, and that you actually know what " +
+    "you're paying for.\n\n" +
+    "There's a short review here, about four minutes:\n" + link + "\n\n" +
+    "Your details are already filled in. There's no cost and nothing to sign up for — if it turns out everything " +
+    "is in order, that's a perfectly good outcome.\n\n" +
+    "Any questions, just reply or call me on " + B.phone + ".\n\n" +
+    B.agent + "\n" + B.agency;
+}
+
+function render() {
+  ref = ref || newRef();
+  const link = buildLink();
+  $("#refOut").textContent = ref;
+  $("#linkOut").textContent = link;
+  $("#msgOut").textContent = buildMessage();
+
+  const sell = $("#cSell").checked, assist = $("#cAssist").checked;
+  $("#tSell").classList.toggle("on", sell);
+  $("#tAssist").classList.toggle("on", assist);
+
+  const chips = [];
+  chips.push('<span class="chip on">' + (kind === "group" ? "Group plan" : "Individual") + "</span>");
+  chips.push('<span class="chip ' + (sell ? "on" : "warm") + '">' + (sell ? "Full review" : "Short version — no coverage questions") + "</span>");
+  if (assist) chips.push('<span class="chip warm">Agent-assisted</span>');
+  if (val("#fPolicy")) chips.push('<span class="chip on">Policy prefilled</span>');
+  const known = ["#fEmail", "#fPhone"].filter((s) => val(s)).length;
+  if (!known) chips.push('<span class="chip warm">No email or mobile yet</span>');
+  $("#chips").innerHTML = chips.join("");
+
+  $("#btnWa").disabled = !val("#fPhone");
+  $("#btnMail").disabled = !val("#fEmail");
+}
+
+/* ── sending ── */
+function digits(s) { return String(s || "").replace(/\D/g, ""); }
+function waNumber() {
+  const d = digits(val("#fPhone"));
+  /* Trinidad & Tobago mobiles are 7 digits local, 10 with the 868 area code.
+     WhatsApp needs the country code, so add 1868 when it's obviously local. */
+  if (d.length === 7) return "1868" + d;
+  if (d.length === 10 && d.slice(0, 3) === "868") return "1" + d;
+  if (d.length === 11 && d[0] === "1") return d;
+  return d;
+}
+function sendWhatsApp() {
+  if (!val("#fPhone")) return;
+  window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(buildMessage()), "_blank", "noopener");
+  remember("WhatsApp");
+}
+function sendEmail() {
+  if (!val("#fEmail")) return;
+  const subject = kind === "group"
+    ? "A quick review of " + (val("#fCompany") || "your group plan")
+    : "A quick review of your policy — " + B.agent;
+  location.href = "mailto:" + encodeURIComponent(val("#fEmail")) +
+    "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(buildMessage());
+  remember("Email");
+}
+function copyLink() { copy(buildLink(), "Link copied"); remember("Copied link"); }
+function copyMsg()  { copy(buildMessage(), "Message copied"); }
+function openPreview() { window.open(buildLink(), "_blank", "noopener"); }
+
+function copy(text, msg) {
+  const done = () => toast(msg || "Copied");
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done, () => fallbackCopy(text, done));
+  } else fallbackCopy(text, done);
+}
+function fallbackCopy(text, done) {
+  const t = document.createElement("textarea");
+  t.value = text; t.style.position = "fixed"; t.style.opacity = "0";
+  document.body.appendChild(t); t.select();
+  try { document.execCommand("copy"); done(); } catch (e) { prompt("Copy this:", text); }
+  t.remove();
+}
+function toast(msg) {
+  const el = $("#toast");
+  el.textContent = msg; el.classList.add("on");
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove("on"), 2000);
+}
+
+/* ── recent (this device only) ── */
+function remember(how) {
+  const list = recent();
+  list.unshift({
+    ref: ref, kind: kind, how: how,
+    who: kind === "group" ? (val("#fCompany") || val("#fContact")) : val("#fName"),
+    policy: val("#fPolicy"), link: buildLink(), at: Date.now(),
+  });
+  try { localStorage.setItem(KEY, JSON.stringify(list.slice(0, 25))); } catch (e) {}
+  ref = newRef();       // next client gets a fresh reference
+  render(); renderRecent();
+}
+function recent() {
+  try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) { return []; }
+}
+function renderRecent() {
+  const list = recent();
+  if (!list.length) {
+    $("#recentList").innerHTML = '<div class="empty">Nothing sent from this device yet.</div>';
+    return;
+  }
+  $("#recentList").innerHTML = list.map((r, i) =>
+    '<div class="ritem"><div><div class="rname">' + escapeHtml(r.who || "Unnamed client") + "</div>" +
+    '<div class="rmeta">' + r.ref + " · " + (r.kind === "group" ? "group" : "individual") +
+    (r.policy ? " · " + escapeHtml(r.policy) : "") + " · " + r.how + " · " + when(r.at) + "</div></div>" +
+    '<div class="ract"><button class="btn btn-line btn-sm" data-copy="' + i + '">Copy</button>' +
+    '<button class="btn btn-line btn-sm" data-open="' + i + '">Open</button></div></div>').join("");
+
+  document.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", () =>
+    copy(recent()[b.dataset.copy].link, "Link copied")));
+  document.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () =>
+    window.open(recent()[b.dataset.open].link, "_blank", "noopener")));
+}
+function when(ts) {
+  const m = Math.round((Date.now() - ts) / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return m + " min ago";
+  const h = Math.round(m / 60);
+  if (h < 24) return h + (h === 1 ? " hour ago" : " hours ago");
+  const d = Math.round(h / 24);
+  return d + (d === 1 ? " day ago" : " days ago");
+}
+function escapeHtml(s) {
+  return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+/* ── boot ── */
+(function boot() {
+  document.querySelectorAll("#segType button").forEach((b) => b.addEventListener("click", () => {
+    kind = b.dataset.v;
+    document.querySelectorAll("#segType button").forEach((x) => x.classList.toggle("on", x === b));
+    $("#fIndividual").style.display = kind === "individual" ? "" : "none";
+    $("#fGroup").style.display = kind === "group" ? "" : "none";
+    render();
+  }));
+
+  ["#fName", "#fCompany", "#fContact", "#fPolicy", "#fInsurer", "#fEmail", "#fPhone"].forEach((s) => {
+    const el = $(s);
+    if (el) { el.addEventListener("input", render); el.addEventListener("change", render); }
+  });
+  ["#cSell", "#cAssist"].forEach((s) => $(s).addEventListener("change", render));
+
+  $("#gateCode").addEventListener("keydown", (e) => { if (e.key === "Enter") tryGate(); });
+
+  $("#foot").innerHTML =
+    "Agent console for " + escapeHtml(B.product) + " · " + escapeHtml(B.agency) + ". " +
+    "The access code keeps this page out of clients' way; it is not security, and no client data is stored here " +
+    "beyond the recent-links list in this browser. Links you generate contain only what you typed — a name, a policy " +
+    "number, a contact — so treat them like any other client email.<br><br>" +
+    "Coverage questions are included only on links an agent sends. Clients who arrive at " + escapeHtml(B.product) +
+    " on their own are never asked them, and there is no setting that changes that.";
+
+  let ok = false;
+  try { ok = sessionStorage.getItem(GATE_KEY) === "1"; } catch (e) {}
+  if (ok) openApp(); else $("#gateCode").focus();
+})();
+</script>
+</body>
+</html>
