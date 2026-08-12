@@ -1,8 +1,12 @@
 # Pension Application Wizard — setup & maintenance
 
 The wizard lives at **`/pension/`** (`rickyrampersadbranch.com/pension/`, or the
-short link `/pension`). It takes a company-owned (Section 134) pension case from
-a blank screen to a signed-ready application:
+short link `/pension`), and at **`pensionplantt.com`** on its own domain.
+
+It opens by asking **who is signing in** — the agent, the employer, or the
+employee — and gives each of them their own page (Part 4). The agent's page is
+the wizard, which takes a company-owned (Section 134) pension case from a blank
+screen to a signed-ready application:
 
 1. **Section 134 computation** — the maximum the company may contribute
    tax-free, the BIR approval form, and the employer's plan.
@@ -12,11 +16,15 @@ a blank screen to a signed-ready application:
    the policy.
 4. **KYC** — ID, utility bill, pay slip, beneficiary ID.
 5. **Review & submit** — one Full Package PDF (cover, both declarations, the
-   auto-built salary deduction form, and the KYC images) plus the branch email.
+   auto-built salary deduction form, and the KYC images), the employee's own
+   three-page pack, plus the branch email.
 
-Everything runs in the client's browser. Case data is held in that browser's
-`localStorage` and never leaves the device except in the PDFs the agent
-downloads and the email they choose to send.
+The wizard runs entirely in the agent's browser. Case data is held in that
+browser's `localStorage` and never leaves the device except in the PDFs the
+agent downloads and the email they choose to send.
+
+The employer's and employee's pages read from the **register** — the branch's
+own sheet — and only ever with an access code the branch issued (Part 4).
 
 ---
 
@@ -143,7 +151,109 @@ the address to clients.
 
 ---
 
-## Part 4 — Maintenance
+## Part 4 — The register: letting employers and employees see their own data
+
+The first thing the site now asks is **who is signing in**, and the answer
+decides what it shows:
+
+| Door | What they get |
+| --- | --- |
+| **I'm the agent** | The wizard, unchanged. |
+| **I'm the employer** | What a company-owned pension costs, what they can deduct, what they sign — and, with a code, **their company's whole schedule**. |
+| **I'm the employee** | What has been set up for them, what they signed, what they may ask — and, with a code, **their own record**. |
+
+The choice is remembered; a strip under the header says which door they came
+through and lets them switch. RIA changes with the door too — it is told who is
+asking, offers them their own questions, and reads the signed-in record.
+
+The wizard itself still knows nothing but the case the agent is typing. The
+data behind those two doors is the **register**, which lives in the same Google
+Sheet and the same Apps Script web app as the renewal portal
+(`apps-script/Pension.gs`).
+
+### Step 1 — create the register
+
+Open the renewals Sheet → **Guardian Renewals → Pension — create register tabs**.
+That makes three tabs:
+
+**`Pension Companies`** — one row per company
+
+`Company Code · Company · BIR File # · Contact · Contact Email · Contact Mobile · Agent · Notes`
+
+**`Pension Employees`** — one row per employee case
+
+`Access Code · Company Code · Company · Employee · Position · Plan · Company Annual (TT$) · Company Lump Sum (TT$) · Employee Monthly (TT$) · Commencement · Stage · BIR Status · Policy # · Beneficiaries · Agent · Email · Mobile · Updated · Notes`
+
+**`Pension Access Log`** — every lookup, with the code masked.
+
+Fill in the companies and the employees, leaving the two code columns blank.
+`Company Code` on an employee row is what ties them to their employer.
+
+**Stage** is free text and drives the coloured pill on screen: anything reading
+*issued / in force / approved / active / complete* shows green, anything reading
+*waiting / pending / with BIR / submitted / underwriting / outstanding* shows
+amber, everything else grey.
+
+### Step 2 — issue the codes
+
+**Guardian Renewals → Pension — issue missing codes**. Every blank code column
+gets one (`CO-XXXX-XXXX` for a company, `EM-XXXX-XXXX` for an employee), drawn
+from an alphabet with no O/0, I/1 or S/5 in it so codes survive being read down
+a phone. **Codes already in the sheet are never touched** — one that has been
+given to a client keeps working forever.
+
+### Step 3 — republish the web app
+
+The endpoint is a new route on the existing web app, so it only appears once the
+script is redeployed: **Deploy → Manage deployments → edit → Version: New
+version → Deploy**. Until that is done the site says *"the branch may need to
+republish it"* rather than showing data.
+
+### Step 4 — give out the codes
+
+Either tell the client their code, or send the link that fills it in:
+
+```
+https://pensionplantt.com/?code=CO-ABCD-EFGH
+```
+
+The prefix tells the site which door to open, so the client lands on their own
+page already signed in. **Guardian Renewals → Pension — show the sign-in link**
+has this to hand.
+
+### What each code can see
+
+This is the whole of the access rule, and it is enforced on the server in
+`pensionLookup_`:
+
+- **Nothing is returned without a code that matches a row.** There is no listing
+  and no browsing.
+- **A company code** returns that company's details and its own employees — name,
+  position, plan, contributions, commencement, stage, BIR status, policy number.
+  It never returns anybody's access code, so an employer cannot sign in as one
+  of their staff.
+- **An employee code** returns exactly one employee — theirs — plus their
+  beneficiaries and agent. It returns nothing about any colleague.
+- Company codes are matched first, so a value typed into the wrong column can
+  never widen access.
+- A code under six characters is refused by the browser and again by the server,
+  so a half-typed code never reaches the sheet.
+- Every lookup, successful or not, is written to `Pension Access Log` with the
+  code masked to its first four characters.
+
+The register is **read-only**. Nothing on the website can change a row; the
+branch edits the sheet.
+
+### If the register is unreachable
+
+No deployment, no signal, or an older deployment that predates `Pension.gs` — in
+every case the page says so in plain words and the email route underneath still
+works. The wizard, the computation and every PDF are completely unaffected: they
+have never needed the network.
+
+---
+
+## Part 5 — Maintenance
 
 ### Replacing a blank Guardian form
 

@@ -368,6 +368,39 @@ body{background:linear-gradient(180deg,#081020 0,#0e1a30 152px,transparent 152px
 .roleview .rrow:last-child{border-bottom:none}
 .roleview .rrow b{display:block;color:#101b33;margin-bottom:2px}
 .roleview .rrow span{color:#64718e}
+/* signing in to the register with an access code */
+.signin{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:11px}
+.signin .field{flex:1 1 210px;margin:0}
+.signin input{font-family:"JetBrains Mono",monospace;letter-spacing:1.2px;text-transform:uppercase}
+.signin .btn{flex:0 0 auto}
+.signote{margin-top:9px;font-size:11.5px;color:#64718e;line-height:1.65}
+.signote a{color:#8a6d1f}
+.signerr{margin-top:10px;background:#fdf0f1;border:1px solid #f1c6cc;color:#8f1c2c;border-radius:10px;padding:9px 12px;font-size:12px;line-height:1.55}
+.signbusy{margin-top:10px;font-size:12px;color:#64718e}
+/* the company's schedule */
+.sched{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}
+.sched th{text-align:left;font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:#64718e;font-weight:700;padding:0 9px 7px 0;border-bottom:1px solid #e4e8f1;white-space:nowrap}
+.sched td{padding:9px 9px 9px 0;border-bottom:1px solid #eef1f7;color:#3d4a68;vertical-align:top}
+.sched tr:last-child td{border-bottom:none}
+.sched td b{color:#101b33;display:block}
+.sched td .sub{display:block;color:#8b96ad;font-size:11px;font-family:"Inter",sans-serif;margin-top:2px}
+.sched .num{text-align:right;font-family:"JetBrains Mono",monospace;white-space:nowrap}
+.sched td:last-child,.sched th:last-child{padding-right:0}
+.sched tfoot td{border-top:2px solid #e4e8f1;border-bottom:none;padding-top:10px;font-weight:700;color:#101b33}
+.schedwrap{overflow-x:auto;margin:0 -3px}
+.stage{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.4px;padding:3px 8px;border-radius:99px;white-space:nowrap;
+  background:#eef1f7;color:#5a6884;border:1px solid #e0e5ef}
+.stage.go{background:#eaf6f0;color:#13845b;border-color:#c7e7d6}
+.stage.wait{background:#fdf6e6;color:#8a6d1f;border-color:#efe0b8}
+/* one employee's own record */
+.mine{display:grid;gap:1px;background:#e9edf5;border:1px solid #e4e8f1;border-radius:12px;overflow:hidden;margin-top:4px}
+@media(min-width:620px){ .mine{grid-template-columns:1fr 1fr} }
+.mine div{background:#fff;padding:11px 13px}
+.mine .lab{display:block;font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:#8b96ad;font-weight:700;margin-bottom:3px}
+.mine div b{display:block;font-size:13.5px;color:#101b33;font-weight:600}
+.mine div .sub{display:block;font-size:11.5px;color:#64718e;font-weight:500;margin-top:4px}
+.mine div.wide{grid-column:1/-1}
+.asof{margin-top:10px;font-size:11px;color:#8b96ad}
 a.btn{display:inline-block;text-decoration:none;text-align:center}
 /* ---- the computation, drawn ----
    Two figures on a light card, matching the printed forms. Colours are the two
@@ -505,9 +538,17 @@ table.ptt td:first-child{width:38%;padding-right:12px;color:#64718e;font-weight:
       <div class="rrow"><b>Company documents</b><span>Certified formation documents, plus ID for every director and any shareholder holding 10% or more.</span></div>
     </div>
 
-    <div class="card"><h3><span class="n">4</span>Your cases</h3>
-      <div class="info show">To see where your company’s applications stand — who is enrolled, what is contributed and what is outstanding — ask the branch. We will send you a personal link. <b>Nothing about your employees is stored in this browser or on this site.</b></div>
-      <div class="btnrow" style="margin-top:11px"><a class="btn sm" href="mailto:support@rickyrampersadbranch.com?subject=Company%20pension%20—%20our%20cases">Ask the branch for our summary</a></div>
+    <div class="card"><h3><span class="n">4</span>Your company’s schedule</h3>
+      <div id="erSignedOut">
+        <p class="rp">Sign in with your <b>company access code</b> to see where every one of your applications stands — who is enrolled, on which plan, what the company is putting in, and what is still waiting on BIR.</p>
+        <div class="signin">
+          <div class="field"><label for="erCode">Company access code</label><input id="erCode" placeholder="CO-XXXX-XXXX" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter'){event.preventDefault();signIn('employer')}"></div>
+          <button class="btn sm" type="button" onclick="signIn('employer')">Sign in</button>
+        </div>
+        <div id="erMsg"></div>
+        <p class="signote">The branch issues the code — your employees cannot see it, and it shows this company only. Don’t have one? <a href="mailto:support@rickyrampersadbranch.com?subject=Company%20pension%20—%20access%20code">Ask us for it</a>.</p>
+      </div>
+      <div id="erData" hidden></div>
     </div>
   </section>
 
@@ -543,8 +584,17 @@ table.ptt td:first-child{width:38%;padding-right:12px;color:#64718e;font-weight:
       </div>
     </div>
 
-    <div class="card"><h3><span class="n">4</span>Your own pack</h3>
-      <div class="info show">Your agent can send you a short pack with <b>your</b> figures in it — the plan the company chose, your own contribution, who you named, and what happens next. Ask them for it, or email the branch and we will send it.</div>
+    <div class="card"><h3><span class="n">4</span>Your own record</h3>
+      <div id="eeSignedOut">
+        <p class="rp">If the branch has given you an <b>access code</b>, sign in and you will see your own line — the plan, what the company is putting in, what is coming out of your salary, who you named, and where the application has reached.</p>
+        <div class="signin">
+          <div class="field"><label for="eeCode">Your access code</label><input id="eeCode" placeholder="EM-XXXX-XXXX" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter'){event.preventDefault();signIn('employee')}"></div>
+          <button class="btn sm" type="button" onclick="signIn('employee')">Sign in</button>
+        </div>
+        <div id="eeMsg"></div>
+        <p class="signote">Your code shows <b>your</b> record and nobody else’s. No code yet? <a href="mailto:support@rickyrampersadbranch.com?subject=My%20pension%20—%20access%20code">Ask the branch</a> — or ask your agent for the short pack with your figures in it.</p>
+      </div>
+      <div id="eeData" hidden></div>
     </div>
   </section>
 
@@ -1835,11 +1885,54 @@ function fableContext(){
     if(dd.empOwnPlan) lines.push('Employee own plan: '+dd.empOwnPlan+(Object.keys(aI).length?(' \u2014 answers: '+JSON.stringify(aI)):'')+(dd.employeePlan?(' \u2014 selected: '+dd.employeePlan):'')+(dd.empRetAge?(' \u2014 retirement age '+dd.empRetAge):'')+(dd.empGuarantee?(' \u2014 guarantee '+dd.empGuarantee+' yrs'):''));
     lines.push('Recommend concretely for whichever part they ask about and say why.');
   }
+  /* Who is actually asking. Without this RIA writes to the agent and an
+     employee gets answers about forms they will never touch. */
+  var role=''; try{ role=localStorage.getItem(ROLE_KEY)||''; }catch(e){}
+  if(role==='employer') lines.push('WHO IS ASKING: the EMPLOYER — the company taking out the policy. Write to them about cost, deductibility, what they sign and stamp, and keeping their people. Do not walk them through the agent\'s wizard steps.');
+  else if(role==='employee') lines.push('WHO IS ASKING: the EMPLOYEE the policy is on. Write to them about what has been set up for them, what they signed, their own contribution, their beneficiaries and what they may ask for. They do not fill in forms and they cannot change the company\'s decisions — say who to ask instead. Never discuss another employee.');
+  if(REG) lines.push(registerContext());
   lines.push('Answer in short, plain Caribbean-friendly language an insured person can follow. Be concrete and step-specific. Never invent figures; use only the context provided. Keep answers under 120 words unless asked for detail.');
   return lines.join('\n');
 }
 
+/**
+ * The signed-in register record, for RIA. Names are reduced to initials the
+ * same way the typed case is — RIA needs the figures and the stage to answer,
+ * not who anybody is.
+ */
+function registerContext(){
+  if(!REG) return '';
+  var L=['REGISTER — this is live data the person has signed in to see. Treat it as fact and answer from it.'];
+  if(REG.kind==='employee'){
+    var e=REG.employee||{};
+    L.push('Their record: employer '+initials((REG.company||{}).name||e.company)+' (initials only); plan '+(e.plan||'not recorded')+
+      '; company puts in '+(e.companyAnnual?'$'+pmoney(e.companyAnnual)+' a year':'nothing recorded')+
+      (e.companyLump?' plus a $'+pmoney(e.companyLump)+' lump sum':'')+
+      '; their own contribution '+(e.employeeMonthly?'$'+pmoney(e.employeeMonthly)+' a month':'none')+
+      (e.commencement?'; started '+e.commencement:'')+
+      '; stage "'+(e.stage||'not recorded')+'"'+(e.birStatus?'; BIR: '+e.birStatus:'')+
+      '; policy number '+(e.policy?'issued':'not issued yet')+
+      (e.beneficiaries?'; beneficiaries are recorded':'; no beneficiary recorded')+'.');
+  }else{
+    var t=REG.totals||{}, n=(REG.employees||[]).length;
+    L.push('Their company has '+n+' employee'+(n===1?'':'s')+' on the register, costing $'+pmoney(t.annual||0)+' a year'+
+      (t.lump?' plus $'+pmoney(t.lump)+' in lump sums':'')+
+      '; employees themselves put in $'+pmoney((t.own||0)/12)+' a month between them.');
+    L.push('Stages on the register: '+(REG.employees||[]).map(function(e){ return initials(e.name)+' — '+(e.stage||'not recorded'); }).join('; ')+'.');
+  }
+  return L.join('\n');
+}
+
 function fableChipSet(){
+  /* An employer or an employee is not walking the wizard, so the step-by-step
+     prompts mean nothing to them. Give them their own questions. */
+  var role=''; try{ role=localStorage.getItem(ROLE_KEY)||''; }catch(e){}
+  if(role==='employer') return REG
+    ? ['What is this costing us a year?','Which of ours is still waiting on BIR?','Can we put in more for someone?','What do we sign and stamp?']
+    : ['What can the company deduct?','How much may we put in per employee?','What does the company sign?','What does it cost to run?'];
+  if(role==='employee') return REG
+    ? ['What is mine worth at retirement?','What happens if I leave?','Who gets it if I die first?','Can I change what I put in?']
+    : ['What has my employer set up?','What did I sign?','Who gets it if I die first?','What happens if I leave?'];
   var per=[
     ['What is this computation for?','What does Line 9 vs Line 11 mean?','Which employer plan and why?','Guaranteed rate vs unit-linked?'],
     ['Which plan suits the employee?','What retirement age should they pick?','Why does the beneficiary need ID?','Where does the salary deduction go?'],
@@ -1875,7 +1968,13 @@ function toggleFable(){
     renderFableChips();
     if(!fableOpened){
       fableOpened=true;
-      pushMsg('bot','Hi, I\u2019m RIA \u2014 the Rampersad Branch assistant. I\u2019m here to make this application easy. I can explain any step in plain language. Tap a question below or ask me anything.');
+      var role=''; try{ role=localStorage.getItem(ROLE_KEY)||''; }catch(e){}
+      pushMsg('bot',
+        role==='employee'
+          ? 'Hi, I\u2019m RIA \u2014 the Rampersad Branch assistant. This pension is being set up for you, and you\u2019re entitled to understand it. Ask me anything about it in plain language, and if it\u2019s something only the branch can answer I\u2019ll tell you who to ask.'
+        : role==='employer'
+          ? 'Hi, I\u2019m RIA \u2014 the Rampersad Branch assistant. Ask me anything about what a company-owned pension costs, what you can deduct, and what your company signs.'
+          : 'Hi, I\u2019m RIA \u2014 the Rampersad Branch assistant. I\u2019m here to make this application easy. I can explain any step in plain language. Tap a question below or ask me anything.');
     }
   }
 }
@@ -2461,6 +2560,7 @@ function setRole(role,remember){
   }
   var bar=document.getElementById('roleBar');
   if(bar){ bar.style.display='flex'; bar.querySelector('b').textContent=ROLE_LABEL[role]||role; }
+  if(!isAgent) autoSignIn(role);   // a remembered code opens the register straight away
   window.scrollTo({top:0,behavior:'auto'});
 }
 function openDoor(){
@@ -2468,7 +2568,187 @@ function openDoor(){
   document.getElementById('door').classList.add('on');
   window.scrollTo({top:0,behavior:'auto'});
 }
+/* ===================== THE REGISTER — signing in to see live case data =====================
+   The wizard itself knows only the case the agent is typing. The register is
+   the branch's sheet, read through the same Apps Script web app the renewal
+   portal uses (apps-script/Pension.gs). An employer's code returns that
+   company's whole schedule; an employee's code returns their own line only.
+
+   Read-only, and nothing is cached beyond the code itself so a returning
+   client is not made to retype it. If the register is unreachable — no
+   deployment, no signal, an older deployment that does not know the pension
+   route — the page says so plainly and the email route below it still works. */
+var REGISTER_URL="https://script.google.com/macros/s/AKfycbwYQlLt1txn4pCWEq3xO_FmmPUfRAUMzey-vzbUe-qDr9tX27BpM0ZbkP5G0WuYQuZJ8g/exec";
+var REG=null;   // the record currently signed in to — RIA reads it, nothing writes it
+var CODE_KEY={employer:'rrb_pension_cocode', employee:'rrb_pension_emcode'};
+var SIGN={
+  employer:{ input:'erCode', msg:'erMsg', out:'erSignedOut', data:'erData' },
+  employee:{ input:'eeCode', msg:'eeMsg', out:'eeSignedOut', data:'eeData' }
+};
+
+function regMsg(kind,html,cls){
+  var el=document.getElementById(SIGN[kind].msg);
+  if(el) el.innerHTML=html?'<div class="'+(cls||'signerr')+'">'+html+'</div>':'';
+}
+
+async function registerLookup(code){
+  if(!REGISTER_URL) throw new Error('The register is not published yet. Please email the branch and we will send your summary.');
+  var url=REGISTER_URL+(REGISTER_URL.indexOf('?')<0?'?':'&')+'pension=1&from=site&code='+encodeURIComponent(code);
+  var res;
+  try{ res=await fetch(url,{method:'GET',redirect:'follow'}); }
+  catch(e){ throw new Error('The register could not be reached. Check your connection and try again.'); }
+  var text=await res.text();
+  var data;
+  try{ data=JSON.parse(text); }
+  catch(e){ throw new Error('The register answered, but not with your data — the branch may need to republish it. Please tell us and we will sort it out.'); }
+  if(!data || typeof data.ok==='undefined') throw new Error('The register answered unexpectedly. Please tell the branch.');
+  return data;
+}
+
+async function signIn(kind,quiet){
+  var s=SIGN[kind];
+  var input=document.getElementById(s.input);
+  var code=(input?input.value:'').trim();
+  if(!code){ if(!quiet){ regMsg(kind,'Enter the code the branch gave you.'); if(input) input.focus(); } return; }
+  /* A half-typed code cannot match anything — don't put it on the wire. */
+  if(code.replace(/\s+/g,'').length<6){ regMsg(kind,'That code looks incomplete — check it against the one the branch sent you.'); return; }
+  regMsg(kind,'Checking the register…','signbusy');
+  var data;
+  try{ data=await registerLookup(code); }
+  catch(e){ regMsg(kind,esc(e.message)); return; }
+  if(!data.ok){ regMsg(kind,esc(data.error||'That code was not recognised.')); return; }
+  if(data.kind!==kind){
+    regMsg(kind, kind==='employer'
+      ? 'That is an employee’s code, not a company code. Employees should use the <b>I’m the employee</b> door.'
+      : 'That is a company code. Company codes open the <b>I’m the employer</b> door.');
+    return;
+  }
+  regMsg(kind,'');
+  REG=data;
+  try{ localStorage.setItem(CODE_KEY[kind],code); }catch(e){}
+  document.getElementById(s.out).hidden=true;
+  var box=document.getElementById(s.data);
+  box.hidden=false;
+  box.innerHTML=(kind==='employer'?employerSchedule(data):employeeRecord(data));
+  /* RIA's suggestions change once there is a record to ask about. */
+  var panel=document.getElementById('aiPanel');
+  if(panel && panel.classList.contains('open')) renderFableChips();
+}
+
+function signOut(kind){
+  REG=null;
+  try{ localStorage.removeItem(CODE_KEY[kind]); }catch(e){}
+  var s=SIGN[kind];
+  var box=document.getElementById(s.data); box.hidden=true; box.innerHTML='';
+  document.getElementById(s.out).hidden=false;
+  var input=document.getElementById(s.input); if(input) input.value='';
+  regMsg(kind,'');
+}
+
+function stagePill(stage){
+  var t=String(stage||'').toLowerCase(), cls='';
+  if(/issued|in force|approved|active|complete/.test(t)) cls=' go';
+  else if(/waiting|pending|with bir|submitted|underwriting|outstanding/.test(t)) cls=' wait';
+  return '<span class="stage'+cls+'">'+esc(stage||'—')+'</span>';
+}
+
+function employerSchedule(d){
+  var co=d.company||{}, list=d.employees||[], t=d.totals||{annual:0,lump:0,own:0};
+  var head='<div class="rrow"><b>'+esc(co.name||'Your company')+'</b><span>'+
+    (co.bir?'B.I.R. file '+esc(co.bir)+' · ':'')+
+    esc(list.length+' employee'+(list.length===1?'':'s')+' on the register')+
+    (co.agent?' · agent '+esc(co.agent):'')+'</span></div>';
+  if(!list.length){
+    return head+'<div class="info show" style="margin-top:11px">Nobody is on the register for this company yet. As soon as an application is entered it appears here.</div>'+
+      '<div class="btnrow" style="margin-top:11px"><button class="btn ghost sm" type="button" onclick="signOut(\'employer\')">Sign out</button></div>';
+  }
+  var rows=list.map(function(e){
+    return '<tr><td><b>'+esc(e.name||'—')+'</b>'+(e.position?'<span class="sub">'+esc(e.position)+'</span>':'')+'</td>'+
+      '<td>'+esc(e.plan||'—')+(e.commencement?'<span class="sub">from '+esc(e.commencement)+'</span>':'')+'</td>'+
+      '<td class="num">'+money(e.companyAnnual||0)+(e.companyLump?'<span class="sub">+ '+money(e.companyLump)+' lump</span>':'')+'</td>'+
+      '<td class="num">'+(e.employeeMonthly?money(e.employeeMonthly)+'<span class="sub">a month</span>':'—')+'</td>'+
+      '<td>'+stagePill(e.stage)+(e.birStatus?'<span class="sub">BIR: '+esc(e.birStatus)+'</span>':'')+
+        (e.policy?'<span class="sub">Policy '+esc(e.policy)+'</span>':'')+'</td></tr>';
+  }).join('');
+  return head+
+    '<div class="schedwrap"><table class="sched"><thead><tr>'+
+      '<th>Employee</th><th>Plan</th><th class="num">Company a year</th><th class="num">Their own</th><th>Where it is</th>'+
+    '</tr></thead><tbody>'+rows+'</tbody><tfoot><tr>'+
+      '<td colspan="2">Total</td>'+
+      '<td class="num">'+money(t.annual||0)+(t.lump?'<span class="sub">+ '+money(t.lump)+' lump</span>':'')+'</td>'+
+      '<td class="num">'+(t.own?money(t.own/12)+'<span class="sub">a month</span>':'—')+'</td><td></td>'+
+    '</tr></tfoot></table></div>'+
+    '<p class="asof">The company’s deductible cost is the annual column. Read as at '+esc(d.asOf||'today')+'.</p>'+
+    '<div class="btnrow" style="margin-top:11px">'+
+      '<a class="btn sm" href="mailto:support@rickyrampersadbranch.com?subject='+encodeURIComponent('Company pension — '+(co.name||'our schedule'))+'">Ask about this schedule</a>'+
+      '<button class="btn ghost sm" type="button" onclick="signOut(\'employer\')">Sign out</button>'+
+    '</div>';
+}
+
+function employeeRecord(d){
+  var e=d.employee||{}, co=d.company||{};
+  function cell(label,value,wide){
+    return '<div'+(wide?' class="wide"':'')+'><span class="lab">'+esc(label)+'</span><b>'+esc(value||'—')+'</b></div>';
+  }
+  var grid='<div class="mine">'+
+    cell('Your employer',co.name||e.company)+
+    cell('Plan',e.plan)+
+    cell('The company puts in',e.companyAnnual?money(e.companyAnnual)+' a year'+(e.companyLump?' + '+money(e.companyLump)+' lump sum':''):'—')+
+    cell('You put in',e.employeeMonthly?money(e.employeeMonthly)+' a month':'Nothing of your own')+
+    cell('Started',e.commencement)+
+    cell('Policy number',e.policy||'Not issued yet')+
+    (e.beneficiaries?cell('You named',e.beneficiaries,true):'')+
+    '<div class="wide"><span class="lab">Where it has reached</span>'+stagePill(e.stage)+
+      (e.birStatus?'<span class="sub">BIR: '+esc(e.birStatus)+'</span>':'')+'</div>'+
+  '</div>';
+  return '<div class="rrow"><b>'+esc(e.name||'Your record')+'</b><span>Held by the Rampersad Branch'+
+      (e.agent?' · your agent is '+esc(e.agent):'')+'</span></div>'+grid+
+    (e.notes?'<div class="info show" style="margin-top:11px">'+esc(e.notes)+'</div>':'')+
+    '<p class="asof">Read as at '+esc(d.asOf||'today')+'. Anything wrong here — a name, a beneficiary, an amount — tell us and we will correct it.</p>'+
+    '<div class="btnrow" style="margin-top:11px">'+
+      '<button class="btn sm" type="button" onclick="toggleFable()">Ask RIA about this →</button>'+
+      '<a class="btn ghost sm" href="mailto:support@rickyrampersadbranch.com?subject='+encodeURIComponent('My pension — a question')+'">Email the branch</a>'+
+      '<button class="btn ghost sm" type="button" onclick="signOut(\'employee\')">Sign out</button>'+
+    '</div>';
+}
+
+/* A code in the address bar (?code=…) fills the box and signs the client in —
+   that is the link the branch emails. Remembered codes do the same on a return
+   visit, silently, so nobody is asked twice. */
+/**
+ * Signs a returning client in without being asked, if we remember their code
+ * and they are actually standing in that door. Called on every switch into the
+ * employer or employee view — a remembered code should never put a request on
+ * the wire for a page nobody is reading.
+ */
+function autoSignIn(kind){
+  if(kind!=='employer' && kind!=='employee') return;
+  var el=document.getElementById(SIGN[kind].input);
+  var box=document.getElementById(SIGN[kind].data);
+  if(!el || !box || !box.hidden) return;          // already signed in
+  if(!el.value){
+    var saved=''; try{ saved=localStorage.getItem(CODE_KEY[kind])||''; }catch(e){}
+    if(!saved) return;
+    el.value=saved;
+  }
+  signIn(kind,true);
+}
+
+/* Which door opens on arrival. A code in the address bar (?code=…) wins — that
+   is the link the branch emails — then the door remembered from last time,
+   otherwise the question itself. Runs last because it can sign a client in,
+   and everything it needs has to exist first. */
 (function(){
+  var linked=''; try{ linked=(new URLSearchParams(location.search).get('code')||'').trim(); }catch(e){}
+  if(linked){
+    /* The prefix says which door the link belongs to. Anything else goes into
+       both boxes and lets the client choose the door themselves. */
+    var kind=/^EM/i.test(linked)?'employee':/^CO/i.test(linked)?'employer':'';
+    ['employer','employee'].forEach(function(k){
+      var el=document.getElementById(SIGN[k].input); if(el) el.value=linked;
+    });
+    if(kind){ setRole(kind); return; }   // setRole calls autoSignIn, which does the lookup
+  }
   var saved=null; try{ saved=localStorage.getItem(ROLE_KEY); }catch(e){}
   if(saved==='agent'||saved==='employer'||saved==='employee') setRole(saved,false);
   else document.getElementById('door').classList.add('on');

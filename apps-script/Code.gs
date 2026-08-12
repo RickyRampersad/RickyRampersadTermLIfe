@@ -395,6 +395,7 @@ function logActivity_(token, client, type, by, details) {
 
 function doGet(e) {
   var p = (e && e.parameter) || {};
+  if (p.pension) return pensionApi_(p);   // JSON for pensionplantt.com — see Pension.gs
   if (p.staff) return staffPage_(p);
   return clientPage_(p);
 }
@@ -888,6 +889,10 @@ function onOpen() {
     .addSeparator()
     .addItem('Show staff dashboard link', 'showStaffLink')
     .addItem('Preview a client portal (row 2)', 'showMyLink')
+    .addSeparator()
+    .addItem('Pension — create register tabs', 'setupPensionTabs')
+    .addItem('Pension — issue missing codes', 'issuePensionCodes')
+    .addItem('Pension — show the sign-in link', 'showPensionPortalLink')
     .addToUi();
 }
 
