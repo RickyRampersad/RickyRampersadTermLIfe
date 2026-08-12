@@ -5,28 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Agent console — Don't Have An Agent</title>
 <meta name="robots" content="noindex"/>
-<meta name="theme-color" content="#0B1622"/>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 88'%3E%3Cpath d='M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z' fill='%23F5C542'/%3E%3Ccircle cx='44' cy='35' r='10.5' fill='%230B1622'/%3E%3Cpath d='M26.5 66.5a17.5 17.5 0 0135 0z' fill='%230B1622'/%3E%3C/svg%3E"/>
+<meta name="theme-color" content="#F6F3EC"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 88'%3E%3Cpath d='M12 20a10 10 0 0110-10h44a10 10 0 0110 10v30a10 10 0 01-10 10H42L24 76V60h-2a10 10 0 01-10-10z' fill='%231E6F52'/%3E%3Ccircle cx='44' cy='29' r='8.5' fill='%23FFFFFF'/%3E%3Cpath d='M30 52.5a14 14 0 0128 0z' fill='%23FFFFFF'/%3E%3C/svg%3E"/>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
+/* Ivory & Forest — see index.html for the full note. Green = resolved,
+   slate = the empty agent slot. Swap this block to re-theme. */
 :root{
-  --ink:#0B1622;--ink2:#11243A;--surface:#17304D;--surface2:#1D3C60;
-  --line:rgba(255,255,255,.085);--line2:rgba(245,197,66,.22);
-  --text:#F6F2E8;--muted:#B3BECB;--muted2:#8496A9;
-  /* gold = resolved · slate = the empty agent slot */
-  --amber:#E8890C;--emerald:#F5C542;--emerald2:#E0A81E;--red:#FF8A6B;--slate:#64798F;
-  --emerald-soft:rgba(245,197,66,.13);--amber-soft:rgba(232,137,12,.13);
+  --ink:#F6F3EC;--ink2:#EFEBE1;--surface:#FFFFFF;--surface2:#FBF9F5;
+  --line:rgba(21,32,27,.10);--line2:rgba(30,111,82,.30);
+  --text:#15201B;--muted:#4A5A52;--muted2:#7B8A82;
+  --amber:#B4522F;--emerald:#1E6F52;--emerald2:#134A37;--red:#B4342A;--slate:#9AA9A1;
+  --emerald-soft:rgba(30,111,82,.10);--amber-soft:rgba(180,82,47,.10);
   --head:'Montserrat',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   --body:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--body);background:var(--ink);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased;
-  background-image:radial-gradient(ellipse 70% 40% at 50% -10%,rgba(245,197,66,.09),transparent 70%);background-attachment:fixed}
+  background-image:radial-gradient(ellipse 70% 40% at 50% -10%,rgba(30,111,82,.09),transparent 70%);background-attachment:fixed}
 h1,h2,h3{font-family:var(--head);letter-spacing:-.02em;line-height:1.18}
 a{color:var(--emerald)}
 .wrap{max-width:1020px;margin:0 auto;padding:0 18px 80px}
 
-.nav{position:sticky;top:0;z-index:90;background:rgba(11,22,34,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.nav{position:sticky;top:0;z-index:90;background:rgba(246,243,236,.93);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 .nav-in{max-width:1020px;margin:0 auto;padding:0 18px;height:62px;display:flex;align-items:center;gap:11px}
 .logo{display:flex;align-items:center;gap:10px}
 .logo svg{width:32px;height:32px}
@@ -34,7 +35,7 @@ a{color:var(--emerald)}
 .logo-word .l1{font-size:9px;font-weight:600;letter-spacing:.17em;text-transform:uppercase;color:var(--muted2);margin-bottom:3px}
 .logo-word .l2{font-size:15px;font-weight:800;letter-spacing:-.025em}
 .logo-word .dot{color:var(--emerald);font-weight:600;font-size:11.5px;margin-left:1px}
-.nav-tag{margin-left:auto;font-size:11.5px;color:var(--amber);background:var(--amber-soft);border:1px solid rgba(232,137,12,.3);padding:5px 12px;border-radius:99px;font-weight:600}
+.nav-tag{margin-left:auto;font-size:11.5px;color:var(--amber);background:var(--amber-soft);border:1px solid rgba(180,82,47,.3);padding:5px 12px;border-radius:99px;font-weight:600}
 
 /* gate */
 .gate{max-width:410px;margin:70px auto;text-align:center}
@@ -42,10 +43,10 @@ a{color:var(--emerald)}
 .gate h1{font-size:25px;font-weight:800;margin-bottom:8px}
 .gate p{color:var(--muted);font-size:14.5px;margin-bottom:22px}
 .gate input{width:100%;font:inherit;font-size:17px;font-weight:700;letter-spacing:.16em;text-align:center;
-  color:var(--text);background:rgba(0,0,0,.3);border:1px solid var(--line2);border-radius:12px;padding:14px}
+  color:var(--text);background:rgba(21,32,27,.035);border:1px solid var(--line2);border-radius:12px;padding:14px}
 .gate input:focus{outline:none;border-color:var(--emerald)}
 .gate .btn{width:100%;margin-top:12px}
-.gate .err{display:none;background:rgba(255,122,122,.12);border:1px solid rgba(255,122,122,.4);color:#ffc9c9;
+.gate .err{display:none;background:rgba(180,52,42,.09);border:1px solid rgba(180,52,42,.32);color:#8C2A22;
   border-radius:10px;padding:10px 13px;font-size:13px;margin-top:12px}
 
 #app{display:none}
@@ -69,11 +70,11 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 label:first-of-type{margin-top:0}
 label .opt{color:var(--muted2);font-weight:400}
 input[type=text],input[type=email],input[type=tel],select,textarea{
-  width:100%;font:inherit;font-size:14.8px;color:var(--text);background:rgba(0,0,0,.28);
+  width:100%;font:inherit;font-size:14.8px;color:var(--text);background:rgba(21,32,27,.035);
   border:1px solid var(--line2);border-radius:11px;padding:11px 13px;transition:border-color .15s}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--emerald)}
-input::placeholder,textarea::placeholder{color:#7A8B9E}
-select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%23B3BECB' stroke-width='2' fill='none' stroke-linecap='round'/></svg>");
+input::placeholder,textarea::placeholder{color:#8B9A92}
+select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%234A5A52' stroke-width='2' fill='none' stroke-linecap='round'/></svg>");
   background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
 select option{background:var(--surface);color:var(--text)}
 .pair{display:grid;grid-template-columns:1fr 1fr;gap:11px}
@@ -81,14 +82,14 @@ select option{background:var(--surface);color:var(--text)}
 
 .seg{display:flex;gap:8px;flex-wrap:wrap}
 .seg button{flex:1;min-width:120px;font:inherit;font-size:13.8px;cursor:pointer;color:var(--muted);
-  background:rgba(255,255,255,.04);border:1.5px solid var(--line);border-radius:11px;padding:11px 13px;transition:all .15s;text-align:left}
+  background:rgba(21,32,27,.042);border:1.5px solid var(--line);border-radius:11px;padding:11px 13px;transition:all .15s;text-align:left}
 .seg button:hover{border-color:var(--line2);color:var(--text)}
 .seg button.on{border-color:var(--emerald);background:var(--emerald-soft);color:var(--text);font-weight:600}
 .seg button b{display:block;font-size:13.8px}
 .seg button span{display:block;font-size:11.6px;color:var(--muted);font-weight:400;margin-top:2px}
-.seg button.on span{color:#a9bbcf}
+.seg button.on span{color:var(--muted)}
 
-.toggle{display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,.03);border:1px solid var(--line);
+.toggle{display:flex;gap:12px;align-items:flex-start;background:rgba(21,32,27,.032);border:1px solid var(--line);
   border-radius:13px;padding:14px 15px;cursor:pointer;margin-top:11px;transition:border-color .15s}
 .toggle:hover{border-color:var(--line2)}
 .toggle.on{border-color:var(--emerald);background:var(--emerald-soft)}
@@ -102,23 +103,23 @@ select option{background:var(--surface);color:var(--text)}
 .note b{color:var(--text)}
 
 /* link preview */
-.linkbox{background:rgba(0,0,0,.34);border:1px solid var(--line2);border-radius:12px;padding:13px 14px;
+.linkbox{background:rgba(21,32,27,.05);border:1px solid var(--line2);border-radius:12px;padding:13px 14px;
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.2px;color:var(--emerald);
   word-break:break-all;overflow-wrap:anywhere;line-height:1.6;max-height:120px;overflow-y:auto}
-.msgbox{background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:12px;padding:14px;
+.msgbox{background:rgba(21,32,27,.035);border:1px solid var(--line);border-radius:12px;padding:14px;
   font-size:13.4px;color:var(--text);white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6;
   max-height:290px;overflow-y:auto}
 .chips{display:flex;gap:7px;flex-wrap:wrap;margin:13px 0}
-.chip{font-size:11.5px;padding:5px 11px;border-radius:99px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--muted)}
-.chip.on{border-color:rgba(245,197,66,.45);background:var(--emerald-soft);color:#b6f0d5}
-.chip.warm{border-color:rgba(232,137,12,.42);background:var(--amber-soft);color:#ffdaa8}
+.chip{font-size:11.5px;padding:5px 11px;border-radius:99px;border:1px solid var(--line);background:rgba(21,32,27,.032);color:var(--muted)}
+.chip.on{border-color:rgba(30,111,82,.45);background:var(--emerald-soft);color:#b6f0d5}
+.chip.warm{border-color:rgba(180,82,47,.42);background:var(--amber-soft);color:#ffdaa8}
 
 .btn{font-family:var(--head);font-weight:700;font-size:14px;cursor:pointer;border:none;border-radius:12px;padding:12px 20px;
   transition:all .16s;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
-.btn-go{background:var(--emerald);color:#17110A}
-.btn-go:hover{background:#FFE79B;transform:translateY(-1px)}
+.btn-go{background:var(--emerald);color:#FFFFFF}
+.btn-go:hover{background:#2F9370;transform:translateY(-1px)}
 .btn-go:disabled{opacity:.45;cursor:not-allowed;transform:none}
-.btn-line{background:rgba(255,255,255,.05);border:1px solid var(--line2);color:var(--text)}
+.btn-line{background:rgba(21,32,27,.05);border:1px solid var(--line2);color:var(--text)}
 .btn-line:hover{border-color:var(--emerald)}
 .btn-sm{padding:9px 15px;font-size:12.8px;border-radius:10px}
 .send-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
@@ -127,14 +128,14 @@ select option{background:var(--surface);color:var(--text)}
 /* recent */
 .recent{margin-top:20px}
 .recent h2{font-size:15.5px;font-weight:700;margin-bottom:12px}
-.ritem{display:flex;gap:12px;align-items:center;background:rgba(255,255,255,.03);border:1px solid var(--line);
+.ritem{display:flex;gap:12px;align-items:center;background:rgba(21,32,27,.032);border:1px solid var(--line);
   border-radius:13px;padding:12px 14px;margin-bottom:8px;font-size:13.4px}
 .ritem .rname{font-weight:600}
 .ritem .rmeta{font-size:11.8px;color:var(--muted2)}
 .ritem .ract{margin-left:auto;display:flex;gap:7px;flex-shrink:0}
 .empty{font-size:13.4px;color:var(--muted2);padding:16px 0}
 
-.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,120%);background:var(--emerald);color:#17110A;
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,120%);background:var(--emerald);color:#FFFFFF;
   font-family:var(--head);font-weight:700;font-size:14px;padding:13px 24px;border-radius:12px;z-index:200;transition:transform .3s cubic-bezier(.2,1.2,.4,1)}
 .toast.on{transform:translate(-50%,0)}
 .foot{border-top:1px solid var(--line);margin-top:34px;padding:20px 0 40px;font-size:11.6px;color:var(--muted2);line-height:1.7}
@@ -147,12 +148,9 @@ select option{background:var(--surface);color:var(--text)}
   <div class="nav-in">
     <a class="logo" href="../index.html">
       <svg viewBox="0 0 88 88" aria-hidden="true">
-        <defs><linearGradient id="lgM1" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#FFDE7A"/><stop offset="52%" stop-color="#F5C542"/><stop offset="100%" stop-color="#D19A16"/>
-        </linearGradient></defs>
-        <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#lgM1)"/>
-        <circle cx="44" cy="35" r="10.5" fill="#0B1622"/>
-        <path d="M26.5 66.5a17.5 17.5 0 0135 0z" fill="#0B1622"/>
+        <path d="M12 20a10 10 0 0110-10h44a10 10 0 0110 10v30a10 10 0 01-10 10H42L24 76V60h-2a10 10 0 01-10-10z" fill="#1E6F52"/>
+        <circle cx="44" cy="29" r="8.5" fill="#FFFFFF"/>
+        <path d="M30 52.5a14 14 0 0128 0z" fill="#FFFFFF"/>
       </svg>
       <span class="logo-word"><span class="l1">don't have</span><span class="l2">an agent<span class="dot">.com</span></span></span>
     </a>
@@ -165,12 +163,9 @@ select option{background:var(--surface);color:var(--text)}
   <!-- ══ GATE ══ -->
   <div class="gate" id="gate">
     <svg viewBox="0 0 88 88" aria-hidden="true">
-        <defs><linearGradient id="lgM2" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#FFDE7A"/><stop offset="52%" stop-color="#F5C542"/><stop offset="100%" stop-color="#D19A16"/>
-        </linearGradient></defs>
-        <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#lgM2)"/>
-        <circle cx="44" cy="35" r="10.5" fill="#0B1622"/>
-        <path d="M26.5 66.5a17.5 17.5 0 0135 0z" fill="#0B1622"/>
+        <path d="M12 20a10 10 0 0110-10h44a10 10 0 0110 10v30a10 10 0 01-10 10H42L24 76V60h-2a10 10 0 01-10-10z" fill="#1E6F52"/>
+        <circle cx="44" cy="29" r="8.5" fill="#FFFFFF"/>
+        <path d="M30 52.5a14 14 0 0128 0z" fill="#FFFFFF"/>
       </svg>
     <h1>Agent console</h1>
     <p>Generate a personal review link for a client and send it in one tap.</p>

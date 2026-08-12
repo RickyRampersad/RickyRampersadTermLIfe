@@ -8,8 +8,8 @@
 <meta property="og:title" content="Don't Have An Agent"/>
 <meta property="og:description" content="Your agent left. Your policy didn't. Free four-minute policy review — no cost, no obligation."/>
 <meta property="og:type" content="website"/>
-<meta name="theme-color" content="#07131f"/>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 88'%3E%3Cpath d='M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z' fill='%23F5C542'/%3E%3Ccircle cx='44' cy='35' r='10.5' fill='%230B1622'/%3E%3Cpath d='M26.5 66.5a17.5 17.5 0 0135 0z' fill='%230B1622'/%3E%3C/svg%3E"/>
+<meta name="theme-color" content="#F6F3EC"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 88'%3E%3Cpath d='M12 20a10 10 0 0110-10h44a10 10 0 0110 10v30a10 10 0 01-10 10H42L24 76V60h-2a10 10 0 01-10-10z' fill='%231E6F52'/%3E%3Ccircle cx='44' cy='29' r='8.5' fill='%23FFFFFF'/%3E%3Cpath d='M30 52.5a14 14 0 0128 0z' fill='%23FFFFFF'/%3E%3C/svg%3E"/>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════════════════════════
@@ -23,29 +23,38 @@
    the years nobody called. Gold is what you want; grey is what you have.
    Keep that opposition if this is ever re-skinned for resale.
    ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════
+   BRAND TOKENS — Ivory & Forest
+   Warm paper and deep green. No yellow, no blue — the two the brand has
+   ruled out. Clay is the warm secondary; slate is the absence colour.
+
+   The signal pair: GREEN is the resolved, assigned, valuable state.
+   SLATE is the empty agent slot. Keep them opposed if this is re-skinned.
+
+   Switching the whole product to another palette is this block plus the
+   matching one in review.html and agent/index.html — nothing else.
+   ═══════════════════════════════════════════════════════════════════════ */
 :root {
-  --bg:      #0B1622;
-  --bg2:     #11243A;
-  --card:    #17304D;
-  --card2:   #1D3C60;
-  --line:    rgba(255,255,255,.085);
-  --line2:   rgba(245,197,66,.22);
-  --text:    #F6F2E8;
-  --muted:   #B3BECB;
-  --muted2:  #8496A9;
+  --bg:      #F6F3EC;
+  --bg2:     #EFEBE1;
+  --card:    #FFFFFF;
+  --card2:   #FBF9F5;
+  --line:    rgba(21,32,27,.10);
+  --line2:   rgba(30,111,82,.30);
+  --text:    #15201B;
+  --muted:   #4A5A52;
+  --muted2:  #7B8A82;
 
-  /* gold — the resolved state, and every call to action */
-  --gold:    #F5C542;
-  --gold2:   #E0A81E;
-  --gold3:   #FFDE7A;
-  --amber:   #E8890C;
-  /* slate — the unassigned state, the gap, the absence */
-  --slate:   #64798F;
-  --red:     #FF8A6B;
+  --gold:    #1E6F52;
+  --gold2:   #134A37;
+  --gold3:   #2F9370;
+  --amber:   #B4522F;
+  --slate:   #9AA9A1;
+  --red:     #B4342A;
 
-  --gold-soft:  rgba(245,197,66,.13);
-  --gold-soft2: rgba(245,197,66,.07);
-  --slate-soft: rgba(100,121,143,.16);
+  --gold-soft:  rgba(30,111,82,.10);
+  --gold-soft2: rgba(30,111,82,.05);
+  --slate-soft: rgba(154,169,161,.20);
 
   --head: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -58,7 +67,7 @@ body {
   font-family: var(--body); background: var(--bg); color: var(--text);
   line-height: 1.65; overflow-x: hidden; -webkit-font-smoothing: antialiased;
   background-image:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(245,197,66,.10), transparent),
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(30,111,82,.10), transparent),
     linear-gradient(180deg, var(--bg) 0%, var(--bg2) 55%, var(--bg) 100%);
   background-attachment: fixed;
 }
@@ -84,14 +93,14 @@ svg { display: block; }
 .logo-mark .badge { opacity: 1; }
 
 /* ── nav ────────────────────────────────────────────────────────────── */
-.nav { position: sticky; top: 0; z-index: 90; background: rgba(6,17,29,.9); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
+.nav { position: sticky; top: 0; z-index: 90; background: rgba(246,243,236,.93); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
 .nav-in { max-width: 1120px; margin: 0 auto; padding: 0 22px; height: 70px; display: flex; align-items: center; gap: 24px; }
 .nav-links { display: flex; gap: 22px; margin-left: auto; align-items: center; }
 .nav-links a { font-size: 14px; color: var(--muted); font-weight: 500; transition: color .16s; }
 .nav-links a:hover { color: var(--text); }
 /* The CTA is a button first and a nav link second — `.nav-links a` would
    otherwise win on specificity and paint its text muted grey on gold. */
-.nav-links a.btn-go { color: #17110A; }
+.nav-links a.btn-go { color: #FFFFFF; }
 .nav-links a.btn-line { color: var(--text); }
 @media (max-width: 900px) { .nav-links a:not(.btn) { display: none; } }
 .by-branch { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--muted2); border-left: 1px solid var(--line); padding-left: 12px; }
@@ -102,25 +111,25 @@ svg { display: block; }
 /* ── buttons ────────────────────────────────────────────────────────── */
 .btn { font-family: var(--head); font-weight: 700; font-size: 15px; cursor: pointer; border: none; border-radius: 13px;
   padding: 14px 26px; transition: all .18s ease; display: inline-flex; align-items: center; justify-content: center; gap: 9px; }
-.btn-go { background: linear-gradient(135deg, var(--gold3), var(--gold)); color: #17110A; box-shadow: 0 6px 24px rgba(245,197,66,.24); }
-.btn-go:hover { background: linear-gradient(135deg, #FFE79B, var(--gold3)); transform: translateY(-2px); box-shadow: 0 12px 34px rgba(245,197,66,.34); }
-.btn-gold { background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #17110A; }
+.btn-go { background: linear-gradient(135deg, var(--gold3), var(--gold)); color: #FFFFFF; box-shadow: 0 6px 24px rgba(30,111,82,.24); }
+.btn-go:hover { background: linear-gradient(135deg, #2F9370, var(--gold3)); transform: translateY(-2px); box-shadow: 0 12px 34px rgba(30,111,82,.34); }
+.btn-gold { background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #FFFFFF; }
 .btn-gold:hover { transform: translateY(-2px); }
-.btn-line { background: rgba(255,255,255,.05); border: 1.5px solid var(--line2); color: var(--text); }
+.btn-line { background: rgba(21,32,27,.05); border: 1.5px solid var(--line2); color: var(--text); }
 .btn-line:hover { border-color: var(--gold); background: var(--gold-soft); }
 .btn-sm { padding: 10px 18px; font-size: 13.5px; border-radius: 11px; }
 
 /* ── hero ───────────────────────────────────────────────────────────── */
 .hero { position: relative; padding: 68px 0 56px; overflow: hidden; }
 .hero::before { content: ""; position: absolute; inset: -30% 0 auto 0; height: 640px; pointer-events: none;
-  background: radial-gradient(ellipse 58% 55% at 18% 0%, rgba(245,197,66,.16), transparent 70%),
-              radial-gradient(ellipse 55% 50% at 86% 14%, rgba(232,137,12,.10), transparent 70%); }
+  background: radial-gradient(ellipse 58% 55% at 18% 0%, rgba(30,111,82,.16), transparent 70%),
+              radial-gradient(ellipse 55% 50% at 86% 14%, rgba(180,82,47,.10), transparent 70%); }
 .hero-in { position: relative; display: grid; grid-template-columns: 1.08fr .92fr; gap: 50px; align-items: start; }
 .hero-in > * { min-width: 0; }
 @media (max-width: 960px) { .hero-in { grid-template-columns: 1fr; gap: 36px; } }
 
 .eyebrow { display: inline-flex; align-items: center; gap: 9px; font-family: var(--head); font-size: 12px; font-weight: 700;
-  color: var(--gold); background: var(--gold-soft); border: 1px solid rgba(245,197,66,.3);
+  color: var(--gold); background: var(--gold-soft); border: 1px solid rgba(30,111,82,.3);
   padding: 7px 15px; border-radius: 99px; margin-bottom: 22px; letter-spacing: .01em; }
 .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); animation: pulse 2.2s ease-in-out infinite; }
 @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(1.5); } }
@@ -159,14 +168,14 @@ h1.hero-h em { font-style: normal; color: var(--gold); }
 
 /* ── compliance badge ───────────────────────────────────────────────── */
 .compliance-badge { display: flex; gap: 13px; align-items: flex-start; margin-top: 18px;
-  background: var(--gold-soft); border: 1px solid rgba(245,197,66,.26); border-radius: 14px; padding: 14px 16px; }
+  background: var(--gold-soft); border: 1px solid rgba(30,111,82,.26); border-radius: 14px; padding: 14px 16px; }
 .compliance-badge svg { width: 30px; height: 30px; flex-shrink: 0; }
 .compliance-badge b { display: block; font-family: var(--head); font-weight: 700; font-size: 13.5px; margin-bottom: 3px; }
 .compliance-badge div { font-size: 12.7px; color: var(--muted); line-height: 1.55; }
 .compliance-badge a { color: var(--gold); text-decoration: underline; text-underline-offset: 2px; }
 
 /* ── the gap band ───────────────────────────────────────────────────── */
-.gapband { padding: 66px 0; border-block: 1px solid var(--line); background: rgba(6,17,29,.45); }
+.gapband { padding: 66px 0; border-block: 1px solid var(--line); background: rgba(239,235,225,.6); }
 .gapband-in { display: grid; grid-template-columns: .82fr 1.18fr; gap: 44px; align-items: center; }
 .gapband-in > * { min-width: 0; }
 @media (max-width: 980px) { .gapband-in { grid-template-columns: 1fr; gap: 30px; } }
@@ -186,11 +195,11 @@ h1.hero-h em { font-style: normal; color: var(--gold); }
   border-radius: var(--rl); padding: 22px 21px; transition: transform .2s, border-color .2s, box-shadow .2s; overflow: hidden; }
 .door::after { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px;
   background: linear-gradient(90deg, var(--gold), var(--gold)); opacity: 0; transition: opacity .2s; }
-.door:hover { transform: translateY(-4px); border-color: var(--line2); box-shadow: 0 18px 44px rgba(0,0,0,.45); }
+.door:hover { transform: translateY(-4px); border-color: var(--line2); box-shadow: 0 18px 44px rgba(21,32,27,.11); }
 .door:hover::after { opacity: 1; }
 .door .di { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 13px; }
-.door.a .di { background: var(--gold-soft); border: 1px solid rgba(245,197,66,.34); }
-.door.b .di { background: var(--gold-soft); border: 1px solid rgba(245,197,66,.32); }
+.door.a .di { background: var(--gold-soft); border: 1px solid rgba(30,111,82,.34); }
+.door.b .di { background: var(--gold-soft); border: 1px solid rgba(30,111,82,.32); }
 .door .di svg { width: 21px; height: 21px; }
 .door h3 { font-size: 17px; font-weight: 800; margin-bottom: 6px; }
 .door p { font-size: 13.5px; color: var(--muted); line-height: 1.55; }
@@ -199,24 +208,24 @@ h1.hero-h em { font-style: normal; color: var(--gold); }
 .door.b .go { color: var(--gold); }
 
 .trust-strip { display: flex; flex-wrap: wrap; gap: 8px; }
-.trust-strip span { font-size: 12.5px; color: var(--muted); background: rgba(255,255,255,.04); border: 1px solid var(--line); padding: 7px 13px; border-radius: 99px; }
+.trust-strip span { font-size: 12.5px; color: var(--muted); background: rgba(21,32,27,.042); border: 1px solid var(--line); padding: 7px 13px; border-radius: 99px; }
 .trust-strip b { color: var(--gold); }
 
 /* ── check card ─────────────────────────────────────────────────────── */
 .check-card { background: linear-gradient(158deg, var(--card), var(--card2)); border: 1px solid var(--line);
-  border-radius: var(--rl); padding: 24px 22px; box-shadow: 0 24px 60px rgba(0,0,0,.42); }
+  border-radius: var(--rl); padding: 24px 22px; box-shadow: 0 24px 60px rgba(21,32,27,.10); }
 .check-card h3 { font-size: 17px; font-weight: 800; margin-bottom: 4px; }
 .check-card .cc-sub { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
 .cq { margin-bottom: 15px; }
 .cq p { font-size: 13.6px; font-weight: 500; margin-bottom: 9px; }
 .cq-opts { display: flex; gap: 7px; flex-wrap: wrap; }
-.cq-opts button { font: inherit; font-size: 12.8px; cursor: pointer; color: var(--muted); background: rgba(255,255,255,.04);
+.cq-opts button { font: inherit; font-size: 12.8px; cursor: pointer; color: var(--muted); background: rgba(21,32,27,.042);
   border: 1.5px solid var(--line); border-radius: 10px; padding: 8px 13px; transition: all .15s; }
 .cq-opts button:hover { border-color: var(--line2); color: var(--text); }
 .cq-opts button.on { background: var(--gold-soft); border-color: var(--gold); color: var(--text); font-weight: 500; }
 .cq-opts button.on.warn { background: var(--gold-soft); border-color: var(--gold); }
 .gauge { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
-.gauge-bar { height: 8px; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; margin-bottom: 12px; }
+.gauge-bar { height: 8px; border-radius: 99px; background: rgba(21,32,27,.07); overflow: hidden; margin-bottom: 12px; }
 .gauge-fill { height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--gold), var(--gold)); transition: width .5s cubic-bezier(.4,0,.2,1); }
 .gauge-txt { font-size: 13.4px; color: var(--muted); line-height: 1.6; min-height: 44px; }
 .gauge-txt b { color: var(--text); }
@@ -224,21 +233,21 @@ h1.hero-h em { font-style: normal; color: var(--gold); }
 
 /* ── sections ───────────────────────────────────────────────────────── */
 section { padding: 84px 0; }
-.alt { background: rgba(6,17,29,.55); border-block: 1px solid var(--line); }
+.alt { background: rgba(239,235,225,.7); border-block: 1px solid var(--line); }
 .sec-label { font-family: var(--head); font-size: 12px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--gold); margin-bottom: 14px; }
 h2.sec-h { font-size: clamp(27px, 4.4vw, 42px); font-weight: 900; margin-bottom: 16px; }
 h2.sec-h em { font-style: normal; color: var(--gold); }
 .sec-sub { font-size: 16.5px; color: var(--muted); max-width: 680px; margin-bottom: 42px; }
 
 /* ── local (T&T) hero figure ────────────────────────────────────────── */
-.tt-figure { background: linear-gradient(158deg, var(--card), var(--card2)); border: 1px solid rgba(245,197,66,.24);
+.tt-figure { background: linear-gradient(158deg, var(--card), var(--card2)); border: 1px solid rgba(30,111,82,.24);
   border-radius: var(--rl); padding: 30px 28px; margin-bottom: 20px; }
 .tt-row { display: grid; grid-template-columns: 190px 1fr; gap: 18px; align-items: center; margin-bottom: 20px; }
 @media (max-width: 700px) { .tt-row { grid-template-columns: 1fr; gap: 8px; } }
 .tt-row:last-child { margin-bottom: 0; }
 .tt-label { font-size: 13.6px; color: var(--muted); line-height: 1.45; }
 .tt-label b { display: block; color: var(--text); font-family: var(--head); font-weight: 700; font-size: 15px; }
-.tt-bar { position: relative; height: 46px; border-radius: 10px; background: rgba(255,255,255,.05); overflow: hidden; }
+.tt-bar { position: relative; height: 46px; border-radius: 10px; background: rgba(21,32,27,.05); overflow: hidden; }
 .tt-bar span { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 10px; transition: width 1.4s cubic-bezier(.2,.8,.3,1); }
 .tt-bar.big span { background: linear-gradient(90deg, var(--gold2), var(--gold)); }
 .tt-bar.small span { background: linear-gradient(90deg, var(--gold2), var(--gold)); }
@@ -256,7 +265,7 @@ h2.sec-h em { font-style: normal; color: var(--gold); }
 @media (max-width: 540px) { .stats { grid-template-columns: 1fr; } }
 .stat { background: linear-gradient(158deg, var(--card), var(--card2)); border: 1px solid var(--line); border-radius: var(--r); padding: 24px 20px; }
 .stat .num { font-size: 46px; font-weight: 900; color: var(--gold); line-height: 1; margin-bottom: 10px; }
-.statbar { height: 6px; border-radius: 99px; background: rgba(255,255,255,.07); overflow: hidden; margin-bottom: 13px; }
+.statbar { height: 6px; border-radius: 99px; background: rgba(21,32,27,.06); overflow: hidden; margin-bottom: 13px; }
 .statbar i { display: block; height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--gold2), var(--gold)); transition: width 1.3s cubic-bezier(.2,.8,.3,1); }
 .stat p { font-size: 14px; color: var(--text); line-height: 1.5; margin-bottom: 9px; }
 .stat p b { color: var(--gold); font-weight: 500; }
@@ -286,8 +295,8 @@ h2.sec-h em { font-style: normal; color: var(--gold); }
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 @media (max-width: 860px) { .two-col { grid-template-columns: 1fr; } }
 .panel { border-radius: var(--rl); padding: 26px 24px; border: 1px solid var(--line); }
-.panel.yes { background: linear-gradient(158deg, rgba(245,197,66,.10), rgba(245,197,66,.03)); border-color: rgba(245,197,66,.28); }
-.panel.no  { background: linear-gradient(158deg, rgba(255,255,255,.035), rgba(255,255,255,.012)); }
+.panel.yes { background: linear-gradient(158deg, rgba(30,111,82,.10), rgba(30,111,82,.03)); border-color: rgba(30,111,82,.28); }
+.panel.no  { background: linear-gradient(158deg, rgba(21,32,27,.038), rgba(21,32,27,.014)); }
 .panel h3 { font-size: 18px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
 .panel h3 svg { width: 21px; height: 21px; }
 .panel ul { list-style: none; display: grid; gap: 13px; }
@@ -301,7 +310,7 @@ h2.sec-h em { font-style: normal; color: var(--gold); }
 @media (max-width: 860px) { .who { grid-template-columns: 1fr; } }
 .who-card { background: linear-gradient(158deg, var(--card), var(--card2)); border: 1px solid var(--line); border-radius: var(--rl); padding: 28px 26px; transition: border-color .2s, transform .2s; }
 .who-card:hover { border-color: var(--line2); transform: translateY(-3px); }
-.who-card .wi { width: 46px; height: 46px; border-radius: 13px; background: var(--gold-soft); border: 1px solid rgba(245,197,66,.32); display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
+.who-card .wi { width: 46px; height: 46px; border-radius: 13px; background: var(--gold-soft); border: 1px solid rgba(30,111,82,.32); display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
 .who-card .wi svg { width: 23px; height: 23px; }
 .who-card h3 { font-size: 19px; font-weight: 800; margin-bottom: 8px; }
 .who-card > p { font-size: 14.4px; color: var(--muted); margin-bottom: 16px; }
@@ -312,8 +321,8 @@ h2.sec-h em { font-style: normal; color: var(--gold); }
 /* ── local rights ───────────────────────────────────────────────────── */
 .local { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 @media (max-width: 860px) { .local { grid-template-columns: 1fr; } }
-.local-item { background: rgba(255,255,255,.035); border: 1px solid var(--line); border-radius: var(--r); padding: 22px 20px; }
-.local-item .li-ic { width: 38px; height: 38px; border-radius: 11px; background: var(--gold-soft); border: 1px solid rgba(245,197,66,.28); display: flex; align-items: center; justify-content: center; margin-bottom: 13px; }
+.local-item { background: rgba(21,32,27,.038); border: 1px solid var(--line); border-radius: var(--r); padding: 22px 20px; }
+.local-item .li-ic { width: 38px; height: 38px; border-radius: 11px; background: var(--gold-soft); border: 1px solid rgba(30,111,82,.28); display: flex; align-items: center; justify-content: center; margin-bottom: 13px; }
 .local-item .li-ic svg { width: 19px; height: 19px; }
 .local-item h4 { font-size: 15.5px; font-weight: 800; margin-bottom: 7px; }
 .local-item p { font-size: 13.6px; color: var(--muted); line-height: 1.65; }
@@ -333,15 +342,15 @@ h2.sec-h em { font-style: normal; color: var(--gold); }
 
 /* ── cta ────────────────────────────────────────────────────────────── */
 .cta-box { position: relative; text-align: center; background: linear-gradient(158deg, var(--card), var(--card2));
-  border: 1px solid rgba(245,197,66,.28); border-radius: 28px; padding: 54px 32px; overflow: hidden; }
+  border: 1px solid rgba(30,111,82,.28); border-radius: 28px; padding: 54px 32px; overflow: hidden; }
 .cta-box::before { content: ""; position: absolute; inset: -60% 0 auto 0; height: 320px;
-  background: radial-gradient(ellipse 50% 60% at 50% 100%, rgba(245,197,66,.18), transparent 70%); pointer-events: none; }
+  background: radial-gradient(ellipse 50% 60% at 50% 100%, rgba(30,111,82,.18), transparent 70%); pointer-events: none; }
 .cta-box h2 { position: relative; font-size: clamp(26px, 4vw, 38px); font-weight: 900; margin-bottom: 14px; }
 .cta-box p { position: relative; font-size: 16.5px; color: var(--muted); max-width: 540px; margin: 0 auto 28px; }
 .cta-actions { position: relative; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
 /* ── footer ─────────────────────────────────────────────────────────── */
-footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rgba(6,17,29,.6); }
+footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rgba(239,235,225,.72); }
 .foot-top { display: flex; justify-content: space-between; gap: 30px; flex-wrap: wrap; margin-bottom: 28px; align-items: flex-start; }
 .foot-links { display: flex; gap: 26px; flex-wrap: wrap; }
 .foot-links a { font-size: 14px; color: var(--muted); }
@@ -350,7 +359,7 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
 .legal a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
 
 /* ── sticky ─────────────────────────────────────────────────────────── */
-.sticky { position: fixed; left: 0; right: 0; bottom: 0; z-index: 80; background: rgba(6,17,29,.96); backdrop-filter: blur(14px);
+.sticky { position: fixed; left: 0; right: 0; bottom: 0; z-index: 80; background: rgba(246,243,236,.96); backdrop-filter: blur(14px);
   border-top: 1px solid var(--line); padding: 12px 0; transform: translateY(105%); transition: transform .3s ease; }
 .sticky.on { transform: none; }
 .sticky-in { max-width: 1120px; margin: 0 auto; padding: 0 22px; display: flex; align-items: center; gap: 16px; }
@@ -367,18 +376,18 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
 }
 
 /* ── modal ──────────────────────────────────────────────────────────── */
-.modal { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(3,8,14,.86); backdrop-filter: blur(7px); align-items: center; justify-content: center; padding: 20px; }
+.modal { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(21,32,27,.55); backdrop-filter: blur(7px); align-items: center; justify-content: center; padding: 20px; }
 .modal.on { display: flex; }
 .modal-box { width: min(500px, 100%); background: linear-gradient(158deg, var(--card), var(--card2)); border: 1px solid var(--line2);
   border-radius: var(--rl); padding: 30px 28px; max-height: 90vh; overflow-y: auto; animation: fade .28s ease; }
 .modal-box h3 { font-size: 21px; font-weight: 800; margin-bottom: 8px; }
 .modal-box > p { font-size: 14.5px; color: var(--muted); margin-bottom: 20px; }
 .modal-box label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin: 14px 0 6px; }
-.modal-box input { width: 100%; font: inherit; font-size: 15px; color: var(--text); background: rgba(0,0,0,.3);
+.modal-box input { width: 100%; font: inherit; font-size: 15px; color: var(--text); background: rgba(21,32,27,.035);
   border: 1px solid var(--line2); border-radius: 11px; padding: 12px 14px; }
 .modal-box input:focus { outline: none; border-color: var(--gold); }
 .modal-box .btn { width: 100%; margin-top: 18px; }
-.modal-x { float: right; background: rgba(255,255,255,.06); border: 1px solid var(--line); color: var(--muted); cursor: pointer; border-radius: 50%; width: 32px; height: 32px; font-size: 15px; }
+.modal-x { float: right; background: rgba(21,32,27,.055); border: 1px solid var(--line); color: var(--muted); cursor: pointer; border-radius: 50%; width: 32px; height: 32px; font-size: 15px; }
 .or { text-align: center; font-size: 13px; color: var(--muted2); margin: 16px 0 4px; }
 </style>
 </head>
@@ -404,22 +413,16 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
   <div class="nav-in">
     <a class="logo" href="#top">
       <svg class="logo-mark" viewBox="0 0 88 88" aria-hidden="true">
-        <defs><linearGradient id="lgM1" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#FFDE7A"/><stop offset="52%" stop-color="#F5C542"/><stop offset="100%" stop-color="#D19A16"/>
-        </linearGradient></defs>
-        <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#lgM1)"/>
-        <circle cx="44" cy="35" r="10.5" fill="#0B1622"/>
-        <path d="M26.5 66.5a17.5 17.5 0 0135 0z" fill="#0B1622"/>
+        <path d="M12 20a10 10 0 0110-10h44a10 10 0 0110 10v30a10 10 0 01-10 10H42L24 76V60h-2a10 10 0 01-10-10z" fill="#1E6F52"/>
+        <circle cx="44" cy="29" r="8.5" fill="#FFFFFF"/>
+        <path d="M30 52.5a14 14 0 0128 0z" fill="#FFFFFF"/>
       </svg>
       <span class="logo-word"><span class="l1">don't have</span><span class="l2">an agent<span class="dot">.com</span></span></span>
     </a>
     <span class="by-branch">
       <svg viewBox="0 0 88 88" aria-hidden="true">
-          <defs><linearGradient id="bsnav" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#FFDE7A"/><stop offset="55%" stop-color="#E0A81E"/><stop offset="100%" stop-color="#A8760F"/>
-          </linearGradient></defs>
-          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#bsnav)"/>
-          <path d="M28 44L39 55L60 31" stroke="#0B1622" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="#7B8A82"/>
+          <path d="M28 44L39 55L60 31" stroke="#F6F3EC" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       a <b>Ricky Rampersad Branch</b> initiative
     </span>
@@ -490,12 +493,9 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
     <div class="hero-side">
       <div class="check-card rv" id="check">
         <svg class="logo-mark hero-mark" style="width:48px;height:48px;margin-bottom:14px" viewBox="0 0 88 88" aria-hidden="true">
-        <defs><linearGradient id="lgM3" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#FFDE7A"/><stop offset="52%" stop-color="#F5C542"/><stop offset="100%" stop-color="#D19A16"/>
-        </linearGradient></defs>
-        <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#lgM3)"/>
-        <circle cx="44" cy="35" r="10.5" fill="#0B1622"/>
-        <path d="M26.5 66.5a17.5 17.5 0 0135 0z" fill="#0B1622"/>
+        <path d="M12 20a10 10 0 0110-10h44a10 10 0 0110 10v30a10 10 0 01-10 10H42L24 76V60h-2a10 10 0 01-10-10z" fill="#1E6F52"/>
+        <circle cx="44" cy="29" r="8.5" fill="#FFFFFF"/>
+        <path d="M30 52.5a14 14 0 0128 0z" fill="#FFFFFF"/>
       </svg>
         <h3>Are you an orphan policyholder?</h3>
         <p class="cc-sub">Four taps. Nothing is sent anywhere — this runs entirely in your browser.</p>
@@ -509,11 +509,8 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
 
       <div class="compliance-badge rv">
           <svg viewBox="0 0 88 88" aria-hidden="true">
-          <defs><linearGradient id="bscmp" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#FFDE7A"/><stop offset="55%" stop-color="#E0A81E"/><stop offset="100%" stop-color="#A8760F"/>
-          </linearGradient></defs>
-          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#bscmp)"/>
-          <path d="M28 44L39 55L60 31" stroke="#0B1622" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="#7B8A82"/>
+          <path d="M28 44L39 55L60 31" stroke="#F6F3EC" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
           <div>
             <b>A registered agent, on the public record</b>
@@ -540,34 +537,34 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
       <div class="gapband-fig">
       <svg class="gapfig" viewBox="0 0 520 120" role="img" aria-label="You, a missing agent, and your insurer — the gap closes">
         <!-- you -->
-        <circle cx="58" cy="56" r="30" fill="rgba(245,197,66,.13)" stroke="#F5C542" stroke-width="2"/>
-        <g transform="translate(40,38) scale(1.5)" fill="#F5C542"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></g>
-        <text x="58" y="108" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="12" font-weight="700" fill="#B3BECB">You</text>
+        <circle cx="58" cy="56" r="30" fill="rgba(30,111,82,.13)" stroke="#1E6F52" stroke-width="2"/>
+        <g transform="translate(40,38) scale(1.5)" fill="#1E6F52"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></g>
+        <text x="58" y="108" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="12" font-weight="700" fill="#4A5A52">You</text>
 
         <!-- insurer -->
-        <circle cx="462" cy="56" r="30" fill="rgba(245,197,66,.13)" stroke="#F5C542" stroke-width="2"/>
-        <g transform="translate(444,38) scale(1.5)" fill="none" stroke="#F5C542" stroke-width="2.1" stroke-linejoin="round">
+        <circle cx="462" cy="56" r="30" fill="rgba(30,111,82,.13)" stroke="#1E6F52" stroke-width="2"/>
+        <g transform="translate(444,38) scale(1.5)" fill="none" stroke="#1E6F52" stroke-width="2.1" stroke-linejoin="round">
           <path d="M4 21V6l8-3 8 3v15"/><path d="M9 21v-5h6v5" stroke-linecap="round"/>
         </g>
-        <text x="462" y="108" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="12" font-weight="700" fill="#B3BECB">Your insurer</text>
+        <text x="462" y="108" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="12" font-weight="700" fill="#4A5A52">Your insurer</text>
 
         <!-- broken state: the gap is grey, because absence is not a colour you want -->
         <g class="broken">
-          <line class="track-broken" x1="92" y1="56" x2="228" y2="56" stroke="#64798F" stroke-width="3" stroke-linecap="round"/>
-          <line class="track-broken" x1="292" y1="56" x2="428" y2="56" stroke="#64798F" stroke-width="3" stroke-linecap="round"/>
-          <circle cx="260" cy="56" r="30" fill="rgba(100,121,143,.16)" stroke="#64798F" stroke-width="2.5" stroke-dasharray="7 6"/>
-          <path d="M250 46l20 20M270 46l-20 20" stroke="#64798F" stroke-width="3" stroke-linecap="round"/>
-          <text x="260" y="108" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="12" font-weight="700" fill="#64798F">No agent</text>
+          <line class="track-broken" x1="92" y1="56" x2="228" y2="56" stroke="#9AA9A1" stroke-width="3" stroke-linecap="round"/>
+          <line class="track-broken" x1="292" y1="56" x2="428" y2="56" stroke="#9AA9A1" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="260" cy="56" r="30" fill="rgba(154,169,161,.16)" stroke="#9AA9A1" stroke-width="2.5" stroke-dasharray="7 6"/>
+          <path d="M250 46l20 20M270 46l-20 20" stroke="#9AA9A1" stroke-width="3" stroke-linecap="round"/>
+          <text x="260" y="108" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="12" font-weight="700" fill="#9AA9A1">No agent</text>
         </g>
 
         <!-- fixed state: gold, because that is the thing worth having -->
         <g class="fixed">
-          <line class="track-fixed" x1="92" y1="56" x2="428" y2="56" stroke="#F5C542" stroke-width="3" stroke-linecap="round"/>
-          <circle cx="260" cy="56" r="30" fill="rgba(245,197,66,.18)" stroke="#F5C542" stroke-width="2.5"/>
-          <g transform="translate(242,38) scale(1.5)" fill="#F5C542"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></g>
-          <circle cx="282" cy="78" r="11" fill="#F5C542"/>
-          <path d="M277 78l3.5 3.5L288 74" stroke="#0B1622" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          <text x="260" y="108" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="12" font-weight="700" fill="#F5C542">Your agent</text>
+          <line class="track-fixed" x1="92" y1="56" x2="428" y2="56" stroke="#1E6F52" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="260" cy="56" r="30" fill="rgba(30,111,82,.18)" stroke="#1E6F52" stroke-width="2.5"/>
+          <g transform="translate(242,38) scale(1.5)" fill="#1E6F52"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></g>
+          <circle cx="282" cy="78" r="11" fill="#1E6F52"/>
+          <path d="M277 78l3.5 3.5L288 74" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="260" y="108" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="12" font-weight="700" fill="#1E6F52">Your agent</text>
         </g>
       </svg>
       </div>
@@ -630,7 +627,7 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
       evidence for exactly that.
     </p>
 
-    <div class="tl-body rv" style="border-color:rgba(245,197,66,.28)">
+    <div class="tl-body rv" style="border-color:rgba(30,111,82,.28)">
       <h3><span>2021</span> · individual life premiums fell 14%</h3>
       <p style="font-size:16px;color:var(--text);border-left:3px solid var(--gold);padding-left:16px;margin-bottom:18px">
         “…may have resulted from the delayed impact of policyholders <b style="color:var(--gold)">discontinuing their
@@ -883,22 +880,16 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
       <div>
         <a class="logo" href="#top" style="margin-bottom:10px">
           <svg class="logo-mark" viewBox="0 0 88 88" aria-hidden="true">
-        <defs><linearGradient id="lgM5" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#FFDE7A"/><stop offset="52%" stop-color="#F5C542"/><stop offset="100%" stop-color="#D19A16"/>
-        </linearGradient></defs>
-        <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#lgM5)"/>
-        <circle cx="44" cy="35" r="10.5" fill="#0B1622"/>
-        <path d="M26.5 66.5a17.5 17.5 0 0135 0z" fill="#0B1622"/>
+        <path d="M12 20a10 10 0 0110-10h44a10 10 0 0110 10v30a10 10 0 01-10 10H42L24 76V60h-2a10 10 0 01-10-10z" fill="#1E6F52"/>
+        <circle cx="44" cy="29" r="8.5" fill="#FFFFFF"/>
+        <path d="M30 52.5a14 14 0 0128 0z" fill="#FFFFFF"/>
       </svg>
           <span class="logo-word"><span class="l1">don't have</span><span class="l2">an agent<span class="dot">.com</span></span></span>
         </a>
         <div class="by-branch" style="border:none;padding:0;margin-top:4px">
           <svg viewBox="0 0 88 88" aria-hidden="true">
-          <defs><linearGradient id="bsfoot" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#FFDE7A"/><stop offset="55%" stop-color="#E0A81E"/><stop offset="100%" stop-color="#A8760F"/>
-          </linearGradient></defs>
-          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#bsfoot)"/>
-          <path d="M28 44L39 55L60 31" stroke="#0B1622" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="#7B8A82"/>
+          <path d="M28 44L39 55L60 31" stroke="#F6F3EC" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
           a <b>Ricky Rampersad Branch</b> initiative
         </div>
