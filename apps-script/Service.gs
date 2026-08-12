@@ -454,8 +454,15 @@ function saveRow_(isGroup, ref, priority, now, body, accessCode) {
     /* Group change of agent needs the physical letter back — letterhead and
        company stamp. While this starts with YES, the every-2-day note chases
        the letter, referencing the previous correspondence, until support
-       replaces it (e.g. "Received 15 Aug") or marks the row Handled. */
-    'Letter outstanding': (isGroup && c.changeAgent) ? 'YES — awaiting stamped letter' : '',
+       replaces it (e.g. "Received 15 Aug") or marks the row Handled.
+       On the matched-agent path no letter has gone out yet — support sends it
+       populated after verification and assignment, then sets this to YES so
+       the chase starts from the day the client actually has the letter. */
+    'Letter outstanding': (isGroup && c.changeAgent)
+      ? ((identity_(body).dhaa && !(body.signature || body.signatureTyped))
+          ? 'After match — support to send, then set YES'
+          : 'YES — awaiting stamped letter')
+      : '',
 
     /* The code that lets the client (and only the client) watch this row's
        progress from the website. Released with the reference, never alone. */
@@ -556,11 +563,13 @@ function prettyDate_(s) {
 
 function wrap_(inner, tag, id) {
   id = id || identity_(null);
-  /* donthaveanagent.com has its own colours — a client who used that product
-     should recognise the email as coming from it. */
-  var bg = id.dhaa ? '#0A1017' : SB.navy;
-  var chip = id.dhaa ? '#22C482' : SB.gold;
-  var chipInk = id.dhaa ? '#06120C' : SB.navy;
+  /* donthaveanagent.com has its own colours — Porcelain & Oxblood, the same
+     palette as the site, so a client who used that product recognises the
+     email as coming from it. */
+  var bg = id.dhaa ? '#5E141F' : SB.navy;
+  var chip = id.dhaa ? '#F2E9DC' : SB.gold;
+  var chipInk = id.dhaa ? '#5E141F' : SB.navy;
+  var sub = id.dhaa ? '#E5C9B3' : '#b7c9de';
   return '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:' + SB.ink + ';max-width:660px">' +
     '<div style="background:' + bg + ';color:#fff;padding:18px 22px;border-radius:10px 10px 0 0">' +
       '<table width="100%" cellpadding="0" cellspacing="0"><tr>' +
@@ -568,7 +577,7 @@ function wrap_(inner, tag, id) {
         '<td style="width:38px;height:38px;background:' + chip + ';border-radius:8px 8px 14px 14px;' +
         'text-align:center;font-size:22px;font-weight:bold;color:' + chipInk + '">✓</td></tr></table></td>' +
       '<td valign="middle" style="padding-left:10px"><b style="font-size:18px">' + esc_(id.name) + '</b><br>' +
-        '<span style="color:#b7c9de;font-size:12px">' + esc_(tag || id.tag) +
+        '<span style="color:' + sub + ';font-size:12px">' + esc_(tag || id.tag) +
         ' · ' + esc_(SVC.AGENT_NAME) + '</span></td>' +
       '</tr></table></div>' +
     '<div style="border:1px solid #dde5ee;border-top:none;padding:22px;border-radius:0 0 10px 10px">' + inner +
@@ -579,6 +588,14 @@ function tr_(k, v) {
   return '<tr><td style="padding:8px 12px;background:#f4f7fa;border:1px solid #e3eaf2;width:46%;color:#5a6b80;' +
     'vertical-align:top">' + esc_(k) + '</td>' +
     '<td style="padding:8px 12px;border:1px solid #e3eaf2;vertical-align:top">' + esc_(v) + '</td></tr>';
+}
+
+/** A small typographic tag for the team's action list — reads cleanly in any
+ *  mail client, prints in black and white, and never renders as a tofu box. */
+function badge_(label, color) {
+  return '<span style="display:inline-block;background:' + color + ';color:#fff;font-size:10px;' +
+    'font-weight:bold;letter-spacing:.08em;padding:2.5px 8px;border-radius:3px;margin-right:8px;' +
+    'vertical-align:1.5px">' + label + '</span>';
 }
 
 function box_(kind, html) {
@@ -657,15 +674,29 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf, accessCode) 
         'brief your agent is matched on, and held to.'
       : '';
     next.push('<b>Your agent appointment goes direct to ' + esc_(SVC.AGENT_NAME) + ' and the branch team.</b>' + brief);
+    /* Only claim the letter is attached when it truly is. On the branch site
+       the one legal document IS the letter; on donthaveanagent.com the letter
+       rides only on the signed (direct) path — a matched client's letter is
+       populated after verification and assignment. */
+    var letterInHand = !identity_(body).dhaa || !!letterPdf;
     next.push(isGroup
-      ? '<b>Your change of agent request is attached as a letter — print it, stamp it, sign it, send it back.</b> ' +
-        'Guardian needs it on your company letterhead with the company stamp. Reply to this email with a photo or ' +
-        'scan, or hand it to us. <b>Until we receive it we will write to you every ' + SVC.CLIENT_UPDATE_DAYS +
-        ' days, referencing our previous correspondence</b>, so it never slips through — the reminders stop the ' +
-        'moment the letter is in. We have already started the request at Customer Service so nothing waits on the post.'
-      : '<b>Your change of servicing agent request has gone to Customer Service</b>, signed and attached here for ' +
-        'your records. It usually takes 5 to 10 working days and Guardian confirms the change to you in writing. ' +
-        'Your policy, your premium and your cover are not affected in any way.');
+      ? (letterInHand
+          ? '<b>Your change of agent request is attached as a letter — print it, stamp it, sign it, send it back.</b> ' +
+            'Guardian needs it on your company letterhead with the company stamp. Reply to this email with a photo or ' +
+            'scan, or hand it to us. <b>Until we receive it we will write to you every ' + SVC.CLIENT_UPDATE_DAYS +
+            ' days, referencing our previous correspondence</b>, so it never slips through — the reminders stop the ' +
+            'moment the letter is in. We have already started the request at Customer Service so nothing waits on the post.'
+          : '<b>Your change of agent letter follows once your matched agent is confirmed.</b> It arrives by email ' +
+            'populated for your company letterhead — with the agent’s name already filled in — and all you do is ' +
+            'print it, stamp it, sign it and send it back. <b>From the day it goes out we will write to you every ' +
+            SVC.CLIENT_UPDATE_DAYS + ' days, referencing our previous correspondence</b>, until it is safely in.')
+      : (letterInHand
+          ? '<b>Your change of servicing agent request has gone to Customer Service</b>, signed and attached here for ' +
+            'your records. It usually takes 5 to 10 working days and Guardian confirms the change to you in writing. ' +
+            'Your policy, your premium and your cover are not affected in any way.'
+          : '<b>Your change of servicing agent papers follow once your matched agent is confirmed</b> — they arrive ' +
+            'by email populated for your digital signature, with the agent’s name filled in. Your policy, your ' +
+            'premium and your cover are not affected in any way.'));
   }
 
   var recs = [];
@@ -801,21 +832,21 @@ function routeToService_(ref, priority, now, body, attachments, clientEmailed) {
 
   var actions = [];
   if (c.needsTracing) {
-    actions.push('🔍 <b>Trace the policy first.</b> They do not have the number' +
+    actions.push(badge_('TRACE', SB.blue) + '<b>Trace the policy first.</b> They do not have the number' +
       (c.insurer ? ' — they think it is with <b>' + esc_(c.insurer) + '</b>' : '') +
       '. Search on name and date of birth' +
       (c.clientName ? ': <b>' + esc_(c.clientName) + '</b>' : '') + '.');
   }
   if (body.origin === 'client') {
-    actions.push('🤝 <b>No product questions were asked</b> — they came to us unprompted. ' +
+    actions.push(badge_('CARE', '#1e7d4f') + '<b>No product questions were asked</b> — they came to us unprompted. ' +
       'Answer exactly what they asked for and nothing more; a sales approach here loses them for good.');
   }
   (body.fields || []).forEach(function (f) {
-    if (f.flag === 'urgent')  actions.push('🔴 <b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
-    if (f.flag === 'records') actions.push('📝 <b>Record change:</b> ' + esc_(f.label) + ' — ' + esc_(f.value));
-    if (f.flag === 'agent')   actions.push('🔁 <b>Change of agent:</b> ' + esc_(f.label) + ' — ' + esc_(f.value));
-    if (f.flag === 'lead')    actions.push('⭐ <b>Follow-up:</b> ' + esc_(f.label) + ' — ' + esc_(f.value));
-    if (f.flag === 'service') actions.push('💬 <b>Needs a reply:</b> ' + esc_(f.label) + ' — ' + esc_(f.value));
+    if (f.flag === 'urgent')  actions.push(badge_('URGENT', '#b3261e') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
+    if (f.flag === 'records') actions.push(badge_('RECORDS', SB.blue) + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
+    if (f.flag === 'agent')   actions.push(badge_('AGENT', '#5E141F') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
+    if (f.flag === 'lead')    actions.push(badge_('FOLLOW-UP', '#a05e03') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
+    if (f.flag === 'service') actions.push(badge_('REPLY', '#455a75') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
   });
 
   var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
@@ -870,8 +901,10 @@ function routeToService_(ref, priority, now, body, attachments, clientEmailed) {
           ((body.signature || body.signatureTyped)
             ? 'The signed request is attached' +
               (isGroup ? ', drafted for the client\'s letterhead — they have been asked to print, stamp and return it.' : '.')
-            : 'No letter is attached yet — it is populated after verification and assignment, and goes out for ' +
-              'digital signature.') +
+            : 'No letter is attached yet — it is populated after verification and assignment' +
+              (isGroup ? ' for the company\'s letterhead. When it goes out, set <b>Letter outstanding</b> to ' +
+                         '<b>YES</b> in the sheet so the every-' + SVC.CLIENT_UPDATE_DAYS + '-day chase starts.'
+                       : ', and goes out for digital signature.')) +
           (av.wantInAgent
             ? '<br><br><b>The client\'s brief — what they want in an agent:</b> ' + esc_(String(av.wantInAgent)) +
               (av.wantInAgentWhy ? '<br><i>&ldquo;' + esc_(String(av.wantInAgentWhy)) + '&rdquo;</i>' : '') +
@@ -1277,7 +1310,7 @@ function answersPdf_(ref, priority, now, body) {
       (c.score !== '' && c.score !== undefined
         ? ' \u00b7 ' + (isGroup ? 'Plan Health Score ' : 'Protection Score ') + esc_(c.score) + '/100'
         : '') + '</div>' +
-    answerTables_(body) +
+    pdfAnswerTables_(body) +
     consentFoot_(body, ref);
 
   return toPdf_('<!DOCTYPE html><html><head><meta charset="utf-8"><style>' + paperCss_() +
@@ -1300,8 +1333,12 @@ function addendumTable_(body) {
   return out;
 }
 
-/** Every answer, section by section — shared by both questionnaire PDFs. */
-function answerTables_(body) {
+/** Every answer, section by section, in paperCss_ classes — the PDF flavour.
+ *  NOT the same as answerTables_ above: that one carries inline styles for
+ *  email clients, this one relies on the print stylesheet. Two names, on
+ *  purpose — Apps Script is one global scope, and a shared name here once
+ *  silently unstyled the team email's answer section. */
+function pdfAnswerTables_(body) {
   var out = '', section = '';
   (body.fields || []).forEach(function (f) {
     if (f.section !== section) {
@@ -1642,7 +1679,7 @@ function dailyServiceFollowUp() {
     MailApp.sendEmail({
       to: [SVC.AGENT_EMAIL].concat(SVC.ESCALATION_CC.length ? SVC.ESCALATION_CC : SVC.CC).filter(String).join(','),
       name: SVC.FROM_NAME,
-      subject: '⏰ ' + overdue.length + ' service questionnaire' + (overdue.length > 1 ? 's are' : ' is') +
+      subject: 'OVERDUE — ' + overdue.length + ' service questionnaire' + (overdue.length > 1 ? 's are' : ' is') +
                ' past the promise we made',
       htmlBody: wrap_(
         box_('warn', '<b>These clients were told they would hear from a person.</b> They have not been marked ' +
@@ -1690,7 +1727,7 @@ function clientPatiencePass_() {
     var headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
     var iRef = headers.indexOf('Reference'), iTs = headers.indexOf('Timestamp');
     var iSt = headers.indexOf('Status'), iCl = headers.indexOf('Client');
-    var iEm = headers.indexOf('Email');
+    var iEm = headers.indexOf('Email'), iSrc = headers.indexOf('Source');
     if (iRef < 0 || iSt < 0 || iEm < 0) return;
 
     /* Sheets created before this column existed get it appended by name. */
@@ -1724,6 +1761,12 @@ function clientPatiencePass_() {
       var first = String(r[iCl] || '').trim().split(/\s+/)[0] || 'there';
       var prevDate = Utilities.formatDate(last, tz, 'd MMMM yyyy');
 
+      /* Brand the note after the product the client actually used — a
+         donthaveanagent.com client gets the oxblood header, not "Service
+         Questionnaire" from a product they have never heard of. */
+      var rowId = identity_(iSrc > -1 ? { source: r[iSrc] } : null);
+      var refInk = rowId.dhaa ? '#5E141F' : SB.navy;
+
       /* Two different notes. A company that owes us the stamped letter is
          chased for the letter, referencing the previous correspondence, until
          support records it received. Everyone else gets the patience note. */
@@ -1735,7 +1778,7 @@ function clientPatiencePass_() {
         html = wrap_(
           '<p>Dear ' + esc_(first) + ',</p>' +
           '<p><b>Further to our email of ' + esc_(prevDate) + '</b> regarding your group change of agent ' +
-          '(reference <b style="color:' + SB.navy + '">' + esc_(ref) + '</b>), we have not yet received the ' +
+          '(reference <b style="color:' + refInk + '">' + esc_(ref) + '</b>), we have not yet received the ' +
           'signed letter, and we don\u2019t want it to slip through.</p>' +
           '<p>Three steps and it\u2019s done:</p>' +
           '<ol style="padding-left:20px;line-height:1.8;font-size:13.8px">' +
@@ -1745,7 +1788,7 @@ function clientPatiencePass_() {
           '<p>We\u2019ll keep this gentle reminder coming every ' + SVC.CLIENT_UPDATE_DAYS + ' days until it\u2019s ' +
           'in, referencing our previous correspondence each time — it stops the moment we receive it. ' +
           'Lost the letter? Reply and we resend it the same day.</p>' + sig_(),
-          'Awaiting your letter');
+          'Awaiting your letter', rowId);
       } else {
         subject = 'Still on it — your request ' + ref;
         html = wrap_(
@@ -1753,12 +1796,12 @@ function clientPatiencePass_() {
           '<p><b>Further to our email of ' + esc_(prevDate) + ' — thank you for your patience. Your request is ' +
           'being worked on right now.</b> Our support team has it, and nothing is stuck: this note is simply the ' +
           'promise we made that you would never be left wondering.</p>' +
-          '<p>Your reference is <b style="color:' + SB.navy + '">' + esc_(ref) + '</b>. ' +
+          '<p>Your reference is <b style="color:' + refInk + '">' + esc_(ref) + '</b>. ' +
           'The moment it is complete you will hear from us properly.</p>' +
           '<p>If anything has changed on your side in the meantime, just reply to this email or call ' +
           esc_(SVC.AGENT_PHONE) + ' and quote the reference.</p>' +
           sig_(),
-          'Working on it');
+          'Working on it', rowId);
       }
 
       try {
