@@ -944,7 +944,11 @@ function renderStep(keepScroll) {
   const step = STEPS[state.step];
   const isReview = step.name === "Review";
   $("#progLabel").textContent = step.name;
-  $("#progCount").textContent = "Step " + (state.step + 1) + " of " + STEPS.length;
+  const pcFrac = state.step / (STEPS.length - 1);
+  const pcWord = pcFrac <= 0.01 ? "easy start" : pcFrac < 0.35 ? "good pace" : pcFrac < 0.6 ? "halfway there"
+               : pcFrac < 0.85 ? "nearly done" : pcFrac < 1 ? "last stretch" : "final look";
+  $("#progCount").textContent = "Step " + (state.step + 1) + " of " + STEPS.length +
+    " · " + Math.round(pcFrac * 100) + "% · " + pcWord;
   $("#progFill").style.width = Math.round((state.step / (STEPS.length - 1)) * 100) + "%";
 
   let html = '<div class="step-head"><h2>' + esc(step.title) + "</h2>" +

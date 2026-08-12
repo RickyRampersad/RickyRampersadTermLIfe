@@ -260,26 +260,27 @@ function handleSubmission_(body) {
   /* 1 — file it */
   saveRow_(isGroup, ref, priority, now, body, accessCode);
 
-  /* 2 — build the paperwork once, attach it to both emails */
+  /* 2 — build the paperwork once, attach it to both emails.
+     Branch clients get ONE legal document: the individual's form 2000-03-147
+     (which itself carries the change of servicing agent request) or the
+     group's change of agent letter — each with every question asked and
+     answered as its addendum. donthaveanagent.com has no printed form, so it
+     keeps the review document plus, on the signed path, the letter. */
   var attachments = [];
-  var formPdf = questionnairePdf_(ref, priority, now, body);
-  if (formPdf) attachments.push(formPdf);
-  /* The branch questionnaire carries its own notes page. Everything else —
-     group plans and donthaveanagent.com — has no printed form, so the answers
-     document is the document. */
-  if (body.kind === 'group' || identity_(body).dhaa) {
-    var answersDoc = answersPdf_(ref, priority, now, body);
-    if (answersDoc) attachments.push(answersDoc);
-  }
-
-  /* The change-of-agent letter is generated only when there is a signature to
-     carry — a matched-agent appointment has no named agent yet, so support
-     populates that letter after verification and assignment, and it goes out
-     with the digital signature package instead. */
-  var letterPdf = null;
-  if (core.changeAgent && (body.signature || body.signatureTyped)) {
-    letterPdf = isGroup ? groupAgentLetterPdf_(ref, now, body) : agentLetterPdf_(ref, now, body);
-    if (letterPdf) attachments.push(letterPdf);
+  var formPdf = null, letterPdf = null;
+  if (!identity_(body).dhaa) {
+    formPdf = isGroup ? groupOnePdf_(ref, priority, now, body)
+                      : paperFacsimilePdf_(ref, priority, now, body);
+    if (formPdf) attachments.push(formPdf);
+  } else {
+    formPdf = answersPdf_(ref, priority, now, body);
+    if (formPdf) attachments.push(formPdf);
+    /* the letter only when there is a signature to carry — a matched-agent
+       appointment is populated by support after verification and assignment */
+    if (core.changeAgent && (body.signature || body.signatureTyped)) {
+      letterPdf = isGroup ? groupAgentLetterPdf_(ref, now, body) : agentLetterPdf_(ref, now, body);
+      if (letterPdf) attachments.push(letterPdf);
+    }
   }
 
   /* 3 — the client hears from us immediately */
@@ -1230,65 +1231,18 @@ function paperFacsimilePdf_(ref, priority, now, body) {
 
     '<div class="code" style="margin-top:.14in">2000 - 03 - 147</div>';
 
-  /* ── page 2 ─────────────────────────────────────────────────────────────
-     The form on page 1 is not written on. The detail behind the answers goes
-     here instead: first the notes against the numbered questions they belong
-     to, then everything else, set condensed in two columns.                */
-  var notes = [];
-  PAPER_Q.forEach(function (q) {
-    var v = q.write ? a[q.write] : (q.note ? a[q.note] : '');
-    if (v && String(v) !== '') notes.push({ n: q.n, t: q.t, v: String(v) });
-  });
-
-  var covered = {};
-  PAPER_Q.forEach(function (q) {
-    if (q.from) covered[q.from] = 1;
-    if (q.note) covered[q.note] = 1;
-    if (q.write) covered[q.write] = 1;
-  });
-
-  var rest = [];
-  (body.fields || []).forEach(function (f) {
-    if (!f.id || covered[f.id]) return;
-    if (f.id.indexOf('coa') === 0 || f.id === 'agentComments') return;   /* on page 1 */
-    rest.push(f);
-  });
-
-  var half = Math.ceil(rest.length / 2);
-  var col = function (list) {
-    return list.map(function (f) {
-      return '<tr><td class="k">' + esc_(f.label) + '</td><td class="v">' + esc_(f.value) + '</td></tr>';
-    }).join('');
-  };
-
+  /* ── the addendum ───────────────────────────────────────────────────────
+     One legal form. Page 1 is 2000-03-147 untouched; what follows is its
+     addendum — every question asked and answered, part of the same document. */
   h += '<div class="pg"></div>' +
-    '<div class="p2h">SERVICE QUESTIONNAIRE &mdash; NOTES ON THE ANSWERS</div>' +
-    '<div class="p2s">' + esc_(a.lifeAssured || c.clientName || '') +
-      ' &nbsp;&middot;&nbsp; policy ' + esc_(a.policyNos || c.policyNos || '') +
-      ' &nbsp;&middot;&nbsp; ' + esc_(ref) +
-      ' &nbsp;&middot;&nbsp; ' + esc_(Utilities.formatDate(d, tz, 'd MMMM yyyy, h:mm a')) +
-      ' &nbsp;&middot;&nbsp; ' + esc_(priority) +
-      (c.score !== '' && c.score !== undefined
-        ? ' &nbsp;&middot;&nbsp; Protection Score ' + esc_(c.score) + '/100' : '') +
-      '<br>Page 1 is form 2000-03-147 exactly as printed. Nothing below has been written onto it.' +
-    '</div>';
-
-  if (notes.length) {
-    h += '<div class="p2t">Against the numbered questions</div><table class="cd">' +
-      notes.map(function (x) {
-        return '<tr><td class="n">' + x.n + '</td><td class="k">' + esc_(x.t) +
-               '</td><td class="v">' + esc_(x.v) + '</td></tr>';
-      }).join('') + '</table>';
-  }
-
-  if (rest.length) {
-    h += '<div class="p2t">Everything else asked</div>' +
-      '<table style="table-layout:fixed"><tr>' +
-        '<td style="width:49%;vertical-align:top"><table class="cd">' + col(rest.slice(0, half)) + '</table></td>' +
-        '<td style="width:2%"></td>' +
-        '<td style="width:49%;vertical-align:top"><table class="cd">' + col(rest.slice(half)) + '</table></td>' +
-      '</tr></table>';
-  }
+    '<div class="p2h">ADDENDUM TO SERVICE QUESTIONNAIRE \u2014 FORM 2000-03-147</div>' +
+    '<div class="p2s">All questions asked and answered \u00b7 ' +
+      esc_(a.lifeAssured || c.clientName || '') +
+      (a.policyNos || c.policyNos ? ' \u00b7 policy ' + esc_(a.policyNos || c.policyNos) : '') +
+      ' \u00b7 reference ' + esc_(ref) +
+      ' \u00b7 ' + esc_(Utilities.formatDate(d, tz, 'd MMMM yyyy, h:mm a')) +
+      '<br>This addendum forms part of the Service Questionnaire above.</div>' +
+    addendumTable_(body);
 
   var con = body.consent || {};
   h += '<div class="p2f">Declared true and correct: <b>' + (con['true'] ? 'Yes' : 'No') +
@@ -1329,6 +1283,21 @@ function answersPdf_(ref, priority, now, body) {
   return toPdf_('<!DOCTYPE html><html><head><meta charset="utf-8"><style>' + paperCss_() +
                 '</style></head><body>' + h + '</body></html>',
                 (isGroup ? 'Group Service Review ' : 'Service Review ') + ref);
+}
+
+/** Every question asked and answered, by section — the addendum body. */
+function addendumTable_(body) {
+  var out = '', section = '';
+  (body.fields || []).forEach(function (f) {
+    if (f.section !== section) {
+      if (section) out += '</table>';
+      section = f.section;
+      out += '<div class="p2t">' + esc_(section) + '</div><table class="cd">';
+    }
+    out += '<tr><td class="k">' + esc_(f.label) + '</td><td class="v">' + esc_(f.value) + '</td></tr>';
+  });
+  if (section) out += '</table>';
+  return out;
 }
 
 /** Every answer, section by section — shared by both questionnaire PDFs. */
@@ -1513,6 +1482,95 @@ function groupAgentLetterPdf_(ref, now, body) {
   return toPdf_('<!DOCTYPE html><html><head><meta charset="utf-8"><style>' + css +
                 '</style></head><body>' + inner + '</body></html>',
                 'Group Change of Agent ' + ref);
+}
+
+/**
+ * The group's one legal form: page 1 is the Request for Change of Agent
+ * exactly as the EBD document prints (nothing written on it beyond the
+ * request's own fields), and the pages after it are the addendum — every
+ * question asked and answered, part of the same document. A group that
+ * declined the change of agent gets the addendum under its own heading.
+ */
+function groupOnePdf_(ref, priority, now, body) {
+  var a = answersById_(body);
+  var c = body.core || {};
+  var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
+  var wants = !!c.changeAgent;
+
+  var rule = function (v, w) {
+    if (v === undefined || v === null || String(v) === '') {
+      return '<span class="ul" style="width:' + w + 'px">&nbsp;</span>';
+    }
+    return '<span class="ul typed" style="min-width:' + w + 'px">' + esc_(String(v)) + '</span>';
+  };
+
+  var inner = '';
+  if (wants) {
+    inner +=
+      '<p class="please">PLEASE PRINT ON COMPANY LETTER HEAD</p>' +
+      '<p>Date:' + rule(Utilities.formatDate(new Date(now), tz, 'd MMMM yyyy'), 210) + '</p>' +
+      '<p class="gap">The Manager<br>Customer Service Department<br>' +
+      'Guardian Life of the Caribbean<br>1 Guardian Drive<br>West Moorings</p>' +
+      '<p class="gap">Dear Sir/Madam,</p>' +
+      '<p class="gap">RE: Request for Change of Agent \u2013 GROUP LIFE POLICY#' +
+        rule(a.coaPolicyNo || a.groupPolicyNo || c.policyNos, 200) + '</p>' +
+      '<p class="gap">This letter serves to inform you that I would like to request a change of ' +
+        'Agent as follows:</p>' +
+      '<table class="ff"><tr><td class="lb">FROM:</td><td>' + rule(a.coaFrom, 380) + '</td></tr>' +
+      '<tr><td class="lb">TO:</td><td>' + rule(a.coaTo || SVC.AGENT_NAME, 380) + '</td></tr>' +
+      '<tr><td class="lb">EFFECTIVE DATE:</td><td>' + rule(prettyDate_(a.coaEffective), 370) +
+        '</td></tr></table>' +
+      '<p class="gap">Any courtesy extended in facilitating this request will be highly appreciated.</p>' +
+      '<p>Thank you for your kind assistance in this matter.</p>' +
+      '<p class="gap">Yours respectfully,</p>' +
+      (body.signature
+        ? '<p style="margin:6px 0 -18px 14px"><img class="sigimg" src="' + body.signature + '"></p>'
+        : (body.signatureTyped
+            ? '<p style="margin:20px 0 -6px 14px;font-style:italic;font-family:\'Courier New\',monospace;' +
+              'font-size:10.4pt">' + esc_(body.signatureTyped) + '</p>'
+            : '<p style="margin:30px 0 0">&nbsp;</p>')) +
+      '<p style="margin:0"><span class="ul" style="width:230px">&nbsp;</span></p>' +
+      '<p style="margin:1px 0 0">Director\'s Name &amp; Company Stamp</p>';
+  } else {
+    inner += '<p style="text-align:center;font-size:15pt;font-weight:bold;letter-spacing:.4px">GROUP SERVICE REVIEW</p>' +
+      '<p style="text-align:center;font-size:10pt">' + esc_(c.companyName || '') +
+      (c.policyNos ? ' \u00b7 policy ' + esc_(c.policyNos) : '') + '</p>';
+  }
+
+  inner += '<div style="page-break-before:always"></div>' +
+    '<div class="adh">' + (wants ? 'ADDENDUM TO REQUEST FOR CHANGE OF AGENT' : 'ALL QUESTIONS ASKED AND ANSWERED') + '</div>' +
+    '<div class="ads">All questions asked and answered \u00b7 ' + esc_(c.companyName || '') +
+      ' \u00b7 reference ' + esc_(ref) + ' \u00b7 ' +
+      esc_(Utilities.formatDate(new Date(now), tz, 'd MMMM yyyy, h:mm a')) +
+      '<br>This addendum forms part of the request above.</div>' +
+    addendumTable_(body) +
+    consentFoot_(body, ref);
+
+  var css = 'body{font-family:"Times New Roman",Times,Georgia,serif;font-size:12pt;color:#000;' +
+      'margin:0;padding:1in;line-height:1.5}' +
+    '@page{size:8.5in 14in;margin:0}' +
+    'p{margin:0 0 4px}' +
+    '.gap{margin-top:17px}' +
+    '.please{text-align:center;font-weight:bold;letter-spacing:.4px;margin-bottom:26px}' +
+    '.ul{display:inline-block;border-bottom:1px solid #000;vertical-align:bottom}' +
+    '.typed{font-family:"Courier New",monospace;font-size:10.6pt;font-weight:bold;padding:0 4px 1px}' +
+    '.ff{border-collapse:collapse;margin:2px 0 0;width:100%}' +
+    '.ff td{border:none;padding:3px 0;vertical-align:bottom}' +
+    '.ff td.lb{padding-right:26px;white-space:nowrap;width:1%}' +
+    '.sigimg{max-height:52px}' +
+    '.adh{font-size:12.5pt;font-weight:bold;letter-spacing:.4px;margin:0 0 3px}' +
+    '.ads{font-size:8.5pt;color:#333;border-bottom:1px solid #000;padding-bottom:5px;margin-bottom:9px;line-height:1.4}' +
+    '.p2t{font-size:8.6pt;font-weight:bold;letter-spacing:.7px;text-transform:uppercase;' +
+      'margin:10px 0 3px;border-bottom:1px solid #999;padding-bottom:2px;font-family:Arial,sans-serif}' +
+    'table.cd{width:100%;border-collapse:collapse;font-size:8.6pt;line-height:1.3;font-family:Arial,sans-serif}' +
+    'table.cd td{border-bottom:1px solid #ddd;padding:2.2px 5px;vertical-align:top}' +
+    'table.cd td.k{width:44%;color:#333}' +
+    'table.cd td.v{font-weight:bold}' +
+    '.foot,.p2f{font-size:7.6pt;color:#333;border-top:1px solid #000;padding-top:5px;margin-top:10px;line-height:1.4;font-family:Arial,sans-serif}';
+
+  return toPdf_('<!DOCTYPE html><html><head><meta charset="utf-8"><style>' + css +
+                '</style></head><body>' + inner + '</body></html>',
+                'Group Service Questionnaire ' + ref);
 }
 
 /** { questionId: raw answer } — the answer itself, not the sentence the review

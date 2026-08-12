@@ -1115,7 +1115,11 @@ function renderStep() {
   const host = $("#stepHost");
 
   $("#progLabel").textContent = step.name;
-  $("#progCount").textContent = "Step " + (state.step + 1) + " of " + STEPS.length;
+  const pcFrac = state.step / (STEPS.length - 1);
+  const pcWord = pcFrac <= 0.01 ? "easy start" : pcFrac < 0.35 ? "good pace" : pcFrac < 0.6 ? "halfway there"
+               : pcFrac < 0.85 ? "nearly done" : pcFrac < 1 ? "last stretch" : "final look";
+  $("#progCount").textContent = "Step " + (state.step + 1) + " of " + STEPS.length +
+    " · " + Math.round(pcFrac * 100) + "% · " + pcWord;
   $("#progFill").style.width = Math.round(((state.step) / (STEPS.length - 1)) * 100) + "%";
 
   let html = '<div class="step-head"><h2>' + esc(step.title) + "</h2>" +
@@ -1595,7 +1599,24 @@ function pvSheetForm() {
     '<div class="fl" style="margin-top:9px"><span>SERVICING AGENT\'S NAME</span>' +
       pvLine(wants ? CONFIG.AGENT_NAME.toUpperCase() : "") + "<span>AGENT\'S NO.</span>" + pvLine(CONFIG.AGENT_NO) + "</div>" +
     '<div class="siglines"><div>SIGNATURE OF AGENT</div><div>SIGNATURE OF MANAGER</div></div>' +
-    '<div class="formcode">2000 - 03 - 147</div></div>';
+    '<div class="formcode">2000 - 03 - 147</div>' +
+    pvAddendum("ADDENDUM TO SERVICE QUESTIONNAIRE — FORM 2000-03-147") +
+    "</div>";
+  return h;
+}
+
+/* Every question asked and answered, appended to the same legal document. */
+function pvAddendum(title) {
+  const rows = collect();
+  let h = '<div style="border-top:1.6px dashed #000;margin:18px 0 12px"></div>' +
+    '<div class="t1" style="font-size:12.5px">' + esc(title) + "</div>" +
+    '<div class="t2" style="font-size:10.5px;margin-bottom:8px">All questions asked and answered · forms part of this document</div>';
+  let sec = "";
+  rows.forEach((r) => {
+    if (r.section !== sec) { sec = r.section; h += '<div class="n2h">' + esc(sec) + "</div>"; }
+    h += '<div class="n2r"><span class="nq" style="flex-basis:46%">' + esc(r.label) +
+         '</span><span class="nv">' + esc(r.value) + "</span></div>";
+  });
   return h;
 }
 
@@ -1659,11 +1680,12 @@ function openDocPreview() {
 
   let docs = "";
   if (g) {
-    docs += '<div class="pv-doc-tag">Document 1 — Group Service Review, answers in full</div>' + pvSheetNotesGroup();
-    if (wants) docs += '<div class="pv-doc-tag">Attachment — Request for Change of Agent (printed on your letterhead)</div>' + pvSheetGroupLetter();
+    docs += '<div class="pv-doc-tag">Your document — one form: the Request for Change of Agent' +
+      (wants ? " (page 1, printed on your letterhead)" : "") + ", with every question asked and answered as its addendum</div>" +
+      pvSheetGroupOne(wants);
   } else {
-    docs += '<div class="pv-doc-tag">Document 1 — Service Questionnaire, form 2000-03-147, exactly as filled</div>' + pvSheetForm();
-    docs += '<div class="pv-doc-tag">Document 2 — Notes on the answers</div>' + pvSheetNotes();
+    docs += '<div class="pv-doc-tag">Your document — one form: 2000-03-147 exactly as filled, with every question asked and answered as its addendum</div>' +
+      pvSheetForm();
   }
 
   const wrap = document.createElement("div");
@@ -1685,7 +1707,38 @@ function closeDocPreview() {
   document.body.style.overflow = "";
 }
 
-/* Group has no printed questionnaire — the answers document is the document. */
+/* The group's one legal form: the EBD letter page, then the addendum. */
+function pvSheetGroupOne(wants) {
+  const A = state.answers;
+  const d = new Date();
+  let h = '<div class="sheet">';
+  if (wants) {
+    h += '<p style="text-align:center;font-weight:bold;letter-spacing:.4px;margin-bottom:16px">PLEASE PRINT ON COMPANY LETTER HEAD</p>' +
+    '<div class="fl" style="max-width:330px"><span>Date:</span>' + pvLine(d.toLocaleDateString("en-TT", { day: "numeric", month: "long", year: "numeric" })) + "</div>" +
+    "<p style='margin-top:12px'>The Manager<br>Customer Service Department<br>Guardian Life of the Caribbean<br>1 Guardian Drive<br>West Moorings</p>" +
+    "<p style='margin-top:12px'>Dear Sir/Madam,</p>" +
+    '<div class="fl" style="margin-top:8px"><span><b>RE: Request for Change of Agent – GROUP LIFE POLICY#</b></span>' +
+      pvLine(A.coaPolicyNo || A.groupPolicyNo) + "</div>" +
+    "<p style='margin-top:10px'>This letter serves to inform you that I would like to request a change of Agent as follows:</p>" +
+    '<div class="fl" style="margin-top:6px"><span>FROM:</span>' + pvLine(A.coaFrom) + "</div>" +
+    '<div class="fl" style="margin-top:5px"><span>TO:</span>' + pvLine(A.coaTo || CONFIG.AGENT_NAME) + "</div>" +
+    '<div class="fl" style="margin-top:5px"><span>EFFECTIVE DATE:</span>' + pvLine(pvDate(A.coaEffective)) + "</div>" +
+    "<p style='margin-top:10px'>Any courtesy extended in facilitating this request will be highly appreciated.</p>" +
+    "<p>Thank you for your kind assistance in this matter.</p>" +
+    "<p style='margin-top:14px'>Yours respectfully,</p>" +
+    '<div style="margin:4px 0 0 10px">' + (pvSigBlock(A.coaSignature) || "&nbsp;") + "</div>" +
+    '<div style="border-bottom:1px solid #000;max-width:230px;margin-top:2px"></div>' +
+    "<p style='margin-top:2px'>Director's Name &amp; Company Stamp</p>";
+  } else {
+    h += '<div class="t1" style="font-size:14px">GROUP SERVICE REVIEW</div>' +
+      '<div class="t2" style="font-size:11px">' + esc(A.companyName || "") +
+      (A.groupPolicyNo ? " · policy " + esc(A.groupPolicyNo) : "") + "</div>";
+  }
+  h += pvAddendum(wants ? "ADDENDUM TO REQUEST FOR CHANGE OF AGENT" : "ALL QUESTIONS ASKED AND ANSWERED");
+  return h + "</div>";
+}
+
+/* kept for the printable fallback */
 function pvSheetNotesGroup() {
   const rows = collect();
   let h = '<div class="sheet"><div class="t1" style="font-size:13.5px">GROUP SERVICE REVIEW — ANSWERS IN FULL</div>' +
