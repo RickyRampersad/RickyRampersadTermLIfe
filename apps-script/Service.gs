@@ -710,8 +710,8 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf, accessCode) 
   var bio = box_('tip',
     '<b style="color:#a05e03">Who you\u2019re dealing with.</b><br>' +
     '<b>' + esc_(SVC.AGENT_NAME) + '</b> — Branch Manager, Ricky Rampersad Branch \u00b7 Guardian Life of the ' +
-    'Caribbean Limited. A registered Guardian Life agent leading a branch built on one idea: nobody who holds a ' +
-    'policy should ever feel forgotten. The branch pairs old-fashioned service — a person who answers, visits and ' +
+    'Caribbean Limited. Branch Manager — and still a servicing agent to his own clients — leading a team of ' +
+    'skilled, licensed Guardian Life agents on one idea: nobody who holds a policy should ever feel forgotten. The branch pairs old-fashioned service — a person who answers, visits and ' +
     'follows through — with tools most agencies don\u2019t have: guided digital reviews, documents populated for ' +
     'digital signature, live progress tracking, and an update every ' + SVC.CLIENT_UPDATE_DAYS + ' days until the ' +
     'work is done. This review is the first step of your onboarding — from here, you are dealing with ' +
