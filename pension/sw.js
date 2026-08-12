@@ -8,11 +8,12 @@
  * the next online visit), cache-first for the versioned static assets.
  * Bump CACHE when the wizard changes.
  */
-const CACHE = 'rrb-pension-v2';
+const CACHE = 'rrb-pension-v3';
 
 const ASSETS = [
   './',
   './index.html',
+  './how-it-works.html',   // the film — an agent shows it in a boardroom, where the signal is worst
   './manifest.webmanifest',
   './assets/pdf-lib.min.js',
   './assets/pdf.min.js',
