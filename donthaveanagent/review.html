@@ -1203,6 +1203,48 @@ function openDocPreview() {
       '. Nothing goes to the insurer until it is checked.</div>' +
     '</div>';
 
+  /* the attachment: the change of agent request, exactly as it will be sent.
+     Only on the direct path — a matched appointment's letter is populated by
+     support after assignment, and the preview note above says so. */
+  let attach = "";
+  const sg = state.answers.coaSignature || {};
+  const sigHtml = sg.img ? '<img style="max-height:44px;vertical-align:bottom" src="' + sg.img + '">'
+                : sg.typed ? '<span class="pv-a" style="font-style:italic">' + esc(sg.typed) + "</span>" : "&nbsp;";
+  const pvDate2 = (v) => { if (!v) return ""; const dd = new Date(v + (String(v).length === 10 ? "T12:00:00" : ""));
+    return isNaN(dd.getTime()) ? String(v) : dd.toLocaleDateString("en-TT", { day: "numeric", month: "long", year: "numeric" }); };
+  const line = (v) => '<span style="display:inline-block;min-width:190px;border-bottom:1px dotted #000" class="pv-a">' + (v ? esc(String(v)) : "&nbsp;") + "</span>";
+
+  if (state.answers.wantAgent === DIRECT_OPT && state.kind !== "group") {
+    attach = '<div class="pv-sec" style="margin-top:22px">Attachment — Request for Change of Servicing Agent, as it will be sent</div>' +
+      '<div class="pv-sheet" style="margin-top:8px">' +
+      '<p style="text-align:center;font-weight:bold">REQUEST FOR CHANGE OF SERVICING AGENT</p>' +
+      "<p style='margin-top:10px'>The Manager<br>Customer Service Department<br><b><u>" + esc(B.carrier.toUpperCase()) + "</u></b></p>" +
+      "<p style='margin-top:10px'>Dear Sir/Madam</p>" +
+      "<p>After completing your Service Questionnaire and reviewing my policy(ies) no(s) " + line(state.answers.policyNos || "to be traced") + "</p>" +
+      "<p>withMr./Mrs./Miss " + line(B.agent) + "</p>" +
+      "<p>I am requesting that he/she be appointed my Servicing Agent with immediate effect.</p>" +
+      "<p style='margin-top:8px'>NAME OF POLICYOWNER IN BLOCK LETTERS " + line(String(state.answers.coaOwnerName || "").toUpperCase()) + "</p>" +
+      "<p style='margin-top:8px'>SIGNATURE OF POLICYOWNER " + sigHtml + "</p>" +
+      "<p style='margin-top:8px'>ADDRESS (HOME) " + line(state.answers.coaAddress) + "</p>" +
+      "<p style='margin-top:8px'>TELEPHONE " + line(state.answers.coaPhone || state.answers.mobile) + "</p></div>";
+  } else if (state.answers.wantAgent === DIRECT_OPT && state.kind === "group") {
+    attach = '<div class="pv-sec" style="margin-top:22px">Attachment — Request for Change of Agent (printed on your letterhead)</div>' +
+      '<div class="pv-sheet" style="margin-top:8px">' +
+      '<p style="text-align:center;font-weight:bold;letter-spacing:.4px">PLEASE PRINT ON COMPANY LETTER HEAD</p>' +
+      "<p style='margin-top:10px'>The Manager<br>Customer Service Department<br>Guardian Life of the Caribbean<br>1 Guardian Drive<br>West Moorings</p>" +
+      "<p style='margin-top:10px'>Dear Sir/Madam,</p>" +
+      "<p><b>RE: Request for Change of Agent – GROUP LIFE POLICY# </b>" + line(state.answers.coaPolicyNo || state.answers.policyNos) + "</p>" +
+      "<p>This letter serves to inform you that I would like to request a change of Agent as follows:</p>" +
+      "<p>FROM: " + line(state.answers.coaFrom) + "</p>" +
+      "<p>TO: " + line(state.answers.coaTo || B.agent) + "</p>" +
+      "<p>EFFECTIVE DATE: " + line(pvDate2(state.answers.coaEffective)) + "</p>" +
+      "<p style='margin-top:8px'>Yours respectfully,</p>" +
+      "<p>" + sigHtml + "</p>" +
+      '<div style="border-bottom:1px solid #000;max-width:220px"></div>' +
+      "<p>Director's Name &amp; Company Stamp</p></div>";
+  }
+  doc += attach;
+
   const wrap = document.createElement("div");
   wrap.id = "pvOverlay";
   wrap.innerHTML = '<div class="pv-frame">' +

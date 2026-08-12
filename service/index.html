@@ -97,6 +97,55 @@
   .prog-bar { height: 6px; border-radius: 99px; background: rgba(26,22,24,.11); overflow: hidden; }
   .prog-fill { height: 100%; width: 0%; border-radius: 99px; background: linear-gradient(90deg, var(--teal2), var(--teal)); transition: width .35s cubic-bezier(.4,0,.2,1); }
 
+  /* ── DOCUMENT PREVIEW ── */
+  .preview-cta { display: flex; align-items: center; gap: 14px; justify-content: space-between; flex-wrap: wrap;
+    background: var(--card); border: 1px solid rgba(140,34,48,.30); border-radius: 14px; padding: 15px 17px; margin-bottom: 16px; }
+  .preview-cta b { font-family: 'Montserrat', sans-serif; font-size: 14.5px; }
+  .preview-cta span { color: var(--muted); font-size: 12.8px; }
+  #pvOverlay { position: fixed; inset: 0; z-index: 300; background: rgba(26,22,24,.55); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center; padding: 18px; }
+  .pv-frame { background: var(--bg); border-radius: 18px; max-width: 800px; width: 100%; max-height: 92vh;
+    display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 30px 80px rgba(26,22,24,.4); }
+  .pv-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 18px;
+    font: 600 12px 'Montserrat', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
+    border-bottom: 1px solid var(--line); }
+  .pv-x { background: none; border: none; font-size: 17px; cursor: pointer; color: var(--muted); padding: 4px 8px; }
+  .pv-scroll { overflow-y: auto; padding: 20px; background: var(--bg2); }
+  .pv-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; padding: 13px 18px;
+    border-top: 1px solid var(--line); background: var(--bg); }
+  .pv-doc-tag { font: 700 10.5px 'Montserrat', sans-serif; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--muted); margin: 18px 0 6px; }
+  .pv-doc-tag:first-child { margin-top: 0; }
+  .sheet { background: #fff; border: 1px solid rgba(26,22,24,.14); box-shadow: 0 8px 30px rgba(26,22,24,.12);
+    padding: 30px 32px; font-family: Georgia, 'Times New Roman', serif; color: #111; font-size: 13px; line-height: 1.42; }
+  .sheet .t1 { text-align: center; font-size: 16.5px; letter-spacing: .4px; font-weight: bold; }
+  .sheet .t2 { text-align: center; font-size: 14.5px; letter-spacing: .4px; margin-bottom: 14px; }
+  .pq { display: flex; align-items: flex-end; gap: 8px; padding: 3.2px 0; }
+  .pq.gap { padding-top: 12px; }
+  .pq .qt { white-space: normal; }
+  .pq .ld { flex: 1; border-bottom: 1px dotted #000; min-width: 14px; text-align: left; }
+  .pq .tv, .tv { font-family: 'Courier New', monospace; font-size: 11.4px; font-weight: bold; padding: 0 3px; }
+  .pq .bx { flex: 0 0 34px; text-align: center; }
+  .box { display: inline-block; width: 30px; height: 15px; border: 1.6px solid #000; border-radius: 3px;
+    line-height: 13px; font-size: 12px; font-weight: bold; text-align: center; }
+  .ynhead { display: flex; justify-content: flex-end; gap: 8px; font-size: 12.5px; font-weight: bold; letter-spacing: .5px; padding: 6px 0 4px; }
+  .ynhead span { flex: 0 0 34px; text-align: center; }
+  .cutline { border: none; border-top: 1.6px dashed #000; margin: 12px 0; }
+  .sheet p { margin: 0 0 6px; }
+  .fl { display: flex; align-items: flex-end; gap: 6px; }
+  .fl .ld { flex: 1; border-bottom: 1px dotted #000; }
+  .sigimg2 { max-height: 40px; vertical-align: bottom; }
+  .siglines { display: flex; gap: 40px; margin-top: 22px; }
+  .siglines div { flex: 1; border-top: 1px solid #000; text-align: center; font-weight: bold; font-size: 11px; padding-top: 3px; }
+  .formcode { font-size: 11.5px; margin-top: 10px; }
+  .n2h { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; border-bottom: 1px solid #999;
+    margin: 14px 0 5px; padding-bottom: 2px; color: #333; }
+  .n2r { display: flex; gap: 10px; padding: 3.5px 0; border-bottom: 1px dotted #ddd; font-size: 12px; }
+  .n2r .nn { flex: 0 0 18px; text-align: right; font-weight: bold; color: #555; }
+  .n2r .nq { flex: 0 0 44%; color: #444; }
+  .n2r .nv { font-family: 'Courier New', monospace; font-size: 11.2px; font-weight: bold; word-break: break-word; }
+  @media (max-width: 560px) { .sheet { padding: 20px 16px; } .n2r { flex-wrap: wrap; } .n2r .nq { flex: 1 1 100%; } }
+
   /* ── STEP ── */
   .step-head { margin-bottom: 20px; }
   .step-head h2 { font-size: clamp(21px, 4.6vw, 28px); font-weight: 800; letter-spacing: -.01em; line-height: 1.2; margin-bottom: 7px; }
@@ -1430,6 +1479,227 @@ function collect() {
   return out;
 }
 
+/* ══════════════════ document preview — the paper, exactly ══════════════════
+   What the client sees here is what the office receives: form 2000-03-147
+   with their ticks and answers on it, the notes sheet, and the change of
+   agent letter. Same mapping as the backend PDF generator, so the preview
+   and the prepared documents can never disagree. */
+
+const PAPER_Q2 = [
+  { n: 1,  t: "Are you satisfied with the service provided by Guardian Life?",
+    from: "satisfaction", yes: ["4", "5"], no: ["1", "2"], note: "satisfaction" },
+  { n: 2,  t: "Do you need any clarification on your policy(ies)?",
+    from: "needClarify", yes: ["Yes"], no: ["No"], note: "clarifyWhat" },
+  { n: 3,  t: "Are you satisfied with the explanation given?",
+    from: "explainOk", yes: ["Yes"], no: ["No"], note: "explainWhat" },
+  { n: 4,  t: "Are you satisfied with your existing policy(ies) and the method of premium payments?",
+    from: "premiumOk", yes: ["Yes"], no: ["No"], note: "premiumNote" },
+  { n: 5,  t: "Have you had any problems that have not been resolved to your satisfaction?",
+    from: "unresolved", yes: ["Yes"], no: ["No"], note: "unresolvedWhat" },
+  { n: 6,  t: "How often would you like your agent to contact you, every 3 mths, 6 mths, 12 mths?",
+    write: "contactFreq" },
+  { n: 7,  t: "Do you or your Spouse own any other Policies with the Company?", gap: true,
+    from: "otherGuardian", yes: ["Yes"], no: ["No"], note: "otherGuardianWhat" },
+  { n: 8,  t: "Do you own any other Policies?",
+    from: "otherCompany", yes: ["Yes"], no: ["No"], note: "otherCompanyWhat" },
+  { n: 9,  t: "Are Name and Address correct?",
+    from: "nameAddrOk", yes: ["Yes"], no: ["No"], note: "newAddress" },
+  { n: 10, t: "Is Date of Birth correct?",
+    from: "dobOk", yes: ["Yes"], no: ["No"], note: "correctDob" },
+  { n: 11, t: "Is the Beneficiary Designation correct?",
+    from: "beneficiaryOk", yes: ["Yes"], no: ["No"], note: "benName" },
+  { n: 12, t: "Does your Beneficiary Know where to locate your Policies?",
+    from: "benKnows", yes: ["Yes"], no: ["No"] },
+  { n: 13, t: "Do you have a Will?  (Explain the importance of a current Will)",
+    from: "hasWill", yes: ["Yes, and it's up to date", "Yes, but it's out of date"], no: ["No"], note: "hasWill" },
+  { n: 14, t: "Do you participate in a Company Group Life or Health Plan?",
+    from: "groupPlan", yes: ["Yes"], no: ["No"], note: "groupEmployer" },
+  { n: 15, t: "Have you made arrangements to replace your Income in the event of accident or disability?", gap: true,
+    from: "incomeProtection", yes: ["Yes"], no: ["No"] },
+  { n: 16, t: "Do you own your own Home?",
+    from: "homeStatus", yes: ["Own it outright", "Own it with a mortgage"],
+    no: ["Renting", "Living with family"], note: "homeStatus" },
+  { n: 17, t: "When last has your financial security programme been reviewed?",
+    write: "lastReview" },
+  { n: 18, t: "Have you a Friend or Relative to whom I may be of service?", gap: true,
+    from: "referral", yes: ["Yes"], no: ["No"], note: "referralWho" },
+  { n: 19, t: "Have you a Friend or Relative who might be interested in a career in Life Insurance?",
+    from: "career", yes: ["Yes"], no: ["No"], note: "careerWho" },
+  { n: 20, t: "Have you any questions?", gap: true,
+    from: "questions", filled: true, note: "questions" },
+];
+
+function pvTick(on) { return '<span class="box">' + (on ? "✓" : "&nbsp;") + "</span>"; }
+function pvLine(v) {
+  return '<span class="ld">' + (v ? '<span class="tv">' + esc(String(v)) + "</span>" : "&nbsp;") + "</span>";
+}
+function pvDate(v) {
+  if (!v) return "";
+  const d = new Date(v + (String(v).length === 10 ? "T12:00:00" : ""));
+  return isNaN(d.getTime()) ? String(v) : d.toLocaleDateString("en-TT", { day: "numeric", month: "long", year: "numeric" });
+}
+function pvSigBlock(sig) {
+  if (sig && sig.img) return '<img class="sigimg2" src="' + sig.img + '">';
+  if (sig && sig.typed) return '<span class="tv" style="font-style:italic">' + esc(sig.typed) + "</span>";
+  return "";
+}
+
+/* Sheet 1 — form 2000-03-147, exactly as printed, filled in */
+function pvSheetForm() {
+  const A = state.answers;
+  const raw = (id) => A[id] === undefined || A[id] === null ? "" : String(A[id]);
+  const d = new Date();
+  const wants = String(A.changeAgent || "").indexOf("Yes") === 0;
+
+  let h = '<div class="sheet">' +
+    '<div class="t1">GUARDIAN LIFE OF THE CARIBBEAN LIMITED</div>' +
+    '<div class="t2">SERVICE QUESTIONNAIRE</div>' +
+    '<div class="fl"><span>LIFE ASSURED</span>' + pvLine(A.lifeAssured) +
+      '<span>POLICY NO(S)</span>' + pvLine(A.policyNos) + "</div>" +
+    '<div class="fl" style="margin-top:7px"><span>PROPOSER</span>' + pvLine(A.proposer) +
+      '<span style="margin-left:14px">Dated this</span>' + pvLine(d.getDate()) +
+      "<span>day of</span>" + pvLine(d.toLocaleDateString("en-TT", { month: "long" })) + pvLine(d.getFullYear()) + "</div>" +
+    '<div class="ynhead"><span>YES</span><span>NO</span></div>';
+
+  PAPER_Q2.forEach((q) => {
+    let yes = false, no = false, typed = "";
+    if (q.write) typed = raw(q.write);
+    else if (q.filled) { if (raw(q.from) !== "") yes = true; else no = true; }
+    else {
+      const v = raw(q.from);
+      if (q.yes.indexOf(v) > -1) yes = true;
+      else if ((q.no || []).indexOf(v) > -1) no = true;
+    }
+    h += '<div class="pq' + (q.gap ? " gap" : "") + '"><span class="qt">' + esc(q.t) + "</span>" +
+      pvLine(typed) + '<span class="bx">' + pvTick(yes) + '</span><span class="bx">' + pvTick(no) + "</span></div>";
+  });
+
+  h += '<hr class="cutline">' +
+    "<p>The Manager<br>Customer Service Department<br><b><u>GUARDIAN LIFE OF THE CARIBBEAN LIMITED</u></b></p>" +
+    "<p style='margin-top:10px'>Dear Sir/Madam</p>" +
+    '<div class="fl"><span>After completing your Service Questionnaire and reviewing my policy(ies) no(s)</span>' +
+      pvLine(wants ? (A.coaPolicies || A.policyNos || "all policies held") : "") + "</div>" +
+    '<div class="fl" style="margin-top:5px"><span>withMr./Mrs./Miss</span>' + pvLine(wants ? CONFIG.AGENT_NAME : "") + "</div>" +
+    "<p style='margin-top:5px'>I am requesting that he/she be appointed my Servicing Agent with immediate effect.</p>" +
+    '<div class="fl" style="margin-top:8px"><span>NAME OF POLICYOWNER IN BLOCK LETTERS</span>' +
+      pvLine(wants ? String(A.coaOwnerName || A.lifeAssured || "").toUpperCase() : "") + "</div>" +
+    '<div class="fl" style="margin-top:9px"><span>SIGNATURE OF POLICYOWNER</span><span class="ld">' +
+      (wants ? (pvSigBlock(A.coaSignature) || "&nbsp;") : "&nbsp;") + "</span>" +
+      "<span>Dated this</span>" + pvLine(wants ? d.getDate() : "") + "<span>day of</span>" +
+      pvLine(wants ? d.toLocaleDateString("en-TT", { month: "long" }) : "") + pvLine(wants ? d.getFullYear() : "") + "</div>" +
+    '<div class="fl" style="margin-top:9px"><span>ADDRESS (HOME)</span>' + pvLine(A.coaHomeAddress || A.newAddress) +
+      "<span>(WORK)</span>" + pvLine(A.coaWorkAddress) + "</div>" +
+    '<div class="fl" style="margin-top:9px"><span>TELEPHONE (HOME)</span>' + pvLine(A.coaHomePhone || A.mobile) +
+      "<span>(WORK)</span>" + pvLine(A.coaWorkPhone) + "</div>" +
+    '<div class="fl" style="margin-top:9px"><span>AGENT\'S COMMENTS</span>' + pvLine(A.agentComments) + "</div>" +
+    '<div class="fl" style="margin-top:9px"><span>SERVICING AGENT\'S NAME</span>' +
+      pvLine(wants ? CONFIG.AGENT_NAME.toUpperCase() : "") + "<span>AGENT\'S NO.</span>" + pvLine(CONFIG.AGENT_NO) + "</div>" +
+    '<div class="siglines"><div>SIGNATURE OF AGENT</div><div>SIGNATURE OF MANAGER</div></div>' +
+    '<div class="formcode">2000 - 03 - 147</div></div>';
+  return h;
+}
+
+/* Sheet 2 — everything the boxes can't hold */
+function pvSheetNotes() {
+  const rows = collect();
+  const byId = {};
+  rows.forEach((r) => { byId[r.id] = r.value; });
+  const covered = {};
+  PAPER_Q2.forEach((q) => { if (q.from) covered[q.from] = 1; if (q.note) covered[q.note] = 1; if (q.write) covered[q.write] = 1; });
+
+  let h = '<div class="sheet"><div class="t1" style="font-size:13.5px">SERVICE QUESTIONNAIRE — NOTES ON THE ANSWERS</div>' +
+    '<div class="t2" style="font-size:11px">' + esc(state.answers.lifeAssured || "") +
+    (state.answers.policyNos ? " · policy " + esc(state.answers.policyNos) : "") + "</div>";
+
+  h += '<div class="n2h">Against the numbered questions</div>';
+  PAPER_Q2.forEach((q) => {
+    const key = q.write || q.note;
+    if (!key) return;
+    const v = byId[key];
+    if (!v) return;
+    h += '<div class="n2r"><span class="nn">' + q.n + '</span><span class="nq">' + esc(q.t) +
+         '</span><span class="nv">' + esc(v) + "</span></div>";
+  });
+
+  const rest = rows.filter((r) => !covered[r.id] && r.id.indexOf("coa") !== 0 && r.id !== "agentComments");
+  if (rest.length) {
+    h += '<div class="n2h">Everything else asked</div>' +
+      rest.map((r) => '<div class="n2r"><span class="nn"></span><span class="nq">' + esc(r.label) +
+        '</span><span class="nv">' + esc(r.value) + "</span></div>").join("");
+  }
+  return h + "</div>";
+}
+
+/* Attachment — the group change of agent letter, for the letterhead */
+function pvSheetGroupLetter() {
+  const A = state.answers;
+  const d = new Date();
+  return '<div class="sheet">' +
+    '<p style="text-align:center;font-weight:bold;letter-spacing:.4px;margin-bottom:16px">PLEASE PRINT ON COMPANY LETTER HEAD</p>' +
+    '<div class="fl" style="max-width:330px"><span>Date:</span>' + pvLine(d.toLocaleDateString("en-TT", { day: "numeric", month: "long", year: "numeric" })) + "</div>" +
+    "<p style='margin-top:12px'>The Manager<br>Customer Service Department<br>Guardian Life of the Caribbean<br>1 Guardian Drive<br>West Moorings</p>" +
+    "<p style='margin-top:12px'>Dear Sir/Madam,</p>" +
+    '<div class="fl" style="margin-top:8px"><span><b>RE: Request for Change of Agent – GROUP LIFE POLICY#</b></span>' +
+      pvLine(A.coaPolicyNo || A.groupPolicyNo) + "</div>" +
+    "<p style='margin-top:10px'>This letter serves to inform you that I would like to request a change of Agent as follows:</p>" +
+    '<div class="fl" style="margin-top:6px"><span>FROM:</span>' + pvLine(A.coaFrom) + "</div>" +
+    '<div class="fl" style="margin-top:5px"><span>TO:</span>' + pvLine(A.coaTo || CONFIG.AGENT_NAME) + "</div>" +
+    '<div class="fl" style="margin-top:5px"><span>EFFECTIVE DATE:</span>' + pvLine(pvDate(A.coaEffective)) + "</div>" +
+    "<p style='margin-top:10px'>Any courtesy extended in facilitating this request will be highly appreciated.</p>" +
+    "<p>Thank you for your kind assistance in this matter.</p>" +
+    "<p style='margin-top:14px'>Yours respectfully,</p>" +
+    '<div style="margin:4px 0 0 10px">' + (pvSigBlock(A.coaSignature) || "&nbsp;") + "</div>" +
+    '<div style="border-bottom:1px solid #000;max-width:230px;margin-top:2px"></div>' +
+    "<p style='margin-top:2px'>Director's Name &amp; Company Stamp</p></div>";
+}
+
+function openDocPreview() {
+  const g = state.kind === "group";
+  const wants = String(state.answers.changeAgent || "").indexOf("Yes") === 0;
+
+  let docs = "";
+  if (g) {
+    docs += '<div class="pv-doc-tag">Document 1 — Group Service Review, answers in full</div>' + pvSheetNotesGroup();
+    if (wants) docs += '<div class="pv-doc-tag">Attachment — Request for Change of Agent (printed on your letterhead)</div>' + pvSheetGroupLetter();
+  } else {
+    docs += '<div class="pv-doc-tag">Document 1 — Service Questionnaire, form 2000-03-147, exactly as filled</div>' + pvSheetForm();
+    docs += '<div class="pv-doc-tag">Document 2 — Notes on the answers</div>' + pvSheetNotes();
+  }
+
+  const wrap = document.createElement("div");
+  wrap.id = "pvOverlay";
+  wrap.innerHTML = '<div class="pv-frame">' +
+    '<div class="pv-bar"><span>Document preview — nothing has been sent</span>' +
+    '<button type="button" class="pv-x" onclick="closeDocPreview()" aria-label="Close preview">✕</button></div>' +
+    '<div class="pv-scroll">' + docs + "</div>" +
+    '<div class="pv-actions">' +
+    '<button type="button" class="btn btn-ghost" onclick="closeDocPreview()">← Back to edit</button>' +
+    '<button type="button" class="btn btn-gold" onclick="closeDocPreview(); goNext();">Looks right — send to our support team →</button>' +
+    "</div></div>";
+  document.body.appendChild(wrap);
+  document.body.style.overflow = "hidden";
+}
+function closeDocPreview() {
+  const el = document.getElementById("pvOverlay");
+  if (el) el.remove();
+  document.body.style.overflow = "";
+}
+
+/* Group has no printed questionnaire — the answers document is the document. */
+function pvSheetNotesGroup() {
+  const rows = collect();
+  let h = '<div class="sheet"><div class="t1" style="font-size:13.5px">GROUP SERVICE REVIEW — ANSWERS IN FULL</div>' +
+    '<div class="t2" style="font-size:11px">' + esc(state.answers.companyName || "") +
+    (state.answers.groupPolicyNo ? " · policy " + esc(state.answers.groupPolicyNo) : "") + "</div>";
+  let sec = "";
+  rows.forEach((r) => {
+    if (r.section !== sec) { sec = r.section; h += '<div class="n2h">' + esc(sec) + "</div>"; }
+    h += '<div class="n2r"><span class="nq" style="flex-basis:46%">' + esc(r.label) +
+         '</span><span class="nv">' + esc(r.value) + "</span></div>";
+  });
+  return h + "</div>";
+}
+
 /* ══════════════════════════ review screen ══════════════════════════ */
 function renderReview() {
   const rows = collect();
@@ -1445,6 +1715,15 @@ function renderReview() {
 
   h += '<div class="note good" style="margin-bottom:18px"><b>Almost there.</b> Have a quick look, then press send. ' +
        "You'll get a copy of all of this by email — keep it, it's a useful record.</div>";
+
+  h += '<div class="preview-cta">' +
+    '<div><b>See your documents before you send them.</b><br><span>' +
+    (state.kind === "group"
+      ? "Preview your review and the change of agent letter exactly as our support team prepares them."
+      : "Preview form 2000-03-147 exactly as it will be filled in — ticks, answers, signature — plus the change of servicing agent request.") +
+    "</span></div>" +
+    '<button type="button" class="btn btn-ghost" onclick="openDocPreview()">📄 Preview my documents</button>' +
+    "</div>";
 
   sections.forEach((s) => {
     const idx = stepIndexOf(s.name);
