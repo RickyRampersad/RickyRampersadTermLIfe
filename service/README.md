@@ -14,11 +14,21 @@ Live at **`/service/`** — [rickyrampersadbranch.com/service/](https://rickyram
    per question — a new question on the form becomes a new column on its own.
 2. **The client gets a real thank-you**, within seconds: their reference number, their
    Protection Score, a numbered list of what happens next *in their case*, and a PDF of
-   everything they told us.
-3. **Customer Service gets the work**, with the priority in the subject line, an action
-   list, the completed questionnaire as a PDF, and — if they asked for one — the change
-   of servicing agent request, filled in and signed.
-4. **Anything unresolved is escalated.** A client who says "this was never fixed" is
+   everything they told us. The first thing it says: **our support team now populates
+   your documents for your digital signature** — nothing to print, nothing typed twice.
+3. **The support team gets the work**, with the priority in the subject line, an action
+   list, the completed questionnaire as a PDF, the change of servicing agent request if
+   they asked for one, and the support workflow spelled out: populate for digital
+   signature, send for signing, mark **Handled** when closed.
+4. **An agent appointment goes direct to Ricky and the team** (`TEAM_CC`), carrying the
+   client's own brief — the form asks *what matters most to you in an agent* and their
+   picks travel with the request, so the match happens the same day.
+5. **Nobody is left wondering.** While a row is still `Open`, the client automatically
+   gets a "thanks for your patience — still working on it" note every 2 days
+   (`CLIENT_UPDATE_DAYS`), stamped in the `Last client update` column. It stops the
+   moment the row is marked **Handled** (and caps at 30 days so a stale row never
+   robo-mails forever — the morning team chase keeps firing regardless).
+6. **Anything unresolved is escalated.** A client who says "this was never fixed" is
    flagged URGENT, promised contact within one business day, and chased automatically if
    nobody marks it handled.
 

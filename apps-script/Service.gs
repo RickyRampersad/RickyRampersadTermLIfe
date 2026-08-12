@@ -74,6 +74,16 @@ var SVC = {
      to use CC. This is the "somebody senior needs to see this" list.  */
   ESCALATION_CC: [],
 
+  /* The skilled agents on the branch team. Copied whenever a client asks
+     for an agent to be appointed, so the match happens the same day —
+     the client's "what I want in an agent" brief is in that email.     */
+  TEAM_CC: [],
+
+  /* While a request is still open, the client hears from us this often —
+     "thanks for your patience, we're working on it" — automatically,
+     until somebody marks the row Handled. Calendar days.               */
+  CLIENT_UPDATE_DAYS: 2,
+
   FROM_NAME:    'Ricky Rampersad — Guardian Life',
   AGENT_NAME:   'Ricky Rampersad',
   AGENT_NO:     '',                      // Guardian agent number, if you want it on the letter
@@ -363,6 +373,10 @@ function saveRow_(isGroup, ref, priority, now, body) {
     'Sent by': (body.sentBy && body.sentBy.name) || '',
     'Link ref': body.linkRef || '',
     'Needs tracing': c.needsTracing ? 'YES — no policy number' : '',
+
+    /* Stamped by the watchdog each time the client is sent a "still working
+       on it" note, so the every-2-days promise is measured, not guessed. */
+    'Last client update': '',
   };
 
   (body.fields || []).forEach(function (f) {
@@ -527,6 +541,9 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf) {
 
   var next = [];
 
+  next.push('<b>Our support team has your file.</b> They now populate your documents for your digital ' +
+    'signature — anything that needs signing comes to you ready-made. Nothing to print, nothing to fill in twice.');
+
   if (c.unresolved) {
     next.push('<b>The problem you told us about is already flagged.</b> It has gone straight to a service ' +
       'manager marked <b>' + esc_(c.unresolvedUrgency || 'for follow-up') + '</b>, and you will hear from a person — ' +
@@ -536,6 +553,11 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf) {
   }
 
   if (c.changeAgent) {
+    var brief = a.wantInAgent
+      ? ' You told us what you want in an agent — <b>' + esc_(String(a.wantInAgent)) + '</b> — and that is the ' +
+        'brief your agent is matched on, and held to.'
+      : '';
+    next.push('<b>Your agent appointment goes direct to ' + esc_(SVC.AGENT_NAME) + ' and the branch team.</b>' + brief);
     next.push(isGroup
       ? '<b>Your change of agent request is attached as a letter.</b> Guardian needs it on your company ' +
         'letterhead with your stamp — print the attachment on your letterhead, stamp and sign it, and send it back ' +
@@ -567,6 +589,9 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf) {
   if (a.referral === 'Yes') next.push('<b>Thank you for the introduction.</b> Whoever you have sent us will be looked after exactly as you are.');
   if (c.contactFreq) next.push('<b>Your next check-in is set: ' + esc_(String(c.contactFreq).toLowerCase()) + '.</b> It is in our system now, so it does not depend on anybody remembering.');
   if (a.questions) next.push('<b>Your question gets a written answer</b>, not a brochure. Give us a day or two to answer it properly.');
+
+  next.push('<b>You will never be left wondering.</b> Until everything here is closed, we send you an update ' +
+    'every ' + SVC.CLIENT_UPDATE_DAYS + ' days — even when the update is simply that we are still working on it.');
 
   next.push('<b>Keep this email.</b> The attached PDF is a complete record of what you told us today, and the ' +
     'reference above will pull your file up in seconds if you call.');
@@ -627,6 +652,7 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf) {
 
 function routeToService_(ref, priority, now, body, attachments, clientEmailed) {
   var c = body.core || {};
+  var av = answersById_(body);
   var isGroup = body.kind === 'group';
   var id = identity_(body);
 
@@ -639,6 +665,9 @@ function routeToService_(ref, priority, now, body, attachments, clientEmailed) {
   if ((priority === 'URGENT' || priority === 'HIGH') && SVC.ESCALATION_CC.length) {
     cc = cc.concat(SVC.ESCALATION_CC);
   }
+  /* An agent appointment goes direct to the whole skilled team, so the
+     match can happen the same day the client asks. */
+  if (c.changeAgent && (SVC.TEAM_CC || []).length) cc = cc.concat(SVC.TEAM_CC);
   cc = cc.filter(function (x, i, arr) { return x && to.indexOf(x) < 0 && arr.indexOf(x) === i; });
 
   var notConfigured = SVC.CS_EMAIL ? '' : box_('warn',
@@ -705,9 +734,21 @@ function routeToService_(ref, priority, now, body, attachments, clientEmailed) {
       : '') +
 
     (c.changeAgent
-      ? box_('tip', '<b>Change of servicing agent requested.</b> The signed request is attached' +
-          (isGroup ? ', drafted for the client\'s letterhead — they have been asked to print, stamp and return it.' : '.'))
+      ? box_('tip', '<b>Agent appointment — direct to ' + esc_(SVC.AGENT_NAME) + ' and the team.</b> ' +
+          'The signed request is attached' +
+          (isGroup ? ', drafted for the client\'s letterhead — they have been asked to print, stamp and return it.' : '.') +
+          (av.wantInAgent
+            ? '<br><br><b>The client\'s brief — what they want in an agent:</b> ' + esc_(String(av.wantInAgent)) +
+              (av.wantInAgentWhy ? '<br><i>&ldquo;' + esc_(String(av.wantInAgentWhy)) + '&rdquo;</i>' : '') +
+              '<br>Match on this and brief the agent on it before first contact.'
+            : ''))
       : '') +
+
+    box_('good', '<b>Support workflow for this file:</b> (1) the client has already been thanked automatically — ' +
+      'they know the support team is populating their documents for digital signature; (2) prepare anything that ' +
+      'needs a signature and email it ready to sign; (3) set <b>Status</b> to <b>Handled</b> in the sheet the moment ' +
+      'it is genuinely closed. Until then the client is sent an automatic &ldquo;still working on it&rdquo; note ' +
+      'every ' + SVC.CLIENT_UPDATE_DAYS + ' days, and the morning watchdog chases anything past its promise.') +
 
     '<h3 style="font-size:15px;color:' + SB.navy + ';margin:24px 0 4px">Every answer</h3>' +
     '<p style="font-size:12.5px;color:#6b7a8d;margin-bottom:4px">Also attached as a PDF for the file.</p>' +
@@ -1372,6 +1413,7 @@ function answersById_(body) {
    Install it with installServiceTriggers().                                */
 
 function dailyServiceFollowUp() {
+  clientPatiencePass_();
   [SVC.IND_SHEET, SVC.GRP_SHEET].forEach(function (name) {
     var sh = ss_().getSheetByName(name);
     if (!sh || sh.getLastRow() < 2) return;
@@ -1433,6 +1475,95 @@ function dailyServiceFollowUp() {
 
     log_('watchdog', 'overdue-chased', overdue.length + ' in ' + name);
   });
+}
+
+/**
+ * The promise on the form is "you will never be left wondering": while a
+ * request is still open, the client hears from us every CLIENT_UPDATE_DAYS
+ * days — thanks for the patience, we are working on it — automatically,
+ * until somebody sets the row's Status to Handled.
+ *
+ * Runs inside the same daily trigger as the team watchdog. Each note it
+ * sends is stamped in the 'Last client update' column, so the cadence is
+ * measured from the last thing the client actually received, not guessed.
+ * Rows older than 30 days stop getting the automatic note — at that point a
+ * robo-update is worse than silence, and the team chase is still firing
+ * every morning.
+ */
+function clientPatiencePass_() {
+  [SVC.IND_SHEET, SVC.GRP_SHEET].forEach(function (name) {
+    var sh = ss_().getSheetByName(name);
+    if (!sh || sh.getLastRow() < 2) return;
+
+    var headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+    var iRef = headers.indexOf('Reference'), iTs = headers.indexOf('Timestamp');
+    var iSt = headers.indexOf('Status'), iCl = headers.indexOf('Client');
+    var iEm = headers.indexOf('Email');
+    if (iRef < 0 || iSt < 0 || iEm < 0) return;
+
+    /* Sheets created before this column existed get it appended by name. */
+    var iUp = headers.indexOf('Last client update');
+    if (iUp < 0) {
+      sh.getRange(1, sh.getLastColumn() + 1).setValue('Last client update')
+        .setFontWeight('bold').setBackground(SB.light);
+      headers.push('Last client update');
+      iUp = headers.length - 1;
+    }
+
+    var rows = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
+    var sent = 0;
+
+    rows.forEach(function (r, idx) {
+      if (String(r[iSt] || '').toLowerCase() !== 'open') return;
+      var email = String(r[iEm] || '').trim();
+      if (!email) return;
+
+      var filed = new Date(r[iTs]);
+      if (isNaN(filed.getTime())) return;
+      if (daysSince_(filed) > 30) return;
+
+      var last = r[iUp] ? new Date(r[iUp]) : filed;
+      if (isNaN(last.getTime())) last = filed;
+      if (daysSince_(last) < SVC.CLIENT_UPDATE_DAYS) return;
+
+      var ref = String(r[iRef] || '');
+      var first = String(r[iCl] || '').trim().split(/\s+/)[0] || 'there';
+
+      try {
+        MailApp.sendEmail({
+          to: email,
+          name: SVC.FROM_NAME,
+          replyTo: SVC.AGENT_EMAIL,
+          subject: 'Still on it — your request ' + ref,
+          htmlBody: wrap_(
+            '<p>Dear ' + esc_(first) + ',</p>' +
+            '<p><b>Thank you for your patience — your request is being worked on right now.</b> ' +
+            'Our support team has it, and nothing is stuck: this note is simply the promise we made that ' +
+            'you would never be left wondering.</p>' +
+            '<p>Your reference is <b style="color:' + SB.navy + '">' + esc_(ref) + '</b>. ' +
+            'The moment it is complete you will hear from us properly.</p>' +
+            '<p>If anything has changed on your side in the meantime, just reply to this email or call ' +
+            esc_(SVC.AGENT_PHONE) + ' and quote the reference.</p>' +
+            sig_(),
+            'Working on it'),
+        });
+        sh.getRange(idx + 2, iUp + 1).setValue(new Date());
+        log_(ref, 'client-updated', 'automatic ' + SVC.CLIENT_UPDATE_DAYS + '-day patience note to ' + email);
+        sent++;
+      } catch (err) {
+        log_(ref, 'client-update-failed', String(err));
+      }
+    });
+
+    if (sent) log_('watchdog', 'patience-pass', sent + ' client update' + (sent > 1 ? 's' : '') + ' in ' + name);
+  });
+}
+
+/** Whole calendar days between then and now. */
+function daysSince_(when) {
+  var d = (when instanceof Date) ? when : new Date(when);
+  if (isNaN(d.getTime())) return 0;
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
 }
 
 /** Whole business days between then and now — weekends don't count. */

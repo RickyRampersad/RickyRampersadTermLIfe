@@ -78,6 +78,11 @@
   @media (max-width: 620px) { .promises { grid-template-columns: 1fr; } }
   .promise { background: rgba(26,22,24,.025); border: 1px solid var(--line); border-radius: 13px; padding: 13px 15px; font-size: 12.8px; color: var(--muted); line-height: 1.5; }
   .promise b { display: block; color: var(--text); font-family: 'Montserrat', sans-serif; font-size: 13px; margin-bottom: 3px; }
+  .hiw { display: grid; gap: 12px; grid-template-columns: repeat(3, 1fr); margin-top: 14px; }
+  @media (max-width: 620px) { .hiw { grid-template-columns: 1fr; } }
+  .hiw-step { background: var(--card); border: 1px solid var(--line); border-radius: 13px; padding: 14px 15px; font-size: 12.8px; color: var(--muted); line-height: 1.55; }
+  .hiw-step b { display: block; color: var(--text); font-family: 'Montserrat', sans-serif; font-size: 13px; margin: 7px 0 3px; }
+  .hiw-n { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--gold); color: #fff; font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 11.5px; }
   .resume { background: rgba(140,34,48,.08); border: 1px solid rgba(140,34,48,.40); border-radius: 14px; padding: 15px 17px; margin-bottom: 22px; font-size: 14px; display: none; }
   .resume b { color: var(--gold); }
   .resume .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 11px; }
@@ -314,6 +319,15 @@
       <div class="promise"><b>About 4 minutes</b>Short, plain questions. Skip anything you'd rather discuss in person.</div>
       <div class="promise"><b>Saved as you go</b>Close the page and come back — this device remembers your answers.</div>
       <div class="promise"><b>A real reply</b>You get a written confirmation, and anything unresolved goes straight to a service manager.</div>
+    </div>
+
+    <div class="hiw">
+      <div class="hiw-step"><span class="hiw-n">1</span><b>Answer guided questions</b>
+        Plain language, one screen at a time. An agent can send you a link with your details already in it.</div>
+      <div class="hiw-step"><span class="hiw-n">2</span><b>Our support team takes over</b>
+        They populate your documents and send them for your digital signature — nothing to print, nothing to fill in twice.</div>
+      <div class="hiw-step"><span class="hiw-n">3</span><b>Direct follow-through</b>
+        Straight to Ricky Rampersad and the branch team, with an update every 2 days until everything is closed.</div>
     </div>
 
     <div class="note tip" style="margin-top:26px">
@@ -650,7 +664,19 @@ const INDIVIDUAL = [
     options: ["Yes — please appoint him", "He is already my servicing agent", "No — no change"],
     paper: "Change of Servicing Agent request",
     help: "Your servicing agent is the person responsible for your policy: your reviews, your claims, your questions.",
-    note: { kind: "tip", text: "This does not change your policy, your premium or your cover in any way. It only changes who looks after you." } },
+    note: { kind: "tip", text: "This does not change your policy, your premium or your cover in any way. It only changes who looks after you. Your request goes direct to " + CONFIG.AGENT_NAME + " and the branch team." } },
+
+  /* The appointment goes to a team of skilled agents — so let the client say
+     what they actually want in one. Short pills, and it becomes the brief. */
+  { id: "wantInAgent", label: "What matters most to you in an agent?", type: "multi", isNew: true, flag: "agent",
+    showIf: { id: "changeAgent", is: "Yes — please appoint him" },
+    help: "Pick up to three. This becomes your agent's brief — we match you and hold them to it.",
+    options: ["Answers when I call", "Explains things in plain language", "Checks in regularly — not just to sell",
+              "Fast, hands-on help with claims", "Available on WhatsApp", "Will visit me at home or at work",
+              "Evenings or weekends", "Reviews everything I hold once a year"] },
+  { id: "wantInAgentWhy", label: "Anything else your ideal agent should know about you?", type: "textarea", isNew: true, flag: "agent",
+    showIf: { id: "changeAgent", is: "Yes — please appoint him" },
+    placeholder: "In your own words — how you like to be looked after." },
 
   { id: "coaPolicies", label: "Policy number(s) this applies to", type: "text",
     showIf: { id: "changeAgent", is: "Yes — please appoint him" }, flag: "agent",
@@ -856,7 +882,16 @@ const GROUP = [
 
   { id: "changeAgent", label: "Does your company wish to change the servicing agent on the group policy?", type: "choice",
     options: ["Yes — appoint " + CONFIG.AGENT_NAME, "He is already our servicing agent", "No — no change"],
-    note: { kind: "tip", text: "This changes who services your plan. It does not change your policy, your benefits, your rates or your renewal date." } },
+    note: { kind: "tip", text: "This changes who services your plan. It does not change your policy, your benefits, your rates or your renewal date. Your request goes direct to " + CONFIG.AGENT_NAME + " and the branch team." } },
+
+  { id: "wantInAgent", label: "What matters most to your company in an agent?", type: "multi", isNew: true, flag: "agent",
+    showIf: { id: "changeAgent", is: "Yes — appoint " + CONFIG.AGENT_NAME },
+    help: "Pick up to three. This becomes the brief your agent is held to.",
+    options: ["A named person who answers the phone", "On-site visits to our office", "Fast escalation when a claim stalls",
+              "Communication our employees actually understand", "Hands-on support at renewal", "Training and support for our HR team"] },
+  { id: "wantInAgentWhy", label: "Anything else your ideal agent should know about your company?", type: "textarea", isNew: true, flag: "agent",
+    showIf: { id: "changeAgent", is: "Yes — appoint " + CONFIG.AGENT_NAME },
+    placeholder: "In your own words — how your company likes to be looked after." },
 
   { id: "coaPolicyNo", label: "GROUP LIFE POLICY #", type: "text", required: true,
     showIf: { id: "changeAgent", is: "Yes — appoint " + CONFIG.AGENT_NAME }, flag: "agent",
@@ -1635,6 +1670,8 @@ function renderDone(ref, sent) {
   /* What happens next is assembled from what they actually told us — a real
      answer to a real person, not one generic paragraph for everybody. */
   const next = [];
+  next.push("<b>Our support team has your file.</b> They now populate your documents for your digital signature — " +
+    "anything that needs signing comes to you ready-made. Nothing to print, nothing to fill in twice.");
   if (c.unresolved) {
     next.push("<b>Your outstanding issue is already flagged.</b> A service manager has it now" +
       (c.unresolvedUrgency ? ", marked &ldquo;" + esc(c.unresolvedUrgency) + "&rdquo;" : "") +
@@ -1642,9 +1679,14 @@ function renderDone(ref, sent) {
       esc(CONFIG.AGENT_PHONE) + " and quote the reference above.");
   }
   if (c.changeAgent) {
+    const brief = Array.isArray(a.wantInAgent) && a.wantInAgent.length
+      ? " You asked for an agent who: <b>" + esc(a.wantInAgent.slice(0, 3).join(" · ")) + "</b> — that is the brief your agent is matched on, and held to."
+      : "";
     next.push(isGroup
-      ? "<b>Your change of agent request is on its way.</b> Watch your inbox for the letterhead-ready letter — print it, stamp it, sign it and send it back. Customer Service typically completes the change in 5 to 10 working days and confirms in writing."
-      : "<b>Your change of servicing agent request has gone to Customer Service.</b> It usually takes 5 to 10 working days, and Guardian confirms the change to you in writing. Your policy, premium and cover are untouched.");
+      ? "<b>Your agent appointment goes direct to " + esc(CONFIG.AGENT_NAME) + " and the branch team.</b>" + brief +
+        " Watch your inbox for the letterhead-ready letter — print it, stamp it, sign it and send it back. Customer Service typically completes the change in 5 to 10 working days and confirms in writing."
+      : "<b>Your agent appointment goes direct to " + esc(CONFIG.AGENT_NAME) + " and the branch team.</b>" + brief +
+        " Customer Service usually completes it in 5 to 10 working days and Guardian confirms in writing. Your policy, premium and cover are untouched.");
   }
   const recordBits = [];
   if (a.nameAddrOk === "No") recordBits.push("your name and address");
@@ -1671,6 +1713,8 @@ function renderDone(ref, sent) {
     next.push("<b>Your next check-in is set: " + esc(String(c.contactFreq).toLowerCase()) + ".</b> It's in the system now, so it doesn't depend on anyone remembering.");
   }
   if (a.questions && String(a.questions).trim()) next.push("<b>Your question gets a written answer</b>, not a brochure. Give us a day or two to do it properly.");
+  next.push("<b>You will never be left wondering.</b> Until everything here is closed, we send you an update every " +
+    "2 days — even when the update is simply that we're still working on it.");
   next.push("<b>A copy of everything you've told us is in your inbox</b> at " + esc(c.email || "your email address") + ". Keep it — it's a useful record of where things stood today.");
 
   const gaps = s.pillars.filter((p) => !p.ok).slice(0, 3);
