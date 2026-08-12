@@ -11,7 +11,22 @@ Built to be white-labelled and sold to other agencies.
 ## Why it exists
 
 Read [RESEARCH.md](RESEARCH.md) first — every claim on the site traces to a source there.
-The short version:
+
+**Trinidad & Tobago leads the evidence**, because a Trinidadian reading American statistics
+is entitled to ask whether any of it applies here:
+
+- **Over 70,000** life policies underwritten by Guardian Life of the Caribbean *alone*.
+- **Roughly 2,180** registered sales representatives in the entire country — every insurer,
+  agency and brokerage, general *and* life combined (our tally of the Central Bank's public
+  register, labelled as such on the page).
+- **Individual life premiums fell 14% in 2021**, which EY attributed to policyholders
+  "discontinuing their policies… as they could no longer afford the premiums". That is the
+  orphan problem with a price on it: nobody explained that the policy could be reduced,
+  made paid-up, or carried by its own cash value.
+- **Seven years** — how long money can sit unclaimed after maturity under s.197 of the
+  Insurance Act, 2018.
+
+The wider pattern, from the largest international studies:
 
 - **40%+** of life insurance policies have no active agent behind them.
 - **43%** of policyholders have had no contact from an agent in over three years, and only
@@ -61,12 +76,27 @@ coverage questions are OFF entirely** — the whole section doesn't render — a
 by one open question: *what would you like help with?*
 
 Asking somebody who came looking for help whether they'd like a retirement plan confirms
-exactly what they suspected. There is no setting on the site that turns them on for this
-path. The agent console can only make an agent-sent link *softer*, never make a
-client-direct one harder.
+exactly what they suspected.
 
-The review's confirmation screen says this back to the client in as many words, so the
-promise is on the record.
+### Overriding it — `?sell=1` / `?sell=0`
+
+The coverage questions are a **separate switch** from the origin, so the two aren't welded
+together:
+
+| Link | Coverage questions |
+|---|---|
+| `from=agent` (no `sell`) | **on** — the default for a link you send |
+| `from=client` (no `sell`) | **off** — the default for someone who found the site alone |
+| `from=agent&sell=0` | **off** — a deliberately gentle link for a client you know has been badly treated |
+| `from=client&sell=1` | **on** — an explicit override |
+
+**The default with no `sell` parameter never changes.** A visitor who types the domain in
+after years of being ignored gets the sales-free version unless an agent has consciously
+decided otherwise for that specific person.
+
+The review's confirmation screen follows the *switch*, not the origin — so a `sell=1` link
+never falsely promises "no product questions were asked". The promise on screen and the
+form actually served are always the same thing.
 
 ---
 
@@ -81,6 +111,7 @@ All optional. Everything you pass arrives prefilled.
 | `k` | your reference for this send, e.g. `DHA-260812-A1B2` |
 | `name` `policy` `email` `phone` `insurer` | prefill the client's details |
 | `company` | group only — the company name |
+| `sell` | `1` forces the coverage questions on, `0` forces them off; omit to let the origin decide |
 | `agent` | `1` shows the **Agent's comments** field (use when completing it with the client) |
 | `agentname` `agentemail` | tags the review back to the agent who sent it |
 
@@ -104,7 +135,7 @@ At `/agent/`. The agent fills in what they know, and it produces:
 | Control | Effect |
 |---|---|
 | **Individual / Group** | Which questionnaire the client sees. Group ends with the director + company stamp letter. |
-| **Include the coverage questions** | On by default. Untick and the link is generated as `from=client` — the short version, records and one open question. |
+| **Include the coverage questions** | On by default. Untick and the link carries `sell=0` — the gentle version: records, beneficiaries and one open question. The origin stays `agent` either way, so the review is still attributed to you. |
 | **I'm completing this with them** | Adds `agent=1`, revealing the Agent's comments field. For phone or in-person, not for sending. |
 
 **The access code is a doorway, not a lock.** Everything runs in the browser, so treat it
@@ -158,17 +189,20 @@ ever turned away.
 
 Three edits re-skin the whole product:
 
-1. **`:root` in each file's stylesheet** — ten colour tokens. `--amber` is the *unassigned*
-   state and `--emerald` the *resolved* one; the design uses that pairing as a narrative,
-   so keep them semantically opposed.
+1. **`:root` in each file's stylesheet** — the colour tokens. The palette is Ricky Rampersad
+   Branch: navy `#07131f`/`#0d2137`, gold `#efc24b`, teal `#00CFEA`, Montserrat + DM Sans,
+   so donthaveanagent.com reads as part of the same house as the branch site. **Gold means
+   unassigned, teal means resolved** — the design uses that pairing as a narrative
+   (the logo animates gold-dashed → teal-solid), so keep them semantically opposed.
 2. **`BRAND` / `CONFIG.BRAND`** at the top of each script — agency, agent, carrier, email,
    phone, country, regulator. Every disclaimer, signature and footer is generated from it.
 3. **The logo** — an inline SVG in each file plus the favicon data URI. The mark is a person
    in a dashed ring (unassigned) with a check badge (claimed); the landing page animates
    dashed → solid on load. That one idea is the brand.
 
-What shouldn't be changed when reselling: the client-direct path stays sales-free, and the
-statistics stay attributed. Both are why it works.
+What shouldn't be changed when reselling: the client-direct **default** stays sales-free,
+and the statistics stay attributed — including the honesty note on our own tally of the
+Central Bank register. Both are why it works.
 
 ---
 

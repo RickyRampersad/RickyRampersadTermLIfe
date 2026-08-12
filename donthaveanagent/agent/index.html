@@ -5,34 +5,34 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Agent console — Don't Have An Agent</title>
 <meta name="robots" content="noindex"/>
-<meta name="theme-color" content="#0A1017"/>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='27' fill='none' stroke='%23F5A623' stroke-width='4' stroke-dasharray='7 6' stroke-linecap='round'/%3E%3Ccircle cx='30' cy='27' r='8' fill='%23EEF3F8'/%3E%3Cpath d='M16 47c0-7.7 6.3-14 14-14s14 6.3 14 14' fill='%23EEF3F8'/%3E%3Ccircle cx='50' cy='48' r='13' fill='%2322C482'/%3E%3Cpath d='M44 48l4.5 4.5L57 43' stroke='%230A1017' stroke-width='4.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"/>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#07131f"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='27' fill='none' stroke='%23efc24b' stroke-width='4' stroke-dasharray='7 6' stroke-linecap='round'/%3E%3Ccircle cx='30' cy='27' r='8' fill='%23edf4fb'/%3E%3Cpath d='M16 47c0-7.7 6.3-14 14-14s14 6.3 14 14' fill='%23edf4fb'/%3E%3Ccircle cx='50' cy='48' r='13' fill='%2300CFEA'/%3E%3Cpath d='M44 48l4.5 4.5L57 43' stroke='%2307131f' stroke-width='4.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{
-  --ink:#0A1017;--ink2:#0E1620;--surface:#151F2B;--surface2:#1B2836;
-  --line:rgba(255,255,255,.075);--line2:rgba(255,255,255,.14);
-  --text:#EEF3F8;--muted:#93A5B8;--muted2:#6B7F94;
-  --amber:#F5A623;--emerald:#22C482;--red:#FF6B6B;
-  --emerald-soft:rgba(34,196,130,.12);--amber-soft:rgba(245,166,35,.11);
-  --head:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  --body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --ink:#07131f;--ink2:#0d2137;--surface:#163553;--surface2:#1b3d61;
+  --line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.17);
+  --text:#edf4fb;--muted:#a9bbcf;--muted2:#7d94ad;
+  --amber:#efc24b;--emerald:#00CFEA;--emerald2:#00A8C5;--red:#ff7a7a;
+  --emerald-soft:rgba(0,207,234,.12);--amber-soft:rgba(239,194,75,.12);
+  --head:'Montserrat',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --body:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--body);background:var(--ink);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased;
-  background-image:radial-gradient(ellipse 70% 40% at 50% -10%,rgba(34,196,130,.06),transparent 70%);background-attachment:fixed}
+  background-image:radial-gradient(ellipse 70% 40% at 50% -10%,rgba(0,207,234,.07),transparent 70%);background-attachment:fixed}
 h1,h2,h3{font-family:var(--head);letter-spacing:-.02em;line-height:1.18}
 a{color:var(--emerald)}
 .wrap{max-width:1020px;margin:0 auto;padding:0 18px 80px}
 
-.nav{position:sticky;top:0;z-index:90;background:rgba(10,16,23,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.nav{position:sticky;top:0;z-index:90;background:rgba(6,17,29,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 .nav-in{max-width:1020px;margin:0 auto;padding:0 18px;height:62px;display:flex;align-items:center;gap:11px}
 .logo{display:flex;align-items:center;gap:10px}
 .logo svg{width:32px;height:32px}
 .logo-word{font-family:var(--head);font-weight:800;font-size:13.5px;letter-spacing:-.035em;white-space:nowrap}
 .logo-word .dim{color:var(--muted2);font-weight:600}
 .logo-word .dot{color:var(--emerald);font-weight:600;font-size:11.5px}
-.nav-tag{margin-left:auto;font-size:11.5px;color:var(--amber);background:var(--amber-soft);border:1px solid rgba(245,166,35,.3);padding:5px 12px;border-radius:99px;font-weight:600}
+.nav-tag{margin-left:auto;font-size:11.5px;color:var(--amber);background:var(--amber-soft);border:1px solid rgba(239,194,75,.3);padding:5px 12px;border-radius:99px;font-weight:600}
 
 /* gate */
 .gate{max-width:410px;margin:70px auto;text-align:center}
@@ -43,7 +43,7 @@ a{color:var(--emerald)}
   color:var(--text);background:rgba(0,0,0,.3);border:1px solid var(--line2);border-radius:12px;padding:14px}
 .gate input:focus{outline:none;border-color:var(--emerald)}
 .gate .btn{width:100%;margin-top:12px}
-.gate .err{display:none;background:rgba(255,107,107,.12);border:1px solid rgba(255,107,107,.4);color:#ffc9c9;
+.gate .err{display:none;background:rgba(255,122,122,.12);border:1px solid rgba(255,122,122,.4);color:#ffc9c9;
   border-radius:10px;padding:10px 13px;font-size:13px;margin-top:12px}
 
 #app{display:none}
@@ -84,7 +84,7 @@ select option{background:var(--surface);color:var(--text)}
 .seg button.on{border-color:var(--emerald);background:var(--emerald-soft);color:var(--text);font-weight:600}
 .seg button b{display:block;font-size:13.8px}
 .seg button span{display:block;font-size:11.6px;color:var(--muted);font-weight:400;margin-top:2px}
-.seg button.on span{color:#a9c9ba}
+.seg button.on span{color:#a9bbcf}
 
 .toggle{display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,.03);border:1px solid var(--line);
   border-radius:13px;padding:14px 15px;cursor:pointer;margin-top:11px;transition:border-color .15s}
@@ -108,13 +108,13 @@ select option{background:var(--surface);color:var(--text)}
   max-height:290px;overflow-y:auto}
 .chips{display:flex;gap:7px;flex-wrap:wrap;margin:13px 0}
 .chip{font-size:11.5px;padding:5px 11px;border-radius:99px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--muted)}
-.chip.on{border-color:rgba(34,196,130,.45);background:var(--emerald-soft);color:#b6f0d5}
-.chip.warm{border-color:rgba(245,166,35,.42);background:var(--amber-soft);color:#ffdaa8}
+.chip.on{border-color:rgba(0,207,234,.45);background:var(--emerald-soft);color:#b6f0d5}
+.chip.warm{border-color:rgba(239,194,75,.42);background:var(--amber-soft);color:#ffdaa8}
 
 .btn{font-family:var(--head);font-weight:700;font-size:14px;cursor:pointer;border:none;border-radius:12px;padding:12px 20px;
   transition:all .16s;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
-.btn-go{background:var(--emerald);color:#06120C}
-.btn-go:hover{background:#2FDD93;transform:translateY(-1px)}
+.btn-go{background:var(--emerald);color:#06121e}
+.btn-go:hover{background:#25E0FF;transform:translateY(-1px)}
 .btn-go:disabled{opacity:.45;cursor:not-allowed;transform:none}
 .btn-line{background:rgba(255,255,255,.05);border:1px solid var(--line2);color:var(--text)}
 .btn-line:hover{border-color:var(--emerald)}
@@ -132,7 +132,7 @@ select option{background:var(--surface);color:var(--text)}
 .ritem .ract{margin-left:auto;display:flex;gap:7px;flex-shrink:0}
 .empty{font-size:13.4px;color:var(--muted2);padding:16px 0}
 
-.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,120%);background:var(--emerald);color:#06120C;
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,120%);background:var(--emerald);color:#06121e;
   font-family:var(--head);font-weight:700;font-size:14px;padding:13px 24px;border-radius:12px;z-index:200;transition:transform .3s cubic-bezier(.2,1.2,.4,1)}
 .toast.on{transform:translate(-50%,0)}
 .foot{border-top:1px solid var(--line);margin-top:34px;padding:20px 0 40px;font-size:11.6px;color:var(--muted2);line-height:1.7}
@@ -145,11 +145,11 @@ select option{background:var(--surface);color:var(--text)}
   <div class="nav-in">
     <a class="logo" href="../index.html">
       <svg viewBox="0 0 64 64" aria-hidden="true">
-        <circle cx="32" cy="32" r="27" fill="none" stroke="#22C482" stroke-width="4" stroke-linecap="round"/>
-        <circle cx="30" cy="27" r="8" fill="#EEF3F8"/>
-        <path d="M16 47c0-7.7 6.3-14 14-14s14 6.3 14 14" fill="#EEF3F8"/>
-        <circle cx="50" cy="48" r="13" fill="#22C482"/>
-        <path d="M44 48l4.5 4.5L57 43" stroke="#0A1017" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="32" cy="32" r="27" fill="none" stroke="#00CFEA" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="30" cy="27" r="8" fill="#edf4fb"/>
+        <path d="M16 47c0-7.7 6.3-14 14-14s14 6.3 14 14" fill="#edf4fb"/>
+        <circle cx="50" cy="48" r="13" fill="#00CFEA"/>
+        <path d="M44 48l4.5 4.5L57 43" stroke="#07131f" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
       <span class="logo-word"><span class="dim">don't have</span> an agent<span class="dot">.com</span></span>
     </a>
@@ -162,9 +162,9 @@ select option{background:var(--surface);color:var(--text)}
   <!-- ══ GATE ══ -->
   <div class="gate" id="gate">
     <svg viewBox="0 0 64 64" aria-hidden="true">
-      <circle cx="32" cy="32" r="27" fill="none" stroke="#F5A623" stroke-width="4" stroke-dasharray="7 6" stroke-linecap="round"/>
-      <circle cx="30" cy="27" r="8" fill="#EEF3F8"/>
-      <path d="M16 47c0-7.7 6.3-14 14-14s14 6.3 14 14" fill="#EEF3F8"/>
+      <circle cx="32" cy="32" r="27" fill="none" stroke="#efc24b" stroke-width="4" stroke-dasharray="7 6" stroke-linecap="round"/>
+      <circle cx="30" cy="27" r="8" fill="#edf4fb"/>
+      <path d="M16 47c0-7.7 6.3-14 14-14s14 6.3 14 14" fill="#edf4fb"/>
     </svg>
     <h1>Agent console</h1>
     <p>Generate a personal review link for a client and send it in one tap.</p>
@@ -233,7 +233,8 @@ select option{background:var(--surface);color:var(--text)}
           <span><b>Include the coverage questions</b>
           <span>Life changes, goals, income protection, retirement — the questions that surface real need.
           On by default for a link you send, because a relationship already exists and the client expects a proper review.
-          Untick it and they get the short version: records, beneficiaries and one open question.</span></span>
+          Untick it for the gentle version — records, beneficiaries and one open question — for a client you know
+          has been badly treated and needs winning back before anything else.</span></span>
         </label>
 
         <label class="toggle" id="tAssist">
@@ -244,9 +245,10 @@ select option{background:var(--surface);color:var(--text)}
         </label>
 
         <div class="note tip" id="sellNote">
-          <b>Worth knowing.</b> A client who arrives at the site on their own never sees the coverage
-          questions — that path is deliberately sales-free, and it is the reason people finish it.
-          This toggle only applies to links you send.
+          <b>Worth knowing.</b> Someone who finds the site on their own and starts a review with no link from
+          you never sees the coverage questions — that path is sales-free by default, and it is the reason
+          people finish it. This toggle sets the version for <b>the link you are creating right now</b>,
+          and it travels with that link.
         </div>
       </div>
 
@@ -372,7 +374,12 @@ function buildLink() {
   if (val("#fInsurer")) p.set("insurer", val("#fInsurer"));
   if (val("#fEmail")) p.set("email", val("#fEmail"));
   if (val("#fPhone")) p.set("phone", val("#fPhone"));
-  if (!$("#cSell").checked) p.set("from", "client");   // short version, no coverage questions
+
+  /* The coverage questions are their own switch now, set explicitly rather
+     than inferred from how the client arrived. That way an agent can send a
+     deliberately gentle link to somebody they know has been badly treated,
+     without the form pretending they walked in off the street. */
+  p.set("sell", $("#cSell").checked ? "1" : "0");
   if ($("#cAssist").checked) p.set("agent", "1");
   p.set("agentname", B.agent);
   p.set("agentemail", B.email);
@@ -412,7 +419,8 @@ function render() {
 
   const chips = [];
   chips.push('<span class="chip on">' + (kind === "group" ? "Group plan" : "Individual") + "</span>");
-  chips.push('<span class="chip ' + (sell ? "on" : "warm") + '">' + (sell ? "Full review" : "Short version — no coverage questions") + "</span>");
+  chips.push('<span class="chip ' + (sell ? "on" : "warm") + '">' +
+    (sell ? "Full review · coverage questions on" : "Gentle version · no coverage questions") + "</span>");
   if (assist) chips.push('<span class="chip warm">Agent-assisted</span>');
   if (val("#fPolicy")) chips.push('<span class="chip on">Policy prefilled</span>');
   const known = ["#fEmail", "#fPhone"].filter((s) => val(s)).length;
@@ -541,8 +549,8 @@ function escapeHtml(s) {
     "The access code keeps this page out of clients' way; it is not security, and no client data is stored here " +
     "beyond the recent-links list in this browser. Links you generate contain only what you typed — a name, a policy " +
     "number, a contact — so treat them like any other client email.<br><br>" +
-    "Coverage questions are included only on links an agent sends. Clients who arrive at " + escapeHtml(B.product) +
-    " on their own are never asked them, and there is no setting that changes that.";
+    "The coverage-questions toggle travels with the link you generate. A visitor who arrives at " +
+    escapeHtml(B.product) + " on their own, with no link from an agent, gets the sales-free version by default.";
 
   let ok = false;
   try { ok = sessionStorage.getItem(GATE_KEY) === "1"; } catch (e) {}

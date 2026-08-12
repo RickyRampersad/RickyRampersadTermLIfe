@@ -109,6 +109,62 @@ thing on the site.
 
 ## 5. Trinidad & Tobago — the local frame
 
+The sections above are the global pattern. This is the part that makes it local, and it is
+the part that should lead on the page. A Trinidadian reading American statistics is
+entitled to ask whether any of it applies here. It does, and here are our own numbers.
+
+### The arithmetic that ends the argument
+
+| Finding | Figure | Source |
+|---|---|---|
+| Policies underwritten by **Guardian Life of the Caribbean** in T&T | **over 70,000** | [Guardian Group](https://trinidad.myguardiangroup.com/companies/guardian-life-of-the-caribbean) |
+| **Registered sales representatives in the entire country** — every insurer, agency and brokerage, general *and* life combined | **roughly 2,180** | Our own tally of the [Central Bank register, 1 January 2025](https://www.central-bank.org.tt/wp-content/uploads/2025/03/sales-representatives-registered-as-at-jan2025.pdf) (70 pages) |
+
+One insurer. Seventy thousand policies. About two thousand registered representatives in
+the whole of Trinidad and Tobago, spread across motor, property, health and life, at every
+company at once.
+
+Do that division and the orphan problem stops being an American statistic. There are not
+enough people in the industry for every policy in the country to have somebody actively
+watching it, and there never have been.
+
+> **Honesty note.** The 2,180 figure is *our count* of the Central Bank's published
+> register, not an official total the Bank publishes. It is presented on the site as
+> "roughly", attributed as our own tally, and the register is linked so anybody can check
+> it. The register is also a snapshot — people join and leave constantly.
+
+### The market
+
+| Finding | Figure | Source |
+|---|---|---|
+| Life insurance premium volume as a share of GDP (2020) | **3.0%** | World Bank / Swiss Re Sigma, via [Trading Economics](https://tradingeconomics.com/trinidad-and-tobago/life-insurance-premium-volume-to-gdp-percent-wb-data.html) |
+| Guardian Life gross written premium, Life/Health/Pensions (2021) | **TT$2,147m** — the largest in the segment | [EY, *Trinidad and Tobago 2021 insurance statistics*](https://www.ey.com/content/dam/ey-unified-site/ey-com/en-tt/documents/ey-tt-report-trinidad-tobago-insurance-statistics-2021-10032023.pdf) |
+| Sagicor Life, same segment and year | TT$1,475m | same |
+| Segment structure | "highly consolidated, with two participants, Guardian Life and Sagicor, dominating the landscape" | same |
+| Population | ~1.53 million (2024 est.) | [Demographics of T&T](https://en.wikipedia.org/wiki/Demographics_of_Trinidad_and_Tobago) |
+
+The EY report is compiled from the Insurance Act annual statements that companies file with
+the Central Bank, through ATTIC — so it is as close to an official industry picture as a
+public document gets here.
+
+### The finding that matters most
+
+EY, on 2021: individual life gross written premium **declined 14%**, which
+
+> "may have resulted from the delayed impact of policyholders **discontinuing their policies
+> in 2020, as they could no longer afford the premiums**."
+
+That is the orphan problem with a price tag on it. A policyholder under financial pressure
+with an agent has options explained to them — reduce the sum assured, make it paid-up, use
+the cash value to cover premiums, change the frequency, take a premium holiday. A
+policyholder under the same pressure with *nobody to call* stops paying and loses the
+policy, along with everything already paid into it.
+
+Nobody cancels a policy because they stopped loving their family. They cancel because it
+got hard and there was no one to ask.
+
+### Your rights, locally
+
 - The **Insurance Act, 2018** governs the market and was written to strengthen policyholder
   protection ([Central Bank of T&T](https://www.central-bank.org.tt/resources/insurance-act-2018/),
   [full text](https://www.ttparliament.org/wp-content/uploads/2022/01/a2018-04g.pdf)).
@@ -116,13 +172,17 @@ thing on the site.
   go **unclaimed for seven years** after the policy's maturity date. Insurers must report
   these to the Central Bank on a standardised return
   ([circular](https://www.central-bank.org.tt/resources/circular-letter-standardized-reporting-of-unclaimed-monies-under-section-1975-of-the-insurance-act-2018/)).
+- Intermediaries — agents, agencies, salespersons, brokers — must be **registered under the
+  Act** and the register is public, so anybody can check the person they are dealing with
+  ([registered intermediaries](https://www.central-bank.org.tt/registered-intermediaries-and-insurance-companies/)).
 
 Seven years is the number worth saying out loud. A matured endowment nobody told you about
 sits there, and the clock runs.
 
-**How this shapes the product:** the site states plainly that money can go unclaimed under
-T&T law and that a review checks for it. It also grounds the service in local regulation
-rather than borrowed American statistics.
+**How this shapes the product:** Trinidad & Tobago figures lead the evidence section and the
+global numbers support them, rather than the other way round. The site says plainly that
+money can go unclaimed under T&T law, that a review checks for it, and that the register of
+registered representatives is public.
 
 ---
 
