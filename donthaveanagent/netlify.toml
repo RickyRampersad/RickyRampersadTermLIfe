@@ -30,6 +30,12 @@
   to = "/review.html?from=client&type=group"
   status = 302
 
+# The launch film — a link always plays, with music; files in chat previews can't.
+[[redirects]]
+  from = "/launch"
+  to = "/launch.html"
+  status = 302
+
 # Where a client goes to watch their request move — reference + access code.
 [[redirects]]
   from = "/track"
