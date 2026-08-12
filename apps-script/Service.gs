@@ -195,8 +195,13 @@ function handleSubmission_(body) {
   var attachments = [];
   var formPdf = questionnairePdf_(ref, priority, now, body);
   if (formPdf) attachments.push(formPdf);
-  var answersDoc = answersPdf_(ref, priority, now, body);
-  if (answersDoc) attachments.push(answersDoc);
+  /* The branch questionnaire carries its own notes page. Everything else —
+     group plans and donthaveanagent.com — has no printed form, so the answers
+     document is the document. */
+  if (body.kind === 'group' || identity_(body).dhaa) {
+    var answersDoc = answersPdf_(ref, priority, now, body);
+    if (answersDoc) attachments.push(answersDoc);
+  }
 
   var letterPdf = null;
   if (core.changeAgent) {
@@ -832,7 +837,17 @@ function paperCss_() {
     'p{margin:0}' +
     '.sigimg{max-height:.34in;vertical-align:bottom;margin-bottom:-3px}' +
     '.dotline{border-bottom:1px dotted #000;height:.9em}' +
-    '.code{font-size:12pt}';
+    '.code{font-size:12pt}' +
+    '.pg{page-break-before:always;height:0}' +
+    '.p2h{font-size:12.5pt;font-weight:bold;letter-spacing:.4px;margin:0 0 3px}' +
+    '.p2s{font-size:8pt;color:#333;border-bottom:1px solid #000;padding-bottom:5px;margin-bottom:9px;line-height:1.35}' +
+    '.p2t{font-size:8.4pt;font-weight:bold;letter-spacing:.7px;text-transform:uppercase;' +
+      'margin:9px 0 3px;border-bottom:1px solid #999;padding-bottom:2px}' +
+    'table.cd{width:100%;border-collapse:collapse;font-size:7.6pt;line-height:1.25}' +
+    'table.cd td{border-bottom:1px solid #ddd;padding:1.6px 4px;vertical-align:top}' +
+    'table.cd td.n{width:16px;text-align:right;font-weight:bold;color:#555}' +
+    'table.cd td.k{width:42%;color:#333}' +
+    '.p2f{font-size:7.4pt;color:#333;border-top:1px solid #000;padding-top:5px;margin-top:10px;line-height:1.4}';
 }
 
 /* A value typed onto a dotted line, sized to the space the paper leaves. */
@@ -1038,6 +1053,73 @@ function paperFacsimilePdf_(ref, priority, now, body) {
     '</tr></table>' +
 
     '<div class="code" style="margin-top:.14in">2000 - 03 - 147</div>';
+
+  /* ── page 2 ─────────────────────────────────────────────────────────────
+     The form on page 1 is not written on. The detail behind the answers goes
+     here instead: first the notes against the numbered questions they belong
+     to, then everything else, set condensed in two columns.                */
+  var notes = [];
+  PAPER_Q.forEach(function (q) {
+    var v = q.write ? a[q.write] : (q.note ? a[q.note] : '');
+    if (v && String(v) !== '') notes.push({ n: q.n, t: q.t, v: String(v) });
+  });
+
+  var covered = {};
+  PAPER_Q.forEach(function (q) {
+    if (q.from) covered[q.from] = 1;
+    if (q.note) covered[q.note] = 1;
+    if (q.write) covered[q.write] = 1;
+  });
+
+  var rest = [];
+  (body.fields || []).forEach(function (f) {
+    if (!f.id || covered[f.id]) return;
+    if (f.id.indexOf('coa') === 0 || f.id === 'agentComments') return;   /* on page 1 */
+    rest.push(f);
+  });
+
+  var half = Math.ceil(rest.length / 2);
+  var col = function (list) {
+    return list.map(function (f) {
+      return '<tr><td class="k">' + esc_(f.label) + '</td><td>' + esc_(f.value) + '</td></tr>';
+    }).join('');
+  };
+
+  h += '<div class="pg"></div>' +
+    '<div class="p2h">SERVICE QUESTIONNAIRE &mdash; NOTES ON THE ANSWERS</div>' +
+    '<div class="p2s">' + esc_(a.lifeAssured || c.clientName || '') +
+      ' &nbsp;&middot;&nbsp; policy ' + esc_(a.policyNos || c.policyNos || '') +
+      ' &nbsp;&middot;&nbsp; ' + esc_(ref) +
+      ' &nbsp;&middot;&nbsp; ' + esc_(Utilities.formatDate(d, tz, 'd MMMM yyyy, h:mm a')) +
+      ' &nbsp;&middot;&nbsp; ' + esc_(priority) +
+      (c.score !== '' && c.score !== undefined
+        ? ' &nbsp;&middot;&nbsp; Protection Score ' + esc_(c.score) + '/100' : '') +
+      '<br>Page 1 is form 2000-03-147 exactly as printed. Nothing below has been written onto it.' +
+    '</div>';
+
+  if (notes.length) {
+    h += '<div class="p2t">Against the numbered questions</div><table class="cd">' +
+      notes.map(function (x) {
+        return '<tr><td class="n">' + x.n + '</td><td class="k">' + esc_(x.t) +
+               '</td><td>' + esc_(x.v) + '</td></tr>';
+      }).join('') + '</table>';
+  }
+
+  if (rest.length) {
+    h += '<div class="p2t">Everything else asked</div>' +
+      '<table style="table-layout:fixed"><tr>' +
+        '<td style="width:49%;vertical-align:top"><table class="cd">' + col(rest.slice(0, half)) + '</table></td>' +
+        '<td style="width:2%"></td>' +
+        '<td style="width:49%;vertical-align:top"><table class="cd">' + col(rest.slice(half)) + '</table></td>' +
+      '</tr></table>';
+  }
+
+  var con = body.consent || {};
+  h += '<div class="p2f">Declared true and correct: <b>' + (con['true'] ? 'Yes' : 'No') +
+    '</b> &nbsp;&middot;&nbsp; Consent to service and update records: <b>' + (con.use ? 'Yes' : 'No') +
+    '</b> &nbsp;&middot;&nbsp; Marketing consent: <b>' + (con.marketing ? 'Yes' : 'No') + '</b><br>' +
+    'Completed online at ' + esc_(SVC.FORM_URL) + '. Changes to policy records are effective only once ' +
+    'processed and confirmed in writing by Guardian Life of the Caribbean Limited.</div>';
 
   return toPdf_('<!DOCTYPE html><html><head><meta charset="utf-8"><style>' + paperCss_() +
                 '</style></head><body>' + h + '</body></html>',
