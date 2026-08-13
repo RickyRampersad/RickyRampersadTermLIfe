@@ -75,6 +75,11 @@ var OUT = {
   // deployment; the copy in the public repository is a demo.
   ENGINE_URL: '',                // e.g. 'https://rrb-premium-due.netlify.app/'
 
+  // The branch shield, as a hosted PNG. This repository publishes to
+  // rickyrampersadbranch.com, so the committed crest images are live at this
+  // path once the site deploys. Blank falls back to a type glyph.
+  LOGO_URL: '',                  // blank = use the default for the theme below
+
   // Branch manager — copied on the 60-day notice and on repeat manager chases.
   BRANCH_MANAGER_EMAIL: '',      // e.g. 'ricky.rampersad@myguardiangroup.com'
 
@@ -274,6 +279,35 @@ var CLOSING_QUESTIONS = [
     { k: 'other',    lab: 'Something else' } ] }
 ];
 
+/**
+ * The day-45 questions, personalised from the portfolio row. The keys never
+ * change — the engine and the log decode by key — but the labels lead with the
+ * client's own facts: the actual amount, their actual collection method. A
+ * button that says "Settle the $1,616.70 now" gets tapped; a button that says
+ * "Settle it now" gets read. Where the account is paying its other premiums,
+ * the billing fix goes first, because that is almost always the real problem.
+ */
+function pdClientQuestions_(p, family) {
+  var due = pdAmountDue_(p);
+  var b = String(p.Billing || '').toLowerCase();
+  var billingLab = 'Change my payment date or bank details';
+  if (b.indexOf('bank') > -1 || b.indexOf('order') > -1)      billingLab = 'Fix my bankers order — re-lodge it';
+  else if (b.indexOf('salary') > -1 || b.indexOf('deduct') > -1) billingLab = 'Restart my salary deduction';
+
+  var opts = [
+    { k: 'settle',  lab: due > 0 ? 'Settle the ' + pdMoney_(due) + ' now' : 'Settle it now' },
+    { k: 'review',  lab: 'Review my premium' },
+    { k: 'billing', lab: billingLab },
+    { k: 'hold',    lab: 'Pause briefly, keep the cover' },
+    { k: 'talk',    lab: 'Have someone call me' },
+    { k: 'other',   lab: 'Something else' }
+  ];
+  var r = pdRelationship_(p, pdFamily_(p, family));
+  if (r.payingOthers > 0) opts.splice(0, 0, opts.splice(2, 1)[0]);   // billing first — it is the likely fault
+
+  return [ { k: 'help', q: CLIENT_QUESTIONS[0].q, opts: opts }, CLIENT_QUESTIONS[1] ];
+}
+
 /* Flat lookup, so a returning click can be named without walking the sets. */
 var ANSWER_BY_KEY = (function () {
   var m = {};
@@ -354,12 +388,12 @@ function pdDecodeAnswer_(questionText, label) {
 var PD_THEME = 'burgundy';
 
 var PD_THEMES = {
-  navy:     { dark: '#0B2035', dark2: '#123050', mid: '#2C4A6B', tint: '#A9C4DE' },
-  teal:     { dark: '#0A403B', dark2: '#0E6E64', mid: '#2C6660', tint: '#9BD0C7' },
-  charcoal: { dark: '#22262B', dark2: '#343A42', mid: '#4A525C', tint: '#C3CCD5' },
-  burgundy: { dark: '#3A1620', dark2: '#5A2333', mid: '#7A3A4B', tint: '#E2B7BF' },
-  forest:   { dark: '#152A1E', dark2: '#24422F', mid: '#3E6248', tint: '#B7D2BD' },
-  slate:    { dark: '#1E2A38', dark2: '#2E4054', mid: '#4A5D74', tint: '#C2D1DF' }
+  navy:     { dark: '#0C2440', dark2: '#15406E', mid: '#1F5FA8', tint: '#BFDBF7' },
+  teal:     { dark: '#093F39', dark2: '#0E6E64', mid: '#0F8A7B', tint: '#A9E6DC' },
+  charcoal: { dark: '#22262B', dark2: '#39414A', mid: '#53616E', tint: '#CDD6DF' },
+  burgundy: { dark: '#42101F', dark2: '#6E1E38', mid: '#A32D4E', tint: '#F5BFCD' },
+  forest:   { dark: '#123324', dark2: '#1F5A3C', mid: '#268052', tint: '#B9E7C9' },
+  slate:    { dark: '#1E2A38', dark2: '#33517A', mid: '#4172A8', tint: '#C9DDF2' }
 };
 
 var PD_BRAND = (function () {
@@ -432,23 +466,19 @@ function pdBadge_(kind, days) {
     '</td></tr></table>';
 }
 
-/** The branch crest — a shield carrying a CHECKMARK, as on the branch website.
-    Built from HTML because Gmail strips inline SVG.
+/* The branch crest — the ACTUAL shield from rickyrampersadbranch.com, the same
+   path and the same stroke-weight checkmark, rendered to a PNG per scheme and
+   committed under premium-due/assets/. The repository publishes to the branch
+   domain, so once deployed the images are live and every mail client that
+   shows images shows the real mark, properly drawn and properly scaled.
+   Inline SVG is not an option (Gmail strips it) and a type glyph never matched
+   the mark, so the glyph survives only as the blocked-images fallback. */
+var PD_LOGO_DEFAULT = 'https://rickyrampersadbranch.com/premium-due/assets/crest-' + PD_THEME + '.png';
 
-    The glyph is U+2714 HEAVY CHECK MARK — the thick-stroked one, matching the
-    weight of the mark on the site — followed by U+FE0E so mail apps render it
-    as type rather than as an emoji. The -webkit-text-stroke line thickens it
-    further in every WebKit/Blink renderer (Apple Mail, iOS Mail, Chrome,
-    the preview page); clients that ignore the property still show the heavy
-    glyph, so nothing degrades below a proper bold check. */
 function pdCrest_() {
-  return '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tr>' +
-    '<td width="46" height="52" align="center" valign="middle" style="width:46px;height:52px;' +
-      'background:' + PD_BRAND.gold2 + ';border-radius:8px 8px 22px 22px;color:' + PD_BRAND.navy + ';' +
-      'font-size:26px;line-height:52px;font-weight:bold;' +
-      'font-family:\'Segoe UI Symbol\',\'Apple Symbols\',Arial,Helvetica,sans-serif;' +
-      '-webkit-text-stroke:1.3px ' + PD_BRAND.navy + '">&#10004;&#65038;</td>' +
-    '</tr></table>';
+  var url = OUT.LOGO_URL || PD_LOGO_DEFAULT;
+  return '<img src="' + url + '" width="46" height="46" alt="&#10003;" ' +
+    'style="display:block;width:46px;height:46px;border:0;outline:none">';
 }
 
 /* ============================ small helpers ============================ */
@@ -650,7 +680,8 @@ function pdAnswerHref_(p, q, o, kind) {
              (p.Client ? p.Client + '\n' : '') + '\n' +
              q.q + '\n' + o.lab + '\n\n' +
              'Anything you would like to add:\n\n\n' +
-             '— sent from the premium notice for policy ' + p.Policy;
+             '— sent from the premium notice for policy ' + p.Policy + '\n' +
+             '[ref ' + q.k + ':' + o.k + ']';
   return 'mailto:' + encodeURIComponent(to) +
          '?cc=' + encodeURIComponent(OUT.SALES_SUPPORT_EMAIL || '') +
          '&subject=' + encodeURIComponent(subj) +
@@ -678,14 +709,14 @@ function pdQuestionBlock_(p, questions, kind) {
     for (var j = 0; j < q.opts.length; j++) {
       var o = q.opts[j];
       var href = pdAnswerHref_(p, q, o, kind);
-      out += '<tr><td style="padding:0 0 6px">' +
+      out += '<tr><td style="padding:0 0 8px">' +
         '<a href="' + href + '" style="display:block;text-decoration:none;border:1px solid ' + PD_BRAND.line +
-          ';border-left:3px solid ' + PD_BRAND.gold + ';background:#FFFFFF">' +
+          ';border-left:5px solid ' + PD_BRAND.gold + ';border-radius:9px;background:#FFFFFF">' +
           '<table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse"><tr>' +
-            '<td style="padding:12px 16px;color:' + PD_BRAND.navy2 + ';font-size:14px;line-height:1.4">' +
-              pdEsc_(o.lab) + '</td>' +
-            '<td width="26" align="right" style="padding:12px 14px 12px 0;color:' + PD_BRAND.navy3 +
-              ';font-size:15px">&rsaquo;</td>' +
+            '<td style="padding:14px 16px;color:' + PD_BRAND.navy2 + ';font-size:14.5px;font-weight:bold;' +
+              'line-height:1.4">' + pdEsc_(o.lab) + '</td>' +
+            '<td width="30" align="right" style="padding:14px 15px 14px 0;color:' + PD_BRAND.gold +
+              ';font-size:19px;font-weight:bold">&rsaquo;</td>' +
           '</tr></table></a></td></tr>';
     }
     out += '</table></div>';
@@ -937,12 +968,12 @@ function pdWrap_(inner, tag, internal) {
       'If you have already paid, please ignore this — payments can take a few days to reflect.';
   var badge = pdBadge_(tag && tag.kind, tag && tag.days);
   return '<div style="font-family:' + PD_SANS + ';font-size:14.5px;line-height:1.65;color:' +
-      PD_BRAND.ink + ';max-width:640px;background:' + PD_BRAND.paper + '">' +
+      PD_BRAND.ink + ';max-width:600px;background:' + PD_BRAND.paper + '">' +
 
     /* letterhead */
     '<table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;background:' +
         PD_BRAND.navy + '">' +
-      '<tr><td style="padding:24px 30px 22px">' +
+      '<tr><td style="padding:22px 22px 20px">' +
         '<table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse"><tr>' +
           '<td width="42" valign="top" style="width:42px">' + pdCrest_() + '</td>' +
           '<td valign="top" style="padding:1px 14px 0 15px;color:#FFFFFF">' +
@@ -958,7 +989,7 @@ function pdWrap_(inner, tag, internal) {
       '<tr><td style="height:2px;line-height:2px;font-size:0;background:' + PD_BRAND.gold2 + '">&nbsp;</td></tr>' +
     '</table>' +
 
-    '<div style="border:1px solid ' + PD_BRAND.line + ';border-top:none;padding:30px;background:' +
+    '<div style="border:1px solid ' + PD_BRAND.line + ';border-top:none;padding:24px 22px;background:' +
         PD_BRAND.paper + ';color:' + PD_BRAND.ink + '">' +
       inner +
       '<table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:28px 0 0">' +
@@ -1035,18 +1066,19 @@ function pdGlance_(p) {
   if (p.PaidToDate) cells.push({ k: 'PAID TO', v: pdEsc_(p.PaidToDate), c: PD_BRAND.ink });
   else if (Number(p.SumAssured) > 0) cells.push({ k: 'BENEFIT', v: pdMoney_(p.SumAssured), c: PD_BRAND.ink });
 
-  var w = Math.floor(100 / cells.length), out = '';
+  /* Inline-block cells rather than table cells, so on a phone the three
+     figures wrap to two rows instead of crushing into unreadable columns. */
+  var out = '';
   for (var i = 0; i < cells.length; i++) {
-    out += '<td width="' + w + '%" valign="top" style="padding:15px 18px 15px ' + (i ? '18px' : '0') +
-      ';border-left:' + (i ? '1px solid ' + PD_BRAND.line : 'none') + '">' +
+    out += '<div style="display:inline-block;vertical-align:top;width:32%;min-width:158px;' +
+      'padding:14px 12px 14px 0">' +
       '<div style="font-size:9.5px;letter-spacing:.13em;color:' + PD_BRAND.mute + ';font-weight:bold">' +
         cells[i].k + '</div>' +
       '<div style="font-family:' + PD_SERIF + ';font-size:22px;color:' + cells[i].c +
-        ';padding-top:5px;line-height:1.2">' + cells[i].v + '</div></td>';
+        ';padding-top:5px;line-height:1.2;white-space:nowrap">' + cells[i].v + '</div></div>';
   }
-  return '<table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:20px 0 6px;' +
-      'border-top:1px solid ' + PD_BRAND.line + ';border-bottom:1px solid ' + PD_BRAND.line + '">' +
-    '<tr>' + out + '</tr></table>' +
+  return '<div style="margin:18px 0 6px;border-top:1px solid ' + PD_BRAND.line +
+      ';border-bottom:1px solid ' + PD_BRAND.line + ';font-size:0">' + out + '</div>' +
     (p.Billing ? '<div style="font-size:12px;color:' + PD_BRAND.mute + ';margin:0 0 4px">Collected by ' +
       pdEsc_(p.Billing) + (p.IssueDate && pdIssueYear_(p) ? ' &middot; in force since ' + pdIssueYear_(p) : '') +
       '</div>' : '');
@@ -1210,6 +1242,16 @@ function pdFamily_(p, family) {
   return (family && family.length) ? family : [p];
 }
 
+/** Total monthly premium across everything still in force. */
+function pdTotalPremium_(family) {
+  var t = 0;
+  for (var i = 0; i < family.length; i++) {
+    if (Number(family[i].Status) === 1) continue;
+    t += Number(family[i].Premium) || 0;
+  }
+  return t;
+}
+
 /** Total cover the client holds with us, across everything still in force. */
 function pdTotalCover_(family) {
   var t = 0;
@@ -1246,35 +1288,44 @@ function pdPolicyTable_(p, family) {
     var st = Number(f.Status), desc = String(f.StatusDesc || '');
     var label = here ? 'This letter' : (st === 1 ? 'Lapsed' : st === 2 ? 'Behind' :
                  st === 3 ? 'In underwriting' : desc || 'In force');
-    var colour = here ? PD_BRAND.red : (st === 1 ? '#8A8578' : st === 2 ? PD_BRAND.gold : PD_BRAND.teal);
+    var colour = here ? PD_BRAND.red : (st === 1 ? '#8A8578' : st === 2 ? PD_BRAND.gold : PD_BRAND.green);
     var bg = here ? PD_BRAND.panel : '#FFFFFF';
     rows += '<tr>' +
-      '<td style="padding:9px 12px;border:1px solid ' + PD_BRAND.line + ';background:' + bg +
-        ';color:' + PD_BRAND.ink + ';font-weight:bold">' + pdEsc_(f.Policy) +
-        '<div style="font-size:11.5px;font-weight:normal;color:' + PD_BRAND.mute + '">' +
+      '<td style="padding:9px 10px;border:1px solid ' + PD_BRAND.line + ';background:' + bg +
+        ';color:' + PD_BRAND.ink + ';font-weight:bold;font-size:12.5px">' + pdEsc_(f.Policy) +
+        '<div style="font-size:11px;font-weight:normal;color:' + PD_BRAND.mute + '">' +
         pdEsc_(f.PlanCode || '') + '</div></td>' +
-      '<td style="padding:9px 12px;border:1px solid ' + PD_BRAND.line + ';background:' + bg +
-        ';color:' + PD_BRAND.ink + ';text-align:right;font-weight:bold">' +
+      '<td style="padding:9px 10px;border:1px solid ' + PD_BRAND.line + ';background:' + bg +
+        ';color:' + PD_BRAND.ink + ';text-align:right;white-space:nowrap">' +
+        (Number(f.Premium) > 0 ? pdMoney_(f.Premium) : '—') + '</td>' +
+      '<td style="padding:9px 10px;border:1px solid ' + PD_BRAND.line + ';background:' + bg +
+        ';color:' + PD_BRAND.ink + ';text-align:right;font-weight:bold;white-space:nowrap">' +
         (Number(f.SumAssured) > 0 ? pdMoney_(f.SumAssured) : '—') + '</td>' +
-      '<td style="padding:9px 12px;border:1px solid ' + PD_BRAND.line + ';background:' + bg +
-        ';color:' + colour + ';font-weight:bold;white-space:nowrap">' + pdEsc_(label) + '</td>' +
+      '<td style="padding:9px 10px;border:1px solid ' + PD_BRAND.line + ';background:' + bg +
+        ';color:' + colour + ';font-weight:bold;white-space:nowrap;font-size:12.5px">' + pdEsc_(label) + '</td>' +
       '</tr>';
   }
   var inForce = pdTotalCover_(family);
+  var premTotal = pdTotalPremium_(family);
   var total = (inForce > 0 && family.length > 1)
     ? '<tr>' +
-        '<td style="padding:10px 12px;border:1px solid ' + PD_BRAND.line + ';background:' + PD_BRAND.panel +
-          ';color:' + PD_BRAND.ink + ';font-weight:bold">Total cover in force</td>' +
-        '<td style="padding:10px 12px;border:1px solid ' + PD_BRAND.line + ';background:' + PD_BRAND.panel +
-          ';color:' + PD_BRAND.ink + ';text-align:right;font-weight:bold;font-size:15px">' + pdMoney_(inForce) + '</td>' +
-        '<td style="padding:10px 12px;border:1px solid ' + PD_BRAND.line + ';background:' + PD_BRAND.panel + '"></td>' +
+        '<td style="padding:10px 10px;border:1px solid ' + PD_BRAND.line + ';background:' + PD_BRAND.panel +
+          ';color:' + PD_BRAND.ink + ';font-weight:bold;font-size:12.5px">Total in force</td>' +
+        '<td style="padding:10px 10px;border:1px solid ' + PD_BRAND.line + ';background:' + PD_BRAND.panel +
+          ';color:' + PD_BRAND.ink + ';text-align:right;font-weight:bold;white-space:nowrap">' +
+          (premTotal > 0 ? pdMoney_(premTotal) : '') + '</td>' +
+        '<td style="padding:10px 10px;border:1px solid ' + PD_BRAND.line + ';background:' + PD_BRAND.panel +
+          ';color:' + PD_BRAND.ink + ';text-align:right;font-weight:bold;white-space:nowrap;font-size:15px">' +
+          pdMoney_(inForce) + '</td>' +
+        '<td style="padding:10px 10px;border:1px solid ' + PD_BRAND.line + ';background:' + PD_BRAND.panel + '"></td>' +
       '</tr>'
     : '';
   return '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:10px 0;font-size:13px">' +
     '<tr>' +
-      '<th style="padding:9px 12px;background:' + PD_BRAND.navy + ';border:1px solid ' + PD_BRAND.navy + ';color:#FFFFFF;text-align:left;font-weight:bold;font-size:11px;letter-spacing:.08em">Policy</th>' +
-      '<th style="padding:9px 12px;background:' + PD_BRAND.navy + ';border:1px solid ' + PD_BRAND.navy + ';color:#FFFFFF;text-align:right;font-weight:bold;font-size:11px;letter-spacing:.08em">Benefit</th>' +
-      '<th style="padding:9px 12px;background:' + PD_BRAND.navy + ';border:1px solid ' + PD_BRAND.navy + ';color:#FFFFFF;text-align:left;font-weight:bold;font-size:11px;letter-spacing:.08em">Standing</th>' +
+      '<th style="padding:9px 10px;background:' + PD_BRAND.navy + ';border:1px solid ' + PD_BRAND.navy + ';color:#FFFFFF;text-align:left;font-weight:bold;font-size:10.5px;letter-spacing:.07em">POLICY</th>' +
+      '<th style="padding:9px 10px;background:' + PD_BRAND.navy + ';border:1px solid ' + PD_BRAND.navy + ';color:#FFFFFF;text-align:right;font-weight:bold;font-size:10.5px;letter-spacing:.07em">PREMIUM</th>' +
+      '<th style="padding:9px 10px;background:' + PD_BRAND.navy + ';border:1px solid ' + PD_BRAND.navy + ';color:#FFFFFF;text-align:right;font-weight:bold;font-size:10.5px;letter-spacing:.07em">BENEFIT</th>' +
+      '<th style="padding:9px 10px;background:' + PD_BRAND.navy + ';border:1px solid ' + PD_BRAND.navy + ';color:#FFFFFF;text-align:left;font-weight:bold;font-size:10.5px;letter-spacing:.07em">STANDING</th>' +
     '</tr>' + rows + total + '</table>';
 }
 
@@ -1354,11 +1405,13 @@ function pdSignature_(p, opts) {
         '<td style="padding:0;vertical-align:top;color:' + PD_BRAND.ink + '">' +
           line(mgr, 'Manager &middot; accountable for this policy since day 60') + '</td>' +
       '</tr></table><br>'
-    : line(p.Agent || OUT.BRANCH_NAME,
-           'Financial Advisor' + (mgr ? ' &middot; reporting to ' + pdEsc_(mgr) : '')) + '<br>';
+    : line('Branch Support', pdEsc_(OUT.BRANCH_NAME)) +
+      (p.Agent ? '<br><span style="color:' + PD_BRAND.mute + ';font-size:12.5px">Your advisor: <b style="color:' +
+        PD_BRAND.ink + '">' + pdEsc_(p.Agent) + '</b>' +
+        (mgr ? ' &middot; reporting to ' + pdEsc_(mgr) : '') + '</span>' : '') + '<br>';
   return '<table cellpadding="0" cellspacing="0" style="width:100%;margin:30px 0 0;font-size:13px">' +
-    '<tr><td style="color:' + PD_BRAND.ink + '">Yours sincerely,</td></tr>' +
-    '<tr><td style="padding:22px 0 0">' + who + '</td></tr></table>';
+    '<tr><td style="color:' + PD_BRAND.ink + '">Warm regards,</td></tr>' +
+    '<tr><td style="padding:18px 0 0">' + who + '</td></tr></table>';
 }
 
 /** Internal mail is from the branch, not from somebody's advisor. */
@@ -1395,32 +1448,37 @@ var PD_TEMPLATES = {
       html: pdWrap_(
         pdRefBlock_(p, 'Premium Outstanding') +
         '<p style="margin:0 0 10px">' + pdSalutation_(p.Client) + ',</p>' +
-        '<p style="margin:0">The premium on this policy is <b>' + d + ' days</b> outstanding. Your cover is ' +
-        'still in force and we would like to keep it that way — one tap below is all it takes.</p>' +
+        '<p style="margin:0 0 10px">We are writing from branch support because the premium on this policy is ' +
+        '<b>' + d + ' days</b> outstanding — and because this happens to the best of us. A bank change, a busy ' +
+        'month, a stretch where money is tight: whatever sits behind it, <b>your cover is still in force</b> and ' +
+        'there is a way through that suits you.</p>' +
+        '<p style="margin:0">Tap one option below. It does the rest — no forms, no hold music, no explaining ' +
+        'yourself to anybody.</p>' +
 
         pdGlance_(p) +
 
-        pdSection_('Choose whichever suits you', pdQuestionBlock_(p, CLIENT_QUESTIONS, 'respond')) +
-
-        pdBillingNote_(p) +
+        pdSection_('How can we help?', pdQuestionBlock_(p, pdClientQuestions_(p, family), 'respond')) +
 
         (family.length > 1
-          ? pdSection_('Your cover with us', pdPolicyTable_(p, family) +
-              pdRelationshipNote_(p, family, !!pdBillingNote_(p)))
+          ? pdSection_('Everything you hold with us', pdPolicyTable_(p, family) +
+              '<p style="font-size:12.5px;color:' + PD_BRAND.mute + ';margin:6px 0 0">The highlighted row is ' +
+              'the policy this letter concerns. The others are unaffected' +
+              (pdRelationship_(p, family).payingOthers > 0
+                ? ' — and their premiums are arriving normally, which usually means the instruction on this ' +
+                  'one stopped, not the intention.'
+                : '.') + '</p>')
           : '') +
 
         pdSection_('What happens next',
-          '<p style="margin:0 0 8px">Cover ends <b>' + left + ' days</b> from today if this stays outstanding. ' +
+          '<p style="margin:0">Cover ends <b>' + left + ' days</b> from today if this stays outstanding' +
           (pdManagerOf_(p.Agent)
-            ? 'If we have not heard from you by <b>day 60</b>, <b>' + pdEsc_(pdManagerOf_(p.Agent)) +
-              '</b> — your advisor&rsquo;s manager — will call you personally.'
-            : 'If we have not heard from you by <b>day 60</b>, your advisor&rsquo;s manager will call you personally.') +
-          '</p>' +
-          '<p style="margin:0;font-size:13.5px;color:' + PD_BRAND.mute + '">This policy was underwritten on your ' +
-          'health as it was when you applied. If it ends and you reapply later, the same cover may cost ' +
-          'considerably more — that is the part that cannot be bought back.</p>') +
+            ? ', and if we have not heard from you by <b>day 60</b>, <b>' + pdEsc_(pdManagerOf_(p.Agent)) +
+              '</b> — the manager responsible for your advisor — will call you personally. '
+            : ', and if we have not heard from you by <b>day 60</b> a manager will call you personally. ') +
+          'We would rather hear from you first.</p>') +
 
-        '<p style="margin:22px 0 0">Prefer to talk? Call <b>' + pdEsc_(OUT.BRANCH_PHONE) + '</b>.</p>' +
+        '<p style="margin:22px 0 0">Prefer a voice? <b>' + pdEsc_(OUT.BRANCH_PHONE) + '</b> — ask for branch ' +
+        'support and quote ' + pdEsc_(p.Policy) + '.</p>' +
         pdSignature_(p),
         { kind: 's45', days: d })
     };
@@ -1464,7 +1522,7 @@ var PD_TEMPLATES = {
               ' been asked to call you personally. If you would rather not wait, one tap settles it now.')
           : '') +
 
-        pdSection_('Choose whichever suits you', pdQuestionBlock_(p, CLIENT_QUESTIONS, 'respond')) +
+        pdSection_('How can we help?', pdQuestionBlock_(p, pdClientQuestions_(p, state && state.family), 'respond')) +
 
         '<p style="margin:22px 0 0">Or call <b>' + pdEsc_(OUT.BRANCH_PHONE) + '</b>, quoting ' + pdEsc_(p.Policy) + '.</p>' +
         pdSignature_(p),
@@ -1502,7 +1560,7 @@ var PD_TEMPLATES = {
         pdGlance_(p) +
 
         pdSection_('How would you like us to handle this?',
-          pdQuestionBlock_(p, CLIENT_QUESTIONS, 'respond')) +
+          pdQuestionBlock_(p, pdClientQuestions_(p, state && state.family), 'respond')) +
 
         pdSection_('What day 90 means here', pdNote_(pdLapseMeaningFor_(p, state), PD_BRAND.red)) +
 
@@ -1532,7 +1590,7 @@ var PD_TEMPLATES = {
         pdGlance_(p) +
 
         pdSection_('Choose whichever suits you — I will handle it personally',
-          pdQuestionBlock_(p, CLIENT_QUESTIONS, 'respond')) +
+          pdQuestionBlock_(p, pdClientQuestions_(p, state && state.family), 'respond')) +
 
         pdSection_('What day 90 means here', pdNote_(pdLapseMeaningFor_(p, state))) +
 
