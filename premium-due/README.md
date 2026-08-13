@@ -12,6 +12,7 @@ file. Replaces the two JotForms and the "Premium Due Status" comment columns.
 | `staff-manual.html` | Staff manual — the day-to-day reference |
 | `process-brief.html` | Rollout brief for the team: the workflow, the actual client emails rendered, and what each role does differently |
 | `flow-map.html` | The whole lifecycle drawn out on one page — the two-phase manager handover, every loop and every exit. The picture to put in front of the team |
+| `launch-runbook.md` | Go-live checklist with the measured day-one numbers: pre-flight config, dress rehearsal, caps, first week, rollback |
 | `letter-preview.html` | The day-45 letter in all six colour schemes, with a picker |
 | `../apps-script/PremiumDue.gs` | Backend — reads the portfolio, stores the log |
 | `../apps-script/PremiumDueAuth.gs` | Sign-in, the roster tab, tokens and scope |
@@ -389,9 +390,10 @@ the roster wins), `pdGroupKey_` folds the spelling variants into one cluster
   exercise, not this remittance); recent member lapses are flagged while
   reinstatement is still simple.
 - **Recipients**: `OUT.GROUP_ADMIN[key]` (the scheme administrator), falling
-  back to the company's own email on file, then the servicing agent. Agents and
-  branch support are copied; the **branch manager joins from the second
-  notice**.
+  back to the **servicing agent** — never to whatever address sits on the
+  company's client record, which on this book can be an individual's personal
+  mailbox. Agents and branch support are copied; the **branch manager joins
+  from the second notice**.
 - The engine mirrors all of it: scheme policies are badged *Group scheme*,
   excluded from the manager clocks, the ribbon and the late counts, and get
   their own filter chip — while a missed remittance surfaces in the insights as

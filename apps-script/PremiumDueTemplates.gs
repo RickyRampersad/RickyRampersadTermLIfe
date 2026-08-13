@@ -56,7 +56,19 @@
 var OUT = {
   DRY_RUN: true,                 // <-- false only after you've read a dry run
   MAX_SENDS_PER_RUN: 60,
+  // Manager/agent accountability emails get their own live budget. On launch
+  // day the whole 60-89 backlog is due at once — without this, every manager
+  // handover in the book would fire in one morning, and a manager with a big
+  // unit would open forty emails before coffee. The most urgent fire first
+  // (the run is sorted); the rest follow on the next mornings. Dry runs are
+  // never capped, so the plan always shows the full picture.
+  MAX_INTERNAL_PER_RUN: 60,
   WIN_BACK_MAX_DAYS: 180,        // don't chase lapses older than this
+  // An application stuck in underwriting four months is a new conversation
+  // with the client, not a "one more thing" chase. The live book carries
+  // pending cases 200+ days old; without this cap launch day would open by
+  // chasing all of them.
+  PEND_MAX_DAYS: 120,
   // Win-back waits for the closing sequence to finish. The last closing letter
   // goes at day 100 and already offers reinstatement; a win-back two days later
   // is the branch asking the same question twice in one week.
@@ -130,7 +142,8 @@ var OUT = {
 
   // scheme key (as pdGroupKey_ prints it) -> the administrator who receives
   // the remittance statement. Without an entry the statement goes to the
-  // company's own email on file, then to the servicing agent.
+  // servicing agent instead — never to whatever address sits on the company's
+  // client record, which on this book can be an individual's personal mailbox.
   GROUP_ADMIN: {
     // 'SERVUS LIMITED': 'payroll@servus.example',   // the real address lives only in the deployed copy
   },
@@ -2333,6 +2346,17 @@ function pdManagerCc_(p) {
 
 /* ============================ the daily run ============================ */
 
+/** Launch-day ordering: who goes first when more is due than the caps allow.
+    Live cover nearest the 90-day cliff, then the freshest lapses, then the
+    newest pending applications. Everything else can wait its turn. */
+function pdUrgency_(p) {
+  var d = Number(p.DaysArrears) || 0, st = Number(p.Status) || 0;
+  if (st === 2) return 10000 + d;       // in-force arrears: day 89 beats day 45
+  if (st === 1) return 5000 - d;        // lapsed: freshest first — the window is closing
+  if (st === 3) return 1000 - d;        // pending: newest application first
+  return 0;
+}
+
 /** Which template, if any, is due for this policy today. */
 function pdStageDue_(p, state) {
   if (pdIsGroup_(p)) return '';                  // schemes get the remittance statement, never these
@@ -2340,7 +2364,9 @@ function pdStageDue_(p, state) {
   var desc = String(p.StatusDesc || '').toLowerCase();
   var st = Number(p.Status) || 0;
 
-  if (st === 3 || desc.indexOf('underwriting') > -1) return d >= 21 ? 'pend' : '';
+  if (st === 3 || desc.indexOf('underwriting') > -1) {
+    return (d >= 21 && d <= OUT.PEND_MAX_DAYS) ? 'pend' : '';
+  }
 
   /* The closing sequence outruns the status change, and owns the policy while
      it runs. A policy that reaches day 90 flips to Lapsed, and win-back would
@@ -2788,10 +2814,12 @@ function pdGroupChase_(key, members, states) {
 
   var letter = pdGroupStatement_(key, members, { round: round, waiting: waiting, agents: agentNames.join(', ') });
 
-  /* administrator first, the company's own address second, the agent last */
-  var to = pdValidEmail_(OUT.GROUP_ADMIN[key]);
-  if (!to) for (i = 0; i < members.length; i++) { to = pdValidEmail_(members[i].Email); if (to) break; }
-  if (!to) to = pdStaffEmail_(agentNames[0]);
+  /* The configured administrator, or the servicing agent — never whatever
+     address happens to sit on the company's client record. On the live book
+     that field can hold some individual's personal mailbox, and a scheme's
+     full member list must not land there. Until GROUP_ADMIN is filled in the
+     agent receives the statement and owns getting the right payroll contact. */
+  var to = pdValidEmail_(OUT.GROUP_ADMIN[key]) || pdStaffEmail_(agentNames[0]);
 
   var cc = [], seen = {}, j;
   for (j = 0; j < agentNames.length && j < 3; j++) cc.push(pdStaffEmail_(agentNames[j]));
@@ -2859,16 +2887,30 @@ function dailyPremiumDueRun() {
     var bp = payload.policies[b];
     (byClient[String(bp.ClientNo)] = byClient[String(bp.ClientNo)] || []).push(bp);
   }
-  var count = 0, skippedNoEmail = 0, planned = 0, internal = 0;
+  var count = 0, skippedNoEmail = 0, planned = 0, internal = 0, capHeld = 0;
 
   var groups = {};                               // scheme key -> every row in the cluster
 
+  /* Most urgent first. On an ordinary day this changes nothing — everything
+     due fits under the cap. On launch day, or after an outage, the whole
+     backlog is due at once and the caps below cut the TAIL: without this sort
+     they would cut whatever happened to sit late in the portfolio, including
+     policies at day 89 with two days of cover left.
+
+     Urgency is not raw days. Live cover closest to the cliff outranks
+     everything; then the freshest lapses (the reinstatement window is
+     closing); then the newest stuck applications. Raw days would put a
+     nine-month-old pending application ahead of a final notice. */
+  payload.policies.sort(function (a, b) { return pdUrgency_(b) - pdUrgency_(a); });
+
   for (var i = 0; i < payload.policies.length; i++) {
-    if (count >= OUT.MAX_SENDS_PER_RUN) break;
     var p = payload.policies[i];
 
     /* Company-owned policies leave the individual flow here, whole. They are
-       collected by scheme and handled once per company below. */
+       collected by scheme and handled once per company below. The client-send
+       cap must never stop this loop — a capped day still has to see every
+       policy, or schemes and manager chases late in the book silently vanish
+       from the run. */
     if (pdIsGroup_(p)) {
       var gk = pdGroupKey_(p);
       (groups[gk] = groups[gk] || []).push(p);
@@ -2877,7 +2919,12 @@ function dailyPremiumDueRun() {
 
     var s = states[String(p.Policy)] || pdEmptyState_();
 
-    internal += pdInternalChase_(p, s);          // agent / manager accountability
+    /* Agent / manager accountability, under its own live-send budget so a
+       launch-day backlog cannot dump hundreds of manager emails in one
+       morning. Dry runs are never capped — the plan must show everything. */
+    if (OUT.DRY_RUN || internal < OUT.MAX_INTERNAL_PER_RUN) {
+      internal += pdInternalChase_(p, s);
+    }
 
     var stageKey = pdStageDue_(p, s);
     if (!stageKey) continue;
@@ -2907,6 +2954,11 @@ function dailyPremiumDueRun() {
     }
     if (OUT.DRY_RUN) { pdLogSend_(p, stageKey, tpl, false, round); continue; }
 
+    /* The live cap holds the least-urgent tail (the sort above guarantees
+       that). Nothing is logged for a held letter, so it is still due — and
+       still first in line — on tomorrow's run. */
+    if (count >= OUT.MAX_SENDS_PER_RUN) { capHeld++; continue; }
+
     try {
       var msg = { to: to, name: OUT.FROM_NAME, subject: tpl.subject, htmlBody: tpl.html };
       if (tpl.cc && tpl.cc.length) msg.cc = tpl.cc.join(',');   // agent + manager + BM
@@ -2927,8 +2979,8 @@ function dailyPremiumDueRun() {
     groupsSent += pdGroupChase_(gk2, groups[gk2], states);
   }
 
-  Logger.log('Premium due run — %s. planned=%s sent=%s no-email=%s internal-chases=%s group-schemes=%s group-statements=%s',
-    OUT.DRY_RUN ? 'DRY RUN, nothing emailed' : 'LIVE', planned, count, skippedNoEmail, internal, groupCount, groupsSent);
+  Logger.log('Premium due run — %s. planned=%s sent=%s held-by-cap=%s no-email=%s internal-chases=%s group-schemes=%s group-statements=%s',
+    OUT.DRY_RUN ? 'DRY RUN, nothing emailed' : 'LIVE', planned, count, capHeld, skippedNoEmail, internal, groupCount, groupsSent);
 }
 
 function pdInstallTrigger() {
