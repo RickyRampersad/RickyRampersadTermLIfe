@@ -84,6 +84,13 @@ var SVC = {
      until somebody marks the row Handled. Calendar days.               */
   CLIENT_UPDATE_DAYS: 2,
 
+  /* The lifetime engine. Once a file is settled, the client is never dropped:
+     a "what has changed?" check-up this many days after the last engagement,
+     and a full service review every year in their birthday month. Both are
+     one click back into the guided review.                              */
+  CHECKUP_DAYS: 182,
+  DHAA_URL: 'https://donthaveanagent.com/start',
+
   FROM_NAME:    'Ricky Rampersad — Guardian Life',
   AGENT_NAME:   'Ricky Rampersad',
   AGENT_NO:     '',                      // Guardian agent number, if you want it on the letter
@@ -440,6 +447,7 @@ function teamBankSheet_() {
 function saveRow_(isGroup, ref, priority, now, body, accessCode) {
   var sh = sheetFor_(isGroup);
   var c = body.core || {};
+  var av0 = answersById_(body);
 
   var vals = {
     'Reference': ref,
@@ -494,6 +502,15 @@ function saveRow_(isGroup, ref, priority, now, body, accessCode) {
     /* Stamped by the watchdog each time the client is sent a "still working
        on it" note, so the every-2-days promise is measured, not guessed. */
     'Last client update': '',
+
+    /* The lifetime engine's memory. Birthday month comes off the date of
+       birth the client just gave (their correction wins); the score gaps are
+       kept so the six-month check-up can say exactly what we flagged; the
+       stamps stop the same note going twice. */
+    'Birthday month': monthOf_(av0.correctDob || av0.dob),
+    'Score gaps': (c.scoreGaps || []).join(', '),
+    'Last check-up': '',
+    'Last annual review': '',
   };
 
   (body.fields || []).forEach(function (f) {
@@ -1206,10 +1223,10 @@ var PAPER_Q = [
 /* The facsimile stylesheet — Times, dot leaders, ruled boxes, the lot. */
 function paperCss_() {
   return '@page{size:8.5in 14in;margin:0}' +
-    'body{font-family:"Times New Roman",Times,serif;font-size:11pt;color:#000;margin:0;' +
-      'padding:.4in .55in .2in;line-height:1.18}' +
-    '.ttl{text-align:center;font-size:19pt;letter-spacing:.6px;margin:0}' +
-    '.ttl2{text-align:center;font-size:17pt;letter-spacing:.6px;margin:2px 0 0}' +
+    'body{font-family:"Times New Roman",Times,serif;font-size:10.3pt;color:#000;margin:0;' +
+      'padding:.28in .55in .12in;line-height:1.12}' +
+    '.ttl{text-align:center;font-size:17pt;letter-spacing:.6px;margin:0}' +
+    '.ttl2{text-align:center;font-size:15pt;letter-spacing:.6px;margin:2px 0 0}' +
     'table{border-collapse:collapse;width:100%}' +
     'td{border:none;padding:0;vertical-align:bottom}' +
     '.lbl{white-space:nowrap;padding-right:5px}' +
@@ -1217,8 +1234,8 @@ function paperCss_() {
     '.typed{font-family:"Courier New",monospace;font-size:9.6pt;font-weight:bold;padding:0 3px;white-space:nowrap}' +
     '.typed.fit{white-space:nowrap;font-size:6.2pt;font-weight:bold}' +
     '.cap{font-size:8pt}' +
-    '.qs td{padding:3.8px 0}' +
-    '.qs tr.gap td{padding-top:9px}' +
+    '.qs td{padding:2.5px 0}' +
+    '.qs tr.gap td{padding-top:5.5px}' +
     '.qs td.qt{white-space:nowrap;padding-right:5px}' +
     '.qs td.bx{width:.92in;text-align:center;padding-left:.1in}' +
     '.yn{font-size:14pt;text-align:center;padding-bottom:3px}' +
@@ -1370,7 +1387,7 @@ function paperFacsimilePdf_(ref, priority, now, body) {
       '<td class="bx"><span class="box">' + no + '</span></td></tr>';
   });
 
-  h += '<table class="qs" style="margin-top:0.165in">' + rows + '</table>' +
+  h += '<table class="qs" style="margin-top:0.11in">' + rows + '</table>' +
        '<div class="cut"></div>';
 
   /* change of servicing agent — the bottom half of the same sheet -------- */
@@ -1381,26 +1398,26 @@ function paperFacsimilePdf_(ref, priority, now, body) {
   var coaAgent = String(body.assignedAgent || SVC.AGENT_NAME);
 
   h +=
-    '<p style="margin-top:0.325in">The Manager<br>Customer Service Department<br>' +
+    '<p style="margin-top:0.20in">The Manager<br>Customer Service Department<br>' +
     '<b><u>GUARDIAN LIFE OF THE CARIBBEAN LIMITED</u></b></p>' +
 
-    '<p style="margin-top:0.225in">Dear Sir/Madam</p>' +
+    '<p style="margin-top:0.14in">Dear Sir/Madam</p>' +
 
-    '<table style="margin-top:0.185in"><tr>' +
+    '<table style="margin-top:0.12in"><tr>' +
       '<td class="lbl">After completing your Service Questionnaire and reviewing my policy(ies) no(s)</td>' +
       L(w(a.coaPolicies || a.policyNos || c.policyNos)) + '</tr></table>' +
 
-    '<table style="margin-top:0.155in"><tr><td class="lbl">withMr./Mrs./Miss</td>' +
+    '<table style="margin-top:0.10in"><tr><td class="lbl">withMr./Mrs./Miss</td>' +
       L(w(coaAgent)) + '</tr></table>' +
 
-    '<p style="margin-top:0.155in">I am requesting that he/she be appointed my Servicing Agent ' +
+    '<p style="margin-top:0.10in">I am requesting that he/she be appointed my Servicing Agent ' +
     'with immediate effect.</p>' +
 
-    '<table style="margin-top:0.165in"><tr>' +
+    '<table style="margin-top:0.11in"><tr>' +
       '<td class="lbl">NAME OF POLICYOWNER IN BLOCK LETTERS</td>' +
       L(w(String(a.coaOwnerName || c.clientName || '').toUpperCase())) + '</tr></table>' +
 
-    '<table style="margin-top:0.185in"><tr>' +
+    '<table style="margin-top:0.12in"><tr>' +
       '<td style="width:57%"><table><tr><td class="lbl">SIGNATURE OF POLICYOWNER</td>' +
         (wants && body.signature
           ? '<td class="ldr"><img class="sigimg" src="' + body.signature + '"></td>'
@@ -1409,7 +1426,7 @@ function paperFacsimilePdf_(ref, priority, now, body) {
       '<td style="vertical-align:top">' + dated(wants) + '</td>' +
     '</tr></table>' +
 
-    '<table style="margin-top:0.215in"><tr>' +
+    '<table style="margin-top:0.14in"><tr>' +
       '<td style="width:52%"><table><tr><td class="lbl">ADDRESS (HOME)</td>' +
         L(a.coaHomeAddress || a.newAddress, '', true) + '</tr></table>' +
         '<div class="cap" style="padding-left:.14in">(and mailing)</div></td>' +
@@ -1417,23 +1434,23 @@ function paperFacsimilePdf_(ref, priority, now, body) {
       '<td><table><tr><td class="lbl">(WORK)</td>' + L(a.coaWorkAddress, '', true) + '</tr></table></td>' +
     '</tr></table>' +
 
-    '<table style="margin-top:0.125in"><tr>' +
+    '<table style="margin-top:0.08in"><tr>' +
       '<td style="width:52%"><div class="dotline">&nbsp;</div></td>' +
       '<td style="width:3%"></td>' +
       '<td><div class="dotline">&nbsp;</div></td>' +
     '</tr></table>' +
 
-    '<table style="margin-top:0.245in"><tr>' +
+    '<table style="margin-top:0.15in"><tr>' +
       '<td style="width:52%"><table><tr><td class="lbl">TELEPHONE (HOME)</td>' +
         L(a.coaHomePhone || c.phone) + '</tr></table></td>' +
       '<td style="width:3%"></td>' +
       '<td><table><tr><td class="lbl">(WORK)</td>' + L(a.coaWorkPhone) + '</tr></table></td>' +
     '</tr></table>' +
 
-    '<table style="margin-top:0.245in"><tr><td class="lbl">AGENT\'S COMMENTS</td>' +
+    '<table style="margin-top:0.15in"><tr><td class="lbl">AGENT\'S COMMENTS</td>' +
       L(a.agentComments, '', true) + '</tr></table>' +
 
-    '<table style="margin-top:0.245in"><tr>' +
+    '<table style="margin-top:0.15in"><tr>' +
       '<td style="width:55%"><table><tr><td class="lbl">SERVICING AGENT\'S NAME</td>' +
         L(w(coaAgent.toUpperCase())) + '</tr></table>' +
         '<div class="cap" style="padding-left:.14in">(in block letters)</div></td>' +
@@ -1849,6 +1866,7 @@ function answersById_(body) {
 
 function dailyServiceFollowUp() {
   clientPatiencePass_();
+  lifecyclePass_();
   [SVC.IND_SHEET, SVC.GRP_SHEET].forEach(function (name) {
     var sh = ss_().getSheetByName(name);
     if (!sh || sh.getLastRow() < 2) return;
@@ -2022,6 +2040,232 @@ function clientPatiencePass_() {
     });
 
     if (sent) log_('watchdog', 'patience-pass', sent + ' client update' + (sent > 1 ? 's' : '') + ' in ' + name);
+  });
+}
+
+/* ============================ the lifetime engine ============================
+   A settled file is not a finished client. Two automatic touches keep every
+   client on the book warm for life, and both are one click back into the
+   guided review — which lands as a fresh submission, re-scored and re-flagged,
+   putting the next conversation in front of the team:
+
+     · SIX-MONTH CHECK-UP — "what has changed?" — sent CHECKUP_DAYS after the
+       last engagement, quoting the client's own Protection Score and the gaps
+       we flagged, so the touch has a reason and the agent has an opening.
+     · BIRTHDAY-MONTH ANNUAL REVIEW — every year, in the client's birthday
+       month, the full service review. Ongoing for as long as they hold a
+       policy. The month comes off the date of birth they gave us.
+
+   Open rows are skipped (the every-2-days promise is already writing to
+   them); the stamps make each touch fire once. Runs inside the daily
+   trigger with the watchdog and the patience pass.                        */
+
+/** "2026-03-14" or "14 March 2026" → "March". Blank in, blank out.
+ *  Both forms occur: validate_ pretty-prints dates for the letters before
+ *  anything is saved, so the sheet holds the written-out form. */
+function monthOf_(s) {
+  s = String(s || '').trim();
+  var names = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+               'August', 'September', 'October', 'November', 'December'];
+  var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+  if (m) return names[Number(m[2]) - 1] || '';
+  for (var i = 0; i < names.length; i++) if (s.indexOf(names[i]) > -1) return names[i];
+  return '';
+}
+
+/** Which front door this client knows — the check-up button sends them back
+ *  through the same one, prefilled where the page supports it. */
+function reviewLink_(src, name, policy) {
+  if (/donthaveanagent/i.test(String(src || ''))) {
+    var q = [];
+    if (name) q.push('name=' + encodeURIComponent(name));
+    if (policy) q.push('policy=' + encodeURIComponent(policy));
+    return SVC.DHAA_URL + (q.length ? (SVC.DHAA_URL.indexOf('?') > -1 ? '&' : '?') + q.join('&') : '');
+  }
+  return SVC.FORM_URL;
+}
+
+/** A button an email client can't break — table, solid colour, one link. */
+function cta_(label, url, dhaa) {
+  return '<table cellpadding="0" cellspacing="0" style="margin:18px 0 6px"><tr>' +
+    '<td style="background:' + (dhaa ? '#5E141F' : SB.navy) + ';border-radius:8px">' +
+    '<a href="' + url + '" style="display:inline-block;padding:13px 26px;color:#ffffff;' +
+    'font-weight:bold;text-decoration:none;font-size:14px">' + esc_(label) + ' →</a>' +
+    '</td></tr></table>';
+}
+
+function lifecyclePass_() {
+  var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
+  var now = new Date();
+  var thisMonth = Utilities.formatDate(now, tz, 'MMMM');
+  var thisYear = now.getFullYear();
+
+  [SVC.IND_SHEET, SVC.GRP_SHEET].forEach(function (name) {
+    var sh = ss_().getSheetByName(name);
+    if (!sh || sh.getLastRow() < 2) return;
+
+    var headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+    var need = function (h) {
+      var i = headers.indexOf(h);
+      if (i < 0) {
+        sh.getRange(1, sh.getLastColumn() + 1).setValue(h).setFontWeight('bold').setBackground(SB.light);
+        headers.push(h);
+        i = headers.length - 1;
+      }
+      return i;
+    };
+    var iRef = headers.indexOf('Reference'), iTs = headers.indexOf('Timestamp');
+    var iSt = headers.indexOf('Status'), iCl = headers.indexOf('Client');
+    var iEm = headers.indexOf('Email'), iSrc = headers.indexOf('Source');
+    var iSc = headers.indexOf('Score'), iPol = headers.indexOf('Policy #');
+    var iCons = headers.indexOf('Consent to service');
+    if (iRef < 0 || iSt < 0 || iEm < 0) return;
+    var iGaps = need('Score gaps'), iBm = need('Birthday month');
+    var iCk = need('Last check-up'), iAn = need('Last annual review');
+
+    var isGroup = name === SVC.GRP_SHEET;
+    var rows = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
+
+    rows.forEach(function (r, idx) {
+      var status = String(r[iSt] || '').toLowerCase();
+      if (status === 'open') return;                       // the 2-day promise has this one
+      var email = String(r[iEm] || '').trim();
+      if (!email) return;
+      if (iCons > -1 && String(r[iCons] || 'Yes') === 'No') return;
+
+      var filed = new Date(r[iTs]);
+      if (isNaN(filed.getTime())) return;
+
+      var o = {
+        ref: String(r[iRef] || ''), email: email,
+        first: String(r[iCl] || '').trim().split(/\s+/)[0] || 'there',
+        src: iSrc > -1 ? r[iSrc] : '',
+        score: iSc > -1 ? String(r[iSc] || '') : '',
+        gaps: String(r[iGaps] || ''),
+        policy: iPol > -1 ? String(r[iPol] || '') : '',
+        clientName: String(r[iCl] || ''),
+        isGroup: isGroup,
+        lastDate: '',
+      };
+
+      /* the annual review first — it supersedes a check-up due the same day */
+      var lastAnnual = r[iAn] ? new Date(r[iAn]) : null;
+      if (String(r[iBm] || '') === thisMonth &&
+          daysSince_(filed) > 60 &&
+          (!lastAnnual || isNaN(lastAnnual.getTime()) || lastAnnual.getFullYear() < thisYear)) {
+        try {
+          annualReviewEmail_(o);
+          sh.getRange(idx + 2, iAn + 1).setValue(now);
+          log_(o.ref, 'annual-review-invited', 'birthday-month review to ' + email);
+        } catch (err) { log_(o.ref, 'annual-review-failed', String(err)); }
+        return;
+      }
+
+      /* the six-month check-up, measured from the last real touch */
+      var last = filed;
+      [r[iCk], r[iAn]].forEach(function (v) {
+        var d = v ? new Date(v) : null;
+        if (d && !isNaN(d.getTime()) && d > last) last = d;
+      });
+      if (daysSince_(last) >= SVC.CHECKUP_DAYS) {
+        var tz2 = Session.getScriptTimeZone() || 'America/Port_of_Spain';
+        o.lastDate = Utilities.formatDate(last, tz2, 'd MMMM yyyy');
+        try {
+          checkupEmail_(o);
+          sh.getRange(idx + 2, iCk + 1).setValue(now);
+          log_(o.ref, 'checkup-sent', 'six-month check-up to ' + email);
+        } catch (err) { log_(o.ref, 'checkup-failed', String(err)); }
+      }
+    });
+  });
+}
+
+/** Six months on: touch base from the last engagement, quote their own score,
+ *  ask what has changed — one click to answer, one line to say all good. */
+function checkupEmail_(o) {
+  var id = identity_({ source: o.src });
+  var refInk = id.dhaa ? '#5E141F' : SB.navy;
+  var link = reviewLink_(o.src, o.clientName, o.policy);
+
+  var scoreBlock = '';
+  if (o.score !== '') {
+    scoreBlock = box_('tip',
+      '<b style="color:#a05e03">Where you stood at our last engagement' +
+      (o.lastDate ? ' (' + esc_(o.lastDate) + ')' : '') + ':</b><br>' +
+      (o.isGroup ? 'Plan Health' : 'Protection') + ' Score <b>' + esc_(o.score) + ' out of 100</b>' +
+      (o.gaps ? ' · flagged: <b>' + esc_(o.gaps) + '</b>' : '') + '.<br>' +
+      '<span style="font-size:12px">Six months is exactly how long it takes for one of these to become urgent quietly.</span>');
+  }
+
+  var changed = o.isGroup
+    ? 'new hires or leavers · a change in ownership or management · new premises · a billing query · ' +
+      'benefits your competitors now offer that you don’t'
+    : 'married or divorced · a child or grandchild · a new home or mortgage · a new job or income change · ' +
+      'a business started · a health change in the family · retirement coming into view';
+
+  var html = wrap_(
+    '<p>Dear ' + esc_(o.first) + ',</p>' +
+    '<p><b>It has been six months since our last engagement' +
+    (o.lastDate ? ' on ' + esc_(o.lastDate) : '') + ' — time for your check-up.</b> ' +
+    'Most of what goes wrong on a ' + (o.isGroup ? 'plan' : 'policy') + ' goes wrong quietly, ' +
+    'because nobody asked. So we ask, every six months, on schedule.</p>' +
+    scoreBlock +
+    '<p style="margin-top:14px"><b>Has any of this changed since we last spoke?</b><br>' +
+    '<span style="font-size:13.4px">' + changed + '.</span></p>' +
+    cta_('Run my 6-minute check-up', link, id.dhaa) +
+    '<p style="font-size:12.5px;color:#5a6b80">Click and answer — your answers land with our support team as a fresh review, ' +
+    'scored and compared with your last one, and anything that needs doing comes back to you prepared.</p>' +
+    '<p><b>Nothing changed?</b> Reply <i>“all good”</i> — one line does it, we file that you checked, ' +
+    'and your next touch is your annual review.</p>' +
+    '<p>Your reference is <b style="color:' + refInk + '">' + esc_(o.ref) + '</b>.</p>' +
+    sig_(),
+    'Six-month check-up', id);
+
+  MailApp.sendEmail({
+    to: o.email, name: SVC.FROM_NAME, replyTo: SVC.AGENT_EMAIL,
+    subject: 'What has changed? Your six-month check-up (' + o.ref + ')',
+    htmlBody: html,
+  });
+}
+
+/** The birthday-month annual service review — every year, ongoing. The client
+ *  clicks and answers; the answers arrive as a fresh Service Questionnaire. */
+function annualReviewEmail_(o) {
+  var id = identity_({ source: o.src });
+  var refInk = id.dhaa ? '#5E141F' : SB.navy;
+  var link = reviewLink_(o.src, o.clientName, o.policy);
+
+  var covers = o.isGroup
+    ? 'your member listing, exactly who is covered today · billing, checked line by line · ' +
+      'benefits measured against what comparable companies provide · anything promised and not delivered · ' +
+      'your renewal, prepared before it arrives'
+    : 'your beneficiary designations — the single most expensive thing to get wrong · ' +
+      'name, address and contact details on record · date of birth, because premiums are calculated on it · ' +
+      'how you pay, and whether it still suits · your cover measured against your life today — marriage, ' +
+      'children, home, income · anything promised and never resolved · your questions, answered in writing';
+
+  var html = wrap_(
+    '<p>Dear ' + esc_(o.first) + ',</p>' +
+    '<p><b>Happy birthday month — and as we do every year in it, your ' +
+    (o.isGroup ? 'plan’s annual service review' : 'annual service review') + ' is ready.</b> ' +
+    'A car gets serviced yearly. The ' + (o.isGroup ? 'plan that covers your people' : 'policy that protects your family') +
+    ' deserves the same discipline — so we put yours on your birthday month, where neither of us forgets it.</p>' +
+    '<p style="margin-top:12px"><b>What the review covers:</b><br>' +
+    '<span style="font-size:13.4px">' + covers + '.</span></p>' +
+    cta_('Start my annual review', link, id.dhaa) +
+    '<p style="font-size:12.5px;color:#5a6b80">You just click and answer — about six minutes, from your phone. ' +
+    'Your answers land as the official service questionnaire, one legal document, and anything that needs your ' +
+    'signature comes back populated for your digital signature.</p>' +
+    '<p>This is ongoing: every year, this month, we will be here. That is what having ' +
+    (id.dhaa ? 'a team' : 'an agent') + ' is supposed to mean.</p>' +
+    '<p>Your reference is <b style="color:' + refInk + '">' + esc_(o.ref) + '</b>.</p>' +
+    sig_(),
+    'Annual service review', id);
+
+  MailApp.sendEmail({
+    to: o.email, name: SVC.FROM_NAME, replyTo: SVC.AGENT_EMAIL,
+    subject: 'Your birthday month — your annual service review is ready (' + o.ref + ')',
+    htmlBody: html,
   });
 }
 
