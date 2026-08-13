@@ -1,0 +1,11 @@
+# Client data never belongs in this repository.
+#
+# The site is served by GitHub Pages from the repository root, and the repo
+# is public — anything committed here is published twice over: once on the
+# website and once through GitHub itself. Registers built from the Salesforce
+# export (data/build-vehicle-register.py) are for importing into the PRIVATE
+# Claims TT Google Sheet only.
+data/*.csv
+data/*.json
+
+node_modules/

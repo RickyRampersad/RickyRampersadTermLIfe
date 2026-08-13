@@ -39,8 +39,11 @@ var CONFIG = {
   WEBAPP_URL: 'https://script.google.com/macros/s/AKfycbwYQlLt1txn4pCWEq3xO_FmmPUfRAUMzey-vzbUe-qDr9tX27BpM0ZbkP5G0WuYQuZJ8g/exec',
 
   // Staff access key — the staff dashboard link is WEBAPP_URL?staff=THIS_KEY.
-  // Change it to something long and private before going live.
-  STAFF_KEY: 'RRB-stf-x92Kq4mVp7-2026',
+  // Set it ONLY in your Apps Script copy, never in this repository: this file
+  // is served on the public website, so any value committed here is public.
+  // The key that used to sit here was published and must be treated as burned —
+  // set a fresh long private value in the Apps Script editor.
+  STAFF_KEY: 'CHANGE-ME-in-Apps-Script-only',
 
   RESPONSES_SHEET: 'Renewal Responses',
   STAFF_SHEET: 'Staff',
