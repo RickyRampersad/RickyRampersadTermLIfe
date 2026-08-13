@@ -10,12 +10,16 @@ what lets a claimant type a number plate and have the form fill itself in.
 
     python3 data/build-vehicle-register.py
 
-Writes data/vehicle-register.csv (import into the PRIVATE Claims sheet) and
-prints a coverage report plus a quarantine list of registrations that are not
-registrations.
+The input (risk-details.csv, the Salesforce export) is NOT in this repository
+— it holds client data, and this repo is public and served as a website by
+GitHub Pages. Place your local copy of the export at data/risk-details.csv
+(that path is gitignored) and run the script; it writes
+data/vehicle-register.csv (also gitignored) plus a quarantine list, and
+prints a coverage report.
 
-The output holds client names, emails and mobiles. It belongs in the private
-Claims spreadsheet, never in a folder the website serves.
+The output holds client names, emails and mobiles. Import it into the
+Vehicle Register tab of the PRIVATE Claims TT spreadsheet, then delete the
+local files. Never commit either file.
 """
 
 import csv
@@ -84,7 +88,12 @@ def sort_key(row):
 
 def main():
     if not os.path.exists(SOURCE):
-        sys.exit(f"Cannot find {SOURCE}")
+        sys.exit(
+            f"Cannot find {SOURCE}\n"
+            "The Salesforce export is not kept in this repository (it holds client\n"
+            "data and this repo is public). Put your local copy of the export at\n"
+            "that path — it is gitignored — and run again."
+        )
 
     with open(SOURCE, newline="", encoding="utf-8-sig") as fh:
         rows = list(csv.DictReader(fh))

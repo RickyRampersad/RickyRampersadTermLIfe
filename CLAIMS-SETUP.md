@@ -23,58 +23,75 @@ Everything runs on free tiers: Netlify (hosting) + Google Apps Script
 
 ---
 
-## ⚠️ Read this first — the client data currently on the public site
+## ⚠️ Read this first — how this site is actually published
 
-`data/risk-details.csv` and `data/fleet-register.csv` hold real client names,
-emails, mobiles, chassis numbers, policy numbers and premiums. The Netlify
-publish directory is the repository root, so **until the `netlify.toml` in this
-commit deploys, both files are downloadable by anyone** who guesses the path:
+**The live site is GitHub Pages, serving this public repository's root.**
+(`server: GitHub.com` on rickyrampersadbranch.com — verified.) That has two
+consequences that shape everything below:
 
-```
-https://rickyrampersadbranch.com/data/risk-details.csv
-```
+1. **Anything committed here is public twice over** — once on the website and
+   once through GitHub itself (`raw.githubusercontent.com`). There is no
+   server-side blocking on GitHub Pages: `netlify.toml` does nothing unless
+   hosting moves to Netlify. The only protection is never committing client
+   data, which is why `data/*.csv` is now gitignored.
 
-The `netlify.toml` here returns 404 for `/data/*` and `/apps-script/*`, which
-closes it on the next deploy. Two things still worth doing:
+2. **Git history is public too.** The client data files that used to live in
+   `data/` were removed from the current tree, but the commits that carried
+   them (`b3b8771`, `8f51b58`) remain reachable — a raw URL at those commit
+   ids still serves the files today. Removing them for real means a history
+   rewrite (`git filter-repo` + force push, then a GitHub support request to
+   drop cached views), **or** making the repository private — which is
+   instant, but GitHub Pages on a free personal plan requires a public repo,
+   so the site would go down until hosting moves (Netlify imports private
+   repos free, and this repo already carries a working `netlify.toml`).
+   One of the two should happen; which one is your call.
 
-1. **Deploy this branch** so the rule takes effect.
-2. Assume the files may already have been fetched. If you want them out of the
-   repository entirely, they have to be purged from git history — a rewrite,
-   not a delete commit. Say the word and it can be done.
+3. **Rotate the staff key.** `apps-script/Code.gs` is served on the public
+   site and previously contained the live `STAFF_KEY` for the renewals staff
+   dashboard. Treat that key as burned: open the Apps Script copy of Code.gs
+   and set a fresh long private value. The repo copy now holds a placeholder.
 
-The files stay in the repo because the register is rebuilt from them; they
-simply must never be *served*. Nothing under `data/` is ever read by the
-website at runtime — the lookup goes to Apps Script, which reads the private
-spreadsheet.
+Nothing under `data/` is ever read by the website at runtime — the claims
+lookup goes to Apps Script, which reads the private spreadsheet.
 
 ---
 
-## Part 1 — Publish the site (5 minutes)
+## Part 1 — Publish the site (nothing to do)
 
-The claims site is `claims/index.html`, a static page. If the repository is
-already on Netlify it deploys with everything else and lives at
-`/claims/`. Short links come free from `netlify.toml`:
+The claims site is `claims/index.html`, a static page. GitHub Pages already
+serves this repository, so the moment this lands on `main` it is live at:
 
-| Link | Goes to |
+```
+https://rickyrampersadbranch.com/claims/
+```
+
+Deep links pre-select the claim type — this is what to put in an SMS to a
+client who has just called about an accident:
+
+| Link | Opens |
 | --- | --- |
-| `/claim` | the claims site |
-| `/claim/motor` | motor pre-selected |
-| `/claim/health` | health pre-selected |
-| `/claims/?type=motor&sub=theft` | motor, theft, pre-selected |
+| `/claims/?type=motor` | motor claim |
+| `/claims/?type=motor&sub=theft` | motor, vehicle stolen |
+| `/claims/?type=health` | health claim |
+| `/claims/#track` | claim tracking |
 
-Those deep links are what to put in an SMS to a client who has just called
-about an accident.
+(The prettier `/claim/motor` short links in `netlify.toml` only work if
+hosting moves to Netlify — GitHub Pages cannot do redirects.)
 
 ### Pointing claimstt.com at it
 
-`claimstt.com` is currently a GoDaddy placeholder. To move it:
+`claimstt.com` is currently a GoDaddy placeholder. Two options:
 
-1. Netlify → **Domain settings → Add a domain** → `claimstt.com`.
-2. At GoDaddy, replace the parked A record with Netlify's, or switch the
-   nameservers to Netlify's. Netlify shows the exact values.
-3. Let Netlify issue the certificate (automatic, a few minutes).
+- **Stay on GitHub Pages:** GoDaddy DNS → CNAME `claimstt.com` (and `www`) to
+  `rickyrampersad.github.io`. But note a GitHub Pages site takes **one**
+  custom domain, and this one already uses rickyrampersadbranch.com — so
+  claimstt.com would redirect there rather than stand alone.
+- **Move hosting to Netlify** (free, imports this repo directly): both
+  domains can then point at the same site, the `netlify.toml` short links
+  and `/data/*` blocking come alive, and the repo could go private without
+  taking the site down. This is the better end state.
 
-Until then everything works at `yoursite.netlify.app/claims/`.
+Until then everything works at `rickyrampersadbranch.com/claims/`.
 
 ---
 
@@ -129,12 +146,16 @@ and their own contact details fill themselves in.
 
 ### Build the register
 
+The Salesforce export is **not kept in this repository** (client data, public
+repo). Put your local copy at `data/risk-details.csv` — the path is
+gitignored — then:
+
 ```bash
 python3 data/build-vehicle-register.py
 ```
 
-Reads `data/risk-details.csv` (the Salesforce export) and writes
-`data/vehicle-register.csv`. Current output:
+It writes `data/vehicle-register.csv` (also gitignored — import it, then
+delete it). Output from the August 2026 export:
 
 ```
 495 risk rows  ->  429 distinct vehicles
@@ -184,12 +205,14 @@ file** and **87% have a policy number** — so most clients verify with their
 policy number. Every client can skip the lookup entirely and type their
 details in; prefill is a convenience, never a gate.
 
-### `data/vehicle-register-quarantine.csv`
+### The quarantine list
 
-24 rows whose "Vehicle Reg" field does not hold a registration — chassis
-numbers, a make, placeholders like `TBA`. Those clients cannot be found by
-plate until the Salesforce records are corrected. The file lists each one with
-the client name and policy number so they can be fixed at source.
+The script also writes `data/vehicle-register-quarantine.csv` (locally, not
+committed): 24 rows whose "Vehicle Reg" field does not hold a registration —
+chassis numbers, a make, placeholders like `TBA`. Those clients cannot be
+found by plate until the Salesforce records are corrected. The file lists
+each one with the client name and policy number so they can be fixed at
+source.
 
 ---
 
@@ -329,10 +352,13 @@ done.
 - [ ] **Apps Script `/exec` URL** → `CONFIG.API_URL` in `claims/index.html`
 - [ ] **`SITE_KEY`** changed from the default, in both files
 - [ ] **Claims desk addresses** confirmed for health, life and pension
-- [ ] **`data/vehicle-register.csv`** imported into the `Vehicle Register` tab
-- [ ] **Deploy this branch** so `/data/*` stops being publicly downloadable
+- [ ] **Vehicle register** imported into the `Vehicle Register` tab (the CSV
+      was delivered privately in the Claude session; or rebuild it locally)
+- [ ] **Rotate `STAFF_KEY`** in the Apps Script copy of `Code.gs` — the old
+      value was published on the public site
+- [ ] **Git history**: purge the client-data commits, or make the repo
+      private and move hosting to Netlify — see *Read this first*
 - [ ] **claimstt.com DNS** repointed from the GoDaddy placeholder
-- [ ] Decide whether to purge `data/*.csv` from git history
 - [ ] **Guardian compliance sign-off** before the site takes live client data
 
 That last one is not a formality. The system holds names, addresses, policy
