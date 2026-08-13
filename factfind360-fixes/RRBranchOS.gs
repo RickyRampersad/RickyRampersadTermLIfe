@@ -701,6 +701,14 @@ function rrbDataSecure_(e) {
     } else if (!rrbScopeHasUnit_(me.scope, rowUnit)) continue;
     d.unitKey = rowUnit;
     d.unit    = (MAIL_CONFIG.managers[d.unitKey] || {}).name || '';
+    // The review intelligence, attached only where a decision is still open —
+    // the dashboard queue shows the same checks the review email shows, so a
+    // manager approving from the queue sees exactly what the email path sees.
+    // The underscore keeps it out of ffWriteRow_, which writes schema keys only.
+    var st = _str(d.status).toLowerCase();
+    if (st.indexOf('approv') < 0 && st.indexOf('declin') < 0 && st.indexOf('cancel') < 0) {
+      try { d._checks = rrbChecks_(d); } catch (err) { d._checks = null; }
+    }
     rows.push(d);
   }
   return { ok: true, rows: rows };

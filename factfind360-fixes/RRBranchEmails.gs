@@ -739,6 +739,87 @@ function rrbDecide(e) {
   return rrbPage_(agreed ? 'Approved' : 'Changes requested', body, agreed ? 'ok' : 'bad');
 }
 
+/**
+ * A decision made from the dashboard queue, authenticated by session token.
+ *
+ * The email path and this one MUST write the same record. Everything below the
+ * auth check mirrors rrbDecide line for line — same fields, same attestation,
+ * same client/agent emails — with only the signature method saying which door
+ * the decision came through. If a field is added to one path, add it to both.
+ *
+ * Returns JSON, not a page: the dashboard stays where it is and updates the
+ * card in place.
+ */
+function rrbQueueDecide(e) {
+  var p = (e && e.parameter) || {};
+  var me = rrbAuthorize_(e);
+  if (!me) return RRB_EXPIRED;
+  if (me.scope && me.scope.kind === 'agent') {
+    return { ok: false, error: 'Only a manager can decide a case.' };
+  }
+  var sess = rrbReadSession_(p.token) || {};
+  var id = _str(p.id);
+  if (!id) return { ok: false, error: 'No case id given.' };
+  var agreed = /^appro/i.test(_str(p.v));
+  var note = _str(p.note);
+
+  // One decision at a time. Two managers looking at the same queue — or one
+  // double-click — must not both write; the second sees "already settled".
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(10000); } catch (err) {
+    return { ok: false, error: 'The sheet is busy — try again in a moment.' };
+  }
+  try {
+    var sheet = ffGetOrCreateRevisedTab_();
+    var headers = ffEnsureHeaders_(sheet);
+    var row = ffFindRowBySubmissionId_(sheet, headers, id);
+    if (!row) return { ok: false, error: 'That fact find is not on the sheet.' };
+
+    var d = ffReadRow_(sheet, headers, row);
+    var rowUnit = ffLookupDirectManager_(_str(d.agentCode).toUpperCase());
+    if (!rrbScopeHasUnit_(me.scope, rowUnit)) {
+      return { ok: false, error: 'That case is not in your unit.' };
+    }
+    var st = _str(d.status).toLowerCase();
+    if (st.indexOf('approv') > -1 || st.indexOf('declin') > -1 || st.indexOf('cancel') > -1) {
+      return { ok: false, already: true,
+               error: 'Already settled' + (_str(d.mgrName) ? ' by ' + d.mgrName : '') +
+                      ' — status is "' + d.status + '".' };
+    }
+
+    var now = new Date().toISOString();
+    var merged = {};
+    Object.keys(d).forEach(function (k) { merged[k] = d[k]; });
+    merged.mgrAgree      = agreed ? 'Agree' : 'Do not agree';
+    merged.mgrName       = _str(me.name) || _str(d.reviewerName);
+    merged.mgrEmail      = _str(sess.email) || _str(d.reviewerEmail);
+    merged.mgrReviewedAt = now;
+    merged.mgrSigDate    = now.slice(0, 10);
+    merged.status        = agreed ? 'approved' : 'changes_requested';
+    merged.approvedAt    = agreed ? now : '';
+    merged.lastUpdated   = now;
+    merged.mgrVerData = merged.mgrVerRatios = merged.mgrVerSuit = merged.mgrVerCompliance = true;
+    merged.mgrSignatureMethod = 'Dashboard';
+    merged.mgrSignatureRef    = _str(me.code) + ' ' + now;
+    merged.dmResponded        = true;
+    if (!_str(merged.dmName)) merged.dmName = merged.mgrName;
+    if (note) {
+      var prior = _str(merged.dmGuidance);
+      merged.dmGuidance  = prior ? prior + '\n\n' + note : note;
+      merged.mgrComments = merged.dmGuidance;
+    }
+
+    ffWriteRow_(sheet, headers, merged, row);
+
+    try { ffSendApprovalEmail_(merged); }
+    catch (err) { Logger.log('rrbQueueDecide: approval email failed — %s', err && err.message); }
+
+    return { ok: true, id: id, status: merged.status,
+             client: _str(d.clientName) || _str(d.fullName) || _str(d.adviceClientName),
+             advisor: _str(d.advisorName) };
+  } finally { try { lock.releaseLock(); } catch (err2) {} }
+}
+
 /** The optional comment that can follow a one-tap decision. */
 function rrbDecideNote(e) {
   var p = (e && e.parameter) || {};

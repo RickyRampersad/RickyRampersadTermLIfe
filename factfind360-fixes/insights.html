@@ -98,6 +98,44 @@
   .hm .rl{color:var(--ink-3);font-weight:700;padding-right:6px;text-align:right;line-height:18px}
   .hm i{display:block;height:18px;border-radius:3px;background:rgba(255,255,255,.045)}
 
+  /* the approval queue — the case comes to the manager, decided in place */
+  .q{display:flex;flex-direction:column;gap:10px}
+  .qc{background:var(--raise);border:1px solid var(--line);border-left:4px solid var(--amber);
+      border-radius:10px;padding:12px 14px;display:grid;
+      grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:start}
+  .qc.hot{border-left-color:var(--red)}
+  .qc.done{border-left-color:var(--teal);opacity:.55;transition:opacity .4s}
+  .qage{font-size:17px;font-weight:800;min-width:2.4em;text-align:center;padding:6px 4px;
+        border-radius:8px;background:rgba(251,191,36,.12);color:var(--amber)}
+  .qc.hot .qage{background:rgba(251,113,133,.12);color:var(--red)}
+  .qc.done .qage{background:rgba(45,212,191,.12);color:var(--teal)}
+  .qwho{font-size:14px;font-weight:750}
+  .qsub{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+  .qrec{margin-top:8px;display:flex;flex-direction:column;gap:3px}
+  .qrec .r1{font-size:12px;display:flex;gap:7px;align-items:baseline}
+  .qrec .r1 b{font-weight:700}
+  .qrec .r1 .m{color:var(--teal);font-weight:700;white-space:nowrap}
+  .qrec .r1 .tk{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+                color:var(--teal);border:1px solid rgba(45,212,191,.4);border-radius:4px;padding:0 5px}
+  .qflags{margin-top:8px;display:flex;flex-wrap:wrap;gap:5px}
+  .qf{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;
+      background:rgba(251,191,36,.1);color:var(--amber);border:1px solid rgba(251,191,36,.25)}
+  .qf.bad{background:rgba(251,113,133,.1);color:var(--red);border-color:rgba(251,113,133,.3)}
+  .qf.okf{background:rgba(45,212,191,.08);color:var(--teal);border-color:rgba(45,212,191,.25)}
+  .qact{display:flex;flex-direction:column;gap:7px;min-width:130px}
+  .qb{border:0;border-radius:8px;padding:10px 14px;font:inherit;font-size:12.5px;font-weight:800;
+      cursor:pointer;white-space:nowrap}
+  .qb.ok{background:var(--teal);color:#04211D}
+  .qb.ok.confirm{background:#0D9488;color:#fff;outline:2px solid var(--teal)}
+  .qb.back{background:transparent;color:var(--amber);border:1.5px solid rgba(251,191,36,.5)}
+  .qb:disabled{opacity:.5;cursor:default}
+  .qnote{width:100%;box-sizing:border-box;margin-top:8px;background:var(--panel);color:var(--ink);
+         border:1px solid var(--line);border-radius:8px;padding:9px;font:inherit;font-size:12.5px;
+         resize:vertical;display:none}
+  .qnote.open{display:block}
+  .qmsg{font-size:11.5px;font-weight:700;margin-top:6px;color:var(--teal)}
+  .qmsg.err{color:var(--red)}
+
   /* attention */
   .att{display:flex;flex-direction:column;gap:7px}
   .arow{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:7px 9px;
@@ -198,6 +236,8 @@
   <div class="card c5"><h3><span>Branch funnel</span><em id="funNote"></em></h3><div id="bfunnel"></div></div>
   <div class="card c7"><h3><span>Producer board</span><em id="pbNote"></em></h3><div id="prodBoard"></div></div>
 
+  <div class="card c12"><h3><span>Waiting on a decision</span><em id="qNote">every open case in your scope, oldest first — the range above does not hide these</em></h3><div class="q" id="queue"></div></div>
+
   <div class="card c12"><h3><span>Needs attention</span><em>named, oldest first</em></h3><div class="att" id="attention"></div></div>
 </div>
 
@@ -211,6 +251,7 @@ var $=function(i){return document.getElementById(i);};
    throws, and one throw takes the whole page down. */
 function setText(id,s){ var el=$(id); if(el) el.textContent=s; }
 var TOK_KEY='rrb_insights_token';
+var TOKEN=null, ROLE='';
 
 /* ── helpers ───────────────────────────────────────────────────────────── */
 function num(v){ var n=parseFloat(String(v==null?'':v).replace(/[^0-9.\-]/g,'')); return isFinite(n)?n:0; }
@@ -279,7 +320,8 @@ function shape(raw){
       lost:/^not proceeding$/i.test(str(r.caseOutcome)),
       need:num(r.insuranceNeed_calc), surplus:num(r.cashSurplus_calc),
       rep:/^(y|yes|true|1)$/i.test(str(r.repDetected)),
-      client:str(r.clientName)||str(r.fullName)||'(client)' };
+      client:str(r.clientName)||str(r.fullName)||str(r.adviceClientName)||'(client)',
+      raw:r };
   }).filter(function(r){ return r.sub; })
     .sort(function(a,b){ return b.sub-a.sub; });
 }
@@ -542,13 +584,106 @@ function render(){
     });
   })();
 
+  /* The approval queue. Built from ROWS, not rows — the range selector must
+     never hide an open case. A 56-day-old fact find that vanishes because
+     "This week" is selected is how a backlog gets to 56 days. */
+  (function(){
+    var pend=ROWS.filter(function(r){return r.status==='pending_review'||r.status==='submitted';})
+      .sort(function(a,b){return a.sub-b.sub;});
+    var canAct=/manager/i.test(ROLE||'');
+    setText('qNote', pend.length
+      ? 'every open case in your scope, oldest first — the range above does not hide these'
+      : '');
+    if(!pend.length){
+      $('queue').innerHTML='<div class="empty">Nothing is waiting on a decision. Every fact find in your scope is signed off.</div>';
+      return;
+    }
+    $('queue').innerHTML=pend.map(function(r){
+      var g=Math.round(days(r.sub,new Date())), hot=g>=14;
+      var raw=r.raw||{}, chk=raw._checks||null;
+      var recl='';
+      for(var i=1;i<=6;i++){
+        var plan=str(raw['rec'+i+'Rec']); var amt=num(raw['rec'+i+'Amt']);
+        var rp=num(raw['rec'+i+'Prem']); var md=str(raw['rec'+i+'Mode']);
+        if(!plan&&!rp) continue;
+        var took=/^yes$/i.test(str(raw['dec'+i+'Go']));
+        recl+='<div class="r1"><b>'+esc(plan||'(plan not named)')+'</b>'+
+          (amt?'<span>'+money(amt)+' cover</span>':'')+
+          (rp?'<span class="m">'+money(rp)+(md?'/'+esc(md.toLowerCase()):'/mo assumed')+'</span>':'')+
+          (took?'<span class="tk">client taking</span>':'')+'</div>';
+      }
+      var flags='';
+      if(chk&&chk.concerns&&chk.concerns.length){
+        flags=chk.concerns.map(function(c){
+          return '<span class="qf '+(c.sev==='bad'?'bad':'')+'" title="'+esc(c.why||'')+'">'+esc(c.t)+'</span>';
+        }).join('');
+      } else if(chk){
+        flags='<span class="qf okf">No concerns flagged by the checks</span>';
+      }
+      if(chk&&chk.adviceOnly) flags='<span class="qf okf">Specific Need Only</span>'+flags;
+      var acts=canAct
+        ? '<div class="qact">'+
+            '<button class="qb ok" data-id="'+esc(r.id)+'" data-v="approve">Approve</button>'+
+            '<button class="qb back" data-id="'+esc(r.id)+'" data-v="return">Send back&hellip;</button>'+
+          '</div>'
+        : '<div class="qact"><div class="qsub">'+esc(r.manager)+' decides this</div></div>';
+      return '<div class="qc'+(hot?' hot':'')+'" data-card="'+esc(r.id)+'">'+
+        '<div class="qage">'+g+'d</div>'+
+        '<div><div class="qwho">'+esc(r.client)+'</div>'+
+        '<div class="qsub">'+esc(r.agent)+' · with '+esc(r.manager)+' · submitted '+r.sub.toLocaleDateString()+
+          (r.need?' · need '+money(r.need):'')+'</div>'+
+        (recl?'<div class="qrec">'+recl+'</div>':'')+
+        (flags?'<div class="qflags">'+flags+'</div>':'')+
+        '<textarea class="qnote" rows="2" placeholder="What needs to change before you can approve it? Goes to the advisor."></textarea>'+
+        '<div class="qmsg" style="display:none"></div></div>'+
+        acts+'</div>';
+    }).join('');
+
+    $('queue').querySelectorAll('.qb').forEach(function(b){
+      b.onclick=function(){
+        var card=b.closest('.qc'), id=b.dataset.id;
+        var noteEl=card.querySelector('.qnote'), msg=card.querySelector('.qmsg');
+        if(b.dataset.v==='return'&&!noteEl.classList.contains('open')){
+          noteEl.classList.add('open'); noteEl.focus();
+          b.textContent='Send back now'; return;
+        }
+        if(b.dataset.v==='approve'&&!b.classList.contains('confirm')){
+          b.classList.add('confirm'); b.textContent='Confirm approve';
+          setTimeout(function(){ b.classList.remove('confirm'); b.textContent='Approve'; },6000);
+          return;
+        }
+        card.querySelectorAll('.qb').forEach(function(x){x.disabled=true;});
+        msg.style.display='block'; msg.className='qmsg'; msg.textContent='Recording…';
+        fetch(ENDPOINT+'?action=qdecide&token='+encodeURIComponent(TOKEN)+
+              '&id='+encodeURIComponent(id)+'&v='+encodeURIComponent(b.dataset.v)+
+              '&note='+encodeURIComponent(noteEl.value.trim())+'&_='+Date.now(),{cache:'no-store'})
+          .then(function(x){return x.json();})
+          .then(function(j){
+            if(!j||!j.ok){
+              if(j&&j.already){ msg.textContent=j.error+' Refreshing…';
+                return load(TOKEN); }
+              throw new Error((j&&j.error)||'Could not record the decision.');
+            }
+            card.classList.add('done'); card.classList.remove('hot');
+            msg.textContent = j.status==='approved'
+              ? 'Approved. The advisor has been emailed, and the client gets their approval letter.'
+              : 'Sent back. The advisor has been emailed with your note.';
+            var mine=ROWS.filter(function(x){return x.id===id;})[0];
+            if(mine){ mine.status=j.status;
+              mine.rev=new Date(); if(j.status==='approved') mine.app=new Date(); }
+            setTimeout(draw,1600);
+          })
+          .catch(function(err){
+            msg.className='qmsg err'; msg.textContent=err.message;
+            card.querySelectorAll('.qb').forEach(function(x){x.disabled=false;});
+          });
+      };
+    });
+  })();
+
   /* Needs attention */
   (function(){
     var items=[];
-    rows.filter(function(r){return r.status==='pending_review'||r.status==='submitted';})
-      .forEach(function(r){ var g=Math.round(days(r.sub,new Date()));
-        if(g>=3) items.push({n:g+'d',t1:'Waiting on '+r.manager,t2:r.agent+' · submitted '+r.sub.toLocaleDateString(),
-                             sev:g>=7?'bad':'warn',sort:g}); });
     rows.filter(function(r){return r.rep;}).forEach(function(r){
       items.push({n:'!',t1:'Replacement of existing cover',t2:r.agent+' · with '+r.manager,sev:'bad',sort:900}); });
     rows.filter(function(r){return r.surplus>0&&r.prem>0&&(r.prem/r.surplus)>0.8;}).forEach(function(r){
@@ -656,6 +791,7 @@ function draw(){ try{ render(); }catch(e){ console.error(e); } }
 
 /* ── auth + load ───────────────────────────────────────────────────────── */
 function load(token){
+  TOKEN=token;
   return fetch(ENDPOINT+'?action=data&token='+encodeURIComponent(token)+'&_='+Date.now(),{cache:'no-store'})
     .then(function(r){return r.json();})
     .then(function(j){
@@ -679,7 +815,9 @@ function signIn(){
     .then(function(j){
       if(!j||j.ok===false) throw new Error((j&&j.error)||'Sign-in failed.');
       ME=j.name||j.person&&j.person.name||e;
-      try{ sessionStorage.setItem(TOK_KEY,j.token); sessionStorage.setItem(TOK_KEY+'_n',ME); }catch(x){}
+      ROLE=str(j.role);
+      try{ sessionStorage.setItem(TOK_KEY,j.token); sessionStorage.setItem(TOK_KEY+'_n',ME);
+           sessionStorage.setItem(TOK_KEY+'_r',ROLE); }catch(x){}
       return load(j.token);
     })
     .catch(function(err){ $('gErr').textContent=err.message; });
@@ -691,7 +829,8 @@ $('rangeSeg').querySelectorAll('button').forEach(function(b){
 $('gPass').addEventListener('keydown',function(e){ if(e.key==='Enter') signIn(); });
 
 (function(){
-  var t=null; try{ t=sessionStorage.getItem(TOK_KEY); ME=sessionStorage.getItem(TOK_KEY+'_n'); }catch(x){}
+  var t=null; try{ t=sessionStorage.getItem(TOK_KEY); ME=sessionStorage.getItem(TOK_KEY+'_n');
+    ROLE=sessionStorage.getItem(TOK_KEY+'_r')||''; }catch(x){}
   if(t) load(t).catch(function(){ $('gate').style.display='grid'; });
 })();
 </script>

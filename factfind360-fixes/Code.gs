@@ -144,6 +144,10 @@ function doGet(e) {
     else if (action === "coaching")      out = getCoachingLog(e.parameter);
     else if (action === "login")        out = rrbLogin(e);
 else if (action === "data")         out = rrbData(e);
+// A decision from the dashboard queue. Session-token auth, never cached
+// (absent from cacheableActions), and it writes the identical record to the
+// email tap-to-approve path.
+else if (action === "qdecide")      out = rrbQueueDecide(e);
 else if (action === "roster")       out = rrbRoster(e);
 // access_names is retired. It published every active agent's name and code
 // with no authentication — the username half of every account — to populate a
