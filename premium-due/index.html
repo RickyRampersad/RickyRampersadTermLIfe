@@ -184,6 +184,7 @@ input,select,textarea{font-family:inherit;font-size:14px}
 .pill.prem{background:var(--green-soft);color:var(--green)}
 .pill.dup{background:var(--gold-soft);color:#8A6A1C}
 .pill.lapse{background:var(--red-soft);color:var(--red)}
+.pill.grp{background:var(--teal-soft);color:var(--teal);font-weight:700}
 .pill.stage{background:var(--amber-soft);color:var(--amber)}
 .pill.stage.s60{background:var(--red-soft);color:var(--red)}
 .pill.stage.s90{background:#EADCDC;color:var(--red-2)}
@@ -578,7 +579,9 @@ const SLA={
   MANAGER_REPLY_DAYS: 3,   // the branch's documented TAT, per the Premium Due Guidelines
   CLIENT_CHASE_EVERY: 5,   // client reminded every 5 days after day 45, while they have said nothing
   MANAGER_CHASE_EVERY: 3,  // commitment outstanding: chased every 3 days, all copied
-  FEEDBACK_CHASE_EVERY: 7  // committed but no feedback yet: chased every 7 days, all copied
+  FEEDBACK_CHASE_EVERY: 7, // committed but no feedback yet: chased every 7 days, all copied
+  GROUP_OPENS: 45,         // scheme statement fires when a member policy hits this
+  GROUP_STATEMENT_EVERY: 14 // and repeats each fortnight while anything stays unpaid
 };
 
 /* ===== LIFECYCLE STAGING ===== */
@@ -634,6 +637,31 @@ function clientFlags(c){
   };
 }
 
+/* ===== GROUP SCHEMES =====
+   Company-owned policies (Servus, Bankers Insurance, JMMB — the client IS a
+   company). One missed payroll remittance puts dozens of member policies "in
+   arrears" on the same day, so these never enter the individual 45/60/90
+   ladder: no client letters, no manager handover, no tracking codes to a
+   payroll clerk. The backend sends one consolidated remittance statement per
+   company per fortnight (pdGroupChase_); here they are badged, kept out of
+   the accountability clocks, and surfaced as schemes in the insights.
+   Mirrors pdIsGroup_/pdGroupKey_ in PremiumDueTemplates.gs — change both. */
+const GROUP_CLIENTS={ /* '<client number>':'Servus Limited' — roster wins over the name test; fill in the deployed copy only */ };
+const CORP_RE=/\b(LIMITED|LTD\.?|COMPANY|CO\.|INC\.?|CORPORATION|SERVUS|BANKERS|CREDIT UNION|CO-?OPERATIVE|CO-?OP|ASSOCIATION|SERVICES|ENTERPRISES|CONTRACTORS|HOLDINGS|AGENCIES|SUPERMART|IMPORTS)\b/i;
+function isGroupCase(c){
+  if(GROUP_CLIENTS[String(c.ClientNo||'')])return true;
+  return CORP_RE.test(String(c.Client||''));
+}
+function groupKeyOf(c){
+  const roster=GROUP_CLIENTS[String(c.ClientNo||'')];
+  if(roster)return String(roster).toUpperCase();
+  let n=String(c.Client||'').toUpperCase().replace(/[^A-Z0-9 ]/g,' ').replace(/  +/g,' ').trim();
+  if(n.indexOf('SERVUS')===0)return 'SERVUS LIMITED';
+  if(n.indexOf('BANKERS INSURANCE')>-1)return 'BANKERS INSURANCE COMPANY';
+  if(n.indexOf('JMMB')===0)return 'JMMB BANK';
+  return n.replace(/\bLIMITED\b/g,'LTD');
+}
+
 /* ===== STORE (records keyed by policy) =====
    Each record: {kind:'comment'|'survey'|'retention'|'verdict', ...} */
 const STORE={records:{}};
@@ -675,6 +703,9 @@ function decodeMgr(qtext,label){
    whole point: without this, a lapsed policy is "the agent's fault" by default
    even when the retention case sat unanswered on a manager's desk for a fortnight. */
 function blocker(c){
+  // Group schemes have no personal owner clock — the remittance statement is
+  // the instrument, per scheme, and nobody is "late" member by member.
+  if(c.grp) return null;
   // Only inside the 60-day window. A policy that lapsed in 2014 has nobody
   // "late" on it — that is win-back work, not a retention SLA, and counting it
   // would bury the handful of live cases under thousands of historic ones.
@@ -703,6 +734,7 @@ function blocker(c){
 }
 /* Chase schedule. Returns what is due today, or null. */
 function chaseDue(c){
+  if(c.grp) return null;                 // schemes: one statement per company, backend-owned
   const st=policyState(c.Policy), d=Number(c.DaysArrears)||0;
   if(c.stage!=='s60') return null;
   const out=[];
@@ -725,7 +757,8 @@ function buildCases(rows){
   return rows.map(r=>{
     const stage=stageOf(r);
     const lapsed=(r.Status===1) || (r.StatusDesc||'').toLowerCase()==='lapsed';
-    return {...r, stage, lapsed, stageMeta:STAGE_META[stage], cf:clientFlags(r)};
+    const grp=isGroupCase(r);
+    return {...r, stage, lapsed, grp, grpKey:grp?groupKeyOf(r):'', stageMeta:STAGE_META[stage], cf:clientFlags(r)};
   });
 }
 let ALL_CASES=buildCases(SEED);
@@ -1086,6 +1119,7 @@ function caseCard(c){
   const probCls=prob>=60?'risk-lo':prob>=35?'risk-md':'risk-hi';
   const dupPill=cf.duplicateRisk?`<span class="pill dup">⚠ ${cf.samePlan.length+1}× ${esc(c.PlanCode)} — duplicate?</span>`:'';
   const churnPill=cf.churnRisk?`<span class="pill lapse">↻ ${cf.lapsed} lapsed in history</span>`:'';
+  const grpPill=c.grp?`<span class="pill grp">▦ Group scheme — remittance statement, not letters</span>`:'';
   const premPill=`<span class="pill prem">${esc(money(c.Premium))} ${esc(c.Mode||'')}premium</span>`.replace(' premium','/yr');
   const awaitV = st.retention && !st.verdict ? `<span class="await-tag">Awaiting manager</span>` : (st.verdict?`<span class="done-tag">${esc(st.verdict.managerVerdict)}</span>`:'');
 
@@ -1093,7 +1127,7 @@ function caseCard(c){
     <div class="case-top" data-toggle>
       <div class="case-main">
         <div class="case-name">${esc(c.Client)} ${premPill} ${awaitV}</div>
-        <div class="case-meta"><span class="mono">Policy ${esc(c.Policy)}</span><span class="mono">Client ${esc(c.ClientNo)}</span><span>Agent <b>${esc(c.Agent)}</b></span>${stagePill(c)}<span class="pill plan">${esc(c.PlanCode)}</span>${dupPill}${churnPill}</div>
+        <div class="case-meta"><span class="mono">Policy ${esc(c.Policy)}</span><span class="mono">Client ${esc(c.ClientNo)}</span><span>Agent <b>${esc(c.Agent)}</b></span>${stagePill(c)}<span class="pill plan">${esc(c.PlanCode)}</span>${grpPill}${dupPill}${churnPill}</div>
       </div>
       <div class="case-right">
         <div class="daybadge"><div class="d ${dayClass(c.stage)}">${c.stage==='pend'?'NEW':c.DaysArrears}</div><div class="l">${c.stage==='pend'?'pending':'days arr.'}</div></div>
@@ -1384,11 +1418,22 @@ function wireOneCard(card){ // re-wire just this card's panel after refresh
 /* ===== AI RICKY ===== */
 function rickyInsights(cases){
   const out=[];
-  const s90=cases.filter(c=>c.stage==='s90');
-  const s60=cases.filter(c=>c.stage==='s60');
-  const s45=cases.filter(c=>c.stage==='s45');
-  const dup=cases.filter(c=>c.cf.duplicateRisk);
-  const churn=cases.filter(c=>c.cf.churnRisk);
+  const ind=cases.filter(c=>!c.grp);      // people; schemes get their own line below
+  const s90=ind.filter(c=>c.stage==='s90');
+  const s60=ind.filter(c=>c.stage==='s60');
+  const s45=ind.filter(c=>c.stage==='s45');
+  const dup=ind.filter(c=>c.cf.duplicateRisk);
+  const churn=ind.filter(c=>c.cf.churnRisk);
+  // Schemes with a genuinely missed remittance (a member 45+ days behind and
+  // inside the live band). One conversation with one payroll office each.
+  const schemes={};
+  cases.filter(c=>c.grp&&c.Status===2).forEach(c=>{
+    const d=Number(c.DaysArrears)||0;
+    const g=schemes[c.grpKey]=schemes[c.grpKey]||{n:0,live:0,prem:0,name:c.Client};
+    g.n++;
+    if(d>=SLA.GROUP_OPENS&&d<180){g.live++;g.prem+=Number(c.Premium)||0;}
+  });
+  const hotSchemes=Object.values(schemes).filter(g=>g.live>0).sort((a,b)=>b.prem-a.prem);
   // who is actually holding things up — the number that ends the blame argument
   const blocked=cases.map(c=>({c,b:blocker(c)})).filter(x=>x.b&&x.b.late);
   const byAgent=blocked.filter(x=>x.b.who==='agent');
@@ -1398,6 +1443,7 @@ function rickyInsights(cases){
   const silent=s60.filter(c=>{const st=policyState(c.Policy);return !st.feedbackDone;});
   const noSurvey=s45.filter(c=>{const st=policyState(c.Policy);return !st.survey&&!st.response;});
   if(s90.length)out.push({mk:'crit',t:`<b>${s90.length} ${s90.length===1?'policy is':'policies are'} at the 90-day lapse line.</b> Reinstatement only from here — pursue today or document the loss.`});
+  if(hotSchemes.length)out.push({mk:'warn',t:`<b>${hotSchemes.length} group scheme${hotSchemes.length===1?' has':'s have'} a missed remittance</b> — ${hotSchemes.slice(0,3).map(g=>`${esc(g.name)} (${g.live} member ${g.live===1?'policy':'policies'}, ${money(g.prem)})`).join(', ')}${hotSchemes.length>3?` and ${hotSchemes.length-3} more`:''}. One call to one payroll office each — the engine sends the consolidated statement every ${SLA.GROUP_STATEMENT_EVERY} days and never writes to members individually.`});
   if(noSurvey.length)out.push({mk:'warn',t:`<b>${noSurvey.length} of ${s45.length} cases in the 45-day window have had no answer from the client.</b> They are reminded every ${SLA.CLIENT_CHASE_EVERY} days automatically until day 60, when the policy becomes a manager's to telephone.`});
   if(byMgr.length)out.push({mk:'crit',t:`<b>${byMgr.length} ${byMgr.length===1?'policy has':'policies have'} been with a manager past the ${SLA.MANAGER_REPLY_DAYS}-day standard with nothing recorded.</b> ${esc([...new Set(byMgr.map(x=>x.b.name))].slice(0,3).join(', '))} ${byMgr.length===1?'owes':'owe'} a call and an answer. Longest waiting: ${Math.max(...byMgr.map(x=>x.b.since))} days. Every one of these clients reads it at day 88.`});
   if(byAgent.length)out.push({mk:'warn',t:`<b>${byAgent.length} ${byAgent.length===1?'case has':'cases have'} passed day ${SLA.AGENT_FILE_BY} with no retention form.</b> ${esc([...new Set(byAgent.map(x=>x.c.Agent))].slice(0,3).join(', '))} — the manager is already working the policy, but the written case is still owed.`});
@@ -1415,8 +1461,8 @@ function rickyBanner(cases,headline){
 /* ===== STATS ===== */
 function statStrip(cases){
   const arrears=cases.filter(c=>c.stage!=='cur'&&c.stage!=='pend').reduce((s,c)=>s+(Number(c.Premium)||0),0);
-  const s90=cases.filter(c=>c.stage==='s90').length;
-  const s60=cases.filter(c=>c.stage==='s60').length;
+  const s90=cases.filter(c=>!c.grp&&c.stage==='s90').length;
+  const s60=cases.filter(c=>!c.grp&&c.stage==='s60').length;
   const dup=cases.filter(c=>c.cf.duplicateRisk).length;
   const lateList=cases.map(c=>blocker(c)).filter(b=>b&&b.late);
   const late=lateList.length, lateMgr=lateList.filter(b=>b.who==='manager').length;
@@ -1432,7 +1478,10 @@ function statStrip(cases){
 
 /* ===== LIFECYCLE RIBBON ===== */
 function ribbon(cases){
-  const count=k=>cases.filter(c=>c.stage===k).length;
+  // Stage counts are people. A scheme's 32 members at day 50 are one remittance,
+  // not 32 manager handovers — they'd triple the "manager owns it" cell for work
+  // that isn't the manager's. Schemes live under their own chip.
+  const count=k=>cases.filter(c=>!c.grp&&c.stage===k).length;
   const cells=[
     ['od','Overdue',count('od'),'1–44 days'],
     ['s45','45-Day',count('s45'),'survey window'],
@@ -1449,7 +1498,7 @@ let FILTER={q:'',chip:'all',sort:'days'};
 function filterBar(){return `<div class="toolbar">
   <div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="fq" placeholder="Search client, policy, client #, agent or plan…" value="${esc(FILTER.q)}"></div>
   <select class="fselect" id="fsort"><option value="days">Sort: Closest to lapse</option><option value="prem">Sort: Highest premium</option><option value="prob">Sort: Lowest retention odds</option><option value="name">Sort: Client A–Z</option></select>
-</div><div class="chips" id="chips">${chip('all','All')}${chip('s45','45-day letter')}${chip('s60','60-day · manager')}${chip('s90','90-day / lapsed')}${chip('pend','Pending')}${chip('await','Awaiting manager')}${chip('late','Late — either side')}${chip('dup','Duplicate/churn')}</div>`;}
+</div><div class="chips" id="chips">${chip('all','All')}${chip('s45','45-day letter')}${chip('s60','60-day · manager')}${chip('s90','90-day / lapsed')}${chip('pend','Pending')}${chip('await','Awaiting manager')}${chip('late','Late — either side')}${chip('dup','Duplicate/churn')}${chip('grp','Group schemes')}</div>`;}
 function chip(k,label){return `<button class="chip ${FILTER.chip===k?'on':''}" data-chip="${k}">${label} <span class="ct" data-ct="${k}"></span></button>`;}
 function applyFilter(cases){
   let r=cases.slice();
@@ -1468,6 +1517,7 @@ function applyFilter(cases){
   if(FILTER.chip==='all' && !RIB.on && !FILTER.q)r=r.filter(c=>c.stage!=='closed' && !c.lapsed);
   if(FILTER.chip==='await')r=r.filter(c=>c.stage==='s60'&&!policyState(c.Policy).feedbackDone);
   if(FILTER.chip==='dup')r=r.filter(c=>c.cf.duplicateRisk||c.cf.churnRisk);
+  if(FILTER.chip==='grp')r=r.filter(c=>c.grp);
   if(FILTER.q){const q=FILTER.q.toLowerCase();r=r.filter(c=>c.Client.toLowerCase().includes(q)||c.Policy.includes(q)||String(c.ClientNo).includes(q)||c.Agent.toLowerCase().includes(q)||(c.PlanCode||'').toLowerCase().includes(q));}
   if(FILTER.sort==='days')r.sort((a,b)=>rank(b)-rank(a));
   if(FILTER.sort==='prem')r.sort((a,b)=>(Number(b.Premium)||0)-(Number(a.Premium)||0));
@@ -1487,11 +1537,13 @@ function wireFilter(cases,rerender){
     else if(k==='late')n=cases.filter(c=>{const b=blocker(c);return b&&b.late;}).length;
     else if(k==='pend')n=cases.filter(c=>c.stage==='pend').length;
     else if(k==='await')n=cases.filter(c=>c.stage==='s60'&&!policyState(c.Policy).feedbackDone).length;
-    else if(k==='dup')n=cases.filter(c=>c.cf.duplicateRisk||c.cf.churnRisk).length;el.textContent=n;});
+    else if(k==='dup')n=cases.filter(c=>c.cf.duplicateRisk||c.cf.churnRisk).length;
+    else if(k==='grp')n=cases.filter(c=>c.grp).length;el.textContent=n;});
 }
 
 /* ===== NEXT STEP ===== */
 function nextStep(cases){
+  cases=cases.filter(c=>!c.grp);          // the personal next step is never a scheme member
   const mine=cases.filter(c=>c.stage==='s60'&&!policyState(c.Policy).feedbackDone);
   const s90=cases.filter(c=>c.stage==='s90');
   const s60noForm=cases.filter(c=>c.stage==='s60'&&!policyState(c.Policy).retention);

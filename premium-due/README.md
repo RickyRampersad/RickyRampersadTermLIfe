@@ -97,6 +97,7 @@ drawn out.
 | 90 / 95 / 100 | Any status | The closing letter, with service ratings. Three sends, then it stops |
 | Win-back | Status 1, from day 110 | Reinstatement, once the closing sequence has finished |
 | Pending | Status 3 / underwriting incomplete | New business chase |
+| **Group scheme** | Company-owned, any member ≥ 45 days | **One consolidated remittance statement per company**, repeating every 14 days · never the individual ladder |
 
 ### Colour — six schemes, one switch
 
@@ -357,6 +358,49 @@ Any answer to a closing question stops it (`state.closingAnswered`).
 the lapse status flips at day 90 and win-back interleaves with the closing
 letters — closing on 90, win-back on 92, closing on 95 — and the closing letter
 already offers reinstatement.
+
+### Group schemes — Servus is one conversation, not sixty-five
+
+The book carries **company-owned schemes**: Servus Limited (222 member policies
+on one client number), Bankers Insurance, JMMB Bank and some thirty smaller
+employers. One missed payroll remittance puts dozens of member policies "in
+arrears" on the same day — and the individual process would get every part of
+that wrong: 65 letters into one payroll inbox, a 222-row policy table, 65
+tracking codes to one clerk, and at day 90 a company asked to rate its advisor
+out of five.
+
+So company-owned policies **never enter the individual ladder**. `pdIsGroup_`
+detects them (company-looking name, or a client number in `OUT.GROUP_CLIENTS` —
+the roster wins), `pdGroupKey_` folds the spelling variants into one cluster
+("Jmmb Bank Limited" / "Jmmb Bank( T & T ) Limited" / "Jmmb Bank (T&T)"), and
+`pdStageDue_` / `pdInternalChase_` both refuse them outright. Instead,
+`pdGroupChase_` sends **one consolidated remittance statement per company**:
+
+- **Fires when any member policy reaches day 45** (`SLA.GROUP_OPENS`) — a
+  scheme at day 20 is a payroll run in transit, and the engine says nothing.
+  Repeats every **14 days** (`SLA.GROUP_STATEMENT_EVERY`) while anything stays
+  unpaid, logged against `GROUP:<key>` with the same round/cadence machinery as
+  every other clock.
+- **The statement carries the diagnosis, not just the list**: when most of the
+  live block is paid to the same date it says so — *"32 of the 34 are paid to
+  exactly 1 July, which reads as one remittance not yet received rather than 34
+  separate difficulties."* Members near day 90 drive a red warning; positions
+  more than six months in arrears are **counted, not listed** (a reconciliation
+  exercise, not this remittance); recent member lapses are flagged while
+  reinstatement is still simple.
+- **Recipients**: `OUT.GROUP_ADMIN[key]` (the scheme administrator), falling
+  back to the company's own email on file, then the servicing agent. Agents and
+  branch support are copied; the **branch manager joins from the second
+  notice**.
+- The engine mirrors all of it: scheme policies are badged *Group scheme*,
+  excluded from the manager clocks, the ribbon and the late counts, and get
+  their own filter chip — while a missed remittance surfaces in the insights as
+  one line per company.
+
+Before go-live, fill in the two maps: `OUT.GROUP_CLIENTS` (client number →
+scheme name — at minimum the Servus account) and `OUT.GROUP_ADMIN` (scheme key →
+the payroll/administrator email). Real client numbers and addresses belong only
+in the deployed copy, never in this public repository.
 
 ### How the handover fires
 

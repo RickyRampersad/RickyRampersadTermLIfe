@@ -113,6 +113,28 @@ var OUT = {
     // 'Neil Ramnanan': 'Gary Sookdeo',
   },
 
+  // ---- Group schemes (company-owned policies: Servus, Bankers Insurance,
+  // JMMB and the like). A company that owns 65 member policies is ONE missed
+  // remittance, not 65 separate failures — and it must never enter the
+  // individual 45/60/90 ladder. Writing "rate your advisor out of five" to a
+  // payroll office, or issuing 65 tracking codes to one clerk, is the engine
+  // misreading who the client is. Group policies get one consolidated
+  // remittance statement per company per cycle instead (pdGroupChase_).
+  //
+  // Detection is by company-looking name plus this roster. The roster wins:
+  // add a client number here and every policy on it is a group policy no
+  // matter what the name looks like.
+  GROUP_CLIENTS: {
+    // '<client number>': 'Servus Limited',   // fill from the portfolio — this repo is public
+  },
+
+  // scheme key (as pdGroupKey_ prints it) -> the administrator who receives
+  // the remittance statement. Without an entry the statement goes to the
+  // company's own email on file, then to the servicing agent.
+  GROUP_ADMIN: {
+    // 'SERVUS LIMITED': 'payroll@servus.example',   // the real address lives only in the deployed copy
+  },
+
   // From day 60 the client is copied on the manager email and on every three-day
   // repeat. That is the branch's decision and it is what makes the sequence
   // work: the policyholder watches the case being handled instead of receiving
@@ -129,7 +151,15 @@ var SLA = {
   MANAGER_REPLY_DAYS: 3,          // day 60 -> the manager must COMMIT within three days
   CLIENT_CHASE_EVERY: 5,
   MANAGER_CHASE_EVERY: 3,         // commitment outstanding: chase every 3 days, all copied
-  FEEDBACK_CHASE_EVERY: 7         // committed but no feedback yet: chase every 7 days, all copied
+  FEEDBACK_CHASE_EVERY: 7,        // committed but no feedback yet: chase every 7 days, all copied
+
+  /* Group schemes run on remittance cycles, not personal deadlines. A scheme
+     at day 20 is a payroll run in transit — normal, say nothing. At day 45 a
+     remittance has genuinely been missed, so one statement goes to the scheme
+     administrator, and it repeats every 14 days while anything stays unpaid —
+     roughly once per payroll cycle, never three letters in a week. */
+  GROUP_OPENS: 45,                // first statement when a member policy hits this
+  GROUP_STATEMENT_EVERY: 14       // and then one per fortnight while it holds
 };
 
 /* ===================== WHAT WE ASK THE CLIENT =====================
@@ -1466,11 +1496,25 @@ function pdRelationship_(p, family) {
            alsoBehind: alsoBehind, cover: pdTotalCover_(family) };
 }
 
-/** Every policy the client holds, with the one in arrears marked. */
+/** Every policy the client holds, with the one in arrears marked.
+    Capped at 12 rows — past that (a scheme, or a roster gap letting one
+    through) the letter shows this policy plus the eleven largest and says how
+    many more there are, instead of mailing somebody a ledger. Totals stay
+    computed over the full holding. */
 function pdPolicyTable_(p, family) {
+  var shown = family, extra = 0;
+  if (family.length > 12) {
+    var rest = [];
+    for (var r = 0; r < family.length; r++) {
+      if (String(family[r].Policy) !== String(p.Policy)) rest.push(family[r]);
+    }
+    rest.sort(function (a, b) { return (Number(b.SumAssured) || 0) - (Number(a.SumAssured) || 0); });
+    shown = [p].concat(rest.slice(0, 11));
+    extra = family.length - shown.length;
+  }
   var rows = '';
-  for (var i = 0; i < family.length; i++) {
-    var f = family[i];
+  for (var i = 0; i < shown.length; i++) {
+    var f = shown[i];
     var here = String(f.Policy) === String(p.Policy);
     var st = Number(f.Status), desc = String(f.StatusDesc || '');
     var label = here ? 'This letter' : (st === 1 ? 'Lapsed' : st === 2 ? 'Behind' :
@@ -1491,6 +1535,12 @@ function pdPolicyTable_(p, family) {
       '<td style="padding:9px 10px;border:1px solid ' + PD_BRAND.line + ';background:' + bg +
         ';color:' + colour + ';font-weight:bold;white-space:nowrap;font-size:12.5px">' + pdEsc_(label) + '</td>' +
       '</tr>';
+  }
+  if (extra > 0) {
+    rows += '<tr><td colspan="4" style="padding:9px 10px;border:1px solid ' + PD_BRAND.line +
+      ';background:#FFFFFF;color:' + PD_BRAND.mute + ';font-size:12px">&hellip; and <b>' + extra +
+      '</b> more polic' + (extra === 1 ? 'y' : 'ies') + ' on this account — the totals below cover all of them, ' +
+      'and the full list is available on request.</td></tr>';
   }
   var inForce = pdTotalCover_(family);
   var premTotal = pdTotalPremium_(family);
@@ -2285,6 +2335,7 @@ function pdManagerCc_(p) {
 
 /** Which template, if any, is due for this policy today. */
 function pdStageDue_(p, state) {
+  if (pdIsGroup_(p)) return '';                  // schemes get the remittance statement, never these
   var d = Number(p.DaysArrears) || 0;
   var desc = String(p.StatusDesc || '').toLowerCase();
   var st = Number(p.Status) || 0;
@@ -2471,6 +2522,7 @@ function pdLogInternal_(p, kind, to, note, sent) {
  */
 function pdInternalChase_(p, s) {
   var d = Number(p.DaysArrears) || 0;
+  if (pdIsGroup_(p)) return 0;                           // schemes: pdGroupChase_ owns these
   if (Number(p.Status) !== 2) return 0;                  // live arrears only
   if (d < SLA.RETENTION_OPENS || d >= SLA.LAPSE) return 0;
   var mgrName = (s.mgrName || pdManagerOf_(p.Agent));
@@ -2541,6 +2593,222 @@ function pdInternalChase_(p, s) {
   return 0;
 }
 
+/* ===================== group schemes =====================
+   Company-owned policies — the client IS a company (Servus Limited, Bankers
+   Insurance, JMMB Bank). On the live book these run 200+ policies on a single
+   client number, and their arrears are remittance-shaped: one missed payroll
+   payment puts 32 member policies "in arrears" on the same day. The individual
+   ladder is the wrong instrument three times over — the letters would ask a
+   company to rate its advisor, the family table would render 222 rows, and one
+   payroll clerk would be issued 65 tracking codes.
+
+   So group policies never enter pdStageDue_ or pdInternalChase_. Instead the
+   whole scheme gets ONE consolidated remittance statement per cycle:
+   administrator addressed, member policies listed, the paid-to gap named, the
+   servicing agent and branch support copied, branch manager from the second
+   statement. It stops the moment the remittance lands, like everything else. */
+
+var PD_CORP_RE = /\b(LIMITED|LTD\.?|COMPANY|CO\.|INC\.?|CORPORATION|SERVUS|BANKERS|CREDIT UNION|CO-?OPERATIVE|CO-?OP|ASSOCIATION|SERVICES|ENTERPRISES|CONTRACTORS|HOLDINGS|AGENCIES|SUPERMART|IMPORTS)\b/i;
+
+/** Is this policy owned by a company / group scheme rather than a person? */
+function pdIsGroup_(p) {
+  if (OUT.GROUP_CLIENTS[String(p.ClientNo || '')]) return true;
+  return PD_CORP_RE.test(String(p.Client || ''));
+}
+
+/** One key per company, so name variants land in the same cluster
+    ("Jmmb Bank Limited" / "Jmmb Bank( T & T ) Limited" / "Jmmb Bank (T&T)"). */
+function pdGroupKey_(p) {
+  var roster = OUT.GROUP_CLIENTS[String(p.ClientNo || '')];
+  if (roster) return String(roster).toUpperCase();
+  var n = String(p.Client || '').toUpperCase().replace(/[^A-Z0-9 ]/g, ' ')
+            .replace(/  +/g, ' ').replace(/^ +| +$/g, '');
+  if (n.indexOf('SERVUS') === 0) return 'SERVUS LIMITED';
+  if (n.indexOf('BANKERS INSURANCE') > -1) return 'BANKERS INSURANCE COMPANY';
+  if (n.indexOf('JMMB') === 0) return 'JMMB BANK';
+  return n.replace(/\bLIMITED\b/g, 'LTD');
+}
+
+/**
+ * The remittance statement: one email covering every live member policy on the
+ * scheme. `members` is every portfolio row in the cluster (any status);
+ * opts.round numbers the repeats, opts.waiting is days since the first.
+ */
+function pdGroupStatement_(key, members, opts) {
+  opts = opts || {};
+  var round = Number(opts.round) || 0;
+  var i, m;
+
+  /* Split the cluster: live arrears (the statement's subject), dormant rows
+     (counted, not listed — a position three years in arrears is a
+     reconciliation exercise, not this remittance), recent lapses (named as a
+     count, because they are still within the reinstatement window). */
+  var live = [], ancient = [], lapsedRecent = 0;
+  for (i = 0; i < members.length; i++) {
+    m = members[i];
+    var d = Number(m.DaysArrears) || 0, st = Number(m.Status) || 0;
+    if (st === 2) { if (d < 180) live.push(m); else ancient.push(m); }
+    else if (st === 1 && d <= OUT.WIN_BACK_MAX_DAYS) lapsedRecent++;
+  }
+  live.sort(function (a, b) { return (Number(b.DaysArrears) || 0) - (Number(a.DaysArrears) || 0); });
+
+  var display = live.length ? String(live[0].Client) : (members.length ? String(members[0].Client) : key);
+  var premTotal = 0, atCliff = 0, minLeft = 999;
+  for (i = 0; i < live.length; i++) {
+    premTotal += Number(live[i].Premium) || 0;
+    var dd = Number(live[i].DaysArrears) || 0;
+    if (dd >= 75) { atCliff++; minLeft = Math.min(minLeft, Math.max(0, SLA.LAPSE - dd)); }
+  }
+
+  /* The paid-to mode: when most of the live block is paid to the same date,
+     that IS the diagnosis — one remittance did not arrive. Say so. */
+  var paidCounts = {}, paidMode = '', paidModeN = 0;
+  for (i = 0; i < live.length; i++) {
+    var pt = String(live[i].PaidToDate || '').replace(/^ +| +$/g, '');
+    if (!pt || /^#+$/.test(pt)) continue;
+    paidCounts[pt] = (paidCounts[pt] || 0) + 1;
+    if (paidCounts[pt] > paidModeN) { paidModeN = paidCounts[pt]; paidMode = pt; }
+  }
+
+  var rows = '';
+  for (i = 0; i < live.length; i++) {
+    m = live[i];
+    var days = Number(m.DaysArrears) || 0;
+    var hot = days >= 75;
+    var bg = hot ? PD_BRAND.panel : '#FFFFFF';
+    rows += '<tr>' +
+      '<td style="padding:8px 10px;border:1px solid ' + PD_BRAND.line + ';background:' + bg +
+        ';color:' + PD_BRAND.ink + ';font-weight:bold;font-size:12.5px">' + pdEsc_(m.Policy) +
+        '<div style="font-size:11px;font-weight:normal;color:' + PD_BRAND.mute + '">' + pdEsc_(m.PlanCode || '') + '</div></td>' +
+      '<td style="padding:8px 10px;border:1px solid ' + PD_BRAND.line + ';background:' + bg +
+        ';color:' + PD_BRAND.ink + ';white-space:nowrap;font-size:12.5px">' + pdEsc_(m.PaidToDate || '—') + '</td>' +
+      '<td style="padding:8px 10px;border:1px solid ' + PD_BRAND.line + ';background:' + bg +
+        ';color:' + (hot ? PD_BRAND.red : PD_BRAND.ink) + ';text-align:right;font-weight:bold">' + days + '</td>' +
+      '<td style="padding:8px 10px;border:1px solid ' + PD_BRAND.line + ';background:' + bg +
+        ';color:' + PD_BRAND.ink + ';text-align:right;white-space:nowrap">' +
+        (Number(m.Premium) > 0 ? pdMoney_(m.Premium) : '—') + '</td>' +
+      '</tr>';
+  }
+  var th = function (t, right) {
+    return '<th style="padding:8px 10px;background:' + PD_BRAND.navy + ';border:1px solid ' + PD_BRAND.navy +
+      ';color:#FFFFFF;text-align:' + (right ? 'right' : 'left') + ';font-weight:bold;font-size:10.5px;letter-spacing:.07em">' + t + '</th>';
+  };
+  var table = '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:10px 0;font-size:13px">' +
+    '<tr>' + th('POLICY') + th('PAID TO') + th('DAYS', 1) + th('PREMIUM', 1) + '</tr>' + rows +
+    '<tr>' +
+      '<td colspan="3" style="padding:9px 10px;border:1px solid ' + PD_BRAND.line + ';background:' + PD_BRAND.panel +
+        ';color:' + PD_BRAND.ink + ';font-weight:bold">Total outstanding premium, ' + live.length + ' member polic' +
+        (live.length === 1 ? 'y' : 'ies') + '</td>' +
+      '<td style="padding:9px 10px;border:1px solid ' + PD_BRAND.line + ';background:' + PD_BRAND.panel +
+        ';color:' + PD_BRAND.red + ';text-align:right;font-weight:bold;font-size:14px">' + pdMoney_(premTotal) + '</td>' +
+    '</tr></table>';
+
+  var diagnosis = (paidModeN >= 2 && paidModeN * 2 >= live.length)
+    ? '<p style="margin:0 0 10px"><b>' + paidModeN + ' of the ' + live.length + '</b> are paid to exactly <b>' +
+      pdEsc_(paidMode) + '</b>, which reads as one remittance not yet received rather than ' + live.length +
+      ' separate difficulties. If that payment has already been made, a remittance date and reference is all we need.</p>'
+    : '';
+
+  var cliffNote = atCliff
+    ? pdNote_('<b>' + atCliff + ' member polic' + (atCliff === 1 ? 'y is' : 'ies are') + ' within ' + minLeft +
+        ' day' + (minLeft === 1 ? '' : 's') + ' of the end of the 90-day grace period.</b> Past that point ' +
+        'reinstatement paperwork replaces a simple payment, member by member.', PD_BRAND.red)
+    : '';
+
+  var tail = '';
+  if (ancient.length) {
+    tail += '<p style="font-size:12.5px;color:' + PD_BRAND.mute + ';margin:8px 0 0">A further <b>' + ancient.length +
+      '</b> position' + (ancient.length === 1 ? '' : 's') + ' on this scheme show' + (ancient.length === 1 ? 's' : '') +
+      ' arrears older than six months — those look like records to reconcile rather than this remittance, and we will ' +
+      'send that list separately on request.</p>';
+  }
+  if (lapsedRecent) {
+    tail += '<p style="font-size:12.5px;color:' + PD_BRAND.mute + ';margin:8px 0 0"><b>' + lapsedRecent +
+      '</b> member polic' + (lapsedRecent === 1 ? 'y' : 'ies') + ' lapsed within the last ' + OUT.WIN_BACK_MAX_DAYS +
+      ' days and remain' + (lapsedRecent === 1 ? 's' : '') + ' inside the reinstatement window — recoverable now, ' +
+      'not later.</p>';
+  }
+
+  var subject = (round ? 'Notice ' + (round + 1) + ' — ' : '') +
+    'Group remittance outstanding — ' + display + ' (' + live.length + ' member polic' +
+    (live.length === 1 ? 'y' : 'ies') + ', ' + pdMoney_(premTotal) + ')';
+
+  var html = pdWrap_(
+    '<p style="margin:0 0 4px;font-size:11px;letter-spacing:.08em;color:' + PD_BRAND.mute + '">GROUP SCHEME — ' +
+      pdEsc_(key) + '</p>' +
+    '<p style="margin:0 0 12px">To the scheme administrator, <b>' + pdEsc_(display) + '</b>' +
+      (opts.agents ? ' &mdash; copied to ' + pdEsc_(opts.agents) + ' (servicing) and branch support' : '') + '.</p>' +
+    (round
+      ? pdNote_('This is <b>notice ' + (round + 1) + '</b> on the same outstanding remittance — the first was sent <b>' +
+          (Number(opts.waiting) || 0) + ' days ago</b>. The branch manager is copied.', PD_BRAND.gold)
+      : '<p style="margin:0 0 10px">The member policies below show premiums outstanding on your scheme. One list, ' +
+        'once — we will not write to your members individually about this.</p>') +
+    diagnosis + table + cliffNote +
+    pdSection_('What would settle it today',
+      '<p style="margin:0 0 8px">Any one of these, by reply:</p>' +
+      '<ul style="margin:0;padding-left:20px;color:' + PD_BRAND.ink + '">' +
+      '<li style="margin:0 0 6px">The <b>date and reference of the remittance</b>, if it has already been sent;</li>' +
+      '<li style="margin:0 0 6px">A <b>date it will be sent</b>, if it is scheduled;</li>' +
+      '<li style="margin:0 0 6px">Or the <b>right person to reconcile with</b>, if the schedule or the member list has changed.</li>' +
+      '</ul>') +
+    tail + pdSigInternal_(),
+    { kind: 'mgr' }, true);
+
+  return { subject: subject, html: html, live: live.length, premium: premTotal };
+}
+
+/**
+ * The group cadence, mirroring pdInternalChase_'s shape: read the log, decide,
+ * send at most one statement per scheme per run. First statement when any live
+ * member reaches SLA.GROUP_OPENS days; repeats every SLA.GROUP_STATEMENT_EVERY
+ * while anything stays unpaid; branch manager copied from the second. Logged
+ * against the synthetic policy 'GROUP:<key>' so pdCaseState_ tracks rounds and
+ * timing exactly as it does for every other internal clock.
+ */
+function pdGroupChase_(key, members, states) {
+  var i, trigger = false, agents = {}, agentNames = [];
+  for (i = 0; i < members.length; i++) {
+    var m = members[i];
+    if (Number(m.Status) === 2) {
+      var d = Number(m.DaysArrears) || 0;
+      if (d >= SLA.GROUP_OPENS && d < 180) trigger = true;
+    }
+    var a = String(m.Agent || '').replace(/^ +| +$/g, '');
+    if (a && !agents[a]) { agents[a] = 1; agentNames.push(a); }
+  }
+  if (!trigger) return 0;
+
+  var gp = { Policy: 'GROUP:' + key, Client: key, ClientNo: String(members[0].ClientNo || ''),
+             Agent: agentNames.join(', ') };
+  var s = states[gp.Policy] || pdEmptyState_();
+  var last = s.chases['group-statement'] || 0;
+  if (last && pdDaysSince_(last) < SLA.GROUP_STATEMENT_EVERY) return 0;
+  var round = Number(s.rounds && s.rounds['group-statement']) || 0;
+  var waiting = round ? pdDaysSince_(last) + (round - 1) * SLA.GROUP_STATEMENT_EVERY : 0;
+
+  var letter = pdGroupStatement_(key, members, { round: round, waiting: waiting, agents: agentNames.join(', ') });
+
+  /* administrator first, the company's own address second, the agent last */
+  var to = pdValidEmail_(OUT.GROUP_ADMIN[key]);
+  if (!to) for (i = 0; i < members.length; i++) { to = pdValidEmail_(members[i].Email); if (to) break; }
+  if (!to) to = pdStaffEmail_(agentNames[0]);
+
+  var cc = [], seen = {}, j;
+  for (j = 0; j < agentNames.length && j < 3; j++) cc.push(pdStaffEmail_(agentNames[j]));
+  cc.push(pdValidEmail_(OUT.SALES_SUPPORT_EMAIL));
+  if (round >= 1) cc.push(pdValidEmail_(OUT.BRANCH_MANAGER_EMAIL));
+  var ccOut = [];
+  for (j = 0; j < cc.length; j++) if (cc[j] && cc[j] !== to && !seen[cc[j]]) { seen[cc[j]] = 1; ccOut.push(cc[j]); }
+
+  var note = (round ? 'Statement ' + (round + 1) : 'First statement') + ' — ' + letter.live +
+    ' member policies, ' + pdMoney_(letter.premium) + ' outstanding';
+  if (!to || OUT.DRY_RUN) { pdLogInternal_(gp, 'group-statement', to, note, false); return 0; }
+  MailApp.sendEmail({ to: to, cc: ccOut.join(','), name: OUT.FROM_NAME,
+                      subject: letter.subject, htmlBody: letter.html });
+  pdLogInternal_(gp, 'group-statement', to, note, true);
+  return 1;
+}
+
 /** Everything already sent, as a {policy|stage: true} set read back from the log. */
 function pdAlreadySent_() {
   var sh = getSheet_();
@@ -2593,9 +2861,20 @@ function dailyPremiumDueRun() {
   }
   var count = 0, skippedNoEmail = 0, planned = 0, internal = 0;
 
+  var groups = {};                               // scheme key -> every row in the cluster
+
   for (var i = 0; i < payload.policies.length; i++) {
     if (count >= OUT.MAX_SENDS_PER_RUN) break;
     var p = payload.policies[i];
+
+    /* Company-owned policies leave the individual flow here, whole. They are
+       collected by scheme and handled once per company below. */
+    if (pdIsGroup_(p)) {
+      var gk = pdGroupKey_(p);
+      (groups[gk] = groups[gk] || []).push(p);
+      continue;
+    }
+
     var s = states[String(p.Policy)] || pdEmptyState_();
 
     internal += pdInternalChase_(p, s);          // agent / manager accountability
@@ -2639,8 +2918,17 @@ function dailyPremiumDueRun() {
     }
   }
 
-  Logger.log('Premium due run — %s. planned=%s sent=%s no-email=%s internal-chases=%s',
-    OUT.DRY_RUN ? 'DRY RUN, nothing emailed' : 'LIVE', planned, count, skippedNoEmail, internal);
+  /* One statement per scheme, after the individual pass — a company with 65
+     member policies is one email here, not 65 anywhere else. */
+  var groupsSent = 0, groupCount = 0;
+  for (var gk2 in groups) {
+    if (!Object.prototype.hasOwnProperty.call(groups, gk2)) continue;
+    groupCount++;
+    groupsSent += pdGroupChase_(gk2, groups[gk2], states);
+  }
+
+  Logger.log('Premium due run — %s. planned=%s sent=%s no-email=%s internal-chases=%s group-schemes=%s group-statements=%s',
+    OUT.DRY_RUN ? 'DRY RUN, nothing emailed' : 'LIVE', planned, count, skippedNoEmail, internal, groupCount, groupsSent);
 }
 
 function pdInstallTrigger() {
@@ -2683,4 +2971,13 @@ function pdPreview() {
   ['commit','ack','feedback'].forEach(function (ph) {
     Logger.log('--- manager %s ---\nSUBJECT: %s', ph, pdManagerLetter_(demo, demoState, { phase: ph }).subject);
   });
+
+  var scheme = [
+    { Policy: '5003700001', Client: 'Servus Limited', ClientNo: '900901', Agent: 'Ricky Rampersad',
+      Status: 2, DaysArrears: 46, Premium: 512.00, PlanCode: 'RPIM 1', PaidToDate: '2026-07-01' },
+    { Policy: '5003700002', Client: 'Servus Limited', ClientNo: '900901', Agent: 'Ricky Rampersad',
+      Status: 2, DaysArrears: 46, Premium: 655.40, PlanCode: 'PIM 1', PaidToDate: '2026-07-01' }
+  ];
+  Logger.log('--- group statement ---\nSUBJECT: %s',
+    pdGroupStatement_('SERVUS LIMITED', scheme, { agents: 'Ricky Rampersad' }).subject);
 }
