@@ -85,6 +85,13 @@ var OUT = {
   // because the shortest path from "I'll settle it" to settled is one tap.
   PAY_URL: 'https://www.myggonline.app/',
 
+  // The grace-period / non-forfeiture clause FROM THE SPECIFIC PLAN'S CONTRACT,
+  // pasted verbatim by the branch. When set, the letters quote it alongside the
+  // Insurance Act; while blank they quote the Act alone and say the policy's
+  // own wording is available on request. Never paraphrase a contract here —
+  // paste it or leave it blank.
+  CONTRACT_NOTE: '',
+
   // Branch manager — copied on the 60-day notice and on repeat manager chases.
   BRANCH_MANAGER_EMAIL: '',      // e.g. 'ricky.rampersad@myguardiangroup.com'
 
@@ -675,8 +682,81 @@ function pdLapseMeaningFor_(p, state) {
   }
 }
 
+/* ===================== WHAT THE LAW ACTUALLY SAYS =====================
+   Quoted verbatim from the Insurance Act, 2018 (Act No. 4 of 2018, Trinidad
+   and Tobago) — sections 180 (ordinary policies) and 207 (industrial
+   policies). Verified against the published Act, not paraphrased from memory.
+   This is why "your cover ends at day 90" is only ever written to a policy
+   with no surrender value: for one that has built value, forfeiture for
+   non-payment alone is barred by statute while the value covers what is owed. */
+
+var PD_LAW = {
+  cite: 'Insurance Act, 2018 (Act No. 4 of 2018), Trinidad and Tobago',
+  s180_1: 'An ordinary policy shall not be forfeited by reason only of non-payment of any premiums ' +
+    'where the surrender value of the policy, calculated as at the day immediately preceding that on ' +
+    'which the premium falls due, exceeds the sum of the amount of the debts owing to the insurer ' +
+    'under, or secured by, the policy and the amount of the overdue premium.',
+  s180_4: 'Where the surrender value does not cover what is owed, the policy may only be forfeited after ' +
+    'the insurer serves a late-payment notice and at least twenty business days have passed (s. 180(4)).',
+  s207_3: 'An industrial policy on which at least two years\u2019 premiums have been paid shall not be ' +
+    'forfeited by reason only of the non-payment of any premium, unless the premium has remained unpaid ' +
+    'for not less than twelve weeks after it became due.'
+};
+
+/**
+ * The letter's legal footing, quoted rather than asserted. The Act is quoted
+ * verbatim with its section number; the plan's own clause is quoted only when
+ * the branch has pasted it into OUT.CONTRACT_NOTE, because a contract must
+ * never be paraphrased at a client.
+ */
+function pdLawBlock_(p) {
+  var quote = function (text, cite) {
+    return '<div style="border-left:3px solid ' + PD_BRAND.line + ';padding:10px 14px;margin:12px 0;' +
+      'font-size:13px;line-height:1.6;color:' + PD_BRAND.navy3 + ';font-style:italic">&ldquo;' + text +
+      '&rdquo;<div style="font-style:normal;font-size:11.5px;color:' + PD_BRAND.mute + ';padding-top:6px">— ' +
+      cite + '</div></div>';
+  };
+  var out = quote(PD_LAW.s180_1, PD_LAW.cite + ', s. 180(1)');
+  if (OUT.CONTRACT_NOTE) out += quote(pdEsc_(OUT.CONTRACT_NOTE), 'Your policy contract');
+  else out += '<p style="font-size:12.5px;color:' + PD_BRAND.mute + ';margin:8px 0 0">Your own policy&rsquo;s ' +
+    'grace-period and non-forfeiture clause governs in all cases — ask and we will send you the exact ' +
+    'wording from your contract.</p>';
+  return out;
+}
+
 /** Days left before the 90-day lapse line. */
 function pdDaysToLapse_(p) { return Math.max(0, SLA.LAPSE - (Number(p.DaysArrears) || 0)); }
+
+/**
+ * The deadline sentence, said correctly. "Cover ends in 45 days" is only true
+ * of a policy with no surrender value; for one that has built value, the Act
+ * bars forfeiture for non-payment alone while the value covers what is owed,
+ * so the truthful sentence is about the grace period and the value being
+ * drawn down — which the manager confirms.
+ */
+function pdDeadlineLine_(p) {
+  var left = pdDaysToLapse_(p);
+  switch (pdValueStatus_(p)) {
+    case VALUE_NONE:
+      return 'This policy is in its first two years, so it has not yet built a value to fall back on. ' +
+        'If the premium is still outstanding at <b>day 90 — ' + left + ' days from today</b> — it will ' +
+        '<b>lapse and cover will end</b>.';
+    case VALUE_APL:
+      return 'In <b>' + left + ' days</b> this policy reaches the end of its 90-day grace period. Cover does ' +
+        'not simply end there — a premium loan is already running against the value you have built, and the ' +
+        'cost of cover is being met from it — but that value is being spent down, and when it is exhausted ' +
+        'the cover does end.';
+    case VALUE_LIKELY:
+      return 'In <b>' + left + ' days</b> this policy reaches the end of its 90-day grace period. Because it ' +
+        'has been in force long enough to have built a value, cover does not simply end there — under your ' +
+        'contract and the Insurance Act the cost of cover can be met from that value for a period. Your ' +
+        'manager will confirm the exact position.';
+    default:
+      return 'In <b>' + left + ' days</b> this policy reaches the end of its 90-day grace period. What happens ' +
+        'then depends on the value it has built — where there is value, cover continues out of it for a ' +
+        'period; where there is none, the policy lapses. We will confirm which applies to yours.';
+  }
+}
 
 function pdRespondLink_(policy, key) {
   if (!OUT.ENGINE_URL) return '';
@@ -1163,7 +1243,7 @@ function pdFacts_(p) {
     (held !== null && held >= 1 ? row('In force', Math.floor(held) + ' year' + (Math.floor(held) === 1 ? '' : 's') +
         (pdIssueYear_(p) ? ' <span style="font-weight:normal;color:' + PD_BRAND.mute + '">&middot; since ' +
          pdIssueYear_(p) + '</span>' : '')) : '') +
-    (p.LapseDate ? row('Cover ends', pdEsc_(p.LapseDate)) : '') +
+    (p.LapseDate ? row('Grace period ends', pdEsc_(p.LapseDate)) : '') +
     '</table>';
 }
 /* ===================== standard letter furniture =====================
@@ -1516,12 +1596,16 @@ var PD_TEMPLATES = {
           : '') +
 
         pdSection_('What happens next',
-          '<p style="margin:0">Cover ends <b>' + left + ' days</b> from today if this stays outstanding' +
+          '<p style="margin:0 0 10px">' + pdDeadlineLine_(p) + '</p>' +
+          '<p style="margin:0">' +
           (pdManagerOf_(p.Agent)
-            ? ', and if we have not heard from you by <b>day 60</b>, <b>' + pdEsc_(pdManagerOf_(p.Agent)) +
+            ? 'If we have not heard from you by <b>day 60</b>, <b>' + pdEsc_(pdManagerOf_(p.Agent)) +
               '</b> — the manager responsible for your advisor — will call you personally. '
-            : ', and if we have not heard from you by <b>day 60</b> a manager will call you personally. ') +
-          'We would rather hear from you first.</p>') +
+            : 'If we have not heard from you by <b>day 60</b>, a manager will call you personally. ') +
+          'We would rather hear from you first.</p>' +
+          '<p style="font-size:12px;color:' + PD_BRAND.mute + ';margin:10px 0 0">Your policy&rsquo;s ' +
+          'grace-period and non-forfeiture provisions, and the ' + PD_LAW.cite + ' (s. 180), govern what ' +
+          'happens at day 90 — the final notice quotes them in full.</p>') +
 
         '<p style="margin:22px 0 0">Prefer a voice? <b>' + pdEsc_(OUT.BRANCH_PHONE) + '</b> — ask for branch ' +
         'support and quote ' + pdEsc_(p.Policy) + '.</p>' +
@@ -1558,8 +1642,7 @@ var PD_TEMPLATES = {
       html: pdWrap_(
         pdRefBlock_(p, 'Premium Outstanding — Reminder') +
         '<p style="margin:0 0 10px">' + pdSalutation_(p.Client) + ',</p>' +
-        '<p style="margin:0">We wrote at day 45 and have not yet had your instruction. Cover on this policy ends ' +
-        'in <b>' + left + ' days</b>.</p>' +
+        '<p style="margin:0">We wrote at day 45 and have not yet had your instruction. ' + pdDeadlineLine_(p) + '</p>' +
 
         pdGlance_(p) +
 
@@ -1610,7 +1693,7 @@ var PD_TEMPLATES = {
           pdQuestionBlock_(p, pdClientQuestions_(p, state && state.family, ['help', 'pay']), 'respond') +
           pdPayBtn_(p)) +
 
-        pdSection_('What day 90 means here', pdNote_(pdLapseMeaningFor_(p, state), PD_BRAND.red)) +
+        pdSection_('What day 90 means here', pdNote_(pdLapseMeaningFor_(p, state), PD_BRAND.red) + pdLawBlock_(p)) +
 
         '<p style="margin:22px 0 0">Or call <b>' + pdEsc_(OUT.BRANCH_PHONE) + '</b>, quoting ' +
         pdEsc_(p.Policy) + '. ' + (mgr ? 'Ask for <b>' + pdEsc_(mgr) + '</b> — this policy is theirs.' : '') + '</p>' +
@@ -1641,7 +1724,7 @@ var PD_TEMPLATES = {
           pdQuestionBlock_(p, pdClientQuestions_(p, state && state.family, ['help', 'pay']), 'respond') +
           pdPayBtn_(p)) +
 
-        pdSection_('What day 90 means here', pdNote_(pdLapseMeaningFor_(p, state))) +
+        pdSection_('What day 90 means here', pdNote_(pdLapseMeaningFor_(p, state)) + pdLawBlock_(p)) +
 
         '<p style="margin:22px 0 0">If none of the above fits, reply with a single line and I will call you ' +
         'myself. <b>' + pdEsc_(OUT.BRANCH_PHONE) + '</b>, quoting ' + pdEsc_(p.Policy) + '.</p>' +
@@ -1700,7 +1783,7 @@ var PD_TEMPLATES = {
           'Nothing about this policy changes them.</p>') : '') +
 
         pdSection_('Where this policy stands',
-          pdNote_(pdLapseMeaningFor_(p, state), PD_BRAND.red) +
+          pdNote_(pdLapseMeaningFor_(p, state), PD_BRAND.red) + pdLawBlock_(p) +
           '<p style="margin:10px 0 0">Reinstatement is usually simpler than starting again — the policy keeps ' +
           'its <b>original age and terms</b>, so it is normally cheaper than the same cover bought today. ' +
           'That window does not stay open indefinitely.</p>') +
@@ -1990,7 +2073,11 @@ function pdManagerLetter_(p, state, opts) {
 
       (outstanding.length
         ? pdSection_(round ? 'Still outstanding — tap to answer' : 'Please answer — one tap each',
-            pdQuestionBlock_(p, outstanding, 'mgr'))
+            pdQuestionBlock_(p, outstanding, 'mgr') +
+            '<p style="font-size:12px;color:' + PD_BRAND.mute + ';margin:12px 0 0">The non-forfeiture ' +
+            'question is statutory: under s. 180(1) of the ' + PD_LAW.cite + ', a policy whose surrender ' +
+            'value covers the arrears <b>cannot be forfeited for non-payment alone</b>. Your answer goes ' +
+            'into the client&rsquo;s final notice verbatim.</p>')
         : pdNote_('<b>Every question has been answered.</b> Nothing further is outstanding on this policy from ' +
             'the branch side.', PD_BRAND.green)) +
 
