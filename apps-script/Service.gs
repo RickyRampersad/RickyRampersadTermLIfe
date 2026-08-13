@@ -97,6 +97,12 @@ var SVC = {
   GRP_SHEET:   'Group Service Questionnaires',
   LOG_SHEET:   'Service Activity',
 
+  /* The branch's agents and what each is strongest at. Support maintains this
+     tab, and "Appoint matched agent" lists it beside the client's brief so
+     every match is picked from the live roster — never hard-coded to anyone.
+     Any name can still be typed in; the bank informs, it does not restrict. */
+  TEAM_SHEET:  'Agent Skill Bank',
+
   /* The promise made to the client on screen. Change it here and in
      service/index.html together, or don't change it at all.           */
   SLA_BUSINESS_DAYS: 1,
@@ -406,6 +412,23 @@ function logSheet_() {
 
 function log_(ref, event, details) {
   try { logSheet_().appendRow([new Date(), ref, event, String(details || '').slice(0, 900)]); } catch (e) {}
+}
+
+/** The Agent Skill Bank tab — the branch keeps its roster here, one agent a
+ *  row, and "Appoint matched agent" lists it beside the client's brief.
+ *  The team updates it as skills grow; nothing in the code names an agent. */
+function teamBankSheet_() {
+  var sh = ss_().getSheetByName(SVC.TEAM_SHEET);
+  if (!sh) {
+    sh = ss_().insertSheet(SVC.TEAM_SHEET);
+    sh.appendRow(['Agent', 'Agent no.', 'Skills & strengths', 'Availability',
+                  'Languages', 'Areas covered', 'Active', 'Notes']);
+    sh.setFrozenRows(1);
+    try {
+      sh.getRange(1, 1, 1, 8).setFontWeight('bold').setBackground(SB.light);
+    } catch (e) {}
+  }
+  return sh;
 }
 
 /**
@@ -903,7 +926,8 @@ function routeToService_(ref, priority, now, body, attachments, clientEmailed) {
       : '') +
     (c.changeAgent
       ? box_('tip', '<b>' + (c.handledBy === 'Matched agent'
-            ? 'Agent appointment — assign from the team, against the brief below.'
+            ? 'Agent appointment — assign from the team, against the brief below. The ' + esc_(SVC.TEAM_SHEET) +
+              ' tab has the live roster; use “Appoint matched agent” on the client’s row.'
             : 'Agent appointment — direct to ' + esc_(SVC.AGENT_NAME) + ' and the team.') + '</b> ' +
           ((body.signature || body.signatureTyped)
             ? 'The signed request is attached' +
@@ -957,6 +981,21 @@ function routeToService_(ref, priority, now, body, attachments, clientEmailed) {
    (letterhead-and-stamp for a company). Run from the sheet menu with the
    client's row selected. */
 
+/** The live roster from the Agent Skill Bank tab — name, number, and what
+ *  each agent is strongest at. Rows with Active = No stay off the list. */
+function skillBank_() {
+  var sh = ss_().getSheetByName(SVC.TEAM_SHEET);
+  if (!sh || sh.getLastRow() < 2) return [];
+  var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+  var rows = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
+  var col = function (r, h) { var i = head.indexOf(h); return i < 0 ? '' : String(r[i] || '').trim(); };
+  return rows.map(function (r) {
+    return { name: col(r, 'Agent'), no: col(r, 'Agent no.'),
+             skills: col(r, 'Skills & strengths'), avail: col(r, 'Availability'),
+             langs: col(r, 'Languages'), active: col(r, 'Active') };
+  }).filter(function (a) { return a.name && !/^no$/i.test(a.active); });
+}
+
 function sendMatchAssignment() {
   var ui = SpreadsheetApp.getUi();
   var sh = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
@@ -967,15 +1006,39 @@ function sendMatchAssignment() {
   var row = sh.getActiveRange().getRow();
   if (row < 2) { ui.alert('Select the client’s row, not the header.'); return; }
 
-  var agent = ui.prompt('Appoint which agent?',
-    'The agent’s name exactly as it should print on the letter:', ui.ButtonSet.OK_CANCEL);
+  /* The choice is the team's, made per client against the brief — the skill
+     bank is laid out to inform it, and any name can still be typed. */
+  var bank = skillBank_();
+  var listing = bank.length
+    ? 'The skill bank:\n' +
+      bank.map(function (a, i) {
+        return (i + 1) + '. ' + a.name +
+               (a.skills ? ' — ' + a.skills : '') +
+               (a.avail ? ' · ' + a.avail : '') +
+               (a.langs ? ' · ' + a.langs : '');
+      }).join('\n') +
+      '\n\nEnter a number from the list, or type any agent’s name:'
+    : 'The agent’s name exactly as it should print on the letter.\n' +
+      '(Tip: keep the roster in the "' + SVC.TEAM_SHEET + '" tab and it will be listed here.)';
+
+  var agent = ui.prompt('Appoint which agent?', listing, ui.ButtonSet.OK_CANCEL);
   if (agent.getSelectedButton() !== ui.Button.OK || !agent.getResponseText().trim()) return;
+  var t = agent.getResponseText().trim();
+
+  var picked = null;
+  var n = parseInt(t, 10);
+  if (bank.length && String(n) === t && n >= 1 && n <= bank.length) picked = bank[n - 1];
+  if (!picked) {
+    picked = bank.filter(function (a) { return a.name.toLowerCase() === t.toLowerCase(); })[0] || null;
+  }
+
   var why = ui.prompt('Why this agent?',
     'One or two sentences for the client — what made this the right match for their brief:',
     ui.ButtonSet.OK_CANCEL);
   if (why.getSelectedButton() !== ui.Button.OK) return;
 
-  var res = matchAssignmentForRow_(sh, row, agent.getResponseText().trim(), '', why.getResponseText().trim());
+  var res = matchAssignmentForRow_(sh, row,
+    picked ? picked.name : t, picked ? picked.no : '', why.getResponseText().trim());
   ui.alert(res.ok ? 'Sent — ' + res.msg : 'Not sent — ' + res.msg);
 }
 
@@ -1992,6 +2055,7 @@ function setupService() {
   sheetFor_(false);
   sheetFor_(true);
   logSheet_();
+  teamBankSheet_();
 
   var warn = SVC.CS_EMAIL ? '' :
     '<p style="color:#b3261e"><b>SVC.CS_EMAIL is still empty.</b> Submissions will route to the branch only ' +
