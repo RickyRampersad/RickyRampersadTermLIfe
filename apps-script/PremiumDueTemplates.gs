@@ -336,12 +336,13 @@ function pdDecodeAnswer_(questionText, label) {
    Three schemes. Set PD_THEME to whichever you want and every letter, badge,
    table header and rule follows it — nothing else to change.
 
-     'navy'      Navy, from rickyrampersadbranch.com. The default.
+     'navy'      Navy, from rickyrampersadbranch.com.
      'teal'      Guardian's corporate teal — closer to head office than to the
                  branch site.
      'charcoal'  The most neutral: closest to a bank statement, and the safest
                  on a poor screen.
-     'burgundy'  Oxblood. The most traditional — reads like a solicitor's letter.
+     'burgundy'  Oxblood. The most traditional — reads like a solicitor's
+                 letter. THE BRANCH'S CHOICE — this is the default.
      'forest'    Deep green. Warmer than navy without losing weight.
      'slate'     Blue-grey. The most contemporary of the six.
 
@@ -350,7 +351,7 @@ function pdDecodeAnswer_(questionText, label) {
 
    All three share the gold, the crest and the layout. Only the dark field
    changes, and every combination in each has been checked to clear 3.2:1. */
-var PD_THEME = 'navy';
+var PD_THEME = 'burgundy';
 
 var PD_THEMES = {
   navy:     { dark: '#0B2035', dark2: '#123050', mid: '#2C4A6B', tint: '#A9C4DE' },
