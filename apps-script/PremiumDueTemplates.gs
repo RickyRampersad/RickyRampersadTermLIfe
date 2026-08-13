@@ -336,29 +336,29 @@ function pdDecodeAnswer_(questionText, label) {
    Three schemes. Set PD_THEME to whichever you want and every letter, badge,
    table header and rule follows it — nothing else to change.
 
-     'navy'      Navy and gold. Taken from rickyrampersadbranch.com, so a client
-                 who has seen the website recognises the letter as the same
-                 house. This is the default.
-     'teal'      Guardian's corporate teal with the same gold — closer to head
-                 office than to the branch site.
-     'charcoal'  Charcoal and gold. The most neutral: closest to a bank
-                 statement, and the safest on a poor screen.
-     'burgundy'  Oxblood and antique gold. The most traditional — reads like a
-                 solicitor's letter.
-     'forest'    Deep green and gold. Warmer than navy without losing weight.
-     'slate'     Blue-grey and copper. The most contemporary of the six.
+     'navy'      Navy, from rickyrampersadbranch.com. The default.
+     'teal'      Guardian's corporate teal — closer to head office than to the
+                 branch site.
+     'charcoal'  The most neutral: closest to a bank statement, and the safest
+                 on a poor screen.
+     'burgundy'  Oxblood. The most traditional — reads like a solicitor's letter.
+     'forest'    Deep green. Warmer than navy without losing weight.
+     'slate'     Blue-grey. The most contemporary of the six.
+
+   There is no yellow in any of them. Accents on white are the scheme's own mid
+   tone; accents on the dark field are its light tint.
 
    All three share the gold, the crest and the layout. Only the dark field
    changes, and every combination in each has been checked to clear 3.2:1. */
 var PD_THEME = 'navy';
 
 var PD_THEMES = {
-  navy:     { dark: '#0B2035', dark2: '#123050', mid: '#2C4A6B', accent: '#C9942C', accent2: '#F0C448' },
-  teal:     { dark: '#0A403B', dark2: '#0E6E64', mid: '#2C6660', accent: '#C9942C', accent2: '#F0C448' },
-  charcoal: { dark: '#22262B', dark2: '#343A42', mid: '#4A525C', accent: '#C9942C', accent2: '#F0C448' },
-  burgundy: { dark: '#3A1620', dark2: '#5A2333', mid: '#7A3A4B', accent: '#C08A3E', accent2: '#E8C07A' },
-  forest:   { dark: '#152A1E', dark2: '#24422F', mid: '#3E6248', accent: '#C9942C', accent2: '#EFD08A' },
-  slate:    { dark: '#1E2A38', dark2: '#2E4054', mid: '#4A5D74', accent: '#B87333', accent2: '#E0A96D' }
+  navy:     { dark: '#0B2035', dark2: '#123050', mid: '#2C4A6B', tint: '#A9C4DE' },
+  teal:     { dark: '#0A403B', dark2: '#0E6E64', mid: '#2C6660', tint: '#9BD0C7' },
+  charcoal: { dark: '#22262B', dark2: '#343A42', mid: '#4A525C', tint: '#C3CCD5' },
+  burgundy: { dark: '#3A1620', dark2: '#5A2333', mid: '#7A3A4B', tint: '#E2B7BF' },
+  forest:   { dark: '#152A1E', dark2: '#24422F', mid: '#3E6248', tint: '#B7D2BD' },
+  slate:    { dark: '#1E2A38', dark2: '#2E4054', mid: '#4A5D74', tint: '#C2D1DF' }
 };
 
 var PD_BRAND = (function () {
@@ -367,14 +367,18 @@ var PD_BRAND = (function () {
     navy:  t.dark,       // the letterhead field
     navy2: t.dark2,      // headings and table headers
     navy3: t.mid,        // secondary text on white
-    gold:  t.accent,     // the rule, the crest, every accent
-    gold2: t.accent2,    // accent on the dark field only — it disappears on white
-    goldDeep: '#7A5810',
+    /* No yellow anywhere, by instruction. Accents on white use the scheme's own
+       mid tone; accents on the dark field use its light tint. The keys keep
+       their old names so forty call sites did not need renaming. */
+    gold:  t.mid,        // accents on white: option edges, note bars, rules
+    gold2: t.tint,       // accents on the dark field only
+    teal:  t.mid,        // legacy aliases — a few tables still name them
+    teal2: t.dark2,
     ink:   '#101A24',
     mute:  '#5C6B7A',
     line:  '#E3DED3',
-    panel: '#F7F4EE',    // warm panel, for reference blocks and option rows
-    wash:  '#FDF7E8',    // the gold wash behind a note
+    panel: '#F7F4EE',    // warm neutral panel, for reference blocks and option rows
+    wash:  '#F5F3ED',    // the neutral wash behind a note
     red:   '#A8322F',
     green: '#2F6B45',
     paper: '#FFFFFF'     // white, not cream. A cream body reads as a photocopy;
@@ -400,19 +404,20 @@ var PD_ORG = { branch: 'Ricky Rampersad Branch', carrier: 'Guardian Life of the 
  */
 function pdBadge_(kind, days) {
   var d = Number(days) || 0;
+  /* The routine badges take the scheme's light tint with dark type, so they sit
+     inside the letterhead instead of shouting over it. Colour is reserved for
+     the two that mean something: red for the final notice, green for an account
+     back in order. */
   var map = {
-    /* Gold takes dark type, never white — white on this gold is 2.7:1, which is
-       unreadable on a phone in daylight and is exactly the sort of thing that
-       makes a letter look cheap. */
-    s45:     { t: 'PREMIUM DUE',  bg: '#C9942C', fg: '#0B2035' },
-    chase:   { t: 'PREMIUM DUE',  bg: '#C9942C', fg: '#0B2035' },
-    s75:     { t: 'PREMIUM DUE',  bg: '#A8641C', fg: '#FFFFFF' },
+    s45:     { t: 'PREMIUM DUE',  bg: PD_BRAND.gold2, fg: PD_BRAND.navy },
+    chase:   { t: 'PREMIUM DUE',  bg: PD_BRAND.gold2, fg: PD_BRAND.navy },
+    s75:     { t: 'PREMIUM DUE',  bg: PD_BRAND.gold2, fg: PD_BRAND.navy },
     s90:     { t: 'FINAL NOTICE', bg: '#A8322F', fg: '#FFFFFF' },
     winback: { t: 'POLICY LAPSED', bg: '#6B7480', fg: '#FFFFFF' },
-    pend:    { t: 'NOT YET IN FORCE', bg: '#0E6E64', fg: '#FFFFFF' },
+    pend:    { t: 'NOT YET IN FORCE', bg: PD_BRAND.gold2, fg: PD_BRAND.navy },
     thanks:  { t: 'ACCOUNT UP TO DATE', bg: '#2F6B45', fg: '#FFFFFF' },
-    close:   { t: 'GRACE PERIOD ENDED', bg: '#3A4654', fg: '#FFFFFF' },
-    mgr:     { t: 'INTERNAL', bg: PD_BRAND.navy2, fg: PD_BRAND.gold2 }
+    close:   { t: 'GRACE PERIOD ENDED', bg: '#6B7480', fg: '#FFFFFF' },
+    mgr:     { t: 'INTERNAL', bg: PD_BRAND.gold2, fg: PD_BRAND.navy }
   };
   var m = map[kind];
   if (!m) return '';
@@ -426,12 +431,14 @@ function pdBadge_(kind, days) {
     '</td></tr></table>';
 }
 
-/** The branch crest — a gold shield with a heart, as on the branch website. */
+/** The branch crest — a shield carrying a CHECKMARK, as on the branch website.
+    (An earlier draft used a heart; that is a different icon on the site and it
+    was the wrong one.) Built from HTML because Gmail strips inline SVG. */
 function pdCrest_() {
   return '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tr>' +
     '<td width="44" height="50" align="center" valign="middle" style="width:44px;height:50px;' +
-      'background:' + PD_BRAND.gold + ';border-radius:7px 7px 21px 21px;color:' + PD_BRAND.navy + ';' +
-      'font-size:21px;line-height:50px;font-family:Arial,Helvetica,sans-serif">&hearts;</td>' +
+      'background:' + PD_BRAND.gold2 + ';border-radius:7px 7px 21px 21px;color:' + PD_BRAND.navy + ';' +
+      'font-size:23px;line-height:50px;font-weight:bold;font-family:Arial,Helvetica,sans-serif">&#10003;</td>' +
     '</tr></table>';
 }
 
@@ -797,12 +804,12 @@ var MGR_SAID_CLIENT = {
 };
 
 /* Rows are told apart by their background, not by the colour of the text.
-   PD_BRAND.gold reads at 2.6:1 on white — fine as a rule or a button, not as a
+   A pale tone on white — fine as a rule or a button, not as a
    sentence somebody has to read on a phone in daylight. Every value below is
    above 4.5:1 against the background it sits on, and each states both. */
 var PD_LOG_TINT = {
   you: { fg: '#0A524A', bg: '#F1F7F5', weight: '600' },     // the client's own words
-  mgr: { fg: '#6B4E0A', bg: '#FBF4E4', weight: '600' },     // a manager acted
+  mgr: { fg: PD_BRAND.navy2, bg: PD_BRAND.panel, weight: '600' },   // a manager acted
   us:  { fg: '#0B1B2B', bg: '#FFFFFF', weight: 'normal' }   // we wrote
 };
 
@@ -939,7 +946,7 @@ function pdWrap_(inner, tag, internal) {
         '</tr></table>' +
       '</td></tr>' +
       /* a hairline, not a band — a 4px stripe reads like a web banner */
-      '<tr><td style="height:2px;line-height:2px;font-size:0;background:' + PD_BRAND.gold + '">&nbsp;</td></tr>' +
+      '<tr><td style="height:2px;line-height:2px;font-size:0;background:' + PD_BRAND.gold2 + '">&nbsp;</td></tr>' +
     '</table>' +
 
     '<div style="border:1px solid ' + PD_BRAND.line + ';border-top:none;padding:30px;background:' +
@@ -957,8 +964,8 @@ function pdWrap_(inner, tag, internal) {
 }
 function pdBtn_(link, label) {
   if (!link) return '';
-  return '<p style="text-align:center;margin:22px 0"><a href="' + link + '" style="background:' + PD_BRAND.gold +
-    ';color:' + PD_BRAND.ink + ';text-decoration:none;font-weight:bold;padding:13px 28px;border-radius:8px;display:inline-block">' +
+  return '<p style="text-align:center;margin:22px 0"><a href="' + link + '" style="background:' + PD_BRAND.navy2 +
+    ';color:#FFFFFF;text-decoration:none;font-weight:bold;padding:13px 28px;border-radius:8px;display:inline-block">' +
     pdEsc_(label) + '</a></p>';
 }
 function pdNote_(html, colour) {
@@ -1231,7 +1238,7 @@ function pdPolicyTable_(p, family) {
     var label = here ? 'This letter' : (st === 1 ? 'Lapsed' : st === 2 ? 'Behind' :
                  st === 3 ? 'In underwriting' : desc || 'In force');
     var colour = here ? PD_BRAND.red : (st === 1 ? '#8A8578' : st === 2 ? PD_BRAND.gold : PD_BRAND.teal);
-    var bg = here ? '#FBF4E4' : '#FFFFFF';
+    var bg = here ? PD_BRAND.panel : '#FFFFFF';
     rows += '<tr>' +
       '<td style="padding:9px 12px;border:1px solid ' + PD_BRAND.line + ';background:' + bg +
         ';color:' + PD_BRAND.ink + ';font-weight:bold">' + pdEsc_(f.Policy) +

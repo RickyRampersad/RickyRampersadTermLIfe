@@ -98,12 +98,17 @@ manager. See below.
 
 | | | |
 |---|---|---|
-| `navy` | Navy & gold | From the branch website. **Default.** |
-| `teal` | Teal & gold | Guardian corporate — closer to head office |
-| `charcoal` | Charcoal & gold | Most neutral; closest to a bank statement |
-| `burgundy` | Oxblood & antique gold | Most traditional; reads like a solicitor's letter |
-| `forest` | Forest & gold | Warmer than navy without losing weight |
-| `slate` | Slate & copper | Most contemporary |
+| `navy` | Navy | From the branch website. **Default.** |
+| `teal` | Teal | Guardian corporate — closer to head office |
+| `charcoal` | Charcoal | Most neutral; closest to a bank statement |
+| `burgundy` | Oxblood | Most traditional; reads like a solicitor's letter |
+| `forest` | Forest | Warmer than navy without losing weight |
+| `slate` | Slate | Most contemporary |
+
+**There is no yellow in any of them**, by instruction. Accents on white use the
+scheme's own mid tone; accents on the dark field use its light tint. Colour on
+the badge is reserved for the two that mean something — red for the final
+notice, green for an account back in order.
 
 Every letter, badge, table header and rule follows it; the crest, the layout and
 the wording are shared. All six clear 3.2:1 on every text node.
@@ -124,9 +129,9 @@ It is laid out as correspondence, not as a notification:
 - **A rule, then the subject in serif**, with the policy number and client
   reference beneath it — the "Re:" line of a real letter.
 - **Section headings in serif over hairlines**, not tinted boxes.
-- **Options as quiet rows** with a gold left edge and a chevron. The previous
-  version put a slab of gold beside every one of ten choices, which is what a
-  form looks like, not a letter.
+- **Options as quiet rows** with a thin left edge in the scheme's mid tone and
+  a chevron. The previous version put a coloured slab beside every one of ten
+  choices, which is what a form looks like, not a letter.
 - **Figures set in serif** at 22px across a hairline strip.
 - **A signature block and a branch footer** — name, title, branch, carrier,
   place, telephone, email.
@@ -149,10 +154,10 @@ nobody taps.
 
 ### The letterhead
 
-Navy field, the gold shield with a heart, the branch name over **Guardian Life
-of the Caribbean · Chaguanas, Trinidad**, and a gold rule — taken from
-rickyrampersadbranch.com rather than invented, so a client who has seen the
-website recognises the letter as the same house.
+Navy field, the branch shield carrying a **checkmark** — the actual mark on
+rickyrampersadbranch.com; an earlier draft wrongly used a heart, which is a
+different icon on the site — the branch name over **Guardian Life of the
+Caribbean · Chaguanas, Trinidad**, and a hairline rule in the scheme's tint.
 
 Top right is a **status badge**: `PREMIUM DUE · 45 DAYS OVERDUE`, in the day
 count off the portfolio, going amber at 75 and red at `FINAL NOTICE`. A letter
@@ -160,8 +165,7 @@ about a lapsing policy should say what it is before a word of it has been read.
 
 The crest is built from HTML, not SVG. **Gmail strips inline SVG and Outlook
 does not render it at all**, so an SVG crest is a blank space in the two clients
-most of this book reads mail in. Gold takes dark type and never white — white on
-this gold is 2.7:1.
+most of this book reads mail in. Tint fields take dark type, never white.
 
 ### What the letter carries from the portfolio
 
