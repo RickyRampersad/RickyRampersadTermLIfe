@@ -1,6 +1,26 @@
-# Netlify configuration for the renewal portal.
+# Netlify configuration for the renewal portal and Claims TT.
 
-# Short personal links: /r/<token> → renewal portal with the token attached.
+# ── Client data must never be served ────────────────────────────────
+# /data/ holds the Salesforce exports — client names, emails, mobiles,
+# chassis numbers, policy numbers and premiums. The publish directory is
+# the repository root, so without this rule every one of those files is
+# downloadable by anyone who guesses the path. They live in the repo so
+# the register can be rebuilt and imported into the private Claims sheet;
+# they are not, and must not become, part of the website.
+[[redirects]]
+  from = "/data/*"
+  to = "/"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/apps-script/*"
+  to = "/"
+  status = 404
+  force = true
+
+# ── Short links ─────────────────────────────────────────────────────
+# Personal renewal links: /r/<token> → renewal portal with the token attached.
 # These are the links stored in the Google Sheet's "Portal Link" column.
 [[redirects]]
   from = "/r/*"
@@ -13,9 +33,33 @@
   to = "/renewal/"
   status = 302
 
+# Claims short links: /claim, and /claim/motor → the motor claim pre-selected.
+[[redirects]]
+  from = "/claim"
+  to = "/claims/"
+  status = 302
+
+[[redirects]]
+  from = "/claim/:type"
+  to = "/claims/?type=:type"
+  status = 302
+
+# ── Headers ─────────────────────────────────────────────────────────
 [[headers]]
   for = "/renewal/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer"
+
+# Claims carries ID documents, medical detail and bank particulars.
+# no-store keeps it out of shared-device browser caches; no-referrer stops
+# the claim reference leaking to anything the page links out to.
+[[headers]]
+  for = "/claims/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    Cache-Control = "no-store"
+    Permissions-Policy = "geolocation=(), microphone=(), payment=()"
