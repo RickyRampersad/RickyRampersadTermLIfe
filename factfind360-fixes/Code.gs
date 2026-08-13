@@ -591,6 +591,12 @@ function ffBuildSchema() {
   s.push(["policyNumber","Policy Number"]);
   s.push(["caseChasedAt","Last Chased At"]);
   s.push(["caseChaseCount","Times Chased"]);
+  // A hold is a manager decision too: "seen it, not signing yet, here is why".
+  // Status stays pending — a held case is still an open case everywhere it is
+  // counted — but the queue shows who parked it and what they are waiting on.
+  s.push(["caseHoldAt","On Hold Since"]);
+  s.push(["caseHoldBy","On Hold By"]);
+  s.push(["caseHoldNote","On Hold Reason"]);
   // What the client themselves confirmed, and what they thought of the service.
   s.push(["clientConfirmed","Client Confirmed"]);
   s.push(["clientConfirmedAt","Client Confirmed At"]);

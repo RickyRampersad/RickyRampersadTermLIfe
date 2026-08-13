@@ -135,6 +135,50 @@
   .qnote.open{display:block}
   .qmsg{font-size:11.5px;font-weight:700;margin-top:6px;color:var(--teal)}
   .qmsg.err{color:var(--red)}
+  .qb.ghost{background:transparent;color:var(--ink-3);border:1.5px solid var(--line)}
+  .qb.hold{background:transparent;color:var(--violet);border:1.5px solid rgba(167,139,250,.45)}
+  .qc.held{border-left-color:var(--violet)}
+  .qc.held .qage{background:rgba(167,139,250,.12);color:var(--violet)}
+  .qheld{font-size:11px;font-weight:700;color:var(--violet);margin-top:6px;
+         background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.25);
+         border-radius:7px;padding:5px 9px;display:inline-block}
+
+  /* the deep dive — the whole case, opened in place */
+  .qdet{display:none;margin-top:12px;border-top:1px solid var(--line);padding-top:12px;
+        grid-column:1/-1}
+  .qdet.open{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  .qsec{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+        min-width:0}
+  .qsec.wide{grid-column:1/-1}
+  .qsec h4{font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+           color:var(--ink-4);margin:0 0 8px}
+  .qkv{display:flex;justify-content:space-between;gap:10px;font-size:12px;padding:2.5px 0}
+  .qkv b{font-weight:700;text-align:right}
+  .qkv .miss{color:var(--red);font-weight:700}
+  .qkv .lbl{color:var(--ink-3)}
+  .qbarrow{margin:5px 0 7px}
+  .qbarrow .t{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px}
+  .qbarrow .t b{font-weight:750}
+  .qbarrow .bar{height:7px;border-radius:4px;background:rgba(255,255,255,.06);overflow:hidden}
+  .qbarrow .bar i{display:block;height:100%;border-radius:4px}
+  .qtbl{width:100%;border-collapse:collapse;font-size:11.5px}
+  .qtbl td{padding:3.5px 4px;border-top:1px solid var(--line)}
+  .qtbl tr:first-child td{border-top:0}
+  .qtbl .r{text-align:right;white-space:nowrap;font-weight:700}
+  .qtbl .mut{color:var(--ink-3)}
+  .qstars{color:var(--gold);letter-spacing:.1em}
+  .qvoice{font-size:12px;line-height:1.5}
+  .qvoice .yes{color:var(--teal);font-weight:700}
+  .qvoice .warnv{color:var(--amber);font-weight:700}
+  .qvoice .quote{background:var(--raise);border-left:3px solid var(--amber);border-radius:0 7px 7px 0;
+                 padding:7px 10px;margin-top:6px;white-space:pre-wrap}
+  .qchk{display:flex;flex-direction:column;gap:6px}
+  .qchk label{display:flex;gap:9px;align-items:flex-start;font-size:12px;cursor:pointer;
+              padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--raise)}
+  .qchk label:has(input:checked){border-color:rgba(45,212,191,.5);background:rgba(45,212,191,.06)}
+  .qchk input{accent-color:var(--teal);width:15px;height:15px;margin-top:1px;flex:none}
+  .qopen{font-size:11.5px;font-weight:700;color:var(--teal);text-decoration:none}
+  .qopen:hover{text-decoration:underline}
 
   /* attention */
   .att{display:flex;flex-direction:column;gap:7px}
@@ -598,6 +642,122 @@ function render(){
       $('queue').innerHTML='<div class="empty">Nothing is waiting on a decision. Every fact find in your scope is signed off.</div>';
       return;
     }
+    /* The deep dive: everything a decision needs, built from the row itself.
+       Six sections and the attestation — the same facts the paper file would
+       hold, so approving here is approving with the file open. */
+    function qDeep(r){
+      var raw=r.raw||{};
+      var kv=function(l,v,crit){
+        var s=str(v);
+        return '<div class="qkv"><span class="lbl">'+l+'</span>'+
+          (s?'<b>'+esc(s)+'</b>':'<b class="'+(crit?'miss':'lbl')+'">'+(crit?'missing':'—')+'</b>')+'</div>';
+      };
+      var db=d(raw.dob), ageY=db?Math.floor(days(db,new Date())/365.25):0;
+      var deps=[]; if(str(raw.spouseName)) deps.push('spouse');
+      for(var ci=1;ci<=4;ci++) if(str(raw['child'+ci+'Name'])) deps.push('child');
+      for(var di=1;di<=3;di++) if(str(raw['dep'+di+'Name'])) deps.push(str(raw['dep'+di+'Rel']).toLowerCase()||'dependant');
+      var sInc=num(raw.spouseIncome)||num(raw.spouseMonthlyIncome);
+      var person='<div class="qsec"><h4>The person</h4>'+
+        kv('Age',ageY?ageY+' yrs':'',true)+
+        kv('ID number',raw.idNumber,true)+
+        kv('Marital',raw.maritalStatus)+
+        kv('Smoker',raw.smoker)+
+        kv('Occupation',str(raw.occupation)+(str(raw.employer)?' · '+str(raw.employer):''))+
+        kv('Employment',str(raw.empStatus)+(str(raw.tenure)?' · '+str(raw.tenure)+' yrs':''))+
+        kv('Dependants',deps.length?deps.length+' — '+deps.join(', '):'none recorded')+
+        (str(raw.spouseName)?kv('Spouse',str(raw.spouseName)+(sInc?' · '+money(sInc)+'/mo':'')):'')+
+        '</div>';
+
+      var inc=num(raw.monthlyIncomeTotal)||num(raw.monthlyIncome);
+      var exp=num(raw.monthlyExpenses);
+      var sur=num(raw.cashSurplus_calc)||(inc&&exp?inc-exp:0);
+      var newPrem=0, src='client taking';
+      for(var i=1;i<=6;i++) if(/^yes$/i.test(str(raw['dec'+i+'Go'])))
+        newPrem+=(num(raw['dec'+i+'Prem'])||num(raw['rec'+i+'Prem']))*apiMult(raw['rec'+i+'Mode'])/12;
+      if(!newPrem){ src='as recommended';
+        for(var i2=1;i2<=6;i2++) newPrem+=num(raw['rec'+i2+'Prem'])*apiMult(raw['rec'+i2+'Mode'])/12; }
+      var pct=sur>0?Math.round(newPrem/sur*100):0;
+      var pcol=pct>80?'var(--red)':pct>50?'var(--amber)':'var(--teal)';
+      var moneyS='<div class="qsec"><h4>The money</h4>'+
+        kv('Income / month',inc?money(inc):'',true)+
+        kv('Expenses / month',exp?money(exp):'')+
+        kv('Surplus / month',sur?money(Math.round(sur)):'',true)+
+        kv('New premium / month',money(Math.round(newPrem))+' · '+src)+
+        '<div class="qbarrow"><div class="t"><span>Premium vs surplus</span><b style="color:'+pcol+'">'+
+          (sur>0?pct+'%':'no surplus recorded')+'</b></div>'+
+        '<div class="bar"><i style="width:'+Math.min(100,pct)+'%;background:'+pcol+'"></i></div></div></div>';
+
+      var takeC=0;
+      for(var i3=1;i3<=6;i3++) if(/^yes$/i.test(str(raw['dec'+i3+'Go'])))
+        takeC+=num(raw['dec'+i3+'Amt'])||num(raw['rec'+i3+'Amt']);
+      var mxN=Math.max(r.need,r.cover,takeC,1);
+      var nbar=function(l,v,c){ return '<div class="qbarrow"><div class="t"><span>'+l+'</span><b>'+money(v)+'</b></div>'+
+        '<div class="bar"><i style="width:'+Math.round(v/mxN*100)+'%;background:'+c+'"></i></div></div>'; };
+      var gap=r.need-takeC;
+      var needS='<div class="qsec"><h4>Need vs the answer</h4>'+
+        nbar('Need found',r.need,'var(--violet)')+
+        nbar('Cover recommended',r.cover,'var(--teal-deep)')+
+        nbar('Client taking',takeC,'var(--teal)')+
+        (r.need>0?'<div class="qkv"><span class="lbl">'+(gap>0?'Need left uncovered':'Need fully covered')+
+          '</span><b style="color:'+(gap>r.need*0.5?'var(--red)':gap>0?'var(--amber)':'var(--teal)')+'">'+
+          (gap>0?money(gap):'&#10003;')+'</b></div>':'')+
+        (str(raw.naqScore)?kv('NAQ score',raw.naqScore):'')+
+        (str(raw.productFit)?kv('Product fit',raw.productFit):'')+
+        (str(raw.lapseRisk)?kv('Lapse risk',raw.lapseRisk):'')+'</div>';
+
+      var insRows='', noneRec=false;
+      for(var k=1;k<=7;k++){
+        var co=str(raw['ins'+k+'Co']), sum=num(raw['ins'+k+'Sum']);
+        if(!co&&!sum) continue;
+        if(/^none$/i.test(co)){ noneRec=true; continue; }
+        insRows+='<tr><td>'+esc(co||'?')+'</td><td class="mut">'+esc(str(raw['ins'+k+'Type']))+'</td>'+
+          '<td class="r">'+(sum?money(sum):'—')+'</td><td class="mut">'+esc(str(raw['ins'+k+'Status']))+'</td></tr>';
+      }
+      var exS='<div class="qsec"><h4>Existing cover</h4>'+
+        (insRows?'<table class="qtbl">'+insRows+'</table>'
+          :'<div class="qkv"><span class="lbl">'+(noneRec?'NONE recorded — client holds no existing cover':'Nothing recorded')+'</span></div>')+
+        (r.rep?'<div class="qheld" style="color:var(--red);border-color:rgba(251,113,133,.4);background:rgba(251,113,133,.07)">Replacement detected — '+
+          (str(raw.repDeclConfirm)?'declaration confirmed':'declaration NOT confirmed')+'</div>':'')+'</div>';
+
+      var conf=/^(y|yes|true|1)$/i.test(str(raw.clientConfirmed));
+      var chg=str(raw.clientChangeNote), rate=num(raw.clientRating);
+      var stars=function(n){ var s=''; for(var z=0;z<Math.round(n);z++) s+='&#9733;'; return s; };
+      var voice='<div class="qsec"><h4>The client&rsquo;s voice</h4><div class="qvoice">'+
+        (conf?'<div class="yes">&#10003; Confirmed the record is accurate'+
+            (d(raw.clientConfirmedAt)?' · '+d(raw.clientConfirmedAt).toLocaleDateString():'')+'</div>'
+          :'<div style="color:var(--ink-3)">Has not yet confirmed the record</div>')+
+        (chg?'<div class="warnv" style="margin-top:5px">Asked for a change — read before approving:</div>'+
+          '<div class="quote">'+esc(chg)+'</div>':'')+
+        (rate?'<div style="margin-top:6px"><span class="qstars">'+stars(rate)+'</span> rated the advisor '+rate+'/5</div>':'')+
+        '</div></div>';
+
+      var book=ROWS.filter(function(x){return x.agent===r.agent;});
+      var appr=book.filter(function(x){return x.status==='approved';}).length;
+      var ret=book.filter(function(x){return x.status==='changes_requested';}).length;
+      var closed=book.filter(function(x){return x.closed;}).length;
+      var rates=book.map(function(x){return num((x.raw||{}).clientRating);}).filter(function(v){return v>0;});
+      var avgR=rates.length?rates.reduce(function(a,v){return a+v;},0)/rates.length:0;
+      var advS='<div class="qsec"><h4>'+esc(r.agent)+' — the record</h4>'+
+        kv('Fact finds on file',book.length)+
+        kv('Approved',appr+(book.length?' ('+Math.round(appr/book.length*100)+'%)':''))+
+        kv('Sent back',ret)+
+        kv('Picked up',closed)+
+        (avgR?'<div class="qkv"><span class="lbl">Client rating</span><b><span class="qstars">'+stars(avgR)+'</span> '+
+          avgR.toFixed(1)+' ('+rates.length+')</b></div>':kv('Client rating','no ratings yet'))+
+        '<div style="margin-top:8px"><a class="qopen" href="FFPROJECT.html?id='+encodeURIComponent(r.id)+
+          '" target="_blank" rel="noopener">Open the full fact find form &rarr;</a></div></div>';
+
+      var att=canAct
+        ? '<div class="qsec wide"><h4>Your attestation — tick all four, then approve</h4><div class="qchk">'+
+          '<label><input type="checkbox"><span>The client data is complete and accurate — identity, age and contact will stand up to underwriting.</span></label>'+
+          '<label><input type="checkbox"><span>The ratios hold — the premium is affordable against the surplus, and the need calculation stands.</span></label>'+
+          '<label><input type="checkbox"><span>The recommendation is suitable — the plans answer the needs found, in the client&rsquo;s interest.</span></label>'+
+          '<label><input type="checkbox"><span>Compliance is addressed — replacement, disclosures and the concerns above are resolved or noted.</span></label>'+
+          '</div></div>'
+        : '';
+      return person+moneyS+needS+exS+voice+advS+att;
+    }
+
     $('queue').innerHTML=pend.map(function(r){
       var g=Math.round(days(r.sub,new Date())), hot=g>=14;
       var raw=r.raw||{}, chk=raw._checks||null;
@@ -621,42 +781,96 @@ function render(){
         flags='<span class="qf okf">No concerns flagged by the checks</span>';
       }
       if(chk&&chk.adviceOnly) flags='<span class="qf okf">Specific Need Only</span>'+flags;
+      var held=!!str(raw.caseHoldAt);
+      var heldChip=held
+        ? '<div class="qheld">On hold'+(d(raw.caseHoldAt)?' since '+d(raw.caseHoldAt).toLocaleDateString():'')+
+          (str(raw.caseHoldBy)?' · '+esc(str(raw.caseHoldBy)):'')+
+          (str(raw.caseHoldNote)?' — '+esc(str(raw.caseHoldNote)):'')+'</div>'
+        : '';
       var acts=canAct
         ? '<div class="qact">'+
             '<button class="qb ok" data-id="'+esc(r.id)+'" data-v="approve">Approve</button>'+
             '<button class="qb back" data-id="'+esc(r.id)+'" data-v="return">Send back&hellip;</button>'+
+            '<button class="qb hold" data-id="'+esc(r.id)+'" data-v="hold">Hold&hellip;</button>'+
+            '<button class="qb ghost" data-id="'+esc(r.id)+'" data-v="toggle">Full review &#9662;</button>'+
           '</div>'
-        : '<div class="qact"><div class="qsub">'+esc(r.manager)+' decides this</div></div>';
-      return '<div class="qc'+(hot?' hot':'')+'" data-card="'+esc(r.id)+'">'+
+        : '<div class="qact"><div class="qsub">'+esc(r.manager)+' decides this</div>'+
+            '<button class="qb ghost" data-id="'+esc(r.id)+'" data-v="toggle">Full review &#9662;</button></div>';
+      return '<div class="qc'+(hot&&!held?' hot':'')+(held?' held':'')+'" data-card="'+esc(r.id)+'">'+
         '<div class="qage">'+g+'d</div>'+
         '<div><div class="qwho">'+esc(r.client)+'</div>'+
         '<div class="qsub">'+esc(r.agent)+' · with '+esc(r.manager)+' · submitted '+r.sub.toLocaleDateString()+
           (r.need?' · need '+money(r.need):'')+'</div>'+
         (recl?'<div class="qrec">'+recl+'</div>':'')+
         (flags?'<div class="qflags">'+flags+'</div>':'')+
+        heldChip+
         '<textarea class="qnote" rows="2" placeholder="What needs to change before you can approve it? Goes to the advisor."></textarea>'+
         '<div class="qmsg" style="display:none"></div></div>'+
-        acts+'</div>';
+        acts+
+        '<div class="qdet">'+qDeep(r)+'</div></div>';
     }).join('');
 
     $('queue').querySelectorAll('.qb').forEach(function(b){
       b.onclick=function(){
-        var card=b.closest('.qc'), id=b.dataset.id;
+        var card=b.closest('.qc'), id=b.dataset.id, v=b.dataset.v;
         var noteEl=card.querySelector('.qnote'), msg=card.querySelector('.qmsg');
-        if(b.dataset.v==='return'&&!noteEl.classList.contains('open')){
-          noteEl.classList.add('open'); noteEl.focus();
-          b.textContent='Send back now'; return;
-        }
-        if(b.dataset.v==='approve'&&!b.classList.contains('confirm')){
-          b.classList.add('confirm'); b.textContent='Confirm approve';
-          setTimeout(function(){ b.classList.remove('confirm'); b.textContent='Approve'; },6000);
+        var det=card.querySelector('.qdet');
+
+        if(v==='toggle'){
+          det.classList.toggle('open');
+          b.innerHTML=det.classList.contains('open')?'Close review &#9652;':'Full review &#9662;';
           return;
         }
+
+        /* Send back and Hold both arm the note box first; the second click on
+           the same button fires. Arming one resets the other. */
+        if(v==='return'||v==='hold'){
+          if(card.dataset.armed!==v){
+            card.dataset.armed=v;
+            noteEl.classList.add('open');
+            noteEl.placeholder = v==='return'
+              ? 'What needs to change before you can approve it? Goes to the advisor.'
+              : 'What are you waiting on? Stays on the file — nothing is emailed, and the reminder clock resets.';
+            noteEl.focus();
+            b.textContent = v==='return' ? 'Send back now' : 'Confirm hold';
+            card.querySelectorAll('.qb').forEach(function(x){
+              if(x===b) return;
+              if(x.dataset.v==='return') x.innerHTML='Send back&hellip;';
+              if(x.dataset.v==='hold')   x.innerHTML='Hold&hellip;';
+            });
+            return;
+          }
+          if(v==='hold'&&!noteEl.value.trim()){
+            msg.style.display='block'; msg.className='qmsg err';
+            msg.textContent='Say what you are waiting on — the reason is the whole point of a hold.';
+            return;
+          }
+        }
+
+        var extra='';
+        if(v==='approve'){
+          if(det.classList.contains('open')){
+            /* Deep dive open: the four ticks are the deliberation, so there is
+               no second arming click — but all four must be ticked. */
+            var boxes=[].slice.call(card.querySelectorAll('.qchk input'));
+            if(boxes.length&&!boxes.every(function(x){return x.checked;})){
+              msg.style.display='block'; msg.className='qmsg err';
+              msg.textContent='Tick all four attestations — they are what you are signing.';
+              return;
+            }
+            extra='&vd=1&vr=1&vs=1&vc=1';
+          } else if(!b.classList.contains('confirm')){
+            b.classList.add('confirm'); b.textContent='Confirm approve';
+            setTimeout(function(){ b.classList.remove('confirm'); b.textContent='Approve'; },6000);
+            return;
+          }
+        }
+
         card.querySelectorAll('.qb').forEach(function(x){x.disabled=true;});
         msg.style.display='block'; msg.className='qmsg'; msg.textContent='Recording…';
         fetch(ENDPOINT+'?action=qdecide&token='+encodeURIComponent(TOKEN)+
-              '&id='+encodeURIComponent(id)+'&v='+encodeURIComponent(b.dataset.v)+
-              '&note='+encodeURIComponent(noteEl.value.trim())+'&_='+Date.now(),{cache:'no-store'})
+              '&id='+encodeURIComponent(id)+'&v='+encodeURIComponent(v)+
+              '&note='+encodeURIComponent(noteEl.value.trim())+extra+'&_='+Date.now(),{cache:'no-store'})
           .then(function(x){return x.json();})
           .then(function(j){
             if(!j||!j.ok){
@@ -664,11 +878,20 @@ function render(){
                 return load(TOKEN); }
               throw new Error((j&&j.error)||'Could not record the decision.');
             }
+            var mine=ROWS.filter(function(x){return x.id===id;})[0];
+            if(j.status==='held'){
+              card.classList.add('held'); card.classList.remove('hot');
+              msg.textContent='On hold. The reason is on the file, and the daily reminder skips this case today.';
+              if(mine&&mine.raw){ mine.raw.caseHoldAt=new Date().toISOString();
+                mine.raw.caseHoldBy=ME||''; mine.raw.caseHoldNote=noteEl.value.trim(); }
+              delete card.dataset.armed;
+              setTimeout(draw,1400);
+              return;
+            }
             card.classList.add('done'); card.classList.remove('hot');
             msg.textContent = j.status==='approved'
               ? 'Approved. The advisor has been emailed, and the client gets their approval letter.'
               : 'Sent back. The advisor has been emailed with your note.';
-            var mine=ROWS.filter(function(x){return x.id===id;})[0];
             if(mine){ mine.status=j.status;
               mine.rev=new Date(); if(j.status==='approved') mine.app=new Date(); }
             setTimeout(draw,1600);

@@ -53,6 +53,52 @@ decision came through.
   the filtered window. A 56-day-old case that vanishes because "This week" is
   selected is how a backlog gets to 56 days.
 
+## The deep dive
+
+**Full review ▾** on any card opens the whole case in place — the same facts
+the paper file would hold, so approving here is approving with the file open:
+
+- **The person** — age from DOB, ID, marital, smoker, occupation and employer,
+  tenure, dependants counted from spouse, children and other dependants.
+  Missing critical fields print as red "missing", not blank.
+- **The money** — income, expenses, surplus, the new premium per month
+  (client-taking lines, or as-recommended when none taken yet), and premium as
+  a percentage of surplus with a bar that turns amber past 50% and red past
+  80%.
+- **Need vs the answer** — three bars on one scale: need found, cover
+  recommended, cover the client is taking, and the need left uncovered. This
+  is the suitability question drawn rather than asserted.
+- **Existing cover** — the portfolio as recorded, insurer by insurer, with
+  "NONE recorded" stated when that is the record. Replacement detection prints
+  in red with whether the declaration was confirmed.
+- **The client's voice** — whether the client confirmed the record is
+  accurate, any change they asked for (quoted, amber, before the approve
+  button can matter), and their rating of the advisor.
+- **The advisor's record** — this advisor across everything in scope:
+  fact finds, approval rate, sent back, picked up, average client rating.
+  Context for how much scrutiny this file deserves.
+- **Open the full fact find form →** — the actual submitted form, by id.
+
+## The attestation
+
+With the deep dive open, the blanket two-click approve is replaced by four
+explicit checkmarks — data, ratios, suitability, compliance — and Approve
+refuses until all four are ticked. The ticks are sent to the server and
+written to the record as the individual attestations (`mgrVer*`), so the file
+shows what was actually attested rather than a blanket true. A quick approve
+from the collapsed card keeps the old behaviour, which is the same blanket
+attestation the email one-tap has always made.
+
+## Hold
+
+The third decision that managers actually make: *seen it, not signing yet*.
+Hold requires a reason, stamps who parked it and when, and resets the reminder
+clock so the daily chase does not nag about a case the manager looked at
+today. Status stays pending — a held case is still an open case in every count
+on every board — but the card turns violet and carries the reason, so the
+queue distinguishes "nobody has looked" from "looked, waiting on something
+named". Any real decision clears the hold.
+
 ## The loop it closes
 
 The daily digest's red block — "18 waiting on you, oldest 59 days" — has a

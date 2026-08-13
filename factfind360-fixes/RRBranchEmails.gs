@@ -790,6 +790,22 @@ function rrbQueueDecide(e) {
     var now = new Date().toISOString();
     var merged = {};
     Object.keys(d).forEach(function (k) { merged[k] = d[k]; });
+
+    // Hold: seen, deliberately not signed, reason on file. Status stays
+    // pending — a held case is still an open case in every count — but the
+    // reminder clock resets so the chase does not nag about a case the
+    // manager has already looked at today.
+    if (/^hold/i.test(_str(p.v))) {
+      merged.caseHoldAt      = now;
+      merged.caseHoldBy      = _str(me.name);
+      merged.caseHoldNote    = note;
+      merged.lastReminderAt  = now;
+      merged.lastUpdated     = now;
+      ffWriteRow_(sheet, headers, merged, row);
+      return { ok: true, id: id, status: 'held',
+               client: _str(d.clientName) || _str(d.fullName) || _str(d.adviceClientName) };
+    }
+
     merged.mgrAgree      = agreed ? 'Agree' : 'Do not agree';
     merged.mgrName       = _str(me.name) || _str(d.reviewerName);
     merged.mgrEmail      = _str(sess.email) || _str(d.reviewerEmail);
@@ -798,7 +814,15 @@ function rrbQueueDecide(e) {
     merged.status        = agreed ? 'approved' : 'changes_requested';
     merged.approvedAt    = agreed ? now : '';
     merged.lastUpdated   = now;
-    merged.mgrVerData = merged.mgrVerRatios = merged.mgrVerSuit = merged.mgrVerCompliance = true;
+    // The attestation. The deep-dive review sends each checkmark explicitly
+    // (vd/vr/vs/vc), so the record holds what the manager actually ticked.
+    // A quick approve from the collapsed card sends none, which means all
+    // four — the same blanket attestation the email one-tap has always made.
+    var att = function (k) { return p[k] == null ? true : p[k] === '1'; };
+    merged.mgrVerData       = att('vd');
+    merged.mgrVerRatios     = att('vr');
+    merged.mgrVerSuit       = att('vs');
+    merged.mgrVerCompliance = att('vc');
     merged.mgrSignatureMethod = 'Dashboard';
     merged.mgrSignatureRef    = _str(me.code) + ' ' + now;
     merged.dmResponded        = true;
@@ -808,6 +832,8 @@ function rrbQueueDecide(e) {
       merged.dmGuidance  = prior ? prior + '\n\n' + note : note;
       merged.mgrComments = merged.dmGuidance;
     }
+    // A decision ends any hold — the case is no longer parked, it is settled.
+    merged.caseHoldAt = merged.caseHoldBy = merged.caseHoldNote = '';
 
     ffWriteRow_(sheet, headers, merged, row);
 
