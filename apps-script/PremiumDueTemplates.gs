@@ -64,6 +64,11 @@ var OUT = {
   MIN_PREMIUM: 0,                // skip trivial amounts if you want a floor
 
   FROM_NAME: 'Ricky Rampersad Branch — Policy Services',
+  // The person who owns premium dues in branch support. Client letters are
+  // signed by a named colleague, not a department — a name answers, a
+  // department files.
+  SUPPORT_NAME: 'Sasha Lalla',
+  SUPPORT_ROLE: 'Branch Support — Premium Dues',
   BRANCH_NAME: 'Ricky Rampersad Branch',
   BRANCH_PHONE: '(868) 678-5921',
   BRANCH_EMAIL: 'support@rickyrampersadbranch.com',
@@ -724,6 +729,26 @@ function pdLawBlock_(p) {
   return out;
 }
 
+/**
+ * How the client follows their case — no telephone numbers, by instruction.
+ * The moment they answer anything, a personal access code is issued. With the
+ * engine deployed it appears on screen as the answer records and unlocks
+ * "Check my case": a progress bar from first letter to resolved, every step
+ * logged, and space to leave a comment. Until then, support sends the code
+ * back on the same thread and keeps the view updated for them.
+ */
+function pdTrackBlock_() {
+  var inner = '<b>Follow your case — no phone calls needed.</b> The moment you answer, you receive your ' +
+    'personal access code. It shows you exactly where things stand: a progress bar from first letter to ' +
+    'resolved, every step on the record, and space to add a comment of your own.' +
+    (OUT.ENGINE_URL
+      ? ' Use it any time at <a href="' + OUT.ENGINE_URL + '" style="color:' + PD_BRAND.navy2 +
+        ';font-weight:bold">Check my case</a>.'
+      : ' ' + pdEsc_(OUT.SUPPORT_NAME || 'Branch support') + ' confirms it on the same thread, and every ' +
+        'update reaches you there.');
+  return pdNote_(inner);
+}
+
 /** Days left before the 90-day lapse line. */
 function pdDaysToLapse_(p) { return Math.max(0, SLA.LAPSE - (Number(p.DaysArrears) || 0)); }
 
@@ -1122,7 +1147,7 @@ function pdWrap_(inner, tag, internal) {
           '<div style="font-size:11px;line-height:1.6;color:#6F6A60">' +
             '<b style="color:' + PD_BRAND.mute + '">' + pdEsc_(PD_ORG.branch) + '</b> &middot; ' +
             pdEsc_(PD_ORG.carrier) + ' &middot; ' + pdEsc_(PD_ORG.place) + '<br>' +
-            pdEsc_(OUT.BRANCH_PHONE) + ' &middot; ' + pdEsc_(OUT.BRANCH_EMAIL) + '</div>' +
+            (internal ? pdEsc_(OUT.BRANCH_PHONE) + ' &middot; ' : '') + pdEsc_(OUT.BRANCH_EMAIL) + '</div>' +
           '<div style="font-size:10.5px;line-height:1.55;color:#7E796E;padding-top:8px">' + foot + '</div>' +
         '</td></tr></table>' +
     '</div></div>';
@@ -1530,7 +1555,8 @@ function pdSignature_(p, opts) {
         '<td style="padding:0;vertical-align:top;color:' + PD_BRAND.ink + '">' +
           line(mgr, 'Manager &middot; accountable for this policy since day 60') + '</td>' +
       '</tr></table><br>'
-    : line('Branch Support', pdEsc_(OUT.BRANCH_NAME)) +
+    : line(OUT.SUPPORT_NAME || 'Branch Support', pdEsc_(OUT.SUPPORT_ROLE || 'Branch Support') +
+        ' &middot; ' + pdEsc_(OUT.BRANCH_NAME)) +
       (p.Agent ? '<br><span style="color:' + PD_BRAND.mute + ';font-size:12.5px">Your advisor: <b style="color:' +
         PD_BRAND.ink + '">' + pdEsc_(p.Agent) + '</b>' +
         (mgr ? ' &middot; reporting to ' + pdEsc_(mgr) : '') + '</span>' : '') + '<br>';
@@ -1550,7 +1576,7 @@ function pdSigInternal_() {
 
 function pdSig_() {
   return '<p style="margin-top:18px">Warm regards,<br><b>' + pdEsc_(OUT.BRANCH_NAME) + '</b>' +
-    (OUT.BRANCH_PHONE ? '<br>' + pdEsc_(OUT.BRANCH_PHONE) : '') +
+
     (OUT.BRANCH_EMAIL ? '<br>' + pdEsc_(OUT.BRANCH_EMAIL) : '') + '</p>';
 }
 
@@ -1607,8 +1633,7 @@ var PD_TEMPLATES = {
           'grace-period and non-forfeiture provisions, and the ' + PD_LAW.cite + ' (s. 180), govern what ' +
           'happens at day 90 — the final notice quotes them in full.</p>') +
 
-        '<p style="margin:22px 0 0">Prefer a voice? <b>' + pdEsc_(OUT.BRANCH_PHONE) + '</b> — ask for branch ' +
-        'support and quote ' + pdEsc_(p.Policy) + '.</p>' +
+        pdTrackBlock_() +
         pdSignature_(p),
         { kind: 's45', days: d })
     };
@@ -1654,7 +1679,7 @@ var PD_TEMPLATES = {
         pdSection_('How can we help?', pdQuestionBlock_(p, pdClientQuestions_(p, state && state.family, ['help', 'when']), 'respond') +
           pdPayBtn_(p)) +
 
-        '<p style="margin:22px 0 0">Or call <b>' + pdEsc_(OUT.BRANCH_PHONE) + '</b>, quoting ' + pdEsc_(p.Policy) + '.</p>' +
+        pdTrackBlock_() +
         pdSignature_(p),
         { kind: 'chase', days: d })
     };
@@ -1695,8 +1720,10 @@ var PD_TEMPLATES = {
 
         pdSection_('What day 90 means here', pdNote_(pdLapseMeaningFor_(p, state), PD_BRAND.red) + pdLawBlock_(p)) +
 
-        '<p style="margin:22px 0 0">Or call <b>' + pdEsc_(OUT.BRANCH_PHONE) + '</b>, quoting ' +
-        pdEsc_(p.Policy) + '. ' + (mgr ? 'Ask for <b>' + pdEsc_(mgr) + '</b> — this policy is theirs.' : '') + '</p>' +
+        '<p style="margin:22px 0 0">' +
+        (mgr ? '<b>' + pdEsc_(mgr) + '</b> holds this policy personally — reply to this email and it reaches them. ' : '') +
+        'If the answer is that you want it to end, we would rather hear it from you than record it as silence.</p>' +
+        pdTrackBlock_() +
         pdSignature_(p, { both: !!(state && (state.activatedTs || state.mgrName)), manager: state && state.mgrName }),
         { kind: 's90', days: Number(p.DaysArrears) || 0 })
     };
@@ -1726,8 +1753,8 @@ var PD_TEMPLATES = {
 
         pdSection_('What day 90 means here', pdNote_(pdLapseMeaningFor_(p, state)) + pdLawBlock_(p)) +
 
-        '<p style="margin:22px 0 0">If none of the above fits, reply with a single line and I will call you ' +
-        'myself. <b>' + pdEsc_(OUT.BRANCH_PHONE) + '</b>, quoting ' + pdEsc_(p.Policy) + '.</p>' +
+        '<p style="margin:22px 0 0">If none of the above fits, reply to this email with a single line and ' +
+        'I will call you myself — you never need to chase us.</p>' + pdTrackBlock_() +
         pdSignature_(p, { both: true, manager: mgr }),
         { kind: 's75', days: d })
     };
@@ -1788,8 +1815,8 @@ var PD_TEMPLATES = {
           'its <b>original age and terms</b>, so it is normally cheaper than the same cover bought today. ' +
           'That window does not stay open indefinitely.</p>') +
 
-        '<p style="margin:22px 0 0">Whatever you tell us above goes to the branch manager directly. If you ' +
-        'would rather say it out loud, call <b>' + pdEsc_(OUT.BRANCH_PHONE) + '</b> and ask for him by name.</p>' +
+        '<p style="margin:22px 0 0">Whatever you tell us above goes to the branch manager directly, under ' +
+        'your name and on the record.</p>' + pdTrackBlock_() +
         pdSignature_(p, { both: !!mgr, manager: mgr }),
         { kind: 'close', days: Number(p.DaysArrears) || 0 })
     };
@@ -1812,8 +1839,8 @@ var PD_TEMPLATES = {
           'the health it stays priced against. The window does not stay open indefinitely: the longer it runs, ' +
           'the more evidence the insurer asks for.</p>' + pdFacts_(p)) +
 
-        '<p style="margin-top:22px">One call tells you exactly what it would take: <b>' +
-        pdEsc_(OUT.BRANCH_PHONE) + '</b>, quoting policy ' + pdEsc_(p.Policy) + '.</p>' + pdSignature_(p),
+        '<p style="margin-top:22px">One tap above tells us to check exactly what restoring it would take, ' +
+        'and we come back to you with the figures.</p>' + pdTrackBlock_() + pdSignature_(p),
         { kind: 'winback', days: 0 })
     };
   },
@@ -1833,9 +1860,9 @@ var PD_TEMPLATES = {
 
         pdSection_('The application', pdFacts_(p)) +
 
-        '<p style="margin-top:22px">It is usually a medical appointment, a form, or one document. Reply to this ' +
-        'email or call <b>' + pdEsc_(OUT.BRANCH_PHONE) + '</b> and we will tell you exactly what is outstanding ' +
-        'and take it from there.</p>' + pdSignature_(p),
+        '<p style="margin-top:22px">It is usually a medical appointment, a form, or one document. Reply to ' +
+        'this email and we will tell you exactly what is outstanding and take it from there.</p>' +
+        pdSignature_(p),
         { kind: 'pend', days: 0 })
     };
   },

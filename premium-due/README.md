@@ -188,6 +188,30 @@ the **60 clients behind on one policy while paying another** is what actually
 happened. It offers to re-lodge the mandate — a five-minute fix rather than a
 retention negotiation.
 
+### Check my case — the client's structured view
+
+A client's **first answer issues a personal access code** (shown on screen the
+moment it records, stored in the log row's `code` column). With policy number +
+code, **Check my case** opens from the engine's login card or the
+`#case=POLICY&code=XXXX` deep link:
+
+- a **progress bar** — *We wrote to you → You answered → With a manager →
+  Manager responded → Resolved*
+- **the record**, client-safe, in date order
+- **a comment box** — posts as `clientnote`, visible to support, the advisor
+  and the manager
+
+The backend serves it at `?type=case&policy&code` and refuses any code that was
+never issued for that policy; `clientnote` writes are gated the same way. No
+staff commentary, no commercial decisions, no other policies in the payload.
+
+**No telephone numbers in client letters**, by instruction — the flow is
+structured through the code instead. Every letter carries the tracking block in
+place of the old "call us" line; the manager's internal brief still carries the
+client's own phone number, because the manager has to make the call. Client
+letters are signed **Sasha Lalla — Branch Support, Premium Dues**
+(`OUT.SUPPORT_NAME`), with the advisor named beneath.
+
 ### One channel
 
 **Email only**, everywhere — the templates, the engine's outreach panel and the

@@ -74,6 +74,7 @@ function doGet(e) {
     // --- open, and deliberately so ---
     if (p.type === 'roster') return pdPublicRoster_();          // names + roles, no codes
     if (p.type === 'auth')   return pdAuth_(p.name, p.code);
+    if (p.type === 'case')   return pdClientCase_(p.policy, p.code);   // client tracking, by issued code
 
     // --- everything below returns client data and needs a token ---
     var who = pdVerifyToken_(p.token);
@@ -114,8 +115,14 @@ function doPost(e) {
 
     // A client answering a survey or clicking a 60-day option has no token,
     // and should not need one. Everything a staff member writes does.
+    // A client NOTE requires the access code issued with their first answer —
+    // that is what stops a guessed policy number leaving comments on a case.
     var clientWrite = (d.role === 'Client') && (d.type === 'survey' || d.type === 'response');
-    if (!clientWrite) {
+    var clientNote  = (d.role === 'Client') && (d.type === 'clientnote');
+    if (clientNote && !pdClientCodeValid_(d.policy, d.code)) {
+      return json_({ ok: false, error: 'code', message: 'That access code does not match this policy.' });
+    }
+    if (!clientWrite && !clientNote) {
       var who = pdVerifyToken_(d.token);
       if (!who) return json_({ ok: false, error: 'auth', message: 'Sign in again.' });
       d.author = who.name;                       // the signer, not whatever was posted
@@ -151,6 +158,56 @@ function doPost(e) {
   } catch (err) {
     return json_({ ok: false, error: String(err) });
   }
+}
+
+/* ===== CLIENT CASE TRACKING =====
+   A client's first answer carries a generated access code, stored in the log
+   row's code column. From then on that code unlocks a CLIENT-SAFE view of the
+   case — the progress bar, the letters sent, their own replies and notes, and
+   whether a manager has responded. Nothing internal: no staff commentary, no
+   commercial decisions, no other policies. */
+
+function pdClientCodeValid_(policy, code) {
+  code = String(code || '').replace(/[^0-9A-Za-z]/g, '').toUpperCase();
+  if (code.length < 4) return false;
+  var v = getSheet_().getDataRange().getValues();
+  for (var i = 1; i < v.length; i++) {
+    if (String(v[i][2]) !== String(policy)) continue;
+    var type = String(v[i][10] || '');
+    if (type !== 'survey' && type !== 'response' && type !== 'clientnote') continue;
+    if (String(v[i][7] || '').toUpperCase() === code) return true;
+  }
+  return false;
+}
+
+function pdClientCase_(policy, code) {
+  if (!pdClientCodeValid_(policy, code)) {
+    return json_({ ok: false, error: 'code', message: 'Check the policy number and access code.' });
+  }
+  var v = getSheet_().getDataRange().getValues();
+  var events = [], notes = [], replied = false, verdict = false, mgrTs = 0;
+  var client = '';
+  for (var i = 1; i < v.length; i++) {
+    if (String(v[i][2]) !== String(policy)) continue;
+    var type = String(v[i][10] || ''), ts = Number(v[i][0]) || 0, stage = String(v[i][11] || '');
+    if (v[i][3]) client = String(v[i][3]);
+    if (type.indexOf('outbound') === 0) events.push({ ts: ts, kind: 'us', what: 'letter', stage: stage });
+    else if (type === 'response' || type === 'survey') { replied = true; events.push({ ts: ts, kind: 'you', what: String(v[i][12] || v[i][11] || 'You replied') }); }
+    else if (type === 'clientnote') notes.push({ ts: ts, body: String(v[i][12] || '') });
+    else if (type === 'verdict') { verdict = true; mgrTs = Math.max(mgrTs, ts); }
+    else if (type === 'internal' && stage === 'manager-60') events.push({ ts: ts, kind: 'us', what: 'manager', stage: 'manager' });
+  }
+  events.sort(function (a, b) { return a.ts - b.ts; });
+  /* the structured progress bar: each step true once reached */
+  var steps = [
+    { k: 'written',  lab: 'We wrote to you',        done: events.length > 0 },
+    { k: 'answered', lab: 'You answered',           done: replied },
+    { k: 'manager',  lab: 'With a manager',         done: events.some(function (e) { return e.what === 'manager'; }) },
+    { k: 'responded',lab: 'Manager responded',      done: verdict },
+    { k: 'resolved', lab: 'Resolved',               done: false }
+  ];
+  return json_({ ok: true, client: client, policy: String(policy), steps: steps,
+                 events: events, notes: notes });
 }
 
 function json_(obj) {

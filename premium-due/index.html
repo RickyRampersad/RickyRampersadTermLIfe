@@ -379,6 +379,20 @@ select.f-line{background:#fff}
 .out-cp{background:#fff;border-color:var(--line);color:var(--ink-2)}
 .out-cp:hover{border-color:var(--slate)}
 .out-none{font-size:12px;color:var(--mut);font-style:italic}
+.case-prog{display:flex;align-items:flex-start;gap:0;margin:6px 0 4px}
+.cp-step{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;width:19%}
+.cp-dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;border:2px solid var(--line);color:var(--mut);background:var(--card)}
+.cp-step.done .cp-dot{background:var(--teal);border-color:var(--teal);color:#fff}
+.cp-step.next .cp-dot{border-color:var(--teal);color:var(--teal)}
+.cp-lab{font-size:10.5px;line-height:1.3;text-align:center;color:var(--mut);max-width:9ch}
+.cp-step.done .cp-lab,.cp-step.next .cp-lab{color:var(--ink);font-weight:600}
+.cp-bar{flex:1 1 auto;height:2px;background:var(--line);margin-top:13px;min-width:8px}
+.cv-list{display:flex;flex-direction:column;gap:6px;max-height:220px;overflow:auto}
+.cv-ev{display:flex;gap:10px;font-size:12.5px;line-height:1.5;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+.cv-ev.mine{border-left:3px solid var(--teal)}
+.cv-ev .t{color:var(--mut);white-space:nowrap;flex:0 0 auto;font-family:var(--mono);font-size:11px;padding-top:1px}
+.cv-ev .w{color:var(--ink)}
 .out-warn{font-size:11.5px;color:var(--amber);background:var(--amber-soft);border-radius:7px;padding:7px 10px;margin-top:10px}
 
 /* copy-link row */
@@ -447,6 +461,11 @@ select.f-line{background:#fff}
       <div class="role-hint">
         <b>Everyone</b> logs in with their personal code (initials + 3 digits).<br>
         <b>Agents</b> see their own clients · <b>Unit Managers</b> their line · <b>Support &amp; BM</b> the full branch &amp; manager queue.
+      </div>
+      <div class="role-hint" style="border-top-style:solid">
+        <b>Policyholder?</b> You don&rsquo;t log in here. Use the access code from your letter answer —
+        <a href="#" id="clientCaseLink" style="color:var(--teal);font-weight:600">Check my case</a> shows your
+        progress bar, the record, and lets you add a comment.
       </div>
     </div>
   </div>
@@ -1846,16 +1865,20 @@ async function handleHashAnswer(){
   const app=document.getElementById('app'); if(app)app.classList.remove('on');
 
   const ts=Date.now();
+  // The client's access code: issued once per policy per browser, sent with
+  // every answer so the backend can verify it later. It unlocks Check my case
+  // — the progress bar, the record, and their own notes. Never a phone call.
+  const clientCode=isMgr?'':caseCodeFor(policy);
   const rec=isMgr
     ? {kind:'verdict',author:(c?managerOf(c.Agent):'Manager'),code:'',role:'Manager',
        stage:c?stageOf(c):'s60',reason:ans.q,body:ans.lab,optKey:key,
        managerVerdict:ans.lab,surveyReason:'',surveyContact:'',surveyPromise:'',factFind:'',ts}
-    : {kind:'response',author:(c?c.Client+' ':'')+'(client)',code:'',role:'Client',
+    : {kind:'response',author:(c?c.Client+' ':'')+'(client)',code:clientCode,role:'Client',
        stage:c?stageOf(c):'s60',reason:ans.q,body:ans.lab,optKey:key,
        surveyReason:'',surveyContact:ans.lab,surveyPromise:'',factFind:'',managerVerdict:'',ts};
   pushRecord(policy,rec);
   sheetLog({ts,policy,client:c?c.Client:'',clientNo:c?c.ClientNo:'',agent:c?c.Agent:'',
-    author:rec.author,code:'',role:rec.role,stage:rec.stage,type:rec.kind,reason:ans.q,
+    author:rec.author,code:clientCode,role:rec.role,stage:rec.stage,type:rec.kind,reason:ans.q,
     body:ans.lab,retainProb:c?retainProbability(c):'',tone:'',surveyReason:'',
     surveyContact:isMgr?'':ans.lab,surveyPromise:'',factFind:'',managerVerdict:isMgr?ans.lab:''});
 
@@ -1874,6 +1897,12 @@ async function handleHashAnswer(){
       <p style="color:var(--slate);max-width:40ch;margin:0 auto 14px;line-height:1.55">${isMgr
         ? `Recorded against the policy under your name. ${c?esc(c.Agent):'The agent'} can see it now.`
         : `Recorded against your policy. Your agent${c?` (${esc(c.Agent)})`:''} and their manager have both been notified, and you will not receive further reminders about this.`}</p>
+      ${!isMgr?`<div style="border:1px dashed var(--line);border-radius:10px;padding:12px 14px;max-width:40ch;margin:0 auto 6px;text-align:center">
+        <div style="font-size:10.5px;letter-spacing:.12em;color:var(--mut);font-weight:700">YOUR ACCESS CODE</div>
+        <div style="font-family:var(--mono);font-size:24px;font-weight:600;letter-spacing:.14em;margin:4px 0 6px">${esc(clientCode)}</div>
+        <div style="font-size:12px;color:var(--slate);line-height:1.5">Keep this. With your policy number it opens <b>Check my case</b> — your progress bar, everything on the record, and space to add a comment.</div>
+        <button class="btn-sm btn-save" type="button" style="margin-top:9px" data-opencase="${esc(policy)}" data-opencode="${esc(clientCode)}">Check my case now</button>
+      </div>`:''}
     </div>
     ${remaining.length?`<div style="border-top:1px solid var(--line);padding-top:14px">
       <div style="font-size:12.5px;color:var(--slate);margin-bottom:10px;text-align:center">
@@ -1886,10 +1915,131 @@ async function handleHashAnswer(){
   $('#surveyBody').querySelectorAll('[data-ansq]').forEach(btn=>btn.addEventListener('click',()=>{
     location.hash=`${isMgr?'mgr':'respond'}=${policy}&q=${btn.dataset.ansq}&a=${btn.dataset.ansa}`;
   }));
+  const oc=$('#surveyBody').querySelector('[data-opencase]');
+  if(oc)oc.addEventListener('click',()=>{closeSurvey();openCaseView(oc.dataset.opencase,oc.dataset.opencode);});
   $('#surveyModal').classList.add('on');
   return true;
 }
+
+/* ===== CLIENT CASE TRACKING =====
+   The structured view a client unlocks with the access code issued on their
+   first answer: a progress bar from first letter to resolved, the record in
+   date order, and a comment box. No login, no phone number, no staff view. */
+function caseCodeFor(policy){
+  const key='pd-case-code-'+policy;
+  let code=localStorage.getItem(key);
+  if(!code){
+    const chars='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+    code=Array.from(crypto.getRandomValues(new Uint8Array(6))).map(b=>chars[b%chars.length]).join('');
+    localStorage.setItem(key,code);
+  }
+  return code;
+}
+const CASE_STEPS=[
+  {k:'written',lab:'We wrote to you'},
+  {k:'answered',lab:'You answered'},
+  {k:'manager',lab:'With a manager'},
+  {k:'responded',lab:'Manager responded'},
+  {k:'resolved',lab:'Resolved'}
+];
+function caseProgressHtml(steps){
+  const doneCount=steps.filter(s=>s.done).length;
+  return `<div class="case-prog">${steps.map((s,i)=>{
+    const state=s.done?'done':(i===doneCount?'next':'off');
+    return `<div class="cp-step ${state}">
+      <div class="cp-dot">${s.done?'✓':''}</div>
+      <div class="cp-lab">${esc(s.lab)}</div></div>`;
+  }).join('<div class="cp-bar"></div>')}</div>`;
+}
+function localCaseData(policy,code){
+  // demo / offline: build the same payload the backend serves, from local records
+  const recs=recordsFor(policy);
+  if(!recs.length)return null;
+  const okCode=recs.some(r=>(r.role==='Client')&&String(r.code||'').toUpperCase()===code);
+  if(!okCode&&!recs.some(r=>r.role==='Client'))return null;
+  if(!okCode)return null;
+  const events=[],notes=[];let replied=false,verdict=false;
+  recs.forEach(r=>{
+    if(r.kind==='response'||r.kind==='survey'){replied=true;events.push({ts:r.ts,kind:'you',what:r.body||r.reason||'You replied'});}
+    else if(r.kind==='clientnote')notes.push({ts:r.ts,body:r.body||''});
+    else if(r.kind==='verdict')verdict=true;
+  });
+  const c=ALL_CASES.find(x=>x.Policy===String(policy));
+  const handed=c?(Number(c.DaysArrears)||0)>=SLA.RETENTION_OPENS:false;
+  return {ok:true,client:c?c.Client:'',policy:String(policy),
+    steps:[{k:'written',lab:'We wrote to you',done:true},
+           {k:'answered',lab:'You answered',done:replied},
+           {k:'manager',lab:'With a manager',done:handed},
+           {k:'responded',lab:'Manager responded',done:verdict},
+           {k:'resolved',lab:'Resolved',done:false}],
+    events,notes};
+}
+async function fetchCaseData(policy,code){
+  if(SHEET_URL){
+    try{
+      const r=await fetch(`${SHEET_URL}?type=case&policy=${encodeURIComponent(policy)}&code=${encodeURIComponent(code)}`);
+      const j=await r.json();
+      if(j&&j.ok)return j;
+      return null;
+    }catch(e){/* fall through to local */}
+  }
+  return localCaseData(policy,code);
+}
+async function openCaseView(policy,code){
+  policy=String(policy||'').trim();code=String(code||'').trim().toUpperCase();
+  const data=await fetchCaseData(policy,code);
+  $('#surveyX').style.display='';
+  $('#surveyTitle').textContent=data?'Your case':'Check my case';
+  $('#surveySub').textContent=data?`Policy ${policy}`:'';
+  if(!data){
+    $('#surveyBody').innerHTML=`<div style="max-width:44ch;margin:0 auto">
+      <p style="color:var(--slate);line-height:1.6;margin:0 0 14px">Enter your policy number and the access
+      code you received when you answered. If you have not answered yet, tap any option in your letter first —
+      the code appears the moment it records.</p>
+      <input class="cmt-input" id="cvPolicy" placeholder="Policy number" value="${esc(policy)}" style="margin-bottom:8px">
+      <input class="cmt-input" id="cvCode" placeholder="Access code" value="${esc(code)}" style="text-transform:uppercase;letter-spacing:.1em">
+      <div class="cmt-actions"><button class="btn-sm btn-save" id="cvGo" type="button">Open my case</button></div>
+    </div>`;
+    $('#cvGo').addEventListener('click',()=>openCaseView($('#cvPolicy').value,$('#cvCode').value));
+    $('#surveyModal').classList.add('on');
+    return;
+  }
+  const evRows=(data.events||[]).slice().sort((a,b)=>a.ts-b.ts).map(e=>
+    `<div class="cv-ev ${e.kind==='you'?'mine':''}">
+      <span class="t">${new Date(e.ts).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span>
+      <span class="w">${e.kind==='you'?`You: <b>${esc(e.what)}</b>`:e.what==='manager'?'A manager took personal responsibility for your case':e.what==='letter'?'We wrote to you':esc(e.what)}</span>
+    </div>`).join('')||'<div class="cv-ev"><span class="w" style="color:var(--mut)">Nothing recorded yet.</span></div>';
+  const noteRows=(data.notes||[]).map(n=>
+    `<div class="cv-ev mine"><span class="t">${new Date(n.ts).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span>
+     <span class="w">Your note: ${esc(n.body)}</span></div>`).join('');
+  $('#surveyBody').innerHTML=`
+    ${caseProgressHtml(data.steps||CASE_STEPS.map(s=>({...s,done:false})))}
+    <div style="margin:16px 0 6px;font-size:12.5px;letter-spacing:.09em;color:var(--mut);font-weight:700">THE RECORD</div>
+    <div class="cv-list">${evRows}${noteRows}</div>
+    <div style="margin:16px 0 6px;font-size:12.5px;letter-spacing:.09em;color:var(--mut);font-weight:700">ADD A COMMENT</div>
+    <textarea class="cmt-input" id="cvNote" placeholder="Anything you want on the record — a question, a correction, a promise. It goes to branch support under your name."></textarea>
+    <div class="cmt-actions"><button class="btn-sm btn-save" id="cvSend" type="button">Add to my case</button>
+      <span class="cmt-hint">Seen by branch support, your advisor and their manager</span></div>`;
+  $('#cvSend').addEventListener('click',()=>{
+    const body=$('#cvNote').value.trim();
+    if(!body){toast('Nothing to add');return;}
+    const ts=Date.now();
+    pushRecord(policy,{kind:'clientnote',author:(data.client||'Client')+' (client)',code,role:'Client',
+      stage:'',reason:'CLIENT NOTE',body,surveyReason:'',surveyContact:'',surveyPromise:'',factFind:'',managerVerdict:'',ts});
+    sheetLog({ts,policy,client:data.client||'',clientNo:'',agent:'',author:(data.client||'Client')+' (client)',
+      code,role:'Client',stage:'',type:'clientnote',reason:'CLIENT NOTE',body,retainProb:'',tone:'',
+      surveyReason:'',surveyContact:'',surveyPromise:'',factFind:'',managerVerdict:''});
+    toast('Added to your case');
+    openCaseView(policy,code);
+  });
+  $('#surveyModal').classList.add('on');
+}
 window.addEventListener('hashchange',handleHashAnswer);
+const ccl=document.getElementById('clientCaseLink');
+if(ccl)ccl.addEventListener('click',e=>{e.preventDefault();openCaseView('','');});
+/* deep link: #case=POLICY&code=XXXX */
+(function(){const m=location.hash.match(/case=([0-9A-Za-z]+)&code=([0-9A-Za-z]+)/i);
+  if(m){history.replaceState(null,'',location.pathname);openCaseView(m[1],m[2]);}})();
 
 /* deep-link client survey (#survey=POLICY) */
 async function handleHashSurvey(){
