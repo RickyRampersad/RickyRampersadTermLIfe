@@ -508,10 +508,12 @@
 
 <script>
 /* ================= CONFIG =================
-   API_URL: your Google Apps Script Web App URL (ends in /exec).
-   Leave "" to run the portal in demo mode with sample data.       */
+   PORTAL_URL: the Apps Script web app (ends in /exec) that runs the secure
+   client portal. This page is the public front door: it educates, then hands
+   the client over to PORTAL_URL with their access code.                     */
 const CONFIG = {
-  API_URL: "", // e.g. "https://script.google.com/macros/s/XXXX/exec"
+  PORTAL_URL: "https://script.google.com/macros/s/AKfycbwYQlLt1txn4pCWEq3xO_FmmPUfRAUMzey-vzbUe-qDr9tX27BpM0ZbkP5G0WuYQuZJ8g/exec",
+  API_URL: "", // legacy direct-data mode; leave "" — PORTAL_URL is used instead
   AGENT_EMAIL: "ricky.rampersad@myguardiangroup.com",
   CAMPAIGNS: [
     {
@@ -660,46 +662,47 @@ function esc(s) {
   return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
 }
 
+/** Sends the client into the secure Apps Script portal with their code. */
+function gotoPortal(code) {
+  const base = CONFIG.PORTAL_URL;
+  location.href = base + (base.indexOf("?") > -1 ? "&" : "?") + "t=" + encodeURIComponent(code);
+}
+
 async function loadClient() {
   const token = getToken();
 
-  if (!CONFIG.API_URL) {
-    renderPolicies(DEMO_DATA);
-    banner("demo", "👋 <span>Portal preview mode — showing sample data. Once connected to our records, this page shows each client their own policies via their personal link.</span>");
-    return;
-  }
-  if (!token) {
-    renderPolicies(DEMO_DATA);
-    banner("demo",
-      "🔑 <span style='flex:1'>Have an access code? Sign in to see your own policies and history:</span>" +
-      "<span style='display:inline-flex;gap:8px;flex-wrap:wrap'>" +
-      "<input id='login-code' placeholder='ACCESS CODE' style='padding:8px 12px;border-radius:10px;border:none;font-weight:700;letter-spacing:.1em;width:150px;text-transform:none' />" +
-      "<button onclick='portalLogin()' style='padding:8px 16px;border-radius:10px;border:none;background:var(--gold);color:var(--gold-ink);font-weight:800;cursor:pointer'>Sign in</button></span>");
-    const inp = $("login-code");
-    if (inp) inp.addEventListener("keydown", (e) => { if (e.key === "Enter") portalLogin(); });
-    return;
-  }
+  // Arrived on a personal link — hand straight over to the secure portal.
+  if (token && CONFIG.PORTAL_URL) { gotoPortal(token); return; }
 
-  banner("demo", "⏳ <span>Loading your renewal details…</span>");
-  try {
-    const res = await fetch(CONFIG.API_URL + "?token=" + encodeURIComponent(token));
-    const data = await res.json();
-    if (data && data.found) {
-      $("status-banner").innerHTML = "";
-      renderPolicies(data);
-    } else {
-      banner("error", "⚠️ <span>We couldn't match that link to a policy. Please use the exact link from your renewal email, or contact us at <a href='mailto:" + CONFIG.AGENT_EMAIL + "' style='color:#fff'>" + CONFIG.AGENT_EMAIL + "</a>.</span>");
-      renderPolicies(DEMO_DATA);
-    }
-  } catch (err) {
-    banner("error", "⚠️ <span>We couldn't load your details right now. You can still send your instructions below, or email us directly.</span>");
-    renderPolicies(DEMO_DATA);
+  // Public visitor: this page educates, and offers sign-in.
+  $("policy").innerHTML =
+    '<div class="policy-card" style="grid-template-columns:1fr;text-align:center">' +
+      '<div>' +
+        '<div class="pc-label">Client sign-in</div>' +
+        '<div class="pc-name" style="margin-bottom:6px">See your policies, values and renewal history</div>' +
+        '<p style="color:var(--muted);font-size:.95rem;max-width:540px;margin:0 auto 18px">Enter the access code from your renewal email — or simply click the button in that email and you\'ll come straight in.</p>' +
+        '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">' +
+          '<input id="login-code" placeholder="ACCESS CODE" autocomplete="off" spellcheck="false" ' +
+            'style="padding:13px 16px;border-radius:12px;border:1.5px solid #D7E3EE;font-weight:700;letter-spacing:.1em;text-align:center;width:190px;font-family:inherit;font-size:1rem" />' +
+          '<button class="btn btn-gold" onclick="portalLogin()">Open my portal →</button>' +
+        '</div>' +
+        '<p style="color:var(--muted);font-size:.85rem;margin-top:14px">Lost your code? Call <strong>(868) 678-5921</strong> or email ' +
+          '<a href="mailto:' + CONFIG.AGENT_EMAIL + '" style="color:var(--teal-600);font-weight:600">' + CONFIG.AGENT_EMAIL + '</a> and we\'ll send your link.</p>' +
+      '</div>' +
+    '</div>';
+  const inp = $("login-code");
+  if (inp) {
+    inp.addEventListener("keydown", (e) => { if (e.key === "Enter") portalLogin(); });
+    inp.focus();
   }
+  $("hero-title").textContent = "Your renewal, made simple.";
+  $("hero-sub").textContent = "Review your cover, understand what you're paying for, and send your renewal instructions in under two minutes. We handle the rest with Guardian.";
 }
 
 function portalLogin() {
   const code = ($("login-code") && $("login-code").value.trim()) || "";
-  if (code) location.search = "?t=" + encodeURIComponent(code);
+  if (!code) { const i = $("login-code"); if (i) i.focus(); return; }
+  gotoPortal(code);
 }
 
 /* ---------- Average calculator ---------- */
