@@ -1374,6 +1374,13 @@ function agentLetterPdf_(ref, now, body) {
   var yy = Utilities.formatDate(d, tz, 'yyyy');
   var owner = String(a.coaOwnerName || c.clientName || '').toUpperCase();
 
+  /* On the matched path support assigns the agent after verification, and the
+     letter must carry THAT agent's name — body.assignedAgent (set by support
+     when they populate the papers), falling back to the branch manager for
+     the direct path. The agent number only prints when it is actually his. */
+  var agentName = String(body.assignedAgent || a.coaTo || SVC.AGENT_NAME);
+  var agentNo = body.assignedAgent ? String(body.assignedAgentNo || '') : SVC.AGENT_NO;
+
   var inner =
     '<div class="ttl">GUARDIAN LIFE OF THE CARIBBEAN LIMITED</div>' +
     '<div class="ttl2">REQUEST FOR CHANGE OF SERVICING AGENT</div>' +
@@ -1385,7 +1392,7 @@ function agentLetterPdf_(ref, now, body) {
 
     '<p>After completing your Service Questionnaire and reviewing my policy(ies) no(s) ' +
       onLine_(a.coaPolicies || a.policyNos || c.policyNos || 'all policies held', 230) + '</p>' +
-    '<p>with Mr./Mrs./Miss ' + onLine_(SVC.AGENT_NAME, 430) + '</p>' +
+    '<p>with Mr./Mrs./Miss ' + onLine_(agentName, 430) + '</p>' +
     '<p>I am requesting that he/she be appointed my Servicing Agent with immediate effect.</p>' +
 
     '<p class="blk">NAME OF POLICYOWNER IN BLOCK LETTERS ' + onLine_(owner, 300) + '</p>' +
@@ -1420,9 +1427,9 @@ function agentLetterPdf_(ref, now, body) {
     '<p class="blk">AGENT\'S COMMENTS ' + onLine_(a.agentComments, 420) + '</p>' +
 
     '<table class="hdr" style="margin-top:12px"><tr>' +
-      '<td style="width:56%">SERVICING AGENT\'S NAME ' + onLine_(SVC.AGENT_NAME.toUpperCase(), 210) +
+      '<td style="width:56%">SERVICING AGENT\'S NAME ' + onLine_(agentName.toUpperCase(), 210) +
         '<div class="cap" style="padding-left:14px">(in block letters)</div></td>' +
-      '<td>AGENT\'S NO. ' + onLine_(SVC.AGENT_NO, 190) + '</td>' +
+      '<td>AGENT\'S NO. ' + onLine_(agentNo, 190) + '</td>' +
     '</tr></table>' +
 
     '<table class="hdr" style="margin-top:44px"><tr>' +
