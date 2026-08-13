@@ -577,7 +577,8 @@ const SLA={
   AGENT_FILE_BY: 65,       // agent files the retention case by this arrears day
   MANAGER_REPLY_DAYS: 3,   // the branch's documented TAT, per the Premium Due Guidelines
   CLIENT_CHASE_EVERY: 5,   // client reminded every 5 days after day 45, while they have said nothing
-  MANAGER_CHASE_EVERY: 3   // manager chased every 3 days once they are late
+  MANAGER_CHASE_EVERY: 3,  // commitment outstanding: chased every 3 days, all copied
+  FEEDBACK_CHASE_EVERY: 7  // committed but no feedback yet: chased every 7 days, all copied
 };
 
 /* ===== LIFECYCLE STAGING ===== */
@@ -642,13 +643,31 @@ function pushRecord(policy, rec){(STORE.records[policy]=STORE.records[policy]||[
 /* survey state: does this policy have a completed 45-day survey? retention form? verdict? */
 function policyState(policy){
   const r=recordsFor(policy);
+  // Manager answers come in as 'verdict' rows; decode them by key to know which
+  // phase is complete. commitDone = all four commitments; feedbackDone = all
+  // four feedback answers. This mirrors pdCaseState_ on the backend.
+  const mgr={};
+  r.filter(x=>x.kind==='verdict').forEach(v=>{
+    const a=ANSWER_BY_KEY[v.optKey]||(v.reason&&decodeMgr(v.reason,v.body));
+    if(a&&a.qk)mgr[a.qk]={lab:a.lab||v.body,ts:v.ts};
+  });
+  const done=set=>set.every(q=>mgr[q.k]);
+  const commitDone=done(MANAGER_COMMIT), feedbackDone=commitDone&&done(MANAGER_FEEDBACK);
   return {
     survey:   r.filter(x=>x.kind==='survey').slice(-1)[0]||null,
     retention:r.filter(x=>x.kind==='retention').slice(-1)[0]||null,
     verdict:  r.filter(x=>x.kind==='verdict').slice(-1)[0]||null,
     response: r.filter(x=>x.kind==='response').slice(-1)[0]||null,   // client's one-click reply
-    comments: r.filter(x=>x.kind==='comment')
+    comments: r.filter(x=>x.kind==='comment'),
+    mgr, commitDone, feedbackDone
   };
+}
+/* question text + answer label -> {qk,lab}, for verdict rows that stored text not keys */
+function decodeMgr(qtext,label){
+  const set=MANAGER_COMMIT.concat(MANAGER_FEEDBACK,MANAGER_PRIVATE);
+  const q=set.find(x=>x.q===qtext); if(!q)return null;
+  const o=q.opts.find(x=>x.lab===label);
+  return {qk:q.k,lab:label,ak:o?o.k:''};
 }
 
 /* ===== WHO IS HOLDING THIS UP =====
@@ -666,16 +685,21 @@ function blocker(c){
   // anybody was accountable is the pattern that let cases sit: the agent had
   // until 65, the manager three days after that, and a client who heard from
   // nobody was the ordinary outcome rather than the failure case.
-  if(!st.verdict){
+  if(!st.commitDone){
     const since=Math.max(0,d-SLA.RETENTION_OPENS);
     return {who:'manager', name:managerOf(c.Agent), late:since>=SLA.MANAGER_REPLY_DAYS,
-      what:'Handed over at day 60 — no response recorded', since};
+      what:'Day 60 — four commitments not yet confirmed', since};
+  }
+  if(!st.feedbackDone){
+    const since=Math.max(0,d-SLA.RETENTION_OPENS);
+    return {who:'manager', name:managerOf(c.Agent), late:since>=SLA.MANAGER_REPLY_DAYS+SLA.FEEDBACK_CHASE_EVERY,
+      what:'Committed — feedback on the call awaited', since};
   }
   if(!st.retention){
     return {who:'agent', name:c.Agent, late:d>=SLA.AGENT_FILE_BY,
       what:'No retention case filed', since:Math.max(0,d-SLA.RETENTION_OPENS)};
   }
-  return {who:'done', name:'', late:false, what:'Manager has responded', since:0};
+  return {who:'done', name:'', late:false, what:'Manager committed and fed back', since:0};
 }
 /* Chase schedule. Returns what is due today, or null. */
 function chaseDue(c){
@@ -686,10 +710,12 @@ function chaseDue(c){
     const since=d-SLA.RETENTION_OPENS;
     if(since>0 && since%SLA.CLIENT_CHASE_EVERY===0) out.push({kind:'client',day:d});
   }
-  if(st.retention && !st.verdict){
-    const waiting=Math.floor((Date.now()-st.retention.ts)/86400000);
-    if(waiting>=SLA.MANAGER_REPLY_DAYS && (waiting-SLA.MANAGER_REPLY_DAYS)%SLA.MANAGER_CHASE_EVERY===0)
-      out.push({kind:'manager',day:d,waiting});
+  if(!st.commitDone && d>=SLA.RETENTION_OPENS){
+    const since=d-SLA.RETENTION_OPENS;
+    if(since%SLA.MANAGER_CHASE_EVERY===0) out.push({kind:'manager',day:d,phase:'commit'});
+  } else if(st.commitDone && !st.feedbackDone && d>=SLA.RETENTION_OPENS){
+    const since=d-SLA.RETENTION_OPENS;
+    if(since%SLA.FEEDBACK_CHASE_EVERY===0) out.push({kind:'manager',day:d,phase:'feedback'});
   }
   return out.length?out:null;
 }
@@ -887,29 +913,37 @@ const CLIENT_QUESTIONS=[
    all service, all dated. MANAGER_PRIVATE is the commercial and compliance
    decision, answered here in the engine and never rendered into an email the
    client is on. Keys must match apps-script/PremiumDueTemplates.gs. */
-const MANAGER_QUESTIONS=[
-  {k:'mcontact',q:'Have you spoken with the client?',opts:[
-    {k:'yes',lab:'Yes — we have spoken'},{k:'attempted',lab:'Attempted — no answer yet'},
-    {k:'today',lab:'Not yet — I am calling today'}]},
-  {k:'moutcome',q:'What was the outcome?',opts:[
-    {k:'settle',lab:'They will settle it'},{k:'review',lab:'They need the premium reviewed'},
-    {k:'billing',lab:'Payment date or bank details to change'},{k:'hold',lab:'They asked for a short pause'},
-    {k:'end',lab:'They do not wish to continue'},{k:'none',lab:'Not reached yet'}]},
-  {k:'magent',q:'Have you spoken with the advisor about this policy?',opts:[
-    {k:'yes',lab:'Yes — we have discussed it'},{k:'today',lab:'Not yet — today'},
-    {k:'noagent',lab:'No advisor is servicing this policy'}]},
-  {k:'mfactfind',q:'Have you reviewed the fact find?',opts:[
-    {k:'yes',lab:'Yes — complete and acceptable'},{k:'returned',lab:'Returned to the advisor to complete'},
-    {k:'none',lab:'None attached'}]},
+const MANAGER_COMMIT=[
+  {k:'mcall',q:'Will you call this client personally?',opts:[
+    {k:'today',lab:'Yes — I will call today'},{k:'week',lab:'Yes — within this week'},
+    {k:'done',lab:'I have already spoken with them'}]},
+  {k:'mfact',q:'Will you review the fact find?',opts:[
+    {k:'yes',lab:'Yes — I will review it'},{k:'done',lab:'Already reviewed — it is in order'},
+    {k:'none',lab:'No fact find yet — I will get it from the advisor'}]},
+  {k:'madvisor',q:'Will you discuss it with the advisor?',opts:[
+    {k:'yes',lab:'Yes — I will speak with them'},{k:'done',lab:'Already discussed'},
+    {k:'reassign',lab:'No advisor is servicing this — I will reassign'}]},
+  {k:'mby',q:'When will you have feedback for us?',opts:[
+    {k:'d2',lab:'Within 2 days'},{k:'d3',lab:'Within 3 days'},{k:'week',lab:'By the end of this week'}]}
+];
+const MANAGER_FEEDBACK=[
+  {k:'mreached',q:'Did you reach the client?',opts:[
+    {k:'spoke',lab:'Yes — we spoke'},{k:'message',lab:'Left word — awaiting their call'},
+    {k:'unable',lab:'Not yet able to reach them'}]},
+  {k:'moutcome',q:'Where does the policy stand?',opts:[
+    {k:'settle',lab:'They will settle it'},{k:'review',lab:'A premium review is agreed'},
+    {k:'plan',lab:'A payment plan is agreed'},{k:'end',lab:'They wish to end the cover'},
+    {k:'working',lab:'Still working on it'}]},
   {k:'mvalue',q:'What is the non-forfeiture position on this policy?',opts:[
     {k:'novalue',lab:'No accrued value — it lapses outright at day 90'},
     {k:'apl',lab:'An automatic premium loan is running against the value'},
     {k:'value',lab:'It has value; cover can be sustained from it for a period'},
     {k:'checking',lab:'Confirming with the carrier'}]},
-  {k:'mwhen',q:'By when will this be resolved?',opts:[
-    {k:'today',lab:'Today'},{k:'week',lab:'This week'},
-    {k:'d75',lab:'Before day 75'},{k:'d88',lab:'Before day 88'}]}
+  {k:'mfactdone',q:'The fact find — where did it land?',opts:[
+    {k:'ok',lab:'Complete and acceptable'},{k:'returned',lab:'Returned to the advisor to complete'},
+    {k:'none',lab:'Still none on file'}]}
 ];
+const MANAGER_QUESTIONS=MANAGER_COMMIT;
 const MANAGER_PRIVATE=[
   {k:'mdecision',q:'Your decision on this case',opts:[
     {k:'retention',lab:'Approve the retention plan as proposed'},
@@ -944,14 +978,15 @@ const CLOSING_QUESTIONS=[
     {k:'money',lab:'It was money — nothing would have'},{k:'other',lab:'Something else'}]}
 ];
 const ANSWER_BY_KEY={};
-[CLIENT_QUESTIONS,MANAGER_QUESTIONS,MANAGER_PRIVATE,CLOSING_QUESTIONS].forEach(set=>set.forEach(q=>q.opts.forEach(o=>{
+[CLIENT_QUESTIONS,MANAGER_COMMIT,MANAGER_FEEDBACK,MANAGER_PRIVATE,CLOSING_QUESTIONS].forEach(set=>set.forEach(q=>q.opts.forEach(o=>{
   ANSWER_BY_KEY[q.k+':'+o.k]={q:q.q,lab:o.lab,qk:q.k,
-    set:(set===MANAGER_QUESTIONS||set===MANAGER_PRIVATE)?'mgr':set===CLOSING_QUESTIONS?'closing':'client'};})));
-/* Which set a question belongs to, so a returning tap offers the right
-   remaining questions rather than the day-45 ones. */
+    set:(set===MANAGER_COMMIT||set===MANAGER_FEEDBACK||set===MANAGER_PRIVATE)?'mgr':set===CLOSING_QUESTIONS?'closing':'client'};})));
+/* Which set a returning tap belongs to. A manager mid-flow is offered whichever
+   phase still has gaps — commitment first, then feedback, then the private set. */
 function questionSet(name){
-  return name==='mgr'?MANAGER_QUESTIONS.concat(MANAGER_PRIVATE)
-       :name==='closing'?CLOSING_QUESTIONS:CLIENT_QUESTIONS;
+  if(name==='closing')return CLOSING_QUESTIONS;
+  if(name!=='mgr')return CLIENT_QUESTIONS;
+  return MANAGER_COMMIT.concat(MANAGER_FEEDBACK,MANAGER_PRIVATE);
 }
 /* Answers that mean the client intends to keep paying, for the odds model. */
 /* Any answer at all is a good sign — these weight how good. */
@@ -1135,10 +1170,14 @@ function ladderHtml(c){
       handed?`<b>Handed to ${esc(mgr)}</b> — client off the letter sequence until day 88`
             :`Day ${SLA.RETENTION_OPENS} — handover to <b>${esc(mgr)}</b>, who calls the client personally`,
       handed?`day ${SLA.RETENTION_OPENS}`:`day ${d}`),
-    rung(!!st.verdict, handed&&!st.verdict&&bl&&bl.who==='manager'&&bl.late, handed&&!st.verdict,
-      st.verdict?`<b>${esc(st.verdict.author)}</b> responded — ${esc(st.verdict.managerVerdict||'')}`
-                :`<b>${esc(mgr)}</b> to call the client and record their answers, within ${SLA.MANAGER_REPLY_DAYS} working days`,
-      st.verdict?timeAgo(st.verdict.ts):(handed?`${Math.max(0,d-SLA.RETENTION_OPENS)}d waiting`:'')),
+    rung(st.commitDone, handed&&!st.commitDone&&bl&&bl.who==='manager'&&bl.late, handed&&!st.commitDone,
+      st.commitDone?`<b>${esc(mgr)} committed</b> — will call, review, discuss, feed back`
+                   :`<b>${esc(mgr)}</b> to confirm the four commitments, within ${SLA.MANAGER_REPLY_DAYS} days`,
+      st.commitDone?'confirmed':(handed?`${Math.max(0,d-SLA.RETENTION_OPENS)}d waiting`:'')),
+    rung(st.feedbackDone, st.commitDone&&!st.feedbackDone&&d>=75, st.commitDone&&!st.feedbackDone,
+      st.feedbackDone?`<b>${esc(mgr)} fed back</b> — outcome recorded`
+                     :`<b>${esc(mgr)}</b> to feed back what came of the call (every 7 days)`,
+      st.feedbackDone?'complete':(st.commitDone?'awaited':'')),
     rung(!!st.retention, !st.retention&&d>=SLA.AGENT_FILE_BY, !st.retention&&handed,
       st.retention?`<b>${esc(c.Agent)}</b> filed the retention case — ${esc(st.retention.reason||'')}`
                   :`<b>${esc(c.Agent)}</b> to file the retention case by day ${SLA.AGENT_FILE_BY}`,
@@ -1356,7 +1395,7 @@ function rickyInsights(cases){
   const byMgr=blocked.filter(x=>x.b.who==='manager');
   // Handed to a manager at day 60, and the manager has recorded nothing at all.
   // Not "no reply from the client" — that is no longer anybody's excuse.
-  const silent=s60.filter(c=>{const st=policyState(c.Policy);return !st.verdict;});
+  const silent=s60.filter(c=>{const st=policyState(c.Policy);return !st.feedbackDone;});
   const noSurvey=s45.filter(c=>{const st=policyState(c.Policy);return !st.survey&&!st.response;});
   if(s90.length)out.push({mk:'crit',t:`<b>${s90.length} ${s90.length===1?'policy is':'policies are'} at the 90-day lapse line.</b> Reinstatement only from here — pursue today or document the loss.`});
   if(noSurvey.length)out.push({mk:'warn',t:`<b>${noSurvey.length} of ${s45.length} cases in the 45-day window have had no answer from the client.</b> They are reminded every ${SLA.CLIENT_CHASE_EVERY} days automatically until day 60, when the policy becomes a manager's to telephone.`});
@@ -1427,7 +1466,7 @@ function applyFilter(cases){
   // returned "no results" while the policy sat right there, which made the
   // win-back work unreachable from search.
   if(FILTER.chip==='all' && !RIB.on && !FILTER.q)r=r.filter(c=>c.stage!=='closed' && !c.lapsed);
-  if(FILTER.chip==='await')r=r.filter(c=>c.stage==='s60'&&!policyState(c.Policy).verdict);
+  if(FILTER.chip==='await')r=r.filter(c=>c.stage==='s60'&&!policyState(c.Policy).feedbackDone);
   if(FILTER.chip==='dup')r=r.filter(c=>c.cf.duplicateRisk||c.cf.churnRisk);
   if(FILTER.q){const q=FILTER.q.toLowerCase();r=r.filter(c=>c.Client.toLowerCase().includes(q)||c.Policy.includes(q)||String(c.ClientNo).includes(q)||c.Agent.toLowerCase().includes(q)||(c.PlanCode||'').toLowerCase().includes(q));}
   if(FILTER.sort==='days')r.sort((a,b)=>rank(b)-rank(a));
@@ -1447,13 +1486,13 @@ function wireFilter(cases,rerender){
     else if(k==='s60')n=cases.filter(c=>c.stage==='s60').length;else if(k==='s90')n=cases.filter(c=>c.stage==='s90').length;
     else if(k==='late')n=cases.filter(c=>{const b=blocker(c);return b&&b.late;}).length;
     else if(k==='pend')n=cases.filter(c=>c.stage==='pend').length;
-    else if(k==='await')n=cases.filter(c=>c.stage==='s60'&&!policyState(c.Policy).verdict).length;
+    else if(k==='await')n=cases.filter(c=>c.stage==='s60'&&!policyState(c.Policy).feedbackDone).length;
     else if(k==='dup')n=cases.filter(c=>c.cf.duplicateRisk||c.cf.churnRisk).length;el.textContent=n;});
 }
 
 /* ===== NEXT STEP ===== */
 function nextStep(cases){
-  const mine=cases.filter(c=>c.stage==='s60'&&!policyState(c.Policy).verdict);
+  const mine=cases.filter(c=>c.stage==='s60'&&!policyState(c.Policy).feedbackDone);
   const s90=cases.filter(c=>c.stage==='s90');
   const s60noForm=cases.filter(c=>c.stage==='s60'&&!policyState(c.Policy).retention);
   const s45noSurvey=cases.filter(c=>c.stage==='s45'&&!policyState(c.Policy).survey&&!policyState(c.Policy).response);
@@ -1514,7 +1553,7 @@ function footer(){return `<div class="foot"><div class="shield">${SHIELD}</div><
    hearing from nobody: the agent is late, so the manager never sees it, so the
    manager is not late either, and the policy lapses with two clean records. */
 function managerQueue(cases){
-  const q=cases.filter(c=>c.stage==='s60'&&!policyState(c.Policy).verdict)
+  const q=cases.filter(c=>c.stage==='s60'&&!policyState(c.Policy).feedbackDone)
     .sort((a,b)=>rank(b)-rank(a));
   if(!q.length)return `<div class="empty-state" style="padding:30px"><div class="shield">${SHIELD}</div><p>Nothing is waiting on you. Every policy handed over at day 60 has your answer against it.</p></div>`;
   return `<table class="lbtable"><thead><tr><th>Client / policy</th><th>Agent</th><th>Stage</th><th>What you have</th><th>Waiting</th><th></th></tr></thead><tbody>

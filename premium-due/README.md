@@ -11,6 +11,7 @@ file. Replaces the two JotForms and the "Premium Due Status" comment columns.
 | `index.html` | The whole app — login, dashboards, case threads, client outreach |
 | `staff-manual.html` | Staff manual — the day-to-day reference |
 | `process-brief.html` | Rollout brief for the team: the workflow, the actual client emails rendered, and what each role does differently |
+| `flow-map.html` | The whole lifecycle drawn out on one page — the two-phase manager handover, every loop and every exit. The picture to put in front of the team |
 | `letter-preview.html` | The day-45 letter in all six colour schemes, with a picker |
 | `../apps-script/PremiumDue.gs` | Backend — reads the portfolio, stores the log |
 | `../apps-script/PremiumDueAuth.gs` | Sign-in, the roster tab, tokens and scope |
@@ -77,16 +78,21 @@ milestones, a reminder every 5 days while the client has said nothing; it stops
 on any answer. Day 75 is signed by the unit manager personally. The final notice
 sends at day 88 so it lands before the cliff, not on it.
 
-**At day 60 one email goes to the manager with the client copied**, and repeats
-every three days until the manager has answered. **At day 90, 95 and 100** the
-client gets the closing letter, which asks them to rate the advisor and the
-manager. See below.
+**At day 60 the case is handed to the manager in two phases.** First a
+*commitment* email — will you call, review the fact find, speak to the advisor,
+and when will you report back — copied to the advisor, branch manager and the
+client, repeating every 3 days until all four are confirmed. The moment they
+are, a one-time thank-you reassures the client and a separate *feedback* clock
+begins, following up every 7 days for what actually happened. **At day 90, 95
+and 100** the client gets the closing letter, which asks them to rate the
+advisor and the manager. See below — and `flow-map.html` for the whole thing
+drawn out.
 
 | Stage | Trigger | What's due |
 |-------|---------|-----------|
 | Overdue | Status 2, 1–44 days | Nothing automated — agent contact only |
 | 45-Day | Status 2, 45–59 days | First letter: two questions, answered by tapping |
-| 60-Day | Status 2, 60–89 days | One email to the manager, **cc advisor + client**, repeating every 3 days until answered · advisor files by day 65 |
+| 60-Day | Status 2, 60–89 days | **Commitment** to the manager (cc advisor + client) every 3 days until confirmed → thank-you (once) → **feedback** every 7 days · advisor files by day 65 |
 | 88 | Status 2, 88–89 days | Short final notice |
 | 90 / 95 / 100 | Any status | The closing letter, with service ratings. Three sends, then it stops |
 | Win-back | Status 1, from day 110 | Reinstatement, once the closing sequence has finished |
@@ -295,32 +301,48 @@ inference: once a manager has confirmed the position, the client's day-88 letter
 says *"we have checked the position on this policy — confirmed by [manager]"*
 rather than *"your agent will confirm"*.
 
-### Day 60 — one email, and the client is on it
+### Day 60 — the handover, in two phases
 
 **The day-60 email is addressed to the manager and copied to the advisor, the
 branch manager and the client.** That last one is the design, not an oversight.
 Up to day 60 the policyholder is asked to act and hears nothing back but
 reminders; from day 60 they watch the branch work — who holds the policy, what
-they have been asked, and by when.
+they have committed to, and by when.
 
-It repeats **every three days** until every question has an answer, and each
-repeat asks only what is still outstanding while showing what has already been
-answered. `pdOutstandingQuestions_` does the filtering, `state.rounds` numbers
-the reminders.
+It comes in two deliberately separate steps, so a case can never sit and the two
+clocks never overlap (`pdManagerLetter_(p, state, {phase})`):
 
-Because a client reads these, the manager's questions are split in two:
+**Phase 1 — the commitment** (`MANAGER_COMMIT`, `phase: 'commit'`). Four things
+the manager can confirm the same day, because none of them needs the call to
+have happened yet: *will you call this client, will you review the fact find,
+will you discuss it with the advisor, and when will you have feedback.* It
+carries **the full record so far** — `pdManagerHistory_` attaches the day-45
+letter, the reminders and the client's own reply, or says plainly there was
+none. It repeats **every 3 days** (`SLA.MANAGER_CHASE_EVERY`), each repeat asking
+only what is still blank via `pdOutstandingQuestions_`, and stops the moment all
+four are in.
 
-| | Asked in the email | |
+**The thank-you** (`phase: 'ack'`) fires exactly once, the run after the four
+are confirmed. It thanks the manager, restates what they committed to, and tells
+the client their manager has taken charge and that feedback is now awaited to
+bring the policy up to date. It is not a chase and never repeats.
+
+**Phase 2 — the feedback** (`MANAGER_FEEDBACK`, `phase: 'feedback'`). A separate
+**7-day** clock (`SLA.FEEDBACK_CHASE_EVERY`) that begins only once the manager
+has committed: *did you reach the client, where does the policy stand, the
+non-forfeiture position, and where did the fact find land.* The non-forfeiture
+answer goes verbatim into the client's day-88 letter.
+
+Because a client reads all of these, the manager's questions are split three ways:
+
+| | Client-copied | The questions |
 |---|---|---|
-| `MANAGER_QUESTIONS` | **Yes** | Have you spoken with the client · What was the outcome · Have you spoken with the advisor · Have you reviewed the fact find · What is the non-forfeiture position · By when will this be resolved |
+| `MANAGER_COMMIT` | **Yes** — phase 1 | Will you call · review the fact find · discuss with the advisor · when will you report back |
+| `MANAGER_FEEDBACK` | **Yes** — phase 2 | Did you reach the client · where does the policy stand · the non-forfeiture position · where did the fact find land |
 | `MANAGER_PRIVATE` | **Never** | The commercial decision (including *allow the policy to lapse*), the outlook, and whether the BM is needed |
 
 Putting "allow the policy to lapse — documented" in front of a policyholder as a
-menu option would be indefensible. Those three are answered in the engine.
-
-`pdWhatWeHave_` carries the day-45 answer into the email — **or says plainly
-that there was no reply**, which is the sentence that makes a manager pick up
-the phone.
+menu option would be indefensible. Those three are answered in the engine only.
 
 ### Day 90, 95, 100 — the closing letter
 
@@ -336,12 +358,12 @@ the lapse status flips at day 90 and win-back interleaves with the closing
 letters — closing on 90, win-back on 92, closing on 95 — and the closing letter
 already offers reinstatement.
 
-### The old day-60 handover
+### How the handover fires
 
-**Day 60 sends the client nothing.** It sends the *manager* the brief, and asks
-them to telephone. `pdInternalChase_` fires `pdManagerLetter_(p, s, {activation:
-true})` once per policy, logged as `manager-60`, and it fires **whether or not
-the agent has filed a retention case**.
+**Day 60 sends the client no letter of their own** — it drives the *manager*
+thread, and asks them to telephone. `pdInternalChase_` runs the two phases,
+logging each send as `mgr-commit`, `mgr-ack` or `mgr-feedback`, and it fires
+**whether or not the agent has filed a retention case**.
 
 That last part is the fix. Under the old design a manager only saw a policy once
 an agent filed on it, so a case nobody filed reached nobody: the agent was late,
@@ -358,7 +380,8 @@ Two internal clocks run from there:
 
 | Clock | Deadline | Missed |
 |-------|----------|--------|
-| Manager calls and answers | 3 working days from the **handover** | Emailed every 3 days, BM copied from the second; hits **their** sign-in gate; shows in the client's day-88 letter as a record with nothing in it |
+| Manager commits | 3 working days from the **handover** | Commitment email every 3 days, BM copied; hits **their** sign-in gate; an empty record shows in the client's day-88 letter |
+| Manager reports back | 7 days from the commitment | Feedback follow-up every 7 days; the feedback is what becomes the client's day-88 record |
 | Agent files the case | day 65 | Emailed, manager copied; shows as *Waiting on [agent]*; hits their sign-in gate |
 
 The two are independent — the agent's clock must not swallow the manager's on

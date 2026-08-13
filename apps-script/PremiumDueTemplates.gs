@@ -126,9 +126,10 @@ var SLA = {
   RETENTION_OPENS: 60,
   LAPSE: 90,
   AGENT_FILE_BY: 65,
-  MANAGER_REPLY_DAYS: 3,          // the branch's documented TAT, per the Premium Due Guidelines
+  MANAGER_REPLY_DAYS: 3,          // day 60 -> the manager must COMMIT within three days
   CLIENT_CHASE_EVERY: 5,
-  MANAGER_CHASE_EVERY: 3
+  MANAGER_CHASE_EVERY: 3,         // commitment outstanding: chase every 3 days, all copied
+  FEEDBACK_CHASE_EVERY: 7         // committed but no feedback yet: chase every 7 days, all copied
 };
 
 /* ===================== WHAT WE ASK THE CLIENT =====================
@@ -203,29 +204,56 @@ var CLIENT_QUESTIONS = [
    be indefensible. Those are answered in the engine, or from the internal-only
    copy, and never appear in the email the client is copied on. */
 
-var MANAGER_QUESTIONS = [
-  { k: 'mcontact', q: 'Have you spoken with the client?', opts: [
-    { k: 'yes',       lab: 'Yes — we have spoken' },
-    { k: 'attempted', lab: 'Attempted — no answer yet' },
-    { k: 'today',     lab: 'Not yet — I am calling today' } ] },
+/* THE MANAGER ANSWERS IN TWO STAGES, because a manager gives us two different
+   things at two different moments and blurring them is what let cases sit.
 
-  { k: 'moutcome', q: 'What was the outcome?', opts: [
+   COMMIT — day 60, chased every 3 days. What the manager will DO: call the
+   client, review the fact find, speak with the advisor, and by when they will
+   report back. Four taps, all forward-looking, all things a manager can answer
+   without having done anything yet — so there is no reason for silence.
+
+   FEEDBACK — after they commit, chased every 7 days. What actually HAPPENED:
+   did they reach the client, where does the policy stand, the non-forfeiture
+   position, the fact-find outcome. This can only be answered once the work is
+   done, which is the point of separating it.
+
+   The client is copied on both, so both are worded as service, and the
+   commercial decision stays in MANAGER_PRIVATE, out of sight. */
+
+var MANAGER_COMMIT = [
+  { k: 'mcall', q: 'Will you call this client personally?', opts: [
+    { k: 'today', lab: 'Yes — I will call today' },
+    { k: 'week',  lab: 'Yes — within this week' },
+    { k: 'done',  lab: 'I have already spoken with them' } ] },
+
+  { k: 'mfact', q: 'Will you review the fact find?', opts: [
+    { k: 'yes',  lab: 'Yes — I will review it' },
+    { k: 'done', lab: 'Already reviewed — it is in order' },
+    { k: 'none', lab: 'No fact find yet — I will get it from the advisor' } ] },
+
+  { k: 'madvisor', q: 'Will you discuss it with the advisor?', opts: [
+    { k: 'yes',     lab: 'Yes — I will speak with them' },
+    { k: 'done',    lab: 'Already discussed' },
+    { k: 'reassign',lab: 'No advisor is servicing this — I will reassign' } ] },
+
+  { k: 'mby', q: 'When will you have feedback for us?', opts: [
+    { k: 'd2',   lab: 'Within 2 days' },
+    { k: 'd3',   lab: 'Within 3 days' },
+    { k: 'week', lab: 'By the end of this week' } ] }
+];
+
+var MANAGER_FEEDBACK = [
+  { k: 'mreached', q: 'Did you reach the client?', opts: [
+    { k: 'spoke',   lab: 'Yes — we spoke' },
+    { k: 'message', lab: 'Left word — awaiting their call' },
+    { k: 'unable',  lab: 'Not yet able to reach them' } ] },
+
+  { k: 'moutcome', q: 'Where does the policy stand?', opts: [
     { k: 'settle',  lab: 'They will settle it' },
-    { k: 'review',  lab: 'They need the premium reviewed' },
-    { k: 'billing', lab: 'Payment date or bank details to change' },
-    { k: 'hold',    lab: 'They asked for a short pause' },
-    { k: 'end',     lab: 'They do not wish to continue' },
-    { k: 'none',    lab: 'Not reached yet' } ] },
-
-  { k: 'magent', q: 'Have you spoken with the advisor about this policy?', opts: [
-    { k: 'yes',    lab: 'Yes — we have discussed it' },
-    { k: 'today',  lab: 'Not yet — today' },
-    { k: 'noagent',lab: 'No advisor is servicing this policy' } ] },
-
-  { k: 'mfactfind', q: 'Have you reviewed the fact find?', opts: [
-    { k: 'yes',      lab: 'Yes — complete and acceptable' },
-    { k: 'returned', lab: 'Returned to the advisor to complete' },
-    { k: 'none',     lab: 'None attached' } ] },
+    { k: 'review',  lab: 'A premium review is agreed' },
+    { k: 'plan',    lab: 'A payment plan is agreed' },
+    { k: 'end',     lab: 'They wish to end the cover' },
+    { k: 'working', lab: 'Still working on it' } ] },
 
   { k: 'mvalue', q: 'What is the non-forfeiture position on this policy?', opts: [
     { k: 'novalue',  lab: 'No accrued value — it lapses outright at day 90' },
@@ -233,12 +261,15 @@ var MANAGER_QUESTIONS = [
     { k: 'value',    lab: 'It has value; cover can be sustained from it for a period' },
     { k: 'checking', lab: 'Confirming with the carrier' } ] },
 
-  { k: 'mwhen', q: 'By when will this be resolved?', opts: [
-    { k: 'today', lab: 'Today' },
-    { k: 'week',  lab: 'This week' },
-    { k: 'd75',   lab: 'Before day 75' },
-    { k: 'd88',   lab: 'Before day 88' } ] }
+  { k: 'mfactdone', q: 'The fact find — where did it land?', opts: [
+    { k: 'ok',       lab: 'Complete and acceptable' },
+    { k: 'returned', lab: 'Returned to the advisor to complete' },
+    { k: 'none',     lab: 'Still none on file' } ] }
 ];
+
+/* Kept as an alias so anything that still says MANAGER_QUESTIONS renders the
+   commitment set (the day-60 email). The engine references it by name. */
+var MANAGER_QUESTIONS = MANAGER_COMMIT;
 
 /* Internal only. Never rendered into an email the client is copied on. */
 var MANAGER_PRIVATE = [
@@ -368,7 +399,7 @@ function pdPayBtn_(p) {
 /* Flat lookup, so a returning click can be named without walking the sets. */
 var ANSWER_BY_KEY = (function () {
   var m = {};
-  [CLIENT_QUESTIONS, MANAGER_QUESTIONS, MANAGER_PRIVATE, CLOSING_QUESTIONS].forEach(function (set) {
+  [CLIENT_QUESTIONS, MANAGER_COMMIT, MANAGER_FEEDBACK, MANAGER_PRIVATE, CLOSING_QUESTIONS].forEach(function (set) {
     set.forEach(function (q) {
       q.opts.forEach(function (o) { m[q.k + ':' + o.k] = { q: q.q, lab: o.lab, qk: q.k }; });
     });
@@ -383,7 +414,7 @@ var ANSWER_BY_KEY = (function () {
    question key + label -> answer key. Everything downstream works in keys. */
 var PD_QKEY_BY_TEXT = (function () {
   var m = {};
-  [CLIENT_QUESTIONS, MANAGER_QUESTIONS, MANAGER_PRIVATE, CLOSING_QUESTIONS].forEach(function (set) {
+  [CLIENT_QUESTIONS, MANAGER_COMMIT, MANAGER_FEEDBACK, MANAGER_PRIVATE, CLOSING_QUESTIONS].forEach(function (set) {
     set.forEach(function (q) { m[q.q] = q.k; });
   });
   return m;
@@ -391,7 +422,7 @@ var PD_QKEY_BY_TEXT = (function () {
 
 var PD_AKEY_BY_LABEL = (function () {
   var m = {};
-  [CLIENT_QUESTIONS, MANAGER_QUESTIONS, MANAGER_PRIVATE, CLOSING_QUESTIONS].forEach(function (set) {
+  [CLIENT_QUESTIONS, MANAGER_COMMIT, MANAGER_FEEDBACK, MANAGER_PRIVATE, CLOSING_QUESTIONS].forEach(function (set) {
     set.forEach(function (q) {
       q.opts.forEach(function (o) { m[q.k + '|' + o.lab] = o.k; });
     });
@@ -972,25 +1003,31 @@ function pdTrail_(p, state) {
    client's to read about in a letter. What appears below is what was done for
    them, and what they were told. */
 var MGR_SAID_CLIENT = {
-  'mcontact:yes':        'Your manager recorded that they spoke with you',
-  'mcontact:attempted':  'Your manager recorded an attempt to reach you',
-  'mcontact:today':      'Your manager recorded that they would call you that day',
-  'moutcome:settle':     'You said you would settle it',
-  'moutcome:review':     'You told them the premium needed reviewing',
-  'moutcome:billing':    'You told them the payment date or bank details needed changing',
-  'moutcome:hold':       'You asked for a short pause',
-  'moutcome:end':        'You told them you did not wish to continue',
-  'magent:yes':          'Your manager and your advisor discussed this policy together',
-  'mfactfind:yes':       'Your fact find was reviewed and accepted',
-  'mfactfind:returned':  'Your fact find was returned to your advisor to complete',
+  /* commitment (day 60) */
+  'mcall:today':         'Your manager committed to calling you that day',
+  'mcall:week':          'Your manager committed to calling you that week',
+  'mcall:done':          'Your manager recorded that they had already spoken with you',
+  'mfact:yes':           'Your manager committed to reviewing your fact find',
+  'mfact:done':          'Your fact find was reviewed and found in order',
+  'madvisor:yes':        'Your manager arranged to discuss the policy with your advisor',
+  'madvisor:done':       'Your manager and your advisor discussed this policy together',
+  /* feedback (after the call) */
+  'mreached:spoke':      'Your manager spoke with you',
+  'mreached:message':    'Your manager left word for you and awaited your call',
+  'moutcome:settle':     'It was recorded that you would settle it',
+  'moutcome:review':     'A premium review was agreed for you',
+  'moutcome:plan':       'A payment plan was agreed for you',
+  'moutcome:end':        'You told them you wished to end the cover',
   'mvalue:novalue':      'The position on this policy&rsquo;s value was confirmed',
   'mvalue:apl':          'It was confirmed that a premium loan is running against the policy&rsquo;s value',
   'mvalue:value':        'It was confirmed that this policy has built a value',
+  'mfactdone:ok':        'Your fact find was reviewed and accepted',
+  'mfactdone:returned':  'Your fact find was returned to your advisor to complete',
+  /* private decisions (client-safe subset only) */
   'mdecision:retention': 'A retention plan was approved for this policy',
   'mdecision:payplan':   'A payment plan was approved for this policy',
   'mdecision:reduce':    'A reduced premium, or an alteration to the benefit, was approved',
-  'mdecision:reinstate': 'The case was escalated for reinstatement',
-  'msupport:yes':        'The case was escalated to the branch manager'
+  'mdecision:reinstate': 'The case was escalated for reinstatement'
 };
 
 /* Rows are told apart by their background, not by the colour of the text.
@@ -1049,7 +1086,7 @@ function pdInteractionLog_(p, state) {
     var said = MGR_SAID_CLIENT[qk + ':' + mgr[qk].ak];
     if (!said) continue;                                     // internal-only answer
     ev.push({ ts: mgr[qk].ts, who: pdEsc_(pdFirst_(mgrName)) || 'Manager', what: said,
-              kind: qk === 'moutcome' ? 'you' : 'mgr' });
+              kind: (qk === 'moutcome' || qk === 'mreached') ? 'you' : 'mgr' });
   }
 
   ev.sort(function (a, b) { return (a.ts || 0) - (b.ts || 0); });
@@ -2022,21 +2059,28 @@ function pdWhatWeHave_(p, state) {
     'This is what the client told us on day 45. The premium is still outstanding, so the conversation is not finished.</p>';
 }
 
-/** Only the questions this manager has not yet answered. */
-function pdOutstandingQuestions_(state) {
-  var answered = (state && state.mgr) || {}, out = [];
-  for (var i = 0; i < MANAGER_QUESTIONS.length; i++) {
-    if (!answered[MANAGER_QUESTIONS[i].k]) out.push(MANAGER_QUESTIONS[i]);
-  }
+/** Whether every question in a set has been answered. */
+function pdAllAnswered_(state, set) {
+  var m = (state && state.mgr) || {};
+  for (var i = 0; i < set.length; i++) if (!m[set[i].k]) return false;
+  return true;
+}
+
+/** The questions in a set this manager has not yet answered. */
+function pdOutstandingQuestions_(state, set) {
+  set = set || MANAGER_COMMIT;
+  var m = (state && state.mgr) || {}, out = [];
+  for (var i = 0; i < set.length; i++) if (!m[set[i].k]) out.push(set[i]);
   return out;
 }
 
-/** What the manager has already answered, shown back so nothing is asked twice. */
-function pdAnsweredBlock_(state) {
-  var answered = (state && state.mgr) || {}, rows = '';
-  for (var i = 0; i < MANAGER_QUESTIONS.length; i++) {
-    var q = MANAGER_QUESTIONS[i], a = answered[q.k];
-    if (a) rows += pdKv_(pdEsc_(q.q), '<b>' + pdEsc_(a.lab) + '</b>');
+/** What the manager has already answered in a set, shown back so nothing is asked twice. */
+function pdAnsweredBlock_(state, set) {
+  set = set || MANAGER_COMMIT;
+  var m = (state && state.mgr) || {}, rows = '';
+  for (var i = 0; i < set.length; i++) {
+    var a = m[set[i].k];
+    if (a) rows += pdKv_(pdEsc_(set[i].q), '<b>' + pdEsc_(a.lab) + '</b>');
   }
   return rows
     ? '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:10px 0;font-size:13px">' +
@@ -2044,95 +2088,197 @@ function pdAnsweredBlock_(state) {
     : '';
 }
 
-/** The timeline for an email the client is copied on — dates, not adjectives. */
-function pdChainTimeline_(p) {
-  var d = Number(p.DaysArrears) || 0;
+/**
+ * The record so far, for the manager's file — fuller than the client sees.
+ * Every letter we sent, every answer the client gave verbatim with its date,
+ * the fact find, and the manager's own commitments once made. This is the "45
+ * and the other emails and the client response, for his record" — attached to
+ * the day-60 email so the manager opens one thing and has the whole history.
+ */
+function pdManagerHistory_(p, state) {
+  var ev = [];
+  (state && state.trail || []).forEach(function (t) {
+    ev.push({ ts: t.ts, who: 'We wrote', what: t.what });
+  });
+  (state && state.replies || []).forEach(function (r) {
+    ev.push({ ts: r.ts, who: pdEsc_(pdFirst_(p.Client)) || 'Client',
+              what: '<b>' + pdEsc_(r.lab || '') + '</b>' + (r.q ? ' <span style="color:' + PD_BRAND.mute +
+                '">(' + pdEsc_(r.q) + ')</span>' : '') });
+  });
+  if (state && state.survey && state.survey.ts) {
+    ev.push({ ts: state.survey.ts, who: pdEsc_(pdFirst_(p.Client)) || 'Client',
+      what: 'Replied' + (state.survey.surveyReason ? ': <b>' + pdEsc_(state.survey.surveyReason) + '</b>' : '') +
+        (state.survey.surveyPromise ? ' &mdash; &ldquo;' + pdEsc_(state.survey.surveyPromise) + '&rdquo;' : '') });
+  }
+  if (state && state.retentionTs) {
+    ev.push({ ts: state.retentionTs, who: pdEsc_(pdFirst_(p.Agent)) || 'Advisor',
+      what: 'Filed a written retention case' + (state.factFind ? ', fact find attached' : '') });
+  }
+  ev.sort(function (a, b) { return (a.ts || 0) - (b.ts || 0); });
+
+  if (!ev.length) {
+    return pdNote_('<b>The client has not replied to anything yet.</b> Everything sent so far &mdash; the ' +
+      'day-45 letter and the reminders &mdash; went out with no answer. A call from you is the intervention.',
+      PD_BRAND.red);
+  }
+  var rows = '';
+  for (var i = 0; i < ev.length; i++) {
+    rows += '<tr>' +
+      '<td style="padding:7px 11px;border:1px solid ' + PD_BRAND.line + ';background:' + PD_BRAND.panel +
+        ';color:' + PD_BRAND.mute + ';white-space:nowrap;font-size:12px;vertical-align:top;width:96px">' +
+        pdDateOf_(ev[i].ts) + '</td>' +
+      '<td style="padding:7px 11px;border:1px solid ' + PD_BRAND.line + ';background:' + PD_BRAND.panel +
+        ';color:' + PD_BRAND.mute + ';white-space:nowrap;font-size:12px;vertical-align:top;width:78px">' +
+        ev[i].who + '</td>' +
+      '<td style="padding:7px 11px;border:1px solid ' + PD_BRAND.line + ';background:#FFFFFF;color:' +
+        PD_BRAND.ink + '">' + ev[i].what + '</td></tr>';
+  }
+  return '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:10px 0;font-size:13px">' +
+    rows + '</table>';
+}
+
+/** The forward timeline for an email everyone is copied on — dates, not adjectives. */
+function pdChainTimeline_(p, phase) {
+  var d = Number(p.DaysArrears) || 0, left = Math.max(0, SLA.LAPSE - d);
   var row = function (when, what, hot) {
     return '<tr><td style="padding:8px 12px;background:' + PD_BRAND.panel + ';border:1px solid ' + PD_BRAND.line +
-        ';width:96px;white-space:nowrap;color:' + (hot ? PD_BRAND.red : PD_BRAND.mute) +
+        ';width:104px;white-space:nowrap;color:' + (hot ? PD_BRAND.red : PD_BRAND.mute) +
         ';font-weight:' + (hot ? 'bold' : 'normal') + '">' + when + '</td>' +
       '<td style="padding:8px 12px;background:#FFFFFF;border:1px solid ' + PD_BRAND.line + ';color:' +
         PD_BRAND.ink + '">' + what + '</td></tr>';
   };
-  return '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:10px 0;font-size:13px">' +
-    row('Day 45', 'We wrote asking how the client would like this handled.') +
-    row('Day 60', '<b>Today the policy sits with the manager named above</b>, who is asked to telephone the client and answer below.') +
-    row('Every 3 days', 'This email repeats, to all of us, until those answers are recorded.') +
-    row('Day 75', 'The manager writes to the client personally.') +
+  var out = '';
+  if (phase === 'commit') {
+    out += row('Now', '<b>The manager confirms the four actions above</b> — within 3 days, or this email repeats to all of us.') +
+      row('Then', 'Once confirmed, we wait for the manager&rsquo;s feedback and follow up every 7 days.');
+  } else {
+    out += row('Now', '<b>The manager&rsquo;s feedback is awaited</b> — we follow up every 7 days until it lands.');
+  }
+  out += row('Day 75', 'The manager writes to the client personally.') +
     row('Day 88', 'Final notice.') +
-    row('Day 90', 'End of the grace period — ' + (d >= 90 ? 'reached' : (90 - d) + ' days from today') + '.', true) +
-    '</table>';
+    row('Day 90', 'End of the grace period — ' + (d >= 90 ? 'reached' : left + ' days from today') + '.', true);
+  return '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:10px 0;font-size:13px">' +
+    out + '</table>';
 }
 
 /**
- * opts.round is 0 for the day-60 email and 1, 2, 3… for each three-day repeat.
+ * The manager's email, in three shapes. opts.phase:
+ *   'commit'   day 60 and its 3-day repeats — the four commitments, the full
+ *              history, the client copied.
+ *   'ack'      fired once the moment the manager commits — a thank-you that
+ *              confirms what they promised and opens the feedback wait.
+ *   'feedback' the 7-day follow-ups — what actually happened.
+ * opts.round numbers the repeats; opts.waiting is days outstanding.
  */
 function pdManagerLetter_(p, state, opts) {
   opts = opts || {};
-  var mgr = (opts.manager || pdManagerOf_(p.Agent) || 'the manager');
-  var d = Number(p.DaysArrears) || 0;
+  var phase = opts.phase || 'commit';
+  var mgr = (opts.manager || (state && state.mgrName) || pdManagerOf_(p.Agent) || 'the manager');
+  var first = pdEsc_(pdFirst_(p.Client));
+  var d = Number(p.DaysArrears) || 0, left = Math.max(0, SLA.LAPSE - d);
   var round = Number(opts.round) || 0;
   var waiting = Number(opts.waiting) || 0;
-  var outstanding = pdOutstandingQuestions_(state);
-  var answered = pdAnsweredBlock_(state);
+  var cc = pdManagerCc_(p);
 
+  var addressed = '<p style="margin:0 0 12px"><b>' + pdEsc_(mgr) + '</b> &mdash; copied to <b>' +
+    pdEsc_(p.Agent) + '</b> (advisor), <b>' + pdEsc_(p.Client) + '</b> and branch support.</p>';
+
+  /* ---- ACK: the thank-you the moment the manager commits ---- */
+  if (phase === 'ack') {
+    var by = (state && state.mgr && state.mgr.mby) ? state.mgr.mby.lab : 'shortly';
+    return {
+      subject: 'Thank you — ' + p.Client + ' (Policy ' + p.Policy + ') is in hand',
+      html: pdWrap_(
+        pdRefBlock_(p, 'Premium Outstanding — In Hand') + addressed +
+        '<p style="margin:0 0 10px">Thank you, ' + pdEsc_(pdFirst_(mgr)) + '. You have taken this policy on and ' +
+        'confirmed what you will do:</p>' +
+        pdAnsweredBlock_(state, MANAGER_COMMIT) +
+        pdNote_('<b>' + first + '</b> — your manager has personally taken charge of your policy and will be in ' +
+          'touch. There is nothing you need to do while we work on this, though you are always welcome to reply.',
+          PD_BRAND.green) +
+        pdSection_('What happens now',
+          '<p style="margin:0">We await ' + pdEsc_(pdFirst_(mgr)) + '&rsquo;s feedback (' + pdEsc_(by) + ') to bring ' +
+          'the policy up to date, and will follow up every 7 days until it lands. Cover reaches the end of its ' +
+          'grace period in <b>' + left + ' days</b>.</p>') +
+        pdSigInternal_(),
+        { kind: 'mgr' }, true),
+      cc: cc
+    };
+  }
+
+  /* ---- FEEDBACK: the 7-day follow-ups ---- */
+  if (phase === 'feedback') {
+    var outF = pdOutstandingQuestions_(state, MANAGER_FEEDBACK);
+    var ansF = pdAnsweredBlock_(state, MANAGER_FEEDBACK);
+    return {
+      subject: (round ? 'Feedback awaited (' + waiting + ' days) — ' : 'Feedback please — ') +
+        p.Client + ' (Policy ' + p.Policy + ')',
+      html: pdWrap_(
+        pdRefBlock_(p, 'Premium Outstanding — Feedback') + addressed +
+        (round
+          ? pdNote_('<b>' + pdEsc_(pdFirst_(mgr)) + '</b>, we are still awaiting your feedback on this policy — ' +
+              'it has been <b>' + waiting + ' days</b> since you took it on, and the grace period ends in <b>' +
+              left + ' days</b>.', PD_BRAND.gold)
+          : '<p style="margin:0 0 4px">Thank you for taking this on. When you have spoken with ' + first +
+            ', tap your feedback below and it reaches everyone at once.</p>') +
+        pdGlance_(p) +
+        pdSection_(round ? 'Still awaited — tap to answer' : 'Your feedback — one tap each',
+          pdQuestionBlock_(p, outF, 'mgr') +
+          '<p style="font-size:12px;color:' + PD_BRAND.mute + ';margin:12px 0 0">The non-forfeiture answer goes ' +
+          'into the client&rsquo;s day-90 letter verbatim, and it is statutory: under s. 180(1) of the ' +
+          PD_LAW.cite + ', a policy whose surrender value covers the arrears <b>cannot be forfeited for ' +
+          'non-payment alone</b>.</p>') +
+        (ansF ? pdSection_('Already recorded', ansF) : '') +
+        pdSection_('Where this policy stands', pdChainTimeline_(p, 'feedback')) +
+        pdSigInternal_(),
+        { kind: 'mgr' }, true),
+      cc: cc
+    };
+  }
+
+  /* ---- COMMIT: day 60 and its 3-day repeats ---- */
+  var outC = pdOutstandingQuestions_(state, MANAGER_COMMIT);
+  var ansC = pdAnsweredBlock_(state, MANAGER_COMMIT);
   var opening = round === 0
-    ? '<p style="margin:0 0 10px">This policy has reached <b>day ' + d + '</b>. From today it sits with <b>' +
-      pdEsc_(mgr) + '</b>, who is asked to telephone <b>' + pdEsc_(p.Client) + '</b> and record the answers below.</p>' +
-      '<p style="margin:0">' + pdEsc_(pdFirst_(p.Client)) + ' is copied on this email and on every one that ' +
-      'follows, so there is no version of this they cannot see.</p>'
-    : '<p style="margin:0 0 10px">This is <b>reminder ' + round + '</b>. The questions below have now been ' +
-      'outstanding for <b>' + waiting + ' days</b> and the policy reaches the end of its grace period in <b>' +
-      Math.max(0, SLA.LAPSE - d) + ' days</b>.</p>' +
-      '<p style="margin:0">' + pdEsc_(p.Client) + ' is copied. We would rather they see this being chased ' +
-      'than wonder whether anything is happening at all.</p>';
+    ? '<p style="margin:0 0 10px">This policy has reached <b>day ' + d + '</b>. From today it is yours: we are ' +
+      'asking you to call <b>' + pdEsc_(p.Client) + '</b> personally and to confirm the four actions below.</p>' +
+      '<p style="margin:0">' + first + ' is copied on this and on every email that follows, so they can see ' +
+      'their policy is being worked — not just chased.</p>'
+    : pdNote_('<b>Reminder ' + round + '.</b> These four confirmations have been outstanding <b>' + waiting +
+        ' days</b>. Until they are recorded the case cannot move, and the grace period ends in <b>' + left +
+        ' days</b>. ' + first + ' is copied and can see it is waiting on us.', PD_BRAND.red);
 
   return {
-    subject: (round ? 'Reminder ' + round + ' — ' : '') + 'Policy ' + p.Policy + ' · ' + p.Client +
-      ' — day ' + d + ', response required from ' + mgr,
+    subject: (round ? 'Reminder ' + round + ' — ' : 'Day ' + d + ' — ') + 'please confirm: ' +
+      p.Client + ' (Policy ' + p.Policy + ')',
     html: pdWrap_(
       pdRefBlock_(p, round ? 'Premium Outstanding — Reminder ' + round : 'Premium Outstanding — Day 60') +
-      '<p style="margin:0 0 10px"><b>' + pdEsc_(mgr) + '</b> &mdash; copied to <b>' + pdEsc_(p.Agent) +
-        '</b> and to <b>' + pdEsc_(p.Client) + '</b>.</p>' +
-      opening +
-
+      addressed + opening +
       pdGlance_(p) +
-
-      (outstanding.length
-        ? pdSection_(round ? 'Still outstanding — tap to answer' : 'Please answer — one tap each',
-            pdQuestionBlock_(p, outstanding, 'mgr') +
-            '<p style="font-size:12px;color:' + PD_BRAND.mute + ';margin:12px 0 0">The non-forfeiture ' +
-            'question is statutory: under s. 180(1) of the ' + PD_LAW.cite + ', a policy whose surrender ' +
-            'value covers the arrears <b>cannot be forfeited for non-payment alone</b>. Your answer goes ' +
-            'into the client&rsquo;s final notice verbatim.</p>')
-        : pdNote_('<b>Every question has been answered.</b> Nothing further is outstanding on this policy from ' +
-            'the branch side.', PD_BRAND.green)) +
-
-      (answered ? pdSection_('Already answered', answered) : '') +
-
-      pdSection_('What the client has told us', pdWhatWeHave_(p, state)) +
-
-      pdSection_('Where this policy stands', pdChainTimeline_(p)) +
-
+      pdSection_(round ? 'Still to confirm — tap each' : 'Please confirm — one tap each',
+        pdQuestionBlock_(p, outC, 'mgr')) +
+      (ansC ? pdSection_('Confirmed', ansC) : '') +
+      pdSection_('The record so far', pdManagerHistory_(p, state)) +
       pdSection_('How to reach them', pdContactBlock_(p) +
         (state && state.retentionBody
           ? '<p style="font-size:13px;color:' + PD_BRAND.mute + ';margin:8px 0 0">The advisor has filed a written ' +
-            'case on this policy; it is on the policy record.</p>'
-          : '<p style="font-size:13px;color:' + PD_BRAND.mute + ';margin:8px 0 0">No written case has been filed ' +
-            'by the advisor yet' + (d < SLA.AGENT_FILE_BY ? ' — due by day ' + SLA.AGENT_FILE_BY : '') + '.</p>')) +
-
+            'case; it is on the policy record.</p>'
+          : '<p style="font-size:13px;color:' + PD_BRAND.mute + ';margin:8px 0 0">No written case filed by the ' +
+            'advisor yet' + (d < SLA.AGENT_FILE_BY ? ' — due by day ' + SLA.AGENT_FILE_BY : '') + '.</p>')) +
+      pdSection_('Where this policy stands', pdChainTimeline_(p, 'commit')) +
       pdSigInternal_(),
       { kind: 'mgr' }, true),
-
-    /* Advisor, branch manager, sales support — and the client, by instruction. */
-    cc: (function () {
-      var out = [pdStaffEmail_(p.Agent), pdValidEmail_(OUT.BRANCH_MANAGER_EMAIL), pdValidEmail_(OUT.SALES_SUPPORT_EMAIL)];
-      if (OUT.COPY_CLIENT_ON_MANAGER_CHASE && pdMayEmail_(p)) out.push(pdValidEmail_(p.Email));
-      var seen = {}, dedup = [];
-      for (var i = 0; i < out.length; i++) if (out[i] && !seen[out[i]]) { seen[out[i]] = 1; dedup.push(out[i]); }
-      return dedup;
-    })()
+    cc: cc
   };
+}
+
+/** Advisor, branch manager, support — and the client, on the manager thread. */
+function pdManagerCc_(p) {
+  var out = [pdStaffEmail_(p.Agent), pdValidEmail_(OUT.BRANCH_MANAGER_EMAIL), pdValidEmail_(OUT.SALES_SUPPORT_EMAIL)];
+  if (pdMayEmail_(p)) out.push(pdValidEmail_(p.Email));   // the client is copied by design
+  var seen = {}, dedup = [];
+  for (var i = 0; i < out.length; i++) if (out[i] && !seen[out[i]]) { seen[out[i]] = 1; dedup.push(out[i]); }
+  return dedup;
 }
 
 /* ============================ the daily run ============================ */
@@ -2265,7 +2411,22 @@ function pdCaseState_() {
          as already handed over on the day you go live, and no manager would
          ever be told. The dry rows still throttle re-planning through
          s.chases, so a dry run does not write the same line daily. */
-      if (key === 'manager-60' && type === 'internal') s.activatedTs = Math.max(s.activatedTs, ts);
+      if (key === 'mgr-commit' && type === 'internal') s.activatedTs = Math.max(s.activatedTs, ts);
+      if (key === 'mgr-ack'    && type === 'internal') s.ackTs = Math.max(s.ackTs || 0, ts);
+    }
+  }
+  /* Derive the two phase flags once per policy. committed = all four
+     commitments in; feedbackDone = all four feedback answers in. commitTs is
+     the last commitment answer, so the 7-day feedback clock starts there. */
+  for (var pol in map) {
+    if (!Object.prototype.hasOwnProperty.call(map, pol)) continue;
+    var st2 = map[pol];
+    st2.committed = pdAllAnswered_(st2, MANAGER_COMMIT);
+    st2.feedbackDone = st2.committed && pdAllAnswered_(st2, MANAGER_FEEDBACK);
+    st2.commitTs = 0;
+    for (var ci = 0; ci < MANAGER_COMMIT.length; ci++) {
+      var av = st2.mgr[MANAGER_COMMIT[ci].k];
+      if (av && av.ts) st2.commitTs = Math.max(st2.commitTs, av.ts);
     }
   }
   return map;
@@ -2274,7 +2435,8 @@ function pdCaseState_() {
 /** The shape pdCaseState_ produces, for a policy that has no log rows yet. */
 function pdEmptyState_() {
   return { responded: false, retentionTs: 0, verdict: false, chases: {}, rounds: {}, survey: null,
-           trail: [], mgr: {}, mgrTs: 0, mgrName: '', activatedTs: 0, noteCount: 0,
+           trail: [], mgr: {}, mgrTs: 0, mgrName: '', activatedTs: 0, ackTs: 0, noteCount: 0,
+           committed: false, feedbackDone: false, commitTs: 0,
            closingAnswered: false, closeRounds: {} };
 }
 
@@ -2291,51 +2453,74 @@ function pdLogInternal_(p, kind, to, note, sent) {
 }
 
 /**
- * The day-60 email and its three-day repeats. Returns 1 if something was sent.
+ * The manager escalation, in two phases. Returns 1 if something was sent.
  *
- * One email, one cadence: to the manager, copied to the advisor and the client,
- * repeating every three days until every question in MANAGER_QUESTIONS has an
- * answer against the policy. The agent's own filing clock runs alongside it and
- * is chased separately, to the agent only — that one is about paperwork and the
- * client has no reason to read it.
+ *   PHASE 1 — COMMIT. Day 60, then every 3 days until the manager confirms all
+ *   four commitments. To the manager, copied to advisor, support and client.
+ *
+ *   ACK. The single run after the commitment completes: a thank-you that
+ *   confirms what was promised and opens the feedback wait. Fires once.
+ *
+ *   PHASE 2 — FEEDBACK. Every 7 days from the commitment until the manager has
+ *   recorded what actually happened. Same recipients.
+ *
+ * At most one email per policy per run, and the phases never overlap — the
+ * commit chase stops the instant the manager commits, the ack fires once, and
+ * only then does the 7-day feedback clock begin. The advisor's filing chase is
+ * separate and internal-only.
  */
 function pdInternalChase_(p, s) {
   var d = Number(p.DaysArrears) || 0;
   if (Number(p.Status) !== 2) return 0;                  // live arrears only
   if (d < SLA.RETENTION_OPENS || d >= SLA.LAPSE) return 0;
-  var mgrName = pdManagerOf_(p.Agent);
-  var due = function (key) {
-    return !s.chases[key] || pdDaysSince_(s.chases[key]) >= SLA.MANAGER_CHASE_EVERY;
+  var mgrName = (s.mgrName || pdManagerOf_(p.Agent));
+  var mTo = pdStaffEmail_(mgrName);
+  var waiting = s.activatedTs ? pdDaysSince_(s.activatedTs) : 0;
+  var due = function (key, every) {
+    return !s.chases[key] || pdDaysSince_(s.chases[key]) >= every;
+  };
+  var send = function (kind, letter, note) {
+    if (!mTo || OUT.DRY_RUN) { pdLogInternal_(p, kind, mTo, note, false); return 0; }
+    MailApp.sendEmail({ to: mTo, cc: letter.cc.join(','), name: OUT.FROM_NAME,
+                        subject: letter.subject, htmlBody: letter.html });
+    pdLogInternal_(p, kind, mTo, note, true);
+    return 1;
   };
 
-  // --- has the manager answered everything we asked? ---
-  var outstanding = pdOutstandingQuestions_(s);
+  /* PHASE 1 — commitment, every 3 days */
+  if (!s.committed) {
+    if (!due('mgr-commit', SLA.MANAGER_CHASE_EVERY)) return 0;
+    var rc = Number(s.rounds && s.rounds['mgr-commit']) || 0;
+    return send('mgr-commit',
+      pdManagerLetter_(p, s, { phase: 'commit', round: rc, waiting: waiting, manager: mgrName }),
+      (rc === 0 ? 'Day ' + d + ' handover to ' : 'Commit reminder ' + rc + ' to ') +
+        (mgrName || 'NO MANAGER MAPPED') + ' — advisor, support and client copied');
+  }
 
-  if (outstanding.length && due('manager-60')) {
-    var round = Number(s.rounds && s.rounds['manager-60']) || 0;
-    var waiting = s.activatedTs ? pdDaysSince_(s.activatedTs) : 0;
-    var mTo = pdStaffEmail_(mgrName);
-    var note = round === 0
-      ? 'Day ' + d + ' — to ' + (mgrName || 'NO MANAGER MAPPED') + ', client and advisor copied'
-      : 'Reminder ' + round + ' — ' + outstanding.length + ' question' + (outstanding.length === 1 ? '' : 's') +
-        ' outstanding ' + waiting + ' days, client and advisor copied';
+  /* ACK — once, the run after the manager commits */
+  if (!s.ackTs && !s.chases['mgr-ack']) {
+    return send('mgr-ack',
+      pdManagerLetter_(p, s, { phase: 'ack', manager: mgrName }),
+      'Manager committed — thank-you sent, feedback awaited');
+  }
 
-    if (!mTo || OUT.DRY_RUN) { pdLogInternal_(p, 'manager-60', mTo, note, false); return 0; }
-
-    var letter = pdManagerLetter_(p, s, { round: round, waiting: waiting, manager: mgrName });
-    MailApp.sendEmail({
-      to: mTo, cc: letter.cc.join(','), name: OUT.FROM_NAME,
-      subject: letter.subject, htmlBody: letter.html
-    });
-    pdLogInternal_(p, 'manager-60', mTo, note, true);
-    return 1;
+  /* PHASE 2 — feedback, every 7 days from the commitment */
+  if (!s.feedbackDone) {
+    var startedFb = Math.max(s.commitTs || 0, s.ackTs || s.chases['mgr-ack'] || 0);
+    if (pdDaysSince_(startedFb) < SLA.FEEDBACK_CHASE_EVERY) return 0;
+    if (!due('mgr-feedback', SLA.FEEDBACK_CHASE_EVERY)) return 0;
+    var rf = Number(s.rounds && s.rounds['mgr-feedback']) || 0;
+    var fbWaiting = pdDaysSince_(s.commitTs || startedFb);
+    return send('mgr-feedback',
+      pdManagerLetter_(p, s, { phase: 'feedback', round: rf, waiting: fbWaiting, manager: mgrName }),
+      'Feedback awaited ' + fbWaiting + ' days from ' + (mgrName || 'manager') + ' — all copied');
   }
 
   /* --- the advisor has not filed ---
      Internal only, and it runs independently: the manager owns the policy from
      day 60 whether or not a case was ever filed, so this clock must not be able
      to swallow the one above. */
-  if (!s.retentionTs && d >= SLA.AGENT_FILE_BY && due('agent-file')) {
+  if (!s.retentionTs && d >= SLA.AGENT_FILE_BY && due('agent-file', SLA.MANAGER_CHASE_EVERY)) {
     var aTo = pdStaffEmail_(p.Agent);
     var note2 = 'Retention case not filed — day ' + d + ' of ' + SLA.LAPSE;
     if (!aTo || OUT.DRY_RUN) { pdLogInternal_(p, 'agent-file', aTo, note2, false); return 0; }
@@ -2485,15 +2670,17 @@ function pdPreview() {
                      { ts: now - 23 * day, mine: false, what: TRAIL_LABEL.chase }];
   demoState.activatedTs = now - 18 * day;
   demoState.mgrName = 'Gary Sookdeo';
-  demoState.mgr = { mcontact:    { ak: 'yes',  lab: 'Yes — I have spoken with them', ts: now - 16 * day },
-                    mclientsays: { ak: 'lower', lab: 'They need a smaller premium',  ts: now - 16 * day },
-                    mvalue:      { ak: 'value', lab: 'It has value; cover can be sustained from it for a period', ts: now - 15 * day } };
+  demoState.mgr = { mcall:  { ak: 'today', lab: 'Yes — I will call today', ts: now - 16 * day },
+                    mfact:  { ak: 'yes',   lab: 'Yes — I will review it', ts: now - 16 * day },
+                    madvisor:{ ak: 'yes',  lab: 'Yes — I will speak with them', ts: now - 16 * day },
+                    mby:    { ak: 'd3',    lab: 'Within 3 days', ts: now - 16 * day } };
   demoState.noteCount = 2;
 
   ['s45', 'chase', 's75', 's90', 'winback', 'pend', 'thanks'].forEach(function (k) {
     var t = pdRender(k, demo, demoState);
     Logger.log('--- %s ---\nSUBJECT: %s\n', k, t.subject);
   });
-  Logger.log('--- manager day-60 handover ---\nSUBJECT: %s',
-    pdManagerLetter_(demo, demoState, { activation: true }).subject);
+  ['commit','ack','feedback'].forEach(function (ph) {
+    Logger.log('--- manager %s ---\nSUBJECT: %s', ph, pdManagerLetter_(demo, demoState, { phase: ph }).subject);
+  });
 }
