@@ -841,17 +841,27 @@ const VERDICTS=['Approve retention plan','Approve payment plan','Escalate to rei
    because that file sends the links and this one records what comes back. */
 const CLIENT_QUESTIONS=[
   {k:'help',q:'How would you like us to handle this?',opts:[
-    {k:'settle',lab:'I will settle it — please confirm the amount'},
-    {k:'review',lab:'I would like the premium reviewed'},
-    {k:'billing',lab:'Change the payment date, or the bank details'},
-    {k:'hold',lab:'Hold the payments briefly, keeping the cover in place'},
-    {k:'talk',lab:'I would prefer to speak with someone'},
-    {k:'other',lab:'Something else — I will reply and explain'}]},
-  {k:'when',q:'When would you like us to action it?',opts:[
+    {k:'settle',lab:'Settle it now'},
+    {k:'review',lab:'Review my premium'},
+    {k:'billing',lab:'Change my payment date or bank details'},
+    {k:'hold',lab:'Pause briefly, keep the cover'},
+    {k:'talk',lab:'Have someone call me'},
+    {k:'other',lab:'Something else'}]},
+  {k:'pay',q:'How would you like to pay?',opts:[
+    {k:'mygg',lab:'Online — myGuardian Group'},
+    {k:'card',lab:'Credit or debit card'},
+    {k:'transfer',lab:'Bank transfer — send me the details'},
+    {k:'other',lab:'Another way — I will explain'}]},
+  {k:'when',q:'When?',opts:[
     {k:'now',lab:'This week'},
-    {k:'payday',lab:'On my next pay date'},
+    {k:'payday',lab:'Next pay date'},
     {k:'month',lab:'Later this month'},
-    {k:'other',lab:'I will confirm when I reply'}]}
+    {k:'other',lab:"I'll say when I reply"}]},
+  {k:'contact',q:'How should we keep in touch?',opts:[
+    {k:'call',lab:'Phone call'},
+    {k:'email',lab:'Email'},
+    {k:'visit',lab:'A visit from my advisor'},
+    {k:'other',lab:'However is easiest'}]}
 ];
 /* What a manager answers from day 60. Split in two because the client is copied
    on those emails: MANAGER_QUESTIONS is what a policyholder sees being asked —
@@ -927,7 +937,7 @@ function questionSet(name){
 /* Answers that mean the client intends to keep paying, for the odds model. */
 /* Any answer at all is a good sign — these weight how good. */
 const POSITIVE_ANSWERS={'help:settle':1,'help:billing':1,'when:now':1,'when:payday':1,
-  'decide:settle':1,'decide:review':1};
+  'pay:mygg':1,'pay:card':1,'pay:transfer':1,'decide:settle':1,'decide:review':1};
 const NEGATIVE_ANSWERS={'help:hold':1,'when:other':1,'decide:end':1,'rateagent:never':1,'ratemanager:never':1};
 function answerLink(c,kind,qk,ak){
   return `${location.origin}${location.pathname}#${kind}=${c.Policy}&q=${qk}&a=${ak}`;

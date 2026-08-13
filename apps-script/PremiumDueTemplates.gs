@@ -80,6 +80,11 @@ var OUT = {
   // path once the site deploys. Blank falls back to a type glyph.
   LOGO_URL: '',                  // blank = use the default for the theme below
 
+  // Guardian Group's own portal — clients register, see their portfolio and
+  // PAY PREMIUMS ONLINE. Every client letter carries a button straight to it,
+  // because the shortest path from "I'll settle it" to settled is one tap.
+  PAY_URL: 'https://www.myggonline.app/',
+
   // Branch manager — copied on the 60-day notice and on repeat manager chases.
   BRANCH_MANAGER_EMAIL: '',      // e.g. 'ricky.rampersad@myguardiangroup.com'
 
@@ -151,11 +156,23 @@ var CLIENT_QUESTIONS = [
     { k: 'talk',    lab: 'Have someone call me' },
     { k: 'other',   lab: 'Something else' } ] },
 
+  { k: 'pay', q: 'How would you like to pay?', opts: [
+    { k: 'mygg',     lab: 'Online — myGuardian Group' },
+    { k: 'card',     lab: 'Credit or debit card' },
+    { k: 'transfer', lab: 'Bank transfer — send me the details' },
+    { k: 'other',    lab: 'Another way — I will explain' } ] },
+
   { k: 'when', q: 'When?', opts: [
     { k: 'now',    lab: 'This week' },
     { k: 'payday', lab: 'Next pay date' },
     { k: 'month',  lab: 'Later this month' },
-    { k: 'other',  lab: "I'll say when I reply" } ] }
+    { k: 'other',  lab: "I'll say when I reply" } ] },
+
+  { k: 'contact', q: 'How should we keep in touch?', opts: [
+    { k: 'call',  lab: 'Phone call' },
+    { k: 'email', lab: 'Email' },
+    { k: 'visit', lab: 'A visit from my advisor' },
+    { k: 'other', lab: 'However is easiest' } ] }
 ];
 
 /* ===================== WHAT THE MANAGER ANSWERS =====================
@@ -287,14 +304,14 @@ var CLOSING_QUESTIONS = [
  * "Settle it now" gets read. Where the account is paying its other premiums,
  * the billing fix goes first, because that is almost always the real problem.
  */
-function pdClientQuestions_(p, family) {
+function pdClientQuestions_(p, family, only) {
   var due = pdAmountDue_(p);
   var b = String(p.Billing || '').toLowerCase();
   var billingLab = 'Change my payment date or bank details';
   if (b.indexOf('bank') > -1 || b.indexOf('order') > -1)      billingLab = 'Fix my bankers order — re-lodge it';
   else if (b.indexOf('salary') > -1 || b.indexOf('deduct') > -1) billingLab = 'Restart my salary deduction';
 
-  var opts = [
+  var helpOpts = [
     { k: 'settle',  lab: due > 0 ? 'Settle the ' + pdMoney_(due) + ' now' : 'Settle it now' },
     { k: 'review',  lab: 'Review my premium' },
     { k: 'billing', lab: billingLab },
@@ -303,9 +320,37 @@ function pdClientQuestions_(p, family) {
     { k: 'other',   lab: 'Something else' }
   ];
   var r = pdRelationship_(p, pdFamily_(p, family));
-  if (r.payingOthers > 0) opts.splice(0, 0, opts.splice(2, 1)[0]);   // billing first — it is the likely fault
+  if (r.payingOthers > 0) helpOpts.splice(0, 0, helpOpts.splice(2, 1)[0]);  // billing first — the likely fault
 
-  return [ { k: 'help', q: CLIENT_QUESTIONS[0].q, opts: opts }, CLIENT_QUESTIONS[1] ];
+  var payOpts = [
+    { k: 'mygg',     lab: due > 0 ? 'Pay the ' + pdMoney_(due) + ' online — myGuardian Group' : 'Online — myGuardian Group' },
+    { k: 'card',     lab: 'Credit or debit card' },
+    { k: 'transfer', lab: 'Bank transfer — send me the details' },
+    { k: 'other',    lab: 'Another way — I will explain' }
+  ];
+
+  var sets = [
+    { k: 'help',    q: CLIENT_QUESTIONS[0].q, opts: helpOpts },
+    { k: 'pay',     q: CLIENT_QUESTIONS[1].q, opts: payOpts },
+    CLIENT_QUESTIONS[2],
+    CLIENT_QUESTIONS[3]
+  ];
+  if (!only) return sets;
+  return sets.filter(function (q) { return only.indexOf(q.k) > -1; });
+}
+
+/**
+ * The one answer that should not be a reply: paying. A button straight to
+ * Guardian Group's portal, where premiums are actually paid — tapping "I'll
+ * settle it" and then having to find the website is where settled intentions
+ * go to die.
+ */
+function pdPayBtn_(p) {
+  if (!OUT.PAY_URL) return '';
+  return pdBtn_(OUT.PAY_URL, 'Pay online now — myGuardian Group') +
+    '<p style="font-size:12px;color:' + PD_BRAND.mute + ';margin:-12px 0 0;text-align:center">' +
+    'Guardian Group&rsquo;s secure portal — register once, then pay any premium in a minute. ' +
+    'Quote policy ' + pdEsc_(p.Policy) + '.</p>';
 }
 
 /* Flat lookup, so a returning click can be named without walking the sets. */
@@ -723,8 +768,8 @@ function pdQuestionBlock_(p, questions, kind) {
   }
   return out + '<p style="font-size:11.5px;color:#8A8578;margin:16px 0 0;line-height:1.55">' +
     (OUT.ENGINE_URL
-      ? 'Each answer is recorded against the policy the moment you tap it. You can answer one question or all of them, in any order, and you never leave this email to do it.'
-      : 'Tapping an answer opens a reply that is already written for you — just press send. Nothing to fill in, no website to visit, no password.') + '</p>';
+      ? 'Each answer is recorded the moment you tap it — answer one question or all of them, in any order. Nobody will ask you to explain anything.'
+      : 'Tapping an answer opens a reply that is already written for you — just press send. Nothing to fill in, no forms, and nobody will ask you to explain anything.') + '</p>';
 }
 
 /** The short form — just the "what will you do" question, for reminder messages. */
@@ -1457,7 +1502,8 @@ var PD_TEMPLATES = {
 
         pdGlance_(p) +
 
-        pdSection_('How can we help?', pdQuestionBlock_(p, pdClientQuestions_(p, family), 'respond')) +
+        pdSection_('How can we help?', pdQuestionBlock_(p, pdClientQuestions_(p, family), 'respond') +
+          pdPayBtn_(p)) +
 
         (family.length > 1
           ? pdSection_('Everything you hold with us', pdPolicyTable_(p, family) +
@@ -1522,7 +1568,8 @@ var PD_TEMPLATES = {
               ' been asked to call you personally. If you would rather not wait, one tap settles it now.')
           : '') +
 
-        pdSection_('How can we help?', pdQuestionBlock_(p, pdClientQuestions_(p, state && state.family), 'respond')) +
+        pdSection_('How can we help?', pdQuestionBlock_(p, pdClientQuestions_(p, state && state.family, ['help', 'when']), 'respond') +
+          pdPayBtn_(p)) +
 
         '<p style="margin:22px 0 0">Or call <b>' + pdEsc_(OUT.BRANCH_PHONE) + '</b>, quoting ' + pdEsc_(p.Policy) + '.</p>' +
         pdSignature_(p),
@@ -1560,7 +1607,8 @@ var PD_TEMPLATES = {
         pdGlance_(p) +
 
         pdSection_('How would you like us to handle this?',
-          pdQuestionBlock_(p, pdClientQuestions_(p, state && state.family), 'respond')) +
+          pdQuestionBlock_(p, pdClientQuestions_(p, state && state.family, ['help', 'pay']), 'respond') +
+          pdPayBtn_(p)) +
 
         pdSection_('What day 90 means here', pdNote_(pdLapseMeaningFor_(p, state), PD_BRAND.red)) +
 
@@ -1590,7 +1638,8 @@ var PD_TEMPLATES = {
         pdGlance_(p) +
 
         pdSection_('Choose whichever suits you — I will handle it personally',
-          pdQuestionBlock_(p, pdClientQuestions_(p, state && state.family), 'respond')) +
+          pdQuestionBlock_(p, pdClientQuestions_(p, state && state.family, ['help', 'pay']), 'respond') +
+          pdPayBtn_(p)) +
 
         pdSection_('What day 90 means here', pdNote_(pdLapseMeaningFor_(p, state))) +
 
@@ -1637,7 +1686,8 @@ var PD_TEMPLATES = {
         open +
 
         pdSection_('Four questions. One tap each.',
-          pdQuestionBlock_(p, CLOSING_QUESTIONS, 'respond')) +
+          pdQuestionBlock_(p, CLOSING_QUESTIONS, 'respond') +
+          pdPayBtn_(p)) +
 
         pdSection_('Everything we did', pdInteractionLog_(p, state) +
           '<p style="font-size:13px;color:' + PD_BRAND.mute + ';margin:8px 0 0">' +
