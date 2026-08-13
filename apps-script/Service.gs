@@ -1435,8 +1435,20 @@ function agentLetterPdf_(ref, now, body) {
 
     '<div class="code">2000 - 03 - 147</div>';
 
+  /* paperCss_ is the questionnaire facsimile's stylesheet; this letter keeps
+     its own line and fill styles on top — dotted rules for what is written on
+     them, answers in bold, real signature lines. Without these the letter
+     prints as a wall of plain text. */
   return toPdf_('<!DOCTYPE html><html><head><meta charset="utf-8"><style>' + paperCss_() +
-                'body{padding:44px 52px}.ttl{font-size:14pt}.ttl2{font-size:11.5pt;margin-bottom:26px}' +
+                'body{padding:44px 52px;line-height:1.5;font-size:11.5pt}' +
+                'p{margin:0 0 4px}.blk{margin-top:15px}' +
+                '.ttl{font-size:14pt}.ttl2{font-size:11.5pt;margin-bottom:26px}' +
+                '.dot{display:inline-block;border-bottom:1px dotted #000;vertical-align:bottom}' +
+                '.fill{display:inline-block;border-bottom:1px dotted #000;vertical-align:bottom;' +
+                  'font-family:"Courier New",monospace;font-size:10.2pt;font-weight:bold;padding:0 4px 1px}' +
+                '.sigrule{display:inline-block;border-bottom:1px dotted #000;min-width:200px;text-align:center}' +
+                '.sigline{display:inline-block;border-bottom:1px solid #000}' +
+                'table.hdr td{padding:2px 0}' +
                 '</style></head><body>' + inner + '</body></html>',
                 'Change of Servicing Agent ' + ref);
 }
