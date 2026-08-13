@@ -878,9 +878,12 @@ function routeToService_(ref, priority, now, body, attachments, clientEmailed) {
   var actions = [];
   if (c.needsTracing) {
     actions.push(badge_('TRACE', SB.blue) + '<b>Trace the policy first.</b> They do not have the number' +
-      (c.insurer ? ' — they think it is with <b>' + esc_(c.insurer) + '</b>' : '') +
-      '. Search on name and date of birth' +
-      (c.clientName ? ': <b>' + esc_(c.clientName) + '</b>' : '') + '.');
+      (c.insurer ? ' — they answered <b>' + esc_(c.insurer) + '</b>' : '') +
+      '. Search Guardian Life of the Caribbean records on name and date of birth' +
+      (c.clientName ? ': <b>' + esc_(c.clientName) + '</b>' : '') +
+      '. <b>If the policy was not issued by Guardian Life of the Caribbean, close the file and tell the ' +
+      'client plainly, pointing them to their own insurer — we do not service or solicit other companies’ ' +
+      'policies.</b>');
   }
   if (body.origin === 'client') {
     actions.push(badge_('CARE', '#1e7d4f') + '<b>No product questions were asked</b> — they came to us unprompted. ' +

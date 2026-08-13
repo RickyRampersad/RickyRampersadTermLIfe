@@ -411,10 +411,14 @@ const INDIVIDUAL = [
   { id: "policyNos", label: "Policy number(s)", type: "text", showIf: { id: "knowsPolicy", is: "Yes, I have it" },
     placeholder: "e.g. 1234567", help: "More than one? Separate them with commas." },
 
-  { id: "insurer", label: "Which company is the policy with?", type: "select",
-    options: ["Guardian Life of the Caribbean", "Sagicor", "Maritime Life", "Tatil Life", "Colonial Life (CLICO)",
-              "Beacon", "British American", "Pan-American Life", "Another company", "I'm honestly not sure"],
-    help: "If you're not sure, say so — we can trace it from your name and date of birth." },
+  { id: "insurer", label: "Is your policy with Guardian Life of the Caribbean?", type: "choice",
+    options: ["Yes — Guardian Life of the Caribbean", "I'm honestly not sure"],
+    help: "If you're not sure, say so — your name and date of birth are enough for us to check.",
+    note: { kind: "tip", text: "<b>Straight with you from the start:</b> we service policies issued by " +
+      "<b>Guardian Life of the Caribbean Limited</b> — that's who our team is licensed with. Not sure who " +
+      "issued yours? Choose <i>not sure</i> and we'll check. If it turns out to be another company, we'll " +
+      "tell you plainly and point you to them — we don't guess with your policy, and we don't touch what " +
+      "isn't ours to touch." } },
 
   { id: "approxYear", label: "Roughly when did you take it out?", type: "choice",
     showIf: { id: "knowsPolicy", is: "No — please trace it for me" },
@@ -637,9 +641,11 @@ const GROUP = [
   { id: "knowsPolicy", label: "Do you have the group policy number?", type: "choice",
     options: ["Yes, I have it", "No — please trace it"], required: true },
   { id: "policyNos", label: "Group policy number(s)", type: "text", showIf: { id: "knowsPolicy", is: "Yes, I have it" } },
-  { id: "insurer", label: "Which company is the plan with?", type: "select",
-    options: ["Guardian Life of the Caribbean", "Sagicor", "Maritime Life", "Tatil Life", "Colonial Life (CLICO)",
-              "Beacon", "British American", "Pan-American Life", "Another company", "Not sure"] },
+  { id: "insurer", label: "Is the plan with Guardian Life of the Caribbean?", type: "choice",
+    options: ["Yes — Guardian Life of the Caribbean", "Not sure"],
+    note: { kind: "tip", text: "We service group plans issued by <b>Guardian Life of the Caribbean Limited</b> — " +
+      "that's who our team is licensed with. Not sure? We'll check, and if the plan sits with another company " +
+      "we'll tell you plainly and point you to them." } },
   { id: "lives", label: "How many employees are covered?", type: "choice",
     options: ["Under 10", "10–24", "25–49", "50–99", "100–249", "250–499", "500+"] },
   { id: "renewalDate", label: "Plan renewal date", type: "date", showIf: AGENT_ONLY, help: "If you know it — it's how we time your review." },
@@ -1434,9 +1440,10 @@ function renderDone(ref, sent, code) {
     "ready-made, and your " + (c.handledBy === "Matched agent" ? "agent match" : "choice of who looks after you") +
     " is confirmed shortly after.");
   if (c.needsTracing) {
-    next.push("<b>We're tracing your " + (g ? "plan" : "policy") + " now.</b> Your name and date of birth are " +
-      "usually enough. If we can't find it with " + esc(c.insurer || "the insurer") + " we'll check the others, and " +
-      "we'll tell you either way — including if the answer is that nothing turns up.");
+    next.push("<b>We're checking Guardian Life of the Caribbean's records for your " + (g ? "plan" : "policy") +
+      " now.</b> Your name and date of birth are usually enough, and we'll tell you either way. If it turns " +
+      "out your " + (g ? "plan" : "policy") + " was issued by another company, we'll say so plainly and point " +
+      "you to them — that's theirs to service, not ours.");
   }
   if (c.unresolved) {
     next.push("<b>Your outstanding issue is flagged.</b> A service manager has it now" +
