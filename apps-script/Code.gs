@@ -18,6 +18,14 @@
  *   No daily spam: after T+7 the pipeline goes human (phone beats inbox).
  *   Client instruction or staff "mark renewed" stops the sequence.
  *   7 days after "renewed", the client gets the QA survey.
+ *
+ * TEST MODE (Guardian Renewals menu → "🧪 Turn test mode ON")
+ *   A Script Properties switch, so flipping it needs no redeploy. While ON:
+ *   every email is rerouted to TEST_INBOX (default: you) with a [TEST]
+ *   subject and a banner naming the real recipients; "Reminders Sent" and
+ *   "Renewal Status" are never stamped, so live state stays untouched; and
+ *   test responses, tasks and activity rows are marked TEST so they're easy
+ *   to spot and delete. Clients can never receive test traffic.
  */
 
 var CONFIG = {
@@ -49,9 +57,47 @@ var CONFIG = {
   SURVEYS_SHEET: 'Surveys',
 
   SURVEY_DAYS_AFTER_RENEWAL: 7,
+
+  // Test mode reroutes every email here instead of clients/Guardian.
+  // Leave '' to use the account that owns the script (you).
+  TEST_INBOX: '',
 };
 
 var BRAND = { navy: '#003366', blue: '#005EB8', gold: '#E8A020', light: '#E8F0F8' };
+
+/* ============================ test mode ============================ */
+// The switch lives in Script Properties (not code), so the deployed web app
+// obeys it the moment it's flipped — no redeploy. Flip it from the sheet:
+// Guardian Renewals menu → 🧪 Test mode.
+
+function testMode_() {
+  return PropertiesService.getScriptProperties().getProperty('TEST_MODE') === 'on';
+}
+
+function testInbox_() {
+  return CONFIG.TEST_INBOX || Session.getEffectiveUser().getEmail();
+}
+
+// Single gate for ALL outgoing mail. Live: passes straight through.
+// Test mode: reroutes to the test inbox with a [TEST] subject and a banner
+// naming the real recipients; cc/bcc/replyTo are stripped so no reply or
+// copy can leak toward a real client.
+function sendMail_(opts) {
+  if (!testMode_()) { MailApp.sendEmail(opts); return; }
+  var would = 'To: ' + (opts.to || '(none)') + (opts.cc ? ' · CC: ' + opts.cc : '') + (opts.bcc ? ' · BCC: ' + opts.bcc : '');
+  var o = {};
+  for (var k in opts) o[k] = opts[k];
+  delete o.cc; delete o.bcc; delete o.replyTo;
+  o.to = testInbox_();
+  o.subject = '[TEST] ' + (opts.subject || '');
+  if (o.htmlBody) {
+    o.htmlBody =
+      '<div style="background:#b3261e;color:#fff;padding:10px 16px;border-radius:6px;margin:0 0 14px;font-family:Arial,sans-serif;font-size:13px">' +
+      '<b>🧪 TEST MODE</b> — nothing was sent to the real recipients.<br>Would have gone to — ' + esc_(would) + '</div>' + o.htmlBody;
+  }
+  o.body = 'TEST MODE — would have gone to — ' + would + '\n\n' + (o.body || '');
+  MailApp.sendEmail(o);
+}
 
 /* ============================ sheet plumbing ============================ */
 
@@ -388,7 +434,8 @@ function vehiclesForClient_(clientName, token, email) {
 }
 
 function logActivity_(token, client, type, by, details) {
-  activitySheet_().appendRow([new Date(), token, client, type, by || 'system', String(details || '').slice(0, 900)]);
+  activitySheet_().appendRow([new Date(), token, client, (testMode_() ? 'TEST:' : '') + type,
+    by || 'system', String(details || '').slice(0, 900)]);
 }
 
 /* ============================ web app routing ============================ */
@@ -469,7 +516,8 @@ function submitInstruction(payload) {
     'Updated Vehicle Value (TT$)': newValue, 'Wants Comprehensive Quote': wantsComp,
     'Changes / Notes': notes, 'Email': email, 'Mobile': mobile,
     'Payment Method': payMethod, 'Payment Reference': payRef,
-    'Emailed To': CONFIG.MAIL_TO + (cc ? ' cc ' + cc : ''), 'Status': 'Received',
+    'Emailed To': testMode_() ? testInbox_() + ' (TEST MODE)' : CONFIG.MAIL_TO + (cc ? ' cc ' + cc : ''),
+    'Status': testMode_() ? 'TEST' : 'Received',
     'Waiver of Excess': waiver, 'Windscreen Cover': windscreen,
   });
 
@@ -482,13 +530,16 @@ function submitInstruction(payload) {
     } catch (err) {}
   }
 
-  // stamp the policy row
-  try {
-    var sh = renewalsSheet_();
-    var map = ensureRenewalCols_();
-    sh.getRange(match.rowIndex, col_(map, 'renewal status') + 1)
-      .setValue(instruction + ' — ' + nowStamp_());
-  } catch (err) {}
+  // stamp the policy row — skipped in test mode: this stamp is what stops
+  // the reminder ladder, so a test submission must never silence a real client
+  if (!testMode_()) {
+    try {
+      var sh = renewalsSheet_();
+      var map = ensureRenewalCols_();
+      sh.getRange(match.rowIndex, col_(map, 'renewal status') + 1)
+        .setValue(instruction + ' — ' + nowStamp_());
+    } catch (err) {}
+  }
 
   logActivity_(token, match.client, 'client-instruction', 'client',
     instruction + (newValue ? ' · value ' + fmtMoney_(newValue) : '') +
@@ -497,7 +548,7 @@ function submitInstruction(payload) {
 
   // notify renewals team
   var subject = 'RENEWAL INSTRUCTION — ' + match.client + (match.policy ? ' — ' + match.policy : '') + ' — ' + instruction;
-  MailApp.sendEmail({
+  sendMail_({
     to: CONFIG.MAIL_TO, cc: cc, replyTo: email || undefined, name: CONFIG.FROM_NAME,
     subject: subject,
     htmlBody:
@@ -525,7 +576,7 @@ function submitInstruction(payload) {
 
   // confirmation to client
   if (email) {
-    MailApp.sendEmail({
+    sendMail_({
       to: email, name: CONFIG.FROM_NAME,
       subject: 'We received your renewal instruction — ' + (match.policy || match.coverage),
       htmlBody: brandWrap_(
@@ -553,7 +604,8 @@ function submitSurvey(payload) {
   var sat = Math.max(1, Math.min(5, Number(payload.sat) || 0));
   var ease = Math.max(1, Math.min(5, Number(payload.ease) || 0));
   var comments = String(payload.comments || '').slice(0, 2000);
-  surveysSheet_().appendRow([new Date(), token, rows[0].client, rows[0].policy, sat, ease, comments]);
+  surveysSheet_().appendRow([new Date(), token, rows[0].client, rows[0].policy, sat, ease,
+    (testMode_() ? '[TEST] ' : '') + comments]);
   logActivity_(token, rows[0].client, 'survey', 'client', 'Satisfaction ' + sat + '/5 · Ease ' + ease + '/5' + (comments ? ' · "' + comments.slice(0, 120) + '"' : ''));
   if (sat <= 3) {   // service recovery: low score → immediate staff task
     createTask_('Service recovery call — survey score ' + sat + '/5', '', rows[0].assignedTo || '', rows[0].client, token, 'system');
@@ -645,6 +697,7 @@ function staffData(key, me) {
 
 function createTask_(title, due, assignee, client, token, by) {
   var id = 'T' + new Date().getTime().toString(36);
+  if (testMode_()) title = '[TEST] ' + title;
   tasksSheet_().appendRow([id, new Date(), due ? new Date(due) : '', assignee, client, token,
     String(title).slice(0, 300), 'Open', by, '', '']);
   logActivity_(token, client, 'task-created', by, title + (assignee ? ' → ' + assignee : ''));
@@ -793,7 +846,7 @@ function sendStageEmail_(row, stage) {
     ? '<div style="background:#fbe9e7;border-left:4px solid #b3261e;padding:12px 16px;margin:14px 0">A balance of <b>' +
       fmtMoney_(row.balance) + '</b> shows on this policy. Settling it keeps your renewal seamless.</div>'
     : '';
-  MailApp.sendEmail({
+  sendMail_({
     to: row.email, name: CONFIG.FROM_NAME,
     subject: st.subject(row),
     htmlBody: brandWrap_(
@@ -807,7 +860,7 @@ function sendStageEmail_(row, stage) {
 
 function sendSurveyEmail_(row) {
   var link = portalLink_(row.token) + '&survey=1';
-  MailApp.sendEmail({
+  sendMail_({
     to: row.email, name: CONFIG.FROM_NAME,
     subject: 'How did we do with your renewal? (30 seconds)',
     htmlBody: brandWrap_(
@@ -835,7 +888,9 @@ function dailyAutomation() {
     function has(code) { return new RegExp('(^|[;\\s])' + code + '@').test(stamps); }
     function stamp(code) {
       stamps = (stamps ? stamps + '; ' : '') + code + '@' + nowStamp_();
-      sh.getRange(r.rowIndex, cRem + 1).setValue(stamps);
+      // test mode: keep the in-memory stamp (one stage per row per run) but
+      // persist nothing — a rehearsal must not mark real reminders as sent
+      if (!testMode_()) sh.getRange(r.rowIndex, cRem + 1).setValue(stamps);
     }
 
     var instructed = /—/.test(r.renewalStatus);      // client sent an instruction
@@ -875,20 +930,51 @@ function dailyAutomation() {
         (r.mobile ? ' (' + r.mobile + ')' : ''), '', r.assignedTo || '', r.client, r.token, 'system');
     }
   });
-  Logger.log('dailyAutomation: ' + sentEmails + ' emails sent');
+  Logger.log('dailyAutomation: ' + sentEmails + ' emails sent' +
+    (testMode_() ? ' — TEST MODE, all rerouted to ' + testInbox_() : ''));
 }
 
 /* ============================ menu & setup ============================ */
 
 function onOpen() {
+  var t = testMode_();
   SpreadsheetApp.getUi().createMenu('Guardian Renewals')
     .addItem('1. Fill portal links', 'fillPortalLinks')
     .addItem('2. Install daily automation (8am)', 'installTriggers')
-    .addItem('Run automation now (test)', 'dailyAutomation')
+    .addItem(t ? 'Run automation now (🧪 test — emails only you)'
+              : 'Run automation now (LIVE — emails clients)', 'dailyAutomation')
+    .addSeparator()
+    .addItem(t ? '🧪 Test mode is ON — turn OFF (go live)'
+              : '🧪 Turn test mode ON (rehearse safely)', 'toggleTestMode')
     .addSeparator()
     .addItem('Show staff dashboard link', 'showStaffLink')
     .addItem('Preview a client portal (row 2)', 'showMyLink')
     .addToUi();
+}
+
+function toggleTestMode() {
+  var props = PropertiesService.getScriptProperties();
+  var ui = SpreadsheetApp.getUi();
+  if (testMode_()) {
+    var resp = ui.alert('Go LIVE?',
+      'Test mode is ON. Turn it OFF so emails go to real clients and Guardian again?\n\n' +
+      'Note: reminders the automation rehearsed while testing were not marked as sent, ' +
+      'so anything due will send for real on the next 8am run.', ui.ButtonSet.YES_NO);
+    if (resp !== ui.Button.YES) return;
+    props.deleteProperty('TEST_MODE');
+    onOpen();
+    ui.alert('Test mode is OFF — the system is LIVE. Emails now go to real clients and Guardian.');
+  } else {
+    props.setProperty('TEST_MODE', 'on');
+    onOpen();
+    ui.alert('🧪 Test mode is ON.\n\n' +
+      'Every email now goes only to ' + testInbox_() + ' with a [TEST] banner — nothing reaches ' +
+      'clients or Guardian. Reminder and status stamps are not written, and test responses, tasks ' +
+      'and activity are marked TEST.\n\n' +
+      'One-time note: for PORTAL submissions (client links) to obey test mode, the web app must be ' +
+      'running this version of the code. After pasting new code, use Deploy → Manage deployments → ' +
+      '✏️ Edit → Version: New version → Deploy — the /exec URL stays the same.');
+  }
 }
 
 function requireUrl_() {
