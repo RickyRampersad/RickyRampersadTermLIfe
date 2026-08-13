@@ -85,6 +85,13 @@ var OUT = {
   // set, and are ignored the moment it is cleared — so nothing tested is ever
   // mistaken for something a client received.
   TEST_INBOX: '',
+
+  // The third key. A client can only ever be emailed when ALL THREE are
+  // thrown: DRY_RUN false, TEST_INBOX empty, AND this set to true. Until
+  // then a run that looks live falls back to a dry run and says so in the
+  // log — so no combination of half-finished settings can reach a client by
+  // accident. Set it only at the end of the pilot, deliberately.
+  GO_LIVE_CONFIRM: false,
   WIN_BACK_MAX_DAYS: 180,        // don't chase lapses older than this
   // An application stuck in underwriting four months is a new conversation
   // with the client, not a "one more thing" chase. The live book carries
@@ -2949,6 +2956,17 @@ function pdLogSend_(p, stageKey, tpl, sent, round) {
  * 'outbound-dry' plan to the log instead. Read that before going live.
  */
 function dailyPremiumDueRun() {
+  /* The interlock. Live-to-clients requires all three switches thrown
+     deliberately: DRY_RUN false, TEST_INBOX cleared, GO_LIVE_CONFIRM true.
+     Anything less runs as a dry run and says so — a half-finished config can
+     never email a client. (Each execution reloads the script, so this
+     fallback lasts this run only.) */
+  if (!OUT.DRY_RUN && !OUT.TEST_INBOX && !OUT.GO_LIVE_CONFIRM) {
+    OUT.DRY_RUN = true;
+    Logger.log('REFUSING to go live: DRY_RUN is false and TEST_INBOX is empty, but GO_LIVE_CONFIRM is not true. ' +
+      'Running as a DRY RUN instead — nothing was emailed. Set GO_LIVE_CONFIRM: true only once the pilot is done.');
+  }
+
   var payload = JSON.parse(getPolicies_().getContent());
   if (!payload.ok) throw new Error('Could not read the portfolio: ' + payload.error);
 

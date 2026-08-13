@@ -12,11 +12,14 @@ portfolio (20,354 rows) was run through `dailyPremiumDueRun()` on 13 August
 |---|---|---|
 | 0 · Dry run | `DRY_RUN: true` | Nothing emailed. The full plan is written to the log to read. |
 | 1 · **Pilot** | `DRY_RUN: false` + `TEST_INBOX` + `PILOT_AGENTS` | Real emails for two books — **every one to your own inbox**, stamped `[TEST]`, banner naming the real recipient. No client, agent or manager hears anything. |
-| 2 · Live | `TEST_INBOX: ''`, `PILOT_AGENTS: []` | The branch is live under the caps. |
+| 2 · Live | `TEST_INBOX: ''`, `PILOT_AGENTS: []`, **`GO_LIVE_CONFIRM: true`** | The branch is live under the caps. |
 
-A dry-run row can never suppress a later live send, and a pilot send stops
-counting the moment `TEST_INBOX` is cleared — so each stage starts the next
-one clean. Both facts are covered by tests.
+**A client can only ever be emailed when all three keys are thrown** —
+`DRY_RUN` off, `TEST_INBOX` empty, `GO_LIVE_CONFIRM` true. Any lesser
+combination falls back to a dry run and says so in the log. A dry-run row can
+never suppress a later live send, and a pilot send stops counting the moment
+`TEST_INBOX` is cleared — so each stage starts the next one clean. All three
+facts are covered by tests.
 
 ---
 
@@ -128,6 +131,8 @@ Run it for **2–3 days** and check, in your own inbox and the engine:
 - [ ] `TEST_INBOX: ''` and `PILOT_AGENTS: []` (or keep
       `['Ricky Rampersad', 'Neil Ramnanan']` for a soft launch — your two
       books go live to real clients first, the branch follows).
+- [ ] **`GO_LIVE_CONFIRM: true`** — the deliberate third key. Without it the
+      run refuses to email a client and falls back to a dry plan.
 - [ ] Leave the caps at 60/60.
 - [ ] After the 8am run, read the Logger line:
       `sent≈60 · internal≈60 · group-statements≈12 · held-by-cap` = the rest.
@@ -149,13 +154,14 @@ Run it for **2–3 days** and check, in your own inbox and the engine:
 
 ## 6 · Safety rails already in place
 
-One send per policy per stage, ever · every sequence stops on an answer or a
-payment · urgency-sorted caps (60 client / 60 internal) · schemes get one
-statement per fortnight, members never written individually · win-back only
-inside 180 days · pending chased only to 120 days · the manager's commercial
-questions never appear on client-copied email · contract wording quoted
-verbatim or not at all · client letters carry no phone numbers — the tracked
-case code instead.
+A client can only be emailed with all three keys thrown — anything less runs
+dry and says so · one send per policy per stage, ever · every sequence stops
+on an answer or a payment · urgency-sorted caps (60 client / 60 internal) ·
+schemes get one statement per fortnight, members never written individually ·
+win-back only inside 180 days · pending chased only to 120 days · the
+manager's commercial questions never appear on client-copied email · contract
+wording quoted verbatim or not at all · client letters carry no phone numbers
+— the tracked case code instead.
 
 ## 7 · Rollback
 
