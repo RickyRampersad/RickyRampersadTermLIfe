@@ -106,6 +106,7 @@ const QP_DEPT_NAMES = {
 function qpRouteFor_(queryType) {
   var k = String(queryType || '').trim();
   if (/Termination$/i.test(k)) return null;                 // handled by terminate_()
+  if (/Enrollment$/i.test(k))  return null;                 // handled by qpEnroll_()
   var r = QP_ROUTES[k];
   if (!r) {
     var lk = k.toLowerCase();
@@ -119,7 +120,7 @@ function qpRouteFor_(queryType) {
 
 /* Applied by doPost. Returns false when the type is unknown, so nothing is sent. */
 function qpApplyRoute_(d) {
-  if (/Termination$/i.test(String(d.queryType || ''))) return true;   // trusted internal path
+  if (/(Termination|Enrollment)$/i.test(String(d.queryType || ''))) return true;   // trusted internal paths
   var route = qpRouteFor_(d.queryType);
   if (!route) return false;
   d.queryType       = route.type;
@@ -487,6 +488,294 @@ function wallStats_(code, token, days) {
 }
 
 
+/* ══════════════════ 8. CLIENT PORTAL — codes, enrollment, history, stats ══════════════════ */
+
+/* --- 8a. Self-service access codes ---------------------------------------
+   The client enters their email; if it is on the branch's records the code is
+   emailed to that address — and only that address. The response is identical
+   whether the email is known or not, so the endpoint cannot be used to test
+   which emails the branch holds. Company codes stay branch-issued: their scope
+   is an account name, not an email, so there is nothing safe to match on.   */
+
+function qpClientCodesSheet_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(CLIENT_CODES_TAB);
+  if (!sh) {
+    sh = ss.insertSheet(CLIENT_CODES_TAB);
+    sh.getRange(1, 1, 1, 4).setValues([['Code', 'Type', 'Name', 'Scope Value']])
+      .setFontWeight('bold').setBackground('#003e66').setFontColor('#ffffff');
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+function qpRequestCode_(e) {
+  var p = e.parameter || {};
+  var email = String(p.email || '').trim().toLowerCase();
+  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
+    return json({ ok: false, error: 'Enter a valid email address.' });
+  var neutral = json({ ok: true, msg: 'If that email is on our records, your access code is on its way.' });
+  if (!qpRateLimit_('code_' + email, 3, 3600) || !qpRateLimit_('code_all', 30, 3600)) return neutral;
+
+  var code = '', name = '';
+  // 1 — a code already exists for this email: resend it
+  var sh = qpClientCodesSheet_();
+  if (sh.getLastRow() > 1) {
+    var rows = sh.getRange(2, 1, sh.getLastRow() - 1, 4).getValues();
+    for (var r = 0; r < rows.length; r++) {
+      if (String(rows[r][1] || '').trim().toLowerCase() !== 'company'
+          && String(rows[r][3] || '').trim().toLowerCase() === email) {
+        code = String(rows[r][0]).trim(); name = String(rows[r][2] || '').trim(); break;
+      }
+    }
+  }
+  // 2 — no code yet: the email must be on the Group Clients roster to get one
+  if (!code) {
+    try {
+      var g = gcSheet_();
+      if (g && g.getLastRow() > 1) {
+        var ix = gcIdx_(g);
+        if (ix.email != null) {
+          var data = g.getRange(2, 1, g.getLastRow() - 1, g.getLastColumn()).getValues();
+          for (var r2 = 0; r2 < data.length; r2++) {
+            if (String(data[r2][ix.email] || '').trim().toLowerCase() === email) {
+              name = ix.name != null ? String(data[r2][ix.name] || '').trim() : '';
+              break;
+            }
+          }
+        }
+      }
+    } catch (ge) {}
+    if (name) {
+      var taken = {};
+      if (sh.getLastRow() > 1) {
+        var cs = sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues();
+        for (var c2 = 0; c2 < cs.length; c2++) taken[String(cs[c2][0]).trim().toUpperCase()] = 1;
+      }
+      do { code = 'IND' + String(Math.floor(1000 + Math.random() * 9000)); } while (taken[code]);
+      sh.appendRow([code, 'individual', name, email]);
+    }
+  }
+  if (code) { try { qpSendCodeEmail_(email, name, code); } catch (se) {} }
+  return neutral;                       // identical answer either way
+}
+
+function qpSendCodeEmail_(email, name, code) {
+  var F = 'font-family:Segoe UI,Helvetica,Arial,sans-serif;';
+  var first = (String(name || '').split(/\s+/)[0] || '').trim();
+  var html = badgeHeader_('Your Access Code', 'Query Pal client portal')
+    + '<div style="' + F + 'font-size:13.5px;color:#0a2138;line-height:1.75;">'
+    + 'Dear ' + esc(first || 'Client') + ',<br><br>'
+    + 'Here is your personal access code for the Rampersad Branch client portal. '
+    + 'Use it on the site under <b>Track my cases</b> to see every request you have with us, '
+    + 'follow live progress, and message the team on any open case.'
+    + '<div style="background:#0a2f4f;border-radius:12px;padding:16px;margin:16px 0;text-align:center;">'
+    + '<div style="' + F + 'font-size:9px;color:#9fc9ec;font-weight:800;letter-spacing:.2em;text-transform:uppercase;">Access code</div>'
+    + '<div style="font-family:Consolas,Menlo,monospace;font-size:26px;font-weight:800;color:#fff;letter-spacing:.14em;margin-top:5px;">' + esc(code) + '</div></div>'
+    + 'Keep it private — anyone holding this code can see your cases. If you did not request it, you can ignore this email.'
+    + '</div>' + badgeFooter_();
+  var msg = { to: (TEST_MODE ? TEST_EMAIL : email), replyTo: BRANCH_SUPPORT, name: 'Ricky Rampersad Branch',
+    subject: (TEST_MODE ? '[TEST] ' : '') + 'Your Query Pal access code',
+    body: 'Your Query Pal access code is ' + code + '. Use it under "Track my cases" on the branch site.',
+    htmlBody: html };
+  var img = qpLogoInline_(); if (img) msg.inlineImages = { qplogo: img };
+  MailApp.sendEmail(msg);
+}
+
+/* --- 8b. Group enrollment — the mirror of terminate_() --------------------
+   Company signs in, submits the member's details with the enrollment forms
+   attached, the branded request goes to Group Insurance Administration, and
+   the case is logged so the autopilot chases it like everything else.       */
+
+function qpEnroll_(d) {
+  if (!qpRateLimit_('enroll', 15, 3600)) return json({ ok: false, error: 'Too many enrollment requests just now — try again shortly.' });
+  var c = resolveClientCode_(d.code);
+  if (!c || c.type !== 'company') return json({ ok: false, error: 'Company sign-in required.' });
+
+  var first = String(d.first || '').trim(), last = String(d.last || '').trim();
+  var member = (first + ' ' + last).trim();
+  var eff = String(d.effdate || '').trim();
+  var doLife = !!d.life, doHealth = !!d.health;
+  if (!member || !eff || (!doLife && !doHealth))
+    return json({ ok: false, error: 'Member name, effective date and at least one plan are required.' });
+
+  var plans = []; if (doLife) plans.push('Group Life'); if (doHealth) plans.push('Group Health');
+  var plansTxt = plans.join(' & ');
+  var lifePol = String(d.lifepol || '').trim(), healthPol = String(d.healthpol || '').trim();
+  var memberEmail = String(d.memberEmail || '').trim();
+  var dob = String(d.dob || '').trim(), note = String(d.note || '').trim();
+  var nFiles = (d.files && d.files.length) || 0;
+
+  var ref = 'RRB/' + Utilities.formatDate(new Date(), tz_(), 'yyyy/MMdd/HHmmss') + '/ENRL';
+  var subject = plansTxt + ' Enrollment – ' + member + ' – ' + c.name;
+  var desc = 'Please enroll the following member under ' + c.name + ', effective ' + eff + ':\n\n'
+    + 'Member: ' + member + (dob ? ('  (DOB ' + dob + ')') : '') + '\n'
+    + (doLife   ? '• Group Life'   + (lifePol   ? ' — Policy ' + lifePol   : '') + '\n' : '')
+    + (doHealth ? '• Group Health' + (healthPol ? ' — Policy ' + healthPol : '') + '\n' : '')
+    + (memberEmail ? 'Member email: ' + memberEmail + '\n' : '')
+    + (note ? '\nNotes from the company:\n' + note + '\n' : '')
+    + (nFiles ? '\n' + nFiles + ' enrollment document' + (nFiles > 1 ? 's are' : ' is') + ' attached.\n' : '')
+    + '\nKindly confirm completion on this thread.';
+
+  var d2 = {
+    reference: ref,
+    category: 'Group Enrollments',
+    queryType: plansTxt + ' Enrollment',
+    subject: subject, description: desc,
+    client: member, name: member,
+    loggedBy: c.name + ' (Company)',
+    policy: [lifePol, healthPol].filter(function (x) { return x; }).join(' / '),
+    agent: '', agentEmail: '',
+    email: memberEmail, phone: '',
+    department: TERM_DEPT_NAME,
+    departmentEmail: TERM_DEPT_TO.join(','),
+    turnaround: String(TERM_TAT_DAYS),
+    priority: 'Normal',
+    assignedStaff: TERM_ASSIGNEE,
+    noSalesforceAttach: true,
+    files: d.files || []
+  };
+  try { sendRoutedEmail(d2); } catch (me) { return json({ ok: false, error: 'Could not send to the department: ' + me }); }
+
+  try {
+    var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+    var row = []; row[0] = ref; row[1] = ''; row[2] = new Date(); row[3] = 'Open';
+    row[4] = c.name + ' (Company)'; row[5] = member; row[6] = memberEmail;
+    row[7] = c.scope;                               // company scope -> visible in the company portal
+    row[11] = 'Group Enrollments'; row[12] = plansTxt + ' Enrollment';
+    row[13] = TERM_DEPT_NAME; row[14] = TERM_DEPT_TO.join(',');
+    row[15] = String(TERM_TAT_DAYS); row[16] = 'Normal';
+    row[17] = subject; row[18] = desc.substring(0, 900);
+    while (row.length < 29) row.push('');
+    row[28] = TERM_ASSIGNEE;
+    sh.appendRow(row);
+    cmtSheet_().appendRow([new Date(), ref, c.name + ' (Company)', 'client',
+      '📥 Enrollment submitted — ' + plansTxt + ' for ' + member + ', effective ' + eff
+      + (nFiles ? (' — ' + nFiles + ' document' + (nFiles > 1 ? 's' : '') + ' attached') : ''), 'trail']);
+  } catch (le) {}
+
+  return json({ ok: true, ref: ref, plans: plansTxt });
+}
+
+/* --- 8c. Client-safe case history -----------------------------------------
+   The existing casehistory endpoint takes only a reference and returns
+   INTERNAL staff notes, so it must never be what the portal calls. This one
+   requires the client's code, verifies the case belongs to them, and shows
+   only what a client should see: milestones plus trail/client comments.     */
+
+function qpClientHistory_(e) {
+  var p = e.parameter || {};
+  var c = resolveClientCode_(p.code);
+  var ref = String(p.ref || '').trim();
+  if (!c || !ref) return json({ ok: false });
+
+  var allowed = false;
+  try {
+    var cases = JSON.parse(clientCases_({ parameter: { code: c.code } }).getContent()).cases || [];
+    for (var i = 0; i < cases.length; i++) if (cases[i].ref === ref) { allowed = true; break; }
+  } catch (ce) {}
+  if (!allowed) return json({ ok: false });
+
+  var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
+  var fmt = function (v) {
+    var dd = (v instanceof Date) ? v : new Date(v);
+    return isNaN(dd) ? '' : Utilities.formatDate(dd, tz, 'd MMM · h:mm a');
+  };
+  var events = [];
+  var qs = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  if (qs && qs.getLastRow() > 1) {
+    var w = Math.min(29, qs.getMaxColumns());
+    var qd = qs.getRange(2, 1, qs.getLastRow() - 1, w).getValues();
+    for (var r = 0; r < qd.length; r++) {
+      if (String(qd[r][0]).trim() !== ref) continue;
+      var logged = (qd[r][2] instanceof Date) ? qd[r][2] : new Date(qd[r][2]);
+      events.push({ ord: isNaN(logged) ? 0 : logged.getTime(), who: 'Branch',
+        text: 'Request logged and routed to ' + String(qd[r][13] || 'the department'), when: fmt(logged) });
+      var fu = Number(qd[r][22]) || 0;
+      var lastFu = qd[r][23], fuOrd = (lastFu instanceof Date) ? lastFu.getTime() : (isNaN(logged) ? 1 : logged.getTime() + 1);
+      for (var k = 1; k <= fu; k++) {
+        events.push({ ord: fuOrd - (fu - k), who: 'Branch',
+          text: (k === fu && fu > 1 ? 'Escalated with the department' : 'We followed up with the department on your behalf'),
+          when: k === fu ? fmt(lastFu) : '' });
+      }
+      if (qd[r][27]) events.push({ ord: (qd[r][27] instanceof Date) ? qd[r][27].getTime() : 2, who: 'Department',
+        text: 'The department responded on your case', when: fmt(qd[r][27]) });
+      if (/closed|resolved|completed/i.test(String(qd[r][3] || '')))
+        events.push({ ord: (qd[r][20] instanceof Date) ? qd[r][20].getTime() : 9e15, who: 'Branch',
+          text: 'Resolved' + (qd[r][21] !== '' ? (' in ' + qd[r][21] + ' day' + (Number(qd[r][21]) === 1 ? '' : 's')) : ''),
+          when: fmt(qd[r][20]) });
+      if (Number(qd[r][25]) > 0) events.push({ ord: 9e15, who: 'You',
+        text: 'You rated this ' + Number(qd[r][25]) + '★ — thank you', when: '' });
+      break;
+    }
+  }
+  // comments — trail and client only; internal staff notes never leave the branch
+  try {
+    var cm = cmtSheet_();
+    if (cm.getLastRow() > 1) {
+      var cd = cm.getRange(2, 1, cm.getLastRow() - 1, 6).getValues();
+      for (var j = 0; j < cd.length; j++) {
+        if (String(cd[j][1]).trim() !== ref) continue;
+        var mode = String(cd[j][5] || '').toLowerCase(), role = String(cd[j][3] || '').toLowerCase();
+        if (mode !== 'trail' && role !== 'client') continue;
+        var when = (cd[j][0] instanceof Date) ? cd[j][0] : new Date(cd[j][0]);
+        events.push({ ord: isNaN(when) ? 3 : when.getTime(),
+          who: String(cd[j][2] || 'Branch'), text: String(cd[j][4] || ''), when: fmt(when) });
+      }
+    }
+  } catch (he) {}
+  events.sort(function (a, b) { return a.ord - b.ord; });
+  return json({ ok: true, items: events.map(function (ev) { return { who: ev.who, text: ev.text, when: ev.when }; }) });
+}
+
+/* --- 8d. Client stats — response rate, resolution rate, and pace ----------
+   Aggregated over only the cases this code is allowed to see, matched with
+   the same rules clientCases_ uses.                                         */
+
+function qpClientStats_(e) {
+  var c = resolveClientCode_((e.parameter || {}).code);
+  if (!c) return json({ ok: false });
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  if (!sh || sh.getLastRow() < 2)
+    return json({ ok: true, total: 0, open: 0, resolved: 0 });
+
+  var scope = c.scope.toLowerCase();
+  var hit = function (v) { return v && v.length >= 4 && (v === scope || v.indexOf(scope) > -1 || scope.indexOf(v) > -1); };
+  var data = sh.getRange(2, 1, sh.getLastRow() - 1, Math.min(29, sh.getMaxColumns())).getValues();
+
+  var total = 0, resolved = 0, responded = 0, onT = 0, onTot = 0;
+  var respSum = 0, respN = 0, closeSum = 0, closeN = 0;
+  for (var r = 0; r < data.length; r++) {
+    var row = data[r];
+    if (!row[0]) continue;
+    var match = false;
+    if (c.type === 'company') {
+      match = hit(String(row[7] || '').trim().toLowerCase()) || hit(String(row[5] || '').trim().toLowerCase());
+    } else {
+      match = String(row[6] || '').trim().toLowerCase() === scope;
+    }
+    if (!match) continue;
+    total++;
+    var done = /closed|resolved|completed/i.test(String(row[3] || ''));
+    var repliedAt = (row[27] instanceof Date) ? row[27] : null;
+    if (done) resolved++;
+    if (done || repliedAt) responded++;
+    var logged = (row[2] instanceof Date) ? row[2] : new Date(row[2]);
+    if (repliedAt && !isNaN(logged)) { respSum += Math.max(0, (repliedAt - logged) / 86400000); respN++; }
+    if (done && row[21] !== '' && !isNaN(+row[21])) {
+      closeSum += +row[21]; closeN++;
+      onTot++; var tat = parseInt(row[15]); if (isNaN(tat)) tat = 5;
+      if (+row[21] <= tat) onT++;
+    }
+  }
+  var pc = function (a, b) { return b ? Math.round(a / b * 100) : null; };
+  var av = function (a, b) { return b ? Math.round(a / b * 10) / 10 : null; };
+  return json({ ok: true, total: total, open: total - resolved, resolved: resolved,
+    resolutionRate: pc(resolved, total), responseRate: pc(responded, total),
+    avgResponse: av(respSum, respN), avgClose: av(closeSum, closeN), onTime: pc(onT, onTot) });
+}
+
+
 /* ══════════════════ 7. SELF-CHECK ══════════════════
    Run qpSelfCheck() in the editor after deploying. It touches nothing. */
 
@@ -502,6 +791,9 @@ function qpSelfCheck() {
   out.push('--- passwords ---');
   out.push('Passwords on file: ' + Object.keys(qpPwStore_()).length + ' of ' + Object.keys(AGENT_ACCESS).length);
   out.push('Enforcement: ' + (QP_REQUIRE_PASSWORD ? 'ON' : 'OFF (rollout mode)'));
+  out.push('--- client portal ---');
+  out.push('Portal endpoints loaded: requestcode, enroll, clienthistory, clientstats');
+  out.push('Enrollment bypasses the router: ' + (qpRouteFor_('Group Life Enrollment') === null ? 'yes' : 'NO — PROBLEM'));
   var msg = out.join('\n');
   Logger.log(msg); return msg;
 }

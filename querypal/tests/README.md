@@ -8,6 +8,8 @@ until their code is ported onto it.
 | `attachments.browser` | **runs** — 26 assertions on the live `index.html` |
 | `wall.browser` | **runs** — 33 assertions on `wall.html` |
 | `patch` | **runs** — 46 assertions on `QueryPalPatch.gs` with the real agent tables |
+| `portal.backend` | **runs** — 35 assertions on the client-portal endpoints |
+| `portal.browser` | **runs** — 32 assertions driving the portal in Chromium |
 | `attachments.backend`, `routing`, `security`, `wall` | skip — superseded by `patch.test.js`; kept for the full-file port |
 | `leaderboard.browser`, `signin.browser` | skip — features not yet ported to the live `index.html` |
 
@@ -44,6 +46,10 @@ NODE_PATH=/opt/node22/lib/node_modules node wall.browser.test.mjs
 
 # patch file — routing table vs the live catalog, attachments, managers, passwords
 node patch.test.js
+
+# client portal — code issuance, enrollment, client-safe history, stats
+node portal.backend.test.js
+NODE_PATH=/opt/node22/lib/node_modules node portal.browser.test.mjs
 ```
 
 Each prints `N passed, 0 failed` and exit non-zero on failure. Test fixtures

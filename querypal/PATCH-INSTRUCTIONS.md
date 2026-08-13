@@ -41,6 +41,7 @@ Replace with:
     const d = JSON.parse(e.postData.contents);
     if (d.action === 'rai') return raiProxy_(d);           // optional AI assistant proxy
     if (d.action === 'agentauth') return qpAgentAuthPost_(d);   // sign-in, so no password rides in the URL
+    if (d.action === 'enroll')    return qpEnroll_(d);          // company portal: enroll a member
 
     // Decide the destination here, from the query type. Whatever department the
     // browser claimed is discarded — the webhook is public and its URL is in the page.
@@ -92,6 +93,9 @@ Replace with:
 ```js
   if (p.action === 'myqueries') return myQueries_(p.token ? (qpAgentFromToken_(p.token)||{}).code || p.code : p.code);
   if (p.action === 'wall')      return wallStats_(p.code, p.token, p.days);
+  if (p.action === 'requestcode')   return qpRequestCode_(e);   // client asks for their access code by email
+  if (p.action === 'clienthistory') return qpClientHistory_(e); // client-safe case timeline (no internal notes)
+  if (p.action === 'clientstats')   return qpClientStats_(e);   // response / resolution rates for the portal
 ```
 
 ---
@@ -251,6 +255,29 @@ check your codes tab first, since some matching may have grown to depend on the
 stricter version.
 
 ---
+
+## The client portal upgrade (rides on the same edits)
+
+The lines added in edits 2 and 4 switch on four portal features that the new
+site files use:
+
+- **Get my code by email** — a client enters the email on their policy; if it
+  matches the Client Codes tab or the Group Clients roster, the code is emailed
+  to that address only. The reply is identical whether the email is known or
+  not, so the endpoint cannot be used to probe your records. Company codes stay
+  branch-issued — their scope is an account name, not an email.
+- **Enroll a new member** — company sign-ins get an Enroll button: member
+  details, plan(s), effective date, up to three documents. GIA receives the
+  branded request, the case is logged under the company's scope, assigned to
+  Sasha, and chased by the autopilot like everything else.
+- **Client-safe history** — IMPORTANT: the old History button called
+  `casehistory`, which needs no sign-in and returns INTERNAL staff notes; it was
+  also reading the wrong field, so it always showed "No history entries yet."
+  The new endpoint requires the client's code, verifies the case is theirs, and
+  shows only milestones plus trail/client comments. Internal notes never leave
+  the branch.
+- **Stats tiles** — response rate, resolution rate, average resolution days and
+  on-time %, computed over only the cases that code can see.
 
 ## After deploying
 

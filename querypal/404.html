@@ -474,6 +474,21 @@
   .ccact{display:flex;gap:8px;margin-top:11px;}
   .ccbtn{flex:1;border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px;font-size:12px;font-weight:700;color:var(--blue);cursor:pointer;transition:.15s;}
   .ccbtn:hover{background:#eef4ff;}
+  .ccstats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;}
+  .ccstat{background:linear-gradient(135deg,#f4f9ff,#eef6ff);border:1px solid #dcebfb;border-radius:12px;padding:10px 6px;text-align:center;}
+  .ccstat .n{font-size:19px;font-weight:800;color:var(--blue);line-height:1;}
+  .ccstat .n.good{color:#0e9f6e;} .ccstat .n.warn{color:#dd7a02;}
+  .ccstat .l{font-size:8.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);margin-top:5px;}
+  @media(max-width:420px){.ccstats{grid-template-columns:repeat(2,1fr);}}
+  .ccgetcode{margin-top:8px;}
+  .ccgetcode .mrow{margin-top:8px;}
+  .enroll-plans{display:flex;gap:10px;margin:4px 0 10px;}
+  .enroll-plans label{flex:1;display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);border-radius:11px;padding:11px 12px;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;}
+  .enroll-plans label:has(input:checked){border-color:var(--blue);background:#eef6ff;}
+  .enroll-two{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+  .enfile{display:flex;align-items:center;gap:9px;background:#f2f9ea;border:1px solid #dcecc6;border-radius:9px;padding:7px 10px;margin-top:7px;font-size:12px;}
+  .enfile b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#41611f;}
+  .enfile button{background:none;border:none;color:var(--bad);font-size:11px;cursor:pointer;text-decoration:underline;}
   .ccbody{margin-top:11px;padding-top:11px;border-top:1px dashed var(--line);display:none;}
   .ccbody.show{display:block;}
   .cctl{list-style:none;padding:0;}
@@ -1443,6 +1458,43 @@ body.wsopen #raiBtn{display:none!important;}  /* replaced by the FAB inside work
 </div>
 
 <!-- Client sign-in — access codes are checked live against the branch sheet -->
+<div class="modal" id="enrollModal" onclick="if(event.target===this)enrollClose()">
+  <div class="modalcard" style="max-width:520px;">
+    <div class="mhead"><b>➕ Enroll a new member</b><button class="mclose" onclick="enrollClose()" aria-label="Close">×</button></div>
+    <p class="msub">Add an employee to your group cover. Group Insurance Administration receives it immediately and the branch tracks it to completion.</p>
+    <div class="enroll-two">
+      <div class="field"><label>First name <span class="req">*</span></label><input id="enFirst" autocomplete="off"></div>
+      <div class="field"><label>Last name <span class="req">*</span></label><input id="enLast" autocomplete="off"></div>
+    </div>
+    <div class="enroll-two">
+      <div class="field"><label>Date of birth</label><input id="enDob" type="date"></div>
+      <div class="field"><label>Member email</label><input id="enEmail" type="email" placeholder="For their updates"></div>
+    </div>
+    <div class="field"><label>Cover <span class="req">*</span></label>
+      <div class="enroll-plans">
+        <label><input type="checkbox" id="enLife"> Group Life</label>
+        <label><input type="checkbox" id="enHealth"> Group Health</label>
+      </div>
+    </div>
+    <div class="enroll-two">
+      <div class="field"><label>Life policy #</label><input id="enLifePol" placeholder="If known"></div>
+      <div class="field"><label>Health policy #</label><input id="enHealthPol" placeholder="If known"></div>
+    </div>
+    <div class="field"><label>Effective date <span class="req">*</span></label><input id="enEff" type="date"></div>
+    <div class="field"><label>Notes for the branch</label><textarea id="enNote" rows="2" placeholder="Anything GIA should know"></textarea></div>
+    <div class="field"><label>Enrollment documents</label>
+      <div class="drop" onclick="document.getElementById('enFile').click()" style="padding:13px;">
+        <div class="di" style="font-size:19px;">📎</div><div class="dt" style="font-size:12px;">Attach the enrollment form, ID or supporting documents</div>
+        <div class="ds">PDF, Word, Excel or photos — up to 3 files</div>
+      </div>
+      <input type="file" id="enFile" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" multiple style="display:none" onchange="enFileAdd(this)">
+      <div id="enFilePrev"></div>
+    </div>
+    <button class="btn" id="enGo" style="width:100%;" onclick="enrollSend()">Submit enrollment</button>
+    <div id="enOut"></div>
+  </div>
+</div>
+
 <div class="modal" id="clientGate" onclick="if(event.target===this)closeClientGate()">
   <div class="modalcard">
     <div class="mhead"><b>🔐 Client access</b><button class="mclose" onclick="closeClientGate()" aria-label="Close">×</button></div>
@@ -1452,7 +1504,15 @@ body.wsopen #raiBtn{display:none!important;}  /* replaced by the FAB inside work
       <button class="btn" id="ccGo" onclick="clientLogin()">View my cases</button>
     </div>
     <div id="ccOut"></div>
-    <p class="msub" style="margin-top:10px;">Don't have a code? <a class="tracklink" href="mailto:support@rickyrampersadbranch.com?subject=Query%20Pal%20access%20code">Email the branch</a> and we'll set you up.</p>
+    <div class="ccgetcode">
+      <p class="msub" style="margin-top:10px;">Don't have a code? <a class="tracklink" href="javascript:void(0)" onclick="ccGetCodeToggle()">Get it by email →</a></p>
+      <div class="mrow" id="ccGetRow" style="display:none;">
+        <input id="ccGetEmail" type="email" placeholder="The email on your policy" autocomplete="email" onkeydown="if(event.key==='Enter')ccGetCode()">
+        <button class="btn" id="ccGetGo" onclick="ccGetCode()">Send my code</button>
+      </div>
+      <div id="ccGetOut"></div>
+      <p class="msub" style="margin-top:8px;font-size:11.5px;">Company accounts: codes are issued by the branch — <a class="tracklink" href="mailto:support@rickyrampersadbranch.com?subject=Company%20access%20code">email us</a>.</p>
+    </div>
   </div>
 </div>
 
@@ -1461,6 +1521,8 @@ body.wsopen #raiBtn{display:none!important;}  /* replaced by the FAB inside work
   <div class="modalcard" style="max-width:560px;">
     <div class="mhead"><b>📋 My cases</b><button class="mclose" onclick="closeClientCases()" aria-label="Close">×</button></div>
     <div class="ccwel"><div><h4 id="ccName">—</h4><p id="ccSub">Your requests with the branch</p></div><span class="ccbadge" id="ccBadge">Client</span></div>
+    <div id="ccStats"></div>
+    <div id="ccEnrollRow"></div>
     <div class="ccchips">
       <button class="ccchip on" data-f="all" onclick="ccFilter('all')">All <span id="ccCntAll"></span></button>
       <button class="ccchip" data-f="open" onclick="ccFilter('open')">Open <span id="ccCntOpen"></span></button>
@@ -2889,7 +2951,27 @@ function ccShow(){
   const b=document.getElementById('ccBadge');b.textContent=isCo?'Company':'Client';b.className='ccbadge'+(isCo?' co':'');
   document.getElementById('ccCodeShow').textContent=clientAuth.code;
   document.getElementById('clientCases').classList.add('show');
+  document.getElementById('ccEnrollRow').innerHTML = isCo
+    ? '<button class="ccbtn" style="width:100%;margin-top:10px;padding:11px;font-size:13px;" onclick="enrollOpen()">➕ Enroll a new member</button>' : '';
+  ccStatsLoad();
   ccRender();
+}
+function ccStatsLoad(){
+  const box=document.getElementById('ccStats');if(!box||!clientAuth)return;
+  box.innerHTML='';
+  fetch(SHEET_WEBHOOK_URL+'?action=clientstats&code='+encodeURIComponent(clientAuth.code))
+    .then(r=>r.json()).then(d=>{
+      if(!d||d.ok!==true||!d.total)return;
+      const pc=v=>v===null||v===undefined?'—':v+'%';
+      const tone=v=>v===null||v===undefined?'':(v>=85?' good':(v>=60?'':' warn'));
+      const tile=(n,l,cls)=>'<div class="ccstat"><div class="n'+(cls||'')+'">'+n+'</div><div class="l">'+l+'</div></div>';
+      box.innerHTML='<div class="ccstats">'
+        +tile(pc(d.responseRate),'Response rate',tone(d.responseRate))
+        +tile(pc(d.resolutionRate),'Resolution rate',tone(d.resolutionRate))
+        +tile(d.avgClose===null||d.avgClose===undefined?'—':d.avgClose+'d','Avg resolution','')
+        +tile(pc(d.onTime),'On time',tone(d.onTime))
+        +'</div>';
+    }).catch(()=>{});
 }
 function ccFilter(f){ccF=f;document.querySelectorAll('.ccchip').forEach(c=>c.classList.toggle('on',c.dataset.f===f));ccRender();}
 function ccRender(){
@@ -2919,7 +3001,7 @@ function ccHistory(i){
   if(body.classList.contains('show')&&body.dataset.mode==='history'){body.classList.remove('show');return;}
   body.dataset.mode='history';body.classList.add('show');
   body.innerHTML='<p style="font-size:12px;color:var(--soft);">Loading history…</p>';
-  fetch(SHEET_WEBHOOK_URL+'?action=casehistory&ref='+encodeURIComponent(ccCases[i].ref))
+  fetch(SHEET_WEBHOOK_URL+'?action=clienthistory&code='+encodeURIComponent(clientAuth.code)+'&ref='+encodeURIComponent(ccCases[i].ref))
     .then(r=>r.json()).then(d=>{
       const items=(d&&d.items)||[];
       if(!items.length){body.innerHTML='<p style="font-size:12px;color:var(--soft);">No history entries yet.</p>';return;}
@@ -2945,6 +3027,74 @@ function ccSend(i){
       else{toast('Could not send — please try again.');ta.disabled=false;}
     })
     .catch(()=>{toast('Connection error — please try again.');ta.disabled=false;});
+}
+function ccGetCodeToggle(){const r=document.getElementById('ccGetRow');r.style.display=r.style.display==='none'?'flex':'none';if(r.style.display!=='none')document.getElementById('ccGetEmail').focus();}
+function ccGetCode(){
+  const em=(document.getElementById('ccGetEmail').value||'').trim();
+  const out=document.getElementById('ccGetOut');const btn=document.getElementById('ccGetGo');
+  if(!em||em.indexOf('@')===-1){out.innerHTML='<div class="trackcard">Enter the email address on your policy.</div>';return;}
+  btn.disabled=true;btn.textContent='Sending…';
+  fetch(SHEET_WEBHOOK_URL+'?action=requestcode&email='+encodeURIComponent(em))
+    .then(r=>r.json()).then(d=>{
+      btn.disabled=false;btn.textContent='Send my code';
+      out.innerHTML='<div class="trackcard" style="border-color:#dcecc6;background:#f6fbef;">📬 '+esc((d&&d.msg)||'If that email is on our records, your access code is on its way.')+'<br><span style="font-size:11.5px;color:var(--soft);">Check your inbox (and spam) in the next few minutes.</span></div>';
+    })
+    .catch(()=>{btn.disabled=false;btn.textContent='Send my code';out.innerHTML='<div class="trackcard">Couldn\'t reach the branch server — try again.</div>';});
+}
+
+/* ---------- company enrollment ---------- */
+let enFiles=[];
+function enrollOpen(){enFiles=[];
+  document.getElementById('clientCases').classList.remove('show');   /* the cases modal would sit on top and swallow clicks */
+  document.getElementById('enrollModal').classList.add('show');
+  document.getElementById('enOut').innerHTML='';document.getElementById('enFilePrev').innerHTML='';}
+function enrollClose(){document.getElementById('enrollModal').classList.remove('show');
+  if(clientAuth)document.getElementById('clientCases').classList.add('show');}
+function enFileAdd(input){
+  const picked=[...input.files];input.value='';
+  picked.forEach(f=>{
+    if(enFiles.length>=3){toast('Up to 3 documents per enrollment');return;}
+    if(!ATT_OK_RX.test(attMime(f))){toast('“'+f.name+'” isn\'t an accepted type — use PDF, Word, Excel or a photo');return;}
+    if(f.size>8*1048576){toast('“'+f.name+'” is over 8 MB');return;}
+    const take=(uri,raw)=>{if(!uri)return;
+      enFiles.push({name:f.name,mime:(raw?attMime(f):'image/jpeg')||'application/octet-stream',data:uri});
+      enFileRender();};
+    if(attIsPhoto(f)){ffCompress(f,1600,take);}
+    else{const r=new FileReader();r.onload=e=>take(e.target.result,true);r.readAsDataURL(f);}
+  });
+}
+function enFileRender(){
+  document.getElementById('enFilePrev').innerHTML=enFiles.map((f,i)=>
+    '<div class="enfile">📎 <b>'+esc(f.name)+'</b><button type="button" onclick="enFiles.splice('+i+',1);enFileRender()">remove</button></div>').join('');
+}
+function enrollSend(){
+  const g=id=>document.getElementById(id);
+  const first=g('enFirst').value.trim(),last=g('enLast').value.trim();
+  const life=g('enLife').checked,health=g('enHealth').checked;
+  const eff=g('enEff').value.trim();
+  const out=g('enOut');const btn=g('enGo');
+  if(!first||!last){out.innerHTML='<div class="trackcard">The member\'s first and last name are required.</div>';return;}
+  if(!life&&!health){out.innerHTML='<div class="trackcard">Pick at least one plan — Group Life, Group Health or both.</div>';return;}
+  if(!eff){out.innerHTML='<div class="trackcard">Set the effective date for the enrollment.</div>';return;}
+  btn.disabled=true;btn.textContent='Submitting…';
+  const nm=(first+'_'+last).replace(/[^A-Za-z0-9_]+/g,'');
+  const payload={action:'enroll',code:clientAuth.code,first:first,last:last,
+    dob:g('enDob').value.trim(),memberEmail:g('enEmail').value.trim(),
+    life:life,health:health,lifepol:g('enLifePol').value.trim(),healthpol:g('enHealthPol').value.trim(),
+    effdate:eff,note:g('enNote').value.trim(),
+    files:enFiles.map((f,i)=>({name:('Enroll_'+nm+'_'+f.name).substring(0,80),mime:f.mime,data:f.data.split(',')[1]}))};
+  fetch(SHEET_WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)})
+    .then(r=>r.json()).then(d=>{
+      btn.disabled=false;btn.textContent='Submit enrollment';
+      if(d&&d.ok){
+        out.innerHTML='<div class="trackcard" style="border-color:#dcecc6;background:#f6fbef;">✅ <b>Enrollment submitted.</b><br>Reference <span style="font-family:Consolas,monospace;font-size:11.5px;">'+esc(d.ref||'')+'</span> — Group Insurance Administration has been notified and the case is being tracked. It will appear in your case list shortly.</div>';
+        ['enFirst','enLast','enDob','enEmail','enLifePol','enHealthPol','enEff','enNote'].forEach(id=>g(id).value='');
+        g('enLife').checked=false;g('enHealth').checked=false;enFiles=[];enFileRender();
+        setTimeout(()=>{try{ccAuth(clientAuth.code,true);}catch(e){}},1200);
+      }
+      else out.innerHTML='<div class="trackcard">'+esc((d&&d.error)||'Could not submit — please try again.')+'</div>';
+    })
+    .catch(()=>{btn.disabled=false;btn.textContent='Submit enrollment';out.innerHTML='<div class="trackcard">Connection error — please try again.</div>';});
 }
 function ccSignOut(){clientAuth=null;ccCases=[];closeClientCases();toast('Signed out');}
 
