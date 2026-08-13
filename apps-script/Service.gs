@@ -673,7 +673,12 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf, accessCode) 
       ? ' You told us what you want in an agent — <b>' + esc_(String(a.wantInAgent)) + '</b> — and that is the ' +
         'brief your agent is matched on, and held to.'
       : '';
-    next.push('<b>Your agent appointment goes direct to ' + esc_(SVC.AGENT_NAME) + ' and the branch team.</b>' + brief);
+    /* A matched client asked US to pick — the appointment is with the matching
+       desk until support assigns the agent, so nobody reads the manager's name
+       as the answer to "who is my agent?". */
+    next.push(c.handledBy === 'Matched agent'
+      ? '<b>Your request to appoint an agent is with the branch’s matching desk.</b>' + brief
+      : '<b>Your agent appointment goes direct to ' + esc_(SVC.AGENT_NAME) + ' and the branch team.</b>' + brief);
     /* Only claim the letter is attached when it truly is. On the branch site
        the one legal document IS the letter; on donthaveanagent.com the letter
        rides only on the signed (direct) path — a matched client's letter is
@@ -897,7 +902,9 @@ function routeToService_(ref, priority, now, body, attachments, clientEmailed) {
             : 'Verify the answers and the in-house team takes it from here. The signed appointment is attached.'))
       : '') +
     (c.changeAgent
-      ? box_('tip', '<b>Agent appointment — direct to ' + esc_(SVC.AGENT_NAME) + ' and the team.</b> ' +
+      ? box_('tip', '<b>' + (c.handledBy === 'Matched agent'
+            ? 'Agent appointment — assign from the team, against the brief below.'
+            : 'Agent appointment — direct to ' + esc_(SVC.AGENT_NAME) + ' and the team.') + '</b> ' +
           ((body.signature || body.signatureTyped)
             ? 'The signed request is attached' +
               (isGroup ? ', drafted for the client\'s letterhead — they have been asked to print, stamp and return it.' : '.')
@@ -939,6 +946,120 @@ function routeToService_(ref, priority, now, body, attachments, clientEmailed) {
   });
 
   return to.concat(cc);
+}
+
+/* ============================ email 3 — the match ============================
+   The matched path's second half. The client asked US to appoint an agent;
+   after support verifies the answers and picks the agent who fits the brief,
+   this sends the response that closes the loop: meet your agent, by name,
+   with why we chose them — and the Request for Change of Servicing Agent
+   attached, populated with THAT agent's name, ready for digital signature
+   (letterhead-and-stamp for a company). Run from the sheet menu with the
+   client's row selected. */
+
+function sendMatchAssignment() {
+  var ui = SpreadsheetApp.getUi();
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  if ([SVC.IND_SHEET, SVC.GRP_SHEET].indexOf(sh.getName()) < 0) {
+    ui.alert('Select the client’s row on "' + SVC.IND_SHEET + '" or "' + SVC.GRP_SHEET + '" first.');
+    return;
+  }
+  var row = sh.getActiveRange().getRow();
+  if (row < 2) { ui.alert('Select the client’s row, not the header.'); return; }
+
+  var agent = ui.prompt('Appoint which agent?',
+    'The agent’s name exactly as it should print on the letter:', ui.ButtonSet.OK_CANCEL);
+  if (agent.getSelectedButton() !== ui.Button.OK || !agent.getResponseText().trim()) return;
+  var why = ui.prompt('Why this agent?',
+    'One or two sentences for the client — what made this the right match for their brief:',
+    ui.ButtonSet.OK_CANCEL);
+  if (why.getSelectedButton() !== ui.Button.OK) return;
+
+  var res = matchAssignmentForRow_(sh, row, agent.getResponseText().trim(), '', why.getResponseText().trim());
+  ui.alert(res.ok ? 'Sent — ' + res.msg : 'Not sent — ' + res.msg);
+}
+
+function matchAssignmentForRow_(sh, row, agentName, agentNo, why) {
+  var headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+  var r = sh.getRange(row, 1, 1, sh.getLastColumn()).getValues()[0];
+  var v = function (h) { var i = headers.indexOf(h); return i < 0 ? '' : String(r[i] || ''); };
+
+  var ref = v('Reference');
+  var email = v('Email').trim();
+  if (!ref) return { ok: false, msg: 'that row has no reference' };
+  if (!email) return { ok: false, msg: ref + ' has no email address on file' };
+
+  var isGroup = sh.getName() === SVC.GRP_SHEET;
+  var id = identity_({ source: v('Source') });
+  var first = v('Client').trim().split(/\s+/)[0] || 'there';
+  var refInk = id.dhaa ? '#5E141F' : SB.navy;
+  var now = new Date();
+
+  /* the letter, populated with the appointed agent's name */
+  var body = {
+    kind: isGroup ? 'group' : 'individual',
+    source: v('Source'),
+    assignedAgent: agentName,
+    assignedAgentNo: agentNo || '',
+    core: { clientName: v('Client'), companyName: v('Company'), phone: v('Phone'),
+            policyNos: v('Policy #'), changeAgent: true },
+    fields: [
+      { id: 'coaOwnerName', label: 'Policy owner', value: v('Client') },
+      { id: 'coaPolicies',  label: 'Policies',     value: v('Policy #') },
+      { id: 'coaHomePhone', label: 'Home phone',   value: v('Phone') },
+      { id: 'agentComments', label: 'Agent comments',
+        value: 'Appointed after review — matched to the client’s brief. ' +
+               (v('Policy #') ? 'Policy number(s) confirmed by Sales Support.' : 'Policy trace by Sales Support.') },
+    ],
+  };
+  var letter = null;
+  try {
+    letter = isGroup ? groupAgentLetterPdf_(ref, now, body) : agentLetterPdf_(ref, now, body);
+  } catch (e) { log_(ref, 'match-letter-failed', String(e)); }
+
+  var html = wrap_(
+    '<p>Dear ' + esc_(first) + ',</p>' +
+    '<p><b>You asked us to appoint an agent. After reviewing your answers, we have — ' +
+      'meet ' + esc_(agentName) + '.</b></p>' +
+    (why ? box_('tip', '<b style="color:#a05e03">Why ' + esc_(agentName) + '.</b><br>' + esc_(why) +
+      '<br><span style="font-size:12px">Matched on the brief you wrote — and held to it.</span>') : '') +
+    '<p><b>Your appointment papers are attached, already filled in</b> — ' +
+      esc_(agentName) + '’s name is on them, and ' +
+      (isGroup
+        ? 'they are drafted for your company letterhead: <b>print, stamp, sign and send them back</b> — ' +
+          'reply to this email with a photo or scan, or hand them to us. Until the letter is in we will ' +
+          'write to you every ' + SVC.CLIENT_UPDATE_DAYS + ' days, referencing our previous correspondence, ' +
+          'and the reminders stop the moment we receive it.'
+        : 'they arrive ready for your <b>digital signature</b> — sign from your phone, and we file the rest. ' +
+          'Nothing to print, nothing to fill in twice.') + '</p>' +
+    '<p>' + esc_(agentName) + ' has been briefed on your file and will introduce ' +
+      (isGroup ? 'themselves to your company' : 'themselves') + ' personally. ' +
+      'Guardian Life confirms the change of agent to you in writing once it is processed — ' +
+      'your policy, your premium and your cover are not affected in any way.</p>' +
+    '<p>Your reference is <b style="color:' + refInk + '">' + esc_(ref) + '</b>.</p>' +
+    sig_(),
+    'Your agent is appointed', id);
+
+  MailApp.sendEmail({
+    to: email,
+    name: SVC.FROM_NAME,
+    replyTo: SVC.AGENT_EMAIL,
+    subject: 'Meet your agent: ' + agentName + ' (' + ref + ')',
+    htmlBody: html,
+    attachments: letter ? [letter] : [],
+  });
+
+  /* the sheet reflects the assignment, and the right chase arms itself */
+  var set = function (h, val) {
+    var i = headers.indexOf(h);
+    if (i > -1) sh.getRange(row, i + 1).setValue(val);
+  };
+  set('Looked after by', 'Matched: ' + agentName);
+  set('Last client update', now);
+  if (isGroup) set('Letter outstanding', 'YES — awaiting stamped letter');
+  log_(ref, 'match-assigned', agentName + ' · papers sent to ' + email);
+
+  return { ok: true, msg: agentName + ' appointed on ' + ref + ', papers emailed to ' + email };
 }
 
 /** If handleSubmission_ throws, the client still saw a failure message — but
@@ -1192,6 +1313,9 @@ function paperFacsimilePdf_(ref, priority, now, body) {
   /* change of servicing agent — the bottom half of the same sheet -------- */
   var wants = String(a.changeAgent || '').indexOf('Yes') === 0;
   var w = function (v) { return wants ? v : ''; };
+  /* support sets assignedAgent when they populate the form for a client who
+     asked us to choose; the manager's name is only the direct-path default */
+  var coaAgent = String(body.assignedAgent || SVC.AGENT_NAME);
 
   h +=
     '<p style="margin-top:0.325in">The Manager<br>Customer Service Department<br>' +
@@ -1204,7 +1328,7 @@ function paperFacsimilePdf_(ref, priority, now, body) {
       L(w(a.coaPolicies || a.policyNos || c.policyNos)) + '</tr></table>' +
 
     '<table style="margin-top:0.155in"><tr><td class="lbl">withMr./Mrs./Miss</td>' +
-      L(w(SVC.AGENT_NAME)) + '</tr></table>' +
+      L(w(coaAgent)) + '</tr></table>' +
 
     '<p style="margin-top:0.155in">I am requesting that he/she be appointed my Servicing Agent ' +
     'with immediate effect.</p>' +
@@ -1248,7 +1372,7 @@ function paperFacsimilePdf_(ref, priority, now, body) {
 
     '<table style="margin-top:0.245in"><tr>' +
       '<td style="width:55%"><table><tr><td class="lbl">SERVICING AGENT\'S NAME</td>' +
-        L(w(SVC.AGENT_NAME.toUpperCase())) + '</tr></table>' +
+        L(w(coaAgent.toUpperCase())) + '</tr></table>' +
         '<div class="cap" style="padding-left:.14in">(in block letters)</div></td>' +
       '<td style="width:3%"></td>' +
       '<td><table><tr><td class="lbl">AGENT\'S NO.</td>' + L(SVC.AGENT_NO) + '</tr></table></td>' +
@@ -1498,7 +1622,7 @@ function groupAgentLetterPdf_(ref, now, body) {
       'Agent as follows:</p>' +
 
     '<table class="ff"><tr><td class="lb">FROM:</td><td>' + rule(a.coaFrom, 380) + '</td></tr>' +
-    '<tr><td class="lb">TO:</td><td>' + rule(a.coaTo || SVC.AGENT_NAME, 380) + '</td></tr>' +
+    '<tr><td class="lb">TO:</td><td>' + rule(body.assignedAgent || a.coaTo || SVC.AGENT_NAME, 380) + '</td></tr>' +
     '<tr><td class="lb">EFFECTIVE DATE:</td><td>' + rule(prettyDate_(a.coaEffective), 370) +
       '</td></tr></table>' +
 
@@ -1573,7 +1697,7 @@ function groupOnePdf_(ref, priority, now, body) {
       '<p class="gap">This letter serves to inform you that I would like to request a change of ' +
         'Agent as follows:</p>' +
       '<table class="ff"><tr><td class="lb">FROM:</td><td>' + rule(a.coaFrom, 380) + '</td></tr>' +
-      '<tr><td class="lb">TO:</td><td>' + rule(a.coaTo || SVC.AGENT_NAME, 380) + '</td></tr>' +
+      '<tr><td class="lb">TO:</td><td>' + rule(body.assignedAgent || a.coaTo || SVC.AGENT_NAME, 380) + '</td></tr>' +
       '<tr><td class="lb">EFFECTIVE DATE:</td><td>' + rule(prettyDate_(a.coaEffective), 370) +
         '</td></tr></table>' +
       '<p class="gap">Any courtesy extended in facilitating this request will be highly appreciated.</p>' +
@@ -1935,6 +2059,8 @@ function onOpen() {
   SpreadsheetApp.getUi().createMenu('Service Questionnaire')
     .addItem('First-time setup', 'setupService')
     .addItem('Send a test submission', 'sendTestSubmission')
+    .addSeparator()
+    .addItem('Appoint matched agent (selected row)', 'sendMatchAssignment')
     .addSeparator()
     .addItem('Install daily follow-up watchdog', 'installServiceTriggers')
     .addItem('Run follow-up check now', 'dailyServiceFollowUp')
