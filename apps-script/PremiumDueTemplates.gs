@@ -433,13 +433,21 @@ function pdBadge_(kind, days) {
 }
 
 /** The branch crest — a shield carrying a CHECKMARK, as on the branch website.
-    (An earlier draft used a heart; that is a different icon on the site and it
-    was the wrong one.) Built from HTML because Gmail strips inline SVG. */
+    Built from HTML because Gmail strips inline SVG.
+
+    The glyph is U+2714 HEAVY CHECK MARK — the thick-stroked one, matching the
+    weight of the mark on the site — followed by U+FE0E so mail apps render it
+    as type rather than as an emoji. The -webkit-text-stroke line thickens it
+    further in every WebKit/Blink renderer (Apple Mail, iOS Mail, Chrome,
+    the preview page); clients that ignore the property still show the heavy
+    glyph, so nothing degrades below a proper bold check. */
 function pdCrest_() {
   return '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tr>' +
-    '<td width="44" height="50" align="center" valign="middle" style="width:44px;height:50px;' +
-      'background:' + PD_BRAND.gold2 + ';border-radius:7px 7px 21px 21px;color:' + PD_BRAND.navy + ';' +
-      'font-size:23px;line-height:50px;font-weight:bold;font-family:Arial,Helvetica,sans-serif">&#10003;</td>' +
+    '<td width="46" height="52" align="center" valign="middle" style="width:46px;height:52px;' +
+      'background:' + PD_BRAND.gold2 + ';border-radius:8px 8px 22px 22px;color:' + PD_BRAND.navy + ';' +
+      'font-size:26px;line-height:52px;font-weight:bold;' +
+      'font-family:\'Segoe UI Symbol\',\'Apple Symbols\',Arial,Helvetica,sans-serif;' +
+      '-webkit-text-stroke:1.3px ' + PD_BRAND.navy + '">&#10004;&#65038;</td>' +
     '</tr></table>';
 }
 
