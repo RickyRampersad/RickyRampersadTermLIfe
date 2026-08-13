@@ -1,829 +1,934 @@
 /**
- * ============================================================
- *  RENEWAL AUTOMATION — Ricky Rampersad, Guardian Group Agent
- * ============================================================
- *  Attach this script to the "Motor Renewal Book — Schedule"
- *  Google Sheet (Extensions → Apps Script → paste this file).
+ * Guardian Renewal Platform v2 — Google Apps Script backend
+ * Spreadsheet: https://docs.google.com/spreadsheets/d/1joDyJMrF0RrQCqt3A6iuFjbC2uzXB7P1ZhOxqyyjAkM
  *
- *  What it does — MANUAL MODE (default):
- *   1. Adds a "📋 Renewals" menu to the spreadsheet. Highlight
- *      any client row(s) and click "Send renewal email" — works
- *      even if the renewal date has already passed (the email
- *      wording adapts for overdue renewals).
- *   2. Serves the portal's data lookup (doGet ?token=...).
- *   3. Receives portal submissions (doPost), logs them to a
- *      "Responses" tab, emails the client an acknowledgment,
- *      and emails renewal instructions to Guardian (CC you).
- *   4. Keeps "Days Left", "Renewal Status" and "Portal Link"
- *      columns up to date (menu → Refresh).
+ * CLIENT experience  (link: WEBAPP_URL?t=TOKEN)
+ *   Guided renewal portal: MotorGuard benefits, value adjustment (comprehensive),
+ *   payment update, renewal + adjusted-value history, instruction submission,
+ *   post-renewal service survey (?t=TOKEN&survey=1).
  *
- *  Automatic reminders (14-day / 7-day follow-up) are OFF by
- *  default. Turn them on any time from the menu:
- *  📋 Renewals → Turn automatic reminders ON.
+ * STAFF experience  (link: WEBAPP_URL?staff=STAFF_KEY)
+ *   Dashboard: pipeline KPIs, tasks, comments, add renewal, mark renewed,
+ *   resend invites. Every action is logged with the staff member's email in
+ *   the Activity tab — that's the accountability trail.
  *
- *  ONE-TIME SETUP (see RENEWAL-SETUP.md in the repo):
- *   a. Fill in CONFIG below (especially PORTAL_BASE and
- *      GUARDIAN_RENEWALS_EMAIL).
- *   b. Run setup() once and authorise the permissions.
- *   c. Deploy → New deployment → Web app →
- *      Execute as: Me · Who has access: Anyone →
- *      copy the /exec URL into the portal's CONFIG.API_URL.
- * ============================================================
+ * AUTOMATION (install from the Guardian Renewals menu, runs daily ~8am)
+ *   T-30 educational invite → T-14 reminder → T-7 reminder → day-of →
+ *   T+3 gentle overdue → T+7 final email + auto "call the client" task.
+ *   No daily spam: after T+7 the pipeline goes human (phone beats inbox).
+ *   Client instruction or staff "mark renewed" stops the sequence.
+ *   7 days after "renewed", the client gets the QA survey.
  */
 
 var CONFIG = {
-  // --- Your details -----------------------------------------------------
+  RENEWALS_GID: 2062860621,
+
+  MAIL_TO: 'GuardianGeneralRenewals@myguardiangroup.com',
+  MAIL_CC: [
+    'ricky.rampersad@myguardiangroup.com',   // you
+    'salessupport@myguardiangroup.com',      // sales support team
+    'support@rickyrampersadbranch.com'       // personal support inbox
+    // ,'crmsrenewals@myguardiangroup.com'   // carrier renewals desk — uncomment to copy them too
+  ],
+
+  FROM_NAME: 'Ricky Rampersad — Guardian Renewals',
   AGENT_NAME: 'Ricky Rampersad',
-  AGENT_EMAIL: 'ricky.rampersad@myguardiangroup.com', // receives copies of everything
   AGENT_PHONE: '(868) 678-5921',
 
-  // --- Guardian ----------------------------------------------------------
-  // Renewal instruction emails go here, with AGENT_EMAIL CC'd on every one.
-  GUARDIAN_RENEWALS_EMAIL: 'GuardianGeneralRenewals@myguardiangroup.com',
+  // Deployed Apps Script web app (Deploy > New deployment > Web app).
+  WEBAPP_URL: 'https://script.google.com/macros/s/AKfycbwYQlLt1txn4pCWEq3xO_FmmPUfRAUMzey-vzbUe-qDr9tX27BpM0ZbkP5G0WuYQuZJ8g/exec',
 
-  // --- Portal ------------------------------------------------------------
-  // The live site (GitHub Pages, custom domain). The client's access code is
-  // appended directly, producing e.g.
-  // https://rickyrampersadbranch.com/renewal/?t=AbCd1234
-  PORTAL_BASE: 'https://rickyrampersadbranch.com/renewal/?t=',
+  // Staff access key — the staff dashboard link is WEBAPP_URL?staff=THIS_KEY.
+  // Change it to something long and private before going live.
+  STAFF_KEY: 'RRB-stf-x92Kq4mVp7-2026',
 
-  // --- Schedule ----------------------------------------------------------
-  REMINDER_DAYS: 14,   // first reminder: 14 days before Next Due
-  FOLLOWUP_DAYS: 7,    // follow-up if no response: 7 days before
-  DAILY_HOUR: 8,       // hour of day (0-23) the daily check runs
+  RESPONSES_SHEET: 'Renewal Responses',
+  STAFF_SHEET: 'Staff',
+  TASKS_SHEET: 'Tasks',
+  ACTIVITY_SHEET: 'Activity',
+  SURVEYS_SHEET: 'Surveys',
 
-  // --- Sheet -------------------------------------------------------------
-  SCHEDULE_SHEET: '',        // '' = auto-detect the tab with the schedule headers
-  RESPONSES_SHEET: 'Responses',
-  FLEET_SHEET: 'Fleet',      // optional tab: per-vehicle register for corporate clients
-  CLIENTS_SHEET: 'Clients',  // client directory: one row per client, holds the access code
+  SURVEY_DAYS_AFTER_RENEWAL: 7,
 };
 
-// Column headers exactly as they appear in the sheet.
-var COL = {
-  NEXT_DUE: 'Next Due',
-  DAYS_LEFT: 'Days Left',
-  MONTH: 'Month',
-  CLIENT: 'Client Account',
-  CONTACT: 'Contact',
-  COVERAGE: 'Coverage',
-  SUM_INSURED: 'Sum Insured (TT$)',
-  PREMIUM: 'Premium (TT$)',
-  PAID: 'Paid (TT$)',
-  BALANCE: 'Balance Owing (TT$)',
-  PAY_STATUS: 'Payment Status',
-  POLICY_NO: 'Policy #',
-  MOBILE: 'Mobile',
-  EMAIL: 'Email',
-  RENEWAL_STATUS: 'Renewal Status',
-  PORTAL_LINK: 'Portal Link',
-  TOKEN: 'Token',
-};
+var BRAND = { navy: '#003366', blue: '#005EB8', gold: '#E8A020', light: '#E8F0F8' };
 
-/* ======================= SETUP & MENU ======================= */
+/* ============================ sheet plumbing ============================ */
 
-/** Run this ONCE after pasting the script. Manual mode: no timers are created. */
-function setup() {
-  ensureResponsesSheet_();
-  fillTokensAndLinks();
-  disableAutomation(); // manual mode — remove any scheduled triggers
-  onOpen();
-  Logger.log('Setup complete in MANUAL mode. Use the "📋 Renewals" menu in the sheet to send emails. Now deploy as a Web App and paste the /exec URL into the portal.');
+function ss_() { return SpreadsheetApp.getActiveSpreadsheet(); }
+
+function renewalsSheet_() {
+  var sheets = ss_().getSheets();
+  for (var i = 0; i < sheets.length; i++)
+    if (sheets[i].getSheetId() === CONFIG.RENEWALS_GID) return sheets[i];
+  throw new Error('Renewals tab (gid ' + CONFIG.RENEWALS_GID + ') not found.');
 }
 
-/** Builds the in-sheet menu. Runs automatically every time the sheet opens. */
-function onOpen() {
-  SpreadsheetApp.getUi()
-    .createMenu('📋 Renewals')
-    .addItem('▶ Send renewal email — selected row(s)', 'sendToSelectedRows')
-    .addItem('📤 Send to everyone due in the next ' + CONFIG.REMINDER_DAYS + ' days', 'sendToUpcoming')
-    .addSeparator()
-    .addItem('👥 Sync client directory', 'syncClients')
-    .addItem('🔄 Refresh days left & portal links', 'refreshSheet')
-    .addItem('✉ Preview the email (sends a sample to you)', 'testReminderEmail')
-    .addSeparator()
-    .addItem('🤖 Turn automatic reminders ON', 'enableAutomation')
-    .addItem('✋ Turn automatic reminders OFF (current mode)', 'disableAutomation')
-    .addToUi();
-}
-
-/**
- * MANUAL SEND — highlight one or more client rows on the schedule tab,
- * then click 📋 Renewals → "Send renewal email — selected row(s)".
- * Works for overdue renewals too: the email wording adapts.
- */
-function sendToSelectedRows() {
-  var ui = SpreadsheetApp.getUi();
-  var s = getSchedule_();
-  var active = SpreadsheetApp.getActiveSheet();
-  if (active.getName() !== s.sheet.getName()) {
-    ui.alert('Please select rows on the "' + s.sheet.getName() + '" tab first.');
-    return;
-  }
-
-  // Collect unique data-row numbers from the selection.
-  var rowNums = {};
-  SpreadsheetApp.getActiveRangeList().getRanges().forEach(function (rg) {
-    for (var r = rg.getRow(); r <= rg.getLastRow(); r++) {
-      if (r > s.headerRow) rowNums[r] = true;
-    }
-  });
-  var rows = Object.keys(rowNums).map(Number);
-  if (!rows.length) {
-    ui.alert('Highlight at least one client row (below the header) and try again.');
-    return;
-  }
-
-  fillTokensAndLinks(); // make sure every selected row has a token + link
-  var data = s.sheet.getDataRange().getValues();
-  var preview = rows.map(function (r) {
-    var info = rowInfo_(data[r - 1], s);
-    return '• ' + (info.client || '(no name)') + ' — due ' + prettyDate_(info.due) +
-           (info.email ? '' : '  ⚠ NO EMAIL, will be skipped');
-  }).join('\n');
-
-  var resp = ui.alert('Send renewal email now?',
-    'This will email the personal renewal link to:\n\n' + preview, ui.ButtonSet.OK_CANCEL);
-  if (resp !== ui.Button.OK) return;
-
-  var report = sendRows_(s, data, rows);
-  ui.alert('Done', report, ui.ButtonSet.OK);
-}
-
-/** MANUAL BULK — one click sends to everyone due within REMINDER_DAYS who hasn't been contacted yet. */
-function sendToUpcoming() {
-  var ui = SpreadsheetApp.getUi();
-  fillTokensAndLinks();
-  var s = getSchedule_();
-  var data = s.sheet.getDataRange().getValues();
-  var today = startOfDay_(new Date());
-  var rows = [];
-  for (var r = s.headerRow; r < data.length; r++) {
-    var info = rowInfo_(data[r], s);
-    if (!info.due) continue;
-    var dl = Math.round((startOfDay_(info.due) - today) / 86400000);
-    var status = String(data[r][s.col[COL.RENEWAL_STATUS]] || '');
-    if (dl >= 0 && dl <= CONFIG.REMINDER_DAYS && info.email && !status) rows.push(r + 1);
-  }
-  if (!rows.length) {
-    ui.alert('Nobody to email: every client due in the next ' + CONFIG.REMINDER_DAYS +
-             ' days has either been contacted already or has no email address.');
-    return;
-  }
-  var resp = ui.alert('Send to ' + rows.length + ' client(s)?',
-    'Emails their personal renewal link to everyone due in the next ' + CONFIG.REMINDER_DAYS +
-    ' days who has an email and no Renewal Status yet.', ui.ButtonSet.OK_CANCEL);
-  if (resp !== ui.Button.OK) return;
-  ui.alert('Done', sendRows_(s, data, rows), ui.ButtonSet.OK);
-}
-
-/** Shared sender used by both manual actions. Returns a human-readable report. */
-function sendRows_(s, data, rowNumbers) {
-  var today = startOfDay_(new Date());
-  var sent = [], skipped = [];
-  rowNumbers.sort(function (a, b) { return a - b; }).forEach(function (rowNum) {
-    var row = data[rowNum - 1];
-    var info = rowInfo_(row, s);
-    if (!info.email && info.client) {
-      // Fall back to the client directory's email for this account.
-      var d = lookupClientByAccount_(info.client);
-      if (d && d.email) info.email = d.email;
-    }
-    if (!info.email || /@(example|unknown)/i.test(info.email)) {
-      skipped.push((info.client || 'Row ' + rowNum) + ' — no usable email');
-      return;
-    }
-    if (!info.due) {
-      skipped.push((info.client || 'Row ' + rowNum) + ' — no renewal date');
-      return;
-    }
-    var daysLeft = Math.round((startOfDay_(info.due) - today) / 86400000);
-    try {
-      sendReminderEmail_(info, daysLeft, false);
-      setStatus_(s, rowNum - 1, 'Invitation sent manually ' + isoDate_(new Date()));
-      s.sheet.getRange(rowNum, s.col[COL.DAYS_LEFT] + 1).setValue(daysLeft);
-      sent.push(info.client + ' <' + info.email + '>');
-    } catch (err) {
-      skipped.push((info.client || 'Row ' + rowNum) + ' — error: ' + err);
-    }
-  });
-  return '✅ Sent: ' + sent.length + (sent.length ? '\n' + sent.join('\n') : '') +
-         (skipped.length ? '\n\n⚠ Skipped: ' + skipped.length + '\n' + skipped.join('\n') : '');
-}
-
-/** Recalculates Days Left and fills tokens/links — no emails sent. */
-function refreshSheet() {
-  fillTokensAndLinks();
-  var s = getSchedule_();
-  var data = s.sheet.getDataRange().getValues();
-  var today = startOfDay_(new Date());
-  for (var r = s.headerRow; r < data.length; r++) {
-    var due = parseDate_(data[r][s.col[COL.NEXT_DUE]]);
-    if (due) s.sheet.getRange(r + 1, s.col[COL.DAYS_LEFT] + 1)
-      .setValue(Math.round((startOfDay_(due) - today) / 86400000));
-  }
-  try { SpreadsheetApp.getUi().alert('Refreshed: days left, tokens and portal links are up to date.'); } catch (e) {}
-}
-
-/* --------- Automation switch (OFF by default) --------- */
-
-function enableAutomation() {
-  removeTriggers_();
-  ScriptApp.newTrigger('dailyRenewalCheck')
-    .timeBased().everyDays(1).atHour(CONFIG.DAILY_HOUR).create();
-  try {
-    SpreadsheetApp.getUi().alert('Automatic reminders are ON. Every day around ' + CONFIG.DAILY_HOUR +
-      ':00 clients due in ' + CONFIG.REMINDER_DAYS + ' days get a reminder (follow-up at ' +
-      CONFIG.FOLLOWUP_DAYS + ' days). Turn OFF any time from this menu.');
-  } catch (e) {}
-}
-
-function disableAutomation() {
-  removeTriggers_();
-  try { SpreadsheetApp.getUi().alert('Automatic reminders are OFF. Use "Send renewal email — selected row(s)" to send manually.'); } catch (e) {}
-}
-
-function removeTriggers_() {
-  ScriptApp.getProjectTriggers().forEach(function (t) {
-    if (t.getHandlerFunction() === 'dailyRenewalCheck') ScriptApp.deleteTrigger(t);
-  });
-}
-
-/** Kept for compatibility — the client directory is now the source of truth. */
-function fillTokensAndLinks() { syncClients(); }
-
-/**
- * CLIENT DIRECTORY — builds/updates the "Clients" tab from the schedule and
- * pushes access codes back onto every schedule row. One row per client:
- *   Client Account | Contact | Email | Mobile | Access Code | Portal Link | Policies
- *
- * - New client accounts found in the schedule are added automatically.
- * - You can also add a client (or fix an email/mobile) directly on the Clients
- *   tab — the directory's contact details win over the schedule's.
- * - The Access Code is the client's login for the portal (and the corporate
- *   fleet portal). Same client account name = same code across motor, property
- *   and fleet. Safe to re-run any time.
- */
-function syncClients() {
-  var s = getSchedule_();
-  var data = s.sheet.getDataRange().getValues();
-  var cs = ensureClientsSheet_();
-  var cdata = cs.getDataRange().getValues();
-  var cidx = {};
-  cdata[0].forEach(function (h, i) { if (h) cidx[String(h).trim()] = i; });
-
-  // Existing directory rows keyed by uppercased account name.
-  var dir = {}, used = {};
-  for (var r = 1; r < cdata.length; r++) {
-    var a = String(cdata[r][cidx['Client Account']] || '').trim();
-    if (!a) continue;
-    var code = String(cdata[r][cidx['Access Code']] || '').trim();
-    dir[a.toUpperCase()] = { row: r, code: code };
-    if (code) used[code] = true;
-  }
-
-  // Group schedule rows by client account.
-  var groups = {};
-  for (var r = s.headerRow; r < data.length; r++) {
-    var row = data[r];
-    var name = String(row[s.col[COL.CLIENT]] || '').trim();
-    if (!name) continue;
-    var u = name.toUpperCase();
-    var g = groups[u] = groups[u] || { name: name, contact: '', email: '', mobile: '', count: 0, token: '' };
-    g.count++;
-    g.contact = g.contact || String(row[s.col[COL.CONTACT]] || '').trim();
-    g.email = g.email || String(row[s.col[COL.EMAIL]] || '').trim();
-    g.mobile = g.mobile || String(row[s.col[COL.MOBILE]] || '').trim();
-    g.token = g.token || String(row[s.col[COL.TOKEN]] || '').trim();
-  }
-
-  // Upsert every client into the directory.
-  Object.keys(groups).forEach(function (u) {
-    var g = groups[u];
-    var code = (dir[u] && dir[u].code) || g.token;
-    if (!code || (used[code] && !(dir[u] && dir[u].code === code))) {
-      do { code = makeToken_(); } while (used[code]);
-    }
-    used[code] = true;
-    g.code = code;
-    var link = CONFIG.PORTAL_BASE + encodeURIComponent(code);
-
-    if (dir[u]) {
-      var rr = dir[u].row + 1;
-      if (dir[u].code !== code) cs.getRange(rr, cidx['Access Code'] + 1).setValue(code);
-      cs.getRange(rr, cidx['Portal Link'] + 1).setValue(link);
-      cs.getRange(rr, cidx['Policies'] + 1).setValue(g.count);
-      // Fill blanks only — the directory's own values always win.
-      ['Contact', 'Email', 'Mobile'].forEach(function (h, i) {
-        var v = [g.contact, g.email, g.mobile][i];
-        if (v && !String(cdata[dir[u].row][cidx[h]] || '').trim()) cs.getRange(rr, cidx[h] + 1).setValue(v);
-      });
-    } else {
-      cs.appendRow([g.name, g.contact, g.email, g.mobile, code, link, g.count]);
-    }
-  });
-
-  // Push codes + links back onto the schedule rows.
-  for (var r = s.headerRow; r < data.length; r++) {
-    var name = String(data[r][s.col[COL.CLIENT]] || '').trim();
-    if (!name) continue;
-    var g = groups[name.toUpperCase()];
-    if (!g) continue;
-    if (String(data[r][s.col[COL.TOKEN]] || '').trim() !== g.code) {
-      s.sheet.getRange(r + 1, s.col[COL.TOKEN] + 1).setValue(g.code);
-    }
-    var link = CONFIG.PORTAL_BASE + encodeURIComponent(g.code);
-    if (String(data[r][s.col[COL.PORTAL_LINK]] || '') !== link) {
-      s.sheet.getRange(r + 1, s.col[COL.PORTAL_LINK] + 1).setValue(link);
-    }
-  }
-}
-
-function ensureClientsSheet_() {
-  var ss = SpreadsheetApp.getActive();
-  var sh = ss.getSheetByName(CONFIG.CLIENTS_SHEET);
+function namedSheet_(name, headers) {
+  var sh = ss_().getSheetByName(name);
   if (!sh) {
-    sh = ss.insertSheet(CONFIG.CLIENTS_SHEET);
-    sh.appendRow(['Client Account', 'Contact', 'Email', 'Mobile', 'Access Code', 'Portal Link', 'Policies']);
+    sh = ss_().insertSheet(name);
+    sh.appendRow(headers);
     sh.setFrozenRows(1);
   }
   return sh;
 }
-
-/** Looks up a directory row by client account name. Returns null if not found. */
-function lookupClientByAccount_(account) {
-  var sh = SpreadsheetApp.getActive().getSheetByName(CONFIG.CLIENTS_SHEET);
-  if (!sh || sh.getLastRow() < 2) return null;
-  var data = sh.getDataRange().getValues();
-  var idx = {};
-  data[0].forEach(function (h, i) { if (h) idx[String(h).trim()] = i; });
-  var want = String(account || '').trim().toUpperCase();
-  for (var r = 1; r < data.length; r++) {
-    if (String(data[r][idx['Client Account']] || '').trim().toUpperCase() === want) {
-      return { email: String(data[r][idx['Email']] || '').trim(), mobile: String(data[r][idx['Mobile']] || '').trim() };
-    }
-  }
-  return null;
+function responsesSheet_() {
+  return namedSheet_(CONFIG.RESPONSES_SHEET, ['Timestamp','Token','Client','Policy #','Coverage','Next Due',
+    'Instruction','Updated Vehicle Value (TT$)','Wants Comprehensive Quote','Changes / Notes',
+    'Email','Mobile','Payment Method','Payment Reference','Emailed To','Status']);
 }
 
-/** Looks up a directory row by access code. Returns null if not found. */
-function lookupClientByCode_(code) {
-  var sh = SpreadsheetApp.getActive().getSheetByName(CONFIG.CLIENTS_SHEET);
-  if (!sh || sh.getLastRow() < 2) return null;
-  var data = sh.getDataRange().getValues();
-  var idx = {};
-  data[0].forEach(function (h, i) { if (h) idx[String(h).trim()] = i; });
-  for (var r = 1; r < data.length; r++) {
-    if (String(data[r][idx['Access Code']] || '').trim() === code) {
-      return {
-        account: String(data[r][idx['Client Account']] || '').trim(),
-        contact: String(data[r][idx['Contact']] || '').trim(),
-        email: String(data[r][idx['Email']] || '').trim(),
-        mobile: String(data[r][idx['Mobile']] || '').trim(),
-      };
+/** Append a response row by header name, creating any missing columns. */
+function appendResponse_(vals) {
+  var sh = responsesSheet_();
+  var headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+  Object.keys(vals).forEach(function (h) {
+    if (headers.indexOf(h) < 0) {
+      sh.getRange(1, sh.getLastColumn() + 1).setValue(h);
+      headers.push(h);
     }
-  }
-  return null;
+  });
+  sh.appendRow(headers.map(function (h) { return (h in vals) ? vals[h] : ''; }));
 }
 
-/* ============ OPTIONAL DAILY AUTOMATION (OFF by default) ============
-   Only runs if you switch it on: 📋 Renewals → Turn automatic reminders ON. */
-
-function dailyRenewalCheck() {
-  fillTokensAndLinks();
-  var s = getSchedule_();
-  var data = s.sheet.getDataRange().getValues();
-  var today = startOfDay_(new Date());
-  var sentCount = 0;
-
-  for (var r = s.headerRow; r < data.length; r++) {
-    var row = data[r];
-    var due = parseDate_(row[s.col[COL.NEXT_DUE]]);
-    if (!due) continue;
-
-    var daysLeft = Math.round((startOfDay_(due) - today) / 86400000);
-    s.sheet.getRange(r + 1, s.col[COL.DAYS_LEFT] + 1).setValue(daysLeft);
-
-    var email = String(row[s.col[COL.EMAIL]] || '').trim();
-    var status = String(row[s.col[COL.RENEWAL_STATUS]] || '').trim();
-    if (!email || /@(example|unknown)/i.test(email)) continue;
-    if (/responded|renewed|sent to guardian|declined/i.test(status)) continue; // client already acted
-
-    var info = rowInfo_(row, s);
-
-    if (daysLeft === CONFIG.REMINDER_DAYS && !/reminder sent/i.test(status)) {
-      sendReminderEmail_(info, daysLeft, false);
-      setStatus_(s, r, 'Reminder sent ' + isoDate_(new Date()));
-      sentCount++;
-    } else if (daysLeft === CONFIG.FOLLOWUP_DAYS && /reminder sent/i.test(status) && !/follow-up/i.test(status)) {
-      sendReminderEmail_(info, daysLeft, true);
-      setStatus_(s, r, status + ' · Follow-up ' + isoDate_(new Date()));
-      sentCount++;
-    }
-  }
-  Logger.log('dailyRenewalCheck: %s email(s) sent.', sentCount);
-}
-
-function sendReminderEmail_(info, daysLeft, isFollowUp) {
-  var first = firstName_(info.contact || info.client);
-  var overdue = daysLeft < 0;
-  var subject = overdue
-    ? 'Action needed: your ' + (info.coverage || 'insurance') + ' renewal was due ' + prettyDate_(info.due) + ' — renew in 2 minutes'
-    : (isFollowUp ? 'Reminder: ' : '') +
-      'Your ' + (info.coverage || 'insurance') + ' renewal is due ' + prettyDate_(info.due) +
-      ' — confirm in 2 minutes';
-
-  var opening;
-  if (overdue) {
-    opening = 'Your <strong>' + esc_(info.coverage || 'insurance') + '</strong> policy' +
-      (info.policyNo ? ' (<strong>' + esc_(info.policyNo) + '</strong>)' : '') +
-      ' came up for renewal on <strong>' + prettyDate_(info.due) + '</strong>. Driving without valid cover is an offence — let\'s get you renewed right away so there\'s no gap in your protection. It takes two minutes online.';
-  } else if (isFollowUp) {
-    opening = 'Just a friendly follow-up — your renewal is now <strong>' + daysLeft + ' days away</strong> and we haven\'t received your instructions yet. It takes two minutes to confirm online.';
-  } else {
-    opening = 'Your <strong>' + esc_(info.coverage || 'insurance') + '</strong> policy' +
-      (info.policyNo ? ' (<strong>' + esc_(info.policyNo) + '</strong>)' : '') +
-      ' comes up for renewal on <strong>' + prettyDate_(info.due) + '</strong> — that\'s ' + daysLeft + ' days from now.';
-  }
-
-  var owing = Number(info.balance) > 0.01;
+/** Guardian General "Request to Adjust Sums Insured / Policy Values/Limit"
+ *  letter, pre-filled from the client's portal submission, as a PDF blob. */
+function valueLetterBlob_(m, newValue, email, mobile, token) {
+  var adjust = !!newValue;
+  var cur = m.sumInsured ? Number(m.sumInsured).toLocaleString('en-US', {minimumFractionDigits: 2}) : '____________';
   var html =
-    emailShell_(
-      overdue ? 'Let\'s get you renewed today' : 'Your renewal is coming up',
-      '<p style="margin:0 0 14px">Hi ' + esc_(first) + ',</p>' +
-      '<p style="margin:0 0 14px">' + opening + '</p>' +
-      statTable_([
-        ['Renewal date', prettyDate_(info.due)],
-        ['Coverage', info.coverage || '—'],
-        ['Annual premium', 'TT$ ' + money_(info.premium)],
-        owing ? ['Balance owing', 'TT$ ' + money_(info.balance) + ' — please settle before renewal'] : ['Payment status', info.payStatus || 'Paid up'],
-      ]) +
-      '<p style="margin:18px 0 8px">On your personal renewal page you can:</p>' +
-      '<ul style="margin:0 0 18px;padding-left:20px;color:#33475b">' +
-        '<li>Review your policy and confirm <strong>renew as-is</strong>, or tell us what changed</li>' +
-        '<li>Check your <strong>sum insured</strong> is right (we explain the "average clause" — worth 2 minutes!)</li>' +
-        '<li>See your Guardian policy decoded — your No Claim Discount, flood cover (Special Perils) and more, in plain English</li>' +
-        '<li>See current offers you may qualify for</li>' +
-      '</ul>' +
-      button_(info.portalLink, 'Review & Confirm My Renewal') +
-      '<p style="margin:18px 0 0;font-size:13px;color:#7a8ca0">Prefer to talk? Call ' + esc_(CONFIG.AGENT_NAME) + ' at ' + esc_(CONFIG.AGENT_PHONE) + ' or just reply to this email.</p>'
-    );
-
-  MailApp.sendEmail({
-    to: info.email,
-    replyTo: CONFIG.AGENT_EMAIL,
-    subject: subject,
-    htmlBody: html,
-    name: CONFIG.AGENT_NAME + ' — Guardian Group Agent',
-  });
+    '<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:13px;line-height:1.75;color:#111;padding:30px 36px">' +
+    'Date: <b>' + nowStamp_() + '</b><br><br>' +
+    'Guardian General Insurance Limited,<br>30-34 Newtown Centre, Maraval Road,<br>PORT OF SPAIN<br><br>' +
+    '<b>Re: Request to Adjust Sums Insured / Policy Values/Limit</b><br><br>' +
+    'Policy Number: <b>' + esc_(m.policy || '____________________') + '</b><br>' +
+    'Insured Name: <b>' + esc_(m.client) + '</b><br><br>' +
+    'Dear Sir/Madam,<br><br>I/we hereby request:<br>' +
+    '<table style="font-size:13px;line-height:1.7"><tr><td style="vertical-align:top;padding-right:8px;font-size:16px">' + (adjust ? '&#9744;' : '&#9745;') + '</td>' +
+    '<td>No adjustment to the sum insured and therefore wish to continue with a value of <b>$' + (adjust ? '____________' : cur) + '</b></td></tr>' +
+    '<tr><td style="vertical-align:top;padding-right:8px;font-size:16px">' + (adjust ? '&#9745;' : '&#9744;') + '</td>' +
+    '<td>An adjustment to the sums insured/values/limit on my/our insurance policy referenced above.</td></tr></table><br>' +
+    'I/we understand that this adjustment may result in a change to the premium and other policy terms and conditions.<br><br>' +
+    (adjust ?
+      ('Please find below the revised sums insured/values/limit that I/we wish to apply:<br><br>' +
+       '&nbsp;&nbsp;Current Sum Insured/Value/Limit: <b>$' + cur + '</b><br>' +
+       '&nbsp;&nbsp;Requested New Sum Insured/Value/Limit: <b>$' + Number(newValue).toLocaleString('en-US', {minimumFractionDigits: 2}) + '</b><br><br>') : '') +
+    'I/we confirm that the information provided is true and accurate to the best of my/our knowledge and agree that the insurer may rely on this request to update the policy accordingly.<br><br>' +
+    'Kindly process this adjustment effective from: <b>' + esc_(m.nextDue || '____________________') + '</b> (date).<br><br>' +
+    'Should you require any additional information or documentation, please feel free to contact me/us at your earliest convenience.<br><br>' +
+    'Thank you for your attention and assistance.<br><br>Sincerely,<br><br><br>' +
+    'Signature: _______________________________ &nbsp;&nbsp;&nbsp; Contact Number: <b>' + esc_(mobile || '___________________') + '</b><br><br>' +
+    'Name: <b>' + esc_(m.contact || m.client) + '</b> &nbsp;&nbsp;&nbsp; Email Address: <b>' + esc_(email || '_______________________') + '</b><br><br>' +
+    'ID/DP/BRN: _____________________________<br><br>' +
+    '<span style="font-size:10px;color:#666">Prepared from the insured\'s electronic submission via the Guardian Renewals portal on ' + nowStamp_() + ' (ref ' + esc_(token || '') + '). Signature to be completed by the insured.</span>' +
+    '</div>';
+  return Utilities.newBlob(html, 'text/html', 'letter.html').getAs('application/pdf')
+    .setName('Value Confirmation - ' + (m.policy || m.client).replace(/[^\w \-]/g, '') + '.pdf');
 }
-
-/* ======================= WEB API (portal) ======================= */
-
-/** GET ?token=XYZ → client + policies as JSON. */
-function doGet(e) {
-  var token = e && e.parameter && String(e.parameter.token || '').trim();
-  var out = { found: false };
-
-  if (token) {
-    var s = getSchedule_();
-    var data = s.sheet.getDataRange().getValues();
-    var policies = [];
-    var client = '', contact = '', email = '', mobile = '';
-    var accounts = {};
-
-    // Directory first: an access code maps to a client account, and we return
-    // every schedule row for that account (motor + property), current and past.
-    var dirEntry = lookupClientByCode_(token);
-    var wantAccount = dirEntry ? dirEntry.account.toUpperCase() : null;
-    if (dirEntry) {
-      client = dirEntry.account;
-      contact = dirEntry.contact;
-      email = dirEntry.email;
-      mobile = dirEntry.mobile;
-    }
-
-    for (var r = s.headerRow; r < data.length; r++) {
-      var row = data[r];
-      var matches = wantAccount
-        ? String(row[s.col[COL.CLIENT]] || '').trim().toUpperCase() === wantAccount
-        : String(row[s.col[COL.TOKEN]] || '').trim() === token;
-      if (!matches) continue;
-      var info = rowInfo_(row, s);
-      if (info.client) accounts[info.client] = true;
-      client = client || info.client;
-      contact = contact || info.contact;
-      email = email || info.email;
-      mobile = mobile || info.mobile;
-      policies.push({
-        coverage: info.coverage,
-        nextDue: info.due ? isoDate_(info.due) : '',
-        premium: num_(info.premium),
-        paid: num_(info.paid),
-        balance: num_(info.balance),
-        paymentStatus: info.payStatus,
-        policyNo: info.policyNo,
-        sumInsured: info.sumInsured === '' ? '' : num_(info.sumInsured),
-      });
-    }
-
-    if (policies.length) {
-      policies.sort(function (a, b) { return (a.nextDue || '9999').localeCompare(b.nextDue || '9999'); });
-      out = { found: true, client: client, contact: contact, email: email, mobile: mobile, policies: policies };
-      out.fleet = getFleetRows_(Object.keys(accounts)); // [] unless a Fleet tab exists
-    }
-  }
-  return ContentService.createTextOutput(JSON.stringify(out))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-/** POST — portal submission → log, ack client, instruct Guardian. */
-function doPost(e) {
-  var out = { ok: false };
-  try {
-    var p = JSON.parse(e.postData.contents);
-    if (p.action !== 'submit') throw new Error('Unknown action');
-
-    var resp = ensureResponsesSheet_();
-    resp.appendRow([
-      new Date(), p.token || '', p.name || '', p.email || '', p.mobile || '',
-      p.decision || '', p.changes || '', p.notes || '',
-      (p.campaigns || []).join('; '), 'Received',
-    ]);
-
-    // Update Renewal Status on every row with this token.
-    var clientInfo = null;
-    if (p.token) {
-      var s = getSchedule_();
-      var data = s.sheet.getDataRange().getValues();
-      for (var r = s.headerRow; r < data.length; r++) {
-        if (String(data[r][s.col[COL.TOKEN]] || '').trim() === p.token) {
-          setStatus_(s, r, 'Responded ' + isoDate_(new Date()) + ' — ' + (p.decision || ''));
-          clientInfo = clientInfo || rowInfo_(data[r], s);
-        }
-      }
-    }
-
-    sendClientAck_(p);
-    sendGuardianInstructions_(p, clientInfo);
-    out = { ok: true };
-  } catch (err) {
-    out = { ok: false, error: String(err) };
-  }
-  return ContentService.createTextOutput(JSON.stringify(out))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function sendClientAck_(p) {
-  if (!p.email) return;
-  var html = emailShell_(
-    'We\'ve received your renewal instructions ✅',
-    '<p style="margin:0 0 14px">Hi ' + esc_(firstName_(p.name)) + ',</p>' +
-    '<p style="margin:0 0 14px">Thank you — your renewal instructions are in and we\'re acting on them right away.</p>' +
-    statTable_([
-      ['Your decision', p.decision || '—'],
-      p.changes ? ['Changes requested', p.changes] : null,
-      (p.campaigns || []).length ? ['Offers you\'re interested in', p.campaigns.join(', ')] : null,
-    ].filter(Boolean)) +
-    '<p style="margin:18px 0 14px"><strong>What happens next:</strong></p>' +
-    '<ol style="margin:0 0 18px;padding-left:20px;color:#33475b">' +
-      '<li>We prepare your renewal and send formal instructions to Guardian.</li>' +
-      '<li>We\'ll contact you if anything is needed (valuation, documents, payment).</li>' +
-      '<li>Your new certificate and schedule are issued before your current cover expires.</li>' +
-    '</ol>' +
-    '<p style="margin:0;font-size:13px;color:#7a8ca0">Questions in the meantime? Reply to this email or call ' + esc_(CONFIG.AGENT_PHONE) + '.</p>'
-  );
-  MailApp.sendEmail({
-    to: p.email,
-    replyTo: CONFIG.AGENT_EMAIL,
-    subject: 'Received: your renewal instructions — we\'re on it',
-    htmlBody: html,
-    name: CONFIG.AGENT_NAME + ' — Guardian Group Agent',
-  });
-}
-
-function sendGuardianInstructions_(p, info) {
-  var to = CONFIG.GUARDIAN_RENEWALS_EMAIL || CONFIG.AGENT_EMAIL;
-  var cc = CONFIG.GUARDIAN_RENEWALS_EMAIL ? CONFIG.AGENT_EMAIL : '';
-
-  var rows = [
-    ['Client', (info && info.client) || p.name || '—'],
-    ['Contact person', p.name || (info && info.contact) || '—'],
-    ['Email', p.email || (info && info.email) || '—'],
-    ['Mobile', p.mobile || (info && info.mobile) || '—'],
-    info && info.policyNo ? ['Policy #', info.policyNo] : null,
-    info && info.coverage ? ['Coverage', info.coverage] : null,
-    info && info.due ? ['Renewal date', prettyDate_(info.due)] : null,
-    info ? ['Premium on record', 'TT$ ' + money_(info.premium)] : null,
-    info ? ['Balance owing', 'TT$ ' + money_(info.balance)] : null,
-    ['Client decision', p.decision || '—'],
-    p.changes ? ['Changes requested', p.changes] : null,
-    p.notes ? ['Client notes', p.notes] : null,
-    (p.campaigns || []).length ? ['Campaign interest', p.campaigns.join(', ')] : null,
-    ['Received via', 'Client renewal portal, ' + new Date().toString()],
-  ].filter(Boolean);
-
-  var html = emailShell_(
-    'Renewal instructions — ' + ((info && info.client) || p.name || 'client'),
-    '<p style="margin:0 0 14px">Please process the following renewal per the client\'s confirmed instructions:</p>' +
-    statTable_(rows) +
-    '<p style="margin:18px 0 0;font-size:13px;color:#7a8ca0">Submitted by the client through the secure renewal portal of ' +
-    esc_(CONFIG.AGENT_NAME) + ' (' + esc_(CONFIG.AGENT_EMAIL) + '). Please reply-all with confirmation or requirements.</p>'
-  );
-
-  MailApp.sendEmail({
-    to: to,
-    cc: cc,
-    replyTo: CONFIG.AGENT_EMAIL,
-    subject: 'RENEWAL INSTRUCTIONS: ' + ((info && info.client) || p.name || '') +
-             (info && info.policyNo ? ' — ' + info.policyNo : '') +
-             (info && info.due ? ' — due ' + isoDate_(info.due) : ''),
-    htmlBody: html,
-    name: CONFIG.AGENT_NAME + ' — Guardian Group Agent',
-  });
-}
-
-/* ======================= HELPERS ======================= */
-
-function getSchedule_() {
-  var ss = SpreadsheetApp.getActive();
-  // If no sheet name is configured, scan all tabs and use the one whose
-  // header row contains "Next Due" — the workbook has other tabs (client
-  // master, staff roster) that must never be touched by the automation.
-  var candidates = CONFIG.SCHEDULE_SHEET
-    ? [ss.getSheetByName(CONFIG.SCHEDULE_SHEET)]
-    : ss.getSheets();
-
-  for (var s = 0; s < candidates.length; s++) {
-    var sheet = candidates[s];
-    if (!sheet || sheet.getLastRow() < 1) continue;
-    var values = sheet.getRange(1, 1, Math.min(5, sheet.getLastRow()), sheet.getLastColumn()).getValues();
-    for (var i = 0; i < values.length; i++) {
-      if (values[i].indexOf(COL.NEXT_DUE) === -1) continue;
-      var col = {};
-      values[i].forEach(function (h, c) { if (h) col[String(h).trim()] = c; });
-      if (!(COL.TOKEN in col)) continue; // must be the schedule, not a lookalike
-      var headerRow = i + 1; // data starts on the next row (0-based index = headerRow)
-      return checkColumns_({ sheet: sheet, headerRow: headerRow, col: col });
-    }
-  }
-  throw new Error('Could not find the schedule tab (looking for a header row with "' + COL.NEXT_DUE + '" and "' + COL.TOKEN + '")');
-}
-
-function checkColumns_(s) {
-  // Verify required columns exist.
-  [COL.CLIENT, COL.EMAIL, COL.TOKEN, COL.RENEWAL_STATUS, COL.PORTAL_LINK].forEach(function (h) {
-    if (!(h in s.col)) throw new Error('Missing column: "' + h + '"');
-  });
-  return s;
-}
-
-function rowInfo_(row, s) {
-  return {
-    due: parseDate_(row[s.col[COL.NEXT_DUE]]),
-    client: String(row[s.col[COL.CLIENT]] || '').trim(),
-    contact: String(row[s.col[COL.CONTACT]] || '').trim(),
-    coverage: String(row[s.col[COL.COVERAGE]] || '').trim(),
-    sumInsured: row[s.col[COL.SUM_INSURED]] === '' ? '' : row[s.col[COL.SUM_INSURED]],
-    premium: row[s.col[COL.PREMIUM]],
-    paid: row[s.col[COL.PAID]],
-    balance: row[s.col[COL.BALANCE]],
-    payStatus: String(row[s.col[COL.PAY_STATUS]] || '').trim(),
-    policyNo: String(row[s.col[COL.POLICY_NO]] || '').trim(),
-    mobile: String(row[s.col[COL.MOBILE]] || '').trim(),
-    email: String(row[s.col[COL.EMAIL]] || '').trim(),
-    portalLink: String(row[s.col[COL.PORTAL_LINK]] || '').trim(),
-  };
-}
-
-/**
- * Reads the optional "Fleet" tab (per-vehicle register for corporate clients).
- * Expected headers: Client Account | Vehicle Reg | Make | Model | Status |
- * Renewal Date | Policy # | Premium (TT$). Returns [] if the tab is missing.
- */
-function getFleetRows_(accountNames) {
-  try {
-    var sh = SpreadsheetApp.getActive().getSheetByName(CONFIG.FLEET_SHEET);
-    if (!sh || sh.getLastRow() < 2) return [];
-    var data = sh.getDataRange().getValues();
-    var idx = {};
-    data[0].forEach(function (h, i) { if (h) idx[String(h).trim()] = i; });
-    if (!('Client Account' in idx)) return [];
-    var wanted = {};
-    (accountNames || []).forEach(function (n) { wanted[String(n).trim().toUpperCase()] = true; });
-    var out = [];
-    for (var r = 1; r < data.length; r++) {
-      var acct = String(data[r][idx['Client Account']] || '').trim();
-      if (!acct || !wanted[acct.toUpperCase()]) continue;
-      var rd = data[r][idx['Renewal Date']];
-      out.push({
-        account: acct,
-        reg: String(data[r][idx['Vehicle Reg']] || ''),
-        make: String(data[r][idx['Make']] || ''),
-        model: String(data[r][idx['Model']] || ''),
-        status: String(data[r][idx['Status']] || ''),
-        renewal: rd instanceof Date ? isoDate_(rd) : String(rd || ''),
-        policyNo: String(data[r][idx['Policy #']] || ''),
-        premium: num_(data[r][idx['Premium (TT$)']]),
-      });
-    }
-    return out;
-  } catch (e) {
-    return [];
-  }
-}
-
-function ensureResponsesSheet_() {
-  var ss = SpreadsheetApp.getActive();
-  var sh = ss.getSheetByName(CONFIG.RESPONSES_SHEET);
+function staffSheet_() {
+  var sh = ss_().getSheetByName(CONFIG.STAFF_SHEET);
   if (!sh) {
-    sh = ss.insertSheet(CONFIG.RESPONSES_SHEET);
-    sh.appendRow(['Timestamp', 'Token', 'Name', 'Email', 'Mobile', 'Decision', 'Changes', 'Notes', 'Campaign Interest', 'Status']);
-    sh.setFrozenRows(1);
+    sh = namedSheet_(CONFIG.STAFF_SHEET, ['Email','Name','Role','Active']);
+    sh.appendRow([Session.getEffectiveUser().getEmail(), CONFIG.AGENT_NAME, 'admin', 'Y']);
   }
   return sh;
 }
-
-function setStatus_(s, rowIndex0, status) {
-  s.sheet.getRange(rowIndex0 + 1, s.col[COL.RENEWAL_STATUS] + 1).setValue(status);
+function tasksSheet_() {
+  return namedSheet_(CONFIG.TASKS_SHEET, ['ID','Created','Due','Assigned To','Client','Token',
+    'Title','Status','Created By','Completed','Completed By']);
+}
+function activitySheet_() {
+  return namedSheet_(CONFIG.ACTIVITY_SHEET, ['Timestamp','Token','Client','Type','By','Details']);
+}
+function surveysSheet_() {
+  return namedSheet_(CONFIG.SURVEYS_SHEET, ['Timestamp','Token','Client','Policy #',
+    'Satisfaction (1-5)','Ease (1-5)','Comments']);
 }
 
-function makeToken_() {
-  var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
-  var t = '';
-  for (var i = 0; i < 8; i++) t += chars.charAt(Math.floor(Math.random() * chars.length));
-  return t;
+function headerMap_(sheet) {
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  var map = {};
+  headers.forEach(function (h, i) { map[String(h).trim().toLowerCase()] = i; });
+  return map;
+}
+function col_(map, name) {
+  var k = name.toLowerCase();
+  if (k in map) return map[k];
+  for (var key in map) if (key.indexOf(k) === 0) return map[key];
+  return -1;
+}
+/** Adds any missing operational columns to the renewals tab. */
+function ensureRenewalCols_() {
+  var sh = renewalsSheet_();
+  var map = headerMap_(sh);
+  ['Reminders Sent', 'Renewed Date', 'Assigned To'].forEach(function (h) {
+    if (col_(map, h) < 0) {
+      sh.getRange(1, sh.getLastColumn() + 1).setValue(h);
+      map = headerMap_(sh);
+    }
+  });
+  return map;
 }
 
-function parseDate_(v) {
-  if (v instanceof Date && !isNaN(v)) return v;
+function fmtDate_(v) {
+  if (!v) return '';
+  if (Object.prototype.toString.call(v) === '[object Date]')
+    return Utilities.formatDate(v, Session.getScriptTimeZone(), 'dd MMM yyyy');
+  return String(v);
+}
+function asDate_(v) {
   if (!v) return null;
-  var d = new Date(String(v).trim() + (String(v).length === 10 ? 'T00:00:00' : ''));
-  return isNaN(d) ? null : d;
+  if (Object.prototype.toString.call(v) === '[object Date]') return v;
+  var d = new Date(String(v));
+  return isNaN(d.getTime()) ? null : d;
 }
-
-function startOfDay_(d) { var x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
-function isoDate_(d) { return Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd'); }
-function prettyDate_(d) { return d ? Utilities.formatDate(d, Session.getScriptTimeZone(), 'd MMMM yyyy') : '—'; }
-function num_(v) { var n = parseFloat(v); return isFinite(n) ? n : 0; }
-function money_(v) { return num_(v).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
-function firstName_(name) {
-  var n = String(name || '').replace(/,/g, ' ').trim().split(/\s+/)[0] || 'there';
-  return n.charAt(0).toUpperCase() + n.slice(1).toLowerCase();
+function daysUntil_(v) {
+  var d = asDate_(v);
+  if (!d) return null;
+  var t = new Date(); t.setHours(0,0,0,0);
+  var dd = new Date(d); dd.setHours(0,0,0,0);
+  return Math.round((dd - t) / 86400000);
+}
+function fmtMoney_(v) {
+  var n = Number(v);
+  if (!v && v !== 0) return '';
+  if (isNaN(n)) return String(v);
+  return 'TT$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 function esc_(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
   });
 }
-
-/* ---------- HTML email building blocks ---------- */
-
-function emailShell_(title, bodyHtml) {
-  return '' +
-  '<div style="background:#F4F8FB;padding:28px 12px;font-family:Arial,Helvetica,sans-serif">' +
-    '<div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #E3EDF5">' +
-      '<div style="background:linear-gradient(135deg,#0E2A47,#0E8C8C);padding:26px 30px">' +
-        '<div style="color:#ffffff;font-size:19px;font-weight:bold">' + esc_(title) + '</div>' +
-        '<div style="color:#BFD9E8;font-size:12px;margin-top:4px">' + esc_(CONFIG.AGENT_NAME) + ' · Guardian Group Agent</div>' +
-      '</div>' +
-      '<div style="padding:28px 30px;color:#152435;font-size:15px;line-height:1.6">' + bodyHtml + '</div>' +
-      '<div style="padding:18px 30px;background:#F4F8FB;border-top:1px solid #E3EDF5;font-size:11px;color:#7a8ca0;line-height:1.5">' +
-        esc_(CONFIG.AGENT_NAME) + ' · ' + esc_(CONFIG.AGENT_PHONE) + ' · ' + esc_(CONFIG.AGENT_EMAIL) +
-        '<br/>Figures are from our office records and are indicative; your official Guardian renewal notice and policy documents are binding.' +
-      '</div>' +
-    '</div>' +
-  '</div>';
+function nowStamp_() {
+  return Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd MMM yyyy');
 }
 
-function statTable_(pairs) {
-  return '<table style="width:100%;border-collapse:collapse;margin:8px 0 4px">' +
-    pairs.map(function (p) {
-      return '<tr>' +
-        '<td style="padding:9px 12px;background:#F4F8FB;border:1px solid #E3EDF5;font-size:12px;color:#5B7186;font-weight:bold;width:42%">' + esc_(p[0]) + '</td>' +
-        '<td style="padding:9px 12px;border:1px solid #E3EDF5;font-size:14px;color:#152435">' + esc_(p[1]) + '</td>' +
-      '</tr>';
-    }).join('') + '</table>';
+/* ============================ data access ============================ */
+
+function rowObj_(r, map, rowIndex) {
+  return {
+    rowIndex: rowIndex,
+    client:   String(r[col_(map, 'client account')] || ''),
+    contact:  String(r[col_(map, 'contact')] || ''),
+    coverage: String(r[col_(map, 'coverage')] || ''),
+    nextDue:  fmtDate_(r[col_(map, 'next due')]),
+    nextDueRaw: r[col_(map, 'next due')],
+    days:     daysUntil_(r[col_(map, 'next due')]),
+    sumInsured: r[col_(map, 'sum insured')] || '',
+    premium:  r[col_(map, 'premium')] || 0,
+    paid:     r[col_(map, 'paid')] || 0,
+    balance:  r[col_(map, 'balance owing')] || 0,
+    payStatus: String(r[col_(map, 'payment status')] || ''),
+    policy:   String(r[col_(map, 'policy')] || ''),
+    mobile:   String(r[col_(map, 'mobile')] || ''),
+    email:    String(r[col_(map, 'email')] || ''),
+    renewalStatus: String(r[col_(map, 'renewal status')] || ''),
+    remindersSent: String(r[col_(map, 'reminders sent')] || ''),
+    renewedDate: fmtDate_(r[col_(map, 'renewed date')]),
+    assignedTo: String(r[col_(map, 'assigned to')] || ''),
+    token: String(r[col_(map, 'token')] || ''),
+  };
 }
 
-function button_(href, label) {
-  return '<div style="text-align:center;margin:22px 0 8px">' +
-    '<a href="' + esc_(href) + '" style="display:inline-block;background:#F2B33D;color:#5C3D00;font-weight:bold;font-size:15px;text-decoration:none;padding:14px 34px;border-radius:999px">' +
-    esc_(label) + '</a>' +
-    '<div style="font-size:11px;color:#7a8ca0;margin-top:10px">Or copy this link: ' + esc_(href) + '</div>' +
-  '</div>';
+function allRenewals_() {
+  var sh = renewalsSheet_();
+  var map = ensureRenewalCols_();
+  if (sh.getLastRow() < 2) return [];
+  var data = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
+  return data.map(function (r, i) { return rowObj_(r, map, i + 2); });
 }
 
-/* ---------- Manual test utilities ---------- */
+function rowsForToken_(token) {
+  token = String(token || '').trim();
+  if (!token) return [];
+  return allRenewals_().filter(function (r) { return r.token === token; });
+}
 
-/** Send yourself a sample reminder email to preview the design. */
-function testReminderEmail() {
-  sendReminderEmail_({
-    client: 'SAMPLE, CLIENT HH', contact: 'Sample', coverage: 'Comprehensive',
-    due: new Date(Date.now() + CONFIG.REMINDER_DAYS * 86400000),
-    premium: 10649.31, paid: 5000, balance: 5649.31, payStatus: 'Balance owing',
-    policyNo: 'TTMV1600000', email: CONFIG.AGENT_EMAIL,
-    portalLink: CONFIG.PORTAL_BASE + 'SAMPLE01',
-  }, CONFIG.REMINDER_DAYS, false);
-  Logger.log('Sample reminder sent to ' + CONFIG.AGENT_EMAIL);
+function historyForToken_(token) {
+  var sh = responsesSheet_();
+  if (sh.getLastRow() < 2) return [];
+  var data = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
+  return data.filter(function (r) { return String(r[1]).trim() === String(token).trim(); })
+    .map(function (r) {
+      return {
+        when: fmtDate_(r[0]),
+        policy: String(r[3] || ''),
+        coverage: String(r[4] || ''),
+        instruction: String(r[6] || ''),
+        value: r[7] ? fmtMoney_(r[7]) : '',
+        valueRaw: r[7] || '',
+        payMethod: String(r[12] || ''),
+        payRef: String(r[13] || ''),
+        status: String(r[15] || 'Received'),
+      };
+    }).reverse();
+}
+
+/** Adjusted-value history for comprehensive policies (from client submissions). */
+function valueHistory_(token, policy) {
+  return historyForToken_(token).filter(function (h) {
+    return h.valueRaw && (!policy || h.policy === policy);
+  }).map(function (h) { return { when: h.when, value: h.value }; });
+}
+
+/* ---------- vehicle risk details (imported "Risk Details" tab) ---------- */
+
+/**
+ * Normalises a client/account name so the same person matches across tabs
+ * regardless of order or house-style: "RAMCHARITAR, AKASH HH" and
+ * "Akash Ramcharitar" both become "AKASH RAMCHARITAR".
+ * Words are sorted so surname-first and first-name-first agree.
+ */
+function normName_(s) {
+  return String(s || '').toUpperCase()
+    .replace(/\b(HOUSEHOLD|HH|REVISED|LTD|LIMITED|LTEE|INC|COMPANY|CO|THE|ESTATE|OF)\b/g, ' ')
+    .replace(/[^A-Z ]/g, ' ')
+    .split(/ +/).filter(function (w) { return w.length > 1; })
+    .sort().join(' ');
+}
+
+/**
+ * Builds three lookups over the "Risk Details" tab so a client's vehicles can
+ * be found by (in order of reliability):
+ *   1. Token  — exact, and the only key that is guaranteed unique
+ *   2. Email  — exact
+ *   3. Name   — normalised (see normName_)
+ * Token wins because names and emails are shared across household accounts.
+ */
+var _riskMap = null;
+function riskLookup_() {
+  if (_riskMap) return _riskMap;
+  _riskMap = { byToken: {}, byEmail: {}, byName: {} };
+  var sh = ss_().getSheetByName('Risk Details');
+  if (!sh || sh.getLastRow() < 2) return _riskMap;
+  var vals = sh.getRange(1, 1, sh.getLastRow(), sh.getLastColumn()).getValues();
+  var idx = {};
+  vals[0].forEach(function (h, i) { idx[String(h).trim().toLowerCase()] = i; });
+  function g(r, n) { var i = idx[n]; return i === undefined ? '' : r[i]; }
+  for (var i = 1; i < vals.length; i++) {
+    var r = vals[i];
+    var nameKey = normName_(g(r, 'client'));
+    var tokKey = String(g(r, 'token') || '').trim();
+    var mailKey = String(g(r, 'email') || '').trim().toLowerCase();
+    if (!nameKey && !tokKey) continue;
+    var rec = {
+      reg: String(g(r, 'vehicle reg') || '').trim(),
+      make: String(g(r, 'make') || '').trim(),
+      model: String(g(r, 'model') || '').trim(),
+      year: String(g(r, 'year') || '').trim(),
+      chassis: String(g(r, 'chassis #') || '').trim(),
+      engine: String(g(r, 'engine #') || '').trim(),
+      cover: String(g(r, 'coverage type') || '').trim(),
+      value: g(r, 'insured value (tt$)') || '',
+      ncd: String(g(r, 'ncd %') || '').trim(),
+      windscreen: g(r, 'windscreen (tt$)') || '',
+      depreciation: String(g(r, 'depreciation %') || '').trim(),
+      policy: String(g(r, 'policy #') || '').trim(),
+      carrier: String(g(r, 'carrier') || '').trim(),
+      from: fmtDate_(g(r, 'from')), to: fmtDate_(g(r, 'to')),
+      toKey: String(g(r, 'to') || ''),
+      status: String(g(r, 'vehicle status') || '').trim(),
+      since: fmtDate_(g(r, 'vehicle first insured')),
+      years: String(g(r, 'years insured') || '').trim(),
+      address: String(g(r, 'address') || '').trim(),
+    };
+    if (tokKey) (_riskMap.byToken[tokKey] = _riskMap.byToken[tokKey] || []).push(rec);
+    if (mailKey) (_riskMap.byEmail[mailKey] = _riskMap.byEmail[mailKey] || []).push(rec);
+    if (nameKey) (_riskMap.byName[nameKey] = _riskMap.byName[nameKey] || []).push(rec);
+  }
+  return _riskMap;
+}
+
+/** Latest comprehensive insured value on record for a client (Risk Details tab). */
+function latestCompValue_(clientName, token, email) {
+  var vs = vehiclesForClient_(clientName, token, email);
+  for (var i = 0; i < vs.length; i++) if (vs[i].comp && vs[i].value) return vs[i].value;
+  return '';
+}
+
+/** Vehicles on record for a client, grouped by registration, latest details +
+ *  insured-value history. Values only surface for comprehensive cover.
+ *  Looks up by token first (exact), then email, then normalised name. */
+function vehiclesForClient_(clientName, token, email) {
+  var map = riskLookup_();
+  var rows = (token && map.byToken[String(token).trim()])
+          || (email && map.byEmail[String(email).trim().toLowerCase()])
+          || map.byName[normName_(clientName)]
+          || [];
+  var groups = {};
+  rows.forEach(function (v) {
+    var k = (v.reg || v.chassis || '?').replace(/\s+/g, '').toUpperCase();
+    (groups[k] = groups[k] || []).push(v);
+  });
+  var out = [];
+  Object.keys(groups).forEach(function (k) {
+    if (k === '?') return;
+    var g = groups[k].sort(function (a, b) { return String(a.toKey).localeCompare(String(b.toKey)); });
+    function last(field) {
+      for (var i = g.length - 1; i >= 0; i--) if (g[i][field]) return g[i][field];
+      return '';
+    }
+    var comp = /comprehensive/i.test(last('cover'));
+    out.push({
+      reg: last('reg'), make: last('make'), model: last('model'), year: last('year'),
+      chassis: last('chassis'), engine: last('engine'), cover: last('cover'),
+      ncd: last('ncd'), windscreen: comp ? last('windscreen') : '',
+      depreciation: comp ? last('depreciation') : '',
+      policy: last('policy'), carrier: last('carrier'),
+      periodTo: last('to'), comp: comp,
+      since: last('since'), years: last('years'), address: last('address'),
+      value: comp ? last('value') : '',
+      valueHistory: comp ? g.filter(function (x) { return x.value; })
+        .map(function (x) { return { when: x.to || x.from, value: fmtMoney_(x.value) }; }) : [],
+    });
+  });
+  return out;
+}
+
+function logActivity_(token, client, type, by, details) {
+  activitySheet_().appendRow([new Date(), token, client, type, by || 'system', String(details || '').slice(0, 900)]);
+}
+
+/* ============================ web app routing ============================ */
+
+function doGet(e) {
+  var p = (e && e.parameter) || {};
+  if (p.staff) return staffPage_(p);
+  return clientPage_(p);
+}
+
+function clientPage_(p) {
+  var token = String(p.t || '');
+  var rows = rowsForToken_(token);
+  var t = HtmlService.createTemplateFromFile('Portal');
+  t.payload = JSON.stringify({
+    ok: rows.length > 0,
+    survey: String(p.survey || '') === '1',
+    token: token,
+    firstName: rows.length ? (rows[0].contact || rows[0].client).split(' ')[0] : '',
+    client: rows.length ? rows[0].client : '',
+    policies: rows.map(function (r) {
+      var comp = /comprehensive/i.test(r.coverage);
+      return {
+        rowIndex: r.rowIndex, coverage: r.coverage, comp: comp,
+        nextDue: r.nextDue, days: r.days, premium: r.premium,
+        // third party: no values; comprehensive: sheet value, else latest from Risk Details
+        sumInsured: comp ? (r.sumInsured || latestCompValue_(r.client, r.token, r.email)) : '',
+        balance: r.balance, payStatus: r.payStatus,
+        policy: r.policy, mobile: r.mobile, email: r.email,
+        renewalStatus: r.renewalStatus,
+        valueHistory: comp ? valueHistory_(token, r.policy) : [],
+      };
+    }),
+    history: token ? historyForToken_(token) : [],
+    vehicles: rows.length ? vehiclesForClient_(rows[0].client, rows[0].token, rows[0].email) : [],
+    agent: { name: CONFIG.AGENT_NAME, phone: CONFIG.AGENT_PHONE },
+  });
+  return t.evaluate().setTitle('Guardian Group — Policy Renewal')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function staffPage_(p) {
+  var t = HtmlService.createTemplateFromFile('Staff');
+  var authorized = String(p.staff) === CONFIG.STAFF_KEY;
+  t.payload = JSON.stringify({ ok: authorized, key: authorized ? CONFIG.STAFF_KEY : '' });
+  return t.evaluate().setTitle('Guardian Renewals — Staff')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+/* ============================ client API ============================ */
+
+function submitInstruction(payload) {
+  payload = payload || {};
+  var token = String(payload.token || '').trim();
+  var rows = rowsForToken_(token);
+  if (!rows.length) throw new Error('We could not find your policy. Please use the link from your renewal email.');
+
+  var match = rows.filter(function (r) { return String(r.rowIndex) === String(payload.rowIndex); })[0] || rows[0];
+  var instruction = String(payload.instruction || '').slice(0, 100);
+  var newValue = payload.newValue ? Number(String(payload.newValue).replace(/[^0-9.]/g, '')) : '';
+  var wantsComp = payload.wantsComp ? 'YES' : '';
+  var waiver = payload.waiver ? 'YES' : '';
+  var windscreen = payload.windscreen ? 'YES' : '';
+  var notes = String(payload.notes || '').slice(0, 2000);
+  var email = String(payload.email || match.email || '').slice(0, 200);
+  var mobile = String(payload.mobile || match.mobile || '').slice(0, 60);
+  var payMethod = String(payload.payMethod || '').slice(0, 60);
+  var payRef = String(payload.payRef || '').slice(0, 120);
+  var isComp = /comprehensive/i.test(match.coverage);
+
+  var cc = CONFIG.MAIL_CC.filter(String).join(',');
+  appendResponse_({
+    'Timestamp': new Date(), 'Token': token, 'Client': match.client,
+    'Policy #': match.policy || '(not on file)', 'Coverage': match.coverage,
+    'Next Due': match.nextDue, 'Instruction': instruction,
+    'Updated Vehicle Value (TT$)': newValue, 'Wants Comprehensive Quote': wantsComp,
+    'Changes / Notes': notes, 'Email': email, 'Mobile': mobile,
+    'Payment Method': payMethod, 'Payment Reference': payRef,
+    'Emailed To': CONFIG.MAIL_TO + (cc ? ' cc ' + cc : ''), 'Status': 'Received',
+    'Waiver of Excess': waiver, 'Windscreen Cover': windscreen,
+  });
+
+  // pre-filled Guardian General value-confirmation letter (comprehensive only)
+  var letter = null;
+  if (isComp && instruction.indexOf('PLEASE CALL') < 0) {
+    try {
+      if (!match.sumInsured) match.sumInsured = latestCompValue_(match.client, match.token, match.email);
+      letter = valueLetterBlob_(match, newValue, email, mobile, token);
+    } catch (err) {}
+  }
+
+  // stamp the policy row
+  try {
+    var sh = renewalsSheet_();
+    var map = ensureRenewalCols_();
+    sh.getRange(match.rowIndex, col_(map, 'renewal status') + 1)
+      .setValue(instruction + ' — ' + nowStamp_());
+  } catch (err) {}
+
+  logActivity_(token, match.client, 'client-instruction', 'client',
+    instruction + (newValue ? ' · value ' + fmtMoney_(newValue) : '') +
+    (waiver ? ' · +WAIVER OF EXCESS' : '') + (windscreen ? ' · +WINDSCREEN' : '') +
+    (wantsComp ? ' · wants comprehensive quote' : '') + (payMethod ? ' · pay: ' + payMethod : ''));
+
+  // notify renewals team
+  var subject = 'RENEWAL INSTRUCTION — ' + match.client + (match.policy ? ' — ' + match.policy : '') + ' — ' + instruction;
+  MailApp.sendEmail({
+    to: CONFIG.MAIL_TO, cc: cc, replyTo: email || undefined, name: CONFIG.FROM_NAME,
+    subject: subject,
+    htmlBody:
+      '<div style="font-family:Arial,sans-serif;font-size:14px;color:#1a2433">' +
+      '<div style="background:' + BRAND.navy + ';color:#fff;padding:14px 18px;border-radius:8px 8px 0 0">' +
+      '<b>Client renewal instruction received via portal</b></div>' +
+      '<table style="border-collapse:collapse;width:100%;max-width:640px">' +
+      tr_('Client', esc_(match.client)) + tr_('Contact person', esc_(match.contact)) +
+      tr_('Policy #', esc_(match.policy || '(not on file)')) + tr_('Coverage', esc_(match.coverage)) +
+      tr_('Renewal due', esc_(match.nextDue)) + tr_('Premium', fmtMoney_(match.premium)) +
+      tr_('Balance owing', fmtMoney_(match.balance) + (Number(match.balance) > 0 ? '  ⚠️' : '')) +
+      tr_('<b>INSTRUCTION</b>', '<b>' + esc_(instruction) + '</b>') +
+      (newValue ? tr_('Updated vehicle value', fmtMoney_(newValue) + ' — signed confirmation letter attached') : '') +
+      (isComp ? tr_('<b>Waiver of Excess</b>', waiver ? '<b>YES — client requests the Waiver of Excess benefit (quote & bill the difference)</b>' : 'Declined / not selected') : '') +
+      (windscreen ? tr_('<b>Windscreen (TP)</b>', '<b>YES — client requests the NEW third-party windscreen cover (quote & bill)</b>') : '') +
+      (wantsComp ? tr_('Upsell', 'Client requests a COMPREHENSIVE quote') : '') +
+      (payMethod ? tr_('Payment method', esc_(payMethod)) : '') +
+      (payRef ? tr_('Payment reference', esc_(payRef)) : '') +
+      (notes ? tr_('Client notes', esc_(notes)) : '') +
+      tr_('Client email', esc_(email || '(none)')) + tr_('Client mobile', esc_(mobile || '(none)')) +
+      '</table><p style="color:#5a6b80;font-size:12px">Via Guardian renewal portal (token ' + esc_(token) + ').' +
+      (letter ? ' Pre-filled Guardian General value-confirmation letter attached.' : '') + '</p></div>',
+    attachments: letter ? [letter] : [],
+  });
+
+  // confirmation to client
+  if (email) {
+    MailApp.sendEmail({
+      to: email, name: CONFIG.FROM_NAME,
+      subject: 'We received your renewal instruction — ' + (match.policy || match.coverage),
+      htmlBody: brandWrap_(
+        '<p>Dear ' + esc_((match.contact || match.client).split(' ')[0]) + ',</p>' +
+        '<p>Thank you — we received your instruction: <b>' + esc_(instruction) + '</b>' +
+        (match.policy ? ' for policy <b>' + esc_(match.policy) + '</b>' : '') + '.</p>' +
+        (waiver ? eduBox_('You asked to add the <b>Waiver of Excess</b> benefit — we will include it in your renewal terms and confirm the premium difference with you before anything is billed.') : '') +
+        (windscreen ? eduBox_('You asked to add the new <b>windscreen cover</b> — we will include it in your renewal terms and confirm the premium difference with you.') : '') +
+        (letter ? '<p>Attached is your pre-filled <b>value confirmation letter</b> for Guardian General — please check it, <b>sign it, and reply to this email with a photo or scan</b> (or bring it to the branch).</p>' : '') +
+        (Number(match.balance) > 0 ?
+          eduBox_('A balance of <b>' + fmtMoney_(match.balance) + '</b> shows on this policy. Renewal completes once it is settled — contact us about payment options.') : '') +
+        '<p>Our renewals team will be in touch to complete everything. Nothing is bound until we confirm.</p>' + sig_(),
+        'Renewal confirmation'),
+      attachments: letter ? [letter] : [],
+    });
+  }
+  return { ok: true, history: historyForToken_(token) };
+}
+
+function submitSurvey(payload) {
+  payload = payload || {};
+  var token = String(payload.token || '').trim();
+  var rows = rowsForToken_(token);
+  if (!rows.length) throw new Error('We could not find your policy link.');
+  var sat = Math.max(1, Math.min(5, Number(payload.sat) || 0));
+  var ease = Math.max(1, Math.min(5, Number(payload.ease) || 0));
+  var comments = String(payload.comments || '').slice(0, 2000);
+  surveysSheet_().appendRow([new Date(), token, rows[0].client, rows[0].policy, sat, ease, comments]);
+  logActivity_(token, rows[0].client, 'survey', 'client', 'Satisfaction ' + sat + '/5 · Ease ' + ease + '/5' + (comments ? ' · "' + comments.slice(0, 120) + '"' : ''));
+  if (sat <= 3) {   // service recovery: low score → immediate staff task
+    createTask_('Service recovery call — survey score ' + sat + '/5', '', rows[0].assignedTo || '', rows[0].client, token, 'system');
+  }
+  return { ok: true };
+}
+
+/* ============================ staff auth + API ============================ */
+
+function staffList_() {
+  var sh = staffSheet_();
+  if (sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, 4).getValues()
+    .filter(function (r) { return String(r[3]).toUpperCase() !== 'N' && String(r[0]).indexOf('@') > 0; })
+    .map(function (r) { return { email: String(r[0]).trim().toLowerCase(), name: String(r[1] || r[0]), role: String(r[2] || 'staff') }; });
+}
+
+function requireStaff_(key, me) {
+  if (String(key) !== CONFIG.STAFF_KEY) throw new Error('Invalid staff link.');
+  me = String(me || '').trim().toLowerCase();
+  var found = staffList_().filter(function (s) { return s.email === me; })[0];
+  if (!found) throw new Error('Your email is not on the Staff sheet — ask an admin to add you.');
+  return found;
+}
+
+function staffData(key, me) {
+  var staff = requireStaff_(key, me);
+  var renewals = allRenewals_().map(function (r) {
+    r.nextDueRaw = undefined;   // keep payload serializable
+    return r;
+  });
+
+  // last touch per token (accountability)
+  var act = activitySheet_();
+  var lastTouch = {}, feed = [];
+  if (act.getLastRow() > 1) {
+    var rows = act.getRange(2, 1, act.getLastRow() - 1, 6).getValues();
+    rows.forEach(function (a) {
+      var tok = String(a[1]);
+      lastTouch[tok] = { when: fmtDate_(a[0]), by: String(a[4]), type: String(a[3]) };
+    });
+    feed = rows.slice(-60).reverse().map(function (a) {
+      return { when: fmtDate_(a[0]), client: String(a[2]), type: String(a[3]), by: String(a[4]), details: String(a[5]) };
+    });
+  }
+
+  // tasks
+  var tsh = tasksSheet_();
+  var tasks = [];
+  if (tsh.getLastRow() > 1) {
+    tasks = tsh.getRange(2, 1, tsh.getLastRow() - 1, 11).getValues().map(function (t) {
+      return { id: String(t[0]), created: fmtDate_(t[1]), due: fmtDate_(t[2]), dueDays: daysUntil_(t[2]),
+               assignee: String(t[3]), client: String(t[4]), token: String(t[5]),
+               title: String(t[6]), status: String(t[7]), createdBy: String(t[8]),
+               completed: fmtDate_(t[9]), completedBy: String(t[10]) };
+    });
+  }
+
+  // surveys
+  var ssh = surveysSheet_();
+  var surveys = { count: 0, avgSat: 0, avgEase: 0, recent: [] };
+  if (ssh.getLastRow() > 1) {
+    var sv = ssh.getRange(2, 1, ssh.getLastRow() - 1, 7).getValues();
+    surveys.count = sv.length;
+    surveys.avgSat = Math.round(sv.reduce(function (s, r) { return s + Number(r[4] || 0); }, 0) / sv.length * 10) / 10;
+    surveys.avgEase = Math.round(sv.reduce(function (s, r) { return s + Number(r[5] || 0); }, 0) / sv.length * 10) / 10;
+    surveys.recent = sv.slice(-8).reverse().map(function (r) {
+      return { when: fmtDate_(r[0]), client: String(r[2]), sat: r[4], ease: r[5], comments: String(r[6]) };
+    });
+  }
+
+  // vehicle details per token (from the imported "Risk Details" tab)
+  var vehiclesByToken = {};
+  var seenTok = {};
+  renewals.forEach(function (r) {
+    if (!r.token || seenTok[r.token]) return;
+    seenTok[r.token] = 1;
+    var v = vehiclesForClient_(r.client, r.token, r.email);
+    if (v.length) vehiclesByToken[r.token] = v;
+  });
+
+  return {
+    me: staff, staff: staffList_(), renewals: renewals, tasks: tasks,
+    lastTouch: lastTouch, feed: feed, surveys: surveys,
+    vehicles: vehiclesByToken,
+    portalBase: CONFIG.WEBAPP_URL,
+  };
+}
+
+function createTask_(title, due, assignee, client, token, by) {
+  var id = 'T' + new Date().getTime().toString(36);
+  tasksSheet_().appendRow([id, new Date(), due ? new Date(due) : '', assignee, client, token,
+    String(title).slice(0, 300), 'Open', by, '', '']);
+  logActivity_(token, client, 'task-created', by, title + (assignee ? ' → ' + assignee : ''));
+  return id;
+}
+
+function staffAction(key, me, action, params) {
+  var staff = requireStaff_(key, me);
+  params = params || {};
+  var sh, map;
+
+  switch (action) {
+    case 'comment': {
+      logActivity_(params.token, params.client, 'comment', staff.email, params.text);
+      break;
+    }
+    case 'addTask': {
+      createTask_(params.title, params.due, params.assignee || staff.email, params.client || '', params.token || '', staff.email);
+      break;
+    }
+    case 'completeTask': {
+      var tsh = tasksSheet_();
+      var data = tsh.getRange(2, 1, Math.max(tsh.getLastRow() - 1, 1), 11).getValues();
+      for (var i = 0; i < data.length; i++) {
+        if (String(data[i][0]) === String(params.id)) {
+          tsh.getRange(i + 2, 8).setValue('Done');
+          tsh.getRange(i + 2, 10).setValue(new Date());
+          tsh.getRange(i + 2, 11).setValue(staff.email);
+          logActivity_(String(data[i][5]), String(data[i][4]), 'task-done', staff.email, String(data[i][6]));
+          break;
+        }
+      }
+      break;
+    }
+    case 'markRenewed': {
+      sh = renewalsSheet_(); map = ensureRenewalCols_();
+      sh.getRange(Number(params.rowIndex), col_(map, 'renewal status') + 1).setValue('RENEWED — ' + nowStamp_());
+      sh.getRange(Number(params.rowIndex), col_(map, 'renewed date') + 1).setValue(new Date());
+      logActivity_(params.token, params.client, 'renewed', staff.email, 'Marked renewed');
+      break;
+    }
+    case 'assign': {
+      sh = renewalsSheet_(); map = ensureRenewalCols_();
+      sh.getRange(Number(params.rowIndex), col_(map, 'assigned to') + 1).setValue(params.assignee || '');
+      logActivity_(params.token, params.client, 'assigned', staff.email, '→ ' + (params.assignee || '(unassigned)'));
+      break;
+    }
+    case 'resendInvite': {
+      var rows = allRenewals_().filter(function (r) { return r.rowIndex === Number(params.rowIndex); });
+      if (rows.length && rows[0].email) {
+        sendStageEmail_(rows[0], 'manual');
+        logActivity_(rows[0].token, rows[0].client, 'invite-sent', staff.email, 'Manual resend');
+      } else throw new Error('No email on file for this row.');
+      break;
+    }
+    case 'addRenewal': {
+      sh = renewalsSheet_(); map = ensureRenewalCols_();
+      var token = Utilities.getUuid().replace(/-/g, '').slice(0, 8);
+      var newRow = new Array(sh.getLastColumn()).fill('');
+      function set(name, v) { var c = col_(map, name); if (c >= 0) newRow[c] = v; }
+      set('next due', params.nextDue ? new Date(params.nextDue) : '');
+      set('days left', params.nextDue ? daysUntil_(params.nextDue) : '');
+      set('client account', params.client); set('contact', params.contact);
+      set('coverage', params.coverage); set('sum insured', params.sumInsured || '');
+      set('premium', params.premium || ''); set('policy', params.policy || '');
+      set('mobile', params.mobile || ''); set('email', params.email || '');
+      set('assigned to', params.assignee || staff.email);
+      set('token', token);
+      if (CONFIG.WEBAPP_URL) set('portal link', portalLink_(token));
+      sh.appendRow(newRow);
+      logActivity_(token, params.client, 'renewal-added', staff.email,
+        (params.coverage || '') + ' due ' + (params.nextDue || '?'));
+      break;
+    }
+    default: throw new Error('Unknown action: ' + action);
+  }
+  return staffData(key, me);
+}
+
+/* ============================ emails ============================ */
+
+function tr_(k, v) {
+  return '<tr><td style="padding:7px 12px;background:#f4f7fa;border:1px solid #e3eaf2;width:190px;color:#5a6b80">' +
+    k + '</td><td style="padding:7px 12px;border:1px solid #e3eaf2">' + v + '</td></tr>';
+}
+function brandWrap_(inner, tag) {
+  return '<div style="font-family:Arial,sans-serif;font-size:14px;color:#1a2433;max-width:640px">' +
+    '<div style="background:' + BRAND.navy + ';color:#fff;padding:18px 22px;border-radius:10px 10px 0 0">' +
+    '<table width="100%"><tr>' +
+    '<td width="46" valign="middle"><table cellpadding="0" cellspacing="0"><tr><td style="width:38px;height:38px;background:' + BRAND.gold + ';border-radius:8px 8px 14px 14px;text-align:center;font-size:22px;font-weight:bold;color:' + BRAND.navy + '">✓</td></tr></table></td>' +
+    '<td valign="middle" style="padding-left:10px"><b style="font-size:18px">Guardian Renewals</b><br>' +
+    '<span style="color:#b7c9de;font-size:12px">' + (tag || 'Policy renewal') + ' · by Ricky Rampersad</span></td>' +
+    '<td align="right" style="color:' + BRAND.gold + ';font-size:11px;letter-spacing:2px"><b>MOTOR RENEWAL</b></td></tr></table></div>' +
+    '<div style="border:1px solid #dde5ee;border-top:none;padding:20px 22px;border-radius:0 0 10px 10px">' + inner +
+    '<p style="color:#8a97a8;font-size:11px;border-top:1px solid #e3eaf2;padding-top:10px;margin-top:18px">' +
+    'This is a plain-language summary for your information. Full terms are in your policy wording and schedule, which govern in all cases. Renewal terms are subject to confirmation.</p>' +
+    '</div></div>';
+}
+function eduBox_(html) {
+  return '<div style="background:#fdf6e9;border-left:4px solid ' + BRAND.gold + ';padding:12px 16px;margin:14px 0">' + html + '</div>';
+}
+function sig_() {
+  return '<p>Warm regards,<br><b>' + esc_(CONFIG.AGENT_NAME) + '</b><br>Guardian Group' +
+    (CONFIG.AGENT_PHONE ? '<br>' + esc_(CONFIG.AGENT_PHONE) : '') + '</p>';
+}
+function ctaBtn_(link, label) {
+  return '<p style="text-align:center;margin:22px 0"><a href="' + link + '" style="background:' + BRAND.gold +
+    ';color:' + BRAND.navy + ';text-decoration:none;font-weight:bold;padding:13px 30px;border-radius:8px;display:inline-block">' +
+    label + '</a></p>';
+}
+function portalLink_(token) {
+  return CONFIG.WEBAPP_URL + (CONFIG.WEBAPP_URL.indexOf('?') > -1 ? '&' : '?') + 't=' + encodeURIComponent(token);
+}
+
+var STAGES = {
+  '30d':   { subject: function (r) { return 'Your motor policy renews on ' + r.nextDue + ' — review & renew online'; },
+             intro: function (r) { return 'Your <b>' + esc_(r.coverage) + '</b> motor policy' + polRef_(r) + ' renews on <b>' + r.nextDue + '</b>. Renewal takes two minutes in our secure portal — review your cover, tell us about changes, and send your instruction.'; } },
+  '14d':   { subject: function (r) { return 'Two weeks to go — renew your motor policy by ' + r.nextDue; },
+             intro: function (r) { return 'A friendly reminder: your <b>' + esc_(r.coverage) + '</b> motor policy' + polRef_(r) + ' renews on <b>' + r.nextDue + '</b> — two weeks away. It takes two minutes online.'; } },
+  '7d':    { subject: function (r) { return 'One week left — your motor policy renews ' + r.nextDue; },
+             intro: function (r) { return 'Just one week to go — your <b>' + esc_(r.coverage) + '</b> policy' + polRef_(r) + ' renews on <b>' + r.nextDue + '</b>. Renewing before the date keeps your cover (and your No Claim Discount) seamless.'; } },
+  '0d':    { subject: function (r) { return 'Your motor policy renews TODAY — one click to stay covered'; },
+             intro: function (r) { return 'Your <b>' + esc_(r.coverage) + '</b> policy' + polRef_(r) + ' renews <b>today</b>. Send your instruction now and your protection continues without a break.'; } },
+  'od3':   { subject: function (r) { return 'Your motor policy renewal date has passed — let’s keep you covered'; },
+             intro: function (r) { return 'Your <b>' + esc_(r.coverage) + '</b> policy' + polRef_(r) + ' reached its renewal date of <b>' + r.nextDue + '</b>. A gap in motor cover — even a short one — leaves you personally exposed and can affect your No Claim Discount. It takes two minutes to put right.'; } },
+  'od7':   { subject: function (r) { return 'Final reminder — your motor cover needs attention'; },
+             intro: function (r) { return 'This is our final email reminder: your <b>' + esc_(r.coverage) + '</b> policy' + polRef_(r) + ' renewal of <b>' + r.nextDue + '</b> is still open. One of our team will call you shortly — or beat us to it and renew online now.'; } },
+  'manual':{ subject: function (r) { return 'Your motor policy renewal — review & renew online'; },
+             intro: function (r) { return 'Your <b>' + esc_(r.coverage) + '</b> motor policy' + polRef_(r) + ' renews on <b>' + r.nextDue + '</b>. Review your cover and send your instruction in our secure portal.'; } },
+};
+function polRef_(r) { return r.policy ? ' <b>' + esc_(r.policy) + '</b>' : ''; }
+
+function sendStageEmail_(row, stage) {
+  var st = STAGES[stage] || STAGES['manual'];
+  var comp = /comprehensive/i.test(row.coverage);
+  var link = portalLink_(row.token);
+  var edu = comp
+    ? eduBox_('<b style="color:#a05e03">💡 Vehicles depreciate.</b> Your vehicle is insured for ' +
+        (row.sumInsured ? '<b>' + fmtMoney_(row.sumInsured) + '</b>' : 'its declared value') +
+        ' — update it to today’s market value in the portal so your premium stays fair.') +
+      eduBox_('<b style="color:#a05e03">⚠️ Important change from Guardian General:</b> the <b>Waiver of Excess</b> is no longer included free after three claim-free years — it is now an optional benefit you purchase. It means your excess is waived if you claim. You can add it in one tick when you renew in the portal.')
+    : eduBox_('<b style="color:#a05e03">💡 Third party covers others — not your own vehicle.</b> ' +
+        'Comprehensive adds accident, fire and theft cover for your own car, plus a No Claim Discount that grows to 60%. Tick one box in the portal for a free comparison quote.') +
+      eduBox_('<b style="color:#a05e03">🆕 New benefit:</b> <b>windscreen cover</b> can now be added to Private Third Party policies — a cracked windscreen no longer has to come out of your pocket. Add it in one tick in the portal.');
+  var bal = Number(row.balance) > 0
+    ? '<div style="background:#fbe9e7;border-left:4px solid #b3261e;padding:12px 16px;margin:14px 0">A balance of <b>' +
+      fmtMoney_(row.balance) + '</b> shows on this policy. Settling it keeps your renewal seamless.</div>'
+    : '';
+  MailApp.sendEmail({
+    to: row.email, name: CONFIG.FROM_NAME,
+    subject: st.subject(row),
+    htmlBody: brandWrap_(
+      '<p>Dear ' + esc_((row.contact || row.client).split(' ')[0] || 'Valued Client') + ',</p>' +
+      '<p>' + st.intro(row) + '</p>' +
+      ctaBtn_(link, 'Review & renew my policy') + edu + bal +
+      '<p>Prefer to talk it through? Just reply to this email' + (CONFIG.AGENT_PHONE ? ' or call ' + esc_(CONFIG.AGENT_PHONE) : '') + '.</p>' + sig_(),
+      'Policy renewal'),
+  });
+}
+
+function sendSurveyEmail_(row) {
+  var link = portalLink_(row.token) + '&survey=1';
+  MailApp.sendEmail({
+    to: row.email, name: CONFIG.FROM_NAME,
+    subject: 'How did we do with your renewal? (30 seconds)',
+    htmlBody: brandWrap_(
+      '<p>Dear ' + esc_((row.contact || row.client).split(' ')[0] || 'Valued Client') + ',</p>' +
+      '<p>Your renewal is complete — thank you for staying with Guardian. We hold ourselves to a high standard, and your honest feedback is how we keep it that way.</p>' +
+      ctaBtn_(link, 'Rate your renewal experience') +
+      '<p>It takes about 30 seconds, and every response is read by the team.</p>' + sig_(),
+      'Service feedback'),
+  });
+}
+
+/* ============================ daily automation ============================ */
+
+function dailyAutomation() {
+  var sh = renewalsSheet_();
+  var map = ensureRenewalCols_();
+  var rows = allRenewals_();
+  var cRem = col_(map, 'reminders sent');
+  var sentEmails = 0;
+
+  rows.forEach(function (r) {
+    if (!r.token) return;
+    var stamps = r.remindersSent || '';
+    // word-boundary match: '0d@' must not match inside '30d@'
+    function has(code) { return new RegExp('(^|[;\\s])' + code + '@').test(stamps); }
+    function stamp(code) {
+      stamps = (stamps ? stamps + '; ' : '') + code + '@' + nowStamp_();
+      sh.getRange(r.rowIndex, cRem + 1).setValue(stamps);
+    }
+
+    var instructed = /—/.test(r.renewalStatus);      // client sent an instruction
+    var renewed = /RENEWED/i.test(r.renewalStatus) || r.renewedDate;
+
+    // ---- post-renewal QA survey (once, +N days) ----
+    if (renewed && r.email && !has('survey')) {
+      var since = r.renewedDate ? -daysUntil_(r.renewedDate) : null;
+      if (since !== null && since >= CONFIG.SURVEY_DAYS_AFTER_RENEWAL) {
+        sendSurveyEmail_(r); stamp('survey');
+        logActivity_(r.token, r.client, 'survey-sent', 'system', '+' + since + ' days after renewal');
+        sentEmails++;
+      }
+      return;
+    }
+    if (renewed || instructed || r.days === null || !r.email) return;
+
+    // ---- reminder ladder: most urgent unsent stage, one per day ----
+    var d = r.days;
+    var stage = null;
+    if (d <= -7 && !has('od7')) stage = 'od7';
+    else if (d <= -3 && d > -30 && !has('od3')) stage = 'od3';
+    else if (d === 0 && !has('0d')) stage = '0d';
+    else if (d <= 7 && d > 0 && !has('7d')) stage = '7d';
+    else if (d <= 14 && d > 7 && !has('14d')) stage = '14d';
+    else if (d <= 30 && d > 14 && !has('30d')) stage = '30d';
+    if (!stage) return;
+
+    sendStageEmail_(r, stage);
+    stamp(stage);
+    logActivity_(r.token, r.client, 'reminder-' + stage, 'system', STAGES[stage].subject(r));
+    sentEmails++;
+
+    // after the final email, hand over to a human
+    if (stage === 'od7') {
+      createTask_('Call ' + (r.contact || r.client) + ' — renewal overdue since ' + r.nextDue +
+        (r.mobile ? ' (' + r.mobile + ')' : ''), '', r.assignedTo || '', r.client, r.token, 'system');
+    }
+  });
+  Logger.log('dailyAutomation: ' + sentEmails + ' emails sent');
+}
+
+/* ============================ menu & setup ============================ */
+
+function onOpen() {
+  SpreadsheetApp.getUi().createMenu('Guardian Renewals')
+    .addItem('1. Fill portal links', 'fillPortalLinks')
+    .addItem('2. Install daily automation (8am)', 'installTriggers')
+    .addItem('Run automation now (test)', 'dailyAutomation')
+    .addSeparator()
+    .addItem('Show staff dashboard link', 'showStaffLink')
+    .addItem('Preview a client portal (row 2)', 'showMyLink')
+    .addToUi();
+}
+
+function requireUrl_() {
+  if (!CONFIG.WEBAPP_URL) {
+    SpreadsheetApp.getUi().alert('Deploy the web app first (Deploy > New deployment > Web app, execute as Me, access: Anyone with the link), then paste its URL into CONFIG.WEBAPP_URL.');
+    throw new Error('WEBAPP_URL not set');
+  }
+}
+
+function fillPortalLinks() {
+  requireUrl_();
+  var sh = renewalsSheet_();
+  var map = ensureRenewalCols_();
+  var cTok = col_(map, 'token'), cLink = col_(map, 'portal link');
+  var n = sh.getLastRow() - 1;
+  var toks = sh.getRange(2, cTok + 1, n, 1).getValues();
+  sh.getRange(2, cLink + 1, n, 1).setValues(toks.map(function (r) { return [r[0] ? portalLink_(r[0]) : '']; }));
+  SpreadsheetApp.getActiveSpreadsheet().toast('Portal links filled for ' + n + ' rows.');
+}
+
+function installTriggers() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'dailyAutomation') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('dailyAutomation').timeBased().everyDays(1).atHour(8).create();
+  staffSheet_(); tasksSheet_(); activitySheet_(); surveysSheet_(); responsesSheet_(); ensureRenewalCols_();
+  SpreadsheetApp.getActiveSpreadsheet().toast('Daily automation installed (runs ~8am). Support tabs created.');
+}
+
+function showStaffLink() {
+  requireUrl_();
+  SpreadsheetApp.getUi().alert('Staff dashboard link (share only with your team):\n\n' +
+    CONFIG.WEBAPP_URL + (CONFIG.WEBAPP_URL.indexOf('?') > -1 ? '&' : '?') + 'staff=' + CONFIG.STAFF_KEY +
+    '\n\nStaff must also be listed on the "Staff" tab (email, name, role, Active=Y).');
+}
+
+function showMyLink() {
+  requireUrl_();
+  var sh = renewalsSheet_();
+  var map = headerMap_(sh);
+  var tok = sh.getRange(2, col_(map, 'token') + 1).getValue();
+  SpreadsheetApp.getUi().alert('Sample client portal link (row 2):\n\n' + portalLink_(tok));
 }
