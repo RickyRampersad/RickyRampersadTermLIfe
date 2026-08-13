@@ -1,10 +1,22 @@
 # Launch Runbook — Premium Due Engine
 
-**Target: first live run tomorrow, 8:00am.** Everything below is measured, not
-guessed: the full live portfolio (20,354 rows) was run through
-`dailyPremiumDueRun()` in dry-run mode on 13 August 2026, and these are its
-numbers. All five test suites pass; every letter clears 3.2:1 contrast in both
-themes.
+**The rollout runs in stages, and nothing reaches a client until the stage
+that says so.** Everything below is measured, not guessed: the full live
+portfolio (20,354 rows) was run through `dailyPremiumDueRun()` on 13 August
+2026, and these are its numbers. All six test suites pass; every letter clears
+3.2:1 contrast in both themes.
+
+**The gates, in order:**
+
+| Stage | Setting | What happens |
+|---|---|---|
+| 0 · Dry run | `DRY_RUN: true` | Nothing emailed. The full plan is written to the log to read. |
+| 1 · **Pilot** | `DRY_RUN: false` + `TEST_INBOX` + `PILOT_AGENTS` | Real emails for two books — **every one to your own inbox**, stamped `[TEST]`, banner naming the real recipient. No client, agent or manager hears anything. |
+| 2 · Live | `TEST_INBOX: ''`, `PILOT_AGENTS: []` | The branch is live under the caps. |
+
+A dry-run row can never suppress a later live send, and a pilot send stops
+counting the moment `TEST_INBOX` is cleared — so each stage starts the next
+one clean. Both facts are covered by tests.
 
 ---
 
@@ -62,7 +74,7 @@ the deployed Apps Script.
       roster emails and scopes.
 - [ ] Run `pdInstallTrigger()` — daily at 8am. `DRY_RUN` is still `true`.
 
-## 2 · Dress rehearsal — tonight
+## 2 · Stage 0 — dry run (tonight)
 
 - [ ] Run `dailyPremiumDueRun()` by hand in the deployed copy
       (`DRY_RUN: true`).
@@ -74,17 +86,57 @@ the deployed Apps Script.
 - [ ] Confirm no row addresses a company as a person, and no scheme member
       gets an individual letter.
 
-## 3 · Go live — tomorrow morning
+## 3 · Stage 1 — the pilot: two books, one inbox
 
-- [ ] Set `OUT.DRY_RUN = false`. Leave the caps at 60/60.
+Set, in the deployed copy:
+
+```
+DRY_RUN: false,
+TEST_INBOX: '<your own email>',
+PILOT_AGENTS: ['Ricky Rampersad', 'Neil Ramnanan'],
+```
+
+**What arrives in your inbox on the first pilot run** (measured on the live
+book): **63 client letters** (day-45s, day-75s, a final notice, a closing
+letter, a win-back, pending chases — 24 more are logged as no-email call
+sheet), **59 manager handovers**, and **7 scheme statements** including
+Servus (50 members), Bankers (38) and both Bertram entries. Every template
+the engine can send, rehearsed on real data — and not one email leaves the
+building: `[TEST]` on every subject, a banner naming the true recipient, no
+copies.
+
+Run it for **2–3 days** and check, in your own inbox and the engine:
+
+- [ ] The day-45 letter reads right: the figures, the billing wording, the
+      four questions, the MyGG button, Sasha's signature, the case code.
+- [ ] Tap an answer — the reply opens pre-written; the case tracker shows it.
+- [ ] The manager ladder moves: commitment → (answer it) → thank-you →
+      feedback, on the real 3-day / 7-day clocks.
+- [ ] The Servus statement: whole scheme listed, diagnosis line correct,
+      administrator named as the would-be recipient.
+- [ ] Cadence: nothing repeats a day early, nothing you answered chases again.
+- [ ] Anything that reads wrong — wording, figures, layout on your phone —
+      gets fixed **now**, while no client has seen it.
+
+- [ ] **Closing the pilot:** clear `TEST_INBOX` (test rows stop counting
+      automatically), and **archive or clear the PremiumDueLog data rows** so
+      live day one starts with a clean ledger — any answers you tapped during
+      the pilot are test data, not client history.
+
+## 4 · Stage 2 — go live
+
+- [ ] `TEST_INBOX: ''` and `PILOT_AGENTS: []` (or keep
+      `['Ricky Rampersad', 'Neil Ramnanan']` for a soft launch — your two
+      books go live to real clients first, the branch follows).
+- [ ] Leave the caps at 60/60.
 - [ ] After the 8am run, read the Logger line:
       `sent≈60 · internal≈60 · group-statements≈12 · held-by-cap` = the rest.
-- [ ] **Two phone calls beat any letter today:**
+- [ ] **Two phone calls beat any letter that morning:**
       **Bertram Manhin** ($42.6k premium across two policies at the cliff) and
       **Ashsingh General Contractors** (5 policies, projected lapse this week,
       ~$24k — plus one already-lapsed $21k policy still inside reinstatement).
 
-## 4 · The first week
+## 5 · The first week
 
 - Backlog clears in ~8 runs, most-urgent-first. Expect `held-by-cap` to fall
   toward zero; from then on a normal day is well under the caps.
@@ -95,7 +147,7 @@ the deployed Apps Script.
 - Managers will start answering by tap — watch the commit → thank-you →
   feedback ladder move on the dashboard.
 
-## 5 · Safety rails already in place
+## 6 · Safety rails already in place
 
 One send per policy per stage, ever · every sequence stops on an answer or a
 payment · urgency-sorted caps (60 client / 60 internal) · schemes get one
@@ -105,13 +157,15 @@ questions never appear on client-copied email · contract wording quoted
 verbatim or not at all · client letters carry no phone numbers — the tracked
 case code instead.
 
-## 6 · Rollback
+## 7 · Rollback
 
 Set `OUT.DRY_RUN = true` — sending stops instantly, planning continues, and
-the log keeps recording. (Deleting the trigger stops runs entirely.) The log
-is append-only; nothing is ever lost.
+the log keeps recording. (Deleting the trigger stops runs entirely.) There is
+also a half-step back: setting `TEST_INBOX` again pulls every send back to
+your own inbox without stopping the machine. The log is append-only; nothing
+is ever lost.
 
-## 7 · Data fixes to request from ops (not launch blockers)
+## 8 · Data fixes to request from ops (not launch blockers)
 
 | Issue | Scale | Effect |
 |---|---|---|

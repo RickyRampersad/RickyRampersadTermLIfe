@@ -63,6 +63,28 @@ var OUT = {
   // (the run is sorted); the rest follow on the next mornings. Dry runs are
   // never capped, so the plan always shows the full picture.
   MAX_INTERNAL_PER_RUN: 60,
+
+  // ---- staged rollout ----
+  // The gates, in order:
+  //   DRY_RUN true                          -> plan only, nothing emailed
+  //   DRY_RUN false + TEST_INBOX set        -> real emails, ONE inbox, [TEST]
+  //   DRY_RUN false + TEST_INBOX ''         -> live
+  //
+  // PILOT_AGENTS: while non-empty, only policies serviced by these agents are
+  // processed at all (plus any scheme they service). Everyone else's book is
+  // untouched — not planned, not chased, not counted.
+  //   e.g. ['Ricky Rampersad', 'Neil Ramnanan']
+  PILOT_AGENTS: [],
+
+  // TEST_INBOX: while set, EVERY email the engine sends — client letters,
+  // manager chases, group statements — goes to this one address instead of
+  // its real recipients, with [TEST] on the subject and a banner naming who
+  // it would really have gone to. Cadence, dedupe and the two-phase ladder
+  // behave exactly as live, so the pilot is a true dress rehearsal. Test
+  // sends are logged as test rows: they drive the clocks while TEST_INBOX is
+  // set, and are ignored the moment it is cleared — so nothing tested is ever
+  // mistaken for something a client received.
+  TEST_INBOX: '',
   WIN_BACK_MAX_DAYS: 180,        // don't chase lapses older than this
   // An application stuck in underwriting four months is a new conversation
   // with the client, not a "one more thing" chase. The live book carries
@@ -2475,11 +2497,13 @@ function pdCaseState_() {
       if (a && a.ak) s.mgr[a.qk] = { ak: a.ak, lab: a.lab, ts: ts };
     }
     else if (type === 'comment') s.noteCount++;
-    else if (type.indexOf('outbound') === 0) {
+    else if (type.indexOf('outbound') === 0 ||
+             (OUT.TEST_INBOX && type.indexOf('test-outbound') === 0)) {
       var stg = String(v[i][11] || '');
       if (TRAIL_LABEL[stg]) (s.trail = s.trail || []).push({ ts: ts, mine: false, what: TRAIL_LABEL[stg] });
     }
-    else if (type.indexOf('internal') === 0) {
+    else if (type.indexOf('internal') === 0 ||
+             (OUT.TEST_INBOX && type.indexOf('test-internal') === 0)) {
       var key = String(v[i][11] || '');
       s.chases[key] = Math.max(s.chases[key] || 0, ts);
       s.rounds[key] = (s.rounds[key] || 0) + 1;
@@ -2487,9 +2511,12 @@ function pdCaseState_() {
          dry row set it, every policy planned during testing would be treated
          as already handed over on the day you go live, and no manager would
          ever be told. The dry rows still throttle re-planning through
-         s.chases, so a dry run does not write the same line daily. */
-      if (key === 'mgr-commit' && type === 'internal') s.activatedTs = Math.max(s.activatedTs, ts);
-      if (key === 'mgr-ack'    && type === 'internal') s.ackTs = Math.max(s.ackTs || 0, ts);
+         s.chases, so a dry run does not write the same line daily. Test-mode
+         handovers count only while TEST_INBOX is set — clearing it resets the
+         ladder, because no real manager was ever told either. */
+      var sentReal = (type === 'internal') || (OUT.TEST_INBOX && type === 'test-internal');
+      if (key === 'mgr-commit' && sentReal) s.activatedTs = Math.max(s.activatedTs, ts);
+      if (key === 'mgr-ack'    && sentReal) s.ackTs = Math.max(s.ackTs || 0, ts);
     }
   }
   /* Derive the two phase flags once per policy. committed = all four
@@ -2523,10 +2550,47 @@ function pdLogInternal_(p, kind, to, note, sent) {
   getSheet_().appendRow([
     Date.now(), new Date().toISOString(), p.Policy, p.Client, p.ClientNo, p.Agent,
     OUT.BRANCH_NAME, '', 'System', kind,
-    sent ? 'internal' : 'internal-dry', kind,
-    (sent ? 'Chased ' : 'WOULD CHASE ') + (to || 'no address on file') + ' — ' + note,
+    sent ? (OUT.TEST_INBOX ? 'test-internal' : 'internal') : 'internal-dry', kind,
+    (sent ? (OUT.TEST_INBOX ? 'TEST-SENT to ' + OUT.TEST_INBOX + ' (for ' : 'Chased ')
+          : 'WOULD CHASE ') + (to || 'no address on file') +
+      (sent && OUT.TEST_INBOX ? ')' : '') + ' — ' + note,
     '', '', '', '', '', '', ''
   ]);
+}
+
+/** Is this agent's book inside the pilot? An empty PILOT_AGENTS means everyone. */
+function pdInPilot_(agent) {
+  if (!OUT.PILOT_AGENTS.length) return true;
+  var a = String(agent || '').replace(/^ +| +$/g, '').toUpperCase();
+  for (var i = 0; i < OUT.PILOT_AGENTS.length; i++) {
+    if (String(OUT.PILOT_AGENTS[i]).replace(/^ +| +$/g, '').toUpperCase() === a) return true;
+  }
+  return false;
+}
+
+/**
+ * The one door every live email leaves through. With TEST_INBOX set, the
+ * message is re-addressed to the test inbox — subject stamped [TEST], a
+ * banner naming the real recipients prepended, all copies dropped — so a
+ * full pilot can run without a single client, agent or manager hearing it.
+ */
+function pdDeliver_(to, cc, subject, html) {
+  if (OUT.TEST_INBOX) {
+    var note = 'TEST MODE — this email would have gone to: <b>' + pdEsc_(to || 'no address on file') + '</b>' +
+      (cc && cc.length ? ' &middot; copied: ' + pdEsc_(cc.join(', ')) : '') +
+      '. No client or member of staff received it.';
+    MailApp.sendEmail({
+      to: OUT.TEST_INBOX, name: OUT.FROM_NAME, subject: '[TEST] ' + subject,
+      htmlBody: '<div style="background:#7A1F1F;color:#FFFFFF;padding:10px 14px;' +
+        'font:bold 12px/1.5 Arial,Helvetica,sans-serif;border-radius:6px;margin:0 0 14px">' +
+        note + '</div>' + html
+    });
+    return OUT.TEST_INBOX;
+  }
+  var msg = { to: to, name: OUT.FROM_NAME, subject: subject, htmlBody: html };
+  if (cc && cc.length) msg.cc = cc.join(',');
+  MailApp.sendEmail(msg);
+  return to;
 }
 
 /**
@@ -2559,8 +2623,7 @@ function pdInternalChase_(p, s) {
   };
   var send = function (kind, letter, note) {
     if (!mTo || OUT.DRY_RUN) { pdLogInternal_(p, kind, mTo, note, false); return 0; }
-    MailApp.sendEmail({ to: mTo, cc: letter.cc.join(','), name: OUT.FROM_NAME,
-                        subject: letter.subject, htmlBody: letter.html });
+    pdDeliver_(mTo, letter.cc, letter.subject, letter.html);
     pdLogInternal_(p, kind, mTo, note, true);
     return 1;
   };
@@ -2831,20 +2894,27 @@ function pdGroupChase_(key, members, states) {
   var note = (round ? 'Statement ' + (round + 1) : 'First statement') + ' — ' + letter.live +
     ' member policies, ' + pdMoney_(letter.premium) + ' outstanding';
   if (!to || OUT.DRY_RUN) { pdLogInternal_(gp, 'group-statement', to, note, false); return 0; }
-  MailApp.sendEmail({ to: to, cc: ccOut.join(','), name: OUT.FROM_NAME,
-                      subject: letter.subject, htmlBody: letter.html });
+  pdDeliver_(to, ccOut, letter.subject, letter.html);
   pdLogInternal_(gp, 'group-statement', to, note, true);
   return 1;
 }
 
-/** Everything already sent, as a {policy|stage: true} set read back from the log. */
+/** Everything already sent, as a {policy|stage: true} set read back from the log.
+    Only REAL sends count — 'outbound' exactly. A dry-run row ('outbound-dry')
+    must never mark a stage as sent, or the dress rehearsal would suppress the
+    entire first live run. Test rows ('test-outbound') count only while
+    TEST_INBOX is set: they drive the cadence during a pilot and stop existing
+    the moment it ends, so nothing tested is mistaken for something a client
+    received. */
 function pdAlreadySent_() {
   var sh = getSheet_();
   var v = sh.getDataRange().getValues();
   var seen = {};
   for (var i = 1; i < v.length; i++) {
     var type = String(v[i][10] || '');
-    if (type.indexOf('outbound') !== 0) continue;
+    var real = (type === 'outbound');
+    var test = OUT.TEST_INBOX && type === 'test-outbound';
+    if (!real && !test) continue;
     var st = String(v[i][11] || '');
     seen[String(v[i][2]) + '|' + st] = true;                       // policy | stage
     if (st === 'chase') {                                          // chases repeat — key them by day
@@ -2863,8 +2933,10 @@ function pdLogSend_(p, stageKey, tpl, sent, round) {
   getSheet_().appendRow([
     Date.now(), new Date().toISOString(), p.Policy, p.Client, p.ClientNo, p.Agent,
     OUT.BRANCH_NAME, '', 'System', stageKey,
-    sent ? 'outbound' : 'outbound-dry', stageKey,
-    (sent ? 'Sent to ' : 'WOULD SEND to ') + (pdValidEmail_(p.Email) || 'no email on file') +
+    sent ? (OUT.TEST_INBOX ? 'test-outbound' : 'outbound') : 'outbound-dry', stageKey,
+    (sent ? (OUT.TEST_INBOX ? 'TEST-SENT to ' + OUT.TEST_INBOX + ' (for ' : 'Sent to ')
+          : 'WOULD SEND to ') + (pdValidEmail_(p.Email) || 'no email on file') +
+      (sent && OUT.TEST_INBOX ? ')' : '') +
       (tpl.cc && tpl.cc.length ? ' (cc ' + tpl.cc.length + ')' : '') +
       ' — day ' + (Number(p.DaysArrears) || 0) + (round ? ' — round ' + round : '') + ' — ' + tpl.subject,
     '', '', '', '', '', '', ''
@@ -2917,6 +2989,11 @@ function dailyPremiumDueRun() {
       continue;
     }
 
+    /* The pilot: while PILOT_AGENTS is set, everyone else's book does not
+       exist to this run. Schemes are still collected in full above so a
+       piloted scheme's statement covers all its members. */
+    if (!pdInPilot_(p.Agent)) continue;
+
     var s = states[String(p.Policy)] || pdEmptyState_();
 
     /* Agent / manager accountability, under its own live-send budget so a
@@ -2960,9 +3037,7 @@ function dailyPremiumDueRun() {
     if (count >= OUT.MAX_SENDS_PER_RUN) { capHeld++; continue; }
 
     try {
-      var msg = { to: to, name: OUT.FROM_NAME, subject: tpl.subject, htmlBody: tpl.html };
-      if (tpl.cc && tpl.cc.length) msg.cc = tpl.cc.join(',');   // agent + manager + BM
-      MailApp.sendEmail(msg);
+      pdDeliver_(to, tpl.cc, tpl.subject, tpl.html);   // cc: agent + manager + BM
       pdLogSend_(p, stageKey, tpl, true, round);
       count++;
     } catch (err) {
@@ -2975,12 +3050,23 @@ function dailyPremiumDueRun() {
   var groupsSent = 0, groupCount = 0;
   for (var gk2 in groups) {
     if (!Object.prototype.hasOwnProperty.call(groups, gk2)) continue;
+    /* A scheme is in the pilot when any of its servicing agents is. */
+    if (OUT.PILOT_AGENTS.length) {
+      var inPilot = false;
+      for (var gm = 0; gm < groups[gk2].length; gm++) {
+        if (pdInPilot_(groups[gk2][gm].Agent)) { inPilot = true; break; }
+      }
+      if (!inPilot) continue;
+    }
     groupCount++;
     groupsSent += pdGroupChase_(gk2, groups[gk2], states);
   }
 
-  Logger.log('Premium due run — %s. planned=%s sent=%s held-by-cap=%s no-email=%s internal-chases=%s group-schemes=%s group-statements=%s',
-    OUT.DRY_RUN ? 'DRY RUN, nothing emailed' : 'LIVE', planned, count, capHeld, skippedNoEmail, internal, groupCount, groupsSent);
+  Logger.log('Premium due run — %s%s%s. planned=%s sent=%s held-by-cap=%s no-email=%s internal-chases=%s group-schemes=%s group-statements=%s',
+    OUT.DRY_RUN ? 'DRY RUN, nothing emailed' : 'LIVE',
+    !OUT.DRY_RUN && OUT.TEST_INBOX ? ' — TEST MODE, everything to ' + OUT.TEST_INBOX : '',
+    OUT.PILOT_AGENTS.length ? ' — pilot: ' + OUT.PILOT_AGENTS.join(', ') : '',
+    planned, count, capHeld, skippedNoEmail, internal, groupCount, groupsSent);
 }
 
 function pdInstallTrigger() {
