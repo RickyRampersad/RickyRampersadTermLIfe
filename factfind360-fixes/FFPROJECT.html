@@ -15069,7 +15069,14 @@ function rrbReadiness() {
 
   function need(cond, msg) { if (cond) blocking.push(msg); else done.push(msg); }
 
-  // ── the gate: identical rules to the ones submitForm used to hold inline ──
+  // ── the gate ──────────────────────────────────────────────────────────────
+  // Blocks ONLY what makes the submission un-routable or illegal. Everything
+  // else moved to advisory after field testing: an advisor sitting in front of
+  // a client was being refused submission over an ID number, a final decision
+  // the client had not made yet, and a written reason on every line — so the
+  // fact find waited, sometimes forever. A gap the manager can see is worth
+  // more than a form the agent never sends. The manager's review — email and
+  // dashboard queue both — flags every one of these gaps in red on arrival.
   need(!S.appType, 'Application Type (Section 1)');
   if (adviceOnly) need(!S.adviceClientName, 'Client Full Name (Section 1)');
   else            need(!S.clientName,       'Client Name (Section 1)');
@@ -15077,29 +15084,44 @@ function rrbReadiness() {
   need(!S.advisorName,  'Advisor Name (Section 1)');
   need(!S.agentEmail,   'Advisor Email (Section 1)');
 
+  // A wrong address fails silently — the mail just never arrives — so a TYPED
+  // address must parse. A client who declines to give one is not a reason to
+  // refuse the fact find; it becomes a loud advisory instead.
   var cEmail = (adviceOnly ? S.adviceClientEmail : S.email) || '';
-  need(!cEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cEmail),
-       'Client Email (Section ' + (adviceOnly ? '1' : '2') +
-       ') — required so the client receives their fact-find draft & review notice');
-
-  if (!adviceOnly) {
-    need(!S.fullName, 'Full Name (Section 2)');
-    need(!S.idNumber, 'ID/DP/PP # (Section 2)');
-  }
-  need(!S.finalDecide, 'Final Decision (Section 11)');
+  need(!!cEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cEmail),
+       'Client Email looks mistyped (Section ' + (adviceOnly ? '1' : '2') +
+       ') — fix it or clear it; a wrong address fails silently');
 
   if (typeof REP_DETECTED !== 'undefined' && REP_DETECTED) {
     need(S.repDeclConfirm !== 'Yes',
          'Replacement Declaration Form confirmation — required per GLOC Replacement Guidelines V6 §9');
   }
+  need(!sigs.advisor, 'Advisor signature');
+
+  // ── formerly blocking, now the manager's business ─────────────────────────
+  if (!cEmail) {
+    advisory.push({ title: 'No client email — the client will receive nothing',
+      detail: 'No draft summary, no approval letter, no way to confirm the record. ' +
+              'If they have an address, this is the single most valuable field on the form.' });
+  }
+  if (!adviceOnly && !S.idNumber) {
+    advisory.push({ title: 'ID / DP / PP number not captured',
+      detail: 'Underwriting will bounce the application without it. The manager sees this flagged in red.' });
+  }
+  if (!S.finalDecide) {
+    advisory.push({ title: 'No final decision recorded yet',
+      detail: 'Fine if the client is still deciding — the case reads as pipeline until it is recorded.' });
+  }
+  var noReason = 0;
   for (var ri = 1; ri <= 6; ri++) {
     var rec = S['rec' + ri + 'Rec'];
-    if (rec && String(rec).trim()) {
-      need(!(S['rec' + ri + 'Reason'] && String(S['rec' + ri + 'Reason']).trim()),
-           'Advisor’s Reason for Recommendation, row ' + ri + ' (Section 10)');
-    }
+    if (rec && String(rec).trim() &&
+        !(S['rec' + ri + 'Reason'] && String(S['rec' + ri + 'Reason']).trim())) noReason++;
   }
-  need(!sigs.advisor, 'Advisor signature');
+  if (noReason > 0) {
+    advisory.push({ title: noReason + ' recommendation' + (noReason === 1 ? '' : 's') + ' without a written reason',
+      detail: 'The manager will ask. A one-line reason per plan is what makes the advice defensible later.' });
+  }
 
   // ── quality: never blocks, but it is what the manager will ask about ──────
   function note(cond, title, detail) { if (cond) advisory.push({ title: title, detail: detail }); }
