@@ -41,15 +41,21 @@ var SHEET_NAME = 'PremiumDueLog';
    doGet(?type=policies) returns the ACTIVE FUNNEL (Lapse / Overdue / Pending)
    plus the premium-paying policies of those same clients (for churn/duplicate
    context). */
-var PORTFOLIO_ID  = 'YOUR_BRANCH_PORTFOLIO_SPREADSHEET_ID';
+/* Both sheets are opened by ID (they are already linked openly in the README),
+   so the script works bound to the Tracker OR as a standalone project created
+   at script.google.com — which is what makes a phone-only setup possible. */
+var PORTFOLIO_ID  = '1T1SG3mgs5QV5LuF3JTpmn1zFldhGjOQNoe0YCMhWxjs';   // Branch Portfolio
 var PORTFOLIO_GID = 0;   // the "Premium Due status" tab (gid=0)
+var TRACKER_ID    = '1OuVG4NIsOd_O1LmmZ2gUYXCr1R59Atsfqv0yOvqFVgo';   // Premium Due Tracker (the log)
 
 var HEADERS = ['ts','iso','policy','client','clientNo','agent','author','code','role',
                'stage','type','reason','body','retainProb','tone',
                'surveyReason','surveyContact','surveyPromise','factFind','managerVerdict'];
 
 function getSheet_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  /* Bound to the Tracker: use the container. Standalone: open the Tracker by
+     ID. Either way the log lands in the same place. */
+  var ss = SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.openById(TRACKER_ID);
   var sh = ss.getSheetByName(SHEET_NAME);
   if (!sh) {
     sh = ss.insertSheet(SHEET_NAME);
