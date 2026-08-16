@@ -233,6 +233,29 @@
                font:800 14px inherit;cursor:pointer}
   #gate .err{color:var(--red);font-size:12.5px;margin-top:10px;min-height:16px}
   @media (max-width:1100px){ .c8,.c7,.c6,.c5,.c4,.c3{grid-column:span 12} .kpi{grid-column:span 4} }
+  /* Phones. The managers run this queue from the agents' quarters and the car
+     park, so the phone is the primary screen, not a degraded one. Wide tables
+     scroll inside their own card — the page itself must never side-scroll,
+     because a panning page slides content under the sticky header, which reads
+     as overlap. The queue stacks: age+details, then full-width buttons a thumb
+     can actually hit. */
+  @media (max-width:640px){
+    .wrap{padding:10px; gap:10px}
+    .kpi{grid-column:span 6}
+    header{gap:8px; padding:9px 10px}
+    .who{display:none}
+    .seg{width:100%; order:9}
+    .seg button{flex:1; padding:9px 4px; font-size:11.5px}
+    .card{overflow-x:auto}
+    .qc{grid-template-columns:auto minmax(0,1fr); gap:8px 10px}
+    .qact{grid-column:1/-1; flex-direction:row; flex-wrap:wrap; min-width:0}
+    .qact .qb{flex:1 1 45%; padding:12px 6px}
+    .qact .qsub{flex-basis:100%}
+    .qdet.open{grid-template-columns:1fr}
+    .qrec .r1{flex-wrap:wrap}
+    .qage{font-size:14px; min-width:2.2em}
+    .qwho{font-size:13.5px}
+  }
 </style>
 </head>
 <body>
