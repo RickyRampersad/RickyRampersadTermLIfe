@@ -132,10 +132,20 @@ function pensionLookup_(code) {
       t.own += Number(e['employee monthly (tt$)'] || 0) * 12;
       return t;
     }, { annual: 0, lump: 0, own: 0 });
+    /* Live enrolments for this company — each with its own timeline, so the
+       employer can see exactly which of their people is holding things up. */
+    var enrols = [];
+    try {
+      enrols = penrolAll_()
+        .filter(function (e) { return codeKey_(e['company code']) === codeKey_(company['company code']); })
+        .map(penrolForEmployer_);
+    } catch (err) { /* the register still works before the flow tabs exist */ }
+
     return {
       ok: true, kind: 'employer',
       company: pensionCompanyPublic_(company),
       employees: mine.map(pensionEmployeeForEmployer_),
+      enrolments: enrols,
       totals: totals,
       asOf: nowStamp_(),
       matched: 'company:' + String(company['company'] || '').slice(0, 40),
@@ -153,6 +163,38 @@ function pensionLookup_(code) {
       company: theirs ? pensionCompanyPublic_(theirs) : { name: String(employee['company'] || '') },
       asOf: nowStamp_(),
       matched: 'employee:' + String(employee['employee'] || '').slice(0, 40),
+    };
+  }
+
+  /* An enrolment code — issued when the employer completed their part. This is
+     the code in the invitation email, and it is how an employee gets in before
+     they are on the register proper. */
+  var enrol;
+  try {
+    enrol = penrolAll_().filter(function (e) { return codeKey_(e['employee code']) === key; })[0];
+  } catch (err) { enrol = null; }
+  if (enrol) {
+    var co = companies.filter(function (c) {
+      return codeKey_(c['company code']) === codeKey_(enrol['company code']);
+    })[0];
+    return {
+      ok: true, kind: 'employee',
+      employee: {
+        name: enrol['employee'], company: enrol['company'], plan: enrol['plan'],
+        companyAnnual: Number(enrol['company annual (tt$)'] || 0),
+        companyLump: Number(enrol['company lump sum (tt$)'] || 0),
+        employeeMonthly: Number(enrol['employee monthly (tt$)'] || 0),
+        commencement: fmtDate_(enrol['commencement']),
+        stage: penrolStageName_(enrol), birStatus: '',
+        policy: enrol['policy #'] || '',
+        beneficiaries: enrol['beneficiaries'] || '',
+        agent: enrol['agent'] || '',
+        notes: '',
+      },
+      enrolment: penrolForEmployee_(enrol),
+      company: co ? pensionCompanyPublic_(co) : { name: String(enrol['company'] || '') },
+      asOf: nowStamp_(),
+      matched: 'enrolment:' + String(enrol['id'] || ''),
     };
   }
 

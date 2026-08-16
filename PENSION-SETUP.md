@@ -267,7 +267,108 @@ have never needed the network.
 
 ---
 
-## Part 5 — Maintenance
+## Part 5 — Enrolling an employee: the two-sided process
+
+The register (Part 4) shows what the branch already holds. This is how a new
+employee gets onto it — and it runs itself once it is started.
+
+### Who goes first, and what happens
+
+**1 · The employer's part.** Signed in, they press **Enrol an employee** and
+complete the company-owned Section 134 side for one person: the employee's name
+and email, the plan, the annual premium, any lump sum, their salary, the
+commencement date, maturity age and guarantee.
+
+**2 · The employee is written to immediately.** The moment the employer
+submits, the employee gets an email that congratulates them, explains what a
+company-owned plan *is* (the company owns it and pays, they are the person it
+pays out to), states what the company is putting in, and asks for the part only
+they can give. It carries their own access code and a button straight into
+their record. **The employer, the branch and the team are copied.**
+
+**3 · Every morning at 9, until they answer.** The employee is reminded on the
+same email thread — so every reminder sits under everything already sent — and
+each one carries a *"What we have sent so far"* list, the live timeline, and an
+invitation to reply if something is stopping them. Everyone stays copied.
+
+> After **45 days** the daily emails stop by themselves, the enrolment is marked
+> *"Stalled — needs a phone call"*, and it is handed to the team. Past that
+> point a daily email is noise rather than service, and a person should ring
+> them.
+
+**4 · The employee's part.** Their own contribution (minimum $200/month, and
+the page says why it is worth doing), retirement age, guarantee, who the money
+goes to, and their documents — photo ID, utility bill under six months old, pay
+slip. Uploads are filed in a Drive folder of their own, never in the sheet.
+
+**5 · Both are thanked.** The enrolment closes and both sides get a message
+explaining that it now goes to the **B.I.R. for approval of both plans** — the
+company's Section 134 contribution and the employee's own — with a link for
+questions.
+
+**6 · Every 10 days, until it is delivered.** Both sides get a progress note on
+the same thread showing exactly where it stands. The day it is delivered they
+get a final one.
+
+### The timeline both sides watch
+
+Five steps, defined once in `PSTEPS` and read by the website, the emails and
+the sheet, so they cannot tell three different stories:
+
+`The employer's part → The employee's part → B.I.R. approval → Policy issued → Policy delivered`
+
+The employer sees a card per enrolment with the timeline, a progress bar, and —
+where it applies — *"Waiting on Marcus. We have written to them 3 times…"*. The
+employee sees the same five steps for their own plan.
+
+### Moving one along
+
+The branch marks the steps the branch controls. Put the cursor on the
+enrolment's row in **`Pension Enrollments`** and choose **Guardian Renewals →
+Pension — mark the next step done**. It asks for the policy number at issue, and
+on delivery it writes to both sides straight away. The two client-owned steps
+cannot be marked this way — the employee's part is theirs to finish.
+
+### Turning the automation on
+
+**Guardian Renewals → Pension — install the 9am automation.** That creates the
+`Pension Enrollments` and `Pension Activity` tabs and the daily trigger.
+**Pension — run the 9am pass now (test)** does a pass immediately and reports
+what it sent.
+
+Then set who is copied, at the top of `apps-script/PensionFlow.gs`:
+
+```js
+BRANCH_EMAIL: 'support@rickyrampersadbranch.com',
+TEAM: [
+  'ricky.rampersad@myguardiangroup.com',
+  // add the rest of the team here — one quoted address per line
+],
+```
+
+Everyone on that list is copied on every message about every enrolment.
+
+### On the email threading
+
+The first message on an enrolment is sent through `GmailApp` and its thread ID
+is stored on the row; every later message is a **reply on that same thread**, so
+nobody ever reads a reminder without its history underneath. If the Gmail scope
+is unavailable the code falls back to a plain `MailApp` send — the client still
+gets their email, it simply will not thread.
+
+The first time the automation runs, Apps Script will ask for permission to send
+mail and to use Drive. That is expected — approve it once.
+
+### What it does not do
+
+It does not decide the maximum contribution. That is still the agent's
+computation in Step 1 of the wizard, and the employer's figure is taken as
+entered. If a company enters more than Section 134 allows, the wizard flags it
+when the agent builds the B.I.R. form — the enrolment flow does not check it.
+
+---
+
+## Part 6 — Maintenance
 
 ### Replacing a blank Guardian form
 

@@ -400,6 +400,26 @@ function doGet(e) {
   return clientPage_(p);
 }
 
+/**
+ * The two pension submissions — the employer's part and the employee's.
+ * The browser posts text/plain so there is no CORS preflight to satisfy; the
+ * body is JSON all the same. See PensionFlow.gs for what each one does.
+ */
+function doPost(e) {
+  var out;
+  try {
+    var body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    if (body.action === 'enrolEmployer') out = penrolEmployerSubmit_(body);
+    else if (body.action === 'enrolEmployee') out = penrolEmployeeSubmit_(body);
+    else out = { ok: false, error: 'Unknown action.' };
+  } catch (err) {
+    console.error('doPost: ' + err);
+    out = { ok: false, error: 'That could not be saved. Please tell the branch.' };
+  }
+  return ContentService.createTextOutput(JSON.stringify(out))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
 function clientPage_(p) {
   var token = String(p.t || '');
   var rows = rowsForToken_(token);
@@ -893,6 +913,10 @@ function onOpen() {
     .addItem('Pension — create register tabs', 'setupPensionTabs')
     .addItem('Pension — issue missing codes', 'issuePensionCodes')
     .addItem('Pension — show the sign-in link', 'showPensionPortalLink')
+    .addSeparator()
+    .addItem('Pension — install the 9am automation', 'installPensionTriggers')
+    .addItem('Pension — mark the next step done', 'pensionAdvanceSelected')
+    .addItem('Pension — run the 9am pass now (test)', 'pensionRunNow')
     .addToUi();
 }
 

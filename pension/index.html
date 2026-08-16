@@ -405,6 +405,50 @@ body{background:linear-gradient(180deg,#081020 0,#0e1a30 152px,transparent 152px
 .mine div .sub{display:block;font-size:11.5px;color:#64718e;font-weight:500;margin-top:4px}
 .mine div.wide{grid-column:1/-1}
 .asof{margin-top:10px;font-size:11px;color:#8b96ad}
+/* ---- the enrolment timeline, the same five steps both sides watch ---- */
+.tl{margin:14px 0 4px;padding-left:2px}
+.tlrow{display:grid;grid-template-columns:26px 1fr;gap:12px;position:relative;padding-bottom:15px}
+.tlrow:last-child{padding-bottom:0}
+.tlrow::before{content:"";position:absolute;left:12px;top:20px;bottom:-2px;width:2px;background:#e4e8f1}
+.tlrow:last-child::before{display:none}
+.tlrow.done::before{background:#bfe3d2}
+.tldot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;
+  background:#f1f3f8;color:#98a2b6;border:1.5px solid #e0e5ef;position:relative;z-index:1}
+.tlrow.done .tldot{background:#eaf6f0;color:#13845b;border-color:#bfe3d2}
+.tlrow.now .tldot{background:#fdf6e6;color:#8a6d1f;border-color:#e6d09a;box-shadow:0 0 0 4px rgba(201,162,39,.13)}
+.tlrow b{display:block;font-size:13px;color:#101b33;line-height:1.35}
+.tlrow.pend b{color:#98a2b6;font-weight:600}
+.tlrow .when{font-size:11px;color:#8b96ad;font-weight:500}
+.tlrow .note{display:block;font-size:11.5px;color:#64718e;margin-top:3px;line-height:1.5}
+.tlbar{height:5px;border-radius:99px;background:#eef1f7;overflow:hidden;margin:4px 0 2px}
+.tlbar i{display:block;height:100%;background:linear-gradient(90deg,#c9a227,#f0d066);border-radius:99px}
+/* an enrolment card in the employer's list */
+.enrol{border:1px solid #e4e8f1;border-radius:14px;padding:16px 17px;margin-top:11px;background:#fff}
+.enrol.wait{border-color:#efe0b8;background:#fffdf6}
+.enrolhd{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.enrolhd b{font-size:14px;color:#101b33}
+.enrolhd .sub{display:block;font-size:11.5px;color:#8b96ad;margin-top:2px}
+.chase{font-size:11.5px;color:#8a6d1f;background:#fdf6e6;border:1px solid #efe0b8;border-radius:8px;padding:8px 11px;margin-top:10px;line-height:1.5}
+/* the two intake forms */
+.intake{border:1px solid #e4e8f1;border-radius:14px;padding:18px;margin-top:12px;background:#fbfcfe}
+.intake h4{font-family:"Fraunces",Georgia,serif;font-size:16px;color:#101b33;margin-bottom:4px}
+.intake .lead{font-size:12.5px;color:#64718e;line-height:1.6;margin-bottom:12px}
+.intake .g2{display:grid;gap:10px}
+@media(min-width:640px){ .intake .g2{grid-template-columns:1fr 1fr} }
+.intake .full{grid-column:1/-1}
+.intake label{display:block;font-size:11px;font-weight:700;letter-spacing:.3px;color:#64718e;margin-bottom:4px;text-transform:uppercase}
+.intake input,.intake select,.intake textarea{width:100%;font-family:inherit;font-size:13px;color:#101b33;background:#fff;
+  border:1px solid #dde3ee;border-radius:9px;padding:10px 11px}
+.intake input:focus,.intake select:focus,.intake textarea:focus{outline:none;border-color:#c9a227;box-shadow:0 0 0 3px rgba(201,162,39,.12)}
+.intake textarea{min-height:66px;resize:vertical}
+.intake .hint{font-size:11px;color:#8b96ad;margin-top:4px;line-height:1.5}
+.intake .files{border:1.5px dashed #dde3ee;border-radius:10px;padding:13px;background:#fff;font-size:12.5px;color:#64718e}
+.intake .files input{border:none;padding:0;font-size:12.5px}
+.filelist{margin-top:8px;font-size:11.5px;color:#13845b}
+.intake .msg{margin-top:11px;font-size:12.5px;line-height:1.55;border-radius:10px;padding:10px 12px}
+.intake .msg.err{background:#fdf0f1;border:1px solid #f1c6cc;color:#8f1c2c}
+.intake .msg.ok{background:#eaf6f0;border:1px solid #c7e7d6;color:#13845b}
+.intake .msg.busy{background:#f4f6fa;border:1px solid #e4e8f1;color:#64718e}
 a.btn{display:inline-block;text-decoration:none;text-align:center}
 /* ---- the computation, drawn ----
    Two figures on a light card, matching the printed forms. Colours are the two
@@ -2650,6 +2694,187 @@ function signOut(kind){
   regMsg(kind,'');
 }
 
+/* ===================== ENROLMENT — the two-sided process =====================
+   The employer goes first: they complete the company-owned Section 134 part for
+   one employee. That submission writes to the employee straight away, and from
+   then on the branch chases the employee every morning until their part is in.
+   Both sides watch the same five steps move. The whole of the process lives in
+   apps-script/PensionFlow.gs — this is only the front of it. */
+
+async function registerPost(payload){
+  if(!REGISTER_URL) throw new Error('The register is not published yet. Please email the branch.');
+  var res;
+  /* text/plain keeps the browser from sending a preflight Apps Script cannot answer */
+  try{ res=await fetch(REGISTER_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}); }
+  catch(e){ throw new Error('That could not be sent — check your connection and try again.'); }
+  var text=await res.text(), data;
+  try{ data=JSON.parse(text); }
+  catch(e){ throw new Error('The branch office system answered unexpectedly — it may need to be republished. Please tell us.'); }
+  return data;
+}
+
+/** The five steps, drawn the same way for an employer and for an employee. */
+function timelineHtml(t){
+  if(!t||!t.steps||!t.steps.length) return '';
+  var rows=t.steps.map(function(s){
+    var cls=s.done?'done':(s.now?'now':'pend');
+    var mark=s.done?'✓':(s.now?'●':'');
+    return '<div class="tlrow '+cls+'"><div class="tldot">'+mark+'</div><div>'+
+      '<b>'+esc(s.label)+(s.at?' <span class="when">· '+esc(s.at)+'</span>':'')+'</b>'+
+      (s.note?'<span class="note">'+esc(s.note)+'</span>':'')+
+    '</div></div>';
+  }).join('');
+  return '<div class="tlbar"><i style="width:'+(t.pct||0)+'%"></i></div><div class="tl">'+rows+'</div>';
+}
+
+function enrolCard(e){
+  var wait=e.waitingOnEmployee;
+  return '<div class="enrol'+(wait?' wait':'')+'">'+
+    '<div class="enrolhd"><div><b>'+esc(e.name||'—')+'</b>'+
+      '<span class="sub">'+esc(e.plan||'Plan not recorded')+
+      (e.companyAnnual?' · '+money(e.companyAnnual)+' a year':'')+'</span></div>'+
+      stagePill(e.stage)+'</div>'+
+    timelineHtml(e)+
+    (wait?'<div class="chase">Waiting on '+esc((e.name||'the employee').split(' ')[0])+
+      '. We have written to them '+(e.remindersSent||0)+' time'+((e.remindersSent||0)===1?'':'s')+
+      ' and will keep doing so every morning at 9 until their part is in — you are copied on every one.</div>':'')+
+  '</div>';
+}
+
+/* ---- the employer's part ---- */
+function enrolFormHtml(){
+  return '<div class="intake" id="enrolForm">'+
+    '<h4>Enrol an employee</h4>'+
+    '<p class="lead">This is the company’s part of a company-owned Section 134 plan. '+
+      'The moment you submit it we write to the employee, tell them what you have set up for them, '+
+      'and ask for the part only they can give — and we copy you and the branch on every message.</p>'+
+    '<div class="g2">'+
+      '<div class="full"><label for="enName">Employee’s full name</label><input id="enName" autocomplete="off"></div>'+
+      '<div><label for="enEmail">Their email address</label><input id="enEmail" type="email" autocomplete="off" placeholder="name@company.co.tt"></div>'+
+      '<div><label for="enMobile">Their mobile (optional)</label><input id="enMobile" autocomplete="off"></div>'+
+      '<div class="full"><label for="enPlan">The plan</label><select id="enPlan">'+
+        '<option value="">Choose the plan…</option>'+
+        PLANS.filter(function(p){return p.tags&&p.tags.own==='company';}).map(function(p){
+          return '<option value="'+esc(p.n)+'">'+esc(p.n)+'</option>'; }).join('')+
+      '</select><p class="hint">All of these are company-owned. Not sure which? Leave it and we will advise.</p></div>'+
+      '<div><label for="enAnnual">Company premium a year (TT$)</label><input id="enAnnual" inputmode="decimal" placeholder="36000"></div>'+
+      '<div><label for="enLump">Lump sum this year (TT$)</label><input id="enLump" inputmode="decimal" placeholder="0"></div>'+
+      '<div><label for="enSalary">Their annual salary (TT$)</label><input id="enSalary" inputmode="decimal" placeholder="240000"><p class="hint">So we can work out the maximum you may contribute.</p></div>'+
+      '<div><label for="enStart">Commencement date</label><input id="enStart" placeholder="dd/mm/yyyy"></div>'+
+      '<div><label for="enMat">Maturity age</label><input id="enMat" placeholder="60"></div>'+
+      '<div><label for="enGtee">Guarantee (years)</label><input id="enGtee" placeholder="10"></div>'+
+      '<div class="full"><label for="enBy">Who is submitting this</label><input id="enBy" placeholder="Your name and position"></div>'+
+    '</div>'+
+    '<div id="enMsg"></div>'+
+    '<div class="btnrow" style="margin-top:13px">'+
+      '<button class="btn sm" type="button" onclick="submitEnrolEmployer()">Submit and write to them →</button>'+
+      '<button class="btn ghost sm" type="button" onclick="document.getElementById(\'enrolForm\').remove()">Cancel</button>'+
+    '</div></div>';
+}
+
+function openEnrolForm(){
+  if(document.getElementById('enrolForm')) return;
+  var host=document.getElementById('enrolHost');
+  if(host){ host.innerHTML=enrolFormHtml(); host.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+}
+
+function enMsg(id,html,cls){
+  var el=document.getElementById(id);
+  if(el) el.innerHTML=html?'<div class="msg '+(cls||'err')+'">'+html+'</div>':'';
+}
+
+async function submitEnrolEmployer(){
+  var v=function(id){ var e=document.getElementById(id); return e?e.value.trim():''; };
+  if(!v('enName')){ enMsg('enMsg','The employee’s name is needed.'); return; }
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v('enEmail'))){ enMsg('enMsg','A valid email address is needed — that is how they are invited.'); return; }
+  enMsg('enMsg','Saving, and writing to '+esc(v('enName').split(' ')[0])+'…','busy');
+  var payload={ action:'enrolEmployer', companyCode:(document.getElementById('erCode')||{}).value||'',
+    employee:v('enName'), employeeEmail:v('enEmail'), employeeMobile:v('enMobile'),
+    plan:v('enPlan'), companyAnnual:v('enAnnual'), companyLump:v('enLump'), salary:v('enSalary'),
+    commencement:v('enStart'), maturityAge:v('enMat'), guarantee:v('enGtee'), submittedBy:v('enBy') };
+  var out;
+  try{ out=await registerPost(payload); }
+  catch(e){ enMsg('enMsg',esc(e.message)); return; }
+  if(!out.ok){ enMsg('enMsg',esc(out.error||'That could not be saved.')); return; }
+  enMsg('enMsg','<b>Done.</b> '+esc(v('enName'))+' has been written to, with their access code, and you and the branch are copied. '+
+    'They will be reminded every morning at 9 until their part is in.','ok');
+  setTimeout(function(){ signIn('employer',true); },1800);
+}
+
+/* ---- the employee's part ---- */
+var ENROL_DOCS=[];
+function enrolDocsPicked(input){
+  ENROL_DOCS=[];
+  var files=[].slice.call(input.files||[]).slice(0,6);
+  var list=document.getElementById('eeFileList');
+  if(!files.length){ if(list) list.textContent=''; return; }
+  var total=0;
+  files.forEach(function(f){ total+=f.size; });
+  if(total>8*1024*1024){
+    if(list) list.innerHTML='<span style="color:#bd2438">Those come to '+Math.round(total/1048576)+
+      ' MB — please keep the total under 8 MB. Photos taken on a phone are usually fine.</span>';
+    input.value=''; return;
+  }
+  var done=0;
+  files.forEach(function(f){
+    var rd=new FileReader();
+    rd.onload=function(){ ENROL_DOCS.push({name:f.name,data:rd.result}); done++;
+      if(list) list.textContent='✓ '+done+' of '+files.length+' ready: '+files.map(function(x){return x.name;}).join(', '); };
+    rd.readAsDataURL(f);
+  });
+}
+
+function employeePartHtml(en){
+  return '<div class="intake" id="eePart">'+
+    '<h4>Your part — about ten minutes</h4>'+
+    '<p class="lead">'+esc(en.company||'Your employer')+' has completed their side. This is the part only you can give us: '+
+      'anything you want to add out of your own salary, who you want the money to go to, and three documents.</p>'+
+    '<div class="g2">'+
+      '<div><label for="eeOwn">Your own contribution (TT$ a month)</label><input id="eeOwn" inputmode="decimal" placeholder="500">'+
+        '<p class="hint">Optional, minimum $200 a month. This part is <b>your</b> money and it lowers the income tax you pay.</p></div>'+
+      '<div><label for="eeRet">Your retirement age</label><input id="eeRet" placeholder="60"></div>'+
+      '<div><label for="eeGtee">Guarantee (years)</label><input id="eeGtee" placeholder="10"><p class="hint">How long it keeps paying out even if you die early.</p></div>'+
+      '<div><label for="eeMob">Your mobile</label><input id="eeMob" autocomplete="off"></div>'+
+      '<div class="full"><label for="eeBens">Who the money goes to</label>'+
+        '<textarea id="eeBens" placeholder="Anisa Boodoo (spouse) 60% · Kyle Boodoo (son) 40%"></textarea>'+
+        '<p class="hint">Name, relationship and share for each person. <b>The shares must add up to 100%.</b> Anyone you name needs photo ID too.</p></div>'+
+      '<div class="full"><label>Your documents</label><div class="files">'+
+        'A valid photo ID · a utility bill in your name under six months old · a recent pay slip'+
+        '<br><br><input type="file" id="eeFiles" accept="image/*,application/pdf" multiple onchange="enrolDocsPicked(this)">'+
+        '<div class="filelist" id="eeFileList"></div></div>'+
+        '<p class="hint">Photographs taken on your phone are perfectly fine. Keep the total under 8 MB.</p></div>'+
+    '</div>'+
+    '<div id="eePartMsg"></div>'+
+    '<div class="btnrow" style="margin-top:13px">'+
+      '<button class="btn sm" type="button" onclick="submitEnrolEmployee()">Send my part →</button>'+
+      '<button class="btn ghost sm" type="button" onclick="toggleFable()">Ask RIA first</button>'+
+    '</div></div>';
+}
+
+async function submitEnrolEmployee(){
+  var v=function(id){ var e=document.getElementById(id); return e?e.value.trim():''; };
+  if(!v('eeBens')){ enMsg('eePartMsg','Please say who you want the money to go to — that is the part we cannot guess.'); return; }
+  var own=v('eeOwn').replace(/[^0-9.]/g,'');
+  if(own && Number(own)>0 && Number(own)<200){
+    enMsg('eePartMsg','The minimum own contribution is $200 a month. Leave it blank if you would rather not add anything.'); return;
+  }
+  if(!ENROL_DOCS.length){
+    enMsg('eePartMsg','Please attach your documents — a photo ID, a utility bill and a pay slip. The B.I.R. needs the pay slip with the application.'); return;
+  }
+  enMsg('eePartMsg','Sending your part and your documents…','busy');
+  var code=(document.getElementById('eeCode')||{}).value||'';
+  var out;
+  try{ out=await registerPost({ action:'enrolEmployee', code:code,
+    employeeMonthly:own, retirementAge:v('eeRet'), employeeGuarantee:v('eeGtee'),
+    beneficiaries:v('eeBens'), employeeMobile:v('eeMob'), documents:ENROL_DOCS }); }
+  catch(e){ enMsg('eePartMsg',esc(e.message)); return; }
+  if(!out.ok){ enMsg('eePartMsg',esc(out.error||'That could not be saved.')); return; }
+  enMsg('eePartMsg','<b>Thank you — that is your part done.</b> Your enrolment is complete and goes to the B.I.R. for approval. '+
+    'We have emailed you the details, and we will write to you as it moves.','ok');
+  ENROL_DOCS=[];
+  setTimeout(function(){ signIn('employee',true); },2200);
+}
+
 function stagePill(stage){
   var t=String(stage||'').toLowerCase(), cls='';
   if(/issued|in force|approved|active|complete/.test(t)) cls=' go';
@@ -2663,10 +2888,6 @@ function employerSchedule(d){
     (co.bir?'B.I.R. file '+esc(co.bir)+' · ':'')+
     esc(list.length+' employee'+(list.length===1?'':'s')+' on the register')+
     (co.agent?' · agent '+esc(co.agent):'')+'</span></div>';
-  if(!list.length){
-    return head+'<div class="info show" style="margin-top:11px">Nobody is on the register for this company yet. As soon as an application is entered it appears here.</div>'+
-      '<div class="btnrow" style="margin-top:11px"><button class="btn ghost sm" type="button" onclick="signOut(\'employer\')">Sign out</button></div>';
-  }
   var rows=list.map(function(e){
     return '<tr><td><b>'+esc(e.name||'—')+'</b>'+(e.position?'<span class="sub">'+esc(e.position)+'</span>':'')+'</td>'+
       '<td>'+esc(e.plan||'—')+(e.commencement?'<span class="sub">from '+esc(e.commencement)+'</span>':'')+'</td>'+
@@ -2675,6 +2896,22 @@ function employerSchedule(d){
       '<td>'+stagePill(e.stage)+(e.birStatus?'<span class="sub">BIR: '+esc(e.birStatus)+'</span>':'')+
         (e.policy?'<span class="sub">Policy '+esc(e.policy)+'</span>':'')+'</td></tr>';
   }).join('');
+  var enrols=d.enrolments||[];
+  var waiting=enrols.filter(function(e){ return e.waitingOnEmployee; }).length;
+  var flow='<div style="margin-top:18px;padding-top:16px;border-top:1px solid #e4e8f1">'+
+    '<div class="rrow" style="padding-top:0"><b>Enrolments in progress'+(enrols.length?' ('+enrols.length+')':'')+'</b>'+
+      '<span>'+(enrols.length
+        ? (waiting? waiting+' of them '+(waiting===1?'is':'are')+' waiting on the employee. We chase them every morning at 9 and copy you on every message.'
+                  : 'Everything is with us or with the B.I.R. — nothing is needed from you.')
+        : 'Nobody is part-way through. Start one below and we take it from there.')+'</span></div>'+
+    enrols.map(enrolCard).join('')+
+    '<div class="btnrow" style="margin-top:13px"><button class="btn sm" type="button" onclick="openEnrolForm()">Enrol an employee →</button></div>'+
+    '<div id="enrolHost"></div></div>';
+
+  if(!list.length){
+    return head+'<div class="info show" style="margin-top:11px">Nobody is on the register for this company yet. As soon as an application is entered it appears here.</div>'+
+      flow+'<div class="btnrow" style="margin-top:11px"><button class="btn ghost sm" type="button" onclick="signOut(\'employer\')">Sign out</button></div>';
+  }
   return head+
     '<div class="schedwrap"><table class="sched"><thead><tr>'+
       '<th>Employee</th><th>Plan</th><th class="num">Company a year</th><th class="num">Their own</th><th>Where it is</th>'+
@@ -2684,6 +2921,7 @@ function employerSchedule(d){
       '<td class="num">'+(t.own?money(t.own/12)+'<span class="sub">a month</span>':'—')+'</td><td></td>'+
     '</tr></tfoot></table></div>'+
     '<p class="asof">The company’s deductible cost is the annual column. Read as at '+esc(d.asOf||'today')+'.</p>'+
+    flow+
     '<div class="btnrow" style="margin-top:11px">'+
       '<a class="btn sm" href="mailto:support@rickyrampersadbranch.com?subject='+encodeURIComponent('Company pension — '+(co.name||'our schedule'))+'">Ask about this schedule</a>'+
       '<button class="btn ghost sm" type="button" onclick="signOut(\'employer\')">Sign out</button>'+
@@ -2706,8 +2944,22 @@ function employeeRecord(d){
     '<div class="wide"><span class="lab">Where it has reached</span>'+stagePill(e.stage)+
       (e.birStatus?'<span class="sub">BIR: '+esc(e.birStatus)+'</span>':'')+'</div>'+
   '</div>';
+  /* An enrolment in flight: either their part is still needed, or they get to
+     watch the same five steps their employer is watching. */
+  var en=d.enrolment, flow='';
+  if(en){
+    flow=(!en.yourPartDone)
+      ? '<div class="info show" style="margin-top:14px;background:#fdf6e6;border-color:#efe0b8;color:#6f5714">'+
+          '<b>Your part is what everything is waiting on.</b> '+esc(en.company||'Your employer')+' has finished theirs — '+
+          'about ten minutes from you and your plan is on its way to the B.I.R.</div>'+
+        employeePartHtml(en)
+      : '<div style="margin-top:16px;padding-top:14px;border-top:1px solid #e4e8f1">'+
+          '<div class="rrow" style="padding-top:0"><b>Where your plan has reached</b>'+
+          '<span>Your part is done. We write to you as it moves, and every ten days while it is with the B.I.R.</span></div>'+
+          timelineHtml(en)+'</div>';
+  }
   return '<div class="rrow"><b>'+esc(e.name||'Your record')+'</b><span>Held by the Rampersad Branch'+
-      (e.agent?' · your agent is '+esc(e.agent):'')+'</span></div>'+grid+
+      (e.agent?' · your agent is '+esc(e.agent):'')+'</span></div>'+grid+flow+
     (e.notes?'<div class="info show" style="margin-top:11px">'+esc(e.notes)+'</div>':'')+
     '<p class="asof">Read as at '+esc(d.asOf||'today')+'. Anything wrong here — a name, a beneficiary, an amount — tell us and we will correct it.</p>'+
     '<div class="btnrow" style="margin-top:11px">'+
