@@ -155,6 +155,9 @@ function doGet(e) {
   if (p.action === 'status') {
     return json_(statusFor_(p.ref, p.code));
   }
+  if (p.action === 'agentbook') {
+    return json_(agentBookFor_(p.agent, p.code));
+  }
   /* Anyone who lands on the /exec URL directly gets pointed at the form. */
   return HtmlService.createHtmlOutput(
     '<meta http-equiv="refresh" content="0;url=' + SVC.FORM_URL + '">' +
@@ -220,6 +223,73 @@ function statusFor_(ref, code) {
 function json_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * An agent's book: every client assigned to them, with stage metadata —
+ * released only to the agent's own name PLUS the portal code the branch set
+ * beside them in the Agent Skill Bank. Status metadata only, same rule as
+ * the client tracker — the answers themselves never travel this road.
+ */
+function agentBookFor_(agent, code) {
+  agent = String(agent || '').trim();
+  code = String(code || '').trim().toUpperCase();
+  if (!agent || !code) return { ok: false, error: 'Enter your name and your portal code.' };
+
+  var me = null;
+  skillBank_().forEach(function (a) {
+    if (a.name.toLowerCase() === agent.toLowerCase() &&
+        a.portal && a.portal.toUpperCase() === code) me = a;
+  });
+  if (!me) return { ok: false, error: 'Name and portal code do not match. Codes are set by the branch in the Agent Skill Bank — ask support.' };
+
+  var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
+  var fmt = function (v) {
+    if (!v) return '';
+    var d = new Date(v);
+    return isNaN(d.getTime()) ? '' : Utilities.formatDate(d, tz, 'd MMMM yyyy');
+  };
+
+  var clients = [];
+  [SVC.IND_SHEET, SVC.GRP_SHEET].forEach(function (name) {
+    var sh = ss_().getSheetByName(name);
+    if (!sh || sh.getLastRow() < 2) return;
+    var headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+    var col = function (h) { return headers.indexOf(h); };
+    var iLook = col('Looked after by');
+    if (iLook < 0) return;
+
+    var rows = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
+    rows.forEach(function (r) {
+      var look = String(r[iLook] || '').replace(/^Matched:\s*/i, '').trim();
+      if (look.toLowerCase() !== me.name.toLowerCase()) return;
+
+      var status = String(r[col('Status')] || '');
+      var done = /handled/i.test(status);
+      var letter = col('Letter outstanding') > -1 ? String(r[col('Letter outstanding')] || '') : '';
+      clients.push({
+        ref: String(r[col('Reference')] || ''),
+        who: String(r[col('Company')] || r[col('Client')] || ''),
+        kind: name === SVC.GRP_SHEET ? 'group' : 'individual',
+        filed: fmt(r[col('Timestamp')]),
+        priority: String(r[col('Priority')] || ''),
+        status: done ? 'Completed' : 'In progress',
+        signed: col('Signed') > -1 ? !!String(r[col('Signed')] || '') : false,
+        letterOut: /^YES/i.test(letter),
+        lastUpdate: col('Last client update') > -1 ? fmt(r[col('Last client update')]) : '',
+        phone: col('Phone') > -1 ? String(r[col('Phone')] || '') : '',
+      });
+    });
+  });
+
+  var open = clients.filter(function (c) { return c.status !== 'Completed'; }).length;
+  return {
+    ok: true,
+    agent: me.name,
+    skills: me.skills,
+    stats: { assigned: clients.length, open: open, completed: clients.length - open },
+    clients: clients,
+  };
 }
 
 
@@ -429,10 +499,10 @@ function teamBankSheet_() {
   if (!sh) {
     sh = ss_().insertSheet(SVC.TEAM_SHEET);
     sh.appendRow(['Agent', 'Agent no.', 'Skills & strengths', 'Availability',
-                  'Languages', 'Areas covered', 'Active', 'Notes']);
+                  'Languages', 'Areas covered', 'Active', 'Portal code', 'Notes']);
     sh.setFrozenRows(1);
     try {
-      sh.getRange(1, 1, 1, 8).setFontWeight('bold').setBackground(SB.light);
+      sh.getRange(1, 1, 1, 9).setFontWeight('bold').setBackground(SB.light);
     } catch (e) {}
   }
   return sh;
@@ -1012,7 +1082,8 @@ function skillBank_() {
   return rows.map(function (r) {
     return { name: col(r, 'Agent'), no: col(r, 'Agent no.'),
              skills: col(r, 'Skills & strengths'), avail: col(r, 'Availability'),
-             langs: col(r, 'Languages'), active: col(r, 'Active') };
+             langs: col(r, 'Languages'), active: col(r, 'Active'),
+             portal: col(r, 'Portal code') };
   }).filter(function (a) { return a.name && !/^no$/i.test(a.active); });
 }
 

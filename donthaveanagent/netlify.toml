@@ -42,6 +42,12 @@
   to = "/status.html"
   status = 302
 
+# The agents' own door — name + portal code from the Agent Skill Bank.
+[[redirects]]
+  from = "/agents"
+  to = "/agents.html"
+  status = 302
+
 [[redirects]]
   from = "/status"
   to = "/status.html"
@@ -59,8 +65,13 @@
     X-Frame-Options = "DENY"
     Permissions-Policy = "geolocation=(), microphone=(), camera=(), interest-cohort=()"
 
-# The agent console is for staff, never for search engines.
+# The agent console and portal are for staff, never for search engines.
 [[headers]]
   for = "/agent/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/agents.html"
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"

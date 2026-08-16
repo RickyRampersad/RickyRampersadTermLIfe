@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agent portal — donthaveanagent.com</title>
+<meta name="description" content="Branch agents: log in to see your assigned clients and their progress.">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 88'%3E%3Crect x='2' y='2' width='84' height='84' rx='23' fill='%238C2230'/%3E%3Cg fill='%23FFFFFF'%3E%3Cpath transform='translate(23.760 28.731) scale(0.07621 -0.07621) translate(-28.0 -751.0)' d='M40 378 115 638 142 530Q92 530 60.0 559.5Q28 589 28 639Q28 690 60.5 720.5Q93 751 142 751Q191 751 223.0 720.5Q255 690 255 639Q255 625 253.0 610.5Q251 596 244.5 576.5Q238 557 223 524L159 378Z'/%3E%3Cpath transform='translate(46.941 28.731) scale(0.07621 -0.07621) translate(-28.0 -751.0)' d='M40 378 115 638 142 530Q92 530 60.0 559.5Q28 589 28 639Q28 690 60.5 720.5Q93 751 142 751Q191 751 223.0 720.5Q255 690 255 639Q255 625 253.0 610.5Q251 596 244.5 576.5Q238 557 223 524L159 378Z'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F6EFE6; --card:#FFFFFF; --ink:#231512; --muted:#6E5A50;
+    --ox:#8C2230; --deep:#5E141F; --line:#E4D6C6; --chip:#F2E9DC;
+    --good:#1E7D4F; --warn:#A05E03; --bad:#A62B22;
+    --disp:'Montserrat',Arial,sans-serif; --body:'DM Sans',Arial,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;min-height:100vh}
+  a{color:var(--ox)}
+  .top{background:#fff;border-bottom:1px solid var(--line);padding:14px 18px}
+  .top-in{max-width:860px;margin:0 auto;display:flex;align-items:center;gap:13px}
+  .top svg{width:40px;height:40px;flex:none}
+  .wm{font-family:var(--disp);line-height:1.05}
+  .wm .t{font-size:10.5px;font-weight:600;letter-spacing:.3em;color:var(--ox);text-transform:uppercase}
+  .wm .b{font-size:19px;font-weight:800}
+  .wm .b span{color:var(--ox)}
+  .top .role{margin-left:auto;font-family:var(--disp);font-weight:700;font-size:11px;letter-spacing:.22em;
+             text-transform:uppercase;color:var(--muted)}
+  .wrap{max-width:860px;margin:0 auto;padding:34px 18px 70px}
+  h1{font-family:var(--disp);font-weight:800;font-size:clamp(26px,5vw,34px);letter-spacing:-.4px;margin-bottom:8px}
+  .lede{color:var(--muted);max-width:58ch}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px;margin-top:22px}
+  label{display:block;font-family:var(--disp);font-weight:700;font-size:12.5px;letter-spacing:.08em;
+        text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+  input{width:100%;padding:13px 15px;border:1.6px solid var(--line);border-radius:11px;font:inherit;
+        background:#FDFBF7;color:var(--ink)}
+  input:focus{outline:none;border-color:var(--ox)}
+  .btn{display:inline-block;background:var(--deep);color:#F2E9DC;font-family:var(--disp);font-weight:800;
+       font-size:15.5px;border:none;border-radius:12px;padding:14px 26px;margin-top:18px;cursor:pointer}
+  .btn:focus-visible{outline:3px solid var(--ox);outline-offset:2px}
+  .btn.ghost{background:transparent;color:var(--ox);border:1.6px solid var(--line)}
+  .err{display:none;background:#FBE9E7;border-left:4px solid var(--bad);border-radius:0 10px 10px 0;
+       padding:12px 15px;margin-top:16px;font-size:14.5px}
+  .hint{font-size:13.5px;color:var(--muted);margin-top:14px}
+  /* book */
+  #book{display:none}
+  .hello{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  .hello .out{font-size:13.5px}
+  .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:18px}
+  .stat{background:var(--card);border:1px solid var(--line);border-top:5px solid var(--ox);border-radius:14px;
+        padding:16px 18px}
+  .stat .n{font-family:var(--disp);font-weight:800;font-size:34px;font-variant-numeric:tabular-nums}
+  .stat .l{font-size:12.5px;color:var(--muted);font-family:var(--disp);font-weight:700;letter-spacing:.1em;
+           text-transform:uppercase}
+  .client{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-top:14px}
+  .c-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .c-head b{font-family:var(--disp);font-weight:800;font-size:18.5px}
+  .c-head .ref{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .pill{font-family:var(--disp);font-weight:700;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+        border-radius:99px;padding:4px 11px;margin-left:auto}
+  .pill.open{background:var(--chip);color:var(--warn);border:1px solid var(--line)}
+  .pill.done{background:#E8F5EE;color:var(--good);border:1px solid #CBE7D7}
+  .stages{display:flex;gap:6px;margin:14px 0 4px;flex-wrap:wrap}
+  .stg{font-size:12px;font-family:var(--disp);font-weight:600;padding:5px 11px;border-radius:99px;
+       background:var(--chip);border:1px solid var(--line);color:var(--muted)}
+  .stg.on{background:var(--deep);border-color:var(--deep);color:#F2E9DC}
+  .meta{font-size:13.5px;color:var(--muted);margin-top:8px}
+  .meta b{color:var(--ink)}
+  .flag{display:inline-block;background:#FBE9E7;color:var(--bad);border:1px solid #F0CCC7;border-radius:8px;
+        font-size:12.5px;font-weight:600;padding:3px 10px;margin-top:10px}
+  .flag.chase{background:#FDF3E4;color:var(--warn);border-color:#EBD9BC}
+  .demo-band{background:var(--deep);color:#F2E9DC;border-radius:12px;padding:10px 16px;margin-top:18px;
+             font-size:13.5px;display:none}
+  .foot{max-width:860px;margin:30px auto 0;padding:0 18px;font-size:12.5px;color:var(--muted)}
+  @media(max-width:560px){ .stats{grid-template-columns:1fr 1fr} .stat:first-child{grid-column:1/-1} }
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <svg viewBox="0 0 88 88" aria-hidden="true"><rect x="2" y="2" width="84" height="84" rx="23" fill="#8C2230"/><g fill="#FFFFFF"><path transform="translate(23.760 28.731) scale(0.07621 -0.07621) translate(-28.0 -751.0)" d="M40 378 115 638 142 530Q92 530 60.0 559.5Q28 589 28 639Q28 690 60.5 720.5Q93 751 142 751Q191 751 223.0 720.5Q255 690 255 639Q255 625 253.0 610.5Q251 596 244.5 576.5Q238 557 223 524L159 378Z"/><path transform="translate(46.941 28.731) scale(0.07621 -0.07621) translate(-28.0 -751.0)" d="M40 378 115 638 142 530Q92 530 60.0 559.5Q28 589 28 639Q28 690 60.5 720.5Q93 751 142 751Q191 751 223.0 720.5Q255 690 255 639Q255 625 253.0 610.5Q251 596 244.5 576.5Q238 557 223 524L159 378Z"/></g></svg>
+  <div class="wm"><div class="t">Don't have</div><div class="b">an agent<span>.com</span></div></div>
+  <div class="role">Agent portal</div>
+</div></header>
+
+<div class="wrap">
+  <div id="login">
+    <h1>Your book, live.</h1>
+    <p class="lede">Every client assigned to you, and where each one stands — the same progress your client
+    sees, plus what still needs you. Sign in with your name and the portal code the branch set for you.</p>
+    <div class="card" style="max-width:460px">
+      <form id="f">
+        <label for="agent">Your name (as in the skill bank)</label>
+        <input id="agent" autocomplete="name" placeholder="e.g. Fawaaz">
+        <label for="code">Portal code</label>
+        <input id="code" autocomplete="off" placeholder="From branch support" style="text-transform:uppercase">
+        <div class="err" id="err"></div>
+        <button class="btn" type="submit">Open my book →</button>
+        <button class="btn ghost" type="button" id="demoBtn">See a demo book</button>
+      </form>
+      <p class="hint">No code yet? Ask branch support — codes live beside your name in the Agent Skill Bank.
+      This page shows progress only, never a client's answers.</p>
+    </div>
+  </div>
+
+  <div id="book">
+    <div class="demo-band" id="demoBand"><b>Demo book.</b> Sample data — this is what an agent sees once their
+    portal code is set. Sign out to try your own.</div>
+    <div class="hello">
+      <div><h1 id="hi">Good day.</h1><p class="lede" id="skills"></p></div>
+      <a href="#" class="out" id="out">Sign out</a>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="n" id="sAssigned">0</div><div class="l">Assigned to you</div></div>
+      <div class="stat"><div class="n" id="sOpen">0</div><div class="l">In progress</div></div>
+      <div class="stat"><div class="n" id="sDone">0</div><div class="l">Completed</div></div>
+    </div>
+    <div id="list"></div>
+  </div>
+</div>
+
+<footer class="foot">A Ricky Rampersad Branch project · Guardian Life of the Caribbean Limited ·
+This portal shows status only — client answers never appear here.</footer>
+
+<script>
+const CONFIG = { API_URL: "" };
+
+const DEMO = {
+  ok: true, agent: "Fawaaz", skills: "Plain-language, patient with first-timers · Evenings + Saturdays",
+  stats: { assigned: 4, open: 3, completed: 1 },
+  clients: [
+    { ref: "DHA-260813-0003", who: "Keisha Boodoo", kind: "individual", filed: "13 August 2026",
+      priority: "ACTION", status: "In progress", signed: true, letterOut: false,
+      lastUpdate: "15 August 2026", phone: "(868) 555-0161", stageNote: "Papers out for digital signature" },
+    { ref: "DHAG-260811-0002", who: "Trini Fabrication Ltd", kind: "group", filed: "11 August 2026",
+      priority: "ACTION", status: "In progress", signed: false, letterOut: true,
+      lastUpdate: "16 August 2026", phone: "(868) 555-0173", stageNote: "Awaiting stamped letter — chase day 4" },
+    { ref: "DHA-260816-0006", who: "Marcus Alleyne", kind: "individual", filed: "16 August 2026",
+      priority: "HIGH", status: "In progress", signed: false, letterOut: false,
+      lastUpdate: "", phone: "(868) 555-0129", stageNote: "Assigned today — introduce yourself" },
+    { ref: "DHA-260722-0001", who: "Denise Ramkissoon", kind: "individual", filed: "22 July 2026",
+      priority: "NORMAL", status: "Completed", signed: true, letterOut: false,
+      lastUpdate: "5 August 2026", phone: "(868) 555-0147", stageNote: "" },
+  ],
+};
+
+const $ = s => document.querySelector(s);
+
+function stageOf(c) {
+  if (c.status === "Completed") return 4;
+  if (c.signed) return 3;
+  if (c.letterOut) return 3;
+  return 2;
+}
+
+function render(data, demo) {
+  $("#login").style.display = "none";
+  $("#book").style.display = "block";
+  $("#demoBand").style.display = demo ? "block" : "none";
+  $("#hi").textContent = "Good day, " + data.agent + ".";
+  $("#skills").textContent = data.skills ? "Matched on: " + data.skills : "";
+  $("#sAssigned").textContent = data.stats.assigned;
+  $("#sOpen").textContent = data.stats.open;
+  $("#sDone").textContent = data.stats.completed;
+
+  const names = ["Received", "Verifying & preparing", c => c.kind === "group" ? "Letter out" : "Signature out", "Complete"];
+  $("#list").innerHTML = data.clients.map(c => {
+    const st = stageOf(c);
+    const chips = names.map((n, i) => {
+      const label = typeof n === "function" ? n(c) : n;
+      return '<span class="stg' + (i + 1 <= st ? " on" : "") + '">' + label + "</span>";
+    }).join("");
+    return '<div class="client">' +
+      '<div class="c-head"><b>' + c.who + "</b>" +
+      '<span class="ref">' + c.ref + " · filed " + c.filed + "</span>" +
+      '<span class="pill ' + (c.status === "Completed" ? "done\">Completed" : "open\">In progress") + "</span></div>" +
+      '<div class="stages">' + chips + "</div>" +
+      (c.stageNote ? '<div class="meta"><b>' + c.stageNote + "</b></div>" : "") +
+      '<div class="meta">' + (c.lastUpdate ? "Client last updated <b>" + c.lastUpdate + "</b> · " : "") +
+        (c.phone ? 'Reach them: <b><a href="tel:' + c.phone.replace(/[^\d+]/g, "") + '">' + c.phone + "</a></b>" : "") + "</div>" +
+      (c.letterOut ? '<div class="flag chase">Stamped letter outstanding — system chasing every 2 days</div>' : "") +
+      (c.priority === "URGENT" || c.priority === "HIGH"
+        ? '<div class="flag">' + c.priority + " — the 1-business-day promise applies</div>" : "") +
+      "</div>";
+  }).join("");
+}
+
+$("#demoBtn").addEventListener("click", () => render(DEMO, true));
+if (new URLSearchParams(location.search).get("demo")) render(DEMO, true);
+
+$("#out").addEventListener("click", e => { e.preventDefault(); location.href = location.pathname; });
+
+$("#f").addEventListener("submit", async e => {
+  e.preventDefault();
+  const err = $("#err");
+  err.style.display = "none";
+  const agent = $("#agent").value.trim(), code = $("#code").value.trim();
+  if (!agent || !code) { err.textContent = "Enter your name and your portal code."; err.style.display = "block"; return; }
+  if (!CONFIG.API_URL) {
+    err.innerHTML = "The live book switches on when the branch connects the backend. " +
+      "Until then, <b>See a demo book</b> shows exactly how it works.";
+    err.style.display = "block"; return;
+  }
+  try {
+    const res = await fetch(CONFIG.API_URL + "?action=agentbook&agent=" + encodeURIComponent(agent) +
+                            "&code=" + encodeURIComponent(code));
+    const data = await res.json();
+    if (!data.ok) { err.textContent = data.error || "Could not open your book."; err.style.display = "block"; return; }
+    data.clients.forEach(c => c.stageNote = "");
+    render(data, false);
+  } catch (ex) {
+    err.textContent = "Connection problem — try again in a minute.";
+    err.style.display = "block";
+  }
+});
+</script>
+</body>
+</html>
