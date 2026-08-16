@@ -846,6 +846,82 @@ function rrbQueueDecide(e) {
   } finally { try { lock.releaseLock(); } catch (err2) {} }
 }
 
+/**
+ * The advisor's quick fixes from a sent-back email: reasons and premium modes
+ * typed into the email itself, written onto the record, and the case put back
+ * into the manager's queue. Accepts ONLY a token minted for this ('fix') —
+ * a decide or note token cannot be replayed here.
+ */
+function rrbAgentFix(e) {
+  var p = (e && e.parameter) || {};
+  var chk = rrbVerifyToken(p.t);
+  if (!chk.ok) {
+    return rrbPage_('Cannot save this',
+      '<div style="font-size:19px;font-weight:800;margin-bottom:8px">This link no longer works</div>' +
+      '<p style="color:#475569;margin:0">' + rrbEsc_(chk.error) + ' If the case still needs the fix, ' +
+      'reopen the fact find and resubmit it there.</p>', 'err');
+  }
+  if (_str(chk.payload.role) !== 'fix') {
+    return rrbPage_('Cannot save this',
+      '<div style="font-size:19px;font-weight:800;margin-bottom:8px">Wrong kind of link</div>' +
+      '<p style="color:#475569;margin:0">This link is not a fix-it link. Nothing was saved.</p>', 'err');
+  }
+
+  var sheet = ffGetOrCreateRevisedTab_();
+  var headers = ffEnsureHeaders_(sheet);
+  var row = ffFindRowBySubmissionId_(sheet, headers, chk.payload.id);
+  if (!row) return rrbPage_('Not found',
+    '<p>That fact find is no longer on the sheet. Nothing was saved.</p>', 'err');
+
+  var d = ffReadRow_(sheet, headers, row);
+  var MODES = { 'Monthly': 1, 'Quarterly': 1, 'Semi-Annual': 1, 'Annual': 1 };
+  var saved = [];
+  var merged = {};
+  Object.keys(d).forEach(function (k) { merged[k] = d[k]; });
+
+  for (var i = 1; i <= 6; i++) {
+    var plan = _str(d['rec' + i + 'Rec']) || ('Recommendation ' + i);
+    var reason = _str(p['r' + i]);
+    // Fill gaps only — an emailed quick-fix must never overwrite something the
+    // form already holds, or a stale email could clobber newer work.
+    if (reason && !_str(d['rec' + i + 'Reason'])) {
+      merged['rec' + i + 'Reason'] = reason;
+      saved.push('Reason for <b>' + rrbEsc_(plan) + '</b>');
+    }
+    var mode = _str(p['m' + i]);
+    if (mode && MODES[mode] && !_str(d['rec' + i + 'Mode'])) {
+      merged['rec' + i + 'Mode'] = mode;
+      saved.push('Premium mode for <b>' + rrbEsc_(plan) + '</b> &mdash; ' + rrbEsc_(mode));
+    }
+  }
+
+  if (!saved.length) {
+    // Nothing entered (or everything already filled). The token is NOT spent,
+    // so the advisor can come back to the same email and try again.
+    return rrbPage_('Nothing to save',
+      '<div style="font-size:19px;font-weight:800;margin-bottom:8px">Nothing was entered</div>' +
+      '<p style="color:#475569;margin:0">Type the reason (or pick the mode) in the email and press the button again. ' +
+      'The link stays valid.</p>', 'ok');
+  }
+
+  var mgr = _str(d.mgrName) || _str(d.reviewerName) || 'your manager';
+  var wasSentBack = _str(d.status).toLowerCase().indexOf('changes') > -1;
+  if (wasSentBack) merged.status = 'pending_review';   // back into the queue
+  merged.lastUpdated = new Date().toISOString();
+  ffWriteRow_(sheet, headers, merged, row);
+  rrbMarkTokenUsed_(chk.row);
+
+  return rrbPage_('Saved',
+    '<div style="font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#0F766E">On the fact find</div>' +
+    '<div style="font-size:21px;font-weight:800;margin:6px 0 10px">' + rrbEsc_(_str(d.clientName) || _str(d.fullName) || 'Saved') + '</div>' +
+    '<ul style="margin:0 0 14px;padding-left:20px;font-size:14px;color:#334155;line-height:1.8">' +
+    saved.map(function (s) { return '<li>' + s + '</li>'; }).join('') + '</ul>' +
+    '<p style="color:#475569;font-size:13.5px;margin:0">' +
+    (wasSentBack
+      ? 'The case is back with ' + rrbEsc_(mgr.split(' ')[0]) + ' for review — you do not need to resubmit.'
+      : 'The record is updated.') + '</p>', 'ok');
+}
+
 /** The optional comment that can follow a one-tap decision. */
 function rrbDecideNote(e) {
   var p = (e && e.parameter) || {};

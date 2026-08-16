@@ -69,12 +69,13 @@ function doGet(e) {
   // Google's raw error page.
   if (action === "decide" || action === "decide_note" ||
       action === "cconfirm" || action === "crate" || action === "crate_note" ||
-      action === "outcome") {
+      action === "outcome" || action === "agent_fix") {
     try {
       if (action === "cconfirm")   return rrbClientConfirm(e);
       if (action === "crate")      return rrbClientRate(e);
       if (action === "crate_note") return rrbClientRateNote(e);
       if (action === "outcome")    return rrbCaseOutcome(e);
+      if (action === "agent_fix")  return rrbAgentFix(e);
       return action === "decide" ? rrbDecide(e) : rrbDecideNote(e);
     } catch (err) {
       Logger.log('%s failed: %s', action, (err && err.stack) || err);

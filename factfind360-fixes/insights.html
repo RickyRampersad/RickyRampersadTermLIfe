@@ -133,6 +133,13 @@
          border:1px solid var(--line);border-radius:8px;padding:9px;font:inherit;font-size:12.5px;
          resize:vertical;display:none}
   .qnote.open{display:block}
+  /* one-tap send-back reasons, built from what the checks found on THIS case */
+  .qpick{display:none;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .qpick.open{display:flex}
+  .qp{font-size:11.5px;font-weight:700;padding:6px 11px;border-radius:20px;cursor:pointer;
+      background:transparent;color:var(--amber);border:1.5px solid rgba(251,191,36,.4);
+      font-family:inherit}
+  .qp.on{background:var(--amber);color:#1F1503;border-color:var(--amber)}
   .qmsg{font-size:11.5px;font-weight:700;margin-top:6px;color:var(--teal)}
   .qmsg.err{color:var(--red)}
   .qb.ghost{background:transparent;color:var(--ink-3);border:1.5px solid var(--line)}
@@ -781,6 +788,28 @@ function render(){
       return person+moneyS+needS+exS+voice+advS+att;
     }
 
+    /* Send-back reasons the manager can tap instead of type, built from what
+       is actually wrong with THIS case — no generic pick-list of twenty
+       options, just the gaps the checks found plus the two evergreen asks. */
+    function qPicks(r){
+      var raw=r.raw||{}, chk=raw._checks||{}, out=[];
+      for(var i=1;i<=6;i++){
+        var plan=str(raw['rec'+i+'Rec']);
+        if(plan&&!str(raw['rec'+i+'Reason']))
+          out.push('No reason given for '+plan);
+        if(num(raw['rec'+i+'Prem'])>0&&!str(raw['rec'+i+'Mode']))
+          out.push('Premium mode not selected for '+(plan||'row '+i));
+      }
+      (chk.concerns||[]).forEach(function(c){ out.push(c.t); });
+      out.push('Confirm the figures with the client');
+      out.push('Needs analysis is too thin to defend');
+      var seen={};
+      return out.filter(function(t){ if(seen[t])return false; seen[t]=1; return true; })
+        .slice(0,8)
+        .map(function(t){ return '<button type="button" class="qp" data-t="'+esc(t)+'">'+esc(t)+'</button>'; })
+        .join('');
+    }
+
     $('queue').innerHTML=pend.map(function(r){
       var g=Math.round(days(r.sub,new Date())), hot=g>=14;
       var raw=r.raw||{}, chk=raw._checks||null;
@@ -827,11 +856,26 @@ function render(){
         (recl?'<div class="qrec">'+recl+'</div>':'')+
         (flags?'<div class="qflags">'+flags+'</div>':'')+
         heldChip+
+        '<div class="qpick">'+qPicks(r)+'</div>'+
         '<textarea class="qnote" rows="2" placeholder="What needs to change before you can approve it? Goes to the advisor."></textarea>'+
         '<div class="qmsg" style="display:none"></div></div>'+
         acts+
         '<div class="qdet">'+qDeep(r)+'</div></div>';
     }).join('');
+
+    /* A tapped chip writes its line into the note; untapping removes it. The
+       note stays an ordinary textarea the manager can edit — what is in the
+       box is exactly what the advisor receives, chips or not. */
+    $('queue').querySelectorAll('.qp').forEach(function(c){
+      c.onclick=function(){
+        var card=c.closest('.qc'), noteEl=card.querySelector('.qnote');
+        var line='• '+c.dataset.t;
+        var lines=noteEl.value.split('\n').filter(function(x){return x.trim()!=='';});
+        if(c.classList.toggle('on')) lines.push(line);
+        else lines=lines.filter(function(x){return x!==line;});
+        noteEl.value=lines.join('\n');
+      };
+    });
 
     $('queue').querySelectorAll('.qb').forEach(function(b){
       b.onclick=function(){
@@ -851,8 +895,10 @@ function render(){
           if(card.dataset.armed!==v){
             card.dataset.armed=v;
             noteEl.classList.add('open');
+            var pick=card.querySelector('.qpick');
+            if(pick) pick.classList.toggle('open', v==='return');
             noteEl.placeholder = v==='return'
-              ? 'What needs to change before you can approve it? Goes to the advisor.'
+              ? 'Tap the reasons above, add your own words if needed — goes to the advisor.'
               : 'What are you waiting on? Stays on the file — nothing is emailed, and the reminder clock resets.';
             noteEl.focus();
             b.textContent = v==='return' ? 'Send back now' : 'Confirm hold';

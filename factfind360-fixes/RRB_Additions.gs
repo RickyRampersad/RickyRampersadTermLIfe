@@ -1461,11 +1461,80 @@ function rrbAgentDeclinedHtml_(d) {
          mgr.split(' ')[0] + ' before you change anything &mdash; and ask for it in writing.</p>';
   }
 
+  h += rrbFixBlock_(d, mgr);
+
   h += '<div style="background:#fff;border-left:4px solid #B45309;border-radius:0 10px 10px 0;padding:13px 16px;font-size:13px;color:#334155;line-height:1.7">' +
-       '<strong>Reopen the fact find, make the changes, and send it again.</strong> ' +
+       '<strong>For anything beyond the quick fixes above:</strong> reopen the fact find, make the changes, and send it again. ' +
        'It goes back to ' + mgr.split(' ')[0] + ' for a fresh review. Being sent back is a normal part of ' +
        'the process &mdash; it is how a weak case gets caught before the client sees it, not a mark against you.</div>';
   return h + rrbFoot_(_str(d.submissionId));
+}
+
+/**
+ * The fix-it-in-the-email form on a sent-back case.
+ *
+ * The most common send-back is a missing reason or a missing premium mode —
+ * gaps of one sentence and one dropdown. Making the advisor reopen the whole
+ * fact find for those meant the fix waited days; this form writes them
+ * straight onto the record from the email, and the case goes back into the
+ * manager's queue by itself. Same single-use signed token as every other
+ * email action.
+ */
+function rrbFixBlock_(d, mgr) {
+  var rows = [];
+  for (var i = 1; i <= 6; i++) {
+    var plan = _str(d['rec' + i + 'Rec']);
+    var prem = rrbNum_(d['rec' + i + 'Prem']);
+    if (!plan && !prem) continue;
+    var noReason = plan && !_str(d['rec' + i + 'Reason']);
+    var noMode   = prem > 0 && !_str(d['rec' + i + 'Mode']);
+    if (noReason || noMode) rows.push({ i: i, plan: plan || ('Recommendation ' + i),
+                                        noReason: noReason, noMode: noMode });
+  }
+  if (!rows.length) return '';
+
+  var tok = '';
+  try { tok = rrbMintToken(_str(d.submissionId), 'fix',
+                           { name: _str(d.advisorName), email: _str(d.agentEmail) }); }
+  catch (err) { return ''; }
+  var url = '';
+  try { url = rrbAppUrl_(); } catch (err2) {}
+  if (!url) return '';
+
+  var h = '<div style="background:#F0FDFA;border:1.5px solid #0D9488;border-radius:10px;padding:14px 16px;margin:0 0 16px">' +
+    '<div style="font-size:14px;font-weight:800;color:#0F766E;margin-bottom:2px">Fix it right here &mdash; no need to reopen the form</div>' +
+    '<div style="font-size:12.5px;color:#115E59;margin-bottom:11px">What you type below goes straight onto the fact find, ' +
+      'and the case goes back to ' + rrbEsc_(mgr.split(' ')[0]) + ' for review automatically.</div>' +
+    '<form action="' + url + '" method="get" style="margin:0">' +
+    '<input type="hidden" name="action" value="agent_fix">' +
+    '<input type="hidden" name="t" value="' + rrbEsc_(tok) + '">';
+
+  rows.forEach(function (r) {
+    h += '<div style="background:#fff;border:1px solid #CCFBF1;border-radius:8px;padding:10px 12px;margin-bottom:9px">' +
+         '<div style="font-size:13px;font-weight:800;color:#134E4A;margin-bottom:6px">' + rrbEsc_(r.plan) + '</div>';
+    if (r.noReason) {
+      h += '<label style="display:block;font-size:11.5px;font-weight:700;color:#475569;margin-bottom:4px">' +
+           'Why did you recommend this? One or two sentences, in the client&rsquo;s terms.</label>' +
+           '<textarea name="r' + r.i + '" rows="2" style="width:100%;box-sizing:border-box;border:1px solid #CBD5E1;' +
+           'border-radius:7px;padding:9px;font:13.5px/1.5 inherit;resize:vertical" ' +
+           'placeholder="e.g. Covers the mortgage so the family keeps the house if anything happens to her"></textarea>';
+    }
+    if (r.noMode) {
+      h += '<label style="display:block;font-size:11.5px;font-weight:700;color:#475569;margin:8px 0 4px">' +
+           'How is the premium paid?</label>' +
+           '<select name="m' + r.i + '" style="width:100%;box-sizing:border-box;border:1px solid #CBD5E1;' +
+           'border-radius:7px;padding:9px;font:13.5px inherit;background:#fff">' +
+           '<option value="">&mdash; choose &mdash;</option>' +
+           '<option value="Monthly">Monthly</option><option value="Quarterly">Quarterly</option>' +
+           '<option value="Semi-Annual">Semi-Annual</option><option value="Annual">Annual</option></select>';
+    }
+    h += '</div>';
+  });
+
+  h += '<button type="submit" style="width:100%;background:#0D9488;color:#fff;border:0;border-radius:8px;' +
+       'padding:13px;font-size:14px;font-weight:800;cursor:pointer">Save these onto the fact find &rarr;</button>' +
+       '</form></div>';
+  return h;
 }
 
 /** Manager AGREED — to the client. Plain language, no jargon, no pressure. */
