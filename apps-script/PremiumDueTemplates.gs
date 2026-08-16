@@ -1725,6 +1725,7 @@ var PD_TEMPLATES = {
     var family = pdFamily_(p, state && state.family);
     return {
       subject: 'Policy ' + p.Policy + ' — ' + (pdAmountDue_(p) > 0 ? pdMoney_(pdAmountDue_(p)) + ' outstanding' : 'premium outstanding ' + d + ' days'),
+      cc: pdChainCc_(p),
       html: pdWrap_(
         pdRefBlock_(p, 'Premium Outstanding') +
         '<p style="margin:0 0 10px">' + pdSalutation_(p.Client) + ',</p>' +
@@ -1956,6 +1957,7 @@ var PD_TEMPLATES = {
     var first = pdFirst_(p.Client), d = Number(p.DaysArrears) || 0;
     return {
       subject: 'Policy ' + p.Policy + ' can still be restored',
+      cc: pdChainCc_(p),
       html: pdWrap_(
         pdRefBlock_(p, 'This policy can still be restored') +
         '<p>' + pdSalutation_(p.Client) + ',</p>' +
@@ -1979,6 +1981,7 @@ var PD_TEMPLATES = {
     var first = pdFirst_(p.Client), d = Number(p.DaysArrears) || 0;
     return {
       subject: 'Your application needs one more thing — policy ' + p.Policy,
+      cc: pdChainCc_(p),
       html: pdWrap_(
         pdRefBlock_(p, 'Your application — outstanding requirements') +
         '<p>' + pdSalutation_(p.Client) + ',</p>' +
@@ -2001,6 +2004,7 @@ var PD_TEMPLATES = {
     var first = pdFirst_(p.Client);
     return {
       subject: 'Thank you — policy ' + p.Policy + ' is up to date',
+      cc: pdChainCc_(p),
       html: pdWrap_(
         pdRefBlock_(p, 'Premium received — thank you') +
         '<p>' + pdSalutation_(p.Client) + ',</p>' +
@@ -2584,7 +2588,7 @@ function pdInPilot_(agent) {
 function pdDeliver_(to, cc, subject, html) {
   if (OUT.TEST_INBOX) {
     var note = 'TEST MODE — this email would have gone to: <b>' + pdEsc_(to || 'no address on file') + '</b>' +
-      (cc && cc.length ? ' &middot; copied: ' + pdEsc_(cc.join(', ')) : '') +
+      ' &middot; copied: <b>' + (cc && cc.length ? pdEsc_(cc.join(', ')) : 'NOBODY — check STAFF_EMAIL / MANAGER_OF') + '</b>' +
       '. No client or member of staff received it.';
     MailApp.sendEmail({
       to: OUT.TEST_INBOX, name: OUT.FROM_NAME, subject: '[TEST] ' + subject,
@@ -3085,6 +3089,22 @@ function dailyPremiumDueRun() {
     !OUT.DRY_RUN && OUT.TEST_INBOX ? ' — TEST MODE, everything to ' + OUT.TEST_INBOX : '',
     OUT.PILOT_AGENTS.length ? ' — pilot: ' + OUT.PILOT_AGENTS.join(', ') : '',
     planned, count, capHeld, skippedNoEmail, internal, groupCount, groupsSent);
+}
+
+/**
+ * Pilot convenience: wipe the log so every letter re-fires on the next run —
+ * for re-testing a fix without hand-deleting sheet rows on a phone. Guarded:
+ * it only runs while TEST_INBOX is set. A live ledger is never wiped by code.
+ */
+function pdResetPilotLog() {
+  if (!OUT.TEST_INBOX) {
+    Logger.log('REFUSED: pdResetPilotLog only runs in test mode (TEST_INBOX set). A live ledger is never wiped.');
+    return;
+  }
+  var sh = getSheet_();
+  var last = sh.getLastRow();
+  if (last > 1) sh.deleteRows(2, last - 1);
+  Logger.log('Pilot log cleared — ' + Math.max(0, last - 1) + ' rows removed. Run dailyPremiumDueRun again and everything re-fires fresh.');
 }
 
 function pdInstallTrigger() {
