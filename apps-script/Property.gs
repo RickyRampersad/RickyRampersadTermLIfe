@@ -433,25 +433,38 @@ function sendPropertyThankYou_(r, policy, instruction, changed, newTotal, nLoc, 
 
 /* ============================ invitations ============================ */
 
-function sendPropertyInvite_(r) {
-  var link = propPortalLink_(r.token);
-  var curTotal = r.total || PROP.LINES.reduce(function (s, L) { return s + (r.values[L.key] || 0); }, 0);
-  var lines = PROP.LINES.map(function (L) { return { label: L.label, current: r.values[L.key] || 0, adjusted: '' }; });
+function sendPropertyInvite_(rows) {
+  if (!rows) return;
+  if (!Array.isArray(rows)) rows = [rows];
+  var head = rows[0];
+  var link = propPortalLink_(head.token);
+  var totalPrem = rows.reduce(function (t, r) { return t + (Number(r.premium) || 0); }, 0);
+
+  var locSections = rows.map(function (r) {
+    var curTotal = PROP.LINES.reduce(function (t, L) { return t + (r.values[L.key] || 0); }, 0);
+    var lines = PROP.LINES.map(function (L) { return { label: L.label, current: r.values[L.key] || 0, adjusted: '' }; });
+    return '<p style="margin:16px 0 6px"><b>📍 ' + esc_(r.location || 'Your property') + '</b>' +
+      (r.occupancy ? ' <span style="color:#5a6b80">· ' + esc_(r.occupancy) + '</span>' : '') + '</p>' +
+      valueTableHtml_(lines, false, 0, curTotal);
+  }).join('');
 
   sendMail_({
-    to: r.email, name: CONFIG.FROM_NAME,
-    subject: (r.days !== null && r.days < 0 ? 'Action needed: ' : '') +
-             'Your property at ' + r.location + ' renews ' + r.renewalDate + ' — review & advise',
+    to: head.email, name: CONFIG.FROM_NAME,
+    subject: (head.days !== null && head.days < 0 ? 'Action needed: ' : '') +
+             'Your property renewal' + (head.policy ? ' — ' + head.policy : '') +
+             ' — due ' + head.renewalDate + ' — review & advise',
     htmlBody: brandWrap_(
-      '<p>Dear ' + esc_((r.contact || r.client).split(' ')[0]) + ',</p>' +
-      '<p><b>' + esc_(r.location) + '</b> is due for renewal on <b>' + esc_(r.renewalDate) + '</b>. ' +
-      'Please review your sums insured below and advise us of any adjustments.</p>' +
-      valueTableHtml_(lines, false, 0, curTotal) +
-      '<p style="margin-top:14px">The current premium at this level of cover is <b>' + fmtMoney_(r.premium) + '</b>.</p>' +
-      (r.years ? '<p style="background:#e3f2ea;border-left:4px solid #1e7d4f;padding:11px 15px;margin:14px 0;font-size:13.5px">' +
-        '🏆 <b>Thank you for ' + esc_(r.years) + ' years with us</b>' + (r.since ? ' — insured since ' + esc_(r.since) : '') + '.</p>' : '') +
-      (r.valuesReviewed ? eduBox_('<b style="color:#a05e03">📅 Your sums insured were last reviewed in ' + esc_(r.valuesReviewed) + '.</b> ' +
-        'Construction and replacement costs have moved since then — if these figures are no longer realistic, ' +
+      '<p>Dear ' + esc_((head.contact || head.client).split(' ')[0]) + ',</p>' +
+      '<p>Your property policy' + (head.policy ? ' <b>' + esc_(head.policy) + '</b>' : '') +
+      (rows.length > 1 ? ', covering <b>' + rows.length + ' locations</b>,' : '') +
+      ' is due for renewal on <b>' + esc_(head.renewalDate) + '</b>. ' +
+      'The sums insured below are as expiring — please review their adequacy and advise us.</p>' +
+      (head.years ? '<p style="background:#e3f2ea;border-left:4px solid #1e7d4f;padding:11px 15px;margin:14px 0;font-size:13.5px">' +
+        '🏆 <b>Thank you for ' + esc_(head.years) + ' years with us</b>' + (head.since ? ' — insured since ' + esc_(head.since) : '') + '.</p>' : '') +
+      locSections +
+      '<p style="margin-top:14px">The renewal premium at this level of cover is <b>' + fmtMoney_(totalPrem) + '</b> (including Government Tax).</p>' +
+      (head.valuesReviewed ? eduBox_('<b style="color:#a05e03">📅 Your sums insured were last reviewed in ' + esc_(head.valuesReviewed) + '.</b> ' +
+        'Replacement and restocking costs have moved since then — if these figures are no longer realistic, ' +
         'this is the moment to put them right.') : '') +
       ctaBtn_(link, 'Review & advise online') +
       '<p style="text-align:center;font-size:13px;color:#5a6b80;margin:2px 0 8px">Know what you want already? Jump straight in:</p>' +
@@ -462,14 +475,12 @@ function sendPropertyInvite_(r) {
       '</p>' +
       '<p style="font-size:13px;color:#5a6b80">Once you send your instruction, you can return to the same page any time to <b>track every step of your renewal</b> — from our desk to Guardian and back — until your new schedule is delivered.</p>' +
       eduBox_('<b style="color:#a05e03">⚠️ Why your values matter — the average clause.</b> ' +
-        'If your property is insured for less than it would cost to rebuild or replace today, ' +
-        'the insurer reduces <u>every</u> claim in the same proportion. Insure at 70% of value and a ' +
-        '$100,000 claim pays $70,000 — even for a small partial loss. The portal shows you exactly ' +
-        'what this would mean on your own figures.') +
+        'If a location is insured for less than it would cost to replace today, the insurer reduces ' +
+        '<u>every</u> claim there in the same proportion. Insure at 70% of value and a $100,000 claim pays $70,000. ' +
+        'Your renewal page shows exactly what this means on your own figures.') +
       eduBox_('<b style="color:#a05e03">💡 Remember your excess</b> — the first portion of every claim is yours to carry. ' +
-        'Your portal shows the excess that applies to this policy.') +
-      '<p>Reviewing takes two minutes online, and you can adjust any line as you go. ' +
-      'Prefer to talk it through? Just reply to this email' +
+        'Your renewal page shows the excess that applies, peril by peril.') +
+      '<p>Reviewing takes two minutes online. Prefer to talk it through? Just reply to this email' +
       (CONFIG.AGENT_PHONE ? ' or call ' + esc_(CONFIG.AGENT_PHONE) : '') + '.</p>' + sig_(),
       'Property renewal'),
   });
@@ -493,19 +504,16 @@ function sendPropertyInvitesToSelection() {
 
   var all = allProperties_();
   var sent = [], skipped = [];
+  var tokens = {};
   wanted.forEach(function (n) {
     var r = all.filter(function (x) { return x.rowIndex === n; })[0];
-    if (!r) return;
-    if (!r.email || !/@/.test(r.email)) { skipped.push((r.client || 'Row ' + n) + ' — no email'); return; }
+    if (r && r.token) tokens[r.token] = r.client;
+  });
+  Object.keys(tokens).forEach(function (tok) {
     try {
-      sendPropertyInvite_(r);
-      if (!(testMode_ && testMode_())) {
-        setPropCell_(n, 'renewal status', 'Invitation sent ' + nowStamp_());
-        setPropCell_(n, 'reminders sent', (r.remindersSent ? r.remindersSent + '; ' : '') + 'invite@' + nowStamp_());
-      }
-      logActivity_(r.token, r.client, 'property-invite', Session.getEffectiveUser().getEmail(), r.location);
-      sent.push(r.client + ' — ' + r.location);
-    } catch (e) { skipped.push((r.client || 'Row ' + n) + ' — ' + e); }
+      sendPropertyInviteByToken_(tok, Session.getEffectiveUser().getEmail());
+      sent.push(tokens[tok]);
+    } catch (e) { skipped.push(tokens[tok] + ' — ' + (e && e.message ? e.message : e)); }
   });
   ui.alert('Property invitations',
     '✅ Sent: ' + sent.length + (sent.length ? '\n' + sent.join('\n') : '') +
@@ -628,7 +636,7 @@ function sendPropertyInviteByToken_(token, by) {
   var rows = propByToken_(token);
   if (!rows) throw new Error('Property renewal not found.');
   if (!rows[0].email) throw new Error('No email on file for this property client.');
-  sendPropertyInvite_(rows[0]);
+  sendPropertyInvite_(rows);
   var isTest = (typeof testMode_ === 'function') && testMode_();
   rows.forEach(function (r) {
     if (!isTest) {
