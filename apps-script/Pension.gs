@@ -36,9 +36,12 @@ var PENSION = {
   MIN_CODE: 6,
 };
 
+/* Address, Incorporated and Agent No. are here rather than on each enrolment
+   because they are constants of the company and the agency — typed once, and
+   then every Declaration and every B.I.R. form for that company has them. */
 var PENSION_COMPANY_HEADERS = [
-  'Company Code', 'Company', 'BIR File #', 'Contact', 'Contact Email', 'Contact Mobile',
-  'Agent', 'Notes',
+  'Company Code', 'Company', 'BIR File #', 'Address', 'Incorporated',
+  'Contact', 'Contact Email', 'Contact Mobile', 'Agent', 'Agent No.', 'Notes',
 ];
 
 var PENSION_EMPLOYEE_HEADERS = [
@@ -104,8 +107,11 @@ function pensionCompanyPublic_(c) {
   return {
     name: String(c['company'] || ''),
     bir: String(c['bir file #'] || ''),
+    address: String(c['address'] || ''),
+    incorporated: fmtDate_(c['incorporated']),
     contact: String(c['contact'] || ''),
     agent: String(c['agent'] || ''),
+    agentNo: String(c['agent no.'] || ''),
   };
 }
 
@@ -192,6 +198,9 @@ function pensionLookup_(code) {
         notes: '',
       },
       enrolment: penrolForEmployee_(enrol),
+      /* Everything the wizard needs to print the pack, once both parts are in.
+         Only ever returned on the enrolment's own code. */
+      wizardCase: enrol['employee part done'] ? penrolCase_(enrol) : null,
       company: co ? pensionCompanyPublic_(co) : { name: String(enrol['company'] || '') },
       asOf: nowStamp_(),
       matched: 'enrolment:' + String(enrol['id'] || ''),

@@ -52,12 +52,21 @@ var PFLOW = {
 
 var PBRAND = { navy: '#0e1a30', deep: '#081020', gold: '#c9a227', goldl: '#f0d066', ink: '#101b33', mut: '#64718e' };
 
+/* Between them, the employer's part and the employee's part collect every field
+   the four printed forms need — Declaration 1, Declaration 2, the Salary
+   Deduction authority and the B.I.R. request. The employer supplies what an
+   employer knows (the job, the payroll dates, the commercial terms); the
+   employee supplies what only they know (date of birth, B.I.R. file number,
+   home address). Anything about the company itself comes off the company's own
+   row, so nobody retypes it per employee. */
 var PENROL_HEADERS = [
   'ID', 'Created', 'Company Code', 'Company', 'Company Contact', 'Company Email',
-  'Employee', 'Employee Email', 'Employee Mobile', 'Employee Code', 'Agent',
+  'Employee', 'Employee Email', 'Employee Mobile', 'Employee Code', 'Agent', 'Agent No.',
+  'Position', 'Department', 'Employed Since',
   'Plan', 'Company Annual (TT$)', 'Company Lump Sum (TT$)', 'Commencement', 'Salary (TT$)',
-  'Maturity Age', 'Guarantee (yrs)', 'Employer Part Done', 'Employer By',
-  'Employee Monthly (TT$)', 'Retirement Age', 'Employee Guarantee', 'Beneficiaries',
+  'Maturity Age', 'Guarantee (yrs)', 'First Deduction', 'Employer Part Done', 'Employer By',
+  'Date of Birth', 'Employee B.I.R. File #', 'Employee Address', 'Marital Status',
+  'Employee Monthly (TT$)', 'Employee Plan', 'Retirement Age', 'Employee Guarantee', 'Beneficiaries',
   'Documents', 'Employee Part Done',
   'BIR Sent', 'BIR Approved', 'Policy #', 'Policy Issued', 'Delivered',
   'Stage', 'Reminders Sent', 'Last Reminder', 'Last Progress Note', 'Thread Id', 'Notes',
@@ -423,6 +432,11 @@ function penrolEmployerSubmit_(p) {
   put('employee', pstr_(p.employee)); put('employee email', employeeEmail);
   put('employee mobile', pstr_(p.employeeMobile, 60)); put('employee code', code);
   put('agent', pstr_(p.agent) || company['agent'] || CONFIG.AGENT_NAME);
+  put('agent no.', company['agent no.'] || '');
+  put('position', pstr_(p.position, 80));
+  put('department', pstr_(p.department, 80));
+  put('employed since', pstr_(p.employedSince, 40));
+  put('first deduction', pstr_(p.firstDeduction, 40));
   put('plan', pstr_(p.plan, 80));
   put('company annual (tt$)', pnum_(p.companyAnnual));
   put('company lump sum (tt$)', pnum_(p.companyLump));
@@ -459,9 +473,16 @@ function penrolEmployeeSubmit_(p) {
   try { docs = pfileDocs_(r, p.documents || []); }
   catch (err) { docs = 'Upload failed — ' + err; }
 
+  if (!pstr_(p.dob)) return { ok: false, error: 'Your date of birth is needed — the declarations cannot be completed without it.' };
+
   var now = new Date();
   penrolSetMany_(r, {
+    'Date of Birth': pstr_(p.dob, 40),
+    'Employee B.I.R. File #': pstr_(p.employeeBir, 40),
+    'Employee Address': pstr_(p.employeeAddress, 200),
+    'Marital Status': pstr_(p.marital, 30),
     'Employee Monthly (TT$)': pnum_(p.employeeMonthly),
+    'Employee Plan': pstr_(p.employeePlan, 80),
     'Retirement Age': pstr_(p.retirementAge, 10),
     'Employee Guarantee': pstr_(p.employeeGuarantee, 10),
     'Beneficiaries': pstr_(p.beneficiaries, 500),
@@ -658,6 +679,50 @@ function penrolForEmployer_(r) {
     stage: t.stageLabel, pct: t.pct, steps: t.steps,
     waitingOnEmployee: !!(r['employer part done'] && !r['employee part done']),
     remindersSent: Number(r['reminders sent'] || 0),
+  };
+}
+
+/**
+ * A completed enrolment, in exactly the shape the wizard's own case file uses.
+ * This is the point of collecting the fields in the first place: an agent
+ * loads it in Step 1 and every form — Declaration 1, Declaration 2, the salary
+ * deduction authority and the B.I.R. request — prints out filled, without
+ * anybody retyping what two people already typed.
+ */
+function penrolCase_(r) {
+  var co = pensionCompanies_().filter(function (c) {
+    return codeKey_(c['company code']) === codeKey_(r['company code']);
+  })[0] || {};
+  return {
+    coName: String(r['company'] || ''),
+    coInc: fmtDate_(co['incorporated']),
+    coBir: String(co['bir file #'] || ''),
+    coAddr: String(co['address'] || ''),
+    empName: String(r['employee'] || ''),
+    empDob: fmtDate_(r['date of birth']),
+    empBir: String(r['employee b.i.r. file #'] || ''),
+    empAddr: String(r['employee address'] || ''),
+    empPhone: String(r['employee mobile'] || ''),
+    empEmail: String(r['employee email'] || ''),
+    empMarital: String(r['marital status'] || ''),
+    empJob: String(r['position'] || ''),
+    empDept: String(r['department'] || ''),
+    empEmpDate: fmtDate_(r['employed since']),
+    salary: String(r['salary (tt$)'] || ''),
+    co6a: String(r['company annual (tt$)'] || ''),
+    co6b: String(r['company lump sum (tt$)'] || ''),
+    planStart: fmtDate_(r['commencement']),
+    firstPay: fmtDate_(r['first deduction']),
+    employerPlan: String(r['plan'] || ''),
+    employerVestAge: String(r['maturity age'] || ''),
+    employerGuarantee: String(r['guarantee (yrs)'] || ''),
+    empPortion: String(r['employee monthly (tt$)'] || ''),
+    employeePlan: String(r['employee plan'] || ''),
+    empRetAge: String(r['retirement age'] || ''),
+    empGuarantee: String(r['employee guarantee'] || ''),
+    agentName: String(r['agent'] || ''),
+    agentNo: String(r['agent no.'] || ''),
+    beneficiariesText: String(r['beneficiaries'] || ''),
   };
 }
 

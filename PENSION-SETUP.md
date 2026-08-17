@@ -329,6 +329,36 @@ Pension — mark the next step done**. It asks for the policy number at issue, a
 on delivery it writes to both sides straight away. The two client-owned steps
 cannot be marked this way — the employee's part is theirs to finish.
 
+### The forms, and where every field comes from
+
+Between them the two parts collect **every field the four printed forms need**,
+so a completed enrolment prints without anybody retyping it.
+
+| Comes from | Fields |
+| --- | --- |
+| **The company's own row** (typed once, not per employee) | Company name, address, B.I.R. file no., date of incorporation, agent name and number |
+| **The employer's part** | Employee name, email, mobile, position, department, employed since, plan, annual premium, lump sum, salary, commencement, maturity age, guarantee, first salary deduction |
+| **The employee's part** | Date of birth, B.I.R. file number, home address, marital status, own contribution, own plan, retirement age, guarantee, beneficiaries, documents |
+
+Date of birth and home address are **required** of the employee — the
+declarations and the B.I.R. request cannot be completed without them.
+
+### Turning an enrolment into the printed pack
+
+Once both parts are in, the agent opens the wizard, puts the employee's
+enrolment code into **"Already enrolled online? Load it"** at the top of Step 1,
+and the whole case fills — all 28 fields. Declaration 1, Declaration 2, the
+salary deduction authority, the B.I.R. request and the 15-page Full Package all
+print from it.
+
+Two things still need the agent: the **KYC images** (the employee's uploads are
+in Drive, not in the browser) and the **beneficiaries**, which the employee gives
+as free text and the agent enters as structured rows in Step 2 so the shares can
+be checked to 100%. The loader shows their text so it can be copied across.
+
+The register will not return a case until the employee's part is in — a
+half-filled Declaration is worse than a blank one.
+
 ### Turning the automation on
 
 **Guardian Renewals → Pension — install the 9am automation.** That creates the

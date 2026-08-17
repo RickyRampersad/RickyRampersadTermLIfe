@@ -380,6 +380,7 @@ body{background:linear-gradient(180deg,#081020 0,#0e1a30 152px,transparent 152px
 .signote{margin-top:9px;font-size:11.5px;color:#64718e;line-height:1.65}
 .signote a{color:#8a6d1f}
 .signerr{margin-top:10px;background:#fdf0f1;border:1px solid #f1c6cc;color:#8f1c2c;border-radius:10px;padding:9px 12px;font-size:12px;line-height:1.55}
+.signok{margin-top:10px;background:#eaf6f0;border:1px solid #c7e7d6;color:#13845b;border-radius:10px;padding:9px 12px;font-size:12px;line-height:1.55}
 .signbusy{margin-top:10px;font-size:12px;color:#64718e}
 /* the company's schedule */
 .sched{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}
@@ -657,6 +658,14 @@ table.ptt td:first-child{width:38%;padding-right:12px;color:#64718e;font-weight:
 
     <div class="card">
       <h3><span class="n">A</span>Case details</h3>
+      <div class="signin" style="margin:0 0 14px">
+        <div class="field" style="margin:0"><label for="pullCode">Already enrolled online? Load it</label>
+          <input id="pullCode" placeholder="EM-XXXX-XXXX" autocomplete="off" spellcheck="false"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();pullEnrolment()}"></div>
+        <button class="btn ghost sm" type="button" onclick="pullEnrolment()">Load</button>
+      </div>
+      <div id="pullMsg"></div>
+      <p class="signote" style="margin:0 0 14px">When the employer and the employee have both completed their parts online, this fills the whole case from the register — every form below prints without retyping anything.</p>
       <div class="row2">
         <div class="field"><label>Company / employer (Proposer)</label><input id="coName" oninput="bridgeSave()"></div>
         <div class="field"><label>Date of incorporation</label><input id="coInc" placeholder="dd/mm/yyyy" oninput="bridgeSave()"></div>
@@ -1777,7 +1786,17 @@ function renderPlans(){
   if(eh){
     var aE=qaGet('planQA_emp');
     var coAmt=pnum(d.co6a)+pnum(d.co6b);
-    var ehtml=qBlock('planQA_emp',EMP_Q,aE)+
+    /* A plan pulled in from an online enrolment was chosen by the employer, not
+       by this profiler. Say so, or an agent reads the unanswered questions as
+       "nothing chosen" and quietly picks something else. */
+    var chosen=(d.employerPlan||'').trim();
+    var ehtml=(chosen&&!Object.keys(aE).length
+      ? '<div class="info show" style="margin-bottom:12px"><b>'+esc(chosen)+'</b> was chosen by the employer when they enrolled online'+
+        (d.employerVestAge?', maturing at age '+esc(d.employerVestAge):'')+
+        (d.employerGuarantee?', '+(d.employerGuarantee==='0'?'no guarantee':esc(d.employerGuarantee)+'-year guarantee'):'')+
+        '. It is already on every form. Answer the questions below only if you want to check it against the alternatives.</div>'
+      : '')+
+      qBlock('planQA_emp',EMP_Q,aE)+
       '<div class="field" style="margin-bottom:12px"><label>Vesting / retirement age for the employer plan</label><select onchange="setIndSel(&quot;employerVestAge&quot;,this.value)">'+
         ['','50','55','60','65','70'].map(function(v){return '<option value="'+v+'" '+((d.employerVestAge||'')===v?'selected':'')+'>'+(v?('Age '+v):'Choose\u2026')+'</option>';}).join('')+
       '</select><div class="hint" style="font-size:10.5px;color:#9aa6c0;margin-top:4px">Maturity age \u2014 by law not before 50. Choose 50 / 55 / 60 / 65 / 70.</div></div>'+
@@ -2713,6 +2732,50 @@ async function registerPost(payload){
   return data;
 }
 
+/**
+ * Pulls a completed enrolment into the wizard. Both parts have to be in — the
+ * register only returns the case once the employee has finished theirs, because
+ * a half-filled Declaration is worse than a blank one.
+ */
+async function pullEnrolment(){
+  var el=document.getElementById('pullCode');
+  var code=(el?el.value:'').trim();
+  var say=function(html,cls){ var m=document.getElementById('pullMsg');
+    if(m) m.innerHTML=html?'<div class="'+(cls||'signerr')+'">'+html+'</div>':''; };
+  if(code.replace(/\s+/g,'').length<6){ say('Enter the employee’s enrolment code.'); return; }
+  say('Looking it up…','signbusy');
+  var data;
+  try{ data=await registerLookup(code); }
+  catch(e){ say(esc(e.message)); return; }
+  if(!data.ok){ say(esc(data.error||'That code was not recognised.')); return; }
+  var c=data.wizardCase;
+  if(!c){
+    var en=data.enrolment;
+    say(en&&!en.yourPartDone
+      ? 'That enrolment is still waiting on the employee’s part, so there is nothing complete to load yet. They are being reminded every morning.'
+      : 'That code has no completed enrolment behind it.');
+    return;
+  }
+  var d=bridgeLoad(), filled=0;
+  for(var k in c){
+    if(k==='beneficiariesText') continue;
+    if(c[k]!==''&&c[k]!=null){ d[k]=c[k]; filled++; }
+  }
+  bridgeWrite(d);
+  /* The case drives three separate surfaces: the plain inputs, the mirrored
+     fields on the later steps, and the plan pickers, which are drawn from the
+     case rather than held in inputs of their own. Refresh all three, or the
+     agent sees a half-loaded screen while the PDFs quietly hold the rest. */
+  loadInitial();
+  try{ renderPlans(); }catch(e){}
+  try{ syncMirrors(); }catch(e){}
+  try{ calc(); }catch(e){}
+  say('<b>Loaded '+filled+' fields for '+esc(c.empName||'this case')+'.</b> '+
+    'Check them, add the KYC images, and every form below is ready to print.'+
+    (c.beneficiariesText?'<br><br><b>Beneficiaries, as the employee gave them:</b> '+esc(c.beneficiariesText)+
+      ' — enter these in Step 2 so they land on Declaration 1.':''),'signok');
+}
+
 /** The five steps, drawn the same way for an employer and for an employee. */
 function timelineHtml(t){
   if(!t||!t.steps||!t.steps.length) return '';
@@ -2752,6 +2815,10 @@ function enrolFormHtml(){
       '<div class="full"><label for="enName">Employee’s full name</label><input id="enName" autocomplete="off"></div>'+
       '<div><label for="enEmail">Their email address</label><input id="enEmail" type="email" autocomplete="off" placeholder="name@company.co.tt"></div>'+
       '<div><label for="enMobile">Their mobile (optional)</label><input id="enMobile" autocomplete="off"></div>'+
+      '<div><label for="enJob">Their position</label><input id="enJob" placeholder="Operations Manager"></div>'+
+      '<div><label for="enDept">Department</label><input id="enDept" placeholder="Operations"></div>'+
+      '<div><label for="enSince">Employed since</label><input id="enSince" placeholder="dd/mm/yyyy"></div>'+
+      '<div><label for="enFirstPay">First salary deduction</label><input id="enFirstPay" placeholder="dd/mm/yyyy"><p class="hint">Only if they add anything of their own — the payroll date it starts.</p></div>'+
       '<div class="full"><label for="enPlan">The plan</label><select id="enPlan">'+
         '<option value="">Choose the plan…</option>'+
         PLANS.filter(function(p){return p.tags&&p.tags.own==='company';}).map(function(p){
@@ -2790,6 +2857,7 @@ async function submitEnrolEmployer(){
   enMsg('enMsg','Saving, and writing to '+esc(v('enName').split(' ')[0])+'…','busy');
   var payload={ action:'enrolEmployer', companyCode:(document.getElementById('erCode')||{}).value||'',
     employee:v('enName'), employeeEmail:v('enEmail'), employeeMobile:v('enMobile'),
+    position:v('enJob'), department:v('enDept'), employedSince:v('enSince'), firstDeduction:v('enFirstPay'),
     plan:v('enPlan'), companyAnnual:v('enAnnual'), companyLump:v('enLump'), salary:v('enSalary'),
     commencement:v('enStart'), maturityAge:v('enMat'), guarantee:v('enGtee'), submittedBy:v('enBy') };
   var out;
@@ -2830,6 +2898,17 @@ function employeePartHtml(en){
     '<p class="lead">'+esc(en.company||'Your employer')+' has completed their side. This is the part only you can give us: '+
       'anything you want to add out of your own salary, who you want the money to go to, and three documents.</p>'+
     '<div class="g2">'+
+      '<div><label for="eeDob">Your date of birth</label><input id="eeDob" placeholder="dd/mm/yyyy"><p class="hint">The declarations cannot be completed without it.</p></div>'+
+      '<div><label for="eeBir">Your B.I.R. file number</label><input id="eeBir" placeholder="000000-0"><p class="hint">On your pay slip or TD1. If you cannot find it, leave it and we will trace it.</p></div>'+
+      '<div class="full"><label for="eeAddr">Your home address</label><input id="eeAddr" placeholder="8 Saddle Road, Maraval"></div>'+
+      '<div><label for="eeMarital">Marital status</label><select id="eeMarital">'+
+        '<option value="">Choose…</option><option>Single</option><option>Married</option>'+
+        '<option>Divorced</option><option>Widowed</option><option>Common-law</option></select></div>'+
+      '<div><label for="eePlan">Your own plan (if you are adding)</label><select id="eePlan">'+
+        '<option value="">Not adding anything of my own</option>'+
+        PLANS.filter(function(p){return p.tags&&p.tags.own!=='company';}).map(function(p){
+          return '<option value="'+esc(p.n)+'">'+esc(p.n)+'</option>'; }).join('')+
+        '</select><p class="hint">Not sure? Leave it — your agent will advise.</p></div>'+
       '<div><label for="eeOwn">Your own contribution (TT$ a month)</label><input id="eeOwn" inputmode="decimal" placeholder="500">'+
         '<p class="hint">Optional, minimum $200 a month. This part is <b>your</b> money and it lowers the income tax you pay.</p></div>'+
       '<div><label for="eeRet">Your retirement age</label><input id="eeRet" placeholder="60"></div>'+
@@ -2853,6 +2932,8 @@ function employeePartHtml(en){
 
 async function submitEnrolEmployee(){
   var v=function(id){ var e=document.getElementById(id); return e?e.value.trim():''; };
+  if(!v('eeDob')){ enMsg('eePartMsg','Your date of birth is needed — the declarations cannot be completed without it.'); return; }
+  if(!v('eeAddr')){ enMsg('eePartMsg','Your home address is needed — it goes on the B.I.R. request.'); return; }
   if(!v('eeBens')){ enMsg('eePartMsg','Please say who you want the money to go to — that is the part we cannot guess.'); return; }
   var own=v('eeOwn').replace(/[^0-9.]/g,'');
   if(own && Number(own)>0 && Number(own)<200){
@@ -2865,7 +2946,8 @@ async function submitEnrolEmployee(){
   var code=(document.getElementById('eeCode')||{}).value||'';
   var out;
   try{ out=await registerPost({ action:'enrolEmployee', code:code,
-    employeeMonthly:own, retirementAge:v('eeRet'), employeeGuarantee:v('eeGtee'),
+    dob:v('eeDob'), employeeBir:v('eeBir'), employeeAddress:v('eeAddr'), marital:v('eeMarital'),
+    employeePlan:v('eePlan'), employeeMonthly:own, retirementAge:v('eeRet'), employeeGuarantee:v('eeGtee'),
     beneficiaries:v('eeBens'), employeeMobile:v('eeMob'), documents:ENROL_DOCS }); }
   catch(e){ enMsg('eePartMsg',esc(e.message)); return; }
   if(!out.ok){ enMsg('eePartMsg',esc(out.error||'That could not be saved.')); return; }
