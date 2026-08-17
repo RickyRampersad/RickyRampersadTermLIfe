@@ -266,8 +266,13 @@ function openProp(token){
         <label>Note for the client's progress update (optional)</label>
         <input type="text" id="pNote" placeholder="e.g. Terms received from Guardian — reviewing now">
       </div>
+      ${pp.rate?`<div class="sec"><h4>Rate check</h4>
+        <div class="task"><div class="t"><b>$${pp.rate.toFixed(2)} per $1,000</b> before tax
+          <div class="mini">${(pp.premiumHistory||[]).map(h=>h.year+': '+money(h.amount)).join(' · ')||'no history on file'}${pp.years?' · '+pp.years+' yrs with us':''}</div>
+        </div></div></div>`:''}
       <div class="sec" style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="abtn primary" id="pInvite">✉ Send/resend renewal invite</button>
+        <button class="abtn gold" id="pRate">⚖ Request loyalty rate review</button>
         ${link?`<button class="abtn" id="pLink">⧉ Copy portal link</button>`:''}
       </div>
     </div>`;
@@ -276,6 +281,7 @@ function openProp(token){
     closeDr(); act('propStage',{token:pp.token,stage:btn.dataset.adv,note:$('#pNote').value},'Stage advanced — client updated by email');
   });
   $('#pInvite').onclick=()=>{ closeDr(); act('propInvite',{token:pp.token},'Invitation sent to '+(pp.email||'client')); };
+  $('#pRate').onclick=()=>{ closeDr(); act('propRateReview',{token:pp.token},'Rate review request sent to Guardian'); };
   $('#pAssign').onchange=e=>act('propAssign',{token:pp.token,assignee:e.target.value},'Assigned');
   const pl=$('#pLink'); if(pl) pl.onclick=async()=>{ try{ await navigator.clipboard.writeText(link); toast('Portal link copied'); }catch(e){ prompt('Copy the link:', link); } };
 }

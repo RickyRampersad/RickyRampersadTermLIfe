@@ -785,6 +785,10 @@ function staffAction(key, me, action, params) {
       sendPropertyInviteByToken_(params.token, staff.email);
       break;
     }
+    case 'propRateReview': {
+      sendRateReviewEmail_(params.token, staff.email);
+      break;
+    }
     case 'propAssign': {
       var pr = propByToken_(params.token);
       if (!pr) throw new Error('Property renewal not found.');

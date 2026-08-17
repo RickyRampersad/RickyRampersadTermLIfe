@@ -599,7 +599,10 @@ function propertyPipeline_() {
       renewalDate: r.renewalDate, days: r.days, stage: r.stage, stageUpdated: r.stageUpdated,
       email: r.email, mobile: r.mobile, assignedTo: r.assignedTo, status: r.status,
       locations: 0, premium: 0 };
-    g.locations++; g.premium += Number(r.premium) || 0;
+    g.locations++; g.premium += Number(r.premium) || 0; g.total = (g.total || 0) + (Number(r.total) || 0);
+    if (r.rate) g.rate = r.rate;
+    if (r.premiumHistory && r.premiumHistory.length > (g.premiumHistory || []).length) g.premiumHistory = r.premiumHistory;
+    if (r.years) g.years = r.years;
     if (r.policy) g.policy = r.policy;
     if (r.stage) { g.stage = r.stage; g.stageUpdated = r.stageUpdated; }
     if (r.email) g.email = r.email;
@@ -626,6 +629,61 @@ function sendPropertyInviteByToken_(token, by) {
 }
 
 function propertyStages_() { return PROP.STAGES; }
+
+/**
+ * Staff action: ask CRMS/underwriting to revisit the renewal rate for a
+ * long-standing, claims-free client. Cites the client's actual history.
+ */
+function sendRateReviewEmail_(token, by) {
+  var rows = propByToken_(token);
+  if (!rows) throw new Error('Property renewal not found.');
+  var head = rows[0];
+  var totalSI = rows.reduce(function (s, r) { return s + (Number(r.total) || 0); }, 0);
+  var totalPrem = rows.reduce(function (s, r) { return s + (Number(r.premium) || 0); }, 0);
+  var hist = head.premiumHistory || [];
+  var histHtml = hist.length
+    ? '<table style="border-collapse:collapse;font-size:13px;margin:8px 0">' +
+      '<tr><th style="padding:6px 12px;border:1px solid #e3eaf2;background:#f4f7fa">Year</th>' +
+      hist.map(function (h) { return '<td style="padding:6px 12px;border:1px solid #e3eaf2"><b>' + esc_(h.year) + '</b></td>'; }).join('') + '</tr>' +
+      '<tr><th style="padding:6px 12px;border:1px solid #e3eaf2;background:#f4f7fa">Premium</th>' +
+      hist.map(function (h) { return '<td style="padding:6px 12px;border:1px solid #e3eaf2">' + fmtMoney_(h.amount) + '</td>'; }).join('') + '</tr></table>'
+    : '';
+
+  var html =
+    '<div style="font-family:Arial,sans-serif;font-size:14px;color:#1a2433">' +
+    '<div style="background:#003366;color:#fff;padding:14px 18px;border-radius:8px 8px 0 0">' +
+    '<b>RATE REVIEW REQUEST — loyal client renewal</b></div>' +
+    '<table style="border-collapse:collapse;width:100%;max-width:640px">' +
+    tr_('Client', esc_(head.client)) +
+    tr_('Policy #', esc_(head.policy || '(not on file)')) +
+    tr_('Renewal date', esc_(head.renewalDate)) +
+    (head.years ? tr_('Years insured with us', esc_(head.years)) : '') +
+    tr_('Claims record', 'No claims on our records — please verify and consider') +
+    tr_('Locations', String(rows.length)) +
+    (totalSI ? tr_('Total sums insured', fmtMoney_(totalSI)) : '') +
+    tr_('Renewal premium as offered', fmtMoney_(totalPrem)) +
+    (head.rate ? tr_('Effective rate', '$' + head.rate + ' per $1,000 (before tax)') : '') +
+    '</table>' +
+    (histHtml ? '<p style="margin:14px 0 4px"><b>Premium history on this policy:</b></p>' + histHtml : '') +
+    '<p style="margin:14px 0">Given this client\'s tenure and clean record, we ask that the renewal ' +
+    'terms be reviewed for a loyalty consideration before the renewal date. Please reply-all with ' +
+    'revised terms, or confirmation that the current terms stand, so we can advise the client.</p>' +
+    '<p style="color:#5a6b80;font-size:12px">Requested by ' + esc_(by || 'branch staff') + ' via the Ricky Rampersad Branch renewal platform (ref ' + esc_(token) + ').</p></div>';
+
+  sendMail_({
+    to: PROP.CRMS_TO,
+    cc: PROP.CRMS_CC.filter(String).join(','),
+    name: CONFIG.FROM_NAME,
+    subject: 'RATE REVIEW REQUEST — ' + head.client + (head.policy ? ' — ' + head.policy : '') +
+             ' — ' + (head.years ? head.years + ' yrs' : 'loyal client') + ', claims-free',
+    htmlBody: html,
+  });
+  logActivity_(token, head.client, 'rate-review-requested', by || 'staff',
+    'Loyalty rate review sent to CRMS · premium ' + fmtMoney_(totalPrem));
+  propProgressSheet_().appendRow([new Date(), token, head.client, head.stage || 'instructed',
+    'Rate review requested from Guardian — negotiating on your behalf', by || 'staff']);
+}
+
 
 /* ============================ menu ============================ */
 
