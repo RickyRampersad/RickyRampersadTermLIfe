@@ -39,6 +39,7 @@ var PROP = {
     'support@rickyrampersadbranch.com',
   ],
 
+  TAX_RATE: 0.06,          // Government Tax applied on premium
   STAFF_FOLLOWUP_DAYS: 3,   // nudge the team every 3 days
   CLIENT_FOLLOWUP_DAYS: 5,  // update the client every 5 days
 
@@ -73,6 +74,7 @@ function propSheet_() {
     'Token', 'Portal Link', 'Renewal Status', 'Stage', 'Stage Updated',
     'Last Client Update', 'Last Staff Nudge', 'Reminders Sent', 'Assigned To',
     'Insured Since', 'Years Insured', 'Values Last Reviewed', 'Premium History',
+    'Rate Per Mille',
   ]);
 }
 
@@ -118,6 +120,19 @@ function propRow_(r, map, rowIndex) {
     years: String(c('years insured') || ''),
     valuesReviewed: String(c('values last reviewed') || ''),
     premiumHistory: parsePremiumHistory_(String(c('premium history') || '')),
+    // $ per $1,000 of sum insured, before tax. Explicit column wins; else
+    // derived from the tax-inclusive premium and the total sum insured.
+    rate: (function () {
+      var explicit = num_(c('rate per mille'));
+      if (explicit) return explicit;
+      var prem = num_(c('premium')), tot = num_(c('total value'));
+      if (!tot) {
+        tot = num_(c('building cover')) + num_(c('stock')) + num_(c('general contents')) +
+              num_(c('plant, equipment & machinery')) + num_(c('electronic equipment'));
+      }
+      if (prem > 0 && tot > 0) return Math.round(prem / (tot * (1 + PROP.TAX_RATE)) * 1000 * 10000) / 10000;
+      return 0;
+    })(),
   };
 }
 
@@ -206,6 +221,7 @@ function propertyPage_(p) {
         email: r.email, mobile: r.mobile,
         stage: r.stage, stageUpdated: r.stageUpdated, status: r.status,
         since: r.since, years: r.years, valuesReviewed: r.valuesReviewed,
+        rate: r.rate, taxRate: PROP.TAX_RATE,
         premiumHistory: r.premiumHistory,
         progress: progressFor_(r.token, r.location),
       };
@@ -258,7 +274,8 @@ function submitPropertyInstruction(payload) {
     var curTotal = lines.reduce(function (s2, l) { return s2 + l.current; }, 0);
     var newTotal = lines.reduce(function (s2, l) { return s2 + (l.adjusted !== '' ? l.adjusted : l.current); }, 0);
     var changed = lines.some(function (l) { return l.adjusted !== '' && l.adjusted !== l.current; });
-    parts.push({ row: r, lines: lines, curTotal: curTotal, newTotal: newTotal, changed: changed,
+    var estPremium = (changed && r.rate) ? Math.round(newTotal * r.rate / 1000 * (1 + PROP.TAX_RATE) * 100) / 100 : '';
+    parts.push({ row: r, lines: lines, curTotal: curTotal, newTotal: newTotal, changed: changed, estPremium: estPremium,
       addressConfirmed: L.addressConfirmed !== false,
       addressCorrection: String(L.addressCorrection || '').slice(0, 300),
       occupancy: String(L.occupancy || '').slice(0, 200) });
@@ -286,6 +303,7 @@ function submitPropertyInstruction(payload) {
       'Occupancy Confirmed': p.occupancy || '',
       'Current Total Value': p.curTotal,
       'Adjusted Total Value': p.changed ? p.newTotal : '',
+      'Estimated New Premium (incl tax)': p.estPremium || '',
       'Emailed To': PROP.CRMS_TO + ' cc ' + PROP.CRMS_CC.join(','),
       'Status': isTest ? 'TEST' : 'Received',
     });
@@ -341,7 +359,8 @@ function sendPropertyInstructionToCRMS_(head, policy, instruction, parts, anyCha
   var sections = parts.map(function (p) {
     return '<p style="margin:16px 0 6px"><b>📍 ' + esc_(p.row.location || 'Location') + '</b>' +
       (p.row.occupancy ? ' <span style="color:#5a6b80">· ' + esc_(p.row.occupancy) + '</span>' : '') +
-      ' — premium ' + fmtMoney_(p.row.premium) + '</p>' +
+      ' — premium ' + fmtMoney_(p.row.premium) +
+      (p.estPremium ? ' · <b>estimated at adjusted values: ' + fmtMoney_(p.estPremium) + '</b> (rate ' + p.row.rate + '/mille + tax — please confirm)' : '') + '</p>' +
       (p.addressCorrection
         ? '<p style="background:#fbe9e7;border-left:4px solid #b3261e;padding:10px 14px;margin:6px 0;font-size:13px">' +
           '<b>⚠️ ADDRESS CORRECTION REQUESTED</b><br>Should read: <b>' + esc_(p.addressCorrection) + '</b><br>' +
