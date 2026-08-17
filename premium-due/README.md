@@ -423,6 +423,19 @@ force; suspense money already paid is named as reassurance; a Future Premium
 Payment requirement carries the MyGG pay button. No requirement data → the
 generic letter still stands.
 
+**Replacement identification:** `pdReplacementRisk_` flags a pending
+application sitting on a client whose in-force cover is behind or freshly
+lapsed — new business written over dying cover. Surfaced internally only (the
+digest, the engine's red pill and insight on both policies, never a
+client-copied email); the manager's private decision set already carries the
+"investigate replacement" option.
+
+**The structured close:** a policy the engine chased as pending that is next
+seen in force gets `nbclose`, once — *"Your policy is in force"*, named by
+product, with the received-date-to-issue timeline, MyGG onboarding, and the
+agent and manager on the copy line. No application ever just quietly stops
+being talked about.
+
 **Stats before letters:** `pdPilotStats()` emails one digest of everything
 the engine believes — the dues funnel, the schemes, the decoded pending book,
 the week's production — to the test inbox (branch email once live), writing

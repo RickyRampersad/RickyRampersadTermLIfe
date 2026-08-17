@@ -628,12 +628,20 @@ function clientFlags(c){
   const plans=new Set(fam.map(x=>x.PlanCode));
   // duplicate signal: 2+ policies under same client, overlapping plan codes
   const samePlan=fam.filter(x=>x.PlanCode===c.PlanCode && x.Policy!==c.Policy);
+  // replacement signal: a NEW application pending while the same client's
+  // in-force cover is behind (or freshly lapsed). New business written over
+  // dying cover — review before anything lapses. Flagged on BOTH policies.
+  const pendSib=fam.some(x=>x.Policy!==c.Policy && Number(x.Status)===3);
+  const slideSib=fam.some(x=>x.Policy!==c.Policy &&
+    (Number(x.Status)===2 || (Number(x.Status)===1 && (Number(x.DaysArrears)||0)<=180)));
+  const replacementRisk=(Number(c.Status)===3 && slideSib) || (Number(c.Status)===2 && pendSib);
   return {
     fam, count:fam.length, active:active.length, lapsed:lapsed.length,
     hasLapseHistory:lapsed.length>0,
     duplicateRisk: samePlan.length>0,
     samePlan, plans:[...plans],
-    churnRisk: active.length>0 && lapsed.length>0
+    churnRisk: active.length>0 && lapsed.length>0,
+    replacementRisk
   };
 }
 
@@ -1120,6 +1128,8 @@ function caseCard(c){
   const dupPill=cf.duplicateRisk?`<span class="pill dup">⚠ ${cf.samePlan.length+1}× ${esc(c.PlanCode)} — duplicate?</span>`:'';
   const churnPill=cf.churnRisk?`<span class="pill lapse">↻ ${cf.lapsed} lapsed in history</span>`:'';
   const grpPill=c.grp?`<span class="pill grp">▦ Group scheme — remittance statement, not letters</span>`:'';
+  const replPill=cf.replacementRisk?`<span class="pill lapse">⚠ Replacement check — new app + sliding cover</span>`:'';
+  const reqtPill=(c.stage==='pend'&&c.ReqtName)?`<span class="pill plan">📄 ${esc(c.ReqtName)}${c.ReqtDays?` · ${c.ReqtDays}d`:''}${c.ReqtUwDone?' · UW ✓ settle-ready':''}</span>`:'';
   const premPill=`<span class="pill prem">${esc(money(c.Premium))} ${esc(c.Mode||'')}premium</span>`.replace(' premium','/yr');
   const awaitV = st.retention && !st.verdict ? `<span class="await-tag">Awaiting manager</span>` : (st.verdict?`<span class="done-tag">${esc(st.verdict.managerVerdict)}</span>`:'');
 
@@ -1127,7 +1137,7 @@ function caseCard(c){
     <div class="case-top" data-toggle>
       <div class="case-main">
         <div class="case-name">${esc(c.Client)} ${premPill} ${awaitV}</div>
-        <div class="case-meta"><span class="mono">Policy ${esc(c.Policy)}</span><span class="mono">Client ${esc(c.ClientNo)}</span><span>Agent <b>${esc(c.Agent)}</b></span>${stagePill(c)}<span class="pill plan">${esc(c.PlanCode)}</span>${grpPill}${dupPill}${churnPill}</div>
+        <div class="case-meta"><span class="mono">Policy ${esc(c.Policy)}</span><span class="mono">Client ${esc(c.ClientNo)}</span><span>Agent <b>${esc(c.Agent)}</b></span>${stagePill(c)}<span class="pill plan">${esc(c.PlanCode)}</span>${grpPill}${replPill}${reqtPill}${dupPill}${churnPill}</div>
       </div>
       <div class="case-right">
         <div class="daybadge"><div class="d ${dayClass(c.stage)}">${c.stage==='pend'?'NEW':c.DaysArrears}</div><div class="l">${c.stage==='pend'?'pending':'days arr.'}</div></div>
@@ -1444,6 +1454,10 @@ function rickyInsights(cases){
   const noSurvey=s45.filter(c=>{const st=policyState(c.Policy);return !st.survey&&!st.response;});
   if(s90.length)out.push({mk:'crit',t:`<b>${s90.length} ${s90.length===1?'policy is':'policies are'} at the 90-day lapse line.</b> Reinstatement only from here — pursue today or document the loss.`});
   if(hotSchemes.length)out.push({mk:'warn',t:`<b>${hotSchemes.length} group scheme${hotSchemes.length===1?' has':'s have'} a missed remittance</b> — ${hotSchemes.slice(0,3).map(g=>`${esc(g.name)} (${g.live} member ${g.live===1?'policy':'policies'}, ${money(g.prem)})`).join(', ')}${hotSchemes.length>3?` and ${hotSchemes.length-3} more`:''}. One call to one payroll office each — the engine sends the consolidated statement every ${SLA.GROUP_STATEMENT_EVERY} days and never writes to members individually.`});
+  const repl=ind.filter(c=>c.cf.replacementRisk&&c.stage==='pend');
+  if(repl.length)out.push({mk:'crit',t:`<b>${repl.length} pending application${repl.length===1?'':'s'} sit${repl.length===1?'s':''} on ${new Set(repl.map(c=>c.ClientNo)).size} client${new Set(repl.map(c=>c.ClientNo)).size===1?'':'s'} whose in-force cover is sliding.</b> The replacement pattern — new business written while existing cover dies. Review each before anything lapses; the manager's private decision set carries the option.`});
+  const ready=ind.filter(c=>c.stage==='pend'&&c.ReqtUwDone);
+  if(ready.length)out.push({mk:'go',t:`<b>${ready.length} pending ${ready.length===1?'case is':'cases are'} SETTLE-READY</b> — underwriting complete, one document outstanding${ready.length<=3?`: ${ready.map(c=>`${esc(c.Client)} (${esc(c.ReqtName||'requirement')})`).join(', ')}`:''}. The fastest settlements available anywhere in the book.`});
   if(noSurvey.length)out.push({mk:'warn',t:`<b>${noSurvey.length} of ${s45.length} cases in the 45-day window have had no answer from the client.</b> They are reminded every ${SLA.CLIENT_CHASE_EVERY} days automatically until day 60, when the policy becomes a manager's to telephone.`});
   if(byMgr.length)out.push({mk:'crit',t:`<b>${byMgr.length} ${byMgr.length===1?'policy has':'policies have'} been with a manager past the ${SLA.MANAGER_REPLY_DAYS}-day standard with nothing recorded.</b> ${esc([...new Set(byMgr.map(x=>x.b.name))].slice(0,3).join(', '))} ${byMgr.length===1?'owes':'owe'} a call and an answer. Longest waiting: ${Math.max(...byMgr.map(x=>x.b.since))} days. Every one of these clients reads it at day 88.`});
   if(byAgent.length)out.push({mk:'warn',t:`<b>${byAgent.length} ${byAgent.length===1?'case has':'cases have'} passed day ${SLA.AGENT_FILE_BY} with no retention form.</b> ${esc([...new Set(byAgent.map(x=>x.c.Agent))].slice(0,3).join(', '))} — the manager is already working the policy, but the written case is still owed.`});

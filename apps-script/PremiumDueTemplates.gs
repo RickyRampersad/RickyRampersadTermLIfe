@@ -2123,6 +2123,24 @@ var PD_TEMPLATES = {
 
         (isPay ? pdPayBtn_(p) : '') +
 
+        pdSection_('Where your application stands', (function () {
+          var tr = function (k, v2, hot) {
+            return '<tr><td style="padding:7px 11px;border:1px solid ' + PD_BRAND.line + ';background:' + PD_BRAND.panel +
+              ';color:' + PD_BRAND.mute + ';white-space:nowrap;width:120px;font-size:12px">' + k + '</td>' +
+              '<td style="padding:7px 11px;border:1px solid ' + PD_BRAND.line + ';background:#FFFFFF;color:' +
+              (hot ? PD_BRAND.red : PD_BRAND.ink) + '">' + v2 + '</td></tr>';
+          };
+          var recv = p.AppReceived ? pdEsc_(String(p.AppReceived).slice(0, 10)) : '';
+          return '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:10px 0;font-size:13px">' +
+            (recv ? tr('Received', 'Your application reached us on <b>' + recv + '</b>') : '') +
+            tr('Today', '<b>Day ' + d + '</b> — ' + (rq && rq.uwDone
+              ? 'underwriting complete, waiting only on the item' + (named && rq.items.length > 1 ? 's' : '') + ' above'
+              : 'with underwriting' + (named ? ', waiting on the item' + (rq.items.length > 1 ? 's' : '') + ' above' : ''))) +
+            tr('On receipt', 'The moment the outstanding item' + (named && rq && rq.items.length > 1 ? 's reach' : ' reaches') +
+              ' us, the application moves to issue — and your agent and their manager (copied here) see it happen', false) +
+            '</table>';
+        })()) +
+
         pdSection_('The application', pdFacts_(p)) +
 
         '<p style="margin-top:22px">' +
@@ -2134,6 +2152,49 @@ var PD_TEMPLATES = {
             'tell you exactly what is outstanding and take it from there.') + '</p>' +
         pdTrackBlock_() + pdSignature_(p),
         { kind: 'pend', days: 0 })
+    };
+  },
+
+  /* ---- the structured close: a pending application became a policy ----
+     Fires once, automatically, when a policy the engine chased as pending is
+     next seen in force. The client gets the good news with the full timeline;
+     the agent and manager are on the copy line, so the case closes in front
+     of everyone it involved — no application ever just quietly stops being
+     talked about. */
+  nbclose: function (p, state) {
+    var first = pdFirst_(p.Client);
+    var recv = p.AppReceived ? String(p.AppReceived).slice(0, 10) : '';
+    var took = 0;
+    if (recv) {
+      var rd = new Date(recv);
+      if (!isNaN(rd)) took = Math.max(1, Math.round((Date.now() - rd.getTime()) / 86400000));
+    }
+    var nm = pdPlanName_(p.PlanCode, p.Policy);
+    return {
+      subject: 'Your policy is in force — ' + (nm || 'policy ' + p.Policy),
+      cc: pdChainCc_(p),
+      html: pdWrap_(
+        pdRefBlock_(p, 'Application complete — policy in force') +
+        '<p>' + pdSalutation_(p.Client) + ',</p>' +
+        '<p><b>Your application is complete and your policy is in force.</b> ' +
+        (nm ? 'You now hold a <b>' + pdEsc_(nm) + '</b>' + (p.PlanCode ? ' (' + pdEsc_(p.PlanCode) + ')' : '') + '. ' : '') +
+        (Number(p.SumAssured) > 0 ? 'Your cover of <b>' + pdMoney_(p.SumAssured) + '</b> is active from today. ' : '') +
+        '</p>' +
+        pdNote_('<b>From this day, you are covered.</b>' +
+          (recv ? ' Your application was received on <b>' + pdEsc_(recv) + '</b> and completed in <b>' + took +
+            ' days</b> — thank you for seeing the requirements through.' : ''), PD_BRAND.green) +
+        pdSection_('Your policy', pdFacts_(p)) +
+        pdSection_('What happens now',
+          '<p style="margin:0 0 8px">Three things worth a minute:</p>' +
+          '<ul style="margin:0;padding-left:20px;color:' + PD_BRAND.ink + '">' +
+          '<li style="margin:0 0 7px">Your contract document follows — read the schedule page and tell us if anything is not as you applied for it.</li>' +
+          '<li style="margin:0 0 7px">Your premium keeps the cover alive. If the payment date or method ever stops suiting you, say so <b>before</b> it becomes a missed payment — changing it is easy.</li>' +
+          '<li style="margin:0 0 7px">Register on <b>myGuardian Group</b> to see your policy, your values and your payments any time.</li>' +
+          '</ul>' + pdPayBtn_(p)) +
+        '<p style="margin-top:18px">Your agent <b>' + pdEsc_(p.Agent) + '</b> and their manager are copied — they saw ' +
+        'this application through and they stay your first call.</p>' +
+        pdTrackBlock_() + pdSignature_(p),
+        { kind: 'thanks', days: 0 })
     };
   },
 
@@ -2858,6 +2919,29 @@ function pdInternalChase_(p, s) {
 
 var PD_REQ_SHEET = 'Requirement Management';
 
+/**
+ * Replacement identification. A NEW application pending while the same
+ * client's in-force cover slides into arrears (or freshly lapsed) is the
+ * classic replacement pattern — new business being written over cover that is
+ * about to die. Sometimes legitimate, sometimes churning; always a review
+ * before anything lapses. MANAGER_PRIVATE already carries the decision option
+ * ("Investigate possible replacement of in-force cover") — this is the
+ * detector that tells the manager to look. Internal surfaces only: the
+ * digest, the engine, the internal chases. Never a client-copied email.
+ */
+function pdReplacementRisk_(p, family) {
+  if (Number(p.Status) !== 3 || !family || !family.length) return null;
+  var risky = [];
+  for (var i = 0; i < family.length; i++) {
+    var f = family[i];
+    if (String(f.Policy) === String(p.Policy)) continue;
+    var st = Number(f.Status) || 0, d = Number(f.DaysArrears) || 0;
+    if (st === 2) risky.push({ policy: f.Policy, why: d + ' days in arrears' });
+    else if (st === 1 && d <= OUT.WIN_BACK_MAX_DAYS) risky.push({ policy: f.Policy, why: 'lapsed ' + d + ' days ago' });
+  }
+  return risky.length ? risky : null;
+}
+
 /** Pending-status decode, per the ES400 manual. */
 function pdPendingMeaning_(code) {
   var c = String(code || '').toUpperCase();
@@ -3251,6 +3335,13 @@ function dailyPremiumDueRun() {
     }
 
     var stageKey = pdStageDue_(p, s);
+    /* The structured close: a policy this engine chased as pending is now in
+       force. Congratulate once — timeline attached, agent and manager copied —
+       so the case ends in front of everyone it involved. */
+    if (!stageKey && (Number(p.Status) || 0) === 0 &&
+        sent[String(p.Policy) + '|pend'] && !sent[String(p.Policy) + '|nbclose']) {
+      stageKey = 'nbclose';
+    }
     if (!stageKey) continue;
     var round = (stageKey === 'close') ? pdCloseRound_(Number(p.DaysArrears) || 0)
               : (stageKey === 'pend') ? pdPendRound_(Number(p.DaysArrears) || 0) : 0;
@@ -3354,6 +3445,7 @@ function pdPilotStats() {
   var at45 = 0, w4547 = 0, w4559 = 0, w6074 = 0, w7589 = 0, w90109 = 0;
   var premWin = 0, noEmail = 0, mgrDue = 0;
   var groups = {}, weekApps = 0, weekPrem = 0;
+  var byClientAll = {}, pendList = [];
   var now = Date.now(), weekAgo = now - 7 * 86400000;
 
   for (i = 0; i < P.length; i++) {
@@ -3368,8 +3460,9 @@ function pdPilotStats() {
       }
       continue;
     }
+    (byClientAll[String(p.ClientNo)] = byClientAll[String(p.ClientNo)] || []).push(p);
     if (s === 1) st1++;
-    else if (s === 3) st3++;
+    else if (s === 3) { st3++; pendList.push(p); }
     else if (s === 2) {
       st2++;
       if (d === 45) at45++;
@@ -3396,6 +3489,16 @@ function pdPilotStats() {
     if (reqMap[pol].errors) pendErrors++;
     pendSusp += reqMap[pol].susp;
   }
+
+  /* Replacement identification: a pending application while the same client's
+     in-force cover is behind or freshly lapsed. Review before anything dies. */
+  var replApps = 0, replClients = {}, j2;
+  for (j2 = 0; j2 < pendList.length; j2++) {
+    var rr = pdReplacementRisk_(pendList[j2], byClientAll[String(pendList[j2].ClientNo)] || []);
+    if (rr) { replApps++; replClients[String(pendList[j2].ClientNo)] = 1; }
+  }
+  var replCli = 0;
+  for (j2 in replClients) if (Object.prototype.hasOwnProperty.call(replClients, j2)) replCli++;
 
   var row = function (k, v2, hot) {
     return '<tr><td style="padding:7px 12px;border:1px solid ' + PD_BRAND.line + ';background:#FFFFFF;color:' +
@@ -3439,7 +3542,9 @@ function pdPilotStats() {
       row('Applications with live requirements', String(pendN), false) +
       row('SETTLE-READY: underwriting complete, paper outstanding', String(pendReady), true) +
       row('Carrying our own entry errors (ours to fix)', String(pendErrors), false) +
-      row('Premium held in suspense on pending cases', pdMoney_(pendSusp), false))) +
+      row('Premium held in suspense on pending cases', pdMoney_(pendSusp), false) +
+      row('REPLACEMENT CHECKS: new app pending while in-force cover slides', replApps + ' app' +
+        (replApps === 1 ? '' : 's') + ' · ' + replCli + ' client' + (replCli === 1 ? '' : 's'), replApps > 0))) +
 
     pdSection_('Production (application received in the last 7 days)', tbl(
       row('Applications', String(weekApps), false) +
@@ -3452,7 +3557,7 @@ function pdPilotStats() {
     { kind: 'mgr' }, true);
 
   var summary = 'status2=' + st2 + ' at45=' + at45 + ' window45-59=' + w4559 + ' mgrDue=' + mgrDue +
-    ' schemes=' + gN + ' pending=' + pendN + ' settle-ready=' + pendReady;
+    ' schemes=' + gN + ' pending=' + pendN + ' settle-ready=' + pendReady + ' replacement-checks=' + replApps;
   if (OUT.DRY_RUN && !OUT.TEST_INBOX) {
     Logger.log('Digest (DRY RUN, no test inbox — logged only, not emailed). ' + summary);
     return;

@@ -290,6 +290,27 @@ function getPolicies_(scope) {
       if (inScope && !inScope[String(row[0] || '')]) continue;   // outside this person's book
       var p = mapPolicy_(row); p.id = id++; out.push(p);
     }
+
+    /* Pending applications carry their live requirement (name, age, decoded
+       status) from the Requirement Management tab, so both logins see WHY a
+       case is pending, not just that it is. Guarded: no tab, no harm. */
+    try {
+      if (typeof pdRequirements_ === 'function') {
+        var rq = pdRequirements_();
+        for (var q = 0; q < out.length; q++) {
+          if (Number(out[q].Status) !== 3) continue;
+          var e = rq[String(out[q].Policy)];
+          if (!e) continue;
+          out[q].ReqtName = e.items.length ? e.items[0].name : '';
+          out[q].ReqtDays = e.items.length ? e.items[0].days : 0;
+          out[q].ReqtCount = e.items.length;
+          out[q].ReqtUwDone = !!e.uwDone;
+          out[q].ReqtErrors = !!e.errors;
+          out[q].ReqtSusp = e.susp || 0;
+        }
+      }
+    } catch (eRq) { /* requirements are an enrichment, never a failure */ }
+
     return json_({ ok: true, policies: out, total: out.length, scoped: !!inScope });
   } catch (err) {
     return json_({ ok: false, error: String(err) });
