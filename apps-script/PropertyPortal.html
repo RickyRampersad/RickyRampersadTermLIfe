@@ -62,6 +62,16 @@ textarea{min-height:64px;resize:vertical}
 .tstep.done h4,.tstep.now h4{color:var(--navy)}
 .tstep p{font-size:12.5px;color:var(--ink2)}
 .tstep.todo h4{color:#98a8ba}
+.loyal{background:#e3f2ea;border-left:4px solid var(--green);border-radius:0 10px 10px 0;padding:11px 15px;margin:10px 0;font-size:13.5px;color:#1b6b45}
+.loyal b{color:#145134}
+.trend{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}
+.trend th,.trend td{padding:6px 10px;border:1px solid #eef2f7;text-align:left}
+.trend th{background:#f7fafd;color:var(--ink2);font-size:11px;text-transform:uppercase}
+.trend td.n{text-align:right;font-variant-numeric:tabular-nums}
+.bar{height:8px;background:var(--blue);border-radius:99px;display:inline-block;min-width:3px;vertical-align:middle}
+.stale{background:#fdf1dc;border-left:4px solid #a05e03;border-radius:0 10px 10px 0;padding:11px 15px;margin:10px 0;font-size:13.5px;color:#7a4a03}
+details.hist{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:10px 0;background:#fff}
+details.hist summary{cursor:pointer;font-weight:700;color:var(--navy);font-size:13.5px}
 .nf{max-width:560px;margin:60px auto;text-align:center;padding:20px}
 .foot{max-width:720px;margin:6px auto;padding:0 14px;font-size:11.5px;color:#8a97a8}
 </style>
@@ -107,6 +117,23 @@ function tracker(r){
   </div>`;
 }
 
+function premTrend(r){
+  const h = r.premiumHistory||[];
+  if(h.length < 2) return '';
+  const max = Math.max(...h.map(x=>x.amount));
+  const first = h[0], last = h[h.length-1];
+  const pct = first.amount ? Math.round(100*(last.amount/first.amount - 1)) : 0;
+  return `<details class="hist"><summary>📈 Your premium over time (${h.length} renewals)</summary>
+    <table class="trend"><tr><th>Year</th><th>Premium</th><th style="width:45%"></th></tr>
+    ${h.map(x=>`<tr><td>${esc(x.year)}</td><td class="n">${money(x.amount)}</td>
+      <td><span class="bar" style="width:${Math.round(100*x.amount/max)}%"></span></td></tr>`).join('')}
+    </table>
+    <div class="note">${pct>0?`Your premium has moved <b>+${pct}%</b> since ${esc(first.year)}.`:
+      pct<0?`Your premium is <b>${pct}%</b> versus ${esc(first.year)}.`:'Your premium has held steady.'}
+      Premiums follow the sums insured, the rate, and your claims record — if your values are out of date,
+      you may be paying for cover that no longer matches the risk.</div></details>`;
+}
+
 function render(){
   const app = $('#app');
   if(!DATA.ok){
@@ -125,6 +152,8 @@ function render(){
       <h2>${esc(r.location||'Your property')} ${dueChip(r)}</h2>
       <div class="loc">${r.occupancy?esc(r.occupancy)+' · ':''}${r.policy?'Policy '+esc(r.policy):''}${r.carrier?' · '+esc(r.carrier):''} · renews <b>${esc(r.renewalDate)}</b></div>
 
+      ${r.years?`<div class="loyal">🏆 <b>Thank you for ${esc(r.years)} years with us</b>${r.since?` — insured since ${esc(r.since)}`:''}. We value the relationship, and we want your cover to be right.</div>`:''}
+
       <div class="step">Step 1 · Check your sums insured</div>
       <table class="vals">
         <tr><th>Cover</th><th style="text-align:right">Current Value</th><th class="adj" style="text-align:right">Your Adjusted Value</th></tr>
@@ -137,6 +166,11 @@ function render(){
       </table>
       <p style="font-size:13px;color:var(--ink2)">Current premium at this level of cover: <b>${money(r.premium)}</b>
       <span style="color:#8a97a8">(renewal terms may vary)</span>${r.excess?`<br>Excess on this policy: <b>${esc(r.excess)}</b>`:''}</p>
+
+      ${r.valuesReviewed?`<div class="stale">📅 <b>Your sums insured were last reviewed in ${esc(r.valuesReviewed)}.</b>
+        Building and replacement costs have moved since then — if these figures no longer reflect what it would
+        cost to rebuild or restock today, adjust them above.</div>`:''}
+      ${premTrend(r)}
 
       <div class="step">Step 2 · The two things that decide what a claim pays</div>
       <div class="warnbox"><b>⚠️ The average clause — the most important thing on this page.</b><br>

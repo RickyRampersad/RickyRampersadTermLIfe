@@ -71,6 +71,7 @@ function propSheet_() {
     'Electronic Equipment', 'Total Value', 'Premium', 'Excess',
     'Token', 'Portal Link', 'Renewal Status', 'Stage', 'Stage Updated',
     'Last Client Update', 'Last Staff Nudge', 'Reminders Sent', 'Assigned To',
+    'Insured Since', 'Years Insured', 'Values Last Reviewed', 'Premium History',
   ]);
 }
 
@@ -111,7 +112,21 @@ function propRow_(r, map, rowIndex) {
     lastStaffNudge: c('last staff nudge'),
     remindersSent: String(c('reminders sent') || ''),
     assignedTo: String(c('assigned to') || ''),
+    // relationship + trend data that makes the portal feel personal
+    since: fmtDate_(c('insured since')),
+    years: String(c('years insured') || ''),
+    valuesReviewed: String(c('values last reviewed') || ''),
+    premiumHistory: parsePremiumHistory_(String(c('premium history') || '')),
   };
+}
+
+/** "2022:11130|2024:12804.8|2025:12804.8" -> [{year,amount},...] */
+function parsePremiumHistory_(s) {
+  if (!s) return [];
+  return String(s).split('|').map(function (part) {
+    var bits = part.split(':');
+    return { year: String(bits[0] || '').trim(), amount: Number(bits[1]) || 0 };
+  }).filter(function (x) { return x.year && x.amount; });
 }
 
 function num_(v) { var n = Number(String(v).replace(/[^0-9.\-]/g, '')); return isFinite(n) ? n : 0; }
@@ -189,6 +204,8 @@ function propertyPage_(p) {
         values: r.values, total: r.total, premium: r.premium, excess: r.excess,
         email: r.email, mobile: r.mobile,
         stage: r.stage, stageUpdated: r.stageUpdated, status: r.status,
+        since: r.since, years: r.years, valuesReviewed: r.valuesReviewed,
+        premiumHistory: r.premiumHistory,
         progress: progressFor_(r.token, r.location),
       };
     }),
@@ -361,6 +378,11 @@ function sendPropertyInvite_(r) {
       'Please review your sums insured below and advise us of any adjustments.</p>' +
       valueTableHtml_(lines, false, 0, curTotal) +
       '<p style="margin-top:14px">The current premium at this level of cover is <b>' + fmtMoney_(r.premium) + '</b>.</p>' +
+      (r.years ? '<p style="background:#e3f2ea;border-left:4px solid #1e7d4f;padding:11px 15px;margin:14px 0;font-size:13.5px">' +
+        '🏆 <b>Thank you for ' + esc_(r.years) + ' years with us</b>' + (r.since ? ' — insured since ' + esc_(r.since) : '') + '.</p>' : '') +
+      (r.valuesReviewed ? eduBox_('<b style="color:#a05e03">📅 Your sums insured were last reviewed in ' + esc_(r.valuesReviewed) + '.</b> ' +
+        'Construction and replacement costs have moved since then — if these figures are no longer realistic, ' +
+        'this is the moment to put them right.') : '') +
       ctaBtn_(link, 'Review & advise online') +
       eduBox_('<b style="color:#a05e03">⚠️ Why your values matter — the average clause.</b> ' +
         'If your property is insured for less than it would cost to rebuild or replace today, ' +
