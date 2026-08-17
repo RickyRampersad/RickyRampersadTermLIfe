@@ -273,6 +273,7 @@ function openProp(token){
       <div class="sec" style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="abtn primary" id="pInvite">✉ Send/resend renewal invite</button>
         <button class="abtn gold" id="pRate">⚖ Request loyalty rate review</button>
+        ${pp.mobile?`<button class="abtn" id="pWa">📱 WhatsApp the link</button>`:''}
         ${link?`<button class="abtn" id="pLink">⧉ Copy portal link</button>`:''}
       </div>
     </div>`;
@@ -282,6 +283,17 @@ function openProp(token){
   });
   $('#pInvite').onclick=()=>{ closeDr(); act('propInvite',{token:pp.token},'Invitation sent to '+(pp.email||'client')); };
   $('#pRate').onclick=()=>{ closeDr(); act('propRateReview',{token:pp.token},'Rate review request sent to Guardian'); };
+  const wa=$('#pWa');
+  if(wa) wa.onclick=()=>{
+    let d=(pp.mobile||'').replace(/\D/g,'');
+    if(d.length===7) d='1868'+d;
+    else if(d.length===10&&d.startsWith('868')) d='1'+d;
+    if(d.length!==11||!d.startsWith('1868')){ toast('Check the mobile number format: '+pp.mobile); return; }
+    const first=(pp.client||'').split(/[ ,]/).filter(Boolean)[1]||(pp.client||'').split(/[ ,]/)[0]||'there';
+    const msg=`Hi, this is the Ricky Rampersad Branch (Guardian Group). Your property renewal${pp.policy?' — policy '+pp.policy:''} is due ${pp.renewalDate}. You can review your cover, check your values and send us your instructions in about 2 minutes here:\n\n${link}\n\nAny questions, just reply here or call (868) 678-5921.`;
+    window.open('https://wa.me/'+d+'?text='+encodeURIComponent(msg),'_blank');
+    act('comment',{token:pp.token,client:pp.client,text:'WhatsApp renewal link sent to '+pp.mobile},'WhatsApp opened — press send there');
+  };
   $('#pAssign').onchange=e=>act('propAssign',{token:pp.token,assignee:e.target.value},'Assigned');
   const pl=$('#pLink'); if(pl) pl.onclick=async()=>{ try{ await navigator.clipboard.writeText(link); toast('Portal link copied'); }catch(e){ prompt('Copy the link:', link); } };
 }

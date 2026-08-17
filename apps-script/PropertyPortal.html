@@ -280,6 +280,18 @@ function render(){
     });
     avg(i);
   });
+
+  // Email click-options: preselect the instruction the client chose in the email.
+  const optIdx={renew:0,adjust:1,call:2}[DATA.opt];
+  if(optIdx!==undefined){
+    const radios=document.querySelectorAll('input[name="inst0"]');
+    if(radios[optIdx]){
+      radios[optIdx].checked=true;
+      radios[optIdx].dispatchEvent(new Event('change',{bubbles:true}));
+      const card=radios[optIdx].closest('.card');
+      if(card) setTimeout(()=>radios[optIdx].closest('.opt').scrollIntoView({behavior:'smooth',block:'center'}),300);
+    }
+  }
 }
 
 /* One location inside a policy card: its values, and its own average check. */

@@ -195,6 +195,10 @@ function fillPropertyLinks() {
   SpreadsheetApp.getActiveSpreadsheet().toast('Property portal links filled.');
 }
 
+function optBtn_(href, label) {
+  return '<a href="' + esc_(href) + '" style="display:inline-block;margin:3px;padding:9px 16px;border:2px solid #003366;border-radius:8px;color:#003366;font-weight:bold;font-size:13px;text-decoration:none">' + label + '</a>';
+}
+
 function propPortalLink_(token) {
   return CONFIG.WEBAPP_URL + (CONFIG.WEBAPP_URL.indexOf('?') > -1 ? '&' : '?') + 'p=' + encodeURIComponent(token);
 }
@@ -209,6 +213,7 @@ function propertyPage_(p) {
   t.payload = JSON.stringify({
     ok: rows.length > 0,
     token: token,
+    opt: String(p.opt || ''),
     firstName: rows.length ? (rows[0].contact || rows[0].client).split(' ')[0] : '',
     client: rows.length ? rows[0].client : '',
     stages: PROP.STAGES,
@@ -449,6 +454,12 @@ function sendPropertyInvite_(r) {
         'Construction and replacement costs have moved since then — if these figures are no longer realistic, ' +
         'this is the moment to put them right.') : '') +
       ctaBtn_(link, 'Review & advise online') +
+      '<p style="text-align:center;font-size:13px;color:#5a6b80;margin:2px 0 8px">Know what you want already? Jump straight in:</p>' +
+      '<p style="text-align:center;margin:0 0 10px">' +
+        optBtn_(link + '&opt=renew',  '✅ Renew as-is') +
+        optBtn_(link + '&opt=adjust', '✏️ Adjust my values') +
+        optBtn_(link + '&opt=call',   '📞 Call me first') +
+      '</p>' +
       '<p style="font-size:13px;color:#5a6b80">Once you send your instruction, you can return to the same page any time to <b>track every step of your renewal</b> — from our desk to Guardian and back — until your new schedule is delivered.</p>' +
       eduBox_('<b style="color:#a05e03">⚠️ Why your values matter — the average clause.</b> ' +
         'If your property is insured for less than it would cost to rebuild or replace today, ' +
