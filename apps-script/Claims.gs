@@ -135,9 +135,56 @@ var CLAIMS = {
   // Statuses used on the Claims tab and shown to the client.
   STATUSES: ['Received', 'Under review', 'Awaiting documents', 'With adjuster',
              'Approved', 'Settled', 'Declined', 'Closed'],
+
+  // Test mode reroutes every email here instead of clients/desks.
+  // Leave '' to use the account that owns the script (you).
+  TEST_INBOX: '',
 };
 
 var CBRAND = { navy: '#0E2A47', blue: '#1C4E80', teal: '#0E8C8C', gold: '#F2B33D', light: '#E9F7F6' };
+
+/* ============================ test mode ============================
+ * Same pattern as the renewals backend: a Script Properties switch, so
+ * flipping it needs no redeploy. While ON, every email — desk, client,
+ * chase, sign-in code — is rerouted to TEST_INBOX with a [TEST] subject
+ * and a banner naming the real recipients. File a test claim end to end
+ * and nothing ever reaches a client or Guardian.                       */
+
+function testMode_() {
+  return PropertiesService.getScriptProperties().getProperty('TEST_MODE') === 'on';
+}
+
+function testInbox_() {
+  return CLAIMS.TEST_INBOX || Session.getEffectiveUser().getEmail();
+}
+
+/** Single gate for ALL outgoing mail. Live: passes straight through. */
+function sendMail_(opts) {
+  if (!testMode_()) { MailApp.sendEmail(opts); return; }
+  var would = 'To: ' + (opts.to || '(none)') + (opts.cc ? ' · CC: ' + opts.cc : '');
+  var o = {};
+  for (var k in opts) o[k] = opts[k];
+  delete o.cc; delete o.bcc; delete o.replyTo;
+  o.to = testInbox_();
+  o.subject = '[TEST] ' + (opts.subject || '');
+  if (o.htmlBody) {
+    o.htmlBody =
+      '<div style="background:#b3261e;color:#fff;padding:10px 16px;border-radius:6px;margin:0 0 14px;font-family:Arial,sans-serif;font-size:13px">' +
+      '<b>🧪 TEST MODE</b> — nothing was sent to the real recipients.<br>Would have gone to — ' + esc_(would) + '</div>' + o.htmlBody;
+  }
+  MailApp.sendEmail(o);
+}
+
+function testModeOn_() {
+  PropertiesService.getScriptProperties().setProperty('TEST_MODE', 'on');
+  SpreadsheetApp.getUi().alert('🧪 Test mode is ON.\n\nEvery email now goes to ' + testInbox_() +
+    ' with a [TEST] banner. Nothing can reach a client or a claims desk until you turn it off.');
+}
+
+function testModeOff_() {
+  PropertiesService.getScriptProperties().deleteProperty('TEST_MODE');
+  SpreadsheetApp.getUi().alert('Test mode is OFF — emails go to real recipients again.');
+}
 
 /** Human labels for the claim types the site offers. */
 var CLAIM_TYPES = {
@@ -511,7 +558,7 @@ function apiRequestCode_(b) {
     CLAIMS.CODE_TTL_MINUTES * 60);
   cache.put(sendSlot, String(Number(cache.get(sendSlot) || 0) + 1), 3600);
 
-  MailApp.sendEmail({
+  sendMail_({
     to: email, name: CLAIMS.FROM_NAME,
     subject: code + ' is your Claims TT sign-in code',
     htmlBody: brandWrap_(
@@ -1198,7 +1245,7 @@ function notifyDesk_(claim, files, missing, form) {
   var subject = 'NEW CLAIM — ' + claim.ref + ' — ' + claim.type +
     (claim.subtype ? ' (' + claim.subtype + ')' : '') + ' — ' + claim.name;
 
-  MailApp.sendEmail({
+  sendMail_({
     to: deskFor_(type), cc: ccList_(), replyTo: claim.email || undefined, name: CLAIMS.FROM_NAME,
     subject: subject,
     htmlBody:
@@ -1239,7 +1286,7 @@ function notifyDesk_(claim, files, missing, form) {
 
 function ackClient_(claim, files, missing, form) {
   var first = String(claim.name).split(' ')[0] || 'there';
-  MailApp.sendEmail({
+  sendMail_({
     to: claim.email, name: CLAIMS.FROM_NAME,
     subject: 'We have your claim — ' + claim.ref,
     htmlBody: brandWrap_(
@@ -1476,7 +1523,7 @@ function sendChase_(claim, missing, n, total) {
     ? '<p>This is our last automatic reminder — from here we will call you instead. If these documents are hard to get, tell us and we will work around it; claims have been settled on less.</p>'
     : '<p>If any of these are hard to get hold of, reply and say so. There is almost always another way, and we would rather solve it than have your claim sit still.</p>';
 
-  MailApp.sendEmail({
+  sendMail_({
     to: claim.email, cc: ccList_(), name: CLAIMS.FROM_NAME,
     subject: 'Reminder ' + n + ' — documents needed for claim ' + claim.ref,
     htmlBody: brandWrap_(
@@ -1496,7 +1543,7 @@ function sendChase_(claim, missing, n, total) {
 }
 
 function sendDeskNudge_(claim, age, quiet, missing) {
-  MailApp.sendEmail({
+  sendMail_({
     to: deskFor_(typeKeyFromLabel_(claim.type)), cc: ccList_(), name: CLAIMS.FROM_NAME,
     subject: 'Still open after ' + age + ' days — claim ' + claim.ref + ' — ' + claim.name,
     htmlBody:
@@ -1547,7 +1594,7 @@ function chaseMissingDocuments() {
     if (!claim.email) { skipped.push(claim.ref + ' (no email)'); continue; }
     if (!missing.length) { skipped.push(claim.ref + ' (nothing outstanding)'); continue; }
 
-    MailApp.sendEmail({
+    sendMail_({
       to: claim.email, cc: ccList_(), name: CLAIMS.FROM_NAME,
       subject: 'Documents still needed for your claim — ' + claim.ref,
       htmlBody: brandWrap_(
@@ -1571,7 +1618,7 @@ function chaseMissingDocuments() {
 
 /** Menu action: tell the client their status changed. */
 function sendStatusEmail_(claim) {
-  MailApp.sendEmail({
+  sendMail_({
     to: claim.email, cc: ccList_(), name: CLAIMS.FROM_NAME,
     subject: 'Update on your claim — ' + claim.ref,
     htmlBody: brandWrap_(
@@ -1668,6 +1715,9 @@ function onOpen() {
     .addItem('Open the claims Drive folder', 'openClaimsFolder')
     .addItem('Email the client their new status', 'notifyStatusChange')
     .addItem('Chase outstanding documents now', 'chaseMissingDocuments')
+    .addSeparator()
+    .addItem('🧪 Turn test mode ON (emails only reach you)', 'testModeOn_')
+    .addItem('Turn test mode OFF (live emails)', 'testModeOff_')
     .addSeparator()
     .addItem('Run the follow-up sweep now (test)', 'runFollowUpNow')
     .addItem('Clean up abandoned uploads', 'cleanupNow')

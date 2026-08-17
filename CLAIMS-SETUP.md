@@ -135,9 +135,13 @@ const CONFIG = {
 Commit and push — Netlify redeploys automatically. The orange "Preview mode"
 banner disappears once `API_URL` is set; that is how you know it is live.
 
-**Test it:** file a claim against yourself with a photo attached. You should
-get the acknowledgement with the PDF, and the desk email should land with the
-Drive folder link.
+**Test it safely:** in the sheet, **Claims TT menu → 🧪 Turn test mode ON**
+— every email (desk, client, chase, sign-in codes) is then rerouted to your
+own inbox with a `[TEST]` banner naming the real recipients, so nothing can
+reach a client or Guardian while you experiment. File a claim against
+yourself with a photo attached: you should get the acknowledgement with the
+PDF and the desk email with the Drive folder link, both marked `[TEST]`.
+Turn test mode OFF from the same menu when you go live.
 
 ---
 
