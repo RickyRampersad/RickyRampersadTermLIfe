@@ -674,8 +674,11 @@ function requireStaff_(key, me) {
   return found;
 }
 
-function staffData(key, me) {
+function staffData(key, me, isLogin) {
   var staff = requireStaff_(key, me);
+  // isLogin is passed only on the dashboard's first load, so the Activity
+  // trail records every sign-in without logging every screen refresh
+  if (isLogin) logActivity_('', staff.name, 'login', staff.email, 'Signed in to the staff dashboard (' + staff.role + ')');
   var renewals = allRenewals_().map(function (r) {
     r.nextDueRaw = undefined;   // keep payload serializable
     return r;
