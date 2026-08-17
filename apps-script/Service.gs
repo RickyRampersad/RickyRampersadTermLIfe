@@ -498,11 +498,11 @@ function teamBankSheet_() {
   var sh = ss_().getSheetByName(SVC.TEAM_SHEET);
   if (!sh) {
     sh = ss_().insertSheet(SVC.TEAM_SHEET);
-    sh.appendRow(['Agent', 'Agent no.', 'Skills & strengths', 'Availability',
+    sh.appendRow(['Agent', 'Agent no.', 'Email', 'Skills & strengths', 'Availability',
                   'Languages', 'Areas covered', 'Active', 'Portal code', 'Notes']);
     sh.setFrozenRows(1);
     try {
-      sh.getRange(1, 1, 1, 9).setFontWeight('bold').setBackground(SB.light);
+      sh.getRange(1, 1, 1, 10).setFontWeight('bold').setBackground(SB.light);
     } catch (e) {}
   }
   return sh;
@@ -1081,6 +1081,7 @@ function skillBank_() {
   var col = function (r, h) { var i = head.indexOf(h); return i < 0 ? '' : String(r[i] || '').trim(); };
   return rows.map(function (r) {
     return { name: col(r, 'Agent'), no: col(r, 'Agent no.'),
+             email: col(r, 'Email'),
              skills: col(r, 'Skills & strengths'), avail: col(r, 'Availability'),
              langs: col(r, 'Languages'), active: col(r, 'Active'),
              portal: col(r, 'Portal code') };
@@ -1213,7 +1214,72 @@ function matchAssignmentForRow_(sh, row, agentName, agentNo, why) {
   if (isGroup) set('Letter outstanding', 'YES — awaiting stamped letter');
   log_(ref, 'match-assigned', agentName + ' · papers sent to ' + email);
 
+  /* the agent's side of the appointment: a brief with everything we know,
+     so first contact is personal, not cold. The Insights column is where
+     support pastes household intelligence from the assignment desk. */
+  try { agentBriefEmail_(agentName, why, headers, r, v, isGroup, ref); }
+  catch (e) { log_(ref, 'agent-brief-failed', String(e)); }
+
   return { ok: true, msg: agentName + ' appointed on ' + ref + ', papers emailed to ' + email };
+}
+
+/** "You have a new client — here is everything we know." Sent to the agent's
+ *  email from the Agent Skill Bank the moment support appoints them, with the
+ *  client's file, the household insight, and the ladder to personal service. */
+function agentBriefEmail_(agentName, why, headers, r, v, isGroup, ref) {
+  var me = null;
+  skillBank_().forEach(function (a) {
+    if (a.name.toLowerCase() === agentName.toLowerCase() && a.email) me = a;
+  });
+  if (!me) { log_(ref, 'agent-brief-skipped', 'no email in skill bank for ' + agentName); return; }
+
+  var brief = '';
+  headers.forEach(function (h, ix) {
+    if (/what matters most|want in an agent/i.test(h) && String(r[ix] || '').trim()) {
+      brief = String(r[ix]).trim();
+    }
+  });
+  var insights = v('Insights');
+  var score = v('Score'), gaps = v('Score gaps');
+
+  var rows = '';
+  var add = function (k, val) { if (String(val || '').trim()) rows += tr_(k, val); };
+  add('Client', v('Company') || v('Client'));
+  add('Reference', ref);
+  add('Phone', v('Phone'));
+  add('Email', v('Email'));
+  add('Policy #', v('Policy #') || 'being traced by support');
+  add('Priority', v('Priority'));
+  if (score !== '') add('Protection Score', score + '/100' + (gaps ? ' · gaps: ' + gaps : ''));
+  add('Their brief — what they asked for in an agent', brief);
+  add('Household & insights', insights);
+
+  var html = wrap_(
+    '<p>Dear ' + esc_(agentName.split(/\s+/)[0]) + ',</p>' +
+    '<p><b>You have been appointed to a new client.</b> The appointment papers have gone to the client ' +
+    'populated with your name' + (isGroup ? ', drafted for their company letterhead' : ' for digital signature') +
+    '. Read this brief before first contact — the goal is that you arrive knowing them.</p>' +
+    '<table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:13.5px">' +
+    rows + '</table>' +
+    (why ? box_('tip', '<b style="color:#a05e03">Why you.</b> ' + esc_(why)) : '') +
+    box_('good',
+      '<b>Your ladder to personal service:</b> (1) <b>Day 1</b> — introduce yourself by phone or WhatsApp: ' +
+      '“the branch has appointed me to look after you.” (2) <b>This week</b> — run the review together if they ' +
+      'have not done one; their answers come back scored and support prepares every paper. (3) <b>Week 2</b> — ' +
+      'confirm the record fixes landed; deliver everything they said yes to. (4) <b>Week 3</b> — first visit; ' +
+      'if the household note above lists others at the address, serve the whole house in one trip. ' +
+      'From there the system holds them: updates every ' + SVC.CLIENT_UPDATE_DAYS + ' days while anything is ' +
+      'open, a check-up at six months, a full review every birthday month.') +
+    '<p>Your book is live at <a href="https://donthaveanagent.com/agents">donthaveanagent.com/agents</a> — ' +
+    'this client appears there now.</p>' + sig_(),
+    'New client assigned', identity_({ source: v('Source') }));
+
+  MailApp.sendEmail({
+    to: me.email, name: SVC.FROM_NAME, replyTo: SVC.AGENT_EMAIL,
+    subject: 'New client assigned to you: ' + (v('Company') || v('Client')) + ' (' + ref + ')',
+    htmlBody: html,
+  });
+  log_(ref, 'agent-briefed', agentName + ' <' + me.email + '>');
 }
 
 /** If handleSubmission_ throws, the client still saw a failure message — but
