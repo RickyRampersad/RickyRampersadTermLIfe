@@ -221,7 +221,12 @@ function render(){
 
       <div class="step">Step 3 · What your property policy protects</div>
       <div class="benefits"><h3>🏠 Your cover at a glance</h3><ul>
-        <li><b>Building</b> — the structure itself, insured for <b>rebuilding cost</b>, not market value</li>
+        ${g.locs.some(l=>Number(l.values.building)>0)
+          ?`<li><b>Building</b> — the structure itself, insured for <b>rebuilding cost</b>, not market value</li>`
+          :`<li><b>Renting your premises?</b> The building is your landlord's to insure — your policy rightly
+             covers what is <b>yours</b>. But any fit-out you paid for (shelving, counters, partitions,
+             signage, electrical work) is <b>not</b> the landlord's insurance — make sure it is counted in
+             your Furniture/Fixtures/Fittings figure above.</li>`}
         <li><b>General contents</b> — furniture, fittings and belongings inside</li>
         <li><b>Stock</b> — trading stock held at the location</li>
         <li><b>Plant, equipment &amp; machinery</b> — the equipment your business runs on</li>
