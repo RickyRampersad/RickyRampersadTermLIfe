@@ -118,7 +118,7 @@ h1{font-family:var(--serif);font-size:clamp(29px,4.4vw,42px);line-height:1.06;le
 .guar{margin-top:40px;border:1px solid var(--green-line);background:var(--green-soft);border-radius:12px;padding:22px 24px}
 .guar h2{font-family:var(--serif);font-size:22px;font-weight:600;margin:0 0 4px;letter-spacing:-.01em;color:var(--ink)}
 .guar .sub{font-size:14px;color:var(--slate);margin:0 0 16px}
-.stops{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+.stops{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:13px}
 @media(max-width:640px){.stops{grid-template-columns:1fr}}
 .stop{background:var(--card);border:1px solid var(--green-line);border-radius:9px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
 .stop .k{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--green)}
@@ -146,8 +146,8 @@ footer{margin-top:40px;border-top:1px solid var(--line);padding-top:18px;font-fa
     <div><div class="k">Ricky Rampersad Branch</div><div class="n">Premium Due Engine</div></div>
   </div>
   <h1>How a premium-due case moves</h1>
-  <p class="stand">One page, drawn out end to end. The client is written to until day 60; then the letters stop and a manager is put on the case in two steps — <b>first a commitment, then the feedback</b>. Every repeat has one job and one way to end it, so nothing is ever asked twice and nobody is chased for something they have already done.</p>
-  <p class="meta"><span>BRANCH 26000</span><span>45 / 60 / 90-DAY CONTROL</span><span>TWO-PHASE MANAGER HANDOVER</span></p>
+  <p class="stand">Both flows, drawn out end to end. <b>Premium dues</b>: the client is written to until day 60, then a manager takes the case in two steps — commitment, then feedback. <b>Pendings</b>: a new application is chased by name — the exact document — from day 21 until it settles. A policy lives in exactly one flow, every repeat has one way to end, and nobody is ever chased for something already done.</p>
+  <p class="meta"><span>BRANCH 26000</span><span>45 / 60 / 90-DAY DUES CONTROL</span><span>DAY 21 · FORTNIGHTLY PENDING CONTROL</span><span>TWO-PHASE MANAGER HANDOVER</span></p>
 </header>
 
 <div class="legend">
@@ -296,6 +296,68 @@ footer{margin-top:40px;border-top:1px solid var(--line);padding-top:18px;font-fa
 
 </div>
 
+<!-- ============ THE SECOND FLOW: PENDINGS ============ -->
+<div class="phase" style="margin-top:44px"><span class="pn">Flow 2</span><span class="pt">A pending application — submission to settled</span><span class="pd">its own clock · never mixed with dues</span></div>
+
+<div class="flow">
+
+  <div class="node c-client">
+    <div class="top"><span class="day">Day 0</span><span class="who">Submission</span></div>
+    <h3>The application is received</h3>
+    <p>It appears in every login’s <b>Pendings workspace</b> and in the morning digest at once. Nothing is sent yet — the first three weeks belong to normal processing.</p>
+  </div>
+
+  <div class="link"><div class="bar"></div><span class="lbl">still incomplete at day 21</span><div class="car"></div></div>
+
+  <div class="node c-mgr">
+    <div class="top"><span class="day">Day 21</span><span class="who">To the client · agent + manager copied</span></div>
+    <h3>The letter that names the document</h3>
+    <p>Not “outstanding requirements” — the actual item: <i>“One thing completes your application: <b>Proof of Address</b> — outstanding 34 days.”</i> It carries the application’s timeline, names any money already paid and held in suspense, and where underwriting is already complete it says the urgent, true thing: <b>one paper stands between you and a policy in force.</b> A first-premium requirement carries the pay button.</p>
+  </div>
+
+  <div class="link"><div class="bar"></div><div class="car"></div></div>
+
+  <div class="gate">
+    <div class="q"><span class="qk">The pending gate</span>Does the document land — does the case settle?</div>
+    <div class="exits">
+      <div class="exit no">
+        <div class="h">✗ &nbsp;Not yet</div>
+        <p>The letter repeats — same named item, updated ages — until day 120, when chasing stops and the case becomes a conversation to close out. The workspace queue keeps pushing it meanwhile: gates first, settle-ready papers, our own errors, first premiums, then documents oldest-first.</p>
+        <span class="loopglyph">↻ every 14 days · to day 120</span>
+      </div>
+      <div class="exit yes">
+        <div class="h">✓ &nbsp;It settles</div>
+        <p>The moment the engine sees the policy in force, the <b>structured close</b> goes — once. ↓</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="link"><div class="bar"></div><div class="car"></div></div>
+
+  <div class="node c-good">
+    <div class="top"><span class="day">On settle</span><span class="who">The good ending · sent once</span></div>
+    <h3>“Your policy is in force”</h3>
+    <p>Named by product — <i>your Flexiterm Convertible (20 years)</i> — with the received-to-issued timeline, MyGG onboarding, and the premium habits that protect the policy from ever meeting Flow 1. The agent and manager are on the copy line: the case ends in front of everyone it involved.</p>
+  </div>
+
+</div>
+
+<!-- the lanes beside the flows -->
+<div class="copynote" style="margin-top:26px;border-color:var(--red-line);background:var(--red-soft)">
+  <span class="k" style="color:var(--red)">The replacement gate — checked before either flow proceeds</span>
+  <p>A pending application beside in-force cover that is behind or freshly lapsed is tested against <b>GLOC’s Replacement/Churn Guidelines (Sept 2022 V5)</b>: replaced policy issued within 5 years, lapse within 12 months (or heading there while the application pends), non-adjustable plans excluded. Flagged cases need the <b>signed Replacement Declaration Form + client ID</b> in the application pack — or the case is “Not Proceeded With” — and a same-agent replacement pays <b>0% commission</b>. The flag appears on both policies, in every login, and in the digest. Never in a client’s email.</p>
+</div>
+
+<div class="copynote" style="margin-top:14px">
+  <span class="k">Group schemes travel their own road</span>
+  <p>Company-owned policies (Servus, Bankers, JMMB…) never enter either flow above. A scheme with a missed remittance gets <b>one consolidated statement per company per fortnight</b> — administrator addressed, members listed, the paid-to gap named — and members are never written to individually.</p>
+</div>
+
+<div class="copynote" style="margin-top:14px">
+  <span class="k">The daily rhythm — how it all runs as one</span>
+  <p>Every morning at 8:00 the engine reads the sheets fresh and works in one order: <b>the digest first</b> (the numbers, before any letter), then the dues ladder, the manager phases, the scheme statements, the pending letters, the closes. Everything most-urgent-first under the send caps, every sequence stopping the moment its answer, payment or document arrives — and the whole thing sits behind the three-key interlock until you deliberately go live.</p>
+</div>
+
 <div class="guar">
   <h2>Every loop has exactly one way to end</h2>
   <p class="sub">This is what keeps it from ever becoming three emails saying the same thing.</p>
@@ -315,6 +377,11 @@ footer{margin-top:40px;border-top:1px solid var(--line);padding-top:18px;font-fa
       <span class="t">The report back closes it</span>
       <span class="s">A different clock, 7 days, begun only after he commits — so the two phases never overlap and never double up.</span>
     </div>
+    <div class="stop">
+      <span class="k">Flow 2 · pendings</span>
+      <span class="t">The document closes it</span>
+      <span class="s">The named item lands and the close email ends the case — or day 120 ends the chase and it becomes a conversation.</span>
+    </div>
   </div>
 </div>
 
@@ -327,7 +394,7 @@ footer{margin-top:40px;border-top:1px solid var(--line);padding-top:18px;font-fa
 <footer>
   Ricky Rampersad Branch · Premium Due Engine · Process flow<br>
   45 / 60 / 90-day persistency control · Branch 26000<br>
-  Two-phase manager handover — commitment, then feedback.
+  Two flows, one machine — dues on the 45/60/90 clock, pendings named by document from day 21, the close in force.
 </footer>
 
 </div>
