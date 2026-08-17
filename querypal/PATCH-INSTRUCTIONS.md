@@ -235,6 +235,101 @@ Replace with:
 
 ---
 
+### 10 — `doGet`: stop anyone ending an employee's cover with a URL
+
+**Do this one first.** `action=terminate` is a GET on a webhook whose URL is
+printed in the page, and it carries nothing that says who is asking. Anyone who
+viewed source could end an employee's Group Life and Health cover — and send
+that person a conversion notice — by pasting a link. Opening terminations to
+employers (edit 12) multiplies who can reach it, so the lock goes on first.
+
+In `doGet`, find the line that handles the termination — it looks like:
+```js
+  if (p.action === 'terminate') return terminate_(e);
+```
+Replace with:
+```js
+  if (p.action === 'terminate') {
+    if (!qpGetTerminateOk_(p)) return json({ ok:false, err:'Please sign in and use the portal — this link no longer works on its own.' });
+    return terminate_(e);
+  }
+```
+
+`qpGetTerminateOk_` accepts a signed-in agent (session token *or* agent code)
+and a company code. Nothing else. `terminate_()` itself is untouched.
+
+> The agent page now has to send its code, which edit 13 does. Passing a code in
+> a URL is still not ideal — edit 2 moved sign-in off the URL for exactly that
+> reason. The clean end state is the agent path moving to POST like the company
+> path. Send me `Code.gs` and I will do that properly; this edit is the part
+> that can be done safely without seeing it.
+
+---
+
+### 11 — `doGet`: same guard on the roster and lookup
+
+`grouproster` returns an employer's staff list and `grouplookup` returns a named
+employee's policy numbers and email. Both take an optional `code` today, so both
+answer callers who supply nothing.
+
+Find:
+```js
+  if (p.action === 'grouproster') return groupRoster_(e);
+  if (p.action === 'grouplookup') return groupLookup_(e);
+```
+(the names may differ slightly — match whatever your file calls them) and wrap
+each the same way:
+```js
+  if (p.action === 'grouproster') {
+    if (!qpGetTerminateOk_(p)) return json({ ok:false, err:'Sign-in required.' });
+    return groupRoster_(e);
+  }
+  if (p.action === 'grouplookup') {
+    if (!qpGetTerminateOk_(p)) return json({ ok:false, err:'Sign-in required.' });
+    return groupLookup_(e);
+  }
+```
+
+If those functions already check the code themselves, this is belt and braces —
+harmless, and it makes the requirement explicit at the routing layer.
+
+---
+
+### 12 — `doPost`: the company leaver run
+
+In `doPost`, alongside the `enroll` line added in edit 2:
+```js
+    if (d.action === 'enroll')    return qpEnroll_(d);          // company portal: enroll a member
+```
+add:
+```js
+    if (d.action === 'leavers')   return qpLeavers_(d);         // company portal: report leavers
+```
+
+POST only, company sign-in required, rate limited to 10 submissions an hour and
+25 members a submission. One case per member, because the department closes them
+one at a time and the conversion notice is per person.
+
+---
+
+### 13 — `index.html`: the agent termination call sends its code
+
+One line, so edit 10 does not lock agents out. Find in `termSubmit()`:
+```js
+  var q=SHEET_WEBHOOK_URL+'?action=terminate'
+```
+Replace with:
+```js
+  var q=SHEET_WEBHOOK_URL+'?action=terminate'
+    +'&code='+encodeURIComponent((agentAuth&&agentAuth.code)||(clientAuth&&clientAuth.code)||'')
+```
+
+The updated `index.html` in this folder already has this change, along with the
+company-facing leaver run. If you are pasting files wholesale you can skip this
+edit — it is here for the record.
+
+---
+
 ## Two more worth doing, not required
 
 **`raiProxy_`** — the assistant endpoint is unauthenticated and spends your

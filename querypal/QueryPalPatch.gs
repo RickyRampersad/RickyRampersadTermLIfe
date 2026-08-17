@@ -776,6 +776,231 @@ function qpClientStats_(e) {
 }
 
 
+/* --- 8e. Group terminations — the leaver run ------------------------------
+   The agent path (terminate_(), GET action=terminate) stays exactly as it is.
+   This is the company path, and it is deliberately built like qpEnroll_:
+   POST only, company sign-in required, rate limited. Terminating cover is
+   destructive and dated, so it must never be reachable by pasting a URL.
+
+   One case per member, because the department closes them one at a time and
+   the conversion notice is per person. Capped, because every member costs a
+   departmental email plus a notice and MailApp quota is finite.             */
+
+var QP_LEAVER_MAX      = 25;   // members per submission
+var QP_CONVERSION_DAYS = 30;   // matches the notice terminate_() already sends
+
+/* Death in service is a CLAIM, not an administrative leaver. It is urgent, it
+   goes to a different department, and the family is owed a benefit rather than
+   a conversion offer. It is refused here on purpose. */
+var QP_LEAVER_REASONS = {
+  resignation:  'Resignation',
+  retirement:   'Retirement',
+  redundancy:   'Redundancy / restructuring',
+  dismissal:    'Dismissal',
+  end_contract: 'End of contract',
+  other:        'Other'
+};
+
+/* ---- closing the anonymous GET ------------------------------------------
+   action=terminate has been a GET on a webhook whose URL is printed in the
+   page, carrying no proof of who is asking. Anyone who viewed source could
+   end an employee's Group Life and Health cover, and trigger a conversion
+   notice to that person, by pasting a URL.
+
+   This guard requires a signed-in agent (session token or agent code) or a
+   company code. Apply edit 10 in PATCH-INSTRUCTIONS.md to switch it on for
+   terminate, and edit 11 for the roster and lookup endpoints, which today
+   hand back an employer's staff list and policy numbers to anyone who asks.
+
+   Set to false only to roll back in a hurry.                              */
+var QP_BLOCK_GET_TERMINATE = true;
+
+function qpGetTerminateOk_(p) {
+  if (!QP_BLOCK_GET_TERMINATE) return true;
+  p = p || {};
+  try {
+    if (p.token && qpAgentFromToken_(p.token)) return true;      // agent, session token
+    if (p.code) {
+      if (typeof findAgent_ === 'function' && findAgent_(p.code)) return true;   // agent, code
+      var c = resolveClientCode_(p.code);
+      if (c && c.type === 'company') return true;                // company portal
+    }
+  } catch (e) {}
+  return false;
+}
+
+function qpDateParse_(s) {
+  s = String(s || '').trim();
+  var m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);          // dd/mm/yyyy, as the agent path sends
+  if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
+  var d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+function qpDaysBetween_(a, b) {
+  return Math.round((b.getTime() - a.getTime()) / 86400000);
+}
+function qpFmtDate_(d) {
+  return Utilities.formatDate(d, tz_(), 'dd/MM/yyyy');
+}
+
+function qpLeavers_(d) {
+  if (!qpRateLimit_('leavers', 10, 3600))
+    return json({ ok: false, error: 'Too many termination submissions just now — try again shortly.' });
+
+  var c = resolveClientCode_(d.code);
+  if (!c || c.type !== 'company') return json({ ok: false, error: 'Company sign-in required.' });
+
+  var members = (d.members && d.members.length) ? d.members : null;
+  if (!members) return json({ ok: false, error: 'Select at least one employee to report as a leaver.' });
+  if (members.length > QP_LEAVER_MAX)
+    return json({ ok: false, error: 'Please report no more than ' + QP_LEAVER_MAX + ' leavers at a time.' });
+
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  var results = [], errors = [];
+
+  for (var i = 0; i < members.length; i++) {
+    var m = members[i] || {};
+    var first = String(m.first || '').trim(), last = String(m.last || '').trim();
+    var member = (first + ' ' + last).trim();
+    var doLife = !!m.life, doHealth = !!m.health;
+    var reasonKey = String(m.reason || 'resignation').trim();
+
+    if (!member) { errors.push('A row was missing the employee name.'); continue; }
+
+    if (/^death$/i.test(reasonKey)) {
+      errors.push(member + ' — a death in service is a claim, not a termination. '
+        + 'Please log it under Claims so it is handled urgently and the family is paid.');
+      continue;
+    }
+    var reason = QP_LEAVER_REASONS[reasonKey] || QP_LEAVER_REASONS.other;
+
+    var effRaw = String(m.effdate || d.effdate || '').trim();
+    var effDate = qpDateParse_(effRaw);
+    if (!effDate) { errors.push(member + ' — a valid last day of cover is required.'); continue; }
+    if (!doLife && !doHealth) { errors.push(member + ' — pick Group Life, Group Health, or both.'); continue; }
+
+    var eff = qpFmtDate_(effDate);
+    var backdatedBy = qpDaysBetween_(effDate, today);
+    var isBackdated = backdatedBy > 0;
+
+    var plans = []; if (doLife) plans.push('Group Life'); if (doHealth) plans.push('Group Health');
+    var plansTxt = plans.join(' & ');
+    var lifePol = String(m.lifepol || '').trim(), healthPol = String(m.healthpol || '').trim();
+    var memberEmail = String(m.memberEmail || '').trim();
+    var note = String(m.note || d.note || '').trim();
+
+    var ref = 'RRB/' + Utilities.formatDate(new Date(), tz_(), 'yyyy/MMdd/HHmmss') + '/TERM' + (i ? '-' + (i + 1) : '');
+    var subject = plansTxt + ' Termination – ' + member + ' – ' + c.name;
+
+    var desc = 'Please terminate the following member under ' + c.name + ', effective ' + eff + ':\n\n'
+      + 'Member: ' + member + '\n'
+      + 'Reason: ' + reason + '\n'
+      + (doLife   ? '• Group Life'   + (lifePol   ? ' — Policy ' + lifePol   : '') + '\n' : '')
+      + (doHealth ? '• Group Health' + (healthPol ? ' — Policy ' + healthPol : '') + '\n' : '')
+      + (memberEmail ? 'Member email: ' + memberEmail + '\n' : '')
+      + (isBackdated
+          ? '\n⚠ BACKDATED — this last day of cover is ' + backdatedBy + ' day'
+            + (backdatedBy === 1 ? '' : 's') + ' in the past.\n'
+            + 'Please check for premium already collected beyond it, and for any claim '
+            + 'incurred after it that may have been paid in error.\n'
+          : '')
+      + (note ? '\nNotes from the company:\n' + note + '\n' : '')
+      + '\nReported by ' + c.name + ' through the company portal.'
+      + '\nKindly confirm completion on this thread.';
+
+    var d2 = {
+      reference: ref,
+      category: 'Group Terminations',
+      queryType: plansTxt + ' Termination',
+      subject: subject, description: desc,
+      client: member, name: member,
+      loggedBy: c.name + ' (Company)',
+      policy: [lifePol, healthPol].filter(function (x) { return x; }).join(' / '),
+      agent: '', agentEmail: '',
+      email: memberEmail, phone: '',
+      department: TERM_DEPT_NAME,
+      departmentEmail: TERM_DEPT_TO.join(','),
+      turnaround: String(TERM_TAT_DAYS),
+      priority: isBackdated ? 'High' : 'Normal',
+      assignedStaff: TERM_ASSIGNEE,
+      noSalesforceAttach: true,
+      files: []
+    };
+    try { sendRoutedEmail(d2); }
+    catch (me) { errors.push(member + ' — could not send to the department: ' + me); continue; }
+
+    try {
+      var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+      var row = []; row[0] = ref; row[1] = ''; row[2] = new Date(); row[3] = 'Open';
+      row[4] = c.name + ' (Company)'; row[5] = member; row[6] = memberEmail;
+      row[7] = c.scope;                               // company scope -> visible in the company portal
+      row[11] = 'Group Terminations'; row[12] = plansTxt + ' Termination';
+      row[13] = TERM_DEPT_NAME; row[14] = TERM_DEPT_TO.join(',');
+      row[15] = String(TERM_TAT_DAYS); row[16] = isBackdated ? 'High' : 'Normal';
+      row[17] = subject; row[18] = desc.substring(0, 900);
+      while (row.length < 29) row.push('');
+      row[28] = TERM_ASSIGNEE;
+      sh.appendRow(row);
+      cmtSheet_().appendRow([new Date(), ref, c.name + ' (Company)', 'client',
+        '📤 Termination submitted — ' + plansTxt + ' for ' + member + ', last day ' + eff
+        + ' (' + reason + ')' + (isBackdated ? ' — BACKDATED by ' + backdatedBy + ' days' : ''), 'trail']);
+    } catch (le) {}
+
+    var notified = false;
+    if (memberEmail) { try { qpConversionNotice_(member, memberEmail, plans, eff, c.name); notified = true; } catch (ne) {} }
+
+    results.push({ ref: ref, member: member, plans: plansTxt, effective: eff,
+                   backdated: isBackdated, noticeSent: notified });
+  }
+
+  if (!results.length)
+    return json({ ok: false, error: errors.join(' \n') || 'Nothing could be submitted.' });
+  return json({ ok: true, results: results, errors: errors, count: results.length });
+}
+
+/* The leaver's own copy: what ended, when, and the window in which they can
+   take the cover into their own name without new medical evidence. Sent from
+   the company path only — the agent path keeps using terminate_()'s notice,
+   so a member never receives two. */
+function qpConversionNotice_(member, email, plans, eff, companyName) {
+  var deadline = new Date(); deadline.setDate(deadline.getDate() + QP_CONVERSION_DAYS);
+  var what = plans.join(' and ');
+  var html =
+    '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#22303c;line-height:1.6">'
+    + '<p>Dear ' + qpEsc_(member) + ',</p>'
+    + '<p>We have been notified by <b>' + qpEsc_(companyName) + '</b> that your <b>' + qpEsc_(what)
+    + '</b> cover under their group plan ends on <b>' + qpEsc_(eff) + '</b>.</p>'
+    + '<div style="border-left:3px solid #F08A24;background:#FFF8F0;padding:12px 16px;margin:16px 0">'
+    + '<p style="margin:0"><b>You may be able to keep this cover in your own name.</b> Group plans '
+    + 'normally allow you a short window — commonly ' + QP_CONVERSION_DAYS + ' days — to convert to an '
+    + 'individual policy <b>without new medical questions</b>. After that window, cover would depend on '
+    + 'your health at the time.</p>'
+    + '<p style="margin:8px 0 0">Please contact us on or before <b>' + qpEsc_(qpFmtDate_(deadline))
+    + '</b> if you would like us to price it. The exact window and terms are set by your group policy '
+    + 'and we will confirm them for you.</p></div>'
+    + '<p>If you had a claim for treatment received <i>before</i> your cover ended, you can still submit '
+    + 'it — there is normally a limited period to do so, and we will help you with it.</p>'
+    + '<p>Nothing here is a bill or a request for payment. It is simply so you do not lose a right you '
+    + 'currently hold without knowing it.</p>'
+    + '<p>Kind regards,<br><b>Ricky Rampersad Branch</b><br>Guardian Life of the Caribbean</p>'
+    + '<p style="font-size:11.5px;color:#7c8b98;border-top:1px solid #e3e9ee;padding-top:10px">'
+    + 'This notice is a courtesy summary and is not the policy. Conversion rights, eligibility and time '
+    + 'limits are governed by the group policy wording and Guardian\'s underwriting rules.</p></div>';
+
+  var msg = { to: email, subject: 'Your group cover is ending — what you can do next',
+              name: 'Ricky Rampersad Branch', htmlBody: html };
+  try { var img = qpLogoInline_(); if (img) msg.inlineImages = { qplogo: img }; } catch (e) {}
+  MailApp.sendEmail(msg);
+}
+
+function qpEsc_(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+
 /* ══════════════════ 7. SELF-CHECK ══════════════════
    Run qpSelfCheck() in the editor after deploying. It touches nothing. */
 
@@ -792,8 +1017,15 @@ function qpSelfCheck() {
   out.push('Passwords on file: ' + Object.keys(qpPwStore_()).length + ' of ' + Object.keys(AGENT_ACCESS).length);
   out.push('Enforcement: ' + (QP_REQUIRE_PASSWORD ? 'ON' : 'OFF (rollout mode)'));
   out.push('--- client portal ---');
-  out.push('Portal endpoints loaded: requestcode, enroll, clienthistory, clientstats');
+  out.push('Portal endpoints loaded: requestcode, enroll, leavers, clienthistory, clientstats');
   out.push('Enrollment bypasses the router: ' + (qpRouteFor_('Group Life Enrollment') === null ? 'yes' : 'NO — PROBLEM'));
+  out.push('--- terminations ---');
+  out.push('Leaver run bypasses the router: ' + (qpRouteFor_('Group Life Termination') === null ? 'yes' : 'NO — PROBLEM'));
+  out.push('Death in service is refused as a leaver: ' + (QP_LEAVER_REASONS.death === undefined ? 'yes' : 'NO — PROBLEM'));
+  out.push('Max leavers per submission: ' + QP_LEAVER_MAX);
+  out.push('GET guard armed: ' + (QP_BLOCK_GET_TERMINATE ? 'yes' : 'NO — set QP_BLOCK_GET_TERMINATE = true'));
+  out.push('Anonymous call refused by the guard: ' + (qpGetTerminateOk_({}) === false ? 'yes' : 'NO — PROBLEM'));
+  out.push('NOTE: the guard only bites once edits 10 and 11 call it from doGet in Code.gs.');
   var msg = out.join('\n');
   Logger.log(msg); return msg;
 }
