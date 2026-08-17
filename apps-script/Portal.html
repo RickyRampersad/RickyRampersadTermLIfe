@@ -74,6 +74,12 @@ details summary{cursor:pointer;font-weight:700;color:var(--teal);font-size:13.5p
 .stars button{font-size:30px;background:none;border:none;cursor:pointer;color:#3a5570;line-height:1}
 .stars button.on{color:var(--gold)}
 .note{font-size:12px;color:var(--muted)}
+.citem{display:flex;gap:11px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}
+.citem:last-child{border-bottom:none}
+.cdot{width:9px;height:9px;border-radius:50%;margin-top:6px;flex-shrink:0}
+.cdot.us{background:var(--teal)}
+.cdot.you{background:var(--gold)}
+.cwhen{font-size:11.5px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -228,6 +234,7 @@ function render(){
     </div>`;
   }
   html += `<div class="card"><h2>Your renewal history</h2><div id="hist">${histTable(DATA.history)}</div></div>`;
+  html += commsCard();
   app.innerHTML = html;
 
   document.querySelectorAll('.opt input').forEach(r=>r.addEventListener('change',e=>{
@@ -235,6 +242,18 @@ function render(){
     wrap.querySelectorAll('.opt').forEach(o=>o.classList.toggle('sel', o.querySelector('input').checked));
   }));
   document.querySelectorAll('[data-submit]').forEach(b=>b.onclick=()=>submit(Number(b.dataset.submit), b));
+}
+
+function commsCard(){
+  const c = DATA.comms||[];
+  if(!c.length) return '';
+  return `<div class="card"><h2>📨 Communication history</h2>
+    <p class="note" style="margin-top:2px">Every touchpoint between us on this renewal — so you always know where things stand.</p>
+    <div style="margin-top:10px">${c.map(x=>`
+      <div class="citem"><span class="cdot ${x.from}"></span>
+        <div><b style="font-size:13.5px">${esc(x.label)}</b>
+        <div class="cwhen">${esc(x.when)}${x.detail?' · '+esc(x.detail):''}</div></div>
+      </div>`).join('')}</div></div>`;
 }
 
 function histTable(h){
@@ -279,7 +298,7 @@ function submit(i, btn){
 }
 
 /* ---------- survey mode ---------- */
-let surveyScores = { sat: 0, ease: 0 };
+let surveyScores = { sat: 0, ease: 0, speed: 0 };
 function renderSurvey(app){
   app.innerHTML = `<div class="card">
     <h2>How did we do, ${esc(DATA.firstName)}?</h2>
@@ -288,6 +307,8 @@ function renderSurvey(app){
     <div class="stars" data-k="sat">${[1,2,3,4,5].map(n=>`<button data-n="${n}">★</button>`).join('')}</div>
     <label>How easy was it to renew?</label>
     <div class="stars" data-k="ease">${[1,2,3,4,5].map(n=>`<button data-n="${n}">★</button>`).join('')}</div>
+    <label>How was our speed — from your instruction to all done?</label>
+    <div class="stars" data-k="speed">${[1,2,3,4,5].map(n=>`<button data-n="${n}">★</button>`).join('')}</div>
     <label>Anything we should know — good or bad? (optional)</label>
     <textarea id="svComments" placeholder="Tell us what stood out, or what we could do better…"></textarea>
     <button class="btn" id="svSend">Send my feedback</button>
@@ -302,12 +323,12 @@ function renderSurvey(app){
   });
   $('#svSend').onclick = ()=>{
     const err=$('#svErr'); err.style.display='none';
-    if(!surveyScores.sat||!surveyScores.ease){ err.textContent='Please tap a star rating for both questions.'; err.style.display='block'; return; }
+    if(!surveyScores.sat||!surveyScores.ease||!surveyScores.speed){ err.textContent='Please tap a star rating for all three questions.'; err.style.display='block'; return; }
     const btn=$('#svSend'); btn.disabled=true; btn.textContent='Sending…';
     google.script.run
       .withSuccessHandler(()=>{ btn.style.display='none'; $('#svOk').style.display='block'; })
       .withFailureHandler(e=>{ btn.disabled=false; btn.textContent='Send my feedback'; err.textContent='Something went wrong: '+(e&&e.message?e.message:e); err.style.display='block'; })
-      .submitSurvey({ token: DATA.token, sat: surveyScores.sat, ease: surveyScores.ease, comments: $('#svComments').value });
+      .submitSurvey({ token: DATA.token, sat: surveyScores.sat, ease: surveyScores.ease, speed: surveyScores.speed, comments: $('#svComments').value });
   };
 }
 render();

@@ -134,6 +134,16 @@ textarea.txt{min-height:64px;resize:vertical}
 .bar button{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#3a2c05;font:800 13.5px 'Montserrat';
   border:none;border-radius:11px;padding:12px 20px;cursor:pointer;white-space:nowrap}
 .nf{max-width:560px;margin:60px auto;text-align:center;padding:20px}
+/* communication history + survey */
+.citem{display:flex;gap:11px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}
+.citem:last-child{border-bottom:none}
+.cdot{width:9px;height:9px;border-radius:50%;margin-top:6px;flex-shrink:0}
+.cdot.us{background:var(--teal)}
+.cdot.you{background:var(--gold)}
+.cwhen{font-size:11.5px;color:var(--muted)}
+.stars{display:flex;gap:6px;margin:6px 0 2px}
+.stars button{font-size:30px;background:none;border:none;cursor:pointer;color:#3a5570;line-height:1}
+.stars button.on{color:var(--gold)}
 .foot{max-width:760px;margin:6px auto;padding:0 16px;font-size:11px;color:#5c7590;line-height:1.6}
 </style>
 </head>
@@ -273,6 +283,7 @@ function render(){
       ${esc(DATA.agent.name)}${DATA.agent.phone?' at '+esc(DATA.agent.phone):''} for a fresh link.</p></div>`;
     return;
   }
+  if(DATA.survey){ renderSurvey(app); return; }
   const pols=policies();
   let html=`<div class="card"><h2>Welcome, ${esc(DATA.firstName)} 👋</h2>
     <div class="loc-sub">Review your cover below — <b style="color:var(--teal)">tap any figure to change it on the spot</b> —
@@ -326,6 +337,7 @@ function render(){
       </div>
     </div>`;
   });
+  html+=commsCard();
   app.innerHTML=html;
 
   document.querySelectorAll('.opt input').forEach(el=>el.addEventListener('change',e=>{
@@ -488,6 +500,53 @@ function submit(gi,btn){
       email:document.getElementById('email'+gi).value,
       mobile:document.getElementById('mob'+gi).value,
     });
+}
+
+function commsCard(){
+  const c=DATA.comms||[];
+  if(!c.length) return '';
+  return `<div class="card"><h2>📨 Communication history</h2>
+    <div class="loc-sub">Every touchpoint between us on this renewal — so you always know where things stand.</div>
+    <div style="margin-top:10px">${c.map(x=>`
+      <div class="citem"><span class="cdot ${x.from}"></span>
+        <div><b style="font-size:13.5px">${esc(x.label)}</b>
+        <div class="cwhen">${esc(x.when)}${x.detail?' · '+esc(x.detail):''}</div></div>
+      </div>`).join('')}</div></div>`;
+}
+
+/* ---------- post-renewal survey (?p=TOKEN&survey=1) ---------- */
+let surveyScores={sat:0,ease:0,speed:0};
+function renderSurvey(app){
+  app.innerHTML=`<div class="card">
+    <h2>How did we do, ${esc(DATA.firstName)}?</h2>
+    <div class="loc-sub">Your renewal is complete — thank you for staying with Guardian. 30 seconds of honest feedback helps us serve you better.</div>
+    <label class="fld">How satisfied are you with your renewal experience?</label>
+    <div class="stars" data-k="sat">${[1,2,3,4,5].map(n=>`<button data-n="${n}">★</button>`).join('')}</div>
+    <label class="fld">How easy was it to review and instruct us?</label>
+    <div class="stars" data-k="ease">${[1,2,3,4,5].map(n=>`<button data-n="${n}">★</button>`).join('')}</div>
+    <label class="fld">How was our speed — from your instruction to your schedule in hand?</label>
+    <div class="stars" data-k="speed">${[1,2,3,4,5].map(n=>`<button data-n="${n}">★</button>`).join('')}</div>
+    <label class="fld">Anything we should know — good or bad? (optional)</label>
+    <textarea class="txt" id="svComments" placeholder="Tell us what stood out, or what we could do better…"></textarea>
+    <button class="btn" id="svSend">Send my feedback</button>
+    <div class="ok" id="svOk">✓ Thank you! Your feedback goes straight to the team.</div>
+    <div class="err" id="svErr"></div>
+  </div>`;
+  document.querySelectorAll('.stars').forEach(row=>{
+    row.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+      surveyScores[row.dataset.k]=Number(b.dataset.n);
+      row.querySelectorAll('button').forEach(x=>x.classList.toggle('on',Number(x.dataset.n)<=Number(b.dataset.n)));
+    });
+  });
+  document.getElementById('svSend').onclick=()=>{
+    const err=document.getElementById('svErr');err.style.display='none';
+    if(!surveyScores.sat||!surveyScores.ease||!surveyScores.speed){err.textContent='Please tap a star rating for all three questions.';err.style.display='block';return;}
+    const btn=document.getElementById('svSend');btn.disabled=true;btn.textContent='Sending…';
+    google.script.run
+      .withSuccessHandler(()=>{btn.style.display='none';document.getElementById('svOk').style.display='block';})
+      .withFailureHandler(e=>{btn.disabled=false;btn.textContent='Send my feedback';err.textContent='Something went wrong: '+(e&&e.message?e.message:e);err.style.display='block';})
+      .submitSurvey({token:DATA.token,sat:surveyScores.sat,ease:surveyScores.ease,speed:surveyScores.speed,comments:document.getElementById('svComments').value});
+  };
 }
 render();
 </script>

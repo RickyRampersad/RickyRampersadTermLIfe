@@ -192,7 +192,40 @@ function activitySheet_() {
 }
 function surveysSheet_() {
   return namedSheet_(CONFIG.SURVEYS_SHEET, ['Timestamp','Token','Client','Policy #',
-    'Satisfaction (1-5)','Ease (1-5)','Comments']);
+    'Satisfaction (1-5)','Ease (1-5)','Comments','Speed (1-5)']);
+}
+
+/* Client-visible communication timeline, built from the Activity trail.
+ * Internal entries (staff comments, task work, assignments) never reach the
+ * client — only touchpoints the client themselves sent or received. */
+var COMM_LABELS = {
+  'invite-sent':            { label: 'Renewal invitation emailed to you', from: 'us' },
+  'property-invite':        { label: 'Renewal invitation emailed to you', from: 'us' },
+  'client-instruction':     { label: 'Your renewal instruction received', from: 'you' },
+  'property-instruction':   { label: 'Your renewal instruction received', from: 'you' },
+  'property-stage':         { label: 'Progress update emailed to you', from: 'us' },
+  'rate-review-requested':  { label: 'We asked Guardian to review your rate', from: 'us' },
+  'renewed':                { label: 'Renewal confirmed', from: 'us' },
+  'survey-sent':            { label: 'Feedback request emailed to you', from: 'us' },
+  'survey':                 { label: 'Your feedback received — thank you', from: 'you' },
+};
+function commsForToken_(token) {
+  token = String(token || '').trim();
+  if (!token) return [];
+  var sh = activitySheet_();
+  if (sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, 6).getValues()
+    .filter(function (r) { return String(r[1]).trim() === token; })
+    .map(function (r) {
+      var type = String(r[3]).replace(/^TEST:/, '');
+      var meta = COMM_LABELS[type] ||
+        (type.indexOf('reminder-') === 0 ? { label: 'Renewal reminder emailed to you', from: 'us' } : null);
+      if (!meta) return null;
+      return { when: fmtDate_(r[0]), label: meta.label, from: meta.from,
+               detail: String(r[5] || '').slice(0, 160) };
+    })
+    .filter(function (x) { return !!x; })
+    .reverse().slice(0, 30);
 }
 
 function headerMap_(sheet) {
@@ -473,6 +506,7 @@ function clientPage_(p) {
       };
     }),
     history: token ? historyForToken_(token) : [],
+    comms: token ? commsForToken_(token) : [],
     vehicles: rows.length ? vehiclesForClient_(rows[0].client, rows[0].token, rows[0].email) : [],
     agent: { name: CONFIG.AGENT_NAME, phone: CONFIG.AGENT_PHONE },
   });
@@ -602,16 +636,21 @@ function submitInstruction(payload) {
 function submitSurvey(payload) {
   payload = payload || {};
   var token = String(payload.token || '').trim();
+  // one survey endpoint for both books: motor first, property fallback
   var rows = rowsForToken_(token);
+  if (!rows.length && typeof propByToken_ === 'function') rows = propByToken_(token) || [];
   if (!rows.length) throw new Error('We could not find your policy link.');
   var sat = Math.max(1, Math.min(5, Number(payload.sat) || 0));
   var ease = Math.max(1, Math.min(5, Number(payload.ease) || 0));
+  var speed = Math.max(0, Math.min(5, Number(payload.speed) || 0));
   var comments = String(payload.comments || '').slice(0, 2000);
   surveysSheet_().appendRow([new Date(), token, rows[0].client, rows[0].policy, sat, ease,
-    (testMode_() ? '[TEST] ' : '') + comments]);
-  logActivity_(token, rows[0].client, 'survey', 'client', 'Satisfaction ' + sat + '/5 · Ease ' + ease + '/5' + (comments ? ' · "' + comments.slice(0, 120) + '"' : ''));
-  if (sat <= 3) {   // service recovery: low score → immediate staff task
-    createTask_('Service recovery call — survey score ' + sat + '/5', '', rows[0].assignedTo || '', rows[0].client, token, 'system');
+    (testMode_() ? '[TEST] ' : '') + comments, speed || '']);
+  logActivity_(token, rows[0].client, 'survey', 'client', 'Satisfaction ' + sat + '/5 · Ease ' + ease + '/5' +
+    (speed ? ' · Speed ' + speed + '/5' : '') + (comments ? ' · "' + comments.slice(0, 120) + '"' : ''));
+  if (sat <= 3 || (speed && speed <= 3)) {   // service recovery: low score → immediate staff task
+    createTask_('Service recovery call — survey score ' + sat + '/5' + (speed ? ' (speed ' + speed + '/5)' : ''),
+      '', rows[0].assignedTo || '', rows[0].client, token, 'system');
   }
   return { ok: true };
 }
@@ -742,6 +781,21 @@ function staffAction(key, me, action, params) {
       sh.getRange(Number(params.rowIndex), col_(map, 'renewal status') + 1).setValue('RENEWED — ' + nowStamp_());
       sh.getRange(Number(params.rowIndex), col_(map, 'renewed date') + 1).setValue(new Date());
       logActivity_(params.token, params.client, 'renewed', staff.email, 'Marked renewed');
+      // "How did we do?" goes out the moment the renewal is confirmed.
+      // The stamp keeps the daily +7d catcher from sending it twice.
+      try {
+        var srow = allRenewals_().filter(function (x) { return x.rowIndex === Number(params.rowIndex); })[0];
+        if (srow && srow.email) {
+          sendSurveyEmail_(srow);
+          var cRem = col_(map, 'reminders sent');
+          if (cRem >= 0 && !testMode_()) {
+            var st0 = String(sh.getRange(Number(params.rowIndex), cRem + 1).getValue() || '');
+            if (st0.indexOf('survey@') < 0)
+              sh.getRange(Number(params.rowIndex), cRem + 1).setValue((st0 ? st0 + '; ' : '') + 'survey@' + nowStamp_());
+          }
+          logActivity_(params.token, params.client, 'survey-sent', 'system', 'On renewal confirmation');
+        }
+      } catch (err) { Logger.log('survey on markRenewed: ' + err); }
       break;
     }
     case 'assign': {

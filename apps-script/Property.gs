@@ -214,6 +214,8 @@ function propertyPage_(p) {
     ok: rows.length > 0,
     token: token,
     opt: String(p.opt || ''),
+    survey: String(p.survey || '') === '1',
+    comms: commsForToken_(token),
     firstName: rows.length ? (rows[0].contact || rows[0].client).split(' ')[0] : '',
     client: rows.length ? rows[0].client : '',
     stages: PROP.STAGES,
@@ -553,6 +555,21 @@ function advancePropertyStage(token, stageKey, note, by) {
         sig_(), 'Property renewal progress'),
     });
     setPropCell_(r.rowIndex, 'last client update', new Date());
+    // renewal confirmed → "How did we do?" goes out right away
+    if (done) {
+      sendMail_({
+        to: r.email, name: CONFIG.FROM_NAME,
+        subject: 'How did we do with your renewal? (30 seconds)',
+        htmlBody: brandWrap_(
+          '<p>Dear ' + esc_((r.contact || r.client).split(' ')[0]) + ',</p>' +
+          '<p>Your renewal is complete — thank you for staying with Guardian. We hold ourselves to a high ' +
+          'standard, especially on <b>how quickly</b> we get your renewal done, and your honest feedback is how we keep it that way.</p>' +
+          ctaBtn_(propPortalLink_(token) + '&survey=1', 'Rate your renewal experience') +
+          '<p>It takes about 30 seconds, and every response is read by the team.</p>' + sig_(),
+          'Property renewal feedback'),
+      });
+      logActivity_(token, r.client, 'survey-sent', 'system', 'On schedule issued');
+    }
   }
   return { ok: true };
 }
