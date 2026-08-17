@@ -123,6 +123,9 @@ const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>
 const money = v => { const n=Number(v); return (!v&&v!==0)||isNaN(n) ? esc(v) : 'TT$'+n.toLocaleString('en-US',{maximumFractionDigits:0}); };
 let D = null, ME = localStorage.getItem('gg_staff_email')||'', PIN = localStorage.getItem('gg_staff_pin')||'', FILTER='action', Q='';
 let AUDIT = { on:false, by:'', type:'', q:'' };
+let PIPE = { month:'', cov:'', who:'' };
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const monthOf=s=>{const m=String(s||'').match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/);return m?m[1]:'';};
 
 function toast(m){ const t=$('#toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
 
@@ -174,9 +177,22 @@ function filtered(){
   else if(FILTER==='overdue') rows = rows.filter(r=>r.st.k==='overdue');
   else if(FILTER==='due14') rows = rows.filter(r=>['due7','due14'].includes(r.st.k));
   else if(FILTER==='renewed') rows = rows.filter(r=>r.st.k==='done');
+  if(PIPE.month) rows = rows.filter(r=>monthOf(r.nextDue)===PIPE.month);
+  if(PIPE.cov) rows = rows.filter(r=>r.coverage===PIPE.cov);
+  if(PIPE.who==='unassigned') rows = rows.filter(r=>!(r.assignedTo||'').trim());
+  else if(PIPE.who) rows = rows.filter(r=>(r.assignedTo||'').toLowerCase()===PIPE.who);
   if(Q) rows = rows.filter(r=>(r.client+' '+r.policy+' '+r.coverage+' '+r.assignedTo).toLowerCase().includes(Q));
   rows.sort((a,b)=>a.st.ord-b.st.ord || (a.days??999)-(b.days??999));
   return rows;
+}
+function filteredProps(){
+  let ps = D.properties||[];
+  if(PIPE.month) ps = ps.filter(p=>monthOf(p.renewalDate)===PIPE.month);
+  if(PIPE.who==='unassigned') ps = ps.filter(p=>!(p.assignedTo||'').trim());
+  else if(PIPE.who) ps = ps.filter(p=>(p.assignedTo||'').toLowerCase()===PIPE.who);
+  if(PIPE.cov && PIPE.cov!=='__prop') return [];   // a motor coverage is selected — property table empties
+  if(Q) ps = ps.filter(p=>(p.client+' '+p.policy+' '+(p.assignedTo||'')).toLowerCase().includes(Q));
+  return ps;
 }
 
 function renderApp(){
@@ -216,6 +232,12 @@ function renderApp(){
       <button class="abtn ${AUDIT.on?'primary':''}" id="audBtn">🔍 Audit</button>
       <button class="abtn gold" id="addBtn">＋ Add renewal</button>
     </div>
+    <div class="bar">
+      <select id="fMon" style="width:auto"><option value="">📅 All months</option>${MONTHS.map(m=>`<option ${m===PIPE.month?'selected':''}>${m}</option>`).join('')}</select>
+      <select id="fCov" style="width:auto"><option value="">🚗🏠 All types</option>${[...new Set(D.renewals.map(r=>r.coverage).filter(Boolean))].sort().map(c=>`<option ${c===PIPE.cov?'selected':''} value="${esc(c)}">${esc(c.replace(' (assumed)',''))}</option>`).join('')}</select>
+      <select id="fWho" style="width:auto"><option value="">👤 Everyone</option><option value="unassigned" ${PIPE.who==='unassigned'?'selected':''}>— Unassigned —</option>${D.staff.map(s=>`<option value="${esc(s.email)}" ${s.email===PIPE.who?'selected':''}>${esc(s.name)}</option>`).join('')}</select>
+      ${(PIPE.month||PIPE.cov||PIPE.who)?`<button class="abtn sm" id="fClear">✕ Clear filters</button>`:''}
+    </div>
     ${AUDIT.on?auditView():''}
 
     <div class="grid2col">
@@ -231,9 +253,9 @@ function renderApp(){
             <td class="mini">${D.lastTouch[r.token]?esc(D.lastTouch[r.token].when+' · '+D.lastTouch[r.token].by.split('@')[0]):'—'}</td>
           </tr>`).join('')}</tbody></table></div>
         </div>
-        ${(D.properties&&D.properties.length)?`<div class="card"><h2>🏠 Property renewals (${D.properties.length})</h2>
+        ${(D.properties&&D.properties.length)?`<div class="card"><h2>🏠 Property renewals (${filteredProps().length})</h2>
           <div style="overflow-x:auto"><table><thead><tr><th>Client</th><th>Policy</th><th>Due</th><th>Stage</th><th>Assigned</th></tr></thead>
-          <tbody>${D.properties.slice(0,80).map(pp=>{
+          <tbody>${filteredProps().slice(0,80).map(pp=>{
             const st=propStatus(pp);
             return `<tr data-prop="${esc(pp.token)}">
               <td><b>${esc(pp.client)}</b><div class="mini">${pp.locations} location${pp.locations===1?'':'s'} · ${money(pp.premium)}</div></td>
@@ -272,6 +294,10 @@ function renderApp(){
   document.querySelectorAll('tbody tr[data-prop]').forEach(tr=>tr.onclick=()=>openProp(tr.dataset.prop));
   $('#kTasks').onclick=()=>{ Q=ME.split('@')[0]; renderApp(); };
   $('#audBtn').onclick=()=>{ AUDIT.on=!AUDIT.on; renderApp(); };
+  $('#fMon').onchange=e=>{ PIPE.month=e.target.value; renderApp(); };
+  $('#fCov').onchange=e=>{ PIPE.cov=e.target.value; renderApp(); };
+  $('#fWho').onchange=e=>{ PIPE.who=e.target.value; renderApp(); };
+  const fc=$('#fClear'); if(fc) fc.onclick=()=>{ PIPE={month:'',cov:'',who:''}; renderApp(); };
   document.querySelectorAll('[data-qans]').forEach(b=>b.onclick=()=>{
     const t=document.getElementById('qa_'+b.dataset.qans).value.trim();
     if(!t){ toast('Type your answer first'); return; }
