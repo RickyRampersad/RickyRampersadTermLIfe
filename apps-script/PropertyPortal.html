@@ -311,7 +311,9 @@ function locationBlock(loc){
       <tr class="tot"><td>Totals</td><td class="n">${money(cur)}</td><td class="n" id="newtot_${i}">—</td></tr>
     </table>
     <p style="font-size:12.5px;color:var(--ink2)">Premium for this location: <b>${money(loc.premium)}</b>
-      <span style="color:#8a97a8">(includes Government Tax · renewal terms may vary)</span></p>
+      <span style="color:#8a97a8">(includes Government Tax · renewal terms may vary)</span>
+      ${loc.rate?`<br>Your rate here: <b>$${loc.rate.toFixed(2)} per $1,000 of cover</b> before tax — so increasing your cover costs less than you may think.`:''}</p>
+    <div id="est_${i}" style="display:none;background:#e8f0fb;border-left:4px solid var(--blue);border-radius:0 10px 10px 0;padding:11px 15px;margin:8px 0;font-size:13.5px"></div>
     ${excessTable(loc.excess,'Excesses at this location')}
     ${loc.valuesReviewed?`<div class="stale">📅 <b>Last reviewed in ${esc(loc.valuesReviewed)}.</b>
       Costs have moved since then — if these figures are no longer realistic, adjust them above.</div>`:''}
@@ -326,6 +328,49 @@ function locationBlock(loc){
       <div class="calcout ok" id="av_out_${i}"></div>
     </div>
   </div>`;
+}
+
+function retotal(i){
+  const r=DATA.risks[i];
+  let t=0, changed=false;
+  DATA.lines.forEach(L=>{
+    const el=document.getElementById(`adj_${i}_${L.key}`);
+    const v=el&&el.value.trim()?numv(el.value):null;
+    if(v!==null){changed=true;t+=v;} else t+=Number(r.values[L.key])||0;
+  });
+  const nt=document.getElementById('newtot_'+i);
+  if(nt) nt.textContent = changed?money(t):'—';
+  const ins=document.getElementById('av_ins_'+i); if(ins&&changed){ins.value=t;avg(i);}
+  // live premium estimate at the client's own rate
+  const est=document.getElementById('est_'+i);
+  if(est){
+    if(changed && r.rate){
+      const newPrem=t*r.rate/1000*(1+(r.taxRate||0.06));
+      const diff=newPrem-(Number(r.premium)||0);
+      est.style.display='block';
+      est.innerHTML=`💡 <b>At your adjusted values, this location's premium would be approximately
+        ${money(newPrem)}</b> including Government Tax — ${diff>=0?`about <b>${money(diff)}</b> more`:`about <b>${money(-diff)}</b> less`} than now.
+        <span style="color:#5a6b80">Estimate at your current rate of $${r.rate.toFixed(2)} per $1,000; final terms are confirmed by Guardian.</span>`;
+    } else est.style.display='none';
+  }
+}
+
+function avg(i){
+  const tEl=document.getElementById('av_true_'+i);
+  const sEl=document.getElementById('av_ins_'+i);
+  const lEl=document.getElementById('av_loss_'+i);
+  const out=document.getElementById('av_out_'+i);
+  if(!tEl||!sEl||!lEl||!out) return;
+  const t=numv(tEl.value), si=numv(sEl.value), l=numv(lEl.value);
+  if(!t||!l){out.className='calcout ok';out.textContent='Enter your figures above to see the result.';return;}
+  const ratio=Math.min(si/t,1), pays=Math.min(l*ratio,si), gap=l-pays;
+  if(si>=t){
+    out.className='calcout ok';
+    out.innerHTML=`✅ This location is insured at full value — average doesn't bite.<span class="big">Claim pays ${money(Math.min(l,si))}</span>Every dollar of this loss is covered, subject to your excess.`;
+  }else{
+    out.className='calcout bad';
+    out.innerHTML=`⚠️ You'd be self-insuring <b>${Math.round((1-ratio)*100)}%</b> of every claim here.<span class="big">Claim pays ${money(pays)}</span>You would carry <b>${money(gap)}</b> yourself, before the excess. Fix it by adjusting the values above to ${money(t)}.`;
+  }
 }
 
 function submit(gi,btn){
