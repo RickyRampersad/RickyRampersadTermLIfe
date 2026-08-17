@@ -185,6 +185,28 @@ input,select,textarea{font-family:inherit;font-size:14px}
 .pill.dup{background:var(--gold-soft);color:#8A6A1C}
 .pill.lapse{background:var(--red-soft);color:var(--red)}
 .pill.grp{background:var(--teal-soft);color:var(--teal);font-weight:700}
+/* pendings workspace */
+.pipe{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+.pp{flex:1 1 130px;background:var(--card);border:1px solid var(--line);border-radius:9px;padding:12px 14px;min-width:120px}
+.pp .n{font-size:22px;font-weight:700;color:var(--ink);line-height:1.1}
+.pp .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-top:3px}
+.pp.hot{border-color:var(--red);background:var(--red-soft)} .pp.hot .n{color:var(--red)}
+.pp.go{border-color:var(--green);background:var(--green-soft)} .pp.go .n{color:var(--green)}
+.pq{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.pq-row{display:grid;grid-template-columns:86px 1fr;gap:12px;padding:13px 16px;background:var(--card);border-bottom:1px solid var(--line-2);cursor:pointer}
+.pq-row:last-child{border-bottom:none}
+.pq-row:hover{background:var(--card-2)}
+.pq-act{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  padding:4px 8px;border-radius:4px;text-align:center;align-self:start;border:1px solid}
+.pq-act.gate{color:var(--red);border-color:var(--red);background:var(--red-soft)}
+.pq-act.settle{color:var(--green);border-color:var(--green);background:var(--green-soft)}
+.pq-act.fix{color:var(--amber);border-color:var(--amber);background:var(--amber-soft)}
+.pq-act.collect{color:var(--teal);border-color:var(--teal);background:var(--teal-soft)}
+.pq-act.chase{color:var(--ink-2);border-color:var(--line)}
+.pq-body .t{font-weight:650;font-size:14.5px;color:var(--ink)}
+.pq-body .s{font-size:13.2px;color:var(--ink-2);margin-top:2px;line-height:1.5}
+.pq-body .m{font-family:var(--mono);font-size:11px;color:var(--mut);margin-top:3px}
+@media(max-width:560px){.pq-row{grid-template-columns:1fr}.pq-act{justify-self:start}}
 .pill.stage{background:var(--amber-soft);color:var(--amber)}
 .pill.stage.s60{background:var(--red-soft);color:var(--red)}
 .pill.stage.s90{background:#EADCDC;color:var(--red-2)}
@@ -1675,10 +1697,13 @@ function renderAgent(){
   const mine=ALL_CASES.filter(c=>c.Agent===SESS.match);
   function rerender(){host(); }
   function host(){view.querySelector('#ribHost').innerHTML=ribbon(mine);renderList(view,mine,'caseHost');wireFilter(mine,rerender);}
+  const pendN=mine.filter(c=>c.stage==='pend'&&!c.grp).length;
   view.innerHTML=`<div class="page-head"><div><div class="eyebrow">Agent workspace · ${esc(SESS.code)}</div><h2>Your premium-due book</h2><div class="sub">${mine.length} policies tracked. Run the 45-day survey, open 75-day retention cases, and act before the 90-day lapse.</div></div></div>
     ${nextStep(mine)}${rickyBanner(mine,`${SESS.firstName}, here's where you save the most this week`)}${statStrip(mine)}
     <div id="ribHost"></div>
-    ${filterBar()}<div id="caseHost" class="cases"></div>${footer()}`;
+    ${filterBar()}<div id="caseHost" class="cases"></div>
+    ${pendN?`<div class="page-head" style="margin-top:34px"><div><div class="eyebrow">Your pendings · submission to settled</div><h2>${pendN} application${pendN===1?'':'s'} not yet in force</h2><div class="sub">Every one is waiting on something specific. Clear it and the case settles.</div></div></div>${pendingsPanel(mine)}`:''}
+    ${footer()}`;
   host();
   bindJumps(view, rerender);
 }
@@ -1692,8 +1717,9 @@ function renderManagerScope(title,eyebrow){
   const awaitN=mine.filter(c=>{const st=policyState(c.Policy);return st.retention&&!st.verdict;}).length;
   view.innerHTML=`<div class="page-head"><div><div class="eyebrow">${esc(eyebrow)} · ${esc(SESS.code)}</div><h2>${esc(title)}</h2><div class="sub">${mine.length} policies across your reporting line.</div></div></div>
     ${nextStep(mine)}${rickyBanner(mine,`${SESS.firstName}, where your line is losing premium`)}${statStrip(mine)}
-    <div class="tabs"><button class="tab on" data-tab="book">Premium book</button><button class="tab" data-tab="queue">Retention queue${awaitN?`<span class="q-badge">${awaitN}</span>`:''}</button><button class="tab" data-tab="score">Agent scorecard</button></div>
+    <div class="tabs"><button class="tab on" data-tab="book">Premium book</button><button class="tab" data-tab="pend">Pendings${(pn=>pn?`<span class="q-badge">${pn}</span>`:'')(mine.filter(c=>c.stage==='pend'&&!c.grp).length)}</button><button class="tab" data-tab="queue">Retention queue${awaitN?`<span class="q-badge">${awaitN}</span>`:''}</button><button class="tab" data-tab="score">Agent scorecard</button></div>
     <div class="tabpane on" data-pane="book"><div id="ribHost"></div>${filterBar()}<div id="caseHost" class="cases"></div></div>
+    <div class="tabpane" data-pane="pend"><p class="note" style="margin-bottom:14px">Your line's new business from submission to settled — what stands between each application and a policy in force.</p>${pendingsPanel(mine)}</div>
     <div class="tabpane" data-pane="queue"><p class="note" style="margin-bottom:14px">75-day retention cases your agents submitted, waiting on your decision. Click any row to respond.</p><div id="queueHost">${managerQueue(mine)}</div></div>
     <div class="tabpane" data-pane="score"><p class="note" style="margin-bottom:14px">Persistency scorecard — who's running surveys, who's letting policies reach the lapse line.</p>${agentScorecard(mine)}</div>
     ${footer()}`;
@@ -1703,6 +1729,50 @@ function renderManagerScope(title,eyebrow){
 function renderUnit(){renderManagerScope("Your unit's premium book","Unit Manager · "+SESS.displayName+" Unit");}
 function renderABM(){renderManagerScope("Your reporting line — full view","Assistant Branch Manager");}
 
+/* ===== PENDINGS WORKSPACE =====
+   The pipeline from submission onward, and a work queue where every row is a
+   specific next action for support — ordered by what settles a case fastest.
+   The same panel serves every login; the case list arriving here is already
+   scoped to the signer (agent -> own book, manager -> unit, BM/support -> branch). */
+function pendAction(c){
+  if(c.cf.replacementRisk)return['gate','GATE','Replacement check first — signed Declaration Form + client ID with the application, or the case is Not Proceeded With (Sept 2022 guidelines §9)'];
+  if(c.ReqtUwDone)return['settle','SETTLE',`Underwriting is COMPLETE — get ${c.ReqtName?`the ${esc(c.ReqtName)}`:'the last document'}${c.ReqtDays?` (outstanding ${c.ReqtDays}d)`:''} and this becomes a policy in force`];
+  if(c.ReqtErrors)return['fix','FIX','Entry errors are OURS to correct on Ingenium — no client or agent needed. Fix, then the case moves'];
+  if(/future premium|premium payment/i.test(c.ReqtName||''))return['collect','COLLECT','First premium not yet paid — send the MyGG link via the agent, or collect at the branch'];
+  if(c.ReqtName)return['chase','CHASE',`Get the ${esc(c.ReqtName)}${c.ReqtCount>1?` (+${c.ReqtCount-1} more item${c.ReqtCount>2?'s':''})`:''} from the client through the agent — the fortnightly letter is asking for exactly this`];
+  return['chase','VERIFY','No requirement on file for this case — confirm with underwriting what is actually outstanding, then log it'];
+}
+function pendingsPanel(cases){
+  const pend=cases.filter(c=>c.stage==='pend'&&!c.grp);
+  if(!pend.length)return `<div class="empty-state"><div class="shield">${SHIELD}</div><p>No pending business in this view — every application is settled or closed.</p></div>`;
+  const d=c=>Number(c.DaysArrears)||0;
+  const ready=pend.filter(c=>c.ReqtUwDone);
+  const errs=pend.filter(c=>c.ReqtErrors&&!c.ReqtUwDone);
+  const repl=pend.filter(c=>c.cf.replacementRisk);
+  const fresh=pend.filter(c=>d(c)<=21);
+  const stale=pend.filter(c=>d(c)>120);
+  const strip=`<div class="pipe">
+    <div class="pp"><div class="n">${pend.length}</div><div class="k">Pending in this view</div></div>
+    <div class="pp"><div class="n">${fresh.length}</div><div class="k">Fresh · ≤21 days</div></div>
+    <div class="pp ${repl.length?'hot':''}"><div class="n">${repl.length}</div><div class="k">Replacement gate</div></div>
+    <div class="pp ${errs.length?'hot':''}"><div class="n">${errs.length}</div><div class="k">Errors — ours to fix</div></div>
+    <div class="pp ${ready.length?'go':''}"><div class="n">${ready.length}</div><div class="k">Settle-ready · UW ✓</div></div>
+    <div class="pp"><div class="n">${stale.length}</div><div class="k">Stale · 120d+</div></div>
+  </div>`;
+  const rank={gate:0,settle:1,fix:2,collect:3,chase:4};
+  const rows=pend.map(c=>({c,a:pendAction(c)}))
+    .sort((x,y)=>(rank[x.a[0]]-rank[y.a[0]])||(d(y.c)-d(x.c)))
+    .map(({c,a})=>`<div class="pq-row" data-qjump="${esc(c.Policy)}">
+      <span class="pq-act ${a[0]}">${a[1]}</span>
+      <div class="pq-body">
+        <div class="t">${esc(c.Client)} · ${esc(c.Policy)}</div>
+        <div class="s">${a[2]}</div>
+        <div class="m">Agent ${esc(c.Agent)} · day ${d(c)} of the application${c.ReqtSusp?` · $${Number(c.ReqtSusp).toLocaleString()} in suspense waiting`:''}</div>
+      </div>
+    </div>`).join('');
+  return strip+`<p class="note" style="margin:0 0 10px">Worked top to bottom, this queue is the shortest path to settled: clear the gates, land the settle-ready papers, fix our own errors, collect first premiums, then chase documents oldest-first. The fortnightly letters chase the same items automatically — this queue is the human push that beats the letter.</p><div class="pq">${rows}</div>`;
+}
+
 /* ===== SUPPORT / BM VIEW (full branch) ===== */
 function renderFull(title,eyebrow){
   const view=$('#view');
@@ -1711,8 +1781,9 @@ function renderFull(title,eyebrow){
   const awaitN=mine.filter(c=>{const st=policyState(c.Policy);return st.retention&&!st.verdict;}).length;
   view.innerHTML=`<div class="page-head"><div><div class="eyebrow">${esc(eyebrow)} · ${esc(SESS.code)}</div><h2>${esc(title)}</h2><div class="sub">Full branch premium-due book — every stage, every agent, the manager queue and persistency scorecard.</div></div></div>
     ${nextStep(mine)}${rickyBanner(mine,`${SESS.firstName}, the branch's premium-due priorities`)}${statStrip(mine)}
-    <div class="tabs"><button class="tab on" data-tab="book">Premium book</button><button class="tab" data-tab="queue">Manager queue${awaitN?`<span class="q-badge">${awaitN}</span>`:''}</button><button class="tab" data-tab="score">Agent scorecard</button></div>
+    <div class="tabs"><button class="tab on" data-tab="book">Premium book</button><button class="tab" data-tab="pend">Pendings${(pn=>pn?`<span class="q-badge">${pn}</span>`:'')(mine.filter(c=>c.stage==='pend'&&!c.grp).length)}</button><button class="tab" data-tab="queue">Manager queue${awaitN?`<span class="q-badge">${awaitN}</span>`:''}</button><button class="tab" data-tab="score">Agent scorecard</button></div>
     <div class="tabpane on" data-pane="book"><div id="ribHost"></div>${filterBar()}<div id="caseHost" class="cases"></div></div>
+    <div class="tabpane" data-pane="pend"><p class="note" style="margin-bottom:14px">New business from submission to settled — what stands between each application and a policy in force, and who moves it.</p>${pendingsPanel(mine)}</div>
     <div class="tabpane" data-pane="queue"><p class="note" style="margin-bottom:14px">Every 75-day retention case awaiting a manager response across the branch.</p><div id="queueHost">${managerQueue(mine)}</div></div>
     <div class="tabpane" data-pane="score"><p class="note" style="margin-bottom:14px">Branch persistency scorecard.</p>${agentScorecard(mine)}</div>
     ${footer()}`;

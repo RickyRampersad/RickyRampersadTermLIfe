@@ -444,6 +444,26 @@ product, with the received-date-to-issue timeline, MyGG onboarding, and the
 agent and manager on the copy line. No application ever just quietly stops
 being talked about.
 
+**The Pendings workspace** — every login now carries a *Pendings* tab
+(agents get the panel under their book), showing new business from submission
+to settled: a pipeline strip (fresh · replacement gate · errors-ours ·
+settle-ready · stale) and a work queue ordered by what settles a case
+fastest. Each row is a specific action with an owner:
+
+| Priority | Tag | What support does |
+|---|---|---|
+| 1 | **GATE** | Replacement check — signed Declaration Form + client ID with the application, or Not Proceeded With |
+| 2 | **SETTLE** | UW complete — land the one outstanding document and the case issues |
+| 3 | **FIX** | Entry errors are ours — correct on Ingenium, no client needed |
+| 4 | **COLLECT** | First premium unpaid — MyGG link via the agent, or collect at branch |
+| 5 | **CHASE** | Get the named document from the client through the agent, oldest first |
+| — | VERIFY | No requirement on file — confirm with underwriting, then log it |
+
+The fortnightly pending letters chase the same items automatically; the queue
+is the human push that beats the letter. Scoping is the login's own: an agent
+sees their applications, a unit manager their line's, support and the BM the
+branch.
+
 **Stats before letters:** `pdPilotStats()` emails one digest of everything
 the engine believes — the dues funnel, the schemes, the decoded pending book,
 the week's production — to the test inbox (branch email once live), writing
