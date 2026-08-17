@@ -694,6 +694,8 @@ function staffData(key, me) {
     me: staff, staff: staffList_(), renewals: renewals, tasks: tasks,
     lastTouch: lastTouch, feed: feed, surveys: surveys,
     vehicles: vehiclesByToken,
+    properties: (typeof propertyPipeline_ === 'function') ? propertyPipeline_() : [],
+    propStages: (typeof propertyStages_ === 'function') ? propertyStages_() : [],
     portalBase: CONFIG.WEBAPP_URL,
   };
 }
@@ -773,6 +775,21 @@ function staffAction(key, me, action, params) {
       sh.appendRow(newRow);
       logActivity_(token, params.client, 'renewal-added', staff.email,
         (params.coverage || '') + ' due ' + (params.nextDue || '?'));
+      break;
+    }
+    case 'propStage': {
+      advancePropertyStage(params.token, params.stage, params.note || '', staff.email);
+      break;
+    }
+    case 'propInvite': {
+      sendPropertyInviteByToken_(params.token, staff.email);
+      break;
+    }
+    case 'propAssign': {
+      var pr = propByToken_(params.token);
+      if (!pr) throw new Error('Property renewal not found.');
+      pr.forEach(function (x) { setPropCell_(x.rowIndex, 'assigned to', params.assignee || ''); });
+      logActivity_(params.token, pr[0].client, 'assigned', staff.email, 'property → ' + (params.assignee || '(unassigned)'));
       break;
     }
     default: throw new Error('Unknown action: ' + action);

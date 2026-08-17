@@ -150,7 +150,7 @@ function filtered(){
 }
 
 function renderApp(){
-  $('#meBox').innerHTML = `Signed in as <b>${esc(D.me.name)}</b> · <a href="#" id="lo" style="color:#b7c9de">switch</a>`;
+  $('#meBox').innerHTML = `Signed in as <b>${esc(D.me.name)}</b> (${esc(D.me.role)}) · <a href="#" id="lo" style="color:#b7c9de">switch</a>`;
   const rows = D.renewals.map(r=>({...r, st:statusOf(r)}));
   const n = k => rows.filter(r=>r.st.k===k).length;
   const myTasks = D.tasks.filter(t=>t.status==='Open' && (t.assignee||'').toLowerCase()===ME).length;
@@ -164,6 +164,7 @@ function renderApp(){
       ${kpi('due14',n('due7')+n('due14'),'Due in 14 days','gold')}
       ${kpi('renewed',renewedMonth,'Renewed','')}
       <div class="kpi ${myTasks?'gold':''}" id="kTasks"><div class="n">${myTasks}</div><div class="l">My open tasks</div></div>
+      <div class="kpi ${(D.properties||[]).filter(p=>p.stage&&p.stage!=='issued').length?'gold':''}"><div class="n">${(D.properties||[]).filter(p=>p.stage&&p.stage!=='issued').length}</div><div class="l">🏠 Property files open</div></div>
       <div class="kpi"><div class="n">${D.surveys.count?D.surveys.avgSat+'★':'—'}</div><div class="l">Avg satisfaction (${D.surveys.count})</div></div>
     </div>
 
@@ -187,6 +188,18 @@ function renderApp(){
             <td class="mini">${D.lastTouch[r.token]?esc(D.lastTouch[r.token].when+' · '+D.lastTouch[r.token].by.split('@')[0]):'—'}</td>
           </tr>`).join('')}</tbody></table></div>
         </div>
+        ${(D.properties&&D.properties.length)?`<div class="card"><h2>🏠 Property renewals (${D.properties.length})</h2>
+          <div style="overflow-x:auto"><table><thead><tr><th>Client</th><th>Policy</th><th>Due</th><th>Stage</th><th>Assigned</th></tr></thead>
+          <tbody>${D.properties.slice(0,80).map(pp=>{
+            const st=propStatus(pp);
+            return `<tr data-prop="${esc(pp.token)}">
+              <td><b>${esc(pp.client)}</b><div class="mini">${pp.locations} location${pp.locations===1?'':'s'} · ${money(pp.premium)}</div></td>
+              <td class="mini">${esc(pp.policy||'—')}</td>
+              <td>${esc(pp.renewalDate)}</td>
+              <td><span class="chip ${st.cls}">${st.label}</span></td>
+              <td class="mini">${esc((pp.assignedTo||'').split('@')[0]||'—')}</td>
+            </tr>`;}).join('')}</tbody></table></div>
+        </div>`:''}
       </div>
       <div>
         <div class="card"><h2>Open tasks (${openTasks.length})</h2><div style="padding:12px 14px">
@@ -212,8 +225,59 @@ function renderApp(){
   $('#addBtn').onclick = addRenewalModal;
   $('#lo').onclick = e=>{ e.preventDefault(); ME=''; localStorage.removeItem('gg_staff_email'); renderLogin(); };
   document.querySelectorAll('[data-done]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); act('completeTask',{id:b.dataset.done},'Task completed'); });
-  document.querySelectorAll('tbody tr').forEach(tr=>tr.onclick=()=>openDetail(Number(tr.dataset.row)));
+  document.querySelectorAll('tbody tr[data-row]').forEach(tr=>tr.onclick=()=>openDetail(Number(tr.dataset.row)));
+  document.querySelectorAll('tbody tr[data-prop]').forEach(tr=>tr.onclick=()=>openProp(tr.dataset.prop));
   $('#kTasks').onclick=()=>{ Q=ME.split('@')[0]; renderApp(); };
+}
+
+function propStatus(pp){
+  const stages=D.propStages||[];
+  const i=stages.findIndex(x=>x.key===pp.stage);
+  if(pp.stage==='issued') return {label:'✓ Issued',cls:'c-done'};
+  if(i>=0) return {label:stages[i].label,cls:'c-wait'};
+  if(pp.days!==null&&pp.days<0) return {label:'Overdue '+Math.abs(pp.days)+'d',cls:'c-over'};
+  if(pp.days!==null&&pp.days<=14) return {label:'Due '+pp.days+'d',cls:'c-due'};
+  return {label:pp.status?pp.status.slice(0,18):'Not invited',cls:'c-up'};
+}
+
+function openProp(token){
+  const pp=(D.properties||[]).find(x=>x.token===token); if(!pp) return;
+  const st=propStatus(pp);
+  const stages=D.propStages||[];
+  const at=stages.findIndex(x=>x.key===pp.stage);
+  const link=D.portalBase? D.portalBase+(D.portalBase.includes('?')?'&':'?')+'p='+encodeURIComponent(pp.token):'';
+  $('#dr').innerHTML=`
+    <div class="dh"><h3>🏠 ${esc(pp.client)} <span class="chip ${st.cls}" style="vertical-align:middle">${st.label}</span></h3>
+    <div style="font-size:12px;color:#b7c9de">${esc(pp.policy||'no policy #')} · ${pp.locations} location(s) · renews ${esc(pp.renewalDate)}</div></div>
+    <div class="db">
+      <div class="sec"><div class="kv">
+        <div><div class="k">Premium (all locations)</div><div class="v">${money(pp.premium)}</div></div>
+        <div><div class="k">Email</div><div class="v">${esc(pp.email||'—')}</div></div>
+        <div><div class="k">Stage since</div><div class="v">${esc(pp.stageUpdated||'—')}</div></div>
+        <div><div class="k">Assigned to</div><div class="v">
+          <select id="pAssign">${['',...D.staff.map(x=>x.email)].map(e=>`<option ${e===(pp.assignedTo||'').toLowerCase()?'selected':''}>${e}</option>`).join('')}</select>
+        </div></div>
+      </div></div>
+      <div class="sec"><h4>Renewal journey</h4>
+        ${stages.map((x,i)=>`<div class="task" style="${i===at?'border-color:#E8A020;background:#fdf6e9':''}">
+          <div class="t"><b>${i<at?'✅ ':i===at?'🟡 ':''}${esc(x.label)}</b><div class="mini">${esc(x.blurb)}</div></div>
+          ${i===at+1?`<button class="abtn sm" data-adv="${x.key}">Advance →</button>`:''}
+        </div>`).join('')}
+        <label>Note for the client's progress update (optional)</label>
+        <input type="text" id="pNote" placeholder="e.g. Terms received from Guardian — reviewing now">
+      </div>
+      <div class="sec" style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="abtn primary" id="pInvite">✉ Send/resend renewal invite</button>
+        ${link?`<button class="abtn" id="pLink">⧉ Copy portal link</button>`:''}
+      </div>
+    </div>`;
+  $('#ov').classList.add('open'); $('#dr').classList.add('open');
+  document.querySelectorAll('[data-adv]').forEach(btn=>btn.onclick=()=>{
+    closeDr(); act('propStage',{token:pp.token,stage:btn.dataset.adv,note:$('#pNote').value},'Stage advanced — client updated by email');
+  });
+  $('#pInvite').onclick=()=>{ closeDr(); act('propInvite',{token:pp.token},'Invitation sent to '+(pp.email||'client')); };
+  $('#pAssign').onchange=e=>act('propAssign',{token:pp.token,assignee:e.target.value},'Assigned');
+  const pl=$('#pLink'); if(pl) pl.onclick=async()=>{ try{ await navigator.clipboard.writeText(link); toast('Portal link copied'); }catch(e){ prompt('Copy the link:', link); } };
 }
 
 function openDetail(rowIndex){

@@ -430,6 +430,7 @@ function sendPropertyInvite_(r) {
         'Construction and replacement costs have moved since then — if these figures are no longer realistic, ' +
         'this is the moment to put them right.') : '') +
       ctaBtn_(link, 'Review & advise online') +
+      '<p style="font-size:13px;color:#5a6b80">Once you send your instruction, you can return to the same page any time to <b>track every step of your renewal</b> — from our desk to Guardian and back — until your new schedule is delivered.</p>' +
       eduBox_('<b style="color:#a05e03">⚠️ Why your values matter — the average clause.</b> ' +
         'If your property is insured for less than it would cost to rebuild or replace today, ' +
         'the insurer reduces <u>every</u> claim in the same proportion. Insure at 70% of value and a ' +
@@ -568,6 +569,44 @@ function dailyPropertyFollowUps() {
   });
   Logger.log('dailyPropertyFollowUps: %s staff nudges, %s client updates', staffNudges, clientNotes);
 }
+
+
+/** One row per property POLICY for the staff dashboard. */
+function propertyPipeline_() {
+  var groups = {};
+  allProperties_().forEach(function (r) {
+    if (!r.token) return;
+    var g = groups[r.token] = groups[r.token] || { token: r.token, client: r.client, policy: r.policy,
+      renewalDate: r.renewalDate, days: r.days, stage: r.stage, stageUpdated: r.stageUpdated,
+      email: r.email, mobile: r.mobile, assignedTo: r.assignedTo, status: r.status,
+      locations: 0, premium: 0 };
+    g.locations++; g.premium += Number(r.premium) || 0;
+    if (r.policy) g.policy = r.policy;
+    if (r.stage) { g.stage = r.stage; g.stageUpdated = r.stageUpdated; }
+    if (r.email) g.email = r.email;
+    if (r.assignedTo) g.assignedTo = r.assignedTo;
+  });
+  return Object.keys(groups).map(function (k) { return groups[k]; })
+    .sort(function (a, b) { return (a.days == null ? 9999 : a.days) - (b.days == null ? 9999 : b.days); });
+}
+
+/** Staff action: (re)send the property invitation for a token. */
+function sendPropertyInviteByToken_(token, by) {
+  var rows = propByToken_(token);
+  if (!rows) throw new Error('Property renewal not found.');
+  if (!rows[0].email) throw new Error('No email on file for this property client.');
+  sendPropertyInvite_(rows[0]);
+  var isTest = (typeof testMode_ === 'function') && testMode_();
+  rows.forEach(function (r) {
+    if (!isTest) {
+      setPropCell_(r.rowIndex, 'renewal status', 'Invitation sent ' + nowStamp_());
+      setPropCell_(r.rowIndex, 'reminders sent', (r.remindersSent ? r.remindersSent + '; ' : '') + 'invite@' + nowStamp_());
+    }
+  });
+  logActivity_(token, rows[0].client, 'property-invite', by || 'staff', rows.length + ' location(s)');
+}
+
+function propertyStages_() { return PROP.STAGES; }
 
 /* ============================ menu ============================ */
 
