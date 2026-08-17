@@ -1034,6 +1034,8 @@ function onOpen() {
     .addSeparator()
     .addItem('Show staff dashboard link', 'showStaffLink')
     .addItem('Preview a client portal (row 2)', 'showMyLink')
+    .addSeparator()
+    .addItem('🔗 Link Risk Details to portal tokens', 'linkRiskDetails')
     .addToUi();
   // property menu comes along automatically when Property.gs is installed
   try { if (typeof propertyMenu_ === 'function') propertyMenu_(SpreadsheetApp.getUi()).addToUi(); } catch (err) { Logger.log(err); }
@@ -1104,4 +1106,55 @@ function showMyLink() {
   var map = headerMap_(sh);
   var tok = sh.getRange(2, col_(map, 'token') + 1).getValue();
   SpreadsheetApp.getUi().alert('Sample client portal link (row 2):\n\n' + portalLink_(tok));
+}
+
+/**
+ * Stamps each Risk Details vehicle row with its owner's portal token (adding
+ * the Token column if the tab doesn't have one). Token is the only exact,
+ * guaranteed link between a renewal row and its vehicles — email and name
+ * matching stay as fallbacks, but linked rows can never mis-match.
+ * Safe to re-run: existing tokens are left untouched.
+ */
+function linkRiskDetails() {
+  var ui = SpreadsheetApp.getUi();
+  var sh = ss_().getSheetByName('Risk Details');
+  if (!sh || sh.getLastRow() < 2) { ui.alert('No "Risk Details" tab found.'); return; }
+  var vals = sh.getRange(1, 1, sh.getLastRow(), sh.getLastColumn()).getValues();
+  var idx = {};
+  vals[0].forEach(function (h, i) { idx[String(h).trim().toLowerCase()] = i; });
+  var cTok = idx['token'];
+  if (cTok === undefined) {
+    cTok = vals[0].length;
+    sh.getRange(1, cTok + 1).setValue('Token');
+    for (var j = 1; j < vals.length; j++) vals[j].push('');
+  }
+  var byEmail = {}, byName = {};
+  allRenewals_().forEach(function (r) {
+    if (!r.token) return;
+    var e = String(r.email || '').trim().toLowerCase();
+    if (e && !byEmail[e]) byEmail[e] = r.token;
+    var n = normName_(r.client);
+    if (n && !byName[n]) byName[n] = r.token;
+  });
+  var filled = 0, already = 0, unmatched = {};
+  var out = [];
+  for (var i = 1; i < vals.length; i++) {
+    var r = vals[i];
+    var cur = String(r[cTok] || '').trim();
+    if (cur) { already++; out.push([cur]); continue; }
+    var e = String(r[idx['email']] || '').trim().toLowerCase();
+    var t = (e && byEmail[e]) || byName[normName_(r[idx['client']])] || '';
+    if (t) filled++;
+    else if (String(r[idx['client']] || '').trim()) unmatched[String(r[idx['client']])] = 1;
+    out.push([t]);
+  }
+  sh.getRange(2, cTok + 1, out.length, 1).setValues(out);
+  _riskMap = null;   // rebuilt with tokens on next lookup
+  var un = Object.keys(unmatched);
+  ui.alert('Risk Details linked.\n\n' + filled + ' vehicle rows connected to portal tokens (' + already + ' already had one).\n\n' +
+    (un.length
+      ? un.length + ' client(s) on Risk Details have no matching Motor row (name/email differs or no renewal row yet):\n• ' +
+        un.slice(0, 25).join('\n• ') + (un.length > 25 ? '\n…' : '') +
+        '\n\nTo connect them, paste the client\'s Token from the Motor tab onto their vehicle rows.'
+      : 'Every vehicle row is connected.'));
 }
