@@ -253,6 +253,7 @@ function mapPolicy_(row) {
     Client: row[3], Premium: num_(row[4]), IssueDate: row[5] || '',
     Status: num_(row[6]), StatusH: row[7] || '',
     DaysArrears: num_(row[8]), InsType: row[9], PaidToDate: row[10] || '',
+    AppReceived: row[11] || '',
     SumAssured: num_(row[12]), PlanCode: row[13] || '', Billing: row[14] || '',
     Mode: row[15] || '', APLAmount: num_(row[16]), StatusDesc: row[17] || '',
     LapseDate: row[18] || '', AmountBilled: num_(row[19]), Address: row[20] || '',

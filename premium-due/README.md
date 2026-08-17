@@ -404,6 +404,31 @@ scheme name — at minimum the Servus account) and `OUT.GROUP_ADMIN` (scheme key
 the payroll/administrator email). Real client numbers and addresses belong only
 in the deployed copy, never in this public repository.
 
+### The pending flow — a separate clock, never confused with dues
+
+Premium dues and pending new business are **different problems on different
+clocks, and the engine never mixes them**. A status-2 policy (cover in force,
+premium behind) lives on the 45/60/90 ladder. A status-3 application (no cover
+yet) lives on the pending clock: **first letter at day 21, then one per
+fortnight to day 120** (`pdPendRound_` dedupes the rounds), and nothing else
+ever writes to it.
+
+The pending letter reads the portfolio workbook's own **Requirement
+Management** tab (`pdRequirements_`) and names the exact outstanding
+document — *"One thing completes your application: Proof of Address —
+outstanding 34 days"* — with the ES400 manual's status codes decoded
+(`pdPendingMeaning_`): `PCRC`/`PERC` mean **underwriting is complete**, so the
+letter says plainly that one paper stands between the client and a policy in
+force; suspense money already paid is named as reassurance; a Future Premium
+Payment requirement carries the MyGG pay button. No requirement data → the
+generic letter still stands.
+
+**Stats before letters:** `pdPilotStats()` emails one digest of everything
+the engine believes — the dues funnel, the schemes, the decoded pending book,
+the week's production — to the test inbox (branch email once live), writing
+nothing to the log. It is the pilot's first act and a daily sanity check:
+when a number disagrees with what the branch knows, the letters wait.
+
 ### How the handover fires
 
 **Day 60 sends the client no letter of their own** — it drives the *manager*

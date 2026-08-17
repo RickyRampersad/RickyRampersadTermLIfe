@@ -2069,25 +2069,70 @@ var PD_TEMPLATES = {
     };
   },
 
-  /* ---- new business stuck in underwriting ---- */
-  pend: function (p) {
+  /* ---- new business waiting on requirements ----
+     When the Requirement Management tab knows the case (state.reqt), the letter
+     names the exact document, how long it has been outstanding, and — where
+     underwriting is already complete — says the true, urgent thing: one paper
+     stands between this application and a policy in force. */
+  pend: function (p, state) {
     var first = pdFirst_(p.Client), d = Number(p.DaysArrears) || 0;
+    var rq = state && state.reqt;
+    var named = rq && rq.items && rq.items.length;
+    var lead = named ? rq.items[0].name : '';
+    var isPay = named && /future premium|premium payment/i.test(lead);
+
+    var list = '';
+    if (named) {
+      list = '<ul style="margin:8px 0 0;padding-left:20px;color:' + PD_BRAND.ink + '">';
+      for (var i = 0; i < rq.items.length; i++) {
+        list += '<li style="margin:0 0 7px"><b>' + pdEsc_(rq.items[i].name) + '</b>' +
+          (rq.items[i].days > 0 ? ' <span style="color:' + PD_BRAND.mute + '">— outstanding ' +
+            rq.items[i].days + ' days</span>' : '') + '</li>';
+      }
+      list += '</ul>';
+    }
+
     return {
-      subject: 'Your application needs one more thing — policy ' + p.Policy,
+      subject: named
+        ? 'One thing completes your application: ' + lead + ' — policy ' + p.Policy
+        : 'Your application needs one more thing — policy ' + p.Policy,
       cc: pdChainCc_(p),
       html: pdWrap_(
-        pdRefBlock_(p, 'Your application — outstanding requirements') +
+        pdRefBlock_(p, 'Your application — what completes it') +
         '<p>' + pdSalutation_(p.Client) + ',</p>' +
-        '<p>Your application has been with underwriting for <b>' + d + ' days</b> and is waiting on outstanding ' +
-        'requirements' + (p.StatusDesc ? ' — <i>' + pdEsc_(p.StatusDesc) + '</i>' : '') + '.</p>' +
-        pdNote_('Until this is complete <b>you are not yet covered</b>. That is the part worth knowing — ' +
-                'an application in progress is not a policy in force.') +
+        '<p>Your application has been in progress for <b>' + d + ' days</b>' +
+        (named ? ', and it is waiting on you for the following:' :
+          ' and is waiting on outstanding requirements' +
+          (p.StatusDesc ? ' — <i>' + pdEsc_(p.StatusDesc) + '</i>' : '') + '.') + '</p>' +
+        list +
+
+        (rq && rq.uwDone
+          ? pdNote_('<b>Underwriting on your application is COMPLETE.</b> ' +
+              (named ? 'The item' + (rq.items.length === 1 ? '' : 's') + ' above ' +
+                (rq.items.length === 1 ? 'is' : 'are') : 'One requirement is') +
+              ' the only thing between you and a policy in force. The day it reaches us, this finishes.',
+              PD_BRAND.green)
+          : pdNote_('Until this is complete <b>you are not yet covered</b>. That is the part worth knowing — ' +
+              'an application in progress is not a policy in force.')) +
+
+        (rq && rq.susp > 0
+          ? '<p style="margin:14px 0 0">The <b>' + pdMoney_(rq.susp) + '</b> you have already paid toward this ' +
+            'policy is held safely and applies in full the moment the application completes — it is waiting on ' +
+            'the same thing we are.</p>'
+          : '') +
+
+        (isPay ? pdPayBtn_(p) : '') +
 
         pdSection_('The application', pdFacts_(p)) +
 
-        '<p style="margin-top:22px">It is usually a medical appointment, a form, or one document. Reply to ' +
-        'this email and we will tell you exactly what is outstanding and take it from there.</p>' +
-        pdSignature_(p),
+        '<p style="margin-top:22px">' +
+        (named
+          ? 'Reply to this email with the item' + (rq.items.length === 1 ? '' : 's') +
+            ' attached, or tell us which office to collect from — whichever is easier. We write every two ' +
+            'weeks until this completes, and stop the day it does.'
+          : 'It is usually a medical appointment, a form, or one document. Reply to this email and we will ' +
+            'tell you exactly what is outstanding and take it from there.') + '</p>' +
+        pdTrackBlock_() + pdSignature_(p),
         { kind: 'pend', days: 0 })
     };
   },
@@ -2491,7 +2536,12 @@ function pdStageDue_(p, state) {
   var st = Number(p.Status) || 0;
 
   if (st === 3 || desc.indexOf('underwriting') > -1) {
-    return (d >= 21 && d <= OUT.PEND_MAX_DAYS) ? 'pend' : '';
+    /* The pending flow's own clock: first letter at day 21, then one per
+       fortnight (a 3-day window so a missed run still catches it), stopping at
+       PEND_MAX_DAYS. Repeats are deduped per round, and each names what is
+       still outstanding — see the pend template. */
+    if (d >= 21 && d <= OUT.PEND_MAX_DAYS && ((d - 21) % 14) < 3) return 'pend';
+    return '';
   }
 
   /* The closing sequence outruns the status change, and owns the policy while
@@ -2549,6 +2599,13 @@ function pdCloseRound_(d) {
   if (d >= 95 && d <= 96) return 2;
   if (d >= 100 && d <= 101) return 3;
   return 0;
+}
+
+/** Which fortnightly pending round day d falls in (1 at day 21, 2 at 35, …). */
+function pdPendRound_(d) {
+  d = Number(d) || 0;
+  if (d < 21) return 0;
+  return 1 + Math.floor((d - 21) / 14);
 }
 
 /* ===================== internal accountability chases =====================
@@ -2784,6 +2841,76 @@ function pdInternalChase_(p, s) {
     return 1;
   }
   return 0;
+}
+
+/* ===================== the pending / requirements flow =====================
+   A SEPARATE PROCESS from premium dues, and deliberately so. Premium dues =
+   an in-force policy (status 2) whose cover is at risk on the 45/60/90 clock.
+   Pending = a NEW application (status 3) that is not yet cover at all, waiting
+   on requirements. A policy lives in exactly one flow — pdStageDue_ routes
+   status 3 to 'pend' and nothing else, so the two chases can never blur.
+
+   The requirements live on the Branch Portfolio workbook's own
+   "Requirement Management" tab, and the ES400 manual decodes its statuses:
+   P + [C clean | E entry errors] + [C no reqt | R reqt outstanding] +
+   [C UW complete | U UW incomplete]. PCRC/PERC mean underwriting is DONE —
+   one document stands between the client and a policy in force. */
+
+var PD_REQ_SHEET = 'Requirement Management';
+
+/** Pending-status decode, per the ES400 manual. */
+function pdPendingMeaning_(code) {
+  var c = String(code || '').toUpperCase();
+  if (c.charAt(0) !== 'P' || c.length !== 4) return null;
+  return {
+    errors: c.charAt(1) === 'E',              // data-entry errors on the case
+    reqtOpen: c.charAt(2) === 'R',            // a requirement is outstanding
+    uwDone: c.charAt(3) === 'C'               // underwriting is complete
+  };
+}
+
+/**
+ * policy -> { items: [{name, days}], susp, code, uwDone, errors }
+ * Read once per run from the Requirement Management tab; {} when the tab is
+ * missing or unreadable, and every letter then falls back to the generic text.
+ */
+function pdRequirements_() {
+  var map = {};
+  try {
+    var ss = SpreadsheetApp.openById(PORTFOLIO_ID);
+    var sh = ss.getSheetByName(PD_REQ_SHEET);
+    if (!sh) return map;
+    var v = sh.getDataRange().getValues();
+    if (v.length < 2) return map;
+    var H = {}, c;
+    for (c = 0; c < v[0].length; c++) H[String(v[0][c]).replace(/^ +| +$/g, '')] = c;
+    var iPol = H['Policy'], iSt = H['status'], iReq = H['Reqt'],
+        iDays = H['ReqtdaysLapsed'], iSusp = H['POL_MISC_SUSP_AMT'];
+    if (iPol == null) return map;
+    for (var r = 1; r < v.length; r++) {
+      var pol = String(v[r][iPol] == null ? '' : v[r][iPol]).replace(/\.0$/, '');
+      if (!pol) continue;
+      var st = String(iSt == null ? '' : v[r][iSt]).replace(/^ +| +$/g, '').toUpperCase();
+      if (st === 'C') continue;                                  // complete — not a chase
+      var e = map[pol] || (map[pol] = { items: [], susp: 0, code: '', uwDone: false, errors: false });
+      var name = String(iReq == null ? '' : (v[r][iReq] || '')).replace(/^ +| +$/g, '');
+      var days = Number(iDays == null ? 0 : v[r][iDays]) || 0;
+      if (days > 3650) continue;                                 // relic rows: reconciliation, not chasing
+      if (name && e.items.length < 4) {
+        var dup = false;
+        for (var k = 0; k < e.items.length; k++) if (e.items[k].name === name) dup = true;
+        if (!dup) e.items.push({ name: name, days: days });
+      }
+      e.susp = Math.max(e.susp, Number(iSusp == null ? 0 : v[r][iSusp]) || 0);
+      var mean = pdPendingMeaning_(st);
+      if (mean) {                                                // policy-status codes outrank 'OR'
+        e.code = st;
+        e.uwDone = e.uwDone || mean.uwDone;
+        e.errors = e.errors || mean.errors;
+      } else if (!e.code) e.code = st;                           // 'OR' — an ordered, awaited requirement
+    }
+  } catch (err) { /* standalone tests / missing tab: generic letters */ }
+  return map;
 }
 
 /* ===================== group schemes =====================
@@ -3029,6 +3156,10 @@ function pdAlreadySent_() {
       var r = String(v[i][12] || '').match(/round (\d+)/);
       if (r) seen[String(v[i][2]) + '|close|' + r[1]] = true;
     }
+    if (st === 'pend') {                                           // fortnightly — key them by round
+      var pr = String(v[i][12] || '').match(/round (\d+)/);
+      if (pr) seen[String(v[i][2]) + '|pend|' + pr[1]] = true;
+    }
   }
   return seen;
 }
@@ -3069,6 +3200,7 @@ function dailyPremiumDueRun() {
 
   var sent = pdAlreadySent_();
   var states = pdCaseState_();
+  var reqMap = pdRequirements_();               // the pending flow's own data
   var byClient = {};
   for (var b = 0; b < payload.policies.length; b++) {
     var bp = payload.policies[b];
@@ -3120,12 +3252,17 @@ function dailyPremiumDueRun() {
 
     var stageKey = pdStageDue_(p, s);
     if (!stageKey) continue;
-    var round = (stageKey === 'close') ? pdCloseRound_(Number(p.DaysArrears) || 0) : 0;
-    // chases and the closing letter repeat by design; everything else sends once per policy per stage
+    var round = (stageKey === 'close') ? pdCloseRound_(Number(p.DaysArrears) || 0)
+              : (stageKey === 'pend') ? pdPendRound_(Number(p.DaysArrears) || 0) : 0;
+    // chases, closing letters and pending rounds repeat by design;
+    // everything else sends once per policy per stage
     if (stageKey === 'chase') {
       if (sent[String(p.Policy) + '|chase|' + (Number(p.DaysArrears) || 0)]) continue;
     } else if (stageKey === 'close') {
       if (sent[String(p.Policy) + '|close|' + round]) continue;
+    } else if (stageKey === 'pend') {
+      if (sent[String(p.Policy) + '|pend|' + round]) continue;
+      s.reqt = reqMap[String(p.Policy)];        // name the exact outstanding document
     } else if (sent[String(p.Policy) + '|' + stageKey]) continue;
     if ((Number(p.Premium) || 0) < OUT.MIN_PREMIUM) continue;
 
@@ -3198,6 +3335,131 @@ function pdResetPilotLog() {
   var last = sh.getLastRow();
   if (last > 1) sh.deleteRows(2, last - 1);
   Logger.log('Pilot log cleared — ' + Math.max(0, last - 1) + ' rows removed. Run dailyPremiumDueRun again and everything re-fires fresh.');
+}
+
+/**
+ * THE FIRST ACT OF THE PILOT — run this before any letters. It reads the book
+ * and emails one digest of everything the engine believes: the funnel, the
+ * bands, the schemes, the pending flow decoded, and what the next run would
+ * send. Check these numbers against what you know; only when they agree do
+ * the letters deserve to fire. Sends to TEST_INBOX while the pilot is on
+ * (branch email once live), and never writes to the log — stats, not sends.
+ */
+function pdPilotStats() {
+  var payload = JSON.parse(getPolicies_().getContent());
+  if (!payload.ok) throw new Error('Could not read the portfolio: ' + payload.error);
+  var P = payload.policies, i, p, d;
+
+  var st2 = 0, st1 = 0, st3 = 0, ctx = 0, grpN = 0;
+  var at45 = 0, w4547 = 0, w4559 = 0, w6074 = 0, w7589 = 0, w90109 = 0;
+  var premWin = 0, noEmail = 0, mgrDue = 0;
+  var groups = {}, weekApps = 0, weekPrem = 0;
+  var now = Date.now(), weekAgo = now - 7 * 86400000;
+
+  for (i = 0; i < P.length; i++) {
+    p = P[i]; d = Number(p.DaysArrears) || 0;
+    var s = Number(p.Status) || 0;
+    if (pdIsGroup_(p)) {
+      grpN++;
+      if (s === 2 && d >= SLA.GROUP_OPENS && d < 180) {
+        var gk = pdGroupKey_(p);
+        var g = groups[gk] || (groups[gk] = { n: 0, prem: 0 });
+        g.n++; g.prem += Number(p.Premium) || 0;
+      }
+      continue;
+    }
+    if (s === 1) st1++;
+    else if (s === 3) st3++;
+    else if (s === 2) {
+      st2++;
+      if (d === 45) at45++;
+      if (d >= 45 && d < 48) w4547++;
+      if (d >= 45 && d <= 59) { w4559++; premWin += Number(p.Premium) || 0; }
+      if (d >= 60 && d <= 74) w6074++;
+      if (d >= 75 && d <= 89) w7589++;
+      if (d >= 90 && d <= 109) w90109++;
+      if (d >= 45 && d <= 89 && !pdValidEmail_(p.Email)) noEmail++;
+      if (d >= SLA.RETENTION_OPENS && d < SLA.LAPSE) mgrDue++;
+    } else ctx++;
+    var ar = new Date(p.AppReceived || '');
+    if (!isNaN(ar) && ar.getTime() >= weekAgo && ar.getTime() <= now) {
+      weekApps++; weekPrem += Number(p.Premium) || 0;
+    }
+  }
+
+  var reqMap = pdRequirements_();
+  var pendN = 0, pendReady = 0, pendErrors = 0, pendSusp = 0;
+  for (var pol in reqMap) {
+    if (!Object.prototype.hasOwnProperty.call(reqMap, pol)) continue;
+    pendN++;
+    if (reqMap[pol].uwDone) pendReady++;
+    if (reqMap[pol].errors) pendErrors++;
+    pendSusp += reqMap[pol].susp;
+  }
+
+  var row = function (k, v2, hot) {
+    return '<tr><td style="padding:7px 12px;border:1px solid ' + PD_BRAND.line + ';background:#FFFFFF;color:' +
+      PD_BRAND.ink + '">' + k + '</td><td style="padding:7px 12px;border:1px solid ' + PD_BRAND.line +
+      ';background:#FFFFFF;color:' + (hot ? PD_BRAND.red : PD_BRAND.ink) +
+      ';text-align:right;font-weight:bold;white-space:nowrap">' + v2 + '</td></tr>';
+  };
+  var tbl = function (rows) {
+    return '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:8px 0;font-size:13px">' +
+      rows + '</table>';
+  };
+
+  var gRows = '', gk2, gN = 0;
+  for (gk2 in groups) {
+    if (!Object.prototype.hasOwnProperty.call(groups, gk2)) continue;
+    gN++;
+    gRows += row(pdEsc_(gk2), groups[gk2].n + ' members · ' + pdMoney_(groups[gk2].prem), false);
+  }
+
+  var html = pdWrap_(
+    '<p style="margin:0 0 4px;font-size:11px;letter-spacing:.08em;color:' + PD_BRAND.mute + '">ENGINE DIGEST — ' +
+      'read before any letter fires</p>' +
+    '<p style="margin:0 0 12px">This is everything the engine believes about the book as of this run. ' +
+    'If a number here disagrees with what the branch knows, stop and say so — the letters wait.</p>' +
+
+    pdSection_('The premium-due flow (in-force cover on the 45/60/90 clock)', tbl(
+      row('Policies in arrears (status 2, individuals)', String(st2), false) +
+      row('At exactly day 45 today', String(at45), false) +
+      row('Day-45 letter window (45–47)', String(w4547), false) +
+      row('Pre-handover window (45–59)', w4559 + ' · ' + pdMoney_(premWin), false) +
+      row('With a manager (60–74)', String(w6074), false) +
+      row('Final stretch (75–89)', String(w7589), true) +
+      row('Closing sequence (90–109)', String(w90109), true) +
+      row('Manager handovers currently due (60–89)', String(mgrDue), false) +
+      row('No usable email in the save window (call list)', String(noEmail), true))) +
+
+    pdSection_('Group schemes (one statement per company — never member letters)', tbl(
+      (gN ? gRows : row('Schemes with a missed remittance (member ≥ ' + SLA.GROUP_OPENS + ' days)', '0', false)))) +
+
+    pdSection_('The pending flow (new business — a separate clock, day 21 then fortnightly)', tbl(
+      row('Applications with live requirements', String(pendN), false) +
+      row('SETTLE-READY: underwriting complete, paper outstanding', String(pendReady), true) +
+      row('Carrying our own entry errors (ours to fix)', String(pendErrors), false) +
+      row('Premium held in suspense on pending cases', pdMoney_(pendSusp), false))) +
+
+    pdSection_('Production (application received in the last 7 days)', tbl(
+      row('Applications', String(weekApps), false) +
+      row('Premium as recorded (mode unknown — see data asks)', pdMoney_(weekPrem), false))) +
+
+    '<p style="font-size:12px;color:' + PD_BRAND.mute + ';margin:14px 0 0">Lapsed book and win-back, pending ' +
+    'outside its clock, and context policies are not counted above — this digest is the working funnel. ' +
+    'Nothing was sent and nothing was logged by this run.</p>' +
+    pdSigInternal_(),
+    { kind: 'mgr' }, true);
+
+  var summary = 'status2=' + st2 + ' at45=' + at45 + ' window45-59=' + w4559 + ' mgrDue=' + mgrDue +
+    ' schemes=' + gN + ' pending=' + pendN + ' settle-ready=' + pendReady;
+  if (OUT.DRY_RUN && !OUT.TEST_INBOX) {
+    Logger.log('Digest (DRY RUN, no test inbox — logged only, not emailed). ' + summary);
+    return;
+  }
+  var to = OUT.TEST_INBOX || pdValidEmail_(OUT.BRANCH_EMAIL) || pdValidEmail_(OUT.SALES_SUPPORT_EMAIL);
+  pdDeliver_(to, [], 'Engine digest — what the book looks like before any letter fires', html);
+  Logger.log('Digest sent to %s. %s', to, summary);
 }
 
 function pdInstallTrigger() {

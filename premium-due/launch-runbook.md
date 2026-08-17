@@ -99,19 +99,44 @@ TEST_INBOX: '<your own email>',
 PILOT_AGENTS: ['Ricky Rampersad', 'Neil Ramnanan'],
 ```
 
-**What arrives in your inbox on the first pilot run** (measured on the live
-book): **63 client letters** (day-45s, day-75s, a final notice, a closing
-letter, a win-back, pending chases — 24 more are logged as no-email call
-sheet), **59 manager handovers**, and **7 scheme statements** including
-Servus (50 members), Bankers (38) and both Bertram entries. Every template
-the engine can send, rehearsed on real data — and not one email leaves the
-building: `[TEST]` on every subject, a banner naming the true recipient, no
-copies.
+**The pilot runs in a fixed order, so nothing gets confused:**
+
+**First — the numbers. Run `pdPilotStats`.** One digest email arrives with
+everything the engine believes about the book, in four clearly separated
+sections: the **premium-due flow** (in-force cover on the 45/60/90 clock),
+the **group schemes** (one statement per company), the **pending flow** (new
+business on its own day-21-then-fortnightly clock, decoded from the
+Requirement Management tab), and **this week's production**. Check every
+number against what the branch knows. If anything disagrees, stop there —
+the letters wait until the numbers are right. Stats never write to the log
+and never send anything to anyone but you.
+
+**Then — the letters. Run `dailyPremiumDueRun`.** What arrives (measured on
+the live book): **~63 client letters** (day-45s, day-75s, a final notice, a
+closing letter, a win-back, pending chases — 24 more are logged as a
+no-email call sheet), **59 manager handovers**, and **7 scheme statements**
+including Servus (50 members), Bankers (38) and both Bertram entries. Every
+template the engine can send, rehearsed on real data — and not one email
+leaves the building: `[TEST]` on every subject, a banner naming the true
+recipients, no copies.
+
+**The two flows never cross:** a status-2 policy (cover in force, premium
+behind) lives on the 45/60/90 ladder; a status-3 application (no cover yet,
+requirements outstanding) lives on the pending clock — day 21, then every
+fortnight to day 120, each letter naming the exact outstanding document from
+the Requirement Management tab, with underwriting-complete cases told
+plainly that one paper stands between them and a policy in force. One
+policy, one flow, never both.
 
 Run it for **2–3 days** and check, in your own inbox and the engine:
 
+- [ ] The digest's numbers match the branch's own (day-45 count, window
+      totals, scheme counts, pending book, the week's production).
 - [ ] The day-45 letter reads right: the figures, the billing wording, the
-      four questions, the MyGG button, Sasha's signature, the case code.
+      four questions, the MyGG button, Sasha's signature, the case code —
+      and the plan named in English ("Flexiterm Convertible (20 years)").
+- [ ] A pending letter names the actual outstanding document and, where
+      underwriting is complete, says so.
 - [ ] Tap an answer — the reply opens pre-written; the case tracker shows it.
 - [ ] The manager ladder moves: commitment → (answer it) → thank-you →
       feedback, on the real 3-day / 7-day clocks.
