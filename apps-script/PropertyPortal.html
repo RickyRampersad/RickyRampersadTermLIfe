@@ -69,6 +69,10 @@ textarea{min-height:64px;resize:vertical}
 .trend th{background:#f7fafd;color:var(--ink2);font-size:11px;text-transform:uppercase}
 .trend td.n{text-align:right;font-variant-numeric:tabular-nums}
 .bar{height:8px;background:var(--blue);border-radius:99px;display:inline-block;min-width:3px;vertical-align:middle}
+.addr{background:#eef4fb;border-left:4px solid var(--blue);border-radius:0 10px 10px 0;padding:12px 15px;margin:10px 0;font-size:13px;color:#31465e}
+.addr b{display:block;color:var(--navy);margin-bottom:4px;font-size:13.5px}
+.chk{display:flex;gap:9px;align-items:flex-start;margin-top:9px;cursor:pointer;font-weight:600;color:var(--navy)}
+.chk input{margin-top:3px}
 .stale{background:#fdf1dc;border-left:4px solid #a05e03;border-radius:0 10px 10px 0;padding:11px 15px;margin:10px 0;font-size:13.5px;color:#7a4a03}
 details.hist{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:10px 0;background:#fff}
 details.hist summary{cursor:pointer;font-weight:700;color:var(--navy);font-size:13.5px}
@@ -235,6 +239,10 @@ function render(){
   }));
   document.querySelectorAll('[data-submit]').forEach(b=>b.onclick=()=>submit(Number(b.dataset.submit),b));
   document.querySelectorAll('table.vals input').forEach(el=>el.addEventListener('input',()=>retotal(Number(el.dataset.risk))));
+  document.querySelectorAll('[data-addr]').forEach(el=>el.addEventListener('change',()=>{
+    const box=document.getElementById('addrfix_'+el.dataset.addr);
+    if(box) box.style.display = el.checked ? 'none' : 'block';
+  }));
   DATA.risks.forEach((r,i)=>{
     ['av_true_','av_ins_','av_loss_'].forEach(p=>{
       const el=document.getElementById(p+i); if(el) el.addEventListener('input',()=>avg(i));
@@ -247,8 +255,19 @@ function render(){
 function locationBlock(loc){
   const i = loc.idx, cur = locTotal(loc);
   return `<div style="border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0;background:#fbfdff">
-    <div style="font-weight:800;color:var(--navy);font-size:14.5px">📍 ${esc(loc.location||'Location')}</div>
+    <div style="font-weight:800;color:var(--navy);font-size:14.5px">📍 ${esc(loc.location||'Location not on record')}</div>
     ${loc.occupancy?`<div class="loc" style="margin-bottom:6px">${esc(loc.occupancy)}</div>`:''}
+    <div class="addr">
+      <b>Is this the correct address, exactly as it should read on your policy?</b>
+      A property policy only responds at the address stated in the schedule — a wrong or incomplete
+      address is one of the few things that can undo an otherwise valid claim.
+      <label class="chk"><input type="checkbox" id="addrok_${i}" checked data-addr="${i}">
+        <span>Yes, this address is correct</span></label>
+      <div id="addrfix_${i}" style="display:none">
+        <label class="fld" style="margin-top:6px">The address should read:</label>
+        <input type="text" id="addrnew_${i}" placeholder="Full address as it should appear on the schedule">
+      </div>
+    </div>
     <table class="vals">
       <tr><th>Cover</th><th style="text-align:right">Current Value</th><th class="adj" style="text-align:right">Your Adjusted Value</th></tr>
       ${DATA.lines.map(L=>`<tr>
@@ -286,7 +305,11 @@ function submit(gi,btn){
       const el=document.getElementById(`adj_${loc.idx}_${L.key}`);
       if(el&&el.value.trim()) adjusted[L.key]=numv(el.value);
     });
-    return { rowIndex: loc.rowIndex, location: loc.location, adjusted: adjusted };
+    const ok = document.getElementById('addrok_'+loc.idx);
+    const fix = document.getElementById('addrnew_'+loc.idx);
+    return { rowIndex: loc.rowIndex, location: loc.location, adjusted: adjusted,
+             addressConfirmed: ok ? ok.checked : true,
+             addressCorrection: (ok && !ok.checked && fix) ? fix.value.trim() : '' };
   });
   btn.disabled=true;btn.textContent='Sending…';
   google.script.run

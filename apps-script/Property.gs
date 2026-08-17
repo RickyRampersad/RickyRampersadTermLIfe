@@ -257,7 +257,9 @@ function submitPropertyInstruction(payload) {
     var curTotal = lines.reduce(function (s2, l) { return s2 + l.current; }, 0);
     var newTotal = lines.reduce(function (s2, l) { return s2 + (l.adjusted !== '' ? l.adjusted : l.current); }, 0);
     var changed = lines.some(function (l) { return l.adjusted !== '' && l.adjusted !== l.current; });
-    parts.push({ row: r, lines: lines, curTotal: curTotal, newTotal: newTotal, changed: changed });
+    parts.push({ row: r, lines: lines, curTotal: curTotal, newTotal: newTotal, changed: changed,
+      addressConfirmed: L.addressConfirmed !== false,
+      addressCorrection: String(L.addressCorrection || '').slice(0, 300) });
   });
   if (!parts.length) throw new Error('We could not match those locations to your policy.');
 
@@ -277,6 +279,8 @@ function submitPropertyInstruction(payload) {
       'Next Due': p.row.renewalDate, 'Instruction': instruction,
       'Changes / Notes': notes, 'Email': email, 'Mobile': mobile,
       'Risk Location': p.row.location,
+      'Address Confirmed': p.addressConfirmed ? 'Yes' : 'NO — correction supplied',
+      'Address Correction': p.addressCorrection || '',
       'Current Total Value': p.curTotal,
       'Adjusted Total Value': p.changed ? p.newTotal : '',
       'Emailed To': PROP.CRMS_TO + ' cc ' + PROP.CRMS_CC.join(','),
@@ -334,6 +338,11 @@ function sendPropertyInstructionToCRMS_(head, policy, instruction, parts, anyCha
     return '<p style="margin:16px 0 6px"><b>📍 ' + esc_(p.row.location || 'Location') + '</b>' +
       (p.row.occupancy ? ' <span style="color:#5a6b80">· ' + esc_(p.row.occupancy) + '</span>' : '') +
       ' — premium ' + fmtMoney_(p.row.premium) + '</p>' +
+      (p.addressCorrection
+        ? '<p style="background:#fbe9e7;border-left:4px solid #b3261e;padding:10px 14px;margin:6px 0;font-size:13px">' +
+          '<b>⚠️ ADDRESS CORRECTION REQUESTED</b><br>Should read: <b>' + esc_(p.addressCorrection) + '</b><br>' +
+          'Please amend the risk location on the schedule.</p>'
+        : '') +
       valueTableHtml_(p.lines, p.changed, p.newTotal, p.curTotal);
   }).join('');
 
@@ -364,7 +373,8 @@ function sendPropertyInstructionToCRMS_(head, policy, instruction, parts, anyCha
     replyTo: email || undefined,
     name: CONFIG.FROM_NAME,
     subject: 'PROPERTY RENEWAL INSTRUCTION — ' + head.client + (policy ? ' — ' + policy : '') +
-             ' — ' + parts.length + ' location(s)' + (anyChanged ? ' (VALUES ADJUSTED)' : ''),
+             ' — ' + parts.length + ' location(s)' + (anyChanged ? ' (VALUES ADJUSTED)' : '') +
+             (parts.some(function (p) { return p.addressCorrection; }) ? ' (ADDRESS CORRECTION)' : ''),
     htmlBody: html,
   });
 }
