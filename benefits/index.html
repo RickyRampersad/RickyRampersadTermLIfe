@@ -421,6 +421,11 @@ const STATUS = {submitted:'Submitted',assigned:'With an adviser',in_review:'Bein
    attached). Blank = demo mode: nothing leaves this page.            */
 const SHEET_WEBHOOK='https://script.google.com/macros/s/AKfycbxMuWSrsMPhvF4Al19q87S545ocCeI5VptX8lPoke7eNe__gomBx2vWsqZHTLJhryBbrw/exec';
 
+/* Query Pal — the company portal. Joiners are handled here in enroll.html;
+   leavers are handled there, where the group roster, the department routing
+   and the case tracking already live. One journey, two doors. */
+const QUERYPAL_URL='https://querymypolicies.netlify.app/';
+
 function postToSheet(req,d){
   if(!SHEET_WEBHOOK) return;
   let censusB64='';
@@ -817,9 +822,15 @@ function homeClient(){
       <div style="display:flex;gap:.6rem;flex-wrap:wrap">
         <button class="btn ghost" type="button" data-sampleform>View a sample form</button>
         <a class="btn ghost" href="enroll.html" style="text-decoration:none">➕ Enroll employees</a>
+        <a class="btn ghost" href="${QUERYPAL_URL}" target="_blank" rel="noopener"
+           style="text-decoration:none">➖ Report leavers</a>
         <button class="btn" data-go="new">Request a quotation</button>
       </div>
     </div>
+    <p class="note" style="max-width:74ch;margin-top:-.6rem">Taking someone <b>off</b> cover happens in
+      <b>Query Pal</b>, your company portal — sign in with your branch access code, pick the leavers from your
+      own staff list and set their last day. Everyone you report is emailed what they can do next, including
+      their right to take the cover into their own name before that window closes.</p>
     ${rows.length?`<div class="tw"><table>
       <thead><tr><th>Reference</th><th>Company</th><th class="r">Employees</th><th>Status</th><th class="r">Submitted</th></tr></thead>
       <tbody>${rows.map(r=>`<tr>
