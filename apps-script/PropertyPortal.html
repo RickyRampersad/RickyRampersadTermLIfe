@@ -226,6 +226,13 @@ function render(){
       <textarea id="notes${gi}" placeholder="e.g. We added a storage building at Waterloo Road; stock at Chase Village is now much higher."></textarea>
       <label class="fld">Best email</label><input type="email" id="email${gi}" value="${esc(g.locs[0].email)}">
       <label class="fld">Best mobile</label><input type="text" id="mob${gi}" value="${esc(g.locs[0].mobile)}">
+      <div class="edu" style="margin-top:12px"><b>📋 Your legal duty to disclose.</b> When renewing, you are legally
+        obliged to tell us any material fact that could affect the insurer's decision to accept the risk — a change
+        of use, new occupiers, building works, past losses. Failure to disclose can void the policy from inception.
+        If in doubt, mention it in the notes above.</div>
+      <label class="chk" style="margin:10px 0 2px"><input type="checkbox" id="mf_${gi}">
+        <span>I confirm the information I have given is accurate, I have disclosed all material facts,
+        and I will provide any outstanding "Know Your Customer" documents at renewal.</span></label>
       <button class="btn" data-submit="${gi}">Send my renewal instruction</button>
       <div class="ok" id="ok${gi}">✓ Sent! Your instruction is with our renewals team — a confirmation email is on its way, and you can track progress right here.</div>
       <div class="err" id="err${gi}"></div>
@@ -267,6 +274,8 @@ function locationBlock(loc){
         <label class="fld" style="margin-top:6px">The address should read:</label>
         <input type="text" id="addrnew_${i}" placeholder="Full address as it should appear on the schedule">
       </div>
+      <label class="fld" style="margin-top:8px">Current occupancy of this building <span style="font-weight:400;color:#5a6b80">(what happens here — e.g. supermarket, dwelling, warehouse; if several occupiers, list each one's activity)</span></label>
+      <input type="text" id="occ_${i}" value="${esc(loc.occupancy||'')}" placeholder="e.g. Supermarket — Haoli Supermarket">
     </div>
     <table class="vals">
       <tr><th>Cover</th><th style="text-align:right">Current Value</th><th class="adj" style="text-align:right">Your Adjusted Value</th></tr>
@@ -278,7 +287,7 @@ function locationBlock(loc){
       <tr class="tot"><td>Totals</td><td class="n">${money(cur)}</td><td class="n" id="newtot_${i}">—</td></tr>
     </table>
     <p style="font-size:12.5px;color:var(--ink2)">Premium for this location: <b>${money(loc.premium)}</b>
-      <span style="color:#8a97a8">(renewal terms may vary)</span></p>
+      <span style="color:#8a97a8">(includes Government Tax · renewal terms may vary)</span></p>
     ${loc.valuesReviewed?`<div class="stale">📅 <b>Last reviewed in ${esc(loc.valuesReviewed)}.</b>
       Costs have moved since then — if these figures are no longer realistic, adjust them above.</div>`:''}
     <div class="calc">
@@ -299,6 +308,8 @@ function submit(gi,btn){
   const sel=document.querySelector(`input[name="inst${gi}"]:checked`);
   const err=document.getElementById('err'+gi); err.style.display='none';
   if(!sel){err.textContent='Please choose an instruction so we know how to proceed.';err.style.display='block';return;}
+  const mf=document.getElementById('mf_'+gi);
+  if(mf && !mf.checked){err.textContent='Please tick the declaration — it covers your legal duty to disclose material facts.';err.style.display='block';return;}
   const locations = g.locs.map(loc=>{
     const adjusted={};
     DATA.lines.forEach(L=>{
@@ -307,9 +318,11 @@ function submit(gi,btn){
     });
     const ok = document.getElementById('addrok_'+loc.idx);
     const fix = document.getElementById('addrnew_'+loc.idx);
+    const occ = document.getElementById('occ_'+loc.idx);
     return { rowIndex: loc.rowIndex, location: loc.location, adjusted: adjusted,
              addressConfirmed: ok ? ok.checked : true,
-             addressCorrection: (ok && !ok.checked && fix) ? fix.value.trim() : '' };
+             addressCorrection: (ok && !ok.checked && fix) ? fix.value.trim() : '',
+             occupancy: occ ? occ.value.trim() : '' };
   });
   btn.disabled=true;btn.textContent='Sending…';
   google.script.run

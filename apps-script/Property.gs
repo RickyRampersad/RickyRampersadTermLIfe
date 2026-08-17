@@ -52,11 +52,12 @@ var PROP = {
   ],
 
   // The value lines, in the order the branch presents them.
+  // Labels match Guardian's renewal notice; keys map to the sheet columns.
   LINES: [
-    { key: 'building',   label: 'Building Cover' },
+    { key: 'building',   label: 'Building' },
     { key: 'stock',      label: 'Stock' },
-    { key: 'contents',   label: 'General Contents' },
-    { key: 'plant',      label: 'Plant, Equipment & Machinery' },
+    { key: 'contents',   label: 'Furniture / Fixtures / Fittings' },
+    { key: 'plant',      label: 'Plant, Machinery & Equipment' },
     { key: 'electronic', label: 'Electronic Equipment' },
   ],
 };
@@ -259,7 +260,8 @@ function submitPropertyInstruction(payload) {
     var changed = lines.some(function (l) { return l.adjusted !== '' && l.adjusted !== l.current; });
     parts.push({ row: r, lines: lines, curTotal: curTotal, newTotal: newTotal, changed: changed,
       addressConfirmed: L.addressConfirmed !== false,
-      addressCorrection: String(L.addressCorrection || '').slice(0, 300) });
+      addressCorrection: String(L.addressCorrection || '').slice(0, 300),
+      occupancy: String(L.occupancy || '').slice(0, 200) });
   });
   if (!parts.length) throw new Error('We could not match those locations to your policy.');
 
@@ -281,12 +283,14 @@ function submitPropertyInstruction(payload) {
       'Risk Location': p.row.location,
       'Address Confirmed': p.addressConfirmed ? 'Yes' : 'NO — correction supplied',
       'Address Correction': p.addressCorrection || '',
+      'Occupancy Confirmed': p.occupancy || '',
       'Current Total Value': p.curTotal,
       'Adjusted Total Value': p.changed ? p.newTotal : '',
       'Emailed To': PROP.CRMS_TO + ' cc ' + PROP.CRMS_CC.join(','),
       'Status': isTest ? 'TEST' : 'Received',
     });
     if (!isTest) {
+      if (p.occupancy && p.occupancy !== p.row.occupancy) setPropCell_(p.row.rowIndex, 'occupancy', p.occupancy);
       setPropCell_(p.row.rowIndex, 'renewal status', instruction + ' — ' + nowStamp_());
       setPropCell_(p.row.rowIndex, 'stage', 'instructed');
       setPropCell_(p.row.rowIndex, 'stage updated', new Date());
@@ -342,6 +346,9 @@ function sendPropertyInstructionToCRMS_(head, policy, instruction, parts, anyCha
         ? '<p style="background:#fbe9e7;border-left:4px solid #b3261e;padding:10px 14px;margin:6px 0;font-size:13px">' +
           '<b>⚠️ ADDRESS CORRECTION REQUESTED</b><br>Should read: <b>' + esc_(p.addressCorrection) + '</b><br>' +
           'Please amend the risk location on the schedule.</p>'
+        : '') +
+      (p.occupancy
+        ? '<p style="font-size:13px;margin:6px 0;color:#31465e">Occupancy confirmed by insured: <b>' + esc_(p.occupancy) + '</b></p>'
         : '') +
       valueTableHtml_(p.lines, p.changed, p.newTotal, p.curTotal);
   }).join('');
