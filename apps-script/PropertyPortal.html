@@ -156,6 +156,23 @@ function policies(){
   return [...map.values()];
 }
 
+/* "Riot & Strike: 5% (min $5,000); Burglary: $20,000; ..." -> rows */
+function parseExcess(str){
+  return String(str||'').split(/;|\n/).map(x=>{
+    const m=x.split(/:(.+)/); if(!m[0]||!m[0].trim()) return null;
+    return {peril:m[0].trim(), value:(m[1]||'').trim()};
+  }).filter(Boolean);
+}
+function excessTable(str,label){
+  const rows=parseExcess(str);
+  if(!rows.length) return '';
+  return `<details class="hist"><summary>💰 ${label||'Your excesses at a glance'} (${rows.length})</summary>
+    <table class="trend"><tr><th>Peril</th><th>Your excess</th></tr>
+    ${rows.map(r=>`<tr><td>${esc(r.peril)}</td><td class="n">${esc(r.value)}</td></tr>`).join('')}</table>
+    <div class="note">The excess is the first part of any claim that you carry. Where it is a percentage,
+    it is a percentage of the sum insured at this location — another reason the values above must be right.</div>
+  </details>`;
+}
 function locTotal(loc){ return DATA.lines.reduce((s,L)=>s+(Number(loc.values[L.key])||0),0); }
 
 function render(){
@@ -185,7 +202,7 @@ function render(){
         <tr><td class="n" style="font-weight:800;font-size:15px">${money(polValue)}</td>
             <td class="n" style="font-weight:800;font-size:15px">${money(polPremium)}</td></tr>
       </table>
-      ${g.excess?`<p style="font-size:13px;color:var(--ink2)">Excess on this policy: <b>${esc(g.excess)}</b></p>`:''}
+      ${(!g.locs.some(l=>l.excess) && g.excess)?excessTable(g.excess,'Excesses on this policy'):''}
       ${premTrend(g)}
 
       <div class="step">Step 1 · Check each location</div>
@@ -198,7 +215,9 @@ function render(){
         70% of the true value and a $100,000 claim pays <b>$70,000</b>. You carry the rest.
         ${g.locs.length>1?'<br><br><b>With more than one location, average is applied to each one separately</b> — so every location needs to be right on its own.':''}</div>
       <div class="edu"><b>💡 Your excess</b> — the first portion of every claim is yours to carry, and it applies
-        each time you claim. A higher excess lowers your premium but raises what you pay when something happens.</div>
+        each time you claim. Your policy sets a different excess per peril — open
+        <b>"Excesses at this location"</b> above to see your actual figures. Note that catastrophe perils
+        (hurricane, flood, earthquake) are usually a <b>percentage of the sum insured</b>, with a minimum.</div>
 
       <div class="step">Step 3 · What your property policy protects</div>
       <div class="benefits"><h3>🏠 Your cover at a glance</h3><ul>
@@ -288,6 +307,7 @@ function locationBlock(loc){
     </table>
     <p style="font-size:12.5px;color:var(--ink2)">Premium for this location: <b>${money(loc.premium)}</b>
       <span style="color:#8a97a8">(includes Government Tax · renewal terms may vary)</span></p>
+    ${excessTable(loc.excess,'Excesses at this location')}
     ${loc.valuesReviewed?`<div class="stale">📅 <b>Last reviewed in ${esc(loc.valuesReviewed)}.</b>
       Costs have moved since then — if these figures are no longer realistic, adjust them above.</div>`:''}
     <div class="calc">
