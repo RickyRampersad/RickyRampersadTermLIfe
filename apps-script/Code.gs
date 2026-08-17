@@ -661,21 +661,35 @@ function submitSurvey(payload) {
 function staffList_() {
   var sh = staffSheet_();
   if (sh.getLastRow() < 2) return [];
-  return sh.getRange(2, 1, sh.getLastRow() - 1, 4).getValues()
+  var nCols = Math.max(4, Math.min(sh.getLastColumn(), 5));
+  return sh.getRange(2, 1, sh.getLastRow() - 1, nCols).getValues()
     .filter(function (r) { return String(r[3]).toUpperCase() !== 'N' && String(r[0]).indexOf('@') > 0; })
-    .map(function (r) { return { email: String(r[0]).trim().toLowerCase(), name: String(r[1] || r[0]), role: String(r[2] || 'staff') }; });
+    .map(function (r) { return { email: String(r[0]).trim().toLowerCase(), name: String(r[1] || r[0]),
+      role: String(r[2] || 'staff'), pin: normPin_(r.length > 4 ? r[4] : '') }; });
 }
 
-function requireStaff_(key, me) {
+/** "4", 4, and 4.0 (a numeric cell) all normalise to "4". */
+function normPin_(v) {
+  if (v === undefined || v === null || v === '') return '';
+  var n = Number(v);
+  if (!isNaN(n) && isFinite(n)) return String(Math.round(n));
+  return String(v).trim();
+}
+
+function requireStaff_(key, me, pin) {
   if (String(key) !== CONFIG.STAFF_KEY) throw new Error('Invalid staff link.');
   me = String(me || '').trim().toLowerCase();
   var found = staffList_().filter(function (s) { return s.email === me; })[0];
   if (!found) throw new Error('Your email is not on the Staff sheet — ask an admin to add you.');
-  return found;
+  // Personal access code from the Staff tab's 5th column (Password/PIN).
+  // If the column is blank for this person, no code is required.
+  if (found.pin && normPin_(pin) !== found.pin) throw new Error('Wrong access code — use the code beside your name on the Staff tab.');
+  var out = { email: found.email, name: found.name, role: found.role };
+  return out;
 }
 
-function staffData(key, me, isLogin) {
-  var staff = requireStaff_(key, me);
+function staffData(key, me, isLogin, pin) {
+  var staff = requireStaff_(key, me, pin);
   // isLogin is passed only on the dashboard's first load, so the Activity
   // trail records every sign-in without logging every screen refresh
   if (isLogin) logActivity_('', staff.name, 'login', staff.email, 'Signed in to the staff dashboard (' + staff.role + ')');
@@ -752,8 +766,8 @@ function createTask_(title, due, assignee, client, token, by) {
   return id;
 }
 
-function staffAction(key, me, action, params) {
-  var staff = requireStaff_(key, me);
+function staffAction(key, me, action, params, pin) {
+  var staff = requireStaff_(key, me, pin);
   params = params || {};
   var sh, map;
 
@@ -856,7 +870,7 @@ function staffAction(key, me, action, params) {
     }
     default: throw new Error('Unknown action: ' + action);
   }
-  return staffData(key, me);
+  return staffData(key, me, false, pin);
 }
 
 /* ============================ emails ============================ */
@@ -1036,6 +1050,7 @@ function onOpen() {
     .addItem('Preview a client portal (row 2)', 'showMyLink')
     .addSeparator()
     .addItem('🔗 Link Risk Details to portal tokens', 'linkRiskDetails')
+    .addItem('⬇ Import prepared data (from Drive sheet)', 'importPreparedData')
     .addToUi();
   // property menu comes along automatically when Property.gs is installed
   try { if (typeof propertyMenu_ === 'function') propertyMenu_(SpreadsheetApp.getUi()).addToUi(); } catch (err) { Logger.log(err); }
@@ -1157,4 +1172,52 @@ function linkRiskDetails() {
         un.slice(0, 25).join('\n• ') + (un.length > 25 ? '\n…' : '') +
         '\n\nTo connect them, paste the client\'s Token from the Motor tab onto their vehicle rows.'
       : 'Every vehicle row is connected.'));
+}
+
+/**
+ * One-click import of a prepared data sheet from Drive. Paste the link of the
+ * sheet Claude placed in your Drive; the headers tell it where the data goes:
+ *   • "Renewal Date …"   → fills the Property Renewals tab (only if empty)
+ *   • "… Vehicle Reg …"  → appends vehicle rows to Risk Details
+ * Run it once per prepared sheet.
+ */
+function importPreparedData() {
+  var ui = SpreadsheetApp.getUi();
+  var resp = ui.prompt('Import prepared data',
+    'Paste the link of ONE prepared import sheet from your Drive:', ui.ButtonSet.OK_CANCEL);
+  if (resp.getSelectedButton() !== ui.Button.OK) return;
+  var m = String(resp.getResponseText()).match(/[-\w]{25,}/);
+  if (!m) { ui.alert('That does not look like a Google Sheets link.'); return; }
+  var vals;
+  try { vals = SpreadsheetApp.openById(m[0]).getSheets()[0].getDataRange().getValues(); }
+  catch (err) { ui.alert('Could not open that sheet: ' + err); return; }
+  if (!vals || vals.length < 2) { ui.alert('That sheet looks empty.'); return; }
+  var h0 = vals[0].map(function (x) { return String(x).trim().toLowerCase(); });
+
+  if (h0[0] === 'renewal date') {                     // ---- property book ----
+    var name = (typeof PROP !== 'undefined' && PROP.SHEET) ? PROP.SHEET : 'Property Renewals';
+    var dest = ss_().getSheetByName(name) || ss_().insertSheet(name);
+    if (dest.getLastRow() > 1) { ui.alert('The ' + name + ' tab already has data — clear its rows first if you want to replace them.'); return; }
+    dest.clearContents();
+    dest.getRange(1, 1, vals.length, vals[0].length).setValues(vals);
+    dest.setFrozenRows(1);
+    var msg = name + ': ' + (vals.length - 1) + ' rows imported.';
+    try { if (typeof fillPropertyLinks === 'function') { fillPropertyLinks(); msg += '\nPortal tokens & links generated for every row.'; } }
+    catch (e) { msg += '\nToken fill: ' + e; }
+    ui.alert(msg);
+
+  } else if (h0.indexOf('vehicle reg') >= 0) {        // ---- risk details additions ----
+    var dst = ss_().getSheetByName('Risk Details');
+    if (!dst) { dst = ss_().insertSheet('Risk Details'); dst.getRange(1, 1, 1, vals[0].length).setValues([vals[0]]); dst.setFrozenRows(1); }
+    var dh = dst.getRange(1, 1, 1, dst.getLastColumn()).getValues()[0].map(function (x) { return String(x).trim().toLowerCase(); });
+    if (dh.indexOf('token') < 0) { dst.getRange(1, dst.getLastColumn() + 1).setValue('Token'); dh.push('token'); }
+    var si = {}; h0.forEach(function (h, i) { si[h] = i; });
+    var out = vals.slice(1).map(function (r) { return dh.map(function (h) { var i = si[h]; return i === undefined ? '' : r[i]; }); });
+    dst.getRange(dst.getLastRow() + 1, 1, out.length, dh.length).setValues(out);
+    _riskMap = null;
+    ui.alert('Risk Details: ' + out.length + ' vehicle rows appended.\n\nNow run 🔗 Link Risk Details to portal tokens.');
+
+  } else {
+    ui.alert('Could not recognise that sheet\'s headers — is it one of the prepared import sheets?');
+  }
 }
