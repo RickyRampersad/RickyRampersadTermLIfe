@@ -122,6 +122,7 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money = v => { const n=Number(v); return (!v&&v!==0)||isNaN(n) ? esc(v) : 'TT$'+n.toLocaleString('en-US',{maximumFractionDigits:0}); };
 let D = null, ME = localStorage.getItem('gg_staff_email')||'', PIN = localStorage.getItem('gg_staff_pin')||'', FILTER='action', Q='';
+let AUDIT = { on:false, by:'', type:'', q:'' };
 
 function toast(m){ const t=$('#toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
 
@@ -186,7 +187,17 @@ function renderApp(){
   const openTasks = D.tasks.filter(t=>t.status==='Open');
   const renewedMonth = rows.filter(r=>r.st.k==='done').length;
 
+  const myQ = (D.queries||[]).filter(q=>q.status==='Open' && q.of===ME);
+  const openQAll = (D.queries||[]).filter(q=>q.status==='Open');
+
   $('#app').innerHTML = `<div class="wrap">
+    ${myQ.length?`<div class="card" style="border-color:rgba(239,194,75,.5)"><h2 style="color:var(--gold)">❓ Needs your answer (${myQ.length}) — these are on the audit trail</h2><div style="padding:12px 16px">
+      ${myQ.map(q=>`<div class="task"><div class="t"><b>${esc(q.client||'General')}</b> — ${esc(q.question)}
+        <div class="mini">asked by ${esc(q.by.split('@')[0])} · ${esc(q.created)}</div>
+        <textarea id="qa_${esc(q.id)}" placeholder="Your answer — logged under your name"></textarea>
+        <button class="abtn primary sm" data-qans="${esc(q.id)}" style="margin-top:6px">Send answer</button>
+      </div></div>`).join('')}
+    </div></div>`:''}
     <div class="kpis">
       ${kpi('instructed','⚡ '+n('instructed'),'Client instructed — process now','warn')}
       ${kpi('overdue',n('overdue'),'Overdue','warn')}
@@ -194,6 +205,7 @@ function renderApp(){
       ${kpi('renewed',renewedMonth,'Renewed','')}
       <div class="kpi ${myTasks?'gold':''}" id="kTasks"><div class="n">${myTasks}</div><div class="l">My open tasks</div></div>
       <div class="kpi ${(D.properties||[]).filter(p=>p.stage&&p.stage!=='issued').length?'gold':''}"><div class="n">${(D.properties||[]).filter(p=>p.stage&&p.stage!=='issued').length}</div><div class="l">🏠 Property files open</div></div>
+      <div class="kpi ${openQAll.length?'warn':''}"><div class="n">${openQAll.length}</div><div class="l">❓ Open queries</div></div>
       <div class="kpi"><div class="n">${D.surveys.count?D.surveys.avgSat+'★':'—'}</div><div class="l">Avg satisfaction (${D.surveys.count})</div></div>
     </div>
 
@@ -201,8 +213,10 @@ function renderApp(){
       <input type="search" id="q" placeholder="Search client, policy, staff…" value="${esc(Q)}">
       <button class="abtn ${FILTER==='action'?'primary':''}" data-f="action">Needs action</button>
       <button class="abtn ${FILTER==='all'?'primary':''}" data-f="all">All</button>
+      <button class="abtn ${AUDIT.on?'primary':''}" id="audBtn">🔍 Audit</button>
       <button class="abtn gold" id="addBtn">＋ Add renewal</button>
     </div>
+    ${AUDIT.on?auditView():''}
 
     <div class="grid2col">
       <div>
@@ -257,6 +271,48 @@ function renderApp(){
   document.querySelectorAll('tbody tr[data-row]').forEach(tr=>tr.onclick=()=>openDetail(Number(tr.dataset.row)));
   document.querySelectorAll('tbody tr[data-prop]').forEach(tr=>tr.onclick=()=>openProp(tr.dataset.prop));
   $('#kTasks').onclick=()=>{ Q=ME.split('@')[0]; renderApp(); };
+  $('#audBtn').onclick=()=>{ AUDIT.on=!AUDIT.on; renderApp(); };
+  document.querySelectorAll('[data-qans]').forEach(b=>b.onclick=()=>{
+    const t=document.getElementById('qa_'+b.dataset.qans).value.trim();
+    if(!t){ toast('Type your answer first'); return; }
+    act('answer',{id:b.dataset.qans,answer:t},'Answer logged on the audit trail');
+  });
+  if(AUDIT.on){
+    const aq=$('#audQ');
+    if(aq) aq.oninput=e=>{ AUDIT.q=e.target.value.toLowerCase(); renderApp(); const x=$('#audQ'); x.focus(); x.setSelectionRange(x.value.length,x.value.length); };
+    const ab=$('#audBy'); if(ab) ab.onchange=e=>{ AUDIT.by=e.target.value; renderApp(); };
+    const at=$('#audType'); if(at) at.onchange=e=>{ AUDIT.type=e.target.value; renderApp(); };
+  }
+}
+
+/* ---------- interactive audit view: every action, filterable ---------- */
+function auditView(){
+  const feed=D.feed||[];
+  const people=[...new Set(feed.map(a=>a.by))].sort();
+  const types=[...new Set(feed.map(a=>a.type.replace(/^TEST:/,'')))].sort();
+  const rows=feed.filter(a=>{
+    if(AUDIT.by && a.by!==AUDIT.by) return false;
+    if(AUDIT.type && a.type.replace(/^TEST:/,'')!==AUDIT.type) return false;
+    if(AUDIT.q && !(a.client+' '+a.details+' '+a.by+' '+a.type).toLowerCase().includes(AUDIT.q)) return false;
+    return true;
+  });
+  const qOpen=(D.queries||[]).filter(q=>q.status==='Open');
+  const qDone=(D.queries||[]).filter(q=>q.status!=='Open');
+  return `<div class="card"><h2>🔍 Audit trail — showing ${rows.length} of ${feed.length} actions</h2>
+    <div style="padding:12px 16px">
+    <div class="bar" style="margin-bottom:10px">
+      <input type="search" id="audQ" placeholder="Filter by client, policy, detail…" value="${esc(AUDIT.q)}">
+      <select id="audBy" style="width:auto"><option value="">Everyone</option>${people.map(p=>`<option ${p===AUDIT.by?'selected':''} value="${esc(p)}">${esc(p.split('@')[0])}</option>`).join('')}</select>
+      <select id="audType" style="width:auto"><option value="">All actions</option>${types.map(t=>`<option ${t===AUDIT.type?'selected':''}>${esc(t)}</option>`).join('')}</select>
+    </div>
+    <div style="overflow-x:auto;max-height:420px;overflow-y:auto"><table><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Client</th><th>Details</th></tr></thead>
+    <tbody>${rows.slice(0,200).map(a=>`<tr style="cursor:default"><td class="mini" style="white-space:nowrap">${esc(a.when)}</td><td><b>${esc(a.by.split('@')[0])}</b></td><td><span class="chip ${/query/.test(a.type)?'c-due':/login/.test(a.type)?'c-up':/instruction|renewed|survey/.test(a.type)?'c-done':'c-wait'}">${esc(a.type.replace(/^TEST:/,''))}</span></td><td>${esc(a.client)}</td><td class="mini">${esc(a.details.slice(0,140))}</td></tr>`).join('')}</tbody></table></div>
+    <h4 style="font:800 11px 'Montserrat';color:var(--teal);text-transform:uppercase;letter-spacing:.08em;margin:16px 0 6px">Queries — open (${qOpen.length}) · answered (${qDone.length})</h4>
+    ${[...qOpen,...qDone].slice(0,30).map(q=>`<div class="task ${q.status==='Open'?'over':''}"><div class="t">
+      <b>${esc(q.client||'General')}</b> — ${esc(q.question)}
+      <div class="mini">${esc(q.by.split('@')[0])} → ${esc(q.of.split('@')[0])} · ${esc(q.created)} · <b>${q.status}</b>${q.answer?` — “${esc(q.answer.slice(0,140))}” (${esc(q.answeredBy.split('@')[0])}, ${esc(q.answered)})`:''}</div>
+    </div></div>`).join('')||'<p class="mini">No queries yet.</p>'}
+  </div></div>`;
 }
 
 function propStatus(pp){
@@ -299,6 +355,11 @@ function openProp(token){
         <div class="task"><div class="t"><b>$${pp.rate.toFixed(2)} per $1,000</b> before tax
           <div class="mini">${(pp.premiumHistory||[]).map(h=>h.year+': '+money(h.amount)).join(' · ')||'no history on file'}${pp.years?' · '+pp.years+' yrs with us':''}</div>
         </div></div></div>`:''}
+      <div class="sec"><h4>❓ Raise a query — the person named must answer, on the record</h4>
+        <label>Who must answer</label><select id="pAskWho">${D.staff.map(s=>`<option value="${esc(s.email)}">${esc(s.name)}</option>`).join('')}</select>
+        <label>Question</label><textarea id="pAskT" placeholder="e.g. Terms overdue from Guardian — please chase and advise"></textarea>
+        <button class="abtn sm" id="pAskGo" style="margin-top:8px">❓ Send query</button>
+      </div>
       <div class="sec" style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="abtn primary" id="pInvite">✉ Send/resend renewal invite</button>
         <button class="abtn gold" id="pRate">⚖ Request loyalty rate review</button>
@@ -324,6 +385,7 @@ function openProp(token){
     act('comment',{token:pp.token,client:pp.client,text:'WhatsApp renewal link sent to '+pp.mobile},'WhatsApp opened — press send there');
   };
   $('#pAssign').onchange=e=>act('propAssign',{token:pp.token,assignee:e.target.value},'Assigned');
+  $('#pAskGo').onclick=()=>{ const t=$('#pAskT').value.trim(); if(!t){ toast('Type the question first'); return; } closeDr(); act('ask',{token:pp.token,client:pp.client,assignee:$('#pAskWho').value,text:t},'Query sent — it must be answered'); };
   const pl=$('#pLink'); if(pl) pl.onclick=async()=>{ try{ await navigator.clipboard.writeText(link); toast('Portal link copied'); }catch(e){ prompt('Copy the link:', link); } };
 }
 
@@ -366,6 +428,11 @@ function openDetail(rowIndex){
         <div><label>Due</label><input type="date" id="dTaskD"></div></div>
         <button class="abtn sm" id="dTaskAdd" style="margin-top:8px">＋ Add task</button>
       </div>
+      <div class="sec"><h4>❓ Raise a query — the person named must answer, on the record</h4>
+        <label>Who must answer</label><select id="dAskWho">${D.staff.map(s=>`<option value="${esc(s.email)}">${esc(s.name)}</option>`).join('')}</select>
+        <label>Question</label><textarea id="dAskT" placeholder="e.g. Client called twice — please advise status"></textarea>
+        <button class="abtn sm" id="dAskGo" style="margin-top:8px">❓ Send query</button>
+      </div>
       <div class="sec"><h4>Comments & history</h4>
         <div class="tl">${acts.map(a=>`<div class="it"><b>${esc(a.by.split('@')[0])}</b> · ${esc(a.type)}<div class="w">${esc(a.when)} · ${esc(a.details.slice(0,120))}</div></div>`).join('')||'<p class="mini">No activity yet.</p>'}</div>
         <label>Add comment</label><textarea id="dCom" placeholder="Spoke to client, awaiting docs…"></textarea>
@@ -379,6 +446,7 @@ function openDetail(rowIndex){
   $('#dAssign').onchange=e=>act('assign',{rowIndex:r.rowIndex,token:r.token,client:r.client,assignee:e.target.value},'Assigned');
   $('#dTaskAdd').onclick=()=>{ const t=$('#dTaskT').value.trim(); if(!t) return; closeDr(); act('addTask',{title:t,assignee:$('#dTaskA').value,due:$('#dTaskD').value,client:r.client,token:r.token},'Task created'); };
   $('#dComAdd').onclick=()=>{ const t=$('#dCom').value.trim(); if(!t) return; closeDr(); act('comment',{token:r.token,client:r.client,text:t},'Comment logged'); };
+  $('#dAskGo').onclick=()=>{ const t=$('#dAskT').value.trim(); if(!t){ toast('Type the question first'); return; } closeDr(); act('ask',{token:r.token,client:r.client,assignee:$('#dAskWho').value,text:t},'Query sent — it must be answered'); };
   document.querySelectorAll('[data-ddone]').forEach(b=>b.onclick=()=>{ closeDr(); act('completeTask',{id:b.dataset.ddone},'Task completed'); });
 }
 function closeDr(){ $('#ov').classList.remove('open'); $('#dr').classList.remove('open'); }

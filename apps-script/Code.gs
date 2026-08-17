@@ -58,6 +58,8 @@ var CONFIG = {
   TASKS_SHEET: 'Tasks',
   ACTIVITY_SHEET: 'Activity',
   SURVEYS_SHEET: 'Surveys',
+  QUERIES_SHEET: 'Queries',
+  QUERY_STALL_DAYS: 3,   // instructed file unprocessed this long → auto-query the assignee
 
   SURVEY_DAYS_AFTER_RENEWAL: 7,
 
@@ -193,6 +195,10 @@ function activitySheet_() {
 function surveysSheet_() {
   return namedSheet_(CONFIG.SURVEYS_SHEET, ['Timestamp','Token','Client','Policy #',
     'Satisfaction (1-5)','Ease (1-5)','Comments','Speed (1-5)']);
+}
+function queriesSheet_() {
+  return namedSheet_(CONFIG.QUERIES_SHEET, ['ID','Created','Token','Client','Asked By','Asked Of',
+    'Question','Status','Answer','Answered','Answered By']);
 }
 
 /* Client-visible communication timeline, built from the Activity trail.
@@ -707,7 +713,7 @@ function staffData(key, me, isLogin, pin) {
       var tok = String(a[1]);
       lastTouch[tok] = { when: fmtDate_(a[0]), by: String(a[4]), type: String(a[3]) };
     });
-    feed = rows.slice(-60).reverse().map(function (a) {
+    feed = rows.slice(-300).reverse().map(function (a) {
       return { when: fmtDate_(a[0]), client: String(a[2]), type: String(a[3]), by: String(a[4]), details: String(a[5]) };
     });
   }
@@ -747,9 +753,20 @@ function staffData(key, me, isLogin, pin) {
     if (v.length) vehiclesByToken[r.token] = v;
   });
 
+  // queries — the ask/answer accountability loop
+  var qsh = queriesSheet_();
+  var queries = [];
+  if (qsh.getLastRow() > 1) {
+    queries = qsh.getRange(2, 1, qsh.getLastRow() - 1, 11).getValues().map(function (q) {
+      return { id: String(q[0]), created: fmtDate_(q[1]), token: String(q[2]), client: String(q[3]),
+               by: String(q[4]), of: String(q[5]).trim().toLowerCase(), question: String(q[6]),
+               status: String(q[7]), answer: String(q[8]), answered: fmtDate_(q[9]), answeredBy: String(q[10]) };
+    }).reverse().slice(0, 150);
+  }
+
   return {
     me: staff, staff: staffList_(), renewals: renewals, tasks: tasks,
-    lastTouch: lastTouch, feed: feed, surveys: surveys,
+    lastTouch: lastTouch, feed: feed, surveys: surveys, queries: queries,
     vehicles: vehiclesByToken,
     properties: (typeof propertyPipeline_ === 'function') ? propertyPipeline_() : [],
     propStages: (typeof propertyStages_ === 'function') ? propertyStages_() : [],
@@ -820,6 +837,40 @@ function staffAction(key, me, action, params, pin) {
       sh = renewalsSheet_(); map = ensureRenewalCols_();
       sh.getRange(Number(params.rowIndex), col_(map, 'assigned to') + 1).setValue(params.assignee || '');
       logActivity_(params.token, params.client, 'assigned', staff.email, '→ ' + (params.assignee || '(unassigned)'));
+      break;
+    }
+    case 'ask': {   // raise an audit query on a file — the person named must answer
+      var askOf = String(params.assignee || '').trim().toLowerCase();
+      var qText = String(params.text || '').slice(0, 500);
+      if (!askOf || !qText) throw new Error('Pick who must answer, and type the question.');
+      var qid = 'Q' + new Date().getTime().toString(36);
+      queriesSheet_().appendRow([qid, new Date(), params.token || '', params.client || '',
+        staff.email, askOf, (testMode_() ? '[TEST] ' : '') + qText, 'Open', '', '', '']);
+      logActivity_(params.token || '', params.client || '', 'query', staff.email, '→ ' + askOf + ': ' + qText.slice(0, 200));
+      var target = staffList_().filter(function (s) { return s.email === askOf; })[0];
+      if (target) sendMail_({ to: target.email, name: CONFIG.FROM_NAME,
+        subject: '❓ Query on ' + (params.client || 'a file') + ' — your answer is needed',
+        htmlBody: brandWrap_('<p>' + esc_(staff.name) + ' asked on <b>' + esc_(params.client || 'a file') + '</b>:</p>' +
+          eduBox_(esc_(qText)) +
+          '<p>Open the staff dashboard — the query is waiting at the top of your screen, and your answer goes on the audit trail.</p>',
+          'Staff query') });
+      break;
+    }
+    case 'answer': {   // answer a query — recorded on the sheet and the audit trail
+      var ans = String(params.answer || '').slice(0, 1000);
+      if (!ans) throw new Error('Type your answer first.');
+      var qsh2 = queriesSheet_();
+      var qd = qsh2.getRange(2, 1, Math.max(qsh2.getLastRow() - 1, 1), 11).getValues();
+      for (var qi = 0; qi < qd.length; qi++) {
+        if (String(qd[qi][0]) === String(params.id)) {
+          qsh2.getRange(qi + 2, 8).setValue('Answered');
+          qsh2.getRange(qi + 2, 9).setValue((testMode_() ? '[TEST] ' : '') + ans);
+          qsh2.getRange(qi + 2, 10).setValue(new Date());
+          qsh2.getRange(qi + 2, 11).setValue(staff.email);
+          logActivity_(String(qd[qi][2]), String(qd[qi][3]), 'query-answered', staff.email, ans.slice(0, 200));
+          break;
+        }
+      }
       break;
     }
     case 'resendInvite': {
@@ -1029,6 +1080,33 @@ function dailyAutomation() {
   });
   Logger.log('dailyAutomation: ' + sentEmails + ' emails sent' +
     (testMode_() ? ' — TEST MODE, all rerouted to ' + testInbox_() : ''));
+
+  // accountability: a client instruction sitting unprocessed for
+  // QUERY_STALL_DAYS raises an audit query the assignee must answer
+  try {
+    var qsh = queriesSheet_();
+    var openQ = {};
+    if (qsh.getLastRow() > 1) qsh.getRange(2, 1, qsh.getLastRow() - 1, 8).getValues()
+      .forEach(function (q) { if (String(q[7]) === 'Open') openQ[String(q[2])] = 1; });
+    var admins = staffList_().filter(function (s) { return /admin|manager/i.test(s.role); });
+    rows.forEach(function (r) {
+      if (!r.token || openQ[r.token]) return;
+      if (!/—/.test(r.renewalStatus) || /RENEWED/i.test(r.renewalStatus) || r.renewedDate) return;
+      var m = r.renewalStatus.match(/— (\d{1,2} \w{3} \d{4})\s*$/);
+      var when = m ? new Date(m[1]) : null;
+      var sitting = (when && !isNaN(when.getTime())) ? Math.round((new Date() - when) / 86400000) : null;
+      if (sitting === null || sitting < CONFIG.QUERY_STALL_DAYS) return;
+      var askOf = String(r.assignedTo || (admins[0] ? admins[0].email : '')).trim().toLowerCase();
+      if (!askOf) return;
+      qsh.appendRow(['AQ' + new Date().getTime().toString(36) + r.rowIndex, new Date(), r.token, r.client,
+        'system', askOf,
+        (testMode_() ? '[TEST] ' : '') + 'Client instructed ' + sitting + ' days ago and the file is not marked renewed — what is the status?',
+        'Open', '', '', '']);
+      logActivity_(r.token, r.client, 'query', 'system', 'auto → ' + askOf + ' (instructed ' + sitting + 'd, unprocessed)');
+      openQ[r.token] = 1;
+    });
+  } catch (err) { Logger.log('auto-queries: ' + err); }
+
   // property follow-ups ride the same daily trigger when Property.gs is installed
   try { if (typeof dailyPropertyFollowUps === 'function') dailyPropertyFollowUps(); } catch (err) { Logger.log(err); }
 }
