@@ -423,12 +423,20 @@ force; suspense money already paid is named as reassurance; a Future Premium
 Payment requirement carries the MyGG pay button. No requirement data → the
 generic letter still stands.
 
-**Replacement identification:** `pdReplacementRisk_` flags a pending
-application sitting on a client whose in-force cover is behind or freshly
-lapsed — new business written over dying cover. Surfaced internally only (the
-digest, the engine's red pill and insight on both policies, never a
-client-copied email); the manager's private decision set already carries the
-"investigate replacement" option.
+**Replacement identification** — implemented to GLOC's own
+*Replacement/Churn Guidelines* (Sept 2022, V5), supplied by the branch.
+The official definition (§6): a policy **issued within 5 years** is
+surrendered/lapsed and a new policy is taken on the same policyowner
+**within 12 months after** — or the application is made up to **6 months
+before** the lapse. `pdReplacementRisk_` flags a pending application beside
+in-force cover in the arrears funnel (the before-window forming live) or a
+lapse inside 12 months, applying the guideline's exclusions (Xpress Life /
+non-adjustable plans, §4.5; replaced policies older than 5 years, §4.1), and
+marks the **same-agent** case — 0% commission and 0% production credit if
+confirmed (§7.2). Every confirmed replacement requires the signed
+**Replacement Declaration Form** with the application, or the case is "Not
+Proceeded With" (§9). Surfaced internally only: the digest, the engine's red
+pill and insight on both policies — never a client-copied email.
 
 **The structured close:** a policy the engine chased as pending that is next
 seen in force gets `nbclose`, once — *"Your policy is in force"*, named by

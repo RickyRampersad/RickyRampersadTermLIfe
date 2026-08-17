@@ -2920,24 +2920,49 @@ function pdInternalChase_(p, s) {
 var PD_REQ_SHEET = 'Requirement Management';
 
 /**
- * Replacement identification. A NEW application pending while the same
- * client's in-force cover slides into arrears (or freshly lapsed) is the
- * classic replacement pattern — new business being written over cover that is
- * about to die. Sometimes legitimate, sometimes churning; always a review
- * before anything lapses. MANAGER_PRIVATE already carries the decision option
- * ("Investigate possible replacement of in-force cover") — this is the
- * detector that tells the manager to look. Internal surfaces only: the
- * digest, the engine, the internal chases. Never a client-copied email.
+ * Replacement identification, per GLOC's Replacement/Churn Guidelines
+ * (Sept 2022, V5). The official definition (§6): a policy ISSUED WITHIN
+ * 5 YEARS is surrendered/lapsed, and a new policy is taken on the same
+ * policyowner within 12 MONTHS AFTER — or the new application is made up to
+ * 6 MONTHS BEFORE the lapse. So a pending application beside in-force cover
+ * in arrears is the pre-lapse half of the definition forming in real time.
+ *
+ * Guideline exclusions applied: non-adjustable plans (Xpress Life — cannot be
+ * redated/reinstated, §4.5) and replaced policies older than 5 years. The
+ * same-agent case matters most (§7.2: 0% commission, 0% production credit if
+ * confirmed), so each hit says whether the agents match. A confirmed
+ * replacement requires the signed REPLACEMENT DECLARATION FORM with the
+ * application — without it the case is "Not Proceeded With" (§9).
+ *
+ * Internal surfaces only — the digest, the engine, the internal chases.
+ * Never a client-copied email.
  */
 function pdReplacementRisk_(p, family) {
   if (Number(p.Status) !== 3 || !family || !family.length) return null;
-  var risky = [];
+  var risky = [], now = Date.now();
   for (var i = 0; i < family.length; i++) {
     var f = family[i];
     if (String(f.Policy) === String(p.Policy)) continue;
+
+    /* §4.5 — non-adjustable plans are outside the churn definition */
+    var plan = String(f.PlanCode || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (plan.indexOf('XL') === 0) continue;
+
+    /* §4.1 / §6 — the replaced policy must be issued within 5 years.
+       An unreadable issue date stays flagged: the review decides, not a blank. */
+    var iso = new Date(f.IssueDate || '');
+    if (!isNaN(iso) && (now - iso.getTime()) >= 5 * 365.25 * 86400000) continue;
+
     var st = Number(f.Status) || 0, d = Number(f.DaysArrears) || 0;
-    if (st === 2) risky.push({ policy: f.Policy, why: d + ' days in arrears' });
-    else if (st === 1 && d <= OUT.WIN_BACK_MAX_DAYS) risky.push({ policy: f.Policy, why: 'lapsed ' + d + ' days ago' });
+    var sameAgent = String(f.Agent || '').replace(/^ +| +$/g, '') ===
+                    String(p.Agent || '').replace(/^ +| +$/g, '');
+    if (st === 2) {
+      risky.push({ policy: f.Policy, sameAgent: sameAgent,
+        why: d + ' days in arrears — heading for lapse while this application pends (the 6-months-before window forming)' });
+    } else if (st === 1 && d <= 365) {
+      risky.push({ policy: f.Policy, sameAgent: sameAgent,
+        why: 'lapsed ' + d + ' days ago — inside the guideline’s 12-month window' });
+    }
   }
   return risky.length ? risky : null;
 }
@@ -3492,10 +3517,13 @@ function pdPilotStats() {
 
   /* Replacement identification: a pending application while the same client's
      in-force cover is behind or freshly lapsed. Review before anything dies. */
-  var replApps = 0, replClients = {}, j2;
+  var replApps = 0, replClients = {}, replSameAgent = 0, j2;
   for (j2 = 0; j2 < pendList.length; j2++) {
     var rr = pdReplacementRisk_(pendList[j2], byClientAll[String(pendList[j2].ClientNo)] || []);
-    if (rr) { replApps++; replClients[String(pendList[j2].ClientNo)] = 1; }
+    if (rr) {
+      replApps++; replClients[String(pendList[j2].ClientNo)] = 1;
+      for (var j3 = 0; j3 < rr.length; j3++) if (rr[j3].sameAgent) { replSameAgent++; break; }
+    }
   }
   var replCli = 0;
   for (j2 in replClients) if (Object.prototype.hasOwnProperty.call(replClients, j2)) replCli++;
@@ -3543,8 +3571,11 @@ function pdPilotStats() {
       row('SETTLE-READY: underwriting complete, paper outstanding', String(pendReady), true) +
       row('Carrying our own entry errors (ours to fix)', String(pendErrors), false) +
       row('Premium held in suspense on pending cases', pdMoney_(pendSusp), false) +
-      row('REPLACEMENT CHECKS: new app pending while in-force cover slides', replApps + ' app' +
-        (replApps === 1 ? '' : 's') + ' · ' + replCli + ' client' + (replCli === 1 ? '' : 's'), replApps > 0))) +
+      row('REPLACEMENT CHECKS (per the Sept 2022 guidelines): new app + cover in the churn windows', replApps + ' app' +
+        (replApps === 1 ? '' : 's') + ' · ' + replCli + ' client' + (replCli === 1 ? '' : 's'), replApps > 0) +
+      (replApps ? row('&nbsp;&nbsp;of which SAME AGENT both sides (0% commission if confirmed — §7.2)',
+        String(replSameAgent), replSameAgent > 0) +
+        row('&nbsp;&nbsp;each confirmed case needs the signed Replacement Declaration Form (§9)', 'or "Not Proceeded With"', false) : ''))) +
 
     pdSection_('Production (application received in the last 7 days)', tbl(
       row('Applications', String(weekApps), false) +

@@ -628,12 +628,20 @@ function clientFlags(c){
   const plans=new Set(fam.map(x=>x.PlanCode));
   // duplicate signal: 2+ policies under same client, overlapping plan codes
   const samePlan=fam.filter(x=>x.PlanCode===c.PlanCode && x.Policy!==c.Policy);
-  // replacement signal: a NEW application pending while the same client's
-  // in-force cover is behind (or freshly lapsed). New business written over
-  // dying cover — review before anything lapses. Flagged on BOTH policies.
+  // replacement signal, per GLOC's Replacement/Churn Guidelines (Sept 2022 V5)
+  // §6: replaced policy issued within 5 YEARS, new policy within 12 MONTHS
+  // after lapse or applied up to 6 months before. Xpress Life (non-adjustable,
+  // §4.5) excluded. Flagged on BOTH policies so each login sees it.
+  const replSide=x=>{
+    if(x.Policy===c.Policy)return false;
+    const plan=String(x.PlanCode||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+    if(plan.indexOf('XL')===0)return false;                       // non-adjustable
+    const iso=new Date(x.IssueDate||'');
+    if(!isNaN(iso)&&(Date.now()-iso.getTime())>=5*365.25*86400000)return false;  // older than 5y
+    return Number(x.Status)===2 || (Number(x.Status)===1 && (Number(x.DaysArrears)||0)<=365);
+  };
   const pendSib=fam.some(x=>x.Policy!==c.Policy && Number(x.Status)===3);
-  const slideSib=fam.some(x=>x.Policy!==c.Policy &&
-    (Number(x.Status)===2 || (Number(x.Status)===1 && (Number(x.DaysArrears)||0)<=180)));
+  const slideSib=fam.some(replSide);
   const replacementRisk=(Number(c.Status)===3 && slideSib) || (Number(c.Status)===2 && pendSib);
   return {
     fam, count:fam.length, active:active.length, lapsed:lapsed.length,
@@ -1455,7 +1463,7 @@ function rickyInsights(cases){
   if(s90.length)out.push({mk:'crit',t:`<b>${s90.length} ${s90.length===1?'policy is':'policies are'} at the 90-day lapse line.</b> Reinstatement only from here — pursue today or document the loss.`});
   if(hotSchemes.length)out.push({mk:'warn',t:`<b>${hotSchemes.length} group scheme${hotSchemes.length===1?' has':'s have'} a missed remittance</b> — ${hotSchemes.slice(0,3).map(g=>`${esc(g.name)} (${g.live} member ${g.live===1?'policy':'policies'}, ${money(g.prem)})`).join(', ')}${hotSchemes.length>3?` and ${hotSchemes.length-3} more`:''}. One call to one payroll office each — the engine sends the consolidated statement every ${SLA.GROUP_STATEMENT_EVERY} days and never writes to members individually.`});
   const repl=ind.filter(c=>c.cf.replacementRisk&&c.stage==='pend');
-  if(repl.length)out.push({mk:'crit',t:`<b>${repl.length} pending application${repl.length===1?'':'s'} sit${repl.length===1?'s':''} on ${new Set(repl.map(c=>c.ClientNo)).size} client${new Set(repl.map(c=>c.ClientNo)).size===1?'':'s'} whose in-force cover is sliding.</b> The replacement pattern — new business written while existing cover dies. Review each before anything lapses; the manager's private decision set carries the option.`});
+  if(repl.length)out.push({mk:'crit',t:`<b>${repl.length} pending application${repl.length===1?'':'s'} sit${repl.length===1?'s':''} on ${new Set(repl.map(c=>c.ClientNo)).size} client${new Set(repl.map(c=>c.ClientNo)).size===1?'':'s'} inside the replacement windows</b> of the Sept 2022 Replacement/Churn Guidelines (issued &lt;5 years · lapsed &lt;12 months, or heading to lapse while the application pends). Each confirmed case needs the signed <b>Replacement Declaration Form</b> with the application — without it, "Not Proceeded With" — and a same-agent replacement pays 0% commission. Review before anything lapses.`});
   const ready=ind.filter(c=>c.stage==='pend'&&c.ReqtUwDone);
   if(ready.length)out.push({mk:'go',t:`<b>${ready.length} pending ${ready.length===1?'case is':'cases are'} SETTLE-READY</b> — underwriting complete, one document outstanding${ready.length<=3?`: ${ready.map(c=>`${esc(c.Client)} (${esc(c.ReqtName||'requirement')})`).join(', ')}`:''}. The fastest settlements available anywhere in the book.`});
   if(noSurvey.length)out.push({mk:'warn',t:`<b>${noSurvey.length} of ${s45.length} cases in the 45-day window have had no answer from the client.</b> They are reminded every ${SLA.CLIENT_CHASE_EVERY} days automatically until day 60, when the policy becomes a manager's to telephone.`});
