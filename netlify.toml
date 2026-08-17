@@ -79,6 +79,18 @@
   force = true
 
 [[redirects]]
+  from = "https://pensionplantt.com/manual"
+  to = "/pension/training.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "https://www.pensionplantt.com/manual"
+  to = "/pension/training.html"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "https://pensionplantt.com/film"
   to = "/pension/how-it-works.html"
   status = 200
@@ -119,6 +131,11 @@
 [[redirects]]
   from = "/film"
   to = "/pension/how-it-works.html"
+  status = 301
+
+[[redirects]]
+  from = "/manual"
+  to = "/pension/training.html"
   status = 301
 
 [[headers]]

@@ -502,6 +502,10 @@ table.ptt td:first-child{width:38%;padding-right:12px;color:#64718e;font-weight:
 .casebtns{margin-left:auto;display:flex;gap:6px}
 .casebtns button{background:var(--navy2);border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit}
 .casebtns button:hover{color:var(--txt);border-color:var(--gold)}
+/* the team's own manual — this bar is only ever shown to an agent */
+.casebtns .manuallink{background:#fffdf5;border:1px solid #e6d09a;color:#8a6d1f;border-radius:8px;padding:6px 10px;
+  font-size:11px;font-weight:700;text-decoration:none;display:inline-block;line-height:1.35}
+.casebtns .manuallink:hover{border-color:var(--gold);color:#6f5714}
 .casebtns button.danger:hover{color:var(--red);border-color:var(--red)}
 </style>
 </head>
@@ -534,7 +538,7 @@ table.ptt td:first-child{width:38%;padding-right:12px;color:#64718e;font-weight:
         <span class="go">Explain my pension →</span>
       </button>
     </div>
-    <p class="doorwatch"><a href="launch.html">▶ &nbsp;New here? Watch the two-minute film</a></p>
+    <p class="doorwatch"><a href="launch.html">▶ &nbsp;New here? Watch the film — under three minutes</a></p>
     <p class="doorfoot">Ricky Rampersad · CFD, MFA · Branch Manager · 23× MDRT<br>
       <a href="mailto:support@rickyrampersadbranch.com">support@rickyrampersadbranch.com</a> · (868) 678-5921</p>
   </div>
@@ -556,6 +560,7 @@ table.ptt td:first-child{width:38%;padding-right:12px;color:#64718e;font-weight:
   <div class="casebar noprint">
     <span class="savedot" id="saveDot">Saved on this device</span>
     <div class="casebtns">
+      <a class="manuallink" href="training.html" target="_blank" rel="noopener">📕 Desk manual</a>
       <button type="button" onclick="exportCase()">Export case</button>
       <button type="button" onclick="document.getElementById('caseFile').click()">Import</button>
       <button type="button" class="danger" onclick="newCase()">New case</button>

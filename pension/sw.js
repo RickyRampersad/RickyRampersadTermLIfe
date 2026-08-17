@@ -8,13 +8,14 @@
  * the next online visit), cache-first for the versioned static assets.
  * Bump CACHE when the wizard changes.
  */
-const CACHE = 'rrb-pension-v6';
+const CACHE = 'rrb-pension-v7';
 
 const ASSETS = [
   './',
   './index.html',
   './how-it-works.html',   // the film — an agent shows it in a boardroom, where the signal is worst
   './launch.html',         // the launch page, minus its video
+  './training.html',       // the team's desk manual — read at a client's office, off signal
   './assets/film-poster.jpg',
   './manifest.webmanifest',
   /* The .mp4 and .webm are deliberately NOT here. They are 11 MB together, and

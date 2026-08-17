@@ -6,7 +6,7 @@ A static site with a small amount of server-side code on Netlify.
 | Path | What it is | Setup notes |
 | --- | --- | --- |
 | `index.html` | The main site: quotes, applications, careers, portals. | |
-| `pension/` | Company-owned pension application wizard (Section 134). | [PENSION-SETUP.md](PENSION-SETUP.md) |
+| `pension/` | Company-owned pension application wizard (Section 134), the launch page, the film, and the team's desk manual. | [PENSION-SETUP.md](PENSION-SETUP.md) |
 | `renewal/` | Motor & property renewal portal for clients. | [RENEWAL-SETUP.md](RENEWAL-SETUP.md) |
 | `market/` | Market intelligence pages. | |
 | `agent.html`, `staff.html` | Internal agent and staff pages. | |
