@@ -15,6 +15,9 @@ other end:
   support** and to you,
 - a **thank-you and acknowledgement** to the client listing what arrived and
   what is still outstanding,
+- **passwordless sign-in**: clients see all their claims and upload
+  outstanding documents directly; staff get a full dashboard at
+  `/claims/staff.html`,
 - **automatic follow-up** that chases the client for missing documents and
   nudges the desk on stalled claims, and stops the moment the claim closes.
 
@@ -250,6 +253,42 @@ ever lost to a dropped connection.
 
 ---
 
+## Logins — how sign-in works with no passwords
+
+Nobody in this system has a password. Signing in means: give us your email
+(clients may also use their mobile number), we email a **6-digit code**, you
+type it back. Codes last 10 minutes, allow 5 attempts, and at most 3 are sent
+per hour per person — so there is nothing to forget, reset, phish, or leak.
+
+**Clients** sign in on the claims page under *Your claims*. They see every
+claim they have (matched by the email or mobile on their claims), its status
+on a progress line, what is still outstanding — and an **Upload now** button
+beside each outstanding document that puts the file straight into the claim's
+Drive folder, marks it received, and logs it. When the last outstanding
+document arrives, a claim waiting on documents moves itself back to *Under
+review*. Sessions last 30 days on that device. Clients with no email on file
+can't receive codes — for them the **quick check** (reference + last 4 mobile
+digits) still works, so nobody is locked out.
+
+**Staff** sign in at `/claims/staff.html` — but only emails listed on the
+**`Staff` tab** of the Claims TT sheet (`Email, Name, Role, Active`) with
+`Active=Y` ever receive a code. `setupClaims` seeds you as `Admin`; add each
+team member as a row. Removing someone = set Active to `N` (their next
+sign-in fails; their current session dies within 12 hours). The dashboard
+gives them the pipeline (counts by status), search, and per-claim: full
+detail, the documents with Drive links, editing what's outstanding, a
+one-click chase email, status changes (optionally emailing the client),
+assignment, and internal notes the client never sees. **Every staff action is
+written to the Claim Log with the staff member's name** — that's the
+accountability trail.
+
+**You** are simply staff with the `Admin` role — and you keep the Google
+Sheet itself as the master console for anything the dashboard doesn't cover.
+
+Uploads are locked accordingly: during filing the browser holds a one-time
+upload key, and after filing only a signed-in owner of the claim, or staff,
+can add files. A guessed claim reference alone can do nothing.
+
 ## Day-to-day: the Claims TT menu
 
 | Menu item | What it does |
@@ -352,6 +391,8 @@ done.
 - [ ] **Apps Script `/exec` URL** → `CONFIG.API_URL` in `claims/index.html`
 - [ ] **`SITE_KEY`** changed from the default, in both files
 - [ ] **Claims desk addresses** confirmed for health, life and pension
+- [ ] **Staff emails** added to the `Staff` tab (Active=Y) so the team can
+      sign in at `/claims/staff.html`
 - [ ] **Vehicle register** imported into the `Vehicle Register` tab (the CSV
       was delivered privately in the Claude session; or rebuild it locally)
 - [ ] **Rotate `STAFF_KEY`** in the Apps Script copy of `Code.gs` — the old

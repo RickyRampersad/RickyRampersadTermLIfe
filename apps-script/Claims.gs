@@ -89,6 +89,21 @@ var CLAIMS = {
   // of hunting for their chassis number at the roadside.
   REGISTER_SHEET: 'Vehicle Register',
 
+  // Who may open the staff dashboard (claims/staff.html): one row per person
+  // on this tab — Email, Name, Role, Active. Only Active=Y emails can sign in.
+  STAFF_SHEET: 'Staff',
+
+  /* ---- sign-in (one-time codes, no passwords) ------------- */
+
+  // A client or staff member signs in with their email (clients may also use
+  // their mobile) and receives a 6-digit code by email. No passwords exist
+  // anywhere in this system, so there is nothing to forget, reset, or steal.
+  CODE_TTL_MINUTES: 10,
+  CODE_MAX_TRIES: 5,
+  CODE_SENDS_PER_HOUR: 3,
+  CLIENT_SESSION_DAYS: 30,
+  STAFF_SESSION_HOURS: 12,
+
   /* ---- automated follow-up ------------------------------- */
 
   // Days after filing to chase the client for outstanding documents.
@@ -334,6 +349,354 @@ function last4_(mobile) {
 }
 
 
+/* ============================ sign-in: codes & sessions ============================
+
+ * "Log in" here means: tell us your email (or mobile), we email you a
+ * 6-digit code, you type it back. No passwords exist in this system — for
+ * a claimant who shows up twice a decade, a password is a guaranteed
+ * reset-loop; a code in their inbox always works.
+ *
+ * Staff use the same machinery at claims/staff.html, gated by the Staff
+ * tab — only listed, Active=Y emails receive a staff code. Client sessions
+ * last 30 days; staff sessions 12 hours; every staff action is logged with
+ * the staff member's name.
+ * ============================================================================ */
+
+function staffSheet_() {
+  var sh = namedSheet_(CLAIMS.STAFF_SHEET, ['Email', 'Name', 'Role', 'Active']);
+  return sh;
+}
+
+function staffByEmail_(email) {
+  var want = String(email || '').trim().toLowerCase();
+  if (!want) return null;
+  var sh = staffSheet_();
+  var last = sh.getLastRow();
+  if (last < 2) return null;
+  var rows = sh.getRange(2, 1, last - 1, 4).getValues();
+  for (var i = 0; i < rows.length; i++) {
+    if (String(rows[i][0]).trim().toLowerCase() === want && /^y/i.test(String(rows[i][3]))) {
+      return { email: want, name: String(rows[i][1] || want), role: String(rows[i][2] || 'Staff') };
+    }
+  }
+  return null;
+}
+
+function staffNames_() {
+  var sh = staffSheet_();
+  var last = sh.getLastRow();
+  if (last < 2) return [];
+  return sh.getRange(2, 1, last - 1, 4).getValues()
+    .filter(function (r) { return /^y/i.test(String(r[3])); })
+    .map(function (r) { return String(r[1] || r[0]); });
+}
+
+function hash_(s) {
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, String(s).toLowerCase())
+    .map(function (b) { return ('0' + ((b + 256) % 256).toString(16)).slice(-2); }).join('');
+}
+
+function randToken_() {
+  var out = '';
+  while (out.length < 40) out += Math.random().toString(36).slice(2);
+  return out.slice(0, 40);
+}
+
+/** Sessions live in script properties: sess.<token> -> {kind,id,email,name,role,exp}. */
+function newSession_(kind, id, email, name, role) {
+  var ttlMs = kind === 'staff'
+    ? CLAIMS.STAFF_SESSION_HOURS * 3600 * 1000
+    : CLAIMS.CLIENT_SESSION_DAYS * 864e5;
+  var token = randToken_();
+  PropertiesService.getScriptProperties().setProperty('sess.' + token, JSON.stringify({
+    kind: kind, id: id, email: email || '', name: name || '', role: role || '',
+    exp: Date.now() + ttlMs,
+  }));
+  return token;
+}
+
+function getSession_(token, kind) {
+  token = String(token || '');
+  if (token.length < 20) return null;
+  var props = PropertiesService.getScriptProperties();
+  var raw = props.getProperty('sess.' + token);
+  if (!raw) return null;
+  var sess;
+  try { sess = JSON.parse(raw); } catch (err) { return null; }
+  if (!sess || sess.exp < Date.now()) { props.deleteProperty('sess.' + token); return null; }
+  if (kind && sess.kind !== kind) return null;
+  return sess;
+}
+
+function dropSession_(token) {
+  if (token) PropertiesService.getScriptProperties().deleteProperty('sess.' + String(token));
+}
+
+/** Now and then, clear out expired sessions so properties never fill up. */
+function pruneSessions_() {
+  var props = PropertiesService.getScriptProperties();
+  var all = props.getProperties();
+  var now = Date.now();
+  Object.keys(all).forEach(function (k) {
+    if (k.indexOf('sess.') !== 0) return;
+    try { if (JSON.parse(all[k]).exp < now) props.deleteProperty(k); }
+    catch (err) { props.deleteProperty(k); }
+  });
+}
+
+function normIdentity_(identity) {
+  var s = String(identity || '').trim();
+  if (s.indexOf('@') > -1) return { kind: 'email', value: s.toLowerCase() };
+  var digits = s.replace(/\D/g, '');
+  return digits.length >= 7 ? { kind: 'mobile', value: digits } : null;
+}
+
+/** Every claim belonging to an email address or mobile number. */
+function claimsForIdentity_(identity) {
+  var id = normIdentity_(identity);
+  if (!id) return [];
+  var sh = claimsSheet_();
+  var last = sh.getLastRow();
+  if (last < 2) return [];
+  var map = headerMap_(sh);
+  var rows = sh.getRange(2, 1, last - 1, sh.getLastColumn()).getValues();
+  var hits = [];
+  rows.forEach(function (values, i) {
+    var email = String(values[map['email']] || '').trim().toLowerCase();
+    var mobile = String(values[map['mobile']] || '').replace(/\D/g, '');
+    var match = id.kind === 'email'
+      ? email && email === id.value
+      : mobile && (mobile.slice(-7) === id.value.slice(-7));
+    if (match) hits.push({ row: i + 2, values: values, map: map, sheet: sh });
+  });
+  return hits;
+}
+
+/** Send a sign-in code. The response is the same whether or not we know
+ *  the identity, so the endpoint cannot be used to fish for clients. */
+function apiRequestCode_(b) {
+  var kind = b.kind === 'staff' ? 'staff' : 'client';
+  var id = normIdentity_(b.identity);
+  var generic = { ok: true, sent: true,
+    message: 'If we have that on file, a sign-in code is on its way to the email we hold. It lasts ' +
+      CLAIMS.CODE_TTL_MINUTES + ' minutes.' };
+  if (!id) return generic;
+
+  var cache = CacheService.getScriptCache();
+  var sendSlot = 'codes.' + kind + '.' + hash_(id.value);
+  if (Number(cache.get(sendSlot) || 0) >= CLAIMS.CODE_SENDS_PER_HOUR) return generic;
+
+  var email = '', name = '';
+  if (kind === 'staff') {
+    var staff = staffByEmail_(id.kind === 'email' ? id.value : '');
+    if (!staff) return generic;
+    email = staff.email; name = staff.name;
+  } else {
+    var mine = claimsForIdentity_(b.identity);
+    if (!mine.length) return generic;
+    // Newest claim with an email wins — that is where the code goes.
+    for (var i = mine.length - 1; i >= 0; i--) {
+      var e = String(mine[i].values[mine[i].map['email']] || '').trim();
+      if (e) { email = e; name = String(mine[i].values[mine[i].map['client name']] || ''); break; }
+    }
+    if (!email) {
+      // Real answer, not the generic one: they cannot receive a code at all.
+      return { ok: true, sent: false,
+        message: 'We have no email address on your claims, so we cannot send a code. Use the quick check with your claim reference, or call us on ' + CLAIMS.AGENT_PHONE + '.' };
+    }
+  }
+
+  var code = String(Math.floor(100000 + Math.random() * 900000));
+  cache.put('code.' + kind + '.' + hash_(id.value), JSON.stringify({ code: code, tries: 0 }),
+    CLAIMS.CODE_TTL_MINUTES * 60);
+  cache.put(sendSlot, String(Number(cache.get(sendSlot) || 0) + 1), 3600);
+
+  MailApp.sendEmail({
+    to: email, name: CLAIMS.FROM_NAME,
+    subject: code + ' is your Claims TT sign-in code',
+    htmlBody: brandWrap_(
+      '<p>Dear ' + esc_(String(name).split(' ')[0] || 'there') + ',</p>' +
+      '<p>Your ' + (kind === 'staff' ? 'staff ' : '') + 'sign-in code is:</p>' +
+      '<p style="background:' + CBRAND.light + ';border:1px solid #CBEAE8;border-radius:10px;padding:16px;text-align:center">' +
+      '<b style="font-size:30px;letter-spacing:8px;color:' + CBRAND.navy + '">' + code + '</b></p>' +
+      '<p>It works for ' + CLAIMS.CODE_TTL_MINUTES + ' minutes. If you did not ask for it, ignore this email — ' +
+      'nobody can get in without the code in your inbox.</p>' + sig_(),
+      'Sign-in code'),
+  });
+  return generic;
+}
+
+function apiVerifyCode_(b) {
+  var kind = b.kind === 'staff' ? 'staff' : 'client';
+  var id = normIdentity_(b.identity);
+  if (!id) return { ok: false, error: 'Please enter the email or mobile number you asked the code for.' };
+
+  var cache = CacheService.getScriptCache();
+  var slot = 'code.' + kind + '.' + hash_(id.value);
+  var raw = cache.get(slot);
+  if (!raw) return { ok: false, error: 'That code has expired — request a fresh one.' };
+  var rec = JSON.parse(raw);
+  if (rec.tries >= CLAIMS.CODE_MAX_TRIES) { cache.remove(slot); return { ok: false, error: 'Too many attempts — request a fresh code.' }; }
+  if (String(b.code || '').trim() !== rec.code) {
+    rec.tries++;
+    cache.put(slot, JSON.stringify(rec), CLAIMS.CODE_TTL_MINUTES * 60);
+    return { ok: false, error: 'That code did not match. Check the email and try again.' };
+  }
+  cache.remove(slot);
+  pruneSessions_();
+
+  if (kind === 'staff') {
+    var staff = staffByEmail_(id.value);
+    if (!staff) return { ok: false, error: 'That email is not on the staff list.' };
+    logClaim_('(staff)', 'staff-signed-in', staff.email, staff.role);
+    return { ok: true, token: newSession_('staff', staff.email, staff.email, staff.name, staff.role),
+      kind: 'staff', name: staff.name, role: staff.role };
+  }
+  return { ok: true, token: newSession_('client', id.value), kind: 'client' };
+}
+
+function apiSignOut_(b) { dropSession_(b.token); return { ok: true }; }
+
+/** Everything a signed-in client may see about their own claims.
+ *  Deliberately excludes bank details and internal notes. */
+function clientClaimView_(hit) {
+  var g = function (f) { return String(claimField_(hit, f) || ''); };
+  var ref = g('Reference');
+  return {
+    ref: ref, status: g('Status') || 'Received',
+    type: g('Claim Type'), subtype: g('Sub-type'),
+    filedOn: Utilities.formatDate(new Date(claimField_(hit, 'Timestamp')),
+      Session.getScriptTimeZone() || 'America/Port_of_Spain', 'dd MMM yyyy'),
+    missing: String(g('Missing Documents')).split(';').map(function (s) { return s.trim(); }).filter(String),
+    documents: filesForRef_(ref).map(function (f) { return f.doc; }),
+    closed: isClosed_(g('Status')),
+  };
+}
+
+function apiMyClaims_(b) {
+  var sess = getSession_(b.token, 'client');
+  if (!sess) return { ok: false, error: 'signed-out' };
+  var mine = claimsForIdentity_(sess.id);
+  return { ok: true, claims: mine.map(clientClaimView_).reverse(),
+    agent: { name: CLAIMS.AGENT_NAME, phone: CLAIMS.AGENT_PHONE } };
+}
+
+/** May this request add files to this claim?
+ *  - the filing session itself (uploadKey handed out by claimStart), or
+ *  - a signed-in client who owns the claim, or
+ *  - signed-in staff. */
+function mayTouchClaim_(b, hit) {
+  var ref = String(claimField_(hit, 'Reference') || '');
+  if (b.uploadKey && CacheService.getScriptCache().get('upk.' + ref) === String(b.uploadKey)) {
+    return { by: 'client', name: 'client' };
+  }
+  var staff = getSession_(b.token, 'staff');
+  if (staff) return { by: 'staff', name: staff.name };
+  var client = getSession_(b.token, 'client');
+  if (client) {
+    var mine = claimsForIdentity_(client.id);
+    for (var i = 0; i < mine.length; i++) {
+      if (String(claimField_(mine[i], 'Reference')) === ref) return { by: 'client', name: 'client' };
+    }
+  }
+  return null;
+}
+
+
+/* ============================ staff API ============================ */
+
+function requireStaff_(b) {
+  var sess = getSession_(b.token, 'staff');
+  if (!sess) throw new Error('signed-out');
+  return sess;
+}
+
+function apiStaffData_(b) {
+  var staff = requireStaff_(b);
+  var sh = claimsSheet_();
+  var last = sh.getLastRow();
+  var map = headerMap_(sh);
+  var claims = [];
+  if (last >= 2) {
+    var rows = sh.getRange(2, 1, last - 1, sh.getLastColumn()).getValues();
+    rows.forEach(function (values, i) {
+      var hit = { row: i + 2, values: values, map: map, sheet: sh };
+      var g = function (f) { return String(claimField_(hit, f) || ''); };
+      if (!g('Reference')) return;
+      claims.push({
+        ref: g('Reference'), status: g('Status') || 'Received',
+        type: g('Claim Type'), subtype: g('Sub-type'),
+        name: g('Client Name'), policy: g('Policy #'),
+        mobile: g('Mobile'), email: g('Email'),
+        filed: fmtOrBlank_(claimField_(hit, 'Timestamp')),
+        quietDays: Math.max(daysSince_(claimField_(hit, 'Last Updated')), 0),
+        amount: g('Estimated Amount (TT$)'),
+        location: g('Location'), description: g('Description'),
+        missing: g('Missing Documents').split(';').map(function (s) { return s.trim(); }).filter(String),
+        files: filesForRef_(g('Reference')),
+        folder: g('Drive Folder'), pdf: g('Claim Form PDF'),
+        assigned: g('Assigned To'), notes: g('Internal Notes'),
+      });
+    });
+  }
+  var kpis = {};
+  CLAIMS.STATUSES.forEach(function (s) { kpis[s] = 0; });
+  claims.forEach(function (c) { if (kpis[c.status] !== undefined) kpis[c.status]++; });
+  return { ok: true, me: { name: staff.name, role: staff.role }, claims: claims.reverse(),
+    staff: staffNames_(), statuses: CLAIMS.STATUSES, kpis: kpis };
+}
+
+function apiStaffAction_(b) {
+  var staff = requireStaff_(b);
+  var hit = findClaim_(b.ref);
+  if (!hit) throw new Error('We could not find that claim.');
+  var claim = claimObject_(hit);
+  // b.action was consumed by routing ('staffAction'); the sub-action rides in b.do.
+  var action = String(b.do || '');
+
+  if (action === 'status') {
+    var status = String(b.status || '');
+    if (CLAIMS.STATUSES.indexOf(status) < 0) throw new Error('Unknown status.');
+    setClaimField_(hit, 'Status', status);
+    claim.status = status;
+    if (b.notify && claim.email) sendStatusEmail_(claim);
+    logClaim_(claim.ref, 'status-changed', staff.email, status + (b.notify ? ' (client emailed)' : ''));
+  } else if (action === 'assign') {
+    setClaimField_(hit, 'Assigned To', clean_(b.assignee, 80));
+    logClaim_(claim.ref, 'assigned', staff.email, clean_(b.assignee, 80) || '(cleared)');
+  } else if (action === 'note') {
+    var note = clean_(b.note, 800);
+    if (!note) throw new Error('The note is empty.');
+    var existing = String(claimField_(hit, 'Internal Notes') || '');
+    setClaimField_(hit, 'Internal Notes',
+      (existing ? existing + '\n' : '') + nowStamp_() + ' — ' + staff.name + ': ' + note);
+    logClaim_(claim.ref, 'note-added', staff.email, note.slice(0, 120));
+  } else if (action === 'missing') {
+    var missing = (b.missing || []).map(function (m) { return clean_(m, 120); }).filter(String);
+    setClaimField_(hit, 'Missing Documents', missing.join('; '));
+    logClaim_(claim.ref, 'missing-updated', staff.email, missing.join(', ') || '(nothing outstanding)');
+  } else if (action === 'chase') {
+    if (!claim.email) throw new Error('That claim has no email on file — call the client instead.');
+    var owed = String(claimField_(hit, 'Missing Documents') || '')
+      .split(';').map(function (s) { return s.trim(); }).filter(String);
+    if (!owed.length) throw new Error('Nothing is outstanding on that claim.');
+    sendChase_(claim, owed, 1, CLAIMS.CHASE_DAYS.length);
+    if (claim.status === 'Received') setClaimField_(hit, 'Status', 'Awaiting documents');
+    logClaim_(claim.ref, 'chased-documents', staff.email, owed.join(', '));
+  } else {
+    throw new Error('Unknown action.');
+  }
+  setClaimField_(hit, 'Last Updated', new Date());
+  return { ok: true, ref: claim.ref };
+}
+
+function fmtOrBlank_(v) {
+  var d = v instanceof Date ? v : new Date(v);
+  if (isNaN(d.getTime())) return '';
+  return Utilities.formatDate(d, Session.getScriptTimeZone() || 'America/Port_of_Spain', 'dd MMM yyyy');
+}
+
+
 /* ============================ web app routing ============================ */
 
 function doGet(e) {
@@ -371,6 +734,12 @@ function doPost(e) {
       case 'claimFile':    out = apiClaimFile_(body); break;
       case 'claimFinish':  out = apiClaimFinish_(body); break;
       case 'verifyPolicy': out = apiVerifyPolicy_(body); break;
+      case 'requestCode':  out = apiRequestCode_(body); break;
+      case 'verifyCode':   out = apiVerifyCode_(body); break;
+      case 'signOut':      out = apiSignOut_(body); break;
+      case 'myClaims':     out = apiMyClaims_(body); break;
+      case 'staffData':    out = apiStaffData_(body); break;
+      case 'staffAction':  out = apiStaffAction_(body); break;
       default:             out = { ok: false, error: 'Unknown action' };
     }
   } catch (err) {
@@ -431,8 +800,13 @@ function apiClaimStart_(b) {
   logClaim_(ref, 'claim-opened', 'client',
     typeLabel_(type) + (b.subtype ? ' · ' + clean_(b.subtype, 80) : '') + ' · ' + name);
 
+  // The filing session proves itself with this key on every upload, so a
+  // guessed reference alone can never add files to someone else's claim.
+  var uploadKey = randToken_();
+  CacheService.getScriptCache().put('upk.' + ref, uploadKey, 21600);
+
   return {
-    ok: true, ref: ref, folder: folder.getUrl(),
+    ok: true, ref: ref, uploadKey: uploadKey, folder: folder.getUrl(),
     maxFileMb: CLAIMS.MAX_FILE_MB, maxFiles: CLAIMS.MAX_FILES,
   };
 }
@@ -446,6 +820,9 @@ function apiClaimFile_(b) {
   var ref = clean_(b.ref, 30).toUpperCase();
   var hit = findClaim_(ref);
   if (!hit) throw new Error('We could not find that claim reference.');
+
+  var who = mayTouchClaim_(b, hit);
+  if (!who) throw new Error('signed-out');
 
   var uploadId = clean_(b.uploadId, 60);
   var part = Number(b.part) || 0;
@@ -495,6 +872,22 @@ function apiClaimFile_(b) {
   setClaimField_(hit, 'Files', count);
   setClaimField_(hit, 'Last Updated', new Date());
 
+  // A later upload can settle one of the documents we were waiting for.
+  var satisfies = clean_(b.satisfies, 120);
+  if (satisfies) {
+    var owed = String(claimField_(hit, 'Missing Documents') || '')
+      .split(';').map(function (s) { return s.trim(); }).filter(String)
+      .filter(function (m) { return m.toLowerCase() !== satisfies.toLowerCase(); });
+    setClaimField_(hit, 'Missing Documents', owed.join('; '));
+    logClaim_(ref, 'document-received', who.name, satisfies + ' — ' + fileName +
+      (owed.length ? ' · still outstanding: ' + owed.join(', ') : ' · nothing outstanding now'));
+    if (!owed.length && String(claimField_(hit, 'Status')) === 'Awaiting documents') {
+      setClaimField_(hit, 'Status', 'Under review');
+    }
+  } else if (who.by === 'staff') {
+    logClaim_(ref, 'document-added', who.name, docLabel + ' — ' + fileName);
+  }
+
   return { ok: true, name: fileName, sizeKb: sizeKb, link: saved.getUrl(), files: count };
 }
 
@@ -524,6 +917,7 @@ function apiClaimFinish_(b) {
   var ref = clean_(b.ref, 30).toUpperCase();
   var hit = findClaim_(ref);
   if (!hit) throw new Error('We could not find that claim reference.');
+  if (!mayTouchClaim_(b, hit)) throw new Error('signed-out');
 
   var missing = (b.missing || []).map(function (m) { return clean_(m, 120); }).filter(String);
   setClaimField_(hit, 'Missing Documents', missing.join('; '));
@@ -858,8 +1252,8 @@ function ackClient_(claim, files, missing, form) {
       fileListHtml_(files) +
       (missing.length
         ? noteBox_('<b style="color:#a05e03">Still needed:</b> ' + esc_(missing.join(', ')) +
-            '. Reply to this email with these attached — or upload them at any time — and we will add them to your file. ' +
-            'Your claim can only be assessed once they are in.')
+            '. Sign in on the claims page with this email address to upload them straight into your claim — ' +
+            'or simply reply to this email with them attached. Your claim can only be assessed once they are in.')
         : noteBox_('<b style="color:#a05e03">Nothing outstanding.</b> You have given us everything we asked for at this stage. ' +
             'If the assessor needs anything more, we will contact you.')) +
       '<h3 style="font-size:15px;margin:20px 0 4px">What happens next</h3>' +
@@ -1092,7 +1486,8 @@ function sendChase_(claim, missing, n, total) {
       '<ul style="padding-left:18px">' + missing.map(function (m) {
         return '<li style="margin:5px 0"><b>' + esc_(m) + '</b></li>';
       }).join('') + '</ul>' +
-      noteBox_('<b style="color:#a05e03">The quickest way:</b> reply to this email with a photo of each one attached. ' +
+      noteBox_('<b style="color:#a05e03">The quickest way:</b> sign in on the claims page with this email address and upload them ' +
+        'straight into your claim — or reply to this email with a photo of each one attached. ' +
         'A phone photo is fine — flat, good light, whole page in frame.') +
       closing +
       '<p>Any question, call me on <b>' + esc_(CLAIMS.AGENT_PHONE) + '</b>.</p>' + sig_(),
@@ -1175,6 +1570,21 @@ function chaseMissingDocuments() {
 }
 
 /** Menu action: tell the client their status changed. */
+function sendStatusEmail_(claim) {
+  MailApp.sendEmail({
+    to: claim.email, cc: ccList_(), name: CLAIMS.FROM_NAME,
+    subject: 'Update on your claim — ' + claim.ref,
+    htmlBody: brandWrap_(
+      '<p>Dear ' + esc_(String(claim.name).split(' ')[0] || 'there') + ',</p>' +
+      '<p>Your claim <b>' + esc_(claim.ref) + '</b> has moved to:</p>' +
+      '<p style="background:' + CBRAND.light + ';border:1px solid #CBEAE8;border-radius:10px;padding:14px 18px;text-align:center">' +
+      '<b style="font-size:19px;color:' + CBRAND.navy + '">' + esc_(claim.status) + '</b></p>' +
+      '<p>Sign in on the claims page with your email address to see your full claim at any time. ' +
+      'We will be in touch as soon as there is more to tell you — or call me on <b>' + esc_(CLAIMS.AGENT_PHONE) +
+      '</b> if you would like to talk it through.</p>' + sig_(), 'Claim update'),
+  });
+}
+
 function notifyStatusChange() {
   var sh = claimsSheet_();
   var sel = sh.getActiveRange();
@@ -1187,17 +1597,7 @@ function notifyStatusChange() {
   var claim = claimObject_(hit);
   if (!claim.email) { SpreadsheetApp.getUi().alert('That claim has no email address on file — please call the client.'); return; }
 
-  MailApp.sendEmail({
-    to: claim.email, cc: ccList_(), name: CLAIMS.FROM_NAME,
-    subject: 'Update on your claim — ' + claim.ref,
-    htmlBody: brandWrap_(
-      '<p>Dear ' + esc_(String(claim.name).split(' ')[0] || 'there') + ',</p>' +
-      '<p>Your claim <b>' + esc_(claim.ref) + '</b> has moved to:</p>' +
-      '<p style="background:' + CBRAND.light + ';border:1px solid #CBEAE8;border-radius:10px;padding:14px 18px;text-align:center">' +
-      '<b style="font-size:19px;color:' + CBRAND.navy + '">' + esc_(claim.status) + '</b></p>' +
-      '<p>We will be in touch as soon as there is more to tell you. Call me on <b>' + esc_(CLAIMS.AGENT_PHONE) +
-      '</b> if you would like to talk it through.</p>' + sig_(), 'Claim update'),
-  });
+  sendStatusEmail_(claim);
   setClaimField_(hit, 'Last Updated', new Date());
   logClaim_(claim.ref, 'status-emailed', Session.getActiveUser().getEmail() || 'staff', claim.status);
   SpreadsheetApp.getUi().alert('Update sent to ' + claim.email + '.');
@@ -1225,6 +1625,12 @@ function setupClaims() {
   filesSheet_(); logSheet_(); registerSheet_();
   var root = rootFolder_();
 
+  // Staff tab: seed you as Admin so the staff dashboard works immediately.
+  var staff = staffSheet_();
+  if (staff.getLastRow() < 2) {
+    staff.appendRow([CLAIMS.MAIL_CC[0], CLAIMS.AGENT_NAME, 'Admin', 'Y']);
+  }
+
   // Status column gets a dropdown so the desk cannot invent new statuses.
   var sh = claimsSheet_();
   var map = headerMap_(sh);
@@ -1244,7 +1650,9 @@ function setupClaims() {
   SpreadsheetApp.getUi().alert(
     'Claims TT is ready.\n\n' +
     'Tabs: ' + CLAIMS.CLAIMS_SHEET + ', ' + CLAIMS.FILES_SHEET + ', ' +
-      CLAIMS.LOG_SHEET + ', ' + CLAIMS.REGISTER_SHEET + '\n' +
+      CLAIMS.LOG_SHEET + ', ' + CLAIMS.REGISTER_SHEET + ', ' + CLAIMS.STAFF_SHEET + '\n' +
+    'Staff sign-in: add each staff email to the ' + CLAIMS.STAFF_SHEET + ' tab (Active=Y); ' +
+      'they sign in at /claims/staff.html with a code emailed to them\n' +
     'Drive folder: ' + root.getUrl() + '\n' +
     'Automatic follow-up: installed, runs daily ~9am\n' +
     'Vehicle register: ' + vehicles + ' vehicle(s)' +
