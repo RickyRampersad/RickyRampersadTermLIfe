@@ -732,12 +732,14 @@ function staffData(key, me, isLogin, pin) {
 
   // surveys
   var ssh = surveysSheet_();
-  var surveys = { count: 0, avgSat: 0, avgEase: 0, recent: [] };
+  var surveys = { count: 0, avgSat: 0, avgEase: 0, avgSpeed: 0, recent: [] };
   if (ssh.getLastRow() > 1) {
-    var sv = ssh.getRange(2, 1, ssh.getLastRow() - 1, 7).getValues();
+    var sv = ssh.getRange(2, 1, ssh.getLastRow() - 1, Math.min(ssh.getLastColumn(), 8)).getValues();
     surveys.count = sv.length;
     surveys.avgSat = Math.round(sv.reduce(function (s, r) { return s + Number(r[4] || 0); }, 0) / sv.length * 10) / 10;
     surveys.avgEase = Math.round(sv.reduce(function (s, r) { return s + Number(r[5] || 0); }, 0) / sv.length * 10) / 10;
+    var spd = sv.map(function (r) { return Number(r[7] || 0); }).filter(function (n) { return n > 0; });
+    surveys.avgSpeed = spd.length ? Math.round(spd.reduce(function (s, n) { return s + n; }, 0) / spd.length * 10) / 10 : 0;
     surveys.recent = sv.slice(-8).reverse().map(function (r) {
       return { when: fmtDate_(r[0]), client: String(r[2]), sat: r[4], ease: r[5], comments: String(r[6]) };
     });
