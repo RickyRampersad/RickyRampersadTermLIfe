@@ -860,13 +860,13 @@ function sendStageEmail_(row, stage) {
   var comp = /comprehensive/i.test(row.coverage);
   var link = portalLink_(row.token);
   var edu = comp
-    ? eduBox_('<b style="color:#a05e03">💡 Vehicles depreciate.</b> Your vehicle is insured for ' +
+    ? eduBox_('<b style="color:#9a6d0b">💡 Vehicles depreciate.</b> Your vehicle is insured for ' +
         (row.sumInsured ? '<b>' + fmtMoney_(row.sumInsured) + '</b>' : 'its declared value') +
         ' — update it to today’s market value in the portal so your premium stays fair.') +
-      eduBox_('<b style="color:#a05e03">⚠️ Important change from Guardian General:</b> the <b>Waiver of Excess</b> is no longer included free after three claim-free years — it is now an optional benefit you purchase. It means your excess is waived if you claim. You can add it in one tick when you renew in the portal.')
-    : eduBox_('<b style="color:#a05e03">💡 Third party covers others — not your own vehicle.</b> ' +
+      eduBox_('<b style="color:#9a6d0b">⚠️ Important change from Guardian General:</b> the <b>Waiver of Excess</b> is no longer included free after three claim-free years — it is now an optional benefit you purchase. It means your excess is waived if you claim. You can add it in one tick when you renew in the portal.')
+    : eduBox_('<b style="color:#9a6d0b">💡 Third party covers others — not your own vehicle.</b> ' +
         'Comprehensive adds accident, fire and theft cover for your own car, plus a No Claim Discount that grows to 60%. Tick one box in the portal for a free comparison quote.') +
-      eduBox_('<b style="color:#a05e03">🆕 New benefit:</b> <b>windscreen cover</b> can now be added to Private Third Party policies — a cracked windscreen no longer has to come out of your pocket. Add it in one tick in the portal.');
+      eduBox_('<b style="color:#9a6d0b">🆕 New benefit:</b> <b>windscreen cover</b> can now be added to Private Third Party policies — a cracked windscreen no longer has to come out of your pocket. Add it in one tick in the portal.');
   var bal = Number(row.balance) > 0
     ? '<div style="background:#fbe9e7;border-left:4px solid #b3261e;padding:12px 16px;margin:14px 0">A balance of <b>' +
       fmtMoney_(row.balance) + '</b> shows on this policy. Settling it keeps your renewal seamless.</div>'
