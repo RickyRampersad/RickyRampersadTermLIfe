@@ -1522,6 +1522,95 @@ function pdTotalCover_(family) {
   return t;
 }
 
+/* ===================== PLAN CODES, IN ENGLISH =====================
+   From the GLOC ES400 training manual (Ingenium plan-codes listing). A letter
+   that says "your Flexiterm Convertible — 20 years" is telling the client what
+   they are about to lose; "FCT201" is telling them nothing. Codes are matched
+   with spaces stripped, so the manual's "FCT20 1" and the portfolio's "FCT201"
+   are the same key. A code the manual does not list falls back to the product
+   family implied by the policy-number prefix (5 = Life Evolution / SOS,
+   1 = Flexiterm / Xpress Life, 8 = Lifestyle / Tophat / IPI) — and if even
+   that fails, the raw code is shown rather than a guess. */
+var PD_PLAN_NAMES = (function () {
+  var m = {
+    'LIFEV1': 'Liberator (to age 65)', 'LB751': 'Liberator (to age 75)',
+    'LB851': 'Liberator (to age 85)', 'LB1001': 'Liberator (to age 100)',
+    'LFINC1': 'Liberator rider', 'LBI751': 'Liberator rider (to 75)',
+    'LBI851': 'Liberator rider (to 85)', 'LBI001': 'Liberator rider (to 100)',
+    'CRIEV1': 'Rejuvenator Original', 'CRINC1': 'Rejuvenator Original rider',
+    'CR2EV1': 'Rejuvenator Plus', 'C2INC1': 'Rejuvenator Plus rider',
+    'CI3DS1': 'Rejuvenator Enhanced',
+    'SAVEV1': 'Saver / Investor',
+    'ADDEV1': 'Accidental Death & Disability', 'ADEV1': 'Accidental Death benefit',
+    'WPEV1': 'Waiver of Premium',
+    'ECL1': 'Econolife',
+    'MB601': 'Money Back Term (to 60)', 'MB651': 'Money Back Term (to 65)',
+    'MP201': 'Mortgage Protection (20 years)', 'MP251': 'Mortgage Protection (25 years)',
+    'MP301': 'Mortgage Protection (30 years)',
+    'DT201': 'Reducing Term (20 years)', 'DT251': 'Reducing Term (25 years)',
+    'ADD1': 'Accidental Death & Disability', 'AD1': 'Accidental Death benefit',
+    'WP1': 'Waiver of Premium',
+    'PIM1': 'Individual Personal Investor', 'PIML1': 'Individual Personal Investor (lump sum)',
+    'PICI1': 'Individual Personal Investor (conservative)', 'PICL1': 'IPI Conservative (lump sum)',
+    'PIMI1': 'Individual Personal Investor (increment)',
+    'PIMU1': 'Individual Personal Investor (US$)', 'PIMUL1': 'IPI US$ (lump sum)', 'PIMUI1': 'IPI US$ (increment)',
+    'SOSA1': 'Student Opportunity Saver', 'SOSAL1': 'Student Opportunity Saver (lump sum)',
+    'SOSCI1': 'Student Opportunity Saver (conservative)', 'SOSCL1': 'SOS Conservative (lump sum)',
+    'SOSAI1': 'Student Opportunity Saver (increment)',
+    'LSTYA1': 'Lifestyle (aggressive)', 'LSTYL1': 'Lifestyle (lump sum)',
+    'THATA1': 'Tophat Special Edition (aggressive)', 'THATL1': 'Tophat Special Edition (lump sum)',
+    'FLACC': 'Flex Accumulator', 'FLACH': 'Flex Accumulator', 'FLACZ': 'Flex Accumulator',
+    'WPLS': 'Waiver of Premium', 'WPFT1': 'Waiver of Premium (Flexiterm)',
+    'ADDRV1': 'Accidental Death & Disability', 'ADRV1': 'Accidental Death benefit'
+  };
+  var i, a;
+  var terms = [5, 10, 15, 20], ages = [60, 65, 70, 80, 85];
+  for (i = 0; i < terms.length; i++) {
+    m['FCT' + terms[i] + '1'] = 'Flexiterm Convertible (' + terms[i] + ' years)';
+    m['FNT' + terms[i] + '1'] = 'Flexiterm (' + terms[i] + ' years)';
+  }
+  for (i = 0; i < ages.length; i++) {
+    m['FCT' + ages[i] + '1'] = 'Flexiterm Convertible (to age ' + ages[i] + ')';
+    m['FNT' + ages[i] + '1'] = 'Flexiterm (to age ' + ages[i] + ')';
+  }
+  var xl = [50, 75, 100, 125, 150];
+  for (i = 0; i < xl.length; i++) m['XL' + xl[i] + '1'] = 'Xpress Life ($' + xl[i] + 'k)';
+  var lsAges = [50, 55, 60, 65, 70], gp = ['0', '1', '2', '3'], gpYears = ['no', '5-year', '10-year', '15-year'];
+  for (i = 0; i < gp.length; i++) {
+    for (a = 0; a < lsAges.length; a++) {
+      m['LS' + gp[i] + lsAges[a] + '1'] = 'Lifestyle Pension (to ' + lsAges[a] +
+        (i ? ', ' + gpYears[i] + ' guarantee' : '') + ')';
+    }
+  }
+  for (a = 0; a < lsAges.length; a++) {
+    m['LSI' + lsAges[a] + '1'] = 'Lifestyle Pension increment (to ' + lsAges[a] + ')';
+    m['TH0' + lsAges[a] + '1'] = 'Tophat Executive (to ' + lsAges[a] + ')';
+  }
+  for (i = 2; i <= 19; i++) {
+    var t2 = (i < 10 ? '0' + i : String(i));
+    m['LS' + t2 + '1'] = 'Lifestyle Privilege (' + i + ' years)';
+    m['TH' + t2 + '1'] = 'Tophat Elite (' + i + ' years)';
+  }
+  var dTerms = ['10', '15', '20', '25', '55', '60', '65'];
+  for (i = 0; i < dTerms.length; i++) {
+    var lbl = Number(dTerms[i]) > 30 ? 'to age ' + dTerms[i] : dTerms[i] + ' years';
+    m['D' + dTerms[i] + 'EV1'] = 'Disability Income (' + lbl + ')';
+    m['D' + dTerms[i] + '1'] = 'Disability Income (' + lbl + ')';
+  }
+  return m;
+})();
+
+/** Friendly product name for a plan code, or '' when the manual doesn't say. */
+function pdPlanName_(code, policy) {
+  var k = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (PD_PLAN_NAMES[k]) return PD_PLAN_NAMES[k];
+  var pfx = String(policy || '').charAt(0);
+  if (pfx === '5') return 'Life Evolution series';
+  if (pfx === '1') return 'Flexiterm / Xpress Life series';
+  if (pfx === '8') return 'Lifestyle · Tophat · IPI series';
+  return '';
+}
+
 /** How this client's situation reads, so the letter can say the true thing. */
 function pdRelationship_(p, family) {
   var payingOthers = 0, lapsedBefore = 0, alsoBehind = 0, others = 0;
@@ -1567,7 +1656,11 @@ function pdPolicyTable_(p, family) {
       '<td style="padding:9px 10px;border:1px solid ' + PD_BRAND.line + ';background:' + bg +
         ';color:' + PD_BRAND.ink + ';font-weight:bold;font-size:12.5px">' + pdEsc_(f.Policy) +
         '<div style="font-size:11px;font-weight:normal;color:' + PD_BRAND.mute + '">' +
-        pdEsc_(f.PlanCode || '') + '</div></td>' +
+        (function () {
+          var nm = pdPlanName_(f.PlanCode, f.Policy);
+          return nm ? pdEsc_(nm) + (f.PlanCode ? ' &middot; ' + pdEsc_(f.PlanCode) : '')
+                    : pdEsc_(f.PlanCode || '');
+        })() + '</div></td>' +
       '<td style="padding:9px 10px;border:1px solid ' + PD_BRAND.line + ';background:' + bg +
         ';color:' + PD_BRAND.ink + ';text-align:right;white-space:nowrap">' +
         (Number(f.Premium) > 0 ? pdMoney_(f.Premium) : '—') + '</td>' +
