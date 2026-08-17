@@ -479,6 +479,7 @@ function logActivity_(token, client, type, by, details) {
 function doGet(e) {
   var p = (e && e.parameter) || {};
   if (p.staff) return staffPage_(p);
+  if (p.p && typeof propertyPage_ === 'function') return propertyPage_(p);   // property links (?p=TOKEN)
   return clientPage_(p);
 }
 
@@ -1011,6 +1012,8 @@ function dailyAutomation() {
   });
   Logger.log('dailyAutomation: ' + sentEmails + ' emails sent' +
     (testMode_() ? ' — TEST MODE, all rerouted to ' + testInbox_() : ''));
+  // property follow-ups ride the same daily trigger when Property.gs is installed
+  try { if (typeof dailyPropertyFollowUps === 'function') dailyPropertyFollowUps(); } catch (err) { Logger.log(err); }
 }
 
 /* ============================ menu & setup ============================ */
@@ -1029,6 +1032,8 @@ function onOpen() {
     .addItem('Show staff dashboard link', 'showStaffLink')
     .addItem('Preview a client portal (row 2)', 'showMyLink')
     .addToUi();
+  // property menu comes along automatically when Property.gs is installed
+  try { if (typeof propertyMenu_ === 'function') propertyMenu_(SpreadsheetApp.getUi()).addToUi(); } catch (err) { Logger.log(err); }
 }
 
 function toggleTestMode() {
