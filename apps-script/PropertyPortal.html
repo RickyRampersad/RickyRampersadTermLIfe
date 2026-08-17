@@ -2,420 +2,478 @@
 <html>
 <head>
 <base target="_top">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-:root{--navy:#003366;--blue:#005EB8;--gold:#E8A020;--light:#E8F0F8;--ink:#1a2433;--ink2:#5a6b80;--line:#dde5ee;--green:#1e7d4f;--red:#b3261e}
+:root{
+  --bg:#07131f; --bg2:#0d2137; --card:#163553; --card2:#1b3d61;
+  --gold:#efc24b; --gold2:#dca530; --teal:#00CFEA; --teal2:#00A8C5;
+  --text:#edf4fb; --muted:#a9bbcf; --line:rgba(255,255,255,.10);
+  --good:#35d07f; --bad:#ff7a7a;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font:15px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:var(--ink);background:#f4f7fa;padding-bottom:60px}
-.head{background:var(--navy);color:#fff;padding:22px 18px}
-.head .in{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:12px}
-.gmark{width:44px;height:44px;flex-shrink:0}
-.head h1{font-size:19px}
-.head .sub{font-size:12.5px;color:#b7c9de}
-.wrap{max-width:720px;margin:0 auto;padding:18px 14px}
-.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
-.card h2{font-size:16px;color:var(--navy);margin-bottom:4px}
-.due{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;background:#fdf1dc;color:#a05e03;margin-left:4px}
-.due.over{background:#fbe9e7;color:var(--red)}
-.loc{font-size:13px;color:var(--ink2);margin-bottom:10px}
-table.vals{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
-table.vals th{background:var(--navy);color:#fff;text-align:left;padding:9px 11px;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em}
-table.vals th.adj{background:var(--gold);color:var(--navy)}
-table.vals td{padding:8px 11px;border:1px solid #eef2f7}
-table.vals td.n{text-align:right;font-variant-numeric:tabular-nums}
-table.vals tr.tot td{font-weight:800;background:#f7fafd}
-table.vals input{width:100%;border:1.5px solid var(--line);border-radius:8px;padding:7px 9px;font:inherit;text-align:right}
-table.vals input:focus{outline:none;border-color:var(--blue);background:#fbfdff}
-.step{font-size:12px;font-weight:800;color:var(--blue);text-transform:uppercase;letter-spacing:.07em;margin:20px 0 6px}
-.edu{background:#fdf6e9;border-left:4px solid var(--gold);border-radius:0 10px 10px 0;padding:13px 16px;margin:12px 0;font-size:13.5px}
-.edu b{color:#a05e03}
-.warnbox{background:#fbe9e7;border-left:4px solid var(--red);border-radius:0 10px 10px 0;padding:13px 16px;margin:12px 0;font-size:13.5px}
-.benefits{background:var(--light);border-radius:12px;padding:14px 16px;margin:12px 0;font-size:13.5px}
-.benefits h3{font-size:12.5px;color:var(--navy);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
-.benefits ul{padding-left:18px}.benefits li{margin:5px 0}
-.calc{border:1px solid var(--line);border-radius:12px;padding:15px;margin:12px 0;background:#fbfdff}
-.calc label{display:block;font-size:12.5px;font-weight:700;color:var(--ink2);margin:9px 0 4px}
-.calc input{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:10px 12px;font:inherit}
-.calcout{border-radius:10px;padding:13px 15px;margin-top:12px;font-size:13.5px;line-height:1.55}
-.calcout.bad{background:#fbe9e7;color:#8f2c2c;border:1px solid #f0c4c0}
-.calcout.ok{background:#e3f2ea;color:#1b6b45;border:1px solid #bfe3d0}
-.calcout .big{display:block;font-size:20px;font-weight:800;margin:5px 0}
-.opt{display:flex;gap:10px;align-items:flex-start;border:1.5px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:8px;cursor:pointer;background:#fff}
-.opt:hover{border-color:var(--blue)}
-.opt.sel{border-color:var(--blue);background:var(--light)}
-.opt b{display:block;font-size:14px}.opt span{font-size:12.5px;color:var(--ink2)}
-label.fld{display:block;font-size:13px;color:var(--ink2);font-weight:600;margin:12px 0 4px}
-input[type=text],input[type=email],textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font:inherit;background:#fff}
-textarea{min-height:64px;resize:vertical}
-.btn{width:100%;background:var(--gold);color:var(--navy);font-weight:800;font-size:15px;border:none;border-radius:10px;padding:14px;cursor:pointer;margin-top:14px}
+body{font:15px/1.65 'DM Sans',sans-serif;color:var(--text);
+  background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 55%,var(--bg) 100%);
+  min-height:100vh;padding-bottom:110px}
+h1,h2,h3,h4,.mont{font-family:'Montserrat',sans-serif}
+.head{padding:20px 18px;border-bottom:1px solid var(--line)}
+.head .in{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:13px}
+.gmark{width:46px;height:46px;flex-shrink:0}
+.head .brand{font:800 15px/1.15 'Montserrat',sans-serif;color:var(--gold);letter-spacing:.3px}
+.head .sub{font-size:12px;color:var(--muted);margin-top:2px}
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:18px}
+.card h2{font-size:17px;font-weight:800;color:var(--text)}
+.chipdue{display:inline-block;font:700 11px 'Montserrat';padding:4px 12px;border-radius:99px;background:rgba(239,194,75,.15);color:var(--gold);margin-left:8px;vertical-align:middle}
+.chipdue.over{background:rgba(255,122,122,.15);color:var(--bad)}
+.loc-sub{font-size:13px;color:var(--muted);margin-top:3px}
+.loyal{display:flex;gap:10px;align-items:center;background:linear-gradient(90deg,rgba(239,194,75,.14),rgba(239,194,75,.04));
+  border:1px solid rgba(239,194,75,.35);border-radius:14px;padding:12px 16px;margin:14px 0;font-size:13.5px}
+.loyal b{color:var(--gold)}
+.bigrow{display:flex;gap:14px;flex-wrap:wrap;margin:16px 0 4px}
+.big{flex:1;min-width:150px;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.big .v{font:800 21px 'Montserrat';color:var(--teal);letter-spacing:-.3px}
+.big .k{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.trendline{display:flex;align-items:flex-end;gap:6px;margin:12px 2px 2px;height:44px}
+.trendline .tb{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
+.trendline .bar{width:100%;max-width:56px;background:linear-gradient(180deg,var(--teal),var(--teal2));border-radius:5px 5px 2px 2px;min-height:5px}
+.trendline .yr{font-size:10.5px;color:var(--muted)}
+.trendnote{font-size:12px;color:var(--muted);margin-top:6px}
+.step{font:800 11.5px 'Montserrat';color:var(--teal);text-transform:uppercase;letter-spacing:.12em;margin:24px 0 10px}
+/* location panel */
+.locpanel{background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:18px;margin:12px 0}
+.locpanel .lname{font:800 15px 'Montserrat';color:var(--text)}
+.locpanel .locc{font-size:12.5px;color:var(--muted);margin:2px 0 12px}
+.vrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 2px;border-bottom:1px solid var(--line)}
+.vrow:last-of-type{border-bottom:none}
+.vrow .lab{font-size:13.5px;color:var(--text)}
+.vrow .lab small{display:block;color:var(--muted);font-size:11px}
+.vcell{position:relative}
+.vcell input{width:150px;background:transparent;border:none;border-bottom:2px dashed rgba(0,207,234,.4);
+  color:var(--text);font:700 15px 'DM Sans';text-align:right;padding:4px 22px 4px 4px;outline:none;border-radius:4px 4px 0 0}
+.vcell input:focus{border-bottom:2px solid var(--teal);background:rgba(0,207,234,.07)}
+.vcell input.changed{color:var(--gold);border-bottom-color:var(--gold)}
+.vcell .pen{position:absolute;right:2px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--teal2);pointer-events:none}
+.vcell .was{position:absolute;right:0;top:100%;font-size:10.5px;color:var(--muted);white-space:nowrap}
+.vtotal{display:flex;justify-content:space-between;align-items:center;padding:12px 2px 4px;margin-top:6px;border-top:2px solid var(--line)}
+.vtotal .lab{font:800 13px 'Montserrat';text-transform:uppercase;letter-spacing:.06em}
+.vtotal .amt{font:800 18px 'Montserrat';color:var(--teal)}
+.vtotal .amt.changed{color:var(--gold)}
+.est{display:none;background:rgba(0,207,234,.10);border:1px solid rgba(0,207,234,.35);border-radius:12px;padding:12px 15px;margin-top:12px;font-size:13.5px}
+.est b{color:var(--teal)}
+.premline{font-size:12.5px;color:var(--muted);margin-top:10px}
+.premline b{color:var(--text)}
+/* replacement check */
+.repl{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:rgba(239,194,75,.07);
+  border:1px solid rgba(239,194,75,.3);border-radius:12px;padding:12px 15px;margin-top:12px}
+.repl label{font-size:12.5px;color:var(--text);flex:1;min-width:180px}
+.repl input{width:140px;background:var(--bg);border:1px solid var(--line);border-radius:9px;color:var(--text);
+  font:700 14px 'DM Sans';text-align:right;padding:9px 10px;outline:none}
+.repl input:focus{border-color:var(--gold)}
+.repl .verdict{width:100%;font-size:13px;line-height:1.55}
+.repl .verdict.ok{color:var(--good)}
+.repl .verdict.warn{color:var(--bad)}
+/* excess chips */
+.exgrid{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.exchip{font-size:11.5px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:5px 11px;color:var(--muted)}
+.exchip b{color:var(--text);font-weight:600}
+.exnote{font-size:11.5px;color:var(--muted);margin-top:8px}
+/* address / occupancy */
+.addr{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-top:14px;font-size:13px}
+.addr b{display:block;color:var(--text);margin-bottom:3px;font-size:13.5px}
+.addr .why{color:var(--muted)}
+.chk{display:flex;gap:10px;align-items:flex-start;margin-top:10px;cursor:pointer;font-weight:600;color:var(--text)}
+.chk input{margin-top:3px;accent-color:var(--teal);width:16px;height:16px}
+.fld{display:block;font-size:12.5px;color:var(--muted);font-weight:600;margin:12px 0 5px}
+input[type=text].txt,input[type=email].txt,textarea.txt{width:100%;background:var(--bg);border:1px solid var(--line);
+  border-radius:11px;padding:11px 13px;font:14px 'DM Sans';color:var(--text);outline:none}
+input.txt:focus,textarea.txt:focus{border-color:var(--teal)}
+textarea.txt{min-height:64px;resize:vertical}
+/* choices */
+.opt{display:flex;gap:12px;align-items:flex-start;border:1.5px solid var(--line);border-radius:14px;
+  padding:13px 15px;margin-bottom:9px;cursor:pointer;background:var(--bg2);transition:.15s}
+.opt:hover{border-color:var(--teal2)}
+.opt.sel{border-color:var(--teal);background:rgba(0,207,234,.08);box-shadow:0 0 0 1px var(--teal)}
+.opt input{margin-top:4px;accent-color:var(--teal)}
+.opt b{display:block;font-size:14.5px;font-family:'Montserrat'}
+.opt span{font-size:12.5px;color:var(--muted)}
+.edu{background:rgba(239,194,75,.08);border-left:3px solid var(--gold);border-radius:0 12px 12px 0;
+  padding:13px 16px;margin:14px 0;font-size:13.5px;color:var(--text)}
+.edu b{color:var(--gold)}
+.warnbox{background:rgba(255,122,122,.08);border-left:3px solid var(--bad);border-radius:0 12px 12px 0;
+  padding:13px 16px;margin:14px 0;font-size:13.5px}
+.warnbox b{color:var(--bad)}
+.btn{width:100%;background:linear-gradient(135deg,var(--teal),var(--teal2));color:#04202b;
+  font:800 15px 'Montserrat';border:none;border-radius:13px;padding:16px;cursor:pointer;margin-top:16px;transition:.15s}
+.btn:hover{filter:brightness(1.1)}
 .btn:disabled{opacity:.5;cursor:wait}
-.ok{background:#e3f2ea;border:1px solid #bfe3d0;color:var(--green);border-radius:10px;padding:14px;margin-top:12px;font-weight:600;display:none}
-.err{background:#fbe9e7;border:1px solid #f0c4c0;color:var(--red);border-radius:10px;padding:14px;margin-top:12px;display:none}
-/* progress tracker */
-.track{display:grid;gap:0;margin-top:6px}
-.tstep{display:grid;grid-template-columns:34px 1fr;gap:12px;padding-bottom:18px;position:relative}
+.ok{background:rgba(53,208,127,.12);border:1px solid rgba(53,208,127,.4);color:var(--good);border-radius:12px;padding:14px;margin-top:12px;font-weight:600;display:none}
+.err{background:rgba(255,122,122,.12);border:1px solid rgba(255,122,122,.4);color:var(--bad);border-radius:12px;padding:14px;margin-top:12px;display:none}
+/* tracker */
+.track{margin-top:10px}
+.tstep{display:grid;grid-template-columns:34px 1fr;gap:12px;padding-bottom:16px;position:relative}
 .tstep::before{content:"";position:absolute;left:16px;top:34px;bottom:0;width:2px;background:var(--line)}
 .tstep:last-child::before{display:none}
-.tdot{width:34px;height:34px;border-radius:50%;background:#fff;border:2px solid var(--line);color:#b3c2d2;display:grid;place-items:center;font-weight:800;font-size:13px;z-index:1}
-.tstep.done .tdot{background:var(--green);border-color:var(--green);color:#fff}
-.tstep.now .tdot{background:var(--gold);border-color:var(--gold);color:var(--navy)}
-.tstep h4{font-size:14px;font-weight:800}
-.tstep.done h4,.tstep.now h4{color:var(--navy)}
-.tstep p{font-size:12.5px;color:var(--ink2)}
-.tstep.todo h4{color:#98a8ba}
-.loyal{background:#e3f2ea;border-left:4px solid var(--green);border-radius:0 10px 10px 0;padding:11px 15px;margin:10px 0;font-size:13.5px;color:#1b6b45}
-.loyal b{color:#145134}
-.trend{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}
-.trend th,.trend td{padding:6px 10px;border:1px solid #eef2f7;text-align:left}
-.trend th{background:#f7fafd;color:var(--ink2);font-size:11px;text-transform:uppercase}
-.trend td.n{text-align:right;font-variant-numeric:tabular-nums}
-.bar{height:8px;background:var(--blue);border-radius:99px;display:inline-block;min-width:3px;vertical-align:middle}
-.addr{background:#eef4fb;border-left:4px solid var(--blue);border-radius:0 10px 10px 0;padding:12px 15px;margin:10px 0;font-size:13px;color:#31465e}
-.addr b{display:block;color:var(--navy);margin-bottom:4px;font-size:13.5px}
-.chk{display:flex;gap:9px;align-items:flex-start;margin-top:9px;cursor:pointer;font-weight:600;color:var(--navy)}
-.chk input{margin-top:3px}
-.stale{background:#fdf1dc;border-left:4px solid #a05e03;border-radius:0 10px 10px 0;padding:11px 15px;margin:10px 0;font-size:13.5px;color:#7a4a03}
-details.hist{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:10px 0;background:#fff}
-details.hist summary{cursor:pointer;font-weight:700;color:var(--navy);font-size:13.5px}
+.tdot{width:34px;height:34px;border-radius:50%;background:var(--bg2);border:2px solid var(--line);color:var(--muted);
+  display:grid;place-items:center;font:800 13px 'Montserrat';z-index:1}
+.tstep.done .tdot{background:var(--good);border-color:var(--good);color:#04202b}
+.tstep.now .tdot{background:var(--gold);border-color:var(--gold);color:#3a2c05}
+.tstep h4{font-size:13.5px}
+.tstep.todo h4{color:var(--muted)}
+.tstep p{font-size:12px;color:var(--muted)}
+.feed{border-top:1px solid var(--line);margin-top:8px;padding-top:10px}
+.feed div{font-size:12px;color:var(--muted);margin:4px 0}
+.feed b{color:var(--teal)}
+/* sticky action bar */
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(7,19,31,.92);backdrop-filter:blur(10px);
+  border-top:1px solid var(--line);padding:12px 16px;display:none;z-index:50}
+.bar .in{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:14px}
+.bar .nums{flex:1;font-size:12.5px;color:var(--muted);line-height:1.4}
+.bar .nums b{color:var(--gold);font-family:'Montserrat'}
+.bar button{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#3a2c05;font:800 13.5px 'Montserrat';
+  border:none;border-radius:11px;padding:12px 20px;cursor:pointer;white-space:nowrap}
 .nf{max-width:560px;margin:60px auto;text-align:center;padding:20px}
-.foot{max-width:720px;margin:6px auto;padding:0 14px;font-size:11.5px;color:#8a97a8}
+.foot{max-width:760px;margin:6px auto;padding:0 16px;font-size:11px;color:#5c7590;line-height:1.6}
 </style>
 </head>
 <body>
 <div class="head"><div class="in">
-  <div class="gmark"><svg viewBox="0 0 24 24" width="44" height="44" aria-label="Shield with tick"><path d="M12 1.8l8.2 3v6.4c0 5.1-3.5 9.6-8.2 11.3C7.3 20.8 3.8 16.3 3.8 11.2V4.8z" fill="#E8A020"/><path d="M8 12.2l2.9 2.9 5.3-6" stroke="#003366" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-  <div><h1>Property Renewal</h1><div class="sub">Ricky Rampersad Branch · Guardian Group</div></div>
+  <svg class="gmark" viewBox="0 0 88 88" aria-hidden="true">
+    <defs><linearGradient id="gn" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
+    </linearGradient></defs>
+    <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#gn)"/>
+    <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <div><div class="brand">Ricky Rampersad<br>Branch</div><div class="sub">Property Renewal · Guardian Group</div></div>
 </div></div>
+
 <div id="app" class="wrap"></div>
-<div class="foot">This portal is a plain-language summary for your information — full terms are set out in your policy wording and schedule, which govern in all cases. Nothing is bound until Guardian confirms your renewal. Never send card numbers through this portal or by email.</div>
+
+<div class="bar" id="bar"><div class="in">
+  <div class="nums" id="barNums"></div>
+  <button onclick="document.getElementById('sendcard0').scrollIntoView({behavior:'smooth',block:'center'})">Review &amp; send ↓</button>
+</div></div>
+
+<div class="foot">This page is a plain-language summary for your information — full terms are set out in your policy wording and
+schedule, which govern in all cases. Nothing is bound until Guardian confirms your renewal. Never send card numbers through
+this page or by email — our team arranges secure payment with you.</div>
 
 <script>
 const DATA = JSON.parse(<?!= JSON.stringify(payload) ?>);
-const $ = s => document.querySelector(s);
-const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const money = v => { const n=Number(v); return (!v&&v!==0)||isNaN(n)?'—':'TT$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); };
-const numv = v => { const n=Number(String(v).replace(/[^0-9.]/g,'')); return isFinite(n)?n:0; };
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=v=>{const n=Number(v);return (!v&&v!==0)||isNaN(n)?'—':'TT$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});};
+const money0=v=>{const n=Number(v);return isNaN(n)?'—':'TT$'+n.toLocaleString('en-US',{maximumFractionDigits:0});};
+const numv=v=>{const n=Number(String(v).replace(/[^0-9.]/g,''));return isFinite(n)?n:0;};
+const fmtN=n=>Number(n).toLocaleString('en-US',{maximumFractionDigits:0});
 
-function dueChip(r){
-  if(r.days===null||r.days===undefined) return '';
-  if(r.days<0) return `<span class="due over">${Math.abs(r.days)} day${Math.abs(r.days)===1?'':'s'} overdue</span>`;
-  if(r.days===0) return `<span class="due over">renews today</span>`;
-  if(r.days<=60) return `<span class="due">${r.days} days to go</span>`;
-  return '';
-}
-
-function tracker(r){
-  const stages = DATA.stages;
-  const at = stages.findIndex(s=>s.key===r.stage);
-  if(at < 0) return '';
-  return `<div class="card"><h2>📍 Your renewal progress</h2>
-    <p class="loc">We update this as your renewal moves — and email you as each step completes.</p>
-    <div class="track">${stages.map((s,i)=>{
-      const cls = i<at?'done':(i===at?'now':'todo');
-      return `<div class="tstep ${cls}"><div class="tdot">${i<at?'✓':i+1}</div>
-        <div><h4>${esc(s.label)}</h4><p>${esc(s.blurb)}</p></div></div>`;
-    }).join('')}</div>
-    ${r.progress && r.progress.length ? `<div style="margin-top:10px;border-top:1px solid #eef2f7;padding-top:10px">
-      ${r.progress.slice(0,6).map(p=>`<div style="font-size:12.5px;color:var(--ink2);margin:4px 0">
-        <b style="color:var(--navy)">${esc(p.when)}</b> — ${esc(p.stage)}${p.note?' · '+esc(p.note):''}</div>`).join('')}
-    </div>`:''}
-  </div>`;
-}
-
-function premTrend(r){
-  const h = r.premiumHistory||[];
-  if(h.length < 2) return '';
-  const max = Math.max(...h.map(x=>x.amount));
-  const first = h[0], last = h[h.length-1];
-  const pct = first.amount ? Math.round(100*(last.amount/first.amount - 1)) : 0;
-  return `<details class="hist"><summary>📈 This policy's premium over time (${h.length} renewals)</summary>
-    <table class="trend"><tr><th>Year</th><th>Premium</th><th style="width:45%"></th></tr>
-    ${h.map(x=>`<tr><td>${esc(x.year)}</td><td class="n">${money(x.amount)}</td>
-      <td><span class="bar" style="width:${Math.round(100*x.amount/max)}%"></span></td></tr>`).join('')}
-    </table>
-    <div class="note">${pct>0?`Your premium has moved <b>+${pct}%</b> since ${esc(first.year)}.`:
-      pct<0?`Your premium is <b>${pct}%</b> versus ${esc(first.year)}.`:'Your premium has held steady.'}
-      Premiums follow the sums insured, the rate, your claims record — and how many locations the policy
-      covers. If your values are out of date, you may be paying for cover that no longer matches the risk.</div></details>`;
-}
-
-/* Group the client's risks into POLICIES — a policy can cover several
-   locations, and that is how the client thinks about their renewal. */
 function policies(){
-  const key = r => (r.policy||'(no policy)').replace(/\s+/g,'').toUpperCase();
-  const map = new Map();
+  const key=r=>(r.policy||'(no policy)').replace(/\s+/g,'').toUpperCase();
+  const map=new Map();
   DATA.risks.forEach((r,i)=>{
-    const k = key(r);
-    if(!map.has(k)) map.set(k, {policy:r.policy||'', carrier:r.carrier, renewalDate:r.renewalDate,
-      days:r.days, excess:r.excess, since:r.since, years:r.years, stage:r.stage,
-      progress:r.progress, premiumHistory:r.premiumHistory, locs:[]});
-    const g = map.get(k);
-    g.locs.push({...r, idx:i});
-    if(r.premiumHistory && r.premiumHistory.length > (g.premiumHistory||[]).length) g.premiumHistory = r.premiumHistory;
-    if(!g.excess && r.excess) g.excess = r.excess;
+    const k=key(r);
+    if(!map.has(k)) map.set(k,{policy:r.policy||'',carrier:r.carrier,renewalDate:r.renewalDate,days:r.days,
+      excess:r.excess,since:r.since,years:r.years,stage:r.stage,progress:r.progress,
+      premiumHistory:r.premiumHistory,locs:[]});
+    const g=map.get(k);
+    g.locs.push({...r,idx:i});
+    if(r.premiumHistory&&r.premiumHistory.length>(g.premiumHistory||[]).length)g.premiumHistory=r.premiumHistory;
   });
   return [...map.values()];
 }
+const locTotal=loc=>DATA.lines.reduce((s,L)=>s+(Number(loc.values[L.key])||0),0);
 
-/* "Riot & Strike: 5% (min $5,000); Burglary: $20,000; ..." -> rows */
-function parseExcess(str){
-  return String(str||'').split(/;|\n/).map(x=>{
-    const m=x.split(/:(.+)/); if(!m[0]||!m[0].trim()) return null;
-    return {peril:m[0].trim(), value:(m[1]||'').trim()};
-  }).filter(Boolean);
+function dueChip(g){
+  if(g.days==null) return '';
+  if(g.days<0) return `<span class="chipdue over">${Math.abs(g.days)} days overdue</span>`;
+  if(g.days===0) return `<span class="chipdue over">renews today</span>`;
+  if(g.days<=60) return `<span class="chipdue">${g.days} days to go</span>`;
+  return '';
 }
-function excessTable(str,label){
-  const rows=parseExcess(str);
+
+function trend(g){
+  const h=g.premiumHistory||[];
+  if(h.length<2) return '';
+  const max=Math.max(...h.map(x=>x.amount));
+  const pct=h[0].amount?Math.round(100*(h[h.length-1].amount/h[0].amount-1)):0;
+  return `<div class="trendline">${h.map(x=>`<div class="tb">
+      <div class="bar" style="height:${Math.max(8,Math.round(40*x.amount/max))}px" title="${money(x.amount)}"></div>
+      <div class="yr">${esc(x.year)}</div></div>`).join('')}</div>
+    <div class="trendnote">Your premium over ${h.length} renewals${pct?` · ${pct>0?'+':''}${pct}% since ${esc(h[0].year)}`:''} — premiums follow your values, the rate and your record.</div>`;
+}
+
+function excessChips(str){
+  const rows=String(str||'').split(/;|\n/).map(x=>{const m=x.split(/:(.+)/);
+    return m[0]&&m[0].trim()?{p:m[0].trim(),v:(m[1]||'').trim()}:null;}).filter(Boolean);
   if(!rows.length) return '';
-  return `<details class="hist"><summary>💰 ${label||'Your excesses at a glance'} (${rows.length})</summary>
-    <table class="trend"><tr><th>Peril</th><th>Your excess</th></tr>
-    ${rows.map(r=>`<tr><td>${esc(r.peril)}</td><td class="n">${esc(r.value)}</td></tr>`).join('')}</table>
-    <div class="note">The excess is the first part of any claim that you carry. Where it is a percentage,
-    it is a percentage of the sum insured at this location — another reason the values above must be right.</div>
-  </details>`;
+  return `<div class="exgrid">${rows.map(r=>`<span class="exchip">${esc(r.p)} <b>${esc(r.v)}</b></span>`).join('')}</div>
+  <div class="exnote">💡 The excess is the first part of any claim that you carry. Percentages apply to the sum insured here — one more reason the values above must be right.</div>`;
 }
-function locTotal(loc){ return DATA.lines.reduce((s,L)=>s+(Number(loc.values[L.key])||0),0); }
+
+function tracker(g){
+  const at=DATA.stages.findIndex(s=>s.key===g.stage);
+  if(at<0) return '';
+  return `<div class="card"><h2>📍 Your renewal progress</h2>
+    <div class="loc-sub">We update this as your renewal moves — and email you as each step completes.</div>
+    <div class="track">${DATA.stages.map((s,i)=>`<div class="tstep ${i<at?'done':i===at?'now':'todo'}">
+      <div class="tdot">${i<at?'✓':i+1}</div><div><h4>${esc(s.label)}</h4><p>${esc(s.blurb)}</p></div></div>`).join('')}</div>
+    ${g.progress&&g.progress.length?`<div class="feed">${g.progress.slice(0,6).map(p=>
+      `<div><b>${esc(p.when)}</b> — ${esc(p.note||p.stage)}</div>`).join('')}</div>`:''}
+  </div>`;
+}
+
+function locationBlock(loc){
+  const i=loc.idx;
+  return `<div class="locpanel">
+    <div class="lname">📍 ${esc(loc.location||'Location not on record')}</div>
+    <div class="locc">${loc.occupancy?esc(loc.occupancy)+' · ':''}tap any amount to change it</div>
+    ${DATA.lines.map(L=>{
+      const cur=Number(loc.values[L.key])||0;
+      if(!cur && L.key==='building') return '';
+      return `<div class="vrow">
+        <div class="lab">${esc(L.label)}${!cur?'<small>not currently covered — add a value to request it</small>':''}</div>
+        <div class="vcell">
+          <input id="val_${i}_${L.key}" data-cur="${cur}" value="${cur?fmtN(cur):''}" inputmode="numeric" placeholder="0">
+          <span class="pen">✏️</span>
+          <span class="was" id="was_${i}_${L.key}"></span>
+        </div>
+      </div>`;}).join('')}
+    <div class="vtotal"><div class="lab">Total sums insured</div><div class="amt" id="tot_${i}">${money0(locTotal(loc))}</div></div>
+    <div class="est" id="est_${i}"></div>
+    <div class="premline">Premium for this location: <b>${money(loc.premium)}</b> incl. Government Tax
+      ${loc.rate?` · your rate: <b>$${loc.rate.toFixed(2)} per $1,000</b> of cover`:''}</div>
+    <div class="repl">
+      <label><b>Reality check:</b> what would it cost to replace everything here today?</label>
+      <input id="rc_${i}" inputmode="numeric" value="${fmtN(locTotal(loc))}">
+      <div class="verdict ok" id="rcv_${i}"></div>
+    </div>
+    ${excessChips(loc.excess)}
+    <div class="addr">
+      <b>Is this address exactly right?</b>
+      <span class="why">Your policy only responds at the address on the schedule.</span>
+      <label class="chk"><input type="checkbox" id="addrok_${i}" checked data-addr="${i}"><span>Yes — "${esc(loc.location)}" is correct</span></label>
+      <div id="addrfix_${i}" style="display:none">
+        <label class="fld">It should read:</label>
+        <input type="text" class="txt" id="addrnew_${i}" placeholder="Full address as it should appear">
+      </div>
+      <label class="fld">What happens at this location? <span style="font-weight:400">(current occupancy — several occupiers? list each)</span></label>
+      <input type="text" class="txt" id="occ_${i}" value="${esc(loc.occupancy||'')}" placeholder="e.g. Supermarket — Haoli Supermarket">
+    </div>
+  </div>`;
+}
 
 function render(){
-  const app = $('#app');
+  const app=$('#app');
   if(!DATA.ok){
-    app.innerHTML = `<div class="nf"><h2 style="color:var(--navy)">We couldn't find your property renewal</h2>
-      <p style="margin-top:10px;color:var(--ink2)">Please use the personal link from your renewal email, or contact ${esc(DATA.agent.name)}${DATA.agent.phone?' at '+esc(DATA.agent.phone):''} for a fresh link.</p></div>`;
+    app.innerHTML=`<div class="nf"><h2 style="color:var(--gold)">We couldn't find your renewal</h2>
+      <p style="margin-top:10px;color:var(--muted)">Please use the personal link from your renewal message, or contact
+      ${esc(DATA.agent.name)}${DATA.agent.phone?' at '+esc(DATA.agent.phone):''} for a fresh link.</p></div>`;
     return;
   }
-  const pols = policies();
-  const nLoc = DATA.risks.length;
-  let html = `<div class="card"><h2>Welcome, ${esc(DATA.firstName)} 👋</h2>
-    <p style="font-size:13.5px;color:var(--ink2)">You have ${pols.length===1?'one property policy':pols.length+' property policies'} with us${nLoc>pols.length?`, covering ${nLoc} locations`:''}.
-    Please check the sums insured for each location — then tell us how to proceed.</p></div>`;
+  const pols=policies();
+  let html=`<div class="card"><h2>Welcome, ${esc(DATA.firstName)} 👋</h2>
+    <div class="loc-sub">Review your cover below — <b style="color:var(--teal)">tap any figure to change it on the spot</b> —
+    then send your instruction. Two minutes, and you can track everything after.</div></div>`;
 
   pols.forEach((g,gi)=>{
-    const polPremium = g.locs.reduce((s,l)=>s+(Number(l.premium)||0),0);
-    const polValue   = g.locs.reduce((s,l)=>s+locTotal(l),0);
-    html += tracker(g);
-    html += `<div class="card">
+    const polPrem=g.locs.reduce((s,l)=>s+(Number(l.premium)||0),0);
+    const polVal=g.locs.reduce((s,l)=>s+locTotal(l),0);
+    html+=tracker(g);
+    html+=`<div class="card">
       <h2>${g.policy?'Policy '+esc(g.policy):'Your property policy'} ${dueChip(g)}</h2>
-      <div class="loc">${esc(g.carrier||'Guardian General')} · renews <b>${esc(g.renewalDate)}</b> · ${g.locs.length} location${g.locs.length===1?'':'s'}</div>
-      ${g.years?`<div class="loyal">🏆 <b>Thank you for ${esc(g.years)} years with us</b>${g.since?` — insured since ${esc(g.since)}`:''}. We value the relationship, and we want your cover to be right.</div>`:''}
+      <div class="loc-sub">${esc(g.carrier||'Guardian General')} · renews <b style="color:var(--text)">${esc(g.renewalDate)}</b> · ${g.locs.length} location${g.locs.length===1?'':'s'}</div>
+      ${g.years?`<div class="loyal">🏆 <span><b>${esc(g.years)} years with us</b>${g.since?` — since ${esc(g.since)}`:''}. Thank you — let's make sure your cover is exactly right.</span></div>`:''}
+      <div class="bigrow">
+        <div class="big"><div class="v" id="polval_${gi}">${money0(polVal)}</div><div class="k">Total sums insured</div></div>
+        <div class="big"><div class="v">${money0(polPrem)}</div><div class="k">Renewal premium (incl. tax)</div></div>
+      </div>
+      ${trend(g)}
 
-      <table class="trend" style="margin:12px 0">
-        <tr><th>Total sums insured</th><th>Total premium</th></tr>
-        <tr><td class="n" style="font-weight:800;font-size:15px">${money(polValue)}</td>
-            <td class="n" style="font-weight:800;font-size:15px">${money(polPremium)}</td></tr>
-      </table>
-      ${(!g.locs.some(l=>l.excess) && g.excess)?excessTable(g.excess,'Excesses on this policy'):''}
-      ${premTrend(g)}
-
-      <div class="step">Step 1 · Check each location</div>
+      <div class="step">Your locations — check &amp; adjust</div>
       ${g.locs.map(loc=>locationBlock(loc)).join('')}
 
-      <div class="step">Step 2 · The two things that decide what a claim pays</div>
-      <div class="warnbox"><b>⚠️ The average clause — the most important thing on this page.</b><br>
-        If a location is insured for <u>less</u> than it would cost to rebuild or replace today, the insurer
-        reduces <b>every</b> claim on that location in the same proportion — not just total losses. Insure at
-        70% of the true value and a $100,000 claim pays <b>$70,000</b>. You carry the rest.
-        ${g.locs.length>1?'<br><br><b>With more than one location, average is applied to each one separately</b> — so every location needs to be right on its own.':''}</div>
-      <div class="edu"><b>💡 Your excess</b> — the first portion of every claim is yours to carry, and it applies
-        each time you claim. Your policy sets a different excess per peril — open
-        <b>"Excesses at this location"</b> above to see your actual figures. Note that catastrophe perils
-        (hurricane, flood, earthquake) are usually a <b>percentage of the sum insured</b>, with a minimum.</div>
+      <div class="warnbox"><b>⚠️ The one clause that decides claims — "average".</b>
+        If a location is insured for less than replacement cost, <u>every</u> claim there is cut in the same proportion —
+        insure at 70% and a $100,000 claim pays $70,000. ${g.locs.length>1?'It applies to <b>each location separately</b>. ':''}
+        The reality check under each location shows where you stand.</div>
 
-      <div class="step">Step 3 · What your property policy protects</div>
-      <div class="benefits"><h3>🏠 Your cover at a glance</h3><ul>
-        ${g.locs.some(l=>Number(l.values.building)>0)
-          ?`<li><b>Building</b> — the structure itself, insured for <b>rebuilding cost</b>, not market value</li>`
-          :`<li><b>Renting your premises?</b> The building is your landlord's to insure — your policy rightly
-             covers what is <b>yours</b>. But any fit-out you paid for (shelving, counters, partitions,
-             signage, electrical work) is <b>not</b> the landlord's insurance — make sure it is counted in
-             your Furniture/Fixtures/Fittings figure above.</li>`}
-        <li><b>General contents</b> — furniture, fittings and belongings inside</li>
-        <li><b>Stock</b> — trading stock held at the location</li>
-        <li><b>Plant, equipment &amp; machinery</b> — the equipment your business runs on</li>
-        <li><b>Electronic equipment</b> — computers, systems and electronics</li>
-        <li><b>Perils</b> — fire, lightning, explosion, and (where added) flood, hurricane, earthquake,
-            burglary, escape of water, riot &amp; malicious damage</li>
-      </ul>
-      <div style="margin-top:8px;padding-top:8px;border-top:1px solid #d5e2f0;font-size:12.5px">
-        Values should reflect <b>today's</b> costs. If you have renovated, extended, restocked or added
-        equipment, this is the moment to say so.</div></div>
-
-      <div class="step">Step 4 · Your instruction for this policy</div>
+      <div class="step">Your instruction</div>
       <label class="opt"><input type="radio" name="inst${gi}" value="RENEW — existing terms">
-        <div><b>✅ Renew on existing terms</b><span>My values are correct — proceed with the renewal</span></div></label>
+        <div><b>✅ Renew as-is</b><span>My values are right — proceed with the renewal</span></div></label>
       <label class="opt"><input type="radio" name="inst${gi}" value="RENEW — adjusted values">
-        <div><b>✏️ Renew with my adjusted values</b><span>Use the adjusted figures I entered above</span></div></label>
+        <div><b>✏️ Renew with my adjusted values</b><span>Use the figures I changed above</span></div></label>
       <label class="opt"><input type="radio" name="inst${gi}" value="PLEASE CALL ME">
-        <div><b>📞 Please call me first</b><span>I'd like to discuss before renewing</span></div></label>
+        <div><b>📞 Call me first</b><span>I'd like to talk before renewing</span></div></label>
 
       <label class="fld">Anything we should know? (renovations, new equipment, a location to add or remove…)</label>
-      <textarea id="notes${gi}" placeholder="e.g. We added a storage building at Waterloo Road; stock at Chase Village is now much higher."></textarea>
-      <label class="fld">Best email</label><input type="email" id="email${gi}" value="${esc(g.locs[0].email)}">
-      <label class="fld">Best mobile</label><input type="text" id="mob${gi}" value="${esc(g.locs[0].mobile)}">
-      <div class="edu" style="margin-top:12px"><b>📋 Your legal duty to disclose.</b> When renewing, you are legally
-        obliged to tell us any material fact that could affect the insurer's decision to accept the risk — a change
-        of use, new occupiers, building works, past losses. Failure to disclose can void the policy from inception.
-        If in doubt, mention it in the notes above.</div>
-      <label class="chk" style="margin:10px 0 2px"><input type="checkbox" id="mf_${gi}">
-        <span>I confirm the information I have given is accurate, I have disclosed all material facts,
-        and I will provide any outstanding "Know Your Customer" documents at renewal.</span></label>
-      <button class="btn" data-submit="${gi}">Send my renewal instruction</button>
-      <div class="ok" id="ok${gi}">✓ Sent! Your instruction is with our renewals team — a confirmation email is on its way, and you can track progress right here.</div>
-      <div class="err" id="err${gi}"></div>
+      <textarea class="txt" id="notes${gi}" placeholder="e.g. Stock at Chase Village is much higher this year."></textarea>
+      <label class="fld">Best email</label><input type="email" class="txt" id="email${gi}" value="${esc(g.locs[0].email)}">
+      <label class="fld">Best mobile / WhatsApp</label><input type="text" class="txt" id="mob${gi}" value="${esc(g.locs[0].mobile)}">
+
+      <div id="sendcard${gi}">
+        <div class="edu" style="margin-top:16px"><b>📋 Your duty to disclose.</b> You're legally obliged to tell us any material
+        fact that could affect the insurer's decision — change of use, new occupiers, works, past losses.
+        If in doubt, put it in the notes.</div>
+        <label class="chk"><input type="checkbox" id="mf_${gi}">
+          <span>The information I've given is accurate, I've disclosed all material facts, and I'll provide any outstanding
+          "Know Your Customer" documents at renewal.</span></label>
+        <button class="btn" data-submit="${gi}">Send my renewal instruction</button>
+        <div class="ok" id="ok${gi}">✓ Sent! Our renewals team has your instruction — a confirmation is on its way, and you can track every step right here.</div>
+        <div class="err" id="err${gi}"></div>
+      </div>
     </div>`;
   });
-  app.innerHTML = html;
+  app.innerHTML=html;
 
   document.querySelectorAll('.opt input').forEach(el=>el.addEventListener('change',e=>{
     const card=e.target.closest('.card');
     card.querySelectorAll('.opt').forEach(o=>o.classList.toggle('sel',o.querySelector('input').checked));
   }));
   document.querySelectorAll('[data-submit]').forEach(b=>b.onclick=()=>submit(Number(b.dataset.submit),b));
-  document.querySelectorAll('table.vals input').forEach(el=>el.addEventListener('input',()=>retotal(Number(el.dataset.risk))));
   document.querySelectorAll('[data-addr]').forEach(el=>el.addEventListener('change',()=>{
     const box=document.getElementById('addrfix_'+el.dataset.addr);
-    if(box) box.style.display = el.checked ? 'none' : 'block';
+    if(box) box.style.display=el.checked?'none':'block';
   }));
   DATA.risks.forEach((r,i)=>{
-    ['av_true_','av_ins_','av_loss_'].forEach(p=>{
-      const el=document.getElementById(p+i); if(el) el.addEventListener('input',()=>avg(i));
+    DATA.lines.forEach(L=>{
+      const el=document.getElementById(`val_${i}_${L.key}`);
+      if(!el) return;
+      el.addEventListener('focus',()=>{el.value=el.value?String(numv(el.value)||''):'';el.select();});
+      el.addEventListener('blur',()=>{const n=numv(el.value);el.value=n?fmtN(n):'';touch(i);});
+      el.addEventListener('input',()=>touch(i));
     });
-    avg(i);
+    const rc=document.getElementById('rc_'+i);
+    if(rc){
+      rc.addEventListener('focus',()=>{rc.value=String(numv(rc.value)||'');rc.select();});
+      rc.addEventListener('blur',()=>{const n=numv(rc.value);rc.value=n?fmtN(n):'';check(i);});
+      rc.addEventListener('input',()=>check(i));
+    }
+    touch(i); check(i);
   });
 
-  // Email click-options: preselect the instruction the client chose in the email.
+  // Email one-tap options preselect the instruction
   const optIdx={renew:0,adjust:1,call:2}[DATA.opt];
   if(optIdx!==undefined){
     const radios=document.querySelectorAll('input[name="inst0"]');
     if(radios[optIdx]){
       radios[optIdx].checked=true;
       radios[optIdx].dispatchEvent(new Event('change',{bubbles:true}));
-      const card=radios[optIdx].closest('.card');
-      if(card) setTimeout(()=>radios[optIdx].closest('.opt').scrollIntoView({behavior:'smooth',block:'center'}),300);
+      setTimeout(()=>radios[optIdx].closest('.opt').scrollIntoView({behavior:'smooth',block:'center'}),350);
     }
   }
 }
 
-/* One location inside a policy card: its values, and its own average check. */
-function locationBlock(loc){
-  const i = loc.idx, cur = locTotal(loc);
-  return `<div style="border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0;background:#fbfdff">
-    <div style="font-weight:800;color:var(--navy);font-size:14.5px">📍 ${esc(loc.location||'Location not on record')}</div>
-    ${loc.occupancy?`<div class="loc" style="margin-bottom:6px">${esc(loc.occupancy)}</div>`:''}
-    <div class="addr">
-      <b>Is this the correct address, exactly as it should read on your policy?</b>
-      A property policy only responds at the address stated in the schedule — a wrong or incomplete
-      address is one of the few things that can undo an otherwise valid claim.
-      <label class="chk"><input type="checkbox" id="addrok_${i}" checked data-addr="${i}">
-        <span>Yes, this address is correct</span></label>
-      <div id="addrfix_${i}" style="display:none">
-        <label class="fld" style="margin-top:6px">The address should read:</label>
-        <input type="text" id="addrnew_${i}" placeholder="Full address as it should appear on the schedule">
-      </div>
-      <label class="fld" style="margin-top:8px">Current occupancy of this building <span style="font-weight:400;color:#5a6b80">(what happens here — e.g. supermarket, dwelling, warehouse; if several occupiers, list each one's activity)</span></label>
-      <input type="text" id="occ_${i}" value="${esc(loc.occupancy||'')}" placeholder="e.g. Supermarket — Haoli Supermarket">
-    </div>
-    <table class="vals">
-      <tr><th>Cover</th><th style="text-align:right">Current Value</th><th class="adj" style="text-align:right">Your Adjusted Value</th></tr>
-      ${DATA.lines.map(L=>`<tr>
-        <td>${esc(L.label)}</td>
-        <td class="n">${loc.values[L.key]?money(loc.values[L.key]):'—'}</td>
-        <td><input id="adj_${i}_${L.key}" inputmode="numeric" placeholder="no change" data-risk="${i}"></td>
-      </tr>`).join('')}
-      <tr class="tot"><td>Totals</td><td class="n">${money(cur)}</td><td class="n" id="newtot_${i}">—</td></tr>
-    </table>
-    <p style="font-size:12.5px;color:var(--ink2)">Premium for this location: <b>${money(loc.premium)}</b>
-      <span style="color:#8a97a8">(includes Government Tax · renewal terms may vary)</span>
-      ${loc.rate?`<br>Your rate here: <b>$${loc.rate.toFixed(2)} per $1,000 of cover</b> before tax — so increasing your cover costs less than you may think.`:''}</p>
-    <div id="est_${i}" style="display:none;background:#e8f0fb;border-left:4px solid var(--blue);border-radius:0 10px 10px 0;padding:11px 15px;margin:8px 0;font-size:13.5px"></div>
-    ${excessTable(loc.excess,'Excesses at this location')}
-    ${loc.valuesReviewed?`<div class="stale">📅 <b>Last reviewed in ${esc(loc.valuesReviewed)}.</b>
-      Costs have moved since then — if these figures are no longer realistic, adjust them above.</div>`:''}
-    <div class="calc">
-      <b style="font-size:13px">Is this location insured for enough?</b>
-      <label>Cost to rebuild / replace today (TT$)</label>
-      <input id="av_true_${i}" inputmode="numeric" value="${cur||''}" placeholder="e.g. 5000000">
-      <label>Insured for (TT$)</label>
-      <input id="av_ins_${i}" inputmode="numeric" value="${cur||''}">
-      <label>Example claim (TT$)</label>
-      <input id="av_loss_${i}" inputmode="numeric" value="100000">
-      <div class="calcout ok" id="av_out_${i}"></div>
-    </div>
-  </div>`;
+function locState(i){
+  const r=DATA.risks[i];
+  let total=0, changed=false;
+  DATA.lines.forEach(L=>{
+    const el=document.getElementById(`val_${i}_${L.key}`);
+    if(!el){total+=Number(r.values[L.key])||0;return;}
+    const cur=Number(el.dataset.cur)||0;
+    const v=el.value.trim()===''?cur:numv(el.value);
+    total+=v;
+    const diff=v!==cur;
+    el.classList.toggle('changed',diff);
+    const was=document.getElementById(`was_${i}_${L.key}`);
+    if(was) was.textContent=diff&&cur?`was ${fmtN(cur)}`:'';
+    if(diff) changed=true;
+  });
+  return {total,changed};
 }
 
-function retotal(i){
+function touch(i){
   const r=DATA.risks[i];
-  let t=0, changed=false;
-  DATA.lines.forEach(L=>{
-    const el=document.getElementById(`adj_${i}_${L.key}`);
-    const v=el&&el.value.trim()?numv(el.value):null;
-    if(v!==null){changed=true;t+=v;} else t+=Number(r.values[L.key])||0;
-  });
-  const nt=document.getElementById('newtot_'+i);
-  if(nt) nt.textContent = changed?money(t):'—';
-  const ins=document.getElementById('av_ins_'+i); if(ins&&changed){ins.value=t;avg(i);}
-  // live premium estimate at the client's own rate
+  const st=locState(i);
+  const tot=document.getElementById('tot_'+i);
+  if(tot){tot.textContent=money0(st.total);tot.classList.toggle('changed',st.changed);}
   const est=document.getElementById('est_'+i);
   if(est){
-    if(changed && r.rate){
-      const newPrem=t*r.rate/1000*(1+(r.taxRate||0.06));
-      const diff=newPrem-(Number(r.premium)||0);
+    if(st.changed&&r.rate){
+      const p=st.total*r.rate/1000*(1+(r.taxRate||0.06));
+      const diff=p-(Number(r.premium)||0);
       est.style.display='block';
-      est.innerHTML=`💡 <b>At your adjusted values, this location's premium would be approximately
-        ${money(newPrem)}</b> including Government Tax — ${diff>=0?`about <b>${money(diff)}</b> more`:`about <b>${money(-diff)}</b> less`} than now.
-        <span style="color:#5a6b80">Estimate at your current rate of $${r.rate.toFixed(2)} per $1,000; final terms are confirmed by Guardian.</span>`;
+      est.innerHTML=`💡 At these values this location's premium becomes <b>≈ ${money(p)}</b> incl. tax —
+        ${diff>=0?`about <b>${money(diff)}</b> more`:`about <b>${money(-diff)}</b> less`} than now.
+        <span style="color:var(--muted)">Estimate at your rate of $${r.rate.toFixed(2)}/$1,000; Guardian confirms final terms.</span>`;
     } else est.style.display='none';
+  }
+  const rc=document.getElementById('rc_'+i);
+  if(rc&&st.changed){rc.value=fmtN(st.total);}
+  check(i);
+  bar();
+}
+
+function check(i){
+  const st=locState(i);
+  const rc=document.getElementById('rc_'+i), out=document.getElementById('rcv_'+i);
+  if(!rc||!out) return;
+  const repl=numv(rc.value);
+  if(!repl){out.className='verdict ok';out.textContent='';return;}
+  if(st.total>=repl){
+    out.className='verdict ok';
+    out.textContent=`✅ Insured at full value — a claim here pays in full, subject to your excess.`;
+  } else {
+    const pct=Math.round((1-st.total/repl)*100);
+    out.className='verdict warn';
+    out.innerHTML=`⚠️ You'd carry <b>${pct}%</b> of every claim yourself — a $100,000 loss pays only ${money0(100000*st.total/repl)}. Tap the figures above to close the gap.`;
   }
 }
 
-function avg(i){
-  const tEl=document.getElementById('av_true_'+i);
-  const sEl=document.getElementById('av_ins_'+i);
-  const lEl=document.getElementById('av_loss_'+i);
-  const out=document.getElementById('av_out_'+i);
-  if(!tEl||!sEl||!lEl||!out) return;
-  const t=numv(tEl.value), si=numv(sEl.value), l=numv(lEl.value);
-  if(!t||!l){out.className='calcout ok';out.textContent='Enter your figures above to see the result.';return;}
-  const ratio=Math.min(si/t,1), pays=Math.min(l*ratio,si), gap=l-pays;
-  if(si>=t){
-    out.className='calcout ok';
-    out.innerHTML=`✅ This location is insured at full value — average doesn't bite.<span class="big">Claim pays ${money(Math.min(l,si))}</span>Every dollar of this loss is covered, subject to your excess.`;
-  }else{
-    out.className='calcout bad';
-    out.innerHTML=`⚠️ You'd be self-insuring <b>${Math.round((1-ratio)*100)}%</b> of every claim here.<span class="big">Claim pays ${money(pays)}</span>You would carry <b>${money(gap)}</b> yourself, before the excess. Fix it by adjusting the values above to ${money(t)}.`;
-  }
+function bar(){
+  const pols=policies();
+  if(!pols.length) return;
+  const g=pols[0];
+  let total=0, prem=0, changed=false;
+  g.locs.forEach(l=>{
+    const st=locState(l.idx);
+    total+=st.total;
+    if(st.changed) changed=true;
+    prem+=(st.changed&&l.rate)?st.total*l.rate/1000*(1+(l.taxRate||0.06)):(Number(l.premium)||0);
+  });
+  const b=$('#bar');
+  if(changed){
+    b.style.display='block';
+    $('#barNums').innerHTML=`New total: <b>${money0(total)}</b> · Est. premium: <b>≈ ${money(prem)}</b> incl. tax`;
+  } else b.style.display='none';
 }
 
 function submit(gi,btn){
-  const g = policies()[gi];
+  const g=policies()[gi];
   const sel=document.querySelector(`input[name="inst${gi}"]:checked`);
   const err=document.getElementById('err'+gi); err.style.display='none';
-  if(!sel){err.textContent='Please choose an instruction so we know how to proceed.';err.style.display='block';return;}
+  if(!sel){err.textContent='Choose an instruction so we know how to proceed.';err.style.display='block';return;}
   const mf=document.getElementById('mf_'+gi);
-  if(mf && !mf.checked){err.textContent='Please tick the declaration — it covers your legal duty to disclose material facts.';err.style.display='block';return;}
-  const locations = g.locs.map(loc=>{
+  if(mf&&!mf.checked){err.textContent='Please tick the declaration — it covers your legal duty to disclose material facts.';err.style.display='block';return;}
+  const locations=g.locs.map(loc=>{
     const adjusted={};
     DATA.lines.forEach(L=>{
-      const el=document.getElementById(`adj_${loc.idx}_${L.key}`);
-      if(el&&el.value.trim()) adjusted[L.key]=numv(el.value);
+      const el=document.getElementById(`val_${loc.idx}_${L.key}`);
+      if(!el) return;
+      const cur=Number(el.dataset.cur)||0;
+      const v=el.value.trim()===''?cur:numv(el.value);
+      if(v!==cur) adjusted[L.key]=v;
     });
-    const ok = document.getElementById('addrok_'+loc.idx);
-    const fix = document.getElementById('addrnew_'+loc.idx);
-    const occ = document.getElementById('occ_'+loc.idx);
-    return { rowIndex: loc.rowIndex, location: loc.location, adjusted: adjusted,
-             addressConfirmed: ok ? ok.checked : true,
-             addressCorrection: (ok && !ok.checked && fix) ? fix.value.trim() : '',
-             occupancy: occ ? occ.value.trim() : '' };
+    const ok=document.getElementById('addrok_'+loc.idx);
+    const fix=document.getElementById('addrnew_'+loc.idx);
+    const occ=document.getElementById('occ_'+loc.idx);
+    return {rowIndex:loc.rowIndex,location:loc.location,adjusted:adjusted,
+      addressConfirmed:ok?ok.checked:true,
+      addressCorrection:(ok&&!ok.checked&&fix)?fix.value.trim():'',
+      occupancy:occ?occ.value.trim():''};
   });
   btn.disabled=true;btn.textContent='Sending…';
   google.script.run
     .withSuccessHandler(res=>{
       btn.textContent='Sent ✓';
       document.getElementById('ok'+gi).style.display='block';
+      $('#bar').style.display='none';
       if(res&&res.stage){
-        g.locs.forEach(loc=>{ DATA.risks[loc.idx].stage=res.stage; DATA.risks[loc.idx].progress=res.progress||[]; });
+        g.locs.forEach(loc=>{DATA.risks[loc.idx].stage=res.stage;DATA.risks[loc.idx].progress=res.progress||[];});
         render();
+        window.scrollTo({top:0,behavior:'smooth'});
       }
-      window.scrollTo({top:0,behavior:'smooth'});
     })
     .withFailureHandler(e=>{
       btn.disabled=false;btn.textContent='Send my renewal instruction';
@@ -423,8 +481,8 @@ function submit(gi,btn){
       err.style.display='block';
     })
     .submitPropertyInstruction({
-      token:DATA.token, rowIndex:g.locs[0].rowIndex, policy:g.policy,
-      instruction:sel.value, locations:locations,
+      token:DATA.token,rowIndex:g.locs[0].rowIndex,policy:g.policy,
+      instruction:sel.value,locations:locations,
       notes:document.getElementById('notes'+gi).value,
       email:document.getElementById('email'+gi).value,
       mobile:document.getElementById('mob'+gi).value,

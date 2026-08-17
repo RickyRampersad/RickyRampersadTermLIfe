@@ -196,7 +196,7 @@ function fillPropertyLinks() {
 }
 
 function optBtn_(href, label) {
-  return '<a href="' + esc_(href) + '" style="display:inline-block;margin:3px;padding:9px 16px;border:2px solid #003366;border-radius:8px;color:#003366;font-weight:bold;font-size:13px;text-decoration:none">' + label + '</a>';
+  return '<a href="' + esc_(href) + '" style="display:inline-block;margin:3px;padding:9px 16px;border:2px solid #dca530;border-radius:9px;color:#0d2137;background:#fdf6e3;font-weight:bold;font-size:13px;text-decoration:none">' + label + '</a>';
 }
 
 function propPortalLink_(token) {
@@ -350,9 +350,9 @@ function valueTableHtml_(lines, changed, newTotal, curTotal) {
       '</tr>';
   }).join('');
   return '<table style="border-collapse:collapse;width:100%;max-width:640px;font-size:13.5px">' +
-    '<tr><th style="padding:8px 12px;border:1px solid #e3eaf2;background:#003366;color:#fff;text-align:left">Cover</th>' +
-    '<th style="padding:8px 12px;border:1px solid #e3eaf2;background:#003366;color:#fff;text-align:right">Current Value</th>' +
-    '<th style="padding:8px 12px;border:1px solid #e3eaf2;background:#E8A020;color:#003366;text-align:right">Adjusted Value</th></tr>' +
+    '<tr><th style="padding:8px 12px;border:1px solid #e3eaf2;background:#07131f;color:#fff;text-align:left">Cover</th>' +
+    '<th style="padding:8px 12px;border:1px solid #e3eaf2;background:#07131f;color:#fff;text-align:right">Current Value</th>' +
+    '<th style="padding:8px 12px;border:1px solid #e3eaf2;background:#efc24b;color:#07131f;text-align:right">Adjusted Value</th></tr>' +
     rowsHtml +
     '<tr><td style="padding:8px 12px;border:1px solid #e3eaf2;font-weight:bold;background:#f4f7fa">Totals</td>' +
     '<td style="padding:8px 12px;border:1px solid #e3eaf2;text-align:right;font-weight:bold;background:#f4f7fa">' + fmtMoney_(curTotal) + '</td>' +
@@ -379,7 +379,7 @@ function sendPropertyInstructionToCRMS_(head, policy, instruction, parts, anyCha
 
   var html =
     '<div style="font-family:Arial,sans-serif;font-size:14px;color:#1a2433">' +
-    '<div style="background:#003366;color:#fff;padding:14px 18px;border-radius:8px 8px 0 0">' +
+    '<div style="background:#07131f;color:#fff;padding:14px 18px;border-radius:8px 8px 0 0;border-bottom:3px solid #efc24b">' +
     '<b>PROPERTY RENEWAL INSTRUCTION — received via client portal</b></div>' +
     '<table style="border-collapse:collapse;width:100%;max-width:640px">' +
     tr_('Client', esc_(head.client)) +
@@ -550,7 +550,7 @@ function advancePropertyStage(token, stageKey, note, by) {
         (done ? '<p>Thank you for renewing with us — your documents are on their way. ' +
                 'Please check your schedule carefully and keep it safe.</p>'
               : ctaBtn_(propPortalLink_(token), 'View my renewal progress')) +
-        sig_(), 'Renewal progress'),
+        sig_(), 'Property renewal progress'),
     });
     setPropCell_(r.rowIndex, 'last client update', new Date());
   }
@@ -599,7 +599,7 @@ function dailyPropertyFollowUps() {
           eduBox_('<b>' + esc_(stage.label) + '</b><br>' + esc_(stage.blurb)) +
           ctaBtn_(propPortalLink_(r.token), 'Track my renewal') +
           '<p style="font-size:13px;color:#5a6b80">We will keep you posted until your schedule is delivered.</p>' +
-          sig_(), 'Renewal progress'),
+          sig_(), 'Property renewal progress'),
       });
       if (!(testMode_ && testMode_())) setPropCell_(r.rowIndex, 'last client update', new Date());
       clientNotes++;
@@ -670,7 +670,7 @@ function sendRateReviewEmail_(token, by) {
 
   var html =
     '<div style="font-family:Arial,sans-serif;font-size:14px;color:#1a2433">' +
-    '<div style="background:#003366;color:#fff;padding:14px 18px;border-radius:8px 8px 0 0">' +
+    '<div style="background:#07131f;color:#fff;padding:14px 18px;border-radius:8px 8px 0 0;border-bottom:3px solid #efc24b">' +
     '<b>RATE REVIEW REQUEST — loyal client renewal</b></div>' +
     '<table style="border-collapse:collapse;width:100%;max-width:640px">' +
     tr_('Client', esc_(head.client)) +

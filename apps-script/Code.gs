@@ -66,7 +66,7 @@ var CONFIG = {
   TEST_INBOX: '',
 };
 
-var BRAND = { navy: '#003366', blue: '#005EB8', gold: '#E8A020', light: '#E8F0F8' };
+var BRAND = { navy: '#0d2137', ink: '#07131f', blue: '#00A8C5', teal: '#00CFEA', gold: '#efc24b', gold2: '#dca530', light: '#eef4fa' };
 
 /* ============================ test mode ============================ */
 // The switch lives in Script Properties (not code), so the deployed web app
@@ -808,14 +808,15 @@ function tr_(k, v) {
     k + '</td><td style="padding:7px 12px;border:1px solid #e3eaf2">' + v + '</td></tr>';
 }
 function brandWrap_(inner, tag) {
+  var badge = /propert/i.test(tag || '') ? 'PROPERTY RENEWAL' : 'MOTOR RENEWAL';
   return '<div style="font-family:Arial,sans-serif;font-size:14px;color:#1a2433;max-width:640px">' +
-    '<div style="background:' + BRAND.navy + ';color:#fff;padding:18px 22px;border-radius:10px 10px 0 0">' +
+    '<div style="background:' + BRAND.ink + ';color:#fff;padding:18px 22px;border-radius:12px 12px 0 0;border-bottom:3px solid ' + BRAND.gold + '">' +
     '<table width="100%"><tr>' +
-    '<td width="46" valign="middle"><table cellpadding="0" cellspacing="0"><tr><td style="width:38px;height:38px;background:' + BRAND.gold + ';border-radius:8px 8px 14px 14px;text-align:center;font-size:22px;font-weight:bold;color:' + BRAND.navy + '">✓</td></tr></table></td>' +
-    '<td valign="middle" style="padding-left:10px"><b style="font-size:18px">Guardian Renewals</b><br>' +
-    '<span style="color:#b7c9de;font-size:12px">' + (tag || 'Policy renewal') + ' · by Ricky Rampersad</span></td>' +
-    '<td align="right" style="color:' + BRAND.gold + ';font-size:11px;letter-spacing:2px"><b>MOTOR RENEWAL</b></td></tr></table></div>' +
-    '<div style="border:1px solid #dde5ee;border-top:none;padding:20px 22px;border-radius:0 0 10px 10px">' + inner +
+    '<td width="46" valign="middle"><table cellpadding="0" cellspacing="0"><tr><td style="width:38px;height:38px;background:' + BRAND.gold + ';border-radius:8px 8px 15px 15px;text-align:center;font-size:22px;font-weight:bold;color:' + BRAND.ink + '">✓</td></tr></table></td>' +
+    '<td valign="middle" style="padding-left:12px"><b style="font-size:17px;color:' + BRAND.gold + ';letter-spacing:.3px">Ricky Rampersad Branch</b><br>' +
+    '<span style="color:#a9bbcf;font-size:12px">' + (tag || 'Policy renewal') + ' · Guardian Group</span></td>' +
+    '<td align="right" style="color:' + BRAND.teal + ';font-size:11px;letter-spacing:2px"><b>' + badge + '</b></td></tr></table></div>' +
+    '<div style="border:1px solid #dde5ee;border-top:none;padding:20px 22px;border-radius:0 0 12px 12px">' + inner +
     '<p style="color:#8a97a8;font-size:11px;border-top:1px solid #e3eaf2;padding-top:10px;margin-top:18px">' +
     'This is a plain-language summary for your information. Full terms are in your policy wording and schedule, which govern in all cases. Renewal terms are subject to confirmation.</p>' +
     '</div></div>';
