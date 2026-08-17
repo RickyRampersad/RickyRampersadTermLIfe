@@ -228,61 +228,84 @@ function progressFor_(token, location) {
 
 /* ============================ client submission ============================ */
 
-/** Called from PropertyPortal.html via google.script.run. */
+/**
+ * Called from PropertyPortal.html. One submission per POLICY — a policy can
+ * cover several locations, and the client instructs on all of them together.
+ * payload.locations = [{rowIndex, location, adjusted:{building,stock,...}}]
+ */
 function submitPropertyInstruction(payload) {
   payload = payload || {};
   var token = String(payload.token || '').trim();
   var rows = propByToken_(token);
   if (!rows) throw new Error('We could not find your property renewal. Please use the link from your renewal email.');
 
-  var r = rows.filter(function (x) { return String(x.rowIndex) === String(payload.rowIndex); })[0] || rows[0];
   var instruction = String(payload.instruction || '').slice(0, 120);
-  var adjusted = payload.adjusted || {};
   var notes = String(payload.notes || '').slice(0, 2000);
-  var email = String(payload.email || r.email || '').slice(0, 200);
-  var mobile = String(payload.mobile || r.mobile || '').slice(0, 60);
+  var locs = payload.locations && payload.locations.length ? payload.locations
+           : [{ rowIndex: payload.rowIndex, adjusted: payload.adjusted || {} }];
 
-  // Build the value comparison exactly as the branch presents it.
-  var lines = PROP.LINES.map(function (L) {
-    var cur = r.values[L.key] || 0;
-    var adj = adjusted[L.key] ? num_(adjusted[L.key]) : '';
-    return { label: L.label, current: cur, adjusted: adj };
+  // Resolve each submitted location back to its sheet row.
+  var parts = [];
+  locs.forEach(function (L) {
+    var r = rows.filter(function (x) { return String(x.rowIndex) === String(L.rowIndex); })[0];
+    if (!r) return;
+    var lines = PROP.LINES.map(function (D) {
+      var cur = r.values[D.key] || 0;
+      var adj = (L.adjusted && L.adjusted[D.key]) ? num_(L.adjusted[D.key]) : '';
+      return { label: D.label, current: cur, adjusted: adj };
+    });
+    var curTotal = lines.reduce(function (s2, l) { return s2 + l.current; }, 0);
+    var newTotal = lines.reduce(function (s2, l) { return s2 + (l.adjusted !== '' ? l.adjusted : l.current); }, 0);
+    var changed = lines.some(function (l) { return l.adjusted !== '' && l.adjusted !== l.current; });
+    parts.push({ row: r, lines: lines, curTotal: curTotal, newTotal: newTotal, changed: changed });
   });
-  var newTotal = lines.reduce(function (s, l) { return s + (l.adjusted !== '' ? l.adjusted : l.current); }, 0);
-  var changed = lines.some(function (l) { return l.adjusted !== '' && l.adjusted !== l.current; });
+  if (!parts.length) throw new Error('We could not match those locations to your policy.');
 
-  appendResponse_({
-    'Timestamp': new Date(), 'Token': token, 'Client': r.client,
-    'Policy #': r.policy || '(not on file)', 'Coverage': 'Property — ' + (r.occupancy || 'risk'),
-    'Next Due': r.renewalDate, 'Instruction': instruction,
-    'Changes / Notes': notes, 'Email': email, 'Mobile': mobile,
-    'Risk Location': r.location,
-    'Current Total Value': r.total || lines.reduce(function (s, l) { return s + l.current; }, 0),
-    'Adjusted Total Value': changed ? newTotal : '',
-    'Emailed To': PROP.CRMS_TO + ' cc ' + PROP.CRMS_CC.join(','),
-    'Status': testMode_ && testMode_() ? 'TEST' : 'Received',
+  var head = parts[0].row;
+  var email = String(payload.email || head.email || '').slice(0, 200);
+  var mobile = String(payload.mobile || head.mobile || '').slice(0, 60);
+  var policy = String(payload.policy || head.policy || '');
+  var anyChanged = parts.some(function (p) { return p.changed; });
+  var polCur = parts.reduce(function (s2, p) { return s2 + p.curTotal; }, 0);
+  var polNew = parts.reduce(function (s2, p) { return s2 + p.newTotal; }, 0);
+  var isTest = (typeof testMode_ === 'function') && testMode_();
+
+  parts.forEach(function (p) {
+    appendResponse_({
+      'Timestamp': new Date(), 'Token': token, 'Client': p.row.client,
+      'Policy #': policy || '(not on file)', 'Coverage': 'Property — ' + (p.row.occupancy || 'risk'),
+      'Next Due': p.row.renewalDate, 'Instruction': instruction,
+      'Changes / Notes': notes, 'Email': email, 'Mobile': mobile,
+      'Risk Location': p.row.location,
+      'Current Total Value': p.curTotal,
+      'Adjusted Total Value': p.changed ? p.newTotal : '',
+      'Emailed To': PROP.CRMS_TO + ' cc ' + PROP.CRMS_CC.join(','),
+      'Status': isTest ? 'TEST' : 'Received',
+    });
+    if (!isTest) {
+      setPropCell_(p.row.rowIndex, 'renewal status', instruction + ' — ' + nowStamp_());
+      setPropCell_(p.row.rowIndex, 'stage', 'instructed');
+      setPropCell_(p.row.rowIndex, 'stage updated', new Date());
+      setPropCell_(p.row.rowIndex, 'last client update', new Date());
+    }
   });
 
-  if (!(testMode_ && testMode_())) {
-    setPropCell_(r.rowIndex, 'renewal status', instruction + ' — ' + nowStamp_());
-    setPropCell_(r.rowIndex, 'stage', 'instructed');
-    setPropCell_(r.rowIndex, 'stage updated', new Date());
-    setPropCell_(r.rowIndex, 'last client update', new Date());
-    propProgressSheet_().appendRow([new Date(), token, r.client, 'instructed',
-      instruction + (changed ? ' · values adjusted' : ' · values unchanged'), 'client']);
+  if (!isTest) {
+    propProgressSheet_().appendRow([new Date(), token, head.client, 'instructed',
+      instruction + ' · ' + parts.length + ' location(s)' +
+      (anyChanged ? ' · values adjusted to ' + fmtMoney_(polNew) : ' · values unchanged'), 'client']);
   }
+  logActivity_(token, head.client, 'property-instruction', 'client',
+    instruction + ' · ' + parts.length + ' location(s)' + (anyChanged ? ' · ' + fmtMoney_(polNew) : ''));
 
-  logActivity_(token, r.client, 'property-instruction', 'client',
-    instruction + (changed ? ' · adjusted total ' + fmtMoney_(newTotal) : ''));
+  sendPropertyInstructionToCRMS_(head, policy, instruction, parts, anyChanged, polCur, polNew, notes, email, mobile, token);
+  if (email) sendPropertyThankYou_(head, policy, instruction, anyChanged, polNew, parts.length, email, token);
 
-  sendPropertyInstructionToCRMS_(r, instruction, lines, changed, newTotal, notes, email, mobile, token);
-  if (email) sendPropertyThankYou_(r, instruction, changed, newTotal, email, token);
+  createTask_('Property renewal — ' + head.client + ' (' + (policy || 'policy') + ', ' +
+    parts.length + ' location(s)) — client instructed',
+    '', head.assignedTo || '', head.client, token, 'system');
 
-  // Open the file with the team.
-  createTask_('Property renewal — ' + r.client + ' (' + (r.location || 'risk') + ') — client instructed',
-    '', r.assignedTo || '', r.client, token, 'system');
-
-  return { ok: true, stage: 'instructed', progress: progressFor_(token, r.location) };
+  return { ok: true, stage: 'instructed', progress: progressFor_(token, head.location) };
 }
 
 function valueTableHtml_(lines, changed, newTotal, curTotal) {
@@ -306,27 +329,32 @@ function valueTableHtml_(lines, changed, newTotal, curTotal) {
       (changed ? fmtMoney_(newTotal) : '—') + '</td></tr></table>';
 }
 
-function sendPropertyInstructionToCRMS_(r, instruction, lines, changed, newTotal, notes, email, mobile, token) {
-  var curTotal = r.total || lines.reduce(function (s, l) { return s + l.current; }, 0);
+function sendPropertyInstructionToCRMS_(head, policy, instruction, parts, anyChanged, polCur, polNew, notes, email, mobile, token) {
+  var sections = parts.map(function (p) {
+    return '<p style="margin:16px 0 6px"><b>📍 ' + esc_(p.row.location || 'Location') + '</b>' +
+      (p.row.occupancy ? ' <span style="color:#5a6b80">· ' + esc_(p.row.occupancy) + '</span>' : '') +
+      ' — premium ' + fmtMoney_(p.row.premium) + '</p>' +
+      valueTableHtml_(p.lines, p.changed, p.newTotal, p.curTotal);
+  }).join('');
+
   var html =
     '<div style="font-family:Arial,sans-serif;font-size:14px;color:#1a2433">' +
     '<div style="background:#003366;color:#fff;padding:14px 18px;border-radius:8px 8px 0 0">' +
     '<b>PROPERTY RENEWAL INSTRUCTION — received via client portal</b></div>' +
     '<table style="border-collapse:collapse;width:100%;max-width:640px">' +
-    tr_('Client', esc_(r.client)) +
-    tr_('Contact', esc_(r.contact)) +
-    tr_('Risk location', esc_(r.location)) +
-    (r.occupancy ? tr_('Occupancy', esc_(r.occupancy)) : '') +
-    tr_('Policy #', esc_(r.policy || '(not on file)')) +
-    tr_('Renewal date', esc_(r.renewalDate)) +
-    tr_('Current premium', fmtMoney_(r.premium)) +
+    tr_('Client', esc_(head.client)) +
+    tr_('Contact', esc_(head.contact)) +
+    tr_('Policy #', esc_(policy || '(not on file)')) +
+    tr_('Renewal date', esc_(head.renewalDate)) +
+    tr_('Locations on this policy', String(parts.length)) +
+    tr_('Total premium on record', fmtMoney_(parts.reduce(function (s, p) { return s + (Number(p.row.premium) || 0); }, 0))) +
     tr_('<b>INSTRUCTION</b>', '<b>' + esc_(instruction) + '</b>') +
-    (changed ? tr_('<b>VALUES ADJUSTED</b>', '<b>Yes — new total ' + fmtMoney_(newTotal) + ' (was ' + fmtMoney_(curTotal) + ')</b>') : tr_('Values', 'No change requested')) +
+    (anyChanged
+      ? tr_('<b>VALUES ADJUSTED</b>', '<b>Yes — policy total ' + fmtMoney_(polNew) + ' (was ' + fmtMoney_(polCur) + ')</b>')
+      : tr_('Values', 'No change requested')) +
     (notes ? tr_('Client notes', esc_(notes)) : '') +
     tr_('Client email', esc_(email || '(none)')) + tr_('Client mobile', esc_(mobile || '(none)')) +
-    '</table>' +
-    '<p style="margin:16px 0 8px"><b>Schedule of values as instructed:</b></p>' +
-    valueTableHtml_(lines, changed, newTotal, curTotal) +
+    '</table>' + sections +
     '<p style="color:#5a6b80;font-size:12px;margin-top:14px">Submitted by the insured through the Ricky Rampersad Branch renewal portal (ref ' + esc_(token) + '). ' +
     'Please action the renewal and reply-all with terms so the client can be updated.</p></div>';
 
@@ -335,20 +363,21 @@ function sendPropertyInstructionToCRMS_(r, instruction, lines, changed, newTotal
     cc: PROP.CRMS_CC.filter(String).join(','),
     replyTo: email || undefined,
     name: CONFIG.FROM_NAME,
-    subject: 'PROPERTY RENEWAL INSTRUCTION — ' + r.client + (r.policy ? ' — ' + r.policy : '') +
-             ' — ' + instruction + (changed ? ' (VALUES ADJUSTED)' : ''),
+    subject: 'PROPERTY RENEWAL INSTRUCTION — ' + head.client + (policy ? ' — ' + policy : '') +
+             ' — ' + parts.length + ' location(s)' + (anyChanged ? ' (VALUES ADJUSTED)' : ''),
     htmlBody: html,
   });
 }
 
-function sendPropertyThankYou_(r, instruction, changed, newTotal, email, token) {
+function sendPropertyThankYou_(r, policy, instruction, changed, newTotal, nLoc, email, token) {
   var link = propPortalLink_(token);
   sendMail_({
     to: email, name: CONFIG.FROM_NAME,
     subject: 'Thank you — your property renewal instruction is with our team',
     htmlBody: brandWrap_(
       '<p>Dear ' + esc_((r.contact || r.client).split(' ')[0]) + ',</p>' +
-      '<p>Thank you — we have your instruction for <b>' + esc_(r.location) + '</b>: <b>' + esc_(instruction) + '</b>' +
+      '<p>Thank you — we have your instruction for <b>' + esc_(policy ? 'policy ' + policy : r.location) + '</b>' +
+      (nLoc > 1 ? ' covering <b>' + nLoc + ' locations</b>' : '') + ': <b>' + esc_(instruction) + '</b>' +
       (changed ? ', with your adjusted values totalling <b>' + fmtMoney_(newTotal) + '</b>' : '') + '.</p>' +
       '<p>It has gone straight to our renewals team at Guardian, and your file is now open. ' +
       'You can follow every step online — we will also email you an update as things move.</p>' +

@@ -123,16 +123,36 @@ function premTrend(r){
   const max = Math.max(...h.map(x=>x.amount));
   const first = h[0], last = h[h.length-1];
   const pct = first.amount ? Math.round(100*(last.amount/first.amount - 1)) : 0;
-  return `<details class="hist"><summary>📈 Your premium over time (${h.length} renewals)</summary>
+  return `<details class="hist"><summary>📈 This policy's premium over time (${h.length} renewals)</summary>
     <table class="trend"><tr><th>Year</th><th>Premium</th><th style="width:45%"></th></tr>
     ${h.map(x=>`<tr><td>${esc(x.year)}</td><td class="n">${money(x.amount)}</td>
       <td><span class="bar" style="width:${Math.round(100*x.amount/max)}%"></span></td></tr>`).join('')}
     </table>
     <div class="note">${pct>0?`Your premium has moved <b>+${pct}%</b> since ${esc(first.year)}.`:
       pct<0?`Your premium is <b>${pct}%</b> versus ${esc(first.year)}.`:'Your premium has held steady.'}
-      Premiums follow the sums insured, the rate, and your claims record — if your values are out of date,
-      you may be paying for cover that no longer matches the risk.</div></details>`;
+      Premiums follow the sums insured, the rate, your claims record — and how many locations the policy
+      covers. If your values are out of date, you may be paying for cover that no longer matches the risk.</div></details>`;
 }
+
+/* Group the client's risks into POLICIES — a policy can cover several
+   locations, and that is how the client thinks about their renewal. */
+function policies(){
+  const key = r => (r.policy||'(no policy)').replace(/\s+/g,'').toUpperCase();
+  const map = new Map();
+  DATA.risks.forEach((r,i)=>{
+    const k = key(r);
+    if(!map.has(k)) map.set(k, {policy:r.policy||'', carrier:r.carrier, renewalDate:r.renewalDate,
+      days:r.days, excess:r.excess, since:r.since, years:r.years, stage:r.stage,
+      progress:r.progress, premiumHistory:r.premiumHistory, locs:[]});
+    const g = map.get(k);
+    g.locs.push({...r, idx:i});
+    if(r.premiumHistory && r.premiumHistory.length > (g.premiumHistory||[]).length) g.premiumHistory = r.premiumHistory;
+    if(!g.excess && r.excess) g.excess = r.excess;
+  });
+  return [...map.values()];
+}
+
+function locTotal(loc){ return DATA.lines.reduce((s,L)=>s+(Number(loc.values[L.key])||0),0); }
 
 function render(){
   const app = $('#app');
@@ -141,86 +161,70 @@ function render(){
       <p style="margin-top:10px;color:var(--ink2)">Please use the personal link from your renewal email, or contact ${esc(DATA.agent.name)}${DATA.agent.phone?' at '+esc(DATA.agent.phone):''} for a fresh link.</p></div>`;
     return;
   }
+  const pols = policies();
+  const nLoc = DATA.risks.length;
   let html = `<div class="card"><h2>Welcome, ${esc(DATA.firstName)} 👋</h2>
-    <p style="font-size:13.5px;color:var(--ink2)">Here ${DATA.risks.length===1?'is your property':'are your '+DATA.risks.length+' properties'} due for renewal.
-    Please check your sums insured carefully — then tell us how to proceed.</p></div>`;
+    <p style="font-size:13.5px;color:var(--ink2)">You have ${pols.length===1?'one property policy':pols.length+' property policies'} with us${nLoc>pols.length?`, covering ${nLoc} locations`:''}.
+    Please check the sums insured for each location — then tell us how to proceed.</p></div>`;
 
-  DATA.risks.forEach((r,i)=>{
-    const curTotal = DATA.lines.reduce((s,L)=>s+(Number(r.values[L.key])||0),0);
-    html += tracker(r);
+  pols.forEach((g,gi)=>{
+    const polPremium = g.locs.reduce((s,l)=>s+(Number(l.premium)||0),0);
+    const polValue   = g.locs.reduce((s,l)=>s+locTotal(l),0);
+    html += tracker(g);
     html += `<div class="card">
-      <h2>${esc(r.location||'Your property')} ${dueChip(r)}</h2>
-      <div class="loc">${r.occupancy?esc(r.occupancy)+' · ':''}${r.policy?'Policy '+esc(r.policy):''}${r.carrier?' · '+esc(r.carrier):''} · renews <b>${esc(r.renewalDate)}</b></div>
+      <h2>${g.policy?'Policy '+esc(g.policy):'Your property policy'} ${dueChip(g)}</h2>
+      <div class="loc">${esc(g.carrier||'Guardian General')} · renews <b>${esc(g.renewalDate)}</b> · ${g.locs.length} location${g.locs.length===1?'':'s'}</div>
+      ${g.years?`<div class="loyal">🏆 <b>Thank you for ${esc(g.years)} years with us</b>${g.since?` — insured since ${esc(g.since)}`:''}. We value the relationship, and we want your cover to be right.</div>`:''}
 
-      ${r.years?`<div class="loyal">🏆 <b>Thank you for ${esc(r.years)} years with us</b>${r.since?` — insured since ${esc(r.since)}`:''}. We value the relationship, and we want your cover to be right.</div>`:''}
-
-      <div class="step">Step 1 · Check your sums insured</div>
-      <table class="vals">
-        <tr><th>Cover</th><th style="text-align:right">Current Value</th><th class="adj" style="text-align:right">Your Adjusted Value</th></tr>
-        ${DATA.lines.map(L=>`<tr>
-          <td>${esc(L.label)}</td>
-          <td class="n">${r.values[L.key]?money(r.values[L.key]):'—'}</td>
-          <td><input id="adj_${i}_${L.key}" inputmode="numeric" placeholder="no change" data-risk="${i}"></td>
-        </tr>`).join('')}
-        <tr class="tot"><td>Totals</td><td class="n">${money(curTotal)}</td><td class="n" id="newtot_${i}">—</td></tr>
+      <table class="trend" style="margin:12px 0">
+        <tr><th>Total sums insured</th><th>Total premium</th></tr>
+        <tr><td class="n" style="font-weight:800;font-size:15px">${money(polValue)}</td>
+            <td class="n" style="font-weight:800;font-size:15px">${money(polPremium)}</td></tr>
       </table>
-      <p style="font-size:13px;color:var(--ink2)">Current premium at this level of cover: <b>${money(r.premium)}</b>
-      <span style="color:#8a97a8">(renewal terms may vary)</span>${r.excess?`<br>Excess on this policy: <b>${esc(r.excess)}</b>`:''}</p>
+      ${g.excess?`<p style="font-size:13px;color:var(--ink2)">Excess on this policy: <b>${esc(g.excess)}</b></p>`:''}
+      ${premTrend(g)}
 
-      ${r.valuesReviewed?`<div class="stale">📅 <b>Your sums insured were last reviewed in ${esc(r.valuesReviewed)}.</b>
-        Building and replacement costs have moved since then — if these figures no longer reflect what it would
-        cost to rebuild or restock today, adjust them above.</div>`:''}
-      ${premTrend(r)}
+      <div class="step">Step 1 · Check each location</div>
+      ${g.locs.map(loc=>locationBlock(loc)).join('')}
 
       <div class="step">Step 2 · The two things that decide what a claim pays</div>
       <div class="warnbox"><b>⚠️ The average clause — the most important thing on this page.</b><br>
-        If your property is insured for <u>less</u> than it would cost to rebuild or replace today, the insurer
-        reduces <b>every</b> claim in the same proportion — not just total losses. Insure at 70% of the true value
-        and a $100,000 claim pays <b>$70,000</b>. You carry the rest.</div>
-      <div class="calc">
-        <b style="font-size:13.5px">See it on your own numbers</b>
-        <label>What would it cost to rebuild / replace today? (TT$)</label>
-        <input id="av_true_${i}" inputmode="numeric" value="${curTotal||''}" placeholder="e.g. 5000000">
-        <label>Insured for (TT$) — your total above</label>
-        <input id="av_ins_${i}" inputmode="numeric" value="${curTotal||''}">
-        <label>Example claim (TT$)</label>
-        <input id="av_loss_${i}" inputmode="numeric" value="100000">
-        <div class="calcout ok" id="av_out_${i}"></div>
-      </div>
+        If a location is insured for <u>less</u> than it would cost to rebuild or replace today, the insurer
+        reduces <b>every</b> claim on that location in the same proportion — not just total losses. Insure at
+        70% of the true value and a $100,000 claim pays <b>$70,000</b>. You carry the rest.
+        ${g.locs.length>1?'<br><br><b>With more than one location, average is applied to each one separately</b> — so every location needs to be right on its own.':''}</div>
       <div class="edu"><b>💡 Your excess</b> — the first portion of every claim is yours to carry, and it applies
-        each time you claim. A higher excess lowers your premium but raises what you pay when something happens.
-        Ask us what makes sense for this property.</div>
+        each time you claim. A higher excess lowers your premium but raises what you pay when something happens.</div>
 
       <div class="step">Step 3 · What your property policy protects</div>
       <div class="benefits"><h3>🏠 Your cover at a glance</h3><ul>
         <li><b>Building</b> — the structure itself, insured for <b>rebuilding cost</b>, not market value</li>
-        <li><b>General contents</b> — furniture, appliances and belongings inside</li>
-        ${r.values.stock?'<li><b>Stock</b> — trading stock at the risk location</li>':''}
-        ${r.values.plant?'<li><b>Plant, equipment &amp; machinery</b> — the tools your business runs on</li>':''}
-        ${r.values.electronic?'<li><b>Electronic equipment</b> — computers, systems and electronics</li>':''}
-        <li><b>Perils</b> — fire, lightning, explosion, and (where added) flood, hurricane, earthquake, burglary,
-            escape of water, riot &amp; malicious damage</li>
-        <li><b>Liability</b> — your legal liability to others arising from the property</li>
+        <li><b>General contents</b> — furniture, fittings and belongings inside</li>
+        <li><b>Stock</b> — trading stock held at the location</li>
+        <li><b>Plant, equipment &amp; machinery</b> — the equipment your business runs on</li>
+        <li><b>Electronic equipment</b> — computers, systems and electronics</li>
+        <li><b>Perils</b> — fire, lightning, explosion, and (where added) flood, hurricane, earthquake,
+            burglary, escape of water, riot &amp; malicious damage</li>
       </ul>
       <div style="margin-top:8px;padding-top:8px;border-top:1px solid #d5e2f0;font-size:12.5px">
-        Building values should reflect <b>today's construction costs</b> — materials and labour have moved a lot.
-        If you have renovated, extended, or added equipment, this is the moment to say so.</div></div>
+        Values should reflect <b>today's</b> costs. If you have renovated, extended, restocked or added
+        equipment, this is the moment to say so.</div></div>
 
-      <div class="step">Step 4 · Your instruction</div>
-      <label class="opt"><input type="radio" name="inst${i}" value="RENEW — existing terms">
+      <div class="step">Step 4 · Your instruction for this policy</div>
+      <label class="opt"><input type="radio" name="inst${gi}" value="RENEW — existing terms">
         <div><b>✅ Renew on existing terms</b><span>My values are correct — proceed with the renewal</span></div></label>
-      <label class="opt"><input type="radio" name="inst${i}" value="RENEW — adjusted values">
+      <label class="opt"><input type="radio" name="inst${gi}" value="RENEW — adjusted values">
         <div><b>✏️ Renew with my adjusted values</b><span>Use the adjusted figures I entered above</span></div></label>
-      <label class="opt"><input type="radio" name="inst${i}" value="PLEASE CALL ME">
+      <label class="opt"><input type="radio" name="inst${gi}" value="PLEASE CALL ME">
         <div><b>📞 Please call me first</b><span>I'd like to discuss before renewing</span></div></label>
 
-      <label class="fld">Anything we should know? (renovations, new equipment, change of use…)</label>
-      <textarea id="notes${i}" placeholder="e.g. Added a new storage building last year; upgraded the electrical panel."></textarea>
-      <label class="fld">Best email</label><input type="email" id="email${i}" value="${esc(r.email)}">
-      <label class="fld">Best mobile</label><input type="text" id="mob${i}" value="${esc(r.mobile)}">
-      <button class="btn" data-submit="${i}">Send my renewal instruction</button>
-      <div class="ok" id="ok${i}">✓ Sent! Your instruction is with our renewals team — a confirmation email is on its way, and you can track progress right here.</div>
-      <div class="err" id="err${i}"></div>
+      <label class="fld">Anything we should know? (renovations, new equipment, a location to add or remove…)</label>
+      <textarea id="notes${gi}" placeholder="e.g. We added a storage building at Waterloo Road; stock at Chase Village is now much higher."></textarea>
+      <label class="fld">Best email</label><input type="email" id="email${gi}" value="${esc(g.locs[0].email)}">
+      <label class="fld">Best mobile</label><input type="text" id="mob${gi}" value="${esc(g.locs[0].mobile)}">
+      <button class="btn" data-submit="${gi}">Send my renewal instruction</button>
+      <div class="ok" id="ok${gi}">✓ Sent! Your instruction is with our renewals team — a confirmation email is on its way, and you can track progress right here.</div>
+      <div class="err" id="err${gi}"></div>
     </div>`;
   });
   app.innerHTML = html;
@@ -239,50 +243,60 @@ function render(){
   });
 }
 
-function retotal(i){
-  const r=DATA.risks[i];
-  let t=0, changed=false;
-  DATA.lines.forEach(L=>{
-    const el=document.getElementById(`adj_${i}_${L.key}`);
-    const v=el&&el.value.trim()?numv(el.value):null;
-    if(v!==null){changed=true;t+=v;} else t+=Number(r.values[L.key])||0;
-  });
-  document.getElementById('newtot_'+i).textContent = changed?money(t):'—';
-  const ins=document.getElementById('av_ins_'+i); if(ins&&changed){ins.value=t;avg(i);}
+/* One location inside a policy card: its values, and its own average check. */
+function locationBlock(loc){
+  const i = loc.idx, cur = locTotal(loc);
+  return `<div style="border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0;background:#fbfdff">
+    <div style="font-weight:800;color:var(--navy);font-size:14.5px">📍 ${esc(loc.location||'Location')}</div>
+    ${loc.occupancy?`<div class="loc" style="margin-bottom:6px">${esc(loc.occupancy)}</div>`:''}
+    <table class="vals">
+      <tr><th>Cover</th><th style="text-align:right">Current Value</th><th class="adj" style="text-align:right">Your Adjusted Value</th></tr>
+      ${DATA.lines.map(L=>`<tr>
+        <td>${esc(L.label)}</td>
+        <td class="n">${loc.values[L.key]?money(loc.values[L.key]):'—'}</td>
+        <td><input id="adj_${i}_${L.key}" inputmode="numeric" placeholder="no change" data-risk="${i}"></td>
+      </tr>`).join('')}
+      <tr class="tot"><td>Totals</td><td class="n">${money(cur)}</td><td class="n" id="newtot_${i}">—</td></tr>
+    </table>
+    <p style="font-size:12.5px;color:var(--ink2)">Premium for this location: <b>${money(loc.premium)}</b>
+      <span style="color:#8a97a8">(renewal terms may vary)</span></p>
+    ${loc.valuesReviewed?`<div class="stale">📅 <b>Last reviewed in ${esc(loc.valuesReviewed)}.</b>
+      Costs have moved since then — if these figures are no longer realistic, adjust them above.</div>`:''}
+    <div class="calc">
+      <b style="font-size:13px">Is this location insured for enough?</b>
+      <label>Cost to rebuild / replace today (TT$)</label>
+      <input id="av_true_${i}" inputmode="numeric" value="${cur||''}" placeholder="e.g. 5000000">
+      <label>Insured for (TT$)</label>
+      <input id="av_ins_${i}" inputmode="numeric" value="${cur||''}">
+      <label>Example claim (TT$)</label>
+      <input id="av_loss_${i}" inputmode="numeric" value="100000">
+      <div class="calcout ok" id="av_out_${i}"></div>
+    </div>
+  </div>`;
 }
 
-function avg(i){
-  const t=numv(document.getElementById('av_true_'+i).value);
-  const s=numv(document.getElementById('av_ins_'+i).value);
-  const l=numv(document.getElementById('av_loss_'+i).value);
-  const out=document.getElementById('av_out_'+i);
-  if(!t||!l){out.className='calcout ok';out.textContent='Enter your figures above to see the result.';return;}
-  const ratio=Math.min(s/t,1), pays=Math.min(l*ratio,s), gap=l-pays;
-  if(s>=t){
-    out.className='calcout ok';
-    out.innerHTML=`✅ You're insured at full value — average doesn't bite.<span class="big">Claim pays ${money(Math.min(l,s))}</span>Every dollar of this loss is covered, subject to your excess.`;
-  }else{
-    out.className='calcout bad';
-    out.innerHTML=`⚠️ You'd be self-insuring <b>${Math.round((1-ratio)*100)}%</b> of every claim.<span class="big">Claim pays ${money(pays)}</span>You would carry <b>${money(gap)}</b> yourself, before the excess. Fix it by adjusting your values above to ${money(t)}.`;
-  }
-}
-
-function submit(i,btn){
-  const r=DATA.risks[i];
-  const sel=document.querySelector(`input[name="inst${i}"]:checked`);
-  const err=document.getElementById('err'+i); err.style.display='none';
+function submit(gi,btn){
+  const g = policies()[gi];
+  const sel=document.querySelector(`input[name="inst${gi}"]:checked`);
+  const err=document.getElementById('err'+gi); err.style.display='none';
   if(!sel){err.textContent='Please choose an instruction so we know how to proceed.';err.style.display='block';return;}
-  const adjusted={};
-  DATA.lines.forEach(L=>{
-    const el=document.getElementById(`adj_${i}_${L.key}`);
-    if(el&&el.value.trim()) adjusted[L.key]=numv(el.value);
+  const locations = g.locs.map(loc=>{
+    const adjusted={};
+    DATA.lines.forEach(L=>{
+      const el=document.getElementById(`adj_${loc.idx}_${L.key}`);
+      if(el&&el.value.trim()) adjusted[L.key]=numv(el.value);
+    });
+    return { rowIndex: loc.rowIndex, location: loc.location, adjusted: adjusted };
   });
   btn.disabled=true;btn.textContent='Sending…';
   google.script.run
     .withSuccessHandler(res=>{
       btn.textContent='Sent ✓';
-      document.getElementById('ok'+i).style.display='block';
-      if(res&&res.stage){ DATA.risks[i].stage=res.stage; DATA.risks[i].progress=res.progress||[]; render(); }
+      document.getElementById('ok'+gi).style.display='block';
+      if(res&&res.stage){
+        g.locs.forEach(loc=>{ DATA.risks[loc.idx].stage=res.stage; DATA.risks[loc.idx].progress=res.progress||[]; });
+        render();
+      }
       window.scrollTo({top:0,behavior:'smooth'});
     })
     .withFailureHandler(e=>{
@@ -291,10 +305,11 @@ function submit(i,btn){
       err.style.display='block';
     })
     .submitPropertyInstruction({
-      token:DATA.token, rowIndex:r.rowIndex, instruction:sel.value, adjusted:adjusted,
-      notes:document.getElementById('notes'+i).value,
-      email:document.getElementById('email'+i).value,
-      mobile:document.getElementById('mob'+i).value,
+      token:DATA.token, rowIndex:g.locs[0].rowIndex, policy:g.policy,
+      instruction:sel.value, locations:locations,
+      notes:document.getElementById('notes'+gi).value,
+      email:document.getElementById('email'+gi).value,
+      mobile:document.getElementById('mob'+gi).value,
     });
 }
 render();
