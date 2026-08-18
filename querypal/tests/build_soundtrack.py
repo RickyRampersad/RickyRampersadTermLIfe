@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
-"""Soundtrack for the Query Pal demo: piper narration on the caption timeline,
+"""Soundtrack for the Query Pal demo: Kokoro narration on the caption timeline,
 under an original motivational score synthesized here (no licensing to clear).
-Reads demo/timeline.json, writes demo/soundtrack.wav aligned to the raw video."""
-import json, math, pathlib, subprocess, wave
+Reads demo/timeline.json, writes demo/soundtrack.wav aligned to the raw video.
+Needs: pip install kokoro torch(cpu) soundfile ; apt install espeak-ng"""
+import json, math, pathlib, wave
 import numpy as np
+from kokoro import KPipeline
 
 HERE = pathlib.Path(__file__).parent
 DEMO = HERE / 'demo'
-VOICE = pathlib.Path('/tmp/claude-0/-home-user-RickyRampersadTermLIfe/9e8333af-59ba-541d-8884-024f96e16bab/scratchpad/voices/en_US-lessac-medium.onnx')
+VOICE = 'af_heart'                                # Kokoro's best-graded narrator
 SR = 44100
+PIPE = KPipeline(lang_code='a', repo_id='hexgrad/Kokoro-82M')
 
 marks = json.load(open(DEMO / 'timeline.json'))
 T = {i: m['t'] / 1000.0 for i, m in enumerate(marks)}
@@ -39,14 +42,9 @@ LINES = {
   22: "Logged. Routed. Chased. Resolved. Query Pal — service, delivered on time.",
 }
 
-def tts(text, out):
-    subprocess.run(['python3', '-m', 'piper', '--model', str(VOICE),
-                    '--output_file', str(out)], input=text.encode(),
-                   check=True, capture_output=True)
-    with wave.open(str(out)) as w:
-        sr = w.getframerate()
-        x = np.frombuffer(w.readframes(w.getnframes()), dtype=np.int16).astype(np.float64) / 32768.0
-    n = int(len(x) * SR / sr)                     # 22050 -> 44100
+def tts(text, out=None):
+    x = np.concatenate([a.numpy() for _, _, a in PIPE(text, voice=VOICE)]).astype(np.float64)
+    n = int(len(x) * SR / 24000)                  # 24000 -> 44100
     return np.interp(np.linspace(0, len(x) - 1, n), np.arange(len(x)), x)
 
 total = int(END * SR)

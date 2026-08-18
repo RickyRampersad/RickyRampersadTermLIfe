@@ -99,10 +99,11 @@ async function installCaption() {
     if (document.getElementById('demoCap')) return;
     const c = document.createElement('div');
     c.id = 'demoCap';
-    c.style.cssText = 'position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:99999;'
-      + 'max-width:86%;background:rgba(6,28,49,.94);color:#eaf4ff;padding:13px 26px;border-radius:14px;'
-      + 'font:600 17px/1.45 Inter,system-ui,sans-serif;letter-spacing:.1px;text-align:center;'
-      + 'box-shadow:0 10px 34px rgba(0,0,0,.4);border:1px solid rgba(84,188,228,.35);'
+    c.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;'
+      + 'background:linear-gradient(180deg,rgba(4,20,36,0),rgba(4,20,36,.82) 46%,rgba(4,20,36,.92));'
+      + 'color:#eaf4ff;padding:20px 28px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'
+      + 'font:500 13.5px/1.3 Inter,system-ui,sans-serif;letter-spacing:.15px;text-align:center;'
+      + 'text-shadow:0 1px 5px rgba(0,0,0,.75);'
       + 'opacity:0;transition:opacity .4s;pointer-events:none;';
     document.body.appendChild(c);
   });
