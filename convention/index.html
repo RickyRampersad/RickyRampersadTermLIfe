@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Convention 2028 Tracker | Ricky Rampersad Branch</title>
+<meta name="robots" content="noindex"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#07131f; --bg2:#0d2137; --card:#163553; --card2:#1b3d61;
+    --gold:#efc24b; --gold2:#dca530; --text:#edf4fb; --muted:#a9bbcf;
+    --line:rgba(255,255,255,.08); --teal:#00CFEA; --teal2:#00A8C5;
+    /* Status. Validated for contrast and colour-vision separation against
+       both --bg and --card. Green is deliberately the deeper #16a34a: the
+       brighter greens sit only ~5 ΔE from brand gold under protanopia,
+       this one sits at ~15. Every status still carries a word and a mark,
+       so colour never has to do the work alone. */
+    --good:#16a34a; --warn:#efc24b; --bad:#f87171;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+    background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(239,194,75,.07),transparent),
+      linear-gradient(180deg,var(--bg) 0%,var(--bg2) 50%,var(--bg) 100%);
+  }
+  a{color:inherit}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 16px}
+
+  /* ---------- lock ---------- */
+  #lock{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;
+    background:var(--bg);background-image:radial-gradient(ellipse 60% 40% at 50% 30%,rgba(239,194,75,.08),transparent)}
+  .lock-card{width:min(400px,92%);text-align:center;background:linear-gradient(160deg,var(--card),var(--card2));
+    border:1px solid var(--line);border-radius:22px;padding:34px 28px}
+  .lock-card h1{font-family:'Montserrat',sans-serif;font-weight:800;font-size:19px;margin-bottom:6px;color:var(--gold)}
+  .lock-card p{font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.6}
+  .lock-card input{width:100%;padding:12px 15px;border-radius:12px;border:1px solid var(--line);
+    background:rgba(0,0,0,.3);color:var(--text);font-size:15px;text-align:center;outline:none;margin-bottom:10px;
+    font-family:'Montserrat',sans-serif;font-weight:700}
+  .lock-card input:focus{border-color:rgba(239,194,75,.5)}
+  .lock-card button{width:100%;padding:13px;border-radius:12px;border:none;cursor:pointer;
+    background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1d1503;
+    font-family:'Montserrat',sans-serif;font-size:14px;font-weight:800}
+  .lock-err{color:var(--bad);font-size:12.5px;margin-top:10px;min-height:16px;font-weight:600}
+  .lock-back{display:inline-block;margin-top:14px;font-size:12px;color:var(--muted);text-decoration:none}
+
+  /* ---------- shell ---------- */
+  #app{display:none}
+  .nav{position:sticky;top:0;z-index:100;background:rgba(6,17,29,.93);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .nav-inner{max-width:1000px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:14px;height:62px}
+  .nav-brand{font-family:'Montserrat',sans-serif;font-weight:800;font-size:14px;color:var(--gold);margin-right:auto;text-decoration:none}
+  .nav a.link{text-decoration:none;color:var(--muted);font-family:'Montserrat',sans-serif;font-size:12.5px;font-weight:600;padding:8px 11px;border-radius:10px}
+  .nav a.link:hover{color:var(--text);background:rgba(255,255,255,.06)}
+
+  .page-head{padding:34px 0 4px}
+  .kicker{font-family:'Montserrat',sans-serif;font-size:10.5px;letter-spacing:3px;text-transform:uppercase;color:var(--gold2);font-weight:700;margin-bottom:8px}
+  .page-head h1{font-family:'Montserrat',sans-serif;font-weight:900;font-size:clamp(23px,5vw,32px);margin-bottom:6px}
+  .asat{color:var(--muted);font-size:13px}
+  .asat b{color:var(--text);font-weight:600}
+
+  section{padding:26px 0 0}
+  .section-label{font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;letter-spacing:2.5px;
+    text-transform:uppercase;color:var(--gold);margin-bottom:13px;display:flex;align-items:center;gap:10px}
+  .section-label::after{content:'';flex:1;height:1px;background:rgba(239,194,75,.2)}
+
+  .card{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:18px;padding:20px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  @media(max-width:820px){.grid3{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}}
+
+  /* ---------- stat tile ---------- */
+  .tile-label{font-family:'Montserrat',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:1.6px;
+    text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+  .hero{font-family:'Montserrat',sans-serif;font-weight:900;font-size:clamp(27px,5.4vw,36px);line-height:1.05;letter-spacing:-.5px}
+  .hero-sub{font-size:12.5px;color:var(--muted);margin-top:7px;line-height:1.55}
+  .hero-sub b{color:var(--text);font-weight:600}
+
+  /* ---------- meters ----------
+     Thin marks, 4px rounded data-end anchored to the baseline, a 2px
+     surface gap where a marker overlaps the fill. */
+  .meter{height:9px;border-radius:5px;background:rgba(0,0,0,.32);overflow:hidden;position:relative;margin:7px 0 5px}
+  .meter > i{display:block;height:100%;border-radius:0 4px 4px 0;background:var(--gold);transition:width .5s ease}
+  .meter.is-good > i{background:var(--good)}
+  .meter.is-bad  > i{background:var(--bad)}
+  .meter-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:12px}
+  .meter-row .k{color:var(--muted)}
+  .meter-row .v{font-family:'Montserrat',sans-serif;font-weight:700;font-size:12.5px}
+
+  /* gauge: full 0–100 scale with the qualifying floor drawn on it, so the
+     reading is never flattered by a truncated axis */
+  .gauge{height:14px;border-radius:7px;background:rgba(0,0,0,.32);position:relative;overflow:hidden;margin:10px 0 6px}
+  .gauge > i{display:block;height:100%;border-radius:0 4px 4px 0;background:var(--good)}
+  .gauge.is-bad > i{background:var(--bad)}
+  .gauge .floor{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--text);
+    box-shadow:0 0 0 2px var(--card)}
+  .gauge-wrap{position:relative;padding-bottom:19px}
+  .gauge-scale{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);
+    font-family:'Montserrat',sans-serif;font-weight:600}
+  /* Sits directly under its own tick, so the reading is never misattributed. */
+  .floor-lbl{position:absolute;top:14px;font-size:10.5px;color:var(--text);white-space:nowrap;
+    font-family:'Montserrat',sans-serif;font-weight:700;transform:translateX(-100%);padding-right:4px}
+
+  /* ---------- status chip: colour never travels alone ---------- */
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;
+    font-family:'Montserrat',sans-serif;font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
+    border:1px solid currentColor}
+  .chip .mk{font-size:11px;line-height:1}
+  .chip.good{color:var(--good)} .chip.warn{color:var(--warn)} .chip.bad{color:var(--bad)}
+
+  /* ---------- category ladder ---------- */
+  .rung{border:1px solid var(--line);border-radius:14px;padding:15px 16px;margin-bottom:9px;background:rgba(0,0,0,.14)}
+  .rung.met{border-color:rgba(22,163,74,.45);background:rgba(22,163,74,.07)}
+  .rung.next{border-color:rgba(239,194,75,.45)}
+  .rung-head{display:flex;align-items:center;gap:10px;margin-bottom:11px;flex-wrap:wrap}
+  .rung-name{font-family:'Montserrat',sans-serif;font-weight:800;font-size:13.5px;margin-right:auto}
+  .gates{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:640px){.gates{grid-template-columns:1fr}}
+
+  .note{font-size:12.5px;color:var(--muted);line-height:1.65;margin-top:10px}
+  .note b{color:var(--text);font-weight:600}
+  .callout{border-left:3px solid var(--gold);padding:11px 14px;background:rgba(239,194,75,.07);
+    border-radius:0 10px 10px 0;font-size:13px;line-height:1.6;margin-top:12px}
+  .callout.bad{border-left-color:var(--bad);background:rgba(248,113,113,.08)}
+
+  table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px}
+  table.tbl th,table.tbl td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line)}
+  table.tbl th{font-family:'Montserrat',sans-serif;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);font-weight:700}
+  table.tbl td.n{text-align:right;font-family:'Montserrat',sans-serif;font-weight:600}
+  .tbl-wrap{overflow-x:auto}
+  details{margin-top:12px}
+  summary{cursor:pointer;font-size:12px;color:var(--muted);font-family:'Montserrat',sans-serif;font-weight:600}
+  summary:hover{color:var(--teal)}
+
+  .demo{background:rgba(0,207,234,.09);border:1px solid rgba(0,207,234,.3);border-radius:12px;
+    padding:11px 14px;font-size:12.5px;color:var(--text);margin-top:16px;line-height:1.6}
+  footer{margin-top:44px;padding:22px 0 34px;border-top:1px solid var(--line);text-align:center;font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div id="lock">
+  <div class="lock-card">
+    <h1>Convention 2028 Tracker</h1>
+    <p>Your own production, lives and persistency. Sign in with your name and your personal PIN.</p>
+    <input id="lname" type="text" placeholder="Your name" autocomplete="name"/>
+    <input id="lpin" type="password" placeholder="PIN" inputmode="numeric" autocomplete="current-password"/>
+    <button onclick="signIn()">Sign in</button>
+    <div class="lock-err" id="lerr"></div>
+    <a class="lock-back" href="/agent.html">← Back to the Agent Portal</a>
+  </div>
+</div>
+
+<div id="app">
+  <nav class="nav"><div class="nav-inner">
+    <a class="nav-brand" href="/agent.html">Ricky Rampersad Branch</a>
+    <a class="link" href="/agent.html">Agent Portal</a>
+    <a class="link" href="#" onclick="signOut();return false;">Sign out</a>
+  </div></nav>
+
+  <div class="wrap">
+    <header class="page-head">
+      <div class="kicker" id="periodLine"></div>
+      <h1 id="hello"></h1>
+      <div class="asat" id="asat"></div>
+    </header>
+
+    <!-- The three qualification measures, together, above the fold. -->
+    <section>
+      <div class="section-label">Where you stand</div>
+      <div class="grid3">
+
+        <div class="card">
+          <div class="tile-label">Net FYC since 1 April 2026</div>
+          <div class="hero" id="fycNow">—</div>
+          <div class="hero-sub" id="fycSub"></div>
+        </div>
+
+        <div class="card">
+          <div class="tile-label">API in force</div>
+          <div class="hero" id="persNow">—</div>
+          <div class="gauge-wrap">
+            <div class="gauge" id="persGauge">
+              <i style="width:0%"></i><span class="floor" style="left:87.5%"></span>
+            </div>
+            <div class="gauge-scale"><span>0%</span><span>100%</span></div>
+            <div class="floor-lbl" id="floorLbl" style="left:87.5%">87.5% floor</div>
+          </div>
+          <div class="hero-sub" id="persSub"></div>
+        </div>
+
+        <div class="card">
+          <div class="tile-label">Lives settled</div>
+          <div class="hero" id="livesNow">—</div>
+          <div class="hero-sub" id="livesSub"></div>
+        </div>
+
+      </div>
+      <div id="bindingNote"></div>
+    </section>
+
+    <!-- Closes 31 December 2026, so it leads while it is open and retires itself after. -->
+    <section id="ebSection">
+      <div class="section-label">Early Bird — Turkey</div>
+      <div class="card" id="ebCard"></div>
+    </section>
+
+    <section>
+      <div class="section-label">Qualification categories</div>
+      <div id="ladder"></div>
+      <div class="note">
+        Every category carries <b>both</b> an FYC target and a minimum lives count, and both must be met.
+        Note the money rises as the lives requirement falls — it is possible to clear Business Class
+        money and still fall short on lives.
+      </div>
+      <details>
+        <summary>Show the categories as a table</summary>
+        <div class="tbl-wrap"><table class="tbl" id="catTable"></table></div>
+      </details>
+    </section>
+
+    <section>
+      <div class="section-label">Health &amp; Group ceiling</div>
+      <div class="card" id="capCard"></div>
+    </section>
+
+    <section id="aspSection" style="display:none">
+      <div class="section-label">Aspirant qualification</div>
+      <div class="card" id="aspCard"></div>
+    </section>
+
+    <section>
+      <div class="section-label">Standing</div>
+      <div class="card">
+        <div class="grid3" id="standing"></div>
+        <div class="note">
+          Production alone does not carry you to the airport. A debit balance must be actively
+          serviced, any Code of Ethics breach or unresolved formal complaint can disqualify
+          regardless of production, and you must be contracted with the Company at the time
+          the Convention is held.
+        </div>
+      </div>
+      <div class="demo" id="demoBanner" style="display:none"></div>
+    </section>
+  </div>
+
+  <footer>
+    <div class="wrap">
+      Figures are the branch's official import and may lag the company by up to a month.
+      Qualification is decided by the Company, not by this page.<br>
+      © 2026 Ricky Rampersad Branch · Convention 2028 Tracker
+    </div>
+  </footer>
+</div>
+
+<script>
+/* Paste the Apps Script /exec URL here to go live. Left blank, the page runs
+   on the sample figures below so the team can see the tracker before the
+   first import. */
+var CONFIG = { API_URL: "" };
+
+var TOKEN_KEY = 'rrb-conv-token';
+var state = null;
+
+/* ---------------- formatting ---------------- */
+function money(n){ return '$' + Math.round(Number(n)||0).toLocaleString('en-US'); }
+function pct(n){ return (Number(n)||0).toFixed(1) + '%'; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+/* Colour is never the only signal: every chip carries a mark and a word. */
+function chip(kind, text){
+  var mk = kind === 'good' ? '✓' : (kind === 'bad' ? '▲' : '●');
+  return '<span class="chip ' + kind + '"><span class="mk">' + mk + '</span>' + esc(text) + '</span>';
+}
+function meter(pctVal, kind){
+  var w = Math.max(0, Math.min(100, Number(pctVal)||0));
+  return '<div class="meter' + (kind ? ' is-' + kind : '') + '"><i style="width:' + w + '%"></i></div>';
+}
+
+/* ---------------- render ---------------- */
+function render(){
+  var m = state.me, r = state.rules;
+
+  document.getElementById('periodLine').textContent =
+    'Production 1 April 2026 → 30 September 2027 · persistency held to 31 March 2028';
+  document.getElementById('hello').textContent = m.name;
+  document.getElementById('asat').innerHTML = m.statementDate
+    ? 'Official figures as at <b>' + esc(m.statementDate) + '</b> · ' +
+      m.clock.remaining.toLocaleString() + ' days of production remain'
+    : m.clock.remaining.toLocaleString() + ' days of production remain';
+
+  /* 1 — FYC accumulated since the start of the period. */
+  document.getElementById('fycNow').textContent = money(m.fyc.net);
+  document.getElementById('fycSub').innerHTML =
+    'Net FYC, the convention measure. <b>' + money(m.fyc.perDayAchieved) + '</b> a day so far.<br>' +
+    '<span style="color:var(--muted)">Gross FYC ' + money(m.fyc.gross) +
+    ' — the awards are measured on gross, the convention on net.</span>';
+
+  /* 2 — API in force, against the floor it must not drop below. */
+  var p = m.persistency;
+  var pg = document.getElementById('persGauge');
+  if (p) {
+    var ok = p.meetsFloor;
+    document.getElementById('persNow').innerHTML =
+      pct(p.rate) + ' &nbsp;' + chip(ok ? 'good' : 'bad', ok ? 'Above floor' : 'Below floor');
+    pg.className = 'gauge' + (ok ? '' : ' is-bad');
+    pg.querySelector('i').style.width = Math.max(0, Math.min(100, p.rate)) + '%';
+    pg.querySelector('.floor').style.left = p.floor + '%';
+    var fl = document.getElementById('floorLbl');
+    fl.style.left = p.floor + '%';
+    fl.textContent = p.floor + '% floor';
+    document.getElementById('persSub').innerHTML = ok
+      ? 'You can absorb <b>' + money(p.headroom) + '</b> more lapsed API before you fall below ' +
+        p.floor + '%.<br><span style="color:var(--muted)">' + money(p.apiInForce) + ' in force of ' +
+        money(p.grossApi) + ' settled · as at ' + esc(p.asAt) + '</span>'
+      : 'You need <b>' + money(Math.abs(p.headroom)) + '</b> more API back in force to clear ' +
+        p.floor + '%.<br><span style="color:var(--muted)">' + money(p.apiInForce) + ' in force of ' +
+        money(p.grossApi) + ' settled · as at ' + esc(p.asAt) + '</span>';
+  } else {
+    document.getElementById('persNow').textContent = 'Not yet measured';
+    document.getElementById('persSub').innerHTML =
+      'Your persistency will appear here with the first measurement.';
+  }
+
+  /* 3 — Lives, counted once each. */
+  var nx = m.next;
+  document.getElementById('livesNow').textContent = m.lives.toLocaleString();
+  document.getElementById('livesSub').innerHTML = nx
+    ? (nx.livesShort > 0
+        ? '<b>' + nx.livesShort + '</b> short of the ' + nx.livesTarget + ' needed for ' + esc(nx.label) + '.'
+        : 'Lives gate met for ' + esc(nx.label) + '.') +
+      '<br><span style="color:var(--muted)">The same life is never counted twice, but repeat FYC still counts.</span>'
+    : 'Every lives gate met.';
+
+  /* The gate that is actually holding them, said in words. */
+  var bn = document.getElementById('bindingNote');
+  if (nx && m.binding) {
+    var t = m.binding === 'lives'
+      ? '<b>Lives is what is holding you.</b> You are ' + nx.livesShort + ' lives short of ' +
+        esc(nx.label) + ', and ' + (nx.fycShort > 0 ? money(nx.fycShort) + ' short on FYC.' :
+        money(nx.fycNow - nx.fycTarget) + ' ahead on FYC.')
+      : m.binding === 'fyc'
+      ? '<b>FYC is what is holding you.</b> You are ' + money(nx.fycShort) + ' short of ' +
+        esc(nx.label) + '; the lives gate is already met.'
+      : '<b>Both gates are still open on ' + esc(nx.label) + '.</b> ' + money(nx.fycShort) +
+        ' and ' + nx.livesShort + ' lives to go.';
+    bn.innerHTML = '<div class="callout">' + t + '</div>';
+  } else { bn.innerHTML = ''; }
+
+  renderEarlyBird(m.earlyBird);
+  renderLadder(m.categories, nx);
+  renderCap(m);
+  renderAspirant(m.aspirant);
+  renderStanding(m.standing);
+}
+
+function renderEarlyBird(eb){
+  var sec = document.getElementById('ebSection');
+  if (!eb.open) { sec.style.display = 'none'; return; }
+  sec.style.display = '';
+  document.getElementById('ebCard').innerHTML =
+    '<div class="tile-label">Closes 31 December 2026</div>' +
+    '<div class="hero">' + eb.daysRemaining.toLocaleString() + ' days left</div>' +
+    '<div class="hero-sub">Settled production only. You must still qualify at the end of the ' +
+      'convention period to travel.</div>' +
+    '<div style="margin-top:16px">' +
+      '<div class="meter-row"><span class="k">Single — ' + money(eb.single) + '</span>' +
+        '<span class="v">' + money(eb.fycNow) + '</span></div>' +
+      meter(eb.singlePct, eb.singlePct >= 100 ? 'good' : null) +
+      '<div class="meter-row"><span class="k">' +
+        (eb.singleShort > 0 ? money(eb.singleShort) + ' to go · <b>' + money(eb.perDaySingle) +
+          ' a day</b> from here' : 'Target reached') + '</span>' +
+        '<span class="v">' + pct(eb.singlePct) + '</span></div>' +
+    '</div>' +
+    '<div style="margin-top:14px">' +
+      '<div class="meter-row"><span class="k">Double — ' + money(eb.double) + '</span>' +
+        '<span class="v">' + money(eb.fycNow) + '</span></div>' +
+      meter(eb.doublePct, eb.doublePct >= 100 ? 'good' : null) +
+      '<div class="meter-row"><span class="k">' +
+        (eb.doubleShort > 0 ? money(eb.doubleShort) + ' to go · <b>' + money(eb.perDayDouble) +
+          ' a day</b> from here' : 'Target reached') + '</span>' +
+        '<span class="v">' + pct(eb.doublePct) + '</span></div>' +
+    '</div>';
+}
+
+function renderLadder(cats, next){
+  var html = cats.map(function(c){
+    var met = c.fycNow >= c.fycTarget && c.livesNow >= c.livesTarget;
+    var isNext = next && next.key === c.key;
+    return '<div class="rung' + (met ? ' met' : '') + (isNext ? ' next' : '') + '">' +
+      '<div class="rung-head">' +
+        '<span class="rung-name">' + esc(c.label) + '</span>' +
+        (c.qualified ? chip('good','Qualified')
+          : met ? chip('warn','Gates met · persistency pending')
+          : isNext ? chip('warn','Next rung') : '') +
+      '</div>' +
+      '<div class="gates">' +
+        '<div>' +
+          '<div class="meter-row"><span class="k">Net FYC</span><span class="v">' +
+            money(c.fycNow) + ' / ' + money(c.fycTarget) + '</span></div>' +
+          meter(c.fycPct, c.fycNow >= c.fycTarget ? 'good' : null) +
+          '<div class="meter-row"><span class="k">' +
+            (c.fycShort > 0 ? money(c.fycShort) + ' to go' : 'Met') + '</span>' +
+            '<span class="v">' + pct(c.fycPct) + '</span></div>' +
+        '</div>' +
+        '<div>' +
+          '<div class="meter-row"><span class="k">Lives</span><span class="v">' +
+            c.livesNow + ' / ' + c.livesTarget + '</span></div>' +
+          meter(c.livesPct, c.livesNow >= c.livesTarget ? 'good' : null) +
+          '<div class="meter-row"><span class="k">' +
+            (c.livesShort > 0 ? c.livesShort + ' to go' : 'Met') + '</span>' +
+            '<span class="v">' + pct(c.livesPct) + '</span></div>' +
+        '</div>' +
+      '</div></div>';
+  }).join('');
+  document.getElementById('ladder').innerHTML = html;
+
+  document.getElementById('catTable').innerHTML =
+    '<thead><tr><th>Category</th><th style="text-align:right">Net FYC</th>' +
+    '<th style="text-align:right">Target</th><th style="text-align:right">Lives</th>' +
+    '<th style="text-align:right">Target</th><th>Status</th></tr></thead><tbody>' +
+    cats.map(function(c){
+      var met = c.fycNow >= c.fycTarget && c.livesNow >= c.livesTarget;
+      return '<tr><td>' + esc(c.label) + '</td><td class="n">' + money(c.fycNow) + '</td>' +
+        '<td class="n">' + money(c.fycTarget) + '</td><td class="n">' + c.livesNow + '</td>' +
+        '<td class="n">' + c.livesTarget + '</td><td>' +
+        (c.qualified ? 'Qualified' : met ? 'Gates met' : 'In progress') + '</td></tr>';
+    }).join('') + '</tbody>';
+}
+
+function renderCap(m){
+  /* The ceiling is a share of the category quota, so it is shown against
+     the rung the agent is actually working toward. */
+  var c = m.next || m.categories[m.categories.length - 1];
+  var used = Math.min(m.fyc.healthGroup, c.capAllowance);
+  var over = Math.max(0, m.fyc.healthGroup - c.capAllowance);
+  var p = c.capAllowance > 0 ? (used / c.capAllowance) * 100 : 0;
+  document.getElementById('capCard').innerHTML =
+    '<div class="tile-label">Group &amp; Individual Health and Group Life — ' + esc(c.label) + '</div>' +
+    '<div class="meter-row"><span class="k">Counted toward qualification</span>' +
+      '<span class="v">' + money(used) + ' / ' + money(c.capAllowance) + '</span></div>' +
+    meter(p, over > 0 ? 'bad' : null) +
+    '<div class="meter-row"><span class="k">15% of the ' + esc(c.label) + ' quota</span>' +
+      '<span class="v">' + pct(p) + '</span></div>' +
+    (over > 0
+      ? '<div class="callout bad"><b>' + money(over) + ' above the ceiling.</b> That production is ' +
+        'written and paid, but it does not count toward convention qualification.</div>'
+      : '<div class="note">Write the business — but note it is capped. Anything above ' +
+        money(c.capAllowance) + ' will not count toward this category.</div>');
+}
+
+function renderAspirant(a){
+  if (!a) return;
+  document.getElementById('aspSection').style.display = '';
+  document.getElementById('aspCard').innerHTML =
+    '<div class="tile-label">Aspirant — top ' + a.places + ' only</div>' +
+    '<div class="gates">' +
+      '<div><div class="meter-row"><span class="k">Net FYC</span><span class="v">' +
+        money(a.fycNow) + ' / ' + money(a.fycTarget) + '</span></div>' +
+        meter(a.fycPct, a.fycNow >= a.fycTarget ? 'good' : null) +
+        '<div class="meter-row"><span class="k">' +
+          (a.fycShort > 0 ? money(a.fycShort) + ' to go' : 'Met') + '</span>' +
+          '<span class="v">' + pct(a.fycPct) + '</span></div></div>' +
+      '<div><div class="meter-row"><span class="k">Lives</span><span class="v">' +
+        a.livesNow + ' / ' + a.livesTarget + '</span></div>' +
+        meter(a.livesPct, a.livesNow >= a.livesTarget ? 'good' : null) +
+        '<div class="meter-row"><span class="k">' +
+          (a.livesShort > 0 ? a.livesShort + ' to go' : 'Met') + '</span>' +
+          '<span class="v">' + pct(a.livesPct) + '</span></div></div>' +
+    '</div>' +
+    '<div class="callout"><b>Hitting the number is not enough.</b> Only the top ' + a.places +
+      ' agents meeting the criteria attend, and persistency is monitored right up until ' +
+      'departure — fall below and the next person in line replaces you.</div>';
+}
+
+function renderStanding(s){
+  var f = /positive|good|clear/i.test(s.financial);
+  var c = /clear|good|none|no complaint/i.test(s.conduct);
+  document.getElementById('standing').innerHTML =
+    '<div><div class="tile-label">Financial standing</div>' +
+      (f ? chip('good', s.financial) : chip('warn', s.financial)) + '</div>' +
+    '<div><div class="tile-label">Market conduct</div>' +
+      (c ? chip('good', s.conduct) : chip('warn', s.conduct)) + '</div>' +
+    '<div><div class="tile-label">Contracted</div>' +
+      (s.contracted ? chip('good','Yes') : chip('bad','No')) + '</div>';
+}
+
+/* ---------------- sign in ---------------- */
+function signIn(){
+  var name = document.getElementById('lname').value.trim();
+  var pin = document.getElementById('lpin').value.trim();
+  var err = document.getElementById('lerr');
+  if (!name || !pin) { err.textContent = 'Enter your name and your PIN.'; return; }
+
+  if (!CONFIG.API_URL) {                       // sample mode
+    if (pin !== '0000') { err.textContent = 'Sample mode — the PIN is 0000.'; return; }
+    state = sampleState(name);
+    open_(); return;
+  }
+
+  err.textContent = 'Signing in…';
+  fetch(CONFIG.API_URL, { method:'POST', body: JSON.stringify({action:'login', name:name, pin:pin}) })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.ok) { err.textContent = d.error === 'no-pin-set'
+        ? 'No PIN set yet for that name — ask the branch to set you up.' : d.error; return; }
+      sessionStorage.setItem(TOKEN_KEY, d.token);
+      load(d.token);
+    })
+    .catch(function(){ err.textContent = 'Could not reach the tracker. Try again.'; });
+}
+
+function load(token){
+  fetch(CONFIG.API_URL + '?action=me&token=' + encodeURIComponent(token))
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.ok) { document.getElementById('lerr').textContent = d.error; return; }
+      state = d; open_();
+    })
+    .catch(function(){ document.getElementById('lerr').textContent = 'Could not reach the tracker.'; });
+}
+
+function open_(){
+  document.getElementById('lock').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  render();
+  if (!CONFIG.API_URL) {
+    var b = document.getElementById('demoBanner');
+    b.style.display = '';
+    b.innerHTML = '<b>Sample figures.</b> This page is not yet connected to the branch sheet, ' +
+      'so the numbers above are made up and belong to nobody. Deploy <code>Convention.gs</code> ' +
+      'and paste the /exec URL into <code>CONFIG.API_URL</code> to show real production.';
+  }
+}
+
+function signOut(){ sessionStorage.removeItem(TOKEN_KEY); location.reload(); }
+
+document.getElementById('lpin').addEventListener('keydown', function(e){ if (e.key === 'Enter') signIn(); });
+
+/* ---------------- sample figures ----------------
+   Invented, so the branch can see the tracker before the first import.
+   No real agent's production appears in this repository. */
+function sampleState(name){
+  var rules = {
+    categories:[
+      {key:'shared',label:'Agent (Shared)',fyc:525000,lives:90},
+      {key:'own',label:'Agent (Own)',fyc:675000,lives:90},
+      {key:'double',label:'Agent & Spouse (Double)',fyc:925000,lives:80},
+      {key:'bc_single',label:'Agent Single (Business Class)',fyc:1600000,lives:60},
+      {key:'bc_double',label:'Agent & Spouse (Business Class)',fyc:2100000,lives:60}
+    ]
+  };
+  var netFyc = 214800, lives = 41, healthGroup = 46200;
+  var apiInForce = 388400, grossApi = 431000;
+  var rate = (apiInForce / grossApi) * 100, floor = 87.5;
+
+  var cats = rules.categories.map(function(c){
+    var cap = c.fyc * 0.15;
+    var counted = netFyc - Math.max(0, healthGroup - cap);
+    return { key:c.key, label:c.label, fycTarget:c.fyc, livesTarget:c.lives,
+      fycNow:counted, livesNow:lives,
+      fycPct:Math.min(100,(counted/c.fyc)*100), livesPct:Math.min(100,(lives/c.lives)*100),
+      fycShort:Math.max(0,c.fyc-counted), livesShort:Math.max(0,c.lives-lives),
+      capAllowance:cap, qualified:false };
+  });
+  var next = cats[0];
+
+  /* Days are computed from today so the countdown is honest in sample mode too. */
+  var today = new Date();
+  var d = function(s){ return new Date(s + 'T00:00:00'); };
+  var days = function(a,b){ return Math.round((b - a) / 86400000); };
+
+  return { rules: rules, me: {
+    name: name,
+    statementDate: '31 July 2026',
+    fyc: { net:netFyc, gross:238600, healthGroup:healthGroup,
+           perDayAchieved: netFyc / Math.max(1, days(d('2026-04-01'), today)) },
+    lives: lives,
+    persistency: { asAt:'31 July 2026', rate:rate, floor:floor,
+      apiInForce:apiInForce, grossApi:grossApi,
+      floorApi: grossApi * floor / 100,
+      headroom: apiInForce - grossApi * floor / 100,
+      meetsFloor: rate >= floor },
+    clock: { periodDays: days(d('2026-04-01'), d('2027-09-30')),
+             elapsed: days(d('2026-04-01'), today),
+             remaining: Math.max(0, days(today, d('2027-09-30'))),
+             pctElapsed: 0 },
+    earlyBird: (function(){
+      var rem = Math.max(0, days(today, d('2026-12-31')));
+      var eb = 214800;
+      return { open: rem > 0, daysRemaining: rem, windowDays: 274, fycNow: eb,
+        single:540000, double:740000,
+        singleShort:Math.max(0,540000-eb), doubleShort:Math.max(0,740000-eb),
+        singlePct:Math.min(100,(eb/540000)*100), doublePct:Math.min(100,(eb/740000)*100),
+        perDaySingle: rem > 0 ? Math.max(0,540000-eb)/rem : 0,
+        perDayDouble: rem > 0 ? Math.max(0,740000-eb)/rem : 0 };
+    })(),
+    categories: cats, next: next, binding: 'both',
+    aspirant: { fycTarget:325000, livesTarget:67, places:5, fycNow:netFyc, livesNow:lives,
+      fycPct:Math.min(100,(netFyc/325000)*100), livesPct:Math.min(100,(lives/67)*100),
+      fycShort:Math.max(0,325000-netFyc), livesShort:Math.max(0,67-lives), meets:false },
+    standing: { financial:'Positive', conduct:'Clear', contracted:true }
+  }};
+}
+
+/* Come back signed in. */
+(function(){
+  var t = sessionStorage.getItem(TOKEN_KEY);
+  if (t && CONFIG.API_URL) load(t);
+})();
+</script>
+</body>
+</html>
