@@ -58,6 +58,23 @@ em{font-style:italic;color:var(--gold)}
 
 .mt24{margin-top:24px}.mt34{margin-top:34px}.mt46{margin-top:46px}.mt60{margin-top:60px}
 
+/* how the money moves */
+.flowrow{display:grid;grid-template-columns:1fr 120px 1fr 120px 1fr;gap:0;align-items:stretch}
+.fnode{background:var(--navy);border:1px solid var(--line);border-radius:22px;padding:36px 30px;text-align:center}
+.fnode .fico{font-size:44px;margin-bottom:14px}
+.fnode b{display:block;font-family:'PlayfairD',Georgia,serif;font-size:30px;color:#fff;font-weight:700}
+.fnode p{margin-top:10px;font-size:20px;line-height:1.5;color:var(--dim)}
+.fnode.gold{border-color:rgba(240,208,102,.45);box-shadow:0 0 60px rgba(240,208,102,.07) inset}
+.fpipe{position:relative;align-self:center;height:4px;background:rgba(255,255,255,.10);border-radius:99px;margin:0 10px}
+.fpipe::after{content:"";position:absolute;right:-2px;top:50%;transform:translateY(-50%);border-left:12px solid rgba(240,208,102,.55);border-top:8px solid transparent;border-bottom:8px solid transparent}
+.fdot{position:absolute;top:50%;width:14px;height:14px;margin-top:-7px;border-radius:50%;background:var(--goldl);
+  box-shadow:0 0 14px rgba(240,208,102,.8);opacity:0}
+/* the light sweep across the title */
+.sweep{position:absolute;top:-40%;left:0;width:34%;height:180%;pointer-events:none;
+  background:linear-gradient(100deg,transparent,rgba(240,208,102,.10) 45%,rgba(255,255,255,.05) 55%,transparent);
+  transform:translateX(-80%) rotate(8deg);opacity:0}
+/* the dip between scenes */
+#dip{position:absolute;inset:0;background:var(--void);opacity:0;pointer-events:none;z-index:5}
 /* three-panel row */
 .trio{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
 .panel{background:var(--navy);border:1px solid var(--line);border-radius:22px;padding:38px 34px}
@@ -169,7 +186,8 @@ em{font-style:italic;color:var(--gold)}
   <div id="grain"></div>
 
   <!-- 1 ─────────────────────────────────────────────── -->
-  <section class="sc" data-ch="Rampersad Branch" data-dur="6">
+  <section class="sc" data-ch="Rampersad Branch" data-dur="7">
+    <div class="sweep" data-a="sweep" data-t=".4" data-d="4.5"></div>
     <div style="display:grid;place-items:center;height:100%;text-align:center">
       <div>
         <svg data-a="pop" data-t=".1" data-d=".9" viewBox="0 0 48 54" style="width:96px;height:108px;margin-bottom:38px">
@@ -186,12 +204,44 @@ em{font-style:italic;color:var(--gold)}
   </section>
 
   <!-- 2 ─────────────────────────────────────────────── -->
-  <section class="sc" data-ch="For your company" data-dur="7">
+  <section class="sc" data-ch="For your company" data-dur="10.5">
     <div class="eyebrow" data-a="fade" data-t="0">The problem</div>
     <div class="rule" data-a="grow" data-t=".15" data-d=".7" data-to="100"></div>
     <h2 class="mt46" data-a="up" data-t=".4">You cannot afford<br>to lose your best people.</h2>
     <p class="lede mt46" data-a="up" data-t="1.6">A raise is spent by Friday. A pension is a reason to still be here in ten years —
       and under <b>Section 134 of the Income Tax Act</b>, the company that pays for it <b>deducts every dollar</b>.</p>
+  </section>
+
+  <!-- 3b ───────────────────────────────────────────── -->
+  <section class="sc" data-ch="For your company" data-dur="8.5">
+    <div class="eyebrow" data-a="fade" data-t="0">How the money moves</div>
+    <div class="rule" data-a="grow" data-t=".15" data-d=".7" data-to="100"></div>
+    <h2 class="mt34" data-a="up" data-t=".35" style="font-size:58px">One direction. <em>Theirs.</em></h2>
+    <div class="flowrow mt60">
+      <div class="fnode" data-a="up" data-t=".8">
+        <div class="fico">🏢</div><b>The company</b>
+        <p>Pays the premium — and deducts it.</p>
+      </div>
+      <div class="fpipe" data-t="1.6">
+        <i class="fdot" data-a="fdot" data-t="1.6" data-ph="0"></i>
+        <i class="fdot" data-a="fdot" data-t="1.6" data-ph=".33"></i>
+        <i class="fdot" data-a="fdot" data-t="1.6" data-ph=".66"></i>
+      </div>
+      <div class="fnode" data-a="up" data-t="1.1">
+        <div class="fico">🛡️</div><b>The policy</b>
+        <p>Owned by the company. Held with Guardian.</p>
+      </div>
+      <div class="fpipe" data-t="2.0">
+        <i class="fdot" data-a="fdot" data-t="2.0" data-ph=".15"></i>
+        <i class="fdot" data-a="fdot" data-t="2.0" data-ph=".48"></i>
+        <i class="fdot" data-a="fdot" data-t="2.0" data-ph=".81"></i>
+      </div>
+      <div class="fnode gold" data-a="up" data-t="1.4">
+        <div class="fico">👪</div><b>Your employee</b>
+        <p>The value builds for them — and their estate.</p>
+      </div>
+    </div>
+    <p class="lede mt46" data-a="up" data-t="2.6" style="font-size:25px;text-align:center">The employee may add their own on top — <b>that part is theirs, and it lowers their income tax.</b></p>
   </section>
 
   <!-- 3 ─────────────────────────────────────────────── -->
@@ -220,7 +270,7 @@ em{font-style:italic;color:var(--gold)}
   </section>
 
   <!-- 4 ─────────────────────────────────────────────── -->
-  <section class="sc" data-ch="For your company" data-dur="7.5">
+  <section class="sc" data-ch="For your company" data-dur="8.5">
     <div class="eyebrow" data-a="fade" data-t="0">Line 6 <span class="ln">— of the B.I.R. request</span></div>
     <div class="rule" data-a="grow" data-t=".15" data-d=".7" data-to="100"></div>
     <h2 class="mt34" data-a="up" data-t=".35" style="font-size:64px">There is a ceiling, and it is not a flat percentage.</h2>
@@ -254,7 +304,7 @@ em{font-style:italic;color:var(--gold)}
   </section>
 
   <!-- 6 ─────────────────────────────────────────────── -->
-  <section class="sc" data-ch="For your company" data-dur="10">
+  <section class="sc" data-ch="For your company" data-dur="11.5">
     <div class="eyebrow" data-a="fade" data-t="0">What it comes to</div>
     <div class="rule" data-a="grow" data-t=".15" data-d=".7" data-to="100"></div>
     <div class="split wide mt46" style="align-items:center">
@@ -286,7 +336,7 @@ em{font-style:italic;color:var(--gold)}
   </section>
 
   <!-- 8 ─────────────────────────────────────────────── -->
-  <section class="sc" data-ch="For the team" data-dur="8">
+  <section class="sc" data-ch="For the team" data-dur="9">
     <div class="eyebrow" data-a="fade" data-t="0">The front door</div>
     <div class="rule" data-a="grow" data-t=".15" data-d=".7" data-to="100"></div>
     <h2 class="mt34" data-a="up" data-t=".35" style="font-size:60px">It asks who is signing in.</h2>
@@ -466,6 +516,7 @@ em{font-style:italic;color:var(--gold)}
   <div id="bigplay" class="on" role="button" tabindex="0" aria-label="Play the film">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
   </div>
+  <div id="dip"></div>
   <div id="chap"></div>
   <div id="clock"></div>
   <div id="rail"><i></i></div>
@@ -524,6 +575,18 @@ function applyEl(el,tl){
     case 'right':el.style.opacity=p; el.style.transform='translateX('+((1-p)*46).toFixed(2)+'px)'; break;
     case 'pop':  el.style.opacity=p; el.style.transform='scale('+(0.9+0.1*p).toFixed(4)+')'; break;
     case 'grow': el.style.width=(p*parseFloat(el.dataset.to)).toFixed(3)+'%'; break;
+    case 'sweep':{
+      var q=(tl-t0)/d; if(q<0||q>1){ el.style.opacity=0; break; }
+      el.style.opacity=(Math.sin(Math.PI*q)*0.9).toFixed(3);
+      el.style.transform='translateX('+(-80+q*300).toFixed(1)+'%) rotate(8deg)';
+      break; }
+    case 'fdot':{
+      if(tl<t0){ el.style.opacity=0; break; }
+      var ph=parseFloat(el.dataset.ph||0);
+      var q2=((tl-t0)*0.30+ph)%1;
+      el.style.left='calc('+(q2*100).toFixed(2)+'% - 7px)';
+      el.style.opacity=(Math.sin(Math.PI*q2)*0.95).toFixed(3);
+      break; }
     case 'count':el.textContent=money(p*parseFloat(el.dataset.to)); el.style.opacity=Math.min(1,p*6); break;
     case 'sheet':
       var i=+el.dataset.i, q=EASEO((tl-t0)/d);
@@ -553,6 +616,17 @@ function render(T){
   var tl=T-starts[idx];
   var els=scenes[idx].querySelectorAll('[data-a]');
   for(var k=0;k<els.length;k++) applyEl(els[k],tl);
+  var dipEl=document.getElementById('dip');
+  if(dipEl){
+    var dop=0, DW=0.42;
+    for(var bi=1;bi<starts.length;bi++){
+      var dd=Math.abs(T-starts[bi]);
+      if(dd<DW) dop=Math.max(dop,0.92*(1-dd/DW));
+    }
+    if(T>total-0.8) dop=Math.max(dop,0.92*(1-(total-T)/0.8));
+    if(T<0.5) dop=Math.max(dop,0.92*(1-T/0.5));
+    dipEl.style.opacity=dop.toFixed(3);
+  }
   railEl.style.width=(T/total*100).toFixed(3)+'%';
   clockEl.textContent=mmss(T)+' / '+mmss(total);
   /* a slow ambient drift, also a pure function of the clock */
