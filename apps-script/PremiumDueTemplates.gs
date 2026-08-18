@@ -98,6 +98,21 @@ var OUT = {
   // pending cases 200+ days old; without this cap launch day would open by
   // chasing all of them.
   PEND_MAX_DAYS: 120,
+  // ===== The free-look watch (the fourth machine) =====
+  // Head office stamps a Dispatch Date on the Export tab the day a policy
+  // leaves; the client's free-look window runs from that day, and the
+  // advisor is the courier. The Acknowledgement Date is the client's own
+  // signature saying it arrived. The gap between those two dates is where
+  // policies go to sit in car trunks — on the current tab, 59% of
+  // acknowledged policies were signed for AFTER the window had already run
+  // out, and 179 were never signed for at all.
+  FL_SHEET: 'Export',
+  // A dispatch first seen older than this gets no client letter — the
+  // window is gone and the case belongs to management, not a mail-merge.
+  // The live tab carries undelivered dispatches over a YEAR old; without
+  // this line, launch day would write to all of them about a window that
+  // closed in another calendar year. The digest carries those names instead.
+  FL_MAX_DAYS: 22,
   // Win-back waits for the closing sequence to finish. The last closing letter
   // goes at day 100 and already offers reinstatement; a win-back two days later
   // is the branch asking the same question twice in one week.
@@ -194,6 +209,15 @@ var SLA = {
   CLIENT_CHASE_EVERY: 5,
   MANAGER_CHASE_EVERY: 3,         // commitment outstanding: chase every 3 days, all copied
   FEEDBACK_CHASE_EVERY: 7,        // committed but no feedback yet: chase every 7 days, all copied
+
+  /* The free-look clock, counted in days since dispatch. The dispatch note
+     goes the day head office sends the policy; while no acknowledgement is
+     on file the branch asks again at 5 / 10 / 15, then counts down daily
+     from day 18; at 20 the window closes — one letter if the policy was
+     signed for, a very different one if the record still shows nothing. */
+  FREE_LOOK_DAYS: 20,
+  FL_REMIND_EVERY: 5,
+  FL_FINAL_FROM: 18,
 
   /* Group schemes run on remittance cycles, not personal deadlines. A scheme
      at day 20 is a payroll run in transit — normal, say nothing. At day 45 a
@@ -612,11 +636,18 @@ function pdBadge_(kind, days) {
     pend:    { t: 'NOT YET IN FORCE', bg: PD_BRAND.gold2, fg: PD_BRAND.navy },
     thanks:  { t: 'ACCOUNT UP TO DATE', bg: '#2F6B45', fg: '#FFFFFF' },
     close:   { t: 'GRACE PERIOD ENDED', bg: '#6B7480', fg: '#FFFFFF' },
-    mgr:     { t: 'INTERNAL', bg: PD_BRAND.gold2, fg: PD_BRAND.navy }
+    mgr:     { t: 'INTERNAL', bg: PD_BRAND.gold2, fg: PD_BRAND.navy },
+    fl_dispatch: { t: 'YOUR POLICY IS ON ITS WAY', bg: '#2F6B45', fg: '#FFFFFF' },
+    fl_remind:   { t: 'HAS YOUR POLICY ARRIVED?', bg: PD_BRAND.gold2, fg: PD_BRAND.navy },
+    fl_final:    { t: 'FREE-LOOK WINDOW CLOSING', bg: '#A8322F', fg: '#FFFFFF' },
+    fl_end:      { t: 'FREE-LOOK PERIOD COMPLETE', bg: '#2F6B45', fg: '#FFFFFF' }
   };
   var m = map[kind];
   if (!m) return '';
-  var sub = (kind === 'thanks' || kind === 'pend' || kind === 'mgr') ? ''
+  /* The overdue sub-line belongs to the arrears ladder only — free-look days
+     are days since dispatch, and "14 DAYS OVERDUE" on a brand-new policy
+     would be exactly the wrong first impression. */
+  var sub = (kind === 'thanks' || kind === 'pend' || kind === 'mgr' || kind.indexOf('fl_') === 0) ? ''
           : d + ' DAY' + (d === 1 ? '' : 'S') + ' OVERDUE';
   return '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tr>' +
     '<td style="background:' + m.bg + ';color:' + m.fg + ';padding:7px 12px;border-radius:5px;' +
@@ -892,8 +923,29 @@ function pdRespondLink_(policy, key) {
   return base + (base.slice(-1) === '/' ? '' : '/') +
     '#respond=' + encodeURIComponent(policy) + '&opt=' + encodeURIComponent(key);
 }
-function pdStaffEmail_(name) { return pdValidEmail_(OUT.STAFF_EMAIL[name] || ''); }
-function pdManagerOf_(agent) { return OUT.MANAGER_OF[agent] || ''; }
+/* Exact key first, then a case-insensitive scan. The portfolio tab writes
+   "Aidan Eugene" and the Export tab writes "AIDAN EUGENE" for the same human;
+   an exact-only lookup would quietly drop the agent (and their manager) from
+   every free-look cc chain, which is precisely the audience those letters
+   exist to be seen by. */
+function pdNameKey_(map, name) {
+  if (map[name] != null) return name;
+  var want = String(name || '').replace(/^ +| +$/g, '').toUpperCase();
+  if (!want) return '';
+  for (var k in map) {
+    if (Object.prototype.hasOwnProperty.call(map, k) &&
+        String(k).replace(/^ +| +$/g, '').toUpperCase() === want) return k;
+  }
+  return '';
+}
+function pdStaffEmail_(name) {
+  var k = pdNameKey_(OUT.STAFF_EMAIL, name);
+  return pdValidEmail_(k ? OUT.STAFF_EMAIL[k] : '');
+}
+function pdManagerOf_(agent) {
+  var k = pdNameKey_(OUT.MANAGER_OF, agent);
+  return k ? OUT.MANAGER_OF[k] : '';
+}
 
 /** Agent + their manager + the BM, as a de-duplicated cc list. */
 function pdChainCc_(p) {
@@ -1001,7 +1053,11 @@ var TRAIL_LABEL = {
   s75:     'Your agent&rsquo;s manager wrote to you personally',
   s90:     'Final notice, with the full record',
   winback: 'We wrote about restoring the policy',
-  pend:    'We wrote about the outstanding requirements'
+  pend:    'We wrote about the outstanding requirements',
+  fl_dispatch: 'We wrote the day your policy left head office',
+  fl_remind:   'We asked whether your policy had reached you',
+  fl_final:    'We warned your free-look window was closing',
+  fl_end:      'We confirmed your free-look period had run its course'
 };
 
 function pdTrailRow_(when, what, mine) {
@@ -2214,6 +2270,148 @@ var PD_TEMPLATES = {
         'to change than to catch up.</p>' + pdSignature_(p),
         { kind: 'thanks', days: 0 })
     };
+  },
+
+  /* ============== the free-look watch: four letters ==============
+     Every one goes to the client with the advisor, their manager, the branch
+     manager and branch support copied — the whole chain sees the same page.
+     Days here are days since head office dispatched the policy. */
+
+  /* Day 0-4 — the welcome. The client's first letter from the branch, and
+     their only introduction to the free-look provision itself. It goes even
+     when the acknowledgement is already signed — same-day delivery is the
+     good case, not a reason to skip the education. */
+  fl_dispatch: function (p) {
+    var plan = pdPlanName_(p.PlanCode, p.Policy);
+    var acked = !!p.Acknowledged;
+    return {
+      subject: 'Your ' + (plan ? plan + ' ' : '') + 'policy is on its way — ' + p.Policy,
+      cc: pdChainCc_(p),
+      html: pdWrap_(
+        pdRefBlock_(p, 'Your policy has been dispatched') +
+        '<p>' + pdSalutation_(p.Client) + ',</p>' +
+        '<p>Good news: your ' + (plan ? '<b>' + pdEsc_(plan) + '</b> ' : '') + 'policy left our head office on ' +
+        '<b>' + pdDateOf_(p.Dispatched.getTime()) + '</b> and is on its way to you' +
+        (p.Agent ? ' through your advisor, <b>' + pdEsc_(p.Agent) + '</b>' : '') + '. ' +
+        (acked ? 'Our record shows it has already reached you — even better.'
+               : 'You should have it in your hands shortly.') + '</p>' +
+        pdSection_('The part worth reading twice',
+          '<p style="margin:0">The Insurance Act gives you a <b>free-look provision</b>: a window of ' +
+          '<b>' + SLA.FREE_LOOK_DAYS + ' days</b> to read your policy — the actual document, not the brochure — ' +
+          'and satisfy yourself it is exactly what you intended to buy. If it is not, you are entitled to return ' +
+          'it within that window. Your policy document states the exact terms on its own pages.</p>' +
+          '<p style="margin:10px 0 0">That window is running <b>now</b>, from dispatch. So when your advisor ' +
+          'delivers it: open it, read it, and sign the <b>acknowledgement of delivery</b> — that signature is ' +
+          'your record of when the policy reached you.</p>') +
+        pdNote_('<b>If it has not arrived within a few days, tell us.</b> A policy sitting undelivered spends ' +
+          'your free-look window for you — and we would rather chase it than let that happen.') +
+        pdFlAskBlock_(p) +
+        pdTrackBlock_() + pdSignature_(p),
+        { kind: 'fl_dispatch', days: 0 })
+    };
+  },
+
+  /* Days 5 / 10 / 15, no acknowledgement on file — "has it arrived?".
+     Three rounds, each a shade firmer, each copying the same five people. */
+  fl_remind: function (p, state, opts) {
+    var r = (opts && opts.round) || 1;
+    var d = Number(p.flDays) || 0;
+    var left = Math.max(0, SLA.FREE_LOOK_DAYS - d);
+    var tone = r === 1
+      ? 'It may well already be with you — delivery and paperwork often cross. If it is, the one-tap answer ' +
+        'below closes this out and you will not hear from us again about it.'
+      : r === 2
+      ? 'By now it should certainly have reached you. If it has not, it is sitting with your advisor — and ' +
+        'every day it sits there is a day off your own review window.'
+      : 'This is the last of the ordinary reminders. From day ' + SLA.FL_FINAL_FROM + ' we write daily, because ' +
+        'from there your window is measured in single days.';
+    return {
+      subject: 'Has your policy reached you? — ' + p.Policy + ' (day ' + d + ' of your ' +
+               SLA.FREE_LOOK_DAYS + '-day free-look window)',
+      cc: pdChainCc_(p),
+      html: pdWrap_(
+        pdRefBlock_(p, 'Your policy — has it reached you?') +
+        '<p>' + pdSalutation_(p.Client) + ',</p>' +
+        '<p>Your policy was dispatched from head office on <b>' + pdDateOf_(p.Dispatched.getTime()) + '</b> — ' +
+        '<b>' + d + ' days ago</b> — and our record does not yet show a signed acknowledgement of delivery.</p>' +
+        '<p>' + tone + '</p>' +
+        pdNote_('Your free-look window has <b>' + left + ' day' + (left === 1 ? '' : 's') + '</b> left to run. ' +
+          'It is the period the Insurance Act gives you to read the policy you bought and return it if it is ' +
+          'not what you intended — and it only works if the policy is actually in your hands.') +
+        pdFlAskBlock_(p) +
+        pdTrackBlock_() + pdSignature_(p),
+        { kind: 'fl_remind', days: d })
+    };
+  },
+
+  /* Days 18 / 19 — the daily countdown — and day 20, the letter that says
+     plainly that nothing was ever recorded as delivered. The countdown names
+     where the policy is sitting; the whole chain is copied; nobody gets to
+     say later that they did not know. */
+  fl_final: function (p, state, opts) {
+    var r = (opts && opts.round) || 1;
+    var d = Number(p.flDays) || 0;
+    var closes = r === 1 ? 'in <b>2 days</b>' : r === 2 ? '<b>tomorrow</b>' : null;
+    if (r < 3) {
+      return {
+        subject: 'Your free-look window closes ' + (r === 1 ? 'in 2 days' : 'tomorrow') + ' — policy ' + p.Policy,
+        cc: pdChainCc_(p),
+        html: pdWrap_(
+          pdRefBlock_(p, 'Your free-look window is closing') +
+          '<p>' + pdSalutation_(p.Client) + ',</p>' +
+          '<p>Your policy was dispatched on <b>' + pdDateOf_(p.Dispatched.getTime()) + '</b>. As of today — ' +
+          'day <b>' + d + '</b> — our records still show <b>no signed acknowledgement of delivery</b>, which ' +
+          'means the policy is with your advisor' + (p.Agent ? ', <b>' + pdEsc_(p.Agent) + '</b>,' : '') +
+          ' and not yet in your hands.</p>' +
+          pdNote_('<b>Your ' + SLA.FREE_LOOK_DAYS + '-day free-look window closes ' + closes + '.</b> ' +
+            'This is the review period the Insurance Act gives you. A policy you have never held cannot be ' +
+            'reviewed — so if it has not reached you, say so now and the branch will put it right today.', PD_BRAND.red) +
+          pdFlAskBlock_(p) +
+          pdTrackBlock_() + pdSignature_(p),
+          { kind: 'fl_final', days: d })
+      };
+    }
+    return {
+      subject: 'Your free-look window has closed — and we show no delivery — policy ' + p.Policy,
+      cc: pdChainCc_(p),
+      html: pdWrap_(
+        pdRefBlock_(p, 'Free-look window closed — no delivery on record') +
+        '<p>' + pdSalutation_(p.Client) + ',</p>' +
+        '<p>Your policy was dispatched from head office on <b>' + pdDateOf_(p.Dispatched.getTime()) + '</b>. ' +
+        'The ' + SLA.FREE_LOOK_DAYS + '-day free-look window counted from that date has now run out — and our ' +
+        'records show the policy was <b>never signed for as delivered</b>.</p>' +
+        pdNote_('<b>An undelivered policy holds back your free-look rights.</b> If your policy has not reached ' +
+          'you, reply to this email or tap below <b>today</b> — the branch manager is copied on this letter, and ' +
+          'we will treat it as our problem to fix, not yours. Do not let this quietly stand.', PD_BRAND.red) +
+        pdNote_('If the policy <b>is</b> in your hands and the acknowledgement simply was never signed, tell us ' +
+          'that too — the signature completes your file, and your policy schedule states your exact free-look ' +
+          'terms.', PD_BRAND.green) +
+        pdFlAskBlock_(p) +
+        pdTrackBlock_() + pdSignature_(p),
+        { kind: 'fl_final', days: d })
+    };
+  },
+
+  /* Day 20, acknowledgement on file — the window ran its course with the
+     policy where it belongs. One quiet, complete close. */
+  fl_end: function (p) {
+    var plan = pdPlanName_(p.PlanCode, p.Policy);
+    return {
+      subject: 'Your free-look period has run its course — ' + p.Policy,
+      cc: pdChainCc_(p),
+      html: pdWrap_(
+        pdRefBlock_(p, 'Free-look period complete') +
+        '<p>' + pdSalutation_(p.Client) + ',</p>' +
+        '<p>Your ' + (plan ? '<b>' + pdEsc_(plan) + '</b> ' : '') + 'policy was delivered and signed for on ' +
+        '<b>' + pdDateOf_(p.Acknowledged.getTime()) + '</b>, and the ' + SLA.FREE_LOOK_DAYS + '-day free-look ' +
+        'window that began at dispatch has now run its course. From here your policy simply does its job.</p>' +
+        '<p>If anything in the document ever reads differently from what you understood you bought — at any ' +
+        'time, not just this month — tell us. Questions cost nothing; assumptions sometimes do.</p>' +
+        pdNote_('Register on <b>myGuardian Group</b> to see this policy, your values and your payment record ' +
+          'in one place, any time.', PD_BRAND.green) +
+        pdTrackBlock_() + pdSignature_(p),
+        { kind: 'fl_end', days: 0 })
+    };
   }
 };
 
@@ -3022,6 +3220,121 @@ function pdRequirements_() {
   return map;
 }
 
+/* ===================== the free-look watch =====================
+   Head office dispatches an issued policy; the Insurance Act gives the client
+   a free-look window to read what they actually bought and hand it back if it
+   is not what they intended; the advisor is the courier in the middle. When
+   the advisor sits on the policy, the client's window burns down without the
+   client ever holding the contract — and nobody involved has an incentive to
+   mention it. This machine is that mention.
+
+   It writes to the CLIENT, always, with the advisor, their manager, the BM
+   and branch support copied on every letter — so a policy rotting in a bag
+   is visible to five people from day 5, and the day-20 letter that says
+   "never recorded as delivered" lands in front of everyone at once. */
+
+/** A date cell from the sheet, whatever shape it arrived in. */
+function pdDate_(v) {
+  if (v === null || v === undefined || v === '') return null;
+  if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
+  var d = new Date(String(v).replace(/^ +| +$/g, ''));
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * The Export tab, decoded: one row per issued policy with head office's
+ * dispatch record — Dispatch Date, Acknowledgement Date, Delivery Category.
+ * Columns are found by header name, tolerating both spellings of
+ * "Acknowledgement" and the tab's own "Servcing Agent Name", because a
+ * reader that dies on a renamed column is a reader that silently stops
+ * protecting clients. Rows without a dispatch date are not yet this
+ * machine's business.
+ */
+function pdDispatches_() {
+  var out = [];
+  try {
+    var ss = SpreadsheetApp.openById(PORTFOLIO_ID);
+    var sh = ss.getSheetByName(OUT.FL_SHEET);
+    if (!sh) return out;
+    var v = sh.getDataRange().getValues();
+    if (v.length < 2) return out;
+    var H = {}, c;
+    for (c = 0; c < v[0].length; c++) H[String(v[0][c]).replace(/^ +| +$/g, '').toLowerCase()] = c;
+    var col = function () {
+      for (var a = 0; a < arguments.length; a++) if (H[arguments[a]] != null) return H[arguments[a]];
+      return null;
+    };
+    var iPol = col('policy id', 'policy'), iDisp = col('dispatch date'),
+        iAck = col('acknowledgement date', 'acknowledgment date'),
+        iCat = col('delivery category'), iGiven = col('given name'), iSur = col('surname'),
+        iAgent = col('servcing agent name', 'servicing agent name'),
+        iEmail = col('email'), iPlan = col('plan'), iCli = col('client id');
+    if (iPol == null || iDisp == null) return out;
+    for (var i = 1; i < v.length; i++) {
+      var disp = pdDate_(v[i][iDisp]);
+      if (!disp) continue;
+      var pol = String(v[i][iPol] || '').replace(/\.0$/, '').replace(/^ +| +$/g, '');
+      if (!pol) continue;
+      out.push({
+        Policy: pol,
+        Client: (String(iGiven != null ? (v[i][iGiven] || '') : '') + ' ' +
+                 String(iSur != null ? (v[i][iSur] || '') : '')).replace(/^ +| +$/g, ''),
+        ClientNo: iCli != null ? String(v[i][iCli] || '') : '',
+        Agent: iAgent != null ? String(v[i][iAgent] || '').replace(/^ +| +$/g, '') : '',
+        Email: iEmail != null ? String(v[i][iEmail] || '') : '',
+        PlanCode: iPlan != null ? String(v[i][iPlan] || '') : '',
+        Dispatched: disp,
+        Acknowledged: iAck != null ? pdDate_(v[i][iAck]) : null,
+        Category: iCat != null ? String(v[i][iCat] || '') : '',
+        Status: 0, DaysArrears: 0
+      });
+    }
+  } catch (e) {
+    Logger.log('Free-look: could not read "' + OUT.FL_SHEET + '" — ' + e + '. The watch sat this run out.');
+  }
+  return out;
+}
+
+/**
+ * The free-look counter. d is whole days since dispatch.
+ *
+ * Acknowledged (the client signed for it): one letter, at day 20 — the
+ * window has run its course, raise anything now or carry on covered.
+ * Not acknowledged: the dispatch note at day 0–4; "has it arrived?" at
+ * 5 / 10 / 15 (3-day windows, so a missed morning still catches its round);
+ * a daily countdown at 18 and 19; and at 20 the letter that says out loud
+ * that nothing was ever recorded as delivered. Beyond FL_MAX_DAYS nothing
+ * mails — an expired window is a management case, and the digest carries
+ * those names instead.
+ *
+ * The dispatch note goes even when the acknowledgement is already on file —
+ * same-day delivery is the good case, and that letter is still the client's
+ * only introduction to the free-look provision itself.
+ */
+function pdFlStage_(d, acked) {
+  d = Number(d) || 0;
+  if (d < 0 || d > OUT.FL_MAX_DAYS) return null;
+  if (d <= 4) return { key: 'fl_dispatch', round: 0 };
+  if (acked) return d >= SLA.FREE_LOOK_DAYS ? { key: 'fl_end', round: 0 } : null;
+  if (d >= SLA.FREE_LOOK_DAYS) return { key: 'fl_final', round: 3 };
+  if (d >= SLA.FL_FINAL_FROM) return { key: 'fl_final', round: d - SLA.FL_FINAL_FROM + 1 };
+  if ((d - SLA.FL_REMIND_EVERY) % SLA.FL_REMIND_EVERY < 3) {
+    return { key: 'fl_remind', round: 1 + Math.floor((d - SLA.FL_REMIND_EVERY) / SLA.FL_REMIND_EVERY) };
+  }
+  return null;                                   // days 8-9 and 13-14: quiet by design
+}
+
+/** The one question every free-look letter asks, with one-tap answers. */
+function pdFlAskBlock_(p) {
+  return pdQuestionBlock_(p, [
+    { k: 'fldeliv', q: 'Has your policy reached you?', opts: [
+      { k: 'inhand',  lab: 'Yes — it is in my hands' },
+      { k: 'missing', lab: 'No — it has not arrived' },
+      { k: 'concern', lab: 'It arrived, and I have a concern' },
+      { k: 'talk',    lab: 'Have someone call me' } ] }
+  ], 'respond');
+}
+
 /* ===================== group schemes =====================
    Company-owned policies — the client IS a company (Servus Limited, Bankers
    Insurance, JMMB Bank). On the live book these run 200+ policies on a single
@@ -3269,6 +3582,10 @@ function pdAlreadySent_() {
       var pr = String(v[i][12] || '').match(/round (\d+)/);
       if (pr) seen[String(v[i][2]) + '|pend|' + pr[1]] = true;
     }
+    if (st === 'fl_remind' || st === 'fl_final') {                 // free-look repeats — key them by round
+      var fr = String(v[i][12] || '').match(/round (\d+)/);
+      if (fr) seen[String(v[i][2]) + '|' + st + '|' + fr[1]] = true;
+    }
   }
   return seen;
 }
@@ -3430,11 +3747,50 @@ function dailyPremiumDueRun() {
     groupsSent += pdGroupChase_(gk2, groups[gk2], states);
   }
 
-  Logger.log('Premium due run — %s%s%s. planned=%s sent=%s held-by-cap=%s no-email=%s internal-chases=%s group-schemes=%s group-statements=%s',
+  /* ===== The free-look watch =====
+     A fourth pass over a fourth dataset: the Export tab's dispatch record.
+     The dispatch note at day 0, "has it arrived?" at 5/10/15 while no
+     acknowledgement is on file, a daily countdown from 18, and the day-20
+     close — one letter if the policy was signed for, a different one if the
+     record still shows nothing. Group-owned policies are skipped (their
+     members are never written to), anything past FL_MAX_DAYS belongs to the
+     digest, and the client-send cap and pilot gate apply here exactly as
+     they do to the arrears ladder. Closest-to-expiry goes first, so a
+     capped day protects the clients with the fewest days left. */
+  var flRows = pdDispatches_(), flPlanned = 0, flNoEmail = 0, flSent = 0;
+  flRows.sort(function (a, b) { return a.Dispatched.getTime() - b.Dispatched.getTime(); });
+  for (var f = 0; f < flRows.length; f++) {
+    var fp = flRows[f];
+    if (pdIsGroup_(fp)) continue;
+    if (!pdInPilot_(fp.Agent)) continue;
+    var fd = pdDaysSince_(fp.Dispatched.getTime());
+    var flStage = pdFlStage_(fd, !!fp.Acknowledged);
+    if (!flStage) continue;
+    fp.flDays = fd; fp.DaysArrears = fd;         // the log's "day N" is days since dispatch here
+    var flKey = String(fp.Policy) + '|' + flStage.key + (flStage.round ? '|' + flStage.round : '');
+    if (sent[flKey]) continue;
+    var ftpl = pdRender(flStage.key, fp, {}, { round: flStage.round });
+    if (!ftpl) continue;
+    if (!pdMayEmail_(fp)) { pdLogSend_(fp, flStage.key, ftpl, false, flStage.round); continue; }
+    flPlanned++;
+    var fto = pdValidEmail_(fp.Email);
+    if (!fto) { flNoEmail++; pdLogSend_(fp, flStage.key, ftpl, false, flStage.round); continue; }
+    if (OUT.DRY_RUN) { pdLogSend_(fp, flStage.key, ftpl, false, flStage.round); continue; }
+    if (count >= OUT.MAX_SENDS_PER_RUN) { capHeld++; continue; }
+    try {
+      pdDeliver_(fto, ftpl.cc, ftpl.subject, ftpl.html);
+      pdLogSend_(fp, flStage.key, ftpl, true, flStage.round);
+      count++; flSent++;
+    } catch (fe) {
+      pdLogSend_(fp, flStage.key, { subject: 'FAILED: ' + String(fe) }, false);
+    }
+  }
+
+  Logger.log('Premium due run — %s%s%s. planned=%s sent=%s held-by-cap=%s no-email=%s internal-chases=%s group-schemes=%s group-statements=%s freelook-planned=%s freelook-no-email=%s',
     OUT.DRY_RUN ? 'DRY RUN, nothing emailed' : 'LIVE',
     !OUT.DRY_RUN && OUT.TEST_INBOX ? ' — TEST MODE, everything to ' + OUT.TEST_INBOX : '',
     OUT.PILOT_AGENTS.length ? ' — pilot: ' + OUT.PILOT_AGENTS.join(', ') : '',
-    planned, count, capHeld, skippedNoEmail, internal, groupCount, groupsSent);
+    planned, count, capHeld, skippedNoEmail, internal, groupCount, groupsSent, flPlanned, flNoEmail);
 }
 
 /**
@@ -3528,6 +3884,36 @@ function pdPilotStats() {
   var replCli = 0;
   for (j2 in replClients) if (Object.prototype.hasOwnProperty.call(replClients, j2)) replCli++;
 
+  /* The free-look watch, counted. The dispatch record answers a question
+     nothing else in the book can: how long do issued policies sit between
+     head office and the client's hands — and on whose desk. */
+  var flAll = pdDispatches_(), flDisp = 0, flAcked = 0, flAckedLate = 0;
+  var flOpen = 0, flCountdown = 0, flExpired = 0, flByAgent = {}, flDue = [];
+  for (var fj = 0; fj < flAll.length; fj++) {
+    var fq = flAll[fj];
+    flDisp++;
+    var fdd = pdDaysSince_(fq.Dispatched.getTime());
+    if (fq.Acknowledged) {
+      flAcked++;
+      if ((fq.Acknowledged.getTime() - fq.Dispatched.getTime()) / 86400000 > SLA.FREE_LOOK_DAYS) flAckedLate++;
+      continue;
+    }
+    if (fdd <= OUT.FL_MAX_DAYS) {
+      flOpen++;
+      if (fdd >= SLA.FL_FINAL_FROM) {
+        flCountdown++;
+        if (flDue.length < 8) flDue.push(fq.Policy + ' · ' + fq.Client + ' · ' + (fq.Agent || 'no agent') + ' · day ' + fdd);
+      }
+    } else {
+      flExpired++;
+      var fa = fq.Agent || '(no agent on record)';
+      flByAgent[fa] = (flByAgent[fa] || 0) + 1;
+    }
+  }
+  var flAgentRows = [], fk;
+  for (fk in flByAgent) if (Object.prototype.hasOwnProperty.call(flByAgent, fk)) flAgentRows.push([fk, flByAgent[fk]]);
+  flAgentRows.sort(function (a, b) { return b[1] - a[1]; });
+
   var row = function (k, v2, hot) {
     return '<tr><td style="padding:7px 12px;border:1px solid ' + PD_BRAND.line + ';background:#FFFFFF;color:' +
       PD_BRAND.ink + '">' + k + '</td><td style="padding:7px 12px;border:1px solid ' + PD_BRAND.line +
@@ -3577,6 +3963,25 @@ function pdPilotStats() {
         String(replSameAgent), replSameAgent > 0) +
         row('&nbsp;&nbsp;each confirmed case needs the signed Replacement Declaration Form (§9)', 'or "Not Proceeded With"', false) : ''))) +
 
+    pdSection_('The free-look watch (dispatch → the client’s hands, on the ' + SLA.FREE_LOOK_DAYS + '-day clock)', tbl(
+      row('Policies with a dispatch date on the Export tab', String(flDisp), false) +
+      row('Acknowledged as delivered', String(flAcked), false) +
+      row('&nbsp;&nbsp;of which signed for AFTER the free-look window had already run out',
+        flAcked ? flAckedLate + ' (' + Math.round(100 * flAckedLate / flAcked) + '%)' : '0', flAckedLate > 0) +
+      row('Dispatched, not acknowledged — inside the live window (letters running)', String(flOpen), false) +
+      row('&nbsp;&nbsp;of which in the daily countdown (day ' + SLA.FL_FINAL_FROM + '+)', String(flCountdown), flCountdown > 0) +
+      row('Expired with NO delivery ever recorded (management cases — no letters)', String(flExpired), flExpired > 0)) +
+      (flDue.length
+        ? '<p style="margin:8px 0 4px;font-size:12.5px;color:' + PD_BRAND.mute + '">In the countdown today:</p>' +
+          tbl((function () { var rws = ''; for (var q3 = 0; q3 < flDue.length; q3++) rws += row(pdEsc_(flDue[q3]), 'expiring', true); return rws; })())
+        : '') +
+      (flAgentRows.length
+        ? '<p style="margin:8px 0 4px;font-size:12.5px;color:' + PD_BRAND.mute + '">Undelivered backlog by servicing agent (top ' +
+          Math.min(8, flAgentRows.length) + ' — these are conversations, not letters):</p>' +
+          tbl((function () { var rws = ''; for (var q4 = 0; q4 < Math.min(8, flAgentRows.length); q4++)
+            rws += row(pdEsc_(flAgentRows[q4][0]), flAgentRows[q4][1] + ' polic' + (flAgentRows[q4][1] === 1 ? 'y' : 'ies'), true); return rws; })())
+        : '')) +
+
     pdSection_('Production (application received in the last 7 days)', tbl(
       row('Applications', String(weekApps), false) +
       row('Premium as recorded (mode unknown — see data asks)', pdMoney_(weekPrem), false))) +
@@ -3588,7 +3993,8 @@ function pdPilotStats() {
     { kind: 'mgr' }, true);
 
   var summary = 'status2=' + st2 + ' at45=' + at45 + ' window45-59=' + w4559 + ' mgrDue=' + mgrDue +
-    ' schemes=' + gN + ' pending=' + pendN + ' settle-ready=' + pendReady + ' replacement-checks=' + replApps;
+    ' schemes=' + gN + ' pending=' + pendN + ' settle-ready=' + pendReady + ' replacement-checks=' + replApps +
+    ' freelook-open=' + flOpen + ' freelook-countdown=' + flCountdown + ' freelook-expired-undelivered=' + flExpired;
   if (OUT.DRY_RUN && !OUT.TEST_INBOX) {
     Logger.log('Digest (DRY RUN, no test inbox — logged only, not emailed). ' + summary);
     return;

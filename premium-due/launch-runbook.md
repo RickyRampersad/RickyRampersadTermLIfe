@@ -34,7 +34,8 @@ facts are covered by tests.
 | 5-day reminder | 48 |
 | Day-90/95/100 closing letter | 34 |
 | Day-88 final notice | 18 |
-| **Total planned** | **612** — of which **169 have no email** and are logged for a phone call |
+| Free-look watch (dispatch → delivery, Export tab) | 9 — 2 at day 18, 2 at day 19, 3 expiry letters, 2 "has it arrived?"; ~12/day for a fortnight after |
+| **Total planned** | **~621** — of which **169 have no email** and are logged for a phone call |
 
 | Internal / schemes | Count |
 |---|---|
@@ -88,6 +89,9 @@ the deployed Apps Script.
       group-statement** (recipient is the administrator you configured).
 - [ ] Confirm no row addresses a company as a person, and no scheme member
       gets an individual letter.
+- [ ] Free-look rows (`fl_*`): only cases **≤ 22 days from dispatch** appear —
+      the 162-case undelivered backlog must show in the digest only, never as
+      planned letters.
 
 ## 3 · Stage 1 — the pilot: two books, one inbox
 
@@ -142,6 +146,11 @@ Run it for **2–3 days** and check, in your own inbox and the engine:
       feedback, on the real 3-day / 7-day clocks.
 - [ ] The Servus statement: whole scheme listed, diagnosis line correct,
       administrator named as the would-be recipient.
+- [ ] The free-look ladder: the dispatch note teaches the window; a day-18/19
+      letter names the advisor holding the policy; the day-20 letter differs
+      by acknowledgement (delivered → "ran its course"; blank → "no delivery
+      on record", BM visibly copied). Fill an Acknowledgement Date mid-ladder
+      and confirm the reminders stop.
 - [ ] Cadence: nothing repeats a day early, nothing you answered chases again.
 - [ ] Anything that reads wrong — wording, figures, layout on your phone —
       gets fixed **now**, while no client has seen it.

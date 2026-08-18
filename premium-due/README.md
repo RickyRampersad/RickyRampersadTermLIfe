@@ -468,9 +468,47 @@ branch.
 
 **Stats before letters:** `pdPilotStats()` emails one digest of everything
 the engine believes — the dues funnel, the schemes, the decoded pending book,
-the week's production — to the test inbox (branch email once live), writing
-nothing to the log. It is the pilot's first act and a daily sanity check:
-when a number disagrees with what the branch knows, the letters wait.
+the free-look watch, the week's production — to the test inbox (branch email
+once live), writing nothing to the log. It is the pilot's first act and a
+daily sanity check: when a number disagrees with what the branch knows, the
+letters wait.
+
+### The free-look watch — dispatch to the client's hands
+
+The fourth machine, on a fourth dataset: the **Export** tab's dispatch record.
+Head office stamps a `Dispatch Date` the day an issued policy leaves; the
+client's free-look window — the Insurance Act's period to read the policy and
+return it if it is not what they intended — runs from that day; the
+`Acknowledgement Date` is the client's signature saying it arrived. The gap
+between those two dates is where policies go to sit in car trunks. On the
+live tab, **59% of acknowledged policies were signed for after the window had
+already run out**, and 179 were never signed for at all.
+
+The clock, counted in days since dispatch (`pdFlStage_`):
+
+| Day | No acknowledgement on file | Acknowledgement on file |
+|-----|---------------------------|------------------------|
+| 0–4 | `fl_dispatch` — the welcome: dispatched, expect it, here is what the free-look provision is | same letter — it teaches the window even when delivery was same-day |
+| 5 / 10 / 15 | `fl_remind` — "has it reached you?", each round a shade firmer, 3-day catch-up windows | quiet — the ladder stopped the moment the date was filled in |
+| 18 / 19 | `fl_final` — daily countdown: "closes in 2 days", "closes tomorrow", naming that the policy is sitting with the advisor | quiet |
+| 20 | `fl_final` round 3 — the window has closed **and no delivery was ever recorded**: said plainly, branch manager copied, "our problem to fix, not yours" | `fl_end` — delivered on the signed date, window ran its course, welcome aboard |
+| 23+ | **nothing mails** — an expired window is a management case; the digest carries those names, grouped by servicing agent | — |
+
+Every letter goes to the **client**, with the advisor, their manager, the BM
+and branch support copied — a policy rotting in a bag is visible to five
+people from day 5, which is the entire point: the rationale is catching the
+agents who fail to deliver, and doing it in front of everyone before the
+client's window burns out rather than in an audit afterwards.
+
+Rails, same as everywhere: one-tap answers in every letter ("it is in my
+hands" / "it has not arrived" / "I have a concern"), rounds deduped in the
+log so a rerun cannot double-send, group-owned dispatches skipped entirely
+(members are never written to), the pilot gate and the three-key interlock
+apply unchanged, and `FL_MAX_DAYS` keeps launch day from writing to the
+year-old backlog — those 162 cases surface in the digest only. Column lookup
+is by header name and tolerates both spellings of "Acknowledgement" plus the
+tab's own "Servcing Agent Name"; staff lookups match names case-insensitively
+because the Export tab writes the same humans in capitals.
 
 ### How the handover fires
 
