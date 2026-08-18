@@ -113,3 +113,25 @@ claims, switching the range reloads, and an agent sees only their own scorecard.
 Live email delivery. After redeploying the Apps Script, send one real query
 with `TEST_MODE = true` and confirm the attachments arrive in the test inbox —
 see the deployment notes in the commit message.
+
+## The demo film
+
+`record-demo.mjs` drives the real app in Chromium and records it (backend
+mocked — no live email), logging a caption timeline to `demo/timeline.json`.
+`build_soundtrack.py` then narrates that timeline with piper text-to-speech and
+composes an original motivational score under it in numpy (D major, 112 BPM —
+pads, bass, plucks, kick, a riser into the wall finale), ducking the music
+whenever the voice speaks. Nothing is licensed from anyone; every note is
+synthesized here.
+
+```bash
+NODE_PATH=/opt/node22/lib/node_modules node record-demo.mjs
+pip install piper-tts numpy && python3 -m piper.download_voices en_US-lessac-medium --download-dir voices
+python3 build_soundtrack.py
+ffmpeg -ss 12.8 -i demo/querypal-demo.webm -ss 12.8 -i demo/soundtrack.wav \
+  -map 0:v -map 1:a -c:v libx264 -crf 23 -pix_fmt yuv420p -c:a aac -b:a 192k \
+  -movflags +faststart -shortest demo/querypal-demo-final.mp4
+```
+(The -ss trims the page-load dead air before the title card; check the first
+timeline mark if the load time changes. The voice model path at the top of
+build_soundtrack.py points at wherever the piper voice was downloaded.)

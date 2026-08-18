@@ -18,6 +18,9 @@ const ctx = await browser.newContext({
 });
 const page = await ctx.newPage();
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+const T0 = Date.now();                       // video starts with the page
+const MARKS = [];                            // caption timeline for the soundtrack
+const mark = (kind, text) => MARKS.push({ t: Date.now() - T0, kind, text });
 
 /* ---------------- mocked backend ---------------- */
 const REF = 'RRB/2026/214/Anita Maharaj/Tax statem';
@@ -105,12 +108,14 @@ async function installCaption() {
   });
 }
 async function cap(text, holdMs) {
+  mark('cap', text);
   await installCaption();
   await page.evaluate(t => { const c = document.getElementById('demoCap');
     c.style.opacity = '0'; setTimeout(() => { c.textContent = t; c.style.opacity = '1'; }, 180); }, text);
   await sleep(holdMs);
 }
 async function card(title, sub, holdMs) {
+  mark('card', title);
   await page.evaluate(({ t, s }) => {
     let o = document.getElementById('demoCard');
     if (!o) { o = document.createElement('div'); o.id = 'demoCard';
@@ -245,6 +250,8 @@ await cap('And how it feels to clients — every rating, in their own words.', 3
 /* — Outro — */
 await card('Logged. Routed. Chased. Resolved.', 'Query Pal · querymypolicies.netlify.app', 3600);
 
+mark('end', '');
+fs.writeFileSync(path.join(OUT, 'timeline.json'), JSON.stringify(MARKS, null, 1));
 await ctx.close();               // flushes the video
 const files = fs.readdirSync(OUT).filter(f => f.endsWith('.webm'));
 const src = path.join(OUT, files[0]);
