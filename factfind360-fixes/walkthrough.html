@@ -1,0 +1,41 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>How factfind360 works</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:radial-gradient(900px 500px at 80% -10%,rgba(45,212,191,.13),transparent 60%),
+radial-gradient(700px 450px at 5% 110%,rgba(245,185,53,.09),transparent 55%),#0E1A2E;
+color:#F3F7FD;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+min-height:100vh;padding:34px 14px 60px}
+.wrap{max-width:960px;margin:0 auto}
+h1{font-size:clamp(26px,5vw,40px);font-weight:850;letter-spacing:-.02em;text-align:center}
+h1 b{color:#2DD4BF}
+.sub{text-align:center;color:#93A7C4;font-weight:600;margin:8px 0 26px}
+video{width:100%;border-radius:16px;border:1px solid #1C2942;box-shadow:0 24px 70px rgba(0,0,0,.5);display:block;background:#000}
+.chs{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:22px}
+.ch{background:rgba(255,255,255,.04);border:1px solid #1C2942;border-radius:12px;padding:13px 15px;cursor:pointer;transition:.15s}
+.ch:hover{border-color:#2DD4BF;transform:translateY(-2px)}
+.ch .t{font-weight:800;font-size:14px}
+.ch .s{color:#93A7C4;font-size:12px;margin-top:3px}
+.ch .m{color:#F5B935;font-weight:800;font-size:11px;letter-spacing:.08em}
+.foot{text-align:center;color:#5E7297;font-size:12px;margin-top:26px}
+.foot a{color:#2DD4BF;font-weight:700;text-decoration:none}
+</style></head><body><div class="wrap">
+<h1>How <b>factfind360</b> works</h1>
+<div class="sub">One guided journey — the agent, the client, and the manager. 105 seconds.</div>
+<video id="v" controls playsinline preload="metadata" poster="tour-poster.jpg">
+  <source src="factfind360-tour.mp4" type="video/mp4">
+</video>
+<div class="chs">
+  <div class="ch" data-t="0"><div class="m">0:00</div><div class="t">Introduction</div><div class="s">One journey, three experiences</div></div>
+  <div class="ch" data-t="7.9"><div class="m">0:08</div><div class="t">The Agent</div><div class="s">Guided fact find · live checks · one-tap submit</div></div>
+  <div class="ch" data-t="38.2"><div class="m">0:38</div><div class="t">The Client</div><div class="s">Their own copy · progress · confirm &amp; rate</div></div>
+  <div class="ch" data-t="59.1"><div class="m">0:59</div><div class="t">The Manager</div><div class="s">Digest · queue · deep dive · one-tap decisions</div></div>
+  <div class="ch" data-t="91.5"><div class="m">1:31</div><div class="t">The Branch</div><div class="s">Live on the wallboard</div></div>
+</div>
+<div class="foot">Ricky Rampersad Branch · Guardian Life of the Caribbean · <a href="index.html">factfind360.com</a></div>
+</div><script>
+document.querySelectorAll('.ch').forEach(function(c){c.onclick=function(){
+  var v=document.getElementById('v'); v.currentTime=parseFloat(c.dataset.t); v.play();};});
+</script></body></html>
