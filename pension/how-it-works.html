@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Company Pensions in Two Minutes</title>
-<meta name="description" content="How a Section 134 company-owned pension works, and how the Rampersad Branch runs one end to end — a two-minute film for companies and for the team.">
+<title>Company Pensions in Three Minutes</title>
+<meta name="description" content="How a Section 134 company-owned pension works, and how the Rampersad Branch runs one end to end — a three-minute film for companies and for the team.">
 <style>
 /* ── The faces are inlined so the film looks the same on a boardroom screen,
       a phone with no signal, and the frame renderer that makes the MP4. ── */
@@ -29,9 +29,14 @@ html,body{height:100%;background:var(--void);overflow:hidden}
 body{font-family:'ArchivoF',system-ui,sans-serif;color:var(--txt);-webkit-font-smoothing:antialiased}
 
 /* ── stage: a fixed 1920×1080 canvas, scaled to whatever screen it lands on ── */
-#stage{position:fixed;inset:0;display:grid;place-items:center;background:var(--void)}
-#film{position:relative;width:1920px;height:1080px;transform-origin:50% 50%;overflow:hidden;background:var(--void);
-  box-shadow:0 40px 120px rgba(0,0,0,.6)}
+/* The film is authored at exactly 1920×1080 and scaled to whatever screen it
+   lands on. Centring is done by fit() rather than by the layout: a 1920px-wide
+   box inside a narrower viewport overflows, and an overflowing grid item gets
+   clamped to the start edge instead of centred — which pushed the right and
+   bottom of every frame off-screen on any display that was not 16:9. */
+#stage{position:fixed;inset:0;background:var(--void);overflow:hidden}
+#film{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;
+  background:var(--void);box-shadow:0 40px 120px rgba(0,0,0,.6)}
 #glow{position:absolute;inset:-20%;pointer-events:none;
   background:radial-gradient(760px 520px at 78% 8%,rgba(232,95,106,.15),transparent 62%),
              radial-gradient(900px 600px at 12% 96%,rgba(63,143,212,.11),transparent 62%)}
@@ -147,7 +152,10 @@ em{font-style:italic;color:var(--gold)}
 #ctl{position:fixed;left:0;right:0;bottom:0;display:flex;align-items:center;gap:18px;padding:16px 26px;
   background:linear-gradient(0deg,rgba(6,11,22,.97),rgba(6,11,22,.72));backdrop-filter:blur(10px);
   border-top:1px solid #23272F;opacity:0;transition:opacity .25s;z-index:9}
-#stage:hover #ctl,#ctl:focus-within{opacity:1}
+/* #ctl is a sibling of #stage, not a child of it — the old descendant selector
+   never matched, so the bar stayed invisible even with the pointer on it and
+   nobody could pause, seek, or skip a chapter with a mouse. */
+#stage:hover ~ #ctl,#ctl:hover,#ctl:focus-within{opacity:1}
 #ctl button{background:none;border:1px solid #343A45;color:var(--txt);border-radius:999px;width:44px;height:44px;
   cursor:pointer;font-size:15px;display:grid;place-items:center;flex:0 0 auto}
 #ctl button:hover{border-color:var(--gold);color:var(--gold)}
@@ -685,7 +693,8 @@ document.addEventListener('keydown',function(e){
 /* fit the 1920×1080 stage to whatever it is being watched on */
 function fit(){
   var s=Math.min(window.innerWidth/1920, window.innerHeight/1080);
-  film.style.transform='scale('+s+')';
+  var x=(window.innerWidth-1920*s)/2, y=(window.innerHeight-1080*s)/2;
+  film.style.transform='translate('+x+'px,'+y+'px) scale('+s+')';
 }
 window.addEventListener('resize',fit); fit();
 render(0); sync();
