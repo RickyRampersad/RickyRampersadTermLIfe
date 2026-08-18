@@ -522,6 +522,8 @@ body.shot main{padding:18px 0}
   <div class="sec-head"><h2>Process &amp; Evidence</h2></div>
   <p class="lede">This case is won in two meetings if the sequence is respected. The discipline that matters most: <b>medical dates locked before any form circulates.</b> Draft figures in circulation create version-control risk at signing.</p>
 
+  <div id="pipelineCard"></div>
+
   <div class="grid" style="grid-template-columns:1.4fr 1fr">
     <div class="card">
       <h3>The six-step sequence</h3>
@@ -585,7 +587,7 @@ body.shot main{padding:18px 0}
 
   <div id="caseView" style="display:none"></div>
   <div id="applyForm">
-  <div id="backToCase" class="no-print" style="display:none;margin-bottom:14px"><button class="btn" type="button" onclick="A.editing=false;save();renderCase();applyMode();window.scrollTo(0,0)">← Back to case tracker</button></div>
+  <div id="backToCase" class="no-print" style="display:none;margin-bottom:14px"><button class="btn" type="button" onclick="A.editing=false;saveA();renderCase();applyMode();window.scrollTo(0,0)">← Back to case tracker</button></div>
   <div class="grid" style="grid-template-columns:1.35fr 1fr;align-items:start">
     <div>
       <div class="card">
@@ -767,6 +769,7 @@ document.querySelectorAll('.tab-btn').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.tabpane').forEach(x=>x.classList.remove('active'));
   b.classList.add('active');$(b.dataset.tab).classList.add('active');
   if(b.dataset.tab==='brief')renderBrief();
+  if(b.dataset.tab==='process'&&typeof renderPipeline==='function')renderPipeline();
   /* remember where this agent works, and keep the URL shareable */
   S.tab=b.dataset.tab;save();
   try{const u=new URL(location.href);u.searchParams.set('tab',S.tab);
@@ -1073,8 +1076,8 @@ $('dlPack').onclick=()=>{
   const missing=DOC_SLOTS.filter(s=>s.req&&!DOCS.some(d=>d.slot===s.k)).map(s=>s.label.split(' — ')[0]);
   if(missing.length){$('packStatus').textContent='✓ Case pack downloaded ('+DOCS.length+' file'+(DOCS.length===1?'':'s')+') — but still missing: '+missing.join('; ')+'. Send those as soon as the client provides them.';$('packStatus').style.color='var(--amber)';}
   else{$('packStatus').textContent='✓ Case pack downloaded with the full evidence pack ('+DOCS.length+' file'+(DOCS.length===1?'':'s')+'). Now send it to the specialist.';$('packStatus').style.color='var(--green)';}
-  if(!A.submitted){A.submitted={date:new Date().toISOString(),docs:DOCS.length};A.stage=1;save();}
-  else{A.submitted.docs=Math.max(A.submitted.docs||0,DOCS.length);save();}
+  if(!A.submitted){A.submitted={date:new Date().toISOString(),docs:DOCS.length};A.stage=1;saveA();}
+  else{A.submitted.docs=Math.max(A.submitted.docs||0,DOCS.length);saveA();}
   setTimeout(()=>{renderCase();applyMode();},600);
 };
 /* ── GLOC admin-form generation ── */
@@ -1445,7 +1448,7 @@ $('genForms').onclick=async()=>{
         'First Name':nm.first.toUpperCase(),'Surname':nm.rest.toUpperCase(),'Name of Company':co,
         'What special knowledge or qualities does the Keyperson have and why is the company so dependent on himher 1':(l.role||'')+' — earnings and key relationships of the company are materially dependent on this person.',
         'What salary or emoluments has the Keyperson earned over the last three 3 years':l.salary?ttFmt(l.salary)+' per month plus benefits (current) — three-year history per attached financial statements.':'',
-        'Why has this class of policy been chosen':(A.polType||'')+' — corporate keyman; company as proposer, payer and beneficiary.',
+        'Why has this class of policy been chosen':(A.polType||S.polType||'Whole Life with Critical Illness')+' — corporate keyman; company as proposer, payer and beneficiary.',
         'Estimate of probable financial loss to the company in the event of the death of the Keyperson Please explain calculation of financial':(l.sum?ttFmt(l.sum)+' — ':'')+sumDeterminedLine(l),
         'DOB dd':d?d.dd:'','DOB MMM':d?d.mmm:'','DOB YYYY':d?d.yyyy:'',
         'Application date DD':DD,'Application date MMM':MMM,'Application date YYYY':YYYY,
@@ -1468,8 +1471,8 @@ $('genForms').onclick=async()=>{
         m3=money3(fd.equity*(+l.share)/100);bt['b Present Value of this Equity']=m3[0];bt['Textfield-64']=m3[1];bt['Textfield-65']=m3[2];}
       if(A.company.year)bt['Textfield-67']=String(new Date().getFullYear()-A.company.year);
       if(A.fin.employees)bt['Textfield-66']=A.fin.employees;
-      // Q8e shareholder rows (from the Annual Return data captured per life)
-      lives.filter(x=>+x.share>0).slice(0,3).forEach((s,si)=>{
+      // Q8e shareholder rows — the form has exactly two ('' and '-0' suffixes)
+      lives.filter(x=>+x.share>0).slice(0,2).forEach((s,si)=>{
         const suf=si===0?'':'-'+(si-1),n2=splitName(s.name);
         bt['First Name'+suf]=n2.first;bt['Surname'+suf]=n2.rest;
         bt['of Share'+suf]=s.share;bt['Value of Shares'+suf]=fd.equity?fmtM(fd.equity*(+s.share)/100):'';});
@@ -1615,13 +1618,14 @@ function renderCase(){
       </div>
     </div>
   </div>`;
-  $('caseView').querySelectorAll('.stg').forEach(el=>el.onclick=()=>{A.stage=+el.dataset.stg;save();renderCase();});
-  $('caseView').querySelectorAll('[data-sent]').forEach(cb=>cb.onchange=()=>{A.sent=A.sent||{};A.sent[cb.dataset.sent]=cb.checked;save();renderCase();});
+  $('caseView').querySelectorAll('.stg').forEach(el=>el.onclick=()=>{A.stage=+el.dataset.stg;saveA();renderCase();});
+  $('caseView').querySelectorAll('[data-sent]').forEach(cb=>cb.onchange=()=>{A.sent=A.sent||{};A.sent[cb.dataset.sent]=cb.checked;saveA();renderCase();});
   $('caseDossier').onclick=()=>previewDossier();
   $('printCase').onclick=()=>{document.body.dataset.print='case';window.print();setTimeout(()=>delete document.body.dataset.print,600);};
-  $('editCase').onclick=()=>{A.editing=true;save();applyMode();};
+  $('editCase').onclick=()=>{A.editing=true;saveA();applyMode();};
   $('newCase').onclick=()=>{if(!confirm('Start a new case? The current application data on this device will be cleared.'))return;
-    A={agent:A.agent,company:{},lives:[{},{}],fin:{},notes:'',consent:false};DOCS=[];save();location.reload();};
+    if(typeof vaultSnapshot==='function')vaultSnapshot();
+    localStorage.setItem(LSA,JSON.stringify({agent:A.agent,company:{},lives:[{},{}],fin:{},notes:'',consent:false}));location.reload();};
 }
 function renderMail(){
   const subj=encodeURIComponent('Keyman application — '+(A.company.name||'new client'));
@@ -1629,6 +1633,89 @@ function renderMail(){
   $('mailPack').href='mailto:rampersadricky@gmail.com?subject='+subj+'&body='+body;
 }
 renderMail();
+
+
+/* ── my pipeline: names submitted on /names + the case vault ──
+   The Three Names page records each submission locally (same origin); the
+   vault keeps one application snapshot per company so several cases can be
+   tracked side by side. Everything stays on this device. */
+const LSP='keymanPipeline_v1',LSV='keymanVault_v1';
+const PSTAT=['Submitted','Researching','Meeting booked','Case opened','Placed','Parked'];
+const loadJ=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v;}catch(e){return d;}};
+let PIPE=loadJ(LSP,[]),VAULT=loadJ(LSV,{});
+const saveP=()=>localStorage.setItem(LSP,JSON.stringify(PIPE));
+const saveV=()=>localStorage.setItem(LSV,JSON.stringify(VAULT));
+const caseKeyOf=name=>(name||'').trim().toUpperCase().replace(/[^\w]+/g,'_').slice(0,60);
+function vaultSnapshot(){
+  const k=caseKeyOf(A.company.name);if(!k)return;
+  VAULT[k]={label:A.company.name,savedAt:new Date().toISOString(),
+    stage:A.stage||0,submitted:!!A.submitted,A:JSON.parse(JSON.stringify(A))};
+  saveV();
+}
+function openCase(k){
+  vaultSnapshot();
+  const c=VAULT[k];if(!c)return;
+  localStorage.setItem(LSA,JSON.stringify(c.A));
+  location.href=location.pathname+'?tab=apply';
+}
+function startCase(p){
+  vaultSnapshot();
+  p.status='Case opened';p.caseKey=caseKeyOf(p.biz||p.owner);saveP();
+  localStorage.setItem(LSA,JSON.stringify({agent:A.agent,
+    company:{name:p.biz||'',industry:p.ind||''},
+    lives:[{name:p.owner||''},{}],fin:{},
+    notes:p.rel?('Source: Three Names — relationship: '+p.rel):'',consent:false}));
+  location.href=location.pathname+'?tab=apply';
+}
+function renderPipeline(){
+  const host=$('pipelineCard');if(!host)return;
+  const active=caseKeyOf(A.company.name);
+  const stageOf=p=>{const k=p.caseKey||caseKeyOf(p.biz||p.owner);
+    if(k&&k===active)return A.submitted?STAGES[(A.stage||1)-1]:(A.company.name?'In preparation':null);
+    if(k&&VAULT[k])return VAULT[k].submitted?STAGES[(VAULT[k].stage||1)-1]:'In preparation';
+    return null;};
+  const rows=PIPE.map((p,i)=>{const st=stageOf(p);
+    return `<tr><td><b>${p.owner||'—'}</b><br><span style="color:var(--tx3);font-size:11px">${p.biz||''}${p.ind?' · '+p.ind:''}</span></td>
+    <td style="font-size:11px;color:var(--tx3)">${dFmt(p.added)}${p.src==='names'?'<br>via Three Names':''}</td>
+    <td>${st?`<span style="color:var(--green);font-weight:600;font-size:12px">◉ ${st}</span>`
+          :`<button class="btn ghost" data-pi="${i}" type="button" style="font-size:11.5px;padding:6px 12px" title="Click to advance">${p.status||'Submitted'} ▸</button>`}</td>
+    <td class="num" style="white-space:nowrap">
+      ${st?'':`<button class="btn ghost" data-start="${i}" type="button" style="font-size:11px;padding:6px 10px">Open case</button>`}
+      <a href="#" data-rmp="${i}" style="color:var(--red);text-decoration:none;margin-left:8px" title="Remove from pipeline">×</a></td></tr>`;}).join('');
+  const vaults=Object.entries(VAULT).filter(([k])=>k!==active).map(([k,c])=>
+    `<tr><td><b>${c.label}</b></td><td style="font-size:11px;color:var(--tx3)">saved ${dFmt(c.savedAt)}</td>
+     <td style="font-size:12px">${c.submitted?STAGES[(c.stage||1)-1]:'In preparation'}</td>
+     <td class="num"><button class="btn ghost" data-open="${k}" type="button" style="font-size:11px;padding:6px 10px">Switch to</button></td></tr>`).join('');
+  host.innerHTML=`<div class="card" style="margin-bottom:18px">
+    <h3>My pipeline — submitted names & cases</h3>
+    <p style="margin-bottom:10px">Names you submit on the Three Names page are recorded here automatically. Click a status to advance it as the relationship moves; open a case to start the application — the current one is kept below and you can switch back any time. Everything stays on this device; uploaded evidence files are never stored and are re-attached at send time.</p>
+    ${PIPE.length?`<table><tr><th>Prospect</th><th>Added</th><th>Status</th><th></th></tr>${rows}</table>`
+      :'<p style="color:var(--tx3)">No names recorded yet — submit your Three Names from the film site, or add one below.</p>'}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+      <input type="text" id="pOwner" placeholder="Business owner" style="flex:1;min-width:140px">
+      <input type="text" id="pBiz" placeholder="Business name" style="flex:1;min-width:140px">
+      <button class="btn ghost" id="pAdd" type="button">+ Add name</button>
+    </div>
+    ${(A.company.name||vaults)?`<h3 style="margin-top:18px">Cases on this device</h3>
+    <table>${A.company.name?`<tr><td><b>${A.company.name}</b> <span style="color:var(--accent);font-size:11px;font-weight:700">· ACTIVE</span></td>
+      <td></td><td style="font-size:12px">${A.submitted?STAGES[(A.stage||1)-1]:'In preparation'}</td>
+      <td class="num"><button class="btn ghost" id="goCase" type="button" style="font-size:11px;padding:6px 10px">Open</button></td></tr>`:''}${vaults}</table>`:''}
+  </div>`;
+  host.querySelectorAll('[data-pi]').forEach(b=>b.onclick=()=>{const p=PIPE[+b.dataset.pi];
+    p.status=PSTAT[(PSTAT.indexOf(p.status||'Submitted')+1)%PSTAT.length];saveP();renderPipeline();});
+  host.querySelectorAll('[data-start]').forEach(b=>b.onclick=()=>{const p=PIPE[+b.dataset.start];
+    if(confirm('Open a new case for '+(p.biz||p.owner)+'? The current application is kept under "Cases on this device".'))startCase(p);});
+  host.querySelectorAll('[data-rmp]').forEach(a=>a.onclick=e=>{e.preventDefault();
+    if(confirm('Remove this name from your pipeline?')){PIPE.splice(+a.dataset.rmp,1);saveP();renderPipeline();}});
+  host.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{
+    if(confirm('Switch to '+VAULT[b.dataset.open].label+'? The current application is saved first.'))openCase(b.dataset.open);});
+  const add=$('pAdd');if(add)add.onclick=()=>{const o=$('pOwner').value.trim(),bz=$('pBiz').value.trim();
+    if(!o&&!bz)return;
+    PIPE.unshift({id:'m'+Date.now(),owner:o,biz:bz,status:'Submitted',added:new Date().toISOString(),src:'manual'});
+    saveP();renderPipeline();};
+  const go=$('goCase');if(go)go.onclick=()=>{const b2=document.querySelector('.tab-btn[data-tab="apply"]');if(b2)b2.click();};
+}
+renderPipeline();
 
 /* ═══════════ 00 training: launch deck ═══════════ */
 const SLIDES=[

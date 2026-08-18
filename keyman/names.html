@@ -389,6 +389,17 @@ function submit(){
     (p.crit||[]).forEach(function(c){ addF(f,e.crit,c); });
   });
   var n=S.p.filter(function(p){return (p.owner||'').trim();}).length;
+  try{ /* record locally so the Keyman Sales Assistant can track these names */
+    var P=JSON.parse(localStorage.getItem('keymanPipeline_v1')||'[]');
+    S.p.forEach(function(p){
+      if(!((p.owner||'').trim()||(p.biz||'').trim())) return;
+      if(P.some(function(q){return (q.owner||'')===(p.owner||'')&&(q.biz||'')===(p.biz||'');})) return;
+      P.unshift({id:'n'+Date.now()+Math.floor(Math.random()*1e4),owner:p.owner||'',biz:p.biz||'',
+        ind:p.ind||'',rel:p.rel||'',like:p.like||'',status:'Submitted',
+        added:new Date().toISOString(),src:'names'});
+    });
+    localStorage.setItem('keymanPipeline_v1',JSON.stringify(P.slice(0,200)));
+  }catch(e){}
   f.submit();
   setTimeout(function(){
     document.querySelectorAll('.step').forEach(function(s){s.classList.remove('on');});
