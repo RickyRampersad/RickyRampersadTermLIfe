@@ -17,6 +17,7 @@ const ASSETS = [
   './launch.html',         // the launch page, minus its video
   './training.html',       // the team's desk manual — read at a client's office, off signal
   './assets/film-poster.jpg',
+  './assets/film.vtt',
   './manifest.webmanifest',
   /* The .mp4 and .webm are deliberately NOT here. They are 11 MB together, and
      precaching them would spend that on every device that ever opens the

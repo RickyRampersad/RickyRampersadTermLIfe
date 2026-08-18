@@ -400,6 +400,48 @@ when the agent builds the B.I.R. form — the enrolment flow does not check it.
 
 ---
 
+## Part 5a — The wall: the branch's own board
+
+**Address:** `https://pensionplantt.com/wall?key=YOUR_STAFF_KEY`
+(also `https://rickyrampersadbranch.com/wall?key=…` — either domain works.)
+
+The sheet menu prints the exact address for you: **Renewals → Pension — show
+the wall link**. Treat it exactly like the staff dashboard link: anybody who has
+the address can read the branch's numbers.
+
+It reads the same three sheets the automation writes to, refreshes itself every
+two minutes, and needs no button pressed. Leave it open on a screen in the
+office.
+
+### What it shows
+
+| Section | What it answers |
+| --- | --- |
+| The four headline numbers | How many plans are on the register, how many are live versus delivered, what the companies are contributing a year, and what employees are adding out of their own salary |
+| **Where every plan is standing** | The funnel. Every plan sits in exactly one row, and the row says *who is holding it* — the employer, the employee, the B.I.R., Guardian, or nobody because it is delivered |
+| **Waiting on an employee** | The only list that names a person, because it is the only one that needs a phone call. Oldest first; anything past 45 days is flagged **needs a call**, which is where the 9am reminders stop |
+| **Coming through, week by week** | New enrolments started, by the Monday of that week — the last eight weeks |
+| **Biggest company plans** | Ranked by what the company contributes a year |
+| **Who is bringing them in** | Every plan on the register, by the agent on it: live, delivered, total |
+| **Who is using it** | Sign-ins to the register by kind, how many in the last seven days, and how many codes were typed that we did not recognise. Then what the branch sent this week without anybody remembering to |
+| **Latest activity** | The last fourteen things that happened |
+
+### What it deliberately does not show
+
+- **No access code, ever.** The endpoint never returns one, in any section.
+- **Counts, not names**, everywhere except the waiting list — and that list
+  exists to be acted on, which is the only reason a name is on this page.
+- It is `noindex, nofollow`, and it answers nothing at all without the staff
+  key.
+
+### If the wall says "not connected"
+
+Same cause as the register: the Apps Script web app has not been republished
+since the wall code was added. **Extensions → Apps Script → Deploy → Manage
+deployments → edit → New version → Deploy.** Nothing else needs to change.
+
+---
+
 ## Part 6 — Maintenance
 
 ### Replacing a blank Guardian form
