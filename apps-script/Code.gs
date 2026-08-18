@@ -486,7 +486,90 @@ function doGet(e) {
   var p = (e && e.parameter) || {};
   if (p.staff) return staffPage_(p);
   if (p.p && typeof propertyPage_ === 'function') return propertyPage_(p);   // property links (?p=TOKEN)
+  if (p.find) return findPage_();                                            // client sign-in (?find=1)
   return clientPage_(p);
+}
+
+/** Client sign-in: enter the email on file → their personal link(s) are
+ *  emailed over. Links are never shown on screen, and the reply is the same
+ *  whether the email matches or not — nothing about who is a client leaks. */
+function findPage_() {
+  var html =
+    '<!DOCTYPE html><html><head><meta charset="utf-8"><base target="_top">' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+    '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">' +
+    '<style>*{box-sizing:border-box;margin:0;padding:0}' +
+    'body{font:15px/1.6 \'DM Sans\',sans-serif;color:#edf4fb;background:linear-gradient(180deg,#07131f,#0d2137 60%,#07131f);min-height:100vh;display:grid;place-items:center;padding:20px}' +
+    '.card{background:#163553;border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:30px 28px;max-width:430px;width:100%}' +
+    '.brand{display:flex;gap:12px;align-items:center;margin-bottom:18px}' +
+    '.brand b{font:800 15px/1.2 \'Montserrat\';color:#efc24b}' +
+    '.brand span{display:block;font-size:11.5px;color:#a9bbcf;font-weight:400}' +
+    'h1{font:800 20px \'Montserrat\';margin-bottom:8px}' +
+    'p{font-size:13.5px;color:#a9bbcf;margin-bottom:14px}' +
+    'input{width:100%;background:#07131f;border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:12px 14px;font:14px \'DM Sans\';color:#edf4fb;outline:none;margin-bottom:10px}' +
+    'input:focus{border-color:#00CFEA}' +
+    'button{width:100%;background:linear-gradient(135deg,#00CFEA,#00A8C5);color:#04202b;font:800 14.5px \'Montserrat\';border:none;border-radius:12px;padding:14px;cursor:pointer}' +
+    'button:disabled{opacity:.5}' +
+    '.ok{display:none;background:rgba(53,208,127,.12);border:1px solid rgba(53,208,127,.4);color:#35d07f;border-radius:12px;padding:13px;margin-top:12px;font-weight:600;font-size:13.5px}' +
+    '.err{display:none;background:rgba(255,122,122,.12);border:1px solid rgba(255,122,122,.4);color:#ff7a7a;border-radius:12px;padding:13px;margin-top:12px;font-size:13.5px}' +
+    '.note{font-size:11.5px;color:#7a90a8;margin-top:14px;line-height:1.6}</style></head><body><div class="card">' +
+    '<div class="brand"><svg width="42" height="42" viewBox="0 0 88 88"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/></linearGradient></defs><path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#g)"/><path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+    '<div><b>Ricky Rampersad Branch</b><span>Client renewal access &middot; Guardian Group</span></div></div>' +
+    '<h1>Track your renewal</h1>' +
+    '<p>Enter the email address on your policy and we’ll send your <b style="color:#edf4fb">personal secure link</b> — review your cover, send instructions, and follow every step from instruction to documents in hand.</p>' +
+    '<input type="email" id="em" placeholder="you@email.com" autocomplete="email">' +
+    '<button id="go">Email me my secure link</button>' +
+    '<div class="ok" id="ok">✓ If that email is on a policy with us, your personal link is on its way — check your inbox (and spam, the first time).</div>' +
+    '<div class="err" id="err"></div>' +
+    '<div class="note">We never show policy details on this page — your link travels only to the email on file. Need help? Call (868) 678-5921.</div>' +
+    '</div><script>' +
+    'var go=document.getElementById("go"),em=document.getElementById("em");' +
+    'function send(){var v=em.value.trim();var err=document.getElementById("err");err.style.display="none";' +
+    'if(v.indexOf("@")<1){err.textContent="Please enter your email address.";err.style.display="block";return;}' +
+    'go.disabled=true;go.textContent="Sending…";' +
+    'google.script.run.withSuccessHandler(function(){go.style.display="none";document.getElementById("ok").style.display="block";})' +
+    '.withFailureHandler(function(e){go.disabled=false;go.textContent="Email me my secure link";err.textContent="Something went wrong — please try again.";err.style.display="block";})' +
+    '.sendMyLink(v);}' +
+    'go.onclick=send;em.addEventListener("keydown",function(e){if(e.key==="Enter")send();});' +
+    '</script></body></html>';
+  return HtmlService.createHtmlOutput(html).setTitle('Track your renewal — Ricky Rampersad Branch')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+/** Emails a client their personal portal link(s). Same response whether the
+ *  email matches or not, so the page can never be used to probe who insures
+ *  with us. */
+function sendMyLink(email) {
+  email = String(email || '').trim().toLowerCase();
+  if (email.indexOf('@') < 1) throw new Error('bad email');
+  var links = [];
+  allRenewals_().forEach(function (r) {
+    if (String(r.email || '').trim().toLowerCase() === email && r.token)
+      links.push({ label: '🚗 Motor — ' + (r.policy || r.coverage || 'my policy'), url: portalLink_(r.token) });
+  });
+  if (typeof allProperties_ === 'function' && typeof propPortalLink_ === 'function') {
+    var seen = {};
+    allProperties_().forEach(function (r) {
+      if (String(r.email || '').trim().toLowerCase() === email && r.token && !seen[r.token]) {
+        seen[r.token] = 1;
+        links.push({ label: '🏠 Property — ' + (r.policy || r.location || 'my policy'), url: propPortalLink_(r.token) });
+      }
+    });
+  }
+  if (links.length) {
+    sendMail_({ to: email, name: CONFIG.FROM_NAME,
+      subject: 'Your secure renewal link' + (links.length > 1 ? 's' : ''),
+      htmlBody: brandWrap_(
+        '<p>Here ' + (links.length > 1 ? 'are your personal renewal pages' : 'is your personal renewal page') + ' — keep this email handy:</p>' +
+        links.map(function (l) { return ctaBtn_(l.url, l.label); }).join('') +
+        '<p>On your page you can review your cover, send us instructions, and <b>track your renewal from instruction to documents in hand</b> — any time, on any device.</p>' + sig_(),
+        'Your renewal access') });
+    logActivity_('', email, 'link-request', 'client', links.length + ' link(s) emailed');
+  } else {
+    logActivity_('', email, 'link-request', 'client', 'no match — nothing sent');
+  }
+  return { ok: true };
 }
 
 function clientPage_(p) {

@@ -74,6 +74,16 @@ details summary{cursor:pointer;font-weight:700;color:var(--teal);font-size:13.5p
 .stars button{font-size:30px;background:none;border:none;cursor:pointer;color:#3a5570;line-height:1}
 .stars button.on{color:var(--gold)}
 .note{font-size:12px;color:var(--muted)}
+/* progress tracker */
+.tstep{display:grid;grid-template-columns:34px 1fr;gap:12px;padding-bottom:16px;position:relative}
+.tstep::before{content:"";position:absolute;left:16px;top:34px;bottom:0;width:2px;background:var(--line)}
+.tstep:last-child::before{display:none}
+.tdot{width:34px;height:34px;border-radius:50%;background:var(--bg2);border:2px solid var(--line);color:var(--muted);display:grid;place-items:center;font:800 13px 'Montserrat';z-index:1}
+.tstep.done .tdot{background:var(--good);border-color:var(--good);color:#04202b}
+.tstep.now .tdot{background:var(--gold);border-color:var(--gold);color:#3a2c05}
+.tstep h4{font-size:13.5px}
+.tstep.todo h4{color:var(--muted)}
+.tstep p{font-size:12px;color:var(--muted);margin:0}
 .citem{display:flex;gap:11px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}
 .citem:last-child{border-bottom:none}
 .cdot{width:9px;height:9px;border-radius:50%;margin-top:6px;flex-shrink:0}
@@ -143,6 +153,7 @@ function render(){
     const comp = p.comp;
     const owing = Number(p.balance)>0;
     const benefits = comp ? BENEFITS_COMP : BENEFITS_TP;
+    html += motorTracker(p);
     html += `<div class="card" id="pol${i}">
       <h2>Motor Policy <span class="badge ${comp?'b-comp':'b-tp'}">${comp?'COMPREHENSIVE':'THIRD PARTY'}</span>${dueChip(p)}</h2>
       <table class="facts">
@@ -242,6 +253,28 @@ function render(){
     wrap.querySelectorAll('.opt').forEach(o=>o.classList.toggle('sel', o.querySelector('input').checked));
   }));
   document.querySelectorAll('[data-submit]').forEach(b=>b.onclick=()=>submit(Number(b.dataset.submit), b));
+}
+
+/* Progress tracker: appears once the client has instructed, and follows the
+   file through to renewed — the "any update?" call, answered on screen. */
+function motorTracker(p){
+  const renewed = /RENEWED/i.test(p.renewalStatus||'');
+  const instructed = /—/.test(p.renewalStatus||'') && !renewed;
+  if(!instructed && !renewed) return '';
+  const when = (p.renewalStatus||'').match(/— (.+)$/);
+  const steps = [
+    ['Instruction received', 'We have your instruction'+(when?' ('+esc(when[1])+')':'')+' — your file is open.'],
+    ['With our renewals team', 'Your renewal is being processed with Guardian.'],
+    ['Renewed — documents issued', 'Your cover is renewed and your documents are on their way.'],
+  ];
+  const at = renewed ? 3 : 1;   // steps completed
+  return `<div class="card"><h2>📍 Your renewal progress${p.policy?' — '+esc(p.policy):''}</h2>
+    <p class="note" style="margin:2px 0 12px">We update this as your renewal moves — no need to call and ask.</p>
+    ${steps.map((s,i)=>{
+      const cls = i<at ? 'done' : i===at ? 'now' : 'todo';
+      return `<div class="tstep ${cls}"><div class="tdot">${i<at?'✓':i+1}</div>
+        <div><h4>${s[0]}</h4><p>${s[1]}</p></div></div>`;
+    }).join('')}</div>`;
 }
 
 function commsCard(){
