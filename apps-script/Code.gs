@@ -396,6 +396,7 @@ function logActivity_(token, client, type, by, details) {
 function doGet(e) {
   var p = (e && e.parameter) || {};
   if (p.pension) return pensionApi_(p);   // JSON for pensionplantt.com — see Pension.gs
+  if (p.wall) return pwallApi_(p);        // the branch wall — see PensionFlow.gs
   if (p.staff) return staffPage_(p);
   return clientPage_(p);
 }
@@ -917,6 +918,7 @@ function onOpen() {
     .addItem('Pension — install the 9am automation', 'installPensionTriggers')
     .addItem('Pension — mark the next step done', 'pensionAdvanceSelected')
     .addItem('Pension — run the 9am pass now (test)', 'pensionRunNow')
+    .addItem('Pension — show the wall link', 'showPensionWallLink')
     .addToUi();
 }
 

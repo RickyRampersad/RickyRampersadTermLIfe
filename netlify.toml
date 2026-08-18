@@ -90,6 +90,20 @@
   status = 200
   force = true
 
+# The branch's own board. The staff key rides in the query string, which
+# Netlify carries through the rewrite untouched.
+[[redirects]]
+  from = "https://pensionplantt.com/wall"
+  to = "/pension/wall.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "https://www.pensionplantt.com/wall"
+  to = "/pension/wall.html"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "https://pensionplantt.com/film"
   to = "/pension/how-it-works.html"
@@ -136,6 +150,11 @@
 [[redirects]]
   from = "/manual"
   to = "/pension/training.html"
+  status = 301
+
+[[redirects]]
+  from = "/wall"
+  to = "/pension/wall.html"
   status = 301
 
 [[headers]]

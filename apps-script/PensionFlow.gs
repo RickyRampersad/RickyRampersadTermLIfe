@@ -735,3 +735,160 @@ function penrolForEmployee_(r) {
   e.yourPartDone = !!r['employee part done'];
   return e;
 }
+
+/* ═══════════════════════ THE WALL ═══════════════════════
+   One screen for the branch: how many plans are coming through, where each of
+   them is stuck, who is bringing them in, and who is actually signing in to
+   use the thing. Read-only, staff-key protected, and it counts rather than
+   naming — the wall is for the room, and a client's business is not.
+
+   Endpoint: WEBAPP_URL?wall=1&key=STAFF_KEY   → JSON
+*/
+
+function pdays_(v){ var d=asDate_(v); return d ? Math.floor((new Date()-d)/86400000) : null; }
+function pweekKey_(d){
+  var dt=asDate_(d); if(!dt) return '';
+  var t=new Date(dt); t.setHours(0,0,0,0);
+  t.setDate(t.getDate()-((t.getDay()+6)%7));            // back to Monday
+  return Utilities.formatDate(t, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+}
+
+/* A funnel row answers "who is holding this one?", which is not the same
+   question as the client's timeline row ("what happens next?"). PSTEPS.label
+   answers the second, so the wall carries its own wording. */
+var PWALL_WAITING = {
+  employer: 'Waiting on the employer',
+  employee: 'Waiting on the employee',
+  bir: 'With the B.I.R.',
+  issued: 'With Guardian, issuing',
+  delivered: 'Issued — ready to deliver',
+};
+
+function pwallData_() {
+  var rows = [];
+  try { rows = penrolAll_().filter(function (r) { return r['id']; }); } catch (err) { rows = []; }
+
+  /* ---- the funnel: every enrolment sits in exactly one stage ---- */
+  var funnel = PSTEPS.map(function (s) {
+    return { key: s.key, label: PWALL_WAITING[s.key] || s.label, count: 0 };
+  });
+  funnel.push({ key: 'done', label: 'Delivered — in force', count: 0 });
+  var waiting = [], stalled = 0, totalAnnual = 0, totalOwn = 0;
+
+  rows.forEach(function (r) {
+    var t = ptimeline_(r);
+    if (t.complete) funnel[funnel.length - 1].count++;
+    else for (var i = 0; i < funnel.length - 1; i++) if (funnel[i].key === t.stage) funnel[i].count++;
+
+    totalAnnual += Number(r['company annual (tt$)'] || 0) + Number(r['company lump sum (tt$)'] || 0);
+    totalOwn += Number(r['employee monthly (tt$)'] || 0) * 12;
+
+    if (r['employer part done'] && !r['employee part done']) {
+      var d = pdays_(r['employer part done']);
+      if (String(r['stage']).toLowerCase().indexOf('stalled') >= 0) stalled++;
+      waiting.push({
+        employee: String(r['employee'] || ''), company: String(r['company'] || ''),
+        days: d, reminders: Number(r['reminders sent'] || 0),
+        stalled: String(r['stage']).toLowerCase().indexOf('stalled') >= 0,
+      });
+    }
+  });
+  waiting.sort(function (a, b) { return (b.days || 0) - (a.days || 0); });
+
+  /* ---- who is bringing them in ---- */
+  var byAgent = {}, byCompany = {};
+  rows.forEach(function (r) {
+    var a = String(r['agent'] || 'Unassigned').trim() || 'Unassigned';
+    byAgent[a] = byAgent[a] || { agent: a, total: 0, live: 0, delivered: 0 };
+    byAgent[a].total++;
+    if (ptimeline_(r).complete) byAgent[a].delivered++; else byAgent[a].live++;
+
+    var c = String(r['company'] || '—');
+    byCompany[c] = byCompany[c] || { company: c, total: 0, annual: 0 };
+    byCompany[c].total++;
+    byCompany[c].annual += Number(r['company annual (tt$)'] || 0);
+  });
+  var agents = Object.keys(byAgent).map(function (k) { return byAgent[k]; })
+    .sort(function (a, b) { return b.total - a.total; });
+  var companies = Object.keys(byCompany).map(function (k) { return byCompany[k]; })
+    .sort(function (a, b) { return b.annual - a.annual; }).slice(0, 8);
+
+  /* ---- coming through, by week started ---- */
+  var weeks = {};
+  rows.forEach(function (r) {
+    var w = pweekKey_(r['created'] || r['employer part done']);
+    if (w) weeks[w] = (weeks[w] || 0) + 1;
+  });
+  var weekList = Object.keys(weeks).sort().slice(-8)
+    .map(function (w) { return { week: w, count: weeks[w] }; });
+
+  /* ---- who is actually signing in (counts only, never a code) ---- */
+  var signins = { employer: 0, employee: 0, misses: 0, last7: 0 };
+  try {
+    pensionRows_(pensionLogSheet_()).forEach(function (a) {
+      var m = String(a['matched'] || ''), ok = String(a['result'] || '') === 'found';
+      if (!ok) signins.misses++;
+      else if (m.indexOf('company:') === 0) signins.employer++;
+      else signins.employee++;
+      var d = pdays_(a['timestamp']);
+      if (ok && d !== null && d <= 7) signins.last7++;
+    });
+  } catch (err) { /* the log may not exist yet */ }
+
+  /* ---- what the branch has sent, this week ---- */
+  var sent = { invites: 0, reminders: 0, progress: 0, thanks: 0, delivered: 0 };
+  var recent = [];
+  try {
+    var acts = pensionRows_(pactSheet_());
+    acts.forEach(function (a) {
+      var e = String(a['event'] || ''), d = pdays_(a['timestamp']);
+      if (d !== null && d <= 7) {
+        if (/invitation/.test(e)) sent.invites++;
+        else if (/reminder/.test(e)) sent.reminders++;
+        else if (/progress/.test(e)) sent.progress++;
+        else if (/complete, going/.test(e)) sent.thanks++;
+        else if (/sent: delivered/.test(e)) sent.delivered++;
+      }
+    });
+    recent = acts.slice(-14).reverse().map(function (a) {
+      return { when: fmtDate_(a['timestamp']), who: String(a['employee'] || ''),
+               what: String(a['event'] || '').replace(/^sent:\s*/, '') };
+    });
+  } catch (err) { /* no activity yet */ }
+
+  return {
+    ok: true, asOf: nowStamp_(),
+    totals: {
+      enrolments: rows.length,
+      live: rows.length - funnel[funnel.length - 1].count,
+      delivered: funnel[funnel.length - 1].count,
+      annual: totalAnnual, employeeAnnual: totalOwn,
+      companies: Object.keys(byCompany).length,
+      stalled: stalled,
+    },
+    funnel: funnel, waiting: waiting.slice(0, 10), agents: agents,
+    companies: companies, weeks: weekList, signins: signins, sent: sent, recent: recent,
+  };
+}
+
+function pwallApi_(p) {
+  if (String(p.key || '') !== CONFIG.STAFF_KEY) {
+    return ContentService.createTextOutput(JSON.stringify({ ok: false, error: 'Not authorised.' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  var out;
+  try { out = pwallData_(); }
+  catch (err) { out = { ok: false, error: 'The wall could not be built.' }; console.error('wall: ' + err); }
+  return ContentService.createTextOutput(JSON.stringify(out))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+/** Shows the wall's address, so nobody has to assemble it by hand. */
+function showPensionWallLink() {
+  requireUrl_();
+  SpreadsheetApp.getUi().alert(
+    'The pension wall — for the branch screen, not for clients:\n\n' +
+    'https://pensionplantt.com/wall?key=' + CONFIG.STAFF_KEY +
+    '\n\nIt refreshes itself every two minutes. Anyone with this address can see the ' +
+    'branch\'s numbers, so treat it like the staff dashboard link.');
+}

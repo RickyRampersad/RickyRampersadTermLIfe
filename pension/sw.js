@@ -8,7 +8,7 @@
  * the next online visit), cache-first for the versioned static assets.
  * Bump CACHE when the wizard changes.
  */
-const CACHE = 'rrb-pension-v9';
+const CACHE = 'rrb-pension-v10';
 
 const ASSETS = [
   './',
@@ -56,16 +56,26 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return; // fonts, CDN fallback — leave alone
   if (url.pathname.startsWith('/api/')) return; // RIA is always live or not at all
 
-  // The page: fresh when online, cached when not.
+  // The page: fresh when online, cached when not. Each page is cached under its
+  // OWN address — caching every navigation as './index.html' would mean that
+  // opening the film or the desk manual replaced the wizard in the cache, and
+  // the next agent offline would get the wrong page.
   if (req.mode === 'navigate') {
     event.respondWith(
       fetch(req)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put('./index.html', copy)).catch(() => {});
+          if (res.ok && res.type === 'basic') {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+          }
           return res;
         })
-        .catch(() => caches.match('./index.html').then((hit) => hit || caches.match('./'))),
+        .catch(() =>
+          caches
+            .match(req, { ignoreSearch: true })
+            .then((hit) => hit || caches.match('./index.html'))
+            .then((hit) => hit || caches.match('./')),
+        ),
     );
     return;
   }
