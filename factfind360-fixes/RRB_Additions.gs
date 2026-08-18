@@ -1851,9 +1851,11 @@ function rrbSetAccessPasswords() {
 // The public site root — the portal, the form and the dashboard all live here.
 var RRB_SITE = 'https://factfind360.com';
 
-function rrbClientLink_(submissionId) {
-  return RRB_SITE + '/client.html?id=' + encodeURIComponent(submissionId);
-}
+// rrbClientLink_(submissionId) used to live here, pointing at a client.html
+// page that was never built. Worse, RRBranchEmails.gs defines a DIFFERENT
+// rrbClientLink_(d, action) — and in Apps Script the later file silently wins,
+// so callers here were minting tokens for the id "undefined" with the action
+// "undefined". One global namespace: never give two functions the same name.
 
 // The thank-you + draft that goes to the client the moment the agent submits.
 function rrbClientDraftHtml_(d) {
@@ -1881,13 +1883,13 @@ function rrbClientDraftHtml_(d) {
          'What ' + adv.split(' ')[0] + ' recommended — a draft for your records</div>' + rt.html;
   }
 
-  h += '<div style="text-align:center;margin:20px 0 10px">' +
-       '<a href="' + rrbClientLink_(d.submissionId) + '" style="display:inline-block;background:#0D9488;color:#fff;' +
-       'padding:15px 30px;border-radius:10px;text-decoration:none;font-weight:800;font-size:16px">' +
-       'Review it online — and tell us if anything needs changing &rarr;</a>' +
-       '<div style="font-size:12px;color:#64748b;margin-top:8px">Your personal page — no app, no password. ' +
-       'If anything looks off, say so there and it reaches ' + adv.split(' ')[0] + ' <strong>and their manager</strong> before anything is signed off.</div>' +
-       '</div>';
+  // No button here. The confirm block appended right after this HTML carries
+  // the two working token buttons ("Yes, that's correct" / "Something needs
+  // changing") — the button that used to sit here pointed at a client page
+  // that was never built.
+  h += '<div style="font-size:12.5px;color:#64748b;margin:16px 0 6px;text-align:center">' +
+       'Check the summary above, then use the buttons below — if anything looks off it reaches ' +
+       adv.split(' ')[0] + ' <strong>and their manager</strong> before anything is signed off.</div>';
 
   h += rrbFoot_(_str(d.submissionId));
   return h;
@@ -2059,10 +2061,11 @@ function rrbClientProgressHtml_(d) {
        'A quick update on your Confidential Fact Find — here is exactly where things are:</p>';
   h += rrbClientProgressBar_(d);
   h += '<p style="margin:0 0 16px;font-size:13.5px;color:#334155;line-height:1.6"><strong>Right now:</strong> ' + nowLine + '</p>';
-  h += '<div style="text-align:center;margin:6px 0 10px">' +
-       '<a href="' + rrbClientLink_(d.submissionId) + '" style="display:inline-block;background:#0D9488;color:#fff;' +
-       'padding:13px 26px;border-radius:10px;text-decoration:none;font-weight:800;font-size:15px">' +
-       'Open your page &rarr;</a></div>';
+  // A progress note whose own subtitle says "nothing is needed from you"
+  // should not end in a call-to-action button — and the one that was here
+  // led to a page that never existed. Reply reaches the branch directly.
+  h += '<p style="margin:0 0 10px;font-size:13px;color:#64748b;text-align:center">' +
+       'Want something changed at this stage? Just reply to this email &mdash; it reaches the branch directly.</p>';
   h += rrbFoot_(_str(d.submissionId));
   return h;
 }

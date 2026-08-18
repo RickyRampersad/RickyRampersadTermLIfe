@@ -71,8 +71,9 @@ function rrbWallSetup() {
   } else {
     Logger.log('Wallboard key already exists — reusing it.');
   }
-  var url = (typeof RRB_APP_URL === 'string' && RRB_APP_URL) ? RRB_APP_URL : ScriptApp.getService().getUrl();
-  Logger.log('Feed URL:  %s?action=wall&k=%s', url, key);
+  // rrbAppUrl_ is the pinned public exec URL — RRB_APP_URL is the Netlify
+  // form and once sent this very log line pointing the wall at the wrong host.
+  Logger.log('Feed URL:  %s?action=wall&k=%s', rrbAppUrl_(), key);
   Logger.log('Put that key into wall.html as WALL_KEY, then open wall.html on the TV.');
   Logger.log('If the key ever leaks, run rrbWallRotateKey() — it exposes no client data either way.');
   return key;

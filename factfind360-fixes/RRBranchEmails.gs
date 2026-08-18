@@ -444,16 +444,31 @@ function rrbAdviceReviewHtml_(d, link) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /** Base URL of this web app. */
+/**
+ * The ONE public URL of this web app — the same deployment wall.html and
+ * index.html call, verified live. Every button in every email is built on it.
+ *
+ * This is pinned because ScriptApp.getService().getUrl() cannot be trusted:
+ * called from a TIME TRIGGER (the progress reminders, the chase, the digest)
+ * it returns the HEAD deployment's URL, which opens only for the script owner.
+ * A client tapping that link gets Google's "Sorry, unable to open the file"
+ * page — which is exactly how this was caught in the field.
+ *
+ * If you ever create a genuinely NEW deployment (new URL, not "New version"),
+ * update this constant and the ENDPOINT in the four site files together.
+ */
+var RRB_EXEC_URL = 'https://script.google.com/macros/s/AKfycbyUnSnQtumx9emW_LsWQf6QKZFBGGnaTn3-PfAZDfjtZuBUSha-OuIXPT30qkMrXMoczA/exec';
+
 function rrbAppUrl_() {
   // APP_URL and RRB_APP_URL both point at the Netlify FORM — correct for a
   // review link a manager opens, wrong for anything that calls this script.
   // Trusting them sent the Approve buttons to Netlify, where they did nothing.
-  // The running deployment is the authority; a constant is used only if it
-  // actually looks like a web-app URL.
   var isExec = function (u) {
     return typeof u === 'string' &&
            /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec/.test(u);
   };
+  try { if (isExec(RRB_EXEC_URL)) return RRB_EXEC_URL; } catch (e) {}
+  // Fallbacks only — see the constant's comment for why getUrl() is not first.
   try { var u = ScriptApp.getService().getUrl(); if (isExec(u)) return u; } catch (e) {}
   try { if (isExec(RRB_APP_URL)) return RRB_APP_URL; } catch (e) {}
   try { if (isExec(APP_URL))     return APP_URL; } catch (e) {}
