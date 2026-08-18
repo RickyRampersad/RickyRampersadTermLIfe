@@ -224,17 +224,23 @@ await sleep(400);
 
 /* — Scene 5: the wall — */
 await cap('And the branch sees everything on the wall.', 1800);
-await page.goto('file://' + path.join(HERE, '..', 'wall.html'));
+await page.goto('file://' + path.join(HERE, '..', 'wall.html') + '?freeze=1');
 await sleep(800);
 await page.fill('#gNum', '260026'); await page.fill('#gPwd', '••••••');
 await page.click('#gGo');
-await sleep(2800);
+await sleep(2600);
 await installCaption();
-await cap('Live: volume, on-time delivery, department performance, agent leaderboard, client satisfaction — refreshed every five minutes.', 4200);
-await page.evaluate(() => window.scrollTo({ top: 700, behavior: 'smooth' }));
-await sleep(2600);
-await page.evaluate(() => window.scrollTo({ top: 1500, behavior: 'smooth' }));
-await sleep(2600);
+await cap('A rotating TV wall — signed in once, it runs on its own and refreshes every minute.', 3200);
+await page.evaluate(() => rotate());   // demand
+await sleep(3000);
+await page.evaluate(() => rotate());   // open work / deadlines
+await sleep(3000);
+await page.evaluate(() => rotate());   // departments
+await cap('Departments and agents ranked by on-time delivery — gold, silver, bronze.', 2400);
+await page.evaluate(() => rotate());   // agents
+await sleep(2800);
+await page.evaluate(() => { rotate(); rotate(); });  // skip mix → satisfaction
+await cap('And how it feels to clients — every rating, in their own words.', 3000);
 
 /* — Outro — */
 await card('Logged. Routed. Chased. Resolved.', 'Query Pal · querymypolicies.netlify.app', 3600);
