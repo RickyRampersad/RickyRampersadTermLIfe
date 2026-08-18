@@ -1435,15 +1435,56 @@ async function buildBIR(){
     txt(p,caption,L,y-12,8.5,helv,grey);
     return y-34;
   }
+  /* Wraps to a measured width — the NOTE items are long and must not run off
+     the page the way a single drawText call would. */
+  function wrap(s,font,size,maxW){
+    var words=String(s).split(/\s+/), lines=[], line='';
+    for(var i=0;i<words.length;i++){
+      var t=line?line+' '+words[i]:words[i];
+      if(font.widthOfTextAtSize(t,size)>maxW && line){ lines.push(line); line=words[i]; }
+      else line=t;
+    }
+    if(line) lines.push(line);
+    return lines;
+  }
+  /* A hanging-indent paragraph: "(i)" in the margin, the text wrapped beside it. */
+  function noteItem(p,y,mark,body,size,lead){
+    size=size||8; lead=lead||10;
+    txt(p,mark,L+6,y,size,bold);
+    var x=L+28, lines=wrap(body,helv,size,RGT-x-6);
+    for(var i=0;i<lines.length;i++){ txt(p,lines[i],x,y-i*lead,size,helv); }
+    return y-lines.length*lead-4;
+  }
 
   /* ---- page 1: the request ---- */
-  var p1=page(), y=H-56;
-  centre(p1,'GOVERNMENT OF THE REPUBLIC OF TRINIDAD AND TOBAGO',y,10.5,bold); y-=16;
-  centre(p1,'REQUEST FOR BOARD OF INLAND REVENUE APPROVAL',y,11.5,bold,navy); y-=14;
-  centre(p1,'OF CONTRIBUTIONS TO AN APPROVED PENSION FUND PLAN / DEFERRED ANNUITY',y,9,helv,grey); y-=12;
-  centre(p1,'Section 134(6) of the Income Tax Act, Chapter 75:01',y,9,helv,grey); y-=10;
-  rule(p1,y); y-=20;
-  rightTxt(p1,'Income Year: '+(fld('incYear')||'2026'),RGT,y,9.5,bold); y-=18;
+  var p1=page(), y=H-46;
+
+  /* The Coat of Arms heads the real form, so it heads this one. It is the same
+     image the on-screen preview uses — staff spotted it missing here. */
+  try{
+    var coaBytes=Uint8Array.from(atob(COA.split(',')[1]),function(c){return c.charCodeAt(0);});
+    var coaImg=await doc.embedJpg(coaBytes);
+    var cw=68, ch=cw*(coaImg.height/coaImg.width);
+    p1.drawImage(coaImg,{x:(W-cw)/2,y:y-ch,width:cw,height:ch});
+    y-=ch+12;
+  }catch(e){ y-=8; }
+
+  centre(p1,'GOVERNMENT OF THE REPUBLIC OF TRINIDAD AND TOBAGO',y,10.5,bold); y-=17;
+  centre(p1,'REQUEST FOR BOARD OF INLAND REVENUE APPROVAL',y,11.5,bold,navy); y-=13;
+  centre(p1,'Complete in Duplicate',y,8,helv,grey); y-=15;
+  centre(p1,'DETAILS OF CONTRIBUTIONS TO FUND OR CONTRACT IN ACCORDANCE',y,8.5,helv); y-=11;
+  centre(p1,'WITH SECTION 134(6A) AND (6B) OF THE INCOME TAX ACT CHAPTER 75:01',y,8.5,helv); y-=16;
+
+  /* the statutory notes, as they appear on the form itself */
+  rule(p1,y+4); y-=8;
+  txt(p1,'NOTE:',L,y,8.5,bold); y-=12;
+  y=noteItem(p1,y,'(i)','The Board of Inland Revenue hereby requires you to give the following information pursuant to Section 117 of the Income Tax Act, Chapter 75:01.');
+  y=noteItem(p1,y,'(ii)','Section 119 of the Income Tax Act, Chapter 75:01 provides that any person who makes a false declaration is liable on summary conviction to a fine of Eight Thousand Dollars ($8,000.00) or imprisonment of three (3) years, or to both such fine and imprisonment.');
+  y=noteItem(p1,y,'(iii)','If there are changes in Income or Contribution, the Board of Inland Revenue must be informed immediately.');
+  y=noteItem(p1,y,'(iv)','Original or certified pay slip and Copy of TD1 approved by the Board must be submitted with request.');
+  y-=4; rule(p1,y); y-=20;
+
+  centre(p1,'INCOME YEAR '+(fld('incYear')||'2026'),y,10,bold); y-=22;
 
   y=item(p1,y,1,'NAME OF EMPLOYER',fld('coName')||'—',{amtBold:false});
   y=item(p1,y,2,'ADDRESS OF EMPLOYER',fld('coAddr')||'—',{amtBold:false});
@@ -1477,7 +1518,8 @@ async function buildBIR(){
 
   /* ---- page 2: the chargeable income computation ---- */
   var p2=page(); y=H-56;
-  centre(p2,'COMPUTATION OF CHARGEABLE INCOME',y,11.5,bold,navy); y-=14;
+  centre(p2,'EMOLUMENT INCOME COMPUTATION',y,11.5,bold,navy); y-=13;
+  centre(p2,'Round figures to the nearest dollar, omit cents',y,8,helv,grey); y-=13;
   centre(p2,'Income Year '+(fld('incYear')||'2026')+' — '+(fld('empName')||'employee'),y,9,helv,grey); y-=10;
   rule(p2,y); y-=20;
 
