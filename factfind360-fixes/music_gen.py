@@ -5,7 +5,7 @@ import numpy as np, wave, sys
 
 SR = 44100
 DUR = float(sys.argv[1]) if len(sys.argv) > 1 else 112.0
-BPM = 84.0
+BPM = 108.0
 beat = 60.0 / BPM
 bar = beat * 4
 
@@ -86,11 +86,11 @@ while pos < DUR:
     seg = min(int(eighth * SR * 2.2), N - n0)
     if seg <= 0: break
     t = np.arange(seg) / SR
-    d = np.exp(-t * 5.5)
+    d = np.exp(-t * 6.5)
     tone = (np.sin(2 * np.pi * f * t) + 0.35 * np.sin(2 * np.pi * 2 * f * t)) * d
     # skip some hits for musical breathing (pattern of rests)
-    if k % 8 not in (3, 6):
-        mix[n0:n0 + seg] += tone * 0.16
+    if k % 8 not in (6,):
+        mix[n0:n0 + seg] += tone * 0.20
     pos += eighth
     k += 1
 
@@ -102,12 +102,26 @@ while pos < DUR:
     seg = min(int(0.05 * SR), N - n0)
     if seg <= 0: break
     t = np.arange(seg) / SR
-    nz = rng.standard_normal(seg) * np.exp(-t * 90)
-    mix[n0:n0 + seg] += nz * 0.045
+    nz = rng.standard_normal(seg) * np.exp(-t * 80)
+    mix[n0:n0 + seg] += nz * 0.055
+    pos += beat
+
+# --- bass pulse on the beat: gives it drive ---
+ROOTS = [73.42, 55.00, 61.74, 49.00]   # D2 A1 B1 G1
+pos = 0.0
+while pos < DUR:
+    ci3 = int(pos // bar) % 4
+    n0 = int(pos * SR)
+    seg = min(int(beat * SR * 0.9), N - n0)
+    if seg <= 0: break
+    t = np.arange(seg) / SR
+    e = np.exp(-t * 7.0)
+    f = ROOTS[ci3]
+    mix[n0:n0 + seg] += (np.sin(2 * np.pi * f * t) + 0.3 * np.sin(2 * np.pi * 2 * f * t)) * e * 0.30
     pos += beat
 
 # gentle master: lowpass the pads' harshness, normalise, fade edges
-mix = onepole_lp(mix, 2600)
+mix = onepole_lp(mix, 3400)
 mix /= max(1e-9, np.max(np.abs(mix))) / 0.85
 fi, fo = int(2.0 * SR), int(4.0 * SR)
 mix[:fi] *= np.linspace(0, 1, fi)

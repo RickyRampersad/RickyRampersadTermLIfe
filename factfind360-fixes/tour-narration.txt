@@ -22,3 +22,7 @@ S2E: And you can preview exactly what the client receives — on Guardian letter
 S12B: An approved case. Signed, timestamped, and the client's letter already on its way.
 S13B: A declined case is never a dead end. The reason goes on the record, and the advisor fixes it inside the email.
 S16: Every case carries its own timeline. Submitted, reviewed, decided, delivered — measured in days, not guesswork.
+S2C: Income replacement, education, final expenses. Enter the figures — and the insurance need is priced instantly. One point two one million dollars.
+S2F: Retirement is the calculation agents used to dread. Seventy percent of income, twenty years, inflation and returns. The lump sum needed, and the gap, in one second.
+S2G: And as each figure lands, the fact find fills itself in — side by side, exactly as the client will receive it.
+S2H: Which turns a spreadsheet into a conversation. If you had died last night, where would your family find one point two one million dollars?
