@@ -90,6 +90,27 @@ details summary{cursor:pointer;font-weight:700;color:var(--teal);font-size:13.5p
 .cdot.us{background:var(--teal)}
 .cdot.you{background:var(--gold)}
 .cwhen{font-size:11.5px;color:var(--muted)}
+
+/* ---- colour themes: Midnight (default) · Ocean · Daylight ---- */
+html[data-theme="ocean"]{
+  --bg:#03151c; --bg2:#062430; --card:#0b3140; --card2:#0e3c4e;
+  --gold:#ffd166; --gold2:#e6b34a; --teal:#2ee6c8; --teal2:#19b89e;
+  --text:#eafffa; --muted:#9cc4bd; --faint:#6f948e; --line:rgba(255,255,255,.10);
+  --good:#3ce08a; --bad:#ff8585; --green:#3ce08a; --red:#ff8585; --amber:#ffd166;
+  --navy:#eafffa; --blue:#2ee6c8; --light:#062430; --ink:#eafffa; --ink2:#9cc4bd;
+}
+html[data-theme="daylight"]{
+  --bg:#eef3f8; --bg2:#ffffff; --card:#ffffff; --card2:#f4f8fc;
+  --gold:#a1720a; --gold2:#8a5f06; --teal:#0092b0; --teal2:#006e86;
+  --text:#152738; --muted:#54677b; --faint:#7d8fa3; --line:rgba(16,42,70,.14);
+  --good:#1e7d4f; --bad:#b3261e; --green:#1e7d4f; --red:#b3261e; --amber:#a1720a;
+  --navy:#152738; --blue:#0092b0; --light:#eef3f8; --ink:#152738; --ink2:#54677b;
+}
+html[data-theme="daylight"] body{background:linear-gradient(180deg,#eef3f8,#ffffff 55%,#eef3f8)}
+html[data-theme="daylight"] .card{box-shadow:0 2px 14px rgba(20,50,90,.07)}
+.thpick{display:flex;gap:7px;align-items:center}
+.thpick button{width:22px;height:22px;border-radius:50%;border:2px solid rgba(127,127,127,.35);cursor:pointer;padding:0}
+.thpick button.on{border-color:var(--teal);box-shadow:0 0 0 2px rgba(0,160,190,.35)}
 </style>
 </head>
 <body>
@@ -103,6 +124,11 @@ details summary{cursor:pointer;font-weight:700;color:var(--teal);font-size:13.5p
     <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>
   <div><div class="brand">Ricky Rampersad<br>Branch</div><div class="sub">Motor Renewal · Guardian Group</div></div>
+  <div class="thpick" style="margin-left:auto" title="Colour theme" aria-label="Colour theme">
+  <button data-th="" style="background:linear-gradient(135deg,#0d2137 55%,#efc24b 55%)" title="Midnight"></button>
+  <button data-th="ocean" style="background:linear-gradient(135deg,#062430 55%,#2ee6c8 55%)" title="Ocean"></button>
+  <button data-th="daylight" style="background:linear-gradient(135deg,#ffffff 55%,#0092b0 55%)" title="Daylight"></button>
+</div>
 </div></div>
 
 <div id="app" class="wrap"></div>
@@ -365,6 +391,17 @@ function renderSurvey(app){
   };
 }
 render();
+</script>
+<script>
+(function(){
+  var saved=''; try{saved=localStorage.getItem('rrb_theme')||'';}catch(e){}
+  function apply(v){ if(v)document.documentElement.setAttribute('data-theme',v);
+    else document.documentElement.removeAttribute('data-theme');
+    document.querySelectorAll('.thpick button').forEach(function(b){b.classList.toggle('on',(b.getAttribute('data-th')||'')===v);}); }
+  apply(saved);
+  document.querySelectorAll('.thpick button').forEach(function(b){
+    b.onclick=function(){var v=b.getAttribute('data-th')||''; apply(v); try{localStorage.setItem('rrb_theme',v);}catch(e){}};});
+})();
 </script>
 </body>
 </html>
