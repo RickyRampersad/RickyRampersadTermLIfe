@@ -307,6 +307,7 @@ function getPolicies_(scope) {
           out[q].ReqtUwDone = !!e.uwDone;
           out[q].ReqtErrors = !!e.errors;
           out[q].ReqtSusp = e.susp || 0;
+          out[q].ReqtDecision = e.decision || '';   // Magnum: Referred / Standard / Terms Offered
         }
       }
     } catch (eRq) { /* requirements are an enrichment, never a failure */ }

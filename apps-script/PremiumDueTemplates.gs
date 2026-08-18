@@ -2303,13 +2303,21 @@ var PD_TEMPLATES = {
         (acked ? 'Our record shows it has already reached you — even better.'
                : 'Expect it in your hands within days, not weeks.') + '</p>' +
         pdSection_('The part worth reading twice',
-          '<p style="margin:0">The Insurance Act gives you a <b>free-look provision</b>: a window of ' +
-          '<b>' + SLA.FREE_LOOK_DAYS + ' days</b> to read your policy — the actual document, not the brochure — ' +
-          'and satisfy yourself it is exactly what you intended to buy. If it is not, you are entitled to return ' +
-          'it within that window. Your policy document states the exact terms on its own pages.</p>' +
-          '<p style="margin:10px 0 0">That window is running <b>now</b>, from dispatch. So when your advisor ' +
-          'delivers it: open it, read it, and sign the <b>acknowledgement of delivery</b> — that signature is ' +
-          'your record of when the policy reached you.</p>') +
+          /* Statute quoted verbatim, never paraphrased as law — Schedule 11 of
+             the same Act requires post-sale communications to be accurate, and
+             the free-look itself is a POLICY provision, not a section of the
+             Act. Say each thing where it is actually true. */
+          pdNote_('<b>Section 268(1) of the Insurance Act, 2018</b> provides: <i>&ldquo;In the case of an ' +
+            'individual life policy, upon acceptance of the risk, an insurer shall issue a policy within ' +
+            'twenty business days of acceptance of the risk.&rdquo;</i> Your policy has been issued and ' +
+            'dispatched — that duty is met. Delivery to your hands is the step we are watching now.') +
+          '<p style="margin:10px 0 0">Your policy document itself carries a <b>free-look provision</b> — your ' +
+          'right, stated on its own pages, to review the policy once it reaches you and to return it within ' +
+          'the period it names if it is not what you intended to buy. The branch tracks ' +
+          '<b>' + SLA.FREE_LOOK_DAYS + ' days from dispatch</b> so that right is never quietly spent while ' +
+          'the document travels.</p>' +
+          '<p style="margin:10px 0 0">So when your advisor delivers it: open it, read it, and sign the ' +
+          '<b>acknowledgement of delivery</b> — that signature is your record of when the policy reached you.</p>') +
         pdNote_('<b>If it has not arrived within a few days, tell us.</b> A policy sitting undelivered spends ' +
           'your free-look window for you — and we would rather chase it than let that happen.') +
         pdFlAskBlock_(p) +
@@ -2343,8 +2351,9 @@ var PD_TEMPLATES = {
         '<b>' + d + ' days ago</b> — and our record does not yet show a signed acknowledgement of delivery.</p>' +
         '<p>' + tone + '</p>' +
         pdNote_('Your free-look window has <b>' + left + ' day' + (left === 1 ? '' : 's') + '</b> left to run. ' +
-          'It is the period the Insurance Act gives you to read the policy you bought and return it if it is ' +
-          'not what you intended — and it only works if the policy is actually in your hands.') +
+          'It is the review period your own policy document gives you — the right to read the policy you ' +
+          'bought and return it if it is not what you intended — and it only works if the policy is actually ' +
+          'in your hands.') +
         pdFlAskBlock_(p) +
         pdTrackBlock_() + pdSignature_(p),
         { kind: 'fl_remind', days: d })
@@ -2371,8 +2380,8 @@ var PD_TEMPLATES = {
           'usually means the policy is still with your advisor' + (p.Agent ? ', <b>' + pdEsc_(p.Agent) + '</b>,' : '') +
           ' — or it has reached you and the signed acknowledgement has not yet made its way back to us.</p>' +
           pdNote_('<b>Your ' + SLA.FREE_LOOK_DAYS + '-day free-look window closes ' + closes + '.</b> ' +
-            'This is the review period the Insurance Act gives you. A policy you have never held cannot be ' +
-            'reviewed — so if it has not reached you, say so now and the branch will put it right today.', PD_BRAND.red) +
+            'This is the review period your policy document gives you. A policy you have never held cannot ' +
+            'be reviewed — so if it has not reached you, say so now and the branch will put it right today.', PD_BRAND.red) +
           pdFlAskBlock_(p) +
           pdTrackBlock_() + pdSignature_(p),
           { kind: 'fl_final', days: d })
@@ -3876,11 +3885,22 @@ function pdPilotStats() {
     }
   }
 
+  /* The requirement tab, cross-checked against the portfolio before anything
+     is counted. The tab is written by hand at head office and rows survive
+     their own cases: on the live book it carries requirement rows for
+     policies that have settled, been closed 'Not Proceeded With', expired,
+     or left the book entirely. Those are housekeeping, not work — counting
+     them as pending would hand support a queue padded with ghosts. */
   var reqMap = pdRequirements_();
-  var pendN = 0, pendReady = 0, pendErrors = 0, pendSusp = 0;
+  var pendPolicies = {};
+  for (var pj = 0; pj < P.length; pj++) {                        // groups included — a scheme's pending
+    if ((Number(P[pj].Status) || 0) === 3) pendPolicies[String(P[pj].Policy)] = true;   // application is real too
+  }
+  var pendN = 0, pendReady = 0, pendErrors = 0, pendSusp = 0, reqStale = 0;
   var mgReferred = 0, mgStandard = 0, mgTerms = 0, factFind = 0;
   for (var pol in reqMap) {
     if (!Object.prototype.hasOwnProperty.call(reqMap, pol)) continue;
+    if (!pendPolicies[String(pol)]) { reqStale++; continue; }    // the case moved on; the tab did not
     pendN++;
     if (reqMap[pol].uwDone) pendReady++;
     if (reqMap[pol].errors) pendErrors++;
@@ -3976,7 +3996,9 @@ function pdPilotStats() {
       (gN ? gRows : row('Schemes with a missed remittance (member ≥ ' + SLA.GROUP_OPENS + ' days)', '0', false)))) +
 
     pdSection_('The pending flow (new business — a separate clock, day 21 then fortnightly)', tbl(
-      row('Applications with live requirements', String(pendN), false) +
+      row('Applications with live requirements (still pending on the portfolio)', String(pendN), false) +
+      (reqStale ? row('Requirement rows whose case already settled or closed — HOUSEKEEPING, not chases',
+        String(reqStale), true) : '') +
       row('SETTLE-READY: underwriting complete, paper outstanding', String(pendReady), true) +
       row('Carrying our own entry errors (ours to fix)', String(pendErrors), false) +
       row('Premium held in suspense on pending cases', pdMoney_(pendSusp), false) +
@@ -4022,7 +4044,8 @@ function pdPilotStats() {
 
   var summary = 'status2=' + st2 + ' at45=' + at45 + ' window45-59=' + w4559 + ' mgrDue=' + mgrDue +
     ' schemes=' + gN + ' pending=' + pendN + ' settle-ready=' + pendReady + ' replacement-checks=' + replApps +
-    ' freelook-open=' + flOpen + ' freelook-countdown=' + flCountdown + ' freelook-expired-undelivered=' + flExpired;
+    ' freelook-open=' + flOpen + ' freelook-countdown=' + flCountdown + ' freelook-expired-undelivered=' + flExpired +
+    ' reqt-housekeeping=' + reqStale;
   if (OUT.DRY_RUN && !OUT.TEST_INBOX) {
     Logger.log('Digest (DRY RUN, no test inbox — logged only, not emailed). ' + summary);
     return;
