@@ -2295,11 +2295,13 @@ var PD_TEMPLATES = {
       html: pdWrap_(
         pdRefBlock_(p, 'Your policy has been dispatched') +
         '<p>' + pdSalutation_(p.Client) + ',</p>' +
-        '<p>Good news: your ' + (plan ? '<b>' + pdEsc_(plan) + '</b> ' : '') + 'policy left our head office on ' +
-        '<b>' + pdDateOf_(p.Dispatched.getTime()) + '</b> and is on its way to you' +
-        (p.Agent ? ' through your advisor, <b>' + pdEsc_(p.Agent) + '</b>' : '') + '. ' +
+        '<p>Good news — and welcome. Your ' + (plan ? '<b>' + pdEsc_(plan) + '</b> ' : '') +
+        'policy has been <b>issued</b>, and the policy document left our head office on ' +
+        '<b>' + pdDateOf_(p.Dispatched.getTime()) + '</b>. It will arrive shortly at our branch office, and ' +
+        (p.Agent ? 'your advisor, <b>' + pdEsc_(p.Agent) + '</b>,' : 'your advisor') +
+        ' will bring it to you personally. ' +
         (acked ? 'Our record shows it has already reached you — even better.'
-               : 'You should have it in your hands shortly.') + '</p>' +
+               : 'Expect it in your hands within days, not weeks.') + '</p>' +
         pdSection_('The part worth reading twice',
           '<p style="margin:0">The Insurance Act gives you a <b>free-look provision</b>: a window of ' +
           '<b>' + SLA.FREE_LOOK_DAYS + ' days</b> to read your policy — the actual document, not the brochure — ' +
@@ -2365,9 +2367,9 @@ var PD_TEMPLATES = {
           pdRefBlock_(p, 'Your free-look window is closing') +
           '<p>' + pdSalutation_(p.Client) + ',</p>' +
           '<p>Your policy was dispatched on <b>' + pdDateOf_(p.Dispatched.getTime()) + '</b>. As of today — ' +
-          'day <b>' + d + '</b> — our records still show <b>no signed acknowledgement of delivery</b>, which ' +
-          'means the policy is with your advisor' + (p.Agent ? ', <b>' + pdEsc_(p.Agent) + '</b>,' : '') +
-          ' and not yet in your hands.</p>' +
+          'day <b>' + d + '</b> — our records still show <b>no signed acknowledgement of delivery</b>. That ' +
+          'usually means the policy is still with your advisor' + (p.Agent ? ', <b>' + pdEsc_(p.Agent) + '</b>,' : '') +
+          ' — or it has reached you and the signed acknowledgement has not yet made its way back to us.</p>' +
           pdNote_('<b>Your ' + SLA.FREE_LOOK_DAYS + '-day free-look window closes ' + closes + '.</b> ' +
             'This is the review period the Insurance Act gives you. A policy you have never held cannot be ' +
             'reviewed — so if it has not reached you, say so now and the branch will put it right today.', PD_BRAND.red) +
@@ -2383,8 +2385,8 @@ var PD_TEMPLATES = {
         pdRefBlock_(p, 'Free-look window closed — no delivery on record') +
         '<p>' + pdSalutation_(p.Client) + ',</p>' +
         '<p>Your policy was dispatched from head office on <b>' + pdDateOf_(p.Dispatched.getTime()) + '</b>. ' +
-        'The ' + SLA.FREE_LOOK_DAYS + '-day free-look window counted from that date has now run out — and our ' +
-        'records show the policy was <b>never signed for as delivered</b>.</p>' +
+        'The ' + SLA.FREE_LOOK_DAYS + '-day free-look window counted from that date has now run out — and <b>no ' +
+        'signed acknowledgement of delivery has ever reached us</b>.</p>' +
         pdNote_('<b>An undelivered policy holds back your free-look rights.</b> If your policy has not reached ' +
           'you, reply to this email or tap below <b>today</b> — the branch manager is copied on this letter, and ' +
           'we will treat it as our problem to fix, not yours. Do not let this quietly stand.', PD_BRAND.red) +
@@ -3197,14 +3199,22 @@ function pdRequirements_() {
     var H = {}, c;
     for (c = 0; c < v[0].length; c++) H[String(v[0][c]).replace(/^ +| +$/g, '')] = c;
     var iPol = H['Policy'], iSt = H['status'], iReq = H['Reqt'],
-        iDays = H['ReqtdaysLapsed'], iSusp = H['POL_MISC_SUSP_AMT'];
+        iDays = H['ReqtdaysLapsed'], iSusp = H['POL_MISC_SUSP_AMT'],
+        iDec = H['DecisionType'], iSys = H['Being Processed In'];
     if (iPol == null) return map;
     for (var r = 1; r < v.length; r++) {
       var pol = String(v[r][iPol] == null ? '' : v[r][iPol]).replace(/\.0$/, '');
       if (!pol) continue;
       var st = String(iSt == null ? '' : v[r][iSt]).replace(/^ +| +$/g, '').toUpperCase();
       if (st === 'C') continue;                                  // complete — not a chase
-      var e = map[pol] || (map[pol] = { items: [], susp: 0, code: '', uwDone: false, errors: false });
+      var e = map[pol] || (map[pol] = { items: [], susp: 0, code: '', uwDone: false, errors: false,
+                                        decision: '', system: '' });
+      /* The Magnum verdict and the system the case sits in. 'Referred' means a
+         human underwriter has it; 'Standard'/'STD' passed clean; 'Terms
+         Offered' means an offer is on the table and the outstanding item is
+         usually the client's acceptance — money waiting on a signature. */
+      if (!e.decision && iDec != null) e.decision = String(v[r][iDec] || '').replace(/^ +| +$/g, '');
+      if (!e.system && iSys != null) e.system = String(v[r][iSys] || '').replace(/^ +| +$/g, '');
       var name = String(iReq == null ? '' : (v[r][iReq] || '')).replace(/^ +| +$/g, '');
       var days = Number(iDays == null ? 0 : v[r][iDays]) || 0;
       if (days > 3650) continue;                                 // relic rows: reconciliation, not chasing
@@ -3868,12 +3878,20 @@ function pdPilotStats() {
 
   var reqMap = pdRequirements_();
   var pendN = 0, pendReady = 0, pendErrors = 0, pendSusp = 0;
+  var mgReferred = 0, mgStandard = 0, mgTerms = 0, factFind = 0;
   for (var pol in reqMap) {
     if (!Object.prototype.hasOwnProperty.call(reqMap, pol)) continue;
     pendN++;
     if (reqMap[pol].uwDone) pendReady++;
     if (reqMap[pol].errors) pendErrors++;
     pendSusp += reqMap[pol].susp;
+    var mgd = String(reqMap[pol].decision || '');
+    if (/referred/i.test(mgd)) mgReferred++;
+    else if (/standard|^STD$/i.test(mgd)) mgStandard++;
+    else if (/terms|RATMD/i.test(mgd)) mgTerms++;
+    for (var fi = 0; fi < reqMap[pol].items.length; fi++) {
+      if (/fact find/i.test(reqMap[pol].items[fi].name)) { factFind++; break; }
+    }
   }
 
   /* Replacement identification: a pending application while the same client's
@@ -3962,6 +3980,11 @@ function pdPilotStats() {
       row('SETTLE-READY: underwriting complete, paper outstanding', String(pendReady), true) +
       row('Carrying our own entry errors (ours to fix)', String(pendErrors), false) +
       row('Premium held in suspense on pending cases', pdMoney_(pendSusp), false) +
+      row('Magnum verdicts: referred to a human underwriter / passed standard / terms offered',
+        mgReferred + ' / ' + mgStandard + ' / ' + mgTerms, false) +
+      (mgTerms ? row('&nbsp;&nbsp;TERMS OFFERED: a rated offer is on the table — the outstanding item is the client&rsquo;s acceptance',
+        String(mgTerms), true) : '') +
+      (factFind ? row('Waiting on a FACT FIND FORM — the branch&rsquo;s own paper, not the client&rsquo;s', String(factFind), true) : '') +
       row('REPLACEMENT CHECKS (per the Sept 2022 guidelines): new app + cover in the churn windows', replApps + ' app' +
         (replApps === 1 ? '' : 's') + ' · ' + replCli + ' client' + (replCli === 1 ? '' : 's'), replApps > 0) +
       (replApps ? row('&nbsp;&nbsp;of which SAME AGENT both sides (0% commission if confirmed — §7.2)',
