@@ -57,7 +57,25 @@ var CONV = {
   // Highest producer above this takes superior accommodation.
   SUPERIOR_ABOVE: 1600000,
 
+  // General rule 1: lapsed, not-taken, not-proceeded-with, postponed and
+  // declined cases from the PREVIOUS convention's block are deducted from
+  // THIS convention's production. It reaches backwards, so an agent can
+  // open this convention already in deficit.
+  //
+  // Note the asymmetry with persistency, which does NOT reach back: net
+  // lapses there count only business submitted and settled inside this
+  // production period. A lapse on a previous-block policy costs an agent
+  // production; a lapse on a this-block policy costs them persistency and
+  // is deducted from the NEXT convention instead.
+  //
+  // The rules do not say whether the deduction also bites on the Early
+  // Bird figure. Defaulted to true because the conservative reading is the
+  // safe one to show an agent — better that the page understates than that
+  // somebody books a trip they have not earned. Confirm with the Committee.
+  CARRYOVER_HITS_EARLY_BIRD: true,
+
   TAB_AGENTS:      'Convention Agents',
+  TAB_CARRYOVER:   'Convention Carryover',
   TAB_PRODUCTION:  'Convention Production',
   TAB_PERSISTENCY: 'Convention Persistency',
   TAB_IMPORTS:     'Convention Imports',
@@ -86,6 +104,13 @@ function setupConvention() {
   convTab_(ss, CONV.TAB_PRODUCTION, [
     'Statement date', 'Settle date', 'Agent', 'Policy ref', 'Life ID',
     'New or increase', 'Product class', 'Net FYC', 'Gross FYC', 'API', 'Status']);
+
+  // One row per case backed out of this convention under general rule 1,
+  // kept case by case rather than as a single total so any agent can be
+  // shown exactly what was deducted and why.
+  convTab_(ss, CONV.TAB_CARRYOVER, [
+    'Agent', 'Policy ref', 'Life ID', 'Originally settled', 'Outcome',
+    'Outcome date', 'Net FYC deducted', 'API', 'Source convention', 'Note']);
 
   convTab_(ss, CONV.TAB_PERSISTENCY, [
     'Agent', 'As at', 'API in force', 'Gross API settled', 'Rate %']);
@@ -390,6 +415,36 @@ function productionFor_(name) {
   return { rows: rows, statementDate: statementDate };
 }
 
+/**
+ * What the previous convention's block takes off this convention, under
+ * general rule 1. Returned case by case so the dashboard can show an agent
+ * the actual policies rather than an unexplained negative number.
+ */
+function carryoverFor_(name) {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONV.TAB_CARRYOVER);
+  if (!sh || sh.getLastRow() < 2) return { total: 0, cases: [] };
+
+  var values = sh.getRange(2, 1, sh.getLastRow() - 1, 10).getValues();
+  var wanted = convName_(name).toLowerCase();
+  var total = 0, cases = [];
+
+  values.forEach(function (r) {
+    if (convName_(r[0]).toLowerCase() !== wanted) return;
+    var fyc = convNum_(r[6]);
+    total += fyc;
+    cases.push({
+      policy: String(r[1] || ''),
+      outcome: String(r[4] || ''),
+      outcomeDate: convDate_(r[5]) ? Utilities.formatDate(convDate_(r[5]), Session.getScriptTimeZone(), 'd MMM yyyy') : '',
+      netFyc: fyc,
+      source: String(r[8] || '')
+    });
+  });
+
+  cases.sort(function (a, b) { return b.netFyc - a.netFyc; });
+  return { total: total, cases: cases };
+}
+
 /** The latest persistency measurement on file for an agent. */
 function persistencyFor_(name) {
   var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONV.TAB_PERSISTENCY);
@@ -450,6 +505,13 @@ function standingFor_(agent, today) {
   var liveCount = Object.keys(lives).length;
   var pers = persistencyFor_(agent.name);
 
+  // General rule 1 — the previous convention's bad cases, taken off this
+  // convention's production before any target is tested.
+  var carry = carryoverFor_(agent.name);
+  var grossPeriodFyc = netFyc;
+  netFyc = netFyc - carry.total;
+  if (CONV.CARRYOVER_HITS_EARLY_BIRD) earlyBirdFyc = earlyBirdFyc - carry.total;
+
   // Where we are on the clock.
   var periodDays = daysBetween_(start, end);
   var elapsed = Math.max(0, Math.min(periodDays, daysBetween_(start, today)));
@@ -470,7 +532,7 @@ function standingFor_(agent, today) {
       livesTarget: c.lives,
       fycNow: counted,
       livesNow: liveCount,
-      fycPct: c.fyc ? Math.min(100, (counted / c.fyc) * 100) : 0,
+      fycPct: c.fyc ? Math.max(0, Math.min(100, (counted / c.fyc) * 100)) : 0,
       livesPct: c.lives ? Math.min(100, (liveCount / c.lives) * 100) : 0,
       fycShort: Math.max(0, c.fyc - counted),
       livesShort: Math.max(0, c.lives - liveCount),
@@ -502,7 +564,7 @@ function standingFor_(agent, today) {
       places: CONV.ASPIRANT.places,
       fycNow: netFyc,
       livesNow: liveCount,
-      fycPct: Math.min(100, (netFyc / CONV.ASPIRANT.fyc) * 100),
+      fycPct: Math.max(0, Math.min(100, (netFyc / CONV.ASPIRANT.fyc) * 100)),
       livesPct: Math.min(100, (liveCount / CONV.ASPIRANT.lives) * 100),
       fycShort: Math.max(0, CONV.ASPIRANT.fyc - netFyc),
       livesShort: Math.max(0, CONV.ASPIRANT.lives - liveCount),
@@ -517,10 +579,20 @@ function standingFor_(agent, today) {
     // FYC accumulated since the start of the production period. This is the
     // qualification measure.
     fyc: {
-      net: netFyc,
+      net: netFyc,                    // after the rule 1 deduction — the qualifying figure
+      periodOnly: grossPeriodFyc,     // written inside this period, before the deduction
       gross: grossFyc,
       healthGroup: healthGroupFyc,
       perDayAchieved: elapsed > 0 ? netFyc / elapsed : 0
+    },
+
+    // Shown on its own line, never folded silently into the total: an
+    // agent who opens in deficit is owed the reason.
+    carryover: {
+      total: carry.total,
+      cases: carry.cases.slice(0, 12),
+      caseCount: carry.cases.length,
+      hitsEarlyBird: CONV.CARRYOVER_HITS_EARLY_BIRD
     },
 
     lives: liveCount,
@@ -554,8 +626,8 @@ function standingFor_(agent, today) {
       double: CONV.EARLY_BIRD_DOUBLE,
       singleShort: Math.max(0, CONV.EARLY_BIRD_SINGLE - earlyBirdFyc),
       doubleShort: Math.max(0, CONV.EARLY_BIRD_DOUBLE - earlyBirdFyc),
-      singlePct: Math.min(100, (earlyBirdFyc / CONV.EARLY_BIRD_SINGLE) * 100),
-      doublePct: Math.min(100, (earlyBirdFyc / CONV.EARLY_BIRD_DOUBLE) * 100),
+      singlePct: Math.max(0, Math.min(100, (earlyBirdFyc / CONV.EARLY_BIRD_SINGLE) * 100)),
+      doublePct: Math.max(0, Math.min(100, (earlyBirdFyc / CONV.EARLY_BIRD_DOUBLE) * 100)),
       onPaceSingle: CONV.EARLY_BIRD_SINGLE * (Math.min(ebDays, daysBetween_(start, today)) / ebDays),
       perDaySingle: ebRemaining > 0 ? Math.max(0, CONV.EARLY_BIRD_SINGLE - earlyBirdFyc) / ebRemaining : 0,
       perDayDouble: ebRemaining > 0 ? Math.max(0, CONV.EARLY_BIRD_DOUBLE - earlyBirdFyc) / ebRemaining : 0

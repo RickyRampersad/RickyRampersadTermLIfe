@@ -219,6 +219,11 @@
       </details>
     </section>
 
+    <section id="coSection" style="display:none">
+      <div class="section-label">Carried back from the last convention</div>
+      <div class="card" id="coCard"></div>
+    </section>
+
     <section>
       <div class="section-label">Health &amp; Group ceiling</div>
       <div class="card" id="capCard"></div>
@@ -291,9 +296,13 @@ function render(){
     : m.clock.remaining.toLocaleString() + ' days of production remain';
 
   /* 1 — FYC accumulated since the start of the period. */
+  var co = m.carryover || { total:0, cases:[], caseCount:0 };
   document.getElementById('fycNow').textContent = money(m.fyc.net);
   document.getElementById('fycSub').innerHTML =
-    'Net FYC, the convention measure. <b>' + money(m.fyc.perDayAchieved) + '</b> a day so far.<br>' +
+    (co.total > 0
+      ? '<b>' + money(m.fyc.periodOnly) + '</b> written this period, less <b style="color:var(--bad)">' +
+        money(co.total) + '</b> carried back from the last convention.<br>'
+      : 'Net FYC, the convention measure. <b>' + money(m.fyc.perDayAchieved) + '</b> a day so far.<br>') +
     '<span style="color:var(--muted)">Gross FYC ' + money(m.fyc.gross) +
     ' — the awards are measured on gross, the convention on net.</span>';
 
@@ -348,11 +357,43 @@ function render(){
     bn.innerHTML = '<div class="callout">' + t + '</div>';
   } else { bn.innerHTML = ''; }
 
+  renderCarryover(co);
   renderEarlyBird(m.earlyBird);
   renderLadder(m.categories, nx);
   renderCap(m);
   renderAspirant(m.aspirant);
   renderStanding(m.standing);
+}
+
+/* General rule 1 deducts the previous convention's lapsed, not-taken,
+   not-proceeded-with, postponed and declined cases from this convention's
+   production. Shown case by case: a number an agent cannot account for is
+   a number they will not trust. */
+function renderCarryover(co){
+  var sec = document.getElementById('coSection');
+  if (!co || co.total <= 0) { sec.style.display = 'none'; return; }
+  sec.style.display = '';
+
+  var rows = co.cases.map(function(c){
+    return '<tr><td>' + esc(c.policy) + '</td><td>' + esc(c.outcome) + '</td>' +
+      '<td>' + esc(c.outcomeDate) + '</td><td class="n">' + money(c.netFyc) + '</td></tr>';
+  }).join('');
+
+  document.getElementById('coCard').innerHTML =
+    '<div class="tile-label">Deducted under general rule 1</div>' +
+    '<div class="hero" style="color:var(--bad)">− ' + money(co.total) + '</div>' +
+    '<div class="hero-sub">' + co.caseCount + ' case' + (co.caseCount === 1 ? '' : 's') +
+      ' from the last convention block that lapsed, were not taken, not proceeded with, ' +
+      'postponed or declined. This is already taken off your figure above' +
+      (co.hitsEarlyBird ? ', and off your Early Bird total' : '') + '.</div>' +
+    '<div class="callout"><b>Reinstating these protects your target, not your persistency.</b> ' +
+      'Net lapses for persistency count only business settled inside this production period ' +
+      '(1 April 2026 – 30 September 2027), so these older policies sit outside that ' +
+      'calculation — but their FYC still comes off what you need to qualify.</div>' +
+    (rows ? '<details open><summary>The cases</summary><div class="tbl-wrap"><table class="tbl">' +
+      '<thead><tr><th>Policy</th><th>Outcome</th><th>Date</th>' +
+      '<th style="text-align:right">Net FYC</th></tr></thead><tbody>' + rows +
+      '</tbody></table></div></details>' : '');
 }
 
 function renderEarlyBird(eb){
@@ -551,7 +592,9 @@ function sampleState(name){
       {key:'bc_double',label:'Agent & Spouse (Business Class)',fyc:2100000,lives:60}
     ]
   };
-  var netFyc = 214800, lives = 41, healthGroup = 46200;
+  var carryover = 18400;          // rule 1 deduction from the 23rd convention block
+  var periodFyc = 233200;
+  var netFyc = periodFyc - carryover, lives = 41, healthGroup = 46200;
   var apiInForce = 388400, grossApi = 431000;
   var rate = (apiInForce / grossApi) * 100, floor = 87.5;
 
@@ -574,8 +617,13 @@ function sampleState(name){
   return { rules: rules, me: {
     name: name,
     statementDate: '31 July 2026',
-    fyc: { net:netFyc, gross:238600, healthGroup:healthGroup,
+    fyc: { net:netFyc, periodOnly:periodFyc, gross:238600, healthGroup:healthGroup,
            perDayAchieved: netFyc / Math.max(1, days(d('2026-04-01'), today)) },
+    carryover: { total:carryover, caseCount:3, hitsEarlyBird:true, cases:[
+      { policy:'L-4471902', outcome:'Lapsed',        outcomeDate:'12 May 2026', netFyc:9200 },
+      { policy:'L-4390114', outcome:'Not taken up',  outcomeDate:'3 Mar 2026',  netFyc:6100 },
+      { policy:'L-4402887', outcome:'Postponed',     outcomeDate:'27 Apr 2026', netFyc:3100 }
+    ]},
     lives: lives,
     persistency: { asAt:'31 July 2026', rate:rate, floor:floor,
       apiInForce:apiInForce, grossApi:grossApi,
@@ -588,7 +636,7 @@ function sampleState(name){
              pctElapsed: 0 },
     earlyBird: (function(){
       var rem = Math.max(0, days(today, d('2026-12-31')));
-      var eb = 214800;
+      var eb = 214800;              // already net of the rule 1 deduction
       return { open: rem > 0, daysRemaining: rem, windowDays: 274, fycNow: eb,
         single:540000, double:740000,
         singleShort:Math.max(0,540000-eb), doubleShort:Math.max(0,740000-eb),
