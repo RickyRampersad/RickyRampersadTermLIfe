@@ -158,7 +158,8 @@ function kpis(d){
     '<div class="kpi"><div class="lab">Companies</div><div class="val mono">'+t.companies+'</div>'+
       '<div class="sub">on the register</div></div>'+
     '<div class="kpi money"><div class="lab">Company contributions</div><div class="val mono">'+money(t.annual)+'</div>'+
-      '<div class="sub">a year, across every plan</div></div>'+
+      '<div class="sub">a year, across every plan'+
+      (t.lump ? ' · plus '+money(t.lump)+' in lump sums' : '')+'</div></div>'+
     '<div class="kpi money good"><div class="lab">Employees adding their own</div><div class="val mono">'+money(t.employeeAnnual)+'</div>'+
       '<div class="sub">a year, out of salary</div></div>'+
   '</div>';

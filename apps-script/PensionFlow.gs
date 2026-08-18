@@ -773,14 +773,17 @@ function pwallData_() {
     return { key: s.key, label: PWALL_WAITING[s.key] || s.label, count: 0 };
   });
   funnel.push({ key: 'done', label: 'Delivered — in force', count: 0 });
-  var waiting = [], stalled = 0, totalAnnual = 0, totalOwn = 0;
+  var waiting = [], stalled = 0, totalAnnual = 0, totalLump = 0, totalOwn = 0;
 
   rows.forEach(function (r) {
     var t = ptimeline_(r);
     if (t.complete) funnel[funnel.length - 1].count++;
     else for (var i = 0; i < funnel.length - 1; i++) if (funnel[i].key === t.stage) funnel[i].count++;
 
-    totalAnnual += Number(r['company annual (tt$)'] || 0) + Number(r['company lump sum (tt$)'] || 0);
+    /* A lump sum is a one-off, so it is kept out of the "a year" figure and
+       reported beside it — the company table means the same thing by "a year". */
+    totalAnnual += Number(r['company annual (tt$)'] || 0);
+    totalLump += Number(r['company lump sum (tt$)'] || 0);
     totalOwn += Number(r['employee monthly (tt$)'] || 0) * 12;
 
     if (r['employer part done'] && !r['employee part done']) {
@@ -862,7 +865,7 @@ function pwallData_() {
       enrolments: rows.length,
       live: rows.length - funnel[funnel.length - 1].count,
       delivered: funnel[funnel.length - 1].count,
-      annual: totalAnnual, employeeAnnual: totalOwn,
+      annual: totalAnnual, lump: totalLump, employeeAnnual: totalOwn,
       companies: Object.keys(byCompany).length,
       stalled: stalled,
     },
