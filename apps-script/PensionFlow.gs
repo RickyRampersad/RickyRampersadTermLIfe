@@ -50,7 +50,7 @@ var PFLOW = {
   REMIND_STOP_AFTER: 45,   // a person is not chased for ever — see below
 };
 
-var PBRAND = { navy: '#0e1a30', deep: '#081020', gold: '#c9a227', goldl: '#f0d066', ink: '#101b33', mut: '#64718e' };
+var PBRAND = { navy: '#1A1D24', deep: '#0E1013', gold: '#D33F49', goldl: '#E85F6A', ink: '#17191F', mut: '#5C616C' };
 
 /* Between them, the employer's part and the employee's part collect every field
    the four printed forms need — Declaration 1, Declaration 2, the Salary
@@ -181,12 +181,12 @@ function pwrap_(inner, tag) {
 
 function pbtn_(href, label) {
   return '<p style="text-align:center;margin:26px 0"><a href="' + href + '" style="background:' + PBRAND.gold +
-    ';color:#2e2405;text-decoration:none;font-weight:bold;padding:14px 32px;border-radius:9px;display:inline-block">' +
+    ';color:#FFF6F6;text-decoration:none;font-weight:bold;padding:14px 32px;border-radius:9px;display:inline-block">' +
     esc_(label) + '</a></p>';
 }
 
 function pnote_(html) {
-  return '<div style="background:#fdf9ec;border-left:4px solid ' + PBRAND.gold + ';padding:13px 17px;margin:16px 0">' + html + '</div>';
+  return '<div style="background:#FCEFF0;border-left:4px solid ' + PBRAND.gold + ';padding:13px 17px;margin:16px 0">' + html + '</div>';
 }
 
 /** The timeline, drawn into an email so it reads the same as the website. */

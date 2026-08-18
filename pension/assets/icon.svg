@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Ricky Rampersad Branch">
   <defs>
     <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#f0d066"/>
-      <stop offset="1" stop-color="#b8941f"/>
+      <stop offset="0" stop-color="#E85F6A"/>
+      <stop offset="1" stop-color="#B22F3A"/>
     </linearGradient>
   </defs>
-  <rect width="512" height="512" rx="96" fill="#0a1228"/>
+  <rect width="512" height="512" rx="96" fill="#101318"/>
   <path d="M256 64 L424 118 V262 C424 366 348 434 256 458 C164 434 88 366 88 262 V118 Z" fill="url(#g)"/>
-  <path d="M256 91 L397 136 V262 C397 350 334 409 256 431 C178 409 115 350 115 262 V136 Z" fill="#0a1228"/>
-  <path d="M172 268 L228 328 L340 196" fill="none" stroke="#f0d066" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M256 91 L397 136 V262 C397 350 334 409 256 431 C178 409 115 350 115 262 V136 Z" fill="#101318"/>
+  <path d="M172 268 L228 328 L340 196" fill="none" stroke="#E85F6A" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

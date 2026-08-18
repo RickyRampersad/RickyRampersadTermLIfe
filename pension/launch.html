@@ -12,9 +12,9 @@
 
 /* A welcome, so it is bright. The film is the dark room; this is the doorway. */
 :root{
-  --paper:#fbfaf7; --card:#fff; --ink:#101b33; --body:#465470; --mut:#7987a5; --line:#e6e3da;
-  --navy:#0e1a30; --navy2:#16243f;
-  --gold:#b8941f; --goldl:#f0d066; --goldt:#8a6d1f; --goldbg:#fdf9ec; --goldln:#eadfb9;
+  --paper:#F8F7F8; --card:#fff; --ink:#17191F; --body:#4A4E58; --mut:#8F93A0; --line:#E4E5E9;
+  --navy:#1A1D24; --navy2:#262B35;
+  --gold:#C22F3F; --goldl:#E85F6A; --goldt:#A32833; --goldbg:#FCEFF0; --goldln:#F2C4C9;
   --emp:#2f6fb5; --empbg:#eef4fb; --empln:#cfe0f2;
 }
 *{margin:0;padding:0;box-sizing:border-box}
@@ -27,15 +27,15 @@ a{color:var(--goldt)}
 
 /* ── the welcome ── */
 .hero{background:
-    radial-gradient(760px 420px at 82% -10%,rgba(240,208,102,.20),transparent 60%),
-    linear-gradient(165deg,#081020,#0e1a30 55%,#16243f);
+    radial-gradient(760px 420px at 82% -10%,rgba(232,95,106,.20),transparent 60%),
+    linear-gradient(165deg,#0E1013,#1A1D24 55%,#262B35);
   color:#fff;padding:60px 0 78px;position:relative;overflow:hidden}
 .hero::after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px);background-size:30px 30px;pointer-events:none}
 .hero .wrap{position:relative;z-index:2}
 .shield{width:52px;height:58px;display:block;margin-bottom:22px}
 .hero h1{color:#fff;font-size:clamp(2.3rem,5.6vw,3.9rem);font-weight:800;letter-spacing:-.02em}
 .hero h1 em{font-style:italic;color:var(--goldl)}
-.hero p.sub{margin-top:20px;font-size:clamp(1.05rem,2.3vw,1.35rem);color:#c2cde3;max-width:720px;line-height:1.55}
+.hero p.sub{margin-top:20px;font-size:clamp(1.05rem,2.3vw,1.35rem);color:#C9CDD6;max-width:720px;line-height:1.55}
 .hero p.sub b{color:#fff;font-weight:600}
 
 /* ── the film ── */
@@ -43,10 +43,10 @@ a{color:var(--goldt)}
 .player video{display:block;width:100%;height:auto;background:#060b16}
 .playrow{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px;align-items:center}
 .chip{font-family:'GroteskF';font-weight:700;font-size:13px;letter-spacing:.06em;text-decoration:none;border-radius:999px;padding:12px 22px;display:inline-block}
-.chip.solid{background:linear-gradient(95deg,#f0d066,#c9a227);color:#2e2405;box-shadow:0 10px 26px rgba(201,162,39,.3)}
+.chip.solid{background:linear-gradient(95deg,#E85F6A,#D33F49);color:#FFF6F6;box-shadow:0 10px 26px rgba(211,63,73,.3)}
 .chip.ghost{border:1.5px solid rgba(255,255,255,.34);color:#e8edf7}
 .chip.ghost:hover{border-color:var(--goldl);color:var(--goldl)}
-.runtime{font-family:'GroteskF';font-size:13px;letter-spacing:.1em;color:#8b9ab8;margin-left:4px}
+.runtime{font-family:'GroteskF';font-size:13px;letter-spacing:.1em;color:#9AA0AD;margin-left:4px}
 
 /* ── the two doors ── */
 section{padding:66px 0}
@@ -72,13 +72,13 @@ section{padding:66px 0}
 .door.em .step .num{background:var(--empbg);color:var(--emp);border-color:var(--empln)}
 .step b{display:block;color:var(--ink);font-size:1.14rem;font-weight:600;font-family:'PlayfairD',Georgia,serif}
 .step p{margin-top:6px;font-size:.99rem;line-height:1.6}
-.step code{font-family:'GroteskF';font-weight:700;background:#f2f0ea;border:1px solid var(--line);border-radius:7px;padding:2px 9px;color:var(--ink);letter-spacing:.06em;font-size:.93em;white-space:nowrap}
+.step code{font-family:'GroteskF';font-weight:700;background:#F0F0F2;border:1px solid var(--line);border-radius:7px;padding:2px 9px;color:var(--ink);letter-spacing:.06em;font-size:.93em;white-space:nowrap}
 
 .shotbox{margin-top:22px;border-radius:14px;overflow:hidden;border:1px solid var(--line);box-shadow:0 12px 30px rgba(16,27,51,.09)}
 .shotbox img{display:block;width:100%}
 .doorcta{margin-top:24px}
 .btn{display:inline-block;font-family:'GroteskF';font-weight:700;font-size:14px;letter-spacing:.05em;text-decoration:none;border-radius:12px;padding:15px 26px;text-align:center}
-.btn.gold{background:linear-gradient(95deg,#f0d066,#c9a227);color:#2e2405;box-shadow:0 10px 24px rgba(201,162,39,.28)}
+.btn.gold{background:linear-gradient(95deg,#E85F6A,#D33F49);color:#FFF6F6;box-shadow:0 10px 24px rgba(211,63,73,.28)}
 .btn.blue{background:var(--emp);color:#fff;box-shadow:0 10px 24px rgba(47,111,181,.26)}
 .btn:hover{filter:brightness(1.05)}
 
@@ -98,15 +98,15 @@ section{padding:66px 0}
 .ask span{display:block;color:var(--mut);font-size:.92rem;margin-top:5px}
 
 /* ── close ── */
-.foot{background:linear-gradient(165deg,#081020,#0e1a30);color:#c2cde3;padding:60px 0;text-align:center}
+.foot{background:linear-gradient(165deg,#0E1013,#1A1D24);color:#C9CDD6;padding:60px 0;text-align:center}
 .foot h2{color:#fff;font-size:clamp(1.7rem,4vw,2.5rem)}
 .foot .dom{font-family:'GroteskF';font-weight:700;font-size:clamp(1.5rem,4vw,2.2rem);color:var(--goldl);margin-top:18px;display:inline-block;text-decoration:none;letter-spacing:-.01em}
 .foot p{margin-top:18px;line-height:1.8}
 .foot b{color:#fff}
-.foot .fine{margin-top:26px;font-family:'GroteskF';font-size:12px;letter-spacing:.1em;color:#68789a}
+.foot .fine{margin-top:26px;font-family:'GroteskF';font-size:12px;letter-spacing:.1em;color:#6E7686}
 
 @media print{
-  .hero,.foot{background:#0e1a30 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .hero,.foot{background:#1A1D24 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .player,.playrow{display:none}
   section{padding:26px 0}
 }
@@ -117,10 +117,10 @@ section{padding:66px 0}
 <header class="hero">
   <div class="wrap">
     <svg class="shield" viewBox="0 0 48 54" aria-hidden="true">
-      <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0d066"/><stop offset="1" stop-color="#b8941f"/></linearGradient></defs>
+      <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E85F6A"/><stop offset="1" stop-color="#B22F3A"/></linearGradient></defs>
       <path d="M24 2 L46 9 V26 C46 40 36 49 24 52 C12 49 2 40 2 26 V9 Z" fill="url(#sg)"/>
-      <path d="M24 5.5 L42.5 11.5 V26 C42.5 38 33.5 46.5 24 49 C14.5 46.5 5.5 38 5.5 26 V11.5 Z" fill="#0a1228"/>
-      <path d="M15 27 L21 34 L34 19" fill="none" stroke="#f0d066" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M24 5.5 L42.5 11.5 V26 C42.5 38 33.5 46.5 24 49 C14.5 46.5 5.5 38 5.5 26 V11.5 Z" fill="#101318"/>
+      <path d="M15 27 L21 34 L34 19" fill="none" stroke="#E85F6A" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
     <div class="eyebrow">Rampersad Branch · Guardian Life of the Caribbean</div>
     <h1 style="margin-top:14px">Your company pension<br>is now <em>open to you</em>.</h1>
@@ -252,7 +252,7 @@ section{padding:66px 0}
     <h2>Welcome aboard.</h2>
     <a class="dom" href="./">pensionplantt.com</a>
     <p><b>Ricky Rampersad</b> — CFD, MFA · Branch Manager · 23× MDRT<br>
-      <a href="mailto:support@rickyrampersadbranch.com" style="color:#c2cde3">support@rickyrampersadbranch.com</a> · (868) 678-5921</p>
+      <a href="mailto:support@rickyrampersadbranch.com" style="color:#C9CDD6">support@rickyrampersadbranch.com</a> · (868) 678-5921</p>
     <p class="fine">Guardian Life of the Caribbean · Section 134, Income Tax Act Chapter 75:01 · Trinidad &amp; Tobago</p>
   </div>
 </footer>

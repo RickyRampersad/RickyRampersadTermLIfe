@@ -8,7 +8,7 @@
  * the next online visit), cache-first for the versioned static assets.
  * Bump CACHE when the wizard changes.
  */
-const CACHE = 'rrb-pension-v8';
+const CACHE = 'rrb-pension-v9';
 
 const ASSETS = [
   './',

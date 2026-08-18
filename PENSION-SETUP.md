@@ -50,7 +50,7 @@ automatically. There is no build step.
 
 ## Part 2 — Turning on RIA, the assistant
 
-RIA is the gold button in the bottom-right of the wizard. It answers questions
+RIA is the red button in the bottom-right of the wizard. It answers questions
 about the current step using the live case on screen.
 
 1. Get an API key from <https://console.anthropic.com> → **API keys**.
