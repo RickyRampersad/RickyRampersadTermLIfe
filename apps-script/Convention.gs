@@ -57,21 +57,22 @@ var CONV = {
   // Highest producer above this takes superior accommodation.
   SUPERIOR_ABOVE: 1600000,
 
-  // General rule 1: lapsed, not-taken, not-proceeded-with, postponed and
-  // declined cases from the PREVIOUS convention's block are deducted from
-  // THIS convention's production. It reaches backwards, so an agent can
-  // open this convention already in deficit.
+  // General rule 1 points FORWARD: lapsed, not-taken, not-proceeded-with,
+  // postponed and declined cases from THIS convention's block are deducted
+  // from the 25th. Nothing in these rules gives this convention an opening
+  // deduction — the earliest date in the whole document is 1 April 2026 and
+  // no previous convention or prior block is mentioned anywhere. So every
+  // agent starts at zero.
   //
-  // Note the asymmetry with persistency, which does NOT reach back: net
-  // lapses there count only business submitted and settled inside this
-  // production period. A lapse on a previous-block policy costs an agent
-  // production; a lapse on a this-block policy costs them persistency and
-  // is deducted from the NEXT convention instead.
+  // The carryover tab below exists only for the case where the Committee
+  // confirms that the 23rd convention's rules imposed one on this cycle. It
+  // is EMPTY BY DEFAULT and the dashboard hides the section entirely unless
+  // the branch loads cases into it. Do not seed it on an assumption.
   //
-  // The rules do not say whether the deduction also bites on the Early
-  // Bird figure. Defaulted to true because the conservative reading is the
-  // safe one to show an agent — better that the page understates than that
-  // somebody books a trip they have not earned. Confirm with the Committee.
+  // If it is ever used: the rules do not say whether such a deduction also
+  // bites on the Early Bird figure. Left true as the conservative reading —
+  // better the page understates than somebody books a trip they have not
+  // earned — but confirm it before relying on it.
   CARRYOVER_HITS_EARLY_BIRD: true,
 
   TAB_AGENTS:      'Convention Agents',
@@ -105,9 +106,10 @@ function setupConvention() {
     'Statement date', 'Settle date', 'Agent', 'Policy ref', 'Life ID',
     'New or increase', 'Product class', 'Net FYC', 'Gross FYC', 'API', 'Status']);
 
-  // One row per case backed out of this convention under general rule 1,
-  // kept case by case rather than as a single total so any agent can be
-  // shown exactly what was deducted and why.
+  // Optional and empty unless the Committee confirms an opening deduction
+  // for this cycle (see CARRYOVER_HITS_EARLY_BIRD above). Kept case by case
+  // rather than as a single total so an agent can be shown exactly what was
+  // deducted and why.
   convTab_(ss, CONV.TAB_CARRYOVER, [
     'Agent', 'Policy ref', 'Life ID', 'Originally settled', 'Outcome',
     'Outcome date', 'Net FYC deducted', 'API', 'Source convention', 'Note']);
@@ -377,10 +379,13 @@ function daysBetween_(a, b) {
 
 /**
  * Every settled row for one agent inside the production period.
+ *
  * Cases that lapsed, were not taken, not proceeded with, postponed or
- * declined are excluded from production — and are what the next
- * convention deducts, which is why the sheet keeps them rather than
- * dropping the row.
+ * declined are excluded from production here — and under general rule 1
+ * they are exactly what the 25th convention will deduct from its opening
+ * figure. That is why the sheet keeps the row with its outcome rather than
+ * deleting it: this cycle is the only time that data is easy to capture,
+ * and in 2028 it would have to be reconstructed from old statements.
  */
 function productionFor_(name) {
   var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONV.TAB_PRODUCTION);
@@ -416,9 +421,11 @@ function productionFor_(name) {
 }
 
 /**
- * What the previous convention's block takes off this convention, under
- * general rule 1. Returned case by case so the dashboard can show an agent
- * the actual policies rather than an unexplained negative number.
+ * Any opening deduction the branch has been given for this cycle. Normally
+ * empty: these rules impose none, and rule 1's own deduction lands on the
+ * 25th convention, not this one. Returned case by case so that if a
+ * deduction ever does apply, the dashboard shows an agent the actual
+ * policies rather than an unexplained negative number.
  */
 function carryoverFor_(name) {
   var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONV.TAB_CARRYOVER);

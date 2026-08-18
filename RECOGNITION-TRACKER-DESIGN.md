@@ -458,53 +458,70 @@ FYC credits may not be transferred between agents; discovery means the cases are
 disallowed and disciplinary action follows. The tracker should therefore never
 offer an "assign credit" affordance of any kind.
 
-### 6.7 Rule 1 reaches backwards — the opening deduction
+### 6.7 Rule 1 points forward, not backward
 
-General rule 1 is easy to read as forward-looking only. It is not:
+General rule 1 is the easiest rule in the document to read the wrong way round:
 
 > *"Any Lapse, Not Proceeded with, Not Taken, Postponed or Declined cases from the
 > convention block of business would be deducted from the production of the
 > following convention."*
 
-The previous (23rd) convention's bad cases are therefore deducted from **this**
-convention's production. An agent can open the 24th convention already in
-deficit, before writing a single case — and nothing on a naive dashboard would
-explain why their total is lower than their own count of what they have written.
+This document governs the 24th convention. "**The** convention block of business"
+therefore means **this** convention's block — 1 April 2026 to 30 September 2027 —
+and "the following convention" means the **25th**. The rule is a forward
+obligation: business written badly now is deducted from the next cycle, two years
+out.
 
-**The asymmetry with persistency is the part worth teaching.** Persistency
-explicitly does *not* reach back — *"for the purpose of net lapses, this will only
-include lapses and reinstatements of the business submitted and settled within the
-production period April 1st 2026 to September 30th 2027."* So:
+It is *not* a statement that this convention opens with a deduction. Three things
+confirm the reading:
 
-| A lapse on… | Hits FYC production | Hits persistency |
-|---|---|---|
-| Previous (23rd) convention business | **Yes — deducted now** | No |
-| This (24th) convention business | No — deducted from the 25th | **Yes** |
+- The **earliest date anywhere in the document is 1 April 2026.** No prior period,
+  no prior block, no opening figure, no carried-forward total appears anywhere.
+- The document never mentions a previous convention. The two uses of "previous"
+  are unrelated — a transferring agent's previous Branch or Unit, and having
+  *previously* qualified as an aspirant.
+- The production period is stated as a clean full term from 1 April 2026, with
+  every other date in the document falling after it.
 
-Which means conservation work splits in two, and an agent should know which one
-they are doing. Chasing a lapsed 2024 policy protects the **target**. Chasing a
-lapsed 2026 policy protects **persistency**. Neither helps with the other.
+**So the tracker's default is a clean slate**, and the opening figure for every
+agent is zero. Anything else would be inventing a liability the rules do not
+impose.
 
-Implemented as a `Convention Carryover` tab — one row per backed-out case, not a
-single total, so an agent can be shown the actual policies. A number somebody
-cannot account for is a number they will not trust.
+#### Could an opening deduction still exist?
 
-**Four things the rules do not settle**, all of which change an agent's figure:
+Possibly — but by a different route, and only the Committee can confirm it. If the
+23rd convention's own rules carried the identical sentence, then *its* block's
+lapses would be deducted from *this* convention, exactly as this document's rule 1
+will do to the 25th. That is a reasonable inference from the cadence — rule 30
+calls it the Bi-Annual Sales Convention — but it rests on a document we do not
+have. **It must not be assumed, and it is not assumed here.**
 
-1. **When must the lapse occur** to count against this convention? The rule sets
-   no window — lapses after the previous production period closed, after its
-   persistency date, or at any time, are three different numbers.
-2. **Does it take lives as well as FYC?** The rule says "cases … deducted from the
-   production". If a backed-out case was the only one for that life, does the life
-   come off the count too? Given lives is half of every gate, this matters.
-3. **Does it bite on the Early Bird?** The Early Bird is measured on FYC settled by
-   31 December 2026. The tracker currently applies the deduction there as well —
-   `CARRYOVER_HITS_EARLY_BIRD`, defaulted to `true` because it is better to
-   understate than to have somebody plan a trip they have not earned. Confirm it.
-4. **Whose block?** "The convention block of business" most naturally means all
-   business written in that production period, by any agent — not only agents who
-   qualified. Worth confirming, since it decides whether non-qualifiers carry a
-   deduction too.
+The `Convention Carryover` tab exists for that case and is **empty by default**;
+the dashboard hides the whole section unless the branch actually loads cases into
+it. If the Committee does confirm an opening deduction, it drops in without a
+rebuild — and the two questions to ask them then are whether it takes **lives**
+as well as FYC, and whether it bites on the **Early Bird** figure
+(`CARRYOVER_HITS_EARLY_BIRD`).
+
+#### What the forward reading obliges the tracker to do
+
+This is the part that matters today, and it is a data-retention requirement rather
+than a display one:
+
+**Every case outcome in this convention's block has to be kept, not just the
+totals.** When the 25th convention opens, its opening deduction is computed from
+this block's lapses, NTUs, NPWs, postponements and declines. A ledger that stores
+period totals and discards case-level outcomes cannot produce that figure, and the
+branch would be reconstructing it from statements two years old.
+
+Hence `status` on every row of the `Production Ledger` (§7), retained
+indefinitely. Today's ledger is the next convention's opening liability, and this
+convention is the only time that data is easy to capture.
+
+It is also worth saying plainly to agents: **a case written carelessly now is
+deducted from a trip in 2030.** Rule 1's real function is to make junk business
+expensive on a two-year delay, and an agent who hears that in 2026 behaves
+differently from one who discovers it in 2028.
 
 ### 6.8 The deadline calendar
 
@@ -691,8 +708,8 @@ nothing.
 | 4 | Confirm the aspirant FYC figure with the Convention Committee | The PDF calls $325,000 "75% of Shared" but 75% of $525,000 is $393,750 (the 67-lives figure *does* match 75%) |
 | 5 | Confirm the burned `STAFF_KEY` was rotated in the deployed script | Noted as published in `Code.gs`; §2 |
 | 6 | Decide: leaderboard shows dollars, or rank and % of target only | §9 — a branch culture call, not a technical one |
-| 7 | **Rule 1 carryover:** the four unsettled points in §6.7 — the lapse window, whether lives are deducted, whether the Early Bird is hit, and whose block counts | Each changes every agent's opening figure |
-| 8 | The 23rd convention's backed-out cases per agent | Nothing can be shown as an opening deduction until the branch has that list |
+| 7 | **Does this convention open with a deduction at all?** Nothing in these rules says so — the earliest date in the document is 1 April 2026 (§6.7). Only the Committee, or the previous convention's own rules, can settle it | Decides whether every agent's opening figure is zero or negative. The tracker assumes zero |
+| 8 | If it does: whether it takes **lives** as well as FYC, and whether it hits the **Early Bird** figure | Lives is half of every gate; the Early Bird closes 31 Dec 2026 |
 
 ---
 

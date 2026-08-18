@@ -592,9 +592,9 @@ function sampleState(name){
       {key:'bc_double',label:'Agent & Spouse (Business Class)',fyc:2100000,lives:60}
     ]
   };
-  var carryover = 18400;          // rule 1 deduction from the 23rd convention block
-  var periodFyc = 233200;
-  var netFyc = periodFyc - carryover, lives = 41, healthGroup = 46200;
+  /* No opening deduction: these rules impose none, so a clean slate is the
+     honest default to show. Rule 1's deduction lands on the 25th convention. */
+  var netFyc = 214800, lives = 41, healthGroup = 46200;
   var apiInForce = 388400, grossApi = 431000;
   var rate = (apiInForce / grossApi) * 100, floor = 87.5;
 
@@ -617,13 +617,9 @@ function sampleState(name){
   return { rules: rules, me: {
     name: name,
     statementDate: '31 July 2026',
-    fyc: { net:netFyc, periodOnly:periodFyc, gross:238600, healthGroup:healthGroup,
+    fyc: { net:netFyc, periodOnly:netFyc, gross:238600, healthGroup:healthGroup,
            perDayAchieved: netFyc / Math.max(1, days(d('2026-04-01'), today)) },
-    carryover: { total:carryover, caseCount:3, hitsEarlyBird:true, cases:[
-      { policy:'L-4471902', outcome:'Lapsed',        outcomeDate:'12 May 2026', netFyc:9200 },
-      { policy:'L-4390114', outcome:'Not taken up',  outcomeDate:'3 Mar 2026',  netFyc:6100 },
-      { policy:'L-4402887', outcome:'Postponed',     outcomeDate:'27 Apr 2026', netFyc:3100 }
-    ]},
+    carryover: { total:0, caseCount:0, hitsEarlyBird:true, cases:[] },
     lives: lives,
     persistency: { asAt:'31 July 2026', rate:rate, floor:floor,
       apiInForce:apiInForce, grossApi:grossApi,
@@ -636,7 +632,7 @@ function sampleState(name){
              pctElapsed: 0 },
     earlyBird: (function(){
       var rem = Math.max(0, days(today, d('2026-12-31')));
-      var eb = 214800;              // already net of the rule 1 deduction
+      var eb = 214800;
       return { open: rem > 0, daysRemaining: rem, windowDays: 274, fycNow: eb,
         single:540000, double:740000,
         singleShort:Math.max(0,540000-eb), doubleShort:Math.max(0,740000-eb),
