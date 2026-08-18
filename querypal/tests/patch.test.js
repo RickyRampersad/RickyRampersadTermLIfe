@@ -59,7 +59,7 @@ const t = (l, got, want) => { const ok = JSON.stringify(got) === JSON.stringify(
 t('60 routes loaded', Object.keys(QP_ROUTES).length, 60);
 t('Bounce Cheque -> Premium Query', qpRouteFor_('Bounce Cheque').email, 'gloc.premiumquery@myguardiangroup.com');
 t('new type: Quote - Life Insurance routes', qpRouteFor_('Quote - Life Insurance').email, 'rickyrampersadsalessupport@myguardiangroup.com');
-t('Statements now goes to Sales Support', qpRouteFor_('Statements – tax and csv').email, 'rickyrampersadsalessupport@myguardiangroup.com');
+t('Statements goes to GLOC Customer Service (branch decision, 18 Aug)', qpRouteFor_('Statements – tax and csv').email, 'gloccustomerservicechaguanassrsc@myguardiangroup.com');
 t('Motor claim department has a name', qpRouteFor_('Motor or Home Claim - Follow-up').dept, 'GGIL P&C Claims');
 t('turnaround from the catalog', qpRouteFor_('Surrenders').tat, '10 days');
 t('single day reads naturally', qpRouteFor_('Embassy letters').tat, '1 day');

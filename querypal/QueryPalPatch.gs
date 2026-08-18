@@ -75,7 +75,7 @@ const QP_ROUTES = {
   'SalesPal': ['GLOCITMORequests@myguardiangroup.com', '1', 'Tech Help (Agents)'],
   'ScanPal': ['GLOCITMORequests@myguardiangroup.com', '1', 'Tech Help (Agents)'],
   'Scripts Undelivered': ['rickyrampersadsalessupport@myguardiangroup.com', '1', "Something's Wrong"],
-  'Statements – tax and csv': ['rickyrampersadsalessupport@myguardiangroup.com', '1', 'My Policy & Documents'],
+  'Statements – tax and csv': ['gloccustomerservicechaguanassrsc@myguardiangroup.com', '1', 'My Policy & Documents'],
   'Status of policies or value': ['gloccustomerservicechaguanassrsc@myguardiangroup.com', '1', 'My Policy & Documents'],
   'Surrenders': ['gloccustomerservicechaguanassrsc@myguardiangroup.com', '10', 'My Money & Payouts'],
   'Underwriting Assistance - Pending Case Guidance': ['rickyrampersadsalessupport@myguardiangroup.com', '1', "Something's Wrong"],
