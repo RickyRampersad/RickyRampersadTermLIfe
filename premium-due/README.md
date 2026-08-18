@@ -13,6 +13,7 @@ file. Replaces the two JotForms and the "Premium Due Status" comment columns.
 | `process-brief.html` | Rollout brief for the team: the workflow, the actual client emails rendered, and what each role does differently |
 | `example-flows.html` | The worked examples: Saira through the dues flow, Javed through the pending flow — every step showing what the client, agent, manager and support each see, with the real letters inline |
 | `flow-map.html` | The whole lifecycle drawn out on one page — the two-phase manager handover, every loop and every exit. The picture to put in front of the team |
+| `journey-map.html` | The journey, photographed: both flows walked day by day with the real letters and the signed-in engine screens framed at every stage, ending in the three-step pilot checklist |
 | `launch-runbook.md` | Go-live checklist with the measured day-one numbers: pre-flight config, the staged rollout (dry run → pilot to one test inbox → live), caps, first week, rollback |
 | `letter-preview.html` | The day-45 letter in all six colour schemes, with a picker |
 | `../apps-script/PremiumDue.gs` | Backend — reads the portfolio, stores the log |
