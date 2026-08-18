@@ -1,5 +1,5 @@
-/* The rotating TV wall in Chromium: gate, remembered sign-in, seven boards,
-   rotation, and the data rendering. */
+/* The rotating TV wall in Chromium: open-by-default boot, seven boards,
+   rotation, data rendering, scoped ?code= boot, and the gate as fallback. */
 import { createRequire } from 'module';
 import path from 'path';
 const { chromium } = createRequire(import.meta.url)('/opt/node22/lib/node_modules/playwright');
@@ -21,12 +21,14 @@ const feed = { ok:true, role:'branch', name:'Ricky Rampersad', days:0, generated
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport:{ width:1280, height:800 } });
 const errors = []; page.on('pageerror', e => errors.push(String(e)));
-let wallCalls = 0;
+let wallCalls = 0, postCalls = 0, refuseAnon = false;
 await page.route('**/macros/s/**', route => {
   const req = route.request();
   const ok = b => route.fulfill({ status:200, contentType:'application/json', body: JSON.stringify(b) });
-  if (req.method() === 'POST') return ok({ ok:true, token:'TOK1', code:'260026', name:'Ricky Rampersad', role:'branch' });
-  wallCalls++; return ok(feed);
+  if (req.method() === 'POST') { postCalls++; return ok({ ok:true, token:'TOK1', code:'260026', name:'Ricky Rampersad', role:'branch' }); }
+  wallCalls++;
+  if (refuseAnon && !/code=[^&]/.test(req.url())) return ok({ ok:false });   // a backend with the open wall switched off
+  return ok(feed);
 });
 
 let pass=0, fail=0;
@@ -34,11 +36,9 @@ const t=(l,got,want)=>{const ok=JSON.stringify(got)===JSON.stringify(want);
   console.log((ok?'  PASS  ':'  FAIL  ')+l+(ok?'':`\n          got  ${JSON.stringify(got)}\n          want ${JSON.stringify(want)}`)); ok?pass++:fail++;};
 
 await page.goto(WALL);
-t('gate shows on a fresh screen', await page.locator('#gate:not(.off)').count(), 1);
-await page.fill('#gNum','260026'); await page.fill('#gPwd','pw');
-await page.click('#gGo');
-await page.waitForSelector('#gate.off', { state:'attached', timeout:5000 });
 await page.waitForFunction(() => document.getElementById('v_total').textContent !== '—', null, { timeout:5000 });
+t('a fresh screen boots straight to the boards — no gate', await page.locator('#gate.off').count(), 1);
+t('no sign-in call was needed', postCalls, 0);
 
 t('seven boards exist', await page.locator('main .panel').count(), 7);
 t('first board is showing', await page.locator('#p0.on').count(), 1);
@@ -77,17 +77,29 @@ t('quotes render', await page.locator('#quotes .rec').count(), 2);
 await page.locator('header').click();
 t('rotation wraps back to the pulse', await page.locator('#p0.on').count(), 1);
 
-// remembered sign-in: reload skips the gate
+// reload stays open, still no sign-in
 await page.reload();
 await page.waitForFunction(() => document.getElementById('v_total').textContent !== '—', null, { timeout:5000 });
-t('reload skips the gate (device remembered)', await page.locator('#gate.off').count(), 1);
+t('reload boots open again', await page.locator('#gate.off').count(), 1);
 
-// ?code= boot path
-await page.evaluate(() => localStorage.removeItem('qpwall'));
+// ?code= boot path — a scoped team/agent view, remembered on the device
 await page.goto(WALL + '?code=RRB2026');
 await page.waitForFunction(() => document.getElementById('v_total').textContent !== '—', null, { timeout:5000 });
 t('?code= boots straight to the wall', await page.locator('#gate.off').count(), 1);
 t('the code is stripped from the address bar', page.url().includes('code='), false);
+t('a scoped boot signs in for a token', postCalls > 0, true);
+
+// gate fallback: only when the open view is refused
+await page.evaluate(() => localStorage.removeItem('qpwall'));
+refuseAnon = true;
+await page.goto(WALL);
+await page.waitForSelector('#gate:not(.off)', { timeout:5000 });
+t('gate appears when the open wall is refused', await page.locator('#gate:not(.off)').count(), 1);
+await page.fill('#gNum','260026'); await page.fill('#gPwd','pw');
+await page.click('#gGo');
+await page.waitForFunction(() => document.getElementById('v_total').textContent !== '—', null, { timeout:5000 });
+t('signing in through the gate still works', await page.locator('#gate.off').count(), 1);
+refuseAnon = false;
 
 t('no page errors', errors, []);
 await page.screenshot({ path: path.join(HERE,'wall-tv.png') });

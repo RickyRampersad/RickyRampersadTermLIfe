@@ -231,12 +231,9 @@ await sleep(400);
 /* — Scene 5: the wall — */
 await cap('And the branch sees everything on the wall.', 1800);
 await page.goto('file://' + path.join(HERE, '..', 'wall.html') + '?freeze=1');
-await sleep(800);
-await page.fill('#gNum', '260026'); await page.fill('#gPwd', '••••••');
-await page.click('#gGo');
 await sleep(2600);
 await installCaption();
-await cap('A rotating TV wall — signed in once, it runs on its own and refreshes every minute.', 3200);
+await cap('A rotating TV wall — no sign-in needed: open /wall on any screen and it runs on its own, refreshing every minute.', 3200);
 await page.evaluate(() => rotate());   // demand
 await sleep(3000);
 await page.evaluate(() => rotate());   // open work / deadlines

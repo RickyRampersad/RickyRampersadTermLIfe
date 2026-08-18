@@ -274,9 +274,11 @@
 
 <script>
 /* Query Pal Wall — the rotating TV sibling of the Fact Find wall.
-   Signs in once per screen (stored on the device), then polls ?action=wall
-   and cycles the boards. No client names or references ever reach this page —
-   the endpoint returns aggregates only. */
+   Open by default: any screen pointed at /wall boots straight into the
+   branch-wide boards — no sign-in. Point it at ?code=XXXX (or sign in via
+   the gate, which only appears if the open view is refused) to narrow the
+   wall to one manager's team or one agent's book. No client names or
+   references ever reach this page — the endpoint returns aggregates only. */
 const WEBHOOK = "https://script.google.com/macros/s/AKfycbxHFobr89jyLMK-CL5cUxs8GhYtkvTVbbqeDo9L5RgUxMGlbFBKK0vanwEjf49gCakpAw/exec";
 const POLL_MS = 60000, ROTATE_MS = 15000, STALE_MS = 180000, PANELS = 7;
 const $ = id => document.getElementById(id);
@@ -345,6 +347,11 @@ document.addEventListener('click', e => {
           body: JSON.stringify({ action:'agentauth', num:s.code, pwd:s.pwd||'', code:s.code }) })
       .then(r=>r.json()).then(d=>{ if(d&&d.ok) cred.token = d.token||''; poll(); })
       .catch(()=>poll());
+  } else {
+    // no code on this screen: the open branch-wide wall, straight away
+    cred = { code:'', pwd:'', token:'' };
+    $('gate').classList.add('off');
+    poll();
   }
 })();
 
@@ -354,9 +361,14 @@ function poll(){
   fetch(WEBHOOK + '?action=wall&days=0&token=' + encodeURIComponent(cred.token||'')
         + '&code=' + encodeURIComponent(cred.code))
     .then(r=>r.json()).then(d=>{
-      if (!d || d.ok !== true) {                    // token expired or access revoked
-        if (saved()) { localStorage.removeItem('qpwall'); }
-        $('gate').classList.remove('off'); cred = null; return;
+      if (!d || d.ok !== true) {
+        if (cred && cred.code) {                    // a scoped sign-in stopped working:
+          if (saved()) { localStorage.removeItem('qpwall'); }
+          cred = { code:'', pwd:'', token:'' };     // fall back to the open branch view
+          return poll();
+        }
+        $('gate').classList.remove('off');          // open view refused too — sign in
+        cred = null; return;
       }
       data = d; lastGood = Date.now(); render();
     })

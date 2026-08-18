@@ -391,8 +391,13 @@ function qpScopeKeys_(me) {
   return keys;
 }
 
+var QP_WALL_PUBLIC = true;   // /wall needs no sign-in — the branch-wide view is open.
+                             // The payload is aggregates only either way; a code or
+                             // token still narrows the wall to that person's team.
+
 function wallStats_(code, token, days) {
   var me = qpAgentFromToken_(token) || (QP_REQUIRE_PASSWORD ? null : findAgent_(code));
+  if (!me && QP_WALL_PUBLIC) me = { name: 'Ricky Rampersad Branch', role: 'branch' };
   if (!me) return json({ ok: false });
 
   var window = parseInt(days); if (isNaN(window) || window <= 0) window = 0;   // 0 = all time

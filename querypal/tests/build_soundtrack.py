@@ -36,7 +36,7 @@ LINES = {
   16: "Enrolling a new member? Right from the portal, documents and all.",
   17: "Logged. Assigned. Chased to completion.",
   18: "And the whole branch — on one wall.",
-  19: "Signed in once, it runs on its own — refreshing every minute.",
+  19: "No sign-in needed. Open it on any screen, and it runs on its own — refreshing every minute.",
   20: "Departments ranked. Agents celebrated.",
   21: "And clients — heard, in their own words.",
   22: "Logged. Routed. Chased. Resolved. Query Pal — service, delivered on time.",
