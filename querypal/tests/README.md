@@ -148,3 +148,14 @@ ffmpeg -ss 1.1 -i demo/querypal-demo.webm -ss 1.1 -i demo/soundtrack.wav \
 (The -ss trims to just before the title card — check mark 0 in
 timeline-video.json if the load time changes. `tests/email-gallery.html` is the
 follow-up/hold template showcase the film pans through in scene 2b.)
+
+If a viewer reports no audio, check the file before rebuilding anything:
+
+```bash
+ffprobe -v error -select_streams a -show_entries stream=codec_name,channels -of default demo/querypal-demo-final.mp4
+ffmpeg -i demo/querypal-demo-final.mp4 -af volumedetect -f null - 2>&1 | grep volume
+```
+A healthy cut reports `aac` / 2 channels and a mean around -15 dB. When that
+holds, the silence is the player, not the film — inline previews often start
+muted. `demo/querypal-soundtrack.mp3` (exported from soundtrack.wav) is the
+quickest way to prove the audio itself plays.
