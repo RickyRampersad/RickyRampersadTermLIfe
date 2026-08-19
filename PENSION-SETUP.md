@@ -444,6 +444,33 @@ deployments → edit → New version → Deploy.** Nothing else needs to change.
 
 ## Part 6 — Maintenance
 
+### The film's soundtrack
+
+The film ships with **music and on-screen text, and no narration**. That is a
+deliberate choice, not an omission: an agent sitting with a company talks over
+it, which is stronger than any recorded voice, and it means the film is never
+embarrassing when it plays on a phone in a boardroom with the sound low.
+
+If you want a narrated version to send out on its own, record it and run one
+command:
+
+```
+bash pension/add-narration.sh  path/to/recording.wav
+```
+
+The words and their timings are in `pension/assets/film.vtt` — twenty lines,
+each with the second it belongs at. Record it straight through in a quiet
+room; a phone at a hand's width, slightly off to the side, is fine. The script
+cleans the recording, lays it over the music, ducks the music underneath it
+automatically, masters the result, and rebuilds both video files **without
+re-rendering a single frame**. It takes about a minute.
+
+Use a real person. A recorded branch voice — Ricky's, or anyone on the team
+who presents well — carries more with a Trinidadian company than a synthetic
+one ever will, and every AI voice tried for this film sounded synthetic to the
+people who heard it.
+
+
 ### Replacing a blank Guardian form
 
 The blanks are real PDFs in `pension/assets/`:
