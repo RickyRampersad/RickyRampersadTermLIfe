@@ -71,7 +71,7 @@ for i, m in enumerate(marks):
     if i not in LINES: continue
     clip = tts(LINES[i], DEMO / f'vo{i}.wav')
     peak = np.abs(clip).max() or 1.0
-    clip = clip / peak * 0.85
+    clip = clip / peak * 0.97
     start = max(T[i] + 0.05, cursor + 0.30)       # never talk over yourself
     s0 = int(start * SR); s1 = min(s0 + len(clip), total)
     voice[s0:s1] += clip[:s1 - s0]
@@ -134,7 +134,7 @@ while pos < END:
     pulse = 0.55 + 0.45 * np.cos(2 * np.pi * (tt % (2 * BEAT)) / (2 * BEAT) * np.pi / 2)
     e_here = energy(pos)
     if e_here >= 1:
-        music[i0:i0 + n] += 0.20 * bass * pulse * env
+        music[i0:i0 + n] += 0.25 * bass * pulse * env
     pos += n / SR; ci += 1
 
 # plucked arpeggio: decaying tones on eighth notes, chord tones climbing
@@ -164,9 +164,9 @@ while ts < END - 0.2:
         n = int(0.11 * SR); i0 = int(ts * SR)
         tt = np.arange(n) / SR
         f = 110 * np.exp(-tt * 26) + 44
-        music[i0:i0 + n] += 0.52 * np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-tt * 22)
+        music[i0:i0 + n] += 0.66 * np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-tt * 22)
         d = int(0.30 * SR)
-        duck_kick[i0:i0 + d] *= np.minimum(1, 0.55 + 0.45 * np.arange(d) / d)
+        duck_kick[i0:i0 + d] *= np.minimum(1, 0.42 + 0.58 * np.arange(d) / d)
     if e >= 2 and beat_pos < step / 2:             # backbeat snare on 2 and 4
         bi = int(round((ts - start_s) / BEAT))
         if bi % 2 == 1:
@@ -174,7 +174,7 @@ while ts < END - 0.2:
             tt = np.arange(n) / SR
             sn = np.random.default_rng(bi).standard_normal(n) * np.exp(-tt * 24)
             sn += 0.55 * np.sin(2 * np.pi * 190 * tt) * np.exp(-tt * 38)
-            music[i0:i0 + n] += (0.26 if e == 2 else 0.32) * sn
+            music[i0:i0 + n] += (0.36 if e == 2 else 0.44) * sn
     if e >= 2 and abs(beat_pos - BEAT / 2) < step / 4:   # offbeat hat
         n = int(0.030 * SR); i0 = int(ts * SR)
         music[i0:i0 + n] += 0.05 * np.random.default_rng(int(ts * 1000)).standard_normal(n) * np.exp(-np.arange(n) / SR * 160)
@@ -193,12 +193,12 @@ def impact(t0, g=1.0):
     rng = np.random.default_rng(int(t0 * 997))
     crash = rng.standard_normal(n) * np.exp(-tt * 5.5)
     crash = np.convolve(crash, np.ones(40) / 40, mode='same')   # darken
-    music[i0:i0 + n] += g * (0.50 * boom + 0.26 * crash)
+    music[i0:i0 + n] += g * (0.78 * boom + 0.40 * crash)
     w = min(int(0.5 * SR), i0)
     if w > 0:
-        music[i0 - w:i0] += 0.15 * g * rng.standard_normal(w) * (np.arange(w) / w) ** 2
+        music[i0 - w:i0] += 0.22 * g * rng.standard_normal(w) * (np.arange(w) / w) ** 2
 
-for t0, g in ((CARD, 0.9), (WIN, 1.0), (WALLSEEN, 0.95), (BOARDS, 1.0), (OUTRO, 1.15)):
+for t0, g in ((CARD, 1.1), (WIN, 1.25), (WALLSEEN, 1.15), (BOARDS, 1.25), (OUTRO, 1.4)):
     impact(t0, g)
 
 # riser into the finale, and the closing chord
@@ -227,10 +227,10 @@ for a, b in segments:                             # music steps back when the vo
     duck[max(0, i0 - r):i0] = np.linspace(1, 0.33, min(r, i0))
     duck[i1:min(total, i1 + r)] = np.linspace(0.33, 1, min(r, total - i1))
 
-music = np.tanh(music * 1.15) * duck
-mix = music * 0.9 + voice
-mix = np.tanh(mix * 1.05)
-mix = mix / (np.abs(mix).max() or 1) * 0.89
+music = np.tanh(music * 1.3) * duck
+mix = music * 0.95 + voice
+mix = np.tanh(mix * 1.5)
+mix = mix / (np.abs(mix).max() or 1) * 0.97
 
 stereo = np.zeros((total, 2))
 stereo[:, 0] = mix; stereo[:, 1] = mix
