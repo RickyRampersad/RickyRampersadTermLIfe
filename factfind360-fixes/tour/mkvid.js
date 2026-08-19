@@ -7,7 +7,7 @@ const LINES = {};
 ['vid/lines.txt','vid/newlines.txt','vid/newlines2.txt','vid/newlines3.txt','vid/newlines4.txt','vid/newlines5.txt','vid/newlines6.txt','vid/newlines7.txt','vid/narration_final.txt'].forEach(f =>
   fs.readFileSync(S + f, 'utf8').trim().split('\n').forEach(l => {
     const [id, text] = l.split('|'); LINES[id] = text; }));
-const DUR = { S00: 15.3, S01: 3.1, S1A: 18.9, S02: 8.8, S2B: 8.8, S2C: 14.7, S2F: 13.6, S2I: 14.2, S2G: 9.6, S2H: 9.9, S2D: 10.4, S2E: 8.4, S12B: 8.4, S13B: 9.6, S16: 19.4, S03: 9.6, S04: 7, S05: 2.8, S06: 7.4, S07: 9.1, S18: 9.3, S19: 14.6, S20: 9.6, S08: 6, S09: 3, S10: 6.2, S11: 7.1, S12: 14.6, S13: 6.4, S14: 5, S15: 12.9, S0W: 15.6, S0R: 15.4, S21: 14.6 };
+const DUR = { S00: 15.3, S01: 3.1, S1A: 18.9, S02: 8.8, S2B: 8.8, S2C: 14.7, S2F: 13.6, S2I: 14.2, S2G: 9.6, S2H: 9.9, S2D: 10.4, S2E: 8.4, S2P: 21.0, S12B: 8.4, S13B: 9.6, S16: 19.4, S03: 9.6, S04: 7, S05: 2.8, S06: 7.4, S07: 9.1, S18: 9.3, S19: 14.6, S20: 9.6, S08: 6, S09: 3, S10: 6.2, S11: 7.1, S12: 14.6, S13: 6.4, S14: 5, S15: 12.9, S0W: 15.6, S0R: 15.4, S21: 14.6 };
 
 // the page is recorded 96px short of 720 so the finished frame can carry a
 // caption bar underneath it — subtitles used to sit on top of the dashboard
@@ -188,18 +188,18 @@ const demoWithout = (...keys) => {
 };
 const DEMO = {
   clientName: 'Marcus Alleyne', fullName: 'Marcus Alleyne',
-  dob: '1988-06-14', idNumber: '00000000000',
+  dob: '1981-06-14', idNumber: '00000000000',
   maritalStatus: 'Married', occupation: 'Secondary School Teacher',
-  employer: 'Sample Employer Ltd', empStatus: 'Permanent', tenure: '11',
+  employer: 'Sample Employer Ltd', empStatus: 'Permanent', tenure: '18',
   address: '14 Sample Street', addressArea: 'Chaguanas',
   phone: '000-0000', email: 'sample.client@example.com',
   interviewDate: '2026-08-04',
   spouseName: 'Denise Alleyne', spouseOccupation: 'Registered Nurse',
   spouseEmployer: 'Sample Health Ltd', spouseEmpStatus: 'Full-time',
-  spouseMonthlyIncome: '9200', spouseTenure: '8', spouseGender: 'F',
+  spouseMonthlyIncome: '9200', spouseTenure: '14', spouseGender: 'F',
   child1Name: 'Kai Alleyne', child1Dob: '2015-03-02', child1Gender: 'M', child1Occ: 'Student',
   child2Name: 'Amara Alleyne', child2Dob: '2019-09-18', child2Gender: 'F', child2Occ: 'Student',
-  dep1Name: 'Yvonne Alleyne', dep1Rel: 'Parent', dep1Age: '68', dep1Income: '0', dep1Gender: 'Female',
+  dep1Name: 'Yvonne Alleyne', dep1Rel: 'Parent', dep1Age: '74', dep1Income: '0', dep1Gender: 'Female',
   monthlyIncome: '14000', monthlyExpenses: '9500',
   ins1Co: 'Guardian Life', ins1Type: 'Whole Life', ins1Sum: '250000',
   ins1Prem: '310', ins1Mode: 'Monthly', ins1Year: '2016',
@@ -510,6 +510,61 @@ const scenes = [
           sel.scrollIntoView({ block: 'center', behavior: 'smooth' }); } });
       await p.waitForTimeout(600);
       await zoomTo(p, '#secbody-10 select', 1.35, 1400);
+    } },
+  // The printed form, turned page by page. This is the compliance artefact —
+  // Guardian's own seven pages, the Insurance Act notice, the market conduct
+  // standards, the analysis and the signatures — filled from what was captured.
+  { id: 'S2P', url: 'factfind360-site/FFPROJECT.html',
+    run: async p => {
+      await SEED(p);
+      await p.evaluate(() => openPreview());
+      await p.waitForTimeout(2000);
+
+      const n = await p.evaluate(() => {
+        const bd = document.getElementById('previewBackdrop');
+        const pages = [...bd.querySelectorAll('.pf-page')];
+        // shrink a 1006px page so a whole one fits the frame — this should read
+        // as turning pages, not scrolling through a wall of paper
+        pages.forEach(pg => { pg.style.transform = 'scale(.575)';
+          pg.style.transformOrigin = 'top center';
+          pg.style.marginBottom = '-' + Math.round(1006 * 0.425 - 26) + 'px'; });
+        const tag = document.createElement('div');
+        tag.id = '__pg';
+        tag.style.cssText = 'position:fixed;left:22px;bottom:20px;z-index:2147483643;' +
+          'background:#0E1A2E;color:#F5B935;border:1.5px solid rgba(245,185,53,.5);' +
+          'font:850 12px/1 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;' +
+          'letter-spacing:.16em;text-transform:uppercase;padding:9px 15px;border-radius:20px';
+        document.documentElement.appendChild(tag);
+        return pages.length;
+      });
+
+      const shown = Math.min(n, 6);
+      for (let i = 0; i < shown; i++) {
+        await p.evaluate(([i, n]) => {
+          const pages = [...document.querySelectorAll('#previewBackdrop .pf-page')];
+          const pg = pages[i];
+          pg.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          document.getElementById('__pg').textContent = 'Page ' + (i + 1) + ' of ' + n;
+          pg.style.boxShadow = '0 0 0 3px rgba(45,212,191,.75)';
+          setTimeout(() => { pg.style.boxShadow = ''; }, 1500);
+        }, [i, n]);
+        // page one carries the Insurance Act notice — hold on it and mark it
+        if (i === 0) {
+          await p.waitForTimeout(700);
+          await p.evaluate(() => {
+            const el = [...document.querySelectorAll('#previewBackdrop *')].find(e =>
+              e.children.length === 0 && /Important Notice to Clients/i.test(e.textContent || ''));
+            if (!el) return;
+            const w = el.closest('div') || el;
+            w.style.transition = 'box-shadow .5s';
+            w.style.boxShadow = '0 0 0 4px rgba(245,185,53,.9)';
+          });
+          await p.waitForTimeout(2100);
+        } else {
+          await p.waitForTimeout(2000);
+        }
+      }
+      await p.waitForTimeout(500);
     } },
   { id: 'S2E', url: 'factfind360-site/FFPROJECT.html', cursor: true,
     run: async p => {

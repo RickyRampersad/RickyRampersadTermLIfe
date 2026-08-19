@@ -5,7 +5,7 @@ const { execFileSync } = require('child_process');
 const S = '/tmp/claude-0/-home-user-RickyRampersadTermLIfe/203562d4-c614-5eed-b728-644df21311be/scratchpad/';
 const DUR = JSON.parse(fs.readFileSync(S + 'vid/dur.json', 'utf8'));
 
-const FULL = ['S00','S0W','S0R','S01','S1A','S02','S2B','S2C','S2H','S2F','S2I','S2G','S2D','S2E',
+const FULL = ['S00','S0W','S0R','S01','S1A','S02','S2B','S2C','S2H','S2F','S2I','S2G','S2D','S2E','S2P',
   'S03','S04','S05','S06','S07','S08','S18','S09','S10','S11','S12','S12B','S13','S13B',
   'S20','S16','S14','S21','S19','S15'];
 const SHORT = ['S00','S0W','S2F','S2G','S12','S21','S15'];
