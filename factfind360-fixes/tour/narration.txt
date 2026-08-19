@@ -1,42 +1,34 @@
-S00|This is fact find three sixty — one guided journey for the agent, the client, and the manager.
-S01|It starts with the agent.
-S02|One guided fact find, built for the conversation. Capture the client, the needs, and the numbers, as you talk.
-S03|Live checks flag the gaps as you go. But nothing blocks you in front of a client — what is missing goes to the manager instead.
-S04|One tap sends it for review. The manager, and the client, are emailed automatically.
+S00|This is factfind360. Built by Ricky Rampersad, Branch Manager, inside his own branch. One guided journey, and it works for all three of us. The agent, the client, and the manager.
+S0W|Start with what we actually sell. We protect the person who earns the money. When that income stops, everything a family planned stops with it. That is why this was built. So no client gets guessed at, and no family gets left short.
+S0R|And it came out of thirty five years in the field. An M D R T member who has sat in those living rooms took what three and a half decades taught him, and handed it to every agent in the branch. Nobody has to learn it the hard way any more.
+S01|So, let us start with the agent.
+S1A|Scroll it, and you will see the whole thing. Every section of Guardian's Confidential Fact Find, version three. Same order, same headings. Nothing invented, and nothing left out. Everything on screen from here is sample data. There is no real client in this film.
+S02|It is one form, built for a conversation. You capture the family, the money and the needs while you are still talking.
+S2B|Watch the maths work. Type the income. Type the expenses. The surplus is worked out before you have finished the sentence.
+S2C|Income replacement. Education. Final expenses. One point two one million dollars of need. Take off the cover he already has, and nine hundred and sixty thousand is still sitting there. Uncovered.
+S2H|And that turns a spreadsheet into a conversation. If you had died last night, where would Denise find nine hundred and sixty thousand dollars?
+S2F|Retirement is the one agents used to dread. Seventy percent of income. Twenty years. Inflation, and what the money earns. The lump sum, and the shortfall, in about a second.
+S2I|And nobody is guessing at the inflation rate. Three and a half percent, straight from the Central Bank of Trinidad and Tobago, turned into a factor and applied to every single year. Try doing that at a kitchen table.
+S2G|And as each figure lands, the form fills itself in. Side by side. Exactly what the client is going to be handed.
+S2D|Recommendations come in three moves. The need. The plan that answers it. And what the client actually decided, written down beside it.
+S2E|And you can see exactly what the client gets. Guardian letterhead, ready to print, or attached to their email.
+S03|Checks run while you work, and flag what is missing. But nothing stops you in front of a client. Whatever is short goes to your manager instead.
+S04|One tap sends it in. Your manager and your client are both emailed, straight away.
 S05|Now, the client.
-S06|They receive their own copy in plain language, and confirm it is correct, right from the email.
-S07|As the plan moves, they see every step.
-S08|And on approval they get the good news — and rate the service with one tap.
-S09|And the manager.
-S10|At five o'clock, the digest says exactly what is waiting, and for how long.
-S11|Every open case in one queue, oldest first, with the full file one tap away.
-S12|Open the deep dive. Attest the four checks. Approve. The advisor and the client hear instantly.
-S13|Or send it back with a tap — and the advisor can fix it right inside the email.
-S14|And the whole branch sees the result, live on the wallboard.
-S15|Fact find three sixty. Easy for agents. Clear for clients. Effortless for managers.
-S2B|Watch the mathematics work. Type the income, type the expenses — and the surplus is priced before you finish talking.
-S2C|The needs analysis assembles itself. Debts pulled in automatically, and the protection gap priced on the spot.
-S1A|Eleven sections — matching Guardian's Confidential Fact Find, version three, section for section. Nothing falls outside the company's own standard.
-S2D|Recommendations are built in three steps. The need. The plan that answers it. And the client's own decision, recorded against it.
-S2E|And you can preview exactly what the client receives — on Guardian letterhead, ready to print, or attached to their email.
-S12B|An approved case. Signed, timestamped, and the client's letter already on its way.
-S13B|A declined case is never a dead end. The reason goes on the record, and the advisor fixes it inside the email.
-S16|Every case carries its own timeline. Submitted, reviewed, decided, delivered — measured in days, not guesswork.
-S2C|Income replacement, education, final expenses. Enter the figures — and the insurance need is priced instantly. One point two one million dollars.
-S2F|Retirement is the calculation agents used to dread. Seventy percent of income, twenty years, inflation and returns. The lump sum needed, and the gap, in one second.
-S2G|And as each figure lands, the fact find fills itself in — side by side, exactly as the client will receive it.
-S2H|Which turns a spreadsheet into a conversation. If you had died last night, where would your family find one point two one million dollars?
-S15|factfind360. Easy for agents. Clear for clients. Effortless for managers. A project of the Ricky Rampersad Branch — led by Branch Manager, Ricky Rampersad.
-S00|factfind360. Created by Ricky Rampersad, Branch Manager — a system conceived, designed and driven from inside the Ricky Rampersad Branch. One guided journey for the agent, the client, and the manager.
-S07|As the plan moves, the client sees exactly where they stand. Six stages — a journey with us, not a transaction.
-S18|And the advisor is told the moment a decision is made. Approved — or sent back, with the manager's own words already on the file.
-S19|And this is only the beginning. Fifty five fact finds. Seventy seven million dollars of need uncovered. One hundred and forty four million recommended. Twenty eight applications written — by the advisors who backed it.
-S20|And managers coach on facts, not opinions. Tap any advisor, and the whole branch view becomes theirs — live.
-S0W|Remember what we sell. We protect the person who earns the income. When that income stops, a family's plans stop with it. That is why this was built. So that no client is ever guessed at, and no family is ever left short.
-S0R|And it came from thirty five years in the field. Ricky Rampersad took what three and a half decades taught him about doing a fact find properly, and put it into every agent's hands. So nobody has to learn it the hard way.
-S21|And the dashboards keep coming. Applications written. Turnaround measured in days. Every advisor, every product, every open case, visible. Real numbers that update themselves, with more landing every week.
-S2C|Income replacement, education, final expenses. Enter the figures, and the need is priced on the spot. One point two one million dollars. That is what this family would have to find.
-S2I|And the inflation rate is not guessed at. Three point five percent, from the Central Bank of Trinidad and Tobago, carried into a factor and applied to every year to retirement. Work no agent could do at a kitchen table.
-S12|Open it, and tick the four attestations. Then sign it, right there, with your finger. Your signature goes onto the fact find itself, in the manager's sign off box, and travels with the client's copy.
-S12B|Approved and signed. Timestamped, on the record, and the client's letter already on its way.
-S16|And the timeline does not stop at approval. Policy delivered, follow up, and then a service review every year as the client gets older. Sent automatically. The advisor kept in the loop. That part is being built now. Because this is not a transaction. It is a relationship, measured.
+S06|They get their own copy, in plain English, and they confirm it is right from inside the email.
+S07|As it moves, they can see exactly where they stand. Six stages. That is a journey with us, not a transaction.
+S08|When it is approved they hear the good news, and they rate the service with one tap.
+S18|And the advisor knows the moment a decision is made. Approved, or sent back, with the manager's own words already on the file.
+S09|And now, the manager.
+S10|At five o'clock, one email says what is waiting, and how long it has been waiting.
+S11|Every open case in one queue. Oldest first. The whole file one tap away.
+S12|Open it. Tick the four things you are standing behind. Then sign it, right there, with your finger. That signature goes onto the fact find itself, and it travels with the client's copy.
+S12B|Approved, and signed. Time stamped, on the record, and the client's letter is already going out.
+S13|Or send it back with a tap. And the advisor can fix it right inside the email.
+S13B|Sending one back is never a dead end. The reason goes on the record, and the fix happens inside the email.
+S20|And managers coach on facts, not opinions. Tap any advisor, and the whole branch view becomes theirs. Live.
+S16|And it does not stop at approval. Policy delivered. Follow up. Then a service review every year as the client gets older, sent on its own, with the advisor kept in the loop. That part is being built right now. Because this is not a transaction. It is a relationship, and we can measure it.
+S14|And the whole branch sees it land. Live, on the wallboard.
+S21|And the dashboards keep coming. Applications written. Turnaround in days. Every advisor, every plan, every open case. Real numbers that keep themselves up to date, and more landing every week.
+S19|And this is just the start. Fifty five fact finds. Seventy seven million dollars of need found. One hundred and forty four million recommended. Twenty eight applications written, by the advisors who backed it.
+S15|factfind360. Easier for agents. Clearer for clients. Lighter for managers. Built in the Ricky Rampersad Branch, by Branch Manager Ricky Rampersad.

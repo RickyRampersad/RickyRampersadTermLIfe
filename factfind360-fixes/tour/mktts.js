@@ -4,11 +4,14 @@
 const fs = require('fs');
 const { execFileSync } = require('child_process');
 const S = '/tmp/claude-0/-home-user-RickyRampersadTermLIfe/203562d4-c614-5eed-b728-644df21311be/scratchpad/';
-const VOICE = 'en-US-AndrewNeural';
+// Andrew's expressive model, a touch under pace. The base Andrew read the
+// script accurately but flat; this one carries the sentence.
+const VOICE = 'en-US-AndrewMultilingualNeural';
+const RATE  = '-3%';
 
 const LINES = {};
 ['vid/lines.txt','vid/newlines.txt','vid/newlines2.txt','vid/newlines3.txt',
- 'vid/newlines4.txt','vid/newlines5.txt','vid/newlines6.txt','vid/newlines7.txt']
+ 'vid/newlines4.txt','vid/newlines5.txt','vid/newlines6.txt','vid/newlines7.txt','vid/narration_final.txt']
   .forEach(f => fs.readFileSync(S + f, 'utf8').trim().split('\n').forEach(l => {
     const i = l.indexOf('|'); if (i > 0) LINES[l.slice(0, i)] = l.slice(i + 1); }));
 
@@ -22,7 +25,7 @@ for (const id of ids) {
   let ok = false;
   for (let t = 0; t < 3 && !ok; t++) {
     try {
-      execFileSync('edge-tts', ['-v', VOICE, '-t', LINES[id],
+      execFileSync('edge-tts', ['-v', VOICE, '--rate=' + RATE, '-t', LINES[id],
         '--write-media', mp3, '--write-subtitles', vtt], { stdio: 'pipe', timeout: 90000 });
       ok = fs.existsSync(mp3) && fs.statSync(mp3).size > 2000;
     } catch (e) { console.log(id, 'retry', t + 1, String(e.message).slice(0, 70)); }

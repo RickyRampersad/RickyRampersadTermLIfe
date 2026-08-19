@@ -4,14 +4,10 @@ const S = '/tmp/claude-0/-home-user-RickyRampersadTermLIfe/203562d4-c614-5eed-b7
 
 // scene id -> narration text (for the caption bar) and recording length (s)
 const LINES = {};
-['vid/lines.txt','vid/newlines.txt','vid/newlines2.txt','vid/newlines3.txt','vid/newlines4.txt','vid/newlines5.txt','vid/newlines6.txt','vid/newlines7.txt'].forEach(f =>
+['vid/lines.txt','vid/newlines.txt','vid/newlines2.txt','vid/newlines3.txt','vid/newlines4.txt','vid/newlines5.txt','vid/newlines6.txt','vid/newlines7.txt','vid/narration_final.txt'].forEach(f =>
   fs.readFileSync(S + f, 'utf8').trim().split('\n').forEach(l => {
     const [id, text] = l.split('|'); LINES[id] = text; }));
-const DUR = { S00: 15.2, S01: 2.8, S1A: 10.8, S02: 8.8, S2B: 8.6, S2C: 12.4, S2F: 12.5, S2I: 14.2,
-  S2G: 9.4, S2H: 9.3, S2D: 9.5, S2E: 8.4,
-  S12B: 8.4, S13B: 9.6, S16: 18.4, S03: 8.3, S04: 7.0, S05: 2.8, S06: 7.0,
-  S07: 8.8, S18: 9.0, S19: 14.6, S20: 9.0, S08: 5.6, S09: 2.8, S10: 6.2, S11: 7.1, S12: 14.6, S13: 6.4, S14: 5.0, S15: 12.6,
-  S0W: 15.0, S0R: 14.6, S21: 14.6 };
+const DUR = { S00: 15.3, S01: 3.1, S1A: 18.9, S02: 8.8, S2B: 8.8, S2C: 14.7, S2F: 13.6, S2I: 14.2, S2G: 9.6, S2H: 9.9, S2D: 10.4, S2E: 8.4, S12B: 8.4, S13B: 9.6, S16: 19.4, S03: 9.6, S04: 7, S05: 2.8, S06: 7.4, S07: 9.1, S18: 9.3, S19: 14.6, S20: 9.6, S08: 6, S09: 3, S10: 6.2, S11: 7.1, S12: 14.6, S13: 6.4, S14: 5, S15: 12.9, S0W: 15.6, S0R: 15.4, S21: 14.6 };
 
 // the page is recorded 96px short of 720 so the finished frame can carry a
 // caption bar underneath it — subtitles used to sit on top of the dashboard
@@ -22,7 +18,9 @@ const VP = { width: 1280, height: 624 };
 let seed = 11; const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
 const agents = [['Felicia Rampersad','Ricky Rampersad'],['Rajiv Soodoo','Akaash Kalladeen'],
   ['Varun Seegolam','Kerwyn Ramroach'],['Kamla Persad','Gary Sookdeo'],['Eaton Boodoo','Akaash Kalladeen']];
-const prods = ['Guardian Term Life 20','Guardian Whole Life','Critical Illness Rider','Guardian Educational Plan'];
+const prods = ['Flexi Term \u2014 to age 65 (convertible)', 'Econolife 65 (Whole Life)',
+  'Rejuvenator (Critical Illness)', 'Reliance Plan \u2014 20 Year (Family Income Protection)',
+  'Liberator \u2014 Life Evolution (Universal Life)'];
 const clients = ['Alice Mohammed','Devon Charles','Sarah Ali','Nigel Baptiste','Priya Maharaj','Kevin Joseph','Anita Ramlogan','Terrence Gopaul'];
 const rows = [];
 for (let i = 0; i < 40; i++) {
@@ -181,20 +179,101 @@ async function glow(p, sel) {
     e.scrollIntoView({ block: 'center', behavior: 'smooth' }); } }, sel);
 }
 
-const SEED = async (p, extra) => {
-  await p.evaluate(extra => {
+// A whole fictitious household, so the film shows a fact find with a life in
+// it rather than two numbers in an empty form. Nothing here belongs to anyone:
+// the email domain is the reserved example.com, the ID is a run of zeroes, and
+// every scene that shows this data carries the SAMPLE stamp below.
+const demoWithout = (...keys) => {
+  const o = {}; Object.keys(DEMO).forEach(k => { if (!keys.includes(k)) o[k] = DEMO[k]; }); return o;
+};
+const DEMO = {
+  clientName: 'Marcus Alleyne', fullName: 'Marcus Alleyne',
+  dob: '1988-06-14', idNumber: '00000000000',
+  maritalStatus: 'Married', occupation: 'Secondary School Teacher',
+  employer: 'Sample Employer Ltd', empStatus: 'Permanent', tenure: '11',
+  address: '14 Sample Street', addressArea: 'Chaguanas',
+  phone: '000-0000', email: 'sample.client@example.com',
+  interviewDate: '2026-08-04',
+  spouseName: 'Denise Alleyne', spouseOccupation: 'Registered Nurse',
+  spouseEmployer: 'Sample Health Ltd', spouseEmpStatus: 'Full-time',
+  spouseMonthlyIncome: '9200', spouseTenure: '8', spouseGender: 'F',
+  child1Name: 'Kai Alleyne', child1Dob: '2015-03-02', child1Gender: 'M', child1Occ: 'Student',
+  child2Name: 'Amara Alleyne', child2Dob: '2019-09-18', child2Gender: 'F', child2Occ: 'Student',
+  dep1Name: 'Yvonne Alleyne', dep1Rel: 'Parent', dep1Age: '68', dep1Income: '0', dep1Gender: 'Female',
+  monthlyIncome: '14000', monthlyExpenses: '9500',
+  ins1Co: 'Guardian Life', ins1Type: 'Whole Life', ins1Sum: '250000',
+  ins1Prem: '310', ins1Mode: 'Monthly', ins1Year: '2016',
+  ins1Owner: 'Client', ins1Status: 'Active',
+  needIncome: '900000', needEducation: '250000', needLastExpenses: '60000',
+  retPctIncome: '70', retYears: '20', retRoi: '4', retNis: '3000', retBasis: 'perpetuity',
+  // the plan names come from the form's own catalogue, not from imagination —
+  // an invented product on screen is the fastest way to lose a room
+  rec1Rec: 'Flexi Term \u2014 to age 65 (convertible)',
+  rec1Need: 'Income Replacement (Breadwinner) \u2014 Life',
+  rec1Amt: '749000', rec1Prem: '419', rec1Mode: 'Monthly', rec1Who: 'Client',
+  rec1Reason: 'Covers the income replacement gap to the youngest child\u2019s majority, at a premium the surplus carries.',
+  rec2Rec: 'Rejuvenator (Critical Illness)', rec2Need: 'Critical Illness',
+  rec2Amt: '250000', rec2Prem: '138', rec2Mode: 'Monthly', rec2Who: 'Client',
+  rec2Reason: 'Family history noted at interview; protects the household income if he survives but cannot work.',
+};
+
+// Every frame that shows client data says so, in the corner, the whole time.
+const STAMP = `
+  if(!document.getElementById('__stamp')){
+    const d=document.createElement('div'); d.id='__stamp';
+    d.style.cssText='position:fixed;top:12px;right:14px;z-index:2147483644;display:flex;'+
+      'align-items:center;gap:8px;background:rgba(245,185,53,.14);border:1.5px solid rgba(245,185,53,.6);'+
+      'color:#F5B935;font:800 11px/1 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;'+
+      'letter-spacing:.13em;text-transform:uppercase;padding:8px 13px;border-radius:20px;'+
+      'backdrop-filter:blur(6px);pointer-events:none';
+    d.innerHTML='<span style="width:7px;height:7px;border-radius:50%;background:#F5B935;'+
+      'display:inline-block"></span>Sample data &middot; not a real client';
+    document.documentElement.appendChild(d);
+  }`;
+
+const SEED = async (p, extra, base) => {
+  await p.evaluate(([extra, base]) => {
     document.querySelectorAll('.section-header').forEach(h => {
       if (getComputedStyle(h.nextElementSibling).display === 'none') h.click(); });
     const set = (f, v) => { const e = document.querySelector('[data-field="' + f + '"]');
-      if (e) { e.value = v; e.dispatchEvent(new Event('input', { bubbles: true }));
-               e.dispatchEvent(new Event('change', { bubbles: true })); } };
-    set('monthlyIncome', '14000'); set('monthlyExpenses', '9500');
+      if (!e) return;
+      if (e.tagName === 'SELECT') {
+        const hit = [...e.options].find(o => o.value === v ||
+          (o.textContent || '').trim().toLowerCase() === String(v).toLowerCase());
+        if (!hit) return;
+        e.value = hit.value;
+      } else { e.value = v; }
+      e.dispatchEvent(new Event('input', { bubbles: true }));
+      e.dispatchEvent(new Event('change', { bubbles: true })); };
+    Object.entries(base || {}).forEach(([f, v]) => set(f, v));
     Object.entries(extra || {}).forEach(([f, v]) => set(f, v));
     // the focus is the arithmetic, not the assistant: hide RAI prompts
     [...document.querySelectorAll('button,div,span,a')].forEach(e => {
       if (e.children.length <= 1 && /^\s*RAI\b|RAI\s*[—:-]/.test(e.textContent || '') &&
           (e.textContent || '').length < 220) e.style.display = 'none'; });
-  }, extra);
+    // and every assistant panel with them. The story here is the arithmetic and
+    // the advisor doing the work, so nothing on screen should read as the
+    // machine having the opinion.
+    [...document.querySelectorAll('*')].forEach(e => {
+      if (e.children.length !== 0) return;
+      const t = (e.textContent || '').trim();
+      if (!/^RAI\b/i.test(t) && !/RAI\s*[—:-]/.test(t) &&
+          !/Full RAI reasoning/i.test(t)) return;
+      // climb to the card the label sits in, then hide the whole card
+      let w = e, best = e;
+      for (let i = 0; i < 6 && w.parentElement; i++) {
+        w = w.parentElement;
+        const h = w.getBoundingClientRect().height;
+        const st = getComputedStyle(w);
+        if (h > 34 && h < 460 &&
+            (st.borderLeftWidth !== '0px' || st.borderWidth !== '0px' ||
+             st.borderRadius !== '0px' || st.backgroundColor !== 'rgba(0, 0, 0, 0)')) {
+          best = w;
+        }
+      }
+      best.style.display = 'none';
+    });
+  }, [extra, base === undefined ? DEMO : base]);
   await p.waitForTimeout(400);
 };
 async function typeField(p, f, v, per = 70) {
@@ -223,36 +302,39 @@ const scenes = [
   { id: 'S0W', url: 'vid/card_why.html' },
   { id: 'S0R', url: 'vid/card_ricky.html' },
   { id: 'S01', url: 'vid/card01.html' },
-  { id: 'S1A', url: 'factfind360-site/FFPROJECT.html', cursor: true,
+  // A continuous scroll down the whole form, filled in, so what is on screen is
+  // Guardian's own V3 section by section — not just its masthead.
+  { id: 'S1A', url: 'factfind360-site/FFPROJECT.html',
     run: async p => {
-      await p.waitForTimeout(500);
+      await SEED(p);
       await p.evaluate(() => {
         document.querySelectorAll('.section-header').forEach(h => {
-          h.style.transition = 'background .4s, box-shadow .4s'; });
+          h.style.transition = 'box-shadow .35s, background .35s'; });
+        window.scrollTo(0, 0);
       });
-      await smoothScroll(p, 320, 1300);
-      // walk the eleven section headers, lighting each
-      await p.evaluate(() => new Promise(res => {
+      await p.waitForTimeout(500);
+
+      // light each heading as the page passes it, without stopping the travel
+      await p.evaluate(() => {
         const hs = [...document.querySelectorAll('.section-header')];
-        let i = 0;
-        (function step() {
-          if (i >= hs.length) return res();
-          const h = hs[i++];
-          h.style.boxShadow = '0 0 0 3px rgba(245,185,53,.85)';
-          h.scrollIntoView({ block: 'center', behavior: 'smooth' });
-          setTimeout(step, 460);
-        })();
-      }));
+        window.__io = new IntersectionObserver(es => es.forEach(e => {
+          if (!e.isIntersecting) return;
+          const h = e.target;
+          h.style.boxShadow = '0 0 0 3px rgba(245,185,53,.9)';
+          h.style.background = 'rgba(245,185,53,.07)';
+          setTimeout(() => { h.style.boxShadow = 'none'; h.style.background = ''; }, 1500);
+        }), { rootMargin: '-38% 0px -46% 0px' });
+        hs.forEach(h => window.__io.observe(h));
+      });
+
+      const bottom = await p.evaluate(() =>
+        document.documentElement.scrollHeight - window.innerHeight);
+      await smoothScroll(p, Math.round(bottom * 0.92), 13500);
       await p.waitForTimeout(400);
-      await p.evaluate(() => { const h = [...document.querySelectorAll('.section-header')]
-        .find(x => /Needs Analysis/i.test(x.textContent)); if (h) { h.setAttribute('data-z','1');
-          h.scrollIntoView({ block: 'center' }); } });
-      await p.waitForTimeout(300);
-      await zoomTo(p, '.section-header[data-z]', 1.45, 1500);
     } },
   { id: 'S02', url: 'factfind360-site/FFPROJECT.html', cursor: true,
     run: async p => {
-      await p.waitForTimeout(500);
+      await SEED(p);
       await p.evaluate(() => { const h = document.querySelectorAll('.section-header')[1];
         if (h) h.setAttribute('data-demo', '1'); });
       await curClick(p, '.section-header[data-demo]', 1100);
@@ -261,6 +343,7 @@ const scenes = [
     } },
   { id: 'S2B', url: 'factfind360-site/FFPROJECT.html', cursor: true,
     run: async p => {
+      await SEED(p, null, demoWithout('monthlyIncome', 'monthlyExpenses'));
       await p.evaluate(() => { const b = document.getElementById('secbody-2');
         if (b && getComputedStyle(b).display === 'none') b.previousElementSibling.click(); });
       await p.waitForTimeout(300);
@@ -281,7 +364,7 @@ const scenes = [
     } },
   { id: 'S2C', url: 'factfind360-site/FFPROJECT.html', cursor: true,
     run: async p => {
-      await SEED(p);
+      await SEED(p, null, demoWithout('needIncome', 'needEducation', 'needLastExpenses'));
       await p.evaluate(() => { const b = document.getElementById('secbody-7');
         if (b) b.scrollIntoView({ block: 'start' }); window.scrollBy(0, -70); });
       await p.waitForTimeout(400);
@@ -312,7 +395,7 @@ const scenes = [
     } },
   { id: 'S2F', url: 'factfind360-site/FFPROJECT.html', cursor: true,
     run: async p => {
-      await SEED(p);
+      await SEED(p, null, demoWithout('retPctIncome', 'retYears', 'retRoi', 'retNis'));
       await p.evaluate(() => { const b = document.getElementById('secbody-8');
         if (b) b.scrollIntoView({ block: 'start' }); window.scrollBy(0, -70); });
       await p.waitForTimeout(400);
@@ -406,6 +489,7 @@ const scenes = [
     } },
   { id: 'S2D', url: 'factfind360-site/FFPROJECT.html', cursor: true,
     run: async p => {
+      await SEED(p);
       await p.evaluate(() => { const h = [...document.querySelectorAll('.section-header')]
         .find(x => /Recommendations/i.test(x.textContent));
         if (h) { h.setAttribute('data-demo', '1');
@@ -429,7 +513,7 @@ const scenes = [
     } },
   { id: 'S2E', url: 'factfind360-site/FFPROJECT.html', cursor: true,
     run: async p => {
-      await p.waitForTimeout(400);
+      await SEED(p);
       await p.evaluate(() => { const b = [...document.querySelectorAll('button')]
         .find(x => /^Preview$/i.test(x.textContent.trim())); if (b) b.setAttribute('data-demo', '1'); });
       await curClick(p, 'button[data-demo]', 900);
@@ -443,14 +527,16 @@ const scenes = [
     } },
   { id: 'S03', url: 'factfind360-site/FFPROJECT.html',
     run: async p => {
-      await p.waitForTimeout(600);
+      // two real gaps left in on purpose, so the checks have something to find
+      await SEED(p, null, demoWithout('idNumber', 'rec2Reason'));
+      await p.waitForTimeout(300);
       await p.evaluate(() => { const el = document.getElementById('rrbReady'); if (el) el.scrollIntoView({ block: 'start' }); });
       await p.waitForTimeout(700);
       await smoothScroll(p, await p.evaluate(() => window.scrollY + 500), DUR.S03 * 1000 - 2400);
     } },
   { id: 'S04', url: 'factfind360-site/FFPROJECT.html',
     run: async p => {
-      await p.waitForTimeout(500);
+      await SEED(p);
       await p.evaluate(() => {
         const b = document.getElementById('submitBtn');
         if (b) { b.scrollIntoView({ block: 'center' });
@@ -652,6 +738,8 @@ const scenes = [
       await p.goto('file://' + S + sc.url);
     }
     if ((sc.cursor || sc.url === 'INSIGHTS') && !sc.noCursor) await p.evaluate(new Function(CURSOR));
+    // anything showing a client carries the sample stamp for its whole run
+    if (!sc.url.startsWith('vid/')) await p.evaluate(new Function(STAMP));
     const t0 = Date.now();
     if (sc.run) { try { await sc.run(p); } catch (e) { console.log(sc.id, 'action warn:', e.message.slice(0, 80)); } }
     const left = DUR[sc.id] * 1000 - (Date.now() - t0);
