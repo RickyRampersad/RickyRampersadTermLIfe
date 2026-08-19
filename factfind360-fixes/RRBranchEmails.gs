@@ -478,7 +478,7 @@ function rrbAppUrl_() {
 
 function rrbEsc_(s) {
   return _str(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 /** Stamp a token as spent so the link cannot be replayed. */
@@ -628,7 +628,10 @@ function rrbDecisionBlock_(d, reviewer) {
     Logger.log('rrbDecisionBlock_: no token (%s) — falling back to the form link', err && err.message);
     return rrbButton_('Open and review', ffReviewLink_(d.submissionId, 'manager'));
   }
-  var base = rrbAppUrl_() + '?action=decide&t=' + encodeURIComponent(tok) + '&v=';
+  // Both buttons open the signing page, not the decision itself. A tap used to
+  // record an approval with no signature at all, leaving the fact find's
+  // sign-off box empty on a case that had supposedly been signed off.
+  var base = rrbAppUrl_() + '?action=decide_sign&t=' + encodeURIComponent(tok) + '&v=';
   return '<table role="presentation" width="100%" style="border-collapse:collapse;margin:18px 0 6px"><tr>' +
     '<td style="padding-right:6px" width="50%"><a href="' + base + 'approve' + '" ' +
       'style="display:block;text-align:center;background:#0F766E;color:#fff;padding:15px 10px;border-radius:10px;' +
@@ -638,7 +641,7 @@ function rrbDecisionBlock_(d, reviewer) {
       'padding:13px 10px;border-radius:10px;text-decoration:none;font-weight:800;font-size:15px">Request changes</a></td>' +
     '</tr></table>' +
     '<p style="text-align:center;font-size:12.5px;color:#64748B;margin:4px 0 0">' +
-      'One tap records it. You can add a comment on the next screen &mdash; ' +
+      'You will see the figures and sign on the next screen &mdash; ' +
       '<a href="' + ffReviewLink_(d.submissionId, 'manager') + '" style="color:#0D9488">or open the full application</a>.</p>';
 }
 
@@ -669,6 +672,235 @@ function rrbPage_(title, bodyHtml, tone) {
  * already single-use and bound to this submission and this reviewer — anyone
  * able to alter the verdict could simply have used the link.
  */
+/**
+ * The signing page a review email's Approve / Send-back button now opens.
+ *
+ * It used to be that tapping Approve in the email recorded the decision on
+ * the spot and collected no signature — which left the fact find's sign-off
+ * box empty on a case that had, on paper, been approved. Now the tap opens
+ * this: what is being signed, the four attestations, and somewhere to put
+ * your hand. Nothing is written until the manager signs.
+ *
+ * The token is only VERIFIED here, never spent — spending it is rrbDecide's
+ * job, on submit. Someone who opens this page and closes it has decided
+ * nothing, and their link still works.
+ */
+function rrbDecideSign(e) {
+  var p = (e && e.parameter) || {};
+  var approve = /^appro/i.test(_str(p.v));
+  var chk = rrbVerifyToken(p.t);
+  if (!chk.ok) {
+    return rrbPage_('Cannot record this',
+      '<div style="font-size:19px;font-weight:800;margin-bottom:8px">This link no longer works</div>' +
+      '<p style="color:#475569;margin:0 0 14px">' + rrbEsc_(chk.error) + '</p>' +
+      '<p style="color:#64748B;font-size:13.5px;margin:0">If the case still needs a decision, open the ' +
+      'dashboard and review it there, or ask for a fresh link.</p>', 'err');
+  }
+
+  var pay = chk.payload;
+  var d = {};
+  try {
+    var sheet = ffGetOrCreateRevisedTab_();
+    var headers = ffEnsureHeaders_(sheet);
+    var row = ffFindRowBySubmissionId_(sheet, headers, pay.id);
+    if (row) d = ffReadRow_(sheet, headers, row);
+  } catch (err) { Logger.log('rrbDecideSign: could not read the row — %s', err && err.message); }
+
+  var st = _str(d.status).toLowerCase();
+  if (st.indexOf('approv') > -1 || st.indexOf('declin') > -1 || st.indexOf('cancel') > -1) {
+    return rrbPage_('Already settled',
+      '<div style="font-size:19px;font-weight:800;margin-bottom:8px">This one is already decided</div>' +
+      '<p style="color:#475569;margin:0">' + rrbEsc_(_str(d.mgrName) || 'Someone') +
+      ' recorded it — the status is &ldquo;' + rrbEsc_(_str(d.status)) + '&rdquo;. Nothing has changed.</p>', 'err');
+  }
+
+  var client  = _str(d.clientName) || _str(d.fullName) || _str(d.adviceClientName) || 'this client';
+  var advisor = _str(d.advisorName) || 'the advisor';
+  var accent  = approve ? '#0D9488' : '#B45309';
+
+  // What is actually being signed: the need, what was recommended against it,
+  // and anything the checks flagged. A manager should not have to remember the
+  // figures from the email above to put their name to them.
+  var money = function (n) {
+    var x = parseFloat(String(n).replace(/[^0-9.\-]/g, ''));
+    return isNaN(x) ? '' : 'TT$' + Math.round(x).toLocaleString('en-US');
+  };
+  var facts = [];
+  if (_str(d.insuranceNeed_calc)) facts.push(['Need uncovered', money(d.insuranceNeed_calc)]);
+  var cover = 0, prem = 0, plans = [];
+  for (var i = 1; i <= 6; i++) {
+    var rec = _str(d['rec' + i + 'Rec']);
+    if (!rec) continue;
+    cover += parseFloat(String(d['rec' + i + 'Amt']).replace(/[^0-9.]/g, '')) || 0;
+    prem  += parseFloat(String(d['rec' + i + 'Prem']).replace(/[^0-9.]/g, '')) || 0;
+    plans.push(rec + (_str(d['rec' + i + 'Amt']) ? ' &middot; ' + money(d['rec' + i + 'Amt']) : ''));
+  }
+  if (cover) facts.push(['Cover recommended', money(cover)]);
+  if (prem)  facts.push(['Premium', money(prem) + ' / month']);
+  if (_str(d.cashSurplus_calc)) facts.push(['Client surplus', money(d.cashSurplus_calc) + ' / month']);
+
+  var flags = [];
+  try {
+    var ck = (typeof rrbChecks_ === 'function') ? rrbChecks_(d) : null;
+    if (ck && ck.concerns) ck.concerns.forEach(function (c) { flags.push(_str(c.t)); });
+  } catch (err2) {}
+  if (prem && parseFloat(d.cashSurplus_calc) > 0 && (prem / parseFloat(d.cashSurplus_calc)) > 0.8)
+    flags.push('The premium is more than 80% of the client’s monthly surplus.');
+
+  var body =
+    '<div style="font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:' +
+      accent + '">' + (approve ? 'Approving' : 'Sending back') + '</div>' +
+    '<div style="font-size:21px;font-weight:800;margin:6px 0 3px">' + rrbEsc_(client) + '</div>' +
+    '<div style="color:#64748B;font-size:13.5px;margin-bottom:16px">' + rrbEsc_(advisor) + '</div>';
+
+  if (facts.length) {
+    body += '<table style="width:100%;border-collapse:collapse;margin:0 0 14px;' +
+      'border:1px solid #E2E8F0;border-radius:10px;overflow:hidden">';
+    facts.forEach(function (f, ix) {
+      body += '<tr style="background:' + (ix % 2 ? '#F8FAFC' : '#fff') + '">' +
+        '<td style="padding:9px 12px;font-size:13.5px;color:#475569">' + f[0] + '</td>' +
+        '<td style="padding:9px 12px;font-size:14px;font-weight:800;text-align:right;color:#0F172A">' +
+          f[1] + '</td></tr>';
+    });
+    body += '</table>';
+  }
+  if (plans.length) {
+    body += '<div style="font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;' +
+      'color:#64748B;margin-bottom:5px">Recommended</div><ul style="margin:0 0 14px;padding-left:19px;' +
+      'color:#334155;font-size:14px;line-height:1.7">';
+    plans.forEach(function (x) { body += '<li>' + x + '</li>'; });
+    body += '</ul>';
+  }
+  if (flags.length) {
+    body += '<div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:11px 13px;' +
+      'margin:0 0 16px"><div style="font-size:12px;font-weight:800;letter-spacing:.05em;' +
+      'text-transform:uppercase;color:#B45309;margin-bottom:5px">Worth a look first</div>' +
+      '<ul style="margin:0;padding-left:18px;color:#78350F;font-size:13.5px;line-height:1.65">';
+    flags.slice(0, 5).forEach(function (x) { body += '<li>' + rrbEsc_(x) + '</li>'; });
+    body += '</ul></div>';
+  }
+
+  body += rrbSignForm_(rrbAppUrl_(), _str(p.t), approve ? 'approve' : 'return',
+                       _str(pay.nm) || _str(d.reviewerName), approve, advisor);
+  return rrbPage_(approve ? 'Sign to approve' : 'Sign and send back', body, approve ? 'ok' : 'bad');
+}
+
+/**
+ * The signature block itself — four attestations, a pad you can draw on with
+ * a finger, and a typed fallback for anyone on a machine without a touch
+ * screen. Shared by the email page and reused in shape by the dashboard so a
+ * manager signs the same way whichever door they came through.
+ */
+function rrbSignForm_(appUrl, token, verb, defaultName, approve, advisor) {
+  var accent = approve ? '#0D9488' : '#B45309';
+  var atts = approve
+    ? [['vd', 'The client data and figures are sound'],
+       ['vr', 'The premium sits within the client’s means'],
+       ['vs', 'The product recommended suits the need found'],
+       ['vc', 'Replacement, disclosure and compliance are in order']]
+    : [];
+
+  var h =
+  '<form method="post" action="' + rrbEsc_(appUrl) + '" id="sf" style="margin:0">' +
+  '<input type="hidden" name="action" value="decide">' +
+  '<input type="hidden" name="t" value="' + rrbEsc_(token) + '">' +
+  '<input type="hidden" name="v" value="' + rrbEsc_(verb) + '">' +
+  '<input type="hidden" name="sig" id="sigData">';
+
+  if (atts.length) {
+    h += '<div style="font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;' +
+      'color:#64748B;margin:0 0 7px">What you are attesting to</div>' +
+      '<div style="border:1px solid #E2E8F0;border-radius:10px;overflow:hidden;margin-bottom:16px">';
+    atts.forEach(function (a, ix) {
+      h += '<label style="display:flex;gap:10px;align-items:flex-start;padding:11px 13px;cursor:pointer;' +
+        'border-top:' + (ix ? '1px solid #F1F5F9' : '0') + '">' +
+        '<input type="checkbox" name="' + a[0] + '" value="1" class="att" ' +
+          'style="width:19px;height:19px;margin:1px 0 0;accent-color:' + accent + ';flex:none">' +
+        '<span style="font-size:14px;color:#334155;line-height:1.45">' + a[1] + '</span></label>';
+    });
+    h += '</div>';
+  } else {
+    h += '<label style="display:block;font-size:13px;font-weight:700;color:#334155;margin-bottom:6px">' +
+      'What does ' + rrbEsc_(String(advisor || 'the advisor').split(' ')[0]) + ' need to fix?</label>' +
+      '<textarea name="note" rows="3" required style="width:100%;box-sizing:border-box;border:1px solid #CBD5E1;' +
+      'border-radius:9px;padding:11px;font:15px/1.5 inherit;resize:vertical;margin-bottom:16px" ' +
+      'placeholder="No reason given for the product recommended&hellip;"></textarea>';
+  }
+
+  h +=
+  '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">' +
+    '<span style="font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#64748B">' +
+      'Your signature</span>' +
+    '<button type="button" id="sigClear" style="background:none;border:0;color:#64748B;font-size:12.5px;' +
+      'font-weight:700;cursor:pointer;padding:0">Clear</button></div>' +
+  '<div style="position:relative;border:2px dashed #CBD5E1;border-radius:12px;background:#fff;' +
+    'height:170px;overflow:hidden">' +
+    '<canvas id="pad" style="position:absolute;inset:0;width:100%;height:100%;touch-action:none"></canvas>' +
+    '<div id="padHint" style="position:absolute;left:0;right:0;bottom:16px;text-align:center;' +
+      'color:#94A3B8;font-size:13px;pointer-events:none">Sign here with your finger</div>' +
+    '<div style="position:absolute;left:22px;right:22px;bottom:44px;border-bottom:1px solid #E2E8F0;' +
+      'pointer-events:none"></div></div>' +
+  '<label style="display:block;font-size:13px;font-weight:700;color:#334155;margin:14px 0 6px">' +
+    'Signed by</label>' +
+  '<input type="text" name="signName" id="signName" required value="' + rrbEsc_(defaultName || '') + '" ' +
+    'style="width:100%;box-sizing:border-box;border:1px solid #CBD5E1;border-radius:9px;padding:11px;' +
+    'font:15px/1.5 inherit">' +
+  '<button type="button" id="typeIt" style="background:none;border:0;color:' + accent + ';font-size:13px;' +
+    'font-weight:700;cursor:pointer;padding:8px 0 0">Use my typed name as the signature instead</button>' +
+  '<div id="sigErr" style="display:none;color:#B91C1C;font-size:13.5px;font-weight:700;margin-top:10px"></div>' +
+  '<button type="submit" id="sigGo" style="width:100%;margin-top:14px;background:' + accent + ';color:#fff;' +
+    'border:0;border-radius:10px;padding:15px;font-size:15.5px;font-weight:800;cursor:pointer">' +
+    (approve ? 'Sign &amp; approve' : 'Sign &amp; send back') + '</button>' +
+  '<p style="color:#94A3B8;font-size:12.5px;margin:12px 0 0;text-align:center;line-height:1.55">' +
+    (approve
+      ? 'Your signature goes onto the fact find itself, in the manager&rsquo;s sign-off box.'
+      : 'Your signature is kept against the decision. The fact find stays unsigned &mdash; it is going back.') +
+  '</p></form>' +
+
+  '<script>(function(){' +
+  'var c=document.getElementById("pad"),hint=document.getElementById("padHint");' +
+  'var x=c.getContext("2d"),drawn=false,down=false,last=null;' +
+  'function fit(){var r=c.getBoundingClientRect(),dp=window.devicePixelRatio||1;' +
+    'c.width=r.width*dp;c.height=r.height*dp;x.scale(dp,dp);' +
+    'x.lineWidth=2.6;x.lineCap="round";x.lineJoin="round";x.strokeStyle="#0F172A";}' +
+  'fit();window.addEventListener("resize",function(){var d=drawn;fit();if(!d)return;});' +
+  'function pt(ev){var r=c.getBoundingClientRect();var t=ev.touches?ev.touches[0]:ev;' +
+    'return {x:t.clientX-r.left,y:t.clientY-r.top};}' +
+  'function start(ev){ev.preventDefault();down=true;last=pt(ev);' +
+    'if(hint)hint.style.display="none";}' +
+  'function move(ev){if(!down)return;ev.preventDefault();var p=pt(ev);' +
+    'x.beginPath();x.moveTo(last.x,last.y);x.lineTo(p.x,p.y);x.stroke();last=p;drawn=true;}' +
+  'function end(){down=false;}' +
+  'c.addEventListener("mousedown",start);c.addEventListener("mousemove",move);' +
+  'window.addEventListener("mouseup",end);' +
+  'c.addEventListener("touchstart",start,{passive:false});' +
+  'c.addEventListener("touchmove",move,{passive:false});' +
+  'c.addEventListener("touchend",end);' +
+  'document.getElementById("sigClear").onclick=function(){' +
+    'x.clearRect(0,0,c.width,c.height);drawn=false;if(hint)hint.style.display="";};' +
+  'document.getElementById("typeIt").onclick=function(){' +
+    'var n=(document.getElementById("signName").value||"").trim();' +
+    'if(!n){document.getElementById("signName").focus();return;}' +
+    'x.clearRect(0,0,c.width,c.height);' +
+    'var r=c.getBoundingClientRect();' +
+    'x.fillStyle="#0F172A";x.textAlign="center";x.textBaseline="middle";' +
+    'var s=44;do{x.font="italic 700 "+s+"px Georgia,\'Times New Roman\',serif";s-=2;}' +
+      'while(x.measureText(n).width>r.width-56&&s>16);' +
+    'x.fillText(n,r.width/2,r.height/2-8);drawn=true;if(hint)hint.style.display="none";};' +
+  'document.getElementById("sf").addEventListener("submit",function(ev){' +
+    'var err=document.getElementById("sigErr");' +
+    'var boxes=[].slice.call(document.querySelectorAll(".att"));' +
+    'if(boxes.length&&!boxes.every(function(b){return b.checked;})){ev.preventDefault();' +
+      'err.style.display="block";err.textContent="Tick all four \\u2014 they are what you are signing.";return;}' +
+    'if(!drawn){ev.preventDefault();err.style.display="block";' +
+      'err.textContent="Sign in the box above, or use your typed name.";return;}' +
+    'err.style.display="none";' +
+    'document.getElementById("sigData").value=c.toDataURL("image/png");' +
+    'var go=document.getElementById("sigGo");go.disabled=true;go.textContent="Recording\\u2026";});' +
+  '})();<\/script>';
+  return h;
+}
+
 function rrbDecide(e) {
   var p = (e && e.parameter) || {};
   var v = /^appro/i.test(_str(p.v)) ? 'Agree' : 'Do not agree';
@@ -707,13 +939,33 @@ function rrbDecide(e) {
   merged.approvedAt    = agreed ? now : '';
   merged.lastUpdated   = now;
 
-  // The attestation, and how it was given. A drawn signature is not collected
-  // on this path, so the record has to say so rather than imply one exists.
-  merged.mgrVerData = merged.mgrVerRatios = merged.mgrVerSuit = merged.mgrVerCompliance = true;
-  merged.mgrSignatureMethod = 'Email one-tap';
+  // The attestation, and how it was given. The signing page sends each tick
+  // explicitly; a link that somehow arrives without them is the old blanket
+  // one-tap, and is recorded as exactly that rather than dressed up.
+  var att = function (k) { return p[k] == null ? true : p[k] === '1'; };
+  merged.mgrVerData       = att('vd');
+  merged.mgrVerRatios     = att('vr');
+  merged.mgrVerSuit       = att('vs');
+  merged.mgrVerCompliance = att('vc');
+
+  var who = null;
+  try { who = rrbFindPerson_(_str(pay.em)); } catch (err0) {}
+  var role = /branch/i.test(_str(who && who.role)) ? 'branchManager' : 'directManager';
+  var how = rrbSaveDecisionSig_(merged, _str(p.sig), role, agreed);
+  merged.mgrSignName        = _str(p.signName) || merged.mgrName;
+  merged.mgrSignatureMethod = how ? ('Email — ' + how) : 'Email one-tap';
   merged.mgrSignatureRef    = _str(pay.jti);
   merged.dmResponded        = true;
   if (!_str(merged.dmName)) merged.dmName = merged.mgrName;
+
+  // A send-back's reason travels with the signature now, so it lands on the
+  // record in the same write rather than needing the follow-up note form.
+  var note = _str(p.note);
+  if (note) {
+    var prior = _str(merged.dmGuidance);
+    merged.dmGuidance  = prior ? prior + '\n\n' + note : note;
+    merged.mgrComments = merged.dmGuidance;
+  }
 
   ffWriteRow_(sheet, headers, merged, row);
   rrbMarkTokenUsed_(chk.row);
@@ -765,6 +1017,49 @@ function rrbDecide(e) {
  * Returns JSON, not a page: the dashboard stays where it is and updates the
  * card in place.
  */
+/**
+ * Puts a drawn signature where it belongs on a decided case.
+ *
+ * On an APPROVAL the mark goes into the fact find's own sign-off spot — the
+ * Branch Manager or Direct Manager box, depending on who signed — so it shows
+ * on the printed form and on the copy the client receives. That is what a
+ * sign-off is: the manager's name and hand against the recommendation.
+ *
+ * On a SEND-BACK it goes to mgrDecisionSigUrl instead. The form is not signed
+ * off — it is going back to the advisor — so leaving a manager's signature in
+ * the sign-off box would say the opposite of what happened. The mark is still
+ * kept, because a refusal is a decision and the record should carry a hand
+ * against it.
+ *
+ * Returns the method string for mgrSignatureMethod, or '' if nothing usable
+ * came through. Never throws: a Drive hiccup must not lose a decision that is
+ * otherwise sound.
+ */
+function rrbSaveDecisionSig_(merged, sigDataUrl, role, approved) {
+  var sig = _str(sigDataUrl);
+  if (sig.indexOf('data:image/') !== 0) return '';
+  try {
+    if (approved) {
+      merged._signatures = {};
+      merged._signatures[role] = sig;
+      ffSaveSigs_(merged, [role]);
+      // The legacy single-manager field points at the same file, so anything
+      // still reading managerSigUrl sees the signature too.
+      var placed = _str(merged[role === 'branchManager' ? 'bmSigUrl' : 'dmSigUrl']);
+      if (placed) merged.managerSigUrl = placed;
+    } else {
+      merged._signatures = { mgrDecision: sig };
+      ffSaveSigs_(merged, ['mgrDecision']);   // → mgrDecisionSigUrl
+    }
+    delete merged._signatures;
+    return 'Drawn';
+  } catch (err) {
+    delete merged._signatures;
+    Logger.log('rrbSaveDecisionSig_: could not file the signature — %s', err && err.message);
+    return 'Drawn (not filed)';
+  }
+}
+
 function rrbQueueDecide(e) {
   var p = (e && e.parameter) || {};
   var me = rrbAuthorize_(e);
@@ -777,6 +1072,17 @@ function rrbQueueDecide(e) {
   if (!id) return { ok: false, error: 'No case id given.' };
   var agreed = /^appro/i.test(_str(p.v));
   var note = _str(p.note);
+  var sig = _str(p.sig);
+  var signName = _str(p.signName) || _str(me.name);
+
+  // An approval is a signature. Without one there is nothing to put in the
+  // fact find's sign-off box, and the case would go to the client carrying a
+  // blank where the manager's mark should be. Refuse it here rather than let
+  // a half-signed approval through.
+  if (agreed && !/^hold/i.test(_str(p.v)) && sig.indexOf('data:image/') !== 0) {
+    return { ok: false, needSig: true,
+             error: 'Sign it before it is approved — the signature goes on the fact find itself.' };
+  }
 
   // One decision at a time. Two managers looking at the same queue — or one
   // double-click — must not both write; the second sees "already settled".
@@ -838,7 +1144,13 @@ function rrbQueueDecide(e) {
     merged.mgrVerRatios     = att('vr');
     merged.mgrVerSuit       = att('vs');
     merged.mgrVerCompliance = att('vc');
-    merged.mgrSignatureMethod = 'Dashboard';
+
+    // The hand on the decision. A branch manager signs the branch manager box;
+    // a unit manager signs their own — the fact find has a spot for each.
+    var role = /branch/i.test(_str(me.role)) ? 'branchManager' : 'directManager';
+    var how = rrbSaveDecisionSig_(merged, sig, role, agreed);
+    merged.mgrSignName        = signName;
+    merged.mgrSignatureMethod = how ? ('Dashboard — ' + how) : 'Dashboard';
     merged.mgrSignatureRef    = _str(me.code) + ' ' + now;
     merged.dmResponded        = true;
     if (!_str(merged.dmName)) merged.dmName = merged.mgrName;

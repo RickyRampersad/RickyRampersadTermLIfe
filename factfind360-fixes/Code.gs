@@ -67,7 +67,7 @@ function doGet(e) {
   // serialiser below — which also puts them outside its error handling, so
   // they carry their own. A manager who taps Approve must never land on
   // Google's raw error page.
-  if (action === "decide" || action === "decide_note" ||
+  if (action === "decide" || action === "decide_note" || action === "decide_sign" ||
       action === "cconfirm" || action === "crate" || action === "crate_note" ||
       action === "outcome" || action === "agent_fix") {
     try {
@@ -76,6 +76,7 @@ function doGet(e) {
       if (action === "crate_note") return rrbClientRateNote(e);
       if (action === "outcome")    return rrbCaseOutcome(e);
       if (action === "agent_fix")  return rrbAgentFix(e);
+      if (action === "decide_sign") return rrbDecideSign(e);
       return action === "decide" ? rrbDecide(e) : rrbDecideNote(e);
     } catch (err) {
       Logger.log('%s failed: %s', action, (err && err.stack) || err);
@@ -196,11 +197,39 @@ else if (action === "roster")       out = rrbRoster(e);
 // ────────────────────────────────────────────────────────────────
 function doPost(e) {
   try {
+    // A signature is far too big for a query string, so anything that carries
+    // one arrives here instead of through doGet. Two shapes reach this door:
+    // a browser form post (e.parameter.action — the signature page in the
+    // review email) and a JSON body (the dashboard queue).
+    var act = _str(e && e.parameter && e.parameter.action);
+    if (act === "decide" || act === "decide_note" || act === "decide_sign" ||
+        act === "cconfirm" || act === "crate" || act === "crate_note" ||
+        act === "outcome" || act === "agent_fix") {
+      try {
+        if (act === "cconfirm")    return rrbClientConfirm(e);
+        if (act === "crate")       return rrbClientRate(e);
+        if (act === "crate_note")  return rrbClientRateNote(e);
+        if (act === "outcome")     return rrbCaseOutcome(e);
+        if (act === "agent_fix")   return rrbAgentFix(e);
+        if (act === "decide_sign") return rrbDecideSign(e);
+        return act === "decide" ? rrbDecide(e) : rrbDecideNote(e);
+      } catch (perr) {
+        Logger.log('doPost %s failed: %s', act, (perr && perr.stack) || perr);
+        return rrbPage_('Something went wrong',
+          '<div style="font-size:19px;font-weight:800;margin-bottom:8px">That did not go through</div>' +
+          '<p style="color:#475569;margin:0">Your decision was <strong>not</strong> recorded. ' +
+          'Please open the dashboard and decide it there.</p>', 'err');
+      }
+    }
+
     if (!e || !e.postData || !e.postData.contents) {
       return _ffJson({ ok: false, error: "No payload" });
     }
     var data = JSON.parse(e.postData.contents);
     var stage = data.stage || "agent_submit";
+    // The dashboard queue posts its decision here so the drawn signature can
+    // travel in a body rather than a URL. Same handler as the GET path.
+    if (stage === "queue_decide") return _ffJson(rrbQueueDecide({ parameter: data }));
     if (stage === "client_response") return ffProcessClientResponse(data);
     if (stage === "agent_log") return ffProcessAgentLog(data);
     if (stage === "manager_review" ||
@@ -607,6 +636,12 @@ function ffBuildSchema() {
   s.push(["clientFeedback","Client Feedback"]);
   s.push(["mgrSignatureMethod","Mgr Signature Method"]);
   s.push(["mgrSignatureRef","Mgr Signature Ref"]);
+  // The name under the signature, and — where the manager did NOT approve —
+  // the signature they drew against that refusal. A declined case must not
+  // put a manager's mark in the fact find's sign-off spot: the form is not
+  // signed off, it is going back. The mark still belongs on the record.
+  s.push(["mgrSignName","Mgr Signed As"]);
+  s.push(["mgrDecisionSigUrl","Mgr Decision Sig URL"]);
   s.push(["_sigFolderUrl","Signatures Folder"]);
   return s;
 }

@@ -1924,9 +1924,10 @@ function rrbEnsureClientCols_(sheet) {
   return idx;
 }
 
-function rrbEsc_(s) {
-  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
+// rrbEsc_ lives in RRBranchEmails.gs. There used to be a second copy here that
+// did not escape quotes, and in Apps Script's single global namespace whichever
+// file parsed last silently won — the same collision that once made the client
+// link mint a token for id "undefined". One definition, and it is the strict one.
 
 function ffProcessClientResponse(data) {
   var id = _str(data.submissionId);

@@ -4,12 +4,13 @@ const S = '/tmp/claude-0/-home-user-RickyRampersadTermLIfe/203562d4-c614-5eed-b7
 
 // scene id -> narration text (for the caption bar) and recording length (s)
 const LINES = {};
-['vid/lines.txt','vid/newlines.txt','vid/newlines2.txt','vid/newlines3.txt','vid/newlines4.txt','vid/newlines5.txt','vid/newlines6.txt'].forEach(f =>
+['vid/lines.txt','vid/newlines.txt','vid/newlines2.txt','vid/newlines3.txt','vid/newlines4.txt','vid/newlines5.txt','vid/newlines6.txt','vid/newlines7.txt'].forEach(f =>
   fs.readFileSync(S + f, 'utf8').trim().split('\n').forEach(l => {
     const [id, text] = l.split('|'); LINES[id] = text; }));
-const DUR = { S00: 15.2, S01: 2.8, S1A: 10.8, S02: 8.8, S2B: 8.6, S2C: 10.9, S2F: 12.5, S2G: 9.4, S2H: 9.3, S2D: 9.5, S2E: 8.4,
-  S12B: 6.8, S13B: 8.3, S16: 9.5, S03: 8.3, S04: 7.0, S05: 2.8, S06: 7.0,
-  S07: 8.8, S18: 9.0, S19: 14.6, S20: 9.0, S08: 5.6, S09: 2.8, S10: 6.2, S11: 7.1, S12: 8.6, S13: 6.4, S14: 5.0, S15: 12.6,
+const DUR = { S00: 15.2, S01: 2.8, S1A: 10.8, S02: 8.8, S2B: 8.6, S2C: 12.4, S2F: 12.5, S2I: 14.2,
+  S2G: 9.4, S2H: 9.3, S2D: 9.5, S2E: 8.4,
+  S12B: 8.4, S13B: 9.6, S16: 18.4, S03: 8.3, S04: 7.0, S05: 2.8, S06: 7.0,
+  S07: 8.8, S18: 9.0, S19: 14.6, S20: 9.0, S08: 5.6, S09: 2.8, S10: 6.2, S11: 7.1, S12: 14.6, S13: 6.4, S14: 5.0, S15: 12.6,
   S0W: 15.0, S0R: 14.6, S21: 14.6 };
 
 // the page is recorded 96px short of 720 so the finished frame can carry a
@@ -89,6 +90,25 @@ async function curClick(p, sel, ms = 850) {
   await p.mouse.click(x, y);
   await p.waitForTimeout(180);
 }
+// A line of text has to be read from its first word, so this pins the LEFT of
+// the element rather than its middle — scaling about the centre pushed the
+// opening words off the frame.
+async function centreZoom(p, sel, scale, ms) {
+  await p.evaluate(sel => { const e = document.querySelector(sel);
+    if (e) e.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, sel);
+  await p.waitForTimeout(650);
+  await p.evaluate(([sel, scale, ms]) => {
+    const el = document.querySelector(sel); if (!el) return;
+    const r = el.getBoundingClientRect();
+    const ox = r.left + window.scrollX + 12;
+    const oy = r.top + r.height / 2 + window.scrollY;
+    const b = document.body;
+    b.style.transition = 'transform ' + ms + 'ms cubic-bezier(.35,.75,.3,1)';
+    b.style.transformOrigin = ox + 'px ' + oy + 'px';
+    b.style.transform = 'scale(' + scale + ')';
+  }, [sel, scale, ms]);
+  await p.waitForTimeout(ms + 120);
+}
 async function zoomTo(p, sel, scale, ms) {
   await p.evaluate(([sel, scale, ms]) => {
     const el = document.querySelector(sel); if (!el) return;
@@ -102,6 +122,59 @@ async function zoomTo(p, sel, scale, ms) {
   }, [sel, scale, ms]);
   await p.waitForTimeout(ms + 120);
 }
+// The moment the need lands is the point of the whole exercise — a number a
+// family would actually have to find. It gets a burst and a callout, not a
+// quiet cell update.
+async function celebrate(p, sel, label) {
+  await p.evaluate(([sel, label]) => {
+    const el = document.querySelector(sel); if (!el) return;
+    const r = el.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const host = document.documentElement;
+
+    const box = el.closest('div') || el;
+    box.style.transition = 'box-shadow .45s, transform .45s';
+    box.style.boxShadow = '0 0 0 5px rgba(45,212,191,.9)';
+    box.style.transform = 'scale(1.03)';
+    setTimeout(() => { box.style.transform = 'none'; }, 900);
+
+    if (label) {
+      const tag = document.createElement('div');
+      tag.style.cssText = 'position:fixed;left:' + cx + 'px;top:' + (cy - 66) + 'px;' +
+        'transform:translate(-50%,6px);z-index:2147483646;background:#2DD4BF;color:#04211D;' +
+        'font:850 17px/1 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;' +
+        'padding:10px 18px;border-radius:24px;box-shadow:0 10px 30px rgba(0,0,0,.4);' +
+        'opacity:0;transition:all .5s cubic-bezier(.2,.9,.3,1);letter-spacing:.01em;white-space:nowrap';
+      tag.textContent = label;
+      host.appendChild(tag);
+      requestAnimationFrame(() => { tag.style.opacity = '1'; tag.style.transform = 'translate(-50%,0)'; });
+      setTimeout(() => { tag.style.opacity = '0'; }, 3400);
+      setTimeout(() => tag.remove(), 4000);
+    }
+
+    const cols = ['#2DD4BF', '#F5B935', '#A78BFA', '#34D399', '#60A5FA', '#FFFFFF'];
+    for (let i = 0; i < 90; i++) {
+      const d = document.createElement('div');
+      const w = 6 + Math.floor(Math.abs(Math.sin(i * 2.7)) * 7);
+      d.style.cssText = 'position:fixed;left:' + cx + 'px;top:' + cy + 'px;width:' + w + 'px;' +
+        'height:' + (w * (i % 3 ? 1.6 : 0.7)) + 'px;background:' + cols[i % cols.length] + ';' +
+        'z-index:2147483645;pointer-events:none;border-radius:' + (i % 4 ? '2px' : '50%') + ';' +
+        'opacity:1;will-change:transform,opacity';
+      host.appendChild(d);
+      const a = (i / 90) * Math.PI * 2;
+      const v = 190 + (i % 11) * 34;
+      const dx = Math.cos(a) * v, dy = Math.sin(a) * v * 0.62 - 130;
+      const spin = (i % 2 ? 1 : -1) * (360 + i * 9);
+      d.animate([
+        { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
+        { transform: 'translate(' + dx * 0.72 + 'px,' + dy + 'px) rotate(' + spin * 0.6 + 'deg)', opacity: 1, offset: 0.55 },
+        { transform: 'translate(' + dx + 'px,' + (dy + 330) + 'px) rotate(' + spin + 'deg)', opacity: 0 }
+      ], { duration: 1900 + (i % 7) * 190, easing: 'cubic-bezier(.15,.6,.35,1)', fill: 'forwards' });
+      setTimeout(() => d.remove(), 2700);
+    }
+  }, [sel, label]);
+}
+
 async function glow(p, sel) {
   await p.evaluate(sel => { const e = document.querySelector(sel); if (e) {
     e.style.transition = 'box-shadow .5s'; e.style.boxShadow = '0 0 0 4px rgba(245,185,53,.75)';
@@ -215,11 +288,12 @@ const scenes = [
       await typeField(p, 'needIncome', '900000');
       await typeField(p, 'needEducation', '250000');
       await typeField(p, 'needLastExpenses', '60000');
-      await p.waitForTimeout(500);
-      await p.evaluate(() => { const c = [...document.querySelectorAll('.live-cell')].pop();
-        if (c) { c.style.transition = 'box-shadow .5s, transform .5s';
-          c.style.boxShadow = '0 0 0 4px rgba(245,185,53,.9)'; c.style.transform = 'scale(1.06)'; } });
-      await p.waitForTimeout(900);
+      await p.waitForTimeout(450);
+      await p.evaluate(() => { const e = document.getElementById('insuranceNeed');
+        if (e) (e.closest('div') || e).scrollIntoView({ block: 'center', behavior: 'smooth' }); });
+      await p.waitForTimeout(700);
+      await celebrate(p, '#insuranceNeed', 'The need, uncovered');
+      await p.waitForTimeout(1500);
     } },
   { id: 'S2H', url: 'factfind360-site/FFPROJECT.html',
     run: async p => {
@@ -257,6 +331,42 @@ const scenes = [
         box.setAttribute('data-gap', '1'); });
       await p.waitForTimeout(700);
       await zoomTo(p, '[data-gap]', 1.12, 1500);
+    } },
+  // The inflation rate is not a number an agent guesses at — it is the Central
+  // Bank's own figure, carried into a factor and applied to every year to
+  // retirement. Worth showing, because it is the part nobody would do by hand.
+  { id: 'S2I', url: 'factfind360-site/FFPROJECT.html',
+    run: async p => {
+      await SEED(p, { retPctIncome: '70', retYears: '20', retRoi: '4', retNis: '3000' });
+      await p.evaluate(() => { const b = document.getElementById('secbody-8');
+        if (b) b.scrollIntoView({ block: 'start' }); window.scrollBy(0, -70); });
+      await p.waitForTimeout(500);
+      await p.evaluate(() => {
+        [['[data-field="retInflRate"]', 'rgba(45,212,191,.9)'],
+         ['#retInflFactor', 'rgba(245,185,53,.95)']].forEach(function (x, i) {
+          const e = document.querySelector(x[0]); if (!e) return;
+          setTimeout(() => { e.style.transition = 'box-shadow .5s, transform .5s';
+            e.style.boxShadow = '0 0 0 4px ' + x[1]; e.style.transform = 'scale(1.02)'; }, i * 900);
+        });
+        const src = [...document.querySelectorAll('*')].find(e => e.children.length === 0 &&
+          /Central Bank/i.test(e.textContent || ''));
+        if (src) { const w = src.closest('div') || src;
+          w.setAttribute('data-src', '1');
+          setTimeout(() => { w.style.transition = 'box-shadow .5s';
+            w.style.boxShadow = '0 0 0 3px rgba(167,139,250,.75)'; }, 1900); }
+      });
+      await p.waitForTimeout(3000);
+      await zoomTo(p, '#retInflFactor', 1.9, 1700);
+      await p.waitForTimeout(1400);
+      await p.evaluate(() => { const b = document.body;
+        b.style.transition = 'transform 1100ms cubic-bezier(.35,.75,.3,1)';
+        b.style.transform = 'scale(1)'; });
+      await p.waitForTimeout(1200);
+      await p.evaluate(() => { const e = document.getElementById('retLumpsum');
+        if (e) { const w = e.closest('div') || e;
+          w.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          w.style.transition = 'box-shadow .5s'; w.style.boxShadow = '0 0 0 4px rgba(45,212,191,.85)'; } });
+      await p.waitForTimeout(1200);
     } },
   { id: 'S2G', url: 'factfind360-site/FFPROJECT.html', cursor: true,
     run: async p => {
@@ -396,13 +506,52 @@ const scenes = [
       await smoothScroll(p, await p.evaluate(() => window.scrollY + 460), DUR.S11 * 1000 - 2600);
     } },
   { id: 'S12', url: 'INSIGHTS', run: async p => {
-      await p.evaluate(() => { const q = document.querySelector('#queue'); if (q) q.closest('.card').scrollIntoView({ block: 'start' }); window.scrollBy(0, -8); });
+      await p.evaluate(() => { const q = document.querySelector('#queue');
+        if (q) q.closest('.card').scrollIntoView({ block: 'start' }); window.scrollBy(0, -8); });
       await p.waitForTimeout(400);
-      await curClick(p, '#queue .qc:first-child .qb.ghost', 800); await p.waitForTimeout(800);
+      await curClick(p, '#queue .qc:first-child .qb.ok', 750);
+      await p.waitForTimeout(700);
+      // the four attestations tick where the manager can see them tick
       for (let i = 1; i <= 4; i++)
-        await curClick(p, '#queue .qc:first-child .qchk label:nth-child(' + i + ') input', 520);
-      await p.waitForTimeout(250);
-      await curClick(p, '#queue .qc:first-child .qb.ok', 700); await p.waitForTimeout(1200);
+        await curClick(p, '#queue .qc:first-child .qsatt label:nth-child(' + i + ') input', 460);
+      await p.waitForTimeout(400);
+      // and then the signature itself, drawn on the pad
+      const bb = await p.evaluate(() => {
+        const c = document.querySelector('#queue .qc:first-child .qpad');
+        c.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        return null;
+      });
+      await p.waitForTimeout(600);
+      const pad = await (await p.$('#queue .qc:first-child .qpad')).boundingBox();
+      const y0 = pad.y + pad.height * 0.66, x0 = pad.x + pad.width * 0.30;
+      await p.evaluate(([x, y]) => window.__curTo(x, y, 620), [x0, y0]);
+      await p.mouse.move(x0, y0);
+      await p.mouse.down();
+      for (let i = 0; i <= 46; i++) {
+        const t = i / 46;
+        const x = x0 + t * pad.width * 0.42;
+        const y = y0 - Math.sin(t * Math.PI * 2.3) * pad.height * 0.24 - t * pad.height * 0.06;
+        await p.mouse.move(x, y);
+        await p.evaluate(([x, y]) => { window.__curXY = [x, y];
+          document.getElementById('__cur').style.transform = 'translate(' + x + 'px,' + y + 'px)'; }, [x, y]);
+        // slow enough to read as a hand signing, not a machine drawing
+        await p.waitForTimeout(42);
+      }
+      await p.mouse.up();
+      await p.waitForTimeout(600);
+      // Recording only: the queue redraws itself 1.6s after a decision lands,
+      // which wipes the confirmation before anyone can read it. Hold the redraw
+      // so the sentence stays on screen — the product still redraws in real use.
+      await p.evaluate(() => {
+        const orig = window.setTimeout;
+        window.setTimeout = function (fn, ms) {
+          if (ms === 1600 || ms === 1400) return 0;
+          return orig.apply(window, arguments);
+        };
+      });
+      await curClick(p, '#queue .qc:first-child .qsgo', 700);
+      await p.waitForTimeout(1400);
+      await centreZoom(p, '#queue .qc:first-child .qmsg', 1.3, 1300);
     } },
   { id: 'S13', url: 'INSIGHTS', run: async p => {
       await p.evaluate(() => { const cs = document.querySelectorAll('#queue .qc'); if (cs[1]) cs[1].scrollIntoView({ block: 'center' }); });
@@ -415,19 +564,32 @@ const scenes = [
   { id: 'S12B', url: 'INSIGHTS', run: async p => {
       await p.evaluate(() => { const q = document.querySelector('#queue');
         if (q) q.closest('.card').scrollIntoView({ block: 'start' }); window.scrollBy(0, -8); });
-      await p.waitForTimeout(400);
-      await curClick(p, '#queue .qc:first-child .qb.ok', 700); await p.waitForTimeout(600);
-      await curClick(p, '#queue .qc:first-child .qb.ok', 500); await p.waitForTimeout(1500);
-      await zoomTo(p, '#queue .qc:first-child .qmsg', 1.5, 1500);
+      await p.waitForTimeout(350);
+      await curClick(p, '#queue .qc:first-child .qb.ok', 600);
+      await p.waitForTimeout(450);
+      await p.evaluate(() => {
+        document.querySelectorAll('#queue .qc:first-child .qsatt input')
+          .forEach(function (x) { x.checked = true; });
+      });
+      await curClick(p, '#queue .qc:first-child .qstype', 600);
+      await p.waitForTimeout(700);
+      await p.evaluate(() => { const o = window.setTimeout;
+        window.setTimeout = function (f, m) { return (m === 1600 || m === 1400) ? 0 : o.apply(window, arguments); }; });
+      await curClick(p, '#queue .qc:first-child .qsgo', 600);
+      await p.waitForTimeout(1400);
+      await centreZoom(p, '#queue .qc:first-child .qmsg', 1.3, 1300);
     } },
   { id: 'S13B', url: 'INSIGHTS', run: async p => {
       await p.evaluate(() => { const cs = document.querySelectorAll('#queue .qc');
         if (cs[1]) cs[1].scrollIntoView({ block: 'center' }); });
       await p.waitForTimeout(400);
-      await curClick(p, '#queue .qc:nth-child(2) .qb.back', 700); await p.waitForTimeout(600);
-      await curClick(p, '#queue .qc:nth-child(2) .qp:nth-of-type(1)', 600); await p.waitForTimeout(400);
-      await curClick(p, '#queue .qc:nth-child(2) .qb.back', 600); await p.waitForTimeout(1500);
-      await zoomTo(p, '#queue .qc:nth-child(2) .qmsg', 1.45, 1400);
+      await curClick(p, '#queue .qc:nth-child(2) .qb.back', 700); await p.waitForTimeout(500);
+      await curClick(p, '#queue .qc:nth-child(2) .qp:nth-of-type(1)', 550); await p.waitForTimeout(350);
+      await curClick(p, '#queue .qc:nth-child(2) .qb.back', 550); await p.waitForTimeout(700);
+      await p.evaluate(() => { const o = window.setTimeout;
+        window.setTimeout = function (f, m) { return (m === 1600 || m === 1400) ? 0 : o.apply(window, arguments); }; });
+      await curClick(p, '#queue .qc:nth-child(2) .qsgo', 600); await p.waitForTimeout(1400);
+      await centreZoom(p, '#queue .qc:nth-child(2) .qmsg', 1.3, 1300);
     } },
   { id: 'S16', url: 'vid/timeline.html' },
   { id: 'S14', url: 'factfind360-site/wall.html', feed: true,
@@ -468,12 +630,16 @@ const scenes = [
     const p = await ctx.newPage();
     if (sc.url === 'INSIGHTS' || sc.feed) {
       await p.route('**/exec*', r => {
-        const u = r.request().url();
+        const req = r.request(), u = req.url();
+        // the queue posts its decision now, so the signature can ride in a body
+        if (req.method() === 'POST') {
+          let b = {}; try { b = JSON.parse(req.postData() || '{}'); } catch (e) {}
+          return r.fulfill({ status: 200, contentType: 'application/json',
+            body: JSON.stringify({ ok: true, id: b.id,
+              status: b.v === 'approve' ? 'approved' : b.v === 'hold' ? 'held' : 'changes_requested' }) });
+        }
         if (u.includes('action=login')) return r.fulfill({ status: 200, contentType: 'application/json',
           body: JSON.stringify({ ok: true, name: 'Ricky Rampersad', role: 'Branch Manager', token: 'demo' }) });
-        if (u.includes('action=qdecide')) { const q = Object.fromEntries(new URL(u).searchParams);
-          return r.fulfill({ status: 200, contentType: 'application/json',
-            body: JSON.stringify({ ok: true, id: q.id, status: q.v === 'approve' ? 'approved' : 'changes_requested' }) }); }
         if (u.includes('action=wall')) return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(FEED) });
         return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, rows }) });
       });

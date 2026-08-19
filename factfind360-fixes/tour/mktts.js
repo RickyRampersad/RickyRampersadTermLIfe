@@ -8,7 +8,7 @@ const VOICE = 'en-US-AndrewNeural';
 
 const LINES = {};
 ['vid/lines.txt','vid/newlines.txt','vid/newlines2.txt','vid/newlines3.txt',
- 'vid/newlines4.txt','vid/newlines5.txt','vid/newlines6.txt']
+ 'vid/newlines4.txt','vid/newlines5.txt','vid/newlines6.txt','vid/newlines7.txt']
   .forEach(f => fs.readFileSync(S + f, 'utf8').trim().split('\n').forEach(l => {
     const i = l.indexOf('|'); if (i > 0) LINES[l.slice(0, i)] = l.slice(i + 1); }));
 

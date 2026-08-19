@@ -1,35 +1,87 @@
 <meta charset="utf-8"><style>
 *{margin:0;box-sizing:border-box}html,body{height:100%}
-body{background:radial-gradient(900px 500px at 80% -10%,rgba(45,212,191,.15),transparent 60%),#0E1A2E;
+body{background:radial-gradient(900px 500px at 80% -12%,rgba(45,212,191,.14),transparent 60%),
+radial-gradient(700px 460px at 4% 112%,rgba(245,185,53,.10),transparent 56%),#0E1A2E;
 color:#F3F7FD;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
 display:grid;place-items:center;overflow:hidden}
-.w{width:1120px}
-h2{font-size:15px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:#F5B935;text-align:center;margin-bottom:6px}
-h3{font-size:34px;font-weight:850;text-align:center;margin-bottom:34px;letter-spacing:-.01em}
-.tl{position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:0}
-.tl::before{content:'';position:absolute;left:8%;right:8%;top:26px;height:4px;border-radius:3px;
-background:linear-gradient(90deg,#2DD4BF,#2DD4BF 62%,#F5B935 62%,#F5B935 84%,#293853 84%)}
-.st{text-align:center;position:relative;animation:pop .6s cubic-bezier(.2,.8,.2,1) both}
-.st:nth-child(1){animation-delay:.15s}.st:nth-child(2){animation-delay:.75s}
-.st:nth-child(3){animation-delay:1.35s}.st:nth-child(4){animation-delay:1.95s}.st:nth-child(5){animation-delay:2.55s}
-@keyframes pop{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
-.dot{width:54px;height:54px;border-radius:50%;margin:0 auto 14px;display:grid;place-items:center;
-font-size:22px;font-weight:900;color:#04211D;background:#2DD4BF;border:5px solid #0E1A2E;position:relative;z-index:2}
-.st.g .dot{background:#F5B935}.st.p .dot{background:#293853;color:#5E7297}
-.lb{font-size:16px;font-weight:800}
-.dt{font-size:13px;color:#93A7C4;margin-top:4px;font-weight:600}
-.el{font-size:12px;font-weight:800;color:#2DD4BF;margin-top:7px;letter-spacing:.04em}
-.st.g .el{color:#F5B935}.st.p .el{color:#5E7297}
-.tot{margin-top:38px;text-align:center;font-size:15px;color:#93A7C4;font-weight:600}
-.tot b{color:#2DD4BF;font-size:26px;font-weight:850}
+.w{width:1170px}
+h2{font-size:13px;font-weight:850;letter-spacing:.24em;text-transform:uppercase;color:#F5B935;
+   text-align:center;margin-bottom:5px}
+h3{font-size:31px;font-weight:850;text-align:center;margin-bottom:8px;letter-spacing:-.015em}
+h3 b{color:#2DD4BF}
+.cap{text-align:center;font-size:14px;color:#7C90AE;font-weight:600;margin-bottom:22px}
+
+.band{display:flex;align-items:center;gap:11px;margin:0 0 13px}
+.band i{font-style:normal;font-size:10.5px;font-weight:850;letter-spacing:.15em;text-transform:uppercase;
+   padding:4px 11px;border-radius:20px;flex:none}
+.band.now i{background:rgba(45,212,191,.14);color:#2DD4BF;border:1px solid rgba(45,212,191,.4)}
+.band.next i{background:rgba(245,185,53,.12);color:#F5B935;border:1px solid rgba(245,185,53,.38)}
+.band span{font-size:13px;font-weight:700;color:#93A7C4}
+.band em{font-style:normal;flex:1;height:1px;background:#1C2942}
+
+.tl{position:relative;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin-bottom:26px}
+.tl::before{content:'';position:absolute;left:10%;right:10%;top:22px;height:4px;border-radius:3px}
+.tl.now::before{background:linear-gradient(90deg,#2DD4BF,#2DD4BF 58%,#F5B935 58%,#F5B935 82%,#293853 82%)}
+.tl.next::before{background:repeating-linear-gradient(90deg,#3A4D6E 0 11px,transparent 11px 21px)}
+.st{text-align:center;position:relative;padding:0 6px;animation:pop .55s cubic-bezier(.2,.8,.2,1) both}
+.st:nth-child(1){animation-delay:.15s}.st:nth-child(2){animation-delay:.5s}
+.st:nth-child(3){animation-delay:.85s}.st:nth-child(4){animation-delay:1.2s}
+.st:nth-child(5){animation-delay:1.55s}
+.tl.next .st:nth-child(1){animation-delay:2.5s}.tl.next .st:nth-child(2){animation-delay:2.85s}
+.tl.next .st:nth-child(3){animation-delay:3.2s}.tl.next .st:nth-child(4){animation-delay:3.55s}
+.tl.next .st:nth-child(5){animation-delay:3.9s}
+@keyframes pop{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.dot{width:46px;height:46px;border-radius:50%;margin:0 auto 11px;display:grid;place-items:center;
+  font-size:18px;font-weight:900;color:#04211D;background:#2DD4BF;border:5px solid #0E1A2E;
+  position:relative;z-index:2}
+.st.g .dot{background:#F5B935}
+.st.p .dot{background:#293853;color:#5E7297}
+.st.f .dot{background:transparent;border:2.5px dashed #4A6088;color:#8FA4C2;width:46px;height:46px;
+  box-shadow:0 0 0 5px #0E1A2E}
+.lb{font-size:14.5px;font-weight:800;line-height:1.25}
+.dt{font-size:12px;color:#93A7C4;margin-top:4px;font-weight:600;line-height:1.35}
+.el{font-size:11.5px;font-weight:850;color:#2DD4BF;margin-top:6px;letter-spacing:.03em}
+.st.g .el{color:#F5B935}.st.p .el,.st.f .el{color:#5E7297}
+.st.f .lb{color:#B9C8DD}
+.foot{display:flex;justify-content:center;gap:34px;margin-top:4px;flex-wrap:wrap}
+.fx{font-size:13.5px;color:#93A7C4;font-weight:600}
+.fx b{color:#2DD4BF;font-size:22px;font-weight:850;vertical-align:-2px}
+.fx.g b{color:#F5B935}
 </style><body><div class="w">
-<h2>Every case, measured</h2><h3>The timeline of one fact find</h3>
-<div class="tl">
- <div class="st"><div class="dot">✓</div><div class="lb">Fact find submitted</div><div class="dt">Mon 4 Aug · 3:12 pm</div><div class="el">Day 0</div></div>
- <div class="st"><div class="dot">✓</div><div class="lb">Client confirmed</div><div class="dt">Mon 4 Aug · 8:41 pm</div><div class="el">+5 hours</div></div>
- <div class="st"><div class="dot">✓</div><div class="lb">Manager approved</div><div class="dt">Tue 5 Aug · 7:20 am</div><div class="el">+0.7 days</div></div>
- <div class="st g"><div class="dot">4</div><div class="lb">Application submitted</div><div class="dt">Thu 7 Aug</div><div class="el">+3 days</div></div>
- <div class="st p"><div class="dot">5</div><div class="lb">Policy picked up</div><div class="dt">awaiting delivery</div><div class="el">API counts here</div></div>
+<h2>Every case, measured</h2>
+<h3>A fact find has <b>no end date</b></h3>
+<div class="cap">It starts at the kitchen table and runs for as long as the client is with us.</div>
+
+<div class="band now"><i>Live today</i><span>The first week</span><em></em></div>
+<div class="tl now">
+ <div class="st"><div class="dot">&#10003;</div><div class="lb">Fact find submitted</div>
+   <div class="dt">Mon 4 Aug &middot; 3:12 pm</div><div class="el">Day 0</div></div>
+ <div class="st"><div class="dot">&#10003;</div><div class="lb">Client confirmed</div>
+   <div class="dt">Mon 4 Aug &middot; 8:41 pm</div><div class="el">+5 hours</div></div>
+ <div class="st"><div class="dot">&#10003;</div><div class="lb">Manager signed</div>
+   <div class="dt">Tue 5 Aug &middot; 7:20 am</div><div class="el">+0.7 days</div></div>
+ <div class="st g"><div class="dot">4</div><div class="lb">Application written</div>
+   <div class="dt">Thu 7 Aug</div><div class="el">+3 days</div></div>
+ <div class="st p"><div class="dot">5</div><div class="lb">Policy delivered</div>
+   <div class="dt">awaiting delivery</div><div class="el">API counts here</div></div>
 </div>
-<div class="tot">Median time to a manager decision this month · <b>0.3 days</b></div>
+
+<div class="band next"><i>Being built</i><span>The years after &mdash; automatic</span><em></em></div>
+<div class="tl next">
+ <div class="st f"><div class="dot">&#8250;</div><div class="lb">Delivery follow-up</div>
+   <div class="dt">the week after the policy lands</div><div class="el">Next</div></div>
+ <div class="st f"><div class="dot">&#8250;</div><div class="lb">Client turns a year older</div>
+   <div class="dt">age change detected</div><div class="el">Year 1</div></div>
+ <div class="st f"><div class="dot">&#8250;</div><div class="lb">Review email sent</div>
+   <div class="dt">to the client, automatically</div><div class="el">Year 1</div></div>
+ <div class="st f"><div class="dot">&#8250;</div><div class="lb">Advisor kept in the loop</div>
+   <div class="dt">same day, same thread</div><div class="el">Year 1</div></div>
+ <div class="st f"><div class="dot">&#8734;</div><div class="lb">Every year after</div>
+   <div class="dt">needs re-checked as life changes</div><div class="el">For life</div></div>
+</div>
+
+<div class="foot">
+  <div class="fx">Median time to a manager decision &middot; <b>0.3 days</b></div>
+  <div class="fx g">Annual service reviews &middot; <b>in build</b></div>
+</div>
 </div></body>
