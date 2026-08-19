@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="robots" content="noindex"/>
+<title>Group Account — Ricky Rampersad Branch</title>
+<style>
+:root{
+  --navy:#08333D; --blue:#0E8FA3; --gold:#F08A24; --lightblue:#E4F4F6;
+  --ink:#0E1F2E; --paper:#F7F9FB; --surface:#FFF; --surface2:#EDF2F7;
+  --slate:#5C7080; --line:#D3DEE7;
+  --go:#1F7A55; --warn:#A9701F; --stop:#A93B2B;
+  --sans:"Gill Sans MT","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --display:Optima,"Palatino Linotype",Georgia,serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ink:#DCE7EF; --paper:#081520; --surface:#0E2231; --surface2:#142E40;
+  --navy:#7FB2D9; --blue:#5FA8DC; --lightblue:#12293A; --slate:#8FA6B8; --line:#1E3B50;
+  --go:#4FAE83; --warn:#D4A055; --stop:#D4685A;
+}}
+:root[data-theme="dark"]{
+  --ink:#DCE7EF; --paper:#081520; --surface:#0E2231; --surface2:#142E40;
+  --navy:#7FB2D9; --blue:#5FA8DC; --lightblue:#12293A; --slate:#8FA6B8; --line:#1E3B50;
+  --go:#4FAE83; --warn:#D4A055; --stop:#D4685A;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6}
+h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;line-height:1.2}
+p{margin:0}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.label{font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--slate)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+a{color:var(--blue)}
+
+.demobar{background:var(--navy);color:#fff;padding:.5rem 1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;font-size:12.5px}
+.demobar b{font-weight:700;letter-spacing:.05em}
+.demobar .who{margin-left:auto;display:flex;gap:.35rem;align-items:center;flex-wrap:wrap}
+.demobar button{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:3px;
+  padding:.25rem .7rem;cursor:pointer;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.demobar button[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#1a1a1a}
+
+header{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.hin{max-width:1180px;margin:0 auto;padding:.85rem 1.5rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:.65rem;margin-right:auto;text-decoration:none;color:inherit}
+.logo svg{width:34px;height:34px}
+.logo b{display:block;font-family:var(--display);font-size:15.5px;font-weight:600;color:var(--navy);line-height:1.1}
+.logo span span{display:block;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--slate);font-weight:600}
+nav{display:flex;gap:1.25rem;font-size:14px}
+nav a{color:inherit;text-decoration:none;cursor:pointer;padding-bottom:2px;border-bottom:2px solid transparent}
+nav a:hover{color:var(--blue)}
+nav a.on{border-bottom-color:var(--gold);color:var(--navy);font-weight:600}
+.me{text-align:right;line-height:1.25}
+.me b{display:block;font-size:13.5px}
+
+main{max-width:1180px;margin:0 auto;padding:2.2rem 1.5rem 4rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:1.5rem}
+.stack{display:flex;flex-direction:column;gap:1.4rem}
+.head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:1rem}
+h1.page{font-size:1.9rem;color:var(--navy);margin-top:.2rem}
+.btn{background:var(--blue);color:#fff;border:1px solid var(--blue);border-radius:4px;padding:.5rem 1rem;cursor:pointer;
+  font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;display:inline-block}
+.btn:hover{background:var(--navy);border-color:var(--navy)}
+.btn.ghost{background:none;color:var(--blue);border-color:var(--line)}
+.btn.ghost:hover{background:var(--lightblue);border-color:var(--blue)}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+th,td{padding:.6rem .9rem;text-align:left;border-bottom:1px solid var(--line)}
+thead th{background:var(--surface2);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--slate);font-weight:700;white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right}
+tfoot td{border-top:2px solid var(--line);font-weight:700;background:var(--surface2)}
+
+.pill{display:inline-block;border-radius:3px;padding:.15rem .45rem;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+.p-ok{background:#D8F0E3;color:var(--go)} .p-warn{background:#FDF0D8;color:var(--warn)}
+.p-bad{background:#F8DEDA;color:var(--stop)} .p-info{background:var(--lightblue);color:var(--blue)}
+.p-mute{background:var(--surface2);color:var(--slate)}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:1rem}
+.stats .card{padding:1.1rem}
+.stats .v{font-family:var(--mono);font-size:1.55rem;font-variant-numeric:tabular-nums;color:var(--navy);margin-top:.2rem;line-height:1.15}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;align-items:start}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+dl.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.85rem 1.4rem;margin:.9rem 0 0}
+dl.kv dt{margin-bottom:.15rem} dl.kv dd{margin:0;font-size:14px}
+.note{font-size:12.5px;color:var(--slate)}
+.alert{border-radius:6px;padding:1rem 1.15rem;font-size:13.5px;line-height:1.6}
+.a-warn{border:1px solid #E8C98A;background:#FDF6E7} .a-bad{border:1px solid #E3B0A8;background:#FCEEEB}
+.a-ok{border:1px solid #A9D8BF;background:#EDF8F2} .a-info{border:1px solid #A8CEDA;background:#EEF7FA}
+:root[data-theme="dark"] .a-warn,:root[data-theme="dark"] .a-bad,:root[data-theme="dark"] .a-ok,:root[data-theme="dark"] .a-info{background:var(--surface2)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .a-warn,:root:not([data-theme="light"]) .a-bad,
+  :root:not([data-theme="light"]) .a-ok,:root:not([data-theme="light"]) .a-info{background:var(--surface2)}}
+.alert b{color:var(--ink)}
+
+.gate{max-width:430px;margin:4rem auto;text-align:center}
+.gate input{width:100%;padding:.75rem .9rem;border:1px solid var(--line);border-radius:5px;background:var(--paper);
+  text-align:center;letter-spacing:.22em;font-family:var(--mono);font-size:16px;text-transform:uppercase}
+.months{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:.7rem}
+.month{border:1px solid var(--line);border-radius:6px;padding:.8rem .9rem;background:var(--surface);cursor:pointer;text-align:left}
+.month:hover{border-color:var(--blue)}
+.month.on{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.month b{display:block;font-size:14px;color:var(--navy)}
+.month span{font-size:12px;color:var(--slate);font-family:var(--mono)}
+.bars{display:flex;flex-direction:column;gap:.5rem;margin-top:.9rem}
+.bar{display:flex;align-items:center;gap:.7rem;font-size:13px}
+.bar .bn{width:118px;flex:none;color:var(--slate);font-size:12px}
+.bar .bt{flex:1;background:var(--surface2);border-radius:3px;height:15px;overflow:hidden}
+.bar .bt i{display:block;height:100%;background:var(--blue)}
+.bar .bv{width:112px;text-align:right;flex:none;font-family:var(--mono);font-size:12.5px}
+.tabs{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1.2rem}
+.tabs button{background:none;border:1px solid var(--line);border-radius:5px;padding:.45rem .85rem;font-size:12.5px;cursor:pointer;color:var(--slate)}
+.tabs button.on{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600}
+:root[data-theme="dark"] .tabs button.on{color:var(--paper)}
+.scroll{max-height:420px;overflow:auto}
+@media print{.demobar,header,.tabs,.btn,.noprint{display:none!important} body{background:#fff} .card,.tw{break-inside:avoid}}
+</style>
+</head>
+<body>
+
+<div class="demobar">
+  <b>SAMPLE</b><span>Invented names and certificate numbers — real rate structure. Nothing here is client data.</span>
+  <div class="who">
+    <button data-as="employer" aria-pressed="true">Employer</button>
+    <button data-as="employee" aria-pressed="false">Employee</button>
+    <button id="theme">Theme</button>
+  </div>
+</div>
+
+<header>
+  <div class="hin">
+    <a class="logo" href="index.html">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <defs><linearGradient id="vN" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0D5361"/><stop offset="1" stop-color="#04252C"/></linearGradient>
+        <linearGradient id="vB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16A5BB"/><stop offset="1" stop-color="#086274"/></linearGradient></defs>
+        <path d="M32 4 L56 12.5 V30 C56 45.5 46 56.5 32 61 C18 56.5 8 45.5 8 30 V12.5 Z" fill="url(#vN)"/>
+        <path d="M32 9.5 L50.7 16.2 V30 C50.7 42.4 42.5 51.6 32 55.5 C21.5 51.6 13.3 42.4 13.3 30 V16.2 Z" fill="url(#vB)" stroke="#F08A24" stroke-width="1.1"/>
+        <g fill="#BDEBEA"><circle cx="22.3" cy="26.8" r="3.3"/><path d="M17.1 42.6 v-1.9 a5.2 5.2 0 0 1 10.4 0 v1.9 Z"/><circle cx="41.7" cy="26.8" r="3.3"/><path d="M36.5 42.6 v-1.9 a5.2 5.2 0 0 1 10.4 0 v1.9 Z"/></g>
+        <g fill="#F08A24"><circle cx="32" cy="25" r="4.8"/><path d="M24.2 46 v-2.7 a7.8 7.8 0 0 1 15.6 0 v2.7 Z"/></g>
+      </svg>
+      <span><b>Ricky Rampersad Branch</b><span>Group Account · Guardian Life</span></span>
+    </a>
+    <nav id="nav"></nav>
+    <div class="me" id="me"></div>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   SAMPLE DATA — invented people, real structure.
+
+   Rates, tier names, policy layout and the billing arithmetic mirror a
+   live Guardian group exactly, so the page can be demonstrated to a
+   prospect without a single real member on it. To run a real group,
+   replace GROUP.people and the header fields; nothing else changes.
+   ══════════════════════════════════════════════════════════════════════ */
+const RATE = {
+  lifePer1000: 0.32,        // basic life, per $1,000 of sum assured, monthly
+  lifePer1000Old: 0.31,     // rate before the January increase — credits use it
+  adndPer1000: 0.08,
+  sumAssured: 100000,       // flat, every member
+  health: { 'Employee Only':266, 'Employee + Child':558, 'Employee + Spouse':558, 'Employee + Family':806 },
+  reportDays: 31            // Guardian's window for reporting a change
+};
+
+const SURNAMES=['Alleyne','Baptiste','Boodoo','Charles','Dookeran','Edwards','Francois','Gopaul','Harripersad','Isaac',
+  'James','Kanhai','Lalla','Mohan','Noel','Ojoe','Persaud','Quashie','Rambharat','Samaroo','Toussaint','Umraw',
+  'Villaroel','Weekes','Yearwood','Achong','Bissoon','Cudjoe','Deosaran','Emmanuel','Ferreira','Ganpat','Hosein',
+  'Inniss','Joefield','Khelawan','Lezama','Maraj','Nanan','Ottley'];
+const FIRSTS=['Anisa','Brandon','Chandra','Dexter','Elena','Farouk','Gita','Hakeem','Ingrid','Jerome','Kavita','Leon',
+  'Marsha','Nikhil','Onika','Pooran','Quincy','Rhonda','Sunil','Tricia','Uma','Vishal','Wendy','Xavier','Yolanda',
+  'Zane','Amrita','Curtis','Devika','Ellis','Fiona','Gerard','Hema','Isaiah','Jamila','Kevon','Lystra','Micah'];
+const ROLES=['Cashier','Shelf Packer','Store Supervisor','Butcher','Baker','Deli Attendant','Cleaner','Security Officer',
+  'Stock Clerk','Produce Attendant','Assistant Manager','Store Manager','Accounts Clerk','Driver','Warehouse Attendant'];
+
+/* Tier mix and headcounts are set to reproduce a real August exactly:
+   60 single / 30 +child / 14 +spouse / 54 family = 158 on health,
+   156 on life (two people on medical with no life cover yet). */
+const TIER_PLAN = [['Employee Only',60],['Employee + Child',30],['Employee + Spouse',14],['Employee + Family',54]];
+
+function buildPeople(){
+  const out=[]; let i=0;
+  TIER_PLAN.forEach(([tier,n])=>{
+    for(let k=0;k<n;k++,i++){
+      const sn=SURNAMES[(i*7+3)%SURNAMES.length], fn=FIRSTS[(i*11+5)%FIRSTS.length];
+      const yr=2004+((i*5)%21), mo=((i*7)%12)+1;
+      out.push({
+        cert:String(101+i).padStart(3,'0'),
+        empId:'TPG0185-'+String(200+i).padStart(5,'0')+'-00',
+        last:sn, first:fn, name:sn+', '+fn,
+        role:ROLES[(i*3)%ROLES.length],
+        started:yr+'-'+String(mo).padStart(2,'0')+'-01',
+        tier, health:true, life:true
+      });
+    }
+  });
+  // two people carry medical but no life yet — the reconciliation has to find them
+  out[7].life=false; out[122].life=false;
+  return out;
+}
+
+const GROUP = {
+  company:'Meridian Supermarkets Limited',
+  groupId:'01_MERSUP001',
+  lifePolicy:'TGM 1000',
+  healthContract:'MERSUP001_01_MDV_14_1',
+  agent:'Ricky Rampersad',
+  month:'August 2026',
+  issued:'2026-07-25',
+  dueBy:'2026-08-01',
+  people:buildPeople(),
+  /* Someone who left on 30 June. Reported late, so the credits land on the
+     August documents — the lag this page is built to make visible. */
+  leaver:{ cert:'156', name:'Sooknanan, Petra', tier:'Employee + Family',
+           lastDay:'2026-06-30', reportedOn:'2026-07-22' },
+  history:[['August 2026',1],['July 2026',0],['June 2026',0],['May 2026',0],['April 2026',0],['March 2026',0]]
+};
+
+/* ── billing engine ── */
+function bill(){
+  const p=GROUP.people;
+  const lifeLives=p.filter(x=>x.life).length;
+  const healthLives=p.filter(x=>x.health).length;
+  const lifeSum=lifeLives*RATE.sumAssured;
+  const lifeBasic=lifeSum/1000*RATE.lifePer1000;
+  const lifeAdnd=lifeSum/1000*RATE.adndPer1000;
+
+  const tiers=Object.keys(RATE.health).map(t=>{
+    const n=p.filter(x=>x.health&&x.tier===t).length;
+    return {tier:t, n, rate:RATE.health[t], total:n*RATE.health[t]};
+  });
+  const healthGross=tiers.reduce((s,t)=>s+t.total,0);
+
+  // the leaver's credits: life at the rate in force when she was covered
+  const lifeCredit=-(RATE.sumAssured/1000*(RATE.lifePer1000Old+RATE.adndPer1000));
+  const healthCredit=-RATE.health[GROUP.leaver.tier];
+
+  return {
+    lifeLives, healthLives, lifeSum,
+    lifeBasic, lifeAdnd, lifeGross:lifeBasic+lifeAdnd,
+    lifeCredit, lifeNet:lifeBasic+lifeAdnd+lifeCredit,
+    tiers, healthGross, healthCredit, healthNet:healthGross+healthCredit,
+    get combined(){ return this.lifeNet+this.healthNet; },
+    get annual(){ return (this.lifeGross+this.healthGross)*12; }
+  };
+}
+
+/* ── helpers ── */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money=n=>(n<0?'-':'')+'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const dmy=s=>new Date(s+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+const days=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
+
+let as='employer', tab='overview', authed=false, ME=null;
+
+/* ══════════════ EMPLOYER ══════════════ */
+function overview(){
+  const b=bill(), L=GROUP.leaver;
+  const late=days(L.lastDay,L.reportedOn);
+  const carried=Math.abs(b.lifeCredit)+Math.abs(b.healthCredit);
+  const noLife=GROUP.people.filter(x=>x.health&&!x.life);
+
+  return `<div class="stack">
+    <div class="head">
+      <div><span class="label">Your group account</span><h1 class="page">${esc(GROUP.company)}</h1>
+        <p class="note">Group ID ${esc(GROUP.groupId)} · Life ${esc(GROUP.lifePolicy)} · Servicing agent ${esc(GROUP.agent)}</p></div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <a class="btn ghost" href="enroll.html">➕ Enrol an employee</a>
+        <button class="btn ghost" data-go="billing">View billing</button>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="card"><span class="label">Payable this month</span><div class="v">${money(b.combined)}</div>
+        <p class="note">${esc(GROUP.month)} · due ${dmy(GROUP.dueBy)}</p></div>
+      <div class="card"><span class="label">Employees covered</span><div class="v">${b.healthLives}</div>
+        <p class="note">${b.lifeLives} on group life</p></div>
+      <div class="card"><span class="label">Sum assured in force</span><div class="v">${money(b.lifeSum).replace('.00','')}</div>
+        <p class="note">${money(RATE.sumAssured).replace('.00','')} each, flat</p></div>
+      <div class="card"><span class="label">Annualised</span><div class="v">${money(b.annual).replace('.00','')}</div>
+        <p class="note">at current membership</p></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2 style="font-size:1.05rem;color:var(--navy)">🛡 Group Life &amp; AD&amp;D</h2>
+        <p class="note" style="margin-top:.25rem">Policy ${esc(GROUP.lifePolicy)}</p>
+        <dl class="kv">
+          <div><dt class="label">Cover per employee</dt><dd class="mono">${money(RATE.sumAssured).replace('.00','')}</dd></div>
+          <div><dt class="label">AD&amp;D</dt><dd class="mono">${money(RATE.sumAssured).replace('.00','')}</dd></div>
+          <div><dt class="label">Rate</dt><dd class="mono">${RATE.lifePer1000.toFixed(2)} + ${RATE.adndPer1000.toFixed(2)} / $1,000</dd></div>
+          <div><dt class="label">Lives</dt><dd class="mono">${b.lifeLives}</dd></div>
+          <div><dt class="label">Monthly</dt><dd class="mono"><b>${money(b.lifeGross)}</b></dd></div>
+          <div><dt class="label">Per employee</dt><dd class="mono">${money(b.lifeGross/b.lifeLives)}</dd></div>
+        </dl>
+      </div>
+      <div class="card">
+        <h2 style="font-size:1.05rem;color:var(--navy)">🩺 Group Health</h2>
+        <p class="note" style="margin-top:.25rem">Medical, dental &amp; vision · ${esc(GROUP.healthContract)}</p>
+        <div class="bars">
+          ${b.tiers.map(t=>`<div class="bar"><span class="bn">${esc(t.tier.replace('Employee','Emp'))}</span>
+            <span class="bt"><i style="width:${Math.round(t.total/b.healthGross*100)}%"></i></span>
+            <span class="bv">${t.n} · ${money(t.total).replace('.00','')}</span></div>`).join('')}
+        </div>
+        <p class="note" style="margin-top:.8rem">Monthly <b class="mono">${money(b.healthGross)}</b>
+          — ${Math.round(b.healthGross/(b.healthGross+b.lifeGross)*100)}% of everything you spend on benefits.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="font-size:1.05rem;color:var(--navy)">What needs your attention</h2>
+
+      <div class="alert a-warn" style="margin-top:.9rem">
+        <b>You paid ${money(carried)} for someone who had already left.</b>
+        ${esc(L.name)} left on <b>${dmy(L.lastDay)}</b> but was reported on <b>${dmy(L.reportedOn)}</b> —
+        ${late} days later. Cover ran on until it was reported, so her ${esc(L.tier.toLowerCase())} health premium
+        and her life premium were both billed and are being credited back on this month's documents.
+        <p style="margin-top:.5rem">Report a leaver on their last day and that money never leaves the account.
+          <a href="${QUERYPAL}" target="_blank" rel="noopener">Report leavers →</a></p>
+      </div>
+
+      ${noLife.length?`<div class="alert a-bad" style="margin-top:.8rem">
+        <b>${noLife.length} ${noLife.length===1?'employee has':'employees have'} medical cover but no group life.</b>
+        ${noLife.map(x=>esc(x.name)+' (cert '+esc(x.cert)+')').join(' · ')} —
+        on the health invoice, absent from the life billing. Either they are still inside a waiting period, or they
+        were never added to ${esc(GROUP.lifePolicy)}. Worth settling before anyone needs to claim.
+        <p style="margin-top:.5rem" class="note">Nobody spots this from two PDFs in different formats. This page compares them every month.</p>
+      </div>`:''}
+
+      <div class="alert a-info" style="margin-top:.8rem">
+        <b>Changes have ${RATE.reportDays} days.</b> Guardian requires any change in coverage to be reported within
+        ${RATE.reportDays} days of its effective date. Later than that and the employee needs Evidence of Insurability —
+        a health declaration that can be <em>declined</em>. New hires and leavers both run against this clock.
+      </div>
+    </div>
+  </div>`;
+}
+
+function billing(){
+  const b=bill(), L=GROUP.leaver;
+  return `<div class="stack">
+    <div class="head">
+      <div><span class="label">Billing</span><h1 class="page">${esc(GROUP.month)}</h1>
+        <p class="note">Issued ${dmy(GROUP.issued)} · payment due ${dmy(GROUP.dueBy)}</p></div>
+      <button class="btn ghost" onclick="window.print()">🖨 Print / save PDF</button>
+    </div>
+
+    <div>
+      <span class="label">Every month we post it here</span>
+      <div class="months" style="margin-top:.5rem">
+        ${GROUP.history.map(([m,cur])=>`<button class="month ${cur?'on':''}">
+          <b>${esc(m.split(' ')[0])}</b><span>${cur?money(b.combined):'paid'}</span></button>`).join('')}
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="font-size:1.05rem;color:var(--navy)">Summary</h2>
+      <div class="tw" style="margin-top:.8rem">
+        <table>
+          <thead><tr><th>Policy</th><th class="r">Lives</th><th class="r">Gross</th><th class="r">Credits</th><th class="r">Payable</th></tr></thead>
+          <tbody>
+            <tr><td><b>Group Life &amp; AD&amp;D</b><div class="note">${esc(GROUP.lifePolicy)}</div></td>
+              <td class="r mono">${b.lifeLives}</td><td class="r mono">${money(b.lifeGross)}</td>
+              <td class="r mono">${money(b.lifeCredit)}</td><td class="r mono"><b>${money(b.lifeNet)}</b></td></tr>
+            <tr><td><b>Group Health</b><div class="note">Medical, dental &amp; vision</div></td>
+              <td class="r mono">${b.healthLives}</td><td class="r mono">${money(b.healthGross)}</td>
+              <td class="r mono">${money(b.healthCredit)}</td><td class="r mono"><b>${money(b.healthNet)}</b></td></tr>
+          </tbody>
+          <tfoot><tr><td>Total payable</td><td class="r mono">—</td><td class="r mono">${money(b.lifeGross+b.healthGross)}</td>
+            <td class="r mono">${money(b.lifeCredit+b.healthCredit)}</td><td class="r mono">${money(b.combined)}</td></tr></tfoot>
+        </table>
+      </div>
+      <p class="note" style="margin-top:.7rem">Credits are ${esc(L.name)}, who left on ${dmy(L.lastDay)}. Her life premium is
+        credited at the rate in force while she was covered (${RATE.lifePer1000Old.toFixed(2)}), not this year's
+        ${RATE.lifePer1000.toFixed(2)} — which is why the two lines differ by a few cents per thousand.</p>
+    </div>
+
+    <div class="card">
+      <h2 style="font-size:1.05rem;color:var(--navy)">Group Health — by tier</h2>
+      <div class="tw" style="margin-top:.8rem">
+        <table>
+          <thead><tr><th>Tier</th><th class="r">Employees</th><th class="r">Rate each</th><th class="r">Total</th></tr></thead>
+          <tbody>${b.tiers.map(t=>`<tr><td>${esc(t.tier)}</td><td class="r mono">${t.n}</td>
+            <td class="r mono">${money(t.rate)}</td><td class="r mono">${money(t.total)}</td></tr>`).join('')}</tbody>
+          <tfoot><tr><td>Total for the month</td><td class="r mono">${b.healthLives}</td><td class="r mono"></td>
+            <td class="r mono">${money(b.healthGross)}</td></tr></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="font-size:1.05rem;color:var(--navy)">Group Life — member schedule</h2>
+      <p class="note" style="margin-top:.25rem">Everyone is insured for the same ${money(RATE.sumAssured).replace('.00','')},
+        so every line is ${money(RATE.sumAssured/1000*(RATE.lifePer1000+RATE.adndPer1000))}.</p>
+      <div class="tw scroll" style="margin-top:.8rem">
+        <table>
+          <thead><tr><th>Cert</th><th>Name</th><th class="r">Sum assured</th><th class="r">AD&amp;D</th><th class="r">Basic</th><th class="r">AD&amp;D prem</th><th class="r">Total</th></tr></thead>
+          <tbody>${GROUP.people.filter(x=>x.life).map(x=>`<tr>
+            <td class="mono">${esc(x.cert)}</td><td>${esc(x.name)}</td>
+            <td class="r mono">${money(RATE.sumAssured).replace('.00','')}</td>
+            <td class="r mono">${money(RATE.sumAssured).replace('.00','')}</td>
+            <td class="r mono">${money(RATE.sumAssured/1000*RATE.lifePer1000)}</td>
+            <td class="r mono">${money(RATE.sumAssured/1000*RATE.adndPer1000)}</td>
+            <td class="r mono">${money(RATE.sumAssured/1000*(RATE.lifePer1000+RATE.adndPer1000))}</td></tr>`).join('')}</tbody>
+          <tfoot><tr><td colspan="2">No of lives: ${b.lifeLives}</td>
+            <td class="r mono">${money(b.lifeSum).replace('.00','')}</td><td class="r mono">${money(b.lifeSum).replace('.00','')}</td>
+            <td class="r mono">${money(b.lifeBasic)}</td><td class="r mono">${money(b.lifeAdnd)}</td>
+            <td class="r mono">${money(b.lifeGross)}</td></tr></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>`;
+}
+
+function people(){
+  const b=bill();
+  const noLife=GROUP.people.filter(x=>x.health&&!x.life);
+  return `<div class="stack">
+    <div class="head">
+      <div><span class="label">Your people</span><h1 class="page">${b.healthLives} employees</h1></div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <a class="btn ghost" href="enroll.html">➕ Enrol</a>
+        <a class="btn ghost" href="${QUERYPAL}" target="_blank" rel="noopener">➖ Report leavers</a>
+      </div>
+    </div>
+    ${noLife.length?`<div class="alert a-bad"><b>${noLife.length} on medical with no life cover:</b>
+      ${noLife.map(x=>esc(x.name)).join(' · ')}</div>`:''}
+    <div class="tw scroll">
+      <table>
+        <thead><tr><th>Cert</th><th>Name</th><th>Role</th><th>Joined</th><th>Health tier</th><th>Life</th></tr></thead>
+        <tbody>${GROUP.people.map(x=>`<tr>
+          <td class="mono">${esc(x.cert)}</td><td><b>${esc(x.name)}</b><div class="note mono">${esc(x.empId)}</div></td>
+          <td>${esc(x.role)}</td><td class="mono">${dmy(x.started)}</td>
+          <td><span class="pill p-info">${esc(x.tier)}</span></td>
+          <td>${x.life?'<span class="pill p-ok">Covered</span>':'<span class="pill p-bad">Not on life</span>'}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+/* ══════════════ EMPLOYEE ══════════════ */
+function mycover(){
+  const me=ME, L=GROUP.leaver;
+  const rate=RATE.health[me.tier];
+  return `<div class="stack">
+    <div class="head">
+      <div><span class="label">Your benefits</span><h1 class="page">Good day, ${esc(me.first)}</h1>
+        <p class="note">${esc(GROUP.company)} · certificate ${esc(me.cert)} · member since ${dmy(me.started)}</p></div>
+    </div>
+
+    <div class="stats">
+      <div class="card"><span class="label">If you die</span><div class="v">${money(RATE.sumAssured).replace('.00','')}</div>
+        <p class="note">paid to your beneficiaries, tax free</p></div>
+      <div class="card"><span class="label">Accidental death or injury</span><div class="v">${money(RATE.sumAssured).replace('.00','')}</div>
+        <p class="note">on top of the above, 24 hours a day</p></div>
+      <div class="card"><span class="label">Your medical plan</span><div class="v" style="font-size:1.15rem">${esc(me.tier)}</div>
+        <p class="note">worth ${money(rate)} a month</p></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2 style="font-size:1.05rem;color:var(--navy)">Who gets your benefit</h2>
+        <div class="alert a-warn" style="margin-top:.8rem">
+          <b>We have no beneficiary on file for you.</b> If something happened tomorrow, your ${money(RATE.sumAssured).replace('.00','')}
+          would go to your estate and wait on the courts instead of reaching your family in weeks.
+          <p style="margin-top:.5rem">It takes two minutes to fix and you can change it any time.</p>
+        </div>
+        <button class="btn" style="margin-top:.9rem">Name my beneficiaries</button>
+      </div>
+      <div class="card">
+        <h2 style="font-size:1.05rem;color:var(--navy)">Making a medical claim</h2>
+        <p style="font-size:14px;margin-top:.5rem">Your claims, your card and your claim history live on Guardian's own
+          member site — that is where to submit and track anything medical.</p>
+        <a class="btn ghost" style="margin-top:.9rem" href="https://easiconnect.myguardiangroup.com" target="_blank" rel="noopener">
+          Open easiconnect ↗</a>
+        <p class="note" style="margin-top:.8rem">Anything else — a benefit you don't understand, a claim that has stalled,
+          adding a newborn — comes to the branch and we chase it for you.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="font-size:1.05rem;color:var(--navy)">If you leave ${esc(GROUP.company)}</h2>
+      <p style="font-size:14px;margin-top:.5rem">Your cover ends with your employment — but you usually have a short window,
+        commonly <b>${RATE.reportDays} days</b>, to convert your ${money(RATE.sumAssured).replace('.00','')} of life cover into
+        a policy of your own <b>with no medical questions</b>. After that window it depends on your health at the time.</p>
+      <p class="note" style="margin-top:.6rem">We write to every leaver with the exact date. If you are thinking about
+        moving on, ask us first — it is far cheaper to keep cover than to buy it back.</p>
+    </div>
+  </div>`;
+}
+
+/* ══════════════ SHELL ══════════════ */
+const QUERYPAL='https://querymypolicies.netlify.app/';
+const TABS={employer:[['overview','Overview'],['billing','Billing'],['people','People']],
+            employee:[['mycover','My benefits']]};
+
+function render(){
+  if(!authed){ $('nav').innerHTML=''; $('me').innerHTML='<span class="label">Not signed in</span>'; $('main').innerHTML=gate(); return; }
+  const tabs=TABS[as];
+  if(!tabs.some(t=>t[0]===tab)) tab=tabs[0][0];
+  $('nav').innerHTML=tabs.map(([k,l])=>`<a data-go="${k}" class="${tab===k?'on':''}">${l}</a>`).join('');
+  $('me').innerHTML = as==='employer'
+    ? `<b>${esc(GROUP.company)}</b><span class="label">Employer account</span>`
+    : `<b>${esc(ME.first+' '+ME.last)}</b><span class="label">Cert ${esc(ME.cert)}</span>`;
+  $('main').innerHTML = ({overview,billing,people,mycover})[tab]();
+}
+
+function gate(){
+  return `<div class="card gate">
+    <h1 style="font-size:1.4rem;color:var(--navy)">Group account</h1>
+    <p class="note" style="margin:.5rem 0 1.1rem">Enter the access code from your branch. Employers see the whole
+      group; employees see their own benefits.</p>
+    <input id="code" placeholder="ACCESS CODE" autocomplete="off">
+    <button class="btn" style="width:100%;margin-top:.8rem" data-signin>Sign in</button>
+    <p class="note" id="gerr" style="margin-top:.8rem;min-height:1.2em"></p>
+    <p class="note" style="margin-top:.4rem">Sample codes — <b>GROUP26</b> for the employer, <b>STAFF26</b> for an employee.</p>
+  </div>`;
+}
+
+function signIn(code){
+  code=(code||'').trim().toUpperCase();
+  if(code==='GROUP26'){ as='employer'; tab='overview'; authed=true; }
+  else if(code==='STAFF26'){ as='employee'; tab='mycover'; ME=GROUP.people[3]; authed=true; }
+  else { $('gerr').textContent='That code was not recognised — check it, or ask the branch.'; return; }
+  syncBar(); render();
+}
+function syncBar(){ document.querySelectorAll('[data-as]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.as===as))); }
+
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-go],[data-as],[data-signin],#theme'); if(!t) return;
+  if(t.id==='theme'){ const r=document.documentElement;
+    r.dataset.theme = r.dataset.theme==='dark' ? 'light' : 'dark'; return; }
+  if(t.dataset.as){ as=t.dataset.as; authed=true; ME=GROUP.people[3]; tab=TABS[as][0][0]; syncBar(); render(); return; }
+  if(t.hasAttribute('data-signin')){ signIn($('code').value); return; }
+  if(t.dataset.go){ tab=t.dataset.go; render(); window.scrollTo({top:0,behavior:'smooth'}); }
+});
+document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.id==='code') signIn(e.target.value); });
+
+render();
+</script>
+</body>
+</html>
