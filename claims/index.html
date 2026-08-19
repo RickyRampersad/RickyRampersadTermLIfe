@@ -276,6 +276,24 @@
   .tstep.on::after{border-color:var(--teal-500);background:var(--teal-500)}
   .tstep.on::before{background:var(--teal-500)}
 
+  /* ── my claims ── */
+  .acct-bar{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:18px}
+  .acct-bar span{font-weight:700}
+  .claim-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:clamp(18px,3.5vw,26px);margin-bottom:16px}
+  .claim-head{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:baseline;margin-bottom:6px}
+  .claim-head b{font-size:1.08rem;letter-spacing:.02em}
+  .status-pill{display:inline-block;font-size:.72rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:5px 12px;border-radius:999px;background:var(--teal-50);color:var(--teal-600);border:1px solid #CBEAE8}
+  .status-pill.closed{background:#EDF3F8;color:var(--muted);border-color:var(--line)}
+  .claim-meta{color:var(--muted);font-size:.9rem;margin-bottom:10px}
+  .owe{background:var(--gold-50);border:1px solid #F0E0BE;border-radius:var(--radius-md);padding:14px 16px;margin-top:12px}
+  .owe b{display:block;margin-bottom:8px;font-size:.93rem}
+  .owe-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-top:1px solid #F0E0BE;flex-wrap:wrap}
+  .owe-row:first-of-type{border-top:none}
+  .owe-row span{font-size:.92rem;font-weight:600}
+  .owe-row .drop{padding:8px 14px;font-size:.84rem}
+  .owe-note{font-size:.8rem;color:var(--muted);margin-top:8px}
+  .up-ok{color:var(--green);font-weight:700;font-size:.9rem}
+
   /* ── faq ── */
   .faq{display:grid;gap:12px}
   details.q{background:#fff;border:1px solid var(--line);border-radius:var(--radius-md);overflow:hidden}
@@ -566,26 +584,63 @@
   </div>
 </section>
 
-<!-- ══════════════ TRACK ══════════════ -->
+<!-- ══════════════ TRACK / MY CLAIMS ══════════════ -->
 <section id="track" style="background:#fff;border-block:1px solid var(--line)">
   <div class="wrap">
     <span class="eyebrow">Already filed</span>
-    <h2 class="h2">Where is my claim?</h2>
-    <p class="lead" style="margin-bottom:26px">Enter your reference and the last four digits of the mobile number you filed with.</p>
-    <div class="status-card">
-      <div class="status-form">
-        <div class="field">
-          <label for="t-ref">Claim reference</label>
-          <input id="t-ref" type="text" placeholder="CLM-2608-4821" autocomplete="off" spellcheck="false" />
+    <h2 class="h2">Your claims</h2>
+    <p class="lead" style="margin-bottom:26px">Sign in with your email or mobile to see every claim you have with us and send in outstanding documents — or do a quick one-off check with a claim reference.</p>
+
+    <!-- signed-out: the two ways in -->
+    <div id="acct-out">
+      <div class="status-card" style="margin-bottom:18px">
+        <h3 class="h3">🔑 Sign in — see all my claims</h3>
+        <p style="color:var(--muted);font-size:.92rem;margin-bottom:16px">No password. We email you a 6-digit code, you type it in, done.</p>
+        <div class="status-form" id="acct-step-id">
+          <div class="field" style="grid-column:1/-2">
+            <label for="a-id">Your email address or mobile number</label>
+            <input id="a-id" type="text" placeholder="you@example.com or 868 555 1234" autocomplete="email" />
+          </div>
+          <button class="btn btn-teal" type="button" id="a-send">Email me a code</button>
         </div>
-        <div class="field">
-          <label for="t-last4">Last 4 digits of your mobile</label>
-          <input id="t-last4" type="text" inputmode="numeric" maxlength="4" placeholder="5921" autocomplete="off" />
+        <div class="status-form" id="acct-step-code" hidden>
+          <div class="field" style="grid-column:1/-2">
+            <label for="a-code">The 6-digit code from your email</label>
+            <input id="a-code" type="text" inputmode="numeric" maxlength="6" placeholder="123456" autocomplete="one-time-code" />
+            <span class="hint">It lasts 10 minutes. Nothing arrived? Check spam, then <button class="skip-btn" type="button" id="a-resend" style="padding:0">send another</button>.</span>
+          </div>
+          <button class="btn btn-teal" type="button" id="a-verify">Sign in</button>
         </div>
-        <button class="btn btn-primary" type="button" id="t-go">Check status</button>
+        <div class="notice bad" id="a-err" hidden style="margin:16px 0 0"></div>
+        <div class="notice info" id="a-msg" hidden style="margin:16px 0 0"></div>
       </div>
-      <div class="notice bad" id="t-err" hidden style="margin:18px 0 0"></div>
-      <div class="track" id="t-result" hidden></div>
+
+      <div class="status-card">
+        <h3 class="h3">⚡ Quick check — one claim, no sign-in</h3>
+        <p style="color:var(--muted);font-size:.92rem;margin-bottom:16px">For anyone without an email on file: your reference plus the last four digits of the mobile you filed with.</p>
+        <div class="status-form">
+          <div class="field">
+            <label for="t-ref">Claim reference</label>
+            <input id="t-ref" type="text" placeholder="CLM-2608-4821" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="field">
+            <label for="t-last4">Last 4 digits of your mobile</label>
+            <input id="t-last4" type="text" inputmode="numeric" maxlength="4" placeholder="5921" autocomplete="off" />
+          </div>
+          <button class="btn btn-primary" type="button" id="t-go">Check status</button>
+        </div>
+        <div class="notice bad" id="t-err" hidden style="margin:18px 0 0"></div>
+        <div class="track" id="t-result" hidden></div>
+      </div>
+    </div>
+
+    <!-- signed-in: the claims list -->
+    <div id="acct-in" hidden>
+      <div class="acct-bar">
+        <span id="acct-hello">Signed in</span>
+        <button class="btn btn-ghost btn-sm" type="button" id="a-signout">Sign out</button>
+      </div>
+      <div id="acct-claims"></div>
     </div>
   </div>
 </section>
@@ -605,6 +660,7 @@
       <details class="q"><summary>Can I start repairs while I wait?</summary><div class="a">No — not until the loss has been inspected or you have written approval. Repairs done beforehand may not be reimbursed, because nobody independent has seen the damage. If the vehicle is undrivable or your home is unsafe, call us first and we can authorise emergency work to secure things.</div></details>
       <details class="q"><summary>How long does a claim take?</summary><div class="a">A straightforward motor or health claim with complete documents typically settles in a few weeks. Claims involving a third party, a police investigation, an overseas provider or a total loss take longer. The single biggest factor is document completeness — that is exactly what this page is built to fix.</div></details>
       <details class="q"><summary>Who can see what I upload?</summary><div class="a">Your documents go into a private folder for your claim only, reachable by the claims team handling it and by your agent. They are not published anywhere and are never shared outside the assessment of your claim.</div></details>
+      <details class="q"><summary>Do I need an account or a password?</summary><div class="a">There are no passwords here, ever. To see your claims, enter your email or mobile under <b>Your claims</b> and we email you a 6-digit code — type it in and you are signed in for 30 days on that device, able to check every claim and upload outstanding documents directly. No email on file? The quick check works with just your claim reference and the last four digits of your mobile.</div></details>
     </div>
   </div>
 </section>
@@ -630,7 +686,8 @@
           <li><a href="tel:+18686785921">(868) 678-5921</a></li>
           <li><a href="/">Main site</a></li>
           <li><a href="/renewal/">Renewals portal</a></li>
-          <li><a href="#track">Track a claim</a></li>
+          <li><a href="#track">My claims / track</a></li>
+          <li><a href="staff.html">Staff sign-in</a></li>
         </ul>
       </div>
     </div>
@@ -979,6 +1036,7 @@ const state = {
   skipped: {},      // docId -> true when "I don't have this yet"
   step: 0,
   ref: "",
+  uploadKey: "",
 };
 
 const $ = (id) => document.getElementById(id);
@@ -1727,17 +1785,17 @@ function claimPayload() {
   };
 }
 
-async function uploadOne(ref, docLabel, entry, onProgress) {
+async function uploadOne(ref, docLabel, entry, onProgress, auth) {
   const b64 = await toBase64(entry.file);
   const parts = Math.max(1, Math.ceil(b64.length / CONFIG.CHUNK_CHARS));
   const uploadId = rid();
   for (let i = 0; i < parts; i++) {
-    await api({
+    await api(Object.assign({
       action: "claimFile", ref: ref, uploadId: uploadId,
       part: i, parts: parts, doc: docLabel,
       name: entry.name, mime: entry.file.type || "application/octet-stream",
       data: b64.slice(i * CONFIG.CHUNK_CHARS, (i + 1) * CONFIG.CHUNK_CHARS),
-    });
+    }, auth || {}));
     if (onProgress) onProgress((i + 1) / parts);
   }
 }
@@ -1764,6 +1822,7 @@ async function submitClaim() {
     setBar(0.04);
     const started = await api(Object.assign({ action: "claimStart" }, claimPayload()));
     state.ref = started.ref;
+    state.uploadKey = started.uploadKey || "";
 
     const failed = [];
     for (let i = 0; i < queue.length; i++) {
@@ -1772,7 +1831,7 @@ async function submitClaim() {
       try {
         await uploadOne(state.ref, item.label, item.entry, (frac) => {
           setBar(0.06 + 0.88 * ((i + frac) / queue.length));
-        });
+        }, { uploadKey: state.uploadKey });
       } catch (err) {
         // One bad file must not sink the whole claim.
         failed.push(item.label + " (" + item.entry.name + ")");
@@ -1783,7 +1842,7 @@ async function submitClaim() {
     say("Notifying the claims team…");
     setBar(0.96);
     const missing = missingDocs().concat(failed.length ? failed.map((f) => f + " — upload failed") : []);
-    const done = await api({ action: "claimFinish", ref: state.ref, missing: missing });
+    const done = await api({ action: "claimFinish", ref: state.ref, uploadKey: state.uploadKey, missing: missing });
 
     setBar(1);
     clearDraft();
@@ -1928,6 +1987,176 @@ function renderTrack(d) {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   MY CLAIMS — passwordless sign-in
+
+   Email or mobile → 6-digit code by email → every claim they have,
+   with direct upload of whatever is still outstanding. The token
+   lives in localStorage for 30 days, so a returning client goes
+   straight to their list.
+   ══════════════════════════════════════════════════════════════ */
+const TOKEN_KEY = "claims-tt-client-token";
+const acct = { token: "", identity: "" };
+
+function acctMsg(id, html) {
+  ["a-err", "a-msg"].forEach((k) => { $(k).hidden = true; });
+  if (!id) return;
+  $(id).innerHTML = html;
+  $(id).hidden = false;
+}
+
+async function acctSendCode() {
+  const identity = $("a-id").value.trim();
+  if (identity.length < 5) { acctMsg("a-err", "Enter the email address or mobile number you used on your claim."); return; }
+  if (!CONFIG.API_URL) { acctMsg("a-err", "Sign-in isn't connected yet — please call the branch on <b>" + CONFIG.AGENT_PHONE + "</b>."); return; }
+
+  const btn = $("a-send");
+  btn.disabled = true; btn.textContent = "Sending…";
+  try {
+    const data = await api({ action: "requestCode", kind: "client", identity: identity });
+    acct.identity = identity;
+    if (data.sent === false) { acctMsg("a-err", esc(data.message)); return; }
+    acctMsg("a-msg", esc(data.message || "Code sent — check your inbox."));
+    $("acct-step-id").hidden = true;
+    $("acct-step-code").hidden = false;
+    $("a-code").focus();
+  } catch (err) {
+    acctMsg("a-err", "We couldn't send a code just now — please try again shortly.");
+  } finally {
+    btn.disabled = false; btn.textContent = "Email me a code";
+  }
+}
+
+async function acctVerify() {
+  const code = $("a-code").value.trim();
+  if (code.length !== 6) { acctMsg("a-err", "The code is 6 digits — it's in the email we just sent."); return; }
+  const btn = $("a-verify");
+  btn.disabled = true; btn.textContent = "Checking…";
+  try {
+    const data = await api({ action: "verifyCode", kind: "client", identity: acct.identity, code: code });
+    acct.token = data.token;
+    try { localStorage.setItem(TOKEN_KEY, data.token); } catch (err) {}
+    acctMsg(null);
+    await acctLoad();
+  } catch (err) {
+    acctMsg("a-err", esc(err && err.message ? err.message : "That code did not match."));
+  } finally {
+    btn.disabled = false; btn.textContent = "Sign in";
+  }
+}
+
+async function acctLoad() {
+  if (!acct.token || !CONFIG.API_URL) return false;
+  try {
+    const data = await api({ action: "myClaims", token: acct.token });
+    renderMyClaims(data.claims || []);
+    $("acct-out").hidden = true;
+    $("acct-in").hidden = false;
+    return true;
+  } catch (err) {
+    // Expired or bogus token: quietly fall back to signed-out.
+    acctSignOut(true);
+    return false;
+  }
+}
+
+function acctSignOut(silent) {
+  if (acct.token && CONFIG.API_URL && !silent) {
+    api({ action: "signOut", token: acct.token }).catch(() => {});
+  }
+  acct.token = "";
+  try { localStorage.removeItem(TOKEN_KEY); } catch (err) {}
+  $("acct-in").hidden = true;
+  $("acct-out").hidden = false;
+  $("acct-step-id").hidden = false;
+  $("acct-step-code").hidden = true;
+}
+
+function renderMyClaims(claims) {
+  $("acct-hello").textContent = "Signed in — " + claims.length +
+    (claims.length === 1 ? " claim" : " claims") + " on file";
+  const box = $("acct-claims");
+  box.innerHTML = "";
+  if (!claims.length) {
+    box.appendChild(el("div", "notice info",
+      "No claims found for that email or mobile. If you filed with different details, sign out and try those — or start a new claim above."));
+    return;
+  }
+  claims.forEach((c) => {
+    const card = el("div", "claim-card");
+    const idx = TRACK_STAGES.indexOf(c.status);
+    const line = idx >= 0
+      ? '<div class="track-line">' + TRACK_STAGES.map((s, i) =>
+          '<div class="tstep' + (i <= idx ? " on" : "") + '">' + s + "</div>").join("") + "</div>"
+      : "";
+    card.innerHTML =
+      '<div class="claim-head"><b>' + esc(c.ref) + '</b>' +
+        '<span class="status-pill' + (c.closed ? " closed" : "") + '">' + esc(c.status) + "</span></div>" +
+      '<div class="claim-meta">' + esc(c.type) + (c.subtype ? " — " + esc(c.subtype) : "") +
+        " · filed " + esc(c.filedOn) +
+        (c.documents.length ? " · " + c.documents.length + " document" + (c.documents.length === 1 ? "" : "s") + " on file" : "") +
+      "</div>" + line;
+
+    if (c.missing.length && !c.closed) {
+      const owe = el("div", "owe", "<b>⏳ We are waiting on you for:</b>");
+      c.missing.forEach((m) => {
+        const row = el("div", "owe-row");
+        row.innerHTML = "<span>" + esc(m) + "</span>";
+        const input = el("input");
+        input.type = "file";
+        input.multiple = true;
+        input.accept = "image/*,application/pdf,.pdf,.heic,.heif";
+        input.className = "sr-only";
+        const pick = el("button", "drop", "📎 Upload now");
+        pick.type = "button";
+        pick.addEventListener("click", () => input.click());
+        input.addEventListener("change", () => acctUpload(c, m, Array.from(input.files || []), row, pick));
+        row.appendChild(pick);
+        row.appendChild(input);
+        owe.appendChild(row);
+      });
+      owe.appendChild(el("p", "owe-note", "Phone photos are fine — flat, good light, whole page in frame. They go straight into your claim file."));
+      card.appendChild(owe);
+    } else if (!c.closed) {
+      card.appendChild(el("div", "notice info", "<b>Nothing outstanding from you.</b> The claim is with us — we will be in touch."));
+    }
+    box.appendChild(card);
+  });
+}
+
+async function acctUpload(claim, docLabel, files, row, pick) {
+  if (!files.length) return;
+  pick.disabled = true;
+  pick.textContent = "Uploading…";
+  try {
+    for (const raw of files) {
+      const prepared = await prepareFile(raw);
+      if (prepared.size > CONFIG.MAX_FILE_MB * 1024 * 1024) {
+        throw new Error((raw.name || "That file") + " is larger than " + CONFIG.MAX_FILE_MB + "MB.");
+      }
+      // The last file for this document tells the server it's satisfied.
+      const isLast = raw === files[files.length - 1];
+      await uploadOne(claim.ref, docLabel,
+        { file: prepared, name: prepared.name || raw.name || "photo.jpg" },
+        null,
+        Object.assign({ token: acct.token }, isLast ? { satisfies: docLabel } : {}));
+    }
+    row.innerHTML = "<span>" + esc(docLabel) + '</span><span class="up-ok">✓ Received — thank you</span>';
+    setTimeout(() => acctLoad(), 900);
+  } catch (err) {
+    pick.disabled = false;
+    pick.textContent = "📎 Try again";
+    alert((err && err.message) ? err.message : "That upload failed — please try again.");
+  }
+}
+
+$("a-send").addEventListener("click", acctSendCode);
+$("a-resend").addEventListener("click", () => { $("acct-step-id").hidden = false; $("acct-step-code").hidden = true; acctSendCode(); });
+$("a-verify").addEventListener("click", acctVerify);
+$("a-signout").addEventListener("click", () => acctSignOut(false));
+$("a-id").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); acctSendCode(); } });
+$("a-code").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); acctVerify(); } });
+
+/* ══════════════════════════════════════════════════════════════
    WIRING
    ══════════════════════════════════════════════════════════════ */
 document.querySelectorAll("[data-next]").forEach((b) =>
@@ -1986,6 +2215,10 @@ $("preview-banner").hidden = !!CONFIG.API_URL;
 if (loadDraft()) $("draft-banner").hidden = false;
 renderTypes();
 if (state.type) renderSubtypes();
+
+// A returning client with a live session goes straight to their claims.
+try { acct.token = localStorage.getItem(TOKEN_KEY) || ""; } catch (err) {}
+if (acct.token) acctLoad();
 
 // Deep link: /claims/?type=motor&sub=accident
 const params = new URLSearchParams(location.search);

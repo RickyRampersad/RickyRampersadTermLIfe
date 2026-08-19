@@ -19,6 +19,22 @@
   status = 404
   force = true
 
+# ── claimstt.com is the claims site ─────────────────────────────────
+# When hosting runs on Netlify with both domains attached, anyone visiting
+# claimstt.com gets the claims app served at that address (a rewrite, not a
+# redirect — the URL stays claimstt.com). Inert until then.
+[[redirects]]
+  from = "https://claimstt.com/*"
+  to = "/claims/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "https://www.claimstt.com/*"
+  to = "https://claimstt.com/:splat"
+  status = 301
+  force = true
+
 # ── Short links ─────────────────────────────────────────────────────
 # Personal renewal links: /r/<token> → renewal portal with the token attached.
 # These are the links stored in the Google Sheet's "Portal Link" column.

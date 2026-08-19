@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Claims TT — Staff</title>
+<meta name="robots" content="noindex, nofollow" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230E2A47'/%3E%3Ctext y='70' x='50' text-anchor='middle' font-size='58'%3E🗂%3C/text%3E%3C/svg%3E" />
+<style>
+  :root{
+    --navy-900:#0E2A47;--navy-800:#14395F;--teal-600:#0E8C8C;--teal-500:#12A5A0;--teal-50:#E9F7F6;
+    --gold:#F2B33D;--gold-50:#FDF6E9;--ink:#152435;--muted:#5B7186;--bg:#F4F8FB;--line:#DCE7F0;
+    --red:#D64545;--red-50:#FCEDED;--green:#2F9E62;--green-50:#EAF7F0;
+    --radius-lg:20px;--radius-md:14px;--radius-sm:10px;
+    --shadow:0 14px 34px rgba(14,42,71,.12);--shadow-sm:0 4px 14px rgba(14,42,71,.08);
+    --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  button{font:inherit;color:inherit}
+  .wrap{width:min(1180px,94%);margin-inline:auto}
+  :focus-visible{outline:3px solid var(--teal-500);outline-offset:2px;border-radius:6px}
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+
+  header{position:sticky;top:0;z-index:40;background:var(--navy-900);color:#fff}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:60px;gap:14px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;text-decoration:none}
+  .logo-badge{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--teal-600),var(--teal-500));display:grid;place-items:center;font-size:16px}
+  .logo small{display:block;font-size:.68rem;font-weight:600;color:#93AFC7}
+  .who{display:flex;align-items:center;gap:12px;font-size:.88rem;color:#CFE0EE}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:700;border-radius:999px;padding:10px 20px;border:none;cursor:pointer;font-size:.93rem;transition:transform .15s;text-decoration:none}
+  .btn:hover:not(:disabled){transform:translateY(-1px)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn-teal{background:var(--teal-500);color:#fff}
+  .btn-navy{background:var(--navy-800);color:#fff}
+  .btn-ghost{background:#fff;color:var(--navy-900);border:1.5px solid var(--line)}
+  .btn-sm{padding:7px 14px;font-size:.84rem}
+
+  .field label{display:block;font-weight:700;font-size:.86rem;margin-bottom:6px}
+  .field input,.field select,.field textarea{width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:var(--radius-sm);font-size:.95rem;font-family:inherit;background:#fff;color:var(--ink)}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--teal-500);box-shadow:0 0 0 4px rgba(18,165,160,.13)}
+  .hint{font-size:.8rem;color:var(--muted);margin-top:5px;display:block}
+  .notice{border-radius:var(--radius-md);padding:12px 16px;font-size:.9rem;margin-top:14px}
+  .notice.bad{background:var(--red-50);border-left:4px solid var(--red);color:#8A2626}
+  .notice.info{background:var(--teal-50);border-left:4px solid var(--teal-500)}
+  .notice[hidden]{display:none}
+
+  /* sign-in */
+  .gate{max-width:460px;margin:8vh auto;background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:30px}
+  .gate h1{font-size:1.35rem;font-weight:800;margin-bottom:4px}
+  .gate p{color:var(--muted);font-size:.92rem;margin-bottom:20px}
+  .gate .row{display:grid;gap:12px}
+  .gate[hidden]{display:none}
+
+  /* dashboard */
+  main{padding:26px 0 60px}
+  main[hidden]{display:none}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px;margin-bottom:20px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:var(--radius-md);padding:12px 14px;cursor:pointer;text-align:left;transition:border-color .15s}
+  .kpi:hover{border-color:var(--teal-500)}
+  .kpi.on{border-color:var(--teal-600);background:var(--teal-50)}
+  .kpi b{display:block;font-size:1.45rem;font-weight:800}
+  .kpi span{font-size:.74rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+
+  .toolbar{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+  .toolbar input{flex:1;min-width:220px;padding:11px 14px;border:1.5px solid var(--line);border-radius:999px;font-size:.95rem;background:#fff}
+  .toolbar input:focus{outline:none;border-color:var(--teal-500)}
+
+  .list{display:grid;gap:10px}
+  .row-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-md);padding:14px 18px;cursor:pointer;display:grid;grid-template-columns:150px 1.2fr 1fr auto;gap:8px 16px;align-items:center;transition:border-color .15s,box-shadow .15s}
+  .row-card:hover{border-color:var(--teal-500);box-shadow:var(--shadow-sm)}
+  @media(max-width:760px){.row-card{grid-template-columns:1fr auto}}
+  .rc-ref{font-weight:800;letter-spacing:.02em}
+  .rc-ref small{display:block;font-weight:600;color:var(--muted);letter-spacing:0}
+  .rc-who b{display:block;font-size:.95rem}
+  .rc-who span{font-size:.82rem;color:var(--muted)}
+  .rc-flags{font-size:.8rem;color:var(--muted)}
+  .rc-flags .owe{color:#A05E03;font-weight:700}
+  .rc-flags .quiet{color:var(--red);font-weight:700}
+  .pill{display:inline-block;font-size:.7rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:5px 11px;border-radius:999px;background:var(--teal-50);color:var(--teal-600);border:1px solid #CBEAE8;white-space:nowrap}
+  .pill.p-Received{background:var(--gold-50);color:#A05E03;border-color:#F0E0BE}
+  .pill.p-Awaiting{background:var(--red-50);color:var(--red);border-color:#F2C6C6}
+  .pill.p-Settled,.pill.p-Closed,.pill.p-Declined{background:#EDF3F8;color:var(--muted);border-color:var(--line)}
+  .empty{color:var(--muted);text-align:center;padding:40px 0}
+
+  /* detail drawer */
+  .scrim{position:fixed;inset:0;background:rgba(14,42,71,.45);z-index:50;opacity:0;pointer-events:none;transition:opacity .2s}
+  .scrim.open{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:0;right:-620px;width:min(600px,100%);height:100%;background:var(--bg);z-index:60;transition:right .25s ease;display:flex;flex-direction:column;box-shadow:-18px 0 40px rgba(14,42,71,.25)}
+  .drawer.open{right:0}
+  .d-head{background:var(--navy-900);color:#fff;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .d-head b{font-size:1.15rem;letter-spacing:.02em}
+  .d-head button{background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;line-height:1}
+  .d-body{flex:1;overflow-y:auto;padding:20px 22px}
+  .d-sec{background:#fff;border:1px solid var(--line);border-radius:var(--radius-md);padding:16px 18px;margin-bottom:14px}
+  .d-sec h3{font-size:.76rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  .kv{display:grid;grid-template-columns:130px 1fr;gap:6px 12px;font-size:.9rem}
+  .kv dt{color:var(--muted)}
+  .kv dd{font-weight:600;word-break:break-word;white-space:pre-wrap}
+  .d-files li{margin:5px 0;font-size:.9rem}
+  .d-files a{color:var(--teal-600);font-weight:700;text-decoration:none}
+  .d-files a:hover{text-decoration:underline}
+  .d-actions{display:grid;gap:12px}
+  .d-actions .pair{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end}
+  .check{display:flex;gap:8px;align-items:center;font-size:.86rem;font-weight:600;cursor:pointer}
+  .check input{width:17px;height:17px;accent-color:var(--teal-600)}
+  .miss-chip{display:inline-flex;align-items:center;gap:7px;background:var(--gold-50);border:1px solid #F0E0BE;border-radius:999px;padding:5px 7px 5px 13px;font-size:.84rem;font-weight:600;margin:0 6px 6px 0}
+  .miss-chip button{background:none;border:none;cursor:pointer;font-size:.9rem;color:#A05E03}
+  .log-line{font-size:.82rem;padding:7px 0;border-top:1px solid #EEF3F8;color:var(--muted)}
+  .log-line b{color:var(--ink)}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--navy-900);color:#fff;padding:12px 22px;border-radius:999px;font-weight:700;font-size:.9rem;z-index:80;transition:transform .25s;box-shadow:var(--shadow)}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="logo" href="./">
+      <span class="logo-badge" aria-hidden="true">🗂</span>
+      <span>Claims&nbsp;TT<small>Staff dashboard</small></span>
+    </a>
+    <div class="who" id="who" hidden>
+      <span id="who-name"></span>
+      <button class="btn btn-ghost btn-sm" type="button" id="signout">Sign out</button>
+    </div>
+  </div>
+</header>
+
+<!-- ── sign-in gate ── -->
+<div class="gate" id="gate">
+  <h1>Staff sign-in</h1>
+  <p>Enter your work email. If you're on the staff list, a 6-digit code arrives in your inbox — no passwords here.</p>
+  <div class="row" id="g-step-id">
+    <div class="field">
+      <label for="g-email">Work email</label>
+      <input id="g-email" type="email" autocomplete="email" placeholder="you@myguardiangroup.com" />
+    </div>
+    <button class="btn btn-teal" type="button" id="g-send">Email me a code</button>
+  </div>
+  <div class="row" id="g-step-code" hidden>
+    <div class="field">
+      <label for="g-code">The 6-digit code</label>
+      <input id="g-code" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456" />
+      <span class="hint">Lasts 10 minutes. Nothing arrived? Check spam, or ask the admin to confirm you're on the Staff tab.</span>
+    </div>
+    <button class="btn btn-teal" type="button" id="g-verify">Sign in</button>
+  </div>
+  <div class="notice bad" id="g-err" hidden></div>
+  <div class="notice info" id="g-msg" hidden></div>
+</div>
+
+<!-- ── dashboard ── -->
+<main id="dash" hidden>
+  <div class="wrap">
+    <div class="kpis" id="kpis"></div>
+    <div class="toolbar">
+      <input id="search" type="search" placeholder="Search name, reference, policy, reg…" />
+      <button class="btn btn-ghost btn-sm" type="button" id="refresh">↻ Refresh</button>
+    </div>
+    <div class="list" id="list"></div>
+    <p class="empty" id="empty" hidden>No claims match.</p>
+  </div>
+</main>
+
+<!-- ── claim drawer ── -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="Claim detail">
+  <div class="d-head">
+    <b id="d-ref">—</b>
+    <button type="button" id="d-close" aria-label="Close">✕</button>
+  </div>
+  <div class="d-body" id="d-body"></div>
+</aside>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* Keep these two in sync with claims/index.html. */
+const CONFIG = {
+  API_URL: "",
+  SITE_KEY: "claims-tt-2026-rrb",
+};
+
+const TOKEN_KEY = "claims-tt-staff-token";
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? "" : s)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+const state = { token: "", email: "", data: null, filter: "", query: "", open: null };
+
+async function api(payload) {
+  const res = await fetch(CONFIG.API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(Object.assign({ siteKey: CONFIG.SITE_KEY }, payload)),
+  });
+  if (!res.ok) throw new Error("The claims system returned an error (" + res.status + ").");
+  const data = await res.json();
+  if (!data || data.ok === false) throw new Error((data && data.error) || "Request failed.");
+  return data;
+}
+
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+function gateMsg(id, text) {
+  ["g-err", "g-msg"].forEach((k) => { $(k).hidden = true; });
+  if (!id) return;
+  $(id).textContent = text;
+  $(id).hidden = false;
+}
+
+/* ── sign-in ── */
+async function sendCode() {
+  const email = $("g-email").value.trim();
+  if (!email.includes("@")) { gateMsg("g-err", "Enter your work email address."); return; }
+  if (!CONFIG.API_URL) { gateMsg("g-err", "This page isn't connected to the claims system yet — set CONFIG.API_URL."); return; }
+  const btn = $("g-send");
+  btn.disabled = true; btn.textContent = "Sending…";
+  try {
+    state.email = email;
+    const data = await api({ action: "requestCode", kind: "staff", identity: email });
+    gateMsg("g-msg", data.message || "If that email is on the staff list, a code is on its way.");
+    $("g-step-id").hidden = true;
+    $("g-step-code").hidden = false;
+    $("g-code").focus();
+  } catch (err) {
+    gateMsg("g-err", "Couldn't send a code just now — try again shortly.");
+  } finally {
+    btn.disabled = false; btn.textContent = "Email me a code";
+  }
+}
+
+async function verifyCode() {
+  const code = $("g-code").value.trim();
+  if (code.length !== 6) { gateMsg("g-err", "The code is 6 digits."); return; }
+  const btn = $("g-verify");
+  btn.disabled = true; btn.textContent = "Checking…";
+  try {
+    const data = await api({ action: "verifyCode", kind: "staff", identity: state.email, code: code });
+    state.token = data.token;
+    try { localStorage.setItem(TOKEN_KEY, data.token); } catch (err) {}
+    await load();
+  } catch (err) {
+    gateMsg("g-err", err.message || "That code did not match.");
+  } finally {
+    btn.disabled = false; btn.textContent = "Sign in";
+  }
+}
+
+function signOut(silent) {
+  if (state.token && CONFIG.API_URL && !silent) api({ action: "signOut", token: state.token }).catch(() => {});
+  state.token = "";
+  try { localStorage.removeItem(TOKEN_KEY); } catch (err) {}
+  $("dash").hidden = true;
+  $("who").hidden = true;
+  $("gate").hidden = false;
+  $("g-step-id").hidden = false;
+  $("g-step-code").hidden = true;
+}
+
+/* ── data ── */
+async function load() {
+  const data = await api({ action: "staffData", token: state.token });
+  state.data = data;
+  $("gate").hidden = true;
+  $("dash").hidden = false;
+  $("who").hidden = false;
+  $("who-name").textContent = data.me.name + " · " + data.me.role;
+  renderKpis();
+  renderList();
+  if (state.open) {
+    const fresh = data.claims.find((c) => c.ref === state.open.ref);
+    if (fresh) { state.open = fresh; renderDrawer(); }
+  }
+}
+
+function renderKpis() {
+  const box = $("kpis");
+  box.innerHTML = "";
+  const open = state.data.claims.filter((c) => !["Settled", "Declined", "Closed"].includes(c.status)).length;
+  const all = { label: "Open claims", count: open, key: "" };
+  const cards = [all].concat(state.data.statuses.map((s) => ({ label: s, count: state.data.kpis[s] || 0, key: s })));
+  cards.forEach((k) => {
+    const b = document.createElement("button");
+    b.className = "kpi" + (state.filter === k.key ? " on" : "");
+    b.type = "button";
+    b.innerHTML = "<b>" + k.count + "</b><span>" + esc(k.label) + "</span>";
+    b.addEventListener("click", () => { state.filter = (state.filter === k.key ? "" : k.key); renderKpis(); renderList(); });
+    box.appendChild(b);
+  });
+}
+
+function matches(c) {
+  if (state.filter && c.status !== state.filter) return false;
+  if (!state.filter && !state.query && ["Settled", "Declined", "Closed"].includes(c.status)) return false;
+  if (!state.query) return true;
+  const q = state.query.toLowerCase();
+  return [c.ref, c.name, c.policy, c.type, c.subtype, c.mobile, c.email, c.assigned, c.description]
+    .some((v) => String(v || "").toLowerCase().includes(q));
+}
+
+function renderList() {
+  const box = $("list");
+  box.innerHTML = "";
+  const rows = state.data.claims.filter(matches);
+  $("empty").hidden = rows.length > 0;
+  rows.forEach((c) => {
+    const div = document.createElement("div");
+    div.className = "row-card";
+    div.tabIndex = 0;
+    div.setAttribute("role", "button");
+    const quiet = c.quietDays >= 10;
+    div.innerHTML =
+      '<div class="rc-ref">' + esc(c.ref) + "<small>" + esc(c.filed) + "</small></div>" +
+      '<div class="rc-who"><b>' + esc(c.name) + "</b><span>" + esc(c.type) +
+        (c.subtype ? " — " + esc(c.subtype) : "") + "</span></div>" +
+      '<div class="rc-flags">' +
+        (c.missing.length ? '<span class="owe">⏳ ' + c.missing.length + " outstanding</span> · " : "") +
+        (quiet ? '<span class="quiet">' + c.quietDays + "d quiet</span> · " : "") +
+        (c.assigned ? esc(c.assigned) : "unassigned") +
+      "</div>" +
+      '<span class="pill p-' + esc(c.status.split(" ")[0]) + '">' + esc(c.status) + "</span>";
+    const open = () => { state.open = c; renderDrawer(); toggleDrawer(true); };
+    div.addEventListener("click", open);
+    div.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+    box.appendChild(div);
+  });
+}
+
+/* ── drawer ── */
+function toggleDrawer(show) {
+  $("drawer").classList.toggle("open", show);
+  $("scrim").classList.toggle("open", show);
+  if (!show) state.open = null;
+}
+
+function kv(dt, dd) {
+  return dd ? "<dt>" + dt + "</dt><dd>" + esc(dd) + "</dd>" : "";
+}
+
+function renderDrawer() {
+  const c = state.open;
+  if (!c) return;
+  $("d-ref").textContent = c.ref;
+  const staffOpts = state.data.staff.map((s) =>
+    '<option value="' + esc(s) + '"' + (c.assigned === s ? " selected" : "") + ">" + esc(s) + "</option>").join("");
+  const statusOpts = state.data.statuses.map((s) =>
+    '<option value="' + esc(s) + '"' + (c.status === s ? " selected" : "") + ">" + esc(s) + "</option>").join("");
+
+  $("d-body").innerHTML =
+    '<div class="d-sec"><h3>Claim</h3><dl class="kv">' +
+      kv("Client", c.name) + kv("Type", c.type + (c.subtype ? " — " + c.subtype : "")) +
+      kv("Policy #", c.policy) + kv("Mobile", c.mobile) + kv("Email", c.email) +
+      kv("Filed", c.filed) + kv("Location", c.location) + kv("Estimated", c.amount) +
+      kv("What happened", c.description) +
+    "</dl></div>" +
+
+    '<div class="d-sec"><h3>Documents (' + c.files.length + ")</h3><ul class=\"d-files\">" +
+      (c.files.map((f) => '<li><b>' + esc(f.doc) + "</b> — <a href=\"" + esc(f.link) + '" target="_blank" rel="noopener">' + esc(f.name) + "</a></li>").join("") || "<li>None yet.</li>") +
+    "</ul>" +
+    (c.folder ? '<p style="margin-top:10px"><a class="btn btn-ghost btn-sm" href="' + esc(c.folder) + '" target="_blank" rel="noopener">📁 Open Drive folder</a> ' +
+      (c.pdf ? '<a class="btn btn-ghost btn-sm" href="' + esc(c.pdf) + '" target="_blank" rel="noopener">📄 Claim form PDF</a>' : "") + "</p>" : "") +
+    "</div>" +
+
+    '<div class="d-sec"><h3>Waiting on the client</h3><div id="d-missing">' +
+      (c.missing.map((m, i) => '<span class="miss-chip">' + esc(m) +
+        '<button type="button" data-drop="' + i + '" title="Mark received / stop chasing">✕</button></span>').join("") ||
+        '<span style="font-size:.9rem;color:var(--muted)">Nothing outstanding.</span>') +
+    "</div>" +
+    (c.missing.length && c.email ? '<p style="margin-top:10px"><button class="btn btn-navy btn-sm" type="button" id="d-chase">📨 Send a chase email now</button></p>' : "") +
+    "</div>" +
+
+    '<div class="d-sec"><h3>Actions</h3><div class="d-actions">' +
+      '<div class="pair"><div class="field"><label>Status</label><select id="d-status">' + statusOpts + "</select>" +
+        '<label class="check" style="margin-top:8px"><input type="checkbox" id="d-notify" checked ' + (c.email ? "" : "disabled") + "/> Email the client this update" + (c.email ? "" : " (no email on file)") + "</label></div>" +
+        '<button class="btn btn-teal" type="button" id="d-save-status">Update</button></div>' +
+      '<div class="pair"><div class="field"><label>Assigned to</label><select id="d-assign"><option value="">— unassigned —</option>' + staffOpts + "</select></div>" +
+        '<button class="btn btn-ghost" type="button" id="d-save-assign">Assign</button></div>' +
+      '<div class="pair"><div class="field"><label>Internal note</label><textarea id="d-note" rows="2" placeholder="Visible to staff only, never the client"></textarea></div>' +
+        '<button class="btn btn-ghost" type="button" id="d-save-note">Add</button></div>' +
+    "</div></div>" +
+
+    '<div class="d-sec"><h3>Internal notes</h3><div style="font-size:.88rem;white-space:pre-wrap">' +
+      (esc(c.notes) || '<span style="color:var(--muted)">None yet.</span>') + "</div></div>";
+
+  $("d-save-status").addEventListener("click", () =>
+    act({ do: "status", status: $("d-status").value, notify: $("d-notify").checked }, "Status updated"));
+  $("d-save-assign").addEventListener("click", () =>
+    act({ do: "assign", assignee: $("d-assign").value }, "Assigned"));
+  $("d-save-note").addEventListener("click", () => {
+    const note = $("d-note").value.trim();
+    if (note) act({ do: "note", note: note }, "Note added");
+  });
+  const chase = $("d-chase");
+  if (chase) chase.addEventListener("click", () => act({ do: "chase" }, "Chase email sent"));
+  document.querySelectorAll("[data-drop]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const left = c.missing.filter((_, i) => i !== Number(b.dataset.drop));
+      act({ do: "missing", missing: left }, "Updated what's outstanding");
+    }));
+}
+
+async function act(params, doneMsg) {
+  try {
+    await api(Object.assign({ action: "staffAction", token: state.token, ref: state.open.ref }, params));
+  } catch (err) {
+    toast(err.message || "That didn't work — try again.");
+    return;
+  }
+  toast(doneMsg);
+  await load();
+}
+
+/* ── wiring ── */
+$("g-send").addEventListener("click", sendCode);
+$("g-verify").addEventListener("click", verifyCode);
+$("g-email").addEventListener("keydown", (e) => { if (e.key === "Enter") sendCode(); });
+$("g-code").addEventListener("keydown", (e) => { if (e.key === "Enter") verifyCode(); });
+$("signout").addEventListener("click", () => signOut(false));
+$("refresh").addEventListener("click", () => load().catch(() => signOut(true)));
+$("search").addEventListener("input", (e) => { state.query = e.target.value.trim(); renderList(); });
+$("d-close").addEventListener("click", () => toggleDrawer(false));
+$("scrim").addEventListener("click", () => toggleDrawer(false));
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") toggleDrawer(false); });
+
+/* ── init ── */
+try { state.token = localStorage.getItem(TOKEN_KEY) || ""; } catch (err) {}
+if (state.token && CONFIG.API_URL) load().catch(() => signOut(true));
+</script>
+</body>
+</html>
