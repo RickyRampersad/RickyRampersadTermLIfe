@@ -16,34 +16,50 @@ PIPE = KPipeline(lang_code='a', repo_id='hexgrad/Kokoro-82M')
 marks = json.load(open(DEMO / 'timeline.json'))
 T = {i: m['t'] / 1000.0 for i, m in enumerate(marks)}
 END = T[len(marks) - 1] + 4.0                     # outro hold + context close
+vt = DEMO / 'timeline-video.json'                 # true on-screen times (sync_timeline.py)
+if vt.exists():
+    v = json.load(open(vt))
+    if len(v['marks']) == len(marks) - 1:
+        T = {i: t for i, t in enumerate(v['marks'])}
+        T[len(marks) - 1] = END = v['duration']
+        print('placing narration on the video-derived timeline')
+    else:
+        raise SystemExit('timeline-video.json mark count mismatch — rerun sync_timeline.py')
 
 # ---------------- narration ----------------
+# One voice, one story — written for the agents who haven't bought in yet.
 LINES = {
-  0:  "This is Query Pal — how the Rampersad Branch turns every request into a promise, kept.",
-  1:  "One link, for everyone. Clients. Agents. Companies.",
-  2:  "Clients choose what they need in plain language — no email addresses to know.",
+  0:  "This is Query Pal, the Rampersad Branch service engine. Everything you're about to see is example data.",
+  1:  "One link, for everyone. Clients, agents, companies.",
+  2:  "Clients choose what they need in plain language. Nothing to remember, no email addresses to know.",
   3:  "Every request already knows its department, and its deadline.",
-  4:  "Guided forms gather the details, and a checklist shows exactly what to prepare.",
+  4:  "Guided forms gather the details, with a checklist of what to have ready.",
   5:  "Documents attach right on the form.",
-  6:  "One tap — and it's routed. The department gets the email. Agent, manager and branch, all copied.",
-  7:  "A reference. A deadline. A promise.",
+  6:  "One tap, and it's routed. The department gets the email. You, your manager, and the branch are copied. And you didn't lift a finger.",
+  7:  "The client walks away with a reference, a deadline, a promise.",
   8:  "Anyone can track a request by its reference.",
-  9:  "And when a department goes quiet, the autopilot doesn't. Follow-ups. Escalation. Until it's answered.",
-  10: "Agents see their book. Managers see their whole team.",
-  12: "Clients get their own portal — and the access code arrives by email, automatically.",
-  13: "Companies see every employee case, with live service stats.",
-  15: "Every case tells its story — and internal notes stay internal.",
-  16: "Enrolling a new member? Right from the portal, documents and all.",
-  17: "Logged. Assigned. Chased to completion.",
-  18: "And the whole branch — on one wall.",
-  19: "No sign-in needed. Open it on any screen, and it runs on its own — refreshing every minute.",
-  20: "Departments ranked. Agents celebrated.",
-  21: "And clients — heard, in their own words.",
-  22: "Logged. Routed. Chased. Resolved. Query Pal — service, delivered on time.",
+  9:  "And here's the part agents love most. The chasing? It's not your job anymore.",
+  10: "The day a deadline passes, follow-up one goes out on the same email thread. Polite, branded, and automatic.",
+  11: "Two days of silence later, follow-up two. Firmer, with the whole trail attached.",
+  12: "Still nothing? Follow-up three is the final escalation. The branch manager is copied, and the department is asked for a status, a date, and a name.",
+  13: "And while all of that is happening, your client sees this. Their request is actively being worked on, with a live progress gauge. That's you, looking after them — automatically.",
+  14: "If a case ever goes on hold, the client is told what that means, and what happens next. Never left guessing.",
+  15: "Your dashboard shows your book. Managers see the whole team.",
+  16: "Every chase the system sends is a phone call you didn't have to make. And every win lands on your record.",
+  17: "Clients and companies get their own portal, and the access code arrives by email, automatically.",
+  18: "A company sees every employee case, with live service stats.",
+  20: "Every case tells its story — and clients can comment right on the case, so you collaborate in one place. Internal notes stay internal.",
+  21: "Enrolling a new member? Right from the portal.",
+  22: "Logged. Assigned. Chased to completion.",
+  23: "And the whole branch — on one wall.",
+  24: "No sign-in needed. Open it on any screen, and it runs on its own.",
+  25: "Departments ranked. Agents celebrated. Your name, in gold.",
+  26: "And clients, heard in their own words.",
+  27: "Query Pal doesn't replace you. It multiplies you. Log it once — and let it keep your promises.",
 }
 
 def tts(text, out=None):
-    x = np.concatenate([a.numpy() for _, _, a in PIPE(text, voice=VOICE)]).astype(np.float64)
+    x = np.concatenate([a.numpy() for _, _, a in PIPE(text, voice=VOICE, speed=0.94)]).astype(np.float64)
     n = int(len(x) * SR / 24000)                  # 24000 -> 44100
     return np.interp(np.linspace(0, len(x) - 1, n), np.arange(len(x)), x)
 
@@ -75,13 +91,14 @@ CHORDS = [                                        # (bass midi, chord midis)
 ]
 t_all = np.arange(total) / SR
 
-CARD, WIN, PORTAL, WALLSEEN, BOARDS, OUTRO = T[0], T[6], T[12], T[18], T[19], T[22]
+CARD, WIN, MAILS, DASH, WALLSEEN, BOARDS, OUTRO = T[0], T[6], T[10], T[15], T[23], T[25], T[27]
 def energy(ts):                                   # 0 pads · 1 groove · 2 drive · 3 finale
     if ts < CARD - 1.2:  return -1                # page still loading: silence
     if ts < T[1]:        return 0
     if ts < WIN:         return 1
-    if ts < PORTAL:      return 2
-    if ts < WALLSEEN:    return 1
+    if ts < MAILS:       return 2
+    if ts < DASH:        return 1                 # the templates: let the voice lead
+    if ts < WALLSEEN:    return 2
     if ts < BOARDS:      return 2
     if ts < OUTRO:       return 3
     return 0

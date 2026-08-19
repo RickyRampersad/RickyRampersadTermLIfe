@@ -1,0 +1,140 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Query Pal — what actually goes out</title>
+<style>
+  /* A film set, not a product page: five slides, each one email, example data. */
+  body { margin:0; background:linear-gradient(150deg,#061c31,#0b2f52); font-family:'Segoe UI',Helvetica,Arial,sans-serif;
+         min-height:100vh; display:grid; place-items:center; }
+  .slide { display:none; width:min(660px,94vw); }
+  .slide.on { display:block; animation:in .5s ease; }
+  @keyframes in { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
+  .tag { text-align:center; margin:0 0 14px; }
+  .tag b { display:inline-block; background:rgba(56,189,248,.14); border:1px solid rgba(56,189,248,.35);
+           color:#9fd7f6; font-size:11px; font-weight:800; letter-spacing:.22em; text-transform:uppercase;
+           padding:7px 16px; border-radius:20px; }
+  .mail { background:#fff; border-radius:18px; overflow:hidden; box-shadow:0 22px 60px rgba(2,16,32,.55); }
+  .hd { background:linear-gradient(128deg,#0a2f4f,#0b6ab4); padding:16px 24px; display:flex; align-items:center; gap:12px; }
+  .hd .lg { width:42px; height:42px; background:#fff; border-radius:12px; display:grid; place-items:center;
+            color:#04223b; font-weight:800; font-size:14px; }
+  .hd .who { flex:1; }
+  .hd .who b { display:block; color:#fff; font-size:15px; font-weight:800; }
+  .hd .who span { color:#bfe0ff; font-size:10.5px; }
+  .badge { font-size:9px; font-weight:800; letter-spacing:.14em; padding:6px 12px; border-radius:20px; color:#fff; white-space:nowrap; }
+  .alert { padding:13px 24px; border-left:4px solid; }
+  .alert .k { font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.16em; }
+  .alert .v { font-size:17px; font-weight:800; margin-top:2px; }
+  .bd { padding:18px 24px 20px; color:#0a2138; font-size:13px; line-height:1.6; }
+  .ref { background:#0a2f4f; border-radius:12px; padding:10px 14px; margin:12px 0; }
+  .ref .k { font-size:8.5px; color:#9fc9ec; font-weight:800; letter-spacing:.2em; text-transform:uppercase; }
+  .ref .v { font-family:Consolas,Menlo,monospace; font-size:12px; font-weight:700; color:#fff; margin-top:3px; }
+  table.meta { width:100%; border-collapse:collapse; }
+  table.meta td { padding:6px 0; border-bottom:1px dashed #e8f0f7; font-size:12px; }
+  table.meta td.k { color:#8fa6ba; font-size:9.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; width:34%; }
+  table.meta td.v { color:#0a2138; font-weight:600; }
+  .note { font-size:11.5px; color:#5e7a93; margin-top:12px; line-height:1.55; }
+  .robot { background:#f4f9fd; border:1px solid #d8e9f6; border-radius:10px; padding:8px 12px; margin:10px 0; font-size:10px; color:#5e7a93; }
+  .gauge { display:flex; gap:5px; margin:12px 0; }
+  .gauge i { flex:1; height:9px; border-radius:5px; background:#e3eef7; }
+  .gauge i.f { background:linear-gradient(90deg,#0b7fd4,#37b1ec); }
+  .glab { display:flex; justify-content:space-between; font-size:9.5px; color:#8fa6ba; font-weight:700;
+          letter-spacing:.06em; text-transform:uppercase; margin-top:-6px; margin-bottom:10px; }
+  .hold { background:#fff7e8; border-left:4px solid #dd7a02; border-radius:8px; padding:10px 13px; margin:12px 0; }
+  .hold .k { font-size:10px; color:#9a6a1c; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+  .hold .v { font-size:12px; color:#5e4a23; margin-top:3px; line-height:1.55; }
+  .ft { background:#f6fafd; border-top:1px solid #e4eef6; padding:11px 24px; text-align:center; font-size:10.5px; color:#8fa6ba; }
+</style></head><body>
+
+<!-- 1 · FOLLOW-UP 1 — the day the deadline passes -->
+<section class="slide on" id="s1"><div class="tag"><b>Sent automatically · deadline day · same email thread</b></div>
+<div class="mail">
+  <div class="hd"><div class="lg">RRB</div><div class="who"><b>Ricky Rampersad Branch</b><span>Query Pal · Rampersad Branch 26000</span></div>
+    <span class="badge" style="background:#dd7a02;">FOLLOW-UP 1 OF 3</span></div>
+  <div class="alert" style="background:#fdeceb;border-color:#dd7a02;"><div class="k" style="color:#a03a33;">Automated system follow-up — still open</div>
+    <div class="v" style="color:#7c2a24;">No reply yet · due Thu, 20 Aug</div></div>
+  <div class="bd">
+    Following up on the request below — our records still show it <b>open</b>. Kindly <b>reply to this
+    thread with a status or completion confirmation</b> so we can update the client.
+    <div class="robot">🤖 This is an <b>automated status request</b> from the branch tracking system. Replying to this thread updates the case record and stops further reminders.</div>
+    <div class="ref"><div class="k">Reference</div><div class="v">RRB/2026/214/Anita Maharaj/Tax statem</div></div>
+    <table class="meta"><tr><td class="k">Request</td><td class="v">Statements – tax and csv</td></tr>
+      <tr><td class="k">Client</td><td class="v">Anita Maharaj</td></tr>
+      <tr><td class="k">Servicing agent</td><td class="v">Aidan Eugene</td></tr>
+      <tr><td class="k">Department</td><td class="v">Customer Service – Chaguanas</td></tr></table>
+    <div class="note">A one-line acknowledgement is perfectly fine — it keeps the client informed.</div>
+  </div><div class="ft">Ricky Rampersad Branch · Query Pal · example data</div></div></section>
+
+<!-- 2 · FOLLOW-UP 2 — two days later, firmer -->
+<section class="slide" id="s2"><div class="tag"><b>Two days of silence later · trail intact</b></div>
+<div class="mail">
+  <div class="hd"><div class="lg">RRB</div><div class="who"><b>Ricky Rampersad Branch</b><span>Query Pal · Rampersad Branch 26000</span></div>
+    <span class="badge" style="background:#dd7a02;">SECOND FOLLOW-UP 2 OF 3</span></div>
+  <div class="alert" style="background:#fdeceb;border-color:#dd7a02;"><div class="k" style="color:#a03a33;">Automated system follow-up — still open</div>
+    <div class="v" style="color:#7c2a24;">Due Thu, 20 Aug · 2 days past deadline</div></div>
+  <div class="bd">
+    Following up on the request below — our records still show it <b>open</b> and now
+    <b>past its deadline</b>. Kindly <b>reply to this thread</b> with a status or completion
+    confirmation so we can update the client. The full original request is in this email trail.
+    <div class="ref"><div class="k">Reference</div><div class="v">RRB/2026/214/Anita Maharaj/Tax statem</div></div>
+    <table class="meta"><tr><td class="k">Request</td><td class="v">Statements – tax and csv</td></tr>
+      <tr><td class="k">Servicing agent</td><td class="v">Aidan Eugene</td></tr>
+      <tr><td class="k">Reporting manager</td><td class="v">Ricky Rampersad</td></tr>
+      <tr><td class="k">Department</td><td class="v">Customer Service – Chaguanas</td></tr></table>
+  </div><div class="ft">Ricky Rampersad Branch · Query Pal · example data</div></div></section>
+
+<!-- 3 · FINAL ESCALATION -->
+<section class="slide" id="s3"><div class="tag"><b>Still nothing · the branch manager steps in</b></div>
+<div class="mail">
+  <div class="hd"><div class="lg">RRB</div><div class="who"><b>Ricky Rampersad Branch</b><span>Query Pal · Rampersad Branch 26000</span></div>
+    <span class="badge" style="background:#e0483e;">FINAL ESCALATION 3 OF 3</span></div>
+  <div class="alert" style="background:#fdeceb;border-color:#e0483e;"><div class="k" style="color:#a03a33;">Automated system follow-up — still open</div>
+    <div class="v" style="color:#7c2a24;">Due Thu, 20 Aug · 4 days past deadline</div></div>
+  <div class="bd">
+    <div class="ref"><div class="k">Reference</div><div class="v">RRB/2026/214/Anita Maharaj/Tax statem</div></div>
+    This is the <b>final automated escalation</b> — the branch manager is copied and will follow
+    up personally.
+    <div class="note" style="margin-top:10px;"><b style="color:#7c2a24;">ACTION REQUESTED</b> — kindly reply with:
+      (1) current status, (2) expected completion date, (3) the officer handling this case.</div>
+    <table class="meta" style="margin-top:10px;"><tr><td class="k">Copied</td><td class="v">Aidan Eugene · <b>Ricky Rampersad (Branch Manager)</b></td></tr>
+      <tr><td class="k">Department</td><td class="v">Customer Service – Chaguanas</td></tr></table>
+  </div><div class="ft">Ricky Rampersad Branch · Query Pal · example data</div></div></section>
+
+<!-- 4 · WHAT THE CLIENT SEES -->
+<section class="slide" id="s4"><div class="tag"><b>Meanwhile, in the client's inbox — every few days until closed</b></div>
+<div class="mail">
+  <div class="hd"><div class="lg">RRB</div><div class="who"><b>Ricky Rampersad Branch</b><span>Query Pal · Rampersad Branch 26000</span></div>
+    <span class="badge" style="background:#12507f;color:#cfeaff;">IN PROGRESS</span></div>
+  <div class="alert" style="background:#0b6ab4;border-color:#0b6ab4;"><div class="k" style="color:rgba(255,255,255,.85);">Status update</div>
+    <div class="v" style="color:#fff;">Statements – tax and csv</div></div>
+  <div class="bd">
+    <b style="font-size:14px;">Dear Anita,</b><br><br>
+    We want you to know that your <b>tax statement request</b> is <b>actively being worked on</b>.
+    Here is where it currently stands:
+    <div class="gauge" style="margin-top:14px;"><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i></div>
+    <div class="glab"><span>Logged</span><span>Routed</span><span>With the department</span><span>Answered</span><span>Closed</span></div>
+    Our team is following it closely with the relevant department to bring it to completion.
+    You do not need to do anything — we will update you as soon as there is progress, and you are
+    always welcome to <b>reply to this email</b> with any questions: it lands directly on your case record.
+  </div><div class="ft">Ricky Rampersad · CFD, MFA · Branch Manager · 23× MDRT · example data</div></div></section>
+
+<!-- 5 · ON HOLD -->
+<section class="slide" id="s5"><div class="tag"><b>If a case pauses, the client is told — never left guessing</b></div>
+<div class="mail">
+  <div class="hd"><div class="lg">RRB</div><div class="who"><b>Ricky Rampersad Branch</b><span>Query Pal · Rampersad Branch 26000</span></div>
+    <span class="badge" style="background:#b97a12;">ON HOLD</span></div>
+  <div class="alert" style="background:#fff7e8;border-color:#dd7a02;"><div class="k" style="color:#9a6a1c;">A quick update</div>
+    <div class="v" style="color:#6e5417;">Your request is on hold</div></div>
+  <div class="bd">
+    <b style="font-size:14px;">Dear Anita,</b><br><br>
+    Your <b>tax statement request</b> is currently <b>on hold</b>. This usually means we are waiting
+    on something — a document, an approval, or word from the insurer — before it can move again.
+    <div class="hold"><div class="k">What this means</div>
+      <div class="v">Nothing is lost and nothing is closed. Your case stays on our board, and the moment
+      it can move, our follow-ups resume automatically.</div></div>
+    If we need anything from you, we will ask directly. You are always welcome to reply to this email —
+    it goes straight to the branch and lands on your case record.
+    <div class="ref"><div class="k">Reference</div><div class="v">RRB/2026/214/Anita Maharaj/Tax statem</div></div>
+  </div><div class="ft">Ricky Rampersad Branch · Query Pal · example data</div></div></section>
+
+<script>
+  function show(n){ document.querySelectorAll('.slide').forEach((s,i)=>s.classList.toggle('on', i===n-1)); }
+</script>
+</body></html>

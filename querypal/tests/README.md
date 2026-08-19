@@ -127,14 +127,24 @@ speaks. Nothing is licensed from anyone; every note is synthesized here.
 Captions render as a thin full-width strip on the bottom edge of the frame so
 they never cover the app.
 
+The screen recorder's encoder falls behind on longer films — by the outro the
+picture can lag the recorder's wall clock by 10+ seconds. So the recorder
+paints a 10px sync dot (red→green→blue, advancing on every caption) in the
+bottom-left corner; `sync_timeline.py` reads the dots back out of the video to
+recover every mark's TRUE on-screen time, and `build_soundtrack.py` places the
+narration on those. The final encode masks the dot with a dark box.
+
 ```bash
 NODE_PATH=/opt/node22/lib/node_modules node record-demo.mjs
 pip install --index-url https://download.pytorch.org/whl/cpu torch
 pip install kokoro soundfile numpy && apt-get install -y espeak-ng
+python3 sync_timeline.py          # webm -> demo/timeline-video.json
 python3 build_soundtrack.py
-ffmpeg -ss 12.8 -i demo/querypal-demo.webm -ss 12.8 -i demo/soundtrack.wav \
-  -map 0:v -map 1:a -c:v libx264 -crf 23 -pix_fmt yuv420p -c:a aac -b:a 192k \
+ffmpeg -ss 1.1 -i demo/querypal-demo.webm -ss 1.1 -i demo/soundtrack.wav \
+  -map 0:v -map 1:a -vf "drawbox=x=0:y=784:w=16:h=16:color=0x04141f:t=fill" \
+  -c:v libx264 -crf 23 -pix_fmt yuv420p -c:a aac -b:a 192k \
   -movflags +faststart -shortest demo/querypal-demo-final.mp4
 ```
-(The -ss trims the page-load dead air before the title card; check the first
-timeline mark if the load time changes.)
+(The -ss trims to just before the title card — check mark 0 in
+timeline-video.json if the load time changes. `tests/email-gallery.html` is the
+follow-up/hold template showcase the film pans through in scene 2b.)

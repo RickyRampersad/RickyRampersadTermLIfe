@@ -1034,3 +1034,42 @@ function qpSelfCheck() {
   var msg = out.join('\n');
   Logger.log(msg); return msg;
 }
+
+
+/* ══════════════════ 9. ON-HOLD NOTICE — the client hears about holds ══════════════════
+   When a case is marked On Hold the chasers pause — but silence reads as
+   neglect. This sends the client one branded note the day the hold appears
+   (a hold-note:1 marker in the Description column stops repeats), and logs
+   it on the case trail. Wired into autoSweep by edit 14 in the instructions. */
+
+function qpHoldNotice_(sh, r, row) {
+  var email = String(row[6] || ''); if (!email) return;
+  var desc = String(row[18] || '');
+  if (/hold-note:1/.test(desc)) return;                       // once per hold
+  var F = 'font-family:Segoe UI,Helvetica,Arial,sans-serif;';
+  var ref = String(row[0] || ''), qtype = String(row[12] || row[17] || 'your request');
+  var first = (String(row[5] || '').split(/\s+/)[0] || 'Client');
+  first = first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+  var html = badgeHeader_('A Quick Update', 'Your request is on hold')
+    + '<div style="' + F + 'font-size:13.5px;color:#0a2138;line-height:1.75;">'
+    + 'Dear ' + esc(first) + ',<br><br>'
+    + 'Your <b>' + esc(qtype) + '</b> request is currently <b>on hold</b>. This usually means we are '
+    + 'waiting on something — a document, an approval, or word from the insurer — before it can move again.'
+    + '<div style="background:#fff7e8;border-left:4px solid #dd7a02;border-radius:8px;padding:12px 14px;margin:16px 0;">'
+    + '<div style="' + F + 'font-size:11px;color:#9a6a1c;font-weight:800;letter-spacing:.12em;text-transform:uppercase;">What this means</div>'
+    + '<div style="' + F + 'font-size:13px;color:#5e4a23;margin-top:4px;line-height:1.6;">Nothing is lost and nothing is closed. Your case stays on our board, and the moment it can move, our follow-ups resume automatically.</div></div>'
+    + 'If we need anything from you, we will ask directly. You are always welcome to reply to this '
+    + 'email — it goes straight to the branch and lands on your case record.'
+    + '<div style="background:#0a2f4f;border-radius:12px;padding:14px;margin:16px 0 0;text-align:center;">'
+    + '<div style="' + F + 'font-size:9px;color:#9fc9ec;font-weight:800;letter-spacing:.2em;text-transform:uppercase;">Reference</div>'
+    + '<div style="font-family:Consolas,Menlo,monospace;font-size:15px;font-weight:700;color:#fff;margin-top:4px;word-break:break-all;">' + esc(ref) + '</div></div>'
+    + '</div>' + badgeFooter_();
+  var msg = { to: (TEST_MODE ? TEST_EMAIL : email), replyTo: BRANCH_SUPPORT, name: 'Ricky Rampersad Branch',
+    subject: (TEST_MODE ? '[TEST] ' : '') + 'Your ' + qtype + ' request is on hold — ' + ref,
+    body: 'Dear ' + first + ',\n\nYour ' + qtype + ' request (' + ref + ') is currently on hold — usually because we are waiting on a document, an approval, or word from the insurer. Nothing is lost or closed; our follow-ups resume the moment it can move. Reply to this email with any questions.\n\n— Ricky Rampersad Branch',
+    htmlBody: html };
+  var img = qpLogoInline_(); if (img) msg.inlineImages = { qplogo: img };
+  MailApp.sendEmail(msg);
+  try { sh.getRange(r + 1, 19).setValue(desc + (desc ? ' | ' : '') + 'hold-note:1'); } catch (e) {}
+  try { cmtSheet_().appendRow([new Date(), ref, 'System', 'system', '⏸ On-hold notice sent to the client', 'internal']); } catch (e) {}
+}

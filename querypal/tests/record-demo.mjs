@@ -25,6 +25,10 @@ const mark = (kind, text) => MARKS.push({ t: Date.now() - T0, kind, text });
 /* ---------------- mocked backend ---------------- */
 const REF = 'RRB/2026/214/Anita Maharaj/Tax statem';
 const daysAgo = n => new Date(Date.now() - n * 864e5).toISOString();
+/* Nothing external: every off-disk request either hits the webhook mock below
+   or is aborted, so page loads never sit waiting on the network. */
+await page.route(/^https?:\/\//, route =>
+  route.request().url().includes('/macros/s/') ? route.fallback() : route.abort());
 await page.route('**/macros/s/**', route => {
   const req = route.request(); const url = new URL(req.url());
   const a = url.searchParams.get('action') || (req.postData() || '').match(/"action":"(\w+)"/)?.[1] || 'post';
@@ -108,8 +112,23 @@ async function installCaption() {
     document.body.appendChild(c);
   });
 }
+/* Sync beacon: a 10px dot bottom-left cycles red→green→white on every mark.
+   The recorder's wall clock and the recorded video drift apart when the
+   encoder falls behind, so sync_timeline.py reads these dots back OUT of the
+   video to recover each mark's true on-screen time for the soundtrack. */
+const PATCH = ['#ff0000', '#00ff00', '#0000ff'];
+async function setPatch(i) {
+  await page.evaluate(c => {
+    let p = document.getElementById('demoPatch');
+    if (!p) { p = document.createElement('div'); p.id = 'demoPatch';
+      p.style.cssText = 'position:fixed;left:2px;bottom:2px;width:10px;height:10px;z-index:2147483647;pointer-events:none;';
+      document.body.appendChild(p); }
+    p.style.background = c;
+  }, PATCH[i % 3]);
+}
 async function cap(text, holdMs) {
   mark('cap', text);
+  await setPatch(MARKS.length - 1);
   await installCaption();
   await page.evaluate(t => { const c = document.getElementById('demoCap');
     c.style.opacity = '0'; setTimeout(() => { c.textContent = t; c.style.opacity = '1'; }, 180); }, text);
@@ -117,6 +136,7 @@ async function cap(text, holdMs) {
 }
 async function card(title, sub, holdMs) {
   mark('card', title);
+  await setPatch(MARKS.length - 1);
   await page.evaluate(({ t, s }) => {
     let o = document.getElementById('demoCard');
     if (!o) { o = document.createElement('div'); o.id = 'demoCard';
@@ -138,16 +158,16 @@ const type = async (sel, text) => { await page.click(sel); await page.type(sel, 
 /* ================= THE FILM ================= */
 await page.goto('file://' + path.join(HERE, '..', 'index.html'));
 await sleep(900);
-await card('Query Pal', 'Ricky Rampersad Branch · how a request travels', 3200);
+await card('Query Pal', 'Ricky Rampersad Branch · how a request travels · shown with example data', 3200);
 
 /* — Scene 1: a client logs a request — */
 await cap('One link for clients, agents and companies — this is the client view.', 2600);
 await page.locator('.card', { hasText: 'Client' }).first().click();
 await sleep(1400);
-await cap('They pick what they need in plain language — no email addresses to know.', 2600);
+await cap('They pick what they need in plain language — no email addresses to know.', 5400);
 await page.locator('.card', { hasText: 'My Policy & Documents' }).first().click();
 await sleep(1500);
-await cap('Every request type knows its department and its promised turnaround.', 2400);
+await cap('Every request type knows its department and its promised turnaround.', 2700);
 await page.locator('.qrow', { hasText: 'tax or policy statement' }).first().click();
 await sleep(1600);
 await cap('Guided details — and the prep checklist shows exactly what to have ready.', 2500);
@@ -166,8 +186,8 @@ await page.locator('#submitBtn').scrollIntoViewIfNeeded();
 await sleep(500);
 await page.click('#submitBtn');
 await sleep(1800);
-await cap('Routed instantly — Customer Service Chaguanas gets the branded email, the agent, their manager and the branch are copied, and a Salesforce case is created.', 3600);
-await cap('The client walks away with a reference, a deadline — and a PDF receipt if they want one.', 2800);
+await cap('Routed instantly — the department gets the branded email; the agent, their manager and the branch are copied. Nobody lifted a finger.', 9000);
+await cap('The client walks away with a reference, a deadline — and a PDF receipt if they want one.', 3800);
 
 /* — Scene 2: tracking + the autopilot — */
 await page.evaluate(() => { try { openTrack(); } catch (e) {} });
@@ -176,11 +196,28 @@ await cap('Anyone can track a request by its reference…', 1600);
 await page.fill('#trackRef', REF);
 await page.evaluate(() => trackGo());
 await sleep(2300);
-await cap('…and behind the scenes the autopilot chases the department until it answers: follow-ups on the same email thread, escalation, then a phone-call alert.', 3800);
+await cap('…and from here the autopilot takes over the chasing — so agents never have to.', 4800);
 await page.evaluate(() => { try { closeTrack(); } catch (e) {} });
 await sleep(400);
 
+/* — Scene 2b: the templates — what actually goes out — */
+await page.goto('file://' + path.join(HERE, 'email-gallery.html'));
+await sleep(600);
+await installCaption();
+await cap('Follow-up 1 — the day the deadline passes, on the same email thread. Polite, branded, automatic.', 7800);
+await page.evaluate(() => show(2));
+await cap('Two days of silence later — follow-up 2, firmer, with the whole trail attached.', 5600);
+await page.evaluate(() => show(3));
+await cap('Follow-up 3 is the final escalation — the branch manager is copied, and the department is asked for a status, a date, and a name.', 10600);
+await page.evaluate(() => show(4));
+await cap('Meanwhile the client sees this — "actively being worked on", with a live progress gauge.', 11800);
+await page.evaluate(() => show(5));
+await cap('And if a case goes on hold, the client is told what that means — never left guessing.', 6400);
+
 /* — Scene 3: the agent dashboard — */
+await page.goto('file://' + path.join(HERE, '..', 'index.html'), { waitUntil: 'domcontentloaded' });
+await sleep(1800);
+await installCaption();
 await cap('Agents sign in with their own code — managers see their whole team.', 2200);
 await page.evaluate(() => {
   agentAuth = { code: 'AE101', name: 'Aidan Eugene', email: '', role: 'manager' };
@@ -188,14 +225,14 @@ await page.evaluate(() => {
   openDash();
 });
 await sleep(2600);
-await cap('Live status on every case — overdue flags, follow-up counts, client ratings.', 3000);
+await cap('Every case, every deadline, every chase the system sent for you — logged, and credited to you.', 4600);
 await page.evaluate(() => dashTab('done'));
 await sleep(1800);
 await page.evaluate(() => { closeDash(); });
 await sleep(400);
 
 /* — Scene 4: the client portal — */
-await cap('Clients and companies get their own portal. No code? It arrives by email, automatically.', 2400);
+await cap('Clients and companies get their own portal. No code? It arrives by email, automatically.', 2900);
 await page.evaluate(() => openClientGate());
 await sleep(700);
 await page.evaluate(() => ccGetCodeToggle());
@@ -209,7 +246,7 @@ await sleep(2400);
 await cap('Response rate, resolution rate, average days — computed on their cases only. Every case carries a live progress gauge.', 3400);
 await page.locator('.ccbtn', { hasText: 'History' }).first().click();
 await sleep(1000);
-await cap('Full history on every case — follow-ups, department replies, comments. Internal branch notes never appear here.', 3400);
+await cap('Full history on every case — and clients can comment, so you collaborate in one place. Internal branch notes never appear here.', 3900);
 await page.locator('.ccbtn', { hasText: 'History' }).first().click();
 await sleep(400);
 await cap('Companies can enroll a new member without a single email…', 2000);
@@ -239,14 +276,14 @@ await sleep(3000);
 await page.evaluate(() => rotate());   // open work / deadlines
 await sleep(3000);
 await page.evaluate(() => rotate());   // departments
-await cap('Departments and agents ranked by on-time delivery — gold, silver, bronze.', 2400);
+await cap('Departments and agents ranked by on-time delivery — gold, silver, bronze. Your name up there.', 2400);
 await page.evaluate(() => rotate());   // agents
 await sleep(2800);
 await page.evaluate(() => { rotate(); rotate(); });  // skip mix → satisfaction
 await cap('And how it feels to clients — every rating, in their own words.', 3000);
 
 /* — Outro — */
-await card('Logged. Routed. Chased. Resolved.', 'Query Pal · querymypolicies.netlify.app', 3600);
+await card('Logged. Routed. Chased. Resolved.', 'Query Pal · querymypolicies.netlify.app', 6800);
 
 mark('end', '');
 fs.writeFileSync(path.join(OUT, 'timeline.json'), JSON.stringify(MARKS, null, 1));

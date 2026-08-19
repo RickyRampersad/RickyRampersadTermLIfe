@@ -330,6 +330,25 @@ edit — it is here for the record.
 
 ---
 
+### 14 — `autoSweep`: tell the client when their case goes on hold
+
+Edit 9 stopped the chasers for cases marked On Hold — but nobody tells the
+client, so a hold feels like being forgotten. This sends one branded
+"your request is on hold" note (the template lives in the patch as
+`qpHoldNotice_`) the day the hold appears, then stays quiet.
+
+Find the line edit 9 installed:
+```js
+    if (/cancel|withdraw|duplicate|on hold/.test(status)) continue;
+```
+Replace with:
+```js
+    if (/on hold/.test(status)) { try { qpHoldNotice_(sh, r, row); } catch (he) {} continue; }
+    if (/cancel|withdraw|duplicate/.test(status)) continue;
+```
+
+---
+
 ## Two more worth doing, not required
 
 **`raiProxy_`** — the assistant endpoint is unauthenticated and spends your
