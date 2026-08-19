@@ -48,6 +48,15 @@
     padding:6px 13px;border-radius:24px;cursor:pointer;transition:.25s var(--ease);white-space:nowrap}
   .rng button:hover{color:var(--ink)}
   .rng button.on{background:var(--grad);color:#04223b;font-weight:750}
+  .filmbtn{background:var(--grad);border:none;color:#04223b;font:inherit;font-size:12px;font-weight:750;
+    padding:8px 16px;border-radius:24px;cursor:pointer;white-space:nowrap}
+  .filmbtn:hover{filter:brightness(1.08)}
+  #film{position:fixed;inset:0;z-index:200;background:#000;display:none}
+  #film.on{display:block}
+  #film iframe{width:100%;height:100%;border:0;display:block}
+  #film .x{position:absolute;top:18px;right:20px;z-index:210;background:rgba(0,0,0,.55);
+    border:1px solid rgba(255,255,255,.25);color:#fff;font:inherit;font-size:13px;font-weight:700;
+    padding:9px 16px;border-radius:22px;cursor:pointer}
   .live{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--dim);white-space:nowrap}
   .live i{width:8px;height:8px;border-radius:50%;background:var(--good);animation:pulse 2.2s infinite}
   .live.stale i{background:var(--warn);animation:none}
@@ -159,10 +168,12 @@
           <button data-m="6" class="on">6 months</button>
           <button data-m="12">12 months</button>
         </div>
+        <button class="filmbtn" id="playfilm" title="Play the launch film over the wall">▶ Film</button>
         <span class="live" id="live"><i></i><span id="stamp">connecting…</span></span>
       </div>
     </header>
     <div class="grid" id="grid"></div>
+    <div id="film"><button class="x" id="closefilm">Back to the wall ✕</button><div id="filmslot"></div></div>
     <footer id="foot"></footer>
   </div>
 </div>
@@ -182,6 +193,15 @@
             cadence the Query Pal wall uses.
    ═══════════════════════════════════════════════════════════════════════ */
 const API = "";
+
+/* The film plays over the wall — a screen in the office should be able to tell
+   the story on its own, then go back to showing the numbers.
+   FILM_EMBED false opens it in a tab instead, for hosted copies where the film
+   is not a sibling file. ATTRACT_MIN plays it by itself after that many quiet
+   minutes; set it to 0 to only ever play it on request. */
+const FILM_URL   = "launch-eb.html";
+const FILM_EMBED = true;
+const ATTRACT_MIN = 20;
 const REFRESH_MS = 5 * 60 * 1000;
 const WALL_CODE = "WALL26";
 
@@ -260,6 +280,7 @@ function signIn(){
   if(v !== WALL_CODE){ $('gerr').textContent = 'That code was not recognised.'; return; }
   authed = true; $('gate').style.display='none'; $('app').style.display='block';
   load(); if(timer) clearInterval(timer); timer = setInterval(load, REFRESH_MS);
+  armAttract();
 }
 $('code').addEventListener('keydown', e => { if(e.key==='Enter') signIn(); });
 
@@ -283,6 +304,34 @@ function load(){
     })
     .catch(()=>{ $('live').className='live stale'; $('stamp').textContent='offline — retrying'; });
 }
+
+/* ── the film ── */
+let idleTimer = null;
+function playFilm(withSound){
+  if(!FILM_EMBED){ window.open(FILM_URL, '_blank', 'noopener'); return; }
+  const box = $('film');
+  // A click is what buys us permission to make noise; without one, run it muted.
+  $('filmslot').innerHTML = '<iframe title="Launch film" allow="autoplay" src="'
+    + FILM_URL + (withSound ? '' : '?mute=1') + '"></iframe>';
+  $('filmslot').firstChild.style.cssText = 'width:100%;height:100%;border:0;display:block';
+  box.classList.add('on');
+  if(idleTimer) clearTimeout(idleTimer);
+}
+function closeFilm(){
+  $('film').classList.remove('on');
+  $('filmslot').innerHTML = '';   // removing the frame stops the narration dead
+  armAttract();
+}
+function armAttract(){
+  if(idleTimer) clearTimeout(idleTimer);
+  if(!ATTRACT_MIN) return;
+  idleTimer = setTimeout(() => playFilm(false), ATTRACT_MIN*60*1000);
+}
+$('playfilm').addEventListener('click', () => playFilm(true));
+$('closefilm').addEventListener('click', closeFilm);
+addEventListener('message', e => { if(e.data && e.data.film === 'ended') closeFilm(); });
+['click','keydown','mousemove'].forEach(ev =>
+  addEventListener(ev, () => { if(!$('film').classList.contains('on')) armAttract(); }, {passive:true}));
 
 $('rng').addEventListener('click', e => {
   const b = e.target.closest('button'); if(!b) return;

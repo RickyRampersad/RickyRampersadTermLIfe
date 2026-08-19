@@ -72,6 +72,11 @@
   .pill{margin-top:34px;background:var(--gold);color:var(--navy2);font-size:32px;font-weight:800;letter-spacing:.14em;
     text-transform:uppercase;padding:20px 52px;border-radius:60px}
   #prog{position:absolute;left:0;bottom:0;height:10px;background:linear-gradient(90deg,var(--blue),var(--gold2));width:0%;z-index:50}
+  #sound{position:absolute;top:24px;left:36px;z-index:50;display:flex;align-items:center;gap:14px;
+    font-family:Arial,sans-serif;color:rgba(255,255,255,.45);font-size:22px}
+  #sound button{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.22);color:#fff;
+    font-size:26px;line-height:1;border-radius:50%;width:60px;height:60px;cursor:pointer}
+  #sound button:hover{background:rgba(255,255,255,.18)}
   #hint{position:absolute;top:26px;right:36px;color:rgba(255,255,255,.45);font-size:24px;z-index:50;font-family:Arial,sans-serif}
   #replay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:60}
   #replay button{font:800 40px Georgia;background:var(--gold);color:var(--navy2);border:0;border-radius:60px;
@@ -188,6 +193,7 @@
   </div>
 
   <div id="prog"></div>
+  <div id="sound"><button id="mute" title="Mute or unmute the narration">🔊</button><span id="voice"></span></div>
   <div id="hint">click to pause</div>
   <div id="replay"><button>▶ Play again</button></div>
 </div></div>
@@ -224,6 +230,74 @@ function paintCounters(t){
   });
 }
 
+/* ═══════════════ NARRATION ═══════════════
+   Spoken by the browser, so there is no audio file to host and nothing to
+   re-record when a line changes. It asks for Andrew — the natural voice that
+   ships with Edge on Windows, which is what the branch screen runs — and
+   settles for the best neural voice it can find anywhere else.
+
+   Each line is written to fit inside its scene at the rate it is spoken.
+   Rate and pitch move line to line: lower and slower for the problem, brighter
+   and slower again for the reveal, so it lands as a reading rather than a
+   machine getting through some text. */
+const NARRATION = [
+  { at:1.2,  rate:0.95, pitch:1.00,
+    text:'Employee benefits. Quote it, enrol it, bill it, and check it — in one place.' },
+  { at:7.2,  rate:1.00, pitch:0.92,
+    text:'Every month, two documents. Group life. Group health. Different systems. Nobody reads three hundred lines by eye.' },
+  { at:15.2, rate:1.00, pitch:1.00,
+    text:'So we quote it properly. What they need, how much cover, read from their real census.' },
+  { at:22.6, rate:0.98, pitch:0.96,
+    text:'Then joiners and leavers, against a thirty-one day clock. Miss it, and the next one needs a medical.' },
+  { at:30.6, rate:0.92, pitch:1.06,
+    text:'And every month we read both, and compare. Three spelled differently. Two with no life cover. Eight hundred and forty-five dollars, recovered.' },
+  { at:39.6, rate:0.96, pitch:1.02,
+    text:'And on the wall in the branch — the whole book, live.' },
+  { at:46.4, rate:0.90, pitch:1.00,
+    text:'Employee benefits. Built at the branch. Running now.' }
+];
+
+const synth = window.speechSynthesis;
+let voice = null, muted = false, spoken = new Set();
+
+function pickVoice(){
+  if(!synth) return null;
+  const vs = synth.getVoices();
+  if(!vs.length) return null;
+  const en = vs.filter(v => /^en(-|_|$)/i.test(v.lang));
+  const pool = en.length ? en : vs;
+  return pool.find(v => /andrew/i.test(v.name))                        // what was asked for
+      || pool.find(v => /natural|neural/i.test(v.name) && /en-US/i.test(v.lang))
+      || pool.find(v => /natural|neural/i.test(v.name))
+      || pool.find(v => /guy|christopher|eric|brian|male/i.test(v.name))
+      || pool[0] || null;
+}
+if(synth){
+  voice = pickVoice();
+  synth.onvoiceschanged = () => { voice = pickVoice(); paintVoice(); };
+}
+function paintVoice(){
+  const el = document.getElementById('voice'); if(!el) return;
+  el.textContent = muted ? 'sound off'
+    : voice ? (/andrew/i.test(voice.name) ? 'Andrew' : voice.name.replace(/^Microsoft\s+/,'').replace(/\s*\(.*\)$/,''))
+    : 'no voice available';
+}
+/* Every step here is guarded. Speech is the one part of this that depends on
+   whatever voices the machine happens to have, and a film that stops dead
+   because a voice object was not what we expected is far worse than a silent
+   one — the pictures have to keep running whatever the audio does. */
+function say(line){
+  if(!synth || muted || !line) return;
+  try{
+    const u = new SpeechSynthesisUtterance(line.text);
+    try{ if(voice) u.voice = voice; }catch(e){}
+    u.rate = line.rate ?? 1; u.pitch = line.pitch ?? 1; u.volume = 1;
+    u.lang = (voice && voice.lang) || 'en-US';
+    synth.speak(u);
+  }catch(e){}
+}
+function hush(){ try{ synth && synth.cancel(); }catch(e){} }
+
 let t0=null, paused=false, pausedAt=0, raf=null, ended=false, confettiDone=false;
 
 function confetti(){
@@ -245,14 +319,18 @@ function tick(ts){
   SCENES.forEach(([id,a,b]) => document.getElementById(id)
     .classList.toggle('on', (t>=a && t<b) || (id==='s7' && t>=a)));
   paintCounters(t);
+  NARRATION.forEach((n,i) => { if(t >= n.at && !spoken.has(i)){ spoken.add(i); say(n); } });
   if(t>=46 && !confettiDone){ confettiDone = true; confetti(); }
   if(t>=DUR){ ended = true; document.getElementById('replay').style.display='flex';
-              document.getElementById('hint').textContent=''; return; }
+              document.getElementById('hint').textContent='';
+              try{ parent !== window && parent.postMessage({film:'ended'},'*'); }catch(e){}
+              return; }
   raf = requestAnimationFrame(tick);
 }
 
 function start(){
   ended=false; paused=false; t0=null; pausedAt=0; confettiDone=false;
+  spoken = new Set(); hush();
   document.getElementById('replay').style.display='none';
   document.getElementById('hint').textContent='click to pause';
   SCENES.forEach(([id]) => document.getElementById(id).classList.remove('on'));
@@ -261,12 +339,25 @@ function start(){
   raf = requestAnimationFrame(tick);
 }
 
+/* The wall opens this muted unless it has a click to spend on audio. */
+if(new URLSearchParams(location.search).get('mute') === '1') muted = true;
+paintVoice();
+document.getElementById('mute').addEventListener('click', e => {
+  e.stopPropagation();
+  muted = !muted;
+  document.getElementById('mute').textContent = muted ? '🔇' : '🔊';
+  if(muted) hush();
+  paintVoice();
+});
+document.getElementById('mute').textContent = muted ? '🔇' : '🔊';
+
 stage.addEventListener('click', e => {
+  if(e.target.closest('#sound')) return;
   if(ended) return;
   paused = !paused;
   document.getElementById('hint').textContent = paused ? 'paused — click to resume' : 'click to pause';
-  if(paused){ pausedAt = performance.now(); if(raf) cancelAnimationFrame(raf); }
-  else { t0 += performance.now() - pausedAt; raf = requestAnimationFrame(tick); }
+  if(paused){ pausedAt = performance.now(); if(raf) cancelAnimationFrame(raf); try{ synth && synth.pause(); }catch(e){} }
+  else { t0 += performance.now() - pausedAt; try{ synth && synth.resume(); }catch(e){} raf = requestAnimationFrame(tick); }
 });
 document.querySelector('#replay button').addEventListener('click', e => { e.stopPropagation(); start(); });
 
