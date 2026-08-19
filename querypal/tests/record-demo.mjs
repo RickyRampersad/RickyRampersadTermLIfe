@@ -144,10 +144,14 @@ async function card(title, sub, holdMs) {
         + 'background:linear-gradient(150deg,#061c31,#0b355b);opacity:1;transition:opacity .6s;';
       document.body.appendChild(o); }
     o.style.opacity = '1';
-    o.innerHTML = '<div style="text-align:center;font-family:Inter,system-ui,sans-serif;padding:0 40px;">'
-      + '<div style="width:74px;height:74px;margin:0 auto 22px;border-radius:20px;background:linear-gradient(135deg,#37b1ec,#0b6ab4);display:grid;place-items:center;color:#04223b;font-weight:800;font-size:24px;box-shadow:0 14px 44px rgba(11,127,212,.5);">RRB</div>'
-      + '<div style="color:#fff;font-size:38px;font-weight:800;letter-spacing:-1px;">' + t + '</div>'
-      + '<div style="color:#9dbdd8;font-size:18px;margin-top:12px;font-weight:500;">' + s + '</div></div>';
+    o.innerHTML = '<div id="demoCardIn" style="text-align:center;font-family:Inter,system-ui,sans-serif;padding:0 40px;">'
+      + '<div style="width:78px;height:78px;margin:0 auto 24px;border-radius:21px;background:linear-gradient(135deg,#37b1ec,#0b6ab4);display:grid;place-items:center;color:#04223b;font-weight:800;font-size:25px;box-shadow:0 0 90px rgba(56,177,236,.55),0 14px 44px rgba(11,127,212,.5);">RRB</div>'
+      + '<div style="color:#fff;font-size:44px;font-weight:800;letter-spacing:-1.2px;text-shadow:0 0 40px rgba(56,177,236,.45);">' + t + '</div>'
+      + '<div style="color:#9dbdd8;font-size:18px;margin-top:13px;font-weight:500;">' + s + '</div></div>';
+    document.getElementById('demoCardIn').animate(
+      [{ transform: 'scale(1.14)', opacity: 0, filter: 'blur(6px)' },
+       { transform: 'scale(1)',    opacity: 1, filter: 'blur(0)' }],
+      { duration: 750, easing: 'cubic-bezier(.16,1,.3,1)' });
   }, { t: title, s: sub });
   await sleep(holdMs);
   await page.evaluate(() => { const o = document.getElementById('demoCard'); if (o) { o.style.opacity = '0'; setTimeout(() => o.remove(), 650); } });
@@ -186,7 +190,7 @@ await page.locator('#submitBtn').scrollIntoViewIfNeeded();
 await sleep(500);
 await page.click('#submitBtn');
 await sleep(1800);
-await cap('Routed instantly — the department gets the branded email; the agent, their manager and the branch are copied. Nobody lifted a finger.', 9000);
+await cap('One tap — straight to the right department, with the agent, their manager and the branch all in the loop. Nobody lifted a finger.', 9000);
 await cap('The client walks away with a reference, a deadline — and a PDF receipt if they want one.', 3800);
 
 /* — Scene 2: tracking + the autopilot — */

@@ -35,13 +35,13 @@ LINES = {
   3:  "Every request already knows its department, and its deadline.",
   4:  "Guided forms gather the details, with a checklist of what to have ready.",
   5:  "Documents attach right on the form.",
-  6:  "One tap, and it's routed. The department gets the email. You, your manager, and the branch are copied. And you didn't lift a finger.",
+  6:  "One tap, and it's on its way. The right department gets a branded email, while you, your manager and the branch are all kept in the loop — and nobody had to lift a finger.",
   7:  "The client walks away with a reference, a deadline, a promise.",
   8:  "Anyone can track a request by its reference.",
   9:  "And here's the part agents love most. The chasing? It's not your job anymore.",
   10: "The day a deadline passes, follow-up one goes out on the same email thread. Polite, branded, and automatic.",
   11: "Two days of silence later, follow-up two. Firmer, with the whole trail attached.",
-  12: "Still nothing? Follow-up three is the final escalation. The branch manager is copied, and the department is asked for a status, a date, and a name.",
+  12: "Still nothing? Follow-up three is the final escalation. Now the branch manager steps in personally, and the department is asked for a status, a date, and a name.",
   13: "And while all of that is happening, your client sees this. Their request is actively being worked on, with a live progress gauge. That's you, looking after them — automatically.",
   14: "If a case ever goes on hold, the client is told what that means, and what happens next. Never left guessing.",
   15: "Your dashboard shows your book. Managers see the whole team.",
@@ -167,11 +167,39 @@ while ts < END - 0.2:
         music[i0:i0 + n] += 0.52 * np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-tt * 22)
         d = int(0.30 * SR)
         duck_kick[i0:i0 + d] *= np.minimum(1, 0.55 + 0.45 * np.arange(d) / d)
+    if e >= 2 and beat_pos < step / 2:             # backbeat snare on 2 and 4
+        bi = int(round((ts - start_s) / BEAT))
+        if bi % 2 == 1:
+            n = int(0.17 * SR); i0 = int(ts * SR); n = min(n, total - i0)
+            tt = np.arange(n) / SR
+            sn = np.random.default_rng(bi).standard_normal(n) * np.exp(-tt * 24)
+            sn += 0.55 * np.sin(2 * np.pi * 190 * tt) * np.exp(-tt * 38)
+            music[i0:i0 + n] += (0.26 if e == 2 else 0.32) * sn
     if e >= 2 and abs(beat_pos - BEAT / 2) < step / 4:   # offbeat hat
         n = int(0.030 * SR); i0 = int(ts * SR)
         music[i0:i0 + n] += 0.05 * np.random.default_rng(int(ts * 1000)).standard_normal(n) * np.exp(-np.arange(n) / SR * 160)
     ts += step / 2
 music *= duck_kick
+
+# cinematic impacts — a sub boom + darkening crash at the big reveals,
+# with a short whoosh rising into each one
+def impact(t0, g=1.0):
+    i0 = int(t0 * SR)
+    if i0 >= total: return
+    n = min(int(1.4 * SR), total - i0)
+    tt = np.arange(n) / SR
+    f = 64 * np.exp(-tt * 3.0) + 30                # pitch-dropping boom
+    boom = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-tt * 2.6)
+    rng = np.random.default_rng(int(t0 * 997))
+    crash = rng.standard_normal(n) * np.exp(-tt * 5.5)
+    crash = np.convolve(crash, np.ones(40) / 40, mode='same')   # darken
+    music[i0:i0 + n] += g * (0.50 * boom + 0.26 * crash)
+    w = min(int(0.5 * SR), i0)
+    if w > 0:
+        music[i0 - w:i0] += 0.15 * g * rng.standard_normal(w) * (np.arange(w) / w) ** 2
+
+for t0, g in ((CARD, 0.9), (WIN, 1.0), (WALLSEEN, 0.95), (BOARDS, 1.0), (OUTRO, 1.15)):
+    impact(t0, g)
 
 # riser into the finale, and the closing chord
 r0, r1 = int((BOARDS - 3.5) * SR), int(BOARDS * SR)
