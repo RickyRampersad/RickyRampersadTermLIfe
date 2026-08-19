@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Employee Benefits Wall | Ricky Rampersad Branch</title>
+<meta name="description" content="Live view of the branch's employee benefits book — groups, lives, premium under management, billing and movement.">
+<meta name="theme-color" content="#061c31">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Same design system as the Query Pal wall — this is its sibling, and on a
+     screen beside it the two should read as one product. */
+  :root{
+    --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
+    --blue:#37b1ec; --blue2:#0b7fd4; --teal:#0fb5a5;
+    --good:#34d399; --warn:#fbbf24; --bad:#fb7185; --gold:#f5b93b;
+    --grad:linear-gradient(120deg,#37b1ec,#0b7fd4);
+    --grad-gold:linear-gradient(120deg,#f5b93b,#e08b1e);
+    --r:18px; --ease:cubic-bezier(.16,1,.3,1);
+    --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-b);color:var(--ink);background:#061c31;
+    min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:
+      radial-gradient(1200px 700px at 12% -8%,rgba(55,177,236,.22),transparent 60%),
+      radial-gradient(900px 600px at 92% 4%,rgba(11,127,212,.20),transparent 62%),
+      radial-gradient(800px 700px at 60% 108%,rgba(15,181,165,.13),transparent 60%),
+      linear-gradient(165deg,#061c31 0%,#08243f 55%,#061a2d 100%)}
+  .wrap{max-width:1680px;margin:0 auto;padding:18px 20px 34px}
+
+  header{display:flex;align-items:center;gap:15px;padding:15px 20px;margin-bottom:16px;
+    background:rgba(255,255,255,.055);border:1px solid var(--line);border-radius:var(--r);backdrop-filter:blur(12px)}
+  header .mark{width:46px;height:46px;flex:none;border-radius:13px;background:var(--grad);
+    display:grid;place-items:center;font-family:var(--font-d);font-weight:800;font-size:15px;color:#04223b;
+    box-shadow:0 6px 20px rgba(11,127,212,.45)}
+  header h1{margin:0;font-family:var(--font-d);font-size:20px;font-weight:800;letter-spacing:-.3px}
+  header .sub{font-size:12.5px;color:var(--dim);margin-top:3px}
+  header .right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+  .rng{display:flex;gap:4px;background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:30px;padding:4px}
+  .rng button{border:none;background:none;color:var(--dim);font:inherit;font-size:12px;font-weight:650;
+    padding:6px 13px;border-radius:24px;cursor:pointer;transition:.25s var(--ease);white-space:nowrap}
+  .rng button:hover{color:var(--ink)}
+  .rng button.on{background:var(--grad);color:#04223b;font-weight:750}
+  .live{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--dim);white-space:nowrap}
+  .live i{width:8px;height:8px;border-radius:50%;background:var(--good);animation:pulse 2.2s infinite}
+  .live.stale i{background:var(--warn);animation:none}
+  .live.demo i{background:var(--gold);animation:none}
+  @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(52,211,153,.5)}50%{opacity:.55;box-shadow:0 0 0 7px rgba(52,211,153,0)}}
+
+  .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;
+    backdrop-filter:blur(10px);position:relative;overflow:hidden;animation:rise .55s var(--ease) both}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .panel:nth-child(2){animation-delay:.05s}.panel:nth-child(3){animation-delay:.10s}
+  .panel:nth-child(4){animation-delay:.15s}.panel:nth-child(5){animation-delay:.20s}
+  .panel:nth-child(6){animation-delay:.25s}.panel:nth-child(7){animation-delay:.30s}
+  .panel h2{margin:0 0 3px;font-family:var(--font-d);font-size:13px;font-weight:750;letter-spacing:.02em}
+  .panel .cap{font-size:11.5px;color:var(--faint);margin-bottom:15px;line-height:1.45}
+  .p-pulse{grid-column:span 12}
+  .p-trend{grid-column:span 7}.p-due{grid-column:span 5}
+  .p-groups{grid-column:span 7}.p-move{grid-column:span 5}
+  .p-mix{grid-column:span 7}.p-recon{grid-column:span 5}
+  @media(max-width:1180px){.panel{grid-column:span 12 !important}}
+
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .kpi{background:rgba(0,0,0,.20);border:1px solid var(--line);border-radius:14px;padding:14px 15px}
+  .kpi .k{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);font-weight:650}
+  .kpi .v{font-family:var(--font-d);font-size:27px;font-weight:800;letter-spacing:-.5px;margin-top:5px;
+    font-variant-numeric:tabular-nums;line-height:1.05}
+  .kpi .d{font-size:11.5px;color:var(--dim);margin-top:4px}
+  .kpi .d.up{color:var(--good)}.kpi .d.down{color:var(--bad)}
+  .kpi.accent .v{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  /* stacked monthly bars — life sits on health */
+  .bars{display:flex;align-items:flex-end;gap:8px;height:190px;margin-top:6px}
+  .bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;height:100%}
+  .bar .stack{width:100%;display:flex;flex-direction:column;justify-content:flex-end;height:100%;border-radius:7px;overflow:hidden}
+  .bar .h{background:var(--grad);transition:height .6s var(--ease)}
+  .bar .l{background:var(--grad-gold);transition:height .6s var(--ease)}
+  .bar .lab{font-size:10.5px;color:var(--faint);white-space:nowrap}
+  .bar:hover .lab{color:var(--ink)}
+  .legend{display:flex;gap:14px;font-size:11.5px;color:var(--dim);margin-top:10px;flex-wrap:wrap}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+  .rows{display:flex;flex-direction:column;gap:9px}
+  .row{display:flex;align-items:center;gap:11px;font-size:13px}
+  .row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+  .row .track{flex:1.3;height:9px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden}
+  .row .track i{display:block;height:100%;background:var(--grad);transition:width .7s var(--ease)}
+  .row .val{width:104px;text-align:right;font-variant-numeric:tabular-nums;font-weight:650;font-size:12.5px}
+  .row .sub{font-size:11px;color:var(--faint);width:78px;text-align:right}
+
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+  .chip{font-size:11px;font-weight:650;padding:4px 10px;border-radius:20px;border:1px solid var(--line);
+    background:rgba(0,0,0,.2);color:var(--dim)}
+  .chip.good{color:var(--good);border-color:rgba(52,211,153,.35)}
+  .chip.warn{color:var(--warn);border-color:rgba(251,191,36,.35)}
+  .chip.bad{color:var(--bad);border-color:rgba(251,113,133,.35)}
+
+  .list{display:flex;flex-direction:column;gap:10px}
+  .item{display:flex;gap:11px;align-items:flex-start;padding:11px 12px;border-radius:12px;
+    background:rgba(0,0,0,.2);border:1px solid var(--line)}
+  .item .ic{width:30px;height:30px;flex:none;border-radius:9px;display:grid;place-items:center;font-size:14px;
+    background:rgba(255,255,255,.07)}
+  .item b{display:block;font-size:12.5px;font-weight:700}
+  .item span{display:block;font-size:11.5px;color:var(--faint);line-height:1.45;margin-top:2px}
+  .item .amt{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:750;font-size:13px;white-space:nowrap}
+
+  .donut{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .donut canvas{flex:none}
+  .dl{display:flex;flex-direction:column;gap:7px;font-size:12.5px}
+  .dl div{display:flex;align-items:center;gap:8px}
+  .dl i{width:11px;height:11px;border-radius:3px}
+  .dl b{font-variant-numeric:tabular-nums;margin-left:auto;padding-left:14px}
+
+  .empty{padding:26px;text-align:center;color:var(--faint);font-size:13px;line-height:1.6}
+  footer{margin-top:18px;text-align:center;font-size:11.5px;color:var(--faint);line-height:1.7}
+  .gate{max-width:430px;margin:12vh auto;text-align:center;background:var(--card);border:1px solid var(--line);
+    border-radius:var(--r);padding:30px 26px;backdrop-filter:blur(10px)}
+  .gate h1{font-family:var(--font-d);font-size:20px;margin:0 0 6px}
+  .gate p{font-size:13px;color:var(--dim);margin:0 0 18px;line-height:1.6}
+  .gate input{width:100%;padding:12px 14px;border-radius:11px;border:1px solid var(--line);
+    background:rgba(0,0,0,.28);color:var(--ink);font:inherit;text-align:center;letter-spacing:.2em;text-transform:uppercase}
+  .gate button{width:100%;margin-top:11px;padding:12px;border:none;border-radius:11px;background:var(--grad);
+    color:#04223b;font:inherit;font-weight:750;cursor:pointer}
+  .gate .err{color:var(--bad);font-size:12px;min-height:1.2em;margin-top:9px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div id="gate" class="gate">
+    <h1>Employee Benefits Wall</h1>
+    <p>The branch's group book — lives, premium, billing and movement. Enter the wall code.</p>
+    <input id="code" placeholder="WALL CODE" autocomplete="off">
+    <button onclick="signIn()">Open the wall</button>
+    <div class="err" id="gerr"></div>
+    <p style="margin:14px 0 0;font-size:12px">Sample code <b>WALL26</b> — runs on a demonstration book.</p>
+  </div>
+
+  <div id="app" style="display:none">
+    <header>
+      <div class="mark">EB</div>
+      <div>
+        <h1>Employee Benefits Wall</h1>
+        <div class="sub" id="sub">Ricky Rampersad Branch · Guardian Life</div>
+      </div>
+      <div class="right">
+        <div class="rng" id="rng">
+          <button data-m="6" class="on">6 months</button>
+          <button data-m="12">12 months</button>
+        </div>
+        <span class="live" id="live"><i></i><span id="stamp">connecting…</span></span>
+      </div>
+    </header>
+    <div class="grid" id="grid"></div>
+    <footer id="foot"></footer>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   WALL CONFIG
+
+   API      Point at the branch Apps Script and the wall goes live. It polls
+            ?action=benefitswall&months=<n>&code=<wall code> and expects the
+            JSON documented at the bottom of this file. Leave it blank and the
+            wall runs on the demonstration book below, which is what a screen
+            in the office shows until the endpoint exists.
+
+   REFRESH  How often it re-pulls. A wall on a TV should never be stale, but
+            it should not hammer the sheet either — five minutes is the same
+            cadence the Query Pal wall uses.
+   ═══════════════════════════════════════════════════════════════════════ */
+const API = "";
+const REFRESH_MS = 5 * 60 * 1000;
+const WALL_CODE = "WALL26";
+
+/* ── demonstration book — invented companies, real rate structure ── */
+const RATE = { life1000:0.32, adnd1000:0.08, sum:100000,
+               health:{ 'Employee Only':266, 'Employee + Child':558, 'Employee + Spouse':558, 'Employee + Family':806 } };
+
+function group(name, sector, lives, mix, opts){
+  opts = opts || {};
+  const tiers = {};
+  const keys = Object.keys(RATE.health);
+  let left = lives;
+  keys.forEach((k,i) => { const n = i===keys.length-1 ? left : Math.round(lives*mix[i]); tiers[k]=n; left-=n; });
+  const health = keys.reduce((s,k) => s + tiers[k]*RATE.health[k], 0);
+  const lifeLives = lives - (opts.noLife||0);
+  const life = lifeLives*(RATE.sum/1000)*(RATE.life1000+RATE.adnd1000);
+  return Object.assign({ name, sector, lives, lifeLives, tiers, life, health,
+    total: life+health, paid: opts.paid!==undefined?opts.paid:1, dueDay: opts.dueDay||1,
+    noLife: opts.noLife||0, lag: opts.lag||0, renewal: opts.renewal }, opts);
+}
+const DEMO_BOOK = [
+  group('Meridian Supermarkets Limited','Retail & distribution',158,[.38,.19,.09,.34],
+        {noLife:2, lag:845, renewal:'2027-01-01', joiners:4, leavers:2}),
+  group('Trinidad Steel Works Limited','Manufacturing',92,[.30,.20,.12,.38],
+        {renewal:'2026-11-01', joiners:1, leavers:0}),
+  group('Caribe Logistics & Freight','Transport',64,[.45,.16,.11,.28],
+        {paid:0, dueDay:1, renewal:'2027-03-01', joiners:2, leavers:3, lag:412}),
+  group('Alpha Energy Services','Energy & marine',210,[.26,.18,.10,.46],
+        {renewal:'2026-10-01', joiners:6, leavers:1}),
+  group('Harbourview Trading Limited','Retail & distribution',46,[.50,.15,.09,.26],
+        {noLife:1, renewal:'2027-02-01', joiners:0, leavers:1}),
+  group('Sunbright Foods Limited','Food processing',120,[.35,.21,.10,.34],
+        {paid:0.4, renewal:'2026-12-01', joiners:3, leavers:2, lag:266})
+];
+
+function demoData(months){
+  const book = DEMO_BOOK;
+  const mTotal = book.reduce((s,g)=>s+g.total,0);
+  const now = new Date('2026-08-01T00:00:00');
+  const series = [];
+  for(let i=months-1;i>=0;i--){
+    const d = new Date(now); d.setMonth(d.getMonth()-i);
+    // the book grew through the period; scale back the earlier months a little
+    const k = 1 - (i*0.017);
+    series.push({ label:d.toLocaleDateString('en-GB',{month:'short'}),
+                  life: book.reduce((s,g)=>s+g.life,0)*k,
+                  health: book.reduce((s,g)=>s+g.health,0)*k });
+  }
+  return {
+    ok:true, demo:true, generated:'demonstration book',
+    month:'August 2026',
+    groups: book.map(g => ({ name:g.name, sector:g.sector, lives:g.lives, lifeLives:g.lifeLives,
+      tiers:g.tiers, life:g.life, health:g.health, total:g.total, paid:g.paid, renewal:g.renewal,
+      noLife:g.noLife, lag:g.lag, joiners:g.joiners||0, leavers:g.leavers||0 })),
+    series,
+    totals: { groups:book.length, lives:book.reduce((s,g)=>s+g.lives,0), monthly:mTotal,
+              annual:mTotal*12, prevMonthly:mTotal*0.983 }
+  };
+}
+
+/* ── helpers ── */
+const $ = id => document.getElementById(id);
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money = n => 'TT$' + Math.round(n).toLocaleString('en-US');
+const short = n => n>=1e6 ? 'TT$'+(n/1e6).toFixed(2)+'M' : n>=1e3 ? 'TT$'+Math.round(n/1e3)+'k' : 'TT$'+Math.round(n);
+const pct = (a,b) => b ? Math.round(a/b*100) : 0;
+
+/* four hues a viewer can tell apart at a glance on a dark ground, without
+   borrowing the good/warn/bad colours that mean something else here */
+const TIER_COLOURS = ['#37b1ec','#0fb5a5','#f5b93b','#93a9f5'];
+
+let data=null, months=6, timer=null, authed=false;
+
+function signIn(){
+  const v = ($('code').value||'').trim().toUpperCase();
+  if(v !== WALL_CODE){ $('gerr').textContent = 'That code was not recognised.'; return; }
+  authed = true; $('gate').style.display='none'; $('app').style.display='block';
+  load(); if(timer) clearInterval(timer); timer = setInterval(load, REFRESH_MS);
+}
+$('code').addEventListener('keydown', e => { if(e.key==='Enter') signIn(); });
+
+function load(){
+  if(!authed) return;
+  if(!API){
+    data = demoData(months);
+    $('live').className='live demo';
+    $('stamp').textContent='demonstration book';
+    render(); return;
+  }
+  fetch(API+'?action=benefitswall&months='+months+'&code='+encodeURIComponent(WALL_CODE))
+    .then(r=>r.json()).then(d=>{
+      if(!d || d.ok!==true){
+        $('grid').innerHTML='<div class="panel p-pulse"><div class="empty">The branch script answered, but not with a benefits wall.<br>It needs the <b>benefitswall</b> endpoint — the contract is in the comment at the foot of this file.</div></div>';
+        $('live').className='live stale'; $('stamp').textContent='endpoint not ready'; return;
+      }
+      data=d; $('live').className='live';
+      $('stamp').textContent = d.generated || new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+      render();
+    })
+    .catch(()=>{ $('live').className='live stale'; $('stamp').textContent='offline — retrying'; });
+}
+
+$('rng').addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b) return;
+  months = +b.dataset.m;
+  [...$('rng').children].forEach(x => x.classList.toggle('on', x===b));
+  load();
+});
+
+/* ── panel 1: the book at a glance ── */
+function pulse(){
+  const t = data.totals, g = data.groups;
+  const delta = t.prevMonthly ? (t.monthly - t.prevMonthly) : 0;
+  const dpc = t.prevMonthly ? (delta/t.prevMonthly*100) : 0;
+  const life = g.reduce((s,x)=>s+x.life,0), health = g.reduce((s,x)=>s+x.health,0);
+  const owed = g.filter(x=>x.paid<1).reduce((s,x)=>s+x.total*(1-x.paid),0);
+  return `<div class="panel p-pulse">
+    <h2>The book</h2><div class="cap">Every group this branch services, as at ${esc(data.month||'')}.</div>
+    <div class="kpis">
+      <div class="kpi accent"><div class="k">Premium under management</div><div class="v">${short(t.annual)}</div>
+        <div class="d">${money(t.monthly)} a month</div></div>
+      <div class="kpi"><div class="k">Groups</div><div class="v">${t.groups}</div>
+        <div class="d">${g.filter(x=>x.lives>=100).length} over 100 lives</div></div>
+      <div class="kpi"><div class="k">Lives covered</div><div class="v">${t.lives.toLocaleString('en-US')}</div>
+        <div class="d">plus dependants</div></div>
+      <div class="kpi"><div class="k">Month on month</div><div class="v">${delta>=0?'+':''}${dpc.toFixed(1)}%</div>
+        <div class="d ${delta>=0?'up':'down'}">${delta>=0?'+':'−'}${money(Math.abs(delta))}</div></div>
+      <div class="kpi"><div class="k">Health share</div><div class="v">${pct(health,life+health)}%</div>
+        <div class="d">life is ${pct(life,life+health)}%</div></div>
+      <div class="kpi"><div class="k">Outstanding</div><div class="v" style="${owed>0?'color:var(--warn)':''}">${owed>0?short(owed):'—'}</div>
+        <div class="d">${owed>0?g.filter(x=>x.paid<1).length+' group(s) unsettled':'all settled'}</div></div>
+    </div></div>`;
+}
+
+/* ── panel 2: premium over time, life stacked on health ── */
+function trend(){
+  const s = data.series||[];
+  const max = Math.max(1, ...s.map(x=>x.life+x.health));
+  return `<div class="panel p-trend">
+    <h2>Premium under management</h2><div class="cap">Billed each month across the whole book.</div>
+    <div class="bars">
+      ${s.map(x=>{
+        const tot=x.life+x.health, h=(tot/max*100);
+        return `<div class="bar" title="${esc(x.label)} — ${money(tot)}">
+          <div class="stack" style="height:${h}%">
+            <div class="l" style="height:${x.life/tot*100}%"></div>
+            <div class="h" style="height:${x.health/tot*100}%"></div>
+          </div><div class="lab">${esc(x.label)}</div></div>`;}).join('')}
+    </div>
+    <div class="legend">
+      <span><i style="background:linear-gradient(120deg,#37b1ec,#0b7fd4)"></i>Group health</span>
+      <span><i style="background:linear-gradient(120deg,#f5b93b,#e08b1e)"></i>Group life &amp; AD&amp;D</span>
+      <span style="color:var(--faint)">Health is the larger share on every group — it is where a renewal is won or lost.</span>
+    </div></div>`;
+}
+
+/* ── panel 3: what is owed ── */
+function due(){
+  const g = data.groups.slice().sort((a,b)=>a.paid-b.paid);
+  const unsettled = g.filter(x=>x.paid<1);
+  return `<div class="panel p-due">
+    <h2>Billing this month</h2><div class="cap">Settled, part-paid and outstanding.</div>
+    ${unsettled.length?`<div class="list">
+      ${unsettled.map(x=>`<div class="item">
+        <div class="ic" style="background:${x.paid===0?'rgba(251,113,133,.16)':'rgba(251,191,36,.16)'}">${x.paid===0?'⚠':'◐'}</div>
+        <div style="flex:1;min-width:0"><b>${esc(x.name)}</b>
+          <span>${x.paid===0?'nothing received':Math.round(x.paid*100)+'% received'} · ${x.lives} lives</span></div>
+        <div class="amt" style="color:${x.paid===0?'var(--bad)':'var(--warn)'}">${money(x.total*(1-x.paid))}</div>
+      </div>`).join('')}
+    </div>`:'<div class="empty">Every group has settled this month.</div>'}
+    <div class="chips" style="margin-top:13px">
+      <span class="chip good">${g.filter(x=>x.paid>=1).length} settled</span>
+      ${g.filter(x=>x.paid>0&&x.paid<1).length?`<span class="chip warn">${g.filter(x=>x.paid>0&&x.paid<1).length} part-paid</span>`:''}
+      ${g.filter(x=>x.paid===0).length?`<span class="chip bad">${g.filter(x=>x.paid===0).length} outstanding</span>`:''}
+    </div></div>`;
+}
+
+/* ── panel 4: groups ranked ── */
+function groups(){
+  const g = data.groups.slice().sort((a,b)=>b.total-a.total);
+  const max = Math.max(1, ...g.map(x=>x.total));
+  return `<div class="panel p-groups">
+    <h2>Groups by premium</h2><div class="cap">Monthly, life and health combined.</div>
+    <div class="rows">
+      ${g.map(x=>`<div class="row">
+        <span class="nm" title="${esc(x.sector||'')}">${esc(x.name)}</span>
+        <span class="sub">${x.lives} lives</span>
+        <span class="track"><i style="width:${x.total/max*100}%"></i></span>
+        <span class="val">${money(x.total)}</span>
+      </div>`).join('')}
+    </div></div>`;
+}
+
+/* ── panel 5: movement, and the clock that matters ── */
+function movement(){
+  const g = data.groups;
+  const joiners = g.reduce((s,x)=>s+(x.joiners||0),0);
+  const leavers = g.reduce((s,x)=>s+(x.leavers||0),0);
+  const withLeavers = g.filter(x=>(x.leavers||0)>0).sort((a,b)=>b.leavers-a.leavers);
+  const renewals = g.filter(x=>x.renewal).sort((a,b)=>String(a.renewal).localeCompare(String(b.renewal))).slice(0,3);
+  return `<div class="panel p-move">
+    <h2>Movement this month</h2><div class="cap">Joiners and leavers across the book. Every change has 31 days to reach Guardian before evidence of insurability is required.</div>
+    <div class="kpis" style="grid-template-columns:1fr 1fr">
+      <div class="kpi"><div class="k">Joined</div><div class="v" style="color:var(--good)">+${joiners}</div>
+        <div class="d">to enrol within 31 days</div></div>
+      <div class="kpi"><div class="k">Left</div><div class="v" style="color:var(--bad)">−${leavers}</div>
+        <div class="d">${withLeavers.length} group(s) affected</div></div>
+    </div>
+    ${renewals.length?`<div style="margin-top:14px">
+      <div class="k" style="font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);font-weight:650;margin-bottom:8px">Next renewals</div>
+      <div class="rows">${renewals.map(x=>`<div class="row">
+        <span class="nm">${esc(x.name)}</span>
+        <span class="val" style="width:120px;color:var(--dim)">${new Date(x.renewal+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}</span>
+      </div>`).join('')}</div></div>`:''}
+    </div>`;
+}
+
+/* ── panel 6: who is covered, and how ── */
+function mix(){
+  const g = data.groups;
+  const tiers = {};
+  g.forEach(x => Object.keys(x.tiers||{}).forEach(k => tiers[k] = (tiers[k]||0) + x.tiers[k]));
+  const keys = Object.keys(tiers), total = keys.reduce((s,k)=>s+tiers[k],0) || 1;
+  const colours = TIER_COLOURS;
+  // dependants ride on every tier above single — the plan reaches far more people than it insures
+  const dependants = (tiers['Employee + Child']||0)*1 + (tiers['Employee + Spouse']||0)*1 + (tiers['Employee + Family']||0)*3;
+  return `<div class="panel p-mix">
+    <h2>Who the medical plans cover</h2><div class="cap">Across every group on the book.</div>
+    <div class="donut">
+      <canvas id="dnut" width="168" height="168" aria-label="Cover tier mix"></canvas>
+      <div class="dl">
+        ${keys.map((k,i)=>`<div><i style="background:${colours[i%colours.length]}"></i>${esc(k)}
+          <b>${tiers[k]} · ${pct(tiers[k],total)}%</b></div>`).join('')}
+      </div>
+    </div>
+    <div style="margin-top:14px;color:var(--faint);font-size:11.5px;line-height:1.55">
+      About <b style="color:var(--ink)">${(total+dependants).toLocaleString('en-US')}</b> people are covered once dependants
+      are counted — these plans reach far more than the ${total.toLocaleString('en-US')} employees who hold them.
+    </div></div>`;
+}
+
+function drawDonut(){
+  const c = $('dnut'); if(!c) return;
+  const g = data.groups, tiers = {};
+  g.forEach(x => Object.keys(x.tiers||{}).forEach(k => tiers[k] = (tiers[k]||0) + x.tiers[k]));
+  const keys = Object.keys(tiers), total = keys.reduce((s,k)=>s+tiers[k],0);
+  if(!total) return;
+  const ctx = c.getContext('2d'), R = 78, r = 47, cx = 84, cy = 84;
+  const colours = TIER_COLOURS;
+  let a = -Math.PI/2;
+  ctx.clearRect(0,0,168,168);
+  keys.forEach((k,i) => {
+    const slice = tiers[k]/total*Math.PI*2;
+    ctx.beginPath(); ctx.arc(cx,cy,R,a,a+slice); ctx.arc(cx,cy,r,a+slice,a,true); ctx.closePath();
+    ctx.fillStyle = colours[i%colours.length]; ctx.fill();
+    a += slice;
+  });
+  ctx.fillStyle = '#eaf4ff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font = '800 25px Plus Jakarta Sans, sans-serif';
+  ctx.fillText(total.toLocaleString('en-US'), cx, cy-6);
+  ctx.font = '600 10px Inter, sans-serif'; ctx.fillStyle = '#6d8ba6';
+  ctx.fillText('EMPLOYEES', cx, cy+13);
+}
+
+/* ── panel 7: is the paperwork straight ── */
+function recon(){
+  const g = data.groups;
+  const gaps = g.filter(x => (x.noLife||0) > 0);
+  const lag = g.reduce((s,x)=>s+(x.lag||0),0);
+  const lagGroups = g.filter(x=>(x.lag||0)>0);
+  return `<div class="panel p-recon">
+    <h2>Is the paperwork straight?</h2><div class="cap">What the monthly documents disagree about, once life is read against health.</div>
+    <div class="list">
+      <div class="item">
+        <div class="ic" style="background:${gaps.length?'rgba(251,191,36,.16)':'rgba(52,211,153,.16)'}">${gaps.length?'◑':'✓'}</div>
+        <div style="flex:1;min-width:0"><b>${gaps.length?gaps.reduce((s,x)=>s+x.noLife,0)+' on medical with no life cover':'Every member on both policies'}</b>
+          <span>${gaps.length?gaps.map(x=>esc(x.name)).join(' · '):'Life and health agree across the book'}</span></div>
+      </div>
+      <div class="item">
+        <div class="ic" style="background:${lag?'rgba(251,113,133,.16)':'rgba(52,211,153,.16)'}">${lag?'↺':'✓'}</div>
+        <div style="flex:1;min-width:0"><b>${lag?'Premium paid on people who had left':'No late leavers this month'}</b>
+          <span>${lag?lagGroups.length+' group(s) reported a leaver after their last day':'Every termination reached Guardian on time'}</span></div>
+        ${lag?`<div class="amt" style="color:var(--bad)">${money(lag)}</div>`:''}
+      </div>
+    </div>
+    <div class="chips" style="margin-top:12px">
+      <span class="chip">${g.length} groups checked</span>
+      <span class="chip ${gaps.length?'warn':'good'}">${gaps.length} with gaps</span>
+      <span class="chip ${lag?'bad':'good'}">${lag?money(lag)+' recoverable':'nothing leaking'}</span>
+    </div>
+    <div style="margin-top:12px;font-size:11.5px;color:var(--faint);line-height:1.55">
+      No single Guardian document shows this. It comes from reading the life billing against the health invoice —
+      which the group account page does the moment a month's files are dropped in.
+    </div></div>`;
+}
+
+function render(){
+  if(!data) return;
+  if(!data.groups || !data.groups.length){
+    $('grid').innerHTML = '<div class="panel p-pulse"><div class="empty">No groups on the book yet.</div></div>';
+    return;
+  }
+  $('grid').innerHTML = [pulse(),trend(),due(),groups(),movement(),mix(),recon()].join('');
+  drawDonut();
+  $('foot').innerHTML = (data.demo
+      ? 'Demonstration book — invented companies on a real rate structure. Point <b>API</b> at the branch script to run this live.'
+      : 'Live from the branch record · refreshes every '+(REFRESH_MS/60000)+' minutes')
+    + '<br>Ricky Rampersad Branch · Employee Benefits · Guardian Life of the Caribbean';
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   THE ENDPOINT THIS WALL EXPECTS
+
+   GET  <API>?action=benefitswall&months=6&code=<wall code>
+
+   {
+     "ok": true,
+     "generated": "14:05",              // shown beside the live dot
+     "month": "August 2026",
+     "totals": {
+       "groups": 6, "lives": 690,
+       "monthly": 512340.00,            // billed this month, whole book
+       "annual": 6148080.00,
+       "prevMonthly": 503900.00         // drives the month-on-month figure
+     },
+     "series": [                        // oldest first, one entry per month
+       { "label": "Mar", "life": 24100, "health": 402300 }
+     ],
+     "groups": [
+       { "name": "…", "sector": "…",
+         "lives": 158, "lifeLives": 156,
+         "tiers": { "Employee Only": 60, "Employee + Child": 30,
+                    "Employee + Spouse": 14, "Employee + Family": 54 },
+         "life": 6240, "health": 84036, "total": 90276,
+         "paid": 1,                     // 0 = nothing in, 0.4 = part-paid, 1 = settled
+         "renewal": "2027-01-01",
+         "noLife": 2,                   // on health, absent from the life billing
+         "lag": 845,                    // premium credited back for late-reported leavers
+         "joiners": 4, "leavers": 2 }
+     ]
+   }
+
+   Every field is optional except name, lives and the premium figures — panels
+   quietly drop what they are not given rather than showing a broken number.
+   ═══════════════════════════════════════════════════════════════════════ */
+</script>
+</body>
+</html>
