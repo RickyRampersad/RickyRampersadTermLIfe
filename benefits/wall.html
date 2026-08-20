@@ -132,31 +132,15 @@
 
   .empty{padding:26px;text-align:center;color:var(--faint);font-size:13px;line-height:1.6}
   footer{margin-top:18px;text-align:center;font-size:11.5px;color:var(--faint);line-height:1.7}
-  .gate{max-width:430px;margin:12vh auto;text-align:center;background:var(--card);border:1px solid var(--line);
-    border-radius:var(--r);padding:30px 26px;backdrop-filter:blur(10px)}
-  .gate h1{font-family:var(--font-d);font-size:20px;margin:0 0 6px}
-  .gate p{font-size:13px;color:var(--dim);margin:0 0 18px;line-height:1.6}
-  .gate input{width:100%;padding:12px 14px;border-radius:11px;border:1px solid var(--line);
     background:rgba(0,0,0,.28);color:var(--ink);font:inherit;text-align:center;letter-spacing:.2em;text-transform:uppercase}
-  .gate button{width:100%;margin-top:11px;padding:12px;border:none;border-radius:11px;background:var(--grad);
-    color:#04223b;font:inherit;font-weight:750;cursor:pointer}
-  .gate .err{color:var(--bad);font-size:12px;min-height:1.2em;margin-top:9px}
+
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 
 <div class="wrap">
-  <div id="gate" class="gate">
-    <h1>Employee Benefits Wall</h1>
-    <p>The branch's group book — lives, premium, billing and movement. Enter the wall code.</p>
-    <input id="code" placeholder="WALL CODE" autocomplete="off">
-    <button onclick="signIn()">Open the wall</button>
-    <div class="err" id="gerr"></div>
-    <p style="margin:14px 0 0;font-size:12px">Sample code <b>WALL26</b> — runs on a demonstration book.</p>
-  </div>
-
-  <div id="app" style="display:none">
+  <div id="app">
     <header>
       <div class="mark">EB</div>
       <div>
@@ -201,9 +185,11 @@ const API = "";
    minutes; set it to 0 to only ever play it on request. */
 const FILM_URL   = "launch-eb.html";
 const FILM_EMBED = true;
-const ATTRACT_MIN = 20;
+const ATTRACT_MIN = 15;
 const REFRESH_MS = 5 * 60 * 1000;
-const WALL_CODE = "WALL26";
+/* Not a password — the wall is open, like the fact find. This only identifies
+   the display to the branch script, which decides what it will answer with. */
+const API_KEY = "WALL26";
 
 /* ── demonstration book — invented companies, real rate structure ── */
 const RATE = { life1000:0.32, adnd1000:0.08, sum:100000,
@@ -273,26 +259,17 @@ const pct = (a,b) => b ? Math.round(a/b*100) : 0;
    borrowing the good/warn/bad colours that mean something else here */
 const TIER_COLOURS = ['#37b1ec','#0fb5a5','#f5b93b','#93a9f5'];
 
-let data=null, months=6, timer=null, authed=false;
+let data=null, months=6, timer=null;
 
-function signIn(){
-  const v = ($('code').value||'').trim().toUpperCase();
-  if(v !== WALL_CODE){ $('gerr').textContent = 'That code was not recognised.'; return; }
-  authed = true; $('gate').style.display='none'; $('app').style.display='block';
-  load(); if(timer) clearInterval(timer); timer = setInterval(load, REFRESH_MS);
-  armAttract();
-}
-$('code').addEventListener('keydown', e => { if(e.key==='Enter') signIn(); });
 
 function load(){
-  if(!authed) return;
   if(!API){
     data = demoData(months);
     $('live').className='live demo';
     $('stamp').textContent='demonstration book';
     render(); return;
   }
-  fetch(API+'?action=benefitswall&months='+months+'&code='+encodeURIComponent(WALL_CODE))
+  fetch(API+'?action=benefitswall&months='+months+'&code='+encodeURIComponent(API_KEY))
     .then(r=>r.json()).then(d=>{
       if(!d || d.ok!==true){
         $('grid').innerHTML='<div class="panel p-pulse"><div class="empty">The branch script answered, but not with a benefits wall.<br>It needs the <b>benefitswall</b> endpoint — the contract is in the comment at the foot of this file.</div></div>';
@@ -306,7 +283,7 @@ function load(){
 }
 
 /* ── the film ── */
-let idleTimer = null;
+let idleTimer = null, soundArmed = false;
 function playFilm(withSound){
   if(!FILM_EMBED){ window.open(FILM_URL, '_blank', 'noopener'); return; }
   const box = $('film');
@@ -325,11 +302,14 @@ function closeFilm(){
 function armAttract(){
   if(idleTimer) clearTimeout(idleTimer);
   if(!ATTRACT_MIN) return;
-  idleTimer = setTimeout(() => playFilm(false), ATTRACT_MIN*60*1000);
+  // browsers only let a page speak after someone has clicked it, so an
+  // unattended first play runs silent rather than looking broken
+  idleTimer = setTimeout(() => playFilm(soundArmed), ATTRACT_MIN*60*1000);
 }
-$('playfilm').addEventListener('click', () => playFilm(true));
+$('playfilm').addEventListener('click', () => { soundArmed = true; playFilm(true); });
 $('closefilm').addEventListener('click', closeFilm);
 addEventListener('message', e => { if(e.data && e.data.film === 'ended') closeFilm(); });
+['click','keydown'].forEach(ev => addEventListener(ev, () => { soundArmed = true; }, {passive:true}));
 ['click','keydown','mousemove'].forEach(ev =>
   addEventListener(ev, () => { if(!$('film').classList.contains('on')) armAttract(); }, {passive:true}));
 
@@ -540,6 +520,11 @@ function render(){
       : 'Live from the branch record · refreshes every '+(REFRESH_MS/60000)+' minutes')
     + '<br>Ricky Rampersad Branch · Employee Benefits · Guardian Life of the Caribbean';
 }
+
+/* Nothing to sign into: it comes up showing the book and keeps itself fresh. */
+load();
+timer = setInterval(load, REFRESH_MS);
+armAttract();
 
 /* ═══════════════════════════════════════════════════════════════════════
    THE ENDPOINT THIS WALL EXPECTS
