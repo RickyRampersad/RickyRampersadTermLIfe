@@ -3244,6 +3244,132 @@ function pdRequirements_() {
   return map;
 }
 
+/* ============== pending business beyond the application queue ==============
+   Three more tabs carry work that is pending business by another name, and
+   none of it was visible to anybody who only read the requirement tab:
+
+     SFTASK MGT                   the support desk's own Salesforce tasks —
+                                  36 open, every one typed 'Pendings', with
+                                  the policy number written into the subject
+     Group Health and Increases   health applications in underwriting, on
+                                  Salesforce client ids rather than policy
+                                  numbers, so they never join the portfolio
+     Increases                    API increases submitted and awaiting
+                                  processing — real premium, already sold
+
+   Reading them turns two blind spots into numbers: pending cases with no
+   task raised against them, and open tasks still chasing cases that have
+   already settled. */
+
+var PD_TASK_SHEET  = 'SFTASK MGT';
+var PD_HEALTH_SHEET = 'Group Health and Increases';
+var PD_INCR_SHEET  = 'Increases';
+
+/** Policy numbers as they appear in a task subject line. */
+var PD_POLICY_RE = /\b([158]\d{9})\b/g;
+
+/**
+ * The support desk's open tasks, keyed by the policy numbers written into
+ * their subjects ('Follow up with UW - <policy> - <client>'). Anything marked
+ * Completed is history; everything else is live work.
+ */
+function pdOpenTasks_() {
+  var out = { open: [], byPolicy: {}, count: 0 };
+  try {
+    var sh = SpreadsheetApp.openById(PORTFOLIO_ID).getSheetByName(PD_TASK_SHEET);
+    if (!sh) return out;
+    var v = sh.getDataRange().getValues();
+    if (v.length < 2) return out;
+    var H = {}, c;
+    for (c = 0; c < v[0].length; c++) H[String(v[0][c]).replace(/^ +| +$/g, '')] = c;
+    var iSt = H['Status'], iSub = H['Subject'], iAsg = H['Assigned'], iAg = H['Agent'],
+        iCon = H['Contact'], iDays = H['Days O/S'], iIdle = H['Days Since Last Activity'];
+    if (iSt == null || iSub == null) return out;
+    for (var r = 1; r < v.length; r++) {
+      var st = String(v[r][iSt] == null ? '' : v[r][iSt]).replace(/^ +| +$/g, '');
+      if (!st || st === 'Completed') continue;
+      var subj = String(iSub == null ? '' : (v[r][iSub] || ''));
+      var t = {
+        status: st, subject: subj,
+        assigned: String(iAsg == null ? '' : (v[r][iAsg] || '')).replace(/^ +| +$/g, ''),
+        agent: String(iAg == null ? '' : (v[r][iAg] || '')).replace(/^ +| +$/g, ''),
+        waitingOn: String(iCon == null ? '' : (v[r][iCon] || '')).replace(/^ +| +$/g, ''),
+        days: Number(iDays == null ? 0 : v[r][iDays]) || 0,
+        idle: Number(iIdle == null ? 0 : v[r][iIdle]) || 0,
+        policies: []
+      };
+      PD_POLICY_RE.lastIndex = 0;                       // a /g regex keeps state between calls
+      var m;
+      while ((m = PD_POLICY_RE.exec(subj)) !== null) {
+        t.policies.push(m[1]);
+        if (!out.byPolicy[m[1]]) out.byPolicy[m[1]] = t;
+      }
+      out.open.push(t);
+      out.count++;
+    }
+  } catch (e) {
+    Logger.log('Open tasks: could not read "' + PD_TASK_SHEET + '" — ' + e);
+  }
+  return out;
+}
+
+/**
+ * Group health applications and API increases — pending business the policy
+ * book cannot see, because these live on Salesforce client ids. Both carry a
+ * days-outstanding count of their own, which is the only clock they have.
+ */
+function pdOtherPending_() {
+  var out = { health: [], increases: [] };
+  var read = function (name, map) {
+    try {
+      var sh = SpreadsheetApp.openById(PORTFOLIO_ID).getSheetByName(name);
+      if (!sh) return [];
+      var v = sh.getDataRange().getValues();
+      if (v.length < 2) return [];
+      var H = {}, c;
+      for (c = 0; c < v[0].length; c++) H[String(v[0][c]).replace(/^ +| +$/g, '')] = c;
+      var rows = [], r, item;
+      for (r = 1; r < v.length; r++) {
+        item = map(v[r], H);
+        if (item) rows.push(item);
+      }
+      return rows;
+    } catch (e) {
+      Logger.log('Other pending: could not read "' + name + '" — ' + e);
+      return [];
+    }
+  };
+  var get = function (row, H, key) {
+    var i = H[key];
+    return i == null || i >= row.length || row[i] == null ? '' : row[i];
+  };
+  out.health = read(PD_HEALTH_SHEET, function (row, H) {
+    var who = String(get(row, H, 'Contact: Full Name')).replace(/^ +| +$/g, '');
+    if (!who) return null;
+    /* The tab writes the same column two ways depending on the export. */
+    var days = Number(get(row, H, 'Days O\\S')) || Number(get(row, H, 'Days O/S')) || 0;
+    return {
+      client: who,
+      agent: String(get(row, H, 'AGENT: Full Name')).replace(/^ +| +$/g, ''),
+      ref: String(get(row, H, 'INSURANCE PORTFOLIO Name')).replace(/^ +| +$/g, ''),
+      days: days,
+      status: String(get(row, H, 'Policy Status Description')).replace(/^ +| +$/g, '')
+    };
+  });
+  out.increases = read(PD_INCR_SHEET, function (row, H) {
+    var who = String(get(row, H, 'Contact: Full Name')).replace(/^ +| +$/g, '');
+    if (!who) return null;
+    return {
+      client: who,
+      agent: String(get(row, H, 'AGENT: Full Name')).replace(/^ +| +$/g, ''),
+      ref: String(get(row, H, 'Policy Increases Name')).replace(/^ +| +$/g, ''),
+      api: Number(get(row, H, 'API Increase')) || 0,
+      days: Number(get(row, H, 'Days O/S')) || 0
+    };
+  });
+  return out;
+}
+
 /* ===================== the free-look watch =====================
    Head office dispatches an issued policy; the Insurance Act gives the client
    a free-look window to read what they actually bought and hand it back if it
@@ -3957,6 +4083,48 @@ function pdPilotStats() {
   for (fk in flByAgent) if (Object.prototype.hasOwnProperty.call(flByAgent, fk)) flAgentRows.push([fk, flByAgent[fk]]);
   flAgentRows.sort(function (a, b) { return b[1] - a[1]; });
 
+  /* The support desk's own tasks, reconciled against the queue. Two questions
+     nobody could answer before: which pending cases has nobody raised with
+     head office, and which tasks are still chasing a case that has already
+     settled. Both are counted, neither is guessed. */
+  var tasks = pdOpenTasks_();
+  var statusOf = {};
+  for (var sj = 0; sj < P.length; sj++) statusOf[String(P[sj].Policy)] = Number(P[sj].Status) || 0;
+  var qTasked = 0, qUntasked = 0, taskDone = 0, taskIdle = 0, untaskedOld = [];
+  for (var qp in reqMap) {
+    if (!Object.prototype.hasOwnProperty.call(reqMap, qp)) continue;
+    if (!pendPolicies[String(qp)]) continue;                     // ghosts already excluded
+    if (tasks.byPolicy[String(qp)]) qTasked++;
+    else {
+      qUntasked++;
+      var oldest = 0, oi;
+      for (oi = 0; oi < reqMap[qp].items.length; oi++) oldest = Math.max(oldest, reqMap[qp].items[oi].days);
+      untaskedOld.push({ pol: qp, days: oldest, name: reqMap[qp].items.length ? reqMap[qp].items[0].name : '' });
+    }
+  }
+  untaskedOld.sort(function (a, b) { return b.days - a.days; });
+  for (var ti = 0; ti < tasks.open.length; ti++) {
+    var tk = tasks.open[ti];
+    if (tk.idle >= 5) taskIdle++;
+    if (!tk.policies.length) continue;
+    /* Every policy named in the subject has left the pending book — the case
+       the task chases is finished, whatever the task still says. */
+    var anyLive = false;
+    for (var tp = 0; tp < tk.policies.length; tp++) {
+      if (statusOf[tk.policies[tp]] === 3 || pendPolicies[tk.policies[tp]]) anyLive = true;
+    }
+    if (!anyLive) taskDone++;
+  }
+
+  var other = pdOtherPending_();
+  var hOld = 0, hTotal = other.health.length, hi;
+  for (hi = 0; hi < other.health.length; hi++) hOld = Math.max(hOld, other.health[hi].days);
+  var incApi = 0, incOld = 0, ii2;
+  for (ii2 = 0; ii2 < other.increases.length; ii2++) {
+    incApi += other.increases[ii2].api;
+    incOld = Math.max(incOld, other.increases[ii2].days);
+  }
+
   var row = function (k, v2, hot) {
     return '<tr><td style="padding:7px 12px;border:1px solid ' + PD_BRAND.line + ';background:#FFFFFF;color:' +
       PD_BRAND.ink + '">' + k + '</td><td style="padding:7px 12px;border:1px solid ' + PD_BRAND.line +
@@ -4032,6 +4200,29 @@ function pdPilotStats() {
             rws += row(pdEsc_(flAgentRows[q4][0]), flAgentRows[q4][1] + ' polic' + (flAgentRows[q4][1] === 1 ? 'y' : 'ies'), true); return rws; })())
         : '')) +
 
+    pdSection_('Pending business the application queue cannot see', tbl(
+      row('Support tasks open on the branch (Salesforce, all typed Pendings)', String(tasks.count), false) +
+      row('&nbsp;&nbsp;pending cases WITH a task raised', String(qTasked), false) +
+      row('&nbsp;&nbsp;pending cases with NO task raised — nobody has asked head office', String(qUntasked), qUntasked > 0) +
+      row('&nbsp;&nbsp;open tasks whose policies have ALL left the pending book (likely closable)', String(taskDone), taskDone > 0) +
+      row('&nbsp;&nbsp;open tasks untouched 5+ days', String(taskIdle), taskIdle > 0) +
+      row('Group health applications in underwriting (Salesforce ids — never in the policy book)',
+        hTotal + (hTotal ? ' · oldest ' + hOld + ' days' : ''), hOld >= 60) +
+      row('API increases submitted and awaiting processing',
+        other.increases.length + (other.increases.length ? ' · ' + pdMoney_(incApi) + ' · oldest ' + incOld + ' days' : ''),
+        incOld >= 60)) +
+      (untaskedOld.length
+        ? '<p style="margin:8px 0 4px;font-size:12.5px;color:' + PD_BRAND.mute + '">Longest-waiting cases with no task against them:</p>' +
+          tbl((function () {
+            var rws = '', ui;
+            for (ui = 0; ui < Math.min(6, untaskedOld.length); ui++) {
+              rws += row(pdEsc_(untaskedOld[ui].pol + (untaskedOld[ui].name ? ' · ' + untaskedOld[ui].name : '')),
+                untaskedOld[ui].days + ' days', untaskedOld[ui].days >= 45);
+            }
+            return rws;
+          })())
+        : '')) +
+
     pdSection_('Production (application received in the last 7 days)', tbl(
       row('Applications', String(weekApps), false) +
       row('Premium as recorded (mode unknown — see data asks)', pdMoney_(weekPrem), false))) +
@@ -4045,7 +4236,8 @@ function pdPilotStats() {
   var summary = 'status2=' + st2 + ' at45=' + at45 + ' window45-59=' + w4559 + ' mgrDue=' + mgrDue +
     ' schemes=' + gN + ' pending=' + pendN + ' settle-ready=' + pendReady + ' replacement-checks=' + replApps +
     ' freelook-open=' + flOpen + ' freelook-countdown=' + flCountdown + ' freelook-expired-undelivered=' + flExpired +
-    ' reqt-housekeeping=' + reqStale;
+    ' reqt-housekeeping=' + reqStale + ' tasks-open=' + tasks.count + ' cases-untasked=' + qUntasked +
+    ' tasks-closable=' + taskDone + ' group-health=' + hTotal + ' increases=' + other.increases.length;
   if (OUT.DRY_RUN && !OUT.TEST_INBOX) {
     Logger.log('Digest (DRY RUN, no test inbox — logged only, not emailed). ' + summary);
     return;

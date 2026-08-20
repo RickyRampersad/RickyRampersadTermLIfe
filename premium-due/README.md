@@ -11,7 +11,7 @@ file. Replaces the two JotForms and the "Premium Due Status" comment columns.
 | `index.html` | The whole app — login, dashboards, case threads, client outreach |
 | `staff-manual.html` | Staff manual — the day-to-day reference |
 | `process-brief.html` | Rollout brief for the team: the workflow, the actual client emails rendered, and what each role does differently |
-| `example-flows.html` | The worked examples: Saira through the dues flow, Javed through the pending flow — every step showing what the client, agent, manager and support each see, with the real letters inline |
+| `example-flows.html` | The worked examples: Saira through the dues flow, Adrian through the pending flow — every step showing what the client, agent, manager and support each see, with the real letters inline. **Both are invented personas on the 9004-1000xx demo range — never a real client** |
 | `flow-map.html` | The whole lifecycle drawn out on one page — the two-phase manager handover, every loop and every exit. The picture to put in front of the team |
 | `journey-map.html` | The journey, photographed: both flows walked day by day with the real letters and the signed-in engine screens framed at every stage, ending in the three-step pilot checklist |
 | `launch-runbook.md` | Go-live checklist with the measured day-one numbers: pre-flight config, the staged rollout (dry run → pilot to one test inbox → live), caps, first week, rollback |

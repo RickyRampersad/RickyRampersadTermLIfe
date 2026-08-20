@@ -312,7 +312,34 @@ function getPolicies_(scope) {
       }
     } catch (eRq) { /* requirements are an enrichment, never a failure */ }
 
-    return json_({ ok: true, policies: out, total: out.length, scoped: !!inScope });
+    /* Pending business the policy book cannot see — the support desk's own
+       open tasks (which name their policy in the subject), group health
+       applications on Salesforce ids, and API increases awaiting processing.
+       Scoped like everything else: an agent is sent their own, a manager
+       their line's, support and the BM the branch. */
+    var worklist = { tasks: [], health: [], increases: [], scoped: !!inScope };
+    try {
+      var mine = function (name) {
+        if (!inScope) return true;
+        name = String(name || '').replace(/^ +| +$/g, '').toUpperCase();
+        for (var k in inScope) {
+          if (Object.prototype.hasOwnProperty.call(inScope, k) &&
+              String(k).replace(/^ +| +$/g, '').toUpperCase() === name) return true;
+        }
+        return false;
+      };
+      if (typeof pdOpenTasks_ === 'function') {
+        var tk = pdOpenTasks_(), t;
+        for (t = 0; t < tk.open.length; t++) if (mine(tk.open[t].agent)) worklist.tasks.push(tk.open[t]);
+      }
+      if (typeof pdOtherPending_ === 'function') {
+        var op = pdOtherPending_(), h;
+        for (h = 0; h < op.health.length; h++) if (mine(op.health[h].agent)) worklist.health.push(op.health[h]);
+        for (h = 0; h < op.increases.length; h++) if (mine(op.increases[h].agent)) worklist.increases.push(op.increases[h]);
+      }
+    } catch (eW) { /* the worklist is an enrichment too */ }
+
+    return json_({ ok: true, policies: out, total: out.length, scoped: !!inScope, worklist: worklist });
   } catch (err) {
     return json_({ ok: false, error: String(err) });
   }
