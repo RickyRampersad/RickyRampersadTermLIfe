@@ -1217,6 +1217,8 @@ function onOpen() {
     .addToUi();
   // property menu comes along automatically when Property.gs is installed
   try { if (typeof propertyMenu_ === 'function') propertyMenu_(SpreadsheetApp.getUi()).addToUi(); } catch (err) { Logger.log(err); }
+  // same for the NovaHub importer when NovaHub.gs is installed
+  try { if (typeof novaHubMenu_ === 'function') novaHubMenu_(SpreadsheetApp.getUi()).addToUi(); } catch (err) { Logger.log(err); }
 }
 
 function toggleTestMode() {
