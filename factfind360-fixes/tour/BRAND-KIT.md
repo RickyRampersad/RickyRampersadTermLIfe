@@ -179,34 +179,6 @@ directly — they are on no public page and in no mail in the account — so
 anything going to Guardian executives should travel with the certificates. His
 public profiles also still say "20+ years" against a true thirty-five.
 
----|---|
-| **MDRT Life Member** | Million Dollar Round Table |
-| **Top of the Table — four times** | MDRT's highest level · **six times** the qualifying requirement |
-| **Court of the Table — eight years** | **three times** the qualifying requirement |
-| **MFA, LUTCF** | Life Underwriter Training Council Fellow |
-| **35 years** | in the field, and still in it |
-
-Always spell out the multiple. Outside the MDRT world "Top of the Table" means
-nothing; "six times what MDRT itself asks for" means everything. Top of the
-Table is the highest level MDRT awards, Court of the Table the one below it.
-
-**Provenance.** MFA and LUTCF are corroborated in his own email signature and on
-his about.me profile. The MDRT counts — Life Member, four Top of the Table,
-eight years Court of the Table — come from him directly; they are not on any
-public page and are not in the mailbox, so if a version of this goes to Guardian
-executives, have the MDRT certificates to hand. Note also that his public
-profiles still say "20+ years" while the true figure is thirty-five.
-
----|---|
-| MDRT — **Top of the Table** | multiple qualifications · **six times** the MDRT requirement |
-| MDRT — **Court of the Table** | multiple qualifications · **three times** the MDRT requirement |
-| **MFA, LUTCF** | professional designations |
-| **35 years** | in the field, and still in it |
-
-Always spell out the multiple. Outside the MDRT world, "Top of the Table" means
-nothing; "six times what MDRT itself asks for" means everything. Top of the
-Table is the highest level MDRT awards.
-
 ---
 
 ## The pipeline
