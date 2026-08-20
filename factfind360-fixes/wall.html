@@ -53,10 +53,8 @@
     border-bottom:.26em solid transparent;
   }
   .shield{
-    width:2.1em; height:2.1em; border-radius:.4em; flex:none; display:grid; place-items:center;
-    background:linear-gradient(145deg,var(--teal-deep),#0A5A54);
-    font-weight:800; font-size:.92em; color:#04120F;
-    box-shadow:0 0 1.4em var(--teal-glow);
+    height:2.9em; width:auto; flex:none; display:block;
+    filter:drop-shadow(0 0 .9em var(--teal-glow));
   }
   .brand{font-size:1.25em; font-weight:750; letter-spacing:-.012em; line-height:1.15}
   .brand small{display:block; font-size:.5em; letter-spacing:.22em; text-transform:uppercase;
@@ -512,7 +510,11 @@
 <body>
 
 <header>
-  <div class="shield">RR</div>
+  <svg class="shield" viewBox="0 0 60 70" xmlns="http://www.w3.org/2000/svg" aria-label="Ricky Rampersad Branch">
+    <path d="M30 2 L56 10 L56 36 C56 52 44 64 30 68 C16 64 4 52 4 36 L4 10 Z" fill="#fff" stroke="#0D9488" stroke-width="2.5"/>
+    <path d="M30 6 L52 13 L52 36 C52 50 41 60 30 64 C19 60 8 50 8 36 L8 13 Z" fill="#1E293B"/>
+    <path d="M16 36 L26 46 L46 22" fill="none" stroke="#14B8A6" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
   <div class="brand">Ricky Rampersad Branch<small>Guardian Life of the Caribbean</small></div>
   <div class="spacer"></div>
   <a class="howto" href="walkthrough.html" title="Watch the walkthrough">
