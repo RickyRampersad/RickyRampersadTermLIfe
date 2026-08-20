@@ -82,6 +82,28 @@
   .pullquote{margin-top:26px;border-left:4px solid var(--teal);padding:4px 0 4px 20px;
     font-size:clamp(16px,2.1vw,20px);line-height:1.5;color:var(--slate);font-weight:600;max-width:56ch}
 
+  /* The Act, and where each obligation is answered */
+  .act{margin-top:26px;border:1px solid var(--line);border-radius:16px;overflow:hidden;
+    background:var(--surface)}
+  .lp-sec.alt .act{background:var(--bg)}
+  .act .quote{padding:20px 22px;border-bottom:1px solid var(--line);background:#F8FAFC}
+  .lp-sec.alt .act .quote{background:var(--surface)}
+  .act .quote .src{font-size:11px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--teal);margin-bottom:9px}
+  .act .quote q{display:block;font-size:15.5px;line-height:1.6;color:var(--slate);
+    font-style:italic;quotes:none}
+  .act .quote q b{font-style:normal;font-weight:800;background:var(--teal-tint);
+    box-shadow:0 0 0 3px var(--teal-tint);border-radius:2px}
+  .act table{width:100%;border-collapse:collapse}
+  .act td{padding:14px 22px;font-size:14.5px;line-height:1.5;vertical-align:top;
+    border-top:1px solid var(--line)}
+  .act tr:first-child td{border-top:0}
+  .act td:first-child{color:var(--muted);width:42%;font-style:italic}
+  .act td:last-child{color:var(--slate);font-weight:600}
+  @media(max-width:620px){.act td{display:block;padding:12px 18px}
+    .act td:first-child{width:auto;padding-bottom:3px;border-top:1px solid var(--line)}
+    .act td:last-child{border-top:0;padding-top:0}}
+
   /* Numbers */
   .lp-nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:13px;margin-top:26px}
   .lp-num{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:19px}
@@ -389,7 +411,7 @@
           <span style="font-size:15px;font-weight:800;color:#F3F7FD;
             text-shadow:0 2px 10px rgba(0,0,0,.7)">Watch the walkthrough</span>
           <span style="font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
-            color:#F5B935;text-shadow:0 2px 10px rgba(0,0,0,.7)">6 min 17 &middot; sound on</span>
+            color:#F5B935;text-shadow:0 2px 10px rgba(0,0,0,.7)">6 min 23 &middot; sound on</span>
         </span>
       </span>
     </a>
@@ -435,6 +457,50 @@
 
 <section class="lp-sec alt">
   <div class="lp-in">
+    <div class="lp-kicker">The Insurance Act, 2018</div>
+    <h2>The obligation was always there. The evidence was not.</h2>
+    <p class="sublede">Schedule 11 does not ask for a fact find as good practice. It asks for one
+    as a <b>standard of market conduct</b> &mdash; taken, retained, and produced on inspection.
+    Page one of every printed fact find carries the words. What changed is that the branch can now
+    produce the evidence for any case, in seconds, without opening a filing cabinet.</p>
+
+    <div class="act">
+      <div class="quote">
+        <div class="src">Insurance Act No. 4 of 2018 &mdash; Schedule 11, B. Understanding Consumers&rsquo; Needs</div>
+        <q>The insurance intermediary or officer should be required to <b>obtain sufficient
+        information about the consumer</b> to ensure an <b>appropriate product is offered</b>.
+        Formal &ldquo;fact finds&rdquo; should be specified for long-term savings and investment
+        products and they should be <b>retained and be available for inspection</b> for a
+        reasonable number of years.</q>
+      </div>
+      <table>
+        <tr><td>&ldquo;sufficient information about the consumer&rdquo;</td>
+          <td>Guardian&rsquo;s Confidential Fact Find V3 in full &mdash; eleven sections, with live
+          checks naming whatever is still missing</td></tr>
+        <tr><td>&ldquo;to ensure an appropriate product is offered&rdquo;</td>
+          <td>Every recommendation recorded against the need it answers, with a written reason.
+          A case cannot be approved without one</td></tr>
+        <tr><td>&ldquo;formal fact finds should be specified&rdquo;</td>
+          <td>The company&rsquo;s own form, section for section &mdash; nothing invented, nothing
+          left out</td></tr>
+        <tr><td>&ldquo;retained and available for inspection&rdquo;</td>
+          <td>Every case timestamped and kept: the file, the client&rsquo;s own confirmation, the
+          manager&rsquo;s four attestations and their signature</td></tr>
+        <tr><td>&ldquo;best suited &hellip; given their needs, financial capability, risk profile
+          and specific circumstances&rdquo; <span style="font-style:normal;font-size:12px">&mdash;
+          Market Conduct Guideline</span></td>
+          <td>The need priced, the premium tested against the client&rsquo;s actual monthly surplus,
+          and a manager attesting to affordability before anything leaves the branch</td></tr>
+      </table>
+    </div>
+
+    <p class="pullquote">Written for one branch. But the obligation belongs to every one of them,
+    and so does the answer.</p>
+  </div>
+</section>
+
+<section class="lp-sec">
+  <div class="lp-in">
     <div class="lp-kicker">Since launch</div>
     <h2>What the branch has found</h2>
     <p class="sublede">Not projections. Fact finds actually completed, and the protection gap they
@@ -448,7 +514,7 @@
   </div>
 </section>
 
-<section class="lp-sec">
+<section class="lp-sec alt">
   <div class="lp-in">
     <div class="lp-kicker">Who built it</div>
     <h2>A whole career, handed to every agent</h2>
