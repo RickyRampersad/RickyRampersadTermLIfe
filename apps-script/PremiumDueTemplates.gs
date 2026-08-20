@@ -3241,6 +3241,35 @@ function pdRequirements_() {
       } else if (!e.code) e.code = st;                           // 'OR' — an ordered, awaited requirement
     }
   } catch (err) { /* standalone tests / missing tab: generic letters */ }
+
+  /* Enrich with the UWPro extracts. Two deliberate limits:
+     1. Magnum's verdict OVERRIDES the hand-typed DecisionType — it is the
+        underwriter's own output, in its full vocabulary, and it covers cases
+        the hand-maintained tab never reached.
+     2. UWPro's requirement text is internal shorthand ("Routine", "plan is
+        out of range", "-section C of form to be completed"). It is excellent
+        for the desk and wrong for a client letter, so it is carried as
+        staff-only detail: a case known ONLY to UWPro gets an entry, and its
+        letter falls back to the generic wording rather than reciting an
+        underwriter's private note back to the applicant. */
+  try {
+    var mg = pdMagnum_();
+    var uw = pdUwProReqts_();
+    var pol2;
+    for (pol2 in uw) {
+      if (!Object.prototype.hasOwnProperty.call(uw, pol2)) continue;
+      var ent = map[pol2] || (map[pol2] = { items: [], susp: 0, code: '', uwDone: false, errors: false,
+                                            decision: '', system: 'UWPro' });
+      ent.followupsOverdue = uw[pol2].overdueFollowups;
+      ent.followupLate = uw[pol2].oldestFollowup;
+      ent.uwLines = uw[pol2].items.length;
+      ent.staffItems = uw[pol2].items;                 // desk detail, never letter text
+    }
+    for (pol2 in map) {
+      if (!Object.prototype.hasOwnProperty.call(map, pol2)) continue;
+      if (mg[pol2]) map[pol2].decision = mg[pol2];     // Magnum wins
+    }
+  } catch (e3) { /* the extracts are an enrichment, never a failure */ }
   return map;
 }
 
@@ -3264,6 +3293,132 @@ function pdRequirements_() {
 var PD_TASK_SHEET  = 'SFTASK MGT';
 var PD_HEALTH_SHEET = 'Group Health and Increases';
 var PD_INCR_SHEET  = 'Increases';
+
+/* ============== the UWPro extracts ==============
+   Head office added the raw underwriting tables to the workbook, and they
+   answer three things the hand-maintained tabs could not:
+
+     RR_UWPRO_MAGNUM               the automated underwriter's own verdict per
+                                   policy, in its full vocabulary — including
+                                   Decline, Postpone, Loaded and Additional
+                                   Information, none of which appeared on the
+                                   Requirement Management tab
+     RR_UWPRO_INSURED_Requirement  the live requirement ledger, with the
+                                   FOLLOW-UP DATE underwriting set itself
+     RR_UWPRO_INSURED              the insured's own contact record, which
+                                   carries an email for applicants the
+                                   portfolio has none for
+
+   (RR_CFPOL is a byte-identical copy of the requirement extract — the same
+   1,682 rows under a name that suggests a policy master. Reading it would
+   double-count, so this engine ignores it; see the README data-asks.) */
+var PD_MAGNUM_SHEET  = 'RR_UWPRO_MAGNUM';
+var PD_UWREQ_SHEET   = 'RR_UWPRO_INSURED_Requirement';
+var PD_INSURED_SHEET = 'RR_UWPRO_INSURED';
+
+/** Magnum's verdict per policy — the authoritative automated-underwriting call. */
+function pdMagnum_() {
+  var map = {};
+  try {
+    var sh = SpreadsheetApp.openById(PORTFOLIO_ID).getSheetByName(PD_MAGNUM_SHEET);
+    if (!sh) return map;
+    var v = sh.getDataRange().getValues();
+    if (v.length < 2) return map;
+    var H = {}, c;
+    for (c = 0; c < v[0].length; c++) H[String(v[0][c]).replace(/^ +| +$/g, '')] = c;
+    var iPol = H['policy_number'], iDec = H['overall_decision_code'];
+    if (iPol == null || iDec == null) return map;
+    for (var r = 1; r < v.length; r++) {
+      var pol = String(v[r][iPol] == null ? '' : v[r][iPol]).replace(/\.0$/, '');
+      var dec = String(v[r][iDec] == null ? '' : v[r][iDec]).replace(/^ +| +$/g, '');
+      if (pol && dec) map[pol] = dec;                 // last row wins: the latest decision
+    }
+  } catch (e) { Logger.log('Magnum: could not read "' + PD_MAGNUM_SHEET + '" — ' + e); }
+  return map;
+}
+
+/**
+ * The live requirement ledger, with the follow-up date underwriting set for
+ * itself. A follow-up date in the past is the strongest signal on the desk:
+ * head office intended to chase this on a named day and did not.
+ */
+function pdUwProReqts_() {
+  var map = {};
+  try {
+    var sh = SpreadsheetApp.openById(PORTFOLIO_ID).getSheetByName(PD_UWREQ_SHEET);
+    if (!sh) return map;
+    var v = sh.getDataRange().getValues();
+    if (v.length < 2) return map;
+    var H = {}, c;
+    for (c = 0; c < v[0].length; c++) H[String(v[0][c]).replace(/^ +| +$/g, '')] = c;
+    var iPol = H['policy_number'], iReq = H['requirement_comment'], iReqs = H['requirements'],
+        iCode = H['requirement_code'], iDays = H['DaysOutstanding'], iFu = H['followup_date'],
+        iEntry = H['manual_or_automatic_entry'], iOrd = H['ordered_date'];
+    if (iPol == null) return map;
+    var now = new Date();
+    for (var r = 1; r < v.length; r++) {
+      var pol = String(v[r][iPol] == null ? '' : v[r][iPol]).replace(/\.0$/, '');
+      if (!pol) continue;
+      var e = map[pol] || (map[pol] = { items: [], overdueFollowups: 0, oldestFollowup: 0, auto: 0, manual: 0 });
+      var name = String(iReq == null ? '' : (v[r][iReq] || '')).replace(/^ +| +$/g, '') ||
+                 String(iReqs == null ? '' : (v[r][iReqs] || '')).replace(/^ +| +$/g, '') ||
+                 String(iCode == null ? '' : (v[r][iCode] || '')).replace(/^ +| +$/g, '');
+      var days = Number(iDays == null ? 0 : v[r][iDays]) || 0;
+      if (name && e.items.length < 6) e.items.push({ name: name, days: days });
+      if (String(iEntry == null ? '' : v[r][iEntry]) === 'Manual') e.manual++; else e.auto++;
+      var fu = iFu == null ? null : pdDate_(v[r][iFu]);
+      if (fu && fu.getTime() < now.getTime()) {
+        e.overdueFollowups++;
+        var late = Math.floor((now.getTime() - fu.getTime()) / 86400000);
+        if (late > e.oldestFollowup) e.oldestFollowup = late;
+      }
+    }
+  } catch (e2) { Logger.log('UWPro requirements: could not read "' + PD_UWREQ_SHEET + '" — ' + e2); }
+  return map;
+}
+
+/**
+ * An email for an applicant the portfolio has none for — but only when the
+ * address plainly belongs to the person named on it.
+ *
+ * This guard is not fussiness. The extract carries addresses that belong to
+ * somebody else entirely: one pending policy shows a third party's gmail, and
+ * another shows a name unrelated to the applicant. Writing to those would put
+ * one client's business in a stranger's inbox, so an address only counts when
+ * the local part contains the person's own first or last name. Everything
+ * else is surfaced to staff to check by hand, never mailed.
+ */
+function pdInsuredEmails_() {
+  var out = { safe: {}, verify: {} };
+  try {
+    var sh = SpreadsheetApp.openById(PORTFOLIO_ID).getSheetByName(PD_INSURED_SHEET);
+    if (!sh) return out;
+    var v = sh.getDataRange().getValues();
+    if (v.length < 2) return out;
+    var H = {}, c;
+    for (c = 0; c < v[0].length; c++) H[String(v[0][c]).replace(/^ +| +$/g, '')] = c;
+    var iPol = H['policy_number'], iEm = H['email_address'], iAlt = H['alt_email_address'],
+        iF = H['first_name'], iL = H['last_name'];
+    if (iPol == null || (iEm == null && iAlt == null)) return out;
+    var norm = function (s) { return String(s == null ? '' : s).toLowerCase().replace(/[^a-z]/g, ''); };
+    for (var r = 1; r < v.length; r++) {
+      var pol = String(v[r][iPol] == null ? '' : v[r][iPol]).replace(/\.0$/, '');
+      if (!pol) continue;
+      var em = String((iEm == null ? '' : v[r][iEm]) || '').replace(/^ +| +$/g, '') ||
+               String((iAlt == null ? '' : v[r][iAlt]) || '').replace(/^ +| +$/g, '');
+      if (em.indexOf('@') < 0) continue;
+      var local = norm(em.split('@')[0]);
+      var fn = norm(iF == null ? '' : v[r][iF]), ln = norm(iL == null ? '' : v[r][iL]);
+      var mine = (ln && ln.length > 3 && local.indexOf(ln.substring(0, 5)) > -1) ||
+                 (fn && fn.length > 3 && local.indexOf(fn.substring(0, 4)) > -1);
+      var who = (String((iF == null ? '' : v[r][iF]) || '') + ' ' +
+                 String((iL == null ? '' : v[r][iL]) || '')).replace(/^ +| +$/g, '');
+      if (mine) { if (!out.safe[pol]) out.safe[pol] = em; }
+      else if (!out.verify[pol]) out.verify[pol] = { email: em, named: who };
+    }
+  } catch (e) { Logger.log('Insured emails: could not read "' + PD_INSURED_SHEET + '" — ' + e); }
+  return out;
+}
 
 /** Policy numbers as they appear in a task subject line. */
 var PD_POLICY_RE = /\b([158]\d{9})\b/g;
@@ -4116,6 +4271,41 @@ function pdPilotStats() {
     if (!anyLive) taskDone++;
   }
 
+  /* What the UWPro extracts add on top: verdicts that change the action,
+     follow-ups head office scheduled and missed, and applicants the portfolio
+     cannot reach but the insured record can. */
+  var mgDecline = 0, mgInfo = 0, mgLoaded = 0, mgPostpone = 0, fuCases = 0, fuWorst = 0, uwOnly = 0;
+  var actionable = [];
+  /* Joined on the PENDING BOOK, not on the requirement map. A declined
+     application often has no outstanding requirement at all — that is rather
+     the point of a decline — so looking only where requirements live would
+     miss exactly the cases that most need a human. */
+  var magMap = pdMagnum_();
+  for (var mp in pendPolicies) {
+    if (!Object.prototype.hasOwnProperty.call(pendPolicies, mp)) continue;
+    var md = String(magMap[mp] || (reqMap[mp] && reqMap[mp].decision) || '');
+    if (/decline/i.test(md)) { mgDecline++; actionable.push({ pol: mp, what: 'DECLINED by Magnum' }); }
+    else if (/postpone/i.test(md)) { mgPostpone++; actionable.push({ pol: mp, what: 'POSTPONED by Magnum' }); }
+    else if (/loaded/i.test(md)) { mgLoaded++; actionable.push({ pol: mp, what: 'LOADED — a rated offer to accept' }); }
+    else if (/additional information/i.test(md)) mgInfo++;
+    if (reqMap[mp] && reqMap[mp].followupsOverdue) {
+      fuCases++;
+      if (reqMap[mp].followupLate > fuWorst) fuWorst = reqMap[mp].followupLate;
+    }
+    if (reqMap[mp] && reqMap[mp].system === 'UWPro' && !reqMap[mp].items.length) uwOnly++;
+  }
+  var mails = pdInsuredEmails_(), mailGain = 0, mailCheck = 0;
+  for (var ep in pendPolicies) {
+    if (!Object.prototype.hasOwnProperty.call(pendPolicies, ep)) continue;
+    var have = false, k2;
+    for (k2 = 0; k2 < P.length; k2++) {
+      if (String(P[k2].Policy) === String(ep)) { have = !!pdValidEmail_(P[k2].Email); break; }
+    }
+    if (have) continue;
+    if (mails.safe[ep]) mailGain++;
+    else if (mails.verify[ep]) mailCheck++;
+  }
+
   var other = pdOtherPending_();
   var hOld = 0, hTotal = other.health.length, hi;
   for (hi = 0; hi < other.health.length; hi++) hOld = Math.max(hOld, other.health[hi].days);
@@ -4200,6 +4390,26 @@ function pdPilotStats() {
             rws += row(pdEsc_(flAgentRows[q4][0]), flAgentRows[q4][1] + ' polic' + (flAgentRows[q4][1] === 1 ? 'y' : 'ies'), true); return rws; })())
         : '')) +
 
+    pdSection_('What underwriting itself says (the UWPro extracts)', tbl(
+      row('Magnum verdict: DECLINED, still sitting as pending', String(mgDecline), mgDecline > 0) +
+      row('Magnum verdict: POSTPONED', String(mgPostpone), mgPostpone > 0) +
+      row('Magnum verdict: LOADED — a rated offer awaiting acceptance', String(mgLoaded), mgLoaded > 0) +
+      row('Magnum verdict: ADDITIONAL INFORMATION — underwriting is waiting on us', String(mgInfo), mgInfo > 0) +
+      row('Cases whose own scheduled FOLLOW-UP DATE has passed with nothing done',
+        fuCases + (fuWorst ? ' · oldest ' + fuWorst + ' days late' : ''), fuCases > 0) +
+      row('Pending cases known to UWPro but absent from the Requirement Management tab', String(uwOnly), false) +
+      row('Applicants with no portfolio email, but a matching address on the insured record',
+        String(mailGain), mailGain > 0) +
+      row('&nbsp;&nbsp;addresses that do NOT match the applicant&rsquo;s name — check by hand, never mail',
+        String(mailCheck), mailCheck > 0)) +
+      (actionable.length
+        ? '<p style="margin:8px 0 4px;font-size:12.5px;color:' + PD_BRAND.mute + '">Verdicts that should change what happens today:</p>' +
+          tbl((function () { var rws = '', ai;
+            for (ai = 0; ai < Math.min(6, actionable.length); ai++)
+              rws += row(pdEsc_(actionable[ai].pol), pdEsc_(actionable[ai].what), true);
+            return rws; })())
+        : '')) +
+
     pdSection_('Pending business the application queue cannot see', tbl(
       row('Support tasks open on the branch (Salesforce, all typed Pendings)', String(tasks.count), false) +
       row('&nbsp;&nbsp;pending cases WITH a task raised', String(qTasked), false) +
@@ -4237,7 +4447,9 @@ function pdPilotStats() {
     ' schemes=' + gN + ' pending=' + pendN + ' settle-ready=' + pendReady + ' replacement-checks=' + replApps +
     ' freelook-open=' + flOpen + ' freelook-countdown=' + flCountdown + ' freelook-expired-undelivered=' + flExpired +
     ' reqt-housekeeping=' + reqStale + ' tasks-open=' + tasks.count + ' cases-untasked=' + qUntasked +
-    ' tasks-closable=' + taskDone + ' group-health=' + hTotal + ' increases=' + other.increases.length;
+    ' tasks-closable=' + taskDone + ' group-health=' + hTotal + ' increases=' + other.increases.length +
+    ' magnum-decline=' + mgDecline + ' magnum-addinfo=' + mgInfo + ' followups-overdue=' + fuCases +
+    ' email-rescued=' + mailGain;
   if (OUT.DRY_RUN && !OUT.TEST_INBOX) {
     Logger.log('Digest (DRY RUN, no test inbox — logged only, not emailed). ' + summary);
     return;

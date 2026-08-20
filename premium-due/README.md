@@ -473,6 +473,43 @@ once live), writing nothing to the log. It is the pilot's first act and a
 daily sanity check: when a number disagrees with what the branch knows, the
 letters wait.
 
+### The UWPro extracts — what underwriting itself says
+
+Head office added the raw underwriting tables to the workbook, and they answer
+things the hand-maintained tabs could not. Three are read by the engine:
+
+| Tab | What it gives the desk |
+|-----|------------------------|
+| `RR_UWPRO_MAGNUM` | The automated underwriter's verdict per policy, in its **full vocabulary** — Referred, Standard, Additional Information, Terms Offered, Loaded, **Decline**, **Postpone**. The hand-typed `DecisionType` column showed only the first four; Magnum's row is now the decision of record |
+| `RR_UWPRO_INSURED_Requirement` | The live requirement ledger — and the **follow-up date underwriting set for itself**. A follow-up date in the past is the strongest signal on the desk: head office meant to chase on a named day and did not |
+| `RR_UWPRO_INSURED` | The insured's own contact record, which carries an **email for applicants the portfolio has none for** |
+
+Requirement coverage goes from **74 policies to 502** by merging the ledger with
+the Requirement Management tab. Two deliberate limits:
+
+- **UWPro's requirement text never reaches a client.** It is internal shorthand
+  — "Routine", "plan is out of range", "-section C of form to be completed".
+  Excellent for the desk, wrong in a letter. A case known only to UWPro reaches
+  the engine carrying no client-facing item, and its letter falls back to the
+  generic wording rather than reciting an underwriter's private note.
+- **A rescued email is never mailed automatically.** The extract carries
+  addresses belonging to somebody else — one pending policy shows a third
+  party's gmail, another a name unrelated to the applicant. `pdInsuredEmails_`
+  returns an address as *safe* only when its local part contains the person's
+  own first or last name; everything else goes to a **verify** list for staff
+  to check by hand. Writing to an unverified address would put one client's
+  business in a stranger's inbox.
+
+Magnum joins on the **policy**, not on the requirement map: a declined or
+postponed application usually has no outstanding requirement at all, and those
+are precisely the cases that most need a human. The queue gains **STOP**
+(declined/postponed — nothing the client sends will move it) and **INFO**
+(Additional Information — underwriting has asked *us* a question).
+
+`RR_CFPOL` is a byte-identical copy of the requirement extract — same 1,682
+rows under a name suggesting a policy master. The engine ignores it rather than
+double-count; see the data-asks.
+
 ### The free-look watch — dispatch to the client's hands
 
 The fourth machine, on a fourth dataset: the **Export** tab's dispatch record.

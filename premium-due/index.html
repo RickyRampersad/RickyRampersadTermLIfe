@@ -199,6 +199,8 @@ input,select,textarea{font-family:inherit;font-size:14px}
 .pq-act{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
   padding:4px 8px;border-radius:4px;text-align:center;align-self:start;border:1px solid}
 .pq-act.gate{color:var(--red);border-color:var(--red);background:var(--red-soft)}
+.pq-act.stop{color:#fff;border-color:var(--red-2);background:var(--red-2)}
+.pq-act.info{color:var(--navy,#1C3145);border-color:var(--line);background:var(--paper-2,#F2EFE8)}
 .pq-act.accept{color:var(--gold-2,#8a6d1a);border-color:var(--amber);background:var(--amber-soft)}
 .pq-act.settle{color:var(--green);border-color:var(--green);background:var(--green-soft)}
 .pq-act.fix{color:var(--amber);border-color:var(--amber);background:var(--amber-soft)}
@@ -1519,6 +1521,12 @@ function rickyInsights(cases){
   if(repl.length)out.push({mk:'crit',t:`<b>${repl.length} pending application${repl.length===1?'':'s'} sit${repl.length===1?'s':''} on ${new Set(repl.map(c=>c.ClientNo)).size} client${new Set(repl.map(c=>c.ClientNo)).size===1?'':'s'} inside the replacement windows</b> of the Sept 2022 Replacement/Churn Guidelines (issued &lt;5 years · lapsed &lt;12 months, or heading to lapse while the application pends). Each confirmed case needs the signed <b>Replacement Declaration Form</b> with the application — without it, "Not Proceeded With" — and a same-agent replacement pays 0% commission. Review before anything lapses.`});
   const ready=ind.filter(c=>c.stage==='pend'&&c.ReqtUwDone);
   if(ready.length)out.push({mk:'go',t:`<b>${ready.length} pending ${ready.length===1?'case is':'cases are'} SETTLE-READY</b> — underwriting complete, one document outstanding${ready.length<=3?`: ${ready.map(c=>`${esc(c.Client)} (${esc(c.ReqtName||'requirement')})`).join(', ')}`:''}. The fastest settlements available anywhere in the book.`});
+  const dead=ind.filter(c=>c.stage==='pend'&&/decline|postpone/i.test(c.ReqtDecision||''));
+  if(dead.length)out.push({mk:'crit',t:`<b>${dead.length} application${dead.length===1?'':'s'} ${dead.length===1?'has':'have'} already been ${dead.length===1?'decided':'decided'} by Magnum — declined or postponed — and ${dead.length===1?'is':'are'} still sitting as pending</b>${dead.length<=3?`: ${dead.map(c=>esc(c.Client)).join(', ')}`:''}. Nothing the client sends will move ${dead.length===1?'it':'them'}. Confirm the decision, tell them properly, and close the case — silence after a decline is the worst letter we never send.`});
+  const info=ind.filter(c=>c.stage==='pend'&&/additional information/i.test(c.ReqtDecision||''));
+  if(info.length)out.push({mk:'crit',t:`<b>${info.length} case${info.length===1?'':'s'} ${info.length===1?'is':'are'} stopped at ADDITIONAL INFORMATION</b> — underwriting has asked <i>us</i> a question and is waiting. These are not client chases; the answer is ours to give${info.length<=3?`: ${info.map(c=>esc(c.Client)).join(', ')}`:''}.`});
+  const lateFu=ind.filter(c=>c.stage==='pend'&&c.ReqtFollowupsLate);
+  if(lateFu.length)out.push({mk:'warn',t:`<b>${lateFu.length} case${lateFu.length===1?'':'s'} passed the follow-up date underwriting set for ${lateFu.length===1?'it':'them'}</b> — the oldest by ${Math.max(...lateFu.map(c=>c.ReqtFollowupLate||0))} days. Head office intended to chase these on a named day and did not; nobody else was told.`});
   const untasked=ind.filter(c=>c.stage==='pend'&&!taskFor(c.Policy));
   if(untasked.length)out.push({mk:'crit',t:`<b>${untasked.length} pending case${untasked.length===1?' has':'s have'} no support task raised against ${untasked.length===1?'it':'them'}.</b> Nobody has formally asked head office to move ${untasked.length===1?'it':'them'} — the oldest has been waiting ${Math.max(...untasked.map(c=>Number(c.DaysArrears)||0))} days. The fortnightly letter chases the client; only a task chases underwriting.`});
   const incr=(WORKLIST.increases||[]);
@@ -1772,8 +1780,12 @@ function renderABM(){renderManagerScope("Your reporting line — full view","Ass
    The same panel serves every login; the case list arriving here is already
    scoped to the signer (agent -> own book, manager -> unit, BM/support -> branch). */
 function pendAction(c){
+  const dec=c.ReqtDecision||'';
+  if(/decline/i.test(dec))return['stop','STOP',`Magnum has <b>DECLINED</b> this application, yet it still sits as pending. Nothing the client sends will move it — confirm the decision, tell them properly, and close the case. Every day it stays open is a day they think they are being underwritten.`];
+  if(/postpone/i.test(dec))return['stop','POSTPONE',`Magnum has <b>POSTPONED</b> this application. Find out the postponement date and tell the client what happens next — chasing documents for it is wasted work.`];
   if(c.cf.replacementRisk)return['gate','GATE','Replacement check first — signed Declaration Form + client ID with the application, or the case is Not Proceeded With (Sept 2022 guidelines §9)'];
-  if(/terms|RATMD/i.test(c.ReqtDecision||''))return['accept','ACCEPT',`Magnum says TERMS OFFERED — a rated offer is on the table and it expires with silence. Get the client's acceptance signed${c.ReqtName?` (file also shows: ${esc(c.ReqtName)})`:''}`];
+  if(/terms|loaded|RATMD/i.test(dec))return['accept','ACCEPT',`Magnum says <b>${esc(/loaded/i.test(dec)?'LOADED':'TERMS OFFERED')}</b> — a rated offer is on the table and it expires with silence. Get the client's acceptance signed${c.ReqtName?` (file also shows: ${esc(c.ReqtName)})`:''}`];
+  if(/additional information/i.test(dec))return['info','INFO',`Magnum is waiting on <b>ADDITIONAL INFORMATION</b> — underwriting has asked us a question and stopped. This is ours to answer, not the client's to chase${c.ReqtName?`; the file shows ${esc(c.ReqtName)}`:''}`];
   if(c.ReqtUwDone)return['settle','SETTLE',`Underwriting is COMPLETE — get ${c.ReqtName?`the ${esc(c.ReqtName)}`:'the last document'}${c.ReqtDays?` (outstanding ${c.ReqtDays}d)`:''} and this becomes a policy in force`];
   if(c.ReqtErrors)return['fix','FIX','Entry errors are OURS to correct on Ingenium — no client or agent needed. Fix, then the case moves'];
   if(/future premium|premium payment/i.test(c.ReqtName||''))return['collect','COLLECT','First premium not yet paid — send the MyGG link via the agent, or collect at the branch'];
@@ -1824,9 +1836,10 @@ function pendingsPanel(cases){
     <div class="pp ${errs.length?'hot':''}"><div class="n">${errs.length}</div><div class="k">Errors — ours to fix</div></div>
     <div class="pp ${ready.length?'go':''}"><div class="n">${ready.length}</div><div class="k">Settle-ready · UW ✓</div></div>
     <div class="pp ${untasked.length?'hot':''}"><div class="n">${untasked.length}</div><div class="k">No task raised yet</div></div>
+    <div class="pp ${pend.filter(c=>c.ReqtFollowupsLate).length?'hot':''}"><div class="n">${pend.filter(c=>c.ReqtFollowupsLate).length}</div><div class="k">UW follow-up date passed</div></div>
     <div class="pp"><div class="n">${stale.length}</div><div class="k">Stale · 120d+</div></div>
   </div>`;
-  const rank={gate:0,accept:1,settle:2,fix:3,collect:4,chase:5};
+  const rank={stop:0,gate:1,accept:2,info:3,settle:4,fix:5,collect:6,chase:7};
   const rows=pend.map(c=>({c,a:pendAction(c)}))
     .sort((x,y)=>(rank[x.a[0]]-rank[y.a[0]])||(d(y.c)-d(x.c)))
     .map(({c,a})=>`<div class="pq-row" data-qjump="${esc(c.Policy)}">
@@ -1834,7 +1847,7 @@ function pendingsPanel(cases){
       <div class="pq-body">
         <div class="t">${esc(c.Client)} · ${esc(c.Policy)}</div>
         <div class="s">${a[2]}</div>
-        <div class="m">Agent ${esc(c.Agent)} · day ${d(c)} of the application${c.ReqtSusp?` · $${Number(c.ReqtSusp).toLocaleString()} in suspense waiting`:''}${(t=>t?` · <b>task open</b> with ${esc(t.assigned||'support')}${t.waitingOn?`, waiting on ${esc(t.waitingOn)}`:''}${t.idle>=5?` · idle ${t.idle}d`:''}`:` · <b>no task raised</b> — head office has not been asked`)(taskFor(c.Policy))}</div>
+        <div class="m">Agent ${esc(c.Agent)} · day ${d(c)} of the application${c.ReqtSusp?` · $${Number(c.ReqtSusp).toLocaleString()} in suspense waiting`:''}${c.ReqtFollowupsLate?` · <b>underwriting's own follow-up is ${c.ReqtFollowupLate}d overdue</b>`:''}${(t=>t?` · <b>task open</b> with ${esc(t.assigned||'support')}${t.waitingOn?`, waiting on ${esc(t.waitingOn)}`:''}${t.idle>=5?` · idle ${t.idle}d`:''}`:` · <b>no task raised</b> — head office has not been asked`)(taskFor(c.Policy))}</div>
       </div>
     </div>`).join('');
   return strip+`<p class="note" style="margin:0 0 10px">Worked top to bottom, this queue is the shortest path to settled: clear the gates, land the settle-ready papers, fix our own errors, collect first premiums, then chase documents oldest-first. The fortnightly letters chase the same items automatically — this queue is the human push that beats the letter.</p><div class="pq">${rows}</div>`+beyond;

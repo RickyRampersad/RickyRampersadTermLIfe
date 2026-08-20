@@ -297,8 +297,13 @@ function getPolicies_(scope) {
     try {
       if (typeof pdRequirements_ === 'function') {
         var rq = pdRequirements_();
+        /* Magnum joins on the policy, not on the requirement map: a declined
+           or postponed application usually has no outstanding requirement,
+           and those are the cases the desk most needs to see. */
+        var mgAll = (typeof pdMagnum_ === 'function') ? pdMagnum_() : {};
         for (var q = 0; q < out.length; q++) {
           if (Number(out[q].Status) !== 3) continue;
+          if (mgAll[String(out[q].Policy)]) out[q].ReqtDecision = mgAll[String(out[q].Policy)];
           var e = rq[String(out[q].Policy)];
           if (!e) continue;
           out[q].ReqtName = e.items.length ? e.items[0].name : '';
@@ -307,7 +312,9 @@ function getPolicies_(scope) {
           out[q].ReqtUwDone = !!e.uwDone;
           out[q].ReqtErrors = !!e.errors;
           out[q].ReqtSusp = e.susp || 0;
-          out[q].ReqtDecision = e.decision || '';   // Magnum: Referred / Standard / Terms Offered
+          out[q].ReqtDecision = e.decision || '';   // Magnum's own verdict, in its full vocabulary
+          out[q].ReqtFollowupsLate = e.followupsOverdue || 0;
+          out[q].ReqtFollowupLate = e.followupLate || 0;
         }
       }
     } catch (eRq) { /* requirements are an enrichment, never a failure */ }
