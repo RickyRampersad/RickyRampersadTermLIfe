@@ -400,7 +400,31 @@ const scenes = [
         if (b) b.scrollIntoView({ block: 'start' }); window.scrollBy(0, -70); });
       await p.waitForTimeout(400);
       await typeField(p, 'retPctIncome', '70', 110);
-      await typeField(p, 'retYears', '20', 110);
+      // Years to Retirement is DERIVED from the date of birth — the form writes
+      // it back the instant the field is cleared, so typing "20" on top of it
+      // produced "2020" on screen. Point at it instead; the form working it out
+      // is the better demonstration anyway.
+      await p.evaluate(() => {
+        const e = document.querySelector('[data-field="retYears"]');
+        if (!e) return;
+        e.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        e.style.transition = 'box-shadow .45s';
+        e.style.boxShadow = '0 0 0 4px rgba(45,212,191,.85)';
+        const tag = document.createElement('div');
+        const r = e.getBoundingClientRect();
+        tag.style.cssText = 'position:fixed;left:' + (r.left + r.width / 2) + 'px;top:' +
+          (r.top - 34) + 'px;transform:translate(-50%,6px);z-index:2147483646;background:#2DD4BF;' +
+          'color:#04211D;font:800 13px/1 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,' +
+          'sans-serif;padding:7px 13px;border-radius:18px;opacity:0;' +
+          'transition:all .45s cubic-bezier(.2,.9,.3,1);white-space:nowrap';
+        tag.textContent = 'worked out from his date of birth';
+        document.documentElement.appendChild(tag);
+        requestAnimationFrame(() => { tag.style.opacity = '1';
+          tag.style.transform = 'translate(-50%,0)'; });
+        setTimeout(() => { tag.style.opacity = '0'; }, 2600);
+        setTimeout(() => tag.remove(), 3200);
+      });
+      await p.waitForTimeout(1500);
       await typeField(p, 'retRoi', '4', 110);
       await typeField(p, 'retNis', '3000', 80);
       await p.waitForTimeout(600);
