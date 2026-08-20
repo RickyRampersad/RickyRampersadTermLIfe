@@ -12,7 +12,25 @@ min-height:100vh;padding:34px 14px 60px}
 h1{font-size:clamp(26px,5vw,40px);font-weight:850;letter-spacing:-.02em;text-align:center}
 h1 b{color:#2DD4BF}
 .sub{text-align:center;color:#93A7C4;font-weight:600;margin:8px 0 26px}
-video{width:100%;border-radius:16px;border:1px solid #1C2942;box-shadow:0 24px 70px rgba(0,0,0,.5);display:block;background:#000}
+.player{position:relative;border-radius:16px;overflow:hidden;border:1px solid #1C2942;
+  box-shadow:0 24px 70px rgba(0,0,0,.5);background:#000}
+video{width:100%;display:block;background:#000}
+.cover{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:16px;cursor:pointer;border:0;width:100%;font:inherit;color:#F3F7FD;
+  background:radial-gradient(60% 70% at 50% 44%,rgba(8,14,26,.86),rgba(8,14,26,.94));
+  transition:opacity .3s}
+.cover[hidden]{display:none}
+.cover:focus-visible{outline:3px solid #2DD4BF;outline-offset:-3px}
+.play{width:84px;height:84px;border-radius:50%;background:#2DD4BF;color:#04211D;
+  display:grid;place-items:center;box-shadow:0 12px 40px rgba(45,212,191,.45);
+  transition:transform .2s}
+.cover:hover .play{transform:scale(1.07)}
+.play svg{width:32px;height:32px;margin-left:5px;fill:currentColor}
+.cover .lab{font-size:19px;font-weight:850;letter-spacing:-.01em;text-shadow:0 2px 12px rgba(0,0,0,.6)}
+.cover .len{font-size:12.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  color:#F5B935;text-shadow:0 2px 12px rgba(0,0,0,.6)}
+@media(max-width:520px){.play{width:64px;height:64px}.play svg{width:24px;height:24px}
+  .cover .lab{font-size:16px}}
 .chs{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:22px}
 .ch{background:rgba(255,255,255,.04);border:1px solid #1C2942;border-radius:12px;padding:13px 15px;cursor:pointer;transition:.15s}
 .ch:hover{border-color:#2DD4BF;transform:translateY(-2px)}
@@ -24,9 +42,16 @@ video{width:100%;border-radius:16px;border:1px solid #1C2942;box-shadow:0 24px 7
 </style></head><body><div class="wrap">
 <h1>How <b>factfind360</b> works</h1>
 <div class="sub">Created by Ricky Rampersad, Branch Manager. Aligned to Guardian’s Confidential Fact Find V3. 6 minutes 10 seconds. All data shown is sample data.</div>
-<video id="v" controls playsinline preload="metadata" poster="tour-poster.jpg">
-  <source src="factfind360-tour.mp4" type="video/mp4">
-</video>
+<div class="player">
+  <video id="v" playsinline preload="metadata" poster="tour-poster.jpg">
+    <source src="factfind360-tour.mp4" type="video/mp4">
+  </video>
+  <button class="cover" id="cover" aria-label="Play the walkthrough, 6 minutes 10 seconds">
+    <span class="play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+    <span class="lab">Watch the walkthrough</span>
+    <span class="len">6 min 10 &middot; sound on</span>
+  </button>
+</div>
 <div class="chs">
   <div class="ch" data-t="0.0"><div class="m">0:00</div><div class="t">Introduction</div><div class="s">One journey — agent, client, manager</div></div>
   <div class="ch" data-t="15.3"><div class="m">0:15</div><div class="t">Why it exists</div><div class="s">We protect the person who earns</div></div>
@@ -59,6 +84,19 @@ video{width:100%;border-radius:16px;border:1px solid #1C2942;box-shadow:0 24px 7
   Guardian Life of the Caribbean · <a href="index.html">factfind360.com</a>
 </div>
 </div><script>
-document.querySelectorAll('.ch').forEach(function(c){c.onclick=function(){
-  var v=document.getElementById('v'); v.currentTime=parseFloat(c.dataset.t); v.play();};});
+var v=document.getElementById('v'), cover=document.getElementById('cover');
+function start(t){
+  cover.hidden=true;
+  v.controls=true;
+  if(typeof t==='number') v.currentTime=t;
+  v.muted=false; v.volume=1;
+  var p=v.play();
+  if(p&&p.catch) p.catch(function(){ cover.hidden=false; });
+}
+cover.onclick=function(){ start(); };
+v.addEventListener('play',function(){ cover.hidden=true; });
+v.addEventListener('ended',function(){ cover.hidden=false; });
+document.querySelectorAll('.ch').forEach(function(c){
+  c.onclick=function(){ start(parseFloat(c.dataset.t)); };
+});
 </script></body></html>
