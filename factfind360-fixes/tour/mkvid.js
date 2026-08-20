@@ -7,7 +7,7 @@ const LINES = {};
 ['vid/lines.txt','vid/newlines.txt','vid/newlines2.txt','vid/newlines3.txt','vid/newlines4.txt','vid/newlines5.txt','vid/newlines6.txt','vid/newlines7.txt','vid/narration_final.txt'].forEach(f =>
   fs.readFileSync(S + f, 'utf8').trim().split('\n').forEach(l => {
     const [id, text] = l.split('|'); LINES[id] = text; }));
-const DUR = { S00: 15.3, S01: 3.1, S1A: 18.9, S02: 8.8, S2B: 8.8, S2C: 14.7, S2F: 13.6, S2I: 14.2, S2G: 9.6, S2H: 9.9, S2D: 10.4, S2E: 8.4, S2P: 21.0, S12B: 8.4, S13B: 9.6, S16: 19.4, S03: 9.6, S04: 7, S05: 2.8, S06: 7.4, S07: 9.1, S18: 9.3, S19: 14.6, S20: 9.6, S08: 6, S09: 3, S10: 6.2, S11: 7.1, S12: 14.6, S13: 6.4, S14: 5, S15: 12.9, S0W: 15.6, S0R: 24.6, S21: 14.6 };
+const DUR = { S00: 15.3, S01: 3.1, S1A: 18.9, S02: 8.8, S2B: 8.8, S2C: 14.7, S2F: 13.6, S2I: 14.2, S2G: 9.6, S2H: 9.9, S2D: 10.4, S2E: 8.4, S2P: 21.0, S12B: 8.4, S13B: 9.6, S16: 19.4, S03: 9.6, S04: 7, S05: 2.8, S06: 7.4, S07: 9.1, S18: 9.3, S19: 14.6, S20: 9.6, S08: 6, S09: 3, S10: 6.2, S11: 7.1, S12: 14.6, S13: 6.4, S14: 5, S15: 12.9, S0W: 15.6, S0R: 22.4, S21: 14.6 };
 
 // the page is recorded 96px short of 720 so the finished frame can carry a
 // caption bar underneath it — subtitles used to sit on top of the dashboard
