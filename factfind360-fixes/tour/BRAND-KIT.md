@@ -155,6 +155,33 @@ The credentials, stated in full. "MDRT member" undersells this badly:
 |---|---|
 | **MDRT Life Member** | Million Dollar Round Table |
 | **Top of the Table — four times** | MDRT's highest level · **six times** the qualifying requirement |
+| **Court of the Table — nine years** | **three times** the qualifying requirement · most recently last year |
+| **MFA, LUTCF** | Life Underwriter Training Council Fellow |
+| **33 years with Guardian** | 35 in the industry · two at ALGICO before that |
+
+Always spell out the multiple. Outside the MDRT world "Top of the Table" means
+nothing; "six times what MDRT itself asks for" means everything. Top of the
+Table is the highest level MDRT awards, Court of the Table the one below it.
+
+**The career, not just a tenure.** Thirty-five years in the industry: two at
+ALGICO — American Life and General Insurance Company (Trinidad & Tobago)
+Limited, an AIG member company — where he started, and thirty-three since with
+Guardian Life of the Caribbean. Say it that way round; "35 years" alone loses
+the fact that thirty-three of them are with the company the audience works for.
+
+Thirteen of those years were spent qualifying at Court of the Table or above,
+the most recent last year. That sentence is what turns a list of badges into an
+argument: the judgement in the system is neither theoretical nor historical.
+
+**Provenance.** MFA and LUTCF are corroborated in his own 2023 email signature
+and on his about.me profile. The MDRT counts and the career split come from him
+directly — they are on no public page and in no mail in the account — so
+anything going to Guardian executives should travel with the certificates. His
+public profiles also still say "20+ years" against a true thirty-five.
+
+---|---|
+| **MDRT Life Member** | Million Dollar Round Table |
+| **Top of the Table — four times** | MDRT's highest level · **six times** the qualifying requirement |
 | **Court of the Table — eight years** | **three times** the qualifying requirement |
 | **MFA, LUTCF** | Life Underwriter Training Council Fellow |
 | **35 years** | in the field, and still in it |
