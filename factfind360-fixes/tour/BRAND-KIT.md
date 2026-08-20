@@ -200,3 +200,18 @@ Three cuts come out of it every time:
 | `factfind360-tour.mp4` | the site, presentations |
 | `tour_60s.mp4` | the highlight, for a quick share |
 | `tour_whatsapp.mp4` | 960×540, under 16MB, travels on WhatsApp |
+
+### Version the filename every single time
+
+Ship the site copy as `factfind360-tour-vN.mp4` and the poster as
+`tour-poster-vN.jpg`, bumping N on every cut, and update the two references in
+`walkthrough.html` and `index.html` to match.
+
+A video re-published under a filename a browser has already seen is served from
+cache, not from the server — so the site keeps showing the previous cut with no
+sign anything is wrong. The same collision happens in a Downloads folder, where
+ten zips all extract to the same name. A new filename cannot be served from a
+cache that has never seen it.
+
+Sanity check for whoever is looking at a copy and is not sure which cut it is:
+read the duration. Each version is a different length.
