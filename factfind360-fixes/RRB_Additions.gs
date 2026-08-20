@@ -1206,9 +1206,16 @@ function rrbManagerReviewHtml_(d, link) {
 
   var chk = rrbChecks_(d);
 
-  var h = rrbHead_(client + ' &mdash; ready for your sign-off',
-                   'From ' + advisor + ' &middot; due back by ' + rrbDueDate_(d.submittedAt));
+  var back = rrbCameBackFixed_(d);
+  var h = rrbHead_(client + (back ? ' &mdash; fixed and back with you' : ' &mdash; ready for your sign-off'),
+                   back ? advisor + ' answered what you sent it back for'
+                        : 'From ' + advisor + ' &middot; due back by ' + rrbDueDate_(d.submittedAt));
   h += '<p style="margin:0 0 16px">Hi ' + mgrFirst + ',</p>';
+
+  // What changed since the send-back, above everything. A returning case that
+  // looks identical to its first submission makes the manager re-read the
+  // whole file to find out whether their own instruction was carried out.
+  h += rrbFixedBanner_(d);
 
   // Decide first, read second. Everything below this line is the reasoning
   // behind the two buttons, not a prerequisite for pressing one.

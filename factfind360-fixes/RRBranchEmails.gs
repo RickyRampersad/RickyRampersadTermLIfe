@@ -307,6 +307,10 @@ function rrbReviewSubject_(d) {
   var client  = _str(d.clientName) || _str(d.fullName) || 'Client';
   var advisor = _str(d.advisorName) || _str(d.agentCode) || '';
   var who     = advisor ? ' (' + advisor + ')' : '';
+  // A case coming back after a send-back says so in the subject. Sitting in an
+  // inbox under the same line as the first submission, it read as a duplicate
+  // and got left — which is how a fixed case waited days for a signature.
+  if (rrbCameBackFixed_(d)) return 'Fixed and back with you — ' + client + who;
   return rrbIsAdviceOnly_(d)
     ? '[DRAFT] Specific Need Only — approval required — ' + client + who
     : '[DRAFT] Fact find for review — ' + client + who;
@@ -347,9 +351,12 @@ function rrbAdviceReviewHtml_(d, link) {
 
   var chk = rrbChecks_(d);
 
-  var h = rrbHead_(client + ' &mdash; Specific Need Only',
-                   'From ' + advisor + ' &middot; due back by ' + rrbDueDate_(d.submittedAt));
+  var back = rrbCameBackFixed_(d);
+  var h = rrbHead_(client + (back ? ' &mdash; fixed and back with you' : ' &mdash; Specific Need Only'),
+                   back ? advisor + ' answered what you sent it back for'
+                        : 'From ' + advisor + ' &middot; due back by ' + rrbDueDate_(d.submittedAt));
   h += '<p style="margin:0 0 15px">Hi ' + mgrFirst + ',</p>';
+  h += rrbFixedBanner_(d);
 
   // The decision sits above everything. A manager who already knows this case
   // should not have to scroll past the reasoning to record it.
@@ -727,22 +734,30 @@ function rrbDecideSign(e) {
   };
   var facts = [];
   if (_str(d.insuranceNeed_calc)) facts.push(['Need uncovered', money(d.insuranceNeed_calc)]);
-  var cover = 0, prem = 0, plans = [];
+  var cover = 0, prem = 0;
   for (var i = 1; i <= 6; i++) {
     var rec = _str(d['rec' + i + 'Rec']);
     if (!rec) continue;
     cover += parseFloat(String(d['rec' + i + 'Amt']).replace(/[^0-9.]/g, '')) || 0;
     prem  += parseFloat(String(d['rec' + i + 'Prem']).replace(/[^0-9.]/g, '')) || 0;
-    plans.push(rec + (_str(d['rec' + i + 'Amt']) ? ' &middot; ' + money(d['rec' + i + 'Amt']) : ''));
   }
   if (cover) facts.push(['Cover recommended', money(cover)]);
   if (prem)  facts.push(['Premium', money(prem) + ' / month']);
   if (_str(d.cashSurplus_calc)) facts.push(['Client surplus', money(d.cashSurplus_calc) + ' / month']);
 
+  // Flags, minus anything the page already says in its own words further down.
+  // A missing reason is called out against the recommendation it belongs to,
+  // and the premium-to-surplus ratio is one of the figures in the table above;
+  // repeating either here is what turns a signing page into a nag screen.
   var flags = [];
   try {
     var ck = (typeof rrbChecks_ === 'function') ? rrbChecks_(d) : null;
-    if (ck && ck.concerns) ck.concerns.forEach(function (c) { flags.push(_str(c.t)); });
+    if (ck && ck.concerns) ck.concerns.forEach(function (c) {
+      var t = _str(c.t);
+      if (/no reason given|reason is missing/i.test(t)) return;
+      if (/premium is \d+% of/i.test(t)) return;
+      flags.push(t);
+    });
   } catch (err2) {}
   if (prem && parseFloat(d.cashSurplus_calc) > 0 && (prem / parseFloat(d.cashSurplus_calc)) > 0.8)
     flags.push('The premium is more than 80% of the client’s monthly surplus.');
@@ -751,7 +766,8 @@ function rrbDecideSign(e) {
     '<div style="font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:' +
       accent + '">' + (approve ? 'Approving' : 'Sending back') + '</div>' +
     '<div style="font-size:21px;font-weight:800;margin:6px 0 3px">' + rrbEsc_(client) + '</div>' +
-    '<div style="color:#64748B;font-size:13.5px;margin-bottom:16px">' + rrbEsc_(advisor) + '</div>';
+    '<div style="color:#64748B;font-size:13.5px;margin-bottom:16px">' + rrbEsc_(advisor) + '</div>' +
+    rrbFixedBanner_(d);
 
   if (facts.length) {
     body += '<table style="width:100%;border-collapse:collapse;margin:0 0 14px;' +
@@ -764,13 +780,11 @@ function rrbDecideSign(e) {
     });
     body += '</table>';
   }
-  if (plans.length) {
-    body += '<div style="font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;' +
-      'color:#64748B;margin-bottom:5px">Recommended</div><ul style="margin:0 0 14px;padding-left:19px;' +
-      'color:#334155;font-size:14px;line-height:1.7">';
-    plans.forEach(function (x) { body += '<li>' + x + '</li>'; });
-    body += '</ul>';
-  }
+  // The recommendation WITH its reason. A plan name and a sum assured is a
+  // product order; the reason is what makes it advice, and it is the reason
+  // an inspection asks to see. Signing a list without it was signing blind.
+  body += rrbRecReasonBlock_(d) + '<div style="height:14px"></div>';
+
   if (flags.length) {
     body += '<div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:11px 13px;' +
       'margin:0 0 16px"><div style="font-size:12px;font-weight:800;letter-spacing:.05em;' +
@@ -965,6 +979,16 @@ function rrbDecide(e) {
     var prior = _str(merged.dmGuidance);
     merged.dmGuidance  = prior ? prior + '\n\n' + note : note;
     merged.mgrComments = merged.dmGuidance;
+  }
+
+  // Same send-back stamp the dashboard path writes — see rrbQueueDecide. The
+  // two doors must leave identical records or the return trip reads
+  // differently depending on where the manager happened to tap.
+  if (!agreed) {
+    merged.sentBackAt   = now;
+    merged.sentBackBy   = merged.mgrName;
+    merged.sentBackNote = note || _str(merged.dmGuidance);
+    merged.fixedAt = merged.fixedBy = merged.fixedWhat = '';
   }
 
   ffWriteRow_(sheet, headers, merged, row);
@@ -1162,6 +1186,17 @@ function rrbQueueDecide(e) {
     // A decision ends any hold — the case is no longer parked, it is settled.
     merged.caseHoldAt = merged.caseHoldBy = merged.caseHoldNote = '';
 
+    // Stamp the send-back so the return trip can be read as a difference.
+    // Clearing the fix stamps at the same time matters: without it a case sent
+    // back a second time still carried the first round's "came back fixed"
+    // banner, and the manager was told work had been done that had not.
+    if (!agreed) {
+      merged.sentBackAt   = now;
+      merged.sentBackBy   = merged.mgrName;
+      merged.sentBackNote = note || _str(merged.dmGuidance);
+      merged.fixedAt = merged.fixedBy = merged.fixedWhat = '';
+    }
+
     ffWriteRow_(sheet, headers, merged, row);
 
     try { ffSendApprovalEmail_(merged); }
@@ -1233,10 +1268,29 @@ function rrbAgentFix(e) {
 
   var mgr = _str(d.mgrName) || _str(d.reviewerName) || 'your manager';
   var wasSentBack = _str(d.status).toLowerCase().indexOf('changes') > -1;
+  var now = new Date().toISOString();
   if (wasSentBack) merged.status = 'pending_review';   // back into the queue
-  merged.lastUpdated = new Date().toISOString();
+  merged.lastUpdated = now;
+
+  // The fix stamp. This is what turns the manager's next look at the case from
+  // "read it all again" into "here is what changed since you sent it back".
+  merged.fixedAt   = now;
+  merged.fixedBy   = _str(d.advisorName) || _str(chk.payload.nm) || 'the advisor';
+  merged.fixedWhat = saved.map(function (s) { return s.replace(/<[^>]+>/g, ''); }).join(' · ');
+  merged.fixRound  = (parseInt(_str(d.fixRound), 10) || 0) + 1;
+
   ffWriteRow_(sheet, headers, merged, row);
   rrbMarkTokenUsed_(chk.row);
+
+  // Tell the manager. Without this the advisor was told "it is back with
+  // Ricky" while Ricky was told nothing at all — the case sat in the queue
+  // waiting to be stumbled on, which is exactly how it played out in the
+  // field. A fixed case now walks back to the person who has to sign it.
+  var notified = false;
+  if (wasSentBack) {
+    try { notified = rrbNotifyFixed_(merged); }
+    catch (err) { Logger.log('rrbAgentFix: could not notify the manager — %s', err && err.message); }
+  }
 
   return rrbPage_('Saved',
     '<div style="font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#0F766E">On the fact find</div>' +
@@ -1245,8 +1299,156 @@ function rrbAgentFix(e) {
     saved.map(function (s) { return '<li>' + s + '</li>'; }).join('') + '</ul>' +
     '<p style="color:#475569;font-size:13.5px;margin:0">' +
     (wasSentBack
-      ? 'The case is back with ' + rrbEsc_(mgr.split(' ')[0]) + ' for review — you do not need to resubmit.'
+      ? (notified
+          ? rrbEsc_(mgr.split(' ')[0]) + ' has been emailed that it is fixed and is back with them — ' +
+            'you do not need to resubmit.'
+          : 'The case is back in ' + rrbEsc_(mgr.split(' ')[0]) + '&rsquo;s queue — you do not need to resubmit.')
       : 'The record is updated.') + '</p>', 'ok');
+}
+
+/**
+ * Did this case go back to the advisor and come back fixed, and is it still
+ * waiting on the manager? Everything that reads differently on a return trip
+ * asks this one question.
+ */
+function rrbCameBackFixed_(d) {
+  var st = _str(d && d.status).toLowerCase();
+  if (st.indexOf('approv') > -1 || st.indexOf('declin') > -1 || st.indexOf('cancel') > -1) return false;
+  var fixed = _str(d.fixedAt);
+  if (!fixed) return false;
+  var back = _str(d.sentBackAt);
+  if (!back) return true;                       // fixed, and no send-back on record
+  return new Date(fixed).getTime() >= new Date(back).getTime();
+}
+
+/**
+ * The banner a returning case leads with, wherever the manager meets it.
+ *
+ * A case that has been sent back and fixed used to arrive looking identical to
+ * a first submission — same concerns list, same "ready for your sign-off", no
+ * sign that anybody had done anything. The manager re-read the whole file to
+ * work out whether their own instruction had been carried out. This says it in
+ * one block: what you asked for, what changed, who changed it, when.
+ */
+function rrbFixedBanner_(d) {
+  if (!rrbCameBackFixed_(d)) return '';
+  var by    = _str(d.fixedBy) || _str(d.advisorName) || 'The advisor';
+  var round = parseInt(_str(d.fixRound), 10) || 1;
+  var asked = _str(d.sentBackNote) || _str(d.dmGuidance);
+  var what  = _str(d.fixedWhat);
+  var when  = '';
+  try { when = Utilities.formatDate(new Date(_str(d.fixedAt)), Session.getScriptTimeZone(), 'd MMMM, h:mm a'); }
+  catch (err) {}
+
+  var h = '<div style="background:#ECFDF5;border:1.5px solid #0D9488;border-radius:11px;' +
+    'padding:14px 16px;margin:0 0 16px">' +
+    '<div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#0F766E;' +
+    'font-weight:800;margin-bottom:4px">Came back fixed' +
+    (round > 1 ? ' &middot; round ' + round : '') + '</div>' +
+    '<div style="font-size:15px;font-weight:800;color:#064E3B">' + rrbEsc_(by) +
+    ' has answered what you sent it back for.</div>';
+  if (asked) {
+    h += '<div style="margin-top:10px;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;' +
+      'color:#0F766E;font-weight:700">You asked for</div>' +
+      '<div style="font-size:13.5px;color:#134E4A;line-height:1.6;white-space:pre-wrap">' +
+      rrbEsc_(asked) + '</div>';
+  }
+  if (what) {
+    h += '<div style="margin-top:10px;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;' +
+      'color:#0F766E;font-weight:700">What changed</div>' +
+      '<div style="font-size:13.5px;color:#134E4A;line-height:1.6">' + rrbEsc_(what) + '</div>';
+  }
+  if (when) {
+    h += '<div style="margin-top:9px;font-size:12px;color:#0F766E">Fixed ' + rrbEsc_(when) + '.</div>';
+  }
+  return h + '</div>';
+}
+
+/**
+ * The email that walks a fixed case back to the manager.
+ *
+ * Deliberately short. The manager has already read this case once; what they
+ * need now is the difference, the figures they are signing against with the
+ * REASON beside each recommendation, and the two buttons. Everything else is
+ * one link away.
+ *
+ * Returns true if a message actually went out.
+ */
+function rrbNotifyFixed_(d) {
+  var to = _str(d.reviewerEmail) || _str(d.mgrEmail) || _str(d.directManagerEmail);
+  if (!to) {
+    try {
+      var key = ffLookupDirectManager_(_str(d.agentCode).toUpperCase());
+      to = _str((MAIL_CONFIG.managers[key] || {}).email);
+    } catch (err) {}
+  }
+  if (!to) { Logger.log('rrbNotifyFixed_: no manager address on %s', _str(d.submissionId)); return false; }
+
+  var mgrName  = _str(d.reviewerName) || _str(d.mgrName) || '';
+  var mgrFirst = mgrName.split(' ')[0] || 'there';
+  var client   = _str(d.clientName) || _str(d.fullName) || _str(d.adviceClientName) || 'this client';
+  var advisor  = _str(d.fixedBy) || _str(d.advisorName) || 'the advisor';
+
+  var h = rrbHead_(client + ' &mdash; fixed and back with you',
+                   advisor + ' answered what you sent it back for');
+  h += '<p style="margin:0 0 14px">Hi ' + rrbEsc_(mgrFirst) + ',</p>';
+  h += rrbFixedBanner_(d);
+  // Decide first. This is a second look, not a first read — the buttons belong
+  // above anything that asks to be read.
+  h += rrbDecisionBlock_(d, { name: mgrName, email: to });
+  h += '<div style="height:1px;background:#E2E8F0;margin:20px 0 16px"></div>';
+  h += rrbRecReasonBlock_(d);
+  h += '<p style="font-size:13px;color:#64748B;margin:14px 0 0;line-height:1.6">' +
+       'Nothing has gone to ' + rrbEsc_(client) + '. It waits on your signature.' +
+       ' <a href="' + ffReviewLink_(_str(d.submissionId), 'manager') +
+       '" style="color:#0D9488;font-weight:700">Open the full fact find</a> if you want the whole file.</p>';
+  h += rrbFoot_(_str(d.submissionId));
+
+  var cc = [_str(d.agentEmail), RRB_ALWAYS_CC].filter(function (x) { return x && x !== to; });
+  MailApp.sendEmail({
+    to: to,
+    cc: cc.join(','),
+    subject: 'Fixed and back with you — ' + client + ' (' + advisor + ')',
+    htmlBody: rrbWithDraft_(h),
+    name: 'RR Branch Fact Find'
+  });
+  return true;
+}
+
+/**
+ * Every recommendation with the REASON beside it.
+ *
+ * The reason is the compliance artefact — Schedule 11 asks that the advice fit
+ * the need found, and the reason on file is the only thing that shows it did.
+ * A manager signing a plan list with no reasons is signing a product order.
+ * Shown wherever a signature is being asked for, and NOT repeated inside the
+ * long review email, which already carries it in its own section.
+ */
+function rrbRecReasonBlock_(d) {
+  var recs = rrbRecLines_(d);
+  if (!recs.length) {
+    return '<div style="background:#FEF2F2;border:1px solid #FCA5A5;border-radius:10px;padding:12px 14px;' +
+      'font-size:13.5px;color:#991B1B">No recommendation is recorded on this case. There is nothing to sign.</div>';
+  }
+  var h = '<div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#64748B;' +
+    'font-weight:800;margin:0 0 7px">What you are signing off, and why</div>' +
+    '<div style="border:1px solid #E2E8F0;border-radius:11px;overflow:hidden;background:#fff">';
+  recs.forEach(function (r, i) {
+    h += '<div style="padding:12px 14px;border-top:' + (i ? '1px solid #F1F5F9' : '0') + '">' +
+      '<div style="font-size:14.5px;font-weight:800;color:#0F172A">' + rrbEsc_(r.plan) +
+      (r.amt ? ' <span style="color:#0F766E">' + rrbMoney_(r.amt) + '</span>' : '') + '</div>' +
+      (r.need ? '<div style="font-size:12.5px;color:#64748B;margin-top:2px">For: ' + rrbEsc_(r.need) + '</div>' : '') +
+      (r.prem ? '<div style="font-size:12.5px;color:#64748B;margin-top:2px">Premium: ' + rrbMoney_(r.prem) + ' a month</div>' : '') +
+      (r.reason
+        ? '<div style="margin-top:7px;background:#F8FAFC;border-left:3px solid #0D9488;border-radius:0 7px 7px 0;' +
+          'padding:8px 11px;font-size:13px;color:#334155;line-height:1.55"><strong style="color:#0F766E">Why: </strong>' +
+          rrbEsc_(r.reason) + '</div>'
+        : '<div style="margin-top:7px;background:#FFFBEB;border-left:3px solid #F59E0B;border-radius:0 7px 7px 0;' +
+          'padding:8px 11px;font-size:13px;color:#92400E;line-height:1.55"><strong>No reason recorded.</strong> ' +
+          'The reason is what shows the advice suited the need &mdash; without it there is nothing to inspect.</div>') +
+      '</div>';
+  });
+  return h + '</div>';
 }
 
 /** The optional comment that can follow a one-tap decision. */

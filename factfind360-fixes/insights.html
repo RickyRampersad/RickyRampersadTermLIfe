@@ -117,6 +117,16 @@
   .qrec .r1 .m{color:var(--teal);font-weight:700;white-space:nowrap}
   .qrec .r1 .tk{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
                 color:var(--teal);border:1px solid rgba(45,212,191,.4);border-radius:4px;padding:0 5px}
+  /* the reason, under the plan it belongs to — the compliance line */
+  .qrec .rwhy{font-size:11.5px;color:var(--ink-3);line-height:1.5;margin:1px 0 4px 2px;
+              padding-left:8px;border-left:2px solid rgba(45,212,191,.35)}
+  .qrec .rwhy.none{color:var(--amber);border-left-color:rgba(251,191,36,.5)}
+  /* a case sent back and since fixed */
+  .qc.back{border-left-color:var(--teal)}
+  .qfixed{margin-top:8px;background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.3);
+          border-radius:8px;padding:8px 11px;font-size:11.5px;color:var(--ink-2);line-height:1.55}
+  .qfixed b{color:var(--teal);font-weight:800}
+  .qfixed i{display:block;font-style:normal;color:var(--ink-3);margin-top:3px}
   .qflags{margin-top:8px;display:flex;flex-wrap:wrap;gap:5px}
   .qf{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;
       background:rgba(251,191,36,.1);color:var(--amber);border:1px solid rgba(251,191,36,.25)}
@@ -839,7 +849,9 @@ function render(){
       ['vc','Replacement, disclosure and compliance in order']];
     function qSignBlock(r){
       return '<div class="qsign" data-sign="'+esc(r.id)+'">'+
-        '<h5 class="qstitle">Attest and sign</h5>'+
+        '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px">'+
+          '<h5 class="qstitle" style="margin:0">Attest and sign</h5>'+
+          '<button type="button" class="qslink qsall">Tick all four</button></div>'+
         '<div class="qsatt">'+SIG_ATT.map(function(a){
           return '<label><input type="checkbox" data-att="'+a[0]+'"><span>'+a[1]+
             '</span><span class="tick">&#10003;</span></label>'; }).join('')+'</div>'+
@@ -899,9 +911,25 @@ function render(){
         c.dataset.drawn='1'; if(hint) hint.style.display='none'; };
     }
 
+    /* Did this case go back to the advisor and come back fixed, and is it
+       still waiting on a signature? Mirrors rrbCameBackFixed_ on the server —
+       if one changes, change both. */
+    function cameBackFixed(raw){
+      var st=str(raw.status).toLowerCase();
+      if(st.indexOf('approv')>-1||st.indexOf('declin')>-1||st.indexOf('cancel')>-1) return false;
+      var fixed=d(raw.fixedAt); if(!fixed) return false;
+      var back=d(raw.sentBackAt); if(!back) return true;
+      return fixed.getTime()>=back.getTime();
+    }
+
     /* Send-back reasons the manager can tap instead of type, built from what
        is actually wrong with THIS case — no generic pick-list of twenty
-       options, just the gaps the checks found plus the two evergreen asks. */
+       options, just the gaps the checks found.
+
+       The two evergreen asks are offered ONLY where the checks found nothing.
+       Appending them unconditionally meant every case, however clean, carried
+       a standing list of things to send it back for — which reads as the
+       system asking to be argued with rather than a case ready to sign. */
     function qPicks(r){
       var raw=r.raw||{}, chk=raw._checks||{}, out=[];
       for(var i=1;i<=6;i++){
@@ -912,8 +940,10 @@ function render(){
           out.push('Premium mode not selected for '+(plan||'row '+i));
       }
       (chk.concerns||[]).forEach(function(c){ out.push(c.t); });
-      out.push('Confirm the figures with the client');
-      out.push('Needs analysis is too thin to defend');
+      if(!out.length){
+        out.push('Confirm the figures with the client');
+        out.push('Needs analysis is too thin to defend');
+      }
       var seen={};
       return out.filter(function(t){ if(seen[t])return false; seen[t]=1; return true; })
         .slice(0,8)
@@ -924,16 +954,23 @@ function render(){
     $('queue').innerHTML=pend.map(function(r){
       var g=Math.round(days(r.sub,new Date())), hot=g>=14;
       var raw=r.raw||{}, chk=raw._checks||null;
+      /* Every recommendation with the REASON under it. A plan name and a sum
+         assured is a product order; the reason is what makes it advice, and it
+         is the line an inspection asks to see. Approving a list without it was
+         approving blind. */
       var recl='';
       for(var i=1;i<=6;i++){
         var plan=str(raw['rec'+i+'Rec']); var amt=num(raw['rec'+i+'Amt']);
         var rp=num(raw['rec'+i+'Prem']); var md=str(raw['rec'+i+'Mode']);
         if(!plan&&!rp) continue;
         var took=/^yes$/i.test(str(raw['dec'+i+'Go']));
+        var why=str(raw['rec'+i+'Reason']);
         recl+='<div class="r1"><b>'+esc(plan||'(plan not named)')+'</b>'+
           (amt?'<span>'+money(amt)+' cover</span>':'')+
           (rp?'<span class="m">'+money(rp)+(md?'/'+esc(md.toLowerCase()):'/mo assumed')+'</span>':'')+
-          (took?'<span class="tk">client taking</span>':'')+'</div>';
+          (took?'<span class="tk">client taking</span>':'')+'</div>'+
+          (why?'<div class="rwhy">'+esc(why)+'</div>'
+              :'<div class="rwhy none">No reason written for this plan</div>');
       }
       var flags='';
       if(chk&&chk.concerns&&chk.concerns.length){
@@ -950,6 +987,20 @@ function render(){
           (str(raw.caseHoldBy)?' · '+esc(str(raw.caseHoldBy)):'')+
           (str(raw.caseHoldNote)?' — '+esc(str(raw.caseHoldNote)):'')+'</div>'
         : '';
+      /* A case you sent back and the advisor has since fixed. Without this it
+         came back into the queue looking exactly like a first submission, and
+         the only way to know whether your instruction had been carried out was
+         to open the file and read it again. */
+      var back=cameBackFixed(raw);
+      var fixChip=back
+        ? '<div class="qfixed"><b>Came back fixed'+
+            (num(raw.fixRound)>1?' · round '+num(raw.fixRound):'')+'</b> — '+
+            esc(str(raw.fixedBy)||r.agent)+' answered what you sent it back for'+
+            (d(raw.fixedAt)?', '+d(raw.fixedAt).toLocaleDateString():'')+'.'+
+            (str(raw.sentBackNote)?'<i>You asked: '+esc(str(raw.sentBackNote))+'</i>':'')+
+            (str(raw.fixedWhat)?'<i>Changed: '+esc(str(raw.fixedWhat))+'</i>':'')+
+          '</div>'
+        : '';
       var acts=canAct
         ? '<div class="qact">'+
             '<button class="qb ok" data-id="'+esc(r.id)+'" data-v="approve">Approve</button>'+
@@ -959,11 +1010,13 @@ function render(){
           '</div>'
         : '<div class="qact"><div class="qsub">'+esc(r.manager)+' decides this</div>'+
             '<button class="qb ghost" data-id="'+esc(r.id)+'" data-v="toggle">Full review &#9662;</button></div>';
-      return '<div class="qc'+(hot&&!held?' hot':'')+(held?' held':'')+'" data-card="'+esc(r.id)+'">'+
+      return '<div class="qc'+(hot&&!held?' hot':'')+(held?' held':'')+(back?' back':'')+
+        '" data-card="'+esc(r.id)+'">'+
         '<div class="qage">'+g+'d</div>'+
         '<div><div class="qwho">'+esc(r.client)+'</div>'+
         '<div class="qsub">'+esc(r.agent)+' · with '+esc(r.manager)+' · submitted '+r.sub.toLocaleDateString()+
           (r.need?' · need '+money(r.need):'')+'</div>'+
+        fixChip+
         (recl?'<div class="qrec">'+recl+'</div>':'')+
         (flags?'<div class="qflags">'+flags+'</div>':'')+
         heldChip+
@@ -1122,6 +1175,19 @@ function render(){
             var g2=card.querySelector('.qsgo'); if(g2) g2.disabled=false;
           });
     }
+
+    /* Four taps to say the same yes is three taps of friction on a phone. One
+       control ticks them, and untick still works individually — the record
+       stores what is ticked, so nothing is assumed on the manager's behalf. */
+    $('queue').querySelectorAll('.qsall').forEach(function(b){
+      b.onclick=function(){
+        var pane=b.closest('.qsign');
+        var boxes=[].slice.call(pane.querySelectorAll('.qsatt input'));
+        var on=!boxes.every(function(x){return x.checked;});
+        boxes.forEach(function(x){ x.checked=on; });
+        b.textContent=on?'Untick all':'Tick all four';
+      };
+    });
 
     /* Signing IS the decision — this is the button that sends it. */
     $('queue').querySelectorAll('.qsgo').forEach(function(go){

@@ -404,6 +404,13 @@ function ffBuildSchema() {
   s.push(["otherInc2Cont", "Other Income 2 Continues if Gone"]);
   s.push(["otherInc3Type", "Other Income 3 Type"]);
   s.push(["otherInc3Cont", "Other Income 3 Continues if Gone"]);
+  // The REASON is the compliance artefact. Schedule 11 asks that the advice
+  // suit the need found, and the reason on file is the only thing that shows
+  // it did — yet these six had no column, so every reason an advisor typed
+  // was dropped by ffWriteRow_ on the way to the sheet. The checks then
+  // re-raised "no reason given" on a case that had just been fixed, which is
+  // exactly what it looked like from the manager's side: an approval screen
+  // that would not stop asking for something already supplied.
   s.push(["rec1Pri",  "Rec 1 Priority"]);
   s.push(["rec1Who",  "Rec 1 Who"]);
   s.push(["rec1Need", "Rec 1 Need"]);
@@ -412,6 +419,7 @@ function ffBuildSchema() {
   s.push(["rec1Gap",  "Rec 1 Gap"]);
   s.push(["rec1Prem", "Rec 1 Premium"]);
   s.push(["rec1Mode", "Rec 1 Premium Mode"]);
+  s.push(["rec1Reason","Rec 1 Reason"]);
   s.push(["rec2Pri",  "Rec 2 Priority"]);
   s.push(["rec2Who",  "Rec 2 Who"]);
   s.push(["rec2Need", "Rec 2 Need"]);
@@ -420,6 +428,7 @@ function ffBuildSchema() {
   s.push(["rec2Gap",  "Rec 2 Gap"]);
   s.push(["rec2Prem", "Rec 2 Premium"]);
   s.push(["rec2Mode", "Rec 2 Premium Mode"]);
+  s.push(["rec2Reason","Rec 2 Reason"]);
   s.push(["rec3Pri",  "Rec 3 Priority"]);
   s.push(["rec3Who",  "Rec 3 Who"]);
   s.push(["rec3Need", "Rec 3 Need"]);
@@ -428,6 +437,7 @@ function ffBuildSchema() {
   s.push(["rec3Gap",  "Rec 3 Gap"]);
   s.push(["rec3Prem", "Rec 3 Premium"]);
   s.push(["rec3Mode", "Rec 3 Premium Mode"]);
+  s.push(["rec3Reason","Rec 3 Reason"]);
   s.push(["rec4Pri",  "Rec 4 Priority"]);
   s.push(["rec4Who",  "Rec 4 Who"]);
   s.push(["rec4Need", "Rec 4 Need"]);
@@ -436,6 +446,7 @@ function ffBuildSchema() {
   s.push(["rec4Gap",  "Rec 4 Gap"]);
   s.push(["rec4Prem", "Rec 4 Premium"]);
   s.push(["rec4Mode", "Rec 4 Premium Mode"]);
+  s.push(["rec4Reason","Rec 4 Reason"]);
   s.push(["rec5Pri",  "Rec 5 Priority"]);
   s.push(["rec5Who",  "Rec 5 Who"]);
   s.push(["rec5Need", "Rec 5 Need"]);
@@ -444,6 +455,7 @@ function ffBuildSchema() {
   s.push(["rec5Gap",  "Rec 5 Gap"]);
   s.push(["rec5Prem", "Rec 5 Premium"]);
   s.push(["rec5Mode", "Rec 5 Premium Mode"]);
+  s.push(["rec5Reason","Rec 5 Reason"]);
   s.push(["rec6Pri",  "Rec 6 Priority"]);
   s.push(["rec6Who",  "Rec 6 Who"]);
   s.push(["rec6Need", "Rec 6 Need"]);
@@ -452,6 +464,7 @@ function ffBuildSchema() {
   s.push(["rec6Gap",  "Rec 6 Gap"]);
   s.push(["rec6Prem", "Rec 6 Premium"]);
   s.push(["rec6Mode", "Rec 6 Premium Mode"]);
+  s.push(["rec6Reason","Rec 6 Reason"]);
   s.push(["dec1Pri",  "Decision 1 Priority"]);
   s.push(["dec1Who",  "Decision 1 Who"]);
   s.push(["dec1Need", "Decision 1 Need"]);
@@ -607,6 +620,22 @@ function ffBuildSchema() {
   s.push(["ackReadBM","Agent Acknowledged BM Comments"]);
   s.push(["mgrSigDate","Mgr Sig Date"]);
   s.push(["managerSigUrl","Manager Sig URL"]);
+  // The fact find has a sign-off box for the direct manager and another for the
+  // branch manager, and the form reads exactly these keys to fill them. Neither
+  // had a column, so the signature reached Drive, was written to a key nothing
+  // stored, and the box came back empty on a case that had genuinely been
+  // signed. managerSigUrl above is the legacy single field and kept working,
+  // which is why this looked like a signature that half-saved.
+  s.push(["dmSigUrl","Direct Mgr Sig URL"]);
+  s.push(["bmSigUrl","Branch Mgr Sig URL"]);
+  s.push(["bmSigDate","Branch Mgr Sig Date"]);
+  s.push(["dmName","Direct Manager Name"]);
+  // The four things a manager attests to when they sign. These ARE the review —
+  // without them the record says a case was approved but not what was checked.
+  s.push(["mgrVerData","Mgr Verified Data"]);
+  s.push(["mgrVerRatios","Mgr Verified Affordability"]);
+  s.push(["mgrVerSuit","Mgr Verified Suitability"]);
+  s.push(["mgrVerCompliance","Mgr Verified Compliance"]);
   s.push(["mgrChecklist","Mgr AI Checklist"]);
   s.push(["mgrReviewedAt","Mgr Reviewed At"]);
   // How the manager signed off, and against which single-use token. A one-tap
@@ -642,6 +671,18 @@ function ffBuildSchema() {
   // signed off, it is going back. The mark still belongs on the record.
   s.push(["mgrSignName","Mgr Signed As"]);
   s.push(["mgrDecisionSigUrl","Mgr Decision Sig URL"]);
+  // The round trip. A case the manager sent back and the advisor then fixed is
+  // NOT a new case — but it used to arrive looking like one, with the same
+  // checklist of concerns and no sign that anything had been answered. These
+  // six carry what was asked for, what changed, and when, so the manager reads
+  // the difference instead of re-reading the case.
+  s.push(["sentBackAt","Sent Back At"]);
+  s.push(["sentBackBy","Sent Back By"]);
+  s.push(["sentBackNote","Sent Back Reason"]);
+  s.push(["fixedAt","Fixed At"]);
+  s.push(["fixedBy","Fixed By"]);
+  s.push(["fixedWhat","What Was Fixed"]);
+  s.push(["fixRound","Fix Round"]);
   s.push(["_sigFolderUrl","Signatures Folder"]);
   return s;
 }
@@ -775,6 +816,42 @@ function ffProcessAgentSubmit(data) {
   var sheet = ffGetOrCreateRevisedTab_();
   var headers = ffEnsureHeaders_(sheet);
   var targetRow = ffFindRowBySubmissionId_(sheet, headers, data.submissionId);
+
+  // A resubmission is not a new case. Read what is already on the row FIRST:
+  // if the manager sent this back, stamp the return trip so the review email
+  // and the queue card both lead with what changed instead of presenting the
+  // case cold for a second time. Without this the manager re-read a file they
+  // had already read, saw the same list of concerns, and had no way to tell
+  // whether their own instruction had been carried out.
+  //
+  // Only the handful of fields the return trip needs are lifted off the old
+  // row. Re-reading the whole row back over `data` was the tempting version
+  // and the wrong one — anything the payload carries that is not a schema
+  // column (the PDF, the signatures, the routing fields set just above) would
+  // vanish on the way through.
+  var wasSentBack = false;
+  if (targetRow > 0) {
+    try {
+      var prev = ffReadRow_(sheet, headers, targetRow);
+      wasSentBack = _str(prev.status).toLowerCase().indexOf("changes") > -1;
+      if (wasSentBack) {
+        data.fixedAt   = data.lastUpdated;
+        data.fixedBy   = data.advisorName || _str(prev.advisorName);
+        data.fixedWhat = "Reopened the fact find and resubmitted it";
+        data.fixRound  = (parseInt(_str(prev.fixRound), 10) || 0) + 1;
+        // What the manager actually asked for, carried onto the new payload so
+        // the email can print it back to them beside what changed.
+        data.sentBackAt   = _str(prev.sentBackAt);
+        data.sentBackBy   = _str(prev.sentBackBy);
+        data.sentBackNote = _str(prev.sentBackNote) || _str(prev.dmGuidance);
+        // submittedAt stays the ORIGINAL date. The queue ages a case from the
+        // day the client was seen, not from the day it was patched — resetting
+        // it would let a case that has been round twice look brand new.
+        data.submittedAt = _str(prev.submittedAt) || data.submittedAt;
+      }
+    } catch (errPrev) { Logger.log("resubmit check failed: " + errPrev); }
+  }
+
   ffWriteRow_(sheet, headers, data, targetRow);
   var finalRow = targetRow > 0 ? targetRow : sheet.getLastRow();
 
