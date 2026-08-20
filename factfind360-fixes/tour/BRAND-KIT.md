@@ -147,7 +147,21 @@ Every cut opens and closes on the same two facts:
 
 - **Created by Ricky Rampersad, Branch Manager** — conceived, designed and
   driven from inside the Ricky Rampersad Branch
-- **MDRT Member · 35 years in the field · Guardian Life of the Caribbean**
+- **35 years in the field · Guardian Life of the Caribbean**
+
+The credentials, stated in full — "MDRT member" alone undersells it by a wide
+margin:
+
+| Credential | Say it as |
+|---|---|
+| MDRT — **Top of the Table** | multiple qualifications · **six times** the MDRT requirement |
+| MDRT — **Court of the Table** | multiple qualifications · **three times** the MDRT requirement |
+| **MFA, LUTCF** | professional designations |
+| **35 years** | in the field, and still in it |
+
+Always spell out the multiple. Outside the MDRT world, "Top of the Table" means
+nothing; "six times what MDRT itself asks for" means everything. Top of the
+Table is the highest level MDRT awards.
 
 ---
 

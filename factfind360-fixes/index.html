@@ -28,8 +28,84 @@
   .hide{display:none !important}
 
   /* ---------- LOGIN ---------- */
-  .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
-    background:radial-gradient(1200px 600px at 20% -10%,rgba(20,184,166,.18),transparent),linear-gradient(160deg,#0f172a,#1e293b 60%,#0f766e)}
+  .login-wrap{min-height:100vh;background:var(--bg)}
+  /* Hero: the story on the left, the way in on the right. Anyone who already
+     has an account signs in without scrolling; anyone who doesn't gets told
+     what this is before being asked for a password. */
+  .lp-hero{background:radial-gradient(1200px 600px at 18% -10%,rgba(20,184,166,.22),transparent),
+    linear-gradient(160deg,#0f172a,#1e293b 58%,#0f766e);padding:clamp(30px,5vw,64px) 24px}
+  .lp-in{max-width:1120px;margin:0 auto}
+  .lp-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,380px);gap:clamp(26px,4vw,54px);
+    align-items:center}
+  @media(max-width:900px){.lp-grid{grid-template-columns:minmax(0,1fr)}
+    .lp-copy{order:2}.login-card{order:1;margin:0 auto}}
+  .lp-eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:11px;font-weight:800;
+    letter-spacing:.18em;text-transform:uppercase;color:#5EEAD4;
+    background:rgba(20,184,166,.13);border:1px solid rgba(20,184,166,.32);
+    border-radius:2em;padding:7px 14px}
+  .lp-copy h1{color:#fff;font-size:clamp(30px,4.6vw,50px);line-height:1.08;letter-spacing:-.028em;
+    font-weight:800;margin:18px 0 0;text-wrap:balance}
+  .lp-copy h1 b{color:#5EEAD4;font-weight:800}
+  .lp-copy .lede{color:#B6C6DA;font-size:clamp(15px,1.7vw,17.5px);line-height:1.6;margin-top:16px;
+    max-width:54ch}
+  .lp-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+  .lp-pills span{font-size:12px;font-weight:700;color:#CBD5E1;background:rgba(255,255,255,.07);
+    border:1px solid rgba(255,255,255,.14);border-radius:2em;padding:7px 13px}
+
+  /* Body sections, on the light ground the rest of the app uses */
+  .lp-sec{padding:clamp(38px,5.5vw,72px) 24px;border-bottom:1px solid var(--line)}
+  .lp-sec.alt{background:var(--surface)}
+  .lp-kicker{font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--teal)}
+  .lp-sec h2{font-size:clamp(23px,3.1vw,34px);color:var(--slate);letter-spacing:-.02em;
+    line-height:1.15;margin:11px 0 0;font-weight:800;text-wrap:balance;max-width:22ch}
+  .lp-sec .sublede{color:var(--muted);font-size:15.5px;line-height:1.62;margin-top:13px;max-width:62ch}
+  .lp-sec .sublede b{color:var(--slate);font-weight:700}
+
+  /* The shift: two columns that are meant to be read across */
+  .shift{display:grid;grid-template-columns:repeat(auto-fit,minmax(285px,1fr));gap:14px;margin-top:26px}
+  .shift .col{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface)}
+  .shift .col.now{border-color:rgba(13,148,136,.4);box-shadow:0 6px 22px rgba(13,148,136,.09)}
+  .shift .ch{padding:14px 18px;font-size:11.5px;font-weight:800;letter-spacing:.14em;
+    text-transform:uppercase;border-bottom:1px solid var(--line)}
+  .shift .col.was .ch{color:var(--muted);background:#F8FAFC}
+  .shift .col.now .ch{color:#fff;background:var(--teal)}
+  .shift ul{list-style:none;margin:0;padding:6px 0}
+  .shift li{display:flex;gap:11px;align-items:flex-start;padding:11px 18px;font-size:14.5px;
+    line-height:1.45;color:var(--ink-soft)}
+  .shift li+li{border-top:1px solid #F1F5F9}
+  .shift .col.now li{color:var(--slate);font-weight:600}
+  .shift .mk{flex:none;width:17px;height:17px;border-radius:50%;display:grid;place-items:center;
+    font-size:10px;font-weight:800;margin-top:2px}
+  .shift .col.was .mk{background:#E2E8F0;color:#94A3B8}
+  .shift .col.now .mk{background:var(--teal-tint);color:var(--teal)}
+  .pullquote{margin-top:26px;border-left:4px solid var(--teal);padding:4px 0 4px 20px;
+    font-size:clamp(16px,2.1vw,20px);line-height:1.5;color:var(--slate);font-weight:600;max-width:56ch}
+
+  /* Numbers */
+  .lp-nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:13px;margin-top:26px}
+  .lp-num{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:19px}
+  .lp-sec.alt .lp-num{background:var(--bg)}
+  .lp-num .n{font-size:clamp(25px,3.4vw,33px);font-weight:800;color:var(--teal);letter-spacing:-.02em;
+    font-variant-numeric:tabular-nums;line-height:1.05}
+  .lp-num .k{font-size:12.5px;color:var(--muted);margin-top:7px;font-weight:600;line-height:1.4}
+
+  /* Who built it */
+  .bio{display:grid;grid-template-columns:auto minmax(0,1fr);gap:22px;align-items:start;margin-top:24px}
+  @media(max-width:620px){.bio{grid-template-columns:minmax(0,1fr)}}
+  .bio .mark{width:78px;height:90px;flex:none}
+  .bio h3{font-size:21px;color:var(--slate);font-weight:800;letter-spacing:-.01em}
+  .bio .role{font-size:11.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--teal);margin-top:4px}
+  .bio p{color:var(--ink-soft);font-size:15px;line-height:1.62;margin-top:13px;max-width:60ch}
+  .creds{display:flex;flex-wrap:wrap;gap:9px;margin-top:17px}
+  .cred{border:1px solid var(--line-2);border-radius:12px;padding:11px 15px;background:var(--surface)}
+  .lp-sec.alt .cred{background:var(--bg)}
+  .cred.top{border-color:rgba(13,148,136,.45);background:var(--teal-tint)}
+  .cred .t{font-size:13.5px;font-weight:800;color:var(--slate);line-height:1.2}
+  .cred.top .t{color:var(--teal-deep)}
+  .cred .d{font-size:11.5px;color:var(--muted);margin-top:3px}
+  .lp-foot{padding:26px 24px 44px;text-align:center;color:var(--muted);font-size:12.5px;line-height:1.8}
   .login-card{background:var(--surface);border-radius:18px;box-shadow:var(--shadow-lg);width:100%;max-width:420px;padding:30px 28px}
   .login-logo{display:flex;align-items:center;gap:12px;margin-bottom:6px}
   .login-logo svg{width:40px;height:46px}
@@ -258,6 +334,17 @@
 
 <!-- ============ LOGIN ============ -->
 <div id="loginView" class="login-wrap">
+
+<section class="lp-hero"><div class="lp-in"><div class="lp-grid">
+  <div class="lp-copy">
+    <span class="lp-eyebrow">Ricky Rampersad Branch &middot; Guardian Life</span>
+    <h1>Managers used to count the calls.<br>We read the <b>fact find</b>.</h1>
+    <p class="lede">factfind360 is one guided journey for the agent, the client and the manager
+    &mdash; the whole Confidential Fact Find, the arithmetic done as you talk, and a manager&rsquo;s
+    signature on the file before it reaches the client.</p>
+    <div class="lp-pills"><span>Aligned to Guardian&rsquo;s Fact Find V3</span>
+      <span>Built inside the branch</span><span>In use today</span></div>
+  </div>
   <div class="login-card">
     <div class="login-logo">
       <svg viewBox="0 0 60 70" xmlns="http://www.w3.org/2000/svg" aria-label="RR Branch">
@@ -302,11 +389,102 @@
           <span style="font-size:15px;font-weight:800;color:#F3F7FD;
             text-shadow:0 2px 10px rgba(0,0,0,.7)">Watch the walkthrough</span>
           <span style="font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
-            color:#F5B935;text-shadow:0 2px 10px rgba(0,0,0,.7)">6 min 10 &middot; sound on</span>
+            color:#F5B935;text-shadow:0 2px 10px rgba(0,0,0,.7)">6 min 20 &middot; sound on</span>
         </span>
       </span>
     </a>
   </div>
+</div></div></section>
+
+<section class="lp-sec">
+  <div class="lp-in">
+    <div class="lp-kicker">How performance is managed</div>
+    <h2>Activity was only ever a proxy</h2>
+    <p class="sublede">For as long as anyone can remember, a sales manager managed effort. How many
+    calls were made. How many contacts. How many appointments booked. Count the activity, and hope
+    the outcome follows. <b>This branch manages the fact find instead</b> &mdash; the work itself,
+    which can be read, checked, coached and signed.</p>
+
+    <div class="shift">
+      <div class="col was">
+        <div class="ch">What was counted</div>
+        <ul>
+          <li><span class="mk">&middot;</span>Calls made</li>
+          <li><span class="mk">&middot;</span>Contacts reached</li>
+          <li><span class="mk">&middot;</span>Appointments booked</li>
+          <li><span class="mk">&middot;</span>Cases submitted</li>
+          <li><span class="mk">&middot;</span>Production, at month end</li>
+        </ul>
+      </div>
+      <div class="col now">
+        <div class="ch">What is looked at now</div>
+        <ul>
+          <li><span class="mk">&#10003;</span>The need uncovered, in dollars</li>
+          <li><span class="mk">&#10003;</span>Cover recommended against that need</li>
+          <li><span class="mk">&#10003;</span>A written reason for every recommendation</li>
+          <li><span class="mk">&#10003;</span>The client&rsquo;s own confirmation</li>
+          <li><span class="mk">&#10003;</span>Turnaround, in days, while it still matters</li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="pullquote">A coaching session used to be an opinion about effort.
+    Now the manager and the advisor open the same file.</p>
+  </div>
+</section>
+
+<section class="lp-sec alt">
+  <div class="lp-in">
+    <div class="lp-kicker">Since launch</div>
+    <h2>What the branch has found</h2>
+    <p class="sublede">Not projections. Fact finds actually completed, and the protection gap they
+    documented. As at August 2026.</p>
+    <div class="lp-nums">
+      <div class="lp-num"><div class="n">55</div><div class="k">fact finds completed</div></div>
+      <div class="lp-num"><div class="n">TT$77.7M</div><div class="k">of need uncovered</div></div>
+      <div class="lp-num"><div class="n">TT$144.7M</div><div class="k">of cover recommended</div></div>
+      <div class="lp-num"><div class="n">28</div><div class="k">applications written</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="lp-sec">
+  <div class="lp-in">
+    <div class="lp-kicker">Who built it</div>
+    <h2>Thirty-five years, handed to every agent</h2>
+    <div class="bio">
+      <svg class="mark" viewBox="0 0 60 70" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M30 2 L56 10 L56 36 C56 52 44 64 30 68 C16 64 4 52 4 36 L4 10 Z" fill="#fff" stroke="#0D9488" stroke-width="2.5"/>
+        <path d="M30 6 L52 13 L52 36 C52 50 41 60 30 64 C19 60 8 50 8 36 L8 13 Z" fill="#1E293B"/>
+        <path d="M16 36 L26 46 L46 22" fill="none" stroke="#14B8A6" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div>
+        <h3>Ricky Rampersad</h3>
+        <div class="role">Branch Manager &middot; Guardian Life of the Caribbean</div>
+        <p>factfind360 was conceived, designed and driven from inside the Ricky Rampersad Branch.
+        It is thirty-five years of sitting in living rooms &mdash; knowing which question to ask,
+        which number a family will actually have to find, and what a recommendation has to be able
+        to stand behind &mdash; written down so that no agent has to learn it the hard way.</p>
+        <div class="creds">
+          <div class="cred top"><div class="t">MDRT &mdash; Top of the Table</div>
+            <div class="d">Multiple qualifications &middot; six times the MDRT requirement</div></div>
+          <div class="cred top"><div class="t">MDRT &mdash; Court of the Table</div>
+            <div class="d">Multiple qualifications &middot; three times the MDRT requirement</div></div>
+          <div class="cred"><div class="t">MFA, LUTCF</div>
+            <div class="d">Professional designations</div></div>
+          <div class="cred"><div class="t">35 years</div>
+            <div class="d">In the field, and still in it</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="lp-foot">
+  factfind360 &middot; a project of the Ricky Rampersad Branch<br>
+  Guardian Life of the Caribbean
+</div>
+
 </div>
 
 <!-- ============ APP ============ -->
