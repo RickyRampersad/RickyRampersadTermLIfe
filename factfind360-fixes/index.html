@@ -104,6 +104,48 @@
     .act td:first-child{width:auto;padding-bottom:3px;border-top:1px solid var(--line)}
     .act td:last-child{border-top:0;padding-top:0}}
 
+  /* Who this protects — one card per person in the room */
+  .aud{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:14px;margin-top:26px}
+  .aud .a{border:1px solid var(--line);border-radius:16px;padding:20px 21px;background:var(--surface);
+    display:flex;flex-direction:column;gap:9px}
+  .lp-sec.alt .aud .a{background:var(--bg)}
+  .aud .who{font-size:11.5px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:var(--teal)}
+  .aud h3{font-size:17.5px;color:var(--slate);font-weight:800;letter-spacing:-.01em;line-height:1.25}
+  .aud p{font-size:14px;line-height:1.6;color:var(--ink-soft);margin:0}
+  .aud p b{color:var(--slate)}
+
+  /* The journey — from the first conversation to a relationship measured in years */
+  .jt{margin-top:30px;display:grid;gap:0}
+  .jt .st{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;position:relative;padding-bottom:22px}
+  .jt .st:last-child{padding-bottom:0}
+  .jt .dot{width:34px;height:34px;border-radius:50%;background:var(--teal-tint);color:var(--teal-deep);
+    display:grid;place-items:center;font-weight:800;font-size:13.5px;flex:none;position:relative;z-index:1;
+    border:2px solid var(--teal)}
+  .jt .st::before{content:"";position:absolute;left:16px;top:34px;bottom:0;width:2px;background:var(--line-2)}
+  .jt .st:last-child::before{display:none}
+  .jt .st.soon .dot{background:var(--surface);color:var(--muted);border-style:dashed;border-color:#CBD5E1}
+  .jt .st.soon::before{background:repeating-linear-gradient(to bottom,#CBD5E1 0 5px,transparent 5px 10px)}
+  .jt h3{font-size:16.5px;color:var(--slate);font-weight:800;letter-spacing:-.01em;padding-top:5px}
+  .jt h3 .live{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--teal-deep);background:var(--teal-tint);border-radius:2em;padding:3px 9px;
+    margin-left:9px;vertical-align:2px;white-space:nowrap}
+  .jt .st.soon h3 .live{color:var(--muted);background:#F1F5F9}
+  .jt p{font-size:14px;line-height:1.58;color:var(--ink-soft);margin:5px 0 0;max-width:62ch}
+
+  /* The closing ask */
+  .cta{margin-top:28px;display:grid;grid-template-columns:repeat(auto-fit,minmax(275px,1fr));gap:14px}
+  .cta .c{border-radius:16px;padding:22px 23px;border:1px solid var(--line);background:var(--surface)}
+  .cta .c.hot{background:linear-gradient(150deg,#0f172a,#134E4A);border-color:transparent}
+  .cta .who{font-size:11.5px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:var(--teal)}
+  .cta .c.hot .who{color:#5EEAD4}
+  .cta h3{font-size:18px;font-weight:800;color:var(--slate);margin-top:8px;letter-spacing:-.01em;line-height:1.3}
+  .cta .c.hot h3{color:#fff}
+  .cta p{font-size:14px;line-height:1.6;color:var(--ink-soft);margin-top:9px}
+  .cta .c.hot p{color:#B6C6DA}
+  .cta a.go{display:inline-block;margin-top:14px;font-size:13.5px;font-weight:800;color:var(--teal-deep);
+    text-decoration:none;border-bottom:2px solid var(--teal)}
+  .cta .c.hot a.go{color:#5EEAD4;border-bottom-color:#5EEAD4}
+
   /* Numbers */
   .lp-nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:13px;margin-top:26px}
   .lp-num{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:19px}
@@ -360,12 +402,14 @@
 <section class="lp-hero"><div class="lp-in"><div class="lp-grid">
   <div class="lp-copy">
     <span class="lp-eyebrow">Ricky Rampersad Branch &middot; Guardian Life</span>
-    <h1>Managers used to count the calls.<br>We read the <b>fact find</b>.</h1>
-    <p class="lede">factfind360 is one guided journey for the agent, the client and the manager
-    &mdash; the whole Confidential Fact Find, the arithmetic done as you talk, and a manager&rsquo;s
-    signature on the file before it reaches the client.</p>
-    <div class="lp-pills"><span>Aligned to Guardian&rsquo;s Fact Find V3</span>
-      <span>Built inside the branch</span><span>In use today</span></div>
+    <h1>We protect the person<br>who earns the <b>money</b>.</h1>
+    <p class="lede">When that income stops, everything a family planned stops with it. factfind360
+    is how this branch makes sure no one is guessed at: the family&rsquo;s need priced in dollars
+    while you talk, a written reason for every recommendation, and a manager&rsquo;s signature on
+    the file before anything reaches the client &mdash; exactly the standard the
+    <b style="color:#5EEAD4">Insurance Act, 2018</b> sets for every advisor in the country.</p>
+    <div class="lp-pills"><span>Guardian&rsquo;s Confidential Fact Find V3, in full</span>
+      <span>Insurance Act 2018 &middot; Schedule 11</span><span>In use today, in this branch</span></div>
   </div>
   <div class="login-card">
     <div class="login-logo">
@@ -417,6 +461,73 @@
     </a>
   </div>
 </div></div></section>
+
+<section class="lp-sec">
+  <div class="lp-in">
+    <div class="lp-kicker">Who this protects</div>
+    <h2>Everyone in the room, and the one who isn&rsquo;t</h2>
+    <p class="sublede">A fact find done properly is not paperwork. It is the moment a family&rsquo;s
+    real position gets written down &mdash; and it protects every person it touches.</p>
+    <div class="aud">
+      <div class="a"><div class="who">The client</div>
+        <h3>You see your own numbers, and you confirm your own record.</h3>
+        <p>The need is worked out in front of you, in dollars &mdash; income replacement, the
+        children&rsquo;s education, the mortgage, retirement. Every recommendation carries a
+        <b>written reason in your terms</b>, you confirm the record from your own email, and
+        nothing is final until a <b>senior manager has reviewed and signed it</b>. A second pair
+        of eyes, on your behalf, on every single case.</p></div>
+      <div class="a"><div class="who">The advisor</div>
+        <h3>The arithmetic is done before you finish the sentence.</h3>
+        <p>One guided journey instead of a stack of forms: the maths runs while you talk, checks
+        name whatever is missing before it matters, and the file that leaves carries the reason,
+        the signature and the timestamp. <b>The best defence an advisor can have is a fact find
+        that stands up</b> &mdash; and this one is built to be inspected.</p></div>
+      <div class="a"><div class="who">The company &amp; the industry</div>
+        <h3>Evidence of market conduct, produced in seconds.</h3>
+        <p>The Insurance Act, 2018 asks that a formal fact find be <b>taken, retained and
+        available for inspection</b>. Every case here is timestamped, signed, and answerable
+        &mdash; the need found, the product matched to it, the reason on record. Not a filing
+        cabinet. A system of evidence.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="lp-sec alt">
+  <div class="lp-in">
+    <div class="lp-kicker">The journey</div>
+    <h2>From one conversation to a relationship measured in years</h2>
+    <p class="sublede">A policy is not a transaction that ends at a signature. The fact find opens
+    a file that stays alive for as long as the client does &mdash; and the system walks every step
+    of it.</p>
+    <div class="jt">
+      <div class="st"><div class="dot">1</div><div>
+        <h3>The fact find, at the kitchen table<span class="live">Live today</span></h3>
+        <p>The whole of Guardian&rsquo;s Confidential Fact Find, captured as a conversation. The
+        family, the money, the need &mdash; priced while you talk.</p></div></div>
+      <div class="st"><div class="dot">2</div><div>
+        <h3>A manager reviews, and signs<span class="live">Live today</span></h3>
+        <p>Every case goes to the advisor&rsquo;s own manager: four attestations &mdash; data,
+        affordability, suitability, compliance &mdash; and a signature that goes onto the fact
+        find itself. Sent back? The advisor fixes it inside the email and the manager is told the
+        moment it returns.</p></div></div>
+      <div class="st"><div class="dot">3</div><div>
+        <h3>The client confirms their own record<span class="live">Live today</span></h3>
+        <p>A plain-English copy lands in the client&rsquo;s inbox. They confirm it is right &mdash;
+        or ask for a change &mdash; with one tap, and they can see exactly where their case stands
+        across all six stages.</p></div></div>
+      <div class="st"><div class="dot">4</div><div>
+        <h3>Approved, delivered, followed up<span class="live">Live today</span></h3>
+        <p>The client hears the good news the moment it is signed, rates the service, and the
+        branch tracks the case to policy delivered &mdash; with reminders that do not forget.</p></div></div>
+      <div class="st soon"><div class="dot">5</div><div>
+        <h3>A service review, every year, for life<span class="live">Being built</span></h3>
+        <p>As the client&rsquo;s age changes, the file wakes up on its own: an annual review
+        invitation to the client, the advisor kept in the loop, the cover checked against the life
+        it protects. Because the need at 35 is not the need at 55 &mdash; and a promise made once
+        deserves to be kept current.</p></div></div>
+    </div>
+  </div>
+</section>
 
 <section class="lp-sec">
   <div class="lp-in">
@@ -551,6 +662,36 @@
             <div class="d">35 in the industry &middot; two at ALGICO before that</div></div>
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<section class="lp-sec">
+  <div class="lp-in">
+    <div class="lp-kicker">The standard</div>
+    <h2>If your advisor is not doing this, they should be</h2>
+    <p class="sublede">A fact find is not this branch&rsquo;s invention &mdash; it is what the
+    Insurance Act asks of <b>every</b> advisor, for every long-term product, everywhere in
+    Trinidad &amp; Tobago. The difference here is that it actually happens, on every case, with
+    the evidence to show for it.</p>
+    <div class="cta">
+      <div class="c hot"><div class="who">If you are a client</div>
+        <h3>Your family&rsquo;s plan deserves a second pair of eyes.</h3>
+        <p>Ask your advisor when your fact find was last done &mdash; and who signed it. If the
+        answer is a shrug, come and sit with a branch where the answer is on file. The
+        conversation costs nothing, and you leave knowing your numbers.</p>
+        <a class="go" href="mailto:ricky.rampersad@myguardiangroup.com?subject=I%20would%20like%20to%20meet%20with%20an%20advisor">Meet with us &rarr;</a></div>
+      <div class="c"><div class="who">If you are an advisor</div>
+        <h3>Work where the standard is the system.</h3>
+        <p>Thirty-five years of judgement, built into the tool you would use every day: the
+        arithmetic done for you, the file that defends you, a manager&rsquo;s signature behind
+        every case, and dashboards that show your work the way it deserves to be seen.</p>
+        <a class="go" href="mailto:ricky.rampersad@myguardiangroup.com?subject=Joining%20the%20Ricky%20Rampersad%20Branch">Talk to the branch &rarr;</a></div>
+      <div class="c"><div class="who">See it first</div>
+        <h3>Six minutes, sound on.</h3>
+        <p>The whole journey &mdash; agent, client and manager &mdash; walked through on sample
+        data, with every calculation happening on screen. Watch it before you decide anything.</p>
+        <a class="go" href="walkthrough.html">Watch the walkthrough &rarr;</a></div>
     </div>
   </div>
 </section>
