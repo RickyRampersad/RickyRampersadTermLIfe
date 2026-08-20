@@ -1,0 +1,224 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#04060a">
+<meta name="robots" content="noindex">
+<title>RR Branch — My Names</title>
+<style>
+:root{--bg:#04060a;--card:rgba(255,255,255,.05);--line:rgba(255,255,255,.14);
+ --tx:#f2f6ff;--tx2:rgba(242,246,255,.72);--tx3:rgba(242,246,255,.44);
+ --pt:#c3d2e4;--pt2:#e6edf8;--em:#34d399;--vi:#a78bfa;--ro:#fb7185;--am:#fbbf24;
+ --dsp:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+ --bdy:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--tx);font-family:var(--bdy);min-height:100vh;line-height:1.5;padding:28px 18px 60px}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;
+ background:radial-gradient(900px 560px at 15% -10%,rgba(195,210,228,.14),transparent 62%),
+            radial-gradient(760px 520px at 88% 6%,rgba(147,167,196,.12),transparent 60%),
+            radial-gradient(700px 620px at 50% 110%,rgba(223,232,244,.07),transparent 62%)}
+.wrap{max-width:640px;margin:0 auto}
+.brandrow{display:flex;align-items:center;gap:12px;margin-bottom:26px}
+.shield{width:40px;height:46px;flex-shrink:0}
+.brand{font-family:var(--dsp);font-weight:800;font-size:15px;letter-spacing:-.01em}
+.brand i{display:block;font-style:normal;font-weight:600;font-size:9px;
+ letter-spacing:.16em;text-transform:uppercase;color:var(--tx3);margin-top:2px}
+h1{font-family:var(--dsp);font-weight:800;font-size:clamp(24px,6.4vw,32px);letter-spacing:-.03em;line-height:1.1}
+h1 em{font-style:normal;background:linear-gradient(96deg,var(--pt2),var(--pt));
+ -webkit-background-clip:text;background-clip:text;color:transparent}
+.note{color:var(--tx2);font-size:13.5px;margin-top:8px;max-width:46ch}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:16px}
+label{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx3);font-weight:600;margin:12px 0 6px}
+input{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:11px;
+ padding:13px 14px;color:var(--tx);font-family:var(--bdy);font-size:15px}
+input:focus{outline:none;border-color:var(--pt);box-shadow:0 0 0 3px rgba(195,210,228,.14)}
+button{width:100%;margin-top:16px;border:0;border-radius:11px;padding:14px;cursor:pointer;
+ font-family:var(--dsp);font-weight:800;font-size:14px;color:#04060a;
+ background:linear-gradient(96deg,var(--pt2),var(--pt));box-shadow:0 8px 26px rgba(195,210,228,.22)}
+button:active{transform:scale(.985)}
+.err{color:#ffb3be;font-size:13px;margin-top:12px;min-height:18px}
+.topline{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:26px 0 4px}
+.topline b{font-family:var(--dsp);font-size:16px}
+.signout{color:var(--tx3);font-size:12px;text-decoration:none;border-bottom:1px solid var(--line);white-space:nowrap}
+.namecard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-top:14px}
+.namecard h3{font-family:var(--dsp);font-size:16.5px;letter-spacing:-.01em}
+.namecard .biz{color:var(--tx2);font-size:13px;margin-top:1px}
+.meta{color:var(--tx3);font-size:11.5px;margin-top:2px}
+.pill{display:inline-block;margin-top:10px;font-family:var(--dsp);font-weight:700;font-size:12px;
+ padding:5px 12px;border-radius:99px;border:1px solid var(--line);color:var(--tx2)}
+.pill.on{color:#04060a;background:linear-gradient(96deg,var(--pt2),var(--pt));border-color:transparent}
+.pill.won{color:#04060a;background:linear-gradient(96deg,#a7f3d0,var(--em));border-color:transparent}
+.pill.parked{color:var(--tx3)}
+.meter{display:flex;gap:4px;margin-top:12px}
+.meter i{flex:1;height:4px;border-radius:3px;background:rgba(255,255,255,.12)}
+.meter i.done{background:linear-gradient(90deg,var(--pt2),var(--pt))}
+.meter i.won{background:linear-gradient(90deg,#a7f3d0,var(--em))}
+.stageline{display:flex;justify-content:space-between;color:var(--tx3);font-size:10px;
+ letter-spacing:.06em;text-transform:uppercase;margin-top:6px}
+.notebox{margin-top:12px;font-size:13px;color:var(--tx2);background:rgba(0,0,0,.25);
+ border-left:2px solid var(--pt);border-radius:0 10px 10px 0;padding:9px 12px}
+.updated{color:var(--tx3);font-size:11px;margin-top:9px}
+.empty{color:var(--tx2);font-size:13.5px}
+.foot{margin-top:38px;font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--tx3);text-align:center}
+.linkrow{margin-top:18px;text-align:center}
+.linkrow a{color:var(--tx3);font-size:12.5px;text-decoration:none;border-bottom:1px solid var(--line)}
+@media(prefers-reduced-motion:no-preference){
+ .namecard{animation:up .5s cubic-bezier(.2,.7,.2,1) both}
+ .namecard:nth-child(2){animation-delay:.06s}.namecard:nth-child(3){animation-delay:.12s}
+ .namecard:nth-child(4){animation-delay:.18s}.namecard:nth-child(5){animation-delay:.24s}
+ @keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1}}}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute"><defs>
+<linearGradient id="sg" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#e6edf8"/><stop offset=".55" stop-color="#c3d2e4"/><stop offset="1" stop-color="#93a7c4"/>
+</linearGradient></defs></svg>
+
+<div class="wrap">
+  <div class="brandrow">
+    <svg class="shield" viewBox="0 0 42 48" aria-hidden="true">
+      <path d="M21 2 4 8v16c0 11 7.4 18.6 17 22 9.6-3.4 17-11 17-22V8Z" fill="none" stroke="url(#sg)" stroke-width="2.1"/>
+      <circle cx="21" cy="19" r="4.4" fill="#152844"/>
+      <path d="M11.8 33.5c0-5.1 4.1-8.4 9.2-8.4s9.2 3.3 9.2 8.4" fill="none" stroke="#152844" stroke-width="4"/>
+      <circle cx="21" cy="19" r="4.4" fill="none" stroke="url(#sg)" stroke-width="1.4"/>
+      <path d="M11.8 33.5c0-5.1 4.1-8.4 9.2-8.4s9.2 3.3 9.2 8.4" fill="none" stroke="url(#sg)" stroke-width="2.1" stroke-linecap="round"/>
+    </svg>
+    <div class="brand">RR Branch<i>Keyman · Guardian Life of the Caribbean</i></div>
+  </div>
+
+  <div id="login">
+    <h1>My names.<br><em>Live progress.</em></h1>
+    <p class="note">Every name you submitted is worked by the branch. Sign in with the email you used on the Three Names form to see where each one stands.</p>
+    <div class="card">
+      <form id="f" autocomplete="on">
+        <label for="em">Your email</label>
+        <input id="em" type="email" placeholder="you@example.com" autocomplete="email" inputmode="email">
+        <label for="cd">Branch access code</label>
+        <input id="cd" type="password" placeholder="Access code" autocomplete="off" autocapitalize="characters">
+        <button type="submit">Show my names</button>
+        <div class="err" id="err"></div>
+      </form>
+    </div>
+    <div class="linkrow"><a href="names.html">Submit more names</a> &nbsp;·&nbsp; <a href="index.html">Watch the film</a></div>
+  </div>
+
+  <div id="board" style="display:none">
+    <div class="topline"><b id="who"></b><a href="#" class="signout" id="out">Sign out</a></div>
+    <p class="note" id="sub"></p>
+    <div id="list"></div>
+    <div class="linkrow"><a href="names.html">Submit more names</a></div>
+  </div>
+
+  <div class="foot">Internal use · Confidential · RR Branch</div>
+</div>
+
+<script>
+/* ── CONFIG ──────────────────────────────────────────────────────────────
+   ENDPOINT: the Apps Script web app URL (ends in /exec) from
+   apps-script/KeymanProgress.gs. Until it is deployed and pasted here the
+   page explains that live tracking is not switched on yet.               */
+var CONFIG = { ENDPOINT: '' };
+
+/* Stage order for the progress meter — mirrors CFG.STATUSES in the backend.
+   The server's own list wins when it responds, so staff can rename stages
+   in one place. 'Parked' renders as a neutral pill with no meter. */
+var STATUSES = ['Submitted','Under analysis','Analysed — on the Friday board',
+  'Meeting booked','Case opened','Lodged — underwriting','Policy issued','Parked'];
+
+var LSK = 'keymanProgressLogin_v1';
+var $ = function (id) { return document.getElementById(id); };
+var fmtD = function (iso) {
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); }
+  catch (e) { return ''; }
+};
+
+function esc(s){var d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
+
+function render(data, email) {
+  var live = STATUSES.filter(function (s) { return s !== 'Parked'; });
+  $('who').textContent = data.agent ? data.agent : email;
+  $('sub').textContent = data.names.length
+    ? data.names.length + (data.names.length === 1 ? ' name' : ' names') + ' in the branch intelligence file. Statuses update as the specialist team works each one.'
+    : '';
+  $('list').innerHTML = data.names.length ? data.names.map(function (n) {
+    var idx = live.indexOf(n.status);
+    var parked = n.status === 'Parked';
+    var won = n.status === 'Policy issued';
+    var meter = '';
+    if (!parked && idx >= 0) {
+      meter = '<div class="meter">' + live.map(function (_, i) {
+        return '<i class="' + (i <= idx ? (won ? 'won' : 'done') : '') + '"></i>';
+      }).join('') + '</div>' +
+      '<div class="stageline"><span>Submitted</span><span>Policy issued</span></div>';
+    }
+    return '<div class="namecard">' +
+      '<h3>' + esc(n.owner || '—') + '</h3>' +
+      (n.biz ? '<div class="biz">' + esc(n.biz) + (n.ind ? ' · ' + esc(n.ind) : '') + '</div>' : '') +
+      (n.submitted ? '<div class="meta">Submitted ' + fmtD(n.submitted) + '</div>' : '') +
+      '<span class="pill ' + (won ? 'won' : parked ? 'parked' : 'on') + '">' + esc(n.status) + '</span>' +
+      meter +
+      (n.note ? '<div class="notebox">' + esc(n.note) + '</div>' : '') +
+      (n.updated ? '<div class="updated">Last update ' + fmtD(n.updated) + '</div>' : '') +
+      '</div>';
+  }).join('') : '<div class="card empty">No names found for <b>' + esc(email) + '</b> yet. Use the exact email you entered on the Three Names form — or submit your three names now.</div>';
+  $('login').style.display = 'none';
+  $('board').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+function load(email, code, remember) {
+  var err = $('err'); err.textContent = '';
+  if (!CONFIG.ENDPOINT) {
+    err.textContent = 'Live tracking is not switched on yet — the branch is connecting it. Ask Sales Support, or try again soon.';
+    return;
+  }
+  err.style.color = ''; err.textContent = 'Checking…';
+  fetch(CONFIG.ENDPOINT + '?email=' + encodeURIComponent(email) + '&code=' + encodeURIComponent(code))
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (!d.ok) {
+        err.textContent = d.error === 'bad-code' ? 'That access code is not recognised.' : 'Could not load your names — check the details and try again.';
+        return;
+      }
+      if (Array.isArray(d.statuses) && d.statuses.length) STATUSES = d.statuses;
+      if (remember) try { localStorage.setItem(LSK, JSON.stringify({ email: email, code: code })); } catch (e) {}
+      render(d, email);
+    })
+    .catch(function () { err.textContent = 'Could not reach the branch tracker — check your connection and try again.'; });
+}
+
+$('f').addEventListener('submit', function (ev) {
+  ev.preventDefault();
+  var email = $('em').value.trim(), code = $('cd').value.trim().toUpperCase();
+  if (!/.+@.+\..+/.test(email)) { $('err').textContent = 'Enter the email you used on the Three Names form.'; return; }
+  if (!code) { $('err').textContent = 'Enter the branch access code.'; return; }
+  load(email, code, true);
+});
+
+$('out').addEventListener('click', function (ev) {
+  ev.preventDefault();
+  try { localStorage.removeItem(LSK); } catch (e) {}
+  $('board').style.display = 'none'; $('login').style.display = 'block';
+  $('cd').value = '';
+});
+
+/* returning agent: auto-load with the remembered login */
+(function () {
+  var q = new URLSearchParams(location.search);
+  if (q.get('demo')) {           /* preview without a backend */
+    STATUSES = STATUSES.slice();
+    render({ ok: true, agent: 'Demo Agent', names: [
+      { owner: 'Anil Maharaj', biz: 'Maharaj Steel Ltd', ind: 'Manufacturing', submitted: '2026-08-12T10:00:00Z', status: 'Meeting booked', note: 'Strong file — audited three years. Meeting set for Tuesday with the specialist attending.', updated: '2026-08-18T15:00:00Z' },
+      { owner: 'Sherry Ali', biz: 'Ali Logistics', ind: 'Transport & logistics', submitted: '2026-08-12T10:00:00Z', status: 'Under analysis', note: '', updated: '2026-08-14T09:00:00Z' },
+      { owner: 'Deo Ramkissoon', biz: 'DR Equipment Rentals', ind: 'Equipment rental', submitted: '2026-08-12T10:00:00Z', status: 'Policy issued', note: 'TT$18M whole life with CI — congratulations, this one is placed.', updated: '2026-08-19T11:00:00Z' }
+    ] }, 'demo@rrbranch.example');
+    return;
+  }
+  var em = q.get('email'); if (em) $('em').value = em;
+  try {
+    var saved = JSON.parse(localStorage.getItem(LSK) || 'null');
+    if (saved && saved.email && saved.code) load(saved.email, saved.code, false);
+    else if (!em) { var last = localStorage.getItem('keymanAgentEmail'); if (last) $('em').value = last; }
+  } catch (e) {}
+})();
+</script>
+</body></html>

@@ -1688,7 +1688,7 @@ function renderPipeline(){
      <td class="num"><button class="btn ghost" data-open="${k}" type="button" style="font-size:11px;padding:6px 10px">Switch to</button></td></tr>`).join('');
   host.innerHTML=`<div class="card" style="margin-bottom:18px">
     <h3>My pipeline — submitted names & cases</h3>
-    <p style="margin-bottom:10px">Names you submit on the Three Names page are recorded here automatically. Click a status to advance it as the relationship moves; open a case to start the application — the current one is kept below and you can switch back any time. Everything stays on this device; uploaded evidence files are never stored and are re-attached at send time.</p>
+    <p style="margin-bottom:10px">Names you submit on the Three Names page are recorded here automatically. Click a status to advance it as the relationship moves; open a case to start the application — the current one is kept below and you can switch back any time. Everything stays on this device; uploaded evidence files are never stored and are re-attached at send time. <a href="progress.html" target="_blank" rel="noopener">Branch progress view for your submitted names →</a></p>
     ${PIPE.length?`<table><tr><th>Prospect</th><th>Added</th><th>Status</th><th></th></tr>${rows}</table>`
       :'<p style="color:var(--tx3)">No names recorded yet — submit your Three Names from the film site, or add one below.</p>'}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">

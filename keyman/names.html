@@ -192,7 +192,8 @@ select option{background:#0a1024;color:#f2f6ff}
     <svg class="tick" viewBox="0 0 80 80"><circle cx="40" cy="40" r="36"/><path d="M25 41.5 35.5 52 56 30"/></svg>
     <h2>Names received.</h2>
     <p id="donep">Your prospects are in the branch intelligence file. They'll be analysed and on screen Friday.</p>
-    <a class='cta' href='/teaser'>▶ Watch the 60-second film</a>
+    <a class='cta' href='progress.html'>📈 Track my names — live progress</a>
+    <a class='cta' href='/teaser' style='margin-top:10px'>▶ Watch the 60-second film</a>
     <div class="foot">RR Branch · Confidential<br>Guardian Life of the Caribbean</div>
   </div>
 
@@ -399,6 +400,7 @@ function submit(){
         added:new Date().toISOString(),src:'names'});
     });
     localStorage.setItem('keymanPipeline_v1',JSON.stringify(P.slice(0,200)));
+    if(S.email)localStorage.setItem('keymanAgentEmail',S.email);
   }catch(e){}
   f.submit();
   setTimeout(function(){
