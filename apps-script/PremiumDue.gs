@@ -52,10 +52,18 @@ var HEADERS = ['ts','iso','policy','client','clientNo','agent','author','code','
                'stage','type','reason','body','retainProb','tone',
                'surveyReason','surveyContact','surveyPromise','factFind','managerVerdict'];
 
+/**
+ * The engine's log, always in the Premium Due Tracker, always opened by ID.
+ *
+ * It used to prefer whatever spreadsheet was "active" and fall back to the
+ * Tracker. That reads fine in a project of its own and is wrong in a shared
+ * one: bound to a container it would write the send log into that live
+ * workbook — a new tab in a book people work in every day — and the Tracker
+ * would stay empty while the trail went somewhere nobody thought to look. A
+ * log that moves depending on how the script was opened is not a record.
+ */
 function getSheet_() {
-  /* Bound to the Tracker: use the container. Standalone: open the Tracker by
-     ID. Either way the log lands in the same place. */
-  var ss = SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.openById(TRACKER_ID);
+  var ss = SpreadsheetApp.openById(TRACKER_ID);
   var sh = ss.getSheetByName(SHEET_NAME);
   if (!sh) {
     sh = ss.insertSheet(SHEET_NAME);

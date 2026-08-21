@@ -60,8 +60,19 @@ var TOKEN_TTL_MS = 12 * 60 * 60 * 1000;    // one working day
 
 /* ============================ the roster ============================ */
 
+/**
+ * The Roster lives in the Premium Due Tracker, opened by ID — never in
+ * whatever spreadsheet happens to be "active".
+ *
+ * That distinction matters the moment this file shares a project with
+ * another script. Bound to a container, getActiveSpreadsheet() would drop a
+ * Roster tab into that live workbook; standalone it returns null and every
+ * sign-in dies on "cannot call getSheetByName of null". Opening by ID gives
+ * the same answer in both cases, which is the only answer a login table may
+ * give.
+ */
 function pdRosterSheet_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(TRACKER_ID);
   var sh = ss.getSheetByName(ROSTER_SHEET);
   if (!sh) {
     sh = ss.insertSheet(ROSTER_SHEET);
@@ -79,10 +90,15 @@ function pdSetupRoster() {
     sh.appendRow(['Ricky Rampersad', 'Branch Manager', '', 'CHANGE-ME', '', true]);
     sh.appendRow(['', '', '', '', '', '']);
   }
-  SpreadsheetApp.getUi().alert(
-    'Roster tab ready.\n\nFill in one row per person, then re-deploy the web app ' +
+  var where = 'Roster tab ready in the Premium Due Tracker:\n' +
+    SpreadsheetApp.openById(TRACKER_ID).getUrl() + '\n\n' +
+    'Fill in one row per person, then re-deploy the web app ' +
     '(Deploy → Manage deployments → edit → Deploy).\n\n' +
-    'Set active to FALSE to revoke someone immediately — no re-deploy needed for that.');
+    'Set active to FALSE to revoke someone immediately — no re-deploy needed for that.';
+  /* getUi() only exists when a spreadsheet or document is hosting this run.
+     From a standalone project, or from a time-based trigger, it throws — so
+     the message goes to the execution log instead of taking the run down. */
+  try { SpreadsheetApp.getUi().alert(where); } catch (e) { Logger.log(where); }
 }
 
 function pdRoster_() {

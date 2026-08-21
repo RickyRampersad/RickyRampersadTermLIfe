@@ -25,8 +25,18 @@ file. Replaces the two JotForms and the "Premium Due Status" comment columns.
 | Sheet | Role |
 |-------|------|
 | [**Branch Portfolio**](https://docs.google.com/spreadsheets/d/1T1SG3mgs5QV5LuF3JTpmn1zFldhGjOQNoe0YCMhWxjs/edit) | Read-only source. Tab `gid=0` = "Premium Due status". Set as `PORTFOLIO_ID` |
-| [**Premium Due Tracker**](https://docs.google.com/spreadsheets/d/1OuVG4NIsOd_O1LmmZ2gUYXCr1R59Atsfqv0yOvqFVgo/edit) | Write target. Holds `PremiumDueLog` and `Roster`. Bind the Apps Script to this one |
+| [**Premium Due Tracker**](https://docs.google.com/spreadsheets/d/1OuVG4NIsOd_O1LmmZ2gUYXCr1R59Atsfqv0yOvqFVgo/edit) | The only write target. Holds `PremiumDueLog` and `Roster`. Set as `TRACKER_ID` |
 | Motor Renewal Book — Schedule | A different system (`Code.gs`). Not used here |
+
+Both are opened by ID, so the engine behaves the same whether it runs in a
+project of its own or shares one with another script. That matters more than it
+sounds. `getSheet_` and `pdRosterSheet_` used to prefer
+`getActiveSpreadsheet()`, which reads fine in isolation and is wrong the moment
+the file has company: attached to a container it writes the send log and the
+login table into *that* workbook, and standalone it hands back `null` and every
+sign-in dies. A log that moves depending on how the script was opened is not a
+record, and a login table in the wrong book is a lockout. Both now name the
+Tracker outright.
 
 Note both files are written in Artifact format — no `<!DOCTYPE>`, since the
 artifact host supplies one. Served straight from this repo a browser falls into
@@ -713,8 +723,10 @@ in-force cover; an active policy alongside a lapsed one flags repeat churn.
 
 ## Sign-in and scope
 
-The roster lives in a **`Roster`** tab in the same sheet — name, role, agentId,
-code, manager, active. Run `pdSetupRoster()` once to create it.
+The roster lives in a **`Roster`** tab in the Premium Due Tracker — name, role,
+agentId, code, manager, active. Run `pdSetupRoster()` once to create it; it
+prints the Tracker's URL, and falls back to the execution log when there is no
+spreadsheet UI to show an alert in.
 
 The browser never receives anybody's code. It fetches `?type=roster` for names
 and roles to build the dropdown, posts the typed code to `?type=auth`, and gets
