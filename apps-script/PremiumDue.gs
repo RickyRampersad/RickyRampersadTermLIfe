@@ -315,6 +315,10 @@ function getPolicies_(scope) {
           out[q].ReqtDecision = e.decision || '';   // Magnum's own verdict, in its full vocabulary
           out[q].ReqtFollowupsLate = e.followupsOverdue || 0;
           out[q].ReqtFollowupLate = e.followupLate || 0;
+          out[q].ReqtRoutine = e.routine || 0;        // UWPro's own grouping: paperwork
+          out[q].ReqtMedical = e.medical || 0;        // ...versus an appointment to keep
+          out[q].ReqtOldest = e.oldestOrdered || 0;   // age from ordered_date, not the broken column
+          out[q].ReqtCode = e.code || '';             // the ES400 grid, PCCC = everything in
         }
       }
     } catch (eRq) { /* requirements are an enrichment, never a failure */ }

@@ -3189,10 +3189,17 @@ function pdReplacementRisk_(p, family) {
 function pdPendingMeaning_(code) {
   var c = String(code || '').toUpperCase();
   if (c.charAt(0) !== 'P' || c.length !== 4) return null;
+  /* The ES400 pending grid, read one letter at a time: P + [C|E] + [C|R] +
+     [C|U]. C is COMPLETE in every position — so PCCC is the case with its
+     entry clean, every requirement in, the cash paid and underwriting
+     finished. That case is not pending in any meaningful sense; it is
+     waiting for somebody to press the button. */
   return {
     errors: c.charAt(1) === 'E',              // data-entry errors on the case
     reqtOpen: c.charAt(2) === 'R',            // a requirement is outstanding
-    uwDone: c.charAt(3) === 'C'               // underwriting is complete
+    reqtDone: c.charAt(2) === 'C',            // everything asked for is in
+    uwDone: c.charAt(3) === 'C',              // underwriting is complete
+    allComplete: c.charAt(1) === 'C' && c.charAt(2) === 'C' && c.charAt(3) === 'C'
   };
 }
 
@@ -3268,6 +3275,13 @@ function pdRequirements_() {
       ent.followupLate = uw[pol2].oldestFollowup;
       ent.uwLines = uw[pol2].items.length;
       ent.staffItems = uw[pol2].items;                 // desk detail, never letter text
+      ent.routine = uw[pol2].routine;                  // paperwork lines
+      ent.medical = uw[pol2].medical;                  // appointments the client must keep
+      var oldestOrd = 0, oi2;
+      for (oi2 = 0; oi2 < uw[pol2].items.length; oi2++) {
+        if (uw[pol2].items[oi2].days > oldestOrd) oldestOrd = uw[pol2].items[oi2].days;
+      }
+      ent.oldestOrdered = oldestOrd;
     }
     for (pol2 in map) {
       if (!Object.prototype.hasOwnProperty.call(map, pol2)) continue;
@@ -3435,19 +3449,31 @@ function pdUwProReqts_() {
     var H = {}, c;
     for (c = 0; c < v[0].length; c++) H[String(v[0][c]).replace(/^ +| +$/g, '')] = c;
     var iPol = H['policy_number'], iReq = H['requirement_comment'], iReqs = H['requirements'],
-        iCode = H['requirement_code'], iDays = H['DaysOutstanding'], iFu = H['followup_date'],
+        iCode = H['requirement_code'], iFu = H['followup_date'],
         iEntry = H['manual_or_automatic_entry'], iOrd = H['ordered_date'];
     if (iPol == null) return map;
     var now = new Date();
     for (var r = 1; r < v.length; r++) {
       var pol = String(v[r][iPol] == null ? '' : v[r][iPol]).replace(/\.0$/, '');
       if (!pol) continue;
-      var e = map[pol] || (map[pol] = { items: [], overdueFollowups: 0, oldestFollowup: 0, auto: 0, manual: 0 });
+      var e = map[pol] || (map[pol] = { items: [], overdueFollowups: 0, oldestFollowup: 0,
+                                        auto: 0, manual: 0, routine: 0, medical: 0 });
       var name = String(iReq == null ? '' : (v[r][iReq] || '')).replace(/^ +| +$/g, '') ||
                  String(iReqs == null ? '' : (v[r][iReqs] || '')).replace(/^ +| +$/g, '') ||
                  String(iCode == null ? '' : (v[r][iCode] || '')).replace(/^ +| +$/g, '');
-      var days = Number(iDays == null ? 0 : v[r][iDays]) || 0;
-      if (name && e.items.length < 6) e.items.push({ name: name, days: days });
+      /* The DaysOutstanding column cannot be trusted — its maximum on the live
+         extract is 750,844 days, which is the year 2057 arriving early. Age is
+         computed from ordered_date, which is populated and sane. */
+      var ord = iOrd == null ? null : pdDate_(v[r][iOrd]);
+      var days = ord ? Math.floor((now.getTime() - ord.getTime()) / 86400000) : 0;
+      if (days < 0 || days > 3650) days = 0;
+      /* UWPro's own grouping: Routine is paperwork, Medicals/Labs is a
+         appointment the client has to keep. They move at different speeds and
+         they are chased differently, so the desk counts them apart. */
+      var group = String(iReqs == null ? '' : (v[r][iReqs] || ''));
+      if (/medical|lab/i.test(group)) e.medical++;
+      else if (/routine/i.test(group)) e.routine++;
+      if (name && e.items.length < 6) e.items.push({ name: name, days: days, group: group });
       if (String(iEntry == null ? '' : v[r][iEntry]) === 'Manual') e.manual++; else e.auto++;
       var fu = iFu == null ? null : pdDate_(v[r][iFu]);
       if (fu && fu.getTime() < now.getTime()) {
@@ -4716,6 +4742,167 @@ function pdHeadOfficeEscalation_() {
   pdDeliver_(to, cc, subject, html);
   Logger.log('Head-office escalation sent to %s — %s cases.', to, theirs.length);
   return theirs.length;
+}
+
+/**
+ * THE ROUTINE CHASE. UWPro groups every outstanding item as either Routine —
+ * paperwork somebody has to fill in and return — or Medicals/Labs, an
+ * appointment the client has to physically keep. They fail differently, so
+ * they are chased differently, and this asks the agent for a position on each
+ * rather than simply telling them the case is old.
+ *
+ * The reply matters more than the send: every case carries three one-tap
+ * answers, so an agent can clear a whole list from a phone in a minute, and
+ * the branch learns which cases are actually dead rather than guessing.
+ */
+function pdRoutineChase_() {
+  var board = pdPendingBoard_(), byAgent = {}, i;
+  for (i = 0; i < board.length; i++) {
+    var c = board[i], rq = c.reqt;
+    if (!rq) continue;
+    if (!(rq.routine || rq.medical)) continue;               // nothing categorised to chase
+    if (!pdInPilot_(c.p.Agent)) continue;
+    var a = String(c.p.Agent || '');
+    if (!a) continue;
+    (byAgent[a] = byAgent[a] || []).push(c);
+  }
+  var sent = 0, agent;
+  for (agent in byAgent) {
+    if (!Object.prototype.hasOwnProperty.call(byAgent, agent)) continue;
+    var list = byAgent[agent], med = [], rout = [], j;
+    for (j = 0; j < list.length; j++) (list[j].reqt.medical ? med : rout).push(list[j]);
+
+    var caseBlock = function (c) {
+      var names = '', k;
+      for (k = 0; k < c.reqt.items.length; k++) {
+        names += (names ? ', ' : '') + pdEsc_(c.reqt.items[k].name) +
+                 (c.reqt.items[k].days ? ' (' + c.reqt.items[k].days + 'd)' : '');
+      }
+      var q = { k: 'reqt', q: 'Where does this one stand?', opts: [
+        { k: 'chasing', lab: 'With the client — I am chasing it this week' },
+        { k: 'sent',    lab: 'Already submitted — the record is wrong' },
+        { k: 'dead',    lab: 'The client has gone quiet — close it' } ] };
+      return '<div style="margin:0 0 14px;padding:12px 14px;border:1px solid ' + PD_BRAND.line +
+        ';border-radius:9px;background:#FFFFFF">' +
+        '<div style="font-weight:bold;color:' + PD_BRAND.ink + '">' + pdEsc_(c.p.Client) + ' &middot; ' +
+          pdEsc_(c.p.Policy) + '</div>' +
+        '<div style="font-size:13px;color:' + PD_BRAND.mute + ';margin:3px 0 8px">' +
+          (names || 'requirement outstanding') + ' &middot; day ' + (Number(c.p.DaysArrears) || 0) +
+          (c.reqt.followupLate ? ' &middot; <b style="color:' + PD_BRAND.red + '">underwriting\'s follow-up is ' +
+            c.reqt.followupLate + ' days overdue</b>' : '') + '</div>' +
+        pdQuestionBlock_(c.p, [q], 'respond') +
+      '</div>';
+    };
+    var blocks = '', b2;
+    if (med.length) {
+      blocks += pdSection_('Medicals and labs — ' + med.length + ' case' + (med.length === 1 ? '' : 's'),
+        '<p style="margin:0 0 10px;font-size:13.5px;color:' + PD_BRAND.mute + '">An appointment the client has to ' +
+        'keep. These slip because nobody books them, not because anybody refuses — a call that fixes a date ' +
+        'usually ends the delay.</p>' +
+        (function () { var s = '', z; for (z = 0; z < med.length; z++) s += caseBlock(med[z]); return s; })());
+    }
+    if (rout.length) {
+      blocks += pdSection_('Routine paperwork — ' + rout.length + ' case' + (rout.length === 1 ? '' : 's'),
+        '<p style="margin:0 0 10px;font-size:13.5px;color:' + PD_BRAND.mute + '">Forms and documents. Most of ' +
+        'these are one conversation away from done.</p>' +
+        (function () { var s = '', z; for (z = 0; z < rout.length; z++) s += caseBlock(rout[z]); return s; })());
+    }
+    var html = pdWrap_(
+      '<p style="margin:0 0 4px;font-size:11px;letter-spacing:.08em;color:' + PD_BRAND.mute + '">OUTSTANDING REQUIREMENTS — ' +
+        pdToday_() + '</p>' +
+      '<p style="margin:0 0 12px">' + pdEsc_(pdFirst_(agent)) + ', <b>' + list.length + '</b> of your applications are ' +
+      'waiting on documents' + (med.length ? ', <b>' + med.length + '</b> of them on a medical or lab' : '') + '. ' +
+      '<b>Please answer each one below</b> — three taps, no forms. Where you tell us a document has already been ' +
+      'submitted we will take it up with underwriting ourselves and stop asking you.</p>' +
+      blocks +
+      pdNote_('Nothing here goes to your client. This is the branch asking you, so that the fortnightly letter ' +
+        'to the client and the chase to head office both say the right thing.') +
+      pdSigInternal_(),
+      { kind: 'mgr' }, true);
+    var to = pdStaffEmail_(agent);
+    var subject = 'Outstanding requirements on ' + list.length + ' of your applications' +
+      (med.length ? ' — ' + med.length + ' medical' + (med.length === 1 ? '' : 's') : '');
+    if (OUT.DRY_RUN) { Logger.log('ROUTINE CHASE (dry) %s -> %s | %s', agent, to || 'no address', subject); continue; }
+    pdDeliver_(to || OUT.TEST_INBOX, [], subject, html);
+    sent++;
+  }
+  Logger.log('Routine chases: %s%s', sent, OUT.DRY_RUN ? ' (dry run — nothing sent)' : '');
+  return sent;
+}
+
+/**
+ * THE DAILY MOVEMENT REPORT — what actually moved, and who moved it.
+ *
+ * Two columns that have never sat side by side before: what the ENGINE did
+ * (letters, chases, escalations, all timestamped in the log) and what a
+ * PERSON did (every comment, retention case, verdict and assignment, under
+ * the name that was signed in). It closes with the cases that did not move
+ * at all, because a day where nothing happened to a 90-day case is the thing
+ * a branch manager most needs to see and least often does.
+ */
+function pdDailyMovement_() {
+  var sh = getSheet_(), v = sh.getDataRange().getValues();
+  var since = Date.now() - 24 * 3600 * 1000, i;
+  var auto = {}, people = {}, autoN = 0, peopleN = 0;
+  for (i = 1; i < v.length; i++) {
+    var ts = Number(v[i][0]) || 0;
+    if (ts < since) continue;
+    var type = String(v[i][10] || ''), stage = String(v[i][11] || ''), who = String(v[i][6] || '');
+    if (type === 'outbound' || type === 'test-outbound' || type === 'internal' || type === 'test-internal') {
+      auto[stage] = (auto[stage] || 0) + 1; autoN++;
+    } else if (who && who !== 'System') {
+      var key = who + '||' + (type || 'note');
+      people[key] = (people[key] || 0) + 1; peopleN++;
+    }
+  }
+  var board = pdPendingBoard_(), stuck = [], j;
+  for (j = 0; j < board.length; j++) {
+    var d = Number(board[j].p.DaysArrears) || 0;
+    if (d >= 60 && board[j].blocker.who !== 'HEAD OFFICE') stuck.push(board[j]);
+  }
+  stuck.sort(function (a, b) { return (Number(b.p.DaysArrears) || 0) - (Number(a.p.DaysArrears) || 0); });
+
+  var rowsOf = function (obj, label) {
+    var out = '', k, any = false;
+    for (k in obj) {
+      if (!Object.prototype.hasOwnProperty.call(obj, k)) continue;
+      any = true;
+      var parts = k.split('||');
+      out += '<tr><td style="padding:7px 11px;border:1px solid ' + PD_BRAND.line + ';background:#FFFFFF">' +
+        pdEsc_(parts[0]) + (parts[1] ? ' <span style="color:' + PD_BRAND.mute + '">&middot; ' + pdEsc_(parts[1]) + '</span>' : '') +
+        '</td><td style="padding:7px 11px;border:1px solid ' + PD_BRAND.line + ';background:#FFFFFF;text-align:right;font-weight:bold">' +
+        obj[k] + '</td></tr>';
+    }
+    return any ? '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:13px">' +
+      out + '</table>' : pdNote_(label);
+  };
+  var stuckRows = '', z;
+  for (z = 0; z < Math.min(8, stuck.length); z++) stuckRows += pdCaseRow_(stuck[z], true);
+
+  var html = pdWrap_(
+    '<p style="margin:0 0 4px;font-size:11px;letter-spacing:.08em;color:' + PD_BRAND.mute + '">YESTERDAY, IN FULL — ' +
+      pdToday_() + '</p>' +
+    '<p style="margin:0 0 12px">The engine sent <b>' + autoN + '</b> ' + (autoN === 1 ? 'email' : 'emails') +
+    ' and the branch recorded <b>' + peopleN + '</b> ' + (peopleN === 1 ? 'action' : 'actions') +
+    ' by name. Both are below, and so is what stood still.</p>' +
+    pdSection_('What the engine did', rowsOf(auto, 'The engine sent nothing in the last 24 hours.')) +
+    pdSection_('What the branch did, by name', rowsOf(people,
+      'No comment, retention case, verdict or assignment was recorded by anybody yesterday. ' +
+      'Either it was a quiet day or the work is happening outside the system — both are worth knowing.')) +
+    (stuckRows
+      ? pdSection_('Past day 60 and still ours to move (' + stuck.length + ')',
+          '<p style="margin:0 0 8px;font-size:13px;color:' + PD_BRAND.mute + '">Not with underwriting. Nobody ' +
+          'else can move these.</p><table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%">' +
+          stuckRows + '</table>')
+      : pdNote_('Nothing over day 60 is sitting with the branch. That is the number to protect.', PD_BRAND.green)) +
+    pdSigInternal_(),
+    { kind: 'mgr' }, true);
+
+  var summary = 'engine=' + autoN + ' people=' + peopleN + ' stuck60=' + stuck.length;
+  if (OUT.DRY_RUN && !OUT.TEST_INBOX) { Logger.log('Daily movement (logged only). ' + summary); return; }
+  var to = OUT.TEST_INBOX || pdValidEmail_(OUT.BRANCH_MANAGER_EMAIL) || pdValidEmail_(OUT.BRANCH_EMAIL);
+  pdDeliver_(to, [], 'Yesterday in full — ' + autoN + ' engine, ' + peopleN + ' by hand', html);
+  Logger.log('Daily movement sent to %s. %s', to, summary);
 }
 
 function pdInstallTrigger() {

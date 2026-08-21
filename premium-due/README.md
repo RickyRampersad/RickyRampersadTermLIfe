@@ -473,6 +473,44 @@ once live), writing nothing to the log. It is the pilot's first act and a
 daily sanity check: when a number disagrees with what the branch knows, the
 letters wait.
 
+### Routine versus medicals — and the stale-requirement trap
+
+UWPro groups every outstanding item as **Routine** (paperwork someone must fill
+in and return) or **Medicals/Labs** (an appointment the client has to keep).
+They fail differently: paperwork stalls because nobody asked twice, a medical
+stalls because nobody booked it. The engine counts them apart, the wall tags
+them, and `pdRoutineChase_()` writes to the agent with the two separated and
+**three one-tap answers per case** — *chasing it / already submitted / client
+has gone quiet*. An agent can clear a list from a phone, and "already
+submitted" is the answer that matters most: the branch takes that one to
+underwriting itself instead of asking the agent again.
+
+On the live book that is **247 routine lines across 80 cases and 41 medical
+lines across 25 cases** — with Varun Seegolam carrying 68 routine and 12
+medical lines, and Rajiv Soodoo 43 routine.
+
+**The `DaysOutstanding` column cannot be used.** Its maximum on the live
+extract is 750,844 days — the year 2057 arriving early. Every age in the
+engine is computed from `ordered_date`, which is populated and sane. Anything
+over ten years old is treated as a data relic, not a chase.
+
+**The ES400 grid, read one letter at a time:** `P + [C|E] + [C|R] + [C|U]`.
+**C is COMPLETE in every position** — so `PCCC` is a case with clean entry,
+every requirement in, cash paid and underwriting finished. That case is not
+pending in any meaningful sense; it is waiting for somebody to press the
+button, and the wall's **Ready to settle** filter finds exactly those.
+
+### The daily movement report
+
+`pdDailyMovement_()` puts two columns side by side that never have been:
+what the **engine** did in the last 24 hours (every letter, chase and
+escalation, from the log) and what a **person** did (every comment, retention
+case, verdict and assignment, under the name that was signed in). It closes
+with the cases past day 60 that are *still ours to move* — because a day where
+nothing happened to a 90-day case is what a branch manager most needs to see
+and least often does. A silent day says so in words rather than showing an
+empty table.
+
 ### Whose move is it — the blocker model
 
 One question, asked the same way in three places: on this pending application,
