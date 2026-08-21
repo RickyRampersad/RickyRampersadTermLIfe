@@ -1,0 +1,27 @@
+Symbol	Ticker	Name	Group	Price	PrevClose	Tradeable
+DJI	INDEXDJX:.DJI	Dow Jones Industrial Average	Index	=IFERROR(GOOGLEFINANCE("INDEXDJX:.DJI","price"),"")	=IFERROR(GOOGLEFINANCE("INDEXDJX:.DJI","closeyest"),"")	no
+IXIC	INDEXNASDAQ:.IXIC	Nasdaq Composite	Index	=IFERROR(GOOGLEFINANCE("INDEXNASDAQ:.IXIC","price"),"")	=IFERROR(GOOGLEFINANCE("INDEXNASDAQ:.IXIC","closeyest"),"")	no
+NDX	INDEXNASDAQ:.NDX	Nasdaq 100	Index	=IFERROR(GOOGLEFINANCE("INDEXNASDAQ:.NDX","price"),"")	=IFERROR(GOOGLEFINANCE("INDEXNASDAQ:.NDX","closeyest"),"")	no
+INX	INDEXSP:.INX	S&P 500	Index	=IFERROR(GOOGLEFINANCE("INDEXSP:.INX","price"),"")	=IFERROR(GOOGLEFINANCE("INDEXSP:.INX","closeyest"),"")	no
+DIA	NYSEARCA:DIA	Dow Jones (DIA fund)	Index trackers	=IFERROR(GOOGLEFINANCE("NYSEARCA:DIA","price"),"")	=IFERROR(GOOGLEFINANCE("NYSEARCA:DIA","closeyest"),"")	yes
+QQQ	NASDAQ:QQQ	Nasdaq 100 (QQQ fund)	Index trackers	=IFERROR(GOOGLEFINANCE("NASDAQ:QQQ","price"),"")	=IFERROR(GOOGLEFINANCE("NASDAQ:QQQ","closeyest"),"")	yes
+SPY	NYSEARCA:SPY	S&P 500 (SPY fund)	Index trackers	=IFERROR(GOOGLEFINANCE("NYSEARCA:SPY","price"),"")	=IFERROR(GOOGLEFINANCE("NYSEARCA:SPY","closeyest"),"")	yes
+AAPL	NASDAQ:AAPL	Apple	Technology	=IFERROR(GOOGLEFINANCE("NASDAQ:AAPL","price"),"")	=IFERROR(GOOGLEFINANCE("NASDAQ:AAPL","closeyest"),"")	yes
+MSFT	NASDAQ:MSFT	Microsoft	Technology	=IFERROR(GOOGLEFINANCE("NASDAQ:MSFT","price"),"")	=IFERROR(GOOGLEFINANCE("NASDAQ:MSFT","closeyest"),"")	yes
+NVDA	NASDAQ:NVDA	NVIDIA	Technology	=IFERROR(GOOGLEFINANCE("NASDAQ:NVDA","price"),"")	=IFERROR(GOOGLEFINANCE("NASDAQ:NVDA","closeyest"),"")	yes
+GOOGL	NASDAQ:GOOGL	Alphabet (Google)	Technology	=IFERROR(GOOGLEFINANCE("NASDAQ:GOOGL","price"),"")	=IFERROR(GOOGLEFINANCE("NASDAQ:GOOGL","closeyest"),"")	yes
+AMZN	NASDAQ:AMZN	Amazon	Technology	=IFERROR(GOOGLEFINANCE("NASDAQ:AMZN","price"),"")	=IFERROR(GOOGLEFINANCE("NASDAQ:AMZN","closeyest"),"")	yes
+META	NASDAQ:META	Meta (Facebook)	Technology	=IFERROR(GOOGLEFINANCE("NASDAQ:META","price"),"")	=IFERROR(GOOGLEFINANCE("NASDAQ:META","closeyest"),"")	yes
+TSLA	NASDAQ:TSLA	Tesla	Technology	=IFERROR(GOOGLEFINANCE("NASDAQ:TSLA","price"),"")	=IFERROR(GOOGLEFINANCE("NASDAQ:TSLA","closeyest"),"")	yes
+JPM	NYSE:JPM	JPMorgan Chase	Financial	=IFERROR(GOOGLEFINANCE("NYSE:JPM","price"),"")	=IFERROR(GOOGLEFINANCE("NYSE:JPM","closeyest"),"")	yes
+BRK.B	NYSE:BRK.B	Berkshire Hathaway B	Financial	=IFERROR(GOOGLEFINANCE("NYSE:BRK.B","price"),"")	=IFERROR(GOOGLEFINANCE("NYSE:BRK.B","closeyest"),"")	yes
+V	NYSE:V	Visa	Financial	=IFERROR(GOOGLEFINANCE("NYSE:V","price"),"")	=IFERROR(GOOGLEFINANCE("NYSE:V","closeyest"),"")	yes
+GS	NYSE:GS	Goldman Sachs	Financial	=IFERROR(GOOGLEFINANCE("NYSE:GS","price"),"")	=IFERROR(GOOGLEFINANCE("NYSE:GS","closeyest"),"")	yes
+JNJ	NYSE:JNJ	Johnson & Johnson	Healthcare & consumer	=IFERROR(GOOGLEFINANCE("NYSE:JNJ","price"),"")	=IFERROR(GOOGLEFINANCE("NYSE:JNJ","closeyest"),"")	yes
+KO	NYSE:KO	Coca-Cola	Healthcare & consumer	=IFERROR(GOOGLEFINANCE("NYSE:KO","price"),"")	=IFERROR(GOOGLEFINANCE("NYSE:KO","closeyest"),"")	yes
+MCD	NYSE:MCD	McDonald's	Healthcare & consumer	=IFERROR(GOOGLEFINANCE("NYSE:MCD","price"),"")	=IFERROR(GOOGLEFINANCE("NYSE:MCD","closeyest"),"")	yes
+WMT	NYSE:WMT	Walmart	Healthcare & consumer	=IFERROR(GOOGLEFINANCE("NYSE:WMT","price"),"")	=IFERROR(GOOGLEFINANCE("NYSE:WMT","closeyest"),"")	yes
+DIS	NYSE:DIS	Walt Disney	Healthcare & consumer	=IFERROR(GOOGLEFINANCE("NYSE:DIS","price"),"")	=IFERROR(GOOGLEFINANCE("NYSE:DIS","closeyest"),"")	yes
+XOM	NYSE:XOM	Exxon Mobil	Energy & industry	=IFERROR(GOOGLEFINANCE("NYSE:XOM","price"),"")	=IFERROR(GOOGLEFINANCE("NYSE:XOM","closeyest"),"")	yes
+CAT	NYSE:CAT	Caterpillar	Energy & industry	=IFERROR(GOOGLEFINANCE("NYSE:CAT","price"),"")	=IFERROR(GOOGLEFINANCE("NYSE:CAT","closeyest"),"")	yes
+BA	NYSE:BA	Boeing	Energy & industry	=IFERROR(GOOGLEFINANCE("NYSE:BA","price"),"")	=IFERROR(GOOGLEFINANCE("NYSE:BA","closeyest"),"")	yes
