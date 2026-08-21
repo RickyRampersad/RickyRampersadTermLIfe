@@ -657,21 +657,24 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
 <!-- ══════════ THE FILM ══════════ -->
 <section id="film">
   <div class="wrap">
-    <a class="filmcard rv" href="launch.html" aria-label="Watch the launch film, about two minutes, with sound">
-      <div class="film-bg" aria-hidden="true">
-        <span class="fb1"></span><span class="fb2"></span><span class="fb3"></span>
-      </div>
-      <div class="film-in">
-        <div class="film-kick">THE LAUNCH FILM · 2 MIN · SOUND ON</div>
-        <h2 class="film-h">Watch what happens<br><em>when somebody finally calls.</em></h2>
-        <p class="film-p">The whole journey in two minutes — the orphan policy, the four-minute review,
-        the papers that arrive already filled in, and the person whose name ends up beside yours.</p>
-        <span class="film-btn"><i class="ptri"></i> Play the film</span>
-      </div>
-      <div class="film-side" aria-hidden="true">
-        <div class="film-play"><i class="ptri big"></i></div>
-      </div>
-    </a>
+    <div class="film-kick rv">THE FILM · 1 MIN 20 · SOUND ON</div>
+    <h2 class="sec-h rv">Watch what happens<br><em>when somebody finally calls.</em></h2>
+    <p class="film-lede rv">The whole journey — the orphan policy, the four-minute review, the papers that
+    arrive already filled in, and the person whose name ends up beside yours.</p>
+    <div class="vwrap rv">
+      <video id="dhaaVid" playsinline preload="metadata" poster="dhaa-film-poster.jpg"
+             controlsList="nodownload">
+        <source src="dhaa-film.mp4" type="video/mp4">
+        Your browser cannot play this video — <a href="launch.html">watch it here instead</a>.
+      </video>
+      <button class="vcover" id="vcover" type="button" aria-label="Play the film, 1 minute 20 seconds, sound on">
+        <span class="vplay"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></span>
+        <span class="vlab">Play the film</span>
+        <span class="vlen">1:20 · sound on</span>
+      </button>
+    </div>
+    <p class="film-foot rv">Prefer it full screen, with the animation live?
+      <a href="launch.html">Open the full experience →</a></p>
   </div>
 </section>
 
@@ -1497,42 +1500,44 @@ const stickyIo = new IntersectionObserver((es) => {
 </script>
 
 <style>
-/* ── the film band ─────────────────────────────────────────────────── */
-#film{padding:64px 0}
-.filmcard{position:relative;display:grid;grid-template-columns:1fr auto;gap:26px;align-items:center;
-  overflow:hidden;border-radius:22px;padding:40px 40px;background:var(--gold2);color:#F6EFE6;
-  text-decoration:none;isolation:isolate;box-shadow:0 18px 44px rgba(46,10,14,.24)}
-.filmcard:hover{box-shadow:0 22px 54px rgba(46,10,14,.32)}
-.film-bg{position:absolute;inset:0;z-index:-1;overflow:hidden}
-.film-bg span{position:absolute;border-radius:50%;filter:blur(46px);opacity:.55}
-.film-bg .fb1{width:340px;height:340px;background:#A8323F;left:-90px;top:-120px}
-.film-bg .fb2{width:300px;height:300px;background:#E8A87C;right:-70px;bottom:-130px;opacity:.28}
-.film-bg .fb3{width:240px;height:240px;background:#5E141F;left:44%;top:30%;opacity:.5}
-.film-kick{font-weight:800;font-size:12px;letter-spacing:.26em;color:#E5C9B3;margin-bottom:12px}
-.film-h{font-size:clamp(25px,3.9vw,40px);font-weight:900;line-height:1.1;color:#F6EFE6;margin-bottom:12px}
-.film-h em{font-style:normal;color:#E8A87C}
-.film-p{font-size:15.4px;line-height:1.62;color:#EBDCCD;max-width:52ch}
-.film-btn{display:inline-flex;align-items:center;gap:11px;margin-top:20px;background:#F6EFE6;color:#5E141F;
-  font-weight:800;font-size:15.5px;padding:13px 24px;border-radius:12px}
-.filmcard:hover .film-btn{background:#fff}
-.ptri{display:block;width:0;height:0;border-style:solid;border-width:7px 0 7px 12px;
-  border-color:transparent transparent transparent #5E141F}
-.ptri.big{border-width:15px 0 15px 25px;border-left-color:#F6EFE6;margin-left:6px}
-.film-side{flex:none}
-.film-play{width:112px;height:112px;border-radius:50%;background:rgba(246,239,230,.13);
-  border:2px solid rgba(246,239,230,.5);display:flex;align-items:center;justify-content:center}
-.filmcard:hover .film-play{background:rgba(246,239,230,.2)}
+/* ── the film player ───────────────────────────────────────────────── */
+#film{padding:70px 0;background:var(--gold2);color:#F6EFE6}
+#film .film-kick{font-weight:800;font-size:12px;letter-spacing:.26em;color:#E5C9B3;margin-bottom:12px}
+#film h2.sec-h{color:#F6EFE6}
+#film h2.sec-h em{color:#E8A87C}
+.film-lede{font-size:16px;line-height:1.62;color:#EBDCCD;max-width:60ch;margin-bottom:24px}
+.vwrap{position:relative;max-width:860px;border-radius:18px;overflow:hidden;background:#0A0708;
+  box-shadow:0 20px 50px rgba(20,4,7,.42);aspect-ratio:16/9}
+.vwrap video{display:block;width:100%;height:100%;object-fit:cover;background:#0A0708}
+.vcover{position:absolute;inset:0;display:grid;place-items:center;border:none;cursor:pointer;
+  color:#F6EFE6;font:inherit;
+  background:radial-gradient(circle at 50% 46%,rgba(20,4,7,.30),rgba(20,4,7,.62) 62%,rgba(20,4,7,.82))}
+.vcover.gone{display:none}
+.vplay{width:88px;height:88px;border-radius:50%;background:rgba(246,239,230,.16);
+  border:2px solid rgba(246,239,230,.62);display:flex;align-items:center;justify-content:center}
+.vplay svg{width:38px;height:38px;margin-left:5px}
+.vcover:hover .vplay{background:rgba(246,239,230,.26)}
+.vlab{position:absolute;left:22px;bottom:20px;font-weight:800;font-size:17px;
+  text-shadow:0 2px 12px rgba(10,4,6,.85)}
+.vlen{position:absolute;right:22px;bottom:22px;font-size:12px;letter-spacing:.16em;color:#E5C9B3;
+  font-weight:700;text-shadow:0 2px 10px rgba(10,4,6,.85)}
+.film-foot{margin-top:18px;font-size:14.5px;color:#EBDCCD}
+.film-foot a{color:#F6EFE6;font-weight:700}
 @media (prefers-reduced-motion: no-preference){
-  .film-play{animation:filmpulse 2.6s ease-in-out infinite}
-  @keyframes filmpulse{0%,100%{box-shadow:0 0 0 0 rgba(246,239,230,.28)}
-    60%{box-shadow:0 0 0 20px rgba(246,239,230,0)}}
+  .vplay{animation:filmpulse 2.6s ease-in-out infinite}
+  @keyframes filmpulse{0%,100%{box-shadow:0 0 0 0 rgba(246,239,230,.3)}60%{box-shadow:0 0 0 18px rgba(246,239,230,0)}}
 }
-@media(max-width:720px){
-  .filmcard{grid-template-columns:1fr;padding:30px 24px;gap:18px}
-  .film-side{display:flex;justify-content:flex-start}
-  .film-play{width:78px;height:78px}
-  .ptri.big{border-width:11px 0 11px 18px}
-}
+@media(max-width:640px){.vplay{width:64px;height:64px}.vplay svg{width:26px;height:26px}
+  .vlab{font-size:14px;left:14px;bottom:14px}.vlen{font-size:10.5px;right:14px;bottom:16px}}
 </style>
+<script>
+(function(){
+  var v=document.getElementById("dhaaVid"), c=document.getElementById("vcover");
+  if(!v||!c) return;
+  c.addEventListener("click", function(){ c.classList.add("gone"); v.setAttribute("controls",""); v.play(); });
+  v.addEventListener("pause", function(){ if(v.currentTime===0) c.classList.remove("gone"); });
+  v.addEventListener("ended", function(){ c.classList.remove("gone"); v.removeAttribute("controls"); v.currentTime=0; });
+})();
+</script>
 </body>
 </html>
