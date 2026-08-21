@@ -29,9 +29,15 @@ that track them, the same way a real investor would:
 The live level of the Dow, the Nasdaq Composite, the Nasdaq 100 and the S&P 500
 runs across the ticker at the top of the page for reference.
 
-Alongside those, players can trade about twenty large names — Apple, Microsoft,
-NVIDIA, Tesla, JPMorgan, Coca-Cola, Boeing and so on. Edit the `UNIVERSE` list in
-`Market.gs` to change what is on the menu.
+Alongside those, the league carries **123 individual stocks** — the full Dow
+Jones 30 and the Nasdaq 100, grouped under those headings in the trade menu so
+people can see which index a name belongs to. Edit the `UNIVERSE` list in
+`Market.gs` to change what is on the menu, then regenerate
+[`PASTE-INTO-SHEET.txt`](PASTE-INTO-SHEET.txt) to match.
+
+Tickers are plain (`WMT`, not `NYSE:WMT`). Google resolves US tickers to their
+primary listing on its own, and spelling out the exchange turned out to be a
+reliable way to get a blank cell when the guess was wrong.
 
 ---
 
