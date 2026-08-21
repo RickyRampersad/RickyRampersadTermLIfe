@@ -73,8 +73,13 @@ var OUT = {
   // PILOT_AGENTS: while non-empty, only policies serviced by these agents are
   // processed at all (plus any scheme they service). Everyone else's book is
   // untouched — not planned, not chased, not counted.
-  //   e.g. ['Ricky Rampersad', 'Neil Ramnanan']
-  PILOT_AGENTS: [],
+  //
+  // It ships with the pilot pair in it ON PURPOSE. Empty means EVERYONE, and
+  // an empty list beside a live DRY_RUN=false is the whole branch on day one:
+  // 415 clients sit in the 45-59 window today and 382 cases are due a manager
+  // escalation. Widen this deliberately, one line, when the pilot has earned
+  // it — never by leaving it blank and finding out afterwards.
+  PILOT_AGENTS: ['Ricky Rampersad', 'Neil Ramnanan'],
 
   // TEST_INBOX: while set, EVERY email the engine sends — client letters,
   // manager chases, group statements — goes to this one address instead of
