@@ -106,6 +106,10 @@ var OUT = {
   // policies go to sit in car trunks — on the current tab, 59% of
   // acknowledged policies were signed for AFTER the window had already run
   // out, and 179 were never signed for at all.
+  // Where the head-office escalation goes once the pilot is over. Blank
+  // falls back to the branch address, so a misconfigured run escalates to
+  // ourselves rather than to somebody who never agreed to receive it.
+  HEAD_OFFICE_EMAIL: '',         // e.g. 'newbusiness@myguardiangroup.com'
   FL_SHEET: 'Export',
   // A dispatch first seen older than this gets no client letter — the
   // window is gone and the case belongs to management, not a mail-merge.
@@ -3294,6 +3298,85 @@ var PD_TASK_SHEET  = 'SFTASK MGT';
 var PD_HEALTH_SHEET = 'Group Health and Increases';
 var PD_INCR_SHEET  = 'Increases';
 
+/* ===================== who is holding this case up =====================
+   One question, asked the same way everywhere: on THIS pending application,
+   whose move is it? The desk, the agent digest and the head-office
+   escalation all call this, so they can never disagree with each other.
+
+   The order matters more than the categories. A Magnum decision outranks a
+   missing document, because chasing paper for a declined case is wasted
+   work. A missed follow-up outranks an outstanding requirement, because
+   head office already said it would chase and did not. Only then does the
+   question become "what is outstanding, and who can actually produce it".
+
+   Measured on the live book, this puts 60 cases on head office, 40 on the
+   branch, 20 on the client and 2 on the agent — and the single largest
+   reason, 35 cases, is that nobody has asked anybody anything. */
+
+var PD_REQ_CLIENT = /medical|doctor|blood|oral fluid|glyco|ecg|echo|urine|nicotine|questionnaire|proof of|identity|address|fatca|declaration|pay ?slip|bank|income|statement|photo|passport|green card|birth/i;
+var PD_REQ_OURS   = /fact find|entry|correction|error|amend|verify information|listbill|section|form incomplete|pdc/i;
+var PD_REQ_MONEY  = /future premium|first premium|premium payment|futpy|cheque|draft|reinc/i;
+
+/**
+ * p       a pending policy row
+ * reqt    its entry from pdRequirements_ (may be undefined)
+ * tasked  true when a support task names this policy
+ */
+function pdBlocker_(p, reqt, tasked, replacement) {
+  var dec = String((reqt && reqt.decision) || '');
+  var names = '', oldest = 0, i;
+  if (reqt && reqt.items) {
+    for (i = 0; i < reqt.items.length; i++) {
+      names += (names ? ' ; ' : '') + reqt.items[i].name;
+      if (reqt.items[i].days > oldest) oldest = reqt.items[i].days;
+    }
+  }
+  var late = (reqt && reqt.followupLate) || 0;
+
+  if (/decline|postpone/i.test(dec)) {
+    return { who: 'HEAD OFFICE', what: 'Magnum has decided (' + pdEsc_(dec) + ') and the client has not been told',
+             act: 'Confirm the decision, write to the client, close the case.', since: oldest };
+  }
+  /* The replacement gate sits above every ordinary chase. Getting it wrong
+     costs the case ("Not Proceeded With") and the commission (0% same-agent),
+     so no document is worth collecting until the pack is compliant. */
+  if (replacement) {
+    return { who: 'BRANCH', what: 'Replacement check — this client has cover lapsing while the application pends',
+             act: 'Signed Replacement Declaration Form + client ID into the pack before anything else (Sept 2022 guidelines §9).',
+             since: oldest };
+  }
+  if (/additional information/i.test(dec)) {
+    return { who: 'HEAD OFFICE', what: 'Underwriting asked us a question and stopped',
+             act: 'Find the question and answer it — the client cannot help here.', since: oldest };
+  }
+  if (late) {
+    return { who: 'HEAD OFFICE', what: 'Underwriting’s own follow-up date passed ' + late + ' days ago',
+             act: 'Raise it with the case manager, quoting the date they set.', since: late };
+  }
+  if (/terms offered|loaded|RATMD/i.test(dec)) {
+    return { who: 'AGENT', what: 'A rated offer is on the table and expires in silence',
+             act: 'Get the client’s signed acceptance.', since: oldest };
+  }
+  if (names && PD_REQ_MONEY.test(names)) {
+    return { who: 'CLIENT', what: 'First premium not yet paid',
+             act: 'Send the MyGG link through the agent, or collect at the branch.', since: oldest };
+  }
+  if (names && PD_REQ_OURS.test(names)) {
+    return { who: 'BRANCH', what: 'Our own paper — ' + pdEsc_(names.substring(0, 60)),
+             act: 'No client and no agent needed. Complete it and the case moves.', since: oldest };
+  }
+  if (names && PD_REQ_CLIENT.test(names)) {
+    return { who: 'CLIENT', what: 'Waiting on the client — ' + pdEsc_(names.substring(0, 60)),
+             act: 'The agent collects it; the fortnightly letter is already asking.', since: oldest };
+  }
+  if (!tasked) {
+    return { who: 'BRANCH', what: 'No requirement on file and no task raised — nobody has asked anybody',
+             act: 'Confirm with underwriting what is actually outstanding, then log it.', since: oldest };
+  }
+  return { who: 'HEAD OFFICE', what: 'With underwriting, nothing outstanding from us',
+           act: 'Chase the open task; it is theirs to move.', since: oldest };
+}
+
 /* ============== the UWPro extracts ==============
    Head office added the raw underwriting tables to the workbook, and they
    answer three things the hand-maintained tabs could not:
@@ -4457,6 +4540,182 @@ function pdPilotStats() {
   var to = OUT.TEST_INBOX || pdValidEmail_(OUT.BRANCH_EMAIL) || pdValidEmail_(OUT.SALES_SUPPORT_EMAIL);
   pdDeliver_(to, [], 'Engine digest — what the book looks like before any letter fires', html);
   Logger.log('Digest sent to %s. %s', to, summary);
+}
+
+/* ===================== the two internal automations =====================
+   Neither writes to a client. Both answer the same question from opposite
+   ends: the agent is told only what nobody else can do for them, and head
+   office is told only what is genuinely theirs — quoting, each time, the
+   date they themselves set. */
+
+/** Shared: the pending book, decorated with its blocker. */
+function pdPendingBoard_() {
+  var payload = JSON.parse(getPolicies_().getContent());
+  if (!payload.ok) throw new Error('Could not read the portfolio: ' + payload.error);
+  var reqMap = pdRequirements_(), tasks = pdOpenTasks_(), out = [], i;
+  var byClient = {};
+  for (i = 0; i < payload.policies.length; i++) {
+    var bp = payload.policies[i];
+    (byClient[String(bp.ClientNo)] = byClient[String(bp.ClientNo)] || []).push(bp);
+  }
+  for (i = 0; i < payload.policies.length; i++) {
+    var p = payload.policies[i];
+    if ((Number(p.Status) || 0) !== 3) continue;
+    if (pdIsGroup_(p)) continue;
+    var rq = reqMap[String(p.Policy)];
+    var fam = byClient[String(p.ClientNo)] || [p];
+    var b = pdBlocker_(p, rq, !!tasks.byPolicy[String(p.Policy)], !!pdReplacementRisk_(p, fam));
+    out.push({ p: p, reqt: rq, blocker: b, tasked: !!tasks.byPolicy[String(p.Policy)] });
+  }
+  out.sort(function (a, b2) { return (Number(b2.p.DaysArrears) || 0) - (Number(a.p.DaysArrears) || 0); });
+  return out;
+}
+
+function pdCaseRow_(c, showAgent) {
+  var d = Number(c.p.DaysArrears) || 0;
+  return '<tr>' +
+    '<td style="padding:8px 11px;border:1px solid ' + PD_BRAND.line + ';background:#FFFFFF;font-size:12.5px">' +
+      '<b>' + pdEsc_(c.p.Client) + '</b><br><span style="color:' + PD_BRAND.mute + '">' + pdEsc_(c.p.Policy) +
+      (showAgent ? ' &middot; ' + pdEsc_(c.p.Agent) : '') + '</span></td>' +
+    '<td style="padding:8px 11px;border:1px solid ' + PD_BRAND.line + ';background:#FFFFFF;font-size:12.5px">' +
+      c.blocker.what + '<br><span style="color:' + PD_BRAND.mute + '">' + c.blocker.act + '</span></td>' +
+    '<td style="padding:8px 11px;border:1px solid ' + PD_BRAND.line + ';background:#FFFFFF;text-align:right;' +
+      'white-space:nowrap;font-weight:bold;color:' + (d >= 60 ? PD_BRAND.red : PD_BRAND.ink) + '">day ' + d + '</td>' +
+  '</tr>';
+}
+
+/**
+ * THE AGENT'S MORNING LIST. One email per agent, carrying only their own
+ * pending cases and — this is the whole point — only the ones where the
+ * next move is theirs or their client's. Cases sitting with head office are
+ * shown as a count, not a to-do list, because an agent cannot move them and
+ * a list of things you cannot do is how people learn to ignore a digest.
+ */
+function pdAgentDigest_() {
+  var board = pdPendingBoard_(), byAgent = {}, i;
+  for (i = 0; i < board.length; i++) {
+    if (!pdInPilot_(board[i].p.Agent)) continue;
+    var a = String(board[i].p.Agent || '');
+    if (!a) continue;
+    (byAgent[a] = byAgent[a] || []).push(board[i]);
+  }
+  var sent = 0, agent;
+  for (agent in byAgent) {
+    if (!Object.prototype.hasOwnProperty.call(byAgent, agent)) continue;
+    var mine = byAgent[agent], yours = [], theirs = 0, j;
+    for (j = 0; j < mine.length; j++) {
+      if (mine[j].blocker.who === 'HEAD OFFICE') theirs++;
+      else yours.push(mine[j]);
+    }
+    var to = pdStaffEmail_(agent);
+    if (!to && !OUT.TEST_INBOX && !OUT.DRY_RUN) continue;          // nobody to write to
+    var rowsHtml = '', api = 0;
+    for (j = 0; j < yours.length; j++) {
+      rowsHtml += pdCaseRow_(yours[j], false);
+      api += (Number(yours[j].p.Premium) || 0) * 12;
+    }
+    var html = pdWrap_(
+      '<p style="margin:0 0 4px;font-size:11px;letter-spacing:.08em;color:' + PD_BRAND.mute + '">YOUR PENDING BUSINESS — ' +
+        pdToday_() + '</p>' +
+      '<p style="margin:0 0 12px">' + pdEsc_(pdFirst_(agent)) + ', you have <b>' + mine.length + ' application' +
+        (mine.length === 1 ? '' : 's') + '</b> in progress. ' +
+        (yours.length
+          ? '<b>' + yours.length + '</b> of them are waiting on you or your client — they are listed below, and they are ' +
+            'worth <b>' + pdMoney_(api) + '</b> of annualised premium.'
+          : 'None of them is waiting on you today.') +
+        (theirs ? ' The other ' + theirs + ' ' + (theirs === 1 ? 'is' : 'are') + ' with head office; the branch is chasing ' +
+          (theirs === 1 ? 'it' : 'them') + ' and you do not need to.' : '') + '</p>' +
+      (yours.length
+        ? pdSection_('Yours to move', '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%">' +
+            '<tr><td style="padding:6px 11px;background:' + PD_BRAND.panel + ';border:1px solid ' + PD_BRAND.line +
+              ';font-size:11px;letter-spacing:.06em;color:' + PD_BRAND.mute + '">CLIENT &amp; POLICY</td>' +
+            '<td style="padding:6px 11px;background:' + PD_BRAND.panel + ';border:1px solid ' + PD_BRAND.line +
+              ';font-size:11px;letter-spacing:.06em;color:' + PD_BRAND.mute + '">WHAT IS HOLDING IT UP</td>' +
+            '<td style="padding:6px 11px;background:' + PD_BRAND.panel + ';border:1px solid ' + PD_BRAND.line +
+              ';font-size:11px;letter-spacing:.06em;color:' + PD_BRAND.mute + ';text-align:right">AGE</td></tr>' +
+            rowsHtml + '</table>')
+        : pdNote_('Nothing on your desk this morning. Every one of your applications is with underwriting.', PD_BRAND.green)) +
+      pdNote_('This list is built from the requirement ledger and Magnum’s own verdicts each morning. If a case ' +
+        'here is already settled, say so — the record is wrong and the branch will fix it.') +
+      pdSigInternal_(),
+      { kind: 'mgr' }, true);
+    var subject = 'Your pending business — ' + yours.length + ' waiting on you' +
+      (theirs ? ' (' + theirs + ' with head office)' : '');
+    if (OUT.DRY_RUN) { Logger.log('AGENT DIGEST (dry) %s -> %s | %s', agent, to || 'no address', subject); continue; }
+    pdDeliver_(to || OUT.TEST_INBOX, [], subject, html);
+    sent++;
+  }
+  Logger.log('Agent digests: %s%s', sent, OUT.DRY_RUN ? ' (dry run — nothing sent)' : '');
+  return sent;
+}
+
+/**
+ * THE HEAD-OFFICE ESCALATION. One email, once, listing only the cases where
+ * head office is the blocker — each with the reason and, where they set one,
+ * the follow-up date they chose themselves. The branch manager and support
+ * are copied so the ask is on the record rather than in somebody's sent items.
+ */
+function pdHeadOfficeEscalation_() {
+  var board = pdPendingBoard_(), theirs = [], i;
+  for (i = 0; i < board.length; i++) {
+    if (!pdInPilot_(board[i].p.Agent)) continue;
+    if (board[i].blocker.who === 'HEAD OFFICE') theirs.push(board[i]);
+  }
+  if (!theirs.length) { Logger.log('Head-office escalation: nothing to raise.'); return 0; }
+
+  var decided = [], asked = [], missed = [], quiet = [], api = 0, j;
+  for (j = 0; j < theirs.length; j++) {
+    var w = theirs[j].blocker.what;
+    api += (Number(theirs[j].p.Premium) || 0) * 12;
+    if (/Magnum has decided/.test(w)) decided.push(theirs[j]);
+    else if (/asked us a question/.test(w)) asked.push(theirs[j]);
+    else if (/follow-up date passed/.test(w)) missed.push(theirs[j]);
+    else quiet.push(theirs[j]);
+  }
+  var block = function (title, list, lead) {
+    if (!list.length) return '';
+    var rows = '', k;
+    for (k = 0; k < Math.min(list.length, 25); k++) rows += pdCaseRow_(list[k], true);
+    return pdSection_(title + ' (' + list.length + ')',
+      '<p style="margin:0 0 8px;font-size:13px;color:' + PD_BRAND.mute + '">' + lead + '</p>' +
+      '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%">' + rows + '</table>' +
+      (list.length > 25 ? '<p style="font-size:12px;color:' + PD_BRAND.mute + '">…and ' + (list.length - 25) +
+        ' more, listed in full on request.</p>' : ''));
+  };
+
+  var html = pdWrap_(
+    '<p style="margin:0 0 4px;font-size:11px;letter-spacing:.08em;color:' + PD_BRAND.mute + '">BRANCH ESCALATION — ' +
+      pdToday_() + '</p>' +
+    '<p style="margin:0 0 12px">Of the branch’s pending applications, <b>' + theirs.length + '</b> are waiting on ' +
+    'underwriting rather than on us or the client — <b>' + pdMoney_(api) + '</b> of annualised premium. ' +
+    'Each one below names the reason from your own records. We are not asking for priority; we are asking ' +
+    'for a position on each.</p>' +
+    block('Decided, but the client has not been told', decided,
+      'Magnum has returned a decision. Until it is communicated the client believes they are still being underwritten.') +
+    block('Underwriting asked us a question and stopped', asked,
+      'These are ours to answer — tell us what is outstanding and it will be with you the same day.') +
+    block('Past the follow-up date underwriting set itself', missed,
+      'Each of these carries a follow-up date chosen in UWPro that has since passed. We are quoting your own dates back, not ours.') +
+    block('With underwriting, nothing outstanding from the branch', quiet,
+      'No requirement is recorded against these and no document is owed by us. A position on each would close them out.') +
+    pdNote_('Branch contact for all of the above: ' + pdEsc_(OUT.SUPPORT_NAME) + ', ' + pdEsc_(OUT.BRANCH_EMAIL) +
+      '. Anything already settled on your side, tell us and we will correct our record the same morning.') +
+    pdSigInternal_(),
+    { kind: 'mgr' }, true);
+
+  var cc = [];
+  if (pdValidEmail_(OUT.BRANCH_MANAGER_EMAIL)) cc.push(OUT.BRANCH_MANAGER_EMAIL);
+  if (pdValidEmail_(OUT.SALES_SUPPORT_EMAIL)) cc.push(OUT.SALES_SUPPORT_EMAIL);
+  var subject = 'Branch pending business — ' + theirs.length + ' cases awaiting a position from underwriting';
+  if (OUT.DRY_RUN) {
+    Logger.log('HEAD-OFFICE ESCALATION (dry): %s | decided=%s asked=%s missed-followups=%s quiet=%s',
+      subject, decided.length, asked.length, missed.length, quiet.length);
+    return theirs.length;
+  }
+  var to = OUT.TEST_INBOX || pdValidEmail_(OUT.HEAD_OFFICE_EMAIL) || pdValidEmail_(OUT.BRANCH_EMAIL);
+  pdDeliver_(to, cc, subject, html);
+  Logger.log('Head-office escalation sent to %s — %s cases.', to, theirs.length);
+  return theirs.length;
 }
 
 function pdInstallTrigger() {

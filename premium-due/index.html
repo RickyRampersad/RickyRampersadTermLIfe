@@ -198,6 +198,24 @@ input,select,textarea{font-family:inherit;font-size:14px}
 .pq-row:hover{background:var(--card-2)}
 .pq-act{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
   padding:4px 8px;border-radius:4px;text-align:center;align-self:start;border:1px solid}
+/* the action wall */
+.wall{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:10px;margin:0 0 22px}
+.wp{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;border-top:3px solid var(--line)}
+.wp .n{font-family:var(--disp);font-size:28px;line-height:1;font-weight:600}
+.wp .k{font-size:12px;color:var(--ink-2);margin-top:5px;font-weight:600}
+.wp .v{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);margin-top:6px}
+.wp .v span{color:var(--mut)}
+.wp.ours{border-top-color:var(--amber)} .wp.ours .n{color:var(--amber)}
+.wp.ho{border-top-color:var(--navy-2,#1C3145)} .wp.ho .n{color:var(--ink)}
+.wp.agt{border-top-color:var(--gold)} .wp.agt .n{color:var(--gold-2,#8A6A1C)}
+.wp.cli{border-top-color:var(--teal)} .wp.cli .n{color:var(--teal)}
+.wh{font-family:var(--disp);font-size:17px;font-weight:600;margin:26px 0 4px;display:flex;flex-wrap:wrap;gap:10px;align-items:baseline}
+.wh span{font-family:var(--mono);font-size:11.5px;color:var(--mut);font-weight:400}
+.wh.ours{color:var(--amber)} .wh.ho{color:var(--ink)} .wh.agt{color:var(--gold-2,#8A6A1C)} .wh.cli{color:var(--teal)}
+.trail{margin-top:9px;border-top:1px dashed var(--line-2);padding-top:8px;display:grid;gap:3px}
+.tr{display:flex;gap:10px;font-size:11.5px;font-family:var(--mono);flex-wrap:wrap}
+.tk{color:var(--mut);min-width:180px}
+.tv{color:var(--ink-2)}
 .pq-act.gate{color:var(--red);border-color:var(--red);background:var(--red-soft)}
 .pq-act.stop{color:#fff;border-color:var(--red-2);background:var(--red-2)}
 .pq-act.info{color:var(--navy,#1C3145);border-color:var(--line);background:var(--paper-2,#F2EFE8)}
@@ -1747,7 +1765,7 @@ function renderAgent(){
     ${nextStep(mine)}${rickyBanner(mine,`${SESS.firstName}, here's where you save the most this week`)}${statStrip(mine)}
     <div id="ribHost"></div>
     ${filterBar()}<div id="caseHost" class="cases"></div>
-    ${pendN?`<div class="page-head" style="margin-top:34px"><div><div class="eyebrow">Your pendings · submission to settled</div><h2>${pendN} application${pendN===1?'':'s'} not yet in force</h2><div class="sub">Every one is waiting on something specific. Clear it and the case settles.</div></div></div>${pendingsPanel(mine)}`:''}
+    ${pendN?`<div class="page-head" style="margin-top:34px"><div><div class="eyebrow">Your pendings · submission to settled</div><h2>${pendN} application${pendN===1?'':'s'} not yet in force</h2><div class="sub">Grouped by who can move each one. Yours and your client's come first — the rest are with head office and the branch is chasing them.</div></div></div>${actionWall(mine,'agent')}`:''}
     ${footer()}`;
   host();
   bindJumps(view, rerender);
@@ -1762,8 +1780,9 @@ function renderManagerScope(title,eyebrow){
   const awaitN=mine.filter(c=>{const st=policyState(c.Policy);return st.retention&&!st.verdict;}).length;
   view.innerHTML=`<div class="page-head"><div><div class="eyebrow">${esc(eyebrow)} · ${esc(SESS.code)}</div><h2>${esc(title)}</h2><div class="sub">${mine.length} policies across your reporting line.</div></div></div>
     ${nextStep(mine)}${rickyBanner(mine,`${SESS.firstName}, where your line is losing premium`)}${statStrip(mine)}
-    <div class="tabs"><button class="tab on" data-tab="book">Premium book</button><button class="tab" data-tab="pend">Pendings${(pn=>pn?`<span class="q-badge">${pn}</span>`:'')(mine.filter(c=>c.stage==='pend'&&!c.grp).length)}</button><button class="tab" data-tab="queue">Retention queue${awaitN?`<span class="q-badge">${awaitN}</span>`:''}</button><button class="tab" data-tab="score">Agent scorecard</button></div>
-    <div class="tabpane on" data-pane="book"><div id="ribHost"></div>${filterBar()}<div id="caseHost" class="cases"></div></div>
+    <div class="tabs"><button class="tab on" data-tab="today">Today${(tn=>tn?`<span class="q-badge">${tn}</span>`:'')(mine.filter(c=>c.stage==='pend'&&!c.grp&&blockerOf(c).who!=='HEAD OFFICE').length)}</button><button class="tab" data-tab="book">Premium book</button><button class="tab" data-tab="pend">Pendings${(pn=>pn?`<span class="q-badge">${pn}</span>`:'')(mine.filter(c=>c.stage==='pend'&&!c.grp).length)}</button><button class="tab" data-tab="queue">Retention queue${awaitN?`<span class="q-badge">${awaitN}</span>`:''}</button><button class="tab" data-tab="score">Agent scorecard</button></div>
+    <div class="tabpane on" data-pane="today"><p class="note" style="margin-bottom:14px">Your line's pending business, grouped by who can move it. The first block needs nobody's permission — it is ours.</p>${actionWall(mine,'manager')}</div>
+    <div class="tabpane" data-pane="book"><div id="ribHost"></div>${filterBar()}<div id="caseHost" class="cases"></div></div>
     <div class="tabpane" data-pane="pend"><p class="note" style="margin-bottom:14px">Your line's new business from submission to settled — what stands between each application and a policy in force.</p>${pendingsPanel(mine)}</div>
     <div class="tabpane" data-pane="queue"><p class="note" style="margin-bottom:14px">75-day retention cases your agents submitted, waiting on your decision. Click any row to respond.</p><div id="queueHost">${managerQueue(mine)}</div></div>
     <div class="tabpane" data-pane="score"><p class="note" style="margin-bottom:14px">Persistency scorecard — who's running surveys, who's letting policies reach the lapse line.</p>${agentScorecard(mine)}</div>
@@ -1818,6 +1837,83 @@ function beyondBook(cases){
     <p class="note" style="margin:0 0 10px">Pending business the portfolio cannot show: increases already sold, group health applications on Salesforce ids, and tasks still chasing cases that have settled.</p>
     <div class="pq">${rows}</div>`;
 }
+/* ===== WHOSE MOVE IS IT =====
+   The browser mirror of pdBlocker_ in PremiumDueTemplates.gs. Same order,
+   same words: a Magnum decision outranks a missing document, and a missed
+   follow-up outranks the document it was about. Change one, change both. */
+const REQ_CLIENT=/medical|doctor|blood|oral fluid|glyco|ecg|echo|urine|nicotine|questionnaire|proof of|identity|address|fatca|declaration|pay ?slip|bank|income|statement|photo|passport|green card|birth/i;
+const REQ_OURS=/fact find|entry|correction|error|amend|verify information|listbill|section|form incomplete|pdc/i;
+const REQ_MONEY=/future premium|first premium|premium payment|futpy|cheque|draft|reinc/i;
+function blockerOf(c){
+  const dec=c.ReqtDecision||'', names=c.ReqtName||'', late=Number(c.ReqtFollowupLate)||0;
+  const age=Number(c.ReqtDays)||Number(c.DaysArrears)||0;
+  if(/decline|postpone/i.test(dec))return{who:'HEAD OFFICE',what:`Magnum has decided (${esc(dec)}) and the client has not been told`,act:'Confirm the decision, write to the client, close the case.',age};
+  if(c.cf&&c.cf.replacementRisk)return{who:'BRANCH',what:'Replacement check — this client has cover lapsing while the application pends',act:'Signed Replacement Declaration Form + client ID into the pack before anything else (Sept 2022 guidelines §9).',age};
+  if(/additional information/i.test(dec))return{who:'HEAD OFFICE',what:'Underwriting asked us a question and stopped',act:'Find the question and answer it — the client cannot help here.',age};
+  if(late)return{who:'HEAD OFFICE',what:`Underwriting's own follow-up date passed ${late} days ago`,act:'Raise it with the case manager, quoting the date they set.',age:late};
+  if(/terms offered|loaded|RATMD/i.test(dec))return{who:'AGENT',what:'A rated offer is on the table and expires in silence',act:"Get the client's signed acceptance.",age};
+  if(names&&REQ_MONEY.test(names))return{who:'CLIENT',what:'First premium not yet paid',act:'Send the MyGG link through the agent, or collect at the branch.',age};
+  if(names&&REQ_OURS.test(names))return{who:'BRANCH',what:`Our own paper — ${esc(names)}`,act:'No client and no agent needed. Complete it and the case moves.',age};
+  if(names&&REQ_CLIENT.test(names))return{who:'CLIENT',what:`Waiting on the client — ${esc(names)}`,act:'The agent collects it; the fortnightly letter is already asking.',age};
+  if(!taskFor(c.Policy))return{who:'BRANCH',what:'No requirement on file and no task raised — nobody has asked anybody',act:'Confirm with underwriting what is actually outstanding, then log it.',age};
+  return{who:'HEAD OFFICE',what:'With underwriting, nothing outstanding from us',act:'Chase the open task; it is theirs to move.',age};
+}
+
+/* The date trail behind one case — what is known, in order, so nobody has to
+   open three systems to see where a file has actually been. */
+function caseTrail(c){
+  const t=taskFor(c.Policy);
+  const steps=[
+    c.AppReceived?['Application received',c.AppReceived]:null,
+    c.ReqtDays?[`Oldest requirement ordered`,`${c.ReqtDays} days ago`]:null,
+    c.ReqtFollowupLate?[`Follow-up date underwriting set`,`passed ${c.ReqtFollowupLate} days ago`]:null,
+    c.ReqtDecision?['Magnum verdict',esc(c.ReqtDecision)]:null,
+    t?['Support task raised',`${esc(t.assigned||'support')} · waiting on ${esc(t.waitingOn||'—')}${t.idle?` · idle ${t.idle}d`:''}`]:['Support task','none raised'],
+    ['Age of the application',`day ${Number(c.DaysArrears)||0}`]
+  ].filter(Boolean);
+  return `<div class="trail">${steps.map(([k,v])=>`<div class="tr"><span class="tk">${k}</span><span class="tv">${v}</span></div>`).join('')}</div>`;
+}
+
+/* ===== THE ACTION WALL =====
+   One screen that answers "what can actually be done today, and by whom".
+   Cases are grouped by who holds them, because the branch cannot move a case
+   sitting with underwriting and an agent cannot answer a question that was
+   asked of us. Everything is ranked by annualised premium at stake. */
+function actionWall(cases,role){
+  const pend=cases.filter(c=>c.stage==='pend'&&!c.grp).map(c=>({c,b:blockerOf(c)}));
+  if(!pend.length)return `<div class="empty-state"><div class="shield">${SHIELD}</div><p>No pending business in this view — every application is settled or closed.</p></div>`;
+  const api=x=>(Number(x.c.Premium)||0)*12;
+  const money=n=>'$'+Number(n||0).toLocaleString(undefined,{maximumFractionDigits:0});
+  const OWNERS=[
+    ['BRANCH','ours','Ours to finish','No client and no agent needed — these move the moment somebody here does the work.'],
+    ['HEAD OFFICE','ho','With underwriting','We cannot settle these ourselves. They need a position from head office — and every one below quotes their own record back.'],
+    ['AGENT','agt','With the agent','A signature the agent must collect. Nothing else stands in the way.'],
+    ['CLIENT','cli','With the client','The fortnightly letter is already asking. The agent collecting it in person is what beats the letter.']
+  ];
+  const mineFirst=role==='agent'?['AGENT','CLIENT','BRANCH','HEAD OFFICE']:['BRANCH','HEAD OFFICE','AGENT','CLIENT'];
+  const strip=OWNERS.slice().sort((a,b)=>mineFirst.indexOf(a[0])-mineFirst.indexOf(b[0])).map(([who,cls])=>{
+    const g=pend.filter(x=>x.b.who===who);
+    return `<div class="wp ${cls}"><div class="n">${g.length}</div><div class="k">${who==='BRANCH'?'Ours to finish':who==='HEAD OFFICE'?'With underwriting':who==='AGENT'?'With the agent':'With the client'}</div><div class="v">${money(g.reduce((s,x)=>s+api(x),0))} <span>a year at stake</span></div></div>`;
+  }).join('');
+  const block=([who,cls,title,lead])=>{
+    const g=pend.filter(x=>x.b.who===who).sort((a,b)=>api(b)-api(a));
+    if(!g.length)return '';
+    return `<h3 class="wh ${cls}">${title} <span>${g.length} case${g.length===1?'':'s'} · ${money(g.reduce((s,x)=>s+api(x),0))} a year</span></h3>
+      <p class="note" style="margin:0 0 10px">${lead}</p>
+      <div class="pq">${g.map(({c,b})=>`<div class="pq-row" data-qjump="${esc(c.Policy)}">
+        <span class="pq-act ${who==='BRANCH'?'fix':who==='HEAD OFFICE'?'info':who==='AGENT'?'accept':'chase'}">${who==='BRANCH'?'OURS':who==='HEAD OFFICE'?'THEIRS':who==='AGENT'?'SIGN':'CHASE'}</span>
+        <div class="pq-body">
+          <div class="t">${esc(c.Client)} · ${esc(c.Policy)} <span style="font-weight:400;color:var(--ink-2)">— ${money(api({c}))} a year</span></div>
+          <div class="s">${b.what}</div>
+          <div class="s" style="color:var(--ink-2)"><b>${b.act}</b></div>
+          <div class="m">Agent ${esc(c.Agent)} · day ${Number(c.DaysArrears)||0}${c.ReqtSusp?` · $${Number(c.ReqtSusp).toLocaleString()} in suspense`:''}</div>
+          ${caseTrail(c)}
+        </div></div>`).join('')}</div>`;
+  };
+  const ordered=OWNERS.slice().sort((a,b)=>mineFirst.indexOf(a[0])-mineFirst.indexOf(b[0]));
+  return `<div class="wall">${strip}</div>${ordered.map(block).join('')}`;
+}
+
 function pendingsPanel(cases){
   const pend=cases.filter(c=>c.stage==='pend'&&!c.grp);
   const beyond=beyondBook(cases);
@@ -1861,8 +1957,9 @@ function renderFull(title,eyebrow){
   const awaitN=mine.filter(c=>{const st=policyState(c.Policy);return st.retention&&!st.verdict;}).length;
   view.innerHTML=`<div class="page-head"><div><div class="eyebrow">${esc(eyebrow)} · ${esc(SESS.code)}</div><h2>${esc(title)}</h2><div class="sub">Full branch premium-due book — every stage, every agent, the manager queue and persistency scorecard.</div></div></div>
     ${nextStep(mine)}${rickyBanner(mine,`${SESS.firstName}, the branch's premium-due priorities`)}${statStrip(mine)}
-    <div class="tabs"><button class="tab on" data-tab="book">Premium book</button><button class="tab" data-tab="pend">Pendings${(pn=>pn?`<span class="q-badge">${pn}</span>`:'')(mine.filter(c=>c.stage==='pend'&&!c.grp).length)}</button><button class="tab" data-tab="queue">Manager queue${awaitN?`<span class="q-badge">${awaitN}</span>`:''}</button><button class="tab" data-tab="score">Agent scorecard</button></div>
-    <div class="tabpane on" data-pane="book"><div id="ribHost"></div>${filterBar()}<div id="caseHost" class="cases"></div></div>
+    <div class="tabs"><button class="tab on" data-tab="today">Today${(tn=>tn?`<span class="q-badge">${tn}</span>`:'')(mine.filter(c=>c.stage==='pend'&&!c.grp&&blockerOf(c).who!=='HEAD OFFICE').length)}</button><button class="tab" data-tab="book">Premium book</button><button class="tab" data-tab="pend">Pendings${(pn=>pn?`<span class="q-badge">${pn}</span>`:'')(mine.filter(c=>c.stage==='pend'&&!c.grp).length)}</button><button class="tab" data-tab="queue">Manager queue${awaitN?`<span class="q-badge">${awaitN}</span>`:''}</button><button class="tab" data-tab="score">Agent scorecard</button></div>
+    <div class="tabpane on" data-pane="today"><p class="note" style="margin-bottom:14px">Every pending application, grouped by who can actually move it. Work the first block first — those need nobody's permission.</p>${actionWall(mine,'support')}</div>
+    <div class="tabpane" data-pane="book"><div id="ribHost"></div>${filterBar()}<div id="caseHost" class="cases"></div></div>
     <div class="tabpane" data-pane="pend"><p class="note" style="margin-bottom:14px">New business from submission to settled — what stands between each application and a policy in force, and who moves it.</p>${pendingsPanel(mine)}</div>
     <div class="tabpane" data-pane="queue"><p class="note" style="margin-bottom:14px">Every 75-day retention case awaiting a manager response across the branch.</p><div id="queueHost">${managerQueue(mine)}</div></div>
     <div class="tabpane" data-pane="score"><p class="note" style="margin-bottom:14px">Branch persistency scorecard.</p>${agentScorecard(mine)}</div>

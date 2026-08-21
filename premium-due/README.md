@@ -473,6 +473,55 @@ once live), writing nothing to the log. It is the pilot's first act and a
 daily sanity check: when a number disagrees with what the branch knows, the
 letters wait.
 
+### Whose move is it — the blocker model
+
+One question, asked the same way in three places: on this pending application,
+whose move is it? `pdBlocker_` (Apps Script) and `blockerOf` (the engine)
+implement the same ladder — change one, change both:
+
+1. **Magnum has decided** (Decline / Postpone) → head office. Chasing paper for
+   a decided case is wasted work, and the client is still waiting to be told.
+2. **Replacement gate** → the branch. Nothing is worth collecting until the
+   pack is compliant: wrong here costs the case and the commission.
+3. **Additional Information** → head office. They asked *us* a question.
+4. **A follow-up date they set and missed** → head office, quoted back with
+   their own lateness.
+5. **Terms Offered / Loaded** → the agent. A signature, nothing else.
+6. **First premium** → the client. **Our own paper** (fact find, entry
+   corrections) → the branch. **Client documents** (medicals, ID, address) →
+   the client.
+7. **Nothing on file and no task raised** → the branch. Nobody has asked anybody.
+
+On the live book that puts **~60 cases on head office, 40 on the branch, 20 on
+the client and 2 on the agent** — and the single largest reason is #7.
+
+### The Action Wall — the daily view
+
+The first tab in every manager and support login, and the pendings section of
+an agent's. Cases grouped by who can actually move them, ranked by annualised
+premium at stake, each carrying its **date trail**: when the oldest requirement
+was ordered, the follow-up date underwriting set, Magnum's verdict, whether a
+support task exists and how long it has been idle, and the age of the
+application. An agent's wall leads with their own and their client's cases;
+support and managers lead with *Ours to finish*, because that block needs
+nobody's permission.
+
+### Two internal automations
+
+Neither writes to a client.
+
+- **`pdAgentDigest_()`** — one email per agent, listing only the cases waiting
+  on them or their client. Cases sitting with head office are *counted, not
+  listed*: an agent cannot move them, and a list of things you cannot do is how
+  people learn to ignore a digest.
+- **`pdHeadOfficeEscalation_()`** — one email listing only the cases where head
+  office is the blocker, grouped by reason from their own records, with the
+  branch manager and support copied. It asks for a **position on each**, not for
+  priority, and quotes UWPro's own follow-up dates rather than the branch's.
+
+Both obey the three-key interlock and the pilot gate exactly like the client
+letters — in a dry run they log what they would send and send nothing.
+
 ### The UWPro extracts — what underwriting itself says
 
 Head office added the raw underwriting tables to the workbook, and they answer
