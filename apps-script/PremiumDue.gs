@@ -73,7 +73,22 @@ function getSheet_() {
 
 /* READ — default returns the comment/survey/retention log;
    ?type=policies returns the live portfolio */
+/* ─────────────────────────────────────────────────────────────────────────
+   IF THIS PROJECT ALREADY HAS A doGet (for example the Branch Intelligence
+   Code.gs, which serves the web app from HtmlService), DELETE THE THREE
+   LINES OF THE WRAPPER BELOW and add ONE line to that doGet instead:
+
+       if (p.type) return pdApiGet_(e);      // Premium Due JSON API
+
+   Apps Script allows only one doGet per project — whichever is defined last
+   silently wins, and the other system stops answering. The wrapper exists so
+   this file also works alone; the rename makes the merge a one-line edit.
+   ───────────────────────────────────────────────────────────────────────── */
 function doGet(e) {
+  return pdApiGet_(e);
+}
+
+function pdApiGet_(e) {
   try {
     var p = (e && e.parameter) || {};
 
@@ -236,7 +251,7 @@ function portfolioSheet_(ss) {
   return all[0];
 }
 
-function num_(x) { var n = Number(x); return isNaN(n) ? 0 : n; }
+function pdNum_(x) { var n = Number(x); return isNaN(n) ? 0 : n; }
 
 function mapPolicy_(row) {
   // A0 Agent | B1 Number | C2 ClientNo | D3 Client | E4 Premium | F5 IssueDate | G6 Status
@@ -250,13 +265,13 @@ function mapPolicy_(row) {
   // the holder of such a policy is not a hard truth, it is the wrong one.
   return {
     Agent: row[0], Policy: String(row[1]), ClientNo: String(row[2] == null ? '' : row[2]),
-    Client: row[3], Premium: num_(row[4]), IssueDate: row[5] || '',
-    Status: num_(row[6]), StatusH: row[7] || '',
-    DaysArrears: num_(row[8]), InsType: row[9], PaidToDate: row[10] || '',
+    Client: row[3], Premium: pdNum_(row[4]), IssueDate: row[5] || '',
+    Status: pdNum_(row[6]), StatusH: row[7] || '',
+    DaysArrears: pdNum_(row[8]), InsType: row[9], PaidToDate: row[10] || '',
     AppReceived: row[11] || '',
-    SumAssured: num_(row[12]), PlanCode: row[13] || '', Billing: row[14] || '',
-    Mode: row[15] || '', APLAmount: num_(row[16]), StatusDesc: row[17] || '',
-    LapseDate: row[18] || '', AmountBilled: num_(row[19]), Address: row[20] || '',
+    SumAssured: pdNum_(row[12]), PlanCode: row[13] || '', Billing: row[14] || '',
+    Mode: row[15] || '', APLAmount: pdNum_(row[16]), StatusDesc: row[17] || '',
+    LapseDate: row[18] || '', AmountBilled: pdNum_(row[19]), Address: row[20] || '',
     Phone: row[21] || '', Email: row[22] || '', SendFlag: String(row[23] == null ? '' : row[23]).trim()
   };
 }
@@ -275,14 +290,14 @@ function getPolicies_(scope) {
     // pass 1: client numbers that have any funnel policy
     var funnelClients = {};
     for (var i = 0; i < rows.length; i++) {
-      var st = num_(rows[i][6]);
+      var st = pdNum_(rows[i][6]);
       if (st === 1 || st === 2 || st === 3) funnelClients[String(rows[i][2])] = true;
     }
 
     // pass 2: emit funnel + premium-paying policies of those clients
     var out = [], id = 1;
     for (var j = 0; j < rows.length; j++) {
-      var row = rows[j], s = num_(row[6]), cn = String(row[2] == null ? '' : row[2]);
+      var row = rows[j], s = pdNum_(row[6]), cn = String(row[2] == null ? '' : row[2]);
       var desc = String(row[17] || '');
       var isFunnel  = (s === 1 || s === 2 || s === 3);
       var isContext = (s === 0 && desc === 'Premium Paying' && funnelClients[cn]);
