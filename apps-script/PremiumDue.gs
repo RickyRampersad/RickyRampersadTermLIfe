@@ -74,15 +74,27 @@ function getSheet_() {
 /* READ — default returns the comment/survey/retention log;
    ?type=policies returns the live portfolio */
 /* ─────────────────────────────────────────────────────────────────────────
-   IF THIS PROJECT ALREADY HAS A doGet (for example the Branch Intelligence
-   Code.gs, which serves the web app from HtmlService), DELETE THE THREE
-   LINES OF THE WRAPPER BELOW and add ONE line to that doGet instead:
+   MERGING INTO A PROJECT THAT ALREADY HAS A doGet
+   (for example Branch Intelligence Code.gs, which serves App.html)
 
-       if (p.type) return pdApiGet_(e);      // Premium Due JSON API
+   Apps Script allows only ONE doGet per project. Whichever is defined last
+   silently wins and the other system stops answering — no error, it simply
+   returns the wrong thing. So:
 
-   Apps Script allows only one doGet per project — whichever is defined last
-   silently wins, and the other system stops answering. The wrapper exists so
-   this file also works alone; the rename makes the merge a one-line edit.
+   STEP 1 — delete the three-line wrapper immediately below this comment.
+
+   STEP 2 — paste this as the FIRST line inside the OTHER doGet:
+
+       if (e && e.parameter && e.parameter.type) return pdApiGet_(e);
+
+   Write it exactly like that. Do NOT write "if (p.type)" — that only works
+   inside this file, which happens to declare a variable named p. The other
+   doGet reads e.parameter directly, so a bare p there is a ReferenceError
+   and every page of the web app would fail to load.
+
+   The two systems never overlap on the query string: this API answers
+   ?type=… and the web app answers ?page=…, so a request with no type at all
+   falls straight through to the HTML as it does today.
    ───────────────────────────────────────────────────────────────────────── */
 function doGet(e) {
   return pdApiGet_(e);
