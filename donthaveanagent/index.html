@@ -562,6 +562,11 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
         <span><b>✓</b> No policy number needed</span>
       </div>
 
+      <button class="hear rv" id="hearBtn" type="button" aria-label="Listen to this page, about forty seconds">
+        <span class="hp">▶</span>
+        <span><b>Hear it.</b> Forty seconds, sound on — the whole idea, out loud.</span>
+      </button>
+
     </div>
 
     <!-- right column: the live check, then the compliance note -->
@@ -649,6 +654,36 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
 </section>
 
 <!-- ══════════ LOCAL — leads the evidence ══════════ -->
+<!-- ══════════ SEND IT — the agent's move ══════════ -->
+<section id="sendit">
+  <div class="wrap">
+    <div class="kicker rv">THE PROFESSIONAL ANSWER</div>
+    <h2 class="sec-h rv">If you met them,<br><em>send them here.</em></h2>
+    <div class="send-grid rv">
+      <div class="send-card">
+        <h3>For our agents</h3>
+        <p>Every week you meet someone who says the same sentence: <b>“nobody looks after my policy.”</b>
+        The professional answer is no longer a shrug — it is this link. Send it while you are still
+        standing there. The review takes four minutes, and it lands with our support team before you
+        are back in your car.</p>
+        <div class="send-actions">
+          <a class="btn btn-go" id="waShare" href="#" target="_blank" rel="noopener">Send by WhatsApp →</a>
+          <button class="btn btn-line" id="copyLinkBtn" type="button">Copy the link</button>
+        </div>
+        <p class="send-note">Working a case of your own? Use your console link instead — the reply
+        arrives carrying your name.</p>
+      </div>
+      <div class="send-card flip">
+        <h3>If someone sent you this</h3>
+        <p>That was not marketing. One of our agents met you, heard that nobody calls you, and did
+        what a professional is supposed to do: brought you to the branch that fixes it. Four minutes
+        from now, your file is open and a person is responsible for you — by name.</p>
+        <a class="btn btn-line" href="review.html?from=client">Start my free review →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="alt" id="local">
   <div class="wrap">
     <div class="sec-label rv">Trinidad &amp; Tobago</div>
@@ -995,10 +1030,31 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
   </div>
 </section>
 
+<!-- ══════════ THE STANDARD ══════════ -->
+<section class="stdband" id="standard">
+  <div class="wrap">
+    <div class="kicker light rv">THE STANDARD IS THE SYSTEM</div>
+    <h2 class="rv">The kind of branch you<br><em>put your name next to.</em></h2>
+    <div class="std-grid rv">
+      <div class="std"><b>4<i>min</i></b><span>the whole review, from your phone</span></div>
+      <div class="std"><b>100<i>%</i></b><span>papers populated before you sign a thing</span></div>
+      <div class="std"><b>2<i>days</i></b><span>the longest you will wait to hear from us</span></div>
+      <div class="std"><b>1<i>code</i></b><span>your file, watched live, by you</span></div>
+      <div class="std"><b>6<i>mo</i></b><span>the automatic “what has changed?” check-up</span></div>
+      <div class="std"><b>∞</b><span>your review, every birthday month, for life</span></div>
+    </div>
+    <p class="std-foot rv">This is the second platform this branch has built in-house.
+    <a href="https://factfind360.com" target="_blank" rel="noopener">FactFind360</a> writes every
+    recommendation down properly; this one makes sure nobody is left without a person.
+    <b>Two platforms. One standard. One branch.</b></p>
+  </div>
+</section>
+
 <!-- ══════════ CTA ══════════ -->
 <section class="alt">
   <div class="wrap">
     <div class="cta-box rv">
+      <p class="cta-ask">Ask when your agent last called you.<br>If the answer is a shrug — you know where we are.</p>
       <h2>Four minutes. No cost.<br>Somebody who answers.</h2>
       <p>You've already paid for the policy. This is about making sure it does what you bought it to do.</p>
       <div class="cta-actions">
@@ -1247,6 +1303,174 @@ const stickyIo = new IntersectionObserver((es) => {
     "<a href='RESEARCH.md'>research brief</a>.<br><br>" +
     "Contact: <a href='mailto:" + BRAND.email + "'>" + BRAND.email + "</a> · " +
     "<a href='tel:+" + BRAND.phone.replace(/\D/g, "") + "'>" + BRAND.phone + "</a>";
+})();
+</script>
+
+<style>
+/* ── v2 additions: hear it · send it · the standard ─────────────────── */
+.hear{display:flex;align-items:center;gap:12px;margin-top:16px;background:var(--card);
+  border:1.6px solid var(--line);border-radius:14px;padding:12px 18px;font:inherit;font-size:15px;
+  color:var(--head);cursor:pointer;text-align:left;max-width:520px}
+.hear:hover{border-color:var(--gold)}
+.hear .hp{display:flex;align-items:center;justify-content:center;width:38px;height:38px;flex:none;
+  background:var(--gold);color:#fff;border-radius:10px 10px 14px 14px;font-size:15px}
+.hear.playing .hp{background:var(--gold2)}
+.kicker{font-weight:800;font-size:12.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+#sendit{padding:74px 0}
+.send-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-top:26px}
+.send-grid>*{min-width:0}
+.send-card{background:var(--card);border:1px solid var(--line);border-top:6px solid var(--gold);
+  border-radius:16px;padding:26px 26px 22px}
+.send-card.flip{border-top-color:var(--gold2)}
+.send-card h3{font-size:19px;font-weight:800;margin-bottom:10px;color:var(--head)}
+.send-card p{font-size:15.2px;line-height:1.62;color:var(--body)}
+.send-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.send-note{font-size:12.8px;color:var(--muted);margin-top:12px}
+.stdband{background:var(--gold2);color:#F2E9DC;padding:78px 0}
+.stdband .kicker.light{color:#E5C9B3}
+.stdband h2{font-size:clamp(27px,4.4vw,42px);font-weight:900;color:#F6EFE6;margin-bottom:8px}
+.stdband h2 em{font-style:normal;color:#E8A87C}
+.std-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-top:30px}
+.std-grid>*{min-width:0}
+.std{background:rgba(246,239,230,.07);border:1px solid rgba(246,239,230,.18);border-radius:14px;padding:18px 18px 15px}
+.std b{display:block;font-size:38px;font-weight:900;line-height:1;color:#F6EFE6;font-variant-numeric:tabular-nums}
+.std b i{font-style:normal;font-size:16px;font-weight:800;margin-left:3px;color:#E5C9B3}
+.std span{display:block;font-size:13px;line-height:1.45;margin-top:7px;color:#E9D8C8}
+.std-foot{margin-top:26px;font-size:15px;line-height:1.65;color:#EBDCCD;max-width:640px}
+.std-foot a{color:#F6EFE6;font-weight:700}
+.std-foot b{color:#F6EFE6}
+.cta-ask{font-size:16.5px;line-height:1.55;color:var(--muted);margin-bottom:14px;font-weight:600}
+#voxbar{position:fixed;left:14px;right:14px;bottom:14px;z-index:60;background:var(--gold2);color:#F6EFE6;
+  border-radius:16px;padding:14px 52px 14px 18px;box-shadow:0 12px 34px rgba(46,10,14,.35);display:none;
+  max-width:680px;margin:0 auto}
+#voxbar.on{display:block}
+#voxline{font-size:16px;line-height:1.5;font-weight:600;min-height:24px}
+#voxstop{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(246,239,230,.14);
+  border:none;color:#F6EFE6;width:34px;height:34px;border-radius:10px;font-size:15px;cursor:pointer}
+#copyToast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:var(--head);color:#F6EFE6;
+  padding:9px 18px;border-radius:99px;font-size:13.5px;z-index:70;display:none}
+@media (prefers-reduced-motion: reduce){ .hear .hp{transition:none} }
+</style>
+<div id="voxbar" role="status"><div id="voxline"></div><button id="voxstop" aria-label="Stop audio">✕</button></div>
+<div id="copyToast">Link copied — paste it anywhere</div>
+<script>
+/* ── send it ── */
+(function(){
+  var MSG = "You mentioned nobody looks after your policy. This fixes it — a free four-minute review from your phone, and a person responsible for you by name: https://donthaveanagent.com — Ricky Rampersad Branch, Guardian Life of the Caribbean.";
+  var wa = document.getElementById("waShare");
+  if (wa) wa.href = "https://wa.me/?text=" + encodeURIComponent(MSG);
+  var cp = document.getElementById("copyLinkBtn");
+  if (cp) cp.addEventListener("click", function(){
+    var done = function(){ var t=document.getElementById("copyToast"); t.style.display="block";
+      setTimeout(function(){ t.style.display="none"; }, 1800); };
+    if (navigator.clipboard && navigator.clipboard.writeText)
+      navigator.clipboard.writeText("https://donthaveanagent.com").then(done, done);
+    else done();
+  });
+})();
+/* ── hear it: Andrew-first narration over a soft bed ── */
+(function(){
+  var btn = document.getElementById("hearBtn");
+  if (!btn) return;
+  if (!("speechSynthesis" in window)) { btn.style.display = "none"; return; }
+  var LINES = [
+    "Your agent left. Your policy didn't.",
+    "Somebody sold you a promise — and then left you holding it.",
+    "This branch keeps the promises other people made.",
+    "Four minutes, from your phone. We trace the policy, fix the record, and put a person's name beside yours.",
+    "Every paper arrives ready to sign. And you hear from us every two days until it's done.",
+    "Then every year, in your birthday month, your policy gets a full review. For life.",
+    "You decide who looks after you. That is the whole idea.",
+    "Don't have an agent dot com. A Ricky Rampersad Branch project."
+  ];
+  var AC=null, master=null, beatTimer=null, lineTimer=null, playing=false, idx=0;
+  var CH=[{r:130.81,t:[261.63,329.63,392.0]},{r:98.0,t:[246.94,293.66,392.0]},
+          {r:110.0,t:[261.63,329.63,440.0]},{r:87.31,t:[261.63,349.23,440.0]}];
+  function bed(){
+    try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return; }
+    master=AC.createGain(); master.gain.value=0.055; master.connect(AC.destination);
+    var bar=0, BEAT=60/76;
+    function pad(t,fs){ fs.forEach(function(hz,i){ var o=AC.createOscillator(),g=AC.createGain(),f=AC.createBiquadFilter();
+      o.type="sawtooth"; o.frequency.value=hz; o.detune.value=i===1?6:-5;
+      f.type="lowpass"; f.frequency.value=1050;
+      g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.09,t+0.8);
+      g.gain.setValueAtTime(0.09,t+BEAT*4-0.9); g.gain.linearRampToValueAtTime(0.0001,t+BEAT*4);
+      o.connect(f); f.connect(g); g.connect(master); o.start(t); o.stop(t+BEAT*4); }); }
+    function bass(t,hz){ var o=AC.createOscillator(),g=AC.createGain();
+      o.type="triangle"; o.frequency.value=hz;
+      g.gain.setValueAtTime(0.16,t); g.gain.exponentialRampToValueAtTime(0.01,t+BEAT*1.9);
+      o.connect(g); g.connect(master); o.start(t); o.stop(t+BEAT*2); }
+    var next=AC.currentTime+0.05;
+    beatTimer=setInterval(function(){
+      if(!AC) return;
+      while(next<AC.currentTime+1.2){
+        var c=CH[bar%4]; pad(next,c.t); bass(next,c.r); bass(next+2*BEAT,c.r);
+        next+=BEAT*4; bar++;
+      }
+    },220);
+  }
+  function pickVoice(){
+    var vs=speechSynthesis.getVoices()||[];
+    var pref=["Andrew","Ryan","Brian","Guy","Daniel","Google UK English Male","Google US English","Aaron"];
+    for(var i=0;i<pref.length;i++){
+      for(var j=0;j<vs.length;j++)
+        if(vs[j].name.indexOf(pref[i])>-1 && /en/i.test(vs[j].lang)) return vs[j];
+    }
+    for(var k=0;k<vs.length;k++) if(/en/i.test(vs[k].lang)) return vs[k];
+    return null;
+  }
+  function showLine(t){ var v=document.getElementById("voxline"); v.textContent=t; }
+  function speakLine(){
+    if(!playing) return;
+    if(idx>=LINES.length){ stop(); return; }
+    var text=LINES[idx]; showLine(text);
+    /* how long this line should be on screen if we have to pace it ourselves */
+    var read=Math.max(2600, text.split(" ").length*430);
+    var t0=Date.now(), advanced=false;
+    var advance=function(){ if(advanced||!playing) return; advanced=true; idx++;
+      lineTimer=setTimeout(speakLine, 260); };
+    /* onend firing almost instantly means no voice actually spoke — in that
+       case keep the line up for its reading time instead of racing ahead */
+    var go=function(){
+      if(advanced||!playing) return;
+      var spoken=Date.now()-t0;
+      if(spoken<500){ lineTimer=setTimeout(advance, read-spoken); return; }
+      advance();
+    };
+    try{
+      var u=new SpeechSynthesisUtterance(text);
+      var v=pickVoice(); if(v) u.voice=v;
+      u.rate=0.96; u.pitch=1.0;
+      u.onend=go; u.onerror=go;
+      speechSynthesis.speak(u);
+    }catch(e){}
+    /* backstop: if nothing ever fires, move on anyway */
+    setTimeout(go, read+900);
+  }
+  function start(){
+    playing=true; idx=0;
+    btn.classList.add("playing");
+    document.getElementById("voxbar").classList.add("on");
+    bed();
+    var vs=speechSynthesis.getVoices();
+    if(!vs || !vs.length){
+      var fired=false;
+      speechSynthesis.onvoiceschanged=function(){ if(fired) return; fired=true; speakLine(); };
+      setTimeout(function(){ if(fired) return; fired=true; speakLine(); }, 700);
+    } else speakLine();
+  }
+  function stop(){
+    playing=false; idx=0;
+    btn.classList.remove("playing");
+    document.getElementById("voxbar").classList.remove("on");
+    try{ speechSynthesis.cancel(); }catch(e){}
+    if(beatTimer){ clearInterval(beatTimer); beatTimer=null; }
+    if(lineTimer){ clearTimeout(lineTimer); lineTimer=null; }
+    if(AC){ try{ AC.close(); }catch(e){} AC=null; }
+  }
+  btn.addEventListener("click", function(){ playing ? stop() : start(); });
+  document.getElementById("voxstop").addEventListener("click", stop);
+  document.addEventListener("visibilitychange", function(){ if(document.hidden && playing) stop(); });
 })();
 </script>
 </body>
