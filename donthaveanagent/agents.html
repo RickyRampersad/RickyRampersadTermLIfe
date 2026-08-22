@@ -143,6 +143,25 @@
     </div>
 
     <div class="card" style="max-width:640px">
+      <h3 style="font-family:var(--disp);font-weight:800;font-size:17px;margin-bottom:4px">Start here — how this works for you</h3>
+      <p style="font-size:14px;color:var(--muted)">Seventy-four seconds: log in, send your link, watch what
+      came back. Share it with any agent joining the branch.</p>
+      <div class="vwrap">
+        <video id="teamVid" playsinline preload="metadata" poster="agent-film-poster.jpg" controlsList="nodownload">
+          <source src="dhaa-agent-film.mp4" type="video/mp4">
+        </video>
+        <button class="vcover" id="teamCover" type="button" aria-label="Play the agent film, seventy-four seconds, sound on">
+          <span class="vplay"><i></i></span>
+          <span class="vlab">The agent film</span><span class="vlen">1:14 · sound on</span>
+        </button>
+      </div>
+      <div class="sharerow" style="margin-top:12px">
+        <a class="btn ghost" id="waTeam" href="#" target="_blank" rel="noopener">Send to an agent</a>
+        <a class="btn ghost" href="dhaa-agent-film.mp4" download>Download</a>
+      </div>
+    </div>
+
+    <div class="card" style="max-width:640px">
       <h3 style="font-family:var(--disp);font-weight:800;font-size:17px;margin-bottom:4px">The film you send clients</h3>
       <p style="font-size:14px;color:var(--muted)">Watch it once so you know what they will see — then send
       <a href="how-we-work.html" target="_blank">the page</a>, which carries the film plus the whole process
@@ -304,6 +323,17 @@ function render(data, demo) {
   }).join("");
 }
 
+(function(){
+  var tv=document.getElementById("teamVid"), tc=document.getElementById("teamCover");
+  if(tv&&tc){
+    tc.addEventListener("click", function(){ tc.classList.add("gone"); tv.setAttribute("controls",""); tv.play(); });
+    tv.addEventListener("ended", function(){ tc.classList.remove("gone"); tv.removeAttribute("controls"); tv.currentTime=0; });
+  }
+  var wt=document.getElementById("waTeam");
+  if(wt) wt.href="https://wa.me/?text="+encodeURIComponent(
+    "This is how the branch system works for us — 74 seconds, worth watching before you start: "
+    +"https://donthaveanagent.com/agent-film — then log in at https://donthaveanagent.com/agents");
+})();
 (function(){
   var v=document.getElementById("agentVid"), c=document.getElementById("agentCover");
   if(v&&c){
