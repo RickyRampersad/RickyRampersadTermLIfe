@@ -19,3 +19,16 @@
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer"
+
+# The prospecting link an advisor sends a client, and the board they send it
+# from. Both are plain files in the published folder; these rules only give
+# them the short, typeable URLs that go on a card or into a WhatsApp message.
+[[redirects]]
+  from = "/meet"
+  to = "/meet.html"
+  status = 200
+
+[[redirects]]
+  from = "/prospecting"
+  to = "/prospecting.html"
+  status = 200
