@@ -161,8 +161,40 @@
       This page shows progress only, never a client's answers.</p>
     </div>
 
+    <div class="card" style="max-width:640px;border-left:5px solid var(--ox)">
+      <h3 style="font-family:var(--disp);font-weight:800;font-size:17px;margin-bottom:6px">Four films, and which is which</h3>
+      <ul style="font-size:13.5px;color:var(--muted);margin:0 0 0 17px;padding:0;line-height:1.65">
+        <li><b>Your side of the link</b> — what <i>you</i> see once you send it. Start here.</li>
+        <li><b>The short orientation</b> — signing in and finding your book.</li>
+        <li><b>What happens after they press send</b> — the process, for a client who asks.</li>
+        <li><b>The film you send clients</b> — the one your link opens with.</li>
+      </ul>
+    </div>
+
     <div class="card" style="max-width:640px">
-      <h3 style="font-family:var(--disp);font-weight:800;font-size:17px;margin-bottom:4px">Start here — how this works for you</h3>
+      <h3 style="font-family:var(--disp);font-weight:800;font-size:17px;margin-bottom:4px">Your side of the link</h3>
+      <p style="font-size:14px;color:var(--muted)">You send the link — then what? This is your half: your name
+      travelling inside the link, the opens and starts landing in your book, your two books kept apart, and the
+      brief that reaches you before you dial, opening with the client&rsquo;s own words and a list titled
+      <b>before you call</b>.</p>
+      <div class="vwrap">
+        <video id="sideVid" playsinline preload="metadata" poster="agent-side-poster.jpg" controlsList="nodownload">
+          <source src="dhaa-your-side.mp4" type="video/mp4">
+        </video>
+        <button class="vcover" id="sideCover" type="button" aria-label="Play the film about what you see, one minute twenty-three seconds, sound on">
+          <span class="vplay"><i></i></span>
+          <span class="vlab">Your side of the link</span>
+          <span class="vlen">1:23 · captioned · sound on</span>
+        </button>
+      </div>
+      <div class="sharerow" style="margin-top:12px">
+        <a class="btn ghost" href="dhaa-your-side.mp4" download>Download</a>
+        <a class="btn ghost" href="agent-side-film.html" target="_blank">Open it full screen</a>
+      </div>
+    </div>
+
+    <div class="card" style="max-width:640px">
+      <h3 style="font-family:var(--disp);font-weight:800;font-size:17px;margin-bottom:4px">The short orientation</h3>
       <p style="font-size:14px;color:var(--muted)">Seventy-four seconds: log in, send your link, watch what
       came back. Share it with any agent joining the branch.</p>
       <div class="vwrap">
@@ -404,6 +436,13 @@ function render(data, demo) {
   if(wt) wt.href="https://wa.me/?text="+encodeURIComponent(
     "This is how the branch system works for us — 74 seconds, worth watching before you start: "
     +"https://donthaveanagent.com/agent-film — then log in at https://donthaveanagent.com/agents");
+})();
+(function(){
+  var sv=document.getElementById("sideVid"), sc=document.getElementById("sideCover");
+  if(sv&&sc){
+    sc.addEventListener("click", function(){ sc.classList.add("gone"); sv.setAttribute("controls",""); sv.play(); });
+    sv.addEventListener("ended", function(){ sc.classList.remove("gone"); sv.removeAttribute("controls"); sv.currentTime=0; });
+  }
 })();
 (function(){
   var pv=document.getElementById("procVid"), pc=document.getElementById("procCover");

@@ -1429,6 +1429,96 @@ function matchAssignmentForRow_(sh, row, agentName, agentNo, why) {
 /** "You have a new client — here is everything we know." Sent to the agent's
  *  email from the Agent Skill Bank the moment support appoints them, with the
  *  client's file, the household insight, and the ladder to personal service. */
+/**
+ * What the agent needs to know before they dial.
+ *
+ * The row already holds every answer the client gave; the brief was carrying
+ * none of it, so an agent arrived knowing a name and a phone number. This
+ * pulls out the answers that actually change the first conversation, in the
+ * order they change it: the client's own words first, then the history that
+ * explains their mood, then the record fixes waiting to be made.
+ *
+ * Matching is by intent rather than exact wording, because the branch
+ * questionnaire and the donthaveanagent review ask the same things in
+ * different words.
+ */
+function firstCallBrief_(headers, r) {
+  var val = function (re) {
+    for (var i = 0; i < headers.length; i++) {
+      if (re.test(String(headers[i]))) {
+        var v = String(r[i] == null ? '' : r[i]).trim();
+        if (v) return v;
+      }
+    }
+    return '';
+  };
+  var neg = function (v) { return /^(no|not sure|never|i'?m not sure)\b/i.test(String(v).trim()); };
+
+  var voice = [], facts = [], todo = [];
+
+  /* 1 — their own words. Nothing else in the file is worth as much. */
+  [/anything you.?d like to say|how you.?ve been treated/i,
+   /something specific you want to ask|any questions for us/i,
+   /anything you remember about them/i,
+   /one thing we could do|serve you better/i].forEach(function (re) {
+    var v = val(re); if (v) voice.push(v);
+  });
+
+  /* 2 — the history that explains the mood they'll answer the phone in. */
+  var add = function (label, v) { if (v) facts.push([label, v]); };
+  add('What happened to their agent', val(/what happened to the agent/i));
+  add('Last reviewed with anyone', val(/when did somebody last review|when last has your financial/i));
+  add('How well they feel they understand it', val(/how well do you feel you understand/i));
+  add('How unhappy they are', val(/how satisfied are you|overall, how satisfied/i));
+  add('They want to be reached by', val(/how would you prefer we reach you|prefer we reach|preferred contact/i));
+  add('What they asked for help with', val(/what would you like help with/i));
+  add('What they want in an agent', val(/what matters most|want in an agent/i));
+
+  /* 3 — the record fixes, which are also the reason to meet. */
+  var former = val(/former name/i);
+  if (former) todo.push('Trace under the former name <b>' + esc_(former) + '</b> as well.');
+  if (/^yes/i.test(val(/needs tracing/i))) todo.push('No policy number — support is tracing it.');
+  if (neg(val(/person named to receive the money|beneficiary designation still|is the beneficiary/i))) {
+    var who = val(/who should it be/i), rel = val(/their relationship to you/i);
+    todo.push('Beneficiary is wrong' + (who ? ' — should be <b>' + esc_(who) + '</b>' +
+      (rel ? ' (' + esc_(rel) + ')' : '') : '') + '. Bring the change form.');
+  }
+  if (neg(val(/would that person know this policy exists/i))) {
+    todo.push('Their family does not know the policy exists.');
+  }
+  if (neg(val(/address for you still correct|name and address correct/i))) {
+    var addr = val(/your correct address/i);
+    todo.push('Address needs changing' + (addr ? ' to <b>' + esc_(addr) + '</b>' : '') + '.');
+  }
+  if (neg(val(/date of birth correct/i))) todo.push('Date of birth may be wrong on the policy — it prices the premium.');
+  if (/^yes/i.test(val(/other policies you.?ve lost track of/i))) todo.push('They believe there are other policies lost track of.');
+  var prem = val(/still paying premiums/i);
+  if (prem && !/^yes/i.test(prem)) {
+    todo.push(/not sure|unsure|don'?t know/i.test(prem)
+      ? 'They are not sure the premiums are still being paid — check the status before you call.'
+      : 'They say the premiums are not being paid — check whether the policy has lapsed or is on paid-up terms.');
+  }
+
+  var html = '';
+  if (voice.length) {
+    html += box_('tip', '<b style="color:#a05e03">In their own words.</b>' +
+      voice.map(function (v) {
+        return '<div style="margin-top:7px;padding-left:11px;border-left:3px solid #d8c39a">' +
+               '&ldquo;' + esc_(v) + '&rdquo;</div>';
+      }).join(''));
+  }
+  if (facts.length) {
+    html += '<p style="margin:16px 0 6px;font-weight:bold">What they told us</p>' +
+      '<table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:13.5px">' +
+      facts.map(function (f) { return tr_(f[0], f[1]); }).join('') + '</table>';
+  }
+  if (todo.length) {
+    html += box_('warn', '<b style="color:#b3261e">Before you call.</b><ul style="margin:8px 0 0 18px;padding:0">' +
+      todo.map(function (t) { return '<li style="margin:4px 0">' + t + '</li>'; }).join('') + '</ul>');
+  }
+  return html;
+}
+
 function agentBriefEmail_(agentName, why, headers, r, v, isGroup, ref) {
   var me = null;
   skillBank_().forEach(function (a) {
@@ -1465,6 +1555,7 @@ function agentBriefEmail_(agentName, why, headers, r, v, isGroup, ref) {
     '<table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:13.5px">' +
     rows + '</table>' +
     (why ? box_('tip', '<b style="color:#a05e03">Why you.</b> ' + esc_(why)) : '') +
+    firstCallBrief_(headers, r) +
     box_('good',
       '<b>Your ladder to personal service:</b> (1) <b>Day 1</b> — introduce yourself by phone or WhatsApp: ' +
       '“the branch has appointed me to look after you.” (2) <b>This week</b> — run the review together if they ' +

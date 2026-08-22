@@ -43,6 +43,12 @@
   to = "/process-film.html"
   status = 302
 
+# The agent's own side: what they see once they send their link.
+[[redirects]]
+  from = "/my-link"
+  to = "/agent-side-film.html"
+  status = 302
+
 [[redirects]]
   from = "/launch"
   to = "/client-film.html"
@@ -108,5 +114,15 @@
 
 [[headers]]
   for = "/dhaa-agent-film.mp4"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/agent-side-film.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/dhaa-your-side.mp4"
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
