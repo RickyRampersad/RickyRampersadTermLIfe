@@ -334,6 +334,15 @@
 </div>
 
 <script>
+/* Clickjacking guard. netlify.toml sets X-Frame-Options on /meetings/*,
+   but GitHub Pages — which serves this domain today — cannot send headers
+   at all, and a CSP frame-ancestors rule is ignored in a meta tag. So the
+   page refuses to be framed itself, and the protection travels with the
+   file whichever host is in front of it. */
+if (window.top !== window.self) { window.top.location = window.self.location; }
+</script>
+
+<script>
 /* ================================================================
  *  BRANCH MEETING BUILDER
  *  Ricky Rampersad Branch
