@@ -1,0 +1,2044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Branch Meeting Builder | Ricky Rampersad Branch</title>
+<meta name="robots" content="noindex"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#07131f; --bg2:#0d2137; --card:#163553; --card2:#1b3d61;
+    --gold:#efc24b; --gold2:#dca530; --text:#edf4fb; --muted:#a9bbcf; --dim:#7a90a8;
+    --line:rgba(255,255,255,.08); --teal:#00CFEA; --teal2:#00A8C5;
+    --green:#35d07f; --amber:#f5a524; --red:#ff7a7a; --violet:#a78bfa;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+    background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(239,194,75,.07),transparent),
+      linear-gradient(180deg,var(--bg) 0%,var(--bg2) 50%,var(--bg) 100%);
+    background-attachment:fixed;
+  }
+  a{color:inherit}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 16px}
+  h1,h2,h3,h4{font-family:'Montserrat',sans-serif}
+
+  /* ---------- sign in ---------- */
+  #gate{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;
+    background:var(--bg);background-image:radial-gradient(ellipse 60% 40% at 50% 25%,rgba(239,194,75,.09),transparent)}
+  .gate-card{width:min(420px,100%);background:linear-gradient(160deg,var(--card),var(--card2));
+    border:1px solid var(--line);border-radius:22px;padding:34px 28px}
+  .gate-card svg.shield{width:58px;height:58px;display:block;margin:0 auto 14px}
+  .gate-card h1{font-weight:800;font-size:20px;text-align:center;color:var(--gold);margin-bottom:6px}
+  .gate-card .sub{font-size:12.5px;color:var(--muted);text-align:center;margin-bottom:22px;line-height:1.6}
+  label{display:block;font-family:'Montserrat',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:1.6px;
+    text-transform:uppercase;color:var(--gold2);margin:0 0 6px}
+  input,select,textarea{width:100%;padding:12px 14px;border-radius:11px;border:1px solid var(--line);
+    background:rgba(0,0,0,.3);color:var(--text);font-size:14.5px;font-family:'DM Sans',sans-serif;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:rgba(0,207,234,.55)}
+  textarea{resize:vertical;min-height:92px;line-height:1.65}
+  select option{background:#0d2137}
+  .field{margin-bottom:14px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  @media(max-width:620px){.row2,.row3{grid-template-columns:1fr}}
+
+  button{font-family:'Montserrat',sans-serif;cursor:pointer;border:none;border-radius:11px;font-weight:800}
+  .btn{padding:13px 18px;font-size:13.5px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1d1503;width:100%}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn.teal{background:linear-gradient(135deg,var(--teal),var(--teal2));color:#04202b}
+  .btn.ghost{background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--line)}
+  .btn.danger{background:rgba(255,122,122,.14);color:var(--red);border:1px solid rgba(255,122,122,.35)}
+  .btn.sm{padding:8px 13px;font-size:12px;width:auto}
+  .btn.auto{width:auto}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap}
+
+  .msg{border-radius:11px;padding:12px 14px;margin-top:12px;font-size:13px;line-height:1.55;display:none}
+  .msg.err{display:block;background:rgba(255,122,122,.12);border:1px solid rgba(255,122,122,.4);color:var(--red)}
+  .msg.ok{display:block;background:rgba(53,208,127,.12);border:1px solid rgba(53,208,127,.4);color:var(--green)}
+  .msg.info{display:block;background:rgba(0,207,234,.1);border:1px solid rgba(0,207,234,.3);color:var(--teal)}
+  .hint{font-size:11.5px;color:var(--dim);margin-top:10px;line-height:1.6}
+  .switch{text-align:center;margin-top:16px;font-size:12.5px;color:var(--muted)}
+  .switch a{color:var(--teal);text-decoration:none;font-weight:700;cursor:pointer}
+
+  /* ---------- shell ---------- */
+  #app{display:none}
+  .nav{position:sticky;top:0;z-index:100;background:rgba(6,17,29,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .nav-inner{max-width:1060px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:12px;height:60px}
+  .nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:auto;min-width:0}
+  .nav-brand svg{width:30px;height:30px;flex-shrink:0}
+  .nav-brand b{font-family:'Montserrat',sans-serif;font-weight:800;font-size:13.5px;color:var(--gold);line-height:1.15;display:block}
+  .nav-brand span{font-size:10.5px;color:var(--dim)}
+  .who{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--muted);white-space:nowrap}
+  .avatar{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--gold),var(--gold2));
+    color:#1d1503;display:grid;place-items:center;font-family:'Montserrat',sans-serif;font-weight:800;font-size:12px}
+  .who .out{color:var(--dim);cursor:pointer;text-decoration:none;font-weight:700;font-size:11.5px}
+  .who .out:hover{color:var(--red)}
+  @media(max-width:600px){.who .nm{display:none}}
+
+  .tabs{display:flex;gap:4px;overflow-x:auto;padding:12px 0 0;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;padding:9px 14px;border-radius:10px;
+    color:var(--muted);background:none;white-space:nowrap;border:1px solid transparent}
+  .tab:hover{color:var(--text);background:rgba(255,255,255,.05)}
+  .tab.on{color:var(--gold);background:rgba(239,194,75,.1);border-color:rgba(239,194,75,.28)}
+  .tab .pip{display:inline-block;min-width:17px;padding:0 5px;margin-left:6px;border-radius:9px;
+    background:rgba(255,122,122,.22);color:var(--red);font-size:10.5px;line-height:17px;text-align:center}
+
+  .page-head{padding:26px 0 4px}
+  .page-head .kicker{font-family:'Montserrat',sans-serif;font-size:10.5px;letter-spacing:2.6px;
+    text-transform:uppercase;color:var(--gold2);font-weight:700;margin-bottom:7px}
+  .page-head h1{font-weight:900;font-size:clamp(22px,4.4vw,30px);margin-bottom:7px;line-height:1.2}
+  .page-head p{color:var(--muted);font-size:13.5px;max-width:640px;line-height:1.65}
+  section{padding:24px 0 4px}
+  .section-label{font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;letter-spacing:2.4px;
+    text-transform:uppercase;color:var(--gold);margin-bottom:13px;display:flex;align-items:center;gap:10px}
+  .section-label::after{content:'';flex:1;height:1px;background:rgba(239,194,75,.2)}
+
+  .card{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);
+    border-radius:16px;padding:18px 20px;margin-bottom:12px}
+  .card.flat{background:rgba(255,255,255,.03)}
+  .card h3{font-size:15px;font-weight:800;margin-bottom:4px}
+  .card .meta{font-size:12px;color:var(--muted);line-height:1.6}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media(max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
+
+  .badge{display:inline-block;font-family:'Montserrat',sans-serif;font-size:9.5px;font-weight:800;
+    letter-spacing:1.1px;text-transform:uppercase;padding:3px 8px;border-radius:6px;vertical-align:middle}
+  .b-all{background:rgba(0,207,234,.14);color:var(--teal);border:1px solid rgba(0,207,234,.3)}
+  .b-staff{background:rgba(239,194,75,.14);color:var(--gold);border:1px solid rgba(239,194,75,.32)}
+  .b-chair{background:rgba(167,139,250,.16);color:var(--violet);border:1px solid rgba(167,139,250,.35)}
+  .b-green{background:rgba(53,208,127,.14);color:var(--green);border:1px solid rgba(53,208,127,.32)}
+  .b-amber{background:rgba(245,165,36,.14);color:var(--amber);border:1px solid rgba(245,165,36,.32)}
+  .b-red{background:rgba(255,122,122,.14);color:var(--red);border:1px solid rgba(255,122,122,.34)}
+  .b-dim{background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--line)}
+
+  .stat{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:13px;padding:14px 16px;text-align:center}
+  .stat b{display:block;font-family:'Montserrat',sans-serif;font-size:24px;font-weight:900;line-height:1.1}
+  .stat span{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1.3px;font-weight:700}
+  .stat.green b{color:var(--green)} .stat.amber b{color:var(--amber)}
+  .stat.red b{color:var(--red)} .stat.teal b{color:var(--teal)} .stat.gold b{color:var(--gold)}
+
+  .empty{text-align:center;padding:44px 20px;color:var(--dim);font-size:13.5px;line-height:1.7}
+  .empty .big{font-size:32px;display:block;margin-bottom:12px;opacity:.55}
+
+  /* ---------- meeting list ---------- */
+  .mtg{display:flex;gap:14px;align-items:flex-start;background:linear-gradient(160deg,var(--card),var(--card2));
+    border:1px solid var(--line);border-radius:15px;padding:15px 17px;margin-bottom:10px;
+    cursor:pointer;transition:transform .16s,border-color .16s;text-align:left;width:100%;color:inherit}
+  .mtg:hover{transform:translateY(-2px);border-color:rgba(239,194,75,.4)}
+  .mtg .when{flex-shrink:0;width:56px;text-align:center;border-right:1px solid var(--line);padding-right:12px}
+  .mtg .when b{display:block;font-family:'Montserrat',sans-serif;font-size:20px;font-weight:900;color:var(--gold);line-height:1}
+  .mtg .when span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;font-weight:700}
+  .mtg .body{flex:1;min-width:0}
+  .mtg .body b{font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;display:block;margin-bottom:3px}
+  .mtg .body .meta{font-size:11.5px;color:var(--muted);line-height:1.6}
+  .mtg .tags{margin-top:7px;display:flex;gap:5px;flex-wrap:wrap}
+
+  /* ---------- check in ---------- */
+  .checkin{background:linear-gradient(150deg,rgba(53,208,127,.13),rgba(0,207,234,.08));
+    border:1px solid rgba(53,208,127,.32);border-radius:18px;padding:22px;text-align:center;margin-bottom:14px}
+  .checkin h2{font-size:17px;font-weight:800;margin-bottom:6px}
+  .checkin p{font-size:13px;color:var(--muted);line-height:1.65;margin-bottom:16px;max-width:460px;margin-inline:auto}
+  .checkin .big-btn{padding:17px 30px;font-size:15px;letter-spacing:.4px;width:auto;min-width:230px;
+    background:linear-gradient(135deg,var(--green),#22a463);color:#04220f}
+  .checkin.done{background:linear-gradient(150deg,rgba(53,208,127,.1),transparent);border-color:rgba(53,208,127,.28)}
+  .checkin.shut{background:rgba(255,255,255,.03);border-color:var(--line)}
+  .tick{width:52px;height:52px;border-radius:50%;background:rgba(53,208,127,.16);border:2px solid var(--green);
+    color:var(--green);display:grid;place-items:center;font-size:26px;margin:0 auto 12px}
+
+  /* ---------- agenda ---------- */
+  .ag{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
+  .ag:last-child{border-bottom:none}
+  .ag .clock{flex-shrink:0;width:64px;font-family:'Montserrat',sans-serif;font-size:12.5px;font-weight:800;color:var(--gold);padding-top:2px}
+  .ag .main{flex:1;min-width:0}
+  .ag .main b{font-size:14px;font-weight:700;font-family:'Montserrat',sans-serif;display:block;margin-bottom:3px}
+  .ag .main .det{font-size:12.5px;color:var(--muted);line-height:1.65;margin-top:3px;white-space:pre-wrap}
+  .ag .main .who2{font-size:11.5px;color:var(--dim);margin-top:5px}
+  .ag .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px;align-items:center}
+
+  .mat{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.22);border:1px solid var(--line);
+    border-radius:10px;padding:9px 12px;margin-top:7px;font-size:12.5px}
+  .mat .ico{font-size:15px;flex-shrink:0}
+  .mat .nm2{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mat .sz{color:var(--dim);font-size:11px;flex-shrink:0}
+
+  /* ---------- tables ---------- */
+  .tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:12px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:520px}
+  th{font-family:'Montserrat',sans-serif;font-size:9.5px;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;
+    color:var(--gold2);text-align:left;padding:9px 11px;border-bottom:1px solid rgba(239,194,75,.22);white-space:nowrap}
+  td{padding:10px 11px;border-bottom:1px solid var(--line);color:var(--text);vertical-align:top;line-height:1.55}
+  tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:rgba(255,255,255,.025)}
+  td .sub2{color:var(--dim);font-size:11px;display:block;margin-top:2px}
+
+  /* ---------- people chips ---------- */
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:8px;
+    padding:5px 10px;font-size:12px;color:var(--text)}
+  .chip.gold{border-color:rgba(239,194,75,.3);background:rgba(239,194,75,.08)}
+  .chip.red{border-color:rgba(255,122,122,.3);background:rgba(255,122,122,.08);color:var(--red)}
+  .chip .t{color:var(--dim);font-size:10.5px;margin-left:5px}
+
+  /* ---------- modal ---------- */
+  .modal{position:fixed;inset:0;z-index:900;background:rgba(4,12,20,.82);backdrop-filter:blur(4px);
+    display:none;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto}
+  .modal.on{display:flex}
+  .modal-card{width:min(620px,100%);background:linear-gradient(165deg,var(--card),var(--card2));
+    border:1px solid var(--line);border-radius:18px;padding:24px;margin:auto 0}
+  .modal-card h2{font-size:17px;font-weight:800;margin-bottom:4px;color:var(--gold)}
+  .modal-card .lead{font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6}
+  .modal-close{float:right;background:none;color:var(--dim);font-size:22px;line-height:1;padding:0 4px}
+  .modal-close:hover{color:var(--red)}
+
+  /* ---------- misc ---------- */
+  .bar{height:7px;border-radius:5px;background:rgba(255,255,255,.07);overflow:hidden;margin-top:7px}
+  .bar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--green),var(--teal))}
+  .back{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);
+    text-decoration:none;cursor:pointer;font-weight:700;font-family:'Montserrat',sans-serif;margin-bottom:4px}
+  .back:hover{color:var(--teal)}
+  .spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.25);
+    border-top-color:var(--gold);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .loading{text-align:center;padding:48px;color:var(--dim);font-size:13px}
+  footer{margin-top:44px;border-top:1px solid var(--line);background:rgba(0,0,0,.25);padding:24px 0 32px;text-align:center}
+  footer p{color:var(--dim);font-size:12px;line-height:1.7}
+  footer a{color:var(--teal2);text-decoration:none}
+  .setup{max-width:720px;margin:60px auto;padding:26px;background:rgba(245,165,36,.08);
+    border:1px solid rgba(245,165,36,.34);border-radius:16px;color:var(--text);font-size:13.5px;line-height:1.75}
+  .setup h2{color:var(--amber);font-size:16px;margin-bottom:10px}
+  .setup code{background:rgba(0,0,0,.4);padding:2px 7px;border-radius:5px;font-size:12.5px;color:var(--gold)}
+  .setup ol{margin:12px 0 0 20px} .setup li{margin-bottom:7px}
+
+  @media print{
+    body{background:#fff;color:#111}
+    .nav,.tabs,.checkin,.btn,.btn-row,footer,.back,.modal{display:none!important}
+    .card{background:#fff;border:1px solid #ccc;break-inside:avoid}
+    .section-label{color:#111} th{color:#333}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================ SIGN IN ============================ -->
+<div id="gate">
+  <div class="gate-card">
+    <svg class="shield" viewBox="0 0 88 88" aria-hidden="true">
+      <defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
+      </linearGradient></defs>
+      <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#gg)"/>
+      <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+
+    <!-- sign in -->
+    <div id="gate-login">
+      <h1>Branch Meeting Builder</h1>
+      <p class="sub">Ricky Rampersad Branch<br>Signing in is the attendance register.</p>
+      <div class="field">
+        <label for="li-email">Work email</label>
+        <input id="li-email" type="email" autocomplete="username" placeholder="you@myguardiangroup.com"/>
+      </div>
+      <div class="field">
+        <label for="li-pin">Your PIN</label>
+        <input id="li-pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="••••"/>
+      </div>
+      <button class="btn" id="li-go">Sign in</button>
+      <div class="msg" id="li-msg"></div>
+      <div class="switch">First time here? <a id="to-enrol">Set up your PIN</a></div>
+    </div>
+
+    <!-- first time -->
+    <div id="gate-enrol" style="display:none">
+      <h1>Set up your PIN</h1>
+      <p class="sub">Your email must already be on the branch list.<br>Ask the branch manager if it is not.</p>
+      <div class="field">
+        <label for="en-email">Work email</label>
+        <input id="en-email" type="email" autocomplete="username" placeholder="you@myguardiangroup.com"/>
+      </div>
+      <div class="field">
+        <label for="en-join">Branch code</label>
+        <input id="en-join" type="text" autocomplete="off" placeholder="Ask the branch manager"/>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="en-pin">Choose a PIN</label>
+          <input id="en-pin" type="password" inputmode="numeric" autocomplete="new-password" placeholder="4–8 digits"/>
+        </div>
+        <div class="field">
+          <label for="en-pin2">Again</label>
+          <input id="en-pin2" type="password" inputmode="numeric" autocomplete="new-password" placeholder="Repeat it"/>
+        </div>
+      </div>
+      <button class="btn teal" id="en-go">Create my sign-in</button>
+      <div class="msg" id="en-msg"></div>
+      <div class="switch">Already set up? <a id="to-login">Sign in</a></div>
+    </div>
+
+    <p class="hint">Your role decides what you see. Agents are counted present and see the
+      agenda and everything shared with the room; branch reports stay with staff.</p>
+  </div>
+</div>
+
+<!-- ============================ APP ============================ -->
+<div id="app">
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-brand" href="/staff.html">
+        <svg viewBox="0 0 88 88" aria-hidden="true">
+          <defs><linearGradient id="gn" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
+          </linearGradient></defs>
+          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#gn)"/>
+          <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <b>Meeting Builder<span>Ricky Rampersad Branch</span></b>
+      </a>
+      <div class="who">
+        <div class="avatar" id="who-av">—</div>
+        <div class="nm"><span id="who-name">—</span><br><span id="who-role" style="color:var(--dim);font-size:10.5px"></span></div>
+        <a class="out" id="sign-out">Sign out</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="wrap">
+    <div class="tabs" id="tabs"></div>
+    <div id="view"><div class="loading"><span class="spin"></span> Loading the branch…</div></div>
+  </div>
+
+  <footer>
+    <p>
+      <a href="/staff.html">← Staff Portal</a> ·
+      © <span id="yr"></span> Ricky Rampersad Branch · Branch Meeting Builder<br>
+      Signing in to a meeting is the attendance register. Every entry is time-stamped and kept in the branch record.
+    </p>
+  </footer>
+</div>
+
+<!-- ============================ MODAL ============================ -->
+<div class="modal" id="modal">
+  <div class="modal-card">
+    <button class="modal-close" id="modal-x">&times;</button>
+    <h2 id="modal-title">—</h2>
+    <p class="lead" id="modal-lead"></p>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+ *  BRANCH MEETING BUILDER
+ *  Ricky Rampersad Branch
+ *
+ *  One place for the whole meeting: the agenda, what each person is
+ *  presenting, who is in the room, the action tracker and the
+ *  minutes. Signing in IS the attendance register — there is no
+ *  second register to reconcile against.
+ *
+ *  SETUP — one line to change:
+ *    Paste the Apps Script web app URL (Meetings.gs, deployed as a
+ *    web app, ends in /exec) into API_URL below. Until then the page
+ *    shows setup instructions rather than pretending to work.
+ * ================================================================ */
+
+var CONFIG = {
+  API_URL: ""   // e.g. "https://script.google.com/macros/s/AKfy…/exec"
+};
+
+var TOKEN_KEY = "rrb-meetings-token";
+
+var S = {
+  token: null,
+  user: null,
+  home: null,
+  view: "home",
+  meetingId: null,
+  detail: null,
+  busy: false
+};
+
+/* ---------------- tiny helpers ---------------- */
+
+function $(id) { return document.getElementById(id); }
+
+function esc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+/** Line breaks survive into the page, but nothing else does. */
+function escLines(s) { return esc(s).replace(/\n/g, "<br>"); }
+
+function initials(name) {
+  var p = String(name || "").trim().split(/\s+/);
+  return ((p[0] || "?")[0] + (p.length > 1 ? p[p.length - 1][0] : "")).toUpperCase();
+}
+
+function bytes(n) {
+  if (!n) return "";
+  if (n < 1024) return n + " B";
+  if (n < 1048576) return Math.round(n / 1024) + " KB";
+  return (n / 1048576).toFixed(1) + " MB";
+}
+
+function dayOf(iso) {
+  if (!iso) return { d: "—", m: "" };
+  var dt = new Date(iso);
+  if (isNaN(dt.getTime())) return { d: "—", m: "" };
+  return { d: dt.getDate(), m: dt.toLocaleString("en", { month: "short" }).toUpperCase() };
+}
+
+function visBadge(v) {
+  if (v === "staff") return '<span class="badge b-staff">Staff only</span>';
+  if (v === "chair") return '<span class="badge b-chair">Chair only</span>';
+  return '<span class="badge b-all">Everyone</span>';
+}
+
+function statusBadge(st) {
+  var map = {
+    draft: ["b-dim", "Draft"], scheduled: ["b-all", "Scheduled"], live: ["b-green", "Live now"],
+    closed: ["b-dim", "Closed"], cancelled: ["b-red", "Cancelled"]
+  };
+  var m = map[st] || ["b-dim", st || "—"];
+  return '<span class="badge ' + m[0] + '">' + esc(m[1]) + "</span>";
+}
+
+function actionBadge(st, overdue) {
+  if (overdue) return '<span class="badge b-red">Overdue</span>';
+  var map = {
+    "Complete": "b-green", "Standing": "b-all", "In Progress": "b-amber",
+    "Overdue": "b-red", "Not Started": "b-dim", "Open": "b-amber"
+  };
+  return '<span class="badge ' + (map[st] || "b-dim") + '">' + esc(st || "Open") + "</span>";
+}
+
+function attBadge(st) {
+  var map = { present: ["b-green", "Present"], late: ["b-amber", "Late"],
+              excused: ["b-all", "Excused"], absent: ["b-red", "Absent"] };
+  var m = map[st] || ["b-dim", st || "—"];
+  return '<span class="badge ' + m[0] + '">' + m[1] + "</span>";
+}
+
+function say(id, text, kind) {
+  var el = $(id);
+  if (!el) return;
+  el.className = "msg " + (kind || "err");
+  el.innerHTML = escLines(text);
+  if (!text) el.className = "msg";
+}
+
+/* ---------------- talking to the sheet ---------------- */
+
+function apiGet(action, params) {
+  var qs = new URLSearchParams(Object.assign({ action: action }, params || {}));
+  return fetch(CONFIG.API_URL + "?" + qs.toString(), { cache: "no-store" })
+    .then(function (r) { return r.json(); });
+}
+
+function apiPost(body) {
+  return fetch(CONFIG.API_URL, {
+    method: "POST",
+    // text/plain keeps the browser from sending a CORS preflight,
+    // which an Apps Script web app cannot answer.
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(body)
+  }).then(function (r) { return r.json(); });
+}
+
+/** Every call that needs the signed-in person carries the token. */
+function post(action, body) {
+  return apiPost(Object.assign({ action: action, token: S.token }, body || {}));
+}
+
+/** A session that has expired sends you back to the sign-in box
+ *  rather than leaving a dead screen. */
+function guard(res) {
+  if (res && res.error && /session has ended|turned off/i.test(res.error)) {
+    signOutLocal();
+    say("li-msg", res.error, "err");
+    throw new Error(res.error);
+  }
+  return res;
+}
+
+/* ---------------- sign in ---------------- */
+
+function showGate(which) {
+  $("gate").style.display = "flex";
+  $("app").style.display = "none";
+  $("gate-login").style.display = which === "enrol" ? "none" : "block";
+  $("gate-enrol").style.display = which === "enrol" ? "block" : "none";
+}
+
+function signOutLocal() {
+  try { localStorage.removeItem(TOKEN_KEY); } catch (e) { /* private mode */ }
+  S.token = null; S.user = null; S.home = null; S.view = "home";
+  showGate("login");
+}
+
+function onSignedIn(res) {
+  S.token = res.token;
+  S.user = res.user;
+  try { localStorage.setItem(TOKEN_KEY, res.token); } catch (e) { /* private mode */ }
+  $("gate").style.display = "none";
+  $("app").style.display = "block";
+  $("who-av").textContent = initials(res.user.name);
+  $("who-name").textContent = res.user.name;
+  $("who-role").textContent = res.user.role === "manager" ? "Branch Manager"
+    : res.user.role === "staff" ? "Branch Staff" : "Agent";
+  loadHome();
+}
+
+function doLogin() {
+  var email = $("li-email").value.trim();
+  var pin = $("li-pin").value.trim();
+  if (!email || !pin) return say("li-msg", "Enter your email and PIN.");
+  $("li-go").disabled = true;
+  say("li-msg", "");
+  apiPost({ action: "login", email: email, pin: pin })
+    .then(function (res) {
+      $("li-go").disabled = false;
+      if (res.needsEnrol) {
+        showGate("enrol");
+        $("en-email").value = email;
+        return say("en-msg", "You have not set a PIN yet — choose one now.", "info");
+      }
+      if (!res.ok) return say("li-msg", res.error || "That did not work.");
+      onSignedIn(res);
+    })
+    .catch(function () {
+      $("li-go").disabled = false;
+      say("li-msg", "Could not reach the branch system. Check your connection and try again.");
+    });
+}
+
+function doEnrol() {
+  var email = $("en-email").value.trim();
+  var join = $("en-join").value.trim();
+  var pin = $("en-pin").value.trim();
+  var pin2 = $("en-pin2").value.trim();
+  if (!email || !join || !pin) return say("en-msg", "Fill in every box.");
+  if (pin !== pin2) return say("en-msg", "The two PINs are not the same.");
+  $("en-go").disabled = true;
+  say("en-msg", "");
+  apiPost({ action: "enrol", email: email, pin: pin, joinCode: join })
+    .then(function (res) {
+      $("en-go").disabled = false;
+      if (!res.ok) return say("en-msg", res.error || "That did not work.");
+      onSignedIn(res);
+    })
+    .catch(function () {
+      $("en-go").disabled = false;
+      say("en-msg", "Could not reach the branch system. Check your connection and try again.");
+    });
+}
+
+/* ---------------- tabs and routing ---------------- */
+
+function tabsFor() {
+  var t = [
+    { id: "home", label: "Meetings" },
+    { id: "prep", label: "My Prep" },
+    { id: "actions", label: "Action Items" }
+  ];
+  if (S.user && (S.user.role === "staff" || S.user.role === "manager")) {
+    t.push({ id: "register", label: "Register" });
+  }
+  if (S.user && S.user.role === "manager") t.push({ id: "people", label: "People" });
+  return t;
+}
+
+function drawTabs() {
+  var open = S.actionsOverdue || 0;
+  $("tabs").innerHTML = tabsFor().map(function (t) {
+    var on = (S.view === t.id || (t.id === "home" && S.view === "meeting")) ? " on" : "";
+    var pip = (t.id === "actions" && open) ? '<span class="pip">' + open + "</span>" : "";
+    return '<button class="tab' + on + '" data-tab="' + t.id + '">' + esc(t.label) + pip + "</button>";
+  }).join("");
+  Array.prototype.forEach.call($("tabs").querySelectorAll("[data-tab]"), function (b) {
+    b.onclick = function () { go(b.getAttribute("data-tab")); };
+  });
+}
+
+function go(view, id) {
+  S.view = view;
+  if (id !== undefined) S.meetingId = id;
+  drawTabs();
+  render();
+}
+
+function loading(msg) {
+  $("view").innerHTML = '<div class="loading"><span class="spin"></span> ' + esc(msg || "Loading…") + "</div>";
+}
+
+function loadHome() {
+  loading("Loading the branch…");
+  apiGet("home", { token: S.token })
+    .then(guard)
+    .then(function (res) {
+      if (!res.ok) throw new Error(res.error || "Could not load.");
+      S.home = res;
+      S.user = res.user;
+      S.actionsOverdue = (res.actionCounts && res.actionCounts.overdue) || 0;
+      drawTabs();
+      render();
+    })
+    .catch(function (e) {
+      $("view").innerHTML = '<div class="empty"><span class="big">⚠️</span>' +
+        esc(e.message || "Could not reach the branch system.") + "</div>";
+    });
+}
+
+function render() {
+  switch (S.view) {
+    case "meeting":  return viewMeeting();
+    case "prep":     return viewPrep();
+    case "actions":  return viewActions();
+    case "register": return viewRegister();
+    case "people":   return viewPeople();
+    case "minutes":  return viewMinutes();
+    case "build":    return viewBuild();
+    default:         return viewHome();
+  }
+}
+
+var isStaff = function () { return S.user && (S.user.role === "staff" || S.user.role === "manager"); };
+
+/* ---------------- home ---------------- */
+
+function viewHome() {
+  var h = S.home || {};
+  var next = h.next;
+  var list = h.meetings || [];
+  var upcoming = list.filter(function (m) { return !m.past && m.status !== "closed"; });
+  var past = list.filter(function (m) { return m.past || m.status === "closed"; });
+
+  var out = '<div class="page-head">' +
+    '<div class="kicker">' + esc(new Date().toLocaleDateString("en", { weekday: "long", day: "numeric", month: "long", year: "numeric" })) + "</div>" +
+    "<h1>Good day, " + esc((S.user.name || "").split(" ")[0]) + "</h1>" +
+    "<p>" + (isStaff()
+      ? "Build the meeting, see who is in the room, and keep the action tracker in one place."
+      : "Sign in to each meeting when you are there — that is the register. Everything shared with the room is below.") +
+    "</p></div>";
+
+  if (next) out += nextMeetingBlock(next);
+
+  if (isStaff()) {
+    out += '<div class="btn-row" style="margin:14px 0 4px">' +
+      '<button class="btn teal sm" id="new-mtg">+ New meeting</button>' +
+      (h.actionCounts && h.actionCounts.overdue
+        ? '<button class="btn ghost sm" id="see-overdue">' + h.actionCounts.overdue + " overdue action item" +
+          (h.actionCounts.overdue === 1 ? "" : "s") + "</button>"
+        : "") + "</div>";
+  }
+
+  out += "<section><div class=\"section-label\">Coming up</div>";
+  out += upcoming.length
+    ? upcoming.map(meetingRow).join("")
+    : '<div class="empty"><span class="big">📅</span>No meeting scheduled yet.' +
+      (isStaff() ? "<br>Use <b>New meeting</b> above to build one." : "") + "</div>";
+  out += "</section>";
+
+  if (past.length) {
+    out += '<section><div class="section-label">The record — ' + past.length + " past meeting" +
+      (past.length === 1 ? "" : "s") + "</div>" +
+      past.slice(0, 40).map(meetingRow).join("") + "</section>";
+  }
+
+  $("view").innerHTML = out;
+
+  var nm = $("new-mtg"); if (nm) nm.onclick = function () { go("build", ""); };
+  var so = $("see-overdue"); if (so) so.onclick = function () { go("actions"); };
+  wireMeetingRows();
+  wireCheckIn();
+}
+
+/** The card at the top: one button, and it is the register. */
+function nextMeetingBlock(m) {
+  var head = '<div class="section-label">' + (m.status === "live" ? "Happening now" : "Your next meeting") + "</div>" +
+    '<div class="card" style="margin-bottom:10px">' +
+    "<h3>" + esc(m.title) + "</h3>" +
+    '<div class="meta">' + esc(m.type) + " · " + esc(m.date) +
+    (m.start ? " · " + esc(m.start) : "") +
+    (m.location ? " · " + esc(m.location) : "") + "</div>" +
+    '<div style="margin-top:9px">' + statusBadge(m.status) +
+    (m.week ? ' <span class="badge b-dim">' + esc(m.week) + "</span>" : "") + "</div></div>";
+
+  if (m.me && (m.me.status === "present" || m.me.status === "late")) {
+    return head + '<div class="checkin done">' +
+      '<div class="tick">✓</div>' +
+      "<h2>You are on the register</h2>" +
+      "<p>Signed in at <b>" + esc(m.me.signedIn) + "</b>" +
+      (m.me.status === "late" ? " — recorded as <b>late by " + m.me.late + " minutes</b>" : " — recorded as <b>present</b>") +
+      ".</p>" +
+      '<button class="btn teal auto" data-open="' + esc(m.id) + '">Open the meeting</button></div>';
+  }
+
+  if (m.me && m.me.status === "excused") {
+    return head + '<div class="checkin shut">' +
+      "<h2>You are logged as excused</h2>" +
+      "<p>Reason on the register: " + esc(m.me.reason || "none given") +
+      ". If you make it after all, sign in and the register corrects itself.</p>" +
+      '<div class="btn-row" style="justify-content:center">' +
+      (m.checkInOpen ? '<button class="btn auto" data-checkin="' + esc(m.id) + '">I am here after all</button>' : "") +
+      '<button class="btn ghost auto" data-open="' + esc(m.id) + '">Open the meeting</button></div></div>';
+  }
+
+  if (m.checkInOpen) {
+    return head + '<div class="checkin">' +
+      "<h2>Are you here?</h2>" +
+      "<p>Pressing this puts you on the attendance register for this meeting, " +
+      "time-stamped. There is nothing else to sign.</p>" +
+      '<button class="btn big-btn" data-checkin="' + esc(m.id) + '">✓ &nbsp;I am here</button>' +
+      '<div class="hint" style="text-align:center">Check-in closes ' + esc(m.checkInClosesAt) + "</div></div>";
+  }
+
+  return head + '<div class="checkin shut">' +
+    "<h2>Check-in opens " + esc(m.checkInOpensAt || "closer to the time") + "</h2>" +
+    "<p>Come back then and sign in — that is the register. If you cannot attend, " +
+    "log it now so the reason is on the record.</p>" +
+    '<div class="btn-row" style="justify-content:center">' +
+    '<button class="btn ghost auto" data-excuse="' + esc(m.id) + '">I cannot attend</button>' +
+    '<button class="btn teal auto" data-open="' + esc(m.id) + '">Open the meeting</button></div></div>';
+}
+
+function meetingRow(m) {
+  var d = dayOf(m.dateISO);
+  var tags = statusBadge(m.status);
+  if (m.me) tags += " " + attBadge(m.me.status);
+  if (m.minutesStatus === "published") tags += ' <span class="badge b-dim">Minutes out</span>';
+  if (m.archiveLink) tags += ' <span class="badge b-dim">Archive</span>';
+
+  return '<button class="mtg" data-open="' + esc(m.id) + '">' +
+    '<div class="when"><b>' + d.d + "</b><span>" + d.m + "</span></div>" +
+    '<div class="body"><b>' + esc(m.title) + "</b>" +
+    '<div class="meta">' + esc(m.type) +
+    (m.start ? " · " + esc(m.start) : "") +
+    (m.format ? " · " + esc(m.format) : "") +
+    (m.location ? "<br>" + esc(m.location) : "") + "</div>" +
+    '<div class="tags">' + tags + "</div></div></button>";
+}
+
+function wireMeetingRows() {
+  Array.prototype.forEach.call(document.querySelectorAll("[data-open]"), function (b) {
+    b.onclick = function () { go("meeting", b.getAttribute("data-open")); };
+  });
+}
+
+function wireCheckIn() {
+  Array.prototype.forEach.call(document.querySelectorAll("[data-checkin]"), function (b) {
+    b.onclick = function () { checkIn(b.getAttribute("data-checkin"), b); };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-excuse]"), function (b) {
+    b.onclick = function () { excuseModal(b.getAttribute("data-excuse")); };
+  });
+}
+
+function checkIn(id, btn) {
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Signing you in…'; }
+  post("checkIn", { meetingId: id, device: navigator.userAgent })
+    .then(guard)
+    .then(function (res) {
+      if (!res.ok) {
+        if (btn) { btn.disabled = false; btn.textContent = "✓  I am here"; }
+        return alertModal("Not signed in", res.error || "That did not work.");
+      }
+      if (S.view === "meeting") loadMeeting(id); else loadHome();
+    })
+    .catch(function () {
+      if (btn) { btn.disabled = false; btn.textContent = "✓  I am here"; }
+      alertModal("No connection", "Could not reach the branch system. Try again in a moment.");
+    });
+}
+
+/* ---------------- modal ---------------- */
+
+function openModal(title, lead, bodyHtml) {
+  $("modal-title").textContent = title;
+  $("modal-lead").innerHTML = escLines(lead || "");
+  $("modal-lead").style.display = lead ? "block" : "none";
+  $("modal-body").innerHTML = bodyHtml;
+  $("modal").classList.add("on");
+}
+function closeModal() { $("modal").classList.remove("on"); }
+
+function alertModal(title, text) {
+  openModal(title, "", '<p style="font-size:13.5px;color:var(--muted);line-height:1.7">' +
+    escLines(text) + '</p><div class="btn-row" style="margin-top:18px">' +
+    '<button class="btn ghost" id="m-ok">Close</button></div>');
+  $("m-ok").onclick = closeModal;
+}
+
+function confirmModal(title, text, label, onYes) {
+  openModal(title, "", '<p style="font-size:13.5px;color:var(--muted);line-height:1.7">' +
+    escLines(text) + '</p><div class="btn-row" style="margin-top:18px">' +
+    '<button class="btn danger auto" id="m-yes">' + esc(label) + "</button>" +
+    '<button class="btn ghost auto" id="m-no">Cancel</button></div>');
+  $("m-yes").onclick = function () { closeModal(); onYes(); };
+  $("m-no").onclick = closeModal;
+}
+
+function excuseModal(id) {
+  openModal("Log that you cannot attend",
+    "The reason goes on the register beside your name, the way the branch minutes record it.",
+    '<div class="field"><label for="ex-why">Reason</label>' +
+    '<textarea id="ex-why" placeholder="Sick leave · client appointment · medical · training…"></textarea></div>' +
+    '<div class="msg" id="ex-msg"></div>' +
+    '<div class="btn-row"><button class="btn auto" id="ex-go">Log it</button>' +
+    '<button class="btn ghost auto" id="ex-cancel">Cancel</button></div>');
+  $("ex-cancel").onclick = closeModal;
+  $("ex-go").onclick = function () {
+    var why = $("ex-why").value.trim();
+    if (why.length < 3) return say("ex-msg", "Please say why you cannot attend.");
+    $("ex-go").disabled = true;
+    post("excuse", { meetingId: id, reason: why })
+      .then(guard)
+      .then(function (res) {
+        $("ex-go").disabled = false;
+        if (!res.ok) return say("ex-msg", res.error);
+        closeModal();
+        if (S.view === "meeting") loadMeeting(id); else loadHome();
+      })
+      .catch(function () { $("ex-go").disabled = false; say("ex-msg", "No connection — try again."); });
+  };
+}
+
+/* ---------------- one meeting ---------------- */
+
+function loadMeeting(id) {
+  loading("Opening the meeting…");
+  apiGet("meeting", { token: S.token, id: id })
+    .then(guard)
+    .then(function (res) {
+      if (!res.ok) throw new Error(res.error);
+      S.detail = res;
+      S.meetingId = id;
+      drawMeeting();
+    })
+    .catch(function (e) {
+      $("view").innerHTML = '<div class="empty"><span class="big">⚠️</span>' + esc(e.message) + "</div>";
+    });
+}
+
+function viewMeeting() {
+  if (S.detail && S.detail.meeting && S.detail.meeting.id === S.meetingId) drawMeeting();
+  else loadMeeting(S.meetingId);
+}
+
+function drawMeeting() {
+  var d = S.detail, m = d.meeting;
+  var out = '<div class="page-head"><a class="back" id="go-back">← All meetings</a>' +
+    '<div class="kicker">' + esc(m.type) + (m.week ? " · " + esc(m.week) : "") +
+    (m.ref ? " · " + esc(m.ref) : "") + "</div>" +
+    "<h1>" + esc(m.title) + "</h1>" +
+    (m.subtitle ? "<p>" + esc(m.subtitle) + "</p>" : "") + "</div>";
+
+  // The facts of the meeting, laid out the way the branch's own
+  // agendas head their first table.
+  var facts = [
+    ["Date", m.date + (m.start ? " · " + m.start + (m.end ? "–" + m.end : "") : "")],
+    ["Format", m.format], ["Location", m.location], ["Chair", m.chair],
+    ["Guest", m.guest], ["Pre-read", m.preRead], ["Anchor document", m.anchor]
+  ].filter(function (r) { return r[1]; });
+
+  out += '<div class="card"><div class="tbl-scroll"><table style="min-width:0">' +
+    facts.map(function (r) {
+      return "<tr><th style='width:150px'>" + esc(r[0]) + "</th><td>" + esc(r[1]) + "</td></tr>";
+    }).join("") + "</table></div>";
+  if (m.archiveLink) {
+    out += '<div style="margin-top:12px"><a class="btn ghost sm" style="display:inline-block;text-decoration:none" ' +
+      'href="' + esc(m.archiveLink) + '" target="_blank" rel="noopener">Open the original document ↗</a></div>';
+  }
+  out += "</div>";
+
+  // Check-in, right at the top where it cannot be missed.
+  if (m.status !== "closed" && !m.archiveLink) out += checkinBlock(m);
+
+  if (m.mission) {
+    out += '<div class="card flat"><div class="section-label" style="margin-bottom:8px">Mission statement</div>' +
+      '<div style="font-size:13.5px;line-height:1.75;color:var(--muted)">' + escLines(m.mission) + "</div></div>";
+  }
+
+  // ---- running order ----
+  out += '<section><div class="section-label">Running order';
+  if (isStaff() && m.status !== "closed") {
+    out += '<button class="btn teal sm" id="edit-agenda" style="margin-left:auto">Edit the agenda</button>';
+  }
+  out += "</div>";
+
+  if (!d.agenda.length) {
+    out += '<div class="empty"><span class="big">📋</span>No agenda yet.' +
+      (isStaff() ? "<br>Open <b>Edit the agenda</b> to build one, or start from the branch's standing order." : "") +
+      "</div>";
+  } else {
+    out += '<div class="card">' + d.agenda.map(agendaRow).join("") + "</div>";
+  }
+  out += "</section>";
+
+  // ---- attendance ----
+  if (d.register) {
+    out += '<section><div class="section-label">Who is in the room' +
+      '<button class="btn ghost sm" id="full-register" style="margin-left:auto">Full register</button></div>' +
+      registerStats(d.register) + "</section>";
+  } else if (d.presentCount !== undefined) {
+    out += '<section><div class="section-label">The room</div><div class="card flat">' +
+      '<div style="font-size:13.5px;color:var(--muted);line-height:1.7">' +
+      "<b style=\"color:var(--text)\">" + d.presentCount + " signed in</b> to this meeting so far. " +
+      "The full register is kept by branch staff.</div></div></section>";
+  }
+
+  // ---- action items ----
+  out += '<section><div class="section-label">Action items';
+  if (isStaff()) {
+    out += '<div class="btn-row" style="margin-left:auto">' +
+      '<button class="btn ghost sm" id="carry-fwd">Carry forward</button>' +
+      '<button class="btn teal sm" id="add-action">+ Add</button></div>';
+  }
+  out += "</div>";
+  out += d.actions.length ? actionsTable(d.actions)
+    : '<div class="empty" style="padding:26px"><span class="big">✅</span>Nothing tracked against this meeting' +
+      (isStaff() ? " yet." : " for you.") + "</div>";
+  out += "</section>";
+
+  // ---- minutes ----
+  out += '<section><div class="section-label">Minutes';
+  if (isStaff()) {
+    out += '<button class="btn teal sm" id="open-minutes" style="margin-left:auto">' +
+      (d.minutes.length ? "Write the minutes" : "Start the minutes") + "</button>";
+  }
+  out += "</div>";
+
+  if (!d.minutes.length) {
+    out += '<div class="empty" style="padding:26px"><span class="big">📝</span>' +
+      (d.minutesPublished ? "No minutes recorded." : "The minutes are not out yet.") + "</div>";
+  } else {
+    if (!d.minutesPublished) {
+      out += '<div class="msg info" style="display:block;margin-bottom:12px">' +
+        "These minutes are still a draft — only branch staff can see them. Publishing releases the " +
+        "sections marked <b>Everyone</b> to the whole branch.</div>";
+    }
+    out += '<div class="card">' + d.minutes.map(function (s) {
+      return '<div style="padding:14px 0;border-bottom:1px solid var(--line)">' +
+        '<div style="display:flex;gap:9px;align-items:center;margin-bottom:7px">' +
+        '<b style="font-family:Montserrat;font-size:14px">' + esc(s.section) + "</b>" +
+        visBadge(s.visibility) + "</div>" +
+        '<div style="font-size:13px;line-height:1.8;color:var(--muted);white-space:pre-wrap">' +
+        escLines(s.body) + "</div></div>";
+    }).join("") + "</div>";
+    out += '<div class="btn-row"><button class="btn ghost sm" onclick="window.print()">Print / save as PDF</button></div>';
+  }
+  out += "</section>";
+
+  $("view").innerHTML = out;
+
+  $("go-back").onclick = function () { go("home"); };
+  wireCheckIn();
+  var ea = $("edit-agenda");   if (ea) ea.onclick = function () { go("build", m.id); };
+  var fr = $("full-register"); if (fr) fr.onclick = function () { go("register", m.id); };
+  var om = $("open-minutes");  if (om) om.onclick = function () { go("minutes", m.id); };
+  var aa = $("add-action");    if (aa) aa.onclick = function () { actionModal(null, m.id); };
+  var cf = $("carry-fwd");     if (cf) cf.onclick = function () {
+    confirmModal("Carry items forward",
+      "Every action item still open on an earlier meeting is copied onto this one, keeping the meeting it was first raised in.",
+      "Carry them forward", function () {
+        post("carryForward", { meetingId: m.id }).then(guard).then(function (res) {
+          if (!res.ok) return alertModal("Not done", res.error);
+          alertModal("Carried forward", res.carried + " open item" + (res.carried === 1 ? "" : "s") + " brought onto this meeting.");
+          loadMeeting(m.id);
+        });
+      });
+  };
+  wireMaterials();
+}
+
+function checkinBlock(m) {
+  if (m.me && (m.me.status === "present" || m.me.status === "late")) {
+    return '<div class="checkin done"><div class="tick">✓</div>' +
+      "<h2>You are on the register</h2><p>Signed in at <b>" + esc(m.me.signedIn) + "</b>" +
+      (m.me.status === "late" ? " — <b>late by " + m.me.late + " minutes</b>" : "") + ".</p></div>";
+  }
+  if (m.checkInOpen) {
+    return '<div class="checkin"><h2>Sign in to this meeting</h2>' +
+      "<p>This is the attendance register. One press and you are on it, time-stamped.</p>" +
+      '<button class="btn big-btn" data-checkin="' + esc(m.id) + '">✓ &nbsp;I am here</button></div>';
+  }
+  if (m.me && m.me.status === "excused") {
+    return '<div class="checkin shut"><h2>Logged as excused</h2><p>' +
+      esc(m.me.reason || "No reason given") + "</p></div>";
+  }
+  if (m.past) {
+    return '<div class="checkin shut"><h2>Check-in closed</h2>' +
+      "<p>This meeting's register closed at " + esc(m.checkInClosesAt) +
+      ". If you were there and did not log in, ask branch staff to correct the register.</p></div>";
+  }
+  return '<div class="checkin shut"><h2>Check-in opens ' + esc(m.checkInOpensAt) + "</h2>" +
+    "<p>Sign in when the meeting starts. If you cannot attend, log it now.</p>" +
+    '<button class="btn ghost auto" data-excuse="' + esc(m.id) + '">I cannot attend</button></div>';
+}
+
+function agendaRow(a) {
+  var tags = visBadge(a.visibility);
+  if (a.materialsRequired) {
+    tags += a.ready ? ' <span class="badge b-green">Material in</span>'
+                    : ' <span class="badge b-red">Material outstanding</span>';
+  }
+  if (a.reviewedBy) tags += ' <span class="badge b-dim">Checked by ' + esc(a.reviewedBy) + "</span>";
+  if (a.mine) tags += ' <span class="badge b-amber">Yours</span>';
+
+  return '<div class="ag">' +
+    '<div class="clock">' + esc(a.clock) + (a.minutes ? '<br><span style="color:var(--dim);font-weight:400;font-size:10.5px">' + a.minutes + " min</span>" : "") + "</div>" +
+    '<div class="main"><b>' + esc(a.title) + "</b>" +
+    (a.section ? '<div style="font-size:10.5px;color:var(--gold2);letter-spacing:1.2px;text-transform:uppercase;font-weight:700">' + esc(a.section) + "</div>" : "") +
+    (a.detail ? '<div class="det">' + escLines(a.detail) + "</div>" : "") +
+    (a.presenter ? '<div class="who2">Presented by <b style="color:var(--text)">' + esc(a.presenter) + "</b></div>" : "") +
+    '<div class="tags">' + tags + "</div>" +
+    a.materials.map(materialRow).join("") +
+    (a.mine && !a.materials.length
+      ? '<div style="margin-top:9px"><button class="btn teal sm" data-upload="' + esc(a.id) + '">Upload what you are presenting</button></div>'
+      : "") +
+    "</div></div>";
+}
+
+function materialRow(u) {
+  var ico = u.kind === "link" ? "🔗"
+    : /pdf/.test(u.mime) ? "📕"
+    : /presentation|powerpoint/.test(u.mime) ? "📊"
+    : /sheet|excel|csv/.test(u.mime) ? "📗"
+    : /word|document/.test(u.mime) ? "📘"
+    : /image/.test(u.mime) ? "🖼️" : "📎";
+  return '<div class="mat"><span class="ico">' + ico + "</span>" +
+    '<span class="nm2">' + esc(u.name) +
+    (u.summary ? '<span class="sub2">' + esc(u.summary) + "</span>" : "") + "</span>" +
+    (u.size ? '<span class="sz">' + bytes(u.size) + "</span>" : "") +
+    visBadge(u.visibility) +
+    '<button class="btn ghost sm" data-file="' + esc(u.id) + '">Open</button></div>';
+}
+
+function wireMaterials() {
+  Array.prototype.forEach.call(document.querySelectorAll("[data-file]"), function (b) {
+    b.onclick = function () { openMaterial(b.getAttribute("data-file"), b); };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-upload]"), function (b) {
+    b.onclick = function () { go("prep"); };
+  });
+}
+
+/** Files are private in Drive. The server hands the bytes back only
+ *  after checking this person may see them; the browser turns them
+ *  into a blob to open. */
+function openMaterial(id, btn) {
+  var label = btn ? btn.textContent : "";
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spin"></span>'; }
+  apiGet("file", { token: S.token, id: id })
+    .then(guard)
+    .then(function (res) {
+      if (btn) { btn.disabled = false; btn.textContent = label; }
+      if (!res.ok) return alertModal("Cannot open", res.error);
+      if (res.kind === "link") return window.open(res.link, "_blank", "noopener");
+      var bin = atob(res.data);
+      var arr = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      var url = URL.createObjectURL(new Blob([arr], { type: res.mime || "application/octet-stream" }));
+      window.open(url, "_blank", "noopener");
+      setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+    })
+    .catch(function () {
+      if (btn) { btn.disabled = false; btn.textContent = label; }
+      alertModal("No connection", "Could not fetch that file.");
+    });
+}
+
+/* ---------------- the register ---------------- */
+
+function registerStats(r) {
+  var c = r.counts;
+  return '<div class="grid3" style="margin-bottom:12px">' +
+    '<div class="stat green"><b>' + c.present + "</b><span>Present</span></div>" +
+    '<div class="stat amber"><b>' + c.late + "</b><span>Late</span></div>" +
+    '<div class="stat teal"><b>' + c.excused + "</b><span>Excused</span></div>" +
+    '<div class="stat red"><b>' + c.absent + "</b><span>Absent</span></div>" +
+    '<div class="stat"><b>' + c.noEntry + "</b><span>No entry</span></div>" +
+    '<div class="stat gold"><b>' + c.rate + "%</b><span>Of the roll</span></div></div>" +
+    '<div class="bar"><i style="width:' + c.rate + '%"></i></div>';
+}
+
+function viewRegister() {
+  var id = S.meetingId;
+  if (!id) {
+    // No meeting chosen: show attendance across every meeting, which
+    // is the view that feeds a one-on-one.
+    loading("Reading the register…");
+    return apiGet("attendance", { token: S.token }).then(guard).then(function (res) {
+      if (!res.ok) throw new Error(res.error);
+      var out = '<div class="page-head"><div class="kicker">Across ' + res.meetings + " meeting" +
+        (res.meetings === 1 ? "" : "s") + "</div><h1>Attendance</h1>" +
+        "<p>Every active person on the branch list, and what the register says about them. " +
+        "<b>No entry</b> counts the meetings where someone neither signed in nor logged a reason — " +
+        "the observation the Q1 minutes record in its own right.</p></div>";
+
+      out += '<div class="card"><div class="tbl-scroll"><table><thead><tr>' +
+        "<th>Name</th><th>Role</th><th>Present</th><th>Late</th><th>Excused</th>" +
+        "<th>Absent</th><th>No entry</th><th>Rate</th></tr></thead><tbody>" +
+        res.people.map(function (p) {
+          var cls = p.rate >= 90 ? "b-green" : p.rate >= 70 ? "b-amber" : "b-red";
+          return "<tr><td><b>" + esc(p.name) + "</b>" +
+            (p.unit ? '<span class="sub2">' + esc(p.unit) + "</span>" : "") + "</td>" +
+            "<td>" + esc(p.role) + "</td><td>" + p.present + "</td><td>" + p.late + "</td>" +
+            "<td>" + p.excused + "</td><td>" + p.absent + "</td>" +
+            "<td>" + (p.noEntry ? '<b style="color:var(--red)">' + p.noEntry + "</b>" : "0") + "</td>" +
+            '<td><span class="badge ' + cls + '">' + p.rate + "%</span></td></tr>";
+        }).join("") + "</tbody></table></div></div>";
+
+      out += '<div class="btn-row"><button class="btn ghost sm" onclick="window.print()">Print / save as PDF</button></div>';
+      $("view").innerHTML = out;
+    }).catch(function (e) {
+      $("view").innerHTML = '<div class="empty"><span class="big">⚠️</span>' + esc(e.message) + "</div>";
+    });
+  }
+
+  loading("Reading the register…");
+  apiGet("register", { token: S.token, id: id }).then(guard).then(function (res) {
+    if (!res.ok) throw new Error(res.error);
+    var m = res.meeting, r = res.register;
+
+    var out = '<div class="page-head"><a class="back" id="reg-back">← Back to the meeting</a>' +
+      '<div class="kicker">' + esc(m.date) + " · " + esc(m.ref || m.type) + "</div>" +
+      "<h1>Attendance register</h1><p>" + esc(m.title) +
+      ". Every entry below came from someone signing in, or from a staff correction — both are stamped.</p></div>";
+
+    out += '<div class="card">' + registerStats(r) + "</div>";
+
+    out += group("Present", r.groups.present, "b-green", function (p) {
+      return p.time + (p.method === "manual" ? " · marked by " + p.recordedBy : "");
+    });
+    out += group("Late", r.groups.late, "b-amber", function (p) {
+      return p.time + " · " + p.late + " min late" + (p.reason ? " · " + p.reason : "");
+    });
+    out += group("Excused", r.groups.excused, "b-all", function (p) { return p.reason || "no reason logged"; });
+    out += group("Absent", r.groups.absent, "b-red", function (p) { return p.reason || "no reason logged"; });
+
+    out += '<section><div class="section-label">No entry in the register — ' + r.counts.noEntry + "</div>";
+    if (!r.groups.noEntry.length) {
+      out += '<div class="card flat"><div style="font-size:13px;color:var(--green);line-height:1.7">' +
+        "✓ Every active member of the branch engaged with the register for this meeting.</div></div>";
+    } else {
+      out += '<div class="card"><div style="font-size:12.5px;color:var(--muted);line-height:1.7;margin-bottom:12px">' +
+        "Neither present, absent, excused nor late. Signing in is the branch standard for a scheduled " +
+        "meeting; where an active person has not engaged with it, that is recorded as a factual " +
+        "observation of the record and carried to the one-on-one with their manager.</div>" +
+        '<div class="chips">' + r.groups.noEntry.map(function (p) {
+          return '<span class="chip red">' + esc(p.name) +
+            (p.unit ? '<span class="t">' + esc(p.unit) + "</span>" : "") + "</span>";
+        }).join("") + "</div></div>";
+    }
+    out += "</section>";
+
+    out += '<section><div class="section-label">Correct the register</div>' +
+      '<div class="card"><div style="font-size:12.5px;color:var(--muted);line-height:1.7;margin-bottom:14px">' +
+      'The "was here earlier, forgot to log" case. Corrections record who made them.</div>' +
+      '<div class="row3">' +
+      '<div class="field"><label for="mk-who">Person</label><select id="mk-who">' +
+      (S.home && S.home.people ? S.home.people.map(function (p) {
+        return '<option value="' + esc(p.email) + '">' + esc(p.name) + "</option>";
+      }).join("") : "") + "</select></div>" +
+      '<div class="field"><label for="mk-st">Status</label><select id="mk-st">' +
+      '<option value="present">Present</option><option value="late">Late</option>' +
+      '<option value="excused">Excused</option><option value="absent">Absent</option></select></div>' +
+      '<div class="field"><label for="mk-why">Reason / note</label><input id="mk-why" placeholder="Optional"/></div>' +
+      "</div>" +
+      '<div class="msg" id="mk-msg"></div>' +
+      '<div class="btn-row"><button class="btn teal sm" id="mk-go">Record it</button>' +
+      '<button class="btn ghost sm" onclick="window.print()">Print / save as PDF</button></div></div></section>';
+
+    $("view").innerHTML = out;
+    $("reg-back").onclick = function () { go("meeting", id); };
+    $("mk-go").onclick = function () {
+      $("mk-go").disabled = true;
+      post("markAttendance", {
+        meetingId: id, email: $("mk-who").value, status: $("mk-st").value, reason: $("mk-why").value.trim()
+      }).then(guard).then(function (r2) {
+        $("mk-go").disabled = false;
+        if (!r2.ok) return say("mk-msg", r2.error);
+        viewRegister();
+      }).catch(function () { $("mk-go").disabled = false; say("mk-msg", "No connection — try again."); });
+    };
+  }).catch(function (e) {
+    $("view").innerHTML = '<div class="empty"><span class="big">⚠️</span>' + esc(e.message) + "</div>";
+  });
+}
+
+function group(label, list, cls, line) {
+  return '<section><div class="section-label">' + label + " — " + list.length + "</div>" +
+    (list.length
+      ? '<div class="card"><div class="tbl-scroll"><table><tbody>' + list.map(function (p) {
+          return "<tr><td style='width:44%'><b>" + esc(p.name) + "</b>" +
+            (p.unit ? '<span class="sub2">' + esc(p.unit) + "</span>" : "") + "</td>" +
+            "<td>" + esc(p.role) + "</td>" +
+            '<td style="color:var(--muted)">' + esc(line(p)) + "</td></tr>";
+        }).join("") + "</tbody></table></div></div>"
+      : '<div class="card flat"><div style="color:var(--dim);font-size:13px">Nobody.</div></div>') +
+    "</section>";
+}
+
+/* ---------------- my prep: uploading what you present ---------------- */
+
+function viewPrep() {
+  var meetingId = S.meetingId;
+  var pick = (S.home && S.home.meetings || []).filter(function (m) {
+    return m.status !== "closed" && !m.archiveLink;
+  });
+  if (!meetingId && pick.length) meetingId = pick[0].id;
+  if (!meetingId) {
+    $("view").innerHTML = '<div class="page-head"><h1>My prep</h1></div>' +
+      '<div class="empty"><span class="big">📎</span>No open meeting to prepare for yet.</div>';
+    return;
+  }
+
+  loading("Loading your slots…");
+  apiGet("prep", { token: S.token, id: meetingId }).then(guard).then(function (res) {
+    if (!res.ok) throw new Error(res.error);
+    var m = res.meeting;
+    var mine = res.slots.filter(function (s) { return s.mine; });
+    var others = res.slots.filter(function (s) { return !s.mine; });
+
+    var out = '<div class="page-head"><div class="kicker">' + esc(m.date) + " · " + esc(m.type) + "</div>" +
+      "<h1>What are you presenting?</h1>" +
+      "<p>Attach your material to your slot before the meeting. It lands in the branch record, " +
+      "not in a chat thread" + (m.materialsDue ? ", and it is due <b>" + esc(m.materialsDue) + "</b>" : "") + ".</p></div>";
+
+    if (pick.length > 1) {
+      out += '<div class="field" style="max-width:420px"><label for="pk-m">Meeting</label><select id="pk-m">' +
+        pick.map(function (x) {
+          return '<option value="' + esc(x.id) + '"' + (x.id === meetingId ? " selected" : "") + ">" +
+            esc(x.date + " — " + x.title) + "</option>";
+        }).join("") + "</select></div>";
+    }
+
+    out += '<section><div class="section-label">Your slots — ' + mine.length + "</div>";
+    out += mine.length
+      ? mine.map(function (s) { return prepCard(s, true); }).join("")
+      : '<div class="empty" style="padding:26px"><span class="big">🎤</span>' +
+        "You are not down to present at this meeting.<br>" +
+        (isStaff() ? "You can still attach material to any slot below." : "Branch staff assign the running order.") +
+        "</div>";
+    out += "</section>";
+
+    if (isStaff() && others.length) {
+      var waiting = others.filter(function (s) { return s.required && !s.ready; });
+      out += '<section><div class="section-label">Everyone else — ' + waiting.length + " still outstanding</div>" +
+        '<div class="card"><div class="tbl-scroll"><table><thead><tr><th>Agenda item</th><th>Presenter</th>' +
+        "<th>Material</th><th>Checked</th><th></th></tr></thead><tbody>" +
+        others.map(function (s) {
+          return "<tr><td><b>" + esc(s.title) + "</b>" +
+            '<span class="sub2">' + esc(s.section) + " · " + visBadgeText(s.visibility) + "</span></td>" +
+            "<td>" + esc(s.presenter || "—") + "</td>" +
+            "<td>" + (s.ready
+              ? '<span class="badge b-green">' + s.count + " in</span>"
+              : s.required ? '<span class="badge b-red">Outstanding</span>' : '<span class="badge b-dim">Not required</span>') + "</td>" +
+            "<td>" + (s.reviewedBy ? esc(s.reviewedBy) : "—") + "</td>" +
+            '<td><button class="btn ghost sm" data-upload-to="' + esc(s.id) + '">Attach</button></td></tr>' +
+            (s.materials.length
+              ? '<tr><td colspan="5" style="padding-top:0">' + s.materials.map(materialRow).join("") + "</td></tr>"
+              : "");
+        }).join("") + "</tbody></table></div></div></section>";
+    }
+
+    $("view").innerHTML = out;
+
+    var pk = $("pk-m");
+    if (pk) pk.onchange = function () { S.meetingId = pk.value; viewPrep(); };
+    wireMaterials();
+    Array.prototype.forEach.call(document.querySelectorAll("[data-upload-to]"), function (b) {
+      b.onclick = function () { uploadModal(meetingId, b.getAttribute("data-upload-to"), res.maxMB); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-drop]"), function (b) {
+      b.onclick = function () { uploadModal(meetingId, b.getAttribute("data-drop"), res.maxMB); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-del-upload]"), function (b) {
+      b.onclick = function () {
+        var uid = b.getAttribute("data-del-upload");
+        confirmModal("Remove this material", "It comes off the agenda item and out of Drive.", "Remove it", function () {
+          post("deleteUpload", { id: uid }).then(guard).then(function () { viewPrep(); });
+        });
+      };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-review]"), function (b) {
+      b.onclick = function () {
+        post("reviewUpload", { id: b.getAttribute("data-review") }).then(guard).then(function () { viewPrep(); });
+      };
+    });
+  }).catch(function (e) {
+    $("view").innerHTML = '<div class="empty"><span class="big">⚠️</span>' + esc(e.message) + "</div>";
+  });
+}
+
+function visBadgeText(v) {
+  return v === "staff" ? "Staff only" : v === "chair" ? "Chair only" : "Everyone";
+}
+
+function prepCard(s) {
+  return '<div class="card"><div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">' +
+    '<div style="flex:1;min-width:200px"><h3>' + esc(s.title) + "</h3>" +
+    '<div class="meta">' + esc(s.section) + "</div></div>" +
+    "<div>" + visBadge(s.visibility) +
+    (s.ready ? ' <span class="badge b-green">In</span>'
+             : s.required ? ' <span class="badge b-red">Outstanding</span>' : "") + "</div></div>" +
+    (s.materials.length
+      ? '<div style="margin-top:10px">' + s.materials.map(function (u) {
+          return materialRow(u).replace("</div>",
+            '<button class="btn ghost sm" data-del-upload="' + esc(u.id) + '">Remove</button>' +
+            (isStaff() && !u.reviewedBy ? '<button class="btn ghost sm" data-review="' + esc(u.id) + '">Mark checked</button>' : "") +
+            "</div>");
+        }).join("") + "</div>"
+      : '<div style="margin-top:10px;font-size:12.5px;color:var(--dim);line-height:1.7">' +
+        "Nothing attached yet. Slides, a report, a screenshot or a link — whatever you are taking the room through.</div>") +
+    '<div class="btn-row" style="margin-top:12px">' +
+    '<button class="btn teal sm" data-drop="' + esc(s.id) + '">Attach material</button></div></div>';
+}
+
+function uploadModal(meetingId, agendaId, maxMB) {
+  openModal("Attach what you are presenting",
+    "Files go into the branch's private Drive folder and are served back only to people allowed to see them. " +
+    "Anything over " + maxMB + " MB goes in as a link instead.",
+    '<div class="field"><label for="up-file">Choose a file</label><input id="up-file" type="file"/></div>' +
+    '<div style="text-align:center;color:var(--dim);font-size:11.5px;margin:8px 0">— or —</div>' +
+    '<div class="field"><label for="up-link">Paste a link</label>' +
+    '<input id="up-link" type="url" placeholder="https://…"/></div>' +
+    '<div class="field"><label for="up-sum">One line on what it is</label>' +
+    '<input id="up-sum" placeholder="e.g. 85-day premium due report, week ending Friday"/></div>' +
+    '<div class="field"><label for="up-vis">Who may see it</label><select id="up-vis">' +
+    '<option value="">Same as the agenda item</option>' +
+    '<option value="all">Everyone in the room</option>' +
+    '<option value="staff">Staff only</option>' +
+    '<option value="chair">Chair only</option></select></div>' +
+    '<div class="msg" id="up-msg"></div>' +
+    '<div class="btn-row"><button class="btn auto" id="up-go">Attach it</button>' +
+    '<button class="btn ghost auto" id="up-cancel">Cancel</button></div>');
+
+  $("up-cancel").onclick = closeModal;
+  $("up-go").onclick = function () {
+    var file = $("up-file").files[0];
+    var link = $("up-link").value.trim();
+    var summary = $("up-sum").value.trim();
+    var vis = $("up-vis").value;
+    if (!file && !link) return say("up-msg", "Choose a file or paste a link.");
+    if (file && file.size > maxMB * 1024 * 1024) {
+      return say("up-msg", "That file is " + bytes(file.size) + " — over the " + maxMB +
+        " MB limit. Put it in Drive and paste the link instead.");
+    }
+
+    var btn = $("up-go");
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin"></span> Attaching…';
+
+    var send = function (payload) {
+      post("upload", payload).then(guard).then(function (res) {
+        btn.disabled = false; btn.textContent = "Attach it";
+        if (!res.ok) return say("up-msg", res.error);
+        closeModal();
+        viewPrep();
+      }).catch(function () {
+        btn.disabled = false; btn.textContent = "Attach it";
+        say("up-msg", "Upload did not go through. Try again, or use a link.");
+      });
+    };
+
+    if (link && !file) {
+      return send({ meetingId: meetingId, agendaId: agendaId, kind: "link",
+                    link: link, summary: summary, visibility: vis });
+    }
+    var reader = new FileReader();
+    reader.onload = function () {
+      send({ meetingId: meetingId, agendaId: agendaId, kind: "file", name: file.name,
+             mime: file.type || "application/octet-stream", data: String(reader.result),
+             summary: summary, visibility: vis });
+    };
+    reader.onerror = function () {
+      btn.disabled = false; btn.textContent = "Attach it";
+      say("up-msg", "That file could not be read.");
+    };
+    reader.readAsDataURL(file);
+  };
+}
+
+/* ---------------- action items ---------------- */
+
+function actionsTable(list) {
+  return '<div class="card"><div class="tbl-scroll"><table><thead><tr>' +
+    "<th>Action item</th><th>Owner</th><th>Raised by</th><th>Due</th><th>Status</th>" +
+    (isStaff() ? "<th></th>" : "") + "</tr></thead><tbody>" +
+    list.map(function (a) {
+      return "<tr><td><b>" + esc(a.item) + "</b>" +
+        (a.notes ? '<span class="sub2">' + esc(a.notes) + "</span>" : "") +
+        (a.origin && a.origin !== a.meetingId ? '<span class="sub2">Carried forward</span>' : "") + "</td>" +
+        "<td>" + esc(a.owner || "—") + "</td><td>" + esc(a.initiatedBy || "—") + "</td>" +
+        "<td>" + esc(a.due || "—") + "</td>" +
+        "<td>" + actionBadge(a.status, a.overdue) + "</td>" +
+        (isStaff() ? '<td><button class="btn ghost sm" data-act="' + esc(a.id) + '">Edit</button></td>' : "") +
+        "</tr>";
+    }).join("") + "</tbody></table></div></div>";
+}
+
+function viewActions() {
+  loading("Loading the tracker…");
+  apiGet("actions", { token: S.token }).then(guard).then(function (res) {
+    if (!res.ok) throw new Error(res.error);
+    S.actionsOverdue = res.counts.overdue;
+    drawTabs();
+
+    var c = res.counts;
+    var out = '<div class="page-head"><div class="kicker">Action item tracker</div>' +
+      "<h1>What we said we would do</h1><p>" +
+      (isStaff()
+        ? "Every item raised in a branch meeting, in one list. Carrying an item forward keeps the meeting it was first raised in, so an item raised in March still says so in May."
+        : "The items that name you, and the ones for all agents.") + "</p></div>";
+
+    out += '<div class="grid3" style="margin-bottom:14px">' +
+      '<div class="stat gold"><b>' + c.open + "</b><span>Open</span></div>" +
+      '<div class="stat red"><b>' + c.overdue + "</b><span>Overdue</span></div>" +
+      '<div class="stat teal"><b>' + c.standing + "</b><span>Standing</span></div>" +
+      '<div class="stat green"><b>' + c.complete + "</b><span>Complete</span></div></div>";
+
+    var overdue = res.actions.filter(function (a) { return a.overdue; });
+    var open = res.actions.filter(function (a) { return !a.overdue && a.status !== "Complete" && a.status !== "Standing"; });
+    var standing = res.actions.filter(function (a) { return a.status === "Standing"; });
+    var done = res.actions.filter(function (a) { return a.status === "Complete"; });
+
+    if (overdue.length) out += '<section><div class="section-label" style="color:var(--red)">Overdue — ' + overdue.length + "</div>" + actionsTable(overdue) + "</section>";
+    if (open.length)    out += '<section><div class="section-label">Open — ' + open.length + "</div>" + actionsTable(open) + "</section>";
+    if (standing.length)out += '<section><div class="section-label">Standing — continuous cadence</div>' + actionsTable(standing) + "</section>";
+    if (done.length)    out += '<section><div class="section-label">Complete — ' + done.length + "</div>" + actionsTable(done.slice(-25)) + "</section>";
+    if (!res.actions.length) out += '<div class="empty"><span class="big">✅</span>Nothing on the tracker.</div>';
+
+    if (isStaff()) {
+      out += '<div class="btn-row" style="margin-top:14px">' +
+        '<button class="btn teal sm" id="add-action2">+ Add an action item</button>' +
+        '<button class="btn ghost sm" onclick="window.print()">Print / save as PDF</button></div>';
+    }
+
+    $("view").innerHTML = out;
+    var ad = $("add-action2");
+    if (ad) ad.onclick = function () { actionModal(null, S.meetingId || ""); };
+    Array.prototype.forEach.call(document.querySelectorAll("[data-act]"), function (b) {
+      b.onclick = function () {
+        var a = res.actions.filter(function (x) { return x.id === b.getAttribute("data-act"); })[0];
+        actionModal(a, a.meetingId);
+      };
+    });
+  }).catch(function (e) {
+    $("view").innerHTML = '<div class="empty"><span class="big">⚠️</span>' + esc(e.message) + "</div>";
+  });
+}
+
+function actionModal(a, meetingId) {
+  a = a || {};
+  var statuses = (S.home && S.home.statuses) || ["Not Started", "Open", "In Progress", "Overdue", "Standing", "Complete"];
+  openModal(a.id ? "Edit the action item" : "New action item",
+    "Owner and a hard date. That is what makes it trackable.",
+    '<div class="field"><label for="ac-item">Action item</label>' +
+    '<textarea id="ac-item" placeholder="What has to happen">' + esc(a.item || "") + "</textarea></div>" +
+    '<div class="row2">' +
+    '<div class="field"><label for="ac-own">Owner</label>' +
+    '<input id="ac-own" placeholder="A name, or All Agents" value="' + esc(a.owner || "") + '"/></div>' +
+    '<div class="field"><label for="ac-by">Raised by</label>' +
+    '<input id="ac-by" value="' + esc(a.initiatedBy || (S.user && S.user.name) || "") + '"/></div></div>' +
+    '<div class="row2">' +
+    '<div class="field"><label for="ac-due">Due</label>' +
+    '<input id="ac-due" placeholder="e.g. Fri 1 May, ASAP, Weekly" value="' + esc(a.due || "") + '"/></div>' +
+    '<div class="field"><label for="ac-st">Status</label><select id="ac-st">' +
+    statuses.map(function (s) {
+      return '<option value="' + esc(s) + '"' + (s === (a.status || "Open") ? " selected" : "") + ">" + esc(s) + "</option>";
+    }).join("") + "</select></div></div>" +
+    '<div class="field"><label for="ac-note">Note</label>' +
+    '<input id="ac-note" placeholder="Optional" value="' + esc(a.notes || "") + '"/></div>' +
+    '<div class="msg" id="ac-msg"></div>' +
+    '<div class="btn-row"><button class="btn auto" id="ac-go">Save</button>' +
+    (a.id ? '<button class="btn danger auto" id="ac-del">Delete</button>' : "") +
+    '<button class="btn ghost auto" id="ac-cancel">Cancel</button></div>');
+
+  $("ac-cancel").onclick = closeModal;
+  var del = $("ac-del");
+  if (del) del.onclick = function () {
+    confirmModal("Delete this item", "It comes off the tracker for good.", "Delete it", function () {
+      post("deleteAction", { id: a.id }).then(guard).then(function () { closeModal(); refreshCurrent(); });
+    });
+  };
+  $("ac-go").onclick = function () {
+    var item = $("ac-item").value.trim();
+    if (!item) return say("ac-msg", "Describe the action item.");
+    $("ac-go").disabled = true;
+    post("saveAction", {
+      id: a.id || "", meetingId: a.meetingId || meetingId || "", item: item,
+      owner: $("ac-own").value.trim(), initiatedBy: $("ac-by").value.trim(),
+      due: $("ac-due").value.trim(), status: $("ac-st").value, notes: $("ac-note").value.trim()
+    }).then(guard).then(function (res) {
+      $("ac-go").disabled = false;
+      if (!res.ok) return say("ac-msg", res.error);
+      closeModal();
+      refreshCurrent();
+    }).catch(function () { $("ac-go").disabled = false; say("ac-msg", "No connection — try again."); });
+  };
+}
+
+function refreshCurrent() {
+  if (S.view === "meeting") loadMeeting(S.meetingId);
+  else if (S.view === "actions") viewActions();
+  else if (S.view === "build") viewBuild();
+  else loadHome();
+}
+
+/* ---------------- people (manager) ---------------- */
+
+function viewPeople() {
+  loading("Loading the branch list…");
+  apiGet("people", { token: S.token }).then(guard).then(function (res) {
+    if (!res.ok) throw new Error(res.error);
+
+    var out = '<div class="page-head"><div class="kicker">' + res.people.length + " on the branch list</div>" +
+      "<h1>People</h1><p>Roles are set here, never chosen by the person signing up. " +
+      "An agent cannot make themselves staff and open the branch reports. " +
+      "Everyone active here is counted in the register's roll.</p></div>";
+
+    out += '<div class="card"><div class="tbl-scroll"><table><thead><tr>' +
+      "<th>Name</th><th>Email</th><th>Role</th><th>Unit</th><th>PIN</th><th>Last seen</th>" +
+      (res.canEdit ? "<th></th>" : "") + "</tr></thead><tbody>" +
+      res.people.map(function (p) {
+        var role = p.role === "manager" ? '<span class="badge b-chair">Manager</span>'
+          : p.role === "staff" ? '<span class="badge b-staff">Staff</span>'
+          : '<span class="badge b-all">Agent</span>';
+        return "<tr" + (p.active ? "" : ' style="opacity:.45"') + "><td><b>" + esc(p.name) + "</b>" +
+          (p.active ? "" : '<span class="sub2">Turned off</span>') + "</td>" +
+          "<td>" + esc(p.email) + "</td><td>" + role + "</td><td>" + esc(p.unit || "—") + "</td>" +
+          "<td>" + (p.locked ? '<span class="badge b-red">Locked</span>'
+            : p.enrolled ? '<span class="badge b-green">Set</span>'
+            : '<span class="badge b-dim">Not set</span>') + "</td>" +
+          "<td>" + esc(p.lastSeen || "—") + "</td>" +
+          (res.canEdit ? '<td><button class="btn ghost sm" data-person="' + esc(p.email) + '">Edit</button></td>' : "") +
+          "</tr>";
+      }).join("") + "</tbody></table></div></div>";
+
+    if (res.canEdit) {
+      out += '<div class="btn-row"><button class="btn teal sm" id="add-person">+ Add someone</button></div>';
+    }
+    $("view").innerHTML = out;
+
+    var ap = $("add-person");
+    if (ap) ap.onclick = function () { personModal(null); };
+    Array.prototype.forEach.call(document.querySelectorAll("[data-person]"), function (b) {
+      b.onclick = function () {
+        personModal(res.people.filter(function (p) { return p.email === b.getAttribute("data-person"); })[0]);
+      };
+    });
+  }).catch(function (e) {
+    $("view").innerHTML = '<div class="empty"><span class="big">⚠️</span>' + esc(e.message) + "</div>";
+  });
+}
+
+function personModal(p) {
+  p = p || {};
+  openModal(p.email ? "Edit " + p.name : "Add someone to the branch",
+    "They sign in with this email and a PIN they choose themselves, using the branch code.",
+    '<div class="field"><label for="pe-name">Name</label>' +
+    '<input id="pe-name" value="' + esc(p.name || "") + '"/></div>' +
+    '<div class="field"><label for="pe-email">Work email</label>' +
+    '<input id="pe-email" type="email" ' + (p.email ? "readonly " : "") + 'value="' + esc(p.email || "") + '"/></div>' +
+    '<div class="row2">' +
+    '<div class="field"><label for="pe-role">Role</label><select id="pe-role">' +
+    ["agent", "staff", "manager"].map(function (r) {
+      return '<option value="' + r + '"' + (r === (p.role || "agent") ? " selected" : "") + ">" +
+        (r === "manager" ? "Branch Manager" : r === "staff" ? "Branch Staff" : "Agent") + "</option>";
+    }).join("") + "</select></div>" +
+    '<div class="field"><label for="pe-unit">Unit</label>' +
+    '<input id="pe-unit" placeholder="Their unit manager" value="' + esc(p.unit || "") + '"/></div></div>' +
+    '<div class="field"><label><input type="checkbox" id="pe-active" style="width:auto;margin-right:8px"' +
+    (p.email && !p.active ? "" : " checked") + "/> Active — counted in the register's roll</label></div>" +
+    '<div class="hint">Staff and the manager see branch reports, the register and the action tracker. ' +
+    "Agents are counted present and see the agenda, shared material and published minutes.</div>" +
+    '<div class="msg" id="pe-msg"></div>' +
+    '<div class="btn-row" style="margin-top:14px"><button class="btn auto" id="pe-go">Save</button>' +
+    (p.enrolled ? '<button class="btn ghost auto" id="pe-reset">Clear their PIN</button>' : "") +
+    '<button class="btn ghost auto" id="pe-cancel">Cancel</button></div>');
+
+  $("pe-cancel").onclick = closeModal;
+  var rs = $("pe-reset");
+  if (rs) rs.onclick = function () {
+    confirmModal("Clear the PIN", p.name + " will set a new PIN next time they sign in, using the branch code.",
+      "Clear it", function () {
+        post("resetPin", { email: p.email }).then(guard).then(function () { closeModal(); viewPeople(); });
+      });
+  };
+  $("pe-go").onclick = function () {
+    var email = $("pe-email").value.trim();
+    if (!email) return say("pe-msg", "Enter their work email.");
+    $("pe-go").disabled = true;
+    post("savePerson", {
+      email: email, name: $("pe-name").value.trim(), role: $("pe-role").value,
+      unit: $("pe-unit").value.trim(), active: $("pe-active").checked
+    }).then(guard).then(function (res) {
+      $("pe-go").disabled = false;
+      if (!res.ok) return say("pe-msg", res.error);
+      closeModal();
+      viewPeople();
+    }).catch(function () { $("pe-go").disabled = false; say("pe-msg", "No connection — try again."); });
+  };
+}
+
+/* ---------------- the builder ---------------- */
+
+function viewBuild() {
+  var id = S.meetingId;
+  if (!id) return buildForm(null);
+  loading("Opening the builder…");
+  apiGet("meeting", { token: S.token, id: id }).then(guard).then(function (res) {
+    if (!res.ok) throw new Error(res.error);
+    S.detail = res;
+    buildForm(res);
+  }).catch(function (e) {
+    $("view").innerHTML = '<div class="empty"><span class="big">⚠️</span>' + esc(e.message) + "</div>";
+  });
+}
+
+function buildForm(d) {
+  var m = d ? d.meeting : {};
+  var types = (S.home && S.home.types) || ["Branch Meeting"];
+  var sections = (S.home && S.home.sections) || [];
+  var people = (S.home && S.home.people) || [];
+  var isNew = !m.id;
+
+  var out = '<div class="page-head">' +
+    (isNew ? "" : '<a class="back" id="b-back">← Back to the meeting</a>') +
+    '<div class="kicker">' + (isNew ? "New meeting" : esc(m.ref || "")) + "</div>" +
+    "<h1>" + (isNew ? "Build a meeting" : "Edit " + esc(m.title)) + "</h1>" +
+    "<p>Set the details, then the running order. Nobody can sign in until you move it off " +
+    "<b>Draft</b> — a draft is invisible to agents.</p></div>";
+
+  out += '<section><div class="section-label">The meeting</div><div class="card">' +
+    '<div class="row2">' +
+    '<div class="field"><label for="b-type">Type</label><select id="b-type">' +
+    types.map(function (t) {
+      return '<option value="' + esc(t) + '"' + (t === (m.type || "Branch Meeting") ? " selected" : "") + ">" + esc(t) + "</option>";
+    }).join("") + "</select></div>" +
+    '<div class="field"><label for="b-status">Status</label><select id="b-status">' +
+    [["draft", "Draft — staff only"], ["scheduled", "Scheduled — open to everyone"],
+     ["live", "Live now"], ["closed", "Closed"], ["cancelled", "Cancelled"]].map(function (s) {
+      return '<option value="' + s[0] + '"' + (s[0] === (m.status || "draft") ? " selected" : "") + ">" + esc(s[1]) + "</option>";
+    }).join("") + "</select></div></div>" +
+
+    '<div class="field"><label for="b-title">Title</label>' +
+    '<input id="b-title" placeholder="e.g. TV Branch Meeting &amp; Motivation Session" value="' + esc(m.title || "") + '"/></div>' +
+    '<div class="field"><label for="b-sub">Subtitle</label>' +
+    '<input id="b-sub" placeholder="Optional — e.g. Q1 Performance Review" value="' + esc(m.subtitle || "") + '"/></div>' +
+
+    '<div class="row3">' +
+    '<div class="field"><label for="b-date">Date</label><input id="b-date" type="date" value="' +
+      esc((m.dateISO || "").slice(0, 10)) + '"/></div>' +
+    '<div class="field"><label for="b-start">Starts</label><input id="b-start" type="time" value="' + esc(m.start || "09:00") + '"/></div>' +
+    '<div class="field"><label for="b-end">Ends</label><input id="b-end" type="time" value="' + esc(m.end || "") + '"/></div></div>' +
+
+    '<div class="row3">' +
+    '<div class="field"><label for="b-format">Format</label><select id="b-format">' +
+    ["In-person", "Teams", "Hybrid"].map(function (f) {
+      return '<option value="' + f + '"' + (f === (m.format || "In-person") ? " selected" : "") + ">" + f + "</option>";
+    }).join("") + "</select></div>" +
+    '<div class="field"><label for="b-late">Late after</label>' +
+    '<input id="b-late" type="number" min="0" max="120" value="' + (m.lateAfter || 10) + '"/></div>' +
+    '<div class="field"><label for="b-week">Week</label>' +
+    '<input id="b-week" placeholder="auto" value="' + esc(m.week || "") + '"/></div></div>' +
+
+    '<div class="field"><label for="b-loc">Location</label>' +
+    '<input id="b-loc" placeholder="9–13 Endeavour 1st Street, Chaguanas" value="' + esc(m.location || "") + '"/></div>' +
+    '<div class="row2">' +
+    '<div class="field"><label for="b-chair">Chair</label><select id="b-chair">' +
+    people.map(function (p) {
+      return '<option value="' + esc(p.email) + '"' +
+        (p.email === (m.chair || (S.user && S.user.email)) ? " selected" : "") + ">" + esc(p.name) + "</option>";
+    }).join("") + "</select></div>" +
+    '<div class="field"><label for="b-guest">Guest</label>' +
+    '<input id="b-guest" placeholder="e.g. VP Sales" value="' + esc(m.guest || "") + '"/></div></div>' +
+
+    '<div class="row2">' +
+    '<div class="field"><label for="b-pre">Pre-read</label>' +
+    '<input id="b-pre" placeholder="What went out beforehand" value="' + esc(m.preRead || "") + '"/></div>' +
+    '<div class="field"><label for="b-anchor">Anchor document</label>' +
+    '<input id="b-anchor" placeholder="Reference the meeting is built on" value="' + esc(m.anchor || "") + '"/></div></div>' +
+
+    '<div class="field"><label for="b-mission">Mission statement</label>' +
+    '<textarea id="b-mission" placeholder="Read at the opening">' + esc(m.mission || "") + "</textarea></div>" +
+    '<div class="field"><label for="b-purpose">Purpose</label>' +
+    '<textarea id="b-purpose" placeholder="What this meeting is for">' + esc(m.purpose || "") + "</textarea></div>" +
+
+    '<div class="msg" id="b-msg"></div>' +
+    '<div class="btn-row"><button class="btn auto" id="b-save">' +
+    (isNew ? "Create the meeting" : "Save changes") + "</button></div></div></section>";
+
+  if (!isNew) {
+    out += '<section><div class="section-label">Running order';
+    out += '<div class="btn-row" style="margin-left:auto">' +
+      (d.agenda.length ? "" : '<button class="btn ghost sm" id="b-seed">Use the standing agenda</button>') +
+      '<button class="btn teal sm" id="b-add">+ Add an item</button></div></div>';
+
+    if (!d.agenda.length) {
+      out += '<div class="empty" style="padding:26px"><span class="big">📋</span>' +
+        "Nothing on the agenda yet.<br><b>Use the standing agenda</b> loads the order the branch runs every week.</div>";
+    } else {
+      var total = d.agenda.reduce(function (n, a) { return n + (a.minutes || 0); }, 0);
+      out += '<div class="card"><div style="font-size:12px;color:var(--muted);margin-bottom:10px">' +
+        d.agenda.length + " items · " + total + " minutes allotted" +
+        (m.start ? " · runs " + esc(d.agenda[0].clock) + " to " + esc(endClock(m.start, total)) : "") + "</div>" +
+        '<div class="tbl-scroll"><table><thead><tr><th>Time</th><th>Item</th><th>Presenter</th>' +
+        "<th>Min</th><th>Seen by</th><th></th></tr></thead><tbody>" +
+        d.agenda.map(function (a, i) {
+          return "<tr><td>" + esc(a.clock) + "</td>" +
+            "<td><b>" + esc(a.title) + "</b><span class='sub2'>" + esc(a.section) + "</span></td>" +
+            "<td>" + esc(a.presenter || "—") + "</td><td>" + a.minutes + "</td>" +
+            "<td>" + visBadge(a.visibility) + "</td>" +
+            '<td style="white-space:nowrap">' +
+            '<button class="btn ghost sm" data-ag-up="' + i + '">↑</button> ' +
+            '<button class="btn ghost sm" data-ag="' + esc(a.id) + '">Edit</button></td></tr>';
+        }).join("") + "</tbody></table></div></div>";
+    }
+    out += "</section>";
+
+    out += '<section><div class="section-label">When it is ready</div><div class="card">' +
+      '<div style="font-size:13px;color:var(--muted);line-height:1.75;margin-bottom:14px">' +
+      "A meeting on <b>Draft</b> is visible to staff only. Move it to <b>Scheduled</b> and it appears for " +
+      "the whole branch, check-in opens " + (m.checkInOpensAt ? "at <b>" + esc(m.checkInOpensAt) + "</b>" : "before the start time") +
+      ", and signing in becomes the register.</div>" +
+      '<div class="btn-row">' +
+      '<button class="btn teal sm" data-mstat="scheduled">Open it to the branch</button>' +
+      '<button class="btn ghost sm" data-mstat="live">Mark it live</button>' +
+      '<button class="btn ghost sm" data-mstat="closed">Close it</button>' +
+      '<button class="btn ghost sm" id="b-open">Open the meeting →</button></div></div></section>';
+  }
+
+  $("view").innerHTML = out;
+
+  var bb = $("b-back"); if (bb) bb.onclick = function () { go("meeting", m.id); };
+  var bo = $("b-open"); if (bo) bo.onclick = function () { go("meeting", m.id); };
+
+  $("b-save").onclick = function () {
+    $("b-save").disabled = true;
+    post("saveMeeting", {
+      id: m.id || "", type: $("b-type").value, title: $("b-title").value.trim(),
+      subtitle: $("b-sub").value.trim(), date: $("b-date").value, start: $("b-start").value,
+      end: $("b-end").value, format: $("b-format").value, location: $("b-loc").value.trim(),
+      chair: $("b-chair").value, guest: $("b-guest").value.trim(), status: $("b-status").value,
+      lateAfter: $("b-late").value, week: $("b-week").value.trim(), preRead: $("b-pre").value.trim(),
+      anchor: $("b-anchor").value.trim(), mission: $("b-mission").value.trim(),
+      purpose: $("b-purpose").value.trim()
+    }).then(guard).then(function (res) {
+      $("b-save").disabled = false;
+      if (!res.ok) return say("b-msg", res.error);
+      say("b-msg", "Saved.", "ok");
+      S.meetingId = res.id;
+      loadHomeThen(function () { go("build", res.id); });
+    }).catch(function () { $("b-save").disabled = false; say("b-msg", "No connection — try again."); });
+  };
+
+  var seed = $("b-seed");
+  if (seed) seed.onclick = function () {
+    post("seedAgenda", { meetingId: m.id }).then(guard).then(function (res) {
+      if (!res.ok) return alertModal("Not done", res.error);
+      viewBuild();
+    });
+  };
+  var add = $("b-add");
+  if (add) add.onclick = function () { agendaModal(null, m.id); };
+
+  Array.prototype.forEach.call(document.querySelectorAll("[data-ag]"), function (b) {
+    b.onclick = function () {
+      agendaModal(d.agenda.filter(function (a) { return a.id === b.getAttribute("data-ag"); })[0], m.id);
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-ag-up]"), function (b) {
+    b.onclick = function () {
+      var i = Number(b.getAttribute("data-ag-up"));
+      if (i === 0) return;
+      var ids = d.agenda.map(function (a) { return a.id; });
+      var t = ids[i - 1]; ids[i - 1] = ids[i]; ids[i] = t;
+      post("reorderAgenda", { ids: ids }).then(guard).then(function () { viewBuild(); });
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-mstat]"), function (b) {
+    b.onclick = function () {
+      post("meetingStatus", { meetingId: m.id, status: b.getAttribute("data-mstat") })
+        .then(guard).then(function (res) {
+          if (!res.ok) return alertModal("Not done", res.error);
+          loadHomeThen(function () { go("build", m.id); });
+        });
+    };
+  });
+}
+
+function endClock(start, mins) {
+  var p = String(start).match(/^(\d{1,2}):(\d{2})/);
+  if (!p) return "";
+  var d = new Date(2000, 0, 1, Number(p[1]), Number(p[2]) + mins);
+  return d.toLocaleTimeString("en", { hour: "numeric", minute: "2-digit" });
+}
+
+function loadHomeThen(fn) {
+  apiGet("home", { token: S.token }).then(guard).then(function (res) {
+    if (res.ok) { S.home = res; S.actionsOverdue = res.actionCounts.overdue; drawTabs(); }
+    fn();
+  }).catch(fn);
+}
+
+function agendaModal(a, meetingId) {
+  a = a || {};
+  var sections = (S.home && S.home.sections) || [];
+  var people = (S.home && S.home.people) || [];
+  openModal(a.id ? "Edit the agenda item" : "New agenda item",
+    "Who is taking it, how long they have, and who may see it.",
+    '<div class="field"><label for="ag-title">Item</label>' +
+    '<input id="ag-title" value="' + esc(a.title || "") + '"/></div>' +
+    '<div class="field"><label for="ag-sec">Section</label><select id="ag-sec">' +
+    sections.map(function (s) {
+      return '<option value="' + esc(s) + '"' + (s === a.section ? " selected" : "") + ">" + esc(s) + "</option>";
+    }).join("") + "</select></div>" +
+    '<div class="field"><label for="ag-det">Detail</label>' +
+    '<textarea id="ag-det" placeholder="What gets covered">' + esc(a.detail || "") + "</textarea></div>" +
+    '<div class="row3">' +
+    '<div class="field"><label for="ag-who">Presenter</label><select id="ag-who">' +
+    '<option value="">Nobody yet</option>' +
+    people.map(function (p) {
+      return '<option value="' + esc(p.email) + '"' + (p.email === a.presenterEmail ? " selected" : "") + ">" + esc(p.name) + "</option>";
+    }).join("") + "</select></div>" +
+    '<div class="field"><label for="ag-min">Minutes</label>' +
+    '<input id="ag-min" type="number" min="1" max="180" value="' + (a.minutes || 5) + '"/></div>' +
+    '<div class="field"><label for="ag-vis">Seen by</label><select id="ag-vis">' +
+    [["all", "Everyone in the room"], ["staff", "Staff only"], ["chair", "Chair only"]].map(function (v) {
+      return '<option value="' + v[0] + '"' + (v[0] === (a.visibility || "all") ? " selected" : "") + ">" + v[1] + "</option>";
+    }).join("") + "</select></div></div>" +
+    '<div class="field"><label><input type="checkbox" id="ag-req" style="width:auto;margin-right:8px"' +
+    (a.materialsRequired ? " checked" : "") + "/> The presenter must upload material beforehand</label></div>" +
+    '<div class="msg" id="ag-msg"></div>' +
+    '<div class="btn-row"><button class="btn auto" id="ag-go">Save</button>' +
+    (a.id ? '<button class="btn danger auto" id="ag-del">Delete</button>' : "") +
+    '<button class="btn ghost auto" id="ag-cancel">Cancel</button></div>');
+
+  $("ag-cancel").onclick = closeModal;
+  var del = $("ag-del");
+  if (del) del.onclick = function () {
+    confirmModal("Delete this item", "It comes off the running order.", "Delete it", function () {
+      post("deleteAgenda", { id: a.id }).then(guard).then(function () { closeModal(); viewBuild(); });
+    });
+  };
+  $("ag-go").onclick = function () {
+    var title = $("ag-title").value.trim();
+    if (!title) return say("ag-msg", "Give the item a title.");
+    $("ag-go").disabled = true;
+    post("saveAgenda", {
+      id: a.id || "", meetingId: meetingId, title: title, section: $("ag-sec").value,
+      detail: $("ag-det").value.trim(), presenterEmail: $("ag-who").value,
+      minutes: $("ag-min").value, visibility: $("ag-vis").value,
+      materialsRequired: $("ag-req").checked
+    }).then(guard).then(function (res) {
+      $("ag-go").disabled = false;
+      if (!res.ok) return say("ag-msg", res.error);
+      closeModal();
+      viewBuild();
+    }).catch(function () { $("ag-go").disabled = false; say("ag-msg", "No connection — try again."); });
+  };
+}
+
+/* ---------------- minutes ---------------- */
+
+function viewMinutes() {
+  var id = S.meetingId;
+  loading("Opening the minutes…");
+  apiGet("meeting", { token: S.token, id: id }).then(guard).then(function (res) {
+    if (!res.ok) throw new Error(res.error);
+    var m = res.meeting;
+
+    var out = '<div class="page-head"><a class="back" id="mn-back">← Back to the meeting</a>' +
+      '<div class="kicker">' + esc(m.date) + " · " + esc(m.ref || m.type) + "</div>" +
+      "<h1>Minutes</h1><p>" + esc(m.title) + ". Each section carries its own visibility — a staff-only " +
+      "report cannot become an all-hands minute by accident.</p></div>";
+
+    if (!res.minutes.length) {
+      out += '<div class="card"><div style="font-size:13.5px;color:var(--muted);line-height:1.75;margin-bottom:16px">' +
+        "Nothing written yet. <b>Start from the record</b> lays out a draft with the parts the system " +
+        "already knows filled in: who was present, who was late and by how long, who logged a reason, " +
+        "who made no entry at all, and every action item on the tracker. You write the rest.</div>" +
+        '<div class="btn-row"><button class="btn auto" id="mn-draft">Start from the record</button>' +
+        '<button class="btn ghost auto" id="mn-blank">Add a section by hand</button></div></div>';
+    } else {
+      out += '<div class="msg ' + (m.minutesStatus === "published" ? "ok" : "info") + '" style="display:block;margin-bottom:14px">' +
+        (m.minutesStatus === "published"
+          ? "These minutes are out. Everyone in the branch can read the sections marked <b>Everyone</b>."
+          : "Draft — staff only. Publishing releases the <b>Everyone</b> sections to the whole branch; " +
+            "staff-only and chair-only sections stay where they are.") + "</div>";
+
+      out += res.minutes.map(function (s) {
+        return '<div class="card"><div style="display:flex;gap:9px;align-items:center;margin-bottom:9px;flex-wrap:wrap">' +
+          '<b style="font-family:Montserrat;font-size:14.5px;flex:1">' + esc(s.section) + "</b>" +
+          visBadge(s.visibility) +
+          '<button class="btn ghost sm" data-min="' + esc(s.id) + '">Edit</button></div>' +
+          '<div style="font-size:13px;line-height:1.8;color:var(--muted);white-space:pre-wrap">' +
+          (s.body ? escLines(s.body) : '<i style="color:var(--dim)">Not written yet.</i>') + "</div>" +
+          '<div class="hint">' + esc(s.author) + " · " + esc(s.updated) + "</div></div>";
+      }).join("");
+
+      out += '<div class="btn-row" style="margin-top:14px">' +
+        '<button class="btn teal sm" id="mn-blank">+ Add a section</button>' +
+        '<button class="btn sm" id="mn-pub">' +
+        (m.minutesStatus === "published" ? "Pull them back to draft" : "Publish to the branch") + "</button>" +
+        '<button class="btn ghost sm" onclick="window.print()">Print / save as PDF</button></div>';
+    }
+
+    $("view").innerHTML = out;
+    $("mn-back").onclick = function () { go("meeting", id); };
+
+    var dr = $("mn-draft");
+    if (dr) dr.onclick = function () {
+      dr.disabled = true; dr.innerHTML = '<span class="spin"></span> Building the draft…';
+      post("minutesDraft", { meetingId: id }).then(guard).then(function (r2) {
+        if (!r2.ok) { dr.disabled = false; dr.textContent = "Start from the record"; return alertModal("Not done", r2.error); }
+        viewMinutes();
+      });
+    };
+    var bl = $("mn-blank");
+    if (bl) bl.onclick = function () { minuteModal(null, id); };
+    var pb = $("mn-pub");
+    if (pb) pb.onclick = function () {
+      var to = m.minutesStatus === "published" ? "draft" : "published";
+      confirmModal(to === "published" ? "Publish the minutes" : "Pull the minutes back",
+        to === "published"
+          ? "Everyone in the branch will be able to read the sections marked Everyone. Staff-only and chair-only sections are not released."
+          : "They go back to staff only.",
+        to === "published" ? "Publish them" : "Pull them back",
+        function () {
+          post("publishMinutes", { meetingId: id, status: to }).then(guard).then(function () { viewMinutes(); });
+        });
+    };
+    Array.prototype.forEach.call(document.querySelectorAll("[data-min]"), function (b) {
+      b.onclick = function () {
+        minuteModal(res.minutes.filter(function (s) { return s.id === b.getAttribute("data-min"); })[0], id);
+      };
+    });
+  }).catch(function (e) {
+    $("view").innerHTML = '<div class="empty"><span class="big">⚠️</span>' + esc(e.message) + "</div>";
+  });
+}
+
+function minuteModal(s, meetingId) {
+  s = s || {};
+  openModal(s.id ? "Edit “" + s.section + "”" : "New section",
+    "Set who may read it before you write it.",
+    '<div class="field"><label for="mi-sec">Heading</label>' +
+    '<input id="mi-sec" value="' + esc(s.section || "") + '"/></div>' +
+    '<div class="field"><label for="mi-vis">Who may read it</label><select id="mi-vis">' +
+    [["all", "Everyone in the branch"], ["staff", "Staff only"], ["chair", "Chair only"]].map(function (v) {
+      return '<option value="' + v[0] + '"' + (v[0] === (s.visibility || "all") ? " selected" : "") + ">" + v[1] + "</option>";
+    }).join("") + "</select></div>" +
+    '<div class="field"><label for="mi-body">What was said and decided</label>' +
+    '<textarea id="mi-body" style="min-height:200px">' + esc(s.body || "") + "</textarea></div>" +
+    '<div class="msg" id="mi-msg"></div>' +
+    '<div class="btn-row"><button class="btn auto" id="mi-go">Save</button>' +
+    (s.id ? '<button class="btn danger auto" id="mi-del">Delete</button>' : "") +
+    '<button class="btn ghost auto" id="mi-cancel">Cancel</button></div>');
+
+  $("mi-cancel").onclick = closeModal;
+  var del = $("mi-del");
+  if (del) del.onclick = function () {
+    confirmModal("Delete this section", "It comes out of the minutes.", "Delete it", function () {
+      post("deleteMinute", { id: s.id }).then(guard).then(function () { closeModal(); viewMinutes(); });
+    });
+  };
+  $("mi-go").onclick = function () {
+    var sec = $("mi-sec").value.trim();
+    if (!sec) return say("mi-msg", "Give the section a heading.");
+    $("mi-go").disabled = true;
+    post("saveMinutes", {
+      id: s.id || "", meetingId: meetingId, section: sec,
+      body: $("mi-body").value, visibility: $("mi-vis").value
+    }).then(guard).then(function (res) {
+      $("mi-go").disabled = false;
+      if (!res.ok) return say("mi-msg", res.error);
+      closeModal();
+      viewMinutes();
+    }).catch(function () { $("mi-go").disabled = false; say("mi-msg", "No connection — try again."); });
+  };
+}
+
+/* ---------------- boot ---------------- */
+
+function setupNotice() {
+  document.body.innerHTML =
+    '<div class="setup"><h2>One line left to fill in</h2>' +
+    "<p>The Branch Meeting Builder needs the address of its backend before it can do anything. " +
+    "It is not connected yet.</p><ol>" +
+    "<li>Make a Google Sheet called <b>Branch Meetings</b>, then <b>Extensions → Apps Script</b>.</li>" +
+    "<li>Paste in <code>apps-script/Meetings.gs</code> from this repository and save.</li>" +
+    "<li>Run <code>setupMeetings()</code> once and grant the permissions it asks for.</li>" +
+    "<li><b>Deploy → New deployment → Web app</b>, execute as <b>Me</b>, access <b>Anyone</b>. Copy the <code>/exec</code> URL.</li>" +
+    "<li>Paste that URL into <code>CONFIG.API_URL</code> at the top of <code>meetings/index.html</code>.</li>" +
+    "</ol><p style='margin-top:14px'>The full walk-through is in <code>meetings/README.md</code>.</p></div>";
+}
+
+function boot() {
+  $("yr").textContent = new Date().getFullYear();
+
+  if (!CONFIG.API_URL) return setupNotice();
+
+  $("li-go").onclick = doLogin;
+  $("en-go").onclick = doEnrol;
+  $("to-enrol").onclick = function () { showGate("enrol"); };
+  $("to-login").onclick = function () { showGate("login"); };
+  $("modal-x").onclick = closeModal;
+  $("modal").onclick = function (e) { if (e.target === $("modal")) closeModal(); };
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeModal(); });
+
+  ["li-email", "li-pin"].forEach(function (id) {
+    $(id).addEventListener("keydown", function (e) { if (e.key === "Enter") doLogin(); });
+  });
+  ["en-email", "en-join", "en-pin", "en-pin2"].forEach(function (id) {
+    $(id).addEventListener("keydown", function (e) { if (e.key === "Enter") doEnrol(); });
+  });
+
+  $("sign-out").onclick = function () {
+    var t = S.token;
+    signOutLocal();
+    if (t) apiPost({ action: "signOut", token: t }).catch(function () { /* already gone */ });
+  };
+
+  var saved = null;
+  try { saved = localStorage.getItem(TOKEN_KEY); } catch (e) { /* private mode */ }
+  if (!saved) return showGate("login");
+
+  // A remembered token still has to be checked against the sheet —
+  // the browser's word for who it is counts for nothing.
+  S.token = saved;
+  apiGet("home", { token: saved }).then(function (res) {
+    if (!res.ok) { signOutLocal(); return; }
+    S.home = res;
+    S.user = res.user;
+    S.actionsOverdue = (res.actionCounts && res.actionCounts.overdue) || 0;
+    $("gate").style.display = "none";
+    $("app").style.display = "block";
+    $("who-av").textContent = initials(res.user.name);
+    $("who-name").textContent = res.user.name;
+    $("who-role").textContent = res.user.role === "manager" ? "Branch Manager"
+      : res.user.role === "staff" ? "Branch Staff" : "Agent";
+    drawTabs();
+    render();
+  }).catch(function () {
+    showGate("login");
+    say("li-msg", "Could not reach the branch system. Sign in again when you have a connection.");
+  });
+}
+
+boot();
+</script>
+</body>
+</html>

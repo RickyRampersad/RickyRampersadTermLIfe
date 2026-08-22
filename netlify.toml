@@ -52,6 +52,16 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer"
 
+# The Meeting Builder holds branch attendance, presenters' material and the
+# minutes. It is staff-and-agent only and must never be framed or indexed.
+[[headers]]
+  for = "/meetings/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    X-Robots-Tag = "noindex, nofollow"
+
 # Claims carries ID documents, medical detail and bank particulars.
 # no-store keeps it out of shared-device browser caches; no-referrer stops
 # the claim reference leaking to anything the page links out to.
