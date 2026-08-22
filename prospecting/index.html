@@ -1,0 +1,484 @@
+<title>Premchand’s Prospect Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Inter:wght@400;500;600;700;800&display=swap">
+
+<style>
+  :root{
+    --navy:#0B1836; --teal:#0D9488; --teal-lt:#2DD4BF; --gold:#F5B324; --wa:#25D366;
+    --paper:#FFFFFF; --ground:#F4F6FA; --sunk:#EEF2F8;
+    --ink:#0F172A; --ink-2:#3F4A5C; --muted:#69748A; --faint:#98A2B3; --line:#DFE4EC;
+    --shadow:0 1px 2px rgba(11,24,54,.06), 0 12px 32px -14px rgba(11,24,54,.22);
+  }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+    --paper:#111A2E; --ground:#080D1A; --sunk:#0D1526;
+    --ink:#EAEEF6; --ink-2:#C3CBDA; --muted:#8B95A9; --faint:#6A7488;
+    --line:#222C42; --teal:#2DD4BF;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 34px -16px rgba(0,0,0,.8); } }
+  :root[data-theme="dark"]{
+    --paper:#111A2E; --ground:#080D1A; --sunk:#0D1526;
+    --ink:#EAEEF6; --ink-2:#C3CBDA; --muted:#8B95A9; --faint:#6A7488;
+    --line:#222C42; --teal:#2DD4BF;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 34px -16px rgba(0,0,0,.8); }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);
+    font:16px/1.6 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:720px;margin:0 auto;padding:0 16px 60px}
+  h2{font-family:Newsreader,Georgia,serif;font-size:26px;font-weight:600;letter-spacing:-.015em;
+    margin:0 0 4px;line-height:1.22}
+  .eyebrow{font-size:11px;font-weight:800;letter-spacing:.17em;text-transform:uppercase;
+    color:var(--teal);margin:0 0 8px}
+  .lede{font-size:15px;color:var(--ink-2);margin:0 0 16px;line-height:1.55}
+  section{margin:0 0 26px}
+
+  /* ── Top ──────────────────────────────────────────────────────────────── */
+  header{background:radial-gradient(620px 340px at 84% -20%, rgba(45,212,191,.20), transparent 60%),
+      var(--navy); color:#fff;padding:20px 16px 22px;margin-bottom:22px}
+  .hin{max-width:688px;margin:0 auto}
+  .me{display:flex;align-items:center;gap:12px}
+  .me .ava{width:44px;height:44px;border-radius:50%;flex:none;
+    background:linear-gradient(150deg,var(--teal),#0F766E);color:#fff;
+    display:grid;place-items:center;font:800 16px Inter,sans-serif}
+  .me .nm{font-size:16.5px;font-weight:800;line-height:1.2}
+  .me .sub{font-size:12.5px;color:rgba(255,255,255,.62);margin-top:2px}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:18px}
+  .kpi{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);
+    border-radius:11px;padding:11px 8px;text-align:center}
+  .kpi .v{font-family:Newsreader,Georgia,serif;font-size:25px;font-weight:600;line-height:1}
+  .kpi .k{font-size:10.5px;font-weight:700;letter-spacing:.04em;
+    color:rgba(255,255,255,.6);margin-top:5px}
+  .kpi.hot .v{color:var(--gold)}
+  .kpi.good .v{color:var(--teal-lt)}
+
+  /* ── Cards ────────────────────────────────────────────────────────────── */
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:16px;
+    padding:20px 18px;box-shadow:var(--shadow)}
+
+  /* ── Send ─────────────────────────────────────────────────────────────── */
+  .fld{margin-bottom:13px}
+  .fld label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-2);margin-bottom:5px}
+  .fld input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:12px 13px;
+    font:16px/1.5 Inter,sans-serif;background:var(--sunk);color:var(--ink)}
+  .fld input:focus{outline:2px solid var(--teal);outline-offset:1px;border-color:var(--teal);
+    background:var(--paper)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .btn{border:0;border-radius:11px;padding:14px;font:800 15.5px Inter,sans-serif;
+    cursor:pointer;width:100%}
+  .btn.wa{background:var(--wa);color:#08301A;box-shadow:0 8px 20px -8px rgba(37,211,102,.8)}
+  .btn.gh{background:transparent;color:var(--teal);border:1.5px solid var(--teal)}
+  .btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  .btn:hover{filter:brightness(1.05)}
+  .linkbox{background:var(--sunk);border:1px dashed var(--line);border-radius:10px;
+    padding:11px 13px;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+    color:var(--muted);word-break:break-all;margin:4px 0 13px}
+  .msg{background:var(--sunk);border-left:3px solid var(--wa);border-radius:0 10px 10px 0;
+    padding:12px 14px;font-size:14.5px;line-height:1.55;color:var(--ink-2);margin:0 0 14px}
+  .msg b{color:var(--ink)}
+
+  /* ── Board ────────────────────────────────────────────────────────────── */
+  .p{background:var(--paper);border:1px solid var(--line);border-radius:14px;
+    padding:15px 16px;margin-bottom:11px;box-shadow:var(--shadow)}
+  .p.act{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset, var(--shadow)}
+  .ptop{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .pn{font-size:16.5px;font-weight:800;line-height:1.25}
+  .pt{font-size:12px;color:var(--faint);white-space:nowrap;flex:none}
+
+  /* The track. Five dots, filled as far as the prospect actually got — the
+     whole point of the workspace is that this is visible without ringing them. */
+  .track{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:13px 0 0}
+  .t{text-align:center}
+  .t .d{height:5px;border-radius:3px;background:var(--line);margin-bottom:6px}
+  .t.on .d{background:var(--teal)}
+  .t.now .d{background:var(--gold)}
+  .t .l{font-size:10px;font-weight:700;letter-spacing:.03em;color:var(--faint);
+    text-transform:uppercase}
+  .t.on .l{color:var(--teal)}
+  .t.now .l{color:var(--gold)}
+
+  .wants{margin:12px 0 0;font-size:14px;line-height:1.5;color:var(--ink-2)}
+  .wants b{color:var(--teal);font-weight:700}
+  .wants .none{color:var(--faint);font-style:italic}
+
+  /* What to do about it. One line, imperative, on the cards that need it. */
+  .todo{margin:12px 0 0;background:rgba(245,179,36,.11);border-radius:9px;
+    padding:10px 12px;font-size:14px;line-height:1.5;color:var(--ink)}
+  .todo b{color:#8A5A00}
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .todo b{color:var(--gold)} }
+  :root[data-theme="dark"] .todo b{color:var(--gold)}
+  .pact{display:flex;gap:8px;margin-top:11px}
+  .pact button{flex:1;border:1px solid var(--line);background:var(--sunk);color:var(--ink-2);
+    border-radius:9px;padding:9px;font:700 13px Inter,sans-serif;cursor:pointer}
+  .pact button:hover{border-color:var(--teal);color:var(--teal)}
+
+  .fbline{margin:11px 0 0;font-size:14px;color:var(--ink-2);line-height:1.5;
+    border-left:3px solid var(--line);padding-left:11px}
+  .fbline em{font-style:normal;color:var(--muted)}
+
+  .tabs{display:flex;gap:7px;margin-bottom:15px;flex-wrap:wrap}
+  .tab{border:1.5px solid var(--line);background:var(--paper);color:var(--ink-2);
+    border-radius:999px;padding:8px 15px;font:700 13.5px Inter,sans-serif;cursor:pointer}
+  .tab[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#fff}
+  .tab:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
+  .qrrow{display:grid;grid-template-columns:96px 1fr;gap:16px;align-items:center;margin-top:16px;
+    padding-top:16px;border-top:1px solid var(--line)}
+  .qrbox{background:#fff;border-radius:9px;padding:7px;border:1px solid var(--line)}
+  .qrbox svg{width:100%;height:auto;display:block;shape-rendering:crispEdges}
+  .qrrow h3{margin:0 0 4px;font-size:15px;font-weight:800}
+  .qrrow p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.5}
+
+  /* ── The two films ────────────────────────────────────────────────────────
+     Two different films for two different audiences, and sending the wrong one
+     would be embarrassing — so they are labelled by who they are for, not by
+     what they are called, and the client one is the only one with a send
+     button anywhere near it. */
+  .films{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+  .fm{background:var(--paper);border:1px solid var(--line);border-radius:15px;
+    overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
+  .fm.send{border:2px solid var(--teal)}
+  .fmv{position:relative;aspect-ratio:16/9;background:#000}
+  .fmv video,.fmv img{width:100%;height:100%;display:block;object-fit:cover}
+  .fmp{position:absolute;inset:0;display:grid;place-items:center;border:0;width:100%;
+    height:100%;background:rgba(11,24,54,.32);cursor:pointer}
+  .fmp b{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.94);
+    display:grid;place-items:center;color:var(--navy);font-size:17px;padding-left:4px;
+    box-shadow:0 6px 20px rgba(0,0,0,.45)}
+  .fmp:focus-visible{outline:3px solid var(--gold);outline-offset:-3px}
+  .fmt{padding:13px 14px 15px;flex:1;display:flex;flex-direction:column}
+  .fmw{display:inline-block;align-self:flex-start;font-size:9.5px;font-weight:800;
+    letter-spacing:.13em;text-transform:uppercase;padding:3px 7px;border-radius:5px;
+    margin-bottom:7px;background:rgba(13,148,136,.14);color:var(--teal)}
+  .fm.own .fmw{background:rgba(11,24,54,.10);color:var(--ink-2)}
+  .fmt h3{margin:0 0 4px;font-size:15.5px;font-weight:800;line-height:1.25}
+  .fmt p{margin:0;font-size:13px;color:var(--muted);line-height:1.5}
+  .fmt .len{margin-top:auto;padding-top:9px;font-size:11.5px;font-weight:700;
+    color:var(--faint);letter-spacing:.03em}
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+    .fm.own .fmw{background:rgba(255,255,255,.09);color:#C3CBDA} } }
+  :root[data-theme="dark"]{ .fm.own .fmw{background:rgba(255,255,255,.09);color:#C3CBDA} }
+  @media (max-width:520px){ .films{grid-template-columns:1fr} }
+
+  .note{font-size:12.5px;color:var(--muted);text-align:center;line-height:1.6;padding:6px 0 0}
+  @media (max-width:430px){ .kpis{grid-template-columns:1fr 1fr} .two{grid-template-columns:1fr} }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header>
+  <div class="hin">
+    <div class="me">
+      <div class="ava">PD</div>
+      <div>
+        <div class="nm">Premchand Dookran</div>
+        <div class="sub">Prospecting &middot; last 30 days</div>
+      </div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><div class="v" id="kSent">14</div><div class="k">SENT</div></div>
+      <div class="kpi good"><div class="v" id="kOpen">11</div><div class="k">OPENED</div></div>
+      <div class="kpi good"><div class="v" id="kWatch">8</div><div class="k">WATCHED</div></div>
+      <div class="kpi hot"><div class="v" id="kBook">5</div><div class="k">BOOKED</div></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section>
+    <p class="eyebrow">Two films</p>
+    <h2>One you send. One is for you.</h2>
+    <p class="lede">Watch both before you send anything &mdash; a client who asks you a
+      question about the film and gets a blank look has learned the wrong thing.</p>
+
+    <div class="films">
+      <div class="fm send">
+        <div class="fmv">
+          <img id="posC" alt="" src="../prospect-poster.jpg">
+          <video id="vidC" preload="none" playsinline controls style="display:none"
+                 poster="../prospect-poster.jpg"><source src="../factfind360-prospect.mp4" type="video/mp4"></video>
+          <button class="fmp" data-v="C" type="button" aria-label="Play the client film"><b>&#9654;</b></button>
+        </div>
+        <div class="fmt">
+          <span class="fmw">Goes in the link</span>
+          <h3>What your client sees</h3>
+          <p>The process, from their side. This is the film inside every link you send
+            below &mdash; you do not attach it, it is already there.</p>
+          <div class="len">2:50</div>
+        </div>
+      </div>
+
+      <div class="fm own">
+        <div class="fmv">
+          <img id="posA" alt="" src="../agent-poster.jpg">
+          <video id="vidA" preload="none" playsinline controls style="display:none"
+                 poster="../agent-poster.jpg"><source src="../factfind360-agent.mp4" type="video/mp4"></video>
+          <button class="fmp" data-v="A" type="button" aria-label="Play your own film"><b>&#9654;</b></button>
+        </div>
+        <div class="fmt">
+          <span class="fmw">For you only</span>
+          <h3>What you do</h3>
+          <p>Your side of the same process, end to end &mdash; and what the fact find finds
+            that you would otherwise miss. Do not send this one to a client.</p>
+          <div class="len">1:58</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <p class="eyebrow">Send it</p>
+      <h2>New prospect</h2>
+      <p class="lede">Their first name goes on the page, so it opens addressed to them.</p>
+
+      <div class="two">
+        <div class="fld"><label for="pf">First name</label>
+          <input id="pf" type="text" placeholder="Devon" autocomplete="off"></div>
+        <div class="fld"><label for="pw">WhatsApp number</label>
+          <input id="pw" type="tel" inputmode="tel" placeholder="868 000 0000"></div>
+      </div>
+
+      <div class="fld"><label>Their link</label>
+        <div class="linkbox" id="lnk">factfind360.com/meet?a=A10024&amp;n=Premchand+Dookran&amp;c=Devon&amp;t=&hellip;</div>
+      </div>
+
+      <p class="msg" id="waMsg"></p>
+
+      <div class="two" style="gap:9px">
+        <button class="btn wa" id="sendWa" type="button">Send on WhatsApp</button>
+        <button class="btn gh" id="copy" type="button">Copy the link</button>
+      </div>
+
+      <div class="qrrow">
+        <div class="qrbox"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 37 37" class="segno"><path class="qrline" stroke="#0b1836" d="M2 2.5h7m1 0h1m2 0h1m1 0h2m2 0h2m3 0h1m1 0h1m1 0h7m-33 1h1m5 0h1m5 0h1m2 0h5m1 0h2m1 0h1m1 0h1m5 0h1m-33 1h1m1 0h3m1 0h1m1 0h3m1 0h1m1 0h1m1 0h1m4 0h1m1 0h2m1 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m2 0h2m1 0h1m1 0h1m2 0h3m1 0h1m1 0h2m1 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h2m1 0h5m1 0h1m1 0h2m3 0h1m1 0h1m1 0h3m1 0h1m-33 1h1m5 0h1m3 0h1m1 0h3m1 0h1m3 0h3m1 0h1m1 0h1m5 0h1m-33 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-25 1h1m2 0h4m1 0h2m4 0h1m-18 1h2m7 0h2m4 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m-31 1h3m2 0h1m1 0h1m2 0h4m2 0h1m3 0h4m1 0h4m-31 1h2m1 0h2m1 0h4m2 0h1m1 0h2m1 0h3m1 0h1m3 0h1m1 0h1m3 0h1m-32 1h1m1 0h1m1 0h2m3 0h2m1 0h1m4 0h1m9 0h1m2 0h1m1 0h1m-32 1h4m1 0h2m1 0h1m1 0h2m1 0h4m1 0h4m1 0h1m1 0h1m5 0h1m-32 1h4m2 0h1m1 0h2m3 0h8m1 0h1m2 0h1m3 0h1m1 0h1m-33 1h1m1 0h2m2 0h2m3 0h2m1 0h1m5 0h1m1 0h1m4 0h1m1 0h3m-28 1h2m1 0h3m1 0h1m1 0h1m1 0h2m1 0h3m3 0h2m2 0h1m1 0h1m1 0h1m-32 1h1m1 0h1m1 0h3m3 0h1m2 0h1m5 0h1m2 0h1m1 0h1m1 0h3m-30 1h1m1 0h4m2 0h4m1 0h1m3 0h1m5 0h2m1 0h2m-24 1h4m3 0h2m6 0h3m1 0h1m1 0h3m1 0h2m1 0h1m-32 1h1m2 0h1m2 0h1m1 0h2m1 0h1m1 0h2m1 0h3m3 0h2m2 0h6m-33 1h2m1 0h1m1 0h2m3 0h1m1 0h1m1 0h1m1 0h1m3 0h1m7 0h2m1 0h2m-33 1h2m3 0h1m1 0h2m2 0h1m1 0h1m4 0h3m2 0h3m1 0h2m1 0h2m-32 1h1m1 0h1m1 0h3m1 0h2m1 0h4m3 0h1m1 0h2m2 0h1m3 0h3m-31 1h1m1 0h1m2 0h1m2 0h3m2 0h3m1 0h2m1 0h1m1 0h3m4 0h4m-33 1h2m1 0h2m1 0h1m1 0h1m2 0h1m1 0h1m1 0h4m1 0h1m1 0h8m1 0h2m-25 1h1m2 0h4m1 0h1m1 0h4m2 0h1m3 0h1m1 0h1m1 0h1m-33 1h7m3 0h1m1 0h1m1 0h1m3 0h3m1 0h3m1 0h1m1 0h1m1 0h2m-32 1h1m5 0h1m1 0h1m1 0h1m2 0h1m2 0h1m1 0h7m3 0h1m1 0h2m-32 1h1m1 0h3m1 0h1m2 0h1m2 0h1m5 0h1m1 0h3m1 0h5m2 0h2m-33 1h1m1 0h3m1 0h1m2 0h2m4 0h3m2 0h1m2 0h1m1 0h1m1 0h2m1 0h1m1 0h1m-33 1h1m1 0h3m1 0h1m2 0h1m2 0h1m3 0h2m1 0h1m1 0h1m6 0h1m1 0h3m-33 1h1m5 0h1m2 0h1m1 0h2m3 0h2m1 0h2m1 0h1m2 0h1m4 0h1m-31 1h7m2 0h2m2 0h1m2 0h2m1 0h1m1 0h1m1 0h2m1 0h1m2 0h1m1 0h1"/></svg></div>
+        <div>
+          <h3>Your own code</h3>
+          <p>Same page, printed. Put it on your card &mdash; anyone who scans it lands on
+            your page, and it counts as yours.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Who is where</p>
+    <h2>The board</h2>
+    <p class="lede">Live. You do not have to ring anyone to find out if they looked.</p>
+
+    <div class="tabs" id="tabs">
+      <button class="tab" data-f="todo" aria-pressed="true">Needs you</button>
+      <button class="tab" data-f="all" aria-pressed="false">Everyone</button>
+      <button class="tab" data-f="booked" aria-pressed="false">Booked</button>
+      <button class="tab" data-f="cold" aria-pressed="false">Never opened</button>
+    </div>
+
+    <div id="board"></div>
+  </section>
+
+  <p class="note">Sample data. Nothing here is a real prospect.<br>
+    <b>Ricky Rampersad Branch</b></p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var ENDPOINT = 'https://script.google.com/macros/s/AKfycbyUnSnQtumx9emW_LsWQf6QKZFBGGnaTn3-PfAZDfjtZuBUSha-OuIXPT30qkMrXMoczA/exec';
+  var PAGE     = 'https://rickyrampersadbranch.com/meet/';
+  var AGENT    = 'A10024';
+  var ADVISOR  = 'Premchand Dookran';
+  var FIRST    = ADVISOR.split(' ')[0];
+
+  // The advisor's own record, shown on their page. Only put real figures here —
+  // it appears under their name in front of a client. Leave either blank and
+  // the page simply does not show the strip.
+  var YEARS    = '11';
+  var FAMILIES = '148';
+
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  /* ── The two films ─────────────────────────────────────────────────────
+     Poster until asked. Playing one stops the other, because two films going
+     at once on a phone is how an agent decides the whole thing is a mess. */
+  Array.prototype.forEach.call(document.querySelectorAll('.fmp'), function(btn){
+    btn.addEventListener('click', function(){
+      var k = btn.dataset.v;
+      ['C','A'].forEach(function(o){
+        var v = document.getElementById('vid' + o);
+        if (o !== k && v && !v.paused) v.pause();
+      });
+      document.getElementById('pos' + k).style.display = 'none';
+      btn.style.display = 'none';
+      var v = document.getElementById('vid' + k);
+      v.style.display = 'block';
+      v.play().catch(function(){ /* native controls take over */ });
+    });
+  });
+
+  /* ── Building the link ──────────────────────────────────────────────────
+     One deployed page serves the whole branch; who it belongs to lives in the
+     query string. The token is what the board keys on, so every send is
+     traceable back to the person it was sent to — that is the whole trick. */
+  function token(){
+    // Short, unguessable enough for a link that carries no personal data.
+    var c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', s = '';
+    var r = new Uint8Array(7);
+    (window.crypto || {}).getRandomValues ? crypto.getRandomValues(r)
+      : r.forEach(function(_,i){ r[i] = Math.floor(Math.random()*256); });
+    for (var i=0;i<7;i++) s += c[r[i] % c.length];
+    return s;
+  }
+  var TOKEN = token();
+
+  var pf = document.getElementById('pf'), pw = document.getElementById('pw');
+  var lnk = document.getElementById('lnk'), waMsg = document.getElementById('waMsg');
+
+  function link(){
+    var p = new URLSearchParams({ a:AGENT, n:ADVISOR, t:TOKEN });
+    var name = pf.value.trim();
+    if (name) p.set('c', name);
+    if (YEARS && FAMILIES) { p.set('y', YEARS); p.set('f', FAMILIES); }
+    return PAGE + '?' + p.toString();
+  }
+  function message(){
+    var name = pf.value.trim() || 'there';
+    return 'Hi ' + name + ' — before we meet, this is how I work and what happens in the ' +
+           'appointment. About a minute. There is a spot at the bottom to tell me what you ' +
+           'want to talk about, so I come with the right numbers.\n\n' + link() +
+           '\n\n' + ADVISOR + ', Ricky Rampersad Branch';
+  }
+  function refresh(){
+    lnk.textContent = link();
+    waMsg.innerHTML = '<b>What they get:</b><br>' +
+      esc(message()).replace(/\n/g,'<br>');
+  }
+  pf.addEventListener('input', refresh);
+  refresh();
+
+  document.getElementById('sendWa').addEventListener('click', function(){
+    var num = pw.value.replace(/\D/g,'');
+    if (!num) { pw.focus(); return; }
+    if (num.length === 7)  num = '1868' + num;          // local 7-digit
+    if (num.length === 10) num = '1' + num;             // 868xxxxxxx
+    // Record the send first, so the board has the row before they ever open it.
+    logSend(num);
+    window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(message()), '_blank');
+  });
+
+  document.getElementById('copy').addEventListener('click', function(){
+    var b = this;
+    navigator.clipboard.writeText(link()).then(function(){
+      b.textContent = 'Copied'; setTimeout(function(){ b.textContent = 'Copy the link'; }, 1600);
+      logSend(pw.value.replace(/\D/g,''));
+    }).catch(function(){ b.textContent = 'Select it above'; });
+  });
+
+  function logSend(num){
+    try {
+      var body = new URLSearchParams({
+        action:'link', agent:AGENT, advisor:ADVISOR, token:TOKEN,
+        name:pf.value.trim(), phone:num, at:new Date().toISOString()
+      });
+      fetch(ENDPOINT, { method:'POST', mode:'no-cors', body:body, keepalive:true })
+        .catch(function(){});
+    } catch(e){}
+    TOKEN = token();   // next one gets its own
+    refresh();
+  }
+
+  /* ── The board ─────────────────────────────────────────────────────────
+     In production this comes from action=board. Here it is sample data so the
+     agents can see the shape of it before it is built. */
+  var STAGES = ['Sent','Opened','Watched','Picked','Booked'];
+  var P = [
+    { n:'Anisa Mohammed', t:'2 days ago', s:3, booked:false,
+      wants:['The house and the mortgage','My children’s education'],
+      todo:'Watched all of it and picked two needs, but never booked. <b>Call her — she is warm.</b>' },
+    { n:'Rondell Charles', t:'yesterday', s:4, booked:true,
+      wants:['My family, if something happens to me','If I got seriously ill'],
+      todo:'' },
+    { n:'Sherry-Ann Baptiste', t:'4 hours ago', s:2, booked:false, wants:[],
+      todo:'Opened it, watched half, stopped. <b>Send one line asking what she thought.</b>' },
+    { n:'Kavir Ramlogan', t:'3 days ago', s:4, booked:true,
+      wants:['My business or my partner'], todo:'',
+      fb:'“Clear. I did not know a second person checks it.”' },
+    { n:'Marlene Joseph', t:'6 days ago', s:1, booked:false, wants:[],
+      todo:'Opened it once, six days ago, and nothing since. <b>Try a different time of day.</b>' },
+    { n:'Dexter Alleyne', t:'a week ago', s:0, booked:false, wants:[],
+      todo:'' },
+    { n:'Priya Seenath', t:'2 days ago', s:4, booked:true,
+      wants:['Retiring properly','Check what I already have'], todo:'' },
+    { n:'Terrence Boodoo', t:'5 days ago', s:0, booked:false, wants:[], todo:'' },
+    { n:'Cindy Ali', t:'yesterday', s:3, booked:false,
+      wants:['Not sure — start from scratch'],
+      todo:'Tapped <b>“start me from scratch”</b> — that is a full fact find. Ring her today.' },
+    { n:'Nigel Persad', t:'8 days ago', s:4, booked:true,
+      wants:['My family, if something happens to me'], todo:'' },
+    { n:'Roxanne Hosein', t:'3 days ago', s:2, booked:false, wants:[], todo:'' },
+    { n:'Ashton Guy', t:'9 days ago', s:0, booked:false, wants:[], todo:'' },
+    { n:'Vidya Maharaj', t:'4 days ago', s:4, booked:true,
+      wants:['My children’s education','The house and the mortgage'], todo:'',
+      fb:'“Would have liked a rough price on the page.”' },
+    { n:'Joel Superville', t:'today', s:2, booked:false, wants:[], todo:'' }
+  ];
+
+  function card(p){
+    var h = '<div class="p' + (p.todo ? ' act' : '') + '">' +
+      '<div class="ptop"><div class="pn">' + esc(p.n) + '</div>' +
+      '<div class="pt">' + esc(p.t) + '</div></div>' +
+      '<div class="track">' + STAGES.map(function(s,i){
+        var cls = i < p.s ? 'on' : (i === p.s ? 'now' : '');
+        return '<div class="t ' + cls + '"><div class="d"></div><div class="l">' + s + '</div></div>';
+      }).join('') + '</div>';
+
+    h += '<p class="wants">' + (p.wants.length
+      ? 'Wants to talk about <b>' + p.wants.map(esc).join('</b>, <b>') + '</b>'
+      : '<span class="none">Has not said what they want yet</span>') + '</p>';
+
+    if (p.fb) h += '<p class="fbline"><em>Their feedback:</em> ' + esc(p.fb) + '</p>';
+    if (p.todo) h += '<p class="todo">' + p.todo + '</p>';
+
+    h += '<div class="pact">' +
+         '<button type="button">WhatsApp</button>' +
+         '<button type="button">Send again</button>' +
+         '<button type="button">Start fact find</button></div>';
+    return h + '</div>';
+  }
+
+  var board = document.getElementById('board');
+  function match(p, f){
+    if (f === 'todo')   return !!p.todo;
+    if (f === 'booked') return p.booked;
+    if (f === 'cold')   return p.s === 0;
+    return true;
+  }
+  function draw(f){
+    var rows = P.filter(function(p){ return match(p, f); });
+    board.innerHTML = rows.length ? rows.map(card).join('')
+      : '<div class="card" style="text-align:center;color:var(--muted)">Nothing here.</div>';
+  }
+
+  // Counts come off the data, so they cannot drift from what the tab actually shows.
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'), function(t){
+    var n = P.filter(function(p){ return match(p, t.dataset.f); }).length;
+    t.textContent = t.textContent + ' (' + n + ')';
+  });
+
+  // The headline numbers, likewise.
+  var el;
+  if ((el = document.getElementById('kSent')))  el.textContent = P.length;
+  if ((el = document.getElementById('kOpen')))  el.textContent = P.filter(function(p){ return p.s >= 1; }).length;
+  if ((el = document.getElementById('kWatch'))) el.textContent = P.filter(function(p){ return p.s >= 2; }).length;
+  if ((el = document.getElementById('kBook')))  el.textContent = P.filter(function(p){ return p.booked; }).length;
+  document.getElementById('tabs').addEventListener('click', function(e){
+    var b = e.target.closest('.tab'); if (!b) return;
+    Array.prototype.forEach.call(this.querySelectorAll('.tab'), function(t){
+      t.setAttribute('aria-pressed', String(t === b));
+    });
+    draw(b.dataset.f);
+  });
+  draw('todo');
+})();
+</script>
