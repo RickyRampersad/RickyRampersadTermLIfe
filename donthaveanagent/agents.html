@@ -182,17 +182,19 @@
 
     <div class="card" style="max-width:640px">
       <h3 style="font-family:var(--disp);font-weight:800;font-size:17px;margin-bottom:4px">The film you send clients</h3>
-      <p style="font-size:14px;color:var(--muted)">Watch it once so you know what they will see — then send
-      <a href="how-we-work.html" target="_blank">the page</a>, which carries the film plus the whole process
-      step by step and a start button on every screen.</p>
+      <p style="font-size:14px;color:var(--muted)">This is what a client sees when they open your link — why
+      an agent matters, what quietly goes wrong without one, what this branch does that nobody else does, and
+      a code they can scan to start. It opens with <b>&ldquo;your agent sent you this&rdquo;</b>. Watch it
+      once, then send <a href="how-we-work.html" target="_blank">the page</a>, which carries this film plus
+      the whole process step by step and a start button on every screen.</p>
       <div class="vwrap">
-        <video id="agentVid" playsinline preload="metadata" poster="how-we-work-poster.jpg" controlsList="nodownload">
-          <source src="dhaa-how-we-work.mp4" type="video/mp4">
+        <video id="agentVid" playsinline preload="metadata" poster="dhaa-film-poster.jpg" controlsList="nodownload">
+          <source src="dhaa-film.mp4" type="video/mp4">
         </video>
-        <button class="vcover" id="agentCover" type="button" aria-label="Play the how we work film, seventy-five seconds, sound on">
+        <button class="vcover" id="agentCover" type="button" aria-label="Play the client film, one minute thirty-two seconds, sound on">
           <span class="vplay"><i></i></span>
-          <span class="vlab">How we work</span>
-          <span class="vlen">1:24 · sound on</span>
+          <span class="vlab">Why this matters</span>
+          <span class="vlen">1:32 · captioned · sound on</span>
         </button>
       </div>
     </div>
@@ -220,13 +222,14 @@
 
     <div class="sharebox">
       <h3>Send a client the film</h3>
-      <p><b>“How we work”</b> shows a client exactly what we do — their own numbers worked out in front of
-      them, a score with the gaps named, every document prepared for them, and a review every birthday month
-      for life. Send the link after a meeting, or the file straight into a chat.</p>
+      <p>The film shows a client exactly what we do — their own numbers worked out in front of them, a score
+      with the gaps named, every document prepared for them, and a review every six months and every birthday
+      month for life. It ends on a code they can scan to start, or a day and a time for you to call. Send the
+      link after a meeting, or the file straight into a chat.</p>
       <div class="sharerow">
         <a class="btn" id="waFilm" href="#" target="_blank" rel="noopener">Send by WhatsApp</a>
         <button class="btn ghost" id="copyFilm" type="button">Copy the link</button>
-        <a class="btn ghost" href="dhaa-how-we-work.mp4" download>Download the video</a>
+        <a class="btn ghost" href="dhaa-film.mp4" download>Download the video</a>
         <a class="btn ghost" href="how-we-work.html" target="_blank">Open the page yourself</a>
       </div>
       <p style="font-size:12.5px;color:var(--muted);margin-top:12px">Your personal link:
@@ -234,8 +237,9 @@
         font-size:12px">https://donthaveanagent.com/how-we-work</code><br>
         Anyone who starts a review from it is recorded as <b>your</b> introduction — in the sheet and in the
         email that reaches support.</p>
-      <p style="font-size:12.5px;color:var(--muted);margin-top:10px">Working an orphan file instead?
-      The <a href="launch.html">launch film</a> is the one for a client who has nobody.</p>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:10px">Working an orphan file instead? Send the
+      same link — the film speaks to anyone whose policy has nobody beside it. Prefer it full screen with no
+      page around it? <a href="client-film.html" target="_blank">Here it is on its own</a>.</p>
     </div>
   </div>
 </div>
@@ -389,14 +393,14 @@ function render(data, demo) {
      credited to them in the sheet and in the team email */
   var who = (window.__agentName || "").trim();
   var LINK = "https://donthaveanagent.com/how-we-work" + (who ? "?a=" + encodeURIComponent(who) : "");
-  var MSG = "Good to meet you. This is how our branch works — about seventy-five seconds, worth a look: "
+  var MSG = "Good to meet you. This is how our branch works — about ninety seconds, worth a look: "
           + LINK + " — you can start the free review right from that page.";
   var wa=document.getElementById("waFilm");
   if(wa) wa.href="https://wa.me/?text="+encodeURIComponent(MSG);
   window.__setShareLink = function(){
     var w=(window.__agentName||"").trim();
     LINK="https://donthaveanagent.com/how-we-work"+(w?"?a="+encodeURIComponent(w):"");
-    MSG="Good to meet you. This is how our branch works — about seventy-five seconds, worth a look: "
+    MSG="Good to meet you. This is how our branch works — about ninety seconds, worth a look: "
        +LINK+" — you can start the free review right from that page.";
     if(wa) wa.href="https://wa.me/?text="+encodeURIComponent(MSG);
     var sl=document.getElementById("shareLink"); if(sl) sl.textContent=LINK;
