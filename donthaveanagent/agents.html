@@ -124,16 +124,16 @@
     </div>
 
     <div class="card" style="max-width:640px">
-      <h3 style="font-family:var(--disp);font-weight:800;font-size:17px;margin-bottom:4px">What this branch does for you</h3>
-      <p style="font-size:14px;color:var(--muted)">Seventy seconds. Sound on.</p>
+      <h3 style="font-family:var(--disp);font-weight:800;font-size:17px;margin-bottom:4px">The film you send clients</h3>
+      <p style="font-size:14px;color:var(--muted)">Watch it once so you know what they will see. Seventy-five seconds, sound on.</p>
       <div class="vwrap">
-        <video id="agentVid" playsinline preload="metadata" poster="agent-film-poster.jpg" controlsList="nodownload">
-          <source src="dhaa-agent-film.mp4" type="video/mp4">
+        <video id="agentVid" playsinline preload="metadata" poster="how-we-work-poster.jpg" controlsList="nodownload">
+          <source src="dhaa-how-we-work.mp4" type="video/mp4">
         </video>
-        <button class="vcover" id="agentCover" type="button" aria-label="Play the agent film, seventy seconds, sound on">
+        <button class="vcover" id="agentCover" type="button" aria-label="Play the how we work film, seventy-five seconds, sound on">
           <span class="vplay"><i></i></span>
-          <span class="vlab">The agent film</span>
-          <span class="vlen">1:13 · sound on</span>
+          <span class="vlab">How we work</span>
+          <span class="vlen">1:15 · sound on</span>
         </button>
       </div>
     </div>
@@ -154,14 +154,17 @@
     <div id="list"></div>
 
     <div class="sharebox">
-      <h3>Met someone with no agent?</h3>
-      <p>Send them the client film — it explains the whole thing in eighty seconds, and every review that
-      comes back through it lands with support and can be assigned to you.</p>
+      <h3>Send a client the film</h3>
+      <p><b>“How we work”</b> shows a client exactly what we do — their own numbers worked out in front of
+      them, a score with the gaps named, every document prepared for them, and a review every birthday month
+      for life. Send the link after a meeting, or the file straight into a chat.</p>
       <div class="sharerow">
         <a class="btn" id="waFilm" href="#" target="_blank" rel="noopener">Send by WhatsApp</a>
         <button class="btn ghost" id="copyFilm" type="button">Copy the link</button>
-        <a class="btn ghost" href="dhaa-film.mp4" download>Download the film</a>
+        <a class="btn ghost" href="dhaa-how-we-work.mp4" download>Download the video</a>
       </div>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:12px">Working an orphan file instead?
+      The <a href="launch.html">launch film</a> is the one for a client who has nobody.</p>
     </div>
   </div>
 </div>
@@ -238,14 +241,14 @@ function render(data, demo) {
     c.addEventListener("click", function(){ c.classList.add("gone"); v.setAttribute("controls",""); v.play(); });
     v.addEventListener("ended", function(){ c.classList.remove("gone"); v.removeAttribute("controls"); v.currentTime=0; });
   }
-  var MSG="You mentioned nobody looks after your policy. This explains how we fix it — a free four-minute review, "
-         +"and a person responsible for you by name: https://donthaveanagent.com";
+  var MSG="Good to meet you. This is how our branch works — about seventy-five seconds, worth a look: "
+         +"https://donthaveanagent.com/how-we-work — and the free review itself is at https://donthaveanagent.com";
   var wa=document.getElementById("waFilm");
   if(wa) wa.href="https://wa.me/?text="+encodeURIComponent(MSG);
   var cp=document.getElementById("copyFilm");
   if(cp) cp.addEventListener("click", function(){
     var done=function(){ cp.textContent="Copied ✓"; setTimeout(function(){cp.textContent="Copy the link";},1600); };
-    if(navigator.clipboard) navigator.clipboard.writeText("https://donthaveanagent.com").then(done,done); else done();
+    if(navigator.clipboard) navigator.clipboard.writeText("https://donthaveanagent.com/how-we-work").then(done,done); else done();
   });
 })();
 

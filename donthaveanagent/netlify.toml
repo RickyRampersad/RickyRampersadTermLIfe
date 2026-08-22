@@ -48,10 +48,10 @@
   to = "/agents.html"
   status = 302
 
-# The agent film, as a link an agent can open in a branch meeting.
+# The film an agent sends a client after a meeting.
 [[redirects]]
-  from = "/agent-film"
-  to = "/agent-film.html"
+  from = "/how-we-work"
+  to = "/how-we-work.html"
   status = 302
 
 [[redirects]]
