@@ -563,10 +563,7 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
         <span><b>✓</b> No policy number needed</span>
       </div>
 
-      <button class="hear rv" id="hearBtn" type="button" aria-label="Listen to this page, about forty seconds">
-        <span class="hp">▶</span>
-        <span><b>Hear it.</b> Forty seconds, sound on — the whole idea, out loud.</span>
-      </button>
+
 
     </div>
 
@@ -1333,13 +1330,6 @@ const stickyIo = new IntersectionObserver((es) => {
 
 <style>
 /* ── v2 additions: hear it · send it · the standard ─────────────────── */
-.hear{display:flex;align-items:center;gap:12px;margin-top:16px;background:var(--card);
-  border:1.6px solid var(--line);border-radius:14px;padding:12px 18px;font:inherit;font-size:15px;
-  color:var(--head);cursor:pointer;text-align:left;max-width:520px}
-.hear:hover{border-color:var(--gold)}
-.hear .hp{display:flex;align-items:center;justify-content:center;width:38px;height:38px;flex:none;
-  background:var(--gold);color:#fff;border-radius:10px 10px 14px 14px;font-size:15px}
-.hear.playing .hp{background:var(--gold2)}
 .kicker{font-weight:800;font-size:12.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
 #sendit{padding:74px 0}
 .send-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-top:26px}
@@ -1365,18 +1355,9 @@ const stickyIo = new IntersectionObserver((es) => {
 .std-foot a{color:#F6EFE6;font-weight:700}
 .std-foot b{color:#F6EFE6}
 .cta-ask{font-size:16.5px;line-height:1.55;color:var(--muted);margin-bottom:14px;font-weight:600}
-#voxbar{position:fixed;left:14px;right:14px;bottom:14px;z-index:60;background:var(--gold2);color:#F6EFE6;
-  border-radius:16px;padding:14px 52px 14px 18px;box-shadow:0 12px 34px rgba(46,10,14,.35);display:none;
-  max-width:680px;margin:0 auto}
-#voxbar.on{display:block}
-#voxline{font-size:16px;line-height:1.5;font-weight:600;min-height:24px}
-#voxstop{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(246,239,230,.14);
-  border:none;color:#F6EFE6;width:34px;height:34px;border-radius:10px;font-size:15px;cursor:pointer}
 #copyToast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:var(--head);color:#F6EFE6;
   padding:9px 18px;border-radius:99px;font-size:13.5px;z-index:70;display:none}
-@media (prefers-reduced-motion: reduce){ .hear .hp{transition:none} }
 </style>
-<div id="voxbar" role="status"><div id="voxline"></div><button id="voxstop" aria-label="Stop audio">✕</button></div>
 <div id="copyToast">Link copied — paste it anywhere</div>
 <script>
 /* ── send it ── */
@@ -1392,110 +1373,6 @@ const stickyIo = new IntersectionObserver((es) => {
       navigator.clipboard.writeText("https://donthaveanagent.com").then(done, done);
     else done();
   });
-})();
-/* ── hear it: Andrew-first narration over a soft bed ── */
-(function(){
-  var btn = document.getElementById("hearBtn");
-  if (!btn) return;
-  if (!("speechSynthesis" in window)) { btn.style.display = "none"; return; }
-  var LINES = [
-    "Your agent left. Your policy didn't.",
-    "Somebody sold you a promise — and then left you holding it.",
-    "This branch keeps the promises other people made.",
-    "Four minutes, from your phone. We trace the policy, fix the record, and put a person's name beside yours.",
-    "Every paper arrives ready to sign. And you hear from us every two days until it's done.",
-    "Then every year, in your birthday month, your policy gets a full review. For life.",
-    "You decide who looks after you. That is the whole idea.",
-    "Don't have an agent dot com. A Ricky Rampersad Branch project."
-  ];
-  var AC=null, master=null, beatTimer=null, lineTimer=null, playing=false, idx=0;
-  var CH=[{r:130.81,t:[261.63,329.63,392.0]},{r:98.0,t:[246.94,293.66,392.0]},
-          {r:110.0,t:[261.63,329.63,440.0]},{r:87.31,t:[261.63,349.23,440.0]}];
-  function bed(){
-    try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return; }
-    master=AC.createGain(); master.gain.value=0.055; master.connect(AC.destination);
-    var bar=0, BEAT=60/76;
-    function pad(t,fs){ fs.forEach(function(hz,i){ var o=AC.createOscillator(),g=AC.createGain(),f=AC.createBiquadFilter();
-      o.type="sawtooth"; o.frequency.value=hz; o.detune.value=i===1?6:-5;
-      f.type="lowpass"; f.frequency.value=1050;
-      g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.09,t+0.8);
-      g.gain.setValueAtTime(0.09,t+BEAT*4-0.9); g.gain.linearRampToValueAtTime(0.0001,t+BEAT*4);
-      o.connect(f); f.connect(g); g.connect(master); o.start(t); o.stop(t+BEAT*4); }); }
-    function bass(t,hz){ var o=AC.createOscillator(),g=AC.createGain();
-      o.type="triangle"; o.frequency.value=hz;
-      g.gain.setValueAtTime(0.16,t); g.gain.exponentialRampToValueAtTime(0.01,t+BEAT*1.9);
-      o.connect(g); g.connect(master); o.start(t); o.stop(t+BEAT*2); }
-    var next=AC.currentTime+0.05;
-    beatTimer=setInterval(function(){
-      if(!AC) return;
-      while(next<AC.currentTime+1.2){
-        var c=CH[bar%4]; pad(next,c.t); bass(next,c.r); bass(next+2*BEAT,c.r);
-        next+=BEAT*4; bar++;
-      }
-    },220);
-  }
-  function pickVoice(){
-    var vs=speechSynthesis.getVoices()||[];
-    var pref=["Andrew","Ryan","Brian","Guy","Daniel","Google UK English Male","Google US English","Aaron"];
-    for(var i=0;i<pref.length;i++){
-      for(var j=0;j<vs.length;j++)
-        if(vs[j].name.indexOf(pref[i])>-1 && /en/i.test(vs[j].lang)) return vs[j];
-    }
-    for(var k=0;k<vs.length;k++) if(/en/i.test(vs[k].lang)) return vs[k];
-    return null;
-  }
-  function showLine(t){ var v=document.getElementById("voxline"); v.textContent=t; }
-  function speakLine(){
-    if(!playing) return;
-    if(idx>=LINES.length){ stop(); return; }
-    var text=LINES[idx]; showLine(text);
-    /* how long this line should be on screen if we have to pace it ourselves */
-    var read=Math.max(2600, text.split(" ").length*430);
-    var t0=Date.now(), advanced=false;
-    var advance=function(){ if(advanced||!playing) return; advanced=true; idx++;
-      lineTimer=setTimeout(speakLine, 260); };
-    /* onend firing almost instantly means no voice actually spoke — in that
-       case keep the line up for its reading time instead of racing ahead */
-    var go=function(){
-      if(advanced||!playing) return;
-      var spoken=Date.now()-t0;
-      if(spoken<500){ lineTimer=setTimeout(advance, read-spoken); return; }
-      advance();
-    };
-    try{
-      var u=new SpeechSynthesisUtterance(text);
-      var v=pickVoice(); if(v) u.voice=v;
-      u.rate=0.96; u.pitch=1.0;
-      u.onend=go; u.onerror=go;
-      speechSynthesis.speak(u);
-    }catch(e){}
-    /* backstop: if nothing ever fires, move on anyway */
-    setTimeout(go, read+900);
-  }
-  function start(){
-    playing=true; idx=0;
-    btn.classList.add("playing");
-    document.getElementById("voxbar").classList.add("on");
-    bed();
-    var vs=speechSynthesis.getVoices();
-    if(!vs || !vs.length){
-      var fired=false;
-      speechSynthesis.onvoiceschanged=function(){ if(fired) return; fired=true; speakLine(); };
-      setTimeout(function(){ if(fired) return; fired=true; speakLine(); }, 700);
-    } else speakLine();
-  }
-  function stop(){
-    playing=false; idx=0;
-    btn.classList.remove("playing");
-    document.getElementById("voxbar").classList.remove("on");
-    try{ speechSynthesis.cancel(); }catch(e){}
-    if(beatTimer){ clearInterval(beatTimer); beatTimer=null; }
-    if(lineTimer){ clearTimeout(lineTimer); lineTimer=null; }
-    if(AC){ try{ AC.close(); }catch(e){} AC=null; }
-  }
-  btn.addEventListener("click", function(){ playing ? stop() : start(); });
-  document.getElementById("voxstop").addEventListener("click", stop);
-  document.addEventListener("visibilitychange", function(){ if(document.hidden && playing) stop(); });
 })();
 </script>
 
