@@ -37,6 +37,12 @@
   to = "/client-film.html"
   status = 302
 
+# What happens after a client presses send — the process, step by step.
+[[redirects]]
+  from = "/what-happens"
+  to = "/process-film.html"
+  status = 302
+
 [[redirects]]
   from = "/launch"
   to = "/client-film.html"

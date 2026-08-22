@@ -181,6 +181,28 @@
     </div>
 
     <div class="card" style="max-width:640px">
+      <h3 style="font-family:var(--disp);font-weight:800;font-size:17px;margin-bottom:4px">What happens after they press send</h3>
+      <p style="font-size:14px;color:var(--muted)">The process itself, step by step — the reference and code,
+      the form completed for them, the two emails, the worklist row with <b>your</b> name on it, the chase
+      every two days, the overdue alert to the branch manager, the six-month check-up and the birthday review.
+      Use it to answer &ldquo;what actually happens?&rdquo; — for a client, or for a new member of staff.</p>
+      <div class="vwrap">
+        <video id="procVid" playsinline preload="metadata" poster="process-film-poster.jpg" controlsList="nodownload">
+          <source src="dhaa-process.mp4" type="video/mp4">
+        </video>
+        <button class="vcover" id="procCover" type="button" aria-label="Play the process film, one minute forty-three seconds, sound on">
+          <span class="vplay"><i></i></span>
+          <span class="vlab">What happens next</span>
+          <span class="vlen">1:43 · captioned · sound on</span>
+        </button>
+      </div>
+      <div class="sharerow" style="margin-top:12px">
+        <a class="btn ghost" href="dhaa-process.mp4" download>Download</a>
+        <a class="btn ghost" href="process-film.html" target="_blank">Open it full screen</a>
+      </div>
+    </div>
+
+    <div class="card" style="max-width:640px">
       <h3 style="font-family:var(--disp);font-weight:800;font-size:17px;margin-bottom:4px">The film you send clients</h3>
       <p style="font-size:14px;color:var(--muted)">This is what a client sees when they open your link — why
       an agent matters, what quietly goes wrong without one, what this branch does that nobody else does, and
@@ -382,6 +404,13 @@ function render(data, demo) {
   if(wt) wt.href="https://wa.me/?text="+encodeURIComponent(
     "This is how the branch system works for us — 74 seconds, worth watching before you start: "
     +"https://donthaveanagent.com/agent-film — then log in at https://donthaveanagent.com/agents");
+})();
+(function(){
+  var pv=document.getElementById("procVid"), pc=document.getElementById("procCover");
+  if(pv&&pc){
+    pc.addEventListener("click", function(){ pc.classList.add("gone"); pv.setAttribute("controls",""); pv.play(); });
+    pv.addEventListener("ended", function(){ pc.classList.remove("gone"); pv.removeAttribute("controls"); pv.currentTime=0; });
+  }
 })();
 (function(){
   var v=document.getElementById("agentVid"), c=document.getElementById("agentCover");
