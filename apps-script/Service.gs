@@ -110,6 +110,12 @@ var SVC = {
      Any name can still be typed in; the bank informs, it does not restrict. */
   TEAM_SHEET:  'Agent Skill Bank',
 
+  /* Every open of an agent's share link, and every review started from it,
+     lands here — so an agent can see what happened after they sent it, and
+     the branch can see which introductions actually convert. No client
+     details are written to this tab; it is agent, event and reference only. */
+  LINK_SHEET:  'Link Activity',
+
   /* One code the whole branch shares to open the agent portal — the code you
      hand out at a branch meeting or keep in the agent fact-find sheet, so
      nobody is locked out waiting for a personal code. An agent still types
@@ -169,6 +175,14 @@ function doGet(e) {
   }
   if (p.action === 'agentbook') {
     return json_(agentBookFor_(p.agent, p.code));
+  }
+  /* fired by the share page itself — no code needed, it writes nothing but
+     an event, and it must never block the page if it fails */
+  if (p.action === 'hit') {
+    return json_(logHit_(p.agent, p.ev, p.ref));
+  }
+  if (p.action === 'logsend') {
+    return json_(logSend_(p.agent, p.code, p.note));
   }
   /* Anyone who lands on the /exec URL directly gets pointed at the form. */
   return HtmlService.createHtmlOutput(
@@ -250,20 +264,9 @@ function agentBookFor_(agent, code) {
 
   /* Two ways in: the agent's own code from the skill bank, or the branch's
      shared TEAM_CODE. Either way the name decides whose book opens. */
-  var branchCode = String(SVC.TEAM_CODE || '').trim().toUpperCase();
-  var me = null, nameKnown = false;
-  skillBank_().forEach(function (a) {
-    if (a.name.toLowerCase() !== agent.toLowerCase()) return;
-    nameKnown = true;
-    var own = a.portal && a.portal.toUpperCase() === code;
-    var shared = branchCode && code === branchCode;
-    if (own || shared) me = a;
-  });
-  if (!me) {
-    return { ok: false, error: nameKnown
-      ? 'That code does not open this portal. Use the branch code from the agent sheet, or your own code from the Agent Skill Bank.'
-      : 'We do not have an agent by that name on the active roster. Check the spelling against the Agent Skill Bank, or ask support.' };
-  }
+  var auth = agentAuth_(agent, code);
+  if (!auth.ok) return auth;
+  var me = auth.agent;
 
   var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
   var fmt = function (v) {
@@ -305,11 +308,26 @@ function agentBookFor_(agent, code) {
   });
 
   var open = clients.filter(function (c) { return c.status !== 'Completed'; }).length;
+  var link = linkStatsFor_(me.name);
+  /* how many of this agent's introductions actually became files */
+  var fromMe = 0;
+  [SVC.IND_SHEET, SVC.GRP_SHEET].forEach(function (name) {
+    var sh = ss_().getSheetByName(name);
+    if (!sh || sh.getLastRow() < 2) return;
+    var h = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+    var iBy = h.indexOf('Sent by');
+    if (iBy < 0) return;
+    sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues().forEach(function (r) {
+      if (String(r[iBy] || '').toLowerCase() === me.name.toLowerCase()) fromMe++;
+    });
+  });
   return {
     ok: true,
     agent: me.name,
     skills: me.skills,
     stats: { assigned: clients.length, open: open, completed: clients.length - open },
+    link: { sent: link.sent, opened: link.open, started: link.start, calls: link.call,
+            reviews: fromMe, recent: link.recent },
     clients: clients,
   };
 }
@@ -1092,6 +1110,87 @@ function routeToService_(ref, priority, now, body, attachments, clientEmailed) {
    attached, populated with THAT agent's name, ready for digital signature
    (letterhead-and-stamp for a company). Run from the sheet menu with the
    client's row selected. */
+
+/** Where share-link activity is written. Created on demand so an existing
+ *  spreadsheet picks it up without re-running setup. */
+function linkSheet_() {
+  var sh = ss_().getSheetByName(SVC.LINK_SHEET);
+  if (!sh) {
+    sh = ss_().insertSheet(SVC.LINK_SHEET);
+    sh.appendRow(['Timestamp', 'Agent', 'Event', 'Reference', 'Note']);
+    sh.setFrozenRows(1);
+    try { sh.getRange(1, 1, 1, 5).setFontWeight('bold').setBackground(SB.light); } catch (e) {}
+  }
+  return sh;
+}
+
+/** An open or a start, fired by the share page. Only names already on the
+ *  roster are recorded, so a stray query string cannot fill the sheet. */
+function logHit_(agent, ev, ref) {
+  agent = String(agent || '').trim();
+  ev = String(ev || '').trim().toLowerCase();
+  if (!agent) return { ok: false };
+  if (['open', 'start', 'call', 'whatsapp'].indexOf(ev) < 0) ev = 'open';
+  var known = false;
+  skillBank_().forEach(function (a) { if (a.name.toLowerCase() === agent.toLowerCase()) known = true; });
+  if (!known) return { ok: false };
+  try {
+    linkSheet_().appendRow([new Date(), agent, ev, String(ref || '').slice(0, 60), '']);
+  } catch (e) { return { ok: false }; }
+  return { ok: true };
+}
+
+/** The agent taps "I sent this" in their portal — the one event we cannot
+ *  observe, because the sending happens in WhatsApp. Code-protected. */
+function logSend_(agent, code, note) {
+  var check = agentAuth_(agent, code);
+  if (!check.ok) return check;
+  try {
+    linkSheet_().appendRow([new Date(), check.agent.name, 'sent', '', String(note || '').slice(0, 120)]);
+  } catch (e) { return { ok: false, error: 'Could not record that.' }; }
+  return { ok: true };
+}
+
+/** Name plus either the agent's own code or the branch code. */
+function agentAuth_(agent, code) {
+  agent = String(agent || '').trim();
+  code = String(code || '').trim().toUpperCase();
+  if (!agent || !code) return { ok: false, error: 'Enter your name and your portal code.' };
+  var branchCode = String(SVC.TEAM_CODE || '').trim().toUpperCase();
+  var me = null, nameKnown = false;
+  skillBank_().forEach(function (a) {
+    if (a.name.toLowerCase() !== agent.toLowerCase()) return;
+    nameKnown = true;
+    var own = a.portal && a.portal.toUpperCase() === code;
+    var shared = branchCode && code === branchCode;
+    if (own || shared) me = a;
+  });
+  if (!me) {
+    return { ok: false, error: nameKnown
+      ? 'That code does not open this portal. Use the branch code from the agent sheet, or your own code from the Agent Skill Bank.'
+      : 'We do not have an agent by that name on the active roster. Check the spelling against the Agent Skill Bank, or ask support.' };
+  }
+  return { ok: true, agent: me };
+}
+
+/** Sends, opens, starts and calls for one agent, plus the last few events. */
+function linkStatsFor_(name) {
+  var out = { sent: 0, open: 0, start: 0, call: 0, recent: [] };
+  var sh = ss_().getSheetByName(SVC.LINK_SHEET);
+  if (!sh || sh.getLastRow() < 2) return out;
+  var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
+  var rows = sh.getRange(2, 1, sh.getLastRow() - 1, 5).getValues();
+  rows.forEach(function (r) {
+    if (String(r[1] || '').toLowerCase() !== name.toLowerCase()) return;
+    var ev = String(r[2] || '').toLowerCase();
+    if (ev === 'whatsapp') ev = 'call';
+    if (out[ev] !== undefined) out[ev]++;
+    var d = new Date(r[0]);
+    out.recent.push({ when: isNaN(d.getTime()) ? '' : Utilities.formatDate(d, tz, 'd MMM, h:mm a'), ev: ev });
+  });
+  out.recent = out.recent.slice(-8).reverse();
+  return out;
+}
 
 /** The live roster from the Agent Skill Bank tab — name, number, and what
  *  each agent is strongest at. Rows with Active = No stay off the list. */
@@ -2462,6 +2561,7 @@ function setupService() {
   sheetFor_(true);
   logSheet_();
   teamBankSheet_();
+  linkSheet_();
 
   var warn = SVC.CS_EMAIL ? '' :
     '<p style="color:#b3261e"><b>SVC.CS_EMAIL is still empty.</b> Submissions will route to the branch only ' +

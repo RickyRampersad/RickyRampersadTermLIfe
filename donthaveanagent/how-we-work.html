@@ -314,6 +314,7 @@
 </div></div>
 
 <script>
+var CONFIG = { API_URL: "" };
 /* An agent shares .../how-we-work?a=Fawaaz — so every route into the review
    carries who sent them, and the branch knows whose introduction it was. */
 (function(){
@@ -332,6 +333,26 @@
       a.setAttribute('href', 'review.html?' + q);
     });
     try { sessionStorage.setItem('dhaa-agent', agent); } catch (e) {}
+
+    /* Tell the branch this introduction was opened. Fire-and-forget: it must
+       never delay or break the page, so failures are swallowed. */
+    var API = (window.CONFIG && window.CONFIG.API_URL) || '';
+    var ping = function (ev) {
+      if (!API) return;
+      var u = API + '?action=hit&agent=' + encodeURIComponent(agent) +
+              '&ev=' + encodeURIComponent(ev) + '&ref=' + encodeURIComponent(k || '');
+      try {
+        if (navigator.sendBeacon) navigator.sendBeacon(u);
+        else fetch(u, { mode: 'no-cors', keepalive: true }).catch(function () {});
+      } catch (e) {}
+    };
+    ping('open');
+    document.querySelectorAll('a[href^="review.html"]').forEach(function (a) {
+      a.addEventListener('click', function () { ping('start'); });
+    });
+    document.querySelectorAll('a[href^="tel:"], a[href*="wa.me"]').forEach(function (a) {
+      a.addEventListener('click', function () { ping('call'); });
+    });
   }
 })();
 (function(){

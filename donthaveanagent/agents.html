@@ -94,7 +94,26 @@
   .sharebox p{font-size:13.5px;color:var(--muted)}
   .sharerow{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
   .sharerow .btn{margin-top:0;font-size:13.5px;padding:11px 18px}
-  @media(max-width:560px){ .stats{grid-template-columns:1fr 1fr} .stat:first-child{grid-column:1/-1} }
+  .dash{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-top:18px}
+  .dash h3{font-family:var(--disp);font-weight:800;font-size:16px;margin-bottom:3px}
+  .dash .dsub{font-size:13px;color:var(--muted);margin-bottom:14px}
+  .funnel{display:flex;flex-direction:column;gap:9px}
+  .fr{display:flex;align-items:center;gap:11px}
+  .fr .fl{width:104px;font-size:13px;font-weight:700;font-family:var(--disp);text-align:right;color:var(--muted)}
+  .fr .ft{flex:1;height:26px;border-radius:8px;background:var(--chip);overflow:hidden;position:relative}
+  .fr .fb{display:block;height:100%;background:var(--deep);border-radius:8px;min-width:3px;
+    transition:width .6s cubic-bezier(.2,.8,.3,1)}
+  .fr.o .fb{background:var(--ox)} .fr.s .fb{background:#A8323F} .fr.r .fb{background:var(--good)}
+  .fr .fv{width:38px;font-family:var(--disp);font-weight:800;font-size:16px;font-variant-numeric:tabular-nums}
+  .conv{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px;padding-top:13px;border-top:1px solid var(--line);
+    font-size:13px;color:var(--muted)}
+  .conv b{font-family:var(--disp);color:var(--deep);font-size:15px}
+  .recent{margin-top:14px;font-size:13px;color:var(--muted)}
+  .recent div{padding:5px 0;border-bottom:1px dashed var(--line);display:flex;gap:10px}
+  .recent div:last-child{border-bottom:none}
+  .recent .ev{font-weight:700;color:var(--ox);width:66px;text-transform:capitalize}
+  @media(max-width:560px){ .stats{grid-template-columns:1fr 1fr} .stat:first-child{grid-column:1/-1}
+    .fr .fl{width:74px;font-size:12px} }
 </style>
 </head>
 <body>
@@ -153,6 +172,8 @@
       <div class="stat"><div class="n" id="sOpen">0</div><div class="l">In progress</div></div>
       <div class="stat"><div class="n" id="sDone">0</div><div class="l">Completed</div></div>
     </div>
+    <div class="dash" id="dash"></div>
+
     <div id="list"></div>
 
     <div class="sharebox">
@@ -186,6 +207,9 @@ const CONFIG = { API_URL: "" };
 const DEMO = {
   ok: true, agent: "Fawaaz", skills: "Plain-language, patient with first-timers · Evenings + Saturdays",
   stats: { assigned: 4, open: 3, completed: 1 },
+  link: { sent: 12, opened: 9, started: 5, calls: 2, reviews: 3,
+          recent: [{when:"22 Aug, 2:14 PM",ev:"open"},{when:"22 Aug, 11:02 AM",ev:"start"},
+                   {when:"21 Aug, 4:47 PM",ev:"open"},{when:"21 Aug, 9:30 AM",ev:"call"}] },
   clients: [
     { ref: "DHA-260813-0003", who: "Keisha Boodoo", kind: "individual", filed: "13 August 2026",
       priority: "ACTION", status: "In progress", signed: true, letterOut: false,
@@ -220,6 +244,43 @@ function render(data, demo) {
   $("#sAssigned").textContent = data.stats.assigned;
   $("#sOpen").textContent = data.stats.open;
   $("#sDone").textContent = data.stats.completed;
+
+  /* the funnel: what happened after this agent sent their link */
+  const L = data.link || { sent:0, opened:0, started:0, calls:0, reviews:0, recent:[] };
+  const dash = document.getElementById("dash");
+  if (dash) {
+    const mx = Math.max(L.sent, L.opened, L.started, L.reviews, 1);
+    const bar = (cls, label, v) =>
+      `<div class="fr ${cls}"><span class="fl">${label}</span>` +
+      `<span class="ft"><i class="fb" style="width:${Math.round(100*v/mx)}%"></i></span>` +
+      `<span class="fv">${v}</span></div>`;
+    const pct = (a,b) => b ? Math.round(100*a/b) + "%" : "—";
+    dash.innerHTML =
+      `<h3>Your introductions</h3>` +
+      `<div class="dsub">What happened after you sent your link. It updates as clients open it.</div>` +
+      `<div class="funnel">${bar("","Sent",L.sent)}${bar("o","Opened",L.opened)}` +
+      `${bar("s","Started",L.started)}${bar("r","Reviews in",L.reviews)}</div>` +
+      `<div class="conv"><span>Opened <b>${pct(L.opened,L.sent)}</b> of sends</span>` +
+      `<span>Started <b>${pct(L.started,L.opened)}</b> of opens</span>` +
+      `<span>Completed <b>${pct(L.reviews,L.started)}</b> of starts</span>` +
+      (L.calls ? `<span>Called or messaged <b>${L.calls}</b></span>` : "") + `</div>` +
+      (L.recent && L.recent.length
+        ? `<div class="recent"><b style="color:var(--ink)">Latest activity</b>` +
+          L.recent.map(r => `<div><span class="ev">${r.ev}</span><span>${r.when}</span></div>`).join("") + `</div>`
+        : `<div class="recent">Nothing yet — send your link and opens appear here.</div>`) +
+      `<button class="btn ghost" id="logSend" style="margin-top:14px;font-size:13.5px;padding:10px 16px">I just sent my link</button>`;
+    const ls = document.getElementById("logSend");
+    if (ls) ls.addEventListener("click", async () => {
+      if (!CONFIG.API_URL) { ls.textContent = "Switches on with the backend"; ls.disabled = true; return; }
+      ls.disabled = true; ls.textContent = "Recording…";
+      try {
+        await fetch(CONFIG.API_URL + "?action=logsend&agent=" + encodeURIComponent(window.__agentName || "") +
+                    "&code=" + encodeURIComponent(window.__agentCode || ""));
+        data.link = Object.assign({}, L, { sent: L.sent + 1 });
+        render(data, demo);
+      } catch (e) { ls.textContent = "Could not record — try again"; ls.disabled = false; }
+    });
+  }
 
   const names = ["Received", "Verifying & preparing", c => c.kind === "group" ? "Letter out" : "Signature out", "Complete"];
   $("#list").innerHTML = data.clients.map(c => {
@@ -296,6 +357,7 @@ $("#f").addEventListener("submit", async e => {
     if (!data.ok) { err.textContent = data.error || "Could not open your book."; err.style.display = "block"; return; }
     data.clients.forEach(c => c.stageNote = "");
     window.__agentName = data.agent;
+    window.__agentCode = code;
     if (window.__setShareLink) window.__setShareLink();
     render(data, false);
   } catch (ex) {
