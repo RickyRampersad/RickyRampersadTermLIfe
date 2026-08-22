@@ -78,6 +78,20 @@ body.beat .mark{animation:beatpop .5s ease}
 .colc.lo div::before{content:"\2715";color:#B9AFA6}
 @media(max-width:640px){.cols{grid-template-columns:1fr}.gap b{width:100px;font-size:12.5px}}
 
+
+/* ── what lands: inbox cards ── */
+.inbox{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:760px;margin:16px auto 0}
+.inbox>*{min-width:0}
+.ic{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;text-align:left;
+  box-shadow:0 6px 18px rgba(46,10,14,.08)}
+.ic .ich{background:var(--ox);color:#F6EFE6;padding:7px 11px;font-family:var(--head);font-weight:800;
+  font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+.ic .icb{padding:12px 13px;font-size:11.5px;line-height:1.45;color:var(--muted)}
+.ic .icb b{display:block;color:var(--ink);font-family:var(--head);font-size:12.5px;margin-bottom:4px}
+.ic .icode{display:inline-block;background:var(--gold-soft,rgba(140,34,48,.1));border:1px solid var(--line);
+  border-radius:6px;padding:3px 9px;font-family:var(--head);font-weight:800;letter-spacing:.16em;
+  color:var(--ox);font-size:12px;margin-top:7px}
+@media(max-width:700px){.inbox{grid-template-columns:1fr;max-width:340px}}
 /* ── story bars ── */
 #bars{position:fixed;top:0;left:0;right:0;z-index:60;display:flex;gap:5px;padding:12px 14px 0}
 #bars i{flex:1;height:3.5px;border-radius:99px;background:rgba(26,22,24,.14);overflow:hidden;position:relative}
@@ -366,6 +380,22 @@ em{font-style:normal;color:var(--ox)}
   </div>
 </section>
 
+<section class="scene" data-d="8200">
+  <div class="inner">
+    <div class="eyebrow st">What actually lands with you</div>
+    <h2 class="st d1">Not promises.<br><em>Paperwork, done properly.</em></h2>
+    <div class="inbox">
+      <div class="ic st d2"><div class="ich">Within minutes</div><div class="icb">
+        <b>Your confirmation</b>Your reference, what happens next, and the code that lets you watch it move.
+        <span class="icode">7KMPQ2</span></div></div>
+      <div class="ic st d3"><div class="ich">Attached</div><div class="icb">
+        <b>The official form</b>Complete, your answers in bold, ready to file with the insurer.</div></div>
+      <div class="ic st d4"><div class="ich">Ready to sign</div><div class="icb">
+        <b>Your papers</b>Already filled in — policy numbers traced by us. You just sign.</div></div>
+    </div>
+  </div>
+</section>
+
 <section class="scene" data-d="7600">
   <div class="inner">
     <div class="eyebrow st">And after that</div>
@@ -383,18 +413,23 @@ em{font-style:normal;color:var(--ox)}
 
 <section class="scene" data-d="99999" id="finale">
   <div class="inner">
-    <svg class="biglogo st" viewBox="0 0 88 88" aria-hidden="true">
-      <rect x="2" y="2" width="84" height="84" rx="23" fill="#8C2230"/>
-      <g fill="#FFFFFF"><path transform="translate(23.760 28.731) scale(0.07621 -0.07621) translate(-28.0 -751.0)" d="M40 378 115 638 142 530Q92 530 60.0 559.5Q28 589 28 639Q28 690 60.5 720.5Q93 751 142 751Q191 751 223.0 720.5Q255 690 255 639Q255 625 253.0 610.5Q251 596 244.5 576.5Q238 557 223 524L159 378Z"/><path transform="translate(46.941 28.731) scale(0.07621 -0.07621) translate(-28.0 -751.0)" d="M40 378 115 638 142 530Q92 530 60.0 559.5Q28 589 28 639Q28 690 60.5 720.5Q93 751 142 751Q191 751 223.0 720.5Q255 690 255 639Q255 625 253.0 610.5Q251 596 244.5 576.5Q238 557 223 524L159 378Z"/></g>
-    </svg>
-    <h2 class="st d2">This is the standard<br><em>you should expect.</em></h2>
-    <div class="url st d3">donthaveanagent<em>.com</em></div>
+    <div class="eyebrow st">Two ways to start</div>
+    <h2 class="st d1">Do it yourself,<br><em>or just ask us to call you.</em></h2>
+    <div class="mini-lanes">
+      <div class="mlane st d2"><h3>Start it now</h3>
+        <div class="mstep"><span class="mt you">YOU</span>Four minutes, on your phone.</div>
+        <div class="mstep"><span class="mt you">YOU</span>No policy number needed.</div></div>
+      <div class="mlane st d3"><h3>Or leave it to us</h3>
+        <div class="mstep"><span class="mt us">US</span>Pick a day and a time on the page.</div>
+        <div class="mstep"><span class="mt us">US</span>We ring you. Nothing to fill in.</div></div>
+    </div>
+    <div class="url st d4">donthaveanagent<em>.com</em></div>
     <div class="cta-row st d4">
-      <a class="btn btn-ox" href="https://donthaveanagent.com/start" target="_blank" rel="noopener">Start my free review →</a>
+      <a class="btn btn-ox" href="https://donthaveanagent.com/how-we-work" target="_blank" rel="noopener">Start or ask for a call →</a>
       <a class="btn btn-wa" id="waBtn" href="#" target="_blank" rel="noopener">💬 Share this</a>
       <button class="btn btn-line" onclick="location.reload()">↻ Play again</button>
     </div>
-    <p class="big-sub st d4">Free · no obligation · about four minutes · your records fixed either way.</p>
+    <p class="big-sub st d4">Free · no obligation · your records fixed either way.</p>
   </div>
 </section>
 
