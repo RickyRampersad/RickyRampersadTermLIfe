@@ -110,6 +110,18 @@ var SVC = {
      Any name can still be typed in; the bank informs, it does not restrict. */
   TEAM_SHEET:  'Agent Skill Bank',
 
+  /* One code the whole branch shares to open the agent portal — the code you
+     hand out at a branch meeting or keep in the agent fact-find sheet, so
+     nobody is locked out waiting for a personal code. An agent still types
+     their own name, and still sees only their own book.
+
+     Worth knowing: a shared code means anyone holding it could type a
+     colleague's name and see that colleague's client list (status only —
+     never answers). If you'd rather that were impossible, leave this blank
+     and give each agent their own code in the 'Portal code' column; both
+     work at the same time, so you can start shared and tighten later.     */
+  TEAM_CODE:   '',
+
   /* The promise made to the client on screen. Change it here and in
      service/index.html together, or don't change it at all.           */
   SLA_BUSINESS_DAYS: 1,
@@ -236,12 +248,22 @@ function agentBookFor_(agent, code) {
   code = String(code || '').trim().toUpperCase();
   if (!agent || !code) return { ok: false, error: 'Enter your name and your portal code.' };
 
-  var me = null;
+  /* Two ways in: the agent's own code from the skill bank, or the branch's
+     shared TEAM_CODE. Either way the name decides whose book opens. */
+  var branchCode = String(SVC.TEAM_CODE || '').trim().toUpperCase();
+  var me = null, nameKnown = false;
   skillBank_().forEach(function (a) {
-    if (a.name.toLowerCase() === agent.toLowerCase() &&
-        a.portal && a.portal.toUpperCase() === code) me = a;
+    if (a.name.toLowerCase() !== agent.toLowerCase()) return;
+    nameKnown = true;
+    var own = a.portal && a.portal.toUpperCase() === code;
+    var shared = branchCode && code === branchCode;
+    if (own || shared) me = a;
   });
-  if (!me) return { ok: false, error: 'Name and portal code do not match. Codes are set by the branch in the Agent Skill Bank — ask support.' };
+  if (!me) {
+    return { ok: false, error: nameKnown
+      ? 'That code does not open this portal. Use the branch code from the agent sheet, or your own code from the Agent Skill Bank.'
+      : 'We do not have an agent by that name on the active roster. Check the spelling against the Agent Skill Bank, or ask support.' };
+  }
 
   var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
   var fmt = function (v) {

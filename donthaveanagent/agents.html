@@ -75,6 +75,25 @@
   .demo-band{background:var(--deep);color:#F2E9DC;border-radius:12px;padding:10px 16px;margin-top:18px;
              font-size:13.5px;display:none}
   .foot{max-width:860px;margin:30px auto 0;padding:0 18px;font-size:12.5px;color:var(--muted)}
+  /* films */
+  .vwrap{position:relative;border-radius:16px;overflow:hidden;background:#0A0708;aspect-ratio:16/9;
+    box-shadow:0 14px 34px rgba(46,10,14,.26);margin-top:14px}
+  .vwrap video{display:block;width:100%;height:100%;object-fit:cover;background:#0A0708}
+  .vcover{position:absolute;inset:0;display:grid;place-items:center;border:none;cursor:pointer;color:#F6EFE6;
+    font:inherit;background:radial-gradient(circle at 50% 46%,rgba(20,4,7,.28),rgba(20,4,7,.6) 62%,rgba(20,4,7,.8))}
+  .vcover.gone{display:none}
+  .vplay{width:74px;height:74px;border-radius:50%;background:rgba(246,239,230,.16);
+    border:2px solid rgba(246,239,230,.6);display:flex;align-items:center;justify-content:center}
+  .vplay i{display:block;width:0;height:0;border-style:solid;border-width:12px 0 12px 20px;
+    border-color:transparent transparent transparent #F6EFE6;margin-left:5px}
+  .vlab{position:absolute;left:18px;bottom:16px;font-weight:800;font-size:15px;text-shadow:0 2px 10px rgba(10,4,6,.85)}
+  .vlen{position:absolute;right:18px;bottom:18px;font-size:11px;letter-spacing:.14em;color:#E5C9B3;font-weight:700;
+    text-shadow:0 2px 10px rgba(10,4,6,.85)}
+  .sharebox{background:var(--chip);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-top:16px}
+  .sharebox h3{font-family:var(--disp);font-weight:800;font-size:16px;margin-bottom:6px}
+  .sharebox p{font-size:13.5px;color:var(--muted)}
+  .sharerow{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
+  .sharerow .btn{margin-top:0;font-size:13.5px;padding:11px 18px}
   @media(max-width:560px){ .stats{grid-template-columns:1fr 1fr} .stat:first-child{grid-column:1/-1} }
 </style>
 </head>
@@ -95,13 +114,28 @@
         <label for="agent">Your name (as in the skill bank)</label>
         <input id="agent" autocomplete="name" placeholder="e.g. Fawaaz">
         <label for="code">Portal code</label>
-        <input id="code" autocomplete="off" placeholder="From branch support" style="text-transform:uppercase">
+        <input id="code" autocomplete="off" placeholder="Branch code or your own" style="text-transform:uppercase">
         <div class="err" id="err"></div>
         <button class="btn" type="submit">Open my book →</button>
         <button class="btn ghost" type="button" id="demoBtn">See a demo book</button>
       </form>
-      <p class="hint">No code yet? Ask branch support — codes live beside your name in the Agent Skill Bank.
+      <p class="hint" style="margin-bottom:0">No code yet? Ask branch support — codes live beside your name in the Agent Skill Bank.
       This page shows progress only, never a client's answers.</p>
+    </div>
+
+    <div class="card" style="max-width:640px">
+      <h3 style="font-family:var(--disp);font-weight:800;font-size:17px;margin-bottom:4px">What this branch does for you</h3>
+      <p style="font-size:14px;color:var(--muted)">Seventy seconds. Sound on.</p>
+      <div class="vwrap">
+        <video id="agentVid" playsinline preload="metadata" poster="agent-film-poster.jpg" controlsList="nodownload">
+          <source src="dhaa-agent-film.mp4" type="video/mp4">
+        </video>
+        <button class="vcover" id="agentCover" type="button" aria-label="Play the agent film, seventy seconds, sound on">
+          <span class="vplay"><i></i></span>
+          <span class="vlab">The agent film</span>
+          <span class="vlen">1:13 · sound on</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -118,6 +152,17 @@
       <div class="stat"><div class="n" id="sDone">0</div><div class="l">Completed</div></div>
     </div>
     <div id="list"></div>
+
+    <div class="sharebox">
+      <h3>Met someone with no agent?</h3>
+      <p>Send them the client film — it explains the whole thing in eighty seconds, and every review that
+      comes back through it lands with support and can be assigned to you.</p>
+      <div class="sharerow">
+        <a class="btn" id="waFilm" href="#" target="_blank" rel="noopener">Send by WhatsApp</a>
+        <button class="btn ghost" id="copyFilm" type="button">Copy the link</button>
+        <a class="btn ghost" href="dhaa-film.mp4" download>Download the film</a>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -186,6 +231,23 @@ function render(data, demo) {
       "</div>";
   }).join("");
 }
+
+(function(){
+  var v=document.getElementById("agentVid"), c=document.getElementById("agentCover");
+  if(v&&c){
+    c.addEventListener("click", function(){ c.classList.add("gone"); v.setAttribute("controls",""); v.play(); });
+    v.addEventListener("ended", function(){ c.classList.remove("gone"); v.removeAttribute("controls"); v.currentTime=0; });
+  }
+  var MSG="You mentioned nobody looks after your policy. This explains how we fix it — a free four-minute review, "
+         +"and a person responsible for you by name: https://donthaveanagent.com";
+  var wa=document.getElementById("waFilm");
+  if(wa) wa.href="https://wa.me/?text="+encodeURIComponent(MSG);
+  var cp=document.getElementById("copyFilm");
+  if(cp) cp.addEventListener("click", function(){
+    var done=function(){ cp.textContent="Copied ✓"; setTimeout(function(){cp.textContent="Copy the link";},1600); };
+    if(navigator.clipboard) navigator.clipboard.writeText("https://donthaveanagent.com").then(done,done); else done();
+  });
+})();
 
 $("#demoBtn").addEventListener("click", () => render(DEMO, true));
 if (new URLSearchParams(location.search).get("demo")) render(DEMO, true);

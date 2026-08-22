@@ -48,6 +48,12 @@
   to = "/agents.html"
   status = 302
 
+# The agent film, as a link an agent can open in a branch meeting.
+[[redirects]]
+  from = "/agent-film"
+  to = "/agent-film.html"
+  status = 302
+
 [[redirects]]
   from = "/status"
   to = "/status.html"
@@ -73,5 +79,16 @@
 
 [[headers]]
   for = "/agents.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+# The agent film is for the team, not for search engines.
+[[headers]]
+  for = "/agent-film.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/dhaa-agent-film.mp4"
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
