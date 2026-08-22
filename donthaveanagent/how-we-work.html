@@ -131,7 +131,39 @@
   .orline{display:flex;align-items:center;gap:14px;margin:26px 0;color:var(--muted);font-size:13px;
     font-family:var(--disp);font-weight:700;letter-spacing:.2em;text-transform:uppercase}
   .orline::before,.orline::after{content:"";flex:1;height:1px;background:var(--line)}
-  @media(max-width:640px){.cmp{grid-template-columns:1fr}.step{grid-template-columns:1fr}
+  .cbform{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:26px}
+  section.alt .cbform{background:var(--paper)}
+  .cbrow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+  .cbrow.one{grid-template-columns:1fr}
+  .cbrow>*{min-width:0}
+  .cbform label{display:block;font-family:var(--disp);font-weight:700;font-size:11.5px;letter-spacing:.09em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+  .cbform input,.cbform select{width:100%;padding:12px 14px;border:1.6px solid var(--line);border-radius:11px;
+    font:inherit;background:#FDFBF7;color:var(--ink)}
+  .cbform input:focus,.cbform select:focus{outline:none;border-color:var(--ox)}
+  .cbform .btn{margin-top:16px}
+  .cbmsg{display:none;margin-top:14px;background:#E8F5EE;border-left:4px solid var(--good);
+    border-radius:0 10px 10px 0;padding:13px 16px;font-size:14.5px}
+  .cbmsg.bad{background:#FBE9E7;border-left-color:#A62B22}
+  .cbmsg.on{display:block}
+  .gal{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:20px}
+  .gal>*{min-width:0}
+  .gc{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;
+    box-shadow:0 6px 18px rgba(46,10,14,.07)}
+  section.alt .gc{background:var(--paper)}
+  .gc .gh{background:var(--deep);color:#F2E9DC;padding:9px 13px;font-size:11px;font-weight:800;
+    letter-spacing:.1em;text-transform:uppercase;font-family:var(--disp)}
+  .gc .gb{padding:14px 15px;font-size:12.5px;line-height:1.5;color:var(--muted)}
+  .gc .gb b{color:var(--ink);display:block;font-size:13.5px;margin-bottom:5px;font-family:var(--disp)}
+  .gc .code{display:inline-block;background:var(--chip);border:1px solid var(--line);border-radius:7px;
+    padding:3px 10px;font-family:var(--disp);font-weight:800;letter-spacing:.18em;color:var(--deep);
+    font-size:13px;margin-top:8px}
+  .gc .tick{color:var(--good);font-weight:800}
+  .gc .doc{font-family:'Times New Roman',serif;font-size:10.5px;color:#333;line-height:1.5}
+  .gc .doc .dt{text-align:center;font-weight:700;font-size:9.5px;letter-spacing:.3px}
+  .gc .doc .dl{border-bottom:1px dotted #999;display:inline-block;min-width:56px}
+  @media(max-width:640px){.cbrow{grid-template-columns:1fr}
+    .cmp{grid-template-columns:1fr}.step{grid-template-columns:1fr}
     .callbox{grid-template-columns:1fr;justify-items:center;text-align:center}
     .callbox .row{justify-content:center}
     .stickycta .btn{margin-left:0;width:100%;text-align:center}}
@@ -145,7 +177,8 @@
 </div></header>
 
 <div class="agentbar" id="abar"><div class="wrap">
-  <span>Sent to you by <b id="aname">your agent</b> — everything below is what they will arrange for you.</span>
+  <span><b id="aname">Your agent</b> sent you this — and everything below is what
+  <b id="aname2">they</b> will personally arrange for you, with the branch behind them.</span>
 </div></div>
 
 <div class="wrap hero">
@@ -235,6 +268,40 @@
 
 <section class="alt">
   <div class="wrap">
+    <div class="eyebrow">What actually lands with you</div>
+    <h2>Not promises.<br><em>Paperwork, done properly.</em></h2>
+    <p class="sub">Here is what arrives in your inbox — the same things, every time, whether you are our
+    biggest client or somebody who has not been called in nine years.</p>
+    <div class="gal">
+      <div class="gc"><div class="gh">Within minutes</div><div class="gb">
+        <b>Your confirmation</b>Your reference, what happens next in plain English, and the access code that
+        lets you watch it move.<span class="code">7KMPQ2</span></div></div>
+      <div class="gc"><div class="gh">Attached to that email</div><div class="gb">
+        <div class="doc"><div class="dt">GUARDIAN LIFE OF THE CARIBBEAN LIMITED</div>
+          <div class="dt" style="font-weight:400">SERVICE QUESTIONNAIRE</div>
+          <div style="margin-top:6px">Beneficiary correct? <span class="tick">✓</span></div>
+          <div>Address current? <span class="dl">Chaguanas</span></div>
+          <div>Have a Will? <span class="tick">✓</span></div>
+          <div style="margin-top:6px;font-size:9px">2000 - 03 - 147</div></div>
+        <b style="margin-top:9px">The official form</b>Complete, your answers in bold, ready to file.</div></div>
+      <div class="gc"><div class="gh">Ready to sign</div><div class="gb">
+        <b>Anything needing a signature</b>Already filled in — policy numbers traced by us — so you sign from
+        your phone and nothing gets typed twice.</div></div>
+      <div class="gc"><div class="gh">Every two days</div><div class="gb">
+        <b>“Still on it”</b>An update until it is finished, even when the update is only that we are still
+        working on it. You never have to chase.</div></div>
+      <div class="gc"><div class="gh">At six months</div><div class="gb">
+        <b>“What has changed?”</b>Your score and the gaps we flagged, quoted back to you. One click to run it
+        again, or one line to say all good.</div></div>
+      <div class="gc"><div class="gh">Every birthday month</div><div class="gb">
+        <b>Your annual review</b>Every year, for as long as you hold the policy. It does not depend on anybody
+        remembering.</div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
     <div class="eyebrow">And then it does not stop</div>
     <h2>The part nobody else does.</h2>
     <p class="sub">Most service ends when the paperwork does. Yours is held by a system that does not forget.</p>
@@ -275,6 +342,41 @@
           <a class="btn line" href="https://wa.me/18686785921" target="_blank" rel="noopener">WhatsApp us</a>
         </div>
       </div>
+    </div>
+
+    <div class="orline">or have us call you</div>
+
+    <div class="cbform">
+      <h3 style="font-family:var(--disp);font-weight:900;font-size:clamp(19px,2.8vw,24px);margin-bottom:6px">
+        Tell us when suits, and <em style="font-style:normal;color:var(--ox)">we will ring you.</em></h3>
+      <p style="color:var(--muted);font-size:15px">No form to fill in, nothing to prepare. Pick a day and a
+      window, and <span id="whoCalls">someone from the branch</span> calls you then.</p>
+      <form id="cbForm" novalidate>
+        <div class="cbrow">
+          <div><label for="cbName">Your name</label><input id="cbName" autocomplete="name" required></div>
+          <div><label for="cbPhone">Your number</label><input id="cbPhone" type="tel" autocomplete="tel" required></div>
+        </div>
+        <div class="cbrow">
+          <div><label for="cbDay">Best day</label>
+            <select id="cbDay">
+              <option>Today if possible</option><option>Tomorrow</option>
+              <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+              <option>Thursday</option><option>Friday</option><option>Saturday</option>
+              <option>Any weekday</option>
+            </select></div>
+          <div><label for="cbTime">Best time</label>
+            <select id="cbTime">
+              <option>Morning (8am – 12pm)</option><option>Afternoon (12pm – 4pm)</option>
+              <option>After work (4pm – 7pm)</option><option>Any time</option>
+            </select></div>
+        </div>
+        <div class="cbrow one">
+          <div><label for="cbNote">Anything we should know? (optional)</label>
+            <input id="cbNote" placeholder="e.g. I am not sure who my agent is any more"></div>
+        </div>
+        <button class="btn" type="submit" id="cbGo">Ask for a call back →</button>
+        <div class="cbmsg" id="cbMsg"></div>
+      </form>
     </div>
     <div class="orline">or</div>
     <div class="callbox">
@@ -334,6 +436,19 @@ var CONFIG = { API_URL: "" };
     });
     try { sessionStorage.setItem('dhaa-agent', agent); } catch (e) {}
 
+    /* Make it read as that agent's own work, not a branch broadcast. */
+    var first = agent.split(/\s+/)[0];
+    var n2 = document.getElementById('aname2'); if (n2) n2.textContent = first;
+    var wc = document.getElementById('whoCalls'); if (wc) wc.textContent = first;
+    var h1 = document.querySelector('.hero h1');
+    if (h1) h1.innerHTML = 'You bought it for a day<br><em>you hope never comes.</em>';
+    var lede = document.querySelector('.hero .lede');
+    if (lede) lede.innerHTML = '<b>' + first + '</b> should be ready for that day \u2014 and this is exactly ' +
+      'how ' + first + ' and this branch make sure of it. Seventy-five seconds, then in full.';
+    var bandH = document.querySelector('.band h2');
+    if (bandH) bandH.innerHTML = 'Four minutes.<br><em>Then ' + first + ' is responsible for you.</em>';
+    document.title = 'How ' + first + ' works \u2014 Ricky Rampersad Branch';
+
     /* Tell the branch this introduction was opened. Fire-and-forget: it must
        never delay or break the page, so failures are swallowed. */
     var API = (window.CONFIG && window.CONFIG.API_URL) || '';
@@ -354,6 +469,42 @@ var CONFIG = { API_URL: "" };
       a.addEventListener('click', function () { ping('call'); });
     });
   }
+})();
+(function(){
+  var f=document.getElementById('cbForm'); if(!f) return;
+  var msg=document.getElementById('cbMsg'), go=document.getElementById('cbGo');
+  var show=function(t,bad){ msg.textContent=t; msg.className='cbmsg on'+(bad?' bad':''); };
+  f.addEventListener('submit', function(e){
+    e.preventDefault();
+    var name=document.getElementById('cbName').value.trim();
+    var phone=document.getElementById('cbPhone').value.trim();
+    if(!name||!phone){ show('We just need a name and a number to call you on.',true); return; }
+    var P=new URLSearchParams(location.search);
+    var agent=(P.get('a')||P.get('agent')||'').trim();
+    var API=(window.CONFIG&&window.CONFIG.API_URL)||'';
+    if(!API){
+      show('Thanks '+name.split(' ')[0]+' — call-backs switch on with our system shortly. In the meantime '
+         +'ring (868) 678-5921 and we will look after you straight away.',true);
+      return;
+    }
+    go.disabled=true; go.textContent='Sending…';
+    var q='?action=callback&name='+encodeURIComponent(name)+'&phone='+encodeURIComponent(phone)
+        +'&day='+encodeURIComponent(document.getElementById('cbDay').value)
+        +'&when='+encodeURIComponent(document.getElementById('cbTime').value)
+        +'&note='+encodeURIComponent(document.getElementById('cbNote').value.trim())
+        +'&agent='+encodeURIComponent(agent);
+    fetch(API+q).then(function(r){return r.json();}).then(function(d){
+      if(d&&d.ok){
+        f.reset();
+        show('Thank you '+name.split(' ')[0]+' — that is with us now. Expect a call, and if anything changes '
+           +'just ring (868) 678-5921.');
+        go.textContent='Request sent ✓';
+      } else { show((d&&d.error)||'That did not send. Please ring (868) 678-5921.',true); go.disabled=false; go.textContent='Ask for a call back →'; }
+    }).catch(function(){
+      show('That did not send — please ring (868) 678-5921 and we will sort it out.',true);
+      go.disabled=false; go.textContent='Ask for a call back →';
+    });
+  });
 })();
 (function(){
   var v=document.getElementById('v'), c=document.getElementById('vc');

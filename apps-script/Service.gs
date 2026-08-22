@@ -116,6 +116,11 @@ var SVC = {
      details are written to this tab; it is agent, event and reference only. */
   LINK_SHEET:  'Link Activity',
 
+  /* A client who would rather be called than fill anything in. They pick a
+     day and a window; it lands here, and with the agent whose link they
+     were on. Answering these fast is the whole point of them.            */
+  CALL_SHEET:  'Callback Requests',
+
   /* One code the whole branch shares to open the agent portal — the code you
      hand out at a branch meeting or keep in the agent fact-find sheet, so
      nobody is locked out waiting for a personal code. An agent still types
@@ -183,6 +188,9 @@ function doGet(e) {
   }
   if (p.action === 'logsend') {
     return json_(logSend_(p.agent, p.code, p.note));
+  }
+  if (p.action === 'callback') {
+    return json_(callbackRequest_(p));
   }
   /* Anyone who lands on the /exec URL directly gets pointed at the form. */
   return HtmlService.createHtmlOutput(
@@ -309,25 +317,43 @@ function agentBookFor_(agent, code) {
 
   var open = clients.filter(function (c) { return c.status !== 'Completed'; }).length;
   var link = linkStatsFor_(me.name);
-  /* how many of this agent's introductions actually became files */
-  var fromMe = 0;
+
+  /* Two different books, and they must never be added together:
+       · branch — an orphan asked us for an agent and we assigned them
+       · own    — the agent found somebody and sent their own link       */
+  var fromMe = 0, fromMeDone = 0;
   [SVC.IND_SHEET, SVC.GRP_SHEET].forEach(function (name) {
     var sh = ss_().getSheetByName(name);
     if (!sh || sh.getLastRow() < 2) return;
     var h = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
-    var iBy = h.indexOf('Sent by');
+    var iBy = h.indexOf('Sent by'), iSt = h.indexOf('Status');
     if (iBy < 0) return;
     sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues().forEach(function (r) {
-      if (String(r[iBy] || '').toLowerCase() === me.name.toLowerCase()) fromMe++;
+      if (String(r[iBy] || '').toLowerCase() !== me.name.toLowerCase()) return;
+      fromMe++;
+      if (iSt > -1 && /handled/i.test(String(r[iSt] || ''))) fromMeDone++;
     });
   });
+  var callbacks = 0;
+  var cs = ss_().getSheetByName(SVC.CALL_SHEET);
+  if (cs && cs.getLastRow() > 1) {
+    var ch = cs.getRange(1, 1, 1, cs.getLastColumn()).getValues()[0].map(String);
+    var iAg = ch.indexOf('Introduced by');
+    if (iAg > -1) {
+      cs.getRange(2, 1, cs.getLastRow() - 1, cs.getLastColumn()).getValues().forEach(function (r) {
+        if (String(r[iAg] || '').toLowerCase() === me.name.toLowerCase()) callbacks++;
+      });
+    }
+  }
   return {
     ok: true,
     agent: me.name,
     skills: me.skills,
+    /* branch-assigned book: orphans who asked us for an agent */
     stats: { assigned: clients.length, open: open, completed: clients.length - open },
+    /* the agent's own introductions: people they found and sent their link to */
     link: { sent: link.sent, opened: link.open, started: link.start, calls: link.call,
-            reviews: fromMe, recent: link.recent },
+            reviews: fromMe, completed: fromMeDone, callbacks: callbacks, recent: link.recent },
     clients: clients,
   };
 }
@@ -1171,6 +1197,62 @@ function agentAuth_(agent, code) {
       : 'We do not have an agent by that name on the active roster. Check the spelling against the Agent Skill Bank, or ask support.' };
   }
   return { ok: true, agent: me };
+}
+
+/** "Call me instead" — the softest possible way in. Logged, and pushed at
+ *  once to the agent who introduced them (or the branch if nobody did). */
+function callbackRequest_(p) {
+  var name = String(p.name || '').trim().slice(0, 80);
+  var phone = String(p.phone || '').trim().slice(0, 40);
+  var day = String(p.day || '').trim().slice(0, 40);
+  var when = String(p.when || '').trim().slice(0, 40);
+  var agent = String(p.agent || '').trim().slice(0, 60);
+  var note = String(p.note || '').trim().slice(0, 300);
+  if (!name || !phone) return { ok: false, error: 'We need a name and a number to call.' };
+
+  var sh = ss_().getSheetByName(SVC.CALL_SHEET);
+  if (!sh) {
+    sh = ss_().insertSheet(SVC.CALL_SHEET);
+    sh.appendRow(['Received', 'Name', 'Phone', 'Preferred day', 'Preferred time',
+                  'Introduced by', 'Note', 'Status', 'Called on']);
+    sh.setFrozenRows(1);
+    try { sh.getRange(1, 1, 1, 9).setFontWeight('bold').setBackground(SB.light); } catch (e) {}
+  }
+  sh.appendRow([new Date(), name, phone, day, when, agent, note, 'Open', '']);
+
+  /* who should ring them */
+  var to = SVC.AGENT_EMAIL, who = 'the branch';
+  if (agent) {
+    skillBank_().forEach(function (a) {
+      if (a.name.toLowerCase() === agent.toLowerCase() && a.email) { to = a.email; who = a.name; }
+    });
+  }
+  var cc = [];
+  if (SVC.SUPPORT_EMAIL) cc.push(SVC.SUPPORT_EMAIL);
+  if (to !== SVC.AGENT_EMAIL) cc.push(SVC.AGENT_EMAIL);
+
+  try {
+    MailApp.sendEmail({
+      to: to, cc: cc.join(','), name: SVC.FROM_NAME, replyTo: SVC.AGENT_EMAIL,
+      subject: 'Call back requested: ' + name + (day ? ' — ' + day : '') + (when ? ', ' + when : ''),
+      htmlBody: wrap_(
+        '<p><b>' + esc_(name) + ' asked to be called.</b> They came through ' +
+        (agent ? '<b>' + esc_(agent) + '\u2019s</b> link' : 'the site directly') + '.</p>' +
+        '<table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:13.5px">' +
+        tr_('Name', name) + tr_('Phone', phone) +
+        (day ? tr_('Prefers', day + (when ? ' \u00b7 ' + when : '')) : '') +
+        (note ? tr_('They said', note) : '') + '</table>' +
+        box_('warn', '<b>Ring them inside one business day.</b> They chose to be called rather than fill ' +
+          'anything in — that is a person who wants to talk, not a form. Mark the row <b>Called</b> in the ' +
+          '<b>' + esc_(SVC.CALL_SHEET) + '</b> tab once you have.') +
+        box_('good', 'If they would rather do it themselves after all, send them ' +
+          '<a href="https://donthaveanagent.com/start">donthaveanagent.com/start</a> — four minutes, and it ' +
+          'lands here fully populated.') + sig_(),
+        'Call back requested'),
+    });
+  } catch (e) { log_('callback', 'email-failed', String(e)); }
+  log_('callback', 'requested', name + ' \u00b7 ' + phone + (agent ? ' \u00b7 via ' + agent : ''));
+  return { ok: true };
 }
 
 /** Sends, opens, starts and calls for one agent, plus the last few events. */

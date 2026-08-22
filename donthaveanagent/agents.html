@@ -94,6 +94,25 @@
   .sharebox p{font-size:13.5px;color:var(--muted)}
   .sharerow{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
   .sharerow .btn{margin-top:0;font-size:13.5px;padding:11px 18px}
+  .twobooks{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+  .twobooks>*{min-width:0}
+  .bk{border:1px solid var(--line);border-radius:14px;padding:16px 17px;background:var(--paper)}
+  .bk.own{background:var(--deep);border-color:var(--deep);color:#F2E9DC}
+  .bkh{font-family:var(--disp);font-weight:800;font-size:14px;margin-bottom:5px}
+  .bk.own .bkh{color:#F6EFE6}
+  .bkp{font-size:12.5px;color:var(--muted);line-height:1.5}
+  .bk.own .bkp{color:#E9D8C8}
+  .bknums{display:flex;gap:14px;flex-wrap:wrap;margin-top:11px}
+  .bknums span{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+  .bk.own .bknums span{color:#E5C9B3}
+  .bknums b{display:block;font-family:var(--disp);font-weight:900;font-size:24px;color:var(--deep);
+    line-height:1.1;font-variant-numeric:tabular-nums}
+  .bk.own .bknums b{color:#F6EFE6}
+  .win{margin-top:11px;padding-top:9px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--muted)}
+  .bk.own .win{border-top-color:rgba(246,239,230,.25);color:#E9D8C8}
+  .win b{font-family:var(--disp);font-weight:900;font-size:15px;color:var(--ox)}
+  .bk.own .win b{color:#E8A87C}
+  @media(max-width:560px){.twobooks{grid-template-columns:1fr}}
   .dash{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-top:18px}
   .dash h3{font-family:var(--disp);font-weight:800;font-size:16px;margin-bottom:3px}
   .dash .dsub{font-size:13px;color:var(--muted);margin-bottom:14px}
@@ -187,12 +206,16 @@
       <a href="#" class="out" id="out">Sign out</a>
     </div>
     <div class="stats">
-      <div class="stat"><div class="n" id="sAssigned">0</div><div class="l">Assigned to you</div></div>
+      <div class="stat"><div class="n" id="sAssigned">0</div><div class="l">Assigned by branch</div></div>
       <div class="stat"><div class="n" id="sOpen">0</div><div class="l">In progress</div></div>
       <div class="stat"><div class="n" id="sDone">0</div><div class="l">Completed</div></div>
     </div>
     <div class="dash" id="dash"></div>
 
+    <h3 style="font-family:var(--disp);font-weight:800;font-size:16px;margin-top:22px">
+      Clients the branch assigned to you</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:2px">Orphans who asked us for an agent — you
+      were matched to them. Work these first; they are already expecting a call.</p>
     <div id="list"></div>
 
     <div class="sharebox">
@@ -226,7 +249,7 @@ const CONFIG = { API_URL: "" };
 const DEMO = {
   ok: true, agent: "Fawaaz", skills: "Plain-language, patient with first-timers · Evenings + Saturdays",
   stats: { assigned: 4, open: 3, completed: 1 },
-  link: { sent: 12, opened: 9, started: 5, calls: 2, reviews: 3,
+  link: { sent: 12, opened: 9, started: 5, calls: 2, reviews: 3, completed: 2, callbacks: 1,
           recent: [{when:"22 Aug, 2:14 PM",ev:"open"},{when:"22 Aug, 11:02 AM",ev:"start"},
                    {when:"21 Aug, 4:47 PM",ev:"open"},{when:"21 Aug, 9:30 AM",ev:"call"}] },
   clients: [
@@ -264,8 +287,10 @@ function render(data, demo) {
   $("#sOpen").textContent = data.stats.open;
   $("#sDone").textContent = data.stats.completed;
 
-  /* the funnel: what happened after this agent sent their link */
-  const L = data.link || { sent:0, opened:0, started:0, calls:0, reviews:0, recent:[] };
+  /* Two books, kept apart on purpose:
+       · the branch assigned these — an orphan asked us for an agent
+       · these came from the agent's own link — people they found      */
+  const L = data.link || { sent:0, opened:0, started:0, calls:0, reviews:0, completed:0, callbacks:0, recent:[] };
   const dash = document.getElementById("dash");
   if (dash) {
     const mx = Math.max(L.sent, L.opened, L.started, L.reviews, 1);
@@ -274,12 +299,32 @@ function render(data, demo) {
       `<span class="ft"><i class="fb" style="width:${Math.round(100*v/mx)}%"></i></span>` +
       `<span class="fv">${v}</span></div>`;
     const pct = (a,b) => b ? Math.round(100*a/b) + "%" : "—";
+    const S = data.stats;
     dash.innerHTML =
-      `<h3>Your introductions</h3>` +
-      `<div class="dsub">What happened after you sent your link. It updates as clients open it.</div>` +
-      `<div class="funnel">${bar("","Sent",L.sent)}${bar("o","Opened",L.opened)}` +
-      `${bar("s","Started",L.started)}${bar("r","Reviews in",L.reviews)}</div>` +
-      `<div class="conv"><span>Opened <b>${pct(L.opened,L.sent)}</b> of sends</span>` +
+      `<div class="twobooks">
+         <div class="bk">
+           <div class="bkh">Given to you by the branch</div>
+           <p class="bkp">Orphan clients who asked us for an agent. We matched them to you and briefed you —
+             they are listed below.</p>
+           <div class="bknums"><span><b>${S.assigned}</b>assigned</span><span><b>${S.open}</b>in progress</span>
+             <span><b>${S.completed}</b>completed</span></div>
+           <div class="win">Closed <b>${pct(S.completed, S.assigned)}</b> of what you were given</div>
+         </div>
+         <div class="bk own">
+           <div class="bkh">Won by you</div>
+           <p class="bkp">People you found yourself and sent your own link to. Every one of these is your
+             introduction, credited to you.</p>
+           <div class="bknums"><span><b>${L.reviews}</b>reviews in</span><span><b>${L.completed||0}</b>completed</span>
+             <span><b>${L.callbacks||0}</b>call-backs</span></div>
+           <div class="win">Win rate <b>${pct(L.reviews, L.sent)}</b> of everything you sent</div>
+         </div>
+       </div>
+
+       <h3 style="margin-top:20px">Your own introductions, step by step</h3>
+       <div class="dsub">What happened after you sent your link. It updates as clients open it.</div>
+       <div class="funnel">${bar("","Sent",L.sent)}${bar("o","Opened",L.opened)}` +
+      `${bar("s","Started",L.started)}${bar("r","Reviews in",L.reviews)}</div>
+       <div class="conv"><span>Opened <b>${pct(L.opened,L.sent)}</b> of sends</span>` +
       `<span>Started <b>${pct(L.started,L.opened)}</b> of opens</span>` +
       `<span>Completed <b>${pct(L.reviews,L.started)}</b> of starts</span>` +
       (L.calls ? `<span>Called or messaged <b>${L.calls}</b></span>` : "") + `</div>` +
