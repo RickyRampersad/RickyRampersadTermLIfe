@@ -1,7 +1,14 @@
 # Ricky Rampersad Branch — Website
 
 This repository **is the live public website** at https://rickyrampersadbranch.com
-(GitHub Pages serves every file on `main`).
+(every file on `main` is served as-is — there is no build step).
+
+> **Hosting is moving from GitHub Pages to Netlify.** GitHub Pages ignores
+> `netlify.toml`, so the rules blocking `/apps-script/*` and `/data/*` have
+> never been in effect and backend source is downloadable from the live
+> site today. `NETLIFY-MIGRATION.md` has the runbook. Note that moving host
+> does **not** make it safe to commit secrets: this repo is public on
+> GitHub regardless of what serves the website.
 
 ## ⛔ NEVER commit client data
 

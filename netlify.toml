@@ -1,6 +1,19 @@
-# Netlify configuration for the renewal portal and Claims TT.
+# Netlify configuration for rickyrampersadbranch.com.
+#
+# The site is plain static files with no build step: every page is committed
+# as-is and the publish directory is the repository root. Stated explicitly
+# so Netlify never tries to detect a framework and run a build that does not
+# exist.
+[build]
+  publish = "."
+  command = ""
+
 
 # ── Client data must never be served ────────────────────────────────
+# These two rules only take effect on Netlify. While the domain pointed at
+# GitHub Pages this whole file was ignored, and /apps-script/Code.gs was
+# downloadable from the live site. Verify both return 404 after any host
+# change — see NETLIFY-MIGRATION.md.
 # /data/ holds the Salesforce exports — client names, emails, mobiles,
 # chassis numbers, policy numbers and premiums. The publish directory is
 # the repository root, so without this rule every one of those files is
