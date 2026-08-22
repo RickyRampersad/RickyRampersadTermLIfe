@@ -48,10 +48,16 @@
   to = "/agents.html"
   status = 302
 
-# The film an agent sends a client after a meeting.
+# The page an agent sends a client after a meeting — film plus the
+# whole process, with a start button on every screen.
 [[redirects]]
   from = "/how-we-work"
   to = "/how-we-work.html"
+  status = 302
+
+[[redirects]]
+  from = "/how-we-work-film"
+  to = "/how-we-work-film.html"
   status = 302
 
 [[redirects]]
