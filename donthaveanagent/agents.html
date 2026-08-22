@@ -166,7 +166,12 @@
         <a class="btn ghost" href="dhaa-how-we-work.mp4" download>Download the video</a>
         <a class="btn ghost" href="how-we-work.html" target="_blank">Open the page yourself</a>
       </div>
-      <p style="font-size:12.5px;color:var(--muted);margin-top:12px">Working an orphan file instead?
+      <p style="font-size:12.5px;color:var(--muted);margin-top:12px">Your personal link:
+        <code id="shareLink" style="background:#fff;border:1px solid var(--line);border-radius:6px;padding:2px 7px;
+        font-size:12px">https://donthaveanagent.com/how-we-work</code><br>
+        Anyone who starts a review from it is recorded as <b>your</b> introduction — in the sheet and in the
+        email that reaches support.</p>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:10px">Working an orphan file instead?
       The <a href="launch.html">launch film</a> is the one for a client who has nobody.</p>
     </div>
   </div>
@@ -244,18 +249,31 @@ function render(data, demo) {
     c.addEventListener("click", function(){ c.classList.add("gone"); v.setAttribute("controls",""); v.play(); });
     v.addEventListener("ended", function(){ c.classList.remove("gone"); v.removeAttribute("controls"); v.currentTime=0; });
   }
-  var MSG="Good to meet you. This is how our branch works — about seventy-five seconds, worth a look: "
-         +"https://donthaveanagent.com/how-we-work — and the free review itself is at https://donthaveanagent.com";
+  /* the link carries the agent's name, so a review that comes back is
+     credited to them in the sheet and in the team email */
+  var who = (window.__agentName || "").trim();
+  var LINK = "https://donthaveanagent.com/how-we-work" + (who ? "?a=" + encodeURIComponent(who) : "");
+  var MSG = "Good to meet you. This is how our branch works — about seventy-five seconds, worth a look: "
+          + LINK + " — you can start the free review right from that page.";
   var wa=document.getElementById("waFilm");
   if(wa) wa.href="https://wa.me/?text="+encodeURIComponent(MSG);
+  window.__setShareLink = function(){
+    var w=(window.__agentName||"").trim();
+    LINK="https://donthaveanagent.com/how-we-work"+(w?"?a="+encodeURIComponent(w):"");
+    MSG="Good to meet you. This is how our branch works — about seventy-five seconds, worth a look: "
+       +LINK+" — you can start the free review right from that page.";
+    if(wa) wa.href="https://wa.me/?text="+encodeURIComponent(MSG);
+    var sl=document.getElementById("shareLink"); if(sl) sl.textContent=LINK;
+  };
   var cp=document.getElementById("copyFilm");
   if(cp) cp.addEventListener("click", function(){
     var done=function(){ cp.textContent="Copied ✓"; setTimeout(function(){cp.textContent="Copy the link";},1600); };
-    if(navigator.clipboard) navigator.clipboard.writeText("https://donthaveanagent.com/how-we-work").then(done,done); else done();
+    if(navigator.clipboard) navigator.clipboard.writeText(LINK).then(done,done); else done();
   });
 })();
 
-$("#demoBtn").addEventListener("click", () => render(DEMO, true));
+$("#demoBtn").addEventListener("click", () => { window.__agentName = DEMO.agent;
+  if (window.__setShareLink) window.__setShareLink(); render(DEMO, true); });
 if (new URLSearchParams(location.search).get("demo")) render(DEMO, true);
 
 $("#out").addEventListener("click", e => { e.preventDefault(); location.href = location.pathname; });
@@ -277,6 +295,8 @@ $("#f").addEventListener("submit", async e => {
     const data = await res.json();
     if (!data.ok) { err.textContent = data.error || "Could not open your book."; err.style.display = "block"; return; }
     data.clients.forEach(c => c.stageNote = "");
+    window.__agentName = data.agent;
+    if (window.__setShareLink) window.__setShareLink();
     render(data, false);
   } catch (ex) {
     err.textContent = "Connection problem — try again in a minute.";

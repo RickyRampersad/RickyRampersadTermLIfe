@@ -102,7 +102,38 @@
   .stickycta span{font-size:13px;color:#EBDCCD}
   .stickycta .btn{margin-left:auto;background:#F6EFE6;color:var(--deep)}
   body{padding-bottom:74px}
+  .agentbar{background:var(--chip);border-bottom:1px solid var(--line);padding:11px 0;font-size:14.5px;display:none}
+  .agentbar.on{display:block}
+  .agentbar .wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .agentbar b{font-family:var(--disp);font-weight:800;color:var(--ox)}
+  .quote{border-left:5px solid var(--ox);padding:4px 0 4px 22px;margin:26px 0 0;
+    font-family:var(--disp);font-weight:700;font-size:clamp(18px,2.6vw,23px);line-height:1.45;letter-spacing:-.2px}
+  .quote span{display:block;font-family:var(--body);font-weight:500;font-size:15px;color:var(--muted);
+    margin-top:10px;letter-spacing:0}
+  .stakes{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:22px}
+  .stakes>*{min-width:0}
+  .stake{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
+  section.alt .stake{background:var(--paper)}
+  .stake h3{font-family:var(--disp);font-weight:800;font-size:16.5px;margin-bottom:7px;color:var(--deep)}
+  .stake p{font-size:14.8px;color:var(--muted)}
+  .stake .then{display:block;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);
+    font-size:14.5px;color:var(--ink);font-weight:600}
+  .callbox{display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:center;
+    background:var(--card);border:1px solid var(--line);border-radius:20px;padding:26px}
+  section.alt .callbox{background:var(--paper)}
+  .callbox .qr{width:168px;height:168px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:9px}
+  .callbox .qr svg{width:100%;height:100%;display:block}
+  .callbox h3{font-family:var(--disp);font-weight:900;font-size:clamp(20px,3vw,26px);margin-bottom:8px}
+  .callbox p{color:var(--muted);margin-bottom:14px}
+  .callbox .row{display:flex;gap:10px;flex-wrap:wrap}
+  .tel{font-family:var(--disp);font-weight:900;font-size:22px;color:var(--deep);text-decoration:none;
+    display:inline-block;margin-bottom:10px}
+  .orline{display:flex;align-items:center;gap:14px;margin:26px 0;color:var(--muted);font-size:13px;
+    font-family:var(--disp);font-weight:700;letter-spacing:.2em;text-transform:uppercase}
+  .orline::before,.orline::after{content:"";flex:1;height:1px;background:var(--line)}
   @media(max-width:640px){.cmp{grid-template-columns:1fr}.step{grid-template-columns:1fr}
+    .callbox{grid-template-columns:1fr;justify-items:center;text-align:center}
+    .callbox .row{justify-content:center}
     .stickycta .btn{margin-left:0;width:100%;text-align:center}}
 </style>
 </head>
@@ -113,11 +144,15 @@
   <a class="btn sm go" href="review.html?from=client">Start my review</a>
 </div></header>
 
+<div class="agentbar" id="abar"><div class="wrap">
+  <span>Sent to you by <b id="aname">your agent</b> — everything below is what they will arrange for you.</span>
+</div></div>
+
 <div class="wrap hero">
   <div class="eyebrow">A Ricky Rampersad Branch initiative</div>
-  <h1>This is how a policy<br><em>is supposed to be serviced.</em></h1>
-  <p class="lede">Watch it in seventy-five seconds, then read exactly what happens — every step, who does it,
-  and what you are left holding at the end.</p>
+  <h1>You bought it for a day<br><em>you hope never comes.</em></h1>
+  <p class="lede">Somebody should be ready for that day. This is exactly how this branch makes sure of it —
+  in seventy-five seconds, then in full, step by step.</p>
 
   <div class="vwrap">
     <video id="v" playsinline preload="metadata" poster="how-we-work-poster.jpg" controlsList="nodownload">
@@ -131,6 +166,28 @@
   </div>
   <div class="trust"><span>✓ Free</span><span>✓ No obligation</span><span>✓ About 4 minutes</span><span>✓ No policy number needed</span></div>
 </div>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow">Why any of this matters</div>
+    <h2>A policy is a promise<br><em>made to someone else.</em></h2>
+    <p class="sub">Not to you — to the people who will be standing in a hallway one day making phone calls.
+    Everything below exists so that on that day, the paperwork is right and somebody already knows their name.</p>
+    <div class="stakes">
+      <div class="stake"><h3>A beneficiary never updated</h3>
+        <p>Life moved on — a marriage, a child, a parting — and the form still names someone from a decade ago.</p>
+        <span class="then">We check it, and fix it while it is easy.</span></div>
+      <div class="stake"><h3>A date of birth typed wrong</h3>
+        <p>Premiums are calculated on age. Discovered at claim time, it can reduce what is actually paid.</p>
+        <span class="then">We check it against the record, now.</span></div>
+      <div class="stake"><h3>Nobody knows what you hold</h3>
+        <p>The policies are real, but the family does not know they exist, or who to call.</p>
+        <span class="then">You leave with that written down.</span></div>
+    </div>
+    <p class="quote">“Most of what goes wrong on a policy goes wrong quietly — because nobody asked.”
+      <span>So we ask. Every six months, and every year in your birthday month, for as long as you hold it.</span></p>
+  </div>
+</section>
 
 <section class="alt">
   <div class="wrap">
@@ -202,6 +259,42 @@
   </div>
 </section>
 
+<section class="alt" id="talk">
+  <div class="wrap">
+    <div class="eyebrow">Two ways to start</div>
+    <h2>Talk to a person,<br><em>or just start it yourself.</em></h2>
+    <p class="sub">Either one reaches the same team. Nothing costs anything, and nothing obliges you to buy.</p>
+    <div class="callbox">
+      <div class="qr"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 29 29" shape-rendering="crispEdges" role="img" aria-label="Scan to call the branch"><rect width="29" height="29" fill="#FFFFFF"/><g fill="#5E141F"><rect x="2" y="2" width="7" height="1"/><rect x="10" y="2" width="1" height="1"/><rect x="13" y="2" width="4" height="1"/><rect x="18" y="2" width="1" height="1"/><rect x="20" y="2" width="7" height="1"/><rect x="2" y="3" width="1" height="1"/><rect x="8" y="3" width="1" height="1"/><rect x="12" y="3" width="6" height="1"/><rect x="20" y="3" width="1" height="1"/><rect x="26" y="3" width="1" height="1"/><rect x="2" y="4" width="1" height="1"/><rect x="4" y="4" width="3" height="1"/><rect x="8" y="4" width="1" height="1"/><rect x="11" y="4" width="2" height="1"/><rect x="14" y="4" width="1" height="1"/><rect x="16" y="4" width="1" height="1"/><rect x="20" y="4" width="1" height="1"/><rect x="22" y="4" width="3" height="1"/><rect x="26" y="4" width="1" height="1"/><rect x="2" y="5" width="1" height="1"/><rect x="4" y="5" width="3" height="1"/><rect x="8" y="5" width="1" height="1"/><rect x="10" y="5" width="2" height="1"/><rect x="13" y="5" width="2" height="1"/><rect x="18" y="5" width="1" height="1"/><rect x="20" y="5" width="1" height="1"/><rect x="22" y="5" width="3" height="1"/><rect x="26" y="5" width="1" height="1"/><rect x="2" y="6" width="1" height="1"/><rect x="4" y="6" width="3" height="1"/><rect x="8" y="6" width="1" height="1"/><rect x="10" y="6" width="1" height="1"/><rect x="13" y="6" width="2" height="1"/><rect x="20" y="6" width="1" height="1"/><rect x="22" y="6" width="3" height="1"/><rect x="26" y="6" width="1" height="1"/><rect x="2" y="7" width="1" height="1"/><rect x="8" y="7" width="1" height="1"/><rect x="10" y="7" width="4" height="1"/><rect x="18" y="7" width="1" height="1"/><rect x="20" y="7" width="1" height="1"/><rect x="26" y="7" width="1" height="1"/><rect x="2" y="8" width="7" height="1"/><rect x="10" y="8" width="1" height="1"/><rect x="12" y="8" width="1" height="1"/><rect x="14" y="8" width="1" height="1"/><rect x="16" y="8" width="1" height="1"/><rect x="18" y="8" width="1" height="1"/><rect x="20" y="8" width="7" height="1"/><rect x="10" y="9" width="6" height="1"/><rect x="17" y="9" width="2" height="1"/><rect x="2" y="10" width="1" height="1"/><rect x="6" y="10" width="1" height="1"/><rect x="8" y="10" width="3" height="1"/><rect x="15" y="10" width="1" height="1"/><rect x="18" y="10" width="6" height="1"/><rect x="26" y="10" width="1" height="1"/><rect x="3" y="11" width="1" height="1"/><rect x="6" y="11" width="1" height="1"/><rect x="9" y="11" width="3" height="1"/><rect x="13" y="11" width="5" height="1"/><rect x="19" y="11" width="1" height="1"/><rect x="21" y="11" width="4" height="1"/><rect x="3" y="12" width="4" height="1"/><rect x="8" y="12" width="2" height="1"/><rect x="13" y="12" width="1" height="1"/><rect x="17" y="12" width="2" height="1"/><rect x="23" y="12" width="2" height="1"/><rect x="3" y="13" width="1" height="1"/><rect x="7" y="13" width="1" height="1"/><rect x="9" y="13" width="2" height="1"/><rect x="12" y="13" width="1" height="1"/><rect x="14" y="13" width="1" height="1"/><rect x="16" y="13" width="1" height="1"/><rect x="18" y="13" width="3" height="1"/><rect x="22" y="13" width="3" height="1"/><rect x="2" y="14" width="3" height="1"/><rect x="6" y="14" width="1" height="1"/><rect x="8" y="14" width="3" height="1"/><rect x="12" y="14" width="2" height="1"/><rect x="15" y="14" width="2" height="1"/><rect x="18" y="14" width="1" height="1"/><rect x="20" y="14" width="1" height="1"/><rect x="23" y="14" width="4" height="1"/><rect x="2" y="15" width="1" height="1"/><rect x="4" y="15" width="1" height="1"/><rect x="7" y="15" width="1" height="1"/><rect x="14" y="15" width="1" height="1"/><rect x="17" y="15" width="1" height="1"/><rect x="19" y="15" width="1" height="1"/><rect x="21" y="15" width="2" height="1"/><rect x="24" y="15" width="1" height="1"/><rect x="4" y="16" width="1" height="1"/><rect x="7" y="16" width="4" height="1"/><rect x="13" y="16" width="5" height="1"/><rect x="22" y="16" width="2" height="1"/><rect x="5" y="17" width="1" height="1"/><rect x="7" y="17" width="1" height="1"/><rect x="12" y="17" width="2" height="1"/><rect x="15" y="17" width="1" height="1"/><rect x="17" y="17" width="2" height="1"/><rect x="20" y="17" width="2" height="1"/><rect x="23" y="17" width="3" height="1"/><rect x="2" y="18" width="2" height="1"/><rect x="5" y="18" width="4" height="1"/><rect x="14" y="18" width="2" height="1"/><rect x="17" y="18" width="6" height="1"/><rect x="24" y="18" width="3" height="1"/><rect x="10" y="19" width="2" height="1"/><rect x="15" y="19" width="4" height="1"/><rect x="22" y="19" width="1" height="1"/><rect x="24" y="19" width="2" height="1"/><rect x="2" y="20" width="7" height="1"/><rect x="10" y="20" width="1" height="1"/><rect x="12" y="20" width="1" height="1"/><rect x="18" y="20" width="1" height="1"/><rect x="20" y="20" width="1" height="1"/><rect x="22" y="20" width="1" height="1"/><rect x="2" y="21" width="1" height="1"/><rect x="8" y="21" width="1" height="1"/><rect x="14" y="21" width="1" height="1"/><rect x="16" y="21" width="3" height="1"/><rect x="22" y="21" width="4" height="1"/><rect x="2" y="22" width="1" height="1"/><rect x="4" y="22" width="3" height="1"/><rect x="8" y="22" width="1" height="1"/><rect x="10" y="22" width="2" height="1"/><rect x="13" y="22" width="1" height="1"/><rect x="15" y="22" width="2" height="1"/><rect x="18" y="22" width="7" height="1"/><rect x="26" y="22" width="1" height="1"/><rect x="2" y="23" width="1" height="1"/><rect x="4" y="23" width="3" height="1"/><rect x="8" y="23" width="1" height="1"/><rect x="11" y="23" width="2" height="1"/><rect x="14" y="23" width="1" height="1"/><rect x="17" y="23" width="1" height="1"/><rect x="20" y="23" width="1" height="1"/><rect x="25" y="23" width="2" height="1"/><rect x="2" y="24" width="1" height="1"/><rect x="4" y="24" width="3" height="1"/><rect x="8" y="24" width="1" height="1"/><rect x="12" y="24" width="5" height="1"/><rect x="18" y="24" width="1" height="1"/><rect x="20" y="24" width="1" height="1"/><rect x="24" y="24" width="2" height="1"/><rect x="2" y="25" width="1" height="1"/><rect x="8" y="25" width="1" height="1"/><rect x="11" y="25" width="1" height="1"/><rect x="13" y="25" width="1" height="1"/><rect x="15" y="25" width="1" height="1"/><rect x="19" y="25" width="2" height="1"/><rect x="23" y="25" width="3" height="1"/><rect x="2" y="26" width="7" height="1"/><rect x="10" y="26" width="1" height="1"/><rect x="14" y="26" width="2" height="1"/><rect x="20" y="26" width="2" height="1"/><rect x="23" y="26" width="4" height="1"/></g></svg></div>
+      <div>
+        <h3>Rather speak to someone?</h3>
+        <p>Scan the code, or tap the number. You will reach the branch — not a call centre.</p>
+        <a class="tel" href="tel:+18686785921">(868) 678&#8209;5921</a>
+        <div class="row">
+          <a class="btn" href="tel:+18686785921">Call the branch</a>
+          <a class="btn line" href="https://wa.me/18686785921" target="_blank" rel="noopener">WhatsApp us</a>
+        </div>
+      </div>
+    </div>
+    <div class="orline">or</div>
+    <div class="callbox">
+      <div class="qr" style="display:grid;place-items:center;background:var(--deep);border-color:var(--deep)">
+        <span style="font-family:var(--disp);font-weight:900;font-size:44px;color:#F6EFE6;line-height:1;text-align:center">4<br>
+          <span style="font-size:13px;letter-spacing:.16em">MINUTES</span></span>
+      </div>
+      <div>
+        <h3>Start the review right now</h3>
+        <p>Plain questions on your phone. No policy number needed — if you do not know it, we find it.
+        You will have a reference and an access code before you put the phone down.</p>
+        <div class="row">
+          <a class="btn" href="review.html?from=client" id="startB">Start my free review →</a>
+          <a class="btn line" href="index.html">What if I have no agent at all?</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <div class="band">
   <div class="wrap">
     <h2>Four minutes.<br><em>Then somebody is responsible for you.</em></h2>
@@ -221,6 +314,26 @@
 </div></div>
 
 <script>
+/* An agent shares .../how-we-work?a=Fawaaz — so every route into the review
+   carries who sent them, and the branch knows whose introduction it was. */
+(function(){
+  var P = new URLSearchParams(location.search);
+  var agent = (P.get('a') || P.get('agent') || '').trim().slice(0, 60);
+  if (agent) {
+    var bar = document.getElementById('abar');
+    document.getElementById('aname').textContent = agent;
+    bar.classList.add('on');
+    var q = 'from=agent&agentname=' + encodeURIComponent(agent);
+    var em = (P.get('ae') || '').trim();
+    if (em) q += '&agentemail=' + encodeURIComponent(em);
+    var k = (P.get('k') || '').trim();
+    if (k) q += '&k=' + encodeURIComponent(k);
+    document.querySelectorAll('a[href^="review.html"]').forEach(function (a) {
+      a.setAttribute('href', 'review.html?' + q);
+    });
+    try { sessionStorage.setItem('dhaa-agent', agent); } catch (e) {}
+  }
+})();
 (function(){
   var v=document.getElementById('v'), c=document.getElementById('vc');
   if(!v||!c) return;
