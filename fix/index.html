@@ -72,10 +72,11 @@ is live and safe, and touches nothing the branch uses.</p>
 
 <section style="margin-top:32px">
 <div class="warn">
-<h3>Do not paste this over the live form yet</h3>
-<p>The fact find is in daily use. Put this on a <b>branch</b> in
-<code>fact-find-analyzer</code>, let Netlify build a preview, and test the preview. Only
-merge once you have opened a real case on it.</p>
+<h3>The folder has to hold the whole site</h3>
+<p>factfind360.com is not built from a repository. It is a folder dragged onto Netlify, and
+a new drag <b>replaces every file on the site</b> &mdash; so anything left out of the folder
+is deleted. Send up all four files together, and test on a throwaway site before you touch
+the live one.</p>
 </div>
 
 <p class="eyebrow">What is repaired</p>
@@ -114,27 +115,30 @@ appointment.</p></div>
 
 <section>
 <p class="eyebrow">Getting it in</p>
-<h2>Five steps, in a browser</h2>
+<h2>Four steps, in a browser</h2>
 
-<div class="st"><div class="n">1</div><div><h3>Download it above</h3>
-<p>Keep the filename exactly <code>FFPROJECT.html</code>.</p></div></div>
+<div class="st"><div class="n">1</div><div><h3>Download it above, then rename it</h3>
+<p>It arrives as <code>FFPROJECT.html</code>. Rename it to <code>ffproject.html</code>
+&mdash; <b>all lowercase</b>. The live address is factfind360.com/ffproject; send it up with
+capitals and every link an advisor already has stops working.</p></div></div>
 
-<div class="st"><div class="n">2</div><div><h3>Open the repo</h3>
-<p><b>github.com/RickyRampersad/fact-find-analyzer</b> &rarr; <b>Add file</b> &rarr;
-<b>Upload files</b>.</p></div></div>
+<div class="st"><div class="n">2</div><div><h3>Build the folder &mdash; all four files</h3>
+<p>One folder holding the renamed <code>ffproject.html</code> and today&rsquo;s
+<code>index.html</code>, <code>walkthrough.html</code> and
+<code>tour-poster-v19.jpg</code>. A drag replaces the whole site, so anything missing from
+the folder is deleted from the site.</p></div></div>
 
-<div class="st"><div class="n">3</div><div><h3>Drag it in &mdash; and commit to a NEW branch</h3>
-<p>At the bottom choose <b>Create a new branch for this commit</b>. Call it
-<code>fixed-fact-find</code>. <b>Not main.</b></p></div></div>
+<div class="st"><div class="n">3</div><div><h3>Test it on a throwaway site first</h3>
+<p>Drag the folder onto <b>app.netlify.com/drop</b>. That publishes a separate site at a
+random address and touches nothing live. Open a real case on it &mdash; put a replacement
+through, print the pack, check the compliance panel &mdash; and click the walkthrough link
+on the home page to confirm nothing is missing.</p></div></div>
 
-<div class="st"><div class="n">4</div><div><h3>Let Netlify build the preview</h3>
-<p>It will produce a URL like
-<code>deploy-preview-1--factfinds.netlify.app</code>. Open a real case on it &mdash; put a
-replacement through, print the pack, check the addendum.</p></div></div>
-
-<div class="st"><div class="n">5</div><div><h3>Only then, merge</h3>
-<p>Open the pull request GitHub offers and merge it. Netlify rebuilds the live site and
-every advisor has the fixed form on their next reload.</p></div></div>
+<div class="st"><div class="n">4</div><div><h3>Then put it live</h3>
+<p><b>app.netlify.com</b> &rarr; the factfind360 site &rarr; <b>Deploys</b> &rarr; drag the
+same folder onto the drop box at the bottom. If anything looks wrong afterwards, open the
+previous deploy in that list and press <b>Publish deploy</b> to put it straight
+back.</p></div></div>
 </section>
 
 <footer><b>Ricky Rampersad Branch</b><br>
