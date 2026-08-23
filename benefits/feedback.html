@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Feedback — Ricky Rampersad Branch</title>
+<style>
+  :root{--navy:#0B3C46;--navy2:#04252C;--blue:#0E8FA3;--aqua:#16A5BB;--gold:#F08A24;--gold2:#FFB558;
+        --surface:#ffffff;--line:#dde3ea;--slate:#5a6a7a;--ok:#3d8b4f;--stop:#b23a3a;--wash:#f2f7f8}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Georgia,'Times New Roman',serif;color:#1c2733;
+       background:radial-gradient(120% 130% at 50% -10%,#11525F 0%,var(--navy) 50%,var(--navy2) 100%);
+       min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.2rem}
+  .card{background:var(--surface);border-radius:16px;box-shadow:0 20px 60px rgba(0,10,20,.4);
+        width:min(480px,100%);padding:2rem 1.7rem;text-align:center}
+  h1{font-size:1.45rem;color:var(--navy);margin:.8rem 0 .2rem}
+  .sub{color:var(--slate);font-size:.95rem;margin:0 0 1.2rem}
+  form{text-align:left;display:flex;flex-direction:column;gap:.75rem}
+  label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--slate);display:block;margin-bottom:.25rem}
+  .inp{width:100%;padding:.65rem .8rem;border:1.5px solid var(--line);border-radius:8px;font:inherit;font-size:15px;background:#fff}
+  .inp:focus{outline:none;border-color:var(--aqua)}
+  textarea.inp{min-height:110px;resize:vertical}
+  button{margin-top:.4rem;background:var(--gold);color:var(--navy2);border:0;border-radius:999px;
+         padding:.85rem;font:800 15px Georgia;letter-spacing:.05em;cursor:pointer;width:100%}
+  button:hover{filter:brightness(1.06)}
+  button:disabled{opacity:.55;cursor:default}
+  .msg{font-weight:700;font-size:.92rem;margin:.6rem 0 0;display:none}
+  .done{display:none;padding:1rem 0}
+  .done .ref{display:inline-block;background:#fdf3e3;border:1px solid var(--gold);border-radius:8px;
+             padding:.55rem 1.2rem;font-weight:800;font-size:1.05rem;letter-spacing:.04em;margin:.7rem 0}
+  .foot{margin-top:1.2rem;font-size:.75rem;color:var(--slate)}
+  a{color:var(--blue)}
+</style></head><body>
+<div class="card">
+  <svg width="76" height="76" viewBox="0 0 64 64" aria-label="Ricky Rampersad Branch">
+    <defs>
+      <linearGradient id="fN" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0D5361"/><stop offset="1" stop-color="#04252C"/></linearGradient>
+      <linearGradient id="fB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16A5BB"/><stop offset="1" stop-color="#086274"/></linearGradient>
+      <linearGradient id="fG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFB558"/><stop offset="1" stop-color="#DE6F0E"/></linearGradient>
+    </defs>
+    <path d="M32 4 L56 12.5 V30 C56 45.5 46 56.5 32 61 C18 56.5 8 45.5 8 30 V12.5 Z" fill="url(#fN)"/>
+    <path d="M32 9.5 L50.7 16.2 V30 C50.7 42.4 42.5 51.6 32 55.5 C21.5 51.6 13.3 42.4 13.3 30 V16.2 Z" fill="url(#fB)" stroke="#F08A24" stroke-width="1.1"/>
+    <g fill="#BDEBEA"><circle cx="22.3" cy="26.8" r="3.3"/><path d="M17.1 42.6 v-1.9 a5.2 5.2 0 0 1 10.4 0 v1.9 Z"/><circle cx="41.7" cy="26.8" r="3.3"/><path d="M36.5 42.6 v-1.9 a5.2 5.2 0 0 1 10.4 0 v1.9 Z"/></g>
+    <g fill="url(#fG)"><circle cx="32" cy="25" r="4.8"/><path d="M24.2 46 v-2.7 a7.8 7.8 0 0 1 15.6 0 v2.7 Z"/></g>
+  </svg>
+  <h1>Tell us what you think</h1>
+  <p class="sub">Spotted a bug, something confusing, or have an idea to make this better?<br>It goes straight to the Branch Manager — and you'll get email updates until it's resolved.</p>
+
+  <form id="f">
+    <div><label for="name">Your name</label><input class="inp" id="name" required placeholder="Your name"></div>
+    <div><label for="email">Your email (for updates)</label><input class="inp" id="email" type="email" required placeholder="you@myguardiangroup.com"></div>
+    <div><label for="cat">Type</label>
+      <select class="inp" id="cat">
+        <option>Bug — something broke</option>
+        <option>Confusing — hard to use</option>
+        <option>Idea — make it better</option>
+        <option>Other</option>
+      </select></div>
+    <div><label for="msg">What happened / your suggestion</label>
+      <textarea class="inp" id="msg" required placeholder="The more detail the better — which screen, what you expected, what device…"></textarea></div>
+    <button id="send" type="submit">Send feedback</button>
+    <p class="msg" id="err" style="color:var(--stop)"></p>
+  </form>
+
+  <div class="done" id="done">
+    <p style="font-size:2.2rem;margin:.2rem 0">🎉</p>
+    <p style="font-weight:700;color:var(--navy);margin:.2rem 0">Thank you — it's with Ricky.</p>
+    <span class="ref" id="ref"></span>
+    <p class="sub" style="margin:.4rem 0 0">A confirmation email is on its way, and you'll get an update every few days until it's resolved.</p>
+    <p style="margin-top:1rem"><a href="/">← Back to the portal</a></p>
+  </div>
+
+  <p class="foot">Ricky Rampersad Branch · Employee Benefits · Guardian Life, Chaguanas</p>
+</div>
+<script>
+const WEBHOOK='https://script.google.com/macros/s/AKfycbxMuWSrsMPhvF4Al19q87S545ocCeI5VptX8lPoke7eNe__gomBx2vWsqZHTLJhryBbrw/exec';
+document.getElementById('f').addEventListener('submit',function(e){
+  e.preventDefault();
+  const name=document.getElementById('name').value.trim(),
+        email=document.getElementById('email').value.trim(),
+        cat=document.getElementById('cat').value,
+        msg=document.getElementById('msg').value.trim(),
+        err=document.getElementById('err');
+  if(!name||!msg||!/@/.test(email)){err.style.display='block';err.textContent='Please fill in your name, a valid email, and the message.';return;}
+  err.style.display='none';
+  const now=new Date();
+  const ref='FB-'+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0')+'-'+String(Date.now()).slice(-4);
+  document.getElementById('send').disabled=true;
+  try{
+    fetch(WEBHOOK,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({kind:'feedback',ref:ref,agent:name,email:email,category:cat,message:msg,via:'feedback-page'})}).catch(function(){});
+  }catch(ex){}
+  document.getElementById('f').style.display='none';
+  document.getElementById('ref').textContent=ref;
+  document.getElementById('done').style.display='block';
+});
+</script>
+</body></html>
