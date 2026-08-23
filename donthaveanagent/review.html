@@ -470,6 +470,13 @@ const INDIVIDUAL = [
 
   { id: "knowValue", label: "Do you know what your policy would pay, and to whom?", type: "yesnona" },
 
+  { id: "explainOk", label: "When you have asked about this policy, were you happy with the answer you got?",
+    type: "yesnona",
+    help: "If you have never had cause to ask, \"not sure\" is the right answer." },
+  { id: "explainWhat", label: "What were you not given a straight answer on?", type: "textarea",
+    showIf: { id: "explainOk", is: "No" }, flag: "service",
+    placeholder: "What you asked, and what you were told." },
+
   { id: "stillPaying", label: "Are you still paying premiums on it?", type: "choice",
     options: ["Yes", "No — it's paid up", "No — I stopped paying", "I'm not sure"] },
   { id: "stoppedWhy", label: "What happened with the premiums?", type: "textarea",
@@ -514,11 +521,33 @@ const INDIVIDUAL = [
     showIf: { id: "benKnows", not: "Yes" },
     help: "One page listing what exists, the numbers and who to call. You fill it in and give it to your family. Free whether or not we ever speak again." },
 
+  { id: "otherGuardian", label: "Do you or your spouse hold any other policies with this same company?",
+    type: "yesnona", flag: "records",
+    help: "People often have two or three with one insurer and only remember the one they still pay." },
+  { id: "otherGuardianWhat", label: "What else do you think is with them?", type: "text",
+    showIf: { id: "otherGuardian", not: "No" }, flag: "records",
+    placeholder: "A type, a number, roughly when — anything you remember." },
+
   { id: "otherPolicies", label: "Do you think there are other policies you've lost track of?", type: "yesnona",
     help: "Old work policies, something a parent took out for you, a policy from a company that has since been bought.",
     note: { kind: "tip", text: "<b>Worth asking.</b> Under section 197 of the Insurance Act 2018, money payable but unclaimed for seven years after maturity is reported to the Central Bank as unclaimed monies. A matured policy nobody told you about is exactly how that happens." } },
   { id: "otherPoliciesWhat", label: "Anything you remember about them", type: "textarea",
     showIf: { id: "otherPolicies", not: "No" }, placeholder: "A company name, roughly when, who arranged it — anything at all.", flag: "records" },
+
+  { id: "groupPlan", label: "Do you have life or health cover through your job?", type: "yesnona",
+    help: "A group scheme at work counts. It usually ends when the job does, which is worth knowing before it happens." },
+  { id: "groupEmployer", label: "Which employer is that through?", type: "text",
+    showIf: { id: "groupPlan", is: "Yes" } },
+
+  { id: "incomeProtection", label: "If illness or an accident stopped you working, have you arranged anything to replace your income?",
+    type: "yesnona" },
+
+  { id: "homeStatus", label: "Do you own your home?", type: "choice",
+    options: ["Own it outright", "Own it with a mortgage", "Renting", "Living with family"] },
+
+  { id: "hasWill", label: "Do you have a current, valid Will?", type: "choice",
+    options: ["Yes, and it's up to date", "Yes, but it's out of date", "No", "I'm not sure"],
+    note: { kind: "tip", text: "<b>A policy pays who is named on it, not who is named in a Will</b> — the two are separate, and both matter. Worth knowing which of yours is current." } },
 
   { id: "paperless", label: "Would you like documents by email rather than post?", type: "yesno", flag: "records" },
 
@@ -541,21 +570,24 @@ const INDIVIDUAL = [
   { id: "runway", label: "If you couldn't work tomorrow, how long could your household manage?", type: "choice", showIf: AGENT_ONLY,
     options: ["Less than a month", "1–3 months", "3–6 months", "6–12 months", "More than a year", "I'm not sure"] },
 
-  { id: "incomeProtection", label: "Have you made arrangements to replace your income if illness or accident stopped you working?",
-    type: "yesnona", showIf: AGENT_ONLY },
-
   { id: "medical", label: "Do you have medical or health insurance?", type: "choice", showIf: AGENT_ONLY,
     options: ["Yes — through this insurer", "Yes — with another company", "Only through my job", "No", "Not sure"] },
 
   { id: "retirement", label: "Do you have a pension or annuity beyond NIS?", type: "yesnona", showIf: AGENT_ONLY },
 
-  { id: "homeStatus", label: "Do you own your home?", type: "choice", showIf: AGENT_ONLY,
-    options: ["Own it outright", "Own it with a mortgage", "Renting", "Living with family"] },
   { id: "mortgageProtected", label: "Is the mortgage covered by life insurance, so your family keeps the house?",
     type: "yesnona", showIf: { id: "homeStatus", is: "Own it with a mortgage" } },
 
-  { id: "hasWill", label: "Do you have a current, valid Will?", type: "choice", showIf: AGENT_ONLY,
-    options: ["Yes, and it's up to date", "Yes, but it's out of date", "No", "I'm not sure"] },
+  { id: "referral", label: "Is there a friend or relative we may be of service to?", type: "yesnona",
+    showIf: AGENT_ONLY, flag: "lead",
+    help: "Only if you'd genuinely want them looked after. Nobody is called without your say-so." },
+  { id: "referralWho", label: "Who should we look after?", type: "text", showIf: { id: "referral", is: "Yes" },
+    flag: "lead", placeholder: "A name and a number is enough." },
+
+  { id: "career", label: "Do you know anyone who might be interested in a career in life insurance?",
+    type: "yesnona", showIf: AGENT_ONLY, flag: "lead" },
+  { id: "careerWho", label: "Who should we speak to?", type: "text", showIf: { id: "career", is: "Yes" },
+    flag: "lead", placeholder: "A name and a number is enough." },
 
   { id: "wantAnalysis", label: "Would you like a free needs analysis alongside the review?", type: "yesno",
     showIf: AGENT_ONLY, flag: "lead",
@@ -579,6 +611,10 @@ const INDIVIDUAL = [
 /* ── the agent ─────────────────────────────────────────────────────── */
 { step: "Your agent", title: "Who should look after you from here?",
   blurb: "Your choice, and every option is free — agents are paid by the insurer, never by you." },
+
+  { id: "contactFreq", label: "How often would you like your agent to check in with you?", type: "choice",
+    options: ["Every 3 months", "Every 6 months", "Once a year", "Only when I get in touch"],
+    help: "This is written into the file, so whoever looks after you is held to it." },
 
   { id: "wantAgent", label: "How would you like to be looked after?", type: "choice", stack: true,
     options: [DIRECT_OPT, MATCHED_OPT,

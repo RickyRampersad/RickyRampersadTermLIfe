@@ -1848,14 +1848,26 @@ function paperAnswers_(body) {
 
   /* 9, 11 and 12 already use the form's own ids and need no translation. */
 
-  /* Which paper questions the review actually puts to the client. Stated
-     outright rather than inferred from an empty box, because a box can also
-     be empty when the client answered "I'm not sure" — question 4 does that
-     routinely, and reporting it as never asked would be a lie on a document
-     Customer Service acts on. */
-  var COVERED = [1, 2, 4, 5, 8, 9, 10, 11, 12, 17, 20];
-  var notAsked = PAPER_Q.map(function (q) { return q.n; })
-    .filter(function (n) { return COVERED.indexOf(n) < 0; });
+  /* Which review question answers each printed question. Read off the
+     submission rather than hardcoded, because the review is not one fixed
+     set: a client who arrives on their own is never asked the referral and
+     recruitment questions, while an agent-sent link asks the lot.
+
+     A number counts as asked when its SOURCE is present — not when a box
+     ends up ticked. "I'm not sure" is a real answer that ticks nothing, and
+     question 4 draws it constantly; reporting that as never asked would be
+     a lie on a document Customer Service acts on. */
+  var SOURCE = {
+    1: 'satisfaction',  2: 'understand',    3: 'explainOk',        4: 'stillPaying',
+    5: 'unresolved',    6: 'contactFreq',   7: 'otherGuardian',    8: 'otherPolicies',
+    9: 'nameAddrOk',   10: 'dobOk',        11: 'beneficiaryOk',   12: 'benKnows',
+    13: 'hasWill',     14: 'groupPlan',    15: 'incomeProtection', 16: 'homeStatus',
+    17: 'lastContact', 18: 'referral',     19: 'career',          20: 'questionsFor'
+  };
+  var notAsked = PAPER_Q.map(function (q) { return q.n; }).filter(function (n) {
+    var id = SOURCE[n];
+    return !id || r[id] === undefined || String(r[id]) === '';
+  });
   return { a: a, r: r, notAsked: notAsked };
 }
 
