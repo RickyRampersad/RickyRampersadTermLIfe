@@ -284,7 +284,7 @@
 (function(){
   "use strict";
 
-  var ENDPOINT = 'https://script.google.com/macros/s/AKfycbyUnSnQtumx9emW_LsWQf6QKZFBGGnaTn3-PfAZDfjtZuBUSha-OuIXPT30qkMrXMoczA/exec';
+  var ENDPOINT = 'https://script.google.com/macros/s/AKfycbzfRo6pS2l8s9GN-E9_aSqshqMs_C2WyWEtaRePPwD0y8o2ttz7zcRE9CEw4OScORX1/exec';
   var PAGE     = 'https://rickyrampersadbranch.com/meet/';
   var AGENT    = 'A10024';
   var ADVISOR  = 'Premchand Dookran';
@@ -389,8 +389,11 @@
   }
 
   /* ── The board ─────────────────────────────────────────────────────────
-     In production this comes from action=board. Here it is sample data so the
-     agents can see the shape of it before it is built. */
+     Live, from action=board. JSONP rather than fetch because Apps Script sends
+     no CORS headers, and a <script> tag has never needed them. The sample list
+     below is what shows while the real one is in flight, and what falls back if
+     the call fails — a board that goes blank on a bad signal is worse than one
+     that is briefly out of date. */
   var STAGES = ['Sent','Opened','Watched','Picked','Booked'];
   var P = [
     { n:'Anisa Mohammed', t:'2 days ago', s:3, booked:false,
@@ -460,18 +463,7 @@
       : '<div class="card" style="text-align:center;color:var(--muted)">Nothing here.</div>';
   }
 
-  // Counts come off the data, so they cannot drift from what the tab actually shows.
-  Array.prototype.forEach.call(document.querySelectorAll('.tab'), function(t){
-    var n = P.filter(function(p){ return match(p, t.dataset.f); }).length;
-    t.textContent = t.textContent + ' (' + n + ')';
-  });
-
-  // The headline numbers, likewise.
-  var el;
-  if ((el = document.getElementById('kSent')))  el.textContent = P.length;
-  if ((el = document.getElementById('kOpen')))  el.textContent = P.filter(function(p){ return p.s >= 1; }).length;
-  if ((el = document.getElementById('kWatch'))) el.textContent = P.filter(function(p){ return p.s >= 2; }).length;
-  if ((el = document.getElementById('kBook')))  el.textContent = P.filter(function(p){ return p.booked; }).length;
+  recount();
   document.getElementById('tabs').addEventListener('click', function(e){
     var b = e.target.closest('.tab'); if (!b) return;
     Array.prototype.forEach.call(this.querySelectorAll('.tab'), function(t){
@@ -480,5 +472,60 @@
     draw(b.dataset.f);
   });
   draw('todo');
+
+  /* ── Live prospects ────────────────────────────────────────────────────
+     Replaces the sample list the moment the real one lands, then redraws
+     whichever tab is open. */
+  (function live(){
+    var cb = 'rrbBoard' + Date.now();
+    var done = false;
+
+    window[cb] = function(data){
+      done = true;
+      cleanup();
+      if (!data || !data.prospects) return;
+      P = data.prospects.map(function(x){
+        return { n: x.n || 'Someone', t: x.t || '', s: Number(x.s) || 0,
+                 booked: !!x.booked, wants: x.wants || [], todo: x.todo || '',
+                 fb: x.fb || '', phone: x.phone || '' };
+      });
+      var open = document.querySelector('.tab[aria-pressed="true"]');
+      recount();
+      draw(open ? open.dataset.f : 'todo');
+      var note = document.querySelector('.note');
+      if (note) note.innerHTML = 'Live &mdash; ' + P.length +
+        ' prospect' + (P.length === 1 ? '' : 's') + ' on your board.<br><b>' +
+        'Ricky Rampersad Branch</b>';
+    };
+
+    function cleanup(){
+      var s = document.getElementById(cb);
+      if (s && s.parentNode) s.parentNode.removeChild(s);
+      try { delete window[cb]; } catch(e){ window[cb] = undefined; }
+    }
+
+    var s = document.createElement('script');
+    s.id = cb;
+    s.src = ENDPOINT + '?action=board&a=' + encodeURIComponent(AGENT) +
+            '&callback=' + cb;
+    s.onerror = cleanup;
+    document.head.appendChild(s);
+    // If it never answers, keep the sample board rather than an empty screen.
+    setTimeout(function(){ if (!done) cleanup(); }, 12000);
+  })();
+
+  /* Tab counts and headline figures are derived, so they follow the data
+     whether it is the sample set or the live one. */
+  function recount(){
+    Array.prototype.forEach.call(document.querySelectorAll('.tab'), function(t){
+      var n = P.filter(function(p){ return match(p, t.dataset.f); }).length;
+      t.textContent = t.textContent.replace(/\s*\(\d+\)\s*$/, '') + ' (' + n + ')';
+    });
+    var el;
+    if ((el = document.getElementById('kSent')))  el.textContent = P.length;
+    if ((el = document.getElementById('kOpen')))  el.textContent = P.filter(function(p){ return p.s >= 1; }).length;
+    if ((el = document.getElementById('kWatch'))) el.textContent = P.filter(function(p){ return p.s >= 2; }).length;
+    if ((el = document.getElementById('kBook')))  el.textContent = P.filter(function(p){ return p.booked; }).length;
+  }
 })();
 </script>
