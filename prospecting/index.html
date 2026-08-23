@@ -290,11 +290,14 @@
   var ADVISOR  = 'Premchand Dookran';
   var FIRST    = ADVISOR.split(' ')[0];
 
-  // The advisor's own record, shown on their page. Only put real figures here —
-  // it appears under their name in front of a client. Leave either blank and
-  // the page simply does not show the strip.
-  var YEARS    = '11';
-  var FAMILIES = '148';
+  // The advisor's own record, shown on their page. Blank until somebody who
+  // knows the real figures types them — "148 families advised" was a number I
+  // invented to show the design, and it was sitting live under a real
+  // advisor's name. A client who finds out one of these is inflated has
+  // learned something about the whole branch. Fill both in and the strip
+  // reappears; leave either empty and the page simply does not show it.
+  var YEARS    = '';
+  var FAMILIES = '';
 
   function esc(s){ return String(s).replace(/[&<>"]/g, function(c){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }

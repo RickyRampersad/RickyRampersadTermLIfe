@@ -398,6 +398,52 @@
   $('opts').addEventListener('change', render);
   render();
 
+  /* ── Live prospecting ──────────────────────────────────────────────────
+     The fact find half of this dash still runs on sample data, but the
+     prospecting half does not have to — that endpoint is deployed and
+     answering. JSONP for the same reason the board uses it: Apps Script
+     sends no CORS headers, and a script tag has never needed them.
+
+     If the call fails the sample numbers stay put. A dash that goes blank
+     at five o'clock is worse than one that is briefly out of date, and the
+     figures are labelled either way. */
+  (function liveProspecting(){
+    var ENDPOINT = 'https://script.google.com/macros/s/' +
+      'AKfycbzfRo6pS2l8s9GN-E9_aSqshqMs_C2WyWEtaRePPwD0y8o2ttz7zcRE9CEw4OScORX1/exec';
+    var cb = 'rrbDash' + Date.now();
+    var done = false;
+
+    window[cb] = function(data){
+      done = true; cleanup();
+      var rows = (data && data.prospects) || [];
+      if (!rows.length) return;               // nothing sent yet — keep the sample
+      DATA.prospect = {
+        sent:    rows.length,
+        opened:  rows.filter(function(p){ return Number(p.s) >= 1; }).length,
+        watched: rows.filter(function(p){ return Number(p.s) >= 2; }).length,
+        booked:  rows.filter(function(p){ return p.booked; }).length
+      };
+      render();
+      var note = document.querySelector('.note');
+      if (note) note.innerHTML = 'Prospecting figures are live &middot; fact find ' +
+        'figures are still sample data.<br><b>Ricky Rampersad Branch</b>';
+    };
+
+    function cleanup(){
+      var s = document.getElementById(cb);
+      if (s && s.parentNode) s.parentNode.removeChild(s);
+      try { delete window[cb]; } catch(e){ window[cb] = undefined; }
+    }
+
+    var s = document.createElement('script');
+    s.id = cb;
+    // No agent code: the branch manager's dash counts the whole branch.
+    s.src = ENDPOINT + '?action=board&callback=' + cb;
+    s.onerror = cleanup;
+    document.head.appendChild(s);
+    setTimeout(function(){ if (!done) cleanup(); }, 12000);
+  })();
+
   $('copy').addEventListener('click', function(){
     var b = this;
     navigator.clipboard.writeText(build()).then(function(){
