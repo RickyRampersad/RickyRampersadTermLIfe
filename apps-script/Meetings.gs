@@ -1826,6 +1826,12 @@ function importArchive(folderIds) {
     var url = f.getUrl();
     if (haveUrl[url]) { skipped++; continue; }
 
+    // Only meeting documents. A folder picks up spreadsheets, images and
+    // whatever else has been dropped in it over the years, and every one
+    // of those would otherwise be registered as a meeting that never
+    // happened.
+    if (!isMeetingDoc_(f)) { skipped++; continue; }
+
     var name = f.getName().replace(/\.(docx?|pdf)$/i, '');
     var date = dateFromName_(name) || f.getLastUpdated();
     var isAgenda = /agenda/i.test(name);
@@ -1866,6 +1872,16 @@ function importArchive(folderIds) {
 
   log_('import-archive', 'system', '', ids.join(', '), added + ' added, ' + skipped + ' already here');
   return { added: added, skipped: skipped };
+}
+
+/** Word documents, Google Docs and PDFs are meeting records. Anything
+ *  else in the folder is not. */
+function isMeetingDoc_(file) {
+  var mime = String(file.getMimeType() || '');
+  return mime === 'application/vnd.google-apps.document' ||
+         mime === 'application/pdf' ||
+         mime === 'application/msword' ||
+         mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 }
 
 /** Pull a date out of the branch's file names — they carry it in
