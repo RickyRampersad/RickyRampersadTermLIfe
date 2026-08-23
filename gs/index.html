@@ -1,0 +1,706 @@
+<title>Paste This Into Apps Script</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,600&family=Inter:wght@400;600;700;800&display=swap">
+<style>
+:root{--navy:#0B1836;--teal:#0D9488;--teal-lt:#2DD4BF;--gold:#F5B324;--good:#0E8A5F;
+ --paper:#fff;--ground:#F4F6FA;--sunk:#EEF2F8;--ink:#0F172A;--ink-2:#3F4A5C;
+ --muted:#69748A;--line:#DFE4EC;--shadow:0 1px 2px rgba(11,24,54,.06),0 12px 32px -14px rgba(11,24,54,.22)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#111A2E;--ground:#080D1A;
+ --sunk:#0D1526;--ink:#EAEEF6;--ink-2:#C3CBDA;--muted:#8B95A9;--line:#222C42;--teal:#2DD4BF;
+ --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 34px -16px rgba(0,0,0,.8)}}
+:root[data-theme="dark"]{--paper:#111A2E;--ground:#080D1A;--sunk:#0D1526;--ink:#EAEEF6;
+ --ink-2:#C3CBDA;--muted:#8B95A9;--line:#222C42;--teal:#2DD4BF;
+ --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 34px -16px rgba(0,0,0,.8)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+ font:16.5px/1.62 Inter,-apple-system,"Segoe UI",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:0 18px 70px}
+header{background:radial-gradient(660px 340px at 86% -18%,rgba(45,212,191,.20),transparent 60%),
+ var(--navy);color:#fff;padding:26px 18px 30px;margin-bottom:26px}
+.hin{max-width:724px;margin:0 auto}
+h1{font-family:Newsreader,Georgia,serif;font-size:clamp(29px,7vw,40px);font-weight:600;
+ line-height:1.14;letter-spacing:-.02em;margin:0 0 12px}
+header p{margin:0;font-size:16px;color:rgba(255,255,255,.76);line-height:1.6}
+h2{font-family:Newsreader,Georgia,serif;font-size:26px;font-weight:600;margin:0 0 6px;
+ letter-spacing:-.015em}
+.eyebrow{font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;
+ color:var(--teal);margin:0 0 9px}
+section{margin:0 0 38px}
+.big{position:sticky;top:14px;z-index:5;width:100%;border:0;border-radius:14px;
+ background:var(--good);color:#fff;font:800 19px Inter,sans-serif;padding:19px;
+ cursor:pointer;box-shadow:0 10px 26px -10px rgba(14,138,95,.85)}
+.big:hover{filter:brightness(1.06)}
+.big:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.big.done{background:var(--teal)}
+.note{font-size:13.5px;color:var(--muted);text-align:center;margin:10px 0 0}
+.st{display:grid;grid-template-columns:38px 1fr;gap:15px;padding:15px 0;
+ border-top:1px solid var(--line)}
+.st:first-of-type{border-top:0}
+.st .n{width:32px;height:32px;border-radius:50%;background:var(--navy);color:#fff;
+ font:800 14px/32px Inter,sans-serif;text-align:center}
+.st h3{margin:2px 0 4px;font-size:17px;font-weight:800;line-height:1.3}
+.st p{margin:0;font-size:15px;color:var(--ink-2);line-height:1.55}
+.st code{background:var(--sunk);border:1px solid var(--line);border-radius:5px;
+ padding:1px 6px;font:600 13.5px ui-monospace,SFMono-Regular,Menlo,monospace}
+.warn{background:rgba(245,179,36,.11);border:1.5px solid rgba(245,179,36,.4);
+ border-radius:14px;padding:17px 19px;margin:0 0 24px}
+.warn h3{margin:0 0 6px;font-size:16px;font-weight:800;color:#8A5A00}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .warn h3{color:var(--gold)}}
+:root[data-theme="dark"] .warn h3{color:var(--gold)}
+.warn p{margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.55}
+pre{background:var(--sunk);border:1px solid var(--line);border-radius:13px;padding:16px;
+ overflow:auto;max-height:460px;font:12.5px/1.62 ui-monospace,SFMono-Regular,Menlo,monospace;
+ color:var(--ink-2);margin:0}
+.meta{font-size:13px;color:var(--muted);margin:10px 0 0;text-align:center}
+.meta a{color:var(--teal)}
+footer{text-align:center;font-size:13px;color:var(--muted);padding:22px 0 0}
+</style>
+
+<header><div class="hin">
+<h1>Paste this into Apps Script</h1>
+<p>One file, one button, no chunks. This is the piece that makes every open, tap
+and booking on the prospecting link actually land somewhere.</p>
+</div></header>
+
+<div class="wrap">
+
+<button class="big" id="copy" type="button">Copy the whole file</button>
+<p class="note">567 lines &middot; copies in one go &middot; nothing to scroll</p>
+
+<section style="margin-top:30px">
+<div class="warn">
+<h3>Into a NEW project &mdash; not the fact find one</h3>
+<p>This file defines <code>doGet</code> and <code>doPost</code>, and Apps Script shares one
+global scope across every file in a project. Dropping it beside the fact find would silently
+replace its handlers and take the form down. A separate project also means nothing here can
+ever break the form.</p>
+</div>
+
+<p class="eyebrow">Five minutes</p>
+<h2>What to do</h2>
+
+<div class="st"><div class="n">1</div><div><h3>Make a new project</h3>
+<p>Go to <b>script.google.com</b> &rarr; <b>New project</b>. Name it
+&ldquo;RR Branch Prospecting&rdquo;.</p></div></div>
+
+<div class="st"><div class="n">2</div><div><h3>Paste over everything</h3>
+<p>Select all of the empty <code>Code.gs</code> and paste. Tap the green button above first
+&mdash; it copies the whole file in one action.</p></div></div>
+
+<div class="st"><div class="n">3</div><div><h3>Your sheet id is already in it</h3>
+<p>Line 28 already carries the fact find spreadsheet id, and the agent roster is read
+straight from the <b>Access</b> tab in that same file &mdash; so adding an agent is a row,
+never a code change. Nothing to edit.</p></div></div>
+
+<div class="st"><div class="n">4</div><div><h3>Run the self test</h3>
+<p>Pick <code>rrbSelfTest</code> from the function menu and press Run. It creates the tab,
+walks a test row through the whole journey, prints the result, then deletes it. Authorise it
+when Google asks.</p></div></div>
+
+<div class="st"><div class="n">5</div><div><h3>Already deployed? Push a new version</h3>
+<p><b>Deploy</b> &rarr; <b>Manage deployments</b> &rarr; the pencil icon &rarr; Version:
+<b>New version</b> &rarr; <b>Deploy</b>. That keeps the same <code>/exec</code> URL, so
+nothing needs rewiring. Editing the code alone does not change what the live URL serves
+&mdash; a deployment is pinned to a version.</p>
+<p style="margin-top:8px">First time deploying: <b>Deploy</b> &rarr; <b>New deployment</b>
+&rarr; <b>Web app</b>, Execute as <b>Me</b>, Access <b>Anyone</b>.</p></div></div>
+</section>
+
+<section>
+<p class="eyebrow">The file</p>
+<h2>RRB_Prospect.gs</h2>
+<pre id="code">/**
+ * RRB_Prospect.gs — the prospecting link, and everything it reports back.
+ * Ricky Rampersad Branch.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * PASTE THIS INTO A **NEW, SEPARATE** APPS SCRIPT PROJECT.
+ *
+ * Not into the fact find project. It defines doGet and doPost, and Apps Script
+ * shares one global scope across every .gs file in a project — dropping this
+ * next to the fact find would silently replace its handlers and take the whole
+ * form down. A separate project also means nothing here can ever break the form.
+ *
+ * Setup, once:
+ *   1. script.google.com → New project → name it &quot;RR Branch Prospecting&quot;
+ *   2. Paste this whole file over the empty Code.gs
+ *   3. Put your spreadsheet id in SHEET_ID below (it is the long string in the
+ *      spreadsheet URL between /d/ and /edit)
+ *   4. Deploy → New deployment → Web app
+ *        Execute as:      Me
+ *        Who has access:  Anyone
+ *   5. Copy the /exec URL it gives you and paste it into ENDPOINT in both
+ *      the prospect page and the workspace page.
+ *
+ * It writes to one tab called Prospects, and creates it on first use.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+var SHEET_ID  = &#x27;1iytBbnETQFRmkveDSxadjsAfN07aMTW9E2slcA5qaWI&#x27;;
+var TAB       = &#x27;Prospects&#x27;;
+var BRANCH    = &#x27;Ricky Rampersad Branch&#x27;;
+
+/* One row per link sent. Everything the prospect does afterwards updates that
+   same row, keyed on the token — so the board is a list of people, not a log
+   of events nobody can read. */
+var COLS = [
+  &#x27;Token&#x27;, &#x27;Agent&#x27;, &#x27;Advisor&#x27;, &#x27;Prospect&#x27;, &#x27;Phone&#x27;,
+  &#x27;Sent&#x27;, &#x27;First opened&#x27;, &#x27;Last seen&#x27;, &#x27;Opens&#x27;,
+  &#x27;Watched&#x27;, &#x27;Read to&#x27;, &#x27;Wants&#x27;,
+  &#x27;Booked&#x27;, &#x27;When&#x27;, &#x27;Time of day&#x27;, &#x27;Note&#x27;,
+  &#x27;Score&#x27;, &#x27;Feedback&#x27;, &#x27;Stage&#x27;, &#x27;Needs you&#x27;
+];
+
+var C = {};
+COLS.forEach(function (n, i) { C[n] = i + 1; });   // 1-based, for getRange
+
+
+/* ── Web app entry points ──────────────────────────────────────────────────
+   Beacons come in as GET because navigator.sendBeacon and no-cors fetch are
+   the only things that survive a page being closed mid-visit. Everything the
+   visitor deliberately submits comes in as POST. */
+
+function doGet(e) {
+  var p = (e &amp;&amp; e.parameter) || {};
+  try {
+    if (p.action === &#x27;track&#x27;) { rrbTrack_(p); return rrbPixel_(); }
+    if (p.action === &#x27;board&#x27;) { return rrbBoard_(p); }
+  } catch (err) {
+    rrbLogError_(&#x27;doGet&#x27;, err, p);
+  }
+  return ContentService.createTextOutput(&#x27;ok&#x27;);
+}
+
+function doPost(e) {
+  var p = (e &amp;&amp; e.parameter) || {};
+  try {
+    if (p.action === &#x27;link&#x27;)     { rrbLink_(p); }
+    else if (p.action === &#x27;book&#x27;)     { rrbBook_(p); }
+    else if (p.action === &#x27;feedback&#x27;) { rrbFeedback_(p); }
+  } catch (err) {
+    rrbLogError_(&#x27;doPost&#x27;, err, p);
+  }
+  return ContentService.createTextOutput(&#x27;ok&#x27;);
+}
+
+
+/* ── The sheet ─────────────────────────────────────────────────────────── */
+
+function rrbSheet_() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName(TAB);
+  if (!sh) {
+    sh = ss.insertSheet(TAB);
+    sh.getRange(1, 1, 1, COLS.length).setValues([COLS])
+      .setFontWeight(&#x27;bold&#x27;).setBackground(&#x27;#0B1836&#x27;).setFontColor(&#x27;#FFFFFF&#x27;);
+    sh.setFrozenRows(1);
+    sh.setColumnWidth(C[&#x27;Wants&#x27;], 280);
+    sh.setColumnWidth(C[&#x27;Needs you&#x27;], 320);
+    sh.setColumnWidth(C[&#x27;Feedback&#x27;], 260);
+  }
+  return sh;
+}
+
+/* Find the row for a token. Reading one column beats reading the whole sheet
+   once the branch has a few thousand prospects on it. */
+function rrbRow_(sh, token) {
+  if (!token) return 0;
+  var n = sh.getLastRow();
+  if (n &lt; 2) return 0;
+  var col = sh.getRange(2, C[&#x27;Token&#x27;], n - 1, 1).getValues();
+  for (var i = 0; i &lt; col.length; i++) {
+    if (String(col[i][0]) === String(token)) return i + 2;
+  }
+  return 0;
+}
+
+/* A token that arrives on a beacon before its row exists — a link forwarded on,
+   or a send that never finished writing — still deserves a row. Better a
+   prospect with a blank name than a visit nobody ever sees. */
+function rrbEnsureRow_(sh, p) {
+  var r = rrbRow_(sh, p.token);
+  if (r) return r;
+
+  var row = new Array(COLS.length).fill(&#x27;&#x27;);
+  row[C[&#x27;Token&#x27;]   - 1] = p.token || &#x27;&#x27;;
+  row[C[&#x27;Agent&#x27;]   - 1] = p.agent || p.a || &#x27;&#x27;;
+  row[C[&#x27;Advisor&#x27;] - 1] = p.advisor || p.n || &#x27;&#x27;;
+  row[C[&#x27;Prospect&#x27;]- 1] = p.name || &#x27;&#x27;;
+  row[C[&#x27;Phone&#x27;]   - 1] = rrbPhone_(p.phone || &#x27;&#x27;);
+  row[C[&#x27;Sent&#x27;]    - 1] = rrbWhen_(p.at);
+  row[C[&#x27;Opens&#x27;]   - 1] = 0;
+  row[C[&#x27;Stage&#x27;]   - 1] = &#x27;Sent&#x27;;
+  sh.appendRow(row);
+  return sh.getLastRow();
+}
+
+
+/* ── 1. The agent sends a link ─────────────────────────────────────────── */
+
+function rrbLink_(p) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var sh = rrbSheet_();
+    if (rrbRow_(sh, p.token)) return;     // already recorded; sending twice is fine
+    rrbEnsureRow_(sh, p);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
+/* ── 2. The prospect does something ────────────────────────────────────────
+   open · watch_start · watch_half · watch_end · read_25/50/75/100 ·
+   picked · want_go · booked · feedback_shown */
+
+function rrbTrack_(p) {
+  var ev = String(p.e || &#x27;&#x27;);
+  if (!ev) return;
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var sh = rrbSheet_();
+    var r  = rrbEnsureRow_(sh, { token: p.t, agent: p.a, advisor: p.n });
+    var now = new Date();
+
+    sh.getRange(r, C[&#x27;Last seen&#x27;]).setValue(now);
+
+    if (ev === &#x27;open&#x27;) {
+      if (!sh.getRange(r, C[&#x27;First opened&#x27;]).getValue()) {
+        sh.getRange(r, C[&#x27;First opened&#x27;]).setValue(now);
+        rrbNotify_(sh, r, &#x27;opened&#x27;);
+      }
+      var opens = Number(sh.getRange(r, C[&#x27;Opens&#x27;]).getValue() || 0);
+      sh.getRange(r, C[&#x27;Opens&#x27;]).setValue(opens + 1);
+    }
+
+    // How much of the film. Keep the furthest point reached, never go backwards.
+    var watch = { watch_start: &#x27;Started&#x27;, watch_half: &#x27;Half&#x27;, watch_end: &#x27;All of it&#x27; };
+    if (watch[ev]) {
+      var rank = { &#x27;&#x27;: 0, &#x27;Started&#x27;: 1, &#x27;Half&#x27;: 2, &#x27;All of it&#x27;: 3 };
+      var had  = String(sh.getRange(r, C[&#x27;Watched&#x27;]).getValue() || &#x27;&#x27;);
+      if ((rank[watch[ev]] || 0) &gt; (rank[had] || 0)) {
+        sh.getRange(r, C[&#x27;Watched&#x27;]).setValue(watch[ev]);
+      }
+    }
+
+    if (ev.indexOf(&#x27;read_&#x27;) === 0) {
+      var pc  = Number(ev.slice(5)) || 0;
+      var was = Number(String(sh.getRange(r, C[&#x27;Read to&#x27;]).getValue() || &#x27;0&#x27;).replace(&#x27;%&#x27;, &#x27;&#x27;));
+      if (pc &gt; was) sh.getRange(r, C[&#x27;Read to&#x27;]).setValue(pc + &#x27;%&#x27;);
+    }
+
+    // What they tapped. This is the single most useful thing on the row: it
+    // arrives whether or not they ever fill the booking form in.
+    if ((ev === &#x27;picked&#x27; || ev === &#x27;want_go&#x27; || ev === &#x27;booked&#x27;) &amp;&amp; p.v) {
+      var wants = String(p.v).split(&#x27;|&#x27;).map(function (s) { return s.trim(); })
+                    .filter(Boolean).join(&#x27;, &#x27;);
+      var before = String(sh.getRange(r, C[&#x27;Wants&#x27;]).getValue() || &#x27;&#x27;);
+      sh.getRange(r, C[&#x27;Wants&#x27;]).setValue(wants);
+      if (wants &amp;&amp; wants !== before) rrbNotify_(sh, r, &#x27;picked&#x27;);
+    }
+
+    rrbRestage_(sh, r);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
+/* ── 3. The prospect books ─────────────────────────────────────────────── */
+
+function rrbBook_(p) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var sh = rrbSheet_();
+    var r  = rrbEnsureRow_(sh, p);
+
+    if (p.name)  sh.getRange(r, C[&#x27;Prospect&#x27;]).setValue(p.name);
+    if (p.phone) sh.getRange(r, C[&#x27;Phone&#x27;]).setValue(rrbPhone_(p.phone));
+    if (p.wants) {
+      sh.getRange(r, C[&#x27;Wants&#x27;]).setValue(
+        String(p.wants).split(&#x27;|&#x27;).map(function (s) { return s.trim(); })
+          .filter(Boolean).join(&#x27;, &#x27;));
+    }
+    sh.getRange(r, C[&#x27;Booked&#x27;]).setValue(rrbWhen_(p.at));
+    sh.getRange(r, C[&#x27;When&#x27;]).setValue(p.when || &#x27;&#x27;);
+    sh.getRange(r, C[&#x27;Time of day&#x27;]).setValue(p.tod || &#x27;&#x27;);
+    sh.getRange(r, C[&#x27;Note&#x27;]).setValue(p.note || &#x27;&#x27;);
+    sh.getRange(r, C[&#x27;Last seen&#x27;]).setValue(new Date());
+
+    rrbRestage_(sh, r);
+    rrbNotify_(sh, r, &#x27;booked&#x27;);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
+/* ── 4. The prospect gives feedback ────────────────────────────────────────
+   Sent twice by the page: once the moment a face is tapped, and again if they
+   write a line. The second call carries both, so the later one simply wins. */
+
+function rrbFeedback_(p) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var sh = rrbSheet_();
+    var r  = rrbEnsureRow_(sh, p);
+
+    var faces = { &#x27;3&#x27;: &#x27;Yes — clear&#x27;, &#x27;2&#x27;: &#x27;Somewhat&#x27;, &#x27;1&#x27;: &#x27;Not really&#x27; };
+    if (p.score) sh.getRange(r, C[&#x27;Score&#x27;]).setValue(faces[String(p.score)] || p.score);
+    if (p.text)  sh.getRange(r, C[&#x27;Feedback&#x27;]).setValue(p.text);
+    sh.getRange(r, C[&#x27;Last seen&#x27;]).setValue(new Date());
+
+    rrbRestage_(sh, r);
+    if (p.text) rrbNotify_(sh, r, &#x27;feedback&#x27;);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
+/* ── Stage, and what to do about it ────────────────────────────────────────
+   The stage is derived, never stored by the page — so a beacon that arrives
+   out of order cannot push somebody backwards. &quot;Needs you&quot; is the column the
+   agent actually works from: it says who to ring and why, in a sentence. */
+
+function rrbRestage_(sh, r) {
+  var v = sh.getRange(r, 1, 1, COLS.length).getValues()[0];
+  function g(n) { return v[C[n] - 1]; }
+
+  var booked  = !!g(&#x27;Booked&#x27;);
+  var wants   = String(g(&#x27;Wants&#x27;) || &#x27;&#x27;);
+  var watched = String(g(&#x27;Watched&#x27;) || &#x27;&#x27;);
+  var opened  = !!g(&#x27;First opened&#x27;);
+
+  var stage = booked ? &#x27;Booked&#x27;
+            : wants  ? &#x27;Picked&#x27;
+            : watched ? &#x27;Watched&#x27;
+            : opened ? &#x27;Opened&#x27;
+            : &#x27;Sent&#x27;;
+  sh.getRange(r, C[&#x27;Stage&#x27;]).setValue(stage);
+
+  var name  = String(g(&#x27;Prospect&#x27;) || &#x27;They&#x27;).split(&#x27; &#x27;)[0] || &#x27;They&#x27;;
+  var since = rrbDaysSince_(g(&#x27;Last seen&#x27;) || g(&#x27;Sent&#x27;));
+  var todo  = &#x27;&#x27;;
+
+  if (booked) {
+    todo = &#x27;&#x27;;
+  } else if (wants) {
+    todo = name + &#x27; told you what they want and did not book. Ring them — this is the &#x27; +
+           &#x27;warmest one on your list.&#x27;;
+  } else if (watched === &#x27;All of it&#x27;) {
+    todo = name + &#x27; watched the whole film and stopped. Ask them one question: what did &#x27; +
+           &#x27;you think?&#x27;;
+  } else if (watched) {
+    todo = name + &#x27; started the film and did not finish it. Send one line, not another link.&#x27;;
+  } else if (opened &amp;&amp; since &gt;= 3) {
+    todo = &#x27;Opened once, &#x27; + since + &#x27; days ago, nothing since. Try a different time of day.&#x27;;
+  } else if (!opened &amp;&amp; since &gt;= 4) {
+    todo = &#x27;Sent &#x27; + since + &#x27; days ago and never opened. Check the number, then call instead.&#x27;;
+  }
+
+  sh.getRange(r, C[&#x27;Needs you&#x27;]).setValue(todo);
+}
+
+
+/* ── Telling the advisor, while it is still worth knowing ──────────────────
+   Only the moments worth interrupting someone for. An &quot;opened&quot; mail on every
+   visit would be noise inside a week, so it goes once, on the first open. */
+
+function rrbNotify_(sh, r, kind) {
+  var v = sh.getRange(r, 1, 1, COLS.length).getValues()[0];
+  function g(n) { return v[C[n] - 1]; }
+
+  var who_ = rrbAgentEmail_(g(&#x27;Agent&#x27;), g(&#x27;Advisor&#x27;));
+  if (!who_ || !who_.to) return;
+
+  var who   = g(&#x27;Prospect&#x27;) || &#x27;Someone you sent the link to&#x27;;
+  var phone = g(&#x27;Phone&#x27;) || &#x27;&#x27;;
+  var wants = g(&#x27;Wants&#x27;) || &#x27;&#x27;;
+  var subj, body;
+
+  if (kind === &#x27;opened&#x27;) {
+    subj = who + &#x27; opened your page&#x27;;
+    body = who + &#x27; just opened the link you sent.\n\nNothing to do yet — this is only so &#x27; +
+           &#x27;you know it landed.&#x27;;
+  } else if (kind === &#x27;picked&#x27;) {
+    subj = who + &#x27; said what they want to talk about&#x27;;
+    body = who + &#x27; tapped:\n\n  &#x27; + wants.split(&#x27;, &#x27;).join(&#x27;\n  &#x27;) +
+           &#x27;\n\nThey have not booked. That is the call to make today.&#x27; +
+           (phone ? &#x27;\n\n&#x27; + phone : &#x27;&#x27;);
+  } else if (kind === &#x27;booked&#x27;) {
+    subj = who + &#x27; booked you — &#x27; + (g(&#x27;When&#x27;) || &#x27;&#x27;) + &#x27;, &#x27; + (g(&#x27;Time of day&#x27;) || &#x27;&#x27;);
+    body = who + &#x27; booked a sit-down.\n\n&#x27; +
+           &#x27;WhatsApp:   &#x27; + phone + &#x27;\n&#x27; +
+           &#x27;When:       &#x27; + (g(&#x27;When&#x27;) || &#x27;&#x27;) + &#x27;, &#x27; + (g(&#x27;Time of day&#x27;) || &#x27;&#x27;) + &#x27;\n&#x27; +
+           (wants ? &#x27;Wants:      &#x27; + wants + &#x27;\n&#x27; : &#x27;&#x27;) +
+           (g(&#x27;Note&#x27;) ? &#x27;They said:  &#x27; + g(&#x27;Note&#x27;) + &#x27;\n&#x27; : &#x27;&#x27;) +
+           &#x27;\nConfirm the time with them before it goes cold.&#x27;;
+  } else if (kind === &#x27;feedback&#x27;) {
+    subj = who + &#x27; left feedback on your page&#x27;;
+    body = (g(&#x27;Score&#x27;) ? g(&#x27;Score&#x27;) + &#x27;\n\n&#x27; : &#x27;&#x27;) + &#x27;&quot;&#x27; + g(&#x27;Feedback&#x27;) + &#x27;&quot;&#x27;;
+  } else {
+    return;
+  }
+
+  try {
+    MailApp.sendEmail({
+      to: who_.to,
+      cc: who_.cc || &#x27;&#x27;,
+      subject: subj,
+      body: body + &#x27;\n\n—\n&#x27; + BRANCH
+    });
+  } catch (err) {
+    rrbLogError_(&#x27;notify&#x27;, err, { row: r, kind: kind });
+  }
+}
+
+/**
+ * Who to mail, read from the roster tab in the same spreadsheet — so adding an
+ * agent is a row, never a code change. The tab is found by its header rather
+ * than its name, because names get renamed and headers rarely do.
+ *
+ * Returns { to, cc } — the advisor, and their unit manager copied, so the
+ * direct manager sees what is happening on his own unit without being told.
+ */
+function rrbRoster_() {
+  var cache = CacheService.getScriptCache();
+  var hit = cache.get(&#x27;rrbRoster&#x27;);
+  if (hit) { try { return JSON.parse(hit); } catch (e) {} }
+
+  var map = { byCode: {}, unitLead: {} };
+  try {
+    var sheets = SpreadsheetApp.openById(SHEET_ID).getSheets();
+    for (var s = 0; s &lt; sheets.length; s++) {
+      var sh = sheets[s];
+      if (sh.getLastRow() &lt; 2) continue;
+      var head = sh.getRange(1, 1, 1, Math.min(12, sh.getLastColumn()))
+                   .getValues()[0].map(function (x) { return String(x).trim().toLowerCase(); });
+      var iEmail = head.indexOf(&#x27;email&#x27;),
+          iCode  = head.indexOf(&#x27;agent number&#x27;),
+          iName  = head.indexOf(&#x27;name&#x27;),
+          iRole  = head.indexOf(&#x27;role&#x27;),
+          iUnit  = head.indexOf(&#x27;unit&#x27;),
+          iLive  = head.indexOf(&#x27;active&#x27;);
+      if (iEmail &lt; 0 || iCode &lt; 0) continue;      // not the roster
+
+      var rows = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
+      rows.forEach(function (r) {
+        var code = String(r[iCode] || &#x27;&#x27;).trim();
+        var mail = String(r[iEmail] || &#x27;&#x27;).trim();
+        if (!code || !mail) return;
+        if (iLive &gt;= 0 &amp;&amp; String(r[iLive]).trim().toLowerCase() !== &#x27;active&#x27;) return;
+
+        var unit = iUnit &gt;= 0 ? String(r[iUnit] || &#x27;&#x27;).trim() : &#x27;&#x27;;
+        var role = iRole &gt;= 0 ? String(r[iRole] || &#x27;&#x27;).trim() : &#x27;&#x27;;
+        // &quot;A03522 - Premchand Dookran&quot; reads badly in an email subject line.
+        var name = iName &gt;= 0 ? String(r[iName] || &#x27;&#x27;).replace(/^A\d+\s*-\s*/, &#x27;&#x27;).trim() : &#x27;&#x27;;
+
+        map.byCode[code] = { email: mail, name: name, unit: unit };
+        // Whoever leads a unit is the person that unit is named after.
+        if (unit &amp;&amp; name &amp;&amp; unit.toLowerCase() === name.toLowerCase()) {
+          map.unitLead[unit] = mail;
+        }
+        if (/manager/i.test(role) &amp;&amp; unit &amp;&amp; !map.unitLead[unit]) {
+          map.unitLead[unit] = mail;
+        }
+      });
+      break;
+    }
+    cache.put(&#x27;rrbRoster&#x27;, JSON.stringify(map), 600);   // ten minutes
+  } catch (err) {
+    rrbLogError_(&#x27;roster&#x27;, err, {});
+  }
+  return map;
+}
+
+function rrbAgentEmail_(code, advisor) {
+  var r = rrbRoster_();
+  var a = r.byCode[String(code || &#x27;&#x27;).trim()];
+  if (!a) return null;
+  var lead = a.unit ? r.unitLead[a.unit] : &#x27;&#x27;;
+  return {
+    to: a.email,
+    cc: (lead &amp;&amp; lead.toLowerCase() !== a.email.toLowerCase()) ? lead : &#x27;&#x27;,
+    name: a.name || advisor || &#x27;&#x27;
+  };
+}
+
+
+/* ── The board the workspace reads ─────────────────────────────────────────
+   JSONP, because the workspace is served from factfind360.com and Apps Script
+   will not send CORS headers for a plain fetch. ?callback=fn wraps it. */
+
+function rrbBoard_(p) {
+  var agent = String(p.a || &#x27;&#x27;).trim();
+  var sh = rrbSheet_();
+  var n  = sh.getLastRow();
+  var out = [];
+
+  if (n &gt;= 2) {
+    var rows = sh.getRange(2, 1, n - 1, COLS.length).getValues();
+    var stages = { &#x27;Sent&#x27;: 0, &#x27;Opened&#x27;: 1, &#x27;Watched&#x27;: 2, &#x27;Picked&#x27;: 3, &#x27;Booked&#x27;: 4 };
+    rows.forEach(function (v) {
+      function g(name) { return v[C[name] - 1]; }
+      if (agent &amp;&amp; String(g(&#x27;Agent&#x27;)) !== agent) return;
+      out.push({
+        token:  g(&#x27;Token&#x27;),
+        n:      g(&#x27;Prospect&#x27;),
+        phone:  g(&#x27;Phone&#x27;),
+        t:      rrbAgo_(g(&#x27;Last seen&#x27;) || g(&#x27;Sent&#x27;)),
+        s:      stages[String(g(&#x27;Stage&#x27;))] || 0,
+        booked: !!g(&#x27;Booked&#x27;),
+        wants:  String(g(&#x27;Wants&#x27;) || &#x27;&#x27;).split(&#x27;, &#x27;).filter(Boolean),
+        todo:   g(&#x27;Needs you&#x27;),
+        fb:     g(&#x27;Feedback&#x27;) ? &#x27;&quot;&#x27; + g(&#x27;Feedback&#x27;) + &#x27;&quot;&#x27; : &#x27;&#x27;
+      });
+    });
+  }
+
+  var json = JSON.stringify({ agent: agent, prospects: out });
+  if (p.callback) {
+    return ContentService.createTextOutput(p.callback + &#x27;(&#x27; + json + &#x27;)&#x27;)
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return ContentService.createTextOutput(json)
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+
+/* ── Small helpers ─────────────────────────────────────────────────────── */
+
+function rrbPixel_() {
+  // sendBeacon does not read the reply, but something has to come back.
+  return ContentService.createTextOutput(&#x27;1&#x27;);
+}
+
+function rrbWhen_(iso) {
+  if (!iso) return new Date();
+  var d = new Date(iso);
+  return isNaN(d.getTime()) ? new Date() : d;
+}
+
+/* Trinidad numbers arrive typed however the agent types them. Store one shape
+   so the sheet sorts and the WhatsApp links work. */
+function rrbPhone_(s) {
+  var d = String(s || &#x27;&#x27;).replace(/\D/g, &#x27;&#x27;);
+  if (!d) return &#x27;&#x27;;
+  if (d.length === 11 &amp;&amp; d.indexOf(&#x27;1868&#x27;) === 0) d = d.slice(4);
+  else if (d.length === 10 &amp;&amp; d.indexOf(&#x27;868&#x27;) === 0) d = d.slice(3);
+  if (d.length === 7) return d.slice(0, 3) + &#x27;-&#x27; + d.slice(3);
+  return String(s).trim();
+}
+
+function rrbDaysSince_(d) {
+  if (!d) return 0;
+  var t = new Date(d).getTime();
+  if (isNaN(t)) return 0;
+  return Math.floor((Date.now() - t) / 86400000);
+}
+
+function rrbAgo_(d) {
+  if (!d) return &#x27;&#x27;;
+  var mins = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
+  if (isNaN(mins) || mins &lt; 0) return &#x27;&#x27;;
+  if (mins &lt; 60)   return mins &lt;= 1 ? &#x27;just now&#x27; : mins + &#x27; minutes ago&#x27;;
+  var hrs = Math.floor(mins / 60);
+  if (hrs &lt; 24)    return hrs === 1 ? &#x27;an hour ago&#x27; : hrs + &#x27; hours ago&#x27;;
+  var days = Math.floor(hrs / 24);
+  if (days === 1)  return &#x27;yesterday&#x27;;
+  if (days &lt; 7)    return days + &#x27; days ago&#x27;;
+  if (days &lt; 14)   return &#x27;a week ago&#x27;;
+  return Math.floor(days / 7) + &#x27; weeks ago&#x27;;
+}
+
+/* Nothing a visitor does should ever throw back at them, so every handler
+   swallows its errors — but they still have to land somewhere findable. */
+function rrbLogError_(where, err, p) {
+  try {
+    var ss = SpreadsheetApp.openById(SHEET_ID);
+    var sh = ss.getSheetByName(&#x27;Prospect errors&#x27;) || ss.insertSheet(&#x27;Prospect errors&#x27;);
+    if (sh.getLastRow() === 0) {
+      sh.appendRow([&#x27;When&#x27;, &#x27;Where&#x27;, &#x27;Error&#x27;, &#x27;Parameters&#x27;]);
+      sh.getRange(1, 1, 1, 4).setFontWeight(&#x27;bold&#x27;);
+    }
+    sh.appendRow([new Date(), where, String(err &amp;&amp; err.message || err),
+                  JSON.stringify(p || {}).slice(0, 500)]);
+  } catch (e) { /* nothing left to try */ }
+}
+
+
+/**
+ * Run this once from the editor after pasting, to prove the setup works.
+ * It creates the tab, writes a test row, walks it through the whole journey
+ * and then deletes it. Check the execution log for the result.
+ */
+function rrbSelfTest() {
+  if (SHEET_ID === &#x27;PUT_YOUR_SPREADSHEET_ID_HERE&#x27;) {
+    throw new Error(&#x27;Put your spreadsheet id in SHEET_ID at the top of this file first.&#x27;);
+  }
+  var t = &#x27;TEST&#x27; + Math.floor(Math.random() * 100000);
+
+  rrbLink_({ token: t, agent: &#x27;TEST&#x27;, advisor: &#x27;Self Test&#x27;, name: &#x27;Test Prospect&#x27;,
+             phone: &#x27;8681234567&#x27;, at: new Date().toISOString() });
+  rrbTrack_({ t: t, e: &#x27;open&#x27; });
+  rrbTrack_({ t: t, e: &#x27;watch_end&#x27; });
+  rrbTrack_({ t: t, e: &#x27;read_100&#x27; });
+  rrbTrack_({ t: t, e: &#x27;picked&#x27;, v: &#x27;The house and the mortgage | Retiring properly&#x27; });
+
+  var sh = rrbSheet_();
+  var r  = rrbRow_(sh, t);
+  var v  = sh.getRange(r, 1, 1, COLS.length).getValues()[0];
+
+  Logger.log(&#x27;Stage:     &#x27; + v[C[&#x27;Stage&#x27;] - 1]);
+  Logger.log(&#x27;Watched:   &#x27; + v[C[&#x27;Watched&#x27;] - 1]);
+  Logger.log(&#x27;Wants:     &#x27; + v[C[&#x27;Wants&#x27;] - 1]);
+  Logger.log(&#x27;Needs you: &#x27; + v[C[&#x27;Needs you&#x27;] - 1]);
+
+  sh.deleteRow(r);
+
+  var ros = rrbRoster_();
+  var n = Object.keys(ros.byCode).length;
+  Logger.log(&#x27;Roster:    &#x27; + n + &#x27; active agents, &#x27; +
+             Object.keys(ros.unitLead).length + &#x27; units&#x27;);
+  if (n) {
+    var first = Object.keys(ros.byCode)[0];
+    var e = rrbAgentEmail_(first, &#x27;&#x27;);
+    Logger.log(&#x27;Example:   &#x27; + first + &#x27; -&gt; &#x27; + e.to + (e.cc ? &#x27;  (cc &#x27; + e.cc + &#x27;)&#x27; : &#x27;&#x27;));
+  } else {
+    Logger.log(&#x27;Roster:    NOT FOUND — no tab with Email and Agent Number headers&#x27;);
+  }
+  Logger.log(&#x27;Test row removed. Setup is working.&#x27;);
+}
+</pre>
+<p class="meta">Or open the <a href="RRB_Prospect.gs.txt">raw file</a> and copy from there.</p>
+</section>
+
+<footer><b>Ricky Rampersad Branch</b></footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var btn = document.getElementById('copy');
+  var code = document.getElementById('code');
+  btn.addEventListener('click', function(){
+    var text = code.textContent;
+    function ok(){ btn.textContent = 'Copied \u2014 now paste it into Code.gs';
+                   btn.classList.add('done'); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(ok).catch(fallback);
+    } else { fallback(); }
+    function fallback(){
+      // Older mobile browsers: select the block so one long-press copies it all.
+      var r = document.createRange(); r.selectNodeContents(code);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      try { document.execCommand('copy'); ok(); }
+      catch(e){ btn.textContent = 'Selected \u2014 press Copy'; }
+    }
+  });
+})();
+</script>

@@ -1,0 +1,324 @@
+<title>Everything Built So Far</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600;6..72,700&family=Inter:wght@400;500;600;700;800&display=swap">
+
+<style>
+  :root{
+    --navy:#0B1836; --teal:#0D9488; --teal-lt:#2DD4BF; --gold:#F5B324;
+    --good:#0E8A5F; --warn:#B8791A; --crit:#C0392B;
+    --paper:#FFFFFF; --ground:#F4F6FA; --sunk:#EEF2F8;
+    --ink:#0F172A; --ink-2:#3F4A5C; --muted:#69748A; --faint:#98A2B3; --line:#DFE4EC;
+    --shadow:0 1px 2px rgba(11,24,54,.06), 0 12px 32px -14px rgba(11,24,54,.22);
+  }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+    --paper:#111A2E; --ground:#080D1A; --sunk:#0D1526;
+    --ink:#EAEEF6; --ink-2:#C3CBDA; --muted:#8B95A9; --faint:#6A7488;
+    --line:#222C42; --teal:#2DD4BF; --good:#34D399; --warn:#F5B324; --crit:#F87171;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 34px -16px rgba(0,0,0,.8); } }
+  :root[data-theme="dark"]{
+    --paper:#111A2E; --ground:#080D1A; --sunk:#0D1526;
+    --ink:#EAEEF6; --ink-2:#C3CBDA; --muted:#8B95A9; --faint:#6A7488;
+    --line:#222C42; --teal:#2DD4BF; --good:#34D399; --warn:#F5B324; --crit:#F87171;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 34px -16px rgba(0,0,0,.8); }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);
+    font:16.5px/1.62 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:820px;margin:0 auto;padding:0 18px 70px}
+  h2{font-family:Newsreader,Georgia,serif;font-size:clamp(24px,5vw,31px);font-weight:600;
+    letter-spacing:-.015em;margin:0 0 6px;line-height:1.2;text-wrap:balance}
+  .eyebrow{font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--teal);margin:0 0 9px}
+  .lede{font-size:16px;color:var(--ink-2);margin:0 0 22px;line-height:1.6}
+  section{margin:0 0 44px}
+  .rule{height:1px;background:var(--line);margin:0 0 34px}
+
+  header{background:radial-gradient(700px 380px at 86% -18%, rgba(45,212,191,.22), transparent 60%),
+      radial-gradient(560px 340px at 4% 112%, rgba(245,179,36,.13), transparent 58%),
+      var(--navy);color:#fff;padding:28px 18px 32px;margin-bottom:28px}
+  .hin{max-width:784px;margin:0 auto}
+  .stamp{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.16em;
+    text-transform:uppercase;background:var(--gold);color:#3D2A00;padding:5px 11px;
+    border-radius:6px;margin-bottom:16px}
+  header h1{font-family:Newsreader,Georgia,serif;font-size:clamp(31px,7.4vw,44px);
+    font-weight:600;line-height:1.12;letter-spacing:-.02em;margin:0 0 13px}
+  header p{margin:0;font-size:16.5px;color:rgba(255,255,255,.76);line-height:1.6}
+  .tally{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:22px}
+  .ty{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);
+    border-radius:12px;padding:13px 11px;text-align:center}
+  .ty b{display:block;font-family:Newsreader,Georgia,serif;font-size:27px;font-weight:600;
+    line-height:1;color:var(--teal-lt)}
+  .ty span{display:block;font-size:10.5px;font-weight:700;letter-spacing:.05em;
+    text-transform:uppercase;color:rgba(255,255,255,.6);margin-top:6px;line-height:1.3}
+
+  /* ── the three lanes ──────────────────────────────────────────────────── */
+  .lane{font-size:12px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--faint);margin:0 0 4px}
+  .thing{display:block;text-decoration:none;color:inherit;background:var(--paper);
+    border:1px solid var(--line);border-radius:16px;padding:19px 20px;margin-bottom:11px;
+    box-shadow:var(--shadow);transition:.15s}
+  .thing:hover{border-color:var(--teal);transform:translateY(-1px)}
+  .thing:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  .th{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+    flex-wrap:wrap;margin-bottom:5px}
+  .th h3{margin:0;font-size:19px;font-weight:800;line-height:1.25}
+  .thing p{margin:0;font-size:15px;color:var(--ink-2);line-height:1.55}
+  .url{display:block;font:600 12.5px ui-monospace,SFMono-Regular,Menlo,monospace;
+    color:var(--teal);margin-top:9px;word-break:break-all}
+  .pill{font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+    padding:4px 9px;border-radius:5px;white-space:nowrap;flex:none}
+  .pill.ok{background:rgba(14,138,95,.14);color:var(--good)}
+  .pill.part{background:rgba(184,121,26,.16);color:var(--warn)}
+  .pill.no{background:rgba(192,57,43,.13);color:var(--crit)}
+
+  /* films */
+  .films{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+  .fm{background:var(--paper);border:1px solid var(--line);border-radius:15px;
+    overflow:hidden;box-shadow:var(--shadow)}
+  .fm.send{border:2px solid var(--teal)}
+  .fmv{position:relative;aspect-ratio:16/9;background:#000}
+  .fmv video,.fmv img{width:100%;height:100%;display:block;object-fit:cover}
+  .fmp{position:absolute;inset:0;display:grid;place-items:center;border:0;width:100%;
+    height:100%;background:rgba(11,24,54,.32);cursor:pointer}
+  .fmp b{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.94);
+    display:grid;place-items:center;color:var(--navy);font-size:16px;padding-left:4px;
+    box-shadow:0 6px 20px rgba(0,0,0,.45)}
+  .fmp:focus-visible{outline:3px solid var(--gold);outline-offset:-3px}
+  .fmt{padding:13px 15px 15px}
+  .fmw{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.13em;
+    text-transform:uppercase;padding:3px 7px;border-radius:5px;margin-bottom:7px;
+    background:rgba(13,148,136,.14);color:var(--teal)}
+  .fm.own .fmw{background:rgba(11,24,54,.10);color:var(--ink-2)}
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .fm.own .fmw{
+    background:rgba(255,255,255,.09);color:#C3CBDA} }
+  :root[data-theme="dark"] .fm.own .fmw{background:rgba(255,255,255,.09);color:#C3CBDA}
+  .fmt h3{margin:0 0 4px;font-size:16px;font-weight:800;line-height:1.25}
+  .fmt p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.5}
+
+  /* music */
+  .mus{background:var(--paper);border:1px solid var(--line);border-radius:16px;
+    padding:19px 20px;box-shadow:var(--shadow)}
+  .mus audio{width:100%;margin-top:12px}
+  .spec{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:14px}
+  .spec div{background:var(--sunk);border-radius:10px;padding:10px 12px}
+  .spec b{display:block;font-size:10px;font-weight:800;letter-spacing:.09em;
+    text-transform:uppercase;color:var(--muted)}
+  .spec span{display:block;font-size:15px;font-weight:700;margin-top:3px}
+
+  /* outstanding */
+  .out{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--crit);
+    border-radius:0 13px 13px 0;padding:15px 18px;margin-bottom:10px;box-shadow:var(--shadow)}
+  .out h3{margin:0 0 4px;font-size:16.5px;font-weight:800;color:var(--crit)}
+  .out p{margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.55}
+  .out .me{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.09em;
+    text-transform:uppercase;background:rgba(13,148,136,.14);color:var(--teal);
+    padding:3px 8px;border-radius:5px;margin-left:8px;vertical-align:2px}
+  .out .you{background:rgba(184,121,26,.16);color:var(--warn)}
+
+  footer{text-align:center;font-size:13px;color:var(--muted);line-height:1.6;padding:26px 0 0}
+  @media (max-width:560px){ .tally{grid-template-columns:1fr 1fr} .films{grid-template-columns:1fr}
+    .spec{grid-template-columns:1fr} }
+</style>
+
+<header>
+  <div class="hin">
+    <div class="stamp">Draft &mdash; everything in one place</div>
+    <h1>What the branch has built</h1>
+    <p>Every piece, in the order a client meets it. Tap through them on your phone the way
+      an agent or a client would. Each one says honestly whether it actually works yet.</p>
+    <div class="tally">
+      <div class="ty"><b>5</b><span>pages live</span></div>
+      <div class="ty"><b>2</b><span>films</span></div>
+      <div class="ty"><b>11</b><span>process steps</span></div>
+      <div class="ty"><b>3</b><span>still to wire</span></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section>
+    <p class="lane">Start here</p>
+    <h2>The manual</h2>
+    <p class="lede">Everything below, written as instructions rather than as a demo.</p>
+
+    <a class="thing" href="https://rickyrampersadbranch.com/manual/">
+      <div class="th"><h3>The branch manual</h3><span class="pill ok">Live</span></div>
+      <p>Nine steps for advisors, five for managers, a page for the desk. Every link and
+        what it is for, every email and what it means, what to do when something breaks,
+        and the rules we set written down so nobody has to guess. Print it or send it.</p>
+      <span class="url">rickyrampersadbranch.com/manual/</span>
+    </a>
+  </section>
+
+  <div class="rule"></div>
+
+  <section>
+    <p class="lane">Lane one</p>
+    <h2>What the client sees</h2>
+    <p class="lede">They meet the branch here, before they meet anybody in it.</p>
+
+    <a class="thing" href="https://rickyrampersadbranch.com/meet/?a=A10024&n=Premchand+Dookran&c=Devon&y=11&f=148">
+      <div class="th"><h3>The prospecting link</h3><span class="pill ok">Live</span></div>
+      <p>Opens as <em>their advisor&rsquo;s</em> page &mdash; name, registration, record. The
+        film, then three taps that show them what their own family would need, then what is
+        actually on their mind, the seven-step process with real timings, the three documents
+        they will end up holding, and Apply or Book at the end.</p>
+      <span class="url">rickyrampersadbranch.com/meet/</span>
+    </a>
+
+    <a class="thing" href="https://rickyrampersadbranch.com/process/">
+      <div class="th"><h3>The process, written down</h3><span class="pill part">Draft</span></div>
+      <p>Eleven steps from first contact to the annual review, coloured by who is holding the
+        file. Two client signatures, one manager. This is the document to mark up before
+        anything else gets built.</p>
+      <span class="url">rickyrampersadbranch.com/process/</span>
+    </a>
+  </section>
+
+  <div class="rule"></div>
+
+  <section>
+    <p class="lane">Lane two</p>
+    <h2>What the advisor uses</h2>
+
+    <a class="thing" href="https://rickyrampersadbranch.com/prospecting/">
+      <div class="th"><h3>The prospecting board</h3><span class="pill part">Sample data</span></div>
+      <p>Both films, labelled by who they are for. A link builder that stamps their code into
+        every send and writes the WhatsApp message for them. Then the board: sent, opened,
+        watched, picked, booked &mdash; and a line saying who to ring and why.</p>
+      <span class="url">rickyrampersadbranch.com/prospecting/</span>
+    </a>
+
+    <a class="thing" href="https://factfind360.com/ffproject">
+      <div class="th"><h3>The fact find itself</h3><span class="pill part">Old version live</span></div>
+      <p>Works, and is in daily use &mdash; but the fixed build is not deployed. That fix
+        includes the replacement check, the Central Bank disclosure form, the four-row cap on
+        Guardian&rsquo;s page five, and the seventeen-need engine.</p>
+      <span class="url">factfind360.com/ffproject</span>
+    </a>
+  </section>
+
+  <div class="rule"></div>
+
+  <section>
+    <p class="lane">Lane three</p>
+    <h2>What the manager runs</h2>
+
+    <a class="thing" href="https://rickyrampersadbranch.com/dash/">
+      <div class="th"><h3>The daily dash</h3><span class="pill part">Sample data</span></div>
+      <p>Fact finds, needs found, cover recommended, and what is sitting on your signature
+        with anything over a day in red. The signing queue oldest first, every advisor ranked,
+        what the branch found today, and coaching lines only where a number says something.
+        The 5pm WhatsApp message writes itself from the same figures.</p>
+      <span class="url">rickyrampersadbranch.com/dash/</span>
+    </a>
+  </section>
+
+  <div class="rule"></div>
+
+  <section>
+    <p class="eyebrow">Both films</p>
+    <h2>Made here, owned by the branch</h2>
+    <p class="lede">No stock footage, no licensed music, no watermark. Sound on.</p>
+    <div class="films">
+      <div class="fm send">
+        <div class="fmv"><img id="posC" alt="" src="../prospect-poster.jpg">
+          <video id="vidC" preload="none" playsinline controls style="display:none"
+                 poster="../prospect-poster.jpg"><source src="../factfind360-prospect.mp4" type="video/mp4"></video>
+          <button class="fmp" data-v="C" type="button" aria-label="Play the client film"><b>&#9654;</b></button></div>
+        <div class="fmt"><span class="fmw">Goes in the link</span>
+          <h3>What your client sees</h3>
+          <p>2:50 &mdash; the contract, the income stopping, the number, the manager, the Act.</p></div>
+      </div>
+      <div class="fm own">
+        <div class="fmv"><img id="posA" alt="" src="../agent-poster.jpg">
+          <video id="vidA" preload="none" playsinline controls style="display:none"
+                 poster="../agent-poster.jpg"><source src="../factfind360-agent.mp4" type="video/mp4"></video>
+          <button class="fmp" data-v="A" type="button" aria-label="Play the agent film"><b>&#9654;</b></button></div>
+        <div class="fmt"><span class="fmw">For agents only</span>
+          <h3>What you do</h3>
+          <p>2:07 &mdash; the same process from your side. Do not send this one to a client.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="rule"></div>
+
+  <section>
+    <p class="eyebrow">The sound</p>
+    <h2>The branch theme</h2>
+    <div class="mus">
+      <p style="margin:0;font-size:15px;color:var(--ink-2);line-height:1.55">Written for the
+        branch, not licensed from anyone &mdash; so it can go on WhatsApp, YouTube or a wall
+        screen with nothing to pay and nothing to credit. Every film shares its key and tempo,
+        which is why they sound like one organisation rather than three.</p>
+      <audio controls preload="none" src="../rr-branch-theme.mp3"></audio>
+      <div class="spec">
+        <div><b>Key and tempo</b><span>D major &middot; 108 BPM</span></div>
+        <div><b>Progression</b><span>D &ndash; A &ndash; Bm &ndash; G</span></div>
+        <div><b>Voicing</b><span>Pads, pluck, brushed hat</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="rule"></div>
+
+  <section>
+    <p class="eyebrow">Not finished</p>
+    <h2>What is still open</h2>
+    <p class="lede">Stated plainly, so nothing here reads as more finished than it is.</p>
+
+    <div class="out"><h3>Nothing is tracked yet<span class="me">Mine, once unblocked</span></h3>
+      <p>RRB_Prospect.gs is written but not deployed. Every open, tap and booking on the
+        prospecting link currently goes nowhere. Paste it into a new Apps Script project and
+        the front half comes alive.</p></div>
+
+    <div class="out"><h3>The fixed fact find is not deployed<span class="me">Mine</span></h3>
+      <p>Including the replacement check, which carries personal liability under section 131.
+        It is built and tested and sitting here.</p></div>
+
+    <div class="out"><h3>Delivery tracking is blocked on the data<span class="you">Yours</span></h3>
+      <p>No dispatch or acknowledgment field exists in the Branch Portfolio &mdash; I read all
+        three copies. Delivery lives in Log Book Digital as Document Delivered and Date
+        Signed, and the clock is the twenty days under section 155(6) that your own form
+        already makes agents declare. Needs access, and the policy number in its own column.</p></div>
+
+    <div class="out"><h3>Every agent sees Premchand&rsquo;s name<span class="you">Yours</span></h3>
+      <p>The real list &mdash; name, code, email &mdash; and a named deputy approver, before
+        any of this goes branch-wide.</p></div>
+
+    <div class="out"><h3>One invented number is live<span class="you">Yours</span></h3>
+      <p>&ldquo;148 families advised&rdquo; on the prospecting page is my placeholder, under a
+        real advisor&rsquo;s name. Give me the real figure or say the word and it comes off.</p></div>
+  </section>
+
+  <footer>
+    <b>Ricky Rampersad Branch</b><br>
+    Draft for review. Nothing on this page has been sent to agents or clients.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  // Poster until asked, and one film at a time — two playing at once on a phone
+  // is how somebody decides the whole thing is a mess.
+  Array.prototype.forEach.call(document.querySelectorAll('.fmp'), function(btn){
+    btn.addEventListener('click', function(){
+      var k = btn.dataset.v;
+      ['C','A'].forEach(function(o){
+        var v = document.getElementById('vid' + o);
+        if (o !== k && v && !v.paused) v.pause();
+      });
+      document.getElementById('pos' + k).style.display = 'none';
+      btn.style.display = 'none';
+      var v = document.getElementById('vid' + k);
+      v.style.display = 'block';
+      v.play().catch(function(){ /* native controls take over */ });
+    });
+  });
+})();
+</script>

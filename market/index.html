@@ -406,15 +406,29 @@
 
 <script>
 /* ================= CONFIG =================
-   API_URL: the Google Apps Script Web App URL for Market.gs (ends in /exec).
-   Leave "" and the page runs in demo mode on this device with simulated
-   prices, so you can look around before the backend is deployed.        */
+   Three ways to run, in order of preference.
+
+   1. API_URL — the Apps Script Web App URL for Market.gs (ends in /exec).
+      Real prices AND one shared league: everybody's portfolio lives in the
+      spreadsheet, so the ranking is the whole team.
+
+   2. PRICES_CSV — a Google Sheet of GOOGLEFINANCE formulas, published via
+      File → Share → Publish to web → CSV. Real prices, but a published
+      sheet is read-only, so portfolios stay on each person's own device.
+      Set this when you want live prices without deploying anything.
+
+   3. Neither — simulated prices, everything local. Fine for a look around.  */
 const CONFIG = {
-  API_URL: "" // e.g. "https://script.google.com/macros/s/XXXX/exec"
+  API_URL: "",   // e.g. "https://script.google.com/macros/s/XXXX/exec"
+
+  // "Branch Trading League — Live Prices", shared as anyone-with-the-link.
+  // Edit the sheet to change what is tradeable — no code change needed.
+  PRICES_CSV: "https://docs.google.com/spreadsheets/d/1ussQe5wrQ7MSGAKcCMq5jpfjWBYqrZTKAZFsjNfvLxM/gviz/tq?tqx=out:csv"
 };
 /* ========================================== */
 
 const LIVE = !!CONFIG.API_URL;
+const PRICES_ONLY = !LIVE && !!CONFIG.PRICES_CSV;
 const $ = (id) => document.getElementById(id);
 const STORE_TOKEN = "rrb-league-token";
 
@@ -431,7 +445,7 @@ const ordinal = (n) => {
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g,
   (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-let state = { token: "", me: null, league: null, quotes: null, side: "buy" };
+let state = { token: "", me: null, league: null, quotes: null, side: "buy", priceError: "" };
 
 
 /* ================= DEMO MODE =================
@@ -601,7 +615,7 @@ function demoResume(token) {
 function demoMe() {
   const d = demoLoad();
   const q = {};
-  demoQuotes().instruments.forEach((x) => { q[x.symbol] = x; });
+  marketQuotes().instruments.forEach((x) => { q[x.symbol] = x; });
 
   let invested = 0;
   const positions = Object.keys(d.holdings).map((sym) => {
@@ -633,7 +647,7 @@ function demoMe() {
 
 function demoTrade(side, symbol, qty) {
   const d = demoLoad();
-  const q = demoQuotes().instruments.filter((x) => x.symbol === symbol)[0];
+  const q = marketQuotes().instruments.filter((x) => x.symbol === symbol)[0];
   if (!q) return { ok: false, error: "That symbol is not in the league." };
 
   const value = Math.round(q.price * qty * 100) / 100;
@@ -673,7 +687,7 @@ function demoTrade(side, symbol, qty) {
 
 function demoLeague() {
   const q = {};
-  demoQuotes().instruments.forEach((x) => { q[x.symbol] = x; });
+  marketQuotes().instruments.forEach((x) => { q[x.symbol] = x; });
   const store = demoStore();
 
   // A real account always wins the name — otherwise a player called
@@ -708,7 +722,104 @@ function demoLeague() {
   rows.sort((a, b) => b.total - a.total);
   rows.forEach((r, i) => { r.rank = i + 1; });
 
-  return { ok: true, demo: true, players: rows, indices: demoQuotes().indices, startingCash: DEMO.startingCash };
+  return { ok: true, demo: true, players: rows, indices: marketQuotes().indices, startingCash: DEMO.startingCash };
+}
+
+
+/* ================= PUBLISHED PRICE SHEET =================
+   Reads the CSV that Google serves for a published sheet. Same shape the
+   backend returns, so everything downstream is none the wiser.          */
+
+/** Splits CSV text, honouring quoted fields and doubled quotes. */
+function parseCsv(text) {
+  const rows = [];
+  let row = [], field = "", quoted = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (quoted) {
+      if (c !== '"') { field += c; continue; }
+      if (text[i + 1] === '"') { field += '"'; i++; }  // an escaped quote
+      else quoted = false;
+    } else if (c === '"') {
+      quoted = true;
+    } else if (c === ",") {
+      row.push(field); field = "";
+    } else if (c === "\n") {
+      row.push(field); rows.push(row); row = []; field = "";
+    } else if (c !== "\r") {
+      field += c;
+    }
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+function quotesFromCsv(text) {
+  const rows = parseCsv(text).filter((r) => r.length > 1);
+  if (rows.length < 2) return null;
+
+  const head = rows[0].map((h) => String(h).trim().toLowerCase().replace(/\s+/g, ""));
+  const at = (name) => head.indexOf(name);
+  const iSym = at("symbol"), iName = at("name"), iGroup = at("group"),
+        iPrice = at("price"), iPrev = at("prevclose"), iTrade = at("tradeable");
+
+  if (iSym < 0 || iPrice < 0) return null;
+
+  const indices = [], instruments = [];
+
+  rows.slice(1).forEach((r) => {
+    const symbol = String(r[iSym] || "").trim();
+    // Google writes plain numbers, but a locale can add thousands separators.
+    const price = parseFloat(String(r[iPrice] || "").replace(/[^0-9.\-]/g, ""));
+    if (!symbol || !isFinite(price) || price <= 0) return;
+
+    const prevRaw = iPrev >= 0 ? String(r[iPrev] || "").replace(/[^0-9.\-]/g, "") : "";
+    const prev = parseFloat(prevRaw);
+    const prevClose = isFinite(prev) && prev > 0 ? prev : price;
+    const change = price - prevClose;
+
+    const quote = {
+      symbol: symbol,
+      name: (iName >= 0 && String(r[iName] || "").trim()) || symbol,
+      group: (iGroup >= 0 && String(r[iGroup] || "").trim()) || "Other",
+      price: Math.round(price * 100) / 100,
+      prevClose: Math.round(prevClose * 100) / 100,
+      change: Math.round(change * 100) / 100,
+      pct: prevClose > 0 ? Math.round((change / prevClose) * 10000) / 100 : 0
+    };
+
+    const tradeable = iTrade < 0 || String(r[iTrade] || "").trim().toLowerCase() === "yes";
+    (tradeable ? instruments : indices).push(quote);
+  });
+
+  if (!instruments.length) return null;
+
+  return {
+    ok: true,
+    indices: indices,
+    instruments: instruments,
+    startingCash: DEMO.startingCash,
+    commission: DEMO.commission,
+    pricesOnly: true
+  };
+}
+
+async function fetchCsvQuotes() {
+  const res = await fetch(CONFIG.PRICES_CSV, { cache: "no-store" });
+  if (!res.ok) throw new Error("sheet unreachable");
+  const parsed = quotesFromCsv(await res.text());
+  if (!parsed) throw new Error("sheet not in the expected shape");
+  return parsed;
+}
+
+/**
+ * The prices the portfolio maths should use. Falls back to the simulated
+ * set only until the first real fetch lands.
+ */
+function marketQuotes() {
+  const q = state.quotes;
+  return q && q.instruments && q.instruments.length ? q : demoQuotes();
 }
 
 
@@ -855,10 +966,25 @@ async function start() {
 /* ================= LOAD & RENDER ================= */
 async function refresh() {
   try {
-    if (!LIVE) {
+    if (PRICES_ONLY) {
+      // Real prices off the published sheet; portfolios still local.
+      // If the sheet is briefly unreachable, keep the last good prices
+      // rather than dropping everyone back to simulated ones mid-session.
+      try {
+        state.quotes = await fetchCsvQuotes();
+        state.priceError = "";
+      } catch (err) {
+        if (!state.quotes) state.quotes = demoQuotes();
+        state.priceError = "Could not reach the price sheet — showing the last prices.";
+      }
+      state.me = demoMe();
+      state.league = demoLeague();
+
+    } else if (!LIVE) {
       state.quotes = demoQuotes();
       state.me = demoMe();
       state.league = demoLeague();
+
     } else {
       const [quotes, me, league] = await Promise.all([
         apiGet("quotes"),
@@ -889,6 +1015,15 @@ async function refresh() {
 
 function renderBanner() {
   if (LIVE) { $("mode-banner").innerHTML = ""; return; }
+
+  if (PRICES_ONLY) {
+    $("mode-banner").innerHTML =
+      '<div class="banner"><b>Live prices, private portfolio.</b> Prices are real, from Google Finance, ' +
+      'delayed up to about 20 minutes. Your portfolio is saved on this device only, so the ranking below ' +
+      'is not yet shared with the team.</div>';
+    return;
+  }
+
   $("mode-banner").innerHTML =
     '<div class="banner"><b>Demo mode.</b> Prices are simulated and your portfolio is saved on this device only, ' +
     'so the leaderboard is not shared yet. Deploy <code>apps-script/Market.gs</code> and paste the web app URL into ' +
@@ -897,7 +1032,11 @@ function renderBanner() {
 
 function renderTicker() {
   const list = (state.quotes && state.quotes.indices) || [];
-  $("ticker").innerHTML = list.map((i) =>
+  const warn = state.priceError
+    ? '<div class="tick"><b class="down">' + esc(state.priceError) + '</b></div>'
+    : "";
+
+  $("ticker").innerHTML = warn + list.map((i) =>
     '<div class="tick"><b>' + esc(shortIndex(i.symbol)) + '</b>' +
     '<span class="lvl mono">' + i.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</span>' +
     '<span class="chg mono ' + cls(i.change) + '">' + pct(i.pct) + '</span></div>'
