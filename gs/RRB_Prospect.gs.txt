@@ -1,0 +1,494 @@
+/**
+ * RRB_Prospect.gs — the prospecting link, and everything it reports back.
+ * Ricky Rampersad Branch.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * PASTE THIS INTO A **NEW, SEPARATE** APPS SCRIPT PROJECT.
+ *
+ * Not into the fact find project. It defines doGet and doPost, and Apps Script
+ * shares one global scope across every .gs file in a project — dropping this
+ * next to the fact find would silently replace its handlers and take the whole
+ * form down. A separate project also means nothing here can ever break the form.
+ *
+ * Setup, once:
+ *   1. script.google.com → New project → name it "RR Branch Prospecting"
+ *   2. Paste this whole file over the empty Code.gs
+ *   3. Put your spreadsheet id in SHEET_ID below (it is the long string in the
+ *      spreadsheet URL between /d/ and /edit)
+ *   4. Deploy → New deployment → Web app
+ *        Execute as:      Me
+ *        Who has access:  Anyone
+ *   5. Copy the /exec URL it gives you and paste it into ENDPOINT in both
+ *      the prospect page and the workspace page.
+ *
+ * It writes to one tab called Prospects, and creates it on first use.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+var SHEET_ID  = 'PUT_YOUR_SPREADSHEET_ID_HERE';
+var TAB       = 'Prospects';
+var BRANCH    = 'Ricky Rampersad Branch';
+
+/* One row per link sent. Everything the prospect does afterwards updates that
+   same row, keyed on the token — so the board is a list of people, not a log
+   of events nobody can read. */
+var COLS = [
+  'Token', 'Agent', 'Advisor', 'Prospect', 'Phone',
+  'Sent', 'First opened', 'Last seen', 'Opens',
+  'Watched', 'Read to', 'Wants',
+  'Booked', 'When', 'Time of day', 'Note',
+  'Score', 'Feedback', 'Stage', 'Needs you'
+];
+
+var C = {};
+COLS.forEach(function (n, i) { C[n] = i + 1; });   // 1-based, for getRange
+
+
+/* ── Web app entry points ──────────────────────────────────────────────────
+   Beacons come in as GET because navigator.sendBeacon and no-cors fetch are
+   the only things that survive a page being closed mid-visit. Everything the
+   visitor deliberately submits comes in as POST. */
+
+function doGet(e) {
+  var p = (e && e.parameter) || {};
+  try {
+    if (p.action === 'track') { rrbTrack_(p); return rrbPixel_(); }
+    if (p.action === 'board') { return rrbBoard_(p); }
+  } catch (err) {
+    rrbLogError_('doGet', err, p);
+  }
+  return ContentService.createTextOutput('ok');
+}
+
+function doPost(e) {
+  var p = (e && e.parameter) || {};
+  try {
+    if (p.action === 'link')     { rrbLink_(p); }
+    else if (p.action === 'book')     { rrbBook_(p); }
+    else if (p.action === 'feedback') { rrbFeedback_(p); }
+  } catch (err) {
+    rrbLogError_('doPost', err, p);
+  }
+  return ContentService.createTextOutput('ok');
+}
+
+
+/* ── The sheet ─────────────────────────────────────────────────────────── */
+
+function rrbSheet_() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName(TAB);
+  if (!sh) {
+    sh = ss.insertSheet(TAB);
+    sh.getRange(1, 1, 1, COLS.length).setValues([COLS])
+      .setFontWeight('bold').setBackground('#0B1836').setFontColor('#FFFFFF');
+    sh.setFrozenRows(1);
+    sh.setColumnWidth(C['Wants'], 280);
+    sh.setColumnWidth(C['Needs you'], 320);
+    sh.setColumnWidth(C['Feedback'], 260);
+  }
+  return sh;
+}
+
+/* Find the row for a token. Reading one column beats reading the whole sheet
+   once the branch has a few thousand prospects on it. */
+function rrbRow_(sh, token) {
+  if (!token) return 0;
+  var n = sh.getLastRow();
+  if (n < 2) return 0;
+  var col = sh.getRange(2, C['Token'], n - 1, 1).getValues();
+  for (var i = 0; i < col.length; i++) {
+    if (String(col[i][0]) === String(token)) return i + 2;
+  }
+  return 0;
+}
+
+/* A token that arrives on a beacon before its row exists — a link forwarded on,
+   or a send that never finished writing — still deserves a row. Better a
+   prospect with a blank name than a visit nobody ever sees. */
+function rrbEnsureRow_(sh, p) {
+  var r = rrbRow_(sh, p.token);
+  if (r) return r;
+
+  var row = new Array(COLS.length).fill('');
+  row[C['Token']   - 1] = p.token || '';
+  row[C['Agent']   - 1] = p.agent || p.a || '';
+  row[C['Advisor'] - 1] = p.advisor || p.n || '';
+  row[C['Prospect']- 1] = p.name || '';
+  row[C['Phone']   - 1] = rrbPhone_(p.phone || '');
+  row[C['Sent']    - 1] = rrbWhen_(p.at);
+  row[C['Opens']   - 1] = 0;
+  row[C['Stage']   - 1] = 'Sent';
+  sh.appendRow(row);
+  return sh.getLastRow();
+}
+
+
+/* ── 1. The agent sends a link ─────────────────────────────────────────── */
+
+function rrbLink_(p) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var sh = rrbSheet_();
+    if (rrbRow_(sh, p.token)) return;     // already recorded; sending twice is fine
+    rrbEnsureRow_(sh, p);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
+/* ── 2. The prospect does something ────────────────────────────────────────
+   open · watch_start · watch_half · watch_end · read_25/50/75/100 ·
+   picked · want_go · booked · feedback_shown */
+
+function rrbTrack_(p) {
+  var ev = String(p.e || '');
+  if (!ev) return;
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var sh = rrbSheet_();
+    var r  = rrbEnsureRow_(sh, { token: p.t, agent: p.a, advisor: p.n });
+    var now = new Date();
+
+    sh.getRange(r, C['Last seen']).setValue(now);
+
+    if (ev === 'open') {
+      if (!sh.getRange(r, C['First opened']).getValue()) {
+        sh.getRange(r, C['First opened']).setValue(now);
+        rrbNotify_(sh, r, 'opened');
+      }
+      var opens = Number(sh.getRange(r, C['Opens']).getValue() || 0);
+      sh.getRange(r, C['Opens']).setValue(opens + 1);
+    }
+
+    // How much of the film. Keep the furthest point reached, never go backwards.
+    var watch = { watch_start: 'Started', watch_half: 'Half', watch_end: 'All of it' };
+    if (watch[ev]) {
+      var rank = { '': 0, 'Started': 1, 'Half': 2, 'All of it': 3 };
+      var had  = String(sh.getRange(r, C['Watched']).getValue() || '');
+      if ((rank[watch[ev]] || 0) > (rank[had] || 0)) {
+        sh.getRange(r, C['Watched']).setValue(watch[ev]);
+      }
+    }
+
+    if (ev.indexOf('read_') === 0) {
+      var pc  = Number(ev.slice(5)) || 0;
+      var was = Number(String(sh.getRange(r, C['Read to']).getValue() || '0').replace('%', ''));
+      if (pc > was) sh.getRange(r, C['Read to']).setValue(pc + '%');
+    }
+
+    // What they tapped. This is the single most useful thing on the row: it
+    // arrives whether or not they ever fill the booking form in.
+    if ((ev === 'picked' || ev === 'want_go' || ev === 'booked') && p.v) {
+      var wants = String(p.v).split('|').map(function (s) { return s.trim(); })
+                    .filter(Boolean).join(', ');
+      var before = String(sh.getRange(r, C['Wants']).getValue() || '');
+      sh.getRange(r, C['Wants']).setValue(wants);
+      if (wants && wants !== before) rrbNotify_(sh, r, 'picked');
+    }
+
+    rrbRestage_(sh, r);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
+/* ── 3. The prospect books ─────────────────────────────────────────────── */
+
+function rrbBook_(p) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var sh = rrbSheet_();
+    var r  = rrbEnsureRow_(sh, p);
+
+    if (p.name)  sh.getRange(r, C['Prospect']).setValue(p.name);
+    if (p.phone) sh.getRange(r, C['Phone']).setValue(rrbPhone_(p.phone));
+    if (p.wants) {
+      sh.getRange(r, C['Wants']).setValue(
+        String(p.wants).split('|').map(function (s) { return s.trim(); })
+          .filter(Boolean).join(', '));
+    }
+    sh.getRange(r, C['Booked']).setValue(rrbWhen_(p.at));
+    sh.getRange(r, C['When']).setValue(p.when || '');
+    sh.getRange(r, C['Time of day']).setValue(p.tod || '');
+    sh.getRange(r, C['Note']).setValue(p.note || '');
+    sh.getRange(r, C['Last seen']).setValue(new Date());
+
+    rrbRestage_(sh, r);
+    rrbNotify_(sh, r, 'booked');
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
+/* ── 4. The prospect gives feedback ────────────────────────────────────────
+   Sent twice by the page: once the moment a face is tapped, and again if they
+   write a line. The second call carries both, so the later one simply wins. */
+
+function rrbFeedback_(p) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var sh = rrbSheet_();
+    var r  = rrbEnsureRow_(sh, p);
+
+    var faces = { '3': 'Yes — clear', '2': 'Somewhat', '1': 'Not really' };
+    if (p.score) sh.getRange(r, C['Score']).setValue(faces[String(p.score)] || p.score);
+    if (p.text)  sh.getRange(r, C['Feedback']).setValue(p.text);
+    sh.getRange(r, C['Last seen']).setValue(new Date());
+
+    rrbRestage_(sh, r);
+    if (p.text) rrbNotify_(sh, r, 'feedback');
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
+/* ── Stage, and what to do about it ────────────────────────────────────────
+   The stage is derived, never stored by the page — so a beacon that arrives
+   out of order cannot push somebody backwards. "Needs you" is the column the
+   agent actually works from: it says who to ring and why, in a sentence. */
+
+function rrbRestage_(sh, r) {
+  var v = sh.getRange(r, 1, 1, COLS.length).getValues()[0];
+  function g(n) { return v[C[n] - 1]; }
+
+  var booked  = !!g('Booked');
+  var wants   = String(g('Wants') || '');
+  var watched = String(g('Watched') || '');
+  var opened  = !!g('First opened');
+
+  var stage = booked ? 'Booked'
+            : wants  ? 'Picked'
+            : watched ? 'Watched'
+            : opened ? 'Opened'
+            : 'Sent';
+  sh.getRange(r, C['Stage']).setValue(stage);
+
+  var name  = String(g('Prospect') || 'They').split(' ')[0] || 'They';
+  var since = rrbDaysSince_(g('Last seen') || g('Sent'));
+  var todo  = '';
+
+  if (booked) {
+    todo = '';
+  } else if (wants) {
+    todo = name + ' told you what they want and did not book. Ring them — this is the ' +
+           'warmest one on your list.';
+  } else if (watched === 'All of it') {
+    todo = name + ' watched the whole film and stopped. Ask them one question: what did ' +
+           'you think?';
+  } else if (watched) {
+    todo = name + ' started the film and did not finish it. Send one line, not another link.';
+  } else if (opened && since >= 3) {
+    todo = 'Opened once, ' + since + ' days ago, nothing since. Try a different time of day.';
+  } else if (!opened && since >= 4) {
+    todo = 'Sent ' + since + ' days ago and never opened. Check the number, then call instead.';
+  }
+
+  sh.getRange(r, C['Needs you']).setValue(todo);
+}
+
+
+/* ── Telling the advisor, while it is still worth knowing ──────────────────
+   Only the moments worth interrupting someone for. An "opened" mail on every
+   visit would be noise inside a week, so it goes once, on the first open. */
+
+function rrbNotify_(sh, r, kind) {
+  var v = sh.getRange(r, 1, 1, COLS.length).getValues()[0];
+  function g(n) { return v[C[n] - 1]; }
+
+  var to = rrbAgentEmail_(g('Agent'), g('Advisor'));
+  if (!to) return;
+
+  var who   = g('Prospect') || 'Someone you sent the link to';
+  var phone = g('Phone') || '';
+  var wants = g('Wants') || '';
+  var subj, body;
+
+  if (kind === 'opened') {
+    subj = who + ' opened your page';
+    body = who + ' just opened the link you sent.\n\nNothing to do yet — this is only so ' +
+           'you know it landed.';
+  } else if (kind === 'picked') {
+    subj = who + ' said what they want to talk about';
+    body = who + ' tapped:\n\n  ' + wants.split(', ').join('\n  ') +
+           '\n\nThey have not booked. That is the call to make today.' +
+           (phone ? '\n\n' + phone : '');
+  } else if (kind === 'booked') {
+    subj = who + ' booked you — ' + (g('When') || '') + ', ' + (g('Time of day') || '');
+    body = who + ' booked a sit-down.\n\n' +
+           'WhatsApp:   ' + phone + '\n' +
+           'When:       ' + (g('When') || '') + ', ' + (g('Time of day') || '') + '\n' +
+           (wants ? 'Wants:      ' + wants + '\n' : '') +
+           (g('Note') ? 'They said:  ' + g('Note') + '\n' : '') +
+           '\nConfirm the time with them before it goes cold.';
+  } else if (kind === 'feedback') {
+    subj = who + ' left feedback on your page';
+    body = (g('Score') ? g('Score') + '\n\n' : '') + '"' + g('Feedback') + '"';
+  } else {
+    return;
+  }
+
+  try {
+    MailApp.sendEmail({
+      to: to,
+      subject: subj,
+      body: body + '\n\n—\n' + BRANCH
+    });
+  } catch (err) {
+    rrbLogError_('notify', err, { row: r, kind: kind });
+  }
+}
+
+/**
+ * Who to mail. Add the branch's agents here, keyed on the agent code the
+ * workspace stamps into the link. Until an agent is in this list they simply
+ * do not get mail — everything still lands on the sheet.
+ */
+function rrbAgentEmail_(code, advisor) {
+  var BOOK = {
+    // 'A10024': 'premchand@example.com',
+  };
+  return BOOK[String(code || '').trim()] || '';
+}
+
+
+/* ── The board the workspace reads ─────────────────────────────────────────
+   JSONP, because the workspace is served from factfind360.com and Apps Script
+   will not send CORS headers for a plain fetch. ?callback=fn wraps it. */
+
+function rrbBoard_(p) {
+  var agent = String(p.a || '').trim();
+  var sh = rrbSheet_();
+  var n  = sh.getLastRow();
+  var out = [];
+
+  if (n >= 2) {
+    var rows = sh.getRange(2, 1, n - 1, COLS.length).getValues();
+    var stages = { 'Sent': 0, 'Opened': 1, 'Watched': 2, 'Picked': 3, 'Booked': 4 };
+    rows.forEach(function (v) {
+      function g(name) { return v[C[name] - 1]; }
+      if (agent && String(g('Agent')) !== agent) return;
+      out.push({
+        token:  g('Token'),
+        n:      g('Prospect'),
+        phone:  g('Phone'),
+        t:      rrbAgo_(g('Last seen') || g('Sent')),
+        s:      stages[String(g('Stage'))] || 0,
+        booked: !!g('Booked'),
+        wants:  String(g('Wants') || '').split(', ').filter(Boolean),
+        todo:   g('Needs you'),
+        fb:     g('Feedback') ? '"' + g('Feedback') + '"' : ''
+      });
+    });
+  }
+
+  var json = JSON.stringify({ agent: agent, prospects: out });
+  if (p.callback) {
+    return ContentService.createTextOutput(p.callback + '(' + json + ')')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return ContentService.createTextOutput(json)
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+
+/* ── Small helpers ─────────────────────────────────────────────────────── */
+
+function rrbPixel_() {
+  // sendBeacon does not read the reply, but something has to come back.
+  return ContentService.createTextOutput('1');
+}
+
+function rrbWhen_(iso) {
+  if (!iso) return new Date();
+  var d = new Date(iso);
+  return isNaN(d.getTime()) ? new Date() : d;
+}
+
+/* Trinidad numbers arrive typed however the agent types them. Store one shape
+   so the sheet sorts and the WhatsApp links work. */
+function rrbPhone_(s) {
+  var d = String(s || '').replace(/\D/g, '');
+  if (!d) return '';
+  if (d.length === 11 && d.indexOf('1868') === 0) d = d.slice(4);
+  else if (d.length === 10 && d.indexOf('868') === 0) d = d.slice(3);
+  if (d.length === 7) return d.slice(0, 3) + '-' + d.slice(3);
+  return String(s).trim();
+}
+
+function rrbDaysSince_(d) {
+  if (!d) return 0;
+  var t = new Date(d).getTime();
+  if (isNaN(t)) return 0;
+  return Math.floor((Date.now() - t) / 86400000);
+}
+
+function rrbAgo_(d) {
+  if (!d) return '';
+  var mins = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
+  if (isNaN(mins) || mins < 0) return '';
+  if (mins < 60)   return mins <= 1 ? 'just now' : mins + ' minutes ago';
+  var hrs = Math.floor(mins / 60);
+  if (hrs < 24)    return hrs === 1 ? 'an hour ago' : hrs + ' hours ago';
+  var days = Math.floor(hrs / 24);
+  if (days === 1)  return 'yesterday';
+  if (days < 7)    return days + ' days ago';
+  if (days < 14)   return 'a week ago';
+  return Math.floor(days / 7) + ' weeks ago';
+}
+
+/* Nothing a visitor does should ever throw back at them, so every handler
+   swallows its errors — but they still have to land somewhere findable. */
+function rrbLogError_(where, err, p) {
+  try {
+    var ss = SpreadsheetApp.openById(SHEET_ID);
+    var sh = ss.getSheetByName('Prospect errors') || ss.insertSheet('Prospect errors');
+    if (sh.getLastRow() === 0) {
+      sh.appendRow(['When', 'Where', 'Error', 'Parameters']);
+      sh.getRange(1, 1, 1, 4).setFontWeight('bold');
+    }
+    sh.appendRow([new Date(), where, String(err && err.message || err),
+                  JSON.stringify(p || {}).slice(0, 500)]);
+  } catch (e) { /* nothing left to try */ }
+}
+
+
+/**
+ * Run this once from the editor after pasting, to prove the setup works.
+ * It creates the tab, writes a test row, walks it through the whole journey
+ * and then deletes it. Check the execution log for the result.
+ */
+function rrbSelfTest() {
+  if (SHEET_ID === 'PUT_YOUR_SPREADSHEET_ID_HERE') {
+    throw new Error('Put your spreadsheet id in SHEET_ID at the top of this file first.');
+  }
+  var t = 'TEST' + Math.floor(Math.random() * 100000);
+
+  rrbLink_({ token: t, agent: 'TEST', advisor: 'Self Test', name: 'Test Prospect',
+             phone: '8681234567', at: new Date().toISOString() });
+  rrbTrack_({ t: t, e: 'open' });
+  rrbTrack_({ t: t, e: 'watch_end' });
+  rrbTrack_({ t: t, e: 'read_100' });
+  rrbTrack_({ t: t, e: 'picked', v: 'The house and the mortgage | Retiring properly' });
+
+  var sh = rrbSheet_();
+  var r  = rrbRow_(sh, t);
+  var v  = sh.getRange(r, 1, 1, COLS.length).getValues()[0];
+
+  Logger.log('Stage:     ' + v[C['Stage'] - 1]);
+  Logger.log('Watched:   ' + v[C['Watched'] - 1]);
+  Logger.log('Wants:     ' + v[C['Wants'] - 1]);
+  Logger.log('Needs you: ' + v[C['Needs you'] - 1]);
+
+  sh.deleteRow(r);
+  Logger.log('Test row removed. Setup is working.');
+}
