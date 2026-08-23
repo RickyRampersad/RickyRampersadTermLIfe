@@ -1217,6 +1217,8 @@ function onOpen() {
     .addToUi();
   // property menu comes along automatically when Property.gs is installed
   try { if (typeof propertyMenu_ === 'function') propertyMenu_(SpreadsheetApp.getUi()).addToUi(); } catch (err) { Logger.log(err); }
+  // Salesforce menu appears when SalesforceSync.gs is installed
+  try { if (typeof salesforceMenu_ === 'function') salesforceMenu_(SpreadsheetApp.getUi()).addToUi(); } catch (err) { Logger.log(err); }
 }
 
 function toggleTestMode() {
