@@ -1,0 +1,445 @@
+<title>The Branch Manual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600;6..72,700&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+:root{--navy:#0B1836;--teal:#0D9488;--teal-lt:#2DD4BF;--gold:#F5B324;--wa:#25D366;
+ --good:#0E8A5F;--warn:#B8791A;--crit:#C0392B;
+ --paper:#fff;--ground:#F4F6FA;--sunk:#EEF2F8;--ink:#0F172A;--ink-2:#3F4A5C;
+ --muted:#69748A;--faint:#98A2B3;--line:#DFE4EC;
+ --shadow:0 1px 2px rgba(11,24,54,.06),0 12px 32px -14px rgba(11,24,54,.22)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#111A2E;
+ --ground:#080D1A;--sunk:#0D1526;--ink:#EAEEF6;--ink-2:#C3CBDA;--muted:#8B95A9;
+ --faint:#6A7488;--line:#222C42;--teal:#2DD4BF;--good:#34D399;--warn:#F5B324;--crit:#F87171;
+ --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 34px -16px rgba(0,0,0,.8)}}
+:root[data-theme="dark"]{--paper:#111A2E;--ground:#080D1A;--sunk:#0D1526;--ink:#EAEEF6;
+ --ink-2:#C3CBDA;--muted:#8B95A9;--faint:#6A7488;--line:#222C42;--teal:#2DD4BF;
+ --good:#34D399;--warn:#F5B324;--crit:#F87171;
+ --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 34px -16px rgba(0,0,0,.8)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+ font:16.5px/1.64 Inter,-apple-system,"Segoe UI",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:800px;margin:0 auto;padding:0 18px 80px}
+h2{font-family:Newsreader,Georgia,serif;font-size:clamp(25px,5.2vw,33px);font-weight:600;
+ letter-spacing:-.018em;margin:0 0 7px;line-height:1.18;text-wrap:balance}
+h3{font-size:18px;font-weight:800;margin:0 0 5px;line-height:1.3}
+.eyebrow{font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;
+ color:var(--teal);margin:0 0 9px}
+.lede{font-size:16px;color:var(--ink-2);margin:0 0 22px;line-height:1.62}
+section{margin:0 0 50px;scroll-margin-top:14px}
+.rule{height:1px;background:var(--line);margin:0 0 38px}
+.part{font-size:12px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
+ color:var(--faint);margin:0 0 4px}
+
+header{background:radial-gradient(720px 380px at 86% -18%,rgba(45,212,191,.22),transparent 60%),
+ radial-gradient(560px 330px at 3% 112%,rgba(245,179,36,.13),transparent 58%),
+ var(--navy);color:#fff;padding:30px 18px 34px;margin-bottom:30px}
+.hin{max-width:764px;margin:0 auto}
+h1{font-family:Newsreader,Georgia,serif;font-size:clamp(32px,7.6vw,46px);font-weight:600;
+ line-height:1.1;letter-spacing:-.022em;margin:0 0 13px}
+header p{margin:0;font-size:16.5px;color:rgba(255,255,255,.76);line-height:1.62}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.toc a{font-size:13px;font-weight:700;text-decoration:none;color:rgba(255,255,255,.9);
+ background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);
+ border-radius:999px;padding:7px 14px}
+.toc a:hover{background:rgba(45,212,191,.22);border-color:var(--teal-lt)}
+
+/* numbered instructions */
+.steps{list-style:none;margin:0;padding:0;counter-reset:s}
+.sp{position:relative;display:grid;grid-template-columns:44px 1fr;gap:16px;padding:0 0 22px}
+.sp::before{content:"";position:absolute;left:21px;top:44px;bottom:0;width:2px;
+ background:var(--line)}
+.sp:last-child::before{display:none}
+.sn{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;
+ background:var(--paper);border:2px solid var(--teal);color:var(--teal);
+ font:800 18px Inter,sans-serif;box-shadow:var(--shadow);position:relative;z-index:1}
+.sp.mgr .sn{border-color:var(--gold);color:var(--warn);background:#FFFBF2}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .sp.mgr .sn{
+ background:rgba(245,179,36,.12);color:var(--gold)}}
+:root[data-theme="dark"] .sp.mgr .sn{background:rgba(245,179,36,.12);color:var(--gold)}
+.sb{padding-top:5px;min-width:0}
+.sb p{margin:0 0 8px;font-size:15.5px;color:var(--ink-2);line-height:1.58}
+.sb p:last-child{margin-bottom:0}
+.sb ul{margin:8px 0 0;padding-left:19px}
+.sb li{font-size:15px;color:var(--ink-2);line-height:1.55;margin-bottom:4px}
+
+code{background:var(--sunk);border:1px solid var(--line);border-radius:5px;padding:1px 6px;
+ font:600 13.5px ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all}
+a.lnk{color:var(--teal);font-weight:600}
+
+.tip{background:rgba(13,148,136,.08);border:1.5px solid rgba(13,148,136,.32);
+ border-radius:13px;padding:14px 17px;margin:11px 0 0}
+.tip b{color:var(--teal)}
+.tip p{margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.55}
+.stop{background:rgba(192,57,43,.08);border:1.5px solid rgba(192,57,43,.34);
+ border-radius:13px;padding:14px 17px;margin:11px 0 0}
+.stop b{color:var(--crit)}
+.stop p{margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.55}
+
+/* reference tables */
+.tw{overflow-x:auto;margin-top:6px}
+table{width:100%;border-collapse:collapse;font-size:14.5px;min-width:520px}
+th{text-align:left;font-size:10.5px;font-weight:800;letter-spacing:.08em;
+ text-transform:uppercase;color:var(--muted);padding:0 11px 9px;white-space:nowrap}
+td{padding:12px 11px;border-top:1px solid var(--line);vertical-align:top;
+ color:var(--ink-2);line-height:1.5}
+td b{color:var(--ink)}
+
+/* Q&A */
+.qa{background:var(--paper);border:1px solid var(--line);border-radius:14px;
+ padding:16px 19px;margin-bottom:10px;box-shadow:var(--shadow)}
+.qa h3{font-size:16.5px;color:var(--ink)}
+.qa p{margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.58}
+
+/* settled decisions */
+.dec{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--good);
+ border-radius:0 13px 13px 0;padding:15px 18px;margin-bottom:10px;box-shadow:var(--shadow)}
+.dec h3{font-size:16.5px}
+.dec p{margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.55}
+.dec .t{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.1em;
+ text-transform:uppercase;background:rgba(14,138,95,.14);color:var(--good);
+ padding:3px 8px;border-radius:5px;margin-bottom:7px}
+
+footer{text-align:center;font-size:13px;color:var(--muted);line-height:1.6;padding:28px 0 0}
+@media print{
+  header{background:var(--navy)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .toc{display:none} section{page-break-inside:avoid}
+}
+</style>
+
+<header><div class="hin">
+<h1>The branch manual</h1>
+<p>How a client is found, advised, checked and looked after &mdash; and what each of us
+does at every step. Written to be read once and then used as a reference.</p>
+<div class="toc">
+  <a href="#advisor">For advisors</a>
+  <a href="#manager">For managers</a>
+  <a href="#staff">For the desk</a>
+  <a href="#ref">Every link</a>
+  <a href="#trouble">When it goes wrong</a>
+  <a href="#rules">The rules we set</a>
+</div>
+</div></header>
+
+<div class="wrap">
+
+<section id="advisor">
+<p class="part">Part one</p>
+<h2>For advisors</h2>
+<p class="lede">Nine steps from a name in your phone to a policy in their hands. Steps one
+to three are live today. Four onward run on the existing system while the new flow is
+finished &mdash; where that matters, it says so.</p>
+
+<ol class="steps">
+  <li class="sp"><div class="sn">1</div><div class="sb">
+    <h3>Send the link</h3>
+    <p>Open <a class="lnk" href="https://rickyrampersadbranch.com/prospecting/">your board</a>,
+      type their first name and WhatsApp number, tap <b>Send on WhatsApp</b>. The link and
+      the message write themselves with your code on them.</p>
+    <p>The page opens in <em>your</em> name, with your registration on it. Your QR code is
+      on the same card &mdash; put it on your business card and anyone who scans it lands on
+      your page and counts as yours.</p>
+    <div class="tip"><p><b>Send it the night before, not the morning of.</b> People watch a
+      film in the evening. Below half your links being opened is almost always a timing
+      problem, not a content one.</p></div>
+  </div></li>
+
+  <li class="sp"><div class="sn">2</div><div class="sb">
+    <h3>Watch what they do with it</h3>
+    <p>Your board fills in by itself: <b>sent &middot; opened &middot; watched &middot;
+      picked &middot; booked</b>. You are emailed the first time they open it, and again
+      when they say what they want. Your unit manager is copied on both.</p>
+    <p>Under each name is a line telling you what to do &mdash; ring them, send one line,
+      try a different hour. Work from that line.</p>
+    <div class="tip"><p><b>The best call you will make all week</b> is to someone who
+      picked two or three needs and did not book. They have told you what they are worried
+      about and stopped. Ring them the same day.</p></div>
+  </div></li>
+
+  <li class="sp"><div class="sn">3</div><div class="sb">
+    <h3>Go to the appointment knowing what they want</h3>
+    <p>Before you sit down you already know what they tapped and, if they used it, the
+      figure they saw. Open on that: <em>&ldquo;You said the mortgage and the children.
+      Let us start there.&rdquo;</em></p>
+    <p>Bring nothing to sell. The numbers come first.</p>
+  </div></li>
+
+  <li class="sp"><div class="sn">4</div><div class="sb">
+    <h3>Write the fact find while you talk</h3>
+    <p>Type it live &mdash; income, expenses, debts, dependants. The client watches their
+      own arithmetic happen, which is the whole difference between this and a form filled
+      in afterwards from memory.</p>
+    <p>Every recommendation carries its reason, in plain words. <b>If you cannot write the
+      reason, do not make the recommendation.</b> The reason is the file.</p>
+    <div class="stop"><p><b>Replacing an existing Guardian policy?</b> The form will say so.
+      Talk the client through what they gain and what they give up, then complete and sign
+      the disclosure form at the back of the pack, with them, before the application is
+      filled in.</p></div>
+  </div></li>
+
+  <li class="sp"><div class="sn">5</div><div class="sb">
+    <h3>One tap sends it</h3>
+    <p>Nothing prints, nothing is signed, nothing reaches the client yet. It goes to your
+      direct manager, and you get your own copy.</p>
+  </div></li>
+
+  <li class="sp mgr"><div class="sn">6</div><div class="sb">
+    <h3>Your manager reads it and signs &mdash; or sends it back</h3>
+    <p>He works from his phone. If he sends it back, you get one line saying what is
+      missing. <b>That is not a rejection.</b> Reopen the case, fix that one thing,
+      resubmit &mdash; he is told it has come back and reads the difference rather than the
+      whole case again. The client is not told any of this happened.</p>
+  </div></li>
+
+  <li class="sp"><div class="sn">7</div><div class="sb">
+    <h3>The client gets their own copy</h3>
+    <p>Plain language, to their own inbox: their needs, what was recommended, and why. They
+      can agree, ask to discuss, or decline &mdash; and their reason is recorded as
+      carefully as the recommendation was.</p>
+    <p>Saying no is a legitimate answer here, and it is written down as one.</p>
+  </div></li>
+
+  <li class="sp"><div class="sn">8</div><div class="sb">
+    <h3>Print, sign, submit</h3>
+    <p>Guardian&rsquo;s six pages plus the RR Branch addendum. Wet signature on the day.
+      The paperwork comes last, not first.</p>
+  </div></li>
+
+  <li class="sp"><div class="sn">9</div><div class="sb">
+    <h3>The addendum is your next appointment</h3>
+    <p>Four needs go on Guardian&rsquo;s form. Everything else the fact find found is set
+      out on the addendum with the question that opens it &mdash; the business with no
+      buy-sell, the mortgaged rental, the card nobody insured, the child with nothing
+      costed.</p>
+    <p>Put it in your bag. Book the follow-up before you leave.</p>
+    <div class="tip"><p><b>You must deliver the contract within twenty days.</b> That is
+      the declaration you sign in the document log, under section 155(6). Diarise it the
+      day the policy is issued.</p></div>
+  </div></li>
+</ol>
+</section>
+
+<div class="rule"></div>
+
+<section id="manager">
+<p class="part">Part two</p>
+<h2>For managers</h2>
+<p class="lede">You are the reason the branch can say a second person checks the work. That
+only holds if you do it quickly and you do not sell.</p>
+
+<ol class="steps">
+  <li class="sp mgr"><div class="sn">1</div><div class="sb">
+    <h3>Decide from the email</h3>
+    <p>The whole case is in the message &mdash; the client&rsquo;s numbers, every
+      recommendation, and the reason written against each one. Three buttons: <b>Approve
+      &amp; sign</b>, <b>Send back</b>, <b>Decline</b>. You do not log in anywhere.</p>
+    <p>Approving signs it in your name with the date and time, and writes that signature
+      onto the fact find itself.</p>
+  </div></li>
+
+  <li class="sp mgr"><div class="sn">2</div><div class="sb">
+    <h3>Check four things, and only four</h3>
+    <ul>
+      <li>Does the cover actually match the need?</li>
+      <li>Can this person afford the premium?</li>
+      <li>Is the reason for it written down?</li>
+      <li>Is anything being replaced &mdash; and was that explained?</li>
+    </ul>
+    <p>If all four hold, approve it. You are not re-doing the fact find.</p>
+  </div></li>
+
+  <li class="sp mgr"><div class="sn">3</div><div class="sb">
+    <h3>Send back rather than decline, nearly always</h3>
+    <p>Send back is coaching: one line saying what is missing, and the case reopens where
+      it failed. Decline closes the case and nobody is being asked to fix anything &mdash;
+      keep it for cases that should not have been written at all.</p>
+  </div></li>
+
+  <li class="sp mgr"><div class="sn">4</div><div class="sb">
+    <h3>Do not add to the sale</h3>
+    <p>If you spot a need the advisor missed, it goes <b>to the advisor</b>, never to the
+      client. He books the follow-up and works it properly.</p>
+    <div class="stop"><p><b>This is the one rule that protects everything else.</b> The
+      branch tells every client that a second person reads the file and is not selling them
+      anything. The first time a client sees that same person increase their bill, the
+      promise is gone &mdash; for the branch, not for one case.</p></div>
+  </div></li>
+
+  <li class="sp mgr"><div class="sn">5</div><div class="sb">
+    <h3>Read the dash at five</h3>
+    <p><a class="lnk" href="https://rickyrampersadbranch.com/dash/">The daily dash</a> opens
+      on the four numbers that decide your evening, then the signing queue oldest first,
+      every advisor ranked by needs found, and coaching lines only where a number says
+      something.</p>
+    <p>The 5pm message writes itself from the same figures. Pick what goes in, tap
+      <b>Send on WhatsApp</b>.</p>
+    <div class="tip"><p><b>Needs found per fact find is the number that matters.</b> Not
+      volume. It is the difference between an advisor making a sale and an advisor building
+      a relationship, and it is the only figure on that page worth coaching against.</p></div>
+  </div></li>
+</ol>
+</section>
+
+<div class="rule"></div>
+
+<section id="staff">
+<p class="part">Part three</p>
+<h2>For the desk</h2>
+<p class="lede">Nothing new to fill in. This is so you can answer an advisor without
+looking anything up.</p>
+
+<div class="tw"><table>
+<tr><th>What</th><th>Where it lands</th></tr>
+<tr><td><b>Everything a prospect does</b><br>opens, watches, taps, books</td>
+    <td>The <b>Prospects</b> tab in the fact find workbook. One row per person, not a log.
+      It updates itself.</td></tr>
+<tr><td><b>Every fact find</b></td>
+    <td>The <b>ffRevised</b> tab, same workbook.</td></tr>
+<tr><td><b>Who the agents are</b></td>
+    <td>The <b>Access</b> tab. Adding somebody is a row &mdash; no code change. It must say
+      <b>Active</b>.</td></tr>
+<tr><td><b>Document delivery</b></td>
+    <td><b>Log Book Digital</b>, as today. Twenty-day turnaround under section 155(6).</td></tr>
+</table></div>
+
+<h3 style="margin-top:26px">The four questions you will actually be asked</h3>
+<div class="qa"><h3>&ldquo;How do I send it?&rdquo;</h3>
+<p>rickyrampersadbranch.com/prospecting/ &mdash; type the client&rsquo;s first name, tap
+Send on WhatsApp.</p></div>
+<div class="qa"><h3>&ldquo;Why is my name not on it?&rdquo;</h3>
+<p>They are on the Access tab. Check the row says <b>Active</b> and the code matches.</p></div>
+<div class="qa"><h3>&ldquo;My board is empty.&rdquo;</h3>
+<p>They have not sent one yet. The board only ever shows their own prospects.</p></div>
+<div class="qa"><h3>&ldquo;Nothing arrived in my email.&rdquo;</h3>
+<p>Check their email address on the Access tab. That is the address everything goes to.</p></div>
+</section>
+
+<div class="rule"></div>
+
+<section id="ref">
+<p class="part">Part four</p>
+<h2>Every link, and what it is for</h2>
+<div class="tw"><table>
+<tr><th>Link</th><th>Who</th><th>What</th></tr>
+<tr><td><code>/meet/</code></td><td>Clients</td>
+    <td>The page an advisor sends before the first appointment. Never send the generic one
+      &mdash; it credits nobody.</td></tr>
+<tr><td><code>/prospecting/</code></td><td>Advisors</td>
+    <td>Send the link, watch the board, both films.</td></tr>
+<tr><td><code>/dash/</code></td><td>Managers</td>
+    <td>The daily dash and the 5pm message.</td></tr>
+<tr><td><code>/process/</code></td><td>Everyone</td>
+    <td>The full process, end to end, including what is not built yet.</td></tr>
+<tr><td><code>/launch/</code></td><td>Branch manager</td>
+    <td>The messages to send, with copy buttons.</td></tr>
+<tr><td><code>/fix/</code></td><td>Branch manager</td>
+    <td>The repaired fact find, to test and merge.</td></tr>
+<tr><td><code>/gs/</code></td><td>Branch manager</td>
+    <td>The tracking script, one button to copy.</td></tr>
+<tr><td><code>/manual/</code></td><td>Everyone</td>
+    <td>This page.</td></tr>
+</table></div>
+
+<h3 style="margin-top:26px">Every email, and what it means</h3>
+<div class="tw"><table>
+<tr><th>Subject</th><th>Goes to</th><th>Means</th></tr>
+<tr><td><b>&hellip; opened your page</b></td><td>Advisor, unit manager</td>
+    <td>First open only. Nothing to do &mdash; it landed.</td></tr>
+<tr><td><b>&hellip; said what they want to talk about</b></td><td>Advisor, unit manager</td>
+    <td><b>Ring them today.</b> They have told you what worries them and not booked.</td></tr>
+<tr><td><b>&hellip; booked you</b></td><td>Advisor, unit manager</td>
+    <td>Confirm the time before it goes cold.</td></tr>
+<tr><td><b>Approval needed &hellip;</b></td><td>Direct manager</td>
+    <td>A fact find is waiting. Decide from the email.</td></tr>
+<tr><td><b>Sent back &hellip;</b></td><td>Advisor</td>
+    <td>One thing to fix. Not a rejection.</td></tr>
+<tr><td><b>Approved &hellip;</b></td><td>Advisor, then the client</td>
+    <td>Checked and signed. The client&rsquo;s copy goes out.</td></tr>
+</table></div>
+</section>
+
+<div class="rule"></div>
+
+<section id="trouble">
+<p class="part">Part five</p>
+<h2>When it goes wrong</h2>
+
+<div class="qa"><h3>The client says they never got the link</h3>
+<p>Check the number on the board. Trinidad numbers work as seven digits, 868 plus seven,
+or 1868 plus seven &mdash; all three are handled. If it still shows nothing after an hour,
+send it again from the board rather than forwarding the old message; a forwarded link still
+records, but it will not carry their name.</p></div>
+
+<div class="qa"><h3>The board shows somebody twice</h3>
+<p>Two separate sends. Each send makes its own row so you can tell which message they
+actually opened. Work the newest one.</p></div>
+
+<div class="qa"><h3>An advisor gets no emails</h3>
+<p>Access tab: is the row <b>Active</b>, and is the email right? Nothing is sent to anybody
+who is not active there &mdash; but everything still records on the sheet, so nothing is
+lost while it is fixed.</p></div>
+
+<div class="qa"><h3>A manager is away</h3>
+<p>Cases go to the named deputy after 48 hours. Until the new flow is built, the branch
+manager approves. Tell the desk when you are out.</p></div>
+
+<div class="qa"><h3>The reason will not save</h3>
+<p>Fixed &mdash; but only in the build at <code>/fix/</code>. Until that is merged, advisors
+on the live form will still see it. Type the reason into the notes as well until then.</p></div>
+
+<div class="qa"><h3>Something looks wrong on a page</h3>
+<p>Say so the same day, with a screenshot and what you were doing. Everything here was
+built in a week and the things that get fixed are the things that get reported.</p></div>
+</section>
+
+<div class="rule"></div>
+
+<section id="rules">
+<p class="part">Part six</p>
+<h2>The rules we set, and why</h2>
+<p class="lede">These were open questions. They are answered now, so nobody has to guess.
+Each one can be changed &mdash; but change it deliberately.</p>
+
+<div class="dec"><div class="t">Settled</div>
+<h3>A manager may decline outright</h3>
+<p>Three outcomes, not two: approve, send back, decline. Send back is coaching and is what
+you should use nearly always. Decline is for a case that should not have been written, and
+it closes the case rather than asking anybody to fix it.</p></div>
+
+<div class="dec"><div class="t">Settled</div>
+<h3>The deputy is the Assistant Branch Manager</h3>
+<p>Kerwyn Ramroach. A case unread after 48 hours goes to him. One manager and one gate
+means the branch stops when that manager is away, and that is not an acceptable way to run
+a queue.</p></div>
+
+<div class="dec"><div class="t">Settled</div>
+<h3>Chasing runs 24 then 48 hours</h3>
+<p>A reminder at 24 hours, the deputy at 48. The dash shows anything over a day in red so
+it is visible before it is chased.</p></div>
+
+<div class="dec"><div class="t">Settled</div>
+<h3>The client&rsquo;s in-email signature confirms the advice, not the contract</h3>
+<p>It records that they read the recommendation and what they decided. The contract is the
+wet signature on Guardian&rsquo;s form. The two are not interchangeable and the emails say
+which is which.</p></div>
+
+<div class="dec"><div class="t">Settled</div>
+<h3>Sales support is one shared address</h3>
+<p><code>rickyrampersadsalessupport@myguardiangroup.com</code> &mdash; already the address
+the system uses. A named person per case creates a gap the day that person is on leave.</p></div>
+
+<div class="dec"><div class="t">Settled</div>
+<h3>The star rating is a coaching signal, never a score</h3>
+<p>It sits on the case and on the dash. It is not published, not ranked and not read out.
+An advisor whose rating is public will coach the client before the email arrives, and then
+it measures nothing.</p></div>
+
+<div class="dec"><div class="t">Settled</div>
+<h3>Replacement covers Guardian policies</h3>
+<p>One line, no citations, and it does not block submission: the policy is named and the
+disclosure form must be signed. Other insurers are out of scope by decision.</p></div>
+</section>
+
+<footer><b>Ricky Rampersad Branch</b><br>
+The branch manual &middot; keep it open, it is a reference not a read.<br>
+Anything wrong on this page, say so the same day.</footer>
+</div>
