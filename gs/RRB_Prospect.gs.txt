@@ -25,7 +25,7 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-var SHEET_ID  = 'PUT_YOUR_SPREADSHEET_ID_HERE';
+var SHEET_ID  = '1iytBbnETQFRmkveDSxadjsAfN07aMTW9E2slcA5qaWI';
 var TAB       = 'Prospects';
 var BRANCH    = 'Ricky Rampersad Branch';
 
@@ -305,8 +305,8 @@ function rrbNotify_(sh, r, kind) {
   var v = sh.getRange(r, 1, 1, COLS.length).getValues()[0];
   function g(n) { return v[C[n] - 1]; }
 
-  var to = rrbAgentEmail_(g('Agent'), g('Advisor'));
-  if (!to) return;
+  var who_ = rrbAgentEmail_(g('Agent'), g('Advisor'));
+  if (!who_ || !who_.to) return;
 
   var who   = g('Prospect') || 'Someone you sent the link to';
   var phone = g('Phone') || '';
@@ -339,7 +339,8 @@ function rrbNotify_(sh, r, kind) {
 
   try {
     MailApp.sendEmail({
-      to: to,
+      to: who_.to,
+      cc: who_.cc || '',
       subject: subj,
       body: body + '\n\n—\n' + BRANCH
     });
@@ -349,15 +350,74 @@ function rrbNotify_(sh, r, kind) {
 }
 
 /**
- * Who to mail. Add the branch's agents here, keyed on the agent code the
- * workspace stamps into the link. Until an agent is in this list they simply
- * do not get mail — everything still lands on the sheet.
+ * Who to mail, read from the roster tab in the same spreadsheet — so adding an
+ * agent is a row, never a code change. The tab is found by its header rather
+ * than its name, because names get renamed and headers rarely do.
+ *
+ * Returns { to, cc } — the advisor, and their unit manager copied, so the
+ * direct manager sees what is happening on his own unit without being told.
  */
+function rrbRoster_() {
+  var cache = CacheService.getScriptCache();
+  var hit = cache.get('rrbRoster');
+  if (hit) { try { return JSON.parse(hit); } catch (e) {} }
+
+  var map = { byCode: {}, unitLead: {} };
+  try {
+    var sheets = SpreadsheetApp.openById(SHEET_ID).getSheets();
+    for (var s = 0; s < sheets.length; s++) {
+      var sh = sheets[s];
+      if (sh.getLastRow() < 2) continue;
+      var head = sh.getRange(1, 1, 1, Math.min(12, sh.getLastColumn()))
+                   .getValues()[0].map(function (x) { return String(x).trim().toLowerCase(); });
+      var iEmail = head.indexOf('email'),
+          iCode  = head.indexOf('agent number'),
+          iName  = head.indexOf('name'),
+          iRole  = head.indexOf('role'),
+          iUnit  = head.indexOf('unit'),
+          iLive  = head.indexOf('active');
+      if (iEmail < 0 || iCode < 0) continue;      // not the roster
+
+      var rows = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
+      rows.forEach(function (r) {
+        var code = String(r[iCode] || '').trim();
+        var mail = String(r[iEmail] || '').trim();
+        if (!code || !mail) return;
+        if (iLive >= 0 && String(r[iLive]).trim().toLowerCase() !== 'active') return;
+
+        var unit = iUnit >= 0 ? String(r[iUnit] || '').trim() : '';
+        var role = iRole >= 0 ? String(r[iRole] || '').trim() : '';
+        // "A03522 - Premchand Dookran" reads badly in an email subject line.
+        var name = iName >= 0 ? String(r[iName] || '').replace(/^A\d+\s*-\s*/, '').trim() : '';
+
+        map.byCode[code] = { email: mail, name: name, unit: unit };
+        // Whoever leads a unit is the person that unit is named after.
+        if (unit && name && unit.toLowerCase() === name.toLowerCase()) {
+          map.unitLead[unit] = mail;
+        }
+        if (/manager/i.test(role) && unit && !map.unitLead[unit]) {
+          map.unitLead[unit] = mail;
+        }
+      });
+      break;
+    }
+    cache.put('rrbRoster', JSON.stringify(map), 600);   // ten minutes
+  } catch (err) {
+    rrbLogError_('roster', err, {});
+  }
+  return map;
+}
+
 function rrbAgentEmail_(code, advisor) {
-  var BOOK = {
-    // 'A10024': 'premchand@example.com',
+  var r = rrbRoster_();
+  var a = r.byCode[String(code || '').trim()];
+  if (!a) return null;
+  var lead = a.unit ? r.unitLead[a.unit] : '';
+  return {
+    to: a.email,
+    cc: (lead && lead.toLowerCase() !== a.email.toLowerCase()) ? lead : '',
+    name: a.name || advisor || ''
   };
-  return BOOK[String(code || '').trim()] || '';
 }
 
 
@@ -490,5 +550,17 @@ function rrbSelfTest() {
   Logger.log('Needs you: ' + v[C['Needs you'] - 1]);
 
   sh.deleteRow(r);
+
+  var ros = rrbRoster_();
+  var n = Object.keys(ros.byCode).length;
+  Logger.log('Roster:    ' + n + ' active agents, ' +
+             Object.keys(ros.unitLead).length + ' units');
+  if (n) {
+    var first = Object.keys(ros.byCode)[0];
+    var e = rrbAgentEmail_(first, '');
+    Logger.log('Example:   ' + first + ' -> ' + e.to + (e.cc ? '  (cc ' + e.cc + ')' : ''));
+  } else {
+    Logger.log('Roster:    NOT FOUND — no tab with Email and Agent Number headers');
+  }
   Logger.log('Test row removed. Setup is working.');
 }
