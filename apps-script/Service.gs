@@ -937,7 +937,7 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf, accessCode) 
     track = box_('tip',
       '<b style="color:#a05e03">Watch your request move.</b> Log in any time at ' +
       '<a href="' + trackUrl + '">donthaveanagent.com</a> with your reference and this access code:' +
-      '<div style="font-size:22px;font-weight:800;letter-spacing:.22em;margin:10px 0 4px;color:#0C3330">' +
+      '<div style="font-size:22px;font-weight:800;letter-spacing:.22em;margin:10px 0 4px;color:#241635">' +
       esc_(accessCode) + '</div>' +
       '<span style="font-size:12px">Keep it private — anyone holding it can see the status (never the answers) of this request.</span>');
   }
