@@ -1,7 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88 88" width="88" height="88">
   <title>don't have an agent — mark</title>
   <rect width="88" height="88" rx="22" fill="#0F1A2B"/>
-  <text x="44" y="56" text-anchor="middle" font-family="Montserrat, Helvetica, Arial, sans-serif"
-        font-weight="900" font-size="34" letter-spacing="-1.5" fill="#FFFFFF" opacity="0.5">dha</text>
-  <rect x="12" y="40" width="64" height="7" rx="3.5" fill="#FF5C4D"/>
+  <g transform="translate(30 66) scale(0.62)" opacity="0.55">
+    <circle cx="0" cy="-46" r="10.5" fill="#FFFFFF"/>
+    <path d="M0 -35 V-9 M0 -28 -13 -14 M0 -28 13 -14 M0 -9 -10 15 M0 -9 10 15"
+          stroke="#FFFFFF" stroke-width="5" fill="none" stroke-linecap="round"/>
+  </g>
+  <path d="M8 44 Q26 36 44 42" stroke="#FF5C4D" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <g transform="translate(62 66) scale(0.62)">
+    <circle cx="0" cy="-46" r="10.5" fill="#FF5C4D"/>
+    <path d="M0 -35 V-9 M0 -28 -13 -14 M0 -28 13 -14 M0 -9 -10 15 M0 -9 10 15"
+          stroke="#FF5C4D" stroke-width="5" fill="none" stroke-linecap="round"/>
+  </g>
 </svg>

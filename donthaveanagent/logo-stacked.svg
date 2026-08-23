@@ -2,7 +2,7 @@
   <title>don't have an agent — stacked</title>
   <text x="150" y="52" text-anchor="middle" font-family="Montserrat, Helvetica, Arial, sans-serif"
         font-weight="900" font-size="44" letter-spacing="-1.6" fill="#0F1A2B" opacity="0.42">don&#8217;t</text>
-  <rect x="82" y="34" width="136" height="8" rx="4" fill="#FF5C4D"/>
+  <path d="M80 44 Q150 30 220 38" stroke="#FF5C4D" stroke-width="9" fill="none" stroke-linecap="round"/>
   <text x="150" y="102" text-anchor="middle" font-family="Montserrat, Helvetica, Arial, sans-serif"
         font-weight="900" font-size="40" letter-spacing="-1.5" fill="#0F1A2B">have an agent</text>
   <text x="150" y="130" text-anchor="middle" font-family="Montserrat, Helvetica, Arial, sans-serif"

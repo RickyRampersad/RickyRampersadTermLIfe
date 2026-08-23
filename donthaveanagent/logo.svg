@@ -2,7 +2,7 @@
   <title>don't have an agent — Ricky Rampersad</title>
   <text x="16" y="62" font-family="Montserrat, Helvetica, Arial, sans-serif" font-weight="900"
         font-size="52" letter-spacing="-2" fill="#0F1A2B" opacity="0.42">don&#8217;t</text>
-  <rect x="6" y="42" width="152" height="9" rx="4.5" fill="#FF5C4D"/>
+  <path d="M4 54 Q60 40 118 46 T162 39" stroke="#FF5C4D" stroke-width="10" fill="none" stroke-linecap="round"/>
   <text x="176" y="62" font-family="Montserrat, Helvetica, Arial, sans-serif" font-weight="900"
         font-size="52" letter-spacing="-2" fill="#0F1A2B">have an agent</text>
   <rect x="17" y="86" width="527" height="2" fill="#FF5C4D" opacity="0.5"/>
