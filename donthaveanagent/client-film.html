@@ -85,9 +85,9 @@ body.onDark #chrome .mark text{fill:#0F1A2B}
 
 /* the brand device: the line drawing itself through "don't" */
 .strikelogo{font-family:var(--head);font-weight:900;letter-spacing:-1.6px;line-height:1;
-  font-size:clamp(26px,4.4vw,50px);color:#fff;margin-bottom:22px;white-space:nowrap}
+  font-size:clamp(19px,2.5vw,30px);color:#fff;margin-bottom:30px;opacity:.95;white-space:nowrap}
 .strikelogo .dw{position:relative;opacity:.5}
-.strikelogo .dw i{position:absolute;left:-5px;right:-5px;top:50%;height:6px;border-radius:3px;
+.strikelogo .dw i{position:absolute;left:-4px;right:-4px;top:50%;height:4px;border-radius:3px;
   background:#FF5C4D;transform:scaleX(0);transform-origin:left}
 .scene.on .strikelogo .dw i{animation:strikedraw .5s .55s cubic-bezier(.3,.85,.3,1) forwards}
 @keyframes strikedraw{to{transform:scaleX(1)}}
@@ -437,22 +437,18 @@ em{font-style:normal;color:var(--ox)}
 <!-- 1 · title -->
 <div class="vig"></div>
 <div class="grain"></div>
-<section class="scene dark" data-d="8600">
+<section class="scene dark" data-d="5800">
   <div class="inner">
     <div class="strikelogo st"><span class="dw">don&rsquo;t<i></i></span> have an agent</div>
-    <div class="eyebrow st d3">Your agent sent you this</div>
-    <h1 class="st d4">You have a policy.<br><em>Do you have a person?</em></h1>
-    <div class="free">
-      <span class="st d5">✓ 4 minutes</span><span class="st d5">✓ Free</span>
-      <span class="st d6">✓ Nothing to buy</span><span class="st d6">✓ No policy number needed</span>
-    </div>
+    <h1 class="st d3">Your agent left.<br><em>Your policy didn&rsquo;t.</em></h1>
   </div>
 </section>
 
-<section class="scene dark" data-d="7800">
+<section class="scene dark" data-d="12600">
   <div class="inner">
     <h1 class="st">Agents retire.<br>They move.<br><em>They pass away.</em></h1>
-    <p class="hugesub st d3">The policy stays exactly where it was.</p>
+    <p class="hugesub st d3">The policy stays exactly where it was — and so does everything that was true
+    about your life the day you signed it.</p>
   </div>
 </section>
 
@@ -489,7 +485,7 @@ em{font-style:normal;color:var(--ox)}
   </div>
 </section>
 
-<section class="scene dark" data-d="13200">
+<section class="scene dark" data-d="13600">
   <div class="inner">
     <div class="eyebrow st">The part nobody tells you</div>
     <h2 class="st d1">Your insurance company will pay<br>a valid claim.<br><em>It will not notice.</em></h2>
@@ -511,7 +507,7 @@ em{font-style:normal;color:var(--ox)}
   </div>
 </section>
 
-<section class="scene dark" data-d="10100">
+<section class="scene dark" data-d="10500">
   <div class="inner">
     <div class="eyebrow st">And on the day it matters</div>
     <h2 class="st d1">Your family will not read<br><em>a policy document.</em></h2>
@@ -524,7 +520,7 @@ em{font-style:normal;color:var(--ox)}
   </div>
 </section>
 
-<section class="scene" data-d="10500">
+<section class="scene" data-d="10900">
   <div class="inner">
     <div class="eyebrow st">And this is who is behind them</div>
     <h2 class="st d1">The Ricky Rampersad Branch.</h2>
@@ -606,8 +602,8 @@ em{font-style:normal;color:var(--ox)}
       </div>
     </div>
     <div class="free">
-      <span class="st d3">✓ Free</span><span class="st d3">✓ Nothing to buy</span>
-      <span class="st d4">✓ No policy number needed</span><span class="st d4">✓ No obligation</span>
+      <span class="st d3">✓ 4 minutes</span><span class="st d3">✓ Free</span>
+      <span class="st d4">✓ Nothing to buy</span><span class="st d4">✓ No policy number needed</span>
     </div>
     <div class="cta-row st d5">
       <a class="btn btn-ox" href="https://donthaveanagent.com/start" target="_blank" rel="noopener">Start my free review →</a>
