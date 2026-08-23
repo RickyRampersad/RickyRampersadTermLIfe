@@ -87,9 +87,16 @@ ever break the form.</p>
 <p>Select all of the empty <code>Code.gs</code> and paste. Tap the green button above first
 &mdash; it copies the whole file in one action.</p></div></div>
 
-<div class="st"><div class="n">3</div><div><h3>Put your sheet id in</h3>
-<p>Line 26 &mdash; replace <code>PUT_YOUR_SPREADSHEET_ID_HERE</code> with the long string in
-your spreadsheet URL between <code>/d/</code> and <code>/edit</code>.</p></div></div>
+<div class="st"><div class="n">3</div><div><h3>Put your sheet id in &mdash; keep the quotes</h3>
+<p>Line 26 &mdash; replace only the words <code>PUT_YOUR_SPREADSHEET_ID_HERE</code> with the
+long string from your spreadsheet URL, between <code>/d/</code> and <code>/edit</code>.
+<b>Leave the two straight quote marks in place.</b> Without them Apps Script reads the id as
+a variable name and stops with <em>&ldquo;is not defined&rdquo;</em>.</p>
+<div class="warn" style="margin:11px 0 0"><h3>Right</h3>
+<p style="font:600 13px ui-monospace,SFMono-Regular,Menlo,monospace">var SHEET_ID  = '1AbC&hellip;xYz';</p>
+<h3 style="margin-top:10px">Wrong</h3>
+<p style="font:600 13px ui-monospace,SFMono-Regular,Menlo,monospace">var SHEET_ID  = 1AbC&hellip;xYz;</p></div>
+</div></div>
 
 <div class="st"><div class="n">4</div><div><h3>Run the self test</h3>
 <p>Pick <code>rrbSelfTest</code> from the function menu and press Run. It creates the tab,
