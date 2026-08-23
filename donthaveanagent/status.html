@@ -6,21 +6,21 @@
 <title>Track my request | donthaveanagent.com</title>
 <meta name="description" content="Log in with your reference and access code to watch your policy review move — verification, your documents, your digital signature, done."/>
 <meta name="robots" content="noindex"/>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 88'%3E%3Crect x='2' y='2' width='84' height='84' rx='26' fill='%23241635'/%3E%3Cpath d='M32 18h24a4 4 0 0 1 4 4v48l-16-12-16 12V22a4 4 0 0 1 4-4Z' fill='%23A98CE3'/%3E%3Ccircle cx='44' cy='38' r='7' fill='%23241635'/%3E%3C/svg%3E"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 88'%3E%3Cpath d='M30 16H16a7 7 0 0 0-7 7v42a7 7 0 0 0 7 7h14' fill='none' stroke='%236D4AA8' stroke-width='8' stroke-linecap='square'/%3E%3Cpath d='M58 16h14a7 7 0 0 1 7 7v42a7 7 0 0 1-7 7H58' fill='none' stroke='%236D4AA8' stroke-width='8' stroke-linecap='square'/%3E%3Ccircle cx='44' cy='44' r='11.5' fill='%23B79BEB'/%3E%3C/svg%3E"/>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
-  --ink:#FBF9F5;--ink2:#EDE6FA;--surface:#FFFFFF;--surface2:#FBF9F5;
-  --line:rgba(30,19,41,.10);--line2:rgba(75,46,122,.30);
-  --text:#1E1329;--muted:#6A5C7A;--muted2:#8D82A0;
-  --amber:#A98CE3;--oxblood:#4B2E7A;--oxblood2:#241635;--red:#A98CE3;--slate:#8D82A0;
-  --ox-soft:rgba(75,46,122,.10);--good:#2F8F5B;
+  --ink:#FCFAFF;--ink2:#F0EAFC;--surface:#FFFFFF;--surface2:#FCFAFF;
+  --line:rgba(59,42,92,.10);--line2:rgba(109,74,168,.30);
+  --text:#3B2A5C;--muted:#6A5C7A;--muted2:#8D82A0;
+  --amber:#B79BEB;--oxblood:#6D4AA8;--oxblood2:#4A3570;--red:#B79BEB;--slate:#8D82A0;
+  --ox-soft:rgba(109,74,168,.10);--good:#2F8F5B;
   --head:'Montserrat',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   --body:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--body);background:var(--ink);color:var(--text);line-height:1.6;min-height:100vh;
-  background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(75,46,122,.09),transparent),
+  background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(109,74,168,.09),transparent),
   linear-gradient(180deg,var(--ink) 0%,var(--ink2) 55%,var(--ink) 100%);background-attachment:fixed}
 a{color:inherit}
 h1,h2,h3{font-family:var(--head);letter-spacing:-.02em;line-height:1.16}
@@ -53,7 +53,7 @@ input::placeholder{color:var(--muted2);letter-spacing:.05em}
 .btn:hover{transform:translateY(-1px)}
 .btn-go{background:var(--oxblood);color:#fff;width:100%;margin-top:18px}
 .btn-line{background:none;border:1.5px solid var(--line);color:var(--text);padding:11px 16px;font-size:13px}
-.err{display:none;background:rgba(169,140,227,.07);border:1px solid rgba(169,140,227,.4);color:#8a1d15;
+.err{display:none;background:rgba(183,155,235,.07);border:1px solid rgba(183,155,235,.4);color:#8a1d15;
   border-radius:12px;padding:12px 14px;font-size:13.5px;margin-top:14px}
 .note{font-size:13px;color:var(--muted);background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:14px}
 
@@ -78,18 +78,23 @@ input::placeholder{color:var(--muted2);letter-spacing:.05em}
   font-size:12px;color:var(--muted2);transition:all .4s}
 .tstep.done .tdot{background:var(--oxblood);border-color:var(--oxblood);color:#fff}
 .tstep.active .tdot{border-color:var(--oxblood);color:var(--oxblood);box-shadow:0 0 0 5px var(--ox-soft);animation:pulse 2.2s infinite}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 4px var(--ox-soft)}50%{box-shadow:0 0 0 9px rgba(75,46,122,.05)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 4px var(--ox-soft)}50%{box-shadow:0 0 0 9px rgba(109,74,168,.05)}}
 @media (prefers-reduced-motion:reduce){.tstep.active .tdot{animation:none}}
 .tstep h3{font-size:15.5px;font-weight:800}
 .tstep.pending h3{color:var(--muted2);font-weight:700}
 .tstep p{font-size:13.3px;color:var(--muted);margin-top:3px;max-width:52ch}
 .tstep .when{display:inline-block;font:700 11px var(--head);letter-spacing:.05em;text-transform:uppercase;
   color:var(--oxblood);background:var(--ox-soft);border-radius:99px;padding:3px 10px;margin-top:7px}
-.tstep.active .when{color:var(--amber);background:rgba(169,140,227,.1)}
+.tstep.active .when{color:var(--amber);background:rgba(183,155,235,.1)}
 
 .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
 .foot{max-width:720px;margin:0 auto;padding:26px 18px 40px;font-size:11.8px;color:var(--muted);border-top:1px solid var(--line)}
 .foot a{color:var(--oxblood)}
+
+.scene.dark .mark path,.scene.dark .biglogo path,
+body.onDark #chrome .mark path{stroke:#FCFAFF}
+.scene.dark .mark circle,.scene.dark .biglogo circle,
+body.onDark #chrome .mark circle{fill:#E8A33D}
 </style>
 </head>
 <body>
@@ -98,7 +103,7 @@ input::placeholder{color:var(--muted2);letter-spacing:.05em}
   <div class="nav-in">
     <a class="logo" href="index.html">
       <svg viewBox="0 0 88 88" aria-hidden="true">
-        <rect x="2" y="2" width="84" height="84" rx="26" fill="#241635"/><path d="M32 18h24a4 4 0 0 1 4 4v48l-16-12-16 12V22a4 4 0 0 1 4-4Z" fill="#A98CE3"/><circle cx="44" cy="38" r="7" fill="#241635"/>
+        <path d="M30 16H16a7 7 0 0 0-7 7v42a7 7 0 0 0 7 7h14" fill="none" stroke="#6D4AA8" stroke-width="8" stroke-linecap="square"/><path d="M58 16h14a7 7 0 0 1 7 7v42a7 7 0 0 1-7 7H58" fill="none" stroke="#6D4AA8" stroke-width="8" stroke-linecap="square"/><circle cx="44" cy="44" r="11.5" fill="#B79BEB"/>
       </svg>
       <span class="logo-word"><span class="l1">don't have</span><span class="l2">an agent<span class="dot">.com</span></span></span>
     </a>
