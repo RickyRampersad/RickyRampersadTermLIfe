@@ -67,6 +67,11 @@ var SVC = {
   AGENT_EMAIL:   'ricky.rampersad@myguardiangroup.com',
   SUPPORT_EMAIL: 'support@rickyrampersadbranch.com',
 
+  /* Sales Support — the desk that reads the answers, verifies the policy and
+     decides which agent fits the client's brief. Copied on every submission
+     and on every agent assignment, because they do the analysis on both.   */
+  SALES_SUPPORT_EMAIL: 'salessupport@myguardiangroup.com',
+
   /* Copied on every submission. Add your branch admin here. */
   CC: [],
 
@@ -423,7 +428,14 @@ function handleSubmission_(body) {
                       : paperFacsimilePdf_(ref, priority, now, body);
     if (formPdf) attachments.push(formPdf);
   } else {
+    /* The client keeps their own review document — donthaveanagent.com is not
+       a Guardian Life form and does not send them one. Customer Service gets
+       form 2000-03-147 all the same, because that is the sheet a record change
+       is processed on, with every review answer carried as its addendum. */
     formPdf = answersPdf_(ref, priority, now, body);
+    var svcForm = isGroup ? groupOnePdf_(ref, priority, now, body)
+                          : paperFacsimilePdf_(ref, priority, now, body);
+    if (svcForm) attachments.push(svcForm);
     if (formPdf) attachments.push(formPdf);
     /* the letter only when there is a signature to carry — a matched-agent
        appointment is populated by support after verification and assignment */
@@ -1000,6 +1012,9 @@ function routeToService_(ref, priority, now, body, attachments, clientEmailed) {
 
   var cc = (SVC.CC || []).slice();
   if (SVC.SUPPORT_EMAIL) cc.push(SVC.SUPPORT_EMAIL);
+  /* Sales Support reads every one of these — they verify the policy and work
+     out which agent fits before anybody is assigned. */
+  if (SVC.SALES_SUPPORT_EMAIL) cc.push(SVC.SALES_SUPPORT_EMAIL);
   if ((priority === 'URGENT' || priority === 'HIGH') && SVC.ESCALATION_CC.length) {
     cc = cc.concat(SVC.ESCALATION_CC);
   }
@@ -1571,6 +1586,11 @@ function agentBriefEmail_(agentName, why, headers, r, v, isGroup, ref) {
 
   MailApp.sendEmail({
     to: me.email, name: SVC.FROM_NAME, replyTo: SVC.AGENT_EMAIL,
+    /* Sales Support made the match — they stay on the thread so they can see
+       the brief the agent got, and pick it up if the agent goes quiet. */
+    cc: [SVC.SALES_SUPPORT_EMAIL, SVC.AGENT_EMAIL].filter(function (x, i, arr) {
+      return x && x !== me.email && arr.indexOf(x) === i;
+    }).join(','),
     subject: 'New client assigned to you: ' + (v('Company') || v('Client')) + ' (' + ref + ')',
     htmlBody: html,
   });
@@ -1755,9 +1775,94 @@ function questionnairePdf_(ref, priority, now, body) {
   return null;   /* everything else is covered by answersPdf_ */
 }
 
-function paperFacsimilePdf_(ref, priority, now, body) {
+/* ── A donthaveanagent.com review, mapped onto the paper form ─────────────
+   The review asks fewer questions than form 2000-03-147, and asks some of
+   them in different words. This is the translation, question by question,
+   written against what the review actually collects.
+
+   Two rules it will not break. Where the review asked something the form
+   also asks, the answer is carried across and the box is ticked. Where the
+   review never asked, BOTH boxes stay empty and the number is listed in
+   `notAsked` — because a blank on this form must never be mistaken for a
+   client who declined to answer. "Not sure" also leaves both boxes empty,
+   which is what the paper form does and what an agent does with a pen.   */
+function paperAnswers_(body) {
   var a = answersById_(body);   /* the printable sentence */
   var r = rawById_(body);       /* the answer itself, for the tick boxes */
+  var c = body.core || {};
+  if (!identity_(body).dhaa) return { a: a, r: r, notAsked: [] };
+
+  var put = function (id, raw, printed) {
+    if (raw === undefined || raw === null || raw === '') return;
+    r[id] = raw;
+    a[id] = (printed === undefined || printed === '') ? raw : printed;
+  };
+  /* Yes / No / neither — anything that is not a clear yes or no leaves the
+     boxes alone, which is the honest reading of "I'm not sure". */
+  var yn = function (v, yes, no) {
+    var s = String(v || '').trim();
+    if (!s) return '';
+    if (yes.test(s)) return 'Yes';
+    if (no.test(s)) return 'No';
+    return '';
+  };
+  var YES = /^yes/i, NO = /^no\b|^no$|^no—|^no —/i;
+
+  /* 1 — satisfaction. The review scores it 1–5, the form ticks 4–5 as yes. */
+  if (c.satisfaction) put('satisfaction', String(c.satisfaction), String(c.satisfaction) + ' of 5');
+
+  /* 2 — "do you need clarification" is asked as "how well do you understand
+         what you own", so a low score is a yes. */
+  var und = String(r.understand || '');
+  var undN = parseInt(und, 10);
+  if (und) {
+    put('needClarify', undN && undN <= 3 ? 'Yes' : (undN >= 4 ? 'No' : ''),
+        undN && undN <= 3 ? 'Yes' : (undN >= 4 ? 'No' : ''));
+    put('clarifyWhat', 'Rated their own understanding ' + und +
+        (String(r.knowValue || '').match(/^no/i) ? '; does not know what it would pay, or to whom' : ''));
+  }
+
+  /* 4 — premiums. */
+  var pay = yn(r.stillPaying, YES, NO);
+  if (pay) put('premiumOk', pay, pay);
+  if (r.stillPaying) put('premiumNote', String(r.stillPaying));
+
+  /* 5 — unresolved problems carries across as it stands; the detail only
+         belongs on the line when they actually said yes. */
+  if (/^yes/i.test(String(r.unresolved || '')) && r.feelHeard) put('unresolvedWhat', String(r.feelHeard));
+
+  /* 8 — other policies. Question 7 asks specifically about policies with
+         Guardian Life; the review does not separate those, so 7 stays blank. */
+  if (r.otherPolicies) put('otherCompany', String(r.otherPolicies), String(r.otherPolicies));
+  if (r.otherPoliciesWhat) put('otherCompanyWhat', String(r.otherPoliciesWhat));
+
+  /* 10 — when the date of birth is wrong or in doubt, print the one they gave. */
+  if (!/^yes/i.test(String(r.dobOk || '')) && (r.dob || c.dob)) put('correctDob', String(r.dob || c.dob));
+
+  /* 17 — "when last was your programme reviewed" is asked as "when did
+          somebody last review this policy with you". */
+  if (r.lastContact) put('lastReview', String(r.lastContact));
+
+  /* 20 — anything they wanted to ask. */
+  if (r.questionsFor) put('questions', String(r.questionsFor));
+
+  /* 9, 11 and 12 already use the form's own ids and need no translation. */
+
+  /* Which paper questions the review actually puts to the client. Stated
+     outright rather than inferred from an empty box, because a box can also
+     be empty when the client answered "I'm not sure" — question 4 does that
+     routinely, and reporting it as never asked would be a lie on a document
+     Customer Service acts on. */
+  var COVERED = [1, 2, 4, 5, 8, 9, 10, 11, 12, 17, 20];
+  var notAsked = PAPER_Q.map(function (q) { return q.n; })
+    .filter(function (n) { return COVERED.indexOf(n) < 0; });
+  return { a: a, r: r, notAsked: notAsked };
+}
+
+function paperFacsimilePdf_(ref, priority, now, body) {
+  var v = paperAnswers_(body);
+  var a = v.a;                  /* the printable sentence */
+  var r = v.r;                  /* the answer itself, for the tick boxes */
   var c = body.core || {};
   var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
   var d  = new Date(now);
@@ -1816,8 +1921,18 @@ function paperFacsimilePdf_(ref, priority, now, body) {
       else if (indexOf_(q.no, v) > -1) no = '✓';
     }
 
+    /* The detail behind the answer goes on the dotted line beside the
+       question — the new address, who the beneficiary should be, what the
+       other policy is — which is what an agent writes there with a pen.
+       The rule is only so long, and the full text is always in the addendum,
+       so anything that would run past the YES box is trimmed here. */
+    if (!typed && q.note && a[q.note] !== undefined) typed = String(a[q.note]);
+    /* A note that only repeats the box it sits beside is noise on the line. */
+    if ((yes || no) && /^(yes|no)$/i.test(typed.trim())) typed = '';
+    if (typed.length > 58) typed = typed.slice(0, 57) + '…';
+
     rows += '<tr' + (q.gap ? ' class="gap"' : '') + '>' +
-      '<td><table><tr><td class="qt">' + esc_(q.t) + '</td>' + L(typed) + '</tr></table></td>' +
+      '<td><table><tr><td class="qt">' + esc_(q.t) + '</td>' + L(typed, '', typed.length > 26) + '</tr></table></td>' +
       '<td class="bx"><span class="box">' + yes + '</span></td>' +
       '<td class="bx"><span class="box">' + no + '</span></td></tr>';
   });
@@ -1826,7 +1941,11 @@ function paperFacsimilePdf_(ref, priority, now, body) {
        '<div class="cut"></div>';
 
   /* change of servicing agent — the bottom half of the same sheet -------- */
-  var wants = String(a.changeAgent || '').indexOf('Yes') === 0;
+  /* The branch form asks this as "changeAgent"; the review asks it as
+     "wantAgent" and sets core.changeAgent alongside it. Any of the three is
+     the client saying yes, and the letter below is only filled when they do. */
+  var wants = /^yes/i.test(String(a.changeAgent || a.wantAgent || '')) ||
+              (body.core || {}).changeAgent === true;
   var w = function (v) { return wants ? v : ''; };
   /* support sets assignedAgent when they populate the form for a client who
      asked us to choose; the manager's name is only the direct-path default */
@@ -1863,7 +1982,7 @@ function paperFacsimilePdf_(ref, priority, now, body) {
 
     '<table style="margin-top:0.14in"><tr>' +
       '<td style="width:52%"><table><tr><td class="lbl">ADDRESS (HOME)</td>' +
-        L(a.coaHomeAddress || a.newAddress, '', true) + '</tr></table>' +
+        L(a.coaHomeAddress || a.coaAddress || a.newAddress, '', true) + '</tr></table>' +
         '<div class="cap" style="padding-left:.14in">(and mailing)</div></td>' +
       '<td style="width:3%"></td>' +
       '<td><table><tr><td class="lbl">(WORK)</td>' + L(a.coaWorkAddress, '', true) + '</tr></table></td>' +
@@ -1913,14 +2032,24 @@ function paperFacsimilePdf_(ref, priority, now, body) {
       (a.policyNos || c.policyNos ? ' \u00b7 policy ' + esc_(a.policyNos || c.policyNos) : '') +
       ' \u00b7 reference ' + esc_(ref) +
       ' \u00b7 ' + esc_(Utilities.formatDate(d, tz, 'd MMMM yyyy, h:mm a')) +
-      '<br>This addendum forms part of the Service Questionnaire above.</div>' +
+      '<br>This addendum forms part of the Service Questionnaire above.' +
+      (v.notAsked.length
+        ? '<br><b>Question' + (v.notAsked.length > 1 ? 's' : '') + ' ' + v.notAsked.join(', ') +
+          ' above ' + (v.notAsked.length > 1 ? 'were' : 'was') + ' not put to the client.</b> ' +
+          'This review is shorter than the printed form; those boxes are blank because the question ' +
+          'was never asked, not because the client declined to answer it.'
+        : '') +
+      '</div>' +
     addendumTable_(body);
 
   var con = body.consent || {};
   h += '<div class="p2f">Declared true and correct: <b>' + (con['true'] ? 'Yes' : 'No') +
     '</b> &nbsp;&middot;&nbsp; Consent to service and update records: <b>' + (con.use ? 'Yes' : 'No') +
     '</b> &nbsp;&middot;&nbsp; Marketing consent: <b>' + (con.marketing ? 'Yes' : 'No') + '</b><br>' +
-    'Completed online at ' + esc_(SVC.FORM_URL) + '. Changes to policy records are effective only once ' +
+    /* Where it was actually filled in — the two front doors are different
+       sites, and this line is part of the record. */
+    'Completed online at ' + esc_(identity_(body).dhaa ? SVC.DHAA_URL : SVC.FORM_URL) +
+    '. Changes to policy records are effective only once ' +
     'processed and confirmed in writing by Guardian Life of the Caribbean Limited.</div>';
 
   return toPdf_('<!DOCTYPE html><html><head><meta charset="utf-8"><style>' + paperCss_() +
