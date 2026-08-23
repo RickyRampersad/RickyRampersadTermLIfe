@@ -70,7 +70,7 @@ var SVC = {
   /* Sales Support — the desk that reads the answers, verifies the policy and
      decides which agent fits the client's brief. Copied on every submission
      and on every agent assignment, because they do the analysis on both.   */
-  SALES_SUPPORT_EMAIL: 'salessupport@myguardiangroup.com',
+  SALES_SUPPORT_EMAIL: 'rickyrampersadsalessupport@myguardiangroup.com',
 
   /* Copied on every submission. Add your branch admin here. */
   CC: [],
