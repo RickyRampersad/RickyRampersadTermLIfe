@@ -93,6 +93,31 @@ body.onDark #chrome .mark text{fill:#0F1A2B}
 @keyframes strikedraw{to{transform:scaleX(1)}}
 .struckline{display:block;margin-bottom:.22em}
 @media (prefers-reduced-motion:reduce){.scene.on .struck i{animation:none;transform:scaleX(1)}}
+
+/* ── the counter: two numbers that tell the whole story ── */
+.tally{display:flex;gap:clamp(26px,6vw,72px);justify-content:center;margin-top:26px;flex-wrap:wrap}
+.ty{text-align:center}
+.ty b{display:block;font-family:var(--head);font-weight:900;font-size:clamp(56px,10vw,104px);
+  line-height:.92;letter-spacing:-.04em;color:#fff;font-variant-numeric:tabular-nums}
+.ty.zero b{color:#FF5C4D;text-shadow:0 0 40px rgba(255,92,77,.4)}
+.ty span{display:block;margin-top:9px;font-size:11.5px;letter-spacing:.19em;text-transform:uppercase;
+  font-weight:800;color:rgba(255,246,244,.62)}
+/* ── the objection wall: every excuse, struck out ── */
+.objs{display:flex;flex-direction:column;gap:13px;max-width:660px;margin:20px auto 0;text-align:left}
+.obj{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;
+  border-bottom:1px solid rgba(255,246,244,.13);padding-bottom:12px}
+.obj .said{position:relative;font-family:var(--head);font-weight:800;font-size:clamp(16px,2.3vw,23px);
+  color:rgba(255,246,244,.5)}
+.obj .said i{position:absolute;left:-6px;right:-6px;top:47%;height:5px;border-radius:3px;background:#FF5C4D;
+  transform:scaleX(0);transform-origin:left;box-shadow:0 0 18px rgba(255,92,77,.45)}
+.scene.on .obj .said i{animation:strikedraw .42s cubic-bezier(.25,.9,.3,1) forwards}
+.scene.on .obj:nth-child(1) .said i{animation-delay:.55s}
+.scene.on .obj:nth-child(2) .said i{animation-delay:1.15s}
+.scene.on .obj:nth-child(3) .said i{animation-delay:1.75s}
+.scene.on .obj:nth-child(4) .said i{animation-delay:2.35s}
+.obj .fix{font-family:var(--head);font-weight:900;font-size:clamp(15px,2.1vw,21px);color:#fff;white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.scene.on .obj .said i{animation:none;transform:scaleX(1)}}
+@media(max-width:640px){.obj{grid-template-columns:1fr}.obj .fix{white-space:normal}}
 </style>
 <style>
 :root{
@@ -450,6 +475,10 @@ em{font-style:normal;color:var(--ox)}
     <h1 class="st">Agents retire.<br>They move.<br><em>They pass away.</em></h1>
     <p class="hugesub st d3">The policy stays exactly where it was — and so does everything that was true
     about your life the day you signed it.</p>
+    <div class="tally">
+      <div class="ty st d4"><b class="count" data-count="27">27</b><span>Years since you signed</span></div>
+      <div class="ty zero st d5"><b>0</b><span>Phone calls</span></div>
+    </div>
   </div>
 </section>
 
@@ -579,6 +608,23 @@ em{font-style:normal;color:var(--ox)}
       <div class="gnum"><span class="count" data-count="62">62</span><small>Protection score</small></div>
     </div>
     <p class="big-sub st d4">With the gaps worth fixing first. <b>Nothing is sold to you.</b></p>
+  </div>
+</section>
+
+<section class="scene dark" data-d="11200">
+  <div class="inner">
+    <div class="eyebrow st">Whatever is stopping you</div>
+    <h2 class="st d1">None of it is true.</h2>
+    <div class="objs">
+      <div class="obj st d2"><span class="said">&ldquo;I don&rsquo;t know my policy number.&rdquo;<i></i></span>
+        <span class="fix">You don&rsquo;t need it</span></div>
+      <div class="obj st d3"><span class="said">&ldquo;It will cost me something.&rdquo;<i></i></span>
+        <span class="fix">It is free</span></div>
+      <div class="obj st d4"><span class="said">&ldquo;They&rsquo;ll try to sell me.&rdquo;<i></i></span>
+        <span class="fix">Nothing to buy</span></div>
+      <div class="obj st d5"><span class="said">&ldquo;I don&rsquo;t have the time.&rdquo;<i></i></span>
+        <span class="fix">Four minutes</span></div>
+    </div>
   </div>
 </section>
 

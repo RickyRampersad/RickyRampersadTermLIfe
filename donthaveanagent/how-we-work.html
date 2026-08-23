@@ -173,6 +173,30 @@ body.onDark #chrome .mark rect:first-of-type{fill:#FFF6F4}
 body.onDark #chrome .mark text{fill:#0F1A2B}
 .scene.dark .biglogo rect:first-of-type{fill:#FFF6F4}
 .scene.dark .biglogo text{fill:#0F1A2B}
+
+/* ── the thirty-second check: an answer about you, before we ask anything ── */
+.chk{max-width:660px;margin:34px auto 0;background:#fff;border:1px solid rgba(15,26,43,.10);
+  border-radius:20px;padding:26px 28px;box-shadow:0 16px 40px rgba(15,26,43,.10)}
+.chk .ce{font-size:10.5px;letter-spacing:.17em;text-transform:uppercase;font-weight:800;color:#FF5C4D;margin-bottom:6px}
+.chk h3{font-family:var(--head);font-weight:900;font-size:23px;margin-bottom:4px;color:#0F1A2B}
+.chk .cs{font-size:14px;color:#6B7C96;margin-bottom:18px;line-height:1.5}
+.cq{border-top:1px solid rgba(15,26,43,.08);padding:15px 0}
+.cq p{font-size:15.5px;font-weight:700;color:#0F1A2B;margin-bottom:10px}
+.cq .opts{display:flex;gap:8px;flex-wrap:wrap}
+.cq button{font:inherit;font-size:14px;font-weight:700;padding:9px 18px;border-radius:99px;cursor:pointer;
+  border:2px solid rgba(15,26,43,.14);background:#fff;color:#0F1A2B;transition:.16s}
+.cq button:hover{border-color:#FF5C4D}
+.cq button[aria-pressed="true"]{background:#0F1A2B;border-color:#0F1A2B;color:#fff}
+.cres{margin-top:18px;border-radius:14px;padding:18px 20px;display:none}
+.cres.on{display:block}
+.cres b{display:block;font-family:var(--head);font-weight:900;font-size:19px;margin-bottom:5px}
+.cres span{font-size:14.5px;line-height:1.55;display:block}
+.cres .cta{display:inline-block;margin-top:14px;font-weight:800;font-size:14.5px;padding:11px 22px;
+  border-radius:99px;background:#FF5C4D;color:#fff;text-decoration:none}
+.cres.warn{background:#FFE9E5;border-left:5px solid #FF5C4D}
+.cres.warn b{color:#0F1A2B}.cres.warn span{color:#5A4A50}
+.cres.good{background:#E8F5EE;border-left:5px solid #2F8F5B}
+.cres.good b{color:#123B27}.cres.good span{color:#3D5B4C}
 </style>
 </head>
 <body>
@@ -198,9 +222,9 @@ body.onDark #chrome .mark text{fill:#0F1A2B}
       <source src="dhaa-film.mp4" type="video/mp4">
       Your browser cannot play this — <a href="client-film.html">watch it here instead</a>.
     </video>
-    <button class="vcover" id="vc" type="button" aria-label="Play the film, two minutes eleven seconds, sound on">
+    <button class="vcover" id="vc" type="button" aria-label="Play the film, two minutes twenty-two seconds, sound on">
       <span class="vplay"><i></i></span>
-      <span class="vlab">Why this matters</span><span class="vlen">2:11 · captioned · sound on</span>
+      <span class="vlab">Why this matters</span><span class="vlen">2:22 · captioned · sound on</span>
     </button>
   </div>
   <div class="trust"><span>✓ Free</span><span>✓ No obligation</span><span>✓ About 4 minutes</span><span>✓ No policy number needed</span></div>
@@ -209,6 +233,36 @@ body.onDark #chrome .mark text{fill:#0F1A2B}
     <a href="process-film.html" style="color:var(--ox);font-weight:700">Watch the process, step by step →</a></p>
 </div>
 
+
+<section>
+  <div class="wrap">
+    <div class="chk">
+      <div class="ce">Thirty seconds · nothing to fill in</div>
+      <h3>Is your policy an orphan?</h3>
+      <div class="cs">Three questions. You will know before you give us a single detail.</div>
+
+      <div class="cq"><p>1 &nbsp;Can you name the person who services your policy today?</p>
+        <div class="opts" data-q="0">
+          <button type="button" data-v="0">Yes, I can</button>
+          <button type="button" data-v="1">No idea</button>
+          <button type="button" data-v="1">They left or passed away</button></div></div>
+
+      <div class="cq"><p>2 &nbsp;When did somebody last go through it with you?</p>
+        <div class="opts" data-q="1">
+          <button type="button" data-v="0">Within 2 years</button>
+          <button type="button" data-v="1">Longer than that</button>
+          <button type="button" data-v="1">Never</button></div></div>
+
+      <div class="cq"><p>3 &nbsp;Would your family know the policy exists, and who to ring?</p>
+        <div class="opts" data-q="2">
+          <button type="button" data-v="0">Yes</button>
+          <button type="button" data-v="1">Not sure</button>
+          <button type="button" data-v="1">No</button></div></div>
+
+      <div class="cres" id="cres" role="status" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
 <section>
   <div class="wrap">
     <div class="eyebrow">Why any of this matters</div>
@@ -520,6 +574,52 @@ var CONFIG = { API_URL: "" };
   if(!v||!c) return;
   c.addEventListener('click',function(){ c.classList.add('gone'); v.setAttribute('controls',''); v.play(); });
   v.addEventListener('ended',function(){ c.classList.remove('gone'); v.removeAttribute('controls'); v.currentTime=0; });
+})();
+</script>
+
+<script>
+/* the thirty-second check — answers about them, then one door */
+(function(){
+  var ans = [null,null,null];
+  document.querySelectorAll('.cq .opts').forEach(function(row){
+    var q = +row.getAttribute('data-q');
+    row.querySelectorAll('button').forEach(function(b){
+      b.addEventListener('click', function(){
+        row.querySelectorAll('button').forEach(function(o){ o.setAttribute('aria-pressed','false'); });
+        b.setAttribute('aria-pressed','true');
+        ans[q] = +b.getAttribute('data-v');
+        render();
+      });
+    });
+  });
+  function render(){
+    if (ans.some(function(a){ return a === null; })) return;
+    var flags = ans.reduce(function(t,a){ return t+a; }, 0);
+    var el = document.getElementById('cres');
+    /* read the attribution from the URL directly — the page keeps it in a
+       local, so relying on a global silently dropped the agent's credit */
+    var P = new URLSearchParams(location.search);
+    var who = (P.get('a') || P.get('agent') || window.__agentName || '').trim().slice(0, 60);
+    var link = who ? '/review.html?from=agent&agentname=' + encodeURIComponent(who)
+                   : '/review.html?from=client';
+    if (flags === 0){
+      el.className = 'cres good on';
+      el.innerHTML = '<b>Your policy is being looked after.</b><span>That puts you in a small minority — ' +
+        'and it is worth keeping. A free review still catches the things that change quietly: a beneficiary ' +
+        'after a marriage, an address, a date of birth.</span>' +
+        '<a class="cta" href="' + link + '">Keep it that way — free review →</a>';
+    } else {
+      var head = flags === 3 ? 'Your policy is an orphan.'
+               : flags === 2 ? 'Your policy is almost certainly an orphan.'
+               : 'Your policy is drifting.';
+      el.className = 'cres warn on';
+      el.innerHTML = '<b>' + head + '</b><span>' + flags + ' of 3 answers say nobody is actively ' +
+        'responsible for it. That does not mean the cover has failed — it means nobody is checking that it ' +
+        'still fits. Four minutes fixes that, and you do not need a policy number.</span>' +
+        '<a class="cta" href="' + link + '">Start my free review →</a>';
+    }
+    el.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
 })();
 </script>
 </body>
