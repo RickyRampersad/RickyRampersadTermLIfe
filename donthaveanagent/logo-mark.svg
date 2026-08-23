@@ -1,6 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
-  <title>donthaveanagent.com mark</title>
-  <path d="M40 22H22a10 10 0 0 0-10 10v56a10 10 0 0 0 10 10h18" fill="none" stroke="#6D4AA8" stroke-width="11" stroke-linecap="square"/>
-  <path d="M80 22h18a10 10 0 0 1 10 10v56a10 10 0 0 1-10 10H80" fill="none" stroke="#6D4AA8" stroke-width="11" stroke-linecap="square"/>
-  <circle cx="60" cy="60" r="16" fill="#B79BEB"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88 88" width="88" height="88">
+  <title>don't have an agent — mark</title>
+  <rect width="88" height="88" rx="22" fill="#0F1A2B"/>
+  <text x="44" y="56" text-anchor="middle" font-family="Montserrat, Helvetica, Arial, sans-serif"
+        font-weight="900" font-size="34" letter-spacing="-1.5" fill="#FFFFFF" opacity="0.5">dha</text>
+  <rect x="12" y="40" width="64" height="7" rx="3.5" fill="#FF5C4D"/>
 </svg>
