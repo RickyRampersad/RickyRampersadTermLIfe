@@ -283,19 +283,28 @@ function agentBookFor_(agent, code) {
     return isNaN(d.getTime()) ? '' : Utilities.formatDate(d, tz, 'd MMMM yyyy');
   };
 
+  /* Two books, and they must never be added together:
+       · branch — an orphan asked us for an agent and we assigned them
+       · own    — the agent found somebody and sent their own link
+     One pass builds both, so a client an agent introduced AND was then
+     assigned is listed once, marked as both, and counted in each book. */
+  var mine = me.name.toLowerCase();
   var clients = [];
   [SVC.IND_SHEET, SVC.GRP_SHEET].forEach(function (name) {
     var sh = ss_().getSheetByName(name);
     if (!sh || sh.getLastRow() < 2) return;
     var headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
     var col = function (h) { return headers.indexOf(h); };
-    var iLook = col('Looked after by');
-    if (iLook < 0) return;
+    var iLook = col('Looked after by'), iBy = col('Sent by');
+    if (iLook < 0 && iBy < 0) return;
 
     var rows = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
     rows.forEach(function (r) {
-      var look = String(r[iLook] || '').replace(/^Matched:\s*/i, '').trim();
-      if (look.toLowerCase() !== me.name.toLowerCase()) return;
+      var look = iLook < 0 ? '' : String(r[iLook] || '').replace(/^Matched:\s*/i, '').trim();
+      var by = iBy < 0 ? '' : String(r[iBy] || '').trim();
+      var assigned = !!look && look.toLowerCase() === mine;
+      var introduced = !!by && by.toLowerCase() === mine;
+      if (!assigned && !introduced) return;
 
       var status = String(r[col('Status')] || '');
       var done = /handled/i.test(status);
@@ -311,29 +320,21 @@ function agentBookFor_(agent, code) {
         letterOut: /^YES/i.test(letter),
         lastUpdate: col('Last client update') > -1 ? fmt(r[col('Last client update')]) : '',
         phone: col('Phone') > -1 ? String(r[col('Phone')] || '') : '',
+        source: assigned && introduced ? 'both' : (assigned ? 'branch' : 'own'),
       });
     });
   });
 
-  var open = clients.filter(function (c) { return c.status !== 'Completed'; }).length;
+  var isAssigned = function (c) { return c.source === 'branch' || c.source === 'both'; };
+  var isOwn = function (c) { return c.source === 'own' || c.source === 'both'; };
+  var assignedList = clients.filter(isAssigned);
+  var open = assignedList.filter(function (c) { return c.status !== 'Completed'; }).length;
   var link = linkStatsFor_(me.name);
+  var fromMe = clients.filter(isOwn).length;
+  var fromMeDone = clients.filter(function (c) {
+    return isOwn(c) && c.status === 'Completed';
+  }).length;
 
-  /* Two different books, and they must never be added together:
-       · branch — an orphan asked us for an agent and we assigned them
-       · own    — the agent found somebody and sent their own link       */
-  var fromMe = 0, fromMeDone = 0;
-  [SVC.IND_SHEET, SVC.GRP_SHEET].forEach(function (name) {
-    var sh = ss_().getSheetByName(name);
-    if (!sh || sh.getLastRow() < 2) return;
-    var h = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
-    var iBy = h.indexOf('Sent by'), iSt = h.indexOf('Status');
-    if (iBy < 0) return;
-    sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues().forEach(function (r) {
-      if (String(r[iBy] || '').toLowerCase() !== me.name.toLowerCase()) return;
-      fromMe++;
-      if (iSt > -1 && /handled/i.test(String(r[iSt] || ''))) fromMeDone++;
-    });
-  });
   var callbacks = 0;
   var cs = ss_().getSheetByName(SVC.CALL_SHEET);
   if (cs && cs.getLastRow() > 1) {
@@ -350,7 +351,7 @@ function agentBookFor_(agent, code) {
     agent: me.name,
     skills: me.skills,
     /* branch-assigned book: orphans who asked us for an agent */
-    stats: { assigned: clients.length, open: open, completed: clients.length - open },
+    stats: { assigned: assignedList.length, open: open, completed: assignedList.length - open },
     /* the agent's own introductions: people they found and sent their link to */
     link: { sent: link.sent, opened: link.open, started: link.start, calls: link.call,
             reviews: fromMe, completed: fromMeDone, callbacks: callbacks, recent: link.recent },

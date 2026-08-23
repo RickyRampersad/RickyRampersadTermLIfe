@@ -281,6 +281,14 @@ body.onDark #chrome .mark text{fill:#0F1A2B}
       were matched to them. Work these first; they are already expecting a call.</p>
     <div id="list"></div>
 
+    <div id="ownWrap" hidden>
+      <h3 style="font-family:var(--disp);font-weight:800;font-size:16px;margin-top:22px">
+        Clients you brought in yourself</h3>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:2px">People you sent your own link to who went
+        on to file a review. Nobody assigned these — they are yours from the first message.</p>
+      <div id="listOwn"></div>
+    </div>
+
     <div class="sharebox">
       <h3>Send a client the film</h3>
       <p>The film shows a client exactly what we do — their own numbers worked out in front of them, a score
@@ -319,17 +327,23 @@ const DEMO = {
                    {when:"21 Aug, 4:47 PM",ev:"open"},{when:"21 Aug, 9:30 AM",ev:"call"}] },
   clients: [
     { ref: "DHA-260813-0003", who: "Keisha Boodoo", kind: "individual", filed: "13 August 2026",
-      priority: "ACTION", status: "In progress", signed: true, letterOut: false,
+      priority: "ACTION", status: "In progress", signed: true, letterOut: false, source: "branch",
       lastUpdate: "15 August 2026", phone: "(868) 555-0161", stageNote: "Papers out for digital signature" },
     { ref: "DHAG-260811-0002", who: "Trini Fabrication Ltd", kind: "group", filed: "11 August 2026",
-      priority: "ACTION", status: "In progress", signed: false, letterOut: true,
+      priority: "ACTION", status: "In progress", signed: false, letterOut: true, source: "branch",
       lastUpdate: "16 August 2026", phone: "(868) 555-0173", stageNote: "Awaiting stamped letter — chase day 4" },
     { ref: "DHA-260816-0006", who: "Marcus Alleyne", kind: "individual", filed: "16 August 2026",
-      priority: "HIGH", status: "In progress", signed: false, letterOut: false,
+      priority: "HIGH", status: "In progress", signed: false, letterOut: false, source: "both",
       lastUpdate: "", phone: "(868) 555-0129", stageNote: "Assigned today — introduce yourself" },
     { ref: "DHA-260722-0001", who: "Denise Ramkissoon", kind: "individual", filed: "22 July 2026",
-      priority: "NORMAL", status: "Completed", signed: true, letterOut: false,
+      priority: "NORMAL", status: "Completed", signed: true, letterOut: false, source: "branch",
       lastUpdate: "5 August 2026", phone: "(868) 555-0147", stageNote: "" },
+    { ref: "DHA-260805-0004", who: "Anand Maharaj", kind: "individual", filed: "5 August 2026",
+      priority: "NORMAL", status: "Completed", signed: true, letterOut: false, source: "own",
+      lastUpdate: "12 August 2026", phone: "(868) 555-0192", stageNote: "" },
+    { ref: "DHA-260729-0002", who: "Sherry-Ann Joseph", kind: "individual", filed: "29 July 2026",
+      priority: "NORMAL", status: "Completed", signed: true, letterOut: false, source: "own",
+      lastUpdate: "8 August 2026", phone: "(868) 555-0118", stageNote: "" },
   ],
 };
 
@@ -412,7 +426,7 @@ function render(data, demo) {
   }
 
   const names = ["Received", "Verifying & preparing", c => c.kind === "group" ? "Letter out" : "Signature out", "Complete"];
-  $("#list").innerHTML = data.clients.map(c => {
+  const card = c => {
     const st = stageOf(c);
     const chips = names.map((n, i) => {
       const label = typeof n === "function" ? n(c) : n;
@@ -423,6 +437,7 @@ function render(data, demo) {
       '<span class="ref">' + c.ref + " · filed " + c.filed + "</span>" +
       '<span class="pill ' + (c.status === "Completed" ? "done\">Completed" : "open\">In progress") + "</span></div>" +
       '<div class="stages">' + chips + "</div>" +
+      (c.source === "both" ? '<div class="meta"><b>You introduced this one — the branch then assigned them to you.</b></div>' : "") +
       (c.stageNote ? '<div class="meta"><b>' + c.stageNote + "</b></div>" : "") +
       '<div class="meta">' + (c.lastUpdate ? "Client last updated <b>" + c.lastUpdate + "</b> · " : "") +
         (c.phone ? 'Reach them: <b><a href="tel:' + c.phone.replace(/[^\d+]/g, "") + '">' + c.phone + "</a></b>" : "") + "</div>" +
@@ -430,7 +445,20 @@ function render(data, demo) {
       (c.priority === "URGENT" || c.priority === "HIGH"
         ? '<div class="flag">' + c.priority + " — the 1-business-day promise applies</div>" : "") +
       "</div>";
-  }).join("");
+  };
+
+  /* Older deployments send no source field — treat those as branch-assigned,
+     which is what the list held before the own-introductions book existed. */
+  const all = data.clients || [];
+  const assigned = all.filter(c => !c.source || c.source === "branch" || c.source === "both");
+  const own = all.filter(c => c.source === "own" || c.source === "both");
+
+  $("#list").innerHTML = assigned.length ? assigned.map(card).join("")
+    : '<div class="client"><div class="meta">Nothing assigned to you yet. When an orphan asks us for an ' +
+      'agent and you are the match, they appear here and you are emailed their brief.</div></div>';
+
+  $("#ownWrap").hidden = !own.length;
+  $("#listOwn").innerHTML = own.map(card).join("");
 }
 
 (function(){
