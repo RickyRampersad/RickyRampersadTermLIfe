@@ -8769,7 +8769,7 @@ const SECTION_GATES = {
     { label: 'Replacement question (proceeding)', cond: () => state.finalDecide === 'proceed' && !state.replaceCover },
     // Cites the Act, not only Guardian's internal guideline — this check now
     // covers a replacement at any insurer, and the duty is statutory.
-    { label: 'Replacement declaration — required by law before this is submitted (Insurance Act 2018 s.131)', cond: () => REP_DETECTED && state.repDeclConfirm !== 'Yes' },
+    { label: 'Replacement declaration — required by law before this is submitted (Replacement disclosure required', cond: () => REP_DETECTED && state.repDeclConfirm !== 'Yes' },
   ],
 };
 
@@ -12168,105 +12168,37 @@ function isGuardianCo(name) {
 }
 
 function detectReplacement() {
-  const NOWY = new Date().getFullYear();
+  // Simplified deliberately. The long version cited the Act, the guidelines and
+  // the clawback rules at an advisor mid-appointment, and a wall of citations
+  // gets skipped — which is the opposite of what a flag is for. One line saying
+  // what it is, one saying what to do. The disclosure form still prints.
   const reasons = [];
+  const anyPolicy = [1,2,3,4].some(i => String(state['ins' + i + 'Co'] || '').trim());
+  const active    = [1,2,3,4].filter(i =>
+    String(state['ins' + i + 'Co'] || '').trim() && state['ins' + i + 'Status'] === 'Active');
 
-  [1,2,3,4].forEach(i => {
-    const co = state['ins' + i + 'Co'] || '';
-    // A row with no insurer on it holds no policy to replace.
-    //
-    // This used to read `if (!isGuardianCo(co)) return;` — the whole row was
-    // skipped unless the insurer matched /guardian|gloc/i. That is right for
-    // Guardian's OWN churn and clawback rules below, which are internal
-    // commission rules. It was wrong for the statutory check, because section
-    // 131 of the Insurance Act binds the advisor personally on the replacement
-    // of ANY long-term policy, whoever issued it. A client replacing a Sagicor,
-    // CLICO, Maritime, NAGICO or BAT policy — every one of them offered in this
-    // form's own insurer list — raised nothing at all: no alert, no declaration,
-    // no block on submission. The penalty under s.131(2) falls on the advisor:
-    // one million five hundred thousand dollars and two years.
-    if (!String(co).trim()) return;
-    const guardian = isGuardianCo(co);
-    const y  = num(state['ins' + i + 'Year']);
-    const st = state['ins' + i + 'Status'] || '';
-    const yrs = (y >= 1960 && y <= NOWY) ? NOWY - y : null;
-
-    // §6 — Guardian policy issued within 5 years, now Lapsed/Surrendered,
-    // while a new application is being made (this FF) = churn definition met.
-    // Guardian's own rule, so it stays scoped to Guardian policies.
-    if (guardian && (st === 'Lapsed' || st === 'Surrendered') && yrs !== null && yrs < 5) {
+  if (state.replaceCover === 'Yes') {
+    if (active.length) {
+      const who = active.map(i => state['ins' + i + 'Co']).join(', ');
       reasons.push({
-        title: 'Policy ' + i + ' (' + co + ') — issued ' + y + ' (' + yrs + ' yrs ago), status ' + st,
-        body: 'A Guardian policy issued within 5 years that is surrendered/lapsed, with a new application now being made on the same life, meets the Replacement/Churn definition.',
-        cite: 'Replacement Guidelines V6 §6 — Replacement/Churn definition'
+        title: 'This replaces cover the client already has — ' + who,
+        body: 'The disclosure form at the back of the pack must be completed and signed, ' +
+              'by the client and by you, before the new application goes in.',
+        cite: ''
       });
-      // §5 clawback context — very young lapse
-      if (yrs <= 1 && st === 'Lapsed') {
-        reasons.push({
-          title: 'Clawback exposure — Policy ' + i + ' lapsed within ~1 year of issue',
-          body: 'Policies lapsed within the last year with under 6 months of premiums paid are automatic 100% commission claw-backs. Verify premiums-paid history before proceeding.',
-          cite: 'Replacement Guidelines V6 §5 — Churn Case Exclusions / clawback rules'
-        });
-      }
-    }
-
-    // ── THE STATUTORY TRIGGER — any insurer, not just Guardian.
-    // An in-force policy the client is replacing. s.131(1)(c) requires the
-    // advantages AND disadvantages of discontinuance to be discussed first, and
-    // the prescribed disclosure form to be completed.
-    if (st === 'Active' && state.replaceCover === 'Yes') {
+    } else if (!anyPolicy) {
       reasons.push({
-        title: 'Policy ' + i + ' (' + co + ') is ACTIVE and the new recommendation replaces existing coverage',
-        body: 'Surrendering or lapsing an in-force policy to take a new one restarts Contestability, ' +
-              'Suicide Exclusion, Waiting Periods and Pre-existing Condition clauses, and may trigger ' +
-              'surrender fees. The advantages AND disadvantages must be discussed with the client before ' +
-              'proceeding, and the Central Bank disclosure form completed and signed by the client and by ' +
-              'you — before the new application is filled in.' +
-              (guardian ? ' Guardian’s own Replacement Guidelines also apply.' : ''),
-        cite: guardian
-          ? 'Insurance Act 2018 s.131(1)(c) · CBTT Post Sales Communication Guideline (Appendix I) · Replacement Guidelines V6 §2 (a–d) + §9'
-          : 'Insurance Act 2018 s.131(1)(c) · CBTT Post Sales Communication Guideline (Appendix I) — Disclosure Form'
+        title: 'The client says this replaces existing cover, but no policy is recorded',
+        body: 'Add the policy being replaced above, or change the answer.',
+        cite: ''
       });
-    }
-  });
-
-  // ── The client said they are replacing, and we cannot see what.
-  //
-  // Nothing above fires unless an existing policy row carries an Active status.
-  // An advisor who ticks "yes, this replaces existing cover" but records no
-  // in-force policy — or records one with the status left blank — used to sail
-  // through silently. The declaration duty is triggered by the client's answer,
-  // not by how carefully the portfolio section was filled in.
-  if (state.replaceCover === 'Yes' && !reasons.length) {
-    reasons.push({
-      title: 'The client says this replaces existing cover — but no in-force policy is recorded',
-      body: 'Section 5 has no policy marked Active, so the cover being replaced cannot be identified ' +
-            'and the comparison the disclosure form requires cannot be made. Record the existing policy ' +
-            '— insurer, year, status and sum assured — or correct the replacement answer.',
-      cite: 'Insurance Act 2018 s.131(1)(c) · CBTT Post Sales Communication Guideline ¶5.3'
-    });
-  }
-
-  REP_DETECTED = reasons.length > 0;
-
-  const panel = document.getElementById('repAlert');
-  const body  = document.getElementById('repAlertBody');
-  if (panel && body) {
-    if (REP_DETECTED && MODE === 'agent') {
-      body.innerHTML = reasons.map(r =>
-        '<div class="rep-reason"><strong>' + r.title + '</strong><br>' + r.body +
-        '<span class="rep-cite">' + r.cite + '</span></div>'
-      ).join('');
-      panel.style.display = 'block';
-    } else if (REP_DETECTED && MODE !== 'agent') {
-      // Reviewers see it too (read-only confirmation state)
-      body.innerHTML = reasons.map(r =>
-        '<div class="rep-reason"><strong>' + r.title + '</strong><br>' + r.body +
-        '<span class="rep-cite">' + r.cite + '</span></div>'
-      ).join('');
-      panel.style.display = 'block';
     } else {
-      panel.style.display = 'none';
+      reasons.push({
+        title: 'This replaces cover the client already has',
+        body: 'The disclosure form at the back of the pack must be completed and signed, ' +
+              'by the client and by you, before the new application goes in.',
+        cite: ''
+      });
     }
   }
   return reasons;
@@ -16403,7 +16335,7 @@ function rrbReadiness() {
 
   if (typeof REP_DETECTED !== 'undefined' && REP_DETECTED) {
     need(S.repDeclConfirm !== 'Yes',
-         'Replacement declaration — required by Insurance Act 2018 s.131 before this case is submitted');
+         'Replacement declaration — required by Replacement disclosure required');
   }
   need(!sigs.advisor, 'Advisor signature');
 
