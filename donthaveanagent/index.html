@@ -9,8 +9,8 @@
 <meta property="og:description" content="Your agent left. Your policy didn't. Free four-minute policy review — no cost, no obligation."/>
 <meta property="og:image" content="https://donthaveanagent.com/share.png"/>
 <meta property="og:type" content="website"/>
-<meta name="theme-color" content="#F2EADC"/>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 88'%3E%3Ccircle cx='44' cy='44' r='42' fill='%230C3330'/%3E%3Ccircle cx='44' cy='44' r='34.5' fill='none' stroke='%23C9663C' stroke-width='2.4'/%3E%3Ctext x='44' y='55.5' font-family='Montserrat,sans-serif' font-weight='900' font-size='30' fill='%23F2EADC' text-anchor='middle' letter-spacing='-1'%3ERR%3C/text%3E%3C/svg%3E"/>
+<meta name="theme-color" content="#FBF9F5"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 88'%3E%3Crect x='2' y='2' width='84' height='84' rx='26' fill='%23241635'/%3E%3Cpath d='M32 18h24a4 4 0 0 1 4 4v48l-16-12-16 12V22a4 4 0 0 1 4-4Z' fill='%23A98CE3'/%3E%3Ccircle cx='44' cy='38' r='7' fill='%23241635'/%3E%3C/svg%3E"/>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════════════════════════
@@ -36,25 +36,25 @@
    matching one in review.html and agent/index.html — nothing else.
    ═══════════════════════════════════════════════════════════════════════ */
 :root {
-  --bg:      #F2EADC;
-  --bg2:     #E7DCC9;
+  --bg:      #FBF9F5;
+  --bg2:     #EDE6FA;
   --card:    #FFFFFF;
-  --card2:   #FAF6EE;
-  --line:    rgba(23,33,31,.10);
-  --line2:   rgba(18,81,76,.30);
-  --text:    #17211F;
-  --muted:   #5B6A66;
-  --muted2:  #8A9793;
+  --card2:   #FBF9F5;
+  --line:    rgba(30,19,41,.10);
+  --line2:   rgba(75,46,122,.30);
+  --text:    #1E1329;
+  --muted:   #6A5C7A;
+  --muted2:  #8D82A0;
 
-  --gold:    #12514C;
-  --gold2:   #0C3330;
-  --gold3:   #1C6E66;
-  --amber:   #C9663C;
-  --slate:   #8A9793;
-  --red:     #C9663C;
+  --gold:    #4B2E7A;
+  --gold2:   #241635;
+  --gold3:   #7B5EA7;
+  --amber:   #A98CE3;
+  --slate:   #8D82A0;
+  --red:     #A98CE3;
 
-  --gold-soft:  rgba(18,81,76,.10);
-  --gold-soft2: rgba(18,81,76,.05);
+  --gold-soft:  rgba(75,46,122,.10);
+  --gold-soft2: rgba(75,46,122,.05);
   --slate-soft: rgba(155,150,160,.20);
 
   --head: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -68,7 +68,7 @@ body {
   font-family: var(--body); background: var(--bg); color: var(--text);
   line-height: 1.65; overflow-x: hidden; -webkit-font-smoothing: antialiased;
   background-image:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(18,81,76,.10), transparent),
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(75,46,122,.10), transparent),
     linear-gradient(180deg, var(--bg) 0%, var(--bg2) 55%, var(--bg) 100%);
   background-attachment: fixed;
 }
@@ -94,7 +94,7 @@ svg { display: block; }
 .logo-mark .badge { opacity: 1; }
 
 /* ── nav ────────────────────────────────────────────────────────────── */
-.nav { position: sticky; top: 0; z-index: 90; background: rgba(242,234,220,.93); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
+.nav { position: sticky; top: 0; z-index: 90; background: rgba(251,249,245,.93); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
 .nav-in { max-width: 1120px; margin: 0 auto; padding: 0 22px; height: 70px; display: flex; align-items: center; gap: 24px; }
 .nav-links { display: flex; gap: 22px; margin-left: auto; align-items: center; }
 .nav-links a { font-size: 14px; color: var(--muted); font-weight: 500; transition: color .16s; }
@@ -124,25 +124,25 @@ svg { display: block; }
 /* ── buttons ────────────────────────────────────────────────────────── */
 .btn { font-family: var(--head); font-weight: 700; font-size: 15px; cursor: pointer; border: none; border-radius: 13px;
   padding: 14px 26px; transition: all .18s ease; display: inline-flex; align-items: center; justify-content: center; gap: 9px; }
-.btn-go { background: linear-gradient(135deg, var(--gold3), var(--gold)); color: #FFFFFF; box-shadow: 0 6px 24px rgba(18,81,76,.24); }
-.btn-go:hover { background: linear-gradient(135deg, #1C6E66, var(--gold3)); transform: translateY(-2px); box-shadow: 0 12px 34px rgba(18,81,76,.34); }
+.btn-go { background: linear-gradient(135deg, var(--gold3), var(--gold)); color: #FFFFFF; box-shadow: 0 6px 24px rgba(75,46,122,.24); }
+.btn-go:hover { background: linear-gradient(135deg, #7B5EA7, var(--gold3)); transform: translateY(-2px); box-shadow: 0 12px 34px rgba(75,46,122,.34); }
 .btn-gold { background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #FFFFFF; }
 .btn-gold:hover { transform: translateY(-2px); }
-.btn-line { background: rgba(23,33,31,.05); border: 1.5px solid var(--line2); color: var(--text); }
+.btn-line { background: rgba(30,19,41,.05); border: 1.5px solid var(--line2); color: var(--text); }
 .btn-line:hover { border-color: var(--gold); background: var(--gold-soft); }
 .btn-sm { padding: 10px 18px; font-size: 13.5px; border-radius: 11px; }
 
 /* ── hero ───────────────────────────────────────────────────────────── */
 .hero { position: relative; padding: 68px 0 56px; overflow: hidden; }
 .hero::before { content: ""; position: absolute; inset: -30% 0 auto 0; height: 640px; pointer-events: none;
-  background: radial-gradient(ellipse 58% 55% at 18% 0%, rgba(18,81,76,.16), transparent 70%),
-              radial-gradient(ellipse 55% 50% at 86% 14%, rgba(201,102,60,.10), transparent 70%); }
+  background: radial-gradient(ellipse 58% 55% at 18% 0%, rgba(75,46,122,.16), transparent 70%),
+              radial-gradient(ellipse 55% 50% at 86% 14%, rgba(169,140,227,.10), transparent 70%); }
 .hero-in { position: relative; display: grid; grid-template-columns: 1.08fr .92fr; gap: 50px; align-items: start; }
 .hero-in > * { min-width: 0; }
 @media (max-width: 960px) { .hero-in { grid-template-columns: 1fr; gap: 36px; } }
 
 .eyebrow { display: inline-flex; align-items: center; gap: 9px; font-family: var(--head); font-size: 12px; font-weight: 700;
-  color: var(--gold); background: var(--gold-soft); border: 1px solid rgba(18,81,76,.3);
+  color: var(--gold); background: var(--gold-soft); border: 1px solid rgba(75,46,122,.3);
   padding: 7px 15px; border-radius: 99px; margin-bottom: 22px; letter-spacing: .01em; }
 .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); animation: pulse 2.2s ease-in-out infinite; }
 @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(1.5); } }
@@ -181,7 +181,7 @@ h1.hero-h em { font-style: normal; color: var(--gold); }
 
 /* ── compliance badge ───────────────────────────────────────────────── */
 .compliance-badge { display: flex; gap: 13px; align-items: flex-start; margin-top: 18px;
-  background: var(--gold-soft); border: 1px solid rgba(18,81,76,.26); border-radius: 14px; padding: 14px 16px; }
+  background: var(--gold-soft); border: 1px solid rgba(75,46,122,.26); border-radius: 14px; padding: 14px 16px; }
 .compliance-badge svg { width: 30px; height: 30px; flex-shrink: 0; }
 .compliance-badge b { display: block; font-family: var(--head); font-weight: 700; font-size: 13.5px; margin-bottom: 3px; }
 .compliance-badge div { font-size: 12.7px; color: var(--muted); line-height: 1.55; }
@@ -208,11 +208,11 @@ h1.hero-h em { font-style: normal; color: var(--gold); }
   border-radius: var(--rl); padding: 22px 21px; transition: transform .2s, border-color .2s, box-shadow .2s; overflow: hidden; }
 .door::after { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px;
   background: linear-gradient(90deg, var(--gold), var(--gold)); opacity: 0; transition: opacity .2s; }
-.door:hover { transform: translateY(-4px); border-color: var(--line2); box-shadow: 0 18px 44px rgba(23,33,31,.11); }
+.door:hover { transform: translateY(-4px); border-color: var(--line2); box-shadow: 0 18px 44px rgba(30,19,41,.11); }
 .door:hover::after { opacity: 1; }
 .door .di { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 13px; }
-.door.a .di { background: var(--gold-soft); border: 1px solid rgba(18,81,76,.34); }
-.door.b .di { background: var(--gold-soft); border: 1px solid rgba(18,81,76,.32); }
+.door.a .di { background: var(--gold-soft); border: 1px solid rgba(75,46,122,.34); }
+.door.b .di { background: var(--gold-soft); border: 1px solid rgba(75,46,122,.32); }
 .door .di svg { width: 21px; height: 21px; }
 .door h3 { font-size: 17px; font-weight: 800; margin-bottom: 6px; }
 .door p { font-size: 13.5px; color: var(--muted); line-height: 1.55; }
@@ -221,24 +221,24 @@ h1.hero-h em { font-style: normal; color: var(--gold); }
 .door.b .go { color: var(--gold); }
 
 .trust-strip { display: flex; flex-wrap: wrap; gap: 8px; }
-.trust-strip span { font-size: 12.5px; color: var(--muted); background: rgba(23,33,31,.042); border: 1px solid var(--line); padding: 7px 13px; border-radius: 99px; }
+.trust-strip span { font-size: 12.5px; color: var(--muted); background: rgba(30,19,41,.042); border: 1px solid var(--line); padding: 7px 13px; border-radius: 99px; }
 .trust-strip b { color: var(--gold); }
 
 /* ── check card ─────────────────────────────────────────────────────── */
 .check-card { background: linear-gradient(158deg, var(--card), var(--card2)); border: 1px solid var(--line);
-  border-radius: var(--rl); padding: 24px 22px; box-shadow: 0 24px 60px rgba(23,33,31,.10); }
+  border-radius: var(--rl); padding: 24px 22px; box-shadow: 0 24px 60px rgba(30,19,41,.10); }
 .check-card h3 { font-size: 17px; font-weight: 800; margin-bottom: 4px; }
 .check-card .cc-sub { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
 .cq { margin-bottom: 15px; }
 .cq p { font-size: 13.6px; font-weight: 500; margin-bottom: 9px; }
 .cq-opts { display: flex; gap: 7px; flex-wrap: wrap; }
-.cq-opts button { font: inherit; font-size: 12.8px; cursor: pointer; color: var(--muted); background: rgba(23,33,31,.042);
+.cq-opts button { font: inherit; font-size: 12.8px; cursor: pointer; color: var(--muted); background: rgba(30,19,41,.042);
   border: 1.5px solid var(--line); border-radius: 10px; padding: 8px 13px; transition: all .15s; }
 .cq-opts button:hover { border-color: var(--line2); color: var(--text); }
 .cq-opts button.on { background: var(--gold-soft); border-color: var(--gold); color: var(--text); font-weight: 500; }
 .cq-opts button.on.warn { background: var(--gold-soft); border-color: var(--gold); }
 .gauge { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
-.gauge-bar { height: 8px; border-radius: 99px; background: rgba(23,33,31,.07); overflow: hidden; margin-bottom: 12px; }
+.gauge-bar { height: 8px; border-radius: 99px; background: rgba(30,19,41,.07); overflow: hidden; margin-bottom: 12px; }
 .gauge-fill { height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--gold), var(--gold)); transition: width .5s cubic-bezier(.4,0,.2,1); }
 .gauge-txt { font-size: 13.4px; color: var(--muted); line-height: 1.6; min-height: 44px; }
 .gauge-txt b { color: var(--text); }
@@ -253,14 +253,14 @@ h2.sec-h em { font-style: normal; color: var(--gold); }
 .sec-sub { font-size: 16.5px; color: var(--muted); max-width: 680px; margin-bottom: 42px; }
 
 /* ── local (T&T) hero figure ────────────────────────────────────────── */
-.tt-figure { background: linear-gradient(158deg, var(--card), var(--card2)); border: 1px solid rgba(18,81,76,.24);
+.tt-figure { background: linear-gradient(158deg, var(--card), var(--card2)); border: 1px solid rgba(75,46,122,.24);
   border-radius: var(--rl); padding: 30px 28px; margin-bottom: 20px; }
 .tt-row { display: grid; grid-template-columns: 190px 1fr; gap: 18px; align-items: center; margin-bottom: 20px; }
 @media (max-width: 700px) { .tt-row { grid-template-columns: 1fr; gap: 8px; } }
 .tt-row:last-child { margin-bottom: 0; }
 .tt-label { font-size: 13.6px; color: var(--muted); line-height: 1.45; }
 .tt-label b { display: block; color: var(--text); font-family: var(--head); font-weight: 700; font-size: 15px; }
-.tt-bar { position: relative; height: 46px; border-radius: 10px; background: rgba(23,33,31,.05); overflow: hidden; }
+.tt-bar { position: relative; height: 46px; border-radius: 10px; background: rgba(30,19,41,.05); overflow: hidden; }
 .tt-bar span { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 10px; transition: width 1.4s cubic-bezier(.2,.8,.3,1); }
 .tt-bar.big span { background: linear-gradient(90deg, var(--gold2), var(--gold)); }
 .tt-bar.small span { background: linear-gradient(90deg, var(--gold2), var(--gold)); }
@@ -278,7 +278,7 @@ h2.sec-h em { font-style: normal; color: var(--gold); }
 @media (max-width: 540px) { .stats { grid-template-columns: 1fr; } }
 .stat { background: linear-gradient(158deg, var(--card), var(--card2)); border: 1px solid var(--line); border-radius: var(--r); padding: 24px 20px; }
 .stat .num { font-size: 46px; font-weight: 900; color: var(--gold); line-height: 1; margin-bottom: 10px; }
-.statbar { height: 6px; border-radius: 99px; background: rgba(23,33,31,.06); overflow: hidden; margin-bottom: 13px; }
+.statbar { height: 6px; border-radius: 99px; background: rgba(30,19,41,.06); overflow: hidden; margin-bottom: 13px; }
 .statbar i { display: block; height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--gold2), var(--gold)); transition: width 1.3s cubic-bezier(.2,.8,.3,1); }
 .stat p { font-size: 14px; color: var(--text); line-height: 1.5; margin-bottom: 9px; }
 .stat p b { color: var(--gold); font-weight: 500; }
@@ -308,8 +308,8 @@ h2.sec-h em { font-style: normal; color: var(--gold); }
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 @media (max-width: 860px) { .two-col { grid-template-columns: 1fr; } }
 .panel { border-radius: var(--rl); padding: 26px 24px; border: 1px solid var(--line); }
-.panel.yes { background: linear-gradient(158deg, rgba(18,81,76,.10), rgba(18,81,76,.03)); border-color: rgba(18,81,76,.28); }
-.panel.no  { background: linear-gradient(158deg, rgba(23,33,31,.038), rgba(23,33,31,.014)); }
+.panel.yes { background: linear-gradient(158deg, rgba(75,46,122,.10), rgba(75,46,122,.03)); border-color: rgba(75,46,122,.28); }
+.panel.no  { background: linear-gradient(158deg, rgba(30,19,41,.038), rgba(30,19,41,.014)); }
 .panel h3 { font-size: 18px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
 .panel h3 svg { width: 21px; height: 21px; }
 .panel ul { list-style: none; display: grid; gap: 13px; }
@@ -330,23 +330,23 @@ h2.sec-h em { font-style: normal; color: var(--gold); }
 .lane-head { display: flex; gap: 14px; align-items: center; margin-bottom: 18px; }
 .lane-head > div { min-width: 0; }
 .lane .wi { width: 46px; height: 46px; border-radius: 13px; background: var(--gold-soft);
-  border: 1px solid rgba(18,81,76,.32); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+  border: 1px solid rgba(75,46,122,.32); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
 .lane .wi svg { width: 23px; height: 23px; }
 .lane-head h3 { font-size: 19px; font-weight: 800; }
 .lane-head p { font-size: 13px; color: var(--muted); }
 .steps { position: relative; flex: 1; margin-bottom: 20px; }
 .steps::before { content: ""; position: absolute; left: 17px; top: 14px; bottom: 14px; width: 2px;
-  background: linear-gradient(180deg, var(--gold) 0%, rgba(18,81,76,.15) 100%); }
+  background: linear-gradient(180deg, var(--gold) 0%, rgba(75,46,122,.15) 100%); }
 .stp { position: relative; display: flex; gap: 13px; padding: 0 0 20px 0; align-items: flex-start; }
 .stp:last-child { padding-bottom: 0; }
 .sic { position: relative; z-index: 1; flex: 0 0 36px; width: 36px; height: 36px; border-radius: 11px;
   display: flex; align-items: center; justify-content: center; }
 .sic svg { width: 19px; height: 19px; }
-.stp.you .sic { background: var(--card); border: 1.6px solid rgba(18,81,76,.45); color: var(--gold); }
+.stp.you .sic { background: var(--card); border: 1.6px solid rgba(75,46,122,.45); color: var(--gold); }
 .stp.us .sic { background: var(--gold); border: 1.6px solid var(--gold); color: #fff; }
 .stp .tag { position: absolute; left: 40px; top: -7px; font: 800 9px var(--head); letter-spacing: .14em;
   text-transform: uppercase; padding: 2px 8px; border-radius: 99px; background: var(--card);
-  border: 1px solid rgba(18,81,76,.4); color: var(--gold); }
+  border: 1px solid rgba(75,46,122,.4); color: var(--gold); }
 .stp .tag.us-t { background: var(--gold); color: #fff; border-color: var(--gold); }
 .stp > div { padding-top: 6px; min-width: 0; }
 .stp b { display: block; font-family: var(--head); font-size: 14.6px; margin-bottom: 3px; }
@@ -359,7 +359,7 @@ h2.sec-h em { font-style: normal; color: var(--gold); }
 .lane.rv.in .stp:nth-child(1) { transition-delay: .1s } .lane.rv.in .stp:nth-child(2) { transition-delay: .25s }
 .lane.rv.in .stp:nth-child(3) { transition-delay: .4s } .lane.rv.in .stp:nth-child(4) { transition-delay: .55s }
 @media (prefers-reduced-motion: reduce) { .lane.rv .stp { opacity: 1; transform: none; transition: none; } }
-.mgr { display: flex; gap: 26px; align-items: flex-start; background: linear-gradient(135deg, #12514C, #0C3330);
+.mgr { display: flex; gap: 26px; align-items: flex-start; background: linear-gradient(135deg, #4B2E7A, #241635);
   color: #fff; border-radius: var(--rl); padding: 30px 28px; }
 .mgr-mark { flex: 0 0 auto; text-align: center; }
 .mgr-mark svg { width: 74px; height: 74px; margin: 0 auto 10px; }
@@ -374,7 +374,7 @@ h2.sec-h em { font-style: normal; color: var(--gold); }
 @media (max-width: 640px) { .mgr { flex-direction: column; gap: 16px; } }
 .who-card { background: linear-gradient(158deg, var(--card), var(--card2)); border: 1px solid var(--line); border-radius: var(--rl); padding: 28px 26px; transition: border-color .2s, transform .2s; }
 .who-card:hover { border-color: var(--line2); transform: translateY(-3px); }
-.who-card .wi { width: 46px; height: 46px; border-radius: 13px; background: var(--gold-soft); border: 1px solid rgba(18,81,76,.32); display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
+.who-card .wi { width: 46px; height: 46px; border-radius: 13px; background: var(--gold-soft); border: 1px solid rgba(75,46,122,.32); display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
 .who-card .wi svg { width: 23px; height: 23px; }
 .who-card h3 { font-size: 19px; font-weight: 800; margin-bottom: 8px; }
 .who-card > p { font-size: 14.4px; color: var(--muted); margin-bottom: 16px; }
@@ -385,8 +385,8 @@ h2.sec-h em { font-style: normal; color: var(--gold); }
 /* ── local rights ───────────────────────────────────────────────────── */
 .local { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 @media (max-width: 860px) { .local { grid-template-columns: 1fr; } }
-.local-item { background: rgba(23,33,31,.038); border: 1px solid var(--line); border-radius: var(--r); padding: 22px 20px; }
-.local-item .li-ic { width: 38px; height: 38px; border-radius: 11px; background: var(--gold-soft); border: 1px solid rgba(18,81,76,.28); display: flex; align-items: center; justify-content: center; margin-bottom: 13px; }
+.local-item { background: rgba(30,19,41,.038); border: 1px solid var(--line); border-radius: var(--r); padding: 22px 20px; }
+.local-item .li-ic { width: 38px; height: 38px; border-radius: 11px; background: var(--gold-soft); border: 1px solid rgba(75,46,122,.28); display: flex; align-items: center; justify-content: center; margin-bottom: 13px; }
 .local-item .li-ic svg { width: 19px; height: 19px; }
 .local-item h4 { font-size: 15.5px; font-weight: 800; margin-bottom: 7px; }
 .local-item p { font-size: 13.6px; color: var(--muted); line-height: 1.65; }
@@ -406,9 +406,9 @@ h2.sec-h em { font-style: normal; color: var(--gold); }
 
 /* ── cta ────────────────────────────────────────────────────────────── */
 .cta-box { position: relative; text-align: center; background: linear-gradient(158deg, var(--card), var(--card2));
-  border: 1px solid rgba(18,81,76,.28); border-radius: 28px; padding: 54px 32px; overflow: hidden; }
+  border: 1px solid rgba(75,46,122,.28); border-radius: 28px; padding: 54px 32px; overflow: hidden; }
 .cta-box::before { content: ""; position: absolute; inset: -60% 0 auto 0; height: 320px;
-  background: radial-gradient(ellipse 50% 60% at 50% 100%, rgba(18,81,76,.18), transparent 70%); pointer-events: none; }
+  background: radial-gradient(ellipse 50% 60% at 50% 100%, rgba(75,46,122,.18), transparent 70%); pointer-events: none; }
 .cta-box h2 { position: relative; font-size: clamp(26px, 4vw, 38px); font-weight: 900; margin-bottom: 14px; }
 .cta-box p { position: relative; font-size: 16.5px; color: var(--muted); max-width: 540px; margin: 0 auto 28px; }
 .cta-actions { position: relative; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
@@ -423,7 +423,7 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
 .legal a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
 
 /* ── sticky ─────────────────────────────────────────────────────────── */
-.sticky { position: fixed; left: 0; right: 0; bottom: 0; z-index: 80; background: rgba(242,234,220,.96); backdrop-filter: blur(14px);
+.sticky { position: fixed; left: 0; right: 0; bottom: 0; z-index: 80; background: rgba(251,249,245,.96); backdrop-filter: blur(14px);
   border-top: 1px solid var(--line); padding: 12px 0; transform: translateY(105%); transition: transform .3s ease; }
 .sticky.on { transform: none; }
 .sticky-in { max-width: 1120px; margin: 0 auto; padding: 0 22px; display: flex; align-items: center; gap: 16px; }
@@ -440,18 +440,18 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
 }
 
 /* ── modal ──────────────────────────────────────────────────────────── */
-.modal { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(23,33,31,.55); backdrop-filter: blur(7px); align-items: center; justify-content: center; padding: 20px; }
+.modal { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(30,19,41,.55); backdrop-filter: blur(7px); align-items: center; justify-content: center; padding: 20px; }
 .modal.on { display: flex; }
 .modal-box { width: min(500px, 100%); background: linear-gradient(158deg, var(--card), var(--card2)); border: 1px solid var(--line2);
   border-radius: var(--rl); padding: 30px 28px; max-height: 90vh; overflow-y: auto; animation: fade .28s ease; }
 .modal-box h3 { font-size: 21px; font-weight: 800; margin-bottom: 8px; }
 .modal-box > p { font-size: 14.5px; color: var(--muted); margin-bottom: 20px; }
 .modal-box label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin: 14px 0 6px; }
-.modal-box input { width: 100%; font: inherit; font-size: 15px; color: var(--text); background: rgba(23,33,31,.035);
+.modal-box input { width: 100%; font: inherit; font-size: 15px; color: var(--text); background: rgba(30,19,41,.035);
   border: 1px solid var(--line2); border-radius: 11px; padding: 12px 14px; }
 .modal-box input:focus { outline: none; border-color: var(--gold); }
 .modal-box .btn { width: 100%; margin-top: 18px; }
-.modal-x { float: right; background: rgba(23,33,31,.055); border: 1px solid var(--line); color: var(--muted); cursor: pointer; border-radius: 50%; width: 32px; height: 32px; font-size: 15px; }
+.modal-x { float: right; background: rgba(30,19,41,.055); border: 1px solid var(--line); color: var(--muted); cursor: pointer; border-radius: 50%; width: 32px; height: 32px; font-size: 15px; }
 .or { text-align: center; font-size: 13px; color: var(--muted2); margin: 16px 0 4px; }
 </style>
 </head>
@@ -483,15 +483,15 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
   <div class="nav-in">
     <a class="logo" href="#top">
       <svg class="logo-mark" viewBox="0 0 88 88" aria-hidden="true">
-        <circle cx="44" cy="44" r="42" fill="#0C3330"/><circle cx="44" cy="44" r="34.5" fill="none" stroke="#C9663C" stroke-width="2.4"/><text x="44" y="55.5" font-family="Montserrat,sans-serif" font-weight="900" font-size="30" fill="#F2EADC" text-anchor="middle" letter-spacing="-1">RR</text>
+        <rect x="2" y="2" width="84" height="84" rx="26" fill="#241635"/><path d="M32 18h24a4 4 0 0 1 4 4v48l-16-12-16 12V22a4 4 0 0 1 4-4Z" fill="#A98CE3"/><circle cx="44" cy="38" r="7" fill="#241635"/>
       </svg>
       <span class="logo-word"><span class="l1">don't have</span><span class="l2">an agent<span class="dot">.com</span></span></span>
     </a>
     <a class="by-branch" href="https://rickyrampersadbranch.com" target="_blank" rel="noopener"
        title="Visit the Ricky Rampersad Branch site">
       <svg viewBox="0 0 88 88" aria-hidden="true">
-          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="#0C3330"/>
-          <path d="M28 44L39 55L60 31" stroke="#F2EADC" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="#241635"/>
+          <path d="M28 44L39 55L60 31" stroke="#FBF9F5" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       <span><i>a</i><b>Ricky Rampersad Branch</b><i>initiative</i></span>
     </a>
@@ -571,7 +571,7 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
     <div class="hero-side">
       <div class="check-card rv" id="check">
         <svg class="logo-mark hero-mark" style="width:48px;height:48px;margin-bottom:14px" viewBox="0 0 88 88" aria-hidden="true">
-        <circle cx="44" cy="44" r="42" fill="#0C3330"/><circle cx="44" cy="44" r="34.5" fill="none" stroke="#C9663C" stroke-width="2.4"/><text x="44" y="55.5" font-family="Montserrat,sans-serif" font-weight="900" font-size="30" fill="#F2EADC" text-anchor="middle" letter-spacing="-1">RR</text>
+        <rect x="2" y="2" width="84" height="84" rx="26" fill="#241635"/><path d="M32 18h24a4 4 0 0 1 4 4v48l-16-12-16 12V22a4 4 0 0 1 4-4Z" fill="#A98CE3"/><circle cx="44" cy="38" r="7" fill="#241635"/>
       </svg>
         <h3>Are you an orphan policyholder?</h3>
         <p class="cc-sub">Four taps. Nothing is sent anywhere — this runs entirely in your browser.</p>
@@ -585,8 +585,8 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
 
       <div class="compliance-badge rv">
           <svg viewBox="0 0 88 88" aria-hidden="true">
-          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="#0C3330"/>
-          <path d="M28 44L39 55L60 31" stroke="#F2EADC" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="#241635"/>
+          <path d="M28 44L39 55L60 31" stroke="#FBF9F5" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
           <div>
             <b>Licensed, and on the public record</b>
@@ -615,34 +615,34 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
       <div class="gapband-fig">
       <svg class="gapfig" viewBox="0 0 520 120" role="img" aria-label="You, a missing agent, and your insurer — the gap closes">
         <!-- you -->
-        <circle cx="58" cy="56" r="30" fill="rgba(18,81,76,.13)" stroke="#12514C" stroke-width="2"/>
-        <g transform="translate(40,38) scale(1.5)" fill="#12514C"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></g>
-        <text x="58" y="108" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="12" font-weight="700" fill="#5B6A66">You</text>
+        <circle cx="58" cy="56" r="30" fill="rgba(75,46,122,.13)" stroke="#4B2E7A" stroke-width="2"/>
+        <g transform="translate(40,38) scale(1.5)" fill="#4B2E7A"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></g>
+        <text x="58" y="108" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="12" font-weight="700" fill="#6A5C7A">You</text>
 
         <!-- insurer -->
-        <circle cx="462" cy="56" r="30" fill="rgba(18,81,76,.13)" stroke="#12514C" stroke-width="2"/>
-        <g transform="translate(444,38) scale(1.5)" fill="none" stroke="#12514C" stroke-width="2.1" stroke-linejoin="round">
+        <circle cx="462" cy="56" r="30" fill="rgba(75,46,122,.13)" stroke="#4B2E7A" stroke-width="2"/>
+        <g transform="translate(444,38) scale(1.5)" fill="none" stroke="#4B2E7A" stroke-width="2.1" stroke-linejoin="round">
           <path d="M4 21V6l8-3 8 3v15"/><path d="M9 21v-5h6v5" stroke-linecap="round"/>
         </g>
-        <text x="462" y="108" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="12" font-weight="700" fill="#5B6A66">Your insurer</text>
+        <text x="462" y="108" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="12" font-weight="700" fill="#6A5C7A">Your insurer</text>
 
         <!-- broken state: the gap is grey, because absence is not a colour you want -->
         <g class="broken">
-          <line class="track-broken" x1="92" y1="56" x2="228" y2="56" stroke="#8A9793" stroke-width="3" stroke-linecap="round"/>
-          <line class="track-broken" x1="292" y1="56" x2="428" y2="56" stroke="#8A9793" stroke-width="3" stroke-linecap="round"/>
-          <circle cx="260" cy="56" r="30" fill="rgba(155,150,160,.16)" stroke="#8A9793" stroke-width="2.5" stroke-dasharray="7 6"/>
-          <path d="M250 46l20 20M270 46l-20 20" stroke="#8A9793" stroke-width="3" stroke-linecap="round"/>
-          <text x="260" y="108" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="12" font-weight="700" fill="#8A9793">No agent</text>
+          <line class="track-broken" x1="92" y1="56" x2="228" y2="56" stroke="#8D82A0" stroke-width="3" stroke-linecap="round"/>
+          <line class="track-broken" x1="292" y1="56" x2="428" y2="56" stroke="#8D82A0" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="260" cy="56" r="30" fill="rgba(155,150,160,.16)" stroke="#8D82A0" stroke-width="2.5" stroke-dasharray="7 6"/>
+          <path d="M250 46l20 20M270 46l-20 20" stroke="#8D82A0" stroke-width="3" stroke-linecap="round"/>
+          <text x="260" y="108" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="12" font-weight="700" fill="#8D82A0">No agent</text>
         </g>
 
         <!-- fixed state: gold, because that is the thing worth having -->
         <g class="fixed">
-          <line class="track-fixed" x1="92" y1="56" x2="428" y2="56" stroke="#12514C" stroke-width="3" stroke-linecap="round"/>
-          <circle cx="260" cy="56" r="30" fill="rgba(18,81,76,.18)" stroke="#12514C" stroke-width="2.5"/>
-          <g transform="translate(242,38) scale(1.5)" fill="#12514C"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></g>
-          <circle cx="282" cy="78" r="11" fill="#12514C"/>
+          <line class="track-fixed" x1="92" y1="56" x2="428" y2="56" stroke="#4B2E7A" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="260" cy="56" r="30" fill="rgba(75,46,122,.18)" stroke="#4B2E7A" stroke-width="2.5"/>
+          <g transform="translate(242,38) scale(1.5)" fill="#4B2E7A"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></g>
+          <circle cx="282" cy="78" r="11" fill="#4B2E7A"/>
           <path d="M277 78l3.5 3.5L288 74" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          <text x="260" y="108" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="12" font-weight="700" fill="#12514C">Your agent</text>
+          <text x="260" y="108" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="12" font-weight="700" fill="#4B2E7A">Your agent</text>
         </g>
       </svg>
       </div>
@@ -760,7 +760,7 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
       evidence for exactly that.
     </p>
 
-    <div class="tl-body rv" style="border-color:rgba(18,81,76,.28)">
+    <div class="tl-body rv" style="border-color:rgba(75,46,122,.28)">
       <h3><span>2021</span> · individual life premiums fell 14%</h3>
       <p style="font-size:16px;color:var(--text);border-left:3px solid var(--gold);padding-left:16px;margin-bottom:18px">
         “…may have resulted from the delayed impact of policyholders <b style="color:var(--gold)">discontinuing their
@@ -930,8 +930,8 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
     <div class="mgr rv">
       <div class="mgr-mark" aria-hidden="true">
         <svg viewBox="0 0 88 88">
-          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="#0C3330"/>
-          <path d="M28 44L39 55L60 31" stroke="#F2EADC" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="#241635"/>
+          <path d="M28 44L39 55L60 31" stroke="#FBF9F5" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         <span>Ricky Rampersad<br><i>Branch Manager</i></span>
       </div>
@@ -1094,14 +1094,14 @@ footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rg
       <div>
         <a class="logo" href="#top" style="margin-bottom:10px">
           <svg class="logo-mark" viewBox="0 0 88 88" aria-hidden="true">
-        <circle cx="44" cy="44" r="42" fill="#0C3330"/><circle cx="44" cy="44" r="34.5" fill="none" stroke="#C9663C" stroke-width="2.4"/><text x="44" y="55.5" font-family="Montserrat,sans-serif" font-weight="900" font-size="30" fill="#F2EADC" text-anchor="middle" letter-spacing="-1">RR</text>
+        <rect x="2" y="2" width="84" height="84" rx="26" fill="#241635"/><path d="M32 18h24a4 4 0 0 1 4 4v48l-16-12-16 12V22a4 4 0 0 1 4-4Z" fill="#A98CE3"/><circle cx="44" cy="38" r="7" fill="#241635"/>
       </svg>
           <span class="logo-word"><span class="l1">don't have</span><span class="l2">an agent<span class="dot">.com</span></span></span>
         </a>
         <div class="by-branch" style="border:none;padding:0;margin-top:4px">
           <svg viewBox="0 0 88 88" aria-hidden="true">
-          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="#0C3330"/>
-          <path d="M28 44L39 55L60 31" stroke="#F2EADC" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="#241635"/>
+          <path d="M28 44L39 55L60 31" stroke="#FBF9F5" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
           <span><i>a</i><b>Ricky Rampersad Branch</b><i>initiative</i></span>
         </div>
@@ -1340,21 +1340,21 @@ const stickyIo = new IntersectionObserver((es) => {
 .send-card p{font-size:15.2px;line-height:1.62;color:var(--body)}
 .send-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
 .send-note{font-size:12.8px;color:var(--muted);margin-top:12px}
-.stdband{background:var(--gold2);color:#F2EADC;padding:78px 0}
-.stdband .kicker.light{color:#E8DCC6}
-.stdband h2{font-size:clamp(27px,4.4vw,42px);font-weight:900;color:#F2EADC;margin-bottom:8px}
-.stdband h2 em{font-style:normal;color:#E8B48F}
+.stdband{background:var(--gold2);color:#FBF9F5;padding:78px 0}
+.stdband .kicker.light{color:#EDE6FA}
+.stdband h2{font-size:clamp(27px,4.4vw,42px);font-weight:900;color:#FBF9F5;margin-bottom:8px}
+.stdband h2 em{font-style:normal;color:#C7B4EE}
 .std-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-top:30px}
 .std-grid>*{min-width:0}
-.std{background:rgba(242,234,220,.07);border:1px solid rgba(242,234,220,.18);border-radius:14px;padding:18px 18px 15px}
-.std b{display:block;font-size:38px;font-weight:900;line-height:1;color:#F2EADC;font-variant-numeric:tabular-nums}
-.std b i{font-style:normal;font-size:16px;font-weight:800;margin-left:3px;color:#E8DCC6}
-.std span{display:block;font-size:13px;line-height:1.45;margin-top:7px;color:#E7DCC9}
-.std-foot{margin-top:26px;font-size:15px;line-height:1.65;color:#E7DCC9;max-width:640px}
-.std-foot a{color:#F2EADC;font-weight:700}
-.std-foot b{color:#F2EADC}
+.std{background:rgba(251,249,245,.07);border:1px solid rgba(251,249,245,.18);border-radius:14px;padding:18px 18px 15px}
+.std b{display:block;font-size:38px;font-weight:900;line-height:1;color:#FBF9F5;font-variant-numeric:tabular-nums}
+.std b i{font-style:normal;font-size:16px;font-weight:800;margin-left:3px;color:#EDE6FA}
+.std span{display:block;font-size:13px;line-height:1.45;margin-top:7px;color:#EDE6FA}
+.std-foot{margin-top:26px;font-size:15px;line-height:1.65;color:#EDE6FA;max-width:640px}
+.std-foot a{color:#FBF9F5;font-weight:700}
+.std-foot b{color:#FBF9F5}
 .cta-ask{font-size:16.5px;line-height:1.55;color:var(--muted);margin-bottom:14px;font-weight:600}
-#copyToast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:var(--head);color:#F2EADC;
+#copyToast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:var(--head);color:#FBF9F5;
   padding:9px 18px;border-radius:99px;font-size:13.5px;z-index:70;display:none}
 </style>
 <div id="copyToast">Link copied — paste it anywhere</div>
@@ -1377,31 +1377,31 @@ const stickyIo = new IntersectionObserver((es) => {
 
 <style>
 /* ── the film player ───────────────────────────────────────────────── */
-#film{padding:70px 0;background:var(--gold2);color:#F2EADC}
-#film .film-kick{font-weight:800;font-size:12px;letter-spacing:.26em;color:#E8DCC6;margin-bottom:12px}
-#film h2.sec-h{color:#F2EADC}
-#film h2.sec-h em{color:#E8B48F}
-.film-lede{font-size:16px;line-height:1.62;color:#E7DCC9;max-width:60ch;margin-bottom:24px}
-.vwrap{position:relative;max-width:860px;border-radius:18px;overflow:hidden;background:#06201E;
-  box-shadow:0 20px 50px rgba(6,32,30,.42);aspect-ratio:16/9}
-.vwrap video{display:block;width:100%;height:100%;object-fit:cover;background:#06201E}
+#film{padding:70px 0;background:var(--gold2);color:#FBF9F5}
+#film .film-kick{font-weight:800;font-size:12px;letter-spacing:.26em;color:#EDE6FA;margin-bottom:12px}
+#film h2.sec-h{color:#FBF9F5}
+#film h2.sec-h em{color:#C7B4EE}
+.film-lede{font-size:16px;line-height:1.62;color:#EDE6FA;max-width:60ch;margin-bottom:24px}
+.vwrap{position:relative;max-width:860px;border-radius:18px;overflow:hidden;background:#150C21;
+  box-shadow:0 20px 50px rgba(21,12,33,.42);aspect-ratio:16/9}
+.vwrap video{display:block;width:100%;height:100%;object-fit:cover;background:#150C21}
 .vcover{position:absolute;inset:0;display:grid;place-items:center;border:none;cursor:pointer;
-  color:#F2EADC;font:inherit;
-  background:radial-gradient(circle at 50% 46%,rgba(6,32,30,.30),rgba(6,32,30,.62) 62%,rgba(6,32,30,.82))}
+  color:#FBF9F5;font:inherit;
+  background:radial-gradient(circle at 50% 46%,rgba(21,12,33,.30),rgba(21,12,33,.62) 62%,rgba(21,12,33,.82))}
 .vcover.gone{display:none}
-.vplay{width:88px;height:88px;border-radius:50%;background:rgba(242,234,220,.16);
-  border:2px solid rgba(242,234,220,.62);display:flex;align-items:center;justify-content:center}
+.vplay{width:88px;height:88px;border-radius:50%;background:rgba(251,249,245,.16);
+  border:2px solid rgba(251,249,245,.62);display:flex;align-items:center;justify-content:center}
 .vplay svg{width:38px;height:38px;margin-left:5px}
-.vcover:hover .vplay{background:rgba(242,234,220,.26)}
+.vcover:hover .vplay{background:rgba(251,249,245,.26)}
 .vlab{position:absolute;left:22px;bottom:20px;font-weight:800;font-size:17px;
-  text-shadow:0 2px 12px rgba(6,32,30,.85)}
-.vlen{position:absolute;right:22px;bottom:22px;font-size:12px;letter-spacing:.16em;color:#E8DCC6;
-  font-weight:700;text-shadow:0 2px 10px rgba(6,32,30,.85)}
-.film-foot{margin-top:18px;font-size:14.5px;color:#E7DCC9}
-.film-foot a{color:#F2EADC;font-weight:700}
+  text-shadow:0 2px 12px rgba(21,12,33,.85)}
+.vlen{position:absolute;right:22px;bottom:22px;font-size:12px;letter-spacing:.16em;color:#EDE6FA;
+  font-weight:700;text-shadow:0 2px 10px rgba(21,12,33,.85)}
+.film-foot{margin-top:18px;font-size:14.5px;color:#EDE6FA}
+.film-foot a{color:#FBF9F5;font-weight:700}
 @media (prefers-reduced-motion: no-preference){
   .vplay{animation:filmpulse 2.6s ease-in-out infinite}
-  @keyframes filmpulse{0%,100%{box-shadow:0 0 0 0 rgba(242,234,220,.3)}60%{box-shadow:0 0 0 18px rgba(242,234,220,0)}}
+  @keyframes filmpulse{0%,100%{box-shadow:0 0 0 0 rgba(251,249,245,.3)}60%{box-shadow:0 0 0 18px rgba(251,249,245,0)}}
 }
 @media(max-width:640px){.vplay{width:64px;height:64px}.vplay svg{width:26px;height:26px}
   .vlab{font-size:14px;left:14px;bottom:14px}.vlen{font-size:10.5px;right:14px;bottom:16px}}

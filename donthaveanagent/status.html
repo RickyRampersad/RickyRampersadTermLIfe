@@ -6,21 +6,21 @@
 <title>Track my request | donthaveanagent.com</title>
 <meta name="description" content="Log in with your reference and access code to watch your policy review move — verification, your documents, your digital signature, done."/>
 <meta name="robots" content="noindex"/>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 88'%3E%3Ccircle cx='44' cy='44' r='42' fill='%230C3330'/%3E%3Ccircle cx='44' cy='44' r='34.5' fill='none' stroke='%23C9663C' stroke-width='2.4'/%3E%3Ctext x='44' y='55.5' font-family='Montserrat,sans-serif' font-weight='900' font-size='30' fill='%23F2EADC' text-anchor='middle' letter-spacing='-1'%3ERR%3C/text%3E%3C/svg%3E"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 88'%3E%3Crect x='2' y='2' width='84' height='84' rx='26' fill='%23241635'/%3E%3Cpath d='M32 18h24a4 4 0 0 1 4 4v48l-16-12-16 12V22a4 4 0 0 1 4-4Z' fill='%23A98CE3'/%3E%3Ccircle cx='44' cy='38' r='7' fill='%23241635'/%3E%3C/svg%3E"/>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
-  --ink:#F2EADC;--ink2:#E7DCC9;--surface:#FFFFFF;--surface2:#FAF6EE;
-  --line:rgba(23,33,31,.10);--line2:rgba(18,81,76,.30);
-  --text:#17211F;--muted:#5B6A66;--muted2:#8A9793;
-  --amber:#C9663C;--oxblood:#12514C;--oxblood2:#0C3330;--red:#C9663C;--slate:#8A9793;
-  --ox-soft:rgba(18,81,76,.10);--good:#2F8F5B;
+  --ink:#FBF9F5;--ink2:#EDE6FA;--surface:#FFFFFF;--surface2:#FBF9F5;
+  --line:rgba(30,19,41,.10);--line2:rgba(75,46,122,.30);
+  --text:#1E1329;--muted:#6A5C7A;--muted2:#8D82A0;
+  --amber:#A98CE3;--oxblood:#4B2E7A;--oxblood2:#241635;--red:#A98CE3;--slate:#8D82A0;
+  --ox-soft:rgba(75,46,122,.10);--good:#2F8F5B;
   --head:'Montserrat',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   --body:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--body);background:var(--ink);color:var(--text);line-height:1.6;min-height:100vh;
-  background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(18,81,76,.09),transparent),
+  background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(75,46,122,.09),transparent),
   linear-gradient(180deg,var(--ink) 0%,var(--ink2) 55%,var(--ink) 100%);background-attachment:fixed}
 a{color:inherit}
 h1,h2,h3{font-family:var(--head);letter-spacing:-.02em;line-height:1.16}
@@ -53,7 +53,7 @@ input::placeholder{color:var(--muted2);letter-spacing:.05em}
 .btn:hover{transform:translateY(-1px)}
 .btn-go{background:var(--oxblood);color:#fff;width:100%;margin-top:18px}
 .btn-line{background:none;border:1.5px solid var(--line);color:var(--text);padding:11px 16px;font-size:13px}
-.err{display:none;background:rgba(201,102,60,.07);border:1px solid rgba(201,102,60,.4);color:#8a1d15;
+.err{display:none;background:rgba(169,140,227,.07);border:1px solid rgba(169,140,227,.4);color:#8a1d15;
   border-radius:12px;padding:12px 14px;font-size:13.5px;margin-top:14px}
 .note{font-size:13px;color:var(--muted);background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:14px}
 
@@ -78,14 +78,14 @@ input::placeholder{color:var(--muted2);letter-spacing:.05em}
   font-size:12px;color:var(--muted2);transition:all .4s}
 .tstep.done .tdot{background:var(--oxblood);border-color:var(--oxblood);color:#fff}
 .tstep.active .tdot{border-color:var(--oxblood);color:var(--oxblood);box-shadow:0 0 0 5px var(--ox-soft);animation:pulse 2.2s infinite}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 4px var(--ox-soft)}50%{box-shadow:0 0 0 9px rgba(18,81,76,.05)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 4px var(--ox-soft)}50%{box-shadow:0 0 0 9px rgba(75,46,122,.05)}}
 @media (prefers-reduced-motion:reduce){.tstep.active .tdot{animation:none}}
 .tstep h3{font-size:15.5px;font-weight:800}
 .tstep.pending h3{color:var(--muted2);font-weight:700}
 .tstep p{font-size:13.3px;color:var(--muted);margin-top:3px;max-width:52ch}
 .tstep .when{display:inline-block;font:700 11px var(--head);letter-spacing:.05em;text-transform:uppercase;
   color:var(--oxblood);background:var(--ox-soft);border-radius:99px;padding:3px 10px;margin-top:7px}
-.tstep.active .when{color:var(--amber);background:rgba(201,102,60,.1)}
+.tstep.active .when{color:var(--amber);background:rgba(169,140,227,.1)}
 
 .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
 .foot{max-width:720px;margin:0 auto;padding:26px 18px 40px;font-size:11.8px;color:var(--muted);border-top:1px solid var(--line)}
@@ -98,7 +98,7 @@ input::placeholder{color:var(--muted2);letter-spacing:.05em}
   <div class="nav-in">
     <a class="logo" href="index.html">
       <svg viewBox="0 0 88 88" aria-hidden="true">
-        <circle cx="44" cy="44" r="42" fill="#0C3330"/><circle cx="44" cy="44" r="34.5" fill="none" stroke="#C9663C" stroke-width="2.4"/><text x="44" y="55.5" font-family="Montserrat,sans-serif" font-weight="900" font-size="30" fill="#F2EADC" text-anchor="middle" letter-spacing="-1">RR</text>
+        <rect x="2" y="2" width="84" height="84" rx="26" fill="#241635"/><path d="M32 18h24a4 4 0 0 1 4 4v48l-16-12-16 12V22a4 4 0 0 1 4-4Z" fill="#A98CE3"/><circle cx="44" cy="38" r="7" fill="#241635"/>
       </svg>
       <span class="logo-word"><span class="l1">don't have</span><span class="l2">an agent<span class="dot">.com</span></span></span>
     </a>

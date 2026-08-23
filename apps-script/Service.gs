@@ -138,7 +138,7 @@ var SVC = {
   SLA_BUSINESS_DAYS: 1,
 };
 
-var SB = { navy: '#0C3330', blue: '#12514C', gold: '#C9663C', light: '#F2EADC', ink: '#17211F' };
+var SB = { navy: '#241635', blue: '#4B2E7A', gold: '#A98CE3', light: '#EDE6FA', ink: '#1E1329' };
 
 
 /* ============================ web endpoints ============================ */
@@ -742,9 +742,9 @@ function wrap_(inner, tag, id) {
   /* donthaveanagent.com has its own colours — Porcelain & Oxblood, the same
      palette as the site, so a client who used that product recognises the
      email as coming from it. */
-  var bg = id.dhaa ? '#0C3330' : SB.navy;
-  var chip = id.dhaa ? '#F2EADC' : SB.gold;
-  var chipInk = id.dhaa ? '#0C3330' : SB.navy;
+  var bg = id.dhaa ? '#241635' : SB.navy;
+  var chip = id.dhaa ? '#EDE6FA' : SB.gold;
+  var chipInk = id.dhaa ? '#241635' : SB.navy;
   var sub = id.dhaa ? '#E5C9B3' : '#b7c9de';
   return '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:' + SB.ink + ';max-width:660px">' +
     '<div style="background:' + bg + ';color:#fff;padding:18px 22px;border-radius:10px 10px 0 0">' +
@@ -1028,7 +1028,7 @@ function routeToService_(ref, priority, now, body, attachments, clientEmailed) {
   (body.fields || []).forEach(function (f) {
     if (f.flag === 'urgent')  actions.push(badge_('URGENT', '#b3261e') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
     if (f.flag === 'records') actions.push(badge_('RECORDS', SB.blue) + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
-    if (f.flag === 'agent')   actions.push(badge_('AGENT', '#0C3330') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
+    if (f.flag === 'agent')   actions.push(badge_('AGENT', '#241635') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
     if (f.flag === 'lead')    actions.push(badge_('FOLLOW-UP', '#a05e03') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
     if (f.flag === 'service') actions.push(badge_('REPLY', '#455a75') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
   });
@@ -1350,7 +1350,7 @@ function matchAssignmentForRow_(sh, row, agentName, agentNo, why) {
   var isGroup = sh.getName() === SVC.GRP_SHEET;
   var id = identity_({ source: v('Source') });
   var first = v('Client').trim().split(/\s+/)[0] || 'there';
-  var refInk = id.dhaa ? '#0C3330' : SB.navy;
+  var refInk = id.dhaa ? '#241635' : SB.navy;
   var now = new Date();
 
   /* the letter, populated with the appointed agent's name */
@@ -2423,7 +2423,7 @@ function clientPatiencePass_() {
          donthaveanagent.com client gets the oxblood header, not "Service
          Questionnaire" from a product they have never heard of. */
       var rowId = identity_(iSrc > -1 ? { source: r[iSrc] } : null);
-      var refInk = rowId.dhaa ? '#0C3330' : SB.navy;
+      var refInk = rowId.dhaa ? '#241635' : SB.navy;
 
       /* Two different notes. A company that owes us the stamped letter is
          chased for the letter, referencing the previous correspondence, until
@@ -2522,7 +2522,7 @@ function reviewLink_(src, name, policy) {
 /** A button an email client can't break — table, solid colour, one link. */
 function cta_(label, url, dhaa) {
   return '<table cellpadding="0" cellspacing="0" style="margin:18px 0 6px"><tr>' +
-    '<td style="background:' + (dhaa ? '#0C3330' : SB.navy) + ';border-radius:8px">' +
+    '<td style="background:' + (dhaa ? '#241635' : SB.navy) + ';border-radius:8px">' +
     '<a href="' + url + '" style="display:inline-block;padding:13px 26px;color:#ffffff;' +
     'font-weight:bold;text-decoration:none;font-size:14px">' + esc_(label) + ' →</a>' +
     '</td></tr></table>';
@@ -2618,7 +2618,7 @@ function lifecyclePass_() {
  *  ask what has changed — one click to answer, one line to say all good. */
 function checkupEmail_(o) {
   var id = identity_({ source: o.src });
-  var refInk = id.dhaa ? '#0C3330' : SB.navy;
+  var refInk = id.dhaa ? '#241635' : SB.navy;
   var link = reviewLink_(o.src, o.clientName, o.policy);
 
   var scoreBlock = '';
@@ -2666,7 +2666,7 @@ function checkupEmail_(o) {
  *  clicks and answers; the answers arrive as a fresh Service Questionnaire. */
 function annualReviewEmail_(o) {
   var id = identity_({ source: o.src });
-  var refInk = id.dhaa ? '#0C3330' : SB.navy;
+  var refInk = id.dhaa ? '#241635' : SB.navy;
   var link = reviewLink_(o.src, o.clientName, o.policy);
 
   var covers = o.isGroup
