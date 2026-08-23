@@ -1,0 +1,411 @@
+<title>Branch Daily Dash</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Inter:wght@400;500;600;700;800&display=swap">
+
+<style>
+  :root{
+    --navy:#0B1836; --teal:#0D9488; --teal-lt:#2DD4BF; --gold:#F5B324; --wa:#25D366;
+    --good:#0E8A5F; --warn:#B8791A; --crit:#C0392B;
+    --paper:#FFFFFF; --ground:#F4F6FA; --sunk:#EEF2F8;
+    --ink:#0F172A; --ink-2:#3F4A5C; --muted:#69748A; --faint:#98A2B3; --line:#DFE4EC;
+    --shadow:0 1px 2px rgba(11,24,54,.06), 0 12px 32px -14px rgba(11,24,54,.22);
+  }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+    --paper:#111A2E; --ground:#080D1A; --sunk:#0D1526;
+    --ink:#EAEEF6; --ink-2:#C3CBDA; --muted:#8B95A9; --faint:#6A7488;
+    --line:#222C42; --teal:#2DD4BF; --good:#34D399; --warn:#F5B324; --crit:#F87171;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 34px -16px rgba(0,0,0,.8); } }
+  :root[data-theme="dark"]{
+    --paper:#111A2E; --ground:#080D1A; --sunk:#0D1526;
+    --ink:#EAEEF6; --ink-2:#C3CBDA; --muted:#8B95A9; --faint:#6A7488;
+    --line:#222C42; --teal:#2DD4BF; --good:#34D399; --warn:#F5B324; --crit:#F87171;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 34px -16px rgba(0,0,0,.8); }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);
+    font:16px/1.6 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:860px;margin:0 auto;padding:0 16px 60px}
+  h2{font-family:Newsreader,Georgia,serif;font-size:25px;font-weight:600;
+    letter-spacing:-.015em;margin:0 0 3px;line-height:1.22}
+  .eyebrow{font-size:11px;font-weight:800;letter-spacing:.17em;text-transform:uppercase;
+    color:var(--teal);margin:0 0 8px}
+  .lede{font-size:14.5px;color:var(--muted);margin:0 0 16px;line-height:1.55}
+  section{margin:0 0 28px}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:16px;
+    padding:20px 18px;box-shadow:var(--shadow)}
+  b.num{font-variant-numeric:tabular-nums}
+
+  /* ── header ─────────────────────────────────────────────────────────── */
+  header{background:radial-gradient(640px 340px at 86% -20%, rgba(45,212,191,.20), transparent 60%),
+      var(--navy);color:#fff;padding:22px 16px 24px;margin-bottom:22px}
+  .hin{max-width:828px;margin:0 auto}
+  .htop{display:flex;justify-content:space-between;align-items:baseline;gap:14px;
+    flex-wrap:wrap}
+  .htop .t{font-size:19px;font-weight:800}
+  .htop .d{font-size:13px;color:rgba(255,255,255,.62)}
+
+  /* KPI tiles. Number first, label under — a manager scans the figure, then
+     reads what it was. */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:18px}
+  .kpi{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);
+    border-radius:12px;padding:13px 11px}
+  .kpi .v{font-family:Newsreader,Georgia,serif;font-size:29px;font-weight:600;line-height:1;
+    font-variant-numeric:tabular-nums}
+  .kpi .k{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    color:rgba(255,255,255,.6);margin-top:6px;line-height:1.3}
+  .kpi .dl{font-size:11px;color:rgba(255,255,255,.45);margin-top:5px}
+  .kpi.act .v{color:var(--gold)} .kpi.up .v{color:var(--teal-lt)}
+
+  /* ── the signing queue ──────────────────────────────────────────────── */
+  .q{display:grid;gap:9px}
+  .qr{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;
+    background:var(--paper);border:1px solid var(--line);border-radius:13px;
+    padding:13px 15px;box-shadow:var(--shadow)}
+  .qr.late{border-color:var(--crit);box-shadow:0 0 0 1px var(--crit) inset,var(--shadow)}
+  .qr .who{font-size:16px;font-weight:800;line-height:1.25}
+  .qr .sub{font-size:13.5px;color:var(--muted);margin-top:3px}
+  .qr .rt{text-align:right;flex:none}
+  .qr .amt{font-family:Newsreader,Georgia,serif;font-size:22px;font-weight:600;
+    font-variant-numeric:tabular-nums}
+  .age{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.06em;
+    text-transform:uppercase;padding:3px 8px;border-radius:5px;margin-top:5px}
+  .age.ok{background:rgba(14,138,95,.14);color:var(--good)}
+  .age.warn{background:rgba(184,121,26,.16);color:var(--warn)}
+  .age.crit{background:rgba(192,57,43,.14);color:var(--crit)}
+
+  /* ── advisor table ──────────────────────────────────────────────────── */
+  .tw{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:14.5px;min-width:560px}
+  th{text-align:left;font-size:10.5px;font-weight:800;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--muted);padding:0 10px 9px;white-space:nowrap}
+  th.r,td.r{text-align:right}
+  td{padding:11px 10px;border-top:1px solid var(--line);vertical-align:middle}
+  td.nm{font-weight:700}
+  td.num{font-variant-numeric:tabular-nums;font-weight:600}
+  .bar{height:7px;border-radius:4px;background:var(--sunk);position:relative;min-width:70px}
+  .bar i{display:block;height:100%;border-radius:4px;background:var(--teal)}
+  .bar.low i{background:var(--warn)}
+  tr.top td{background:rgba(45,212,191,.07)}
+  tr.top td.nm::after{content:"TOP";font-size:9.5px;font-weight:800;letter-spacing:.1em;
+    color:var(--teal);margin-left:7px;vertical-align:1px}
+
+  /* ── what the branch found ──────────────────────────────────────────── */
+  .found{display:grid;gap:8px}
+  .fd{display:grid;grid-template-columns:44px 1fr auto;gap:13px;align-items:center;
+    background:var(--sunk);border-radius:11px;padding:11px 14px}
+  .fd .c{font-family:Newsreader,Georgia,serif;font-size:24px;font-weight:600;color:var(--teal);
+    text-align:center;font-variant-numeric:tabular-nums}
+  .fd .l{font-size:15px;font-weight:600;line-height:1.3}
+  .fd .l em{display:block;font-style:normal;font-size:13px;color:var(--muted);
+    font-weight:400;margin-top:2px}
+  .fd .v{font-family:Newsreader,Georgia,serif;font-size:19px;font-weight:600;
+    font-variant-numeric:tabular-nums;color:var(--ink-2);white-space:nowrap}
+
+  /* ── coaching ───────────────────────────────────────────────────────── */
+  .co{background:rgba(245,179,36,.10);border:1px solid rgba(245,179,36,.32);
+    border-radius:12px;padding:13px 16px;font-size:14.5px;line-height:1.55;margin-bottom:8px}
+  .co b{color:var(--ink)}
+
+  /* ── the WhatsApp post ──────────────────────────────────────────────── */
+  .post{background:var(--sunk);border:1px dashed var(--line);border-radius:12px;
+    padding:16px 18px;font:14px/1.62 ui-monospace,SFMono-Regular,Menlo,monospace;
+    white-space:pre-wrap;color:var(--ink-2);max-height:340px;overflow:auto}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:13px}
+  .btn{border:0;border-radius:11px;padding:14px;font:800 15.5px Inter,sans-serif;
+    cursor:pointer;width:100%}
+  .btn.wa{background:var(--wa);color:#08301A;box-shadow:0 8px 20px -8px rgba(37,211,102,.8)}
+  .btn.gh{background:transparent;color:var(--teal);border:1.5px solid var(--teal)}
+  .btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  .btn:hover{filter:brightness(1.05)}
+  .tog{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:13px}
+  .tog label{position:relative}
+  .tog input{position:absolute;opacity:0;width:1px;height:1px}
+  .tog span{display:block;border:1.5px solid var(--line);border-radius:999px;
+    padding:7px 14px;font-size:13.5px;font-weight:700;color:var(--ink-2);cursor:pointer;
+    background:var(--paper)}
+  .tog input:checked + span{background:var(--teal);border-color:var(--teal);color:#fff}
+  .tog input:focus-visible + span{outline:3px solid var(--gold);outline-offset:2px}
+
+  .note{font-size:12.5px;color:var(--muted);text-align:center;line-height:1.6;padding:8px 0 0}
+  @media (max-width:620px){ .kpis{grid-template-columns:1fr 1fr} .two{grid-template-columns:1fr} }
+</style>
+
+<header>
+  <div class="hin">
+    <div class="htop">
+      <div><div class="t">Ricky Rampersad Branch</div>
+        <div class="d" id="dstamp">Daily dash</div></div>
+      <div class="d" id="asof"></div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section>
+    <p class="eyebrow">Do this first</p>
+    <h2>Waiting on your signature</h2>
+    <p class="lede">Nothing reaches the client until you sign it. Oldest first.</p>
+    <div class="q" id="queue"></div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Today</p>
+    <h2>By advisor</h2>
+    <p class="lede">Needs found per fact find is the number that matters &mdash; it is the
+      difference between a sale and a relationship.</p>
+    <div class="card"><div class="tw"><table id="advisors"></table></div></div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Across every file today</p>
+    <h2>What the branch found</h2>
+    <p class="lede">Needs the fact find surfaced that nobody went looking for.</p>
+    <div class="found" id="found"></div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Worth a word</p>
+    <h2>Coaching</h2>
+    <div id="coaching"></div>
+  </section>
+
+  <section>
+    <div class="card">
+      <p class="eyebrow">Post it</p>
+      <h2 style="margin-bottom:5px">The 5pm message</h2>
+      <p class="lede">Written from today&rsquo;s numbers. Pick what goes in, then send.</p>
+
+      <div class="tog" id="opts">
+        <label><input type="checkbox" data-o="top" checked><span>Name the top advisor</span></label>
+        <label><input type="checkbox" data-o="queue" checked><span>Signing queue</span></label>
+        <label><input type="checkbox" data-o="found" checked><span>What we found</span></label>
+        <label><input type="checkbox" data-o="pros" checked><span>Prospecting</span></label>
+        <label><input type="checkbox" data-o="coach"><span>Coaching line</span></label>
+      </div>
+
+      <div class="post" id="post"></div>
+
+      <div class="two">
+        <button class="btn wa" id="sendWa" type="button">Send on WhatsApp</button>
+        <button class="btn gh" id="copy" type="button">Copy the message</button>
+      </div>
+    </div>
+  </section>
+
+  <p class="note">Sample data &mdash; nothing here is a real case yet.<br>
+    <b>Ricky Rampersad Branch</b></p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* In production this comes from the sheet via action=dash. Everything below
+     is derived from DATA, so wiring it up later means replacing this object and
+     nothing else — the tiles, the table, the coaching lines and the WhatsApp
+     message all read from it. */
+  var DATA = {
+    date: '2026-08-23',
+    advisors: [
+      { name:'Premchand Dookran',  ff:3, needs:41, cover:5_800_000, booked:2, sent:5, opened:4 },
+      { name:'Anisa Mohammed',     ff:2, needs:26, cover:3_100_000, booked:1, sent:4, opened:3 },
+      { name:'Kavir Ramlogan',     ff:2, needs:19, cover:2_400_000, booked:2, sent:6, opened:2 },
+      { name:'Sherry-Ann Baptiste',ff:1, needs:14, cover:1_150_000, booked:0, sent:3, opened:1 },
+      { name:'Nigel Persad',       ff:1, needs:6,  cover:900_000,   booked:0, sent:1, opened:0 }
+    ],
+    queue: [
+      { client:'Devon Ramkissoon', advisor:'Premchand Dookran', cover:2_300_000, hours:31 },
+      { client:'Marlene Joseph',   advisor:'Anisa Mohammed',    cover:1_450_000, hours:19 },
+      { client:'Terrence Boodoo',  advisor:'Kavir Ramlogan',    cover:880_000,   hours:6 },
+      { client:'Roxanne Hosein',   advisor:'Premchand Dookran', cover:1_100_000, hours:2 }
+    ],
+    found: [
+      { n:6, label:'Business owners with no buy-sell',   ask:'Who buys their share?',            value:9_400_000 },
+      { n:5, label:'Mortgages with no cover behind them', ask:'Who keeps the house?',            value:4_100_000 },
+      { n:4, label:'Children with nothing costed',        ask:'What does university cost?',      value:1_200_000 },
+      { n:3, label:'Group cover only',                    ask:'It ends the day the job does.',   value:2_600_000 },
+      { n:3, label:'Uninsured card and loan balances',    ask:'Who settles it?',                 value:  310_000 }
+    ],
+    prospect: { sent:19, opened:14, watched:9, booked:5 }
+  };
+
+  var $ = function(id){ return document.getElementById(id); };
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function money(n){
+    if (n >= 1000000) return '$' + (n/1000000).toFixed(n >= 10000000 ? 0 : 1)
+      .replace(/\.0$/,'') + 'm';
+    return '$' + Math.round(n/1000) + 'k';
+  }
+  function first(n){ return String(n).split(' ')[0]; }
+
+  /* ── derived totals ─────────────────────────────────────────────────── */
+  var A = DATA.advisors;
+  var T = {
+    ff:     A.reduce(function(s,a){ return s + a.ff; }, 0),
+    needs:  A.reduce(function(s,a){ return s + a.needs; }, 0),
+    cover:  A.reduce(function(s,a){ return s + a.cover; }, 0),
+    booked: A.reduce(function(s,a){ return s + a.booked; }, 0)
+  };
+  T.per = T.ff ? (T.needs / T.ff) : 0;
+  /* Top is the most needs actually found, not the best ratio — a single fact
+     find with a high average is not a day's work, and naming it as one in front
+     of the branch tells everybody the number can be gamed. Depth breaks a tie. */
+  var top = A.slice().sort(function(x,y){
+    return (y.needs - x.needs) || ((y.needs/y.ff) - (x.needs/x.ff));
+  })[0];
+  var late = DATA.queue.filter(function(q){ return q.hours >= 24; });
+
+  var d = new Date(DATA.date + 'T17:00:00');
+  var DAY = d.toLocaleDateString('en-GB',
+    { weekday:'long', day:'numeric', month:'long' });
+  $('dstamp').textContent = 'Daily dash · ' + DAY;
+  $('asof').textContent = 'as at 5:00 pm';
+
+  /* ── tiles ──────────────────────────────────────────────────────────── */
+  [['up', T.ff, 'fact finds', 'today'],
+   ['up', T.needs, 'needs found', T.per.toFixed(1) + ' per fact find'],
+   ['up', money(T.cover), 'cover recommended', ''],
+   ['act', DATA.queue.length, 'awaiting you', late.length ? late.length + ' over a day' : 'all fresh']
+  ].forEach(function(k){
+    var el = document.createElement('div');
+    el.className = 'kpi ' + k[0];
+    el.innerHTML = '<div class="v">' + k[1] + '</div><div class="k">' + k[2] + '</div>' +
+                   (k[3] ? '<div class="dl">' + k[3] + '</div>' : '');
+    $('kpis').appendChild(el);
+  });
+
+  /* ── the queue ──────────────────────────────────────────────────────── */
+  $('queue').innerHTML = DATA.queue.slice().sort(function(a,b){ return b.hours - a.hours; })
+    .map(function(q){
+      var cls = q.hours >= 24 ? 'crit' : q.hours >= 12 ? 'warn' : 'ok';
+      var txt = q.hours >= 24 ? Math.floor(q.hours/24) + ' day' + (q.hours>=48?'s':'') + ' waiting'
+              : q.hours + ' hours waiting';
+      return '<div class="qr' + (q.hours >= 24 ? ' late' : '') + '">'+
+        '<div><div class="who">' + esc(q.client) + '</div>'+
+        '<div class="sub">' + esc(q.advisor) + '</div></div>'+
+        '<div class="rt"><div class="amt">' + money(q.cover) + '</div>'+
+        '<span class="age ' + cls + '">' + txt + '</span></div></div>';
+    }).join('');
+
+  /* ── advisors ───────────────────────────────────────────────────────── */
+  var maxPer = Math.max.apply(null, A.map(function(a){ return a.needs / a.ff; }));
+  $('advisors').innerHTML =
+    '<tr><th>Advisor</th><th class="r">Fact finds</th><th class="r">Needs</th>'+
+    '<th>Per fact find</th><th class="r">Cover</th><th class="r">Booked</th></tr>' +
+    A.slice().sort(function(x,y){
+      return (y.needs - x.needs) || ((y.needs/y.ff) - (x.needs/x.ff));
+    }).map(function(a){
+      var per = a.needs / a.ff, pc = Math.round(per / maxPer * 100);
+      return '<tr' + (a === top ? ' class="top"' : '') + '>'+
+        '<td class="nm">' + esc(a.name) + '</td>'+
+        '<td class="num r">' + a.ff + '</td>'+
+        '<td class="num r">' + a.needs + '</td>'+
+        '<td><div class="bar' + (per < 8 ? ' low' : '') + '">'+
+          '<i style="width:' + pc + '%"></i></div>'+
+          '<span class="num" style="font-size:12.5px;color:var(--muted)">' +
+          per.toFixed(1) + '</span></td>'+
+        '<td class="num r">' + money(a.cover) + '</td>'+
+        '<td class="num r">' + a.booked + '</td></tr>';
+    }).join('');
+
+  /* ── what the branch found ──────────────────────────────────────────── */
+  $('found').innerHTML = DATA.found.map(function(f){
+    return '<div class="fd"><div class="c">' + f.n + '</div>'+
+      '<div class="l">' + esc(f.label) + '<em>' + esc(f.ask) + '</em></div>'+
+      '<div class="v">' + money(f.value) + '</div></div>';
+  }).join('');
+
+  /* ── coaching ───────────────────────────────────────────────────────────
+     Only where the number says something. A line about everybody is a line
+     nobody reads. */
+  var coach = [];
+  A.forEach(function(a){
+    var per = a.needs / a.ff;
+    if (per < 8) coach.push('<b>' + esc(first(a.name)) + '</b> is averaging ' +
+      per.toFixed(1) + ' needs a fact find against a branch average of ' +
+      T.per.toFixed(1) + '. Sit in on his next one — the questions are being skipped, ' +
+      'not the paperwork.');
+    if (a.sent >= 4 && a.opened / a.sent < 0.5) coach.push('<b>' + esc(first(a.name)) +
+      '</b> sent ' + a.sent + ' links and only ' + a.opened + ' were opened. ' +
+      'That is a timing problem, not a content one.');
+    if (a.booked === 0 && a.opened > 0) coach.push('<b>' + esc(first(a.name)) +
+      '</b> has ' + a.opened + ' people who opened the link and nobody booked. ' +
+      'Ask what he is saying when he sends it.');
+  });
+  $('coaching').innerHTML = coach.length
+    ? coach.map(function(c){ return '<div class="co">' + c + '</div>'; }).join('')
+    : '<div class="co">Nothing standing out today. Everybody is above the line.</div>';
+
+  /* ── the 5pm message ────────────────────────────────────────────────────
+     Assembled from the same numbers, so it cannot drift from the dash above.
+     WhatsApp markup: *bold*, _italic_. */
+  function build(){
+    function on(k){ var el = document.querySelector('[data-o="' + k + '"]');
+                    return el && el.checked; }
+    var P = DATA.prospect;
+    var L = [];
+    L.push('*Ricky Rampersad Branch — ' + DAY + '*');
+    L.push('');
+    L.push('*' + T.ff + '* fact finds · *' + T.needs + '* needs found · *' +
+           money(T.cover) + '* recommended');
+    L.push('That is *' + T.per.toFixed(1) + '* needs a fact find.');
+
+    if (on('top')) {
+      L.push('');
+      L.push('🏆 *' + top.name + '* — ' + top.needs + ' needs across ' + top.ff +
+             ' fact finds (' + (top.needs/top.ff).toFixed(1) + ' each), ' +
+             money(top.cover) + ' recommended, ' + top.booked + ' booked.');
+    }
+    if (on('found')) {
+      L.push('');
+      L.push('*What the fact find turned up today:*');
+      DATA.found.slice(0, 4).forEach(function(f){
+        L.push('• ' + f.n + ' × ' + f.label.toLowerCase() + ' — ' + money(f.value));
+      });
+      L.push('_None of that came from asking about products._');
+    }
+    if (on('pros')) {
+      L.push('');
+      L.push('*Prospecting:* ' + P.sent + ' links sent · ' + P.opened + ' opened · ' +
+             P.watched + ' watched it through · *' + P.booked + ' booked*');
+    }
+    if (on('queue')) {
+      L.push('');
+      if (DATA.queue.length) {
+        L.push('*' + DATA.queue.length + ' files waiting on my signature' +
+               (late.length ? ' — ' + late.length + ' over a day' : '') + '.*');
+        L.push('_Nothing reaches a client until it is checked. I will clear these tonight._');
+      } else {
+        L.push('*Nothing waiting on my signature.* Every file went back the same day.');
+      }
+    }
+    if (on('coach') && coach.length) {
+      L.push('');
+      L.push('_' + coach[0].replace(/<[^>]+>/g, '') + '_');
+    }
+    L.push('');
+    L.push('Keep asking the questions. The needs are already there.');
+    L.push('— Ricky');
+    return L.join('\n');
+  }
+
+  function render(){ $('post').textContent = build(); }
+  $('opts').addEventListener('change', render);
+  render();
+
+  $('copy').addEventListener('click', function(){
+    var b = this;
+    navigator.clipboard.writeText(build()).then(function(){
+      b.textContent = 'Copied'; setTimeout(function(){ b.textContent = 'Copy the message'; }, 1700);
+    }).catch(function(){ b.textContent = 'Select the text above'; });
+  });
+  $('sendWa').addEventListener('click', function(){
+    window.open('https://wa.me/?text=' + encodeURIComponent(build()), '_blank');
+  });
+})();
+</script>
