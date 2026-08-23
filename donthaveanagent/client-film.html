@@ -83,15 +83,16 @@ body.onDark #chrome .mark text{fill:#0F1A2B}
 .scene.dark .biglogo rect:first-of-type{fill:#FFF6F4}
 .scene.dark .biglogo text{fill:#0F1A2B}
 
-/* the brand device: the line drawing itself through "don't" */
-.strikelogo{font-family:var(--head);font-weight:900;letter-spacing:-1.6px;line-height:1;
-  font-size:clamp(19px,2.5vw,30px);color:#fff;margin-bottom:30px;opacity:.95;white-space:nowrap}
-.strikelogo .dw{position:relative;opacity:.5}
-.strikelogo .dw i{position:absolute;left:-4px;right:-4px;top:50%;height:4px;border-radius:3px;
-  background:#FF5C4D;transform:scaleX(0);transform-origin:left}
-.scene.on .strikelogo .dw i{animation:strikedraw .5s .55s cubic-bezier(.3,.85,.3,1) forwards}
+/* the brand device: the line strikes out what left, and what stayed stands */
+.struck{position:relative;display:inline-block}
+/* dim only the words — the line stays full-strength coral over them */
+.struck .tx{opacity:.5}
+.struck i{position:absolute;left:-10px;right:-10px;top:45%;height:9px;border-radius:5px;
+  background:#FF5C4D;transform:scaleX(0);transform-origin:left;box-shadow:0 0 26px rgba(255,92,77,.5)}
+.scene.on .struck i{animation:strikedraw .6s .85s cubic-bezier(.25,.9,.3,1) forwards}
 @keyframes strikedraw{to{transform:scaleX(1)}}
-@media (prefers-reduced-motion:reduce){.scene.on .strikelogo .dw i{animation:none;transform:scaleX(1)}}
+.struckline{display:block;margin-bottom:.22em}
+@media (prefers-reduced-motion:reduce){.scene.on .struck i{animation:none;transform:scaleX(1)}}
 </style>
 <style>
 :root{
@@ -439,8 +440,8 @@ em{font-style:normal;color:var(--ox)}
 <div class="grain"></div>
 <section class="scene dark" data-d="5800">
   <div class="inner">
-    <div class="strikelogo st"><span class="dw">don&rsquo;t<i></i></span> have an agent</div>
-    <h1 class="st d3">Your agent left.<br><em>Your policy didn&rsquo;t.</em></h1>
+    <h1 class="st d1"><span class="struckline"><span class="struck"><span class="tx">Your agent left.</span><i></i></span></span>
+      <em class="st d6">Your policy didn&rsquo;t.</em></h1>
   </div>
 </section>
 
