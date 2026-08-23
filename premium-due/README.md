@@ -795,6 +795,23 @@ Tracked in the build review; none of these are fixed here.
   still more than ten times the cap.
 - **The engine's `SLA` and the Apps Script's `SLA` are separate copies.** They
   must be changed together; nothing enforces that.
-- **`MANAGER_OF` and `STAFF_EMAIL` in the templates file are hand-maintained**
-  mirrors of `UNITS`/`HIERARCHY` in the engine. A missing entry means that
-  person is silently not copied — no error, just no email.
+- **`MANAGER_OF` and `STAFF_EMAIL` are overrides now, not the source.** Left
+  empty, `pdDirectory_()` reads the branch's own **Agent Codes** tab — email,
+  name, role, unit — and the unit column supplies the reporting line. That
+  reaches 96% of the cases on the book (1,128 of 1,170); the 42 it misses are
+  brokerages and outside agents who are not branch staff. The password column
+  is never read, and no work address is stored in this repository. A name put
+  in `STAFF_EMAIL` or `MANAGER_OF` still wins for that one person.
+
+  Names never match cleanly — the tab writes `A12530 - John Boodhoo`, the
+  portfolio writes `John Boodhoo`, the export writes `JOHN BOODHOO`, and the
+  same human is `Joy Barbara Sammah` in one place and `Joy Sammah` in another.
+  Each person is indexed three ways (full name, first + last, surname +
+  initial) and any key that would land on two different people is dropped
+  rather than guessed. A missing cc is a gap; a wrong one puts a client's
+  arrears in a colleague's inbox.
+
+  Escalation has a floor. The tree has a top — the branch manager's own cases
+  have nobody above them — and a brokerage is not branch staff at all. Both
+  used to resolve to no recipient, which meant the branch manager's own book
+  was the one nobody chased. Both now fall to `SALES_SUPPORT_EMAIL`.

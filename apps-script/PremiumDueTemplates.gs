@@ -165,15 +165,23 @@ var OUT = {
   // Branch manager — copied on the 60-day notice and on repeat manager chases.
   BRANCH_MANAGER_EMAIL: '',      // e.g. 'ricky.rampersad@myguardiangroup.com'
 
-  // name -> email, for everyone who can be an agent or a manager on a case.
-  // Without an entry here that person simply is not copied; nothing breaks.
+  // OPTIONAL OVERRIDES. Leave both of these empty and the engine reads the
+  // branch's own "Agent Codes" tab instead — email, name, role and unit, with
+  // the unit column supplying the reporting line. That reaches 96% of the
+  // cases on the book today, updates itself the moment somebody joins or
+  // changes unit, and keeps 37 real work addresses out of this file.
+  //
+  // Put a name here only to override the tab for that one person.
   STAFF_EMAIL: {
     // 'Ricky Rampersad':   'ricky.rampersad@myguardiangroup.com',
     // 'Kerwyn Ramroach':   '...',
     // 'Neil Ramnanan':      '...'
   },
 
-  // agent -> their manager. Mirror of UNITS/HIERARCHY in the engine.
+  // agent -> their manager. Same rule: empty means read the Unit column on
+  // the Agent Codes tab. An agent at the top of the tree — the branch manager
+  // on their own cases — and a brokerage that is not branch staff both
+  // escalate to SALES_SUPPORT_EMAIL rather than to nobody.
   MANAGER_OF: {
     // 'Neil Ramnanan': 'Gary Sookdeo',
   },
@@ -947,13 +955,144 @@ function pdNameKey_(map, name) {
   }
   return '';
 }
+/* =========================== the staff directory ==========================
+ * The branch already maintains this: one row per person on the "Agent Codes"
+ * tab — email, name, agent number, role, unit. The unit column IS the
+ * reporting line. Reading it beats copying it into OUT.STAFF_EMAIL for three
+ * reasons: this repository is public and those are real work addresses; a
+ * copy goes stale the first time somebody joins or moves unit; and a person
+ * who is missing from a hand-kept list is silently dropped from every cc
+ * chain, which is the audience these letters exist for.
+ *
+ * The password column is never read.
+ *
+ * Names do not match cleanly and never will. The tab writes "A12530 - John
+ * Boodhoo", the portfolio writes "John Boodhoo", the export writes "JOHN
+ * BOODHOO", and the same human is "Joy Barbara Sammah" in one place and "Joy
+ * Sammah" in another. So each person is indexed three ways — full name, first
+ * plus last, and surname plus initial — and any key that would land on two
+ * different people is dropped rather than guessed. A missing cc is a gap; a
+ * wrong one puts a client's arrears in a colleague's inbox.
+ */
+var PD_DIR_SHEET = 'Agent Codes';
+var PD_DIR_MEMO = null;
+
+function pdDirNorm_(s) {
+  return String(s == null ? '' : s)
+    .replace(/^\s*[A-Z]?\d{4,6}\s*-\s*/i, '')     // "A12530 - John Boodhoo"
+    .replace(/[^A-Za-z ]+/g, ' ')                 // hyphens, dots, digits
+    .replace(/\s+/g, ' ')
+    .replace(/^ +| +$/g, '')
+    .toUpperCase();
+}
+
+/** The keys one person answers to. Longest first; callers try them in order. */
+function pdDirKeys_(full) {
+  var parts = full.split(' '), keys = [full];
+  if (parts.length > 1) {
+    var first = parts[0], last = parts[parts.length - 1];
+    if (first + ' ' + last !== full) keys.push(first + ' ' + last);
+    keys.push(last + ' ' + first.charAt(0));
+  }
+  return keys;
+}
+
+function pdDirectory_() {
+  if (PD_DIR_MEMO) return PD_DIR_MEMO;
+  var dir = { email: {}, manager: {}, role: {}, bm: '', support: [], rows: 0 };
+  try {
+    var sh = SpreadsheetApp.openById(PORTFOLIO_ID).getSheetByName(PD_DIR_SHEET);
+    if (!sh) return (PD_DIR_MEMO = dir);
+    var v = sh.getDataRange().getValues();
+    if (v.length < 2) return (PD_DIR_MEMO = dir);
+    var H = {}, c;
+    for (c = 0; c < v[0].length; c++) H[String(v[0][c]).replace(/^ +| +$/g, '').toLowerCase()] = c;
+    var iMail = H['email'], iName = H['name'], iRole = H['role'],
+        iUnit = H['unit'], iLive = H['active'];
+    if (iMail == null || iName == null) return (PD_DIR_MEMO = dir);
+
+    var people = [], i;
+    for (i = 1; i < v.length; i++) {
+      var mail = pdValidEmail_(v[i][iMail]);
+      var full = pdDirNorm_(v[i][iName]);
+      if (!mail || !full) continue;
+      if (iLive != null && String(v[i][iLive]).replace(/^ +| +$/g, '').toUpperCase() === 'FALSE') continue;
+      var role = String(iRole == null ? '' : v[i][iRole] || '').replace(/^ +| +$/g, '');
+      var unitRaw = String(iUnit == null ? '' : v[i][iUnit] || '').replace(/^ +| +$/g, '');
+      people.push({ full: full, mail: mail, role: role,
+                    unit: pdDirNorm_(unitRaw), unitRaw: unitRaw });
+      dir.rows++;
+      if (/branch manager/i.test(role) && !/assistant/i.test(role) && !dir.bm) dir.bm = mail;
+      if (/staff|support/i.test(role)) dir.support.push(mail);
+    }
+
+    /* Index every person under each of their keys, counting collisions. */
+    var claims = {};
+    for (i = 0; i < people.length; i++) {
+      var keys = pdDirKeys_(people[i].full);
+      for (var k = 0; k < keys.length; k++) {
+        var key = keys[k];
+        if (!claims[key]) claims[key] = [];
+        if (claims[key].indexOf(people[i]) < 0) claims[key].push(people[i]);
+      }
+    }
+    var key2;
+    for (key2 in claims) {
+      if (!Object.prototype.hasOwnProperty.call(claims, key2)) continue;
+      if (claims[key2].length !== 1) continue;                  // ambiguous — refuse to guess
+      var who = claims[key2][0];
+      dir.email[key2] = who.mail;
+      dir.role[key2] = who.role;
+      /* The unit names the manager, and it is carried as written — these
+         names are read out in letters, so "Kerwyn Ramroach", not the
+         uppercase key it was matched on. A manager's own unit is themselves,
+         and nobody escalates to themselves. */
+      if (who.unit && who.unit !== who.full) dir.manager[key2] = who.unitRaw;
+    }
+  } catch (e) { /* no tab, no access, standalone tests: fall back to OUT */ }
+  return (PD_DIR_MEMO = dir);
+}
+
+/** Look one person up in the directory, trying each key they answer to. */
+function pdDirLookup_(map, name) {
+  var full = pdDirNorm_(name);
+  if (!full) return '';
+  var keys = pdDirKeys_(full);
+  for (var i = 0; i < keys.length; i++) if (map[keys[i]]) return map[keys[i]];
+  return '';
+}
+
 function pdStaffEmail_(name) {
-  var k = pdNameKey_(OUT.STAFF_EMAIL, name);
-  return pdValidEmail_(k ? OUT.STAFF_EMAIL[k] : '');
+  var k = pdNameKey_(OUT.STAFF_EMAIL, name);                    // a hand-set entry always wins
+  var hand = pdValidEmail_(k ? OUT.STAFF_EMAIL[k] : '');
+  return hand || pdValidEmail_(pdDirLookup_(pdDirectory_().email, name));
 }
 function pdManagerOf_(agent) {
   var k = pdNameKey_(OUT.MANAGER_OF, agent);
-  return k ? OUT.MANAGER_OF[k] : '';
+  return k ? OUT.MANAGER_OF[k] : pdDirLookup_(pdDirectory_().manager, agent);
+}
+/** The branch manager: whatever OUT says, else whoever the tab says holds the role. */
+function pdBranchManagerEmail_() {
+  return pdValidEmail_(OUT.BRANCH_MANAGER_EMAIL) || pdDirectory_().bm;
+}
+
+/**
+ * Who chases this case, and under what name.
+ *
+ * The unit manager owns it. But the tree has a top: the branch manager's own
+ * cases have nobody above them, and a brokerage that services policies here is
+ * not branch staff at all. Left alone, both resolve to no recipient — and a
+ * chase with no recipient is a chase that does not happen, which is how the
+ * branch manager's own book becomes the one nobody works. Both fall to sales
+ * support, which is the desk that works these every day anyway.
+ */
+function pdEscalation_(agent) {
+  var mgr = pdManagerOf_(agent);
+  var mail = mgr ? pdStaffEmail_(mgr) : '';
+  if (mgr && mail) return { name: mgr, email: mail };
+  var support = pdValidEmail_(OUT.SALES_SUPPORT_EMAIL);
+  if (support) return { name: 'Sales Support', email: support };
+  return { name: mgr, email: '' };
 }
 
 /** Agent + their manager + the BM, as a de-duplicated cc list. */
@@ -962,7 +1101,7 @@ function pdChainCc_(p) {
   var add = function (e) { e = pdValidEmail_(e); if (e && !seen[e]) { seen[e] = 1; out.push(e); } };
   add(pdStaffEmail_(p.Agent));
   add(pdStaffEmail_(pdManagerOf_(p.Agent)));
-  add(OUT.BRANCH_MANAGER_EMAIL);
+  add(pdBranchManagerEmail_());
   add(OUT.SALES_SUPPORT_EMAIL);
   return out;
 }
@@ -2792,7 +2931,7 @@ function pdManagerLetter_(p, state, opts) {
 
 /** Advisor, branch manager, support — and the client, on the manager thread. */
 function pdManagerCc_(p) {
-  var out = [pdStaffEmail_(p.Agent), pdValidEmail_(OUT.BRANCH_MANAGER_EMAIL), pdValidEmail_(OUT.SALES_SUPPORT_EMAIL)];
+  var out = [pdStaffEmail_(p.Agent), pdBranchManagerEmail_(), pdValidEmail_(OUT.SALES_SUPPORT_EMAIL)];
   if (pdMayEmail_(p)) out.push(pdValidEmail_(p.Email));   // the client is copied by design
   var seen = {}, dedup = [];
   for (var i = 0; i < out.length; i++) if (out[i] && !seen[out[i]]) { seen[out[i]] = 1; dedup.push(out[i]); }
@@ -3060,8 +3199,9 @@ function pdInternalChase_(p, s) {
   if (pdIsGroup_(p)) return 0;                           // schemes: pdGroupChase_ owns these
   if (Number(p.Status) !== 2) return 0;                  // live arrears only
   if (d < SLA.RETENTION_OPENS || d >= SLA.LAPSE) return 0;
-  var mgrName = (s.mgrName || pdManagerOf_(p.Agent));
-  var mTo = pdStaffEmail_(mgrName);
+  var esc = pdEscalation_(p.Agent);
+  var mgrName = (s.mgrName || esc.name);
+  var mTo = (s.mgrName ? pdStaffEmail_(s.mgrName) : '') || esc.email;
   var waiting = s.activatedTs ? pdDaysSince_(s.activatedTs) : 0;
   var due = function (key, every) {
     return !s.chases[key] || pdDaysSince_(s.chases[key]) >= every;
@@ -3959,7 +4099,7 @@ function pdGroupChase_(key, members, states) {
   var cc = [], seen = {}, j;
   for (j = 0; j < agentNames.length && j < 3; j++) cc.push(pdStaffEmail_(agentNames[j]));
   cc.push(pdValidEmail_(OUT.SALES_SUPPORT_EMAIL));
-  if (round >= 1) cc.push(pdValidEmail_(OUT.BRANCH_MANAGER_EMAIL));
+  if (round >= 1) cc.push(pdBranchManagerEmail_());
   var ccOut = [];
   for (j = 0; j < cc.length; j++) if (cc[j] && cc[j] !== to && !seen[cc[j]]) { seen[cc[j]] = 1; ccOut.push(cc[j]); }
 
@@ -4557,13 +4697,34 @@ function pdPilotStats() {
     pdSigInternal_(),
     { kind: 'mgr' }, true);
 
+  /* Who the letters can actually reach. An advisor with no address is a cc
+     that silently does not happen, so the digest states it rather than
+     leaving it to be discovered from a client's reply. */
+  var dirAgents = {}, dirHit = 0, dirMiss = [], dirTotal = 0, dirKey;
+  for (var da = 0; da < P.length; da++) {
+    var dst = Number(P[da].Status) || 0, dd2 = Number(P[da].DaysArrears) || 0;
+    if (!(dst === 3 || (dst === 2 && dd2 >= 45 && dd2 < 180))) continue;
+    var dan = String(P[da].Agent || '').replace(/^ +| +$/g, '');
+    if (dan) dirAgents[dan] = (dirAgents[dan] || 0) + 1;
+  }
+  for (dirKey in dirAgents) {
+    if (!Object.prototype.hasOwnProperty.call(dirAgents, dirKey)) continue;
+    dirTotal += dirAgents[dirKey];
+    if (pdStaffEmail_(dirKey)) dirHit += dirAgents[dirKey];
+    else dirMiss.push([dirKey, dirAgents[dirKey]]);
+  }
+  dirMiss.sort(function (a, b) { return b[1] - a[1]; });
+  var dirPct = dirTotal ? Math.round(dirHit / dirTotal * 100) : 0;
+
   var summary = 'status2=' + st2 + ' at45=' + at45 + ' window45-59=' + w4559 + ' mgrDue=' + mgrDue +
     ' schemes=' + gN + ' pending=' + pendN + ' settle-ready=' + pendReady + ' replacement-checks=' + replApps +
     ' freelook-open=' + flOpen + ' freelook-countdown=' + flCountdown + ' freelook-expired-undelivered=' + flExpired +
     ' reqt-housekeeping=' + reqStale + ' tasks-open=' + tasks.count + ' cases-untasked=' + qUntasked +
     ' tasks-closable=' + taskDone + ' group-health=' + hTotal + ' increases=' + other.increases.length +
     ' magnum-decline=' + mgDecline + ' magnum-addinfo=' + mgInfo + ' followups-overdue=' + fuCases +
-    ' email-rescued=' + mailGain;
+    ' email-rescued=' + mailGain +
+    ' directory=' + pdDirectory_().rows + ' agents-reachable=' + dirPct + '%' +
+    ' cases-with-no-advisor-address=' + (dirTotal - dirHit);
   if (OUT.DRY_RUN && !OUT.TEST_INBOX) {
     Logger.log('Digest (DRY RUN, no test inbox — logged only, not emailed). ' + summary);
     return;
@@ -4735,7 +4896,7 @@ function pdHeadOfficeEscalation_() {
     { kind: 'mgr' }, true);
 
   var cc = [];
-  if (pdValidEmail_(OUT.BRANCH_MANAGER_EMAIL)) cc.push(OUT.BRANCH_MANAGER_EMAIL);
+  if (pdBranchManagerEmail_()) cc.push(pdBranchManagerEmail_());
   if (pdValidEmail_(OUT.SALES_SUPPORT_EMAIL)) cc.push(OUT.SALES_SUPPORT_EMAIL);
   var subject = 'Branch pending business — ' + theirs.length + ' cases awaiting a position from underwriting';
   if (OUT.DRY_RUN) {
@@ -4905,7 +5066,7 @@ function pdDailyMovement_() {
 
   var summary = 'engine=' + autoN + ' people=' + peopleN + ' stuck60=' + stuck.length;
   if (OUT.DRY_RUN && !OUT.TEST_INBOX) { Logger.log('Daily movement (logged only). ' + summary); return; }
-  var to = OUT.TEST_INBOX || pdValidEmail_(OUT.BRANCH_MANAGER_EMAIL) || pdValidEmail_(OUT.BRANCH_EMAIL);
+  var to = OUT.TEST_INBOX || pdBranchManagerEmail_() || pdValidEmail_(OUT.BRANCH_EMAIL);
   pdDeliver_(to, [], 'Yesterday in full — ' + autoN + ' engine, ' + peopleN + ' by hand', html);
   Logger.log('Daily movement sent to %s. %s', to, summary);
 }
