@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Wall — Ricky Rampersad Branch</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="description" content="Branch wall: every review, every agent, live.">
+<link rel="icon" href="/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ground:#0A121F; --panel:#111C2F; --line:#22324D; --ink:#F2F6FC; --dim:#8598B4;
+    --coral:#FF5C4D; --coral-glow:rgba(255,92,77,.32); --tint:#FFE9E5;
+    --good:#3DD68C; --warn:#F5B935; --bad:#FF7A6B;
+    --disp:'Montserrat',Arial,sans-serif; --body:'DM Sans',Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:16px;
+    line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(900px 520px at 12% -8%,rgba(255,92,77,.14),transparent 60%),
+               radial-gradient(760px 460px at 92% 4%,rgba(61,214,140,.08),transparent 62%)}
+  .wrap{position:relative;z-index:1;max-width:1680px;margin:0 auto;padding:20px 22px 34px}
+
+  /* ── header ─────────────────────────────────────────────────── */
+  .top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+  .top .mark{height:38px;width:38px;display:block;flex:none}
+  .top .name{font-family:var(--disp);font-weight:900;font-size:19px;letter-spacing:-.3px}
+  .top .name small{display:block;font-weight:700;font-size:10.5px;letter-spacing:.24em;
+    color:var(--dim);text-transform:uppercase;margin-top:2px}
+  .clock{margin-left:auto;text-align:right}
+  .clock .t{font-family:var(--disp);font-weight:800;font-size:26px;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+  .clock .d{font-size:11.5px;color:var(--dim);font-family:var(--disp);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+  .live{display:inline-flex;align-items:center;gap:7px;font-family:var(--disp);font-weight:800;
+    font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--coral);
+    border:1px solid rgba(255,92,77,.4);border-radius:999px;padding:5px 11px;background:rgba(255,92,77,.08)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--coral);box-shadow:0 0 0 0 var(--coral-glow);
+    animation:pulse 2.4s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 var(--coral-glow)}70%{box-shadow:0 0 0 11px rgba(255,92,77,0)}100%{box-shadow:0 0 0 0 rgba(255,92,77,0)}}
+
+  /* ── gate ───────────────────────────────────────────────────── */
+  .gate{max-width:430px;margin:9vh auto;background:var(--panel);border:1px solid var(--line);
+    border-radius:16px;padding:30px 28px}
+  .gate h1{font-family:var(--disp);font-weight:900;font-size:27px;letter-spacing:-.5px;margin-bottom:6px}
+  .gate p{color:var(--dim);font-size:14.5px;margin-bottom:18px}
+  .gate label{display:block;font-family:var(--disp);font-weight:700;font-size:11.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--dim);margin-bottom:7px}
+  .gate input{width:100%;background:#0A121F;border:1px solid var(--line);border-radius:10px;
+    color:var(--ink);font-family:var(--body);font-size:16px;padding:13px 14px;letter-spacing:.06em}
+  .gate input:focus{outline:none;border-color:var(--coral);box-shadow:0 0 0 3px rgba(255,92,77,.16)}
+  .gate button{width:100%;margin-top:13px;background:var(--coral);color:#180A08;border:none;border-radius:10px;
+    font-family:var(--disp);font-weight:800;font-size:15px;letter-spacing:.04em;padding:14px;cursor:pointer}
+  .gate button:hover{filter:brightness(1.07)}
+  .err{color:var(--bad);font-size:13.5px;margin-top:11px;min-height:20px}
+
+  /* ── grid ───────────────────────────────────────────────────── */
+  .grid{display:grid;gap:14px}
+  .band{grid-template-columns:repeat(auto-fit,minmax(158px,1fr))}
+  /* The right column runs the full height of the left one, so the stream
+     fills whatever space the branch's day leaves it rather than stopping
+     short with a scrollbar nobody standing at a wall can use. */
+  .main{grid-template-columns:1.45fr 1fr;align-items:stretch;margin-top:14px}
+  .main > div:last-child{display:flex;flex-direction:column;position:sticky;top:14px;
+    max-height:calc(100vh - 28px)}
+  @media(max-width:1080px){.main{grid-template-columns:1fr}
+    .main > div:last-child{position:static;max-height:none}}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 17px}
+  .ph{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+  .ph h2{font-family:var(--disp);font-weight:800;font-size:13px;letter-spacing:.17em;text-transform:uppercase}
+  .ph .sub{font-size:12px;color:var(--dim);margin-left:auto;text-align:right}
+
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 16px;
+    position:relative;overflow:hidden}
+  .stat .n{font-family:var(--disp);font-weight:900;font-size:clamp(30px,3.4vw,44px);line-height:1;
+    font-variant-numeric:tabular-nums;letter-spacing:-1.4px}
+  .stat .l{font-family:var(--disp);font-weight:700;font-size:10.5px;letter-spacing:.15em;
+    text-transform:uppercase;color:var(--dim);margin-top:7px}
+  .stat.hot .n{color:var(--coral)}
+  .stat.hot{border-color:rgba(255,92,77,.45);background:linear-gradient(180deg,rgba(255,92,77,.10),transparent 70%),var(--panel)}
+  .stat.win .n{color:var(--good)}
+  .stat.due .n{color:var(--warn)}
+
+  /* ── leaderboard ────────────────────────────────────────────── */
+  table{width:100%;border-collapse:collapse}
+  th{font-family:var(--disp);font-weight:700;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--dim);text-align:right;padding:0 0 9px;border-bottom:1px solid var(--line)}
+  th:first-child{text-align:left}
+  td{padding:11px 0;border-bottom:1px solid rgba(34,50,77,.55);text-align:right;
+    font-variant-numeric:tabular-nums;font-size:15px}
+  td:first-child{text-align:left}
+  tr:last-child td{border-bottom:none}
+  .who{display:flex;align-items:center;gap:10px}
+  .rank{width:24px;height:24px;border-radius:7px;background:#0A121F;border:1px solid var(--line);
+    display:grid;place-items:center;font-family:var(--disp);font-weight:800;font-size:11px;color:var(--dim);flex:none}
+  tr.lead .rank{background:var(--coral);border-color:var(--coral);color:#180A08}
+  .who b{font-family:var(--disp);font-weight:700;font-size:15px}
+  .zero{color:var(--dim)}
+  .tot{font-family:var(--disp);font-weight:800;color:var(--good)}
+
+  /* ── queue ──────────────────────────────────────────────────── */
+  .q{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid rgba(34,50,77,.55)}
+  .q:last-child{border-bottom:none}
+  .q .qw{min-width:0;flex:1}
+  .q .qw b{display:block;font-family:var(--disp);font-weight:700;font-size:14.5px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .q .qw span{font-size:11.5px;color:var(--dim)}
+  .pill{font-family:var(--disp);font-weight:800;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+    padding:4px 8px;border-radius:6px;flex:none;border:1px solid}
+  .pill.URGENT{color:#180A08;background:var(--coral);border-color:var(--coral)}
+  .pill.HIGH{color:var(--coral);background:rgba(255,92,77,.12);border-color:rgba(255,92,77,.45)}
+  .pill.NORMAL,.pill.ACTION{color:var(--dim);background:transparent;border-color:var(--line)}
+  .age{font-family:var(--disp);font-weight:800;font-size:13px;font-variant-numeric:tabular-nums;
+    min-width:52px;text-align:right;flex:none;color:var(--dim)}
+  .age.late{color:var(--bad)}
+
+  /* ── stream ─────────────────────────────────────────────────── */
+  .stream{flex:1;min-height:0;overflow:auto}
+  .stream::-webkit-scrollbar{width:6px}
+  .stream::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+  .ev{display:flex;gap:11px;padding:9px 0;border-bottom:1px solid rgba(34,50,77,.5);align-items:flex-start}
+  .ev:last-child{border-bottom:none}
+  .ico{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex:none;
+    font-size:12px;font-weight:800;font-family:var(--disp)}
+  .ico.review{background:rgba(255,92,77,.16);color:var(--coral)}
+  .ico.sent{background:rgba(133,152,180,.16);color:var(--dim)}
+  .ico.open{background:rgba(245,185,53,.16);color:var(--warn)}
+  .ico.start{background:rgba(61,214,140,.16);color:var(--good)}
+  .ico.callback{background:rgba(255,122,107,.18);color:var(--bad)}
+  .ev .txt{min-width:0;flex:1}
+  .ev .txt b{font-family:var(--disp);font-weight:700;font-size:14px}
+  .ev .txt span{display:block;font-size:11.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ev .tm{font-size:11px;color:var(--dim);flex:none;font-variant-numeric:tabular-nums;padding-top:2px}
+  .ev.new{animation:landin .7s cubic-bezier(.22,1.2,.36,1) both}
+  @keyframes landin{0%{opacity:0;transform:translateY(-14px)}100%{opacity:1;transform:none}}
+
+  /* ── calendar ───────────────────────────────────────────────── */
+  .bars{display:flex;align-items:flex-end;gap:4px;height:96px;margin-top:4px}
+  .bar{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+  .bar i{display:block;background:linear-gradient(180deg,var(--coral),rgba(255,92,77,.45));
+    border-radius:3px 3px 0 0;min-height:3px;transition:height .5s cubic-bezier(.22,1,.36,1)}
+  .bar.zero i{background:var(--line)}
+  .bar.today i{background:linear-gradient(180deg,#fff,var(--coral))}
+  .blabels{display:flex;justify-content:space-between;font-size:10.5px;color:var(--dim);margin-top:7px}
+
+  .empty{color:var(--dim);font-size:13.5px;padding:16px 0;text-align:center}
+  .foot{margin-top:18px;font-size:11.5px;color:var(--dim);display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+  .foot a{color:var(--dim)}
+  #board{display:none}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- the code gate -->
+  <div class="gate" id="gate">
+    <h1>The Wall</h1>
+    <p>Everything the branch is doing, on one screen. Use the branch code, or your own code from the Agent Skill Bank.</p>
+    <label for="code">Code</label>
+    <input id="code" type="password" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="••••••••">
+    <button id="go" type="button">Open the wall</button>
+    <div class="err" id="err"></div>
+  </div>
+
+  <!-- the wall -->
+  <div id="board">
+    <div class="top">
+      <svg class="mark" viewBox="0 0 120 120" aria-hidden="true">
+        <defs><clipPath id="kW"><rect x="40" y="34" width="21" height="50"/></clipPath></defs>
+        <g transform="rotate(-40 60 60)">
+          <rect x="16" y="43" width="62" height="34" rx="17" fill="none" stroke="#F2F6FC" stroke-width="9"/>
+          <rect x="42" y="43" width="62" height="34" rx="17" fill="none" stroke="#FF5C4D" stroke-width="9"/>
+          <g clip-path="url(#kW)"><rect x="16" y="43" width="62" height="34" rx="17" fill="none" stroke="#F2F6FC" stroke-width="9"/></g>
+        </g>
+      </svg>
+      <div class="name">The Wall<small>Ricky Rampersad Branch</small></div>
+      <span class="live"><span class="dot"></span>Live</span>
+      <div class="clock"><div class="t" id="clk">—</div><div class="d" id="dte">—</div></div>
+    </div>
+
+    <div class="grid band" id="band"></div>
+
+    <div class="grid main">
+      <div>
+        <div class="panel">
+          <div class="ph"><h2>The team</h2><span class="sub" id="rosterNote"></span></div>
+          <div id="board-table"></div>
+        </div>
+
+        <div class="panel" style="margin-top:14px">
+          <div class="ph"><h2>Thirty days</h2><span class="sub">Reviews filed per day</span></div>
+          <div class="bars" id="bars"></div>
+          <div class="blabels"><span id="b0"></span><span id="b1"></span></div>
+        </div>
+
+        <div class="panel" style="margin-top:14px">
+          <div class="ph"><h2>Waiting on us</h2><span class="sub" id="qNote"></span></div>
+          <div id="queue"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="ph"><h2>As it happens</h2><span class="sub" id="asOf"></span></div>
+        <div class="stream" id="stream"></div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span>Refreshes every 45 seconds.</span>
+      <span id="lastFetch"></span>
+      <a href="/agents.html">Your own book →</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const CONFIG = { API_URL: "https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec" };
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c =>
+  ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+
+/* The code is kept on this device only, so a screen left running in the
+   office comes back up on its own after a power cut. It never leaves here
+   except as the query that fetches the wall. */
+const KEY = "dhaa.wall.code";
+let CODE = "";
+try { CODE = sessionStorage.getItem(KEY) || localStorage.getItem(KEY) || ""; } catch (e) {}
+
+let seen = new Set();      /* which stream events we have already drawn */
+let firstPaint = true;
+
+function clock() {
+  const d = new Date();
+  let h = d.getHours(), m = String(d.getMinutes()).padStart(2, "0");
+  const ap = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12;
+  $("#clk").textContent = h + ":" + m + " " + ap;
+  $("#dte").textContent = d.toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long" });
+}
+
+function band(t) {
+  const cells = [
+    { n: t.open,      l: "Open right now",  cls: "hot" },
+    { n: t.today,     l: "Filed today",     cls: "" },
+    { n: t.urgent,    l: "Urgent &amp; high", cls: t.urgent ? "hot" : "" },
+    { n: t.overdue,   l: "Past the promise", cls: t.overdue ? "due" : "" },
+    { n: t.callbacks, l: "Call-backs waiting", cls: t.callbacks ? "due" : "" },
+    { n: t.unassigned,l: "No agent yet",    cls: t.unassigned ? "due" : "" },
+    { n: t.month,     l: "This month",      cls: "" },
+    { n: t.completed, l: "Completed",       cls: "win" },
+  ];
+  $("#band").innerHTML = cells.map(c =>
+    '<div class="stat ' + c.cls + '"><div class="n">' + c.n + '</div><div class="l">' + c.l + "</div></div>").join("");
+}
+
+function team(agents) {
+  if (!agents.length) {
+    $("#board-table").innerHTML = '<div class="empty">No agents on the roster yet. Add them to the ' +
+      "<b>Agent Skill Bank</b> tab and they appear here.</div>";
+    return;
+  }
+  const rows = agents.map((a, i) => {
+    const done = a.completed + a.ownDone;
+    return '<tr class="' + (i === 0 && done > 0 ? "lead" : "") + '">' +
+      '<td><div class="who"><span class="rank">' + (i + 1) + "</span><b>" + esc(a.name) + "</b></div></td>" +
+      "<td" + (a.assigned ? "" : ' class="zero"') + ">" + a.assigned + "</td>" +
+      "<td" + (a.own ? "" : ' class="zero"') + ">" + a.own + "</td>" +
+      "<td" + (a.sent ? "" : ' class="zero"') + ">" + a.sent + "</td>" +
+      "<td" + (a.started ? "" : ' class="zero"') + ">" + a.started + "</td>" +
+      "<td" + (a.open ? "" : ' class="zero"') + ">" + a.open + "</td>" +
+      '<td class="' + (done ? "tot" : "zero") + '">' + done + "</td></tr>";
+  }).join("");
+  $("#board-table").innerHTML =
+    "<table><thead><tr><th>Agent</th><th>Assigned</th><th>Own</th><th>Sent</th>" +
+    "<th>Started</th><th>Open</th><th>Done</th></tr></thead><tbody>" + rows + "</tbody></table>";
+}
+
+function queue(q) {
+  $("#qNote").textContent = q.length ? q.length + " oldest first" : "";
+  if (!q.length) { $("#queue").innerHTML = '<div class="empty">Nothing outstanding. Everything filed has been handled.</div>'; return; }
+  $("#queue").innerHTML = q.map(c =>
+    '<div class="q"><span class="pill ' + esc(c.pri) + '">' + esc(c.pri) + "</span>" +
+    '<div class="qw"><b>' + esc(c.who) + "</b><span>" + esc(c.ref) +
+      (c.agent ? " · " + esc(c.agent) : " · not assigned") + "</span></div>" +
+    '<span class="age' + (c.late ? " late" : "") + '">' +
+      (c.days === 0 ? "today" : c.days + "d") + "</span></div>").join("");
+}
+
+function stream(evs) {
+  const label = { review:"NEW", sent:"→", open:"👁", start:"▶", callback:"☎" };
+  const verb  = { review:"filed a review", sent:"sent their link", open:"opened the link",
+                  start:"started a review", callback:"asked to be called" };
+  $("#stream").innerHTML = evs.map(e => {
+    const id = e.kind + "|" + e.who + "|" + e.when + "|" + e.note;
+    const isNew = !firstPaint && !seen.has(id);
+    seen.add(id);
+    return '<div class="ev' + (isNew ? " new" : "") + '">' +
+      '<span class="ico ' + esc(e.kind) + '">' + (label[e.kind] || "•") + "</span>" +
+      '<div class="txt"><b>' + esc(e.who) + "</b><span>" + esc(verb[e.kind] || e.kind) +
+        (e.note ? " · " + esc(e.note) : "") + "</span></div>" +
+      '<span class="tm">' + esc(e.when) + "</span></div>";
+  }).join("") || '<div class="empty">Nothing yet today.</div>';
+  firstPaint = false;
+}
+
+function bars(days) {
+  const mx = Math.max(1, ...days.map(d => d.n));
+  $("#bars").innerHTML = days.map(d =>
+    '<div class="bar' + (d.n ? "" : " zero") + (d.today ? " today" : "") + '" title="' + esc(d.d) + ": " + d.n + '">' +
+    '<i style="height:' + Math.round((d.n / mx) * 100) + '%"></i></div>').join("");
+  $("#b0").textContent = days[0] ? days[0].d : "";
+  $("#b1").textContent = days.length ? days[days.length - 1].d : "";
+}
+
+function paint(w) {
+  band(w.totals);
+  team(w.agents);
+  queue(w.queue);
+  stream(w.stream);
+  bars(w.days);
+  $("#asOf").textContent = "as of " + w.asOf;
+  $("#rosterNote").textContent = w.roster + (w.roster === 1 ? " agent" : " agents") + " on the roster";
+  $("#lastFetch").textContent = "Last read " + new Date().toLocaleTimeString();
+}
+
+async function load(showErrors) {
+  if (!CONFIG.API_URL || !CODE) return;
+  try {
+    const res = await fetch(CONFIG.API_URL + "?action=wall&code=" + encodeURIComponent(CODE));
+    const w = await res.json();
+    if (!w.ok) {
+      if (showErrors) { $("#err").textContent = w.error || "That code did not open the wall."; }
+      return false;
+    }
+    $("#gate").style.display = "none";
+    $("#board").style.display = "block";
+    paint(w);
+    return true;
+  } catch (e) {
+    if (showErrors) $("#err").textContent = "Could not reach the branch. Check the connection and try again.";
+    else $("#lastFetch").textContent = "Connection lost — retrying";
+    return false;
+  }
+}
+
+$("#go").addEventListener("click", async () => {
+  const v = $("#code").value.trim();
+  if (!v) { $("#err").textContent = "Enter your code."; return; }
+  if (!CONFIG.API_URL) { $("#err").textContent = "The wall is not connected to the branch yet."; return; }
+  CODE = v;
+  $("#err").textContent = "Opening…";
+  const good = await load(true);
+  if (good) { try { localStorage.setItem(KEY, CODE); } catch (e) {} }
+  else CODE = "";
+});
+$("#code").addEventListener("keydown", e => { if (e.key === "Enter") $("#go").click(); });
+
+clock();
+setInterval(clock, 10000);
+setInterval(() => load(false), 45000);
+if (CODE) load(false);
+</script>
+</body>
+</html>

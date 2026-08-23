@@ -54,6 +54,13 @@
   to = "/client-film.html"
   status = 302
 
+# The branch wall — one screen for the whole team, meant to be left running.
+# Behind the branch code, so the short link costs nothing to hand out.
+[[redirects]]
+  from = "/wall"
+  to = "/wall.html"
+  status = 302
+
 # Where a client goes to watch their request move — reference + access code.
 [[redirects]]
   from = "/track"

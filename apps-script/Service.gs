@@ -186,6 +186,10 @@ function doGet(e) {
   if (p.action === 'agentbook') {
     return json_(agentBookFor_(p.agent, p.code));
   }
+  /* the branch wall — everything, for a screen left running in the office */
+  if (p.action === 'wall') {
+    return json_(wallData_(p.code));
+  }
   /* fired by the share page itself — no code needed, it writes nothing but
      an event, and it must never block the page if it fails */
   if (p.action === 'hit') {
@@ -361,6 +365,162 @@ function agentBookFor_(agent, code) {
     link: { sent: link.sent, opened: link.open, started: link.start, calls: link.call,
             reviews: fromMe, completed: fromMeDone, callbacks: callbacks, recent: link.recent },
     clients: clients,
+  };
+}
+
+
+/* ============================ the wall ============================
+   One screen for the whole branch, meant to be left running. Everything on
+   it is branch-wide, so it is behind the branch code or any agent's own
+   code — never open. Names and counts only: no client answers, no contact
+   details, nothing that would matter if the screen were photographed.   */
+
+function wallData_(code) {
+  code = String(code || '').trim().toUpperCase();
+  var branch = String(SVC.TEAM_CODE || '').trim().toUpperCase();
+  var ok = !!(branch && code === branch);
+  var bank = skillBank_();
+  bank.forEach(function (a) { if (a.portal && a.portal.toUpperCase() === code) ok = true; });
+  if (!ok) {
+    return { ok: false, error: bank.length || branch
+      ? 'That code does not open the wall. Use the branch code, or your own code from the Agent Skill Bank.'
+      : 'The wall is not open yet — set TEAM_CODE in Service.gs, or add an agent with a portal code to the Agent Skill Bank.' };
+  }
+
+  var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
+  var now = new Date();
+  var DAY = 86400000;
+  var dayKey = function (d) { return Utilities.formatDate(d, tz, 'yyyy-MM-dd'); };
+  var todayKey = dayKey(now);
+  var monthKey = Utilities.formatDate(now, tz, 'yyyy-MM');
+
+  var t = { reviews: 0, open: 0, completed: 0, urgent: 0, overdue: 0, today: 0, month: 0, monthDone: 0,
+            tracing: 0, letters: 0, unassigned: 0 };
+  var byAgent = {}, queue = [], stream = [], dayCount = {};
+  var agentRow = function (name) {
+    if (!byAgent[name]) {
+      byAgent[name] = { name: name, assigned: 0, open: 0, completed: 0,
+                        sent: 0, opened: 0, started: 0, own: 0, ownDone: 0 };
+    }
+    return byAgent[name];
+  };
+  bank.forEach(function (a) { agentRow(a.name); });
+
+  [SVC.IND_SHEET, SVC.GRP_SHEET].forEach(function (name) {
+    var sh = ss_().getSheetByName(name);
+    if (!sh || sh.getLastRow() < 2) return;
+    var h = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+    var ix = function (k) { return h.indexOf(k); };
+    var iRef = ix('Reference'), iTs = ix('Timestamp'), iPri = ix('Priority'), iSt = ix('Status');
+    var iCl = ix('Client'), iCo = ix('Company'), iSrc = ix('Source'), iBy = ix('Sent by');
+    var iLook = ix('Looked after by'), iLet = ix('Letter outstanding'), iTr = ix('Needs tracing');
+    var get = function (r, i) { return i < 0 ? '' : String(r[i] || '').trim(); };
+
+    sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues().forEach(function (r) {
+      var ref = get(r, iRef);
+      if (!ref) return;
+      var when = iTs > -1 ? new Date(r[iTs]) : null;
+      if (when && isNaN(when.getTime())) when = null;
+      var pri = get(r, iPri).toUpperCase();
+      var done = /handled/i.test(get(r, iSt));
+      var who = get(r, iCo) || get(r, iCl) || '—';
+      var look = get(r, iLook).replace(/^Matched:\s*/i, '');
+      var sentBy = get(r, iBy);
+
+      t.reviews++;
+      if (done) t.completed++; else t.open++;
+      if (pri === 'URGENT' || pri === 'HIGH') t.urgent += done ? 0 : 1;
+      if (/^yes/i.test(get(r, iLet))) t.letters++;
+      if (get(r, iTr) && !/^no/i.test(get(r, iTr))) t.tracing++;
+      if (!look && !done) t.unassigned++;
+
+      if (when) {
+        var k = dayKey(when);
+        dayCount[k] = (dayCount[k] || 0) + 1;
+        if (k === todayKey) t.today++;
+        if (k.slice(0, 7) === monthKey) { t.month++; if (done) t.monthDone++; }
+        stream.push({ at: when.getTime(), when: Utilities.formatDate(when, tz, 'd MMM, h:mm a'),
+                      kind: 'review', who: who, note: ref + (sentBy ? ' · sent by ' + sentBy : ''), pri: pri });
+      }
+
+      if (look) { var A = agentRow(look); A.assigned++; if (done) A.completed++; else A.open++; }
+      if (sentBy) { var S = agentRow(sentBy); S.own++; if (done) S.ownDone++; }
+
+      if (!done) {
+        var days = when ? Math.floor((now - when) / DAY) : 0;
+        var allowed = (pri === 'URGENT' || pri === 'HIGH') ? SVC.SLA_BUSINESS_DAYS : 5;
+        if (days > allowed) t.overdue++;
+        queue.push({ ref: ref, who: who, pri: pri || 'NORMAL', days: days, agent: look || '',
+                     late: days > allowed, kind: name === SVC.GRP_SHEET ? 'group' : 'individual' });
+      }
+    });
+  });
+
+  var lk = ss_().getSheetByName(SVC.LINK_SHEET);
+  if (lk && lk.getLastRow() > 1) {
+    lk.getRange(2, 1, lk.getLastRow() - 1, 5).getValues().forEach(function (r) {
+      var who = String(r[1] || '').trim();
+      var ev = String(r[2] || '').toLowerCase();
+      if (!who) return;
+      var A = agentRow(who);
+      if (ev === 'sent') A.sent++;
+      else if (ev === 'open') A.opened++;
+      else if (ev === 'start') A.started++;
+      var d = new Date(r[0]);
+      if (!isNaN(d.getTime())) {
+        stream.push({ at: d.getTime(), when: Utilities.formatDate(d, tz, 'd MMM, h:mm a'),
+                      kind: ev === 'sent' ? 'sent' : ev === 'start' ? 'start' : 'open',
+                      who: who, note: String(r[4] || r[3] || ''), pri: '' });
+      }
+    });
+  }
+
+  var callbacks = 0;
+  var cs = ss_().getSheetByName(SVC.CALL_SHEET);
+  if (cs && cs.getLastRow() > 1) {
+    var ch = cs.getRange(1, 1, 1, cs.getLastColumn()).getValues()[0].map(String);
+    var iStat = ch.indexOf('Status'), iName = ch.indexOf('Name'), iAg = ch.indexOf('Introduced by');
+    cs.getRange(2, 1, cs.getLastRow() - 1, cs.getLastColumn()).getValues().forEach(function (r) {
+      if (iStat > -1 && /called/i.test(String(r[iStat] || ''))) return;
+      callbacks++;
+      var d = new Date(r[0]);
+      if (!isNaN(d.getTime())) {
+        stream.push({ at: d.getTime(), when: Utilities.formatDate(d, tz, 'd MMM, h:mm a'), kind: 'callback',
+                      who: iName > -1 ? String(r[iName] || '') : 'Someone',
+                      note: iAg > -1 && r[iAg] ? 'via ' + r[iAg] : '', pri: 'HIGH' });
+      }
+    });
+  }
+
+  /* thirty days of bars, oldest first, gaps included so the rhythm is real */
+  var days = [];
+  for (var i = 29; i >= 0; i--) {
+    var d0 = new Date(now.getTime() - i * DAY);
+    var k0 = dayKey(d0);
+    days.push({ d: Utilities.formatDate(d0, tz, 'd MMM'), n: dayCount[k0] || 0, today: k0 === todayKey });
+  }
+
+  stream.sort(function (x, y) { return y.at - x.at; });
+  queue.sort(function (x, y) { return (y.late - x.late) || (y.days - x.days); });
+
+  var agents = [];
+  Object.keys(byAgent).forEach(function (k) { agents.push(byAgent[k]); });
+  agents.forEach(function (a) { a.total = a.completed + a.ownDone; });
+  agents.sort(function (x, y) {
+    return (y.completed + y.ownDone) - (x.completed + x.ownDone) ||
+           (y.assigned + y.own) - (x.assigned + x.own) || (x.name < y.name ? -1 : 1);
+  });
+
+  t.callbacks = callbacks;
+  return {
+    ok: true,
+    asOf: Utilities.formatDate(now, tz, 'EEE d MMM, h:mm a'),
+    totals: t,
+    agents: agents,
+    queue: queue.slice(0, 12),
+    stream: stream.slice(0, 40).map(function (s) { delete s.at; return s; }),
+    days: days,
+    roster: bank.length,
   };
 }
 
