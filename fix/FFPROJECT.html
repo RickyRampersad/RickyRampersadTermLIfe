@@ -8767,9 +8767,8 @@ const SECTION_GATES = {
   10: [
     { label: 'Final Decision', cond: () => !state.finalDecide },
     { label: 'Replacement question (proceeding)', cond: () => state.finalDecide === 'proceed' && !state.replaceCover },
-    // Cites the Act, not only Guardian's internal guideline — this check now
-    // covers a replacement at any insurer, and the duty is statutory.
-    { label: 'Replacement declaration — required by law before this is submitted (Replacement disclosure required', cond: () => REP_DETECTED && state.repDeclConfirm !== 'Yes' },
+    { label: 'Replacement — disclosure form not signed yet',
+      cond: () => REP_DETECTED && state.repDeclConfirm !== 'Yes' },
   ],
 };
 
@@ -11254,7 +11253,7 @@ const COACH_RULES = [
     ask: '<em>"What is your number one financial priority?"</em> — then record proceed / not proceed.' },
   { sec: 10, where: 'Replacement Declaration',
     when: () => REP_DETECTED && state.repDeclConfirm !== 'Yes',
-    ask: '<em>A replacement has been detected.</em> Discuss the advantages <strong>and the disadvantages</strong> of giving up the existing policy, and complete the <em>Replacement Declaration</em> with the client <strong>now, before the application is filled in</strong>. This is not company policy — it is section 131 of the Insurance Act, and the penalty for getting it wrong falls on you personally.' },
+    ask: 'Talk the client through what they gain and what they give up, then sign the disclosure form together.' },
   { sec: 10, where: 'Replacement Check',
     when: () => state.finalDecide === 'proceed' && !state.replaceCover,
     ask: '<em>"Would these policies replace any Life Insurance/Critical Illness coverage you have now?"</em> — mandatory market-conduct question.' }
@@ -12168,38 +12167,22 @@ function isGuardianCo(name) {
 }
 
 function detectReplacement() {
-  // Simplified deliberately. The long version cited the Act, the guidelines and
-  // the clawback rules at an advisor mid-appointment, and a wall of citations
-  // gets skipped — which is the opposite of what a flag is for. One line saying
-  // what it is, one saying what to do. The disclosure form still prints.
+  // Guardian policies only, and a note rather than a gate. It does not block
+  // submission and it does not argue — it says what it is and what to sign.
   const reasons = [];
-  const anyPolicy = [1,2,3,4].some(i => String(state['ins' + i + 'Co'] || '').trim());
-  const active    = [1,2,3,4].filter(i =>
-    String(state['ins' + i + 'Co'] || '').trim() && state['ins' + i + 'Status'] === 'Active');
+  if (state.replaceCover !== 'Yes') return reasons;
 
-  if (state.replaceCover === 'Yes') {
-    if (active.length) {
-      const who = active.map(i => state['ins' + i + 'Co']).join(', ');
-      reasons.push({
-        title: 'This replaces cover the client already has — ' + who,
-        body: 'The disclosure form at the back of the pack must be completed and signed, ' +
-              'by the client and by you, before the new application goes in.',
-        cite: ''
-      });
-    } else if (!anyPolicy) {
-      reasons.push({
-        title: 'The client says this replaces existing cover, but no policy is recorded',
-        body: 'Add the policy being replaced above, or change the answer.',
-        cite: ''
-      });
-    } else {
-      reasons.push({
-        title: 'This replaces cover the client already has',
-        body: 'The disclosure form at the back of the pack must be completed and signed, ' +
-              'by the client and by you, before the new application goes in.',
-        cite: ''
-      });
-    }
+  const co = [1,2,3,4]
+    .filter(i => isGuardianCo(state['ins' + i + 'Co'] || '') &&
+                 state['ins' + i + 'Status'] === 'Active')
+    .map(i => state['ins' + i + 'Co']);
+
+  if (co.length) {
+    reasons.push({
+      title: 'Replacing an existing Guardian policy — ' + co.join(', '),
+      body: 'Complete and sign the disclosure form at the back of the pack.',
+      cite: ''
+    });
   }
   return reasons;
 }
