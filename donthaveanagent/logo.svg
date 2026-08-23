@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 120" width="560" height="120">
+  <title>donthaveanagent.com — Ricky Rampersad</title>
+  <g>
+    <path d="M40 22H22a10 10 0 0 0-10 10v56a10 10 0 0 0 10 10h18" fill="none" stroke="#6D4AA8" stroke-width="11" stroke-linecap="square"/>
+    <path d="M80 22h18a10 10 0 0 1 10 10v56a10 10 0 0 1-10 10H80" fill="none" stroke="#6D4AA8" stroke-width="11" stroke-linecap="square"/>
+    <circle cx="60" cy="60" r="16" fill="#B79BEB"/>
+  </g>
+  <text x="136" y="58" font-family="Montserrat, Helvetica, Arial, sans-serif" font-weight="900"
+        font-size="40" letter-spacing="-1.4" fill="#4A3570">donthavean<tspan fill="#6D4AA8">agent</tspan></text>
+  <rect x="137" y="70" width="332" height="2.2" fill="#B79BEB"/>
+  <text x="137" y="94" font-family="Montserrat, Helvetica, Arial, sans-serif" font-weight="700"
+        font-size="13" letter-spacing="6.6" fill="#8A76B0">RICKY RAMPERSAD</text>
+</svg>
