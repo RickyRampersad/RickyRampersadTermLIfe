@@ -91,9 +91,9 @@ var SVC = {
   CHECKUP_DAYS: 182,
   DHAA_URL: 'https://donthaveanagent.com/start',
 
-  FROM_NAME:    'Ricky Rampersad — Guardian Life',
+  FROM_NAME:    'Ricky Rampersad',
   AGENT_NAME:   'Ricky Rampersad',
-  AGENT_NO:     '',                      // Guardian agent number, if you want it on the letter
+  AGENT_NO:     '',                      // agent number, if you want it on the letter
   AGENT_PHONE:  '(868) 678-5921',
   AGENT_WHATSAPP: '18686785921',
 
@@ -138,7 +138,7 @@ var SVC = {
   SLA_BUSINESS_DAYS: 1,
 };
 
-var SB = { navy: '#003366', blue: '#005EB8', gold: '#E8A020', light: '#E8F0F8', ink: '#1a2433' };
+var SB = { navy: '#0C3330', blue: '#12514C', gold: '#C9663C', light: '#F2EADC', ink: '#17211F' };
 
 
 /* ============================ web endpoints ============================ */
@@ -742,9 +742,9 @@ function wrap_(inner, tag, id) {
   /* donthaveanagent.com has its own colours — Porcelain & Oxblood, the same
      palette as the site, so a client who used that product recognises the
      email as coming from it. */
-  var bg = id.dhaa ? '#5E141F' : SB.navy;
-  var chip = id.dhaa ? '#F2E9DC' : SB.gold;
-  var chipInk = id.dhaa ? '#5E141F' : SB.navy;
+  var bg = id.dhaa ? '#0C3330' : SB.navy;
+  var chip = id.dhaa ? '#F2EADC' : SB.gold;
+  var chipInk = id.dhaa ? '#0C3330' : SB.navy;
   var sub = id.dhaa ? '#E5C9B3' : '#b7c9de';
   return '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:' + SB.ink + ';max-width:660px">' +
     '<div style="background:' + bg + ';color:#fff;padding:18px 22px;border-radius:10px 10px 0 0">' +
@@ -784,7 +784,7 @@ function box_(kind, html) {
 
 function sig_() {
   return '<p style="margin-top:20px">Warm regards,<br><b>' + esc_(SVC.AGENT_NAME) + '</b><br>' +
-    'Guardian Life of the Caribbean Limited' +
+    'donthaveanagent.com \u00b7 a Ricky Rampersad project' +
     (SVC.AGENT_PHONE ? '<br>' + esc_(SVC.AGENT_PHONE) : '') +
     (SVC.AGENT_EMAIL ? '<br>' + esc_(SVC.AGENT_EMAIL) : '') + '</p>';
 }
@@ -922,9 +922,9 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf, accessCode) 
 
   var bio = box_('tip',
     '<b style="color:#a05e03">Who you\u2019re dealing with.</b><br>' +
-    '<b>' + esc_(SVC.AGENT_NAME) + '</b> — Branch Manager, Ricky Rampersad Branch \u00b7 Guardian Life of the ' +
-    'Caribbean Limited. Branch Manager — and still a servicing agent to his own clients — leading a team of ' +
-    'skilled, licensed Guardian Life agents on one idea: nobody who holds a policy should ever feel forgotten. The branch pairs old-fashioned service — a person who answers, visits and ' +
+    '<b>' + esc_(SVC.AGENT_NAME) + '</b> — Branch Manager, Ricky Rampersad Branch. ' +
+    'Still a servicing agent to his own clients, and leading a team of ' +
+    'skilled, licensed agents on one idea: nobody who holds a policy should ever feel forgotten. The branch pairs old-fashioned service — a person who answers, visits and ' +
     'follows through — with tools most agencies don\u2019t have: guided digital reviews, documents populated for ' +
     'digital signature, live progress tracking, and an update every ' + SVC.CLIENT_UPDATE_DAYS + ' days until the ' +
     'work is done. This review is the first step of your onboarding — from here, you are dealing with ' +
@@ -937,7 +937,7 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf, accessCode) 
     track = box_('tip',
       '<b style="color:#a05e03">Watch your request move.</b> Log in any time at ' +
       '<a href="' + trackUrl + '">donthaveanagent.com</a> with your reference and this access code:' +
-      '<div style="font-size:22px;font-weight:800;letter-spacing:.22em;margin:10px 0 4px;color:#5E141F">' +
+      '<div style="font-size:22px;font-weight:800;letter-spacing:.22em;margin:10px 0 4px;color:#0C3330">' +
       esc_(accessCode) + '</div>' +
       '<span style="font-size:12px">Keep it private — anyone holding it can see the status (never the answers) of this request.</span>');
   }
@@ -1028,7 +1028,7 @@ function routeToService_(ref, priority, now, body, attachments, clientEmailed) {
   (body.fields || []).forEach(function (f) {
     if (f.flag === 'urgent')  actions.push(badge_('URGENT', '#b3261e') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
     if (f.flag === 'records') actions.push(badge_('RECORDS', SB.blue) + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
-    if (f.flag === 'agent')   actions.push(badge_('AGENT', '#5E141F') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
+    if (f.flag === 'agent')   actions.push(badge_('AGENT', '#0C3330') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
     if (f.flag === 'lead')    actions.push(badge_('FOLLOW-UP', '#a05e03') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
     if (f.flag === 'service') actions.push(badge_('REPLY', '#455a75') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
   });
@@ -1350,7 +1350,7 @@ function matchAssignmentForRow_(sh, row, agentName, agentNo, why) {
   var isGroup = sh.getName() === SVC.GRP_SHEET;
   var id = identity_({ source: v('Source') });
   var first = v('Client').trim().split(/\s+/)[0] || 'there';
-  var refInk = id.dhaa ? '#5E141F' : SB.navy;
+  var refInk = id.dhaa ? '#0C3330' : SB.navy;
   var now = new Date();
 
   /* the letter, populated with the appointed agent's name */
@@ -2423,7 +2423,7 @@ function clientPatiencePass_() {
          donthaveanagent.com client gets the oxblood header, not "Service
          Questionnaire" from a product they have never heard of. */
       var rowId = identity_(iSrc > -1 ? { source: r[iSrc] } : null);
-      var refInk = rowId.dhaa ? '#5E141F' : SB.navy;
+      var refInk = rowId.dhaa ? '#0C3330' : SB.navy;
 
       /* Two different notes. A company that owes us the stamped letter is
          chased for the letter, referencing the previous correspondence, until
@@ -2522,7 +2522,7 @@ function reviewLink_(src, name, policy) {
 /** A button an email client can't break — table, solid colour, one link. */
 function cta_(label, url, dhaa) {
   return '<table cellpadding="0" cellspacing="0" style="margin:18px 0 6px"><tr>' +
-    '<td style="background:' + (dhaa ? '#5E141F' : SB.navy) + ';border-radius:8px">' +
+    '<td style="background:' + (dhaa ? '#0C3330' : SB.navy) + ';border-radius:8px">' +
     '<a href="' + url + '" style="display:inline-block;padding:13px 26px;color:#ffffff;' +
     'font-weight:bold;text-decoration:none;font-size:14px">' + esc_(label) + ' →</a>' +
     '</td></tr></table>';
@@ -2618,7 +2618,7 @@ function lifecyclePass_() {
  *  ask what has changed — one click to answer, one line to say all good. */
 function checkupEmail_(o) {
   var id = identity_({ source: o.src });
-  var refInk = id.dhaa ? '#5E141F' : SB.navy;
+  var refInk = id.dhaa ? '#0C3330' : SB.navy;
   var link = reviewLink_(o.src, o.clientName, o.policy);
 
   var scoreBlock = '';
@@ -2666,7 +2666,7 @@ function checkupEmail_(o) {
  *  clicks and answers; the answers arrive as a fresh Service Questionnaire. */
 function annualReviewEmail_(o) {
   var id = identity_({ source: o.src });
-  var refInk = id.dhaa ? '#5E141F' : SB.navy;
+  var refInk = id.dhaa ? '#0C3330' : SB.navy;
   var link = reviewLink_(o.src, o.clientName, o.policy);
 
   var covers = o.isGroup

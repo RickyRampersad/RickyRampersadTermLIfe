@@ -6,31 +6,31 @@
 <title>Your policy review — Don't Have An Agent</title>
 <meta name="description" content="A free four-minute policy review for policyholders without an active agent. No cost, no obligation, no policy number needed."/>
 <meta name="robots" content="noindex"/>
-<meta name="theme-color" content="#F4F5F7"/>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 88'%3E%3Crect x='2' y='2' width='84' height='84' rx='23' fill='%238C2230'/%3E%3Cg fill='%23FFFFFF'%3E%3Cpath transform='translate(23.760 28.731) scale(0.07621 -0.07621) translate(-28.0 -751.0)' d='M40 378 115 638 142 530Q92 530 60.0 559.5Q28 589 28 639Q28 690 60.5 720.5Q93 751 142 751Q191 751 223.0 720.5Q255 690 255 639Q255 625 253.0 610.5Q251 596 244.5 576.5Q238 557 223 524L159 378Z'/%3E%3Cpath transform='translate(46.941 28.731) scale(0.07621 -0.07621) translate(-28.0 -751.0)' d='M40 378 115 638 142 530Q92 530 60.0 559.5Q28 589 28 639Q28 690 60.5 720.5Q93 751 142 751Q191 751 223.0 720.5Q255 690 255 639Q255 625 253.0 610.5Q251 596 244.5 576.5Q238 557 223 524L159 378Z'/%3E%3C/g%3E%3C/svg%3E"/>
+<meta name="theme-color" content="#F2EADC"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 88'%3E%3Ccircle cx='44' cy='44' r='42' fill='%230C3330'/%3E%3Ccircle cx='44' cy='44' r='34.5' fill='none' stroke='%23C9663C' stroke-width='2.4'/%3E%3Ctext x='44' y='55.5' font-family='Montserrat,sans-serif' font-weight='900' font-size='30' fill='%23F2EADC' text-anchor='middle' letter-spacing='-1'%3ERR%3C/text%3E%3C/svg%3E"/>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 /* Ivory & Forest — see index.html for the full note. Green = resolved,
    slate = the empty agent slot. Swap this block to re-theme. */
 :root{
-  --ink:#F4F5F7;--ink2:#ECEEF1;--surface:#FFFFFF;--surface2:#FAFAFC;
-  --line:rgba(26,22,24,.10);--line2:rgba(140,34,48,.30);
-  --text:#1A1618;--muted:#565056;--muted2:#87828A;
-  --amber:#A65A15;--emerald:#8C2230;--emerald2:#5E141F;--red:#D93025;--slate:#9B96A0;
-  --emerald-soft:rgba(140,34,48,.10);--amber-soft:rgba(166,90,21,.10);
+  --ink:#F2EADC;--ink2:#E7DCC9;--surface:#FFFFFF;--surface2:#FAF6EE;
+  --line:rgba(23,33,31,.10);--line2:rgba(18,81,76,.30);
+  --text:#17211F;--muted:#5B6A66;--muted2:#8A9793;
+  --amber:#C9663C;--emerald:#12514C;--emerald2:#0C3330;--red:#C9663C;--slate:#8A9793;
+  --emerald-soft:rgba(18,81,76,.10);--amber-soft:rgba(201,102,60,.10);
   --head:'Montserrat',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   --body:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{font-family:var(--body);background:var(--ink);color:var(--text);line-height:1.65;overflow-x:hidden;-webkit-font-smoothing:antialiased;
-  background-image:radial-gradient(ellipse 70% 40% at 50% -10%,rgba(140,34,48,.09),transparent 70%);background-attachment:fixed}
+  background-image:radial-gradient(ellipse 70% 40% at 50% -10%,rgba(18,81,76,.09),transparent 70%);background-attachment:fixed}
 h1,h2,h3{font-family:var(--head);letter-spacing:-.02em;line-height:1.16}
 a{color:var(--emerald)}
 .wrap{max-width:760px;margin:0 auto;padding:0 18px 90px}
 
 /* nav */
-.nav{position:sticky;top:0;z-index:90;background:rgba(244,245,247,.93);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.nav{position:sticky;top:0;z-index:90;background:rgba(242,234,220,.93);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 .nav-in{max-width:760px;margin:0 auto;padding:0 18px;height:62px;display:flex;align-items:center;gap:11px}
 .logo{display:flex;align-items:center;gap:10px}
 .logo svg{width:32px;height:32px;flex-shrink:0}
@@ -42,12 +42,12 @@ a{color:var(--emerald)}
 .nav-safe b{color:var(--emerald)}
 
 /* progress */
-.prog{position:sticky;top:62px;z-index:80;background:rgba(244,245,247,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:12px 0 11px;display:none}
+.prog{position:sticky;top:62px;z-index:80;background:rgba(242,234,220,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:12px 0 11px;display:none}
 .prog-in{max-width:760px;margin:0 auto;padding:0 18px}
 .prog-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .prog-label{font-family:var(--head);font-size:11.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--emerald)}
 .prog-count{margin-left:auto;font-size:11.5px;color:var(--muted)}
-.prog-bar{height:5px;border-radius:99px;background:rgba(26,22,24,.07);overflow:hidden}
+.prog-bar{height:5px;border-radius:99px;background:rgba(23,33,31,.07);overflow:hidden}
 .prog-fill{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--emerald2),var(--emerald));transition:width .35s cubic-bezier(.4,0,.2,1)}
 
 /* intro / chooser */
@@ -59,18 +59,18 @@ h1.big em{font-style:normal;color:var(--emerald)}
 @media(max-width:600px){.choose{grid-template-columns:1fr}}
 .card-btn{text-align:left;font:inherit;color:inherit;cursor:pointer;background:linear-gradient(158deg,var(--surface),var(--surface2));
   border:1px solid var(--line);border-radius:20px;padding:22px 20px;transition:transform .18s,border-color .18s,box-shadow .18s}
-.card-btn:hover{transform:translateY(-3px);border-color:var(--line2);box-shadow:0 16px 40px rgba(26,22,24,.10)}
-.card-btn .ci{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:12px;background:var(--emerald-soft);border:1px solid rgba(140,34,48,.3)}
-.card-btn.warm .ci{background:var(--amber-soft);border-color:rgba(166,90,21,.3)}
+.card-btn:hover{transform:translateY(-3px);border-color:var(--line2);box-shadow:0 16px 40px rgba(23,33,31,.10)}
+.card-btn .ci{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:12px;background:var(--emerald-soft);border:1px solid rgba(18,81,76,.3)}
+.card-btn.warm .ci{background:var(--amber-soft);border-color:rgba(201,102,60,.3)}
 .card-btn h3{font-size:16.5px;font-weight:700;margin-bottom:5px}
 .card-btn p{font-size:13.4px;color:var(--muted);line-height:1.55}
 .card-btn .go{display:inline-block;margin-top:11px;font-family:var(--head);font-weight:700;font-size:13px;color:var(--emerald)}
 .card-btn.warm .go{color:var(--amber)}
 .promises{display:grid;gap:9px;grid-template-columns:repeat(3,1fr);margin-top:22px}
 @media(max-width:600px){.promises{grid-template-columns:1fr}}
-.promise{background:rgba(26,22,24,.032);border:1px solid var(--line);border-radius:13px;padding:13px 15px;font-size:12.6px;color:var(--muted);line-height:1.5}
+.promise{background:rgba(23,33,31,.032);border:1px solid var(--line);border-radius:13px;padding:13px 15px;font-size:12.6px;color:var(--muted);line-height:1.5}
 .promise b{display:block;color:var(--text);font-family:var(--head);font-size:12.8px;margin-bottom:3px}
-.resume{background:var(--amber-soft);border:1px solid rgba(166,90,21,.4);border-radius:14px;padding:15px 17px;margin-bottom:20px;font-size:14px;display:none}
+.resume{background:var(--amber-soft);border:1px solid rgba(201,102,60,.4);border-radius:14px;padding:15px 17px;margin-bottom:20px;font-size:14px;display:none}
 .resume b{color:var(--amber)}
 .resume .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:11px}
 
@@ -80,8 +80,8 @@ h1.big em{font-style:normal;color:var(--emerald)}
 .step-head h2{font-size:clamp(21px,4.4vw,29px);font-weight:800;margin-bottom:7px}
 .step-head p{color:var(--muted);font-size:14.6px;line-height:1.6}
 .q{background:linear-gradient(158deg,var(--surface),var(--surface2));border:1px solid var(--line);border-radius:16px;padding:17px 18px;margin-bottom:12px}
-.q.kid{border-left:2px solid rgba(140,34,48,.5);background:rgba(140,34,48,.05);margin-left:12px}
-.q.err{border-color:rgba(217,48,37,.5)}
+.q.kid{border-left:2px solid rgba(18,81,76,.5);background:rgba(18,81,76,.05);margin-left:12px}
+.q.err{border-color:rgba(201,102,60,.5)}
 .q .qlabel{display:block;font-family:var(--head);font-weight:700;font-size:15px;line-height:1.45;margin-bottom:4px}
 .q .req{color:var(--amber)}
 .q .help{font-size:12.8px;color:var(--muted);line-height:1.55;margin-bottom:10px}
@@ -89,15 +89,15 @@ h1.big em{font-style:normal;color:var(--emerald)}
 .q.err .errmsg{display:block}
 .ctl{margin-top:10px}
 input[type=text],input[type=email],input[type=tel],input[type=date],textarea,select{
-  width:100%;font:inherit;font-size:15px;color:var(--text);background:rgba(26,22,24,.035);
+  width:100%;font:inherit;font-size:15px;color:var(--text);background:rgba(23,33,31,.035);
   border:1px solid var(--line2);border-radius:11px;padding:12px 14px;transition:border-color .16s}
 input:focus,textarea:focus,select:focus{outline:none;border-color:var(--emerald)}
 input::placeholder,textarea::placeholder{color:#8E8A92}
 textarea{min-height:92px;resize:vertical;line-height:1.55}
-select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%23565056' stroke-width='2' fill='none' stroke-linecap='round'/></svg>");background-repeat:no-repeat;background-position:right 15px center;padding-right:38px}
+select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%235B6A66' stroke-width='2' fill='none' stroke-linecap='round'/></svg>");background-repeat:no-repeat;background-position:right 15px center;padding-right:38px}
 select option{background:var(--surface);color:var(--text)}
 .pills{display:flex;flex-wrap:wrap;gap:8px}
-.pill{font:inherit;font-size:14px;cursor:pointer;color:var(--text);background:rgba(26,22,24,.042);
+.pill{font:inherit;font-size:14px;cursor:pointer;color:var(--text);background:rgba(23,33,31,.042);
   border:1.5px solid var(--line);border-radius:11px;padding:11px 16px;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
 .pill:hover{border-color:var(--line2)}
 .pill.on{border-color:var(--emerald);background:var(--emerald-soft);font-weight:600}
@@ -105,7 +105,7 @@ select option{background:var(--surface);color:var(--text)}
 .pills.stack{flex-direction:column;align-items:stretch}
 .pills.stack .pill{justify-content:flex-start;text-align:left}
 .faces{display:flex;gap:7px}
-.face{flex:1;font:inherit;cursor:pointer;color:var(--muted);background:rgba(26,22,24,.042);
+.face{flex:1;font:inherit;cursor:pointer;color:var(--muted);background:rgba(23,33,31,.042);
   border:1.5px solid var(--line);border-radius:13px;padding:12px 4px 10px;text-align:center;transition:all .15s}
 .face:hover{border-color:var(--line2);transform:translateY(-2px)}
 .face .em{font-size:23px;display:block;line-height:1.25}
@@ -113,17 +113,17 @@ select option{background:var(--surface);color:var(--text)}
 .face.on{border-color:var(--emerald);background:var(--emerald-soft);color:var(--text)}
 .note{border-radius:0 12px 12px 0;padding:12px 15px;margin-top:11px;font-size:13.2px;line-height:1.6}
 .note.tip{background:var(--amber-soft);border-left:3px solid var(--amber)}
-.note.warn{background:rgba(217,48,37,.08);border-left:3px solid var(--red)}
+.note.warn{background:rgba(201,102,60,.08);border-left:3px solid var(--red)}
 .note.good{background:var(--emerald-soft);border-left:3px solid var(--emerald)}
 .note b{color:var(--text)}
 
 /* policy finder */
-.finder{background:linear-gradient(158deg,var(--surface),var(--surface2));border:1px solid rgba(140,34,48,.26);border-radius:18px;padding:20px;margin-bottom:14px}
+.finder{background:linear-gradient(158deg,var(--surface),var(--surface2));border:1px solid rgba(18,81,76,.26);border-radius:18px;padding:20px;margin-bottom:14px}
 .finder h3{font-size:16px;font-weight:700;margin-bottom:5px}
 .finder > p{font-size:13.4px;color:var(--muted);margin-bottom:14px}
 .finder-tabs{display:flex;gap:8px;margin-bottom:15px;flex-wrap:wrap}
 .finder-tabs button{font-family:var(--head);font-weight:700;font-size:13px;cursor:pointer;color:var(--muted);
-  background:rgba(26,22,24,.042);border:1.5px solid var(--line);border-radius:11px;padding:9px 15px;transition:all .15s}
+  background:rgba(23,33,31,.042);border:1.5px solid var(--line);border-radius:11px;padding:9px 15px;transition:all .15s}
 .finder-tabs button.on{background:var(--emerald-soft);border-color:var(--emerald);color:var(--text)}
 
 /* signature */
@@ -137,10 +137,10 @@ select option{background:var(--surface);color:var(--text)}
 .btn{font-family:var(--head);font-weight:700;font-size:14.5px;cursor:pointer;border:none;border-radius:12px;
   padding:14px 25px;transition:all .18s;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
 .btn-go{background:var(--emerald);color:#FFFFFF}
-.btn-go:hover{background:#B0303F;transform:translateY(-1px)}
+.btn-go:hover{background:#1C6E66;transform:translateY(-1px)}
 .btn-go:disabled{opacity:.55;cursor:default;transform:none}
 .btn-amber{background:var(--amber);color:#1a1204}
-.btn-line{background:rgba(26,22,24,.05);border:1px solid var(--line2);color:var(--muted)}
+.btn-line{background:rgba(23,33,31,.05);border:1px solid var(--line2);color:var(--muted)}
 .btn-line:hover{color:var(--text)}
 .btn-sm{padding:9px 15px;font-size:13px;border-radius:10px}
 .nav-row{display:flex;gap:11px;align-items:center;margin-top:22px;flex-wrap:wrap}
@@ -153,8 +153,8 @@ select option{background:var(--surface);color:var(--text)}
 .rev-sec h4 button{margin-left:auto}
 .rev-tbl{width:100%;border-collapse:collapse;font-size:13.5px}
 .rev-tbl td{padding:9px 12px;border:1px solid var(--line);vertical-align:top;line-height:1.5}
-.rev-tbl td:first-child{width:48%;color:var(--muted);background:rgba(26,22,24,.028)}
-.consent{background:rgba(26,22,24,.032);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:16px 0}
+.rev-tbl td:first-child{width:48%;color:var(--muted);background:rgba(23,33,31,.028)}
+.consent{background:rgba(23,33,31,.032);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:16px 0}
 .check{display:flex;gap:11px;align-items:flex-start;font-size:13.6px;line-height:1.55;margin-bottom:12px;cursor:pointer}
 .check:last-child{margin-bottom:0}
 .check input{width:19px;height:19px;margin-top:1px;flex-shrink:0;accent-color:var(--emerald);cursor:pointer}
@@ -164,20 +164,20 @@ select option{background:var(--surface);color:var(--text)}
   background:var(--card);border:1px solid var(--line2);border-radius:14px;padding:15px 17px;margin-bottom:16px}
 .preview-cta b{font-family:var(--head);font-size:14.5px}
 .preview-cta span{color:var(--muted);font-size:12.8px}
-#pvOverlay{position:fixed;inset:0;z-index:300;background:rgba(26,22,24,.55);backdrop-filter:blur(4px);
+#pvOverlay{position:fixed;inset:0;z-index:300;background:rgba(23,33,31,.55);backdrop-filter:blur(4px);
   display:flex;align-items:center;justify-content:center;padding:18px}
 .pv-frame{background:var(--bg);border-radius:18px;max-width:760px;width:100%;max-height:92vh;
-  display:flex;flex-direction:column;overflow:hidden;box-shadow:0 30px 80px rgba(26,22,24,.4)}
+  display:flex;flex-direction:column;overflow:hidden;box-shadow:0 30px 80px rgba(23,33,31,.4)}
 .pv-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 18px;
   font:600 12px var(--head);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);
   border-bottom:1px solid var(--line)}
 .pv-x{background:none;border:none;font-size:17px;cursor:pointer;color:var(--muted);padding:4px 8px}
 .pv-scroll{overflow-y:auto;padding:20px;background:var(--bg2)}
-.pv-sheet{background:#fff;border:1px solid rgba(26,22,24,.14);box-shadow:0 8px 30px rgba(26,22,24,.12);
+.pv-sheet{background:#fff;border:1px solid rgba(23,33,31,.14);box-shadow:0 8px 30px rgba(23,33,31,.12);
   padding:34px 36px;font-family:Georgia,'Times New Roman',serif;color:#111;font-size:13.5px;line-height:1.5}
 .pv-head{text-align:center;font-size:16.5px;letter-spacing:.4px;font-weight:bold}
 .pv-sub{text-align:center;font-size:11px;color:#555;margin:3px 0 14px}
-.pv-route{border:1.4px solid #8C2230;color:#8C2230;font-size:11.5px;letter-spacing:.04em;
+.pv-route{border:1.4px solid #12514C;color:#12514C;font-size:11.5px;letter-spacing:.04em;
   padding:7px 11px;margin:0 0 8px;font-weight:bold}
 .pv-sec{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid #999;
   margin:16px 0 6px;padding-bottom:3px;color:#333}
@@ -187,15 +187,15 @@ select option{background:var(--surface);color:var(--text)}
 .pv-note{font-size:12px;color:#333;padding-top:4px}
 .pv-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;padding:13px 18px;border-top:1px solid var(--line);background:var(--bg)}
 @media (max-width:560px){.pv-sheet{padding:22px 18px}.pv-row{flex-direction:column;gap:2px}.pv-q{flex:none}}
-.code-card{background:linear-gradient(135deg,#8C2230,#5E141F);color:#fff;border-radius:18px;
+.code-card{background:linear-gradient(135deg,#12514C,#0C3330);color:#fff;border-radius:18px;
   padding:22px 22px;margin:18px 0}
 .code-card h3{font-family:var(--head);font-size:15px;margin-bottom:4px;color:#fff}
 .code-card p{font-size:13px;color:rgba(255,255,255,.85);line-height:1.55}
 .code-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:13px}
 .code-chip{background:rgba(255,255,255,.14);border:1.5px dashed rgba(255,255,255,.6);border-radius:12px;
   font:800 24px/1 var(--head);letter-spacing:.24em;padding:13px 18px 12px;color:#fff}
-.code-card .btn{background:#fff;color:#5E141F;border:none}
-.bio-card{display:flex;gap:18px;align-items:flex-start;background:linear-gradient(135deg,#8C2230,#5E141F);
+.code-card .btn{background:#fff;color:#0C3330;border:none}
+.bio-card{display:flex;gap:18px;align-items:flex-start;background:linear-gradient(135deg,#12514C,#0C3330);
   color:#fff;border-radius:18px;padding:24px 24px;margin-top:20px}
 .bio-mark{flex:0 0 auto}
 .bio-mark svg{width:52px;height:52px}
@@ -210,13 +210,13 @@ select option{background:var(--surface);color:var(--text)}
 @keyframes pop{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
 #doneArea h1{font-size:clamp(25px,5.5vw,35px);font-weight:800;margin-bottom:11px}
 .ref-chip{display:inline-block;font-family:var(--head);font-weight:800;font-size:13px;letter-spacing:.06em;background:var(--amber-soft);
-  border:1px solid rgba(166,90,21,.42);color:var(--amber);border-radius:99px;padding:7px 16px;margin:6px 0 20px}
+  border:1px solid rgba(201,102,60,.42);color:var(--amber);border-radius:99px;padding:7px 16px;margin:6px 0 20px}
 .done-card{background:linear-gradient(158deg,var(--surface),var(--surface2));border:1px solid var(--line);border-radius:20px;padding:22px;margin-bottom:15px}
 .done-card h3{font-size:16px;font-weight:700;margin-bottom:10px}
 .next-list{list-style:none}
 .next-list li{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);font-size:14.2px;line-height:1.55}
 .next-list li:last-child{border-bottom:none}
-.next-list .n{flex-shrink:0;width:25px;height:25px;border-radius:50%;background:var(--emerald-soft);border:1px solid rgba(140,34,48,.4);
+.next-list .n{flex-shrink:0;width:25px;height:25px;border-radius:50%;background:var(--emerald-soft);border:1px solid rgba(18,81,76,.4);
   color:var(--emerald);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;font-family:var(--head)}
 .done-actions{display:flex;gap:11px;flex-wrap:wrap;margin-top:8px}
 .foot{border-top:1px solid var(--line);margin-top:40px;padding:22px 0 40px;font-size:11.6px;color:var(--muted2);line-height:1.7}
@@ -232,8 +232,7 @@ select option{background:var(--surface);color:var(--text)}
   <div class="nav-in">
     <a class="logo" href="index.html">
       <svg viewBox="0 0 88 88" aria-hidden="true">
-        <rect x="2" y="2" width="84" height="84" rx="23" fill="#8C2230"/>
-        <g fill="#FFFFFF"><path transform="translate(23.760 28.731) scale(0.07621 -0.07621) translate(-28.0 -751.0)" d="M40 378 115 638 142 530Q92 530 60.0 559.5Q28 589 28 639Q28 690 60.5 720.5Q93 751 142 751Q191 751 223.0 720.5Q255 690 255 639Q255 625 253.0 610.5Q251 596 244.5 576.5Q238 557 223 524L159 378Z"/><path transform="translate(46.941 28.731) scale(0.07621 -0.07621) translate(-28.0 -751.0)" d="M40 378 115 638 142 530Q92 530 60.0 559.5Q28 589 28 639Q28 690 60.5 720.5Q93 751 142 751Q191 751 223.0 720.5Q255 690 255 639Q255 625 253.0 610.5Q251 596 244.5 576.5Q238 557 223 524L159 378Z"/></g>
+        <circle cx="44" cy="44" r="42" fill="#0C3330"/><circle cx="44" cy="44" r="34.5" fill="none" stroke="#C9663C" stroke-width="2.4"/><text x="44" y="55.5" font-family="Montserrat,sans-serif" font-weight="900" font-size="30" fill="#F2EADC" text-anchor="middle" letter-spacing="-1">RR</text>
       </svg>
       <span class="logo-word"><span class="l1">don't have</span><span class="l2">an agent<span class="dot">.com</span></span></span>
     </a>
@@ -350,16 +349,16 @@ const CONFIG = {
     product:  "donthaveanagent.com",
     agency:   "Ricky Rampersad Branch",
     agent:    "Ricky Rampersad",
-    carrier:  "Guardian Life of the Caribbean Limited",
+    carrier:  "your insurance company",
     email:    "ricky.rampersad@myguardiangroup.com",
     phone:    "(868) 678-5921",
     whatsapp: "18686785921",
 
     /* The onboarding bio — shown when the review completes, so every client,
        personal or corporate, sees exactly who they are now dealing with. */
-    bioTitle:  "Branch Manager · Ricky Rampersad Branch · Guardian Life of the Caribbean Limited",
+    bioTitle:  "Branch Manager · Ricky Rampersad Branch · your insurance company",
     bio: "Branch Manager — and still a servicing agent to his own clients — leading a team of skilled, " +
-         "licensed Guardian Life agents on one idea: nobody who holds a policy should ever feel forgotten. The branch pairs old-fashioned service — a person who answers, visits " +
+         "licensed your insurer agents on one idea: nobody who holds a policy should ever feel forgotten. The branch pairs old-fashioned service — a person who answers, visits " +
          "and follows through — with tools most agencies don't have: guided digital reviews, documents " +
          "populated for digital signature, live progress tracking, and an update every 2 days until the work " +
          "is done.",
@@ -411,11 +410,11 @@ const INDIVIDUAL = [
   { id: "policyNos", label: "Policy number(s)", type: "text", showIf: { id: "knowsPolicy", is: "Yes, I have it" },
     placeholder: "e.g. 1234567", help: "More than one? Separate them with commas." },
 
-  { id: "insurer", label: "Is your policy with Guardian Life of the Caribbean?", type: "choice",
-    options: ["Yes — Guardian Life of the Caribbean", "I'm honestly not sure"],
+  { id: "insurer", label: "Is your policy with your insurance company?", type: "choice",
+    options: ["Yes — your insurance company", "I'm honestly not sure"],
     help: "If you're not sure, say so — your name and date of birth are enough for us to check.",
     note: { kind: "tip", text: "<b>Straight with you from the start:</b> we service policies issued by " +
-      "<b>Guardian Life of the Caribbean Limited</b> — that's who our team is licensed with. Not sure who " +
+      "<b>your insurance company</b> — that's who our team is licensed with. Not sure who " +
       "issued yours? Choose <i>not sure</i> and we'll check. If it turns out to be another company, we'll " +
       "tell you plainly and point you to them — we don't guess with your policy, and we don't touch what " +
       "isn't ours to touch." } },
@@ -609,7 +608,7 @@ const INDIVIDUAL = [
     label: "What you are signing",
     text: "\"After completing my Service Questionnaire and reviewing my policy(ies), I am requesting that " +
       B.agent + " be appointed my Servicing Agent with immediate effect.\"<br><br>" +
-      "<span style='color:#565056;font-size:12.5px'>This is the standard wording. Your insurer's Customer Service " +
+      "<span style='color:#5B6A66;font-size:12.5px'>This is the standard wording. Your insurer's Customer Service " +
       "Department processes it — usually within 5 to 10 working days — and confirms it to you in writing.</span>" },
 
   { id: "coaSignature", label: "Your signature", type: "signature", required: true,
@@ -641,9 +640,9 @@ const GROUP = [
   { id: "knowsPolicy", label: "Do you have the group policy number?", type: "choice",
     options: ["Yes, I have it", "No — please trace it"], required: true },
   { id: "policyNos", label: "Group policy number(s)", type: "text", showIf: { id: "knowsPolicy", is: "Yes, I have it" } },
-  { id: "insurer", label: "Is the plan with Guardian Life of the Caribbean?", type: "choice",
-    options: ["Yes — Guardian Life of the Caribbean", "Not sure"],
-    note: { kind: "tip", text: "We service group plans issued by <b>Guardian Life of the Caribbean Limited</b> — " +
+  { id: "insurer", label: "Is the plan with your insurance company?", type: "choice",
+    options: ["Yes — your insurance company", "Not sure"],
+    note: { kind: "tip", text: "We service group plans issued by <b>your insurance company</b> — " +
       "that's who our team is licensed with. Not sure? We'll check, and if the plan sits with another company " +
       "we'll tell you plainly and point you to them." } },
   { id: "lives", label: "How many employees are covered?", type: "choice",
@@ -747,7 +746,7 @@ const GROUP = [
 
 /* ── change of agent ───────────────────────────────────────────────── */
 { step: "Your agent", title: "Who should look after your plan from here?",
-  blurb: "Your choice, and every option is free. Guardian requires a group change of agent on your company letterhead with your stamp — we'll prepare the letter for you.", },
+  blurb: "Your choice, and every option is free. the insurer requires a group change of agent on your company letterhead with your stamp — we'll prepare the letter for you.", },
 
   { id: "wantAgent", label: "How would your company like to be looked after?", type: "choice", stack: true,
     options: [DIRECT_OPT, MATCHED_OPT_G,
@@ -1240,7 +1239,7 @@ function openDocPreview() {
     attach = '<div class="pv-sec" style="margin-top:22px">Attachment — Request for Change of Agent (printed on your letterhead)</div>' +
       '<div class="pv-sheet" style="margin-top:8px">' +
       '<p style="text-align:center;font-weight:bold;letter-spacing:.4px">PLEASE PRINT ON COMPANY LETTER HEAD</p>' +
-      "<p style='margin-top:10px'>The Manager<br>Customer Service Department<br>Guardian Life of the Caribbean<br>1 Guardian Drive<br>West Moorings</p>" +
+      "<p style='margin-top:10px'>The Manager<br>Customer Service Department<br>your insurance company<br>1 the insurer Drive<br>West Moorings</p>" +
       "<p style='margin-top:10px'>Dear Sir/Madam,</p>" +
       "<p><b>RE: Request for Change of Agent – GROUP LIFE POLICY# </b>" + line(state.answers.coaPolicyNo || state.answers.policyNos) + "</p>" +
       "<p>This letter serves to inform you that I would like to request a change of Agent as follows:</p>" +
@@ -1440,7 +1439,7 @@ function renderDone(ref, sent, code) {
     "ready-made, and your " + (c.handledBy === "Matched agent" ? "agent match" : "choice of who looks after you") +
     " is confirmed shortly after.");
   if (c.needsTracing) {
-    next.push("<b>We're checking Guardian Life of the Caribbean's records for your " + (g ? "plan" : "policy") +
+    next.push("<b>We're checking your insurance company's records for your " + (g ? "plan" : "policy") +
       " now.</b> Your name and date of birth are usually enough, and we'll tell you either way. If it turns " +
       "out your " + (g ? "plan" : "policy") + " was issued by another company, we'll say so plainly and point " +
       "you to them — that's theirs to service, not ours.");
@@ -1531,8 +1530,8 @@ function renderDone(ref, sent, code) {
 
   /* the onboarding moment: who they are now dealing with */
   h += '<div class="bio-card"><div class="bio-mark"><svg viewBox="0 0 88 88" aria-hidden="true">' +
-      '<path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="#5E141F"/>' +
-      '<path d="M28 44L39 55L60 31" stroke="#F4F5F7" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="#0C3330"/>' +
+      '<path d="M28 44L39 55L60 31" stroke="#F2EADC" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' +
       '</svg></div>' +
     '<div class="bio-body"><div class="bio-eyebrow">Who you\u2019re dealing with</div>' +
     "<h3>" + esc(B.agent) + "</h3>" +
