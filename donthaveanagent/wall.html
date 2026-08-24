@@ -6,216 +6,290 @@
 <title>The Wall — Ricky Rampersad Branch</title>
 <meta name="robots" content="noindex,nofollow">
 <meta name="description" content="Branch wall: every review, every agent, live.">
-<link rel="icon" href="/logo-mark.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
     --ground:#0A121F; --panel:#111C2F; --line:#22324D; --ink:#F2F6FC; --dim:#8598B4;
-    --coral:#FF5C4D; --coral-glow:rgba(255,92,77,.32); --tint:#FFE9E5;
+    --coral:#FF5C4D; --glow:rgba(255,92,77,.32);
     --good:#3DD68C; --warn:#F5B935; --bad:#FF7A6B;
     --disp:'Montserrat',Arial,sans-serif; --body:'DM Sans',Arial,sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
   html,body{height:100%}
-  body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:16px;
-    line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
-    background:radial-gradient(900px 520px at 12% -8%,rgba(255,92,77,.14),transparent 60%),
-               radial-gradient(760px 460px at 92% 4%,rgba(61,214,140,.08),transparent 62%)}
-  .wrap{position:relative;z-index:1;max-width:1680px;margin:0 auto;padding:20px 22px 34px}
+  body{background:var(--ground);color:var(--ink);font-family:var(--body);
+    -webkit-font-smoothing:antialiased;overflow-x:hidden}
 
-  /* ── header ─────────────────────────────────────────────────── */
-  .top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}
-  .top .mark{height:38px;width:38px;display:block;flex:none}
-  .top .name{font-family:var(--disp);font-weight:900;font-size:19px;letter-spacing:-.3px}
-  .top .name small{display:block;font-weight:700;font-size:10.5px;letter-spacing:.24em;
-    color:var(--dim);text-transform:uppercase;margin-top:2px}
-  .clock{margin-left:auto;text-align:right}
-  .clock .t{font-family:var(--disp);font-weight:800;font-size:26px;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
-  .clock .d{font-size:11.5px;color:var(--dim);font-family:var(--disp);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
-  .live{display:inline-flex;align-items:center;gap:7px;font-family:var(--disp);font-weight:800;
-    font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--coral);
-    border:1px solid rgba(255,92,77,.4);border-radius:999px;padding:5px 11px;background:rgba(255,92,77,.08)}
-  .dot{width:7px;height:7px;border-radius:50%;background:var(--coral);box-shadow:0 0 0 0 var(--coral-glow);
-    animation:pulse 2.4s infinite}
-  @keyframes pulse{0%{box-shadow:0 0 0 0 var(--coral-glow)}70%{box-shadow:0 0 0 11px rgba(255,92,77,0)}100%{box-shadow:0 0 0 0 rgba(255,92,77,0)}}
+  /* ── the deck ────────────────────────────────────────────────── */
+  #deck{height:100vh;overflow-y:auto;overflow-x:hidden;scroll-snap-type:y mandatory;display:none}
+  #deck::-webkit-scrollbar{width:0}
+  .slide{min-height:100vh;scroll-snap-align:start;scroll-snap-stop:always;position:relative;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:clamp(40px,7vh,90px) clamp(26px,5vw,90px) clamp(76px,10vh,120px)}
+  .slide::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;opacity:.9;
+    background:radial-gradient(1100px 640px at 8% -10%,rgba(255,92,77,.16),transparent 62%),
+               radial-gradient(880px 520px at 96% 108%,rgba(61,214,140,.09),transparent 64%)}
+  .slide > *{position:relative;z-index:1}
 
-  /* ── gate ───────────────────────────────────────────────────── */
-  .gate{max-width:430px;margin:9vh auto;background:var(--panel);border:1px solid var(--line);
-    border-radius:16px;padding:30px 28px}
-  .gate h1{font-family:var(--disp);font-weight:900;font-size:27px;letter-spacing:-.5px;margin-bottom:6px}
-  .gate p{color:var(--dim);font-size:14.5px;margin-bottom:18px}
-  .gate label{display:block;font-family:var(--disp);font-weight:700;font-size:11.5px;letter-spacing:.14em;
-    text-transform:uppercase;color:var(--dim);margin-bottom:7px}
-  .gate input{width:100%;background:#0A121F;border:1px solid var(--line);border-radius:10px;
-    color:var(--ink);font-family:var(--body);font-size:16px;padding:13px 14px;letter-spacing:.06em}
-  .gate input:focus{outline:none;border-color:var(--coral);box-shadow:0 0 0 3px rgba(255,92,77,.16)}
-  .gate button{width:100%;margin-top:13px;background:var(--coral);color:#180A08;border:none;border-radius:10px;
-    font-family:var(--disp);font-weight:800;font-size:15px;letter-spacing:.04em;padding:14px;cursor:pointer}
-  .gate button:hover{filter:brightness(1.07)}
-  .err{color:var(--bad);font-size:13.5px;margin-top:11px;min-height:20px}
+  .eyebrow{font-family:var(--disp);font-weight:800;font-size:clamp(11px,1.15vw,15px);
+    letter-spacing:.3em;text-transform:uppercase;color:var(--coral);margin-bottom:clamp(14px,2.2vh,26px)}
+  .eyebrow span{color:var(--dim)}
+  h2{font-family:var(--disp);font-weight:900;letter-spacing:-.03em;line-height:.98;
+    font-size:clamp(34px,5.4vw,86px)}
+  .say{font-size:clamp(16px,1.7vw,27px);color:var(--dim);margin-top:clamp(12px,2vh,22px);max-width:24ch;line-height:1.35}
+  .huge{font-family:var(--disp);font-weight:900;line-height:.82;letter-spacing:-.05em;
+    font-size:clamp(150px,34vh,420px);font-variant-numeric:tabular-nums}
+  .huge.coral{color:var(--coral);text-shadow:0 0 90px var(--glow)}
+  .huge.good{color:var(--good)}
 
-  /* ── grid ───────────────────────────────────────────────────── */
-  .grid{display:grid;gap:14px}
-  .band{grid-template-columns:repeat(auto-fit,minmax(158px,1fr))}
-  /* The right column runs the full height of the left one, so the stream
-     fills whatever space the branch's day leaves it rather than stopping
-     short with a scrollbar nobody standing at a wall can use. */
-  .main{grid-template-columns:1.45fr 1fr;align-items:stretch;margin-top:14px}
-  .main > div:last-child{display:flex;flex-direction:column;position:sticky;top:14px;
-    max-height:calc(100vh - 28px)}
-  @media(max-width:1080px){.main{grid-template-columns:1fr}
-    .main > div:last-child{position:static;max-height:none}}
+  /* things arrive rather than appear */
+  .r{opacity:0;transform:translateY(-46px) scale(.965)}
+  .slide.on .r{animation:drop .62s cubic-bezier(.22,1.16,.36,1) forwards}
+  @keyframes drop{0%{opacity:0;transform:translateY(-46px) scale(.965)}
+    62%{opacity:1;transform:translateY(7px) scale(1.012)}100%{opacity:1;transform:none}}
+  .d1{animation-delay:.06s}.d2{animation-delay:.15s}.d3{animation-delay:.24s}
+  .d4{animation-delay:.33s}.d5{animation-delay:.42s}.d6{animation-delay:.51s}
+  .d7{animation-delay:.60s}.d8{animation-delay:.69s}.d9{animation-delay:.78s}
+  .d10{animation-delay:.87s}.d11{animation-delay:.96s}.d12{animation-delay:1.05s}
 
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 17px}
-  .ph{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
-  .ph h2{font-family:var(--disp);font-weight:800;font-size:13px;letter-spacing:.17em;text-transform:uppercase}
-  .ph .sub{font-size:12px;color:var(--dim);margin-left:auto;text-align:right}
+  /* ── hero split ──────────────────────────────────────────────── */
+  .hero{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(24px,4vw,70px);align-items:center}
+  @media(max-width:900px){.hero{grid-template-columns:1fr}}
+  .sidestats{display:flex;flex-direction:column;gap:clamp(10px,1.6vh,20px)}
+  .side{display:flex;align-items:baseline;gap:16px;border-top:1px solid var(--line);padding-top:clamp(9px,1.4vh,16px)}
+  .side b{font-family:var(--disp);font-weight:900;font-size:clamp(30px,4.2vw,62px);
+    font-variant-numeric:tabular-nums;letter-spacing:-.03em;line-height:1;min-width:1.6em}
+  .side span{font-family:var(--disp);font-weight:700;font-size:clamp(11px,1.05vw,15px);
+    letter-spacing:.17em;text-transform:uppercase;color:var(--dim)}
+  .side.hot b{color:var(--coral)} .side.win b{color:var(--good)} .side.due b{color:var(--warn)}
 
-  .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 16px;
-    position:relative;overflow:hidden}
-  .stat .n{font-family:var(--disp);font-weight:900;font-size:clamp(30px,3.4vw,44px);line-height:1;
-    font-variant-numeric:tabular-nums;letter-spacing:-1.4px}
-  .stat .l{font-family:var(--disp);font-weight:700;font-size:10.5px;letter-spacing:.15em;
-    text-transform:uppercase;color:var(--dim);margin-top:7px}
-  .stat.hot .n{color:var(--coral)}
-  .stat.hot{border-color:rgba(255,92,77,.45);background:linear-gradient(180deg,rgba(255,92,77,.10),transparent 70%),var(--panel)}
-  .stat.win .n{color:var(--good)}
-  .stat.due .n{color:var(--warn)}
+  /* ── tiles ───────────────────────────────────────────────────── */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:clamp(12px,1.6vw,22px);
+    margin-top:clamp(20px,3.4vh,44px)}
+  .tile{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:clamp(18px,2.6vh,32px)}
+  .tile b{display:block;font-family:var(--disp);font-weight:900;line-height:.9;letter-spacing:-.04em;
+    font-size:clamp(48px,6.4vw,104px);font-variant-numeric:tabular-nums}
+  .tile span{display:block;font-family:var(--disp);font-weight:700;font-size:clamp(10.5px,1vw,14px);
+    letter-spacing:.17em;text-transform:uppercase;color:var(--dim);margin-top:clamp(8px,1.2vh,14px)}
+  .tile.hot{border-color:rgba(255,92,77,.5);background:linear-gradient(180deg,rgba(255,92,77,.13),transparent 68%),var(--panel)}
+  .tile.hot b{color:var(--coral)} .tile.win b{color:var(--good)} .tile.due b{color:var(--warn)}
 
-  /* ── leaderboard ────────────────────────────────────────────── */
-  table{width:100%;border-collapse:collapse}
-  th{font-family:var(--disp);font-weight:700;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
-    color:var(--dim);text-align:right;padding:0 0 9px;border-bottom:1px solid var(--line)}
-  th:first-child{text-align:left}
-  td{padding:11px 0;border-bottom:1px solid rgba(34,50,77,.55);text-align:right;
-    font-variant-numeric:tabular-nums;font-size:15px}
-  td:first-child{text-align:left}
-  tr:last-child td{border-bottom:none}
-  .who{display:flex;align-items:center;gap:10px}
-  .rank{width:24px;height:24px;border-radius:7px;background:#0A121F;border:1px solid var(--line);
-    display:grid;place-items:center;font-family:var(--disp);font-weight:800;font-size:11px;color:var(--dim);flex:none}
-  tr.lead .rank{background:var(--coral);border-color:var(--coral);color:#180A08}
-  .who b{font-family:var(--disp);font-weight:700;font-size:15px}
-  .zero{color:var(--dim)}
-  .tot{font-family:var(--disp);font-weight:800;color:var(--good)}
+  /* ── team ────────────────────────────────────────────────────── */
+  .team{width:100%;border-collapse:collapse;margin-top:clamp(14px,2.4vh,30px)}
+  .team th{font-family:var(--disp);font-weight:700;font-size:clamp(9.5px,.92vw,13px);letter-spacing:.17em;
+    text-transform:uppercase;color:var(--dim);text-align:right;padding-bottom:clamp(8px,1.2vh,14px);
+    border-bottom:1px solid var(--line)}
+  .team th:first-child{text-align:left}
+  .team td{text-align:right;padding:clamp(11px,1.9vh,24px) 0;border-bottom:1px solid rgba(34,50,77,.6);
+    font-variant-numeric:tabular-nums;font-family:var(--disp);font-weight:700;
+    font-size:clamp(19px,2.5vw,40px);letter-spacing:-.02em}
+  .team td:first-child{text-align:left}
+  .team tr:last-child td{border-bottom:none}
+  .nm{display:flex;align-items:center;gap:clamp(11px,1.4vw,20px)}
+  .rk{width:clamp(30px,3vw,50px);height:clamp(30px,3vw,50px);border-radius:12px;flex:none;
+    background:#0A121F;border:1px solid var(--line);display:grid;place-items:center;
+    font-size:clamp(13px,1.2vw,20px);color:var(--dim)}
+  tr.lead .rk{background:var(--coral);border-color:var(--coral);color:#180A08}
+  tr.lead .nm b{color:var(--coral)}
+  .z{color:#3E4E67}
+  .dn{color:var(--good)}
 
-  /* ── queue ──────────────────────────────────────────────────── */
-  .q{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid rgba(34,50,77,.55)}
-  .q:last-child{border-bottom:none}
-  .q .qw{min-width:0;flex:1}
-  .q .qw b{display:block;font-family:var(--disp);font-weight:700;font-size:14.5px;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .q .qw span{font-size:11.5px;color:var(--dim)}
-  .pill{font-family:var(--disp);font-weight:800;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
-    padding:4px 8px;border-radius:6px;flex:none;border:1px solid}
+  /* ── queue ───────────────────────────────────────────────────── */
+  .qrow{display:flex;align-items:center;gap:clamp(12px,1.6vw,24px);
+    padding:clamp(11px,1.8vh,22px) 0;border-bottom:1px solid rgba(34,50,77,.6)}
+  .qrow:last-child{border-bottom:none}
+  .pill{font-family:var(--disp);font-weight:800;font-size:clamp(9.5px,.9vw,13px);letter-spacing:.14em;
+    text-transform:uppercase;padding:clamp(5px,.7vh,9px) clamp(9px,.9vw,14px);border-radius:8px;
+    flex:none;border:1px solid;min-width:clamp(62px,6vw,96px);text-align:center}
   .pill.URGENT{color:#180A08;background:var(--coral);border-color:var(--coral)}
-  .pill.HIGH{color:var(--coral);background:rgba(255,92,77,.12);border-color:rgba(255,92,77,.45)}
+  .pill.HIGH{color:var(--coral);background:rgba(255,92,77,.13);border-color:rgba(255,92,77,.5)}
   .pill.NORMAL,.pill.ACTION{color:var(--dim);background:transparent;border-color:var(--line)}
-  .age{font-family:var(--disp);font-weight:800;font-size:13px;font-variant-numeric:tabular-nums;
-    min-width:52px;text-align:right;flex:none;color:var(--dim)}
+  .qw{flex:1;min-width:0}
+  .qw b{display:block;font-family:var(--disp);font-weight:700;font-size:clamp(17px,2.1vw,34px);
+    letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .qw span{font-size:clamp(11.5px,1.05vw,16px);color:var(--dim)}
+  .age{font-family:var(--disp);font-weight:900;font-size:clamp(16px,1.9vw,30px);
+    font-variant-numeric:tabular-nums;flex:none;color:var(--dim)}
   .age.late{color:var(--bad)}
 
-  /* ── stream ─────────────────────────────────────────────────── */
-  .stream{flex:1;min-height:0;overflow:auto}
-  .stream::-webkit-scrollbar{width:6px}
-  .stream::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
-  .ev{display:flex;gap:11px;padding:9px 0;border-bottom:1px solid rgba(34,50,77,.5);align-items:flex-start}
-  .ev:last-child{border-bottom:none}
-  .ico{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex:none;
-    font-size:12px;font-weight:800;font-family:var(--disp)}
-  .ico.review{background:rgba(255,92,77,.16);color:var(--coral)}
-  .ico.sent{background:rgba(133,152,180,.16);color:var(--dim)}
-  .ico.open{background:rgba(245,185,53,.16);color:var(--warn)}
-  .ico.start{background:rgba(61,214,140,.16);color:var(--good)}
-  .ico.callback{background:rgba(255,122,107,.18);color:var(--bad)}
-  .ev .txt{min-width:0;flex:1}
-  .ev .txt b{font-family:var(--disp);font-weight:700;font-size:14px}
-  .ev .txt span{display:block;font-size:11.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .ev .tm{font-size:11px;color:var(--dim);flex:none;font-variant-numeric:tabular-nums;padding-top:2px}
-  .ev.new{animation:landin .7s cubic-bezier(.22,1.2,.36,1) both}
-  @keyframes landin{0%{opacity:0;transform:translateY(-14px)}100%{opacity:1;transform:none}}
-
-  /* ── calendar ───────────────────────────────────────────────── */
-  .bars{display:flex;align-items:flex-end;gap:4px;height:96px;margin-top:4px}
+  /* ── bars ────────────────────────────────────────────────────── */
+  .bars{display:flex;align-items:flex-end;gap:clamp(3px,.5vw,9px);
+    height:clamp(160px,34vh,380px);margin-top:clamp(16px,2.6vh,34px)}
   .bar{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;height:100%}
-  .bar i{display:block;background:linear-gradient(180deg,var(--coral),rgba(255,92,77,.45));
-    border-radius:3px 3px 0 0;min-height:3px;transition:height .5s cubic-bezier(.22,1,.36,1)}
-  .bar.zero i{background:var(--line)}
-  .bar.today i{background:linear-gradient(180deg,#fff,var(--coral))}
-  .blabels{display:flex;justify-content:space-between;font-size:10.5px;color:var(--dim);margin-top:7px}
+  .bar i{display:block;border-radius:5px 5px 0 0;min-height:4px;
+    background:linear-gradient(180deg,var(--coral),rgba(255,92,77,.35));height:0;
+    transition:height .85s cubic-bezier(.22,1,.36,1)}
+  .bar.zero i{background:#1B2942}
+  .bar.today i{background:linear-gradient(180deg,#fff,var(--coral));box-shadow:0 0 34px var(--glow)}
+  .blab{display:flex;justify-content:space-between;color:var(--dim);margin-top:clamp(8px,1.2vh,14px);
+    font-family:var(--disp);font-weight:700;font-size:clamp(10.5px,1vw,14px);letter-spacing:.14em;text-transform:uppercase}
 
-  .empty{color:var(--dim);font-size:13.5px;padding:16px 0;text-align:center}
-  .foot{margin-top:18px;font-size:11.5px;color:var(--dim);display:flex;gap:14px;flex-wrap:wrap;align-items:center}
-  .foot a{color:var(--dim)}
-  #board{display:none}
+  /* ── stream ──────────────────────────────────────────────────── */
+  .feed{margin-top:clamp(12px,2vh,26px);display:flex;flex-direction:column;gap:clamp(6px,1vh,12px)}
+  .ev{display:flex;align-items:center;gap:clamp(12px,1.5vw,22px);
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:clamp(11px,1.5vh,19px) clamp(13px,1.4vw,22px)}
+  .ico{width:clamp(32px,3.1vw,52px);height:clamp(32px,3.1vw,52px);border-radius:13px;flex:none;
+    display:grid;place-items:center;font-family:var(--disp);font-weight:800;font-size:clamp(12px,1.1vw,18px)}
+  .ico.review{background:rgba(255,92,77,.17);color:var(--coral)}
+  .ico.sent{background:rgba(133,152,180,.17);color:var(--dim)}
+  .ico.open{background:rgba(245,185,53,.17);color:var(--warn)}
+  .ico.start{background:rgba(61,214,140,.17);color:var(--good)}
+  .ico.callback{background:rgba(255,122,107,.2);color:var(--bad)}
+  .ev .tx{flex:1;min-width:0}
+  .ev .tx b{display:block;font-family:var(--disp);font-weight:700;font-size:clamp(16px,1.75vw,28px);letter-spacing:-.02em}
+  .ev .tx span{display:block;font-size:clamp(11.5px,1.05vw,16px);color:var(--dim);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ev .tm{flex:none;color:var(--dim);font-variant-numeric:tabular-nums;font-size:clamp(11px,1vw,15px)}
+
+  .empty{color:var(--dim);font-size:clamp(15px,1.5vw,23px);padding:clamp(20px,4vh,50px) 0}
+
+  /* ── chrome ──────────────────────────────────────────────────── */
+  .chrome{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;align-items:center;
+    gap:clamp(12px,1.6vw,22px);padding:clamp(12px,1.7vh,20px) clamp(26px,5vw,90px);
+    background:linear-gradient(0deg,rgba(10,18,31,.96),rgba(10,18,31,0))}
+  .mark{height:clamp(26px,2.4vw,38px);width:clamp(26px,2.4vw,38px);flex:none}
+  .brand{font-family:var(--disp);font-weight:900;font-size:clamp(12px,1.15vw,17px);letter-spacing:-.01em;line-height:1.15}
+  .brand small{display:block;font-weight:700;font-size:clamp(8.5px,.75vw,11px);letter-spacing:.22em;
+    color:var(--dim);text-transform:uppercase;margin-top:1px}
+  .dots{display:flex;gap:8px;margin-left:auto}
+  .dots i{width:9px;height:9px;border-radius:50%;background:#26374F;cursor:pointer;transition:.3s;display:block}
+  .dots i.on{background:var(--coral);width:30px;border-radius:5px}
+  .clk{font-family:var(--disp);font-weight:800;font-size:clamp(13px,1.3vw,21px);
+    font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  .live{display:inline-flex;align-items:center;gap:7px;font-family:var(--disp);font-weight:800;
+    font-size:clamp(8.5px,.78vw,11px);letter-spacing:.2em;text-transform:uppercase;color:var(--coral);
+    border:1px solid rgba(255,92,77,.42);border-radius:999px;padding:5px 11px;background:rgba(255,92,77,.09)}
+  .pip{width:7px;height:7px;border-radius:50%;background:var(--coral);animation:pulse 2.4s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 var(--glow)}70%{box-shadow:0 0 0 11px rgba(255,92,77,0)}100%{box-shadow:0 0 0 0 rgba(255,92,77,0)}}
+  .tick{position:fixed;top:0;left:0;height:3px;background:var(--coral);z-index:21;width:0;
+    box-shadow:0 0 16px var(--glow)}
+  @media(max-width:700px){.brand,.clk{display:none}}
+
+  /* ── gate ────────────────────────────────────────────────────── */
+  .gate{max-width:440px;margin:12vh auto;background:var(--panel);border:1px solid var(--line);
+    border-radius:18px;padding:34px 30px}
+  .gate h1{font-family:var(--disp);font-weight:900;font-size:30px;letter-spacing:-.03em;margin-bottom:7px}
+  .gate p{color:var(--dim);font-size:15px;margin-bottom:20px}
+  .gate label{display:block;font-family:var(--disp);font-weight:700;font-size:11.5px;letter-spacing:.15em;
+    text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+  .gate input{width:100%;background:#0A121F;border:1px solid var(--line);border-radius:11px;color:var(--ink);
+    font-family:var(--body);font-size:17px;padding:14px 15px;letter-spacing:.06em}
+  .gate input:focus{outline:none;border-color:var(--coral);box-shadow:0 0 0 3px rgba(255,92,77,.17)}
+  .gate button{width:100%;margin-top:14px;background:var(--coral);color:#180A08;border:none;border-radius:11px;
+    font-family:var(--disp);font-weight:800;font-size:16px;padding:15px;cursor:pointer}
+  .gate button:hover{filter:brightness(1.07)}
+  .err{color:var(--bad);font-size:14px;margin-top:12px;min-height:21px}
+  @media(prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    .slide.on .r{animation:none}.r{opacity:1;transform:none}
+    .pip{animation:none}
+  }
 </style>
 </head>
 <body>
 
-<div class="wrap">
+<div class="gate" id="gate">
+  <h1>The Wall</h1>
+  <p>Everything the branch is doing, on one screen. Use the branch code, or your own code from the Agent Skill Bank.</p>
+  <label for="code">Code</label>
+  <input id="code" type="password" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="••••••••">
+  <button id="go" type="button">Open the wall</button>
+  <div class="err" id="err"></div>
+</div>
 
-  <!-- the code gate -->
-  <div class="gate" id="gate">
-    <h1>The Wall</h1>
-    <p>Everything the branch is doing, on one screen. Use the branch code, or your own code from the Agent Skill Bank.</p>
-    <label for="code">Code</label>
-    <input id="code" type="password" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="••••••••">
-    <button id="go" type="button">Open the wall</button>
-    <div class="err" id="err"></div>
-  </div>
+<div class="tick" id="tick"></div>
 
-  <!-- the wall -->
-  <div id="board">
-    <div class="top">
-      <svg class="mark" viewBox="0 0 120 120" aria-hidden="true">
-        <defs><clipPath id="kW"><rect x="40" y="34" width="21" height="50"/></clipPath></defs>
-        <g transform="rotate(-40 60 60)">
-          <rect x="16" y="43" width="62" height="34" rx="17" fill="none" stroke="#F2F6FC" stroke-width="9"/>
-          <rect x="42" y="43" width="62" height="34" rx="17" fill="none" stroke="#FF5C4D" stroke-width="9"/>
-          <g clip-path="url(#kW)"><rect x="16" y="43" width="62" height="34" rx="17" fill="none" stroke="#F2F6FC" stroke-width="9"/></g>
-        </g>
-      </svg>
-      <div class="name">The Wall<small>Ricky Rampersad Branch</small></div>
-      <span class="live"><span class="dot"></span>Live</span>
-      <div class="clock"><div class="t" id="clk">—</div><div class="d" id="dte">—</div></div>
-    </div>
-
-    <div class="grid band" id="band"></div>
-
-    <div class="grid main">
+<div id="deck">
+  <!-- 1 · waiting -->
+  <section class="slide" id="s1">
+    <div class="hero">
       <div>
-        <div class="panel">
-          <div class="ph"><h2>The team</h2><span class="sub" id="rosterNote"></span></div>
-          <div id="board-table"></div>
-        </div>
-
-        <div class="panel" style="margin-top:14px">
-          <div class="ph"><h2>Thirty days</h2><span class="sub">Reviews filed per day</span></div>
-          <div class="bars" id="bars"></div>
-          <div class="blabels"><span id="b0"></span><span id="b1"></span></div>
-        </div>
-
-        <div class="panel" style="margin-top:14px">
-          <div class="ph"><h2>Waiting on us</h2><span class="sub" id="qNote"></span></div>
-          <div id="queue"></div>
-        </div>
+        <div class="eyebrow r d1">Right now</div>
+        <div class="huge coral r d2" id="hOpen">0</div>
+        <h2 class="r d3" id="hOpenSay">people are waiting to hear from us</h2>
+        <p class="say r d4">Every one of them was promised a person, not an auto-reply.</p>
       </div>
-
-      <div class="panel">
-        <div class="ph"><h2>As it happens</h2><span class="sub" id="asOf"></span></div>
-        <div class="stream" id="stream"></div>
+      <div class="sidestats">
+        <div class="side hot r d5"><b id="hUrgent">0</b><span>Urgent &amp; high</span></div>
+        <div class="side due r d6"><b id="hOverdue">0</b><span>Past the promise</span></div>
+        <div class="side due r d7"><b id="hCall">0</b><span>Call-backs waiting</span></div>
+        <div class="side r d8"><b id="hNoAgent">0</b><span>No agent yet</span></div>
       </div>
     </div>
+  </section>
 
-    <div class="foot">
-      <span>Refreshes every 45 seconds.</span>
-      <span id="lastFetch"></span>
-      <a href="/agents.html">Your own book →</a>
+  <!-- 2 · the day -->
+  <section class="slide" id="s2">
+    <div class="eyebrow r d1">The day so far</div>
+    <h2 class="r d2">What came in.</h2>
+    <div class="tiles">
+      <div class="tile hot r d3"><b id="tToday">0</b><span>Filed today</span></div>
+      <div class="tile r d4"><b id="tMonth">0</b><span>This month</span></div>
+      <div class="tile win r d5"><b id="tDone">0</b><span>Completed</span></div>
+      <div class="tile r d6"><b id="tAll">0</b><span>All time</span></div>
     </div>
-  </div>
+    <p class="say r d7" style="max-width:44ch" id="tSay"></p>
+  </section>
+
+  <!-- 3 · the team -->
+  <section class="slide" id="s3">
+    <div class="eyebrow r d1">The team <span id="rosterNote"></span></div>
+    <h2 class="r d2">Who is doing the work.</h2>
+    <div id="teamWrap"></div>
+  </section>
+
+  <!-- 4 · waiting on us -->
+  <section class="slide" id="s4">
+    <div class="eyebrow r d1">Waiting on us <span id="qNote"></span></div>
+    <h2 class="r d2">Oldest first.</h2>
+    <div id="queueWrap"></div>
+  </section>
+
+  <!-- 5 · thirty days -->
+  <section class="slide" id="s5">
+    <div class="eyebrow r d1">Thirty days</div>
+    <h2 class="r d2">The rhythm.</h2>
+    <div class="bars r d3" id="bars"></div>
+    <div class="blab r d4"><span id="b0"></span><span id="bPeak"></span><span id="b1"></span></div>
+  </section>
+
+  <!-- 6 · live -->
+  <section class="slide" id="s6">
+    <div class="eyebrow r d1">As it happens <span id="asOf"></span></div>
+    <h2 class="r d2">Live.</h2>
+    <div class="feed" id="feed"></div>
+  </section>
+
+  <!-- 7 · the promise -->
+  <section class="slide" id="s7">
+    <div class="eyebrow r d1">The promise</div>
+    <h2 class="r d2" id="pHead">Nobody waits.</h2>
+    <p class="say r d3" style="max-width:40ch" id="pSay"></p>
+    <div class="tiles">
+      <div class="tile win r d4"><b id="pKept">—</b><span>Kept on time</span></div>
+      <div class="tile due r d5"><b id="pLate">0</b><span>Past the promise</span></div>
+      <div class="tile r d6"><b id="pTrace">0</b><span>Policies to trace</span></div>
+      <div class="tile r d7"><b id="pLetter">0</b><span>Letters outstanding</span></div>
+    </div>
+  </section>
+</div>
+
+<div class="chrome" id="chrome" style="display:none">
+  <svg class="mark" viewBox="0 0 120 120" aria-hidden="true">
+    <defs><clipPath id="kW"><rect x="40" y="34" width="21" height="50"/></clipPath></defs>
+    <g transform="rotate(-40 60 60)">
+      <rect x="16" y="43" width="62" height="34" rx="17" fill="none" stroke="#F2F6FC" stroke-width="9"/>
+      <rect x="42" y="43" width="62" height="34" rx="17" fill="none" stroke="#FF5C4D" stroke-width="9"/>
+      <g clip-path="url(#kW)"><rect x="16" y="43" width="62" height="34" rx="17" fill="none" stroke="#F2F6FC" stroke-width="9"/></g>
+    </g>
+  </svg>
+  <div class="brand">The Wall<small>Ricky Rampersad Branch</small></div>
+  <span class="live"><span class="pip"></span>Live</span>
+  <div class="dots" id="dots"></div>
+  <div class="clk" id="clk">—</div>
 </div>
 
 <script>
@@ -224,127 +298,188 @@ const CONFIG = { API_URL: "https://script.google.com/macros/s/AKfycbxdW5mVcK6DZb
 const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c =>
   ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
 
-/* The code is kept on this device only, so a screen left running in the
-   office comes back up on its own after a power cut. It never leaves here
-   except as the query that fetches the wall. */
+/* Kept on this device only, so a screen left running comes back up on its
+   own after a power cut. It never leaves here except as the query that
+   fetches the wall. */
 const KEY = "dhaa.wall.code";
 let CODE = "";
-try { CODE = sessionStorage.getItem(KEY) || localStorage.getItem(KEY) || ""; } catch (e) {}
+try { CODE = localStorage.getItem(KEY) || ""; } catch (e) {}
 
-let seen = new Set();      /* which stream events we have already drawn */
-let firstPaint = true;
+const SLIDES = 7;
+const HOLD = 13000;          /* how long each slide holds before advancing */
+const RELOAD = 45000;        /* how often the data is re-read */
+let at = 0, paused = 0, tickStart = Date.now();
+
+/* ── the deck ─────────────────────────────────────────────────── */
+const deck = $("#deck");
+const dots = $("#dots");
+for (let i = 0; i < SLIDES; i++) {
+  const d = document.createElement("i");
+  d.addEventListener("click", () => { go(i); nudge(); });
+  dots.appendChild(d);
+}
+function mark() {
+  [...dots.children].forEach((d, i) => d.classList.toggle("on", i === at));
+}
+function go(i) {
+  at = (i + SLIDES) % SLIDES;
+  const el = document.getElementById("s" + (at + 1));
+  if (el) deck.scrollTo({ top: el.offsetTop, behavior: "smooth" });
+  tickStart = Date.now();
+  mark();
+}
+/* a hand on the screen stops the carousel for a minute — somebody is reading */
+function nudge() { paused = Date.now() + 60000; tickStart = Date.now(); }
+
+/* Which slide is actually in view drives both the dots and the animations,
+   so a manual scroll and an automatic one behave identically. */
+const seen = new IntersectionObserver(es => {
+  es.forEach(e => {
+    e.target.classList.toggle("on", e.isIntersecting && e.intersectionRatio > .5);
+    if (e.isIntersecting && e.intersectionRatio > .5) {
+      const n = Number(e.target.id.slice(1)) - 1;
+      if (n !== at) { at = n; mark(); tickStart = Date.now(); }
+      if (e.target.id === "s5") drawBars();
+    }
+  });
+}, { threshold: [.5], root: deck });
+document.querySelectorAll(".slide").forEach(s => seen.observe(s));
+
+deck.addEventListener("wheel", nudge, { passive: true });
+deck.addEventListener("touchstart", nudge, { passive: true });
+addEventListener("keydown", e => {
+  if (e.key === "ArrowDown" || e.key === "ArrowRight" || e.key === " ") { go(at + 1); nudge(); e.preventDefault(); }
+  if (e.key === "ArrowUp" || e.key === "ArrowLeft") { go(at - 1); nudge(); e.preventDefault(); }
+});
+
+setInterval(() => {
+  const el = $("#tick");
+  if (Date.now() < paused) { el.style.width = "0"; return; }
+  const p = (Date.now() - tickStart) / HOLD;
+  el.style.width = Math.min(100, p * 100) + "%";
+  if (p >= 1) go(at + 1);
+}, 120);
 
 function clock() {
   const d = new Date();
-  let h = d.getHours(), m = String(d.getMinutes()).padStart(2, "0");
-  const ap = h >= 12 ? "PM" : "AM";
+  let h = d.getHours();
+  const m = String(d.getMinutes()).padStart(2, "0"), ap = h >= 12 ? "PM" : "AM";
   h = h % 12 || 12;
-  $("#clk").textContent = h + ":" + m + " " + ap;
-  $("#dte").textContent = d.toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long" });
+  set("clk", h + ":" + m + " " + ap);
 }
 
-function band(t) {
-  const cells = [
-    { n: t.open,      l: "Open right now",  cls: "hot" },
-    { n: t.today,     l: "Filed today",     cls: "" },
-    { n: t.urgent,    l: "Urgent &amp; high", cls: t.urgent ? "hot" : "" },
-    { n: t.overdue,   l: "Past the promise", cls: t.overdue ? "due" : "" },
-    { n: t.callbacks, l: "Call-backs waiting", cls: t.callbacks ? "due" : "" },
-    { n: t.unassigned,l: "No agent yet",    cls: t.unassigned ? "due" : "" },
-    { n: t.month,     l: "This month",      cls: "" },
-    { n: t.completed, l: "Completed",       cls: "win" },
-  ];
-  $("#band").innerHTML = cells.map(c =>
-    '<div class="stat ' + c.cls + '"><div class="n">' + c.n + '</div><div class="l">' + c.l + "</div></div>").join("");
-}
-
-function team(agents) {
-  if (!agents.length) {
-    $("#board-table").innerHTML = '<div class="empty">No agents on the roster yet. Add them to the ' +
-      "<b>Agent Skill Bank</b> tab and they appear here.</div>";
-    return;
-  }
-  const rows = agents.map((a, i) => {
-    const done = a.completed + a.ownDone;
-    return '<tr class="' + (i === 0 && done > 0 ? "lead" : "") + '">' +
-      '<td><div class="who"><span class="rank">' + (i + 1) + "</span><b>" + esc(a.name) + "</b></div></td>" +
-      "<td" + (a.assigned ? "" : ' class="zero"') + ">" + a.assigned + "</td>" +
-      "<td" + (a.own ? "" : ' class="zero"') + ">" + a.own + "</td>" +
-      "<td" + (a.sent ? "" : ' class="zero"') + ">" + a.sent + "</td>" +
-      "<td" + (a.started ? "" : ' class="zero"') + ">" + a.started + "</td>" +
-      "<td" + (a.open ? "" : ' class="zero"') + ">" + a.open + "</td>" +
-      '<td class="' + (done ? "tot" : "zero") + '">' + done + "</td></tr>";
-  }).join("");
-  $("#board-table").innerHTML =
-    "<table><thead><tr><th>Agent</th><th>Assigned</th><th>Own</th><th>Sent</th>" +
-    "<th>Started</th><th>Open</th><th>Done</th></tr></thead><tbody>" + rows + "</tbody></table>";
-}
-
-function queue(q) {
-  $("#qNote").textContent = q.length ? q.length + " oldest first" : "";
-  if (!q.length) { $("#queue").innerHTML = '<div class="empty">Nothing outstanding. Everything filed has been handled.</div>'; return; }
-  $("#queue").innerHTML = q.map(c =>
-    '<div class="q"><span class="pill ' + esc(c.pri) + '">' + esc(c.pri) + "</span>" +
-    '<div class="qw"><b>' + esc(c.who) + "</b><span>" + esc(c.ref) +
-      (c.agent ? " · " + esc(c.agent) : " · not assigned") + "</span></div>" +
-    '<span class="age' + (c.late ? " late" : "") + '">' +
-      (c.days === 0 ? "today" : c.days + "d") + "</span></div>").join("");
-}
-
-function stream(evs) {
-  const label = { review:"NEW", sent:"→", open:"👁", start:"▶", callback:"☎" };
-  const verb  = { review:"filed a review", sent:"sent their link", open:"opened the link",
-                  start:"started a review", callback:"asked to be called" };
-  $("#stream").innerHTML = evs.map(e => {
-    const id = e.kind + "|" + e.who + "|" + e.when + "|" + e.note;
-    const isNew = !firstPaint && !seen.has(id);
-    seen.add(id);
-    return '<div class="ev' + (isNew ? " new" : "") + '">' +
-      '<span class="ico ' + esc(e.kind) + '">' + (label[e.kind] || "•") + "</span>" +
-      '<div class="txt"><b>' + esc(e.who) + "</b><span>" + esc(verb[e.kind] || e.kind) +
-        (e.note ? " · " + esc(e.note) : "") + "</span></div>" +
-      '<span class="tm">' + esc(e.when) + "</span></div>";
-  }).join("") || '<div class="empty">Nothing yet today.</div>';
-  firstPaint = false;
-}
-
-function bars(days) {
-  const mx = Math.max(1, ...days.map(d => d.n));
-  $("#bars").innerHTML = days.map(d =>
-    '<div class="bar' + (d.n ? "" : " zero") + (d.today ? " today" : "") + '" title="' + esc(d.d) + ": " + d.n + '">' +
-    '<i style="height:' + Math.round((d.n / mx) * 100) + '%"></i></div>').join("");
-  $("#b0").textContent = days[0] ? days[0].d : "";
-  $("#b1").textContent = days.length ? days[days.length - 1].d : "";
+/* ── painting ─────────────────────────────────────────────────── */
+let DAYS = [];
+function drawBars() {
+  const mx = Math.max(1, ...DAYS.map(d => d.n));
+  [...document.querySelectorAll("#bars .bar i")].forEach((el, i) => {
+    el.style.height = Math.round((DAYS[i].n / mx) * 100) + "%";
+  });
 }
 
 function paint(w) {
-  band(w.totals);
-  team(w.agents);
-  queue(w.queue);
-  stream(w.stream);
-  bars(w.days);
-  $("#asOf").textContent = "as of " + w.asOf;
-  $("#rosterNote").textContent = w.roster + (w.roster === 1 ? " agent" : " agents") + " on the roster";
-  $("#lastFetch").textContent = "Last read " + new Date().toLocaleTimeString();
+  const t = w.totals;
+
+  /* 1 */
+  set("hOpen", t.open);
+  set("hOpenSay", t.open === 1 ? "person is waiting to hear from us"
+                               : "people are waiting to hear from us");
+  set("hUrgent", t.urgent); set("hOverdue", t.overdue);
+  set("hCall", t.callbacks); set("hNoAgent", t.unassigned);
+
+  /* 2 */
+  set("tToday", t.today); set("tMonth", t.month);
+  set("tDone", t.completed); set("tAll", t.reviews);
+  set("tSay", t.today
+    ? "Every one of these was a policy nobody was looking after this morning."
+    : "Nothing yet today. The links are out there — the wall fills as they land.");
+
+  /* 3 */
+  $("#rosterNote").textContent = w.roster
+    ? "· " + w.roster + (w.roster === 1 ? " agent" : " agents") : "";
+  $("#teamWrap").innerHTML = w.agents.length
+    ? '<table class="team"><thead><tr><th>Agent</th><th>Assigned</th><th>Own</th>' +
+      "<th>Sent</th><th>Started</th><th>Open</th><th>Done</th></tr></thead><tbody>" +
+      w.agents.map((a, i) => {
+        const done = a.completed + a.ownDone;
+        return '<tr class="r d' + Math.min(12, i + 3) + (i === 0 && done ? " lead" : "") + '">' +
+          '<td><div class="nm"><span class="rk">' + (i + 1) + "</span><b>" + esc(a.name) + "</b></div></td>" +
+          "<td" + (a.assigned ? "" : ' class="z"') + ">" + a.assigned + "</td>" +
+          "<td" + (a.own ? "" : ' class="z"') + ">" + a.own + "</td>" +
+          "<td" + (a.sent ? "" : ' class="z"') + ">" + a.sent + "</td>" +
+          "<td" + (a.started ? "" : ' class="z"') + ">" + a.started + "</td>" +
+          "<td" + (a.open ? "" : ' class="z"') + ">" + a.open + "</td>" +
+          '<td class="' + (done ? "dn" : "z") + '">' + done + "</td></tr>";
+      }).join("") + "</tbody></table>"
+    : '<div class="empty r d3">No agents on the roster yet. Add them to the <b>Agent Skill Bank</b> tab ' +
+      "and they appear here.</div>";
+
+  /* 4 */
+  $("#qNote").textContent = w.queue.length ? "· " + w.queue.length : "";
+  $("#queueWrap").innerHTML = w.queue.length
+    ? w.queue.slice(0, 7).map((c, i) =>
+        '<div class="qrow r d' + Math.min(12, i + 3) + '">' +
+        '<span class="pill ' + esc(c.pri) + '">' + esc(c.pri) + "</span>" +
+        '<div class="qw"><b>' + esc(c.who) + "</b><span>" + esc(c.ref) +
+          (c.agent ? " · " + esc(c.agent) : " · not assigned") + "</span></div>" +
+        '<span class="age' + (c.late ? " late" : "") + '">' +
+          (c.days === 0 ? "today" : c.days + "d") + "</span></div>").join("")
+    : '<div class="empty r d3">Nothing outstanding. Everything filed has been handled.</div>';
+
+  /* 5 */
+  DAYS = w.days;
+  $("#bars").innerHTML = DAYS.map(d =>
+    '<div class="bar' + (d.n ? "" : " zero") + (d.today ? " today" : "") + '"><i></i></div>').join("");
+  const peak = DAYS.reduce((a, b) => (b.n > a.n ? b : a), DAYS[0] || { n: 0, d: "" });
+  set("b0", DAYS[0] ? DAYS[0].d : "");
+  set("bPeak", peak && peak.n ? "Busiest " + peak.d + " · " + peak.n : "");
+  set("b1", DAYS.length ? "Today" : "");
+  if ($("#s5").classList.contains("on")) drawBars();
+
+  /* 6 */
+  $("#asOf").textContent = "· " + w.asOf;
+  const label = { review:"NEW", sent:"→", open:"👁", start:"▶", callback:"☎" };
+  const verb  = { review:"filed a review", sent:"sent their link", open:"opened the link",
+                  start:"started a review", callback:"asked to be called" };
+  $("#feed").innerHTML = w.stream.length
+    ? w.stream.slice(0, 7).map((e, i) =>
+        '<div class="ev r d' + Math.min(12, i + 3) + '">' +
+        '<span class="ico ' + esc(e.kind) + '">' + (label[e.kind] || "•") + "</span>" +
+        '<div class="tx"><b>' + esc(e.who) + "</b><span>" + esc(verb[e.kind] || e.kind) +
+          (e.note ? " · " + esc(e.note) : "") + "</span></div>" +
+        '<span class="tm">' + esc(e.when) + "</span></div>").join("")
+    : '<div class="empty r d3">Nothing yet today.</div>';
+
+  /* 7 */
+  const closed = t.reviews - t.open;
+  const kept = closed + t.open - t.overdue;
+  const total = t.reviews || 1;
+  set("pKept", Math.round((kept / total) * 100) + "%");
+  set("pLate", t.overdue); set("pTrace", t.tracing); set("pLetter", t.letters);
+  set("pHead", t.overdue ? (t.overdue === 1 ? "One is late." : t.overdue + " are late.") : "Nobody is waiting past the promise.");
+  set("pSay", t.overdue
+    ? "Everyone on that list was told they would hear from a person. Mark the row Handled once it genuinely is."
+    : "Every client who filed has been answered inside the time we promised them. Keep it there.");
 }
 
+/* ── data ─────────────────────────────────────────────────────── */
 async function load(showErrors) {
-  if (!CONFIG.API_URL || !CODE) return;
+  if (!CONFIG.API_URL || !CODE) return false;
   try {
     const res = await fetch(CONFIG.API_URL + "?action=wall&code=" + encodeURIComponent(CODE));
     const w = await res.json();
-    if (!w.ok) {
-      if (showErrors) { $("#err").textContent = w.error || "That code did not open the wall."; }
-      return false;
-    }
+    if (!w.ok) { if (showErrors) $("#err").textContent = w.error || "That code did not open the wall."; return false; }
     $("#gate").style.display = "none";
-    $("#board").style.display = "block";
+    deck.style.display = "block";
+    $("#chrome").style.display = "flex";
     paint(w);
+    mark();
+    document.getElementById("s1").classList.add("on");
     return true;
   } catch (e) {
     if (showErrors) $("#err").textContent = "Could not reach the branch. Check the connection and try again.";
-    else $("#lastFetch").textContent = "Connection lost — retrying";
     return false;
   }
 }
@@ -355,15 +490,14 @@ $("#go").addEventListener("click", async () => {
   if (!CONFIG.API_URL) { $("#err").textContent = "The wall is not connected to the branch yet."; return; }
   CODE = v;
   $("#err").textContent = "Opening…";
-  const good = await load(true);
-  if (good) { try { localStorage.setItem(KEY, CODE); } catch (e) {} }
+  if (await load(true)) { try { localStorage.setItem(KEY, CODE); } catch (e) {} }
   else CODE = "";
 });
 $("#code").addEventListener("keydown", e => { if (e.key === "Enter") $("#go").click(); });
 
 clock();
 setInterval(clock, 10000);
-setInterval(() => load(false), 45000);
+setInterval(() => load(false), RELOAD);
 if (CODE) load(false);
 </script>
 </body>
