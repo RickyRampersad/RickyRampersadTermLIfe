@@ -8,6 +8,7 @@ until their code is ported onto it.
 | `attachments.browser` | **runs** — 26 assertions on the live `index.html` |
 | `wall.browser` | **runs** — 33 assertions on `wall.html` |
 | `patch` | **runs** — 46 assertions on `QueryPalPatch.gs` with the real agent tables |
+| `thread` | **runs** — 44 assertions on thread-finding, reply insight and the owed-reply sweep |
 | `portal.backend` | **runs** — 35 assertions on the client-portal endpoints |
 | `portal.browser` | **runs** — 32 assertions driving the portal in Chromium |
 | `leavers.backend` | **runs** — 81 assertions on the company leaver run and the GET guard |
@@ -48,6 +49,9 @@ NODE_PATH=/opt/node22/lib/node_modules node wall.browser.test.mjs
 
 # patch file — routing table vs the live catalog, attachments, managers, passwords
 node patch.test.js
+
+# the trail — finding the original thread, reading a reply, chasing our own side
+node thread.test.js
 
 # client portal — code issuance, enrollment, client-safe history, stats
 node portal.backend.test.js

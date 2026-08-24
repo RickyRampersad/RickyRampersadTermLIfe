@@ -422,6 +422,84 @@ After deploying, confirm it is closed — this must come back `{"ok":false}`:
 
 ---
 
+### 16 — `sendFollowUp_`: actually land inside the thread
+
+This is the reported bug. The follow-up looks for the original email with a
+single Gmail search on the reference — and a reference like
+`RRB/2026/214/Anita Maharaj/Tax statem` is not one search term to Gmail. When
+the search misses, the empty `catch` swallows it and the chase goes out as a
+fresh `Re:` email with no day-1 underneath it. Find, inside `sendFollowUp_`:
+
+```js
+    var threads = (function(){ var th = deptThread_(ref, row[14]); return th ? [th] : []; })();  // dept-locked
+    if (threads && threads.length) {
+      threads[0].replyAll(plain, { htmlBody: html, name: 'RR Branch Query Pal',
+        inlineImages: img ? { qplogo: img } : undefined });
+      sent = true;                                               // true threaded reply — full trail
+    }
+  } catch (ge) {}
+```
+Replace with:
+```js
+    var found = qpFindThread_(ref, row[14], subjectBase);        // four searches, not one
+    if (found.thread) {
+      found.thread.replyAll(plain, { htmlBody: html, name: 'RR Branch Query Pal',
+        inlineImages: img ? { qplogo: img } : undefined });
+      sent = true;                                               // true threaded reply — full trail
+    } else {
+      try { cmtSheet_().appendRow([new Date(), ref, 'Query Pal', 'system',
+        '⚠️ Follow-up sent outside the thread (' + found.how + ')', 'internal']); } catch (ce) {}
+    }
+  } catch (ge) {}
+```
+
+Now a miss is written on the case trail instead of vanishing.
+
+> **Run `qpThreadCheck()` first.** It sends nothing and tells you in one line
+> whether Gmail access is the problem. Deploying never asks for permissions —
+> only *running* a function does, so a project that was deployed but never run
+> since the threading feature was added has been posting stray mail ever since.
+
+---
+
+### 17 — `autoSweep`: chase our own side too
+
+A department that replies asking for a document is waiting on **us**. Nothing
+currently notices. Find the line that skips cases inside the reply grace window:
+
+```js
+    var extAt = (reply && reply.at) ? reply.at : (row[27] ? new Date(row[27]) : null);
+    if (extAt && (now - extAt) < REPLY_GRACE_DAYS * 86400000) continue;
+```
+Replace with:
+```js
+    var extAt = (reply && reply.at) ? reply.at : (row[27] ? new Date(row[27]) : null);
+    if (extAt) { try { qpOwedSweep_(sh, r, row, now); } catch (oe) {} }   // do WE owe a reply?
+    if (extAt && (now - extAt) < REPLY_GRACE_DAYS * 86400000) continue;
+```
+
+The department chasers are untouched — this only adds a nudge to the assigned
+person on the next working day when a department is waiting on us, and copies
+their manager the day after. A reply that reads as a resolution owes nothing.
+
+---
+
+### 18 — reply watch: put the insight on the trail
+
+Wherever the reply watcher stamps the department's reply (the block that sets
+column AB and calls `classifyReply_`), add one line after the stamp:
+
+```js
+    try { qpReplyInsight_(row[0], replyText, replyFrom); } catch (ie) {}
+```
+
+Use whatever the local variables for the reply body and sender are called. This
+writes a plain-language note onto the case — what the department said, what they
+are asking for, and what to do next — so whoever opens the case can act without
+reading the whole thread.
+
+---
+
 ## Two more worth doing, not required
 
 **`raiProxy_`** — the assistant endpoint is unauthenticated and spends your

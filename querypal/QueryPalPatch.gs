@@ -1193,3 +1193,290 @@ function qpLooseAgent_(code) {
   }
   return null;
 }
+
+
+/* ══════════════════ 10. THE TRAIL — threading, insight, and the reply we owe ══════════════════
+   Three problems, one section.
+
+   (a) Follow-ups are meant to land inside the original email thread so the
+       department sees day 1 underneath day 3. deptThread_ finds that thread by
+       running a Gmail search for the reference — and the reference is full of
+       slashes and spaces, which Gmail's index does not treat as one term. When
+       the search misses, the caller's empty catch swallows it and the chase
+       goes out as a fresh 'Re:' mail. Silent, and exactly what was reported.
+       qpFindThread_ tries four searches instead of one and SAYS which worked.
+
+   (b) A department reply is currently only classified well enough to decide
+       whether to auto-close. qpReplyInsight_ writes what it means into the case
+       trail in plain words, so whoever opens the case knows what to do next.
+
+   (c) Nothing chases US. If a department answers and asks for something, the
+       branch owes a reply the same day. qpOwedSweep_ nudges the assigned person
+       the next working day, and copies their manager the day after.          */
+
+var QP_OWED_GRACE_WD  = 1;    // working days the branch has to answer a department
+var QP_OWED_MGR_AFTER = 2;    // working days after which the manager is copied
+var QP_OWED_MAX       = 3;    // never nudge one case more than this many times
+
+/* --- (a) finding the thread ------------------------------------------------ */
+
+function qpThreadQueries_(ref, subject) {
+  var r = String(ref || '').trim();
+  var q = [];
+  if (r) {
+    q.push({ how: 'reference', q: '"' + r + '"' });
+    q.push({ how: 'reference-loose', q: '"' + r.replace(/[\/_-]+/g, ' ').replace(/\s+/g, ' ').trim() + '"' });
+    var run = r.match(/RRB\/\d{4}\/(\d+)/i);           // the run number alone is unique and clean
+    if (run) q.push({ how: 'run-number', q: '"RRB" "' + run[1] + '"' });
+  }
+  if (subject) q.push({ how: 'subject', q: 'subject:"' + String(subject).replace(/"/g, '') + '"' });
+  return q;
+}
+
+/* Returns { thread, how } or { thread:null, how:'<why it failed>' }. Never throws. */
+function qpFindThread_(ref, deptMail, subject) {
+  var want = String(deptMail || '').toLowerCase();
+  var qs = qpThreadQueries_(ref, subject);
+  for (var i = 0; i < qs.length; i++) {
+    var threads;
+    try {
+      threads = GmailApp.search(qs[i].q, 0, 8);
+    } catch (ge) {
+      // The Gmail scope is what lets a follow-up reply inside the thread. If it
+      // was never authorised the search throws on every case — say so once,
+      // clearly, instead of silently posting stray mail for months.
+      return { thread: null, how: 'gmail-not-authorised: ' + (ge && ge.message ? ge.message : ge) };
+    }
+    if (!threads || !threads.length) continue;
+    for (var t = 0; t < threads.length; t++) {
+      try {
+        var ms = threads[t].getMessages();
+        for (var m = 0; m < ms.length; m++) {
+          var blob = (String(ms[m].getTo()) + ',' + String(ms[m].getFrom()) + ',' +
+                      String(ms[m].getCc())).toLowerCase();
+          if ((want && blob.indexOf(want) > -1) || blob.indexOf('myguardiangroup.com') > -1)
+            return { thread: threads[t], how: qs[i].how };
+        }
+      } catch (te) {}
+    }
+    return { thread: threads[0], how: qs[i].how + '-first' };   // matched text, no address match
+  }
+  return { thread: null, how: 'no-thread-found' };
+}
+
+/* Read-only. Run this from the editor to see whether threading actually works.
+   It sends nothing — it only reports what a follow-up WOULD attach itself to. */
+function qpThreadCheck() {
+  var out = ['THREADING CHECK — nothing is sent by this function', ''];
+  try {
+    GmailApp.search('subject:querypal', 0, 1);
+    out.push('Gmail access: OK (follow-ups can reply inside a thread)');
+  } catch (ge) {
+    out.push('Gmail access: REFUSED — ' + (ge && ge.message ? ge.message : ge));
+    out.push('');
+    out.push('This is why follow-ups are arriving as separate emails. Fix it by');
+    out.push('opening the editor, choosing any function, pressing Run, and');
+    out.push('granting the Gmail permission when prompted. Deploying does not');
+    out.push('ask for permissions — only running does.');
+    var m0 = out.join('\n'); Logger.log(m0); return m0;
+  }
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  if (!sh || sh.getLastRow() < 2) { out.push('No queries logged yet.'); var m1 = out.join('\n'); Logger.log(m1); return m1; }
+  var wide = Math.min(29, sh.getMaxColumns());
+  var data = sh.getRange(2, 1, sh.getLastRow() - 1, wide).getValues();
+  var checked = 0, found = 0;
+  out.push('');
+  for (var r = data.length - 1; r >= 0 && checked < 10; r--) {
+    var row = data[r];
+    if (!row[0]) continue;
+    if (/closed|resolved|completed/i.test(String(row[3] || ''))) continue;
+    checked++;
+    var subject = String(row[5] || '') + ' - ' + String(row[17] || '');
+    var res = qpFindThread_(row[0], row[14], subject);
+    if (res.thread) {
+      found++;
+      out.push('  FOUND  via ' + res.how + '  (' + res.thread.getMessageCount() + ' messages)  ' + row[0]);
+    } else {
+      out.push('  MISS   ' + res.how + '  ' + row[0]);
+    }
+  }
+  out.push('');
+  out.push(found + ' of ' + checked + ' open cases can be replied to inside their thread.');
+  if (found < checked) out.push('Misses usually mean the original went out before this fix, or from another account.');
+  var msg = out.join('\n'); Logger.log(msg); return msg;
+}
+
+/* --- (b) what the department's reply actually means ------------------------ */
+
+var QP_ASKS = [
+  { rx: /(kindly|please)\s+(provide|send|forward|furnish)|we need|require[sd]?\b|outstanding|missing|incomplete/i,
+    label: 'They need a document or detail from us' },
+  { rx: /cannot locate|can not locate|unable to locate|no record|not found/i,
+    label: 'They cannot find the policy or client — check the details we sent' },
+  { rx: /clarif|confirm (the|whether)|which policy|please advise/i,
+    label: 'They want something clarified before they can act' },
+  { rx: /signature|signed|authoris|authoriz|consent|letter of/i,
+    label: 'They need a signed or authorised instruction' },
+  { rx: /id\b|identification|passport|driver|utility bill/i,
+    label: 'They need identification' },
+  { rx: /premium|arrears|outstanding balance|payment/i,
+    label: 'There is a payment or premium question to settle' },
+  { rx: /in progress|being processed|will process|revert|shortly|next week/i,
+    label: 'In progress — they have given a timeframe, not an answer' },
+  { rx: /on hold|suspend|pending approval|awaiting/i,
+    label: 'Parked pending something on their side' }
+];
+
+/* Plain-language read of a reply: verdict, what they are asking, what to do. */
+function qpReadReply_(text) {
+  var t = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!t) return { verdict: 'unclear', asks: [], action: 'Open the thread and read the reply.', owed: true };
+  var verdict = (typeof classifyReply_ === 'function') ? classifyReply_(t) : 'unclear';
+  var asks = [];
+  for (var i = 0; i < QP_ASKS.length; i++) if (QP_ASKS[i].rx.test(t)) asks.push(QP_ASKS[i].label);
+  var action, owed = true;
+  if (verdict === 'resolved' && !asks.length) {
+    action = 'Looks resolved. Confirm, tell the client, and close the case.';
+    owed = false;                      // a resolution is the one reply we do not owe same-day
+  } else if (asks.length) {
+    action = 'Send what they asked for today, on this thread — then the case moves again.';
+  } else if (verdict === 'blocked') {
+    action = 'They are waiting on something. Reply today confirming who is doing what.';
+  } else {
+    action = 'Reply today acknowledging, so the department knows we have it.';
+  }
+  return { verdict: verdict, asks: asks, action: action, owed: owed,
+           quote: t.length > 220 ? t.substring(0, 220) + '…' : t };
+}
+
+/* Writes the insight onto the case trail so a human opening the case sees it. */
+function qpReplyInsight_(ref, text, who) {
+  var read = qpReadReply_(text);
+  var head = read.verdict === 'resolved' ? '✅ Department replied — reads as resolved'
+           : (read.asks.length ? '📌 Department replied — they need something from us'
+                               : '💬 Department replied');
+  var lines = [head];
+  if (read.asks.length) lines.push('What they are asking: ' + read.asks.join('; '));
+  lines.push('Next step: ' + read.action);
+  if (who) lines.push('From: ' + who);
+  try {
+    cmtSheet_().appendRow([new Date(), ref, 'Query Pal', 'system', lines.join('\n'), 'internal']);
+  } catch (e) {}
+  return read;
+}
+
+/* --- (c) the reply WE owe -------------------------------------------------- */
+
+function qpEmailForName_(name) {
+  var key = normName_(name);
+  if (!key) return '';
+  for (var c in AGENT_ACCESS) {
+    var e = AGENT_ACCESS[c] || [];
+    if (normName_(e[0]) === key) return String(e[1] || '');
+  }
+  try {
+    var tab = codeTable_();
+    for (var t = 0; t < tab.length; t++) if (normName_(tab[t].name) === key) return String(tab[t].email || '');
+  } catch (te) {}
+  return '';
+}
+
+function qpOwedMarker_(desc) {
+  var m = String(desc || '').match(/owed-nudge:(\d+)/);
+  return m ? parseInt(m[1]) : 0;
+}
+function qpSetOwedMarker_(sh, r, desc, n) {
+  var d = String(desc || '');
+  var next = /owed-nudge:\d+/.test(d) ? d.replace(/owed-nudge:\d+/, 'owed-nudge:' + n)
+                                      : (d + (d ? ' | ' : '') + 'owed-nudge:' + n);
+  try { sh.getRange(r + 1, 19).setValue(next); } catch (e) {}
+  return next;
+}
+
+/* Did anyone from our side answer the thread after the department wrote? */
+function qpBranchAnswered_(row, since) {
+  var subject = String(row[5] || '') + ' - ' + String(row[17] || '');
+  var res = qpFindThread_(row[0], row[14], subject);
+  if (!res.thread) return null;                       // unknown — do not nudge on a guess
+  try {
+    var ms = res.thread.getMessages(), me = String(Session.getActiveUser().getEmail() || '').toLowerCase();
+    for (var i = ms.length - 1; i >= 0; i--) {
+      var when = ms[i].getDate();
+      if (!when || when.getTime() <= since.getTime()) break;
+      var from = String(ms[i].getFrom() || '').toLowerCase();
+      if (me && from.indexOf(me) > -1) return true;
+      if (from.indexOf('querypal') > -1 || from.indexOf(String(BRANCH_SUPPORT).toLowerCase()) > -1) continue;
+      if (from.indexOf(String(row[10] || '').toLowerCase()) > -1 && row[10]) return true;   // the agent
+    }
+  } catch (e) { return null; }
+  return false;
+}
+
+function qpOwedNotify_(row, n, read, toMail, ccMail) {
+  var ref = String(row[0] || ''), client = String(row[5] || ''), qtype = String(row[12] || '');
+  var dept = String(row[13] || ''), who = String(row[28] || row[9] || 'the branch');
+  var F = 'font-family:Segoe UI,Helvetica,Arial,sans-serif;';
+  var bar = n >= QP_OWED_MGR_AFTER ? '#b3261e' : '#dd7a02';
+  var asks = (read && read.asks && read.asks.length)
+    ? '<ul style="margin:6px 0 0;padding-left:18px;">' + read.asks.map(function (a) {
+        return '<li style="' + F + 'font-size:13px;color:#0a2138;">' + esc(a) + '</li>'; }).join('') + '</ul>'
+    : '';
+  var html = '<div style="background:#eef6fc;padding:26px 12px;' + F + '">'
+    + '<div style="max-width:560px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;'
+    + 'border:1px solid #e1ebf4;box-shadow:0 12px 30px rgba(8,42,76,.12);">'
+    + '<div style="background:' + bar + ';padding:14px 22px;color:#fff;font-weight:800;font-size:14px;">'
+    + (n >= QP_OWED_MGR_AFTER ? 'Still unanswered — manager copied' : 'A department is waiting on us')
+    + '</div>'
+    + '<div style="padding:20px 22px;' + F + 'font-size:13.5px;color:#0a2138;line-height:1.65;">'
+    + '<b>' + esc(who) + '</b>, ' + esc(dept) + ' replied on this case and we have not answered.'
+    + '<div style="background:#fff7e8;border-left:4px solid ' + bar + ';border-radius:8px;padding:11px 14px;margin:13px 0;">'
+    + '<div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;color:#9a6a1c;">What they need</div>'
+    + (asks || '<div style="font-size:13px;margin-top:4px;">' + esc(read && read.action ? read.action : 'Read the thread and reply.') + '</div>')
+    + '</div>'
+    + '<div style="font-size:13px;"><b>Next step:</b> ' + esc(read && read.action ? read.action : 'Reply on the thread today.') + '</div>'
+    + '<div style="background:#0a2f4f;border-radius:10px;padding:11px 14px;margin:14px 0 0;">'
+    + '<div style="font-size:9px;color:#9fc9ec;font-weight:800;letter-spacing:.2em;text-transform:uppercase;">Reference</div>'
+    + '<div style="font-family:Consolas,monospace;font-size:12.5px;font-weight:700;color:#fff;margin-top:3px;word-break:break-all;">' + esc(ref) + '</div></div>'
+    + '<div style="font-size:12px;color:#5e7a93;margin-top:12px;">' + esc(client) + ' · ' + esc(qtype)
+    + ' · replies to a department are expected the same day, unless the reply is a resolution.</div>'
+    + '</div></div></div>';
+  var msg = { to: (TEST_MODE ? TEST_EMAIL : toMail), replyTo: BRANCH_SUPPORT, name: 'RR Branch Query Pal',
+    subject: (TEST_MODE ? '[TEST] ' : '') + 'Waiting on us — ' + qtype + ' · ' + client,
+    body: dept + ' replied on ' + ref + ' and we have not answered.\n\n'
+        + (read && read.asks && read.asks.length ? 'They need: ' + read.asks.join('; ') + '\n' : '')
+        + 'Next step: ' + (read && read.action ? read.action : 'Reply on the thread today.'),
+    htmlBody: html };
+  if (!TEST_MODE && ccMail) msg.cc = ccMail;
+  MailApp.sendEmail(msg);
+}
+
+/* Called once per open row from autoSweep (edit 16). Returns true if it acted. */
+function qpOwedSweep_(sh, r, row, now) {
+  var replied = row[27] ? new Date(row[27]) : null;          // Dept Replied stamp (col AB)
+  if (!replied || isNaN(replied)) return false;
+  var read = qpReadReply_(String(row[18] || ''));            // best available text
+  if (!read.owed) return false;                              // a resolution owes nothing
+  var wd = (typeof workedDaysSince_ === 'function') ? workedDaysSince_(replied)
+         : Math.floor((now - replied) / 86400000);
+  if (wd < QP_OWED_GRACE_WD) return false;                   // same day: leave people alone
+  var sent = qpOwedMarker_(row[18]);
+  if (sent >= QP_OWED_MAX) return false;
+  if (sent >= wd) return false;                              // one nudge per working day, at most
+  var answered = qpBranchAnswered_(row, replied);
+  if (answered === true || answered === null) return false;  // answered, or we cannot tell
+  var who = String(row[28] || row[9] || '');
+  var to = qpEmailForName_(who) || String(row[10] || '') || BRANCH_SUPPORT;
+  var cc = '';
+  if (wd >= QP_OWED_MGR_AFTER) {
+    try { cc = qpManagerFor_(row[9]); } catch (e) { cc = ''; }
+    if (!cc) cc = BRANCH_SUPPORT;
+  }
+  try {
+    qpOwedNotify_(row, sent + 1, read, to, cc);
+    qpSetOwedMarker_(sh, r, row[18], sent + 1);
+    cmtSheet_().appendRow([new Date(), row[0], 'Query Pal', 'system',
+      '⏰ Reminder ' + (sent + 1) + ' of ' + QP_OWED_MAX + ' sent to ' + (who || 'the branch')
+      + ' — the department is waiting on our reply' + (cc ? ' (manager copied)' : ''), 'internal']);
+    return true;
+  } catch (e) { return false; }
+}
