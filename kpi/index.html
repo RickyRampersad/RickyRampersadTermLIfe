@@ -59,10 +59,20 @@ const fnFor=(r)=>r==="bma"?BMA_FUNCTIONS:SSA_FUNCTIONS;
 
 const STANDARDS=["Completed applications to Head Office within 2 days of receipt.","Policy documents processed with 100% accuracy.","Documents to the relevant party within 1 day of receipt.","A rolled due date is not an actioned task — log the genuine blocker + owner.","\"Waiting on someone\" needs a named person and the date last chased.","Value Added is logged every day — even if the honest entry is \"None today\"."];
 
-const BLOCKS_DEFAULT=[{id:"kpi1",label:"KPI 1",time:"8–10 am"},{id:"kpi2",label:"KPI 2",time:"10–12 pm"},{id:"pm1",label:"Afternoon 1",time:"1–3 pm"},{id:"pm2",label:"Afternoon 2",time:"3–4 pm"}];
-const BLOCKS_9TO5=[{id:"kpi1",label:"KPI 1",time:"9–11 am"},{id:"kpi2",label:"KPI 2",time:"11–1 pm"},{id:"pm1",label:"Afternoon 1",time:"2–3:30 pm"},{id:"pm2",label:"Afternoon 2",time:"3:30–5 pm"}];
-const BLOCKS=BLOCKS_DEFAULT;
-const blocksFor=(staffId)=>profileFor(staffId).shift==="nine"?BLOCKS_9TO5:BLOCKS_DEFAULT;
+// The four blocks, in order. Their times and what each is for come from the
+// branch schedule the Apps Script serves — the same DILO the BMA has been
+// emailing out every morning. One copy, held where the reports read it.
+const BLOCK_ORDER=[{id:"kpi1",col:"KPI1",label:"KPI 1"},{id:"kpi2",col:"KPI2",label:"KPI 2"},
+  {id:"pm1",col:"PM1",label:"Afternoon 1"},{id:"pm2",col:"PM2",label:"Afternoon 2"}];
+const BLOCKS=BLOCK_ORDER;
+let SCHEDULE={};
+const schedFor=(staffId)=>SCHEDULE[staffId]||null;
+const blockSched=(staffId,col)=>{const s=schedFor(staffId);return (s&&s.blocks&&s.blocks[col])||{};};
+// Each block carries its own time and focus for this person.
+const blocksFor=(staffId)=>BLOCK_ORDER.map(b=>{
+  const sc=blockSched(staffId,b.col);
+  return {...b,time:sc.time||"",focus:sc.focus||"",kpi:sc.kpi||""};
+});
 // Blocks 1–3 are behind you at the 3pm cut; the last one is still running.
 const CHECKPOINT_BLOCKS=3;
 
@@ -122,13 +132,29 @@ function rowToEntry(row){
     return {...blankBlock(),kpi:g(p),actioned:g(p+"_Actioned"),resolved:g(p+"_Resolved"),openOwned:g(p+"_Open"),blocker,blockerOwner:owner};
   };
   let date=g("Date"); if(date&&date.indexOf("T")>-1)date=date.slice(0,10);
-  return {staffId:g("StaffId"),date,name:g("Name"),grade:g("Grade"),
+  const at={}; BLOCK_ORDER.forEach(b=>{at[b.id]=g(b.col+"_At");});
+  return {staffId:g("StaffId"),date,name:g("Name"),grade:g("Grade"),blockAt:at,
     submitted:g("Status")==="Submitted",
     blocks:{kpi1:blk("KPI1"),kpi2:blk("KPI2"),pm1:blk("PM1"),pm2:blk("PM2")},
     metrics:{closed:g("Closed"),overdue:g("Overdue"),aged60:g("Aged60")},
     valueAdded:g("ValueAdded"),innovation:g("Innovation"),systemFlags:g("SystemFlags"),
     notes:g("Notes"),updatedAt:g("UpdatedAt")};
 }
+// A block whose KPI is still blank gets the one the schedule says it is for,
+// so opening a block is a confirmation rather than a blank page. Anything the
+// person has already chosen — or already reported — is left exactly as it is.
+function withSchedule(entry,staffId){
+  if(!entry) return entry;
+  const blocks={...entry.blocks};
+  BLOCK_ORDER.forEach(b=>{
+    const cur=blocks[b.id]||blankBlock();
+    if(txt(cur.kpi)) return;
+    const want=blockSched(staffId,b.col).kpi;
+    if(want) blocks[b.id]={...cur,kpi:want,prefilled:true};
+  });
+  return {...entry,blocks};
+}
+
 // A day's training lives in its own register. Put it back on the form when the
 // day is re-opened — submitting again rewrites those rows from what is on
 // screen, so anything not loaded back would be erased.
@@ -149,7 +175,18 @@ function withTraining(entry,training){
   });
   return {...entry,blocks};
 }
-const blocksDone=(e)=>BLOCKS.reduce((n,b)=>{const d=e.blocks?.[b.id];return n+((d&&(txt(d.kpi)||txt(d.actioned)))?1:0);},0);
+const blockWorked=(e,bid)=>{
+  if(txt(e?.blockAt?.[bid])) return true;             // it was submitted
+  const d=e?.blocks?.[bid]; if(!d) return false;
+  if(txt(d.actioned)||txt(d.resolved)||txt(d.openOwned)) return true;
+  return txt(d.kpi)&&!d.prefilled;                    // a KPI they chose, not one we did
+};
+const blocksDone=(e)=>BLOCK_ORDER.reduce((n,b)=>n+(blockWorked(e,b.id)?1:0),0);
+const blockTime=(e,bid)=>{
+  const raw=txt(e?.blockAt?.[bid]); if(!raw) return "";
+  const d=new Date(raw); if(isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+};
 const blockersOf=(e)=>BLOCKS.map(b=>({b,d:e.blocks?.[b.id]})).filter(x=>x.d&&(txt(x.d.blocker)||txt(x.d.blockerOwner)))
   .map(x=>({block:x.b.label,kpi:x.d.kpi||"",text:[txt(x.d.blocker),txt(x.d.blockerOwner)].filter(Boolean).join(" · ")}));
 const trainingCount=(e)=>BLOCKS.reduce((n,b)=>n+((e.blocks?.[b.id]?.kpi)==="Training delivered"?1:0),0);
@@ -176,7 +213,9 @@ function App(){
   const [rows,setRows]=useState([]);
   const [training,setTraining]=useState([]);
   const [loading,setLoading]=useState(false);
-  const [saveState,setSaveState]=useState({tone:"idle",text:""});
+  const [blockState,setBlockState]=useState({});   // per block: idle|saving|ok|bad
+  const [dayState,setDayState]=useState({tone:"idle",text:""});
+  const [openBlock,setOpenBlock]=useState(null);
   const [reviewDate,setReviewDate]=useState(todayISO());
   const [weekOf,setWeekOf]=useState(weekStartOf(todayISO()));
   const [trendStaff,setTrendStaff]=useState(null);
@@ -192,7 +231,7 @@ function App(){
       if(!token){ setBooting(false); return; }
       const r=await api("me",{token});
       if(off) return;
-      if(r.ok){ setMe(r.profile); setRoster(r.roster||[]); }
+      if(r.ok){ setMe(r.profile); setRoster(r.roster||[]); if(r.schedule) SCHEDULE=r.schedule; }
       else { storeToken(""); setToken(""); }
       setBooting(false);
     })();
@@ -204,7 +243,8 @@ function App(){
     if(!token) return;
     setLoading(true);
     const r=await api("rows",{token});
-    if(r.ok){ setRows(r.rows||[]); setTraining(r.training||[]); if(r.roster) setRoster(r.roster); }
+    if(r.ok){ setRows(r.rows||[]); setTraining(r.training||[]); if(r.roster) setRoster(r.roster);
+      if(r.schedule) SCHEDULE=r.schedule; }
     else if(r.authRequired){ signOut(); }
     setLoading(false);
   },[token,signOut]);
@@ -215,42 +255,53 @@ function App(){
   useEffect(()=>{
     if(view!=="entry"||!active) return;
     const found=rows.map(rowToEntry).find(e=>e.staffId===active&&e.date===date);
-    setEntry(withTraining(found||blankEntry(active,date),training));
+    setEntry(withSchedule(withTraining(found||blankEntry(active,date),training),active));
   },[view,active,date,rows,training]);
 
   const patchBlock=(bid,f,v)=>setEntry(e=>({...e,blocks:{...e.blocks,[bid]:{...e.blocks[bid],[f]:v}}}));
   const patchMetric=(f,v)=>setEntry(e=>({...e,metrics:{...e.metrics,[f]:v}}));
 
-  // Submit. Reports what actually happened — no more silent "Saved ✓".
-  async function submitDay(){
-    if(!entry||saveState.tone==="saving") return;
+  // A block goes in on its own, the moment it ends. The reply says what
+  // actually happened — and the staff member gets their own copy by email.
+  async function submitBlock(b){
+    if(!entry||blockState[b.id]?.tone==="saving") return;
     const prof=profileFor(active);
     const person=roster.find(p=>p.staffId===active);
-    setSaveState({tone:"saving",text:"Submitting…"});
-    const res=await api("save",{
-      token,
-      staffId:active,
-      date:entry.date,
-      name:person?person.name:(me?me.name:""),
-      grade:prof.grade,
-      submitted:true,
-      blocks:entry.blocks,
-      metrics:entry.metrics,
-      valueAdded:entry.valueAdded,
-      innovation:entry.innovation,
-      systemFlags:entry.systemFlags,
-      notes:entry.notes
+    setBlockState(s=>({...s,[b.id]:{tone:"saving",text:"Sending…"}}));
+    const res=await api("saveBlock",{
+      token, staffId:active, date:entry.date, block:b.col,
+      name:person?person.name:(me?me.name:""), grade:prof.grade,
+      data:entry.blocks[b.id]||blankBlock(),
+      valueAdded:entry.valueAdded, innovation:entry.innovation,
+      systemFlags:entry.systemFlags, notes:entry.notes, metrics:entry.metrics
     });
     if(res.ok){
-      setEntry(e=>({...e,submitted:true}));
-      setSaveState({tone:"ok",text:res.upserted?"Updated ✓":"Logged ✓"});
+      setBlockState(s=>({...s,[b.id]:{tone:"ok",
+        text:"Sent "+(res.at||"")+" · "+res.blocksDone+"/4 in · copy emailed to you"}}));
       loadRows();
-      setTimeout(()=>setSaveState({tone:"idle",text:""}),2600);
-    }else if(res.authRequired){
-      signOut();
-    }else{
-      setSaveState({tone:"bad",text:res.error||"Did not save."});
-    }
+      setTimeout(()=>setBlockState(s=>({...s,[b.id]:{tone:"idle",text:""}})),6000);
+    }else if(res.authRequired){ signOut(); }
+    else{ setBlockState(s=>({...s,[b.id]:{tone:"bad",text:res.error||"Did not send."}})); }
+  }
+
+  // The day's own fields. Saved on their own so they never overwrite a block.
+  async function saveDay(){
+    if(!entry||dayState.tone==="saving") return;
+    const prof=profileFor(active);
+    const person=roster.find(p=>p.staffId===active);
+    setDayState({tone:"saving",text:"Saving…"});
+    const res=await api("saveDay",{
+      token, staffId:active, date:entry.date,
+      name:person?person.name:(me?me.name:""), grade:prof.grade,
+      metrics:entry.metrics, valueAdded:entry.valueAdded,
+      innovation:entry.innovation, systemFlags:entry.systemFlags, notes:entry.notes
+    });
+    if(res.ok){
+      setDayState({tone:"ok",text:"Saved ✓"});
+      loadRows();
+      setTimeout(()=>setDayState({tone:"idle",text:""}),2600);
+    }else if(res.authRequired){ signOut(); }
+    else{ setDayState({tone:"bad",text:res.error||"Did not save."}); }
   }
 
   if(booting) return <Splash text="Checking your session…"/>;
@@ -313,7 +364,8 @@ function App(){
         {visible.map(p=>{
           const today=entries.find(e=>e.staffId===p.staffId&&e.date===todayISO());
           return <PersonRow key={p.staffId} p={p} today={today}
-            onOpen={()=>{setActive(p.staffId);setDate(todayISO());setSaveState({tone:"idle",text:""});setView("entry");}}
+            onOpen={()=>{setActive(p.staffId);setDate(todayISO());setBlockState({});
+              setDayState({tone:"idle",text:""});setOpenBlock(null);setView("entry");}}
             onTrend={()=>{setTrendStaff(p.staffId);setView("trend");}}/>;
         })}
 
@@ -325,49 +377,117 @@ function App(){
       </div>
     </Shell>);
 
-  // ---- entry --------------------------------------------------------------
+  // ---- entry: one block at a time -----------------------------------------
   if(view==="entry"&&active){
     const prof=profileFor(active);
     const person=roster.find(p=>p.staffId===active);
+    const sched=schedFor(active);
     const opts=fnFor(prof.role);
     const mine=me.manager||me.staffId===active;
     if(!mine) return <Denied onBack={()=>setView("home")}/>;
+    const blocks=blocksFor(active);
+    const done=entry?blocksDone(entry):0;
+
     return(
     <Shell>
       <SubHeader title={person?person.name:active} sub={prof.grade} tenure={prof.tenure} onBack={()=>setView("home")}/>
-      <div style={{padding:"0 18px 124px"}}>
+      <div style={{padding:"0 18px 40px"}}>
         <div style={dateBar}>
           <label style={{fontSize:12,color:MUTED,fontWeight:700}}>Reporting day</label>
           <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={dateInput}/>
         </div>
-        {loading&&!entry?<p style={{color:MUTED,padding:24,textAlign:"center"}}>Loading…</p>:!entry?null:(<React.Fragment>
-          {entry.submitted&&<div style={banner}>Already logged for this day — change anything and submit again. It updates the same row rather than adding another.</div>}
 
-          {blocksFor(active).map(b=>{const bl=entry.blocks[b.id]||blankBlock();return(
-            <div key={b.id} style={card}>
-              <div style={cardHead}><span style={cardTitle}>{b.label}</span><span style={cardTime}>{b.time}</span></div>
-              <Field label="KPI worked"><select value={bl.kpi} onChange={e=>patchBlock(b.id,"kpi",e.target.value)} style={selectBox}><option value="">Select…</option>{opts.map(k=><option key={k} value={k}>{k}</option>)}</select></Field>
-              <Field label="Actioned"><textarea rows={2} value={bl.actioned} onChange={e=>patchBlock(b.id,"actioned",e.target.value)} placeholder="In your own words — names, counts, cases" style={ta}/></Field>
-              <Field label="Resolved / closed"><textarea rows={2} value={bl.resolved} onChange={e=>patchBlock(b.id,"resolved",e.target.value)} placeholder="What is genuinely complete" style={ta}/></Field>
-              <Field label="Still open & owned by you"><textarea rows={2} value={bl.openOwned} onChange={e=>patchBlock(b.id,"openOwned",e.target.value)} placeholder="Carried forward" style={ta}/></Field>
-              <div style={grid2}>
-                <Field label="Blocker (if waiting)"><input value={bl.blocker} onChange={e=>patchBlock(b.id,"blocker",e.target.value)} placeholder="Genuine blocker" style={inp}/></Field>
-                <Field label="Waiting on (named) + last chased"><input value={bl.blockerOwner} onChange={e=>patchBlock(b.id,"blockerOwner",e.target.value)} placeholder="Name + date" style={inp}/></Field>
-              </div>
-              {bl.kpi==="Training delivered"&&(<div style={trainBox}>
-                <div style={{fontSize:11,fontWeight:800,letterSpacing:0.8,textTransform:"uppercase",color:GOLD,marginBottom:8}}>Training record</div>
-                <Field label="Who you trained"><input value={bl.tr_trainee} onChange={e=>patchBlock(b.id,"tr_trainee",e.target.value)} placeholder="Trainee name(s)" style={inp}/></Field>
-                <Field label="Topic / what was covered"><textarea rows={2} value={bl.tr_topic} onChange={e=>patchBlock(b.id,"tr_topic",e.target.value)} placeholder="e.g. Premium-due processing, end to end" style={ta}/></Field>
-                <Field label="Objectives set vs met"><textarea rows={2} value={bl.tr_objectives} onChange={e=>patchBlock(b.id,"tr_objectives",e.target.value)} placeholder="What they should be able to do — and whether they can now" style={ta}/></Field>
-                <Field label="What was achieved"><textarea rows={2} value={bl.tr_achieved} onChange={e=>patchBlock(b.id,"tr_achieved",e.target.value)} placeholder="Concrete outcome of the session" style={ta}/></Field>
-                <div style={grid2}>
-                  <Field label="Test / check done?"><select value={bl.tr_test} onChange={e=>patchBlock(b.id,"tr_test",e.target.value)} style={selectBox}><option value="">Select…</option><option value="Yes - passed">Yes — passed</option><option value="Yes - needs more">Yes — needs more practice</option><option value="No - not yet">No — not yet</option></select></Field>
-                  <Field label="Result / score"><input value={bl.tr_result} onChange={e=>patchBlock(b.id,"tr_result",e.target.value)} placeholder="e.g. 5/6, or notes" style={inp}/></Field>
+        {sched&&<div style={dayStrip}>
+          <div>
+            <div style={{fontSize:11,fontWeight:800,letterSpacing:1,textTransform:"uppercase",color:GOLD}}>Your day</div>
+            <div style={{fontSize:12.5,color:"#E9E6DD",marginTop:2}}>{sched.hours} · lunch {sched.lunch}</div>
+          </div>
+          <div style={{display:"flex",gap:4}}>
+            {blocks.map(b=>{
+              const t=entry?blockTime(entry,b.id):"";
+              const filled=entry&&blockWorked(entry,b.id);
+              return <div key={b.id} title={b.label} style={{width:26,height:26,borderRadius:7,
+                background:(t||filled)?GREEN:"rgba(255,255,255,0.16)",color:"#fff",fontSize:11,
+                fontWeight:800,display:"grid",placeItems:"center"}}>{(t||filled)?"✓":"–"}</div>;})}
+          </div>
+        </div>}
+
+        {loading&&!entry?<p style={{color:MUTED,padding:24,textAlign:"center"}}>Loading…</p>:!entry?null:(<React.Fragment>
+          <p style={{fontSize:12.5,color:MUTED,margin:"14px 0 2px",lineHeight:1.5}}>
+            Submit each block as it ends — not at four o'clock from memory. Your KPI is already set
+            from the schedule; change it if the block went elsewhere.
+          </p>
+
+          {blocks.map(b=>{
+            const bl=entry.blocks[b.id]||blankBlock();
+            const at=blockTime(entry,b.id);
+            const filled=blockWorked(entry,b.id);
+            const st=blockState[b.id]||{tone:"idle",text:""};
+            const open=openBlock===b.id;
+            return(
+            <div key={b.id} style={{...card,padding:0,overflow:"hidden",
+              borderLeft:"4px solid "+((at||filled)?GREEN:LINE)}}>
+              <button onClick={()=>setOpenBlock(open?null:b.id)} style={blockHead}>
+                <div style={{textAlign:"left"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <span style={{fontSize:14,fontWeight:800,color:NAVY}}>{b.label}</span>
+                    {b.time&&<span style={{fontSize:11,color:MUTED,fontWeight:600}}>{b.time}</span>}
+                  </div>
+                  {b.focus&&<div style={{fontSize:11.5,color:MUTED,marginTop:2}}>{b.focus}</div>}
                 </div>
-                <Field label="Follow-up / next step"><input value={bl.tr_followup} onChange={e=>patchBlock(b.id,"tr_followup",e.target.value)} placeholder="What happens next / when to re-check" style={inp}/></Field>
-                <p style={{fontSize:11,color:MUTED,margin:"4px 0 0",lineHeight:1.4}}>This is kept as its own line in the training register, so the branch has a record of who was trained on what.</p>
-              </div>)}
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  {at?<span style={pillOutline(GREEN)}>Sent {at}</span>
+                     :filled?<span style={pillOutline(AMBER)}>Unsent</span>
+                     :<span style={{fontSize:11,color:MUTED,fontWeight:700}}>Open</span>}
+                  <span style={{color:GOLD,fontSize:16,fontWeight:700}}>{open?"⌄":"›"}</span>
+                </div>
+              </button>
+
+              {open&&<div style={{padding:"0 14px 14px"}}>
+                <Field label="KPI worked">
+                  <select value={bl.kpi} onChange={e=>patchBlock(b.id,"kpi",e.target.value)} style={selectBox}>
+                    <option value="">Select…</option>
+                    {opts.map(k=><option key={k} value={k}>{k}</option>)}
+                  </select>
+                </Field>
+                <Field label="Actioned"><textarea rows={2} value={bl.actioned} onChange={e=>patchBlock(b.id,"actioned",e.target.value)} placeholder="In your own words — names, counts, cases" style={ta}/></Field>
+                <Field label="Resolved / closed"><textarea rows={2} value={bl.resolved} onChange={e=>patchBlock(b.id,"resolved",e.target.value)} placeholder="What is genuinely complete" style={ta}/></Field>
+                <Field label="Still open & owned by you"><textarea rows={2} value={bl.openOwned} onChange={e=>patchBlock(b.id,"openOwned",e.target.value)} placeholder="Carried forward" style={ta}/></Field>
+                <div style={grid2}>
+                  <Field label="Blocker (if waiting)"><input value={bl.blocker} onChange={e=>patchBlock(b.id,"blocker",e.target.value)} placeholder="Genuine blocker" style={inp}/></Field>
+                  <Field label="Waiting on (named) + last chased"><input value={bl.blockerOwner} onChange={e=>patchBlock(b.id,"blockerOwner",e.target.value)} placeholder="Name + date" style={inp}/></Field>
+                </div>
+
+                {bl.kpi==="Training delivered"&&(<div style={trainBox}>
+                  <div style={{fontSize:11,fontWeight:800,letterSpacing:0.8,textTransform:"uppercase",color:GOLD,marginBottom:8}}>Training record</div>
+                  <Field label="Who you trained"><input value={bl.tr_trainee} onChange={e=>patchBlock(b.id,"tr_trainee",e.target.value)} placeholder="Trainee name(s)" style={inp}/></Field>
+                  <Field label="Topic / what was covered"><textarea rows={2} value={bl.tr_topic} onChange={e=>patchBlock(b.id,"tr_topic",e.target.value)} placeholder="e.g. Premium-due processing, end to end" style={ta}/></Field>
+                  <Field label="Objectives set vs met"><textarea rows={2} value={bl.tr_objectives} onChange={e=>patchBlock(b.id,"tr_objectives",e.target.value)} placeholder="What they should be able to do — and whether they can now" style={ta}/></Field>
+                  <Field label="What was achieved"><textarea rows={2} value={bl.tr_achieved} onChange={e=>patchBlock(b.id,"tr_achieved",e.target.value)} placeholder="Concrete outcome of the session" style={ta}/></Field>
+                  <div style={grid2}>
+                    <Field label="Test / check done?"><select value={bl.tr_test} onChange={e=>patchBlock(b.id,"tr_test",e.target.value)} style={selectBox}><option value="">Select…</option><option value="Yes - passed">Yes — passed</option><option value="Yes - needs more">Yes — needs more practice</option><option value="No - not yet">No — not yet</option></select></Field>
+                    <Field label="Result / score"><input value={bl.tr_result} onChange={e=>patchBlock(b.id,"tr_result",e.target.value)} placeholder="e.g. 5/6, or notes" style={inp}/></Field>
+                  </div>
+                  <Field label="Follow-up / next step"><input value={bl.tr_followup} onChange={e=>patchBlock(b.id,"tr_followup",e.target.value)} placeholder="What happens next / when to re-check" style={inp}/></Field>
+                </div>)}
+
+                <div style={{display:"flex",alignItems:"center",gap:10,marginTop:4}}>
+                  <div style={{flex:1,fontSize:12.5,fontWeight:700,lineHeight:1.35,
+                    color:st.tone==="bad"?RED:st.tone==="ok"?GREEN:MUTED}}>
+                    {st.text||(at?"Sent at "+at+" — submitting again updates it.":"")}
+                  </div>
+                  <button onClick={()=>submitBlock(b)} disabled={st.tone==="saving"}
+                    style={{...submitBtn,padding:"11px 18px",opacity:st.tone==="saving"?0.65:1}}>
+                    {st.tone==="saving"?"Sending…":at?"Update block":"Submit block"}
+                  </button>
+                </div>
+              </div>}
             </div>);})}
+
+          <SectionLabel>The day</SectionLabel>
+          <p style={{fontSize:11.5,color:MUTED,margin:"0 0 10px",lineHeight:1.45}}>
+            These belong to the day rather than any one block. Save them once, whenever you have them.
+          </p>
 
           <div style={card}>
             <div style={cardHead}><span style={cardTitle}>Task position · Salesforce</span></div>
@@ -395,20 +515,19 @@ function App(){
             <Field label="System issue to flag"><input value={entry.systemFlags} onChange={e=>setEntry(x=>({...x,systemFlags:e.target.value}))} placeholder="What broke + who you flagged it to" style={inp}/></Field>
             <Field label="Note for the Branch Manager"><textarea rows={2} value={entry.notes} onChange={e=>setEntry(x=>({...x,notes:e.target.value}))} placeholder="Optional" style={ta}/></Field>
           </div>
+
+          <div style={{display:"flex",alignItems:"center",gap:10,marginTop:2}}>
+            <div style={{flex:1,fontSize:12.5,fontWeight:700,
+              color:dayState.tone==="bad"?RED:dayState.tone==="ok"?GREEN:MUTED}}>
+              {dayState.text||done+" of 4 blocks in"}
+            </div>
+            <button onClick={saveDay} disabled={dayState.tone==="saving"}
+              style={{...dayBtn,padding:"11px 18px",opacity:dayState.tone==="saving"?0.65:1}}>
+              {dayState.tone==="saving"?"Saving…":"Save the day"}
+            </button>
+          </div>
         </React.Fragment>)}
       </div>
-
-      {entry&&<div style={footer}>
-        <div style={{flex:1}}>
-          {saveState.text&&<div style={{fontSize:12.5,fontWeight:700,lineHeight:1.35,
-            color:saveState.tone==="bad"?RED:saveState.tone==="ok"?GREEN:MUTED}}>{saveState.text}</div>}
-          {!saveState.text&&<div style={{fontSize:11.5,color:MUTED,lineHeight:1.35}}>{blocksDone(entry)}/4 blocks filled</div>}
-        </div>
-        <button onClick={submitDay} disabled={saveState.tone==="saving"}
-          style={{...submitBtn,opacity:saveState.tone==="saving"?0.65:1}}>
-          {saveState.tone==="saving"?"Submitting…":entry.submitted?"Update day":"Submit day"}
-        </button>
-      </div>}
     </Shell>);}
 
   // ---- 3pm checkpoint -----------------------------------------------------
@@ -793,7 +912,7 @@ function Login({onIn}){
     setBusy(true); setErr("");
     const r=await api("login",{who:who.trim(),password:pw});
     setBusy(false);
-    if(r.ok) onIn(r.token,r.profile,r.roster);
+    if(r.ok){ if(r.schedule) SCHEDULE=r.schedule; onIn(r.token,r.profile,r.roster); }
     else setErr(r.error||"Could not sign you in.");
   }
 
@@ -989,6 +1108,8 @@ const grid2={display:"grid",gridTemplateColumns:"1fr 1fr",gap:10};
 const grid3={display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10};
 const grid3row={display:"grid",gridTemplateColumns:"1fr 1fr 1fr",borderBottom:"1px solid "+LINE};
 const footer={position:"sticky",bottom:0,display:"flex",gap:10,alignItems:"center",padding:"12px 18px",background:"rgba(247,245,239,0.96)",borderTop:"1px solid "+LINE,backdropFilter:"blur(6px)"};
+const dayBtn={background:"#fff",color:NAVY,border:"1.5px solid "+NAVY,borderRadius:11,
+  padding:"13px 18px",fontSize:14,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"};
 const submitBtn={background:NAVY,color:"#fff",border:"none",borderRadius:11,padding:"13px 22px",fontSize:14,fontWeight:800,cursor:"pointer"};
 const trainBox={background:"#FBF8EF",border:"1px solid "+GOLD,borderRadius:10,padding:"12px 13px",marginTop:6,marginBottom:4};
 const banner={background:GOLD_SOFT,border:"1px solid "+GOLD,borderRadius:10,padding:"10px 12px",fontSize:12,color:NAVY_DEEP,marginBottom:12,lineHeight:1.4};
@@ -996,6 +1117,10 @@ const statRow={display:"flex",gap:7,marginTop:16};
 const goldBtn={background:GOLD,color:NAVY_DEEP,border:"none",borderRadius:9,padding:"9px 14px",fontSize:13,fontWeight:700,cursor:"pointer"};
 const ghostBtn={background:"rgba(255,255,255,0.12)",border:"1px solid rgba(255,255,255,0.3)",color:"#fff",borderRadius:9,padding:"9px 12px",fontSize:13,fontWeight:700,cursor:"pointer"};
 const navBtn={background:"rgba(255,255,255,0.12)",border:"1px solid rgba(255,255,255,0.25)",color:"#fff",borderRadius:9,padding:"9px 10px",fontSize:12.5,fontWeight:700,cursor:"pointer"};
+const dayStrip={display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,
+  background:NAVY_DEEP,borderRadius:12,padding:"12px 14px",marginTop:12};
+const blockHead={display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",
+  background:"none",border:"none",padding:"13px 14px",cursor:"pointer",gap:10};
 const trendChip={background:"#F0EEE6",color:NAVY,border:"1px solid "+LINE,borderRadius:20,padding:"4px 11px",fontSize:11,fontWeight:700,cursor:"pointer"};
 const pill=(bg,fg)=>({fontSize:11,fontWeight:700,color:fg,background:bg,borderRadius:20,padding:"3px 10px"});
 const pillOutline=(c)=>({fontSize:11,fontWeight:700,color:c,border:"1px solid "+c,borderRadius:20,padding:"3px 10px"});

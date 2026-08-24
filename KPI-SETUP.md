@@ -177,6 +177,49 @@ That first tab is left exactly as it is either way. The new training register is
 a separate tab, `KPI Training`, and records something different: who delivered
 training to whom, on what, and whether it was tested.
 
+## Reporting after each block
+
+The tracker now takes a block at a time. This is the thing that has been asked
+for since 21 August — *"please amend to have reporting done after each KPI as
+customary"* — and it is why the entry screen looks different.
+
+Each person opens their own day and sees their four blocks, with the times and
+the focus straight off the DILO: Ashley's 9–10 is *Client Portfolio creation,
+Macros, Surveys*, her 10–1 is *Scripts / Clawbacks / Servicing Lines*. The KPI
+for the block is already chosen, so opening a block is a confirmation rather
+than a blank page. They write what they did and press **Submit block**.
+
+That block, and only that block, is written. The other three are untouched, and
+the day is still one row. A block submitted at 10:04 is stamped 10:04, so the
+3pm report reads what was actually done by 3pm rather than what someone recalls
+at four o'clock.
+
+**The schedule lives in the script**, in `SCHEDULE` near the top of `KPI.gs` —
+hours, lunch, and what each block is for, per person. The app reads it from
+there. Changing somebody's day is one edit in one place, and it stops the DILO
+being retyped into a mail every morning. Anyone not listed gets neutral blocks
+and an empty KPI.
+
+### Who gets emailed, and when
+
+| | When | Who | What |
+|---|---|---|---|
+| Block receipt | on every Submit block | the person who submitted | their own words back, and how many blocks are in |
+| Midday nudge | weekdays 12:00 | anyone whose morning is blank | which morning blocks are outstanding |
+| 3pm chase | weekdays 15:00 | anyone short of blocks 1–3 | what is missing, and a request for the final block |
+| 3pm Checkpoint | weekdays 15:00 | you | the branch at the cut |
+| Weekly Summary | Friday 17:00 | you | the week against the week before |
+
+The receipt is the thing to paste into the branch group — no retyping what they
+just wrote.
+
+**A person who is up to date is never written to.** The nudges look at what has
+actually been submitted and skip anyone who is current. A reminder that arrives
+when you have already done the thing is how people learn to ignore reminders.
+
+`Pawan Probhu` is on the DILO but not on the Access tab, so he is not in the
+app and gets none of this. Add him to Access if he should be.
+
 ## What changed
 
 **Submit now tells you the truth.** It used to post with `mode: "no-cors"`,

@@ -94,12 +94,93 @@ function trainingSheet_() {
 
 var BLOCK_IDS = ['KPI1', 'KPI2', 'PM1', 'PM2'];
 
+// ---------------------------------------------------------------------------
+//  The branch day
+//  Straight off the DILO tables the BMA has been emailing out every morning.
+//  Holding it here means the app can show each person their own blocks and
+//  what each one is for — so the schedule stops being retyped into a mail
+//  every day, and the report lines up with the block it belongs to.
+//
+//  'focus' is what that block is for, in the words the team already uses.
+//  'kpi' is the matching entry in the person's KPI list, pre-selected on the
+//  form so a block is a confirmation rather than a blank page.
+// ---------------------------------------------------------------------------
+var SCHEDULE = {
+  sasha: {
+    hours: '8am – 4pm', lunch: '12:30 – 1:30pm',
+    blocks: {
+      KPI1: { time: '8 – 10am',  focus: 'Premium Dues / Surveys',                    kpi: 'Pending / Lapse / Follow-ups' },
+      KPI2: { time: '10 – 12pm', focus: 'Ind. Health Billing Recon / Send Off',      kpi: 'Issues Resolution / Future Payments (Arrears)' },
+      PM1:  { time: '1 – 3pm',   focus: 'Adopt an Orphan / Service Quest. / Quotations', kpi: 'Orphan Adoption Listing' },
+      PM2:  { time: '3 – 4pm',   focus: 'Task Mgmt / Branch Meeting Reports',        kpi: 'Reporting' }
+    }
+  },
+  azariah: {
+    hours: '8am – 4pm', lunch: '12:00 – 1:00pm',
+    blocks: {
+      KPI1: { time: '8 – 10am',  focus: 'Pendings, Increases, Group Apps / Production', kpi: 'Pending / Lapse / Follow-ups' },
+      KPI2: { time: '10 – 12pm', focus: 'Reinstatements / Lapse Mgmt / Reporting',   kpi: 'Reinstatements / Re-dates / Increments' },
+      PM1:  { time: '1 – 3pm',   focus: 'Query Pal Management / Survey Mgmt',        kpi: 'Surveys / Query Pal' },
+      PM2:  { time: '3 – 4pm',   focus: 'Task Mgmt / Branch Meeting Reports',        kpi: 'Reporting' }
+    }
+  },
+  ashley: {
+    hours: '9am – 5pm', lunch: '1:00 – 2:00pm',
+    blocks: {
+      KPI1: { time: '9 – 10am',  focus: 'Client Portfolio creation, Macros, Surveys', kpi: 'Client Portfolios / Macros' },
+      KPI2: { time: '10 – 1pm',  focus: 'Scripts / Clawbacks / Servicing Lines',     kpi: 'Scripts / Clawbacks' },
+      PM1:  { time: '2 – 3pm',   focus: 'Mail Management',                            kpi: 'Mail Management / Contracts' },
+      PM2:  { time: '3 – 5pm',   focus: 'Claims / Maturities / Surveys & Task Mgmt', kpi: 'Claims / Maturities' }
+    }
+  },
+  kamla: {
+    hours: '8am – 4pm', lunch: 'Flexible',
+    blocks: {
+      KPI1: { time: '8 – 9am',   focus: 'HR, SA, RECR, CB',                          kpi: 'New Agent Activity (Recruitment / OFT / Licensing)' },
+      KPI2: { time: '10 – 12pm', focus: 'BM Client Mgt / RR Oper / General lines',   kpi: 'Administrative Support' },
+      PM1:  { time: '1 – 3pm',   focus: 'Escalations / New Recruit Training',        kpi: 'Escalations' },
+      PM2:  { time: '3 – 4pm',   focus: 'Task Mgmt / Branch Meeting Reports',        kpi: 'Reporting (Production / RDAR)' }
+    }
+  },
+  elizabeth: {
+    hours: '8am – 4pm', lunch: 'Flexible',
+    blocks: {
+      KPI1: { time: '8 – 10am',  focus: 'Branch Intelligence / Query Pal',           kpi: 'Surveys / Query Pal' },
+      KPI2: { time: '10 – 12pm', focus: 'New Application Oversight',                 kpi: 'New Application Oversight' },
+      PM1:  { time: '1 – 3pm',   focus: 'Administrative Support',                    kpi: 'Administrative Support' },
+      PM2:  { time: '3 – 4pm',   focus: 'Task Mgmt / Reporting',                     kpi: 'Reporting (Production / RDAR)' }
+    }
+  }
+};
+
+var DEFAULT_SCHEDULE = {
+  hours: '8am – 4pm', lunch: 'Flexible',
+  blocks: {
+    KPI1: { time: '8 – 10am',  focus: 'KPI Block 1', kpi: '' },
+    KPI2: { time: '10 – 12pm', focus: 'KPI Block 2', kpi: '' },
+    PM1:  { time: '1 – 3pm',   focus: 'Afternoon 1', kpi: '' },
+    PM2:  { time: '3 – 4pm',   focus: 'Afternoon 2', kpi: '' }
+  }
+};
+
+function scheduleFor_(staffId) { return SCHEDULE[staffId] || DEFAULT_SCHEDULE; }
+
+/** Blocks that should be behind a person by this hour of the branch day.
+ *  The morning pair are due by noon; the third by 3, when the checkpoint runs. */
+var BLOCK_DUE_HOUR = { KPI1: 10, KPI2: 12, PM1: 15, PM2: 16 };
+
+function blockLabel_(p) {
+  return { KPI1: 'KPI 1', KPI2: 'KPI 2', PM1: 'Afternoon 1', PM2: 'Afternoon 2' }[p] || p;
+}
+
+
 var LOG_HEADERS = ['Timestamp', 'Date', 'StaffId', 'Name', 'Grade', 'Status']
   .concat(BLOCK_IDS.reduce(function (a, p) {
     return a.concat([p, p + '_Actioned', p + '_Resolved', p + '_Open', p + '_Blocker']);
   }, []))
   .concat(['Closed', 'Overdue', 'Aged60', 'ValueAdded', 'Innovation', 'SystemFlags', 'Notes',
-           'UpdatedAt', 'Revision']);
+           'UpdatedAt', 'Revision'])
+  .concat(BLOCK_IDS.map(function (p) { return p + '_At'; }));
 
 var TRAINING_HEADERS = ['TrainingDate', 'StaffId', 'Trainer', 'Block', 'Trainee', 'Topic',
                         'Objectives', 'Achieved', 'Test', 'Result', 'Followup', 'LoggedAt'];
@@ -108,7 +189,9 @@ var TRAINING_HEADERS = ['TrainingDate', 'StaffId', 'Trainer', 'Block', 'Trainee'
  *  disturbing a single cell of what is already recorded. */
 function ensureLogColumns_(sh) {
   var head = headerOf_(sh);
-  ['UpdatedAt', 'Revision'].forEach(function (col) {
+  ['UpdatedAt', 'Revision']
+    .concat(BLOCK_IDS.map(function (p) { return p + '_At'; }))
+    .forEach(function (col) {
     if (head.indexOf(col) === -1) {
       sh.getRange(1, sh.getLastColumn() + 1).setValue(col);
       head.push(col);
@@ -297,7 +380,8 @@ function login_(who, password) {
 
   clearFailures_(key);
   var t = issueToken_(person);
-  return { ok: true, token: t.token, profile: t.profile, roster: publicRoster_() };
+  return { ok: true, token: t.token, profile: t.profile,
+           roster: publicRoster_(), schedule: SCHEDULE };
 }
 
 /** The roster minus the passwords. This is the only shape that leaves here. */
@@ -430,6 +514,195 @@ function saveEntry_(payload, profile) {
   } finally {
     lock.releaseLock();
   }
+}
+
+/** One block, submitted on its own, the moment it ends.
+ *
+ *  This is the change the Branch Manager has been asking for since 21 August:
+ *  reporting after each KPI block, not a single entry typed from memory at
+ *  4pm. Each block writes only its own five columns and stamps its own time,
+ *  so the day builds up as it is worked and the 3pm checkpoint reads what
+ *  actually happened by 3pm rather than what someone recalls afterwards.
+ *
+ *  The day's row is still one row. A block never disturbs its neighbours. */
+function saveBlock_(payload, profile) {
+  var staffId = profile.manager && payload.staffId ? payload.staffId : profile.staffId;
+  var date = isoDay_(payload.date);
+  var blockId = String(payload.block || '').toUpperCase();
+  if (!staffId || !date) return { ok: false, error: 'Missing staff or date.' };
+  if (BLOCK_IDS.indexOf(blockId) === -1) return { ok: false, error: 'Unknown block: ' + blockId };
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var sh = logSheet_();
+    var head = headerOf_(sh);
+    var idx = colMap_(sh);
+    var now = new Date();
+    var d = payload.data || {};
+
+    var targetRow = 0, revision = 0;
+    if (sh.getLastRow() > 1) {
+      var vals = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
+      for (var i = 0; i < vals.length; i++) {
+        var sid = String(vals[i][idx['StaffId']] || '').trim() || staffIdFor_(vals[i][idx['Name']]);
+        if (sid === staffId && isoDay_(vals[i][idx['Date']]) === date) {
+          targetRow = i + 2;
+          revision = Number(vals[i][idx['Revision']]) || 0;
+          break;
+        }
+      }
+    }
+
+    // The block's own cells, plus anything the day carries that came with it.
+    var patch = {};
+    patch[blockId] = d.kpi || '';
+    patch[blockId + '_Actioned'] = d.actioned || '';
+    patch[blockId + '_Resolved'] = d.resolved || '';
+    patch[blockId + '_Open'] = d.openOwned || '';
+    patch[blockId + '_Blocker'] = joinBlocker_(d.blocker, d.blockerOwner);
+    patch[blockId + '_At'] = now;
+    patch.UpdatedAt = now;
+    patch.Revision = revision + 1;
+    patch.Status = 'Submitted';
+
+    // Day-level fields ride along with whichever block carries them.
+    ['valueAdded:ValueAdded', 'innovation:Innovation', 'systemFlags:SystemFlags', 'notes:Notes']
+      .forEach(function (pair) {
+        var k = pair.split(':');
+        if (payload[k[0]] != null && String(payload[k[0]]).trim() !== '') patch[k[1]] = payload[k[0]];
+      });
+    if (payload.metrics) {
+      if (payload.metrics.closed !== '' && payload.metrics.closed != null) patch.Closed = numOrBlank_(payload.metrics.closed);
+      if (payload.metrics.overdue !== '' && payload.metrics.overdue != null) patch.Overdue = numOrBlank_(payload.metrics.overdue);
+      if (payload.metrics.aged60 !== '' && payload.metrics.aged60 != null) patch.Aged60 = numOrBlank_(payload.metrics.aged60);
+    }
+
+    if (targetRow) {
+      // Touch only the columns this block owns; leave every other cell alone.
+      Object.keys(patch).forEach(function (col) {
+        if (idx[col] != null) sh.getRange(targetRow, idx[col] + 1).setValue(patch[col]);
+      });
+    } else {
+      patch.Timestamp = now;
+      patch.Date = date;
+      patch.StaffId = staffId;
+      patch.Name = payload.name || profile.name;
+      patch.Grade = payload.grade || '';
+      sh.appendRow(head.map(function (h) { return (h in patch) ? patch[h] : ''; }));
+      targetRow = sh.getLastRow();
+    }
+
+    saveBlockTraining_(staffId, date, payload.name || profile.name, blockId, d, now);
+
+    var done = blocksSubmittedOn_(staffId, date);
+    emailBlockReceipt_(staffId, date, blockId, d, payload, done);
+
+    return {
+      ok: true,
+      block: blockId,
+      at: Utilities.formatDate(now, CONFIG.TZ, 'HH:mm'),
+      blocksDone: done.length,
+      submitted: done
+    };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/** The day's own fields — task position, value added, the idea, the flag.
+ *  They belong to the day rather than to any one block, so they save on their
+ *  own and never overwrite a block that has already been reported. */
+function saveDay_(payload, profile) {
+  var staffId = profile.manager && payload.staffId ? payload.staffId : profile.staffId;
+  var date = isoDay_(payload.date);
+  if (!staffId || !date) return { ok: false, error: 'Missing staff or date.' };
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var sh = logSheet_();
+    var head = headerOf_(sh);
+    var idx = colMap_(sh);
+    var now = new Date();
+
+    var targetRow = 0, revision = 0;
+    if (sh.getLastRow() > 1) {
+      var vals = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
+      for (var i = 0; i < vals.length; i++) {
+        var sid = String(vals[i][idx['StaffId']] || '').trim() || staffIdFor_(vals[i][idx['Name']]);
+        if (sid === staffId && isoDay_(vals[i][idx['Date']]) === date) {
+          targetRow = i + 2;
+          revision = Number(vals[i][idx['Revision']]) || 0;
+          break;
+        }
+      }
+    }
+
+    var m = payload.metrics || {};
+    var patch = {
+      Closed: numOrBlank_(m.closed), Overdue: numOrBlank_(m.overdue), Aged60: numOrBlank_(m.aged60),
+      ValueAdded: payload.valueAdded || '', Innovation: payload.innovation || '',
+      SystemFlags: payload.systemFlags || '', Notes: payload.notes || '',
+      UpdatedAt: now, Revision: revision + 1
+    };
+
+    if (targetRow) {
+      Object.keys(patch).forEach(function (col) {
+        if (idx[col] != null) sh.getRange(targetRow, idx[col] + 1).setValue(patch[col]);
+      });
+    } else {
+      patch.Timestamp = now; patch.Date = date; patch.StaffId = staffId;
+      patch.Name = payload.name || profile.name; patch.Grade = payload.grade || '';
+      patch.Status = 'Submitted';
+      sh.appendRow(head.map(function (h) { return (h in patch) ? patch[h] : ''; }));
+    }
+    return { ok: true, saved: 'day' };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/** Which blocks carry a submission stamp for this person and day. */
+function blocksSubmittedOn_(staffId, date) {
+  var out = [];
+  latestEntries_().forEach(function (e) {
+    if (e.StaffId !== staffId || e.Date !== date) return;
+    BLOCK_IDS.forEach(function (p) {
+      if (e[p + '_At'] || hasText_(e[p]) || hasText_(e[p + '_Actioned'])) out.push(p);
+    });
+  });
+  return out;
+}
+
+/** Training for one block only — the other blocks' sessions stay put. */
+function saveBlockTraining_(staffId, date, trainer, blockId, d, now) {
+  var sh = trainingSheet_();
+  var head = headerOf_(sh);
+  var idx = colMap_(sh);
+
+  if (sh.getLastRow() > 1) {
+    var vals = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
+    for (var i = vals.length - 1; i >= 0; i--) {
+      if (String(vals[i][idx['StaffId']] || '').trim() === staffId &&
+          isoDay_(vals[i][idx['TrainingDate']]) === date &&
+          String(vals[i][idx['Block']] || '').trim() === blockId) {
+        sh.deleteRow(i + 2);
+      }
+    }
+  }
+
+  var any = d.tr_trainee || d.tr_topic || d.tr_objectives || d.tr_achieved ||
+            d.tr_test || d.tr_result || d.tr_followup;
+  if (!any) return;
+  var o = {
+    TrainingDate: date, StaffId: staffId, Trainer: trainer, Block: blockId,
+    Trainee: d.tr_trainee || '', Topic: d.tr_topic || '',
+    Objectives: d.tr_objectives || '', Achieved: d.tr_achieved || '',
+    Test: d.tr_test || '', Result: d.tr_result || '',
+    Followup: d.tr_followup || '', LoggedAt: now
+  };
+  sh.appendRow(head.map(function (h) { return (h in o) ? o[h] : ''; }));
 }
 
 /** Client block ids are kpi1/kpi2/pm1/pm2; columns are KPI1/KPI2/PM1/PM2. */
@@ -585,6 +858,13 @@ function checkpointReport_(date) {
       systemFlags: e && hasText_(e.SystemFlags) ? String(e.SystemFlags) : '',
       notes: e && hasText_(e.Notes) ? String(e.Notes) : '',
       blockers: e ? openBlockers_(e) : [],
+      blockTimes: BLOCK_IDS.map(function (b) {
+        return {
+          block: b, label: blockLabel_(b),
+          at: e && e[b + '_At'] ? Utilities.formatDate(new Date(e[b + '_At']), CONFIG.TZ, 'HH:mm') : '',
+          filled: !!(e && (hasText_(e[b]) || hasText_(e[b + '_Actioned'])))
+        };
+      }),
       updatedAt: e && e.UpdatedAt ? Utilities.formatDate(new Date(e.UpdatedAt), CONFIG.TZ, 'HH:mm') : ''
     };
   });
@@ -776,7 +1056,7 @@ function handle_(action, data, token) {
 
   switch (action) {
     case 'me':
-      return { ok: true, profile: profile, roster: publicRoster_() };
+      return { ok: true, profile: profile, roster: publicRoster_(), schedule: SCHEDULE };
 
     case 'rows': {
       // Staff see their own days. The manager sees the branch.
@@ -794,7 +1074,8 @@ function handle_(action, data, token) {
         tr = tr.filter(function (t) { return t.StaffId === profile.staffId; });
       }
       tr.forEach(function (t) { if (t.LoggedAt) t.LoggedAt = String(t.LoggedAt); });
-      return { ok: true, rows: rows, training: tr, profile: profile, roster: publicRoster_() };
+      return { ok: true, rows: rows, training: tr, profile: profile,
+               roster: publicRoster_(), schedule: SCHEDULE };
     }
 
     case 'training': {
@@ -813,6 +1094,12 @@ function handle_(action, data, token) {
     case 'weekly':
       if (!profile.manager) return { ok: false, error: 'Branch Manager only.' };
       return { ok: true, report: weeklyReport_(data.date) };
+
+    case 'saveBlock':
+      return saveBlock_(data, profile);
+
+    case 'saveDay':
+      return saveDay_(data, profile);
 
     case 'save':
       return saveEntry_(data, profile);
@@ -1107,9 +1394,9 @@ function sendWeekly(dateOpt) {
 
 /** Run once from the editor. Safe to re-run: it clears its own triggers first. */
 function installTriggers() {
+  var mine = ['sendCheckpoint', 'sendWeekly', 'remindMidday', 'remindCheckpoint'];
   ScriptApp.getProjectTriggers().forEach(function (t) {
-    var fn = t.getHandlerFunction();
-    if (fn === 'sendCheckpoint' || fn === 'sendWeekly') ScriptApp.deleteTrigger(t);
+    if (mine.indexOf(t.getHandlerFunction()) > -1) ScriptApp.deleteTrigger(t);
   });
 
   // 3pm checkpoint, Monday to Friday. Apps Script fires within the hour, so
@@ -1119,11 +1406,20 @@ function installTriggers() {
       .onWeekDay(ScriptApp.WeekDay[d]).atHour(CONFIG.CHECKPOINT_HOUR).create();
   });
 
+  // Staff nudges. Noon for a blank morning, three for an unfinished day.
+  ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'].forEach(function (d) {
+    ScriptApp.newTrigger('remindMidday').timeBased()
+      .onWeekDay(ScriptApp.WeekDay[d]).atHour(12).create();
+    ScriptApp.newTrigger('remindCheckpoint').timeBased()
+      .onWeekDay(ScriptApp.WeekDay[d]).atHour(CONFIG.CHECKPOINT_HOUR).create();
+  });
+
   // Weekly summary, Friday evening once the day is in.
   ScriptApp.newTrigger('sendWeekly').timeBased()
     .onWeekDay(ScriptApp.WeekDay.FRIDAY).atHour(17).create();
 
-  var msg = 'Triggers installed. Checkpoint weekdays at ' + CONFIG.CHECKPOINT_HOUR +
+  var msg = 'Triggers installed. Staff nudges weekdays at 12:00 and ' +
+            CONFIG.CHECKPOINT_HOUR + ':00, branch checkpoint ' + CONFIG.CHECKPOINT_HOUR +
             ':00, weekly summary Friday 17:00 (' + CONFIG.TZ + ').';
   Logger.log(msg);
   return msg;
@@ -1132,3 +1428,178 @@ function installTriggers() {
 /** Preview either report in the editor without emailing anyone. */
 function previewCheckpoint() { Logger.log(checkpointHtml_(checkpointReport_())); }
 function previewWeekly() { Logger.log(weeklyHtml_(weeklyReport_())); }
+
+// ---------------------------------------------------------------------------
+//  What the staff member gets back
+//  A block is submitted and the record of it lands in their own inbox. It is
+//  their copy — the thing to forward, or to paste into the branch group —
+//  without anybody re-typing what they just wrote.
+// ---------------------------------------------------------------------------
+
+function emailFor_(staffId) {
+  var p = roster_().filter(function (x) { return x.staffId === staffId; })[0];
+  return p && p.email ? p.email : '';
+}
+
+function nameFor_(staffId) {
+  var p = roster_().filter(function (x) { return x.staffId === staffId; })[0];
+  return p && p.name ? p.name : staffId;
+}
+
+function line_(label, value, tone) {
+  if (!hasText_(value)) return '';
+  return '<div style="margin-top:7px">' +
+    '<div style="font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:' +
+      (tone || MAIL.muted) + '">' + esc_(label) + '</div>' +
+    '<div style="font-size:13.5px;line-height:1.5;color:' + MAIL.ink + '">' + esc_(value) + '</div>' +
+  '</div>';
+}
+
+function emailBlockReceipt_(staffId, date, blockId, d, payload, done) {
+  var to = emailFor_(staffId);
+  if (!to) return;
+
+  var sched = scheduleFor_(staffId).blocks[blockId] || {};
+  var remaining = BLOCK_IDS.filter(function (p) { return done.indexOf(p) === -1; });
+
+  var progress = BLOCK_IDS.map(function (p) {
+    var on = done.indexOf(p) > -1;
+    return '<td align="center" style="padding:0 3px">' +
+      '<div style="background:' + (on ? MAIL.green : '#E4E0D6') + ';border-radius:5px;height:26px;' +
+        'line-height:26px;color:' + (on ? '#fff' : MAIL.muted) + ';font-size:10.5px;font-weight:700">' +
+        (on ? '✓' : '–') + '</div>' +
+      '<div style="font-size:9px;color:' + MAIL.muted + ';margin-top:3px">' + esc_(blockLabel_(p)) + '</div></td>';
+  }).join('');
+
+  var body =
+    '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.gold +
+      ';border-radius:10px;padding:14px 16px">' +
+      '<div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:' + MAIL.gold + '">' +
+        esc_(blockLabel_(blockId)) + (sched.time ? ' · ' + esc_(sched.time) : '') + '</div>' +
+      '<div style="font-size:16px;font-weight:800;margin-top:3px">' + esc_(d.kpi || sched.focus || '—') + '</div>' +
+      line_('Actioned', d.actioned) +
+      line_('Resolved / closed', d.resolved, MAIL.green) +
+      line_('Still open & owned by you', d.openOwned, MAIL.amber) +
+      line_('Blocked', joinBlocker_(d.blocker, d.blockerOwner), MAIL.red) +
+      (d.tr_trainee || d.tr_topic
+        ? line_('Training delivered', (d.tr_trainee || '?') + ' — ' + (d.tr_topic || '') +
+            (d.tr_test ? ' · Test: ' + d.tr_test + (d.tr_result ? ' (' + d.tr_result + ')' : '') : ''), MAIL.green)
+        : '') +
+    '</div>' +
+
+    (payload && (hasText_(payload.valueAdded) || hasText_(payload.innovation) || hasText_(payload.systemFlags))
+      ? '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:12px 16px;margin-top:9px">' +
+          line_('Value added', payload.valueAdded, MAIL.gold) +
+          line_('Idea', payload.innovation, MAIL.navy) +
+          line_('System flag', payload.systemFlags, MAIL.red) +
+        '</div>'
+      : '') +
+
+    sectionLabel_('Your day so far') +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>' + progress + '</tr></table>' +
+    '<div style="font-size:13px;color:' + MAIL.muted + ';margin-top:12px;line-height:1.5">' +
+      (remaining.length
+        ? 'Still to come: <b style="color:' + MAIL.ink + '">' +
+          esc_(remaining.map(blockLabel_).join(', ')) + '</b>. Submit each one as it ends.'
+        : 'All four blocks are in for today. Nothing further needed.') +
+    '</div>';
+
+  MailApp.sendEmail({
+    to: to,
+    subject: 'Your ' + blockLabel_(blockId) + ' report · ' + shortDate_(date) +
+             ' · ' + done.length + '/4 blocks in',
+    htmlBody: shell_(blockLabel_(blockId) + ' logged', nameFor_(staffId) + ' · ' + prettyDate_(date), body)
+  });
+}
+
+// ---------------------------------------------------------------------------
+//  Nudges
+//  Two, and only two. A quiet morning gets one at noon; an unfinished day gets
+//  one at three. Anyone already up to date is not written to at all — a
+//  reminder that arrives when you have done the thing teaches people to ignore
+//  reminders.
+// ---------------------------------------------------------------------------
+
+function nudge_(staffId, date, missing, heading, message) {
+  var to = emailFor_(staffId);
+  if (!to) return false;
+  var sched = scheduleFor_(staffId);
+
+  var rows = missing.map(function (p) {
+    var b = sched.blocks[p] || {};
+    return '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.amber +
+      ';border-radius:9px;padding:11px 14px;margin-bottom:8px">' +
+      '<div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:' + MAIL.amber + '">' +
+        esc_(blockLabel_(p)) + (b.time ? ' · ' + esc_(b.time) : '') + '</div>' +
+      '<div style="font-size:14px;margin-top:2px">' + esc_(b.focus || '') + '</div>' +
+    '</div>';
+  }).join('');
+
+  MailApp.sendEmail({
+    to: to,
+    subject: heading + ' · ' + shortDate_(date),
+    htmlBody: shell_(heading, nameFor_(staffId) + ' · ' + prettyDate_(date),
+      '<div style="background:' + MAIL.paper + ';border:1px solid ' + MAIL.gold +
+        ';border-radius:10px;padding:13px 15px;font-size:14px;line-height:1.55;margin-bottom:16px">' +
+        message + '</div>' +
+      sectionLabel_('Outstanding') + rows +
+      '<div style="font-size:13px;color:' + MAIL.muted + ';line-height:1.55;margin-top:6px">' +
+        'Report each block as it ends — not at four o\'clock from memory. ' +
+        'It takes a minute per block and it is what the 3pm branch report reads from.' +
+      '</div>')
+  });
+  return true;
+}
+
+/** Noon. Anyone whose morning is still blank hears about it while the
+ *  afternoon can still be salvaged. */
+function remindMidday() {
+  var date = todayISO_();
+  var people = publicRoster_().filter(function (p) { return !p.manager; });
+  var sent = [];
+
+  people.forEach(function (p) {
+    var done = blocksSubmittedOn_(p.staffId, date);
+    var morning = ['KPI1', 'KPI2'].filter(function (b) { return done.indexOf(b) === -1; });
+    if (morning.length === 0) return;                 // up to date; say nothing
+    if (nudge_(p.staffId, date, morning, 'KPI blocks outstanding',
+        morning.length === 2
+          ? 'Nothing has been logged for this morning yet. Both morning blocks are still open.'
+          : 'One morning block is still outstanding.')) {
+      sent.push(p.name);
+    }
+  });
+
+  var msg = sent.length
+    ? 'Midday reminder sent to: ' + sent.join(', ')
+    : 'Midday reminder: everyone is up to date, nothing sent.';
+  Logger.log(msg);
+  return msg;
+}
+
+/** Three o'clock. Blocks 1–3 should be behind them; the last runs to 4.
+ *  Whoever is short gets the list, and is asked for the day's close-off. */
+function remindCheckpoint() {
+  var date = todayISO_();
+  var people = publicRoster_().filter(function (p) { return !p.manager; });
+  var sent = [];
+
+  people.forEach(function (p) {
+    var done = blocksSubmittedOn_(p.staffId, date);
+    var due = ['KPI1', 'KPI2', 'PM1'].filter(function (b) { return done.indexOf(b) === -1; });
+    if (due.length === 0) return;
+    if (nudge_(p.staffId, date, due, 'Your daily report is outstanding',
+        'It is past three. ' + (done.length
+          ? 'You have ' + done.length + ' of 4 blocks in — the ones below are still missing.'
+          : 'Nothing has been logged for today at all.') +
+        ' Please close these off, and submit your final block before you leave.')) {
+      sent.push(p.name);
+    }
+  });
+
+  var msg = sent.length
+    ? '3pm chase sent to: ' + sent.join(', ')
+    : '3pm chase: everyone is up to date, nothing sent.';
+  Logger.log(msg);
+  return msg;
+}
