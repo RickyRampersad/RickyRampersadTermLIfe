@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Record the Andrew narration</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#08131f;color:#eaf3fb;font:15px/1.6 'Segoe UI',system-ui,sans-serif;
+    padding:26px 20px 70px}
+  .wrap{max-width:780px;margin:0 auto}
+  h1{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
+  .sub{color:#8fb0cd;margin-bottom:22px}
+  .card{background:#102133;border:1px solid #1d3550;border-radius:12px;padding:18px 20px;margin-bottom:14px}
+  label{display:block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#7f9dbb;
+    font-weight:700;margin-bottom:7px}
+  select,button{font:inherit}
+  select{width:100%;background:#0a1a2b;color:#eaf3fb;border:1px solid #1d3550;border-radius:8px;
+    padding:10px 12px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  button{background:linear-gradient(135deg,#38BDF8,#0b6ab4);color:#04223b;font-weight:700;
+    border:0;border-radius:9px;padding:12px 22px;cursor:pointer}
+  button.ghost{background:transparent;color:#9dc0dd;border:1px solid #1d3550}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  #log{font:12.5px/1.7 ui-monospace,Menlo,monospace;color:#8fb0cd;background:#0a1a2b;
+    border:1px solid #1d3550;border-radius:9px;padding:13px 15px;max-height:260px;overflow:auto;
+    white-space:pre-wrap;margin-top:14px}
+  .warn{background:#3a2410;border-color:#6b4413;color:#f5cf9a}
+  .ok{color:#5fdcb4}
+  ol{margin:10px 0 0 20px} li{margin:5px 0;color:#b9d2e8}
+  code{background:#0a1a2b;padding:2px 6px;border-radius:4px;font-size:.9em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Record the Andrew narration</h1>
+  <p class="sub">Open this page <strong>in Microsoft Edge on Windows</strong> — that is where the
+  Andrew voice lives. It reads the script aloud, records it, and saves one audio file per line.</p>
+
+  <div class="card warn">
+    <strong>Before you press start</strong>
+    <ol>
+      <li>Use <strong>Edge</strong>, not Chrome — Andrew is a Microsoft voice.</li>
+      <li>Be connected to the internet: the natural voices stream from Microsoft.</li>
+      <li>When the browser asks to <strong>share audio</strong>, choose <strong>This tab</strong>
+          and tick <strong>Share tab audio</strong>. That is how the voice gets captured.</li>
+      <li>Do not switch tabs while it records.</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <label for="voice">Voice</label>
+    <select id="voice"></select>
+    <div class="row">
+      <button id="test">Test the voice</button>
+      <button id="go">Record all lines</button>
+      <button id="stop" class="ghost" disabled>Stop</button>
+    </div>
+    <div id="log">Loading voices…</div>
+  </div>
+
+  <div class="card">
+    <strong>When it finishes</strong>
+    <p style="color:#b9d2e8;margin-top:6px">Your browser will download one file per line
+    (<code>vo-00.webm</code>, <code>vo-01.webm</code> …). Send those files back and they go
+    straight into the film — the timing is handled at the edit.</p>
+  </div>
+</div>
+
+<script>
+/* The narration script. Index order is the order they are spoken and recorded;
+   the film's timeline matches these indexes exactly. */
+const LINES = [
+  "Every day, someone asks us for something.",
+  "A statement. A claim. A change of address.",
+  "Small things. But never small to the person asking.",
+  "For years, those requests lived in email.",
+  "And email forgets.",
+  "Any update? The honest answer, too often, was: let me check.",
+  "We got tired of saying, let me check.",
+  "So the branch built Query Pal. One place where a request cannot be forgotten.",
+  "One link. Every request logged the moment it is made.",
+  "It already knows the right department, and the day the answer is due.",
+  "From that moment, it is a promise, with a date on it.",
+  "And if the department goes quiet, we don't.",
+  "A reminder goes out. Then a firmer one, on the same email thread.",
+  "And then the branch manager, personally.",
+  "All the while, the client is told exactly where things stand.",
+  "And if a case has to pause, we say so. Nobody is left guessing.",
+  "When it's done, we ask the client how we did.",
+  "Every rating, in their own words.",
+  "And we put the score on the wall, where anyone can see it.",
+  "Nothing hidden. Nothing quietly missed.",
+  "This is how we work.",
+  "Not because a system is impressive,",
+  "but because a promise should be kept.",
+  "Query Pal. From the Rampersad Branch."
+];
+
+const $ = id => document.getElementById(id);
+const log = (m, cls) => { const d = document.createElement('div');
+  if (cls) d.className = cls; d.textContent = m; $('log').appendChild(d);
+  $('log').scrollTop = $('log').scrollHeight; };
+
+let voices = [], stopped = false;
+function loadVoices() {
+  voices = speechSynthesis.getVoices();
+  if (!voices.length) return;
+  const sel = $('voice'); sel.innerHTML = '';
+  // Andrew first, then other natural male voices, then everything else
+  const rank = v => (/andrew/i.test(v.name) ? 0
+                   : /natural/i.test(v.name) && /guy|christopher|eric|brian|steffan|davis/i.test(v.name) ? 1
+                   : /natural/i.test(v.name) ? 2 : 3);
+  voices.sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
+  voices.forEach((v, i) => {
+    const o = document.createElement('option');
+    o.value = i; o.textContent = v.name + '  (' + v.lang + ')';
+    sel.appendChild(o);
+  });
+  $('log').innerHTML = '';
+  const andrew = voices.find(v => /andrew/i.test(v.name));
+  if (andrew) log('Found "' + andrew.name + '" — selected.', 'ok');
+  else log('No Andrew voice on this device. Open this page in Microsoft Edge on Windows, '
+         + 'or pick the closest natural voice above.');
+}
+speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+setTimeout(loadVoices, 600);
+
+function speak(text, voice) {
+  return new Promise(resolve => {
+    const u = new SpeechSynthesisUtterance(text);
+    u.voice = voice; u.lang = voice.lang; u.rate = 0.94; u.pitch = 1; u.volume = 1;
+    u.onend = resolve; u.onerror = resolve;
+    speechSynthesis.speak(u);
+  });
+}
+
+$('test').onclick = async () => {
+  const v = voices[$('voice').value];
+  if (!v) return;
+  await speak('Every request a client makes is a promise. We keep every one.', v);
+};
+
+$('go').onclick = async () => {
+  const v = voices[$('voice').value];
+  if (!v) { log('Pick a voice first.'); return; }
+  let stream;
+  try {
+    // Tab audio is the only way to capture what the speech engine plays.
+    stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+  } catch (e) { log('Screen share was refused — nothing can be recorded without it.'); return; }
+  if (!stream.getAudioTracks().length) {
+    log('No audio track. Re-run and tick "Share tab audio" in the picker.');
+    stream.getTracks().forEach(t => t.stop()); return;
+  }
+  const audioOnly = new MediaStream(stream.getAudioTracks());
+  $('go').disabled = true; $('stop').disabled = false; stopped = false;
+  $('log').innerHTML = '';
+  log('Recording with ' + v.name + '. Do not switch tabs.', 'ok');
+
+  for (let i = 0; i < LINES.length && !stopped; i++) {
+    const rec = new MediaRecorder(audioOnly, { mimeType: 'audio/webm' });
+    const chunks = [];
+    rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+    const done = new Promise(r => rec.onstop = r);
+    rec.start();
+    await new Promise(r => setTimeout(r, 350));      // a little silence to trim against
+    await speak(LINES[i], v);
+    await new Promise(r => setTimeout(r, 450));
+    rec.stop(); await done;
+
+    const blob = new Blob(chunks, { type: 'audio/webm' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'vo-' + String(i).padStart(2, '0') + '.webm';
+    a.click();
+    log('  ' + String(i).padStart(2, '0') + '  ' + Math.round(blob.size / 1024) + ' KB   ' + LINES[i].slice(0, 46));
+    await new Promise(r => setTimeout(r, 500));      // let the download settle
+  }
+  stream.getTracks().forEach(t => t.stop());
+  $('go').disabled = false; $('stop').disabled = true;
+  log(stopped ? 'Stopped.' : 'Done — send the vo-*.webm files back.', 'ok');
+};
+
+$('stop').onclick = () => { stopped = true; speechSynthesis.cancel(); };
+</script>
+</body>
+</html>
