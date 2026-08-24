@@ -85,6 +85,15 @@ for ratings. Embed it as a data URI; never draw a lettered box in its place.
 inaudible — it reads to the viewer as "no music". Run the bed loud and duck it
 to about 40% under narration rather than leaving it quiet throughout.
 
+**Films are drawn, and drawn for a phone.** The cast is stick people in the
+branch colours — client coral, agent blue, staff green, Ricky gold — built by
+one `person(colour, pose, mood)` SVG so the same body reads as calm, stressed,
+typing or cheering. Departments are buildings whose windows light when a
+request lands. Envelopes are drawn paper that arcs between them, bouncing off
+the wrong building and flying true to the right one. Compose for **portrait
+first** — a column of two or three things — then let it spread out on a wide
+screen. Most people will watch this on a phone.
+
 **A film needs a journey.** Six stations along the foot of the frame — Asked,
 Logged, Routed, Chased, Answered, Rated — lit as the story reaches them, so the
 viewer always knows where they are and can feel the distance travelled.

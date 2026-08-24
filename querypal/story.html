@@ -242,6 +242,61 @@ body{
 .plab{display:flex;justify-content:space-between;font-size:9.5px;letter-spacing:.13em;
   text-transform:uppercase;color:#6F8AAC;font-weight:700;margin-top:6px}
 
+/* ══ THE CAST ══════════════════════════════════════════════════════════
+   Drawn, not photographed: stick people in the branch colours, and the
+   departments as buildings. Everything is SVG so it stays sharp on a phone
+   and can be animated limb by limb.                                       */
+.cast{display:flex;align-items:flex-end;justify-content:center;gap:clamp(10px,3vw,44px);
+  width:100%;flex-wrap:wrap}
+.guy{display:flex;flex-direction:column;align-items:center;gap:9px;
+  opacity:0;transform:translateY(20px)}
+.guy.on{animation:noteIn .8s cubic-bezier(.16,1,.3,1) forwards}
+.guy svg{width:var(--w,clamp(74px,13vw,124px));height:auto;overflow:visible}
+.guy .nm2{font-size:clamp(9px,1.3vw,11.5px);letter-spacing:.16em;text-transform:uppercase;
+  font-weight:800;color:#93A9C6;white-space:nowrap}
+.guy.big{--w:clamp(96px,17vw,168px)}
+/* a limb that fidgets — frustration, drawn */
+@keyframes flail{0%,100%{transform:rotate(0)}30%{transform:rotate(-13deg)}65%{transform:rotate(11deg)}}
+.guy.stressed .arms{transform-origin:50px 58px;animation:flail 1.5s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.guy.happy{animation:bob 1.9s ease-in-out infinite}
+.guy.happy.on{animation:noteIn .8s cubic-bezier(.16,1,.3,1) forwards, bob 1.9s ease-in-out 1s infinite}
+
+/* speech and thought */
+.bub{position:relative;background:#fff;color:#14243D;border-radius:14px;padding:10px 14px;
+  font-size:clamp(11.5px,1.6vw,14.5px);font-weight:600;max-width:16em;text-align:center;
+  box-shadow:0 12px 30px rgba(0,0,0,.45);opacity:0;transform:scale(.9) translateY(8px)}
+.bub.on{animation:pop .6s cubic-bezier(.2,1.5,.4,1) forwards}
+.bub::after{content:'';position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);
+  border:9px solid transparent;border-top-color:#fff;border-bottom:0}
+.bub.q{background:var(--coral);color:#fff}
+.bub.q::after{border-top-color:var(--coral)}
+.bub.g2{background:#3FBF8F;color:#04241A}
+.bub.g2::after{border-top-color:#3FBF8F}
+
+/* the town: departments as buildings */
+.town{display:flex;align-items:flex-end;justify-content:center;gap:clamp(6px,1.4vw,16px);
+  width:100%;flex-wrap:wrap}
+.bld{display:flex;flex-direction:column;align-items:center;gap:7px;opacity:0;transform:translateY(18px)}
+.bld.on{animation:noteIn .7s cubic-bezier(.16,1,.3,1) forwards}
+.bld svg{width:var(--bw,clamp(52px,8vw,86px));height:auto}
+.bld .lb4{font-size:clamp(7.5px,1vw,9.5px);letter-spacing:.09em;text-transform:uppercase;
+  font-weight:800;color:#7E93B4;text-align:center;max-width:8em;line-height:1.25}
+.bld .win{fill:#2C4162;transition:fill .5s ease}
+.bld.lit .win{fill:var(--gold)}
+.bld.lit .lb4{color:#F3D79B}
+.bld.lit svg{filter:drop-shadow(0 0 22px rgba(245,185,53,.55))}
+.bld.wrong svg{filter:drop-shadow(0 0 18px rgba(251,113,133,.5))}
+.bld.wrong .win{fill:#7E3040}
+
+/* a paper envelope, drawn, that can be thrown between things */
+.pap{position:absolute;width:clamp(22px,3.4vw,34px);aspect-ratio:4/3;border-radius:3px;
+  background:linear-gradient(150deg,#FFF6F2,#E7D6CE);box-shadow:0 5px 14px rgba(0,0,0,.5);z-index:6}
+.pap::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(150deg,transparent 45%,#C9AFA4 47%,transparent 55%)}
+.stagewrap{position:relative;width:100%;display:flex;flex-direction:column;align-items:center;
+  gap:clamp(14px,3vh,30px)}
+
 /* ── typing into Query Pal: the form fills itself on camera ────────────── */
 .form{width:min(660px,88vw)}
 .fld{margin-bottom:13px}
@@ -453,6 +508,16 @@ body{
 /* On a phone the frame is a third of the width and twice as tall. Reflow the
    wide compositions rather than scaling them down into unreadability. */
 @media (max-width:820px){
+  .cast{gap:6px}
+  .guy{--w:clamp(62px,20vw,96px)}
+  .guy.big{--w:clamp(84px,30vw,130px)}
+  .bld{--bw:clamp(46px,17vw,72px)}
+  .town{gap:5px}
+  .town .bld:nth-child(n+5){display:none}
+  .cast .guy:nth-child(n+5){display:none}
+  .bub{font-size:12px;padding:8px 12px;max-width:88vw}
+  .stagewrap{gap:14px}
+  .half .guy{--w:clamp(56px,18vw,84px)}
   #bars::before,#bars::after{height:0}
   #cap{padding:20px 5vw 12px;white-space:normal;font-size:13px;line-height:1.35}
   #rail{bottom:64px;padding:0 4vw}
@@ -743,6 +808,93 @@ function throwMail(scene, chipIx, delay, back) {
     setTimeout(() => chip.classList.add('hit'), back ? 1050 : 1250);
     if (back) setTimeout(() => chip.classList.remove('hit'), 2300);
   }, delay);
+}
+
+/* ══ drawing the cast ═══════════════════════════════════════════════════
+   One function draws a person: a colour, a pose and a mood. Poses move the
+   arms only, so the same body reads as calm, stressed, typing or cheering. */
+const POSE = {
+  stand:  'M50,60 L27,92  M50,60 L73,92',
+  shrug:  'M50,60 L24,42  M50,60 L76,42',
+  cheer:  'M50,60 L26,22  M50,60 L74,22',
+  type:   'M50,62 L30,86  M50,62 L70,86',
+  point:  'M50,60 L27,92  M50,58 L84,44',
+  phone:  'M50,60 L30,92  M50,58 L62,34',
+};
+const MOUTH = {
+  happy:   'M40,34 Q50,44 60,34',
+  flat:    'M41,36 L59,36',
+  sad:     'M40,40 Q50,30 60,40',
+  worried: 'M40,39 Q45,33 50,38 Q55,43 60,36',
+};
+function person(color, pose, mood, opts) {
+  const o = Object.assign({ name:'', cls:'', prop:'' }, opts || {});
+  return `<div class="guy ${o.cls}">
+    <svg viewBox="-14 0 128 168" fill="none" stroke="${color}" stroke-width="5"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="50" cy="26" r="18" fill="${color}22"/>
+      <circle cx="43" cy="23" r="2.6" fill="${color}" stroke="none"/>
+      <circle cx="57" cy="23" r="2.6" fill="${color}" stroke="none"/>
+      <path d="${MOUTH[mood] || MOUTH.flat}"/>
+      <path d="M50,44 L50,100"/>
+      <g class="arms"><path d="${POSE[pose] || POSE.stand}"/></g>
+      <path d="M50,100 L33,150 M50,100 L67,150"/>
+      ${o.prop}
+    </svg>
+    ${o.name ? `<div class="nm2">${o.name}</div>` : ''}
+  </div>`;
+}
+/* props a figure can hold */
+const PROP = {
+  phone: '<rect x="56" y="26" width="16" height="26" rx="3" fill="#0F1B2E" stroke="#8FB6DA" stroke-width="2.5"/>',
+  desk:  '<path d="M14,88 L86,88" stroke-width="6"/><path d="M22,88 L22,112 M78,88 L78,112" stroke-width="4"/>',
+  bulb:  '<circle cx="50" cy="-12" r="13" fill="#F5B93544" stroke="#F5B935" stroke-width="4"/>'
+       + '<path d="M45,2 L55,2" stroke="#F5B935" stroke-width="4"/>'
+       + '<path d="M50,-32 L50,-38 M31,-12 L25,-12 M69,-12 L75,-12" stroke="#F5B935" stroke-width="3.5"/>',
+};
+function building(name, opts) {
+  const o = Object.assign({ cls:'', tone:'#4C6A99' }, opts || {});
+  const wins = [];
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++)
+    wins.push(`<rect class="win" x="${18 + c * 22}" y="${34 + r * 22}" width="13" height="13" rx="2"/>`);
+  return `<div class="bld ${o.cls}">
+    <svg viewBox="0 0 100 132" aria-hidden="true">
+      <path d="M8,26 L50,4 L92,26 Z" fill="#31456A"/>
+      <rect x="12" y="26" width="76" height="102" rx="4" fill="#1E2E4C" stroke="#3A527C" stroke-width="2"/>
+      ${wins.join('')}
+      <rect x="40" y="106" width="20" height="22" rx="2.5" fill="#2C4162"/>
+    </svg>
+    <div class="lb4">${name}</div></div>`;
+}
+/* throw a drawn envelope from one element to another, inside a wrapper */
+function paperFlight(wrap, fromEl, toEl, delay, opts) {
+  const o = Object.assign({ bounce:false, ms:1500, glow:false }, opts || {});
+  const W = wrap.getBoundingClientRect(), A = fromEl.getBoundingClientRect(), B = toEl.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = 'pap';
+  if (o.glow) el.style.boxShadow = '0 0 22px rgba(240,144,111,.9),0 5px 14px rgba(0,0,0,.5)';
+  el.style.left = (A.left + A.width / 2 - W.left) + 'px';
+  el.style.top  = (A.top + A.height / 2 - W.top) + 'px';
+  el.style.opacity = '0';
+  wrap.appendChild(el);
+  const dx = (B.left + B.width / 2) - (A.left + A.width / 2);
+  const dy = (B.top + B.height / 2) - (A.top + A.height / 2);
+  const arc = -Math.max(40, Math.abs(dx) * 0.34);
+  setTimeout(() => {
+    const frames = o.bounce
+      ? [{ transform:'translate(0,0) rotate(0)', opacity:0 },
+         { transform:`translate(${dx * .5}px,${dy * .5 + arc}px) rotate(140deg)`, opacity:1, offset:.32 },
+         { transform:`translate(${dx}px,${dy}px) rotate(300deg)`, opacity:1, offset:.55 },
+         { transform:`translate(${dx * .55}px,${dy * .55 + arc * .7}px) rotate(400deg)`, opacity:1, offset:.78 },
+         { transform:'translate(0,10px) rotate(520deg)', opacity:0 }]
+      : [{ transform:'translate(0,0) rotate(0)', opacity:0 },
+         { transform:`translate(${dx * .5}px,${dy * .5 + arc}px) rotate(9deg)`, opacity:1, offset:.45 },
+         { transform:`translate(${dx}px,${dy}px) rotate(0)`, opacity:1 }];
+    el.animate(frames, { duration: o.ms, easing:'cubic-bezier(.3,.05,.4,1)', fill:'forwards' });
+    if (!o.bounce) setTimeout(() => el.remove(), o.ms + 900);
+    else setTimeout(() => el.remove(), o.ms + 100);
+  }, delay);
+  return el;
 }
 
 /* type text into an element, character by character, with a live caret */
@@ -1048,6 +1200,184 @@ const SCENES_EXTRA = {
   },
 };
 Object.assign(SCENES, SCENES_EXTRA);
+
+/* ══ THE ILLUSTRATED CUT ═══════════════════════════════════════════════
+   Composed for a phone held upright first — a column of two or three
+   things — and allowed to spread out when there is width to spare.     */
+const C = { client:'#F0906F', agent:'#5EC2F5', staff:'#3FBF8F', boss:'#F5B935', dept:'#8FA6C4' };
+const DEPT4 = ['Customer Service', 'Health Claims', 'Group Admin', 'Underwriting'];
+
+function reveal(scene, sel, gap, start) {
+  [...scene.querySelectorAll(sel)].forEach((e, i) =>
+    setTimeout(() => e.classList.add('on'), (start || 200) + i * (gap || 220)));
+}
+
+const SCENES_CAST = {
+  /* a client asks for something */
+  openMail: () => {
+    const s = newScene(`<div class="stagewrap">
+      <div class="bub" id="b1">“I need my tax statement.”</div>
+      <div class="cast">
+        ${person(C.client, 'point', 'happy', { name:'Client', cls:'big' })}
+        ${person(C.agent, 'stand', 'flat', { name:'Agent' })}
+      </div></div>`);
+    reveal(s, '.guy', 340, 150);
+    setTimeout(() => s.querySelector('#b1').classList.add('on'), 750);
+    return s;
+  },
+  askWhat: () => {
+    const s = newScene(`<div class="stagewrap">
+      <div class="bub" id="b2">A statement. A claim. A change of address.</div>
+      <div class="town">${DEPT4.map(d => building(d)).join('')}</div></div>`);
+    setTimeout(() => s.querySelector('#b2').classList.add('on'), 300);
+    reveal(s, '.bld', 200, 700);
+    return s;
+  },
+  /* which of them? — the agent shrugs at a row of buildings */
+  whereTo: () => {
+    const s = newScene(`<div class="stagewrap">
+      <div class="bub q" id="b3">Which department does this one go to?</div>
+      <div class="cast">${person(C.agent, 'shrug', 'worried', { name:'Agent', cls:'big stressed' })}</div>
+      <div class="town">${DEPT4.map(d => building(d)).join('')}</div></div>`);
+    setTimeout(() => s.querySelector('#b3').classList.add('on'), 400);
+    reveal(s, '.guy', 0, 200);
+    reveal(s, '.bld', 170, 800);
+    return s;
+  },
+  /* guessing: paper thrown at buildings, bouncing back */
+  sixteen: () => {
+    const s = newScene(`<div class="stagewrap" id="w1">
+      <div class="cast">${person(C.agent, 'shrug', 'worried', { name:'Agent', cls:'big stressed' })}</div>
+      <div class="town">${DEPT4.map(d => building(d)).join('')}</div></div>`);
+    reveal(s, '.guy', 0, 100); reveal(s, '.bld', 150, 400);
+    setTimeout(() => {
+      const wrap = s.querySelector('#w1'), from = s.querySelector('.guy svg');
+      const blds = [...s.querySelectorAll('.bld')];
+      [1, 3, 0].forEach((ix, k) => {
+        paperFlight(wrap, from, blds[ix].querySelector('svg'), k * 1150, { bounce:true, ms:1800 });
+        setTimeout(() => { blds[ix].classList.add('wrong');
+          setTimeout(() => blds[ix].classList.remove('wrong'), 1400); }, k * 1150 + 900);
+      });
+    }, 1400);
+    return s;
+  },
+  /* chasing by hand, at a desk, over and over */
+  again: () => {
+    const s = newScene(`<div class="stagewrap">
+      <div class="bub q" id="b4">“Any update?” · “Gentle reminder” · “Third follow-up”</div>
+      <div class="cast">${person(C.agent, 'type', 'sad', { name:'Still chasing', cls:'big stressed', prop:PROP.desk })}</div>
+      <div class="again" style="margin-top:6px">
+        <div class="a">Following up — any update? <em>You</em><div class="t">Mon</div></div>
+        <div class="a">Gentle reminder on this one. <em>You</em><div class="t">Wed</div></div>
+        <div class="a">Still awaiting your response. <em>You</em><div class="t">Fri</div></div>
+      </div></div>`);
+    reveal(s, '.guy', 0, 150);
+    setTimeout(() => s.querySelector('#b4').classList.add('on'), 700);
+    reveal(s, '.again .a', 800, 1200);
+    return s;
+  },
+  /* nobody can see: three confused people, three colours */
+  nobody: () => {
+    const s = newScene(`<div class="stagewrap">
+      <div class="bub q" id="b5">Where is it? Nobody could say.</div>
+      <div class="cast">
+        ${person(C.client, 'shrug', 'worried', { name:'Client', cls:'stressed' })}
+        ${person(C.agent, 'shrug', 'worried', { name:'Agent', cls:'stressed' })}
+        ${person(C.staff, 'shrug', 'worried', { name:'Staff', cls:'stressed' })}
+      </div></div>`);
+    reveal(s, '.guy', 280, 200);
+    setTimeout(() => s.querySelector('#b5').classList.add('on'), 1100);
+    return s;
+  },
+  /* the idea */
+  mckinsey: () => {
+    const s = newScene(`<div class="stagewrap">
+      <div class="cast">${person(C.boss, 'point', 'happy', { name:'Ricky Rampersad', cls:'big', prop:PROP.bulb })}</div>
+      <div class="line sm" style="margin-top:6px">${typeset('“A process you cannot <em>see</em> is a process you cannot <em>fix</em>.”')}</div>
+      </div>`);
+    reveal(s, '.guy', 0, 200);
+    return s;
+  },
+  built: () => { film.classList.add('warm'); sweep(); scoreLift(true);
+    const s = newScene(`<div class="stagewrap">
+      <img class="mark" style="--mk:clamp(88px,15vw,132px)" alt="" src="${LOGO}">
+      <div class="line">${typeset('So he built <em>Query&nbsp;Pal</em>.')}</div>
+      <div class="cast">
+        ${person(C.client, 'stand', 'happy', { name:'Client' })}
+        ${person(C.agent, 'stand', 'happy', { name:'Agent' })}
+        ${person(C.staff, 'stand', 'happy', { name:'Staff' })}
+      </div></div>`);
+    reveal(s, '.guy', 240, 900);
+    return s;
+  },
+  /* one clean flight to the building that is right */
+  sendTrue: () => {
+    const s = newScene(`<div class="stagewrap" id="w2">
+      <div class="cast">${person(C.client, 'phone', 'happy', { name:'One tap', cls:'big', prop:PROP.phone })}</div>
+      <div class="town">${DEPT4.map((d, i) => building(d, { cls:i === 0 ? 'target' : '' })).join('')}</div></div>`);
+    reveal(s, '.guy', 0, 100); reveal(s, '.bld', 150, 400);
+    setTimeout(() => {
+      const wrap = s.querySelector('#w2'), from = s.querySelector('.guy svg');
+      const target = s.querySelector('.bld.target');
+      paperFlight(wrap, from, target.querySelector('svg'), 0, { ms:1700, glow:true });
+      setTimeout(() => { target.classList.add('lit'); sweep(); }, 1650);
+    }, 1300);
+    return s;
+  },
+  /* the chasing happens without the agent */
+  notYou: () => {
+    const s = newScene(`<div class="stagewrap">
+      <div class="bub g2" id="b6">Query Pal chases. The agent doesn’t have to.</div>
+      <div class="cast">
+        ${person(C.agent, 'cheer', 'happy', { name:'Agent', cls:'big happy' })}
+      </div></div>`);
+    reveal(s, '.guy', 0, 150);
+    setTimeout(() => s.querySelector('#b6').classList.add('on'), 800);
+    return s;
+  },
+  lastResort: () => {
+    const s = newScene(`<div class="stagewrap">
+      <div class="cast">
+        ${person(C.boss, 'stand', 'happy', { name:'Branch manager' })}
+      </div>
+      <div class="line sm">${typeset('The last resort —<br>and it <em>almost never</em> gets here.')}</div>
+      </div>`);
+    reveal(s, '.guy', 0, 150);
+    return s;
+  },
+  /* everyone sees it now */
+  beforeAfter: () => {
+    camera(1, 0, 0);
+    const s = newScene(`<div class="split">
+      <div class="half bad">
+        ${person(C.client, 'shrug', 'sad', { name:'', cls:'on stressed' })}
+        <div class="lb2">Before</div>
+        <div class="ln">“Any update on my statement?”<small>Nobody could say.</small></div></div>
+      <div class="arrow">→</div>
+      <div class="half good">
+        ${person(C.client, 'cheer', 'happy', { name:'', cls:'on happy' })}
+        <div class="lb2">Now</div>
+        <div class="ln">“I can see it. It’s due Wednesday.”<small>Logged, routed, chased.</small></div></div>
+    </div>`);
+    setTimeout(() => s.querySelector('.half.bad').classList.add('on'), 250);
+    setTimeout(() => s.querySelector('.arrow').classList.add('on'), 1100);
+    setTimeout(() => s.querySelector('.half.good').classList.add('on'), 1550);
+    return s;
+  },
+  thisIs: () => {
+    const s = newScene(`<div class="stagewrap">
+      <div class="line">${typeset('This is <em>Query&nbsp;Pal</em>.')}</div>
+      <div class="cast">
+        ${person(C.client, 'cheer', 'happy', { name:'Client', cls:'happy' })}
+        ${person(C.agent, 'cheer', 'happy', { name:'Agent', cls:'happy' })}
+        ${person(C.staff, 'cheer', 'happy', { name:'Staff', cls:'happy' })}
+        ${person(C.boss, 'cheer', 'happy', { name:'Branch', cls:'happy' })}
+      </div></div>`);
+    reveal(s, '.guy', 200, 600);
+    return s;
+  },
+};
+Object.assign(SCENES, SCENES_CAST);
 function bigLine(html, sub, small) {
   return newScene(`<div class="line${small ? ' sm' : ''}">${typeset(html)}</div>`
     + (sub ? `<div class="sub">${sub}</div>` : ''));
