@@ -65,6 +65,14 @@ film/
   voice/embed-audio.py   fold the MP3s back into the film
 ```
 
+**iPhone has its own rules, and they bite.** An `Audio` element only plays if
+that element was started inside a user gesture — ones built later in a loop are
+refused silently, so narration goes through `decodeAudioData` and buffer
+sources on the same AudioContext instead. Resume the context inside the tap.
+And the hardware ring switch mutes Web Audio, so say so on the start screen
+rather than shipping a film someone hears nothing from. Films must also reflow
+for a portrait phone: stack what is side by side, drop what will not fit.
+
 Films carry **subtitles on every line** — most people meet them muted.
 Example data is labelled as example data, on screen.
 
