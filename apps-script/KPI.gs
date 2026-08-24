@@ -509,8 +509,10 @@ function dedupeLog() {
   for (var r = sh.getLastRow(); r >= 2; r--) {
     if (!survivors[r]) { sh.deleteRow(r); removed++; }
   }
-  return 'Removed ' + removed + ' duplicate row(s); ' +
-         Object.keys(keep).length + ' entries remain.';
+  var msg = 'Removed ' + removed + ' duplicate row(s); ' +
+            Object.keys(keep).length + ' entries remain.';
+  Logger.log(msg);
+  return msg;
 }
 
 // ---------------------------------------------------------------------------
@@ -963,7 +965,9 @@ function sendCheckpoint(dateOpt) {
              r.reported + '/' + r.headcount + ' logged',
     htmlBody: checkpointHtml_(r)
   });
-  return 'Sent to ' + to.join(', ');
+  var msg = 'Sent to ' + to.join(', ');
+  Logger.log(msg);
+  return msg;
 }
 
 // ---- weekly summary -------------------------------------------------------
@@ -1094,7 +1098,9 @@ function sendWeekly(dateOpt) {
              ' · ' + r.totals.closed + ' closed, ' + r.totals.valueAdds + ' value adds',
     htmlBody: weeklyHtml_(r)
   });
-  return 'Sent to ' + to.join(', ');
+  var msg = 'Sent to ' + to.join(', ');
+  Logger.log(msg);
+  return msg;
 }
 
 // ---- triggers -------------------------------------------------------------
@@ -1117,8 +1123,10 @@ function installTriggers() {
   ScriptApp.newTrigger('sendWeekly').timeBased()
     .onWeekDay(ScriptApp.WeekDay.FRIDAY).atHour(17).create();
 
-  return 'Triggers installed. Checkpoint weekdays at ' + CONFIG.CHECKPOINT_HOUR +
-         ':00, weekly summary Friday 17:00 (' + CONFIG.TZ + ').';
+  var msg = 'Triggers installed. Checkpoint weekdays at ' + CONFIG.CHECKPOINT_HOUR +
+            ':00, weekly summary Friday 17:00 (' + CONFIG.TZ + ').';
+  Logger.log(msg);
+  return msg;
 }
 
 /** Preview either report in the editor without emailing anyone. */
