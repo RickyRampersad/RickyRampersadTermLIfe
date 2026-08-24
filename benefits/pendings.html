@@ -89,11 +89,29 @@
   .filters{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
   .filters select,.filters input{border:1px solid var(--line);border-radius:5px;background:var(--surface);
     padding:.35rem .55rem;font-size:13px}
+  .gate{max-width:420px;margin:12vh auto;background:var(--surface);border:1px solid var(--line);
+    border-radius:8px;padding:2rem 1.9rem;text-align:center}
+  .gate h2{font-family:var(--display);font-size:1.3rem;color:var(--navy);margin-bottom:.4rem}
+  .gate p{font-size:13.5px;color:var(--slate);line-height:1.6;margin-bottom:1.2rem}
+  .gate input{width:100%;padding:.7rem .8rem;border:1px solid var(--line);border-radius:6px;
+    background:var(--paper);text-align:center;letter-spacing:.22em;font-family:var(--mono);text-transform:uppercase}
+  .gate .btn{width:100%;margin-top:.7rem}
+  .gate .err{color:var(--stop);font-size:12.5px;min-height:1.3em;margin-top:.7rem;font-weight:600}
   @media print{header,.btn,.filters,.noprint{display:none!important} body{background:#fff}}
 </style>
 </head>
 <body>
 
+<div id="gate" class="gate">
+  <h2>Branch staff only</h2>
+  <p>This list spans every group on the book, so it shows one client's members alongside another's.
+     It is not for employers and not for their staff.</p>
+  <input id="code" placeholder="BRANCH CODE" autocomplete="off">
+  <button class="btn" id="go">Open</button>
+  <div class="err" id="gerr"></div>
+</div>
+
+<div id="app" hidden>
 <header>
   <div class="hin">
     <div class="brand">
@@ -132,6 +150,7 @@
   </table></div>
   <p class="note" id="foot"></p>
 </main>
+</div>
 
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
@@ -155,6 +174,14 @@
    production, so it stays an explicit decision rather than a default.
    ═══════════════════════════════════════════════════════════════════════ */
 const API = "";
+
+/* Branch code. Change it here, and change it when someone leaves.
+   This is a door, not a security model — the list behind it spans every group
+   on the book, so an employer must never reach it. When the pendings screen
+   moves inside the portal it should sit behind the roster sign-in instead,
+   which knows who each person actually is. */
+const BRANCH_CODE = "RRB2026";
+const SESSION_KEY = "rrb-pendings-ok";
 
 /* Sample rows — invented people at real ages, so the ageing bands and the
    sort can be worked on without live data on screen. */
@@ -321,7 +348,22 @@ $('theme').addEventListener('click', () => {
   r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark';
 });
 
-load();
+/* ── the door ── */
+function open_(){
+  document.getElementById('gate').hidden = true;
+  document.getElementById('app').hidden = false;
+  load();
+}
+function tryCode(){
+  const v = (document.getElementById('code').value||'').trim().toUpperCase();
+  if(v === BRANCH_CODE){ try{ sessionStorage.setItem(SESSION_KEY,'1'); }catch(e){} open_(); }
+  else document.getElementById('gerr').textContent = 'That is not the branch code.';
+}
+document.getElementById('go').addEventListener('click', tryCode);
+document.getElementById('code').addEventListener('keydown', e => { if(e.key==='Enter') tryCode(); });
+/* Session only — closing the tab shuts it again, which is what you want on a
+   machine other people use. */
+try{ if(sessionStorage.getItem(SESSION_KEY)==='1') open_(); }catch(e){}
 </script>
 </body>
 </html>
