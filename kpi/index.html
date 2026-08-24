@@ -53,9 +53,11 @@ const PROFILES = {
 const DEFAULT_PROFILE = {grade:"Branch Staff", role:"ssa", tenure:"experienced", shift:"default"};
 const profileFor=(staffId)=>PROFILES[staffId]||DEFAULT_PROFILE;
 
-const SSA_FUNCTIONS=["New Application Process","Pending / Lapse / Follow-ups","Issues Resolution / Future Payments (Arrears)","Document Management (Scan / Classify / Verify)","Client Portfolios / Macros","Claims / Maturities","Servicing Lines","Scripts / Clawbacks","Reinstatements / Re-dates / Increments","Mail Management / Contracts","Quotations & Proposals","Orphan Adoption Listing","Surveys / Query Pal","OFT Collation","Reporting","Training delivered","Task Management"];
-const BMA_FUNCTIONS=["New Application Oversight","Pending / Re-date / Persistency","New Agent Activity (Recruitment / OFT / Licensing)","Reporting (Production / RDAR)","Budget & Expense Management","People Management (Staff Leadership)","Orphan Policy Management","Issues Resolution / Future Payments","Administrative Support","Escalations","Training delivered","Task Distribution"];
-const fnFor=(r)=>r==="bma"?BMA_FUNCTIONS:SSA_FUNCTIONS;
+// The KPI list is served by the script: the ten Salesforce Task_Type__c values
+// first — those carry live numbers — then the job-document responsibilities
+// Salesforce does not track, which are logged in words only.
+let KPI_CHOICES={ssa:[],bma:[]};
+const fnFor=(role)=>(KPI_CHOICES[role==="bma"?"bma":"ssa"]||[]);
 
 const STANDARDS=["Completed applications to Head Office within 2 days of receipt.","Policy documents processed with 100% accuracy.","Documents to the relevant party within 1 day of receipt.","A rolled due date is not an actioned task — log the genuine blocker + owner.","\"Waiting on someone\" needs a named person and the date last chased.","Value Added is logged every day — even if the honest entry is \"None today\"."];
 
@@ -212,6 +214,7 @@ function App(){
   const [entry,setEntry]=useState(null);
   const [rows,setRows]=useState([]);
   const [training,setTraining]=useState([]);
+  const [metrics,setMetrics]=useState(null);
   const [loading,setLoading]=useState(false);
   const [blockState,setBlockState]=useState({});   // per block: idle|saving|ok|bad
   const [dayState,setDayState]=useState({tone:"idle",text:""});
@@ -231,7 +234,7 @@ function App(){
       if(!token){ setBooting(false); return; }
       const r=await api("me",{token});
       if(off) return;
-      if(r.ok){ setMe(r.profile); setRoster(r.roster||[]); if(r.schedule) SCHEDULE=r.schedule; }
+      if(r.ok){ setMe(r.profile); setRoster(r.roster||[]); if(r.schedule) SCHEDULE=r.schedule; if(r.kpis) KPI_CHOICES=r.kpis; }
       else { storeToken(""); setToken(""); }
       setBooting(false);
     })();
@@ -244,7 +247,8 @@ function App(){
     setLoading(true);
     const r=await api("rows",{token});
     if(r.ok){ setRows(r.rows||[]); setTraining(r.training||[]); if(r.roster) setRoster(r.roster);
-      if(r.schedule) SCHEDULE=r.schedule; }
+      if(r.schedule) SCHEDULE=r.schedule; if(r.kpis) KPI_CHOICES=r.kpis;
+      if(r.metrics) setMetrics(r.metrics); }
     else if(r.authRequired){ signOut(); }
     setLoading(false);
   },[token,signOut]);
@@ -447,7 +451,12 @@ function App(){
                 <Field label="KPI worked">
                   <select value={bl.kpi} onChange={e=>patchBlock(b.id,"kpi",e.target.value)} style={selectBox}>
                     <option value="">Select…</option>
-                    {opts.map(k=><option key={k} value={k}>{k}</option>)}
+                    <optgroup label="Salesforce task types — these carry live numbers">
+                      {opts.filter(k=>k.salesforce).map(k=><option key={k.value} value={k.value}>{k.label}</option>)}
+                    </optgroup>
+                    <optgroup label="Logged in words only">
+                      {opts.filter(k=>!k.salesforce).map(k=><option key={k.value} value={k.value}>{k.label}</option>)}
+                    </optgroup>
                   </select>
                 </Field>
                 <Field label="Actioned"><textarea rows={2} value={bl.actioned} onChange={e=>patchBlock(b.id,"actioned",e.target.value)} placeholder="In your own words — names, counts, cases" style={ta}/></Field>
@@ -489,14 +498,7 @@ function App(){
             These belong to the day rather than any one block. Save them once, whenever you have them.
           </p>
 
-          <div style={card}>
-            <div style={cardHead}><span style={cardTitle}>Task position · Salesforce</span></div>
-            <div style={grid3}>
-              <Field label="Closed today"><input inputMode="numeric" value={entry.metrics.closed} onChange={e=>patchMetric("closed",e.target.value)} placeholder="0" style={inp}/></Field>
-              <Field label="Overdue now"><input inputMode="numeric" value={entry.metrics.overdue} onChange={e=>patchMetric("overdue",e.target.value)} placeholder="0" style={inp}/></Field>
-              <Field label="Of those, 60+ days"><input inputMode="numeric" value={entry.metrics.aged60} onChange={e=>patchMetric("aged60",e.target.value)} placeholder="0" style={inp}/></Field>
-            </div>
-          </div>
+          <TaskPosition live={metrics} staffId={active} entry={entry} patchMetric={patchMetric}/>
 
           <div style={{...card,borderLeft:"4px solid "+GOLD}}>
             <div style={cardHead}><span style={cardTitle}>Value Added today</span><span style={{fontSize:10.5,color:AMBER,fontWeight:700}}>log every day</span></div>
@@ -912,7 +914,8 @@ function Login({onIn}){
     setBusy(true); setErr("");
     const r=await api("login",{who:who.trim(),password:pw});
     setBusy(false);
-    if(r.ok){ if(r.schedule) SCHEDULE=r.schedule; onIn(r.token,r.profile,r.roster); }
+    if(r.ok){ if(r.schedule) SCHEDULE=r.schedule; if(r.kpis) KPI_CHOICES=r.kpis;
+      onIn(r.token,r.profile,r.roster); }
     else setErr(r.error||"Could not sign you in.");
   }
 
@@ -1031,6 +1034,50 @@ function ReviewCard({p,e,onTrend}){
       <Line k="Value added" v={e.valueAdded} tone={isRealVA(e.valueAdded)?GOLD:MUTED}/></div>}
     {e&&txt(e.systemFlags)&&<div style={{padding:"9px 14px",borderTop:"1px solid "+LINE}}><Line k="Flag" v={e.systemFlags} tone={RED}/></div>}
     {e&&txt(e.notes)&&<div style={{padding:"9px 14px",borderTop:"1px solid "+LINE}}><Line k="Note" v={e.notes} tone={MUTED}/></div>}
+  </div>;
+}
+
+// The task position, read from Salesforce rather than typed. Where Salesforce
+// cannot be reached the boxes come back, because a tracker that stops working
+// when a connection drops is worse than one that asks.
+function TaskPosition({live,staffId,entry,patchMetric}){
+  const m=live&&live.ok&&live.staff?live.staff[staffId]:null;
+  if(m){
+    return <div style={card}>
+      <div style={cardHead}>
+        <span style={cardTitle}>Task position</span>
+        <span style={{fontSize:10.5,color:GREEN,fontWeight:700}}>live from Salesforce</span>
+      </div>
+      <div style={grid3row}>
+        <MiniStat label="Closed today" value={m.closed} tone={GREEN}/>
+        <MiniStat label="Open now" value={m.open}/>
+        <MiniStat label="Overdue" value={m.overdue} tone={m.overdue>0?AMBER:INK} last/>
+      </div>
+      <div style={{display:"flex",gap:14,padding:"9px 2px 0",fontSize:11.5,color:MUTED}}>
+        <span><b style={{color:m.aged60>0?RED:INK}}>{m.aged60}</b> at 60+ days</span>
+        {m.noDate>0&&<span><b style={{color:AMBER}}>{m.noDate}</b> with no due date</span>}
+      </div>
+      {m.noDate>0&&<p style={{fontSize:11.5,color:AMBER,margin:"8px 0 0",lineHeight:1.45}}>
+        A task with no due date can never be overdue, so it never shows up in any report.
+        Give those a date, or close them.
+      </p>}
+      <p style={{fontSize:11,color:MUTED,margin:"8px 0 0",lineHeight:1.4}}>
+        Nothing to type — these come straight from your Salesforce tasks.
+      </p>
+    </div>;
+  }
+  const why=live&&live.reason==="notConfigured"
+    ? "Salesforce is not connected yet, so these are typed for now."
+    : "Salesforce could not be reached, so type them for now.";
+  return <div style={card}>
+    <div style={cardHead}><span style={cardTitle}>Task position · Salesforce</span>
+      <span style={{fontSize:10.5,color:AMBER,fontWeight:700}}>typed</span></div>
+    <p style={{fontSize:11.5,color:MUTED,margin:"0 0 8px",lineHeight:1.4}}>{why}</p>
+    <div style={grid3}>
+      <Field label="Closed today"><input inputMode="numeric" value={entry.metrics.closed} onChange={e=>patchMetric("closed",e.target.value)} placeholder="0" style={inp}/></Field>
+      <Field label="Overdue now"><input inputMode="numeric" value={entry.metrics.overdue} onChange={e=>patchMetric("overdue",e.target.value)} placeholder="0" style={inp}/></Field>
+      <Field label="Of those, 60+ days"><input inputMode="numeric" value={entry.metrics.aged60} onChange={e=>patchMetric("aged60",e.target.value)} placeholder="0" style={inp}/></Field>
+    </div>
   </div>;
 }
 

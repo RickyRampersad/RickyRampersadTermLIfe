@@ -92,6 +92,74 @@ function trainingSheet_() {
   return sh;
 }
 
+// ---------------------------------------------------------------------------
+//  What a KPI actually is
+//  Ten of these are the Task_Type__c picklist in Salesforce — the field the
+//  branch already tags every task with. Picking one here means the app can
+//  count that person's real open, overdue and closed tasks for it, instead of
+//  asking them to type a number they will guess or leave blank.
+//
+//  The rest are responsibilities that appear in the job documents but are not
+//  tracked as Salesforce tasks. They are logged in words only, and marked so
+//  nobody expects a number against them.
+// ---------------------------------------------------------------------------
+var SF_TYPES = {
+  'Pendings':             'Pendings · pending, lapse and follow-ups',
+  'Renewa/PDl/Bill':      'Renewals / Premium Dues / Billing',
+  'Servicing':            'Servicing lines',
+  'Claims/ Mat':          'Claims / Maturities',
+  'Scripts/CB':           'Scripts / Clawbacks',
+  'Opportunity':          'Opportunity',
+  'Lic/Staffing/SA/HR':   'Licensing / Staffing / Sales Admin / HR',
+  'RR Operations':        'RR Operations',
+  'Training':             'Training delivered',
+  'Innovation&Creativity':'Innovation & Creativity'
+};
+
+/** Salesforce-backed first — those are the ones that carry live numbers. */
+function sfTypeList_() { return Object.keys(SF_TYPES); }
+
+/** In the job documents, not in Salesforce. Words only, no counts. */
+var SSA_ONLY = [
+  'New Application Process',
+  'Client Portfolios / Macros',
+  'Document Management (Scan / Classify / Verify)',
+  'Reporting',
+  'Administrative Support',
+  'Mail Management / Contracts',
+  'Quotations & Proposals',
+  'Orphan Adoption Listing',
+  'OFT Collation',
+  'Surveys / Query Pal',
+  'Task Management'
+];
+
+var BMA_ONLY = [
+  'New Application Oversight',
+  'Surveys / Query Pal',
+  'Pending / Re-date / Persistency',
+  'New Agent Activity (Recruitment / OFT / Licensing)',
+  'Reporting (Production / RDAR)',
+  'Budget & Expense Management',
+  'People Management (Staff Leadership)',
+  'Orphan Policy Management',
+  'Issues Resolution / Future Payments',
+  'Administrative Support',
+  'Escalations',
+  'Task Distribution'
+];
+
+/** The list a person sees, and whether each entry carries live numbers. */
+function kpiChoicesFor_(role) {
+  var out = sfTypeList_().map(function (t) {
+    return { value: t, label: SF_TYPES[t], salesforce: true };
+  });
+  (role === 'bma' ? BMA_ONLY : SSA_ONLY).forEach(function (t) {
+    out.push({ value: t, label: t, salesforce: false });
+  });
+  return out;
+}
+
 var BLOCK_IDS = ['KPI1', 'KPI2', 'PM1', 'PM2'];
 
 // ---------------------------------------------------------------------------
@@ -109,8 +177,8 @@ var SCHEDULE = {
   sasha: {
     hours: '8am – 4pm', lunch: '12:30 – 1:30pm',
     blocks: {
-      KPI1: { time: '8 – 10am',  focus: 'Premium Dues / Surveys',                    kpi: 'Pending / Lapse / Follow-ups' },
-      KPI2: { time: '10 – 12pm', focus: 'Ind. Health Billing Recon / Send Off',      kpi: 'Issues Resolution / Future Payments (Arrears)' },
+      KPI1: { time: '8 – 10am',  focus: 'Premium Dues / Surveys',                    kpi: 'Renewa/PDl/Bill' },
+      KPI2: { time: '10 – 12pm', focus: 'Ind. Health Billing Recon / Send Off',      kpi: 'Renewa/PDl/Bill' },
       PM1:  { time: '1 – 3pm',   focus: 'Adopt an Orphan / Service Quest. / Quotations', kpi: 'Orphan Adoption Listing' },
       PM2:  { time: '3 – 4pm',   focus: 'Task Mgmt / Branch Meeting Reports',        kpi: 'Reporting' }
     }
@@ -118,8 +186,8 @@ var SCHEDULE = {
   azariah: {
     hours: '8am – 4pm', lunch: '12:00 – 1:00pm',
     blocks: {
-      KPI1: { time: '8 – 10am',  focus: 'Pendings, Increases, Group Apps / Production', kpi: 'Pending / Lapse / Follow-ups' },
-      KPI2: { time: '10 – 12pm', focus: 'Reinstatements / Lapse Mgmt / Reporting',   kpi: 'Reinstatements / Re-dates / Increments' },
+      KPI1: { time: '8 – 10am',  focus: 'Pendings, Increases, Group Apps / Production', kpi: 'Pendings' },
+      KPI2: { time: '10 – 12pm', focus: 'Reinstatements / Lapse Mgmt / Reporting',   kpi: 'Renewa/PDl/Bill' },
       PM1:  { time: '1 – 3pm',   focus: 'Query Pal Management / Survey Mgmt',        kpi: 'Surveys / Query Pal' },
       PM2:  { time: '3 – 4pm',   focus: 'Task Mgmt / Branch Meeting Reports',        kpi: 'Reporting' }
     }
@@ -128,27 +196,27 @@ var SCHEDULE = {
     hours: '9am – 5pm', lunch: '1:00 – 2:00pm',
     blocks: {
       KPI1: { time: '9 – 10am',  focus: 'Client Portfolio creation, Macros, Surveys', kpi: 'Client Portfolios / Macros' },
-      KPI2: { time: '10 – 1pm',  focus: 'Scripts / Clawbacks / Servicing Lines',     kpi: 'Scripts / Clawbacks' },
+      KPI2: { time: '10 – 1pm',  focus: 'Scripts / Clawbacks / Servicing Lines',     kpi: 'Scripts/CB' },
       PM1:  { time: '2 – 3pm',   focus: 'Mail Management',                            kpi: 'Mail Management / Contracts' },
-      PM2:  { time: '3 – 5pm',   focus: 'Claims / Maturities / Surveys & Task Mgmt', kpi: 'Claims / Maturities' }
+      PM2:  { time: '3 – 5pm',   focus: 'Claims / Maturities / Surveys & Task Mgmt', kpi: 'Claims/ Mat' }
     }
   },
   kamla: {
     hours: '8am – 4pm', lunch: 'Flexible',
     blocks: {
-      KPI1: { time: '8 – 9am',   focus: 'HR, SA, RECR, CB',                          kpi: 'New Agent Activity (Recruitment / OFT / Licensing)' },
+      KPI1: { time: '8 – 9am',   focus: 'HR, SA, RECR, CB',                          kpi: 'Lic/Staffing/SA/HR' },
       KPI2: { time: '10 – 12pm', focus: 'BM Client Mgt / RR Oper / General lines',   kpi: 'Administrative Support' },
       PM1:  { time: '1 – 3pm',   focus: 'Escalations / New Recruit Training',        kpi: 'Escalations' },
       PM2:  { time: '3 – 4pm',   focus: 'Task Mgmt / Branch Meeting Reports',        kpi: 'Reporting (Production / RDAR)' }
     }
   },
   elizabeth: {
-    hours: '8am – 4pm', lunch: 'Flexible',
+    hours: '9am – 5pm', lunch: '1:00 – 2:00pm',
     blocks: {
-      KPI1: { time: '8 – 10am',  focus: 'Branch Intelligence / Query Pal',           kpi: 'Surveys / Query Pal' },
-      KPI2: { time: '10 – 12pm', focus: 'New Application Oversight',                 kpi: 'New Application Oversight' },
-      PM1:  { time: '1 – 3pm',   focus: 'Administrative Support',                    kpi: 'Administrative Support' },
-      PM2:  { time: '3 – 4pm',   focus: 'Task Mgmt / Reporting',                     kpi: 'Reporting (Production / RDAR)' }
+      KPI1: { time: '9 – 11am',  focus: 'Branch Intelligence / Query Pal testing',   kpi: 'Surveys / Query Pal' },
+      KPI2: { time: '11 – 1pm',  focus: 'New Application Oversight',                 kpi: 'New Application Oversight' },
+      PM1:  { time: '2 – 3:30pm',focus: 'Administrative Support',                    kpi: 'Administrative Support' },
+      PM2:  { time: '3:30 – 5pm',focus: 'Task Mgmt / Reporting',                     kpi: 'Reporting (Production / RDAR)' }
     }
   }
 };
@@ -164,6 +232,28 @@ var DEFAULT_SCHEDULE = {
 };
 
 function scheduleFor_(staffId) { return SCHEDULE[staffId] || DEFAULT_SCHEDULE; }
+
+/** Every scheduled KPI must be one a person can actually pick. Run from the
+ *  editor after editing SCHEDULE — a typo here shows up as a blank dropdown
+ *  and nothing else, which is a miserable thing to debug. */
+function checkSchedule() {
+  var bma = {}, ssa = {};
+  kpiChoicesFor_('bma').forEach(function (c) { bma[c.value] = 1; });
+  kpiChoicesFor_('ssa').forEach(function (c) { ssa[c.value] = 1; });
+  var bmaFolk = { kamla: 1, elizabeth: 1 };
+  var bad = [];
+  Object.keys(SCHEDULE).forEach(function (sid) {
+    var list = bmaFolk[sid] ? bma : ssa;
+    BLOCK_IDS.forEach(function (b) {
+      var k = (SCHEDULE[sid].blocks[b] || {}).kpi;
+      if (k && !list[k]) bad.push(sid + ' ' + b + ': "' + k + '" is not on their KPI list');
+    });
+  });
+  var msg = bad.length ? 'Schedule problems:\n  ' + bad.join('\n  ')
+                       : 'Schedule is consistent — every block points at a KPI that exists.';
+  Logger.log(msg);
+  return msg;
+}
 
 /** Blocks that should be behind a person by this hour of the branch day.
  *  The morning pair are due by noon; the third by 3, when the checkpoint runs. */
@@ -842,17 +932,26 @@ function checkpointReport_(date) {
   var byId = {};
   latestEntries_().forEach(function (e) { if (e.Date === day) byId[e.StaffId] = e; });
 
+  // Salesforce is the authority on the task position. What was typed into the
+  // sheet is only used where Salesforce could not be reached.
+  var sf = sfkMetricsSafe_(day);
+  var live = sf.ok ? sf.staff : {};
+
   var lines = people.map(function (p) {
     var e = byId[p.staffId];
     var done = e ? blocksDone_(e) : 0;
+    var L = live[p.staffId];
     return {
       staffId: p.staffId, name: p.name, unit: p.unit,
       status: !e ? 'No entry' : (String(e.Status) === 'Submitted' ? 'Submitted' : 'Draft'),
       blocksDone: done,
       onTrack: done >= 3,
-      closed: e ? n_(e.Closed) : null,
-      overdue: e ? n_(e.Overdue) : null,
-      aged60: e ? n_(e.Aged60) : null,
+      fromSalesforce: !!L,
+      closed: L ? L.closed : (e ? n_(e.Closed) : null),
+      overdue: L ? L.overdue : (e ? n_(e.Overdue) : null),
+      aged60: L ? L.aged60 : (e ? n_(e.Aged60) : null),
+      noDate: L ? L.noDate : null,
+      openNow: L ? L.open : null,
       valueAdded: e && isRealValueAdd_(e.ValueAdded) ? String(e.ValueAdded) : '',
       innovation: e && hasText_(e.Innovation) ? String(e.Innovation) : '',
       systemFlags: e && hasText_(e.SystemFlags) ? String(e.SystemFlags) : '',
@@ -1056,7 +1155,19 @@ function handle_(action, data, token) {
 
   switch (action) {
     case 'me':
-      return { ok: true, profile: profile, roster: publicRoster_(), schedule: SCHEDULE };
+      return { ok: true, profile: profile, roster: publicRoster_(), schedule: SCHEDULE,
+               kpis: { ssa: kpiChoicesFor_('ssa'), bma: kpiChoicesFor_('bma') } };
+
+    case 'metrics': {
+      // Staff see their own position; the manager sees the branch.
+      var m = sfkMetricsSafe_(data.date);
+      if (m.ok && !profile.manager) {
+        var only = {};
+        if (m.staff[profile.staffId]) only[profile.staffId] = m.staff[profile.staffId];
+        m = { ok: true, date: m.date, staff: only };
+      }
+      return { ok: true, metrics: m };
+    }
 
     case 'rows': {
       // Staff see their own days. The manager sees the branch.
@@ -1075,7 +1186,9 @@ function handle_(action, data, token) {
       }
       tr.forEach(function (t) { if (t.LoggedAt) t.LoggedAt = String(t.LoggedAt); });
       return { ok: true, rows: rows, training: tr, profile: profile,
-               roster: publicRoster_(), schedule: SCHEDULE };
+               roster: publicRoster_(), schedule: SCHEDULE,
+               kpis: { ssa: kpiChoicesFor_('ssa'), bma: kpiChoicesFor_('bma') },
+               metrics: sfkMetricsSafe_(data.date) };
     }
 
     case 'training': {
@@ -1214,6 +1327,11 @@ function checkpointHtml_(r) {
       detail.push('<div style="font-size:12px;color:' + MAIL.red + ';margin-top:4px"><b>Blocked' +
         (b.kpi ? ' · ' + esc_(b.kpi) : '') + ':</b> ' + esc_(b.text) + '</div>');
     });
+    if (l.noDate) {
+      detail.push('<div style="font-size:12px;color:' + MAIL.amber + ';margin-top:4px"><b>No due date:</b> ' +
+        l.noDate + ' open task' + (l.noDate === 1 ? '' : 's') +
+        ' carrying no due date — invisible to every overdue report.</div>');
+    }
     if (l.systemFlags) {
       detail.push('<div style="font-size:12px;color:' + MAIL.red + ';margin-top:3px"><b>Flag:</b> ' + esc_(l.systemFlags) + '</div>');
     }
@@ -1232,8 +1350,11 @@ function checkpointHtml_(r) {
       '</tr></table>' +
       '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:5px">' +
         'Closed ' + (l.closed == null ? '—' : l.closed) +
+        ' · Open ' + (l.openNow == null ? '—' : l.openNow) +
         ' · Overdue ' + (l.overdue == null ? '—' : l.overdue) +
-        ' · 60+ ' + (l.aged60 == null ? '—' : l.aged60) + '</div>' +
+        ' · 60+ ' + (l.aged60 == null ? '—' : l.aged60) +
+        (l.fromSalesforce ? ' <span style="color:' + MAIL.green + '">· live from Salesforce</span>' : '') +
+        '</div>' +
       detail.join('') +
     '</div>';
   }).join('');
@@ -1600,6 +1721,218 @@ function remindCheckpoint() {
   var msg = sent.length
     ? '3pm chase sent to: ' + sent.join(', ')
     : '3pm chase: everyone is up to date, nothing sent.';
+  Logger.log(msg);
+  return msg;
+}
+
+// ---------------------------------------------------------------------------
+//  Salesforce
+//  The three numbers on the form — closed, overdue, sixty-plus — were being
+//  typed by hand, and the sheet shows how that went: Closed filled on 47 rows
+//  out of 63, Overdue on 30. A number somebody guesses at four o'clock is not
+//  a measurement.
+//
+//  Salesforce already knows all three, per person, to the minute. So it is
+//  asked, and the form shows what came back. Nobody types anything.
+//
+//  Credentials live in Script Properties, never in this file:
+//    SF_KEY, SF_SECRET   — from the Connected App
+//    SF_USER, SF_PASS    — password with the security token appended, no space
+//  The same four the renewal sheet uses. Run sfKpiTest() once to check.
+// ---------------------------------------------------------------------------
+
+var SFK = { API: 'v64.0', LOGIN: 'https://login.salesforce.com', CACHE_MIN: 12 };
+
+function sfkProps_() { return PropertiesService.getScriptProperties(); }
+
+function sfkConfigured_() {
+  var p = sfkProps_();
+  return !!(p.getProperty('SF_KEY') && p.getProperty('SF_SECRET') &&
+            p.getProperty('SF_USER') && p.getProperty('SF_PASS'));
+}
+
+function sfkToken_() {
+  var p = sfkProps_();
+  var cached = p.getProperty('SFK_TOKEN'), when = Number(p.getProperty('SFK_TOKEN_AT') || 0);
+  if (cached && (new Date().getTime() - when) < 50 * 60 * 1000) return JSON.parse(cached);
+
+  var res = UrlFetchApp.fetch(SFK.LOGIN + '/services/oauth2/token', {
+    method: 'post', muteHttpExceptions: true,
+    payload: {
+      grant_type: 'password',
+      client_id: p.getProperty('SF_KEY'), client_secret: p.getProperty('SF_SECRET'),
+      username: p.getProperty('SF_USER'), password: p.getProperty('SF_PASS')
+    }
+  });
+  if (res.getResponseCode() !== 200) {
+    throw new Error('Salesforce login failed: ' + res.getContentText() +
+      (res.getContentText().indexOf('invalid_grant') > -1
+        ? '\n\nThe password field must be the password with the security token stuck on the end, no space.'
+        : ''));
+  }
+  var tok = JSON.parse(res.getContentText());
+  p.setProperty('SFK_TOKEN', JSON.stringify(tok));
+  p.setProperty('SFK_TOKEN_AT', String(new Date().getTime()));
+  return tok;
+}
+
+function sfkQuery_(soql) {
+  var tok = sfkToken_();
+  var url = tok.instance_url + '/services/data/' + SFK.API + '/query?q=' + encodeURIComponent(soql);
+  var out = [], guard = 0;
+  while (url && guard++ < 40) {
+    var res = UrlFetchApp.fetch(url, {
+      muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + tok.access_token }
+    });
+    if (res.getResponseCode() === 401) {
+      sfkProps_().deleteProperty('SFK_TOKEN');
+      tok = sfkToken_();
+      continue;
+    }
+    if (res.getResponseCode() !== 200) throw new Error('Salesforce query failed: ' + res.getContentText());
+    var j = JSON.parse(res.getContentText());
+    out = out.concat(j.records || []);
+    url = j.nextRecordsUrl ? tok.instance_url + j.nextRecordsUrl : null;
+  }
+  return out;
+}
+
+/** Branch staff, matched to their Salesforce user by email.
+ *
+ *  Two traps live here, both real in this org. Kamla has two user records on
+ *  the same address and only kdookran@gloc.biz is active; and a user can be
+ *  flagged inactive while still owning this month's work. So: prefer the
+ *  active record, but never drop somebody just because the flag says inactive. */
+function sfkUsers_() {
+  var cache = CacheService.getScriptCache();
+  var hit = cache.get('sfk_users');
+  if (hit) return JSON.parse(hit);
+
+  var emails = roster_().filter(function (p) { return p.email; })
+    .map(function (p) { return "'" + p.email.replace(/'/g, "\\'") + "'"; });
+  if (!emails.length) return {};
+
+  var recs = sfkQuery_(
+    'SELECT Id, Name, Email, IsActive FROM User WHERE Email IN (' + emails.join(',') + ')');
+
+  var byStaff = {};
+  roster_().forEach(function (p) {
+    var mine = recs.filter(function (r) {
+      return normEmail_(r.Email) === normEmail_(p.email) && !/Site Guest User/i.test(r.Name || '');
+    });
+    if (!mine.length) return;
+    var pick = mine.filter(function (r) { return r.IsActive; })[0] || mine[0];
+    byStaff[p.staffId] = { id: pick.Id, name: pick.Name, active: !!pick.IsActive, all: mine.length };
+  });
+
+  cache.put('sfk_users', JSON.stringify(byStaff), 3600);
+  return byStaff;
+}
+
+function sfkCount_(soql) {
+  var r = sfkQuery_(soql);
+  return r.length ? Number(r[0].expr0 || 0) : 0;
+}
+
+/** Everyone's task position, in one round trip per question rather than one
+ *  per person. Cached for a few minutes so a page refresh is not a new query. */
+function sfkMetrics_(date) {
+  var day = date || todayISO_();
+  var cache = CacheService.getScriptCache();
+  var key = 'sfk_m_' + day;
+  var hit = cache.get(key);
+  if (hit) return JSON.parse(hit);
+
+  var users = sfkUsers_();
+  var ids = Object.keys(users).map(function (k) { return "'" + users[k].id + "'"; });
+  if (!ids.length) return { ok: false, error: 'No branch staff matched a Salesforce user.' };
+  var IN = '(' + ids.join(',') + ')';
+  var byId = {};
+  Object.keys(users).forEach(function (k) { byId[users[k].id] = k; });
+
+  function blank() { return { closed: 0, open: 0, overdue: 0, aged60: 0, noDate: 0, byType: {} }; }
+  var out = {};
+  Object.keys(users).forEach(function (k) { out[k] = blank(); });
+
+  function add(recs, field, typed) {
+    recs.forEach(function (r) {
+      var sid = byId[r.OwnerId];
+      if (!sid) return;
+      var n = Number(r.expr0 || 0);
+      out[sid][field] += n;
+      if (typed) {
+        var t = r.Task_Type__c || 'Untyped';
+        out[sid].byType[t] = out[sid].byType[t] || { closed: 0, open: 0, overdue: 0 };
+        out[sid].byType[t][field] += n;
+      }
+    });
+  }
+
+  // Closed on the day itself
+  add(sfkQuery_(
+    'SELECT OwnerId, Task_Type__c, COUNT(Id) FROM Task WHERE OwnerId IN ' + IN +
+    " AND Status = 'Completed' AND LastModifiedDate >= " + day + 'T00:00:00Z AND ' +
+    'LastModifiedDate < ' + shiftDays_(day, 1) + 'T00:00:00Z ' +
+    'GROUP BY OwnerId, Task_Type__c'), 'closed', true);
+
+  // Still open, whatever the due date
+  add(sfkQuery_(
+    'SELECT OwnerId, Task_Type__c, COUNT(Id) FROM Task WHERE OwnerId IN ' + IN +
+    " AND Status != 'Completed' GROUP BY OwnerId, Task_Type__c"), 'open', true);
+
+  // Open and already past due
+  add(sfkQuery_(
+    'SELECT OwnerId, Task_Type__c, COUNT(Id) FROM Task WHERE OwnerId IN ' + IN +
+    " AND Status != 'Completed' AND ActivityDate < " + day +
+    ' GROUP BY OwnerId, Task_Type__c'), 'overdue', true);
+
+  // Open with no due date at all. These can never be overdue, so they never
+  // appear in an overdue report — they simply sit there. Worth seeing.
+  add(sfkQuery_(
+    'SELECT OwnerId, COUNT(Id) FROM Task WHERE OwnerId IN ' + IN +
+    " AND Status != 'Completed' AND ActivityDate = NULL GROUP BY OwnerId"), 'noDate', false);
+
+  // Open, past due, and sixty days or more old
+  add(sfkQuery_(
+    'SELECT OwnerId, COUNT(Id) FROM Task WHERE OwnerId IN ' + IN +
+    " AND Status != 'Completed' AND ActivityDate < " + shiftDays_(day, -60) +
+    ' GROUP BY OwnerId'), 'aged60', false);
+
+  var res = { ok: true, date: day, staff: out, users: users };
+  cache.put(key, JSON.stringify(res), SFK.CACHE_MIN * 60);
+  return res;
+}
+
+/** Safe wrapper — the tracker must keep working when Salesforce does not. */
+function sfkMetricsSafe_(date) {
+  if (!sfkConfigured_()) return { ok: false, reason: 'notConfigured' };
+  try { return sfkMetrics_(date); }
+  catch (e) { return { ok: false, reason: 'error', error: String(e && e.message || e) }; }
+}
+
+/** Run once from the editor to check the connection and see what it reads. */
+function sfKpiTest() {
+  if (!sfkConfigured_()) {
+    var msg = 'Salesforce is not set up. Add SF_KEY, SF_SECRET, SF_USER and SF_PASS ' +
+              'to Script Properties — the same four the renewal sheet uses.';
+    Logger.log(msg); return msg;
+  }
+  var users = sfkUsers_();
+  var lines = ['Matched ' + Object.keys(users).length + ' branch staff to Salesforce users:'];
+  Object.keys(users).forEach(function (k) {
+    lines.push('  ' + k + ' → ' + users[k].name + (users[k].active ? '' : '  (user flagged INACTIVE)') +
+      (users[k].all > 1 ? '  (' + users[k].all + ' user records on this address)' : ''));
+  });
+  var m = sfkMetrics_(todayISO_());
+  lines.push('', 'Task position for ' + m.date + ':');
+  Object.keys(m.staff).forEach(function (k) {
+    var s = m.staff[k];
+    lines.push('  ' + k.padEnd ? k : k, '');
+    lines[lines.length - 2] = '  ' + k + ':  closed ' + s.closed + '  open ' + s.open +
+      '  overdue ' + s.overdue + '  60+ ' + s.aged60;
+    lines.pop();
+  });
+  var msg = lines.join('\n');
   Logger.log(msg);
   return msg;
 }
