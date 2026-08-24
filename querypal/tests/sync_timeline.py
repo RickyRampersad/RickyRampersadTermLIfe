@@ -12,7 +12,11 @@ import numpy as np
 
 HERE = pathlib.Path(__file__).parent
 DEMO = HERE / 'demo'
-SRC = DEMO / 'querypal-demo.webm'
+import sys
+WHICH = sys.argv[1] if len(sys.argv) > 1 else 'demo'      # 'demo' | 'story'
+SRC = DEMO / ('querypal-%s.webm' % WHICH)
+MARKS_IN = DEMO / ('timeline.json' if WHICH == 'demo' else 'story-timeline.json')
+MARKS_OUT = DEMO / ('timeline-video.json' if WHICH == 'demo' else 'story-timeline-video.json')
 FPS = 20
 
 dur = float(subprocess.run(
@@ -40,10 +44,10 @@ for i, m in enumerate(mean):
         times.append(round(i / FPS, 3))
         last = s
 
-marks = json.load(open(DEMO / 'timeline.json'))
+marks = json.load(open(MARKS_IN))
 want = len(marks) - 1                                    # the 'end' mark has no dot
 out = {'duration': round(dur, 3), 'marks': times}
-json.dump(out, open(DEMO / 'timeline-video.json', 'w'), indent=1)
+json.dump(out, open(MARKS_OUT, 'w'), indent=1)
 status = 'OK' if len(times) == want else f'MISMATCH (want {want})'
 print(f'{len(times)} marks decoded from video, {status}; duration {dur:.1f}s')
 for i, t in enumerate(times):

@@ -118,6 +118,32 @@ Live email delivery. After redeploying the Apps Script, send one real query
 with `TEST_MODE = true` and confirm the attachments arrive in the test inbox —
 see the deployment notes in the commit message.
 
+## The story film
+
+`record-story.mjs` is the public-facing piece — why the branch built Query Pal,
+for clients rather than staff. Full-screen story cards carry the narrative beats
+(there is no UI to show for "email forgets"), and real app footage carries the
+rest. `build_story_score.py` narrates it with Kokoro's warm male voice over a
+soft felt-piano score (F major, 68 BPM, no drums — one gentle swell at the turn).
+
+Microsoft's `en-US-AndrewMultilingualNeural` was the voice asked for, but the
+network proxy intercepts TLS and edge-tts pins its own chain, so it cannot be
+reached from here. `am_michael` is the closest warm male narrator available
+offline; `am_puck` is a brighter alternative if a change is wanted.
+
+```bash
+NODE_PATH=/opt/node22/lib/node_modules node record-story.mjs
+python3 sync_timeline.py story     # webm -> demo/story-timeline-video.json
+python3 build_story_score.py
+ffmpeg -ss 0.6 -i demo/querypal-story.webm -ss 0.6 -i demo/story-soundtrack.wav \
+  -map 0:v -map 1:a -vf "drawbox=x=0:y=784:w=16:h=16:color=0x04111e:t=fill" \
+  -af "volume=-0.8dB" -c:v libx264 -crf 24 -pix_fmt yuv420p -c:a aac -b:a 160k \
+  -movflags +faststart -shortest demo/querypal-story.mp4
+```
+
+The finished file is copied to `querypal/querypal-story.mp4` and played by
+`querypal/story.html`, routed as `/story` in `_redirects`.
+
 ## The demo film
 
 `record-demo.mjs` drives the real app in Chromium and records it (backend
