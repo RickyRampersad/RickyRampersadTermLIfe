@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /kpi/
 
 Sitemap: https://rickyrampersadbranch.com/sitemap.xml

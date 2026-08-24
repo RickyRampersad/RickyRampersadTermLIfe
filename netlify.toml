@@ -63,3 +63,15 @@
     Referrer-Policy = "no-referrer"
     Cache-Control = "no-store"
     Permissions-Policy = "geolocation=(), microphone=(), payment=()"
+
+# The KPI tracker holds staff performance records and keeps a session token in
+# the browser. Same treatment as the renewal and claims portals: never framed,
+# never cached on a shared branch machine, and no referrer leaking the page on
+# the way out.
+[[headers]]
+  for = "/kpi/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    Cache-Control = "no-store"
