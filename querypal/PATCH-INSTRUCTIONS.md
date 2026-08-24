@@ -381,6 +381,47 @@ two people (which lets one sign in as the other).
 
 ---
 
+### 16 — `findAgent_`: stop a name being a password  ·  **do this one first**
+
+Verified against the live webhook on 24 Aug 2026. Typing an agent's **full name**
+into the number box with the **password left blank** signed straight in:
+
+```text
+?action=agentauth&num=Kamla%20Dookran&pwd=
+  → {"ok":true,"code":"KAMLA DOOKRAN","role":"staff"}
+```
+
+The last thing `findAgent_` tries is a loose scan: if the typed text matches any
+cell in any tab except `Queries`, that row is accepted as the person signing in,
+with no password checked. The Comments and KPI tabs hold staff names in ordinary
+rows, so **every member of staff can be impersonated by anyone who knows their
+name** — and the branch webhook URL is printed in the page source.
+
+Find, near the end of `findAgent_`:
+```js
+  if (code.length < 3) return null;                          // loose scan stays strict
+  var rows = codeRows_();
+  for (var i = 0; i < rows.length; i++) {
+    for (var c = 0; c < rows[i].length; c++) {
+      if (rows[i][c].toUpperCase() === code) return parseRow_(rows[i], code);
+    }
+  }
+  return null;
+}
+```
+Replace with:
+```js
+  return qpLooseAgent_(code);        // people-tabs only; never a name, email or date
+}
+```
+
+After deploying, confirm it is closed — this must come back `{"ok":false}`:
+```text
+?action=agentauth&num=Kamla%20Dookran&pwd=
+```
+
+---
+
 ## Two more worth doing, not required
 
 **`raiProxy_`** — the assistant endpoint is unauthenticated and spends your

@@ -1141,3 +1141,55 @@ function auditAgentCodes() {
   var msg = out.join('\n');
   Logger.log(msg); return msg;
 }
+
+
+/* ══════════════════ 11. CLOSE THE NAME-ONLY SIGN-IN HOLE ══════════════════
+   findAgent_ ends with a "loose scan": if the typed text matches ANY cell in
+   ANY tab except Queries, that row is accepted as the person signing in — with
+   no password. Verified against the live webhook on 24 Aug 2026: typing an
+   agent's full name into the number box, password blank, signed straight in.
+   The Comments and KPI tabs carry staff names in ordinary rows, so every
+   member of staff is reachable this way by anyone who knows their name.
+
+   qpLooseAgent_ replaces that scan. It only reads tabs that are actually about
+   people, it will not accept a name or an email as a credential, and it refuses
+   anything that looks like a date or a sentence. Everyone genuinely on the
+   roster is already served by the Agent Codes tab (section 10) or AGENT_ACCESS,
+   so this closes the hole without locking anyone out.
+   Wired in by edit 16 in PATCH-INSTRUCTIONS.md.                             */
+
+var QP_LOOSE_TABS = /agent|staff|code|roster|team/i;   // tabs that may hold credentials
+
+function qpLooseAgent_(code) {
+  code = String(code || '').trim().toUpperCase();
+  if (code.length < 4) return null;                     // 3-char codes were too easy to guess
+  if (code.indexOf('@') > -1) return null;              // an email is not a password
+  if (/\s/.test(code)) return null;                     // "Kamla Dookran" — a name, not a code
+  if (!/\d/.test(code)) return null;                    // real codes carry a number
+  if (/^\d{1,3}$/.test(code)) return null;              // "5" and friends
+
+  var sheets;
+  try { sheets = SpreadsheetApp.getActiveSpreadsheet().getSheets(); } catch (e) { return null; }
+  for (var s = 0; s < sheets.length; s++) {
+    var sh = sheets[s], nm = sh.getName();
+    if (nm === SHEET_NAME) continue;
+    if (!QP_LOOSE_TABS.test(nm)) continue;              // Comments / KPI / Group tabs are out
+    var rows = sh.getLastRow(), cols = sh.getLastColumn();
+    if (rows < 1 || cols < 1) continue;
+    var data = sh.getRange(1, 1, rows, Math.min(cols, 10)).getValues();
+    for (var r = 0; r < data.length; r++) {
+      var cells = [];
+      for (var c = 0; c < data[r].length; c++) {
+        if (data[r][c] instanceof Date) continue;       // a timestamp is never a credential
+        var v = String(data[r][c]).trim();
+        if (v) cells.push(v);
+      }
+      for (var k = 0; k < cells.length; k++) {
+        if (cells[k].toUpperCase() !== code) continue;
+        if (cells[k].indexOf('@') > -1) continue;
+        return parseRow_(cells, code);
+      }
+    }
+  }
+  return null;
+}

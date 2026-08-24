@@ -217,6 +217,69 @@ function agentAuthPatched_(code, pwd) {
   return json({ ok: true, code: me.code, name: me.name, email: me.email, role: me.role });
 }
 
+
+/* ---------- WITH PATCH EDIT 16: the loose scan is fenced ---------- */
+var QP_LOOSE_TABS = /agent|staff|code|roster|team/i;
+function qpLooseAgent_(code) {
+  code = String(code || '').trim().toUpperCase();
+  if (code.length < 4) return null;
+  if (code.indexOf('@') > -1) return null;
+  if (/\s/.test(code)) return null;
+  if (!/\d/.test(code)) return null;
+  if (/^\d{1,3}$/.test(code)) return null;
+  var sheets;
+  try { sheets = SpreadsheetApp.getActiveSpreadsheet().getSheets(); } catch (e) { return null; }
+  for (var s = 0; s < sheets.length; s++) {
+    var sh = sheets[s], nm = sh.getName();
+    if (nm === SHEET_NAME) continue;
+    if (!QP_LOOSE_TABS.test(nm)) continue;
+    var rows = sh.getLastRow(), cols = sh.getLastColumn();
+    if (rows < 1 || cols < 1) continue;
+    var data = sh.getRange(1, 1, rows, Math.min(cols, 10)).getValues();
+    for (var r = 0; r < data.length; r++) {
+      var cells = [];
+      for (var c = 0; c < data[r].length; c++) {
+        if (data[r][c] instanceof Date) continue;
+        var v = String(data[r][c]).trim();
+        if (v) cells.push(v);
+      }
+      for (var k = 0; k < cells.length; k++) {
+        if (cells[k].toUpperCase() !== code) continue;
+        if (cells[k].indexOf('@') > -1) continue;
+        return parseRow_(cells, code);
+      }
+    }
+  }
+  return null;
+}
+function findAgentSecure_(code) {
+  code = String(code || '').trim().toUpperCase();
+  if (!code) return null;
+  var fromSheet = qpSheetAgent_(code);
+  if (fromSheet) return fromSheet.revoked ? null : fromSheet;
+  for (var k in AGENT_ACCESS) {
+    if (k.toUpperCase() === code) {
+      var e0 = AGENT_ACCESS[k] || [];
+      var nm2 = e0[0] || '', em = e0[1] || '';
+      var rl = e0[2] ? (roleWord_(String(e0[2])) || 'agent') : roleFromHierarchy_(nm2, em);
+      return { code: code, name: nm2, email: em, role: rl, mgr: '',
+               cells: [nm2, em].filter(function (x) { return x; }) };
+    }
+  }
+  return qpLooseAgent_(code);
+}
+function authSecure_(code, pwd) {
+  var me = findAgentSecure_(code);
+  if (!me && pwd) me = findAgentSecure_(pwd);
+  if (!me) return json({ ok: false });
+  if (me.src === 'tab') {
+    var want = String(me.pwd || '').trim().toUpperCase();
+    var got = String(pwd || '').trim().toUpperCase();
+    if (want && got !== want) return json({ ok: false, why: 'pwd' });
+  }
+  return json({ ok: true, code: me.code, name: me.name, email: me.email, role: me.role });
+}
+
 /* ---------- the diagnosis ---------- */
 let pass = 0, fail = 0;
 const t = (label, got, want) => {
@@ -318,6 +381,40 @@ t('anyone not in the sheet still falls back to the script list',
   agentAuthPatched_('260026', '').ok, true);
 t('and keeps their branch role', agentAuthPatched_('260026', '').role, 'branch');
 t('unknown codes are still refused', agentAuthPatched_('ZZ999', ''), { ok: false });
+
+
+/* ===== G. edit 16 — reproduce the LIVE hole, then close it ===== */
+head('G · edit 16: a name must never be a password (live finding, 24 Aug 2026)');
+TABS = {
+  'Comments': [                                   // an ordinary working tab
+    [new Date('2026-07-24T10:00:07'), 'RRB/2026/188', 'Kamla Dookran', 'staff', 'Chased the department', 'internal'],
+  ],
+  'Agent Codes': [
+    ['Name', 'Agent Number', 'Password', 'Active'],
+    ['Kamla Dookran', 'KD122', 'Kam#2026', 'Active'],
+  ],
+};
+t('TODAY: a name alone signs in, no password', agentAuth_('Kamla Dookran', '').ok, true);
+t('TODAY: it even hands back a timestamp as the person\'s name',
+  /^\w{3} \w{3} \d{2} 2026/.test(agentAuth_('Kamla Dookran', '').name), true);
+t('AFTER EDIT 16: the name is refused', authSecure_('Kamla Dookran', ''), { ok: false });
+t('AFTER EDIT 16: an email is refused',
+  authSecure_('kamla.dookran@myguardiangroup.com', ''), { ok: false });
+t('AFTER EDIT 16: a bare digit is refused', authSecure_('5', ''), { ok: false });
+t('AFTER EDIT 16: the real code still works', authSecure_('KD122', 'Kam#2026').ok, true);
+t('AFTER EDIT 16: script-list people still sign in', authSecure_('260026', '').ok, true);
+
+head('G2 · the Javid Ali collision, reproduced');
+TABS = { 'Agent Codes': [
+  ['Name', 'Agent Number', 'Password'],
+  ['Javid Ali', 'JA135', '5'],                    // a one-character password already in use
+]};
+t('TODAY: EL005 + password 5 lands in someone else\'s account',
+  agentAuth_('EL005', '5').name, 'Javid Ali');
+t('AFTER EDIT 16: it still resolves — the password IS his',
+  authSecure_('EL005', '5').name, 'Javid Ali');
+t('the real fix is his password, not the code path — 4+ chars is refused as a code',
+  authSecure_('EL005', ''), { ok: false });
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
