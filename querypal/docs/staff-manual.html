@@ -1,0 +1,312 @@
+<title>Query Pal Staff Manual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --paper:#f3f7fb; --surface:#fff; --sunk:#eaf2f9; --ink:#0b2138; --muted:#54708c;
+  --line:#d9e6f1; --accent:#0b6ab4; --accent-ink:#08527f; --accent-soft:rgba(11,106,180,.09);
+  --gold:#9a6a10; --gold-soft:rgba(214,158,30,.14);
+  --good:#0d6b4f; --good-soft:rgba(15,128,90,.12);
+  --bad:#a8322c; --bad-soft:rgba(190,60,52,.11);
+  --shadow:0 1px 2px rgba(9,38,64,.05),0 8px 22px rgba(9,38,64,.06);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#061626; --surface:#0b2033; --sunk:#0f2942; --ink:#e7f1fa; --muted:#8aa7c2;
+  --line:#183349; --accent:#4aa9e8; --accent-ink:#93cdf3; --accent-soft:rgba(74,169,232,.13);
+  --gold:#efb75e; --gold-soft:rgba(239,183,94,.14);
+  --good:#54cba1; --good-soft:rgba(84,203,161,.13);
+  --bad:#f0847d; --bad-soft:rgba(240,132,125,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.32);
+}}
+:root[data-theme="dark"]{
+  --paper:#061626; --surface:#0b2033; --sunk:#0f2942; --ink:#e7f1fa; --muted:#8aa7c2;
+  --line:#183349; --accent:#4aa9e8; --accent-ink:#93cdf3; --accent-soft:rgba(74,169,232,.13);
+  --gold:#efb75e; --gold-soft:rgba(239,183,94,.14);
+  --good:#54cba1; --good-soft:rgba(84,203,161,.13);
+  --bad:#f0847d; --bad-soft:rgba(240,132,125,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.32);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;font-size:16px;line-height:1.62;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:820px;margin:0 auto;padding:0 22px 90px}
+code,.mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+
+header.top{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.tin{max-width:820px;margin:0 auto;padding:10px 22px;display:flex;align-items:center;gap:12px}
+.shield{width:30px;height:30px;border-radius:8px;flex:none;display:grid;place-items:center;
+  background:linear-gradient(140deg,var(--accent),var(--accent-ink));color:#fff;font-size:10.5px;font-weight:700}
+.tname{font-weight:600;font-size:14.5px}
+.tsub{font-size:10.5px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase}
+
+.hero{padding:48px 0 30px}
+h1{font-size:clamp(30px,5.6vw,44px);line-height:1.1;letter-spacing:-.026em;margin:0 0 14px;
+  font-weight:700;text-wrap:balance}
+.lede{font-size:18px;color:var(--muted);margin:0;max-width:60ch}
+
+/* contents */
+.toc{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:8px;margin:30px 0 0;
+  padding:0;list-style:none}
+.toc a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink);
+  background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 13px;
+  font-size:14.5px;box-shadow:var(--shadow);transition:border-color .15s}
+.toc a:hover{border-color:var(--accent)}
+.toc a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.toc .n{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--accent-ink)}
+
+h2{font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-ink);
+  font-weight:700;margin:56px 0 4px;display:flex;align-items:baseline;gap:11px;scroll-margin-top:64px}
+h2 .n{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)}
+h2+.h{font-size:26px;font-weight:650;letter-spacing:-.02em;margin:0 0 14px;text-wrap:balance}
+h3{font-size:17px;font-weight:600;margin:28px 0 6px;letter-spacing:-.01em}
+p{margin:0 0 14px;max-width:64ch}
+ul,ol{margin:0 0 15px;padding-left:22px;max-width:64ch}
+li{margin:6px 0}
+strong{font-weight:600}
+a{color:var(--accent-ink)}
+code{font-size:.875em;background:var(--accent-soft);color:var(--accent-ink);padding:2px 6px;border-radius:5px}
+
+/* step list */
+.steps{list-style:none;padding:0;margin:16px 0;counter-reset:st;display:grid;gap:9px}
+.steps li{counter-increment:st;display:grid;grid-template-columns:28px 1fr;gap:13px;
+  background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:13px 15px;
+  box-shadow:var(--shadow);max-width:none}
+.steps li::before{content:counter(st);font-family:'JetBrains Mono',monospace;font-size:11.5px;
+  font-weight:600;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;
+  background:var(--accent-soft);color:var(--accent-ink)}
+.steps b{display:block;font-weight:600}
+.steps span{color:var(--muted);font-size:14.5px}
+
+/* callouts */
+.box{border-radius:12px;padding:14px 16px;margin:18px 0;font-size:15px;max-width:64ch;
+  border:1px solid var(--line);background:var(--sunk)}
+.box.warn{background:var(--bad-soft);border-color:transparent}
+.box.tip{background:var(--good-soft);border-color:transparent}
+.box.rule{background:var(--gold-soft);border-color:transparent}
+.box .lab{font-size:11px;letter-spacing:.15em;text-transform:uppercase;font-weight:700;
+  display:block;margin-bottom:4px}
+.box.warn .lab{color:var(--bad)} .box.tip .lab{color:var(--good)} .box.rule .lab{color:var(--gold)}
+.box p:last-child{margin:0}
+
+/* tables */
+.tw{overflow-x:auto;margin:16px 0;border:1px solid var(--line);border-radius:12px;background:var(--surface);
+  box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:520px}
+th{text-align:left;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);
+  font-weight:700;padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.mono{font-family:'JetBrains Mono',monospace;font-size:13px;white-space:nowrap}
+.pill{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.pill.b{background:var(--accent-soft);color:var(--accent-ink)}
+.pill.g{background:var(--good-soft);color:var(--good)}
+.pill.a{background:var(--gold-soft);color:var(--gold)}
+.pill.r{background:var(--bad-soft);color:var(--bad)}
+
+/* escalation ladder */
+.ladder{display:grid;gap:0;margin:18px 0;border:1px solid var(--line);border-radius:12px;
+  overflow:hidden;background:var(--surface);box-shadow:var(--shadow)}
+.rung{display:grid;grid-template-columns:92px 1fr;gap:15px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.rung:last-child{border-bottom:0}
+.rung .when{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--accent-ink);
+  padding-top:2px}
+.rung b{display:block;font-weight:600;margin-bottom:2px}
+.rung span{color:var(--muted);font-size:14.5px}
+footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:13.5px}
+@media (max-width:560px){.rung{grid-template-columns:1fr;gap:3px}}
+</style>
+
+<header class="top"><div class="tin">
+  <div class="shield">QP</div>
+  <div><div class="tname">Query Pal</div><div class="tsub">Staff Manual</div></div>
+</div></header>
+
+<div class="wrap">
+<section class="hero">
+  <h1>Every request, kept as a promise</h1>
+  <p class="lede">Query Pal logs a client request, sends it to the right department, and then
+  chases it until it is answered — so you don't have to. This is how to use it.</p>
+
+  <ul class="toc">
+    <li><a href="#s1"><span class="n">01</span> Signing in</a></li>
+    <li><a href="#s2"><span class="n">02</span> Logging a request</a></li>
+    <li><a href="#s3"><span class="n">03</span> What happens next</a></li>
+    <li><a href="#s4"><span class="n">04</span> The chasing, done for you</a></li>
+    <li><a href="#s5"><span class="n">05</span> Your dashboard</a></li>
+    <li><a href="#s6"><span class="n">06</span> Clients and companies</a></li>
+    <li><a href="#s7"><span class="n">07</span> Closing a case</a></li>
+    <li><a href="#s8"><span class="n">08</span> The branch wall</a></li>
+    <li><a href="#s9"><span class="n">09</span> Rules that matter</a></li>
+    <li><a href="#s10"><span class="n">10</span> When something goes wrong</a></li>
+  </ul>
+</section>
+
+<h2 id="s1"><span class="n">01</span> Signing in</h2>
+<div class="h">Your code is your identity</div>
+<p>Open <code>querymypolicies.netlify.app</code> and choose <strong>Agent</strong>. Sign in with your
+<strong>agent number</strong> and, where one has been set for you, your <strong>password</strong>.</p>
+
+<div class="tw"><table>
+  <tr><th>What you see</th><th>What it means</th><th>What to do</th></tr>
+  <tr><td>Signed in, your name shown</td><td>All good.</td><td>Carry on.</td></tr>
+  <tr><td><span class="pill r">Not on the branch list</span></td><td>The number was not recognised.</td>
+      <td>Check you typed your <em>number</em>, not your name or email. Case and spaces don't matter.</td></tr>
+  <tr><td><span class="pill a">Password doesn't match</span></td><td>Your row has a password set.</td>
+      <td>Use it. If you don't know it, ask the branch — it can be reset in seconds.</td></tr>
+  <tr><td><span class="pill a">Too many attempts</span></td><td>Guess-protection kicked in.</td>
+      <td>Wait ten minutes, then try once, carefully.</td></tr>
+</table></div>
+
+<div class="box rule"><span class="lab">House rule</span>
+<p>Your code is yours. It decides whose cases you can see and whose name goes on the work.
+Never sign in with someone else's number, and never share yours — including with a client.</p></div>
+
+<h2 id="s2"><span class="n">02</span> Logging a request</h2>
+<div class="h">Five screens, about a minute</div>
+<ol class="steps">
+  <li><b>Who is it for</b><span>Client, agent, or company. Pick <em>Agent</em> when you are logging on a
+    client's behalf — your name goes on the case and the credit is yours.</span></li>
+  <li><b>What do they need</b><span>Choose in plain language. You never need to know a department
+    or an email address — the system already knows where every request type goes.</span></li>
+  <li><b>Check the promise</b><span>The card shows the department and the turnaround, and names the
+    date the answer is due. Say that date to the client out loud. It is the promise.</span></li>
+  <li><b>Fill in the details</b><span>A checklist shows exactly what to have ready, so the department
+    doesn't come back asking. Attach documents right on the form — PDF, Word, Excel, CSV or photos,
+    up to five files.</span></li>
+  <li><b>Submit</b><span>You get a reference. Give it to the client, or send them the PDF receipt.</span></li>
+</ol>
+
+<div class="box tip"><span class="lab">Do this</span>
+<p>Write the description as if the officer reading it has never met this client. One clear
+sentence about what is wanted saves two days of back-and-forth.</p></div>
+
+<h2 id="s3"><span class="n">03</span> What happens the moment you submit</h2>
+<div class="h">Four things, instantly</div>
+<ul>
+  <li>The <strong>department</strong> receives a branded email with the full request and any documents.</li>
+  <li><strong>You, your manager and the branch</strong> are copied, so nobody is working blind.</li>
+  <li>The case is <strong>logged</strong> with a reference in the form
+    <code>RRB/2026/214/Client Name/Subject</code> and a working-day deadline.</li>
+  <li>A <strong>Salesforce case</strong> is created, so the record exists where the company expects it.</li>
+</ul>
+<p>From that moment the case is on the branch board, and the clock is running.</p>
+
+<h2 id="s4"><span class="n">04</span> The chasing, done for you</h2>
+<div class="h">You do not follow up. The system does.</div>
+<p>Once a day the autopilot sweeps every open case. If a deadline has passed with no reply, it
+chases the department <strong>on the same email thread</strong>, so the whole history stays in one place.</p>
+
+<div class="ladder">
+  <div class="rung"><span class="when">Deadline day</span>
+    <div><b>Follow-up 1</b><span>Polite, branded, on the original thread. "A one-line acknowledgement is
+    perfectly fine — it keeps the client informed."</span></div></div>
+  <div class="rung"><span class="when">+2 days</span>
+    <div><b>Follow-up 2</b><span>Firmer, with the days past deadline stated and the full trail attached.</span></div></div>
+  <div class="rung"><span class="when">+4 days</span>
+    <div><b>Final escalation</b><span>The branch manager is copied personally, and the department is asked
+    for three things: current status, expected completion date, and the officer handling it.</span></div></div>
+  <div class="rung"><span class="when">Silence after</span>
+    <div><b>Flagged as stuck</b><span>Three working days after the final chase with no reply, the case is
+    surfaced to the branch for a phone call.</span></div></div>
+</div>
+
+<p>Meanwhile the <strong>client</strong> is not left guessing:</p>
+<ul>
+  <li>Every few working days they get a <strong>progress note</strong> — "actively being worked on" — with a
+    live progress gauge. They are told they need do nothing.</li>
+  <li>If a case is put <strong>on hold</strong>, they are told what that means and that nothing is lost.</li>
+  <li>When it closes, they get a <strong>one-tap star rating</strong> email. Their score lands on your record.</li>
+</ul>
+
+<div class="box"><span class="lab">Health and claims</span>
+<p>Health and claims items route to Sales Support and are chased <strong>daily</strong> until closed, with
+the Claims &amp; Maturity portal block (10:00&ndash;12:00) named in every reminder.</p></div>
+
+<h2 id="s5"><span class="n">05</span> Your dashboard</h2>
+<div class="h">Your book, and what the system did for you</div>
+<p>Signed in, you see every case in your name: status, the promised turnaround, days elapsed, how
+many chases went out on your behalf, and the client's rating once it arrives.</p>
+<ul>
+  <li><strong>Agents</strong> see their own cases.</li>
+  <li><strong>Managers</strong> see their whole unit.</li>
+  <li><strong>Branch</strong> sees everything.</li>
+  <li><strong>Staff</strong> see the cases assigned to them for action.</li>
+</ul>
+<p>You can add a comment to any open case, chase now if a client is waiting on the phone, and
+close a case in the app when the answer comes back.</p>
+
+<h2 id="s6"><span class="n">06</span> Clients and companies</h2>
+<div class="h">They can serve themselves</div>
+<p>Clients and corporate clients have their own portal. They sign in with an access code — and if
+they don't have one, they request it on the page and it arrives by email automatically, only ever
+to the address already on our records.</p>
+<p>Once in, a company can:</p>
+<ul>
+  <li>see <strong>every employee case</strong> with a live progress gauge and their own service statistics —
+    response rate, resolution rate, average days;</li>
+  <li>read the <strong>full history</strong> of a case and add comments, which land on the case record;</li>
+  <li><strong>enroll a new member</strong> with the forms attached — it goes straight to Group Insurance
+    Administration and is chased like anything else;</li>
+  <li><strong>report a leaver</strong>, which ends cover and sends the 30-day conversion notice.</li>
+</ul>
+<div class="box warn"><span class="lab">Never</span>
+<p>Internal branch notes are filtered out of everything a client can see — but that only works if
+notes are entered as <strong>internal</strong>. Never type an internal remark into a client-facing comment.</p></div>
+
+<h2 id="s7"><span class="n">07</span> Closing a case</h2>
+<div class="h">Close it the moment it's answered</div>
+<p>When the department replies with the answer, the system usually notices and closes the case
+itself. If it doesn't, close it in the app. Closing does three things: it stops the chasers, it
+fills in the date closed and days to close, and it triggers the client's rating email.</p>
+<div class="box warn"><span class="lab">Do not</span>
+<p>Do not leave an answered case open. It keeps chasing a department that has already replied,
+it drags down the branch's on-time figure, and it costs you your own on-time record.</p></div>
+
+<h2 id="s8"><span class="n">08</span> The branch wall</h2>
+<div class="h">How we're doing, in the open</div>
+<p>Any screen at <code>querymypolicies.netlify.app/wall</code> shows the live branch board — no sign-in
+needed. It rotates through eight boards every fifteen seconds and refreshes every minute: the
+service pulse, twelve weeks of demand, open work against deadlines, department performance, the
+agent leaderboard, what clients ask for most, satisfaction, and a scorecard of how we're doing
+against the promises we make.</p>
+<p>Tap <strong>Sound</strong> once and the wall plays a quiet score and reads the headline out loud.</p>
+<div class="box tip"><span class="lab">Worth knowing</span>
+<p>The wall shows totals only — never a client name, policy number or reference — so it is safe on
+any screen the public can see. Your name appears on the leaderboard when you are resolving on time.</p></div>
+
+<h2 id="s9"><span class="n">09</span> Rules that matter</h2>
+<div class="h">Six things to get right</div>
+<ol>
+  <li><strong>Log it in Query Pal, not by email.</strong> A request sent straight to a department has no
+    reference, no deadline, no chasing, and no record that you did the work.</li>
+  <li><strong>Give the client the reference and the date.</strong> That is the promise we are measured on.</li>
+  <li><strong>Attach at the form.</strong> Documents sent separately get separated.</li>
+  <li><strong>Never put a password, full card number or PIN in a description.</strong> The description
+    travels to the department and into the record.</li>
+  <li><strong>Keep internal notes internal.</strong> Clients can read the case trail.</li>
+  <li><strong>Close what is finished.</strong> See section 07.</li>
+</ol>
+
+<h2 id="s10"><span class="n">10</span> When something goes wrong</h2>
+<div class="h">Quick answers</div>
+<div class="tw"><table>
+  <tr><th>Problem</th><th>What to do</th></tr>
+  <tr><td>Sign-in refused</td><td>Type your <em>number</em>. If it still fails, the branch can check your
+    row in seconds and reset your password.</td></tr>
+  <tr><td>Wrong department on a request type</td><td>Tell the branch — routing is set centrally and fixed
+    once for everyone, not case by case.</td></tr>
+  <tr><td>A client says they got nothing</td><td>Check the email on the case. Progress notes only go to the
+    address recorded when the case was logged.</td></tr>
+  <tr><td>Department replied but the case is still open</td><td>Close it in the app, or add a comment so the
+    branch can.</td></tr>
+  <tr><td>Client is upset about a delay</td><td>Use <strong>chase now</strong>, then tell them the case has been
+    escalated and the manager is copied. It will be true.</td></tr>
+  <tr><td>A case must pause</td><td>Set it <strong>On Hold</strong>. The chasers stop and the client is told what
+    that means — silence is what damages trust.</td></tr>
+</table></div>
+
+<footer>Query Pal &middot; Ricky Rampersad Branch 26000, Chaguanas &middot;
+Lots 28&ndash;30 Endeavour Industrial Estate &middot; 1-868-665-3279 &middot; WhatsApp 678-6921</footer>
+</div>
