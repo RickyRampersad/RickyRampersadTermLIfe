@@ -68,6 +68,19 @@ film/
 Films carry **subtitles on every line** — most people meet them muted.
 Example data is labelled as example data, on screen.
 
+**The mark is `querypal/qp-shield.png`** — a coral shield with a white check on
+deep navy. The palette follows the mark, not the other way round: navy
+`#1B2A4A` / `#0E1830` ground, coral `#E4644B` with `#F0906F` lit, gold `#F5B935`
+for ratings. Embed it as a data URI; never draw a lettered box in its place.
+
+**Watch the bed's level.** A score at −21 dBFS against a full-scale voice is
+inaudible — it reads to the viewer as "no music". Run the bed loud and duck it
+to about 40% under narration rather than leaving it quiet throughout.
+
+**A film needs a journey.** Six stations along the foot of the frame — Asked,
+Logged, Routed, Chased, Answered, Rated — lit as the story reaches them, so the
+viewer always knows where they are and can feel the distance travelled.
+
 ## Query Pal
 
 Static front end on Netlify (`querymypolicies.netlify.app`), Google Apps Script
