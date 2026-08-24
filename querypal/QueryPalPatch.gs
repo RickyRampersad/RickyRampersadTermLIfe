@@ -1480,3 +1480,77 @@ function qpOwedSweep_(sh, r, row, now) {
     return true;
   } catch (e) { return false; }
 }
+
+
+/* ══════════════════ 11. HEALTH — is it actually up? ══════════════════
+   One person built this and one person maintains it, so the useful question
+   is not "is Google down" (it rarely is) but "did my last change break
+   something, and can I tell in ten seconds". qpHealth() answers that from
+   the editor, and ?action=health answers it from a phone.                */
+
+function qpHealth_() {
+  var out = { ok: true, version: (typeof getVersion === 'function' ? getVersion() : '?'),
+              checks: [], when: new Date().toISOString() };
+  var add = function (name, ok, note) {
+    out.checks.push({ name: name, ok: !!ok, note: note || '' });
+    if (!ok) out.ok = false;
+  };
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sh = ss.getSheetByName(SHEET_NAME);
+    add('Queries sheet', !!sh, sh ? (sh.getLastRow() - 1) + ' rows' : 'MISSING');
+    add('Comments sheet', !!cmtSheet_(), '');
+  } catch (e) { add('Spreadsheet', false, String(e)); }
+
+  try {
+    var codes = 0;
+    for (var k in AGENT_ACCESS) codes++;
+    var tab = 0;
+    try { tab = codeTable_().length; } catch (te) {}
+    add('Sign-in list', codes + tab > 0, codes + ' in script, ' + tab + ' in the sheet');
+  } catch (e) { add('Sign-in list', false, String(e)); }
+
+  try {
+    var routes = 0;
+    for (var r in QP_ROUTES) routes++;
+    add('Routing table', routes > 40, routes + ' request types mapped');
+  } catch (e) { add('Routing table', false, String(e)); }
+
+  try {
+    var trg = ScriptApp.getProjectTriggers(), names = [];
+    for (var i = 0; i < trg.length; i++) names.push(trg[i].getHandlerFunction());
+    add('Autopilot installed', names.indexOf('autoSweep') > -1,
+        names.length ? names.join(', ') : 'NONE — run setupTriggers()');
+  } catch (e) { add('Autopilot installed', false, String(e)); }
+
+  try {
+    var left = MailApp.getRemainingDailyQuota();
+    add('Email quota', left > 20, left + ' emails left today');
+  } catch (e) { add('Email quota', false, String(e)); }
+
+  try {
+    GmailApp.search('subject:querypal', 0, 1);
+    add('Gmail access (threading)', true, 'follow-ups can reply in-thread');
+  } catch (e) { add('Gmail access (threading)', false, 'not authorised — run any function once'); }
+
+  return out;
+}
+
+/* Run this one from the editor. */
+function qpHealth() {
+  var h = qpHealth_();
+  var lines = ['QUERY PAL HEALTH — ' + h.version, h.ok ? 'ALL GOOD' : 'SOMETHING IS WRONG', ''];
+  for (var i = 0; i < h.checks.length; i++) {
+    var c = h.checks[i];
+    lines.push((c.ok ? '  OK    ' : '  FAIL  ') + c.name + (c.note ? '  —  ' + c.note : ''));
+  }
+  if (!h.ok) {
+    lines.push('');
+    lines.push('If a change you just made caused this, roll back rather than debug:');
+    lines.push('Deploy > Manage deployments > pencil > Version > pick the previous one > Deploy.');
+    lines.push('The sheet is untouched by a rollback — nothing logged is ever lost.');
+  }
+  var msg = lines.join('\n');
+  Logger.log(msg);
+  return msg;
+}

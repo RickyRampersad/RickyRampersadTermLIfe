@@ -500,6 +500,23 @@ reading the whole thread.
 
 ---
 
+### 19 — `doGet`: let anyone check whether it is up
+
+One person built this and one person keeps it running, so the useful question
+is "did my last change break something, and can I tell in ten seconds". Add to
+`doGet`, beside the other actions:
+
+```js
+  if (p.action === 'health')    return json(qpHealth_());
+```
+
+Then `…/exec?action=health` answers from a phone, and `qpHealth()` run from the
+editor prints the same thing in plain words. It reports the sheets, the sign-in
+list, the routing table, whether the autopilot trigger is installed, how much
+email quota is left today, and whether Gmail threading is authorised.
+
+---
+
 ## Two more worth doing, not required
 
 **`raiProxy_`** — the assistant endpoint is unauthenticated and spends your
