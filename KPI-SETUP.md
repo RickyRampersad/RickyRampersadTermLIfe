@@ -16,6 +16,10 @@ The tracker is two pieces:
 3. **Project Settings → Time zone → `(GMT-04:00) Atlantic Time`** — the 3pm
    trigger and every date in the reports read from this. Getting it wrong moves
    the checkpoint an hour and can push entries onto the wrong day.
+   Set the **workbook's** zone to match, in the Sheet itself under
+   **File → Settings → Time zone**. Date cells are stored against that zone;
+   the script reads them back in it, so the two agreeing keeps every entry on
+   the day it was logged.
 4. **Project Settings → Script Properties → Add** `MANAGER_EMAIL` = the address
    the reports should go to. Several addresses, separate them with commas.
    Leave it unset and the reports go to whoever owns the workbook.
@@ -30,10 +34,28 @@ It creates `KPI Training` itself the first time somebody logs a training session
 
 ## 2. Clear out the duplicate rows — once
 
-The old script added a new row every time anybody saved. The workbook currently
-holds **63 rows for 32 actual reports**: one of Azariah's days is in there five
-times over. Every total built on that sheet — closed, overdue, the pivot — has
-been counting some days twice and others five times.
+The old script *tried* to update one row per person per day. It matched like
+this:
+
+```js
+if (String(data[i][1]) === String(e.date) && ...)
+```
+
+The app posts the date as the text `2026-06-22`. Sheets parses that into a real
+date cell on the way in — so reading it back gives a Date object, and
+`String(...)` on it returns `Mon Jun 22 2026 00:00:00 GMT-0400 (…)`. That never
+equals `2026-06-22`, so the match always failed and the row was appended
+instead of updated. Every save, every time.
+
+The workbook holds **63 rows for 32 actual reports**: 16 days are byte-identical
+copies of one submission, 3 more are edits that landed as new rows rather than
+replacing the original. One of Azariah's days is in there five times over. Every
+total built on that sheet — closed, overdue, the pivot — has been counting some
+days twice and others five times.
+
+The new script normalises both sides to a plain `yyyy-mm-dd` before comparing,
+reading date cells in the spreadsheet's own time zone, so it matches whether the
+column holds text, a date cell, or `6/22/2026`.
 
 In the Apps Script editor pick **`dedupeLog`** from the function dropdown and
 press **Run**. It keeps the newest row for each person and day and deletes the
@@ -135,6 +157,25 @@ Kamla's training notes. She had no entry in the app, so she is set up as
 is wrong, her line in `PROFILES` is the place to fix it.
 
 ---
+
+## One thing the old script did that this one doesn't
+
+The script being replaced also had a second endpoint, for course results:
+
+```js
+if (e.kind === "training") { ... }   // Name, Role, Course, Score, Outcome
+```
+
+That is what wrote the two `Daily KPI & Innovation Tracker · 6/6 · PASS` rows on
+the workbook's first tab. Nothing in the site posts to it — the new tracker
+never has — so replacing the script is safe as far as this repository goes. But
+if you have a quiz or sign-off page **outside** the repo pointing at that same
+`/exec` URL, it will stop recording once you deploy. Say so and it takes ten
+minutes to carry across.
+
+That first tab is left exactly as it is either way. The new training register is
+a separate tab, `KPI Training`, and records something different: who delivered
+training to whom, on what, and whether it was tested.
 
 ## What changed
 

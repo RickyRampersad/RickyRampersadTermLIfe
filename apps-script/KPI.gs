@@ -126,15 +126,31 @@ function colMap_(sh) {
 //  the ISO day in branch time, or comparisons quietly fail across midnight.
 // ---------------------------------------------------------------------------
 
+/** A date cell comes back as a Date at midnight in the SPREADSHEET's zone, so
+ *  that is the zone to read the calendar day back in. Reading it in any other
+ *  zone can shift it by a day.
+ *
+ *  This is what broke the old script. It compared String(cell) against the
+ *  posted "2026-06-22"; once Sheets had parsed that text into a date cell,
+ *  String(cell) read "Mon Jun 22 2026 00:00:00 GMT-0400 (…)" and never matched
+ *  again — so every save appended instead of updating the day it belonged to. */
+var _ssTz = null;
+function ssTz_() {
+  if (_ssTz) return _ssTz;
+  try { _ssTz = ss_().getSpreadsheetTimeZone() || CONFIG.TZ; }
+  catch (e) { _ssTz = CONFIG.TZ; }
+  return _ssTz;
+}
+
 function isoDay_(v) {
   if (v == null || v === '') return '';
   if (Object.prototype.toString.call(v) === '[object Date]') {
-    return Utilities.formatDate(v, CONFIG.TZ, 'yyyy-MM-dd');
+    return Utilities.formatDate(v, ssTz_(), 'yyyy-MM-dd');
   }
   var s = String(v).trim();
   if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
   var d = new Date(s);
-  return isNaN(d.getTime()) ? s : Utilities.formatDate(d, CONFIG.TZ, 'yyyy-MM-dd');
+  return isNaN(d.getTime()) ? s : Utilities.formatDate(d, ssTz_(), 'yyyy-MM-dd');
 }
 
 function todayISO_() { return Utilities.formatDate(new Date(), CONFIG.TZ, 'yyyy-MM-dd'); }
