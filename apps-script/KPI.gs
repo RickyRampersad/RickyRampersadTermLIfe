@@ -5,9 +5,12 @@
  * 3pm checkpoint and the Friday weekly summary.
  *
  * What changed versus the first version of this script:
- *   1. Entries are UPSERTED on (StaffId, Date) instead of appended. Every
- *      "Save draft" used to add a fresh row, so one day could hold five copies
- *      of itself and every total downstream was inflated.
+ *   1. The upsert on (StaffId, Date) actually matches now. The old script
+ *      compared String(cell) against the posted "2026-06-22" — but Sheets had
+ *      parsed that text into a date cell, so String(cell) read
+ *      "Mon Jun 22 2026 00:00:00 GMT-0400 (…)" and never matched. Every save
+ *      appended instead of updating: one day could hold five copies of itself
+ *      and every total downstream was inflated. See isoDay_ below.
  *   2. Staff sign in. The Access tab holds the credentials; the check happens
  *      here, on the server. The password column is never served to a browser.
  *   3. Training records are kept. The form has always collected them; there
