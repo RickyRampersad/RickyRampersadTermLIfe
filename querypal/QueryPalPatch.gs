@@ -6,7 +6,7 @@
    Nothing here overwrites Code.gs. Every name ends in QP_ or is new, so it
    cannot collide with anything you already have.
 
-   After adding this file, make the ten small edits listed in
+   After adding this file, make the small edits listed in
    PATCH-INSTRUCTIONS.md, then Deploy → Manage deployments → pencil →
    Version: New version → Deploy.
    ============================================================================ */

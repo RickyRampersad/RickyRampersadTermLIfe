@@ -7,7 +7,7 @@ file so the logo array and the 1,500 lines around it are never touched.
 **Step 1.** In the Apps Script editor: `+` → `Script` → name it **`QueryPalPatch`**.
 Paste the whole of `QueryPalPatch.gs` into it. Save.
 
-**Step 2.** Make the nine edits below in `Code.gs`.
+**Step 2.** Make the fifteen edits below in `Code.gs`. Only the ones you need — each is independent.
 
 **Step 3.** Deploy → Manage deployments → pencil → Version: **New version** → Deploy.
 
@@ -15,7 +15,7 @@ Paste the whole of `QueryPalPatch.gs` into it. Save.
 
 ---
 
-## The nine edits
+## The edits
 
 ### 1 — `getVersion` (line ~30)
 
