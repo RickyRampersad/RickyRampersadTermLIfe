@@ -81,6 +81,23 @@ to about 40% under narration rather than leaving it quiet throughout.
 Logged, Routed, Chased, Answered, Rated — lit as the story reaches them, so the
 viewer always knows where they are and can feel the distance travelled.
 
+## Why Query Pal exists
+
+A **Ricky Rampersad initiative**, built at Branch 26000. The branch ran on
+email, and email is where a request goes to die: the agent had to guess which
+of sixteen departments a request belonged to, guess wrong and it sat in the
+wrong inbox for a week, and nobody — agent, staff or client — could see where
+anything stood. Ricky took what he learned at McKinsey — *a process you cannot
+see is a process you cannot fix* — and built one place that serves all three.
+
+The promise, and the line every film ends on: **log it once and forget it.
+The system does the rest.**
+
+**Escalation to the branch manager is a failure state, not a feature.** The BM
+is the last resort, and the measure of the system working is that it almost
+never gets there. Never present the manager step as the exciting part of the
+chase — the chasers doing their job without anyone is the point.
+
 ## Query Pal
 
 Static front end on Netlify (`querymypolicies.netlify.app`), Google Apps Script
