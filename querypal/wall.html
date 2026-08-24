@@ -53,6 +53,28 @@
   .dot.stale{background:var(--amber); animation:none} .dot.dead{background:var(--red); animation:none}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(56,189,248,.65)}70%{box-shadow:0 0 0 .8em rgba(56,189,248,0)}100%{box-shadow:0 0 0 0 rgba(56,189,248,0)}}
   .clock{font-size:1.42em; font-weight:750} .clock span{color:var(--ink-3); font-size:.6em; margin-left:.45em}
+  .sndbtn{display:flex; align-items:center; gap:.5em; font:inherit; font-size:.68em; letter-spacing:.15em;
+          text-transform:uppercase; font-weight:800; color:var(--ink-2); cursor:pointer;
+          background:rgba(56,189,248,.10); border:1px solid rgba(56,189,248,.30);
+          padding:.5em 1em; border-radius:2em; margin-right:1.3em; transition:all .2s}
+  .sndbtn:hover{background:rgba(56,189,248,.20); color:var(--ink)}
+  .sndbtn.on{background:rgba(52,211,153,.13); border-color:rgba(52,211,153,.38); color:var(--green)}
+  .sndbtn.speaking #sndIco{animation:sndp .9s ease-in-out infinite}
+  @keyframes sndp{0%,100%{opacity:.45}50%{opacity:1}}
+
+  /* KPI scorecard — target vs actual, graded */
+  .kpis{display:grid; grid-template-columns:repeat(2,1fr); gap:.8em; flex:1; align-content:start}
+  .kpi{display:grid; grid-template-columns:auto 1fr; gap:1em; align-items:center;
+       background:var(--panel-2); border:1px solid var(--line); border-radius:.8em; padding:1em 1.2em}
+  .kpi .ring{width:4.4em; height:4.4em; border-radius:50%; display:grid; place-items:center;
+             font-weight:800; font-size:.95em; position:relative}
+  .kpi .ring b{font-size:1.15em; line-height:1}
+  .kpi .lab{font-size:.66em; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-3); font-weight:800}
+  .kpi .now{font-size:1.5em; font-weight:800; line-height:1.15; margin-top:.12em}
+  .kpi .tgt{font-size:.72em; color:var(--ink-3); font-weight:600; margin-top:.15em}
+  .kpi .bar{height:.42em; border-radius:.3em; background:rgba(255,255,255,.08); margin-top:.5em; overflow:hidden}
+  .kpi .bar i{display:block; height:100%; border-radius:.3em}
+  #k_grade{font-style:normal; font-weight:800}
 
   .ptitle{display:flex; align-items:baseline; gap:.7em; margin-bottom:.15em}
   .ptitle h1{font-size:1.55em; font-weight:800; letter-spacing:-.02em; line-height:1.15}
@@ -198,6 +220,8 @@
   <div class="shield">QP</div>
   <div class="brand">Ricky Rampersad Branch<small>Query Pal · Service Command</small></div>
   <div class="spacer"></div>
+  <button id="snd" class="sndbtn" onclick="soundToggle()" title="Sound">
+    <span id="sndIco">♪</span><span id="sndTxt">Sound on</span></button>
   <div class="live"><span class="dot" id="dot"></span><span id="liveTxt">Live</span></div>
   <div class="clock num" id="clock">--:--</div>
 </header>
@@ -270,6 +294,13 @@
       <div class="card"><h2>Every rating</h2><div id="stars"></div><div id="quotes"></div></div>
     </div>
   </section>
+
+  <section class="panel" id="p7">
+    <div class="ptitle"><h1 id="t_p7">How are we doing?</h1><span class="tag">Our promises</span></div>
+    <div class="card grow"><h2>Measured against what we promise <em id="k_grade"></em></h2>
+      <div class="kpis" id="kpis"></div>
+    </div>
+  </section>
 </main>
 
 <script>
@@ -280,7 +311,11 @@
    wall to one manager's team or one agent's book. No client names or
    references ever reach this page — the endpoint returns aggregates only. */
 const WEBHOOK = "https://script.google.com/macros/s/AKfycbxHFobr89jyLMK-CL5cUxs8GhYtkvTVbbqeDo9L5RgUxMGlbFBKK0vanwEjf49gCakpAw/exec";
-const POLL_MS = 60000, ROTATE_MS = 15000, STALE_MS = 180000, PANELS = 7;
+const POLL_MS = 60000, ROTATE_MS = 15000, STALE_MS = 180000, PANELS = 8;
+/* KPI promises — what the branch holds itself to. Edit these and the
+   scorecard, the grade and the spoken briefing all follow. */
+const KPI_TARGET = { onTime: 90, avg: 4, csat: 4.5, overdue: 0 };
+const SPEAK_GAP_MS = 45000;      // never more than one announcement in this window
 const $ = id => document.getElementById(id);
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pc = v => (v===null||v===undefined) ? '—' : v+'%';
@@ -376,10 +411,22 @@ function poll(){
 }
 setInterval(poll, POLL_MS);
 
+/* A screen that had sound on yesterday should say so, but browsers will not
+   start audio without a gesture — so pulse the button instead of failing silently. */
+(function soundHint(){
+  let want = '0';
+  try { want = localStorage.getItem('qpwallsnd') || '0'; } catch (e) {}
+  if (want === '1' && !musicOn) {
+    $('sndTxt').textContent = 'Tap for sound';
+    $('snd').style.animation = 'sndp 1.8s ease-in-out 6';
+  }
+})();
+
 /* ---------- rotation ---------- */
 function rotate(){
   cur = (cur + 1) % PANELS;
   for (let i = 0; i < PANELS; i++) $('p'+i).classList.toggle('on', i === cur);
+  say(briefing(cur));            // throttled — roughly one announcement a minute
 }
 /* ?freeze=1 stops the auto-cycle — for filming, screenshots, or a board you
    want parked on one page. Click / ArrowRight still advance manually. */
@@ -488,6 +535,180 @@ function render(){
     '<div class="rec"><span class="tick2">'+'★'.repeat(Math.max(1,Math.min(5,q.score)))+'</span>'
     + '<div class="t">“'+esc(q.text)+'”</div></div>').join('');
   $('t_p6').innerHTML = t.csat != null ? 'Clients rate us <i>★'+t.csat+'</i>' : 'How the service feels';
+
+  renderKPI(t);
+}
+
+/* ---------- p7: how are we doing, against what we promise ----------
+   Four promises, each scored 0-100 against KPI_TARGET, averaged into a grade.
+   This is the board the public reads: plain words, no jargon, no client data. */
+function kpiScore(kind, v){
+  if (v == null) return null;
+  if (kind === 'onTime') return Math.max(0, Math.min(100, Math.round(v / KPI_TARGET.onTime * 100)));
+  if (kind === 'csat')   return Math.max(0, Math.min(100, Math.round(v / KPI_TARGET.csat * 100)));
+  if (kind === 'avg')    return Math.max(0, Math.min(100, Math.round(KPI_TARGET.avg / Math.max(v, .1) * 100)));
+  if (kind === 'overdue')return v === 0 ? 100 : Math.max(0, Math.min(100, Math.round(100 - v * 12)));
+  return null;
+}
+function gradeOf(pct){
+  if (pct == null) return { g:'—', c:'var(--ink-3)' };
+  if (pct >= 95) return { g:'A+', c:'var(--green)' };
+  if (pct >= 88) return { g:'A',  c:'var(--green)' };
+  if (pct >= 78) return { g:'B',  c:'var(--blue)' };
+  if (pct >= 65) return { g:'C',  c:'var(--amber)' };
+  return { g:'D', c:'var(--red)' };
+}
+function renderKPI(t){
+  const rows = [
+    { lab:'Resolved on time',  kind:'onTime',  now: t.onTime  != null ? t.onTime + '%'  : '—',
+      tgt:'We promise ' + KPI_TARGET.onTime + '% or better', v:t.onTime },
+    { lab:'Average time to close', kind:'avg', now: t.avg     != null ? t.avg + ' days' : '—',
+      tgt:'We aim for ' + KPI_TARGET.avg + ' days or fewer', v:t.avg },
+    { lab:'How clients rate us', kind:'csat',  now: t.csat    != null ? '★' + t.csat    : '—',
+      tgt:'We aim for ★' + KPI_TARGET.csat + ' and above', v:t.csat },
+    { lab:'Past their deadline', kind:'overdue', now: t.overdue != null ? String(t.overdue) : '—',
+      tgt: t.overdue ? 'Every one is being chased automatically' : 'Nothing is overdue', v:t.overdue },
+  ];
+  let sum = 0, n = 0;
+  $('kpis').innerHTML = rows.map(r => {
+    const sc = kpiScore(r.kind, r.v);
+    if (sc != null) { sum += sc; n++; }
+    const gr = gradeOf(sc);
+    return '<div class="kpi">'
+      + '<div class="ring" style="background:radial-gradient(closest-side,var(--panel) 74%,transparent 75%),'
+      + 'conic-gradient(' + gr.c + ' ' + (sc||0) + '%, rgba(255,255,255,.09) 0);color:' + gr.c + '">'
+      + '<b>' + gr.g + '</b></div>'
+      + '<div><div class="lab">' + esc(r.lab) + '</div>'
+      + '<div class="now num">' + esc(r.now) + '</div>'
+      + '<div class="tgt">' + esc(r.tgt) + '</div>'
+      + '<div class="bar"><i style="width:' + (sc||0) + '%;background:' + gr.c + '"></i></div>'
+      + '</div></div>';
+  }).join('');
+  const overall = n ? Math.round(sum / n) : null;
+  const og = gradeOf(overall);
+  $('k_grade').innerHTML = overall != null
+    ? '<span style="color:' + og.c + '">' + og.g + ' &middot; ' + overall + '%</span>' : '';
+  $('t_p7').innerHTML = overall != null
+    ? 'We are keeping <b>' + overall + '%</b> of our promises' : 'How are we doing?';
+}
+
+/* ================= SOUND =================
+   Two things, both generated in the browser: an ambient score built with the
+   Web Audio API (no file to load, nothing licensed) and spoken briefings read
+   by the device's own voice. Browsers block audio until someone interacts with
+   the page, so the header carries a Sound button — one tap on the TV remote or
+   screen and it runs for the rest of the day. */
+let audioCtx = null, musicOn = false, musicTimer = null, lastSpoke = 0, voice = null;
+
+function pickVoice(){
+  const all = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+  if (!all.length) return null;
+  const by = rx => all.find(v => rx.test(v.name));
+  return by(/andrew/i)                       // the requested voice, where the device has it
+      || by(/guy|christopher|eric|brian|ryan/i)
+      || all.find(v => /^en-US/i.test(v.lang) && /male/i.test(v.name))
+      || all.find(v => /^en-/i.test(v.lang))
+      || all[0];
+}
+if (window.speechSynthesis) {
+  voice = pickVoice();
+  speechSynthesis.onvoiceschanged = () => { voice = pickVoice(); };
+}
+
+function say(text, force){
+  if (!musicOn || !text || !window.speechSynthesis) return;
+  if (!force && Date.now() - lastSpoke < SPEAK_GAP_MS) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    if (voice) { u.voice = voice; u.lang = voice.lang; }
+    u.rate = .96; u.pitch = 1; u.volume = 1;
+    u.onstart = () => $('snd').classList.add('speaking');
+    u.onend   = () => $('snd').classList.remove('speaking');
+    speechSynthesis.speak(u);
+    lastSpoke = Date.now();
+  } catch (e) {}
+}
+
+/* what each board says out loud — short, plain, and only ever aggregates */
+function briefing(i){
+  if (!data) return '';
+  const t = data.totals || {}, ag = (data.agents||[])[0], dp = (data.depts||[])[0],
+        ty = (data.types||[])[0];
+  switch (i) {
+    case 0: return 'Right now, ' + (t.open||0) + ' requests are open'
+      + (t.onTime != null ? ', and we are resolving ' + t.onTime + ' percent of them on time.' : '.');
+    case 1: return 'Here is the demand on the branch over the last twelve weeks.';
+    case 2: return t.overdue
+      ? t.overdue + ' requests are past their deadline. Every one is being chased automatically.'
+      : 'Nothing is past its deadline.';
+    case 3: return dp ? dp.name + ' is answering fastest, at ' + dp.onTime + ' percent on time.' : '';
+    case 4: return ag ? 'Leading the branch: ' + ag.name + ', with ' + ag.done + ' resolved.' : '';
+    case 5: return ty ? 'Most asked for: ' + ty.name + '.' : '';
+    case 6: return t.csat != null ? 'Clients rate us ' + t.csat + ' out of five.' : '';
+    case 7: {
+      const g = $('k_grade').textContent.trim();
+      return g ? 'Against the promises we make, the branch is scoring ' + g.replace('·', 'at') + '.' : '';
+    }
+  }
+  return '';
+}
+
+/* ambient score: slow D-major pads that drift, quiet enough to live under a room */
+const CH = [[146.83,220,293.66],[164.81,246.94,329.63],[110,164.81,220],[130.81,196,261.63]];
+let chI = 0;
+function padChord(){
+  if (!audioCtx || !musicOn) return;
+  const now = audioCtx.currentTime, notes = CH[chI++ % CH.length], LEN = 7.5;
+  notes.forEach((f, k) => {
+    [0, 1].forEach(d => {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = k === 0 ? 'sine' : 'triangle';
+      o.frequency.value = f * (d ? 1.004 : 1);
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(.030 / (k + 1), now + 2.4);
+      g.gain.linearRampToValueAtTime(0, now + LEN);
+      o.connect(g); g.connect(audioCtx.__bus);
+      o.start(now); o.stop(now + LEN + .1);
+    });
+  });
+  // one soft bell, high above the pad
+  const b = audioCtx.createOscillator(), bg = audioCtx.createGain();
+  b.type = 'sine'; b.frequency.value = notes[2] * 2;
+  bg.gain.setValueAtTime(0, now + .4);
+  bg.gain.linearRampToValueAtTime(.020, now + .7);
+  bg.gain.exponentialRampToValueAtTime(.0001, now + 5);
+  b.connect(bg); bg.connect(audioCtx.__bus);
+  b.start(now + .4); b.stop(now + 5.2);
+}
+
+function soundToggle(){
+  if (musicOn) {                                   // turn it off
+    musicOn = false;
+    clearInterval(musicTimer); musicTimer = null;
+    if (window.speechSynthesis) speechSynthesis.cancel();
+    if (audioCtx) { try { audioCtx.suspend(); } catch (e) {} }
+    $('snd').classList.remove('on', 'speaking');
+    $('sndIco').textContent = '♪'; $('sndTxt').textContent = 'Sound on';
+    try { localStorage.setItem('qpwallsnd', '0'); } catch (e) {}
+    return;
+  }
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const bus = audioCtx.createGain(); bus.gain.value = .5;
+      const lp = audioCtx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1500;
+      bus.connect(lp); lp.connect(audioCtx.destination);
+      audioCtx.__bus = bus;
+    }
+    audioCtx.resume();
+  } catch (e) { audioCtx = null; }
+  musicOn = true;
+  $('snd').classList.add('on');
+  $('sndIco').textContent = '♫'; $('sndTxt').textContent = 'Sound off';
+  try { localStorage.setItem('qpwallsnd', '1'); } catch (e) {}
+  padChord(); musicTimer = setInterval(padChord, 7000);
+  say('Query Pal, live from the Rampersad Branch. ' + briefing(cur), true);
 }
 </script>
 </body>

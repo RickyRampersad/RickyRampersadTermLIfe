@@ -40,7 +40,7 @@ await page.waitForFunction(() => document.getElementById('v_total').textContent 
 t('a fresh screen boots straight to the boards — no gate', await page.locator('#gate.off').count(), 1);
 t('no sign-in call was needed', postCalls, 0);
 
-t('seven boards exist', await page.locator('main .panel').count(), 7);
+t('eight boards exist', await page.locator('main .panel').count(), 8);
 t('first board is showing', await page.locator('#p0.on').count(), 1);
 t('headline open count', await page.locator('#h_open').innerText(), '21');
 t('on-time headline in the title', (await page.locator('#t_p0').innerText()).includes('84%'), true);
@@ -75,7 +75,24 @@ t('five star rows', await page.locator('#stars .srow').count(), 5);
 t('quotes render', await page.locator('#quotes .rec').count(), 2);
 
 await page.locator('header').click();
+t('KPI scorecard board', await page.locator('#p7.on').count(), 1);
+t('four promises scored', await page.locator('#kpis .kpi').count(), 4);
+t('on-time promise shows the target', (await page.locator('#kpis').innerText()).includes('90%'), true);
+t('overall grade is stated', (await page.locator('#k_grade').innerText()).match(/^[A-D]\+?\s/) !== null, true);
+t('scorecard title names the score', (await page.locator('#t_p7').innerText()).includes('%'), true);
+
+await page.locator('header').click();
 t('rotation wraps back to the pulse', await page.locator('#p0.on').count(), 1);
+
+// sound: the button exists, and nothing plays until someone asks for it
+t('sound button present', await page.locator('#snd').count(), 1);
+t('sound starts off', await page.locator('#snd.on').count(), 0);
+t('a briefing is composed from live data',
+  (await page.evaluate(() => briefing(0))).includes('21 requests are open'), true);
+t('the scorecard briefing quotes the grade',
+  (await page.evaluate(() => briefing(7))).length > 10, true);
+t('briefings never carry client names',
+  (await page.evaluate(() => [0,1,2,3,4,5,6,7].map(i => briefing(i)).join(' '))).includes('Anita'), false);
 
 // reload stays open, still no sign-in
 await page.reload();
