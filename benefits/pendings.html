@@ -103,10 +103,10 @@
 <body>
 
 <div id="gate" class="gate">
-  <h2>Branch staff only</h2>
+  <h2>Administrators only</h2>
   <p>This list spans every group on the book, so it shows one client's members alongside another's.
-     It is not for employers and not for their staff.</p>
-  <input id="code" placeholder="BRANCH CODE" autocomplete="off">
+     Administrators only — not agents, not employers, not their staff.</p>
+  <input id="code" placeholder="ADMIN CODE" autocomplete="off">
   <button class="btn" id="go">Open</button>
   <div class="err" id="gerr"></div>
 </div>
@@ -175,12 +175,17 @@
    ═══════════════════════════════════════════════════════════════════════ */
 const API = "";
 
-/* Branch code. Change it here, and change it when someone leaves.
-   This is a door, not a security model — the list behind it spans every group
-   on the book, so an employer must never reach it. When the pendings screen
-   moves inside the portal it should sit behind the roster sign-in instead,
-   which knows who each person actually is. */
-const BRANCH_CODE = "RRB2026";
+/* Administrators only — deliberately narrower than "branch staff". This list
+   crosses every group on the book, which is a management view: an agent has no
+   business reading another agent's clients, and chasing outstanding
+   applications across the whole book is an admin job.
+
+   Change the code here, and change it when someone leaves. It is a door, not a
+   security model — it cannot tell one administrator from another and cannot be
+   revoked for one person. When this screen moves inside the portal it should
+   check the roster instead, where role is already 'manager' or 'agent', and
+   admit only the former. */
+const ADMIN_CODE = "RRB-ADMIN-2026";
 const SESSION_KEY = "rrb-pendings-ok";
 
 /* Sample rows — invented people at real ages, so the ageing bands and the
@@ -356,8 +361,8 @@ function open_(){
 }
 function tryCode(){
   const v = (document.getElementById('code').value||'').trim().toUpperCase();
-  if(v === BRANCH_CODE){ try{ sessionStorage.setItem(SESSION_KEY,'1'); }catch(e){} open_(); }
-  else document.getElementById('gerr').textContent = 'That is not the branch code.';
+  if(v === ADMIN_CODE){ try{ sessionStorage.setItem(SESSION_KEY,'1'); }catch(e){} open_(); }
+  else document.getElementById('gerr').textContent = 'That code is not an administrator code.';
 }
 document.getElementById('go').addEventListener('click', tryCode);
 document.getElementById('code').addEventListener('keydown', e => { if(e.key==='Enter') tryCode(); });
