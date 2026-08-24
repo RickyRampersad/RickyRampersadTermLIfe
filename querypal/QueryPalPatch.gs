@@ -1073,3 +1073,71 @@ function qpHoldNotice_(sh, r, row) {
   try { sh.getRange(r + 1, 19).setValue(desc + (desc ? ' | ' : '') + 'hold-note:1'); } catch (e) {}
   try { cmtSheet_().appendRow([new Date(), ref, 'System', 'system', '⏸ On-hold notice sent to the client', 'internal']); } catch (e) {}
 }
+
+
+/* ══════════════════ 10. AGENT CODES SHEET IS THE MASTER LIST ══════════════════
+   Today AGENT_ACCESS (hard-coded above in Code.gs) is checked first, so editing
+   the "Agent Codes" tab does nothing for the 35 people already in the script —
+   you cannot give them a password, change a role, or revoke them from the sheet.
+   qpSheetAgent_ flips that: the sheet is consulted first and wins. Anyone NOT in
+   the sheet still falls through to AGENT_ACCESS, so nothing breaks on day one.
+
+   The tab needs a header row. Recognised headings (any order, case-insensitive):
+     Name · Agent Number · Password · Role · Unit · Email · Active
+   Role accepts Agent / Staff / Manager / Branch. Unit names the person's manager.
+   Active: anything not starting with "activ" (e.g. Left, Revoked) blocks sign-in
+   — and now it blocks it even for someone listed in AGENT_ACCESS.
+   Wired in by edit 15 in PATCH-INSTRUCTIONS.md.                              */
+
+function qpSheetAgent_(code) {
+  code = String(code || '').trim().toUpperCase();
+  if (!code) return null;
+  var tab;
+  try { tab = codeTable_(); } catch (e) { return null; }     // sheet unreadable: fall through
+  for (var t = 0; t < tab.length; t++) {
+    var e1 = tab[t];
+    var hit = (e1.num && e1.num === code) ||
+              (e1.pwd && String(e1.pwd).trim().toUpperCase() === code);
+    if (!hit) continue;
+    if (!e1.active) return { revoked: true };                // listed but switched off: refuse
+    return { code: code, name: e1.name, email: e1.email, role: e1.role, mgr: e1.unit,
+             src: 'tab', pwd: String(e1.pwd || ''),
+             cells: [e1.name, e1.email].filter(function (x) { return x; }) };
+  }
+  return null;                                               // not in the sheet at all
+}
+
+/* Roster check — run this from the editor after editing the Agent Codes tab.
+   Lists who the sheet governs, who still falls back to the script list, and
+   flags weak or duplicated passwords before they cause a mix-up. */
+function auditAgentCodes() {
+  var out = [], tab;
+  try { tab = codeTable_(); } catch (e) { return 'Could not read the codes tab: ' + e; }
+  if (!tab.length) return 'No credentials tab found. The tab needs a header row '
+    + 'containing "Agent Number" and/or "Password".';
+  var seenPwd = {}, weak = [], dupe = [], noNum = [];
+  out.push('AGENT CODES TAB — ' + tab.length + ' row(s)');
+  out.push('');
+  for (var i = 0; i < tab.length; i++) {
+    var e = tab[i];
+    var inScript = false;
+    for (var k in AGENT_ACCESS) { if (k.toUpperCase() === e.num) { inScript = true; break; } }
+    out.push((e.active ? '  ' : '  [OFF] ') + (e.num || '(no number)') + '  ' + (e.name || '(no name)')
+      + '  role=' + e.role + (e.pwd ? '  pwd set' : '  NO PASSWORD')
+      + (inScript ? '  · also in the script list (sheet now wins)' : ''));
+    if (!e.num) noNum.push(e.name || '(row ' + (i + 2) + ')');
+    if (e.pwd && String(e.pwd).length < 4) weak.push((e.num || e.name) + ' → "' + e.pwd + '"');
+    if (e.pwd) {
+      var key = String(e.pwd).toUpperCase();
+      if (seenPwd[key]) dupe.push(key + ' used by ' + seenPwd[key] + ' and ' + (e.num || e.name));
+      else seenPwd[key] = (e.num || e.name);
+    }
+  }
+  out.push('');
+  if (noNum.length) out.push('NO AGENT NUMBER (sign-in will only work by password): ' + noNum.join(', '));
+  if (weak.length)  out.push('WEAK PASSWORD (under 4 characters — easy to hit by accident): ' + weak.join(', '));
+  if (dupe.length)  out.push('DUPLICATE PASSWORD — these people can land in each other\'s account: ' + dupe.join('; '));
+  if (!noNum.length && !weak.length && !dupe.length) out.push('No problems found.');
+  var msg = out.join('\n');
+  Logger.log(msg); return msg;
+}

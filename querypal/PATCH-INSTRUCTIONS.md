@@ -349,6 +349,38 @@ Replace with:
 
 ---
 
+### 15 — `findAgent_`: manage staff and agents from the Agent Codes tab
+
+Right now the hard-coded `AGENT_ACCESS` list is checked *first*, so for the 35
+people already in the script the sheet is ignored — you cannot set their
+password, change a role, or revoke them without editing code. This makes the
+**Agent Codes tab the master list**; anyone not in it still falls back to the
+script list, so nothing breaks the day you deploy.
+
+Find the top of `findAgent_`:
+```js
+function findAgent_(code) {
+  code = String(code || '').trim().toUpperCase();
+  if (!code) return null;
+  for (var k in AGENT_ACCESS) {                              // the script list wins
+```
+Replace with:
+```js
+function findAgent_(code) {
+  code = String(code || '').trim().toUpperCase();
+  if (!code) return null;
+  var fromSheet = qpSheetAgent_(code);        // the Agent Codes tab wins — edit people there
+  if (fromSheet) return fromSheet.revoked ? null : fromSheet;
+  for (var k in AGENT_ACCESS) {                              // then the script list
+```
+
+After deploying, run **`auditAgentCodes`** from the editor. It prints every row
+the sheet governs, marks who still falls back to the script list, and flags
+missing agent numbers, passwords under 4 characters, and any password used by
+two people (which lets one sign in as the other).
+
+---
+
 ## Two more worth doing, not required
 
 **`raiProxy_`** — the assistant endpoint is unauthenticated and spends your
