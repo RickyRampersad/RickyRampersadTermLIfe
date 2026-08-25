@@ -14,9 +14,11 @@ const feed = { ok:true, role:'branch', name:'Ricky Rampersad', days:0, generated
   depts:[ {name:'Health Claims TT',n:26,done:24,late:0,chased:6,onTime:95,avg:2.6,csat:4.8},
           {name:'Customer Service – Chaguanas',n:84,done:79,late:1,chased:14,onTime:90,avg:3.1,csat:4.6},
           {name:'GLOC Premium Query',n:46,done:41,late:1,chased:12,onTime:78,avg:4.6,csat:4.3} ],
-  agents:[ {name:'Aidan Eugene',n:52,done:49,late:0,chased:6,onTime:94,avg:3.0,csat:4.7},
-           {name:'Crystal Fraser',n:44,done:40,late:2,chased:15,onTime:81,avg:4.4,csat:4.4} ],
-  types:[ {name:'Bounce Cheque',n:38}, {name:'Surrenders',n:29}, {name:'Statements – tax and csv',n:24} ] };
+  agents:[ {name:'Felicia Rampersad',n:52,done:49,late:0,chased:6,onTime:94,avg:3.0,csat:4.7},
+           {name:'Fawwaz Mohamed',n:44,done:40,late:2,chased:15,onTime:81,avg:4.4,csat:4.4} ],
+  types:[ {name:'Bounce Cheque',n:38}, {name:'Surrenders',n:29}, {name:'Statements – tax and csv',n:24} ],
+  intake:{ today:9, week:41, month:167, rToday:7, rWeek:38, rMonth:150 },
+  staff:[ {name:'Sasha Lalla Jagassar',n:34,done:31}, {name:'Elizabeth Lee',n:22,done:19} ] };
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport:{ width:1280, height:800 } });
@@ -40,7 +42,7 @@ await page.waitForFunction(() => document.getElementById('v_total').textContent 
 t('a fresh screen boots straight to the boards — no gate', await page.locator('#gate.off').count(), 1);
 t('no sign-in call was needed', postCalls, 0);
 
-t('eight boards exist', await page.locator('main .panel').count(), 8);
+t('ten boards exist', await page.locator('main .panel').count(), 10);
 t('first board is showing', await page.locator('#p0.on').count(), 1);
 t('headline open count', await page.locator('#h_open').innerText(), '21');
 t('on-time headline in the title', (await page.locator('#t_p0').innerText()).includes('84%'), true);
@@ -64,7 +66,7 @@ t('gold rank on first row', await page.locator('#depts .prow.r1').count(), 1);
 t('dynamic dept title', (await page.locator('#t_p3').innerText()).includes('Health Claims TT'), true);
 
 await page.locator('header').click();
-t('leading agent named in the title', (await page.locator('#t_p4').innerText()).includes('Aidan Eugene'), true);
+t('leading agent named in the title', (await page.locator('#t_p4').innerText()).includes('Felicia Rampersad'), true);
 
 await page.locator('header').click();
 t('mix board shows Statements', (await page.locator('#types').innerText()).includes('Statements – tax and csv'), true);
@@ -82,6 +84,10 @@ t('overall grade is stated', (await page.locator('#k_grade').innerText()).match(
 t('scorecard title names the score', (await page.locator('#t_p7').innerText()).includes('%'), true);
 
 await page.locator('header').click();
+t('intake board rotates in', await page.locator('#p8.on').count(), 1);
+await page.locator('header').click();
+t('automation board rotates in', await page.locator('#p9.on').count(), 1);
+await page.locator('header').click();
 t('rotation wraps back to the pulse', await page.locator('#p0.on').count(), 1);
 
 // sound: the button exists, and nothing plays until someone asks for it
@@ -91,8 +97,16 @@ t('a briefing is composed from live data',
   (await page.evaluate(() => briefing(0))).includes('21 requests are open'), true);
 t('the scorecard briefing quotes the grade',
   (await page.evaluate(() => briefing(7))).length > 10, true);
+t("intake board shows today's count", (await page.evaluate(() => { render(); return document.getElementById('i_t').textContent; })), '9');
+t('intake title says in vs resolved', (await page.locator('#t_p8').innerText()).includes('9'), true);
+t('autopilot board counts the chases', await page.locator('#a_chase').innerText(), '58');
+t('staff board ranks the desks', (await page.locator('#a_staff').innerText()).includes('Sasha Lalla Jagassar'), true);
+t('fastest-response title names a department', (await page.locator('#t_p9').innerText()).includes('Fastest response'), true);
+t('intake briefing is composed', (await page.evaluate(() => briefing(8))).includes('9 requests in today'), true);
+t('automation briefing is composed', (await page.evaluate(() => briefing(9))).includes('58 automatic reminders'), true);
+t('the real shield is in the header', await page.locator('header img.shield').count(), 1);
 t('briefings never carry client names',
-  (await page.evaluate(() => [0,1,2,3,4,5,6,7].map(i => briefing(i)).join(' '))).includes('Anita'), false);
+  (await page.evaluate(() => [0,1,2,3,4,5,6,7,8,9].map(i => briefing(i)).join(' '))).includes('Anita'), false);
 
 // reload stays open, still no sign-in
 await page.reload();

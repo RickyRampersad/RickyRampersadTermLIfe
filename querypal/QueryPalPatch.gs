@@ -412,6 +412,11 @@ function wallStats_(code, token, days) {
   var DONE = /closed|resolved|completed/i;
 
   var tot = 0, open = 0, done = 0, overdue = 0, chased = 0;
+  var dayMs = 86400000;
+  var midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  var weekAgo = now.getTime() - 7 * dayMs, monthAgo = now.getTime() - 30 * dayMs;
+  var intake = { today: 0, week: 0, month: 0, rToday: 0, rWeek: 0, rMonth: 0 };
+  var byStaff = {};
   var onT = 0, onTot = 0, dSum = 0, dN = 0, sSum = 0, sN = 0;
   var weeks = {}, byDept = {}, byAgent = {}, byType = {}, age = { ok: 0, soon: 0, late: 0 };
   var scoreDist = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, notes = [];
@@ -440,6 +445,28 @@ function wallStats_(code, token, days) {
 
     tot++; chased += fu;
     if (isDone) done++; else open++;
+
+    // intake buckets — when it arrived, and when it was resolved
+    var tms = ts.getTime();
+    if (tms >= midnight) intake.today++;
+    if (tms >= weekAgo)  intake.week++;
+    if (tms >= monthAgo) intake.month++;
+    if (isDone) {
+      var closedAt = (row[19] instanceof Date) ? row[19].getTime()
+                   : (row[19] ? new Date(row[19]).getTime() : NaN);
+      if (!isNaN(closedAt)) {
+        if (closedAt >= midnight) intake.rToday++;
+        if (closedAt >= weekAgo)  intake.rWeek++;
+        if (closedAt >= monthAgo) intake.rMonth++;
+      }
+    }
+    // who is actually working it — the Assigned To column
+    var asg = String(row[28] || '').trim();
+    if (asg) {
+      if (!byStaff[asg]) byStaff[asg] = { n: 0, done: 0 };
+      byStaff[asg].n++;
+      if (isDone) byStaff[asg].done++;
+    }
 
     var dRec = bump(byDept, dept), aRec = bump(byAgent, agent), tRec = bump(byType, type);
     [dRec, aRec, tRec].forEach(function (x) { if (x) { x.n++; x.chased += fu; if (isDone) x.done++; } });
@@ -488,6 +515,12 @@ function wallStats_(code, token, days) {
     totals: { total: tot, open: open, done: done, overdue: overdue, chased: chased,
               onTime: pct(onT, onTot), avg: avg(dSum, dN), csat: avg(sSum, sN), rated: sN },
     weeks: wkArr, age: age, scoreDist: scoreDist, notes: notes,
+    intake: intake,
+    staff: (function () {
+      var out = [];
+      for (var k in byStaff) out.push({ name: k, n: byStaff[k].n, done: byStaff[k].done });
+      return out.sort(function (a, b) { return b.n - a.n; }).slice(0, 6);
+    })(),
     depts: flat(byDept), agents: flat(byAgent), types: flat(byType).slice(0, 8)
   });
 }
