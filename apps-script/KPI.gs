@@ -1158,6 +1158,12 @@ function handle_(action, data, token) {
       return { ok: true, profile: profile, roster: publicRoster_(), schedule: SCHEDULE,
                kpis: { ssa: kpiChoicesFor_('ssa'), bma: kpiChoicesFor_('bma') } };
 
+    case 'updateTask':
+      if (typeof updateTask_ !== 'function') {
+        return { ok: false, error: 'Editing tasks is not switched on. Add KPI-Write.gs to this project.' };
+      }
+      return updateTask_(data, profile);
+
     case 'billing': {
       var bc = sfkBillingCheckSafe_(data.date);
       if (!profile.manager) {

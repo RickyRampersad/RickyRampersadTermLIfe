@@ -471,7 +471,7 @@ function App(){
                   <Field label="Waiting on (named) + last chased"><input value={bl.blockerOwner} onChange={e=>patchBlock(b.id,"blockerOwner",e.target.value)} placeholder="Name + date" style={inp}/></Field>
                 </div>
 
-                {bl.kpi==="Renewa/PDl/Bill"&&<BillingCheck data={billing[active]}/>}
+                {bl.kpi==="Renewa/PDl/Bill"&&<BillingCheck data={billing[active]} api={api} token={token} onSaved={loadRows}/>}
 
                 {bl.kpi==="Training delivered"&&(<div style={trainBox}>
                   <div style={{fontSize:11,fontWeight:800,letterSpacing:0.8,textTransform:"uppercase",color:GOLD,marginBottom:8}}>Training record</div>
@@ -505,7 +505,7 @@ function App(){
           </p>
 
           <TaskPosition live={metrics} staffId={active} entry={entry} patchMetric={patchMetric}/>
-          <NeedsReason items={needsReason[active]}/>
+          <NeedsReason items={needsReason[active]} api={api} token={token} onSaved={loadRows}/>
 
           <div style={{...card,borderLeft:"4px solid "+GOLD}}>
             <div style={cardHead}><span style={cardTitle}>Value Added today</span><span style={{fontSize:10.5,color:AMBER,fontWeight:700}}>log every day</span></div>
@@ -1088,11 +1088,68 @@ function TaskPosition({live,staffId,entry,patchMetric}){
   </div>;
 }
 
+// A task you can fix from here. The reason and the due date are the two things
+// that make an overdue task legible, and both were a trip to Salesforce. Now
+// they are a line and a button, and the row confirms what it did.
+function TaskRow({t,onSaved,api,token,showDate}){
+  const [reason,setReason]=useState("");
+  const [due,setDue]=useState("");
+  const [st,setSt]=useState({tone:"idle",text:""});
+  const [done,setDone]=useState(null);
+
+  async function save(field,value){
+    if(st.tone==="saving") return;
+    setSt({tone:"saving",text:"Saving…"});
+    const r=await api("updateTask",{token,taskId:t.id,field,value});
+    if(r.ok){
+      setSt({tone:"ok",text:r.label+" saved to Salesforce ✓"});
+      setDone(d=>({...(d||{}),[field]:value}));
+      if(onSaved) onSaved();
+    }else setSt({tone:"bad",text:r.error||"Did not save."});
+  }
+
+  const age=t.age||0;
+  return <div style={{padding:"10px 0",borderTop:"1px solid "+LINE}}>
+    <div style={{display:"flex",gap:8,alignItems:"baseline"}}>
+      {t.repeat&&<span style={{fontSize:9.5,fontWeight:800,color:RED,border:"1px solid "+RED,
+        borderRadius:3,padding:"0 4px",flexShrink:0}}>REPEAT</span>}
+      <span style={{fontSize:12.5,color:INK,lineHeight:1.4}}>{t.subject}</span>
+    </div>
+    <div style={{fontSize:11,color:MUTED,marginTop:2}}>
+      {t.type||t.status} · due {shortDate(done?.due||t.due)} ·{" "}
+      <b style={{color:age>60?RED:age>30?AMBER:MUTED}}>{age} days old</b>
+    </div>
+
+    {done?.reason
+      ? <div style={{fontSize:12,color:GREEN,marginTop:6,lineHeight:1.45}}>
+          <b>Reason:</b> {done.reason}</div>
+      : <div style={{display:"flex",gap:6,marginTop:7}}>
+          <input value={reason} onChange={e=>setReason(e.target.value)}
+            placeholder="What it is waiting on, and who owns the next step"
+            style={{...inp,fontSize:12.5,padding:"7px 9px"}}/>
+          <button onClick={()=>save("reason",reason)} disabled={st.tone==="saving"||reason.trim().length<4}
+            style={{...goldBtn,padding:"7px 12px",fontSize:12,
+              opacity:(st.tone==="saving"||reason.trim().length<4)?0.5:1}}>Save</button>
+        </div>}
+
+    {showDate&&!done?.due&&<div style={{display:"flex",gap:6,marginTop:6,alignItems:"center"}}>
+      <span style={{fontSize:11,color:MUTED,fontWeight:600}}>New due date</span>
+      <input type="date" value={due} onChange={e=>setDue(e.target.value)}
+        style={{...inp,fontSize:12.5,padding:"6px 8px",width:"auto",flex:"0 1 auto"}}/>
+      <button onClick={()=>save("due",due)} disabled={st.tone==="saving"||!due}
+        style={{...goldBtn,padding:"7px 12px",fontSize:12,opacity:(st.tone==="saving"||!due)?0.5:1}}>Set</button>
+    </div>}
+
+    {st.text&&<div style={{fontSize:11.5,fontWeight:700,marginTop:6,
+      color:st.tone==="bad"?RED:st.tone==="ok"?GREEN:MUTED}}>{st.text}</div>}
+  </div>;
+}
+
 // Overdue tasks carrying nothing in the reason field. The branch built that
 // field for this; it is filled on about one overdue task in twenty. An overdue
 // task with a reason is work in progress. One without is a task nobody has
 // looked at — so those are the ones named here.
-function NeedsReason({items}){
+function NeedsReason({items,api,token,onSaved}){
   if(!items||!items.length) return null;
   const show=items.slice(0,6);
   return <div style={{...card,borderLeft:"4px solid "+RED}}>
@@ -1105,14 +1162,7 @@ function NeedsReason({items}){
       Salesforce saying what it is waiting on and who owns the next step — a
       rolled date is not an actioned task.
     </p>
-    {show.map(t=>(
-      <div key={t.id} style={{padding:"8px 0",borderTop:"1px solid "+LINE}}>
-        <div style={{fontSize:12.5,color:INK,lineHeight:1.4}}>{t.subject}</div>
-        <div style={{fontSize:11,color:MUTED,marginTop:2}}>
-          {t.type} · due {shortDate(t.due)} ·{" "}
-          <b style={{color:t.age>60?RED:t.age>30?AMBER:MUTED}}>{t.age} days old</b> · {t.status}
-        </div>
-      </div>))}
+    {show.map(t=><TaskRow key={t.id} t={t} api={api} token={token} showDate={!t.due} onSaved={onSaved}/>)}
     {items.length>show.length&&<div style={{fontSize:11.5,color:MUTED,marginTop:8}}>
       and {items.length-show.length} more.</div>}
   </div>;
@@ -1121,7 +1171,7 @@ function NeedsReason({items}){
 // Billing is the branch's most repetitive work, and its easiest to send twice.
 // The same account carrying more than one open billing task is the signal that
 // the last one was never reconciled — so those come first, by name.
-function BillingCheck({data}){
+function BillingCheck({data,api,token,onSaved}){
   if(!data||!data.items||!data.items.length) return null;
   const reps=data.repeats||[];
   const show=data.items.slice(0,8);
@@ -1147,19 +1197,15 @@ function BillingCheck({data}){
       </div>
     </div>}
 
-    {show.map(t=>(
-      <div key={t.id} style={{padding:"7px 0",borderTop:"1px solid "+LINE}}>
-        <div style={{display:"flex",gap:8,alignItems:"baseline"}}>
-          {t.repeat&&<span style={{fontSize:9.5,fontWeight:800,color:RED,
-            border:"1px solid "+RED,borderRadius:3,padding:"0 4px",flexShrink:0}}>REPEAT</span>}
-          <span style={{fontSize:12.5,color:INK,lineHeight:1.4}}>{t.subject}</span>
+    {show.map(t=>t.hasReason
+      ? <div key={t.id} style={{padding:"8px 0",borderTop:"1px solid "+LINE}}>
+          <div style={{fontSize:12.5,color:INK,lineHeight:1.4}}>{t.subject}</div>
+          <div style={{fontSize:11,color:MUTED,marginTop:2}}>
+            {t.status} · due {shortDate(t.due)} ·{" "}
+            <b style={{color:t.age>60?RED:t.age>30?AMBER:MUTED}}>{t.age} days old</b>
+            <span style={{color:GREEN}}> · reason recorded</span></div>
         </div>
-        <div style={{fontSize:11,color:MUTED,marginTop:2}}>
-          {t.status} · due {shortDate(t.due)} ·{" "}
-          <b style={{color:t.age>60?RED:t.age>30?AMBER:MUTED}}>{t.age} days old</b>
-          {!t.hasReason&&<span style={{color:AMBER}}> · no reason recorded</span>}
-        </div>
-      </div>))}
+      : <TaskRow key={t.id} t={t} api={api} token={token} showDate={!t.due} onSaved={onSaved}/>)}
     {data.items.length>show.length&&<div style={{fontSize:11.5,color:MUTED,marginTop:8}}>
       and {data.items.length-show.length} more open.</div>}
   </div>;
