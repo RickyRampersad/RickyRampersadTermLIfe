@@ -134,6 +134,55 @@ var SSA_ONLY = [
   'Task Management'
 ];
 
+/** Branch Manager. An agency BM is not a senior administrator — the job is
+ *  building and running a salesforce. Recruitment, development, production,
+ *  persistency and compliance are the accountabilities; the admin is what
+ *  supports them. Six of these carry live Salesforce numbers. */
+var BM_ONLY = [
+  'Recruitment & Selection',
+  'Agent Development & Field Training',
+  'Production & Pipeline Management',
+  'Activity Management (one-on-ones, joint field work)',
+  'Persistency & Conservation',
+  'Compliance, Licensing & Market Conduct',
+  'Budget & Expense Management',
+  'People Management (branch team)',
+  'Personal Production & Own Book',
+  'Client Escalations',
+  'Reporting (Production / RDAR / Branch Meeting)',
+  'Business Planning'
+];
+
+/** Assistant Branch Manager. Deputises for the Branch Manager and carries the
+ *  programmes — recruitment intake, agent school, licensing — while running the
+ *  unit managers beneath. Broader than a unit, narrower than the branch. */
+var ABM_ONLY = [
+  'Recruitment Intake & Selection',
+  'Agent School & Onboarding',
+  'Unit Manager Supervision',
+  'Joint Field Work',
+  'Production & Pipeline Management',
+  'Persistency & Conservation',
+  'Agent Licensing & Compliance',
+  'Personal Production & Own Book',
+  'Client Escalations',
+  'Reporting (Production / RDAR)',
+  'Deputising for the Branch Manager'
+];
+
+/** Unit Manager. The same shape one level down: their unit's recruits, their
+ *  unit's activity, their unit's persistency, and their own book. */
+var UM_ONLY = [
+  'Unit Recruitment',
+  'Joint Field Work',
+  'Unit Production & Activity',
+  'Agent Licensing & Development',
+  'Unit Persistency',
+  'Personal Production & Own Book',
+  'Unit Meeting & Coaching',
+  'Client Escalations'
+];
+
 var BMA_ONLY = [
   'New Application Oversight',
   'Surveys / Query Pal',
@@ -150,11 +199,19 @@ var BMA_ONLY = [
 ];
 
 /** The list a person sees, and whether each entry carries live numbers. */
+var ROLE_LISTS = { ssa: SSA_ONLY, bma: BMA_ONLY, bm: BM_ONLY, abm: ABM_ONLY, um: UM_ONLY };
+
+function allKpiChoices_() {
+  var out = {};
+  Object.keys(ROLE_LISTS).forEach(function (r) { out[r] = kpiChoicesFor_(r); });
+  return out;
+}
+
 function kpiChoicesFor_(role) {
   var out = sfTypeList_().map(function (t) {
     return { value: t, label: SF_TYPES[t], salesforce: true };
   });
-  (role === 'bma' ? BMA_ONLY : SSA_ONLY).forEach(function (t) {
+  (ROLE_LISTS[role] || SSA_ONLY).forEach(function (t) {
     out.push({ value: t, label: t, salesforce: false });
   });
   return out;
@@ -218,6 +275,42 @@ var SCHEDULE = {
       PM1:  { time: '2 – 3:30pm',focus: 'Administrative Support',                    kpi: 'Administrative Support' },
       PM2:  { time: '3:30 – 5pm',focus: 'Task Mgmt / Reporting',                     kpi: 'Reporting (Production / RDAR)' }
     }
+  },
+  ricky: {
+    hours: '8am – 5pm', lunch: 'Flexible',
+    blocks: {
+      KPI1: { time: '8 – 10am',  focus: 'Recruitment, licensing and staffing',    kpi: 'Lic/Staffing/SA/HR' },
+      KPI2: { time: '10 – 12pm', focus: 'Production, pipeline and own book',      kpi: 'Opportunity' },
+      PM1:  { time: '1 – 3pm',   focus: 'Agent development and field training',   kpi: 'Training' },
+      PM2:  { time: '3 – 5pm',   focus: 'Escalations, reporting and branch team', kpi: 'Reporting (Production / RDAR / Branch Meeting)' }
+    }
+  },
+  kerwyn: {
+    hours: '8am – 5pm', lunch: 'Flexible',
+    blocks: {
+      KPI1: { time: '8 – 10am',  focus: 'Recruitment intake and agent school',  kpi: 'Lic/Staffing/SA/HR' },
+      KPI2: { time: '10 – 12pm', focus: 'Unit manager supervision',             kpi: 'Unit Manager Supervision' },
+      PM1:  { time: '1 – 3pm',   focus: 'Joint field work and pipeline',        kpi: 'Opportunity' },
+      PM2:  { time: '3 – 5pm',   focus: 'Persistency and reporting',            kpi: 'Reporting (Production / RDAR)' }
+    }
+  },
+  akaash: {
+    hours: '8am – 4:30pm', lunch: 'Flexible',
+    blocks: {
+      KPI1: { time: '8 – 10am',  focus: 'Unit activity and pipeline',      kpi: 'Opportunity' },
+      KPI2: { time: '10 – 12pm', focus: 'Joint field work',                kpi: 'Joint Field Work' },
+      PM1:  { time: '1 – 3pm',   focus: 'Recruitment and agent licensing', kpi: 'Lic/Staffing/SA/HR' },
+      PM2:  { time: '3 – 4:30pm',focus: 'Unit persistency and own book',   kpi: 'Pendings' }
+    }
+  },
+  gary: {
+    hours: '8am – 4:30pm', lunch: 'Flexible',
+    blocks: {
+      KPI1: { time: '8 – 10am',  focus: 'Unit activity and pipeline',      kpi: 'Opportunity' },
+      KPI2: { time: '10 – 12pm', focus: 'Joint field work',                kpi: 'Joint Field Work' },
+      PM1:  { time: '1 – 3pm',   focus: 'Recruitment and agent licensing', kpi: 'Lic/Staffing/SA/HR' },
+      PM2:  { time: '3 – 4:30pm',focus: 'Unit persistency and own book',   kpi: 'Pendings' }
+    }
   }
 };
 
@@ -231,26 +324,61 @@ var DEFAULT_SCHEDULE = {
   }
 };
 
+/** The reporting line, so the branch reads as a structure rather than a list.
+ *      Ricky — Branch Manager
+ *        ├─ Kerwyn — Assistant Branch Manager
+ *        │    └─ Gary — Unit Manager
+ *        └─ Akaash — Unit Manager
+ *  Support staff report to the BMA, who reports to the Branch Manager. */
+var REPORTS_TO = {
+  kerwyn: 'ricky', akaash: 'ricky', gary: 'kerwyn',
+  kamla: 'ricky',
+  sasha: 'kamla', azariah: 'kamla', ashley: 'kamla', elizabeth: 'kamla'
+};
+
 function scheduleFor_(staffId) { return SCHEDULE[staffId] || DEFAULT_SCHEDULE; }
 
 /** Every scheduled KPI must be one a person can actually pick. Run from the
  *  editor after editing SCHEDULE — a typo here shows up as a blank dropdown
  *  and nothing else, which is a miserable thing to debug. */
 function checkSchedule() {
-  var bma = {}, ssa = {};
-  kpiChoicesFor_('bma').forEach(function (c) { bma[c.value] = 1; });
-  kpiChoicesFor_('ssa').forEach(function (c) { ssa[c.value] = 1; });
-  var bmaFolk = { kamla: 1, elizabeth: 1 };
+  // Build from ROLE_LISTS itself, so adding a role can never leave this check
+  // silently comparing against the wrong list.
+  var lists = {};
+  Object.keys(ROLE_LISTS).forEach(function (r) {
+    lists[r] = {};
+    kpiChoicesFor_(r).forEach(function (c) { lists[r][c.value] = 1; });
+  });
+  var roleBy = {};
+  try {
+    publicRoster_().forEach(function (p) { roleBy[p.staffId] = p.role; });
+  } catch (e) { /* no Access tab yet — fall back below */ }
   var bad = [];
   Object.keys(SCHEDULE).forEach(function (sid) {
-    var list = bmaFolk[sid] ? bma : ssa;
+    var list = lists[roleBy[sid] || 'ssa'] || lists.ssa;
     BLOCK_IDS.forEach(function (b) {
       var k = (SCHEDULE[sid].blocks[b] || {}).kpi;
       if (k && !list[k]) bad.push(sid + ' ' + b + ': "' + k + '" is not on their KPI list');
     });
   });
+  var notes = [];
+  try {
+    roster_().forEach(function (p) {
+      var pinned = ROLE_PINNED[p.staffId];
+      if (!pinned) return;
+      var t = ((p.role || '') + ' ' + (p.unit || '')).toLowerCase();
+      var sheetSays = /assistant|bma/.test(t) ? 'bma' : (/branch manager/.test(t) ? 'bm' : 'ssa');
+      if (sheetSays !== pinned) {
+        notes.push(p.name + ': the Access tab says "' + (p.unit || p.role) +
+          '" but their entries are ' + pinned.toUpperCase() +
+          ' work. Using ' + pinned.toUpperCase() + '. Correct the tab and remove the pin.');
+      }
+    });
+  } catch (e) { /* no Access tab yet */ }
+
   var msg = bad.length ? 'Schedule problems:\n  ' + bad.join('\n  ')
                        : 'Schedule is consistent — every block points at a KPI that exists.';
+  if (notes.length) msg += '\n\nRoster to correct:\n  ' + notes.join('\n  ');
   Logger.log(msg);
   return msg;
 }
@@ -393,13 +521,44 @@ function roster_() {
   return out;
 }
 
+/** Which KPI list a person gets, read from the Role and Unit columns.
+ *  Assistant is checked before manager, because "Branch Manager's Assistant"
+ *  contains the word manager and is not one. */
+/** The Access tab currently has two people mislabelled: Kamla's Unit reads
+ *  SalesSupport and Ashley's reads Branch Managers Assistant, which is the
+ *  wrong way round against what each of them has actually been logging since
+ *  June. Reading the sheet faithfully would hand them each other's KPI list.
+ *
+ *  So these two are pinned until the tab is corrected, and checkSchedule()
+ *  reports the disagreement rather than letting it pass silently. Delete an
+ *  entry the moment its row is fixed. */
+var ROLE_PINNED = { kamla: 'bma', ashley: 'ssa' };
+
+function roleFor_(person) {
+  if (ROLE_PINNED[person.staffId]) return ROLE_PINNED[person.staffId];
+  var t = ((person.role || '') + ' ' + (person.unit || '') + ' ' + (person.grade || '')).toLowerCase();
+  // Order matters. "Assistant Branch Manager" contains both "assistant" and
+  // "branch manager", and is neither a BMA nor the Branch Manager — so it is
+  // tested first, before either of the words it happens to contain.
+  if (/assistant branch manager|\babm\b/.test(t)) return 'abm';
+  if (/branch manager'?s? assistant|\bbma\b/.test(t)) return 'bma';
+  if (/branch manager/.test(t)) return 'bm';
+  if (/unit manager|sales manager|agency manager|\bmanager\b/.test(t)) return 'um';
+  if (/assistant/.test(t)) return 'bma';
+  return 'ssa';
+}
+
 /** Manager rights: Role or Unit says so, or the address is on MANAGER_EMAIL. */
 function isManager_(person) {
   if (!person) return false;
   var mgrs = managerEmails_().map(normEmail_);
   if (mgrs.indexOf(normEmail_(person.email)) > -1) return true;
-  return /manager|admin|branch manager/i.test(person.role + ' ' + person.unit) &&
-         !/assistant/i.test(person.unit);
+  var t = (person.role || '') + ' ' + (person.unit || '');
+  // The Assistant Branch Manager deputises, so he sees the branch. A Branch
+  // Manager's Assistant does not — different job, similar words.
+  if (/assistant branch manager|\babm\b/i.test(t)) return true;
+  if (/assistant/i.test(t)) return false;
+  return /branch manager|administrator|\badmin\b/i.test(t);
 }
 
 function issueToken_(person) {
@@ -480,6 +639,8 @@ function publicRoster_() {
     return {
       staffId: p.staffId, name: p.name, email: p.email,
       agentNumber: p.agentNumber, unit: p.unit, grade: p.grade,
+      role: roleFor_(p),
+      reportsTo: REPORTS_TO[p.staffId] || '',
       manager: isManager_(p)
     };
   });
@@ -928,7 +1089,7 @@ function openBlockers_(e) {
  *  reported as outstanding rather than as a gap. */
 function checkpointReport_(date) {
   var day = date || todayISO_();
-  var people = publicRoster_().filter(function (p) { return !p.manager; });
+  var people = publicRoster_();
   var byId = {};
   latestEntries_().forEach(function (e) { if (e.Date === day) byId[e.StaffId] = e; });
 
@@ -1021,7 +1182,7 @@ function weeklyReport_(anyDateInWeek) {
   var prevDays = weekDays_(shiftDays_(monday, -7));
   var entries = latestEntries_();
   var training = trainingRows_();
-  var people = publicRoster_().filter(function (p) { return !p.manager; });
+  var people = publicRoster_();
 
   function slice(dayList) {
     var set = {};
@@ -1156,7 +1317,7 @@ function handle_(action, data, token) {
   switch (action) {
     case 'me':
       return { ok: true, profile: profile, roster: publicRoster_(), schedule: SCHEDULE,
-               kpis: { ssa: kpiChoicesFor_('ssa'), bma: kpiChoicesFor_('bma') } };
+               kpis: allKpiChoices_() };
 
     case 'updateTask':
       if (typeof updateTask_ !== 'function') {
@@ -1222,7 +1383,7 @@ function handle_(action, data, token) {
       tr.forEach(function (t) { if (t.LoggedAt) t.LoggedAt = String(t.LoggedAt); });
       return { ok: true, rows: rows, training: tr, profile: profile,
                roster: publicRoster_(), schedule: SCHEDULE,
-               kpis: { ssa: kpiChoicesFor_('ssa'), bma: kpiChoicesFor_('bma') },
+               kpis: allKpiChoices_(),
                metrics: sfkMetricsSafe_(data.date),
                needsReason: sfkNeedsReasonSafe_(data.date),
                billing: sfkBillingCheckSafe_(data.date) };
@@ -1713,7 +1874,7 @@ function nudge_(staffId, date, missing, heading, message) {
  *  afternoon can still be salvaged. */
 function remindMidday() {
   var date = todayISO_();
-  var people = publicRoster_().filter(function (p) { return !p.manager; });
+  var people = publicRoster_();
   var sent = [];
 
   people.forEach(function (p) {
@@ -1739,7 +1900,7 @@ function remindMidday() {
  *  Whoever is short gets the list, and is asked for the day's close-off. */
 function remindCheckpoint() {
   var date = todayISO_();
-  var people = publicRoster_().filter(function (p) { return !p.manager; });
+  var people = publicRoster_();
   var sent = [];
 
   people.forEach(function (p) {

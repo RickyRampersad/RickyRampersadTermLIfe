@@ -69,20 +69,33 @@ const NAVY="#16264F",NAVY_DEEP="#0D1838",GOLD="#C7A34A",GOLD_SOFT="#E7D9AE",
 //  list to show, and the shift a person works.
 // ---------------------------------------------------------------------------
 const PROFILES = {
-  sasha:     {grade:"Sales Support Assistant · G3",      role:"ssa", tenure:"experienced", shift:"default"},
-  azariah:   {grade:"Sales Support Assistant · G3",      role:"ssa", tenure:"probation",   shift:"default"},
-  ashley:    {grade:"Sales Support Assistant · G3",      role:"ssa", tenure:"training",    shift:"nine"},
-  kamla:     {grade:"Branch Manager's Assistant · G4",   role:"bma", tenure:"experienced", shift:"default"},
-  elizabeth: {grade:"Branch Manager's Assistant · G4",   role:"bma", tenure:"training",    shift:"default"},
+  sasha:     {grade:"Sales Support Assistant · G3",      role:"ssa", tenure:"experienced"},
+  azariah:   {grade:"Sales Support Assistant · G3",      role:"ssa", tenure:"probation"},
+  ashley:    {grade:"Sales Support Assistant · G3",      role:"ssa", tenure:"training"},
+  kamla:     {grade:"Branch Manager's Assistant · G4",   role:"bma", tenure:"experienced"},
+  elizabeth: {grade:"Branch Manager's Assistant · G4",   role:"bma", tenure:"training"},
+  ricky:     {grade:"Branch Manager",                    role:"bm",  tenure:"experienced"},
+  kerwyn:    {grade:"Assistant Branch Manager",          role:"abm", tenure:"experienced"},
+  akaash:    {grade:"Unit Manager",                      role:"um",  tenure:"experienced"},
+  gary:      {grade:"Unit Manager",                      role:"um",  tenure:"experienced"},
 };
-const DEFAULT_PROFILE = {grade:"Branch Staff", role:"ssa", tenure:"experienced", shift:"default"};
-const profileFor=(staffId)=>PROFILES[staffId]||DEFAULT_PROFILE;
+const DEFAULT_PROFILE = {grade:"Branch Team", role:"ssa", tenure:"experienced"};
+
+// The Access tab is the authority on who somebody is. PROFILES only supplies
+// what the sheet does not carry, and covers anyone not yet described there.
+let ROSTER_ROLES = {};
+const profileFor=(staffId)=>{
+  const base=PROFILES[staffId]||DEFAULT_PROFILE;
+  const fromSheet=ROSTER_ROLES[staffId];
+  return fromSheet?{...base,role:fromSheet.role||base.role,
+                    grade:fromSheet.grade||base.grade}:base;
+};
 
 // The KPI list is served by the script: the ten Salesforce Task_Type__c values
 // first — those carry live numbers — then the job-document responsibilities
 // Salesforce does not track, which are logged in words only.
-let KPI_CHOICES={ssa:[],bma:[]};
-const fnFor=(role)=>(KPI_CHOICES[role==="bma"?"bma":"ssa"]||[]);
+let KPI_CHOICES={ssa:[],bma:[],bm:[],abm:[],um:[]};
+const fnFor=(role)=>(KPI_CHOICES[role]||KPI_CHOICES.ssa||[]);
 
 const STANDARDS=["Completed applications to Head Office within 2 days of receipt.","Policy documents processed with 100% accuracy.","Documents to the relevant party within 1 day of receipt.","A rolled due date is not an actioned task — log the genuine blocker + owner.","\"Waiting on someone\" needs a named person and the date last chased.","Value Added is logged every day — even if the honest entry is \"None today\"."];
 
@@ -263,7 +276,7 @@ function App(){
       if(!token){ setBooting(false); return; }
       const r=await api("me",{token});
       if(off) return;
-      if(r.ok){ setMe(r.profile); setRoster(r.roster||[]); if(r.schedule) SCHEDULE=r.schedule; if(r.kpis) KPI_CHOICES=r.kpis; }
+      if(r.ok){ setMe(r.profile); setRoster(r.roster||[]); rememberRoles(r.roster); if(r.schedule) SCHEDULE=r.schedule; if(r.kpis) KPI_CHOICES=r.kpis; }
       else { storeToken(""); setToken(""); }
       setBooting(false);
     })();
@@ -275,7 +288,7 @@ function App(){
     if(!token) return;
     setLoading(true);
     const r=await api("rows",{token});
-    if(r.ok){ setRows(r.rows||[]); setTraining(r.training||[]); if(r.roster) setRoster(r.roster);
+    if(r.ok){ setRows(r.rows||[]); setTraining(r.training||[]); if(r.roster){ setRoster(r.roster); rememberRoles(r.roster); }
       if(r.schedule) SCHEDULE=r.schedule; if(r.kpis) KPI_CHOICES=r.kpis;
       if(r.metrics) setMetrics(r.metrics);
       if(r.needsReason) setNeedsReason(r.needsReason);
@@ -1062,7 +1075,7 @@ function Login({onIn}){
     const r=await api("login",{who:who.trim(),password:pw});
     setBusy(false);
     if(r.ok){ if(r.schedule) SCHEDULE=r.schedule; if(r.kpis) KPI_CHOICES=r.kpis;
-      onIn(r.token,r.profile,r.roster); }
+      rememberRoles(r.roster); onIn(r.token,r.profile,r.roster); }
     else setErr(r.error||"Could not sign you in.");
   }
 
@@ -1393,6 +1406,8 @@ function MiniChart({labels,seriesA,seriesB,colorA,colorB,legendA,legendB}){
   </div>;
 }
 
+const rememberRoles=(roster)=>{const m={};(roster||[]).forEach(p=>{
+  m[p.staffId]={role:p.role,grade:p.grade||""};});ROSTER_ROLES=m;};
 const nameOf=(roster,sid)=>{const p=(roster||[]).find(x=>x.staffId===sid);return p?p.name.split(' ')[0]:sid;};
 const Legend=({color,label})=><span style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:MUTED,fontWeight:600}}><span style={{width:10,height:10,borderRadius:3,background:color}}/>{label}</span>;
 function SectionLabel({children}){return<div style={{display:"flex",alignItems:"center",gap:10,margin:"22px 0 10px"}}><span style={{fontSize:11,fontWeight:800,letterSpacing:1.1,textTransform:"uppercase",color:NAVY}}>{children}</span><span style={{flex:1,height:1,background:GOLD,opacity:0.45}}/></div>;}
