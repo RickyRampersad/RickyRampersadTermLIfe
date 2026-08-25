@@ -391,6 +391,34 @@ function qpScopeKeys_(me) {
   return keys;
 }
 
+/* Per-reference tally of who moved the case. The Comments tab records both the
+   system's own actions and everything a person typed, so it is the only place
+   that can tell "the machine handled this" from "somebody had to step in".
+   Returns { ref: {human, sys, autoClosed, humanClosed} }. Aggregated by the
+   caller — no comment text ever reaches the wall. */
+function qpTouchMap_() {
+  var out = {};
+  var sh;
+  try { sh = cmtSheet_(); } catch (e) { return out; }
+  if (!sh || sh.getLastRow() < 2) return out;
+  var w = Math.min(6, sh.getMaxColumns());
+  var d;
+  try { d = sh.getRange(2, 1, sh.getLastRow() - 1, w).getValues(); } catch (e) { return out; }
+  for (var i = 0; i < d.length; i++) {
+    var ref = String(d[i][1] || '').trim();
+    if (!ref) continue;
+    var who = String(d[i][2] || ''), role = String(d[i][3] || '').toLowerCase(),
+        txt = String(d[i][4] || '');
+    if (!out[ref]) out[ref] = { human: 0, sys: 0, autoClosed: false, humanClosed: false };
+    var rec = out[ref];
+    var isSystem = role === 'system' || /^(system|query pal)$/i.test(who.trim());
+    if (isSystem) rec.sys++; else rec.human++;
+    if (/auto-closed/i.test(txt)) rec.autoClosed = true;
+    else if (/case closed/i.test(txt)) rec.humanClosed = true;
+  }
+  return out;
+}
+
 var QP_WALL_PUBLIC = true;   // /wall needs no sign-in — the branch-wide view is open.
                              // The payload is aggregates only either way; a code or
                              // token still narrows the wall to that person's team.
@@ -427,6 +455,14 @@ function wallStats_(code, token, days) {
     return m[k];
   };
 
+  /* Who actually moved each case — the system, or a person. The wall is meant
+     to show where the machine is carrying the work, so this has to be counted
+     honestly: a case only counts as system-solved if NO human touched it. */
+  var touch = qpTouchMap_();
+  var auto = { chases: 0, surveys: 0, replies: 0, autoClosed: 0, humanClosed: 0,
+               sysActs: 0, humanActs: 0, solvedAlone: 0, neededHands: 0,
+               minutes: 0, touchless: 0 };
+
   for (var r = 0; r < data.length; r++) {
     var row = data[r];
     if (!row[0]) continue;
@@ -445,6 +481,24 @@ function wallStats_(code, token, days) {
 
     tot++; chased += fu;
     if (isDone) done++; else open++;
+
+    /* ---- system vs hands ---- */
+    var tk = touch[String(row[0]).trim()] || { human: 0, sys: 0, autoClosed: false, humanClosed: false };
+    auto.chases += fu;                                  // reminders nobody had to send
+    if (row[24]) auto.surveys++;                        // survey went out on its own
+    if (row[27]) auto.replies++;                        // a department reply, spotted automatically
+    auto.sysActs += tk.sys + fu + (row[24] ? 1 : 0);
+    auto.humanActs += tk.human;
+    if (tk.autoClosed) auto.autoClosed++;
+    if (tk.humanClosed) auto.humanClosed++;
+    if (isDone) {
+      if (tk.human === 0) auto.solvedAlone++;           // closed with nobody chasing it
+      else auto.neededHands++;
+    }
+    if (tk.human === 0) auto.touchless++;
+    // what the chasing would have cost in person-time: 4 minutes to write and
+    // send a chase, 2 to send a survey, 3 to notice and log a reply
+    auto.minutes += fu * 4 + (row[24] ? 2 : 0) + (row[27] ? 3 : 0);
 
     // intake buckets — when it arrived, and when it was resolved
     var tms = ts.getTime();
@@ -518,6 +572,15 @@ function wallStats_(code, token, days) {
               onTime: pct(onT, onTot), avg: avg(dSum, dN), csat: avg(sSum, sN), rated: sN },
     weeks: wkArr, age: age, scoreDist: scoreDist, notes: notes,
     intake: intake,
+    auto: { chases: auto.chases, surveys: auto.surveys, replies: auto.replies,
+            autoClosed: auto.autoClosed, humanClosed: auto.humanClosed,
+            sysActs: auto.sysActs, humanActs: auto.humanActs,
+            solvedAlone: auto.solvedAlone, neededHands: auto.neededHands,
+            touchless: auto.touchless, minutes: auto.minutes,
+            hours: Math.round(auto.minutes / 60 * 10) / 10,
+            sysShare: (auto.sysActs + auto.humanActs)
+              ? Math.round(auto.sysActs / (auto.sysActs + auto.humanActs) * 100) : null,
+            aloneShare: done ? Math.round(auto.solvedAlone / done * 100) : null },
     staff: (function () {
       var out = [];
       for (var k in byStaff) out.push({ name: k, n: byStaff[k].n, done: byStaff[k].done });

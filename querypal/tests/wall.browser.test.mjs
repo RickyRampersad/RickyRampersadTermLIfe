@@ -18,7 +18,11 @@ const feed = { ok:true, role:'branch', name:'Ricky Rampersad', days:0, generated
            {name:'Fawwaz Mohamed',n:44,done:40,late:2,chased:15,onTime:81,avg:4.4,csat:4.4} ],
   types:[ {name:'Bounce Cheque',n:38}, {name:'Surrenders',n:29}, {name:'Statements – tax and csv',n:24} ],
   intake:{ today:9, week:41, month:167, rToday:7, rWeek:38, rMonth:150 },
-  staff:[ {name:'Sasha Lalla Jagassar',n:34,done:31}, {name:'Elizabeth Lee',n:22,done:19} ] };
+  staff:[ {name:'Sasha Lalla Jagassar',n:34,done:31}, {name:'Elizabeth Lee',n:22,done:19} ],
+  // auto.chases and totals.chased are the same sum on the real backend
+  auto:{ chases:58, surveys:96, replies:58, autoClosed:31, humanClosed:12,
+         sysActs:261, humanActs:87, solvedAlone:132, neededHands:61,
+         touchless:140, minutes:626, hours:10.4, sysShare:75, aloneShare:68 } };
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport:{ width:1280, height:800 } });
@@ -42,7 +46,7 @@ await page.waitForFunction(() => document.getElementById('v_total').textContent 
 t('a fresh screen boots straight to the boards — no gate', await page.locator('#gate.off').count(), 1);
 t('no sign-in call was needed', postCalls, 0);
 
-t('ten boards exist', await page.locator('main .panel').count(), 10);
+t('eleven boards exist', await page.locator('main .panel').count(), 11);
 t('first board is showing', await page.locator('#p0.on').count(), 1);
 t('headline open count', await page.locator('#h_open').innerText(), '21');
 t('on-time headline in the title', (await page.locator('#t_p0').innerText()).includes('84%'), true);
@@ -87,8 +91,20 @@ await page.locator('header').click();
 t('intake board rotates in', await page.locator('#p8.on').count(), 1);
 await page.locator('header').click();
 t('automation board rotates in', await page.locator('#p9.on').count(), 1);
+t('autopilot names the hours it handed back', await page.locator('#a_hours').innerText(), '10.4h');
+t('autopilot explains what the number means',
+  (await page.locator('#a_mean').innerText()).includes('10.4 hours'), true);
+await page.locator('header').click();
+t('people-vs-system board rotates in', await page.locator('#p10.on').count(), 1);
+t('system share in the donut', await page.locator('#s_pct').innerText(), '75%');
+t('cases the system closed alone', await page.locator('#s_alone').innerText(), '132');
+t('cases that needed hands', await page.locator('#s_hands').innerText(), '61');
+t('the split bar is drawn', (await page.locator('#s_sys').evaluate(e => e.style.width)).startsWith('75'), true);
+t('title names the system share', (await page.locator('#t_p10').innerText()).includes('75%'), true);
 await page.locator('header').click();
 t('rotation wraps back to the pulse', await page.locator('#p0.on').count(), 1);
+t('pulse shows hands-free share', await page.locator('#v_alone').innerText(), '68%');
+t('pulse shows time saved', await page.locator('#v_hours').innerText(), '10.4h');
 
 // sound: the button exists, and nothing plays until someone asks for it
 t('sound button present', await page.locator('#snd').count(), 1);
@@ -102,11 +118,33 @@ t('intake title says in vs resolved', (await page.locator('#t_p8').innerText()).
 t('autopilot board counts the chases', await page.locator('#a_chase').innerText(), '58');
 t('staff board ranks the desks', (await page.locator('#a_staff').innerText()).includes('Sasha Lalla Jagassar'), true);
 t('fastest-response title names a department', (await page.locator('#t_p9').innerText()).includes('Fastest response'), true);
-t('intake briefing is composed', (await page.evaluate(() => briefing(8))).includes('9 requests in today'), true);
-t('automation briefing is composed', (await page.evaluate(() => briefing(9))).includes('58 automatic reminders'), true);
+t('intake briefing is composed', (await page.evaluate(() => briefing(8))).includes('9 requests came in today'), true);
+t('automation briefing is composed', (await page.evaluate(() => briefing(9))).includes('58 reminders were sent'), true);
+t('automation briefing explains the payoff', (await page.evaluate(() => briefing(9))).includes('10.4 hours'), true);
+t('people-vs-system briefing is composed', (await page.evaluate(() => briefing(10))).includes('75 percent'), true);
 t('the real shield is in the header', await page.locator('header img.shield').count(), 1);
 t('briefings never carry client names',
-  (await page.evaluate(() => [0,1,2,3,4,5,6,7,8,9].map(i => briefing(i)).join(' '))).includes('Anita'), false);
+  (await page.evaluate(() => [0,1,2,3,4,5,6,7,8,9,10].map(i => briefing(i)).join(' '))).includes('Anita'), false);
+
+/* Andrew reads live numbers by splicing a recorded bank. Every clip a board
+   asks for must exist, or he goes silent mid-sentence on the wall. */
+t('the voice bank is embedded', await page.evaluate(() => Object.keys(WVO).length > 150), true);
+t('numbers map to clips', await page.evaluate(() => JSON.stringify([nSeq(0),nSeq(7),nSeq(28),nSeq(100),nSeq(107),nSeq(300),nSeq(1240)])),
+  JSON.stringify([['n0'],['n7'],['n28'],['n100'],['h1','n7'],['hf3'],['over','n1','thousand']]));
+t('decimals map to clips', await page.evaluate(() => JSON.stringify([dSeq(9.4),dSeq(3),dSeq(4.5)])),
+  JSON.stringify([['n9','p4'],['n3'],['n4','p5']]));
+const missing = await page.evaluate(() => {
+  const gaps = [];
+  for (let i = 0; i <= 10; i++) lines(i).forEach(k => { if (!(k in WVO)) gaps.push(i + ':' + k); });
+  return gaps;
+});
+t('every board can be spoken end to end — no missing clips', missing, []);
+t('board 0 splices the open count into the sentence',
+  (await page.evaluate(() => lines(0).join(' '))).includes('n21'), true);
+t('the autopilot board says the hours out loud',
+  (await page.evaluate(() => lines(9).join(' '))).includes('p4'), true);
+t('spoken lines carry no names', await page.evaluate(() =>
+  [0,1,2,3,4,5,6,7,8,9,10].flatMap(i => lines(i)).some(k => /felicia|sasha|health/i.test(k))), false);
 
 // reload stays open, still no sign-in
 await page.reload();
