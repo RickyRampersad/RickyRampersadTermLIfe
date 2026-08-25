@@ -607,6 +607,39 @@ const MEMBER_ID_FULL = /^[A-Za-z]{0,4}\d{2,6}-\d{4,6}-\d{2}$/;
 const FURNITURE = /myguardiangroup|^https?:|^[tf]:|\(myGG\)|^Page\b|Printed On|Calculation Date|Standard Report|Invoice (Detail|Summary)|^\d{1,2}:\d{2}|^\d{3} \d{3} \d{4}$|Guardian Drive|Westmoorings/i;
 const DATEISH = /^\d{2}-[A-Za-z]{3}-\d{4}$/;
 
+/* ── a member id that wrapped onto a second line ──
+   The report writer breaks a long certificate across two lines, and both
+   halves look enough like an id to be read as members in their own right.
+   September did this to one person: TPG0185-00311-00 arrived as TPG0185-003
+   and 11-00, two rows at $266 each — one life and $266 that do not exist.
+   August clipped the same certificate but did not split it, so a month that
+   reconciled was hiding the fault.
+
+   Merge only on strong agreement: neighbouring rows, same name, same start
+   and effective dates, same premium, the first id incomplete and the second
+   a bare tail with no letters. Two different people matching all of that is
+   not a thing that happens; splitting one person into two demonstrably is. */
+const ID_TAIL = /^\d{1,6}-\d{2}$/;
+function mergeWrappedIds(members, problems){
+  const out = [];
+  for(const m of members){
+    const prev = out[out.length-1];
+    const wrapped = prev && prev.idClipped && ID_TAIL.test(m.empId)
+      && prev.name === m.name && prev.started === m.started
+      && prev.effective === m.effective && prev.premium === m.premium;
+    if(wrapped){
+      prev.empId = prev.empId + m.empId;
+      prev.idClipped = !MEMBER_ID_FULL.test(prev.empId);
+      prev.idRepaired = true;
+      if(problems) problems.push('Certificate for ' + (prev.name||prev.empId)
+        + ' was split across two lines and has been rejoined as ' + prev.empId);
+      continue;
+    }
+    out.push(m);
+  }
+  return out;
+}
+
 function parseHealthPages(pages){
   const out = { kind:'health', groupId:null, month:null, members:[], credits:[], tiers:{}, stated:{}, problems:[] };
   const text = [];
@@ -669,6 +702,7 @@ function parseHealthPages(pages){
     const cov = /Coverage for:\s*([A-Za-z]+\s+\d{4})/i.exec(l);  if(cov && !out.month) out.month = cov[1];
   }
   // page-level figures come from joined lines, handled by the caller passing them in
+  out.members = mergeWrappedIds(out.members, out.problems);
   const seen = new Set();
   out.members = out.members.filter(m => { if(seen.has(m.empId)) return false; seen.add(m.empId); return true; });
   out.credits = out.credits.filter(m => { const k='c'+m.empId; if(seen.has(k)) return false; seen.add(k); return true; });
@@ -682,8 +716,8 @@ function parseHealthPages(pages){
   return out;
 }
 function parseHealthInvoice(lines){
-  const out = { kind:'health', groupId:null, month:null, members:[], credits:[], tiers:{}, stated:{}, problems:[] };
-  let tier = null;
+  const out = { kind:'health', groupId:null, month:null, members:[], credits:[], tiers:{}, stated:{}, arrears:[], problems:[] };
+  let tier = null, ledger = false;
   const isAmountOnly = s => new RegExp('^'+AMT+'$').test(s.trim());
   const ROW = new RegExp(
     String.raw`^\s*([A-Z][A-Za-z\-'\. ]*,\s*[A-Za-z\-'\. ]*?)\s{2,}(\d{2}-[A-Za-z]{3}-\d{4})\s+(\S+)\s+(\d{2}-[A-Za-z]{3}-\d{4})\s+([A-Za-z]+\s+\d{4})(?:\s+(`+AMT+`))?`);
@@ -702,10 +736,40 @@ function parseHealthInvoice(lines){
     const tot = /Total for current month\s+(\d+)\s+\$([\d,]+\.\d{2})/i.exec(l)
              || /Total for current month/i.test(l) && /(\d+)\s+\$([\d,]+\.\d{2})/.exec(near());
     if(tot){ out.stated.lives = +tot[1]; out.stated.gross = gmoney(tot[2]); }
-    if(/TOTAL PAYABLE BALANCE/i.test(l) && out.stated.payable == null){
-      const m = /\$([\d,]+\.\d{2})/.exec(near());
-      if(m) out.stated.payable = gmoney(m[1]);
+    /* Finding the figure that belongs to a label is not as simple as looking
+       nearby. This writer puts it on the label's own line sometimes, and on
+       the line BEFORE it other times — the right-aligned column is drawn
+       first. Take a neighbour in either direction and you can pick up the
+       credit above the total, or the balance below it; both happened here.
+
+       What separates them is that the real figure is drawn alone. So: the
+       label's own line first, then a neighbour that is nothing but an amount,
+       and only then anything else. */
+    const money = t => { const m = t && /\(?\$([\d,]+\.\d{2})\)?/.exec(t); return m ? gmoney(m[1]) : null; };
+    const bare  = t => t && /^\s*\(?\$[\d,]+\.\d{2}\)?\s*$/.test(t);
+    const figure = () => money(l)
+      ?? (bare(lines[i-1]) ? money(lines[i-1]) : null)
+      ?? (bare(lines[i+1]) ? money(lines[i+1]) : null)
+      ?? money(lines[i-1]) ?? money(lines[i+1]);
+    if(/TOTAL PAYABLE BALANCE/i.test(l) && out.stated.balance == null)
+      out.stated.balance = figure();
+    /* What is owed for THIS month, which is what the member rows have to add
+       up to. Distinct from the balance, which carries arrears forward. */
+    if(/Total Premium for current month/i.test(l) && out.stated.payable == null)
+      out.stated.payable = figure();
+    if(/Total Division Outstanding Amount/i.test(l) && out.stated.outstanding == null)
+      out.stated.outstanding = figure();
+    /* An outstanding line names its invoice and amount, with the month it
+       belongs to on the line after. A figure in brackets is a credit. */
+    if(ledger){
+      const inv = /^\s*(G\d{6}M\d{9})\s+(\(?\$[\d,]+\.\d{2}\)?)\s*$/.exec(l);
+      if(inv){
+        const mth = /^([A-Za-z]+\s+\d{4})\s*$/.exec((lines[i+1]||'').trim());
+        out.arrears.push({ invoice:inv[1], month: mth ? mth[1] : null, amount: amt(inv[2].replace('$','')) });
+      }
+      if(/TOTAL PAYABLE BALANCE/i.test(l)) ledger = false;
     }
+    if(/^\s*Outstanding Balance\(s\)/i.test(l)) ledger = true;
 
     // tier headings, with or without their count appended
     const th = TIERS.find(t => l.trim().replace(/\s+/g,'') .startsWith(t.replace(/\s+/g,'')));
@@ -732,6 +796,9 @@ function parseHealthInvoice(lines){
   /* The invoice prints its tier counts on the summary page, and those parse
      cleanly. Their sum is the membership it is claiming — a firmer figure than
      the one-line total, which the layout keeps splitting. */
+  /* A month with nothing outstanding prints no ledger and no "current month"
+     total — the balance is the whole story. */
+  if(out.stated.payable == null && !out.arrears.length) out.stated.payable = out.stated.balance;
   const tierSum = TIERS.reduce((s,t) => s + ((out.tiers[t] && out.tiers[t].stated) || 0), 0);
   if(tierSum && out.stated.lives == null) out.stated.lives = tierSum;
   out.computed = {
@@ -802,6 +869,7 @@ function parseAdjustments(lines){
 
 /* ── verification: does what we read agree with what the document claims? ── */
 const near = (a,b,tol=0.02) => a!=null && b!=null && Math.abs(a-b) <= tol;
+const round2 = n => Math.round(n*100)/100;
 function verify(doc){
   const checks = [];
   if(doc.kind === 'life'){
@@ -815,7 +883,19 @@ function verify(doc){
     checks.push(['Lives',   doc.computed.lives,   doc.stated.lives]);
     checks.push(['Gross',   doc.computed.gross,   doc.stated.gross]);
     checks.push(['Credits', doc.computed.credits, doc.stated.credits]);
-    checks.push(['Payable', doc.computed.payable, doc.stated.payable]);
+    checks.push(['This month', doc.computed.payable, doc.stated.payable]);
+    /* An invoice carrying arrears asks for more than this month's premium. The
+       member rows can only ever add up to this month; checking them against
+       the balance would fail an invoice that is perfectly correct, and — worse
+       — a month with no arrears would pass while nobody looked at the ledger.
+       So the ledger is checked on its own terms: what it lists must add up to
+       what it totals, and this month plus that total must equal the balance. */
+    if(doc.arrears && doc.arrears.length){
+      const listed = doc.arrears.reduce((s,a) => s + (a.amount||0), 0);
+      checks.push(['Arrears listed', round2(listed), doc.stated.outstanding]);
+      if(doc.stated.payable != null && doc.stated.outstanding != null)
+        checks.push(['This month + arrears', round2(doc.stated.payable + doc.stated.outstanding), doc.stated.balance]);
+    }
     /* Tier counts are deliberately not a pass/fail check. Two tiers share a
        rate here (+child and +spouse are both $558), so the split between them
        can only come from section headings, which page breaks interrupt. The
@@ -996,6 +1076,7 @@ async function take(fileList){
         doc = parseHealthPages(pages);
         const sum = parseHealthInvoice(flat);
         doc.stated = sum.stated; doc.groupId = doc.groupId || sum.groupId; doc.month = doc.month || sum.month;
+        doc.arrears = sum.arrears || [];
         Object.keys(sum.tiers).forEach(t => { if(sum.tiers[t] && sum.tiers[t].stated != null){
           doc.tiers[t] = doc.tiers[t] || {}; doc.tiers[t].stated = sum.tiers[t].stated; } });
         calibrateTiers(doc); ver = verify(doc);
@@ -1003,7 +1084,18 @@ async function take(fileList){
         const r = await readDoc(pdfText, bytes, kind);
         doc = r.doc; ver = r.verification;
       }
-      got[kind] = { file:f.name, kind, doc, ver, ok: ver.ok };
+      /* Two invoices for the same line means the assistant has dropped last
+         month in beside this one. Keep both: the older becomes the thing this
+         month is measured against, which is the only way to answer "is
+         everyone still on" without a database behind us. */
+      const already = got[kind];
+      if(already && monthOf(already.doc) && monthOf(doc) && monthOf(already.doc) !== monthOf(doc)){
+        const older = monthOf(already.doc) < monthOf(doc) ? already : { file:f.name, kind, doc, ver, ok:ver.ok };
+        const newer = older === already ? { file:f.name, kind, doc, ver, ok:ver.ok } : already;
+        prior[kind] = older; got[kind] = newer;
+      } else {
+        got[kind] = { file:f.name, kind, doc, ver, ok: ver.ok };
+      }
     }catch(e){ got['?'+f.name] = { file:f.name, ok:false, why:String(e.message||e) }; }
   }
   busy = false;
@@ -1029,6 +1121,95 @@ function paintReadout(){
 
 /* What the screen cannot decide for itself. Each of these is a real thing a
    person has to look at, not a formality. */
+/* ── what changed since last month ──
+   Keyed on the certificate number, never on the name. Guardian's August
+   invoice printed five members with their given names cut off — JOSEPH, for
+   JOSEPH, ANNA-LEE — and September printed them in full. Compared by name
+   that reads as five people leaving and five joining on the same day, at the
+   same premiums, having started years ago. Compared by certificate it is what
+   it actually is: nobody moved, and five names got fixed.
+
+   A certificate can itself arrive cut off, so a short one that is the start of
+   a long one is treated as the same member rather than as a departure. */
+let prior = {};
+const MONTHS = ['january','february','march','april','may','june','july','august',
+                'september','october','november','december'];
+function monthOf(doc){
+  const m = /([A-Za-z]+)\s+(\d{4})/.exec(doc && doc.month || '');
+  if(!m) return null;
+  const i = MONTHS.indexOf(m[1].toLowerCase());
+  return i < 0 ? null : +m[2]*12 + i;
+}
+const docMonth = doc => (doc && doc.month) || 'last month';
+
+function matchMembers(before, after){
+  const byCert = new Map(before.map(m => [m.empId, m]));
+  const takenBefore = new Set(), pairs = [];
+  after.forEach(m => {
+    let hit = byCert.get(m.empId);
+    if(!hit){
+      /* One side's certificate was cut off, so the short one is a prefix of the
+         long one. A prefix on its own is far too weak to match on: TPG0185-003
+         opens 00311, 00340, 00304 and more, and the first of those to be tried
+         wins — which quietly swaps two people and reports both a joiner and a
+         leaver who never moved. Accept it only when exactly one candidate fits
+         and the premium and start date agree as well. */
+      const cands = before.filter(b => !takenBefore.has(b.empId) &&
+        b.empId.length !== m.empId.length &&
+        (m.empId.startsWith(b.empId) || b.empId.startsWith(m.empId)) &&
+        b.premium === m.premium && b.started === m.started);
+      if(cands.length === 1) hit = cands[0];
+    }
+    if(hit) takenBefore.add(hit.empId);
+    pairs.push({ before:hit || null, after:m });
+  });
+  const left = before.filter(b => !takenBefore.has(b.empId));
+  return { pairs, left };
+}
+
+function movement(kind){
+  const now = got[kind], was = prior[kind];
+  if(!now || !was || !now.doc || !was.doc) return null;
+  const { pairs, left } = matchMembers(was.doc.members, now.doc.members);
+  const joined  = pairs.filter(p => !p.before).map(p => p.after);
+  const changed = pairs.filter(p => p.before && p.before.premium !== p.after.premium)
+                       .map(p => ({ ...p.after, wasPremium:p.before.premium, wasTier:p.before.tier }));
+  const renamed = pairs.filter(p => p.before && p.before.name !== p.after.name && p.before.premium === p.after.premium)
+                       .map(p => ({ ...p.after, wasName:p.before.name }));
+  const delta = (now.doc.computed.gross||0) - (was.doc.computed.gross||0);
+  const explained = joined.reduce((s,m)=>s+(m.premium||0),0)
+                  - left.reduce((s,m)=>s+(m.premium||0),0)
+                  + changed.reduce((s,m)=>s+((m.premium||0)-(m.wasPremium||0)),0);
+  return { from:docMonth(was.doc), to:docMonth(now.doc), joined, left, changed, renamed,
+           delta, explained, accountsFor: Math.abs(delta-explained) < 0.01,
+           wasLives: was.doc.computed.lives, nowLives: now.doc.computed.lives };
+}
+
+/* Arrears are the invoice telling you last month was never settled. */
+function arrears(kind){
+  const r = got[kind];
+  const list = r && r.doc && r.doc.arrears || [];
+  if(!list.length) return null;
+  /* A charge raised then reversed nets to nothing and is not a credit to the
+     client — reporting it as one turned $2,134 of real credits into $86,170
+     of imaginary ones. Pair each negative against an equal positive and set
+     both aside; what is left on either side is real. */
+  const pos = list.filter(a => a.amount > 0).slice();
+  const neg = list.filter(a => a.amount < 0).slice();
+  const owed = [], credits = [];
+  neg.forEach(n => {
+    const i = pos.findIndex(pp => Math.abs(pp.amount + n.amount) < 0.01);
+    if(i >= 0) pos.splice(i,1); else credits.push(n);
+  });
+  owed.push(...pos);
+  const months = [...new Set(owed.map(a => a.month).filter(Boolean))];
+  const reversals = list.length - owed.length - credits.length;
+  return { list, owed, credits, months, reversals,
+           outstanding: r.doc.stated.outstanding,
+           balance: r.doc.stated.balance,
+           thisMonth: r.doc.stated.payable };
+}
+
 function questions(){
   const qs = [], exp = expected();
   const life = got.life, health = got.health;
@@ -1061,6 +1242,30 @@ function questions(){
       q:`${r.lifeOnly.length} on life with no health, ${r.healthOnly.length} on health with no life.`,
       opts:['Known — waiting periods','New to me, flag it for the client'] });
   }
+  /* Against last month's own document, when we have it — a firmer answer than
+     the headcount remembered on the account. */
+  Object.keys(LINES).forEach(k => {
+    const mv = movement(k);
+    if(!mv) return;
+    if(mv.left.length) qs.push({ id:'left-'+k, kind:'check',
+      q:`${mv.left.length === 1 ? 'One member is' : mv.left.length + ' members are'} on the ${
+         mv.from} billing but not on ${mv.to}: ${mv.left.map(m => m.name).join(', ')}.`,
+      opts:['They left — that is right','They should still be covered, query it'] });
+    if(!mv.accountsFor) qs.push({ id:'unexplained-'+k, kind:'blocker',
+      q:`The ${LINES[k].label.toLowerCase()} moved ${money(mv.delta)} on ${mv.from}, but the joiners, `
+       +`leavers and cover changes only account for ${money(mv.explained)}.`,
+      opts:['I will get this checked','Publish anyway, I have checked it'] });
+  });
+
+  Object.keys(LINES).forEach(k => {
+    const ar = arrears(k);
+    if(!ar || !ar.owed.length) return;
+    qs.push({ id:'arrears-'+k, kind:'blocker',
+      q:`This invoice is carrying ${money(ar.outstanding)} outstanding from ${
+         ar.months.join(', ')}. The client is being asked for ${money(ar.balance)}, not ${money(ar.thisMonth)}.`,
+      opts:['Confirmed unpaid — say so in the email','Paid already, I will get the invoice corrected'] });
+  });
+
   exp.forEach(k => { if(!got[k]) qs.push({ id:'missing-'+k, kind:'blocker',
     q:`No ${DOC_KINDS[k].label.toLowerCase()} yet.`,
     opts:['It is coming','There was none this month'] }); });
@@ -1161,6 +1366,20 @@ function draftEmail(){
   if(lines.length > 1) body.push(`  ${''.padEnd(0)}Total   ${money(total)}`);
   body.push(``);
 
+  /* An invoice carrying arrears asks for more than this month, and the figure
+     on the remittance is the balance. Saying only this month's premium sends
+     the client to pay the wrong amount. */
+  const ars = Object.keys(LINES).map(k => [k, arrears(k)]).filter(([,a]) => a && a.owed.length);
+  ars.forEach(([k, a]) => {
+    body.push(`${LINES[k].label} is showing ${money(a.outstanding)} still outstanding from `
+      + `${a.months.join(' and ')}, so the payable balance on this invoice is ${money(a.balance)} `
+      + `rather than ${money(a.thisMonth)}.`);
+    if(a.credits.length) body.push(`  That figure is already net of `
+      + `${money(Math.abs(a.credits.reduce((t,c)=>t+c.amount,0)))} in credits carried forward from `
+      + `${[...new Set(a.credits.map(c=>c.month).filter(Boolean))].join(' and ')}.`);
+    body.push(`  If this has been paid since the invoice was raised, send us the reference and we will have it cleared.`, ``);
+  });
+
   // anything the reading turned up that the client should act on
   const notes = [];
   const adj = got.adjustments;
@@ -1171,6 +1390,19 @@ function draftEmail(){
       + `${money(Math.abs(credits.reduce((s,i)=>s+i.total,0)))} for ${credits.map(i=>i.name).join(', ')}, `
       + `whose cover ended before this billing ran.`);
   }
+  Object.keys(LINES).forEach(k => {
+    const mv = movement(k);
+    if(!mv) return;
+    const bits = [];
+    if(mv.joined.length) bits.push(`${mv.joined.length} added (${mv.joined.map(x=>x.name).join('; ')})`);
+    if(mv.left.length)   bits.push(`${mv.left.length} removed (${mv.left.map(x=>x.name).join('; ')})`);
+    if(mv.changed.length)bits.push(`${mv.changed.length} on a different cover level`);
+    if(bits.length) notes.push(`Against ${mv.from}, the ${LINES[k].label.toLowerCase()} has ${bits.join('; ')} `
+      + `— ${mv.delta === 0 ? 'no change' : (mv.delta > 0 ? 'up ' : 'down ') + money(Math.abs(mv.delta))} on the month.`);
+    if(mv.renamed.length) notes.push(`${mv.renamed.length} ${mv.renamed.length===1?'name is':'names are'} `
+      + `printed differently from ${mv.from} — ${mv.renamed.map(x=>x.name).join('; ')}. `
+      + `Same certificates, so no action needed — Guardian has corrected how they print.`);
+  });
   if(got.life && got.health && got.life.ok && got.health.ok){
     const r = reconcile(got.life.doc, got.health.doc);
     if(r.healthOnly.length) notes.push(
@@ -1183,14 +1415,25 @@ function draftEmail(){
   if(notes.length){ body.push(`A couple of things worth knowing:`, ``);
     notes.forEach(n => body.push(`• ${n}`)); body.push(``); }
 
-  body.push(`Nothing needs doing beyond settling the amount above, and anything you want to query `
-    + `you can raise straight from the billing page.`, ``, `Kind regards,`, `Ricky Rampersad`,
-    `Guardian Life of the Caribbean`);
+  /* "The amount above" is fine until arrears put two figures above it. Name
+     the one to pay. */
+  const carrying = Object.keys(LINES).map(k => arrears(k)).find(a => a && a.owed.length);
+  body.push(carrying
+    ? `Please settle ${money(carrying.balance)}. Anything you want to query you can raise straight from the billing page.`
+    : `Nothing needs doing beyond settling the amount above, and anything you want to query `
+      + `you can raise straight from the billing page.`,
+    ``, `Kind regards,`, `Ricky Rampersad`, `Guardian Life of the Caribbean`);
 
   return { to:'', subject:`${group.name} — ${m} group billing`, body:body.join('\n'), atts };
 }
 
+/* The documents know their own month. The picker is a starting point and is
+   routinely left on the month before — an email headed August carrying the
+   September invoice is the kind of thing a client remembers. */
 function monthName(){
+  const fromDocs = Object.values(got).filter(r => r.doc && r.doc.month)
+    .sort((a,b) => (monthOf(b.doc)||0) - (monthOf(a.doc)||0))[0];
+  if(fromDocs) return fromDocs.doc.month;
   const [y,m] = ($('mon').value||'2026-08').split('-');
   return new Date(+y, +m-1, 1).toLocaleDateString('en-GB',{month:'long',year:'numeric'});
 }
