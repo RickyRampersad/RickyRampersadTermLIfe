@@ -70,6 +70,8 @@
   .p-life{background:var(--lightblue);color:var(--navy)}
   .p-health{background:#EAF3E9;color:var(--go)}
   :root[data-theme="dark"] .p-health{background:#16302A}
+  .p-pension{background:#F3EDF9;color:#5B3E7A}
+  :root[data-theme="dark"] .p-pension{background:#241C33;color:#B9A3D6}
   .age{font-family:var(--mono);font-weight:700;white-space:nowrap}
   .a-ok{color:var(--slate)} .a-warn{color:var(--warn)} .a-bad{color:var(--stop)}
   .band{display:inline-block;width:52px;height:5px;border-radius:3px;margin-left:.5rem;vertical-align:middle}
@@ -121,9 +123,10 @@
     <div class="filters">
       <select id="f-acct"></select>
       <select id="f-line">
-        <option value="">Life and health</option>
-        <option value="LIFE_GROUP">Life only</option>
-        <option value="HEALTH_GROUP">Health only</option>
+        <option value="">Every line</option>
+        <option value="LIFE_GROUP">Life</option>
+        <option value="HEALTH_GROUP">Health</option>
+        <option value="PENSION">Pension</option>
       </select>
       <input id="f-text" placeholder="Find a name" autocomplete="off">
       <button class="btn ghost" onclick="window.print()">Print</button>
@@ -156,12 +159,35 @@
 /* ═══════════════════════════════════════════════════════════════════════
    WHERE THE DATA COMES FROM
 
+   The snapshot query, for whoever writes the Apps Script:
+
+     SELECT Account__r.Name, Contact__r.Name, RecordType.DeveloperName,
+            POLICY__c, ISSUE_DATE__c, Policy_Requirements__c
+     FROM   CLIENT_PORTFOLIO__c
+     WHERE  Policy_Status_Description_R__c = 'Pending'
+       AND (RecordType.DeveloperName IN ('LIFE_GROUP','HEALTH_GROUP')
+            OR (RecordType.DeveloperName = 'PENSION'
+                AND Account__r.RecordType.Name IN ('BUSINESS ACCOUNT','COMMERCIAL CLIENT')))
+
+
    API   The branch Apps Script. Two calls:
            GET  ?action=pendings                → the list below
            POST {action:'pendingnote', id, text} → what staff typed
 
          Leave it blank and the page runs on the sample rows at the foot of
          this file, so the screen can be worked on without touching the org.
+
+   Which records count as group:
+
+     Life and health carry their own record types — LIFE(GROUP) and
+     HEALTH (GROUP) — so those are simply filtered on.
+
+     Pensions do not. There is no group pension record type; a pension is a
+     pension whether it belongs to a person or to a company scheme. What makes
+     one a group pension is the account it hangs off, so the filter is the
+     company: CLIENT_PORTFOLIO__c of record type PENSION whose Account record
+     type is BUSINESS ACCOUNT or COMMERCIAL CLIENT. About 10,700 records
+     qualify, against roughly 31,000 household accounts that must not.
 
    The list is a snapshot, not a live query — Apps Script pulls it from
    Salesforce on a schedule and the browser never holds credentials. A book
@@ -209,14 +235,16 @@ const SAMPLE = [
   { id:'a8', account:'D Rampersad & Company Ltd', member:'K. Ramnarine',
     line:'HEALTH_GROUP', policy:'TPG0278-00104-00', issued:'2024-06-01', note:'' },
   { id:'a9', account:'D Rampersad & Company Ltd', member:'D. John',
-    line:'HEALTH_GROUP', policy:'TPG0864-00023-00', issued:'2024-08-01', note:'' }
+    line:'HEALTH_GROUP', policy:'TPG0864-00023-00', issued:'2024-08-01', note:'' },
+  { id:'a10', account:'Meridian Supermarkets Limited', member:'A. Boodhoo',
+    line:'PENSION', policy:'TPN0442-00019-00', issued:'2026-06-01', note:'' }
 ];
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const dmy = s => s ? new Date(s+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
 const days = s => s ? Math.floor((Date.now() - new Date(s+'T00:00:00')) / 86400000) : null;
-const LINE = { LIFE_GROUP:['Life','p-life'], HEALTH_GROUP:['Health','p-health'] };
+const LINE = { LIFE_GROUP:['Life','p-life'], HEALTH_GROUP:['Health','p-health'], PENSION:['Pension','p-pension'] };
 
 /* Bands chosen for what this actually is. A group application that has sat
    for a year is not "slow" — it is almost certainly settled and never
@@ -274,6 +302,9 @@ function paint(){
 
   const flags = DATA.filter(r => r.flag);
   $('flags').innerHTML = [
+    (()=>{ const lines = ['LIFE_GROUP','HEALTH_GROUP','PENSION'].filter(l => !DATA.some(r => r.line===l));
+      return lines.length ? `<div class="alert a-info">Nothing pending on ${
+        lines.map(l => LINE[l][0].toLowerCase()).join(' or ')}.</div>` : ''; })(),
     overYear ? `<div class="alert a-flag"><b>${overYear} of these have been pending for more than a year.</b>
       An application that old is rarely still in underwriting — it has usually settled and nobody updated the record,
       or it lapsed. Worth clearing the list before anyone reads a count off it.</div>` : '',

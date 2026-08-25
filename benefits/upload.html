@@ -68,6 +68,21 @@
   .doc .st{margin-left:auto;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
   .doc.ok .st{color:var(--go)} .doc.bad .st{color:var(--stop)} .doc.wait .st{color:var(--slate)}
 
+  .lineblk{border:1px solid var(--line);border-radius:7px;padding:.7rem .8rem;background:var(--surface)}
+  .lineblk + .lineblk{margin-top:.7rem}
+  .lineblk.off{opacity:.5}
+  .linehd{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin-bottom:.5rem}
+  .linehd span:first-child{font-family:var(--display);font-size:1rem;color:var(--navy);font-weight:600}
+  .linetot{font-family:var(--mono);font-size:12.5px;color:var(--slate)}
+  .lineblk .doc{background:var(--paper)}
+  .lineblk .doc + .doc{margin-top:.45rem}
+  .mail{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:1rem 1.1rem;margin-top:.9rem}
+  .mail .hdr{font-size:12.5px;color:var(--slate);border-bottom:1px solid var(--line);padding-bottom:.5rem;margin-bottom:.7rem}
+  .mail .hdr b{color:var(--ink)}
+  .mail pre{white-space:pre-wrap;font-family:inherit;font-size:13.5px;margin:0;line-height:1.65}
+  .mail .att{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.8rem;padding-top:.7rem;border-top:1px solid var(--line)}
+  .mail .att span{font-size:12px;background:var(--surface2);border:1px solid var(--line);
+    border-radius:4px;padding:.25rem .55rem;font-family:var(--mono)}
   .drop{border:1.5px dashed var(--line);border-radius:8px;padding:1.5rem;text-align:center;cursor:pointer;
     background:var(--paper);transition:.15s}
   .drop:hover,.drop.over{border-color:var(--blue);background:var(--lightblue)}
@@ -189,23 +204,47 @@ const API = "";
 const STAFF_CODE = "RRB2026";
 const SESSION_KEY = "rrb-upload-ok";
 
-/* Sample book — invented companies. Each carries the plans it actually has,
-   because that is what decides which documents are expected. */
+/* Sample book — invented companies, real shapes.
+
+   Groups do not all carry all three lines, and assuming they do is how an
+   assistant ends up hunting for a document that was never going to arrive.
+   Real examples from the branch book: one company runs life, health and
+   pension together; another runs health and pension with its life cover
+   written individually; a third is pension only. The four below cover those
+   shapes, so the checklist is right for each. */
 const BOOK = [
   { id:'g1', name:'Meridian Supermarkets Limited', lines:['life','health'],
     lifePolicy:'TGM 1000', lives:{ life:156, health:158 }, last:{ life:6240, health:84036 } },
   { id:'g2', name:'Trinidad Steel Works Limited', lines:['life','health','pension'],
     lifePolicy:'TGM 1042', lives:{ life:92, health:92 }, last:{ life:3680, health:48200 } },
-  { id:'g3', name:'Harbourview Trading Limited', lines:['life'],
-    lifePolicy:'TGM 1188', lives:{ life:46, health:0 }, last:{ life:1840, health:0 } }
+  { id:'g3', name:'Caribe Logistics & Freight', lines:['health','pension'],
+    lifePolicy:null, lives:{ life:0, health:64 }, last:{ life:0, health:34268 } },
+  { id:'g4', name:'Sunbright Foods Limited', lines:['pension'],
+    lifePolicy:null, lives:{ life:0, health:0 }, last:{ life:0, health:0 } }
 ];
 
-const DOC_KINDS = {
-  life:        { label:'Group life billing',        hint:'The monthly schedule, one line per member.' },
-  adjustments: { label:'Statement of adjustments',  hint:'Additions and terminations since the last run.' },
-  health:      { label:'Group health invoice',      hint:'Members by tier, with any credits.' },
-  pension:     { label:'Pension schedule',          hint:'Contributions for the month.' }
+/* Each line is billed on its own — a separate document, a separate total, and
+   at Guardian a separate department. The screen is arranged the same way, so
+   an assistant working one line is never looking at another's paperwork. */
+const LINES = {
+  life:    { label:'Group Life & AD&D', icon:'🛡', docs:['life','adjustments'] },
+  health:  { label:'Group Health',      icon:'🩺', docs:['health'] },
+  pension: { label:'Group Pension',     icon:'🏦', docs:['pension'] }
 };
+const DOC_KINDS = {
+  life:        { line:'life',    label:'Group life billing',       hint:'The monthly schedule, one line per member.' },
+  adjustments: { line:'life',    label:'Statement of adjustments', hint:'Additions and terminations since the last run.' },
+  health:      { line:'health',  label:'Group health invoice',     hint:'Members by tier, with any credits.' },
+  pension:     { line:'pension', label:'Pension schedule',         hint:'Contributions for the month.' }
+};
+/* What each line comes to this month, once its own documents are read. */
+function lineTotal(key){
+  if(key==='life')    return (got.life && got.life.ok ? got.life.doc.computed.total : 0)
+                          + (got.adjustments && got.adjustments.ok ? got.adjustments.doc.computed.net : 0);
+  if(key==='health')  return got.health && got.health.ok ? got.health.doc.computed.payable : 0;
+  if(key==='pension') return got.pension && got.pension.ok ? (got.pension.doc.computed.total||0) : 0;
+  return 0;
+}
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -907,14 +946,22 @@ function expected(){
 function paintDocs(){
   const exp = expected();
   $('plans').textContent = 'Plans on this account: ' + group.lines.join(' · ');
-  $('docs').innerHTML = Object.keys(DOC_KINDS).map(k => {
-    const want = exp.includes(k), r = got[k];
-    const cls = !want ? 'na' : r ? (r.ok ? 'ok' : 'bad') : 'wait';
-    const st  = !want ? 'not on this account' : r ? (r.ok ? 'reads cleanly' : 'does not add up') : 'still needed';
-    const ic  = !want ? '–' : r ? (r.ok ? '✓' : '!') : '○';
-    return `<div class="doc ${cls}"><div class="ic">${ic}</div>
-      <div><b>${esc(DOC_KINDS[k].label)}</b><small>${r ? esc(r.file) : esc(DOC_KINDS[k].hint)}</small></div>
-      <span class="st">${st}</span></div>`;
+  $('docs').innerHTML = Object.keys(LINES).map(lk => {
+    const L = LINES[lk], on = group.lines.includes(lk);
+    const tot = lineTotal(lk);
+    const rows = L.docs.map(k => {
+      const want = on && exp.includes(k), r = got[k];
+      const cls = !want ? 'na' : r ? (r.ok ? 'ok' : 'bad') : 'wait';
+      const st  = !want ? 'not on this account' : r ? (r.ok ? 'reads cleanly' : 'does not add up') : 'still needed';
+      const ic  = !want ? '–' : r ? (r.ok ? '✓' : '!') : '○';
+      return `<div class="doc ${cls}"><div class="ic">${ic}</div>
+        <div><b>${esc(DOC_KINDS[k].label)}</b><small>${r ? esc(r.file) : esc(DOC_KINDS[k].hint)}</small></div>
+        <span class="st">${st}</span></div>`;
+    }).join('');
+    return `<div class="lineblk ${on?'':'off'}">
+      <div class="linehd"><span>${L.icon} ${esc(L.label)}</span>
+        <span class="linetot">${on ? (tot ? money(tot) : 'nothing read yet') : 'not on this account'}</span></div>
+      ${rows}</div>`;
   }).join('');
   paintSteps();
 }
@@ -1057,14 +1104,88 @@ function paintPublish(){
     </div>
     ${unanswered.length ? `<div class="alert a-warn">${unanswered.length} question${unanswered.length>1?'s':''}
       still unanswered. Publishing now records them as unresolved.</div>` : ''}
+    ${(() => { const e = draftEmail(); return `
+    <div class="mail">
+      <div class="hdr"><b>Subject</b> ${esc(e.subject)}<br><b>To</b> the billing contact on this account</div>
+      <pre>${esc(e.body)}</pre>
+      <div class="att">${e.atts.map(a => `<span>📎 ${esc(a)}</span>`).join('')}</div>
+    </div>
+    <p class="note" style="margin-top:.5rem">Written from what was read this month. Edit it after copying if you want —
+      publishing sends this text with those attachments.</p>`; })()}
     <div class="row" style="margin-top:1rem">
-      <button class="btn go" id="pub" ${busy?'disabled':''}>Publish this month</button>
+      <button class="btn go" id="pub" ${busy?'disabled':''}>Publish and send</button>
+      <button class="btn ghost" id="copy">Copy the email</button>
       <span class="note">${blocked ? 'A document that does not add up will be marked as such for the client.' : ''}</span>
     </div>
     <div id="pubout"></div>
   </div>`;
   const b = $('pub'); if(b) b.addEventListener('click', publish);
+  const c = $('copy'); if(c) c.addEventListener('click', () => {
+    const e = draftEmail();
+    const text = e.subject + '\n\n' + e.body;
+    const done = () => { c.textContent = 'Copied ✓'; setTimeout(()=>c.textContent='Copy the email', 1800); };
+    /* The clipboard API needs a secure context and a permission the browser may
+       not grant. Fall back to a selection copy rather than leaving the button
+       looking broken. */
+    const fallback = () => {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+      document.body.appendChild(ta); ta.select();
+      let ok = false; try{ ok = document.execCommand('copy'); }catch(err){}
+      ta.remove();
+      if(ok) done(); else c.textContent = 'Select the text above to copy';
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText)
+      navigator.clipboard.writeText(text).then(done).catch(fallback);
+    else fallback();
+  });
 }
+/* The email the client actually receives. Written from what was read, not
+   from a template with blanks — if the month found a late leaver or a cover
+   gap, it says so, because that is the reason they open it. Kept short: an
+   employer reading this on a phone wants the number, the attachments, and
+   anything that needs them to act. */
+function draftEmail(){
+  const lines = Object.keys(LINES).filter(k => group.lines.includes(k) && lineTotal(k));
+  const total = lines.reduce((s,k) => s + lineTotal(k), 0);
+  const m = monthName();
+  const atts = Object.values(got).filter(r => r.ver && r.ok).map(r => r.file);
+
+  const body = [];
+  body.push(`Good day,`, ``, `Your ${m} group billing is attached and is also on your portal.`, ``);
+  lines.forEach(k => body.push(`  ${LINES[k].label}   ${money(lineTotal(k))}`));
+  if(lines.length > 1) body.push(`  ${''.padEnd(0)}Total   ${money(total)}`);
+  body.push(``);
+
+  // anything the reading turned up that the client should act on
+  const notes = [];
+  const adj = got.adjustments;
+  if(adj && adj.ok && adj.doc.items && adj.doc.items.length){
+    const credits = adj.doc.items.filter(i => i.total < 0);
+    if(credits.length) notes.push(
+      `This month includes ${credits.length === 1 ? 'a credit' : credits.length + ' credits'} of `
+      + `${money(Math.abs(credits.reduce((s,i)=>s+i.total,0)))} for ${credits.map(i=>i.name).join(', ')}, `
+      + `whose cover ended before this billing ran.`);
+  }
+  if(got.life && got.health && got.life.ok && got.health.ok){
+    const r = reconcile(got.life.doc, got.health.doc);
+    if(r.healthOnly.length) notes.push(
+      `${r.healthOnly.length} ${r.healthOnly.length===1?'employee is':'employees are'} on the health invoice `
+      + `but not on the life billing. Usually a waiting period — worth confirming, because it is life cover they do not yet have.`);
+    if(r.spelling.length) notes.push(
+      `${r.spelling.length} ${r.spelling.length===1?'employee is':'employees are'} spelled differently on the two `
+      + `documents. We are having Guardian align them so a claim is never held up over it.`);
+  }
+  if(notes.length){ body.push(`A couple of things worth knowing:`, ``);
+    notes.forEach(n => body.push(`• ${n}`)); body.push(``); }
+
+  body.push(`Nothing needs doing beyond settling the amount above, and anything you want to query `
+    + `you can raise straight from the billing page.`, ``, `Kind regards,`, `Ricky Rampersad`,
+    `Guardian Life of the Caribbean`);
+
+  return { to:'', subject:`${group.name} — ${m} group billing`, body:body.join('\n'), atts };
+}
+
 function monthName(){
   const [y,m] = ($('mon').value||'2026-08').split('-');
   return new Date(+y, +m-1, 1).toLocaleDateString('en-GB',{month:'long',year:'numeric'});
@@ -1073,6 +1194,9 @@ function monthName(){
 async function publish(){
   const btn = $('pub'); btn.disabled = true; btn.textContent = 'Publishing…';
   const payload = { action:'publishbilling', group:group.id, groupName:group.name, month:$('mon').value,
+    email: draftEmail(),
+    lineTotals: Object.keys(LINES).filter(k => group.lines.includes(k))
+      .reduce((o,k) => (o[k] = lineTotal(k), o), {}),
     documents: Object.values(got).filter(r => r.ver).map(r => ({ kind:r.kind, file:r.file, ok:r.ok,
       checks:r.ver.results, computed:r.doc.computed })),
     answers, publishedAt:new Date().toISOString() };
@@ -1082,7 +1206,7 @@ async function publish(){
       body: JSON.stringify(payload) }); const d = await r.json().catch(()=>({})); ok = r.ok && d.ok !== false; }
     catch(e){ ok = false; }
   }
-  btn.textContent = ok ? 'Published ✓' : 'Publish this month';
+  btn.textContent = ok ? 'Sent ✓' : 'Publish and send';
   btn.disabled = !ok;
   $('pubout').innerHTML = ok
     ? `<div class="alert a-ok"><b>${esc(monthName())} is live for ${esc(group.name)}.</b>
