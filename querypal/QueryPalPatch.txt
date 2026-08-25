@@ -452,8 +452,10 @@ function wallStats_(code, token, days) {
     if (tms >= weekAgo)  intake.week++;
     if (tms >= monthAgo) intake.month++;
     if (isDone) {
-      var closedAt = (row[19] instanceof Date) ? row[19].getTime()
-                   : (row[19] ? new Date(row[19]).getTime() : NaN);
+      // col 21 "Date Closed" is index 20 — index 19 is the CC list, which is
+      // never a date, so every resolved-today/week/month count came back zero.
+      var closedAt = (row[20] instanceof Date) ? row[20].getTime()
+                   : (row[20] ? new Date(row[20]).getTime() : NaN);
       if (!isNaN(closedAt)) {
         if (closedAt >= midnight) intake.rToday++;
         if (closedAt >= weekAgo)  intake.rWeek++;
