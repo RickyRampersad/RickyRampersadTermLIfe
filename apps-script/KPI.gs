@@ -1158,6 +1158,26 @@ function handle_(action, data, token) {
       return { ok: true, profile: profile, roster: publicRoster_(), schedule: SCHEDULE,
                kpis: { ssa: kpiChoicesFor_('ssa'), bma: kpiChoicesFor_('bma') } };
 
+    case 'billing': {
+      var bc = sfkBillingCheckSafe_(data.date);
+      if (!profile.manager) {
+        var m2 = {};
+        if (bc[profile.staffId]) m2[profile.staffId] = bc[profile.staffId];
+        bc = m2;
+      }
+      return { ok: true, billing: bc };
+    }
+
+    case 'needsReason': {
+      var nr = sfkNeedsReasonSafe_(data.date);
+      if (!profile.manager) {
+        var mine = {};
+        if (nr[profile.staffId]) mine[profile.staffId] = nr[profile.staffId];
+        nr = mine;
+      }
+      return { ok: true, needsReason: nr };
+    }
+
     case 'metrics': {
       // Staff see their own position; the manager sees the branch.
       var m = sfkMetricsSafe_(data.date);
@@ -1188,7 +1208,9 @@ function handle_(action, data, token) {
       return { ok: true, rows: rows, training: tr, profile: profile,
                roster: publicRoster_(), schedule: SCHEDULE,
                kpis: { ssa: kpiChoicesFor_('ssa'), bma: kpiChoicesFor_('bma') },
-               metrics: sfkMetricsSafe_(data.date) };
+               metrics: sfkMetricsSafe_(data.date),
+               needsReason: sfkNeedsReasonSafe_(data.date),
+               billing: sfkBillingCheckSafe_(data.date) };
     }
 
     case 'training': {
@@ -1898,9 +1920,61 @@ function sfkMetrics_(date) {
     " AND Status != 'Completed' AND ActivityDate < " + shiftDays_(day, -60) +
     ' GROUP BY OwnerId'), 'aged60', false);
 
+  // How many of each person's overdue tasks carry no reason.
+  try {
+    var nr = sfkNeedsReason_(day);
+    Object.keys(out).forEach(function (k) { out[k].needsReason = (nr[k] || []).length; });
+  } catch (e) { /* the position is still worth returning without it */ }
+
   var res = { ok: true, date: day, staff: out, users: users };
   cache.put(key, JSON.stringify(res), SFK.CACHE_MIN * 60);
   return res;
+}
+
+/** Overdue tasks with nothing in Task_Update_Reason__c.
+ *
+ *  The branch built that field for exactly this: when a due date passes, the
+ *  owner says why. It is filled on 5% of overdue tasks. So the number is only
+ *  half the story — an overdue task with a reason is work in progress, and an
+ *  overdue task without one is a task nobody has looked at. The app should
+ *  tell people which of theirs are which, by name, so the answer is a
+ *  sentence rather than a search. */
+function sfkNeedsReason_(date) {
+  var day = date || todayISO_();
+  var cache = CacheService.getScriptCache();
+  var key = 'sfk_nr_' + day;
+  var hit = cache.get(key);
+  if (hit) return JSON.parse(hit);
+
+  var users = sfkUsers_();
+  var ids = Object.keys(users).map(function (k) { return "'" + users[k].id + "'"; });
+  if (!ids.length) return {};
+  var byId = {};
+  Object.keys(users).forEach(function (k) { byId[users[k].id] = k; });
+
+  var recs = sfkQuery_(
+    'SELECT Id, OwnerId, Subject, Status, Task_Type__c, ActivityDate, Days_O_S__c ' +
+    'FROM Task WHERE OwnerId IN (' + ids.join(',') + ") AND Status != 'Completed' " +
+    'AND ActivityDate < ' + day + ' AND Task_Update_Reason_c__c = NULL ' +
+    'ORDER BY Days_O_S__c DESC NULLS LAST LIMIT 400');
+
+  var out = {};
+  recs.forEach(function (r) {
+    var sid = byId[r.OwnerId];
+    if (!sid) return;
+    (out[sid] = out[sid] || []).push({
+      id: r.Id, subject: r.Subject, status: r.Status,
+      type: r.Task_Type__c || 'No type', due: r.ActivityDate,
+      age: Number(r.Days_O_S__c || 0)
+    });
+  });
+  cache.put(key, JSON.stringify(out), SFK.CACHE_MIN * 60);
+  return out;
+}
+
+function sfkNeedsReasonSafe_(date) {
+  if (!sfkConfigured_()) return {};
+  try { return sfkNeedsReason_(date); } catch (e) { return {}; }
 }
 
 /** Safe wrapper — the tracker must keep working when Salesforce does not. */
@@ -1935,4 +2009,91 @@ function sfKpiTest() {
   var msg = lines.join('\n');
   Logger.log(msg);
   return msg;
+}
+
+// ---------------------------------------------------------------------------
+//  The billing reference check
+//
+//  Renewals, premium dues and billing is the branch's second-largest category
+//  and its most repetitive. The open book shows why that matters: the same
+//  company can carry four separate open billing tasks — T-LIFE for March,
+//  April, May and June, plus T-HEALTH for July, all still open on one account.
+//  Each was sent. None was checked back.
+//
+//  So the block does not just say "send it". It lists what is open against
+//  each account, and puts the repeats at the top — because the same client
+//  appearing three times is not three jobs, it is one job nobody closed.
+// ---------------------------------------------------------------------------
+
+var BILLING_TYPE = 'Renewa/PDl/Bill';
+
+function sfkBillingCheck_(date) {
+  var day = date || todayISO_();
+  var cache = CacheService.getScriptCache();
+  var key = 'sfk_bill_' + day;
+  var hit = cache.get(key);
+  if (hit) return JSON.parse(hit);
+
+  var users = sfkUsers_();
+  var ids = Object.keys(users).map(function (k) { return "'" + users[k].id + "'"; });
+  if (!ids.length) return {};
+  var byId = {};
+  Object.keys(users).forEach(function (k) { byId[users[k].id] = k; });
+
+  var recs = sfkQuery_(
+    'SELECT Id, OwnerId, Subject, Status, ActivityDate, Days_O_S__c, ' +
+    'What.Name, Task_Update_Reason_c__c ' +
+    'FROM Task WHERE OwnerId IN (' + ids.join(',') + ") AND Status != 'Completed' " +
+    "AND Task_Type__c = '" + BILLING_TYPE + "' " +
+    'ORDER BY Days_O_S__c DESC NULLS LAST LIMIT 400');
+
+  var out = {};
+  recs.forEach(function (r) {
+    var sid = byId[r.OwnerId];
+    if (!sid) return;
+    out[sid] = out[sid] || { items: [], accounts: {} };
+    var acct = accountOf_(r.Subject, r.What ? r.What.Name : '');
+    out[sid].items.push({
+      id: r.Id, subject: r.Subject, status: r.Status, due: r.ActivityDate,
+      age: Number(r.Days_O_S__c || 0), account: acct,
+      hasReason: !!(r.Task_Update_Reason_c__c || '').trim()
+    });
+    out[sid].accounts[acct] = (out[sid].accounts[acct] || 0) + 1;
+  });
+
+  // Anything open more than once against the same account is the thing to
+  // look at first: it was sent again before the last one was reconciled.
+  Object.keys(out).forEach(function (sid) {
+    var a = out[sid].accounts;
+    out[sid].repeats = Object.keys(a).filter(function (k) { return a[k] > 1; })
+      .map(function (k) { return { account: k, open: a[k] }; })
+      .sort(function (x, y) { return y.open - x.open; });
+    out[sid].items.forEach(function (it) { it.repeat = a[it.account] > 1; });
+    out[sid].items.sort(function (x, y) {
+      if (x.repeat !== y.repeat) return x.repeat ? -1 : 1;
+      return y.age - x.age;
+    });
+  });
+
+  cache.put(key, JSON.stringify(out), SFK.CACHE_MIN * 60);
+  return out;
+}
+
+/** The client or company a billing task belongs to.
+ *  Group work names the company at the end of the subject after the last
+ *  dash; premium-due mail names the client the same way. Fall back to the
+ *  related record, which is a portfolio or transaction reference. */
+function accountOf_(subject, whatName) {
+  var s = String(subject || '');
+  var m = s.match(/-\s*([^-]+)$/);
+  if (m) {
+    var tail = m[1].trim().replace(/\s+/g, ' ');
+    if (tail && tail.length > 2 && !/^\d+$/.test(tail)) return tail;
+  }
+  return whatName || 'Unattributed';
+}
+
+function sfkBillingCheckSafe_(date) {
+  if (!sfkConfigured_()) return {};
+  try { return sfkBillingCheck_(date); } catch (e) { return {}; }
 }

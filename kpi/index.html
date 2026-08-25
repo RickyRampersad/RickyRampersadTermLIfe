@@ -215,6 +215,8 @@ function App(){
   const [rows,setRows]=useState([]);
   const [training,setTraining]=useState([]);
   const [metrics,setMetrics]=useState(null);
+  const [needsReason,setNeedsReason]=useState({});
+  const [billing,setBilling]=useState({});
   const [loading,setLoading]=useState(false);
   const [blockState,setBlockState]=useState({});   // per block: idle|saving|ok|bad
   const [dayState,setDayState]=useState({tone:"idle",text:""});
@@ -248,7 +250,9 @@ function App(){
     const r=await api("rows",{token});
     if(r.ok){ setRows(r.rows||[]); setTraining(r.training||[]); if(r.roster) setRoster(r.roster);
       if(r.schedule) SCHEDULE=r.schedule; if(r.kpis) KPI_CHOICES=r.kpis;
-      if(r.metrics) setMetrics(r.metrics); }
+      if(r.metrics) setMetrics(r.metrics);
+      if(r.needsReason) setNeedsReason(r.needsReason);
+      if(r.billing) setBilling(r.billing); }
     else if(r.authRequired){ signOut(); }
     setLoading(false);
   },[token,signOut]);
@@ -467,6 +471,8 @@ function App(){
                   <Field label="Waiting on (named) + last chased"><input value={bl.blockerOwner} onChange={e=>patchBlock(b.id,"blockerOwner",e.target.value)} placeholder="Name + date" style={inp}/></Field>
                 </div>
 
+                {bl.kpi==="Renewa/PDl/Bill"&&<BillingCheck data={billing[active]}/>}
+
                 {bl.kpi==="Training delivered"&&(<div style={trainBox}>
                   <div style={{fontSize:11,fontWeight:800,letterSpacing:0.8,textTransform:"uppercase",color:GOLD,marginBottom:8}}>Training record</div>
                   <Field label="Who you trained"><input value={bl.tr_trainee} onChange={e=>patchBlock(b.id,"tr_trainee",e.target.value)} placeholder="Trainee name(s)" style={inp}/></Field>
@@ -499,6 +505,7 @@ function App(){
           </p>
 
           <TaskPosition live={metrics} staffId={active} entry={entry} patchMetric={patchMetric}/>
+          <NeedsReason items={needsReason[active]}/>
 
           <div style={{...card,borderLeft:"4px solid "+GOLD}}>
             <div style={cardHead}><span style={cardTitle}>Value Added today</span><span style={{fontSize:10.5,color:AMBER,fontWeight:700}}>log every day</span></div>
@@ -1078,6 +1085,83 @@ function TaskPosition({live,staffId,entry,patchMetric}){
       <Field label="Overdue now"><input inputMode="numeric" value={entry.metrics.overdue} onChange={e=>patchMetric("overdue",e.target.value)} placeholder="0" style={inp}/></Field>
       <Field label="Of those, 60+ days"><input inputMode="numeric" value={entry.metrics.aged60} onChange={e=>patchMetric("aged60",e.target.value)} placeholder="0" style={inp}/></Field>
     </div>
+  </div>;
+}
+
+// Overdue tasks carrying nothing in the reason field. The branch built that
+// field for this; it is filled on about one overdue task in twenty. An overdue
+// task with a reason is work in progress. One without is a task nobody has
+// looked at — so those are the ones named here.
+function NeedsReason({items}){
+  if(!items||!items.length) return null;
+  const show=items.slice(0,6);
+  return <div style={{...card,borderLeft:"4px solid "+RED}}>
+    <div style={cardHead}>
+      <span style={cardTitle}>Overdue with no reason given</span>
+      <span style={{fontSize:10.5,color:RED,fontWeight:700}}>{items.length}</span>
+    </div>
+    <p style={{fontSize:11.5,color:MUTED,margin:"0 0 10px",lineHeight:1.45}}>
+      The due date has passed and the Task Update Reason is empty. Put a line in
+      Salesforce saying what it is waiting on and who owns the next step — a
+      rolled date is not an actioned task.
+    </p>
+    {show.map(t=>(
+      <div key={t.id} style={{padding:"8px 0",borderTop:"1px solid "+LINE}}>
+        <div style={{fontSize:12.5,color:INK,lineHeight:1.4}}>{t.subject}</div>
+        <div style={{fontSize:11,color:MUTED,marginTop:2}}>
+          {t.type} · due {shortDate(t.due)} ·{" "}
+          <b style={{color:t.age>60?RED:t.age>30?AMBER:MUTED}}>{t.age} days old</b> · {t.status}
+        </div>
+      </div>))}
+    {items.length>show.length&&<div style={{fontSize:11.5,color:MUTED,marginTop:8}}>
+      and {items.length-show.length} more.</div>}
+  </div>;
+}
+
+// Billing is the branch's most repetitive work, and its easiest to send twice.
+// The same account carrying more than one open billing task is the signal that
+// the last one was never reconciled — so those come first, by name.
+function BillingCheck({data}){
+  if(!data||!data.items||!data.items.length) return null;
+  const reps=data.repeats||[];
+  const show=data.items.slice(0,8);
+  return <div style={{background:"#F4F7FB",border:"1px solid "+NAVY,borderRadius:10,
+    padding:"12px 13px",marginTop:6,marginBottom:4}}>
+    <div style={{fontSize:11,fontWeight:800,letterSpacing:0.8,textTransform:"uppercase",
+      color:NAVY,marginBottom:6}}>Reference check · before you send</div>
+    <p style={{fontSize:11.5,color:MUTED,margin:"0 0 10px",lineHeight:1.45}}>
+      What is already open against these accounts. Check the last one landed
+      before sending the next.
+    </p>
+
+    {reps.length>0&&<div style={{background:"#FBE9E7",border:"1px solid "+RED,
+      borderRadius:8,padding:"9px 11px",marginBottom:10}}>
+      <div style={{fontSize:10.5,fontWeight:800,letterSpacing:0.6,textTransform:"uppercase",
+        color:RED,marginBottom:4}}>Sent more than once, still open</div>
+      {reps.slice(0,4).map(r=>(
+        <div key={r.account} style={{fontSize:12.5,color:INK,lineHeight:1.5}}>
+          <b>{r.account}</b> — {r.open} open billing tasks
+        </div>))}
+      <div style={{fontSize:11,color:"#7A2A24",marginTop:5,lineHeight:1.4}}>
+        One account, several periods. That is one unreconciled job, not several new ones.
+      </div>
+    </div>}
+
+    {show.map(t=>(
+      <div key={t.id} style={{padding:"7px 0",borderTop:"1px solid "+LINE}}>
+        <div style={{display:"flex",gap:8,alignItems:"baseline"}}>
+          {t.repeat&&<span style={{fontSize:9.5,fontWeight:800,color:RED,
+            border:"1px solid "+RED,borderRadius:3,padding:"0 4px",flexShrink:0}}>REPEAT</span>}
+          <span style={{fontSize:12.5,color:INK,lineHeight:1.4}}>{t.subject}</span>
+        </div>
+        <div style={{fontSize:11,color:MUTED,marginTop:2}}>
+          {t.status} · due {shortDate(t.due)} ·{" "}
+          <b style={{color:t.age>60?RED:t.age>30?AMBER:MUTED}}>{t.age} days old</b>
+          {!t.hasReason&&<span style={{color:AMBER}}> · no reason recorded</span>}
+        </div>
+      </div>))}
+    {data.items.length>show.length&&<div style={{fontSize:11.5,color:MUTED,marginTop:8}}>
+      and {data.items.length-show.length} more open.</div>}
   </div>;
 }
 
