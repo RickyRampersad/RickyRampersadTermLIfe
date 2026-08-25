@@ -1303,6 +1303,49 @@ function paintChecks(){
   paintSteps();
 }
 
+/* ── the month-end flow ──
+   The proper process, in states:
+
+     staff read the documents and answer the checks   →  SUBMITTED
+     an administrator verifies                        →  APPROVED + SENT
+     or sends it back with a reason                   →  RETURNED
+     staff fix and submit again                       →  SUBMITTED
+
+   Nothing goes to a client on a staff click. Submitting creates a review
+   item with everything an administrator needs to verify the month — the
+   figures read, the checks and how staff answered them, the movement
+   against last month, the arrears, the drafted email — and hands back a
+   link to send them. Approval is what sends.
+
+   Two people, always: whoever submitted a month cannot be the one who
+   approves it. The review page enforces that by name.
+
+   The store is same-origin browser storage so the whole flow can be tested
+   with nothing behind it. Live, these become branch-script calls —
+   submitmonth / reviewmonth — and the script must check the identity on
+   every one against the administrators sheet, server-side.
+   This block is duplicated in review.html; change both together. */
+const FLOW_KEY = 'rrb-monthflow';
+function flowLoad(){
+  try{ return JSON.parse(localStorage.getItem(FLOW_KEY) || '{"subs":[]}'); }
+  catch(e){ return { subs:[] }; }
+}
+function flowSave(d){
+  /* Newest twenty is plenty for a browser store; the sheet keeps the rest. */
+  d.subs = d.subs.slice(-20);
+  try{ localStorage.setItem(FLOW_KEY, JSON.stringify(d)); }catch(e){}
+}
+function flowFor(groupId, monthKey){
+  const d = flowLoad();
+  return d.subs.filter(x => x.group.id === groupId && x.monthKey === monthKey).pop() || null;
+}
+function monthKey(){
+  const docs = Object.values(got).filter(r => r.doc && r.doc.month)
+    .sort((a,b) => (monthOf(b.doc)||0) - (monthOf(a.doc)||0))[0];
+  if(docs){ const n = monthOf(docs.doc); return Math.floor(n/12) + '-' + String(n%12+1).padStart(2,'0'); }
+  return $('mon').value || '';
+}
+
 function paintPublish(){
   const qs = questions(), unanswered = qs.filter(q => answers[q.id] == null);
   const blocked = qs.some(q => q.kind==='blocker' && answers[q.id] !== '1' && q.id.startsWith('recon'));
@@ -1315,29 +1358,41 @@ function paintPublish(){
   const total = (life && life.ok ? life.doc.computed.total : 0)
               + (adj && adj.ok ? adj.doc.computed.net : 0)
               + (health && health.ok ? health.doc.computed.payable : 0);
+  const sub = flowFor(group.id, monthKey());
+  const stateLine = sub ? ({
+    SUBMITTED:`<div class="alert a-info"><b>This month is with the administrators.</b>
+      Submitted by ${esc(sub.events[0].by)} ${ago(sub.events[0].at)} — waiting to be verified.
+      ${reviewLinkHtml(sub.id)}</div>`,
+    RETURNED:`<div class="alert a-warn"><b>Sent back by ${esc(last(sub,'RETURNED').by)}:</b>
+      &ldquo;${esc(last(sub,'RETURNED').note||'')}&rdquo;<br>Fix it and submit again.</div>`,
+    SENT:`<div class="alert a-ok"><b>Verified and sent.</b> Approved by ${esc(last(sub,'APPROVED').by)}
+      ${ago(last(sub,'APPROVED').at)}. Submitting again sends a corrected version for review.
+      ${reviewLinkHtml(sub.id)}</div>`
+  })[sub.state] || '' : '';
   $('publish').innerHTML = `<div class="card">
-    <h2 style="font-size:1.05rem;color:var(--navy)">Publish to ${esc(group.name)}</h2>
-    <p class="note" style="margin-top:.25rem">They get an email, and the month appears in their portal with the
-      documents to download and the comparison already done.</p>
+    <h2 style="font-size:1.05rem;color:var(--navy)">Send ${esc(group.name)} for verification</h2>
+    <p class="note" style="margin-top:.25rem">Nothing goes to the client from here. An administrator checks this
+      month first, and it is their approval that sends it.</p>
+    ${stateLine}
     <div class="alert a-info">
-      <b>What they will see:</b> ${have} document${have>1?'s':''} for ${esc(monthName())},
-      ${total ? money(total)+' payable' : 'the month\'s figures'}, and the life-against-health comparison.
-      They will not see anything recorded here.
+      <b>What the administrator will see:</b> ${have} document${have>1?'s':''} for ${esc(monthName())},
+      ${total ? money(total)+' payable' : 'the month\'s figures'}, every check and how you answered it,
+      and the email exactly as it will go out.
     </div>
     ${unanswered.length ? `<div class="alert a-warn">${unanswered.length} question${unanswered.length>1?'s':''}
-      still unanswered. Publishing now records them as unresolved.</div>` : ''}
+      still unanswered. Submitting now hands them to the administrator unresolved.</div>` : ''}
     ${(() => { const e = draftEmail(); return `
     <div class="mail">
       <div class="hdr"><b>Subject</b> ${esc(e.subject)}<br><b>To</b> the billing contact on this account</div>
       <pre>${esc(e.body)}</pre>
       <div class="att">${e.atts.map(a => `<span>📎 ${esc(a)}</span>`).join('')}</div>
     </div>
-    <p class="note" style="margin-top:.5rem">Written from what was read this month. Edit it after copying if you want —
-      publishing sends this text with those attachments.</p>`; })()}
+    <p class="note" style="margin-top:.5rem">Written from what was read this month. This is the text the
+      administrator approves — their approval sends it with those attachments.</p>`; })()}
     <div class="row" style="margin-top:1rem">
-      <button class="btn go" id="pub" ${busy?'disabled':''}>Publish and send</button>
+      <button class="btn go" id="pub" ${busy?'disabled':''}>${sub && sub.state==='SUBMITTED' ? 'Replace what is waiting' : sub && sub.state==='SENT' ? 'Submit a correction' : 'Submit for review'}</button>
       <button class="btn ghost" id="copy">Copy the email</button>
-      <span class="note">${blocked ? 'A document that does not add up will be marked as such for the client.' : ''}</span>
+      <span class="note">${blocked ? 'A document that does not add up will be flagged to the administrator as such.' : ''}</span>
     </div>
     <div id="pubout"></div>
   </div>`;
@@ -1451,28 +1506,83 @@ function monthName(){
   return new Date(+y, +m-1, 1).toLocaleDateString('en-GB',{month:'long',year:'numeric'});
 }
 
+const ago = at => { const m = Math.round((Date.now()-at)/60000);
+  return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m/60) + ' h ago'
+    : Math.round(m/1440) + ' d ago'; };
+const last = (sub, did) => sub.events.slice().reverse().find(e => e.did === did) || {};
+function reviewLinkHtml(id){
+  const url = new URL('review.html#' + id, location.href).href;
+  return `<br><span class="mono" style="font-size:11.5px">${esc(url)}</span>
+    <button class="btn ghost" style="margin-left:.5rem;padding:.2rem .55rem" data-copylink="${esc(url)}">Copy link</button>`;
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-copylink]');
+  if(!b) return;
+  const done = () => { b.textContent = 'Copied ✓'; setTimeout(()=>b.textContent='Copy link', 1600); };
+  const ta = document.createElement('textarea');
+  const fb = () => { ta.value = b.dataset.copylink; ta.style.cssText='position:fixed;opacity:0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); done(); }catch(err){} ta.remove(); };
+  if(navigator.clipboard && navigator.clipboard.writeText)
+    navigator.clipboard.writeText(b.dataset.copylink).then(done).catch(fb);
+  else fb();
+});
+
 async function publish(){
-  const btn = $('pub'); btn.disabled = true; btn.textContent = 'Publishing…';
-  const payload = { action:'publishbilling', group:group.id, groupName:group.name, month:$('mon').value,
-    by: IDENTITY ? IDENTITY.name : 'Branch staff', byCode: IDENTITY ? IDENTITY.code : null,
+  const btn = $('pub'); btn.disabled = true; btn.textContent = 'Submitting…';
+  const qs = questions();
+  const sub = {
+    id: 'S' + Date.now().toString(36) + Math.floor(Math.random()*1296).toString(36),
+    group: { id:group.id, name:group.name },
+    monthKey: monthKey(),
+    monthLabel: monthName(),
+    state: 'SUBMITTED',
+    lineTotals: Object.keys(LINES).filter(k => group.lines.includes(k) && lineTotal(k))
+      .reduce((o,k) => (o[LINES[k].label] = lineTotal(k), o), {}),
+    docs: Object.values(got).filter(r => r.ver).map(r => ({
+      kind:r.kind, file:r.file, ok:r.ok,
+      checks:r.ver.results, computed:r.doc.computed, problems:r.doc.problems||[] })),
+    checks: qs.map(q => ({ q:q.q, kind:q.kind,
+      answer: answers[q.id] != null ? q.opts[+answers[q.id]] : null,
+      note: answers['n-'+q.id] || null })),
+    movement: Object.keys(LINES).map(k => movement(k)).find(Boolean) || null,
+    arrears: Object.keys(LINES).map(k => arrears(k)).find(a => a && a.owed.length) || null,
     email: draftEmail(),
-    lineTotals: Object.keys(LINES).filter(k => group.lines.includes(k))
-      .reduce((o,k) => (o[k] = lineTotal(k), o), {}),
-    documents: Object.values(got).filter(r => r.ver).map(r => ({ kind:r.kind, file:r.file, ok:r.ok,
-      checks:r.ver.results, computed:r.doc.computed })),
-    answers, publishedAt:new Date().toISOString() };
-  let ok = true;
-  if(API){
-    try{ const r = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify(payload) }); const d = await r.json().catch(()=>({})); ok = r.ok && d.ok !== false; }
-    catch(e){ ok = false; }
+    events: [{ at:Date.now(), by: IDENTITY ? IDENTITY.name : 'Branch staff',
+               code: IDENTITY ? IDENTITY.code : null, did:'SUBMITTED' }]
+  };
+  /* Movement and arrears carry member objects; slim them to what a reviewer
+     reads so twenty submissions never bloat the store. */
+  if(sub.movement){ const m = sub.movement;
+    sub.movement = { from:m.from, to:m.to, delta:m.delta, accountsFor:m.accountsFor,
+      joined:m.joined.map(x=>x.name), left:m.left.map(x=>x.name),
+      changed:m.changed.map(x=>x.name), renamed:m.renamed.map(x=>x.name) }; }
+  if(sub.arrears){ const a = sub.arrears;
+    sub.arrears = { outstanding:a.outstanding, balance:a.balance, thisMonth:a.thisMonth, months:a.months }; }
+
+  const d = flowLoad();
+  /* A resubmission replaces what is waiting; anything already decided stays
+     as history and the new version starts its own trail. */
+  const existing = flowFor(group.id, sub.monthKey);
+  if(existing && existing.state === 'SUBMITTED'){
+    sub.events = existing.events.concat(sub.events);
+    d.subs = d.subs.filter(x => x.id !== existing.id);
+  } else if(existing && existing.state === 'RETURNED'){
+    sub.events = existing.events.concat(sub.events);
+    d.subs = d.subs.filter(x => x.id !== existing.id);
   }
-  btn.textContent = ok ? 'Sent ✓' : 'Publish and send';
-  btn.disabled = !ok;
-  $('pubout').innerHTML = ok
-    ? `<div class="alert a-ok"><b>${esc(monthName())} is live for ${esc(group.name)}.</b>
-       ${API ? 'They have been emailed.' : 'Nothing was actually sent — no branch script is configured, so this ran end to end without leaving the machine.'}</div>`
-    : '<div class="alert a-bad">Could not reach the branch script. Nothing was published.</div>';
+  d.subs.push(sub); flowSave(d);
+
+  if(API){
+    try{ await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'submitmonth', sub }) }); }catch(e){}
+  }
+  btn.textContent = 'Submitted ✓';
+  $('pubout').innerHTML = `<div class="alert a-ok">
+    <b>${esc(sub.monthLabel)} is in for review.</b> Send an administrator this link — they sign in,
+    verify, and their approval sends it to ${esc(group.name)}.
+    ${reviewLinkHtml(sub.id)}
+    ${API ? '' : '<br><span class="note">Test run — everything stayed on this machine.</span>'}</div>`;
 }
 
 /* ── wiring ── */

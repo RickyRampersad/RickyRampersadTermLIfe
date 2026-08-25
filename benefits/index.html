@@ -743,7 +743,8 @@ function renderChrome(){
   $('nav').innerHTML = links.map(([k,l])=>
     `<a data-go="${k}" class="${screen===k?'on':''}">${l}</a>`).join('')
     // the wall is a branch display, not something a client should be handed
-    + (role==='manager' ? '<a href="pendings.html" target="_blank" rel="noopener">Pendings ↗</a>'
+    + (role==='manager' ? '<a href="review.html" target="_blank" rel="noopener">Review ↗</a>'
+                        + '<a href="pendings.html" target="_blank" rel="noopener">Pendings ↗</a>'
                         + '<a href="upload.html" target="_blank" rel="noopener">Billing upload ↗</a>' : '')
     + (role!=='client' ? '<a href="wall.html" target="_blank" rel="noopener">Wall ↗</a>' : '');
   const m=ME[role];
