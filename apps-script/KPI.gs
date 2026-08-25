@@ -1969,6 +1969,14 @@ function remindCheckpoint() {
 
 var SFK = { API: 'v64.0', LOGIN: 'https://login.salesforce.com', CACHE_MIN: 12 };
 
+/** Where to authenticate. Orgs that enforce My Domain refuse
+ *  login.salesforce.com outright, so this is a Script Property (SF_LOGIN_URL)
+ *  rather than something you have to come in here and edit. */
+function sfkLoginUrl_() {
+  var u = sfkProps_().getProperty('SF_LOGIN_URL');
+  return (u ? String(u).trim().replace(/\/+$/, '') : SFK.LOGIN);
+}
+
 function sfkProps_() { return PropertiesService.getScriptProperties(); }
 
 function sfkConfigured_() {
@@ -1982,7 +1990,7 @@ function sfkToken_() {
   var cached = p.getProperty('SFK_TOKEN'), when = Number(p.getProperty('SFK_TOKEN_AT') || 0);
   if (cached && (new Date().getTime() - when) < 50 * 60 * 1000) return JSON.parse(cached);
 
-  var res = UrlFetchApp.fetch(SFK.LOGIN + '/services/oauth2/token', {
+  var res = UrlFetchApp.fetch(sfkLoginUrl_() + '/services/oauth2/token', {
     method: 'post', muteHttpExceptions: true,
     payload: {
       grant_type: 'password',
@@ -2306,4 +2314,80 @@ function accountOf_(subject, whatName) {
 function sfkBillingCheckSafe_(date) {
   if (!sfkConfigured_()) return {};
   try { return sfkBillingCheck_(date); } catch (e) { return {}; }
+}
+
+
+/** Why the Salesforce login is failing, without printing the credentials.
+ *
+ *  invalid_grant tells you almost nothing on its own — it is returned for a
+ *  wrong password, a stale security token, an SSO-only user, a flow the org has
+ *  switched off, and a host that refuses to authenticate at all. So rather than
+ *  guessing which, this tries the combinations separately and prints what
+ *  Salesforce says to each. The answer is usually obvious once they sit side by
+ *  side.
+ *
+ *  Prints lengths, never values. */
+function sfLoginCheck() {
+  var p = sfkProps_();
+  var key = p.getProperty('SF_KEY'), sec = p.getProperty('SF_SECRET');
+  var user = p.getProperty('SF_USER'), pass = p.getProperty('SF_PASS') || '';
+  var out = [];
+
+  out.push('What is set');
+  out.push('  SF_KEY     ' + (key ? key.length + ' chars, starts ' + key.slice(0, 8) + '…' : 'MISSING'));
+  out.push('  SF_SECRET  ' + (sec ? sec.length + ' chars' : 'MISSING'));
+  out.push('  SF_USER    ' + (user || 'MISSING'));
+  out.push('  SF_PASS    ' + (pass ? pass.length + ' chars' : 'MISSING'));
+  if (pass) {
+    out.push('             a security token is 24 characters, so this should be your');
+    out.push('             password plus 24 more. ' +
+      (pass.length > 24 ? 'Length is consistent with that.'
+                        : 'Length is too short — the token looks missing.'));
+    if (/\s/.test(pass)) out.push('             WARNING: it contains a space. Join them with nothing between.');
+  }
+  if (!key || !sec || !user || !pass) { Logger.log(out.join('\n')); return out.join('\n'); }
+
+  var hosts = [sfkLoginUrl_()];
+  var mine = 'https://rickyrampersadbranch.my.salesforce.com';
+  if (hosts.indexOf(mine) < 0) hosts.push(mine);
+  if (hosts.indexOf(SFK.LOGIN) < 0) hosts.push(SFK.LOGIN);
+
+  out.push('', 'What Salesforce says');
+  hosts.forEach(function (h) {
+    [['password + token as stored', pass],
+     ['password only, token stripped', pass.length > 24 ? pass.slice(0, -24) : null]
+    ].forEach(function (t) {
+      if (t[1] == null) return;
+      var r;
+      try {
+        r = UrlFetchApp.fetch(h + '/services/oauth2/token', {
+          method: 'post', muteHttpExceptions: true,
+          payload: { grant_type: 'password', client_id: key, client_secret: sec,
+                     username: user, password: t[1] }
+        });
+      } catch (e) { out.push('  ' + h + ' — ' + t[0] + ': ' + e); return; }
+      var body = {};
+      try { body = JSON.parse(r.getContentText()); } catch (e) {}
+      out.push('  ' + h);
+      out.push('    ' + t[0] + ' → ' +
+        (r.getResponseCode() === 200 ? 'SUCCESS — use this combination'
+          : (body.error || r.getResponseCode()) + ': ' + (body.error_description || '')));
+    });
+  });
+
+  out.push('', 'Reading it');
+  out.push('  invalid_client_id      the Consumer Key is not this org\'s, or the app');
+  out.push('                         has not finished propagating — wait ten minutes');
+  out.push('  invalid_grant          key accepted, credentials refused. Usually the');
+  out.push('                         security token is stale — it changes every time');
+  out.push('                         the password does. Reset it and try the new one');
+  out.push('  inactive user / org    the login is disabled');
+  out.push('  unsupported_grant_type this org has retired the password flow; the');
+  out.push('                         script needs the refresh-token path instead');
+  out.push('  If password-only succeeds where password+token fails, your address is');
+  out.push('  on a trusted IP range and the token must be left off.');
+
+  var msg = out.join('\n');
+  Logger.log(msg);
+  return msg;
 }
