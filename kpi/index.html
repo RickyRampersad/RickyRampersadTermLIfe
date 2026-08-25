@@ -365,7 +365,11 @@ function App(){
   if(booting) return <Splash text="Checking your session…"/>;
   if(!me) return <Login onIn={(tok,profile,ros)=>{storeToken(tok);setToken(tok);setMe(profile);setRoster(ros||[]);}}/>;
 
-  const staffList=roster.filter(p=>!p.manager);
+  // Everyone on the Access tab logs a day, the Branch Manager included. Being
+  // able to see the branch and having a day of your own are different things —
+  // filtering managers out of this list is what left the person who asked for
+  // the checkpoint with no way to open his own blocks.
+  const staffList=roster;
   const visible=me.manager?staffList:staffList.filter(p=>p.staffId===me.staffId);
   const entries=rows.map(rowToEntry);
 
