@@ -316,6 +316,72 @@ body{
 .stagewrap{position:relative;width:100%;display:flex;flex-direction:column;align-items:center;
   gap:clamp(14px,3vh,30px)}
 
+/* ── data, drawn ──────────────────────────────────────────────────────── */
+.chartbox{width:min(880px,94vw)}
+.chart2{display:flex;align-items:flex-end;gap:clamp(4px,1vw,12px);height:min(320px,38vh);
+  padding:0 2px;border-bottom:1px solid rgba(140,175,220,.18)}
+.col2{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:7px}
+.col2 i{display:block;width:100%;border-radius:5px 5px 0 0;height:0;
+  background:linear-gradient(180deg,var(--coral-lit),rgba(228,100,75,.25));
+  transition:height 1.1s cubic-bezier(.2,.8,.3,1)}
+.col2 u{font-size:9px;color:#6F88A6;font-style:normal;font-variant-numeric:tabular-nums}
+.chead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
+.chead b{font-size:clamp(15px,2.2vw,21px);font-weight:650}
+.chead span{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#6F88A6;font-weight:800}
+
+.rings{display:flex;gap:clamp(14px,4vw,52px);justify-content:center;flex-wrap:wrap}
+.ring2{text-align:center;opacity:0;transform:scale(.86)}
+.ring2.on{animation:pop .8s cubic-bezier(.2,1.4,.4,1) forwards}
+.ring2 svg{width:clamp(104px,17vw,168px);height:auto;transform:rotate(-90deg)}
+.ring2 .track{stroke:rgba(255,255,255,.09)}
+.ring2 .fill{stroke-linecap:round;transition:stroke-dashoffset 1.7s cubic-bezier(.2,.8,.3,1)}
+.ring2 .val{font-size:clamp(21px,3.2vw,34px);font-weight:750;margin-top:-58%;position:relative;
+  font-variant-numeric:tabular-nums}
+.ring2 .cap3{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#7E93B4;
+  font-weight:800;margin-top:calc(58% - 6px)}
+
+/* ── the inbox: what the problem actually looks like ──────────────────── */
+.inbox{width:min(880px,92vw);border-radius:14px;overflow:hidden;
+  background:#0E1726;border:1px solid rgba(140,175,220,.16);
+  box-shadow:0 40px 100px rgba(0,0,0,.7);opacity:0;transform:translateY(24px) scale(.985);
+  transition:opacity 1s ease,transform 1.3s cubic-bezier(.16,1,.3,1)}
+.scene.on .inbox{opacity:1;transform:none}
+.inbox .ih{display:flex;align-items:center;gap:10px;padding:13px 18px;
+  background:rgba(255,255,255,.03);border-bottom:1px solid rgba(140,175,220,.12)}
+.inbox .ih .t{font-size:13px;font-weight:600;color:#C7D9EC;letter-spacing:.01em}
+.inbox .ih .n{margin-left:auto;font-size:11px;color:#5E7690;font-variant-numeric:tabular-nums}
+.msg{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;
+  padding:14px 18px;border-bottom:1px solid rgba(140,175,220,.07);
+  opacity:0;transform:translateY(8px)}
+.msg:last-child{border-bottom:0}
+.msg.on{animation:noteIn .55s ease forwards}
+.msg .dot2{width:7px;height:7px;border-radius:50%;background:#3A5A82}
+.msg.unread .dot2{background:var(--coral)}
+.msg .sub2{min-width:0}
+.msg .sub2 b{display:block;font-size:13.5px;font-weight:600;color:#DCE9F6;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msg .sub2 span{display:block;font-size:11.5px;color:#6F88A6;margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msg .when{font-size:11px;color:#5E7690;font-variant-numeric:tabular-nums;white-space:nowrap}
+.msg .flag{font-size:9px;letter-spacing:.13em;text-transform:uppercase;font-weight:800;
+  padding:3px 8px;border-radius:11px;background:rgba(251,113,133,.14);color:#F09098;white-space:nowrap}
+.msg.aged{opacity:.55}
+
+/* the sixteen, as an index rather than an illustration */
+.index{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+  width:min(900px,94vw);background:rgba(140,175,220,.1);border:1px solid rgba(140,175,220,.14);
+  border-radius:12px;overflow:hidden}
+.ix{background:#0D1626;padding:13px 14px;font-size:12px;color:#8FA6C4;font-weight:500;
+  opacity:0;transition:opacity .5s ease,background .5s ease,color .5s ease;min-height:46px;
+  display:flex;align-items:center}
+.ix.on{opacity:1}
+.ix.miss{background:rgba(251,113,133,.1);color:#F2A0A8}
+.ix.hit{background:linear-gradient(120deg,rgba(228,100,75,.24),rgba(228,100,75,.08));
+  color:#FFE2D8;font-weight:700;box-shadow:inset 0 0 0 1px rgba(228,100,75,.5)}
+.idxq{font-size:clamp(13px,1.9vw,17px);color:#8FA6C4;font-weight:500;letter-spacing:.01em;
+  text-align:center;margin-bottom:4px}
+.idxq b{color:var(--coral-lit);font-weight:700}
+
 /* ── typing into Query Pal: the form fills itself on camera ────────────── */
 .form{width:min(660px,88vw)}
 .fld{margin-bottom:13px}
@@ -566,6 +632,13 @@ body{
   .flow{flex-wrap:wrap;gap:10px 0;justify-content:center}
   .fline{max-width:26px;min-width:10px}
   /* screens and scoreboard */
+  .index{grid-template-columns:1fr 1fr;width:94vw}
+  .ix{padding:9px 10px;font-size:10.5px;min-height:36px}
+  .idxq{font-size:12.5px}
+  .inbox{width:94vw}
+  .msg{grid-template-columns:auto 1fr;gap:9px;padding:10px 12px}
+  .msg .when,.msg .flag{display:none}
+  .msg .sub2 b{font-size:12px} .msg .sub2 span{font-size:10.5px}
   .tiles{grid-template-columns:repeat(2,1fr)}
   .score{grid-template-columns:1fr;gap:9px}
   .sc{padding:14px 16px}
@@ -664,7 +737,7 @@ const SCRIPT = [
   { id:'22', stn:4, after:0.6, scene:'phones',    text:'An agent opens their phone — and sees their entire book.' },
   { id:'23', stn:4, after:1.0, scene:'phones2',   text:'A client opens theirs, and watches the progress move.' },
   { id:'24', stn:4, after:1.2, scene:'beforeAfter',text:'No more asking for an update. They can simply look.' },
-  { id:'25', stn:5, after:1.0, scene:'flow',      text:'Agent. Staff. Client. One system — everybody can see.' },
+  { id:'25', stn:5, after:1.0, scene:'demand',    text:'Agent. Staff. Client. One system — everybody can see.' },
   { id:'26', stn:5, after:1.4, scene:'score',     text:'84% on time. Rated ★4.5. Nothing hidden.' },
   { id:'27', stn:5, after:1.0, scene:'thisIs',    text:'This is Query Pal — a Ricky Rampersad Branch initiative.' },
   { id:'28', stn:5, after:3.8, scene:'lockup',    text:'Log it once. Forget it. We’ll keep the promise.' },
@@ -807,7 +880,6 @@ function chaosStage(opts) {
         <div class="q">Outlook</div>
         ${o.marks ? '<div class="marks"><b style="left:-6%;top:8%">?</b><b style="right:-4%;top:2%">?</b><b style="left:46%;top:-16%">?</b></div>' : ''}
       </div>
-      ${o.who ? '<div class="who"><div class="av">🙍</div><div class="nm">The agent</div></div>' : ''}
     </div>`);
   const chipEls = [...s.querySelectorAll('.dept')];
   chipEls.forEach((c, i) => setTimeout(() => c.classList.add('in'), 90 + i * 55));
@@ -1136,7 +1208,7 @@ const SCENES_EXTRA = {
           <b>Change of address</b><b>Bounce cheque</b><b id="pk">Statements — tax and csv</b>
           <b>Surrenders</b><b>Policy loan</b><b>Claim forms</b>
         </div></div>
-      <div class="auto" id="au"><div class="ic">✓</div><div class="tx">
+      <div class="auto" id="au"><div class="ic">→</div><div class="tx">
         Goes to <b>Customer Service — Chaguanas</b> · usually resolved in <b>1 day</b></div></div>
     </div>`);
     setTimeout(() => s.querySelector('#pk').classList.add('sel'), 1400);
@@ -1211,25 +1283,9 @@ const SCENES_EXTRA = {
     return null;                                        // hold the scene
   },
 
-  beforeAfter: () => {
-    camera(1, 0, 0);
-    const s = newScene(`<div class="split">
-      <div class="half bad"><span class="face">😟</span>
-        <div class="lb2">Before</div>
-        <div class="ln">“Any update on my statement?”<small>Nobody could say. Not the agent, not the branch.</small></div></div>
-      <div class="arrow">→</div>
-      <div class="half good"><span class="face">😊</span>
-        <div class="lb2">Now</div>
-        <div class="ln">“I can see it. It’s due Wednesday.”<small>Logged, routed, chased — and visible to everyone.</small></div></div>
-    </div>`);
-    setTimeout(() => s.querySelector('.half.bad').classList.add('on'), 250);
-    setTimeout(() => s.querySelector('.arrow').classList.add('on'), 1200);
-    setTimeout(() => s.querySelector('.half.good').classList.add('on'), 1650);
-    return s;
-  },
 
   flow:     () => {
-    const steps = [['📝','Asked'],['🗂️','Logged'],['📤','Routed'],['🔔','Chased'],['✅','Answered'],['⭐','Rated']];
+    const steps = [['1','Asked'],['2','Logged'],['3','Routed'],['4','Chased'],['5','Answered'],['6','Rated']];
     const inner = steps.map(([ic, lb], i) =>
       `<div class="fnode"><div class="ic">${ic}</div><div class="lb3">${lb}</div></div>` +
       (i < steps.length - 1 ? '<div class="fline"><i></i></div>' : '')).join('');
@@ -1244,261 +1300,150 @@ const SCENES_EXTRA = {
 };
 Object.assign(SCENES, SCENES_EXTRA);
 
+/* ══ THE FILM, PRODUCT-LED ═══════════════════════════════════════════════
+   No characters. The interface is the subject: real screens, real copy, real
+   numbers, held long enough to read and pushed into rather than cut to.    */
+const DEPTS16 = [
+  'Customer Service — Chaguanas', 'GLOC Premium Query', 'Health Claims TT',
+  'Group Insurance Admin', 'Policy Servicing', 'New Business',
+  'Claims & Maturity', 'Pensions', 'Underwriting', 'GGIL P&C Claims',
+  'Sales Support', 'Reinstatements', 'Cashiering', 'Medicals',
+  'Loans & Surrenders', 'Bancassurance',
+];
+const INBOX = [
+  ['Tax statement — Anita Maharaj', 'Sent to Customer Service · no reply', 'Mon 09:04', 1],
+  ['Surrender value — R. Persad',   'Sent to Policy Servicing · no reply',  'Mon 14:22', 1],
+  ['Claim forms — S. Ali',          'Forwarded twice · no reply',           'Tue 08:15', 1],
+  ['Change of address — K. Dass',   'Sent to New Business · no reply',      'Tue 16:40', 0],
+  ['Policy loan — T. Mohammed',     'Sent to Loans · no reply',             'Wed 10:02', 0],
+];
+function reveal(scene, sel, gap, start) {
+  [...scene.querySelectorAll(sel)].forEach((e, i) =>
+    setTimeout(() => e.classList.add('on'), (start || 200) + i * (gap || 220)));
+}
+function inboxScene(opts) {
+  const o = Object.assign({ flag:false, age:false }, opts || {});
+  // the trailing cell is either the time or a flag — one element, chosen here,
+  // rather than closing a div inside a template and breaking the grid
+  const rows = INBOX.map(([t, sub, when, unread]) =>
+    `<div class="msg ${unread ? 'unread' : ''} ${o.age ? 'aged' : ''}">
+       <div class="dot2"></div>
+       <div class="sub2"><b>${t}</b><span>${sub}</span></div>
+       ${o.flag ? `<div class="flag">no reply</div>` : `<div class="when">${when}</div>`}
+     </div>`).join('');
+  const s = newScene(`<div class="inbox">
+    <div class="ih"><div class="t">Inbox — Ricky Rampersad Branch</div>
+      <div class="n">${INBOX.length} waiting</div></div>${rows}</div>`);
+  const rowEls = [...s.querySelectorAll('.msg')];
+  rowEls.forEach((el, i) => setTimeout(() => el.classList.add('on'), 450 + i * 200));
+  camera(1.05, 0, 7);
+  return s;
+}
+
+Object.assign(SCENES, {
+  openMail:  () => { camera(1, 0, 0); return bigLine('Every branch runs on <em>email</em>.'); },
+  mailDies:  () => inboxScene({ flag:true }),
+  askWhat:   () => { camera(1, 0, 0);
+    return bigLine('A statement. A claim.<br>A change of address.', null, true); },
+  thinking:  () => bigLine('And the agent has to <em>guess</em>.'),
+
+  /* sixteen destinations, as an index — and the guess landing wrong */
+  whereTo:   () => {
+    const s = newScene(`<div class="stagewrap">
+      <div class="idxq">Which of these does <b>“a tax statement”</b> belong to?</div>
+      <div class="index">${DEPTS16.map(d => `<div class="ix">${d}</div>`).join('')}</div></div>`);
+    reveal(s, '.ix', 55, 300);
+    camera(1.04, 0, 8);
+    return s;
+  },
+  sixteen:   () => {
+    const s = newScene(`<div class="stagewrap">
+      <div class="idxq">Guess wrong, and it waits a week.</div>
+      <div class="index">${DEPTS16.map(d => `<div class="ix on">${d}</div>`).join('')}</div></div>`);
+    const ix = [...s.querySelectorAll('.ix')];
+    [5, 8, 3].forEach((n, k) => setTimeout(() => {
+      ix[n].classList.add('miss');
+      setTimeout(() => ix[n].classList.remove('miss'), 1500);
+    }, 700 + k * 1200));
+    camera(1, 0, 0);
+    return s;
+  },
+  again:     () => inboxScene({ age:true }),
+  nobody:    () => bigLine('Nobody could say<br>where anything <em>stood</em>.'),
+  mckinsey:  () => bigLine('Ricky Rampersad took what<br>he learned at McKinsey.', null, true),
+  quote:     () => bigLine('“A process you cannot <em>see</em><br>is a process you cannot <em>fix</em>.”'),
+
+  built:     () => { film.classList.add('warm'); sweep(); scoreLift(true);
+    return newScene(`<div class="stagewrap">
+      <img class="mark" style="--mk:clamp(96px,16vw,140px)" alt="" src="${LOGO}">
+      <div class="line">${typeset('Query&nbsp;Pal')}</div>
+      <div class="sub">Built at Branch 26000, Chaguanas</div></div>`); },
+  oneAim:    () => bigLine('One aim.<br><em>End the emails.</em>'),
+  logOnce:   () => bigLine('Log it once.<br>And <em>forget it</em>.', 'The system does the rest.'),
+
+  /* the request finds its department, in the same index that defeated the agent */
+  knowsIt:   () => {
+    const s = newScene(`<div class="stagewrap">
+      <div class="idxq">Query Pal already knows.</div>
+      <div class="index">${DEPTS16.map(d => `<div class="ix on">${d}</div>`).join('')}</div></div>`);
+    setTimeout(() => { s.querySelectorAll('.ix')[0].classList.add('hit'); sweep(); }, 1300);
+    camera(1.05, 0, 7);
+    return s;
+  },
+  sendTrue:  () => { camera(1, 0, 0);
+    return bigLine('One tap.<br><em>Gone</em> — to the right place.'); },
+  notYou:    () => bigLine('The branch manager<br>is the <em>last resort</em>.', null, true),
+  lastResort:() => bigLine('And it almost never<br>gets there.'),
+  beforeAfter: () => { camera(1, 0, 0);
+    return bigLine('No more “any update?”<br>They can simply <em>look</em>.', null, true); },
+  thisIs:    () => bigLine('This is <em>Query&nbsp;Pal</em>.',
+                           'A Ricky Rampersad Branch initiative'),
+
+  /* twelve weeks of demand, drawing itself */
+  demand:    () => {
+    const w = [9,12,11,15,13,17,14,16,12,19,17,21], max = Math.max(...w);
+    const s2 = newScene(`<div class="chartbox">
+      <div class="chead"><b>Every request, counted</b><span>12 weeks</span></div>
+      <div class="chart2">${w.map(v =>
+        `<div class="col2"><i data-h="${Math.round(v / max * 100)}"></i><u>${v}</u></div>`).join('')}</div>
+    </div>`);
+    [...s2.querySelectorAll('.col2 i')].forEach((b, i) =>
+      setTimeout(() => { b.style.height = b.dataset.h + '%'; }, 400 + i * 95));
+    camera(1.03, 0, 8);
+    return s2;
+  },
+
+  /* the promises, as rings that fill */
+  rings:     () => {
+    camera(1, 0, 0);
+    const R = 52, CIRC = 2 * Math.PI * R;
+    const data = [['84', '%', 84, 'var(--coral-lit)', 'On time'],
+                  ['4.5', '', 90, 'var(--gold)', 'Client rating'],
+                  ['3.9', 'd', 78, '#3FBF8F', 'Days to close']];
+    const s2 = newScene(`<div class="rings">${data.map(([v, suf, pct, col, cap]) => `
+      <div class="ring2">
+        <svg viewBox="0 0 128 128"><circle class="track" cx="64" cy="64" r="${R}" fill="none" stroke-width="11"/>
+          <circle class="fill" cx="64" cy="64" r="${R}" fill="none" stroke="${col}" stroke-width="11"
+            stroke-dasharray="${CIRC}" stroke-dashoffset="${CIRC}"/></svg>
+        <div class="val" style="color:${col}">${v}${suf}</div>
+        <div class="cap3">${cap}</div></div>`).join('')}</div>`);
+    [...s2.querySelectorAll('.ring2')].forEach((r, i) => setTimeout(() => {
+      r.classList.add('on');
+      const f = r.querySelector('.fill');
+      f.style.strokeDashoffset = CIRC * (1 - data[i][2] / 100);
+    }, 300 + i * 520));
+    return s2;
+  },
+});
+
 /* ══ THE ILLUSTRATED CUT ═══════════════════════════════════════════════
    Composed for a phone held upright first — a column of two or three
    things — and allowed to spread out when there is width to spare.     */
 const C = { client:'#F0906F', agent:'#5EC2F5', staff:'#3FBF8F', boss:'#F5B935', dept:'#8FA6C4' };
 const DEPT4 = ['Customer Service', 'Health Claims', 'Group Admin', 'Underwriting'];
 
-function reveal(scene, sel, gap, start) {
-  [...scene.querySelectorAll(sel)].forEach((e, i) =>
-    setTimeout(() => e.classList.add('on'), (start || 200) + i * (gap || 220)));
-}
 
-const SCENES_CAST = {
-  /* a client asks for something */
-  openMail: () => {
-    const s = newScene(`<div class="stagewrap">
-      <div class="bub" id="b1">“I need my tax statement.”</div>
-      <div class="cast">
-        ${person(C.client, 'point', 'happy', { name:'Client', cls:'big' })}
-        ${person(C.agent, 'stand', 'flat', { name:'Agent' })}
-      </div></div>`);
-    reveal(s, '.guy', 340, 150);
-    setTimeout(() => s.querySelector('#b1').classList.add('on'), 750);
-    return s;
-  },
-  askWhat: () => {
-    const s = newScene(`<div class="stagewrap">
-      <div class="bub" id="b2">A statement. A claim. A change of address.</div>
-      <div class="town">${DEPT4.map(d => building(d)).join('')}</div></div>`);
-    setTimeout(() => s.querySelector('#b2').classList.add('on'), 300);
-    reveal(s, '.bld', 200, 700);
-    return s;
-  },
-  /* which of them? — the agent shrugs at a row of buildings */
-  whereTo: () => {
-    const s = newScene(`<div class="stagewrap">
-      <div class="bub q" id="b3">Which department does this one go to?</div>
-      <div class="cast">${person(C.agent, 'shrug', 'worried', { name:'Agent', cls:'big stressed' })}</div>
-      <div class="town">${DEPT4.map(d => building(d)).join('')}</div></div>`);
-    setTimeout(() => s.querySelector('#b3').classList.add('on'), 400);
-    reveal(s, '.guy', 0, 200);
-    reveal(s, '.bld', 170, 800);
-    return s;
-  },
-  /* guessing: paper thrown at buildings, bouncing back */
-  sixteen: () => {
-    const s = newScene(`<div class="stagewrap" id="w1">
-      <div class="cast">${person(C.agent, 'shrug', 'worried', { name:'Agent', cls:'big stressed' })}</div>
-      <div class="town">${DEPT4.map(d => building(d)).join('')}</div></div>`);
-    reveal(s, '.guy', 0, 100); reveal(s, '.bld', 150, 400);
-    setTimeout(() => {
-      const wrap = s.querySelector('#w1'), from = s.querySelector('.guy svg');
-      const blds = [...s.querySelectorAll('.bld')];
-      [1, 3, 0].forEach((ix, k) => {
-        paperFlight(wrap, from, blds[ix].querySelector('svg'), k * 1150, { bounce:true, ms:1800 });
-        setTimeout(() => { blds[ix].classList.add('wrong');
-          setTimeout(() => blds[ix].classList.remove('wrong'), 1400); }, k * 1150 + 900);
-      });
-    }, 1400);
-    return s;
-  },
-  /* chasing by hand, at a desk, over and over */
-  again: () => {
-    const s = newScene(`<div class="stagewrap">
-      <div class="bub q" id="b4">“Any update?” · “Gentle reminder” · “Third follow-up”</div>
-      <div class="cast">${person(C.agent, 'type', 'sad', { name:'Still chasing', cls:'big stressed', prop:PROP.desk })}</div>
-      <div class="again" style="margin-top:6px">
-        <div class="a">Following up — any update? <em>You</em><div class="t">Mon</div></div>
-        <div class="a">Gentle reminder on this one. <em>You</em><div class="t">Wed</div></div>
-        <div class="a">Still awaiting your response. <em>You</em><div class="t">Fri</div></div>
-      </div></div>`);
-    reveal(s, '.guy', 0, 150);
-    setTimeout(() => s.querySelector('#b4').classList.add('on'), 700);
-    reveal(s, '.again .a', 800, 1200);
-    return s;
-  },
-  /* nobody can see: three confused people, three colours */
-  nobody: () => {
-    const s = newScene(`<div class="stagewrap">
-      <div class="bub q" id="b5">Where is it? Nobody could say.</div>
-      <div class="cast">
-        ${person(C.client, 'shrug', 'worried', { name:'Client', cls:'stressed' })}
-        ${person(C.agent, 'shrug', 'worried', { name:'Agent', cls:'stressed' })}
-        ${person(C.staff, 'shrug', 'worried', { name:'Staff', cls:'stressed' })}
-      </div></div>`);
-    reveal(s, '.guy', 280, 200);
-    setTimeout(() => s.querySelector('#b5').classList.add('on'), 1100);
-    return s;
-  },
-  /* the idea */
-  mckinsey: () => {
-    const s = newScene(`<div class="stagewrap">
-      <div class="cast">${person(C.boss, 'point', 'happy', { name:'Ricky Rampersad', cls:'big', prop:PROP.bulb })}</div>
-      <div class="line sm" style="margin-top:6px">${typeset('“A process you cannot <em>see</em> is a process you cannot <em>fix</em>.”')}</div>
-      </div>`);
-    reveal(s, '.guy', 0, 200);
-    return s;
-  },
-  built: () => { film.classList.add('warm'); sweep(); scoreLift(true);
-    const s = newScene(`<div class="stagewrap">
-      <img class="mark" style="--mk:clamp(88px,15vw,132px)" alt="" src="${LOGO}">
-      <div class="line">${typeset('So he built <em>Query&nbsp;Pal</em>.')}</div>
-      <div class="cast">
-        ${person(C.client, 'stand', 'happy', { name:'Client' })}
-        ${person(C.agent, 'stand', 'happy', { name:'Agent' })}
-        ${person(C.staff, 'stand', 'happy', { name:'Staff' })}
-      </div></div>`);
-    reveal(s, '.guy', 240, 900);
-    return s;
-  },
-  /* one clean flight to the building that is right */
-  sendTrue: () => {
-    const s = newScene(`<div class="stagewrap" id="w2">
-      <div class="cast">${person(C.client, 'phone', 'happy', { name:'One tap', cls:'big', prop:PROP.phone })}</div>
-      <div class="town">${DEPT4.map((d, i) => building(d, { cls:i === 0 ? 'target' : '' })).join('')}</div></div>`);
-    reveal(s, '.guy', 0, 100); reveal(s, '.bld', 150, 400);
-    setTimeout(() => {
-      const wrap = s.querySelector('#w2'), from = s.querySelector('.guy svg');
-      const target = s.querySelector('.bld.target');
-      paperFlight(wrap, from, target.querySelector('svg'), 0, { ms:1700, glow:true });
-      setTimeout(() => { target.classList.add('lit'); sweep(); }, 1650);
-    }, 1300);
-    return s;
-  },
-  /* the chasing happens without the agent */
-  notYou: () => {
-    const s = newScene(`<div class="stagewrap">
-      <div class="bub g2" id="b6">Query Pal chases. The agent doesn’t have to.</div>
-      <div class="cast">
-        ${person(C.agent, 'cheer', 'happy', { name:'Agent', cls:'big happy' })}
-      </div></div>`);
-    reveal(s, '.guy', 0, 150);
-    setTimeout(() => s.querySelector('#b6').classList.add('on'), 800);
-    return s;
-  },
-  lastResort: () => {
-    const s = newScene(`<div class="stagewrap">
-      <div class="cast">
-        ${person(C.boss, 'stand', 'happy', { name:'Branch manager' })}
-      </div>
-      <div class="line sm">${typeset('The last resort —<br>and it <em>almost never</em> gets here.')}</div>
-      </div>`);
-    reveal(s, '.guy', 0, 150);
-    return s;
-  },
-  /* everyone sees it now */
-  beforeAfter: () => {
-    camera(1, 0, 0);
-    const s = newScene(`<div class="split">
-      <div class="half bad">
-        ${person(C.client, 'shrug', 'sad', { name:'', cls:'on stressed' })}
-        <div class="lb2">Before</div>
-        <div class="ln">“Any update on my statement?”<small>Nobody could say.</small></div></div>
-      <div class="arrow">→</div>
-      <div class="half good">
-        ${person(C.client, 'cheer', 'happy', { name:'', cls:'on happy' })}
-        <div class="lb2">Now</div>
-        <div class="ln">“I can see it. It’s due Wednesday.”<small>Logged, routed, chased.</small></div></div>
-    </div>`);
-    setTimeout(() => s.querySelector('.half.bad').classList.add('on'), 250);
-    setTimeout(() => s.querySelector('.arrow').classList.add('on'), 1100);
-    setTimeout(() => s.querySelector('.half.good').classList.add('on'), 1550);
-    return s;
-  },
-  thisIs: () => {
-    const s = newScene(`<div class="stagewrap">
-      <div class="line">${typeset('This is <em>Query&nbsp;Pal</em>.')}</div>
-      <div class="cast">
-        ${person(C.client, 'cheer', 'happy', { name:'Client', cls:'happy' })}
-        ${person(C.agent, 'cheer', 'happy', { name:'Agent', cls:'happy' })}
-        ${person(C.staff, 'cheer', 'happy', { name:'Staff', cls:'happy' })}
-        ${person(C.boss, 'cheer', 'happy', { name:'Branch', cls:'happy' })}
-      </div></div>`);
-    reveal(s, '.guy', 200, 600);
-    return s;
-  },
-};
-Object.assign(SCENES, SCENES_CAST);
 
-Object.assign(SCENES, {
-  /* the inbox where things go to die — mail piling on a slumped agent */
-  mailDies: () => {
-    const s = newScene(`<div class="stagewrap" id="wd">
-      <div class="cast">${person(C.agent, 'shrug', 'sad', { name:'', cls:'big stressed', prop:PROP.desk })}</div>
-      <div class="again" style="margin-top:2px">
-        <div class="a">Re: tax statement — no reply<div class="t">Mon</div></div>
-        <div class="a">Re: surrender value — no reply<div class="t">Tue</div></div>
-        <div class="a">Re: claim forms — no reply<div class="t">Wed</div></div>
-      </div></div>`);
-    reveal(s, '.guy', 0, 120);
-    reveal(s, '.again .a', 620, 700);
-    return s;
-  },
-  /* thinking: the agent, a thought bubble, and departments staring back */
-  thinking: () => {
-    const s = newScene(`<div class="stagewrap">
-      <div class="think" id="th1">Customer Service? Claims? Group Admin?<span class="dots"><i></i><i></i><i></i></span></div>
-      <div class="cast">${person(C.agent, 'think', 'worried', { name:'Agent', cls:'big' })}</div>
-      <div class="town">${DEPT4.map(d => building(d)).join('')}</div></div>`);
-    reveal(s, '.guy', 0, 150);
-    setTimeout(() => s.querySelector('#th1').classList.add('on'), 700);
-    reveal(s, '.bld', 170, 1000);
-    return s;
-  },
-  /* the departments have people in them, and they are waiting too */
-  whereTo: () => {
-    const s = newScene(`<div class="stagewrap">
-      <div class="bub q" id="b3">Which one is this for?</div>
-      <div class="cast">${person(C.agent, 'shrug', 'worried', { name:'Agent', cls:'big stressed' })}</div>
-      <div class="town">${DEPT4.map((d, i) => staffedBuilding(d, C.dept)).join('')}</div></div>`);
-    setTimeout(() => s.querySelector('#b3').classList.add('on'), 400);
-    reveal(s, '.guy', 0, 200);
-    reveal(s, '.bld', 170, 800);
-    return s;
-  },
-  quote: () => {
-    const s = newScene(`<div class="stagewrap">
-      <div class="line sm">${typeset('“A process you cannot <em>see</em><br>is a process you cannot <em>fix</em>.”')}</div>
-      <div class="cast">${person(C.boss, 'think', 'happy', { name:'Ricky Rampersad', cls:'big' })}</div>
-      </div>`);
-    reveal(s, '.guy', 0, 400);
-    return s;
-  },
-  /* the right building lights, and its person waves back */
-  sendTrue: () => {
-    const s = newScene(`<div class="stagewrap" id="w2">
-      <div class="cast">${person(C.client, 'phone', 'happy', { name:'One tap', cls:'big', prop:PROP.phone })}</div>
-      <div class="town">${DEPT4.map((d, i) =>
-        staffedBuilding(d, i === 0 ? C.staff : C.dept, { cls:i === 0 ? 'target' : '' })).join('')}</div></div>`);
-    reveal(s, '.guy', 0, 100); reveal(s, '.bld', 150, 400);
-    setTimeout(() => {
-      const wrap = s.querySelector('#w2'), from = s.querySelector('.guy svg');
-      const target = s.querySelector('.bld.target');
-      paperFlight(wrap, from, target.querySelector('svg'), 0, { ms:1700, glow:true });
-      setTimeout(() => { target.classList.add('lit'); sweep(); }, 1650);
-    }, 1200);
-    return s;
-  },
-  notYou: () => {
-    const s = newScene(`<div class="stagewrap">
-      <div class="bub g2" id="b6">Query Pal chases. The agent doesn’t have to.</div>
-      <div class="cast">${person(C.agent, 'cheer', 'happy', { name:'Agent', cls:'big happy' })}</div>
-      </div>`);
-    reveal(s, '.guy', 0, 150);
-    setTimeout(() => s.querySelector('#b6').classList.add('on'), 700);
-    return s;
-  },
-  lastResort: () => {
-    const s = newScene(`<div class="stagewrap">
-      <div class="cast">${person(C.boss, 'wave', 'happy', { name:'Branch manager', cls:'big happy' })}</div>
-      <div class="line sm">${typeset('The last resort —<br>and it <em>almost never</em> gets here.')}</div>
-      </div>`);
-    reveal(s, '.guy', 0, 150);
-    return s;
-  },
-});
 function bigLine(html, sub, small) {
   return newScene(`<div class="line${small ? ' sm' : ''}">${typeset(html)}</div>`
     + (sub ? `<div class="sub">${sub}</div>` : ''));
