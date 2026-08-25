@@ -151,74 +151,69 @@ the weekly summary. What you lose is the part that reads people's real task
 position instead of asking them to count it: open, overdue, aged and closed
 today, plus the Needs-a-reason, Billing check and Waiting-on views.
 
-Four Script Properties, under **⚙️ Project Settings → Script Properties**:
+Two Script Properties, under **⚙️ Project Settings → Script Properties**:
 
 | Property | What it is |
 |---|---|
-| `SF_KEY` | Consumer Key from a Connected App |
+| `SF_KEY` | Consumer Key from the app |
 | `SF_SECRET` | Consumer Secret from the same app |
-| `SF_USER` | the Salesforce login you want it to read as |
-| `SF_PASS` | that login's password with the security token appended, no space |
+
+That is the whole of it. No password, no security token.
 
 `SFK_TOKEN` and `SFK_TOKEN_AT` appear on their own once it works — those are the
 cached session, not something you set.
 
-### The security token
+### The app
 
-Avatar → **Settings** → **My Personal Information** → **Reset My Security
-Token**. Salesforce emails it. Apps Script calls from Google's servers, which
-your org will not treat as a trusted address, so the token is required.
+**Setup** → **External Client App Manager** → **New External Client App**.
 
-`SF_PASS` is the password and the token run together as one string — no space,
-no comma. This is where this usually fails.
-
-### If you already have a Connected App
-
-Any Connected App with the **api** scope will do — including one created for
-something else entirely. Take its Consumer Key and Secret and try those first:
-**Setup** → **App Manager** → the app → **View** → **Manage Consumer Details**.
-
-Change nothing about it while you test. The username-password flow does not use
-an authorization code, so the PKCE and callback settings that matter to a
-browser-based app are not consulted here, and an app built for a different
-purpose will usually work untouched.
-
-If it does not, make a separate app rather than loosening the settings on one
-that something else depends on. A key you can revoke on its own is worth the
-five minutes.
-
-### Making a new Connected App
-
-**Setup** → Quick Find **App Manager** → **New Connected App**.
-
-- Name it something recognisable, put your address as contact
-- Tick **Enable OAuth Settings**
+- API Name takes letters, numbers and underscores only — `RRB_KPI_Tracker`. The
+  label can have spaces
+- Tick **Enable OAuth**
 - Callback URL: `https://login.salesforce.com/services/oauth2/success` — nothing
   calls back, but the field is required
-- Scopes: **Manage user data via APIs (api)** and **Perform requests at any time
-  (refresh_token, offline_access)**
-- Untick **Require Proof Key for Code Exchange (PKCE)** — it blocks this flow
+- OAuth Scopes: **Manage user data via APIs (api)**
+- Flow Enablement: tick **Enable Client Credentials Flow**
 - Save, then **wait ten minutes**. Salesforce needs that long to propagate, and
-  trying sooner fails in a way that looks like wrong credentials
+  trying sooner fails in a way that reads like a wrong key
 
-Then App Manager → your app → **View** → **Manage Consumer Details**. Salesforce
-emails a verification code, and the Key and Secret are behind it.
+Then open the app → **Policies** → **Enable Client Credentials Flow** → set
+**Run As** to a user with API access.
 
-Finally **Manage** → **Edit Policies**: Permitted Users *All users may
-self-authorize*, IP Relaxation *Relax IP restrictions*.
+**That Run As user is not optional.** Client credentials has no person signing
+in, so without it Salesforce has no identity to issue a token for and returns
+`invalid_grant` — which reads like a credentials problem and is not one. It also
+decides what the tracker can see: it reads as that user, so it needs visibility
+of the branch's tasks.
 
-### The setting that catches most people
+Consumer Key and Secret are under the app's **Settings** → **OAuth Settings** →
+**Consumer Key and Secret**, behind an emailed verification code.
 
-Salesforce now disables the username-password flow by default, and this script
-uses it.
+### Why not a password
 
-**Setup** → Quick Find **OAuth and OpenID Connect Settings** → enable **Allow
-OAuth Username-Password Flows**.
+Older builds of this script used the username-password flow, and the setup notes
+here used to explain how to append a security token. Salesforce has withdrawn
+that flow: it is absent from the Flow Enablement list on an External Client App,
+and an org on that model records **Username-Password Flow Disabled** in Login
+History regardless of the credentials sent, regardless of the org-level toggle
+still being ticked in OAuth and OpenID Connect Settings.
 
-Without it every attempt returns `invalid_grant`, which reads like a bad
-password and is not one.
+The script still supports it, for an org where it survives. Set `SF_USER` and
+`SF_PASS` and it is used automatically. Nothing needs `SF_AUTH` unless you want
+to force one or the other.
 
-### Checking it
+Client credentials is the better arrangement in any case. Nothing expires when a
+password changes, no security token goes stale, no refresh token rotates, and
+the credentials in Script Properties are the app's rather than a person's.
+
+### If the org still refuses
+
+**Setup** → **Identity** → **Login History** is the place to look, not the error
+text. It records Salesforce's own reason for every attempt — the flow being
+disabled, the Run As user missing, an IP restriction — where the OAuth response
+gives you `invalid_grant` for all of them.
+
+### Checking it### Checking it
 
 Run **`sfKpiTest()`**. It maps each person on the Access tab to their Salesforce
 user and prints what it found. On failure it prints Salesforce's own words

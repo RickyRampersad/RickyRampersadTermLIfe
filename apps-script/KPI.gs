@@ -1979,10 +1979,67 @@ function sfkLoginUrl_() {
 
 function sfkProps_() { return PropertiesService.getScriptProperties(); }
 
+/** Which OAuth flow to use.
+ *
+ *  Salesforce has removed the username-password flow from the External Client
+ *  App model — it is not in the Flow Enablement list at all, and an org that has
+ *  moved to that model records "Username-Password Flow Disabled" in Login
+ *  History no matter what the credentials are.
+ *
+ *  Client credentials is the better fit anyway. The app authenticates as itself
+ *  against a Run As user set on the app, so there is no password in a script
+ *  property, no security token to go stale when the password changes, and no
+ *  refresh token to rotate. Set SF_KEY and SF_SECRET and leave SF_USER and
+ *  SF_PASS unset, and this is what runs. */
+function sfkAuthMode_() {
+  var p = sfkProps_();
+  var m = (p.getProperty('SF_AUTH') || '').trim().toLowerCase();
+  if (m === 'client_credentials' || m === 'password') return m;
+  return p.getProperty('SF_PASS') ? 'password' : 'client_credentials';
+}
+
 function sfkConfigured_() {
   var p = sfkProps_();
-  return !!(p.getProperty('SF_KEY') && p.getProperty('SF_SECRET') &&
-            p.getProperty('SF_USER') && p.getProperty('SF_PASS'));
+  if (!p.getProperty('SF_KEY') || !p.getProperty('SF_SECRET')) return false;
+  if (sfkAuthMode_() === 'client_credentials') return true;
+  return !!(p.getProperty('SF_USER') && p.getProperty('SF_PASS'));
+}
+
+function sfkAuthPayload_() {
+  var p = sfkProps_();
+  var base = { client_id: p.getProperty('SF_KEY'), client_secret: p.getProperty('SF_SECRET') };
+  if (sfkAuthMode_() === 'client_credentials') {
+    base.grant_type = 'client_credentials';
+  } else {
+    base.grant_type = 'password';
+    base.username = p.getProperty('SF_USER');
+    base.password = p.getProperty('SF_PASS');
+  }
+  return base;
+}
+
+/** Say what the error means for the flow actually in use, rather than repeating
+ *  advice about a security token to somebody who is not using one. */
+function sfkAuthHint_(body) {
+  var cc = sfkAuthMode_() === 'client_credentials';
+  if (body.indexOf('invalid_client') > -1)
+    return 'The Consumer Key or Secret is wrong, or the app has not finished ' +
+           'propagating yet — Salesforce needs about ten minutes after you save it.';
+  if (body.indexOf('inactive user') > -1 || body.indexOf('inactive org') > -1)
+    return cc ? 'The Run As user on the app is inactive.' : 'That login is disabled.';
+  if (body.indexOf('unsupported_grant_type') > -1)
+    return cc ? 'Tick "Enable Client Credentials Flow" on the app.'
+              : 'This org has retired the username-password flow. Use client credentials.';
+  if (body.indexOf('invalid_grant') > -1) {
+    return cc
+      ? 'Client credentials needs a Run As user. Open the app, Policies, and set ' +
+        '"Run As" to a user with API access — without one Salesforce has no ' +
+        'identity to issue the token for.'
+      : 'The key was accepted and the credentials refused. Check Login History ' +
+        'in Setup: if it says "Username-Password Flow Disabled" then no password ' +
+        'will work and you want client credentials instead.';
+  }
+  return 'Run sfLoginCheck() to see each part tested separately.';
 }
 
 function sfkToken_() {
@@ -1991,18 +2048,11 @@ function sfkToken_() {
   if (cached && (new Date().getTime() - when) < 50 * 60 * 1000) return JSON.parse(cached);
 
   var res = UrlFetchApp.fetch(sfkLoginUrl_() + '/services/oauth2/token', {
-    method: 'post', muteHttpExceptions: true,
-    payload: {
-      grant_type: 'password',
-      client_id: p.getProperty('SF_KEY'), client_secret: p.getProperty('SF_SECRET'),
-      username: p.getProperty('SF_USER'), password: p.getProperty('SF_PASS')
-    }
+    method: 'post', muteHttpExceptions: true, payload: sfkAuthPayload_()
   });
   if (res.getResponseCode() !== 200) {
     throw new Error('Salesforce login failed: ' + res.getContentText() +
-      (res.getContentText().indexOf('invalid_grant') > -1
-        ? '\n\nThe password field must be the password with the security token stuck on the end, no space.'
-        : ''));
+      '\n\n' + sfkAuthHint_(res.getContentText()));
   }
   var tok = JSON.parse(res.getContentText());
   p.setProperty('SFK_TOKEN', JSON.stringify(tok));
@@ -2331,61 +2381,82 @@ function sfLoginCheck() {
   var p = sfkProps_();
   var key = p.getProperty('SF_KEY'), sec = p.getProperty('SF_SECRET');
   var user = p.getProperty('SF_USER'), pass = p.getProperty('SF_PASS') || '';
+  var mode = sfkAuthMode_();
   var out = [];
 
+  out.push('Flow in use: ' + mode +
+    (mode === 'client_credentials'
+      ? '  (no password involved — the app authenticates as itself)'
+      : '  (set SF_AUTH to client_credentials to switch)'));
+  out.push('');
   out.push('What is set');
   out.push('  SF_KEY     ' + (key ? key.length + ' chars, starts ' + key.slice(0, 8) + '…' : 'MISSING'));
   out.push('  SF_SECRET  ' + (sec ? sec.length + ' chars' : 'MISSING'));
-  out.push('  SF_USER    ' + (user || 'MISSING'));
-  out.push('  SF_PASS    ' + (pass ? pass.length + ' chars' : 'MISSING'));
-  if (pass) {
-    out.push('             a security token is 24 characters, so this should be your');
-    out.push('             password plus 24 more. ' +
-      (pass.length > 24 ? 'Length is consistent with that.'
-                        : 'Length is too short — the token looks missing.'));
-    if (/\s/.test(pass)) out.push('             WARNING: it contains a space. Join them with nothing between.');
+  if (mode === 'password') {
+    out.push('  SF_USER    ' + (user || 'MISSING'));
+    out.push('  SF_PASS    ' + (pass ? pass.length + ' chars' : 'MISSING'));
+    if (pass && pass.length <= 24) out.push('             too short to contain a 24-character token');
+    if (/\s/.test(pass)) out.push('             WARNING: contains a space — join them with nothing between');
   }
-  if (!key || !sec || !user || !pass) { Logger.log(out.join('\n')); return out.join('\n'); }
+  if (!key || !sec) { Logger.log(out.join('\n')); return out.join('\n'); }
 
   var hosts = [sfkLoginUrl_()];
-  var mine = 'https://rickyrampersadbranch.my.salesforce.com';
-  if (hosts.indexOf(mine) < 0) hosts.push(mine);
-  if (hosts.indexOf(SFK.LOGIN) < 0) hosts.push(SFK.LOGIN);
+  ['https://rickyrampersadbranch.my.salesforce.com', SFK.LOGIN].forEach(function (h) {
+    if (hosts.indexOf(h) < 0) hosts.push(h);
+  });
+
+  var attempts = mode === 'client_credentials'
+    ? [['client credentials', { grant_type: 'client_credentials', client_id: key, client_secret: sec }]]
+    : [['password + token as stored',
+        { grant_type: 'password', client_id: key, client_secret: sec, username: user, password: pass }],
+       ['password only, token stripped', pass.length > 24
+        ? { grant_type: 'password', client_id: key, client_secret: sec,
+            username: user, password: pass.slice(0, -24) } : null]];
 
   out.push('', 'What Salesforce says');
+  var won = null;
   hosts.forEach(function (h) {
-    [['password + token as stored', pass],
-     ['password only, token stripped', pass.length > 24 ? pass.slice(0, -24) : null]
-    ].forEach(function (t) {
-      if (t[1] == null) return;
-      var r;
+    out.push('  ' + h);
+    attempts.forEach(function (a) {
+      if (!a[1]) return;
+      var r, body = {};
       try {
-        r = UrlFetchApp.fetch(h + '/services/oauth2/token', {
-          method: 'post', muteHttpExceptions: true,
-          payload: { grant_type: 'password', client_id: key, client_secret: sec,
-                     username: user, password: t[1] }
-        });
-      } catch (e) { out.push('  ' + h + ' — ' + t[0] + ': ' + e); return; }
-      var body = {};
+        r = UrlFetchApp.fetch(h + '/services/oauth2/token',
+              { method: 'post', muteHttpExceptions: true, payload: a[1] });
+      } catch (e) { out.push('    ' + a[0] + ' → ' + e); return; }
       try { body = JSON.parse(r.getContentText()); } catch (e) {}
-      out.push('  ' + h);
-      out.push('    ' + t[0] + ' → ' +
-        (r.getResponseCode() === 200 ? 'SUCCESS — use this combination'
-          : (body.error || r.getResponseCode()) + ': ' + (body.error_description || '')));
+      if (r.getResponseCode() === 200) {
+        won = won || h;
+        out.push('    ' + a[0] + ' → SUCCESS' +
+          (body.instance_url ? '   instance ' + body.instance_url : ''));
+      } else {
+        out.push('    ' + a[0] + ' → ' + (body.error || r.getResponseCode()) +
+          ': ' + (body.error_description || ''));
+      }
     });
   });
 
-  out.push('', 'Reading it');
-  out.push('  invalid_client_id      the Consumer Key is not this org\'s, or the app');
-  out.push('                         has not finished propagating — wait ten minutes');
-  out.push('  invalid_grant          key accepted, credentials refused. Usually the');
-  out.push('                         security token is stale — it changes every time');
-  out.push('                         the password does. Reset it and try the new one');
-  out.push('  inactive user / org    the login is disabled');
-  out.push('  unsupported_grant_type this org has retired the password flow; the');
-  out.push('                         script needs the refresh-token path instead');
-  out.push('  If password-only succeeds where password+token fails, your address is');
-  out.push('  on a trusted IP range and the token must be left off.');
+  out.push('');
+  if (won) {
+    out.push('Working. ' + (won === sfkLoginUrl_() ? 'Nothing further to set.'
+      : 'Set SF_LOGIN_URL to ' + won + ' so the rest of the script uses it.'));
+    out.push('Run sfKpiTest() to map the branch to Salesforce users.');
+  } else {
+    out.push('Nothing succeeded. What each answer means:');
+    out.push('  invalid_client         key or secret wrong, or the app has not');
+    out.push('                         propagated yet — Salesforce needs ten minutes');
+    out.push('  invalid_grant, and     client credentials has no Run As user. Open the');
+    out.push('  client credentials     app, Policies, set Run As to a user with API');
+    out.push('                         access. That is the usual one');
+    out.push('  unsupported_grant_type the flow is not ticked on the app');
+    out.push('  invalid_grant, and     check Login History in Setup. If it says');
+    out.push('  password flow          "Username-Password Flow Disabled" then no');
+    out.push('                         password will ever work here — use client');
+    out.push('                         credentials instead');
+    out.push('');
+    out.push('Setup > Identity > Login History shows Salesforce\'s own reason for');
+    out.push('every attempt above, which beats reading the error text.');
+  }
 
   var msg = out.join('\n');
   Logger.log(msg);
