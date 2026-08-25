@@ -104,8 +104,9 @@ A **Ricky Rampersad initiative**, built at Branch 26000. The branch ran on
 email, and email is where a request goes to die: the agent had to guess which
 of sixteen departments a request belonged to, guess wrong and it sat in the
 wrong inbox for a week, and nobody — agent, staff or client — could see where
-anything stood. Ricky took what he learned at McKinsey — *a process you cannot
-see is a process you cannot fix* — and built one place that serves all three.
+anything stood. Ricky **attended a McKinsey project** and saw a different way — *a process you
+cannot see is a process you cannot fix* — then built one place that serves all
+three. He attended the project; he did not work there. Get this right.
 
 The promise, and the line every film ends on: **log it once and forget it.
 The system does the rest.**
