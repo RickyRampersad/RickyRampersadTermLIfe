@@ -366,8 +366,8 @@ function checkSchedule() {
     roster_().forEach(function (p) {
       var pinned = ROLE_PINNED[p.staffId];
       if (!pinned) return;
-      var t = ((p.role || '') + ' ' + (p.unit || '')).toLowerCase();
-      var sheetSays = /assistant|bma/.test(t) ? 'bma' : (/branch manager/.test(t) ? 'bm' : 'ssa');
+      // What the sheet alone would say, with the pin taken out of the way.
+      var sheetSays = roleFor_({ role: p.role, unit: p.unit, grade: p.grade, staffId: '' });
       if (sheetSays !== pinned) {
         notes.push(p.name + ': the Access tab says "' + (p.unit || p.role) +
           '" but their entries are ' + pinned.toUpperCase() +
@@ -532,16 +532,40 @@ function roster_() {
  *  So these two are pinned until the tab is corrected, and checkSchedule()
  *  reports the disagreement rather than letting it pass silently. Delete an
  *  entry the moment its row is fixed. */
-var ROLE_PINNED = { kamla: 'bma', ashley: 'ssa' };
+// A pin overrides the Access tab for one person. It is the escape hatch for a
+// row that is wrong, not a place to keep the real answer — checkSchedule()
+// names everyone pinned so the pin gets removed once the tab is corrected.
+//
+// Elizabeth: her Role cell reads "Branch" with the Unit column now empty, which
+// reads as Sales Support. Her day is Branch Intelligence, New Application
+// Oversight, Administrative Support and Reporting — BMA work, under Kamla — and
+// two of her four blocks point at KPIs an SSA does not have, so without this
+// her morning prefill would come up blank. Set her Role to "Branch Mgr
+// Assistant" and delete this line.
+var ROLE_PINNED = { elizabeth: 'bma' };
+
+/** Nobody types "Assistant Branch Manager" into a spreadsheet. They type
+ *  "Assit Branch Mgr". Expand the abbreviations and the usual near-misses
+ *  before matching, so the Role column can be written the way a person writes
+ *  it rather than the way the code would prefer. */
+function normRole_(t) {
+  return String(t || '').toLowerCase()
+    .replace(/[\u2018\u2019'`]s\b/g, 's')            // manager's -> managers
+    .replace(/[^a-z]+/g, ' ')
+    .replace(/\b(?:managers|manager|mgrs|mgr|mngr|mgnr|manger|managr|mananger|mgt)\b/g, 'manager')
+    .replace(/\b(?:assistant|assistants|assistent|assitant|assistan|assit|asst|assis|asstt|ast)\b/g, 'assistant')
+    .replace(/\b(?:snr|sr)\b/g, 'senior')
+    .replace(/\s+/g, ' ').trim();
+}
 
 function roleFor_(person) {
   if (ROLE_PINNED[person.staffId]) return ROLE_PINNED[person.staffId];
-  var t = ((person.role || '') + ' ' + (person.unit || '') + ' ' + (person.grade || '')).toLowerCase();
+  var t = normRole_((person.role || '') + ' ' + (person.unit || '') + ' ' + (person.grade || ''));
   // Order matters. "Assistant Branch Manager" contains both "assistant" and
   // "branch manager", and is neither a BMA nor the Branch Manager — so it is
   // tested first, before either of the words it happens to contain.
   if (/assistant branch manager|\babm\b/.test(t)) return 'abm';
-  if (/branch manager'?s? assistant|\bbma\b/.test(t)) return 'bma';
+  if (/branch manager assistant|\bbma\b/.test(t)) return 'bma';
   if (/branch manager/.test(t)) return 'bm';
   if (/unit manager|sales manager|agency manager|\bmanager\b/.test(t)) return 'um';
   if (/assistant/.test(t)) return 'bma';
@@ -553,12 +577,15 @@ function isManager_(person) {
   if (!person) return false;
   var mgrs = managerEmails_().map(normEmail_);
   if (mgrs.indexOf(normEmail_(person.email)) > -1) return true;
-  var t = (person.role || '') + ' ' + (person.unit || '');
-  // The Assistant Branch Manager deputises, so he sees the branch. A Branch
-  // Manager's Assistant does not — different job, similar words.
-  if (/assistant branch manager|\babm\b/i.test(t)) return true;
-  if (/assistant/i.test(t)) return false;
-  return /branch manager|administrator|\badmin\b/i.test(t);
+  // Ask roleFor_ rather than reading the same cells again here. Two places
+  // deriving the same answer from the same words is how "Branch Mgr" managed to
+  // be a Branch Manager for the KPI list and a Sales Support Assistant for the
+  // reports. The Assistant Branch Manager deputises, so he sees the branch; a
+  // Branch Manager's Assistant does not — different job, similar words, and
+  // roleFor_ is the one place that tells them apart.
+  var r = roleFor_(person);
+  if (r === 'bm' || r === 'abm') return true;
+  return /administrator|\badmin\b/.test(normRole_((person.role || '') + ' ' + (person.unit || '')));
 }
 
 function issueToken_(person) {
@@ -1997,10 +2024,15 @@ function sfkQuery_(soql) {
 
 /** Branch staff, matched to their Salesforce user by email.
  *
- *  Two traps live here, both real in this org. Kamla has two user records on
- *  the same address and only kdookran@gloc.biz is active; and a user can be
- *  flagged inactive while still owning this month's work. So: prefer the
- *  active record, but never drop somebody just because the flag says inactive. */
+ *  Three traps live here, all real in this org. Kamla has two user records on
+ *  the same address and only kdookran@gloc.biz is active; a user can be flagged
+ *  inactive while still owning this month's work; and ricky.rampersad@ is
+ *  shared by five users, four of them active Site Guest Users that own nothing
+ *  — the real account, owning 5,934 tasks, is the one SOQL returns last.
+ *
+ *  So: drop guests by UserType, which is what actually says so, rather than by
+ *  a name that can be edited; then prefer the active record, but never drop
+ *  somebody just because the flag says inactive. */
 function sfkUsers_() {
   var cache = CacheService.getScriptCache();
   var hit = cache.get('sfk_users');
@@ -2011,12 +2043,13 @@ function sfkUsers_() {
   if (!emails.length) return {};
 
   var recs = sfkQuery_(
-    'SELECT Id, Name, Email, IsActive FROM User WHERE Email IN (' + emails.join(',') + ')');
+    'SELECT Id, Name, Email, IsActive, UserType FROM User WHERE Email IN (' + emails.join(',') + ')');
 
   var byStaff = {};
   roster_().forEach(function (p) {
     var mine = recs.filter(function (r) {
-      return normEmail_(r.Email) === normEmail_(p.email) && !/Site Guest User/i.test(r.Name || '');
+      return normEmail_(r.Email) === normEmail_(p.email) &&
+             r.UserType !== 'Guest' && !/Site Guest User/i.test(r.Name || '');
     });
     if (!mine.length) return;
     var pick = mine.filter(function (r) { return r.IsActive; })[0] || mine[0];
