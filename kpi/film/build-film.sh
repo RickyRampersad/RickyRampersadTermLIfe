@@ -66,9 +66,13 @@ ffmpeg -y -v error -stream_loop -1 -i "$MUSIC" -i "$WORK/voice.wav" -filter_comp
    aformat=channel_layouts=stereo[mix]" \
   -map "[mix]" -c:a pcm_s16le "$WORK/mixed.wav"
 
+# Bring the mix to -16 LUFS. Mixing two sources leaves it around -20, which is
+# audible on headphones and reads as "no sound" on a phone speaker in an office.
 echo "Encoding $OUT"
 ffmpeg -y -v error -i "$WORK/video.mp4" -i "$WORK/mixed.wav" \
-  -map 0:v -map 1:a -c:v copy -c:a aac -b:a 160k -movflags +faststart -shortest "$OUT"
+  -map 0:v -map 1:a -c:v copy \
+  -af "loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000,aformat=channel_layouts=stereo" \
+  -c:a aac -b:a 160k -ar 48000 -movflags +faststart -shortest "$OUT"
 
 echo
 { ffmpeg -hide_banner -i "$OUT" 2>&1 || true; } | grep -E "Duration|Stream"
