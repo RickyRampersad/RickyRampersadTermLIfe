@@ -160,8 +160,20 @@ t('board 0 splices the open count into the sentence',
   (await page.evaluate(() => lines(0).join(' '))).includes('n21'), true);
 t('the autopilot board says the hours out loud',
   (await page.evaluate(() => lines(9).join(' '))).includes('p4'), true);
-t('spoken lines carry no names', await page.evaluate(() =>
-  [0,1,2,3,4,5,6,7,8,9,10,11].flatMap(i => lines(i)).some(k => /felicia|sasha|health/i.test(k))), false);
+/* Andrew names people by FIRST NAME only, and only from the recorded roster.
+   Anything else — a surname, a client, a department — stays on the screen. */
+t('every spoken clip is a fragment, a number or a first name', await page.evaluate(() =>
+  [0,1,2,3,4,5,6,7,8,9,10,11].flatMap(i => lines(i))
+    .filter(k => !/^(f_|nm_|n\d|p\d|h\d|hf\d|g[A-D]|gAp|gNA|over|thousand|open$)/.test(k))), []);
+t('a surname is never spoken', await page.evaluate(() =>
+  [0,1,2,3,4,5,6,7,8,9,10,11].flatMap(i => lines(i))
+    .some(k => /lalla|jagassar|rampersad|griffith|mohamed|dookran/i.test(k))), false);
+t('the leading agent is named by first name', await page.evaluate(() =>
+  lines(4).includes('nm_felicia')), true);
+t('the busiest desk is named by first name', await page.evaluate(() =>
+  lines(11).includes('nm_sasha')), true);
+t('an unknown name is skipped rather than mangled', await page.evaluate(() =>
+  nmSeq('Zebedee Nobody')), []);
 
 // reload stays open, still no sign-in
 await page.reload();
