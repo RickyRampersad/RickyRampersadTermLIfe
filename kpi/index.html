@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>RRB · Daily KPI &amp; Innovation Tracker</title>
 <link rel="icon" href="../favicon.svg"/>
 <style>
@@ -26,6 +26,31 @@
 
 <script type="text/babel" data-presets="react">
 const { useState, useEffect, useCallback } = React;
+
+// The branch reads this on three things: a phone at a desk, a tablet in a
+// meeting, and a laptop for the reports. Same app, three shapes — the phone
+// layout stretched across a monitor wastes the room the reports need.
+function useViewport(){
+  const read=()=>{
+    const w=typeof window!=="undefined"?window.innerWidth:560;
+    return {w,phone:w<680,tablet:w>=680&&w<1024,desktop:w>=1024,wide:w>=680};
+  };
+  const [v,setV]=useState(read);
+  useEffect(()=>{
+    let f=null;
+    const on=()=>{ if(f) cancelAnimationFrame(f); f=requestAnimationFrame(()=>setV(read())); };
+    window.addEventListener("resize",on);
+    window.addEventListener("orientationchange",on);
+    return()=>{ window.removeEventListener("resize",on);
+                window.removeEventListener("orientationchange",on);
+                if(f) cancelAnimationFrame(f); };
+  },[]);
+  return v;
+}
+
+// Grid that fills the width it is given rather than a fixed column count.
+const autoGrid=(min,gap)=>({display:"grid",gap:gap||12,
+  gridTemplateColumns:"repeat(auto-fit,minmax("+min+"px,1fr))"});
 
 // ===========================================================================
 //   Paste the Apps Script /exec URL here after deploying apps-script/KPI.gs.
@@ -204,6 +229,7 @@ function ShieldLogo({size=34}){return(
 //  App
 // ===========================================================================
 function App(){
+  const vp=useViewport();
   const [booting,setBooting]=useState(true);
   const [token,setToken]=useState(readStoredToken());
   const [me,setMe]=useState(null);          // {staffId,name,email,manager}
@@ -369,6 +395,7 @@ function App(){
         )}
 
         {visible.length===0&&<Empty text="Nobody on the roster yet — add staff to the Access tab of the workbook."/>}
+        <div style={vp.wide?autoGrid(300,10):null}>
         {visible.map(p=>{
           const today=entries.find(e=>e.staffId===p.staffId&&e.date===todayISO());
           return <PersonRow key={p.staffId} p={p} today={today}
@@ -376,6 +403,7 @@ function App(){
               setDayState({tone:"idle",text:""});setOpenBlock(null);setView("entry");}}
             onTrend={()=>{setTrendStaff(p.staffId);setView("trend");}}/>;
         })}
+        </div>
 
         <div style={standardsBox}>
           <div style={{fontSize:11,fontWeight:800,letterSpacing:1,textTransform:"uppercase",color:GOLD,marginBottom:8}}>The standard</div>
@@ -397,7 +425,7 @@ function App(){
     const done=entry?blocksDone(entry):0;
 
     return(
-    <Shell>
+    <Shell wide={vp.desktop?1160:vp.tablet?760:560}>
       <SubHeader title={person?person.name:active} sub={prof.grade} tenure={prof.tenure} onBack={()=>setView("home")}/>
       <div style={{padding:"0 18px 40px"}}>
         <div style={dateBar}>
@@ -426,6 +454,8 @@ function App(){
             from the schedule; change it if the block went elsewhere.
           </p>
 
+          <div style={vp.desktop?{display:"grid",gridTemplateColumns:"minmax(0,1.35fr) minmax(0,1fr)",gap:20,alignItems:"start"}:null}>
+          <div>
           {blocks.map(b=>{
             const bl=entry.blocks[b.id]||blankBlock();
             const at=blockTime(entry,b.id);
@@ -499,6 +529,8 @@ function App(){
               </div>}
             </div>);})}
 
+          </div>
+          <div style={vp.desktop?{position:"sticky",top:16}:null}>
           <SectionLabel>The day</SectionLabel>
           <p style={{fontSize:11.5,color:MUTED,margin:"0 0 10px",lineHeight:1.45}}>
             These belong to the day rather than any one block. Save them once, whenever you have them.
@@ -535,6 +567,7 @@ function App(){
               {dayState.tone==="saving"?"Saving…":"Save the day"}
             </button>
           </div>
+          </div></div>
         </React.Fragment>)}
       </div>
     </Shell>);}
@@ -559,7 +592,7 @@ function App(){
       aged60:a.aged60+(l.e?num(l.e.metrics.aged60)||0:0)}),{closed:0,overdue:0,aged60:0});
     const reported=lines.filter(l=>l.e).length;
 
-    return(<Shell>
+    return(<Shell wide={vp.desktop?1120:vp.tablet?820:560}>
       <div style={{...mast,paddingBottom:16}}>
         <button onClick={()=>setView("home")} style={backLink}>← Branch</button>
         <div style={{display:"flex",alignItems:"center",gap:10,marginTop:8}}>
@@ -600,6 +633,7 @@ function App(){
         )}
 
         <SectionLabel>Where each person stands</SectionLabel>
+        <div style={vp.wide?autoGrid(330,12):null}>
         {lines.map(({p,e,done,onTrack,status,blockers})=>{
           const tone=!e?RED:(onTrack?GREEN:AMBER);
           return(<div key={p.staffId} style={{...card,padding:0,overflow:"hidden"}}>
@@ -635,6 +669,7 @@ function App(){
             )}
           </div>);
         })}
+        </div>
       </div>
     </Shell>);}
 
@@ -695,7 +730,7 @@ function App(){
 
     const isThisWeek=weekOf===weekStartOf(todayISO());
 
-    return(<Shell>
+    return(<Shell wide={vp.desktop?1120:vp.tablet?820:560}>
       <div style={{...mast,paddingBottom:16}}>
         <button onClick={()=>setView("home")} style={backLink}>← Branch</button>
         <div style={{display:"flex",alignItems:"center",gap:10,marginTop:8}}>
@@ -741,6 +776,7 @@ function App(){
           colorA={GREEN} colorB={AMBER} legendA="Closed" legendB="Overdue"/>
 
         <SectionLabel>The week, person by person</SectionLabel>
+        <div style={vp.wide?autoGrid(330,12):null}>
         {staffList.map(p=>{
           const mine=thisRows.filter(e=>e.staffId===p.staffId);
           const mt=totals(mine);
@@ -771,6 +807,7 @@ function App(){
               {pt.days>0&&<span> · last week {pt.days}/5 days, {pt.closed} closed</span>}
             </div>}
           </div>);})}
+        </div>
 
         <SectionLabel>Where the time went</SectionLabel>
         {mixList.length===0?<Empty text="No KPI blocks logged this week."/>:
@@ -820,7 +857,7 @@ function App(){
     const vAdds=staffList.map(p=>({p,e:byId[p.staffId]})).filter(x=>x.e&&isRealVA(x.e.valueAdded));
     const innovs=staffList.map(p=>({p,e:byId[p.staffId]})).filter(x=>x.e&&isRealVA(x.e.innovation));
 
-    return(<Shell>
+    return(<Shell wide={vp.desktop?1120:vp.tablet?820:560}>
       <div style={{...mast,paddingBottom:16}}>
         <button onClick={()=>setView("home")} style={backLink}>← Branch</button>
         <div style={{display:"flex",alignItems:"center",gap:10,marginTop:8}}>
@@ -960,7 +997,11 @@ function Login({onIn}){
 // ===========================================================================
 //  Pieces
 // ===========================================================================
-function Shell({children}){return<div style={{minHeight:"100vh",background:PAPER}}><div style={{maxWidth:560,margin:"0 auto",minHeight:"100vh",position:"relative"}}>{children}</div></div>;}
+function Shell({children,wide}){
+  return <div style={{minHeight:"100vh",background:PAPER}}>
+    <div style={{maxWidth:wide||560,margin:"0 auto",minHeight:"100vh",position:"relative"}}>
+      {children}</div></div>;
+}
 
 const Splash=({text})=><div style={{minHeight:"100vh",background:PAPER,display:"grid",placeItems:"center"}}>
   <div style={{textAlign:"center"}}><ShieldLogo size={44}/><p style={{color:MUTED,fontSize:13,marginTop:12}}>{text}</p></div></div>;
