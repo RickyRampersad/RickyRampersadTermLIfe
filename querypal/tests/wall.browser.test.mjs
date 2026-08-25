@@ -122,6 +122,32 @@ t('pulse shows time saved', await page.locator('#v_hours').innerText(), '10.4h')
 
 // sound: the button exists, and nothing plays until someone asks for it
 t('sound button present', await page.locator('#snd').count(), 1);
+t('pause button present', await page.locator('#pauseBtn').count(), 1);
+
+/* Two Andrews talking over each other was the "jumbled" complaint: every
+   briefing must silence the one before it, and no sequence may contain a
+   fragment-on-fragment seam (a pitch reset the ear hears as robotic). */
+t('changing board stops the previous briefing', await page.evaluate(() => {
+  voxLive = [{ stopped:0, stop(){this.stopped=1;}, disconnect(){} }];
+  stopSpeech();
+  return voxLive.length;
+}), 0);
+t('no fragment lands on a fragment — every seam has a number between',
+  await page.evaluate(() => {
+    const bad = [];
+    for (let i = 0; i <= 11; i++) {
+      const ids = lines(i);
+      for (let k = 0; k < ids.length - 1; k++)
+        if (ids[k].startsWith('f_') && ids[k + 1].startsWith('f_')) bad.push(i + ':' + ids[k] + '>' + ids[k + 1]);
+    }
+    return bad;
+  }), []);
+t('pause halts the rotation and the voice', await page.evaluate(() => {
+  pauseToggle();
+  const held = paused && rotTimer === null;
+  pauseToggle();
+  return held && !paused;
+}), true);
 t('sound starts off', await page.locator('#snd.on').count(), 0);
 t('a briefing is composed from live data',
   (await page.evaluate(() => briefing(0))).includes('21 requests are open'), true);
