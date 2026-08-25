@@ -305,19 +305,25 @@ function paint(){
       names.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
   }
   const rows = filtered();
-  const all = DATA.map(r => days(r.issued)).filter(n => n != null);
+  /* Every figure and flag below describes what is on screen, not the whole
+     book. Filter to pensions and read "9 outstanding over a year" off a
+     life-and-health count and you would chase the wrong thing. */
+  const narrowed = rows.length !== DATA.length;
+  const all = rows.map(r => days(r.issued)).filter(n => n != null);
   const oldest = all.length ? Math.max(...all) : 0;
   const overYear = all.filter(n => n >= 365).length;
-  const withNote = DATA.filter(r => (r.note||'').trim()).length;
+  const withNote = rows.filter(r => (r.note||'').trim()).length;
+  const scope = narrowed ? 'of ' + DATA.length + ' on the book' : '';
 
   $('kpis').innerHTML =
-    kpi(DATA.length, 'Pending applications', [...new Set(DATA.map(r=>r.account))].length + ' accounts') +
+    kpi(rows.length, narrowed ? 'Pending, filtered' : 'Pending applications',
+        plural([...new Set(rows.map(r=>r.account))].length, 'account') + (scope ? ' · ' + scope : '')) +
     kpi(overYear, 'Outstanding over a year', overYear ? 'almost certainly stale' : 'none', overYear>0) +
     kpi(oldest ? ageWord(oldest) : '—', 'Oldest', oldest ? oldest.toLocaleString()+' days' : '') +
-    kpi(withNote + ' of ' + DATA.length, 'With a reason recorded',
-        withNote < DATA.length ? (DATA.length - withNote) + ' still blank' : 'all accounted for');
+    kpi(withNote + ' of ' + rows.length, 'With a reason recorded',
+        withNote < rows.length ? (rows.length - withNote) + ' still blank' : 'all accounted for');
 
-  const flags = DATA.filter(r => r.flag);
+  const flags = rows.filter(r => r.flag);
   $('flags').innerHTML = [
     (()=>{ const lines = ['LIFE_GROUP','HEALTH_GROUP','PENSION'].filter(l => !DATA.some(r => r.line===l));
       return lines.length ? `<div class="alert a-info">Nothing pending on ${
@@ -348,13 +354,16 @@ function paint(){
 
   document.querySelectorAll('.req').forEach(grow);
   $('foot').innerHTML = (API ? 'Snapshot from the branch record.' : 'Sample rows — invented people at real ages.')
-    + ' Pending means <span class="mono">Policy Status Description = Pending</span> on a group life or group health'
-    + ' portfolio record. What you type here is saved to the branch sheet, not written back to Salesforce.';
+    + ' Pending means <span class="mono">Policy Status Description = Pending</span> on a group life, group health'
+    + ' or scheme pension portfolio record. What you type here is saved to the branch sheet,'
+    + ' not written back to Salesforce.';
 }
 
 /* Grow the box to its content: a clipped note reads as an empty one. */
 function grow(el){ el.style.height='auto'; el.style.height=Math.max(34, el.scrollHeight)+'px'; }
 document.addEventListener('input', e => { if(e.target.classList && e.target.classList.contains('req')) grow(e.target); });
+
+const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
 
 function kpi(v, k, n, bad){
   return `<div class="kpi"><span class="label">${esc(k)}</span>
@@ -383,9 +392,10 @@ document.addEventListener('focusout', e => {
   paintKpisOnly();
 });
 function paintKpisOnly(){
-  const withNote = DATA.filter(r => (r.note||'').trim()).length;
+  const rows = filtered();
+  const withNote = rows.filter(r => (r.note||'').trim()).length;
   const el = $('kpis').lastElementChild;
-  if(el) el.querySelector('.v').textContent = withNote + ' of ' + DATA.length;
+  if(el) el.querySelector('.v').textContent = withNote + ' of ' + rows.length;
 }
 
 document.querySelectorAll('thead th[data-sort]').forEach(th => {
