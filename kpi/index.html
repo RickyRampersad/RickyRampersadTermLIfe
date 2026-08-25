@@ -269,6 +269,16 @@ function App(){
     storeToken(""); setToken(""); setMe(null); setRows([]); setEntry(null); setView("home");
   },[]);
 
+  // Somebody who can only see themselves has no list to choose from, so making
+  // them click their own name to reach their own blocks is a step that asks a
+  // question with one answer. Land them on their day; the branch view is still
+  // a tap away for the chasing and trends screens.
+  useEffect(()=>{
+    if(me&&!me.manager&&view==="home"&&!active){
+      setActive(me.staffId); setDate(todayISO()); setView("entry");
+    }
+  },[me,view,active]);
+
   // Resume a session if the token is still good.
   useEffect(()=>{
     let off=false;
