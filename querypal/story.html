@@ -316,6 +316,21 @@ body{
 .stagewrap{position:relative;width:100%;display:flex;flex-direction:column;align-items:center;
   gap:clamp(14px,3vh,30px)}
 
+/* the envelope itself, flying the route */
+.env2{position:absolute;width:clamp(34px,6vw,52px);aspect-ratio:1.45;border-radius:4px;z-index:9;
+  background:linear-gradient(150deg,#FFF6F2,#EBD9D1);
+  box-shadow:0 0 26px rgba(240,144,111,.85),0 10px 24px rgba(0,0,0,.55);
+  opacity:0;offset-rotate:0deg}
+.env2::after{content:'';position:absolute;inset:0;border-radius:4px;
+  background:linear-gradient(150deg,transparent 44%,#C9AFA4 46%,transparent 56%)}
+.env2 b{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  font-size:9px;font-weight:800;color:#B4695A;letter-spacing:.04em}
+.trail{position:absolute;border-radius:50%;background:var(--coral-lit);
+  width:6px;height:6px;opacity:.85;pointer-events:none;z-index:8}
+.land{animation:landpulse 1.1s ease-out}
+@keyframes landpulse{0%{box-shadow:0 0 0 0 rgba(63,191,143,.7)}
+  100%{box-shadow:0 0 0 34px rgba(63,191,143,0)}}
+
 /* ── the routing constellation ─────────────────────────────────────────
    The one picture that explains the whole system: sixty kinds of request on
    one side, sixteen departments on the other, and every line already drawn.
@@ -760,7 +775,7 @@ const SCRIPT = [
   { id:'14', stn:1, after:0.6, scene:'typing',    text:'The client types what they need — in plain language.' },
   { id:'15', stn:2, after:0.7, scene:'typing2',   text:'No department to know. No address to find.' },
   { id:'16', stn:2, after:0.8, scene:'resolved',  text:'Query Pal already knows where it goes — and the day it is due.' },
-  { id:'17', stn:2, after:1.1, scene:'sendTrue',  text:'One tap. Gone. To the right place.' },
+  { id:'17', stn:2, after:1.1, scene:'flyRoute',  text:'One tap. Gone. To the right place.' },
   { id:'18', stn:3, after:0.7, scene:'templates', text:'If the department goes quiet, the reminders write themselves.' },
   { id:'19', stn:3, after:0.9, scene:'ladder',    text:'Day one. Day three. Firm, polite, on the very same thread.' },
   { id:'20', stn:3, after:0.6, scene:'notYou',    text:'The branch manager is the last resort.' },
@@ -1476,6 +1491,65 @@ Object.assign(SCENES, {
   tangle:    () => SCENES.constellation('tangled'),
   resolved:  () => SCENES.constellation('resolved'),
 
+  /* the email, flying the route to the one department that owns it */
+  flyRoute: () => {
+    const tall = innerWidth < 820;
+    const H = tall ? 640 : 460, W = tall ? 440 : 900;
+    const rows = DEPTS16.slice(0, tall ? 8 : 16);
+    const ry = j => 40 + j * ((H - 80) / (rows.length - 1));
+    const rx = tall ? W - 150 : W - 190, lx = 40;
+    const target = 0;
+    const s2 = newScene(`<div class="conste" id="fr" style="position:relative">
+      <svg viewBox="0 0 ${W} ${H}">
+        ${rows.map((d, j) => `<rect class="cnode on" x="${rx - 5}" y="${ry(j) - 5}" width="10" height="10"
+            rx="2.5" fill="${j === target ? 'var(--coral-lit)' : '#3A5A82'}"/>`).join('')}
+        ${rows.map((d, j) => `<text class="clab on ${j === target ? 'hot' : ''}" x="${rx + 12}"
+            y="${ry(j) + 3}" style="font-size:${tall ? 8 : 9}px">${d.replace(' — Chaguanas', '')}</text>`).join('')}
+        <path id="frp" class="cpath draw" style="--len:1600"
+          d="M${lx},${H / 2} C${lx + 240},${H / 2 - 120} ${rx - 200},${ry(target) + 90} ${rx - 14},${ry(target)}"
+          stroke="var(--coral)" stroke-width="2"/>
+      </svg>
+      <div class="env2" id="fre"><b>RRB</b></div></div>`);
+
+    const wrap = s2.querySelector('#fr'), env = s2.querySelector('#fre');
+    const path = s2.querySelector('#frp');
+    setTimeout(() => {
+      const len = path.getTotalLength();
+      const box = wrap.getBoundingClientRect();
+      const svg = wrap.querySelector('svg').getBoundingClientRect();
+      const kx = svg.width / W, ky = svg.height / H;
+      const T = 2600, t0 = performance.now();
+      env.style.opacity = '1';
+      (function step(now) {
+        const k = Math.min(1, (now - t0) / T);
+        const e = 1 - Math.pow(1 - k, 2.4);
+        const pt = path.getPointAtLength(len * e);
+        const x = (svg.left - box.left) + pt.x * kx, y = (svg.top - box.top) + pt.y * ky;
+        env.style.left = x + 'px'; env.style.top = y + 'px';
+        env.style.transform = `translate(-50%,-50%) rotate(${-6 + e * 10}deg) scale(${1 - e * 0.25})`;
+        if (k > 0.06 && k < 0.97 && Math.random() < 0.5) {     // a trail behind it
+          const t = document.createElement('div');
+          t.className = 'trail';
+          t.style.left = x + 'px'; t.style.top = y + 'px';
+          t.style.transform = 'translate(-50%,-50%)';
+          wrap.appendChild(t);
+          t.animate([{ opacity: .8, transform: 'translate(-50%,-50%) scale(1)' },
+                     { opacity: 0, transform: 'translate(-50%,-50%) scale(.2)' }],
+                    { duration: 900, easing: 'ease-out' }).onfinish = () => t.remove();
+        }
+        if (k < 1) requestAnimationFrame(step);
+        else {
+          env.style.opacity = '0';
+          const box2 = wrap.querySelector('rect');
+          wrap.querySelector('svg').querySelectorAll('rect')[target].classList.add('land');
+          sweep();
+        }
+      })(t0);
+    }, 700);
+    camera(tall ? 1.02 : 1.05, 0, 8);
+    return s2;
+  },
+
   /* one number, held */
   bigNumber: () => {
     camera(1, 0, 0);
@@ -1815,7 +1889,17 @@ function scoreOut() {
 })();
 
 /* ── the projector ──────────────────────────────────────────────────────── */
-let running = false, held = null;
+const REC = new URLSearchParams(location.search).has('rec');
+let running = false, held = null, recStep = 0;
+const REC_COLS = ['#ff0000', '#00ff00', '#0000ff'];
+function recMark() {
+  if (!REC) return;
+  let d = document.getElementById('recDot');
+  if (!d) { d = document.createElement('div'); d.id = 'recDot';
+    d.style.cssText = 'position:fixed;left:0;top:0;width:14px;height:14px;z-index:2147483647;pointer-events:none';
+    document.body.appendChild(d); }
+  d.style.background = REC_COLS[recStep++ % 3];
+}
 /* scenes whose stage the NEXT line keeps using */
 const HOLD_AFTER = new Set(['phones', 'forget']);
 async function play() {
@@ -1828,8 +1912,8 @@ async function play() {
   await decodeVO();                       // ~600 KB of narration, decoded once
 
   $('#gate').classList.add('off');
-  $('#skip').hidden = false;
-  setTimeout(() => $('#skip').classList.add('on'), 1200);
+  if (!REC) { $('#skip').hidden = false;
+    setTimeout(() => $('#skip').classList.add('on'), 1200); }
   buildRail();
   await sleep(1400);
   $('#rail').classList.add('on');
@@ -1853,6 +1937,7 @@ async function play() {
     const words = built && built.querySelector('.line');
     if (words) runWords(words, dur);
 
+    recMark();
     railTo(line.stn == null ? 0 : line.stn);
     cap.textContent = line.text.replace(/<[^>]+>/g, '');
     cap.classList.add('on');
@@ -1867,6 +1952,7 @@ async function play() {
   }
   cap.classList.remove('on');
   $('#skip').classList.remove('on');
+  running = false;                       // the film is over — recorders watch this
 }
 function stop() {
   running = false;

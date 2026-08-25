@@ -151,21 +151,35 @@ duck = np.ones(total)
 for a, b in segs:
     i0, i1 = max(0, int((a - .2) * SR)), min(total, int((b + .28) * SR))
     r = int(.22 * SR)
-    duck[i0:i1] = 0.42
-    if i0 > 0: duck[max(0, i0 - r):i0] = np.linspace(1, .42, min(r, i0))
-    if i1 < total: duck[i1:min(total, i1 + r)] = np.linspace(.42, 1, min(r, total - i1))
+    duck[i0:i1] = 0.50
+    if i0 > 0: duck[max(0, i0 - r):i0] = np.linspace(1, .50, min(r, i0))
+    if i1 < total: duck[i1:min(total, i1 + r)] = np.linspace(.50, 1, min(r, total - i1))
 
 tail = int(6.0 * SR)
 music[-tail:] *= np.linspace(1, 0, tail)          # ring out, then silence
 fade = int(2.5 * SR); i0 = int(start * SR)
 music[i0:i0 + fade] *= np.linspace(0, 1, fade)
 
-mix = np.tanh(music * 0.55) * duck * 0.9 + voice
-mix = np.tanh(mix * 1.15)
+# Normalise each part to a known level BEFORE mixing. Multiplying an already
+# quiet buffer by tanh(0.55) shrank the bed to roughly 16 dB under the voice,
+# which is exactly why it could not be heard. These are the levels that matter:
+MUSIC_LEVEL = 0.80          # the bed, on its own, in the gaps
+VOICE_LEVEL = 0.88          # narration sits on top
+music = music / (np.abs(music).max() or 1) * MUSIC_LEVEL
+voice = voice / (np.abs(voice).max() or 1) * VOICE_LEVEL
+mix = music * duck + voice
+mix = np.tanh(mix * 1.05)
 mix = mix / (np.abs(mix).max() or 1) * 0.95
+
+def _db(a):
+    a = a[np.abs(a) > 1e-5]
+    return 20 * np.log10(np.sqrt((a ** 2).mean())) if len(a) else -99
+gap = duck > 0.9
+print(f'  bed in the gaps {_db(music[gap]):.1f} dB · under the voice '
+      f'{_db((music * duck)[~gap]):.1f} dB · voice {_db(voice[voice != 0]):.1f} dB')
 st = np.zeros((total, 2)); st[:, 0] = mix; st[:, 1] = mix
 w = int(.012 * SR)
-st[w:, 0] += .06 * music[:-w]; st[:-w, 1] += .06 * music[w:]
+st[w:, 0] += .05 * music[:-w]; st[:-w, 1] += .05 * music[w:]
 st = np.clip(st, -1, 1)
 
 out = MP4 / 'story-audio.wav'
