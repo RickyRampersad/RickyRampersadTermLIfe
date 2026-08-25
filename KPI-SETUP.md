@@ -102,59 +102,133 @@ from the editor. To see one without anybody being emailed, run
 
 ---
 
-## Before staff can sign in
+## Roles come from the Access tab
 
-Three things on the Access tab need your attention.
+The **Role** column decides which KPI list a person gets and whether they can
+read anyone else's entries. Abbreviations are expanded before matching, so write
+it the way you would say it — `Branch Mgr`, `Assit Branch Mgr`, `Unit Mgr` and
+`Branch Mgr Assistant` all land correctly.
 
-### You have no account
+| Role column says | Gets | Sees |
+|---|---|---|
+| Branch Mgr | Branch Manager list | the whole branch |
+| Assit Branch Mgr | Assistant Branch Manager list | own entries |
+| Unit Mgr | Unit Manager list | own entries |
+| Branch Mgr Assistant | BMA list | own entries |
+| Sales Support | SSA list | own entries |
 
-Every row on the Access tab is a staff member. There is no Branch Manager, so
-there is nobody who can open the checkpoint or the weekly summary.
+The Branch Manager alone can read other people's records. Seniority does not
+come into it — the ABM and the Unit Managers see their own work, same as
+everyone else.
 
-Add a row for yourself. The script treats you as manager if **either**:
+Change somebody's job in the sheet and the tool follows. Nothing in the script
+needs editing, and there are no hard-coded exceptions.
 
-- your address is the one in `MANAGER_EMAIL`, **or**
-- the **Role** column says `Branch Manager` (or `Manager`, or `Admin`)
-
-Staff see their own day and their own history. The manager sees the branch.
+Run **`checkSchedule()`** after any change to the tab. It reports two things:
+anyone whose Role column disagrees with what they actually log, and any
+scheduled block pointing at a KPI that person's role does not have. A clean run
+says *"Schedule is consistent"* and nothing else.
 
 ### The passwords are single digits
 
-The five accounts currently use `1`, `2`, `3`, `4`, `5`. Anyone who reaches the
-page is four guesses from another person's record, and the Access tab is the
-only thing standing between a browser and the branch's data.
+The accounts use `1`, `2`, `3`, `4`, `5`, `7`, `8`. Anyone who reaches the page
+is a few guesses from another person's record, and the Access tab is the only
+thing standing between a browser and the branch's data.
 
 Change the **Password** column to something per-person and non-obvious before
-the staff start using it. Nothing else has to change — the script reads whatever
-is in that column.
+staff start using it. Nothing else has to change — the script reads whatever is
+in that column.
 
 The script gives an account five wrong tries and then refuses that name for
-fifteen minutes, so the page cannot simply be guessed at. That is a backstop,
-not a substitute for real passwords.
+fifteen minutes. That is a backstop, not a substitute for real passwords.
 
-### Two people are on the wrong side of the Unit column
+---
 
-The **Unit** column disagrees with what these two have been logging since June:
+## Connecting Salesforce
 
-| Person | Unit says | Their entries say |
-|---|---|---|
-| Kamla Dookran | SalesSupport | Branch Manager's Assistant · G4 |
-| Ashley Rondon | Branch Managers Assistant | Sales Support Assistant · G3 |
+Optional. Without it everything still works — sign-in, blocks, the checkpoint,
+the weekly summary. What you lose is the part that reads people's real task
+position instead of asking them to count it: open, overdue, aged and closed
+today, plus the Needs-a-reason, Billing check and Waiting-on views.
 
-Kamla logs *New Agent Activity*, *Escalations* and *Reporting (Production/RDAR)*
-— the BMA list. Ashley logs *Pending/Lapse*, *Servicing Lines* and
-*Mail Management* — the SSA list. The two look swapped.
+Four Script Properties, under **⚙️ Project Settings → Script Properties**:
 
-The app goes by its own `PROFILES` map (top of `kpi/index.html`), which matches
-what they have actually been logging, so the right function list shows either
-way. Worth correcting the tab so the two agree.
+| Property | What it is |
+|---|---|
+| `SF_KEY` | Consumer Key from a Connected App |
+| `SF_SECRET` | Consumer Secret from the same app |
+| `SF_USER` | the Salesforce login you want it to read as |
+| `SF_PASS` | that login's password with the security token appended, no space |
 
-### Elizabeth Lee
+`SFK_TOKEN` and `SFK_TOKEN_AT` appear on their own once it works — those are the
+cached session, not something you set.
 
-She is on the Access tab and can sign in, and she shows up in Sasha's and
-Kamla's training notes. She had no entry in the app, so she is set up as
-`Branch Manager's Assistant · G4`, in training, on branch hours. If any of that
-is wrong, her line in `PROFILES` is the place to fix it.
+### The security token
+
+Avatar → **Settings** → **My Personal Information** → **Reset My Security
+Token**. Salesforce emails it. Apps Script calls from Google's servers, which
+your org will not treat as a trusted address, so the token is required.
+
+`SF_PASS` is the password and the token run together as one string — no space,
+no comma. This is where this usually fails.
+
+### If you already have a Connected App
+
+Any Connected App with the **api** scope will do — including one created for
+something else entirely. Take its Consumer Key and Secret and try those first:
+**Setup** → **App Manager** → the app → **View** → **Manage Consumer Details**.
+
+Change nothing about it while you test. The username-password flow does not use
+an authorization code, so the PKCE and callback settings that matter to a
+browser-based app are not consulted here, and an app built for a different
+purpose will usually work untouched.
+
+If it does not, make a separate app rather than loosening the settings on one
+that something else depends on. A key you can revoke on its own is worth the
+five minutes.
+
+### Making a new Connected App
+
+**Setup** → Quick Find **App Manager** → **New Connected App**.
+
+- Name it something recognisable, put your address as contact
+- Tick **Enable OAuth Settings**
+- Callback URL: `https://login.salesforce.com/services/oauth2/success` — nothing
+  calls back, but the field is required
+- Scopes: **Manage user data via APIs (api)** and **Perform requests at any time
+  (refresh_token, offline_access)**
+- Untick **Require Proof Key for Code Exchange (PKCE)** — it blocks this flow
+- Save, then **wait ten minutes**. Salesforce needs that long to propagate, and
+  trying sooner fails in a way that looks like wrong credentials
+
+Then App Manager → your app → **View** → **Manage Consumer Details**. Salesforce
+emails a verification code, and the Key and Secret are behind it.
+
+Finally **Manage** → **Edit Policies**: Permitted Users *All users may
+self-authorize*, IP Relaxation *Relax IP restrictions*.
+
+### The setting that catches most people
+
+Salesforce now disables the username-password flow by default, and this script
+uses it.
+
+**Setup** → Quick Find **OAuth and OpenID Connect Settings** → enable **Allow
+OAuth Username-Password Flows**.
+
+Without it every attempt returns `invalid_grant`, which reads like a bad
+password and is not one.
+
+### Checking it
+
+Run **`sfKpiTest()`**. It maps each person on the Access tab to their Salesforce
+user and prints what it found. On failure it prints Salesforce's own words
+rather than a summary, so the message names the actual problem.
+
+Two things it is built to survive, both real in this org: one person having more
+than one user record on the same address, and an address shared with Site Guest
+Users that own nothing. Guests are dropped by `UserType`; among what remains the
+active record wins, but an inactive one is still used rather than dropping
+somebody who owns this month's work.
 
 ---
 
