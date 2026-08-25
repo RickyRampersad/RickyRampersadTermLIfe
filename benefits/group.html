@@ -82,6 +82,12 @@ tfoot td{border-top:2px solid var(--line);font-weight:700;background:var(--surfa
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:1rem}
 .stats .card{padding:1.1rem}
 .stats .v{font-family:var(--mono);font-size:1.55rem;font-variant-numeric:tabular-nums;color:var(--navy);margin-top:.2rem;line-height:1.15}
+.stats .v.bad{color:var(--stop,#A93B2B)}
+.sub{font-size:11.5px;color:var(--slate);margin-top:.2rem;line-height:1.4}
+.owe{color:var(--stop,#A93B2B);font-weight:700}
+tbody tr.owing{background:#FDF6E7}
+:root[data-theme="dark"] tbody tr.owing{background:#2A2113}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) tbody tr.owing{background:#2A2113}}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;align-items:start}
 @media(max-width:900px){.grid2{grid-template-columns:1fr}}
 dl.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.85rem 1.4rem;margin:.9rem 0 0}
@@ -415,6 +421,111 @@ function billing(){
       </div>
     </div>
   </div>`;
+}
+
+/* ══════════════ HISTORY ══════════════
+   Every month billed on this account, what was paid against it, and what is
+   still open. The branch record for a month is a TRANSACTIONS__c row hanging
+   off the group's CLIENT_PORTFOLIO__c — one per renewal month per line — so
+   this reads that rather than inventing a second ledger:
+
+       SELECT Name, GROUP_TRANSACTION_TYPE__c, Renewal_Date__c,
+              Group_Billing_Premiums__c, Premium_Paid__c, Premium_Due__c,
+              Payment_Date__c, Date_Premium_Applied__c, Payment_Method__c,
+              Recipt__c, Invoice_Value_1__c, POLICY_STATUS__c
+       FROM   TRANSACTIONS__c
+       WHERE  INSURANCE_PORTFOLIO__r.Account__c = :ACCOUNT
+         AND  GROUP_TRANSACTION_TYPE__c != null
+       ORDER BY Renewal_Date__c DESC
+
+   Two fields on that object are not safe to show a client and are not read
+   here. Days_O_S__c counts from the renewal date whether or not the month was
+   ever paid — on settled 2015 rows it reads past four thousand — and
+   POLICY_STATUS__c stays INFORCE on months with premium still due, so neither
+   can be shown as a state. Paid is decided from the figures themselves. */
+const HISTORY = [
+  { month:'2026-09-01', line:'Group Health', invoice:'G260801M300709990', billed:83514, paid:0, paidOn:null, method:null, receipt:null },
+  { month:'2026-08-01', line:'Group Health', invoice:'G260801M300709990', billed:83514, paid:0, paidOn:null, method:null, receipt:null,
+    note:'Originally billed $84,036. That charge was reversed and re-issued at this figure.' },
+  { month:'2026-08-01', line:'Group Life',   invoice:'TGM 1526', billed:6240, paid:6240, paidOn:'2026-08-22', method:'Cheque', receipt:'RC-118204' },
+  { month:'2026-07-01', line:'Group Health', invoice:'G260701M300708103', billed:83230, paid:84036, paidOn:'2026-07-19', method:'Wire Transfer', receipt:'RC-117655',
+    note:'Paid $806 over, held as a credit.' },
+  { month:'2026-07-01', line:'Group Health', invoice:'G260701M300709859', billed:0, paid:788, paidOn:'2026-07-19', method:'Wire Transfer', receipt:'RC-117655',
+    note:'Adjustment credit.' },
+  { month:'2026-07-01', line:'Group Life',   invoice:'TGM 1526', billed:6201, paid:6201, paidOn:'2026-07-19', method:'Wire Transfer', receipt:'RC-117655' },
+  { month:'2026-06-01', line:'Group Health', invoice:'G260601M300709858', billed:82690, paid:83230, paidOn:'2026-06-20', method:'Cheque', receipt:'RC-117032',
+    note:'Paid $540 over, held as a credit.' },
+  { month:'2026-06-01', line:'Group Life',   invoice:'TGM 1526', billed:6162, paid:6162, paidOn:'2026-06-20', method:'Cheque', receipt:'RC-117032' }
+];
+
+const mLabel = d => new Date(d+'T00:00:00').toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+const dLabel = d => d ? new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+const daysSince = d => Math.floor((Date.now() - new Date(d+'T00:00:00')) / 86400000);
+/* A month that has not started yet is not late. Showing it as "-7 days
+   outstanding" reads as a fault in the client's own account. */
+const ageWords = d => { const n = daysSince(d); return n < 0 ? 'not yet due' : n + ' days'; };
+
+function history(){
+  const rows = HISTORY.slice().sort((a,b) => b.month.localeCompare(a.month) || a.line.localeCompare(b.line));
+  const open = rows.filter(r => r.billed - r.paid > 0.005);
+  const owed = open.reduce((s,r) => s + (r.billed - r.paid), 0);
+  /* Overpayments are not just history — Guardian carries them forward, so the
+     balance actually payable is the arrears less the credits. Quoting the
+     gross would have this account chased for $2,134 it has already paid. */
+  const credit = rows.reduce((s,r) => s + Math.max(0, r.paid - r.billed), 0);
+  const net = owed - credit;
+  const settled = rows.length - open.length;
+  const overdue = open.filter(r => daysSince(r.month) > 0);
+
+  return `<div class="stack">
+    <div class="card">
+      <h2>Billing history</h2>
+      <p class="note">Every month billed on this account and what was paid against it.
+        ${open.length ? 'Anything still open is marked.' : 'Everything is settled.'}</p>
+      <div class="stats" style="margin-top:1rem">
+        ${stat(rows.length, 'Months billed', 'across ' + [...new Set(rows.map(r=>r.line))].length + ' lines')}
+        ${stat(settled, 'Settled', settled === rows.length ? 'all of them' : '')}
+        ${stat(open.length ? money(net) : 'None', 'Payable now',
+               credit ? money(owed) + ' less credits' : (overdue.length ? 'oldest ' + ageWords(overdue[overdue.length-1].month) : 'nothing overdue'),
+               overdue.length>0)}
+        ${stat(credit ? money(credit) : '—', 'Credit carried', credit ? 'from overpayment' : '')}
+      </div>
+    </div>
+
+    ${overdue.length ? `<div class="alert a-warn">
+      <b>${money(net)} is showing as unpaid.</b> If you have already sent this, give us the payment
+      reference and we will chase it internally — it usually means the payment reached Guardian but has
+      not been applied to your account yet. Nothing about your cover changes while that is sorted out.</div>` : ''}
+
+    <div class="card">
+      <div class="tw"><table>
+        <thead><tr><th>Month</th><th>Line</th><th>Invoice</th><th class="r">Billed</th>
+          <th class="r">Paid</th><th>Settled</th><th class="r">Open</th></tr></thead>
+        <tbody>${rows.map(r => {
+          const bal = r.billed - r.paid, isOpen = bal > 0.005, over = bal < -0.005;
+          return `<tr class="${isOpen && daysSince(r.month) > 0 ? 'owing' : ''}">
+            <td><b>${mLabel(r.month)}</b>${r.note?`<div class="sub">${esc(r.note)}</div>`:''}</td>
+            <td>${esc(r.line)}</td>
+            <td class="mono" style="font-size:12px">${esc(r.invoice||'—')}</td>
+            <td class="r mono">${money(r.billed)}</td>
+            <td class="r mono">${r.paid ? money(r.paid) : '—'}</td>
+            <td>${r.paidOn
+                  ? dLabel(r.paidOn) + `<div class="sub">${esc(r.method||'')}${r.receipt?' · '+esc(r.receipt):''}</div>`
+                  : `<span class="${daysSince(r.month) > 0 ? 'owe' : 'note'}">${
+                       daysSince(r.month) > 0 ? 'not yet' : '—'}</span><div class="sub">${ageWords(r.month)}</div>`}</td>
+            <td class="r mono ${isOpen?'owe':''}">${isOpen ? money(bal) : over ? '(' + money(-bal) + ')' : '—'}</td>
+          </tr>`; }).join('')}</tbody>
+      </table></div>
+      <p class="note" style="margin-top:.8rem">A month shows as settled once the payment is applied to your
+        account. Invoice numbers are Guardian's own, so quoting one on a payment is the quickest way to have
+        it matched.</p>
+    </div>
+  </div>`;
+}
+
+function stat(v, k, n, bad){
+  return `<div class="card"><span class="label">${esc(k)}</span>
+    <div class="v${bad?' bad':''}">${esc(v)}</div><div class="note">${esc(n||'')}</div></div>`;
 }
 
 function people(){
@@ -1178,7 +1289,7 @@ function leakage(adjustments, health){
 
 /* ══════════════ SHELL ══════════════ */
 const QUERYPAL='https://querymypolicies.netlify.app/';
-const TABS={employer:[['overview','Overview'],['billing','Billing'],['people','People'],['check','Check my month']],
+const TABS={employer:[['overview','Overview'],['billing','Billing'],['history','History'],['people','People'],['check','Check my month']],
             employee:[['mycover','My benefits']]};
 
 /* ══════════════ CHECK MY MONTH ══════════════
@@ -1347,7 +1458,7 @@ function render(){
   $('me').innerHTML = as==='employer'
     ? `<b>${esc(GROUP.company)}</b><span class="label">Employer account</span>`
     : `<b>${esc(ME.first+' '+ME.last)}</b><span class="label">Cert ${esc(ME.cert)}</span>`;
-  $('main').innerHTML = ({overview,billing,people,check,mycover})[tab]();
+  $('main').innerHTML = ({overview,billing,history,people,check,mycover})[tab]();
   const cf=$('ckFiles');
   if(cf) cf.addEventListener('change', e => { if(e.target.files.length) checkFiles([...e.target.files]); });
 }
