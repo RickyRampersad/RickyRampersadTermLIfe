@@ -1740,10 +1740,48 @@ function sendWeekly(dateOpt) {
 // ---- triggers -------------------------------------------------------------
 
 /** Run once from the editor. Safe to re-run: it clears its own triggers first. */
+/** Everything this tool installs. Anything else in the project is somebody
+ *  else's and is left alone. */
+var MY_TRIGGERS = ['sendCheckpoint', 'sendWeekly', 'remindMidday', 'remindCheckpoint'];
+
+/** Handlers from earlier versions of this tool. Replacing the code does not
+ *  remove the triggers that call it — they are stored against the project, not
+ *  the file — so a daily digest kept arriving long after the function that
+ *  built it had been pasted over. Named here so installTriggers() clears them. */
+var RETIRED_TRIGGERS = ['sendDailyDigest', 'dailyDigest', 'sendDigest',
+                        'sendDaily', 'dailySummary', 'sendDailySummary'];
+
+/** What is actually scheduled in this project, whoever put it there. Run this
+ *  when something arrives that you did not expect. */
+function listTriggers() {
+  var all = ScriptApp.getProjectTriggers();
+  if (!all.length) { Logger.log('No triggers installed.'); return 'No triggers installed.'; }
+  var out = ['This project has ' + all.length + ' trigger(s):', ''];
+  all.forEach(function (t) {
+    var fn = t.getHandlerFunction();
+    var who = MY_TRIGGERS.indexOf(fn) > -1 ? 'the tracker'
+            : RETIRED_TRIGGERS.indexOf(fn) > -1 ? 'RETIRED — installTriggers() will remove it'
+            : typeof this[fn] === 'function' ? 'something else in this project'
+            : 'ORPHAN — the function no longer exists, so it fails every time';
+    out.push('  ' + pad_(fn, 26) + who);
+  });
+  out.push('', 'To remove one by hand: the clock icon in the left bar, then the');
+  out.push('three dots beside the trigger, then Delete.');
+  var msg = out.join('\n');
+  Logger.log(msg);
+  return msg;
+}
+
 function installTriggers() {
-  var mine = ['sendCheckpoint', 'sendWeekly', 'remindMidday', 'remindCheckpoint'];
+  var removed = [];
   ScriptApp.getProjectTriggers().forEach(function (t) {
-    if (mine.indexOf(t.getHandlerFunction()) > -1) ScriptApp.deleteTrigger(t);
+    var fn = t.getHandlerFunction();
+    // Ours, so it can be reinstalled cleanly; or a retired handler from an
+    // earlier version that is still sending mail nobody asked for.
+    if (MY_TRIGGERS.indexOf(fn) > -1 || RETIRED_TRIGGERS.indexOf(fn) > -1) {
+      ScriptApp.deleteTrigger(t);
+      if (RETIRED_TRIGGERS.indexOf(fn) > -1) removed.push(fn);
+    }
   });
 
   // 3pm checkpoint, Monday to Friday. Apps Script fires within the hour, so
@@ -1768,6 +1806,12 @@ function installTriggers() {
   var msg = 'Triggers installed. Staff nudges weekdays at 12:00 and ' +
             CONFIG.CHECKPOINT_HOUR + ':00, branch checkpoint ' + CONFIG.CHECKPOINT_HOUR +
             ':00, weekly summary Friday 17:00 (' + CONFIG.TZ + ').';
+  if (removed.length) {
+    msg += '\n\nStopped ' + removed.length + ' retired trigger(s) from the previous ' +
+           'version: ' + removed.join(', ') + '.';
+  }
+  msg += '\n\nRun listTriggers() to see everything scheduled in this project — ' +
+         'anything still arriving that you did not ask for will be named there.';
   Logger.log(msg);
   return msg;
 }
