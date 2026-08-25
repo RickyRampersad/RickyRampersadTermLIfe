@@ -1815,7 +1815,17 @@ function scoreOut() {
 })();
 
 /* ── the projector ──────────────────────────────────────────────────────── */
-let running = false, held = null;
+const REC = new URLSearchParams(location.search).has('rec');
+let running = false, held = null, recStep = 0;
+const REC_COLS = ['#ff0000', '#00ff00', '#0000ff'];
+function recMark() {
+  if (!REC) return;
+  let d = document.getElementById('recDot');
+  if (!d) { d = document.createElement('div'); d.id = 'recDot';
+    d.style.cssText = 'position:fixed;left:0;top:0;width:14px;height:14px;z-index:2147483647;pointer-events:none';
+    document.body.appendChild(d); }
+  d.style.background = REC_COLS[recStep++ % 3];
+}
 /* scenes whose stage the NEXT line keeps using */
 const HOLD_AFTER = new Set(['phones', 'forget']);
 async function play() {
@@ -1828,8 +1838,8 @@ async function play() {
   await decodeVO();                       // ~600 KB of narration, decoded once
 
   $('#gate').classList.add('off');
-  $('#skip').hidden = false;
-  setTimeout(() => $('#skip').classList.add('on'), 1200);
+  if (!REC) { $('#skip').hidden = false;
+    setTimeout(() => $('#skip').classList.add('on'), 1200); }
   buildRail();
   await sleep(1400);
   $('#rail').classList.add('on');
@@ -1853,6 +1863,7 @@ async function play() {
     const words = built && built.querySelector('.line');
     if (words) runWords(words, dur);
 
+    recMark();
     railTo(line.stn == null ? 0 : line.stn);
     cap.textContent = line.text.replace(/<[^>]+>/g, '');
     cap.classList.add('on');
@@ -1867,6 +1878,7 @@ async function play() {
   }
   cap.classList.remove('on');
   $('#skip').classList.remove('on');
+  running = false;                       // the film is over — recorders watch this
 }
 function stop() {
   running = false;
