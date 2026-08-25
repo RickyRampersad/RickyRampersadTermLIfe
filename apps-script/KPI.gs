@@ -271,9 +271,9 @@ var SCHEDULE = {
     hours: '9am – 5pm', lunch: '1:00 – 2:00pm',
     blocks: {
       KPI1: { time: '9 – 11am',  focus: 'Branch Intelligence / Query Pal testing',   kpi: 'Surveys / Query Pal' },
-      KPI2: { time: '11 – 1pm',  focus: 'New Application Oversight',                 kpi: 'New Application Oversight' },
+      KPI2: { time: '11 – 1pm',  focus: 'New applications',                          kpi: 'New Application Process' },
       PM1:  { time: '2 – 3:30pm',focus: 'Administrative Support',                    kpi: 'Administrative Support' },
-      PM2:  { time: '3:30 – 5pm',focus: 'Task Mgmt / Reporting',                     kpi: 'Reporting (Production / RDAR)' }
+      PM2:  { time: '3:30 – 5pm',focus: 'Task Mgmt / Reporting',                     kpi: 'Reporting' }
     }
   },
   ricky: {
@@ -536,13 +536,10 @@ function roster_() {
 // row that is wrong, not a place to keep the real answer — checkSchedule()
 // names everyone pinned so the pin gets removed once the tab is corrected.
 //
-// Elizabeth: her Role cell reads "Branch" with the Unit column now empty, which
-// reads as Sales Support. Her day is Branch Intelligence, New Application
-// Oversight, Administrative Support and Reporting — BMA work, under Kamla — and
-// two of her four blocks point at KPIs an SSA does not have, so without this
-// her morning prefill would come up blank. Set her Role to "Branch Mgr
-// Assistant" and delete this line.
-var ROLE_PINNED = { elizabeth: 'bma' };
+// Nobody is pinned. Every role now comes from the Role column, which is where
+// it belongs: change somebody's job in the sheet and the tool follows without
+// anyone editing this file.
+var ROLE_PINNED = {};
 
 /** Nobody types "Assistant Branch Manager" into a spreadsheet. They type
  *  "Assit Branch Mgr". Expand the abbreviations and the usual near-misses
