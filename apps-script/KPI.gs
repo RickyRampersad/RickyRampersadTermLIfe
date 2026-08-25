@@ -1164,6 +1164,15 @@ function handle_(action, data, token) {
       }
       return updateTask_(data, profile);
 
+    case 'waiting': {
+      if (typeof sfkWaitingSafe_ !== 'function') {
+        return { ok: false, error: 'Add KPI-Waiting.gs to this project.' };
+      }
+      return { ok: true, waiting: profile.manager
+        ? sfkWaitingSafe_(data.date)
+        : sfkWaitingFor_(profile.staffId, data.date) };
+    }
+
     case 'billing': {
       var bc = sfkBillingCheckSafe_(data.date);
       if (!profile.manager) {

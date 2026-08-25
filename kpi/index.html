@@ -243,6 +243,7 @@ function App(){
   const [metrics,setMetrics]=useState(null);
   const [needsReason,setNeedsReason]=useState({});
   const [billing,setBilling]=useState({});
+  const [waiting,setWaiting]=useState(null);
   const [loading,setLoading]=useState(false);
   const [blockState,setBlockState]=useState({});   // per block: idle|saving|ok|bad
   const [dayState,setDayState]=useState({tone:"idle",text:""});
@@ -284,6 +285,16 @@ function App(){
   },[token,signOut]);
 
   useEffect(()=>{ if(me) loadRows(); },[me,loadRows]);
+
+  // Pulled when the view is opened rather than with every page — it is a
+  // different question from "what did you do today".
+  useEffect(()=>{
+    if(view!=="waiting"||!token) return;
+    let off=false;
+    (async()=>{ const r=await api("waiting",{token});
+      if(!off&&r.ok) setWaiting(r.waiting); })();
+    return()=>{off=true;};
+  },[view,token]);
 
   // Load one day into the form.
   useEffect(()=>{
@@ -382,6 +393,8 @@ function App(){
                 <span style={{fontSize:19}}>▤</span><span>Weekly summary</span>
               </button>
             </div>
+            <button onClick={()=>{setWaiting(null);setView("waiting");}} style={{...primaryWide,marginTop:10}}>
+              Who we are waiting on →</button>
             <button onClick={()=>{setReviewDate(todayISO());setView("review");}} style={primaryWide}>Full day review →</button>
             <SectionLabel>The team</SectionLabel>
           </React.Fragment>
@@ -390,6 +403,8 @@ function App(){
             <p style={{color:MUTED,fontSize:13.5,margin:"16px 0 4px",lineHeight:1.55}}>
               Log your day against your KPI blocks — what was <b style={{color:INK}}>actioned and resolved</b>, what you carry forward, and your <b style={{color:INK}}>value added</b>. Ideas belong here too.
             </p>
+            <button onClick={()=>{setWaiting(null);setView("waiting");}} style={{...primaryWide,marginTop:14}}>
+              What you are chasing →</button>
             <SectionLabel>Your day</SectionLabel>
           </React.Fragment>
         )}
@@ -846,6 +861,94 @@ function App(){
       </div>
     </Shell>);}
 
+  // ---- who we are waiting on ----------------------------------------------
+  if(view==="waiting"){
+    const w=waiting;
+    const ready=w&&w.ok;
+    return(<Shell wide={vp.desktop?1120:vp.tablet?820:560}>
+      <div style={{...mast,paddingBottom:16}}>
+        <button onClick={()=>setView("home")} style={backLink}>← Branch</button>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginTop:8}}>
+          <ShieldLogo size={30}/>
+          <div>
+            <h1 style={{color:"#fff",fontSize:20,fontWeight:800,margin:0}}>
+              {me.manager?"Who we are waiting on":"What you are chasing"}</h1>
+            <p style={{color:GOLD_SOFT,fontSize:12,margin:"2px 0 0"}}>
+              Open tasks sitting at "waiting on someone else"</p>
+          </div>
+        </div>
+      </div>
+
+      <div style={{padding:"0 18px 56px"}}>
+        {!w&&<p style={{color:MUTED,textAlign:"center",padding:24}}>Reading Salesforce…</p>}
+        {w&&!w.ok&&<div style={{...warn,marginTop:16}}>
+          {w.reason==="notConfigured"
+            ? "Salesforce is not connected, so there is nothing to read yet."
+            : "Could not reach Salesforce: "+(w.error||"unknown")}</div>}
+
+        {ready&&<React.Fragment>
+          <div style={statRow}>
+            <Stat label="Tasks waiting" value={w.total} tone={w.total>0?"amber":"green"}/>
+            <Stat label="Days carried" value={w.totalDays.toLocaleString()} tone="red"/>
+            <Stat label="People" value={w.named.length} tone="navy"/>
+          </div>
+
+          <p style={{fontSize:12.5,color:MUTED,margin:"14px 0 0",lineHeight:1.5}}>
+            Grouped by who the task is waiting on — the agent named on it, or the contact.
+            <b style={{color:INK}}> Days quiet</b> is how long since anyone touched it: a task
+            waiting three weeks and chased yesterday is fine; one nobody has touched in a month
+            is not, and the age alone cannot tell them apart.
+          </p>
+
+          <SectionLabel>Longest first</SectionLabel>
+          <div style={vp.wide?autoGrid(340,12):null}>
+          {w.named.map(g=>(
+            <div key={g.name} style={{...card,padding:0,overflow:"hidden"}}>
+              <div style={{padding:"11px 14px",background:"#FBFAF5",borderBottom:"1px solid "+LINE}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:8}}>
+                  <span style={{fontSize:14.5,fontWeight:700,color:INK}}>{g.name}</span>
+                  <span style={{fontSize:11.5,color:MUTED,whiteSpace:"nowrap"}}>
+                    {g.count} task{g.count===1?"":"s"}</span>
+                </div>
+                <div style={{fontSize:11.5,color:MUTED,marginTop:3}}>
+                  <b style={{color:g.days>1000?RED:AMBER}}>{g.days.toLocaleString()} days</b> carried
+                  {" · oldest "}{g.oldest}d
+                  {g.noReason>0&&<span style={{color:AMBER}}> · {g.noReason} with no reason</span>}
+                  {g.stale>0&&<span style={{color:RED}}> · {g.stale} unchased over a month</span>}
+                </div>
+              </div>
+              {g.tasks.slice(0,5).map(t=>(
+                <div key={t.id} style={{padding:"9px 14px",borderTop:"1px solid "+LINE}}>
+                  <div style={{fontSize:12.5,color:INK,lineHeight:1.4}}>{t.subject}</div>
+                  <div style={{fontSize:11,color:MUTED,marginTop:2}}>
+                    {t.type} · {me.manager?nameOf(roster,t.owner)+" · ":""}
+                    <b style={{color:t.age>180?RED:t.age>60?AMBER:MUTED}}>{t.age}d old</b>
+                    {t.quiet!=null&&<span style={{color:t.quiet>30?RED:MUTED}}> · quiet {t.quiet}d</span>}
+                    {!t.hasReason&&<span style={{color:AMBER}}> · no reason</span>}
+                  </div>
+                </div>))}
+              {g.tasks.length>5&&<div style={{padding:"8px 14px",borderTop:"1px solid "+LINE,
+                fontSize:11.5,color:MUTED}}>and {g.tasks.length-5} more.</div>}
+            </div>))}
+          </div>
+
+          {w.unnamed&&w.unnamed.count>0&&<React.Fragment>
+            <SectionLabel>Waiting on nobody in particular</SectionLabel>
+            <div style={{...card,borderLeft:"4px solid "+RED}}>
+              <div style={{fontSize:13.5,color:INK,lineHeight:1.5}}>
+                <b>{w.unnamed.count} task{w.unnamed.count===1?"":"s"}</b> carrying{" "}
+                <b>{w.unnamed.days.toLocaleString()} days</b> have no agent and no contact recorded.
+              </div>
+              <p style={{fontSize:12,color:MUTED,margin:"7px 0 0",lineHeight:1.45}}>
+                A task cannot be chased if the person to chase was never written down. These are
+                the ones to name or close.
+              </p>
+            </div>
+          </React.Fragment>}
+        </React.Fragment>}
+      </div>
+    </Shell>);}
+
   // ---- full day review ----------------------------------------------------
   if(view==="review"){
     if(!me.manager) return <Denied onBack={()=>setView("home")}/>;
@@ -1290,6 +1393,7 @@ function MiniChart({labels,seriesA,seriesB,colorA,colorB,legendA,legendB}){
   </div>;
 }
 
+const nameOf=(roster,sid)=>{const p=(roster||[]).find(x=>x.staffId===sid);return p?p.name.split(' ')[0]:sid;};
 const Legend=({color,label})=><span style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:MUTED,fontWeight:600}}><span style={{width:10,height:10,borderRadius:3,background:color}}/>{label}</span>;
 function SectionLabel({children}){return<div style={{display:"flex",alignItems:"center",gap:10,margin:"22px 0 10px"}}><span style={{fontSize:11,fontWeight:800,letterSpacing:1.1,textTransform:"uppercase",color:NAVY}}>{children}</span><span style={{flex:1,height:1,background:GOLD,opacity:0.45}}/></div>;}
 const Field=({label,children})=><div style={{marginBottom:10}}><label style={{display:"block",fontSize:11,fontWeight:600,color:MUTED,marginBottom:4}}>{label}</label>{children}</div>;
