@@ -743,7 +743,8 @@ function renderChrome(){
   $('nav').innerHTML = links.map(([k,l])=>
     `<a data-go="${k}" class="${screen===k?'on':''}">${l}</a>`).join('')
     // the wall is a branch display, not something a client should be handed
-    + (role==='manager' ? '<a href="pendings.html" target="_blank" rel="noopener">Pendings ↗</a>' : '')
+    + (role==='manager' ? '<a href="pendings.html" target="_blank" rel="noopener">Pendings ↗</a>'
+                        + '<a href="upload.html" target="_blank" rel="noopener">Billing upload ↗</a>' : '')
     + (role!=='client' ? '<a href="wall.html" target="_blank" rel="noopener">Wall ↗</a>' : '');
   const m=ME[role];
   $('me').innerHTML = `<b>${m.name}</b><span class="label">${m.sub}</span>
@@ -2187,6 +2188,12 @@ document.addEventListener('click',e=>{
         return;
       }
       const [anum,name,,rrole,unit,title]=row;
+      /* Hand the signed-in identity to the sibling pages (pendings, upload)
+         so an administrator signs in once, here, rather than keeping a
+         second code per page. Same-origin only — nothing leaves the site —
+         and pages decide for themselves which roles they admit. */
+      try{ localStorage.setItem('rrb-signin',
+        JSON.stringify({ code:anum, name, role:rrole, title, at:Date.now() })); }catch(e){}
       if(rrole==='manager'){
         role='manager';
         ME.manager={name:name,sub:title+' · Chaguanas',role:'manager'};
@@ -2202,7 +2209,9 @@ document.addEventListener('click',e=>{
     authed=true; screen='home'; syncRole(); render(); return;
   }
   if(t.dataset.demo){ role=t.dataset.demo; authed=true; screen='home'; syncRole(); render(); return; }
-  if(t.hasAttribute('data-logout')){ authed=false; screen='login'; WIZ=null; openId=null; render(); return; }
+  if(t.hasAttribute('data-logout')){ authed=false; screen='login'; WIZ=null; openId=null;
+    try{ localStorage.removeItem('rrb-signin'); }catch(e){}
+    render(); return; }
 
   if(t.hasAttribute('data-wnext')){ saveStep(); WIZ.step++; render(); return; }
   if(t.hasAttribute('data-wback')){ saveStep(); WIZ.step--; render(); return; }

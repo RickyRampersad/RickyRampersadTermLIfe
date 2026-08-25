@@ -202,6 +202,19 @@
    ═══════════════════════════════════════════════════════════════════════ */
 const API = "";
 const STAFF_CODE = "RRB2026";
+
+/* Managers signed in at the portal walk straight in — same hand-off the
+   pendings page reads. The staff code stays for the assistant, who is not
+   on the agent roster. */
+const HANDOFF_KEY = "rrb-signin";
+let IDENTITY = null;
+function handoff(){
+  try{
+    const d = JSON.parse(localStorage.getItem(HANDOFF_KEY) || 'null');
+    if(!d || !d.at || (Date.now() - d.at) > 12*3600*1000) return null;
+    return d;
+  }catch(e){ return null; }
+}
 const SESSION_KEY = "rrb-upload-ok";
 
 /* Sample book — invented companies, real shapes.
@@ -1441,6 +1454,7 @@ function monthName(){
 async function publish(){
   const btn = $('pub'); btn.disabled = true; btn.textContent = 'Publishing…';
   const payload = { action:'publishbilling', group:group.id, groupName:group.name, month:$('mon').value,
+    by: IDENTITY ? IDENTITY.name : 'Branch staff', byCode: IDENTITY ? IDENTITY.code : null,
     email: draftEmail(),
     lineTotals: Object.keys(LINES).filter(k => group.lines.includes(k))
       .reduce((o,k) => (o[k] = lineTotal(k), o), {}),
@@ -1486,7 +1500,14 @@ $('theme').addEventListener('click', () => {
 });
 
 /* ── the door ── */
-function open_(){ $('gate').hidden = true; $('app').hidden = false; paintDocs(); }
+function open_(){
+  $('gate').hidden = true; $('app').hidden = false;
+  if(IDENTITY){
+    const sub = document.querySelector('header .sub');
+    if(sub) sub.textContent = 'Signed in as ' + IDENTITY.name + ' — ' + sub.textContent;
+  }
+  paintDocs();
+}
 function tryCode(){
   const v = ($('code').value||'').trim().toUpperCase();
   if(v === STAFF_CODE){ try{ sessionStorage.setItem(SESSION_KEY,'1'); }catch(e){} open_(); }
@@ -1494,7 +1515,10 @@ function tryCode(){
 }
 $('go').addEventListener('click', tryCode);
 $('code').addEventListener('keydown', e => { if(e.key==='Enter') tryCode(); });
-try{ if(sessionStorage.getItem(SESSION_KEY)==='1') open_(); }catch(e){}
+/* Portal-signed managers first, then the assistant's session code. */
+const ho = handoff();
+if(ho && ho.role === 'manager'){ IDENTITY = ho; open_(); }
+else { try{ if(sessionStorage.getItem(SESSION_KEY)==='1') open_(); }catch(e){} }
 </script>
 </body>
 </html>

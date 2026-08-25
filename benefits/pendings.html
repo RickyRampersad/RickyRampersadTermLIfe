@@ -115,6 +115,8 @@
   <h2>Administrators only</h2>
   <p>This list spans every group on the book, so it shows one client's members alongside another's.
      Administrators only — not agents, not employers, not their staff.</p>
+  <p>Managers: sign in on the <a href="index.html">portal</a> and open Pendings from the menu —
+     no code needed. The code below is the branch fallback.</p>
   <input id="code" placeholder="ADMIN CODE" autocomplete="off">
   <button class="btn" id="go">Open</button>
   <div class="err" id="gerr"></div>
@@ -136,6 +138,7 @@
         <option value="PENSION">Pension</option>
       </select>
       <input id="f-text" placeholder="Find a name" autocomplete="off">
+      <span class="note" id="who" style="align-self:center"></span>
       <button class="btn ghost" onclick="window.print()">Print</button>
       <button class="btn ghost" id="theme">Theme</button>
     </div>
@@ -259,6 +262,36 @@ const API = "";
    admit only the former. */
 const ADMIN_CODE = "RRB-ADMIN-2026";
 const SESSION_KEY = "rrb-pendings-ok";
+
+/* ── who gets in ──
+   Administrators are the managers on the branch roster, and they sign in at
+   the portal — index.html validates the agent number and password there, and
+   hands the identity to this page through same-origin storage. So the normal
+   path is: sign in once at the portal, open Pendings from the nav, and this
+   gate never appears.
+
+   The typed code below is the break-glass: one shared branch code for the
+   day the portal is down or someone is on a machine mid-crisis. It cannot say
+   WHO opened the page, which is why the roster path is the normal one — notes
+   save with the author's name, and access ends by removing someone from the
+   roster rather than by re-issuing a shared secret to everyone else.
+
+   None of this is cryptography; it is a door on a public static page showing
+   sample rows. The day the branch script serves real rows, the script must
+   check the identity again server-side — read the POST's `by` and `code`
+   against the roster sheet — because anything only the browser checks, the
+   browser can be talked out of. */
+const HANDOFF_KEY = "rrb-signin";
+const HANDOFF_MAX_H = 12;
+let IDENTITY = null;
+
+function handoff(){
+  try{
+    const d = JSON.parse(localStorage.getItem(HANDOFF_KEY) || 'null');
+    if(!d || !d.at || (Date.now() - d.at) > HANDOFF_MAX_H*3600*1000) return null;
+    return d;
+  }catch(e){ return null; }
+}
 
 /* Sample rows — invented people at real ages, so the ageing bands and the
    sort can be worked on without live data on screen. */
@@ -440,15 +473,20 @@ document.addEventListener('focusout', e => {
   const row = DATA.find(r => r.id === id);
   if(!row || row.note === text) return;
   row.note = text;
+  /* A note without an author is a note nobody can ask about. */
+  row.noteBy = IDENTITY ? IDENTITY.name : 'Branch admin';
+  row.noteAt = new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short'})
+             + ' ' + new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
   t.classList.toggle('filled', !!text);
   const cell = $('s-'+id);
   if(cell) cell.innerHTML = '<span class="saved">saving…</span>';
   const done = ok => { if(cell) cell.innerHTML = ok
-    ? '<span class="saved">saved just now</span>'
+    ? '<span class="saved">saved just now</span><br><span class="note">' + esc(row.noteBy) + '</span>'
     : '<span class="note" style="color:var(--stop)">not saved — try again</span>'; };
   if(!API){ setTimeout(()=>done(true), 250); paintKpisOnly(); return; }
   fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify({ action:'pendingnote', id, text }) })
+    body: JSON.stringify({ action:'pendingnote', id, text,
+      by: row.noteBy, code: IDENTITY ? IDENTITY.code : null }) })
     .then(r => r.json()).then(d => done(d && d.ok !== false)).catch(() => done(false));
   paintKpisOnly();
 });
@@ -476,6 +514,15 @@ $('theme').addEventListener('click', () => {
 function open_(){
   document.getElementById('gate').hidden = true;
   document.getElementById('app').hidden = false;
+  const w = document.getElementById('who');
+  if(w) w.innerHTML = IDENTITY
+    ? `Signed in as <b>${esc(IDENTITY.name)}</b> · <a id="out" style="cursor:pointer">sign out</a>`
+    : `Branch admin code · <a id="out" style="cursor:pointer">sign out</a>`;
+  const o = document.getElementById('out');
+  if(o) o.addEventListener('click', () => {
+    try{ sessionStorage.removeItem(SESSION_KEY); localStorage.removeItem(HANDOFF_KEY); }catch(e){}
+    location.reload();
+  });
   load();
 }
 function tryCode(){
@@ -485,9 +532,12 @@ function tryCode(){
 }
 document.getElementById('go').addEventListener('click', tryCode);
 document.getElementById('code').addEventListener('keydown', e => { if(e.key==='Enter') tryCode(); });
-/* Session only — closing the tab shuts it again, which is what you want on a
-   machine other people use. */
-try{ if(sessionStorage.getItem(SESSION_KEY)==='1') open_(); }catch(e){}
+/* Managers signed in at the portal walk straight through; the roster path
+   knows who they are. The break-glass code stays session-only — closing the
+   tab shuts it again, which is what you want on a machine other people use. */
+const ho = handoff();
+if(ho && ho.role === 'manager'){ IDENTITY = ho; open_(); }
+else { try{ if(sessionStorage.getItem(SESSION_KEY)==='1') open_(); }catch(e){} }
 </script>
 </body>
 </html>
