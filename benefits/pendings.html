@@ -88,6 +88,13 @@
   .a-info{border-color:#A8CEDA;background:#EEF7FA} .a-flag{border-color:#E8C98A;background:#FDF6E7}
   :root[data-theme="dark"] .a-info,:root[data-theme="dark"] .a-flag{background:var(--surface2)}
   .alert b{color:var(--ink)}
+  .a-stop{border-color:#E0A79C;background:#FBEEEB}
+  :root[data-theme="dark"] .a-stop{background:#2E1A16;border-color:#6B3227}
+  tbody tr.misfiled{background:#FDF3F1}
+  :root[data-theme="dark"] tbody tr.misfiled{background:#2A1713}
+  tbody tr.misfiled:hover{background:#F8E7E3}
+  :root[data-theme="dark"] tbody tr.misfiled:hover{background:#331C17}
+  .wrongacct{font-size:11px;color:var(--stop);margin-top:.3rem;line-height:1.4}
   .filters{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
   .filters select,.filters input{border:1px solid var(--line);border-radius:5px;background:var(--surface);
     padding:.35rem .55rem;font-size:13px}
@@ -174,6 +181,30 @@
    at least one account on the book is stored with a double space in the middle
    of its name, so an exact string match silently finds nothing.
 
+   ── Do not trust Account__c on its own ──────────────────────────────────
+   The Account__c lookup is not reliable. A portfolio record also carries
+   ACCOUNTS_NAME__c, the account name as the policy administration system
+   holds it, and on a large number of records the two disagree: the lookup
+   points at one account while the record's own source field names another.
+   Where they disagree it is the lookup that is wrong.
+
+   So the snapshot must pull ACCOUNTS_NAME__c alongside, send it as
+   sourceName, and let this page flag any row where the two do not agree.
+   A row whose account cannot be trusted is worse than a missing row: it
+   puts one client's member on another client's list.
+
+   Anything filtering on the account should carry the agreement as a
+   condition rather than assume it, and a reconciliation should be run
+   before the list is read as complete:
+
+       SELECT Id, Account__r.Name, ACCOUNTS_NAME__c, POLICY__c, Contact__r.Name
+       FROM   CLIENT_PORTFOLIO__c
+       WHERE  Account__c = :SOME_ACCOUNT
+         AND (NOT ACCOUNTS_NAME__c LIKE :SOME_ACCOUNT_NAME_FRAGMENT)
+
+   Anything that comes back is mis-filed and should be repaired at source,
+   not worked around here.
+
 
    API   The branch Apps Script. Two calls:
            GET  ?action=pendings                → the list below
@@ -254,7 +285,12 @@ const SAMPLE = [
   { id:'a10', account:'Meridian Supermarkets Limited', member:'A. Boodhoo',
     line:'PENSION', policy:'TPN0442-00019-00', issued:'2026-06-01', note:'' },
   { id:'a11', account:'Anchorage Services Limited', member:'R. Seepaul',
-    line:'PENSION', policy:'TPN0771-00204-00', issued:'2026-05-01', note:'' }
+    line:'PENSION', policy:'TPN0771-00204-00', issued:'2026-05-01', note:'' },
+  /* Linked to one account, but the policy system says it belongs to another.
+     Left in the sample deliberately: the real book has thousands like it and
+     the screen has to be able to show one. */
+  { id:'a12', account:'Anchorage Services Limited', sourceName:'Northgate Joinery Limited',
+    member:'V. Sooklal', line:'PENSION', policy:'TPN0771-00311-00', issued:'2026-04-01', note:'' }
 ];
 
 const $ = id => document.getElementById(id);
@@ -262,6 +298,19 @@ const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>'
 const dmy = s => s ? new Date(s+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
 const days = s => s ? Math.floor((Date.now() - new Date(s+'T00:00:00')) / 86400000) : null;
 const LINE = { LIFE_GROUP:['Life','p-life'], HEALTH_GROUP:['Health','p-health'], PENSION:['Pension','p-pension'] };
+
+/* Compare account names the way a person would. The policy system writes the
+   same company several ways — trailing LTD against LIMITED, stray double
+   spaces, an apostrophe that is sometimes curly — so a strict equality test
+   reports honest matches as mismatches and buries the real ones. */
+const normAcct = s => String(s??'').toUpperCase()
+  .replace(/[\u2018\u2019]/g, "'").replace(/[.,]/g,'')
+  .replace(/\bLIMITED\b/g,'LTD').replace(/\bCOMPANY\b/g,'CO')
+  .replace(/\s+/g,' ').trim();
+const sameAccount = (a, b) => {
+  const x = normAcct(a), y = normAcct(b);
+  return !x || !y || x === y || x.startsWith(y) || y.startsWith(x);
+};
 
 /* Bands chosen for what this actually is. A group application that has sat
    for a year is not "slow" — it is almost certainly settled and never
@@ -323,11 +372,22 @@ function paint(){
     kpi(withNote + ' of ' + rows.length, 'With a reason recorded',
         withNote < rows.length ? (rows.length - withNote) + ' still blank' : 'all accounted for');
 
+  /* A row whose account lookup disagrees with the policy system is not a
+     detail — it is this client's list showing another client's member. */
+  rows.forEach(r => { r.misfiled = !!(r.sourceName && !sameAccount(r.sourceName, r.account)); });
+  const misfiled = rows.filter(r => r.misfiled);
   const flags = rows.filter(r => r.flag);
   $('flags').innerHTML = [
     (()=>{ const lines = ['LIFE_GROUP','HEALTH_GROUP','PENSION'].filter(l => !DATA.some(r => r.line===l));
       return lines.length ? `<div class="alert a-info">Nothing pending on ${
         lines.map(l => LINE[l][0].toLowerCase()).join(' or ')}.</div>` : ''; })(),
+    misfiled.length ? `<div class="alert a-stop"><b>${misfiled.length === 1
+      ? 'One row is filed against the wrong account.'
+      : misfiled.length + ' rows are filed against the wrong account.'}</b>
+      The account each is linked to is not the account the policy system names
+      — ${misfiled.slice(0,3).map(r => esc(r.member) + ' → ' + esc(r.sourceName)).join(', ')}${
+        misfiled.length > 3 ? ' and ' + (misfiled.length-3) + ' more' : ''}.
+      Treat these as another client's records until they are repaired at source.</div>` : '',
     overYear ? `<div class="alert a-flag"><b>${overYear} of these have been pending for more than a year.</b>
       An application that old is rarely still in underwriting — it has usually settled and nobody updated the record,
       or it lapsed. Worth clearing the list before anyone reads a count off it.</div>` : '',
@@ -338,8 +398,9 @@ function paint(){
   $('rows').innerHTML = rows.length ? rows.map(r => {
     const d = days(r.issued), [ln,cls] = LINE[r.line] || [r.line,'p-life'];
     const pct = d==null ? 0 : Math.min(100, d/1200*100);
-    return `<tr>
-      <td>${esc(r.account)}</td>
+    return `<tr${r.misfiled ? ' class="misfiled"' : ''}>
+      <td>${esc(r.account)}${r.misfiled
+        ? `<div class="wrongacct">policy system says<br><b>${esc(r.sourceName)}</b></div>` : ''}</td>
       <td><b>${esc(r.member)}</b></td>
       <td><span class="pill ${cls}">${ln}</span></td>
       <td class="mono" style="font-size:12.5px">${esc(r.policy||'—')}</td>
