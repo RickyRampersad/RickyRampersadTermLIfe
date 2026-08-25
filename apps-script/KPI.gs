@@ -580,11 +580,15 @@ function isManager_(person) {
   // Ask roleFor_ rather than reading the same cells again here. Two places
   // deriving the same answer from the same words is how "Branch Mgr" managed to
   // be a Branch Manager for the KPI list and a Sales Support Assistant for the
-  // reports. The Assistant Branch Manager deputises, so he sees the branch; a
-  // Branch Manager's Assistant does not — different job, similar words, and
-  // roleFor_ is the one place that tells them apart.
+  // reports.
+  //
+  // The Branch Manager alone sees the branch. Not the Assistant Branch Manager,
+  // not a Unit Manager, not the BMA — everyone else sees their own entries and
+  // their own Salesforce position, whatever their title says. Seeing the whole
+  // branch is one person's job here, and it is a separate question from
+  // seniority: roleFor_ decides the KPI list, this decides the reach.
   var r = roleFor_(person);
-  if (r === 'bm' || r === 'abm') return true;
+  if (r === 'bm') return true;
   return /administrator|\badmin\b/.test(normRole_((person.role || '') + ' ' + (person.unit || '')));
 }
 
