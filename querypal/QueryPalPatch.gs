@@ -409,12 +409,19 @@ function qpTouchMap_() {
     if (!ref) continue;
     var who = String(d[i][2] || ''), role = String(d[i][3] || '').toLowerCase(),
         txt = String(d[i][4] || '');
-    if (!out[ref]) out[ref] = { human: 0, sys: 0, autoClosed: false, humanClosed: false };
+    if (!out[ref]) out[ref] = { human: 0, sys: 0, autoClosed: false, humanClosed: false,
+                                closedBy: '', closeKind: '' };
     var rec = out[ref];
     var isSystem = role === 'system' || /^(system|query pal)$/i.test(who.trim());
     if (isSystem) rec.sys++; else rec.human++;
-    if (/auto-closed/i.test(txt)) rec.autoClosed = true;
-    else if (/case closed/i.test(txt)) rec.humanClosed = true;
+    if (/auto-closed/i.test(txt)) { rec.autoClosed = true; rec.closeKind = 'auto'; rec.closedBy = ''; }
+    else if (/case closed/i.test(txt)) {
+      rec.humanClosed = true;
+      // "closed by agent (Name) — self-close" vs "closed in the app by Name"
+      var m = txt.match(/closed by agent \(([^)]+)\)/i) || txt.match(/closed in the app by\s+(.+)$/i);
+      rec.closedBy = m ? String(m[1]).trim() : who.trim();
+      rec.closeKind = /by agent/i.test(txt) ? 'self' : 'app';
+    }
   }
   return out;
 }
@@ -444,7 +451,7 @@ function wallStats_(code, token, days) {
   var midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   var weekAgo = now.getTime() - 7 * dayMs, monthAgo = now.getTime() - 30 * dayMs;
   var intake = { today: 0, week: 0, month: 0, rToday: 0, rWeek: 0, rMonth: 0 };
-  var byStaff = {};
+  var byStaff = {}, closers = {};
   var onT = 0, onTot = 0, dSum = 0, dN = 0, sSum = 0, sN = 0;
   var weeks = {}, byDept = {}, byAgent = {}, byType = {}, age = { ok: 0, soon: 0, late: 0 };
   var scoreDist = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, notes = [];
@@ -516,12 +523,29 @@ function wallStats_(code, token, days) {
         if (closedAt >= monthAgo) intake.rMonth++;
       }
     }
-    // who is actually working it — the Assigned To column
+    // who is actually working it — the Assigned To column. A desk is judged on
+    // what it carries and what it clears, so the departments it deals with and
+    // the split between "they closed it" and "the system closed it" are kept
+    // apart: closing a case the autopilot finished is not the same work.
     var asg = String(row[28] || '').trim();
     if (asg) {
-      if (!byStaff[asg]) byStaff[asg] = { n: 0, done: 0 };
-      byStaff[asg].n++;
-      if (isDone) byStaff[asg].done++;
+      if (!byStaff[asg]) byStaff[asg] = { n: 0, done: 0, open: 0, self: 0, auto: 0,
+                                          late: 0, depts: {}, types: {} };
+      var st = byStaff[asg];
+      st.n++;
+      if (isDone) {
+        st.done++;
+        if (tk.closeKind === 'auto') st.auto++;
+        else if (tk.closeKind) st.self++;
+      } else st.open++;
+      if (dept) st.depts[dept] = (st.depts[dept] || 0) + 1;
+      if (type) st.types[type] = (st.types[type] || 0) + 1;
+    }
+
+    // who is closing their own cases — the branch should be able to see it
+    if (isDone && tk.closedBy) {
+      if (!closers[tk.closedBy]) closers[tk.closedBy] = { self: 0, app: 0 };
+      closers[tk.closedBy][tk.closeKind === 'self' ? 'self' : 'app']++;
     }
 
     var dRec = bump(byDept, dept), aRec = bump(byAgent, agent), tRec = bump(byType, type);
@@ -545,7 +569,8 @@ function wallStats_(code, token, days) {
 
     if (!isDone) {
       var due = deadlineAt_(ts, row[15]), left = (due.getTime() - now.getTime()) / 86400000;
-      if (left < 0)      { age.late++; overdue++; if (dRec) dRec.late++; if (aRec) aRec.late++; }
+      if (left < 0)      { age.late++; overdue++; if (dRec) dRec.late++; if (aRec) aRec.late++;
+                           if (asg && byStaff[asg]) byStaff[asg].late++; }
       else if (left < 1)   age.soon++;
       else                 age.ok++;
     }
@@ -582,9 +607,26 @@ function wallStats_(code, token, days) {
               ? Math.round(auto.sysActs / (auto.sysActs + auto.humanActs) * 100) : null,
             aloneShare: done ? Math.round(auto.solvedAlone / done * 100) : null },
     staff: (function () {
+      var top3 = function (m) {                       // the desks' busiest lanes
+        var a = [];
+        for (var k in m) a.push({ name: k, n: m[k] });
+        return a.sort(function (x, y) { return y.n - x.n; }).slice(0, 3);
+      };
       var out = [];
-      for (var k in byStaff) out.push({ name: k, n: byStaff[k].n, done: byStaff[k].done });
-      return out.sort(function (a, b) { return b.n - a.n; }).slice(0, 6);
+      for (var k in byStaff) {
+        var s = byStaff[k];
+        out.push({ name: k, n: s.n, done: s.done, open: s.open, late: s.late,
+                   self: s.self, auto: s.auto,
+                   autoShare: s.done ? Math.round(s.auto / s.done * 100) : null,
+                   depts: top3(s.depts), types: top3(s.types) });
+      }
+      return out.sort(function (a, b) { return b.n - a.n; }).slice(0, 8);
+    })(),
+    closers: (function () {
+      var out = [];
+      for (var k in closers) out.push({ name: k, self: closers[k].self, app: closers[k].app,
+                                        total: closers[k].self + closers[k].app });
+      return out.sort(function (a, b) { return b.total - a.total; }).slice(0, 8);
     })(),
     depts: flat(byDept), agents: flat(byAgent), types: flat(byType).slice(0, 8)
   });
