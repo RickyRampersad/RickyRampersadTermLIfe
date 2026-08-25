@@ -167,7 +167,12 @@
      WHERE  Policy_Status_Description_R__c = 'Pending'
        AND (RecordType.DeveloperName IN ('LIFE_GROUP','HEALTH_GROUP')
             OR (RecordType.DeveloperName = 'PENSION'
-                AND Account__r.RecordType.Name IN ('BUSINESS ACCOUNT','COMMERCIAL CLIENT')))
+                AND Account__r.Name IN :PENSION_SCHEME_ACCOUNTS))
+
+   …where PENSION_SCHEME_ACCOUNTS is the named list from the sheet. Match the
+   names exactly as Salesforce stores them, and normalise before comparing:
+   at least one account on the book is stored with a double space in the middle
+   of its name, so an exact string match silently finds nothing.
 
 
    API   The branch Apps Script. Two calls:
@@ -184,10 +189,20 @@
 
      Pensions do not. There is no group pension record type; a pension is a
      pension whether it belongs to a person or to a company scheme. What makes
-     one a group pension is the account it hangs off, so the filter is the
-     company: CLIENT_PORTFOLIO__c of record type PENSION whose Account record
-     type is BUSINESS ACCOUNT or COMMERCIAL CLIENT. About 10,700 records
-     qualify, against roughly 31,000 household accounts that must not.
+     one a group pension is the account it hangs off — so it has to be keyed on
+     the company.
+
+     Filtering on the account RECORD TYPE is not good enough. Business and
+     commercial accounts between them hold about 10,700 pension records, and
+     that sweeps in a bank with nearly nine thousand of its own, plus accounts
+     literally named SELF EMPLOYED, PROJECTS and Lapses. The branch runs a
+     handful of group pension schemes, not hundreds.
+
+     So the list of scheme accounts is named, and it is held in the branch
+     sheet rather than here — the page shows whatever pension rows the snapshot
+     sends it. Keeping the list there means client names stay out of a public
+     repository, and the list is maintained by whoever runs the book instead of
+     by editing code.
 
    The list is a snapshot, not a live query — Apps Script pulls it from
    Salesforce on a schedule and the browser never holds credentials. A book
@@ -237,7 +252,9 @@ const SAMPLE = [
   { id:'a9', account:'D Rampersad & Company Ltd', member:'D. John',
     line:'HEALTH_GROUP', policy:'TPG0864-00023-00', issued:'2024-08-01', note:'' },
   { id:'a10', account:'Meridian Supermarkets Limited', member:'A. Boodhoo',
-    line:'PENSION', policy:'TPN0442-00019-00', issued:'2026-06-01', note:'' }
+    line:'PENSION', policy:'TPN0442-00019-00', issued:'2026-06-01', note:'' },
+  { id:'a11', account:'Anchorage Services Limited', member:'R. Seepaul',
+    line:'PENSION', policy:'TPN0771-00204-00', issued:'2026-05-01', note:'' }
 ];
 
 const $ = id => document.getElementById(id);
