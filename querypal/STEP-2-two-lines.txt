@@ -1,0 +1,86 @@
+QUERY PAL — STEP 2. TWO LINES. THAT IS ALL.
+===========================================
+
+You have already done Step 1: QueryPalPatch is saved in Apps Script. Good.
+
+Step 2 adds two lines to Code.gs so the wall can ask for its data.
+You are ADDING lines. You are not deleting or changing anything.
+
+
+WHERE TO PUT THEM
+-----------------
+1. In Apps Script, click  Code.gs  in the list on the left.
+2. Press  Command + F  to open the little search box.
+3. Type (or paste) this and press Return:
+
+myqueries
+
+4. It will highlight this line:
+
+  if (p.action === 'myqueries') return myQueries_(p.code);
+
+5. Click at the very END of that line, after the semicolon ;
+6. Press Return to make a new empty line underneath it.
+7. Paste the two lines below into that empty space.
+
+
+THE TWO LINES — copy everything between the dashes
+--------------------------------------------------
+  if (p.action === 'wall')      return wallStats_(p.code, p.token, p.days);
+  if (p.action === 'health')    return json(qpHealth_());
+--------------------------------------------------
+
+
+IT SHOULD NOW LOOK LIKE THIS
+----------------------------
+  if (p.action === 'myqueries') return myQueries_(p.code);
+  if (p.action === 'wall')      return wallStats_(p.code, p.token, p.days);
+  if (p.action === 'health')    return json(qpHealth_());
+  if (p.action === 'clientauth') return clientAuth_(e);
+
+The first and last lines were already there. The two in the middle are new.
+
+
+THEN SAVE
+---------
+Press  Command + S
+
+
+STEP 3 — PUBLISH IT (this is the part people miss)
+--------------------------------------------------
+Saving changes nothing on the live site. You have to publish.
+
+  Deploy   (blue button, top right)
+    -> Manage deployments
+    -> the pencil  (edit)
+    -> Version:  choose  New version      <-- MUST be "New version"
+    -> Deploy
+
+If you pick the existing version instead of "New version", nothing happens.
+
+
+HOW TO KNOW IT WORKED
+---------------------
+Open this in Safari:
+
+https://script.google.com/macros/s/AKfycbxHFobr89jyLMK-CL5cUxs8GhYtkvTVbbqeDo9L5RgUxMGlbFBKK0vanwEjf49gCakpAw/exec?action=health
+
+BEFORE, it says:      RRB Query Pal logger is live. v10.2-CLIENT-PORTAL
+AFTER, it says:       {"ok":true,"version":...   lots of curly brackets
+
+Curly brackets = it worked. Then open qpwall.html again and the numbers
+will fill in by themselves.
+
+If it still says "logger is live", the Deploy did not take. Do the
+Deploy steps again and make sure you chose "New version".
+
+
+IF SOMETHING GOES WRONG
+-----------------------
+Nothing is lost. Your data lives in the Google Sheet and is never touched
+by any of this. To go back:
+
+  Deploy -> Manage deployments -> pencil -> Version -> pick the older
+  number -> Deploy
+
+You are back where you started.
