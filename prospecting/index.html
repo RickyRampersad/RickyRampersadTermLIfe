@@ -243,7 +243,20 @@
         <div class="linkbox" id="lnk">Your link appears here once you type a first name.</div>
       </div>
 
-      <p class="msg" id="waMsg"></p>
+      <div class="fld" style="margin-top:2px">
+        <label style="display:flex;justify-content:space-between;align-items:baseline">
+          <span>Your message</span>
+          <button type="button" id="msgReset"
+            style="background:none;border:0;color:var(--teal);font:700 12px Inter,sans-serif;
+                   cursor:pointer;padding:0;text-decoration:underline">Reset to the standard one</button>
+        </label>
+        <textarea id="waMsg" rows="9"
+          style="width:100%;border:1.5px solid var(--line);border-radius:10px;padding:12px 13px;
+                 font:15px/1.55 Inter,sans-serif;background:var(--sunk);color:var(--ink);
+                 resize:vertical"></textarea>
+        <p style="font-size:12.5px;color:var(--muted);margin:6px 2px 0;line-height:1.5">
+          Edit it if you want. The link is added at the end when you send.</p>
+      </div>
 
       <div class="two" style="gap:9px">
         <button class="btn wa" id="sendWa" type="button">Send on WhatsApp</button>
@@ -417,26 +430,64 @@
   var pf = document.getElementById('pf'), pw = document.getElementById('pw');
   var lnk = document.getElementById('lnk'), waMsg = document.getElementById('waMsg');
 
+  /* The link goes to the advisor's own address, /meet/a/CODE/, not to /meet/
+     with their code on the query string.
+
+     Both land the prospect in the same place. The difference is the grey box
+     WhatsApp draws when the link is pasted: it fetches the address once,
+     without running any JavaScript, so a name on the query string never
+     reaches it. Every advisor's link previewed as one advisor's name for
+     exactly that reason. A page per advisor is the only thing WhatsApp will
+     read differently, so there is one, and it carries their name and forwards
+     the prospect on with everything else on the link intact.
+
+     a and n are left off here — the advisor's own page sets them. */
   function link(){
-    var p = new URLSearchParams({ a:AGENT, n:ADVISOR, t:TOKEN });
+    var p = new URLSearchParams({ t:TOKEN });
     var name = pf.value.trim();
     if (name) p.set('c', name);
     if (YEARS && FAMILIES) { p.set('y', YEARS); p.set('f', FAMILIES); }
-    return PAGE + '?' + p.toString();
+    return PAGE + 'a/' + encodeURIComponent(AGENT) + '/?' + p.toString();
   }
-  function message(){
+  /* The message is about how this advisor works, not about insurance.
+     Anybody can send a prospect a product. Almost nobody can tell them their
+     file is checked by a manager before they ever see it, that every
+     recommendation carries a written reason, and that they can walk away with
+     part of it or none of it. That is the whole difference and it was not
+     being said - the old message asked them to watch a video and offered no
+     reason to. */
+  function standardMessage(){
     var name = pf.value.trim() || 'there';
-    return 'Hi ' + name + ' — before we meet, this is how I work and what happens in the ' +
-           'appointment. About a minute. There is a spot at the bottom to tell me what you ' +
-           'want to talk about, so I come with the right numbers.\n\n' + link() +
-           '\n\n' + ADVISOR + ', Ricky Rampersad Branch';
+    return 'Hi ' + name + ' — before we meet, this is how I work.\n\n' +
+           'The numbers are worked out in front of you, not sent afterwards. ' +
+           'Every recommendation carries a written reason. A manager checks the ' +
+           'file before you see it, and you keep your own copy of everything.\n\n' +
+           'You take all of it, some of it, or none of it.\n\n' +
+           'About a minute to watch. There is a spot at the end to tell me what is ' +
+           'actually on your mind, so I come with the right numbers.\n\n' +
+           '— ' + ADVISOR + ', Ricky Rampersad Branch';
   }
+
+  /* What actually gets sent: whatever is in the box, with the link on the end.
+     The link is appended at send time rather than sitting in the box, so an
+     advisor rewriting the message cannot delete the thing being sent. */
+  function message(){
+    var typed = (waMsg && typeof waMsg.value === 'string')
+      ? waMsg.value.trim() : '';
+    return (typed || standardMessage()) + '\n\n' + link();
+  }
+  /* Retyping the prospect's name should update the greeting — but not wipe a
+     message the advisor has written themselves. */
+  var msgEdited = false;
   function refresh(){
     lnk.textContent = link();
-    waMsg.innerHTML = '<b>What they get:</b><br>' +
-      esc(message()).replace(/\n/g,'<br>');
+    if (!msgEdited) waMsg.value = standardMessage();
   }
   pf.addEventListener('input', refresh);
+  waMsg.addEventListener('input', function(){ msgEdited = true; });
+  document.getElementById('msgReset').addEventListener('click', function(){
+    msgEdited = false; refresh(); waMsg.focus();
+  });
   refresh();
 
   document.getElementById('sendWa').addEventListener('click', function(){
