@@ -249,15 +249,6 @@ var SCHEDULE = {
       PM2:  { time: '3 – 4pm',   focus: 'Task Mgmt / Branch Meeting Reports',        kpi: 'Reporting' }
     }
   },
-  ashley: {
-    hours: '9am – 5pm', lunch: '1:00 – 2:00pm',
-    blocks: {
-      KPI1: { time: '9 – 10am',  focus: 'Client Portfolio creation, Macros, Surveys', kpi: 'Client Portfolios / Macros' },
-      KPI2: { time: '10 – 1pm',  focus: 'Scripts / Clawbacks / Servicing Lines',     kpi: 'Scripts/CB' },
-      PM1:  { time: '2 – 3pm',   focus: 'Mail Management',                            kpi: 'Mail Management / Contracts' },
-      PM2:  { time: '3 – 5pm',   focus: 'Claims / Maturities / Surveys & Task Mgmt', kpi: 'Claims/ Mat' }
-    }
-  },
   kamla: {
     hours: '8am – 4pm', lunch: 'Flexible',
     blocks: {
@@ -333,7 +324,7 @@ var DEFAULT_SCHEDULE = {
 var REPORTS_TO = {
   kerwyn: 'ricky', akaash: 'ricky', gary: 'kerwyn',
   kamla: 'ricky',
-  sasha: 'kamla', azariah: 'kamla', ashley: 'kamla', elizabeth: 'kamla'
+  sasha: 'kamla', azariah: 'kamla', elizabeth: 'kamla'
 };
 
 function scheduleFor_(staffId) { return SCHEDULE[staffId] || DEFAULT_SCHEDULE; }
@@ -524,14 +515,6 @@ function roster_() {
 /** Which KPI list a person gets, read from the Role and Unit columns.
  *  Assistant is checked before manager, because "Branch Manager's Assistant"
  *  contains the word manager and is not one. */
-/** The Access tab currently has two people mislabelled: Kamla's Unit reads
- *  SalesSupport and Ashley's reads Branch Managers Assistant, which is the
- *  wrong way round against what each of them has actually been logging since
- *  June. Reading the sheet faithfully would hand them each other's KPI list.
- *
- *  So these two are pinned until the tab is corrected, and checkSchedule()
- *  reports the disagreement rather than letting it pass silently. Delete an
- *  entry the moment its row is fixed. */
 // A pin overrides the Access tab for one person. It is the escape hatch for a
 // row that is wrong, not a place to keep the real answer — checkSchedule()
 // names everyone pinned so the pin gets removed once the tab is corrected.

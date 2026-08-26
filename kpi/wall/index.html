@@ -93,6 +93,15 @@
   .kpi .v{font-size:5.6vh;font-weight:800;letter-spacing:-.02em;margin:.7vh 0 .3vh}
   .kpi .d{font-size:1.7vh;color:var(--muted)}
   .kpi.gold .v{color:var(--gold)} .kpi.red .v{color:var(--red)} .kpi.green .v{color:var(--green)}
+  .kpi.teal .v{color:var(--teal)}
+  .kpi{position:relative;overflow:hidden}
+  .kpi::after{content:"";position:absolute;left:0;top:0;bottom:0;width:.35vw;background:var(--line)}
+  .kpi.gold::after{background:var(--gold)} .kpi.red::after{background:var(--red)}
+  .kpi.green::after{background:var(--green)} .kpi.teal::after{background:var(--teal)}
+  .when{display:grid;grid-template-columns:auto 1fr;gap:1vw 1.2vw;align-items:baseline}
+  .when .t{font-size:3.4vh;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .when .w{font-size:2.1vh;line-height:1.35}
+  .when .w b{color:#fff} .when .w span{color:var(--muted);display:block;font-size:1.7vh;margin-top:.3vh}
   .rows .row{display:grid;grid-template-columns:1.15fr 2fr auto auto;gap:1vw;
              align-items:center;margin-bottom:1.5vh;font-size:2vh}
   .rows .nm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -193,9 +202,10 @@ const TASKS={
       "Renewa/PDl/Bill":{n:7,d:33},"Pendings":{n:1,d:6}}},
     Elizabeth:{open:5,overdue:0,aged:0,closed30:80,types:{
       "Renewa/PDl/Bill":{n:2,d:20},"Claims/ Mat":{n:1,d:8},
-      "Scripts/CB":{n:1,d:1},"Servicing":{n:1,d:1}}},
-    Ashley:{open:0,overdue:0,aged:0,closed30:0,types:{}}
+      "Scripts/CB":{n:1,d:1},"Servicing":{n:1,d:1}}}
   },
+  branch:{ open:225, overdue:150, days:20845, oldest:3836, noReason:134,
+           closed30:1255, people:5 },
   waiting:{ total:141, days:9775, quiet30:43, unnamed:64, unnamedDays:1891,
             top:[{n:"Ricky (agent feedback)",t:50,d:5631},
                  {n:"Named agents & clients", t:27,d:2253},
@@ -358,6 +368,50 @@ function sReconcile(cards){
     "<th>Who</th><th>Logged against</th><th>Blocks</th><th>Open in that type</th><th>Age carried</th>"+
     "</tr></thead><tbody>"+rows+"</tbody></table></div></div>";
 }
+// The branch in one screen. Cards, not prose — this one is read from the
+// back of the room in the four seconds somebody glances up.
+function sNumbers(cards){
+  const B=TASKS.branch;
+  const inToday=cards.filter(c=>c.done>0).length;
+  const late=cards.reduce((n,c)=>n+c.late.length,0);
+  const pct=B.overdue?Math.round(B.overdue/B.open*100):0;
+  return '<div class="kick">4 · The branch in numbers · snapshot '+dstr(TASKS.asOf)+'</div>'+
+    "<h2>What the desk is carrying</h2>"+
+    '<p class="lede">Five people, one open book. Every figure here is a task somebody owns.</p>'+
+    '<div class="body"><div class="kpis">'+
+    '<div class="kpi teal"><div class="k">Open tasks</div><div class="v">'+B.open+
+      '</div><div class="d">across '+B.people+' people</div></div>'+
+    '<div class="kpi red"><div class="k">Past their date</div><div class="v">'+B.overdue+
+      '</div><div class="d">'+pct+'% of the open book</div></div>'+
+    '<div class="kpi red"><div class="k">Days carried</div><div class="v">'+(B.days/1000).toFixed(1)+
+      'k</div><div class="d">oldest single task: '+B.oldest.toLocaleString()+' days</div></div>'+
+    '<div class="kpi gold"><div class="k">Overdue, no reason given</div><div class="v">'+B.noReason+
+      '</div><div class="d">the field exists — it is not being filled</div></div>'+
+    '<div class="kpi green"><div class="k">Closed · last 30 days</div><div class="v">'+B.closed30.toLocaleString()+
+      '</div><div class="d">the work is moving, the pile is not</div></div>'+
+    '<div class="kpi '+(inToday?"green":"red")+'"><div class="k">Logging today</div><div class="v">'+
+      inToday+'/'+cards.length+'</div><div class="d">'+
+      (late?late+' block'+(late>1?'s':'')+' overdue right now':'nothing overdue right now')+'</div></div>'+
+    "</div></div>";
+}
+
+// The tracker chases the day on its own. Staff should know exactly what
+// arrives and when, so nothing feels like being singled out.
+function sRhythm(){
+  const rows=[
+    ["8am","<b>Your blocks are waiting</b><span>Signed in, you land on your own day — the KPI already chosen from the schedule</span>"],
+    ["12pm","<b>Midday nudge</b><span>Nothing logged yet? An email, only to you. Not to the branch</span>"],
+    ["3pm","<b>Finish the day</b><span>Blocks still open? A second reminder — while there is a working hour left</span>"],
+    ["3pm","<b>Branch checkpoint</b><span>Who is in, who is missing, what is blocked — to the Branch Manager</span>"],
+    ["each&nbsp;block","<b>Your receipt</b><span>Every submission emailed straight back to you. Keep them — they are your file</span>"],
+    ["Fri&nbsp;5pm","<b>The week</b><span>Where the week actually went, person by person</span>"]
+  ].map(r=>'<div class="t">'+r[0]+'</div><div class="w">'+r[1]+"</div>").join("");
+  return '<div class="kick">9 · How the day is chased</div>'+
+    "<h2>Nobody has to remember</h2>"+
+    '<p class="lede">Six things happen on their own. None of them is a manager walking over to your desk.</p>'+
+    '<div class="body"><div class="panel" style="height:100%"><div class="when">'+rows+"</div></div></div>";
+}
+
 function sLoad(){
   const P=Object.entries(TASKS.byPerson).map(([n,v])=>({n,...v}));
   const max=Math.max(...P.map(x=>x.open),1);
@@ -370,7 +424,7 @@ function sLoad(){
       '<span class="sub">'+x.overdue+" overdue · "+x.aged+" aged 60d+</span></div>";
   }).join("");
   const tot=P.reduce((s,x)=>s+x.open,0), totO=P.reduce((s,x)=>s+x.overdue,0);
-  return '<div class="kick">4 · Salesforce tasks · snapshot '+dstr(TASKS.asOf)+'</div>'+
+  return '<div class="kick">5 · Who carries it</div>'+
     "<h2>"+tot+" open tasks · "+totO+" past their date</h2>"+
     '<p class="lede">Who carries the branch\'s open book. Red is the overdue share — a rolled due date is not an actioned task.</p>'+
     '<div class="body"><div class="panel"><div class="rows">'+rows+"</div></div></div>";
@@ -395,7 +449,7 @@ function sTypes(cards){
     '<span class="val">'+x.n+'</span><span class="sub">'+x.d.toLocaleString()+" days · "+
     (x.logged?'<span style="color:var(--green)">'+x.logged+" worked today</span>":'<span style="color:var(--red)">nobody on it today</span>')+
     "</span></div>").join("");
-  return '<div class="kick">5 · By task type</div>'+
+  return '<div class="kick">6 · By task type</div>'+
     "<h2>Where the days sit — and who is on them</h2>"+
     '<p class="lede">Open tasks by Salesforce type across the branch. The right-hand note says whether anybody logged a block against that type today.</p>'+
     '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div></div></div>";
@@ -406,7 +460,7 @@ function sFeedback(){
     '<div class="row"><span class="nm">'+esc(x.n)+'</span>'+
     '<span class="track"><i class="red" style="width:'+(x.t/max*100)+'%"></i></span>'+
     '<span class="val">'+x.t+'</span><span class="sub">'+x.d.toLocaleString()+" days</span></div>").join("");
-  return '<div class="kick">6 · Feedback owed</div>'+
+  return '<div class="kick">7 · Feedback owed</div>'+
     "<h2>"+W.total+' tasks marked "waiting on someone"</h2>'+
     '<p class="lede">'+W.days.toLocaleString()+" days of work sits behind a reply. "+W.quiet30+
       " have not been chased in over a month, and "+W.unnamed+
@@ -422,7 +476,7 @@ function sDone(){
     '<span class="track"><i class="green" style="width:'+(x.closed30/max*100)+'%"></i></span>'+
     '<span class="val">'+x.closed30+'</span><span class="sub">closed · '+x.open+" still open</span></div>").join("");
   const tot=P.reduce((s,x)=>s+x.closed30,0);
-  return '<div class="kick">7 · Throughput</div>'+
+  return '<div class="kick">8 · Throughput</div>'+
     "<h2>"+tot.toLocaleString()+" tasks closed in the last 30 days</h2>"+
     '<p class="lede">What is actually being done, next to what is still open. Logging a block and closing a task are different things — this is where you see whether both happened.</p>'+
     '<div class="body"><div class="panel"><div class="rows">'+rows+"</div></div></div>";
@@ -432,7 +486,8 @@ function sDone(){
 let cur=0, timer=null, paused=false;
 function render(rows){
   const cards=judge(rows);
-  const slides=[sBlocks(cards),sWaitingToday(cards),sReconcile(cards),sLoad(),sTypes(cards),sFeedback(),sDone()];
+  const slides=[sBlocks(cards),sWaitingToday(cards),sReconcile(cards),sNumbers(cards),
+                sLoad(),sTypes(cards),sFeedback(),sDone(),sRhythm()];
   $("#slides").innerHTML=slides.map(h=>'<section class="slide">'+h+"</section>").join("");
   const nav=$("#dotsNav"); nav.innerHTML="";
   slides.forEach((_,i)=>{const d=document.createElement("i");
