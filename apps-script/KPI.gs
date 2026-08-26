@@ -1748,8 +1748,8 @@ var MY_TRIGGERS = ['sendCheckpoint', 'sendWeekly', 'remindMidday', 'remindCheckp
  *  remove the triggers that call it — they are stored against the project, not
  *  the file — so a daily digest kept arriving long after the function that
  *  built it had been pasted over. Named here so installTriggers() clears them. */
-var RETIRED_TRIGGERS = ['sendDailyDigest', 'dailyDigest', 'sendDigest',
-                        'sendDaily', 'dailySummary', 'sendDailySummary'];
+var RETIRED_TRIGGERS = ['sendWeeklyRollup', 'sendDailyDigest', 'dailyDigest',
+                        'sendDigest', 'sendDaily', 'dailySummary', 'sendDailySummary'];
 
 /** What is actually scheduled in this project, whoever put it there. Run this
  *  when something arrives that you did not expect. */
