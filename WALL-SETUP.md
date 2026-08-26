@@ -1,3 +1,8 @@
+> **Address change.** This board first shipped at `/wall/`. That address now
+> belongs to the KPI wall — the per-person block tracker the training film
+> shows — so the rotating Salesforce board lives at **`/board/`** and the
+> production wall at **`/board/production.html`**. Same pages, new door.
+
 # Salesforce Wall Board — setup
 
 Two rotating slide boards for the branch wall, both fed by the same
@@ -5,8 +10,8 @@ Salesforce connection and the same Apps Script feed:
 
 | Board | Address | What it shows |
 |---|---|---|
-| **Branch board** | `/wall/` | the whole branch — book, renewals, claims, pipeline |
-| **Production wall** | `/wall/production.html` | policies **picked up for production** — this week, this month, year to date |
+| **Branch board** | `/board/` | the whole branch — book, renewals, claims, pipeline |
+| **Production wall** | `/board/production.html` | policies **picked up for production** — this week, this month, year to date |
 
 ## The production wall
 
@@ -26,7 +31,7 @@ fields are never queried for this board, so no client data can reach it.
 
 ## The branch board
 
-Seven slides at `/wall/`, fourteen seconds each:
+Seven slides at `/board/`, fourteen seconds each:
 
 1. **The branch, right now** — risks written and premium billed this year,
    with the same-period-last-year comparison, renewals due and open claims
