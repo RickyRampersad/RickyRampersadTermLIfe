@@ -15,16 +15,52 @@ Salesforce connection and the same Apps Script feed:
 
 ## The production wall
 
-Everything on it is `CLIENT_PORTFOLIO__c` filtered on
-`Production_Picked_up_Date__c`, summing `Total_API__c`. Five slides:
+Production is two measures merged: `CLIENT_PORTFOLIO__c` on
+`Production_Picked_up_Date__c` (new business, `Total_API__c`) **plus**
+`Policy_Increases__c` on `Increase_Production_Picked_Up_Date__c`
+(increases, `Increase_API__c`) — each counted on its own picked-up date.
+Seven slides:
 
-1. **Week · month · year** — API and policy count for this week (vs last
-   week), the running month (vs the same days last year) and year to date
-   (vs the same point last year)
-2. **Week by week** — the last nine weeks, current week in gold
-3. **Month by month** — the year's production curve
-4. **Leaderboard** — API per advisor year to date, top three ranked in gold
-5. **Latest pickups** — the most recent policies picked up this month
+1. **Week · month · year** — merged API and pickup count for this week
+   (vs last week), the running month (vs the same days last year) and
+   year to date (vs the same point last year), each card showing its
+   new-business / increases split
+2. **Held-back API** — apps received this year with no picked-up date:
+   submitted business waiting on requirements, banded by how long it has
+   waited
+3. **Where the held-back money sits** — held-back API by advisor, and the
+   biggest single files with days waiting
+4. **Week by week** — the last nine weeks, current week in gold
+5. **Month by month** — new business with increases stacked on top
+6. **Leaderboard** — new-business API per advisor year to date
+7. **Latest pickups** — the most recent policies picked up this month
+
+### Sound
+
+The **Sound** button in the header turns on narration and music (browsers
+require that click before a page may make sound — it cannot start itself):
+
+- The voice is **Andrew** (edge-tts, `-3%` — the house voice), one short
+  line per slide, baked into the file as data URIs. The lines carry no
+  figures, so they stay true when the live feed changes the numbers.
+- The bed is **played, not loaded** — synthesised in Web Audio on the
+  branch progression **D – A – Bm – G**, soft pads that duck under the
+  voice. Nothing to licence, nothing to loop badly.
+- Regenerate the voice with `edge-tts` per the house notes in CLAUDE.md if
+  a line changes; each MP3 is base64-folded into `VOICE_LINES` in
+  `wall/production.html`.
+
+**Pause** freezes the rotation (so a slide can be talked over in a huddle);
+space does the same, ←/→ still step.
+
+### The weekly report
+
+`wbSendProductionReport()` in `WallBoard.gs` emails the wall's numbers —
+production incl. increases, plus the held-back picture by advisor — to
+`MANAGER_EMAIL` (Script Properties, comma-separate several; falls back to
+the script owner). Send it every Monday: **Triggers → Add Trigger →
+`wbSendProductionReport` → time-driven → week timer → Monday 8–9am.**
+Or run it by hand from the editor whenever it's needed.
 
 Advisor names are branch staff and belong on a production wall. Client
 fields are never queried for this board, so no client data can reach it.
