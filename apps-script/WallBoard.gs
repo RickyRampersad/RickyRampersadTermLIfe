@@ -130,7 +130,50 @@ function wbBuild_() {
     }),
     legacy: wbLegacy_(),
     production: wbProduction_(),
-    dashboardAdvisors: wbDashboard_()
+    dashboardAdvisors: wbDashboard_(),
+    settlement: wbSettlement_()
+  };
+}
+
+/* ======================= settlement (dashboard panel) =======================
+   Settled vs pending on the picked-up book: Date_Settled__c and
+   Days_Taken_to_Settle__c. Blank Policy_Status_Description_R__c means the
+   settle date is the only reliable signal — the dashboard's data-health
+   panel exists to change that. */
+function wbSettlement_() {
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function one(soql) { return wbQ_(soql)[0] || {}; }
+  var base = 'FROM CLIENT_PORTFOLIO__c WHERE Production_Picked_up_Date__c = THIS_YEAR';
+  var s = one('SELECT COUNT(Id) n, SUM(Total_API__c) api, AVG(Days_Taken_to_Settle__c) d ' + base + ' AND Date_Settled__c != null');
+  var p = one('SELECT COUNT(Id) n, SUM(Total_API__c) api ' + base + ' AND Date_Settled__c = null');
+  function band(label, where) {
+    var r = one('SELECT COUNT(Id) n ' + base + ' AND Date_Settled__c != null AND ' + where);
+    return { k: label, n: r.n || 0 };
+  }
+  var byMonth = {};
+  wbQ_('SELECT CALENDAR_MONTH(Production_Picked_up_Date__c) m, COUNT(Id) n, SUM(Total_API__c) api ' +
+       base + ' AND Date_Settled__c != null GROUP BY CALENDAR_MONTH(Production_Picked_up_Date__c)')
+    .forEach(function (r) { byMonth[months[r.m - 1]] = { sN: r.n, sApi: Math.round(r.api || 0) }; });
+  var monthly = wbQ_('SELECT CALENDAR_MONTH(Production_Picked_up_Date__c) m, COUNT(Id) n, SUM(Total_API__c) api ' +
+       base + ' GROUP BY CALENDAR_MONTH(Production_Picked_up_Date__c) ORDER BY CALENDAR_MONTH(Production_Picked_up_Date__c)')
+    .map(function (r) {
+      var mm = months[r.m - 1], st = byMonth[mm] || { sN: 0, sApi: 0 };
+      return { m: mm, sN: st.sN, sApi: st.sApi,
+               pN: r.n - st.sN, pApi: Math.round((r.api || 0) - st.sApi) };
+    });
+  return {
+    settledN: s.n || 0, settledApi: Math.round(s.api || 0), avgDays: Math.round(s.d || 0),
+    pendingN: p.n || 0, pendingApi: Math.round(p.api || 0),
+    bands: [
+      band('Within a week', 'Days_Taken_to_Settle__c <= 7'),
+      band('8 – 30 days',   'Days_Taken_to_Settle__c > 7 AND Days_Taken_to_Settle__c <= 30'),
+      band('Over 30 days',  'Days_Taken_to_Settle__c > 30')
+    ],
+    monthly: monthly,
+    pendingByAgent: wbQ_(
+      'SELECT AGENT__r.Name a, COUNT(Id) n, SUM(Total_API__c) api ' + base +
+      ' AND Date_Settled__c = null GROUP BY AGENT__r.Name ORDER BY SUM(Total_API__c) DESC LIMIT 6'
+    ).map(function (r) { return { a: r.a || 'Unassigned', n: r.n, api: Math.round(r.api || 0) }; })
   };
 }
 

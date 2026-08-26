@@ -45,9 +45,10 @@
   .live{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--dim)}
   .live i{width:8px;height:8px;border-radius:50%;background:var(--warn)}
   .live.on i{background:var(--good)}
-  .navbtn{font-size:12.5px;font-weight:650;color:var(--ink);text-decoration:none;border:1px solid var(--line);
-    background:rgba(0,0,0,.25);padding:8px 15px;border-radius:20px}
+  .navbtn{font:inherit;font-size:12.5px;font-weight:650;color:var(--ink);text-decoration:none;border:1px solid var(--line);
+    background:rgba(0,0,0,.25);padding:8px 15px;border-radius:20px;cursor:pointer}
   .navbtn:hover{border-color:rgba(255,255,255,.3)}
+  .navbtn.on{background:var(--grad);color:#04223b;border-color:transparent}
 
   /* KPI hero tiles */
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-bottom:16px}
@@ -85,6 +86,8 @@
   .bars .seg{border-radius:4px 4px 2px 2px;min-height:2px}
   .bars .seg.new{background:var(--new)}
   .bars .seg.inc{background:var(--inc)}
+  .bars .seg.set{background:var(--good)}
+  .bars .seg.pen{background:var(--warn)}
   .bars .col:hover .seg{filter:brightness(1.25)}
   .bars .lab{font-size:11.5px;color:var(--faint);font-weight:600;white-space:nowrap}
   .bars .col.now .lab{color:var(--ink)}
@@ -157,7 +160,9 @@
     <div class="sub">Ricky Rampersad Branch · Total API (new business + increases) · Salesforce</div>
   </div>
   <div class="right">
-    <a class="navbtn" href="production.html">▶ Wall mode</a>
+    <button class="navbtn" id="runBtn" title="Cycle through the sections like a wall">▶ Run</button>
+    <button class="navbtn" id="xlsBtn" title="Download the head-office weekly as Excel">⬇ Head-office weekly</button>
+    <a class="navbtn" href="production.html">Wall mode</a>
     <span class="live" id="live"><i></i><span id="liveTxt">Snapshot</span></span>
   </div>
 </header>
@@ -181,7 +186,23 @@
   </div>
 </div>
 
-<div class="panel" style="margin-bottom:16px">
+<div class="grid2" id="secSettle">
+  <div class="panel">
+    <h3>Settled vs pending — the picked-up book, month by month</h3>
+    <p class="note">Green settled (the record has a Date Settled), amber still pending. Hover a bar for the settle-through rate.</p>
+    <div class="chart"><div class="bars" id="settleChart"></div><div class="tip" id="tipS"></div></div>
+    <div class="legend"><span><i style="background:var(--good)"></i>✓ Settled</span><span><i style="background:var(--warn)"></i>⏳ Pending</span></div>
+  </div>
+  <div class="panel">
+    <h3>Settlement engine</h3>
+    <p class="note" id="settleNote"></p>
+    <div class="hbband" id="settleBands"></div>
+    <div style="margin-top:16px"><h3 style="font-size:13px">Largest pending books — the settle chase list</h3></div>
+    <div class="hbband" id="settleAgents" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<div class="panel" style="margin-bottom:16px" id="secAdvisors">
   <h3>Advisors</h3>
   <p class="note">Pick a period, click a team to filter, click any column to sort. “vs LY” compares the same period last year.</p>
   <div class="controls">
@@ -241,6 +262,34 @@ var D = {
     {a:"Varun S.",  n:17, api:317573},
     {a:"Gary S.",   n:7,  api:238182}
   ],
+  /* settlement — Date_Settled__c on the picked-up book */
+  settle: {
+    settledN:348, settledApi:2544797, avgDays:22,
+    pendingN:358, pendingApi:3255748,
+    bands: [
+      {k:"Within a week", n:121},
+      {k:"8 – 30 days",   n:156},
+      {k:"Over 30 days",  n:71}
+    ],
+    monthly: [
+      {m:"Jan", sN:97, sApi:769749, pN:21, pApi:151613},
+      {m:"Feb", sN:62, sApi:367166, pN:34, pApi:350233},
+      {m:"Mar", sN:17, sApi:107571, pN:64, pApi:586605},
+      {m:"Apr", sN:74, sApi:531656, pN:24, pApi:154162},
+      {m:"May", sN:35, sApi:195776, pN:77, pApi:573410},
+      {m:"Jun", sN:6,  sApi:61903,  pN:56, pApi:387481},
+      {m:"Jul", sN:44, sApi:396493, pN:49, pApi:332928},
+      {m:"Aug", sN:13, sApi:114484, pN:33, pApi:719315}
+    ],
+    pendingByAgent: [
+      {a:"Varun S.",     n:12, api:440785},
+      {a:"Gary S.",      n:28, api:303706},
+      {a:"Fawwaz M.",    n:15, api:248577},
+      {a:"Aidan E.",     n:35, api:244054},
+      {a:"Premchand D.", n:20, api:234947},
+      {a:"Malcolm S.",   n:9,  api:125781}
+    ]
+  },
   teams: {
     gary:   {label:"Gary's team",   color:"var(--c-gary)"},
     kerwyn: {label:"Kerwyn's team", color:"var(--c-kerwyn)"},
@@ -284,6 +333,8 @@ var D = {
     {a:"Crystal F.",   t:"kerwyn", wN:0,wApi:0, lwN:0,lwApi:0,     mN:0,mApi:0,      yN:1, yApi:2048,   ly:25202,   hbN:0, hbApi:0}
   ],
   health: [
+    {n:"700", red:true,  t:"<b>Picked-up policies with no Policy Status Description</b> — 700 of this year's 706. Set the status at every stage change (Pending → Premium Paying → …) so the settled/pending picture reads from status, not only the settle date. This is the single highest-value field to keep current."},
+    {n:"358", red:true,  t:"<b>Picked-up policies with no Date Settled</b> holding TT$3.26m. Some are genuinely pending — chase those to settlement — but any policy already settled and missing the date is understating the branch. Update Date Settled the day the case settles."},
     {n:"176", red:true,  t:"<b>Apps with no pickup date</b> holding TT$10.0m — 125 of them waiting over two months. Chase the requirement, or close the dead ones (NPW / declined) so held-back is real money, not history."},
     {n:"171", red:false, t:"<b>Held-back apps with no policy status.</b> Only 5 of 176 say why they're stuck. Set Policy Status Description on each so the wall can show what's blocking, not just how long."},
     {n:"6",   red:false, t:"<b>Advisors' pickups entered late last week</b> (TT$23.7k landed in Salesforce after the Monday report was cut). Enter pickups the same day — the wall refreshes every 15 minutes, the report only sees what's in by Monday."},
@@ -327,7 +378,8 @@ function renderInsights(){
     '<div class="insight red"><b>The year’s gap is not sales — it’s pickup.</b> Pacing '+mS(pace)+' ('+(pace/k.ytd.lyFull*100).toFixed(0)+'% of 2025) while '+mS(k.heldBack.api)+' sits written and waiting. Releasing the held-back book alone beats last year.</div>'
    +'<div class="insight"><b>'+esc(varun.a)+' owns August:</b> '+mS(varun.mApi)+' — '+(varun.mApi/k.month.api*100).toFixed(0)+'% of the month on '+varun.mN+' policies. Value profile: '+mS(varun.yApi/varun.yN)+' average case, the branch’s largest.</div>'
    +'<div class="insight gold"><b>The increases engine has stalled.</b> TT$1.02m by this point last year, TT$498k now — July wrote TT$4.5k, August none. Every in-force review is an increase opportunity.</div>'
-   +'<div class="insight"><b>Two ways to win are both on the board:</b> Aidan (66) and Anthony (64) lead on cases; Varun leads on value. The month says a big-case week (Wk 32: TT$405k on 6 policies) changes everything.</div>';
+   +'<div class="insight"><b>Two ways to win are both on the board:</b> Aidan (66) and Anthony (64) lead on cases; Varun leads on value. The month says a big-case week (Wk 32: TT$405k on 6 policies) changes everything.</div>'
+   +'<div class="insight red"><b>Settlement is the second bottleneck.</b> '+D.settle.pendingN+' of the year’s picked-up policies ('+mS(D.settle.pendingApi)+') still have no settle date — Premchand’s entire year is pending. When cases do settle, they settle in '+D.settle.avgDays+' days on average.</div>';
 }
 
 /* monthly stacked chart with hover tooltip */
@@ -369,6 +421,42 @@ function renderHeldBack(){
   $("#hbAgents").innerHTML=D.hbAgents.map(function(b){
     return '<div class="hbrow"><span class="nm">'+esc(b.a)+'</span><span class="track"><i style="width:'+Math.max(2,b.api/amax*100)+'%"></i></span><span class="val">'+mS(b.api)+'</span><span class="n">'+b.n+' apps</span></div>';
   }).join("");
+}
+
+/* settlement panel */
+function renderSettle(){
+  var S=D.settle;
+  $("#settleNote").innerHTML="<b style='color:var(--ink)'>"+S.settledN+" settled</b> ("+mS(S.settledApi)+", avg "+S.avgDays+" days) · <b style='color:var(--ink)'>"+S.pendingN+" pending</b> ("+mS(S.pendingApi)+").";
+  var bmax=Math.max.apply(null,S.bands.map(function(b){return b.n}));
+  $("#settleBands").innerHTML=S.bands.map(function(b){
+    return '<div class="hbrow"><span class="nm">'+esc(b.k)+'</span><span class="track"><i style="width:'+Math.max(2,b.n/bmax*100)+'%;background:var(--good)"></i></span><span class="val">'+b.n+'</span><span class="n">settled</span></div>';
+  }).join("");
+  var amax=Math.max.apply(null,S.pendingByAgent.map(function(b){return b.api}));
+  $("#settleAgents").innerHTML=S.pendingByAgent.map(function(b){
+    return '<div class="hbrow"><span class="nm">'+esc(b.a)+'</span><span class="track"><i style="width:'+Math.max(2,b.api/amax*100)+'%;background:var(--warn)"></i></span><span class="val">'+mS(b.api)+'</span><span class="n">'+b.n+' pending</span></div>';
+  }).join("");
+  var max=Math.max.apply(null,S.monthly.map(function(x){return x.sApi+x.pApi}));
+  var H=180;
+  $("#settleChart").innerHTML=S.monthly.map(function(x,i){
+    var tot=x.sApi+x.pApi;
+    return '<div class="col" data-i="'+i+'"><div class="amt">'+Math.round(x.sApi/(tot||1)*100)+'%</div>'
+      +'<div class="stack">'+(x.pApi>0?'<div class="seg pen" style="height:'+Math.max(2,x.pApi/max*H)+'px"></div>':'')
+      +(x.sApi>0?'<div class="seg set" style="height:'+Math.max(2,x.sApi/max*H)+'px"></div>':'')
+      +'</div><div class="lab">'+x.m+'</div></div>';
+  }).join("");
+  var tip=$("#tipS");
+  $("#settleChart").onmousemove=function(e){
+    var col=e.target.closest(".col"); if(!col){tip.style.display="none";return}
+    var x=S.monthly[+col.dataset.i], tot=x.sApi+x.pApi;
+    tip.innerHTML='<b>'+x.m+' pickups · '+Math.round(x.sApi/(tot||1)*100)+'% settled by value</b>'
+      +'<div class="row2"><i style="background:var(--good)"></i>Settled '+money(x.sApi)+' · '+x.sN+' policies</div>'
+      +'<div class="row2"><i style="background:var(--warn)"></i>Pending '+money(x.pApi)+' · '+x.pN+' policies</div>';
+    tip.style.display="block";
+    var r=$("#settleChart").getBoundingClientRect(), cr=col.getBoundingClientRect();
+    tip.style.left=Math.min(cr.left-r.left, r.width-260)+"px";
+    tip.style.top=(cr.top-r.top-8)+"px";
+  };
+  $("#settleChart").onmouseleave=function(){tip.style.display="none"};
 }
 
 /* advisor explorer */
@@ -470,7 +558,7 @@ function renderHealth(){
 
 function renderAll(){
   renderKpis(); renderInsights(); renderMonthly(); renderHeldBack();
-  renderControls(); renderTeams(); renderTable(); renderHealth();
+  renderSettle(); renderControls(); renderTeams(); renderTable(); renderHealth();
   var t=new Date(D.generatedAt);
   $("#src").textContent="Data: Salesforce · client portfolio + policy increases (Total API basis, matching the branch report) · pulled "
     +t.toLocaleDateString("en-GB",{day:"numeric",month:"short"})+" "
@@ -485,6 +573,111 @@ document.addEventListener("keydown",function(e){
     else document.documentElement.requestFullscreen();
   }
 });
+
+/* ── RUN MODE — the dashboard as a running wall ─────────────────────────────
+   Cycles section to section every 12 s. Any real interaction (click, wheel,
+   touch, key) hands control back to the person at the screen. */
+var running=false, runTimer=null, runIdx=0;
+function runSections(){
+  return [ $("#kpis"), $("#secSettle").previousElementSibling, $("#secSettle"), $("#secAdvisors"), $("#health").parentElement ];
+}
+function runStep(){
+  var secs=runSections();
+  secs[runIdx%secs.length].scrollIntoView({behavior:"smooth",block:"start"});
+  runIdx++;
+  runTimer=setTimeout(runStep,12000);
+}
+function setRunning(on){
+  running=on;
+  clearTimeout(runTimer);
+  var b=$("#runBtn");
+  b.classList.toggle("on",on);
+  b.textContent=on?"⏸ Running":"▶ Run";
+  if(on){runIdx=0;runStep();}
+}
+$("#runBtn").onclick=function(e){e.stopPropagation();setRunning(!running)};
+["pointerdown","wheel","touchstart"].forEach(function(ev){
+  document.addEventListener(ev,function(e){
+    if(running && !e.target.closest("#runBtn")) setRunning(false);
+  },{passive:true});
+});
+
+/* ── HEAD-OFFICE WEEKLY — downloadable Excel ────────────────────────────────
+   Rebuilds the Monday hierarchy sheet (Apps/API for last week, the month and
+   YTD, advisor rows grouped under each unit) from whatever the dashboard is
+   showing — snapshot initials, or full names once the live feed is wired.
+   SpreadsheetML keeps it dependency-free; Excel opens it directly. */
+function xmlEsc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function xlsCell(v,style,num){
+  return num
+    ? '<Cell ss:StyleID="'+style+'"><Data ss:Type="Number">'+(v||0)+'</Data></Cell>'
+    : '<Cell ss:StyleID="'+style+'"><Data ss:Type="String">'+xmlEsc(v)+'</Data></Cell>';
+}
+function xlsRow(cells){return "<Row>"+cells.join("")+"</Row>"}
+function buildXls(){
+  var order=["gary","kerwyn","ricky","akaash"];
+  var rows=[], tot={lwN:0,lwApi:0,mN:0,mApi:0,yN:0,yApi:0};
+  rows.push(xlsRow([xlsCell("SUBMITTED — Ricky Rampersad Branch (Total API: new business + increases)","sTitle")]));
+  var cut=new Date(); cut.setDate(cut.getDate()-cut.getDay()-1);   // last Saturday
+  rows.push(xlsRow([xlsCell("Week ending "+cut.toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})
+    +" · month: "+D.kpi.month.label+" · generated "+new Date().toLocaleDateString("en-GB"),"sSub")]));
+  rows.push(xlsRow([xlsCell("Hierarchy","sHead"),xlsCell("Apps - W","sHead"),xlsCell("API - W","sHead"),
+    xlsCell("Apps - M","sHead"),xlsCell("API - M","sHead"),xlsCell("Apps - Y","sHead"),xlsCell("API - Y","sHead")]));
+  order.forEach(function(t){
+    var advs=D.advisors.filter(function(a){return a.t===t}).slice()
+      .sort(function(x,y){return y.yApi-x.yApi});
+    var u={lwN:0,lwApi:0,mN:0,mApi:0,yN:0,yApi:0};
+    advs.forEach(function(a){["lwN","lwApi","mN","mApi","yN","yApi"].forEach(function(k){u[k]+=a[k]||0})});
+    rows.push(xlsRow([xlsCell(D.teams[t].label,"sUnit"),
+      xlsCell(u.lwN,"sUnitN",1),xlsCell(u.lwApi,"sUnitM",1),
+      xlsCell(u.mN,"sUnitN",1),xlsCell(u.mApi,"sUnitM",1),
+      xlsCell(u.yN,"sUnitN",1),xlsCell(u.yApi,"sUnitM",1)]));
+    advs.forEach(function(a){
+      rows.push(xlsRow([xlsCell("    "+a.a,"sAdv"),
+        xlsCell(a.lwN,"sNum",1),xlsCell(a.lwApi,"sMon",1),
+        xlsCell(a.mN,"sNum",1),xlsCell(a.mApi,"sMon",1),
+        xlsCell(a.yN,"sNum",1),xlsCell(a.yApi,"sMon",1)]));
+    });
+    ["lwN","lwApi","mN","mApi","yN","yApi"].forEach(function(k){tot[k]+=u[k]});
+  });
+  rows.push(xlsRow([xlsCell("Total","sTot"),
+    xlsCell(tot.lwN,"sTotN",1),xlsCell(tot.lwApi,"sTotM",1),
+    xlsCell(tot.mN,"sTotN",1),xlsCell(tot.mApi,"sTotM",1),
+    xlsCell(tot.yN,"sTotN",1),xlsCell(tot.yApi,"sTotM",1)]));
+  rows.push(xlsRow([xlsCell("","sAdv")]));
+  rows.push(xlsRow([xlsCell("Held-back API (apps received, not yet picked up): "
+    +D.kpi.heldBack.n+" apps · TT$"+D.kpi.heldBack.api.toLocaleString("en-US")
+    +" — settled this year: "+D.settle.settledN+" policies · pending: "+D.settle.pendingN,"sSub")]));
+  var xml='<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>'
+    +'<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'
+    +'<Styles>'
+    +'<Style ss:ID="sTitle"><Font ss:Bold="1" ss:Size="14"/></Style>'
+    +'<Style ss:ID="sSub"><Font ss:Color="#666666"/></Style>'
+    +'<Style ss:ID="sHead"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#1E7145" ss:Pattern="Solid"/></Style>'
+    +'<Style ss:ID="sUnit"><Font ss:Bold="1"/><Interior ss:Color="#E2EFDA" ss:Pattern="Solid"/></Style>'
+    +'<Style ss:ID="sUnitN"><Font ss:Bold="1"/><Interior ss:Color="#E2EFDA" ss:Pattern="Solid"/></Style>'
+    +'<Style ss:ID="sUnitM"><Font ss:Bold="1"/><Interior ss:Color="#E2EFDA" ss:Pattern="Solid"/><NumberFormat ss:Format="#,##0"/></Style>'
+    +'<Style ss:ID="sAdv"/>'
+    +'<Style ss:ID="sNum"/>'
+    +'<Style ss:ID="sMon"><NumberFormat ss:Format="#,##0"/></Style>'
+    +'<Style ss:ID="sTot"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#1E7145" ss:Pattern="Solid"/></Style>'
+    +'<Style ss:ID="sTotN"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#1E7145" ss:Pattern="Solid"/></Style>'
+    +'<Style ss:ID="sTotM"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#1E7145" ss:Pattern="Solid"/><NumberFormat ss:Format="#,##0"/></Style>'
+    +'</Styles>'
+    +'<Worksheet ss:Name="Submitted"><Table>'
+    +'<Column ss:Width="190"/><Column ss:Width="60"/><Column ss:Width="80"/><Column ss:Width="60"/><Column ss:Width="80"/><Column ss:Width="60"/><Column ss:Width="90"/>'
+    +rows.join("")
+    +'</Table></Worksheet></Workbook>';
+  return xml;
+}
+$("#xlsBtn").onclick=function(){
+  var blob=new Blob([buildXls()],{type:"application/vnd.ms-excel"});
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="RRB-production-weekly-"+new Date().toISOString().slice(0,10)+".xls";
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500);
+};
 
 /* live feed — same /exec URL as the walls. The feed sends full advisor names;
    this map assigns them to teams (the report's hierarchy). Unknown names fold
@@ -528,6 +721,7 @@ function refresh(){
         return {a:x.a, t:TEAM_BY_NAME[x.a]||"ricky", wN:x.wN,wApi:x.wApi, lwN:x.lwN,lwApi:x.lwApi,
                 mN:x.mN,mApi:x.mApi, yN:x.yN,yApi:x.yApi, ly:x.ly||0, hbN:x.hbN||0, hbApi:x.hbApi||0};
       });
+      if(j.settlement && j.settlement.monthly) D.settle=j.settlement;
       renderAll();
       $("#live").classList.add("on"); $("#liveTxt").textContent="Live";
     }).catch(function(){});
