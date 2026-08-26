@@ -11,7 +11,7 @@
   :root{
     --navy:#0D1838; --navy2:#16264F; --line:#24355F;
     --gold:#C7A34A; --gold-soft:#E7D9AE; --ink:#F2EFE6; --muted:#8FA0C5;
-    --green:#3FA46A; --amber:#D99A2B; --grey:#4A5A7E;
+    --green:#3FA46A; --amber:#D99A2B; --grey:#4A5A7E; --red:#C75450;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
@@ -41,12 +41,17 @@
   .dot{width:2.3vh;height:2.3vh;border-radius:50%;background:transparent;
        border:.35vh solid var(--grey)}
   .dot.on{background:var(--gold);border-color:var(--gold)}
+  /* the block's time has passed and nothing was submitted */
+  .dot.due{border-color:var(--red);background:rgba(199,84,80,.18)}
   .count{font-size:3.4vh;font-weight:800;width:2.4em;text-align:right;
          font-variant-numeric:tabular-nums}
   .count small{font-size:.5em;color:var(--muted);font-weight:700}
   .c-full .count{color:var(--green)} .c-full .dot.on{background:var(--green);border-color:var(--green)}
   .c-some .count{color:var(--amber)}
   .c-none .count{color:var(--grey)}
+  .late{font-size:1.5vh;font-weight:800;color:var(--red)}
+  .wait .idea{border-left-color:var(--red)}
+  .allin{color:var(--green);font-size:1.9vh;font-weight:700}
 
   aside{display:flex;flex-direction:column;gap:1.6vh;min-height:0}
   .panel{background:var(--navy2);border:1px solid var(--line);border-radius:14px;padding:2vh 1.4vw}
@@ -107,6 +112,10 @@
         <div id="cpTime">–</div>
         <div id="cpNote"></div>
       </div>
+      <div class="panel wait">
+        <h2>Waiting on</h2>
+        <div id="waitBox"></div>
+      </div>
       <div class="panel" style="flex:1;display:flex;flex-direction:column;min-height:0">
         <h2>Value added &amp; ideas today</h2>
         <div id="inBox"></div>
@@ -139,7 +148,10 @@ async function call(body){
 }
 
 // Trinidad's now, wherever the TV actually is.
-function trini(){ return new Date(new Date().toLocaleString("en-US",{timeZone:TZ})); }
+function trini(){
+  if(window.__now) return new Date(window.__now);   // test hook, unused in life
+  return new Date(new Date().toLocaleString("en-US",{timeZone:TZ}));
+}
 function todayISO(){ const d=trini();
   return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 
@@ -151,7 +163,28 @@ function blockDone(row,c){
   return !!(txt(row[c+"_Actioned"])||txt(row[c+"_Resolved"])||txt(row[c+"_Open"]));
 }
 
-let roster=[], lastGood=null;
+let roster=[], lastGood=null, schedule={};
+
+// '9 – 11am' / '3:30 – 5pm' / '10 – 1pm' → when the block ends, in minutes
+// from midnight. The end always carries its am/pm; a block we cannot parse
+// simply never turns red, which errs on the quiet side.
+function blockEndMin(sch,col){
+  const t=sch&&sch.blocks&&sch.blocks[col]&&sch.blocks[col].time;
+  if(!t) return null;
+  const end=String(t).split('–').pop();
+  const m=end.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i);
+  if(!m) return null;
+  let h=+m[1]%12; if(/pm/i.test(m[3])) h+=12;
+  return h*60+(+(m[2]||0));
+}
+const GRACE_MIN=10;   // still typing at two past the hour is not "missing"
+
+// submitted / due (time passed, nothing in) / open (not yet due)
+function blockState(row,sch,col,nowMin){
+  if(row&&blockDone(row,col)) return 'on';
+  const end=blockEndMin(sch,col);
+  return (end!=null&&nowMin>end+GRACE_MIN)?'due':'off';
+}
 
 function render(rows){
   const day=todayISO();
@@ -160,21 +193,34 @@ function render(rows){
 
   const ROLE={bm:"Branch Manager",abm:"Assistant Branch Manager",um:"Unit Manager",
               bma:"Branch Manager's Assistant",ssa:"Sales Support"};
+  const nw=trini(); const nowMin=nw.getHours()*60+nw.getMinutes();
+  const LBL={KPI1:'KPI 1',KPI2:'KPI 2',PM1:'Afternoon 1',PM2:'Afternoon 2'};
   const cards=roster.map(p=>{
-    const r=today[p.staffId];
-    const done=r?BLOCKS.reduce((n,c)=>n+(blockDone(r,c)?1:0),0):0;
-    return {p,done};
-  }).sort((a,b)=>a.done-b.done||a.p.name.localeCompare(b.p.name));
+    const r=today[p.staffId], sch=schedule[p.staffId];
+    const states=BLOCKS.map(c=>blockState(r,sch,c,nowMin));
+    return {p,states,
+      done:states.filter(x=>x==='on').length,
+      late:BLOCKS.filter((c,i)=>states[i]==='due')};
+  }).sort((a,b)=>b.late.length-a.late.length||a.done-b.done||a.p.name.localeCompare(b.p.name));
 
-  $("people").innerHTML=cards.map(({p,done})=>{
+  $("people").innerHTML=cards.map(({p,states,done,late})=>{
     const cls=done>=4?"c-full":done>0?"c-some":"c-none";
-    const dots=BLOCKS.map((_,i)=>'<span class="dot'+(i<done?' on':'')+'"></span>').join("");
+    const dots=states.map(st=>'<span class="dot'+(st==='on'?' on':st==='due'?' due':'')+'"></span>').join("");
     return '<div class="card '+cls+'">'+
       '<div><div class="name">'+p.name+'</div>'+
-      '<div class="role">'+(ROLE[p.role]||"")+'</div></div>'+
+      '<div class="role">'+(ROLE[p.role]||"")+
+      (late.length?' <span class="late">· '+late.length+' block'+(late.length>1?'s':'')+' overdue</span>':'')+
+      '</div></div>'+
       '<div class="meter"><div class="dots">'+dots+'</div>'+
       '<div class="count">'+done+'<small>/4</small></div></div></div>';
   }).join("");
+
+  // Who has not submitted a block whose time has passed — by name, by block.
+  const owing=cards.filter(c=>c.late.length);
+  $("waitBox").innerHTML=owing.length
+    ? owing.slice(0,7).map(c=>'<div class="idea"><div class="t">'+c.p.name+
+        '</div><div class="w">'+c.late.map(b=>LBL[b]).join(' · ')+'</div></div>').join("")
+    : '<div class="allin">Everyone is in — every ended block submitted.</div>';
 
   const ideas=[];
   Object.values(today).forEach(r=>{
@@ -214,6 +260,7 @@ async function refresh(){
     if(res&&res.authRequired){ gate(true); return; }
     if(!res||!res.ok) throw new Error(res&&res.error||"no response");
     roster=res.roster||roster;
+    schedule=res.schedule||schedule;
     lastGood=res.rows||[];
     render(lastGood);
   }catch(e){
@@ -242,6 +289,9 @@ $("gPass").addEventListener("keydown",e=>{ if(e.key==="Enter") $("gGo").click();
 
 tick(); setInterval(tick,1000);
 setInterval(refresh,REFRESH_MS);
+// re-judge lateness on the minute, between refreshes, so a block turns red
+// when its time passes rather than when the next fetch happens to land
+setInterval(()=>{ if(lastGood) render(lastGood); },60*1000);
 if(store.get()){ gate(false); refresh(); } else gate(true);
 </script>
 </body>
