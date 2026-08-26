@@ -617,10 +617,21 @@ function xlsRow(cells){return "<Row>"+cells.join("")+"</Row>"}
 function buildXls(){
   var order=["gary","kerwyn","ricky","akaash"];
   var rows=[], tot={lwN:0,lwApi:0,mN:0,mApi:0,yN:0,yApi:0};
+  // who did well — the branch leader (green) and top three (gold) per API column
+  function topSet(key){
+    return D.advisors.slice().filter(function(a){return a[key]>0})
+      .sort(function(x,y){return y[key]-x[key]}).slice(0,3).map(function(a){return a.a});
+  }
+  var tops={lwApi:topSet("lwApi"), mApi:topSet("mApi"), yApi:topSet("yApi")};
+  function apiStyle(a,key){
+    var t=tops[key], i=t.indexOf(a.a);
+    return i===0?"sBest":i>0?"sGold":"sMon";
+  }
   rows.push(xlsRow([xlsCell("SUBMITTED — Ricky Rampersad Branch (Total API: new business + increases)","sTitle")]));
   var cut=new Date(); cut.setDate(cut.getDate()-cut.getDay()-1);   // last Saturday
   rows.push(xlsRow([xlsCell("Week ending "+cut.toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})
     +" · month: "+D.kpi.month.label+" · generated "+new Date().toLocaleDateString("en-GB"),"sSub")]));
+  rows.push(xlsRow([xlsCell("Green — leads the branch for the period · Gold — top three","sSub")]));
   rows.push(xlsRow([xlsCell("Hierarchy","sHead"),xlsCell("Apps - W","sHead"),xlsCell("API - W","sHead"),
     xlsCell("Apps - M","sHead"),xlsCell("API - M","sHead"),xlsCell("Apps - Y","sHead"),xlsCell("API - Y","sHead")]));
   order.forEach(function(t){
@@ -634,9 +645,9 @@ function buildXls(){
       xlsCell(u.yN,"sUnitN",1),xlsCell(u.yApi,"sUnitM",1)]));
     advs.forEach(function(a){
       rows.push(xlsRow([xlsCell("    "+a.a,"sAdv"),
-        xlsCell(a.lwN,"sNum",1),xlsCell(a.lwApi,"sMon",1),
-        xlsCell(a.mN,"sNum",1),xlsCell(a.mApi,"sMon",1),
-        xlsCell(a.yN,"sNum",1),xlsCell(a.yApi,"sMon",1)]));
+        xlsCell(a.lwN,"sNum",1),xlsCell(a.lwApi,apiStyle(a,"lwApi"),1),
+        xlsCell(a.mN,"sNum",1),xlsCell(a.mApi,apiStyle(a,"mApi"),1),
+        xlsCell(a.yN,"sNum",1),xlsCell(a.yApi,apiStyle(a,"yApi"),1)]));
     });
     ["lwN","lwApi","mN","mApi","yN","yApi"].forEach(function(k){tot[k]+=u[k]});
   });
@@ -660,6 +671,8 @@ function buildXls(){
     +'<Style ss:ID="sAdv"/>'
     +'<Style ss:ID="sNum"/>'
     +'<Style ss:ID="sMon"><NumberFormat ss:Format="#,##0"/></Style>'
+    +'<Style ss:ID="sBest"><Font ss:Bold="1" ss:Color="#1E6B3A"/><Interior ss:Color="#C6EFCE" ss:Pattern="Solid"/><NumberFormat ss:Format="#,##0"/></Style>'
+    +'<Style ss:ID="sGold"><Font ss:Bold="1" ss:Color="#7F6000"/><Interior ss:Color="#FFF2CC" ss:Pattern="Solid"/><NumberFormat ss:Format="#,##0"/></Style>'
     +'<Style ss:ID="sTot"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#1E7145" ss:Pattern="Solid"/></Style>'
     +'<Style ss:ID="sTotN"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#1E7145" ss:Pattern="Solid"/></Style>'
     +'<Style ss:ID="sTotM"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#1E7145" ss:Pattern="Solid"/><NumberFormat ss:Format="#,##0"/></Style>'
