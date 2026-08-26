@@ -241,6 +241,34 @@ const BOOK = [
     lifePolicy:null, lives:{ life:0, health:0 }, last:{ life:0, health:0 } }
 ];
 
+/* With a branch script configured, the real book comes from the Groups tab
+   of the branch sheet — staff pick the actual client, never a sample. The
+   sample book above stays as the no-script fallback and for the preview. */
+let LIVE_BOOK = false;
+function bookShape(g){
+  return { id:g.id, name:g.name, lines:g.lines && g.lines.length ? g.lines : ['life','health'],
+           hasEmail:!!g.hasEmail, lifePolicy:null,
+           lives:{ life:0, health:0 }, last:{ life:0, health:0 } };
+}
+async function loadBook(){
+  if(!API) return;
+  try{
+    const r = await fetch(API + '?action=groups&auth=' + encodeURIComponent(AUTH || ''));
+    const d = await r.json();
+    if(d && d.ok && d.groups && d.groups.length){
+      BOOK.length = 0;
+      d.groups.forEach(g => BOOK.push(bookShape(g)));
+      LIVE_BOOK = true;
+    }
+  }catch(e){}
+  $('grp').innerHTML = BOOK.map(g => `<option value="${esc(g.id)}">${esc(g.name)}</option>`).join('');
+  group = BOOK[0];
+  if(API && !LIVE_BOOK){
+    $('plans').innerHTML = '<span style="color:var(--stop)">The Groups tab of the branch sheet is empty '
+      + '(or the script needs updating) — these are sample groups. Add your groups to the sheet.</span>';
+  }
+}
+
 /* Each line is billed on its own — a separate document, a separate total, and
    at Guardian a separate department. The screen is arranged the same way, so
    an assistant working one line is never looking at another's paperwork. */
@@ -1090,6 +1118,23 @@ async function take(fileList){
         b64 = btoa(bin); }
       const pages = await pdfPages(bytes);
       const flat  = await pdfText(bytes, 0.8);
+      /* A document that never names the chosen client is probably another
+         client's — the fastest way to put one group's members in front of
+         another. Compared loosely: the book writes LIMITED and LTD, doubles
+         spaces, and the invoice prints everything in capitals. */
+      const namesGroup = (() => {
+        const t = flat.join(' ').toUpperCase().replace(/[.,']/g,'').replace(/\bLIMITED\b/g,'LTD').replace(/\s+/g,' ');
+        const n = String(group.name||'').toUpperCase().replace(/[.,']/g,'').replace(/\bLIMITED\b/g,'LTD').replace(/\s+/g,' ').trim();
+        if(!n) return true;
+        if(t.includes(n)) return true;
+        /* Fallback for a sheet spelling that differs slightly from the
+           document's: every substantial word must appear. Half is not
+           enough — the agent's own surname is printed on every client's
+           invoice, so RAMPERSAD alone must never pass a document as
+           D Rampersad's. */
+        const words = n.split(' ').filter(w => w.length > 3);
+        return words.length ? words.every(w => t.includes(w)) : true;
+      })();
       const kind  = detectKind(flat);
       if(!kind){ got['?'+f.name] = { file:f.name, ok:false, why:'Not a Guardian group document.' }; continue; }
       let doc, ver;
@@ -1110,7 +1155,7 @@ async function take(fileList){
          month is measured against, which is the only way to answer "is
          everyone still on" without a database behind us. */
       const already = got[kind];
-      const mine = { file:f.name, kind, doc, ver, ok:ver.ok, b64 };
+      const mine = { file:f.name, kind, doc, ver, ok:ver.ok, b64, namesGroup };
       if(already && monthOf(already.doc) && monthOf(doc) && monthOf(already.doc) !== monthOf(doc)){
         const older = monthOf(already.doc) < monthOf(doc) ? already : mine;
         prior[kind] = older; got[kind] = older === already ? mine : already;
@@ -1239,6 +1284,10 @@ function questions(){
     if(r.ver && !r.ok) qs.push({ id:'recon-'+r.kind, kind:'blocker',
       q: DOC_KINDS[r.kind].label + ' does not agree with its own totals. It may be missing a page.',
       opts:['I will get the file again','Publish anyway, I have checked it'] });
+    if(r.ver && r.namesGroup === false) qs.push({ id:'wronggroup-'+r.kind, kind:'blocker',
+      q:`${r.file} never mentions ${group.name}. It may belong to another client — sending it would put `
+       +`one group's members in front of another.`,
+      opts:['Wrong file — I will remove it','It is theirs — the document just writes the name differently'] });
   });
 
   if(life && life.ok){
@@ -1616,7 +1665,7 @@ async function publish(){
 }
 
 /* ── wiring ── */
-$('grp').innerHTML = BOOK.map(g => `<option value="${g.id}">${esc(g.name)}</option>`).join('');
+if(!API) $('grp').innerHTML = BOOK.map(g => `<option value="${g.id}">${esc(g.name)}</option>`).join('');
 $('grp').addEventListener('change', e => {
   group = BOOK.find(g => g.id === e.target.value); got = {}; answers = {};
   $('readout').innerHTML=''; $('checks').innerHTML=''; $('publish').innerHTML='';
@@ -1647,8 +1696,7 @@ function open_(){
     const sub = document.querySelector('header .sub');
     if(sub) sub.textContent = 'Signed in as ' + IDENTITY.name + ' — ' + sub.textContent;
   }
-  paintDocs();
-  flowRefresh().then(paintPublish);
+  loadBook().then(() => { paintDocs(); return flowRefresh(); }).then(paintPublish);
 }
 function tryCode(){
   const v = ($('code').value||'').trim().toUpperCase();

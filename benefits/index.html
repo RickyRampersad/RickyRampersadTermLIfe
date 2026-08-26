@@ -289,6 +289,10 @@ dl.kv dd{margin:0;font-size:14px}
 /* ---------------- sample data ---------------- */
 /* Branch roster — from the staff access sheet. Agent number + password sign-in.
    Emails deliberately excluded from this public file; the live app holds them server-side. */
+/* Administrators the branch maintains on its sheet sign in through the
+   branch script — agent number and the password kept THERE, checked
+   server-side. The roster below stays for the demo/preview people. */
+const BRANCH_API = "https://script.google.com/macros/s/AKfycbyMb0fwB6_k2WTLHQT6axejY8wNOpDYNHpvTfBbF-Tk5MRcMgyudC2KHxU8XZOGGfNUVQ/exec";
 const ROSTER=[
  ['A00427','Ricky Rampersad','1','manager','Ricky Rampersad','Branch Manager'],
  ['A01066','Narissa Mohammed','2','agent','Ricky Rampersad','Agent'],
@@ -2185,6 +2189,28 @@ document.addEventListener('click',e=>{
       const pw=(($('l_pass')||{}).value||'').trim();
       const row=ROSTER.find(x=>x[0]===num);
       if(!row||row[2]!==pw){
+        /* Not a preview login — ask the branch script, which checks the
+           number and password against the Administrators tab. */
+        if(BRANCH_API && num && pw){
+          if(err){err.textContent='Checking with the branch…';err.style.display='block';}
+          fetch(BRANCH_API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+            body:JSON.stringify({action:'signin',code:num,password:pw})})
+            .then(r=>r.json())
+            .then(d=>{
+              if(d && d.ok){
+                role='manager';
+                ME.manager={name:d.name,sub:'Administrator · branch sheet',role:'manager'};
+                try{ localStorage.setItem('rrb-signin',
+                  JSON.stringify({ code:num, name:d.name, role:'manager', title:'Administrator', at:Date.now() })); }catch(e){}
+                authed=true; screen='home'; syncRole(); render();
+              } else if(err){
+                err.textContent=(d && d.error) || 'Not recognised — check the agent number and password.';
+                err.style.display='block';
+              }
+            })
+            .catch(()=>{ if(err){err.textContent='Could not reach the branch just now — try again.';err.style.display='block';} });
+          return;
+        }
         if(err){err.textContent='Not on the branch roster — check the agent number and password.';err.style.display='block';}
         return;
       }

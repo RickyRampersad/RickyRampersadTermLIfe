@@ -152,6 +152,28 @@ function bstaff_(code) {
   return badmin_(code);
 }
 
+/* Portal sign-in against the Administrators tab — agent number AND the
+   password column the branch maintains there. POST only, so the password
+   never sits in a URL. If the tab has no password column, this refuses
+   rather than quietly accepting a number alone. */
+function benSignin_(b) {
+  var sh = bsheet_(BEN.ADMINS_SHEET);
+  var head = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0]
+    .map(function (h) { return String(h).toLowerCase(); });
+  var hasPw = head.some(function (h) { return h.indexOf('pass') !== -1 || h === 'pw'; });
+  if (!hasPw) return berr_('The Administrators tab has no Password column — add one, or sign in with the branch code.');
+  var code = String(b.code || '').trim().toUpperCase();
+  var pw   = String(b.password || '');
+  var hit = brows_(sh).filter(function (r) {
+    return String(bfield_(r, ['code', 'agent', 'number'])).trim().toUpperCase() === code &&
+           String(bfield_(r, ['password', 'pass', 'pw'])) === pw && pw !== '';
+  })[0];
+  if (!hit) return berr_('Not on the administrators list — check the agent number and password.');
+  var name = String(bfield_(hit, ['name'])).trim() || code;
+  blog_(name, code, 'SIGNIN', '', '', '');
+  return bok_({ name: name, role: 'manager' });
+}
+
 function blog_(by, code, did, group, month, note) {
   bsheet_(BEN.ACTIVITY_SHEET).appendRow([new Date(), by || '', code || '', did || '', group || '', month || '', note || '']);
 }
@@ -173,6 +195,7 @@ function doGet(e) {
     if (a === 'pendings')  return benPendings_(e.parameter);
     if (a === 'monthflow') return benMonthflow_(e.parameter);
     if (a === 'billing')   return benBilling_(e.parameter);
+    if (a === 'groups')    return benGroups_(e.parameter);
     if (!a) {
       if (typeof quoteDoGet_ === 'function') return quoteDoGet_();
       return ContentService.createTextOutput('Ricky Rampersad Branch engine is running.');
@@ -184,6 +207,7 @@ function doGet(e) {
 function doPost(e) {
   try {
     var b = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    if (b.action === 'signin')       return benSignin_(b);
     if (b.action === 'pendingnote')  return benPendingNote_(b);
     if (b.action === 'submitmonth')  return benSubmitMonth_(b);
     if (b.action === 'reviewmonth')  return benReviewMonth_(b);
@@ -382,6 +406,23 @@ function bsendMonth_(sub) {
            note: testMode ? 'Test mode — emailed ' + to + ' instead of the client.' : 'Emailed ' + to + '.' };
 }
 
+/* The book, for the upload page's group picker — real groups come from the
+   Groups tab, so staff choose the actual client and never a sample. Billing
+   emails stay server-side; the page only learns whether one is on file. */
+function benGroups_(p) {
+  if (!bstaff_(p.auth)) return berr_('Staff or administrators only.');
+  var groups = brows_(bsheet_(BEN.GROUPS_SHEET)).map(function (r) {
+    var lines = String(bfield_(r, ['lines'])).toLowerCase();
+    return {
+      id:   String(bfield_(r, ['group id', 'groupid', 'id'])).trim(),
+      name: String(bfield_(r, ['group name', 'groupname', 'name'])).trim(),
+      lines: ['life', 'health', 'pension'].filter(function (l) { return lines.indexOf(l) !== -1; }),
+      hasEmail: !!String(bfield_(r, ['billing email', 'email'])).trim()
+    };
+  }).filter(function (g) { return g.id && g.name; });
+  return bok_({ groups: groups });
+}
+
 /* ============================ client billing ============================ */
 
 /* group.html asks with the group's portal code, not an admin code — a
@@ -394,6 +435,7 @@ function benBilling_(p) {
   })[0];
   if (!g && !badmin_(p.auth)) return berr_('That code was not recognised.');
   var gid = g ? String(bfield_(g, ['group id', 'groupid', 'id'])).trim() : String(p.group || '');
+  var gname = g ? String(bfield_(g, ['group name', 'groupname', 'name'])).trim() : '';
   var rows = brows_(bsheet_(BEN.BILLING_SHEET)).filter(function (r) {
     return String(bfield_(r, ['group id', 'groupid'])).trim() === gid;
   }).map(function (r) {
@@ -409,5 +451,5 @@ function benBilling_(p) {
       note:    String(bfield_(r, ['note']))
     };
   });
-  return bok_({ group: gid, rows: rows });
+  return bok_({ group: gid, name: gname, rows: rows });
 }

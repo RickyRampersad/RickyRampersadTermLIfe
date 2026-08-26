@@ -263,6 +263,11 @@ const dmy=s=>new Date(s+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',m
 const days=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
 
 let as='employer', tab='overview', authed=false, ME=null;
+/* A real employer signs in with the portal code the branch gave them — the
+   branch script validates it and returns THEIR months from the Billing tab.
+   LIVE holds that account; while it is set, nothing sampled is shown. */
+const API = "https://script.google.com/macros/s/AKfycbyMb0fwB6_k2WTLHQT6axejY8wNOpDYNHpvTfBbF-Tk5MRcMgyudC2KHxU8XZOGGfNUVQ/exec";
+let LIVE = null;
 
 /* ══════════════ EMPLOYER ══════════════ */
 function overview(){
@@ -466,7 +471,13 @@ const daysSince = d => Math.floor((Date.now() - new Date(d+'T00:00:00')) / 86400
 const ageWords = d => { const n = daysSince(d); return n < 0 ? 'not yet due' : n + ' days'; };
 
 function history(){
-  const rows = HISTORY.slice().sort((a,b) => b.month.localeCompare(a.month) || a.line.localeCompare(b.line));
+  const rows = (LIVE ? LIVE.rows.slice() : HISTORY.slice())
+    .sort((a,b) => b.month.localeCompare(a.month) || a.line.localeCompare(b.line));
+  if(LIVE && !rows.length){
+    return `<div class="card"><h2>Billing history</h2>
+      <div class="alert a-info" style="margin-top:.8rem"><b>No months on record yet for ${esc(LIVE.name)}.</b>
+      When the branch verifies and sends a month it appears here automatically.</div></div>`;
+  }
   const open = rows.filter(r => r.billed - r.paid > 0.005);
   const owed = open.reduce((s,r) => s + (r.billed - r.paid), 0);
   /* Overpayments are not just history — Guardian carries them forward, so the
@@ -1290,6 +1301,7 @@ function leakage(adjustments, health){
 /* ══════════════ SHELL ══════════════ */
 const QUERYPAL='https://querymypolicies.netlify.app/';
 const TABS={employer:[['overview','Overview'],['billing','Billing'],['history','History'],['people','People'],['check','Check my month']],
+            employer_live:[['history','History'],['check','Check my month']],
             employee:[['mycover','My benefits']]};
 
 /* ══════════════ CHECK MY MONTH ══════════════
@@ -1455,10 +1467,16 @@ function render(){
   const tabs=TABS[as];
   if(!tabs.some(t=>t[0]===tab)) tab=tabs[0][0];
   $('nav').innerHTML=tabs.map(([k,l])=>`<a data-go="${k}" class="${tab===k?'on':''}">${l}</a>`).join('');
-  $('me').innerHTML = as==='employer'
+  $('me').innerHTML = as==='employer_live'
+    ? `<b>${esc(LIVE.name)}</b><span class="label">Employer account</span>`
+    : as==='employer'
     ? `<b>${esc(GROUP.company)}</b><span class="label">Employer account</span>`
     : `<b>${esc(ME.first+' '+ME.last)}</b><span class="label">Cert ${esc(ME.cert)}</span>`;
   $('main').innerHTML = ({overview,billing,history,people,check,mycover})[tab]();
+  if(as==='employer_live' && $('barTag')){
+    $('barTag').textContent = 'YOUR ACCOUNT';
+    $('barText').textContent = 'Signed in with your company portal code. These are your months as the branch holds them.';
+  }
   const cf=$('ckFiles');
   if(cf) cf.addEventListener('change', e => { if(e.target.files.length) checkFiles([...e.target.files]); });
 }
@@ -1477,10 +1495,39 @@ function gate(){
 
 function signIn(code){
   code=(code||'').trim().toUpperCase();
-  if(code==='GROUP26'){ as='employer'; tab='overview'; authed=true; }
-  else if(code==='STAFF26'){ as='employee'; tab='mycover'; ME=GROUP.people[3]; authed=true; }
+  if(code==='GROUP26'){ LIVE=null; as='employer'; tab='overview'; authed=true; }
+  else if(code==='STAFF26'){ LIVE=null; as='employee'; tab='mycover'; ME=GROUP.people[3]; authed=true; }
+  else if(API && code){
+    /* Not a preview code — ask the branch script whose portal code it is. */
+    $('gerr').textContent='Checking…';
+    fetch(API + '?action=billing&auth=' + encodeURIComponent(code))
+      .then(r => r.json())
+      .then(d => {
+        if(d && d.ok){
+          LIVE = { gid:d.group, name:d.name || 'Your company', rows:(d.rows||[]).map(liveRow).filter(Boolean) };
+          as='employer_live'; tab='history'; authed=true; syncBar(); render();
+        } else {
+          $('gerr').textContent='That code was not recognised — check it, or ask the branch.';
+        }
+      })
+      .catch(() => { $('gerr').textContent='Could not reach the branch just now — try again in a moment.'; });
+    return;
+  }
   else { $('gerr').textContent='That code was not recognised — check it, or ask the branch.'; return; }
   syncBar(); render();
+}
+
+/* The sheet stores the month as its label; the renderer keys on an ISO first
+   of month. A row whose month cannot be read is dropped rather than shown
+   under a wrong date. */
+function liveRow(r){
+  const d = new Date(String(r.month||'') + ' 1');
+  if(isNaN(+d)) return null;
+  const iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-01';
+  return { month: iso, line: r.line || '', invoice: r.invoice || '',
+           billed: +r.billed || 0, paid: +r.paid || 0,
+           paidOn: r.paidOn || null, method: r.method || null,
+           receipt: r.receipt || null, note: r.note || '' };
 }
 function syncBar(){ document.querySelectorAll('[data-as]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.as===as))); }
 
