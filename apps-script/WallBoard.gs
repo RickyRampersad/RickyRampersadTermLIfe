@@ -256,11 +256,12 @@ function wbProduction_() {
     weekly: wbWeekly_(),
     leaders: wbLeaders_(base),
     latest: wbQ_(
-      'SELECT AGENT__r.Name, Total_API__c, Production_Picked_up_Date__c ' + base +
+      'SELECT AGENT__r.Name, Total_API__c, Production_Picked_up_Date__c, CreatedBy.Name ' + base +
       ' = THIS_MONTH ORDER BY Production_Picked_up_Date__c DESC LIMIT 10'
     ).map(function (r) {
       return { a: (r.AGENT__r && r.AGENT__r.Name) || 'Unassigned',
-               d: r.Production_Picked_up_Date__c, api: Math.round(r.Total_API__c || 0) };
+               d: r.Production_Picked_up_Date__c, api: Math.round(r.Total_API__c || 0),
+               by: (r.CreatedBy && r.CreatedBy.Name) || '' };
     })
   };
 }

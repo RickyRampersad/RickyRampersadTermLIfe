@@ -202,6 +202,22 @@
   </div>
 </div>
 
+<div class="grid2" id="secPickups">
+  <div class="panel">
+    <h3>Who picked up — August</h3>
+    <p class="note">Total API picked up per advisor this month, every advisor who scored.</p>
+    <div class="hbband" id="pickMonth"></div>
+  </div>
+  <div class="panel">
+    <h3>Who picked up — this week</h3>
+    <p class="note" id="pickWeekNote"></p>
+    <div style="overflow-x:auto"><table id="pickWeekTable"><thead><tr>
+      <th>Advisor</th><th>API</th><th>Picked up</th><th>Entered by</th></tr></thead><tbody></tbody></table></div>
+    <div style="margin-top:18px"><h3 style="font-size:13px">Data accuracy — trends to watch</h3></div>
+    <div class="health" id="trends" style="margin-top:6px"></div>
+  </div>
+</div>
+
 <div class="panel" style="margin-bottom:16px" id="secAdvisors">
   <h3>Advisors</h3>
   <p class="note">Pick a period, click a team to filter, click any column to sort. “vs LY” compares the same period last year.</p>
@@ -290,6 +306,43 @@ var D = {
       {a:"Malcolm S.",   n:9,  api:125781}
     ]
   },
+  /* who picked up — the log, with who keyed each record (data ownership) */
+  pickups: {
+    week: [
+      {a:"Daniel B.", api:15402, d:"2026-08-25", by:"Sasha L."},
+      {a:"Rajiv S.",  api:5543,  d:"2026-08-25", by:"Azariah G."},
+      {a:"Rajiv S.",  api:4613,  d:"2026-08-25", by:"Azariah G."}
+    ],
+    monthByAgent: [
+      {a:"Varun S.",     n:4, api:353262},
+      {a:"Fawwaz M.",    n:3, api:90521},
+      {a:"Rajiv S.",     n:3, api:89303},
+      {a:"Gary S.",      n:5, api:45551},
+      {a:"Daniel B.",    n:3, api:32610},
+      {a:"Joy S.",       n:1, api:28541},
+      {a:"Faizal M.",    n:1, api:28541},
+      {a:"Anthony S.",   n:5, api:27920},
+      {a:"Neil R.",      n:4, api:27089},
+      {a:"Aidan E.",     n:3, api:26526},
+      {a:"Naila S.",     n:3, api:21711},
+      {a:"Darryl M.",    n:1, api:16168},
+      {a:"Dhalina H.",   n:3, api:14632},
+      {a:"Premchand D.", n:1, api:11623},
+      {a:"Narissa M.",   n:1, api:9026},
+      {a:"Aleema M.",    n:2, api:4187},
+      {a:"Javid A.",     n:2, api:4187},
+      {a:"Felicia R.",   n:1, api:2400}
+    ]
+  },
+  /* accuracy trends — every figure computed from the record-level data */
+  trends: [
+    {n:"44%", red:true, t:"<b>Late entry is hiding the month.</b> TT$365k of August's TT$834k reached Salesforce after its pickup date — six records, led by Varun's month-topping TT$308k case, entered 14 days after it was picked up. Until 21 Aug the wall showed a quiet month that was actually the year's best."},
+    {n:"2.3×", red:false, t:"<b>Cases are getting bigger.</b> Average case TT$7.8k in January (118 policies), TT$18.1k in August (46). Fewer, larger cases — which makes every single held-back or late-entered record move the branch number visibly."},
+    {n:"▼", red:true, t:"<b>Settle-through is sliding.</b> January's pickups are 84% settled by value; March sits at 15%, May 25%, June 14% — months old and still mostly unsettled. The chase list on the settlement panel is where the slide reverses."},
+    {n:"$4.5k", red:false, t:"<b>Increases have flatlined.</b> TT$4.5k picked up since 1 July, after TT$493k in the first half. Last year increases were a TT$1.02m engine by this date."},
+    {n:"3", red:false, t:"<b>Three people key the branch's production.</b> August's 46 pickups: Azariah G. entered 28, Sasha L. 15, Ashley R. 3 — and Sasha holds 97 of the 176 held-back records. Their entry rhythm IS the wall's accuracy; same-day entry is the single habit that fixes the late-entry trend."},
+    {n:"134", red:false, t:"<b>Intake keeps outrunning pickup.</b> 840 apps received this year, 706 picked up — the gap grew again with Monday's TT$330k intake still sitting in the tray after two days."}
+  ],
   teams: {
     gary:   {label:"Gary's team",   color:"var(--c-gary)"},
     kerwyn: {label:"Kerwyn's team", color:"var(--c-kerwyn)"},
@@ -459,6 +512,31 @@ function renderSettle(){
   $("#settleChart").onmouseleave=function(){tip.style.display="none"};
 }
 
+/* who picked up + accuracy trends */
+function renderPickups(){
+  var P=D.pickups;
+  var max=Math.max.apply(null,P.monthByAgent.map(function(x){return x.api}));
+  $("#pickMonth").innerHTML=P.monthByAgent.map(function(x){
+    return '<div class="hbrow"><span class="nm">'+esc(x.a)+'</span>'
+      +'<span class="track"><i style="width:'+Math.max(2,x.api/max*100)+'%;background:var(--new)"></i></span>'
+      +'<span class="val">'+mS(x.api)+'</span><span class="n">'+x.n+' pol</span></div>';
+  }).join("");
+  var tot=P.week.reduce(function(s,x){return s+x.api},0);
+  $("#pickWeekNote").innerHTML=P.week.length
+    ? "<b style='color:var(--ink)'>"+money(tot)+"</b> across "+P.week.length+" pickups so far — with who keyed each record."
+    : "No pickups logged yet this week.";
+  $("#pickWeekTable tbody").innerHTML=P.week.map(function(x){
+    return "<tr><td class='adv'>"+esc(x.a)+"</td><td class='num'>"+money(x.api)+"</td>"
+      +"<td>"+dstr2(x.d)+"</td><td>"+esc(x.by||"—")+"</td></tr>";
+  }).join("");
+  $("#trends").innerHTML=D.trends.map(function(h){
+    return '<div class="hitem"><div class="badge'+(h.red?" red":"")+'">'+h.n+'</div><div>'+h.t+'</div></div>';
+  }).join("");
+}
+function dstr2(iso){
+  return new Date(iso+"T12:00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
+}
+
 /* advisor explorer */
 var PERIODS=[
   {id:"w", label:"This week", api:"wApi", n:"wN"},
@@ -558,7 +636,7 @@ function renderHealth(){
 
 function renderAll(){
   renderKpis(); renderInsights(); renderMonthly(); renderHeldBack();
-  renderSettle(); renderControls(); renderTeams(); renderTable(); renderHealth();
+  renderSettle(); renderPickups(); renderControls(); renderTeams(); renderTable(); renderHealth();
   var t=new Date(D.generatedAt);
   $("#src").textContent="Data: Salesforce · client portfolio + policy increases (Total API basis, matching the branch report) · pulled "
     +t.toLocaleDateString("en-GB",{day:"numeric",month:"short"})+" "
@@ -579,7 +657,7 @@ document.addEventListener("keydown",function(e){
    touch, key) hands control back to the person at the screen. */
 var running=false, runTimer=null, runIdx=0;
 function runSections(){
-  return [ $("#kpis"), $("#secSettle").previousElementSibling, $("#secSettle"), $("#secAdvisors"), $("#health").parentElement ];
+  return [ $("#kpis"), $("#secSettle").previousElementSibling, $("#secSettle"), $("#secPickups"), $("#secAdvisors"), $("#health").parentElement ];
 }
 function runStep(){
   var secs=runSections();
@@ -735,6 +813,14 @@ function refresh(){
                 mN:x.mN,mApi:x.mApi, yN:x.yN,yApi:x.yApi, ly:x.ly||0, hbN:x.hbN||0, hbApi:x.hbApi||0};
       });
       if(j.settlement && j.settlement.monthly) D.settle=j.settlement;
+      // who-picked-up panels from the same feed
+      var weekStart=new Date(now); weekStart.setDate(now.getDate()-now.getDay()); // Sunday
+      D.pickups.monthByAgent=D.advisors.filter(function(a){return a.mApi>0})
+        .map(function(a){return {a:a.a,n:a.mN,api:a.mApi}})
+        .sort(function(x,y){return y.api-x.api});
+      if(p.latest) D.pickups.week=p.latest
+        .filter(function(x){return new Date(x.d+"T12:00:00")>=weekStart})
+        .map(function(x){return {a:x.a,api:x.api,d:x.d,by:x.by||"—"}});
       renderAll();
       $("#live").classList.add("on"); $("#liveTxt").textContent="Live";
     }).catch(function(){});
