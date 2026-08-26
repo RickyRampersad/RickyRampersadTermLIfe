@@ -1,4 +1,26 @@
-<title>Meet Premchand Dookran</title>
+<title>What would your family actually need?</title>
+
+<!-- The link preview, as it appears when an advisor pastes this into WhatsApp.
+     WhatsApp's crawler does not run JavaScript, so none of this can carry the
+     advisor's name however the link is built — ?n= reaches the page but never
+     reaches the preview. It said "Meet Premchand Dookran" for everyone, which
+     was both wrong for seven advisors and a poor reason to tap.
+
+     So the preview asks the question the page is about. It is the page's own
+     heading, it is true of every advisor who sends it, and a prospect who
+     cannot answer it is the prospect worth sitting with. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Ricky Rampersad Branch · Guardian Life">
+<meta property="og:title" content="What would your family actually need?">
+<meta property="og:description" content="A short film, then five questions about what is actually on your mind. Nothing to buy and nothing to sign — you decide afterwards whether we meet.">
+<meta property="og:image" content="https://rickyrampersadbranch.com/prospect-poster.jpg">
+<meta property="og:image:alt" content="Ricky Rampersad Branch, Guardian Life">
+<meta property="og:url" content="https://rickyrampersadbranch.com/meet/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="What would your family actually need?">
+<meta name="twitter:description" content="A short film, then five questions about what is actually on your mind. Nothing to buy and nothing to sign.">
+<meta name="twitter:image" content="https://rickyrampersadbranch.com/prospect-poster.jpg">
+<meta name="description" content="A short film, then five questions about what is actually on your mind. Nothing to buy and nothing to sign.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600;6..72,700&family=Inter:wght@400;500;600;700;800&display=swap">
@@ -934,10 +956,10 @@
   var q = new URLSearchParams(location.search);
   function val(k, d){ var v = q.get(k); return (v === null || v === '') ? d : v; }
 
-  var AGENT   = val('a',  'A10024');
-  var ADVISOR = val('n',  'Premchand Dookran');
+  var AGENT   = val('a',  '');
+  var ADVISOR = val('n',  'your advisor');
   var TOKEN   = val('t',  '');
-  var CLIENT  = val('c',  'Devon');
+  var CLIENT  = val('c',  '');
   var CRED    = val('cr', 'Financial Advisor · Ricky Rampersad Branch');
   var LINE    = val('q',  '');
 
@@ -956,7 +978,9 @@
   function esc(s){ return String(s).replace(/[&<>"]/g, function(c){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 
-  document.title = 'Meet ' + ADVISOR;
+  /* The tab, once a real browser has the page. The link preview keeps the
+     question — a crawler never gets this far. */
+  if (ADVISOR && ADVISOR !== 'your advisor') document.title = 'Meet ' + ADVISOR;
   txt('hAva', INITIALS);
   txt('hName', ADVISOR);
   htm('hCred', CRED.split('|').map(esc).join('<br>'));
