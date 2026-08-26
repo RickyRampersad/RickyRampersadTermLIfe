@@ -208,6 +208,7 @@ const STAFF_CODE = "RRB2026";
    on the agent roster. */
 const HANDOFF_KEY = "rrb-signin";
 let IDENTITY = null;
+let AUTH = null;
 function handoff(){
   try{
     const d = JSON.parse(localStorage.getItem(HANDOFF_KEY) || 'null');
@@ -1080,6 +1081,13 @@ async function take(fileList){
   for(const f of fileList){
     try{
       const bytes = new Uint8Array(await f.arrayBuffer());
+      /* Live, approval emails the documents — so the submission has to carry
+         them. Chunked, because spreading a 100KB file overflows the stack. */
+      let b64 = '';
+      if(API){ let bin = '';
+        for(let i = 0; i < bytes.length; i += 0x8000)
+          bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+        b64 = btoa(bin); }
       const pages = await pdfPages(bytes);
       const flat  = await pdfText(bytes, 0.8);
       const kind  = detectKind(flat);
@@ -1102,12 +1110,12 @@ async function take(fileList){
          month is measured against, which is the only way to answer "is
          everyone still on" without a database behind us. */
       const already = got[kind];
+      const mine = { file:f.name, kind, doc, ver, ok:ver.ok, b64 };
       if(already && monthOf(already.doc) && monthOf(doc) && monthOf(already.doc) !== monthOf(doc)){
-        const older = monthOf(already.doc) < monthOf(doc) ? already : { file:f.name, kind, doc, ver, ok:ver.ok };
-        const newer = older === already ? { file:f.name, kind, doc, ver, ok:ver.ok } : already;
-        prior[kind] = older; got[kind] = newer;
+        const older = monthOf(already.doc) < monthOf(doc) ? already : mine;
+        prior[kind] = older; got[kind] = older === already ? mine : already;
       } else {
-        got[kind] = { file:f.name, kind, doc, ver, ok: ver.ok };
+        got[kind] = mine;
       }
     }catch(e){ got['?'+f.name] = { file:f.name, ok:false, why:String(e.message||e) }; }
   }
@@ -1326,6 +1334,16 @@ function paintChecks(){
    every one against the administrators sheet, server-side.
    This block is duplicated in review.html; change both together. */
 const FLOW_KEY = 'rrb-monthflow';
+let FLOWCACHE = { subs: [] };
+async function flowRefresh(){
+  if(!API){ FLOWCACHE = flowLoad(); return; }
+  try{
+    const r = await fetch(API + '?action=monthflow&auth=' + encodeURIComponent(AUTH || '')
+      + '&group=' + encodeURIComponent(group.id));
+    const d = await r.json();
+    FLOWCACHE = { subs: (d && d.subs) || [] };
+  }catch(e){ FLOWCACHE = { subs: [] }; }
+}
 function flowLoad(){
   try{ return JSON.parse(localStorage.getItem(FLOW_KEY) || '{"subs":[]}'); }
   catch(e){ return { subs:[] }; }
@@ -1336,7 +1354,7 @@ function flowSave(d){
   try{ localStorage.setItem(FLOW_KEY, JSON.stringify(d)); }catch(e){}
 }
 function flowFor(groupId, monthKey){
-  const d = flowLoad();
+  const d = API ? FLOWCACHE : flowLoad();
   return d.subs.filter(x => x.group.id === groupId && x.monthKey === monthKey).pop() || null;
 }
 function monthKey(){
@@ -1560,22 +1578,34 @@ async function publish(){
   if(sub.arrears){ const a = sub.arrears;
     sub.arrears = { outstanding:a.outstanding, balance:a.balance, thisMonth:a.thisMonth, months:a.months }; }
 
-  const d = flowLoad();
   /* A resubmission replaces what is waiting; anything already decided stays
      as history and the new version starts its own trail. */
   const existing = flowFor(group.id, sub.monthKey);
-  if(existing && existing.state === 'SUBMITTED'){
+  if(existing && (existing.state === 'SUBMITTED' || existing.state === 'RETURNED')){
     sub.events = existing.events.concat(sub.events);
-    d.subs = d.subs.filter(x => x.id !== existing.id);
-  } else if(existing && existing.state === 'RETURNED'){
-    sub.events = existing.events.concat(sub.events);
-    d.subs = d.subs.filter(x => x.id !== existing.id);
   }
-  d.subs.push(sub); flowSave(d);
 
   if(API){
-    try{ await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify({ action:'submitmonth', sub }) }); }catch(e){}
+    /* The script is the store — nothing is trusted until it says so. */
+    let ok = false, why = '';
+    try{
+      const r = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ action:'submitmonth', auth:AUTH, sub,
+          files: Object.values(got).filter(x => x.ok && x.b64)
+            .map(x => ({ name:x.file, b64:x.b64, type:'application/pdf' })) }) });
+      const d = await r.json();
+      ok = d && d.ok; why = (d && d.error) || '';
+    }catch(e){ why = 'Could not reach the branch script.'; }
+    if(!ok){
+      btn.textContent = 'Submit for review'; btn.disabled = false;
+      $('pubout').innerHTML = `<div class="alert a-bad"><b>Not submitted.</b> ${esc(why || 'The branch script refused it.')}</div>`;
+      return;
+    }
+    await flowRefresh();
+  } else {
+    const d = flowLoad();
+    d.subs = d.subs.filter(x => !(existing && x.id === existing.id));
+    d.subs.push(sub); flowSave(d);
   }
   btn.textContent = 'Submitted ✓';
   $('pubout').innerHTML = `<div class="alert a-ok">
@@ -1591,8 +1621,9 @@ $('grp').addEventListener('change', e => {
   group = BOOK.find(g => g.id === e.target.value); got = {}; answers = {};
   $('readout').innerHTML=''; $('checks').innerHTML=''; $('publish').innerHTML='';
   paintDocs();
+  flowRefresh().then(paintPublish);
 });
-$('mon').addEventListener('change', () => { paintPublish(); });
+$('mon').addEventListener('change', () => { flowRefresh().then(paintPublish); });
 $('drop').addEventListener('click', () => $('files').click());
 $('files').addEventListener('change', e => { if(e.target.files.length) take([...e.target.files]); });
 ['dragenter','dragover'].forEach(ev => $('drop').addEventListener(ev, e => { e.preventDefault(); $('drop').classList.add('over'); }));
@@ -1617,18 +1648,19 @@ function open_(){
     if(sub) sub.textContent = 'Signed in as ' + IDENTITY.name + ' — ' + sub.textContent;
   }
   paintDocs();
+  flowRefresh().then(paintPublish);
 }
 function tryCode(){
   const v = ($('code').value||'').trim().toUpperCase();
-  if(v === STAFF_CODE){ try{ sessionStorage.setItem(SESSION_KEY,'1'); }catch(e){} open_(); }
+  if(v === STAFF_CODE){ AUTH = v; try{ sessionStorage.setItem(SESSION_KEY,'1'); }catch(e){} open_(); }
   else $('gerr').textContent = 'That is not the staff code.';
 }
 $('go').addEventListener('click', tryCode);
 $('code').addEventListener('keydown', e => { if(e.key==='Enter') tryCode(); });
 /* Portal-signed managers first, then the assistant's session code. */
 const ho = handoff();
-if(ho && ho.role === 'manager'){ IDENTITY = ho; open_(); }
-else { try{ if(sessionStorage.getItem(SESSION_KEY)==='1') open_(); }catch(e){} }
+if(ho && ho.role === 'manager'){ IDENTITY = ho; AUTH = ho.code; open_(); }
+else { try{ if(sessionStorage.getItem(SESSION_KEY)==='1'){ AUTH = STAFF_CODE; open_(); } }catch(e){} }
 </script>
 </body>
 </html>

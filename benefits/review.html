@@ -191,7 +191,21 @@ const ADMIN_CODE = "RRB-ADMIN-2026";
 const SESSION_KEY = "rrb-review-ok";
 const HANDOFF_KEY = "rrb-signin";
 const FLOW_KEY = "rrb-monthflow";
-let IDENTITY = null, openSub = null;
+let IDENTITY = null, openSub = null, AUTH = null;
+/* With a branch script configured this cache is the truth; without one the
+   same-origin store is, so the flow still runs with nothing behind it. */
+let CACHE = { subs: [] };
+async function refresh(){
+  if(API){
+    try{
+      const r = await fetch(API + '?action=monthflow&auth=' + encodeURIComponent(AUTH || ''));
+      const d = await r.json();
+      CACHE = { subs: (d && d.subs) || [] };
+    }catch(e){ CACHE = { subs: [] }; }
+  }
+  paint();
+}
+function subs(){ return API ? CACHE.subs : flowLoad().subs; }
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -223,12 +237,12 @@ const STATE = { SUBMITTED:['Waiting for review','p-wait'], RETURNED:['Sent back'
 
 function filtered(){
   const st = $('f-state').value, t = ($('f-text').value||'').toLowerCase().trim();
-  return flowLoad().subs.slice().reverse().filter(x =>
+  return subs().slice().reverse().filter(x =>
     (!st || x.state === st) && (!t || x.group.name.toLowerCase().includes(t)));
 }
 
 function paint(){
-  const all = flowLoad().subs;
+  const all = subs();
   const waiting = all.filter(x => x.state === 'SUBMITTED');
   const back    = all.filter(x => x.state === 'RETURNED');
   const sent    = all.filter(x => x.state === 'SENT');
@@ -257,7 +271,7 @@ function paint(){
      billing upload it appears in this queue with everything needed to verify it — and this page is also the
      record of every month that has been through.</div></div>`;
 
-  $('detail').innerHTML = openSub ? detail(flowLoad().subs.find(x => x.id === openSub)) : '';
+  $('detail').innerHTML = openSub ? detail(subs().find(x => x.id === openSub)) : '';
 
   const events = all.flatMap(x => x.events.map(e => ({...e, group:x.group.name, month:x.monthLabel})))
     .sort((a,b) => b.at - a.at).slice(0, 30);
@@ -340,27 +354,45 @@ function kpi(v, k, n, hot){
     <div class="v${hot?' hot':''}">${esc(v)}</div><div class="n">${esc(n||'')}</div></div>`;
 }
 
-function decide(id, approve){
-  const d = flowLoad();
-  const x = d.subs.find(s => s.id === id);
-  if(!x || x.state !== 'SUBMITTED') return;
+async function decide(id, approve){
   const by = IDENTITY ? IDENTITY.name : 'Branch admin';
-  if(IDENTITY && x.events[0].by === by) return;  // belt and braces; the UI already hides the buttons
   const note = ($('retnote') && $('retnote').value.trim()) || null;
-  if(approve){
-    x.state = 'SENT';
-    x.events.push({ at:Date.now(), by, code:IDENTITY?IDENTITY.code:null, did:'APPROVED' });
-    x.events.push({ at:Date.now(), by, code:IDENTITY?IDENTITY.code:null, did:'SENT' });
-  }else{
-    if(!note){ $('dout').innerHTML = '<div class="alert a-bad" style="margin-top:.7rem">Returning it needs a reason — staff have to know what to fix.</div>'; return; }
-    x.state = 'RETURNED';
-    x.events.push({ at:Date.now(), by, code:IDENTITY?IDENTITY.code:null, did:'RETURNED', note });
+  if(!approve && !note){
+    $('dout').innerHTML = '<div class="alert a-bad" style="margin-top:.7rem">Returning it needs a reason — staff have to know what to fix.</div>';
+    return;
   }
-  flowSave(d);
+  let x, serverNote = '';
   if(API){
-    fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify({ action:'reviewmonth', id, decision: approve?'approve':'return', note, by,
-        code: IDENTITY?IDENTITY.code:null }) }).catch(()=>{});
+    /* The script decides — it re-checks who is asking and that they are not
+       the submitter, and approval is the moment it actually emails. */
+    let d = null;
+    try{
+      const r = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ action:'reviewmonth', id, decision: approve?'approve':'return',
+          note, by, auth: AUTH }) });
+      d = await r.json();
+    }catch(e){}
+    if(!d || !d.ok){
+      $('dout').innerHTML = `<div class="alert a-bad" style="margin-top:.7rem">${esc((d && d.error) || 'Could not reach the branch script — nothing was decided.')}</div>`;
+      return;
+    }
+    serverNote = d.note || '';
+    await refresh();
+    x = subs().find(s => s.id === id) || { group:{name:''} };
+  } else {
+    const d = flowLoad();
+    x = d.subs.find(s => s.id === id);
+    if(!x || x.state !== 'SUBMITTED') return;
+    if(IDENTITY && x.events[0].by === by) return;  // belt and braces; the UI already hides the buttons
+    if(approve){
+      x.state = 'SENT';
+      x.events.push({ at:Date.now(), by, code:IDENTITY?IDENTITY.code:null, did:'APPROVED' });
+      x.events.push({ at:Date.now(), by, code:IDENTITY?IDENTITY.code:null, did:'SENT' });
+    }else{
+      x.state = 'RETURNED';
+      x.events.push({ at:Date.now(), by, code:IDENTITY?IDENTITY.code:null, did:'RETURNED', note });
+    }
+    flowSave(d);
   }
   paint();
   const box = $('d-'+id);
@@ -368,7 +400,8 @@ function decide(id, approve){
     const out = box.querySelector('#dout') || box;
     out.insertAdjacentHTML('beforeend', approve
       ? `<div class="alert a-ok" style="margin-top:.7rem"><b>Approved.</b> ${API
-          ? 'The client has been emailed.' : 'Test run — live, this is the moment the branch script emails ' + esc(x.group.name) + '.'}</div>`
+          ? esc(serverNote || 'The client has been emailed.')
+          : 'Test run — live, this is the moment the branch script emails ' + esc(x.group.name) + '.'}</div>`
       : `<div class="alert a-info" style="margin-top:.7rem"><b>Returned.</b> Staff see your note on the upload page and can resubmit.</div>`);
   }
 }
@@ -384,7 +417,7 @@ document.addEventListener('click', e => {
 /* A link can land in a tab that is already open — only the hash changes and
    the page does not reload. Follow it. */
 window.addEventListener('hashchange', () => {
-  if(location.hash.length > 1 && flowLoad().subs.some(x => x.id === location.hash.slice(1))){
+  if(location.hash.length > 1 && subs().some(x => x.id === location.hash.slice(1))){
     openSub = location.hash.slice(1); paint();
     const el = $('d-'+openSub); if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
   }
@@ -404,23 +437,25 @@ function open_(){
     try{ sessionStorage.removeItem(SESSION_KEY); localStorage.removeItem(HANDOFF_KEY); }catch(e){}
     location.reload();
   });
-  if(location.hash.length > 1){
-    openSub = location.hash.slice(1);
-    if(!flowLoad().subs.some(x => x.id === openSub)) openSub = null;
-  }
-  paint();
-  if(openSub){ const el = $('d-'+openSub); if(el) el.scrollIntoView({block:'start'}); }
+  refresh().then(() => {
+    if(location.hash.length > 1){
+      openSub = location.hash.slice(1);
+      if(!subs().some(x => x.id === openSub)) openSub = null;
+      paint();
+    }
+    if(openSub){ const el = $('d-'+openSub); if(el) el.scrollIntoView({block:'start'}); }
+  });
 }
 function tryCode(){
   const v = ($('code').value||'').trim().toUpperCase();
-  if(v === ADMIN_CODE){ try{ sessionStorage.setItem(SESSION_KEY,'1'); }catch(e){} open_(); }
+  if(v === ADMIN_CODE){ AUTH = v; try{ sessionStorage.setItem(SESSION_KEY,'1'); }catch(e){} open_(); }
   else $('gerr').textContent = 'That code is not an administrator code.';
 }
 $('go').addEventListener('click', tryCode);
 $('code').addEventListener('keydown', e => { if(e.key==='Enter') tryCode(); });
 const ho = handoff();
-if(ho && ho.role === 'manager'){ IDENTITY = ho; open_(); }
-else { try{ if(sessionStorage.getItem(SESSION_KEY)==='1') open_(); }catch(e){} }
+if(ho && ho.role === 'manager'){ IDENTITY = ho; AUTH = ho.code; open_(); }
+else { try{ if(sessionStorage.getItem(SESSION_KEY)==='1'){ AUTH = ADMIN_CODE; open_(); } }catch(e){} }
 </script>
 </body>
 </html>
