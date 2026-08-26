@@ -24,6 +24,15 @@
  *     THREE files: benefits/pendings.html, benefits/upload.html,
  *     benefits/review.html. Commit, push, merge to main — Netlify ships it.
  *
+ *  ── SHARING THE PROJECT WITH THE QUOTE ENGINE (Code.gs) ─────────────
+ *  This file owns doGet/doPost and passes non-benefits traffic through to
+ *  the quote engine. Code.gs must therefore rename two functions:
+ *      function doPost(e)  →  function quoteDoPost_(e)
+ *      function doGet()    →  function quoteDoGet_()
+ *  Nothing else in Code.gs changes. The quote portal's EXISTING deployed
+ *  URL keeps working regardless — deployments are pinned to the version
+ *  they were made from — and after the rename, one new URL serves both.
+ *
  *  ── SAFETY ───────────────────────────────────────────────────────────
  *  TEST MODE IS ON BY DEFAULT: approvals email BEN_NOTIFY (you), never
  *  the client, until you set BEN_TEST_MODE to "off" in Script Properties.
@@ -147,7 +156,16 @@ function blog_(by, code, did, group, month, note) {
   bsheet_(BEN.ACTIVITY_SHEET).appendRow([new Date(), by || '', code || '', did || '', group || '', month || '', note || '']);
 }
 
-/* ============================ routing ============================ */
+/* ============================ routing ============================
+
+   This project also holds Code.gs, the quote-request engine, and a script
+   project can only have ONE doGet and ONE doPost — two files defining them
+   fight, and whichever loads last silently wins. So this file owns the two
+   entry points and hands anything that is not a benefits call through to
+   the quote engine, whose own entry points are renamed quoteDoPost_ /
+   quoteDoGet_. One deployed URL then serves both engines: benefits traffic
+   carries an `action`, everything else is a quote, enrollment or feedback
+   posting exactly as before. */
 
 function doGet(e) {
   try {
@@ -155,6 +173,10 @@ function doGet(e) {
     if (a === 'pendings')  return benPendings_(e.parameter);
     if (a === 'monthflow') return benMonthflow_(e.parameter);
     if (a === 'billing')   return benBilling_(e.parameter);
+    if (!a) {
+      if (typeof quoteDoGet_ === 'function') return quoteDoGet_();
+      return ContentService.createTextOutput('Ricky Rampersad Branch engine is running.');
+    }
     return berr_('Unknown action.');
   } catch (err) { return berr_(String(err && err.message || err)); }
 }
@@ -165,6 +187,7 @@ function doPost(e) {
     if (b.action === 'pendingnote')  return benPendingNote_(b);
     if (b.action === 'submitmonth')  return benSubmitMonth_(b);
     if (b.action === 'reviewmonth')  return benReviewMonth_(b);
+    if (typeof quoteDoPost_ === 'function') return quoteDoPost_(e);
     return berr_('Unknown action.');
   } catch (err) { return berr_(String(err && err.message || err)); }
 }
