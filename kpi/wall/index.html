@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>RRB · The Wall</title>
+<style>
+  /* A display for the office screen. Nobody interacts with it after the
+     morning sign-in, so everything is sized to be read from across a room. */
+  :root{
+    --navy:#0D1838; --navy2:#16264F; --line:#24355F;
+    --gold:#C7A34A; --gold-soft:#E7D9AE; --ink:#F2EFE6; --muted:#8FA0C5;
+    --green:#3FA46A; --amber:#D99A2B; --grey:#4A5A7E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--navy);color:var(--ink);
+       font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       display:flex;flex-direction:column;overflow:hidden}
+
+  header{display:flex;align-items:baseline;justify-content:space-between;
+         padding:2.2vh 2.6vw 1.2vh;border-bottom:1px solid var(--line)}
+  .brand{font-size:1.7vh;font-weight:800;letter-spacing:.35em;color:var(--gold-soft);text-transform:uppercase}
+  .brand b{color:#fff}
+  #clock{font-size:5.4vh;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  #date{font-size:1.9vh;color:var(--muted);text-align:right}
+
+  main{flex:1;display:grid;grid-template-columns:2.1fr 1fr;gap:2vh;padding:2vh 2.6vw;min-height:0}
+
+  #people{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+          gap:1.6vh;align-content:start;min-height:0}
+  /* Name reads first and in full — a wall where "Elizabeth" renders as "Eliz…"
+     is not a wall. The dots sit under it with the count alongside. */
+  .card{background:var(--navy2);border:1px solid var(--line);border-radius:14px;
+        padding:1.7vh 1.2vw;display:flex;flex-direction:column;gap:1.1vh}
+  .name{font-size:2.7vh;font-weight:800;letter-spacing:-.01em;line-height:1.15}
+  .role{font-size:1.5vh;color:var(--muted);margin-top:.2vh}
+  .meter{display:flex;align-items:center;justify-content:space-between}
+  .dots{display:flex;gap:.6vw}
+  .dot{width:2.3vh;height:2.3vh;border-radius:50%;background:transparent;
+       border:.35vh solid var(--grey)}
+  .dot.on{background:var(--gold);border-color:var(--gold)}
+  .count{font-size:3.4vh;font-weight:800;width:2.4em;text-align:right;
+         font-variant-numeric:tabular-nums}
+  .count small{font-size:.5em;color:var(--muted);font-weight:700}
+  .c-full .count{color:var(--green)} .c-full .dot.on{background:var(--green);border-color:var(--green)}
+  .c-some .count{color:var(--amber)}
+  .c-none .count{color:var(--grey)}
+
+  aside{display:flex;flex-direction:column;gap:1.6vh;min-height:0}
+  .panel{background:var(--navy2);border:1px solid var(--line);border-radius:14px;padding:2vh 1.4vw}
+  .panel h2{font-size:1.5vh;font-weight:800;letter-spacing:.25em;text-transform:uppercase;
+            color:var(--gold);margin-bottom:1.2vh}
+  #cpTime{font-size:4.6vh;font-weight:800;font-variant-numeric:tabular-nums}
+  #cpNote{font-size:1.7vh;color:var(--muted);margin-top:.4vh}
+  #inBox{flex:1;overflow:hidden}
+  .idea{border-left:.3vw solid var(--gold);padding:.2vh 0 .2vh .8vw;margin-bottom:1.3vh}
+  .idea .t{font-size:1.9vh;line-height:1.35}
+  .idea .w{font-size:1.5vh;color:var(--muted);margin-top:.3vh;font-weight:700}
+  .none{color:var(--muted);font-size:1.8vh}
+
+  footer{border-top:1px solid var(--line);padding:1.2vh 2.6vw;display:flex;
+         justify-content:space-between;font-size:1.6vh;color:var(--muted)}
+  #stale{color:var(--amber);font-weight:700;display:none}
+
+  /* Sign-in overlay — used once, by the Branch Manager, in the morning. */
+  #gate{position:fixed;inset:0;background:var(--navy);display:flex;
+        align-items:center;justify-content:center;flex-direction:column;gap:2vh}
+  #gate h1{font-size:3vh;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-soft)}
+  #gate p{color:var(--muted);font-size:1.9vh;max-width:34em;text-align:center;line-height:1.5}
+  #gate input{font-size:2.4vh;padding:1.2vh 1vw;border-radius:10px;border:1px solid var(--line);
+              background:var(--navy2);color:var(--ink);width:16em;text-align:center}
+  #gate button{font-size:2.2vh;font-weight:800;padding:1.3vh 3vw;border-radius:10px;border:0;
+               background:var(--gold);color:var(--navy);cursor:pointer}
+  #gErr{color:#E27D7D;font-size:1.8vh;min-height:2.2vh}
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+  <div id="gate">
+    <h1>The Wall</h1>
+    <p>Sign in once as the Branch Manager and leave the screen open.
+       It refreshes itself through the day and shows each person's blocks as they land.</p>
+    <input id="gUser" placeholder="Agent number" autocomplete="username">
+    <input id="gPass" placeholder="Password" type="password" autocomplete="current-password">
+    <div id="gErr"></div>
+    <button id="gGo">Open the wall</button>
+  </div>
+
+  <header class="hidden" id="hdr">
+    <div>
+      <div class="brand"><b>Ricky Rampersad Branch</b></div>
+      <div class="brand" style="letter-spacing:.6em;color:var(--muted);margin-top:.6vh">The Wall</div>
+    </div>
+    <div style="text-align:right">
+      <div id="clock">–:–</div>
+      <div id="date"></div>
+    </div>
+  </header>
+
+  <main class="hidden" id="mn">
+    <section id="people"></section>
+    <aside>
+      <div class="panel">
+        <h2>3pm checkpoint</h2>
+        <div id="cpTime">–</div>
+        <div id="cpNote"></div>
+      </div>
+      <div class="panel" style="flex:1;display:flex;flex-direction:column;min-height:0">
+        <h2>Value added &amp; ideas today</h2>
+        <div id="inBox"></div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="hidden" id="ftr">
+    <div>Submit each block as it ends — not at four o'clock from memory.</div>
+    <div><span id="stale">Connection lost — showing the last good picture</span>
+         <span id="asof"></span></div>
+  </footer>
+
+<script>
+// Same backend as the tracker. The wall only ever reads.
+const EXEC="https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66QVurol0rSQvIBTRBQpFT3LwvClCAOm6jiTW5tflDdg/exec";
+const TZ="America/Port_of_Spain";
+const CHECKPOINT_HOUR=15;
+const BLOCKS=["KPI1","KPI2","PM1","PM2"];
+const REFRESH_MS=5*60*1000;
+
+const $=id=>document.getElementById(id);
+const store={get:()=>{try{return localStorage.getItem("kpiwall_token")||""}catch(e){return ""}},
+             set:t=>{try{localStorage.setItem("kpiwall_token",t)}catch(e){}}};
+
+async function call(body){
+  const r=await fetch(EXEC,{method:"POST",headers:{"Content-Type":"text/plain"},
+                            body:JSON.stringify(body)});
+  return r.json();
+}
+
+// Trinidad's now, wherever the TV actually is.
+function trini(){ return new Date(new Date().toLocaleString("en-US",{timeZone:TZ})); }
+function todayISO(){ const d=trini();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+
+// Mirrors the app: a block counts when it was submitted, or carries real text.
+// A KPI name alone does not count — the schedule prefills those.
+const txt=v=>String(v==null?"":v).trim();
+function blockDone(row,c){
+  if(txt(row[c+"_At"])) return true;
+  return !!(txt(row[c+"_Actioned"])||txt(row[c+"_Resolved"])||txt(row[c+"_Open"]));
+}
+
+let roster=[], lastGood=null;
+
+function render(rows){
+  const day=todayISO();
+  const today={};
+  rows.forEach(r=>{ if(txt(r.Date).slice(0,10)===day) today[r.StaffId]=r; });
+
+  const ROLE={bm:"Branch Manager",abm:"Assistant Branch Manager",um:"Unit Manager",
+              bma:"Branch Manager's Assistant",ssa:"Sales Support"};
+  const cards=roster.map(p=>{
+    const r=today[p.staffId];
+    const done=r?BLOCKS.reduce((n,c)=>n+(blockDone(r,c)?1:0),0):0;
+    return {p,done};
+  }).sort((a,b)=>a.done-b.done||a.p.name.localeCompare(b.p.name));
+
+  $("people").innerHTML=cards.map(({p,done})=>{
+    const cls=done>=4?"c-full":done>0?"c-some":"c-none";
+    const dots=BLOCKS.map((_,i)=>'<span class="dot'+(i<done?' on':'')+'"></span>').join("");
+    return '<div class="card '+cls+'">'+
+      '<div><div class="name">'+p.name+'</div>'+
+      '<div class="role">'+(ROLE[p.role]||"")+'</div></div>'+
+      '<div class="meter"><div class="dots">'+dots+'</div>'+
+      '<div class="count">'+done+'<small>/4</small></div></div></div>';
+  }).join("");
+
+  const ideas=[];
+  Object.values(today).forEach(r=>{
+    ["ValueAdded","Innovation"].forEach(k=>{
+      const v=txt(r[k]);
+      if(v&&!/^none( today)?\.?$/i.test(v))
+        ideas.push({who:r.Name,text:v.length>110?v.slice(0,107)+"…":v});
+    });
+  });
+  $("inBox").innerHTML=ideas.length
+    ? ideas.slice(0,6).map(i=>'<div class="idea"><div class="t">'+i.text+
+        '</div><div class="w">'+i.who+'</div></div>').join("")
+    : '<div class="none">Nothing logged yet — the honest entry is still an entry.</div>';
+
+  $("asof").textContent="Updated "+trini().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+  $("stale").style.display="none";
+}
+
+function tick(){
+  const n=trini();
+  $("clock").textContent=n.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+  $("date").textContent=n.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
+  const cp=new Date(n); cp.setHours(CHECKPOINT_HOUR,0,0,0);
+  if(n<cp){
+    const m=Math.round((cp-n)/60000);
+    $("cpTime").textContent=(Math.floor(m/60)?Math.floor(m/60)+"h ":"")+(m%60)+"m";
+    $("cpNote").textContent="until the branch report goes out";
+  }else{
+    $("cpTime").textContent="Sent";
+    $("cpNote").textContent="finish the day's blocks before you leave";
+  }
+}
+
+async function refresh(){
+  try{
+    const res=await call({action:"rows",token:store.get()});
+    if(res&&res.authRequired){ gate(true); return; }
+    if(!res||!res.ok) throw new Error(res&&res.error||"no response");
+    roster=res.roster||roster;
+    lastGood=res.rows||[];
+    render(lastGood);
+  }catch(e){
+    // Keep the last good picture rather than a blank wall.
+    if(lastGood) $("stale").style.display="inline";
+  }
+}
+
+function gate(show){
+  $("gate").classList.toggle("hidden",!show);
+  ["hdr","mn","ftr"].forEach(id=>$(id).classList.toggle("hidden",show));
+}
+
+$("gGo").onclick=async()=>{
+  $("gErr").textContent="";
+  try{
+    const res=await call({action:"login",who:$("gUser").value.trim(),password:$("gPass").value});
+    if(!res.ok){ $("gErr").textContent=res.error||"Could not sign in."; return; }
+    store.set(res.token);
+    if(!res.profile.manager)
+      $("gErr").textContent="Signed in — note only the Branch Manager's sign-in shows the whole branch.";
+    gate(false); refresh();
+  }catch(e){ $("gErr").textContent="Could not reach the sheet. Check the connection."; }
+};
+$("gPass").addEventListener("keydown",e=>{ if(e.key==="Enter") $("gGo").click(); });
+
+tick(); setInterval(tick,1000);
+setInterval(refresh,REFRESH_MS);
+if(store.get()){ gate(false); refresh(); } else gate(true);
+</script>
+</body>
+</html>
