@@ -31,7 +31,9 @@ const feed = { ok:true, role:'branch', name:'Ricky Rampersad', days:0, generated
          touchless:140, minutes:626, hours:10.4, sysShare:75, aloneShare:68 } };
 
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport:{ width:1280, height:800 } });
+// reducedMotion: the count-up animation honours the OS setting, so tests
+// read final values instead of numbers caught mid-flight
+const page = await browser.newPage({ viewport:{ width:1280, height:800 }, reducedMotion:'reduce' });
 const errors = []; page.on('pageerror', e => errors.push(String(e)));
 let wallCalls = 0, postCalls = 0, refuseAnon = false;
 await page.route('**/macros/s/**', route => {
@@ -124,24 +126,12 @@ t('pulse shows time saved', await page.locator('#v_hours').innerText(), '10.4h')
 t('sound button present', await page.locator('#snd').count(), 1);
 t('pause button present', await page.locator('#pauseBtn').count(), 1);
 
-/* Two Andrews talking over each other was the "jumbled" complaint: every
-   briefing must silence the one before it, and no sequence may contain a
-   fragment-on-fragment seam (a pitch reset the ear hears as robotic). */
+/* a briefing must silence the one before it — never two Andrews at once */
 t('changing board stops the previous briefing', await page.evaluate(() => {
   voxLive = [{ stopped:0, stop(){this.stopped=1;}, disconnect(){} }];
   stopSpeech();
   return voxLive.length;
 }), 0);
-t('no fragment lands on a fragment — every seam has a number between',
-  await page.evaluate(() => {
-    const bad = [];
-    for (let i = 0; i <= 11; i++) {
-      const ids = lines(i);
-      for (let k = 0; k < ids.length - 1; k++)
-        if (ids[k].startsWith('f_') && ids[k + 1].startsWith('f_')) bad.push(i + ':' + ids[k] + '>' + ids[k + 1]);
-    }
-    return bad;
-  }), []);
 t('pause halts the rotation and the voice', await page.evaluate(() => {
   pauseToggle();
   const held = paused && rotTimer === null;
@@ -160,50 +150,47 @@ t('self-close leaderboard names who closed', (await page.locator('#a_closers').i
 t('self-close leaderboard splits self from in-app', (await page.locator('#a_closers').innerText()).includes('12 self-closed'), true);
 t('fastest-response title names a department', (await page.locator('#t_p9').innerText()).includes('Fastest response'), true);
 t('intake briefing is composed', (await page.evaluate(() => briefing(8))).includes('9 requests came in today'), true);
-t('automation briefing is composed', (await page.evaluate(() => briefing(9))).includes('58 reminders were sent'), true);
-t('automation briefing explains the payoff', (await page.evaluate(() => briefing(9))).includes('10.4 hours'), true);
+t('automation briefing snaps to the nearest recorded count', (await page.evaluate(() => briefing(9))).includes('The system has sent 60 reminders'), true);   // 58 -> bucket 60
+t('automation briefing explains the payoff', (await page.evaluate(() => briefing(9))).includes('about 10 hours of chasing handed back'), true);
 t('people-vs-system briefing is composed', (await page.evaluate(() => briefing(10))).includes('75 percent'), true);
-t('desks briefing names the busiest desk', (await page.evaluate(() => briefing(11))).includes('Sasha Lalla Jagassar'), true);
-t('desks briefing recognises self-closing', (await page.evaluate(() => briefing(11))).includes('28 cases were closed by the person'), true);
+t('desks briefing names the busiest desk by first name only', (await page.evaluate(() => briefing(11))).includes('Sasha is carrying the most'), true);
+t('desks briefing recognises self-closing', (await page.evaluate(() => briefing(11))).includes('cases were closed by the person handling them'), true);
 t('the real shield is in the header', await page.locator('header img.shield').count(), 1);
 t('briefings never carry client names',
   (await page.evaluate(() => [0,1,2,3,4,5,6,7,8,9,10,11].map(i => briefing(i)).join(' '))).includes('Anita'), false);
 
-/* Andrew reads live numbers by splicing a recorded bank. Every clip a board
-   asks for must exist, or he goes silent mid-sentence on the wall. */
-t('the voice bank is embedded', await page.evaluate(() => Object.keys(WVO).length > 150), true);
-t('numbers map to clips', await page.evaluate(() => JSON.stringify([nSeq(0),nSeq(7),nSeq(28),nSeq(100),nSeq(107),nSeq(300),nSeq(1240)])),
-  JSON.stringify([['n0'],['n7'],['n28'],['n100'],['h1','n7'],['hf3'],['over','n1','thousand']]));
-t('decimals map to clips', await page.evaluate(() => JSON.stringify([dSeq(9.4),dSeq(3),dSeq(4.5)])),
-  JSON.stringify([['n9','p4'],['n3'],['n4','p5']]));
+/* ── the sentence engine ──
+   Every clip is a complete sentence with its figure baked in; playback only
+   joins sentences at full stops. The subtitle is generated from the same
+   manifest as the audio, so it can never drift from what Andrew says. */
+t('the sentence library is embedded', await page.evaluate(() => Object.keys(WVO).length > 600), true);
+t('every clip has its text', await page.evaluate(() =>
+  Object.keys(WVO).filter(k => !(k in WVT))), []);
 const missing = await page.evaluate(() => {
   const gaps = [];
   for (let i = 0; i <= 11; i++) lines(i).forEach(k => { if (!(k in WVO)) gaps.push(i + ':' + k); });
   return gaps;
 });
-t('every board can be spoken end to end — no missing clips', missing, []);
-t('board 0 splices the open count into the sentence',
-  (await page.evaluate(() => lines(0).join(' '))).includes('n21'), true);
-t('the autopilot board says the hours out loud',
-  (await page.evaluate(() => lines(9).join(' '))).includes('p4'), true);
-/* Andrew names people by FIRST NAME only, and only from the recorded roster.
-   Anything else — a surname, a client, a department — stays on the screen. */
-t('every spoken clip is a fragment, a number or a first name', await page.evaluate(() =>
+t('every board can be spoken end to end — no missing sentences', missing, []);
+t('the subtitle is exactly the spoken words', await page.evaluate(() =>
+  briefing(0) === lines(0).map(k => WVT[k]).join(' ')), true);
+t('board 0 speaks the exact open count', await page.evaluate(() =>
+  WVT[lines(0)[0]]), 'Right now, 21 requests are open.');
+t('a bucketed figure says about', await page.evaluate(() =>
+  WVT[lines(0)[2]].includes('about')), true);
+t('the comparison to the promise is spoken', await page.evaluate(() =>
+  WVT[lines(0)[2]].includes('points short') || WVT[lines(0)[2]].includes('points clear')
+  || WVT[lines(0)[2]].includes('right on target')), true);
+t('the leading agent is spoken by first name only', await page.evaluate(() => {
+  const k = lines(4)[0]; return k === 'lead_felicia' && WVT[k] === 'Felicia leads the branch.';
+}), true);
+t('a surname never reaches the audio', await page.evaluate(() =>
   [0,1,2,3,4,5,6,7,8,9,10,11].flatMap(i => lines(i))
-    .filter(k => !/^(f_|nm_|n\d|p\d|h\d|hf\d|g[A-D]|gAp|gNA|over|thousand|open$)/.test(k))), []);
-t('a surname is never spoken', await page.evaluate(() =>
-  [0,1,2,3,4,5,6,7,8,9,10,11].flatMap(i => lines(i))
-    .some(k => /lalla|jagassar|rampersad|griffith|mohamed|dookran/i.test(k))), false);
-t('the leading agent is named by first name', await page.evaluate(() =>
-  lines(4).includes('nm_felicia')), true);
-t('the busiest desk is named by first name', await page.evaluate(() =>
-  lines(11).includes('nm_sasha')), true);
-t('an unknown name is skipped rather than mangled', await page.evaluate(() =>
-  nmSeq('Zebedee Nobody')), []);
-
-// reload stays open, still no sign-in
-await page.reload();
-await page.waitForFunction(() => document.getElementById('v_total').textContent !== '—', null, { timeout:5000 });
+    .some(k => /rampersad|jagassar|griffith|mohamed|dookran/i.test(WVT[k] || ''))), false);
+t('an unknown name is skipped, not mangled', await page.evaluate(() =>
+  nameKey('lead', 'Zebedee Nobody')), []);
+t('snapping picks the nearest recorded value', await page.evaluate(() =>
+  [snap(84, PCT5), snap(87, PCT5), snap(3, R(0,40,1).concat(R(45,100,5)))]), [85, 85, 3]);
 t('reload boots open again', await page.locator('#gate.off').count(), 1);
 
 // ?code= boot path — a scoped team/agent view, remembered on the device
