@@ -119,6 +119,11 @@
               opacity:.5;cursor:pointer}
   .dots-nav i.on{background:var(--gold);opacity:1}
   #stale{color:var(--amber);font-weight:700;display:none;margin-right:1vw}
+  .ctl{background:var(--navy2);border:1px solid var(--line);color:var(--ink);
+       border-radius:99px;width:4.2vh;height:4.2vh;font-size:1.9vh;cursor:pointer;
+       display:flex;align-items:center;justify-content:center;line-height:1;padding:0}
+  .ctl:hover{border-color:var(--gold)}
+  .ctl.on{border-color:var(--gold);color:var(--gold)}
 
   #gate{position:fixed;inset:0;background:var(--navy);display:flex;z-index:10;
         align-items:center;justify-content:center;flex-direction:column;gap:2vh}
@@ -160,8 +165,12 @@
   <main class="hidden" id="mn"><div id="slides"></div></main>
 
   <footer class="hidden" id="ftr">
-    <div>Submit each block as it ends · <span style="opacity:.75">←&nbsp;→ slides · space pause · F full screen</span></div>
-    <div class="dots-nav" id="dotsNav"></div>
+    <div>Submit each block as it ends · <span style="opacity:.75">←&nbsp;→ slides · space pause · F full screen · 🔊 for the voice</span></div>
+    <div style="display:flex;align-items:center;gap:1.2vw">
+      <button id="btnPlay" class="ctl" title="Pause / play (space)">⏸</button>
+      <button id="btnSound" class="ctl" title="Sound on / off">🔇</button>
+      <div class="dots-nav" id="dotsNav"></div>
+    </div>
     <div><span id="stale">Connection lost — showing the last good picture</span>
          <span id="asof"></span></div>
   </footer>
@@ -205,7 +214,29 @@ const TASKS={
       "Scripts/CB":{n:1,d:1},"Servicing":{n:1,d:1}}}
   },
   branch:{ open:225, overdue:150, days:20845, oldest:3836, noReason:134,
-           closed30:1255, people:5 },
+           // Closed in thirty days, split honestly. The birthday mailer closes
+           // its own tasks — 5,718 of them all told — and counting those as
+           // throughput flatters the branch by roughly half.
+           closed30:1255, closedByPeople:807, closedByRobot:448, people:5 },
+  // Days since anybody touched the task. Age says how long it has existed;
+  // this says how long it has been ignored, which is the different question.
+  quiet:[{n:"Azariah",avg:2,max:14},{n:"Elizabeth",avg:3,max:7},
+         {n:"Sasha",avg:11,max:366},{n:"Kamla",avg:27,max:216},
+         {n:"Ricky",avg:46,max:363}],
+  // Real work closed in thirty days, birthday automation excluded.
+  human30:[{n:"Sasha",v:500},{n:"Azariah",v:169},{n:"Elizabeth",v:91},
+           {n:"Kamla",v:46},{n:"Ricky",v:1}],
+  // Who the branch is chasing, by how long it has been quiet. Deliberately
+  // unnamed: this file sits in a public repository, so the names live behind
+  // the tracker's sign-in under "What you are chasing" and only the shape is
+  // on the wall. Initials would not be much better in a branch this size.
+  chasing:[
+    {band:"Untouched over a year", people:2, tasks:2,  days:1490},
+    {band:"Quiet 3 to 12 months",  people:5, tasks:12, days:8236},
+    {band:"Quiet 1 to 3 months",   people:9, tasks:21, days:4104},
+    {band:"Chased inside a month", people:17,tasks:42, days:3120}],
+  // The Branch Manager's untyped pile, looked at rather than assumed.
+  inbound:{ total:70, waiting:67, notStarted:3, avgWaitingDays:29, avgNotStartedDays:53 },
   waiting:{ total:141, days:9775, quiet30:43, unnamed:64, unnamedDays:1891,
             top:[{n:"Ricky (agent feedback)",t:50,d:5631},
                  {n:"Named agents & clients", t:27,d:2253},
@@ -387,8 +418,8 @@ function sNumbers(cards){
       'k</div><div class="d">oldest single task: '+B.oldest.toLocaleString()+' days</div></div>'+
     '<div class="kpi gold"><div class="k">Overdue, no reason given</div><div class="v">'+B.noReason+
       '</div><div class="d">the field exists — it is not being filled</div></div>'+
-    '<div class="kpi green"><div class="k">Closed · last 30 days</div><div class="v">'+B.closed30.toLocaleString()+
-      '</div><div class="d">the work is moving, the pile is not</div></div>'+
+    '<div class="kpi green"><div class="k">Closed by people · 30 days</div><div class="v">'+B.closedByPeople.toLocaleString()+
+      '</div><div class="d">a further '+B.closedByRobot+' closed themselves — birthday mail</div></div>'+
     '<div class="kpi '+(inToday?"green":"red")+'"><div class="k">Logging today</div><div class="v">'+
       inToday+'/'+cards.length+'</div><div class="d">'+
       (late?late+' block'+(late>1?'s':'')+' overdue right now':'nothing overdue right now')+'</div></div>'+
@@ -397,6 +428,65 @@ function sNumbers(cards){
 
 // The tracker chases the day on its own. Staff should know exactly what
 // arrives and when, so nothing feels like being singled out.
+// Throughput with the robot taken out. The birthday mailer closes its own
+// tasks in the hundreds; leaving that in the total tells the branch it is
+// twice as productive as it is, which is the most expensive kind of comfort.
+function sHuman(){
+  const H=TASKS.human30, B=TASKS.branch, max=Math.max(...H.map(x=>x.v),1);
+  const rows=H.map(x=>
+    '<div class="row"><span class="nm">'+esc(x.n)+'</span>'+
+    '<span class="track"><i class="green" style="width:'+(x.v/max*100)+'%"></i></span>'+
+    '<span class="val">'+x.v+'</span><span class="sub">closed · 30 days</span></div>').join("");
+  return '<div class="kick">9 · People, not automation</div>'+
+    "<h2>"+B.closedByPeople.toLocaleString()+" tasks closed by hand</h2>"+
+    '<p class="lede">The birthday mailer closed a further '+B.closedByRobot+
+      " on its own. It is counted separately here, because a robot's output is not the branch's.</p>"+
+    '<div class="body"><div class="panel"><div class="rows">'+rows+"</div></div></div>";
+}
+
+// Age is how long a task has existed. Quiet is how long nobody has touched it.
+// A three-week task chased yesterday is fine; a three-week task nobody has
+// opened in a month is not, and the age alone cannot tell them apart.
+function sQuiet(){
+  const Q=TASKS.quiet, I=TASKS.inbound, max=Math.max(...Q.map(x=>x.max),1);
+  const rows=Q.map(x=>
+    '<div class="row"><span class="nm">'+esc(x.n)+'</span>'+
+    '<span class="track"><i class="'+(x.avg>21?"red":x.avg>7?"gold":"teal")+
+      '" style="width:'+(x.max/max*100)+'%"></i></span>'+
+    '<span class="val">'+x.avg+'d</span><span class="sub">average · longest '+x.max+" days</span></div>").join("");
+  return '<div class="kick">10 · How long since anyone touched it</div>'+
+    "<h2>Quiet is not the same as aged</h2>"+
+    '<p class="lede">Days since the last activity on an open task. The bar is the longest one each person is carrying.</p>'+
+    '<div class="body"><div class="cols">'+
+    '<div class="panel"><h3>Days quiet</h3><div class="rows">'+rows+"</div></div>"+
+    '<div class="panel"><h3>The inbound pile</h3>'+
+    '<div style="font-size:5.2vh;font-weight:800;color:var(--gold)">'+I.total+"</div>"+
+    '<div style="font-size:1.9vh;color:var(--muted);line-height:1.5;margin-top:1vh">'+
+      "untyped tasks on the Branch Manager — <b style=\"color:#fff\">"+I.waiting+
+      "</b> are emails from agents and clients marked <i>waiting on someone else</i>, averaging "+
+      I.avgWaitingDays+" days. They are not birthday mail: those close themselves.</div>"+
+    "</div></div></div>";
+}
+
+// Tasks carry a contact. Grouping the open ones by how long since anybody
+// touched them turns "waiting on someone" into a queue with an oldest end.
+function sChasing(){
+  const C=TASKS.chasing, max=Math.max(...C.map(x=>x.days),1);
+  const tone=["red","red","gold","teal"];
+  const rows=C.map((x,i)=>
+    '<div class="row"><span class="nm">'+esc(x.band)+'</span>'+
+    '<span class="track"><i class="'+tone[i]+'" style="width:'+(x.days/max*100)+'%"></i></span>'+
+    '<span class="val">'+x.tasks+'</span><span class="sub">'+x.people+" people · "+
+    x.days.toLocaleString()+" days</span></div>").join("");
+  const worst=C[0];
+  return '<div class="kick">11 · Who we are chasing</div>'+
+    "<h2>Every open task has somebody's name on it</h2>"+
+    '<p class="lede">Grouped by how long since anyone touched it. '+
+      worst.tasks+" task"+(worst.tasks>1?"s have":" has")+
+      " not been touched in over a year. Names are in the tracker under <b>What you are chasing</b> — not on a wall.</p>"+
+    '<div class="body"><div class="panel"><div class="rows">'+rows+"</div></div></div>";
+}
+
 function sRhythm(){
   const rows=[
     ["8am","<b>Your blocks are waiting</b><span>Signed in, you land on your own day — the KPI already chosen from the schedule</span>"],
@@ -406,7 +496,7 @@ function sRhythm(){
     ["each&nbsp;block","<b>Your receipt</b><span>Every submission emailed straight back to you. Keep them — they are your file</span>"],
     ["Fri&nbsp;5pm","<b>The week</b><span>Where the week actually went, person by person</span>"]
   ].map(r=>'<div class="t">'+r[0]+'</div><div class="w">'+r[1]+"</div>").join("");
-  return '<div class="kick">9 · How the day is chased</div>'+
+  return '<div class="kick">12 · How the day is chased</div>'+
     "<h2>Nobody has to remember</h2>"+
     '<p class="lede">Six things happen on their own. None of them is a manager walking over to your desk.</p>'+
     '<div class="body"><div class="panel" style="height:100%"><div class="when">'+rows+"</div></div></div>";
@@ -487,12 +577,14 @@ let cur=0, timer=null, paused=false;
 function render(rows){
   const cards=judge(rows);
   const slides=[sBlocks(cards),sWaitingToday(cards),sReconcile(cards),sNumbers(cards),
-                sLoad(),sTypes(cards),sFeedback(),sDone(),sRhythm()];
+                sLoad(),sTypes(cards),sFeedback(),sDone(),sHuman(),sQuiet(),sChasing(),sRhythm()];
   $("#slides").innerHTML=slides.map(h=>'<section class="slide">'+h+"</section>").join("");
   const nav=$("#dotsNav"); nav.innerHTML="";
   slides.forEach((_,i)=>{const d=document.createElement("i");
     d.onclick=()=>go(i,true); nav.appendChild(d);});
+  const keep=spokenFor;
   go(Math.min(cur,slides.length-1),false);
+  spokenFor=keep;
   $("#asof").textContent="Updated "+trini().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
   $("#stale").style.display="none";
 }
@@ -502,6 +594,7 @@ function go(i){
   cur=(i+slides.length)%slides.length;
   slides.forEach((s,j)=>s.classList.toggle("on",j===cur));
   dots.forEach((d,j)=>d.classList.toggle("on",j===cur));
+  speak(cur);
   arm();
 }
 function arm(){
@@ -518,7 +611,7 @@ document.addEventListener("keydown",e=>{
   if(!$("#gate").classList.contains("hidden")) return;
   if(e.key==="ArrowRight") go(cur+1);
   else if(e.key==="ArrowLeft") go(cur-1);
-  else if(e.key===" "){e.preventDefault();paused=!paused;arm();}
+  else if(e.key===" "){e.preventDefault();paused=!paused;syncPlayBtn();arm();}
   else if(e.key==="f"||e.key==="F"){
     if(document.fullscreenElement) document.exitFullscreen();
     else document.documentElement.requestFullscreen();
@@ -529,6 +622,43 @@ $("#mn").addEventListener("click",e=>{
   if(e.target.closest("a,button,input")) return;
   go(cur+(e.clientX>innerWidth/2?1:-1));
 });
+
+// ---- voice and bed ------------------------------------------------------
+// Andrew narrates what each slide is for; the branch theme sits underneath.
+// Both are off until somebody asks, because a screen that starts talking on
+// its own in an open office is a screen people unplug. The sign-in click is
+// the browser gesture that lets audio play at all, so the toggle works from
+// the first press rather than failing silently.
+let sound=false, bed=null, voice=null, spokenFor=-1;
+function initAudio(){
+  if(bed) return;
+  bed=new Audio("/rr-branch-theme.mp3");
+  bed.loop=true; bed.volume=0.10;
+  voice=new Audio(); voice.volume=1.0;
+  // duck the bed while Andrew is speaking, lift it after
+  voice.addEventListener("play",()=>{ if(bed) bed.volume=0.045; });
+  ["ended","pause","error"].forEach(e=>voice.addEventListener(e,()=>{ if(bed) bed.volume=0.10; }));
+}
+function speak(i){
+  if(!sound||!voice) return;
+  if(spokenFor===i) return;          // do not repeat on a data refresh
+  spokenFor=i;
+  voice.src="/wall/audio/s"+(i+1)+".mp3";
+  voice.play().catch(()=>{});
+}
+function setSound(on){
+  sound=on; initAudio();
+  const b=$("#btnSound");
+  b.textContent=on?"🔊":"🔇"; b.classList.toggle("on",on);
+  if(on){ bed.play().catch(()=>{}); spokenFor=-1; speak(cur); }
+  else { bed.pause(); voice.pause(); }
+}
+$("#btnSound").onclick=()=>setSound(!sound);
+$("#btnPlay").onclick=()=>{ paused=!paused; syncPlayBtn(); arm(); };
+function syncPlayBtn(){
+  const b=$("#btnPlay");
+  b.textContent=paused?"▶":"⏸"; b.classList.toggle("on",paused);
+}
 
 function tick(){
   const n=trini();
