@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Production Wall | Ricky Rampersad Branch</title>
+<meta name="description" content="Rotating production wall for the branch — policies picked up for production this week, this month and year to date, from Salesforce.">
+<meta name="theme-color" content="#061c31">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Same design system as /wall/ — this is its sibling board. */
+  :root{
+    --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
+    --blue:#37b1ec; --blue2:#0b7fd4; --teal:#0fb5a5;
+    --good:#34d399; --warn:#fbbf24; --bad:#fb7185; --gold:#f5b93b;
+    --grad:linear-gradient(120deg,#37b1ec,#0b7fd4);
+    --grad-gold:linear-gradient(120deg,#f5b93b,#e08b1e);
+    --r:18px; --ease:cubic-bezier(.16,1,.3,1);
+    --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:var(--font-b);color:var(--ink);background:#061c31;
+    overflow:hidden;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:
+      radial-gradient(1200px 700px at 12% -8%,rgba(55,177,236,.22),transparent 60%),
+      radial-gradient(900px 600px at 92% 4%,rgba(11,127,212,.20),transparent 62%),
+      radial-gradient(800px 700px at 60% 108%,rgba(15,181,165,.13),transparent 60%),
+      linear-gradient(165deg,#061c31 0%,#08243f 55%,#061a2d 100%)}
+
+  header{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;gap:16px;
+    padding:16px 26px}
+  header .mark{width:44px;height:44px;flex:none;border-radius:13px;background:var(--grad-gold);
+    display:grid;place-items:center;font-family:var(--font-d);font-weight:800;font-size:15px;color:#3a2404;
+    box-shadow:0 6px 20px rgba(224,139,30,.4)}
+  header h1{margin:0;font-family:var(--font-d);font-size:18px;font-weight:800;letter-spacing:-.3px}
+  header .sub{font-size:12px;color:var(--dim);margin-top:2px}
+  header .right{margin-left:auto;display:flex;align-items:center;gap:16px}
+  .live{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--dim);white-space:nowrap}
+  .live i{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+  .live.on i{background:var(--good);animation:pulse 2.2s infinite}
+  @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(52,211,153,.5)}50%{opacity:.55;box-shadow:0 0 0 7px rgba(52,211,153,0)}}
+  #clock{font-family:var(--font-d);font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;color:var(--dim)}
+
+  .dots{position:fixed;bottom:22px;left:0;right:0;z-index:20;display:flex;justify-content:center;gap:9px}
+  .dots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.18);cursor:pointer;transition:.3s var(--ease)}
+  .dots i.on{background:var(--gold);transform:scale(1.25)}
+  #bar{position:fixed;bottom:0;left:0;z-index:20;height:3px;background:var(--grad-gold);width:0%}
+  #bar.run{transition:width linear}
+
+  .slide{position:fixed;inset:0;padding:96px 70px 74px;display:flex;flex-direction:column;justify-content:center;
+    opacity:0;visibility:hidden;transform:translateY(16px);transition:opacity .7s var(--ease),transform .7s var(--ease),visibility .7s}
+  .slide.on{opacity:1;visibility:visible;transform:none}
+  .slide .kick{font-size:13px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:10px}
+  .slide h2{margin:0 0 6px;font-family:var(--font-d);font-size:46px;font-weight:800;letter-spacing:-1.2px;line-height:1.06}
+  .slide .lede{font-size:17px;color:var(--dim);max-width:940px;line-height:1.55;margin:0 0 30px}
+  .slide .body{flex:0 0 auto;min-height:0}
+
+  .periods{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  .period{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:34px 36px;backdrop-filter:blur(10px)}
+  .period .k{font-size:13px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);font-weight:650}
+  .period .v{font-family:var(--font-d);font-size:66px;font-weight:800;letter-spacing:-2.2px;margin-top:12px;
+    font-variant-numeric:tabular-nums;line-height:1;
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .period.gold .v{background:var(--grad-gold);-webkit-background-clip:text;background-clip:text}
+  .period .n{font-size:17px;color:var(--ink);margin-top:14px;font-weight:650}
+  .period .d{font-size:14px;color:var(--dim);margin-top:8px;line-height:1.5}
+  .period .d.up{color:var(--good)}.period .d.down{color:var(--bad)}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:24px 26px;backdrop-filter:blur(10px)}
+  .panel h3{margin:0 0 16px;font-family:var(--font-d);font-size:15px;font-weight:750;letter-spacing:.02em}
+
+  .bars{display:flex;align-items:flex-end;gap:16px;height:330px}
+  .bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:9px;height:100%}
+  .bar .amt{font-size:13px;color:var(--dim);font-variant-numeric:tabular-nums;font-weight:650;white-space:nowrap}
+  .bar i{display:block;width:100%;max-width:74px;border-radius:10px 10px 4px 4px;background:var(--grad);
+    box-shadow:0 6px 22px rgba(11,127,212,.35);transform-origin:bottom;transition:transform .9s var(--ease)}
+  .bar.now i{background:var(--grad-gold);box-shadow:0 6px 22px rgba(224,139,30,.35)}
+  .slide:not(.on) .bar i{transform:scaleY(0)}
+  .bar .lab{font-size:13px;color:var(--faint);font-weight:600;white-space:nowrap}
+  .bar .n{font-size:11.5px;color:var(--faint)}
+  .bar.now .lab{color:var(--ink)}
+
+  .rows{display:flex;flex-direction:column;gap:13px}
+  .row{display:flex;align-items:center;gap:14px;font-size:16px}
+  .row .rk{width:34px;flex:none;font-family:var(--font-d);font-weight:800;font-size:15px;color:var(--faint);text-align:center}
+  .row:nth-child(1) .rk,.row:nth-child(2) .rk,.row:nth-child(3) .rk{color:var(--gold)}
+  .row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+  .row .track{flex:1.4;height:12px;background:rgba(255,255,255,.08);border-radius:7px;overflow:hidden}
+  .row .track i{display:block;height:100%;background:var(--grad);border-radius:7px;transition:width .9s var(--ease)}
+  .slide:not(.on) .row .track i{width:0!important}
+  .row .val{width:130px;text-align:right;font-variant-numeric:tabular-nums;font-weight:700;font-size:15px}
+  .row .sub{font-size:12.5px;color:var(--faint);width:96px;text-align:right}
+
+  table{width:100%;border-collapse:collapse;font-size:15.5px}
+  th{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:650;
+    text-align:left;padding:0 14px 12px}
+  td{padding:12px 14px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+  td:last-child,th:last-child{text-align:right}
+  td b{font-weight:700}
+  .chip{display:inline-block;font-size:12px;font-weight:650;padding:4px 12px;border-radius:20px;
+    border:1px solid var(--line);background:rgba(0,0,0,.2);color:var(--dim);white-space:nowrap}
+  .chip.good{color:var(--good);border-color:rgba(52,211,153,.35)}
+
+  footer{position:fixed;bottom:20px;left:26px;z-index:20;font-size:11.5px;color:var(--faint)}
+  .hint{position:fixed;bottom:20px;right:26px;z-index:20;font-size:11.5px;color:var(--faint)}
+
+  @media (max-width:1100px){
+    .slide{padding:88px 34px 70px}
+    .slide h2{font-size:32px}
+    .periods{grid-template-columns:1fr}
+    .period .v{font-size:44px}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}
+    .slide:not(.on) .bar i{transform:none}.slide:not(.on) .row .track i{width:auto!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mark">RR</div>
+  <div>
+    <h1>Production Wall</h1>
+    <div class="sub">Ricky Rampersad Branch · picked up for production · Salesforce</div>
+  </div>
+  <div class="right">
+    <span class="live" id="live"><i></i><span id="liveTxt">Snapshot</span></span>
+    <span id="clock"></span>
+  </div>
+</header>
+
+<div id="slides"></div>
+<div class="dots" id="dots"></div>
+<div id="bar"></div>
+<footer id="src"></footer>
+<div class="hint">←&nbsp;→ change &nbsp;·&nbsp; space pause &nbsp;·&nbsp; F full screen</div>
+
+<script>
+/* ── DATA ────────────────────────────────────────────────────────────────────
+   Everything here is CLIENT_PORTFOLIO__c filtered on Production_Picked_up_Date__c
+   — the "picked up for production" measure — summing Total_API__c.
+
+   What ships in this file is a snapshot queried from Salesforce on the date
+   in the footer. For live numbers, deploy apps-script/WallBoard.gs (see
+   WALL-SETUP.md) and paste the /exec URL below: the board then refreshes
+   every 15 minutes and falls back to this snapshot if the feed is down.
+
+   This committed snapshot shortens advisors to first name + initial because
+   the repo is public; the live feed (never committed) carries full names.
+   Client fields are never queried, so none can end up here.                        */
+var WALL_DATA_URL = "";   // ← Apps Script /exec URL, or leave "" for snapshot
+
+var PROD_DATA = {
+  generatedAt: "2026-08-26T12:45:00Z",
+  week:  { n:3,   api:25557,   prevN:15,  prevApi:101521 },
+  month: { label:"August", n:46,  api:833799,
+           lastYearN:71, lastYearApi:636762 },
+  ytd:   { year:2026, n:706, api:5800544,
+           lastYearN:909, lastYearApi:8362421 },
+  monthly: [
+    {m:"Jan", n:118, api:921362},
+    {m:"Feb", n:96,  api:717399},
+    {m:"Mar", n:81,  api:694176},
+    {m:"Apr", n:98,  api:685817},
+    {m:"May", n:112, api:769186},
+    {m:"Jun", n:62,  api:449384},
+    {m:"Jul", n:93,  api:729421},
+    {m:"Aug", n:46,  api:833799}
+  ],
+  weekly: [
+    {w:"Wk 27", n:16, api:81768},
+    {w:"Wk 28", n:10, api:75747},
+    {w:"Wk 29", n:16, api:112959},
+    {w:"Wk 30", n:14, api:194144},
+    {w:"Wk 31", n:33, api:250400},
+    {w:"Wk 32", n:6,  api:405382},
+    {w:"Wk 33", n:25, api:326591},
+    {w:"Last wk", n:15, api:101521},
+    {w:"This wk", n:3, api:25557}
+  ],
+  leaders: [
+    {a:"Varun S.",     n:26, api:597129},
+    {a:"Gary S.",       n:48, api:450798},
+    {a:"Anthony S.",    n:59, api:441526},
+    {a:"Aidan E.",       n:61, api:369433},
+    {a:"Fawwaz M.",     n:25, api:311454},
+    {a:"Ricky R.",    n:17, api:302765},
+    {a:"Randolph G.",  n:19, api:245241},
+    {a:"Aleema M.",n:55, api:242782},
+    {a:"Premchand D.",  n:20, api:234947},
+    {a:"John B.",       n:51, api:212521}
+  ],
+  latest: [
+    {a:"Daniel B.", d:"2026-08-25", api:15402},
+    {a:"Rajiv S.",      d:"2026-08-25", api:5543},
+    {a:"Rajiv S.",      d:"2026-08-25", api:4613},
+    {a:"Gary S.",      d:"2026-08-21", api:13060},
+    {a:"Gary S.",      d:"2026-08-21", api:12145},
+    {a:"Premchand D.", d:"2026-08-21", api:11623},
+    {a:"Varun S.",    d:"2026-08-21", api:5960},
+    {a:"Naila S.",      d:"2026-08-21", api:3456},
+    {a:"Javid A.",         d:"2026-08-21", api:2795},
+    {a:"Aleema M.",d:"2026-08-21", api:2795}
+  ]
+};
+
+/* ── helpers ── */
+function $(s,el){return (el||document).querySelector(s)}
+function money(n){return "TT$" + Math.round(n).toLocaleString("en-US")}
+function moneyShort(n){
+  if(n>=1e6) return "TT$" + (n/1e6).toFixed(n>=1e7?0:2) + "m";
+  if(n>=1e3) return "TT$" + Math.round(n/1e3) + "k";
+  return "TT$" + Math.round(n);
+}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function dstr(iso){
+  var d = new Date(iso + "T12:00:00");
+  return d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
+}
+function pct(now,then){ return then ? (now-then)/then*100 : 0 }
+function deltaLine(now,then,label){
+  var p = pct(now,then);
+  return '<div class="d '+(p>=0?"up":"down")+'">'+(p>=0?"▲ +":"▼ ")+Math.abs(p).toFixed(1)+"% "+label+'</div>';
+}
+
+/* ── slides ── */
+function sPulse(D){
+  var w=D.week, m=D.month, y=D.ytd;
+  return '<div class="kick">Picked up for production</div>'
+    +'<h2>Production — week · month · year</h2>'
+    +'<p class="lede">Every policy counted here has a production picked-up date on the client portfolio; the money is annualised premium income.</p>'
+    +'<div class="body"><div class="periods">'
+    +'<div class="period gold"><div class="k">This week</div><div class="v">'+moneyShort(w.api)+'</div>'
+    +'<div class="n">'+w.n+' '+(w.n===1?"policy":"policies")+'</div>'
+    +deltaLine(w.api,w.prevApi,"vs last week ("+moneyShort(w.prevApi)+")")+'</div>'
+    +'<div class="period"><div class="k">'+esc(m.label)+' so far</div><div class="v">'+moneyShort(m.api)+'</div>'
+    +'<div class="n">'+m.n+' policies</div>'
+    +deltaLine(m.api,m.lastYearApi,"vs "+esc(m.label)+" last year")+'</div>'
+    +'<div class="period"><div class="k">Year to date · '+y.year+'</div><div class="v">'+moneyShort(y.api)+'</div>'
+    +'<div class="n">'+y.n+' policies</div>'
+    +deltaLine(y.api,y.lastYearApi,"vs this point in "+(y.year-1))+'</div>'
+    +'</div></div>';
+}
+function sWeeks(D){
+  var max = Math.max.apply(null, D.weekly.map(function(x){return x.api}));
+  var bars = D.weekly.map(function(x,i){
+    var now = i===D.weekly.length-1;
+    return '<div class="bar'+(now?" now":"")+'"><div class="amt">'+moneyShort(x.api)+'</div>'
+      +'<i style="height:'+Math.max(5,x.api/max*100)+'%"></i><div class="lab">'+esc(x.w)+'</div><div class="n">'+x.n+'</div></div>';
+  }).join("");
+  return '<div class="kick">The last nine weeks</div>'
+    +'<h2>Week by week</h2>'
+    +'<p class="lede">API picked up each week, with the policy count underneath. The gold bar is the week we are standing in — still open.</p>'
+    +'<div class="body"><div class="panel"><div class="bars">'+bars+'</div></div></div>';
+}
+function sMonths(D){
+  var max = Math.max.apply(null, D.monthly.map(function(x){return x.api}));
+  var bars = D.monthly.map(function(x,i){
+    var now = i===D.monthly.length-1;
+    return '<div class="bar'+(now?" now":"")+'"><div class="amt">'+moneyShort(x.api)+'</div>'
+      +'<i style="height:'+Math.max(5,x.api/max*100)+'%"></i><div class="lab">'+x.m+'</div><div class="n">'+x.n+' pol</div></div>';
+  }).join("");
+  return '<div class="kick">Production · '+D.ytd.year+'</div>'
+    +'<h2>API picked up, month by month</h2>'
+    +'<p class="lede">The gold bar is the running month. '
+    +esc(D.month.label)+' already holds '+moneyShort(D.month.api)+' — with days still on the clock.</p>'
+    +'<div class="body"><div class="panel"><div class="bars">'+bars+'</div></div></div>';
+}
+function sLeaders(D){
+  var max = Math.max.apply(null, D.leaders.map(function(x){return x.api}));
+  var rows = D.leaders.map(function(x,i){
+    return '<div class="row"><span class="rk">'+(i+1)+'</span><span class="nm">'+esc(x.a)+'</span>'
+      +'<span class="track"><i style="width:'+(x.api/max*100)+'%"></i></span>'
+      +'<span class="val">'+moneyShort(x.api)+'</span><span class="sub">'+x.n+' policies</span></div>';
+  }).join("");
+  return '<div class="kick">Leaderboard · year to date</div>'
+    +'<h2>Who is carrying the year</h2>'
+    +'<p class="lede">API picked up per advisor in '+D.ytd.year+'. Gold ranks are the top three.</p>'
+    +'<div class="body"><div class="panel"><div class="rows">'+rows+'</div></div></div>';
+}
+function sLatest(D){
+  var rows = D.latest.slice(0,10).map(function(x){
+    return '<tr><td><b>'+esc(x.a)+'</b></td><td>'+dstr(x.d)+'</td>'
+      +'<td><span class="chip good">picked up</span></td><td>'+money(x.api)+'</td></tr>';
+  }).join("");
+  return '<div class="kick">Fresh off the desk</div>'
+    +'<h2>Latest pickups</h2>'
+    +'<p class="lede">The most recent policies picked up for production this month — the board the whole branch watches.</p>'
+    +'<div class="body"><div class="panel"><table><thead><tr>'
+    +'<th>Advisor</th><th>Date</th><th>Status</th><th>API</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody></table></div></div>';
+}
+
+/* ── deck ── */
+var BUILDERS=[sPulse,sWeeks,sMonths,sLeaders,sLatest];
+var DWELL=14000, cur=0, timer=null, paused=false;
+
+function render(D){
+  var host=$("#slides"); host.innerHTML="";
+  BUILDERS.forEach(function(b){
+    var el=document.createElement("section");
+    el.className="slide"; el.innerHTML=b(D);
+    host.appendChild(el);
+  });
+  var dots=$("#dots"); dots.innerHTML="";
+  BUILDERS.forEach(function(_,i){
+    var d=document.createElement("i");
+    d.onclick=function(){go(i,true)};
+    dots.appendChild(d);
+  });
+  var t=new Date(D.generatedAt);
+  $("#src").textContent="Data: Salesforce · client portfolio, production picked up · pulled "
+    +t.toLocaleDateString("en-GB",{day:"numeric",month:"short"})+" "
+    +t.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+  go(Math.min(cur,BUILDERS.length-1),false);
+}
+
+function go(i){
+  cur=(i+BUILDERS.length)%BUILDERS.length;
+  document.querySelectorAll(".slide").forEach(function(s,j){s.classList.toggle("on",j===cur)});
+  document.querySelectorAll(".dots i").forEach(function(d,j){d.classList.toggle("on",j===cur)});
+  arm();
+}
+function arm(){
+  clearTimeout(timer);
+  var bar=$("#bar");
+  bar.classList.remove("run"); bar.style.width="0%";
+  if(paused) return;
+  void bar.offsetWidth;
+  bar.classList.add("run");
+  bar.style.transitionDuration=DWELL+"ms"; bar.style.width="100%";
+  timer=setTimeout(function(){go(cur+1)},DWELL);
+}
+document.addEventListener("keydown",function(e){
+  if(e.key==="ArrowRight") go(cur+1);
+  else if(e.key==="ArrowLeft") go(cur-1);
+  else if(e.key===" "){e.preventDefault();paused=!paused;arm();}
+  else if(e.key==="f"||e.key==="F"){
+    if(document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen();
+  }
+});
+
+function tick(){
+  $("#clock").textContent=new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+}
+setInterval(tick,10000); tick();
+
+/* live feed — the shared WallBoard.gs payload carries this board's numbers
+   under .production; the snapshot stays on screen if the fetch fails */
+function refresh(){
+  if(!WALL_DATA_URL) return;
+  fetch(WALL_DATA_URL,{redirect:"follow"}).then(function(r){return r.json()})
+    .then(function(j){
+      var p = j && j.production;
+      if(p && p.ytd && p.monthly){
+        PROD_DATA=p; render(p);
+        $("#live").classList.add("on"); $("#liveTxt").textContent="Live";
+      }
+    }).catch(function(){ /* keep the snapshot on screen */ });
+}
+render(PROD_DATA);
+refresh();
+setInterval(refresh, 15*60*1000);
+</script>
+</body>
+</html>
