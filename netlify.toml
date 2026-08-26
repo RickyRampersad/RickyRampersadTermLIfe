@@ -33,6 +33,24 @@
   to = "/renewal/"
   status = 302
 
+# KPI tracker short links — what staff are told in the training film:
+# /kpi is the tracker, /training this film, /manual the written guide,
+# /wall the live office screen.
+[[redirects]]
+  from = "/training"
+  to = "/kpi/training/"
+  status = 302
+
+[[redirects]]
+  from = "/manual"
+  to = "/kpi/manual/"
+  status = 302
+
+[[redirects]]
+  from = "/wall"
+  to = "/kpi/wall/"
+  status = 302
+
 # Claims short links: /claim, and /claim/motor → the motor claim pre-selected.
 [[redirects]]
   from = "/claim"
