@@ -1,7 +1,32 @@
 # Salesforce Wall Board — setup
 
-A rotating slide board for the branch wall at **`/wall/`** —
-rickyrampersadbranch.com/wall/. Seven slides, fourteen seconds each:
+Two rotating slide boards for the branch wall, both fed by the same
+Salesforce connection and the same Apps Script feed:
+
+| Board | Address | What it shows |
+|---|---|---|
+| **Branch board** | `/wall/` | the whole branch — book, renewals, claims, pipeline |
+| **Production wall** | `/wall/production.html` | policies **picked up for production** — this week, this month, year to date |
+
+## The production wall
+
+Everything on it is `CLIENT_PORTFOLIO__c` filtered on
+`Production_Picked_up_Date__c`, summing `Total_API__c`. Five slides:
+
+1. **Week · month · year** — API and policy count for this week (vs last
+   week), the running month (vs the same days last year) and year to date
+   (vs the same point last year)
+2. **Week by week** — the last nine weeks, current week in gold
+3. **Month by month** — the year's production curve
+4. **Leaderboard** — API per advisor year to date, top three ranked in gold
+5. **Latest pickups** — the most recent policies picked up this month
+
+Advisor names are branch staff and belong on a production wall. Client
+fields are never queried for this board, so no client data can reach it.
+
+## The branch board
+
+Seven slides at `/wall/`, fourteen seconds each:
 
 1. **The branch, right now** — risks written and premium billed this year,
    with the same-period-last-year comparison, renewals due and open claims
@@ -39,8 +64,9 @@ The board can refresh itself from Salesforce every 15 minutes:
    numbers.
 4. **Deploy → New deployment → Web app** · Execute as **Me** · Who has access
    **Anyone**. Copy the `/exec` URL.
-5. Paste that URL into `WALL_DATA_URL` at the top of `wall/index.html`, commit,
-   push.
+5. Paste that URL into `WALL_DATA_URL` at the top of **both** `wall/index.html`
+   and `wall/production.html` — one feed serves the two boards (the production
+   wall reads the payload's `production` block) — then commit and push.
 
 The badge flips to **Live** on the first successful fetch. If the feed ever
 fails — quota, network, an expired password — the board silently falls back to

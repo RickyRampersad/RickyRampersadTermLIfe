@@ -128,8 +128,97 @@ function wbBuild_() {
     ).map(function (r) {
       return { name: wbOppLabel_(r.Name), stage: r.s, amt: Math.round(r.a || 0) };
     }),
-    legacy: wbLegacy_()
+    legacy: wbLegacy_(),
+    production: wbProduction_()
   };
+}
+
+/* ======================= production wall (/wall/production) =======================
+   CLIENT_PORTFOLIO__c filtered on Production_Picked_up_Date__c, summing
+   Total_API__c — the "picked up for production" measure. Advisor names are
+   branch staff and belong on a production wall; client fields are never
+   queried, so none can leak onto the feed. */
+
+function wbProduction_() {
+  var yr = new Date().getFullYear();
+  var now = new Date();
+  var monthNames = ['January','February','March','April','May','June',
+                    'July','August','September','October','November','December'];
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function one(soql) { return wbQ_(soql)[0] || {}; }
+  var base = 'FROM CLIENT_PORTFOLIO__c WHERE Production_Picked_up_Date__c';
+
+  var wk  = one('SELECT COUNT(Id) n, SUM(Total_API__c) api ' + base + ' = THIS_WEEK');
+  var lwk = one('SELECT COUNT(Id) n, SUM(Total_API__c) api ' + base + ' = LAST_WEEK');
+  var mtd = one('SELECT COUNT(Id) n, SUM(Total_API__c) api ' + base + ' = THIS_MONTH');
+  var ytd = one('SELECT COUNT(Id) n, SUM(Total_API__c) api ' + base + ' = THIS_YEAR');
+
+  // same window last year, for the month and YTD deltas
+  function d(dt) { return Utilities.formatDate(dt, 'UTC', 'yyyy-MM-dd'); }
+  var lyMtd = one('SELECT COUNT(Id) n, SUM(Total_API__c) api ' + base +
+    ' >= ' + d(new Date(yr - 1, now.getMonth(), 1)) +
+    ' AND Production_Picked_up_Date__c <= ' + d(new Date(yr - 1, now.getMonth(), now.getDate())));
+  var lyYtd = one('SELECT COUNT(Id) n, SUM(Total_API__c) api ' + base +
+    ' >= ' + d(new Date(yr - 1, 0, 1)) +
+    ' AND Production_Picked_up_Date__c <= ' + d(new Date(yr - 1, now.getMonth(), now.getDate())));
+
+  var monthly = wbQ_(
+    'SELECT CALENDAR_MONTH(Production_Picked_up_Date__c) m, COUNT(Id) n, SUM(Total_API__c) api ' +
+    base + ' = THIS_YEAR GROUP BY CALENDAR_MONTH(Production_Picked_up_Date__c) ' +
+    'ORDER BY CALENDAR_MONTH(Production_Picked_up_Date__c)'
+  ).map(function (r) { return { m: months[r.m - 1], n: r.n, api: Math.round(r.api || 0) }; });
+
+  return {
+    generatedAt: new Date().toISOString(),
+    week:  { n: wk.n || 0,  api: Math.round(wk.api || 0),
+             prevN: lwk.n || 0, prevApi: Math.round(lwk.api || 0) },
+    month: { label: monthNames[now.getMonth()], n: mtd.n || 0, api: Math.round(mtd.api || 0),
+             lastYearN: lyMtd.n || 0, lastYearApi: Math.round(lyMtd.api || 0) },
+    ytd:   { year: yr, n: ytd.n || 0, api: Math.round(ytd.api || 0),
+             lastYearN: lyYtd.n || 0, lastYearApi: Math.round(lyYtd.api || 0) },
+    monthly: monthly,
+    weekly: wbWeekly_(),
+    leaders: wbQ_(
+      'SELECT AGENT__r.Name a, COUNT(Id) n, SUM(Total_API__c) api ' + base +
+      ' = THIS_YEAR GROUP BY AGENT__r.Name ORDER BY SUM(Total_API__c) DESC LIMIT 10'
+    ).map(function (r) {
+      return { a: r.a || 'Unassigned', n: r.n, api: Math.round(r.api || 0) };
+    }),
+    latest: wbQ_(
+      'SELECT AGENT__r.Name, Total_API__c, Production_Picked_up_Date__c ' + base +
+      ' = THIS_MONTH ORDER BY Production_Picked_up_Date__c DESC LIMIT 10'
+    ).map(function (r) {
+      return { a: (r.AGENT__r && r.AGENT__r.Name) || 'Unassigned',
+               d: r.Production_Picked_up_Date__c, api: Math.round(r.Total_API__c || 0) };
+    })
+  };
+}
+
+// Last nine weeks as Monday-start buckets, built from the raw dates so the
+// labels can say which week each bar is, whatever Salesforce's locale week is.
+function wbWeekly_() {
+  var recs = wbQ_(
+    'SELECT Production_Picked_up_Date__c d, Total_API__c api FROM CLIENT_PORTFOLIO__c ' +
+    'WHERE Production_Picked_up_Date__c = LAST_N_DAYS:70'
+  );
+  var buckets = {};
+  recs.forEach(function (r) {
+    var dt = new Date(r.d + 'T12:00:00Z');
+    var day = (dt.getUTCDay() + 6) % 7;                       // Monday = 0
+    var mon = new Date(dt.getTime() - day * 864e5);
+    var key = Utilities.formatDate(mon, 'UTC', 'yyyy-MM-dd');
+    if (!buckets[key]) buckets[key] = { n: 0, api: 0, mon: mon };
+    buckets[key].n++; buckets[key].api += (r.api || 0);
+  });
+  var keys = Object.keys(buckets).sort().slice(-9);
+  return keys.map(function (k, i) {
+    var b = buckets[k];
+    var lab = i === keys.length - 1 ? 'This wk'
+            : i === keys.length - 2 ? 'Last wk'
+            : 'w/c ' + Utilities.formatDate(b.mon, 'UTC', 'd MMM');
+    return { w: lab, n: b.n, api: Math.round(b.api) };
+  });
 }
 
 /* Life production history is closed (2011–2017), so query it once and keep it. */
