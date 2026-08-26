@@ -24,8 +24,24 @@ the fields back without re-verifying.
 The dashboard is for a desk or a touch screen rather than the rotating wall:
 pick a period (this week / last week / month / YTD), click a team card to
 filter, click a column to sort, hover the monthly bars for the new-business /
-increases split. It also carries the **data health** panel — the standing
-list of what staff should fix in Salesforce, with the counts.
+increases split. It also carries:
+
+- **▶ Run** — cycles section to section every 12 seconds like a wall; any
+  click, scroll or key hands control back to whoever is at the screen.
+- **⬇ Head-office weekly** — downloads the Monday hierarchy sheet as Excel
+  (Apps/API for last week, the month and YTD, advisor rows grouped under
+  each unit, unit subtotals, grand total), rebuilt from whatever the
+  dashboard is showing. On the snapshot the advisors are initials; wire the
+  live feed and the export carries full names — ready to send to head
+  office. Apps columns count policy records; if head office counts apps
+  differently (joint cases once), adjust before sending.
+- **Settled vs pending** — `Date_Settled__c` against the picked-up book,
+  month by month with settle-through rates, settle-speed bands and the
+  pending chase list by advisor. `Policy_Status_Description_R__c` is blank
+  on 700 of 706 picked-up records, so the settle date is currently the only
+  reliable signal — the data-health panel exists to change that.
+- The **data health** panel — the standing list of what staff should fix in
+  Salesforce, with the counts.
 
 ## The production wall
 
