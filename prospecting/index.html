@@ -417,12 +417,24 @@
   var pf = document.getElementById('pf'), pw = document.getElementById('pw');
   var lnk = document.getElementById('lnk'), waMsg = document.getElementById('waMsg');
 
+  /* The link goes to the advisor's own address, /meet/a/CODE/, not to /meet/
+     with their code on the query string.
+
+     Both land the prospect in the same place. The difference is the grey box
+     WhatsApp draws when the link is pasted: it fetches the address once,
+     without running any JavaScript, so a name on the query string never
+     reaches it. Every advisor's link previewed as one advisor's name for
+     exactly that reason. A page per advisor is the only thing WhatsApp will
+     read differently, so there is one, and it carries their name and forwards
+     the prospect on with everything else on the link intact.
+
+     a and n are left off here — the advisor's own page sets them. */
   function link(){
-    var p = new URLSearchParams({ a:AGENT, n:ADVISOR, t:TOKEN });
+    var p = new URLSearchParams({ t:TOKEN });
     var name = pf.value.trim();
     if (name) p.set('c', name);
     if (YEARS && FAMILIES) { p.set('y', YEARS); p.set('f', FAMILIES); }
-    return PAGE + '?' + p.toString();
+    return PAGE + 'a/' + encodeURIComponent(AGENT) + '/?' + p.toString();
   }
   function message(){
     var name = pf.value.trim() || 'there';
