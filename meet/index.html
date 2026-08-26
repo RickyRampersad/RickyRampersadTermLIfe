@@ -969,6 +969,36 @@
   var CRED    = val('cr', 'Financial Advisor · Ricky Rampersad Branch');
   var LINE    = val('q',  '');
 
+  /* How this person got here.
+  
+     Three ways in, and the branch has to treat them differently:
+  
+       sent       an advisor sent this link to this person. There is a token,
+                  and the name typed into the booking is the name the advisor
+                  addressed it to.
+       forwarded  same token, different person. The client passed it on. Whoever
+                  fills it in is not the advisor's prospect - they are the
+                  branch's, and somebody has to be assigned to them.
+       direct     no token at all: a scanned code, or a link shared without one.
+                  Nobody was targeted.
+  
+     Worked out here rather than on the server because this page is the only
+     place that knows both halves - the name the link was addressed to and the
+     name the person actually typed. It is sent with the booking so the branch
+     can see, without guessing, which arrivals are unclaimed.
+  
+     A first name is a weak comparator on its own, which is why it only ever
+     downgrades to "forwarded" - never upgrades anything to "sent". */
+  var ADDRESSED_TO = CLIENT;
+
+  function arrivalKind(typedName){
+    if (!TOKEN) return 'direct';
+    var a = String(ADDRESSED_TO || '').trim().toLowerCase();
+    var b = String(typedName || '').trim().toLowerCase().split(/\s+/)[0] || '';
+    if (!a || !b) return 'sent';
+    return a === b ? 'sent' : 'forwarded';
+  }
+
   // The advisor's own record. No defaults on purpose: a number nobody typed is
   // a number nobody can stand behind, and this page carries a real person's
   // name. If the workspace does not supply them, the strip does not render.
@@ -1019,7 +1049,8 @@
     if (sent[ev] && !extra) return;      // each milestone once
     sent[ev] = true;
     try {
-      var u = ENDPOINT + '?action=track&e=' + encodeURIComponent(ev) +
+      var u = ENDPOINT + '?action=track&arrival=' + (TOKEN ? 'sent' : 'direct')
+              + '&e=' + encodeURIComponent(ev) +
               '&a=' + encodeURIComponent(AGENT) +
               '&t=' + encodeURIComponent(TOKEN) +
               '&n=' + encodeURIComponent(ADVISOR);
@@ -1250,7 +1281,7 @@
       wants:chosen().join(' | '),
       need: NEED ? money(NEED) : '',
       note:document.getElementById('note').value.trim(),
-      source:'prospect_page', at:new Date().toISOString()
+      source:'prospect_page', arrival:arrivalKind(nm), addressedTo:ADDRESSED_TO, at:new Date().toISOString()
     });
 
     // no-cors means we never see the reply, so the page confirms optimistically.
@@ -1307,7 +1338,7 @@
       var body = new URLSearchParams({
         action:'feedback', agent:AGENT, advisor:ADVISOR, token:TOKEN,
         score:score, text:text, wants:chosen().join(' | '),
-        source:'prospect_page', at:new Date().toISOString()
+        source:'prospect_page', arrival:arrivalKind(nm), addressedTo:ADDRESSED_TO, at:new Date().toISOString()
       });
       fetch(ENDPOINT, { method:'POST', mode:'no-cors', body:body, keepalive:true })
         .catch(function(){});
