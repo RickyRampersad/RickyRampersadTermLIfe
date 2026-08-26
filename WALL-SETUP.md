@@ -1,3 +1,8 @@
+> **Address change.** This board first shipped at `/wall/`. That address now
+> belongs to the KPI wall — the per-person block tracker the training film
+> shows — so the rotating Salesforce board lives at **`/board/`** and the
+> production wall at **`/board/production.html`**. Same pages, new door.
+
 # Salesforce Wall Board — setup
 
 Two rotating slide boards for the branch wall, both fed by the same
@@ -5,9 +10,9 @@ Salesforce connection and the same Apps Script feed:
 
 | Board | Address | What it shows |
 |---|---|---|
-| **Branch board** | `/wall/` | the whole branch — book, renewals, claims, pipeline |
-| **Production wall** | `/wall/production.html` | policies **picked up for production** — this week, this month, year to date |
-| **Production dashboard** | `/wall/dashboard.html` | the interactive view — periods, teams, sortable advisors, held-back deep dive, data health |
+| **Branch board** | `/board/` | the whole branch — book, renewals, claims, pipeline |
+| **Production wall** | `/board/production.html` | policies **picked up for production** — this week, this month, year to date |
+| **Production dashboard** | `/board/dashboard.html` | the interactive view — periods, teams, sortable advisors, held-back deep dive, data health |
 
 **The basis everywhere is the branch report's "Total API": `Total_API__c`
 (client portfolio, on the production picked-up date) plus `API_Increase__c`
@@ -20,15 +25,15 @@ The dashboard is for a desk or a touch screen rather than the rotating wall:
 pick a period (this week / last week / month / YTD), click a team card to
 filter, click a column to sort, hover the monthly bars for the new-business /
 increases split. It also carries the **data health** panel — the standing
-list of what staff should fix in Salesforce, with the live counts.
+list of what staff should fix in Salesforce, with the counts.
 
 ## The production wall
 
 Production is two measures merged: `CLIENT_PORTFOLIO__c` on
 `Production_Picked_up_Date__c` (new business, `Total_API__c`) **plus**
 `Policy_Increases__c` on `Increase_Production_Picked_Up_Date__c`
-(increases, `Increase_API__c`) — each counted on its own picked-up date.
-Seven slides:
+(increases, `API_Increase__c` — the Total API basis) — each counted on its
+own picked-up date. Seven slides:
 
 1. **Week · month · year** — merged API and pickup count for this week
    (vs last week), the running month (vs the same days last year) and
@@ -41,7 +46,7 @@ Seven slides:
    biggest single files with days waiting
 4. **Week by week** — the last nine weeks, current week in gold
 5. **Month by month** — new business with increases stacked on top
-6. **Leaderboard** — new-business API per advisor year to date
+6. **Leaderboard** — Total API per advisor year to date
 7. **Latest pickups** — the most recent policies picked up this month
 
 ### Sound
@@ -57,7 +62,7 @@ require that click before a page may make sound — it cannot start itself):
   voice. Nothing to licence, nothing to loop badly.
 - Regenerate the voice with `edge-tts` per the house notes in CLAUDE.md if
   a line changes; each MP3 is base64-folded into `VOICE_LINES` in
-  `wall/production.html`.
+  `board/production.html`.
 
 **Pause** freezes the rotation (so a slide can be talked over in a huddle);
 space does the same, ←/→ still step.
@@ -76,7 +81,7 @@ fields are never queried for this board, so no client data can reach it.
 
 ## The branch board
 
-Seven slides at `/wall/`, fourteen seconds each:
+Seven slides at `/board/`, fourteen seconds each:
 
 1. **The branch, right now** — risks written and premium billed this year,
    with the same-period-last-year comparison, renewals due and open claims
@@ -114,9 +119,10 @@ The board can refresh itself from Salesforce every 15 minutes:
    numbers.
 4. **Deploy → New deployment → Web app** · Execute as **Me** · Who has access
    **Anyone**. Copy the `/exec` URL.
-5. Paste that URL into `WALL_DATA_URL` at the top of **both** `wall/index.html`
-   and `wall/production.html` — one feed serves the two boards (the production
-   wall reads the payload's `production` block) — then commit and push.
+5. Paste that URL into `WALL_DATA_URL` at the top of `board/index.html`,
+   `board/production.html` **and** `board/dashboard.html` — one feed serves
+   all three (the production wall reads the payload's `production` block,
+   the dashboard also reads `dashboardAdvisors`) — then commit and push.
 
 The badge flips to **Live** on the first successful fetch. If the feed ever
 fails — quota, network, an expired password — the board silently falls back to
@@ -149,7 +155,7 @@ repo. When refreshing the snapshot by hand, strip names the same way.
 - Refresh cadence: browser asks the feed every 15 min; the feed caches for
   10 min, so Salesforce sees about six queries an hour.
 - To refresh the **snapshot** instead (no live feed), re-run the queries and
-  update the `WALL_DATA` block in `wall/index.html` — every number in it is
+  update the `WALL_DATA` block in `board/index.html` — every number in it is
   plain JSON with the query it came from documented in `apps-script/WallBoard.gs`.
 
 ## Things that have bitten elsewhere — and apply here
