@@ -38,16 +38,6 @@
 # /wall the live office screen. The rotating Salesforce board that used to
 # live at /wall/ is now /board/ — see WALL-SETUP.md.
 [[redirects]]
-  from = "/board"
-  to = "/board/"
-  status = 302
-
-[[redirects]]
-  from = "/production"
-  to = "/board/production.html"
-  status = 302
-
-[[redirects]]
   from = "/training"
   to = "/kpi/training/"
   status = 302
