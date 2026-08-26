@@ -129,7 +129,8 @@ function wbBuild_() {
       return { name: wbOppLabel_(r.Name), stage: r.s, amt: Math.round(r.a || 0) };
     }),
     legacy: wbLegacy_(),
-    production: wbProduction_()
+    production: wbProduction_(),
+    dashboardAdvisors: wbDashboard_()
   };
 }
 
@@ -169,21 +170,23 @@ function wbProduction_() {
     'ORDER BY CALENDAR_MONTH(Production_Picked_up_Date__c)'
   ).map(function (r) { return { m: months[r.m - 1], n: r.n, api: Math.round(r.api || 0) }; });
 
-  // increases — Policy_Increases__c on its own picked-up date, merged in
+  // increases — Policy_Increases__c on its own picked-up date, merged in.
+  // API_Increase__c is the branch's confirmed "Total API" basis (matches the
+  // Monday report); Increase_API__c is the joint-split field — do not swap back.
   var incBase = 'FROM Policy_Increases__c WHERE Increase_Production_Picked_Up_Date__c';
-  var iWk  = one('SELECT COUNT(Id) n, SUM(Increase_API__c) api ' + incBase + ' = THIS_WEEK');
-  var iLwk = one('SELECT COUNT(Id) n, SUM(Increase_API__c) api ' + incBase + ' = LAST_WEEK');
-  var iMtd = one('SELECT COUNT(Id) n, SUM(Increase_API__c) api ' + incBase + ' = THIS_MONTH');
-  var iYtd = one('SELECT COUNT(Id) n, SUM(Increase_API__c) api ' + incBase + ' = THIS_YEAR');
-  var iLyMtd = one('SELECT COUNT(Id) n, SUM(Increase_API__c) api ' + incBase +
+  var iWk  = one('SELECT COUNT(Id) n, SUM(API_Increase__c) api ' + incBase + ' = THIS_WEEK');
+  var iLwk = one('SELECT COUNT(Id) n, SUM(API_Increase__c) api ' + incBase + ' = LAST_WEEK');
+  var iMtd = one('SELECT COUNT(Id) n, SUM(API_Increase__c) api ' + incBase + ' = THIS_MONTH');
+  var iYtd = one('SELECT COUNT(Id) n, SUM(API_Increase__c) api ' + incBase + ' = THIS_YEAR');
+  var iLyMtd = one('SELECT COUNT(Id) n, SUM(API_Increase__c) api ' + incBase +
     ' >= ' + d(new Date(yr - 1, now.getMonth(), 1)) +
     ' AND Increase_Production_Picked_Up_Date__c <= ' + d(new Date(yr - 1, now.getMonth(), now.getDate())));
-  var iLyYtd = one('SELECT COUNT(Id) n, SUM(Increase_API__c) api ' + incBase +
+  var iLyYtd = one('SELECT COUNT(Id) n, SUM(API_Increase__c) api ' + incBase +
     ' >= ' + d(new Date(yr - 1, 0, 1)) +
     ' AND Increase_Production_Picked_Up_Date__c <= ' + d(new Date(yr - 1, now.getMonth(), now.getDate())));
   var incMonthly = {};
   wbQ_(
-    'SELECT CALENDAR_MONTH(Increase_Production_Picked_Up_Date__c) m, COUNT(Id) n, SUM(Increase_API__c) api ' +
+    'SELECT CALENDAR_MONTH(Increase_Production_Picked_Up_Date__c) m, COUNT(Id) n, SUM(API_Increase__c) api ' +
     incBase + ' = THIS_YEAR GROUP BY CALENDAR_MONTH(Increase_Production_Picked_Up_Date__c)'
   ).forEach(function (r) { incMonthly[months[r.m - 1]] = { n: r.n, api: Math.round(r.api || 0) }; });
   monthly.forEach(function (x) {
@@ -208,12 +211,7 @@ function wbProduction_() {
     monthly: monthly,
     heldBack: wbHeldBack_(),
     weekly: wbWeekly_(),
-    leaders: wbQ_(
-      'SELECT AGENT__r.Name a, COUNT(Id) n, SUM(Total_API__c) api ' + base +
-      ' = THIS_YEAR GROUP BY AGENT__r.Name ORDER BY SUM(Total_API__c) DESC LIMIT 10'
-    ).map(function (r) {
-      return { a: r.a || 'Unassigned', n: r.n, api: Math.round(r.api || 0) };
-    }),
+    leaders: wbLeaders_(base),
     latest: wbQ_(
       'SELECT AGENT__r.Name, Total_API__c, Production_Picked_up_Date__c ' + base +
       ' = THIS_MONTH ORDER BY Production_Picked_up_Date__c DESC LIMIT 10'
@@ -222,6 +220,63 @@ function wbProduction_() {
                d: r.Production_Picked_up_Date__c, api: Math.round(r.Total_API__c || 0) };
     })
   };
+}
+
+/* Leaderboard on the Total API basis: new business + increases per advisor,
+   merged so the wall agrees with the Monday report to the dollar. */
+function wbLeaders_(base) {
+  var byAgent = {};
+  wbQ_(
+    'SELECT AGENT__r.Name a, COUNT(Id) n, SUM(Total_API__c) api ' + base +
+    ' = THIS_YEAR GROUP BY AGENT__r.Name'
+  ).forEach(function (r) {
+    byAgent[r.a || 'Unassigned'] = { n: r.n, api: r.api || 0 };
+  });
+  wbQ_(
+    'SELECT Policy_Increases__r.AGENT__r.Name a, COUNT(Id) n, SUM(API_Increase__c) api ' +
+    'FROM Policy_Increases__c WHERE Increase_Production_Picked_Up_Date__c = THIS_YEAR ' +
+    'GROUP BY Policy_Increases__r.AGENT__r.Name'
+  ).forEach(function (r) {
+    var k = r.a || 'Unassigned';
+    if (!byAgent[k]) byAgent[k] = { n: 0, api: 0 };
+    byAgent[k].n += r.n; byAgent[k].api += (r.api || 0);
+  });
+  return Object.keys(byAgent).map(function (k) {
+    return { a: k, n: byAgent[k].n, api: Math.round(byAgent[k].api) };
+  }).sort(function (x, y) { return y.api - x.api; }).slice(0, 10);
+}
+
+/* ======================= dashboard feed (/wall/dashboard) =======================
+   Per-advisor figures for every period the dashboard's table offers, plus
+   last-year comparison and held-back book, all on the Total API basis. */
+function wbDashboard_() {
+  var yr = new Date().getFullYear(), now = new Date();
+  function d(dt) { return Utilities.formatDate(dt, 'UTC', 'yyyy-MM-dd'); }
+  var A = {};
+  function row(name) {
+    if (!A[name]) A[name] = { a: name, wN:0,wApi:0, lwN:0,lwApi:0, mN:0,mApi:0, yN:0,yApi:0, ly:0, hbN:0,hbApi:0 };
+    return A[name];
+  }
+  function fold(soql, nKey, apiKey) {
+    wbQ_(soql).forEach(function (r) {
+      var x = row(r.a || 'Unassigned');
+      x[nKey] += (r.n || 0); x[apiKey] = Math.round((x[apiKey] || 0) + (r.api || 0));
+    });
+  }
+  var nb = 'SELECT AGENT__r.Name a, COUNT(Id) n, SUM(Total_API__c) api FROM CLIENT_PORTFOLIO__c WHERE Production_Picked_up_Date__c';
+  var inc = 'SELECT Policy_Increases__r.AGENT__r.Name a, COUNT(Id) n, SUM(API_Increase__c) api FROM Policy_Increases__c WHERE Increase_Production_Picked_Up_Date__c';
+  [[' = THIS_WEEK','wN','wApi'],[' = LAST_WEEK','lwN','lwApi'],[' = THIS_MONTH','mN','mApi'],[' = THIS_YEAR','yN','yApi']]
+    .forEach(function (p) {
+      fold(nb + p[0] + ' GROUP BY AGENT__r.Name', p[1], p[2]);
+      fold(inc + p[0] + ' GROUP BY Policy_Increases__r.AGENT__r.Name', p[1], p[2]);
+    });
+  var lyTo = d(new Date(yr - 1, now.getMonth(), now.getDate()));
+  fold(nb + ' >= ' + d(new Date(yr - 1, 0, 1)) + ' AND Production_Picked_up_Date__c <= ' + lyTo + ' GROUP BY AGENT__r.Name', 'lyN_', 'ly');
+  fold(inc + ' >= ' + d(new Date(yr - 1, 0, 1)) + ' AND Increase_Production_Picked_Up_Date__c <= ' + lyTo + ' GROUP BY Policy_Increases__r.AGENT__r.Name', 'lyN_', 'ly');
+  fold('SELECT AGENT__r.Name a, COUNT(Id) n, SUM(Total_API__c) api FROM CLIENT_PORTFOLIO__c ' +
+       'WHERE App_Received_Date__c = THIS_YEAR AND Production_Picked_up_Date__c = null GROUP BY AGENT__r.Name', 'hbN', 'hbApi');
+  return Object.keys(A).map(function (k) { var x = A[k]; delete x.lyN_; return x; })
+    .sort(function (x, y) { return y.yApi - x.yApi; });
 }
 
 /* Held-back API: apps received this year with no production picked-up date —

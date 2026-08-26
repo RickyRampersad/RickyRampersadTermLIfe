@@ -191,15 +191,15 @@ var PROD_DATA = {
   week:  { n:3, api:25557, incN:0, inc:0, prevN:15, prevApi:101521, prevInc:0 },
   month: { label:"August", n:46, api:833799, incN:0, inc:0,
            lastYearN:71, lastYearApi:636762, lastYearIncN:14, lastYearInc:39133 },
-  ytd:   { year:2026, n:706, api:5800544, incN:78, inc:432903,
-           lastYearN:909, lastYearApi:8362421, lastYearIncN:131, lastYearInc:444119 },
+  ytd:   { year:2026, n:706, api:5800544, incN:78, inc:497811,
+           lastYearN:909, lastYearApi:8362421, lastYearIncN:131, lastYearInc:1021505 },
   monthly: [
-    {m:"Jan", n:118, api:921362, incN:11, inc:132331},
-    {m:"Feb", n:96,  api:717399, incN:10, inc:32994},
+    {m:"Jan", n:118, api:921362, incN:11, inc:132330},
+    {m:"Feb", n:96,  api:717399, incN:10, inc:34092},
     {m:"Mar", n:81,  api:694176, incN:15, inc:47430},
-    {m:"Apr", n:98,  api:685817, incN:19, inc:140441},
-    {m:"May", n:112, api:769186, incN:14, inc:24298},
-    {m:"Jun", n:62,  api:449384, incN:5,  inc:50916},
+    {m:"Apr", n:98,  api:685817, incN:19, inc:139841},
+    {m:"May", n:112, api:769186, incN:14, inc:87190},
+    {m:"Jun", n:62,  api:449384, incN:5,  inc:52435},
     {m:"Jul", n:93,  api:729421, incN:4,  inc:4493},
     {m:"Aug", n:46,  api:833799, incN:0,  inc:0}
   ],
@@ -239,17 +239,18 @@ var PROD_DATA = {
       {a:"Ricky R.",  api:196560,  days:118}
     ]
   },
+  /* Total API basis — new business + increases, matching the Monday report */
   leaders: [
-    {a:"Varun S.",     n:26, api:597129},
-    {a:"Gary S.",      n:48, api:450798},
-    {a:"Anthony S.",   n:59, api:441526},
-    {a:"Aidan E.",     n:61, api:369433},
-    {a:"Fawwaz M.",    n:25, api:311454},
-    {a:"Ricky R.",     n:17, api:302765},
-    {a:"Randolph G.",  n:19, api:245241},
-    {a:"Aleema M.",    n:55, api:242782},
+    {a:"Varun S.",     n:27, api:637563},
+    {a:"Gary S.",      n:50, api:462011},
+    {a:"Anthony S.",   n:64, api:454380},
+    {a:"Aidan E.",     n:66, api:380307},
+    {a:"Fawwaz M.",    n:28, api:352783},
+    {a:"Randolph G.",  n:23, api:347321},
+    {a:"Ricky R.",     n:22, api:309970},
+    {a:"Aleema M.",    n:58, api:254893},
     {a:"Premchand D.", n:20, api:234947},
-    {a:"John B.",      n:51, api:212521}
+    {a:"John B.",      n:55, api:214990}
   ],
   latest: [
     {a:"Daniel B.",  d:"2026-08-25", api:15402},
@@ -384,11 +385,11 @@ function sLeaders(D){
   var rows = D.leaders.map(function(x,i){
     return '<div class="row"><span class="rk">'+(i+1)+'</span><span class="nm">'+esc(x.a)+'</span>'
       +'<span class="track"><i style="width:'+(x.api/max*100)+'%"></i></span>'
-      +'<span class="val">'+moneyShort(x.api)+'</span><span class="sub">'+x.n+' policies</span></div>';
+      +'<span class="val">'+moneyShort(x.api)+'</span><span class="sub">'+x.n+' pickups</span></div>';
   }).join("");
   return '<div class="kick">Leaderboard · year to date</div>'
     +'<h2>Who is carrying the year</h2>'
-    +'<p class="lede">New-business API picked up per advisor in '+D.ytd.year+'. Gold ranks are the top three.</p>'
+    +'<p class="lede">Total API — new business plus increases — per advisor in '+D.ytd.year+'. Gold ranks are the top three.</p>'
     +'<div class="body"><div class="panel"><div class="rows">'+rows+'</div></div></div>';
 }
 function sLatest(D){
