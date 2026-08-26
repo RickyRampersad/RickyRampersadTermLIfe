@@ -7,6 +7,20 @@ Salesforce connection and the same Apps Script feed:
 |---|---|---|
 | **Branch board** | `/wall/` | the whole branch — book, renewals, claims, pipeline |
 | **Production wall** | `/wall/production.html` | policies **picked up for production** — this week, this month, year to date |
+| **Production dashboard** | `/wall/dashboard.html` | the interactive view — periods, teams, sortable advisors, held-back deep dive, data health |
+
+**The basis everywhere is the branch report's "Total API": `Total_API__c`
+(client portfolio, on the production picked-up date) plus `API_Increase__c`
+(policy increases, on the increase picked-up date).** `Increase_API__c` is
+the joint-split field and is NOT what the Monday report sums — verified
+against the circulated report to the dollar, advisor by advisor. Do not swap
+the fields back without re-verifying.
+
+The dashboard is for a desk or a touch screen rather than the rotating wall:
+pick a period (this week / last week / month / YTD), click a team card to
+filter, click a column to sort, hover the monthly bars for the new-business /
+increases split. It also carries the **data health** panel — the standing
+list of what staff should fix in Salesforce, with the live counts.
 
 ## The production wall
 
