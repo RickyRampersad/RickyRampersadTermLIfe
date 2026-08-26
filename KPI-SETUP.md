@@ -344,3 +344,14 @@ the editor. A trigger that threw is listed there with the reason.
 **The counts look too high** — `dedupeLog` has not been run yet (§2). The app's
 own screens collapse duplicates as they read, so the app and an untouched sheet
 will disagree until you run it.
+
+
+## One hosting fact that bites
+
+This site is **GitHub Pages**. The `netlify.toml` in the repository is inert —
+Pages ignores its redirects *and its headers*, which means the `/kpi/*`
+security headers declared there are not applied in production. The short links
+(`/wall`, `/training`) are real folders containing redirect stubs, because that
+is the only kind of redirect Pages honours. `/manual` is the branch's own
+manual, a separate page; the KPI manual lives at `/kpi/manual/` and is linked
+from the training page and the app.
