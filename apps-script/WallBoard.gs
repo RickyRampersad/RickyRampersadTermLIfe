@@ -169,15 +169,44 @@ function wbProduction_() {
     'ORDER BY CALENDAR_MONTH(Production_Picked_up_Date__c)'
   ).map(function (r) { return { m: months[r.m - 1], n: r.n, api: Math.round(r.api || 0) }; });
 
+  // increases — Policy_Increases__c on its own picked-up date, merged in
+  var incBase = 'FROM Policy_Increases__c WHERE Increase_Production_Picked_Up_Date__c';
+  var iWk  = one('SELECT COUNT(Id) n, SUM(Increase_API__c) api ' + incBase + ' = THIS_WEEK');
+  var iLwk = one('SELECT COUNT(Id) n, SUM(Increase_API__c) api ' + incBase + ' = LAST_WEEK');
+  var iMtd = one('SELECT COUNT(Id) n, SUM(Increase_API__c) api ' + incBase + ' = THIS_MONTH');
+  var iYtd = one('SELECT COUNT(Id) n, SUM(Increase_API__c) api ' + incBase + ' = THIS_YEAR');
+  var iLyMtd = one('SELECT COUNT(Id) n, SUM(Increase_API__c) api ' + incBase +
+    ' >= ' + d(new Date(yr - 1, now.getMonth(), 1)) +
+    ' AND Increase_Production_Picked_Up_Date__c <= ' + d(new Date(yr - 1, now.getMonth(), now.getDate())));
+  var iLyYtd = one('SELECT COUNT(Id) n, SUM(Increase_API__c) api ' + incBase +
+    ' >= ' + d(new Date(yr - 1, 0, 1)) +
+    ' AND Increase_Production_Picked_Up_Date__c <= ' + d(new Date(yr - 1, now.getMonth(), now.getDate())));
+  var incMonthly = {};
+  wbQ_(
+    'SELECT CALENDAR_MONTH(Increase_Production_Picked_Up_Date__c) m, COUNT(Id) n, SUM(Increase_API__c) api ' +
+    incBase + ' = THIS_YEAR GROUP BY CALENDAR_MONTH(Increase_Production_Picked_Up_Date__c)'
+  ).forEach(function (r) { incMonthly[months[r.m - 1]] = { n: r.n, api: Math.round(r.api || 0) }; });
+  monthly.forEach(function (x) {
+    var i = incMonthly[x.m] || { n: 0, api: 0 };
+    x.incN = i.n; x.inc = i.api;
+  });
+
   return {
     generatedAt: new Date().toISOString(),
     week:  { n: wk.n || 0,  api: Math.round(wk.api || 0),
-             prevN: lwk.n || 0, prevApi: Math.round(lwk.api || 0) },
+             incN: iWk.n || 0, inc: Math.round(iWk.api || 0),
+             prevN: lwk.n || 0, prevApi: Math.round(lwk.api || 0),
+             prevInc: Math.round(iLwk.api || 0) },
     month: { label: monthNames[now.getMonth()], n: mtd.n || 0, api: Math.round(mtd.api || 0),
-             lastYearN: lyMtd.n || 0, lastYearApi: Math.round(lyMtd.api || 0) },
+             incN: iMtd.n || 0, inc: Math.round(iMtd.api || 0),
+             lastYearN: lyMtd.n || 0, lastYearApi: Math.round(lyMtd.api || 0),
+             lastYearIncN: iLyMtd.n || 0, lastYearInc: Math.round(iLyMtd.api || 0) },
     ytd:   { year: yr, n: ytd.n || 0, api: Math.round(ytd.api || 0),
-             lastYearN: lyYtd.n || 0, lastYearApi: Math.round(lyYtd.api || 0) },
+             incN: iYtd.n || 0, inc: Math.round(iYtd.api || 0),
+             lastYearN: lyYtd.n || 0, lastYearApi: Math.round(lyYtd.api || 0),
+             lastYearIncN: iLyYtd.n || 0, lastYearInc: Math.round(iLyYtd.api || 0) },
     monthly: monthly,
+    heldBack: wbHeldBack_(),
     weekly: wbWeekly_(),
     leaders: wbQ_(
       'SELECT AGENT__r.Name a, COUNT(Id) n, SUM(Total_API__c) api ' + base +
@@ -193,6 +222,84 @@ function wbProduction_() {
                d: r.Production_Picked_up_Date__c, api: Math.round(r.Total_API__c || 0) };
     })
   };
+}
+
+/* Held-back API: apps received this year with no production picked-up date —
+   submitted business waiting on requirements. The live feed carries full
+   advisor names; there are no client fields in any of these queries. */
+function wbHeldBack_() {
+  var base = 'FROM CLIENT_PORTFOLIO__c WHERE App_Received_Date__c = THIS_YEAR ' +
+             'AND Production_Picked_up_Date__c = null';
+  function one(soql) { return wbQ_(soql)[0] || {}; }
+  var tot = one('SELECT COUNT(Id) n, SUM(Total_API__c) api, AVG(Days_App_Not_Picked_Up__c) d ' + base);
+  function band(label, where) {
+    var r = one('SELECT COUNT(Id) n, SUM(Total_API__c) api ' + base + ' AND ' + where);
+    return { k: label, n: r.n || 0, api: Math.round(r.api || 0) };
+  }
+  return {
+    n: tot.n || 0, api: Math.round(tot.api || 0), avgDays: Math.round(tot.d || 0),
+    bands: [
+      band('Under 2 weeks', 'Days_App_Not_Picked_Up__c <= 14'),
+      band('2 – 4 weeks',   'Days_App_Not_Picked_Up__c > 14 AND Days_App_Not_Picked_Up__c <= 30'),
+      band('1 – 2 months',  'Days_App_Not_Picked_Up__c > 30 AND Days_App_Not_Picked_Up__c <= 60'),
+      band('Over 2 months', 'Days_App_Not_Picked_Up__c > 60')
+    ],
+    byAgent: wbQ_(
+      'SELECT AGENT__r.Name a, COUNT(Id) n, SUM(Total_API__c) api ' + base +
+      ' GROUP BY AGENT__r.Name ORDER BY SUM(Total_API__c) DESC LIMIT 6'
+    ).map(function (r) { return { a: r.a || 'Unassigned', n: r.n, api: Math.round(r.api || 0) }; }),
+    top: wbQ_(
+      'SELECT AGENT__r.Name, Total_API__c, Days_App_Not_Picked_Up__c ' + base +
+      ' ORDER BY Total_API__c DESC NULLS LAST LIMIT 6'
+    ).map(function (r) {
+      return { a: (r.AGENT__r && r.AGENT__r.Name) || 'Unassigned',
+               api: Math.round(r.Total_API__c || 0),
+               days: Math.round(r.Days_App_Not_Picked_Up__c || 0) };
+    })
+  };
+}
+
+/* ======================= weekly production report =======================
+   Emails a plain summary of the wall's numbers — production incl increases,
+   plus held-back API — to MANAGER_EMAIL (Script Properties; comma-separate
+   several addresses; falls back to the script owner). To send it every
+   Monday morning: Triggers → Add Trigger → wbSendProductionReport →
+   time-driven → week timer → Monday 8–9am. Or run it by hand any time. */
+function wbSendProductionReport() {
+  var p = wbProduction_();
+  var to = wbProps_().getProperty('MANAGER_EMAIL') || Session.getEffectiveUser().getEmail();
+  function tt(n) { return 'TT$' + Math.round(n).toLocaleString('en-US'); }
+  function line(label, o) {
+    var all = (o.api || 0) + (o.inc || 0), cnt = (o.n || 0) + (o.incN || 0);
+    return label + ': ' + tt(all) + ' across ' + cnt + ' pickups (' +
+      tt(o.api || 0) + ' new + ' + tt(o.inc || 0) + ' increases)';
+  }
+  var hb = p.heldBack, over = hb.bands[hb.bands.length - 1];
+  var body = [
+    'Production — picked up (new business + increases)',
+    '',
+    line('This week', p.week),
+    line(p.month.label + ' so far', p.month),
+    line('Year to date', p.ytd),
+    '',
+    'Held-back API — apps received this year, not yet picked up',
+    '',
+    hb.n + ' apps holding ' + tt(hb.api) + ', waiting an average of ' + hb.avgDays + ' days.',
+    over.n + ' of them (' + tt(over.api) + ') have waited over two months.',
+    '',
+    'Held-back by advisor:',
+  ].concat(hb.byAgent.map(function (x) {
+    return '  ' + x.a + ' — ' + tt(x.api) + ' (' + x.n + ' apps)';
+  })).concat([
+    '',
+    'Live wall: https://rickyrampersadbranch.com/wall/production.html',
+  ]).join('\n');
+  MailApp.sendEmail({
+    to: to,
+    subject: 'Production wall — ' + Utilities.formatDate(new Date(),
+      Session.getScriptTimeZone(), 'd MMM yyyy'),
+    body: body,
+  });
 }
 
 // Last nine weeks as Monday-start buckets, built from the raw dates so the
