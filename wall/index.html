@@ -46,20 +46,30 @@
   /* slide 1 — people */
   #people{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
           gap:1.5vh;align-content:start}
-  .card{background:var(--navy2);border:1px solid var(--line);border-radius:14px;
-        padding:1.6vh 1.2vw;display:flex;flex-direction:column;gap:1vh}
-  .name{font-size:2.6vh;font-weight:800;line-height:1.15}
-  .role{font-size:1.5vh;color:var(--muted);margin-top:.2vh}
+  .card{background:var(--navy2);border:1px solid var(--line);border-radius:12px;
+        padding:1.1vh 1vw;display:flex;flex-direction:column;gap:.7vh}
+  .name{font-size:2.2vh;font-weight:800;line-height:1.1}
+  .role{font-size:1.35vh;color:var(--muted);margin-top:.15vh}
   .meter{display:flex;align-items:center;justify-content:space-between}
   .dots-b{display:flex;gap:.6vw}
-  .dot{width:2.2vh;height:2.2vh;border-radius:50%;border:.34vh solid var(--grey)}
+  .dot{width:1.9vh;height:1.9vh;border-radius:50%;border:.3vh solid var(--grey)}
   .dot.on{background:var(--gold);border-color:var(--gold)}
   .dot.due{border-color:var(--red);background:rgba(199,84,80,.18)}
-  .count{font-size:3.2vh;font-weight:800;font-variant-numeric:tabular-nums}
+  .count{font-size:2.7vh;font-weight:800;font-variant-numeric:tabular-nums}
   .count small{font-size:.5em;color:var(--muted);font-weight:700}
   .c-full .count{color:var(--green)} .c-full .dot.on{background:var(--green);border-color:var(--green)}
   .c-some .count{color:var(--amber)} .c-none .count{color:var(--grey)}
   .late{font-size:1.5vh;font-weight:800;color:var(--red)}
+  /* the branch has a shape; the wall shows it rather than listing nine names */
+  .tier{margin-bottom:1.1vh}
+  .tierhead{display:flex;justify-content:space-between;align-items:baseline;
+            font-size:1.35vh;font-weight:800;letter-spacing:.22em;text-transform:uppercase;
+            color:var(--gold);border-bottom:1px solid var(--line);
+            padding-bottom:.45vh;margin-bottom:.8vh}
+  .tierhead span{letter-spacing:.04em;text-transform:none;color:var(--muted);font-weight:700}
+  .tiergrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:1vh}
+  tr.grouprow td{font-size:1.4vh;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
+                 color:var(--gold);padding-top:1.6vh;border-bottom:1px solid var(--line)}
 
   .cols{display:grid;grid-template-columns:1.4fr 1fr;gap:2vh;height:100%;min-height:0}
   .panel{background:var(--navy2);border:1px solid var(--line);border-radius:14px;
@@ -191,56 +201,50 @@ const DWELL=14000;
 // app; the wall's snapshot is refreshed by rebuilding this block.
 const TASKS={
   asOf:"2026-08-26",
-  // Open tasks per person per Salesforce Task_Type__c, with the days they
-  // carry. The keys are the same strings staff pick as their KPI, which is
-  // what lets the wall put "what I logged" next to "what is still open".
+  // Never a sum of days. Adding "days outstanding" across tasks produces a
+  // number with no meaning — twenty thousand days is not a fact about anything.
+  // Count, average age and the single oldest are the honest three.
+  today:{ closed:[{n:"Azariah",v:13},{n:"Sasha",v:11},{n:"Kamla",v:2},
+                  {n:"Elizabeth",v:0},{n:"Ricky",v:0}] },
+  week: { closed:[{n:"Azariah",v:93},{n:"Sasha",v:66},{n:"Elizabeth",v:28},
+                  {n:"Kamla",v:9},{n:"Ricky",v:0}] },
+  // The overdue book, by person and task type. Two people carry all of it.
+  overdue:[
+    {who:"Ricky", type:"", n:70, avg:31, oldest:87},
+    {who:"Ricky", type:"Servicing", n:3, avg:153, oldest:153},
+    {who:"Ricky", type:"Lic/Staffing/SA/HR", n:2, avg:121, oldest:148},
+    {who:"Ricky", type:"Renewa/PDl/Bill", n:1, avg:129, oldest:129},
+    {who:"Ricky", type:"Opportunity", n:1, avg:161, oldest:161},
+    {who:"Kamla", type:"Renewa/PDl/Bill", n:24, avg:77, oldest:246},
+    {who:"Kamla", type:"Claims/ Mat", n:12, avg:129, oldest:534},
+    {who:"Kamla", type:"Opportunity", n:8, avg:95, oldest:141},
+    {who:"Kamla", type:"Servicing", n:5, avg:94, oldest:157},
+    {who:"Kamla", type:"Pendings", n:2, avg:72, oldest:140},
+    {who:"Kamla", type:"Lic/Staffing/SA/HR", n:2, avg:79, oldest:120},
+    {who:"Kamla", type:"", n:1, avg:31, oldest:31},
+    {who:"Sasha", type:"Renewa/PDl/Bill", n:1, avg:10, oldest:10}],
+  // Open book per person: how many, not how many days.
   byPerson:{
-    Kamla:{open:88,overdue:69,aged:48,closed30:41,types:{
-      "Renewa/PDl/Bill":{n:27,d:1989},"Lic/Staffing/SA/HR":{n:19,d:1393},
-      "Claims/ Mat":{n:12,d:1532},"Opportunity":{n:10,d:1154},
-      "Servicing":{n:8,d:863},"Pendings":{n:4,d:220},
-      "RR Operations":{n:4,d:5906},"Training":{n:1,d:161},"":{n:3,d:90}}},
-    Ricky:{open:80,overdue:74,aged:15,closed30:521,types:{
-      "":{n:70,d:2118},"RR Operations":{n:4,d:3087},"Servicing":{n:3,d:456},
-      "Lic/Staffing/SA/HR":{n:2,d:239},"Opportunity":{n:1,d:160},
-      "Renewa/PDl/Bill":{n:1,d:128}}},
-    Sasha:{open:47,overdue:0,aged:4,closed30:463,types:{
-      "Renewa/PDl/Bill":{n:21,d:605},"Pendings":{n:17,d:50},
-      "Servicing":{n:4,d:48},"Opportunity":{n:1,d:722},"":{n:1,d:1}}},
-    Azariah:{open:17,overdue:7,aged:0,closed30:150,types:{
-      "Renewa/PDl/Bill":{n:7,d:33},"Pendings":{n:1,d:6}}},
-    Elizabeth:{open:5,overdue:0,aged:0,closed30:80,types:{
-      "Renewa/PDl/Bill":{n:2,d:20},"Claims/ Mat":{n:1,d:8},
-      "Scripts/CB":{n:1,d:1},"Servicing":{n:1,d:1}}}
-  },
-  branch:{ open:225, overdue:150, days:20845, oldest:3836, noReason:134,
-           // Closed in thirty days, split honestly. The birthday mailer closes
-           // its own tasks — 5,718 of them all told — and counting those as
-           // throughput flatters the branch by roughly half.
-           closed30:1255, closedByPeople:807, closedByRobot:448, people:5 },
-  // Days since anybody touched the task. Age says how long it has existed;
-  // this says how long it has been ignored, which is the different question.
-  quiet:[{n:"Azariah",avg:2,max:14},{n:"Elizabeth",avg:3,max:7},
-         {n:"Sasha",avg:11,max:366},{n:"Kamla",avg:27,max:216},
-         {n:"Ricky",avg:46,max:363}],
-  // Real work closed in thirty days, birthday automation excluded.
-  human30:[{n:"Sasha",v:500},{n:"Azariah",v:169},{n:"Elizabeth",v:91},
-           {n:"Kamla",v:46},{n:"Ricky",v:1}],
-  // Who the branch is chasing, by how long it has been quiet. Deliberately
-  // unnamed: this file sits in a public repository, so the names live behind
-  // the tracker's sign-in under "What you are chasing" and only the shape is
-  // on the wall. Initials would not be much better in a branch this size.
-  chasing:[
-    {band:"Untouched over a year", people:2, tasks:2,  days:1490},
-    {band:"Quiet 3 to 12 months",  people:5, tasks:12, days:8236},
-    {band:"Quiet 1 to 3 months",   people:9, tasks:21, days:4104},
-    {band:"Chased inside a month", people:17,tasks:42, days:3120}],
+    Kamla:{open:88,overdue:54,quietAvg:27,quietMax:216},
+    Ricky:{open:80,overdue:77,quietAvg:46,quietMax:363},
+    Sasha:{open:47,overdue:1, quietAvg:11,quietMax:366},
+    Azariah:{open:17,overdue:0,quietAvg:2, quietMax:14},
+    Elizabeth:{open:5,overdue:0,quietAvg:3, quietMax:7}},
+  // Who the branch is actually waiting on, named by account rather than by a
+  // status. Head office and one company account carry most of it.
+  waitingOn:[
+    {who:"D Rampersad & Company",       n:7, oldest:149, quiet:19},
+    {who:"Guardian Life (head office)", n:6, oldest:112, quiet:9},
+    {who:"Ahamad, Shiraze",             n:3, oldest:206, quiet:17},
+    {who:"Samuel, Naila",               n:3, oldest:6,   quiet:0},
+    {who:"Trinrico Steel & Wire",       n:2, oldest:142, quiet:13},
+    {who:"Persad, Dipchan",             n:2, oldest:534, quiet:26},
+    {who:"Ashford's Electrical",        n:2, oldest:128, quiet:34}],
   // The Branch Manager's untyped pile, looked at rather than assumed.
-  inbound:{ total:70, waiting:67, notStarted:3, avgWaitingDays:29, avgNotStartedDays:53 },
-  waiting:{ total:141, days:9775, quiet30:43, unnamed:64, unnamedDays:1891,
-            top:[{n:"Ricky (agent feedback)",t:50,d:5631},
-                 {n:"Named agents & clients", t:27,d:2253},
-                 {n:"Nobody recorded",        t:64,d:1891}] }
+  inbound:{ total:70, waiting:67, notStarted:3, avgAge:31, oldest:87 },
+  // The birthday mailer: it closes its own work and should never be counted
+  // as anybody's throughput.
+  robot:{ closedAllTime:5718, closed30:448 }
 };
 
 // The ten Task_Type__c values, in the words the branch uses.
@@ -295,7 +299,7 @@ function blockState(row,sch,col,nowMin){
 let roster=[], schedule={}, lastGood=null;
 const LBL={KPI1:"KPI 1",KPI2:"KPI 2",PM1:"Afternoon 1",PM2:"Afternoon 2"};
 const ROLE={bm:"Branch Manager",abm:"Assistant Branch Manager",um:"Unit Manager",
-            bma:"Branch Manager's Assistant",ssa:"Sales Support"};
+            bma:"Branch Manager's Assistant",pa:"Personal Assistant",ssa:"Sales Support"};
 
 function judge(rows){
   const day=todayISO(), today={};
@@ -309,47 +313,70 @@ function judge(rows){
   }).sort((a,b)=>b.late.length-a.late.length||a.done-b.done||a.p.name.localeCompare(b.p.name));
 }
 
-// ---- the seven slides --------------------------------------------------
+// ---- the slides ---------------------------------------------------------
+const TIER_ORDER=["management","bma","pa","support"];
+const TIER_LABEL={management:"Management",bma:"Branch Manager's Assistant",
+                  pa:"Personal Assistant",support:"Sales Support"};
+function byTier(cards){
+  const g={};
+  cards.forEach(c=>{ const t=c.p.tier||"support"; (g[t]=g[t]||[]).push(c); });
+  return TIER_ORDER.filter(t=>g[t]&&g[t].length).map(t=>({tier:t,label:TIER_LABEL[t],rows:g[t]}));
+}
+
 function sBlocks(cards){
-  const grid=cards.map(({p,states,done,late})=>{
-    const cls=done>=4?"c-full":done>0?"c-some":"c-none";
-    const dots=states.map(st=>'<span class="dot'+(st==="on"?" on":st==="due"?" due":"")+'"></span>').join("");
-    return '<div class="card '+cls+'"><div><div class="name">'+esc(p.name)+'</div>'+
-      '<div class="role">'+(ROLE[p.role]||"")+
-      (late.length?' <span class="late">· '+late.length+" overdue</span>":"")+"</div></div>"+
-      '<div class="meter"><div class="dots-b">'+dots+'</div>'+
-      '<div class="count">'+done+"<small>/4</small></div></div></div>";
+  const groups=byTier(cards).map(g=>{
+    const cardsHtml=g.rows.map(({p,states,done,late})=>{
+      const cls=done>=4?"c-full":done>0?"c-some":"c-none";
+      const dots=states.map(st=>'<span class="dot'+(st==="on"?" on":st==="due"?" due":"")+'"></span>').join("");
+      return '<div class="card '+cls+'"><div><div class="name">'+esc(p.name)+'</div>'+
+        '<div class="role">'+(ROLE[p.role]||"")+
+        (late.length?' <span class="late">· '+late.length+" overdue</span>":"")+"</div></div>"+
+        '<div class="meter"><div class="dots-b">'+dots+'</div>'+
+        '<div class="count">'+done+"<small>/4</small></div></div></div>";
+    }).join("");
+    const inG=g.rows.filter(c=>c.done>0).length;
+    return '<div class="tier"><div class="tierhead">'+esc(g.label)+
+      '<span>'+inG+" of "+g.rows.length+" logging</span></div>"+
+      '<div class="tiergrid">'+cardsHtml+"</div></div>";
   }).join("");
   return '<div class="kick">1 · Today, block by block</div>'+
     "<h2>The day, as it lands</h2>"+
-    '<p class="lede">A dot lights when the block is submitted. It turns red when the block\'s time has passed with nothing in.</p>'+
-    '<div class="body"><div id="people">'+grid+"</div></div>";
+    '<p class="lede" style="font-size:1.7vh">A dot lights when the block is submitted, and turns red when its time has passed with nothing in.</p>'+
+    '<div class="body" style="margin-top:1vh">'+groups+"</div>";
 }
+
 function sWaitingToday(cards){
-  const owing=cards.filter(c=>c.late.length);
-  const list=owing.length
-    ? owing.slice(0,7).map(c=>'<div class="owe"><div class="t">'+esc(c.p.name)+
-        '</div><div class="w">'+c.late.map(b=>LBL[b]).join(" · ")+"</div></div>").join("")
-    : '<div class="allin">Everyone is in — every ended block submitted.</div>';
+  const groups=byTier(cards).map(g=>{
+    const owing=g.rows.filter(c=>c.late.length);
+    const body=owing.length
+      ? owing.map(c=>'<div class="owe"><div class="t">'+esc(c.p.name)+
+          '</div><div class="w">'+c.late.map(b=>LBL[b]).join(" · ")+"</div></div>").join("")
+      : '<div class="allin">All in</div>';
+    return '<div class="tier"><div class="tierhead">'+esc(g.label)+
+      '<span>'+owing.length+" owing</span></div>"+body+"</div>";
+  }).join("");
   const nw=trini(); const cp=new Date(nw); cp.setHours(CHECKPOINT_HOUR,0,0,0);
   let big,note;
   if(nw<cp){ const m=Math.round((cp-nw)/60000);
     big=(Math.floor(m/60)?Math.floor(m/60)+"h ":"")+(m%60)+"m";
-    note="until the 3pm checkpoint goes to the Branch Manager. What is in by then is the day's story.";
-  } else { big="Sent"; note="the checkpoint has gone. Finish the day's blocks before you leave."; }
+    note="until the 3pm checkpoint. What is in by then is the day's story.";
+  } else { big="Sent"; note="the checkpoint has gone. Finish the day before you leave."; }
+  const inAll=cards.filter(c=>c.done>0).length;
   return '<div class="kick">2 · Accountability today</div>'+
-    "<h2>Waiting on</h2>"+
-    '<p class="lede">Blocks whose time has passed, and the names they are waiting under.</p>'+
+    "<h2>Who owes a block</h2>"+
+    '<p class="lede">Blocks whose time has passed with nothing submitted, by where each person sits.</p>'+
     '<div class="body"><div class="cols">'+
-    '<div class="panel" style="overflow:auto"><h3>Owes a block</h3><div id="waitBox">'+list+"</div></div>"+
+    '<div class="panel" style="overflow:auto">'+groups+"</div>"+
     '<div style="display:flex;flex-direction:column;gap:2vh;min-height:0">'+
     '<div class="panel"><h3>3pm checkpoint</h3><div id="cpBig">'+big+'</div><div id="cpNote">'+note+"</div></div>"+
-    '<div class="panel" style="flex:1;overflow:auto"><h3>Value added &amp; ideas today</h3>'+ideasHtml(cards)+"</div>"+
+    '<div class="panel"><h3>Logging today</h3><div style="font-size:5vh;font-weight:800;color:'+
+      (inAll?"var(--green)":"var(--red)")+'">'+inAll+" of "+cards.length+"</div></div>"+
+    '<div class="panel" style="flex:1;overflow:auto"><h3>Value added &amp; ideas</h3>'+ideasHtml(cards)+"</div>"+
     "</div></div></div>";
 }
+
 // The task types a person actually worked today: the KPI on each block they
-// submitted. A prefilled KPI on an unsubmitted block does not count — that is
-// the schedule's opinion, not theirs.
+// submitted. A prefilled KPI on an unsubmitted block does not count.
 function loggedTypes(row){
   const out=[];
   BLOCKS.forEach(c=>{
@@ -364,169 +391,83 @@ function ideasHtml(cards){
     ["ValueAdded","Innovation"].forEach(k=>{
       const v=txt(r[k]);
       if(v&&!/^none( today)?\.?$/i.test(v))
-        ideas.push({who:r.Name,text:v.length>120?v.slice(0,117)+"…":v});
+        ideas.push({who:r.Name,text:v.length>110?v.slice(0,107)+"…":v});
     });
   });
   return ideas.length
     ? ideas.slice(0,4).map(i=>'<div class="idea"><div class="t">'+esc(i.text)+
         '</div><div class="w">'+esc(i.who)+"</div></div>").join("")
-    : '<div class="none">Nothing logged yet today. Value added is logged every day — even when the honest entry is "none today".</div>';
+    : '<div class="none">Nothing logged yet. Even "none today" is an entry.</div>';
 }
+
 function sReconcile(cards){
-  const rows=cards.map(({p,r,done})=>{
-    const T=TASKS.byPerson[p.name.split(" ")[0]];
-    if(!T) return "";
-    const logged=r?loggedTypes(r):[];
-    if(!logged.length){
-      return '<tr><td><b>'+esc(p.name.split(" ")[0])+'</b></td>'+
-        '<td class="dim">nothing logged yet</td><td class="dim">—</td>'+
-        '<td>'+T.open+'</td><td>'+(T.overdue?'<span class="chip bad">'+T.overdue+' overdue</span>':'<span class="chip good">none overdue</span>')+'</td></tr>';
-    }
-    return logged.map((k,ix)=>{
-      const t=T.types[k]||{n:0,d:0};
-      const chip=t.n===0?'<span class="chip good">cleared</span>'
-        :'<span class="chip '+(t.d>365?"bad":"warn")+'">'+t.d.toLocaleString()+' days</span>';
-      return '<tr><td>'+(ix?"":'<b>'+esc(p.name.split(" ")[0])+'</b>')+'</td>'+
-        '<td>'+esc(TYPE_LABEL[k]||k)+'</td>'+
-        '<td><span class="chip good">'+done+'/4 blocks in</span></td>'+
-        '<td><b>'+t.n+'</b> still open</td><td>'+chip+'</td></tr>';
+  const rows=byTier(cards).map(g=>{
+    const inner=g.rows.map(({p,r,done})=>{
+      const T=TASKS.byPerson[p.name.split(" ")[0]];
+      const logged=r?loggedTypes(r):[];
+      if(!logged.length){
+        return '<tr><td><b>'+esc(p.name.split(" ")[0])+'</b></td>'+
+          '<td class="dim">nothing logged yet</td><td class="dim">—</td>'+
+          '<td>'+(T?T.open+" open":"—")+"</td></tr>";
+      }
+      return logged.map((k,ix)=>{
+        const od=TASKS.overdue.filter(o=>o.who===p.name.split(" ")[0]&&o.type===k)[0];
+        return '<tr><td>'+(ix?"":'<b>'+esc(p.name.split(" ")[0])+'</b>')+'</td>'+
+          '<td>'+esc(TYPE_LABEL[k]||k)+'</td>'+
+          '<td><span class="chip good">'+done+'/4 in</span></td>'+
+          '<td>'+(od?'<span class="chip warn">'+od.n+" overdue · avg "+od.avg+'d</span>'
+                    :'<span class="chip good">none overdue</span>')+"</td></tr>";
+      }).join("");
     }).join("");
+    return '<tr class="grouprow"><td colspan="4">'+esc(g.label)+"</td></tr>"+inner;
   }).join("");
   return '<div class="kick">3 · Logged today vs still open</div>'+
     "<h2>Does the day match the book?</h2>"+
-    '<p class="lede">The KPI on a block is a Salesforce task type. So each line reads: what this person worked on today, and what is still sitting open in exactly that type.</p>'+
+    '<p class="lede">The KPI on a block is a Salesforce task type — so each line reads what somebody worked on today beside what is overdue in exactly that type.</p>'+
     '<div class="body"><div class="panel" style="height:100%;overflow:auto"><table><thead><tr>'+
-    "<th>Who</th><th>Logged against</th><th>Blocks</th><th>Open in that type</th><th>Age carried</th>"+
+    "<th>Who</th><th>Logged against</th><th>Blocks</th><th>Overdue in that type</th>"+
     "</tr></thead><tbody>"+rows+"</tbody></table></div></div>";
 }
-// The branch in one screen. Cards, not prose — this one is read from the
-// back of the room in the four seconds somebody glances up.
-function sNumbers(cards){
-  const B=TASKS.branch;
-  const inToday=cards.filter(c=>c.done>0).length;
-  const late=cards.reduce((n,c)=>n+c.late.length,0);
-  const pct=B.overdue?Math.round(B.overdue/B.open*100):0;
-  return '<div class="kick">4 · The branch in numbers · snapshot '+dstr(TASKS.asOf)+'</div>'+
-    "<h2>What the desk is carrying</h2>"+
-    '<p class="lede">Five people, one open book. Every figure here is a task somebody owns.</p>'+
-    '<div class="body"><div class="kpis">'+
-    '<div class="kpi teal"><div class="k">Open tasks</div><div class="v">'+B.open+
-      '</div><div class="d">across '+B.people+' people</div></div>'+
-    '<div class="kpi red"><div class="k">Past their date</div><div class="v">'+B.overdue+
-      '</div><div class="d">'+pct+'% of the open book</div></div>'+
-    '<div class="kpi red"><div class="k">Days carried</div><div class="v">'+(B.days/1000).toFixed(1)+
-      'k</div><div class="d">oldest single task: '+B.oldest.toLocaleString()+' days</div></div>'+
-    '<div class="kpi gold"><div class="k">Overdue, no reason given</div><div class="v">'+B.noReason+
-      '</div><div class="d">the field exists — it is not being filled</div></div>'+
-    '<div class="kpi green"><div class="k">Closed by people · 30 days</div><div class="v">'+B.closedByPeople.toLocaleString()+
-      '</div><div class="d">a further '+B.closedByRobot+' closed themselves — birthday mail</div></div>'+
-    '<div class="kpi '+(inToday?"green":"red")+'"><div class="k">Logging today</div><div class="v">'+
-      inToday+'/'+cards.length+'</div><div class="d">'+
-      (late?late+' block'+(late>1?'s':'')+' overdue right now':'nothing overdue right now')+'</div></div>'+
-    "</div></div>";
-}
 
-// The tracker chases the day on its own. Staff should know exactly what
-// arrives and when, so nothing feels like being singled out.
-// Throughput with the robot taken out. The birthday mailer closes its own
-// tasks in the hundreds; leaving that in the total tells the branch it is
-// twice as productive as it is, which is the most expensive kind of comfort.
-function sHuman(){
-  const H=TASKS.human30, B=TASKS.branch, max=Math.max(...H.map(x=>x.v),1);
-  const rows=H.map(x=>
-    '<div class="row"><span class="nm">'+esc(x.n)+'</span>'+
-    '<span class="track"><i class="green" style="width:'+(x.v/max*100)+'%"></i></span>'+
-    '<span class="val">'+x.v+'</span><span class="sub">closed · 30 days</span></div>').join("");
-  return '<div class="kick">9 · People, not automation</div>'+
-    "<h2>"+B.closedByPeople.toLocaleString()+" tasks closed by hand</h2>"+
-    '<p class="lede">The birthday mailer closed a further '+B.closedByRobot+
-      " on its own. It is counted separately here, because a robot's output is not the branch's.</p>"+
-    '<div class="body"><div class="panel"><div class="rows">'+rows+"</div></div></div>";
-}
-
-// Age is how long a task has existed. Quiet is how long nobody has touched it.
-// A three-week task chased yesterday is fine; a three-week task nobody has
-// opened in a month is not, and the age alone cannot tell them apart.
-function sQuiet(){
-  const Q=TASKS.quiet, I=TASKS.inbound, max=Math.max(...Q.map(x=>x.max),1);
-  const rows=Q.map(x=>
-    '<div class="row"><span class="nm">'+esc(x.n)+'</span>'+
-    '<span class="track"><i class="'+(x.avg>21?"red":x.avg>7?"gold":"teal")+
-      '" style="width:'+(x.max/max*100)+'%"></i></span>'+
-    '<span class="val">'+x.avg+'d</span><span class="sub">average · longest '+x.max+" days</span></div>").join("");
-  return '<div class="kick">10 · How long since anyone touched it</div>'+
-    "<h2>Quiet is not the same as aged</h2>"+
-    '<p class="lede">Days since the last activity on an open task. The bar is the longest one each person is carrying.</p>'+
-    '<div class="body"><div class="cols">'+
-    '<div class="panel"><h3>Days quiet</h3><div class="rows">'+rows+"</div></div>"+
-    '<div class="panel"><h3>The inbound pile</h3>'+
-    '<div style="font-size:5.2vh;font-weight:800;color:var(--gold)">'+I.total+"</div>"+
-    '<div style="font-size:1.9vh;color:var(--muted);line-height:1.5;margin-top:1vh">'+
-      "untyped tasks on the Branch Manager — <b style=\"color:#fff\">"+I.waiting+
-      "</b> are emails from agents and clients marked <i>waiting on someone else</i>, averaging "+
-      I.avgWaitingDays+" days. They are not birthday mail: those close themselves.</div>"+
-    "</div></div></div>";
-}
-
-// Tasks carry a contact. Grouping the open ones by how long since anybody
-// touched them turns "waiting on someone" into a queue with an oldest end.
-function sChasing(){
-  const C=TASKS.chasing, max=Math.max(...C.map(x=>x.days),1);
-  const tone=["red","red","gold","teal"];
-  const rows=C.map((x,i)=>
-    '<div class="row"><span class="nm">'+esc(x.band)+'</span>'+
-    '<span class="track"><i class="'+tone[i]+'" style="width:'+(x.days/max*100)+'%"></i></span>'+
-    '<span class="val">'+x.tasks+'</span><span class="sub">'+x.people+" people · "+
-    x.days.toLocaleString()+" days</span></div>").join("");
-  const worst=C[0];
-  return '<div class="kick">11 · Who we are chasing</div>'+
-    "<h2>Every open task has somebody's name on it</h2>"+
-    '<p class="lede">Grouped by how long since anyone touched it. '+
-      worst.tasks+" task"+(worst.tasks>1?"s have":" has")+
-      " not been touched in over a year. Names are in the tracker under <b>What you are chasing</b> — not on a wall.</p>"+
-    '<div class="body"><div class="panel"><div class="rows">'+rows+"</div></div></div>";
-}
-
-function sRhythm(){
-  const rows=[
-    ["8am","<b>Your blocks are waiting</b><span>Signed in, you land on your own day — the KPI already chosen from the schedule</span>"],
-    ["12pm","<b>Midday nudge</b><span>Nothing logged yet? An email, only to you. Not to the branch</span>"],
-    ["3pm","<b>Finish the day</b><span>Blocks still open? A second reminder — while there is a working hour left</span>"],
-    ["3pm","<b>Branch checkpoint</b><span>Who is in, who is missing, what is blocked — to the Branch Manager</span>"],
-    ["each&nbsp;block","<b>Your receipt</b><span>Every submission emailed straight back to you. Keep them — they are your file</span>"],
-    ["Fri&nbsp;5pm","<b>The week</b><span>Where the week actually went, person by person</span>"]
-  ].map(r=>'<div class="t">'+r[0]+'</div><div class="w">'+r[1]+"</div>").join("");
-  return '<div class="kick">12 · How the day is chased</div>'+
-    "<h2>Nobody has to remember</h2>"+
-    '<p class="lede">Six things happen on their own. None of them is a manager walking over to your desk.</p>'+
-    '<div class="body"><div class="panel" style="height:100%"><div class="when">'+rows+"</div></div></div>";
-}
-
-function sLoad(){
-  const P=Object.entries(TASKS.byPerson).map(([n,v])=>({n,...v}));
-  const max=Math.max(...P.map(x=>x.open),1);
-  const rows=P.sort((a,b)=>b.open-a.open).map(x=>{
-    const w=x.open/max*100, wo=x.open?x.overdue/x.open*w:0;
+function sToday(){
+  const T=TASKS.today.closed, W=TASKS.week.closed;
+  const tot=T.reduce((s,x)=>s+x.v,0), wtot=W.reduce((s,x)=>s+x.v,0);
+  const max=Math.max(...W.map(x=>x.v),1);
+  const rows=W.map(x=>{
+    const t=(T.find(y=>y.n===x.n)||{v:0}).v;
     return '<div class="row"><span class="nm">'+esc(x.n)+'</span>'+
-      '<span class="track"><i class="teal" style="width:'+w+'%"></i>'+
-      '<i class="red" style="width:'+wo+'%"></i></span>'+
-      '<span class="val">'+x.open+'</span>'+
-      '<span class="sub">'+x.overdue+" overdue · "+x.aged+" aged 60d+</span></div>";
+      '<span class="track"><i class="teal" style="width:'+(x.v/max*100)+'%"></i>'+
+      '<i class="green" style="width:'+(t/max*100)+'%"></i></span>'+
+      '<span class="val">'+t+'</span><span class="sub">today · '+x.v+" this week</span></div>";
   }).join("");
-  const tot=P.reduce((s,x)=>s+x.open,0), totO=P.reduce((s,x)=>s+x.overdue,0);
-  return '<div class="kick">5 · Who carries it</div>'+
-    "<h2>"+tot+" open tasks · "+totO+" past their date</h2>"+
-    '<p class="lede">Who carries the branch\'s open book. Red is the overdue share — a rolled due date is not an actioned task.</p>'+
+  return '<div class="kick">4 · Closed today</div>'+
+    "<h2>"+tot+" tasks closed today · "+wtot+" this week</h2>"+
+    '<p class="lede">Real work only. The birthday mailer closes its own tasks in the hundreds and is counted nowhere on this wall. Green is today, teal is the week behind it.</p>'+
     '<div class="body"><div class="panel"><div class="rows">'+rows+"</div></div></div>";
 }
+
+function sOverdue(){
+  const O=TASKS.overdue, tot=O.reduce((s,x)=>s+x.n,0);
+  const max=Math.max(...O.map(x=>x.n),1);
+  const rows=O.slice().sort((a,b)=>b.n-a.n).map(x=>{
+    const tone=x.avg>120?"red":x.avg>60?"gold":"teal";
+    return '<div class="row"><span class="nm">'+esc(x.who)+" · "+
+      esc(TYPE_LABEL[x.type]||x.type||"No type")+'</span>'+
+      '<span class="track"><i class="'+tone+'" style="width:'+(x.n/max*100)+'%"></i></span>'+
+      '<span class="val">'+x.n+'</span><span class="sub">avg '+x.avg+"d · oldest "+x.oldest+"d</span></div>";
+  }).join("");
+  return '<div class="kick">5 · The overdue book</div>'+
+    "<h2>"+tot+" tasks past their date — and two people hold them</h2>"+
+    '<p class="lede">By owner and task type, with the average age and the single oldest. Days are never added together: a total of days is a number about nothing.</p>'+
+    '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div></div></div>";
+}
+
 function sTypes(cards){
-  // branch totals per type, plus how many people logged a block against it today
   const agg={};
-  Object.values(TASKS.byPerson).forEach(v=>{
-    Object.entries(v.types).forEach(([k,t])=>{
-      if(!agg[k]) agg[k]={n:0,d:0,logged:0};
-      agg[k].n+=t.n; agg[k].d+=t.d;
-    });
+  TASKS.overdue.forEach(o=>{
+    const k=o.type||"";
+    if(!agg[k]) agg[k]={n:0,oldest:0,people:new Set(),logged:0};
+    agg[k].n+=o.n; agg[k].oldest=Math.max(agg[k].oldest,o.oldest); agg[k].people.add(o.who);
   });
   cards.forEach(({r})=>{ if(!r) return;
     loggedTypes(r).forEach(k=>{ if(agg[k]) agg[k].logged++; });
@@ -534,50 +475,76 @@ function sTypes(cards){
   const T=Object.entries(agg).map(([k,v])=>({k,...v})).sort((a,b)=>b.n-a.n);
   const max=Math.max(...T.map(x=>x.n),1);
   const rows=T.map(x=>
-    '<div class="row"><span class="nm">'+esc(TYPE_LABEL[x.k]||x.k)+'</span>'+
-    '<span class="track"><i class="gold" style="width:'+(x.n/max*100)+'%"></i></span>'+
-    '<span class="val">'+x.n+'</span><span class="sub">'+x.d.toLocaleString()+" days · "+
-    (x.logged?'<span style="color:var(--green)">'+x.logged+" worked today</span>":'<span style="color:var(--red)">nobody on it today</span>')+
-    "</span></div>").join("");
-  return '<div class="kick">6 · By task type</div>'+
-    "<h2>Where the days sit — and who is on them</h2>"+
-    '<p class="lede">Open tasks by Salesforce type across the branch. The right-hand note says whether anybody logged a block against that type today.</p>'+
+    '<div class="row"><span class="nm">'+esc(TYPE_LABEL[x.k]||x.k||"No type recorded")+'</span>'+
+    '<span class="track"><i class="'+(x.logged?"green":"red")+'" style="width:'+(x.n/max*100)+'%"></i></span>'+
+    '<span class="val">'+x.n+'</span><span class="sub">oldest '+x.oldest+"d · "+
+    (x.logged?'<span style="color:var(--green)">worked today</span>'
+             :'<span style="color:var(--red)">nobody on it</span>')+"</span></div>").join("");
+  const idle=T.filter(x=>!x.logged).length;
+  return '<div class="kick">6 · Overdue by task type</div>'+
+    "<h2>"+(idle?idle+" types overdue with nobody on them today":"Every overdue type was worked today")+"</h2>"+
+    '<p class="lede">Green means somebody logged a block against that type today. Red means the pile sat.</p>'+
     '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div></div></div>";
 }
-function sFeedback(){
-  const W=TASKS.waiting, max=Math.max(...W.top.map(x=>x.t));
-  const rows=W.top.map(x=>
-    '<div class="row"><span class="nm">'+esc(x.n)+'</span>'+
-    '<span class="track"><i class="red" style="width:'+(x.t/max*100)+'%"></i></span>'+
-    '<span class="val">'+x.t+'</span><span class="sub">'+x.d.toLocaleString()+" days</span></div>").join("");
-  return '<div class="kick">7 · Feedback owed</div>'+
-    "<h2>"+W.total+' tasks marked "waiting on someone"</h2>'+
-    '<p class="lede">'+W.days.toLocaleString()+" days of work sits behind a reply. "+W.quiet30+
-      " have not been chased in over a month, and "+W.unnamed+
-      " name nobody at all — a task cannot be chased if the person to chase was never written down.</p>"+
-    '<div class="body"><div class="panel"><div class="rows">'+rows+"</div></div></div>";
+
+function sWaitingOn(){
+  const W=TASKS.waitingOn, max=Math.max(...W.map(x=>x.n),1);
+  const rows=W.map(x=>{
+    const tone=x.quiet>21?"red":x.quiet>7?"gold":"teal";
+    return '<div class="row"><span class="nm">'+esc(x.who)+'</span>'+
+      '<span class="track"><i class="'+tone+'" style="width:'+(x.n/max*100)+'%"></i></span>'+
+      '<span class="val">'+x.n+'</span><span class="sub">oldest '+x.oldest+"d · quiet "+x.quiet+"d</span></div>";
+  }).join("");
+  return '<div class="kick">7 · Who we are waiting on</div>'+
+    "<h2>The reply is with somebody else</h2>"+
+    '<p class="lede">Open tasks grouped by the account they sit against — head office, a company, a client. Quiet is days since anyone chased it.</p>'+
+    '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div></div></div>";
 }
-function sDone(){
-  const P=Object.entries(TASKS.byPerson).map(([n,v])=>({n,...v}))
-    .sort((a,b)=>b.closed30-a.closed30);
-  const max=Math.max(...P.map(x=>x.closed30),1);
-  const rows=P.map(x=>
-    '<div class="row"><span class="nm">'+esc(x.n)+'</span>'+
-    '<span class="track"><i class="green" style="width:'+(x.closed30/max*100)+'%"></i></span>'+
-    '<span class="val">'+x.closed30+'</span><span class="sub">closed · '+x.open+" still open</span></div>").join("");
-  const tot=P.reduce((s,x)=>s+x.closed30,0);
-  return '<div class="kick">8 · Throughput</div>'+
-    "<h2>"+tot.toLocaleString()+" tasks closed in the last 30 days</h2>"+
-    '<p class="lede">What is actually being done, next to what is still open. Logging a block and closing a task are different things — this is where you see whether both happened.</p>'+
-    '<div class="body"><div class="panel"><div class="rows">'+rows+"</div></div></div>";
+
+function sInbound(){
+  const I=TASKS.inbound, B=TASKS.byPerson;
+  const rows=Object.entries(B).map(([n,v])=>
+    '<div class="row"><span class="nm">'+esc(n)+'</span>'+
+    '<span class="track"><i class="'+(v.quietAvg>21?"red":v.quietAvg>7?"gold":"teal")+
+      '" style="width:'+Math.min(v.quietAvg/50*100,100)+'%"></i></span>'+
+    '<span class="val">'+v.quietAvg+'d</span><span class="sub">average · longest '+v.quietMax+"d</span></div>").join("");
+  return '<div class="kick">8 · Nobody has touched these</div>'+
+    "<h2>Quiet is not the same as aged</h2>"+
+    '<p class="lede">Days since the last activity on an open task. A three-week task chased yesterday is fine; one nobody has opened in a month is not.</p>'+
+    '<div class="body"><div class="cols">'+
+    '<div class="panel"><h3>Days quiet, by person</h3><div class="rows">'+rows+"</div></div>"+
+    '<div class="panel"><h3>The inbound pile</h3>'+
+    '<div style="font-size:5.2vh;font-weight:800;color:var(--gold)">'+I.total+"</div>"+
+    '<div style="font-size:1.9vh;color:var(--muted);line-height:1.5;margin-top:1vh">'+
+      "emails logged to the Branch Manager — <b style=\"color:#fff\">"+I.waiting+
+      "</b> waiting on a reply, average "+I.avgAge+" days, oldest "+I.oldest+
+      ". These are agents and clients, not birthday mail: that closes itself.</div>"+
+    "</div></div></div>";
+}
+
+// The tracker chases the day on its own. Staff should know exactly what
+// arrives and when, so nothing feels like being singled out.
+function sRhythm(){
+  const rows=[
+    ["8am","<b>Your blocks are waiting</b><span>You land on your own day — the KPI already set from the schedule</span>"],
+    ["12pm","<b>Midday nudge</b><span>Nothing logged yet? An email, only to you. Never to the branch</span>"],
+    ["3pm","<b>Finish the day</b><span>Blocks still open? A second reminder, while there is a working hour left</span>"],
+    ["3pm","<b>Branch checkpoint</b><span>Who is in, who is missing, what is blocked — to the Branch Manager</span>"],
+    ["each&nbsp;block","<b>Your receipt</b><span>Every submission emailed back to you. Keep them — they are your file</span>"],
+    ["Fri&nbsp;5pm","<b>The week</b><span>Where the week actually went, person by person</span>"]
+  ].map(r=>'<div class="t">'+r[0]+'</div><div class="w">'+r[1]+"</div>").join("");
+  return '<div class="kick">9 · How the day is chased</div>'+
+    "<h2>Nobody has to remember</h2>"+
+    '<p class="lede">Six things happen on their own. None of them is a manager walking over to your desk.</p>'+
+    '<div class="body"><div class="panel" style="height:100%"><div class="when">'+rows+"</div></div></div>";
 }
 
 // ---- deck --------------------------------------------------------------
 let cur=0, timer=null, paused=false;
 function render(rows){
   const cards=judge(rows);
-  const slides=[sBlocks(cards),sWaitingToday(cards),sReconcile(cards),sNumbers(cards),
-                sLoad(),sTypes(cards),sFeedback(),sDone(),sHuman(),sQuiet(),sChasing(),sRhythm()];
+  const slides=[sBlocks(cards),sWaitingToday(cards),sReconcile(cards),sToday(),
+                sOverdue(),sTypes(cards),sWaitingOn(),sInbound(),sRhythm()];
   $("#slides").innerHTML=slides.map(h=>'<section class="slide">'+h+"</section>").join("");
   const nav=$("#dotsNav"); nav.innerHTML="";
   slides.forEach((_,i)=>{const d=document.createElement("i");

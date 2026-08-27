@@ -199,7 +199,23 @@ var BMA_ONLY = [
 ];
 
 /** The list a person sees, and whether each entry carries live numbers. */
-var ROLE_LISTS = { ssa: SSA_ONLY, bma: BMA_ONLY, bm: BM_ONLY, abm: ABM_ONLY, um: UM_ONLY };
+/* The Branch Manager's personal assistant. Not sales support and not a BMA —
+   the work is the Branch Manager's own diary, his mail, his contracts and the
+   errands that keep a branch moving. It has never been written down, which is
+   why none of the existing lists fitted it. */
+var PA_ONLY = [
+  'Mail Management / Contracts',
+  'Document delivery & collection',
+  'Diary, appointments & travel',
+  'Branch Manager support',
+  'Scripts & transmittals',
+  'Banking, errands & office runs',
+  'Office supplies & facilities',
+  'Meeting prep & branch events'
+];
+
+var ROLE_LISTS = { ssa: SSA_ONLY, bma: BMA_ONLY, bm: BM_ONLY, abm: ABM_ONLY,
+                   um: UM_ONLY, pa: PA_ONLY };
 
 function allKpiChoices_() {
   var out = {};
@@ -256,6 +272,17 @@ var SCHEDULE = {
       KPI2: { time: '10 – 12pm', focus: 'BM Client Mgt / RR Oper / General lines',   kpi: 'Administrative Support' },
       PM1:  { time: '1 – 3pm',   focus: 'Escalations / New Recruit Training',        kpi: 'Escalations' },
       PM2:  { time: '3 – 4pm',   focus: 'Task Mgmt / Branch Meeting Reports',        kpi: 'Reporting (Production / RDAR)' }
+    }
+  },
+  // The Branch Manager's personal assistant. His day is the mail run, the
+  // contracts that have to reach an agent's hand, and whatever the diary needs.
+  pawan: {
+    hours: '8am – 4pm', lunch: '12:00 – 1:00pm',
+    blocks: {
+      KPI1: { time: '8 – 10am',  focus: 'Mail in, contracts logged',            kpi: 'Mail Management / Contracts' },
+      KPI2: { time: '10 – 12pm', focus: 'Deliveries, collections, banking',      kpi: 'Document delivery & collection' },
+      PM1:  { time: '1 – 2:30pm',focus: "Branch Manager's diary and requests",   kpi: 'Branch Manager support' },
+      PM2:  { time: '2:30 – 4pm',focus: 'Scripts, transmittals, office',         kpi: 'Scripts & transmittals' }
     }
   },
   elizabeth: {
@@ -324,7 +351,8 @@ var DEFAULT_SCHEDULE = {
 var REPORTS_TO = {
   kerwyn: 'ricky', akaash: 'ricky', gary: 'kerwyn',
   kamla: 'ricky',
-  sasha: 'kamla', azariah: 'kamla', elizabeth: 'kamla'
+  sasha: 'kamla', azariah: 'kamla', elizabeth: 'kamla',
+  pawan: 'ricky'      // and works to Kamla day to day; see TIER below
 };
 
 function scheduleFor_(staffId) { return SCHEDULE[staffId] || DEFAULT_SCHEDULE; }
@@ -544,6 +572,7 @@ function roleFor_(person) {
   // Order matters. "Assistant Branch Manager" contains both "assistant" and
   // "branch manager", and is neither a BMA nor the Branch Manager — so it is
   // tested first, before either of the words it happens to contain.
+  if (/personal assistant|\bpa\b|assistant to the branch manager/.test(t)) return 'pa';
   if (/assistant branch manager|\babm\b/.test(t)) return 'abm';
   if (/branch manager assistant|\bbma\b/.test(t)) return 'bma';
   if (/branch manager/.test(t)) return 'bm';
@@ -645,12 +674,28 @@ function login_(who, password) {
 }
 
 /** The roster minus the passwords. This is the only shape that leaves here. */
+/* What the branch looks like, rather than what a spreadsheet column says.
+   A wall that lists nine names alphabetically teaches nobody anything; one
+   that groups them teaches the structure without a word of explanation. */
+var TIER = {
+  bm:  { key: 'management', label: 'Management',                    order: 1 },
+  abm: { key: 'management', label: 'Management',                    order: 1 },
+  um:  { key: 'management', label: 'Management',                    order: 1 },
+  bma: { key: 'bma',        label: "Branch Manager's Assistant",    order: 2 },
+  pa:  { key: 'pa',         label: 'Personal Assistant',            order: 3 },
+  ssa: { key: 'support',    label: 'Sales Support',                 order: 4 }
+};
+function tierFor_(role) { return TIER[role] || TIER.ssa; }
+
 function publicRoster_() {
   return roster_().filter(function (p) { return p.active; }).map(function (p) {
     return {
       staffId: p.staffId, name: p.name, email: p.email,
       agentNumber: p.agentNumber, unit: p.unit, grade: p.grade,
       role: roleFor_(p),
+      tier: tierFor_(roleFor_(p)).key,
+      tierLabel: tierFor_(roleFor_(p)).label,
+      tierOrder: tierFor_(roleFor_(p)).order,
       reportsTo: REPORTS_TO[p.staffId] || '',
       manager: isManager_(p)
     };
