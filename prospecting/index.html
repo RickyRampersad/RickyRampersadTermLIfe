@@ -1,4 +1,4 @@
-<title>Premchand’s Prospect Board</title>
+<title>Your Prospect Board</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Inter:wght@400;500;600;700;800&display=swap">
@@ -170,7 +170,7 @@
     <div class="me">
       <div class="ava">PD</div>
       <div>
-        <div class="nm">Premchand Dookran</div>
+        <div class="nm" id="pbAdvisorName"></div>
         <div class="sub">Prospecting &middot; last 30 days</div>
       </div>
     </div>
@@ -240,10 +240,23 @@
       </div>
 
       <div class="fld"><label>Their link</label>
-        <div class="linkbox" id="lnk">factfind360.com/meet?a=A10024&amp;n=Premchand+Dookran&amp;c=Devon&amp;t=&hellip;</div>
+        <div class="linkbox" id="lnk">Your link appears here once you type a first name.</div>
       </div>
 
-      <p class="msg" id="waMsg"></p>
+      <div class="fld" style="margin-top:2px">
+        <label style="display:flex;justify-content:space-between;align-items:baseline">
+          <span>Your message</span>
+          <button type="button" id="msgReset"
+            style="background:none;border:0;color:var(--teal);font:700 12px Inter,sans-serif;
+                   cursor:pointer;padding:0;text-decoration:underline">Reset to the standard one</button>
+        </label>
+        <textarea id="waMsg" rows="9"
+          style="width:100%;border:1.5px solid var(--line);border-radius:10px;padding:12px 13px;
+                 font:15px/1.55 Inter,sans-serif;background:var(--sunk);color:var(--ink);
+                 resize:vertical"></textarea>
+        <p style="font-size:12.5px;color:var(--muted);margin:6px 2px 0;line-height:1.5">
+          Edit it if you want. The link is added at the end when you send.</p>
+      </div>
 
       <div class="two" style="gap:9px">
         <button class="btn wa" id="sendWa" type="button">Send on WhatsApp</button>
@@ -286,9 +299,88 @@
 
   var ENDPOINT = 'https://script.google.com/macros/s/AKfycbzfRo6pS2l8s9GN-E9_aSqshqMs_C2WyWEtaRePPwD0y8o2ttz7zcRE9CEw4OScORX1/exec';
   var PAGE     = 'https://rickyrampersadbranch.com/meet/';
-  var AGENT    = 'A10024';
-  var ADVISOR  = 'Premchand Dookran';
-  var FIRST    = ADVISOR.split(' ')[0];
+  /* Whose board this is.
+     The agent code and name were constants, so every advisor who opened this
+     page got Premchand's board and every link they built credited Premchand.
+     The server was never the problem — it has always been asked for one
+     agent's prospects, ?action=board&a=CODE — only the code it was told to ask
+     for was fixed.
+     Now: from the address if it carries one, otherwise from what this browser
+     was told last time, otherwise nothing and the page asks. It does not fall
+     back to a real advisor, because a board silently belonging to somebody
+     else is how a prospect ends up credited to the wrong person. */
+  var AGENT = '', ADVISOR = '';
+  (function identify() {
+    var q = new URLSearchParams(location.search);
+    var a = (q.get('a') || '').trim().toUpperCase();
+    var n = (q.get('n') || '').trim();
+
+    if (a) {
+      AGENT = a;
+      ADVISOR = n;
+      try {
+        localStorage.setItem('rrb_pb_agent', AGENT);
+        if (ADVISOR) localStorage.setItem('rrb_pb_name', ADVISOR);
+      } catch (e) {}
+      if (!ADVISOR) { try { ADVISOR = localStorage.getItem('rrb_pb_name') || ''; } catch (e) {} }
+      return;
+    }
+    try {
+      AGENT   = localStorage.getItem('rrb_pb_agent') || '';
+      ADVISOR = localStorage.getItem('rrb_pb_name')  || '';
+    } catch (e) {}
+  })();
+
+  var FIRST = ADVISOR ? ADVISOR.split(' ')[0] : '';
+
+  /* No code, no board. Asking is better than guessing: an advisor who lands
+     here without their link needs to know that, not to start sending prospects
+     under a code that is not theirs. */
+  if (!AGENT) {
+    document.title = 'Your prospect board';
+    document.addEventListener('DOMContentLoaded', function () {
+      document.body.innerHTML =
+        '<div style="max-width:560px;margin:0 auto;padding:60px 22px;' +
+        'font:16px/1.6 Inter,-apple-system,Arial,sans-serif;color:#0F172A">' +
+        '<h1 style="font:600 30px/1.2 Newsreader,Georgia,serif;margin:0 0 12px">' +
+        'Whose board is this?</h1>' +
+        '<p style="color:#3F4A5C;margin:0 0 18px">Your board is on your own link, ' +
+        'so the prospects you send are credited to you. Enter your agent number ' +
+        'once and this browser will remember it.</p>' +
+        '<label style="display:block;font-weight:700;font-size:14px;margin-bottom:5px">Agent number</label>' +
+        '<input id="pbCode" placeholder="A10024" autocapitalize="characters" ' +
+        'style="width:100%;padding:13px 14px;border:1.5px solid #DDE3EC;border-radius:11px;' +
+        'font:16px Inter,sans-serif;margin-bottom:12px">' +
+        '<label style="display:block;font-weight:700;font-size:14px;margin-bottom:5px">Your name</label>' +
+        '<input id="pbName" placeholder="Premchand Dookran" ' +
+        'style="width:100%;padding:13px 14px;border:1.5px solid #DDE3EC;border-radius:11px;' +
+        'font:16px Inter,sans-serif;margin-bottom:16px">' +
+        '<button id="pbGo" style="width:100%;padding:16px;border:0;border-radius:12px;' +
+        'background:#0D9488;color:#fff;font:800 16.5px Inter,sans-serif;cursor:pointer">' +
+        'Open my board</button>' +
+        '<p style="color:#697489;font-size:13.5px;margin-top:16px">Bookmark the page once ' +
+        'it opens &mdash; the link carries your code, so it works from any device.</p>' +
+        '</div>';
+      document.getElementById('pbGo').onclick = function () {
+        var c = (document.getElementById('pbCode').value || '').trim().toUpperCase();
+        var nm = (document.getElementById('pbName').value || '').trim();
+        if (!c) { document.getElementById('pbCode').focus(); return; }
+        location.search = '?a=' + encodeURIComponent(c) +
+                          (nm ? '&n=' + encodeURIComponent(nm) : '');
+      };
+    });
+    return;
+  }
+
+  if (ADVISOR) document.title = FIRST + '’s Prospect Board';
+
+  /* The name on the card is whoever the board belongs to. It was Premchand's
+     in the markup, so an advisor on their own board still saw his name over
+     their own prospects. */
+  document.addEventListener('DOMContentLoaded', function () {
+    var el = document.getElementById('pbAdvisorName');
+    if (el) el.textContent = ADVISOR || AGENT;
+  });
 
   // The advisor's own record, shown on their page. Blank until somebody who
   // knows the real figures types them — "148 families advised" was a number I
@@ -338,26 +430,72 @@
   var pf = document.getElementById('pf'), pw = document.getElementById('pw');
   var lnk = document.getElementById('lnk'), waMsg = document.getElementById('waMsg');
 
+  /* The link goes to the advisor's own address, /meet/a/CODE/, not to /meet/
+     with their code on the query string.
+
+     Both land the prospect in the same place. The difference is the grey box
+     WhatsApp draws when the link is pasted: it fetches the address once,
+     without running any JavaScript, so a name on the query string never
+     reaches it. Every advisor's link previewed as one advisor's name for
+     exactly that reason. A page per advisor is the only thing WhatsApp will
+     read differently, so there is one, and it carries their name and forwards
+     the prospect on with everything else on the link intact.
+
+     a and n are left off here — the advisor's own page sets them. */
   function link(){
-    var p = new URLSearchParams({ a:AGENT, n:ADVISOR, t:TOKEN });
+    var p = new URLSearchParams({ t:TOKEN });
     var name = pf.value.trim();
     if (name) p.set('c', name);
     if (YEARS && FAMILIES) { p.set('y', YEARS); p.set('f', FAMILIES); }
-    return PAGE + '?' + p.toString();
+    return PAGE + 'a/' + encodeURIComponent(AGENT) + '/?' + p.toString();
   }
-  function message(){
+  /* The message is about how this advisor works, not about insurance.
+     Anybody can send a prospect a product. Almost nobody can tell them their
+     file is checked by a manager before they ever see it, that every
+     recommendation carries a written reason, and that they can walk away with
+     part of it or none of it. That is the whole difference and it was not
+     being said - the old message asked them to watch a video and offered no
+     reason to.
+
+     "Written while we talk, not from memory after I leave" is the branch's own
+     line off the meet page, and it is the sentence a prospect recognises: it
+     describes what happened to them last time somebody sold them a policy.
+
+     And the ask is tiny on purpose. There is nothing to fill in - the page is
+     eight things to tap. Saying so is worth more than any number of questions,
+     because the fear is the form, not the time. */
+  function standardMessage(){
     var name = pf.value.trim() || 'there';
-    return 'Hi ' + name + ' — before we meet, this is how I work and what happens in the ' +
-           'appointment. About a minute. There is a spot at the bottom to tell me what you ' +
-           'want to talk about, so I come with the right numbers.\n\n' + link() +
-           '\n\n' + ADVISOR + ', Ricky Rampersad Branch';
+    return 'Hi ' + name + ' — before we meet, this is how I work.\n\n' +
+           'It is written while we talk, not from memory after I leave. Every ' +
+           'recommendation carries a reason in writing. And a manager checks it ' +
+           'before you ever see it.\n\n' +
+           'A minute to watch. Then nothing to fill in — just tap what is actually ' +
+           'on your mind, and I come with the right numbers.\n\n' +
+           'You take all of it, some of it, or none of it.\n\n' +
+           '— ' + ADVISOR + ', Ricky Rampersad Branch';
   }
+
+  /* What actually gets sent: whatever is in the box, with the link on the end.
+     The link is appended at send time rather than sitting in the box, so an
+     advisor rewriting the message cannot delete the thing being sent. */
+  function message(){
+    var typed = (waMsg && typeof waMsg.value === 'string')
+      ? waMsg.value.trim() : '';
+    return (typed || standardMessage()) + '\n\n' + link();
+  }
+  /* Retyping the prospect's name should update the greeting — but not wipe a
+     message the advisor has written themselves. */
+  var msgEdited = false;
   function refresh(){
     lnk.textContent = link();
-    waMsg.innerHTML = '<b>What they get:</b><br>' +
-      esc(message()).replace(/\n/g,'<br>');
+    if (!msgEdited) waMsg.value = standardMessage();
   }
   pf.addEventListener('input', refresh);
+  waMsg.addEventListener('input', function(){ msgEdited = true; });
+  document.getElementById('msgReset').addEventListener('click', function(){
+    msgEdited = false; refresh(); waMsg.focus();
+  });
   refresh();
 
   document.getElementById('sendWa').addEventListener('click', function(){

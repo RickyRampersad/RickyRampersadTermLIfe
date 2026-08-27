@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>RRB · The Wall</title>
+<style>
+  /* One wall for the office screen: seven slides, fourteen seconds each.
+     People first — the day's blocks, who is behind, the ideas raised — then
+     the task operation from Salesforce: who carries what, by type, how long
+     it has aged, who the branch is waiting on, and what actually got done.
+     Staff and agents both watch this, so every slide answers "what needs
+     doing" rather than decorating a number. The general-insurance book has
+     its own deep dive at /board. */
+  :root{
+    --navy:#0D1838; --navy2:#16264F; --line:#24355F;
+    --gold:#C7A34A; --gold-soft:#E7D9AE; --ink:#F2EFE6; --muted:#8FA0C5;
+    --green:#3FA46A; --amber:#D99A2B; --grey:#4A5A7E; --red:#C75450; --teal:#4FA3A5;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--navy);color:var(--ink);
+       font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       display:flex;flex-direction:column;overflow:hidden}
+
+  header{display:flex;align-items:baseline;justify-content:space-between;
+         padding:2vh 2.6vw 1.1vh;border-bottom:1px solid var(--line);position:relative}
+  .brand{font-size:1.7vh;font-weight:800;letter-spacing:.35em;color:var(--gold-soft);text-transform:uppercase}
+  .brand b{color:#fff}
+  .brand .sub{letter-spacing:.6em;color:var(--muted);margin-top:.5vh;font-size:1.5vh}
+  #clock{font-size:5vh;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  #date{font-size:1.8vh;color:var(--muted);text-align:right}
+  #bar{position:absolute;left:0;bottom:-1px;height:3px;width:0%;background:var(--gold)}
+  #bar.run{transition-property:width;transition-timing-function:linear}
+
+  main{flex:1;position:relative;min-height:0}
+  .slide{position:absolute;inset:0;padding:2.4vh 2.8vw;opacity:0;
+         transition:opacity .45s ease;pointer-events:none;display:flex;flex-direction:column}
+  .slide.on{opacity:1;pointer-events:auto}
+  .kick{font-size:1.5vh;font-weight:800;letter-spacing:.25em;text-transform:uppercase;color:var(--gold)}
+  .slide h2{font-size:4vh;font-weight:800;letter-spacing:-.02em;margin:.6vh 0 .4vh}
+  .lede{font-size:1.9vh;color:var(--muted);max-width:64em;line-height:1.45}
+  .body{flex:1;margin-top:1.6vh;min-height:0}
+
+  /* slide 1 — people */
+  #people{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+          gap:1.5vh;align-content:start}
+  .card{background:var(--navy2);border:1px solid var(--line);border-radius:12px;
+        padding:1.1vh 1vw;display:flex;flex-direction:column;gap:.7vh}
+  .name{font-size:2.2vh;font-weight:800;line-height:1.1}
+  .role{font-size:1.35vh;color:var(--muted);margin-top:.15vh}
+  .meter{display:flex;align-items:center;justify-content:space-between}
+  .dots-b{display:flex;gap:.6vw}
+  .dot{width:1.9vh;height:1.9vh;border-radius:50%;border:.3vh solid var(--grey)}
+  .dot.on{background:var(--gold);border-color:var(--gold)}
+  .dot.due{border-color:var(--red);background:rgba(199,84,80,.18)}
+  .count{font-size:2.7vh;font-weight:800;font-variant-numeric:tabular-nums}
+  .count small{font-size:.5em;color:var(--muted);font-weight:700}
+  .c-full .count{color:var(--green)} .c-full .dot.on{background:var(--green);border-color:var(--green)}
+  .c-some .count{color:var(--amber)} .c-none .count{color:var(--grey)}
+  .late{font-size:1.5vh;font-weight:800;color:var(--red)}
+  /* the day as a grid: four blocks across, everybody down */
+  .dayline{margin:.6vh 0 0}
+  .dbar{height:.8vh;background:rgba(36,53,95,.7);border-radius:99px;overflow:hidden}
+  .dbar i{display:block;height:100%;background:var(--gold);border-radius:99px}
+  .dtxt{font-size:1.6vh;color:var(--muted);margin-top:.5vh}
+  .dtxt b{font-weight:800} .dtxt b.ok{color:var(--green)}
+  .dtxt b.part{color:var(--amber)} .dtxt b.none{color:var(--red)}
+  .prow{display:grid;grid-template-columns:15vw 1fr 4vw;gap:1vw;align-items:center;
+        margin-bottom:.75vh}
+  .pname{font-size:1.95vh;font-weight:800;line-height:1.1;white-space:nowrap;
+         overflow:hidden;text-overflow:ellipsis}
+  .pname span{display:block;font-size:1.25vh;font-weight:600;color:var(--muted)}
+  .pcells{display:grid;grid-template-columns:repeat(4,1fr);gap:.6vw}
+  .cell{border-radius:8px;padding:.5vh .5vw;text-align:center;border:1px solid var(--line);
+        background:rgba(22,38,79,.55)}
+  .cell .ct{font-size:1.2vh;color:var(--muted);white-space:nowrap;
+            overflow:hidden;text-overflow:ellipsis}
+  .cell .cm{font-size:2vh;font-weight:800;line-height:1.1}
+  .c-in{background:rgba(63,164,106,.18);border-color:var(--green)}
+  .c-in .cm{color:var(--green)}
+  .c-late{background:rgba(199,84,80,.18);border-color:var(--red)}
+  .c-late .cm{color:var(--red)}
+  .c-wait .cm{color:var(--grey)}
+  .pcount{font-size:2.2vh;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+  .pcount small{font-size:.55em;color:var(--muted)}
+  .pcount.ok{color:var(--green)} .pcount.part{color:var(--amber)} .pcount.none{color:var(--grey)}
+  /* the branch has a shape; the wall shows it rather than listing nine names */
+  .tier{margin-bottom:1.1vh}
+  .tierhead{display:flex;justify-content:space-between;align-items:baseline;
+            font-size:1.35vh;font-weight:800;letter-spacing:.22em;text-transform:uppercase;
+            color:var(--gold);border-bottom:1px solid var(--line);
+            padding-bottom:.45vh;margin-bottom:.8vh}
+  .tierhead span{letter-spacing:.04em;text-transform:none;color:var(--muted);font-weight:700}
+  .tiergrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:1vh}
+  tr.grouprow td{font-size:1.4vh;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
+                 color:var(--gold);padding-top:1.6vh;border-bottom:1px solid var(--line)}
+
+  .cols{display:grid;grid-template-columns:1.4fr 1fr;gap:2vh;height:100%;min-height:0}
+  .panel{background:var(--navy2);border:1px solid var(--line);border-radius:14px;
+         padding:2vh 1.4vw;overflow:hidden}
+  .panel h3{font-size:1.5vh;font-weight:800;letter-spacing:.22em;text-transform:uppercase;
+            color:var(--gold);margin-bottom:1.3vh}
+  .owe{border-left:.35vw solid var(--red);padding:.3vh 0 .3vh .9vw;margin-bottom:1.5vh}
+  .owe .t{font-size:2.5vh;font-weight:800}
+  .owe .w{font-size:1.7vh;color:var(--muted);margin-top:.3vh;font-weight:700}
+  .allin{color:var(--green);font-size:2.4vh;font-weight:800}
+  #cpBig{font-size:9vh;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+  #cpNote{font-size:1.9vh;color:var(--muted);margin-top:1vh;line-height:1.5}
+
+  .idea{border-left:.35vw solid var(--gold);padding:.3vh 0 .3vh .9vw;margin-bottom:1.7vh}
+  .idea .t{font-size:2.5vh;line-height:1.4}
+  .idea .w{font-size:1.6vh;color:var(--muted);margin-top:.4vh;font-weight:700}
+  .none{color:var(--muted);font-size:2.2vh}
+  td.dim{color:var(--muted)}
+  .chip.bad{background:rgba(199,84,80,.2);color:#E79490}
+  .chip.warn{background:rgba(217,154,43,.18);color:#E7C27B}
+  .chip.good{background:rgba(63,164,106,.16);color:#7FCF9F}
+  .chip{font-size:1.5vh;font-weight:800;padding:.3vh .7vw;border-radius:99px;white-space:nowrap}
+  table{width:100%;border-collapse:collapse;font-size:1.95vh}
+  th{font-size:1.35vh;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:left;padding:.7vh .6vw;border-bottom:1px solid var(--line)}
+  td{padding:.9vh .6vw;border-bottom:1px solid rgba(36,53,95,.55)}
+
+  /* task slides */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1.8vh}
+  .kpi{background:var(--navy2);border:1px solid var(--line);border-radius:14px;padding:2vh 1.3vw}
+  .kpi .k{font-size:1.5vh;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+  .kpi .v{font-size:5.6vh;font-weight:800;letter-spacing:-.02em;margin:.7vh 0 .3vh}
+  .kpi .d{font-size:1.7vh;color:var(--muted)}
+  .kpi.gold .v{color:var(--gold)} .kpi.red .v{color:var(--red)} .kpi.green .v{color:var(--green)}
+  .kpi.teal .v{color:var(--teal)}
+  .kpi{position:relative;overflow:hidden}
+  .kpi::after{content:"";position:absolute;left:0;top:0;bottom:0;width:.35vw;background:var(--line)}
+  .kpi.gold::after{background:var(--gold)} .kpi.red::after{background:var(--red)}
+  .kpi.green::after{background:var(--green)} .kpi.teal::after{background:var(--teal)}
+  .when{display:grid;grid-template-columns:auto 1fr;gap:1vw 1.2vw;align-items:baseline}
+  .when .t{font-size:3.4vh;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .when .w{font-size:2.1vh;line-height:1.35}
+  .when .w b{color:#fff} .when .w span{color:var(--muted);display:block;font-size:1.7vh;margin-top:.3vh}
+  .rows .row{display:grid;grid-template-columns:1.15fr 2fr auto auto;gap:1vw;
+             align-items:center;margin-bottom:1.5vh;font-size:2vh}
+  .rows .nm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .track{height:1.6vh;background:rgba(36,53,95,.6);border-radius:99px;overflow:hidden;position:relative}
+  .track i{display:block;height:100%;border-radius:99px;position:absolute;left:0;top:0}
+  .track .gold{background:var(--gold)} .track .teal{background:var(--teal)}
+  .track .red{background:var(--red)} .track .green{background:var(--green)}
+  .rows .val{font-weight:800;font-variant-numeric:tabular-nums;text-align:right}
+  .rows .sub{color:var(--muted);font-size:1.6vh;text-align:right;min-width:8em}
+
+  footer{border-top:1px solid var(--line);padding:1.1vh 2.6vw;display:flex;
+         justify-content:space-between;align-items:center;font-size:1.6vh;color:var(--muted)}
+  .dots-nav{display:flex;gap:.7vw}
+  .dots-nav i{width:1.5vh;height:1.5vh;border-radius:50%;background:var(--grey);
+              opacity:.5;cursor:pointer}
+  .dots-nav i.on{background:var(--gold);opacity:1}
+  #stale{color:var(--amber);font-weight:700;display:none;margin-right:1vw}
+  .ctl{background:var(--navy2);border:1px solid var(--line);color:var(--ink);
+       border-radius:99px;width:4.2vh;height:4.2vh;font-size:1.9vh;cursor:pointer;
+       display:flex;align-items:center;justify-content:center;line-height:1;padding:0}
+  .ctl:hover{border-color:var(--gold)}
+  .ctl.on{border-color:var(--gold);color:var(--gold)}
+
+  #gate{position:fixed;inset:0;background:var(--navy);display:flex;z-index:10;
+        align-items:center;justify-content:center;flex-direction:column;gap:2vh}
+  #gate h1{font-size:3vh;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-soft)}
+  #gate p{color:var(--muted);font-size:1.9vh;max-width:36em;text-align:center;line-height:1.5}
+  #gate input{font-size:2.4vh;padding:1.2vh 1vw;border-radius:10px;border:1px solid var(--line);
+              background:var(--navy2);color:var(--ink);width:16em;text-align:center}
+  #gate button{font-size:2.2vh;font-weight:800;padding:1.3vh 3vw;border-radius:10px;border:0;
+               background:var(--gold);color:var(--navy);cursor:pointer}
+  #gErr{color:#E27D7D;font-size:1.8vh;min-height:2.2vh}
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+  <div id="gate">
+    <h1>The Wall</h1>
+    <p>Sign in once as the Branch Manager and leave the screen open.
+       Seven slides, fourteen seconds each — the day's blocks, who is behind,
+       the ideas raised, then the Salesforce task operation: who carries what,
+       how long it has aged, and what got done.</p>
+    <input id="gUser" placeholder="Agent number" autocomplete="username">
+    <input id="gPass" placeholder="Password" type="password" autocomplete="current-password">
+    <div id="gErr"></div>
+    <button id="gGo">Open the wall</button>
+  </div>
+
+  <header class="hidden" id="hdr">
+    <div>
+      <div class="brand"><b>Ricky Rampersad Branch</b></div>
+      <div class="brand sub">The Wall</div>
+    </div>
+    <div style="text-align:right">
+      <div id="clock">–:–</div>
+      <div id="date"></div>
+    </div>
+    <div id="bar"></div>
+  </header>
+
+  <main class="hidden" id="mn"><div id="slides"></div></main>
+
+  <footer class="hidden" id="ftr">
+    <div>Submit each block as it ends · <span style="opacity:.75">←&nbsp;→ slides · space pause · F full screen · 🔊 for the voice</span></div>
+    <div style="display:flex;align-items:center;gap:1.2vw">
+      <button id="btnPlay" class="ctl" title="Pause / play (space)">⏸</button>
+      <button id="btnSound" class="ctl" title="Sound on / off">🔇</button>
+      <div class="dots-nav" id="dotsNav"></div>
+    </div>
+    <div><span id="stale">Connection lost — showing the last good picture</span>
+         <span id="asof"></span></div>
+  </footer>
+
+<script>
+// Same backend as the tracker. The wall only ever reads.
+const EXEC="https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66QVurol0rSQvIBTRBQpFT3LwvClCAOm6jiTW5tflDdg/exec";
+const TZ="America/Port_of_Spain";
+const CHECKPOINT_HOUR=15;
+const BLOCKS=["KPI1","KPI2","PM1","PM2"];
+const REFRESH_MS=5*60*1000;
+const DWELL=14000;
+
+// ---- the task operation, read from the branch's Salesforce org ---------
+// A dated snapshot: this file sits in a public repository, so it carries
+// staff first names and counts, never a client. When the tracker's own
+// Salesforce connection is switched on, the same figures flow live into the
+// app; the wall's snapshot is refreshed by rebuilding this block.
+const TASKS={
+  asOf:"2026-08-26",
+  // Never a sum of days. Adding "days outstanding" across tasks produces a
+  // number with no meaning — twenty thousand days is not a fact about anything.
+  // Count, average age and the single oldest are the honest three.
+  today:{ closed:[{n:"Azariah",v:13},{n:"Sasha",v:11},{n:"Kamla",v:2},
+                  {n:"Elizabeth",v:0},{n:"Ricky",v:0}] },
+  week: { closed:[{n:"Azariah",v:93},{n:"Sasha",v:66},{n:"Elizabeth",v:28},
+                  {n:"Kamla",v:9},{n:"Ricky",v:0}] },
+  // The overdue book, by person and task type. Two people carry all of it.
+  overdue:[
+    {who:"Ricky", type:"", n:70, avg:31, oldest:87},
+    {who:"Ricky", type:"Servicing", n:3, avg:153, oldest:153},
+    {who:"Ricky", type:"Lic/Staffing/SA/HR", n:2, avg:121, oldest:148},
+    {who:"Ricky", type:"Renewa/PDl/Bill", n:1, avg:129, oldest:129},
+    {who:"Ricky", type:"Opportunity", n:1, avg:161, oldest:161},
+    {who:"Kamla", type:"Renewa/PDl/Bill", n:24, avg:77, oldest:246},
+    {who:"Kamla", type:"Claims/ Mat", n:12, avg:129, oldest:534},
+    {who:"Kamla", type:"Opportunity", n:8, avg:95, oldest:141},
+    {who:"Kamla", type:"Servicing", n:5, avg:94, oldest:157},
+    {who:"Kamla", type:"Pendings", n:2, avg:72, oldest:140},
+    {who:"Kamla", type:"Lic/Staffing/SA/HR", n:2, avg:79, oldest:120},
+    {who:"Kamla", type:"", n:1, avg:31, oldest:31},
+    {who:"Sasha", type:"Renewa/PDl/Bill", n:1, avg:10, oldest:10}],
+  // Open book per person: how many, not how many days.
+  byPerson:{
+    Kamla:{open:88,overdue:54,quietAvg:27,quietMax:216},
+    Ricky:{open:80,overdue:77,quietAvg:46,quietMax:363},
+    Sasha:{open:47,overdue:1, quietAvg:11,quietMax:366},
+    Azariah:{open:17,overdue:0,quietAvg:2, quietMax:14},
+    Elizabeth:{open:5,overdue:0,quietAvg:3, quietMax:7}},
+  // Who the branch is actually waiting on, named by account rather than by a
+  // status. Head office and one company account carry most of it.
+  waitingOn:[
+    {who:"D Rampersad & Company",       n:7, oldest:149, quiet:19},
+    {who:"Guardian Life (head office)", n:6, oldest:112, quiet:9},
+    {who:"Ahamad, Shiraze",             n:3, oldest:206, quiet:17},
+    {who:"Samuel, Naila",               n:3, oldest:6,   quiet:0},
+    {who:"Trinrico Steel & Wire",       n:2, oldest:142, quiet:13},
+    {who:"Persad, Dipchan",             n:2, oldest:534, quiet:26},
+    {who:"Ashford's Electrical",        n:2, oldest:128, quiet:34}],
+  // The Branch Manager's untyped pile, looked at rather than assumed.
+  inbound:{ total:70, waiting:67, notStarted:3, avgAge:31, oldest:87 },
+  // The birthday mailer: it closes its own work and should never be counted
+  // as anybody's throughput.
+  robot:{ closedAllTime:5718, closed30:448 }
+};
+
+// The ten Task_Type__c values, in the words the branch uses.
+const TYPE_LABEL={
+  "Pendings":"Pendings","Renewa/PDl/Bill":"Renewals / PD / Billing",
+  "Servicing":"Servicing","Claims/ Mat":"Claims / Maturities",
+  "Scripts/CB":"Scripts / Clawbacks","Opportunity":"Opportunity",
+  "Lic/Staffing/SA/HR":"Licensing / Staffing / HR","RR Operations":"RR Operations",
+  "Training":"Training","Innovation&Creativity":"Innovation","":"No type recorded"
+};
+
+const $=s=>document.querySelector(s);
+const store={get:()=>{try{return localStorage.getItem("kpiwall_token")||""}catch(e){return ""}},
+             set:t=>{try{localStorage.setItem("kpiwall_token",t)}catch(e){}}};
+async function call(body){
+  const r=await fetch(EXEC,{method:"POST",headers:{"Content-Type":"text/plain"},
+                            body:JSON.stringify(body)});
+  return r.json();
+}
+function trini(){
+  if(window.__now) return new Date(window.__now);   // test hook, unused in life
+  return new Date(new Date().toLocaleString("en-US",{timeZone:TZ}));
+}
+function todayISO(){ const d=trini();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+const txt=v=>String(v==null?"":v).trim();
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const dstr=iso=>new Date(iso+"T12:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+
+// A block counts when it was submitted, or carries real text; a prefilled
+// KPI name alone does not.
+function blockDone(row,c){
+  if(txt(row[c+"_At"])) return true;
+  return !!(txt(row[c+"_Actioned"])||txt(row[c+"_Resolved"])||txt(row[c+"_Open"]));
+}
+// '9 – 11am' / '3:30 – 5pm' → minutes from midnight when the block ends.
+function blockEndMin(sch,col){
+  const t=sch&&sch.blocks&&sch.blocks[col]&&sch.blocks[col].time;
+  if(!t) return null;
+  const m=String(t).split("–").pop().match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i);
+  if(!m) return null;
+  let h=+m[1]%12; if(/pm/i.test(m[3])) h+=12;
+  return h*60+(+(m[2]||0));
+}
+const GRACE_MIN=10;   // typing at two past the hour is not "missing"
+function blockState(row,sch,col,nowMin){
+  if(row&&blockDone(row,col)) return "on";
+  const end=blockEndMin(sch,col);
+  return (end!=null&&nowMin>end+GRACE_MIN)?"due":"off";
+}
+
+let roster=[], schedule={}, lastGood=null;
+const LBL={KPI1:"KPI 1",KPI2:"KPI 2",PM1:"Afternoon 1",PM2:"Afternoon 2"};
+const ROLE={bm:"Branch Manager",abm:"Assistant Branch Manager",um:"Unit Manager",
+            bma:"Branch Manager's Assistant",pa:"Personal Assistant",ssa:"Sales Support"};
+
+function judge(rows){
+  const day=todayISO(), today={};
+  (rows||[]).forEach(r=>{ if(txt(r.Date).slice(0,10)===day) today[r.StaffId]=r; });
+  const nw=trini(), nowMin=nw.getHours()*60+nw.getMinutes();
+  return roster.map(p=>{
+    const r=today[p.staffId], sch=schedule[p.staffId];
+    const states=BLOCKS.map(c=>blockState(r,sch,c,nowMin));
+    return {p,r,states,done:states.filter(x=>x==="on").length,
+            late:BLOCKS.filter((c,i)=>states[i]==="due")};
+  }).sort((a,b)=>b.late.length-a.late.length||a.done-b.done||a.p.name.localeCompare(b.p.name));
+}
+
+// ---- the slides ---------------------------------------------------------
+const TIER_ORDER=["management","bma","pa","support"];
+const TIER_LABEL={management:"Management",bma:"Branch Manager's Assistant",
+                  pa:"Personal Assistant",support:"Sales Support"};
+function byTier(cards){
+  const g={};
+  cards.forEach(c=>{ const t=c.p.tier||"support"; (g[t]=g[t]||[]).push(c); });
+  return TIER_ORDER.filter(t=>g[t]&&g[t].length).map(t=>({tier:t,label:TIER_LABEL[t],rows:g[t]}));
+}
+
+function sBlocks(cards){
+  const nw=trini(), nowMin=nw.getHours()*60+nw.getMinutes();
+  // How far through the working day we are, so the wall reads as a day
+  // filling in rather than a scoreboard that was always going to be red.
+  const DAY_START=8*60, DAY_END=17*60;
+  const through=Math.max(0,Math.min(1,(nowMin-DAY_START)/(DAY_END-DAY_START)));
+  const dueCells=cards.reduce((n,c)=>n+c.states.filter(x=>x!=="off").length,0);
+  const inCells =cards.reduce((n,c)=>n+c.states.filter(x=>x==="on").length,0);
+  const pct=dueCells?Math.round(inCells/dueCells*100):100;
+
+  const groups=byTier(cards).map(g=>{
+    const rows=g.rows.map(({p,states,done,late})=>{
+      const cells=BLOCKS.map((col,i)=>{
+        const sch=schedule[p.staffId], b=(sch&&sch.blocks&&sch.blocks[col])||{};
+        const st=states[i];
+        const cls=st==="on"?"c-in":st==="due"?"c-late":"c-wait";
+        const mark=st==="on"?"✓":st==="due"?"!":"·";
+        return '<div class="cell '+cls+'"><div class="ct">'+esc(b.time||LBL[col])+'</div>'+
+               '<div class="cm">'+mark+"</div></div>";
+      }).join("");
+      return '<div class="prow"><div class="pname">'+esc(p.name)+
+        '<span>'+(ROLE[p.role]||"")+"</span></div>"+
+        '<div class="pcells">'+cells+"</div>"+
+        '<div class="pcount '+(done>=4?"ok":done?"part":"none")+'">'+done+"<small>/4</small></div></div>";
+    }).join("");
+    const inG=g.rows.filter(c=>c.done>0).length;
+    return '<div class="tier"><div class="tierhead">'+esc(g.label)+
+      '<span>'+inG+" of "+g.rows.length+" logging</span></div>"+rows+"</div>";
+  }).join("");
+
+  return '<div class="kick">1 · Today, block by block</div>'+
+    "<h2>The day, as it lands</h2>"+
+    '<div class="dayline"><div class="dbar"><i style="width:'+(through*100)+'%"></i></div>'+
+      '<div class="dtxt">'+nw.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})+
+      " · "+inCells+" of "+dueCells+" blocks due are in"+
+      (dueCells?' <b class="'+(pct>=80?"ok":pct>=50?"part":"none")+'">'+pct+"%</b>":"")+"</div></div>"+
+    '<div class="body" style="margin-top:.8vh">'+groups+"</div>";
+}
+
+function sWaitingToday(cards){
+  const groups=byTier(cards).map(g=>{
+    const owing=g.rows.filter(c=>c.late.length);
+    const body=owing.length
+      ? owing.map(c=>'<div class="owe"><div class="t">'+esc(c.p.name)+
+          '</div><div class="w">'+c.late.map(b=>LBL[b]).join(" · ")+"</div></div>").join("")
+      : '<div class="allin">All in</div>';
+    return '<div class="tier"><div class="tierhead">'+esc(g.label)+
+      '<span>'+owing.length+" owing</span></div>"+body+"</div>";
+  }).join("");
+  const nw=trini(); const cp=new Date(nw); cp.setHours(CHECKPOINT_HOUR,0,0,0);
+  let big,note;
+  if(nw<cp){ const m=Math.round((cp-nw)/60000);
+    big=(Math.floor(m/60)?Math.floor(m/60)+"h ":"")+(m%60)+"m";
+    note="until the 3pm checkpoint. What is in by then is the day's story.";
+  } else { big="Sent"; note="the checkpoint has gone. Finish the day before you leave."; }
+  const inAll=cards.filter(c=>c.done>0).length;
+  return '<div class="kick">2 · Accountability today</div>'+
+    "<h2>Who owes a block</h2>"+
+    '<p class="lede">Blocks whose time has passed with nothing submitted, by where each person sits.</p>'+
+    '<div class="body"><div class="cols">'+
+    '<div class="panel" style="overflow:auto">'+groups+"</div>"+
+    '<div style="display:flex;flex-direction:column;gap:2vh;min-height:0">'+
+    '<div class="panel"><h3>3pm checkpoint</h3><div id="cpBig">'+big+'</div><div id="cpNote">'+note+"</div></div>"+
+    '<div class="panel"><h3>Logging today</h3><div style="font-size:5vh;font-weight:800;color:'+
+      (inAll?"var(--green)":"var(--red)")+'">'+inAll+" of "+cards.length+"</div></div>"+
+    '<div class="panel" style="flex:1;overflow:auto"><h3>Value added &amp; ideas</h3>'+ideasHtml(cards)+"</div>"+
+    "</div></div></div>";
+}
+
+// The task types a person actually worked today: the KPI on each block they
+// submitted. A prefilled KPI on an unsubmitted block does not count.
+function loggedTypes(row){
+  const out=[];
+  BLOCKS.forEach(c=>{
+    const k=txt(row&&row[c]);
+    if(k&&blockDone(row,c)&&out.indexOf(k)<0) out.push(k);
+  });
+  return out;
+}
+function ideasHtml(cards){
+  const ideas=[];
+  cards.forEach(({r})=>{ if(!r) return;
+    ["ValueAdded","Innovation"].forEach(k=>{
+      const v=txt(r[k]);
+      if(v&&!/^none( today)?\.?$/i.test(v))
+        ideas.push({who:r.Name,text:v.length>110?v.slice(0,107)+"…":v});
+    });
+  });
+  return ideas.length
+    ? ideas.slice(0,4).map(i=>'<div class="idea"><div class="t">'+esc(i.text)+
+        '</div><div class="w">'+esc(i.who)+"</div></div>").join("")
+    : '<div class="none">Nothing logged yet. Even "none today" is an entry.</div>';
+}
+
+function sReconcile(cards){
+  const rows=byTier(cards).map(g=>{
+    const inner=g.rows.map(({p,r,done})=>{
+      const T=TASKS.byPerson[p.name.split(" ")[0]];
+      const logged=r?loggedTypes(r):[];
+      if(!logged.length){
+        return '<tr><td><b>'+esc(p.name.split(" ")[0])+'</b></td>'+
+          '<td class="dim">nothing logged yet</td><td class="dim">—</td>'+
+          '<td>'+(T?T.open+" open":"—")+"</td></tr>";
+      }
+      return logged.map((k,ix)=>{
+        const od=TASKS.overdue.filter(o=>o.who===p.name.split(" ")[0]&&o.type===k)[0];
+        return '<tr><td>'+(ix?"":'<b>'+esc(p.name.split(" ")[0])+'</b>')+'</td>'+
+          '<td>'+esc(TYPE_LABEL[k]||k)+'</td>'+
+          '<td><span class="chip good">'+done+'/4 in</span></td>'+
+          '<td>'+(od?'<span class="chip warn">'+od.n+" overdue · avg "+od.avg+'d</span>'
+                    :'<span class="chip good">none overdue</span>')+"</td></tr>";
+      }).join("");
+    }).join("");
+    return '<tr class="grouprow"><td colspan="4">'+esc(g.label)+"</td></tr>"+inner;
+  }).join("");
+  return '<div class="kick">3 · Logged today vs still open</div>'+
+    "<h2>Does the day match the book?</h2>"+
+    '<p class="lede">The KPI on a block is a Salesforce task type — so each line reads what somebody worked on today beside what is overdue in exactly that type.</p>'+
+    '<div class="body"><div class="panel" style="height:100%;overflow:auto"><table><thead><tr>'+
+    "<th>Who</th><th>Logged against</th><th>Blocks</th><th>Overdue in that type</th>"+
+    "</tr></thead><tbody>"+rows+"</tbody></table></div></div>";
+}
+
+function sToday(){
+  const T=TASKS.today.closed, W=TASKS.week.closed;
+  const tot=T.reduce((s,x)=>s+x.v,0), wtot=W.reduce((s,x)=>s+x.v,0);
+  const max=Math.max(...W.map(x=>x.v),1);
+  const rows=W.map(x=>{
+    const t=(T.find(y=>y.n===x.n)||{v:0}).v;
+    return '<div class="row"><span class="nm">'+esc(x.n)+'</span>'+
+      '<span class="track"><i class="teal" style="width:'+(x.v/max*100)+'%"></i>'+
+      '<i class="green" style="width:'+(t/max*100)+'%"></i></span>'+
+      '<span class="val">'+t+'</span><span class="sub">today · '+x.v+" this week</span></div>";
+  }).join("");
+  return '<div class="kick">4 · Closed today</div>'+
+    "<h2>"+tot+" tasks closed today · "+wtot+" this week</h2>"+
+    '<p class="lede">Real work only. The birthday mailer closes its own tasks in the hundreds and is counted nowhere on this wall. Green is today, teal is the week behind it.</p>'+
+    '<div class="body"><div class="panel"><div class="rows">'+rows+"</div></div></div>";
+}
+
+function sOverdue(){
+  const O=TASKS.overdue, tot=O.reduce((s,x)=>s+x.n,0);
+  const max=Math.max(...O.map(x=>x.n),1);
+  const rows=O.slice().sort((a,b)=>b.n-a.n).map(x=>{
+    const tone=x.avg>120?"red":x.avg>60?"gold":"teal";
+    return '<div class="row"><span class="nm">'+esc(x.who)+" · "+
+      esc(TYPE_LABEL[x.type]||x.type||"No type")+'</span>'+
+      '<span class="track"><i class="'+tone+'" style="width:'+(x.n/max*100)+'%"></i></span>'+
+      '<span class="val">'+x.n+'</span><span class="sub">avg '+x.avg+"d · oldest "+x.oldest+"d</span></div>";
+  }).join("");
+  return '<div class="kick">5 · The overdue book</div>'+
+    "<h2>"+tot+" tasks past their date — and two people hold them</h2>"+
+    '<p class="lede">By owner and task type, with the average age and the single oldest. Days are never added together: a total of days is a number about nothing.</p>'+
+    '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div></div></div>";
+}
+
+function sTypes(cards){
+  const agg={};
+  TASKS.overdue.forEach(o=>{
+    const k=o.type||"";
+    if(!agg[k]) agg[k]={n:0,oldest:0,people:new Set(),logged:0};
+    agg[k].n+=o.n; agg[k].oldest=Math.max(agg[k].oldest,o.oldest); agg[k].people.add(o.who);
+  });
+  cards.forEach(({r})=>{ if(!r) return;
+    loggedTypes(r).forEach(k=>{ if(agg[k]) agg[k].logged++; });
+  });
+  const T=Object.entries(agg).map(([k,v])=>({k,...v})).sort((a,b)=>b.n-a.n);
+  const max=Math.max(...T.map(x=>x.n),1);
+  const rows=T.map(x=>
+    '<div class="row"><span class="nm">'+esc(TYPE_LABEL[x.k]||x.k||"No type recorded")+'</span>'+
+    '<span class="track"><i class="'+(x.logged?"green":"red")+'" style="width:'+(x.n/max*100)+'%"></i></span>'+
+    '<span class="val">'+x.n+'</span><span class="sub">oldest '+x.oldest+"d · "+
+    (x.logged?'<span style="color:var(--green)">worked today</span>'
+             :'<span style="color:var(--red)">nobody on it</span>')+"</span></div>").join("");
+  const idle=T.filter(x=>!x.logged).length;
+  return '<div class="kick">6 · Overdue by task type</div>'+
+    "<h2>"+(idle?idle+" types overdue with nobody on them today":"Every overdue type was worked today")+"</h2>"+
+    '<p class="lede">Green means somebody logged a block against that type today. Red means the pile sat.</p>'+
+    '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div></div></div>";
+}
+
+function sWaitingOn(){
+  const W=TASKS.waitingOn, max=Math.max(...W.map(x=>x.n),1);
+  const rows=W.map(x=>{
+    const tone=x.quiet>21?"red":x.quiet>7?"gold":"teal";
+    return '<div class="row"><span class="nm">'+esc(x.who)+'</span>'+
+      '<span class="track"><i class="'+tone+'" style="width:'+(x.n/max*100)+'%"></i></span>'+
+      '<span class="val">'+x.n+'</span><span class="sub">oldest '+x.oldest+"d · quiet "+x.quiet+"d</span></div>";
+  }).join("");
+  return '<div class="kick">7 · Who we are waiting on</div>'+
+    "<h2>The reply is with somebody else</h2>"+
+    '<p class="lede">Open tasks grouped by the account they sit against — head office, a company, a client. Quiet is days since anyone chased it.</p>'+
+    '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div></div></div>";
+}
+
+function sInbound(){
+  const I=TASKS.inbound, B=TASKS.byPerson;
+  const rows=Object.entries(B).map(([n,v])=>
+    '<div class="row"><span class="nm">'+esc(n)+'</span>'+
+    '<span class="track"><i class="'+(v.quietAvg>21?"red":v.quietAvg>7?"gold":"teal")+
+      '" style="width:'+Math.min(v.quietAvg/50*100,100)+'%"></i></span>'+
+    '<span class="val">'+v.quietAvg+'d</span><span class="sub">average · longest '+v.quietMax+"d</span></div>").join("");
+  return '<div class="kick">8 · Nobody has touched these</div>'+
+    "<h2>Quiet is not the same as aged</h2>"+
+    '<p class="lede">Days since the last activity on an open task. A three-week task chased yesterday is fine; one nobody has opened in a month is not.</p>'+
+    '<div class="body"><div class="cols">'+
+    '<div class="panel"><h3>Days quiet, by person</h3><div class="rows">'+rows+"</div></div>"+
+    '<div class="panel"><h3>The inbound pile</h3>'+
+    '<div style="font-size:5.2vh;font-weight:800;color:var(--gold)">'+I.total+"</div>"+
+    '<div style="font-size:1.9vh;color:var(--muted);line-height:1.5;margin-top:1vh">'+
+      "emails logged to the Branch Manager — <b style=\"color:#fff\">"+I.waiting+
+      "</b> waiting on a reply, average "+I.avgAge+" days, oldest "+I.oldest+
+      ". These are agents and clients, not birthday mail: that closes itself.</div>"+
+    "</div></div></div>";
+}
+
+// The tracker chases the day on its own. Staff should know exactly what
+// arrives and when, so nothing feels like being singled out.
+function sRhythm(){
+  const rows=[
+    ["8am","<b>Your blocks are waiting</b><span>You land on your own day — the KPI already set from the schedule</span>"],
+    ["12pm","<b>Midday nudge</b><span>Nothing logged yet? An email, only to you. Never to the branch</span>"],
+    ["3pm","<b>Finish the day</b><span>Blocks still open? A second reminder, while there is a working hour left</span>"],
+    ["3pm","<b>Branch checkpoint</b><span>Who is in, who is missing, what is blocked — to the Branch Manager</span>"],
+    ["each&nbsp;block","<b>Your receipt</b><span>Every submission emailed back to you. Keep them — they are your file</span>"],
+    ["Fri&nbsp;5pm","<b>The week</b><span>Where the week actually went, person by person</span>"]
+  ].map(r=>'<div class="t">'+r[0]+'</div><div class="w">'+r[1]+"</div>").join("");
+  return '<div class="kick">9 · How the day is chased</div>'+
+    "<h2>Nobody has to remember</h2>"+
+    '<p class="lede">Six things happen on their own. None of them is a manager walking over to your desk.</p>'+
+    '<div class="body"><div class="panel" style="height:100%"><div class="when">'+rows+"</div></div></div>";
+}
+
+// ---- deck --------------------------------------------------------------
+let cur=0, timer=null, paused=false;
+function render(rows){
+  const cards=judge(rows);
+  const slides=[sBlocks(cards),sWaitingToday(cards),sReconcile(cards),sToday(),
+                sOverdue(),sTypes(cards),sWaitingOn(),sInbound(),sRhythm()];
+  $("#slides").innerHTML=slides.map(h=>'<section class="slide">'+h+"</section>").join("");
+  const nav=$("#dotsNav"); nav.innerHTML="";
+  slides.forEach((_,i)=>{const d=document.createElement("i");
+    d.onclick=()=>go(i,true); nav.appendChild(d);});
+  const keep=spokenFor;
+  go(Math.min(cur,slides.length-1),false);
+  spokenFor=keep;
+  $("#asof").textContent="Updated "+trini().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+  $("#stale").style.display="none";
+}
+function go(i){
+  const slides=document.querySelectorAll(".slide"), dots=document.querySelectorAll("#dotsNav i");
+  if(!slides.length) return;
+  cur=(i+slides.length)%slides.length;
+  slides.forEach((s,j)=>s.classList.toggle("on",j===cur));
+  dots.forEach((d,j)=>d.classList.toggle("on",j===cur));
+  speak(cur);
+  arm();
+}
+function arm(){
+  clearTimeout(timer);
+  const bar=$("#bar");
+  bar.classList.remove("run"); bar.style.width="0%";
+  if(paused) return;
+  void bar.offsetWidth;
+  bar.classList.add("run");
+  bar.style.transitionDuration=DWELL+"ms"; bar.style.width="100%";
+  timer=setTimeout(()=>go(cur+1),DWELL);
+}
+document.addEventListener("keydown",e=>{
+  if(!$("#gate").classList.contains("hidden")) return;
+  if(e.key==="ArrowRight") go(cur+1);
+  else if(e.key==="ArrowLeft") go(cur-1);
+  else if(e.key===" "){e.preventDefault();paused=!paused;syncPlayBtn();applyPause();arm();}
+  else if(e.key==="f"||e.key==="F"){
+    if(document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen();
+  }
+});
+// a TV with only a mouse: click the right half to advance, left to go back
+$("#mn").addEventListener("click",e=>{
+  if(e.target.closest("a,button,input")) return;
+  go(cur+(e.clientX>innerWidth/2?1:-1));
+});
+
+// ---- voice and bed ------------------------------------------------------
+// Andrew narrates what each slide is for; the branch theme sits underneath.
+// Both are off until somebody asks, because a screen that starts talking on
+// its own in an open office is a screen people unplug. The sign-in click is
+// the browser gesture that lets audio play at all, so the toggle works from
+// the first press rather than failing silently.
+let sound=false, bed=null, voice=null, spokenFor=-1;
+function initAudio(){
+  if(bed) return;
+  bed=new Audio("/rr-branch-theme.mp3");
+  bed.loop=true; bed.volume=0.10;
+  voice=new Audio(); voice.volume=1.0;
+  // duck the bed while Andrew is speaking, lift it after
+  voice.addEventListener("play",()=>{ if(bed) bed.volume=0.045; });
+  ["ended","pause","error"].forEach(e=>voice.addEventListener(e,()=>{ if(bed) bed.volume=0.10; }));
+}
+function speak(i){
+  if(!sound||!voice) return;
+  if(spokenFor===i) return;          // do not repeat on a data refresh
+  spokenFor=i;
+  voice.src="/wall/audio/s"+(i+1)+".mp3";
+  voice.play().catch(()=>{});
+}
+function setSound(on){
+  sound=on; initAudio();
+  const b=$("#btnSound");
+  b.textContent=on?"🔊":"🔇"; b.classList.toggle("on",on);
+  if(on&&!paused){ bed.play().catch(()=>{}); spokenFor=-1; speak(cur); }
+  else { bed.pause(); voice.pause(); }
+}
+$("#btnSound").onclick=()=>setSound(!sound);
+$("#btnPlay").onclick=()=>{ paused=!paused; syncPlayBtn(); applyPause(); arm(); };
+
+// Pausing the deck pauses everything it is doing. A wall that freezes the
+// slides but keeps the music playing has not paused — it has half stopped,
+// which is worse than either.
+function applyPause(){
+  if(!sound||!bed) return;
+  if(paused){ bed.pause(); if(voice) voice.pause(); }
+  else { bed.play().catch(()=>{}); if(voice&&voice.currentTime>0&&!voice.ended) voice.play().catch(()=>{}); }
+}
+function syncPlayBtn(){
+  const b=$("#btnPlay");
+  b.textContent=paused?"▶":"⏸"; b.classList.toggle("on",paused);
+}
+
+function tick(){
+  const n=trini();
+  $("#clock").textContent=n.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+  $("#date").textContent=n.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
+}
+async function refresh(){
+  try{
+    const res=await call({action:"rows",token:store.get()});
+    if(res&&res.authRequired){ gate(true); return; }
+    if(!res||!res.ok) throw new Error(res&&res.error||"no response");
+    roster=res.roster||roster;
+    schedule=res.schedule||schedule;
+    lastGood=res.rows||[];
+    render(lastGood);
+  }catch(e){ if(lastGood) $("#stale").style.display="inline"; }
+}
+function gate(show){
+  $("#gate").classList.toggle("hidden",!show);
+  ["#hdr","#mn","#ftr"].forEach(s=>$(s).classList.toggle("hidden",show));
+}
+$("#gGo").onclick=async()=>{
+  $("#gErr").textContent="";
+  try{
+    const res=await call({action:"login",who:$("#gUser").value.trim(),password:$("#gPass").value});
+    if(!res.ok){ $("#gErr").textContent=res.error||"Could not sign in."; return; }
+    store.set(res.token);
+    if(!res.profile.manager)
+      $("#gErr").textContent="Signed in — note only the Branch Manager's sign-in shows the whole branch.";
+    gate(false); refresh();
+  }catch(e){ $("#gErr").textContent="Could not reach the sheet. Check the connection."; }
+};
+$("#gPass").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#gGo").click(); });
+
+tick(); setInterval(tick,1000);
+setInterval(refresh,REFRESH_MS);
+// lateness is re-judged on the minute, between refreshes
+setInterval(()=>{ if(lastGood) render(lastGood); },60*1000);
+if(store.get()){ gate(false); refresh(); } else gate(true);
+</script>
+</body>
+</html>

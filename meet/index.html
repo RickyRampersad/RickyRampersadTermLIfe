@@ -1,4 +1,32 @@
-<title>Meet Premchand Dookran</title>
+<title>If your income stopped tomorrow, how long would your family be alright?</title>
+
+<!-- The link preview, as it appears when an advisor pastes this into WhatsApp.
+     WhatsApp's crawler does not run JavaScript, so none of this can carry the
+     advisor's name however the link is built — ?n= reaches the page but never
+     reaches the preview. It said "Meet Premchand Dookran" for everyone, which
+     was both wrong for seven advisors and a poor reason to tap.
+
+     So it asks the one question a prospect cannot answer off the top of their
+     head, about themselves rather than about insurance. Nobody knows how long
+     their family would last, and not knowing is what gets the tap. It is true
+     whoever sends it, and someone who cannot answer it is exactly the person
+     worth sitting with.
+
+     "Five minutes" leads the description on purpose: the reason a link like
+     this goes unopened is not disagreement, it is not knowing what it costs
+     you to look. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Ricky Rampersad Branch · Guardian Life">
+<meta property="og:title" content="If your income stopped tomorrow, how long would your family be alright?">
+<meta property="og:description" content="A minute to watch. Then nothing to fill in — just tap what is actually on your mind. Nothing to buy and nothing to sign.">
+<meta property="og:image" content="https://rickyrampersadbranch.com/prospect-poster.jpg">
+<meta property="og:image:alt" content="Ricky Rampersad Branch, Guardian Life">
+<meta property="og:url" content="https://rickyrampersadbranch.com/meet/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="If your income stopped tomorrow, how long would your family be alright?">
+<meta name="twitter:description" content="A minute to watch. Then nothing to fill in — just tap what is actually on your mind. Nothing to buy and nothing to sign.">
+<meta name="twitter:image" content="https://rickyrampersadbranch.com/prospect-poster.jpg">
+<meta name="description" content="A minute to watch. Then nothing to fill in — just tap what is actually on your mind. Nothing to buy and nothing to sign.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600;6..72,700&family=Inter:wght@400;500;600;700;800&display=swap">
@@ -934,12 +962,42 @@
   var q = new URLSearchParams(location.search);
   function val(k, d){ var v = q.get(k); return (v === null || v === '') ? d : v; }
 
-  var AGENT   = val('a',  'A10024');
-  var ADVISOR = val('n',  'Premchand Dookran');
+  var AGENT   = val('a',  '');
+  var ADVISOR = val('n',  'your advisor');
   var TOKEN   = val('t',  '');
-  var CLIENT  = val('c',  'Devon');
+  var CLIENT  = val('c',  '');
   var CRED    = val('cr', 'Financial Advisor · Ricky Rampersad Branch');
   var LINE    = val('q',  '');
+
+  /* How this person got here.
+  
+     Three ways in, and the branch has to treat them differently:
+  
+       sent       an advisor sent this link to this person. There is a token,
+                  and the name typed into the booking is the name the advisor
+                  addressed it to.
+       forwarded  same token, different person. The client passed it on. Whoever
+                  fills it in is not the advisor's prospect - they are the
+                  branch's, and somebody has to be assigned to them.
+       direct     no token at all: a scanned code, or a link shared without one.
+                  Nobody was targeted.
+  
+     Worked out here rather than on the server because this page is the only
+     place that knows both halves - the name the link was addressed to and the
+     name the person actually typed. It is sent with the booking so the branch
+     can see, without guessing, which arrivals are unclaimed.
+  
+     A first name is a weak comparator on its own, which is why it only ever
+     downgrades to "forwarded" - never upgrades anything to "sent". */
+  var ADDRESSED_TO = CLIENT;
+
+  function arrivalKind(typedName){
+    if (!TOKEN) return 'direct';
+    var a = String(ADDRESSED_TO || '').trim().toLowerCase();
+    var b = String(typedName || '').trim().toLowerCase().split(/\s+/)[0] || '';
+    if (!a || !b) return 'sent';
+    return a === b ? 'sent' : 'forwarded';
+  }
 
   // The advisor's own record. No defaults on purpose: a number nobody typed is
   // a number nobody can stand behind, and this page carries a real person's
@@ -956,7 +1014,9 @@
   function esc(s){ return String(s).replace(/[&<>"]/g, function(c){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 
-  document.title = 'Meet ' + ADVISOR;
+  /* The tab, once a real browser has the page. The link preview keeps the
+     question — a crawler never gets this far. */
+  if (ADVISOR && ADVISOR !== 'your advisor') document.title = 'Meet ' + ADVISOR;
   txt('hAva', INITIALS);
   txt('hName', ADVISOR);
   htm('hCred', CRED.split('|').map(esc).join('<br>'));
@@ -989,7 +1049,8 @@
     if (sent[ev] && !extra) return;      // each milestone once
     sent[ev] = true;
     try {
-      var u = ENDPOINT + '?action=track&e=' + encodeURIComponent(ev) +
+      var u = ENDPOINT + '?action=track&arrival=' + (TOKEN ? 'sent' : 'direct')
+              + '&e=' + encodeURIComponent(ev) +
               '&a=' + encodeURIComponent(AGENT) +
               '&t=' + encodeURIComponent(TOKEN) +
               '&n=' + encodeURIComponent(ADVISOR);
@@ -1220,7 +1281,7 @@
       wants:chosen().join(' | '),
       need: NEED ? money(NEED) : '',
       note:document.getElementById('note').value.trim(),
-      source:'prospect_page', at:new Date().toISOString()
+      source:'prospect_page', arrival:arrivalKind(nm), addressedTo:ADDRESSED_TO, at:new Date().toISOString()
     });
 
     // no-cors means we never see the reply, so the page confirms optimistically.
@@ -1277,7 +1338,7 @@
       var body = new URLSearchParams({
         action:'feedback', agent:AGENT, advisor:ADVISOR, token:TOKEN,
         score:score, text:text, wants:chosen().join(' | '),
-        source:'prospect_page', at:new Date().toISOString()
+        source:'prospect_page', arrival:arrivalKind(nm), addressedTo:ADDRESSED_TO, at:new Date().toISOString()
       });
       fetch(ENDPOINT, { method:'POST', mode:'no-cors', body:body, keepalive:true })
         .catch(function(){});

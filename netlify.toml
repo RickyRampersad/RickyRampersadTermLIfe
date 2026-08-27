@@ -33,6 +33,25 @@
   to = "/renewal/"
   status = 302
 
+# KPI tracker short links — what staff are told in the training film:
+# /kpi is the tracker, /training this film, /manual the written guide,
+# /wall the live office screen. The rotating Salesforce board that used to
+# live at /wall/ is now /board/ — see WALL-SETUP.md.
+[[redirects]]
+  from = "/training"
+  to = "/kpi/training/"
+  status = 302
+
+[[redirects]]
+  from = "/manual"
+  to = "/kpi/manual/"
+  status = 302
+
+[[redirects]]
+  from = "/wall"
+  to = "/kpi/wall/"
+  status = 302
+
 # Claims short links: /claim, and /claim/motor → the motor claim pre-selected.
 [[redirects]]
   from = "/claim"
@@ -63,3 +82,15 @@
     Referrer-Policy = "no-referrer"
     Cache-Control = "no-store"
     Permissions-Policy = "geolocation=(), microphone=(), payment=()"
+
+# The KPI tracker holds staff performance records and keeps a session token in
+# the browser. Same treatment as the renewal and claims portals: never framed,
+# never cached on a shared branch machine, and no referrer leaking the page on
+# the way out.
+[[headers]]
+  for = "/kpi/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    Cache-Control = "no-store"
