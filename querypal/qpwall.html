@@ -284,6 +284,13 @@
        grow, or the last rows of a card are simply cut off the bottom */
     .card,.grow,.hero,.cols,.journey,.rows{min-height:0; flex:none; overflow:visible}
     .card{height:auto}
+    /* anything that sizes itself by flex collapses to nothing once flex is
+       off — every chart needs a real height of its own on a phone */
+    .chart{height:13em; flex:none}
+    #i_bars{min-height:9em}
+    .journey{min-height:11em}
+    .kpi .ring{width:3.6em; height:3.6em}
+    .agebar{flex:none}
     /* a phone has no room beside the header — the invitation becomes a bar
        across the bottom, where a thumb already is */
     #sndInvite{top:auto !important; right:0 !important; left:0 !important; bottom:0 !important;
@@ -2745,8 +2752,17 @@ function stopSpeech(){
   }
 }
 const SENT_GAP = 0.34;             // the breath between sentences
+/* iOS suspends the context when the tab loses focus, and a suspended context
+   plays nothing while looking perfectly healthy — resume before every play
+   and on every tap. */
+function wakeAudio(){
+  if (audioCtx && audioCtx.state === 'suspended') { try { audioCtx.resume(); } catch (e) {} }
+}
+document.addEventListener('touchend', wakeAudio, { passive: true });
+document.addEventListener('click', wakeAudio);
 function speakSeq(ids){
   if (!musicOn || !audioCtx || paused) return 0;
+  wakeAudio();
   const bufs = ids.map(x => wvoBuf[x]).filter(Boolean);
   if (!bufs.length) return 0;
   stopSpeech();
@@ -2896,6 +2912,14 @@ function soundToggle(){
   musicOn = true;
   $('snd').classList.add('on');
   $('sndIco').textContent = '♫'; $('sndTxt').textContent = 'Sound off';
+  // the iPhone ring switch mutes Web Audio outright, and nothing on screen
+  // would ever say so — one notice, once per device
+  try {
+    if (/iPhone|iPad/.test(navigator.userAgent) && !localStorage.getItem('qpwallring')) {
+      localStorage.setItem('qpwallring', '1');
+      title('If you hear nothing: flip the ring switch on the side of your iPhone off silent, and turn the volume up.');
+    }
+  } catch (e) {}
   try { localStorage.setItem('qpwallsnd', '1'); } catch (e) {}
   padChord(); musicTimer = setInterval(padChord, CHORD_MS);
   ensureBufs(['welcome']).then(() => {
