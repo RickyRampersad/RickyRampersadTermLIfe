@@ -1219,6 +1219,8 @@ function onOpen() {
   try { if (typeof propertyMenu_ === 'function') propertyMenu_(SpreadsheetApp.getUi()).addToUi(); } catch (err) { Logger.log(err); }
   // Salesforce menu appears when SalesforceSync.gs is installed
   try { if (typeof salesforceMenu_ === 'function') salesforceMenu_(SpreadsheetApp.getUi()).addToUi(); } catch (err) { Logger.log(err); }
+  // Production menu appears when Production.gs is installed
+  try { if (typeof productionMenu_ === 'function') productionMenu_(SpreadsheetApp.getUi()).addToUi(); } catch (err) { Logger.log(err); }
 }
 
 function toggleTestMode() {

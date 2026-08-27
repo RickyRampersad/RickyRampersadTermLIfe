@@ -96,6 +96,22 @@ label{display:block;font-size:12px;color:var(--muted);font-weight:600;margin:9px
 .grid2col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:900px){.grid2col{grid-template-columns:1fr}}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--gold);color:#3a2c05;font-weight:700;padding:10px 20px;border-radius:99px;font-size:13px;z-index:80;display:none}
+/* production — head office's own look */
+.pbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.pwrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+.ptable{width:100%;border-collapse:collapse;font:13px 'DM Sans';min-width:720px;background:#fff;color:#1a2433}
+.ptable th,.ptable td{border:1px solid #c9d4c4;padding:5px 9px;white-space:nowrap}
+.ptable thead tr.ptitle th{background:#4a7c2f;color:#fff;font:800 12.5px 'Montserrat';letter-spacing:.14em;text-align:center;padding:6px}
+.ptable thead tr:last-child th{background:#dfe9d8;color:#1f3d14;font:700 11.5px 'DM Sans';text-align:right}
+.ptable thead tr:last-child th.pname{text-align:left}
+.ptable td.pname{text-align:left}
+.ptable td.pnum{text-align:right;font-variant-numeric:tabular-nums}
+.ptable tr.lvl-branch td{background:#eef3ea;font-weight:800}
+.ptable tr.lvl-unit td{background:#f6f9f4;font-weight:700}
+.ptable tr.lvl-agent td{background:#fff}
+.ptable td.pnum.hot{background:#ffe9a8;font-weight:700}
+.ptable tr.lvl-branch td.pnum.hot,.ptable tr.lvl-unit td.pnum.hot{background:#f8c9c2}
+.ptable tfoot tr.ptotal td{background:#cfe3c4;font-weight:800;border-top:2px solid #4a7c2f}
 /* reports */
 .rept{font:800 11px 'Montserrat';color:var(--teal);text-transform:uppercase;letter-spacing:.08em;margin:18px 0 8px}
 .chart{display:flex;align-items:flex-end;gap:8px;padding:6px 2px 0;min-height:150px}
@@ -174,6 +190,7 @@ let D = null, ME = localStorage.getItem('gg_staff_email')||'', PIN = localStorag
 let AUDIT = { on:false, by:'', type:'', q:'' };
 let PIPE = { month:'', cov:'', who:'' };
 let REP = { on:false };
+let PROD = { on:false, data:null, loading:false, err:'' };
 const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const monthOf=s=>{const m=String(s||'').match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/);return m?m[1]:'';};
 
@@ -280,6 +297,7 @@ function renderApp(){
       <button class="abtn ${FILTER==='action'?'primary':''}" data-f="action">Needs action</button>
       <button class="abtn ${FILTER==='all'?'primary':''}" data-f="all">All</button>
       <button class="abtn ${REP.on?'primary':''}" id="repBtn">📊 Reports</button>
+      ${/admin|manager/i.test(D.me.role||'')?`<button class="abtn ${PROD.on?'primary':''}" id="prodBtn">📈 Production</button>`:''}
       <button class="abtn ${AUDIT.on?'primary':''}" id="audBtn">🔍 Audit</button>
       <button class="abtn gold" id="addBtn">＋ Add renewal</button>
     </div>
@@ -289,6 +307,7 @@ function renderApp(){
       <select id="fWho" style="width:auto"><option value="">👤 Everyone</option><option value="unassigned" ${PIPE.who==='unassigned'?'selected':''}>— Unassigned —</option>${D.staff.map(s=>`<option value="${esc(s.email)}" ${s.email===PIPE.who?'selected':''}>${esc(s.name)}</option>`).join('')}</select>
       ${(PIPE.month||PIPE.cov||PIPE.who)?`<button class="abtn sm" id="fClear">✕ Clear filters</button>`:''}
     </div>
+    ${PROD.on?productionView():''}
     ${REP.on?reportView():''}
     ${AUDIT.on?auditView():''}
 
@@ -351,6 +370,9 @@ function renderApp(){
   $('#kTasks').onclick=()=>{ Q=ME.split('@')[0]; renderApp(); };
   $('#audBtn').onclick=()=>{ AUDIT.on=!AUDIT.on; renderApp(); };
   $('#repBtn').onclick=()=>{ REP.on=!REP.on; renderApp(); };
+  const pb=$('#prodBtn');
+  if(pb) pb.onclick=()=>{ PROD.on=!PROD.on; renderApp(); if(PROD.on&&!PROD.data&&!PROD.loading) loadProduction(); };
+  const pd=$('#prodDl'); if(pd) pd.onclick=downloadProduction;
   if(REP.on){
     document.querySelectorAll('.chart .col').forEach(c=>c.onclick=()=>{ PIPE.month=c.dataset.m; REP.on=false; renderApp(); });
     document.querySelectorAll('[data-who]').forEach(tr=>tr.onclick=()=>{ PIPE.who=tr.dataset.who; REP.on=false; renderApp(); });
@@ -371,6 +393,70 @@ function renderApp(){
     const ab=$('#audBy'); if(ab) ab.onchange=e=>{ AUDIT.by=e.target.value; renderApp(); };
     const at=$('#audType'); if(at) at.onchange=e=>{ AUDIT.type=e.target.value; renderApp(); };
   }
+}
+
+/* ---------- production: head office format, management only ---------- */
+function prodMoney(v){ return v?Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):''; }
+function prodMoney0(v){ return v?'$'+Number(v).toLocaleString('en-US',{maximumFractionDigits:0}):''; }
+function prodCount(v){ return v?String(v):''; }
+function productionView(){
+  if(PROD.err) return `<div class="card"><h2>📈 Production</h2><div style="padding:16px"><div class="err" style="display:block">${esc(PROD.err)}</div></div></div>`;
+  if(!PROD.data) return `<div class="card"><h2>📈 Production</h2><div style="padding:18px" class="mini">Loading the submitted figures…</div></div>`;
+  const d=PROD.data, m=d.marks||{};
+  const cell=(v,f,fmt)=>{
+    const hot = v && m[f] && v>=m[f];
+    return `<td class="pnum${hot?' hot':''}">${fmt(v)}</td>`;
+  };
+  const row=r=>{
+    const cls = r.level==='branch'?'lvl-branch':(r.level==='unit'?'lvl-unit':'lvl-agent');
+    const label = r.level==='agent'&&r.code ? `${esc(r.code)} - ${esc(r.name)}` : esc(r.name||r.code);
+    return `<tr class="${cls}"><td class="pname" style="padding-left:${12+r.depth*20}px">${label}</td>
+      ${cell(r.appsW,'appsW',prodCount)}${cell(r.apiW,'apiW',prodMoney)}
+      ${cell(r.appsM,'appsM',prodCount)}${cell(r.apiM,'apiM',prodMoney)}
+      ${cell(r.appsY,'appsY',prodCount)}${cell(r.apiY,'apiY',prodMoney)}</tr>`;
+  };
+  const t=d.total;
+  return `<div class="card"><h2>📈 Production — SUBMITTED</h2>
+    <div style="padding:12px 16px 16px">
+      <div class="pbar">
+        <div class="mini">As at <b style="color:var(--text)">${esc(d.asOf)}</b> · viewed by ${esc(d.by)} (${esc(d.role)})
+          · <span style="color:var(--gold)">confidential — branch management only</span></div>
+        <button class="abtn gold sm" id="prodDl">⬇ Download</button>
+      </div>
+      <div class="pwrap"><table class="ptable">
+        <thead>
+          <tr class="ptitle"><th colspan="7">SUBMITTED</th></tr>
+          <tr><th class="pname">Hierachy</th><th>Apps -W</th><th>API - W</th><th>Apps -M</th><th>Api -M</th><th>Apps -Y</th><th>API</th></tr>
+        </thead>
+        <tbody>${d.rows.map(row).join('')}</tbody>
+        <tfoot><tr class="ptotal"><td class="pname">Total</td>
+          <td class="pnum">${prodCount(t.appsW)}</td><td class="pnum">${prodMoney(t.apiW)}</td>
+          <td class="pnum">${prodCount(t.appsM)}</td><td class="pnum">${prodMoney(t.apiM)}</td>
+          <td class="pnum">${prodCount(t.appsY)}</td><td class="pnum">${prodMoney(t.apiY)}</td></tr></tfoot>
+      </table></div>
+      <div class="mini" style="margin-top:10px">Every view and download is recorded on the Activity tab under your name.</div>
+    </div></div>`;
+}
+function loadProduction(){
+  PROD.loading=true; PROD.err='';
+  google.script.run
+    .withSuccessHandler(d=>{ PROD.data=d; PROD.loading=false; renderApp(); })
+    .withFailureHandler(e=>{ PROD.err=(e&&e.message)?e.message:String(e); PROD.loading=false; renderApp(); })
+    .productionData(BOOT.key, ME, PIN);
+}
+function downloadProduction(){
+  toast('Preparing the download…');
+  google.script.run
+    .withSuccessHandler(r=>{
+      const blob=new Blob([r.csv],{type:'text/csv;charset=utf-8;'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob); a.download=r.filename;
+      document.body.appendChild(a); a.click();
+      setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},1500);
+      toast('Downloaded — logged under your name');
+    })
+    .withFailureHandler(e=>toast('⚠ '+((e&&e.message)?e.message:e)))
+    .productionCsv(BOOT.key, ME, PIN);
 }
 
 /* ---------- reports: the book, the team, the money, the follow-ups ---------- */
