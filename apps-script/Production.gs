@@ -166,35 +166,126 @@ function productionData(key, me, pin) {
 }
 
 /**
- * The download, in head office's exact column order. Returned as CSV text —
- * the dashboard turns it into a file. Restricted like the view, and logged.
+ * The download, in head office's exact format — not a CSV of it.
+ *
+ * The report is recognised by how it looks: the green SUBMITTED banner, the
+ * branch and unit lines shaded above their agents, the standout figures in
+ * gold and the green Total across the foot. A comma-separated file throws all
+ * of that away and arrives as raw text, which is why this builds a real
+ * workbook instead.
+ *
+ * SpreadsheetML keeps it to one string with no library to ship — Excel, Google
+ * Sheets and Numbers all open it. Restricted exactly like the view, and logged.
  */
-function productionCsv(key, me, pin) {
+function productionWorkbook(key, me, pin) {
   var staff = requireProduction_(key, me, pin);
   var d = productionData(key, me, pin);
-  var lines = [];
-  lines.push('SUBMITTED,,,,,,');
-  lines.push('Hierachy,Apps -W,API - W,Apps -M,Api -M,Apps -Y,API');
-  function q(s) {
-    s = String(s === null || s === undefined ? '' : s);
-    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+
+  function xe(v) {
+    return String(v === null || v === undefined ? '' : v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
-  function money(v) { return v ? Number(v).toFixed(2) : ''; }
-  function count(v) { return v ? String(v) : ''; }
+  function cS(v, st) { return '<Cell ss:StyleID="' + st + '"><Data ss:Type="String">' + xe(v) + '</Data></Cell>'; }
+  function cN(v, st) {
+    return (v === '' || v === null || v === undefined || v === 0)
+      ? '<Cell ss:StyleID="' + st + '"/>'
+      : '<Cell ss:StyleID="' + st + '"><Data ss:Type="Number">' + v + '</Data></Cell>';
+  }
+  var rows = [];
+
+  // The banner, merged the full width of the report.
+  rows.push('<Row ss:Height="22"><Cell ss:StyleID="ban" ss:MergeAcross="6">' +
+            '<Data ss:Type="String">SUBMITTED</Data></Cell></Row>');
+  rows.push('<Row ss:Height="18">' +
+    cS('Hierachy', 'hd') + cS('Apps -W', 'hdc') + cS('API - W', 'hdc') +
+    cS('Apps -M', 'hdc') + cS('Api -M', 'hdc') + cS('Apps -Y', 'hdc') + cS('API', 'hdc') +
+    '</Row>');
+
+  var m = d.marks || {};
   d.rows.forEach(function (r) {
-    var indent = new Array(r.depth + 1).join('    ');
-    var label = r.level === 'agent' && r.code ? r.code + ' - ' + r.name : r.name || r.code;
-    lines.push([q(indent + label), count(r.appsW), money(r.apiW), count(r.appsM),
-                money(r.apiM), count(r.appsY), money(r.apiY)].join(','));
+    // Branch, unit and agent each carry their own shading, so the hierarchy
+    // reads down the page without anyone needing the indent explained.
+    var band = r.level === 'branch' ? 'b' : r.level === 'unit' ? 'u' : 'a';
+    var label = (r.level === 'agent' && r.code) ? r.code + ' - ' + r.name : (r.name || r.code);
+    var indent = new Array((r.depth || 0) + 1).join('    ');
+    // A standout figure is gold, the same rule the on-screen report uses.
+    function st(field, base) {
+      return (r.level === 'agent' && m[field] && r[field] >= m[field]) ? base + 'g' : base;
+    }
+    rows.push('<Row>' +
+      cS(indent + label, band + 'n') +
+      cN(r.appsW, st('appsW', band + 'c')) + cN(r.apiW, st('apiW', band + 'm')) +
+      cN(r.appsM, st('appsM', band + 'c')) + cN(r.apiM, st('apiM', band + 'm')) +
+      cN(r.appsY, st('appsY', band + 'c')) + cN(r.apiY, st('apiY', band + 'm')) +
+      '</Row>');
   });
+
   var t = d.total;
-  lines.push(['Total', count(t.appsW), money(t.apiW), count(t.appsM),
-              money(t.apiM), count(t.appsY), money(t.apiY)].join(','));
-  lines.push('');
-  lines.push(q('Downloaded ' + d.asOf + ' by ' + staff.name + ' (' + staff.email + ') — CONFIDENTIAL, branch management only'));
-  logActivity_('', 'PRODUCTION', 'production-downloaded', staff.email, d.rows.length + ' lines exported');
-  return { ok: true, csv: lines.join('\n'),
-           filename: 'Production-SUBMITTED-' + d.asOf.replace(/[^\w]/g, '-') + '.csv' };
+  rows.push('<Row ss:Height="19">' +
+    cS('Total', 'tn') + cN(t.appsW, 'tc') + cN(t.apiW, 'tm') +
+    cN(t.appsM, 'tc') + cN(t.apiM, 'tm') +
+    cN(t.appsY, 'tc') + cN(t.apiY, 'tm') + '</Row>');
+
+  rows.push('<Row/>');
+  rows.push('<Row><Cell ss:StyleID="foot" ss:MergeAcross="6"><Data ss:Type="String">' +
+    xe('Downloaded ' + d.asOf + ' by ' + staff.name + ' (' + staff.email +
+       ') — CONFIDENTIAL, branch management only') + '</Data></Cell></Row>');
+
+  var B = '<Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#BFBFBF"/>' +
+          '<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#BFBFBF"/>' +
+          '<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#BFBFBF"/>' +
+          '<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#BFBFBF"/></Borders>';
+  var MONEY = '<NumberFormat ss:Format="#,##0.00"/>';
+  function sty(id, extra) { return '<Style ss:ID="' + id + '">' + B + extra + '</Style>'; }
+  function fill(c) { return '<Interior ss:Color="' + c + '" ss:Pattern="Solid"/>'; }
+  var RIGHT = '<Alignment ss:Horizontal="Right"/>', CENTRE = '<Alignment ss:Horizontal="Center"/>';
+
+  var styles =
+    // banner and column heads
+    '<Style ss:ID="ban"><Font ss:Bold="1" ss:Size="13" ss:Color="#FFFFFF"/>' + fill('#375623') + CENTRE + '</Style>' +
+    sty('hd', '<Font ss:Bold="1"/>' + fill('#C6E0B4')) +
+    sty('hdc', '<Font ss:Bold="1"/>' + fill('#C6E0B4') + CENTRE) +
+    // branch lines
+    sty('bn', '<Font ss:Bold="1"/>' + fill('#F8CBAD')) +
+    sty('bc', '<Font ss:Bold="1"/>' + fill('#F8CBAD') + RIGHT) +
+    sty('bm', '<Font ss:Bold="1"/>' + fill('#F8CBAD') + RIGHT + MONEY) +
+    sty('bcg', '<Font ss:Bold="1"/>' + fill('#FFD966') + RIGHT) +
+    sty('bmg', '<Font ss:Bold="1"/>' + fill('#FFD966') + RIGHT + MONEY) +
+    // unit lines
+    sty('un', '<Font ss:Bold="1"/>' + fill('#FCE4D6')) +
+    sty('uc', '<Font ss:Bold="1"/>' + fill('#FCE4D6') + RIGHT) +
+    sty('um', '<Font ss:Bold="1"/>' + fill('#FCE4D6') + RIGHT + MONEY) +
+    sty('ucg', '<Font ss:Bold="1"/>' + fill('#FFD966') + RIGHT) +
+    sty('umg', '<Font ss:Bold="1"/>' + fill('#FFD966') + RIGHT + MONEY) +
+    // agent lines
+    sty('an', '') + sty('ac', RIGHT) + sty('am', RIGHT + MONEY) +
+    sty('acg', fill('#FFD966') + RIGHT) + sty('amg', fill('#FFD966') + RIGHT + MONEY) +
+    // total
+    sty('tn', '<Font ss:Bold="1" ss:Color="#FFFFFF"/>' + fill('#375623')) +
+    sty('tc', '<Font ss:Bold="1" ss:Color="#FFFFFF"/>' + fill('#375623') + RIGHT) +
+    sty('tm', '<Font ss:Bold="1" ss:Color="#FFFFFF"/>' + fill('#375623') + RIGHT + MONEY) +
+    '<Style ss:ID="foot"><Font ss:Italic="1" ss:Size="9" ss:Color="#808080"/></Style>';
+
+  var xml = '<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>' +
+    '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" ' +
+    'xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" ' +
+    'xmlns:x="urn:schemas-microsoft-com:office:excel">' +
+    '<Styles>' + styles + '</Styles>' +
+    '<Worksheet ss:Name="Submitted">' +
+    // Freeze under the headers so the hierarchy stays readable when scrolled.
+    '<Table ss:DefaultRowHeight="15">' +
+    '<Column ss:Width="215"/><Column ss:Width="58"/><Column ss:Width="82"/>' +
+    '<Column ss:Width="58"/><Column ss:Width="88"/><Column ss:Width="58"/><Column ss:Width="92"/>' +
+    rows.join('') + '</Table>' +
+    '<WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">' +
+    '<FreezePanes/><FrozenNoSplit/><SplitHorizontal>2</SplitHorizontal>' +
+    '<TopRowBottomPane>2</TopRowBottomPane><ActivePane>2</ActivePane></WorksheetOptions>' +
+    '</Worksheet></Workbook>';
+
+  logActivity_('', 'PRODUCTION', 'production-downloaded', staff.email,
+               d.rows.length + ' lines exported as Excel');
+  return { ok: true, xml: xml,
+           filename: 'Production-SUBMITTED-' + d.asOf.replace(/[^\w]/g, '-') + '.xls' };
 }
 
 function productionMenu_(ui) {

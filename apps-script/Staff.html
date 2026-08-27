@@ -448,7 +448,10 @@ function downloadProduction(){
   toast('Preparing the download…');
   google.script.run
     .withSuccessHandler(r=>{
-      const blob=new Blob([r.csv],{type:'text/csv;charset=utf-8;'});
+      /* A real workbook, not a CSV of one: the report is recognised by the
+         green banner, the shaded unit lines and the gold standouts, so it has
+         to arrive looking like the report it is. */
+      const blob=new Blob([r.xml],{type:'application/vnd.ms-excel'});
       const a=document.createElement('a');
       a.href=URL.createObjectURL(blob); a.download=r.filename;
       document.body.appendChild(a); a.click();
@@ -456,7 +459,7 @@ function downloadProduction(){
       toast('Downloaded — logged under your name');
     })
     .withFailureHandler(e=>toast('⚠ '+((e&&e.message)?e.message:e)))
-    .productionCsv(BOOT.key, ME, PIN);
+    .productionWorkbook(BOOT.key, ME, PIN);
 }
 
 /* ---------- reports: the book, the team, the money, the follow-ups ---------- */
