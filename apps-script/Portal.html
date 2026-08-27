@@ -74,6 +74,24 @@ details summary{cursor:pointer;font-weight:700;color:var(--teal);font-size:13.5p
 .stars button{font-size:30px;background:none;border:none;cursor:pointer;color:#3a5570;line-height:1}
 .stars button.on{color:var(--gold)}
 .note{font-size:12px;color:var(--muted)}
+.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+@media(max-width:520px){.vgrid{grid-template-columns:1fr}}
+.vnow,.vguide{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+.vguide{border-color:var(--teal)}
+.vnow .k,.vguide .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.vnow .v{font:800 19px 'Montserrat';margin-top:3px}
+.vguide .v{font:800 19px 'Montserrat';color:var(--teal);margin-top:3px}
+.vguide .why{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.5}
+.warnpill{display:inline-block;margin-top:6px;font:700 10.5px 'Montserrat';background:rgba(239,194,75,.16);
+  color:var(--gold);border-radius:5px;padding:3px 8px}
+.vtrend{display:flex;align-items:flex-end;gap:8px;height:74px;margin:12px 0 2px}
+.vtrend .vb{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
+.vtrend .vbar{width:100%;max-width:44px;background:linear-gradient(180deg,var(--teal),var(--teal2));border-radius:4px 4px 2px 2px}
+.vtrend .vy{font-size:10px;color:var(--muted)}
+.vfeed{font-size:12.5px;line-height:1.55;margin-top:7px;padding:0}
+.vfeed.ok{color:var(--good);background:rgba(53,208,127,.10);border-radius:9px;padding:9px 12px}
+.vfeed.bad{color:var(--bad);background:rgba(255,122,122,.10);border-radius:9px;padding:9px 12px}
+.vfeed b{color:inherit}
 /* progress tracker */
 .tstep{display:grid;grid-template-columns:34px 1fr;gap:12px;padding-bottom:16px;position:relative}
 .tstep::before{content:"";position:absolute;left:16px;top:34px;bottom:0;width:2px;background:var(--line)}
@@ -198,15 +216,8 @@ function render(){
       </div>
 
       ${comp?`
-      <div class="step">Step 2 · Keep your value current</div>
-      <div class="edu"><b>💡 Vehicles depreciate.</b> Your vehicle is insured for ${p.sumInsured?money(p.sumInsured):'its declared value'}. Updating it to today's realistic market value keeps your premium fair — you shouldn't pay to insure value that no longer exists.</div>
-      ${p.valueHistory && p.valueHistory.length?`<details><summary>📉 Your adjusted-value history (${p.valueHistory.length})</summary>
-        <table class="vhist"><tr><th>Date requested</th><th>Requested value</th></tr>
-        ${p.valueHistory.map(v=>`<tr><td>${esc(v.when)}</td><td>${esc(v.value)}</td></tr>`).join('')}</table>
-        <div class="note">Requested adjustments apply from your renewal once confirmed by Guardian.</div></details>`:''}
-      <label>Updated vehicle market value (TT$) — optional</label>
-      <input type="text" id="val${i}" inputmode="numeric" placeholder="e.g. 180000">
-      <div class="note" style="margin-top:4px">We'll prepare your Guardian General value-confirmation letter automatically — it comes back to you pre-filled for one signature.</div>
+      <div class="step">Step 2 · Your vehicle's value this year</div>
+      ${valueBlock(p,i)}
 
       <div class="edu" style="margin-top:14px"><b>⚠️ Important change: Waiver of Excess.</b><br>
       Guardian General no longer includes the waiver of excess free after three claim-free years — it's now an optional benefit you purchase. With it, <b>you pay no excess when you claim</b>; without it, the excess in your schedule comes out of your pocket on every claim.</div>
@@ -279,6 +290,7 @@ function render(){
     wrap.querySelectorAll('.opt').forEach(o=>o.classList.toggle('sel', o.querySelector('input').checked));
   }));
   document.querySelectorAll('[data-submit]').forEach(b=>b.onclick=()=>submit(Number(b.dataset.submit), b));
+  DATA.policies.forEach((p,i)=>{ if(p.comp) wireValue(i); });
 }
 
 /* Progress tracker: appears once the client has instructed, and follows the
@@ -301,6 +313,70 @@ function motorTracker(p){
       return `<div class="tstep ${cls}"><div class="tdot">${i<at?'✓':i+1}</div>
         <div><h4>${s[0]}</h4><p>${s[1]}</p></div></div>`;
     }).join('')}</div>`;
+}
+
+/* ---------- comprehensive: the value conversation ---------- */
+const num = v => { const n=Number(String(v).replace(/[^0-9.]/g,'')); return isFinite(n)?n:0; };
+const m0 = v => 'TT$'+Number(v).toLocaleString('en-US',{maximumFractionDigits:0});
+function valueBlock(p,i){
+  const g = p.guide;
+  const cur = Number(p.sumInsured)||0;
+  const hist = p.valueHistory||[];
+  const bars = hist.length>1 ? (()=>{
+    const vals = hist.map(h=>num(h.value)).filter(Boolean);
+    const max = Math.max(...vals,1);
+    return `<div class="vtrend">${hist.map(h=>{
+      const v=num(h.value);
+      return `<div class="vb"><div class="vbar" style="height:${Math.max(6,Math.round(v/max*54))}px"></div>
+        <div class="vy">${esc(String(h.when).replace(/^\\d+\\s/,''))}</div></div>`;}).join('')}</div>
+      <div class="note">Your insured value across ${hist.length} renewals.</div>`;
+  })() : '';
+  return `
+  <div class="edu"><b>💡 Your car is worth less this year than last.</b>
+    That is normal — and it matters, because you should not pay premium on value that has gone,
+    and you cannot claim more than the car is worth. So the figure below should follow the market down.</div>
+  ${bars}
+  <div class="vgrid">
+    <div class="vnow"><div class="k">Insured with us now</div><div class="v">${cur?m0(cur):'—'}</div>
+      ${g&&g.stale?`<div class="warnpill">Unchanged for ${g.years||'2+'} years</div>`:''}</div>
+    ${g?`<div class="vguide"><div class="k">A reasonable range for this year</div>
+      <div class="v">${m0(g.low)} – ${m0(g.high)}</div>
+      <div class="why">Based on ${esc(g.basis)}. It is a starting point, not a valuation — the figure you
+        enter is yours.</div></div>`:''}
+  </div>
+  <label>Your vehicle's market value today (TT$)</label>
+  <input type="text" id="val${i}" inputmode="numeric" placeholder="${g?String(g.high):'e.g. 180000'}"
+         data-cur="${cur}" data-low="${g?g.low:0}" data-high="${g?g.high:0}">
+  <div class="vfeed" id="vfeed${i}"></div>
+  <div class="note" style="margin-top:6px">Leave it blank to keep ${cur?m0(cur):'the current value'}.
+    We prepare your Guardian General value-confirmation letter automatically — it comes back pre-filled
+    for one signature.</div>
+`;}
+function wireValue(i){
+  const el=document.getElementById('val'+i); if(!el) return;
+  const fb=document.getElementById('vfeed'+i);
+  const cur=Number(el.dataset.cur)||0, lo=Number(el.dataset.low)||0, hi=Number(el.dataset.high)||0;
+  const upd=()=>{
+    const v=num(el.value);
+    if(!v){ fb.className='vfeed'; fb.innerHTML=''; return; }
+    if(lo&&v<lo*0.8){
+      fb.className='vfeed bad';
+      fb.innerHTML=`<b>That looks low.</b> If the car is worth more than ${m0(v)} and it is written off,
+        this is all you can be paid — and a partial claim is cut in the same proportion.`;
+    } else if(hi&&v>cur*1.05){
+      fb.className='vfeed bad';
+      fb.innerHTML=`<b>That is above what you carry now.</b> You cannot be paid more than the car is worth,
+        so a higher figure usually buys premium, not protection. Tell us in the notes if the car was
+        upgraded or the market moved.`;
+    } else {
+      fb.className='vfeed ok';
+      const save=cur&&v<cur?` About ${m0(cur-v)} of value comes off — your premium should follow.`:'';
+      fb.innerHTML=`<b>Noted.</b>${save} Guardian confirms the final figure and premium with you.`;
+    }
+  };
+  el.addEventListener('input',upd);
+  el.addEventListener('focus',()=>{el.value=el.value?String(num(el.value)||''):'';});
+  el.addEventListener('blur',()=>{const n=num(el.value); el.value=n?n.toLocaleString('en-US'):''; upd();});
 }
 
 function commsCard(){

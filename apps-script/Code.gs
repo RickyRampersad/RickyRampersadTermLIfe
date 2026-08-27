@@ -475,6 +475,16 @@ function vehiclesForClient_(clientName, token, email) {
   return out;
 }
 
+/** Insured-value history for the client's comprehensive vehicle, newest last. */
+function vehicleValueHistory_(r) {
+  try {
+    var vs = vehiclesForClient_(r.client, r.token, r.email).filter(function (v) { return v.comp; });
+    for (var i = 0; i < vs.length; i++)
+      if (vs[i].valueHistory && vs[i].valueHistory.length > 1) return vs[i].valueHistory;
+    return (vs[0] && vs[0].valueHistory) || [];
+  } catch (e) { return []; }
+}
+
 function logActivity_(token, client, type, by, details) {
   activitySheet_().appendRow([new Date(), token, client, (testMode_() ? 'TEST:' : '') + type,
     by || 'system', String(details || '').slice(0, 900)]);
@@ -593,6 +603,9 @@ function clientPage_(p) {
         policy: r.policy, mobile: r.mobile, email: r.email,
         renewalStatus: r.renewalStatus,
         valueHistory: comp ? valueHistory_(token, r.policy) : [],
+        guide: comp && typeof motorValueGuide_ === 'function'
+          ? motorValueGuide_(vehicleValueHistory_(r), r.sumInsured || latestCompValue_(r.client, r.token, r.email))
+          : null,
       };
     }),
     history: token ? historyForToken_(token) : [],
@@ -1194,6 +1207,9 @@ function dailyAutomation() {
 
   // property follow-ups ride the same daily trigger when Property.gs is installed
   try { if (typeof dailyPropertyFollowUps === 'function') dailyPropertyFollowUps(); } catch (err) { Logger.log(err); }
+  // premium chasing — spaced reminders on anything renewed but unpaid
+  try { if (typeof dailyPaymentFollowUps === 'function') dailyPaymentFollowUps(); } catch (err) { Logger.log(err); }
+  try { if (typeof dailyPropertyPaymentFollowUps === 'function') dailyPropertyPaymentFollowUps(); } catch (err) { Logger.log(err); }
 }
 
 /* ============================ menu & setup ============================ */
@@ -1213,6 +1229,7 @@ function onOpen() {
     .addItem('Preview a client portal (row 2)', 'showMyLink')
     .addSeparator()
     .addItem('🔗 Link Risk Details to portal tokens', 'linkRiskDetails')
+    .addItem('💵 Preview premium chasing', 'previewPaymentFollowUps')
     .addItem('⬇ Import prepared data (from Drive sheet)', 'importPreparedData')
     .addToUi();
   // property menu comes along automatically when Property.gs is installed
