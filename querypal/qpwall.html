@@ -389,7 +389,7 @@
         <div class="spark" id="h_spark" title="requests logged per week, last 12 weeks"></div>
         <div class="s" style="font-size:.72em;color:var(--ink-3);margin-top:.4em">logged per week · last 12 weeks</div></div>
       <div class="stats" style="grid-template-columns:1fr 1fr">
-        <div class="stat"><div class="k">Logged all-time</div><div class="val num" id="v_total">—</div></div>
+        <div class="stat"><div class="k" id="v_total_k">Logged</div><div class="val num" id="v_total">—</div></div>
         <div class="stat g"><div class="k">Client rating</div><div class="val num goldc" id="v_csat">—</div><div class="s" id="v_rated"></div></div>
         <div class="stat"><div class="k">Resolved on time</div><div class="val num" id="v_ontime">—</div></div>
         <div class="stat v"><div class="k">Avg days to close</div><div class="val num" id="v_avg">—</div></div>
@@ -544,6 +544,13 @@ const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
 const pc = v => (v===null||v===undefined) ? '—' : v+'%';
 const tone = v => (v===null||v===undefined) ? 'na' : (v>=85?'ok':(v>=60?'mid':'low'));
 
+/* The wall shows the last 30 days by default — the branch as it is now, not
+   its whole history. ?days=0 on the URL brings back all-time; any other
+   number sets its own window. */
+const DAYS = (() => {
+  const d = new URLSearchParams(location.search).get('days');
+  return d === null ? 30 : Math.max(0, parseInt(d) || 0);
+})();
 let cred = null, lastGood = 0, cur = 0, data = null, paused = false;
 
 /* ---------- clock + staleness ---------- */
@@ -630,7 +637,7 @@ function feedNotice(msg){
 }
 function poll(){
   if (!cred) return;
-  fetch(WEBHOOK + '?action=wall&days=0&token=' + encodeURIComponent(cred.token||'')
+  fetch(WEBHOOK + '?action=wall&days=' + DAYS + '&token=' + encodeURIComponent(cred.token||'')
         + '&code=' + encodeURIComponent(cred.code))
     .then(r=>r.text()).then(txt=>{
       let d = null;
@@ -764,6 +771,7 @@ function render(){
   $('h_open_s').textContent = (t.overdue ? (t.overdue + ' past deadline — chased automatically') : 'all inside their promised turnaround');
   $('h_open').className = 'n num' + (t.overdue ? ' warnc' : '');
   $('v_total').textContent = t.total ?? '—';
+  $('v_total_k').textContent = DAYS ? 'Logged · last ' + DAYS + ' days' : 'Logged all-time';
   $('v_csat').textContent = t.csat != null ? '★'+t.csat : '—';
   $('v_rated').textContent = t.rated ? (t.rated + ' clients rated us') : 'awaiting first ratings';
   $('v_ontime').textContent = pc(t.onTime);
