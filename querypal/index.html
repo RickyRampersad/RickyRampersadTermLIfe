@@ -1387,7 +1387,10 @@ body.wsopen #raiBtn{display:none!important;}  /* replaced by the FAB inside work
     <div class="panel">
       <div class="route">
         <div class="rt-ico">📨</div>
-        <div class="rt-txt"><b id="rtType">—</b><br>Goes to <b id="rtDept">—</b> &middot; Usually resolved in <b id="rtTat">—</b><br><span class="duechip" id="rtDue"></span></div>
+        <div class="rt-txt"><b id="rtType">—</b><br>Goes to <b id="rtDept">—</b>
+          <a href="#" id="rtChange" onclick="deptChange(event)" style="font-size:.85em;margin-left:.4em;color:#0b7fd4;text-decoration:none;font-weight:700">change</a>
+          &middot; Usually resolved in <b id="rtTat">—</b><br><span class="duechip" id="rtDue"></span>
+          <div id="rtOverride" style="display:none;margin-top:.5em"></div></div>
       </div>
 
       <div id="prepBox"></div>
@@ -2624,8 +2627,32 @@ function smartSearch(v){
   }).join('')+`</div></div>`;
 }
 
+/* An agent who knows the request belongs elsewhere can redirect it — but only
+   to a department on the branch's own list. The server checks the same list,
+   so this can never aim branded mail at an arbitrary address. */
+function deptChange(ev){
+  ev.preventDefault();
+  const host=document.getElementById('rtOverride');
+  if(host.style.display!=='none'){host.style.display='none';host.innerHTML='';return;}
+  const opts=Object.keys(DEPT).sort((a,b)=>DEPT[a]<DEPT[b]?-1:1)
+    .map(e=>'<option value="'+e+'"'+(e===state.q.email?' selected':'')+'>'+esc(DEPT[e])+'</option>').join('');
+  host.innerHTML='<select id="rtSel" style="font:inherit;font-size:.9em;padding:.45em .6em;border-radius:.5em;'
+    +'border:1.5px solid #cfe0ef;max-width:100%" onchange="deptApply(this.value)">'+opts+'</select>'
+    +'<div style="font-size:.75em;color:#8fa6ba;margin-top:.3em">Only use this when you are sure — the turnaround shown stays the original type\'s.</div>';
+  host.style.display='block';
+}
+function deptApply(email){
+  state.deptOverride = (email===state.q.email)?'':email;
+  document.getElementById('rtDept').textContent=deptName(email);
+  const a=document.getElementById('rtChange');
+  a.textContent=state.deptOverride?'changed ✓':'change';
+  a.style.color=state.deptOverride?'#15803d':'#0b7fd4';
+}
 function pickQ(idx){
   state.q=DATA[idx];
+  state.deptOverride='';
+  const _rc=document.getElementById('rtChange'); if(_rc){_rc.textContent='change';_rc.style.color='#0b7fd4';}
+  const _ro=document.getElementById('rtOverride'); if(_ro){_ro.style.display='none';_ro.innerHTML='';}
   document.getElementById('rtType').textContent=state.q.title;
   document.getElementById('rtDept').textContent=deptName(state.q.email);
   document.getElementById('rtTat').textContent=tatLabel(state.q.tat);
@@ -2834,7 +2861,8 @@ function submitQuery(){
     client,name:client,email,phone:document.getElementById('f_phone').value.trim(),
     policy,agent,agentEmail:state.agentEmail,
     category:state.q.group,queryType:state.q.type,
-    department:deptName(state.q.email),departmentEmail:state.q.email,
+    department:deptName(state.deptOverride||state.q.email),departmentEmail:state.deptOverride||state.q.email,
+    deptOverride:state.deptOverride||'',
     turnaround:tatLabel(state.q.tat),priority:document.getElementById('f_pri').value,
     subject:emailSubject,descFirst10:sanShort(subject,24),description:fullDesc,cc:cc.join(','),
     agentCode:((state.who==='Agent'||state.who==='Staff')&&agentAuth)?agentAuth.code:'',
@@ -3635,10 +3663,14 @@ function renderGenAttach(q){
   const box=document.getElementById('genAttach');
   if(!box)return;
   formState.gen=[];
-  if(FORM_QUERIES[q.type]){box.innerHTML='';return;}
+  /* Form-based requests (beneficiary, RCC…) used to hide this box entirely,
+     leaving only the photo-ID slots — so a supporting DOCUMENT could not be
+     attached at all on exactly those requests. The form keeps its own ID/card
+     slots; this box now rides along for anything extra. */
+  const isForm=!!FORM_QUERIES[q.type];
   box.innerHTML=`
     <div class="field">
-      <label>Attach files <span class="hintinline">(optional — receipt, letter, completed form or document)</span></label>
+      <label>${isForm?'Attach any other documents':'Attach files'} <span class="hintinline">(optional — receipt, letter, completed form or document)</span></label>
       <div class="drop" onclick="document.getElementById('gen_file').click()">
         <div class="di">📎</div><div class="dt">Tap to attach photos or documents</div>
         <div class="ds">PDF, Word, Excel, CSV, text or photos — up to ${ATT_MAX_FILES} files. They travel with your request straight to the department. Photos are auto-compressed.</div>
@@ -3738,6 +3770,21 @@ function genAttachResult(){
   att.attachId=files[0].data; att.attachIdName=files[0].name; att.attachIdMime=files[0].mime;
   return {ok:true,attach:att};
 }
+/* Fold the general attachments into a form's own payload. The backend uses
+   files[] INSTEAD of the single attachId slot when both are present, so the
+   form's ID or card image must travel inside files[] too or it would be
+   silently dropped. */
+function mergeGen(att){
+  const g=formState.gen||[];
+  if(!g.length)return att;
+  const nm=cleanPart(document.getElementById('f_client').value.trim()).replace(/\s+/g,'_')||'client';
+  const files=[];
+  if(att.attachId)files.push({name:att.attachIdName||'ID.jpg',mime:att.attachIdMime||'image/jpeg',data:att.attachId});
+  g.forEach((f,i)=>files.push({name:attSafeName(f.name,nm,i),mime:f.mime,data:f.data.split(',')[1]}));
+  att.files=files;
+  att.formExtra=(att.formExtra?att.formExtra+' | ':'')+g.length+' extra document'+(g.length>1?'s':'')+': '+g.map(f=>f.name).join(', ');
+  return att;
+}
 function ffValidateAndBuild(q){
   const cfg=FORM_QUERIES[q.type];
   if(!cfg)return genAttachResult();
@@ -3747,7 +3794,7 @@ function ffValidateAndBuild(q){
     if(cfg.needsSig && !formState.sigs.owner){toast('Policy owner signature is required');return {ok:false};}
     if(cfg.needsID && !formState.id){toast('Please upload a valid photo ID');return {ok:false};}
     const pdf=ffBeneficiaryPDF();
-    return {ok:true,attach:{
+    return {ok:true,attach:mergeGen({
       attachPdf:pdf.split(',')[1],
       attachPdfName:'Change_of_Beneficiary_'+document.getElementById('f_policy').value.trim()+'.pdf',
       attachId:formState.id?formState.id.split(',')[1]:'',
@@ -3755,19 +3802,19 @@ function ffValidateAndBuild(q){
       attachIdName:'ID_'+(document.getElementById('f_client').value.trim().replace(/\s+/g,'_'))+'.'+mimeExt(dataUriMime(formState.id)),
       noSalesforceAttach:true,
       formExtra:'Life Assured: '+(document.getElementById('ff_life')||{}).value+' | Beneficiaries: '+ffGetBens().map(b=>b.name+(b.rel?' ('+b.rel+')':'')).join('; ')
-    }};
+    })};
   }
   if(cfg.kind==='rcc'){
     const cn=(document.getElementById('ff_cardname')||{}).value.trim();
     if(!cn){toast('Enter the name on the card');return {ok:false};}
     if(cfg.needsCard && !formState.card){toast('Please upload a photo of the card');return {ok:false};}
-    return {ok:true,attach:{
+    return {ok:true,attach:mergeGen({
       attachId:formState.card?formState.card.split(',')[1]:'',
       attachIdMime:formState.card?dataUriMime(formState.card):'',
       attachIdName:'RCC_Card_'+cn.replace(/\s+/g,'_')+'.'+mimeExt(dataUriMime(formState.card)),
       noSalesforceAttach:true,
       formExtra:'Recurring Credit Card setup/update · Name on card: '+cn
-    }};
+    })};
   }
   return genAttachResult();
 }

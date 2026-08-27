@@ -128,6 +128,23 @@ function qpApplyRoute_(d) {
   d.department      = route.dept;
   d.turnaround      = route.tat;
   d.category        = route.group;
+
+  /* An agent can redirect to a DIFFERENT department — but only one on the
+     branch's own list. Anything else is ignored, so the override can never
+     aim branded mail at an outside address. The redirect is written into
+     the request so the receiving department and the trail both see it. */
+  var ov = String(d.deptOverride || '').trim();
+  if (ov && ov.toLowerCase() !== route.email.toLowerCase()) {
+    var known = null;
+    for (var k in QP_DEPT_NAMES) { if (k.toLowerCase() === ov.toLowerCase()) { known = k; break; } }
+    if (known) {
+      d.departmentEmail = known;
+      d.department      = QP_DEPT_NAMES[known];
+      d.description     = String(d.description || '')
+        + '\n\n[Redirected by the agent: this request type normally goes to '
+        + route.dept + ', sent instead to ' + QP_DEPT_NAMES[known] + '.]';
+    }
+  }
   return true;
 }
 
