@@ -83,14 +83,32 @@ require that click before a page may make sound — it cannot start itself):
 **Pause** freezes the rotation (so a slide can be talked over in a huddle);
 space does the same, ←/→ still step.
 
-### The weekly report
+### The Friday 3pm weekly
 
-`wbSendProductionReport()` in `WallBoard.gs` emails the wall's numbers —
-production incl. increases, plus the held-back picture by advisor — to
-`MANAGER_EMAIL` (Script Properties, comma-separate several; falls back to
-the script owner). Send it every Monday: **Triggers → Add Trigger →
-`wbSendProductionReport` → time-driven → week timer → Monday 8–9am.**
-Or run it by hand from the editor whenever it's needed.
+`wbSendWeeklyNow()` in `WallBoard.gs` emails the branch weekly with a real
+**spreadsheet attached** — five sheets: Production (periods and the year by
+month), Advisors, Held back, Settlement, Week by week. It is built inside
+Apps Script, so the send never depends on anyone opening a browser.
+
+**Why a clock tick and not a weekly trigger.** Apps Script's weekly time
+trigger fires somewhere inside the hour you pick — "3pm" means any time
+between 15:00 and 16:00. This has to land at 3pm sharp, so `wbWeeklyTick()`
+runs every five minutes and sends the moment Friday passes 15:00. A stamp in
+Script Properties means it can only go once a week however often the tick
+runs, so a retry or a duplicate trigger can never double-send to the whole
+company.
+
+To set it up:
+
+1. **Project Settings → Time zone → `(GMT-04:00) Atlantic Time`.** Every time
+   in the tick is read in that zone; get it wrong and the send moves an hour.
+2. **Script Properties** — `WEEKLY_TO` = the company distribution list,
+   comma-separated. Falls back to `MANAGER_EMAIL`, then to the script owner.
+3. **Triggers → Add Trigger → `wbWeeklyTick` → time-driven → minutes timer →
+   every 5 minutes.**
+
+Send it by hand any time with `wbSendWeeklyNow()` from the editor. To test
+without mailing the company, set `WEEKLY_TO` to your own address first.
 
 Advisor names are branch staff and belong on a production wall. Client
 fields are never queried for this board, so no client data can reach it.

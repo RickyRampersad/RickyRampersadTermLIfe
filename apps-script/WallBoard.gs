@@ -358,47 +358,157 @@ function wbHeldBack_() {
   };
 }
 
-/* ======================= weekly production report =======================
-   Emails a plain summary of the wall's numbers — production incl increases,
-   plus held-back API — to MANAGER_EMAIL (Script Properties; comma-separate
-   several addresses; falls back to the script owner). To send it every
-   Monday morning: Triggers → Add Trigger → wbSendProductionReport →
-   time-driven → week timer → Monday 8–9am. Or run it by hand any time. */
-function wbSendProductionReport() {
-  var p = wbProduction_();
-  var to = wbProps_().getProperty('MANAGER_EMAIL') || Session.getEffectiveUser().getEmail();
-  function tt(n) { return 'TT$' + Math.round(n).toLocaleString('en-US'); }
-  function line(label, o) {
-    var all = (o.api || 0) + (o.inc || 0), cnt = (o.n || 0) + (o.incN || 0);
-    return label + ': ' + tt(all) + ' across ' + cnt + ' pickups (' +
-      tt(o.api || 0) + ' new + ' + tt(o.inc || 0) + ' increases)';
+/* ======================= the Friday 3pm weekly =======================
+   The branch weekly, sent company-wide as a real spreadsheet.
+
+   WHY A CLOCK TICK AND NOT A WEEKLY TRIGGER
+   Apps Script's weekly time trigger fires somewhere inside the hour you pick
+   — "3pm" means between 15:00 and 16:00. This has to land at 3pm sharp, so
+   wbWeeklyTick() runs every 5 minutes instead and sends the moment Friday
+   passes 15:00. A stamp in Script Properties means it can only go once a
+   week however often the tick runs, so a retry or an extra trigger can never
+   double-send to the whole company.
+
+   SET IT UP
+     1. Project Settings → Time zone → (GMT-04:00) Atlantic Time. Every time
+        below is read in that zone; get it wrong and the send moves an hour.
+     2. Script Properties:
+          WEEKLY_TO   who it goes to, comma-separated (the company list)
+          MANAGER_EMAIL  fallback if WEEKLY_TO is unset
+     3. Triggers → Add Trigger → wbWeeklyTick → time-driven → minutes timer
+        → every 5 minutes.
+   Run wbSendWeeklyNow() from the editor any time to send it by hand. */
+
+function wbWeeklyTick() {
+  var tz = Session.getScriptTimeZone();
+  var now = new Date();
+  var dow = Number(Utilities.formatDate(now, tz, 'u'));      // 1 Mon … 5 Fri
+  var hhmm = Number(Utilities.formatDate(now, tz, 'HHmm'));
+  if (dow !== 5 || hhmm < 1500) return;                      // Friday, from 3pm
+  var stamp = Utilities.formatDate(now, tz, 'YYYY-ww');      // ISO year + week
+  var props = wbProps_();
+  if (props.getProperty('WEEKLY_SENT') === stamp) return;    // already gone
+  props.setProperty('WEEKLY_SENT', stamp);                   // claim before sending
+  try {
+    wbSendWeeklyNow();
+  } catch (err) {
+    props.deleteProperty('WEEKLY_SENT');                     // let the next tick retry
+    throw err;
   }
-  var hb = p.heldBack, over = hb.bands[hb.bands.length - 1];
+}
+
+function wbSendWeeklyNow() {
+  var tz = Session.getScriptTimeZone();
+  var p = wbProduction_(), h = p.heldBack || {}, s = wbSettlement_();
+  var to = wbProps_().getProperty('WEEKLY_TO')
+        || wbProps_().getProperty('MANAGER_EMAIL')
+        || Session.getEffectiveUser().getEmail();
+  var ending = Utilities.formatDate(new Date(), tz, 'd MMMM yyyy');
+  function tt(n) { return 'TT$' + Math.round(n || 0).toLocaleString('en-US'); }
+  function tot(o) { return (o.api || 0) + (o.inc || 0); }
+  function cnt(o) { return (o.n || 0) + (o.incN || 0); }
+
   var body = [
-    'Production — picked up (new business + increases)',
+    'Branch production to ' + ending + '.',
     '',
-    line('This week', p.week),
-    line(p.month.label + ' so far', p.month),
-    line('Year to date', p.ytd),
+    'This week      ' + tt(tot(p.week))  + '  ·  ' + cnt(p.week)  + ' picked up',
+    p.month.label + (p.month.label.length < 8 ? '        ' : '   ')
+                   + tt(tot(p.month)) + '  ·  ' + cnt(p.month) + ' picked up',
+    'Year to date   ' + tt(tot(p.ytd))   + '  ·  ' + cnt(p.ytd)   + ' picked up',
     '',
-    'Held-back API — apps received this year, not yet picked up',
+    'Held back      ' + tt(h.api) + ' across ' + h.n + ' apps, averaging ' + h.avgDays + ' days.',
+    'Settled        ' + s.settledN + ' of the year\'s pickups; ' + s.pendingN + ' still pending.',
     '',
-    hb.n + ' apps holding ' + tt(hb.api) + ', waiting an average of ' + hb.avgDays + ' days.',
-    over.n + ' of them (' + tt(over.api) + ') have waited over two months.',
+    'The attached workbook carries the detail: periods and the year by month,',
+    'units, the advisor board, the held-back book and the day-by-day tray.',
     '',
-    'Held-back by advisor:',
-  ].concat(hb.byAgent.map(function (x) {
-    return '  ' + x.a + ' — ' + tt(x.api) + ' (' + x.n + ' apps)';
-  })).concat([
-    '',
-    'Live wall: https://rickyrampersadbranch.com/wall/production.html',
-  ]).join('\n');
+    'Wall: https://factfind360.com/wall.html',
+    'Dashboard: https://rickyrampersadbranch.com/dashboard'
+  ].join('\n');
+
   MailApp.sendEmail({
     to: to,
-    subject: 'Production wall — ' + Utilities.formatDate(new Date(),
-      Session.getScriptTimeZone(), 'd MMM yyyy'),
+    subject: 'Branch production — week ending ' + ending,
     body: body,
+    attachments: [{
+      fileName: 'RRB-production-' + Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd') + '.xls',
+      mimeType: 'application/vnd.ms-excel',
+      content: wbWorkbook_(p, s)
+    }]
   });
+}
+
+/* The same five sheets the wall's Spreadsheet button produces, built here so
+   the Friday send does not depend on anyone opening a browser. */
+function wbWorkbook_(p, s) {
+  function xe(v) { return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function cS(v, st) { return '<Cell ss:StyleID="' + st + '"><Data ss:Type="String">' + xe(v) + '</Data></Cell>'; }
+  function cN(v, st) { return '<Cell ss:StyleID="' + st + '"><Data ss:Type="Number">' + (v || 0) + '</Data></Cell>'; }
+  function R(c) { return '<Row>' + c.join('') + '</Row>'; }
+  function sheet(name, cols, rows) {
+    return '<Worksheet ss:Name="' + xe(name) + '"><Table>' +
+      cols.map(function (w) { return '<Column ss:Width="' + w + '"/>'; }).join('') +
+      rows.join('') + '</Table></Worksheet>';
+  }
+  function tot(o) { return (o.api || 0) + (o.inc || 0); }
+  function cnt(o) { return (o.n || 0) + (o.incN || 0); }
+
+  var W = [], r = [
+    R([cS('PRODUCTION · Ricky Rampersad Branch', 'tt')]),
+    R([cS('Total API = new business on its production picked-up date + increases on theirs', 'sub')]),
+    R([cS('')]), R([cS('Period', 'hd'), cS('Pickups', 'hd'), cS('Total API', 'hd')])
+  ];
+  [['This week', p.week], [p.month.label, p.month], ['Year to date', p.ytd]]
+    .forEach(function (x) { r.push(R([cS(x[0], 'p'), cN(cnt(x[1]), 'n'), cN(tot(x[1]), 'm')])); });
+  r.push(R([cS('')]));
+  r.push(R([cS('Month', 'hd'), cS('New business', 'hd'), cS('Increases', 'hd'), cS('Total API', 'hd')]));
+  (p.monthly || []).forEach(function (x) {
+    r.push(R([cS(x.m, 'p'), cN(x.api, 'm'), cN(x.inc, 'm'), cN((x.api || 0) + (x.inc || 0), 'mb')]));
+  });
+  W.push(sheet('Production', [200, 90, 120, 120], r));
+
+  var a = [R([cS('Rank', 'hd'), cS('Advisor', 'hd'), cS('Pickups', 'hd'), cS('Total API', 'hd')])];
+  (p.leaders || []).forEach(function (x, i) {
+    a.push(R([cN(i + 1, 'n'), cS(x.a, 'p'), cN(x.n, 'n'), cN(x.api, 'm')]));
+  });
+  W.push(sheet('Advisors', [60, 200, 90, 120], a));
+
+  var h = p.heldBack || {}, hb = [
+    R([cS('Held back — written, waiting on requirements', 'tt')]),
+    R([cS(h.n + ' apps · avg ' + h.avgDays + ' days', 'sub')]), R([cS('')]),
+    R([cS('How long it waited', 'hd'), cS('Apps', 'hd'), cS('API', 'hd')])
+  ];
+  (h.bands || []).forEach(function (b) { hb.push(R([cS(b.k, 'p'), cN(b.n, 'n'), cN(b.api, 'm')])); });
+  hb.push(R([cS('')]));
+  hb.push(R([cS('Advisor', 'hd'), cS('Apps', 'hd'), cS('API', 'hd')]));
+  (h.byAgent || []).forEach(function (b) { hb.push(R([cS(b.a, 'p'), cN(b.n, 'n'), cN(b.api, 'm')])); });
+  W.push(sheet('Held back', [210, 90, 120], hb));
+
+  var st = [
+    R([cS('Settled', 'hd'), cS('Pending', 'hd'), cS('Avg days to settle', 'hd')]),
+    R([cN(s.settledN, 'n'), cN(s.pendingN, 'n'), cN(s.avgDays, 'n')]), R([cS('')]),
+    R([cS('Month', 'hd'), cS('Settled', 'hd'), cS('Settled API', 'hd'),
+       cS('Pending', 'hd'), cS('Pending API', 'hd')])
+  ];
+  (s.monthly || []).forEach(function (x) {
+    st.push(R([cS(x.m, 'p'), cN(x.sN, 'n'), cN(x.sApi, 'm'), cN(x.pN, 'n'), cN(x.pApi, 'm')]));
+  });
+  W.push(sheet('Settlement', [110, 90, 130, 90, 130], st));
+
+  var wk = [R([cS('Week', 'hd'), cS('Pickups', 'hd'), cS('API', 'hd')])];
+  (p.weekly || []).forEach(function (x) { wk.push(R([cS(x.w, 'p'), cN(x.n, 'n'), cN(x.api, 'm')])); });
+  W.push(sheet('Week by week', [140, 90, 130], wk));
+
+  return '<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>' +
+    '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' +
+    '<Styles>' +
+    '<Style ss:ID="tt"><Font ss:Bold="1" ss:Size="14"/></Style>' +
+    '<Style ss:ID="sub"><Font ss:Color="#666666"/></Style>' +
+    '<Style ss:ID="hd"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#0D9488" ss:Pattern="Solid"/></Style>' +
+    '<Style ss:ID="p"/><Style ss:ID="n"/>' +
+    '<Style ss:ID="m"><NumberFormat ss:Format="#,##0"/></Style>' +
+    '<Style ss:ID="mb"><Font ss:Bold="1"/><NumberFormat ss:Format="#,##0"/></Style>' +
+    '</Styles>' + W.join('') + '</Workbook>';
 }
 
 // Last nine weeks as Monday-start buckets, built from the raw dates so the
