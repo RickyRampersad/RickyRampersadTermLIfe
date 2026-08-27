@@ -420,6 +420,10 @@ function productionView(){
     <div style="padding:12px 16px 16px">
       <div class="pbar">
         <div class="mini">As at <b style="color:var(--text)">${esc(d.asOf)}</b> · viewed by ${esc(d.by)} (${esc(d.role)})
+          · ${d.source==='salesforce'
+              ? `<b style="color:var(--ok,#2f9e6b)">live from Salesforce</b> — production picked up`
+              : `<b style="color:#b7791f">from the Production tab</b> — as last pasted`}
+          ${(d.unmatched&&d.unmatched.length)?`<br><span style="color:#b7791f">Picked up but not on the Production tab: ${esc(d.unmatched.join(', '))}</span>`:''}
           · <span style="color:var(--gold)">confidential — branch management only</span></div>
         <button class="abtn gold sm" id="prodDl">⬇ Download</button>
       </div>
