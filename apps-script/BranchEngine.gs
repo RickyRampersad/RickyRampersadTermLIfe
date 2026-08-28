@@ -642,7 +642,6 @@ function benefitsSetup() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var want = {};
   want[BEN.ADMINS_SHEET]   = ['Code', 'Name', 'Role'];
-  want[BEN.GROUPS_SHEET]   = ['Group ID', 'Group Name', 'Lines', 'Billing Email', 'Portal Code'];
   want[BEN.PENDINGS_SHEET] = ['Id', 'Account', 'Source Name', 'Member', 'Line', 'Policy', 'Issued', 'Note', 'Note By', 'Note At'];
   want[BEN.SUBS_SHEET]     = ['Id', 'Group ID', 'Group Name', 'Month Key', 'Month', 'State', 'Updated', 'JSON'];
   want[BEN.BILLING_SHEET]  = ['Group ID', 'Month', 'Line', 'Invoice', 'Billed', 'Paid', 'Paid On', 'Method', 'Receipt', 'Note'];
@@ -734,12 +733,34 @@ function badminsSheet_() {
   return withPeople[0] || cands[0];
 }
 
+/* One Access tab holds everyone: branch people AND each client company's
+   plan administrator. Company decides which doors a row opens — Guardian
+   Life rows are the branch; every other company is a client whose login
+   reaches their own billing and nothing else. A client administrator must
+   never pass as a branch administrator. */
+function bIsBranch_(r) {
+  return /guardian/i.test(String(bfield_(r, ['company'])));
+}
+function bActive_(r) {
+  return !/inactive|disabled|^no$|^off$/i.test(String(bfield_(r, ['active'])).trim());
+}
+function bLoginOf_(r) {
+  return String(bfield_(r, ['login', 'log in', 'code', 'agent', 'number'])).trim().toUpperCase();
+}
+function bClientRows_(company) {
+  var want = String(company || '').trim().toUpperCase();
+  return brows_(badminsSheet_()).filter(function (r) {
+    return bActive_(r) && !bIsBranch_(r) &&
+           String(bfield_(r, ['company'])).trim().toUpperCase() === want;
+  });
+}
+
 function badmin_(code) {
   code = String(code || '').trim().toUpperCase();
   if (!code) return null;
   if (code === bprop_('BEN_ADMIN_CODE').toUpperCase()) return { name: 'Branch admin code', code: code };
   var hit = brows_(badminsSheet_()).filter(function (r) {
-    return String(bfield_(r, ['code', 'agent', 'number'])).trim().toUpperCase() === code;
+    return bActive_(r) && bIsBranch_(r) && bLoginOf_(r) === code;
   })[0];
   return hit ? { name: String(bfield_(hit, ['name'])).trim() || code, code: code } : null;
 }
@@ -765,18 +786,46 @@ function benSignin_(b) {
     return String(bfield_(r, ['code', 'agent', 'number'])).trim().toUpperCase() === code &&
            String(bfield_(r, ['password', 'pass', 'pw'])) === pw && pw !== '';
   })[0];
-  if (!hit) return berr_('Not on the access list — check the agent number and password.');
+  if (!hit) return berr_('Not on the access list — check the login and password.');
+  if (!bActive_(hit)) return berr_('This login has been deactivated — speak to the branch.');
   var name = String(bfield_(hit, ['name'])).trim() || code;
   var roleTxt = String(bfield_(hit, ['role', 'title', 'position'])).trim() || 'Administrator';
-  /* The Role column decides what the sign-in opens. A row whose role says
-     agent gets the agent experience — no Pendings, no Review, no approvals.
-     Everything else on the Access tab — administrators, the BMA, sales
-     support — gets the administrator doors. Every sign-in lands on the
-     activity tab under the person's own name and role, so the branch can
-     see who is on and who did what. */
-  var isAgent = /agent|advisor/i.test(roleTxt) && !/manager|admin|assist|support/i.test(roleTxt);
+
+  /* A client company's administrator signs in to see their own billing —
+     nothing of the branch, nothing of anyone else's. Their months come back
+     with the sign-in so the employer portal needs exactly one call. */
+  if (!bIsBranch_(hit)) {
+    var company = String(bfield_(hit, ['company'])).trim();
+    blog_(name, code, 'SIGNIN', company, '', roleTxt + ' (client)');
+    return bok_({ role: 'client', name: name, company: company, title: roleTxt,
+                  rows: bBillingRowsFor_(company) });
+  }
+
+  /* Branch rows: the Role column decides — agents get the agent view, and
+     managers, the BMA and sales support get the administrator doors. Every
+     sign-in lands on the activity tab under the person's own name. */
+  var isAgent = /agent|advisor/i.test(roleTxt) && !/manager|admin|assist|support|branch/i.test(roleTxt);
   blog_(name, code, 'SIGNIN', '', '', roleTxt);
   return bok_({ name: name, role: isAgent ? 'agent' : 'manager', title: roleTxt });
+}
+
+function bBillingRowsFor_(company) {
+  var want = String(company || '').trim().toUpperCase();
+  return brows_(bsheet_(BEN.BILLING_SHEET)).filter(function (r) {
+    return String(bfield_(r, ['group id', 'groupid'])).trim().toUpperCase() === want;
+  }).map(function (r) {
+    return {
+      month:   String(bfield_(r, ['month'])),
+      line:    String(bfield_(r, ['line'])),
+      invoice: String(bfield_(r, ['invoice'])),
+      billed:  Number(bfield_(r, ['billed'])) || 0,
+      paid:    Number(bfield_(r, ['paid'])) || 0,
+      paidOn:  bdate_(bfield_(r, ['paid on', 'paidon'])),
+      method:  String(bfield_(r, ['method'])),
+      receipt: String(bfield_(r, ['receipt'])),
+      note:    String(bfield_(r, ['note']))
+    };
+  });
 }
 
 function blog_(by, code, did, group, month, note) {
@@ -1011,12 +1060,9 @@ function bfolder_(groupName, monthKey) {
 
 function bsendMonth_(sub) {
   var testMode = bprop_('BEN_TEST_MODE') !== 'off';
-  var groups = brows_(bsheet_(BEN.GROUPS_SHEET));
-  var g = groups.filter(function (r) {
-    return String(bfield_(r, ['group id', 'groupid', 'id'])).trim() === sub.group.id ||
-           String(bfield_(r, ['group name', 'groupname'])).trim() === sub.group.name;
-  })[0];
-  var clientEmail = g ? String(bfield_(g, ['billing email', 'email'])).trim() : '';
+  var clientEmail = bClientRows_(sub.group.name).map(function (r) {
+    return String(bfield_(r, ['email'])).trim();
+  }).filter(function (x) { return !!x; }).join(',');
   var to = testMode ? bprop_('BEN_NOTIFY') : clientEmail;
 
   if (!to) {
@@ -1049,15 +1095,20 @@ function bsendMonth_(sub) {
    emails stay server-side; the page only learns whether one is on file. */
 function benGroups_(p) {
   if (!bstaff_(p.auth)) return berr_('Staff or administrators only.');
-  var groups = brows_(bsheet_(BEN.GROUPS_SHEET)).map(function (r) {
-    var lines = String(bfield_(r, ['lines'])).toLowerCase();
-    return {
-      id:   String(bfield_(r, ['group id', 'groupid', 'id'])).trim(),
-      name: String(bfield_(r, ['group name', 'groupname', 'name'])).trim(),
-      lines: ['life', 'health', 'pension'].filter(function (l) { return lines.indexOf(l) !== -1; }),
-      hasEmail: !!String(bfield_(r, ['billing email', 'email'])).trim()
-    };
-  }).filter(function (g) { return g.id && g.name; });
+  /* The book IS the Access tab: every non-Guardian company with an active
+     administrator row is a group. One row creates the group, the employer
+     login, and the billing contact at once. */
+  var seen = {}, groups = [];
+  brows_(badminsSheet_()).forEach(function (r) {
+    if (!bActive_(r) || bIsBranch_(r)) return;
+    var company = String(bfield_(r, ['company'])).trim();
+    if (!company) return;
+    var key = company.toUpperCase();
+    if (seen[key]) { if (String(bfield_(r, ['email'])).trim()) seen[key].hasEmail = true; return; }
+    seen[key] = { id: company, name: company, lines: ['life', 'health', 'pension'],
+                  hasEmail: !!String(bfield_(r, ['email'])).trim() };
+    groups.push(seen[key]);
+  });
   return bok_({ groups: groups });
 }
 
@@ -1066,30 +1117,11 @@ function benGroups_(p) {
 /* group.html asks with the group's portal code, not an admin code — a
    client may read their own months and nothing else. */
 function benBilling_(p) {
-  var groups = brows_(bsheet_(BEN.GROUPS_SHEET));
-  var g = groups.filter(function (r) {
-    return String(bfield_(r, ['portal code', 'portalcode'])).trim().toUpperCase() ===
-           String(p.auth || '').trim().toUpperCase();
-  })[0];
-  if (!g && !badmin_(p.auth)) return berr_('That code was not recognised.');
-  var gid = g ? String(bfield_(g, ['group id', 'groupid', 'id'])).trim() : String(p.group || '');
-  var gname = g ? String(bfield_(g, ['group name', 'groupname', 'name'])).trim() : '';
-  var rows = brows_(bsheet_(BEN.BILLING_SHEET)).filter(function (r) {
-    return String(bfield_(r, ['group id', 'groupid'])).trim() === gid;
-  }).map(function (r) {
-    return {
-      month:   String(bfield_(r, ['month'])),
-      line:    String(bfield_(r, ['line'])),
-      invoice: String(bfield_(r, ['invoice'])),
-      billed:  Number(bfield_(r, ['billed'])) || 0,
-      paid:    Number(bfield_(r, ['paid'])) || 0,
-      paidOn:  bdate_(bfield_(r, ['paid on', 'paidon'])),
-      method:  String(bfield_(r, ['method'])),
-      receipt: String(bfield_(r, ['receipt'])),
-      note:    String(bfield_(r, ['note']))
-    };
-  });
-  return bok_({ group: gid, name: gname, rows: rows });
+  /* Client administrators get their months through sign-in now. This route
+     stays for the branch: an administrator may read any group's ledger. */
+  if (!badmin_(p.auth)) return berr_('That code was not recognised.');
+  var gid = String(p.group || '').trim();
+  return bok_({ group: gid, name: gid, rows: bBillingRowsFor_(gid) });
 }
 
 /* ── follow-up: months waiting for review do not wait quietly ──
@@ -1176,12 +1208,10 @@ function benefitsDunning() {
       var d = Math.floor((Date.now() - sentEv.at) / DAY);
       sub.dunning = sub.dunning || {};
 
-      /* who this month's mail goes to */
-      var groups = brows_(bsheet_(BEN.GROUPS_SHEET));
-      var g = groups.filter(function (r) {
-        return String(bfield_(r, ['group id', 'groupid', 'id'])).trim() === sub.group.id;
-      })[0];
-      var clientEmail = g ? String(bfield_(g, ['billing email', 'email'])).trim() : '';
+      /* who this month's mail goes to — the plan administrators on Access */
+      var clientEmail = bClientRows_(sub.group.name).map(function (r) {
+        return String(bfield_(r, ['email'])).trim();
+      }).filter(function (x) { return !!x; }).join(',');
       var to = testMode ? bprop_('BEN_NOTIFY') : clientEmail;
       if (!to) return;
       var pfx = testMode ? '[TEST — would go to ' + (clientEmail || 'no address on file') + '] ' : '';

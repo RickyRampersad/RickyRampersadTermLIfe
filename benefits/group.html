@@ -1484,36 +1484,42 @@ function render(){
 function gate(){
   return `<div class="card gate">
     <h1 style="font-size:1.4rem;color:var(--navy)">Group account</h1>
-    <p class="note" style="margin:.5rem 0 1.1rem">Enter the access code from your branch. Employers see the whole
-      group; employees see their own benefits.</p>
-    <input id="code" placeholder="ACCESS CODE" autocomplete="off">
+    <p class="note" style="margin:.5rem 0 1.1rem">Company administrators: sign in with the login and password the
+      branch gave you — you will see your own company's billing and nothing else.</p>
+    <input id="code" placeholder="LOGIN" autocomplete="off">
+    <input id="pw" type="password" placeholder="PASSWORD" autocomplete="off" style="margin-top:.6rem">
     <button class="btn" style="width:100%;margin-top:.8rem" data-signin>Sign in</button>
     <p class="note" id="gerr" style="margin-top:.8rem;min-height:1.2em"></p>
     <p class="note" style="margin-top:.4rem">Sample codes — <b>GROUP26</b> for the employer, <b>STAFF26</b> for an employee.</p>
   </div>`;
 }
 
-function signIn(code){
+function signIn(code, pw){
   code=(code||'').trim().toUpperCase();
   if(code==='GROUP26'){ LIVE=null; as='employer'; tab='overview'; authed=true; }
   else if(code==='STAFF26'){ LIVE=null; as='employee'; tab='mycover'; ME=GROUP.people[3]; authed=true; }
   else if(API && code){
-    /* Not a preview code — ask the branch script whose portal code it is. */
+    /* A real company administrator: the branch script checks the login and
+       password against the Access tab and answers with THEIR months only. */
     $('gerr').textContent='Checking…';
-    fetch(API + '?action=billing&auth=' + encodeURIComponent(code))
+    fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'signin', code:code, password:pw||'' }) })
       .then(r => r.json())
       .then(d => {
-        if(d && d.ok){
-          LIVE = { gid:d.group, name:d.name || 'Your company', rows:(d.rows||[]).map(liveRow).filter(Boolean) };
+        if(d && d.ok && d.role === 'client'){
+          LIVE = { gid:d.company, name:d.company || 'Your company',
+                   admin:d.name, rows:(d.rows||[]).map(liveRow).filter(Boolean) };
           as='employer_live'; tab='history'; authed=true; syncBar(); render();
+        } else if(d && d.ok){
+          $('gerr').textContent='That is a branch login — staff sign in on the portal, not here.';
         } else {
-          $('gerr').textContent='That code was not recognised — check it, or ask the branch.';
+          $('gerr').textContent=(d && d.error) || 'Not recognised — check the login and password, or ask the branch.';
         }
       })
       .catch(() => { $('gerr').textContent='Could not reach the branch just now — try again in a moment.'; });
     return;
   }
-  else { $('gerr').textContent='That code was not recognised — check it, or ask the branch.'; return; }
+  else { $('gerr').textContent='Not recognised — check the login and password, or ask the branch.'; return; }
   syncBar(); render();
 }
 
@@ -1536,7 +1542,7 @@ document.addEventListener('click',e=>{
   if(t.id==='theme'){ const r=document.documentElement;
     r.dataset.theme = r.dataset.theme==='dark' ? 'light' : 'dark'; return; }
   if(t.dataset.as){ as=t.dataset.as; authed=true; ME=GROUP.people[3]; tab=TABS[as][0][0]; syncBar(); render(); return; }
-  if(t.hasAttribute('data-signin')){ signIn($('code').value); return; }
+  if(t.hasAttribute('data-signin')){ signIn($('code').value, $('pw') ? $('pw').value : ''); return; }
   if(t.dataset.go){ tab=t.dataset.go; render(); window.scrollTo({top:0,behavior:'smooth'}); }
 });
 document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.id==='code') signIn(e.target.value); });
