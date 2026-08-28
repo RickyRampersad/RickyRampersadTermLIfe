@@ -82,6 +82,12 @@ tfoot td{border-top:2px solid var(--line);font-weight:700;background:var(--surfa
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:1rem}
 .stats .card{padding:1.1rem}
 .stats .v{font-family:var(--mono);font-size:1.55rem;font-variant-numeric:tabular-nums;color:var(--navy);margin-top:.2rem;line-height:1.15}
+.stats .v.bad{color:var(--stop,#A93B2B)}
+.sub{font-size:11.5px;color:var(--slate);margin-top:.2rem;line-height:1.4}
+.owe{color:var(--stop,#A93B2B);font-weight:700}
+tbody tr.owing{background:#FDF6E7}
+:root[data-theme="dark"] tbody tr.owing{background:#2A2113}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) tbody tr.owing{background:#2A2113}}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;align-items:start}
 @media(max-width:900px){.grid2{grid-template-columns:1fr}}
 dl.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.85rem 1.4rem;margin:.9rem 0 0}
@@ -257,6 +263,11 @@ const dmy=s=>new Date(s+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',m
 const days=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
 
 let as='employer', tab='overview', authed=false, ME=null;
+/* A real employer signs in with the portal code the branch gave them — the
+   branch script validates it and returns THEIR months from the Billing tab.
+   LIVE holds that account; while it is set, nothing sampled is shown. */
+const API = "https://script.google.com/macros/s/AKfycbyMb0fwB6_k2WTLHQT6axejY8wNOpDYNHpvTfBbF-Tk5MRcMgyudC2KHxU8XZOGGfNUVQ/exec";
+let LIVE = null;
 
 /* ══════════════ EMPLOYER ══════════════ */
 function overview(){
@@ -415,6 +426,117 @@ function billing(){
       </div>
     </div>
   </div>`;
+}
+
+/* ══════════════ HISTORY ══════════════
+   Every month billed on this account, what was paid against it, and what is
+   still open. The branch record for a month is a TRANSACTIONS__c row hanging
+   off the group's CLIENT_PORTFOLIO__c — one per renewal month per line — so
+   this reads that rather than inventing a second ledger:
+
+       SELECT Name, GROUP_TRANSACTION_TYPE__c, Renewal_Date__c,
+              Group_Billing_Premiums__c, Premium_Paid__c, Premium_Due__c,
+              Payment_Date__c, Date_Premium_Applied__c, Payment_Method__c,
+              Recipt__c, Invoice_Value_1__c, POLICY_STATUS__c
+       FROM   TRANSACTIONS__c
+       WHERE  INSURANCE_PORTFOLIO__r.Account__c = :ACCOUNT
+         AND  GROUP_TRANSACTION_TYPE__c != null
+       ORDER BY Renewal_Date__c DESC
+
+   Two fields on that object are not safe to show a client and are not read
+   here. Days_O_S__c counts from the renewal date whether or not the month was
+   ever paid — on settled 2015 rows it reads past four thousand — and
+   POLICY_STATUS__c stays INFORCE on months with premium still due, so neither
+   can be shown as a state. Paid is decided from the figures themselves. */
+const HISTORY = [
+  { month:'2026-09-01', line:'Group Health', invoice:'G260801M300709990', billed:83514, paid:0, paidOn:null, method:null, receipt:null },
+  { month:'2026-08-01', line:'Group Health', invoice:'G260801M300709990', billed:83514, paid:0, paidOn:null, method:null, receipt:null,
+    note:'Originally billed $84,036. That charge was reversed and re-issued at this figure.' },
+  { month:'2026-08-01', line:'Group Life',   invoice:'TGM 1526', billed:6240, paid:6240, paidOn:'2026-08-22', method:'Cheque', receipt:'RC-118204' },
+  { month:'2026-07-01', line:'Group Health', invoice:'G260701M300708103', billed:83230, paid:84036, paidOn:'2026-07-19', method:'Wire Transfer', receipt:'RC-117655',
+    note:'Paid $806 over, held as a credit.' },
+  { month:'2026-07-01', line:'Group Health', invoice:'G260701M300709859', billed:0, paid:788, paidOn:'2026-07-19', method:'Wire Transfer', receipt:'RC-117655',
+    note:'Adjustment credit.' },
+  { month:'2026-07-01', line:'Group Life',   invoice:'TGM 1526', billed:6201, paid:6201, paidOn:'2026-07-19', method:'Wire Transfer', receipt:'RC-117655' },
+  { month:'2026-06-01', line:'Group Health', invoice:'G260601M300709858', billed:82690, paid:83230, paidOn:'2026-06-20', method:'Cheque', receipt:'RC-117032',
+    note:'Paid $540 over, held as a credit.' },
+  { month:'2026-06-01', line:'Group Life',   invoice:'TGM 1526', billed:6162, paid:6162, paidOn:'2026-06-20', method:'Cheque', receipt:'RC-117032' }
+];
+
+const mLabel = d => new Date(d+'T00:00:00').toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+const dLabel = d => d ? new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+const daysSince = d => Math.floor((Date.now() - new Date(d+'T00:00:00')) / 86400000);
+/* A month that has not started yet is not late. Showing it as "-7 days
+   outstanding" reads as a fault in the client's own account. */
+const ageWords = d => { const n = daysSince(d); return n < 0 ? 'not yet due' : n + ' days'; };
+
+function history(){
+  const rows = (LIVE ? LIVE.rows.slice() : HISTORY.slice())
+    .sort((a,b) => b.month.localeCompare(a.month) || a.line.localeCompare(b.line));
+  if(LIVE && !rows.length){
+    return `<div class="card"><h2>Billing history</h2>
+      <div class="alert a-info" style="margin-top:.8rem"><b>No months on record yet for ${esc(LIVE.name)}.</b>
+      When the branch verifies and sends a month it appears here automatically.</div></div>`;
+  }
+  const open = rows.filter(r => r.billed - r.paid > 0.005);
+  const owed = open.reduce((s,r) => s + (r.billed - r.paid), 0);
+  /* Overpayments are not just history — Guardian carries them forward, so the
+     balance actually payable is the arrears less the credits. Quoting the
+     gross would have this account chased for $2,134 it has already paid. */
+  const credit = rows.reduce((s,r) => s + Math.max(0, r.paid - r.billed), 0);
+  const net = owed - credit;
+  const settled = rows.length - open.length;
+  const overdue = open.filter(r => daysSince(r.month) > 0);
+
+  return `<div class="stack">
+    <div class="card">
+      <h2>Billing history</h2>
+      <p class="note">Every month billed on this account and what was paid against it.
+        ${open.length ? 'Anything still open is marked.' : 'Everything is settled.'}</p>
+      <div class="stats" style="margin-top:1rem">
+        ${stat(rows.length, 'Months billed', 'across ' + [...new Set(rows.map(r=>r.line))].length + ' lines')}
+        ${stat(settled, 'Settled', settled === rows.length ? 'all of them' : '')}
+        ${stat(open.length ? money(net) : 'None', 'Payable now',
+               credit ? money(owed) + ' less credits' : (overdue.length ? 'oldest ' + ageWords(overdue[overdue.length-1].month) : 'nothing overdue'),
+               overdue.length>0)}
+        ${stat(credit ? money(credit) : '—', 'Credit carried', credit ? 'from overpayment' : '')}
+      </div>
+    </div>
+
+    ${overdue.length ? `<div class="alert a-warn">
+      <b>${money(net)} is showing as unpaid.</b> If you have already sent this, give us the payment
+      reference and we will chase it internally — it usually means the payment reached Guardian but has
+      not been applied to your account yet. Nothing about your cover changes while that is sorted out.</div>` : ''}
+
+    <div class="card">
+      <div class="tw"><table>
+        <thead><tr><th>Month</th><th>Line</th><th>Invoice</th><th class="r">Billed</th>
+          <th class="r">Paid</th><th>Settled</th><th class="r">Open</th></tr></thead>
+        <tbody>${rows.map(r => {
+          const bal = r.billed - r.paid, isOpen = bal > 0.005, over = bal < -0.005;
+          return `<tr class="${isOpen && daysSince(r.month) > 0 ? 'owing' : ''}">
+            <td><b>${mLabel(r.month)}</b>${r.note?`<div class="sub">${esc(r.note)}</div>`:''}</td>
+            <td>${esc(r.line)}</td>
+            <td class="mono" style="font-size:12px">${esc(r.invoice||'—')}</td>
+            <td class="r mono">${money(r.billed)}</td>
+            <td class="r mono">${r.paid ? money(r.paid) : '—'}</td>
+            <td>${r.paidOn
+                  ? dLabel(r.paidOn) + `<div class="sub">${esc(r.method||'')}${r.receipt?' · '+esc(r.receipt):''}</div>`
+                  : `<span class="${daysSince(r.month) > 0 ? 'owe' : 'note'}">${
+                       daysSince(r.month) > 0 ? 'not yet' : '—'}</span><div class="sub">${ageWords(r.month)}</div>`}</td>
+            <td class="r mono ${isOpen?'owe':''}">${isOpen ? money(bal) : over ? '(' + money(-bal) + ')' : '—'}</td>
+          </tr>`; }).join('')}</tbody>
+      </table></div>
+      <p class="note" style="margin-top:.8rem">A month shows as settled once the payment is applied to your
+        account. Invoice numbers are Guardian's own, so quoting one on a payment is the quickest way to have
+        it matched.</p>
+    </div>
+  </div>`;
+}
+
+function stat(v, k, n, bad){
+  return `<div class="card"><span class="label">${esc(k)}</span>
+    <div class="v${bad?' bad':''}">${esc(v)}</div><div class="note">${esc(n||'')}</div></div>`;
 }
 
 function people(){
@@ -834,7 +956,13 @@ function parseLifeBilling(lines){
    drawn as two items, page footers land inside the row band, and some pages
    run two columns. Anchoring sidesteps all three. */
 const TIERS = ['Employee Only','Employee+Child','Employee+Spouse','Employee+Family'];
-const MEMBER_ID = /^[A-Za-z]{0,4}\d{2,6}-\d{4,6}-\d{2}$/;
+/* A whole member id looks like TPG0185-00210-00. Guardian's report writer
+   sometimes clips this column the way it clips long names, leaving TPG0185-003
+   — and a row anchored on nothing at all is a member dropped in silence, which
+   is worse than a member with a short id. Accept the clipped form and mark it,
+   so the row is counted and the flaw is visible. */
+const MEMBER_ID = /^[A-Za-z]{0,4}\d{2,6}-\d{2,6}(?:-\d{1,2})?$/;
+const MEMBER_ID_FULL = /^[A-Za-z]{0,4}\d{2,6}-\d{4,6}-\d{2}$/;
 const FURNITURE = /myguardiangroup|^https?:|^[tf]:|\(myGG\)|^Page\b|Printed On|Calculation Date|Standard Report|Invoice (Detail|Summary)|^\d{1,2}:\d{2}|^\d{3} \d{3} \d{4}$|Guardian Drive|Westmoorings/i;
 const DATEISH = /^\d{2}-[A-Za-z]{3}-\d{4}$/;
 
@@ -877,12 +1005,20 @@ function parseHealthPages(pages){
       const pick = tol => band.filter(i => inCol(i) && Math.abs(i.y - it.y) <= tol)
                               .map(i => i.t).join('').replace(/\s+/g,' ').trim();
       const name = pick(0.35) || pick(1.4);
-      const amtItem = band.filter(i => i.x > it.x && new RegExp('^'+AMT+'\\s*$').test(i.t.trim())).sort((a,b) => b.x - a.x)[0];
+      /* Take the figure on this row's own baseline, not merely the rightmost
+         one in the band. Where two members are drawn a hair apart, the loose
+         band holds both their premiums, and the rightmost is as likely to be
+         the neighbour's — which silently prices a family member as a single. */
+      const amts = band.filter(i => i.x > it.x && new RegExp('^'+AMT+'\\s*$').test(i.t.trim()));
+      const amtItem = amts.filter(i => Math.abs(i.y - it.y) <= 0.4).sort((a,b) => b.x - a.x)[0]
+                   || amts.sort((a,b) => Math.abs(a.y - it.y) - Math.abs(b.y - it.y) || b.x - a.x)[0];
       const mon = band.filter(i => /^[A-Za-z]+\s+\d{4}$/.test(i.t.trim())).map(i => i.t.trim())[0] || null;
       const premium = amtItem ? amt(amtItem.t) : null;
       const rec = { name, empId:it.t.trim(), started:dates[0]||null, effective:dates[1]||null,
-                    month:mon, tier, premium };
+                    month:mon, tier, premium,
+                    idClipped: !MEMBER_ID_FULL.test(it.t.trim()) };
       if(!name) out.problems.push('A row could not be read: '+rec.empId);
+      if(rec.idClipped) out.problems.push('Member id cut off in the document for '+(name||rec.empId));
       if(premium !== null && premium < 0) out.credits.push(rec); else out.members.push(rec);
     });
   });
@@ -915,10 +1051,20 @@ function parseHealthInvoice(lines){
     let l = lines[i];
     const gid = /Employer Group ID:\s*(\S+)/i.exec(l);        if(gid && !out.groupId) out.groupId = gid[1];
     const cov = /Coverage for:\s*([A-Za-z]+\s+\d{4})/i.exec(l); if(cov && !out.month) out.month = cov[1];
-    const tot = /Total for current month\s+(\d+)\s+\$([\d,]+\.\d{2})/i.exec(l);
-    if(tot){ out.stated.lives = +tot[1]; out.stated.gross = gmoney(tot[2]); }
-    const pay = /TOTAL PAYABLE BALANCE.*?\$([\d,]+\.\d{2})/i.exec(l); if(pay) out.stated.payable = gmoney(pay[1]);
     const cr  = /Credits\/Adjustments\s*\(\$([\d,]+\.\d{2})\)/i.exec(l); if(cr) out.stated.credits = -gmoney(cr[1]);
+    /* The summary page draws a label and its figure as separate lines, and not
+       always in that order, so a single-line regex finds neither. Look at the
+       neighbours. Getting this wrong is not cosmetic: without stated totals
+       there is nothing to check the parse against, and a short read passes as
+       clean — which is exactly what it did before this. */
+    const near = () => [lines[i-1], l, lines[i+1]].filter(Boolean).join('  ');
+    const tot = /Total for current month\s+(\d+)\s+\$([\d,]+\.\d{2})/i.exec(l)
+             || /Total for current month/i.test(l) && /(\d+)\s+\$([\d,]+\.\d{2})/.exec(near());
+    if(tot){ out.stated.lives = +tot[1]; out.stated.gross = gmoney(tot[2]); }
+    if(/TOTAL PAYABLE BALANCE/i.test(l) && out.stated.payable == null){
+      const m = /\$([\d,]+\.\d{2})/.exec(near());
+      if(m) out.stated.payable = gmoney(m[1]);
+    }
 
     // tier headings, with or without their count appended
     const th = TIERS.find(t => l.trim().replace(/\s+/g,'') .startsWith(t.replace(/\s+/g,'')));
@@ -942,6 +1088,11 @@ function parseHealthInvoice(lines){
   const seen = new Set();
   out.members = out.members.filter(m => { const k = m.empId+'|'+m.name; if(seen.has(k)) return false; seen.add(k); return true; });
   TIERS.forEach(t => { out.tiers[t] = Object.assign({}, out.tiers[t], { counted: out.members.filter(m=>m.tier===t).length }); });
+  /* The invoice prints its tier counts on the summary page, and those parse
+     cleanly. Their sum is the membership it is claiming — a firmer figure than
+     the one-line total, which the layout keeps splitting. */
+  const tierSum = TIERS.reduce((s,t) => s + ((out.tiers[t] && out.tiers[t].stated) || 0), 0);
+  if(tierSum && out.stated.lives == null) out.stated.lives = tierSum;
   out.computed = {
     lives: out.members.length,
     gross: out.members.reduce((s,m)=>s+(m.premium||0),0),
@@ -971,6 +1122,15 @@ function calibrateTiers(doc){
     }else{
       byRate[rate].forEach(m => { m.tierCertain = false; });
     }
+  });
+  /* A rate that has been claimed belongs to that tier and no other. Any member
+     at a different rate still carrying that tier got it from a section heading
+     a page break interrupted — leave it unknown rather than let it inflate a
+     count the invoice already told us. */
+  Object.keys(byRate).forEach(rate => {
+    const certain = byRate[rate].some(m => m.tierCertain);
+    if(certain) return;
+    byRate[rate].forEach(m => { if(m.tier && claimed.has(m.tier)) m.tier = null; });
   });
   TIERS.forEach(t => { doc.tiers[t] = Object.assign({}, doc.tiers[t], { counted: doc.members.filter(m=>m.tier===t).length }); });
   doc.tierAmbiguous = doc.members.some(m => m.tierCertain === false);
@@ -1140,7 +1300,8 @@ function leakage(adjustments, health){
 
 /* ══════════════ SHELL ══════════════ */
 const QUERYPAL='https://querymypolicies.netlify.app/';
-const TABS={employer:[['overview','Overview'],['billing','Billing'],['people','People'],['check','Check my month']],
+const TABS={employer:[['overview','Overview'],['billing','Billing'],['history','History'],['people','People'],['check','Check my month']],
+            employer_live:[['history','History'],['check','Check my month']],
             employee:[['mycover','My benefits']]};
 
 /* ══════════════ CHECK MY MONTH ══════════════
@@ -1306,10 +1467,16 @@ function render(){
   const tabs=TABS[as];
   if(!tabs.some(t=>t[0]===tab)) tab=tabs[0][0];
   $('nav').innerHTML=tabs.map(([k,l])=>`<a data-go="${k}" class="${tab===k?'on':''}">${l}</a>`).join('');
-  $('me').innerHTML = as==='employer'
+  $('me').innerHTML = as==='employer_live'
+    ? `<b>${esc(LIVE.name)}</b><span class="label">Employer account</span>`
+    : as==='employer'
     ? `<b>${esc(GROUP.company)}</b><span class="label">Employer account</span>`
     : `<b>${esc(ME.first+' '+ME.last)}</b><span class="label">Cert ${esc(ME.cert)}</span>`;
-  $('main').innerHTML = ({overview,billing,people,check,mycover})[tab]();
+  $('main').innerHTML = ({overview,billing,history,people,check,mycover})[tab]();
+  if(as==='employer_live' && $('barTag')){
+    $('barTag').textContent = 'YOUR ACCOUNT';
+    $('barText').textContent = 'Signed in with your company portal code. These are your months as the branch holds them.';
+  }
   const cf=$('ckFiles');
   if(cf) cf.addEventListener('change', e => { if(e.target.files.length) checkFiles([...e.target.files]); });
 }
@@ -1328,10 +1495,39 @@ function gate(){
 
 function signIn(code){
   code=(code||'').trim().toUpperCase();
-  if(code==='GROUP26'){ as='employer'; tab='overview'; authed=true; }
-  else if(code==='STAFF26'){ as='employee'; tab='mycover'; ME=GROUP.people[3]; authed=true; }
+  if(code==='GROUP26'){ LIVE=null; as='employer'; tab='overview'; authed=true; }
+  else if(code==='STAFF26'){ LIVE=null; as='employee'; tab='mycover'; ME=GROUP.people[3]; authed=true; }
+  else if(API && code){
+    /* Not a preview code — ask the branch script whose portal code it is. */
+    $('gerr').textContent='Checking…';
+    fetch(API + '?action=billing&auth=' + encodeURIComponent(code))
+      .then(r => r.json())
+      .then(d => {
+        if(d && d.ok){
+          LIVE = { gid:d.group, name:d.name || 'Your company', rows:(d.rows||[]).map(liveRow).filter(Boolean) };
+          as='employer_live'; tab='history'; authed=true; syncBar(); render();
+        } else {
+          $('gerr').textContent='That code was not recognised — check it, or ask the branch.';
+        }
+      })
+      .catch(() => { $('gerr').textContent='Could not reach the branch just now — try again in a moment.'; });
+    return;
+  }
   else { $('gerr').textContent='That code was not recognised — check it, or ask the branch.'; return; }
   syncBar(); render();
+}
+
+/* The sheet stores the month as its label; the renderer keys on an ISO first
+   of month. A row whose month cannot be read is dropped rather than shown
+   under a wrong date. */
+function liveRow(r){
+  const d = new Date(String(r.month||'') + ' 1');
+  if(isNaN(+d)) return null;
+  const iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-01';
+  return { month: iso, line: r.line || '', invoice: r.invoice || '',
+           billed: +r.billed || 0, paid: +r.paid || 0,
+           paidOn: r.paidOn || null, method: r.method || null,
+           receipt: r.receipt || null, note: r.note || '' };
 }
 function syncBar(){ document.querySelectorAll('[data-as]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.as===as))); }
 

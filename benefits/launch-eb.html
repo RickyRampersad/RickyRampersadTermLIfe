@@ -78,7 +78,11 @@
     font-size:26px;line-height:1;border-radius:50%;width:60px;height:60px;cursor:pointer}
   #sound button:hover{background:rgba(255,255,255,.18)}
   #hint{position:absolute;top:26px;right:36px;color:rgba(255,255,255,.45);font-size:24px;z-index:50;font-family:Arial,sans-serif}
-  #replay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:60}
+  /* Sits under the end card, not over it. Centred, this landed square on the
+     domain name — the one line on the screen that has to be readable. */
+  #replay{position:absolute;inset:0;display:none;align-items:flex-end;justify-content:center;
+    padding-bottom:9vh;z-index:60;pointer-events:none}
+  #replay button{pointer-events:auto}
   #replay button{font:800 40px Georgia;background:var(--gold);color:var(--navy2);border:0;border-radius:60px;
     padding:26px 70px;cursor:pointer;box-shadow:0 20px 60px rgba(0,0,0,.5)}
   .confetti{position:absolute;width:16px;height:16px;border-radius:3px;opacity:0}
