@@ -166,12 +166,13 @@
 
   <div class="card">
     <h2 style="font-size:1.05rem;color:var(--navy)">What this group should send</h2>
-    <p class="note" style="margin-top:.25rem">Drop in everything at once — each file is recognised by what is inside it,
-      not by its name.</p>
+    <p class="note" style="margin-top:.25rem">Upload one line at a time with its Add button and it is analysed as it
+      lands — or drop everything at once at the bottom. Every file is recognised by what is inside it, never by its
+      name, so a document added in the wrong place is still filed correctly and the screen says so.</p>
     <div class="docs" id="docs"></div>
     <div class="drop" id="drop" style="margin-top:1rem">
       <div class="big">📄</div>
-      <b style="font-size:14px">Drop the PDFs here, or click to choose</b>
+      <b style="font-size:14px">Or drop everything at once</b>
       <p>Nothing is sent anywhere while it is read — that happens on this machine.</p>
       <input type="file" id="files" accept="application/pdf,.pdf" multiple hidden>
     </div>
@@ -200,7 +201,7 @@
          result to it; leave it blank and the screen runs end to end without
          sending anything, which is how it is worked on.
    ═══════════════════════════════════════════════════════════════════════ */
-const API = "https://script.google.com/macros/s/AKfycbymwOLoqCxwCuXoto_GNyJwFRxpzubWZTLM-mQ-DaLBIpaapJGz8ReW59fnQFWGVE6S0A/exec";
+const API = "https://script.google.com/macros/s/AKfycbzxAl-EP_stXYGHZkkxWnei6idJ04bM5ZIUKfGxDTr-cHPH7Tt9trmAYVNPzeq9k4U56w/exec";
 const STAFF_CODE = "RRB2026";
 
 /* Managers signed in at the portal walk straight in — same hand-off the
@@ -1084,10 +1085,14 @@ function paintDocs(){
         <div><b>${esc(DOC_KINDS[k].label)}</b><small>${r ? esc(r.file) : esc(DOC_KINDS[k].hint)}</small></div>
         <span class="st">${st}</span></div>`;
     }).join('');
-    return `<div class="lineblk ${on?'':'off'}">
+    return `<div class="lineblk ${on?'':'off'}" data-line="${lk}">
       <div class="linehd"><span>${L.icon} ${esc(L.label)}</span>
-        <span class="linetot">${on ? (tot ? money(tot) : 'nothing read yet') : 'not on this account'}</span></div>
-      ${rows}</div>`;
+        <span class="linehd-right">
+          ${on ? `<button class="btn ghost addbtn" data-add="${lk}">＋ Add ${esc(L.label)} documents</button>` : ''}
+          <span class="linetot">${on ? (tot ? money(tot) : 'nothing read yet') : 'not on this account'}</span>
+        </span></div>
+      ${rows}
+      ${on ? `<div class="linedrop">…or drag this line's PDFs anywhere on this card</div>` : ''}</div>`;
   }).join('');
   paintSteps();
 }
@@ -1102,7 +1107,7 @@ function paintSteps(){
       <div class="n">Step ${n}${done[i]&&now>i+1?' ✓':''}</div><div class="t">${t}</div></div>`).join('');
 }
 
-async function take(fileList){
+async function take(fileList, hintLine){
   if(busy) return;
   busy = true;
   $('readout').innerHTML = '<p class="note" style="margin-top:.8rem">Reading…</p>';
@@ -1155,7 +1160,8 @@ async function take(fileList){
          month is measured against, which is the only way to answer "is
          everyone still on" without a database behind us. */
       const already = got[kind];
-      const mine = { file:f.name, kind, doc, ver, ok:ver.ok, b64, namesGroup };
+      const mine = { file:f.name, kind, doc, ver, ok:ver.ok, b64, namesGroup,
+                     addedUnder: hintLine || null };
       if(already && monthOf(already.doc) && monthOf(doc) && monthOf(already.doc) !== monthOf(doc)){
         const older = monthOf(already.doc) < monthOf(doc) ? already : mine;
         prior[kind] = older; got[kind] = older === already ? mine : already;
@@ -1284,6 +1290,12 @@ function questions(){
     if(r.ver && !r.ok) qs.push({ id:'recon-'+r.kind, kind:'blocker',
       q: DOC_KINDS[r.kind].label + ' does not agree with its own totals. It may be missing a page.',
       opts:['I will get the file again','Publish anyway, I have checked it'] });
+    if(r.ver && r.addedUnder && !LINES[r.addedUnder].docs.includes(r.kind)){
+      qs.push({ id:'misplaced-'+r.kind, kind:'check',
+        q:`${r.file} was added under ${LINES[r.addedUnder].label}, but it reads as a ${DOC_KINDS[r.kind].label.toLowerCase()} — it has been filed under ${
+           LINES[Object.keys(LINES).find(l => LINES[l].docs.includes(r.kind))].label}.`,
+        opts:['Good catch — that is where it belongs','Wrong file entirely, I will remove it'] });
+    }
     if(r.ver && r.namesGroup === false) qs.push({ id:'wronggroup-'+r.kind, kind:'blocker',
       q:`${r.file} never mentions ${group.name}. It may belong to another client — sending it would put `
        +`one group's members in front of another.`,
@@ -1426,7 +1438,29 @@ function paintPublish(){
               + (adj && adj.ok ? adj.doc.computed.net : 0)
               + (health && health.ok ? health.doc.computed.payable : 0);
   const sub = flowFor(group.id, monthKey());
-  const stateLine = sub ? ({
+  /* The journey, drawn: staff and the manager should see where a month
+     stands without reading a trail — submitted, with the approver, back
+     with staff to answer her notes, approved, sent. */
+  function flowBar(x){
+    if(!x) return '';
+    const returned = x.state === 'RETURNED';
+    const sent = x.state === 'SENT';
+    const ret = last(x, 'RETURNED'), ap = last(x, 'APPROVED');
+    const steps = [
+      { t:'Submitted', st:'done', when: x.events[0] && ago(x.events[0].at) },
+      returned
+        ? { t:'Approver reviewed', st:'done', when: ret.at && ago(ret.at) }
+        : { t:'With the approver', st: sent ? 'done' : 'now', when: sent && ap.at ? ago(ap.at) : 'waiting' },
+      ...(returned ? [{ t:'Back with staff — answer & resubmit', st:'warn', when:'now' }] : []),
+      { t:'Approved', st: sent ? 'done' : 'todo', when: sent && ap.at ? ago(ap.at) : '' },
+      { t:'Sent to client', st: sent ? 'done' : 'todo', when:'' }
+    ];
+    return `<div class="fbar">${steps.map(st => `
+      <div class="fnode ${st.st}"><span class="dot">${st.st==='done'?'✓':st.st==='warn'?'!':''}</span>
+        <span class="ft">${esc(st.t)}</span>${st.when?`<span class="fw">${esc(st.when)}</span>`:''}</div>`).join('<div class="fline"></div>')}
+    </div>`;
+  }
+  const stateLine = (sub ? flowBar(sub) : '') + (sub ? ({
     SUBMITTED:`<div class="alert a-info"><b>This month is with the administrators.</b>
       Submitted by ${esc(sub.events[0].by)} ${ago(sub.events[0].at)} — waiting to be verified.
       ${reviewLinkHtml(sub.id)}</div>`,
@@ -1435,7 +1469,7 @@ function paintPublish(){
     SENT:`<div class="alert a-ok"><b>Verified and sent.</b> Approved by ${esc(last(sub,'APPROVED').by)}
       ${ago(last(sub,'APPROVED').at)}. Submitting again sends a corrected version for review.
       ${reviewLinkHtml(sub.id)}</div>`
-  })[sub.state] || '' : '';
+  })[sub.state] || '' : '');
   $('publish').innerHTML = `<div class="card">
     <h2 style="font-size:1.05rem;color:var(--navy)">Send ${esc(group.name)} for verification</h2>
     <p class="note" style="margin-top:.25rem">Nothing goes to the client from here. An administrator checks this
@@ -1612,6 +1646,11 @@ async function publish(){
     checks: qs.map(q => ({ q:q.q, kind:q.kind,
       answer: answers[q.id] != null ? q.opts[+answers[q.id]] : null,
       note: answers['n-'+q.id] || null })),
+    /* Every adjustment item rides along by name — the approver checks each
+       termination is real and gone, not a number in a total. */
+    adjItems: (got.adjustments && got.adjustments.ok && got.adjustments.doc.items)
+      ? got.adjustments.doc.items.map(i => ({ type:i.type, name:i.name, total:i.total, periods:i.periods }))
+      : [],
     movement: Object.keys(LINES).map(k => movement(k)).find(Boolean) || null,
     arrears: Object.keys(LINES).map(k => arrears(k)).find(a => a && a.owed.length) || null,
     email: draftEmail(),
@@ -1659,6 +1698,9 @@ async function publish(){
     d.subs.push(sub); flowSave(d);
   }
   btn.textContent = 'Submitted ✓';
+  /* Repaint so the journey bar and the with-the-administrators banner appear
+     immediately, then lay the confirmation under them. */
+  paintPublish();
   $('pubout').innerHTML = `<div class="alert a-ok">
     <b>${esc(sub.monthLabel)} is in for review.</b> Send an administrator this link — they sign in,
     verify, and their approval sends it to ${esc(group.name)}.${notifiedLine}
@@ -1675,8 +1717,37 @@ $('grp').addEventListener('change', e => {
   flowRefresh().then(paintPublish);
 });
 $('mon').addEventListener('change', () => { flowRefresh().then(paintPublish); });
-$('drop').addEventListener('click', () => $('files').click());
-$('files').addEventListener('change', e => { if(e.target.files.length) take([...e.target.files]); });
+/* Each line card is its own upload space. The Add button and a drop onto
+   the card both hint which line staff MEANT — detection still decides what
+   a file actually is, and a mismatch is called out rather than obeyed. */
+let addHint = null;
+$('drop').addEventListener('click', e => {
+  /* The hidden input lives inside this zone, so the synthetic click the Add
+     buttons fire on it bubbles back here — without this guard, that wipes
+     the very hint the button just set. */
+  if(e.target && e.target.id === 'files') return;
+  addHint = null; $('files').click();
+});
+$('files').addEventListener('change', e => {
+  if(e.target.files.length) take([...e.target.files], addHint);
+  addHint = null; e.target.value = '';
+});
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-add]');
+  if(!b) return;
+  addHint = b.dataset.add;
+  $('files').click();
+});
+['dragover','dragleave','drop'].forEach(ev => document.addEventListener(ev, e => {
+  const card = e.target.closest && e.target.closest('.lineblk[data-line]');
+  if(!card || card.classList.contains('off')) return;
+  e.preventDefault();
+  card.classList.toggle('droptarget', ev !== 'drop' && ev !== 'dragleave');
+  if(ev === 'drop' && e.dataTransfer && e.dataTransfer.files.length){
+    card.classList.remove('droptarget');
+    take([...e.dataTransfer.files], card.dataset.line);
+  }
+}));
 ['dragenter','dragover'].forEach(ev => $('drop').addEventListener(ev, e => { e.preventDefault(); $('drop').classList.add('over'); }));
 ['dragleave','drop'].forEach(ev => $('drop').addEventListener(ev, e => { e.preventDefault(); $('drop').classList.remove('over'); }));
 $('drop').addEventListener('drop', e => { const f = [...(e.dataTransfer.files||[])]; if(f.length) take(f); });

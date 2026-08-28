@@ -186,7 +186,7 @@
    the script actually emails the client — this page merely asks. The
    store block is duplicated in upload.html; change both together.
    ═══════════════════════════════════════════════════════════════════════ */
-const API = "https://script.google.com/macros/s/AKfycbymwOLoqCxwCuXoto_GNyJwFRxpzubWZTLM-mQ-DaLBIpaapJGz8ReW59fnQFWGVE6S0A/exec";
+const API = "https://script.google.com/macros/s/AKfycbzxAl-EP_stXYGHZkkxWnei6idJ04bM5ZIUKfGxDTr-cHPH7Tt9trmAYVNPzeq9k4U56w/exec";
 const ADMIN_CODE = "RRB-ADMIN-2026";
 const SESSION_KEY = "rrb-review-ok";
 const HANDOFF_KEY = "rrb-signin";
@@ -309,6 +309,11 @@ function detail(x){
                                   : '<span class="noans">movement NOT fully accounted for</span>'}.</li>` : ''}
     </ul>
 
+    ${(x.adjItems && x.adjItems.length) ? `
+    <h3 style="font-size:.95rem;margin-top:1rem;color:var(--navy)">Statement of adjustments, item by item</h3>
+    <ul class="checks">${x.adjItems.map(i => `<li>${esc(i.type || 'ADJUSTMENT')} — <b>${esc(i.name)}</b>
+      · <span class="mono">${money(i.total)}</span>${i.periods > 1 ? ` · ${i.periods} periods` : ''}${
+      /TERMIN/i.test(i.type || '') ? `<br><span class="noans">→ confirm this person is off next month's invoices — a termination that keeps billing is the commonest leak.</span>` : ''}</li>`).join('')}</ul>` : ''}
     <h3 style="font-size:.95rem;margin-top:1rem;color:var(--navy)">Documents as read</h3>
     <ul class="checks">${(x.docs||[]).map(d => `<li>${esc(d.file)} — ${d.ok
       ? '<span class="ans">agrees with its own totals</span>'

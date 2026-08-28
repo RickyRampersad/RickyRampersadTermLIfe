@@ -146,10 +146,12 @@ function setup() {
   SpreadsheetApp.getActiveSpreadsheet().toast('Requests + Feedback tabs ready, 3 p.m. daily sweep installed.', 'Branch engine', 8);
 }
 
-/** One daily trigger runs both sweeps. */
+/** One daily trigger runs all the sweeps. */
 function dailySweep() {
   dailyFollowUp();
   feedbackSweep();
+  benefitsFollowUp();
+  benefitsDunning();
 }
 
 function requestsTab_() {
@@ -640,7 +642,6 @@ function benefitsSetup() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var want = {};
   want[BEN.ADMINS_SHEET]   = ['Code', 'Name', 'Role'];
-  want[BEN.GROUPS_SHEET]   = ['Group ID', 'Group Name', 'Lines', 'Billing Email', 'Portal Code'];
   want[BEN.PENDINGS_SHEET] = ['Id', 'Account', 'Source Name', 'Member', 'Line', 'Policy', 'Issued', 'Note', 'Note By', 'Note At'];
   want[BEN.SUBS_SHEET]     = ['Id', 'Group ID', 'Group Name', 'Month Key', 'Month', 'State', 'Updated', 'JSON'];
   want[BEN.BILLING_SHEET]  = ['Group ID', 'Month', 'Line', 'Invoice', 'Billed', 'Paid', 'Paid On', 'Method', 'Receipt', 'Note'];
@@ -732,12 +733,34 @@ function badminsSheet_() {
   return withPeople[0] || cands[0];
 }
 
+/* One Access tab holds everyone: branch people AND each client company's
+   plan administrator. Company decides which doors a row opens — Guardian
+   Life rows are the branch; every other company is a client whose login
+   reaches their own billing and nothing else. A client administrator must
+   never pass as a branch administrator. */
+function bIsBranch_(r) {
+  return /guardian/i.test(String(bfield_(r, ['company'])));
+}
+function bActive_(r) {
+  return !/inactive|disabled|^no$|^off$/i.test(String(bfield_(r, ['active'])).trim());
+}
+function bLoginOf_(r) {
+  return String(bfield_(r, ['login', 'log in', 'code', 'agent', 'number'])).trim().toUpperCase();
+}
+function bClientRows_(company) {
+  var want = String(company || '').trim().toUpperCase();
+  return brows_(badminsSheet_()).filter(function (r) {
+    return bActive_(r) && !bIsBranch_(r) &&
+           String(bfield_(r, ['company'])).trim().toUpperCase() === want;
+  });
+}
+
 function badmin_(code) {
   code = String(code || '').trim().toUpperCase();
   if (!code) return null;
   if (code === bprop_('BEN_ADMIN_CODE').toUpperCase()) return { name: 'Branch admin code', code: code };
   var hit = brows_(badminsSheet_()).filter(function (r) {
-    return String(bfield_(r, ['code', 'agent', 'number'])).trim().toUpperCase() === code;
+    return bActive_(r) && bIsBranch_(r) && bLoginOf_(r) === code;
   })[0];
   return hit ? { name: String(bfield_(hit, ['name'])).trim() || code, code: code } : null;
 }
@@ -759,22 +782,54 @@ function benSignin_(b) {
   if (!hasPw) return berr_('The Administrators tab has no Password column — add one, or sign in with the branch code.');
   var code = String(b.code || '').trim().toUpperCase();
   var pw   = String(b.password || '');
+  /* The login column is whatever the branch calls it — LogIn on the Access
+     tab — so resolve it the same way every other lookup does rather than
+     hunting for a "Code" header that does not exist. Passwords typed as
+     numbers come back as numbers, so compare as text both ways. */
   var hit = brows_(sh).filter(function (r) {
-    return String(bfield_(r, ['code', 'agent', 'number'])).trim().toUpperCase() === code &&
-           String(bfield_(r, ['password', 'pass', 'pw'])) === pw && pw !== '';
+    return bLoginOf_(r) === code &&
+           String(bfield_(r, ['password', 'pass', 'pw'])).trim() === pw && pw !== '';
   })[0];
-  if (!hit) return berr_('Not on the access list — check the agent number and password.');
+  if (!hit) return berr_('Not on the access list — check the login and password.');
+  if (!bActive_(hit)) return berr_('This login has been deactivated — speak to the branch.');
   var name = String(bfield_(hit, ['name'])).trim() || code;
   var roleTxt = String(bfield_(hit, ['role', 'title', 'position'])).trim() || 'Administrator';
-  /* The Role column decides what the sign-in opens. A row whose role says
-     agent gets the agent experience — no Pendings, no Review, no approvals.
-     Everything else on the Access tab — administrators, the BMA, sales
-     support — gets the administrator doors. Every sign-in lands on the
-     activity tab under the person's own name and role, so the branch can
-     see who is on and who did what. */
-  var isAgent = /agent|advisor/i.test(roleTxt) && !/manager|admin|assist|support/i.test(roleTxt);
+
+  /* A client company's administrator signs in to see their own billing —
+     nothing of the branch, nothing of anyone else's. Their months come back
+     with the sign-in so the employer portal needs exactly one call. */
+  if (!bIsBranch_(hit)) {
+    var company = String(bfield_(hit, ['company'])).trim();
+    blog_(name, code, 'SIGNIN', company, '', roleTxt + ' (client)');
+    return bok_({ role: 'client', name: name, company: company, title: roleTxt,
+                  rows: bBillingRowsFor_(company) });
+  }
+
+  /* Branch rows: the Role column decides — agents get the agent view, and
+     managers, the BMA and sales support get the administrator doors. Every
+     sign-in lands on the activity tab under the person's own name. */
+  var isAgent = /agent|advisor/i.test(roleTxt) && !/manager|admin|assist|support|branch/i.test(roleTxt);
   blog_(name, code, 'SIGNIN', '', '', roleTxt);
   return bok_({ name: name, role: isAgent ? 'agent' : 'manager', title: roleTxt });
+}
+
+function bBillingRowsFor_(company) {
+  var want = String(company || '').trim().toUpperCase();
+  return brows_(bsheet_(BEN.BILLING_SHEET)).filter(function (r) {
+    return String(bfield_(r, ['group id', 'groupid'])).trim().toUpperCase() === want;
+  }).map(function (r) {
+    return {
+      month:   String(bfield_(r, ['month'])),
+      line:    String(bfield_(r, ['line'])),
+      invoice: String(bfield_(r, ['invoice'])),
+      billed:  Number(bfield_(r, ['billed'])) || 0,
+      paid:    Number(bfield_(r, ['paid'])) || 0,
+      paidOn:  bdate_(bfield_(r, ['paid on', 'paidon'])),
+      method:  String(bfield_(r, ['method'])),
+      receipt: String(bfield_(r, ['receipt'])),
+      note:    String(bfield_(r, ['note']))
+    };
+  });
 }
 
 function blog_(by, code, did, group, month, note) {
@@ -799,6 +854,8 @@ function doGet(e) {
     if (a === 'monthflow') return benMonthflow_(e.parameter);
     if (a === 'billing')   return benBilling_(e.parameter);
     if (a === 'groups')    return benGroups_(e.parameter);
+    if (a === 'ack')       return benAck_(e.parameter);
+    if (a === 'rate')      return benRate_(e.parameter);
     if (!a) {
       if (typeof quoteDoGet_ === 'function') return quoteDoGet_();
       return ContentService.createTextOutput('Ricky Rampersad Branch engine is running.');
@@ -1007,12 +1064,9 @@ function bfolder_(groupName, monthKey) {
 
 function bsendMonth_(sub) {
   var testMode = bprop_('BEN_TEST_MODE') !== 'off';
-  var groups = brows_(bsheet_(BEN.GROUPS_SHEET));
-  var g = groups.filter(function (r) {
-    return String(bfield_(r, ['group id', 'groupid', 'id'])).trim() === sub.group.id ||
-           String(bfield_(r, ['group name', 'groupname'])).trim() === sub.group.name;
-  })[0];
-  var clientEmail = g ? String(bfield_(g, ['billing email', 'email'])).trim() : '';
+  var clientEmail = bClientRows_(sub.group.name).map(function (r) {
+    return String(bfield_(r, ['email'])).trim();
+  }).filter(function (x) { return !!x; }).join(',');
   var to = testMode ? bprop_('BEN_NOTIFY') : clientEmail;
 
   if (!to) {
@@ -1024,12 +1078,16 @@ function bsendMonth_(sub) {
   }).filter(function (x) { return !!x; });
 
   var mgrCc = bprop_('BEN_NOTIFY');
+  var ackLink = bexecUrl_() ? (bexecUrl_() + '?action=ack&id=' + encodeURIComponent(sub.id)) : '';
+  var footer = '\n\n———\n'
+    + (ackLink ? 'Please confirm receipt of this billing by opening this link:\n' + ackLink + '\n\n' : '')
+    + 'Premium is due on receipt. Cover lapses 45 days after the billing date, so kindly arrange payment early.';
   MailApp.sendEmail({
     to: to,
     cc: (!testMode && mgrCc && mgrCc !== to) ? mgrCc : undefined,
     name: BEN.FROM_NAME,
     subject: (testMode ? '[TEST — would go to ' + (clientEmail || 'no address on file') + '] ' : '') + sub.email.subject,
-    body: sub.email.body,
+    body: sub.email.body + footer,
     attachments: atts
   });
   return { sent: true, testMode: testMode,
@@ -1041,15 +1099,20 @@ function bsendMonth_(sub) {
    emails stay server-side; the page only learns whether one is on file. */
 function benGroups_(p) {
   if (!bstaff_(p.auth)) return berr_('Staff or administrators only.');
-  var groups = brows_(bsheet_(BEN.GROUPS_SHEET)).map(function (r) {
-    var lines = String(bfield_(r, ['lines'])).toLowerCase();
-    return {
-      id:   String(bfield_(r, ['group id', 'groupid', 'id'])).trim(),
-      name: String(bfield_(r, ['group name', 'groupname', 'name'])).trim(),
-      lines: ['life', 'health', 'pension'].filter(function (l) { return lines.indexOf(l) !== -1; }),
-      hasEmail: !!String(bfield_(r, ['billing email', 'email'])).trim()
-    };
-  }).filter(function (g) { return g.id && g.name; });
+  /* The book IS the Access tab: every non-Guardian company with an active
+     administrator row is a group. One row creates the group, the employer
+     login, and the billing contact at once. */
+  var seen = {}, groups = [];
+  brows_(badminsSheet_()).forEach(function (r) {
+    if (!bActive_(r) || bIsBranch_(r)) return;
+    var company = String(bfield_(r, ['company'])).trim();
+    if (!company) return;
+    var key = company.toUpperCase();
+    if (seen[key]) { if (String(bfield_(r, ['email'])).trim()) seen[key].hasEmail = true; return; }
+    seen[key] = { id: company, name: company, lines: ['life', 'health', 'pension'],
+                  hasEmail: !!String(bfield_(r, ['email'])).trim() };
+    groups.push(seen[key]);
+  });
   return bok_({ groups: groups });
 }
 
@@ -1058,28 +1121,208 @@ function benGroups_(p) {
 /* group.html asks with the group's portal code, not an admin code — a
    client may read their own months and nothing else. */
 function benBilling_(p) {
-  var groups = brows_(bsheet_(BEN.GROUPS_SHEET));
-  var g = groups.filter(function (r) {
-    return String(bfield_(r, ['portal code', 'portalcode'])).trim().toUpperCase() ===
-           String(p.auth || '').trim().toUpperCase();
-  })[0];
-  if (!g && !badmin_(p.auth)) return berr_('That code was not recognised.');
-  var gid = g ? String(bfield_(g, ['group id', 'groupid', 'id'])).trim() : String(p.group || '');
-  var gname = g ? String(bfield_(g, ['group name', 'groupname', 'name'])).trim() : '';
+  /* Client administrators get their months through sign-in now. This route
+     stays for the branch: an administrator may read any group's ledger. */
+  if (!badmin_(p.auth)) return berr_('That code was not recognised.');
+  var gid = String(p.group || '').trim();
+  return bok_({ group: gid, name: gid, rows: bBillingRowsFor_(gid) });
+}
+
+/* ── follow-up: months waiting for review do not wait quietly ──
+   Runs with the daily 3 p.m. sweep. Any submission still SUBMITTED after a
+   day re-emails the approver the list and the links, manager copied. Time
+   triggers always run the latest saved code, so pasting this file is
+   enough — no redeployment needed for the sweep. */
+function benefitsFollowUp() {
+  try {
+    var DAY = 24 * 3600 * 1000;
+    var waiting = bsubs_().filter(function (s) {
+      var ev = s.events && s.events[0] || {};
+      return s.state === 'SUBMITTED' && ev.at && (Date.now() - ev.at) > 20 * 3600 * 1000;
+    });
+    if (!waiting.length) return;
+    var approver = bprop_('BEN_APPROVER_EMAIL') || bprop_('BEN_NOTIFY');
+    if (!approver) return;
+    var mgr = bprop_('BEN_NOTIFY');
+    var lines = waiting.map(function (s) {
+      var days = Math.max(1, Math.floor((Date.now() - s.events[0].at) / DAY));
+      return '• ' + s.group.name + ' — ' + s.monthLabel + ' (waiting ' + days + ' day' + (days === 1 ? '' : 's') + ')\n  '
+        + bprop_('BEN_SITE') + 'review.html#' + s.id;
+    });
+    MailApp.sendEmail({
+      to: approver,
+      cc: (mgr && mgr !== approver) ? mgr : undefined,
+      name: BEN.FROM_NAME,
+      subject: '⏰ Waiting for review: ' + waiting.length + ' month' + (waiting.length === 1 ? '' : 's'),
+      body: 'Still waiting for a decision:\n\n' + lines.join('\n\n')
+        + '\n\nApproving sends to the client; returning goes back to staff with your reason.'
+    });
+  } catch (e) {}
+}
+
+/* ══════════════ THE COLLECTIONS EXPERIENCE ══════════════
+   Billing reaches the branch on the 25th and goes out on the 26th — the
+   approval send is email one, carrying a confirm-receipt link. Cover
+   lapses 45 days after billing, so the ladder is:
+
+     day 10 — reminder one, the invoice re-attached, if no payment
+     day 25 — reminder two
+     day 35 — final notice, naming the lapse date
+
+   Payment is what staff record on the Billing tab (the Paid column); the
+   moment any payment shows for the month, reminders stop and the client
+   gets a thank-you with a five-star rating link instead. Acknowledgement
+   and rating land on the activity tab and inside the submission's trail.
+
+   Test mode routes every one of these to the branch, never the client.
+
+   The confirm/rate links need a deployment that serves the ack and rate
+   actions — set BEN_EXEC in Script Properties to the current /exec URL.
+   Without it, emails simply omit the link; the reminder ladder itself
+   runs off the daily trigger, which always uses the latest saved code. */
+
+function bexecUrl_() {
+  var u = bprop_('BEN_EXEC');
+  if (u) return u;
+  try { return ScriptApp.getService().getUrl() || ''; } catch (e) { return ''; }
+}
+
+function bBillingPaid_(gid, monthLabel) {
   var rows = brows_(bsheet_(BEN.BILLING_SHEET)).filter(function (r) {
-    return String(bfield_(r, ['group id', 'groupid'])).trim() === gid;
-  }).map(function (r) {
-    return {
-      month:   String(bfield_(r, ['month'])),
-      line:    String(bfield_(r, ['line'])),
-      invoice: String(bfield_(r, ['invoice'])),
-      billed:  Number(bfield_(r, ['billed'])) || 0,
-      paid:    Number(bfield_(r, ['paid'])) || 0,
-      paidOn:  bdate_(bfield_(r, ['paid on', 'paidon'])),
-      method:  String(bfield_(r, ['method'])),
-      receipt: String(bfield_(r, ['receipt'])),
-      note:    String(bfield_(r, ['note']))
-    };
+    return String(bfield_(r, ['group id', 'groupid'])).trim() === gid &&
+           String(bfield_(r, ['month'])).trim() === String(monthLabel).trim();
   });
-  return bok_({ group: gid, name: gname, rows: rows });
+  var billed = 0, paid = 0;
+  rows.forEach(function (r) {
+    billed += Number(bfield_(r, ['billed'])) || 0;
+    paid   += Number(bfield_(r, ['paid'])) || 0;
+  });
+  return { billed: billed, paid: paid };
+}
+
+function benefitsDunning() {
+  try {
+    var DAY = 24 * 3600 * 1000;
+    var testMode = bprop_('BEN_TEST_MODE') !== 'off';
+    bsubs_().forEach(function (sub) {
+      if (sub.state !== 'SENT') return;
+      var sentEv = null;
+      (sub.events || []).forEach(function (e) { if (e.did === 'SENT') sentEv = e; });
+      if (!sentEv || !sentEv.at) return;
+      var d = Math.floor((Date.now() - sentEv.at) / DAY);
+      sub.dunning = sub.dunning || {};
+
+      /* who this month's mail goes to — the plan administrators on Access */
+      var clientEmail = bClientRows_(sub.group.name).map(function (r) {
+        return String(bfield_(r, ['email'])).trim();
+      }).filter(function (x) { return !!x; }).join(',');
+      var to = testMode ? bprop_('BEN_NOTIFY') : clientEmail;
+      if (!to) return;
+      var pfx = testMode ? '[TEST — would go to ' + (clientEmail || 'no address on file') + '] ' : '';
+
+      var pay = bBillingPaid_(sub.group.id, sub.monthLabel);
+
+      /* payment ends the ladder with thanks and a rating ask */
+      if (pay.paid > 0) {
+        if (!sub.dunning.thanked) {
+          var stars = '';
+          if (bexecUrl_()) {
+            for (var n = 1; n <= 5; n++) {
+              stars += n + ' star' + (n === 1 ? '' : 's') + ': '
+                + bexecUrl_() + '?action=rate&id=' + encodeURIComponent(sub.id) + '&stars=' + n + '\n';
+            }
+          }
+          MailApp.sendEmail({
+            to: to, name: BEN.FROM_NAME,
+            subject: pfx + 'Thank you — ' + sub.monthLabel + ' premium received (' + sub.group.name + ')',
+            body: 'Good day,\n\nYour ' + sub.monthLabel + ' premium has been received and applied. '
+              + 'Thank you for settling promptly — your cover continues without interruption.\n\n'
+              + (stars ? 'How did we do this month? One tap:\n' + stars + '\n' : '')
+              + 'Kind regards,\nRicky Rampersad\nGuardian Life of the Caribbean'
+          });
+          sub.dunning.thanked = Date.now();
+          bwrite_(sub);
+          blog_('System', '', 'THANKED', sub.group.name, sub.monthLabel, 'payment received');
+        }
+        return;
+      }
+
+      /* no payment: the ladder */
+      var atts = (sub._fileIds || []).map(function (id) {
+        try { return DriveApp.getFileById(id).getBlob(); } catch (e) { return null; }
+      }).filter(function (x) { return !!x; });
+      var ackLine = (!sub.dunning.ack && bexecUrl_())
+        ? '\n\nIf you have received this billing, please confirm with one click:\n'
+          + bexecUrl_() + '?action=ack&id=' + encodeURIComponent(sub.id)
+        : '';
+      var lapseInDays = 45 - d;
+
+      function remind(key, subjectTag, bodyText, withAtts) {
+        if (sub.dunning[key]) return;
+        MailApp.sendEmail({
+          to: to, name: BEN.FROM_NAME,
+          subject: pfx + subjectTag + ' — ' + sub.group.name + ' · ' + sub.monthLabel,
+          body: bodyText + ackLine + '\n\nKind regards,\nRicky Rampersad\nGuardian Life of the Caribbean',
+          attachments: withAtts ? atts : undefined
+        });
+        sub.dunning[key] = Date.now();
+        bwrite_(sub);
+        blog_('System', '', 'REMINDER', sub.group.name, sub.monthLabel, subjectTag);
+      }
+
+      if (d >= 35) {
+        remind('r35', 'FINAL NOTICE: premium unpaid',
+          'Good day,\n\nOur records show the ' + sub.monthLabel + ' premium remains unpaid '
+          + d + ' days after billing. Cover lapses 45 days after the billing date'
+          + (lapseInDays > 0 ? ' — that is ' + lapseInDays + ' day' + (lapseInDays === 1 ? '' : 's') + ' from now.' : '.')
+          + '\n\nIf payment has already been made, please send us the payment reference and we will have it applied immediately — this usually resolves it the same day.', true);
+      } else if (d >= 25) {
+        remind('r25', 'Second reminder: premium outstanding',
+          'Good day,\n\nA further reminder that the ' + sub.monthLabel + ' premium is still showing as unpaid. '
+          + 'The original billing is attached again for ease of reference.\n\n'
+          + 'If payment has been made, reply with the reference and we will have it applied.', true);
+      } else if (d >= 10) {
+        remind('r10', 'Reminder: premium outstanding',
+          'Good day,\n\nWe have not yet received payment or a response for the ' + sub.monthLabel
+          + ' billing sent on ' + Utilities.formatDate(new Date(sentEv.at), Session.getScriptTimeZone(), 'dd MMM yyyy')
+          + '. The billing is attached again.\n\nIf it has been settled, reply with the payment reference and we will match it.', true);
+      }
+    });
+  } catch (e) {}
+}
+
+/* one-click receipt confirmation from the billing email */
+function benAck_(p) {
+  var sub = bsubs_().filter(function (s) { return s.id === String(p.id || ''); })[0];
+  if (!sub) return HtmlService.createHtmlOutput('<h2>Link not recognised</h2><p>Please contact the branch.</p>');
+  sub.dunning = sub.dunning || {};
+  if (!sub.dunning.ack) {
+    sub.dunning.ack = Date.now();
+    bwrite_(sub);
+    blog_('Client', '', 'ACKNOWLEDGED', sub.group.name, sub.monthLabel, 'billing receipt confirmed');
+  }
+  return HtmlService.createHtmlOutput(
+    '<div style="font-family:Georgia,serif;max-width:480px;margin:14vh auto;text-align:center">'
+    + '<h2 style="color:#0B3C46">Receipt confirmed — thank you</h2>'
+    + '<p>' + sub.group.name + ' · ' + sub.monthLabel + '</p>'
+    + '<p style="color:#68747f">The branch has been notified. Nothing more is needed from you.</p></div>');
+}
+
+/* the five-star tap from the thank-you email */
+function benRate_(p) {
+  var sub = bsubs_().filter(function (s) { return s.id === String(p.id || ''); })[0];
+  var stars = Math.max(1, Math.min(5, Number(p.stars) || 0));
+  if (!sub || !stars) return HtmlService.createHtmlOutput('<h2>Link not recognised</h2>');
+  sub.dunning = sub.dunning || {};
+  if (!sub.dunning.rated) {
+    sub.dunning.rated = stars;
+    bwrite_(sub);
+    blog_('Client', '', 'RATED', sub.group.name, sub.monthLabel, stars + ' star' + (stars === 1 ? '' : 's'));
+  }
+  var shown = '★★★★★'.slice(0, sub.dunning.rated) + '☆☆☆☆☆'.slice(0, 5 - sub.dunning.rated);
+  return HtmlService.createHtmlOutput(
+    '<div style="font-family:Georgia,serif;max-width:480px;margin:14vh auto;text-align:center">'
+    + '<h2 style="color:#0B3C46">Thank you!</h2>'
+    + '<p style="font-size:34px;letter-spacing:.15em;color:#E8A020">' + shown + '</p>'
+    + '<p style="color:#68747f">Your rating reached the branch. We appreciate your business.</p></div>');
 }
