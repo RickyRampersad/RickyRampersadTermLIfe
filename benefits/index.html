@@ -2198,10 +2198,22 @@ document.addEventListener('click',e=>{
             .then(r=>r.json())
             .then(d=>{
               if(d && d.ok){
-                role='manager';
-                ME.manager={name:d.name,sub:(d.title||'Administrator')+' · branch sheet',role:'manager'};
+                /* The sheet's Role column travels with the sign-in: agents
+                   get the agent view, everyone else the administrator's.
+                   The hand-off carries the same role, so the admin pages
+                   stay shut to an agent who browses to them directly. */
+                if(d.role === 'agent'){
+                  role='agent';
+                  let a=AGENTS.find(x=>x.name===d.name);
+                  if(!a){ a={id:'sheet'+num,name:d.name}; AGENTS.push(a); }
+                  ME.agent={name:d.name,sub:(d.title||'Agent')+' · branch sheet',role:'agent',id:a.id};
+                }else{
+                  role='manager';
+                  ME.manager={name:d.name,sub:(d.title||'Administrator')+' · branch sheet',role:'manager'};
+                }
                 try{ localStorage.setItem('rrb-signin',
-                  JSON.stringify({ code:num, name:d.name, role:'manager', title:d.title||'Administrator', at:Date.now() })); }catch(e){}
+                  JSON.stringify({ code:num, name:d.name, role:d.role==='agent'?'agent':'manager',
+                                   title:d.title||'Administrator', at:Date.now() })); }catch(e){}
                 authed=true; screen='home'; syncRole(); render();
               } else if(err){
                 err.textContent=(d && d.error) || 'Not recognised — check the agent number and password.';

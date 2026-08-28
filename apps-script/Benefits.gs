@@ -201,11 +201,18 @@ function benSignin_(b) {
     return String(bfield_(r, ['code', 'agent', 'number'])).trim().toUpperCase() === code &&
            String(bfield_(r, ['password', 'pass', 'pw'])) === pw && pw !== '';
   })[0];
-  if (!hit) return berr_('Not on the administrators list — check the agent number and password.');
+  if (!hit) return berr_('Not on the access list — check the agent number and password.');
   var name = String(bfield_(hit, ['name'])).trim() || code;
   var roleTxt = String(bfield_(hit, ['role', 'title', 'position'])).trim() || 'Administrator';
+  /* The Role column decides what the sign-in opens. A row whose role says
+     agent gets the agent experience — no Pendings, no Review, no approvals.
+     Everything else on the Access tab — administrators, the BMA, sales
+     support — gets the administrator doors. Every sign-in lands on the
+     activity tab under the person's own name and role, so the branch can
+     see who is on and who did what. */
+  var isAgent = /agent|advisor/i.test(roleTxt) && !/manager|admin|assist|support/i.test(roleTxt);
   blog_(name, code, 'SIGNIN', '', '', roleTxt);
-  return bok_({ name: name, role: 'manager', title: roleTxt });
+  return bok_({ name: name, role: isAgent ? 'agent' : 'manager', title: roleTxt });
 }
 
 function blog_(by, code, did, group, month, note) {
