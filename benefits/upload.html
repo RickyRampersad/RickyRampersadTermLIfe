@@ -1098,7 +1098,11 @@ function paintDocs(){
 }
 
 function paintSteps(){
-  const exp = expected(), have = exp.filter(k => got[k] && got[k].ok).length;
+  /* Progress follows the documents that ARRIVED, not only the ones that
+     reconciled. A month whose documents do not add up is exactly the month
+     an administrator most needs to see — leaving staff stuck on step 1 with
+     no way forward was the opposite of the point. */
+  const exp = expected(), have = exp.filter(k => got[k]).length;
   const qs = questions(), answered = qs.filter(q => answers[q.id]).length;
   const done = [ true, have>0, have===exp.length, qs.length===0 || answered===qs.length ];
   const now  = have===0 ? 1 : have<exp.length ? 2 : (answered<qs.length ? 3 : 4);
@@ -1428,8 +1432,10 @@ function monthKey(){
 function paintPublish(){
   const qs = questions(), unanswered = qs.filter(q => answers[q.id] == null);
   const blocked = qs.some(q => q.kind==='blocker' && answers[q.id] !== '1' && q.id.startsWith('recon'));
-  const have = Object.values(got).filter(r => r.ok).length;
-  if(!have){ $('publish').innerHTML = ''; return; }
+  const read = Object.values(got).filter(r => r.ver);
+  const have = read.filter(r => r.ok).length;
+  const shaky = read.filter(r => !r.ok);
+  if(!read.length){ $('publish').innerHTML = ''; return; }
   const life = got.life, health = got.health, adj = got.adjustments;
   /* What the client owes is the life billing plus the health invoice plus the
      adjustments — the statement is a credit note, so leaving it out overstates
@@ -1475,9 +1481,17 @@ function paintPublish(){
     <p class="note" style="margin-top:.25rem">Nothing goes to the client from here. An administrator checks this
       month first, and it is their approval that sends it.</p>
     ${stateLine}
+    ${shaky.length ? `<div class="alert a-bad">
+      <b>${shaky.length === 1 ? 'One document does not add up' : shaky.length + ' documents do not add up'}
+      against ${shaky.length === 1 ? 'its' : 'their'} own printed totals</b> —
+      ${shaky.map(r => esc(r.file)).join(', ')}.
+      Nothing read from ${shaky.length === 1 ? 'it' : 'them'} can be trusted, so no figure from
+      ${shaky.length === 1 ? 'that line' : 'those lines'} is quoted to the client. You can still send this for
+      review: the administrator sees exactly this, and decides whether to chase Guardian for a clean copy.</div>` : ''}
     <div class="alert a-info">
-      <b>What the administrator will see:</b> ${have} document${have>1?'s':''} for ${esc(monthName())},
-      ${total ? money(total)+' payable' : 'the month\'s figures'}, every check and how you answered it,
+      <b>What the administrator will see:</b> ${read.length} document${read.length>1?'s':''} for ${esc(monthName())},
+      ${have ? (total ? money(total)+' from the lines that reconcile' : 'the figures that reconcile')
+             : 'no trustworthy figures yet'}, every check and how you answered it,
       and the email exactly as it will go out.
     </div>
     ${unanswered.length ? `<div class="alert a-warn">${unanswered.length} question${unanswered.length>1?'s':''}
@@ -1524,7 +1538,14 @@ function paintPublish(){
    employer reading this on a phone wants the number, the attachments, and
    anything that needs them to act. */
 function draftEmail(){
-  const lines = Object.keys(LINES).filter(k => group.lines.includes(k) && lineTotal(k));
+  /* A line is only quoted when the documents behind it agreed with their own
+     totals. Billing a client a figure the screen could not verify — or worse,
+     a zero it read from a document it failed on — is the one mistake this
+     whole process exists to prevent. */
+  const lineOk = k => LINES[k].docs.some(d => got[d] && got[d].ok);
+  const lines = Object.keys(LINES).filter(k => group.lines.includes(k) && lineOk(k) && lineTotal(k));
+  const unverified = Object.keys(LINES).filter(k => group.lines.includes(k) && !lineOk(k)
+    && LINES[k].docs.some(d => got[d]));
   const total = lines.reduce((s,k) => s + lineTotal(k), 0);
   const m = monthName();
   const atts = Object.values(got).filter(r => r.ver && r.ok).map(r => r.file);
@@ -1532,7 +1553,9 @@ function draftEmail(){
   const body = [];
   body.push(`Good day,`, ``, `Your ${m} group billing is attached and is also on your portal.`, ``);
   lines.forEach(k => body.push(`  ${LINES[k].label}   ${money(lineTotal(k))}`));
-  if(lines.length > 1) body.push(`  ${''.padEnd(0)}Total   ${money(total)}`);
+  unverified.forEach(k => body.push(`  ${LINES[k].label}   see the attached billing`));
+  if(lines.length > 1) body.push(`  ${''.padEnd(0)}Total   ${money(total)}${
+    unverified.length ? '   (the lines above only)' : ''}`);
   body.push(``);
 
   /* An invoice carrying arrears asks for more than this month, and the figure
