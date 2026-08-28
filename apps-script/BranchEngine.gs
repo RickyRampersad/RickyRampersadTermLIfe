@@ -49,22 +49,22 @@
 // ── Switches ───────────────────────────────────────────────────────────────
 // Branch sales support — copied on request alerts, enrollment alerts and the
 // census email to Guardian. Blank = off. (Armed 4 Aug 2026.)
-const CC_SALES_SUPPORT = 'rickyrampersadsalessupport@myguardiangroup.com';
+var CC_SALES_SUPPORT = 'rickyrampersadsalessupport@myguardiangroup.com';
 
 // Where new-request alerts go. Blank = the Google account that owns this
 // script (you). You can also put your Guardian address here.
-const BRANCH_EMAIL = '';
+var BRANCH_EMAIL = '';
 
 // ── Census straight to Guardian (ARMED 4 Aug 2026 on Ricky's instruction) ──
 // Every submission that includes a census emails it to these addresses
 // immediately. To PAUSE (e.g. while testing): make GUARDIAN_CENSUS_TO = ''
 // then Deploy → Manage deployments → New version.
-const GUARDIAN_CENSUS_TO = 'EBCustomercare@myguardiangroup.com, gia.taskrequest@myguardiangroup.com';
-const GUARDIAN_CENSUS_CC = 'ricardo.seereeram@myguardiangroup.com';
+var GUARDIAN_CENSUS_TO = 'EBCustomercare@myguardiangroup.com, gia.taskrequest@myguardiangroup.com';
+var GUARDIAN_CENSUS_CC = 'ricardo.seereeram@myguardiangroup.com';
 
 // When an AGENT enters a request on a client's behalf, the branch alert
 // CCs that agent automatically (matched by the name recorded on the request).
-const AGENT_EMAILS = {
+var AGENT_EMAILS = {
   'ricky rampersad':      'ricky.rampersad@myguardiangroup.com',
   'narissa mohammed':     'narissa.mohammed@myguardiangroup.com',
   'kerwyn ramroach':      'kerwyn.ramroach@myguardiangroup.com',
@@ -103,19 +103,19 @@ function agentEmail_(name) {
   return AGENT_EMAILS[String(name || '').trim().toLowerCase()] || '';
 }
 
-const SHEET_TAB = 'Requests';
-const FEEDBACK_TAB = 'Feedback';
-const ENROLL_TAB = 'Enrollments';
-const BRAND = 'Ricky Rampersad Branch — Employee Benefits · Guardian Life';
-const BRANCH_PHONE = '868-678-5821';
+var SHEET_TAB = 'Requests';
+var FEEDBACK_TAB = 'Feedback';
+var ENROLL_TAB = 'Enrollments';
+var BRAND = 'Ricky Rampersad Branch — Employee Benefits · Guardian Life';
+var BRANCH_PHONE = '868-678-5821';
 
 // ── Trinidad & Tobago working days ────────────────────────────────────────
-const TT_HOLIDAYS = [
+var TT_HOLIDAYS = [
   // movable, update each January:
   '2026-02-16', '2026-02-17', '2026-03-20', '2026-04-03', '2026-04-06',
   '2026-06-04', '2026-11-08',
 ];
-const TT_FIXED = [[1,1],[3,30],[5,30],[6,19],[8,1],[8,31],[9,24],[12,25],[12,26]];
+var TT_FIXED = [[1,1],[3,30],[5,30],[6,19],[8,1],[8,31],[9,24],[12,25],[12,26]];
 
 function isWorkingDay_(d) {
   const dow = d.getDay();
