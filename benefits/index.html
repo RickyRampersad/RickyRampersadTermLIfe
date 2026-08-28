@@ -2199,9 +2199,9 @@ document.addEventListener('click',e=>{
             .then(d=>{
               if(d && d.ok){
                 role='manager';
-                ME.manager={name:d.name,sub:'Administrator · branch sheet',role:'manager'};
+                ME.manager={name:d.name,sub:(d.title||'Administrator')+' · branch sheet',role:'manager'};
                 try{ localStorage.setItem('rrb-signin',
-                  JSON.stringify({ code:num, name:d.name, role:'manager', title:'Administrator', at:Date.now() })); }catch(e){}
+                  JSON.stringify({ code:num, name:d.name, role:'manager', title:d.title||'Administrator', at:Date.now() })); }catch(e){}
                 authed=true; screen='home'; syncRole(); render();
               } else if(err){
                 err.textContent=(d && d.error) || 'Not recognised — check the agent number and password.';
