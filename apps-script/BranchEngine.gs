@@ -782,9 +782,13 @@ function benSignin_(b) {
   if (!hasPw) return berr_('The Administrators tab has no Password column — add one, or sign in with the branch code.');
   var code = String(b.code || '').trim().toUpperCase();
   var pw   = String(b.password || '');
+  /* The login column is whatever the branch calls it — LogIn on the Access
+     tab — so resolve it the same way every other lookup does rather than
+     hunting for a "Code" header that does not exist. Passwords typed as
+     numbers come back as numbers, so compare as text both ways. */
   var hit = brows_(sh).filter(function (r) {
-    return String(bfield_(r, ['code', 'agent', 'number'])).trim().toUpperCase() === code &&
-           String(bfield_(r, ['password', 'pass', 'pw'])) === pw && pw !== '';
+    return bLoginOf_(r) === code &&
+           String(bfield_(r, ['password', 'pass', 'pw'])).trim() === pw && pw !== '';
   })[0];
   if (!hit) return berr_('Not on the access list — check the login and password.');
   if (!bActive_(hit)) return berr_('This login has been deactivated — speak to the branch.');
