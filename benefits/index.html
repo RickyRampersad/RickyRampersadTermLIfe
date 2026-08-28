@@ -2185,7 +2185,11 @@ document.addEventListener('click',e=>{
     const err=$('l_err');
     if(loginTab==='staff'){
       let num=(($('l_email')||{}).value||'').trim().toUpperCase();
-      if(num && !num.startsWith('A')) num='A'+num;
+      /* Agent numbers are typed without their A often enough to be worth
+         restoring — but only for a bare number. Logins on the Access tab
+         are not all agent codes (KD001, VK001), and prefixing those turned
+         Kamla's login into AKD001 and refused her. */
+      if(/^\d+$/.test(num)) num='A'+num;
       const pw=(($('l_pass')||{}).value||'').trim();
       const row=ROSTER.find(x=>x[0]===num);
       if(!row||row[2]!==pw){
