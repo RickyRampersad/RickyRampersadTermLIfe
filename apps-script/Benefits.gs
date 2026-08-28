@@ -85,6 +85,12 @@ function benefitsSetup() {
   want[BEN.ACTIVITY_SHEET] = ['At', 'By', 'Code', 'Did', 'Group', 'Month', 'Note'];
   Object.keys(want).forEach(function (name) {
     var sh = ss.getSheetByName(name);
+    if (name === BEN.ADMINS_SHEET && !sh) {
+      /* The branch may already keep its people on a tab of its own naming
+         (Access); creating an empty Administrators tab beside it would be
+         the one the resolver must then ignore. Skip if any qualifies. */
+      try { if (badminsSheet_()) return; } catch (e) {}
+    }
     if (!sh) {
       sh = ss.insertSheet(name);
       sh.getRange(1, 1, 1, want[name].length).setValues([want[name]]).setFontWeight('bold');
@@ -141,11 +147,34 @@ function bfield_(o, names) {
 }
 
 /* ── who is asking ── */
+
+/* The branch keeps its people on the tab IT named — Access — while the
+   original setup had created an empty Administrators tab beside it. Reading
+   the empty one would lock every real administrator out, so resolve to
+   whichever admin-looking tab actually holds people. Recognised names:
+   Administrators, Admins, Access (and the odd spelling). BEN_ADMINS_TAB in
+   Script Properties overrides everything if the branch renames again. */
+function badminsSheet_() {
+  var ss = bss_();
+  var override = bprop_('BEN_ADMINS_TAB');
+  if (override) {
+    var o = ss.getSheetByName(override);
+    if (o) return o;
+  }
+  var ok = { administrators:1, administrator:1, admins:1, admin:1, access:1, acess:1, accesstab:1 };
+  var cands = ss.getSheets().filter(function (sh) {
+    return ok[String(sh.getName()).toLowerCase().replace(/[^a-z]/g, '')] === 1;
+  });
+  if (!cands.length) throw new Error('No Administrators or Access tab found — run benefitsSetup() once.');
+  var withPeople = cands.filter(function (sh) { return sh.getLastRow() > 1; });
+  return withPeople[0] || cands[0];
+}
+
 function badmin_(code) {
   code = String(code || '').trim().toUpperCase();
   if (!code) return null;
   if (code === bprop_('BEN_ADMIN_CODE').toUpperCase()) return { name: 'Branch admin code', code: code };
-  var hit = brows_(bsheet_(BEN.ADMINS_SHEET)).filter(function (r) {
+  var hit = brows_(badminsSheet_()).filter(function (r) {
     return String(bfield_(r, ['code', 'agent', 'number'])).trim().toUpperCase() === code;
   })[0];
   return hit ? { name: String(bfield_(hit, ['name'])).trim() || code, code: code } : null;
@@ -161,7 +190,7 @@ function bstaff_(code) {
    never sits in a URL. If the tab has no password column, this refuses
    rather than quietly accepting a number alone. */
 function benSignin_(b) {
-  var sh = bsheet_(BEN.ADMINS_SHEET);
+  var sh = badminsSheet_();
   var head = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0]
     .map(function (h) { return String(h).toLowerCase(); });
   var hasPw = head.some(function (h) { return h.indexOf('pass') !== -1 || h === 'pw'; });
@@ -172,10 +201,18 @@ function benSignin_(b) {
     return String(bfield_(r, ['code', 'agent', 'number'])).trim().toUpperCase() === code &&
            String(bfield_(r, ['password', 'pass', 'pw'])) === pw && pw !== '';
   })[0];
-  if (!hit) return berr_('Not on the administrators list — check the agent number and password.');
+  if (!hit) return berr_('Not on the access list — check the agent number and password.');
   var name = String(bfield_(hit, ['name'])).trim() || code;
-  blog_(name, code, 'SIGNIN', '', '', '');
-  return bok_({ name: name, role: 'manager' });
+  var roleTxt = String(bfield_(hit, ['role', 'title', 'position'])).trim() || 'Administrator';
+  /* The Role column decides what the sign-in opens. A row whose role says
+     agent gets the agent experience — no Pendings, no Review, no approvals.
+     Everything else on the Access tab — administrators, the BMA, sales
+     support — gets the administrator doors. Every sign-in lands on the
+     activity tab under the person's own name and role, so the branch can
+     see who is on and who did what. */
+  var isAgent = /agent|advisor/i.test(roleTxt) && !/manager|admin|assist|support/i.test(roleTxt);
+  blog_(name, code, 'SIGNIN', '', '', roleTxt);
+  return bok_({ name: name, role: isAgent ? 'agent' : 'manager', title: roleTxt });
 }
 
 function blog_(by, code, did, group, month, note) {

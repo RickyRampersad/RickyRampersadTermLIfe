@@ -292,7 +292,7 @@ dl.kv dd{margin:0;font-size:14px}
 /* Administrators the branch maintains on its sheet sign in through the
    branch script — agent number and the password kept THERE, checked
    server-side. The roster below stays for the demo/preview people. */
-const BRANCH_API = "https://script.google.com/macros/s/AKfycbyMb0fwB6_k2WTLHQT6axejY8wNOpDYNHpvTfBbF-Tk5MRcMgyudC2KHxU8XZOGGfNUVQ/exec";
+const BRANCH_API = "https://script.google.com/macros/s/AKfycbymwOLoqCxwCuXoto_GNyJwFRxpzubWZTLM-mQ-DaLBIpaapJGz8ReW59fnQFWGVE6S0A/exec";
 const ROSTER=[
  ['A00427','Ricky Rampersad','1','manager','Ricky Rampersad','Branch Manager'],
  ['A01066','Narissa Mohammed','2','agent','Ricky Rampersad','Agent'],
@@ -2198,10 +2198,22 @@ document.addEventListener('click',e=>{
             .then(r=>r.json())
             .then(d=>{
               if(d && d.ok){
-                role='manager';
-                ME.manager={name:d.name,sub:'Administrator · branch sheet',role:'manager'};
+                /* The sheet's Role column travels with the sign-in: agents
+                   get the agent view, everyone else the administrator's.
+                   The hand-off carries the same role, so the admin pages
+                   stay shut to an agent who browses to them directly. */
+                if(d.role === 'agent'){
+                  role='agent';
+                  let a=AGENTS.find(x=>x.name===d.name);
+                  if(!a){ a={id:'sheet'+num,name:d.name}; AGENTS.push(a); }
+                  ME.agent={name:d.name,sub:(d.title||'Agent')+' · branch sheet',role:'agent',id:a.id};
+                }else{
+                  role='manager';
+                  ME.manager={name:d.name,sub:(d.title||'Administrator')+' · branch sheet',role:'manager'};
+                }
                 try{ localStorage.setItem('rrb-signin',
-                  JSON.stringify({ code:num, name:d.name, role:'manager', title:'Administrator', at:Date.now() })); }catch(e){}
+                  JSON.stringify({ code:num, name:d.name, role:d.role==='agent'?'agent':'manager',
+                                   title:d.title||'Administrator', at:Date.now() })); }catch(e){}
                 authed=true; screen='home'; syncRole(); render();
               } else if(err){
                 err.textContent=(d && d.error) || 'Not recognised — check the agent number and password.';
