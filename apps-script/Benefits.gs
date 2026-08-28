@@ -96,6 +96,10 @@ function benefitsSetup() {
   if (!p.getProperty('BEN_STAFF_CODE')) p.setProperty('BEN_STAFF_CODE', 'RRB2026');
   if (!p.getProperty('BEN_TEST_MODE'))  p.setProperty('BEN_TEST_MODE', 'on');
   if (!p.getProperty('BEN_NOTIFY'))     p.setProperty('BEN_NOTIFY', Session.getEffectiveUser().getEmail());
+  /* Who verifies. Submissions are emailed to the approver with the review
+     link, with the branch manager copied. Blank = the manager reviews. */
+  if (!p.getProperty('BEN_APPROVER_EMAIL')) p.setProperty('BEN_APPROVER_EMAIL', '');
+  if (!p.getProperty('BEN_SITE')) p.setProperty('BEN_SITE', 'https://rickyrampersadbranch.com/benefits/');
 }
 
 /* ============================ plumbing ============================ */
@@ -309,7 +313,32 @@ function benSubmitMonth_(b) {
                 sub.state, new Date(), JSON.stringify(sub)]);
   var ev = sub.events && sub.events[sub.events.length - 1];
   blog_(ev ? ev.by : who.name, who.code, 'SUBMITTED', sub.group.name, sub.monthLabel, '');
-  return bok_({ id: sub.id });
+
+  /* The approver hears about it the moment it lands — no chasing staff for
+     links. The branch manager is copied so nothing waits unseen. */
+  var notified = '';
+  try {
+    var approver = bprop_('BEN_APPROVER_EMAIL') || bprop_('BEN_NOTIFY');
+    if (approver) {
+      var ccMgr = bprop_('BEN_NOTIFY');
+      var link = bprop_('BEN_SITE') + 'review.html#' + sub.id;
+      var total = 0;
+      Object.keys(sub.lineTotals || {}).forEach(function (k) { total += sub.lineTotals[k]; });
+      MailApp.sendEmail({
+        to: approver,
+        cc: (ccMgr && ccMgr !== approver) ? ccMgr : undefined,
+        name: BEN.FROM_NAME,
+        subject: 'For review: ' + sub.group.name + ' — ' + sub.monthLabel,
+        body: (ev ? ev.by : who.name) + ' submitted ' + sub.group.name + ' for ' + sub.monthLabel + '.\n\n'
+          + 'This month: TT$' + total.toFixed(2)
+          + (sub.arrears && sub.arrears.balance ? '\nPayable balance incl. arrears: TT$' + Number(sub.arrears.balance).toFixed(2) : '')
+          + '\n\nReview and decide here (sign in as an administrator):\n' + link
+          + '\n\nApproving sends it to the client; returning it sends it back to staff with your reason.'
+      });
+      notified = approver;
+    }
+  } catch (mailErr) {}
+  return bok_({ id: sub.id, notified: notified });
 }
 
 function benReviewMonth_(b) {
@@ -395,8 +424,10 @@ function bsendMonth_(sub) {
     try { return DriveApp.getFileById(id).getBlob(); } catch (e) { return null; }
   }).filter(function (x) { return !!x; });
 
+  var mgrCc = bprop_('BEN_NOTIFY');
   MailApp.sendEmail({
     to: to,
+    cc: (!testMode && mgrCc && mgrCc !== to) ? mgrCc : undefined,
     name: BEN.FROM_NAME,
     subject: (testMode ? '[TEST — would go to ' + (clientEmail || 'no address on file') + '] ' : '') + sub.email.subject,
     body: sub.email.body,

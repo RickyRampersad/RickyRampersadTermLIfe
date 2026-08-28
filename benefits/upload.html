@@ -1634,6 +1634,7 @@ async function publish(){
     sub.events = existing.events.concat(sub.events);
   }
 
+  let notifiedLine = '';
   if(API){
     /* The script is the store — nothing is trusted until it says so. */
     let ok = false, why = '';
@@ -1644,6 +1645,7 @@ async function publish(){
             .map(x => ({ name:x.file, b64:x.b64, type:'application/pdf' })) }) });
       const d = await r.json();
       ok = d && d.ok; why = (d && d.error) || '';
+      if(ok && d.notified) notifiedLine = `<br>The reviewing administrator has been emailed this link.`;
     }catch(e){ why = 'Could not reach the branch script.'; }
     if(!ok){
       btn.textContent = 'Submit for review'; btn.disabled = false;
@@ -1659,7 +1661,7 @@ async function publish(){
   btn.textContent = 'Submitted ✓';
   $('pubout').innerHTML = `<div class="alert a-ok">
     <b>${esc(sub.monthLabel)} is in for review.</b> Send an administrator this link — they sign in,
-    verify, and their approval sends it to ${esc(group.name)}.
+    verify, and their approval sends it to ${esc(group.name)}.${notifiedLine}
     ${reviewLinkHtml(sub.id)}
     ${API ? '' : '<br><span class="note">Test run — everything stayed on this machine.</span>'}</div>`;
 }
