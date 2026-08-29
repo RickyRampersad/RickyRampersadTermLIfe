@@ -669,6 +669,10 @@ function benefitsSetup() {
      link, with the branch manager copied. Blank = the manager reviews. */
   if (!p.getProperty('BEN_APPROVER_EMAIL')) p.setProperty('BEN_APPROVER_EMAIL', '');
   if (!p.getProperty('BEN_SITE')) p.setProperty('BEN_SITE', 'https://rickyrampersadbranch.com/benefits/');
+  /* Pending applications and terminations are visible to the branch at once
+     and to employers only when this says "on" — see benGroupView_ for why
+     that switch exists rather than being on by default. */
+  if (!p.getProperty('BEN_CLIENT_PENDING')) p.setProperty('BEN_CLIENT_PENDING', 'off');
 }
 
 /* ============================ plumbing ============================ */
@@ -855,6 +859,7 @@ function doGet(e) {
     if (a === 'billing')   return benBilling_(e.parameter);
     if (a === 'groups')    return benGroups_(e.parameter);
     if (a === 'roster')    return benRoster_(e.parameter);
+    if (a === 'groupview') return benGroupView_(e.parameter);
     if (a === 'ack')       return benAck_(e.parameter);
     if (a === 'rate')      return benRate_(e.parameter);
     if (!a) {
@@ -886,6 +891,9 @@ function doPost(e) {
     if (b.action === 'submitmonth')  return benSubmitMonth_(b);
     if (b.action === 'reviewmonth')  return benReviewMonth_(b);
     if (b.action === 'sendmonth')    return benSendMonth_(b);
+    /* The employer portal posts this one: a client's password must never
+       ride in a URL, where it lands in every proxy and history list. */
+    if (b.action === 'groupview')    return benGroupView_(b);
     if (typeof quoteDoPost_ === 'function') return quoteDoPost_(e);
     return berr_('Unknown action.');
   } catch (err) { return berr_(String(err && err.message || err)); }
@@ -1222,6 +1230,29 @@ function benGroups_(p) {
    is cover that has ended, and a blank is a record nobody has maintained. */
 var BEN_INFORCE = ['Premium Paying', 'Paid up', 'RNP'];
 
+/* Waiting on somebody: an application in, not yet on cover. */
+var BEN_PENDING = ['Pending', 'Postponed', 'RFC', 'RDE', 'ANT', 'ANP', 'RDC',
+                   'Underwriting complete, Missing Settlement Reqts'];
+
+/* Finished, one way or another. Death is here because the record has ended;
+   the claim it becomes is a different process and a different department. */
+var BEN_ENDED   = ['Matured', 'Expired', 'Converted', 'Not taken', 'Rejected',
+                   'Not Proceeded With', 'Death', 'Surrendered', 'File Closed'];
+
+function bClassify_(status) {
+  var s = String(status || '').trim();
+  if (!s) return 'unknown';
+  if (BEN_INFORCE.indexOf(s) !== -1) return 'inforce';
+  if (BEN_PENDING.indexOf(s) !== -1) return 'pending';
+  if (BEN_ENDED.indexOf(s)   !== -1) return 'ended';
+  /* A status nobody has classified is not quietly an in-force policy. Say
+     unknown and let a person look — 26 different values sit in this field on
+     one account alone, several of them bare codes like "1", "E" and "X". */
+  return 'unknown';
+}
+
+var BEN_DAY = 24 * 3600 * 1000;
+
 /* A LIKE that finds the account however the book spells it. The two longest
    words in order survive LIMITED against LTD, doubled spaces and the odd
    full stop — the differences that made an exact match report honest
@@ -1234,51 +1265,152 @@ function bAcctLike_(name) {
   return '%' + (kept.length ? kept.join('%') : String(name || '').toUpperCase()) + '%';
 }
 
+/* One read of Salesforce, classified once. The staff screen and the employer
+   portal both come through here, so a member cannot be pending on one screen
+   and in force on the other — which is exactly the kind of second version of
+   the truth this whole platform exists to remove. */
+function bRosterRows_(group) {
+  if (typeof sfQuery_ !== 'function')
+    throw new Error('SalesforceSync.gs is not in this project, so the branch record could not be read.');
+  /* Filtered on ACCOUNTS_NAME__c, not the Account lookup. The lookup is
+     wrong on thousands of records across the org — 9,262 of them sit on one
+     bank's account carrying somebody else's name — and it is the name the
+     policy administration system holds that is right. */
+  var like = bAcctLike_(group).replace(/'/g, "\\'");
+  var rows = sfQuery_(
+    "SELECT Id, POLICY__c, Contact__r.Name, RecordType.DeveloperName, "
+    + "Policy_Status_Description_R__c, Policy_Status_Description__c, "
+    + "Status_Change_Date__c, Employment_Status__c, CreatedDate, LastModifiedDate "
+    + "FROM CLIENT_PORTFOLIO__c "
+    + "WHERE ACCOUNTS_NAME__c LIKE '" + like + "' "
+    + "AND RecordType.DeveloperName IN ('LIFE_GROUP','HEALTH_GROUP') "
+    + "LIMIT 2000");
+
+  var now = Date.now();
+  return rows.map(function (r) {
+    /* The same status is kept in four fields and they disagree — a picklist,
+       a text copy, a code, and a second misspelt picklist. Read the picklist
+       first and fall back to the text, which is the pair that carries
+       values. */
+    var st = r.Policy_Status_Description_R__c || r.Policy_Status_Description__c || '';
+    var created = r.CreatedDate ? new Date(r.CreatedDate).getTime() : 0;
+    return {
+      name:   (r.Contact__r && r.Contact__r.Name) || '',
+      policy: String(r.POLICY__c || ''),
+      line:   r.RecordType && r.RecordType.DeveloperName === 'HEALTH_GROUP' ? 'health' : 'life',
+      status: st,
+      state:  bClassify_(st),
+      inForce: BEN_INFORCE.indexOf(st) !== -1,
+      statusAt: r.Status_Change_Date__c || null,
+      employment: r.Employment_Status__c || '',
+      since:  created ? String(r.CreatedDate).slice(0, 10) : null,
+      days:   created ? Math.floor((now - created) / BEN_DAY) : null,
+      modified: String(r.LastModifiedDate || '').slice(0, 10)
+    };
+  }).filter(function (r) { return !!r.name; });
+}
+
 function benRoster_(p) {
   if (!bstaff_(p.auth)) return berr_('Staff or administrators only.');
   var group = String(p.group || '').trim();
   if (!group) return berr_('Which group?');
-  if (typeof sfQuery_ !== 'function')
-    return bok_({ roster: null, why: 'SalesforceSync.gs is not in this project, so the roster could not be read.' });
-
   try {
-    /* Filtered on ACCOUNTS_NAME__c, not the Account lookup. The lookup is
-       wrong on thousands of records across the org — 9,262 of them sit on
-       one bank's account carrying somebody else's name — and it is the name
-       the policy administration system holds that is right. */
-    var like = bAcctLike_(group).replace(/'/g, "\\'");
-    var rows = sfQuery_(
-      "SELECT Id, POLICY__c, Contact__r.Name, RecordType.DeveloperName, "
-      + "Policy_Status_Description_R__c, Policy_Status_Description__c, "
-      + "Status_Change_Date__c, Employment_Status__c, LastModifiedDate "
-      + "FROM CLIENT_PORTFOLIO__c "
-      + "WHERE ACCOUNTS_NAME__c LIKE '" + like + "' "
-      + "AND RecordType.DeveloperName IN ('LIFE_GROUP','HEALTH_GROUP') "
-      + "LIMIT 2000");
-
-    var out = rows.map(function (r) {
-      /* The same status is kept in four fields and they disagree — a
-         picklist, a text copy, a code, and a second misspelt picklist. Read
-         the picklist first and fall back to the text, which is the pair
-         that actually carries values. */
-      var st = r.Policy_Status_Description_R__c || r.Policy_Status_Description__c || '';
-      return {
-        name:   (r.Contact__r && r.Contact__r.Name) || '',
-        policy: String(r.POLICY__c || ''),
-        line:   r.RecordType && r.RecordType.DeveloperName === 'HEALTH_GROUP' ? 'health' : 'life',
-        status: st,
-        inForce: BEN_INFORCE.indexOf(st) !== -1,
-        statusAt: r.Status_Change_Date__c || null,
-        employment: r.Employment_Status__c || '',
-        modified: String(r.LastModifiedDate || '').slice(0, 10)
-      };
-    }).filter(function (r) { return !!r.name; });
-
-    return bok_({ roster: out, matchedOn: like, read: new Date().toISOString() });
+    return bok_({ roster: bRosterRows_(group), matchedOn: bAcctLike_(group),
+                  read: new Date().toISOString() });
   } catch (err) {
     /* A month must never be held up because Salesforce was unreachable. */
     return bok_({ roster: null, why: String(err && err.message || err) });
   }
+}
+
+/* ══════════════ WHAT AN EMPLOYER SEES ══════════════
+
+   Every group the branch manages already has a login on the Access tab, so
+   "all our groups in one portal" is not a new system — it is two more tabs
+   on the one they already sign in to. This is what fills them: their own
+   pending applications and their own terminations, read from the same
+   Salesforce records the month-end checks against.
+
+   A word about why this does not simply switch on.
+
+   Across the whole org there are NINE pending group records. Seven belong
+   to one client. The youngest was raised in July 2024 and the oldest in May
+   2023 — between two and three and a quarter years ago. Several carry a
+   placeholder where the policy number goes ("TGM - Jeanmarc Rampersad",
+   "TPG Krishna" — and that last one sits on a different member's record).
+   In the same two years, five group records changed to an ended status,
+   all for one client, four of them on the same afternoon.
+
+   Switch that straight through to employers and Bhagwansingh's signs in to
+   an application pending since May 2023. That is not transparency, it is
+   publishing our own filing.
+
+   So the branch sees this immediately and the client sees it when the
+   branch says so: BEN_CLIENT_PENDING in Script Properties, "off" until
+   somebody has looked. The staleness is reported honestly to the branch on
+   the way, because a list of things nobody has touched in two years is the
+   most useful thing this view produces first. */
+
+/* Anything older than this was not "in progress" by any reading. */
+var BEN_STALE_DAYS = 90;
+
+function bClientRow_(code, password) {
+  var sh = badminsSheet_();
+  var head = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0]
+    .map(function (h) { return String(h).toLowerCase(); });
+  if (!head.some(function (h) { return h.indexOf('pass') !== -1 || h === 'pw'; })) return null;
+  var c = String(code || '').trim().toUpperCase(), pw = String(password || '');
+  var hit = brows_(sh).filter(function (r) {
+    return bLoginOf_(r) === c &&
+           String(bfield_(r, ['password', 'pass', 'pw'])).trim() === pw && pw !== '';
+  })[0];
+  if (!hit || !bActive_(hit) || bIsBranch_(hit)) return null;
+  return hit;
+}
+
+function benGroupView_(p) {
+  /* An employer proves who they are the same way they signed in. Whatever
+     group they ask for, they get their own — the company is read off their
+     row, never off the request. */
+  var group, forBranch = false;
+  var staff = bstaff_(p.auth);
+  if (staff) { group = String(p.group || '').trim(); forBranch = true; }
+  else {
+    var row = bClientRow_(p.code, p.password);
+    if (!row) return berr_('Not on the access list — check the login and password.');
+    group = String(bfield_(row, ['company'])).trim();
+  }
+  if (!group) return berr_('That login is not attached to a company.');
+
+  if (!forBranch && bprop_('BEN_CLIENT_PENDING') !== 'on')
+    return bok_({ group: group, shown: false,
+                  why: 'The branch has not switched this on yet.' });
+
+  var rows;
+  try { rows = bRosterRows_(group); }
+  catch (err) { return bok_({ group: group, shown: false, why: String(err && err.message || err) }); }
+
+  var pick = function (state) {
+    return rows.filter(function (r) { return r.state === state; })
+      .sort(function (a, b) { return (b.days || 0) - (a.days || 0); })
+      .map(function (r) {
+        return { name: r.name, line: r.line, policy: r.policy, status: r.status,
+                 since: r.since, days: r.days, statusAt: r.statusAt, modified: r.modified,
+                 stale: (r.days != null && r.days > BEN_STALE_DAYS) };
+      });
+  };
+  var pending = pick('pending'), ended = pick('ended');
+  var counts = { life: 0, health: 0 };
+  rows.forEach(function (r) { if (r.inForce) counts[r.line]++; });
+
+  return bok_({
+    group: group, shown: true, read: new Date().toISOString(),
+    inForce: counts, pending: pending, ended: ended,
+    /* Unclassified statuses are the branch's problem, not the client's, so
+       they go back only to staff. */
+    unknown: forBranch ? rows.filter(function (r) { return r.state === 'unknown'; }).length : undefined,
+    stale: pending.filter(function (r) { return r.stale; }).length
+  });
 }
 
 /* ============================ client billing ============================ */

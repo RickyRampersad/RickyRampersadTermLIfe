@@ -1301,7 +1301,8 @@ function leakage(adjustments, health){
 /* ══════════════ SHELL ══════════════ */
 const QUERYPAL='https://querymypolicies.netlify.app/';
 const TABS={employer:[['overview','Overview'],['billing','Billing'],['history','History'],['people','People'],['check','Check my month']],
-            employer_live:[['history','History'],['check','Check my month']],
+            employer_live:[['history','History'],['pending','Pending applications'],
+                           ['leavers','Terminations'],['check','Check my month']],
             employee:[['mycover','My benefits']]};
 
 /* ══════════════ CHECK MY MONTH ══════════════
@@ -1472,13 +1473,127 @@ function render(){
     : as==='employer'
     ? `<b>${esc(GROUP.company)}</b><span class="label">Employer account</span>`
     : `<b>${esc(ME.first+' '+ME.last)}</b><span class="label">Cert ${esc(ME.cert)}</span>`;
-  $('main').innerHTML = ({overview,billing,history,people,check,mycover})[tab]();
+  $('main').innerHTML = ({overview,billing,history,people,check,mycover,pending,leavers})[tab]();
   if(as==='employer_live' && $('barTag')){
     $('barTag').textContent = 'YOUR ACCOUNT';
     $('barText').textContent = 'Signed in with your company portal code. These are your months as the branch holds them.';
   }
   const cf=$('ckFiles');
   if(cf) cf.addEventListener('change', e => { if(e.target.files.length) checkFiles([...e.target.files]); });
+}
+
+
+/* ══════════════ PENDING APPLICATIONS, AND LEAVERS ══════════════
+   Both read from the branch's own Salesforce records — the same records the
+   month-end billing is checked against, so an employer and the branch are
+   never looking at two different answers.
+
+   The honest part is the clock. A pending application's only interesting
+   fact is how long it has been pending, and an employer who cannot see that
+   has been given a list, not a status. So the age leads, and anything past
+   ninety days is called what it is instead of being coloured "in progress".
+
+   Nothing here is editable. Reporting a leaver goes through the form, which
+   reaches the department; a page that let a client change a policy status
+   would be a page that could lose somebody their cover. */
+let GV = null, GV_STATE = 'idle';   // idle | loading | ready | off | error
+let GV_WHY = '';
+
+async function loadGroupView(code, pw){
+  if(!API){ GV_STATE = 'off'; GV_WHY = 'Not connected to the branch.'; return; }
+  GV_STATE = 'loading'; if(tab==='pending'||tab==='leavers') render();
+  try{
+    const r = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'groupview', code, password: pw || '' }) });
+    const d = await r.json();
+    if(d && d.ok && d.shown){ GV = d; GV_STATE = 'ready'; }
+    else { GV_STATE = 'off'; GV_WHY = (d && (d.why || d.error)) || 'Not available yet.'; }
+  }catch(e){ GV_STATE = 'error'; GV_WHY = 'Could not reach the branch just now.'; }
+  if(tab==='pending'||tab==='leavers') render();
+}
+
+const gvAge = d => d == null ? '' : d < 1 ? 'today' : d === 1 ? '1 day'
+  : d < 60 ? d + ' days' : d < 730 ? Math.round(d/30) + ' months' : (d/365).toFixed(1) + ' years';
+
+function gvShell(title, blurb, body){
+  return `<p class="label">${esc(LIVE ? LIVE.name : GROUP.company)}</p>
+    <h1 class="page">${esc(title)}</h1>
+    <p class="note" style="margin:.3rem 0 1.2rem;max-width:62ch">${blurb}</p>${body}`;
+}
+/* The card on its own, so a view that has something else to show — the
+   Report a leaver door, which works whether or not the record loaded — can
+   place it without the page furniture around it. */
+function gvCard(){
+  if(GV_STATE === 'loading') return `<div class="card"><p class="note">Reading the branch record…</p></div>`;
+  return `<div class="card">
+    <p>${GV_STATE === 'error'
+      ? 'The branch record could not be reached just now. Your billing is unaffected — try this tab again in a moment.'
+      : 'This is not switched on for your account yet. Your branch turns it on once they have been through the records; ask them and they will.'}</p>
+    ${GV_WHY ? `<p class="note" style="margin-top:.5rem">${esc(GV_WHY)}</p>` : ''}</div>`;
+}
+function gvWaiting(title, blurb){ return gvShell(title, blurb, gvCard()); }
+
+function pending(){
+  const title = 'Pending applications';
+  const blurb = 'Members whose application is in and who are not yet on cover. Read from the branch’s '
+    + 'own records, so what you see here is what we see.';
+  if(GV_STATE !== 'ready') return gvWaiting(title, blurb);
+  const rows = GV.pending || [];
+  if(!rows.length) return gvShell(title, blurb, `<div class="card">
+    <p><b>Nothing is pending.</b> Every member on your account is either on cover or has been closed off.</p>
+    <p class="note" style="margin-top:.5rem">New applications appear here as soon as they reach us.</p></div>`);
+  const stale = rows.filter(r => r.stale);
+  return gvShell(title, blurb, `
+    <div class="stats" style="margin-bottom:1rem">
+      <div class="card"><span class="label">Waiting</span><div class="v">${rows.length}</div>
+        <div class="note">${rows.filter(r=>r.line==='life').length} life · ${rows.filter(r=>r.line==='health').length} health</div></div>
+      <div class="card"><span class="label">Longest waiting</span><div class="v">${esc(gvAge(rows[0].days))}</div>
+        <div class="note">${esc(rows[0].name)}</div></div>
+      <div class="card"><span class="label">Over 90 days</span><div class="v">${stale.length}</div>
+        <div class="note">${stale.length ? 'we are chasing these' : 'none'}</div></div>
+    </div>
+    ${stale.length ? `<div class="card" style="border-color:var(--gold);margin-bottom:1rem">
+      <b>${stale.length === 1 ? 'One application has' : stale.length + ' applications have'} been waiting more than
+      ninety days.</b> That is longer than it should take. We are going through these with Guardian, and your
+      account executive will come back to you on each one.</div>` : ''}
+    <div class="card" style="overflow-x:auto"><table><thead><tr>
+      <th>Member</th><th>Cover</th><th>Since</th><th class="r">Waiting</th><th>Where it is</th></tr></thead><tbody>
+      ${rows.map(r => `<tr>
+        <td><b>${esc(r.name)}</b>${r.policy ? `<br><span class="note mono">${esc(r.policy)}</span>` : ''}</td>
+        <td>${r.line === 'health' ? '🩺 Group Health' : '🛡 Group Life'}</td>
+        <td>${esc(r.since || '—')}</td>
+        <td class="r mono"${r.stale ? ' style="color:var(--gold);font-weight:700"' : ''}>${esc(gvAge(r.days))}</td>
+        <td>${esc(r.status || 'With Guardian')}</td></tr>`).join('')}
+    </tbody></table></div>
+    <p class="note" style="margin-top:.7rem">Read ${esc(String(GV.read||'').slice(0,10))}. A member stays on this
+      list until cover starts — at which point they appear on your next billing.</p>`);
+}
+
+function leavers(){
+  const title = 'Terminations';
+  const blurb = 'Members whose cover has ended, and where each one has reached. Report a leaver on their last '
+    + 'day and the premium stops there — leave it a month and you pay for cover nobody was using.';
+  const report = `<div class="card" style="margin-bottom:1rem">
+      <b>Somebody left?</b> Tell us on their last day.
+      <p style="margin-top:.4rem"><a class="btn" href="${QUERYPAL}" target="_blank" rel="noopener">Report a leaver →</a></p>
+      <p class="note" style="margin-top:.5rem">It reaches the department the same day, the member gets their
+        conversion offer, and the credit shows on your next billing.</p></div>`;
+  if(GV_STATE !== 'ready') return gvShell(title, blurb, report + gvCard());
+  const rows = GV.ended || [];
+  if(!rows.length) return gvShell(title, blurb, report + `<div class="card">
+    <p><b>Nothing has ended on your account.</b> Every member we hold is on cover.</p></div>`);
+  return gvShell(title, blurb, report + `
+    <div class="card" style="overflow-x:auto"><table><thead><tr>
+      <th>Member</th><th>Cover</th><th>Ended as</th><th>Recorded</th></tr></thead><tbody>
+      ${rows.map(r => `<tr>
+        <td><b>${esc(r.name)}</b>${r.policy ? `<br><span class="note mono">${esc(r.policy)}</span>` : ''}</td>
+        <td>${r.line === 'health' ? '🩺 Group Health' : '🛡 Group Life'}</td>
+        <td>${esc(r.status)}</td>
+        <td>${esc(r.statusAt || r.modified || '—')}</td></tr>`).join('')}
+    </tbody></table></div>
+    <p class="note" style="margin-top:.7rem">A termination is finished when three things are true: you have told
+      us, our record shows the cover ended, and the member is off your billing with the credit applied. The last
+      of those shows on the billing itself.</p>`);
 }
 
 function gate(){
@@ -1510,6 +1625,9 @@ function signIn(code, pw){
           LIVE = { gid:d.company, name:d.company || 'Your company',
                    admin:d.name, rows:(d.rows||[]).map(liveRow).filter(Boolean) };
           as='employer_live'; tab='history'; authed=true; syncBar(); render();
+          /* The roster is a second, slower call on purpose: Salesforce being
+             slow or down must never stand between a client and their door. */
+          loadGroupView(code, pw);
         } else if(d && d.ok){
           $('gerr').textContent='That is a branch login — staff sign in on the portal, not here.';
         } else {
