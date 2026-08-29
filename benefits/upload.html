@@ -119,6 +119,36 @@
   .step.on{border-color:var(--gold);box-shadow:inset 3px 0 0 var(--gold)}
   .step.done .n{color:var(--go)}
 
+  /* The journey a month takes, and how long it has been standing still at
+     each stop. The waiting time is the point: a billing that is late is
+     almost never late because it was hard. */
+  .fbar{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin:.9rem 0 .3rem}
+  .fnode{flex:1;min-width:132px;border:1px solid var(--line);border-radius:6px;padding:.5rem .6rem;
+    background:var(--surface);display:flex;flex-direction:column;gap:.1rem}
+  .fnode .dot{width:16px;height:16px;border-radius:50%;background:var(--surface2);color:var(--slate);
+    font-size:10px;line-height:16px;text-align:center;font-weight:700}
+  .fnode .ft{font-size:12.5px;font-weight:600;line-height:1.35}
+  .fnode .fw{font-size:11px;color:var(--slate);font-variant-numeric:tabular-nums}
+  .fnode.done .dot{background:var(--go);color:#fff}
+  .fnode.now{border-color:var(--gold);box-shadow:inset 3px 0 0 var(--gold)}
+  .fnode.now .dot{background:var(--gold);color:#fff}
+  .fnode.warn{border-color:var(--stop)} .fnode.warn .dot{background:var(--stop);color:#fff}
+  .fnode.todo{opacity:.55}
+  .fline{width:12px;align-self:center;border-top:1px solid var(--line)}
+  @media(max-width:640px){.fline{display:none}}
+
+  /* Everything in flight, across the whole book, at the top of the screen. */
+  .board{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:.7rem;margin-bottom:1rem}
+  .bcard{border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:.7rem .8rem;
+    cursor:pointer;text-align:left;font:inherit;color:inherit}
+  .bcard:hover{border-color:var(--blue)}
+  .bcard.mine{border-color:var(--gold);box-shadow:inset 3px 0 0 var(--gold)}
+  .bcard .bg{font-size:13.5px;font-weight:600;line-height:1.3}
+  .bcard .bm{font-size:11.5px;color:var(--slate)}
+  .bcard .bs{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;margin-top:.35rem}
+  .bcard .bw{font-size:11px;color:var(--slate);font-variant-numeric:tabular-nums}
+  .s-wait{color:var(--warn)} .s-you{color:var(--gold)} .s-sent{color:var(--go)} .s-stop{color:var(--stop)}
+
   .gate{max-width:420px;margin:12vh auto;background:var(--surface);border:1px solid var(--line);
     border-radius:8px;padding:2rem 1.9rem;text-align:center}
   .gate h2{font-family:var(--display);font-size:1.3rem;color:var(--navy);margin-bottom:.4rem}
@@ -152,6 +182,7 @@
 </header>
 
 <main class="stack">
+  <div id="board"></div>
   <div class="steps" id="steps"></div>
 
   <div class="card">
@@ -281,8 +312,13 @@ const LINES = {
 const DOC_KINDS = {
   life:        { line:'life',    label:'Group life billing',       hint:'The monthly schedule, one line per member.' },
   adjustments: { line:'life',    label:'Statement of adjustments', hint:'Additions and terminations since the last run.' },
-  health:      { line:'health',  label:'Group health invoice',     hint:'Members by tier, with any credits.' },
-  pension:     { line:'pension', label:'Pension schedule',         hint:'Contributions for the month.' }
+  health:      { line:'health',  label:'Group health invoice',     hint:'Members by tier, with any credits. Its adjustments are inside it, not beside it.' },
+  /* Pension is not a Guardian print run. The schedule comes out of Salesforce,
+     which means the figures already exist as data on our own side of the
+     fence — the export is a copy, and copying is where a month goes wrong.
+     Until the branch's pension report reads straight into this space, the
+     export drops here like any other document. */
+  pension:     { line:'pension', label:'Pension schedule',         hint:'The Salesforce export of contributions for the month.' }
 };
 /* What each line comes to this month, once its own documents are read. */
 function lineTotal(key){
@@ -1141,6 +1177,117 @@ function leakage(adjustments, health){
 }
 
 
+/* ══════════════ WHERE THE PACK REPEATS ITSELF ══════════════
+   Guardian sends the same figure more than once, in more than one shape.
+   Most of those repeats are a gift — they are the only way to catch a bad
+   month without a second system to check against. Two of them are traps,
+   and both are expensive.
+
+   THE LIFE TOTAL IS PRINTED FOUR TIMES:
+     the billing's section subtotal   "No of Lives: 156 … 6,240.00"
+     the billing's grand total        "GRAND TOTAL: … 6,240.00"
+     the statement of adjustments     "PREMIUM DUE BEFORE ADJUSTMENTS: … 6,240.00"
+     the covering letter              the figure AFTER adjustment
+   The statement is not a second invoice. It opens on the life billing's own
+   bottom line, moves it, and prints the answer. Billing the life schedule
+   AND the statement charges the client twice for one month. The right sum is
+   billing + net — which the statement then prints as "premium due after
+   adjustment", so it can be checked rather than trusted.
+
+   HEALTH WORKS THE OTHER WAY ROUND. Its credits sit inside its own "total
+   premium for current month" already. Applying them the way life's are
+   applied credits the client twice.
+
+   AND THE HEALTH TRANSMITTAL IS NOT THE BILL. It totals the current month
+   per division and stops. On D Rampersad's September that is $64,740 against
+   a payable balance of $206,766 — key from the transmittal and you drop the
+   whole arrears.
+
+   THE LEAVERS APPEAR IN BOTH LINES, A MONTH APART. Life terminates from the
+   date they left; health credits back the month already billed. So a leaver
+   should show up twice, and the interesting case is when they do not:
+   terminated on life, still on the health invoice, no credit — that is a
+   client paying for somebody who has gone.
+
+   None of this can be seen from inside one document, which is why staff have
+   been doing it by eye. */
+function crossChecks(){
+  const out = [], life = got.life, adj = got.adjustments, health = got.health;
+  const push = (id, kind, text) => out.push({ id, kind, text });
+
+  /* Two names are the same person only when they share two words. One is not
+     enough: Suraj Roopchand terminated on life and Vedish Roopchand still
+     employed share a surname and nothing else. */
+  const words = s => new Set(String(s||'').toUpperCase().replace(/[^A-Z ]/g,' ')
+    .split(/\s+/).filter(w => w.length > 1));
+  const same = (a,b) => { const A = words(a), B = words(b);
+    return [...A].filter(w => B.has(w)).length >= 2; };
+
+  /* ── the life schedule and its statement must be the same run ── */
+  if(life && adj && life.ok && adj.ok && life.doc.stated.total != null && adj.doc.stated.before != null){
+    const agree = near(life.doc.stated.total, adj.doc.stated.before, 0.02);
+    push('x-run', agree ? 'ok' : 'blocker', agree
+      ? `The statement of adjustments opens on ${money(adj.doc.stated.before)} — the same figure the life `
+        + `schedule closes on. Both documents are from the same run.`
+      : `The life schedule totals ${money(life.doc.stated.total)}, but the statement of adjustments says the `
+        + `premium before adjustments is ${money(adj.doc.stated.before)}. They are not from the same run — `
+        + `one of them is last month's.`);
+    if(adj.doc.stated.after != null){
+      const derived = round2(life.doc.stated.total + (adj.doc.computed.net||0));
+      const ties = near(derived, adj.doc.stated.after, 0.02);
+      push('x-after', ties ? 'ok' : 'blocker', ties
+        ? `Schedule ${money(life.doc.stated.total)} less ${money(Math.abs(adj.doc.computed.net||0))} in `
+          + `adjustments comes to ${money(derived)} — exactly what the statement prints as due after `
+          + `adjustment. The life line is billed once, at that figure.`
+        : `Schedule plus adjustments comes to ${money(derived)}, but the statement says `
+          + `${money(adj.doc.stated.after)} is due after adjustment.`);
+    }
+  }
+
+  /* ── the leavers, across both lines ── */
+  if(adj && adj.ok && health && health.ok && (adj.doc.items||[]).length){
+    const leavers = adj.doc.items.filter(i => /TERMIN/i.test(i.type||'') || (i.total||0) < 0);
+    const credited = [], stillBilled = [], notOnHealth = [];
+    leavers.forEach(l => {
+      if((health.doc.credits||[]).some(c => same(c.name, l.name))) credited.push(l);
+      else if((health.doc.members||[]).some(m => same(m.name, l.name))) stillBilled.push(l);
+      else notOnHealth.push(l);
+    });
+    if(credited.length) push('x-leavers-ok', 'ok',
+      `${credited.length === 1 ? 'The leaver on the life statement is' : 'All ' + credited.length + ' of these leavers are'} `
+      + `credited on the health invoice as well — ${credited.map(l => l.name).join(', ')}. `
+      + `Both lines have been told.`);
+    if(notOnHealth.length) push('x-leavers-nohealth', 'ok',
+      `${notOnHealth.map(l => l.name).join(', ')} ${notOnHealth.length === 1 ? 'is' : 'are'} terminated on life `
+      + `with no health credit — and ${notOnHealth.length === 1 ? 'is' : 'are'} not on the health invoice at all, `
+      + `so there is nothing to credit. Correct.`);
+    if(stillBilled.length) push('x-leavers-billed', 'blocker',
+      `${stillBilled.map(l => l.name).join(', ')} ${stillBilled.length === 1 ? 'has' : 'have'} been terminated on `
+      + `the life statement but ${stillBilled.length === 1 ? 'is' : 'are'} still on this month's health invoice, `
+      + `with no credit. The client is being billed for health cover on somebody who has left.`);
+  }
+
+  /* ── credited and billed in the same breath ── */
+  if(health && health.ok && (health.doc.credits||[]).length){
+    const both = (health.doc.credits||[]).filter(c =>
+      (health.doc.members||[]).some(m => m.empId && c.empId && m.empId === c.empId));
+    if(both.length) push('x-credit-billed', 'blocker',
+      `${both.map(c => c.name).join(', ')} ${both.length === 1 ? 'appears' : 'appear'} on this invoice as both a `
+      + `credit and a charge. One of the two is wrong.`);
+  }
+
+  /* ── the transmittal figure is not the bill ── */
+  if(health && health.ok && health.doc.stated.balance != null && health.doc.stated.payable != null
+     && !near(health.doc.stated.balance, health.doc.stated.payable, 0.02)){
+    push('x-transmittal', 'ok',
+      `The health invoice prints ${money(health.doc.stated.payable)} as this month's premium and `
+      + `${money(health.doc.stated.balance)} as the payable balance. The payment transmittal at the back shows `
+      + `only the first. ${money(health.doc.stated.balance)} is what the client owes, and it is what the email says.`);
+  }
+
+  return out;
+}
+
 /* ══════════════ SCREEN ══════════════ */
 function expected(){
   const e = ['life','adjustments'];
@@ -1431,18 +1578,71 @@ function questions(){
       opts:['Confirmed unpaid — say so in the email','Paid already, I will get the invoice corrected'] });
   });
 
+  /* What one document cannot see about another. These are the ones staff have
+     always done by eye, between two printouts on a desk. */
+  crossChecks().filter(c => c.kind === 'blocker').forEach(c => qs.push({
+    id:c.id, kind:'blocker', q:c.text,
+    opts:['I will get this checked','Publish anyway, I have checked it'] }));
+
   exp.forEach(k => { if(!got[k]) qs.push({ id:'missing-'+k, kind:'blocker',
     q:`No ${DOC_KINDS[k].label.toLowerCase()} yet.`,
     opts:['It is coming','There was none this month'] }); });
   return qs;
 }
 
+/* The one number, and the only path to it. Written out because the pack
+   states the same figures several ways and staff have had to hold in their
+   heads which restatement is the bill — the schedule, the statement, the
+   transmittal, the letter. Shown as a derivation, nobody re-keys and nobody
+   adds a document twice. */
+function derivation(){
+  const rows = [];
+  const life = got.life, adj = got.adjustments, health = got.health;
+  if(life && life.ok){
+    rows.push({ what:'Life schedule', from:life.file, amt:round2(life.doc.computed.total) });
+    if(adj && adj.ok) rows.push({ what:'Statement of adjustments — the same bill, moved',
+      from:adj.file, amt:adj.doc.computed.net,
+      note:(adj.doc.items||[]).length ? (adj.doc.items.length===1?'1 change':adj.doc.items.length+' changes') : '' });
+  }
+  if(health && health.ok){
+    rows.push({ what:'Health, this month', from:health.file, amt:round2(health.doc.computed.payable),
+      note:health.doc.computed.credits ? 'credits of ' + money(Math.abs(health.doc.computed.credits)) + ' already inside this' : '' });
+    const ar = health.doc.stated.outstanding;
+    /* The months, once each. A multi-division account lists July and August
+       under every division, so reading the raw ledger prints them twice. */
+    if(ar) rows.push({ what:'Health, still outstanding', from:health.file + ' — ledger page', amt:ar,
+      note:[...new Set((health.doc.arrears||[]).map(a=>a.month).filter(Boolean))].join(', ') });
+  }
+  if(got.pension && got.pension.ok)
+    rows.push({ what:'Pension', from:got.pension.file, amt:got.pension.doc.computed.total||0 });
+  return { rows, total: round2(rows.reduce((s,r)=>s+(r.amt||0),0)) };
+}
+
 function paintChecks(){
   const qs = questions();
-  if(!qs.length){ $('checks').innerHTML = Object.keys(got).length
-    ? '<div class="card"><div class="alert a-ok"><b>Everything agrees.</b> Each document adds up against its own totals, the headcounts match last month, and life and health line up. Nothing needs a decision.</div></div>' : '';
+  const agreed = crossChecks().filter(c => c.kind === 'ok');
+  const der = derivation();
+  const tiesCard = (agreed.length || der.rows.length) ? `<div class="card">
+    <h2 style="font-size:1.05rem;color:var(--navy)">What the pack agrees on</h2>
+    <p class="note" style="margin-top:.25rem">Guardian prints these figures more than once. Where two documents
+      state the same thing, they have been read against each other rather than taken on trust.</p>
+    ${agreed.length ? `<ul class="checks" style="margin:.7rem 0 0;padding-left:1.1rem">
+      ${agreed.map(c => `<li><span class="ans">✓</span> ${esc(c.text)}</li>`).join('')}</ul>` : ''}
+    ${der.rows.length ? `<div class="tw" style="margin-top:.9rem"><table><thead><tr>
+        <th>What is billed</th><th>Read from</th><th class="r">Amount</th></tr></thead><tbody>
+      ${der.rows.map(r => `<tr><td>${esc(r.what)}${r.note?`<br><small class="note">${esc(r.note)}</small>`:''}</td>
+        <td><small class="note">${esc(r.from)}</small></td>
+        <td class="r mono">${r.amt < 0 ? '−' + money(-r.amt) : money(r.amt)}</td></tr>`).join('')}
+      <tr><td colspan="2"><b>Payable</b></td><td class="r mono"><b>${money(der.total)}</b></td></tr>
+    </tbody></table></div>
+    <p class="note" style="margin-top:.5rem">Every figure is used once. The statement of adjustments moves the
+      life schedule, it is not a second bill; the health credits are already inside the health figure.</p>` : ''}
+  </div>` : '';
+
+  if(!qs.length){ $('checks').innerHTML = tiesCard + (Object.keys(got).length
+    ? '<div class="card"><div class="alert a-ok"><b>Everything agrees.</b> Each document adds up against its own totals, the documents agree with each other, the headcounts match last month, and life and health line up. Nothing needs a decision.</div></div>' : '');
     paintSteps(); return; }
-  $('checks').innerHTML = `<div class="card">
+  $('checks').innerHTML = tiesCard + `<div class="card">
     <h2 style="font-size:1.05rem;color:var(--navy)">Before this goes out</h2>
     <p class="note" style="margin-top:.25rem">${qs.length} thing${qs.length>1?'s':''} the screen cannot decide on its own.</p>
     ${qs.map(q => `<div class="q">
@@ -1482,8 +1682,11 @@ let FLOWCACHE = { subs: [] };
 async function flowRefresh(){
   if(!API){ FLOWCACHE = flowLoad(); return; }
   try{
-    const r = await fetch(API + '?action=monthflow&auth=' + encodeURIComponent(AUTH || '')
-      + '&group=' + encodeURIComponent(group.id));
+    /* The whole book, not this group — the board at the top of the screen is
+       every month in flight, and an assistant needs to see the one that has
+       been sitting approved for three days even while she is working another
+       client. flowFor() narrows it back down where that is what is wanted. */
+    const r = await fetch(API + '?action=monthflow&auth=' + encodeURIComponent(AUTH || ''));
     const d = await r.json();
     FLOWCACHE = { subs: (d && d.subs) || [] };
   }catch(e){ FLOWCACHE = { subs: [] }; }
@@ -1508,13 +1711,130 @@ function monthKey(){
   return $('mon').value || '';
 }
 
+/* ── the board ──
+   Every month in flight, across the whole book, at the top of the screen —
+   because the month that needs an assistant is almost never the one she has
+   open. What each card answers is "whose desk is this on, and for how long":
+   a billing that goes out late was hardly ever hard, it was waiting, and
+   nobody could see where.
+
+   Ordered by what needs a hand first. Clicking one opens that group. */
+const BOARD = {
+  APPROVED: { label:'Yours to send',      cls:'s-you',  mine:true,  rank:0 },
+  RETURNED: { label:'Back with you',      cls:'s-stop', mine:true,  rank:1 },
+  QUERIED:  { label:'Client queried it',  cls:'s-stop', mine:true,  rank:2 },
+  SUBMITTED:{ label:'With the approver',  cls:'s-wait', mine:false, rank:3 },
+  SENT:     { label:'Awaiting the client',cls:'s-sent', mine:false, rank:4 },
+  CONFIRMED:{ label:'Client confirmed',   cls:'s-sent', mine:false, rank:5 }
+};
+function paintBoard(){
+  const subs = ((API ? FLOWCACHE : flowLoad()).subs || []).slice();
+  if(!subs.length){ $('board').innerHTML = ''; return; }
+  /* One card per group and month — the newest submission wins, older ones
+     are the trail behind it. */
+  const newest = {};
+  subs.forEach(s => { const k = s.group.id + '|' + s.monthKey;
+    const at = (s.events && s.events[s.events.length-1] || {}).at || 0;
+    if(!newest[k] || at >= newest[k]._at) newest[k] = Object.assign({ _at:at }, s); });
+  const rows = Object.values(newest).filter(s => BOARD[s.state])
+    .sort((a,b) => BOARD[a.state].rank - BOARD[b.state].rank || a._at - b._at);
+  if(!rows.length){ $('board').innerHTML = ''; return; }
+  const needs = rows.filter(s => BOARD[s.state].mine).length;
+  $('board').innerHTML = `<div class="card" style="margin-bottom:0">
+    <h2 style="font-size:1.05rem;color:var(--navy)">Months in flight</h2>
+    <p class="note" style="margin-top:.25rem">${
+      needs ? `<b style="color:var(--gold)">${needs} need${needs===1?'s':''} you.</b> ` : ''
+    }${rows.length} month${rows.length===1?'':'s'} on the go. The time is how long it has been standing where it is.</p>
+    <div class="board" style="margin-top:.8rem">
+      ${rows.map(s => { const B = BOARD[s.state];
+        return `<button class="bcard ${B.mine?'mine':''}" data-open="${esc(s.group.id)}">
+          <div class="bg">${esc(s.group.name)}</div>
+          <div class="bm">${esc(s.monthLabel)}</div>
+          <div class="bs ${B.cls}">${esc(B.label)}</div>
+          <div class="bw">${esc(s._at ? dur(Date.now()-s._at) : '')}</div>
+        </button>`; }).join('')}
+    </div></div>`;
+}
+
+/* The newest month for a group that is still going somewhere — what an
+   assistant opening the screen cold should be looking at. */
+function flowOpen(groupId){
+  const subs = ((API ? FLOWCACHE : flowLoad()).subs || [])
+    .filter(s => s.group.id === groupId && BOARD[s.state]);
+  return subs.sort((a,b) =>
+    ((a.events[a.events.length-1]||{}).at||0) - ((b.events[b.events.length-1]||{}).at||0)).pop() || null;
+}
+
+/* The month as it stands, with no documents open. Read from the submission,
+   which is the record of what was actually approved — not from a re-read
+   that might now say something different. */
+function standingCard(x){
+  const banner = {
+    APPROVED:`<div class="alert a-ok"><b>Approved — and it is back with you.</b>
+      ${esc(last(x,'APPROVED').by)} cleared it ${ago(last(x,'APPROVED').at)}.
+      ${last(x,'APPROVED').note ? `Their note: &ldquo;${esc(last(x,'APPROVED').note)}&rdquo;<br>` : ''}
+      Nothing has gone to ${esc(x.group.name)} yet. Read it once more, then send it.</div>`,
+    RETURNED:`<div class="alert a-warn"><b>Sent back by ${esc(last(x,'RETURNED').by)}:</b>
+      &ldquo;${esc(last(x,'RETURNED').note||'')}&rdquo;<br>
+      Load this month's documents again, answer it, and submit.</div>`,
+    SUBMITTED:`<div class="alert a-info"><b>With the approver.</b>
+      Submitted by ${esc(x.events[0].by)} ${ago(x.events[0].at)}.${reviewLinkHtml(x.id)}</div>`,
+    SENT:`<div class="alert a-ok"><b>Sent to ${esc(x.group.name)}</b> ${ago(last(x,'SENT').at)}.
+      Waiting for them to confirm it is right.</div>`,
+    CONFIRMED:`<div class="alert a-ok"><b>${esc(x.group.name)} confirmed this billing is correct.</b>
+      Payment is what the follow-ups now chase.</div>`,
+    QUERIED:`<div class="alert a-bad"><b>${esc(x.group.name)} has raised a query.</b>
+      ${esc(last(x,'QUERIED').note || 'No detail given.')}<br>
+      Reminders on this month have stopped until it is settled.</div>`
+  }[x.state] || '';
+  const lines = Object.keys(x.lineTotals || {});
+  return `<div class="card">
+    <h2 style="font-size:1.05rem;color:var(--navy)">${esc(x.group.name)} — ${esc(x.monthLabel)}</h2>
+    <p class="note" style="margin-top:.25rem">Where this month stands. Nothing is open on the screen;
+      this is the submission as it was approved.</p>
+    ${flowBar(x)}
+    ${banner}
+    ${lines.length ? `<div class="tw" style="margin-top:.9rem"><table><thead><tr>
+        <th>Line</th><th class="r">Billed</th></tr></thead><tbody>
+      ${lines.map(k => `<tr><td>${esc(k)}</td><td class="r mono">${money(x.lineTotals[k])}</td></tr>`).join('')}
+      ${x.arrears && x.arrears.balance ? `<tr><td><b>Payable including arrears</b></td>
+        <td class="r mono"><b>${money(x.arrears.balance)}</b></td></tr>` : ''}
+    </tbody></table></div>` : ''}
+    ${x.email ? `<div class="mail">
+      <div class="hdr"><b>Subject</b> ${esc(x.email.subject)}<br><b>To</b> the billing contact on this account</div>
+      <pre>${esc(x.email.body)}</pre>
+      <div class="att">${(x.email.atts||[]).map(a => `<span>📎 ${esc(a)}</span>`).join('')}</div>
+    </div>` : ''}
+    ${x.state === 'APPROVED' ? `<div class="row" style="margin-top:1rem">
+      <button class="btn go" id="send">Send to ${esc(x.group.name)}</button>
+      <span class="note">This is the click that puts it in front of the client.</span>
+    </div>` : ''}
+    <div id="pubout"></div>
+  </div>`;
+}
+function wireSend(x){
+  const s = $('send');
+  if(s) s.addEventListener('click', () => sendToClient(x));
+}
+
 function paintPublish(){
   const qs = questions(), unanswered = qs.filter(q => answers[q.id] == null);
   const blocked = qs.some(q => q.kind==='blocker' && answers[q.id] !== '1' && q.id.startsWith('recon'));
   const read = Object.values(got).filter(r => r.ver);
   const have = read.filter(r => r.ok).length;
   const shaky = read.filter(r => !r.ok);
-  if(!read.length){ $('publish').innerHTML = ''; return; }
+  /* A month already in the flow does not need its documents re-read to be
+     acted on. An assistant coming in on Monday to a month approved on Friday
+     has nothing open — asking her to upload four PDFs again before she can
+     press send would be a dead end dressed as a screen. Everything needed is
+     in the submission: the journey, the approver's note, the email word for
+     word. */
+  if(!read.length){
+    const open = flowOpen(group.id);
+    $('publish').innerHTML = open ? standingCard(open) : '';
+    if(open) wireSend(open);
+    return;
+  }
   const life = got.life, health = got.health, adj = got.adjustments;
   /* What the client owes is the life billing plus the health invoice plus the
      adjustments — the statement is a credit note, so leaving it out overstates
@@ -1526,34 +1846,25 @@ function paintPublish(){
   /* The journey, drawn: staff and the manager should see where a month
      stands without reading a trail — submitted, with the approver, back
      with staff to answer her notes, approved, sent. */
-  function flowBar(x){
-    if(!x) return '';
-    const returned = x.state === 'RETURNED';
-    const sent = x.state === 'SENT';
-    const ret = last(x, 'RETURNED'), ap = last(x, 'APPROVED');
-    const steps = [
-      { t:'Submitted', st:'done', when: x.events[0] && ago(x.events[0].at) },
-      returned
-        ? { t:'Approver reviewed', st:'done', when: ret.at && ago(ret.at) }
-        : { t:'With the approver', st: sent ? 'done' : 'now', when: sent && ap.at ? ago(ap.at) : 'waiting' },
-      ...(returned ? [{ t:'Back with staff — answer & resubmit', st:'warn', when:'now' }] : []),
-      { t:'Approved', st: sent ? 'done' : 'todo', when: sent && ap.at ? ago(ap.at) : '' },
-      { t:'Sent to client', st: sent ? 'done' : 'todo', when:'' }
-    ];
-    return `<div class="fbar">${steps.map(st => `
-      <div class="fnode ${st.st}"><span class="dot">${st.st==='done'?'✓':st.st==='warn'?'!':''}</span>
-        <span class="ft">${esc(st.t)}</span>${st.when?`<span class="fw">${esc(st.when)}</span>`:''}</div>`).join('<div class="fline"></div>')}
-    </div>`;
-  }
   const stateLine = (sub ? flowBar(sub) : '') + (sub ? ({
-    SUBMITTED:`<div class="alert a-info"><b>This month is with the administrators.</b>
+    SUBMITTED:`<div class="alert a-info"><b>This month is with the approver.</b>
       Submitted by ${esc(sub.events[0].by)} ${ago(sub.events[0].at)} — waiting to be verified.
       ${reviewLinkHtml(sub.id)}</div>`,
     RETURNED:`<div class="alert a-warn"><b>Sent back by ${esc(last(sub,'RETURNED').by)}:</b>
-      &ldquo;${esc(last(sub,'RETURNED').note||'')}&rdquo;<br>Fix it and submit again.</div>`,
-    SENT:`<div class="alert a-ok"><b>Verified and sent.</b> Approved by ${esc(last(sub,'APPROVED').by)}
-      ${ago(last(sub,'APPROVED').at)}. Submitting again sends a corrected version for review.
-      ${reviewLinkHtml(sub.id)}</div>`
+      &ldquo;${esc(last(sub,'RETURNED').note||'')}&rdquo;<br>Answer it and submit again.</div>`,
+    APPROVED:`<div class="alert a-ok"><b>Approved — and it is back with you.</b>
+      ${esc(last(sub,'APPROVED').by)} cleared it ${ago(last(sub,'APPROVED').at)}.
+      ${last(sub,'APPROVED').note ? `Their note: &ldquo;${esc(last(sub,'APPROVED').note)}&rdquo;<br>` : ''}
+      Nothing has gone to ${esc(group.name)} yet. Read it once more, then send it.</div>`,
+    SENT:`<div class="alert a-ok"><b>Sent to ${esc(group.name)}.</b>
+      Approved by ${esc(last(sub,'APPROVED').by)}, sent by ${esc(last(sub,'SENT').by)}
+      ${ago(last(sub,'SENT').at)}. Waiting for them to confirm.
+      ${reviewLinkHtml(sub.id)}</div>`,
+    CONFIRMED:`<div class="alert a-ok"><b>${esc(group.name)} has confirmed this billing is correct.</b>
+      Confirmed ${ago(last(sub,'CONFIRMED').at)}. Payment is what the follow-ups now chase.</div>`,
+    QUERIED:`<div class="alert a-bad"><b>${esc(group.name)} has raised a query.</b>
+      ${esc(last(sub,'QUERIED').note || 'No detail given.')}<br>
+      Reminders on this month have stopped until it is settled.</div>`
   })[sub.state] || '' : '');
   $('publish').innerHTML = `<div class="card">
     <h2 style="font-size:1.05rem;color:var(--navy)">Send ${esc(group.name)} for verification</h2>
@@ -1584,13 +1895,22 @@ function paintPublish(){
     <p class="note" style="margin-top:.5rem">Written from what was read this month. This is the text the
       administrator approves — their approval sends it with those attachments.</p>`; })()}
     <div class="row" style="margin-top:1rem">
-      <button class="btn go" id="pub" ${busy?'disabled':''}>${sub && sub.state==='SUBMITTED' ? 'Replace what is waiting' : sub && sub.state==='SENT' ? 'Submit a correction' : 'Submit for review'}</button>
+      ${sub && sub.state === 'APPROVED'
+        ? `<button class="btn go" id="send" ${busy?'disabled':''}>Send to ${esc(group.name)}</button>
+           <button class="btn ghost" id="pub">Something changed — submit again</button>`
+        : `<button class="btn go" id="pub" ${busy?'disabled':''}>${
+             sub && sub.state==='SUBMITTED' ? 'Replace what is waiting'
+             : sub && (sub.state==='SENT'||sub.state==='CONFIRMED'||sub.state==='QUERIED') ? 'Submit a correction'
+             : 'Submit for review'}</button>`}
       <button class="btn ghost" id="copy">Copy the email</button>
-      <span class="note">${blocked ? 'A document that does not add up will be flagged to the administrator as such.' : ''}</span>
+      <span class="note">${sub && sub.state === 'APPROVED'
+        ? 'This is the click that puts it in front of the client.'
+        : blocked ? 'A document that does not add up will be flagged to the approver as such.' : ''}</span>
     </div>
     <div id="pubout"></div>
   </div>`;
   const b = $('pub'); if(b) b.addEventListener('click', publish);
+  const s = $('send'); if(s) s.addEventListener('click', () => sendToClient(sub));
   const c = $('copy'); if(c) c.addEventListener('click', () => {
     const e = draftEmail();
     const text = e.subject + '\n\n' + e.body;
@@ -1712,7 +2032,47 @@ function monthName(){
 const ago = at => { const m = Math.round((Date.now()-at)/60000);
   return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m/60) + ' h ago'
     : Math.round(m/1440) + ' d ago'; };
+const dur = ms => { const m = Math.round(ms/60000);
+  return m < 1 ? 'under a minute' : m < 60 ? m + ' min' : m < 1440 ? Math.round(m/60) + ' h'
+    : Math.round(m/1440) + ' d'; };
 const last = (sub, did) => sub.events.slice().reverse().find(e => e.did === did) || {};
+
+/* The journey, drawn — with the clock on every stop.
+   Submitted → with the approver → back with staff to send → sent → the
+   client answers. Approval clears a month; it does not post it. The last
+   person to touch a billing before a client reads it is the assistant who
+   built it, which is also the only place a swapped document would still be
+   caught. The waiting figures are the useful part: they are what turns
+   "the billing went out late" into "it sat approved for four days". */
+function flowBar(x){
+  if(!x || !x.events || !x.events.length) return '';
+  const at = did => (x.events.slice().reverse().find(e => e.did === did) || {}).at;
+  const S = x.state;
+  const t0 = x.events[0].at, tA = at('APPROVED'), tR = at('RETURNED'), tS = at('SENT');
+  const tC = at('CONFIRMED') || at('QUERIED');
+  const span = (from, to) => from ? dur((to || Date.now()) - from) : '';
+  const open = (from) => from ? span(from) + ' so far' : '';
+  const steps = [
+    { t:'Submitted', st:'done', when: ago(t0) },
+    S === 'RETURNED'
+      ? { t:'Approver sent it back', st:'warn', when: span(t0, tR) }
+      : { t:'With the approver', st: S === 'SUBMITTED' ? 'now' : (tA ? 'done' : 'todo'),
+          when: S === 'SUBMITTED' ? open(t0) : span(t0, tA) },
+    S === 'RETURNED'
+      ? { t:'Back with you — answer and resubmit', st:'warn', when: open(tR) }
+      : { t:'Yours to send', st: S === 'APPROVED' ? 'now' : (tS ? 'done' : 'todo'),
+          when: S === 'APPROVED' ? open(tA) : (tA && tS ? span(tA, tS) : '') },
+    { t:'Sent to the client', st: tS ? 'done' : 'todo', when: tS ? ago(tS) : '' },
+    { t: S === 'QUERIED' ? 'Client raised a query'
+       : S === 'CONFIRMED' ? 'Client confirmed it' : 'With the client',
+      st: S === 'QUERIED' ? 'warn' : S === 'CONFIRMED' ? 'done' : (tS ? 'now' : 'todo'),
+      when: tC ? span(tS, tC) : (tS ? open(tS) : '') }
+  ];
+  return `<div class="fbar">${steps.map(st => `
+    <div class="fnode ${st.st}"><span class="dot">${st.st==='done'?'✓':st.st==='warn'?'!':''}</span>
+      <span class="ft">${esc(st.t)}</span>${st.when?`<span class="fw">${esc(st.when)}</span>`:''}</div>`)
+    .join('<div class="fline"></div>')}</div>`;
+}
 function reviewLinkHtml(id){
   const url = new URL('review.html#' + id, location.href).href;
   return `<br><span class="mono" style="font-size:11.5px">${esc(url)}</span>
@@ -1730,6 +2090,49 @@ document.addEventListener('click', e => {
     navigator.clipboard.writeText(b.dataset.copylink).then(done).catch(fb);
   else fb();
 });
+
+/* The send. Approval cleared the month; this is the assistant putting it in
+   front of the client, and it is deliberately a separate hand — an approver
+   who could also post would be signing off and posting in one motion, with
+   nobody left to notice a document swapped between the two. */
+async function sendToClient(sub){
+  if(!sub) return;
+  const btn = $('send'); btn.disabled = true; btn.textContent = 'Sending…';
+  if(API){
+    let ok = false, why = '', note = '';
+    try{
+      const r = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ action:'sendmonth', auth:AUTH, id:sub.id,
+                               by: IDENTITY ? IDENTITY.name : null }) });
+      const d = await r.json();
+      ok = d && d.ok; why = (d && d.error) || ''; note = (d && d.note) || '';
+    }catch(e){ why = 'Could not reach the branch script.'; }
+    if(!ok){
+      btn.disabled = false; btn.textContent = 'Send to ' + group.name;
+      $('pubout').innerHTML = `<div class="alert a-bad"><b>Not sent.</b> ${esc(why || 'The branch script refused it.')}</div>`;
+      return;
+    }
+    await flowRefresh();
+    paintPublish();
+    $('pubout').innerHTML = `<div class="alert a-ok"><b>Sent.</b> ${esc(note)}
+      ${esc(group.name)} has been asked to confirm it is right — their answer lands here and on the
+      activity trail.</div>`;
+    paintBoard();
+    return;
+  }
+  /* Test run: move it the same way the script would, so the whole journey
+     can be walked with nothing behind it. */
+  const d = flowLoad();
+  const x = d.subs.find(s => s.id === sub.id);
+  if(x){ x.state = 'SENT';
+    x.events.push({ at:Date.now(), by: IDENTITY ? IDENTITY.name : 'Branch staff',
+                    code: IDENTITY ? IDENTITY.code : null, did:'SENT' });
+    flowSave(d); }
+  FLOWCACHE = flowLoad();
+  paintPublish(); paintBoard();
+  $('pubout').innerHTML = `<div class="alert a-ok"><b>Sent.</b>
+    <span class="note">Test run — nothing left this machine.</span></div>`;
+}
 
 async function publish(){
   const btn = $('pub'); btn.disabled = true; btn.textContent = 'Submitting…';
@@ -1800,9 +2203,9 @@ async function publish(){
     d.subs.push(sub); flowSave(d);
   }
   btn.textContent = 'Submitted ✓';
-  /* Repaint so the journey bar and the with-the-administrators banner appear
+  /* Repaint so the journey bar and the with-the-approver banner appear
      immediately, then lay the confirmation under them. */
-  paintPublish();
+  paintPublish(); paintBoard();
   $('pubout').innerHTML = `<div class="alert a-ok">
     <b>${esc(sub.monthLabel)} is in for review.</b> Send an administrator this link — they sign in,
     verify, and their approval sends it to ${esc(group.name)}.${notifiedLine}
@@ -1812,13 +2215,20 @@ async function publish(){
 
 /* ── wiring ── */
 if(!API) $('grp').innerHTML = BOOK.map(g => `<option value="${g.id}">${esc(g.name)}</option>`).join('');
-$('grp').addEventListener('change', e => {
-  group = BOOK.find(g => g.id === e.target.value); got = {}; answers = {};
+function switchGroup(id){
+  const g = BOOK.find(x => x.id === id);
+  if(!g) return;
+  group = g; $('grp').value = id; got = {}; answers = {};
   $('readout').innerHTML=''; $('checks').innerHTML=''; $('publish').innerHTML='';
   paintDocs();
-  flowRefresh().then(paintPublish);
+  flowRefresh().then(() => { paintPublish(); paintBoard(); });
+}
+$('grp').addEventListener('change', e => switchGroup(e.target.value));
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-open]');
+  if(b){ switchGroup(b.dataset.open); window.scrollTo({ top:0, behavior:'smooth' }); }
 });
-$('mon').addEventListener('change', () => { flowRefresh().then(paintPublish); });
+$('mon').addEventListener('change', () => { flowRefresh().then(() => { paintPublish(); paintBoard(); }); });
 /* Each line card is its own upload space. The Add button and a drop onto
    the card both hint which line staff MEANT — detection still decides what
    a file actually is, and a mismatch is called out rather than obeyed. */
@@ -1871,7 +2281,7 @@ function open_(){
     const sub = document.querySelector('header .sub');
     if(sub) sub.textContent = 'Signed in as ' + IDENTITY.name + ' — ' + sub.textContent;
   }
-  loadBook().then(() => { paintDocs(); return flowRefresh(); }).then(paintPublish);
+  loadBook().then(() => { paintDocs(); return flowRefresh(); }).then(() => { paintPublish(); paintBoard(); });
 }
 function tryCode(){
   const v = ($('code').value||'').trim().toUpperCase();

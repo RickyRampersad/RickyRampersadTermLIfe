@@ -866,11 +866,25 @@ function doGet(e) {
 
 function doPost(e) {
   try {
+    /* A client replying from the billing email posts a plain HTML form —
+       top-level navigation, not fetch, so there is no CORS to negotiate and
+       nothing for them to sign in to. It arrives as parameters, not JSON, so
+       it has to be read before the JSON parse below. */
+    if (e && e.parameter && e.parameter.action === 'clientreply') {
+      /* Several boxes ticked arrive on e.parameters, where every field is an
+         array; e.parameter keeps only the first, which would silently drop
+         all but one reason. Read the reasons from the array form. */
+      var form = { action: 'clientreply', id: e.parameter.id, verdict: e.parameter.verdict,
+                   note: e.parameter.note,
+                   reason: (e.parameters && e.parameters.reason) || e.parameter.reason };
+      return benClientReply_(form);
+    }
     var b = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     if (b.action === 'signin')       return benSignin_(b);
     if (b.action === 'pendingnote')  return benPendingNote_(b);
     if (b.action === 'submitmonth')  return benSubmitMonth_(b);
     if (b.action === 'reviewmonth')  return benReviewMonth_(b);
+    if (b.action === 'sendmonth')    return benSendMonth_(b);
     if (typeof quoteDoPost_ === 'function') return quoteDoPost_(e);
     return berr_('Unknown action.');
   } catch (err) { return berr_(String(err && err.message || err)); }
@@ -1014,14 +1028,37 @@ function benReviewMonth_(b) {
 
   var now = Date.now();
   if (b.decision === 'approve') {
-    sub.state = 'SENT';
-    sub.events.push({ at: now, by: byName, code: who.code, did: 'APPROVED' });
-    sub.events.push({ at: now, by: byName, code: who.code, did: 'SENT' });
-    var sent = bsendMonth_(sub);
+    /* Approval clears the month; it does not send it. The last hand on a
+       billing before a client sees it is the assistant who built it — she
+       reads the approver's notes, satisfies herself nothing changed under
+       her, and presses send. An approver who could send would be signing
+       off and posting in one motion, with nobody left to catch a document
+       swapped between the two. */
+    sub.state = 'APPROVED';
+    sub.events.push({ at: now, by: byName, code: who.code, did: 'APPROVED',
+                      note: b.note ? String(b.note) : '' });
     bwrite_(sub);
-    blog_(byName, who.code, 'APPROVED', sub.group.name, sub.monthLabel, sent.note);
-    bbillingRows_(sub);
-    return bok_({ sent: sent.sent, testMode: sent.testMode, note: sent.note });
+    blog_(byName, who.code, 'APPROVED', sub.group.name, sub.monthLabel,
+          b.note ? String(b.note) : 'cleared to send');
+    var back = '';
+    try {
+      var staffEmail = bSubmitterEmail_(sub);
+      if (staffEmail) {
+        MailApp.sendEmail({
+          to: staffEmail,
+          cc: bprop_('BEN_NOTIFY') || undefined,
+          name: BEN.FROM_NAME,
+          subject: 'Cleared to send: ' + sub.group.name + ' — ' + sub.monthLabel,
+          body: byName + ' has approved ' + sub.group.name + ' for ' + sub.monthLabel + '.\n\n'
+            + (b.note ? 'Their note:\n' + String(b.note) + '\n\n' : '')
+            + 'It is back with you. Open the month, read the note, check nothing has moved, '
+            + 'and press Send — that is what puts it in front of the client.\n\n'
+            + bprop_('BEN_SITE') + 'upload.html'
+        });
+        back = staffEmail;
+      }
+    } catch (mailErr) {}
+    return bok_({ state: 'APPROVED', backTo: back });
   }
   if (b.decision === 'return') {
     if (!b.note) return berr_('Returning it needs a reason.');
@@ -1032,6 +1069,43 @@ function benReviewMonth_(b) {
     return bok_();
   }
   return berr_('Decision must be approve or return.');
+}
+
+/* The email address of whoever submitted a month, read off the Access tab by
+   their login code — so "back to staff" reaches the person who built it and
+   not a branch-wide alias. */
+function bSubmitterEmail_(sub) {
+  var first = (sub.events || [])[0] || {};
+  var code = String(first.code || '').toUpperCase();
+  var name = String(first.by || '');
+  var hit = null;
+  brows_(badminsSheet_()).forEach(function (r) {
+    if (hit) return;
+    if (!bActive_(r)) return;
+    var login = String(bLoginOf_(r) || '').toUpperCase();
+    if ((code && login === code) || (!code && name && String(bfield_(r, ['name'])) === name)) hit = r;
+  });
+  return hit ? String(bfield_(hit, ['email'])).trim() : '';
+}
+
+/* Staff press send. The month must have been approved by somebody else
+   first — the page hides the button, and this is the lock behind it. */
+function benSendMonth_(b) {
+  var who = bstaff_(b.auth);
+  if (!who) return berr_('Staff or administrators only.');
+  var sub = bsubs_().filter(function (s) { return s.id === String(b.id); })[0];
+  if (!sub) return berr_('No submission with that id.');
+  if (sub.state === 'SENT') return berr_('That month has already gone out.');
+  if (sub.state !== 'APPROVED') return berr_('That month has not been approved yet, so it cannot be sent.');
+
+  var byName = (who.name === 'Branch admin code' && b.by) ? String(b.by) : who.name;
+  var sent = bsendMonth_(sub);
+  sub.state = 'SENT';
+  sub.events.push({ at: Date.now(), by: byName, code: who.code, did: 'SENT', note: sent.note });
+  bwrite_(sub);
+  blog_(byName, who.code, 'SENT', sub.group.name, sub.monthLabel, sent.note);
+  bbillingRows_(sub);
+  return bok_({ sent: sent.sent, testMode: sent.testMode, note: sent.note });
 }
 
 function bwrite_(sub) {
@@ -1135,27 +1209,61 @@ function benBilling_(p) {
    enough — no redeployment needed for the sweep. */
 function benefitsFollowUp() {
   try {
-    var DAY = 24 * 3600 * 1000;
-    var waiting = bsubs_().filter(function (s) {
-      var ev = s.events && s.events[0] || {};
-      return s.state === 'SUBMITTED' && ev.at && (Date.now() - ev.at) > 20 * 3600 * 1000;
-    });
-    if (!waiting.length) return;
-    var approver = bprop_('BEN_APPROVER_EMAIL') || bprop_('BEN_NOTIFY');
-    if (!approver) return;
+    var DAY = 24 * 3600 * 1000, HOLD = 20 * 3600 * 1000;
     var mgr = bprop_('BEN_NOTIFY');
-    var lines = waiting.map(function (s) {
-      var days = Math.max(1, Math.floor((Date.now() - s.events[0].at) / DAY));
-      return '• ' + s.group.name + ' — ' + s.monthLabel + ' (waiting ' + days + ' day' + (days === 1 ? '' : 's') + ')\n  '
-        + bprop_('BEN_SITE') + 'review.html#' + s.id;
+    var approver = bprop_('BEN_APPROVER_EMAIL') || mgr;
+
+    /* When a month last moved, whatever moved it. A month stuck is a month
+       whose last event is old, and the useful question is always "sitting
+       with whom" — so each stall is chased to the desk that holds it. */
+    function stuckFor(s) {
+      var ev = (s.events || [])[s.events.length - 1] || {};
+      return ev.at ? (Date.now() - ev.at) : 0;
+    }
+    function days(ms) { return Math.max(1, Math.floor(ms / DAY)); }
+
+    var waiting = bsubs_().filter(function (s) {
+      return s.state === 'SUBMITTED' && stuckFor(s) > HOLD;
     });
-    MailApp.sendEmail({
-      to: approver,
-      cc: (mgr && mgr !== approver) ? mgr : undefined,
-      name: BEN.FROM_NAME,
-      subject: '⏰ Waiting for review: ' + waiting.length + ' month' + (waiting.length === 1 ? '' : 's'),
-      body: 'Still waiting for a decision:\n\n' + lines.join('\n\n')
-        + '\n\nApproving sends to the client; returning goes back to staff with your reason.'
+    if (waiting.length && approver) {
+      MailApp.sendEmail({
+        to: approver,
+        cc: (mgr && mgr !== approver) ? mgr : undefined,
+        name: BEN.FROM_NAME,
+        subject: '⏰ Waiting for review: ' + waiting.length + ' month' + (waiting.length === 1 ? '' : 's'),
+        body: 'Still waiting for a decision:\n\n'
+          + waiting.map(function (s) {
+              return '• ' + s.group.name + ' — ' + s.monthLabel + ' (waiting '
+                + days(stuckFor(s)) + ' day' + (days(stuckFor(s)) === 1 ? '' : 's') + ')\n  '
+                + bprop_('BEN_SITE') + 'review.html#' + s.id;
+            }).join('\n\n')
+          + '\n\nApproving hands it back to staff to send; returning goes back with your reason.'
+      });
+    }
+
+    /* The new stall the flow creates: approved, cleared, and sitting unsent
+       on somebody's desk. The client is waiting on a billing that is ready
+       and nobody knows it. Chase the person who has to press send. */
+    var ready = bsubs_().filter(function (s) {
+      return (s.state === 'APPROVED' || s.state === 'RETURNED') && stuckFor(s) > HOLD;
+    });
+    ready.forEach(function (s) {
+      var staffEmail = bSubmitterEmail_(s);
+      if (!staffEmail && !mgr) return;
+      var approvedNow = s.state === 'APPROVED';
+      MailApp.sendEmail({
+        to: staffEmail || mgr,
+        cc: (mgr && mgr !== staffEmail) ? mgr : undefined,
+        name: BEN.FROM_NAME,
+        subject: (approvedNow ? '⏰ Approved and not yet sent: ' : '⏰ Sent back and not yet fixed: ')
+          + s.group.name + ' — ' + s.monthLabel,
+        body: s.group.name + ' — ' + s.monthLabel + ' has been sitting with you for '
+          + days(stuckFor(s)) + ' day' + (days(stuckFor(s)) === 1 ? '' : 's') + '.\n\n'
+          + (approvedNow
+              ? 'It is approved. The client has not seen it — pressing Send is the only thing left.'
+              : 'It came back with a note to answer, and the month cannot go out until it does.')
+          + '\n\n' + bprop_('BEN_SITE') + 'upload.html'
+      });
     });
   } catch (e) {}
 }
@@ -1205,7 +1313,11 @@ function benefitsDunning() {
     var DAY = 24 * 3600 * 1000;
     var testMode = bprop_('BEN_TEST_MODE') !== 'off';
     bsubs_().forEach(function (sub) {
-      if (sub.state !== 'SENT') return;
+      /* A month that has gone out is still in the ladder after the client
+         confirms it — confirming is not paying. A month they have queried
+         is not: chasing somebody for money while their question sits
+         unanswered is how a branch loses a group. */
+      if (sub.state !== 'SENT' && sub.state !== 'CONFIRMED') return;
       var sentEv = null;
       (sub.events || []).forEach(function (e) { if (e.did === 'SENT') sentEv = e; });
       if (!sentEv || !sentEv.at) return;
@@ -1291,21 +1403,170 @@ function benefitsDunning() {
   } catch (e) {}
 }
 
-/* one-click receipt confirmation from the billing email */
+/* ══════════════ THE CLIENT'S REPLY ══════════════
+   A billing that lands and is never answered is the one that lapses. So the
+   email asks a question the client can answer in one tap: is this right?
+
+   Yes ends it — the month is confirmed and the branch stops wondering.
+   No is the valuable answer, and it is the one a free-text reply loses. A
+   client writing "there's a problem with the bill" starts a week of email;
+   a client picking "someone on this billing has left us" tells the branch
+   which department to call before anyone has read a sentence. So the reasons
+   are named, and they are the things that actually go wrong on these packs.
+
+   The page posts a plain form back to this same script — a top-level
+   navigation, so there is nothing to sign in to, nothing to install, and no
+   browser between them and us that can block it. */
+
+var BEN_REPLY_REASONS = [
+  ['left',    'Someone on this billing has left us'],
+  ['missing', 'Someone who should be covered is not on it'],
+  ['premium', 'A premium or sum assured looks wrong'],
+  ['paid',    'The balance is wrong — we have paid'],
+  ['tier',    'A member is on the wrong plan or tier'],
+  ['attach',  'The attachment is missing or will not open'],
+  ['other',   'Something else']
+];
+
+function bhesc_(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function bpage_(inner) {
+  return HtmlService.createHtmlOutput(
+    '<!DOCTYPE html><meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<style>'
+    + 'body{margin:0;background:#F7F9FB;color:#0E1F2E;font:15px/1.6 "Gill Sans MT","Segoe UI",system-ui,sans-serif}'
+    + '.w{max-width:560px;margin:7vh auto;padding:0 1.2rem}'
+    + '.c{background:#fff;border:1px solid #D3DEE7;border-radius:8px;padding:1.8rem 1.7rem}'
+    + 'h2{font-family:Optima,Palatino,Georgia,serif;color:#08333D;margin:0 0 .3rem;font-size:1.4rem}'
+    + '.s{color:#5C7080;font-size:13px;margin:0 0 1.2rem}'
+    + '.amt{font-family:ui-monospace,Menlo,monospace;font-size:1.6rem;color:#08333D;margin:.2rem 0 1.2rem}'
+    + 'button{font:inherit;cursor:pointer;border-radius:5px;padding:.7rem 1.1rem;border:1px solid;width:100%;'
+    + 'font-weight:700;letter-spacing:.04em;margin-top:.6rem}'
+    + '.go{background:#1F7A55;border-color:#1F7A55;color:#fff}'
+    + '.alt{background:#fff;border-color:#D3DEE7;color:#08333D}'
+    + 'label{display:block;padding:.5rem .1rem;border-bottom:1px solid #EDF2F7;font-size:14px;cursor:pointer}'
+    + 'label:last-of-type{border-bottom:0}'
+    + 'input[type=checkbox]{margin-right:.6rem;transform:scale(1.15)}'
+    + 'textarea{width:100%;box-sizing:border-box;font:inherit;border:1px solid #D3DEE7;border-radius:5px;'
+    + 'padding:.6rem;min-height:80px;margin-top:.7rem;background:#F7F9FB}'
+    + '.q{display:none;margin-top:1rem;border-top:1px solid #EDF2F7;padding-top:1rem}'
+    + '</style><div class="w"><div class="c">' + inner + '</div></div>');
+}
+
+/* the landing page the billing email links to */
 function benAck_(p) {
   var sub = bsubs_().filter(function (s) { return s.id === String(p.id || ''); })[0];
-  if (!sub) return HtmlService.createHtmlOutput('<h2>Link not recognised</h2><p>Please contact the branch.</p>');
+  if (!sub) return bpage_('<h2>Link not recognised</h2><p class="s">Please contact the branch and we will resend it.</p>');
+
   sub.dunning = sub.dunning || {};
+  if (sub.dunning.verdict === 'ok')    return bpage_(bthanks_(sub));
+  if (sub.dunning.verdict === 'query') return bpage_(bqueryDone_(sub));
+
+  /* Opening the link is itself the receipt — whatever they answer next. */
   if (!sub.dunning.ack) {
     sub.dunning.ack = Date.now();
     bwrite_(sub);
-    blog_('Client', '', 'ACKNOWLEDGED', sub.group.name, sub.monthLabel, 'billing receipt confirmed');
+    blog_('Client', '', 'ACKNOWLEDGED', sub.group.name, sub.monthLabel, 'billing opened');
   }
-  return HtmlService.createHtmlOutput(
-    '<div style="font-family:Georgia,serif;max-width:480px;margin:14vh auto;text-align:center">'
-    + '<h2 style="color:#0B3C46">Receipt confirmed — thank you</h2>'
-    + '<p>' + sub.group.name + ' · ' + sub.monthLabel + '</p>'
-    + '<p style="color:#68747f">The branch has been notified. Nothing more is needed from you.</p></div>');
+
+  var total = 0;
+  Object.keys(sub.lineTotals || {}).forEach(function (k) { total += Number(sub.lineTotals[k]) || 0; });
+  var due = (sub.arrears && sub.arrears.balance) ? Number(sub.arrears.balance) : total;
+
+  return bpage_(
+    '<h2>' + bhesc_(sub.group.name) + '</h2>'
+    + '<p class="s">' + bhesc_(sub.monthLabel) + ' group billing</p>'
+    + (due ? '<div class="amt">TT$' + due.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '</div>' : '')
+    + '<p>Is this billing correct?</p>'
+    + '<form method="post" action="' + bhesc_(bexecUrl_()) + '">'
+    + '<input type="hidden" name="action" value="clientreply">'
+    + '<input type="hidden" name="id" value="' + bhesc_(sub.id) + '">'
+    + '<button class="go" name="verdict" value="ok" type="submit">Yes — received and correct</button>'
+    + '<button class="alt" type="button" onclick="document.getElementById(\'q\').style.display=\'block\';this.style.display=\'none\'">'
+    + 'No — something is not right</button>'
+    + '<div class="q" id="q">'
+    + '<p class="s" style="margin-bottom:.4rem">Tell us what, and it goes straight to the person who prepared it.</p>'
+    + BEN_REPLY_REASONS.map(function (r) {
+        return '<label><input type="checkbox" name="reason" value="' + r[0] + '">' + r[1] + '</label>';
+      }).join('')
+    + '<textarea name="note" maxlength="1500" placeholder="Names, amounts, anything that helps us find it"></textarea>'
+    + '<button class="go" name="verdict" value="query" type="submit" style="background:#A9701F;border-color:#A9701F">'
+    + 'Send this to the branch</button>'
+    + '</div></form>');
+}
+
+function bthanks_(sub) {
+  return '<h2>Thank you — noted</h2>'
+    + '<p class="s">' + bhesc_(sub.group.name) + ' · ' + bhesc_(sub.monthLabel) + '</p>'
+    + '<p>You have confirmed this billing is correct. The branch has been told, and nothing '
+    + 'more is needed from you beyond settling it.</p>';
+}
+
+function bqueryDone_(sub) {
+  return '<h2>We have it — thank you</h2>'
+    + '<p class="s">' + bhesc_(sub.group.name) + ' · ' + bhesc_(sub.monthLabel) + '</p>'
+    + '<p>Your query is with the branch and reminders on this month have stopped while we look at it. '
+    + 'Somebody will come back to you.</p>';
+}
+
+/* the reply itself */
+function benClientReply_(p) {
+  var sub = bsubs_().filter(function (s) { return s.id === String(p.id || ''); })[0];
+  if (!sub) return bpage_('<h2>Link not recognised</h2><p class="s">Please contact the branch.</p>');
+  sub.dunning = sub.dunning || {};
+
+  var verdict = String(p.verdict || '') === 'query' ? 'query' : 'ok';
+  var picked = [];
+  if (p.reason) {
+    var raw = (typeof p.reason === 'string') ? [p.reason] : p.reason;
+    /* Apps Script hands a single checkbox back as a string and several as an
+       array; e.parameters would give arrays either way but the form check in
+       doPost reads e.parameter. Handle both rather than depend on it. */
+    raw.forEach(function (code) {
+      BEN_REPLY_REASONS.forEach(function (r) { if (r[0] === code) picked.push(r[1]); });
+    });
+  }
+  var note = String(p.note || '').slice(0, 1500);
+
+  sub.dunning.verdict = verdict;
+  sub.dunning.repliedAt = Date.now();
+  if (!sub.dunning.ack) sub.dunning.ack = Date.now();
+  if (verdict === 'query') { sub.dunning.query = { reasons: picked, note: note, at: Date.now() }; }
+  sub.state = (verdict === 'ok') ? 'CONFIRMED' : 'QUERIED';
+  sub.events.push({ at: Date.now(), by: sub.group.name, code: '', did: sub.state,
+                    note: verdict === 'query' ? (picked.join('; ') + (note ? ' — ' + note : '')) : '' });
+  bwrite_(sub);
+  blog_('Client', '', verdict === 'ok' ? 'CONFIRMED' : 'QUERIED', sub.group.name, sub.monthLabel,
+        verdict === 'ok' ? 'billing confirmed correct' : picked.join('; ') + (note ? ' — ' + note : ''));
+
+  /* The branch hears about a query at once — the assistant who built it,
+     the approver, and the manager. A confirmation is quieter: it lands on
+     the activity tab and stops the reminder ladder, and nobody's inbox
+     needs to carry it. */
+  try {
+    if (verdict === 'query') {
+      var to = [bSubmitterEmail_(sub), bprop_('BEN_APPROVER_EMAIL'), bprop_('BEN_NOTIFY')]
+        .filter(function (x) { return !!x; });
+      var seen = {}, list = [];
+      to.forEach(function (a) { if (!seen[a]) { seen[a] = 1; list.push(a); } });
+      if (list.length) {
+        MailApp.sendEmail({
+          to: list.join(','), name: BEN.FROM_NAME,
+          subject: '⚠ Query raised: ' + sub.group.name + ' — ' + sub.monthLabel,
+          body: sub.group.name + ' has replied that the ' + sub.monthLabel + ' billing is not right.\n\n'
+            + (picked.length ? 'What they picked:\n' + picked.map(function (x) { return '  • ' + x; }).join('\n') + '\n\n' : '')
+            + (note ? 'What they wrote:\n' + note + '\n\n' : '')
+            + 'Reminders on this month have stopped until it is resolved.\n\n'
+            + bprop_('BEN_SITE') + 'review.html#' + sub.id
+        });
+      }
+    }
+  } catch (mailErr) {}
+
+  return bpage_(verdict === 'ok' ? bthanks_(sub) : bqueryDone_(sub));
 }
 
 /* the five-star tap from the thank-you email */
