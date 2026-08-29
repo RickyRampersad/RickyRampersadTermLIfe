@@ -805,7 +805,12 @@ function parseHealthPages(pages){
       const inCol = i => nameX != null && i.x >= nameX - 4 && i.x < dateX - 10 && !FURNITURE.test(i.t);
       const pick = tol => band.filter(i => inCol(i) && Math.abs(i.y - it.y) <= tol)
                               .map(i => i.t).join('').replace(/\s+/g,' ').trim();
-      const name = pick(0.35) || pick(1.4);
+      /* The loose band sometimes sweeps the start date in behind the name —
+         "BABOOLAL, LINDA01-Nov-2011". Harmless to the money, which is read
+         from its own column, but it is the name every comparison runs on:
+         against the life billing, and against our own record. Cut it. */
+      const name = String(pick(0.35) || pick(1.4) || '')
+        .replace(/\s*\d{2}-[A-Za-z]{3}-\d{4}.*$/, '').trim();
       /* Take the figure on this row's own baseline, not merely the rightmost
          one in the band. Where two members are drawn a hair apart, the loose
          band holds both their premiums, and the rightmost is as likely to be
@@ -1288,6 +1293,134 @@ function crossChecks(){
   return out;
 }
 
+/* ══════════════ AND WHAT SALESFORCE BELIEVES ══════════════
+   The documents are one half of the question. The other half is the branch's
+   own record: who do we think is covered? Nobody has put the two side by
+   side, and on D Rampersad they do not agree — Salesforce holds 71 life and
+   78 health records reading "Premium Paying" against a September billing of
+   67 lives on each line.
+
+   Every name in that gap is either a leaver whose status was never changed —
+   so the branch is quoting cover that stopped, and the conversion notice the
+   person was owed never went — or cover that lapsed with nobody watching.
+
+   The strongest case is the one this month actually contains: a member
+   terminated on the statement of adjustments whose Salesforce record still
+   reads in force. The document is the notification. If the status did not
+   move, the process stopped halfway: no termination went to the department,
+   no conversion notice went to the member, and next month the same name
+   comes round again.
+
+   Read-only, and never a reason to hold a month. If Salesforce cannot be
+   reached the check says so and the billing goes on. */
+let ROSTER = null, ROSTER_WHY = '';
+async function loadRoster(){
+  ROSTER = null; ROSTER_WHY = '';
+  if(!API) return;
+  try{
+    const r = await fetch(API + '?action=roster&auth=' + encodeURIComponent(AUTH || '')
+      + '&group=' + encodeURIComponent(group.name));
+    const d = await r.json();
+    if(d && d.ok && d.roster) ROSTER = d.roster;
+    else ROSTER_WHY = (d && (d.why || d.error)) || 'The roster could not be read.';
+  }catch(e){ ROSTER_WHY = 'Could not reach the branch script for the roster.'; }
+}
+
+/* The termination form the employer and the branch already use. Pre-filled
+   so reporting a leaver is one click from the month that found them. */
+const QUERYPAL = 'https://querymypolicies.netlify.app/';
+const reportLink = name => `${QUERYPAL}?action=leaver&name=${encodeURIComponent(name)}`;
+
+function rosterChecks(){
+  const out = [], push = (id,kind,text,extra) => out.push(Object.assign({id,kind,text}, extra||{}));
+  if(!ROSTER){
+    if(ROSTER_WHY) push('r-off','note',
+      `The branch record was not read this month — ${ROSTER_WHY} The documents were still checked `
+      + `against each other; only the comparison with Salesforce is missing.`);
+    return out;
+  }
+  const words = s => new Set(String(s||'').toUpperCase().replace(/[^A-Z ]/g,' ')
+    .split(/\s+/).filter(w => w.length > 1));
+  const same = (a,b) => { const A = words(a), B = words(b);
+    return [...A].filter(w => B.has(w)).length >= 2; };
+  const inForce = line => ROSTER.filter(r => r.line === line && r.inForce);
+  const billed  = line => (line === 'life'
+    ? (got.life   && got.life.ok   ? got.life.doc.members   : null)
+    : (got.health && got.health.ok ? got.health.doc.members : null));
+
+  /* ── terminated on the statement, still in force on our side ── */
+  const adj = got.adjustments;
+  if(adj && adj.ok && (adj.doc.items||[]).length){
+    const leavers = adj.doc.items.filter(i => /TERMIN/i.test(i.type||'') || (i.total||0) < 0);
+    const stuck = [];
+    leavers.forEach(l => {
+      const rows = ROSTER.filter(r => same(r.name, l.name) && r.inForce);
+      if(rows.length) stuck.push({ name:l.name, rows });
+    });
+    if(stuck.length) push('r-terminated-inforce', 'blocker',
+      `${stuck.map(s => `${s.name} still reads "${s.rows[0].status}" on our own record`
+        + (s.rows[0].modified ? ` (last touched ${s.rows[0].modified})` : '')).join('; ')}. `
+      + `Guardian has terminated ${stuck.length === 1 ? 'them' : 'them'} on this statement, so the `
+      + `termination was never put through on our side — which means no conversion notice went to `
+      + `${stuck.length === 1 ? 'them' : 'any of them'} either.`,
+      { leavers: stuck.map(s => s.name) });
+    if(leavers.length && !stuck.length) push('r-terminated-ok','ok',
+      `All ${leavers.length === 1 ? 'the leaver on this statement is' : leavers.length + ' leavers on this statement are'} `
+      + `already off our own record. The process was followed.`);
+  }
+
+  /* ── in force with us, not on the bill ──
+     Anyone already named as a stuck termination is left out: they are the
+     same problem, and stating it twice is how a screen teaches people to
+     skim it. */
+  const named = new Set([].concat.apply([], out.filter(c => c.leavers).map(c => c.leavers)));
+  const alreadyNamed = n => [...named].some(x => same(x, n));
+  ['life','health'].forEach(line => {
+    if(!group.lines.includes(line)) return;
+    const mine = billed(line); if(!mine) return;
+    const ghosts = inForce(line).filter(r =>
+      !mine.some(m => same(m.name, r.name)) && !alreadyNamed(r.name));
+    if(!ghosts.length) return;
+    push('r-ghosts-'+line, 'flag',
+      `${ghosts.length} ${ghosts.length === 1 ? 'person reads' : 'people read'} as covered on our `
+      + `${LINES[line].label.toLowerCase()} record but ${ghosts.length === 1 ? 'is' : 'are'} not on this `
+      + `month's billing: ${ghosts.slice(0,8).map(r => r.name).join(', ')}`
+      + `${ghosts.length > 8 ? ` and ${ghosts.length - 8} more` : ''}. `
+      + `Guardian stopped charging for them and nobody changed the status.`,
+      { people: ghosts.map(r => r.name) });
+  });
+
+  /* ── on the bill, nothing in force with us ──
+     With one caveat that matters more than the check itself: if most of a
+     billing comes back unknown, the roster did not find this account — a
+     name the book spells differently, or a query that came back short. Say
+     that, once, instead of accusing sixty people of not existing. A check
+     that fires on everybody teaches staff to scroll past it. */
+  ['life','health'].forEach(line => {
+    if(!group.lines.includes(line)) return;
+    const mine = billed(line); if(!mine) return;
+    const unknown = mine.filter(m => !ROSTER.some(r => r.line === line && same(r.name, m.name)));
+    if(!unknown.length) return;
+    if(unknown.length > mine.length / 2){
+      if(!out.some(c => c.id === 'r-nomatch')) push('r-nomatch','note',
+        `The branch record came back with little of this group in it — ${
+          ROSTER.filter(r => r.inForce).length} in-force ${
+          ROSTER.filter(r => r.inForce).length === 1 ? 'record' : 'records'} against ${mine.length} billed. `
+        + `Salesforce almost certainly holds this account under a different spelling, so the roster `
+        + `comparison has been left out of this month rather than reported as ${unknown.length} missing people.`);
+      return;
+    }
+    push('r-unknown-'+line, 'flag',
+      `${unknown.length} ${unknown.length === 1 ? 'person is' : 'people are'} on this month's `
+      + `${LINES[line].label.toLowerCase()} with no record on our side at all: `
+      + `${unknown.slice(0,8).map(m => m.name).join(', ')}`
+      + `${unknown.length > 8 ? ` and ${unknown.length - 8} more` : ''}. `
+      + `New members are the usual reason — but until the record exists, nothing we run can see them.`);
+  });
+
+  return out;
+}
+
 /* ══════════════ SCREEN ══════════════ */
 function expected(){
   const e = ['life','adjustments'];
@@ -1584,6 +1717,18 @@ function questions(){
     id:c.id, kind:'blocker', q:c.text,
     opts:['I will get this checked','Publish anyway, I have checked it'] }));
 
+  /* And what the branch's own record says. A termination Guardian has made
+     that our side never made is the process stopping halfway, so it blocks;
+     a roster that has drifted is worth an answer but not worth holding a
+     client's billing over. */
+  rosterChecks().forEach(c => {
+    if(c.kind === 'blocker') qs.push({ id:c.id, kind:'blocker', q:c.text,
+      opts:['I will put the termination through','Already done, it has not synced yet','Publish anyway, I have checked it'],
+      links:(c.leavers||[]).map(n => ({ label:'Report ' + n, href:reportLink(n) })) });
+    if(c.kind === 'flag') qs.push({ id:c.id, kind:'check', q:c.text,
+      opts:['Known — I will get the records tidied','New to me, flag it for the client'] });
+  });
+
   exp.forEach(k => { if(!got[k]) qs.push({ id:'missing-'+k, kind:'blocker',
     q:`No ${DOC_KINDS[k].label.toLowerCase()} yet.`,
     opts:['It is coming','There was none this month'] }); });
@@ -1620,14 +1765,16 @@ function derivation(){
 
 function paintChecks(){
   const qs = questions();
-  const agreed = crossChecks().filter(c => c.kind === 'ok');
+  const agreed = crossChecks().filter(c => c.kind === 'ok')
+    .concat(rosterChecks().filter(c => c.kind === 'ok' || c.kind === 'note'));
   const der = derivation();
   const tiesCard = (agreed.length || der.rows.length) ? `<div class="card">
     <h2 style="font-size:1.05rem;color:var(--navy)">What the pack agrees on</h2>
     <p class="note" style="margin-top:.25rem">Guardian prints these figures more than once. Where two documents
-      state the same thing, they have been read against each other rather than taken on trust.</p>
+      state the same thing, they have been read against each other rather than taken on trust — and against
+      what the branch's own record in Salesforce says is in force.</p>
     ${agreed.length ? `<ul class="checks" style="margin:.7rem 0 0;padding-left:1.1rem">
-      ${agreed.map(c => `<li><span class="ans">✓</span> ${esc(c.text)}</li>`).join('')}</ul>` : ''}
+      ${agreed.map(c => `<li><span class="${c.kind==='note'?'noans':'ans'}">${c.kind==='note'?'–':'✓'}</span> ${esc(c.text)}</li>`).join('')}</ul>` : ''}
     ${der.rows.length ? `<div class="tw" style="margin-top:.9rem"><table><thead><tr>
         <th>What is billed</th><th>Read from</th><th class="r">Amount</th></tr></thead><tbody>
       ${der.rows.map(r => `<tr><td>${esc(r.what)}${r.note?`<br><small class="note">${esc(r.note)}</small>`:''}</td>
@@ -1649,6 +1796,8 @@ function paintChecks(){
       <p>${q.kind==='blocker'?'<b>⚠ </b>':''}${esc(q.q)}</p>
       <div class="ans">${q.opts.map((o,i) =>
         `<button data-q="${esc(q.id)}" data-a="${i}" class="${answers[q.id]===String(i)?'on':''}">${esc(o)}</button>`).join('')}</div>
+      ${(q.links||[]).length ? `<div class="row" style="margin-top:.5rem">${q.links.map(l =>
+        `<a class="btn ghost" href="${esc(l.href)}" target="_blank" rel="noopener">${esc(l.label)} →</a>`).join('')}</div>` : ''}
       ${answers[q.id]!=null?'<textarea data-note="'+esc(q.id)+'" placeholder="Anything to record with that?">'+esc(answers['n-'+q.id]||'')+'</textarea>':''}
     </div>`).join('')}
   </div>`;
@@ -2221,7 +2370,8 @@ function switchGroup(id){
   group = g; $('grp').value = id; got = {}; answers = {};
   $('readout').innerHTML=''; $('checks').innerHTML=''; $('publish').innerHTML='';
   paintDocs();
-  flowRefresh().then(() => { paintPublish(); paintBoard(); });
+  Promise.all([flowRefresh(), loadRoster()]).then(() => {
+    paintPublish(); paintBoard(); paintChecks(); });
 }
 $('grp').addEventListener('change', e => switchGroup(e.target.value));
 document.addEventListener('click', e => {
@@ -2281,7 +2431,8 @@ function open_(){
     const sub = document.querySelector('header .sub');
     if(sub) sub.textContent = 'Signed in as ' + IDENTITY.name + ' — ' + sub.textContent;
   }
-  loadBook().then(() => { paintDocs(); return flowRefresh(); }).then(() => { paintPublish(); paintBoard(); });
+  loadBook().then(() => { paintDocs(); return Promise.all([flowRefresh(), loadRoster()]); })
+    .then(() => { paintPublish(); paintBoard(); paintChecks(); });
 }
 function tryCode(){
   const v = ($('code').value||'').trim().toUpperCase();

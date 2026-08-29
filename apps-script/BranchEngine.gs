@@ -854,6 +854,7 @@ function doGet(e) {
     if (a === 'monthflow') return benMonthflow_(e.parameter);
     if (a === 'billing')   return benBilling_(e.parameter);
     if (a === 'groups')    return benGroups_(e.parameter);
+    if (a === 'roster')    return benRoster_(e.parameter);
     if (a === 'ack')       return benAck_(e.parameter);
     if (a === 'rate')      return benRate_(e.parameter);
     if (!a) {
@@ -1188,6 +1189,96 @@ function benGroups_(p) {
     groups.push(seen[key]);
   });
   return bok_({ groups: groups });
+}
+
+/* ══════════════ THE ROSTER — WHAT SALESFORCE BELIEVES ══════════════
+
+   The billing says who Guardian is charging for. Salesforce says who the
+   branch believes is covered. Nobody has ever put the two side by side, and
+   on D Rampersad they do not agree: Salesforce holds 71 life records and 78
+   health records reading "Premium Paying" against a September billing of 67
+   lives on each line.
+
+   That gap is not an accounting curiosity. Every name in it is either a
+   leaver whose status was never changed — so the branch is quoting cover
+   that stopped, and the conversion notice they were owed never went — or
+   cover that lapsed with nobody watching.
+
+   The three people terminated on the September statement prove the point.
+   All three still read as in force. Harripersad Ramdath is "Premium Paying"
+   and employed "Active" on both lines, last touched in 2021.
+
+   So the month-end now asks Salesforce the same question it asks the
+   documents, and disagreements become work rather than nothing.
+
+   Read-only. This never writes to Salesforce — a termination goes through
+   the department, on the employer's instruction, the way it always has.
+   The connection is the one SalesforceSync.gs already set up; if it is not
+   set up, the roster check simply says so and the month proceeds. Never
+   block a billing on a check that could not run. */
+
+/* Statuses that mean "this cover is running and being paid for". Anything
+   else — Matured, Expired, Converted, Not Proceeded With, Rejected, Death —
+   is cover that has ended, and a blank is a record nobody has maintained. */
+var BEN_INFORCE = ['Premium Paying', 'Paid up', 'RNP'];
+
+/* A LIKE that finds the account however the book spells it. The two longest
+   words in order survive LIMITED against LTD, doubled spaces and the odd
+   full stop — the differences that made an exact match report honest
+   matches as failures. */
+function bAcctLike_(name) {
+  var words = String(name || '').toUpperCase().replace(/[^A-Z0-9 ]/g, ' ')
+    .split(/\s+/).filter(function (w) { return w.length > 3; });
+  var two = words.slice().sort(function (a, b) { return b.length - a.length; }).slice(0, 2);
+  var kept = words.filter(function (w) { return two.indexOf(w) !== -1; });
+  return '%' + (kept.length ? kept.join('%') : String(name || '').toUpperCase()) + '%';
+}
+
+function benRoster_(p) {
+  if (!bstaff_(p.auth)) return berr_('Staff or administrators only.');
+  var group = String(p.group || '').trim();
+  if (!group) return berr_('Which group?');
+  if (typeof sfQuery_ !== 'function')
+    return bok_({ roster: null, why: 'SalesforceSync.gs is not in this project, so the roster could not be read.' });
+
+  try {
+    /* Filtered on ACCOUNTS_NAME__c, not the Account lookup. The lookup is
+       wrong on thousands of records across the org — 9,262 of them sit on
+       one bank's account carrying somebody else's name — and it is the name
+       the policy administration system holds that is right. */
+    var like = bAcctLike_(group).replace(/'/g, "\\'");
+    var rows = sfQuery_(
+      "SELECT Id, POLICY__c, Contact__r.Name, RecordType.DeveloperName, "
+      + "Policy_Status_Description_R__c, Policy_Status_Description__c, "
+      + "Status_Change_Date__c, Employment_Status__c, LastModifiedDate "
+      + "FROM CLIENT_PORTFOLIO__c "
+      + "WHERE ACCOUNTS_NAME__c LIKE '" + like + "' "
+      + "AND RecordType.DeveloperName IN ('LIFE_GROUP','HEALTH_GROUP') "
+      + "LIMIT 2000");
+
+    var out = rows.map(function (r) {
+      /* The same status is kept in four fields and they disagree — a
+         picklist, a text copy, a code, and a second misspelt picklist. Read
+         the picklist first and fall back to the text, which is the pair
+         that actually carries values. */
+      var st = r.Policy_Status_Description_R__c || r.Policy_Status_Description__c || '';
+      return {
+        name:   (r.Contact__r && r.Contact__r.Name) || '',
+        policy: String(r.POLICY__c || ''),
+        line:   r.RecordType && r.RecordType.DeveloperName === 'HEALTH_GROUP' ? 'health' : 'life',
+        status: st,
+        inForce: BEN_INFORCE.indexOf(st) !== -1,
+        statusAt: r.Status_Change_Date__c || null,
+        employment: r.Employment_Status__c || '',
+        modified: String(r.LastModifiedDate || '').slice(0, 10)
+      };
+    }).filter(function (r) { return !!r.name; });
+
+    return bok_({ roster: out, matchedOn: like, read: new Date().toISOString() });
+  } catch (err) {
+    /* A month must never be held up because Salesforce was unreachable. */
+    return bok_({ roster: null, why: String(err && err.message || err) });
+  }
 }
 
 /* ============================ client billing ============================ */
