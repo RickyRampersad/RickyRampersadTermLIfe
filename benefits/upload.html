@@ -643,7 +643,13 @@ function samePerson(a, b){
   return [...aAll].filter(w => bAll.has(w)).length >= 2;
 }
 /* A name Guardian's own report writer cut off at the column edge. */
-const isClipped = n => !/[,;]/.test(String(n)) || String(n).trim().length < 4;
+/* A name Guardian's own report writer cut off at the column edge. Three
+   shapes of it: no separator at all, too short to be a name, or a separator
+   with nothing after it — "JOSEPH," is a surname whose given name did not
+   fit, and reporting it as a rename told a client their employee had
+   changed name when the truth was a short page. */
+const isClipped = n => { const s = String(n||'').trim();
+  return !/[,;]/.test(s) || s.length < 4 || /[,;]\s*$/.test(s); };
 
 /* ── Group life monthly billing ── */
 function parseLifeBilling(lines){
@@ -1578,27 +1584,36 @@ function monthOf(doc){
 const docMonth = doc => (doc && doc.month) || 'last month';
 
 function matchMembers(before, after){
-  const byCert = new Map(before.map(m => [m.empId, m]));
+  /* A health invoice identifies a member by employee id; the life schedule
+     by certificate number. Reading only empId meant every life member keyed
+     on `undefined`, so the map held one entry — the last person in the list
+     — and all 158 September members "matched" them. Life has therefore never
+     had a month-over-month comparison: no joiners, no leavers, and 157
+     phantom renames that went into the client's email. */
+  const idOf = m => String((m && (m.empId || m.cert)) || '');
+  const byCert = new Map();
+  before.forEach(m => { const k = idOf(m); if(k) byCert.set(k, m); });
   const takenBefore = new Set(), pairs = [];
   after.forEach(m => {
-    let hit = byCert.get(m.empId);
-    if(!hit){
+    let hit = idOf(m) ? byCert.get(idOf(m)) : null;
+    if(!hit && idOf(m)){
       /* One side's certificate was cut off, so the short one is a prefix of the
          long one. A prefix on its own is far too weak to match on: TPG0185-003
          opens 00311, 00340, 00304 and more, and the first of those to be tried
          wins — which quietly swaps two people and reports both a joiner and a
          leaver who never moved. Accept it only when exactly one candidate fits
          and the premium and start date agree as well. */
-      const cands = before.filter(b => !takenBefore.has(b.empId) &&
-        b.empId.length !== m.empId.length &&
-        (m.empId.startsWith(b.empId) || b.empId.startsWith(m.empId)) &&
+      const mid = idOf(m);
+      const cands = before.filter(b => idOf(b) && !takenBefore.has(idOf(b)) &&
+        idOf(b).length !== mid.length &&
+        (mid.startsWith(idOf(b)) || idOf(b).startsWith(mid)) &&
         b.premium === m.premium && b.started === m.started);
       if(cands.length === 1) hit = cands[0];
     }
-    if(hit) takenBefore.add(hit.empId);
+    if(hit) takenBefore.add(idOf(hit));
     pairs.push({ before:hit || null, after:m });
   });
-  const left = before.filter(b => !takenBefore.has(b.empId));
+  const left = before.filter(b => idOf(b) && !takenBefore.has(idOf(b)));
   return { pairs, left };
 }
 
@@ -1609,9 +1624,27 @@ function movement(kind){
   const joined  = pairs.filter(p => !p.before).map(p => p.after);
   const changed = pairs.filter(p => p.before && p.before.premium !== p.after.premium)
                        .map(p => ({ ...p.after, wasPremium:p.before.premium, wasTier:p.before.tier }));
-  const renamed = pairs.filter(p => p.before && p.before.name !== p.after.name && p.before.premium === p.after.premium)
+  /* "Printed differently" has to mean differently, not merely re-spaced.
+     Guardian's life schedule puts a space before the semicolon one month and
+     not the next, so comparing the raw strings called 157 of 158 members
+     renamed and put every one of their names in the client's email. Compare
+     the words, which is what a person reading the two pages would do. */
+  const printed = s => String(s||'').toUpperCase().replace(/[^A-Z ]/g,' ')
+    .split(/\s+/).filter(Boolean).sort().join(' ');
+  const renamed = pairs.filter(p => p.before && p.before.premium === p.after.premium
+                       && printed(p.before.name) !== printed(p.after.name)
+                       /* A name Guardian's report cut off at the column edge
+                          was not renamed, it was clipped. Telling a client
+                          five of their staff were renamed when the truth is
+                          last month's page was short is worse than silence. */
+                       && !isClipped(p.before.name) && !isClipped(p.after.name))
                        .map(p => ({ ...p.after, wasName:p.before.name }));
-  const delta = (now.doc.computed.gross||0) - (was.doc.computed.gross||0);
+  /* Each line's own cash figure. Life documents carry no `gross`, so reading
+     one made every life month move by exactly zero — and an unexplained
+     movement on life could never be raised, because there was never a
+     movement to explain. */
+  const cash = d => d.computed.gross != null ? d.computed.gross : (d.computed.total || 0);
+  const delta = round2(cash(now.doc) - cash(was.doc));
   const explained = joined.reduce((s,m)=>s+(m.premium||0),0)
                   - left.reduce((s,m)=>s+(m.premium||0),0)
                   + changed.reduce((s,m)=>s+((m.premium||0)-(m.wasPremium||0)),0);

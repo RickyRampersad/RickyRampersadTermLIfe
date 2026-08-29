@@ -919,7 +919,13 @@ function samePerson(a, b){
   return [...aAll].filter(w => bAll.has(w)).length >= 2;
 }
 /* A name Guardian's own report writer cut off at the column edge. */
-const isClipped = n => !/[,;]/.test(String(n)) || String(n).trim().length < 4;
+/* A name Guardian's own report writer cut off at the column edge. Three
+   shapes of it: no separator at all, too short to be a name, or a separator
+   with nothing after it — "JOSEPH," is a surname whose given name did not
+   fit, and reporting it as a rename told a client their employee had
+   changed name when the truth was a short page. */
+const isClipped = n => { const s = String(n||'').trim();
+  return !/[,;]/.test(s) || s.length < 4 || /[,;]\s*$/.test(s); };
 
 /* ── Group life monthly billing ── */
 function parseLifeBilling(lines){
