@@ -178,7 +178,9 @@ footer.foot{max-width:1220px;margin:0 auto;padding:0 16px 40px;color:var(--dim);
     <div class="gatefoot">
       Your access code comes from the branch. It is checked on the server —
       nothing about your book is loaded into this page until it matches.<br>
-      Signed in for 12 hours, then it asks again.
+      Signed in for 12 hours, then it asks again.<br>
+      New to this? <a href="manual/" style="color:var(--gold)">Read the manual first</a> —
+      fifteen minutes, and three of the numbers are not what they look like.
     </div>
   </div>
 </div>
@@ -196,6 +198,8 @@ footer.foot{max-width:1220px;margin:0 auto;padding:0 16px 40px;color:var(--dim);
       <div class="brand">Branch Intelligence<small id="builtline">—</small></div>
       <div class="spacer"></div>
       <div class="who"><b id="whoname">—</b><span id="whorole">—</span></div>
+      <a class="btn small ghost" href="manual/" target="_blank"
+         style="text-decoration:none;display:inline-block">Manual</a>
       <button class="btn small ghost" id="signout" type="button">Sign out</button>
     </div>
   </header>
@@ -209,6 +213,8 @@ footer.foot{max-width:1220px;margin:0 auto;padding:0 16px 40px;color:var(--dim);
     <div class="view" id="v-reqs"></div>
     <div class="view" id="v-maturity"></div>
     <div class="view" id="v-expiry"></div>
+    <div class="view" id="v-xsell"></div>
+    <div class="view" id="v-moves"></div>
     <div class="view" id="v-health"></div>
   </main>
 
@@ -435,6 +441,10 @@ var TABS = [
   { id: 'reqs',     label: 'Requirements',  count: function (d) { return (d.reqs || {}).openCount; } },
   { id: 'maturity', label: 'Maturities',    count: function (d) { return ((d.maturity || {}).retirement || {}).total + ((d.maturity || {}).life || {}).total; } },
   { id: 'expiry',   label: 'Expiring cover', count: function (d) { return ((d.expiry || {}).term || {}).total; } },
+  { id: 'xsell',    label: 'Cross-sell',    count: function (d) { return (d.crosssell || {}).thisWeek; } },
+  { id: 'moves',    label: 'What moved',    count: function (d) {
+      var m = d.movements || {}; if (m.first) return 0;
+      var c = m.counts || {}; return (c.lapsed || 0) + (c.slipped || 0); } },
   { id: 'health',   label: 'Data health',   count: function (d) { return ((d.health || {}).items || []).length; } }
 ];
 
@@ -453,7 +463,8 @@ function show(view) {
   var el = $('v-' + view);
   el.classList.add('on');
   ({ pulse: viewPulse, dues: viewDues, pending: viewPending, reqs: viewReqs,
-     maturity: viewMaturity, expiry: viewExpiry, health: viewHealth }[view])(el);
+     maturity: viewMaturity, expiry: viewExpiry, xsell: viewXsell,
+     moves: viewMoves, health: viewHealth }[view])(el);
   window.scrollTo(0, 0);
 }
 
@@ -493,7 +504,26 @@ function viewPulse(el) {
            'Permanent cover with no medical — until the term ends', conv24 ? 'gold' : '', 'expiry') +
       stat('Unreachable clients', num((d.defects || {}).unreachable || 0),
            'On the chase list with no phone and no e-mail', 'bad', 'dues') +
+      stat('Cross-sell calls ready', num((DATA.crosssell || {}).thisWeek || 0),
+           'Scored 80+ — reachable, paid up, right age', 'good', 'xsell') +
+      ((DATA.movements || {}).first
+        ? ''
+        : stat('Lapsed overnight', num(((DATA.movements || {}).counts || {}).lapsed || 0),
+               'Easiest to reinstate today than any day after',
+               (((DATA.movements || {}).counts || {}).lapsed ? 'bad' : 'good'), 'moves')) +
     '</div></div>';
+
+  /* What changed overnight goes above the standing lists, because it is the
+     only thing on this screen with a clock on it. */
+  var mv = DATA.movements || {}, mc = mv.counts || {};
+  if (!mv.first && ((mc.lapsed || 0) + (mc.slipped || 0)) > 0) {
+    html += '<div class="note red"><b>Overnight.</b> ' +
+      (mc.lapsed ? '<b>' + num(mc.lapsed) + '</b> ' + plural(mc.lapsed, 'policy', 'policies') + ' lapsed' : '') +
+      (mc.lapsed && mc.slipped ? ', and ' : '') +
+      (mc.slipped ? '<b>' + num(mc.slipped) + '</b> slipped into arrears' : '') +
+      '. Reinstatement is easiest in the first weeks and hardest after a year. ' +
+      '<button class="linkish" data-go="moves">See what moved →</button></div>';
+  }
 
   /* The one thing a manager should read before believing any of the above. */
   if ((h.items || []).length) {
@@ -1076,6 +1106,183 @@ function expiryCols() {
                '" data-client="' + esc(r.client) + '">Log</button>';
       }, value: function () { return ''; } }
   ]);
+}
+
+/* ── Cross-sell ────────────────────────────────────────────────────────────
+   One row per client, under their strongest reason, scored out of 100. A name
+   repeated six times under six rules is a list nobody works, so the other gaps
+   ride along as "also needs".                                              */
+function viewXsell(el) {
+  var x = DATA.crosssell || {};
+  if (x.error) { el.innerHTML = errCard(x.error); return; }
+  var mine = DATA.you.role !== 'branch';
+  /* The wording arrives once and every row points at it by id. */
+  var defs = x.rules || {};
+  function ruleOf(r) { return defs[r.rule] || {}; }
+  function askOf(r) { return r.askOverride || ruleOf(r).ask || ''; }
+  function alsoOf(r) {
+    return (r.allRules || []).filter(function (id) { return id !== r.rule; })
+      .map(function (id) { return (defs[id] || {}).title || id; });
+  }
+
+  var html =
+    '<div class="card"><h2>Who to call, and what to say</h2>' +
+    '<p class="sub">Every client measured against what they already hold. Ranked by whether ' +
+    'the call is likely to happen — reachable, paid up, right age, proven capacity — not just ' +
+    'by the size of the gap.</p>' +
+    '<div class="stats">' +
+      stat('Call this week', num(x.thisWeek || 0), 'scored 80 and above', 'good', null) +
+      stat('Worth a call', num(x.worthACall || 0), 'scored 60 to 79', 'gold') +
+      stat('Keep on file', num(x.keepOnFile || 0), 'scored under 60') +
+      stat('Clients reviewed', num(x.clients || 0),
+           mine ? 'your in-force clients' : 'every in-force client in the branch') +
+    '</div>' +
+    '<div class="note red"><b>Read this the right way round.</b> ' + esc(x.caveat) + '</div>' +
+    '<div class="note"><b>Two clients are never on this list:</b> anybody the branch has no ' +
+    'phone or e-mail for, and anybody more than 30 days behind on what they already hold. ' +
+    'The second is a collections call — pitching them is how a branch loses both.</div></div>';
+
+  if ((x.byRule || []).length) {
+    html += '<div class="card"><h2>The gaps in the book</h2>' +
+      '<p class="sub">A client can appear in more than one of these. The two marked ' +
+      '<b>campaign</b> cover most of the book — they are a mailing, not a call list.</p>' +
+      table('xsRules', [
+        { key: 'title', label: 'Gap' },
+        { key: 'kind', label: 'Work it as',
+          render: function (r) {
+            return '<span class="pill ' + (r.kind === 'lead' ? 'p-good' : 'p-dim') + '">' +
+                   (r.kind === 'lead' ? 'call list' : 'campaign') + '</span>';
+          } },
+        { key: 'n', label: 'Clients', num: true, render: function (r) { return num(r.n); } }
+      ], x.byRule, { sort: 'n', dir: 'desc' }) + '</div>';
+  }
+
+  html += '<div class="card"><h2>The call list</h2>' +
+    '<p class="sub">Highest score first. The question in the last column is the opening — it ' +
+    'asks rather than tells, because the gap is only a gap in <i>this</i> branch\'s book.</p>' +
+    table('xsList', [].concat([
+      { key: 'score', label: 'Score', num: true,
+        render: function (r) {
+          var t = r.score >= 80 ? 'p-good' : r.score >= 60 ? 'p-gold' : 'p-dim';
+          return '<span class="pill ' + t + '">' + r.score + '</span>';
+        } },
+      { key: 'client', label: 'Client' },
+      { key: 'age', label: 'Age', num: true,
+        sortValue: function (r) { return r.age === null ? -1 : r.age; },
+        render: function (r) { return r.age === null ? '<span style="color:var(--dim)">—</span>' : r.age; } },
+      { key: 'rule', label: 'The gap',
+        render: function (r) {
+          var also = alsoOf(r);
+          return esc(ruleOf(r).title || r.rule) +
+            (also.length
+              ? '<br><span style="color:var(--dim);font-size:11.5px">also: ' +
+                esc(also.join(' · ')) + '</span>'
+              : '');
+        },
+        sortValue: function (r) { return ruleOf(r).title || r.rule; },
+        value: function (r) {
+          var also = alsoOf(r);
+          return (ruleOf(r).title || r.rule) + (also.length ? ' | also: ' + also.join('; ') : '');
+        } },
+      { key: 'size', label: 'Worth', num: true,
+        render: function (r) {
+          return money(r.size) + '<br><span style="color:var(--dim);font-size:11px">' +
+                 esc(ruleOf(r).sizeLabel || '') + '</span>';
+        } },
+      { key: 'holds', label: 'Holds now',
+        render: function (r) { return '<span class="pill p-dim">' + esc(r.holds) + '</span>'; } }
+    ], mine ? [] : [{ key: 'agent', label: 'Servicing agent' }], [
+      { key: 'phone', label: 'Contact',
+        render: function (r) { return esc(r.phone || r.email); },
+        value: function (r) { return r.phone || r.email; } },
+      { key: 'ask', label: 'Open with',
+        sortable: false,
+        render: function (r) { return '<i style="color:var(--muted)">\u201c' + esc(askOf(r)) + '\u201d</i>'; },
+        value: function (r) { return askOf(r); } },
+      { key: 'act', label: '', sortable: false,
+        render: function (r) {
+          return '<button class="btn small" data-log="cross-sell" data-policy="' + esc(r.clientId) +
+                 '" data-client="' + esc(r.client) + '">Log</button>';
+        }, value: function () { return ''; } }
+    ]), x.rows || [], { sort: 'score', dir: 'desc', limit: 400,
+                        empty: 'No cross-sell gaps found in your book.' }) + '</div>';
+
+  el.innerHTML = html;
+}
+
+/* ── What moved ────────────────────────────────────────────────────────────
+   The only genuinely urgent screen. Everything else here is a standing list;
+   this is what changed while nobody was looking.                          */
+function viewMoves(el) {
+  var m = DATA.movements || {};
+  if (m.first) {
+    el.innerHTML = '<div class="card"><h2>Nothing to compare yet</h2>' +
+      '<p class="sub">' + esc(m.note || '') + '</p></div>';
+    return;
+  }
+  var c = m.counts || {}, mine = DATA.you.role !== 'branch';
+
+  var html =
+    '<div class="card"><h2>What moved since the last rebuild</h2>' +
+    '<p class="sub">Each night the book is fingerprinted and compared with the night before. ' +
+    'A policy that slid from overdue to lapsed looks identical to one that was always lapsed — ' +
+    'this is the only place the difference shows.</p>' +
+    '<div class="stats">' +
+      stat('Newly lapsed', num(c.lapsed || 0),
+           'the reinstatement window opened last night', c.lapsed ? 'bad' : 'good') +
+      stat('Slipped into arrears', num(c.slipped || 0),
+           'were paying, now overdue', c.slipped ? 'warn' : 'good') +
+      stat('Came good', num(c.cleared || 0), 'off the chase list', 'good') +
+      stat('New pending cases', num(c.newPending || 0), 'submitted since last night') +
+    '</div></div>';
+
+  function moveTable(id, rows, title, sub, tone) {
+    if (!rows || !rows.length) return '';
+    return '<div class="card"><h2>' + esc(title) + '</h2><p class="sub">' + sub + '</p>' +
+      table(id, [].concat(mine ? [] : [{ key: 'agent', label: 'Agent' }], [
+        { key: 'client', label: 'Client' },
+        { key: 'policy', label: 'Policy' },
+        { key: 'plan', label: 'Plan' },
+        { key: 'modal', label: 'Instalment', num: true,
+          render: function (r) { return r.modal ? money2(r.modal) : '—'; } },
+        { key: 'phone', label: 'Phone' },
+        { key: 'email', label: 'E-mail' },
+        { key: 'act', label: '', sortable: false,
+          render: function (r) {
+            return '<button class="btn small" data-log="movement" data-policy="' + esc(r.policy) +
+                   '" data-client="' + esc(r.client) + '">Log</button>';
+          }, value: function () { return ''; } }
+      ]), rows, { sort: 'modal', dir: 'desc', limit: 300 }) + '</div>';
+  }
+
+  html += moveTable('mvLapsed', m.lapsed, 'Lapsed last night',
+    'Reinstatement is easiest in the first weeks and hardest after a year. These are as ' +
+    'easy as they will ever be, today.');
+  html += moveTable('mvSlipped', m.slipped, 'Slipped into arrears',
+    'These were paying yesterday. A call now costs one conversation; in six months it costs ' +
+    'a reinstatement.');
+  html += moveTable('mvCleared', m.cleared, 'Came good',
+    'Off the chase list. Worth knowing so nobody calls them about a premium they have paid.');
+
+  if (!mine && (m.vanished || []).length) {
+    html += '<div class="card"><h2>Left the extract entirely</h2>' +
+      '<p class="sub">These policies were in last night\'s book and are not in tonight\'s. ' +
+      'Usually a surrender nobody mentioned, sometimes an export that came up short — worth ' +
+      'a glance either way.</p>' +
+      table('mvGone', [
+        { key: 'policy', label: 'Policy' },
+        { key: 'was', label: 'Was',
+          render: function (r) {
+            return '<span class="pill p-dim">' + ({ P: 'paying', O: 'overdue', L: 'lapsed',
+              U: 'underwriting', G: 'ended' }[r.was] || r.was) + '</span>';
+          } }
+      ], m.vanished, { sort: 'policy', dir: 'asc', limit: 200 }) + '</div>';
+  }
+
+  if (!(m.lapsed || []).length && !(m.slipped || []).length && !(m.cleared || []).length) {
+    html += '<div class="card"><div class="empty">Nothing moved. That is a good night.</div></div>';
+  }
+  el.innerHTML = html;
 }
 
 /* ── Data health ───────────────────────────────────────────────────────────

@@ -48,6 +48,7 @@ var INTEL = {
   W_REQS:         'Watchlist — Requirements',
   W_MATURITY:     'Watchlist — Maturities',
   W_EXPIRY:       'Watchlist — Expiry',
+  W_XSELL:        'Watchlist — Cross-sell',
 
   SESSION_HOURS:  12,     // a sign-in lasts a working day, then it is gone
   CHASE_MIN_DAYS: 31,     // below this a premium is inside its grace period
@@ -312,7 +313,19 @@ function intelRebuild() {
   // Maturities and expiry read the same inforce book, so they are built together.
   out.expiry = out.maturity.expiry;
   delete out.maturity.expiry;
+  /* Cross-sell reads every in-force record, not just the maturing ones. The
+     raw list is dropped straight after so it never reaches a browser. */
+  out.crosssell = iBuildCrossSell_(today, out.maturity.all);
+  delete out.maturity.all;
   iJoinChases_(out);
+
+  /* Movements need every policy's status, not just the chase list. The working
+     list is handed over and dropped straight after — it is a third of a
+     megabyte and nothing on screen reads it. */
+  out.__duesAll = (out.dues && out.dues.allCodes) || [];
+  out.movements = iBuildMovements_(out);
+  delete out.__duesAll;
+  if (out.dues) delete out.dues.allCodes;
   out.health = iBuildHealth_(out);
   out.seconds = Math.round((new Date() - started) / 1000);
 
@@ -367,7 +380,8 @@ function iBuildDues_(today) {
   var ageing = {}, byBilling = {}, byAgent = {}, byPlan = {}, ageingByAgent = {};
   BUCKETS.forEach(function (b) { ageing[b] = { policies: 0, modal: 0 }; });
 
-  var chase = [], lapsedRecent = [], counts = { total: 0, overdue: 0, lapsed: 0, pending: 0, clean: 0 };
+  var chase = [], lapsedRecent = [], allCodes = [];
+  var counts = { total: 0, overdue: 0, lapsed: 0, pending: 0, clean: 0 };
   var defects = { sciNumber: 0, badPaidTo: 0, badLapseDate: 0, spacedEmail: 0, noPhone: 0, noEmail: 0, unreachable: 0 };
   var modalOverdue = 0, modalChase = 0;
 
@@ -396,6 +410,18 @@ function iBuildDues_(today) {
     if (status === '1') counts.lapsed++;
     else if (status === '3') counts.pending++;
     else if (status !== '2') { counts.clean++; }
+
+    /* One letter per policy for the overnight comparison. A policy that has
+       genuinely ended is 'G' — it should never show up as a fresh lapse. */
+    var desc = String(d.get('desc', r)).trim();
+    var code = status === '1' ? 'L' : status === '2' ? 'O' : status === '3' ? 'U'
+             : /surrender|matured|death|file closed|not proceeded|not taken|expired|rejected|declined|converted/i.test(desc) ? 'G'
+             : 'P';
+    if (!iBadNumber_(rawNum)) {
+      allCodes.push({ policy: String(rawNum).trim(), code: code, agent: agent,
+                      client: String(d.get('client', r)).trim(), modal: modal,
+                      plan: plan, phone: phone, email: email });
+    }
 
     if (status === '2') {
       counts.overdue++;
@@ -492,6 +518,7 @@ function iBuildDues_(today) {
     lapsedRecent: lapsedRecent.slice(0, 1500),
     byBilling: billingRows, byAgent: agentRows, byPlan: planRows,
     ageingByAgent: ageingByAgent,
+    allCodes: allCodes,
     defects: defects,
     // Said in one place so every screen and every e-mail says the same thing.
     basis: 'Premium is the modal instalment. The Mode column is empty in every ' +
@@ -837,7 +864,7 @@ function iBuildMaturity_(today) {
     agentStatus: ['servicing agent status']
   });
 
-  var mat = [], exp = [], byClass = {}, byAgentTotals = {};
+  var mat = [], exp = [], all = [], byClass = {}, byAgentTotals = {};
   var suspense = 0, suspenseCases = 0, fundHeld = 0, orphaned = 0, noFunds3 = 0;
   var horizonM = INTEL.MATURITY_MONTHS, horizonE = INTEL.EXPIRY_MONTHS;
 
@@ -865,19 +892,24 @@ function iBuildMaturity_(today) {
     var isOrphan = /inactive|vested|terminated/i.test(agentStatus);
     if (isOrphan) { orphaned++; mineT.orphaned++; }
 
+    /* Age drives which cross-sell conversation fits, so it is computed once
+       here rather than in every rule. A birth date that parses to an
+       impossible age is treated as absent rather than used. */
+    var born = iDate_(d.get('birth', r));
+    var age = born ? Math.floor((iDays_(born, today) || 0) / 365.25) : null;
+    if (age !== null && (age < 0 || age > 110)) age = null;
+
     var matDate = iDate_(d.get('mat', r));
-    if (!matDate) continue;
-    var monthsOut = iDays_(today, matDate);
-    if (monthsOut === null || monthsOut < 0) continue;
-    monthsOut = monthsOut / 30.44;
+    var monthsOut = matDate ? iDays_(today, matDate) : null;
+    if (monthsOut !== null) monthsOut = monthsOut < 0 ? null : monthsOut / 30.44;
 
     var rec = {
       policy: policy,
       client: [String(d.get('given', r)).trim(), String(d.get('sur', r)).trim()].filter(String).join(' '),
       clientId: String(d.get('clientId', r)).trim(),
-      plan: plan, cls: cls,
+      plan: plan, cls: cls, age: age,
       matures: iIso_(matDate),
-      months: Math.round(monthsOut),
+      months: monthsOut === null ? null : Math.round(monthsOut),
       sumInsured: iNum_(d.get('sumIns', r)),
       fund: iNum_(d.get('fund', r)),
       annual: iNum_(d.get('annual', r)),
@@ -896,6 +928,11 @@ function iBuildMaturity_(today) {
       convertible: /CNV(?!.*NCNV)/.test(plan.toUpperCase()) && plan.toUpperCase().indexOf('NCNV') === -1
     };
 
+    /* Every in-force record is kept for cross-sell, which cares about what a
+       client holds whether or not anything is maturing. Maturity and expiry
+       take only what falls inside their horizons. */
+    all.push(rec);
+    if (monthsOut === null) continue;
     if (cls === 'term' || cls === 'benefit') {
       if (monthsOut <= horizonE) exp.push(rec);
     } else if (monthsOut <= horizonM) {
@@ -934,7 +971,8 @@ function iBuildMaturity_(today) {
     note: 'Sums insured here are life cover only. Personal accident and critical ' +
           'illness plans are counted under Expiry, never in a cover total — ' +
           'neither is payable on death.',
-    expiry: iShapeExpiry_(exp, window_, sum)
+    expiry: iShapeExpiry_(exp, window_, sum),
+    all: all
   };
 }
 
@@ -1006,6 +1044,368 @@ function iJoinChases_(out) {
   p.chaseNever = never;
   p.chaseLive = live;
   p.chaseClosed = wentQuiet;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   WHAT MOVED OVERNIGHT
+   The rebuild sees the book fresh every night and has no memory of yesterday,
+   so a policy that slid from overdue to lapsed looks exactly like one that was
+   always lapsed. Nobody notices, and by the time anybody does, the
+   reinstatement window is shorter.
+
+   So each rebuild leaves behind a fingerprint — policy number against status —
+   and the next one compares. What comes out is the only genuinely urgent list
+   in this whole app: what changed while nobody was looking.
+
+   The fingerprint is stored on a hidden tab rather than in Script Properties,
+   which caps at 9 KB and would truncate silently at about a tenth of this book.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var INTEL_STATE_TAB = '_Intel State';
+
+function iSaveState_(map) {
+  var json = JSON.stringify(map);
+  var chunks = [];
+  for (var i = 0; i < json.length; i += INTEL.CACHE_CHUNK) chunks.push([json.substr(i, INTEL.CACHE_CHUNK)]);
+  var sh = iSheet_(INTEL_STATE_TAB, ['state']);
+  sh.clear();
+  sh.getRange(1, 1).setValue('STATE/1 chunks=' + chunks.length + ' len=' + json.length +
+                             ' at=' + Utilities.formatDate(new Date(), iTz_(), 'yyyy-MM-dd HH:mm'));
+  if (chunks.length) sh.getRange(2, 1, chunks.length, 1).setValues(chunks);
+  sh.hideSheet();
+}
+
+function iLoadState_() {
+  var sh = iSs_().getSheetByName(INTEL_STATE_TAB);
+  if (!sh || sh.getLastRow() < 2) return null;
+  var manifest = String(sh.getRange(1, 1).getValue());
+  var m = manifest.match(/len=(\d+)/);
+  var json = sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues()
+    .map(function (r) { return String(r[0]); }).join('');
+  if (m && json.length !== +m[1]) return null;   // truncated — treat as no history
+  try { return JSON.parse(json); } catch (e) { return null; }
+}
+
+/* Compact on purpose: one letter per policy, because 20,392 keys is already a
+   third of a megabyte and this is compared, never read by a person.
+     P premium paying / clean   O overdue   L lapsed   U underwriting pending
+     N pending business         G gone (surrendered, matured, died, closed)   */
+function iFingerprint_(out) {
+  var st = {};
+  (out.__duesAll || []).forEach(function (r) { st['d' + r.policy] = r.code; });
+  ((out.pending || {}).rows || []).forEach(function (r) { st['n' + r.policy] = 'N'; });
+  return st;
+}
+
+function iBuildMovements_(out) {
+  var now = iFingerprint_(out);
+  var was = iLoadState_();
+  iSaveState_(now);
+
+  if (!was) {
+    return { first: true, note: 'This is the first night with a fingerprint to compare. ' +
+             'Movements appear from tomorrow.' };
+  }
+
+  var lapsed = [], slipped = [], cleared = [], newPending = [], donePending = [], vanished = [];
+  var index = {};
+  (out.__duesAll || []).forEach(function (r) { index['d' + r.policy] = r; });
+  ((out.pending || {}).rows || []).forEach(function (r) { index['n' + r.policy] = r; });
+
+  Object.keys(now).forEach(function (k) {
+    var before = was[k], after = now[k];
+    if (before === after || before === undefined) return;
+    var row = index[k] || {};
+    if (after === 'L' && before !== 'L') lapsed.push(row);
+    else if (after === 'O' && (before === 'P' || before === undefined)) slipped.push(row);
+    else if (after === 'P' && (before === 'O' || before === 'L')) cleared.push(row);
+  });
+
+  /* A key present tonight and absent last night is new; the other way round is
+     a policy that left the extract entirely, which is worth knowing about
+     because it is usually a surrender nobody mentioned. */
+  Object.keys(now).forEach(function (k) {
+    if (was[k] !== undefined) return;
+    if (k.charAt(0) === 'n') newPending.push(index[k] || {});
+  });
+  Object.keys(was).forEach(function (k) {
+    if (now[k] !== undefined) return;
+    if (k.charAt(0) === 'n') donePending.push({ policy: k.slice(1) });
+    else vanished.push({ policy: k.slice(1), was: was[k] });
+  });
+
+  return {
+    first: false,
+    since: 'the last rebuild',
+    lapsed: lapsed.slice(0, 400),
+    slipped: slipped.slice(0, 400),
+    cleared: cleared.slice(0, 400),
+    newPending: newPending.slice(0, 200),
+    donePending: donePending.slice(0, 200),
+    vanished: vanished.slice(0, 200),
+    counts: {
+      lapsed: lapsed.length, slipped: slipped.length, cleared: cleared.length,
+      newPending: newPending.length, donePending: donePending.length, vanished: vanished.length
+    }
+  };
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CROSS-SELL
+   Not "everyone could buy more" — that is a mailing list, not a lead. Each
+   rule below names a specific gap in what a client already holds, measured on
+   the in-force book, and says what the conversation is.
+
+   Measured on the branch's own 2,153 clients before any of it was written:
+
+     1,780 of them (83%) hold exactly one policy
+     1,249 hold life cover and no retirement plan
+       357 hold a retirement fund and no death benefit at all
+       311 hold term cover and nothing permanent
+     1,963 (91%) hold no critical illness or personal accident benefit
+
+   ONE HONEST LIMIT, AND IT IS ON EVERY SCREEN THAT SHOWS THIS.
+   These gaps are gaps *in this branch's in-force book*. A client shown as
+   having no retirement plan may hold one with another company, another
+   branch, or through their employer. The list is a prompt to ask, never a
+   statement about the client's affairs — and an adviser who opens with "you
+   have no retirement plan" instead of "do you have one anywhere else?" will
+   be wrong roughly as often as the branch's share of that client's wallet.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var IXSELL_RULES = [
+  {
+    id: 'protection-gap',
+    title: 'Saving for retirement with no death benefit',
+    needs: function (h) { return h.retirement && !h.life && !h.term; },
+    why: 'They are building a fund and their family has no sum assured behind it. ' +
+         'If they die before it matures, their people get the fund balance — not a cover amount.',
+    ask: 'What happens to this plan, and to them, if you are not here to finish it?',
+    size: function (c) { return c.fund; },
+    sizeLabel: 'fund with no cover behind it',
+    bestAge: [25, 60],
+    weight: 40,
+    kind: 'lead'
+  },
+  {
+    id: 'term-only',
+    title: 'Term cover only — nothing permanent',
+    needs: function (h) { return h.term && !h.life && !h.retirement; },
+    why: 'The cover ends on a date. Nothing here pays out if they outlive it, and the ' +
+         'premium climbs steeply at renewal — if the plan renews at all.',
+    ask: 'Do you know the date this cover stops, and what it costs to replace it then?',
+    size: function (c) { return c.sumInsured; },
+    sizeLabel: 'cover with an end date',
+    bestAge: [40, 65],
+    weight: 32,
+    kind: 'lead'
+  },
+  {
+    id: 'conversion-window',
+    title: 'Conversion right closing',
+    needs: function (h, c) { return c.convertible && c.convertibleMonths <= 60; },
+    why: 'They can move to permanent cover with no evidence of health until the term ends. ' +
+         'After that a medical decides, and they will be older.',
+    ask: 'You have a right here most people never hear about. Shall I show you what it is worth?',
+    size: function (c) { return c.sumInsured; },
+    sizeLabel: 'convertible without a medical',
+    bestAge: [0, 200],
+    weight: 38,
+    kind: 'lead'
+  },
+  {
+    id: 'money-in-motion',
+    title: 'Money coming out within two years',
+    needs: function (h, c) { return c.maturingMonths !== null && c.maturingMonths <= 24; },
+    why: 'A maturity is the one moment a client has a lump sum and a decision. Whoever is in ' +
+         'the room when it lands keeps it.',
+    ask: 'This matures in ' + '', // filled per client below
+    size: function (c) { return c.maturingValue; },
+    sizeLabel: 'maturing',
+    bestAge: [0, 200],
+    weight: 36,
+    kind: 'lead'
+  },
+  {
+    id: 'retirement-gap',
+    title: 'Protected, but not saving',
+    needs: function (h) { return (h.life || h.term) && !h.retirement; },
+    why: 'Their family is covered if they die. Nothing here is building anything if they live, ' +
+         'and they are already paying premiums every month, so affordability is proven.',
+    ask: 'Everything you hold pays out if the worst happens. What is working for you if it does not?',
+    size: function (c) { return c.annual; },
+    sizeLabel: 'already paid a year',
+    bestAge: [25, 55],
+    weight: 22,
+    kind: 'campaign'
+  },
+  {
+    id: 'living-benefit',
+    title: 'No critical illness or accident benefit',
+    needs: function (h) { return !h.benefit && (h.life || h.term || h.retirement); },
+    why: 'Everything they hold pays on death. Nothing pays on the diagnosis or the accident ' +
+         'they are far more likely to survive — and which costs money while they do.',
+    ask: 'You are covered if you die. What covers you if you live through something expensive?',
+    size: function (c) { return c.annual; },
+    sizeLabel: 'already paid a year',
+    bestAge: [30, 55],
+    weight: 18,
+    kind: 'campaign'
+  }
+];
+
+function iBuildCrossSell_(today, inforceRows) {
+  if (!inforceRows || !inforceRows.length) {
+    return { error: 'The in-force book is needed to find cross-sell gaps and was not read.' };
+  }
+
+  /* One entry per client, holding everything they have with this branch. */
+  var byClient = {};
+  inforceRows.forEach(function (r) {
+    var id = r.clientId || ('name:' + iNameKey_(r.client));
+    if (!id) return;
+    if (!byClient[id]) {
+      byClient[id] = {
+        clientId: r.clientId, client: r.client, age: r.age, city: r.city,
+        phone: '', email: '', agent: r.agent, agentId: r.agentId, agentActive: r.agentActive,
+        policies: 0, annual: 0, sumInsured: 0, fund: 0, worstOverdue: 0,
+        holds: { life: false, term: false, retirement: false, benefit: false },
+        plans: [], convertible: false, convertibleMonths: null,
+        maturingMonths: null, maturingValue: 0
+      };
+    }
+    var c = byClient[id];
+    c.policies++;
+    c.annual += r.annual;
+    c.sumInsured += r.sumInsured;
+    c.fund += r.fund;
+    c.worstOverdue = Math.max(c.worstOverdue, r.overdue);
+    if (r.cls !== 'unclassified') c.holds[r.cls] = true;
+    if (c.plans.indexOf(r.plan) === -1) c.plans.push(r.plan);
+    if (!c.phone && r.phone) c.phone = r.phone;
+    if (!c.email && r.email) c.email = r.email;
+    if (c.age === null || c.age === undefined) c.age = r.age;
+
+    if (r.convertible && (c.convertibleMonths === null || r.months < c.convertibleMonths)) {
+      c.convertible = true;
+      c.convertibleMonths = r.months;
+    }
+    /* Only a maturity that actually pays the client counts as money in motion —
+       a term policy reaching its end date pays nobody. */
+    if ((r.cls === 'retirement' || r.cls === 'life') &&
+        (c.maturingMonths === null || r.months < c.maturingMonths)) {
+      c.maturingMonths = r.months;
+      c.maturingValue = r.cls === 'retirement' ? r.fund : r.sumInsured;
+    }
+  });
+
+  var leads = [], byRule = {}, holdsCount = {};
+  Object.keys(byClient).forEach(function (id) {
+    var c = byClient[id];
+    var key = [c.holds.life ? 'life' : '', c.holds.term ? 'term' : '',
+               c.holds.retirement ? 'retirement' : '', c.holds.benefit ? 'benefit' : '']
+              .filter(String).join('+') || '(none)';
+    holdsCount[key] = (holdsCount[key] || 0) + 1;
+
+    /* Every rule a client trips is counted, because that is the campaign
+       figure — but the client appears ONCE on the call list, under their
+       strongest reason. A name repeated six times is a list nobody works. */
+    var hits = [];
+    IXSELL_RULES.forEach(function (rule) {
+      if (!rule.needs(c.holds, c)) return;
+      var score = iXsellScore_(rule, c);
+      byRule[rule.id] = (byRule[rule.id] || 0) + 1;
+      if (score.total <= 0) return;
+      hits.push({ rule: rule, score: score });
+    });
+    if (!hits.length) return;
+    hits.sort(function (a, b) { return b.score.total - a.score.total; });
+
+    /* The wording — title, why, the opening question — is identical for every
+       client under a rule, so it travels once in `rules` below and the row
+       carries only the id. Repeating it on 2,000 rows cost a megabyte and a
+       half of the response for nothing. */
+    var best = hits[0], rule = best.rule;
+    leads.push({
+      rule: rule.id,
+      askOverride: rule.id === 'money-in-motion'
+        ? 'This matures in ' + c.maturingMonths + ' months. Shall we plan where it goes before it lands?'
+        : '',
+      allRules: hits.map(function (h) { return h.rule.id; }),
+      clientId: c.clientId, client: c.client, age: c.age, city: c.city,
+      agent: c.agent, agentId: c.agentId, agentActive: c.agentActive,
+      phone: c.phone, email: c.email,
+      policies: c.policies,
+      annual: c.annual, size: rule.size(c) || 0,
+      holds: key, overdue: c.worstOverdue,
+      score: best.score.total, reasons: best.score.reasons
+    });
+  });
+
+  /* Highest score first, and within a score the largest number attached. A
+     lead list nobody can get to the bottom of is ranked or it is useless. */
+  leads.sort(function (a, b) { return (b.score - a.score) || (b.size - a.size); });
+
+  function band(lo, hi) {
+    return leads.filter(function (l) { return l.score >= lo && l.score <= hi; }).length;
+  }
+
+  return {
+    clients: Object.keys(byClient).length,
+    leads: leads.length,
+    thisWeek: band(80, 100),
+    worthACall: band(60, 79),
+    keepOnFile: band(1, 59),
+    byRule: IXSELL_RULES.map(function (r) {
+      return { id: r.id, title: r.title, kind: r.kind, n: byRule[r.id] || 0 };
+    }).filter(function (r) { return r.n; }),
+    /* Said once. Every row points at one of these by id. */
+    rules: IXSELL_RULES.reduce(function (m, r) {
+      m[r.id] = { title: r.title, why: r.why, ask: r.ask, kind: r.kind, sizeLabel: r.sizeLabel };
+      return m;
+    }, {}),
+    holds: holdsCount,
+    rows: leads.slice(0, 2500),
+    caveat: 'These are gaps in THIS branch\'s in-force book. A client shown without a ' +
+            'retirement plan may hold one elsewhere. Open by asking, never by telling.'
+  };
+}
+
+/* Scored out of 100, and the parts are deliberately unequal: how sharp the gap
+   is (up to 40) matters, but being able to reach somebody who is paid up and
+   the right age matters just as much, because that is what makes a call happen.
+
+   Two conditions score zero rather than low, because they are not leads at all:
+   nobody the branch can contact, and anybody behind on what they already hold.
+   Pitching a client who is in arrears is how a branch loses both sales.
+
+   The reasons come back with the number so an adviser can see why a name is
+   near the top instead of being asked to trust a score. */
+function iXsellScore_(rule, c) {
+  var total = rule.weight, reasons = [];
+
+  if (!c.phone && !c.email) return { total: 0, reasons: ['no way to reach them'] };
+  if (c.worstOverdue > 30) return { total: 0, reasons: ['behind on existing premiums — this is a collections call'] };
+
+  if (c.phone) { total += 20; reasons.push('phone on file'); }
+  else { total += 8; reasons.push('e-mail only'); }
+
+  if (c.worstOverdue <= 0) { total += 15; reasons.push('paid up to date'); }
+  else { total += 5; reasons.push('slightly behind (' + Math.round(c.worstOverdue) + ' days)'); }
+
+  if (c.age === null || c.age === undefined) { reasons.push('date of birth not on file'); }
+  else if (c.age >= rule.bestAge[0] && c.age <= rule.bestAge[1]) {
+    total += 15; reasons.push('age ' + c.age + ' suits this');
+  } else { reasons.push('age ' + c.age + ' is outside the usual band'); }
+
+  if (c.annual >= 12000) { total += 10; reasons.push('pays ' + iMoney_(c.annual) + ' a year already'); }
+  else if (c.annual >= 6000) { total += 6; reasons.push('pays ' + iMoney_(c.annual) + ' a year already'); }
+  else if (c.annual >= 3000) { total += 3; }
+
+  if (c.policies >= 2) { total += 5; reasons.push(c.policies + ' policies — an established relationship'); }
+  if (!c.agentActive) { total -= 8; reasons.push('servicing agent is not active'); }
+
+  return { total: Math.max(0, Math.min(100, Math.round(total))), reasons: reasons };
 }
 
 /* ── Data health ──────────────────────────────────────────────────────────
@@ -1166,6 +1566,26 @@ function iWriteWatchlists_(out) {
               x.agent, x.phone, x.email, x.city];
     }),
     'Rider amounts are never added to a sum-assured total.');
+
+  var x = out.crosssell || {};
+  iWriteTab_(INTEL.W_XSELL,
+    ['Score', 'Band', 'Client', 'Age', 'The gap', 'What to ask', 'Worth', 'What that is',
+     'Also needs', 'Holds now', 'Policies', 'Annual premium', 'Servicing agent', 'Phone',
+     'E-mail', 'City', 'Why this scored'],
+    (x.rows || []).map(function (r) {
+      var def = (x.rules || {})[r.rule] || {};
+      return [r.score,
+              r.score >= 80 ? 'Call this week' : r.score >= 60 ? 'Worth a call' : 'Keep on file',
+              r.client, r.age === null ? '' : r.age, def.title || r.rule,
+              r.askOverride || def.ask || '',
+              r.size, def.sizeLabel || '',
+              (r.allRules || []).filter(function (id) { return id !== r.rule; })
+                .map(function (id) { return ((x.rules || {})[id] || {}).title || id; }).join('; '),
+              r.holds,
+              r.policies, r.annual, r.agent, r.phone, r.email, r.city,
+              (r.reasons || []).join('; ')];
+    }),
+    'Gaps in THIS branch\'s in-force book only — a client may hold the missing product elsewhere. Open by asking, not by telling.');
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -1551,6 +1971,43 @@ function iScope_(cache, session) {
     delete m.byClass;
   }
 
+  /* ── cross-sell ──────────────────────────────────────────────────────────
+     An agent gets their own clients and their own bands recounted. The
+     campaign totals across the branch are not theirs to see. */
+  if (c.crosssell && !c.crosssell.error) {
+    var xs = c.crosssell;
+    xs.rows = mine(xs.rows);
+    xs.leads = xs.rows.length;
+    xs.clients = xs.rows.length;
+    xs.thisWeek   = xs.rows.filter(function (l) { return l.score >= 80; }).length;
+    xs.worthACall = xs.rows.filter(function (l) { return l.score >= 60 && l.score < 80; }).length;
+    xs.keepOnFile = xs.rows.filter(function (l) { return l.score < 60; }).length;
+    var seen = {};
+    xs.rows.forEach(function (l) {
+      (l.allRules || [l.rule]).forEach(function (r) { seen[r] = (seen[r] || 0) + 1; });
+    });
+    xs.byRule = (xs.byRule || []).map(function (r) {
+      return { id: r.id, title: r.title, kind: r.kind, n: seen[r.id] || 0 };
+    }).filter(function (r) { return r.n; });
+    delete xs.holds;
+  }
+
+  /* ── what moved overnight ───────────────────────────────────────────────
+     Each list carries the servicing agent, so an agent sees their own losses
+     and nobody else's. The counts are recomputed rather than carried. */
+  if (c.movements && !c.movements.first) {
+    var mv = c.movements;
+    ['lapsed', 'slipped', 'cleared', 'newPending'].forEach(function (k) {
+      mv[k] = mine(mv[k]);
+    });
+    /* These two carry a policy number and nothing else — there is no agent on
+       them to filter by, so an agent is shown neither rather than everyone's. */
+    mv.donePending = []; mv.vanished = [];
+    mv.counts = { lapsed: mv.lapsed.length, slipped: mv.slipped.length,
+                  cleared: mv.cleared.length, newPending: mv.newPending.length,
+                  donePending: null, vanished: null };
+  }
+
   /* ── expiring cover ──────────────────────────────────────────────────── */
   if (c.expiry && !c.expiry.error) {
     var e = c.expiry;
@@ -1718,7 +2175,8 @@ function iRecentActions_(session) {
    ══════════════════════════════════════════════════════════════════════════ */
 
 function intelInstallTriggers() {
-  var wanted = ['intelRebuild', 'intelAgentDigest', 'intelManagerDigest', 'intelHorizonWatch'];
+  var wanted = ['intelRebuild', 'intelAgentDigest', 'intelManagerDigest',
+                'intelHorizonWatch', 'intelCrossSellDigest'];
   ScriptApp.getProjectTriggers().forEach(function (t) {
     if (wanted.indexOf(t.getHandlerFunction()) !== -1) ScriptApp.deleteTrigger(t);
   });
@@ -1726,6 +2184,7 @@ function intelInstallTriggers() {
   ScriptApp.newTrigger('intelAgentDigest').timeBased().atHour(7).everyDays(1).create();
   ScriptApp.newTrigger('intelManagerDigest').timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(7).create();
   ScriptApp.newTrigger('intelHorizonWatch').timeBased().onMonthDay(1).atHour(8).create();
+  ScriptApp.newTrigger('intelCrossSellDigest').timeBased().onMonthDay(8).atHour(8).create();
   return 'Installed. Check Project Settings → Time zone reads (GMT-04:00) Atlantic Time, ' +
          'or every one of these fires an hour out.';
 }
@@ -1813,15 +2272,41 @@ function intelAgentDigest() {
     var pend = (mine.pending && mine.pending.rows ? mine.pending.rows : [])
       .filter(function (x) { return x.suspense > 0 || (x.age || 0) > 60 || x.chase === 'never'; });
     var due = iDueFollowUps_(person.name);
+    var mv = mine.movements || {};
+    var justLapsed = mv.first ? [] : (mv.lapsed || []);
+    var justSlipped = mv.first ? [] : (mv.slipped || []);
 
-    if (!urgent.length && !pend.length && !due.length) return;
+    if (!urgent.length && !pend.length && !due.length && !justLapsed.length && !justSlipped.length) return;
 
     var inner =
       '<table style="width:100%;border-spacing:8px 0"><tr>' +
+        iStat_('Lapsed overnight', String(justLapsed.length), justLapsed.length ? 'bad' : 'good') +
         iStat_('Arrears 60 days +', String(urgent.length), urgent.length ? 'bad' : 'good') +
         iStat_('Pending stuck', String(pend.length), pend.length ? 'bad' : 'good') +
         iStat_('Follow-ups due', String(due.length)) +
       '</tr></table>';
+
+    /* Anything that moved last night goes first. It is the only part of this
+       mail with a clock on it — everything else will still be true tomorrow. */
+    if (justLapsed.length) {
+      inner += '<h3 style="font-size:14px;margin:20px 0 4px;color:#c0392b">Lapsed last night</h3>' +
+        '<p style="font-size:12.5px;color:#5c7590;margin:0 0 6px">Reinstatement is easiest in ' +
+        'the first weeks and hardest after a year. These are as easy as they will ever be, today.</p>' +
+        iTable_(['Client', 'Policy', 'Plan', 'Instalment', 'Contact'],
+          justLapsed.slice(0, 12).map(function (x) {
+            return [x.client, x.policy, x.plan, iMoney_(x.modal),
+                    x.phone || x.email || '— none on file —'];
+          }));
+    }
+    if (justSlipped.length) {
+      inner += '<h3 style="font-size:14px;margin:20px 0 4px;color:#b0791c">Slipped into arrears</h3>' +
+        '<p style="font-size:12.5px;color:#5c7590;margin:0 0 6px">Paying yesterday. A call now ' +
+        'costs one conversation; in six months it costs a reinstatement.</p>' +
+        iTable_(['Client', 'Policy', 'Instalment', 'Contact'],
+          justSlipped.slice(0, 12).map(function (x) {
+            return [x.client, x.policy, iMoney_(x.modal), x.phone || x.email || '— none on file —'];
+          }));
+    }
 
     if (urgent.length) {
       inner += '<h3 style="font-size:14px;margin:20px 0 4px;color:#00254d">Premiums past 60 days</h3>' +
@@ -1855,9 +2340,15 @@ function intelAgentDigest() {
       'color:#00254d;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:9px;' +
       'display:inline-block;font-size:14px">Open Branch Intelligence →</a></p>';
 
+    /* The lede counts what is actually below it. "Three things" printed above
+       four sections is the kind of small wrongness that teaches people to stop
+       reading the top of an e-mail. */
+    var blocks = [justLapsed.length, justSlipped.length, urgent.length, pend.length, due.length]
+      .filter(function (n) { return n > 0; }).length;
+    var words = ['', 'One thing', 'Two things', 'Three things', 'Four things', 'Five things'][blocks] || 'Everything';
     iSend_(person.email, 'Your branch list — ' + Utilities.formatDate(new Date(), iTz_(), 'EEEE d MMMM'),
            iShell_('Good morning, ' + person.name.split(' ')[0],
-                   'Three things this morning, and nothing else.', inner));
+                   words + ' this morning, and nothing else.', inner));
     sent++;
   });
   return 'Agent digests sent: ' + sent;
@@ -1947,6 +2438,20 @@ function intelManagerDigest() {
       iStat_('Open over a year', String(q.overYear || 0), (q.overYear || 0) ? 'bad' : 'good') +
     '</tr></table>';
 
+  var mv = cache.movements || {}, mc = mv.counts || {};
+  if (!mv.first && ((mc.lapsed || 0) + (mc.slipped || 0) + (mc.cleared || 0)) > 0) {
+    inner += '<p style="font-size:14px;margin:16px 0 0;padding:12px 14px;border-radius:10px;background:#fdf0ee">' +
+      '<b>Overnight:</b> ' + (mc.lapsed || 0) + ' lapsed, ' + (mc.slipped || 0) +
+      ' slipped into arrears, ' + (mc.cleared || 0) + ' came good.</p>';
+  }
+
+  var xs = cache.crosssell || {};
+  if (xs.thisWeek) {
+    inner += '<p style="font-size:14px;margin:12px 0 0;padding:12px 14px;border-radius:10px;background:#eefaf3">' +
+      '<b>' + xs.thisWeek + ' cross-sell calls are ready this week</b> — reachable, paid up, ' +
+      'the right age, and a gap worth talking about. ' + (xs.worthACall || 0) + ' more are worth a call.</p>';
+  }
+
   if (moved !== null) {
     inner += '<p style="font-size:14px;margin:16px 0 0;padding:12px 14px;border-radius:10px;background:' +
       (moved > 0 ? '#fdf0ee' : '#eefaf3') + '">The chase list ' +
@@ -2030,6 +2535,74 @@ function iPrevSnapshot_() {
   if (last < 2) return null;
   var row = sh.getRange(last, 1, 1, 7).getValues()[0];
   return { chaseCount: iNum_(row[1]), modalChase: iNum_(row[2]), pending: iNum_(row[3]) };
+}
+
+/* ── The month's leads ────────────────────────────────────────────────────
+   Ten names, not two hundred. A list an adviser can finish is a list they
+   start; a list of everything is a list nobody opens twice. The opening
+   question travels with the name, because the gap is only a gap in this
+   branch's book and an adviser who opens by telling will be wrong.        */
+function intelCrossSellDigest() {
+  var cache = iLoadCache_();
+  if (!cache) return 'No cache — run intelRebuild() first.';
+  var directory = iAgentDirectory_(), sent = 0;
+
+  Object.keys(directory).forEach(function (key) {
+    var person = directory[key];
+    if (!person.email) return;
+    var mine = iScope_(cache, { role: 'agent', agentName: person.agentName,
+                                agentId: person.agentId, name: person.name });
+    var xs = mine.crosssell || {};
+    var top = (xs.rows || []).filter(function (l) { return l.score >= 70; }).slice(0, 10);
+    if (!top.length) return;
+    var defs = xs.rules || {};
+    function ruleOf(l) { return defs[l.rule] || {}; }
+    function alsoOf(l) {
+      return (l.allRules || []).filter(function (id) { return id !== l.rule; })
+        .map(function (id) { return (defs[id] || {}).title || id; });
+    }
+
+    var inner =
+      '<table style="width:100%;border-spacing:8px 0"><tr>' +
+        iStat_('Ready this week', String(xs.thisWeek || 0), 'good') +
+        iStat_('Worth a call', String(xs.worthACall || 0)) +
+        iStat_('Clients reviewed', String(xs.clients || 0)) +
+      '</tr></table>' +
+      '<p style="font-size:13.5px;color:#3d4457;margin:16px 0 4px">Ten names, highest first. ' +
+      'Not two hundred — a list you can finish is a list you start.</p>';
+
+    top.forEach(function (l) {
+      inner +=
+        '<div style="border:1px solid #e2e8f0;border-left:4px solid #E8A020;border-radius:10px;' +
+        'padding:14px 16px;margin:12px 0">' +
+          '<div style="font-size:16px;font-weight:700;color:#00254d">' + iEsc_(l.client) +
+            (l.age !== null && l.age !== undefined ? ' <span style="font-weight:400;color:#5c7590;font-size:13px">· ' + l.age + '</span>' : '') +
+            '<span style="float:right;background:#eefaf3;color:#1e8449;border-radius:99px;' +
+            'padding:2px 10px;font-size:12px">' + l.score + '</span></div>' +
+          '<div style="font-size:13.5px;color:#c0392b;font-weight:600;margin-top:5px">' + iEsc_(ruleOf(l).title) + '</div>' +
+          '<div style="font-size:13px;color:#3d4457;margin-top:5px;line-height:1.6">' + iEsc_(ruleOf(l).why) + '</div>' +
+          '<div style="font-size:13px;color:#00254d;margin-top:8px;font-style:italic">' +
+            '\u201c' + iEsc_(l.askOverride || ruleOf(l).ask) + '\u201d</div>' +
+          '<div style="font-size:12px;color:#5c7590;margin-top:8px">' +
+            iMoney_(l.size) + ' ' + iEsc_(ruleOf(l).sizeLabel) + ' &nbsp;·&nbsp; holds ' + iEsc_(l.holds) +
+            ' &nbsp;·&nbsp; ' + iEsc_(l.phone || l.email || 'no contact on file') +
+            (alsoOf(l).length ? '<br>also needs: ' + iEsc_(alsoOf(l).join(' · ')) : '') +
+          '</div>' +
+        '</div>';
+    });
+
+    inner += '<p style="font-size:12.5px;color:#5c7590;margin-top:18px;padding:12px 14px;' +
+      'background:#fdf9ee;border-left:3px solid #E8A020;border-radius:0 8px 8px 0;line-height:1.6">' +
+      '<b>Ask, do not tell.</b> ' + iEsc_(xs.caveat || '') + '</p>';
+    inner += '<p style="margin-top:18px"><a href="' + iEsc_(iAppUrl_()) + '" style="background:#E8A020;' +
+      'color:#00254d;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:9px;' +
+      'display:inline-block;font-size:14px">See your whole list →</a></p>';
+
+    iSend_(person.email, 'Ten clients worth a call — ' + Utilities.formatDate(new Date(), iTz_(), 'MMMM yyyy'),
+           iShell_('Your cross-sell list', 'Built from what each of your clients already holds.', inner));
+    sent++;
+  });
+  return 'Cross-sell digests sent: ' + sent;
 }
 
 /* ── The horizon ──────────────────────────────────────────────────────────
@@ -2165,7 +2738,8 @@ function intelSelfTest() {
   line(cache ? 'Cache: built ' + cache.builtAt + ' in ' + cache.seconds + 's'
              : 'Cache: EMPTY — run intelRebuild() once.');
   var triggers = ScriptApp.getProjectTriggers().map(function (t) { return t.getHandlerFunction(); });
-  ['intelRebuild', 'intelAgentDigest', 'intelManagerDigest', 'intelHorizonWatch'].forEach(function (f) {
+  ['intelRebuild', 'intelAgentDigest', 'intelManagerDigest', 'intelHorizonWatch',
+   'intelCrossSellDigest'].forEach(function (f) {
     line('  trigger ' + f + ': ' + (triggers.indexOf(f) !== -1 ? 'installed' : 'MISSING — run intelInstallTriggers()'));
   });
   if (iProp_('INTEL_TEST_TO')) line('');
@@ -2258,6 +2832,7 @@ function onOpen() {
       .addItem('Send agent digests now', 'intelAgentDigest')
       .addItem('Send manager digest now', 'intelManagerDigest')
       .addItem('Send horizon notices now', 'intelHorizonWatch')
+      .addItem('Send cross-sell lists now', 'intelCrossSellDigest')
       .addSeparator()
       .addItem('Re-issue weak access codes', 'intelIssueCodesDialog_')
       .addToUi();

@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="robots" content="noindex"/>
+<title>Reading the branch · Branch Intelligence manual</title>
+<link rel="icon" href="../../favicon.svg"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+
+  :root{
+    --navy:#16264F; --deep:#0D1838; --gold:#C7A34A; --soft:#E7D9AE;
+    --paper:#F7F5EF; --card:#FFFFFF; --sunk:#FBFAF5;
+    --ink:#1F2433; --ink2:#3D4457; --muted:#6A7180; --line:#E5E1D6;
+    --good:#2C7A57; --warn:#B0791C; --stop:#AE3A33;
+    --shadow:0 1px 2px rgba(13,24,56,.05), 0 10px 26px -18px rgba(13,24,56,.30);
+  }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+    --paper:#0B1226; --card:#131C33; --sunk:#0F1729;
+    --ink:#ECEAE2; --ink2:#C4C8D4; --muted:#8E96A6; --line:#26304A; --gold:#D9B863;
+    --good:#5FC493; --warn:#E0A93F; --stop:#F08A82;
+    --shadow:0 1px 2px rgba(0,0,0,.45), 0 12px 30px -18px rgba(0,0,0,.85); }}
+  :root[data-theme="dark"]{
+    --paper:#0B1226; --card:#131C33; --sunk:#0F1729;
+    --ink:#ECEAE2; --ink2:#C4C8D4; --muted:#8E96A6; --line:#26304A; --gold:#D9B863;
+    --good:#5FC493; --warn:#E0A93F; --stop:#F08A82;
+    --shadow:0 1px 2px rgba(0,0,0,.45), 0 12px 30px -18px rgba(0,0,0,.85); }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.6}
+  .wrap{max-width:720px;margin:0 auto;padding:0 20px 70px}
+  .mast{background:linear-gradient(158deg,var(--navy) 0%,var(--deep) 100%);
+    border-bottom:3px solid var(--gold);color:#fff;padding:32px 0 28px;margin-bottom:30px}
+  .mast .wrap{padding-bottom:0}
+  .eyebrow{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--soft);margin:0 0 6px}
+  h1{font-family:Newsreader,Georgia,serif;font-weight:600;font-size:clamp(28px,5.2vw,40px);
+    line-height:1.12;margin:0 0 10px;color:#fff;text-wrap:balance}
+  .stand{margin:0;font-size:15.5px;color:#D9DEEA;max-width:58ch}
+  h2{font-family:Newsreader,Georgia,serif;font-weight:600;font-size:23px;margin:40px 0 4px;
+    text-wrap:balance}
+  h3{font-size:16px;font-weight:700;margin:24px 0 6px}
+  .sub{margin:0 0 16px;color:var(--muted);font-size:14.5px}
+  p{color:var(--ink2);margin:0 0 12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:13px;
+    box-shadow:var(--shadow);padding:18px 20px;margin-bottom:13px}
+  .step{display:flex;gap:14px;align-items:flex-start}
+  .num{flex:0 0 auto;width:29px;height:29px;border-radius:50%;border:1.5px solid var(--gold);
+    color:var(--gold);font-size:13px;font-weight:700;display:grid;place-items:center;margin-top:2px}
+  .note{border-left:3px solid var(--gold);background:var(--sunk);border-radius:0 9px 9px 0;
+    padding:11px 14px;margin:0 0 12px;font-size:14px;color:var(--ink2)}
+  .note.good{border-left-color:var(--good)}
+  .note.warn{border-left-color:var(--warn)}
+  .note.stop{border-left-color:var(--stop)}
+  .lbl{display:block;font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;
+    margin-bottom:3px}
+  .note.good .lbl{color:var(--good)} .note.warn .lbl{color:var(--warn)} .note.stop .lbl{color:var(--stop)}
+  .note b{color:var(--ink)}
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:11px;margin:0 0 14px}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:440px}
+  th,td{padding:10px 13px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--sunk);font-size:10.5px;font-weight:700;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted)}
+  tr:last-child td{border-bottom:none}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13.5px;
+    background:var(--sunk);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+  ul{margin:0 0 12px;padding-left:20px;color:var(--ink2)}
+  li{margin-bottom:5px}
+  .quote{border-left:3px solid var(--gold);padding:2px 0 2px 14px;margin:0 0 12px;
+    font-style:italic;color:var(--ink2)}
+  .flow{display:grid;gap:9px;margin:0 0 14px}
+  .flow-row{display:flex;gap:12px;align-items:center;background:var(--card);
+    border:1px solid var(--line);border-radius:11px;padding:12px 14px}
+  .flow-when{flex:0 0 92px;font-size:12px;font-weight:700;color:var(--gold);
+    font-variant-numeric:tabular-nums}
+  .flow-what{font-size:14px}
+  hr{border:none;border-top:1px solid var(--line);margin:38px 0 0}
+  footer{margin-top:24px;font-size:12.5px;color:var(--muted);text-align:center}
+  a{color:var(--navy);text-decoration-color:var(--gold);text-underline-offset:2px}
+  :root[data-theme="dark"] a,:root:not([data-theme="light"]) a{color:var(--gold)}
+  @media (prefers-color-scheme:light){:root:not([data-theme="dark"]) a{color:var(--navy)}}
+  @media print{.mast{background:var(--navy)!important;-webkit-print-color-adjust:exact}}
+  .screens{display:grid;gap:11px;margin:0 0 16px}
+  .screen{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    box-shadow:var(--shadow);padding:15px 17px}
+  .screen h4{margin:0 0 3px;font-size:15px;font-weight:700;color:var(--ink)}
+  .screen .who{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--gold);margin-bottom:6px}
+  .screen p{margin:0 0 7px;font-size:14px}
+  .screen .do{font-size:13.5px;color:var(--ink);background:var(--sunk);border-radius:8px;
+    padding:9px 12px;margin-top:9px}
+  .screen .do b{color:var(--navy)}
+  :root[data-theme="dark"] .screen .do b,:root:not([data-theme="light"]) .screen .do b{color:var(--gold)}
+  @media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .screen .do b{color:var(--navy)}}
+</style>
+</head>
+<body>
+
+<div class="mast"><div class="wrap">
+  <p class="eyebrow">Ricky Rampersad's Branch · A Ricky Rampersad Initiative</p>
+  <h1>Reading the branch</h1>
+  <p class="stand">Nine screens, five e-mails, and three numbers that are not what they look
+  like. Fifteen minutes to read once, and you will never have to guess what a figure means
+  again.</p>
+</div></div>
+
+<div class="wrap">
+
+  <h2>What this is</h2>
+  <p class="sub">One place, built from the branch's own book, rebuilt every night.</p>
+
+  <div class="card">
+    <p>The branch keeps its records in a Google workbook — premiums, pending business,
+    requirements, the in-force book. All of it is there and none of it was readable. Four
+    questions got asked every week and none could be answered from the sheet directly:</p>
+    <ul>
+      <li>Which premiums are actually going to lapse, and whose are they?</li>
+      <li>What is stuck in pending, and what is stopping it?</li>
+      <li>Which policies mature soon — pensions and life, separately?</li>
+      <li>Which cover runs out before anybody notices?</li>
+    </ul>
+    <p>Branch Intelligence answers those, plus a fifth nobody was asking: <b>who should you
+    call, and what should you say?</b></p>
+    <div class="note">
+      <span class="lbl">The one thing to know about how it works</span>
+      Every night at 2 a.m. it reads the workbook and works everything out. During the day it
+      is reading last night's answers, not the sheet. <b>A change somebody makes in the
+      workbook this afternoon shows up tomorrow morning</b>, not immediately. That is what
+      makes it fast enough to be worth opening.
+    </div>
+  </div>
+
+  <h2>Signing in</h2>
+  <p class="sub">Your e-mail or agent number, and the code from the branch.</p>
+
+  <div class="card">
+    <div class="step"><div class="num">1</div><div>
+      <p>Go to <code>/intelligence/</code>.</p></div></div>
+    <div class="step"><div class="num">2</div><div>
+      <p>Type your Guardian e-mail address <i>or</i> your agent number — whichever you remember.
+      Both work.</p></div></div>
+    <div class="step"><div class="num">3</div><div>
+      <p>Enter your access code. If you do not have one, or it does not work, the branch issues
+      it — nobody else can look it up for you.</p></div></div>
+    <div class="note good">
+      <span class="lbl">What you see</span>
+      <b>Agents see their own book and nothing else.</b> Your arrears, your pending cases, your
+      maturities, your leads. The filtering happens on the server before anything reaches your
+      screen, so there is nothing to accidentally scroll into.<br><br>
+      <b>Managers, staff and sales support see the whole branch.</b> Same screens, wider view,
+      plus the agent league table and the chase log.
+    </div>
+    <div class="note warn">
+      <span class="lbl">On a shared machine</span>
+      A sign-in lasts <b>12 hours</b>, and closing the browser tab ends it immediately. Refreshing
+      the page keeps you in. If you walk away from a branch machine, close the tab.
+    </div>
+  </div>
+
+  <h2>Three numbers that are not what they look like</h2>
+  <p class="sub">Read this section even if you read nothing else.</p>
+
+  <div class="card">
+    <h3>1. "Premium" is one instalment, not a year</h3>
+    <p>The premium column in the dues extract is <b>one payment</b> — one month for a monthly
+    policy, one year for an annual one. The column that would tell you which is
+    <b>completely empty</b>, in all 20,392 rows.</p>
+    <p>So the book cannot be annualised, and this app never pretends it can. Where you see
+    <i>instalments at risk</i>, that is exactly what it means: add up one payment from each
+    policy. It is not annual premium and it is not what the branch would lose.</p>
+    <div class="note stop">
+      <span class="lbl">Never do this</span>
+      Do not take "TT$6.9m at risk" into a meeting as an annual figure. On monthly business it
+      understates by roughly twelve times, and mixed with annual policies it means nothing at
+      all. Say <b>"2,536 policies, past the grace period"</b> — that number is exact.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>2. Status 2 says "Premium Paying" and means overdue</h3>
+    <p>The workbook has a status code and a status description, and on the overdue policies they
+    disagree. Status <code>2</code> — the collectable book, the whole reason the chase list
+    exists — carries the description <b>"Premium Paying"</b>.</p>
+    <div class="tw"><table>
+      <tr><th>Code</th><th>What it really means</th><th>What you do</th></tr>
+      <tr><td><code>0</code></td><td>No premium problem — read the description for what the
+        policy actually is</td><td>Nothing. Not a dues case.</td></tr>
+      <tr><td><code>1</code></td><td>Lapsed. Already gone.</td><td>Reinstatement, not
+        collection</td></tr>
+      <tr><td><code>2</code></td><td><b>Overdue, still premium-paying</b></td><td>This is the
+        chase list</td></tr>
+      <tr><td><code>3</code></td><td>Pending, underwriting incomplete</td><td>Pending
+        business</td></tr>
+    </table></div>
+    <p>If you ever filter the raw sheet yourself, filter on the <b>code</b>. Filtering on
+    "Premium Paying" misses every case that matters.</p>
+  </div>
+
+  <div class="card">
+    <h3>3. A cross-sell "gap" is a gap in <i>our</i> book</h3>
+    <p>When the app says a client has no retirement plan, it means <b>no retirement plan with
+    this branch</b>. They may well have one with another company, another branch, or through
+    their employer. The app cannot see those and does not claim to.</p>
+    <div class="note stop">
+      <span class="lbl">This changes how you open</span>
+      Never open with <i>"you have no retirement plan"</i>. Open with <i>"do you have anything
+      set up for retirement anywhere?"</i> The first is wrong often enough to cost you the
+      relationship. The second is right every time and gets you the same conversation.
+    </div>
+  </div>
+
+  <h2>The nine screens</h2>
+  <p class="sub">What each one is for, and the one thing to do with it.</p>
+
+  <div class="screens">
+
+    <div class="screen">
+      <div class="who">Everyone · start here</div>
+      <h4>Pulse</h4>
+      <p>The whole picture on one screen. Every tile is a door — click it and you land on the
+      screen that explains it.</p>
+      <div class="do"><b>Do:</b> read the red bar at the top first. It tells you what moved
+      overnight, and it is the only thing on the screen with a clock on it.</div>
+    </div>
+
+    <div class="screen">
+      <div class="who">Everyone</div>
+      <h4>Premium dues</h4>
+      <p>Policies more than 30 days overdue and still premium-paying. Under 30 days is inside
+      the grace period and is deliberately left alone — chasing somebody who is not late costs
+      you goodwill for nothing.</p>
+      <p>Three cuts underneath: how the arrears are aged, which billing method produced them,
+      and which agents are carrying them.</p>
+      <div class="do"><b>Do:</b> look at <b>billing method</b> before you look at the names.
+      Pre Authorized Cheque fails at 42%, Bankers Order at 18%. Moving a client from a failing
+      method to a working one stops them coming back every quarter — that is a fix, where a
+      phone call is only a patch.</div>
+    </div>
+
+    <div class="screen">
+      <div class="who">Everyone</div>
+      <h4>Pending</h4>
+      <p>Cases submitted and not yet on the books, ordered by the client's own money sitting in
+      suspense. Then matched against the follow-up tasks staff raise with head office, which
+      gives three states.</p>
+      <div class="tw"><table>
+        <tr><th>State</th><th>Means</th><th>What to do</th></tr>
+        <tr><td>Being chased now</td><td>an open task names this policy</td><td>Wait, or ask the
+          person named</td></tr>
+        <tr><td>Chase closed, case open</td><td>somebody chased and closed it, case is still
+          pending</td><td>Find out why it was closed</td></tr>
+        <tr><td>Never chased</td><td>no task has ever named it</td><td>Raise one</td></tr>
+      </table></div>
+      <div class="do"><b>Do:</b> work <b>Nobody is chasing these</b> first. A case with nobody
+      on it does not move on its own, and the client is still waiting.</div>
+    </div>
+
+    <div class="screen">
+      <div class="who">Everyone</div>
+      <h4>Requirements</h4>
+      <p>Outstanding requirements, oldest first, with the codes spelled out — <code>FUTPY</code>
+      is first premium, <code>DECLF</code> is declaration of health, <code>PRADD</code> is proof
+      of address. Those three are most of the queue, and all three are things an agent can
+      collect without head office.</p>
+      <div class="do"><b>Do:</b> notice that the median requirement has been open over 500 days.
+      Most of those are cases that ended and were never closed off. Clearing them is what makes
+      the live list believable.</div>
+    </div>
+
+    <div class="screen">
+      <div class="who">Everyone</div>
+      <h4>Maturities</h4>
+      <p>Pensions and life kept apart, because they are two different conversations. A pension
+      maturity is a decision about a fund. A life maturity is an endowment paying out.</p>
+      <div class="do"><b>Do:</b> start pension maturities <b>a year out</b>. The decision —
+      annuity, lump sum, or roll into a new plan — gets made months before the maturity letter
+      reaches the client. Whoever is in the room when it is made keeps the money.</div>
+    </div>
+
+    <div class="screen">
+      <div class="who">Everyone</div>
+      <h4>Expiring cover</h4>
+      <p>Term cover reaching its end date, and — the part nobody watches — the <b>conversion
+      right</b> that ends with it.</p>
+      <p>While a convertible term policy runs, the client can move to permanent cover with
+      <b>no evidence of health</b>. The day the term ends, that right is gone and a medical
+      decides instead. By then they are older, and possibly uninsurable.</p>
+      <div class="do"><b>Do:</b> treat the conversion list as the most valuable thing in this
+      app. Nobody is using it, and it expires quietly.</div>
+    </div>
+
+    <div class="screen">
+      <div class="who">Everyone</div>
+      <h4>Cross-sell</h4>
+      <p>Every client measured against what they already hold, one row each, under their
+      strongest reason, scored out of 100. The score is about whether the call will
+      <i>happen</i> — reachable, paid up, right age, proven capacity — not just how big the
+      gap is.</p>
+      <div class="tw"><table>
+        <tr><th>Score</th><th>Means</th></tr>
+        <tr><td>80–100</td><td>Call this week</td></tr>
+        <tr><td>60–79</td><td>Worth a call</td></tr>
+        <tr><td>Under 60</td><td>Keep on file</td></tr>
+      </table></div>
+      <p>Two kinds of client never appear: anybody with no phone and no e-mail, and anybody more
+      than 30 days behind on what they already hold. <b>The second is a collections call.</b>
+      Pitching somebody in arrears is how a branch loses both sales.</p>
+      <div class="do"><b>Do:</b> use the question in the last column as your opening. It asks
+      instead of telling, for the reason in section 3 above.</div>
+    </div>
+
+    <div class="screen">
+      <div class="who">Everyone · the urgent one</div>
+      <h4>What moved</h4>
+      <p>Each night the book is fingerprinted and compared with the night before. A policy that
+      slid from overdue to lapsed looks identical to one that was always lapsed — this is the
+      only place the difference shows.</p>
+      <div class="do"><b>Do:</b> work <b>Lapsed last night</b> the same day. Reinstatement is
+      easiest in the first weeks and hardest after a year. These are as easy as they will ever
+      be, today.</div>
+    </div>
+
+    <div class="screen">
+      <div class="who">Managers, mainly</div>
+      <h4>Data health</h4>
+      <p>Not an appendix. Every figure in this app rests on an extract with known faults, and
+      anybody acting on a number is entitled to know how solid it is.</p>
+      <div class="do"><b>Do:</b> check it before you take a figure into a meeting. Each row says
+      what is wrong, how many rows it affects, and where it gets fixed — which is almost always
+      upstream, in how the export is produced.</div>
+    </div>
+
+  </div>
+
+  <h2>The mail you will get</h2>
+  <p class="sub">Five automatic messages. You do not have to remember to open anything.</p>
+
+  <div class="flow">
+    <div class="flow-row"><div class="flow-when">2:00 a.m.<br>nightly</div>
+      <div class="flow-what"><b>Nothing arrives.</b> This is the rebuild — the whole workbook
+      read and worked out while the branch is closed.</div></div>
+    <div class="flow-row"><div class="flow-when">7:00 a.m.<br>weekdays</div>
+      <div class="flow-what"><b>Your branch list.</b> What lapsed overnight, arrears past 60
+      days, pending cases holding money, and anything you said you would come back to. If you
+      have nothing outstanding, <b>no e-mail is sent</b> — a digest that arrives empty stops
+      being read.</div></div>
+    <div class="flow-row"><div class="flow-when">7:30 a.m.<br>Mondays</div>
+      <div class="flow-what"><b>The branch this week</b> — to managers. Trends, not lists: how
+      the arrears moved since last Monday, which billing method is failing, who is carrying
+      what, and the data-health panel.</div></div>
+    <div class="flow-row"><div class="flow-when">8:00 a.m.<br>1st of the month</div>
+      <div class="flow-what"><b>What is coming for your clients.</b> Maturities within 18
+      months and conversion rights within 3 years, to the servicing agent.</div></div>
+    <div class="flow-row"><div class="flow-when">8:00 a.m.<br>8th of the month</div>
+      <div class="flow-what"><b>Ten clients worth a call.</b> Your top cross-sell leads with the
+      opening question for each. Ten, not two hundred — a list you can finish is a list you
+      start.</div></div>
+  </div>
+
+  <h2>Logging what happened</h2>
+  <p class="sub">The one habit that makes this worth having.</p>
+
+  <div class="card">
+    <p>Every row on every screen has a <b>Log</b> button. Use it after a call — the outcome,
+    what was said, the next step, and a date to come back on.</p>
+    <p>That does three things. The next person who opens that policy sees it, so nobody rings a
+    client twice. Your follow-up date comes back to you in your morning e-mail on the day.
+    And the branch has a record of the work, which is otherwise invisible.</p>
+    <div class="note">
+      <span class="lbl">Where it goes</span>
+      Into the <b>Intel Actions</b> tab, under your name. That tab is never overwritten by the
+      nightly rebuild — the watchlist tabs are rebuilt from scratch every night, so anything
+      typed into <i>those</i> is lost. Notes belong in the app.
+    </div>
+  </div>
+
+  <h2>Working from the Sheet instead</h2>
+  <p class="sub">If you would rather sort and filter in Google Sheets.</p>
+
+  <div class="card">
+    <p>The nightly rebuild also writes six ordinary tabs into the workbook, carrying exactly the
+    figures the app shows: <b>Watchlist — Dues</b>, <b>— Pending</b>, <b>— Requirements</b>,
+    <b>— Maturities</b>, <b>— Expiry</b> and <b>— Cross-sell</b>.</p>
+    <div class="note warn">
+      <span class="lbl">They are rebuilt every night</span>
+      Anything you type into a watchlist tab is <b>gone by morning</b>. Sort them, filter them,
+      copy from them — but record decisions with the Log button, or in <b>Intel Actions</b>.
+    </div>
+  </div>
+
+  <h2>When something looks wrong</h2>
+
+  <div class="tw"><table>
+    <tr><th>What you see</th><th>What it usually is</th></tr>
+    <tr><td>"That login and code do not match"</td><td>The code, or your row is marked inactive.
+      The message is the same whether the login is unknown or the code is wrong — telling those
+      apart would tell an outsider which logins exist. Ask the branch.</td></tr>
+    <tr><td>You are signed in but every screen is empty</td><td>Your name on the access list does
+      not match the way it is spelled in the data. Ask the branch to check it against the dues
+      tab.</td></tr>
+    <tr><td>"No intelligence has been built yet"</td><td>The nightly rebuild has not run. A
+      manager can run it on demand from <b>Branch Intelligence → Rebuild now</b> in the
+      workbook.</td></tr>
+    <tr><td>A figure looks too high or too low</td><td>Check <b>Data health</b> first. Roughly
+      one row in eight of the dues extract has something wrong with it, and the screen says
+      exactly what.</td></tr>
+    <tr><td>A policy number shows as "number lost"</td><td>Excel wrote it in scientific notation
+      on export and the digits are gone. 107 rows are affected. It is fixed by formatting that
+      column as plain text before the export is pasted.</td></tr>
+    <tr><td>A client is on the chase list with no contact at all</td><td>351 of them are. Nothing
+      can be collected from someone the branch cannot reach — finding a number for them is
+      worth more than another call to somebody you can already reach.</td></tr>
+  </table></div>
+
+  <hr>
+  <footer>
+    Branch Intelligence · a Ricky Rampersad Branch initiative<br>
+    Rebuilt nightly from the branch workbook. Nothing on these screens is stored on the website.
+  </footer>
+
+</div>
+</body>
+</html>

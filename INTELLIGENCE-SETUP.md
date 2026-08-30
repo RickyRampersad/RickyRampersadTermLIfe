@@ -4,8 +4,12 @@ Two pieces, the same shape as the KPI tracker:
 
 | Piece | Where | What it does |
 |---|---|---|
-| `intelligence/index.html` | served with the rest of the site, at `/intelligence/` | sign-in, and the seven screens |
+| `intelligence/index.html` | served with the rest of the site, at `/intelligence/` | sign-in, and the nine screens |
+| `intelligence/manual/index.html` | `/intelligence/manual/` | the manual everyone reads — plain language, no setup in it |
 | `apps-script/Intelligence.gs` | bound to the branch workbook | reads the tabs, computes everything, checks access codes, sends the digests |
+
+**This file is for whoever installs it.** Staff and agents get
+`/intelligence/manual/` instead — same system, none of the deployment.
 
 The workbook is `1T1SG3mgs5QV5LuF3JTpmn1zFldhGjOQNoe0YCMhWxjs`. Five questions
 get asked of it every week and none of them could be answered from it directly:
@@ -212,10 +216,11 @@ are shared machines.
 
 | Function | When | What it sends |
 |---|---|---|
-| `intelRebuild` | 02:00 nightly | nothing — recomputes everything |
-| `intelAgentDigest` | 07:00 weekdays | each agent's own arrears past 60 days, pending cases holding money, and follow-ups they said they would make |
-| `intelManagerDigest` | 07:30 Monday | the branch's week: ageing, billing-method failure, the agent league, what is coming, and the data-health panel |
+| `intelRebuild` | 02:00 nightly | nothing — recomputes everything, and fingerprints the book so tomorrow can tell what moved |
+| `intelAgentDigest` | 07:00 weekdays | what lapsed overnight, arrears past 60 days, pending cases holding money, and follow-ups they said they would make |
+| `intelManagerDigest` | 07:30 Monday | the branch's week: overnight movement, ageing, billing-method failure, the agent league, what is coming, and the data-health panel |
 | `intelHorizonWatch` | 08:00 on the 1st | maturities within 18 months and conversion rights within 3 years, to the servicing agent |
+| `intelCrossSellDigest` | 08:00 on the 8th | ten clients worth a call, with the opening question for each |
 
 An agent with nothing outstanding is **not** mailed. A digest that arrives
 empty stops being read.
@@ -223,6 +228,22 @@ empty stops being read.
 `intelManagerDigest` writes a row to `Intel Trend` each week, which is where
 "the chase list grew by 40 since last Monday" comes from. That line appears
 from the second Monday onward.
+
+### What moved overnight
+
+The rebuild sees the book fresh each night and has no memory of yesterday, so a
+policy that slid from overdue to lapsed looks exactly like one that was always
+lapsed. Nobody notices, and the reinstatement window shortens while they don't.
+
+So each rebuild leaves a fingerprint — policy number against a one-letter
+status — on the hidden `_Intel State` tab, and the next one compares. Out of
+that comes newly lapsed, slipped into arrears, came good, new pending, and
+policies that left the extract entirely (usually a surrender nobody mentioned).
+
+The fingerprint is on a tab rather than in Script Properties, which caps at
+9 KB and would truncate silently at about a tenth of this book. **The first
+night after installing produces no movements** — there is nothing to compare
+against yet. They appear from the second night.
 
 ---
 
@@ -290,6 +311,49 @@ as a number.
 The requirements extract repeats a requirement once per history row. Counting
 rows makes the open list four times worse than it is, so each
 `insured_requirement_id` is taken once. Open means no `closed_date`.
+
+### Cross-sell is scored on whether the call will happen
+
+Every client is measured against what they already hold. Measured on the
+branch's own 2,153 in-force clients before any of the rules were written:
+
+| | |
+|---|---|
+| hold exactly one policy | **1,780** (83%) |
+| hold life cover and no retirement plan | **1,249** |
+| hold a retirement fund and **no death benefit at all** | **357**, carrying TT$31.6m of fund value |
+| hold term cover and nothing permanent | **311**, covering TT$429m |
+| hold no critical illness or accident benefit | **1,963** (91%) |
+
+Six rules fire off those. Four are **call lists** — small and sharp. Two are
+**campaigns** — they cover most of the book and are a mailing, not a phone list;
+the app labels which is which.
+
+A client appears **once**, under their strongest reason, with the others riding
+along as "also needs". A name repeated six times is a list nobody works.
+
+The score is out of 100 and it is mostly about whether the call will happen:
+the sharpness of the gap is worth up to 40, and being reachable, paid up, the
+right age and demonstrably able to afford it is worth the other 60. Two
+conditions score zero rather than low, because they are not leads:
+
+- **no phone and no e-mail** — nothing can start
+- **more than 30 days behind on what they already hold** — that is a
+  collections call, and pitching them is how a branch loses both
+
+The reasons travel with the score, so an adviser can see why a name is near the
+top instead of being asked to trust a number.
+
+**The caveat is on every screen and in every e-mail, and it is not decoration.**
+These are gaps in *this branch's* in-force book. A client shown without a
+retirement plan may hold one with another company, another branch, or through
+their employer. An adviser who opens with "you have no retirement plan" will be
+wrong roughly as often as the branch's share of that client's wallet. The
+opening question the app supplies asks instead of telling, every time.
+
+To add or change a rule, edit `IXSELL_RULES` near the top of the cross-sell
+section. Each rule declares who it fires on, why it matters, the question to
+open with, what number to show, the age band it suits, and its weight.
 
 ### Three chase states, not two
 
