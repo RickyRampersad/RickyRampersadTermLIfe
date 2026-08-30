@@ -326,6 +326,7 @@ function lineTotal(key){
                           + (got.adjustments && got.adjustments.ok ? got.adjustments.doc.computed.net : 0);
   if(key==='health')  return got.health && got.health.ok ? got.health.doc.computed.payable : 0;
   if(key==='pension') return got.pension && got.pension.ok ? (got.pension.doc.computed.total||0) : 0;
+
   return 0;
 }
 
@@ -1070,6 +1071,12 @@ function verify(doc){
        can only come from section headings, which page breaks interrupt. The
        gmoney is what has to reconcile; the split is shown as read. */
   }
+  if(doc.kind === 'pension'){
+    checks.push(['Rows',     doc.computed.rows,  doc.stated.rows]);
+    checks.push(['Total contribution', doc.computed.total, doc.stated.total]);
+    if(!checks.filter(c => c[2] != null).length)
+      doc.problems.push('This sheet prints no total of its own, so nothing read from it could be verified.');
+  }
   if(doc.kind === 'adjustments'){
     checks.push(['Net adjustment', doc.computed.net, doc.stated.net]);
     if(doc.stated.before != null && doc.stated.after != null)
@@ -1087,6 +1094,165 @@ function verify(doc){
    document prints on itself. If none agrees, say so — a confident wrong
    number is worse than an honest failure. */
 const TOLERANCES = [0.8, 1.2, 1.6, 2.2, 3, 4, 6, 8];
+
+/* ══════════════ THE PENSION BILLING ══════════════
+   Group pension does not arrive as a Guardian PDF. It arrives as a
+   spreadsheet, and the reason an assistant keeps her own copy of it is that
+   Salesforce cannot be counted on for the same figures — on Servus, 204 of
+   the 407 records under the scheme's bill number are empty shells with no
+   contact, no plan and no premium, and across both schemes the contribution
+   field is filled on about a tenth of what is actually billed.
+
+   So the billing is the truth about the scheme, exactly as the life
+   schedule and the health invoice are the truth about theirs. It is read
+   the same way and held to the same standard: it must agree with the total
+   printed at the foot of its own sheet before a figure from it is used.
+
+   No library. An .xlsx is a zip of XML, and the browser already has
+   DecompressionStream — the same one the PDF reader uses for FlateDecode. */
+
+/* Minimal zip reader: enough to pull named entries out of an .xlsx. */
+async function unzip(bytes){
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  /* Find the end-of-central-directory record, then walk the directory. It is
+     the only reliable way in — local headers can lie about sizes when the
+     writer streamed the file. */
+  let eocd = -1;
+  for(let i = bytes.length - 22; i >= 0 && i > bytes.length - 66000; i--){
+    if(dv.getUint32(i, true) === 0x06054b50){ eocd = i; break; }
+  }
+  if(eocd < 0) throw new Error('Not a readable spreadsheet.');
+  let n = dv.getUint16(eocd + 10, true), off = dv.getUint32(eocd + 16, true);
+  const out = {};
+  for(let k = 0; k < n; k++){
+    if(dv.getUint32(off, true) !== 0x02014b50) break;
+    const method  = dv.getUint16(off + 10, true);
+    const csize   = dv.getUint32(off + 20, true);
+    const nameLen = dv.getUint16(off + 28, true);
+    const extLen  = dv.getUint16(off + 30, true);
+    const cmtLen  = dv.getUint16(off + 32, true);
+    const lho     = dv.getUint32(off + 42, true);
+    const name    = new TextDecoder().decode(bytes.subarray(off + 46, off + 46 + nameLen));
+    /* The local header repeats the name and extra field, at its own lengths. */
+    const lNameLen = dv.getUint16(lho + 26, true), lExtLen = dv.getUint16(lho + 28, true);
+    const start = lho + 30 + lNameLen + lExtLen;
+    const raw = bytes.subarray(start, start + csize);
+    out[name] = method === 0 ? raw : await inflate(raw);
+    off += 46 + nameLen + extLen + cmtLen;
+  }
+  return out;
+}
+
+/* A sheet as rows of cells keyed by column letter. Shared strings resolved,
+   everything left as text — the parser decides what is a number. */
+async function xlsxRows(bytes){
+  const files = await unzip(bytes);
+  const txt = k => files[k] ? new TextDecoder().decode(files[k]) : '';
+  const shared = [];
+  const ss = txt('xl/sharedStrings.xml');
+  if(ss){
+    /* Each <si> may hold several <t> runs; the string is all of them joined. */
+    const re = /<si>([\s\S]*?)<\/si>/g; let m;
+    while((m = re.exec(ss))){
+      let s = '', t; const tr = /<t[^>]*>([\s\S]*?)<\/t>/g;
+      while((t = tr.exec(m[1]))) s += t[1];
+      shared.push(s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+                   .replace(/&quot;/g,'"').replace(/&#39;/g,"'"));
+    }
+  }
+  const name = Object.keys(files).find(k => /^xl\/worksheets\/sheet1\.xml$/.test(k))
+            || Object.keys(files).find(k => /^xl\/worksheets\/.*\.xml$/.test(k));
+  const sheet = txt(name), rows = [];
+  const rowRe = /<row[^>]*>([\s\S]*?)<\/row>/g; let r;
+  while((r = rowRe.exec(sheet))){
+    const cells = {};
+    /* An empty cell is written self-closing — <c r="A1" s="1"/> — and a
+       pattern that treats the slash as just another attribute character
+       never fires the self-closing branch. It then runs on to the next
+       </c> and swallows every cell in between, which read a whole sheet
+       as blank. Match the tag first, then decide. */
+    const cRe = /<c\b([^>]*?)(\/)?>/g; let c;
+    while((c = cRe.exec(r[1]))){
+      const attrs = c[1] || '';
+      const ref = /r="([A-Z]+)\d+"/.exec(attrs);
+      if(!ref) continue;
+      if(c[2]) continue;                                  // self-closing: empty
+      const end = r[1].indexOf('</c>', cRe.lastIndex);
+      if(end < 0) continue;
+      const body = r[1].slice(cRe.lastIndex, end);
+      cRe.lastIndex = end + 4;
+      const v = /<v>([\s\S]*?)<\/v>/.exec(body);
+      const inline = /<is>[\s\S]*?<t[^>]*>([\s\S]*?)<\/t>/.exec(body);
+      let val = v ? v[1] : (inline ? inline[1] : '');
+      if(/\bt="s"/.test(attrs) && v) val = shared[+v[1]] ?? '';
+      if(val !== '') cells[ref[1]] = String(val)
+        .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+        .replace(/&quot;/g,'"').replace(/&#39;/g,"'");
+    }
+    rows.push(cells);
+  }
+  return rows;
+}
+
+/* ── the pension billing itself ──
+   Guardian's list-bill extract, one row per policy:
+
+     Contact: Full Name | Record Type | POLICY # | ISSUE DATE | Total Premiums | List Bill #
+
+   and a Total row at the foot carrying the row count and the sum. That
+   total is what makes this document checkable, and nothing is used from a
+   sheet whose own total does not agree. */
+function parsePensionBilling(rows){
+  const out = { kind:'pension', members:[], stated:{}, bills:[], problems:[] };
+  /* The header row names the columns wherever it happens to sit. */
+  let col = null;
+  for(const r of rows){
+    const vals = Object.entries(r);
+    const find = re => (vals.find(([,v]) => re.test(String(v))) || [])[0];
+    const name = find(/^\s*contact\s*:?\s*full\s*name/i) || find(/^\s*(employee|member)\s*name/i);
+    if(name){
+      col = { name, rt:find(/^\s*record\s*type/i), policy:find(/^\s*policy\s*#?/i),
+              issued:find(/^\s*issue\s*date/i),
+              prem:find(/^\s*total\s*premium/i) || find(/^\s*premium/i),
+              bill:find(/^\s*list\s*bill/i) };
+      continue;
+    }
+    if(!col) continue;
+    const nm = String(r[col.name] || '').trim();
+    if(!nm) continue;
+    /* The foot of the sheet: the count sits where the record type does and
+       the sum where the premiums do. */
+    if(/^total/i.test(nm)){
+      const cnt = col.rt ? +String(r[col.rt]).replace(/[^\d]/g,'') : NaN;
+      if(!isNaN(cnt)) out.stated.rows = cnt;
+      const sum = col.prem ? +String(r[col.prem]).replace(/[^\d.\-]/g,'') : NaN;
+      if(!isNaN(sum)) out.stated.total = round2(sum);
+      continue;
+    }
+    const prem = col.prem ? +String(r[col.prem]).replace(/[^\d.\-]/g,'') : NaN;
+    const bill = col.bill ? String(r[col.bill] || '').trim() : '';
+    if(bill && out.bills.indexOf(bill) === -1) out.bills.push(bill);
+    out.members.push({ name:nm, empId:String(r[col.policy] || '').trim(),
+                       policy:String(r[col.policy] || '').trim(),
+                       recordType:col.rt ? String(r[col.rt] || '').trim() : '',
+                       bill, premium: isNaN(prem) ? null : prem });
+  }
+  const people = new Set(out.members.map(m => nameKey(m.name).display.toUpperCase()));
+  out.computed = { rows: out.members.length, people: people.size,
+                   total: round2(out.members.reduce((s,m) => s + (m.premium||0), 0)),
+                   lives: people.size };
+  /* Two policies to a person is normal on a Section 134 arrangement — one
+     leg each. More than two is worth a look. */
+  const per = {};
+  out.members.forEach(m => { const k = nameKey(m.name).display.toUpperCase();
+    per[k] = (per[k]||0) + 1; });
+  const many = Object.keys(per).filter(k => per[k] > 2);
+  if(many.length) out.problems.push(many.length + ' member' + (many.length===1?' has':'s have')
+    + ' more than two policies on this bill: ' + many.slice(0,5).join(', '));
+  if(out.bills.length > 1) out.problems.push('This sheet carries more than one list bill number: '
+    + out.bills.join(', ') + '. Each scheme is billed on its own.');
+  return out;
+}
 
 const PARSERS = { life:parseLifeBilling, health:parseHealthInvoice, adjustments:parseAdjustments };
 
@@ -1483,6 +1649,21 @@ async function take(fileList, hintLine){
   for(const f of fileList){
     try{
       const bytes = new Uint8Array(await f.arrayBuffer());
+      /* A spreadsheet is the pension billing — it is the one line Guardian
+         does not send as a PDF. Recognised by the zip signature rather than
+         the file name, because names get changed and PK never does. */
+      if(bytes[0] === 0x50 && bytes[1] === 0x4B){
+        let b64x = '';
+        if(API){ let bin = '';
+          for(let i = 0; i < bytes.length; i += 0x8000)
+            bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+          b64x = btoa(bin); }
+        const doc = parsePensionBilling(await xlsxRows(bytes));
+        const ver = verify(doc);
+        got.pension = { file:f.name, kind:'pension', doc, ver, ok:ver.ok, b64:b64x,
+                        namesGroup:true, addedUnder: hintLine || null };
+        continue;
+      }
       /* Live, approval emails the documents — so the submission has to carry
          them. Chunked, because spreading a 100KB file overflows the stack. */
       let b64 = '';
