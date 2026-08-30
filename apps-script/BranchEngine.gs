@@ -632,6 +632,7 @@ var BEN = {
   SUBS_SHEET:     'Submissions',
   BILLING_SHEET:  'Billing',
   ACTIVITY_SHEET: 'BenefitsActivity',
+  TERMS_SHEET:    'Terminations',
   DRIVE_ROOT:     'Benefits Billing',
   FROM_NAME:      'Ricky Rampersad Branch — Employee Benefits'
 };
@@ -646,6 +647,9 @@ function benefitsSetup() {
   want[BEN.SUBS_SHEET]     = ['Id', 'Group ID', 'Group Name', 'Month Key', 'Month', 'State', 'Updated', 'JSON'];
   want[BEN.BILLING_SHEET]  = ['Group ID', 'Month', 'Line', 'Invoice', 'Billed', 'Paid', 'Paid On', 'Method', 'Receipt', 'Note'];
   want[BEN.ACTIVITY_SHEET] = ['At', 'By', 'Code', 'Did', 'Group', 'Month', 'Note'];
+  want[BEN.TERMS_SHEET]    = ['Id', 'Group', 'Member', 'Line', 'Last Day', 'Reason',
+                              'Reported By', 'Reported At', 'State', 'Sent At',
+                              'Actioned At', 'Settled At', 'Note'];
   Object.keys(want).forEach(function (name) {
     var sh = ss.getSheetByName(name);
     if (name === BEN.ADMINS_SHEET && !sh) {
@@ -860,6 +864,7 @@ function doGet(e) {
     if (a === 'groups')    return benGroups_(e.parameter);
     if (a === 'roster')    return benRoster_(e.parameter);
     if (a === 'groupview') return benGroupView_(e.parameter);
+    if (a === 'terminations') return benTerminations_(e.parameter);
     if (a === 'ack')       return benAck_(e.parameter);
     if (a === 'rate')      return benRate_(e.parameter);
     if (!a) {
@@ -894,6 +899,9 @@ function doPost(e) {
     /* The employer portal posts this one: a client's password must never
        ride in a URL, where it lands in every proxy and history list. */
     if (b.action === 'groupview')    return benGroupView_(b);
+    if (b.action === 'terminations') return benTerminations_(b);
+    if (b.action === 'reportleaver') return benReportTermination_(b);
+    if (b.action === 'leaversent')   return benTerminationSent_(b);
     if (typeof quoteDoPost_ === 'function') return quoteDoPost_(e);
     return berr_('Unknown action.');
   } catch (err) { return berr_(String(err && err.message || err)); }
@@ -992,6 +1000,21 @@ function benSubmitMonth_(b) {
                 sub.state, new Date(), JSON.stringify(sub)]);
   var ev = sub.events && sub.events[sub.events.length - 1];
   blog_(ev ? ev.by : who.name, who.code, 'SUBMITTED', sub.group.name, sub.monthLabel, '');
+
+  /* The month-end found members Guardian has terminated whose cover our own
+     record still shows in force, and staff answered that they would put it
+     through. That answer is a promise; this is what makes it a tracked one,
+     so it gets chased rather than remembered. */
+  try {
+    var owed = (sub.stuckLeavers || []).filter(function (n) { return !!n; });
+    if (owed.length) benReportTermination_({
+      auth: b.auth, by: ev ? ev.by : who.name, group: sub.group.id,
+      members: owed.map(function (n) { return { name: n, line: 'life' }; }),
+      lastDay: sub.leaverLastDay || bdate_(new Date()),
+      reason: 'Terminated by Guardian on the ' + sub.monthLabel + ' statement',
+      note: 'Raised by the month-end: our record still showed the cover in force.'
+    });
+  } catch (termErr) {}
 
   /* The approver hears about it the moment it lands — no chasing staff for
      links. The branch manager is copied so nothing waits unseen. */
@@ -1114,7 +1137,12 @@ function benSendMonth_(b) {
   bwrite_(sub);
   blog_(byName, who.code, 'SENT', sub.group.name, sub.monthLabel, sent.note);
   bbillingRows_(sub);
-  return bok_({ sent: sent.sent, testMode: sent.testMode, note: sent.note });
+  /* The statement of adjustments credited these members back, which is the
+     billing itself saying the cover ended and the money came off. That is
+     the only stage of a termination the employer actually feels. */
+  var settled = 0;
+  try { settled = bTermSettle_(sub.group.id, sub.adjItems || []); } catch (e) {}
+  return bok_({ sent: sent.sent, testMode: sent.testMode, note: sent.note, settled: settled });
 }
 
 function bwrite_(sub) {
@@ -1323,6 +1351,263 @@ function benRoster_(p) {
   }
 }
 
+/* ══════════════ TRACKING A TERMINATION ══════════════
+
+   An employer reports a leaver and then hears nothing. That is the whole
+   problem. Salesforce is supposed to be the answer — "look, the status
+   changed" — except we have measured it: the three members Guardian
+   terminated on D Rampersad's July statement still read Premium Paying on
+   our own record, one of them last touched in 2021, and across the entire
+   org only five group records changed to an ended status in two years.
+
+   So a termination gets its own row, and it moves through four stages.
+   The first two are things a person does. The last two are NOT typed by
+   anybody — they are derived from evidence, because a stage somebody can
+   claim is a stage that gets claimed:
+
+     REPORTED  the employer or the branch told us, with a last day
+     SENT      passed to Guardian's department
+     ACTIONED  our own record no longer shows them in force  ← from the roster
+     SETTLED   they are off the billing and the credit has appeared  ← from
+               the month-end, which reads the statement of adjustments
+
+   SETTLED is the only stage that means the employer has stopped paying for
+   somebody who left, which is the only stage they actually care about.
+
+   Nothing here writes to Salesforce. The department terminates cover; this
+   watches for it having happened and says so when it has not. */
+
+function btermsSheet_() { return bsheet_(BEN.TERMS_SHEET); }
+
+var BEN_TERM_STATES = ['REPORTED', 'SENT', 'ACTIONED', 'SETTLED'];
+
+function bTermRows_(group) {
+  var want = String(group || '').trim().toUpperCase();
+  return brows_(btermsSheet_()).map(function (r) {
+    return {
+      id:       String(bfield_(r, ['id'])),
+      group:    String(bfield_(r, ['group'])),
+      member:   String(bfield_(r, ['member'])),
+      line:     String(bfield_(r, ['line'])) || 'life',
+      lastDay:  bdate_(bfield_(r, ['last day', 'lastday'])),
+      reason:   String(bfield_(r, ['reason'])),
+      by:       String(bfield_(r, ['reported by', 'reportedby'])),
+      at:       bdate_(bfield_(r, ['reported at', 'reportedat'])),
+      state:    String(bfield_(r, ['state'])).toUpperCase() || 'REPORTED',
+      sentAt:     bdate_(bfield_(r, ['sent at', 'sentat'])),
+      actionedAt: bdate_(bfield_(r, ['actioned at', 'actionedat'])),
+      settledAt:  bdate_(bfield_(r, ['settled at', 'settledat'])),
+      note:     String(bfield_(r, ['note'])),
+      _row:     r._row
+    };
+  }).filter(function (t) {
+    return t.member && (!want || String(t.group).trim().toUpperCase() === want);
+  });
+}
+
+function bTermWrite_(t) {
+  var sh = btermsSheet_();
+  var line = [t.id, t.group, t.member, t.line, t.lastDay || '', t.reason || '',
+              t.by || '', t.at || '', t.state, t.sentAt || '',
+              t.actionedAt || '', t.settledAt || '', t.note || ''];
+  if (t._row) sh.getRange(t._row, 1, 1, line.length).setValues([line]);
+  else sh.appendRow(line);
+}
+
+/* Two names are the same person only when they share two words. One is not
+   enough: Suraj Roopchand terminated and Vedish Roopchand still employed
+   share a surname and nothing else. */
+function bSameName_(a, b) {
+  var w = function (s) {
+    return String(s || '').toUpperCase().replace(/[^A-Z ]/g, ' ')
+      .split(/\s+/).filter(function (x) { return x.length > 1; });
+  };
+  var A = w(a), B = w(b), n = 0;
+  A.forEach(function (x) { if (B.indexOf(x) !== -1) n++; });
+  return n >= 2;
+}
+
+/* Report one. Staff, an administrator, or a client administrator for their
+   own group — the same door the employer portal's leaver form comes through
+   once QueryPal hands over. */
+function benReportTermination_(b) {
+  var who = bstaff_(b.auth), group, byName;
+  if (who) {
+    group = String(b.group || '').trim();
+    byName = (who.name === 'Branch admin code' && b.by) ? String(b.by) : who.name;
+  } else {
+    var row = bClientRow_(b.code, b.password);
+    if (!row) return berr_('Not on the access list — check the login and password.');
+    group = String(bfield_(row, ['company'])).trim();
+    byName = String(bfield_(row, ['name'])).trim() || group;
+  }
+  if (!group) return berr_('Which group?');
+
+  var members = [].concat(b.member || b.members || []);
+  if (!members.length) return berr_('Who has left?');
+  if (members.length > 25) return berr_('Twenty-five at a time, so each one gets its own notice.');
+  /* A death in service is a claim, not an administrative leaver. It is
+     urgent, it goes to a different department, and the family is owed a
+     benefit rather than a conversion offer. Refused here on purpose. */
+  if (/death|deceased|passed away/i.test(String(b.reason || '')))
+    return berr_('A death in service is a claim, not a termination — call the branch on 678-5921 and we will start it today.');
+
+  var lastDay = String(b.lastDay || '').trim();
+  if (!lastDay) return berr_('A termination needs the last day — the premium stops from that date.');
+
+  var open = bTermRows_(group), made = [];
+  members.forEach(function (m) {
+    var name = String(m && m.name ? m.name : m).trim();
+    if (!name) return;
+    var line = String((m && m.line) || b.line || 'life');
+    /* Reporting the same person twice does not make two terminations. */
+    if (open.some(function (t) {
+      return t.state !== 'SETTLED' && t.line === line && bSameName_(t.member, name);
+    })) return;
+    var t = { id: 'T' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36),
+              group: group, member: name, line: line, lastDay: lastDay,
+              reason: String(b.reason || ''), by: byName, at: bdate_(new Date()),
+              state: 'REPORTED', note: String(b.note || '') };
+    bTermWrite_(t); made.push(t);
+    blog_(byName, who ? who.code : '', 'LEAVER REPORTED', group, '', name + ' — last day ' + lastDay);
+  });
+  if (!made.length) return bok_({ made: 0, note: 'Already reported — nothing added.' });
+
+  try {
+    var to = [bprop_('BEN_APPROVER_EMAIL'), bprop_('BEN_NOTIFY')]
+      .filter(function (x) { return !!x; });
+    if (to.length) MailApp.sendEmail({
+      to: to.join(','), name: BEN.FROM_NAME,
+      subject: 'Leaver reported: ' + group + ' — ' + made.length + ' member' + (made.length === 1 ? '' : 's'),
+      body: byName + ' reported ' + made.length + ' leaver' + (made.length === 1 ? '' : 's')
+        + ' at ' + group + ', last day ' + lastDay + ':\n\n'
+        + made.map(function (t) { return '  • ' + t.member + ' (' + t.line + ')'; }).join('\n')
+        + (b.reason ? '\n\nReason: ' + b.reason : '')
+        + '\n\nPut it through to the department, then mark it sent on the month-end screen.\n'
+        + bprop_('BEN_SITE') + 'upload.html'
+    });
+  } catch (mailErr) {}
+  return bok_({ made: made.length, ids: made.map(function (t) { return t.id; }) });
+}
+
+/* Staff mark it passed to the department. That is the last thing a person
+   types about a termination; everything after is observed. */
+function benTerminationSent_(b) {
+  var who = bstaff_(b.auth);
+  if (!who) return berr_('Staff or administrators only.');
+  var byName = (who.name === 'Branch admin code' && b.by) ? String(b.by) : who.name;
+  var ids = [].concat(b.id || b.ids || []).map(String);
+  var n = 0;
+  bTermRows_('').forEach(function (t) {
+    if (ids.indexOf(t.id) === -1 || t.state !== 'REPORTED') return;
+    t.state = 'SENT'; t.sentAt = bdate_(new Date());
+    bTermWrite_(t); n++;
+    blog_(byName, who.code, 'LEAVER SENT', t.group, '', t.member);
+  });
+  return bok_({ moved: n });
+}
+
+/* ── the sweep: what the branch record and the billing now show ──
+   Runs with the daily trigger. Nothing here is a claim; every move is
+   evidence. A termination that has been sitting with the department too
+   long is chased, because that is the week an employer is paying for
+   somebody who left. */
+function benTerminationSweep_() {
+  var open = bTermRows_('').filter(function (t) { return t.state !== 'SETTLED'; });
+  if (!open.length) return { checked: 0, actioned: 0, stale: 0 };
+
+  var byGroup = {};
+  open.forEach(function (t) { (byGroup[t.group] = byGroup[t.group] || []).push(t); });
+
+  var actioned = 0;
+  Object.keys(byGroup).forEach(function (g) {
+    var roster;
+    try { roster = bRosterRows_(g); } catch (e) { return; }   // unreachable: leave them be
+    if (!roster.length) return;
+    byGroup[g].forEach(function (t) {
+      if (t.state === 'ACTIONED') return;
+      var mine = roster.filter(function (r) {
+        return r.line === t.line && bSameName_(r.name, t.member);
+      });
+      /* No record at all is not proof of anything — the roster may simply
+         not hold them. Only a record that exists and is no longer in force
+         is evidence the department acted. */
+      if (!mine.length) return;
+      if (mine.some(function (r) { return r.inForce; })) return;
+      t.state = 'ACTIONED'; t.actionedAt = bdate_(new Date());
+      bTermWrite_(t); actioned++;
+      blog_('System', '', 'LEAVER ACTIONED', t.group, '', t.member + ' — no longer in force on our record');
+    });
+  });
+
+  /* Chase what has not moved. Fourteen days with the department is a fair
+     wait; a month is an employer paying for nobody. */
+  var stale = open.filter(function (t) {
+    if (t.state === 'ACTIONED') return false;
+    var when = t.sentAt || t.at;
+    if (!when) return false;
+    return (Date.now() - new Date(when).getTime()) > 14 * BEN_DAY;
+  });
+  if (stale.length) {
+    try {
+      var to = [bprop_('BEN_APPROVER_EMAIL'), bprop_('BEN_NOTIFY')]
+        .filter(function (x) { return !!x; });
+      if (to.length) MailApp.sendEmail({
+        to: to.join(','), name: BEN.FROM_NAME,
+        subject: '⏰ ' + stale.length + ' termination' + (stale.length === 1 ? '' : 's')
+          + ' still not through',
+        body: 'These were reported and our own record still shows the cover in force. '
+          + 'Every week one of these sits, the employer is paying for somebody who left.\n\n'
+          + stale.map(function (t) {
+              var d = Math.floor((Date.now() - new Date(t.sentAt || t.at).getTime()) / BEN_DAY);
+              return '  • ' + t.group + ' — ' + t.member + ' (' + t.line + '), last day '
+                + t.lastDay + ', reported ' + d + ' day' + (d === 1 ? '' : 's') + ' ago'
+                + (t.state === 'REPORTED' ? ' — NOT YET SENT TO THE DEPARTMENT' : '');
+            }).join('\n')
+      });
+    } catch (mailErr) {}
+  }
+  return { checked: open.length, actioned: actioned, stale: stale.length };
+}
+
+/* The month-end closes the loop. When a statement of adjustments credits a
+   member back, that is the billing itself saying the cover ended and the
+   money came off — the only stage that means the employer has stopped
+   paying. Called from benSendMonth_ with the adjustment items. */
+function bTermSettle_(group, adjItems) {
+  if (!adjItems || !adjItems.length) return 0;
+  var open = bTermRows_(group).filter(function (t) { return t.state !== 'SETTLED'; });
+  if (!open.length) return 0;
+  var n = 0;
+  adjItems.forEach(function (i) {
+    if (!i || !i.name || (i.total || 0) >= 0) return;      // credits only
+    open.forEach(function (t) {
+      if (t.state === 'SETTLED' || !bSameName_(t.member, i.name)) return;
+      t.state = 'SETTLED'; t.settledAt = bdate_(new Date());
+      if (!t.actionedAt) t.actionedAt = t.settledAt;
+      bTermWrite_(t); n++;
+      blog_('System', '', 'LEAVER SETTLED', group, '', t.member + ' — credited on the billing');
+    });
+  });
+  return n;
+}
+
+function benTerminations_(p) {
+  var group, forBranch = false;
+  if (bstaff_(p.auth)) { group = String(p.group || '').trim(); forBranch = true; }
+  else {
+    var row = bClientRow_(p.code, p.password);
+    if (!row) return berr_('Not on the access list — check the login and password.');
+    group = String(bfield_(row, ['company'])).trim();
+  }
+  var rows = bTermRows_(group).map(function (t) {
+    delete t._row;
+    if (!forBranch) delete t.note;      // the branch's working notes stay internal
+    return t;
+  });
+  return bok_({ group: group, terminations: rows });
+}
+
 /* ══════════════ WHAT AN EMPLOYER SEES ══════════════
 
    Every group the branch manages already has a login on the Access tab, so
@@ -1403,9 +1688,20 @@ function benGroupView_(p) {
   var counts = { life: 0, health: 0 };
   rows.forEach(function (r) { if (r.inForce) counts[r.line]++; });
 
+  /* The tracked terminations ride along, because an employer asking "what
+     happened to the leaver I reported" is asking one question, not two.
+     Salesforce's ended statuses answer "did it eventually happen"; these
+     answer "where is it now". */
+  var tracked = [];
+  try {
+    tracked = bTermRows_(group).map(function (t) {
+      delete t._row; if (!forBranch) delete t.note; return t;
+    });
+  } catch (e) {}
+
   return bok_({
     group: group, shown: true, read: new Date().toISOString(),
-    inForce: counts, pending: pending, ended: ended,
+    inForce: counts, pending: pending, ended: ended, tracked: tracked,
     /* Unclassified statuses are the branch's problem, not the client's, so
        they go back only to staff. */
     unknown: forBranch ? rows.filter(function (r) { return r.state === 'unknown'; }).length : undefined,
@@ -1529,6 +1825,13 @@ function bBillingPaid_(gid, monthLabel) {
     paid   += Number(bfield_(r, ['paid'])) || 0;
   });
   return { billed: billed, paid: paid };
+}
+
+/* One daily pass over the terminations: what the branch record now shows,
+   and what has been sitting too long. Time triggers always run the latest
+   saved code, so pasting this file is enough. */
+function benefitsTerminationSweep() {
+  try { return benTerminationSweep_(); } catch (e) { return { error: String(e && e.message || e) }; }
 }
 
 function benefitsDunning() {

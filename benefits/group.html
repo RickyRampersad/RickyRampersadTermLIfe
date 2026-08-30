@@ -33,6 +33,18 @@ button,input,select{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .label{font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--slate)}
 .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.trow{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;align-items:flex-start}
+.tstages{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.9rem}
+.tstage{flex:1;min-width:132px;border:1px solid var(--line);border-radius:6px;padding:.5rem .6rem;
+  display:flex;flex-direction:column;gap:.1rem;background:var(--paper)}
+.tstage .tdot{width:15px;height:15px;border-radius:50%;background:var(--surface2);color:var(--slate);
+  font-size:9px;line-height:15px;text-align:center;font-weight:700}
+.tstage .tlabel{font-size:12.5px;font-weight:600;line-height:1.3}
+.tstage .tsub{font-size:11px;color:var(--slate)}
+.tstage.done .tdot{background:var(--go);color:#fff}
+.tstage.now{border-color:var(--gold);box-shadow:inset 3px 0 0 var(--gold)}
+.tstage.now .tdot{background:var(--gold);color:#fff}
+.tstage.todo{opacity:.5}
 a{color:var(--blue)}
 
 .demobar{background:var(--navy);color:#fff;padding:.5rem 1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;font-size:12.5px}
@@ -1575,6 +1587,26 @@ function pending(){
       list until cover starts — at which point they appear on your next billing.</p>`);
 }
 
+/* The four stages a termination moves through. Two are things a person
+   does; two are observed, because a stage somebody can claim is a stage
+   that gets claimed. SETTLED is the only one that means the employer has
+   stopped paying for somebody who left — so it is the one drawn boldest. */
+const TERM_STAGES = [
+  ['REPORTED', 'You told us',            'we have it'],
+  ['SENT',     'With Guardian',          'passed to the department'],
+  ['ACTIONED', 'Cover ended',            'our record shows it'],
+  ['SETTLED',  'Off your billing',       'credit applied']
+];
+function termBar(state){
+  const at = TERM_STAGES.findIndex(x => x[0] === String(state||'').toUpperCase());
+  return `<div class="tstages">${TERM_STAGES.map(([k,label,sub],i) => `
+    <div class="tstage ${i < at ? 'done' : i === at ? 'now' : 'todo'}">
+      <span class="tdot">${i < at ? '✓' : i === at ? '●' : ''}</span>
+      <span class="tlabel">${esc(label)}</span>
+      <span class="tsub">${esc(sub)}</span>
+    </div>`).join('')}</div>`;
+}
+
 function leavers(){
   const title = 'Terminations';
   const blurb = 'Members whose cover has ended, and where each one has reached. Report a leaver on their last '
@@ -1585,21 +1617,51 @@ function leavers(){
       <p class="note" style="margin-top:.5rem">It reaches the department the same day, the member gets their
         conversion offer, and the credit shows on your next billing.</p></div>`;
   if(GV_STATE !== 'ready') return gvShell(title, blurb, report + gvCard());
-  const rows = GV.ended || [];
-  if(!rows.length) return gvShell(title, blurb, report + `<div class="card">
-    <p><b>Nothing has ended on your account.</b> Every member we hold is on cover.</p></div>`);
-  return gvShell(title, blurb, report + `
+
+  const tracked = (GV.tracked || []);
+  const open = tracked.filter(t => t.state !== 'SETTLED');
+  const done = tracked.filter(t => t.state === 'SETTLED');
+  const ended = GV.ended || [];
+
+  const inflight = open.length ? `<h2 style="font-size:1.05rem;color:var(--navy);margin:1.4rem 0 .3rem">In progress</h2>
+    <p class="note" style="margin-bottom:.8rem">${open.length === 1 ? 'One termination is' : open.length + ' terminations are'}
+      on the way. Until the last stage, the premium is still being charged.</p>
+    ${open.map(t => `<div class="card" style="margin-bottom:.8rem">
+      <div class="trow"><div>
+        <b>${esc(t.member)}</b>
+        <div class="note">${t.line === 'health' ? '🩺 Group Health' : '🛡 Group Life'}
+          · last day ${esc(t.lastDay || '—')}${t.reason ? ' · ' + esc(t.reason) : ''}</div>
+      </div><div class="note" style="text-align:right">reported ${esc(t.at || '')}<br>by ${esc(t.by || '')}</div></div>
+      ${termBar(t.state)}
+    </div>`).join('')}` : '';
+
+  const settled = done.length ? `<h2 style="font-size:1.05rem;color:var(--navy);margin:1.4rem 0 .3rem">Completed</h2>
+    <div class="card" style="overflow-x:auto"><table><thead><tr>
+      <th>Member</th><th>Cover</th><th>Last day</th><th>Reported</th><th>Off your billing</th></tr></thead><tbody>
+      ${done.map(t => `<tr><td><b>${esc(t.member)}</b></td>
+        <td>${t.line === 'health' ? '🩺 Group Health' : '🛡 Group Life'}</td>
+        <td>${esc(t.lastDay || '—')}</td><td>${esc(t.at || '—')}</td>
+        <td>${esc(t.settledAt || '—')}</td></tr>`).join('')}
+    </tbody></table></div>` : '';
+
+  const history = ended.length ? `<h2 style="font-size:1.05rem;color:var(--navy);margin:1.4rem 0 .3rem">Earlier</h2>
+    <p class="note" style="margin-bottom:.8rem">Cover that ended before we began tracking each one through.</p>
     <div class="card" style="overflow-x:auto"><table><thead><tr>
       <th>Member</th><th>Cover</th><th>Ended as</th><th>Recorded</th></tr></thead><tbody>
-      ${rows.map(r => `<tr>
+      ${ended.map(r => `<tr>
         <td><b>${esc(r.name)}</b>${r.policy ? `<br><span class="note mono">${esc(r.policy)}</span>` : ''}</td>
         <td>${r.line === 'health' ? '🩺 Group Health' : '🛡 Group Life'}</td>
         <td>${esc(r.status)}</td>
         <td>${esc(r.statusAt || r.modified || '—')}</td></tr>`).join('')}
-    </tbody></table></div>
-    <p class="note" style="margin-top:.7rem">A termination is finished when three things are true: you have told
+    </tbody></table></div>` : '';
+
+  if(!inflight && !settled && !history) return gvShell(title, blurb, report + `<div class="card">
+    <p><b>Nothing has ended on your account.</b> Every member we hold is on cover.</p></div>`);
+
+  return gvShell(title, blurb, report + inflight + settled + history + `
+    <p class="note" style="margin-top:.9rem">A termination is finished when three things are true: you have told
       us, our record shows the cover ended, and the member is off your billing with the credit applied. The last
-      of those shows on the billing itself.</p>`);
+      two are not ticked by hand — we read them off the record and off the billing itself.</p>`);
 }
 
 function gate(){

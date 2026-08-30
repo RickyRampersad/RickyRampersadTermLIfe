@@ -2338,6 +2338,15 @@ async function publish(){
     adjItems: (got.adjustments && got.adjustments.ok && got.adjustments.doc.items)
       ? got.adjustments.doc.items.map(i => ({ type:i.type, name:i.name, total:i.total, periods:i.periods }))
       : [],
+    /* Members Guardian has terminated whose cover our own record still shows
+       in force, where staff have said they will put it through. Naming them
+       on the submission is what turns that answer from a promise into a row
+       that gets chased. */
+    stuckLeavers: (() => {
+      const c = crossChecks().concat(rosterChecks()).find(x => x.id === 'r-terminated-inforce');
+      return (c && answers['r-terminated-inforce'] === '0') ? (c.leavers || []) : [];
+    })(),
+    leaverLastDay: (got.adjustments && got.adjustments.ok && got.adjustments.doc.effective) || null,
     movement: Object.keys(LINES).map(k => movement(k)).find(Boolean) || null,
     arrears: Object.keys(LINES).map(k => arrears(k)).find(a => a && a.owed.length) || null,
     email: draftEmail(),
