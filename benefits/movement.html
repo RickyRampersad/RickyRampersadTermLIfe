@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Members Joining &amp; Leaving — Ricky Rampersad Branch</title>
+<style>
+  :root{--navy:#0B3C46;--navy2:#04252C;--blue:#0E8FA3;--aqua:#16A5BB;--gold:#F08A24;--gold2:#FFB558;
+        --surface:#ffffff;--line:#dde3ea;--slate:#5a6a7a;--ok:#3d8b4f;--stop:#b23a3a;--wash:#f2f7f8}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Georgia,'Times New Roman',serif;color:#1c2733;background:var(--wash)}
+  header{background:linear-gradient(135deg,#11525F,var(--navy) 60%,var(--navy2));color:#fff;padding:1.4rem 1rem;text-align:center}
+  header h1{font-size:1.3rem;margin:.5rem 0 .1rem}
+  header p{margin:0;font-size:.85rem;color:#B7DEE2}
+  .wrap{max-width:860px;margin:1.2rem auto 3rem;padding:0 1rem}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:1.2rem 1.3rem;margin-bottom:1rem}
+  h2{font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);border-bottom:2px solid var(--gold);padding-bottom:.35rem;margin:0 0 .9rem}
+  label{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--slate);display:block;margin-bottom:.2rem}
+  .inp{width:100%;padding:.55rem .7rem;border:1.5px solid var(--line);border-radius:7px;font:inherit;font-size:14.5px;background:#fff}
+  .inp:focus{outline:none;border-color:var(--aqua)}
+  select.inp{cursor:pointer}
+  .row{display:grid;gap:.7rem;margin-bottom:.7rem}
+  .c2{grid-template-columns:1fr 1fr}.c3{grid-template-columns:1fr 1fr 1fr}.c4{grid-template-columns:1fr 1fr 1fr 1fr}
+  @media(max-width:620px){.c2,.c3,.c4{grid-template-columns:1fr}}
+  .note{font-size:12px;color:var(--slate)}
+  .btn{background:var(--gold);color:var(--navy2);border:0;border-radius:999px;padding:.8rem 1.6rem;font:800 15px Georgia;letter-spacing:.04em;cursor:pointer}
+  .btn.ghost{background:#fff;color:var(--blue);border:1.5px solid var(--line)}
+  .btn.sm{padding:.45rem .95rem;font-size:13px}
+  .btn:disabled{opacity:.45;cursor:default}
+  .err{display:none;font-weight:700;color:var(--stop);margin:.6rem 0 0;font-size:.9rem}
+  .stepper{display:flex;margin:0 0 .45rem}
+  .stp{flex:1;text-align:center;position:relative;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--slate);font-weight:700}
+  .stp::before{content:'';position:absolute;top:13px;left:-50%;width:100%;height:3px;background:var(--line);z-index:0}
+  .stp:first-child::before{display:none}
+  .stp .dot{position:relative;z-index:1;width:27px;height:27px;border-radius:50%;background:#fff;border:2.5px solid var(--line);display:flex;align-items:center;justify-content:center;margin:0 auto .3rem;font-size:12px;color:var(--slate);font-weight:800;transition:all .25s}
+  .stp.cur .dot{border-color:var(--blue);color:var(--blue);transform:scale(1.12)}
+  .stp.done .dot{background:var(--gold);border-color:var(--gold);color:var(--navy2)}
+  .stp.done::before,.stp.cur::before{background:var(--gold)}
+  .pbar{height:7px;border-radius:4px;background:var(--line);overflow:hidden;margin:0 0 1rem}
+  .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--aqua),var(--gold));border-radius:4px;transition:width .3s}
+  .navbar{display:flex;gap:.6rem;justify-content:space-between;align-items:center;flex-wrap:wrap}
+  @media(max-width:560px){.stp{font-size:8.5px}}
+
+  /* what kind of change — the three things Guardian's forms ask about */
+  .kinds{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;margin-bottom:1rem}
+  @media(max-width:620px){.kinds{grid-template-columns:1fr}}
+  .kind{border:1.5px solid var(--line);border-radius:10px;padding:.9rem;background:#fff;cursor:pointer;text-align:left;font:inherit}
+  .kind:hover{border-color:var(--aqua)}
+  .kind b{display:block;font-size:15px;color:var(--navy)}
+  .kind span{font-size:12px;color:var(--slate)}
+  .kind .big{font-size:1.6rem;display:block;margin-bottom:.2rem}
+
+  .person{border:1.5px solid var(--line);border-radius:10px;padding:.9rem 1rem;margin-bottom:.8rem;background:#fff}
+  .person.join{border-left:4px solid var(--ok)}
+  .person.leave{border-left:4px solid var(--stop)}
+  .person.change{border-left:4px solid var(--gold)}
+  .phead{display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.6rem}
+  .phead b{font-size:15px;color:var(--navy)}
+  .tag{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:.15rem .5rem;border-radius:4px}
+  .tag.join{background:#E8F4EC;color:var(--ok)} .tag.leave{background:#FBEDEA;color:var(--stop)}
+  .tag.change{background:#FDF3E6;color:#8a5a10}
+  .lines{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.6rem}
+  .lnbtn{border:1.5px solid var(--line);border-radius:999px;padding:.3rem .8rem;font:inherit;font-size:13px;background:#fff;cursor:pointer}
+  .lnbtn.on{background:var(--navy);border-color:var(--navy);color:#fff}
+  .flag{border:1.5px solid var(--gold);background:#FDF6E7;border-radius:8px;padding:.6rem .8rem;font-size:12.5px;margin-top:.5rem}
+  .x{background:none;border:0;color:var(--stop);cursor:pointer;font-size:13px;font-family:inherit}
+
+  /* ── the printed forms ── */
+  #printview{display:none}
+  .gf{background:#fff;max-width:840px;margin:0 auto;padding:26px 30px;border:1px solid var(--line);
+      font-family:Arial,Helvetica,sans-serif;font-size:10.5px;color:#111}
+  .gf .top{font-weight:700;font-size:10px;line-height:1.3;margin-bottom:6px}
+  .gf h3{text-align:center;font-size:14px;margin:.1rem 0 .5rem}
+  .gf table{width:100%;border-collapse:collapse;margin-bottom:8px}
+  .gf td,.gf th{border:1px solid #666;padding:3px 5px;text-align:left;font-weight:normal;vertical-align:top}
+  .gf th{font-weight:700;font-size:9.5px;text-align:center}
+  .gf .band{font-weight:700;font-size:10.5px;padding:2px 0 3px}
+  .gf .none td{border:0;padding:2px 0;font-size:9.5px;color:#444}
+  .gf .hdr td{border:0;padding:1px 0;vertical-align:top}
+  .gf .fill{border-bottom:1px solid #333;display:inline-block;min-width:150px;font-weight:700}
+  .gf .r{text-align:right}.gf .c{text-align:center}
+  .gf .sigrow td{height:40px;vertical-align:bottom;border:0;padding-top:14px}
+  .gf .u{border-bottom:1px solid #333;display:inline-block;min-width:200px}
+  .toolbar{max-width:840px;margin:0 auto 1rem;display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap}
+  .pb{margin-top:20px}
+  @media print{
+    .pb{page-break-before:always;margin:0}
+    body{background:#fff}
+    header,.toolbar,#formview{display:none!important}
+    #printview{display:block!important}
+    .gf{border:0;padding:0;max-width:none}
+  }
+</style></head><body>
+
+<header>
+  <svg width="54" height="54" viewBox="0 0 64 64" aria-label="Ricky Rampersad Branch">
+    <defs>
+      <linearGradient id="mN" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0D5361"/><stop offset="1" stop-color="#04252C"/></linearGradient>
+      <linearGradient id="mB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16A5BB"/><stop offset="1" stop-color="#086274"/></linearGradient>
+      <linearGradient id="mG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFB558"/><stop offset="1" stop-color="#DE6F0E"/></linearGradient>
+    </defs>
+    <path d="M32 4 L56 12.5 V30 C56 45.5 46 56.5 32 61 C18 56.5 8 45.5 8 30 V12.5 Z" fill="url(#mN)"/>
+    <path d="M32 9.5 L50.7 16.2 V30 C50.7 42.4 42.5 51.6 32 55.5 C21.5 51.6 13.3 42.4 13.3 30 V16.2 Z" fill="url(#mB)" stroke="#F08A24" stroke-width="1.1"/>
+    <g fill="#BDEBEA"><circle cx="22.3" cy="26.8" r="3.3"/><path d="M17.1 42.6 v-1.9 a5.2 5.2 0 0 1 10.4 0 v1.9 Z"/><circle cx="41.7" cy="26.8" r="3.3"/><path d="M36.5 42.6 v-1.9 a5.2 5.2 0 0 1 10.4 0 v1.9 Z"/></g>
+    <g fill="url(#mG)"><circle cx="32" cy="25" r="4.8"/><path d="M24.2 46 v-2.7 a7.8 7.8 0 0 1 15.6 0 v2.7 Z"/></g>
+  </svg>
+  <h1>Members joining and leaving</h1>
+  <p>One entry · both Guardian forms · Ricky Rampersad Branch</p>
+</header>
+
+<div id="formview" class="wrap">
+  <div class="stepper" id="stepper">
+    <div class="stp" data-s="1"><span class="dot">1</span>Your plan</div>
+    <div class="stp" data-s="2"><span class="dot">2</span>Who changed</div>
+    <div class="stp" data-s="3"><span class="dot">3</span>Sign it</div>
+    <div class="stp" data-s="4"><span class="dot">4</span>The forms</div>
+  </div>
+  <div class="pbar"><i id="pfill"></i></div>
+
+  <div class="card" data-step="1">
+    <h2>Your plan</h2>
+    <p class="note" style="margin-bottom:.9rem">Guardian keeps group life and group health on two policies and asks
+      for changes on two different forms. You fill this once and both come out filled — which is also how life and
+      health stop disagreeing about who is covered.</p>
+    <div class="row"><div><label>Name of employer</label>
+      <input class="inp" id="employer" placeholder="e.g. D. RAMPERSAD &amp; COMPANY LIMITED"></div></div>
+    <div class="row c3">
+      <div><label>Group life policy #</label><input class="inp" id="polLife" placeholder="e.g. TGM 1099"></div>
+      <div><label>Group health plan #</label><input class="inp" id="polHealth" placeholder="e.g. 01_DRACO001"></div>
+      <div><label>Month these changes belong to</label><input class="inp" id="month" type="month"></div>
+    </div>
+    <p class="note">Both numbers are printed at the top of your monthly billing. If you only run one of the two
+      plans, leave the other blank and that form is not produced.</p>
+  </div>
+
+  <div class="card" data-step="2">
+    <h2>Who changed this month</h2>
+    <div class="kinds">
+      <button type="button" class="kind" data-add="join"><span class="big">➕</span>
+        <b>Someone joined</b><span>A new member to be added to cover</span></button>
+      <button type="button" class="kind" data-add="change"><span class="big">↕</span>
+        <b>Cover changed</b><span>A salary, sum assured or plan tier has moved</span></button>
+      <button type="button" class="kind" data-add="leave"><span class="big">➖</span>
+        <b>Someone left</b><span>Cover to end — tell us on their last day</span></button>
+    </div>
+    <div id="people"></div>
+    <p class="note" id="emptyNote">Nothing added yet. Every person you add here appears on whichever Guardian form
+      applies to them — you never fill the same name twice.</p>
+  </div>
+
+  <div class="card" data-step="3">
+    <h2>Sign it</h2>
+    <p class="note" style="margin-bottom:.9rem">Guardian will not action a movement without an authorised
+      signature, so this is the part that makes it real rather than a note.</p>
+    <div class="row c2">
+      <div><label>Plan administrator (your name)</label><input class="inp" id="adminName" placeholder="Full name"></div>
+      <div><label>Date</label><input class="inp" id="signDate" type="date"></div>
+    </div>
+    <div class="row"><div><label>Anything the branch should know</label>
+      <textarea class="inp" id="adminNote" style="min-height:60px"
+        placeholder="Optional — e.g. two of these were reported in July and never came off"></textarea></div></div>
+    <p class="note">You sign the printed forms by hand and stamp them; that is what Guardian's department
+      requires. Sending this to us first means we check it before it goes anywhere.</p>
+  </div>
+
+  <div class="card" data-step="4">
+    <h2>The forms, filled</h2>
+    <div id="summary"></div>
+    <div id="preview" style="margin-top:1rem"></div>
+  </div>
+
+  <p class="err" id="err"></p>
+  <div class="navbar" style="margin-top:1rem">
+    <button type="button" class="btn ghost" id="backbtn">← Back</button>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+      <button type="button" class="btn" id="nextbtn">Continue →</button>
+      <button type="button" class="btn" id="printbtn" style="display:none">🖨️ Print both forms</button>
+      <button type="button" class="btn" id="sendbtn" style="display:none">✓ Send to the branch</button>
+    </div>
+  </div>
+  <div id="sendout"></div>
+</div>
+
+<div id="printview"><div id="forms"></div></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   MEMBERS JOINING AND LEAVING
+
+   Guardian asks for the same three facts on two different forms:
+
+     GROUP LIFE — MOVEMENTS AND ADJUSTMENTS
+       1 ADDITIONS · 2 INCREASE/DECREASE · 3 DELETIONS
+     GROUP HEALTH REPORTING FORM
+       ADDITIONS · TERMINATIONS · CHANGE OF STATUS
+
+   Today an employer fills both by hand, and that is precisely where life and
+   health start disagreeing about who is covered — somebody gets written onto
+   one form and not the other. We have the evidence: D Rampersad's September
+   statement terminated three members on life, and health credited two.
+
+   So this screen takes one entry per person and puts them on whichever form
+   applies. The employer never writes a name twice, and the two forms cannot
+   drift apart because they are produced from the same list.
+
+   The printed output follows Guardian's own layouts column for column, so
+   the department receives what it expects rather than something of ours they
+   have to interpret. Anything the employer did not fill stays blank, exactly
+   as it would on the paper form — this fills a form, it never invents a
+   figure to complete one.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const API = "";   /* set to the branch /exec URL to send from here */
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money = n => n==='' || n==null || isNaN(+n) ? '' :
+  (+n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+/* Guardian's forms ask for dd/mm/yy on every date column. Anything else and
+   an administrator has to translate it, which is where 3/7 becomes July. */
+function dmy(iso){
+  if(!iso) return '';
+  const p = String(iso).split('-');
+  if(p.length !== 3) return String(iso);
+  return p[2] + '/' + p[1] + '/' + p[0].slice(2);
+}
+function longDate(iso){
+  if(!iso) return { d:'', m:'', y:'' };
+  const dt = new Date(iso + 'T00:00:00');
+  if(isNaN(+dt)) return { d:'', m:'', y:'' };
+  return { d: String(dt.getDate()),
+           m: dt.toLocaleDateString('en-GB',{month:'long'}),
+           y: String(dt.getFullYear()) };
+}
+
+/* Everyone on the plan tiers Guardian bills by. "Change of status from / to"
+   on the health form is a move between these. */
+const TIERS = ['Employee Only','Employee + Child','Employee + Spouse','Employee + Family'];
+
+let PEOPLE = [], seq = 0;
+
+/* ── a person ──
+   Which fields matter depends on what happened to them and which plans they
+   are on, so the form asks for those and nothing else. A joiner needs the
+   things Guardian's ADDITIONS row needs; a leaver needs the certificate and
+   the three sums assured, because that is what the DELETIONS row demands and
+   what the statement of adjustments will credit against. */
+function blank(kind){
+  return { id:++seq, kind, name:'', life:true, health:true,
+           sex:'', dob:'', employed:'', joined:'', salary:'', sum:'',
+           cert:'', empNo:'', effective:'', tierFrom:'', tierTo:'',
+           basic:'', adnd:'', newlife:'', lastDay:'', reason:'', remarks:'' };
+}
+
+const KIND = { join:['Joining','join'], change:['Cover changed','change'], leave:['Leaving','leave'] };
+
+function personCard(p){
+  const on = (k,v) => p[k] ? 'on' : '';
+  const f = (label, key, type, extra) =>
+    `<div><label>${esc(label)}</label><input class="inp" data-f="${p.id}|${key}" type="${type||'text'}"
+      value="${esc(p[key])}" ${extra||''}></div>`;
+  let body = '';
+
+  if(p.kind === 'join'){
+    body = `<div class="row c2">${f('Full name','name')}
+      <div><label>Sex</label><select class="inp" data-f="${p.id}|sex">
+        <option value=""></option><option${p.sex==='M'?' selected':''}>M</option>
+        <option${p.sex==='F'?' selected':''}>F</option></select></div></div>
+      <div class="row c3">${f('Date of birth','dob','date')}${f('Date employed','employed','date')}
+        ${f('Date joining the plan','joined','date')}</div>`;
+    if(p.life) body += `<div class="row c2">${f('Annual salary (TT$)','salary','number','step="0.01"')}
+      ${f('Sum assured (TT$)','sum','number','step="0.01"')}</div>`;
+    if(p.health) body += `<div class="row c2">
+      <div><label>Cover tier</label><select class="inp" data-f="${p.id}|tierTo"><option value=""></option>
+        ${TIERS.map(t=>`<option${p.tierTo===t?' selected':''}>${t}</option>`).join('')}</select></div>
+      ${f('Remarks (optional)','remarks')}</div>`;
+  }
+
+  if(p.kind === 'change'){
+    body = `<div class="row c2">${f('Full name','name')}${f('Effective date','effective','date')}</div>`;
+    if(p.life) body += `<div class="row c3">${f('Certificate number','cert')}
+      ${f('New annual salary (TT$)','salary','number','step="0.01"')}
+      ${f('New sum assured (TT$)','sum','number','step="0.01"')}</div>`;
+    if(p.health) body += `<div class="row c3">${f('Employee #','empNo')}
+      <div><label>Tier from</label><select class="inp" data-f="${p.id}|tierFrom"><option value=""></option>
+        ${TIERS.map(t=>`<option${p.tierFrom===t?' selected':''}>${t}</option>`).join('')}</select></div>
+      <div><label>Tier to</label><select class="inp" data-f="${p.id}|tierTo"><option value=""></option>
+        ${TIERS.map(t=>`<option${p.tierTo===t?' selected':''}>${t}</option>`).join('')}</select></div></div>`;
+  }
+
+  if(p.kind === 'leave'){
+    body = `<div class="row c2">${f('Full name','name')}${f('Last day','lastDay','date')}</div>
+      <div class="row c2">
+        <div><label>Reason</label><select class="inp" data-f="${p.id}|reason"><option value=""></option>
+          ${['Resignation','Retirement','Redundancy / restructuring','Dismissal','End of contract','Other']
+            .map(r=>`<option${p.reason===r?' selected':''}>${r}</option>`).join('')}</select></div>
+        ${f('Remarks (optional)','remarks')}</div>`;
+    if(p.life) body += `<div class="row c4">${f('Certificate number','cert')}
+      ${f('Basic sum assured','basic','number','step="0.01"')}
+      ${f('AD&D sum assured','adnd','number','step="0.01"')}
+      ${f('Newlife sum assured','newlife','number','step="0.01"')}</div>`;
+    if(p.health) body += `<div class="row c2">${f('Employee #','empNo')}</div>`;
+  }
+
+  const [label, cls] = KIND[p.kind];
+  return `<div class="person ${cls}" data-pid="${p.id}">
+    <div class="phead">
+      <b>${p.name ? esc(p.name) : 'New entry'}</b>
+      <div style="display:flex;gap:.5rem;align-items:center">
+        <span class="tag ${cls}">${esc(label)}</span>
+        <button type="button" class="x" data-del="${p.id}">Remove</button></div>
+    </div>
+    <div class="lines">
+      <button type="button" class="lnbtn ${on('life')}" data-line="${p.id}|life">🛡 Group Life</button>
+      <button type="button" class="lnbtn ${on('health')}" data-line="${p.id}|health">🩺 Group Health</button>
+    </div>
+    ${body}
+    <div class="flags">${flagsFor(p).map(x=>`<div class="flag">${x}</div>`).join('')}</div>
+  </div>`;
+}
+
+/* Things worth saying at the moment somebody types them, rather than three
+   weeks later when Guardian sends the form back. */
+function flagsFor(p){
+  const out = [];
+  if(p.kind === 'leave' && /death|deceased|passed/i.test(p.reason || ''))
+    out.push('<b>A death in service is a claim, not a termination.</b> It goes to a different department and the '
+      + 'family is owed a benefit rather than a conversion offer. Call the branch on 678-5921 and we will start it today.');
+  if(p.kind === 'leave' && p.life && p.cert === '')
+    out.push('Guardian’s deletions row asks for the certificate number — it is on your monthly life billing, '
+      + 'beside the name.');
+  if(p.kind === 'join' && p.life && p.sum !== '' && +p.sum > 0)
+    out.push('Sums assured above the plan’s Free Cover Limit need Evidence of Health before cover starts. '
+      + 'If this one is above it, an application form has to travel with the movement.');
+  if(p.kind === 'change' && p.health && p.tierFrom && p.tierTo && p.tierFrom === p.tierTo)
+    out.push('The tier before and after are the same, so there is nothing for the health form to report.');
+  if(p.kind === 'leave' && p.lastDay && new Date(p.lastDay) < new Date(Date.now() - 45*864e5))
+    out.push('That last day is more than six weeks ago. Premium runs until Guardian actions the termination, so '
+      + 'tell us anything you already sent and we will chase what is owed back.');
+  return out;
+}
+
+function paintPeople(){
+  $('people').innerHTML = PEOPLE.map(personCard).join('');
+  $('emptyNote').style.display = PEOPLE.length ? 'none' : '';
+}
+
+/* Only the name and the flags change while somebody is typing, so only those
+   are rewritten. Rebuilding the whole list on each keystroke tore out the
+   very field being typed into — it dropped two of the three sums assured on
+   the way to the printed form, which is the exact class of silent loss this
+   platform exists to stop. The list is rebuilt only when the SET of fields
+   changes, and that only happens on a button. */
+function refreshCard(p){
+  const card = document.querySelector('.person[data-pid="' + p.id + '"]');
+  if(!card) return;
+  const title = card.querySelector('.phead b');
+  if(title) title.textContent = p.name.trim() || 'New entry';
+  const host = card.querySelector('.flags');
+  if(host) host.innerHTML = flagsFor(p).map(x => '<div class="flag">' + x + '</div>').join('');
+}
+document.addEventListener('click', e => {
+  const add = e.target.closest('[data-add]');
+  if(add){ PEOPLE.push(blank(add.dataset.add)); paintPeople();
+    window.scrollTo({ top: document.body.scrollHeight, behavior:'smooth' }); return; }
+  const del = e.target.closest('[data-del]');
+  if(del){ PEOPLE = PEOPLE.filter(p => p.id !== +del.dataset.del); paintPeople(); return; }
+  const ln = e.target.closest('[data-line]');
+  if(ln){ const [id,k] = ln.dataset.line.split('|');
+    const p = PEOPLE.find(x => x.id === +id); if(!p) return;
+    /* Turning a plan on is always fine; turning one off only when the other
+       is still on, because a person on neither plan has nothing to file. */
+    const other = k === 'life' ? 'health' : 'life';
+    if(!p[k] || p[other]) p[k] = !p[k];
+    paintPeople(); return; }
+});
+function onField(e){
+  const t = e.target.closest('[data-f]'); if(!t) return;
+  const [id,k] = t.dataset.f.split('|');
+  const p = PEOPLE.find(x => x.id === +id); if(!p) return;
+  p[k] = t.value;
+  refreshCard(p);
+}
+document.addEventListener('input', onField);
+document.addEventListener('change', onField);
+
+/* ── the two Guardian forms ── */
+function plan(){
+  return { employer:$('employer').value.trim(), polLife:$('polLife').value.trim(),
+           polHealth:$('polHealth').value.trim(), month:$('month').value,
+           admin:$('adminName').value.trim(), signDate:$('signDate').value,
+           note:$('adminNote').value.trim() };
+}
+const forLine = (kind, line) => PEOPLE.filter(p => p.kind === kind && p[line] && p.name.trim());
+
+/* Guardian's paper has a fixed number of ruled rows in each block. Matching
+   that means the department reads the page it is used to, so the rows are
+   padded out rather than the table simply ending. */
+function rows(list, cells, min){
+  const body = list.map(p => '<tr>' + cells(p).map(c => `<td>${c === '' ? '&nbsp;' : c}</td>`).join('') + '</tr>');
+  const width = cells(list[0] || {}).length;
+  while(body.length < min) body.push('<tr>' + Array(width).fill('<td>&nbsp;</td>').join('') + '</tr>');
+  return body.join('');
+}
+
+function lifeForm(){
+  const d = plan(), sd = longDate(d.signDate);
+  const adds = forLine('join','life'), chg = forLine('change','life'), dels = forLine('leave','life');
+  return `<div class="gf">
+    <div class="top">THIS FORM SHOULD BE COMPLETED IN DUPLICATE<br>RETAIN THE COPY FOR YOUR FILES</div>
+    <table><tr>
+      <td style="width:58%">
+        <b>TO: THE GROUP INSURANCE ADMINISTRATION DEPARTMENT</b><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;GUARDIAN LIFE OF THE CARIBBEAN LIMITED<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;1 GUARDIAN DRIVE<br>&nbsp;&nbsp;&nbsp;&nbsp;WESTMOORINGS<br><br>
+        Dated this <span class="fill" style="min-width:34px">${esc(sd.d)}</span> day of
+        <span class="fill" style="min-width:96px">${esc(sd.m)}</span>
+        <span class="fill" style="min-width:56px">${esc(sd.y)}</span><br>
+        <span style="font-size:8.5px">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;day&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;month&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;year</span>
+      </td>
+      <td><b>GROUP LIFE ASSURANCE FOR<br>MOVEMENTS AND ADJUSTMENTS</b><br><br>
+        POLICYHOLDER: <span class="fill">${esc(d.employer)}</span><br><br>
+        POLICY #: <span class="fill">${esc(d.polLife)}</span></td>
+    </tr></table>
+
+    <div class="band">1&nbsp; ADDITIONS <span style="font-weight:400;font-size:9px">(Application forms attached
+      &ndash; Evidence of Health will be required above the Free Cover Limit)</span></div>
+    <table><tr><th>Name</th><th>Sex</th><th>Date of Birth<br>dd/mm/yy</th><th>Date Employed<br>dd/mm/yy</th>
+      <th>Date Join Plan<br>dd/mm/yy</th><th>Annual<br>Salary</th><th>Sum<br>Assured</th></tr>
+      ${rows(adds, p => [esc(p.name), esc(p.sex), dmy(p.dob), dmy(p.employed), dmy(p.joined),
+                         money(p.salary), money(p.sum)], 5)}</table>
+
+    <div class="band">2&nbsp; INCREASE/DECREASE <span style="font-weight:400;font-size:9px">(Increases are subject
+      to Evidence of Health above the Free Cover Limit)</span></div>
+    <table><tr><th>Certificate<br>Number</th><th>Name</th><th>Annual<br>Salary</th><th>Sum<br>Assured</th>
+      <th>Effective Date<br>dd/mm/yy</th></tr>
+      ${rows(chg, p => [esc(p.cert), esc(p.name), money(p.salary), money(p.sum), dmy(p.effective)], 4)}</table>
+
+    <div class="band">3&nbsp; DELETIONS <span style="font-weight:400;font-size:9px">(Certificates of Membership
+      attached for cancellation)</span></div>
+    <table><tr><th>Certificate<br>Number</th><th>Name</th><th>Date of<br>Termination<br>dd/mm/yy</th>
+      <th>Basic<br>Sum Assured</th><th>AD&amp;D<br>Sum Assured</th><th>Newlife<br>Sum Assured</th></tr>
+      ${rows(dels, p => [esc(p.cert), esc(p.name), dmy(p.lastDay), money(p.basic), money(p.adnd),
+                         money(p.newlife)], 4)}</table>
+
+    <table class="sigrow"><tr>
+      <td style="width:50%"></td>
+      <td><b>Employer:</b> <span class="u">${esc(d.employer)}</span><br><br>
+        <b>Authorized Signature:</b> <span class="u"></span></td></tr></table>
+  </div>`;
+}
+
+function healthForm(){
+  const d = plan();
+  const adds = forLine('join','health'), terms = forLine('leave','health'), chg = forLine('change','health');
+  const monthName = d.month ? new Date(d.month + '-01T00:00:00')
+    .toLocaleDateString('en-GB',{month:'long',year:'numeric'}) : '';
+  return `<div class="gf pb">
+    <div class="top">THIS FORM SHOULD BE COMPLETED IN DUPLICATE<br>RETAIN THE COPY FOR YOUR FILES</div>
+    <h3>GUARDIAN LIFE OF THE CARIBBEAN LTD.<br>GROUP HEALTH REPORTING FORM</h3>
+    <table class="hdr"><tr>
+      <td style="width:50%"><b>PLAN#</b> <span class="fill">${esc(d.polHealth)}</span></td>
+      <td><b>MONTH</b> <span class="fill">${esc(monthName)}</span></td></tr></table>
+    <table><tr><td style="padding:7px 6px"><b>Name of Employer:</b>
+      <span class="fill" style="min-width:340px">${esc(d.employer)}</span></td></tr></table>
+
+    <div class="band">ADDITIONS:</div>
+    <table><tr><th>NAME OF EMPLOYEE</th><th>EFFECTIVE DATE</th><th>REMARKS</th></tr>
+      ${rows(adds, p => [esc(p.name), dmy(p.joined),
+                         esc([p.tierTo, p.remarks].filter(Boolean).join(' · '))], 8)}</table>
+    <div style="font-size:9px;font-weight:700;margin:-4px 0 8px">NOTE: APPLICATIONS CARDS MUST BE ATTACHED</div>
+
+    <div class="band">TERMINATIONS:</div>
+    <table><tr><th>NAME OF EMPLOYEE</th><th>EMPLOYEE #</th><th>TERMINATION DATE</th><th>REMARKS</th></tr>
+      ${rows(terms, p => [esc(p.name), esc(p.empNo), dmy(p.lastDay),
+                          esc([p.reason, p.remarks].filter(Boolean).join(' · '))], 6)}</table>
+
+    <div class="band">CHANGE OF STATUS:</div>
+    <table><tr><th>NAME OF<br>EMPLOYEE</th><th>EMPLOYEE #</th><th>CHANGE OF<br>STATUS FROM</th>
+      <th>CHANGE OF<br>STATUS TO</th><th>DATE OF<br>CHANGE</th></tr>
+      ${rows(chg, p => [esc(p.name), esc(p.empNo), esc(p.tierFrom), esc(p.tierTo), dmy(p.effective)], 4)}</table>
+    <div style="font-size:9px;font-weight:700;margin:-4px 0 10px">NOTE: CHANGE OF DEPENDENT/STATUS CARDS MUST BE ATTACHED</div>
+
+    <table class="hdr"><tr><td><b>POLICYHOLDERS SIGNATURE:</b> <span class="u"></span>
+      &nbsp;&nbsp;<b>DATE:</b> <span class="u" style="min-width:110px">${esc(dmy(d.signDate))}</span></td></tr></table>
+    <div style="font-weight:700;margin:10px 0 4px">FOR OFFICIAL USE ONLY</div>
+    <table><tr><th>Date Received:</th><th>Date Entered On System:</th><th>Signature:</th></tr>
+      <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr></table>
+  </div>`;
+}
+
+function renderForms(){
+  const d = plan();
+  const bits = [];
+  if(d.polLife || PEOPLE.some(p => p.life)) bits.push(lifeForm());
+  if(d.polHealth || PEOPLE.some(p => p.health)) bits.push(healthForm());
+  const html = bits.join('');
+  $('forms').innerHTML = html;
+  $('preview').innerHTML = html.replace(/class="gf pb"/g, 'class="gf" style="margin-top:18px"');
+}
+
+function summary(){
+  const d = plan();
+  const line = (k, l) => forLine(k, l).length;
+  const rowsOut = [
+    ['Group Life &ndash; Additions',        line('join','life')],
+    ['Group Life &ndash; Increase/Decrease',line('change','life')],
+    ['Group Life &ndash; Deletions',        line('leave','life')],
+    ['Group Health &ndash; Additions',      line('join','health')],
+    ['Group Health &ndash; Terminations',   line('leave','health')],
+    ['Group Health &ndash; Change of Status',line('change','health')]
+  ].filter(r => r[1]);
+  const both = PEOPLE.filter(p => p.life && p.health && p.name.trim()).length;
+  $('summary').innerHTML = `<p class="note" style="margin-bottom:.7rem">
+    ${PEOPLE.filter(p=>p.name.trim()).length} ${PEOPLE.filter(p=>p.name.trim()).length===1?'person':'people'},
+    on ${rowsOut.length} of Guardian's ${(d.polLife?3:0)+(d.polHealth?3:0)||6} blocks.
+    ${both ? `<b>${both}</b> of them appear on both forms &mdash; written once here, so the two cannot disagree.` : ''}</p>
+    <table style="width:100%;border-collapse:collapse;font-size:13.5px">
+    ${rowsOut.map(r => `<tr><td style="padding:.3rem .1rem;border-bottom:1px solid var(--line)">${r[0]}</td>
+      <td style="padding:.3rem .1rem;border-bottom:1px solid var(--line);text-align:right"><b>${r[1]}</b></td></tr>`).join('')}
+    </table>`;
+}
+
+/* ── steps ── */
+let step = 1; const LAST = 4;
+function stepError(m){ $('err').textContent = m; $('err').style.display = 'block'; }
+function validate(n){
+  const d = plan();
+  if(n === 1){
+    if(!d.employer) return 'Missing: the name of the employer.';
+    if(!d.polLife && !d.polHealth) return 'Give at least one policy number — life, health, or both.';
+    if(!d.month) return 'Which month do these changes belong to?';
+  }
+  if(n === 2){
+    const named = PEOPLE.filter(p => p.name.trim());
+    if(!named.length) return 'Add at least one person, or there is nothing to send.';
+    for(const p of named){
+      if(!p.life && !p.health) return p.name + ' is not on either plan — remove them, or tick a plan.';
+      if(p.kind === 'leave' && !p.lastDay) return p.name + ' needs a last day — the premium stops from that date.';
+      if(p.kind === 'leave' && /death|deceased|passed/i.test(p.reason||''))
+        return 'A death in service is a claim, not a termination — remove ' + p.name
+             + ' and call the branch on 678-5921.';
+      if(p.kind === 'join' && !p.joined) return p.name + ' needs the date they join the plan.';
+      if(p.kind === 'change' && !p.effective) return p.name + ' needs an effective date for the change.';
+    }
+  }
+  if(n === 3){
+    if(!d.admin) return 'Missing: who is authorising this.';
+    if(!d.signDate) return 'Missing: the date.';
+  }
+  return null;
+}
+function showStep(n){
+  step = n;
+  document.querySelectorAll('.card[data-step]').forEach(c => {
+    c.style.display = (+c.dataset.step === n) ? '' : 'none'; });
+  document.querySelectorAll('#stepper .stp').forEach(el => {
+    const k = +el.dataset.s;
+    el.classList.toggle('cur', k === n); el.classList.toggle('done', k < n);
+    el.querySelector('.dot').textContent = k < n ? '✓' : k;
+  });
+  $('pfill').style.width = ((n-1)/(LAST-1)*100) + '%';
+  $('backbtn').style.visibility = n === 1 ? 'hidden' : 'visible';
+  $('nextbtn').style.display = n === LAST ? 'none' : '';
+  $('printbtn').style.display = n === LAST ? '' : 'none';
+  $('sendbtn').style.display = (n === LAST && API) ? '' : 'none';
+  $('err').style.display = 'none';
+  if(n === LAST){ summary(); renderForms(); }
+  window.scrollTo(0,0);
+}
+$('nextbtn').addEventListener('click', () => {
+  const m = validate(step); if(m){ stepError(m); return; }
+  showStep(step + 1);
+});
+$('backbtn').addEventListener('click', () => showStep(step - 1));
+$('printbtn').addEventListener('click', () => window.print());
+
+/* Sending records the leavers with the branch, so a termination is tracked
+   from the moment it is reported rather than from whenever somebody
+   remembers to type it in. */
+$('sendbtn').addEventListener('click', async () => {
+  const b = $('sendbtn'); b.disabled = true; b.textContent = 'Sending…';
+  const d = plan();
+  const leavers = PEOPLE.filter(p => p.kind === 'leave' && p.name.trim());
+  try{
+    const r = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'reportleaver', code: (localStorage.getItem('rrb-code')||''),
+        password: (localStorage.getItem('rrb-pw')||''), group: d.employer,
+        members: leavers.map(p => ({ name:p.name, line: p.life ? 'life' : 'health' })),
+        lastDay: leavers[0] ? leavers[0].lastDay : '',
+        reason: leavers[0] ? leavers[0].reason : '',
+        note: d.note }) });
+    const j = await r.json();
+    $('sendout').innerHTML = (j && j.ok)
+      ? `<div class="flag" style="border-color:var(--ok);background:#EDF8F2">
+          <b>Sent.</b> ${j.made||0} termination${j.made===1?'':'s'} now tracked with the branch — you can watch
+          each one through on your portal. Print both forms, sign and stamp them, and they go to Guardian.</div>`
+      : `<div class="flag"><b>Not sent.</b> ${esc((j&&j.error)||'The branch could not be reached.')}
+          Print the forms and send them the usual way; nothing is lost.</div>`;
+  }catch(e){
+    $('sendout').innerHTML = `<div class="flag"><b>Not sent.</b> The branch could not be reached just now.
+      Print the forms and send them the usual way; nothing is lost.</div>`;
+  }
+  b.disabled = false; b.textContent = '✓ Send to the branch';
+});
+
+/* Today, and this month, are right far more often than not. */
+(function start(){
+  const t = new Date(), iso = t.toISOString().slice(0,10);
+  $('signDate').value = iso;
+  $('month').value = iso.slice(0,7);
+  paintPeople(); showStep(1);
+})();
+</script>
+</body></html>
