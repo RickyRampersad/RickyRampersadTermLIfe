@@ -1689,34 +1689,43 @@ function pension(){
         Your employees use their own code on the employee door.</p></div>`;
   if(GV_STATE !== 'ready') return gvShell(title, blurb, enrol + gvCard());
 
-  const P = GV.pension || { monthly:0, priced:0, total:0 };
+  const P = GV.pension || { monthly:0, priced:0, owned:0, unclear:0, personal:0, total:0 };
   if(!P.total) return gvShell(title, blurb, enrol + `<div class="card">
     <p><b>Nothing on our pension record for you yet.</b> If a plan is being set up, it appears here
     once the first member is on cover.</p></div>`);
 
-  /* Guardian fills the monthly contribution on some pension records and not
-     others. Reporting a total that covers a third of the members as though
-     it were the whole schedule would be worse than reporting none, so the
-     coverage is stated beside the figure. */
-  const partial = P.priced < P.total;
+  /* A company-owned pension is written as an ordinary annuity on one
+     employee — a TopHat or a LifeStyle — so the product does not tell you
+     whose it is. Only the ownership field does, and Guardian has filled it
+     on a small minority of these records. Counting the rest as the scheme
+     would show an employer their staff's own savings and call it their
+     pension, so the unknowns are counted apart and named. */
+  const partial = P.priced < P.owned;
   return gvShell(title, blurb, enrol + `
     <div class="stats" style="margin-bottom:1rem">
-      <div class="card"><span class="label">Members on cover</span><div class="v">${P.total}</div>
-        <div class="note">company-owned policies</div></div>
+      <div class="card"><span class="label">Your scheme</span><div class="v">${P.owned}</div>
+        <div class="note">company-owned on our record</div></div>
       <div class="card"><span class="label">Monthly contribution</span>
         <div class="v">${P.monthly ? money(P.monthly) : '—'}</div>
-        <div class="note">${partial
-          ? P.priced + ' of ' + P.total + ' records carry a figure'
-          : 'all ' + P.total + ' records'}</div></div>
-      <div class="card"><span class="label">Enrolling now</span>
-        <div class="v">${(GV.pending||[]).filter(r=>r.line==='pension').length}</div>
-        <div class="note">not yet on cover</div></div>
+        <div class="note">${P.owned ? (partial ? P.priced + ' of ' + P.owned + ' carry a figure'
+          : 'all ' + P.owned + ' records') : 'nothing to total yet'}</div></div>
+      <div class="card"><span class="label">Ownership not recorded</span>
+        <div class="v${P.unclear ? ' hot' : ''}">${P.unclear}</div>
+        <div class="note">could be yours or theirs</div></div>
     </div>
-    ${partial ? `<div class="card" style="border-color:var(--gold);margin-bottom:1rem">
+    ${P.unclear ? `<div class="card" style="border-color:var(--gold);margin-bottom:1rem">
+      <b>${P.unclear} pension ${P.unclear === 1 ? 'record carries' : 'records carry'} no owner.</b>
+      A company-owned pension is written as an ordinary annuity on one employee, so the plan name cannot
+      tell us whose it is — only the ownership field can, and Guardian has left it blank on these. They
+      are deliberately not counted in your scheme above. We are having them confirmed one by one, and
+      your own deduction schedule is the reliable list until that is done.</div>` : ''}
+    ${P.personal ? `<p class="note" style="margin-bottom:.8rem">${P.personal} further
+      ${P.personal === 1 ? 'plan is' : 'plans are'} recorded as an employee's own — personal savings
+      held with us, not part of your scheme and not billed to you.</p>` : ''}
+    ${partial && P.owned ? `<div class="card" style="border-color:var(--gold);margin-bottom:1rem">
       <b>That contribution figure is not the whole schedule.</b> Guardian has filled the monthly
-      contribution on ${P.priced} of your ${P.total} records, so what you see above covers those only.
-      We are having the rest filled in — until then, your deduction schedule is the one to work from,
-      not this.</div>` : ''}
+      contribution on ${P.priced} of the ${P.owned} we can confirm are yours. Work from your deduction
+      schedule, not this.</div>` : ''}
     <p class="note">A company-owned pension is one policy per employee, owned by the company under
       Section 134. Members joining or leaving go through the pension plan, not the health and life
       forms.</p>`);

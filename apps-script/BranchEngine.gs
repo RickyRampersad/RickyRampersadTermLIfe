@@ -1267,13 +1267,45 @@ var BEN_PENDING = ['Pending', 'Postponed', 'RFC', 'RDE', 'ANT', 'ANP', 'RDC',
 var BEN_ENDED   = ['Matured', 'Expired', 'Converted', 'Not taken', 'Rejected',
                    'Not Proceeded With', 'Death', 'Surrendered', 'File Closed'];
 
-/* Three lines, three record types. Pension came late to this platform and is
-   the branch's recurring revenue, so it gets read the same way as the other
-   two rather than sitting in a lane of its own. */
+/* Three lines, but only two of them have a group record type.
+
+   Life and health each carry both — LIFE and LIFE_GROUP, INDIVIDUAL_HEALTH
+   and HEALTH_GROUP. Pension has one type for everything: 12,843 records
+   covering personal annuities and company-owned Section 134 schemes alike,
+   with nothing in the record type to tell them apart.
+
+   That matters because a company-owned pension IS an individual annuity
+   product — a TopHat or a LifeStyle written on one employee — and what makes
+   it the employer's scheme rather than the employee's own savings is who
+   OWNS it. On this branch's five schemes, that is recorded on 8 records out
+   of 402. The rest are indistinguishable, and counting them as the scheme
+   would show an employer a pile of their staff's personal plans and call it
+   their pension. So they are counted separately and named honestly. */
 function bLineOf_(rt) {
   if (rt === 'HEALTH_GROUP') return 'health';
   if (rt === 'PENSION')      return 'pension';
   return 'life';
+}
+
+/* Company-owned, on the evidence rather than on the hope of it. The picklist
+   first; failing that the free-text owner, which the book writes four ways
+   for the same two companies ("SERVUS LTD" / "SERVUS LIMITED", "D Rampersad
+   & Co." / "D Rampersad Company Ltd"), so it is compared the same forgiving
+   way account names are. Anything blank is UNKNOWN — never assumed to be
+   the scheme. */
+function bPensionOwned_(row, group) {
+  var own = String(row.owner || '').trim();
+  if (!own) return 'unknown';
+  if (/^company$/i.test(own)) return 'company';
+  if (/^personal$/i.test(own)) return 'personal';
+  var words = function (x) {
+    return String(x).toUpperCase().replace(/[^A-Z0-9 ]/g, ' ')
+      .replace(/\b(LTD|LIMITED|CO|COMPANY|INC)\b/g, ' ')
+      .split(/\s+/).filter(function (w) { return w.length > 3; });
+  };
+  var a = words(own), b = words(group), hit = 0;
+  a.forEach(function (w) { if (b.indexOf(w) !== -1) hit++; });
+  return hit ? 'company' : 'personal';
 }
 
 function bClassify_(status) {
@@ -1318,6 +1350,7 @@ function bRosterRows_(group) {
     "SELECT Id, POLICY__c, Contact__r.Name, RecordType.DeveloperName, "
     + "Policy_Status_Description_R__c, Policy_Status_Description__c, "
     + "Status_Change_Date__c, Employment_Status__c, Pension_Premiums__c, "
+    + "Ownership__c, POLICY_OWNER__c, PLAN_NAME__c, "
     + "CreatedDate, LastModifiedDate "
     + "FROM CLIENT_PORTFOLIO__c "
     + "WHERE ACCOUNTS_NAME__c LIKE '" + like + "' "
@@ -1342,6 +1375,8 @@ function bRosterRows_(group) {
       statusAt: r.Status_Change_Date__c || null,
       employment: r.Employment_Status__c || '',
       premium: Number(r.Pension_Premiums__c) || 0,
+      plan:    String(r.PLAN_NAME__c || ''),
+      owner:   String(r.Ownership__c || r.POLICY_OWNER__c || ''),
       since:  created ? String(r.CreatedDate).slice(0, 10) : null,
       days:   created ? Math.floor((now - created) / BEN_DAY) : null,
       modified: String(r.LastModifiedDate || '').slice(0, 10)
@@ -1702,9 +1737,13 @@ function benGroupView_(p) {
      not, so it is the one line whose schedule can be read rather than billed
      from a document. Only where Guardian has actually filled the field —
      which on this branch's pension book is a minority of records. */
-  var contrib = 0, withFigure = 0;
+  var contrib = 0, withFigure = 0, owned = 0, unclear = 0, personal = 0;
   rows.forEach(function (r) {
-    if (r.line === 'pension' && r.inForce && r.premium) { contrib += r.premium; withFigure++; }
+    if (r.line !== 'pension' || !r.inForce) return;
+    var who = bPensionOwned_(r, group);
+    if (who === 'company') { owned++; if (r.premium) { contrib += r.premium; withFigure++; } }
+    else if (who === 'personal') personal++;
+    else unclear++;
   });
 
   /* The tracked terminations ride along, because an employer asking "what
@@ -1721,8 +1760,13 @@ function benGroupView_(p) {
   return bok_({
     group: group, shown: true, read: new Date().toISOString(),
     inForce: counts, pending: pending, ended: ended, tracked: tracked,
+    /* owned  — demonstrably the employer's, by the ownership field
+       unclear — no owner recorded, so it could be either
+       personal — an employee's own plan, which is not the scheme
+       The monthly figure covers the owned ones only. */
     pension: { monthly: Math.round(contrib * 100) / 100, priced: withFigure,
-               total: rows.filter(function (r) { return r.line === 'pension' && r.inForce; }).length },
+               owned: owned, unclear: unclear, personal: personal,
+               total: owned + unclear + personal },
     /* Unclassified statuses are the branch's problem, not the client's, so
        they go back only to staff. */
     unknown: forBranch ? rows.filter(function (r) { return r.state === 'unknown'; }).length : undefined,
