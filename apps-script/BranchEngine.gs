@@ -1293,7 +1293,13 @@ function bLineOf_(rt) {
    & Co." / "D Rampersad Company Ltd"), so it is compared the same forgiving
    way account names are. Anything blank is UNKNOWN — never assumed to be
    the scheme. */
-function bPensionOwned_(row, group) {
+function bPensionOwned_(row, group, bills) {
+  /* On the scheme's own bill number the question is already answered: the
+     employer is invoiced for it every month. That beats an ownership field
+     nobody filled. */
+  if (row.bill && (bills || []).some(function (b) {
+    return bBillLike_(b) && bBillLike_(row.bill).indexOf(bBillLike_(b)) === 0;
+  })) return 'company';
   var own = String(row.owner || '').trim();
   if (!own) return 'unknown';
   if (/^company$/i.test(own)) return 'company';
@@ -1338,7 +1344,46 @@ function bAcctLike_(name) {
    portal both come through here, so a member cannot be pending on one screen
    and in force on the other — which is exactly the kind of second version of
    the truth this whole platform exists to remove. */
-function bRosterRows_(group) {
+/* ── the list bill number is what makes a scheme a scheme ──
+   Group pension has no record type, and chasing it by account name was
+   always going to be approximate. The actual identifier was in front of us
+   the whole time: List_Bill__c, the number Guardian bills the group under,
+   and it works for all three lines at once.
+
+     S047        Servus pension   301 records · 84 people · $57,780
+     B087        Bankers pension  104 records · 58 people
+     D041        Dansteel         pension, life and LIFE_GROUP together
+     TGM 1099    D Rampersad group life      — the policy on the letter
+     01_DRACO00  D Rampersad group health    — the Employer Group ID
+     TGM1526     Xtra Foods group life
+     01_NAIXT00  Xtra Foods group health     — under Naipaul's, its legal name
+
+   Two things follow. A scheme spans record types — Bankers' B087 holds 104
+   PENSION rows and 95 LIFE rows, one policy for each leg — so the record
+   type was never going to identify it. And the number is already printed on
+   every document the month-end reads: the life letter's POLICY #, the health
+   invoice's Employer Group ID.
+
+   The field is spelled loosely, so it is matched loosely: "TGM1526" and
+   "TGM 1526" are one scheme, and "01_DRACO00" is "01_DRACO001" cut to ten
+   characters. */
+/* Every distinct bill number in a set of rows, biggest first — a group's own
+   scheme numbers, read off its records rather than asked for. */
+function bDistinctBills_(rows) {
+  var tally = {};
+  (rows || []).forEach(function (r) {
+    if (!r.bill) return;
+    tally[r.bill] = (tally[r.bill] || 0) + 1;
+  });
+  return Object.keys(tally).sort(function (a, b) { return tally[b] - tally[a]; })
+    .map(function (b) { return { bill: b, records: tally[b] }; });
+}
+
+function bBillLike_(bill) {
+  return String(bill || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+}
+
+function bRosterRows_(group, bills) {
   if (typeof sfQuery_ !== 'function')
     throw new Error('SalesforceSync.gs is not in this project, so the branch record could not be read.');
   /* Both account fields, because they disagree in BOTH directions and each
@@ -1357,15 +1402,24 @@ function bRosterRows_(group) {
      Neither field is authoritative. Asking for either is the only way to see
      the whole scheme, and the duplicates that follow are removed by Id. */
   var like = bAcctLike_(group).replace(/'/g, "\\'");
+  /* A scheme identified by its bill number is identified exactly; the
+     account-name match stays as the way in when nobody has told us the
+     number yet. */
+  var billWhere = '';
+  (bills || []).forEach(function (b) {
+    var v = String(b || '').replace(/'/g, "\\'").trim();
+    if (v) billWhere += " OR List_Bill__c LIKE '" + v.slice(0, 8) + "%'";
+  });
   var rows = sfQuery_(
     "SELECT Id, POLICY__c, Contact__r.Name, RecordType.DeveloperName, "
     + "Policy_Status_Description_R__c, Policy_Status_Description__c, "
     + "Status_Change_Date__c, Employment_Status__c, Pension_Premiums__c, "
-    + "Ownership__c, POLICY_OWNER__c, PLAN_NAME__c, "
+    + "Ownership__c, POLICY_OWNER__c, PLAN_NAME__c, List_Bill__c, "
     + "CreatedDate, LastModifiedDate "
     + "FROM CLIENT_PORTFOLIO__c "
-    + "WHERE (ACCOUNTS_NAME__c LIKE '" + like + "' OR Account__r.Name LIKE '" + like + "') "
-    + "AND RecordType.DeveloperName IN ('LIFE_GROUP','HEALTH_GROUP','PENSION') "
+    + "WHERE (ACCOUNTS_NAME__c LIKE '" + like + "' OR Account__r.Name LIKE '" + like + "'"
+    + billWhere + ") "
+    + "AND RecordType.DeveloperName IN ('LIFE_GROUP','HEALTH_GROUP','PENSION','LIFE') "
     + "LIMIT 4000");
 
   var now = Date.now();
@@ -1391,6 +1445,7 @@ function bRosterRows_(group) {
       employment: r.Employment_Status__c || '',
       premium: Number(r.Pension_Premiums__c) || 0,
       plan:    String(r.PLAN_NAME__c || ''),
+      bill:    String(r.List_Bill__c || ''),
       owner:   String(r.Ownership__c || r.POLICY_OWNER__c || ''),
       since:  created ? String(r.CreatedDate).slice(0, 10) : null,
       days:   created ? Math.floor((now - created) / BEN_DAY) : null,
@@ -1404,7 +1459,14 @@ function benRoster_(p) {
   var group = String(p.group || '').trim();
   if (!group) return berr_('Which group?');
   try {
-    return bok_({ roster: bRosterRows_(group), matchedOn: bAcctLike_(group),
+    var bills = [].concat(p.bills || p.bill || []).filter(Boolean);
+    if (typeof bills[0] === 'string' && bills.length === 1) bills = bills[0].split(',');
+    var rows = bRosterRows_(group, bills);
+    return bok_({ roster: rows, matchedOn: bAcctLike_(group), bills: bills,
+                  /* What the branch does not know yet: every bill number these
+                     records actually carry. Reading them back is how a group
+                     learns its own, once, instead of nobody ever knowing. */
+                  billsFound: bDistinctBills_(rows),
                   read: new Date().toISOString() });
   } catch (err) {
     /* A month must never be held up because Salesforce was unreachable. */
@@ -1732,8 +1794,9 @@ function benGroupView_(p) {
     return bok_({ group: group, shown: false,
                   why: 'The branch has not switched this on yet.' });
 
-  var rows;
-  try { rows = bRosterRows_(group); }
+  var rows, bills = [].concat(p.bills || p.bill || []).filter(Boolean);
+  if (typeof bills[0] === 'string' && bills.length === 1) bills = bills[0].split(',');
+  try { rows = bRosterRows_(group, bills); }
   catch (err) { return bok_({ group: group, shown: false, why: String(err && err.message || err) }); }
 
   var pick = function (state) {
@@ -1755,7 +1818,7 @@ function benGroupView_(p) {
   var contrib = 0, withFigure = 0, owned = 0, unclear = 0, personal = 0;
   rows.forEach(function (r) {
     if (r.line !== 'pension' || !r.inForce) return;
-    var who = bPensionOwned_(r, group);
+    var who = bPensionOwned_(r, group, bills);
     if (who === 'company') { owned++; if (r.premium) { contrib += r.premium; withFigure++; } }
     else if (who === 'personal') personal++;
     else unclear++;
@@ -1779,6 +1842,7 @@ function benGroupView_(p) {
        unclear — no owner recorded, so it could be either
        personal — an employee's own plan, which is not the scheme
        The monthly figure covers the owned ones only. */
+    bills: bDistinctBills_(rows),
     pension: { monthly: Math.round(contrib * 100) / 100, priced: withFigure,
                owned: owned, unclear: unclear, personal: personal,
                total: owned + unclear + personal },
