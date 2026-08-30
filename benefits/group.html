@@ -1320,7 +1320,7 @@ function leakage(adjustments, health){
 const QUERYPAL='https://querymypolicies.netlify.app/';
 const TABS={employer:[['overview','Overview'],['billing','Billing'],['history','History'],['people','People'],['check','Check my month']],
             employer_live:[['history','History'],['pending','Pending applications'],
-                           ['leavers','Terminations'],['check','Check my month']],
+                           ['leavers','Terminations'],['pension','Pension'],['check','Check my month']],
             employee:[['mycover','My benefits']]};
 
 /* ══════════════ CHECK MY MONTH ══════════════
@@ -1491,7 +1491,7 @@ function render(){
     : as==='employer'
     ? `<b>${esc(GROUP.company)}</b><span class="label">Employer account</span>`
     : `<b>${esc(ME.first+' '+ME.last)}</b><span class="label">Cert ${esc(ME.cert)}</span>`;
-  $('main').innerHTML = ({overview,billing,history,people,check,mycover,pending,leavers})[tab]();
+  $('main').innerHTML = ({overview,billing,history,people,check,mycover,pending,leavers,pension})[tab]();
   if(as==='employer_live' && $('barTag')){
     $('barTag').textContent = 'YOUR ACCOUNT';
     $('barText').textContent = 'Signed in with your company portal code. These are your months as the branch holds them.';
@@ -1662,6 +1662,64 @@ function leavers(){
     <p class="note" style="margin-top:.9rem">A termination is finished when three things are true: you have told
       us, our record shows the cover ended, and the member is off your billing with the credit applied. The last
       two are not ticked by hand — we read them off the record and off the billing itself.</p>`);
+}
+
+/* ══════════════ PENSION ══════════════
+   The branch runs company-owned Section 134 pensions on its own site —
+   pensionplanstt.netlify.app — which enrols a member, chases both sides
+   through five steps, and hands the case to Head Office. That works; it is
+   not rebuilt here.
+
+   What this tab does is the half that site cannot do: read the branch's own
+   record of what a company already HAS. One door for the employer either
+   way, so they are not keeping two sets of codes and two ideas of who is
+   covered. */
+const PENSIONSITE = 'https://pensionplanstt.netlify.app';
+
+function pension(){
+  const title = 'Pension';
+  const blurb = 'Your company-owned pension — what is in force on our record, and the door to enrol '
+    + 'somebody new.';
+  const enrol = `<div class="card" style="margin-bottom:1rem">
+      <b>Enrolling somebody?</b> The pension plan has its own two-sided process — you complete the
+      company’s part, it goes straight to the employee for theirs, and you both watch the same five steps.
+      <p style="margin-top:.5rem">
+        <a class="btn" href="${PENSIONSITE}" target="_blank" rel="noopener">Open the pension plan →</a></p>
+      <p class="note" style="margin-top:.5rem">Sign in there with the company code the branch gave you.
+        Your employees use their own code on the employee door.</p></div>`;
+  if(GV_STATE !== 'ready') return gvShell(title, blurb, enrol + gvCard());
+
+  const P = GV.pension || { monthly:0, priced:0, total:0 };
+  if(!P.total) return gvShell(title, blurb, enrol + `<div class="card">
+    <p><b>Nothing on our pension record for you yet.</b> If a plan is being set up, it appears here
+    once the first member is on cover.</p></div>`);
+
+  /* Guardian fills the monthly contribution on some pension records and not
+     others. Reporting a total that covers a third of the members as though
+     it were the whole schedule would be worse than reporting none, so the
+     coverage is stated beside the figure. */
+  const partial = P.priced < P.total;
+  return gvShell(title, blurb, enrol + `
+    <div class="stats" style="margin-bottom:1rem">
+      <div class="card"><span class="label">Members on cover</span><div class="v">${P.total}</div>
+        <div class="note">company-owned policies</div></div>
+      <div class="card"><span class="label">Monthly contribution</span>
+        <div class="v">${P.monthly ? money(P.monthly) : '—'}</div>
+        <div class="note">${partial
+          ? P.priced + ' of ' + P.total + ' records carry a figure'
+          : 'all ' + P.total + ' records'}</div></div>
+      <div class="card"><span class="label">Enrolling now</span>
+        <div class="v">${(GV.pending||[]).filter(r=>r.line==='pension').length}</div>
+        <div class="note">not yet on cover</div></div>
+    </div>
+    ${partial ? `<div class="card" style="border-color:var(--gold);margin-bottom:1rem">
+      <b>That contribution figure is not the whole schedule.</b> Guardian has filled the monthly
+      contribution on ${P.priced} of your ${P.total} records, so what you see above covers those only.
+      We are having the rest filled in — until then, your deduction schedule is the one to work from,
+      not this.</div>` : ''}
+    <p class="note">A company-owned pension is one policy per employee, owned by the company under
+      Section 134. Members joining or leaving go through the pension plan, not the health and life
+      forms.</p>`);
 }
 
 function gate(){

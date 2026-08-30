@@ -1267,6 +1267,15 @@ var BEN_PENDING = ['Pending', 'Postponed', 'RFC', 'RDE', 'ANT', 'ANP', 'RDC',
 var BEN_ENDED   = ['Matured', 'Expired', 'Converted', 'Not taken', 'Rejected',
                    'Not Proceeded With', 'Death', 'Surrendered', 'File Closed'];
 
+/* Three lines, three record types. Pension came late to this platform and is
+   the branch's recurring revenue, so it gets read the same way as the other
+   two rather than sitting in a lane of its own. */
+function bLineOf_(rt) {
+  if (rt === 'HEALTH_GROUP') return 'health';
+  if (rt === 'PENSION')      return 'pension';
+  return 'life';
+}
+
 function bClassify_(status) {
   var s = String(status || '').trim();
   if (!s) return 'unknown';
@@ -1308,11 +1317,12 @@ function bRosterRows_(group) {
   var rows = sfQuery_(
     "SELECT Id, POLICY__c, Contact__r.Name, RecordType.DeveloperName, "
     + "Policy_Status_Description_R__c, Policy_Status_Description__c, "
-    + "Status_Change_Date__c, Employment_Status__c, CreatedDate, LastModifiedDate "
+    + "Status_Change_Date__c, Employment_Status__c, Pension_Premiums__c, "
+    + "CreatedDate, LastModifiedDate "
     + "FROM CLIENT_PORTFOLIO__c "
     + "WHERE ACCOUNTS_NAME__c LIKE '" + like + "' "
-    + "AND RecordType.DeveloperName IN ('LIFE_GROUP','HEALTH_GROUP') "
-    + "LIMIT 2000");
+    + "AND RecordType.DeveloperName IN ('LIFE_GROUP','HEALTH_GROUP','PENSION') "
+    + "LIMIT 4000");
 
   var now = Date.now();
   return rows.map(function (r) {
@@ -1325,12 +1335,13 @@ function bRosterRows_(group) {
     return {
       name:   (r.Contact__r && r.Contact__r.Name) || '',
       policy: String(r.POLICY__c || ''),
-      line:   r.RecordType && r.RecordType.DeveloperName === 'HEALTH_GROUP' ? 'health' : 'life',
+      line:   bLineOf_(r.RecordType && r.RecordType.DeveloperName),
       status: st,
       state:  bClassify_(st),
       inForce: BEN_INFORCE.indexOf(st) !== -1,
       statusAt: r.Status_Change_Date__c || null,
       employment: r.Employment_Status__c || '',
+      premium: Number(r.Pension_Premiums__c) || 0,
       since:  created ? String(r.CreatedDate).slice(0, 10) : null,
       days:   created ? Math.floor((now - created) / BEN_DAY) : null,
       modified: String(r.LastModifiedDate || '').slice(0, 10)
@@ -1685,8 +1696,16 @@ function benGroupView_(p) {
       });
   };
   var pending = pick('pending'), ended = pick('ended');
-  var counts = { life: 0, health: 0 };
-  rows.forEach(function (r) { if (r.inForce) counts[r.line]++; });
+  var counts = { life: 0, health: 0, pension: 0 };
+  rows.forEach(function (r) { if (r.inForce && counts[r.line] != null) counts[r.line]++; });
+  /* Pension carries a monthly contribution on the record; life and health do
+     not, so it is the one line whose schedule can be read rather than billed
+     from a document. Only where Guardian has actually filled the field —
+     which on this branch's pension book is a minority of records. */
+  var contrib = 0, withFigure = 0;
+  rows.forEach(function (r) {
+    if (r.line === 'pension' && r.inForce && r.premium) { contrib += r.premium; withFigure++; }
+  });
 
   /* The tracked terminations ride along, because an employer asking "what
      happened to the leaver I reported" is asking one question, not two.
@@ -1702,6 +1721,8 @@ function benGroupView_(p) {
   return bok_({
     group: group, shown: true, read: new Date().toISOString(),
     inForce: counts, pending: pending, ended: ended, tracked: tracked,
+    pension: { monthly: Math.round(contrib * 100) / 100, priced: withFigure,
+               total: rows.filter(function (r) { return r.line === 'pension' && r.inForce; }).length },
     /* Unclassified statuses are the branch's problem, not the client's, so
        they go back only to staff. */
     unknown: forBranch ? rows.filter(function (r) { return r.state === 'unknown'; }).length : undefined,
