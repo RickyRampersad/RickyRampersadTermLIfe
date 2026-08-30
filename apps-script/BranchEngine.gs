@@ -1317,9 +1317,19 @@ function bPensionOwned_(row, group, bills) {
 function bClassify_(status) {
   var s = String(status || '').trim();
   if (!s) return 'unknown';
-  if (BEN_INFORCE.indexOf(s) !== -1) return 'inforce';
-  if (BEN_PENDING.indexOf(s) !== -1) return 'pending';
-  if (BEN_ENDED.indexOf(s)   !== -1) return 'ended';
+  /* The same status is written three ways across the two status fields —
+     "Premium Paying", "premium paying", "PREMIUM PAYING". Xtra Foods' entire
+     group life scheme, 155 of its 156 records, carries it in capitals in the
+     text field with the picklist left blank; matching exactly dropped the
+     branch's largest life scheme out of every in-force count. */
+  var hit = function (list) {
+    for (var i = 0; i < list.length; i++)
+      if (list[i].toUpperCase() === s.toUpperCase()) return true;
+    return false;
+  };
+  if (hit(BEN_INFORCE)) return 'inforce';
+  if (hit(BEN_PENDING)) return 'pending';
+  if (hit(BEN_ENDED))   return 'ended';
   /* A status nobody has classified is not quietly an in-force policy. Say
      unknown and let a person look — 26 different values sit in this field on
      one account alone, several of them bare codes like "1", "E" and "X". */
@@ -1432,15 +1442,23 @@ function bRosterRows_(group, bills) {
        a text copy, a code, and a second misspelt picklist. Read the picklist
        first and fall back to the text, which is the pair that carries
        values. */
-    var st = r.Policy_Status_Description_R__c || r.Policy_Status_Description__c || '';
+    /* Read the picklist first, then the text copy — and where they disagree,
+       say so rather than picking one. On Dansteel's health scheme nine
+       records have the picklist reading Lapsed and the text reading Premium
+       paying, which is a question for a person, not a tie for code to break. */
+    var stA = String(r.Policy_Status_Description_R__c || '').trim();
+    var stB = String(r.Policy_Status_Description__c || '').trim();
+    var st = stA || stB;
+    var stClash = !!(stA && stB && bClassify_(stA) !== bClassify_(stB));
     var created = r.CreatedDate ? new Date(r.CreatedDate).getTime() : 0;
     return {
       name:   (r.Contact__r && r.Contact__r.Name) || '',
       policy: String(r.POLICY__c || ''),
       line:   bLineOf_(r.RecordType && r.RecordType.DeveloperName),
       status: st,
-      state:  bClassify_(st),
-      inForce: BEN_INFORCE.indexOf(st) !== -1,
+      state:  stClash ? 'unknown' : bClassify_(st),
+      statusClash: stClash ? (stA + ' / ' + stB) : null,
+      inForce: bClassify_(st) === 'inforce',
       statusAt: r.Status_Change_Date__c || null,
       employment: r.Employment_Status__c || '',
       premium: Number(r.Pension_Premiums__c) || 0,
