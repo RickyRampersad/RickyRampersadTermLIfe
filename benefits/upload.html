@@ -1160,9 +1160,26 @@ async function xlsxRows(bytes){
                    .replace(/&quot;/g,'"').replace(/&#39;/g,"'"));
     }
   }
-  const name = Object.keys(files).find(k => /^xl\/worksheets\/sheet1\.xml$/.test(k))
-            || Object.keys(files).find(k => /^xl\/worksheets\/.*\.xml$/.test(k));
-  const sheet = txt(name), rows = [];
+  /* A workbook may hold one sheet or twenty-eight. Servus's carries every
+     month back to November 2023, plus the employer's payroll file and a
+     variance report — so the right sheet has to be chosen rather than
+     assumed. Return them all, named, and let the caller pick. */
+  const wb = txt('xl/workbook.xml'), names = [];
+  const nRe = /<sheet[^>]*name="([^"]*)"[^>]*r:id="([^"]*)"/g; let nm;
+  while((nm = nRe.exec(wb))) names.push({ name: nm[1], rid: nm[2] });
+  const rel = txt('xl/_rels/workbook.xml.rels'), target = {};
+  const rRe = /<Relationship[^>]*Id="([^"]*)"[^>]*Target="([^"]*)"/g; let rr;
+  while((rr = rRe.exec(rel))) target[rr[1]] = rr[2];
+  const sheets = names.map(x => ({ name: x.name,
+    path: 'xl/' + String(target[x.rid] || '').replace(/^\/?xl\//, '').replace(/^\//, '') }))
+    .filter(x => files[x.path]);
+  if(!sheets.length) sheets.push({ name:'Sheet1', path:
+    Object.keys(files).find(k => /^xl\/worksheets\/.*\.xml$/.test(k)) });
+  return sheets.map(sh => ({ name: sh.name, rows: sheetRows(txt(sh.path), shared) }));
+}
+
+function sheetRows(sheet, shared){
+  const rows = [];
   const rowRe = /<row[^>]*>([\s\S]*?)<\/row>/g; let r;
   while((r = rowRe.exec(sheet))){
     const cells = {};
@@ -1194,6 +1211,33 @@ async function xlsxRows(bytes){
   return rows;
 }
 
+/* Which sheet is this month's billing. A workbook of twenty-eight is a
+   filing cabinet, and the wrong drawer is last November. Prefer the sheet
+   that parses to the most member rows AND names a list bill; fall back to
+   the most rows. */
+function pickPensionSheet(sheets){
+  const read = [];
+  sheets.forEach(sh => {
+    let doc; try{ doc = parsePensionBilling(sh.rows); }catch(e){ return; }
+    if(!doc.members.length) return;
+    /* The month comes from the sheet's own billing date first, and from its
+       tab name only as a fallback — "JULY 2026" is a label somebody typed. */
+    let n = doc.month ? monthOf(doc) : null;
+    if(n == null){
+      const m = /([A-Za-z]{3,9})[^A-Za-z0-9]{0,3}(\d{4})/.exec(sh.name || '');
+      if(m){ const d = new Date(m[1] + ' 1, ' + m[2]);
+        if(!isNaN(+d)){ n = d.getFullYear()*12 + d.getMonth();
+          if(!doc.month) doc.month = d.toLocaleDateString('en-GB',{month:'long',year:'numeric'}); } }
+    }
+    read.push({ sheet: sh.name, doc, n });
+  });
+  if(!read.length) return null;
+  /* Newest month wins. Where nothing dates itself, the fullest sheet does. */
+  const dated = read.filter(x => x.n != null);
+  if(dated.length) return dated.sort((a,b) => a.n - b.n).pop();
+  return read.sort((a,b) => a.doc.members.length - b.doc.members.length).pop();
+}
+
 /* ── the pension billing itself ──
    Guardian's list-bill extract, one row per policy:
 
@@ -1207,6 +1251,27 @@ function parsePensionBilling(rows){
   /* The header row names the columns wherever it happens to sit. */
   let col = null;
   for(const r of rows){
+    /* Servus's sheet names the bill in a header line of its own —
+       "LISTBILL | S072" — above the columns. Bankers' carries it in a column
+       on every row. Take it from either. */
+    const vals0 = Object.values(r);
+    /* "BILLING DATE | 1--JULY--2026". The sheet knows which month it is, and
+       a workbook holding every month back to November 2023 makes guessing
+       from size exactly the wrong idea. */
+    const di = vals0.findIndex(v => /^\s*billing\s*date/i.test(String(v)));
+    if(di >= 0 && vals0[di+1] && !out.month){
+      const m = /([A-Za-z]{3,9})[^A-Za-z0-9]*(\d{4})/.exec(String(vals0[di+1]));
+      if(m){ const d = new Date(m[1] + ' 1, ' + m[2]);
+        if(!isNaN(+d)) out.month = d.toLocaleDateString('en-GB',{month:'long',year:'numeric'}); }
+      continue;
+    }
+    const li = vals0.findIndex(v => /^\s*list\s*bill/i.test(String(v)));
+    if(li >= 0 && vals0[li+1]){
+      const b = String(vals0[li+1]).trim();
+      if(b && out.bills.indexOf(b) === -1) out.bills.push(b);
+      out.stated.bill = b;
+      continue;
+    }
     const vals = Object.entries(r);
     const find = re => (vals.find(([,v]) => re.test(String(v))) || [])[0];
     const name = find(/^\s*contact\s*:?\s*full\s*name/i) || find(/^\s*(employee|member)\s*name/i);
@@ -1658,10 +1723,16 @@ async function take(fileList, hintLine){
           for(let i = 0; i < bytes.length; i += 0x8000)
             bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
           b64x = btoa(bin); }
-        const doc = parsePensionBilling(await xlsxRows(bytes));
+        const sheets = await xlsxRows(bytes);
+        const pick = pickPensionSheet(sheets);
+        if(!pick){ got['?'+f.name] = { file:f.name, ok:false,
+          why:'No sheet in that workbook reads as a pension billing.' }; continue; }
+        const doc = pick.doc;
+        doc.sheet = pick.sheet;
+        doc.sheetCount = sheets.length;
         const ver = verify(doc);
-        got.pension = { file:f.name, kind:'pension', doc, ver, ok:ver.ok, b64:b64x,
-                        namesGroup:true, addedUnder: hintLine || null };
+        got.pension = { file:f.name + ' — ' + pick.sheet, kind:'pension', doc, ver, ok:ver.ok,
+                        b64:b64x, namesGroup:true, addedUnder: hintLine || null };
         continue;
       }
       /* Live, approval emails the documents — so the submission has to carry
