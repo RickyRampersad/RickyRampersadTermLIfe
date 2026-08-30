@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Branch Intelligence — Ricky Rampersad Branch</title>
+<link rel="icon" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07131f; --bg2:#0d2137; --card:#12293f; --card2:#173d5e;
+  --line:rgba(255,255,255,.10); --line2:rgba(255,255,255,.06);
+  --gold:#E8A020; --gold2:#f2b13a; --teal:#00CFEA;
+  --text:#edf4fb; --muted:#a9bbcf; --dim:#7e94b3;
+  --bad:#ff7a7a; --warn:#f5b942; --good:#35d07f;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:15px/1.6 'DM Sans',system-ui,sans-serif;color:var(--text);
+  background:linear-gradient(180deg,#00182e 0%,#07131f 40%,#07131f 100%);min-height:100vh}
+h1,h2,h3,h4,.mono-h{font-family:'Montserrat',sans-serif}
+a{color:var(--teal)}
+button{font-family:'DM Sans',sans-serif}
+
+/* ── sign in ───────────────────────────────────────────────────────────── */
+#gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.gatecard{width:100%;max-width:410px;text-align:center}
+.gatecard h1{font-size:26px;margin:16px 0 3px}
+.tag{color:var(--gold);font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:700}
+.gatecard p.lead{color:var(--muted);font-size:14px;line-height:1.6;margin:16px 0 22px}
+.field{text-align:left;margin-bottom:12px}
+.field label{display:block;font-size:12px;color:var(--muted);font-weight:700;margin-bottom:5px}
+.field input{width:100%;border:1px solid var(--line);border-radius:11px;padding:13px 14px;
+  font:15px 'DM Sans';background:rgba(0,0,0,.28);color:var(--text);outline:none}
+.field input:focus{border-color:var(--gold)}
+.btn{width:100%;background:linear-gradient(180deg,var(--gold2),var(--gold));color:#00254d;
+  font:800 15px 'Montserrat';border:none;border-radius:12px;padding:14px;cursor:pointer;margin-top:6px}
+.btn:hover{filter:brightness(1.06)} .btn:disabled{opacity:.55;cursor:wait}
+.btn.small{width:auto;padding:8px 15px;font-size:12.5px;border-radius:9px}
+.btn.ghost{background:rgba(255,255,255,.07);color:var(--muted);border:1px solid var(--line);font-weight:600}
+.msg{margin-top:14px;padding:12px 14px;border-radius:11px;font-size:13.5px;display:none;text-align:left}
+.msg.err{display:block;background:rgba(255,122,122,.12);border:1px solid rgba(255,122,122,.35);color:var(--bad)}
+.msg.ok{display:block;background:rgba(53,208,127,.12);border:1px solid rgba(53,208,127,.35);color:var(--good)}
+.gatefoot{margin-top:26px;color:var(--dim);font-size:11.5px;line-height:1.7}
+
+/* ── shell ─────────────────────────────────────────────────────────────── */
+#app{display:none}
+header.top{background:linear-gradient(135deg,#00254d,#00458c);border-bottom:1px solid var(--line);
+  padding:14px 20px;position:sticky;top:0;z-index:40}
+.top .in{max-width:1220px;margin:0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.top .brand{font:800 15px 'Montserrat';color:var(--gold);letter-spacing:.3px;line-height:1.2}
+.top .brand small{display:block;font:500 11px 'DM Sans';color:#c8d6e8;letter-spacing:0;margin-top:2px}
+.top .spacer{flex:1}
+.who{font-size:12.5px;color:#c8d6e8;text-align:right;line-height:1.4}
+.who b{display:block;color:#fff;font:700 13.5px 'Montserrat'}
+nav.tabs{background:var(--bg2);border-bottom:1px solid var(--line);position:sticky;top:63px;z-index:35;
+  overflow-x:auto;-webkit-overflow-scrolling:touch}
+nav.tabs .in{max-width:1220px;margin:0 auto;display:flex;gap:2px;padding:0 12px}
+nav.tabs button{background:none;border:none;color:var(--muted);font:700 13px 'Montserrat';
+  padding:13px 15px;cursor:pointer;white-space:nowrap;border-bottom:2.5px solid transparent}
+nav.tabs button:hover{color:var(--text)}
+nav.tabs button.on{color:var(--gold);border-bottom-color:var(--gold)}
+nav.tabs button .n{display:inline-block;background:rgba(255,255,255,.10);border-radius:99px;
+  padding:1px 7px;font-size:11px;margin-left:6px}
+nav.tabs button.on .n{background:rgba(232,160,32,.22);color:var(--gold)}
+main{max-width:1220px;margin:0 auto;padding:22px 16px 80px}
+.view{display:none} .view.on{display:block}
+
+/* ── pieces ────────────────────────────────────────────────────────────── */
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px}
+.card>h2{font-size:16px;margin-bottom:3px}
+.card>p.sub{color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:14px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:11px;margin-bottom:16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px 16px}
+.stat .k{font-size:10.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.stat .v{font:800 25px 'Montserrat';margin-top:5px;line-height:1.15}
+.stat .n{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.45}
+.stat.bad .v{color:var(--bad)} .stat.warn .v{color:var(--warn)} .stat.good .v{color:var(--good)}
+.stat.gold .v{color:var(--gold)}
+.stat.click{cursor:pointer;transition:.12s} .stat.click:hover{border-color:var(--gold);transform:translateY(-1px)}
+
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th{text-align:left;padding:9px 10px;background:rgba(0,0,0,.3);color:var(--gold);
+  font:700 10.5px 'Montserrat';text-transform:uppercase;letter-spacing:.06em;
+  position:sticky;top:0;white-space:nowrap;cursor:pointer;user-select:none}
+table.t th:hover{color:var(--gold2)}
+table.t th.plain{cursor:default}
+table.t td{padding:9px 10px;border-bottom:1px solid var(--line2);vertical-align:top}
+table.t tr:hover td{background:rgba(255,255,255,.03)}
+table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.scroll{overflow:auto;max-height:560px;border:1px solid var(--line);border-radius:12px}
+.pill{display:inline-block;font:700 10.5px 'Montserrat';padding:2px 9px;border-radius:99px;white-space:nowrap}
+.p-bad{background:rgba(255,122,122,.16);color:var(--bad)}
+.p-warn{background:rgba(245,185,66,.16);color:var(--warn)}
+.p-good{background:rgba(53,208,127,.16);color:var(--good)}
+.p-dim{background:rgba(255,255,255,.08);color:var(--muted)}
+.p-gold{background:rgba(232,160,32,.16);color:var(--gold)}
+
+.bars{margin:6px 0}
+.bar{display:grid;grid-template-columns:132px minmax(60px,1fr) max-content;gap:11px;
+  align-items:center;margin-bottom:7px;font-size:12.5px}
+.bar .lbl{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:520px){.bar{grid-template-columns:104px minmax(40px,1fr) max-content;font-size:12px}}
+.bar .track{background:rgba(0,0,0,.34);border-radius:5px;height:20px;overflow:hidden}
+.bar .fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--gold),var(--gold2));
+  min-width:2px;transition:width .35s ease}
+.bar .fill.bad{background:linear-gradient(90deg,#c0392b,var(--bad))}
+.bar .val{text-align:right;font-variant-numeric:tabular-nums;color:var(--text);font-weight:700}
+
+.note{background:rgba(232,160,32,.07);border-left:3px solid var(--gold);border-radius:0 11px 11px 0;
+  padding:12px 15px;margin:12px 0;font-size:13px;line-height:1.65;color:var(--muted)}
+.note b{color:var(--gold)}
+.note.red{background:rgba(255,122,122,.07);border-left-color:var(--bad)}
+.note.red b{color:var(--bad)}
+.toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:13px}
+.toolbar input,.toolbar select{border:1px solid var(--line);border-radius:9px;padding:9px 12px;
+  font:13.5px 'DM Sans';background:rgba(0,0,0,.28);color:var(--text);outline:none}
+.toolbar input:focus,.toolbar select:focus{border-color:var(--gold)}
+.toolbar input.grow{flex:1;min-width:180px}
+.toolbar .count{color:var(--dim);font-size:12.5px;margin-left:auto}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:860px){.split{grid-template-columns:1fr}}
+.empty{color:var(--dim);font-size:13.5px;padding:26px 10px;text-align:center}
+.linkish{background:none;border:none;color:var(--teal);cursor:pointer;font:inherit;padding:0;text-decoration:underline}
+
+/* ── log-an-action drawer ──────────────────────────────────────────────── */
+#drawer{position:fixed;inset:0;background:rgba(2,10,20,.72);display:none;z-index:60;
+  align-items:flex-end;justify-content:center}
+#drawer.on{display:flex}
+.sheet{background:var(--card);border:1px solid var(--line);border-radius:18px 18px 0 0;
+  width:100%;max-width:560px;padding:22px;max-height:92vh;overflow:auto}
+@media(min-width:680px){#drawer{align-items:center}.sheet{border-radius:18px}}
+.sheet h3{font-size:17px;margin-bottom:3px}
+.sheet .who2{color:var(--muted);font-size:13px;margin-bottom:14px}
+.sheet label{display:block;font-size:12px;color:var(--muted);font-weight:700;margin:12px 0 5px}
+.sheet input,.sheet select,.sheet textarea{width:100%;border:1px solid var(--line);border-radius:10px;
+  padding:11px 13px;font:14px 'DM Sans';background:rgba(0,0,0,.3);color:var(--text);outline:none}
+.sheet textarea{min-height:76px;resize:vertical}
+.sheet .row{display:flex;gap:10px;margin-top:16px}
+footer.foot{max-width:1220px;margin:0 auto;padding:0 16px 40px;color:var(--dim);font-size:11.5px;line-height:1.7}
+</style>
+</head>
+<body>
+
+<!-- ═══ SIGN IN ═══════════════════════════════════════════════════════════ -->
+<div id="gate">
+  <div class="gatecard">
+    <svg viewBox="0 0 24 24" width="76" height="76" aria-hidden="true"
+         style="filter:drop-shadow(0 6px 18px rgba(0,0,0,.45))">
+      <path d="M12 1.5l8.5 3.2v6.4c0 5.3-3.6 9.3-8.5 11.6C7.1 20.4 3.5 16.4 3.5 11.1V4.7L12 1.5z" fill="#E8A020"/>
+      <path d="M12 3.3l6.8 2.6v5.2c0 4.4-2.9 7.7-6.8 9.7-3.9-2-6.8-5.3-6.8-9.7V5.9L12 3.3z" fill="#003366"/>
+      <path d="M8.3 12.1l2.6 2.6 5-5.2" stroke="#fff" stroke-width="2.1" fill="none"
+            stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <h1>Branch Intelligence</h1>
+    <div class="tag">A Ricky Rampersad Branch Initiative</div>
+    <p class="lead">Premium dues, pending business, requirements, maturities and expiring
+      benefits — one place, built from the branch's own book.</p>
+
+    <form id="signin" autocomplete="off">
+      <div class="field">
+        <label for="who">Your Guardian e-mail or agent number</label>
+        <input id="who" name="who" type="text" required autocapitalize="off" spellcheck="false"
+               placeholder="firstname.lastname@myguardiangroup.com">
+      </div>
+      <div class="field">
+        <label for="secret">Access code</label>
+        <input id="secret" name="secret" type="password" required autocomplete="current-password"
+               placeholder="from the branch">
+      </div>
+      <button class="btn" id="go" type="submit">Sign in</button>
+      <div class="msg" id="gatemsg"></div>
+    </form>
+
+    <div class="gatefoot">
+      Your access code comes from the branch. It is checked on the server —
+      nothing about your book is loaded into this page until it matches.<br>
+      Signed in for 12 hours, then it asks again.
+    </div>
+  </div>
+</div>
+
+<!-- ═══ APP ═══════════════════════════════════════════════════════════════ -->
+<div id="app">
+  <header class="top">
+    <div class="in">
+      <svg viewBox="0 0 24 24" width="34" height="34" aria-hidden="true">
+        <path d="M12 1.5l8.5 3.2v6.4c0 5.3-3.6 9.3-8.5 11.6C7.1 20.4 3.5 16.4 3.5 11.1V4.7L12 1.5z" fill="#E8A020"/>
+        <path d="M12 3.3l6.8 2.6v5.2c0 4.4-2.9 7.7-6.8 9.7-3.9-2-6.8-5.3-6.8-9.7V5.9L12 3.3z" fill="#003366"/>
+        <path d="M8.3 12.1l2.6 2.6 5-5.2" stroke="#fff" stroke-width="2" fill="none"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="brand">Branch Intelligence<small id="builtline">—</small></div>
+      <div class="spacer"></div>
+      <div class="who"><b id="whoname">—</b><span id="whorole">—</span></div>
+      <button class="btn small ghost" id="signout" type="button">Sign out</button>
+    </div>
+  </header>
+
+  <nav class="tabs"><div class="in" id="tabbar"></div></nav>
+
+  <main>
+    <div class="view" id="v-pulse"></div>
+    <div class="view" id="v-dues"></div>
+    <div class="view" id="v-pending"></div>
+    <div class="view" id="v-reqs"></div>
+    <div class="view" id="v-maturity"></div>
+    <div class="view" id="v-expiry"></div>
+    <div class="view" id="v-health"></div>
+  </main>
+
+  <footer class="foot">
+    Branch Intelligence reads the branch workbook once a night and serves only your own slice of it.
+    Premium figures are <b>modal instalments</b> — the extract carries no billing frequency, so this
+    book cannot be annualised. Nothing on this page is stored on the website.
+  </footer>
+</div>
+
+<!-- ═══ LOG AN ACTION ═════════════════════════════════════════════════════ -->
+<div id="drawer">
+  <div class="sheet">
+    <h3>Log what happened</h3>
+    <div class="who2" id="d-who">—</div>
+    <label for="d-outcome">Outcome</label>
+    <select id="d-outcome">
+      <option>Spoke to client — will pay</option>
+      <option>Spoke to client — cannot pay now</option>
+      <option>Left a message</option>
+      <option>Wrong number / bad contact</option>
+      <option>Requirement chased</option>
+      <option>Appointment booked</option>
+      <option>Paid / resolved</option>
+      <option>Other</option>
+    </select>
+    <label for="d-note">What was said</label>
+    <textarea id="d-note" placeholder="Enough that the next person picking this up knows where it stands."></textarea>
+    <label for="d-next">Next step</label>
+    <input id="d-next" type="text" placeholder="e.g. call back after payday">
+    <label for="d-follow">Follow up on</label>
+    <input id="d-follow" type="date">
+    <div class="msg" id="d-msg"></div>
+    <div class="row">
+      <button class="btn" id="d-save" type="button">Save to the branch log</button>
+      <button class="btn ghost" id="d-cancel" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   BRANCH INTELLIGENCE — the front of house
+
+   This file holds no client data and never has. Everything on screen arrives
+   from the Apps Script deployment below, after a sign-in, already narrowed to
+   what the person signing in is allowed to see. Refreshing the page throws it
+   all away again.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* The Apps Script web-app URL. Deploy → New deployment → Web app,
+   Execute as Me, Who has access: Anyone. Paste the /exec URL here.
+   See INTELLIGENCE-SETUP.md. */
+var API = 'https://script.google.com/macros/s/AKfycbymH3OowYXYqdZg6FJ_fjcOu5F0tpoibGeEswAQFg7TXtNYMaySr3wSeLzUnTJtTF76/exec';
+
+var TOKEN = null, DATA = null, ME = null, VIEW = 'pulse';
+
+/* Apps Script answers a simple cross-origin POST but not a preflight, so the
+   content type stays text/plain. The body is still JSON and the script still
+   parses it as JSON — this is only about not tripping the preflight. */
+function call(payload) {
+  return fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  }).then(function (r) { return r.json(); });
+}
+
+/* ── small helpers ─────────────────────────────────────────────────────── */
+function $(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function money(n) {
+  n = Number(n) || 0;
+  return 'TT$' + n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+function money2(n) {
+  n = Number(n) || 0;
+  return 'TT$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function pct(x) { return Math.round((Number(x) || 0) * 100) + '%'; }
+function num(n) { return (Number(n) || 0).toLocaleString('en-US'); }
+function plural(n, one, many) { return n === 1 ? one : (many || one + 's'); }
+
+/* Days into something a person reads without doing arithmetic. */
+function months(m) {
+  m = Number(m) || 0;
+  if (m < 1) return 'this month';
+  if (m < 12) return m + ' ' + plural(m, 'month');
+  var y = Math.floor(m / 12), r = m % 12;
+  return y + ' ' + plural(y, 'year') + (r ? ' ' + r + 'm' : '');
+}
+
+function stat(k, v, note, tone, onclick) {
+  return '<div class="stat ' + (tone || '') + (onclick ? ' click" data-go="' + esc(onclick) : '') + '">' +
+    '<div class="k">' + esc(k) + '</div><div class="v">' + esc(v) + '</div>' +
+    (note ? '<div class="n">' + note + '</div>' : '') + '</div>';
+}
+
+function bars(rows, opts) {
+  opts = opts || {};
+  var max = rows.reduce(function (m, r) { return Math.max(m, Number(r.value) || 0); }, 0) || 1;
+  return '<div class="bars">' + rows.map(function (r) {
+    return '<div class="bar"><div class="lbl">' + esc(r.label) + '</div>' +
+      '<div class="track"><div class="fill' + (r.bad ? ' bad' : '') + '" style="width:' +
+      Math.max(1, Math.round((Number(r.value) || 0) / max * 100)) + '%"></div></div>' +
+      '<div class="val">' + esc(r.display != null ? r.display : num(r.value)) + '</div></div>';
+  }).join('') + '</div>' + (opts.note ? '<p class="sub" style="margin-top:8px">' + opts.note + '</p>' : '');
+}
+
+/* ── sortable, filterable tables ───────────────────────────────────────────
+   One table renderer for every list in the app. Columns declare how they are
+   compared so a sort on Days is numeric and a sort on Client is not — sorting
+   "1,204" as text is how a chase list ends up in the wrong order.          */
+var TABLES = {};
+
+function table(id, cols, rows, opts) {
+  opts = opts || {};
+  TABLES[id] = { cols: cols, rows: rows, sort: opts.sort || null, dir: opts.dir || 'desc',
+                 filter: '', opts: opts };
+  return '<div id="wrap-' + id + '">' + tableInner(id) + '</div>';
+}
+
+function tableInner(id) {
+  var t = TABLES[id], cols = t.cols, rows = t.rows.slice();
+  var q = t.filter.trim().toLowerCase();
+  if (q) {
+    rows = rows.filter(function (r) {
+      return cols.some(function (c) {
+        return String(c.value ? c.value(r) : r[c.key] == null ? '' : r[c.key]).toLowerCase().indexOf(q) !== -1;
+      });
+    });
+  }
+  if (t.sort) {
+    var col = cols.filter(function (c) { return c.key === t.sort; })[0];
+    if (col) {
+      var sign = t.dir === 'asc' ? 1 : -1;
+      rows.sort(function (a, b) {
+        var x = col.sortValue ? col.sortValue(a) : a[col.key];
+        var y = col.sortValue ? col.sortValue(b) : b[col.key];
+        if (typeof x === 'number' && typeof y === 'number') return (x - y) * sign;
+        return String(x == null ? '' : x).localeCompare(String(y == null ? '' : y)) * sign;
+      });
+    }
+  }
+  var shown = rows.slice(0, t.opts.limit || 500);
+
+  var head = '<tr>' + cols.map(function (c) {
+    var arrow = t.sort === c.key ? (t.dir === 'asc' ? ' ▲' : ' ▼') : '';
+    return '<th class="' + (c.num ? 'num ' : '') + (c.sortable === false ? 'plain' : '') + '"' +
+      (c.sortable === false ? '' : ' data-sort="' + esc(id) + '|' + esc(c.key) + '"') + '>' +
+      esc(c.label) + arrow + '</th>';
+  }).join('') + '</tr>';
+
+  var body = shown.map(function (r) {
+    return '<tr>' + cols.map(function (c) {
+      return '<td class="' + (c.num ? 'num' : '') + '">' + (c.render ? c.render(r) : esc(r[c.key])) + '</td>';
+    }).join('') + '</tr>';
+  }).join('');
+
+  var bar =
+    '<div class="toolbar">' +
+      '<input class="grow" placeholder="Filter these ' + rows.length + ' rows…" data-filter="' + esc(id) + '" value="' + esc(t.filter) + '">' +
+      '<button class="btn small ghost" data-csv="' + esc(id) + '" type="button">Download CSV</button>' +
+      '<span class="count">' + num(rows.length) + ' ' + plural(rows.length, 'row') +
+      (rows.length > shown.length ? ' · showing first ' + num(shown.length) : '') + '</span>' +
+    '</div>';
+
+  if (!rows.length) return bar + '<div class="empty">' + esc(t.opts.empty || 'Nothing here — which is the good outcome.') + '</div>';
+  return bar + '<div class="scroll"><table class="t">' + head + body + '</table></div>';
+}
+
+function redrawTable(id) {
+  var w = $('wrap-' + id);
+  if (w) w.innerHTML = tableInner(id);
+}
+
+/* CSV of what is on screen after the filter and the sort — the list somebody
+   is about to work, not the whole book. */
+function downloadCsv(id) {
+  var t = TABLES[id], cols = t.cols;
+  var rows = t.rows.slice();
+  var q = t.filter.trim().toLowerCase();
+  if (q) {
+    rows = rows.filter(function (r) {
+      return cols.some(function (c) {
+        return String(c.value ? c.value(r) : r[c.key] == null ? '' : r[c.key]).toLowerCase().indexOf(q) !== -1;
+      });
+    });
+  }
+  function cell(v) {
+    v = String(v == null ? '' : v);
+    /* A leading =, +, - or @ makes Excel treat the cell as a formula. The
+       branch opens these in Excel, so it is prefixed with a quote. */
+    if (/^[=+\-@]/.test(v)) v = "'" + v;
+    return '"' + v.replace(/"/g, '""') + '"';
+  }
+  var csv = cols.map(function (c) { return cell(c.label); }).join(',') + '\r\n' +
+    rows.map(function (r) {
+      return cols.map(function (c) {
+        return cell(c.value ? c.value(r) : r[c.key]);
+      }).join(',');
+    }).join('\r\n');
+
+  var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'branch-intelligence-' + id + '-' + new Date().toISOString().slice(0, 10) + '.csv';
+  document.body.appendChild(a); a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 400);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE VIEWS
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var TABS = [
+  { id: 'pulse',    label: 'Pulse' },
+  { id: 'dues',     label: 'Premium dues',  count: function (d) { return (d.dues || {}).chaseCount; } },
+  { id: 'pending',  label: 'Pending',       count: function (d) { return (d.pending || {}).total; } },
+  { id: 'reqs',     label: 'Requirements',  count: function (d) { return (d.reqs || {}).openCount; } },
+  { id: 'maturity', label: 'Maturities',    count: function (d) { return ((d.maturity || {}).retirement || {}).total + ((d.maturity || {}).life || {}).total; } },
+  { id: 'expiry',   label: 'Expiring cover', count: function (d) { return ((d.expiry || {}).term || {}).total; } },
+  { id: 'health',   label: 'Data health',   count: function (d) { return ((d.health || {}).items || []).length; } }
+];
+
+function renderTabs() {
+  $('tabbar').innerHTML = TABS.map(function (t) {
+    var n = t.count ? t.count(DATA) : null;
+    return '<button data-view="' + t.id + '" class="' + (VIEW === t.id ? 'on' : '') + '">' +
+      esc(t.label) + (n ? '<span class="n">' + num(n) + '</span>' : '') + '</button>';
+  }).join('');
+}
+
+function show(view) {
+  VIEW = view;
+  renderTabs();
+  document.querySelectorAll('.view').forEach(function (v) { v.classList.remove('on'); });
+  var el = $('v-' + view);
+  el.classList.add('on');
+  ({ pulse: viewPulse, dues: viewDues, pending: viewPending, reqs: viewReqs,
+     maturity: viewMaturity, expiry: viewExpiry, health: viewHealth }[view])(el);
+  window.scrollTo(0, 0);
+}
+
+function errCard(msg) {
+  return '<div class="card"><h2>Not available</h2><p class="sub">' + esc(msg) + '</p></div>';
+}
+
+/* ── Pulse ─────────────────────────────────────────────────────────────────
+   One screen that answers "what needs me today". Every tile is a doorway into
+   the view that explains it, because a number nobody can open is decoration. */
+function viewPulse(el) {
+  var d = DATA.dues || {}, p = DATA.pending || {}, q = DATA.reqs || {},
+      m = DATA.maturity || {}, x = DATA.expiry || {}, h = DATA.health || {};
+  var mine = DATA.you.role !== 'branch';
+  var suspense = (p.suspense || 0) + (m.suspense || 0);
+  var conv24 = (x.convertible || {}).w24 || 0;
+  var pens12 = (m.retirement || {}).w12 || 0;
+
+  var html =
+    '<div class="card"><h2>' + esc(mine ? 'Your book, this morning' : 'The branch, this morning') + '</h2>' +
+    '<p class="sub">Built from the workbook at ' + esc(DATA.builtAt) + '. ' +
+    (mine ? 'These are your policies only.' : 'The whole branch — 93 agents across the units.') + '</p>' +
+    '<div class="stats">' +
+      stat('Premiums to chase', num(d.chaseCount || 0),
+           'Overdue more than 30 days — past the grace period, not yet lapsed', 'bad', 'dues') +
+      stat('Instalments at risk', money(d.modalChase || 0),
+           'One instalment each, <b>not</b> annual premium', 'bad', 'dues') +
+      stat('Pending cases', num(p.total || 0),
+           num(p.stale || 0) + ' waiting more than 90 days', p.stale ? 'warn' : '', 'pending') +
+      stat('Client money in suspense', money(suspense),
+           'Already paid, cannot be applied until the case closes', 'gold', 'pending') +
+      stat('Requirements open', num(q.openCount || 0),
+           num(q.overYear || 0) + ' of them open more than a year', q.overYear ? 'warn' : '', 'reqs') +
+      stat('Pensions maturing', num(pens12) + ' in 12mo',
+           money((m.retirement || {}).fund12 || 0) + ' of fund value', 'good', 'maturity') +
+      stat('Conversion rights ending', num(conv24) + ' in 24mo',
+           'Permanent cover with no medical — until the term ends', conv24 ? 'gold' : '', 'expiry') +
+      stat('Unreachable clients', num((d.defects || {}).unreachable || 0),
+           'On the chase list with no phone and no e-mail', 'bad', 'dues') +
+    '</div></div>';
+
+  /* The one thing a manager should read before believing any of the above. */
+  if ((h.items || []).length) {
+    var top = h.items[0];
+    html += '<div class="note' + (top.severity === 'high' ? ' red' : '') + '">' +
+      '<b>Before you act on these numbers.</b> ' + esc(top.what) + ' — ' +
+      num(top.count) + (top.of ? ' of ' + num(top.of) : '') + ' rows. ' + esc(top.why) +
+      ' <button class="linkish" data-go="health">See all ' + h.items.length + ' data issues →</button></div>';
+  }
+
+  if (!mine) {
+    html += '<div class="split">' +
+      '<div class="card"><h2>Where the arrears sit</h2>' +
+      '<p class="sub">Policies by how long the premium has been outstanding.</p>' +
+      bars((d.buckets || []).map(function (b) {
+        var v = (d.ageing || {})[b] || { policies: 0, modal: 0 };
+        return { label: b + ' days', value: v.policies, display: num(v.policies),
+                 bad: b === '365+' || b === '181-365' };
+      }), { note: 'The 0–30 band is inside the grace period and is not chased. ' +
+                  'The 365+ band is the one that never comes back on its own.' }) +
+      '</div>' +
+      '<div class="card"><h2>Which billing method is failing</h2>' +
+      '<p class="sub">Share of each method\'s policies currently overdue.</p>' +
+      bars((d.byBilling || []).slice(0, 7).map(function (b) {
+        return { label: b.billing, value: b.rate, display: pct(b.rate), bad: b.rate > 0.35 };
+      }), { note: 'This is the most actionable table in the app: the billing method is a thing ' +
+                  'you can change, and changing it stops the same client reappearing every quarter.' }) +
+      '</div></div>';
+  }
+
+  var acts = DATA.actions || [];
+  if (acts.length) {
+    html += '<div class="card"><h2>Last thing logged</h2>' +
+      '<p class="sub">The most recent note against each policy — so nobody calls a client twice.</p>' +
+      table('recent', [
+        { key: 'when', label: 'When' },
+        { key: 'by', label: 'By' },
+        { key: 'client', label: 'Client' },
+        { key: 'policy', label: 'Policy' },
+        { key: 'outcome', label: 'Outcome',
+          render: function (r) { return '<span class="pill p-dim">' + esc(r.outcome || '—') + '</span>'; } },
+        { key: 'note', label: 'Note' },
+        { key: 'followUp', label: 'Follow up',
+          render: function (r) {
+            if (!r.followUp) return '<span style="color:var(--dim)">—</span>';
+            var over = r.followUp <= new Date().toISOString().slice(0, 10);
+            return '<span class="pill ' + (over ? 'p-bad' : 'p-dim') + '">' + esc(r.followUp) + '</span>';
+          } }
+      ], acts, { sort: 'when', dir: 'desc', limit: 60 }) + '</div>';
+  }
+
+  el.innerHTML = html;
+}
+
+/* ── Premium dues ──────────────────────────────────────────────────────────
+   The chase list, and the three cuts that turn it from a list into a decision:
+   how it is aged, which billing method produced it, and who is carrying it. */
+function viewDues(el) {
+  var d = DATA.dues || {};
+  if (d.error) { el.innerHTML = errCard(d.error); return; }
+  var mine = DATA.you.role !== 'branch';
+  var unreachable = (d.chase || []).filter(function (r) { return !r.reachable; });
+
+  var html =
+    '<div class="card"><h2>Premiums to chase</h2>' +
+    '<p class="sub">Overdue more than 30 days and still premium-paying — past the grace period, ' +
+    'not yet lapsed. This is the collectable book.</p>' +
+    '<div class="stats">' +
+      stat('Policies', num(d.chaseCount || 0), 'past 30 days', 'bad') +
+      stat('Instalments at risk', money(d.modalChase || 0), 'one instalment each', 'bad') +
+      stat('Past a year', num(((d.ageing || {})['365+'] || {}).policies || 0),
+           'these do not recover on their own', 'bad') +
+      stat('No way to reach them', num(unreachable.length), 'no phone, no e-mail on file', 'warn') +
+      stat('Already lapsed', num((d.counts || {}).lapsed || 0), 'reinstatement, not collection', 'warn') +
+    '</div>' +
+    '<div class="note red"><b>Read this figure correctly.</b> ' + esc(d.basis) + '</div></div>';
+
+  html += '<div class="split">' +
+    '<div class="card"><h2>How it is aged</h2>' +
+    bars((d.buckets || []).map(function (b) {
+      var v = (d.ageing || {})[b] || { policies: 0, modal: 0 };
+      return { label: b + ' days', value: v.policies,
+               display: num(v.policies) + ' · ' + money(v.modal), bad: b === '365+' };
+    })) + '</div>' +
+    '<div class="card"><h2>Billing method</h2>' +
+    bars((d.byBilling || []).slice(0, 7).map(function (b) {
+      return { label: b.billing, value: b.rate,
+               display: pct(b.rate) + ' of ' + num(b.total), bad: b.rate > 0.35 };
+    }), { note: 'A client on a failing method comes back every quarter until the method changes.' +
+                (d.ratesAreBranchWide
+                  ? ' <b>These rates are the whole branch\'s, not yours</b> — one agent\'s book is ' +
+                    'too small to make a percentage mean anything, and the branch shape is what tells ' +
+                    'you which method to move a client onto.'
+                  : '') }) +
+    '</div></div>';
+
+  if (!mine && (d.byAgent || []).length) {
+    html += '<div class="card"><h2>By agent</h2>' +
+      '<p class="sub">Share of each agent\'s book sitting on the chase list. Agents with fewer ' +
+      'than 20 policies are left out — a small book makes a meaningless percentage.</p>' +
+      table('duesAgents', [
+        { key: 'agent', label: 'Agent' },
+        { key: 'book', label: 'Book', num: true, render: function (r) { return num(r.book); } },
+        { key: 'chase', label: 'Chasing', num: true, render: function (r) { return num(r.chase); } },
+        { key: 'rate', label: 'Share', num: true,
+          render: function (r) {
+            return '<span class="pill ' + (r.rate > 0.2 ? 'p-bad' : r.rate > 0.14 ? 'p-warn' : 'p-good') +
+                   '">' + pct(r.rate) + '</span>';
+          }, value: function (r) { return pct(r.rate); } },
+        { key: 'modal', label: 'Instalments', num: true, render: function (r) { return money(r.modal); } },
+        { key: 'unreachable', label: 'Unreachable', num: true,
+          render: function (r) { return r.unreachable ? '<span class="pill p-warn">' + r.unreachable + '</span>' : '—'; } }
+      ], d.byAgent, { sort: 'rate', dir: 'desc' }) + '</div>';
+  }
+
+  html += '<div class="card"><h2>The list</h2>' +
+    '<p class="sub">Oldest arrears first. Log what happens on each call — the next person to open ' +
+    'this policy sees it.</p>' +
+    table('duesList', duesCols(mine), d.chase || [], { sort: 'days', dir: 'desc', limit: 400 }) + '</div>';
+
+  /* Lapsed inside a year is still reinstatable at Guardian without a fresh
+     application. After that it is a new case with a new medical, so this list
+     has a shelf life and the soonest ones are the ones worth the call. */
+  if ((d.lapsedRecent || []).length) {
+    html += '<div class="card"><h2>Lapsed within the last year</h2>' +
+      '<p class="sub">Still reinstatable — the client keeps their original age and terms. ' +
+      'The ones that lapsed most recently are the easiest conversation, so they are first.</p>' +
+      table('duesLapsed', [].concat(mine ? [] : [{ key: 'agent', label: 'Agent' }], [
+        { key: 'client', label: 'Client' },
+        { key: 'policy', label: 'Policy' },
+        { key: 'lapsedOn', label: 'Lapsed' },
+        { key: 'daysAgo', label: 'Days ago', num: true,
+          render: function (r) {
+            var t = r.daysAgo > 270 ? 'p-bad' : r.daysAgo > 120 ? 'p-warn' : 'p-good';
+            return '<span class="pill ' + t + '">' + num(r.daysAgo) + '</span>';
+          } },
+        { key: 'modal', label: 'Instalment', num: true, render: function (r) { return money2(r.modal); } },
+        { key: 'plan', label: 'Plan' },
+        { key: 'phone', label: 'Phone' },
+        { key: 'email', label: 'E-mail' },
+        { key: 'act', label: '', sortable: false,
+          render: function (r) {
+            return '<button class="btn small" data-log="reinstate" data-policy="' + esc(r.policy) +
+                   '" data-client="' + esc(r.client) + '">Log</button>';
+          }, value: function () { return ''; } }
+      ]), d.lapsedRecent, { sort: 'daysAgo', dir: 'asc', limit: 300 }) + '</div>';
+  }
+
+  if (unreachable.length) {
+    html += '<div class="card"><h2>Nobody can reach these ' + num(unreachable.length) + '</h2>' +
+      '<p class="sub">No phone and no e-mail on file. No collection effort of any kind can start ' +
+      'until a contact is found, so these are first, not last.</p>' +
+      table('duesUnreachable', duesCols(mine).filter(function (c) { return c.key !== 'phone' && c.key !== 'email'; }),
+            unreachable, { sort: 'modal', dir: 'desc', limit: 300 }) + '</div>';
+  }
+  el.innerHTML = html;
+}
+
+function duesCols(mine) {
+  var cols = [];
+  if (!mine) cols.push({ key: 'agent', label: 'Agent' });
+  return cols.concat([
+    { key: 'client', label: 'Client' },
+    { key: 'policy', label: 'Policy',
+      render: function (r) {
+        return r.policyBroken
+          ? '<span class="pill p-warn" title="Scientific notation on export destroyed the digits">number lost</span>'
+          : esc(r.policy);
+      } },
+    { key: 'days', label: 'Days', num: true,
+      render: function (r) {
+        var t = r.days > 365 ? 'p-bad' : r.days > 90 ? 'p-warn' : 'p-dim';
+        return '<span class="pill ' + t + '">' + num(r.days) + '</span>';
+      } },
+    { key: 'modal', label: 'Instalment', num: true, render: function (r) { return money2(r.modal); } },
+    { key: 'billing', label: 'Billing' },
+    { key: 'plan', label: 'Plan' },
+    { key: 'lapseOn', label: 'Lapses',
+      render: function (r) { return r.lapseOn ? esc(r.lapseOn) : '<span style="color:var(--dim)">not stated</span>'; } },
+    { key: 'phone', label: 'Phone' },
+    { key: 'email', label: 'E-mail' },
+    { key: 'act', label: '', sortable: false,
+      render: function (r) {
+        return '<button class="btn small" data-log="dues" data-policy="' + esc(r.policy) +
+               '" data-client="' + esc(r.client) + '">Log</button>';
+      }, value: function () { return ''; } }
+  ]);
+}
+
+/* ── Pending business ──────────────────────────────────────────────────────
+   Sorted by suspense first. A case holding the client's own money is the one
+   that turns into a complaint, and it is the one the client remembers.     */
+function viewPending(el) {
+  var p = DATA.pending || {};
+  if (p.error) { el.innerHTML = errCard(p.error); return; }
+  var mine = DATA.you.role !== 'branch';
+  var AGE = ['0-30', '31-60', '61-90', '91-180', '180+'];
+
+  var html =
+    '<div class="card"><h2>Pending business</h2>' +
+    '<p class="sub">Cases submitted and not yet on the books. Ordered by the client\'s money ' +
+    'held in suspense, then by age.</p>' +
+    '<div class="stats">' +
+      stat('Cases open', num(p.total || 0), '', p.total ? '' : 'good') +
+      stat('Money in suspense', money(p.suspense || 0),
+           'across ' + num(p.suspenseCases || 0) + ' ' + plural(p.suspenseCases || 0, 'case'), 'gold') +
+      stat('Waiting over 90 days', num(p.stale || 0),
+           'past the point a client stops expecting it', p.stale ? 'bad' : 'good') +
+      stat('Waiting on a requirement', num((p.byStatus || {})['OR'] || 0),
+           'a document is the only thing missing', 'warn') +
+      stat('Nobody has ever chased', num(p.chaseNever || 0),
+           'no follow-up task has ever named these', p.chaseNever ? 'bad' : 'good') +
+      stat('Being chased now', num(p.chaseLive || 0),
+           'a follow-up task is open against these', 'good') +
+      stat('Chase closed, case open', num(p.chaseClosed || 0),
+           'somebody stopped chasing before the case moved', p.chaseClosed ? 'warn' : '') +
+    '</div>' +
+    '<div class="note"><b>Age is recomputed here.</b> The sheet\'s own ReqtdaysLapsed column ' +
+    'reaches 8,128 days — a stale cell, not a case that waited twenty-two years — so age is ' +
+    'measured from the requirement and submission dates instead, and anything over ten years ' +
+    'is shown as unknown rather than as a number.</div></div>';
+
+  html += '<div class="split">' +
+    '<div class="card"><h2>How long they have waited</h2>' +
+    bars(AGE.map(function (b) {
+      return { label: b + ' days', value: (p.ageing || {})[b] || 0, bad: b === '180+' || b === '91-180' };
+    })) + '</div>' +
+    '<div class="card"><h2>What is holding them</h2>' +
+    bars(Object.keys(p.byDecision || {}).map(function (k) {
+      return { label: k, value: p.byDecision[k] };
+    }).sort(function (a, b) { return b.value - a.value; }).slice(0, 6),
+    { note: 'Referred means underwriting wants more before it decides. That is the queue ' +
+            'requirements sit behind.' }) + '</div></div>';
+
+  if (!mine && (p.byUnit || []).length > 1) {
+    html += '<div class="card"><h2>By unit</h2>' +
+      table('pendUnits', [
+        { key: 'unit', label: 'Unit' },
+        { key: 'cases', label: 'Cases', num: true, render: function (r) { return num(r.cases); } },
+        { key: 'susp', label: 'Suspense held', num: true, render: function (r) { return money(r.susp); } }
+      ], p.byUnit, { sort: 'cases', dir: 'desc' }) + '</div>';
+  }
+
+  html += '<div class="card"><h2>The cases</h2>' +
+    table('pendList', [].concat(mine ? [] : [{ key: 'agent', label: 'Agent' }], [
+      { key: 'client', label: 'Client' },
+      { key: 'policy', label: 'Policy' },
+      { key: 'requirement', label: 'Waiting on',
+        render: function (r) { return esc(r.requirement || r.status); } },
+      { key: 'age', label: 'Days', num: true,
+        sortValue: function (r) { return r.age === null ? -1 : r.age; },
+        render: function (r) {
+          if (r.age === null) return '<span style="color:var(--dim)">unknown</span>';
+          var t = r.age > 90 ? 'p-bad' : r.age > 60 ? 'p-warn' : 'p-dim';
+          return '<span class="pill ' + t + '">' + num(r.age) + '</span>';
+        } },
+      { key: 'suspense', label: 'Suspense', num: true,
+        render: function (r) {
+          return r.suspense ? '<span class="pill p-gold">' + money2(r.suspense) + '</span>'
+                            : '<span style="color:var(--dim)">—</span>';
+        } },
+      { key: 'chase', label: 'Chased',
+        sortValue: function (r) { return r.chase === 'never' ? 0 : r.chase === 'closed' ? 1 : 2; },
+        render: function (r) {
+          if (r.chase === 'live') {
+            return '<span class="pill p-good">' + esc(r.chasedBy) + '</span>';
+          }
+          if (r.chase === 'closed') {
+            return '<span class="pill p-warn">closed ' + esc(r.chasedOn) + '</span>';
+          }
+          return '<span class="pill p-bad">never</span>';
+        },
+        value: function (r) {
+          return r.chase === 'live' ? 'chasing: ' + r.chasedBy
+               : r.chase === 'closed' ? 'chase closed ' + r.chasedOn : 'NEVER CHASED';
+        } },
+      { key: 'decision', label: 'Decision' },
+      { key: 'where', label: 'Processed in' },
+      { key: 'submitted', label: 'Submitted' },
+      { key: 'act', label: '', sortable: false,
+        render: function (r) {
+          return '<button class="btn small" data-log="pending" data-policy="' + esc(r.policy) +
+                 '" data-client="' + esc(r.client) + '">Log</button>';
+        }, value: function () { return ''; } }
+    ]), p.rows || [], { sort: 'suspense', dir: 'desc', limit: 400 }) + '</div>';
+
+  /* The three chase states need three different actions, so the one that needs
+     the most attention gets its own list rather than being a filter people
+     have to think to apply. */
+  var never = (p.rows || []).filter(function (r) { return r.chase === 'never'; });
+  if (never.length) {
+    html += '<div class="card"><h2>Nobody is chasing these ' + num(never.length) + '</h2>' +
+      '<p class="sub">No follow-up task — open or closed — has ever named these policies. ' +
+      'They are not being worked. Oldest first, and the ones holding the client\'s money ' +
+      'first within that.</p>' +
+      table('pendNever', [].concat(mine ? [] : [{ key: 'agent', label: 'Agent' }], [
+        { key: 'client', label: 'Client' },
+        { key: 'policy', label: 'Policy' },
+        { key: 'requirement', label: 'Waiting on',
+          render: function (r) { return esc(r.requirement || r.status); } },
+        { key: 'age', label: 'Days', num: true,
+          sortValue: function (r) { return r.age === null ? -1 : r.age; },
+          render: function (r) {
+            if (r.age === null) return '<span style="color:var(--dim)">unknown</span>';
+            var t = r.age > 90 ? 'p-bad' : r.age > 60 ? 'p-warn' : 'p-dim';
+            return '<span class="pill ' + t + '">' + num(r.age) + '</span>';
+          } },
+        { key: 'suspense', label: 'Suspense', num: true,
+          render: function (r) {
+            return r.suspense ? '<span class="pill p-gold">' + money2(r.suspense) + '</span>'
+                              : '<span style="color:var(--dim)">—</span>';
+          } },
+        { key: 'submitted', label: 'Submitted' },
+        { key: 'act', label: '', sortable: false,
+          render: function (r) {
+            return '<button class="btn small" data-log="pending" data-policy="' + esc(r.policy) +
+                   '" data-client="' + esc(r.client) + '">Log</button>';
+          }, value: function () { return ''; } }
+      ]), never, { sort: 'age', dir: 'desc', limit: 300 }) + '</div>';
+  }
+
+  /* The chase log itself is staff business — an agent sees the marks on their
+     own cases above and nothing else. */
+  var t = DATA.tasks || {};
+  if (!mine && !t.error && !t.restricted && (t.rows || []).length) {
+    html += '<div class="card"><h2>The chase log</h2>' +
+      '<p class="sub">Open follow-up tasks against head office — ' + num(t.openCount || 0) +
+      ' open, ' + num(t.closed || 0) + ' closed. Longest since anything happened first.</p>' +
+      '<div class="stats">' +
+        (t.byAssignee || []).slice(0, 4).map(function (a) {
+          return stat(a.who, num(a.n), 'open ' + plural(a.n, 'task'));
+        }).join('') +
+      '</div>' +
+      table('taskList', [
+        { key: 'subject', label: 'Task' },
+        { key: 'assigned', label: 'Assigned to' },
+        { key: 'status', label: 'Status',
+          render: function (r) {
+            var t2 = /waiting/i.test(r.status) ? 'p-warn' : /not started/i.test(r.status) ? 'p-bad' : 'p-good';
+            return '<span class="pill ' + t2 + '">' + esc(r.status) + '</span>';
+          } },
+        { key: 'agent', label: 'Agent' },
+        { key: 'contact', label: 'Chasing' },
+        { key: 'lastTouched', label: 'Last touched' },
+        { key: 'quiet', label: 'Quiet for', num: true,
+          sortValue: function (r) { return r.quiet === null ? -1 : r.quiet; },
+          render: function (r) {
+            if (r.quiet === null) return '<span style="color:var(--dim)">—</span>';
+            var t3 = r.quiet > 30 ? 'p-bad' : r.quiet > 14 ? 'p-warn' : 'p-dim';
+            return '<span class="pill ' + t3 + '">' + num(r.quiet) + 'd</span>';
+          } }
+      ], t.rows, { sort: 'quiet', dir: 'desc', limit: 200 }) + '</div>';
+  }
+
+  el.innerHTML = html;
+}
+
+/* ── Requirements ──────────────────────────────────────────────────────────
+   The oldest first, and the codes spelled out. Half of what makes a chase
+   list unusable is that nobody remembers what FUTPY means.                 */
+function viewReqs(el) {
+  var q = DATA.reqs || {};
+  if (q.error) { el.innerHTML = errCard(q.error); return; }
+  var AGE = ['0-30', '31-60', '61-90', '91-180', '181-365', '365+'];
+
+  var html =
+    '<div class="card"><h2>Outstanding requirements</h2>' +
+    '<p class="sub">One row per requirement with no closed date — not one per history entry, ' +
+    'which is what makes the raw extract look four times worse than it is.</p>' +
+    '<div class="stats">' +
+      stat('Open', num(q.openCount || 0), 'on ' + num(q.policies || 0) + ' policies') +
+      stat('Median age', num(q.medianAge || 0) + ' days', 'half have waited longer than this',
+           (q.medianAge || 0) > 180 ? 'bad' : 'warn') +
+      stat('Open over a year', num(q.overYear || 0),
+           'usually cases that died and were never closed off', 'bad') +
+      stat('Oldest', num(q.oldest || 0) + ' days', 'still shown as outstanding', 'bad') +
+      (q.closedThisYear === null
+        ? stat('Closed this year', '—', 'the extract does not say which agent closed a requirement')
+        : stat('Closed this year', num(q.closedThisYear), 'the work that did get done', 'good')) +
+    '</div>' +
+    '<div class="note red"><b>The ' + num(q.overYear || 0) + ' oldest are the real problem.</b> ' +
+    'A requirement open more than a year is rarely still being chased — it is a case that ended ' +
+    'without anybody closing the record. Until they are cleared, no count of "what is outstanding" ' +
+    'in this branch is believable, including this one.</div></div>';
+
+  html += '<div class="split">' +
+    '<div class="card"><h2>How long they have been open</h2>' +
+    bars(AGE.map(function (b) {
+      return { label: b + ' days', value: (q.ageing || {})[b] || 0, bad: b === '365+' || b === '181-365' };
+    })) + '</div>' +
+    '<div class="card"><h2>What is being asked for</h2>' +
+    bars((q.byCode || []).slice(0, 8).map(function (c) {
+      return { label: c.label.length > 22 ? c.label.slice(0, 21) + '…' : c.label, value: c.n };
+    }), { note: 'First premium, declaration of health and proof of address are three quarters of ' +
+                'the queue — and all three are things the agent can collect without head office.' }) +
+    '</div></div>';
+
+  html += '<div class="card"><h2>The requirements</h2>' +
+    table('reqList', [
+      { key: 'policy', label: 'Policy' },
+      { key: 'label', label: 'Requirement' },
+      { key: 'code', label: 'Code', render: function (r) { return '<span class="pill p-dim">' + esc(r.code) + '</span>'; } },
+      { key: 'category', label: 'Category' },
+      { key: 'age', label: 'Days open', num: true,
+        sortValue: function (r) { return r.age === null ? -1 : r.age; },
+        render: function (r) {
+          if (r.age === null) return '<span style="color:var(--dim)">—</span>';
+          var t = r.age > 365 ? 'p-bad' : r.age > 90 ? 'p-warn' : 'p-dim';
+          return '<span class="pill ' + t + '">' + num(r.age) + '</span>';
+        } },
+      { key: 'added', label: 'Ordered' },
+      { key: 'orderedFor', label: 'Ordered for' },
+      { key: 'comment', label: 'Note' },
+      { key: 'act', label: '', sortable: false,
+        render: function (r) {
+          return '<button class="btn small" data-log="requirement" data-policy="' + esc(r.policy) +
+                 '" data-client="' + esc(r.orderedFor) + '">Log</button>';
+        }, value: function () { return ''; } }
+    ], q.rows || [], { sort: 'age', dir: 'desc', limit: 400 }) + '</div>';
+
+  if ((q.worstPolicies || []).length) {
+    html += '<div class="card"><h2>Policies carrying the most</h2>' +
+      '<p class="sub">One conversation clears several requirements on these.</p>' +
+      table('reqWorst', [
+        { key: 'policy', label: 'Policy' },
+        { key: 'open', label: 'Open requirements', num: true, render: function (r) { return num(r.open); } }
+      ], q.worstPolicies, { sort: 'open', dir: 'desc' }) + '</div>';
+  }
+  el.innerHTML = html;
+}
+
+/* ── Maturities ────────────────────────────────────────────────────────────
+   Pensions and life kept apart, because they are two different conversations
+   and only one of them is about a death benefit. A pension maturity is a
+   decision about a fund and it needs a year's notice; a life maturity is an
+   endowment paying out.                                                    */
+function viewMaturity(el) {
+  var m = DATA.maturity || {};
+  if (m.error) { el.innerHTML = errCard(m.error); return; }
+  var r = m.retirement || {}, l = m.life || {};
+
+  var html =
+    '<div class="card"><h2>Maturities ahead</h2>' +
+    '<p class="sub">Every in-force policy with a maturity date inside five years. Nothing else in ' +
+    'the workbook carries a maturity date, which is why these were invisible until now.</p>' +
+    '<div class="stats">' +
+      stat('Pensions · 12 months', num(r.w12 || 0), money(r.fund12 || 0) + ' of fund value', 'good') +
+      stat('Pensions · 24 months', num(r.w24 || 0), money(r.fund24 || 0) + ' of fund value', 'good') +
+      stat('Pensions · 5 years', num(r.w60 || 0), money(r.fund60 || 0) + ' of fund value', 'gold') +
+      stat('Life · 12 months', num(l.w12 || 0), money(l.sum12 || 0) + ' sum insured') +
+      stat('Life · 5 years', num(l.w60 || 0), money(l.sum60 || 0) + ' sum insured') +
+      stat('Retirement fund held', money(m.fundHeld || 0), 'across the whole in-force book', 'gold') +
+    '</div>' +
+    '<div class="note"><b>' + esc(m.note) + '</b></div>' +
+    (m.orphaned ? '<div class="note red"><b>' + num(m.orphaned) + ' policies have an inactive or ' +
+      'vested servicing agent.</b> Nobody is calling those clients. On a maturing policy that is a ' +
+      'payout with no adviser attached — and the client will take the cheque and go.</div>' : '') +
+    '</div>';
+
+  html += '<div class="card"><h2>Pensions and annuities</h2>' +
+    '<p class="sub">Start these a year out. The decision — annuity, lump sum, or roll into a new ' +
+    'plan — is made months before the maturity letter reaches the client, and whoever is in the ' +
+    'room when it is made keeps the money.</p>' +
+    table('matPension', maturityCols('fund', 'Fund value'), r.rows || [],
+          { sort: 'months', dir: 'asc', limit: 300,
+            empty: 'No pension maturities inside five years.' }) + '</div>';
+
+  html += '<div class="card"><h2>Life maturities</h2>' +
+    '<p class="sub">Endowments reaching their maturity date. The payout is the conversation, and ' +
+    'so is what replaces the cover.</p>' +
+    table('matLife', maturityCols('sumInsured', 'Sum insured'), l.rows || [],
+          { sort: 'months', dir: 'asc', limit: 300,
+            empty: 'No life maturities inside five years.' }) + '</div>';
+
+  el.innerHTML = html;
+}
+
+function maturityCols(valueKey, valueLabel) {
+  var mine = DATA.you.role !== 'branch';
+  return [].concat([
+    { key: 'matures', label: 'Matures' },
+    { key: 'months', label: 'In', num: true,
+      render: function (r) {
+        var t = r.months <= 12 ? 'p-bad' : r.months <= 24 ? 'p-warn' : 'p-dim';
+        return '<span class="pill ' + t + '">' + months(r.months) + '</span>';
+      }, value: function (r) { return r.months; } },
+    { key: 'client', label: 'Client' },
+    { key: 'policy', label: 'Policy' },
+    { key: 'plan', label: 'Plan' },
+    { key: valueKey, label: valueLabel, num: true, render: function (r) { return money(r[valueKey]); } },
+    { key: 'annual', label: 'Annual premium', num: true, render: function (r) { return money(r.annual); } }
+  ], mine ? [] : [{ key: 'agent', label: 'Servicing agent',
+      render: function (r) {
+        return esc(r.agent) + (r.agentActive ? '' : ' <span class="pill p-bad">not active</span>');
+      } }], [
+    { key: 'phone', label: 'Contact',
+      render: function (r) {
+        return esc(r.phone || r.email) || '<span class="pill p-warn">no contact on file</span>';
+      }, value: function (r) { return r.phone || r.email; } },
+    { key: 'act', label: '', sortable: false,
+      render: function (r) {
+        return '<button class="btn small" data-log="maturity" data-policy="' + esc(r.policy) +
+               '" data-client="' + esc(r.client) + '">Log</button>';
+      }, value: function () { return ''; } }
+  ]);
+}
+
+/* ── Expiring cover ────────────────────────────────────────────────────────
+   Term cover ending, and the conversion right that ends with it. The
+   conversion right is the part nobody watches: while the term runs the client
+   can move to permanent cover with no evidence of health. The day it ends,
+   a medical decides instead — and by then the client is older.            */
+function viewExpiry(el) {
+  var x = DATA.expiry || {};
+  if (x.error) { el.innerHTML = errCard(x.error); return; }
+  var t = x.term || {}, c = x.convertible || {}, rd = x.riders || {};
+
+  var html =
+    '<div class="card"><h2>Cover that runs out</h2>' +
+    '<p class="sub">Term policies and standalone benefits reaching the end of their term inside ' +
+    'ten years, taken from the in-force book.</p>' +
+    '<div class="stats">' +
+      stat('Term ending · 24 months', num(t.w24 || 0), money(t.cover24 || 0) + ' of cover', 'bad') +
+      stat('Term ending · 5 years', num(t.w60 || 0), money(t.cover60 || 0) + ' of cover', 'warn') +
+      stat('Term ending · 10 years', num(t.w120 || t.total || 0), money(t.cover120 || 0) + ' of cover') +
+      stat('Conversion rights', num(c.total || 0),
+           money(c.cover || 0) + ' convertible without a medical', 'gold') +
+      stat('Rights ending · 24 months', num(c.w24 || 0), 'after this a medical decides', 'bad') +
+      stat('Benefits ending', num(rd.total || 0), 'accident and critical illness') +
+    '</div>' +
+    '<div class="note"><b>' + esc(x.note) + '</b></div></div>';
+
+  html += '<div class="card"><h2>Conversion rights, soonest first</h2>' +
+    '<p class="sub">These clients can move to permanent cover with <b>no evidence of health</b> ' +
+    'until the term ends. It is the single most valuable thing in this app that nobody is ' +
+    'currently using, and it expires quietly.</p>' +
+    table('expConv', expiryCols(), c.rows || [],
+          { sort: 'months', dir: 'asc', limit: 300,
+            empty: 'No convertible term policies inside ten years.' }) + '</div>';
+
+  html += '<div class="card"><h2>All term cover ending</h2>' +
+    table('expTerm', expiryCols(), t.rows || [],
+          { sort: 'months', dir: 'asc', limit: 400,
+            empty: 'No term cover ending inside ten years.' }) + '</div>';
+
+  if ((rd.rows || []).length) {
+    html += '<div class="card"><h2>Accident and critical illness benefits</h2>' +
+      '<p class="sub">Listed because they end, not because they pay a death claim. Their amounts ' +
+      'are never added to a sum-assured total.</p>' +
+      table('expRiders', expiryCols(), rd.rows, { sort: 'months', dir: 'asc', limit: 200 }) + '</div>';
+  }
+  el.innerHTML = html;
+}
+
+function expiryCols() {
+  var mine = DATA.you.role !== 'branch';
+  return [].concat([
+    { key: 'matures', label: 'Ends' },
+    { key: 'months', label: 'In', num: true,
+      render: function (r) {
+        var t = r.months <= 24 ? 'p-bad' : r.months <= 60 ? 'p-warn' : 'p-dim';
+        return '<span class="pill ' + t + '">' + months(r.months) + '</span>';
+      }, value: function (r) { return r.months; } },
+    { key: 'client', label: 'Client' },
+    { key: 'policy', label: 'Policy' },
+    { key: 'plan', label: 'Plan',
+      render: function (r) {
+        return esc(r.plan) + (r.convertible ? ' <span class="pill p-gold">convertible</span>' : '');
+      } },
+    { key: 'sumInsured', label: 'Cover ending', num: true, render: function (r) { return money(r.sumInsured); } },
+    { key: 'annual', label: 'Annual premium', num: true, render: function (r) { return money(r.annual); } }
+  ], mine ? [] : [{ key: 'agent', label: 'Servicing agent' }], [
+    { key: 'phone', label: 'Contact',
+      render: function (r) {
+        return esc(r.phone || r.email) || '<span class="pill p-warn">no contact on file</span>';
+      }, value: function (r) { return r.phone || r.email; } },
+    { key: 'act', label: '', sortable: false,
+      render: function (r) {
+        return '<button class="btn small" data-log="expiry" data-policy="' + esc(r.policy) +
+               '" data-client="' + esc(r.client) + '">Log</button>';
+      }, value: function () { return ''; } }
+  ]);
+}
+
+/* ── Data health ───────────────────────────────────────────────────────────
+   Not an appendix. Every figure in this app rests on an extract with known
+   defects, and a manager acting on a number is entitled to know how solid it
+   is without having to ask anybody.                                       */
+function viewHealth(el) {
+  var h = DATA.health || {};
+  var items = h.items || [];
+  var html =
+    '<div class="card"><h2>How solid these figures are</h2>' +
+    '<p class="sub">Measured on the live workbook every night, not estimated. Each of these is a ' +
+    'defect in the source extract — the app works around them, but the fix belongs upstream.</p>' +
+    '<div class="stats">' +
+      stat('Issues found', num(items.length), '', items.length ? 'warn' : 'good') +
+      stat('Serious', num(h.high || 0), 'these change what a number means', h.high ? 'bad' : 'good') +
+      stat('Built', esc(DATA.builtAt), 'rebuilt nightly at 2am') +
+    '</div></div>';
+
+  html += '<div class="card"><h2>Every issue, worst first</h2>' +
+    table('healthList', [
+      { key: 'severity', label: 'Severity',
+        render: function (r) {
+          return '<span class="pill ' + (r.severity === 'high' ? 'p-bad' : 'p-warn') + '">' +
+                 esc(r.severity) + '</span>';
+        } },
+      { key: 'what', label: 'Issue' },
+      { key: 'count', label: 'Rows', num: true,
+        render: function (r) { return num(r.count) + (r.of ? ' <span style="color:var(--dim)">of ' + num(r.of) + '</span>' : ''); } },
+      { key: 'pct', label: 'Share', num: true,
+        render: function (r) { return r.of ? pct(r.pct) : '—'; } },
+      { key: 'why', label: 'What it means' },
+      { key: 'fix', label: 'Where it gets fixed' }
+    ], items, { sort: 'count', dir: 'desc', limit: 60,
+                empty: 'Nothing to report — the extract is clean.' }) + '</div>';
+
+  el.innerHTML = html;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   WIRING
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* The token lives in sessionStorage, not localStorage. A refresh keeps you
+   signed in; closing the tab does not. These machines are shared. */
+var STORE = 'rrb_intel_token';
+function saveToken(t) { try { sessionStorage.setItem(STORE, t); } catch (e) {} }
+function readToken() { try { return sessionStorage.getItem(STORE); } catch (e) { return null; } }
+function dropToken() { try { sessionStorage.removeItem(STORE); } catch (e) {} }
+
+function gateMsg(text, kind) {
+  var el = $('gatemsg');
+  el.className = 'msg ' + (kind || 'err');
+  el.innerHTML = text;
+  if (!text) el.className = 'msg';
+}
+
+function enter(session) {
+  ME = session;
+  $('gate').style.display = 'none';
+  $('app').style.display = 'block';
+  $('whoname').textContent = session.name;
+  $('whorole').textContent = session.role === 'branch'
+    ? (session.title || 'Branch') + ' · whole branch'
+    : (session.title || 'Agent') + ' · your book';
+  loadData();
+}
+
+function loadData() {
+  return call({ action: 'intel.data', token: TOKEN }).then(function (res) {
+    if (!res.ok) {
+      if (/session/i.test(res.error || '')) return signOut(res.error);
+      $('v-pulse').innerHTML = errCard(res.error);
+      $('v-pulse').classList.add('on');
+      return;
+    }
+    DATA = res.data;
+    $('builtline').textContent = 'built ' + DATA.builtAt;
+    show(VIEW);
+  }).catch(function (e) {
+    $('v-pulse').innerHTML = errCard('Could not reach the branch script. ' + e.message);
+    $('v-pulse').classList.add('on');
+  });
+}
+
+function signOut(why) {
+  if (TOKEN) call({ action: 'intel.signout', token: TOKEN }).catch(function () {});
+  TOKEN = null; DATA = null; ME = null;
+  dropToken();
+  $('app').style.display = 'none';
+  $('gate').style.display = 'flex';
+  $('signin').reset();
+  gateMsg(why ? esc(why) : '', why ? 'err' : '');
+}
+
+$('signin').addEventListener('submit', function (ev) {
+  ev.preventDefault();
+  var who = $('who').value.trim(), secret = $('secret').value;
+  if (!who || !secret) return;
+  var btn = $('go');
+  btn.disabled = true; btn.textContent = 'Checking…';
+  gateMsg('');
+  call({ action: 'intel.signin', who: who, secret: secret })
+    .then(function (res) {
+      btn.disabled = false; btn.textContent = 'Sign in';
+      if (!res.ok) { gateMsg(esc(res.error)); return; }
+      TOKEN = res.token;
+      saveToken(TOKEN);
+      enter(res);
+    })
+    .catch(function (e) {
+      btn.disabled = false; btn.textContent = 'Sign in';
+      gateMsg('Could not reach the branch script — check the connection and try again. ' +
+              '<span style="color:var(--dim)">(' + esc(e.message) + ')</span>');
+    });
+});
+
+$('signout').addEventListener('click', function () { signOut(); });
+
+/* One listener for the whole app. Every table, tile and button is markup that
+   was rendered as a string, so nothing can hold its own handler. */
+document.addEventListener('click', function (ev) {
+  var el = ev.target.closest('[data-view],[data-go],[data-sort],[data-csv],[data-log]');
+  if (!el) return;
+
+  if (el.hasAttribute('data-view')) return show(el.getAttribute('data-view'));
+  if (el.hasAttribute('data-go'))   return show(el.getAttribute('data-go'));
+  if (el.hasAttribute('data-csv'))  return downloadCsv(el.getAttribute('data-csv'));
+
+  if (el.hasAttribute('data-sort')) {
+    var parts = el.getAttribute('data-sort').split('|');
+    var t = TABLES[parts[0]];
+    if (!t) return;
+    if (t.sort === parts[1]) t.dir = t.dir === 'asc' ? 'desc' : 'asc';
+    else { t.sort = parts[1]; t.dir = 'desc'; }
+    return redrawTable(parts[0]);
+  }
+
+  if (el.hasAttribute('data-log')) {
+    return openDrawer(el.getAttribute('data-log'),
+                      el.getAttribute('data-policy'), el.getAttribute('data-client'));
+  }
+});
+
+document.addEventListener('input', function (ev) {
+  var el = ev.target;
+  if (!el.hasAttribute || !el.hasAttribute('data-filter')) return;
+  var id = el.getAttribute('data-filter');
+  TABLES[id].filter = el.value;
+  var pos = el.selectionStart;
+  redrawTable(id);
+  var again = document.querySelector('[data-filter="' + id + '"]');
+  if (again) { again.focus(); again.setSelectionRange(pos, pos); }
+});
+
+/* ── the action drawer ─────────────────────────────────────────────────── */
+var DRAWER = { domain: '', policy: '', client: '' };
+
+function openDrawer(domain, policy, client) {
+  DRAWER = { domain: domain, policy: policy || '', client: client || '' };
+  $('d-who').textContent = (client || 'This policy') + (policy ? '  ·  ' + policy : '');
+  $('d-note').value = ''; $('d-next').value = ''; $('d-follow').value = '';
+  $('d-msg').className = 'msg';
+  $('drawer').classList.add('on');
+  $('d-note').focus();
+}
+function closeDrawer() { $('drawer').classList.remove('on'); }
+
+$('d-cancel').addEventListener('click', closeDrawer);
+$('drawer').addEventListener('click', function (ev) { if (ev.target === $('drawer')) closeDrawer(); });
+document.addEventListener('keydown', function (ev) {
+  if (ev.key === 'Escape' && $('drawer').classList.contains('on')) closeDrawer();
+});
+
+$('d-save').addEventListener('click', function () {
+  var btn = $('d-save'), msg = $('d-msg');
+  var note = $('d-note').value.trim();
+  if (!note) {
+    msg.className = 'msg err';
+    msg.textContent = 'Write what was said — a blank note tells the next person nothing.';
+    return;
+  }
+  btn.disabled = true; btn.textContent = 'Saving…';
+  call({
+    action: 'intel.action', token: TOKEN, domain: DRAWER.domain,
+    policy: DRAWER.policy, client: DRAWER.client,
+    outcome: $('d-outcome').value, note: note,
+    next: $('d-next').value.trim(), followUp: $('d-follow').value
+  }).then(function (res) {
+    btn.disabled = false; btn.textContent = 'Save to the branch log';
+    if (!res.ok) { msg.className = 'msg err'; msg.textContent = res.error; return; }
+    closeDrawer();
+    return loadData();
+  }).catch(function (e) {
+    btn.disabled = false; btn.textContent = 'Save to the branch log';
+    msg.className = 'msg err'; msg.textContent = 'Could not save — ' + e.message;
+  });
+});
+
+/* ── start ─────────────────────────────────────────────────────────────── */
+(function boot() {
+  var t = readToken();
+  if (!t) return;
+  TOKEN = t;
+  call({ action: 'intel.session', token: t }).then(function (res) {
+    if (res && res.ok) enter(res);
+    else { TOKEN = null; dropToken(); }
+  }).catch(function () { TOKEN = null; dropToken(); });
+})();
+</script>
+</body>
+</html>
