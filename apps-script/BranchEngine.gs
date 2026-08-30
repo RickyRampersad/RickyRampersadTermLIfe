@@ -1341,10 +1341,21 @@ function bAcctLike_(name) {
 function bRosterRows_(group) {
   if (typeof sfQuery_ !== 'function')
     throw new Error('SalesforceSync.gs is not in this project, so the branch record could not be read.');
-  /* Filtered on ACCOUNTS_NAME__c, not the Account lookup. The lookup is
-     wrong on thousands of records across the org — 9,262 of them sit on one
-     bank's account carrying somebody else's name — and it is the name the
-     policy administration system holds that is right. */
+  /* Both account fields, because they disagree in BOTH directions and each
+     one alone loses a different part of the book.
+
+     On the bank's account the lookup is wrong: 9,262 records sit there
+     carrying somebody else's name in ACCOUNTS_NAME__c. Reading the lookup
+     there gives you other people's clients.
+
+     On the branch's pension schemes it is the other way round. Records whose
+     ACCOUNTS_NAME__c names the scheme have a lookup pointing at a household
+     — or at "PROJECTS", "Lapses", "TO REALLOCATE". And records whose lookup
+     correctly says SERVUS LTD (202 of them, $69,264 of premium) were being
+     missed entirely by reading the name field alone.
+
+     Neither field is authoritative. Asking for either is the only way to see
+     the whole scheme, and the duplicates that follow are removed by Id. */
   var like = bAcctLike_(group).replace(/'/g, "\\'");
   var rows = sfQuery_(
     "SELECT Id, POLICY__c, Contact__r.Name, RecordType.DeveloperName, "
@@ -1353,11 +1364,15 @@ function bRosterRows_(group) {
     + "Ownership__c, POLICY_OWNER__c, PLAN_NAME__c, "
     + "CreatedDate, LastModifiedDate "
     + "FROM CLIENT_PORTFOLIO__c "
-    + "WHERE ACCOUNTS_NAME__c LIKE '" + like + "' "
+    + "WHERE (ACCOUNTS_NAME__c LIKE '" + like + "' OR Account__r.Name LIKE '" + like + "') "
     + "AND RecordType.DeveloperName IN ('LIFE_GROUP','HEALTH_GROUP','PENSION') "
     + "LIMIT 4000");
 
   var now = Date.now();
+  /* One record reached through both fields is one record. */
+  var seen = {};
+  rows = rows.filter(function (r) { if (seen[r.Id]) return false; seen[r.Id] = 1; return true; });
+
   return rows.map(function (r) {
     /* The same status is kept in four fields and they disagree — a picklist,
        a text copy, a code, and a second misspelt picklist. Read the picklist
