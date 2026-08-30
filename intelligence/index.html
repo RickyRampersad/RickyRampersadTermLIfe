@@ -92,7 +92,13 @@ table.t td{padding:9px 10px;border-bottom:1px solid var(--line2);vertical-align:
 table.t tr:hover td{background:rgba(255,255,255,.03)}
 table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .scroll{overflow:auto;max-height:560px;border:1px solid var(--line);border-radius:12px}
+/* A table that already fits has no business being in a scroll box of its own —
+   a nested scrollbar inside a scrolling page hides rows people never find. */
+.scroll.short{max-height:none;overflow:visible}
 .pill{display:inline-block;font:700 10.5px 'Montserrat';padding:2px 9px;border-radius:99px;white-space:nowrap}
+.nowrap{white-space:nowrap}
+/* One line, ellipsis, full text on hover and in the CSV. */
+.clip{display:block;max-width:26ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
 .p-bad{background:rgba(255,122,122,.16);color:var(--bad)}
 .p-warn{background:rgba(245,185,66,.16);color:var(--warn)}
 .p-good{background:rgba(53,208,127,.16);color:var(--good)}
@@ -387,7 +393,10 @@ function tableInner(id) {
     '</div>';
 
   if (!rows.length) return bar + '<div class="empty">' + esc(t.opts.empty || 'Nothing here — which is the good outcome.') + '</div>';
-  return bar + '<div class="scroll"><table class="t">' + head + body + '</table></div>';
+  /* Under 14 rows fits on screen; boxing it in its own scroller only hides the
+     last few and gives the page two scrollbars. */
+  var short = shown.length <= 14 ? ' short' : '';
+  return bar + '<div class="scroll' + short + '"><table class="t">' + head + body + '</table></div>';
 }
 
 function redrawTable(id) {
@@ -486,7 +495,9 @@ function viewPulse(el) {
   var html =
     '<div class="card"><h2>' + esc(mine ? 'Your book, this morning' : 'The branch, this morning') + '</h2>' +
     '<p class="sub">Built from the workbook at ' + esc(DATA.builtAt) + '. ' +
-    (mine ? 'These are your policies only.' : 'The whole branch — 93 agents across the units.') + '</p>' +
+    (mine ? 'These are your policies only.'
+          : 'The whole branch — ' + num(((d.byAgent || []).length) || 0) +
+            ' agents carrying 20 or more policies.') + '</p>' +
     '<div class="stats">' +
       stat('Premiums to chase', num(d.chaseCount || 0),
            'Overdue more than 30 days — past the grace period, not yet lapsed', 'bad', 'dues') +
@@ -498,10 +509,12 @@ function viewPulse(el) {
            'Already paid, cannot be applied until the case closes', 'gold', 'pending') +
       stat('Requirements open', num(q.openCount || 0),
            num(q.overYear || 0) + ' of them open more than a year', q.overYear ? 'warn' : '', 'reqs') +
-      stat('Pensions maturing', num(pens12) + ' in 12mo',
-           money((m.retirement || {}).fund12 || 0) + ' of fund value', 'good', 'maturity') +
-      stat('Conversion rights ending', num(conv24) + ' in 24mo',
-           'Permanent cover with no medical — until the term ends', conv24 ? 'gold' : '', 'expiry') +
+      stat('Pensions maturing', num(pens12),
+           'within 12 months · ' + money((m.retirement || {}).fund12 || 0) + ' of fund value',
+           'good', 'maturity') +
+      stat('Conversion rights ending', num(conv24),
+           'within 24 months · permanent cover with no medical until then',
+           conv24 ? 'gold' : '', 'expiry') +
       stat('Unreachable clients', num((d.defects || {}).unreachable || 0),
            'On the chase list with no phone and no e-mail', 'bad', 'dues') +
       stat('Cross-sell calls ready', num((DATA.crosssell || {}).thisWeek || 0),
@@ -1124,6 +1137,10 @@ function viewXsell(el) {
     return (r.allRules || []).filter(function (id) { return id !== r.rule; })
       .map(function (id) { return (defs[id] || {}).title || id; });
   }
+  function alsoShortOf(r) {
+    return (r.allRules || []).filter(function (id) { return id !== r.rule; })
+      .map(function (id) { var d = defs[id] || {}; return d.short || d.title || id; });
+  }
 
   var html =
     '<div class="card"><h2>Who to call, and what to say</h2>' +
@@ -1166,17 +1183,25 @@ function viewXsell(el) {
           var t = r.score >= 80 ? 'p-good' : r.score >= 60 ? 'p-gold' : 'p-dim';
           return '<span class="pill ' + t + '">' + r.score + '</span>';
         } },
-      { key: 'client', label: 'Client' },
-      { key: 'age', label: 'Age', num: true,
-        sortValue: function (r) { return r.age === null ? -1 : r.age; },
-        render: function (r) { return r.age === null ? '<span style="color:var(--dim)">—</span>' : r.age; } },
+      /* Client, age and what they hold ride in one cell. Six narrow columns
+         wrapped every row onto four lines, which put four names on screen —
+         not a list anybody works top to bottom. */
+      { key: 'client', label: 'Client',
+        render: function (r) {
+          return '<b>' + esc(r.client) + '</b>' +
+            '<div style="color:var(--dim);font-size:11.5px;margin-top:2px">' +
+            (r.age === null || r.age === undefined ? 'age unknown' : 'age ' + r.age) +
+            ' · holds ' + esc(r.holds) + '</div>';
+        },
+        value: function (r) { return r.client + ' (age ' + (r.age === null ? '?' : r.age) + ', holds ' + r.holds + ')'; } },
       { key: 'rule', label: 'The gap',
         render: function (r) {
-          var also = alsoOf(r);
-          return esc(ruleOf(r).title || r.rule) +
+          var d = ruleOf(r), also = alsoShortOf(r);
+          return '<span class="nowrap" title="' + esc(d.title || '') + '">' +
+                 esc(d.short || d.title || r.rule) + '</span>' +
             (also.length
-              ? '<br><span style="color:var(--dim);font-size:11.5px">also: ' +
-                esc(also.join(' · ')) + '</span>'
+              ? '<div style="color:var(--dim);font-size:11.5px;margin-top:2px">also: ' +
+                esc(also.join(' · ')) + '</div>'
               : '');
         },
         sortValue: function (r) { return ruleOf(r).title || r.rule; },
@@ -1186,18 +1211,26 @@ function viewXsell(el) {
         } },
       { key: 'size', label: 'Worth', num: true,
         render: function (r) {
-          return money(r.size) + '<br><span style="color:var(--dim);font-size:11px">' +
-                 esc(ruleOf(r).sizeLabel || '') + '</span>';
-        } },
-      { key: 'holds', label: 'Holds now',
-        render: function (r) { return '<span class="pill p-dim">' + esc(r.holds) + '</span>'; } }
-    ], mine ? [] : [{ key: 'agent', label: 'Servicing agent' }], [
+          return money(r.size) + '<div style="color:var(--dim);font-size:11px">' +
+                 esc(ruleOf(r).sizeLabel || '') + '</div>';
+        } }
+    ], mine ? [] : [{ key: 'agent', label: 'Servicing agent',
+        render: function (r) {
+          /* Agency names run to five words — "ARCHITECTS FOR INSURANCE &
+             FINANCIAL SERVICES LTD" wrapped four lines on its own. */
+          return '<span class="clip" style="max-width:20ch;font-size:12px" title="' +
+                 esc(r.agent) + '">' + esc(r.agent) + '</span>';
+        } }], [
       { key: 'phone', label: 'Contact',
-        render: function (r) { return esc(r.phone || r.email); },
+        render: function (r) { return '<span class="nowrap">' + esc(r.phone || r.email) + '</span>'; },
         value: function (r) { return r.phone || r.email; } },
-      { key: 'ask', label: 'Open with',
-        sortable: false,
-        render: function (r) { return '<i style="color:var(--muted)">\u201c' + esc(askOf(r)) + '\u201d</i>'; },
+      { key: 'ask', label: 'Open with', sortable: false,
+        render: function (r) {
+          /* Full question on hover and in the CSV; one line on screen, so the
+             row stays the height of a row. */
+          var q = askOf(r);
+          return '<i class="clip" title="' + esc(q) + '">\u201c' + esc(q) + '\u201d</i>';
+        },
         value: function (r) { return askOf(r); } },
       { key: 'act', label: '', sortable: false,
         render: function (r) {
@@ -1305,6 +1338,10 @@ function viewHealth(el) {
   html += '<div class="card"><h2>Every issue, worst first</h2>' +
     table('healthList', [
       { key: 'severity', label: 'Severity',
+        /* Sorted by how much it matters, not alphabetically — "high" sorts
+           after "medium" as text, which put the worst issues last under a
+           heading that promised the opposite. */
+        sortValue: function (r) { return { high: 3, medium: 2, low: 1 }[r.severity] || 0; },
         render: function (r) {
           return '<span class="pill ' + (r.severity === 'high' ? 'p-bad' : 'p-warn') + '">' +
                  esc(r.severity) + '</span>';
@@ -1316,7 +1353,7 @@ function viewHealth(el) {
         render: function (r) { return r.of ? pct(r.pct) : '—'; } },
       { key: 'why', label: 'What it means' },
       { key: 'fix', label: 'Where it gets fixed' }
-    ], items, { sort: 'count', dir: 'desc', limit: 60,
+    ], items, { sort: 'severity', dir: 'desc', limit: 60,
                 empty: 'Nothing to report — the extract is clean.' }) + '</div>';
 
   el.innerHTML = html;

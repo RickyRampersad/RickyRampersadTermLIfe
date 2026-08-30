@@ -1176,6 +1176,7 @@ function iBuildMovements_(out) {
 var IXSELL_RULES = [
   {
     id: 'protection-gap',
+    short: 'No death benefit',
     title: 'Saving for retirement with no death benefit',
     needs: function (h) { return h.retirement && !h.life && !h.term; },
     why: 'They are building a fund and their family has no sum assured behind it. ' +
@@ -1189,6 +1190,7 @@ var IXSELL_RULES = [
   },
   {
     id: 'term-only',
+    short: 'Term only',
     title: 'Term cover only — nothing permanent',
     needs: function (h) { return h.term && !h.life && !h.retirement; },
     why: 'The cover ends on a date. Nothing here pays out if they outlive it, and the ' +
@@ -1202,6 +1204,7 @@ var IXSELL_RULES = [
   },
   {
     id: 'conversion-window',
+    short: 'Conversion closing',
     title: 'Conversion right closing',
     needs: function (h, c) { return c.convertible && c.convertibleMonths <= 60; },
     why: 'They can move to permanent cover with no evidence of health until the term ends. ' +
@@ -1215,6 +1218,7 @@ var IXSELL_RULES = [
   },
   {
     id: 'money-in-motion',
+    short: 'Money in motion',
     title: 'Money coming out within two years',
     needs: function (h, c) { return c.maturingMonths !== null && c.maturingMonths <= 24; },
     why: 'A maturity is the one moment a client has a lump sum and a decision. Whoever is in ' +
@@ -1228,6 +1232,7 @@ var IXSELL_RULES = [
   },
   {
     id: 'retirement-gap',
+    short: 'Not saving',
     title: 'Protected, but not saving',
     needs: function (h) { return (h.life || h.term) && !h.retirement; },
     why: 'Their family is covered if they die. Nothing here is building anything if they live, ' +
@@ -1241,6 +1246,7 @@ var IXSELL_RULES = [
   },
   {
     id: 'living-benefit',
+    short: 'No living benefit',
     title: 'No critical illness or accident benefit',
     needs: function (h) { return !h.benefit && (h.life || h.term || h.retirement); },
     why: 'Everything they hold pays on death. Nothing pays on the diagnosis or the accident ' +
@@ -1361,7 +1367,11 @@ function iBuildCrossSell_(today, inforceRows) {
     }).filter(function (r) { return r.n; }),
     /* Said once. Every row points at one of these by id. */
     rules: IXSELL_RULES.reduce(function (m, r) {
-      m[r.id] = { title: r.title, why: r.why, ask: r.ask, kind: r.kind, sizeLabel: r.sizeLabel };
+      /* `short` is for the table, where a three-line title turns a call list
+         into four rows a screen. `title` is for e-mail and the gaps summary,
+         where the room exists to say it properly. */
+      m[r.id] = { title: r.title, short: r.short, why: r.why, ask: r.ask,
+                  kind: r.kind, sizeLabel: r.sizeLabel };
       return m;
     }, {}),
     holds: holdsCount,
