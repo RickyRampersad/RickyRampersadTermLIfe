@@ -55,14 +55,29 @@ function headerOf_(sheet) {
     .map(function (h) { return String(h || '').trim(); });
 }
 
+/* Finding a tab means reading the header row of every sheet in the workbook,
+   and each of those is a round trip to Sheets. Doing it once is fine. Doing it
+   once per call is what made signing in take eight seconds: login_ reads the
+   roster, publicRoster_ reads it again, and each read rescanned the workbook.
+   Four scans for one sign-in, which on a phone reads as "could not reach the
+   sheet" because the request outlives the browser's patience.
+
+   Memoised per execution. Apps Script gives every request a fresh global
+   scope, so this cannot serve a stale tab to the next request — it only stops
+   one request asking the same question four times. */
+var _tabMemo = {};
 function findTabBy_(mustHave) {
+  var key = mustHave.join('|').toLowerCase();
+  if (_tabMemo.hasOwnProperty(key)) return _tabMemo[key];
   var sheets = ss_().getSheets();
+  var found = null;
   for (var i = 0; i < sheets.length; i++) {
     var head = headerOf_(sheets[i]).map(function (h) { return h.toLowerCase(); });
     var ok = mustHave.every(function (m) { return head.indexOf(m.toLowerCase()) > -1; });
-    if (ok) return sheets[i];
+    if (ok) { found = sheets[i]; break; }
   }
-  return null;
+  _tabMemo[key] = found;
+  return found;
 }
 
 /** The daily log. Identified by StaffId + KPI1_Actioned. */
@@ -512,7 +527,11 @@ function staffIdFor_(name) {
   return String(name || '').trim().toLowerCase().split(/[\s.]+/)[0] || '';
 }
 
+/* Same reasoning as findTabBy_: the Access tab is read several times in a
+   single request and it cannot change mid-request. */
+var _rosterMemo = null;
 function roster_() {
+  if (_rosterMemo) return _rosterMemo;
   var sh = accessSheet_();
   if (sh.getLastRow() < 2) return [];
   var head = headerOf_(sh);
@@ -537,6 +556,7 @@ function roster_() {
       active: !/^(no|inactive|false|0)$/i.test(active)
     });
   });
+  _rosterMemo = out;
   return out;
 }
 
@@ -1344,7 +1364,15 @@ function json_(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+/* Apps Script gives each request a fresh global scope, so the memos below
+   would reset on their own here. Clearing them explicitly at the door makes
+   that a property of the code rather than of the runtime — which matters
+   because the test harness runs many simulated requests in one process, and a
+   memo that outlives its request is a memo serving yesterday's roster. */
+function resetRequestMemo_() { _tabMemo = {}; _rosterMemo = null; }
+
 function doGet(e) {
+  resetRequestMemo_();
   var p = (e && e.parameter) || {};
   try {
     return json_(handle_(p.action || 'rows', p, p.token));
@@ -1354,6 +1382,7 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  resetRequestMemo_();
   var body = {};
   try { body = JSON.parse(e.postData.contents); } catch (err) { body = {}; }
   try {
