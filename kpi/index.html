@@ -291,42 +291,44 @@ const configured = () => APPS_SCRIPT_URL && APPS_SCRIPT_URL.indexOf("PASTE_") !=
 //  version posted with no-cors, which returns an opaque response — the Submit
 //  button could never tell whether the save landed, so it always claimed it had.
 // ---------------------------------------------------------------------------
-async function api(action, payload) {
-  if (!configured()) return {
-    ok: false,
-    error: "No Apps Script URL set in this file."
-  };
-  try {
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8"
-      },
-      body: JSON.stringify({
-        action,
-        ...payload
-      })
-    });
-    if (!res.ok) return {
-      ok: false,
-      error: "Server returned " + res.status + "."
-    };
-    const text = await res.text();
-    try {
-      return JSON.parse(text);
-    } catch {
-      return {
-        ok: false,
-        error: "Unreadable reply from the sheet. Re-deploy the Apps Script with access set to Anyone."
-      };
-    }
-  } catch (e) {
-    return {
-      ok: false,
-      error: "Could not reach the sheet. Check your connection."
-    };
+// Apps Script is not fast and a branch is not always on good signal. A single
+// dropped request used to read as "could not reach the sheet", which sends
+// somebody who has just typed out a whole block back to a login screen — the
+// most expensive possible failure. So: try again once, quietly, before saying
+// anything went wrong.
+async function apiOnce(action, payload) {
+  const res = await fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action, ...payload })
+  });
+  if (!res.ok) return { ok: false, error: "Server returned " + res.status + ".", _retry: res.status >= 500 };
+  const text = await res.text();
+  try { return JSON.parse(text); }
+  catch {
+    return { ok: false,
+      error: "Unreadable reply from the sheet. Re-deploy the Apps Script with access set to Anyone." };
   }
 }
+
+async function api(action, payload) {
+  if (!configured()) return { ok: false, error: "No Apps Script URL set in this file." };
+  let last = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (attempt) await new Promise(r => setTimeout(r, 1200));
+    try {
+      const out = await apiOnce(action, payload);
+      if (out && out.ok) return out;
+      if (out && !out._retry) return out;      // a real answer, just not a happy one
+      last = out;
+    } catch (e) {
+      last = { ok: false,
+        error: "Could not reach the sheet. It can be slow — try once more, and check your signal." };
+    }
+  }
+  return last;
+}
+
 const TOKEN_KEY = "rrb_kpi_token";
 const readStoredToken = () => {
   try {
