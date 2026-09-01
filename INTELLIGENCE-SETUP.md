@@ -206,6 +206,32 @@ Agent names are matched loosely, because the extracts disagree with each other:
 and `GARY SOOKDEO INSURANCE SOLUTIONS LTD` against `Gary Sookdeo` for the same
 person. Surname plus first initial is the test.
 
+### Some agents are a company, and no name test finds them
+
+Three of them, and they are the branch's three most senior people:
+
+| Code | In the in-force book as | Is |
+|---|---|---|
+| `A00427` | ADVANCED INVESTMENTS MANAGEMENT LIMITED | Ricky Rampersad |
+| `A01363` | ARCHITECTS FOR INSURANCE & FINANCIAL SERVICES LTD | Kerwyn Ramroach |
+| `A06869` | EXPERT ADVISORS COMPANY LTD | Akaash Kalladeen |
+
+No amount of cleverness gets from "Ricky Rampersad" to "Advanced Investments
+Management Limited". Before this was handled, each of the three saw their dues
+book — which is filed under their own name — and **none of their in-force
+book**: no maturities, no expiring cover, no cross-sell leads, and a fund-held
+figure of zero against a real TT$3.5m. Their monthly e-mails went out empty.
+
+The agent code joins them, and the workbook holds both halves: the in-force
+book has code → agency name, the access lists have code → person. `intelRebuild`
+joins those two every night into an alias table — **33 groups** on the current
+book — and scoping consults it. Nothing is hard-coded, so an agency Guardian
+adds next year is picked up on the next rebuild with nothing typed in here.
+
+Relying on the agent number alone would not have been enough: Ricky's row on the
+96-row access list carries no number at all, and that tab has no number column.
+The alias comes from the data, which is why it works for him.
+
 Sessions last 12 hours and the token lives in `sessionStorage`, not
 `localStorage` — a refresh keeps you signed in, closing the tab does not. These
 are shared machines.
@@ -354,6 +380,19 @@ opening question the app supplies asks instead of telling, every time.
 To add or change a rule, edit `IXSELL_RULES` near the top of the cross-sell
 section. Each rule declares who it fires on, why it matters, the question to
 open with, what number to show, the age band it suits, and its weight.
+
+### The lists fold into clients
+
+Nearly half the chase list is the same client twice or more — 2,536 policies
+across 1,838 clients — and the worst of it is corporate: one scheme carries
+**34 policies behind one phone number**, another 24, another 22. Worked as
+policies, an agent rings the same company all afternoon.
+
+So the chase list, the unreachable list and the three movement lists all carry
+a **Group into clients** toggle. Folded, a row is one client: how many policies,
+the total instalments, the worst arrears among them, every billing method in
+play and every policy number, so the whole conversation is on one line. The CSV
+follows whichever view is on screen.
 
 ### Three chase states, not two
 

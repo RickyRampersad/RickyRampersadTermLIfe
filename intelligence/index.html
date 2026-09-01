@@ -343,12 +343,46 @@ var TABLES = {};
 function table(id, cols, rows, opts) {
   opts = opts || {};
   TABLES[id] = { cols: cols, rows: rows, sort: opts.sort || null, dir: opts.dir || 'desc',
-                 filter: '', opts: opts };
+                 filter: '', opts: opts, grouped: !!opts.groupDefault };
   return '<div id="wrap-' + id + '">' + tableInner(id) + '</div>';
 }
 
+/* ── one row per client ────────────────────────────────────────────────────
+   Nearly half the chase list is the same client twice or more, and the worst
+   of it is corporate: one scheme carries 34 policies under one phone number.
+   Left as policies, the list reads as 2,533 pieces of work when it is 1,836
+   conversations — and an agent who works it top to bottom rings the same
+   company thirty-four times.                                               */
+function foldByClient(rows, spec) {
+  var by = {}, order = [];
+  rows.forEach(function (r) {
+    var k = String(spec.key(r) || '').trim().toLowerCase();
+    if (!k) k = '\u0000row' + order.length;         // no key — stands alone
+    if (!by[k]) { by[k] = []; order.push(k); }
+    by[k].push(r);
+  });
+  return order.map(function (k) { return spec.fold(by[k]); });
+}
+
+/* The little aggregations every fold needs. */
+function firstOf(list, key) {
+  for (var i = 0; i < list.length; i++) if (list[i][key]) return list[i][key];
+  return '';
+}
+function sumOf(list, key) { return list.reduce(function (t, r) { return t + (Number(r[key]) || 0); }, 0); }
+function maxOf(list, key) { return list.reduce(function (m, r) { return Math.max(m, Number(r[key]) || 0); }, 0); }
+function uniqueOf(list, key) {
+  var seen = {}, out = [];
+  list.forEach(function (r) { var v = r[key]; if (v && !seen[v]) { seen[v] = 1; out.push(v); } });
+  return out;
+}
+
 function tableInner(id) {
-  var t = TABLES[id], cols = t.cols, rows = t.rows.slice();
+  var t = TABLES[id];
+  var g = t.opts.group;
+  var grouped = g && t.grouped;
+  var cols = grouped ? g.cols : t.cols;
+  var rows = (grouped ? foldByClient(t.rows, g) : t.rows).slice();
   var q = t.filter.trim().toLowerCase();
   if (q) {
     rows = rows.filter(function (r) {
@@ -384,11 +418,22 @@ function tableInner(id) {
     }).join('') + '</tr>';
   }).join('');
 
+  var toggle = '';
+  if (g) {
+    var folded = foldByClient(t.rows, g).length;
+    toggle = '<button class="btn small ' + (grouped ? '' : 'ghost') + '" data-group="' + esc(id) + '" type="button">' +
+      (grouped
+        ? 'Showing ' + num(folded) + ' ' + plural(folded, 'client') + ' — show all ' + num(t.rows.length) + ' policies'
+        : 'Group into ' + num(folded) + ' ' + plural(folded, 'client')) +
+      '</button>';
+  }
   var bar =
     '<div class="toolbar">' +
       '<input class="grow" placeholder="Filter these ' + rows.length + ' rows…" data-filter="' + esc(id) + '" value="' + esc(t.filter) + '">' +
+      toggle +
       '<button class="btn small ghost" data-csv="' + esc(id) + '" type="button">Download CSV</button>' +
-      '<span class="count">' + num(rows.length) + ' ' + plural(rows.length, 'row') +
+      '<span class="count">' + num(rows.length) + ' ' +
+      plural(rows.length, grouped ? 'client' : 'row') +
       (rows.length > shown.length ? ' · showing first ' + num(shown.length) : '') + '</span>' +
     '</div>';
 
@@ -407,8 +452,10 @@ function redrawTable(id) {
 /* CSV of what is on screen after the filter and the sort — the list somebody
    is about to work, not the whole book. */
 function downloadCsv(id) {
-  var t = TABLES[id], cols = t.cols;
-  var rows = t.rows.slice();
+  var t = TABLES[id];
+  var g = t.opts.group, grouped = g && t.grouped;
+  var cols = grouped ? g.cols : t.cols;
+  var rows = (grouped ? foldByClient(t.rows, g) : t.rows).slice();
   var q = t.filter.trim().toLowerCase();
   if (q) {
     rows = rows.filter(function (r) {
@@ -612,7 +659,11 @@ function viewDues(el) {
       stat('No way to reach them', num(unreachable.length), 'no phone, no e-mail on file', 'warn') +
       stat('Already lapsed', num((d.counts || {}).lapsed || 0), 'reinstatement, not collection', 'warn') +
     '</div>' +
-    '<div class="note red"><b>Read this figure correctly.</b> ' + esc(d.basis) + '</div></div>';
+    '<div class="note red"><b>Read this figure correctly.</b> ' + esc(d.basis) + '</div>' +
+    '<div class="note"><b>This is a list of policies, not of people.</b> Nearly half of it is ' +
+    'the same client twice or more, and the worst of it is corporate — one scheme carries ' +
+    'thirty-four policies behind one phone number. Use <b>Group into clients</b> on the list ' +
+    'below before you start calling, or you will ring the same company all afternoon.</div></div>';
 
   html += '<div class="split">' +
     '<div class="card"><h2>How it is aged</h2>' +
@@ -655,7 +706,8 @@ function viewDues(el) {
   html += '<div class="card"><h2>The list</h2>' +
     '<p class="sub">Oldest arrears first. Log what happens on each call — the next person to open ' +
     'this policy sees it.</p>' +
-    table('duesList', duesCols(mine), d.chase || [], { sort: 'days', dir: 'desc', limit: 400 }) + '</div>';
+    table('duesList', duesCols(mine), d.chase || [],
+          { sort: 'days', dir: 'desc', limit: 400, group: duesGroup(mine) }) + '</div>';
 
   /* Lapsed inside a year is still reinstatable at Guardian without a fresh
      application. After that it is a new case with a new medical, so this list
@@ -690,9 +742,63 @@ function viewDues(el) {
       '<p class="sub">No phone and no e-mail on file. No collection effort of any kind can start ' +
       'until a contact is found, so these are first, not last.</p>' +
       table('duesUnreachable', duesCols(mine).filter(function (c) { return c.key !== 'phone' && c.key !== 'email'; }),
-            unreachable, { sort: 'modal', dir: 'desc', limit: 300 }) + '</div>';
+            unreachable, { sort: 'modal', dir: 'desc', limit: 300, group: duesGroup(mine) }) + '</div>';
   }
   el.innerHTML = html;
+}
+
+/* A client's policies folded into the one conversation they actually are. */
+function duesGroup(mine) {
+  return {
+    key: function (r) { return r.clientNo || r.client; },
+    fold: function (list) {
+      var f = list[0];
+      return {
+        agent: f.agent, client: f.client, clientNo: f.clientNo,
+        policies: list.length,
+        modal: sumOf(list, 'modal'),
+        days: maxOf(list, 'days'),
+        plans: uniqueOf(list, 'plan').join(', '),
+        billings: uniqueOf(list, 'billing').join(', '),
+        phone: firstOf(list, 'phone'), email: firstOf(list, 'email'),
+        reachable: list.some(function (r) { return r.reachable; }),
+        nums: list.map(function (r) { return r.policyBroken ? '(lost)' : r.policy; }).join(' ')
+      };
+    },
+    cols: [].concat(mine ? [] : [{ key: 'agent', label: 'Agent' }], [
+      { key: 'client', label: 'Client',
+        render: function (r) { return '<span class="clip" style="max-width:20ch" title="' + esc(r.client) + '">' + esc(r.client) + '</span>'; } },
+      { key: 'policies', label: 'Policies', num: true,
+        render: function (r) {
+          return r.policies > 1
+            ? '<span class="pill p-gold">' + r.policies + '</span>'
+            : '<span style="color:var(--dim)">1</span>';
+        } },
+      { key: 'days', label: 'Worst days', num: true,
+        render: function (r) {
+          var t = r.days > 365 ? 'p-bad' : r.days > 90 ? 'p-warn' : 'p-dim';
+          return '<span class="pill ' + t + '">' + num(r.days) + '</span>';
+        } },
+      { key: 'modal', label: 'Instalments', num: true,
+        render: function (r) { return money2(r.modal); } },
+      { key: 'billings', label: 'Billing',
+        /* A corporate scheme collects on three or four methods at once; spelled
+           out in full it wrapped the row to five lines. */
+        render: function (r) {
+          return '<span class="clip" style="max-width:16ch" title="' + esc(r.billings) + '">' +
+                 esc(r.billings) + '</span>';
+        } },
+      { key: 'phone', label: 'Phone', render: function (r) { return '<span class="nowrap">' + esc(r.phone) + '</span>'; } },
+      { key: 'email', label: 'E-mail' },
+      { key: 'nums', label: 'Policy numbers',
+        render: function (r) { return '<span class="clip" style="max-width:22ch" title="' + esc(r.nums) + '">' + esc(r.nums) + '</span>'; } },
+      { key: 'act', label: '', sortable: false,
+        render: function (r) {
+          return '<button class="btn small" data-log="dues" data-policy="' + esc(r.nums) +
+                 '" data-client="' + esc(r.client) + '">Log</button>';
+        }, value: function () { return ''; } }
+    ])
+  };
 }
 
 function duesCols(mine) {
@@ -1269,6 +1375,46 @@ function viewMoves(el) {
       stat('New pending cases', num(c.newPending || 0), 'submitted since last night') +
     '</div></div>';
 
+  /* Movement lists fold the same way — three policies lapsing on one client is
+     one call, and the list said three. */
+  var moveGroup = {
+    key: function (r) { return r.client; },
+    fold: function (list) {
+      var f = list[0];
+      return {
+        agent: f.agent, client: f.client, policies: list.length,
+        modal: sumOf(list, 'modal'),
+        plans: uniqueOf(list, 'plan').join(', '),
+        phone: firstOf(list, 'phone'), email: firstOf(list, 'email'),
+        nums: list.map(function (r) { return r.policy; }).join(' ')
+      };
+    },
+    cols: [].concat(mine ? [] : [{ key: 'agent', label: 'Agent' }], [
+      { key: 'client', label: 'Client' },
+      { key: 'policies', label: 'Policies', num: true,
+        render: function (r) {
+          return r.policies > 1 ? '<span class="pill p-gold">' + r.policies + '</span>'
+                                : '<span style="color:var(--dim)">1</span>';
+        } },
+      { key: 'modal', label: 'Instalments', num: true,
+        render: function (r) { return r.modal ? money2(r.modal) : '—'; } },
+      { key: 'plans', label: 'Plans',
+        render: function (r) {
+          return '<span class="clip" style="max-width:16ch" title="' + esc(r.plans) + '">' +
+                 esc(r.plans) + '</span>';
+        } },
+      { key: 'phone', label: 'Phone', render: function (r) { return '<span class="nowrap">' + esc(r.phone) + '</span>'; } },
+      { key: 'email', label: 'E-mail' },
+      { key: 'nums', label: 'Policy numbers',
+        render: function (r) { return '<span class="clip" style="max-width:22ch" title="' + esc(r.nums) + '">' + esc(r.nums) + '</span>'; } },
+      { key: 'act', label: '', sortable: false,
+        render: function (r) {
+          return '<button class="btn small" data-log="movement" data-policy="' + esc(r.nums) +
+                 '" data-client="' + esc(r.client) + '">Log</button>';
+        }, value: function () { return ''; } }
+    ])
+  };
+
   function moveTable(id, rows, title, sub, tone) {
     if (!rows || !rows.length) return '';
     return '<div class="card"><h2>' + esc(title) + '</h2><p class="sub">' + sub + '</p>' +
@@ -1285,7 +1431,7 @@ function viewMoves(el) {
             return '<button class="btn small" data-log="movement" data-policy="' + esc(r.policy) +
                    '" data-client="' + esc(r.client) + '">Log</button>';
           }, value: function () { return ''; } }
-      ]), rows, { sort: 'modal', dir: 'desc', limit: 300 }) + '</div>';
+      ]), rows, { sort: 'modal', dir: 'desc', limit: 300, group: moveGroup }) + '</div>';
   }
 
   html += moveTable('mvLapsed', m.lapsed, 'Lapsed last night',
@@ -1442,12 +1588,19 @@ $('signout').addEventListener('click', function () { signOut(); });
 /* One listener for the whole app. Every table, tile and button is markup that
    was rendered as a string, so nothing can hold its own handler. */
 document.addEventListener('click', function (ev) {
-  var el = ev.target.closest('[data-view],[data-go],[data-sort],[data-csv],[data-log]');
+  var el = ev.target.closest('[data-view],[data-go],[data-sort],[data-csv],[data-log],[data-group]');
   if (!el) return;
 
   if (el.hasAttribute('data-view')) return show(el.getAttribute('data-view'));
   if (el.hasAttribute('data-go'))   return show(el.getAttribute('data-go'));
   if (el.hasAttribute('data-csv'))  return downloadCsv(el.getAttribute('data-csv'));
+
+  if (el.hasAttribute('data-group')) {
+    var gid = el.getAttribute('data-group');
+    TABLES[gid].grouped = !TABLES[gid].grouped;
+    TABLES[gid].sort = null;          // the two views sort on different columns
+    return redrawTable(gid);
+  }
 
   if (el.hasAttribute('data-sort')) {
     var parts = el.getAttribute('data-sort').split('|');

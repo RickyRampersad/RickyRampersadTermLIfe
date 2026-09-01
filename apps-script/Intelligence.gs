@@ -316,6 +316,9 @@ function intelRebuild() {
   /* Cross-sell reads every in-force record, not just the maturing ones. The
      raw list is dropped straight after so it never reaches a browser. */
   out.crosssell = iBuildCrossSell_(today, out.maturity.all);
+  /* Built here because it needs the in-force rows, and shipped in the cache so
+     scoping and the digests all agree on who is who. */
+  out.aliases = iBuildAliases_(out.maturity.all);
   delete out.maturity.all;
   iJoinChases_(out);
 
@@ -1044,6 +1047,85 @@ function iJoinChases_(out) {
   p.chaseNever = never;
   p.chaseLive = live;
   p.chaseClosed = wentQuiet;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE SAME PERSON, TWO NAMES
+   The extracts disagree about what an agent is called, and not just in spelling.
+   The dues sheet books business against the person — "Gary Sookdeo". The
+   in-force book services it against their agency — "GARY SOOKDEO INSURANCE
+   SOLUTIONS LTD". Strip the company words and those two still meet.
+
+   Three do not, and they are the branch's three most senior people:
+
+     A00427   ADVANCED INVESTMENTS MANAGEMENT LIMITED   is Ricky Rampersad
+     A01363   ARCHITECTS FOR INSURANCE & FINANCIAL...   is Kerwyn Ramroach
+     A06869   EXPERT ADVISORS COMPANY LTD               is Akaash Kalladeen
+
+   No amount of name cleverness gets from "Ricky Rampersad" to "Advanced
+   Investments Management Limited". Before this, each of them saw their dues
+   book (booked under their own name) and none of their in-force book — no
+   maturities, no expiring cover, no cross-sell leads, and a fund-held figure
+   of zero against a real TT$3.5m. Their monthly e-mails went out empty.
+
+   The agent code is what joins them, and the workbook holds both halves: the
+   in-force book has code → agency name, the access list has code → person.
+   Joining those two gives an alias group per person, built fresh every night,
+   so a company Guardian adds next year needs nothing typed in here.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function iBuildAliases_(inforceRows) {
+  var byCode = {};
+  function put(code, name) {
+    code = String(code || '').trim().toUpperCase();
+    name = String(name || '').trim();
+    if (!code || !name || !iNameKey_(name)) return;
+    if (!byCode[code]) byCode[code] = {};
+    byCode[code][name] = 1;
+  }
+
+  /* Half one: the in-force book, where the name is usually the agency. */
+  (inforceRows || []).forEach(function (r) { put(r.agentId, r.agent); });
+
+  /* Half two: the access lists, where the name is the person. Both the
+     "Agent Number" column and the "A00427 - Ricky Rampersad" prefix form are
+     read, because the branch's two access tabs each use only one of them. */
+  iAccessTabs_().forEach(function (sh) {
+    var head = iHeaders_(sh), last = sh.getLastRow();
+    if (last < 2) return;
+    var vals = sh.getRange(2, 1, last - 1, sh.getLastColumn()).getValues();
+    var cName = iCol_(head, ['name']),
+        cAgent = iCol_(head, ['agent name (exactly as in data)', 'agent name']),
+        cNum = iCol_(head, ['agent number', 'agent id', 'agentid']);
+    vals.forEach(function (row) {
+      var nm = cName >= 0 ? String(row[cName]).trim() : '';
+      var id = iIdentity_(nm, cAgent >= 0 ? row[cAgent] : '', cNum >= 0 ? row[cNum] : '');
+      if (!id.agentId) return;
+      put(id.agentId, id.agentName);
+      put(id.agentId, id.display);
+    });
+  });
+
+  /* A code with only one name tells us nothing we did not already know. */
+  var groups = [];
+  Object.keys(byCode).forEach(function (code) {
+    var names = Object.keys(byCode[code]);
+    if (names.length < 2) return;
+    groups.push({ code: code, names: names });
+  });
+  return groups;
+}
+
+/* Name → group index, so a match is a lookup rather than a scan. */
+function iAliasIndex_(groups) {
+  var idx = {};
+  (groups || []).forEach(function (g, i) {
+    g.names.forEach(function (n) {
+      var k = iNameKey_(n);
+      if (k) idx[k] = i;
+    });
+  });
+  return idx;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -1809,13 +1891,24 @@ function iScope_(cache, session) {
   var me = session.agentName;
   var meId = String(session.agentId || '').trim().toUpperCase();
   var c = JSON.parse(JSON.stringify(cache));
+
+  /* Which alias group this person belongs to, if any — this is what lets
+     "Ricky Rampersad" match rows filed under "Advanced Investments Management
+     Limited". Falls back to name and code matching when there is no group. */
+  var aliasIdx = iAliasIndex_(cache.aliases);
+  var myGroup = aliasIdx[iNameKey_(me)];
+  if (myGroup === undefined && meId) {
+    (cache.aliases || []).forEach(function (g, i) { if (g.code === meId) myGroup = i; });
+  }
   /* Name first, because that is all the dues, pending and requirement extracts
      carry. The in-force book also carries a Servicing Agent Id, and matching on
      it catches the rows where the branch wrote the agency's company name —
      "GARY SOOKDEO INSURANCE SOLUTIONS LTD" — where the person's name belongs. */
   function isMine(x, key) {
     if (iSameAgent_(x[key || 'agent'], me)) return true;
-    return !!(meId && x.agentId && String(x.agentId).toUpperCase() === meId);
+    if (meId && x.agentId && String(x.agentId).toUpperCase() === meId) return true;
+    if (myGroup === undefined) return false;
+    return aliasIdx[iNameKey_(x[key || 'agent'])] === myGroup;
   }
   function mine(list, key) {
     return (list || []).filter(function (x) { return isMine(x, key); });
@@ -1832,6 +1925,7 @@ function iScope_(cache, session) {
     for (var i = 0; i < keys.length; i++) {
       if (iSameAgent_(keys[i], me)) return map[keys[i]];
       if (meId && map[keys[i]] && String(map[keys[i]].agentId || '').toUpperCase() === meId) return map[keys[i]];
+      if (myGroup !== undefined && aliasIdx[iNameKey_(keys[i])] === myGroup) return map[keys[i]];
     }
     return blank;
   }
@@ -1913,6 +2007,9 @@ function iScope_(cache, session) {
   if (c.tasks && !c.tasks.error) {
     c.tasks = { openCount: null, restricted: true };
   }
+  /* The alias table names every agent in the branch; it is plumbing, and an
+     agent has no reason to receive it. */
+  delete c.aliases;
 
   /* ── requirements ────────────────────────────────────────────────────────
      Requirements carry no agent — they are keyed on policy. An agent sees the
@@ -2625,16 +2722,22 @@ function intelHorizonWatch() {
   if (!cache) return 'No cache — run intelRebuild() first.';
   var directory = iAgentDirectory_(), sent = 0;
   var m = cache.maturity || {}, e = cache.expiry || {};
+  var aliasIdx = iAliasIndex_(cache.aliases);
 
   Object.keys(directory).forEach(function (key) {
     var person = directory[key];
     if (!person.email) return;
     var pid = String(person.agentId || '').toUpperCase();
+    var pGroup = aliasIdx[iNameKey_(person.agentName)];
+    if (pGroup === undefined && pid) {
+      (cache.aliases || []).forEach(function (g, i) { if (g.code === pid) pGroup = i; });
+    }
     function mine(rows, months) {
       return (rows || []).filter(function (x) {
         if (x.months > months) return false;
-        return iSameAgent_(x.agent, person.agentName) ||
-               !!(pid && x.agentId && String(x.agentId).toUpperCase() === pid);
+        if (iSameAgent_(x.agent, person.agentName)) return true;
+        if (pid && x.agentId && String(x.agentId).toUpperCase() === pid) return true;
+        return pGroup !== undefined && aliasIdx[iNameKey_(x.agent)] === pGroup;
       });
     }
     var pens = mine((m.retirement || {}).rows, 18);
