@@ -314,8 +314,8 @@ async function apiOnce(action, payload) {
 async function api(action, payload) {
   if (!configured()) return { ok: false, error: "No Apps Script URL set in this file." };
   let last = null;
-  for (let attempt = 0; attempt < 2; attempt++) {
-    if (attempt) await new Promise(r => setTimeout(r, 1200));
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt) await new Promise(r => setTimeout(r, attempt * 1500));
     try {
       const out = await apiOnce(action, payload);
       if (out && out.ok) return out;
@@ -323,7 +323,7 @@ async function api(action, payload) {
       last = out;
     } catch (e) {
       last = { ok: false,
-        error: "Could not reach the sheet. It can be slow — try once more, and check your signal." };
+        error: "The sheet did not answer in time. It can take a few seconds — press Sign in once more." };
     }
   }
   return last;
@@ -2628,7 +2628,7 @@ function Login({
       flex: "none",
       opacity: busy ? 0.65 : 1
     }
-  }, busy ? "Signing in…" : "Sign in"), /*#__PURE__*/React.createElement("p", {
+  }, busy ? "Signing in… this can take a few seconds" : "Sign in"), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 11.5,
       color: MUTED,
