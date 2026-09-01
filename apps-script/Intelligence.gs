@@ -2170,6 +2170,7 @@ function intelRoute_(b) {
 
   switch (action) {
     case 'intel.data':    return iActData_(b, session);
+    case 'intel.client':  return iActClientLookup_(b, session);
     case 'intel.action':  return iActLog_(b, session);
     case 'intel.session': return iOk_({ name: session.name, role: session.role,
                                        agentName: session.agentName, agentId: session.agentId });
@@ -2213,6 +2214,310 @@ function iActData_(b, session) {
   scoped.you = { name: session.name, role: session.role, agentName: session.agentName };
   scoped.actions = iRecentActions_(session);
   return iOk_({ data: scoped });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ONE CLIENT, EVERYTHING
+   The screens in this app are lists: every overdue premium, every maturity,
+   every lead. The question a branch is actually asked all day is the other
+   way round — the phone rings, somebody gives a name, and the person who
+   answers needs the whole story on one screen.
+
+   This is the only part of the app that does NOT read the nightly cache. The
+   cache holds the lists, and a client's policies mostly are not on them: a
+   premium paid on time is on no list at all. So the lookup reads the source
+   tabs live, which also means the answer is current rather than last night's.
+
+   It reads the dues book first — that is the only tab with every policy in it
+   — then enriches from the in-force book, pending business, requirements and
+   the branch's own action log.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Who this person is allowed to see, decided once and used by both the
+   shortlist and the full record. Aliases included, or the three agents whose
+   book is filed under a company name could not look up their own clients. */
+function iOwnershipTest_(session) {
+  if (session.role === 'branch') return function () { return true; };
+  var cache = iLoadCache_();
+  var aliasIdx = iAliasIndex_(cache && cache.aliases);
+  var meId = String(session.agentId || '').trim().toUpperCase();
+  var myGroup = aliasIdx[iNameKey_(session.agentName)];
+  if (myGroup === undefined && meId && cache) {
+    (cache.aliases || []).forEach(function (g, i) { if (g.code === meId) myGroup = i; });
+  }
+  return function (agent) {
+    if (iSameAgent_(agent, session.agentName)) return true;
+    return myGroup !== undefined && aliasIdx[iNameKey_(agent)] === myGroup;
+  };
+}
+
+function iActClientLookup_(b, session) {
+  var q = String(b.q || '').trim();
+  if (q.length < 3) return iErr_('Type at least three characters — a name, a policy or client number, a phone or an e-mail.');
+
+  var sh = iTabDues_();
+  if (!sh) return iErr_('No dues tab found, so there is nothing to search.');
+
+  var d = iReadCols_(sh, {
+    agent: ['agent'], number: ['number'], clientNo: ['client number'], client: ['client'],
+    premium: ['premium'], issue: ['issue date'], status: ['status'], days: ['days'],
+    paidTo: ['paid to date'], sumAssured: ['sum assured'], plan: ['plan code'],
+    billing: ['billing type'], desc: ['status description'], lapseDate: ['projected lapse date'],
+    address: ['address'], phone: ['phone'], email: ['email']
+  });
+
+  var needle = q.toLowerCase();
+  var digits = q.replace(/\D/g, '');
+  var byClient = {}, order = [];
+  var ours = iOwnershipTest_(session);
+
+  for (var r = 0; r < d.rows; r++) {
+    var clientNo = String(d.get('clientNo', r)).trim();
+    var name = String(d.get('client', r)).trim();
+    if (!clientNo && !name) continue;
+
+    /* Match on anything a caller might give: their name, the policy in their
+       hand, their client number, the phone they are calling from, or the
+       e-mail an enquiry came in on. Leading zeros differ between tabs, so the
+       number comparisons strip them. */
+    var policy = String(d.get('number', r)).trim();
+    var phone = String(d.get('phone', r));
+    var email = String(d.get('email', r));
+    var hit =
+      (name && name.toLowerCase().indexOf(needle) !== -1) ||
+      (digits.length >= 4 && (
+        policy.replace(/\D/g, '').indexOf(digits) === 0 ||
+        clientNo.replace(/^0+/, '') === digits.replace(/^0+/, '') ||
+        phone.replace(/\D/g, '').indexOf(digits) !== -1)) ||
+      (needle.indexOf('@') !== -1 && iEmail_(email) === needle);
+    if (!hit) continue;
+
+    /* A client whose policies all sit on somebody else's book is not on this
+       person's shortlist at all — showing the name, the agent and the phone
+       number of a client they cannot open is the leak the sign-in exists to
+       prevent. */
+    if (!ours(String(d.get('agent', r)).trim())) continue;
+
+    var key = clientNo || ('name:' + iNameKey_(name));
+    if (!byClient[key]) { byClient[key] = { key: key, clientNo: clientNo, client: name, rowIdx: [] }; order.push(key); }
+    byClient[key].rowIdx.push(r);
+  }
+
+  if (!order.length) return iOk_({ query: q, matches: [], client: null });
+
+  /* Several people answer to "Mohammed". Hand back the shortlist and let the
+     person on the phone pick, rather than guessing at one. */
+  if (order.length > 1) {
+    var list = order.map(function (k) {
+      var c = byClient[k], first = c.rowIdx[0];
+      return { clientNo: c.clientNo, client: c.client, policies: c.rowIdx.length,
+               agent: String(d.get('agent', first)).trim(),
+               phone: iPhone_(d.get('phone', first)), email: iEmail_(d.get('email', first)) };
+    }).sort(function (a, b) { return b.policies - a.policies; });
+    return iOk_({ query: q, matches: list.slice(0, 40), more: Math.max(0, list.length - 40), client: null });
+  }
+
+  /* One client. Widen from the rows that matched the query to every row that
+     client has — somebody reading a policy number off a letter still wants
+     their whole picture, not the one policy they happened to quote. */
+  var only = byClient[order[0]];
+  if (only.clientNo) {
+    var want = only.clientNo.replace(/^0+/, '');
+    var all = [];
+    for (var w = 0; w < d.rows; w++) {
+      if (String(d.get('clientNo', w)).trim().replace(/^0+/, '') === want) all.push(w);
+    }
+    if (all.length) only.rowIdx = all;
+  }
+  return iOk_(iClientRecord_(only, d, session, q));
+}
+
+/* Everything the workbook knows about one client, assembled. */
+function iClientRecord_(c, d, session, q) {
+  var today = iToday_();
+  var mine = session.role !== 'branch';
+  var ours = iOwnershipTest_(session);
+  var policies = [], theirs = 0, others = 0;
+  var address = '', phone = '', email = '', agents = {};
+
+  c.rowIdx.forEach(function (r) {
+    var agent = String(d.get('agent', r)).trim();
+    /* An agent looking up a client sees the policies that are theirs. The rest
+       are counted so nobody is misled into thinking they have the whole
+       picture, but not detailed — another agent's book is not theirs to read. */
+    if (!ours(agent)) { others++; return; }
+    theirs++;
+    agents[agent] = (agents[agent] || 0) + 1;
+    address = address || String(d.get('address', r)).trim();
+    phone = phone || iPhone_(d.get('phone', r));
+    email = email || iEmail_(d.get('email', r));
+
+    var status = String(d.get('status', r)).trim();
+    var rawNum = d.get('number', r);
+    policies.push({
+      policy: iBadNumber_(rawNum) ? '' : String(rawNum).trim(),
+      policyBroken: iBadNumber_(rawNum),
+      plan: String(d.get('plan', r)).trim(),
+      status: status,
+      state: status === '1' ? 'Lapsed' : status === '2' ? 'Overdue'
+           : status === '3' ? 'Underwriting' : String(d.get('desc', r)).trim(),
+      desc: String(d.get('desc', r)).trim(),
+      modal: iNum_(d.get('premium', r)),
+      sumAssured: iNum_(d.get('sumAssured', r)),
+      days: iNum_(d.get('days', r)),
+      billing: String(d.get('billing', r)).trim(),
+      issued: iIso_(iDate_(d.get('issue', r))),
+      paidTo: iIso_(iDate_(d.get('paidTo', r))),
+      lapseOn: iIso_(iDate_(d.get('lapseDate', r)))
+    });
+  });
+
+  if (!theirs) {
+    return { query: q, matches: [], client: null,
+             blocked: 'That client\'s policies are on another agent\'s book.' };
+  }
+
+  policies.sort(function (a, b) {
+    var rank = { 'Overdue': 0, 'Underwriting': 1, 'Lapsed': 2 };
+    var ra = rank[a.state] === undefined ? 3 : rank[a.state];
+    var rb = rank[b.state] === undefined ? 3 : rank[b.state];
+    return ra - rb || b.modal - a.modal;
+  });
+
+  var polSet = {};
+  policies.forEach(function (p) { if (p.policy) polSet[p.policy] = 1; });
+
+  return {
+    query: q, matches: [],
+    client: {
+      clientNo: c.clientNo, name: c.client,
+      phone: phone, email: email, address: address,
+      agents: Object.keys(agents),
+      policies: policies,
+      hiddenPolicies: others,
+      counts: {
+        total: policies.length,
+        overdue: policies.filter(function (p) { return p.state === 'Overdue'; }).length,
+        lapsed: policies.filter(function (p) { return p.state === 'Lapsed'; }).length,
+        paying: policies.filter(function (p) { return /premium paying/i.test(p.desc) && p.status === '0'; }).length
+      },
+      modalOverdue: policies.filter(function (p) { return p.state === 'Overdue'; })
+                            .reduce(function (t, p) { return t + p.modal; }, 0),
+      inforce: iClientInforce_(c.clientNo, polSet),
+      pending: iClientPending_(polSet),
+      requirements: iClientReqs_(polSet, today),
+      history: iClientHistory_(polSet, c.client)
+    }
+  };
+}
+
+/* The in-force book adds what the dues extract has no column for: the maturity
+   date, the fund behind it, and what the cover is actually worth. */
+function iClientInforce_(clientNo, polSet) {
+  var sh = iTabInforce_();
+  if (!sh) return [];
+  var d = iReadCols_(sh, {
+    policy: ['policy id'], plan: ['plan'], mat: ['policy maturity date'],
+    sumIns: ['sum insured'], fund: ['fund value'], annual: ['annual premium'],
+    billType: ['policy bill type'], paidTo: ['policy paid to date'],
+    susp: ['premium in suspense amount'], clientId: ['client id'],
+    agent: ['servcing agent name', 'servicing agent name']
+  });
+  var want = String(clientNo || '').replace(/^0+/, '');
+  var out = [], today = iToday_();
+  for (var r = 0; r < d.rows; r++) {
+    var pol = String(d.get('policy', r)).trim();
+    var cid = String(d.get('clientId', r)).trim().replace(/^0+/, '');
+    if (!(polSet[pol] || (want && cid === want))) continue;
+    var mat = iDate_(d.get('mat', r));
+    out.push({
+      policy: pol, plan: String(d.get('plan', r)).trim(),
+      matures: iIso_(mat),
+      months: mat ? Math.round((iDays_(today, mat) || 0) / 30.44) : null,
+      sumInsured: iNum_(d.get('sumIns', r)), fund: iNum_(d.get('fund', r)),
+      annual: iNum_(d.get('annual', r)), billType: String(d.get('billType', r)).trim(),
+      paidTo: iIso_(iDate_(d.get('paidTo', r))), suspense: iNum_(d.get('susp', r)),
+      agent: String(d.get('agent', r)).trim(),
+      cls: iClassifyPlan_(String(d.get('plan', r)).trim())
+    });
+  }
+  out.sort(function (a, b) { return (a.months === null ? 1e9 : a.months) - (b.months === null ? 1e9 : b.months); });
+  return out;
+}
+
+function iClientPending_(polSet) {
+  var sh = iTabPending_();
+  if (!sh) return [];
+  var d = iReadCols_(sh, {
+    policy: ['policy'], status: ['status'], decision: ['decisiontype'],
+    reqt: ['reqt'], submit: ['submitdt'], reqtDt: ['reqtdt'],
+    susp: ['pol_misc_susp_amt'], where: ['being processed in'], agent: ['agent name']
+  });
+  var today = iToday_(), out = [];
+  for (var r = 0; r < d.rows; r++) {
+    var pol = String(d.get('policy', r)).trim();
+    if (!polSet[pol]) continue;
+    var reqtDt = iDate_(d.get('reqtDt', r)), submit = iDate_(d.get('submit', r));
+    var age = reqtDt ? iDays_(reqtDt, today) : (submit ? iDays_(submit, today) : null);
+    if (age !== null && (age < 0 || age > 3650)) age = null;
+    out.push({ policy: pol, status: String(d.get('status', r)).trim(),
+               decision: String(d.get('decision', r)).trim(),
+               requirement: String(d.get('reqt', r)).trim(),
+               submitted: iIso_(submit), age: age,
+               suspense: iNum_(d.get('susp', r)),
+               where: String(d.get('where', r)).trim() });
+  }
+  return out;
+}
+
+function iClientReqs_(polSet, today) {
+  var sh = iTabReqs_();
+  if (!sh) return [];
+  var d = iReadCols_(sh, {
+    added: ['added_date'], closed: ['closed_date'], policy: ['policy_number'],
+    code: ['requirement_code'], cat: ['requirements'], comment: ['requirement_comment'],
+    reqId: ['insured_requirement_id']
+  });
+  var seen = {}, out = [];
+  for (var r = 0; r < d.rows; r++) {
+    var pol = String(d.get('policy', r)).trim();
+    if (!polSet[pol] || iDate_(d.get('closed', r))) continue;
+    var key = String(d.get('reqId', r)).trim() || (pol + d.get('code', r));
+    if (seen[key]) continue;
+    seen[key] = 1;
+    var added = iDate_(d.get('added', r));
+    var code = String(d.get('code', r)).trim().toUpperCase();
+    out.push({ policy: pol, code: code, label: iReqLabel_(code),
+               category: String(d.get('cat', r)).trim(),
+               comment: String(d.get('comment', r)).trim(),
+               added: iIso_(added), age: added ? iDays_(added, today) : null });
+  }
+  out.sort(function (a, b) { return (b.age || 0) - (a.age || 0); });
+  return out;
+}
+
+/* Everything anybody has logged against this client, so whoever picks up the
+   phone knows what was said last time. */
+function iClientHistory_(polSet, name) {
+  var sh = iActionsTab_(), last = sh.getLastRow();
+  if (last < 2) return [];
+  var vals = sh.getRange(2, 1, last - 1, 9).getValues();
+  var want = iNameKey_(name), out = [];
+  for (var r = vals.length - 1; r >= 0; r--) {
+    var row = vals[r];
+    if (String(row[2]) === 'SIGNIN') continue;
+    var pol = String(row[3] || '');
+    var matches = (pol && polSet[pol]) || (want && iNameKey_(row[4]) === want);
+    if (!matches) continue;
+    out.push({
+      when: iIso_(row[0] instanceof Date ? row[0] : iDate_(row[0])),
+      by: String(row[1]), domain: String(row[2]), policy: pol,
+      outcome: String(row[5]), note: String(row[6]), next: String(row[7]),
+      followUp: iIso_(row[8] instanceof Date ? row[8] : iDate_(row[8]))
+    });
+    if (out.length >= 40) break;
+  }
+  return out;
 }
 
 /* ── The action log ───────────────────────────────────────────────────────

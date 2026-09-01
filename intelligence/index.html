@@ -77,7 +77,9 @@ main{max-width:1220px;margin:0 auto;padding:22px 16px 80px}
 .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px 16px}
 .stat .k{font-size:10.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
 .stat .v{font:800 25px 'Montserrat';margin-top:5px;line-height:1.15}
-.stat .n{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.45}
+.stat .n{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.45;
+  overflow-wrap:anywhere}
+.stat .v{overflow-wrap:anywhere}
 .stat.bad .v{color:var(--bad)} .stat.warn .v{color:var(--warn)} .stat.good .v{color:var(--good)}
 .stat.gold .v{color:var(--gold)}
 .stat.click{cursor:pointer;transition:.12s} .stat.click:hover{border-color:var(--gold);transform:translateY(-1px)}
@@ -213,6 +215,7 @@ footer.foot{max-width:1220px;margin:0 auto;padding:0 16px 40px;color:var(--dim);
   <nav class="tabs"><div class="in" id="tabbar"></div></nav>
 
   <main>
+    <div class="view" id="v-client"></div>
     <div class="view" id="v-pulse"></div>
     <div class="view" id="v-dues"></div>
     <div class="view" id="v-pending"></div>
@@ -492,6 +495,7 @@ function downloadCsv(id) {
 
 var TABS = [
   { id: 'pulse',    label: 'Pulse' },
+  { id: 'client',   label: 'Find a client' },
   { id: 'dues',     label: 'Premium dues',  count: function (d) { return (d.dues || {}).chaseCount; } },
   { id: 'pending',  label: 'Pending',       count: function (d) { return (d.pending || {}).total; } },
   { id: 'reqs',     label: 'Requirements',  count: function (d) { return (d.reqs || {}).openCount; } },
@@ -518,8 +522,8 @@ function show(view) {
   document.querySelectorAll('.view').forEach(function (v) { v.classList.remove('on'); });
   var el = $('v-' + view);
   el.classList.add('on');
-  ({ pulse: viewPulse, dues: viewDues, pending: viewPending, reqs: viewReqs,
-     maturity: viewMaturity, expiry: viewExpiry, xsell: viewXsell,
+  ({ pulse: viewPulse, client: viewClient, dues: viewDues, pending: viewPending,
+     reqs: viewReqs, maturity: viewMaturity, expiry: viewExpiry, xsell: viewXsell,
      moves: viewMoves, health: viewHealth }[view])(el);
   window.scrollTo(0, 0);
 }
@@ -636,6 +640,222 @@ function viewPulse(el) {
   }
 
   el.innerHTML = html;
+}
+
+/* ── Find a client ─────────────────────────────────────────────────────────
+   The one screen that runs the other way round from the rest. Everywhere else
+   is a list; this answers the question the phone actually asks — somebody
+   gives a name and the person who picked up needs the whole story.
+
+   It is also the only screen that does not read last night's cache. A premium
+   paid on time is on no list at all, so the lookup goes to the workbook live,
+   which also means the answer is current.                                    */
+var CLIENT = { q: '', busy: false, result: null, error: '' };
+
+function viewClient(el) {
+  var html =
+    '<div class="card"><h2>Find a client</h2>' +
+    '<p class="sub">A name, a policy number, a client number, a phone number or an e-mail — ' +
+    'whatever they give you. This searches the whole book, not just the lists, so it finds ' +
+    'clients who are perfectly up to date.</p>' +
+    '<form id="cq-form" class="toolbar" autocomplete="off">' +
+      '<input class="grow" id="cq" placeholder="a surname, a policy or client number, a phone or an e-mail" ' +
+        'value="' + esc(CLIENT.q) + '" autocapitalize="off" spellcheck="false">' +
+      '<button class="btn small" id="cq-go" type="submit">' +
+        (CLIENT.busy ? 'Searching…' : 'Search') + '</button>' +
+    '</form>' +
+    (DATA.you.role === 'branch'
+      ? ''
+      : '<div class="note">You will find your own clients. A client whose policies are all on ' +
+        'another agent\'s book does not appear here.</div>') +
+    (CLIENT.error ? '<div class="note red"><b>' + esc(CLIENT.error) + '</b></div>' : '') +
+    '</div>';
+
+  var res = CLIENT.result;
+  if (CLIENT.busy) {
+    html += '<div class="card"><div class="empty">Searching the branch book…</div></div>';
+  } else if (res && res.matches && res.matches.length) {
+    html += '<div class="card"><h2>' + num(res.matches.length + (res.more || 0)) +
+      ' clients match “' + esc(res.query) + '”</h2>' +
+      '<p class="sub">Pick one.' + (res.more ? ' Showing the ' + num(res.matches.length) +
+        ' with the most policies — narrow the search to see the rest.' : '') + '</p>' +
+      table('cMatches', [
+        { key: 'client', label: 'Client' },
+        { key: 'clientNo', label: 'Client no' },
+        { key: 'policies', label: 'Policies', num: true },
+        { key: 'agent', label: 'Agent' },
+        { key: 'phone', label: 'Contact',
+          render: function (r) { return esc(r.phone || r.email); },
+          value: function (r) { return r.phone || r.email; } },
+        { key: 'open', label: '', sortable: false,
+          render: function (r) {
+            return '<button class="btn small" data-client-open="' +
+                   esc(r.clientNo || r.client) + '">Open</button>';
+          }, value: function () { return ''; } }
+      ], res.matches, { sort: 'policies', dir: 'desc', limit: 40 }) + '</div>';
+  } else if (res && res.client) {
+    html += clientCard(res.client);
+  } else if (res) {
+    html += '<div class="card"><div class="empty">Nothing found for “' + esc(res.query) +
+      '”. Try a surname, or the policy number from their letter.</div></div>';
+  }
+
+  el.innerHTML = html;
+  var box = $('cq');
+  if (box && !CLIENT.busy) { box.focus(); box.setSelectionRange(box.value.length, box.value.length); }
+}
+
+function clientCard(c) {
+  var k = c.counts || {};
+  var html =
+    '<div class="card"><h2>' + esc(c.name) + '</h2>' +
+    '<p class="sub">Client ' + esc(c.clientNo || '—') + ' · ' +
+      esc(c.agents.join(', ')) + (c.address ? ' · ' + esc(c.address) : '') + '</p>' +
+    '<div class="stats">' +
+      stat('Policies', num(k.total || 0),
+           (c.hiddenPolicies ? num(c.hiddenPolicies) + ' more on another agent\'s book' : 'on this book')) +
+      stat('Overdue', num(k.overdue || 0), money(c.modalOverdue || 0) + ' of instalments',
+           k.overdue ? 'bad' : 'good') +
+      stat('Lapsed', num(k.lapsed || 0), 'reinstatement, not collection', k.lapsed ? 'warn' : '') +
+      stat('Phone', c.phone || '—', c.phone ? 'on file' : 'nothing on file', c.phone ? '' : 'bad') +
+      stat('E-mail', c.email ? 'on file' : '—', esc(c.email || 'nothing on file'), c.email ? '' : 'bad') +
+    '</div>' +
+    '<div class="toolbar" style="margin-top:4px">' +
+      '<button class="btn small" data-log="client" data-policy="' + esc(c.clientNo) +
+        '" data-client="' + esc(c.name) + '">Log a call</button>' +
+      '<button class="btn small ghost" data-client-back="1">← Back to the search</button>' +
+    '</div></div>';
+
+  html += '<div class="card"><h2>Every policy</h2>' +
+    '<p class="sub">Whatever needs attention first — overdue, then underwriting, then lapsed, ' +
+    'then everything running normally.</p>' +
+    table('cPolicies', [
+      { key: 'state', label: 'State',
+        render: function (r) {
+          var t = r.state === 'Overdue' ? 'p-bad' : r.state === 'Lapsed' ? 'p-warn'
+                : r.state === 'Underwriting' ? 'p-gold' : 'p-dim';
+          return '<span class="pill ' + t + '">' + esc(r.state) + '</span>';
+        } },
+      { key: 'policy', label: 'Policy',
+        render: function (r) {
+          return r.policyBroken
+            ? '<span class="pill p-warn" title="Scientific notation on export destroyed the digits">number lost</span>'
+            : esc(r.policy);
+        } },
+      { key: 'plan', label: 'Plan' },
+      { key: 'modal', label: 'Instalment', num: true, render: function (r) { return money2(r.modal); } },
+      { key: 'sumAssured', label: 'Sum assured', num: true,
+        render: function (r) { return r.sumAssured ? money(r.sumAssured) : '<span style="color:var(--dim)">—</span>'; } },
+      { key: 'billing', label: 'Billing' },
+      { key: 'days', label: 'Days', num: true,
+        render: function (r) {
+          if (r.state !== 'Overdue') return '<span style="color:var(--dim)">—</span>';
+          var t = r.days > 365 ? 'p-bad' : r.days > 90 ? 'p-warn' : 'p-dim';
+          return '<span class="pill ' + t + '">' + num(r.days) + '</span>';
+        } },
+      { key: 'issued', label: 'Issued' },
+      { key: 'paidTo', label: 'Paid to' },
+      { key: 'act', label: '', sortable: false,
+        render: function (r) {
+          return '<button class="btn small" data-log="client" data-policy="' + esc(r.policy) +
+                 '" data-client="' + esc(c.name) + '">Log</button>';
+        }, value: function () { return ''; } }
+    ], c.policies, { limit: 100 }) + '</div>';
+
+  if ((c.inforce || []).length) {
+    html += '<div class="card"><h2>What these are worth</h2>' +
+      '<p class="sub">From the in-force book — the maturity date, the fund behind it and the ' +
+      'cover, none of which the dues extract carries.</p>' +
+      table('cInforce', [
+        { key: 'policy', label: 'Policy' },
+        { key: 'plan', label: 'Plan' },
+        { key: 'cls', label: 'Kind',
+          render: function (r) {
+            return '<span class="pill p-dim">' + esc({ retirement: 'Pension', life: 'Life',
+              term: 'Term', benefit: 'Benefit' }[r.cls] || r.cls) + '</span>';
+          } },
+        { key: 'matures', label: 'Matures',
+          render: function (r) {
+            return esc(r.matures) + (r.months !== null
+              ? '<div style="color:var(--dim);font-size:11.5px">' + months(r.months) + '</div>' : '');
+          } },
+        { key: 'fund', label: 'Fund value', num: true,
+          render: function (r) { return r.fund ? money(r.fund) : '<span style="color:var(--dim)">—</span>'; } },
+        { key: 'sumInsured', label: 'Sum insured', num: true,
+          render: function (r) { return r.sumInsured ? money(r.sumInsured) : '<span style="color:var(--dim)">—</span>'; } },
+        { key: 'annual', label: 'Annual premium', num: true, render: function (r) { return money(r.annual); } },
+        { key: 'suspense', label: 'In suspense', num: true,
+          render: function (r) { return r.suspense ? '<span class="pill p-gold">' + money2(r.suspense) + '</span>' : '<span style="color:var(--dim)">—</span>'; } }
+      ], c.inforce, { limit: 60 }) + '</div>';
+  }
+
+  if ((c.pending || []).length) {
+    html += '<div class="card"><h2>Pending</h2>' +
+      table('cPending', [
+        { key: 'policy', label: 'Policy' },
+        { key: 'requirement', label: 'Waiting on',
+          render: function (r) { return esc(r.requirement || r.status); } },
+        { key: 'decision', label: 'Decision' },
+        { key: 'age', label: 'Days', num: true,
+          render: function (r) { return r.age === null ? '<span style="color:var(--dim)">unknown</span>' : num(r.age); } },
+        { key: 'suspense', label: 'Suspense', num: true,
+          render: function (r) { return r.suspense ? '<span class="pill p-gold">' + money2(r.suspense) + '</span>' : '—'; } },
+        { key: 'where', label: 'Processed in' }
+      ], c.pending, { limit: 30 }) + '</div>';
+  }
+
+  if ((c.requirements || []).length) {
+    html += '<div class="card"><h2>Outstanding requirements</h2>' +
+      '<p class="sub">What is stopping their business going on the books.</p>' +
+      table('cReqs', [
+        { key: 'policy', label: 'Policy' },
+        { key: 'label', label: 'Requirement' },
+        { key: 'code', label: 'Code', render: function (r) { return '<span class="pill p-dim">' + esc(r.code) + '</span>'; } },
+        { key: 'age', label: 'Days open', num: true,
+          render: function (r) {
+            if (r.age === null) return '<span style="color:var(--dim)">—</span>';
+            var t = r.age > 365 ? 'p-bad' : r.age > 90 ? 'p-warn' : 'p-dim';
+            return '<span class="pill ' + t + '">' + num(r.age) + '</span>';
+          } },
+        { key: 'added', label: 'Ordered' },
+        { key: 'comment', label: 'Note' }
+      ], c.requirements, { sort: 'age', dir: 'desc', limit: 40 }) + '</div>';
+  }
+
+  html += '<div class="card"><h2>What was said last time</h2>' +
+    '<p class="sub">Everything logged against this client, newest first — so nobody repeats a ' +
+    'conversation the client has already had.</p>' +
+    table('cHistory', [
+      { key: 'when', label: 'When' },
+      { key: 'by', label: 'By' },
+      { key: 'policy', label: 'Policy' },
+      { key: 'outcome', label: 'Outcome',
+        render: function (r) { return '<span class="pill p-dim">' + esc(r.outcome || '—') + '</span>'; } },
+      { key: 'note', label: 'Note' },
+      { key: 'next', label: 'Next step' },
+      { key: 'followUp', label: 'Follow up' }
+    ], c.history || [], { sort: 'when', dir: 'desc', limit: 40,
+                          empty: 'Nothing logged against this client yet. Yours would be the first.' }) +
+    '</div>';
+
+  return html;
+}
+
+function runClientLookup(q) {
+  CLIENT.q = q; CLIENT.busy = true; CLIENT.error = ''; CLIENT.result = null;
+  show('client');
+  call({ action: 'intel.client', token: TOKEN, q: q })
+    .then(function (res) {
+      CLIENT.busy = false;
+      if (!res.ok) { CLIENT.error = res.error; CLIENT.result = null; }
+      else CLIENT.result = res;
+      show('client');
+    })
+    .catch(function (e) {
+      CLIENT.busy = false;
+      CLIENT.error = 'Could not reach the branch script — ' + e.message;
+      show('client');
+    });
 }
 
 /* ── Premium dues ──────────────────────────────────────────────────────────
@@ -1561,6 +1781,16 @@ function signOut(why) {
   gateMsg(why ? esc(why) : '', why ? 'err' : '');
 }
 
+/* The search form is rendered as a string like everything else, so the submit
+   is caught on the way up rather than bound to the element. */
+document.addEventListener('submit', function (ev) {
+  if (ev.target && ev.target.id === 'cq-form') {
+    ev.preventDefault();
+    var v = ($('cq') || {}).value || '';
+    if (v.trim().length >= 3) runClientLookup(v.trim());
+  }
+}, true);
+
 $('signin').addEventListener('submit', function (ev) {
   ev.preventDefault();
   var who = $('who').value.trim(), secret = $('secret').value;
@@ -1588,12 +1818,20 @@ $('signout').addEventListener('click', function () { signOut(); });
 /* One listener for the whole app. Every table, tile and button is markup that
    was rendered as a string, so nothing can hold its own handler. */
 document.addEventListener('click', function (ev) {
-  var el = ev.target.closest('[data-view],[data-go],[data-sort],[data-csv],[data-log],[data-group]');
+  var el = ev.target.closest('[data-view],[data-go],[data-sort],[data-csv],[data-log],[data-group],' +
+                             '[data-client-open],[data-client-back]');
   if (!el) return;
 
   if (el.hasAttribute('data-view')) return show(el.getAttribute('data-view'));
   if (el.hasAttribute('data-go'))   return show(el.getAttribute('data-go'));
   if (el.hasAttribute('data-csv'))  return downloadCsv(el.getAttribute('data-csv'));
+
+  if (el.hasAttribute('data-client-open')) {
+    return runClientLookup(el.getAttribute('data-client-open'));
+  }
+  if (el.hasAttribute('data-client-back')) {
+    CLIENT.result = null; return show('client');
+  }
 
   if (el.hasAttribute('data-group')) {
     var gid = el.getAttribute('data-group');

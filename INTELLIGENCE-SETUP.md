@@ -4,7 +4,7 @@ Two pieces, the same shape as the KPI tracker:
 
 | Piece | Where | What it does |
 |---|---|---|
-| `intelligence/index.html` | served with the rest of the site, at `/intelligence/` | sign-in, and the nine screens |
+| `intelligence/index.html` | served with the rest of the site, at `/intelligence/` | sign-in, and the ten screens |
 | `intelligence/manual/index.html` | `/intelligence/manual/` | the manual everyone reads — plain language, no setup in it |
 | `apps-script/Intelligence.gs` | bound to the branch workbook | reads the tabs, computes everything, checks access codes, sends the digests |
 
@@ -156,6 +156,32 @@ Saving the file is not deploying it.
 | `INTEL_TAB_DUES` etc. | point a domain at a named tab if the column search ever picks the wrong one. Keys: `DUES`, `INFORCE`, `PENDING`, `REQS`, `TASKS`, `ACCESS`. |
 
 ---
+
+## 3a. The one screen that does not read the cache
+
+**Find a client** goes to the workbook live, and it is the only part that does.
+
+The cache holds lists — overdue premiums, maturities, leads. A client's
+policies mostly are not on any of them: a premium paid on time is on no list at
+all. So the lookup reads the dues book directly, then enriches from the
+in-force book, pending business, requirements and the action log. It is a
+little slower than the other screens and the answer is current rather than last
+night's, which for a phone call is the right trade.
+
+It searches on a name, a policy number, a client number, a phone number or an
+e-mail — whatever the caller happens to give. Several matches return a
+shortlist; one match returns the whole picture.
+
+**Searching by policy returns the client, not the policy.** Somebody reading a
+number off a letter still wants their other eighteen policies, so the lookup
+widens from the row that matched to every row that client has.
+
+Scoping is the same as everywhere else and applies to the shortlist as well as
+the record: an agent finds their own clients. A client whose policies all sit
+on another book does not appear at all — being told a client exists but is
+withheld is itself the disclosure. Where a client is shared across two agents,
+the agent sees their own policies and a **count** of the others, so nobody is
+misled into thinking they have the whole picture.
 
 ## 4. How it is put together
 
