@@ -66,19 +66,48 @@ function headerOf_(sheet) {
    scope, so this cannot serve a stale tab to the next request — it only stops
    one request asking the same question four times. */
 var _tabMemo = {};
+
+/* Remember which tab answered last time, so the scan does not have to happen
+   at all. Discovery costs three Sheets calls per sheet — getLastRow,
+   getLastColumn, getRange — so a six-tab workbook is around eighteen round
+   trips, and that was still most of the eight seconds after memoising the
+   scan down to one per request.
+
+   The tab's NAME is cached across requests instead. A named lookup is one
+   call, and the header is checked against it so a renamed or restructured tab
+   falls back to the full scan and re-caches. Nothing is trusted that is not
+   verified. */
+function tabNameCache_() { return CacheService.getScriptCache(); }
+
 function findTabBy_(mustHave) {
   var key = mustHave.join('|').toLowerCase();
   if (_tabMemo.hasOwnProperty(key)) return _tabMemo[key];
+
+  var cache = null, remembered = null;
+  try { cache = tabNameCache_(); remembered = cache.get('tab_' + key); } catch (e) {}
+
+  if (remembered) {
+    var quick = ss_().getSheetByName(remembered);
+    if (quick && headerMatches_(quick, mustHave)) { _tabMemo[key] = quick; return quick; }
+  }
+
   var sheets = ss_().getSheets();
   var found = null;
   for (var i = 0; i < sheets.length; i++) {
-    var head = headerOf_(sheets[i]).map(function (h) { return h.toLowerCase(); });
-    var ok = mustHave.every(function (m) { return head.indexOf(m.toLowerCase()) > -1; });
-    if (ok) { found = sheets[i]; break; }
+    if (headerMatches_(sheets[i], mustHave)) { found = sheets[i]; break; }
+  }
+  if (found && cache) {
+    try { cache.put('tab_' + key, found.getName(), 6 * 3600); } catch (e) {}
   }
   _tabMemo[key] = found;
   return found;
 }
+
+function headerMatches_(sheet, mustHave) {
+  var head = headerOf_(sheet).map(function (h) { return h.toLowerCase(); });
+  return mustHave.every(function (m) { return head.indexOf(m.toLowerCase()) > -1; });
+}
+
 
 /** The daily log. Identified by StaffId + KPI1_Actioned. */
 function logSheet_() {
