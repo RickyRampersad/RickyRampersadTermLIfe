@@ -320,6 +320,7 @@ function intelRebuild() {
   /* Built here because it needs the in-force rows, and shipped in the cache so
      scoping and the digests all agree on who is who. */
   out.aliases = iBuildAliases_(out.maturity.all);
+  out.units = iBuildUnits_();
   delete out.maturity.all;
   iJoinChases_(out);
 
@@ -1873,6 +1874,56 @@ function iFindPerson_(who, secret) {
   return null;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   THE BRANCH IS FIVE LEVELS, NOT THREE
+   The Unit column on the access list is the org chart and nobody was reading
+   it. It says which manager each agent reports to, and every one of the 29
+   agents has it filled in:
+
+     Ricky Rampersad     13 people   Branch Manager
+     Gary Sookdeo         8          Unit Manager
+     Kerwyn Ramroach      6          Assistant Branch Manager
+     Akaash Kalladeen     6          Unit Manager
+     SalesSupport         3          the pending desk
+     Branch Managers Assistant  1
+
+   A unit manager runs a team, not the branch. Before this they were handed the
+   whole branch — every other unit's arrears and every other unit's clients —
+   which is both more than they need and more than they should have.
+
+   The map is rebuilt nightly from the access list, so moving an agent between
+   units is a cell change in the sheet and nothing else.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function iBuildUnits_() {
+  var units = {};
+  iAccessTabs_().forEach(function (sh) {
+    var head = iHeaders_(sh), last = sh.getLastRow();
+    if (last < 2) return;
+    var vals = sh.getRange(2, 1, last - 1, sh.getLastColumn()).getValues();
+    var cName = iCol_(head, ['name']),
+        cAgent = iCol_(head, ['agent name (exactly as in data)', 'agent name']),
+        cNum = iCol_(head, ['agent number', 'agent id', 'agentid']),
+        cUnit = iCol_(head, ['unit']),
+        cRole = iCol_(head, ['role (agent/manager/staff)', 'role']),
+        cActive = iCol_(head, ['active']);
+    if (cUnit < 0) return;
+    vals.forEach(function (row) {
+      var unit = String(row[cUnit]).trim();
+      if (!unit) return;
+      if (cActive >= 0 && /^(no|inactive|disabled|off)$/i.test(String(row[cActive]).trim())) return;
+      var id = iIdentity_(cName >= 0 ? row[cName] : '',
+                          cAgent >= 0 ? row[cAgent] : '',
+                          cNum >= 0 ? row[cNum] : '');
+      if (!id.agentName && !id.agentId) return;
+      if (!units[unit]) units[unit] = [];
+      units[unit].push({ name: id.agentName, id: id.agentId,
+                         role: cRole >= 0 ? String(row[cRole]).trim() : '' });
+    });
+  });
+  return units;
+}
+
 /* ── Three kinds of person, not two ───────────────────────────────────────
    The first cut of this split everyone into "branch" and "agent" on a loose
    regex, and Staff fell through to agent. Staff have no book of their own, so
@@ -1890,9 +1941,21 @@ function iFindPerson_(who, secret) {
      agent    their own book and nobody else's                             */
 function iRoleOf_(title) {
   var t = String(title || '').trim().toLowerCase();
-  if (/branch manager|assistant branch|unit manager|^manager$|^admin|bma/.test(t)) return 'branch';
-  if (/^staff$|sales support|^support|^assistant$|administrator|clerk|secretar/.test(t)) return 'staff';
+  /* Most specific first. "Assistant Branch Manager" contains both "assistant"
+     and "manager", and "Unit Manager" contains "manager" — a loose test gets
+     all three wrong. */
+  if (/branch manager|^bm$/.test(t) && !/assistant/.test(t)) return 'branch';
+  if (/assistant branch manager|^abm$/.test(t))              return 'branch';
+  if (/unit manager|team manager/.test(t))                   return 'unit';
+  if (/sales support manager|staff manager|support manager|^bma$|managers assistant/.test(t)) return 'staff-lead';
+  if (/^manager$|^admin/.test(t))                            return 'branch';
+  if (/^staff$|sales support|^support$|administrator|clerk|secretar/.test(t)) return 'staff';
   return 'agent';
+}
+
+/* Who sees the whole branch, whatever their level. */
+function iSeesBranch_(role) {
+  return role === 'branch' || role === 'staff' || role === 'staff-lead';
 }
 
 /* One access tab names people "Narissa Mohammed"; the other names the same
@@ -1924,7 +1987,8 @@ function iIdentity_(name, agentName, agentNumber) {
 
 function iSessionsTab_() {
   return iSheet_(INTEL.SESSIONS_TAB,
-    ['Token', 'Name', 'E-mail', 'Role', 'Agent name', 'Issued', 'Expires', 'Last seen', 'Agent id']);
+    ['Token', 'Name', 'E-mail', 'Role', 'Agent name', 'Issued', 'Expires', 'Last seen',
+     'Agent id', 'Unit']);
 }
 
 function iIssueSession_(person) {
@@ -1933,7 +1997,7 @@ function iIssueSession_(person) {
   var now = new Date();
   var exp = new Date(now.getTime() + INTEL.SESSION_HOURS * 3600000);
   sh.appendRow([token, person.name, person.email, person.role, person.agentName,
-                now, exp, now, person.agentId || '']);
+                now, exp, now, person.agentId || '', person.unit || '']);
   iPruneSessions_(sh);
   return { token: token, expires: exp.toISOString() };
 }
@@ -1943,7 +2007,7 @@ function iIssueSession_(person) {
 function iPruneSessions_(sh) {
   var last = sh.getLastRow();
   if (last < 2) return;
-  var vals = sh.getRange(2, 1, last - 1, 9).getValues();
+  var vals = sh.getRange(2, 1, last - 1, 10).getValues();
   var now = new Date();
   for (var r = vals.length - 1; r >= 0; r--) {
     var exp = vals[r][6];
@@ -1957,7 +2021,7 @@ function iSession_(token) {
   var sh = iSessionsTab_();
   var last = sh.getLastRow();
   if (last < 2) return null;
-  var vals = sh.getRange(2, 1, last - 1, 9).getValues();
+  var vals = sh.getRange(2, 1, last - 1, 10).getValues();
   var now = new Date();
   for (var r = 0; r < vals.length; r++) {
     if (String(vals[r][0]) !== token) continue;
@@ -1965,7 +2029,8 @@ function iSession_(token) {
     if (!(exp instanceof Date) || exp < now) return null;
     sh.getRange(r + 2, 8).setValue(now);
     return { name: vals[r][1], email: vals[r][2], role: vals[r][3],
-             agentName: vals[r][4], agentId: String(vals[r][8] || '') };
+             agentName: vals[r][4], agentId: String(vals[r][8] || ''),
+             unit: String(vals[r][9] || '') };
   }
   return null;
 }
@@ -1999,31 +2064,56 @@ function iSameAgent_(a, b) {
 
 function iScope_(cache, session) {
   if (!cache) return null;
-  /* Staff work every agent's pending cases, so they get the branch's data.
-     What differs for them is the day's emphasis, not the slice. */
-  if (session.role === 'branch' || session.role === 'staff') return cache;
+  /* Staff and their supervisor work every agent's pending cases, so they get
+     the branch's data. What differs for them is the day's emphasis, not the
+     slice. A unit manager falls through to the scoping below. */
+  if (iSeesBranch_(session.role)) return cache;
 
   var me = session.agentName;
   var meId = String(session.agentId || '').trim().toUpperCase();
   var c = JSON.parse(JSON.stringify(cache));
 
+  /* A unit manager is scoped to their team, an agent to themselves. Both are
+     the same operation over a different set of people, so the set is built
+     once here and everything below asks the same question of it. */
+  var team = [{ name: me, id: meId }];
+  if (session.role === 'unit') {
+    var members = (cache.units || {})[String(session.unit || '').trim()] || [];
+    if (members.length) team = members;
+  }
+
   /* Which alias group this person belongs to, if any — this is what lets
      "Ricky Rampersad" match rows filed under "Advanced Investments Management
      Limited". Falls back to name and code matching when there is no group. */
   var aliasIdx = iAliasIndex_(cache.aliases);
-  var myGroup = aliasIdx[iNameKey_(me)];
-  if (myGroup === undefined && meId) {
-    (cache.aliases || []).forEach(function (g, i) { if (g.code === meId) myGroup = i; });
-  }
+  /* Every alias group the team belongs to, so a member filed under a company
+     name is still recognised as one of ours. */
+  var groups = {}, names = {}, ids = {};
+  team.forEach(function (p) {
+    var k = iNameKey_(p.name);
+    if (k) names[k] = 1;
+    if (p.id) ids[String(p.id).toUpperCase()] = 1;
+    var g = aliasIdx[k];
+    if (g === undefined && p.id) {
+      (cache.aliases || []).forEach(function (ag, i) { if (ag.code === String(p.id).toUpperCase()) g = i; });
+    }
+    if (g !== undefined) groups[g] = 1;
+  });
   /* Name first, because that is all the dues, pending and requirement extracts
      carry. The in-force book also carries a Servicing Agent Id, and matching on
      it catches the rows where the branch wrote the agency's company name —
      "GARY SOOKDEO INSURANCE SOLUTIONS LTD" — where the person's name belongs. */
   function isMine(x, key) {
-    if (iSameAgent_(x[key || 'agent'], me)) return true;
-    if (meId && x.agentId && String(x.agentId).toUpperCase() === meId) return true;
-    if (myGroup === undefined) return false;
-    return aliasIdx[iNameKey_(x[key || 'agent'])] === myGroup;
+    var who = x[key || 'agent'];
+    if (x.agentId && ids[String(x.agentId).toUpperCase()]) return true;
+    var k = iNameKey_(who);
+    if (k && names[k]) return true;
+    var g = aliasIdx[k];
+    if (g !== undefined && groups[g]) return true;
+    /* Last resort: the loose surname test, which is what catches the extracts
+       spelling the same person three different ways. */
+    for (var i = 0; i < team.length; i++) if (iSameAgent_(who, team[i].name)) return true;
+    return false;
   }
   function mine(list, key) {
     return (list || []).filter(function (x) { return isMine(x, key); });
@@ -2035,14 +2125,30 @@ function iScope_(cache, session) {
   /* The precomputed per-agent maps are keyed on the name the extract used.
      An agent whose access row carries only a number still resolves, because
      each entry keeps the servicing agent id beside its totals. */
+  /* The per-agent precomputed maps are keyed on the extract's own name. For a
+     team they are summed rather than looked up, because a unit's total is the
+     sum of its people's. */
   function forMe(map, blank) {
-    var keys = Object.keys(map || {});
-    for (var i = 0; i < keys.length; i++) {
-      if (iSameAgent_(keys[i], me)) return map[keys[i]];
-      if (meId && map[keys[i]] && String(map[keys[i]].agentId || '').toUpperCase() === meId) return map[keys[i]];
-      if (myGroup !== undefined && aliasIdx[iNameKey_(keys[i])] === myGroup) return map[keys[i]];
-    }
-    return blank;
+    var keys = Object.keys(map || {}).filter(function (k) {
+      return isMine({ agent: k, agentId: (map[k] || {}).agentId });
+    });
+    if (!keys.length) return blank;
+    if (keys.length === 1) return map[keys[0]];
+    var out = JSON.parse(JSON.stringify(blank));
+    keys.forEach(function (k) {
+      var v = map[k];
+      Object.keys(v).forEach(function (f) {
+        if (typeof v[f] !== 'number') return;
+        out[f] = (typeof out[f] === 'number' ? out[f] : 0) + v[f];
+      });
+      /* The dues ageing map is a band-per-band object, not flat numbers. */
+      Object.keys(v).forEach(function (f) {
+        if (!v[f] || typeof v[f] !== 'object' || !('policies' in v[f])) return;
+        if (!out[f]) out[f] = { policies: 0, modal: 0 };
+        out[f].policies += v[f].policies; out[f].modal += v[f].modal;
+      });
+    });
+    return out;
   }
 
   /* ── dues ────────────────────────────────────────────────────────────────
@@ -2122,9 +2228,10 @@ function iScope_(cache, session) {
   if (c.tasks && !c.tasks.error) {
     c.tasks = { openCount: null, restricted: true };
   }
-  /* The alias table names every agent in the branch; it is plumbing, and an
-     agent has no reason to receive it. */
+  /* The alias table and the org chart both name every agent in the branch;
+     they are plumbing, and nobody below branch level needs to receive them. */
   delete c.aliases;
+  delete c.units;
 
   /* ── requirements ────────────────────────────────────────────────────────
      Requirements carry no agent — they are keyed on policy. An agent sees the
@@ -2288,7 +2395,8 @@ function intelRoute_(b) {
     case 'intel.client':  return iActClientLookup_(b, session);
     case 'intel.action':  return iActLog_(b, session);
     case 'intel.session': return iOk_({ name: session.name, role: session.role,
-                                       agentName: session.agentName, agentId: session.agentId });
+                                       agentName: session.agentName, agentId: session.agentId,
+                                       unit: session.unit });
     case 'intel.signout': return iActSignout_(b);
   }
   return iErr_('Unknown action: ' + action);
@@ -2352,7 +2460,7 @@ function iActData_(b, session) {
    shortlist and the full record. Aliases included, or the three agents whose
    book is filed under a company name could not look up their own clients. */
 function iOwnershipTest_(session) {
-  if (session.role === 'branch' || session.role === 'staff') return function () { return true; };
+  if (iSeesBranch_(session.role)) return function () { return true; };
   var cache = iLoadCache_();
   var aliasIdx = iAliasIndex_(cache && cache.aliases);
   var meId = String(session.agentId || '').trim().toUpperCase();

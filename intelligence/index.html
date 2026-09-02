@@ -561,7 +561,7 @@ function errCard(msg) {
 function viewPulse(el) {
   var d = DATA.dues || {}, p = DATA.pending || {}, q = DATA.reqs || {},
       m = DATA.maturity || {}, x = DATA.expiry || {}, h = DATA.health || {};
-  var mine = DATA.you.role !== 'branch';
+  var mine = soloAgent();
   var suspense = (p.suspense || 0) + (m.suspense || 0);
   var conv24 = (x.convertible || {}).w24 || 0;
   var pens12 = (m.retirement || {}).w12 || 0;
@@ -723,6 +723,21 @@ function moveGroupFor(mine) {
    Everything here is computed from data already on the page, so it costs
    nothing to serve and cannot disagree with the screen it points at.        */
 
+/* Only a single agent has no need of an Agent column — a unit manager, the
+   staff desk and their supervisor all need to know whose row it is. The old
+   test asked "am I not the branch", which hid the column from three of the
+   five levels. */
+function soloAgent() { return DATA.you.role === 'agent'; }
+
+var ROLE_WORD = {
+  branch:      'the branch',
+  unit:        'your unit',
+  'staff-lead':'the branch',
+  staff:       'the branch',
+  agent:       'your book'
+};
+function roleWord() { return ROLE_WORD[DATA.you.role] || 'your book'; }
+
 function isoToday() { return new Date().toISOString().slice(0, 10); }
 
 function dueFollowUps() {
@@ -743,7 +758,7 @@ function todayJobs() {
      about it. Staff do not reinstate policies — they chase head office — so
      putting it at the top of their list would be telling them to do somebody
      else's job first. */
-  if (role !== 'staff') {
+  if (role !== 'staff' && role !== 'staff-lead') {
     job({ key: 'lapsed', count: mc.lapsed || 0, tone: 'bad', view: 'moves',
           label: role === 'branch' ? 'Lapsed overnight — make sure somebody is on them'
                                    : 'Reinstate what lapsed last night',
@@ -815,6 +830,76 @@ function todayJobs() {
           rows: oldreq.slice(0, 5), cols: 'reqs' });
   }
 
+  /* A unit manager runs a team of five or six. Their day is not the branch's
+     trend line — it is which of their people needs a hand this week. */
+  if (role === 'unit') {
+    job({ key: 'unitchase', count: (d.chase || []).filter(function (r) { return r.days > 90; }).length,
+          tone: 'bad', view: 'dues',
+          label: 'Arrears past 90 days across your unit',
+          why: 'Past ninety days the odds fall away quickly. Worth knowing which of your people is carrying them.',
+          rows: (d.chase || []).filter(function (r) { return r.days > 90; })
+                  .sort(function (a, b) { return b.days - a.days; }).slice(0, 5), cols: 'dues' });
+
+    var uw = (d.byAgent || []).filter(function (a) { return a.rate > 0.15; });
+    job({ key: 'unitworst', count: uw.length, tone: 'warn', view: 'dues',
+          label: 'People in your unit with a heavy share in arrears',
+          why: 'A conversation about billing method, not effort — the method is usually what is failing.',
+          rows: uw.slice(0, 5), cols: 'agentleague' });
+
+    job({ key: 'unitnever', count: p.chaseNever || 0, tone: 'bad', view: 'pending',
+          label: 'Your unit\'s pending cases nobody has chased',
+          why: 'No follow-up task has ever named these. Somebody on your team has to own them.',
+          rows: (p.rows || []).filter(function (r) { return r.chase === 'never'; })
+                  .sort(function (a, b) { return (b.age || 0) - (a.age || 0); }).slice(0, 5),
+          cols: 'pending' });
+
+    job({ key: 'unitleads', count: x.thisWeek || 0, tone: 'good', view: 'xsell',
+          label: 'Cross-sell calls ready in your unit',
+          why: 'Reachable, paid up, right age. Worth handing to the agent who owns each one at your next unit meeting.',
+          rows: (x.rows || []).filter(function (r) { return r.score >= 80; }).slice(0, 5), cols: 'xsell' });
+
+    job({ key: 'unitpens', count: (m.retirement || {}).w12 || 0, tone: 'good', view: 'maturity',
+          label: 'Pensions maturing in your unit within a year',
+          why: 'The decision is made months before the letter lands. Make sure the servicing agent knows.',
+          rows: ((m.retirement || {}).rows || []).filter(function (r) { return r.months <= 12; }).slice(0, 5),
+          cols: 'maturity' });
+  }
+
+  /* The person who runs the pending desk needs to see the desk, not the
+     branch's selling. Whose work is stacking up, and what has gone quiet. */
+  if (role === 'staff-lead') {
+    job({ key: 'never', count: p.chaseNever || 0, tone: 'bad', view: 'pending',
+          label: 'Pending cases nobody has ever chased',
+          why: 'No task has ever named these. Somebody on the desk has to be given them.',
+          rows: (p.rows || []).filter(function (r) { return r.chase === 'never'; })
+                  .sort(function (a, b) { return (b.age || 0) - (a.age || 0); }).slice(0, 5),
+          cols: 'pending' });
+
+    var quiet = ((DATA.tasks || {}).rows || []).filter(function (r) { return (r.quiet || 0) > 14; });
+    job({ key: 'quiet', count: quiet.length, tone: 'warn', view: 'pending',
+          label: 'Chases that have gone quiet',
+          why: 'Open tasks nobody has touched in a fortnight. Either head office has stopped replying or the task needs closing.',
+          rows: quiet.slice(0, 5), cols: 'tasks' });
+
+    var load = ((DATA.tasks || {}).byAssignee || []);
+    job({ key: 'load', count: load.length, tone: 'gold', view: 'pending',
+          label: 'How the desk\'s work is spread',
+          why: 'Open follow-ups by person. One name carrying most of it is the thing to fix.',
+          rows: load.slice(0, 5), cols: 'load' });
+
+    job({ key: 'held', count: (p.rows || []).filter(function (r) { return r.suspense > 0; }).length,
+          tone: 'gold', view: 'pending',
+          label: 'Cases holding a client\'s money',
+          why: 'Paid and unapplied. These are the ones that turn into complaints.',
+          rows: (p.rows || []).filter(function (r) { return r.suspense > 0; }).slice(0, 5), cols: 'pending' });
+
+    var oldq = (q.rows || []).filter(function (r) { return (r.age || 0) > 180; });
+    job({ key: 'oldreq', count: oldq.length, tone: 'warn', view: 'reqs',
+          label: 'Requirements open more than six months',
+          why: 'Mostly cases that ended and were never closed off. Clearing them is what makes the live list believable.',
+          rows: oldq.slice(0, 5), cols: 'reqs' });
+  }
+
   if (role === 'branch') {
     var stale = (DATA.freshness || []).filter(function (f) { return f.missing || (f.ageDays !== null && f.ageDays > 14); });
     job({ key: 'stale', count: stale.length, tone: 'bad', view: 'health',
@@ -853,13 +938,13 @@ function viewToday(el) {
   var who = DATA.you.name.split(' ')[0];
   var hour = new Date().getHours();
   var greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  var roleWord = { branch: 'the branch', staff: 'the branch', agent: 'your book' }[DATA.you.role];
+  var scopeWord = roleWord();
 
   var html =
     '<div class="card"><h2>' + esc(greet) + ', ' + esc(who) + '</h2>' +
     '<p class="sub">' + (jobs.length
-      ? 'Everything worth doing on ' + roleWord + ' today, hardest-first. Each one opens the screen that holds it.'
-      : 'Nothing needs you on ' + roleWord + ' today — which is the good outcome.') +
+      ? 'Everything worth doing on ' + scopeWord + ' today, hardest-first. Each one opens the screen that holds it.'
+      : 'Nothing needs you on ' + scopeWord + ' today — which is the good outcome.') +
     ' Built from the workbook at ' + esc(DATA.builtAt) + '.</p>';
 
   if (!jobs.length) {
@@ -890,7 +975,7 @@ function viewToday(el) {
 
 /* Each job knows which shape its rows are, so one renderer covers them all. */
 function todayTable(j) {
-  var mine = DATA.you.role === 'agent';
+  var mine = soloAgent();
   var C = {
     move: [].concat(mine ? [] : [{ key: 'agent', label: 'Agent' }], [
       { key: 'client', label: 'Client' }, { key: 'policy', label: 'Policy' },
@@ -941,6 +1026,12 @@ function todayTable(j) {
     health: [{ key: 'what', label: 'Issue' },
       { key: 'count', label: 'Rows', num: true, render: function (r) { return num(r.count); } },
       { key: 'fix', label: 'Where it gets fixed' }],
+    tasks: [{ key: 'subject', label: 'Task' }, { key: 'assigned', label: 'Assigned to' },
+      { key: 'contact', label: 'Chasing' }, { key: 'lastTouched', label: 'Last touched' },
+      { key: 'quiet', label: 'Quiet for', num: true,
+        render: function (r) { return r.quiet === null ? '—' : num(r.quiet) + 'd'; } }],
+    load: [{ key: 'who', label: 'Person' },
+      { key: 'n', label: 'Open follow-ups', num: true, render: function (r) { return num(r.n); } }],
     agentleague: [{ key: 'agent', label: 'Agent' },
       { key: 'book', label: 'Book', num: true, render: function (r) { return num(r.book); } },
       { key: 'chase', label: 'Chasing', num: true, render: function (r) { return num(r.chase); } },
@@ -981,10 +1072,12 @@ function viewClient(el) {
       '<button class="btn small" id="cq-go" type="submit">' +
         (CLIENT.busy ? 'Searching…' : 'Search') + '</button>' +
     '</form>' +
-    (DATA.you.role === 'branch'
-      ? ''
-      : '<div class="note">You will find your own clients. A client whose policies are all on ' +
-        'another agent\'s book does not appear here.</div>') +
+    (soloAgent()
+      ? '<div class="note">You will find your own clients. A client whose policies are all on ' +
+        'another agent\'s book does not appear here.</div>'
+      : DATA.you.role === 'unit'
+        ? '<div class="note">You will find the clients of the agents in your unit.</div>'
+        : '') +
     (CLIENT.error ? '<div class="note red"><b>' + esc(CLIENT.error) + '</b></div>' : '') +
     '</div>';
 
@@ -1181,7 +1274,7 @@ function runClientLookup(q) {
 function viewDues(el) {
   var d = DATA.dues || {};
   if (d.error) { el.innerHTML = errCard(d.error); return; }
-  var mine = DATA.you.role !== 'branch';
+  var mine = soloAgent();
   var unreachable = (d.chase || []).filter(function (r) { return !r.reachable; });
 
   var html =
@@ -1375,7 +1468,7 @@ function duesCols(mine) {
 function viewPending(el) {
   var p = DATA.pending || {};
   if (p.error) { el.innerHTML = errCard(p.error); return; }
-  var mine = DATA.you.role !== 'branch';
+  var mine = soloAgent();
   var AGE = ['0-30', '31-60', '61-90', '91-180', '180+'];
 
   var html =
@@ -1658,7 +1751,7 @@ function viewMaturity(el) {
 }
 
 function maturityCols(valueKey, valueLabel) {
-  var mine = DATA.you.role !== 'branch';
+  var mine = soloAgent();
   return [].concat([
     { key: 'matures', label: 'Matures' },
     { key: 'months', label: 'In', num: true,
@@ -1735,7 +1828,7 @@ function viewExpiry(el) {
 }
 
 function expiryCols() {
-  var mine = DATA.you.role !== 'branch';
+  var mine = soloAgent();
   return [].concat([
     { key: 'matures', label: 'Ends' },
     { key: 'months', label: 'In', num: true,
@@ -1771,7 +1864,7 @@ function expiryCols() {
 function viewXsell(el) {
   var x = DATA.crosssell || {};
   if (x.error) { el.innerHTML = errCard(x.error); return; }
-  var mine = DATA.you.role !== 'branch';
+  var mine = soloAgent();
   /* The wording arrives once and every row points at it by id. */
   var defs = x.rules || {};
   function ruleOf(r) { return defs[r.rule] || {}; }
@@ -1896,7 +1989,7 @@ function viewMoves(el) {
       '<p class="sub">' + esc(m.note || '') + '</p></div>';
     return;
   }
-  var c = m.counts || {}, mine = DATA.you.role !== 'branch';
+  var c = m.counts || {}, mine = soloAgent();
 
   var html =
     '<div class="card"><h2>What moved since the last rebuild</h2>' +

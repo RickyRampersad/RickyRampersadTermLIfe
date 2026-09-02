@@ -211,24 +211,59 @@ is paid up **to** — its maximum sits in 2028 and it says nothing about
 recency. Using it was the first thing tried and it reported every source as
 fresh.
 
-## 3c. Three roles, and the day each of them gets
+## 3c. Five levels, and the day each of them gets
 
-The first cut split everyone into *branch* and *agent* on a loose regex, and
-**Staff fell through to agent**. Staff have no book of their own, so all four
-of them — including the person who logs two thirds of the branch's chase work —
-signed in to an app with nothing in it at all.
+The **Unit column on the access list is the org chart**, and nothing was
+reading it. Every one of the 29 agents has it filled in:
 
-There are three:
+| Unit | People | Led by |
+|---|---|---|
+| Ricky Rampersad | 13 | Branch Manager |
+| Gary Sookdeo | 8 | Unit Manager |
+| Kerwyn Ramroach | 6 | Assistant Branch Manager |
+| Akaash Kalladeen | 6 | Unit Manager |
+| SalesSupport | 3 | the pending desk |
+| Branch Managers Assistant | 1 | |
+
+A unit manager runs a team, not the branch. Before this they were handed every
+other unit's arrears and every other unit's clients — both more than they need
+and more than they should have. The map is rebuilt nightly, so moving an agent
+between units is one cell in the sheet and nothing else.
 
 | Role on the access list | Resolves to | Sees | Their day |
 |---|---|---|---|
-| Branch Manager, Assistant Branch Manager, Unit Manager, manager | `branch` | everything, plus the management cuts | what moved · stale sources · serious data issues · worst arrears |
-| Staff, Sales Support, administrator | `staff` | everything — they work every agent's cases | never-chased pending · money held · chases closed with the case open · old requirements |
-| Agent, advisor, anything else | `agent` | their own book and nobody else's | lapses · arrears past 90 days · suspense · cross-sell ready · pensions maturing |
+| Branch Manager, Assistant Branch Manager, manager | `branch` | everything | what moved · stale sources · serious data issues · worst arrears · branch leads |
+| **Unit Manager**, Team Manager | `unit` | **their unit only** | their unit's arrears past 90 days · who in the team is carrying a heavy share · unit pendings nobody chased · unit leads · unit pensions maturing |
+| **Sales Support Manager**, BMA, Managers Assistant | `staff-lead` | the branch | never-chased pending · chases gone quiet · **how the desk's work is spread** · money held · old requirements |
+| Staff, Sales Support | `staff` | the branch | never-chased pending · money held · chases closed with the case open · old requirements |
+| Agent, advisor, anything else | `agent` | their own book | lapses · arrears past 90 days · suspense · cross-sell ready · pensions maturing |
 
-Order matters in the test: "Assistant Branch **Manager**" contains *assist* and
-must not read as support staff, which is why the manager pattern runs first and
-both are anchored rather than loose.
+Order matters in the test, and a loose regex gets all of it wrong: "Assistant
+Branch **Manager**" contains both *assistant* and *manager*, and "**Unit**
+Manager" contains *manager*. Each pattern is anchored and the most specific
+runs first.
+
+An agent's own totals are one person's. A unit manager's are the **sum** of
+their team's, which is why Akaash's 294 chase-list policies reconcile exactly
+to the six members of his unit added together.
+
+### One cell to set before Kamla gets the right view
+
+The sheet currently records **Kamla Dookran** and **Sasha Lalla Jagassar**
+identically — both `Staff`, both `SalesSupport`. Nothing in the workbook says
+Kamla supervises the desk, so she gets the same screen as the people she
+manages.
+
+To fix it, change Kamla's **Role** cell on `Agent Codes` to **`Sales Support
+Manager`**. The app also accepts `BMA`, `Staff Manager` or `Managers
+Assistant`. That one cell gives her the two things a supervisor needs and a
+staff member does not: **chases that have gone quiet** and **how the desk's
+work is spread**.
+
+The same applies to anyone else whose real job the sheet does not record. The
+Role column is the only place the app can learn it.
+
+### The digests follow the same rule
 
 The digests follow the same rule — staff and managers are skipped by the agent,
 cross-sell and horizon mails rather than sent an empty list. That alone stopped
