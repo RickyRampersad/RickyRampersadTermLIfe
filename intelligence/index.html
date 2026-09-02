@@ -1699,7 +1699,42 @@ function viewHealth(el) {
       stat('Issues found', num(items.length), '', items.length ? 'warn' : 'good') +
       stat('Serious', num(h.high || 0), 'these change what a number means', h.high ? 'bad' : 'good') +
       stat('Built', esc(DATA.builtAt), 'rebuilt nightly at 2am') +
+      (function () {
+        var f = (DATA.freshness || []).filter(function (x) { return !x.missing && x.ageDays !== null; });
+        if (!f.length) return '';
+        var worst = f.reduce(function (m, x) { return x.ageDays > m.ageDays ? x : m; });
+        return stat('Oldest source', num(worst.ageDays) + ' days',
+          esc(worst.label.split(' — ')[0]) + ' — nothing newer than ' + esc(worst.newest),
+          worst.ageDays > 30 ? 'bad' : worst.ageDays > 14 ? 'warn' : 'good');
+      })() +
     '</div></div>';
+
+  /* How old each extract is, before any of the defects — a tab nobody has
+     refreshed is not a data fault, it is a report about a different week, and
+     it changes what every figure downstream of it means. */
+  var fresh = DATA.freshness || [];
+  if (fresh.length) {
+    html += '<div class="card"><h2>How current each source is</h2>' +
+      '<p class="sub">The newest dated record in each tab. This is not when the tab was ' +
+      'refreshed — a spreadsheet does not record that — so a quiet fortnight and a stale ' +
+      'extract look the same here. Either is worth knowing before you quote the figure.</p>' +
+      table('freshList', [
+        { key: 'ageDays', label: 'Age', num: true,
+          sortValue: function (r) { return r.ageDays === null ? -1 : r.ageDays; },
+          render: function (r) {
+            if (r.missing) return '<span class="pill p-bad">missing</span>';
+            if (r.ageDays === null) return '<span style="color:var(--dim)">—</span>';
+            var t = r.ageDays > 30 ? 'p-bad' : r.ageDays > 14 ? 'p-warn' : 'p-good';
+            return '<span class="pill ' + t + '">' + num(r.ageDays) + ' days</span>';
+          } },
+        { key: 'label', label: 'Source' },
+        { key: 'newest', label: 'Newest record' },
+        { key: 'via', label: 'Measured on' },
+        { key: 'rows', label: 'Rows', num: true,
+          render: function (r) { return r.rows ? num(r.rows) : '—'; } },
+        { key: 'feeds', label: 'What it feeds' }
+      ], fresh, { sort: 'ageDays', dir: 'desc', limit: 20 }) + '</div>';
+  }
 
   html += '<div class="card"><h2>Every issue, worst first</h2>' +
     table('healthList', [

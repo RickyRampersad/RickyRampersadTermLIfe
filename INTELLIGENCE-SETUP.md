@@ -22,14 +22,17 @@ get asked of it every week and none of them could be answered from it directly:
 
 ### It reads six tabs, and only six
 
-| What it needs | The columns it finds it by |
-|---|---|
-| Premium dues | `Agent`, `Client Number`, `Premium`, `Status Description` |
-| In-force book | `Policy Id`, `Policy Maturity Date`, `Plan`, `Fund Value` |
-| Pending business | `Policy`, `DecisionType`, `ReqtdaysLapsed` |
-| Requirements | `insured_requirement_id`, `requirement_code`, `policy_number` |
-| Tasks (the chase log) | `Subject`, `Task Type`, `Days O/S` |
-| Access | `Email`, `Name`, `Role` + a code or password column |
+| What it needs | The branch calls it | The columns it finds it by |
+|---|---|---|
+| Premium dues | `Branch Portfolio` | `Agent`, `Client Number`, `Premium`, `Status Description` |
+| In-force book | `Export` | `Policy Id`, `Policy Maturity Date`, `Plan`, `Fund Value` |
+| Pending business | `Requirement Management` | `Policy`, `DecisionType`, `ReqtdaysLapsed` |
+| Requirements | `URPPBIEX - Reqt` | `insured_requirement_id`, `requirement_code`, `policy_number` |
+| Tasks (the chase log) | `SFTASK MGT` | `Subject`, `Task Type`, `Days O/S` |
+| Access | `Agent Codes`, `App Users` | `Email`, `Name`, `Role` + a code or password column |
+
+The middle column is what those tabs happen to be called today. Nothing reads
+the names — they are here so a person can find the tab, not so the script can.
 
 **Everything else in the workbook is ignored, and deleting it is safe.** Tabs
 are found by the columns they carry, not by their names or their positions, so
@@ -182,6 +185,31 @@ on another book does not appear at all — being told a client exists but is
 withheld is itself the disclosure. Where a client is shared across two agents,
 the agent sees their own policies and a **count** of the others, so nobody is
 misled into thinking they have the whole picture.
+
+## 3b. How old is each source
+
+The extracts do not refresh together, and until this was measured nobody could
+see that. On the day it was built the requirements tab was **one day** old and
+the Salesforce task export was **sixty-one** — so "10 pending cases being
+chased" was being read off two-month-old data with nothing on screen saying so.
+
+Every rebuild now measures each source and puts the result at the top of
+**Data health**, with anything over 14 days also raised as an issue and listed
+in the Monday digest.
+
+**What it actually measures.** Not when the tab was refreshed — a spreadsheet
+does not record that per tab — but **the newest business event in it**, read
+from a column that only ever looks backwards: an issue date, a dispatch date,
+the date a requirement was raised. A tab refreshed this morning whose branch
+genuinely wrote nothing for a fortnight reads as a fortnight old. That is the
+honest limit: it says *nothing here has happened in N days*, which is either a
+stale extract or a quiet fortnight, and either is worth knowing before the
+figure is quoted.
+
+Forward-looking columns are excluded deliberately. `Paid To Date` is what cover
+is paid up **to** — its maximum sits in 2028 and it says nothing about
+recency. Using it was the first thing tried and it reported every source as
+fresh.
 
 ## 4. How it is put together
 

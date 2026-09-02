@@ -308,6 +308,7 @@ function intelRebuild() {
     reqs: iBuildReqs_(today),
     maturity: iBuildMaturity_(today),
     expiry: null,
+    freshness: iBuildFreshness_(today),
     health: null
   };
   // Maturities and expiry read the same inforce book, so they are built together.
@@ -1500,12 +1501,104 @@ function iXsellScore_(rule, c) {
   return { total: Math.max(0, Math.min(100, Math.round(total))), reasons: reasons };
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   HOW OLD IS EACH SOURCE
+   Every figure in this app is only as current as the extract under it, and the
+   extracts do not refresh together. On the day this was written the
+   requirements tab was a day old and the Salesforce task export was sixty-one
+   — so "10 cases being chased" was being read off two-month-old data with
+   nothing on screen to say so.
+
+   WHAT THIS MEASURES, EXACTLY. Not when the tab was refreshed — a spreadsheet
+   does not record that per tab — but the newest business event in it, read
+   from a column that only ever looks backwards. Issue dates, dispatch dates,
+   the date a requirement was raised. A tab refreshed this morning whose branch
+   genuinely wrote nothing for a fortnight will read as a fortnight old, and
+   that is the honest limit of the measure: it says "nothing here has happened
+   in N days", which is either a stale extract or a quiet fortnight, and either
+   one is worth knowing before quoting the number.
+
+   Forward-looking columns are useless for this and are deliberately excluded.
+   Paid To Date is what cover is paid up TO — its maximum sits in 2028.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var INTEL_SOURCES = [
+  { key: 'dues',     label: 'Branch Portfolio — premium dues',   tab: iTabDues_,
+    cols: ['issue date', 'app received date'],
+    feeds: 'the chase list, the ageing bands and the billing-method rates' },
+  { key: 'inforce',  label: 'Export — the in-force book',        tab: iTabInforce_,
+    cols: ['dispatch date', 'acknowledgement date', 'policy effective date'],
+    feeds: 'maturities, expiring cover, cross-sell and every fund figure' },
+  { key: 'pending',  label: 'Requirement Management — pending',  tab: iTabPending_,
+    cols: ['reqtdt', 'submitdt'],
+    feeds: 'pending business and the suspense held' },
+  { key: 'reqs',     label: 'URPPBIEX — requirements',           tab: iTabReqs_,
+    cols: ['added_date', 'ordered_date', 'closed_date'],
+    feeds: 'outstanding requirements and their ages' },
+  { key: 'tasks',    label: 'SFTASK MGT — the chase log',        tab: iTabTasks_,
+    cols: ['last modified date', 'date'],
+    feeds: 'who is chasing which pending case' }
+];
+
+function iBuildFreshness_(today) {
+  return INTEL_SOURCES.map(function (src) {
+    var sh;
+    try { sh = src.tab(); } catch (e) { sh = null; }
+    if (!sh) return { key: src.key, label: src.label, feeds: src.feeds, missing: true };
+
+    var head = iHeaders_(sh), last = sh.getLastRow();
+    var best = null, via = '';
+    if (last > 1) {
+      src.cols.forEach(function (c) {
+        var i = iCol_(head, [c]);
+        if (i < 0) return;
+        var vals = sh.getRange(2, i + 1, last - 1, 1).getValues();
+        for (var r = 0; r < vals.length; r++) {
+          var d = iDate_(vals[r][0]);
+          /* A date in the future is a promise, not an event — it cannot say
+             anything about how recently this tab was filled. */
+          if (d && d <= today && (!best || d > best)) { best = d; via = head[i]; }
+        }
+      });
+    }
+    return {
+      key: src.key, label: src.label, feeds: src.feeds,
+      tab: sh.getName(), rows: Math.max(0, last - 1),
+      newest: iIso_(best), via: via,
+      ageDays: best ? iDays_(best, today) : null
+    };
+  });
+}
+
 /* ── Data health ──────────────────────────────────────────────────────────
    Shown on the front screen, not buried. Every figure this app reports is
    only as good as the extract underneath it, and the branch should be able
    to see the size of the doubt without asking anybody.                     */
 function iBuildHealth_(out) {
   var items = [];
+
+  /* Staleness first, because it changes what every other figure means. A tab
+     nobody has refreshed is not a data defect — it is a report about a
+     different week. */
+  (out.freshness || []).forEach(function (f) {
+    if (f.missing) {
+      items.push({ severity: 'high', what: f.label + ' — tab not found', count: 0, of: null, pct: 0,
+        why: 'The screens fed by this source (' + f.feeds + ') will be empty.',
+        fix: 'Check the tab still carries its columns, or set the matching INTEL_TAB_* property.' });
+      return;
+    }
+    if (f.ageDays === null || f.ageDays <= 14) return;
+    items.push({
+      severity: f.ageDays > 30 ? 'high' : 'medium',
+      what: f.label + ' — nothing newer than ' + f.newest,
+      count: f.ageDays, of: null, pct: 0,
+      why: 'The newest ' + (f.via || 'dated record') + ' in this tab is ' + f.ageDays +
+           ' days old, so ' + f.feeds + ' describe that date, not today. Either the extract ' +
+           'has not been refreshed or the branch genuinely had no activity — both are worth ' +
+           'knowing before the figure is quoted.',
+      fix: 'Refresh the extract into this tab.'
+    });
+  });
   var dues = out.dues || {}, def = dues.defects || {}, counts = dues.counts || {};
   var n = counts.total || 0;
 
@@ -2910,6 +3003,19 @@ function intelManagerDigest() {
       ['Term cover ending within 24 months', String(t24), iMoney_((e.term || {}).cover24 || 0) + ' of cover'],
       ['Conversion rights ending within 24 months', String(c24), 'convert without evidence of health']
     ]);
+
+  var stale = (cache.freshness || []).filter(function (f) { return f.missing || (f.ageDays !== null && f.ageDays > 14); });
+  if (stale.length) {
+    inner += '<h3 style="font-size:14px;margin:22px 0 4px;color:#00254d">Sources that have stopped moving</h3>' +
+      '<p style="font-size:12.5px;color:#5c7590;margin:0 0 6px">The newest dated record in each. ' +
+      'Either the extract has not refreshed or the branch genuinely had no activity — both ' +
+      'change what the figures above describe.</p>' +
+      iTable_(['Source', 'Newest record', 'Age', 'What it feeds'],
+        stale.map(function (f) {
+          return [f.label, f.missing ? 'tab not found' : f.newest,
+                  f.missing ? '—' : f.ageDays + ' days', f.feeds];
+        }));
+  }
 
   if ((h.items || []).length) {
     inner += '<h3 style="font-size:14px;margin:22px 0 4px;color:#00254d">How solid these figures are</h3>' +

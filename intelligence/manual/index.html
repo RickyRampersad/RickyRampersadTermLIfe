@@ -351,6 +351,10 @@
       <div class="do"><b>Do:</b> check it before you take a figure into a meeting. Each row says
       what is wrong, how many rows it affects, and where it gets fixed — which is almost always
       upstream, in how the export is produced.</div>
+      <div class="do"><b>And look at the top:</b> <b>How current each source is</b> shows the
+      newest dated record in every tab. The extracts do not refresh together — one of them has
+      been known to sit two months behind while the others were current. A figure built on a
+      stale tab describes that week, not this one.</div>
     </div>
 
   </div>
@@ -431,6 +435,9 @@
     <tr><td>A figure looks too high or too low</td><td>Check <b>Data health</b> first. Roughly
       one row in eight of the dues extract has something wrong with it, and the screen says
       exactly what.</td></tr>
+    <tr><td>A figure has not moved in weeks</td><td>Look at <b>How current each source is</b> on
+      Data health. If that tab's newest record is weeks old, the extract behind it has probably
+      stopped refreshing — the app is reporting faithfully on old data.</td></tr>
     <tr><td>A policy number shows as "number lost"</td><td>Excel wrote it in scientific notation
       on export and the digits are gone. 107 rows are affected. It is fixed by formatting that
       column as plain text before the export is pasted.</td></tr>
