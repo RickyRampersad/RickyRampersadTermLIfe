@@ -2847,6 +2847,24 @@ function submitQuery(){
   const fb=ffValidateAndBuild(state.q);
   if(!fb.ok)return;
 
+  /* The same request sent twice creates a second case and a second branded
+     email to the department. It happens honestly: the webhook runs slow, the
+     20s timeout shows success, the agent doubts it and presses Send again.
+     A fingerprint of client + type + the start of the description is kept on
+     the device; a match inside 15 minutes has to be confirmed. */
+  try {
+    const fp='qp_'+btoa(unescape(encodeURIComponent((client+'|'+state.q.type+'|'+desc.slice(0,80)).toLowerCase()))).slice(0,40);
+    const prev=JSON.parse(localStorage.getItem('qpsent')||'{}');
+    const hit=prev[fp];
+    if(hit && Date.now()-hit.at<15*60*1000){
+      const mins=Math.max(1,Math.round((Date.now()-hit.at)/60000));
+      if(!confirm('This looks identical to a request sent '+mins+' minute'+(mins>1?'s':'')
+        +' ago'+(hit.ref&&hit.ref!=='(assigned)'?' — reference '+hit.ref:'')
+        +'.\n\nSend it AGAIN? The department would receive it twice.'))return;
+    }
+    window._dupfp=fp;
+  } catch(e){ window._dupfp=null; }
+
   window._sending=true;
   const btn=document.getElementById('submitBtn');btn.disabled=true;btn.textContent='Sending...';
   const cc=[...CC_ALWAYS];if(state.agentEmail)cc.push(state.agentEmail);if(email)cc.push(email);
@@ -2868,7 +2886,12 @@ function submitQuery(){
     agentCode:((state.who==='Agent'||state.who==='Staff')&&agentAuth)?agentAuth.code:'',
     ...(fb.attach||{})
   };
-  const finish=(ref)=>{window._sending=false;payload.reference=ref||'(assigned)';window._lastPayload=payload;renderSuccess(payload);btn.disabled=false;btn.textContent='Send my request →';};
+  const finish=(ref)=>{window._sending=false;payload.reference=ref||'(assigned)';window._lastPayload=payload;
+    try{ if(window._dupfp){ const m=JSON.parse(localStorage.getItem('qpsent')||'{}');
+      m[window._dupfp]={at:Date.now(),ref:payload.reference};
+      const ks=Object.keys(m); if(ks.length>40)ks.slice(0,ks.length-40).forEach(k=>delete m[k]);
+      localStorage.setItem('qpsent',JSON.stringify(m)); } }catch(e){}
+    renderSuccess(payload);btn.disabled=false;btn.textContent='Send my request →';};
   if(SHEET_WEBHOOK_URL){
     const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),20000);
     fetch(SHEET_WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),signal:ctl.signal})
