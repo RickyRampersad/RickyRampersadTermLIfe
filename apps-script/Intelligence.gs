@@ -82,7 +82,7 @@ function iBadNumber_(v) {
 
 var I_MONTHS = { jan:0, feb:1, mar:2, apr:3, may:4, jun:5, jul:6, aug:7, sep:8, oct:9, nov:10, dec:11 };
 
-function iDate_(v) {
+function iDate_(v, dayFirst) {
   if (!v && v !== 0) return null;
   if (Object.prototype.toString.call(v) === '[object Date]') {
     return isNaN(v.getTime()) || v.getFullYear() < 1950 ? null : v;
@@ -107,8 +107,21 @@ function iDate_(v) {
     return iMk_(+m[3], mo2, +m[1]);
   }
 
-  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);                    // 9/10/2025 — US order
-  if (m) return iMk_(+m[3], +m[1] - 1, +m[2]);
+  /* Slash dates come in both orders and the workbook uses both. The task log
+     writes 10/17/2025, which can only be month-first. The settlement extract
+     writes 22/05/2026, which can only be day-first. Read whichever component
+     is impossible as a month, and fall back to the caller's hint when both
+     are under thirteen.
+
+     Getting this wrong is not a small error: month 22 rolls the year forward,
+     so 22/05/2026 came out as 2028 and sorted to the top of "latest settled". */
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) {
+    var p1 = +m[1], p2 = +m[2];
+    if (p1 > 12 && p2 <= 12) return iMk_(+m[3], p2 - 1, p1);   // must be day-first
+    if (p2 > 12 && p1 <= 12) return iMk_(+m[3], p1 - 1, p2);   // must be month-first
+    return dayFirst ? iMk_(+m[3], p2 - 1, p1) : iMk_(+m[3], p1 - 1, p2);
+  }
 
   var d = new Date(s);
   return isNaN(d.getTime()) || d.getFullYear() < 1950 ? null : d;
@@ -213,6 +226,7 @@ function iTabPending_()  { return iFindTab_('PENDING',  ['policy', 'decisiontype
 function iTabReqs_()     { return iFindTab_('REQS',     ['insured_requirement_id', 'requirement_code', 'policy_number']); }
 function iTabTasks_()    { return iFindTab_('TASKS',    ['subject', 'task type', 'days o/s']); }
 function iTabAccess_()   { return iFindTab_('ACCESS',   ['email', 'name', 'role']); }
+function iTabSettled_()  { return iFindTab_('SETTLED',  ['api_amt', 'count', 'year', 'month']); }
 
 /* Column index by name, tolerant of the trailing spaces and the (2)-style
    suffixes the extracts carry. Returns -1 when the column is absent, and every
@@ -308,6 +322,7 @@ function intelRebuild() {
     reqs: iBuildReqs_(today),
     maturity: iBuildMaturity_(today),
     expiry: null,
+    production: iBuildProduction_(today),
     freshness: iBuildFreshness_(today),
     health: null
   };
@@ -1536,6 +1551,9 @@ var INTEL_SOURCES = [
   { key: 'reqs',     label: 'URPPBIEX — requirements',           tab: iTabReqs_,
     cols: ['added_date', 'ordered_date', 'closed_date'],
     feeds: 'outstanding requirements and their ages' },
+  { key: 'settled',  label: 'Branch Settlement — production',    tab: iTabSettled_,
+    cols: ['effective_dt', 'pol_app_recv_dt'], dayFirst: true,
+    feeds: 'everything on the Production screen' },
   { key: 'tasks',    label: 'SFTASK MGT — the chase log',        tab: iTabTasks_,
     cols: ['last modified date', 'date'],
     feeds: 'who is chasing which pending case' }
@@ -1555,7 +1573,7 @@ function iBuildFreshness_(today) {
         if (i < 0) return;
         var vals = sh.getRange(2, i + 1, last - 1, 1).getValues();
         for (var r = 0; r < vals.length; r++) {
-          var d = iDate_(vals[r][0]);
+          var d = iDate_(vals[r][0], src.dayFirst);
           /* A date in the future is a promise, not an event — it cannot say
              anything about how recently this tab was filled. */
           if (d && d <= today && (!best || d > best)) { best = d; via = head[i]; }
@@ -1569,6 +1587,165 @@ function iBuildFreshness_(today) {
       ageDays: best ? iDays_(best, today) : null
     };
   });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   WHAT THE BRANCH ACTUALLY WROTE
+   Every other screen in this app is about something going wrong — arrears,
+   lapses, cases stuck, requirements nobody chased. None of it says what the
+   branch sold. An agent could work here all year and never see a number that
+   went their way.
+
+   The settlement extract closes that. Three things about it decide whether
+   the figures come out right:
+
+   COUNT IS A FLAG, NOT A QUANTITY. 1 on the base coverage, 0 on each rider
+   attached to it, -1 on a reversal. So applications are the SUM of the
+   column, not the row count: August is 126 rows and 70 apps.
+
+   THE TAB CARRIES ITS OWN TOTAL ROW. One row reads EFFECTIVE_DT "Total" with
+   COUNT 742 and no policy. Including it doubles the year. It is dropped here,
+   and the sum of what remains is checked against it — 742 either way, and the
+   API agrees to a cent.
+
+   A00427 AND U00427 ARE ONE PERSON. Guardian writes agent codes both ways and
+   four agents appear under both, so grouping on the raw code split Varun
+   Seegolam's August into 296,745 and 65,393 when he had written 362,138.
+   iCode_ folds every code before it is used as a key.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function iBuildProduction_(today) {
+  var sh = iTabSettled_();
+  if (!sh) return { error: 'No settlement tab found (needs API_AMT, COUNT, YEAR, MONTH).' };
+
+  var d = iReadCols_(sh, {
+    eff: ['effective_dt'], branch: ['agent_branch'], agentId: ['agt_id'],
+    policy: ['pol_id'], cvg: ['cvg_id'], plan: ['plan_id_base'],
+    face: ['face_amt'], recv: ['pol_app_recv_dt'], count: ['count'],
+    api: ['api_amt'], year: ['year'], month: ['month'],
+    clientId: ['cli_id'], first: ['client first name'], last: ['client last name']
+  });
+
+  var thisYear = today.getFullYear();
+  var byMonth = {}, byAgent = {}, rows = [];
+  var apps = 0, api = 0, face = 0, sheetTotal = null, dropped = 0;
+
+  for (var r = 0; r < d.rows; r++) {
+    var eff = String(d.get('eff', r)).trim();
+    var yr = String(d.get('year', r)).trim();
+    var mo = String(d.get('month', r)).trim();
+
+    /* The tab's own total row, and the filter caption beneath it. */
+    if (/^total$/i.test(eff) || /^applied filters/i.test(eff)) {
+      if (/^total$/i.test(eff)) sheetTotal = { apps: iNum_(d.get('count', r)), api: iNum_(d.get('api', r)) };
+      dropped++; continue;
+    }
+    if (!yr || !/^\d+$/.test(mo)) { dropped++; continue; }
+    if (+yr !== thisYear) continue;
+
+    var n = iNum_(d.get('count', r));
+    var a = iNum_(d.get('api', r));
+    var f = iNum_(d.get('face', r));
+    var code = iCode_(d.get('agentId', r));
+    var m = +mo;
+
+    apps += n; api += a; face += f;
+
+    if (!byMonth[m]) byMonth[m] = { month: m, apps: 0, api: 0, face: 0, policies: {} };
+    byMonth[m].apps += n; byMonth[m].api += a; byMonth[m].face += f;
+    var pol = String(d.get('policy', r)).trim();
+    if (pol) byMonth[m].policies[pol] = 1;
+
+    if (!byAgent[code]) byAgent[code] = { agentId: code, agent: '', apps: 0, api: 0, face: 0, months: {} };
+    byAgent[code].apps += n; byAgent[code].api += a; byAgent[code].face += f;
+    byAgent[code].months[m] = (byAgent[code].months[m] || 0) + a;
+
+    /* Only the rows that count as an application are worth listing — the
+       rider rows carry the same client and would read as duplicates. */
+    if (n !== 0) {
+      rows.push({
+        agentId: code, month: m,
+        settled: iIso_(iDate_(d.get('eff', r), true)),
+        received: iIso_(iDate_(d.get('recv', r), true)),
+        policy: pol, plan: String(d.get('plan', r)).trim(),
+        client: [String(d.get('first', r)).trim(), String(d.get('last', r)).trim()]
+                  .filter(String).join(' '),
+        clientId: String(d.get('clientId', r)).trim(),
+        branch: String(d.get('branch', r)).trim(),
+        apps: n, api: a, face: f,
+        reversal: n < 0
+      });
+    }
+  }
+
+  /* Names come from the alias table's own sources, so a company-coded agent
+     shows as the person. */
+  var codeName = iCodeNames_();
+  Object.keys(byAgent).forEach(function (c) { byAgent[c].agent = codeName[c] || c; });
+  rows.forEach(function (x) { x.agent = codeName[x.agentId] || x.agentId; });
+
+  var months = Object.keys(byMonth).map(function (k) {
+    var m = byMonth[k];
+    m.policies = Object.keys(m.policies).length;
+    m.perApp = m.apps ? m.api / m.apps : 0;
+    return m;
+  }).sort(function (a, b) { return a.month - b.month; });
+
+  var agents = Object.keys(byAgent).map(function (c) { return byAgent[c]; })
+    .sort(function (a, b) { return b.api - a.api; });
+
+  rows.sort(function (a, b) { return String(b.settled).localeCompare(String(a.settled)); });
+
+  var best = months.reduce(function (m, x) { return !m || x.api > m.api ? x : m; }, null);
+  var worst = months.reduce(function (m, x) { return !m || x.api < m.api ? x : m; }, null);
+  var latest = months.length ? months[months.length - 1] : null;
+
+  return {
+    year: thisYear,
+    apps: apps, api: api, face: face,
+    avgApp: apps ? api / apps : 0,
+    monthlyAvg: months.length ? api / months.length : 0,
+    months: months, byAgent: agents, rows: rows.slice(0, 1200),
+    best: best, worst: worst, latest: latest,
+    /* The tab totals its own column; agreeing with it is the check that the
+       total row was excluded exactly once and nothing else was. */
+    reconciles: sheetTotal ? (Math.round(sheetTotal.apps) === Math.round(apps) &&
+                              Math.abs(sheetTotal.api - api) < 1) : null,
+    sheetTotal: sheetTotal, droppedRows: dropped,
+    basis: 'Applications are the sum of the COUNT column, which is a flag: 1 on ' +
+           'the base coverage, 0 on each rider, -1 on a reversal. API is annual ' +
+           'premium as the extract reports it.'
+  };
+}
+
+/* Agent code to the person's name, from the same two halves the alias table
+   joins — the access list for people, the in-force book for agencies. */
+function iCodeNames_() {
+  var out = {};
+  iAccessTabs_().forEach(function (sh) {
+    var head = iHeaders_(sh), last = sh.getLastRow();
+    if (last < 2) return;
+    var vals = sh.getRange(2, 1, last - 1, sh.getLastColumn()).getValues();
+    var cName = iCol_(head, ['name']),
+        cAgent = iCol_(head, ['agent name (exactly as in data)', 'agent name']),
+        cNum = iCol_(head, ['agent number', 'agent id', 'agentid']);
+    vals.forEach(function (row) {
+      var id = iIdentity_(cName >= 0 ? row[cName] : '',
+                          cAgent >= 0 ? row[cAgent] : '',
+                          cNum >= 0 ? row[cNum] : '');
+      if (id.agentId && id.display && !out[id.agentId]) out[id.agentId] = id.display;
+    });
+  });
+  var inf = iTabInforce_();
+  if (inf) {
+    var di = iReadCols_(inf, { id: ['servicing agent id'],
+                               nm: ['servcing agent name', 'servicing agent name'] });
+    for (var r = 0; r < di.rows; r++) {
+      var c = iCode_(di.get('id', r)), n = String(di.get('nm', r)).trim();
+      if (c && n && !out[c]) out[c] = n;
+    }
+  }
+  return out;
 }
 
 /* ── Data health ──────────────────────────────────────────────────────────
@@ -2346,6 +2523,40 @@ function iScope_(cache, session) {
     mv.counts = { lapsed: mv.lapsed.length, slipped: mv.slipped.length,
                   cleared: mv.cleared.length, newPending: mv.newPending.length,
                   donePending: null, vanished: null };
+  }
+
+  /* ── production ──────────────────────────────────────────────────────────
+     Rebuilt from this person's own settled rows rather than filtered, because
+     every figure on that screen is a total and a filtered total is wrong. */
+  if (c.production && !c.production.error) {
+    var pr = c.production;
+    pr.rows = mine(pr.rows);
+    pr.byAgent = mine(pr.byAgent);
+    pr.apps = pr.byAgent.reduce(function (t, a) { return t + a.apps; }, 0);
+    pr.api  = pr.byAgent.reduce(function (t, a) { return t + a.api; }, 0);
+    pr.face = pr.byAgent.reduce(function (t, a) { return t + a.face; }, 0);
+    pr.avgApp = pr.apps ? pr.api / pr.apps : 0;
+
+    var mm = {};
+    pr.byAgent.forEach(function (a) {
+      Object.keys(a.months || {}).forEach(function (k) {
+        mm[k] = (mm[k] || 0) + a.months[k];
+      });
+    });
+    /* Apps per month need the rows, since the per-agent map only carries API. */
+    var ma = {};
+    pr.rows.forEach(function (r) { ma[r.month] = (ma[r.month] || 0) + r.apps; });
+    pr.months = Object.keys(mm).map(function (k) {
+      var n = ma[k] || 0;
+      return { month: +k, api: mm[k], apps: n, face: 0, policies: 0,
+               perApp: n ? mm[k] / n : 0 };
+    }).sort(function (a, b) { return a.month - b.month; });
+    pr.monthlyAvg = pr.months.length ? pr.api / pr.months.length : 0;
+    pr.best  = pr.months.reduce(function (m, x) { return !m || x.api > m.api ? x : m; }, null);
+    pr.worst = pr.months.reduce(function (m, x) { return !m || x.api < m.api ? x : m; }, null);
+    pr.latest = pr.months.length ? pr.months[pr.months.length - 1] : null;
+    /* The reconciliation is a check on the whole tab, not on one slice. */
+    pr.reconciles = null; delete pr.sheetTotal;
   }
 
   /* ── expiring cover ──────────────────────────────────────────────────── */

@@ -20,7 +20,7 @@ get asked of it every week and none of them could be answered from it directly:
 4. Which policies mature soon — pensions and life, separately?
 5. Which term benefits and conversion rights expire before anybody notices?
 
-### It reads six tabs, and only six
+### It reads seven tabs, and only seven
 
 | What it needs | The branch calls it | The columns it finds it by |
 |---|---|---|
@@ -29,10 +29,15 @@ get asked of it every week and none of them could be answered from it directly:
 | Pending business | `Requirement Management` | `Policy`, `DecisionType`, `ReqtdaysLapsed` |
 | Requirements | `URPPBIEX - Reqt` | `insured_requirement_id`, `requirement_code`, `policy_number` |
 | Tasks (the chase log) | `SFTASK MGT` | `Subject`, `Task Type`, `Days O/S` |
+| Settled production | `Branch Settlement Exp PBI Production` | `API_AMT`, `COUNT`, `YEAR`, `MONTH` |
 | Access | `Agent Codes`, `App Users` | `Email`, `Name`, `Role` + a code or password column |
 
 The middle column is what those tabs happen to be called today. Nothing reads
 the names — they are here so a person can find the tab, not so the script can.
+
+Two tabs carry those settlement columns — the current one and an older
+`Settled` that stops at July. The search breaks the tie on row count, so it
+picks the fuller one on its own.
 
 **Everything else in the workbook is ignored, and deleting it is safe.** Tabs
 are found by the columns they carry, not by their names or their positions, so
@@ -280,6 +285,42 @@ with the screen it points at.
 
 Nothing is hidden by role. Every screen stays one click away; only the order and
 the emphasis change.
+
+## 3e. Production — the only screen about something going right
+
+Every other screen is arrears, lapses, stuck cases and requirements nobody
+chased. An agent could work in this app all year and never see a number that
+went their way. **Settled** is the other half: what actually made it onto the
+books, scoped like everything else — an agent's own, a unit manager's team,
+the branch.
+
+Three things about that extract decide whether the figures come out right, and
+all three were found the hard way:
+
+**COUNT is a flag, not a quantity.** 1 on the base coverage, 0 on each rider
+attached to it, −1 on a reversal. Applications are the **sum** of the column,
+so August is 126 rows and 70 applications. Counting rows overstates it by
+four fifths.
+
+**The tab totals itself.** One row reads `EFFECTIVE_DT` = "Total" with COUNT
+742 and no policy, followed by a filter caption. Including it doubles the year.
+It is dropped, and the sum of what remains is checked back against it — 742
+either way, and the API agrees to the cent. That check is shown on the screen,
+because a total that reconciles against the source is worth more than one that
+merely looks plausible.
+
+**`EFFECTIVE_DT` is day-first.** It writes `22/05/2026`. The task log writes
+`10/17/2025`, which can only be month-first. So the date parser now reads
+whichever component is impossible as a month and only falls back to a hint when
+both are under thirteen. Before that, month 22 rolled the year forward and
+settlement dates came out in **2028**, sorting to the top of "latest settled".
+
+### One habit this screen depends on
+
+Agent codes are folded — `A00427` and `U00427` are one person, four agents in
+this extract appear under both, and grouping on the raw code split Varun
+Seegolam's August into TT$296,745 and TT$65,393 when he had written
+TT$362,138.
 
 ## 4. How it is put together
 

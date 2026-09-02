@@ -59,8 +59,12 @@ header.top{background:linear-gradient(135deg,#00254d,#00458c);border-bottom:1px 
 nav.tabs{background:var(--bg2);border-bottom:1px solid var(--line);position:sticky;top:63px;z-index:35;
   overflow-x:auto;-webkit-overflow-scrolling:touch}
 nav.tabs .in{max-width:1220px;margin:0 auto;display:flex;gap:2px;padding:0 12px}
+/* Twelve tabs at 15px of padding each need 1,329px against the 1,220 the
+   content column allows, so the last one clipped at every window size. The
+   padding gives the width back without shortening any more labels. */
 nav.tabs button{background:none;border:none;color:var(--muted);font:700 13px 'Montserrat';
-  padding:13px 15px;cursor:pointer;white-space:nowrap;border-bottom:2.5px solid transparent}
+  padding:13px 10px;cursor:pointer;white-space:nowrap;border-bottom:2.5px solid transparent}
+nav.tabs button .n{margin-left:5px}
 nav.tabs button:hover{color:var(--text)}
 nav.tabs button.on{color:var(--gold);border-bottom-color:var(--gold)}
 nav.tabs button .n{display:inline-block;background:rgba(255,255,255,.10);border-radius:99px;
@@ -95,8 +99,10 @@ table.t tr:hover td{background:rgba(255,255,255,.03)}
 table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .scroll{overflow:auto;max-height:560px;border:1px solid var(--line);border-radius:12px}
 /* A table that already fits has no business being in a scroll box of its own —
-   a nested scrollbar inside a scrolling page hides rows people never find. */
-.scroll.short{max-height:none;overflow:visible}
+   a nested scrollbar inside a scrolling page hides rows people never find.
+   Only the height cap goes: a wide table still has to scroll sideways inside
+   its own container, or it pushes the card out past the page. */
+.scroll.short{max-height:none;overflow-y:visible;overflow-x:auto}
 .pill{display:inline-block;font:700 10.5px 'Montserrat';padding:2px 9px;border-radius:99px;white-space:nowrap}
 .nowrap{white-space:nowrap}
 /* One line, ellipsis, full text on hover and in the CSV. */
@@ -239,6 +245,7 @@ footer.foot{max-width:1220px;margin:0 auto;padding:0 16px 40px;color:var(--dim);
     <div class="view" id="v-today"></div>
     <div class="view" id="v-client"></div>
     <div class="view" id="v-pulse"></div>
+    <div class="view" id="v-production"></div>
     <div class="view" id="v-dues"></div>
     <div class="view" id="v-pending"></div>
     <div class="view" id="v-reqs"></div>
@@ -516,19 +523,23 @@ function downloadCsv(id) {
    ══════════════════════════════════════════════════════════════════════════ */
 
 var TABS = [
+  /* Twelve tabs is more than a laptop fits. The labels that carry a count can
+     afford to be short — the number does the explaining — so the long ones are
+     trimmed rather than letting the last tab clip off the right edge. */
   { id: 'today',    label: 'Today', count: function () { return todayJobs().length; } },
   { id: 'pulse',    label: 'Pulse' },
   { id: 'client',   label: 'Find a client' },
-  { id: 'dues',     label: 'Premium dues',  count: function (d) { return (d.dues || {}).chaseCount; } },
+  { id: 'production', label: 'Settled',  count: function (d) { return (d.production || {}).apps; } },
+  { id: 'dues',     label: 'Dues',  count: function (d) { return (d.dues || {}).chaseCount; } },
   { id: 'pending',  label: 'Pending',       count: function (d) { return (d.pending || {}).total; } },
   { id: 'reqs',     label: 'Requirements',  count: function (d) { return (d.reqs || {}).openCount; } },
   { id: 'maturity', label: 'Maturities',    count: function (d) { return ((d.maturity || {}).retirement || {}).total + ((d.maturity || {}).life || {}).total; } },
-  { id: 'expiry',   label: 'Expiring cover', count: function (d) { return ((d.expiry || {}).term || {}).total; } },
+  { id: 'expiry',   label: 'Expiring', count: function (d) { return ((d.expiry || {}).term || {}).total; } },
   { id: 'xsell',    label: 'Cross-sell',    count: function (d) { return (d.crosssell || {}).thisWeek; } },
   { id: 'moves',    label: 'What moved',    count: function (d) {
       var m = d.movements || {}; if (m.first) return 0;
       var c = m.counts || {}; return (c.lapsed || 0) + (c.slipped || 0); } },
-  { id: 'health',   label: 'Data health',   count: function (d) { return ((d.health || {}).items || []).length; } }
+  { id: 'health',   label: 'Health',   count: function (d) { return ((d.health || {}).items || []).length; } }
 ];
 
 function renderTabs() {
@@ -545,7 +556,8 @@ function show(view) {
   document.querySelectorAll('.view').forEach(function (v) { v.classList.remove('on'); });
   var el = $('v-' + view);
   el.classList.add('on');
-  ({ today: viewToday, pulse: viewPulse, client: viewClient, dues: viewDues, pending: viewPending,
+  ({ today: viewToday, pulse: viewPulse, client: viewClient, production: viewProduction,
+     dues: viewDues, pending: viewPending,
      reqs: viewReqs, maturity: viewMaturity, expiry: viewExpiry, xsell: viewXsell,
      moves: viewMoves, health: viewHealth }[view])(el);
   window.scrollTo(0, 0);
@@ -591,6 +603,11 @@ function viewPulse(el) {
            conv24 ? 'gold' : '', 'expiry') +
       stat('Unreachable clients', num((d.defects || {}).unreachable || 0),
            'On the chase list with no phone and no e-mail', 'bad', 'dues') +
+      ((DATA.production || {}).latest
+        ? stat('Settled in ' + monShort(DATA.production.latest.month),
+               num(DATA.production.latest.apps) + ' apps',
+               money(DATA.production.latest.api) + ' of API', 'good', 'production')
+        : '') +
       stat('Cross-sell calls ready', num((DATA.crosssell || {}).thisWeek || 0),
            'Scored 80+ — reachable, paid up, right age', 'good', 'xsell') +
       ((DATA.movements || {}).first
@@ -767,6 +784,20 @@ function todayJobs() {
           cols: 'move' });
   }
 
+  /* Good news belongs on the list too. An app that only ever shows what is
+     going wrong gets read as an accusation. */
+  var pr = DATA.production || {};
+  var thisMonth = (pr.months || []).filter(function (m) { return m.month === new Date().getMonth() + 1; })[0];
+  var lastMonth = (pr.latest && (!thisMonth || pr.latest.month !== thisMonth.month)) ? pr.latest : null;
+  var show = thisMonth || lastMonth;
+  if (show) {
+    jobs.push({ key: 'settled', count: show.apps, tone: 'good', view: 'production',
+      label: (thisMonth ? 'Settled so far this month' : 'Settled in ' + MONTH_NAME[show.month]),
+      why: money(show.api) + ' of API at ' + money(show.perApp) + ' a case' +
+           (pr.monthlyAvg ? ' — the year runs at ' + money(pr.monthlyAvg) + ' a month.' : '.'),
+      rows: [], cols: null });
+  }
+
   job({ key: 'followup', count: dueFollowUps().length, tone: 'warn', view: 'pulse',
         label: 'Follow-ups you promised', 
         why: 'You said you would come back to these on or before today.',
@@ -784,11 +815,13 @@ function todayJobs() {
           why: 'Past ninety days the odds fall away quickly. These still have a phone or an e-mail on file.',
           rows: deep.slice(0, 5), cols: 'dues' });
 
-    var money = (p.rows || []).filter(function (r) { return r.suspense > 0; });
-    job({ key: 'suspense', count: money.length, tone: 'gold', view: 'pending',
+    /* Not `money` — that is the currency formatter, and a var of the same name
+       shadows it for this whole function whatever line it sits on. */
+    var inSuspense = (p.rows || []).filter(function (r) { return r.suspense > 0; });
+    job({ key: 'suspense', count: inSuspense.length, tone: 'gold', view: 'pending',
           label: 'Your clients\' money sitting in suspense',
           why: 'They have paid. It cannot be applied until the case closes, and they remember.',
-          rows: money.slice(0, 5), cols: 'pending' });
+          rows: inSuspense.slice(0, 5), cols: 'pending' });
 
     job({ key: 'leads', count: x.thisWeek || 0, tone: 'good', view: 'xsell',
           label: 'Cross-sell calls that are ready',
@@ -1266,6 +1299,115 @@ function runClientLookup(q) {
       CLIENT.error = 'Could not reach the branch script — ' + e.message;
       show('client');
     });
+}
+
+var MONTH_NAME = ['', 'January', 'February', 'March', 'April', 'May', 'June',
+                  'July', 'August', 'September', 'October', 'November', 'December'];
+function monShort(m) { return (MONTH_NAME[m] || '').slice(0, 3); }
+
+/* ── Production ────────────────────────────────────────────────────────────
+   The only screen in this app about something going right. Everything else
+   here is arrears, lapses, stuck cases and requirements nobody chased — an
+   agent could work in it all year and never see a number that went their way.
+
+   Applications are the sum of the COUNT column, which is a flag rather than a
+   quantity: 1 on the base coverage, 0 on each rider, -1 on a reversal. So
+   August is 126 rows and 70 apps, and saying so on the screen is cheaper than
+   somebody counting rows and getting a different answer.                    */
+function viewProduction(el) {
+  var P = DATA.production || {};
+  if (P.error) { el.innerHTML = errCard(P.error); return; }
+  var solo = soloAgent();
+  var months = P.months || [];
+  var latest = P.latest, best = P.best, worst = P.worst;
+
+  var html =
+    '<div class="card"><h2>What ' + esc(solo ? 'you have' : roleWord() + ' has') + ' settled in ' + esc(P.year) + '</h2>' +
+    '<p class="sub">Gross settled business — new applications that made it onto the books. ' +
+    'Not the pipeline, not what was submitted: what settled.</p>' +
+    '<div class="stats">' +
+      stat('Applications', num(P.apps || 0), 'year to date', 'good') +
+      stat('API settled', money(P.api || 0), 'annual premium income', 'good') +
+      stat('Average case', money(P.avgApp || 0), 'premium per application', 'gold') +
+      (latest ? stat(MONTH_NAME[latest.month], num(latest.apps) + ' apps',
+                     money(latest.api) + ' — the latest month', 'good') : '') +
+      (best ? stat('Best month', monShort(best.month), money(best.api), 'good') : '') +
+      (worst && months.length > 1 ? stat('Weakest month', monShort(worst.month), money(worst.api), 'warn') : '') +
+    '</div>' +
+    '<div class="note"><b>An application is the sum of the COUNT column, not a row count.</b> ' +
+    'That column is a flag — 1 on the base coverage, 0 on each rider attached to it, and −1 on ' +
+    'a reversal — so a month of 126 rows can be 70 applications. API is annual premium as the ' +
+    'extract reports it.</div>' +
+    (P.reconciles === true
+      ? '<div class="note"><b>These figures reconcile.</b> The extract totals its own COUNT and API ' +
+        'columns, and the sum of every data row agrees with it — so the total row has been ' +
+        'excluded exactly once and nothing else has been dropped.</div>'
+      : '') +
+    '</div>';
+
+  if (months.length) {
+    var maxApi = months.reduce(function (m, x) { return Math.max(m, x.api); }, 0);
+    html += '<div class="split">' +
+      '<div class="card"><h2>Premium by month</h2>' +
+      bars(months.map(function (m) {
+        return { label: MONTH_NAME[m.month], value: m.api, display: money(m.api),
+                 bad: worst && m.month === worst.month && months.length > 1 };
+      }), { note: worst && months.length > 1
+              ? 'The weakest month is marked. ' + MONTH_NAME[worst.month] + ' came in at ' +
+                money(worst.api) + ' against a ' + money(P.monthlyAvg || 0) + ' average.'
+              : '' }) +
+      '</div>' +
+      '<div class="card"><h2>Applications by month</h2>' +
+      bars(months.map(function (m) {
+        return { label: MONTH_NAME[m.month], value: Math.max(0, m.apps), display: num(m.apps) };
+      }), { note: 'Volume and premium do not move together. ' +
+              (latest ? MONTH_NAME[latest.month] + ' settled ' + num(latest.apps) + ' applications at ' +
+                money(latest.perApp) + ' each.' : '') }) +
+      '</div></div>';
+  }
+
+  if (!solo && (P.byAgent || []).length) {
+    html += '<div class="card"><h2>Who settled it</h2>' +
+      '<p class="sub">Year to date, highest premium first. Agent codes are folded — Guardian ' +
+      'writes the same person as A00427 and U00427, and four agents appear under both.</p>' +
+      table('prodAgents', [
+        { key: 'agent', label: 'Agent' },
+        { key: 'apps', label: 'Apps', num: true, render: function (r) { return num(r.apps); } },
+        { key: 'api', label: 'API settled', num: true, render: function (r) { return money(r.api); } },
+        { key: 'per', label: 'Average case', num: true,
+          sortValue: function (r) { return r.apps ? r.api / r.apps : 0; },
+          render: function (r) { return r.apps ? money(r.api / r.apps) : '<span style="color:var(--dim)">—</span>'; },
+          value: function (r) { return r.apps ? Math.round(r.api / r.apps) : ''; } },
+        { key: 'face', label: 'Sum assured', num: true, render: function (r) { return money(r.face); } },
+        { key: 'agentId', label: 'Code',
+          render: function (r) { return '<span class="pill p-dim">' + esc(r.agentId) + '</span>'; } }
+      ], P.byAgent, { sort: 'api', dir: 'desc', limit: 60 }) + '</div>';
+  }
+
+  html += '<div class="card"><h2>Everything that settled</h2>' +
+    '<p class="sub">One row per application — the rider rows that make up the same case are not ' +
+    'listed separately. Newest first.</p>' +
+    table('prodRows', [].concat([
+      { key: 'settled', label: 'Settled' },
+      { key: 'client', label: 'Client' },
+      { key: 'policy', label: 'Policy' },
+      { key: 'plan', label: 'Plan' }
+    ], solo ? [] : [{ key: 'agent', label: 'Agent' }], [
+      { key: 'api', label: 'API', num: true,
+        render: function (r) {
+          return r.reversal
+            ? '<span class="pill p-bad">' + money(r.api) + '</span>'
+            : money(r.api);
+        } },
+      { key: 'face', label: 'Sum assured', num: true,
+        render: function (r) { return r.face ? money(r.face) : '<span style="color:var(--dim)">—</span>'; } },
+      { key: 'received', label: 'App received' },
+      { key: 'act', label: '', sortable: false, value: function () { return ''; },
+        render: function (r) { return logBtn('production', r.policy, r.client); } }
+    ]), P.rows || [], { sort: 'settled', dir: 'desc', limit: 300,
+                        empty: 'Nothing settled yet this year.' }) + '</div>';
+
+  el.innerHTML = html;
 }
 
 /* ── Premium dues ──────────────────────────────────────────────────────────
