@@ -883,7 +883,7 @@ function iBuildMaturity_(today) {
 
     var susp = iNum_(d.get('susp', r));
     var agentNm = String(d.get('agent', r)).trim();
-    if (!byAgentTotals[agentNm]) byAgentTotals[agentNm] = { agentId: String(d.get('agentId', r)).trim().toUpperCase(),
+    if (!byAgentTotals[agentNm]) byAgentTotals[agentNm] = { agentId: iCode_(d.get('agentId', r)),
       suspense: 0, suspenseCases: 0, fundHeld: 0, orphaned: 0, noFunds3: 0 };
     var mineT = byAgentTotals[agentNm];
 
@@ -924,7 +924,7 @@ function iBuildMaturity_(today) {
       overdue: iNum_(d.get('overdue', r)),
       suspense: susp,
       agent: String(d.get('agent', r)).trim(),
-      agentId: String(d.get('agentId', r)).trim().toUpperCase(),
+      agentId: iCode_(d.get('agentId', r)),
       agentActive: !isOrphan,
       unit: String(d.get('unit', r)).trim(),
       city: String(d.get('city', r)).trim(),
@@ -1079,7 +1079,7 @@ function iJoinChases_(out) {
 function iBuildAliases_(inforceRows) {
   var byCode = {};
   function put(code, name) {
-    code = String(code || '').trim().toUpperCase();
+    code = iCode_(code);
     name = String(name || '').trim();
     if (!code || !name || !iNameKey_(name)) return;
     if (!byCode[code]) byCode[code] = {};
@@ -1840,7 +1840,7 @@ function iFindPerson_(who, secret) {
       var email = cEmail  >= 0 ? String(row[cEmail]).trim().toLowerCase() : '';
       var name  = cName   >= 0 ? String(row[cName]).trim() : '';
       var agent = cAgent  >= 0 ? String(row[cAgent]).trim() : '';
-      var agtNo = cAgtNum >= 0 ? String(row[cAgtNum]).trim() : '';
+      var agtNo = cAgtNum >= 0 ? iCode_(row[cAgtNum]) : '';
 
       /* People sign in with whatever they know: their Guardian address, their
          agent number, or the name the branch put beside it. */
@@ -1917,7 +1917,7 @@ function iBuildUnits_() {
                           cNum >= 0 ? row[cNum] : '');
       if (!id.agentName && !id.agentId) return;
       if (!units[unit]) units[unit] = [];
-      units[unit].push({ name: id.agentName, id: id.agentId,
+      units[unit].push({ name: id.agentName, id: iCode_(id.agentId),
                          role: cRole >= 0 ? String(row[cRole]).trim() : '' });
     });
   });
@@ -1965,21 +1965,32 @@ function iSeesBranch_(role) {
    resolved here — and a bare agent number is never used as the name key.
    Doing that cost the whole of the second access tab an empty app: "A01066"
    matches nothing in any extract. */
+/* Guardian writes the same agent code two ways — A00427 and U00427 are one
+   person, and the settlement extract uses both. Four agents appear under both
+   prefixes there, so grouping on the raw code splits their production in two:
+   Varun Seegolam showed up as 296,745 under U and 65,393 under A when he had
+   written 362,138. Every code is folded to its A form before it is compared
+   or used as a key. */
+function iCode_(v) {
+  var c = String(v || '').trim().toUpperCase();
+  return c.replace(/^U(?=\d)/, 'A');
+}
+
 function iIdentity_(name, agentName, agentNumber) {
   var display = String(name || '').trim();
-  var num = String(agentNumber || '').trim().toUpperCase();
+  var num = iCode_(agentNumber);
 
   /* Names on that tab are prefixed with the agent number. Strip it — what is
      left is the name the extracts use. */
   var m = display.match(/^([A-Z]?\d{3,})\s*[-\u2013]\s*(.+)$/i);
   if (m) {
-    if (!num) num = m[1].toUpperCase();
+    if (!num) num = iCode_(m[1]);
     display = m[2].trim();
   }
 
   var human = String(agentName || '').trim();
   /* An "Agent Name" column holding a bare number is a number, not a name. */
-  if (/^[A-Z]?\d+$/i.test(human)) { if (!num) num = human.toUpperCase(); human = ''; }
+  if (/^[A-Z]?\d+$/i.test(human)) { if (!num) num = iCode_(human); human = ''; }
   if (!human) human = display;
 
   return { display: display || human || num, agentName: human, agentId: num };
@@ -2070,7 +2081,7 @@ function iScope_(cache, session) {
   if (iSeesBranch_(session.role)) return cache;
 
   var me = session.agentName;
-  var meId = String(session.agentId || '').trim().toUpperCase();
+  var meId = iCode_(session.agentId);
   var c = JSON.parse(JSON.stringify(cache));
 
   /* A unit manager is scoped to their team, an agent to themselves. Both are
@@ -2092,7 +2103,7 @@ function iScope_(cache, session) {
   team.forEach(function (p) {
     var k = iNameKey_(p.name);
     if (k) names[k] = 1;
-    if (p.id) ids[String(p.id).toUpperCase()] = 1;
+    if (p.id) ids[iCode_(p.id)] = 1;
     var g = aliasIdx[k];
     if (g === undefined && p.id) {
       (cache.aliases || []).forEach(function (ag, i) { if (ag.code === String(p.id).toUpperCase()) g = i; });
@@ -2105,7 +2116,7 @@ function iScope_(cache, session) {
      "GARY SOOKDEO INSURANCE SOLUTIONS LTD" — where the person's name belongs. */
   function isMine(x, key) {
     var who = x[key || 'agent'];
-    if (x.agentId && ids[String(x.agentId).toUpperCase()]) return true;
+    if (x.agentId && ids[iCode_(x.agentId)]) return true;
     var k = iNameKey_(who);
     if (k && names[k]) return true;
     var g = aliasIdx[k];
@@ -2463,7 +2474,7 @@ function iOwnershipTest_(session) {
   if (iSeesBranch_(session.role)) return function () { return true; };
   var cache = iLoadCache_();
   var aliasIdx = iAliasIndex_(cache && cache.aliases);
-  var meId = String(session.agentId || '').trim().toUpperCase();
+  var meId = iCode_(session.agentId);
   var myGroup = aliasIdx[iNameKey_(session.agentName)];
   if (myGroup === undefined && meId && cache) {
     (cache.aliases || []).forEach(function (g, i) { if (g.code === meId) myGroup = i; });
@@ -3274,7 +3285,7 @@ function intelHorizonWatch() {
     var person = directory[key];
     if (!person.email) return;
     if (iRoleOf_(person.role) !== 'agent') return;
-    var pid = String(person.agentId || '').toUpperCase();
+    var pid = iCode_(person.agentId);
     var pGroup = aliasIdx[iNameKey_(person.agentName)];
     if (pGroup === undefined && pid) {
       (cache.aliases || []).forEach(function (g, i) { if (g.code === pid) pGroup = i; });
@@ -3283,7 +3294,7 @@ function intelHorizonWatch() {
       return (rows || []).filter(function (x) {
         if (x.months > months) return false;
         if (iSameAgent_(x.agent, person.agentName)) return true;
-        if (pid && x.agentId && String(x.agentId).toUpperCase() === pid) return true;
+        if (pid && x.agentId && iCode_(x.agentId) === pid) return true;
         return pGroup !== undefined && aliasIdx[iNameKey_(x.agent)] === pGroup;
       });
     }
