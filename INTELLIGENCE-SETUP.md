@@ -4,7 +4,7 @@ Two pieces, the same shape as the KPI tracker:
 
 | Piece | Where | What it does |
 |---|---|---|
-| `intelligence/index.html` | served with the rest of the site, at `/intelligence/` | sign-in, and the ten screens |
+| `intelligence/index.html` | served with the rest of the site, at `/intelligence/` | sign-in, the **Today** list, and the ten screens behind it |
 | `intelligence/manual/index.html` | `/intelligence/manual/` | the manual everyone reads — plain language, no setup in it |
 | `apps-script/Intelligence.gs` | bound to the branch workbook | reads the tabs, computes everything, checks access codes, sends the digests |
 
@@ -210,6 +210,41 @@ Forward-looking columns are excluded deliberately. `Paid To Date` is what cover
 is paid up **to** — its maximum sits in 2028 and it says nothing about
 recency. Using it was the first thing tried and it reported every source as
 fresh.
+
+## 3c. Three roles, and the day each of them gets
+
+The first cut split everyone into *branch* and *agent* on a loose regex, and
+**Staff fell through to agent**. Staff have no book of their own, so all four
+of them — including the person who logs two thirds of the branch's chase work —
+signed in to an app with nothing in it at all.
+
+There are three:
+
+| Role on the access list | Resolves to | Sees | Their day |
+|---|---|---|---|
+| Branch Manager, Assistant Branch Manager, Unit Manager, manager | `branch` | everything, plus the management cuts | what moved · stale sources · serious data issues · worst arrears |
+| Staff, Sales Support, administrator | `staff` | everything — they work every agent's cases | never-chased pending · money held · chases closed with the case open · old requirements |
+| Agent, advisor, anything else | `agent` | their own book and nobody else's | lapses · arrears past 90 days · suspense · cross-sell ready · pensions maturing |
+
+Order matters in the test: "Assistant Branch **Manager**" contains *assist* and
+must not read as support staff, which is why the manager pattern runs first and
+both are anchored rather than loose.
+
+The digests follow the same rule — staff and managers are skipped by the agent,
+cross-sell and horizon mails rather than sent an empty list. That alone stopped
+ten pointless e-mails a day.
+
+### Today
+
+`Today` is the landing screen and the answer to "ten screens is too many". It is
+a ranked list of jobs — a count, a reason it is urgent now rather than later,
+and a button onto the screen holding it — with the first job already loaded
+underneath so the common case needs no navigation. It is computed in the browser
+from data already on the page, so it costs nothing to serve and cannot disagree
+with the screen it points at.
+
+Nothing is hidden by role. Every screen stays one click away; only the order and
+the emphasis change.
 
 ## 4. How it is put together
 

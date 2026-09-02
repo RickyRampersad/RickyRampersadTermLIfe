@@ -1855,14 +1855,12 @@ function iFindPerson_(who, secret) {
       if (!iSecretEq_(String(row[cCode]).trim(), secret)) continue;
 
       var roleTxt = (cRole >= 0 ? String(row[cRole]).trim() : '') || 'Agent';
-      /* Branch manager, sales support and the BMA see the branch. Everyone
-         else sees their own book and nobody else's. */
-      var isBranch = /manager|admin|support|assist|bma|branch/i.test(roleTxt);
+      var role = iRoleOf_(roleTxt);
       var ident = iIdentity_(name, agent, agtNo);
       return {
         name: ident.display || who,
         email: email,
-        role: isBranch ? 'branch' : 'agent',
+        role: role,
         title: roleTxt,
         agentName: ident.agentName,
         agentId: ident.agentId,
@@ -1873,6 +1871,28 @@ function iFindPerson_(who, secret) {
     }
   }
   return null;
+}
+
+/* ── Three kinds of person, not two ───────────────────────────────────────
+   The first cut of this split everyone into "branch" and "agent" on a loose
+   regex, and Staff fell through to agent. Staff have no book of their own, so
+   all four of them — including the person who logs two thirds of the branch's
+   chase work — signed in to an app with nothing in it.
+
+   So there are three. Order matters: "Assistant Branch Manager" contains
+   "assist" and must not be read as support staff, which is why the manager
+   test runs first and both are anchored rather than loose.
+
+     branch   everything, plus the management cuts — the agent league,
+              billing-method rates, data health
+     staff    everything too, because they work every agent's pending cases,
+              but they do not sell, so the selling screens are not their day
+     agent    their own book and nobody else's                             */
+function iRoleOf_(title) {
+  var t = String(title || '').trim().toLowerCase();
+  if (/branch manager|assistant branch|unit manager|^manager$|^admin|bma/.test(t)) return 'branch';
+  if (/^staff$|sales support|^support|^assistant$|administrator|clerk|secretar/.test(t)) return 'staff';
+  return 'agent';
 }
 
 /* One access tab names people "Narissa Mohammed"; the other names the same
@@ -1979,7 +1999,9 @@ function iSameAgent_(a, b) {
 
 function iScope_(cache, session) {
   if (!cache) return null;
-  if (session.role === 'branch') return cache;
+  /* Staff work every agent's pending cases, so they get the branch's data.
+     What differs for them is the day's emphasis, not the slice. */
+  if (session.role === 'branch' || session.role === 'staff') return cache;
 
   var me = session.agentName;
   var meId = String(session.agentId || '').trim().toUpperCase();
@@ -2330,7 +2352,7 @@ function iActData_(b, session) {
    shortlist and the full record. Aliases included, or the three agents whose
    book is filed under a company name could not look up their own clients. */
 function iOwnershipTest_(session) {
-  if (session.role === 'branch') return function () { return true; };
+  if (session.role === 'branch' || session.role === 'staff') return function () { return true; };
   var cache = iLoadCache_();
   var aliasIdx = iAliasIndex_(cache && cache.aliases);
   var meId = String(session.agentId || '').trim().toUpperCase();
@@ -2770,6 +2792,10 @@ function intelAgentDigest() {
     var person = directory[key];
     if (!person.email) return;
 
+    /* Staff and managers have no personal book; the branch digest is theirs,
+       not an agent list that would always come back empty. */
+    if (iRoleOf_(person.role) !== 'agent') return;
+
     var mine = iScope_(cache, { role: 'agent', agentName: person.agentName,
                                 agentId: person.agentId, name: person.name });
     var chase = (mine.dues && mine.dues.chase ? mine.dues.chase : []);
@@ -3068,6 +3094,7 @@ function intelCrossSellDigest() {
   Object.keys(directory).forEach(function (key) {
     var person = directory[key];
     if (!person.email) return;
+    if (iRoleOf_(person.role) !== 'agent') return;
     var mine = iScope_(cache, { role: 'agent', agentName: person.agentName,
                                 agentId: person.agentId, name: person.name });
     var xs = mine.crosssell || {};
@@ -3138,6 +3165,7 @@ function intelHorizonWatch() {
   Object.keys(directory).forEach(function (key) {
     var person = directory[key];
     if (!person.email) return;
+    if (iRoleOf_(person.role) !== 'agent') return;
     var pid = String(person.agentId || '').toUpperCase();
     var pGroup = aliasIdx[iNameKey_(person.agentName)];
     if (pGroup === undefined && pid) {

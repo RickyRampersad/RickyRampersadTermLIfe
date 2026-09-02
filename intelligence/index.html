@@ -132,6 +132,27 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
 .split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:860px){.split{grid-template-columns:1fr}}
 .empty{color:var(--dim);font-size:13.5px;padding:26px 10px;text-align:center}
+
+/* ── the day's jobs ─────────────────────────────────────────────────────── */
+.joblist{display:grid;gap:9px;margin-top:4px}
+.jobrow{display:grid;grid-template-columns:26px 66px 1fr 22px;gap:14px;align-items:center;
+  width:100%;text-align:left;background:rgba(255,255,255,.03);border:1px solid var(--line);
+  border-radius:13px;padding:14px 16px;cursor:pointer;color:inherit;font:inherit;transition:.14s}
+.jobrow:hover{border-color:var(--gold);background:rgba(232,160,32,.06);transform:translateX(2px)}
+.jobrow:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.jobn{font:700 12px 'Montserrat';color:var(--dim);text-align:center}
+.jobc{font:800 26px 'Montserrat';text-align:right;font-variant-numeric:tabular-nums;line-height:1}
+.jobc.bad{color:var(--bad)} .jobc.warn{color:var(--warn)}
+.jobc.good{color:var(--good)} .jobc.gold{color:var(--gold)}
+.jobt b{display:block;font:700 15px 'Montserrat';margin-bottom:3px}
+.jobt span{font-size:13px;color:var(--muted);line-height:1.5}
+.jobgo{color:var(--dim);font-size:17px;text-align:center}
+.jobrow:hover .jobgo{color:var(--gold)}
+@media(max-width:620px){
+  .jobrow{grid-template-columns:44px 1fr;gap:10px}
+  .jobn,.jobgo{display:none}
+  .jobc{font-size:21px;text-align:left}
+}
 .linkish{background:none;border:none;color:var(--teal);cursor:pointer;font:inherit;padding:0;text-decoration:underline}
 
 /* ── log-an-action drawer ──────────────────────────────────────────────── */
@@ -215,6 +236,7 @@ footer.foot{max-width:1220px;margin:0 auto;padding:0 16px 40px;color:var(--dim);
   <nav class="tabs"><div class="in" id="tabbar"></div></nav>
 
   <main>
+    <div class="view" id="v-today"></div>
     <div class="view" id="v-client"></div>
     <div class="view" id="v-pulse"></div>
     <div class="view" id="v-dues"></div>
@@ -279,7 +301,7 @@ footer.foot{max-width:1220px;margin:0 auto;padding:0 16px 40px;color:var(--dim);
    See INTELLIGENCE-SETUP.md. */
 var API = 'https://script.google.com/macros/s/AKfycbymH3OowYXYqdZg6FJ_fjcOu5F0tpoibGeEswAQFg7TXtNYMaySr3wSeLzUnTJtTF76/exec';
 
-var TOKEN = null, DATA = null, ME = null, VIEW = 'pulse';
+var TOKEN = null, DATA = null, ME = null, VIEW = 'today';
 
 /* Apps Script answers a simple cross-origin POST but not a preflight, so the
    content type stays text/plain. The body is still JSON and the script still
@@ -494,6 +516,7 @@ function downloadCsv(id) {
    ══════════════════════════════════════════════════════════════════════════ */
 
 var TABS = [
+  { id: 'today',    label: 'Today', count: function () { return todayJobs().length; } },
   { id: 'pulse',    label: 'Pulse' },
   { id: 'client',   label: 'Find a client' },
   { id: 'dues',     label: 'Premium dues',  count: function (d) { return (d.dues || {}).chaseCount; } },
@@ -522,7 +545,7 @@ function show(view) {
   document.querySelectorAll('.view').forEach(function (v) { v.classList.remove('on'); });
   var el = $('v-' + view);
   el.classList.add('on');
-  ({ pulse: viewPulse, client: viewClient, dues: viewDues, pending: viewPending,
+  ({ today: viewToday, pulse: viewPulse, client: viewClient, dues: viewDues, pending: viewPending,
      reqs: viewReqs, maturity: viewMaturity, expiry: viewExpiry, xsell: viewXsell,
      moves: viewMoves, health: viewHealth }[view])(el);
   window.scrollTo(0, 0);
@@ -640,6 +663,300 @@ function viewPulse(el) {
   }
 
   el.innerHTML = html;
+}
+
+/* Movement lists fold by client the same way the chase list does — three
+   policies lapsing on one person is one call, and the list said three. Shared
+   so Today can fold its own start-here list with it. */
+function moveGroupFor(mine) {
+  return {
+    key: function (r) { return r.client; },
+    fold: function (list) {
+      var f = list[0];
+      return {
+        agent: f.agent, client: f.client, policies: list.length,
+        modal: sumOf(list, 'modal'),
+        plans: uniqueOf(list, 'plan').join(', '),
+        phone: firstOf(list, 'phone'), email: firstOf(list, 'email'),
+        nums: list.map(function (r) { return r.policy; }).join(' ')
+      };
+    },
+    cols: [].concat(mine ? [] : [{ key: 'agent', label: 'Agent' }], [
+      { key: 'client', label: 'Client' },
+      { key: 'policies', label: 'Policies', num: true,
+        render: function (r) {
+          return r.policies > 1 ? '<span class="pill p-gold">' + r.policies + '</span>'
+                                : '<span style="color:var(--dim)">1</span>';
+        } },
+      { key: 'modal', label: 'Instalments', num: true,
+        render: function (r) { return r.modal ? money2(r.modal) : '—'; } },
+      { key: 'plans', label: 'Plans',
+        render: function (r) {
+          return '<span class="clip" style="max-width:16ch" title="' + esc(r.plans) + '">' +
+                 esc(r.plans) + '</span>';
+        } },
+      { key: 'phone', label: 'Phone', render: function (r) { return '<span class="nowrap">' + esc(r.phone) + '</span>'; } },
+      { key: 'email', label: 'E-mail' },
+      { key: 'nums', label: 'Policy numbers',
+        render: function (r) { return '<span class="clip" style="max-width:22ch" title="' + esc(r.nums) + '">' + esc(r.nums) + '</span>'; } },
+      { key: 'act', label: '', sortable: false,
+        render: function (r) {
+          return '<button class="btn small" data-log="movement" data-policy="' + esc(r.nums) +
+                 '" data-client="' + esc(r.client) + '">Log</button>';
+        }, value: function () { return ''; } }
+    ])
+  };
+}
+
+/* ── Today ─────────────────────────────────────────────────────────────────
+   Ten screens is nine too many for somebody who has five minutes between
+   appointments. This one asks the only question that matters on a Tuesday
+   morning — what should I do today — and answers it as a short ranked list
+   of jobs, each with a count, a reason it is urgent now rather than later,
+   and a button that lands on the screen holding it.
+
+   The jobs differ by role because the three roles have different days. An
+   agent sells and collects. Staff chase head office and never sell. A manager
+   watches the shape of it. Nothing is hidden from anybody — every screen is
+   still one click away — but the day starts with a list, not a menu.
+
+   Everything here is computed from data already on the page, so it costs
+   nothing to serve and cannot disagree with the screen it points at.        */
+
+function isoToday() { return new Date().toISOString().slice(0, 10); }
+
+function dueFollowUps() {
+  var t = isoToday();
+  return (DATA.actions || []).filter(function (a) { return a.followUp && a.followUp <= t; });
+}
+
+function todayJobs() {
+  if (!DATA) return [];
+  var role = DATA.you.role;
+  var d = DATA.dues || {}, p = DATA.pending || {}, q = DATA.reqs || {},
+      m = DATA.maturity || {}, x = DATA.crosssell || {}, h = DATA.health || {},
+      mv = DATA.movements || {}, mc = (mv.first ? {} : mv.counts) || {};
+  var jobs = [];
+  function job(o) { if (o.count > 0) jobs.push(o); }
+
+  /* What lapsed overnight leads the day for the people who can do something
+     about it. Staff do not reinstate policies — they chase head office — so
+     putting it at the top of their list would be telling them to do somebody
+     else's job first. */
+  if (role !== 'staff') {
+    job({ key: 'lapsed', count: mc.lapsed || 0, tone: 'bad', view: 'moves',
+          label: role === 'branch' ? 'Lapsed overnight — make sure somebody is on them'
+                                   : 'Reinstate what lapsed last night',
+          why: 'Reinstatement is easiest in the first weeks and hardest after a year. These are as easy as they will ever be, today.',
+          rows: (mv.lapsed || []).slice(0, 5),
+          cols: 'move' });
+  }
+
+  job({ key: 'followup', count: dueFollowUps().length, tone: 'warn', view: 'pulse',
+        label: 'Follow-ups you promised', 
+        why: 'You said you would come back to these on or before today.',
+        rows: dueFollowUps().slice(0, 5), cols: 'action' });
+
+  if (role === 'agent') {
+    job({ key: 'slipped', count: mc.slipped || 0, tone: 'warn', view: 'moves',
+          label: 'Catch the ones that slipped',
+          why: 'These were paying yesterday. A call now costs one conversation; in six months it costs a reinstatement.',
+          rows: (mv.slipped || []).slice(0, 5), cols: 'move' });
+
+    var deep = (d.chase || []).filter(function (r) { return r.days > 90 && r.reachable; });
+    job({ key: 'deep', count: deep.length, tone: 'bad', view: 'dues',
+          label: 'Arrears past 90 days you can still reach',
+          why: 'Past ninety days the odds fall away quickly. These still have a phone or an e-mail on file.',
+          rows: deep.slice(0, 5), cols: 'dues' });
+
+    var money = (p.rows || []).filter(function (r) { return r.suspense > 0; });
+    job({ key: 'suspense', count: money.length, tone: 'gold', view: 'pending',
+          label: 'Your clients\' money sitting in suspense',
+          why: 'They have paid. It cannot be applied until the case closes, and they remember.',
+          rows: money.slice(0, 5), cols: 'pending' });
+
+    job({ key: 'leads', count: x.thisWeek || 0, tone: 'good', view: 'xsell',
+          label: 'Cross-sell calls that are ready',
+          why: 'Scored 80 or better — reachable, paid up, the right age, and a gap worth talking about.',
+          rows: (x.rows || []).filter(function (r) { return r.score >= 80; }).slice(0, 5),
+          cols: 'xsell' });
+
+    job({ key: 'pens', count: (m.retirement || {}).w12 || 0, tone: 'good', view: 'maturity',
+          label: 'Pensions maturing within a year',
+          why: 'The decision gets made months before the maturity letter lands. Whoever is in the room keeps it.',
+          rows: ((m.retirement || {}).rows || []).filter(function (r) { return r.months <= 12; }).slice(0, 5),
+          cols: 'maturity' });
+  }
+
+  if (role === 'staff') {
+    job({ key: 'never', count: p.chaseNever || 0, tone: 'bad', view: 'pending',
+          label: 'Pending cases nobody has ever chased',
+          why: 'No follow-up task has ever named these. They are not being worked, and they will sit until somebody raises one.',
+          rows: (p.rows || []).filter(function (r) { return r.chase === 'never'; })
+                  .sort(function (a, b) { return (b.age || 0) - (a.age || 0); }).slice(0, 5),
+          cols: 'pending' });
+
+    var held = (p.rows || []).filter(function (r) { return r.suspense > 0; });
+    job({ key: 'held', count: held.length, tone: 'gold', view: 'pending',
+          label: 'Cases holding a client\'s money',
+          why: 'Paid and unapplied. These are the ones that turn into complaints.',
+          rows: held.slice(0, 5), cols: 'pending' });
+
+    job({ key: 'closed', count: p.chaseClosed || 0, tone: 'warn', view: 'pending',
+          label: 'Chases closed with the case still open',
+          why: 'Somebody stopped chasing before the case moved. Either it closed too early or nobody updated it.',
+          rows: (p.rows || []).filter(function (r) { return r.chase === 'closed'; }).slice(0, 5),
+          cols: 'pending' });
+
+    var oldreq = (q.rows || []).filter(function (r) { return (r.age || 0) > 180; });
+    job({ key: 'oldreq', count: oldreq.length, tone: 'warn', view: 'reqs',
+          label: 'Requirements open more than six months',
+          why: 'Most of these are cases that ended and were never closed off. Clearing them is what makes the live list believable.',
+          rows: oldreq.slice(0, 5), cols: 'reqs' });
+  }
+
+  if (role === 'branch') {
+    var stale = (DATA.freshness || []).filter(function (f) { return f.missing || (f.ageDays !== null && f.ageDays > 14); });
+    job({ key: 'stale', count: stale.length, tone: 'bad', view: 'health',
+          label: 'Sources that have stopped moving',
+          why: 'A figure built on a stale extract describes that week, not this one. Fix the feed before anybody acts on the number.',
+          rows: stale.slice(0, 5), cols: 'fresh' });
+
+    job({ key: 'never', count: p.chaseNever || 0, tone: 'bad', view: 'pending',
+          label: 'Pending cases nobody has ever chased',
+          why: 'No follow-up task has ever named these. Somebody has to own them.',
+          rows: [], cols: null });
+
+    job({ key: 'serious', count: h.high || 0, tone: 'warn', view: 'health',
+          label: 'Serious data issues behind the figures',
+          why: 'These change what a number means, not just how tidy it is.',
+          rows: (h.items || []).filter(function (i) { return i.severity === 'high'; }).slice(0, 5),
+          cols: 'health' });
+
+    var worst = (d.byAgent || []).filter(function (a) { return a.rate > 0.2; });
+    job({ key: 'worst', count: worst.length, tone: 'warn', view: 'dues',
+          label: 'Agents with more than a fifth of their book in arrears',
+          why: 'A conversation about method, not effort — the billing type is usually what is failing.',
+          rows: worst.slice(0, 5), cols: 'agentleague' });
+
+    job({ key: 'leads', count: x.thisWeek || 0, tone: 'good', view: 'xsell',
+          label: 'Cross-sell calls ready across the branch',
+          why: 'Reachable, paid up, right age. Worth putting in front of the agents who own them.',
+          rows: [], cols: null });
+  }
+
+  return jobs;
+}
+
+function viewToday(el) {
+  var jobs = todayJobs();
+  var who = DATA.you.name.split(' ')[0];
+  var hour = new Date().getHours();
+  var greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  var roleWord = { branch: 'the branch', staff: 'the branch', agent: 'your book' }[DATA.you.role];
+
+  var html =
+    '<div class="card"><h2>' + esc(greet) + ', ' + esc(who) + '</h2>' +
+    '<p class="sub">' + (jobs.length
+      ? 'Everything worth doing on ' + roleWord + ' today, hardest-first. Each one opens the screen that holds it.'
+      : 'Nothing needs you on ' + roleWord + ' today — which is the good outcome.') +
+    ' Built from the workbook at ' + esc(DATA.builtAt) + '.</p>';
+
+  if (!jobs.length) {
+    html += '<div class="empty">No arrears past the grace period, nothing lapsed overnight, ' +
+      'no follow-ups due. Have a look at Pulse if you want the wider picture.</div></div>';
+    el.innerHTML = html;
+    return;
+  }
+
+  html += '<div class="joblist">' + jobs.map(function (j, i) {
+    return '<button class="jobrow" data-go="' + esc(j.view) + '">' +
+      '<span class="jobn">' + (i + 1) + '</span>' +
+      '<span class="jobc ' + esc(j.tone) + '">' + num(j.count) + '</span>' +
+      '<span class="jobt"><b>' + esc(j.label) + '</b><span>' + esc(j.why) + '</span></span>' +
+      '<span class="jobgo">→</span></button>';
+  }).join('') + '</div></div>';
+
+  /* The first job, ready to work, so the common case needs no navigation. */
+  var first = jobs.filter(function (j) { return j.rows && j.rows.length; })[0];
+  if (first) {
+    html += '<div class="card"><h2>Start here — ' + esc(first.label.toLowerCase()) + '</h2>' +
+      '<p class="sub">The first ' + first.rows.length + ' of ' + num(first.count) +
+      '. Log what happens and the next person to open it sees what you said.</p>' +
+      todayTable(first) + '</div>';
+  }
+  el.innerHTML = html;
+}
+
+/* Each job knows which shape its rows are, so one renderer covers them all. */
+function todayTable(j) {
+  var mine = DATA.you.role === 'agent';
+  var C = {
+    move: [].concat(mine ? [] : [{ key: 'agent', label: 'Agent' }], [
+      { key: 'client', label: 'Client' }, { key: 'policy', label: 'Policy' },
+      { key: 'plan', label: 'Plan' },
+      { key: 'modal', label: 'Instalment', num: true, render: function (r) { return r.modal ? money2(r.modal) : '—'; } },
+      { key: 'phone', label: 'Phone' }, { key: 'email', label: 'E-mail' },
+      { key: 'act', label: '', sortable: false, value: function () { return ''; },
+        render: function (r) { return logBtn('movement', r.policy, r.client); } }]),
+    dues: duesCols(mine),
+    pending: [].concat(mine ? [] : [{ key: 'agent', label: 'Agent' }], [
+      { key: 'client', label: 'Client' }, { key: 'policy', label: 'Policy' },
+      { key: 'requirement', label: 'Waiting on', render: function (r) { return esc(r.requirement || r.status); } },
+      { key: 'age', label: 'Days', num: true,
+        render: function (r) { return r.age === null ? '—' : num(r.age); } },
+      { key: 'suspense', label: 'Suspense', num: true,
+        render: function (r) { return r.suspense ? '<span class="pill p-gold">' + money2(r.suspense) + '</span>' : '—'; } },
+      { key: 'act', label: '', sortable: false, value: function () { return ''; },
+        render: function (r) { return logBtn('pending', r.policy, r.client); } }]),
+    reqs: [{ key: 'policy', label: 'Policy' }, { key: 'label', label: 'Requirement' },
+      { key: 'age', label: 'Days open', num: true, render: function (r) { return num(r.age || 0); } },
+      { key: 'added', label: 'Ordered' },
+      { key: 'act', label: '', sortable: false, value: function () { return ''; },
+        render: function (r) { return logBtn('requirement', r.policy, r.orderedFor); } }],
+    xsell: [{ key: 'score', label: 'Score', num: true,
+        render: function (r) { return '<span class="pill p-good">' + r.score + '</span>'; } },
+      { key: 'client', label: 'Client' },
+      { key: 'rule', label: 'The gap',
+        render: function (r) { return esc(((DATA.crosssell.rules || {})[r.rule] || {}).short || r.rule); } },
+      { key: 'size', label: 'Worth', num: true, render: function (r) { return money(r.size); } },
+      { key: 'phone', label: 'Contact', render: function (r) { return esc(r.phone || r.email); } },
+      { key: 'act', label: '', sortable: false, value: function () { return ''; },
+        render: function (r) { return logBtn('cross-sell', r.clientId, r.client); } }],
+    maturity: [{ key: 'matures', label: 'Matures' },
+      { key: 'client', label: 'Client' }, { key: 'plan', label: 'Plan' },
+      { key: 'fund', label: 'Fund value', num: true, render: function (r) { return money(r.fund); } },
+      { key: 'phone', label: 'Contact', render: function (r) { return esc(r.phone || r.email); } },
+      { key: 'act', label: '', sortable: false, value: function () { return ''; },
+        render: function (r) { return logBtn('maturity', r.policy, r.client); } }],
+    action: [{ key: 'followUp', label: 'Due' }, { key: 'client', label: 'Client' },
+      { key: 'policy', label: 'Policy' }, { key: 'next', label: 'You said' },
+      { key: 'note', label: 'Last note' },
+      { key: 'act', label: '', sortable: false, value: function () { return ''; },
+        render: function (r) { return logBtn('follow-up', r.policy, r.client); } }],
+    fresh: [{ key: 'label', label: 'Source' }, { key: 'newest', label: 'Newest record' },
+      { key: 'ageDays', label: 'Age', num: true,
+        render: function (r) { return r.missing ? 'missing' : num(r.ageDays) + ' days'; } },
+      { key: 'feeds', label: 'What it feeds' }],
+    health: [{ key: 'what', label: 'Issue' },
+      { key: 'count', label: 'Rows', num: true, render: function (r) { return num(r.count); } },
+      { key: 'fix', label: 'Where it gets fixed' }],
+    agentleague: [{ key: 'agent', label: 'Agent' },
+      { key: 'book', label: 'Book', num: true, render: function (r) { return num(r.book); } },
+      { key: 'chase', label: 'Chasing', num: true, render: function (r) { return num(r.chase); } },
+      { key: 'rate', label: 'Share', num: true,
+        render: function (r) { return '<span class="pill p-bad">' + pct(r.rate) + '</span>'; } }]
+  };
+  /* The shapes that can repeat a client fold like they do everywhere else —
+     three policies lapsing on one person is one call, not three. */
+  var G = { move: moveGroupFor(mine), dues: duesGroup(mine) };
+  return table('today_' + j.key, C[j.cols], j.rows,
+               { limit: 5, group: G[j.cols], groupDefault: !!G[j.cols] });
+}
+
+function logBtn(domain, policy, client) {
+  return '<button class="btn small" data-log="' + esc(domain) + '" data-policy="' +
+         esc(policy || '') + '" data-client="' + esc(client || '') + '">Log</button>';
 }
 
 /* ── Find a client ─────────────────────────────────────────────────────────
@@ -1595,45 +1912,7 @@ function viewMoves(el) {
       stat('New pending cases', num(c.newPending || 0), 'submitted since last night') +
     '</div></div>';
 
-  /* Movement lists fold the same way — three policies lapsing on one client is
-     one call, and the list said three. */
-  var moveGroup = {
-    key: function (r) { return r.client; },
-    fold: function (list) {
-      var f = list[0];
-      return {
-        agent: f.agent, client: f.client, policies: list.length,
-        modal: sumOf(list, 'modal'),
-        plans: uniqueOf(list, 'plan').join(', '),
-        phone: firstOf(list, 'phone'), email: firstOf(list, 'email'),
-        nums: list.map(function (r) { return r.policy; }).join(' ')
-      };
-    },
-    cols: [].concat(mine ? [] : [{ key: 'agent', label: 'Agent' }], [
-      { key: 'client', label: 'Client' },
-      { key: 'policies', label: 'Policies', num: true,
-        render: function (r) {
-          return r.policies > 1 ? '<span class="pill p-gold">' + r.policies + '</span>'
-                                : '<span style="color:var(--dim)">1</span>';
-        } },
-      { key: 'modal', label: 'Instalments', num: true,
-        render: function (r) { return r.modal ? money2(r.modal) : '—'; } },
-      { key: 'plans', label: 'Plans',
-        render: function (r) {
-          return '<span class="clip" style="max-width:16ch" title="' + esc(r.plans) + '">' +
-                 esc(r.plans) + '</span>';
-        } },
-      { key: 'phone', label: 'Phone', render: function (r) { return '<span class="nowrap">' + esc(r.phone) + '</span>'; } },
-      { key: 'email', label: 'E-mail' },
-      { key: 'nums', label: 'Policy numbers',
-        render: function (r) { return '<span class="clip" style="max-width:22ch" title="' + esc(r.nums) + '">' + esc(r.nums) + '</span>'; } },
-      { key: 'act', label: '', sortable: false,
-        render: function (r) {
-          return '<button class="btn small" data-log="movement" data-policy="' + esc(r.nums) +
-                 '" data-client="' + esc(r.client) + '">Log</button>';
-        }, value: function () { return ''; } }
-    ])
-  };
+  var moveGroup = moveGroupFor(mine);
 
   function moveTable(id, rows, title, sub, tone) {
     if (!rows || !rows.length) return '';
