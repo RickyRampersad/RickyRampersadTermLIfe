@@ -416,6 +416,32 @@ const TASKS={
       {who:"Kamla", what:"Premium due reminder — S. Roopnarine",               days:1}]
   },
 
+  // Is the branch keeping up? Thirty days, what came in against what went out.
+  //
+  // This is the card that decides how every other card should be read, and it
+  // says the opposite of what an overdue count implies. Four of the six are at
+  // or below break-even. Kamla closed twenty-one more than arrived. Sasha
+  // eleven more. The support team is not the reason the book is 144.
+  //
+  // The Branch Manager's own line is the one that matters, and it needs the
+  // robot taken out of it or it lies: of 582 tasks created in his name, 551
+  // are the birthday mailer, which creates and closes its own work. His real
+  // intake is 31 in thirty days — one a day, all inbound email — and his real
+  // closures by hand are close to none. That is where the 76-strong untyped
+  // pile comes from, and it is not a capacity problem: it is one a day, not
+  // being answered.
+  //
+  // So the action this card points at is not "work harder". Nobody here is
+  // behind on volume. It is: clear the specific old items, because they are
+  // not being carried by a tide, they are just sitting.
+  flow:[
+    {n:"Sasha",     in:361, out:372},
+    {n:"Azariah",   in:225, out:225},
+    {n:"Elizabeth", in:128, out:118},
+    {n:"Pawan",     in:49,  out:55},
+    {n:"Kamla",     in:35,  out:56},
+    {n:"Ricky",     in:31,  out:1, note:"robot excluded — 551 in, 551 out"}],
+
   // The birthday mailer: it closes its own work and should never be counted
   // as anybody's throughput.
   robot:{ closedToday:19, closedWeek:141 }
@@ -1019,12 +1045,53 @@ function sBeforeYouLeave(){
     "</div></div>";
 }
 
+function sFlow(){
+  const F=TASKS.flow;
+  const max=Math.max(...F.map(x=>Math.max(x.in,x.out)),1);
+  const keeping=F.filter(x=>x.out>=x.in).length;
+
+  const rows=F.map(x=>{
+    // The book grows when more arrives than leaves. in minus out, not the
+    // other way round — the first version had this backwards and told the
+    // room Sasha's book had grown on a month she closed eleven more than
+    // came in.
+    const net=x.in-x.out;
+    // Two bars, in over out, so the eye reads the gap rather than a number.
+    const bar=(v,c,label,title)=>
+      '<div class="stack" style="height:1.5vh;margin-bottom:.3vh">'+
+      seg(v/max*100,c,label,title)+"</div>";
+    return '<div class="row"><span class="nm">'+esc(x.n)+'</span>'+
+      "<span>"+
+        bar(x.in,"var(--muted)",  x.in+" in",  x.n+" — "+x.in+" arrived")+
+        bar(x.out,net<=0?"var(--green)":"var(--gold)", x.out+" out",
+            x.n+" — "+x.out+" closed")+
+      "</span>"+
+      '<span class="val" style="color:'+(net>0?"var(--red)":"var(--green)")+'">'+
+        (net>0?"+":"")+net+"</span>"+
+      '<span class="sub">'+(net>0?"the book grew":net<0?"the book shrank":"level")+
+      (x.note?' · <span style="color:var(--muted)">'+esc(x.note)+"</span>":"")+"</span></div>";
+  }).join("");
+
+  return '<div class="kick">12 · Are we keeping up?</div>'+
+    "<h2>"+keeping+" of "+F.length+" closed at least as much as arrived</h2>"+
+    '<p class="lede">Thirty days, in against out. Grey is what arrived, green or gold is what was '+
+      'closed, and the number is the difference. This is the card that says how to read the others: '+
+      'the overdue book is <b>not</b> a volume problem. Nobody here is drowning. What is wrong is a '+
+      'small number of specific old items that are simply sitting, and those are named on card 11.</p>'+
+    '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div>"+
+    '<div class="key" style="margin-top:1.6vh;font-size:1.6vh">'+
+      '<b>The birthday mailer is excluded throughout — it creates and closes its own work, '+
+      '551 of each in thirty days, and it is nobody&rsquo;s throughput.</b></div>'+
+    "</div></div>";
+}
+
 // ---- deck --------------------------------------------------------------
 let cur=0, timer=null, paused=false;
 function render(rows){
   const cards=judge(rows);
   const slides=[sBlocks(cards),sWaitingToday(cards),sSubstance(cards),sReconcile(cards),sToday(),
-                sOverdue(),sTypes(cards),sWaitingOn(),sInbound(),sRhythm(),sBeforeYouLeave()];
+                sOverdue(),sTypes(cards),sWaitingOn(),sInbound(),sRhythm(),sBeforeYouLeave(),
+                sFlow()];
   $("#slides").innerHTML=slides.map(h=>'<section class="slide">'+h+"</section>").join("");
   const nav=$("#dotsNav"); nav.innerHTML="";
   slides.forEach((_,i)=>{const d=document.createElement("i");

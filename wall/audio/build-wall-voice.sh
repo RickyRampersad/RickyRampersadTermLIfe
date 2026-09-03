@@ -42,4 +42,6 @@ say s10 "How the day is chased. Six things happen on their own — the midday nu
 
 say s11 "Before you leave. On the left, what is due today with nobody else holding it up. On the right, the work that was never started at all — not late, never begun, which is the one an overdue count cannot tell you."
 
-echo "Done — 11 lines, matching the 11 slides in render()."
+say s12 "Are we keeping up. Thirty days, what arrived against what was closed. This is the card that says how to read the others. The overdue book is not a volume problem. Nobody here is drowning. What is wrong is a small number of specific old things that are simply sitting."
+
+echo "Done — 12 lines, matching the 12 slides in render()."
