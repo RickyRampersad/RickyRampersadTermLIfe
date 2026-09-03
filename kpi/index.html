@@ -341,8 +341,13 @@ async function api(action, payload, onAttempt) {
       if (out && !out._retry) return out;      // a real answer, just not a happy one
       last = out;
     } catch (e) {
+      // A thrown fetch is not the same as a refusal — the request never
+      // completed. On a phone over LTE that is usually the connection
+      // dropping a slow request. Say both, and blame neither: the last time
+      // this message mentioned a connection, somebody restarted their phone
+      // over a fault in this script.
       last = { ok: false,
-        error: "The sheet did not answer in time. It can take a few seconds — press Sign in once more." };
+        error: "The sheet did not answer. It is slow today, so a weak signal can drop the request — press Sign in once more, and tell the Branch Manager if it keeps happening." };
     }
   }
   // Every attempt is spent. "Trying again..." was true a moment ago and is not
