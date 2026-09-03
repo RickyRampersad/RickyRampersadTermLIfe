@@ -94,7 +94,14 @@ const ok = (l,c,x='') => { console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:'')
   ok('the draft is on the device before she even submits', !!stored && stored.includes('Actioned remaining tasks'));
 
   console.log('\nThe sheet answers 404, three times:\n');
+  // Her words are the real ones, and they read thin, so the tracker asks once
+  // before it sends. That is a separate behaviour with its own test; here it
+  // is simply the first press on the way to the failure being tested.
   await page.click('button:has-text("Submit block")');
+  await page.waitForTimeout(700);
+  const askFirst = await page.locator('button:has-text("Send it anyway")').count();
+  ok('it asks once, because the entry reads thin', askFirst > 0);
+  await page.click('button:has-text("Send it anyway")');
   await page.waitForTimeout(9000);
   ok('it retried instead of giving up on the first 404', saveAttempts >= 3, saveAttempts + ' attempts');
   const msg = await page.locator('text=/busy, not broken|saved on this phone/').count();
@@ -114,6 +121,9 @@ const ok = (l,c,x='') => { console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:'')
   console.log('\nThe sheet recovers:\n');
   failSaves = false;
   await page.click('button:has-text("Submit block")');
+  await page.waitForTimeout(700);
+  if (await page.locator('button:has-text("Send it anyway")').count())
+    await page.click('button:has-text("Send it anyway")');
   await page.waitForTimeout(2500);
   ok('it sends', await page.locator('text=/Sent 15:42/').count() > 0);
   const left = await page.evaluate(() => {

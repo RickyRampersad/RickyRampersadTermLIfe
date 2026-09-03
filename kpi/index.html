@@ -456,6 +456,76 @@ function overlayDraft(entry, draft) {
   return out;
 }
 
+// ---------------------------------------------------------------------------
+//  Does the entry actually say anything?
+//
+//  The same rule the sheet applies, run here so the answer is instant and
+//  nobody waits on a round trip to be told their block reads thin. KPI.gs
+//  holds the authoritative copy and records it; tests/test-substance.js runs
+//  the branch's real entries through both.
+//
+//  The bar is one question: does this say HOW MANY or WHICH ONE. Only
+//  Actioned and Resolved are read, and they are read together — "None today"
+//  is often the honest answer to Resolved and must never count against a
+//  block whose Actioned line is full. Blocker and Waiting-on are never
+//  judged; "None" is the right answer there most days.
+// ---------------------------------------------------------------------------
+const FILLER_RE = /^(?:\W|none|n\/?a|nil|nothing|no|yes|ok|okay|done|complete[d]?|finish(?:ed)?|task[s]?|work(?:ing|ed)?|action(?:ed|s)?|remaining|outstanding|same|as\s+above|see\s+above|ditto|all|various|misc(?:ellaneous)?|general|usual|normal|routine|etc|and|the|my|daily)*$/i;
+const COUNT_RE = /\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|dozen)\b/i;
+const COUNT_STRIP = /\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|dozen)\b/gi;
+const VERB_RE = /\b(?:sent|send|sending|process(?:ed|ing)?|chas(?:ed|ing)|chase|resolv(?:ed|ing)|escalat(?:ed|ing)|submit(?:ted|ting)?|upload(?:ed)?|correct(?:ed)?|amend(?:ed)?|follow(?:ed)?[\s-]?up|call(?:ed)?|email(?:ed)?|reconcil(?:ed|ing|iation)?|issu(?:ed)?|prepar(?:ed)?|review(?:ed)?|updat(?:ed)?|clos(?:ed)?|logg?(?:ed)?|fil(?:ed|ing)|scan(?:ned)?|print(?:ed)?|deliver(?:ed)?|collect(?:ed)?|verif(?:ied|y)|approv(?:ed)?|declin(?:ed)?|quot(?:ed)?|renew(?:ed)?|transmit(?:ted)?|receiv(?:ed)?|request(?:ed)?|book(?:ed)?|arrang(?:ed)?|confirm(?:ed)?|check(?:ed)?|contact(?:ed)?|advis(?:ed)?|refer(?:red)?|rais(?:ed)?|cancel(?:led|ed)?|reinstat(?:ed)?|surrender(?:ed)?|paid|pay|banked|deposit(?:ed)?)\b/i;
+const REF_RE = /\b(?:[A-Z]{2,}[-\/]?\d{2,}|\d{5,}|#\s*\d+)\b/;
+
+const wordsOf = t => String(t || "").trim().split(/\s+/).filter(w => /[a-z0-9]/i.test(w));
+
+function hasProperName(t) {
+  const w = String(t || "").split(/\s+/);
+  for (let i = 1; i < w.length; i++) if (/^[A-Z][a-z]{2,}/.test(w[i])) return true;
+  return /^[A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}/.test(String(t || "").trim());
+}
+
+function readSubstance(d, others) {
+  d = d || {};
+  const both = (String(d.actioned || "").trim() + " " + String(d.resolved || "").trim()).trim();
+  const words = wordsOf(both);
+
+  if (!words.length)        return { level: "thin", reason: "nothing written" };
+  if (FILLER_RE.test(both)) return { level: "thin", reason: "no answer, only filler" };
+  if (words.length < 3)     return { level: "thin", reason: "too short to say anything" };
+  if (FILLER_RE.test(both.replace(COUNT_STRIP, " ")))
+    return { level: "thin", reason: "a count, but nothing named" };
+
+  const hasCount = COUNT_RE.test(both),
+        hasRef   = REF_RE.test(both),
+        hasVerb  = VERB_RE.test(both),
+        hasName  = hasProperName(both);
+
+  if (hasName && !hasCount && !hasRef && !hasVerb)
+    return { level: "thin", reason: "a name, but nothing done with it" };
+  if (!hasCount && !hasRef && !hasName)
+    return { level: "thin", reason: "no count or case named" };
+
+  const norm = both.toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+  if (norm.length > 8 && others) {
+    for (const o of others) {
+      const n = String(o || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+      if (n && n === norm) return { level: "thin", reason: "same words as another block today" };
+    }
+  }
+  return { level: "full", reason: "" };
+}
+
+/** The branch's written standards, checked rather than merely printed. */
+function readStandards(d) {
+  const out = [];
+  d = d || {};
+  const owner = String(d.blockerOwner || "").trim();
+  if (owner && !/\d/.test(owner)) out.push("name the date you last chased " + owner);
+  if (COUNT_RE.test(String(d.openOwned || "").trim()) && !String(d.blocker || "").trim())
+    out.push("say what is holding the work you are carrying forward");
+  return out;
+}
+
 // A sheet row becomes an entry the form understands.
 function rowToEntry(row) {
   const g = k => row[k] != null ? String(row[k]) : "";
@@ -786,6 +856,34 @@ function App() {
   // actually happened — and the staff member gets their own copy by email.
   async function submitBlock(b) {
     if (!entry || blockState[b.id]?.tone === "saving") return;
+
+    // Ask once, then send.
+    //
+    // A block that does not say how many or which one gets one question and
+    // one reason. Pressing Submit again sends it exactly as written — nothing
+    // is ever blocked, because somebody having a rotten day must still be able
+    // to log it. The friction is deliberate and it is one tap deep.
+    const mine = entry.blocks[b.id] || blankBlock();
+    if (blockState[b.id]?.tone !== "ask") {
+      const others = Object.keys(entry.blocks || {}).filter(k => k !== b.id)
+        .map(k => ((entry.blocks[k] || {}).actioned || "") + " " + ((entry.blocks[k] || {}).resolved || ""));
+      const read = readSubstance(mine, others);
+      const std = readStandards(mine);
+      if (read.level === "thin" || std.length) {
+        setBlockState(s => ({
+          ...s,
+          [b.id]: {
+            tone: "ask",
+            text: (read.level === "thin"
+                    ? "This reads thin — " + read.reason + "."
+                    : "Before this goes in — " + std.join("; ") + ".")
+                  + " Add a line if you can — or send it anyway, exactly as you wrote it."
+          }
+        }));
+        return;
+      }
+    }
+
     const prof = profileFor(active);
     const person = roster.find(p => p.staffId === active);
     setBlockState(s => ({
@@ -1441,7 +1539,7 @@ function App() {
           fontSize: 12.5,
           fontWeight: 700,
           lineHeight: 1.35,
-          color: st.tone === "bad" ? RED : st.tone === "ok" ? GREEN : MUTED
+          color: st.tone === "bad" ? RED : st.tone === "ok" ? GREEN : st.tone === "ask" ? AMBER : MUTED
         }
       }, st.text || (at ? "Sent at " + at + " — submitting again updates it." : "")), /*#__PURE__*/React.createElement("button", {
         onClick: () => submitBlock(b),
@@ -1451,7 +1549,9 @@ function App() {
           padding: "11px 18px",
           opacity: st.tone === "saving" ? 0.65 : 1
         }
-      }, st.tone === "saving" ? "Sending…" : at ? "Update block" : "Submit block"))));
+      }, st.tone === "saving" ? "Sending…"
+         : st.tone === "ask" ? "Send it anyway"
+         : at ? "Update block" : "Submit block"))));
     })), /*#__PURE__*/React.createElement("div", {
       style: vp.desktop ? {
         position: "sticky",

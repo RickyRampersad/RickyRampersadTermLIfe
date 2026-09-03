@@ -3,7 +3,8 @@ const { makeEnv } = require('./harness');
 const LOGH = ['Timestamp','Date','StaffId','Name','Grade','Status']
   .concat(['KPI1','KPI2','PM1','PM2'].reduce((a,p)=>a.concat([p,p+'_Actioned',p+'_Resolved',p+'_Open',p+'_Blocker']),[]))
   .concat(['Closed','Overdue','Aged60','ValueAdded','Innovation','SystemFlags','Notes','UpdatedAt','Revision'])
-  .concat(['KPI1_At','KPI2_At','PM1_At','PM2_At']);
+  .concat(['KPI1_At','KPI2_At','PM1_At','PM2_At'])
+  .concat(['KPI1_Quality','KPI2_Quality','PM1_Quality','PM2_Quality']);
 const TRH = ['TrainingDate','StaffId','Trainer','Block','Trainee','Topic','Objectives','Achieved','Test','Result','Followup','LoggedAt'];
 
 function seed(env, existingRow) {
