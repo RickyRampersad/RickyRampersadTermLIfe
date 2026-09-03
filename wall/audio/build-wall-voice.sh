@@ -33,7 +33,7 @@ say s1  "The day, block by block. A dot lights when a block is submitted, and tu
 say s2  "Who owes a block right now, and how long until the three o'clock checkpoint goes to the Branch Manager."
 say s3  "How the day is being written. A block is written when it says how many, or which one. A box filled in is not a day recorded."
 say s4  "What each person worked on today, set against what is still open in exactly that task type. The day and the book, side by side."
-say s5  "What was worked today, not only what closed. A task is worked the moment somebody touches it. Closing is one outcome of working, and not the only one that counts."
+say s5  "What was worked today, and whether anybody wrote down what they did. A task can be moved in two seconds. Change the status, push the date into next week, and it counts as work. The line that matters is the one underneath: how many carried a note saying what actually happened."
 say s6  "The overdue book, by who owns it — and what each pile is actually made of. A total on its own tells nobody what to do on Monday morning."
 say s7  "The same book cut the other way. By owner you see who to talk to. By task type you see what the branch is behind on, and whether anybody worked it today."
 say s8  "Who the branch is actually waiting on, by name. Waiting on someone else is a status, not an answer. A name and a number is something you can chase."
