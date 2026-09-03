@@ -83,6 +83,26 @@ Re-deploy after any change to `KPI.gs`: **Deploy → Manage deployments → edit
 Version: New version**. Skipping this is the usual reason a change appears to do
 nothing.
 
+### Handing the redeploy to somebody else
+
+**rickyrampersadbranch.com/redeploy** is that job written out for a person who
+does not work in code: five steps, each saying what they should see when it has
+worked, and a button that asks the workbook which version is answering and
+times it. They find out themselves whether it took, instead of messaging
+somebody and waiting.
+
+It hinges on `SCRIPT_VERSION` at the top of `KPI.gs`. **Bump it in the same
+commit as any change to that file**, and change `WANT` in
+`redeploy/index.html` to match. A deployed script is invisible from outside —
+this is the only way anybody can tell which one is running, and not being able
+to tell is what cost a day in September: the redeploy was done, it was still
+slow, and nobody could say whether the new code was live or the old.
+
+If the check reports the old script, it is nearly always **New deployment**
+used in place of **Manage deployments → pencil → New version** — which quietly
+creates a *second* web address while the tracker carries on talking to the
+first.
+
 ## 4. Turn on the emails
 
 Run **`installTriggers`** once from the editor and grant it permission when
