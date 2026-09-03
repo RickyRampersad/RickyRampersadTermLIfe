@@ -269,13 +269,24 @@ const TASKS={
   //
   // The birthday mailer closes 19 of its own and is counted nowhere here.
   // `written` is the count of those tasks that carry any record of what was
-  // actually done — an email in the Description, or a typed note.
+  // actually done — an email or note in the Description, OR a Chatter post.
+  //
+  // CORRECTION, 3 September. The first version of this counted the Description
+  // field alone and put "nothing written on any of them" on the office wall
+  // against Sasha, Kamla and Elizabeth. That was wrong about two of the three.
+  // Sasha had written three Chatter notes that day and Elizabeth two — real
+  // ones: "Kindly provide an UW decision on case as today would make the TAT",
+  // "From Claim Officer: the claim is not yet approved, we are reviewing with a
+  // second CMO". They were writing things up in the place the branch actually
+  // uses, and the wall called them out for not doing it.
+  //
+  // Measure the thing people do, not the field you happened to query first.
   //
   // This is the control the Branch Manager asked for, and it matters more than
   // any of the counts beside it. A task can be moved in two seconds: change the
   // status, push the due date into next week, and the wall reads it as work.
-  // Today, 22 of the 38 tasks moved were moved with nothing written, and the
-  // due dates on many of them were pushed to the 8th, 9th and 10th.
+  // Today, 17 of the 38 tasks moved were moved with nothing written anywhere,
+  // and the due dates on many of them were pushed to the 8th, 9th and 10th.
   //
   // The branch's own standard already says it: a rolled due date is not an
   // actioned task. This is that standard, counted.
@@ -285,13 +296,17 @@ const TASKS={
   worked:[
     {n:"Azariah",  worked:17, closed:13, moving:4, waiting:0, written:12,
      types:{"":11,"Renewa/PDl/Bill":6}},
-    {n:"Sasha",    worked:7,  closed:1,  moving:6, waiting:0, written:0,
+    {n:"Sasha",    worked:7,  closed:1,  moving:6, waiting:0, written:3,
      types:{"Pendings":5,"Renewa/PDl/Bill":2}},
     {n:"Pawan",    worked:7,  closed:6,  moving:0, waiting:1, written:4,
      types:{"":4,"Renewa/PDl/Bill":3}},
     {n:"Kamla",    worked:4,  closed:0,  moving:2, waiting:2, written:0,
      types:{"Lic/Staffing/SA/HR":4}},
-    {n:"Elizabeth",worked:3,  closed:0,  moving:2, waiting:1, written:0,
+    // Elizabeth's two Chatter notes sit on tasks she did not otherwise change,
+    // and posting Chatter does not touch LastModifiedDate — so those two do
+    // not appear in `worked` at all. Her day is larger than any field here
+    // shows, which is the whole argument for reading the feed.
+    {n:"Elizabeth",worked:3,  closed:0,  moving:2, waiting:1, written:2, alsoChattered:2,
      types:{"Servicing":3}},
     {n:"Ricky",    worked:0,  closed:0,  moving:0, waiting:0, written:0, types:{}}],
 
@@ -610,9 +625,14 @@ function sToday(){
                   x.n+" — "+x.waiting+" chased, now waiting on a reply");
     const types=Object.entries(x.types).sort((p,q)=>q[1]-p[1])
       .map(([t,c])=>esc(TYPE_LABEL[t]||t||"no type")+" "+c).join(" · ");
-    // The part that cannot be faked by moving a task.
+    // The part that cannot be faked by moving a task. "Written up" means an
+    // email or note on the task, or a Chatter post — whichever the person
+    // actually uses. Counting only one of them is how this card libelled two
+    // people who had written plenty, in the other place.
+    const extra = x.alsoChattered
+      ? ' <span style="color:var(--teal)">+'+x.alsoChattered+" more commented elsewhere</span>" : "";
     const note = x.written
-      ? '<span style="color:var(--green)">'+x.written+" of "+x.worked+" written up</span>"
+      ? '<span style="color:var(--green)">'+x.written+" of "+x.worked+" written up</span>"+extra
       : '<span style="color:var(--red)">nothing written on any of them</span>';
     return '<div class="row"><span class="nm">'+esc(x.n)+'</span>'+
       '<span class="stack">'+bar+"</span>"+
@@ -621,13 +641,13 @@ function sToday(){
   }).join("");
 
   return '<div class="kick">5 · Worked today</div>'+
-    "<h2>"+tot+" tasks moved · "+closed+" closed · <span style=\"color:var(--red)\">only "+
+    "<h2>"+tot+" tasks moved · "+closed+" closed · <span style=\"color:var(--gold)\">"+
       written+" say what was done</span></h2>"+
     '<p class="lede">Green closed, gold moved on and still with us, teal chased and now waiting '+
       'on somebody else &mdash; read from Salesforce&rsquo;s last-modified date. But a task can be '+
       'moved in two seconds: change the status, push the due date into next week, and it counts as '+
-      'work. So the line under each bar is the one that matters &mdash; how many carried an email or '+
-      'a typed note saying what actually happened.</p>'+
+      'work. So the line under each bar is the one that matters &mdash; how many carried a note '+
+      'saying what actually happened, whether that was written on the task or posted to its feed.</p>'+
     '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div>"+
     '<div class="key" style="margin-top:2vh;font-size:1.6vh;line-height:1.5">'+
       '<b style="color:var(--gold)">A rolled due date is not an actioned task &mdash; the branch&rsquo;s own standard.</b>'+
