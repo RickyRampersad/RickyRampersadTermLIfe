@@ -69,6 +69,26 @@ const ok = (l,c,x='') => { console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:'')
   ok('she is signed in, not staring at an error', await page.locator('text=YOUR DAY').count() > 0);
   ok('"Server returned 404." is nowhere on screen', await page.locator('text=Server returned 404').count() === 0);
 
+  console.log('\nThe button has to look busy, not frozen:\n');
+  // Sasha pressed Sign in five times on 3 September because one static label
+  // sat there for half a minute. Watch the label move through the retries.
+  await page.evaluate(() => localStorage.clear());
+  refuseFirst = 2; loginTries = 0;
+  await page.reload({ waitUntil:'networkidle' });
+  const i3 = await page.$$('input');
+  await i3[0].fill('KD001'); await i3[1].fill('1');
+  const seen = new Set();
+  const watch = setInterval(async () => {
+    try { seen.add((await page.locator('button[type="submit"]').innerText()).trim()); } catch (e) {}
+  }, 250);
+  await page.click('button:has-text("Sign in")');
+  await page.waitForTimeout(6500);
+  clearInterval(watch);
+  const labels = [...seen];
+  ok('it says it is still trying', labels.some(l => /Still trying/.test(l)), labels.join(' | '));
+  ok('and counts the attempt', labels.some(l => /\(2 of 3\)|\(3 of 3\)/.test(l)), labels.join(' | '));
+  ok('the button was never left blank', !labels.some(l => l === ''));
+
   console.log('\nAnd when the sheet really is unreachable, she is told plainly:\n');
   await page.evaluate(() => localStorage.clear());
   refuseFirst = 99; loginTries = 0;
