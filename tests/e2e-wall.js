@@ -42,7 +42,7 @@ const ROWS = [
     KPI1_Resolved:'12 cleared', KPI1_At:today+'T09:40:00' }
 ];
 
-let fails = 0;
+let fails = 0, live = true;
 const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(!c)fails++;};
 
 (async () => {
@@ -59,6 +59,24 @@ const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(
       return j({ok:true,token:'t',profile:ROSTER[2],roster:ROSTER,schedule:SCHEDULE});
     if (body.action==='rows')
       return j({ok:true,rows:ROWS,roster:ROSTER,schedule:SCHEDULE});
+    // The Salesforce half. Numbers deliberately unlike the snapshot, so a
+    // pass can only mean the live answer reached the screen.
+    if (body.action==='wall')
+      return live
+        ? j({ok:true, tasks:{
+            asOf: today,
+            overdue:[{who:'Sasha', type:'Pendings', n:999}],
+            age:{ Sasha:{over30:900, over60:5, oldestDays:7, oldestSince:'27 August'} },
+            byPerson:{ Sasha:{open:1000, overdue:999} },
+            worked:[{n:'Sasha', worked:42, closed:40, moving:2, waiting:0, written:41, types:{Pendings:42}}],
+            flow:[{n:'Sasha', in:10, out:20}, {n:'Ricky', in:31, out:1}],
+            waitingOn:[{who:'A Named Client', agent:'Sasha', n:3, days:2}],
+            endOfDay:{ inHand:[{who:'Sasha', what:'A live item', state:'In Progress'}],
+                       waitingDueToday:1,
+                       neverStarted:[{who:'Sasha', what:'a staffing matter', days:200, masked:true}] },
+            inbound:{ who:'Sasha', total:7, waiting:6, notStarted:1, oldestDays:9, oldestSince:'25 August' }
+          }})
+        : j({ok:true, tasks:null, note:'Salesforce did not answer.'});
     return j({ok:true});
   });
 
@@ -117,6 +135,23 @@ const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(
   // that is served publicly from a public repository.
   const src = fs.readFileSync(path.join(ROOT,'wall','index.html'),'utf8');
   ok('and not described anywhere in the served file', !/salary/i.test(src));
+  console.log('\nThe live figures must beat the snapshot:\n');
+  await page.evaluate(() => go(5));
+  await page.waitForTimeout(500);
+  const six = await page.locator('.slide.on').innerText();
+  ok('card 6 shows the live count, not the constant', /999/.test(six), six.split('\n')[1]||'');
+  await page.evaluate(() => go(4));
+  await page.waitForTimeout(400);
+  ok('card 5 shows the live day', /42/.test(await page.locator('.slide.on').innerText()));
+
+  console.log('\nAnd a silent Salesforce must not blank the wall:\n');
+  live = false;
+  await page.evaluate(() => refresh());
+  await page.waitForTimeout(1500);
+  ok('every card still renders', (await page.locator('.slide').count()) === 12);
+  ok('the last good figures are still on screen',
+     /999/.test(await page.locator('.slide').nth(5).innerText()));
+
   const real = errs.filter(e => !/favicon|Failed to load/i.test(e));
   ok('no javascript errors', real.length === 0, real.slice(0,2).join(' | '));
 
