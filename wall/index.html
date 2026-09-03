@@ -464,7 +464,7 @@ function sReconcile(cards){
     }).join("");
     return '<tr class="grouprow"><td colspan="4">'+esc(g.label)+"</td></tr>"+inner;
   }).join("");
-  return '<div class="kick">3 · Logged today vs still open</div>'+
+  return '<div class="kick">4 · Logged today vs still open</div>'+
     "<h2>Does the day match the book?</h2>"+
     '<p class="lede">The KPI on a block is a Salesforce task type — so each line reads what somebody worked on today beside what is overdue in exactly that type.</p>'+
     '<div class="body"><div class="panel" style="height:100%;overflow:auto"><table><thead><tr>'+
@@ -483,7 +483,7 @@ function sToday(){
       '<i class="green" style="width:'+(t/max*100)+'%"></i></span>'+
       '<span class="val">'+t+'</span><span class="sub">today · '+x.v+" this week</span></div>";
   }).join("");
-  return '<div class="kick">4 · Closed today</div>'+
+  return '<div class="kick">5 · Closed today</div>'+
     "<h2>"+tot+" tasks closed today · "+wtot+" this week</h2>"+
     '<p class="lede">Real work only. The birthday mailer closes its own tasks in the hundreds and is counted nowhere on this wall. Green is today, teal is the week behind it.</p>'+
     '<div class="body"><div class="panel"><div class="rows">'+rows+"</div></div></div>";
@@ -499,7 +499,7 @@ function sOverdue(){
       '<span class="track"><i class="'+tone+'" style="width:'+(x.n/max*100)+'%"></i></span>'+
       '<span class="val">'+x.n+'</span><span class="sub">avg '+x.avg+"d · oldest "+x.oldest+"d</span></div>";
   }).join("");
-  return '<div class="kick">5 · The overdue book</div>'+
+  return '<div class="kick">6 · The overdue book</div>'+
     "<h2>"+tot+" tasks past their date — and two people hold them</h2>"+
     '<p class="lede">By owner and task type, with the average age and the single oldest. Days are never added together: a total of days is a number about nothing.</p>'+
     '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div></div></div>";
@@ -524,7 +524,7 @@ function sTypes(cards){
     (x.logged?'<span style="color:var(--green)">worked today</span>'
              :'<span style="color:var(--red)">nobody on it</span>')+"</span></div>").join("");
   const idle=T.filter(x=>!x.logged).length;
-  return '<div class="kick">6 · Overdue by task type</div>'+
+  return '<div class="kick">7 · Overdue by task type</div>'+
     "<h2>"+(idle?idle+" types overdue with nobody on them today":"Every overdue type was worked today")+"</h2>"+
     '<p class="lede">Green means somebody logged a block against that type today. Red means the pile sat.</p>'+
     '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div></div></div>";
@@ -538,7 +538,7 @@ function sWaitingOn(){
       '<span class="track"><i class="'+tone+'" style="width:'+(x.n/max*100)+'%"></i></span>'+
       '<span class="val">'+x.n+'</span><span class="sub">oldest '+x.oldest+"d · quiet "+x.quiet+"d</span></div>";
   }).join("");
-  return '<div class="kick">7 · Who we are waiting on</div>'+
+  return '<div class="kick">8 · Who we are waiting on</div>'+
     "<h2>The reply is with somebody else</h2>"+
     '<p class="lede">Open tasks grouped by the account they sit against — head office, a company, a client. Quiet is days since anyone chased it.</p>'+
     '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div></div></div>";
@@ -551,7 +551,7 @@ function sInbound(){
     '<span class="track"><i class="'+(v.quietAvg>21?"red":v.quietAvg>7?"gold":"teal")+
       '" style="width:'+Math.min(v.quietAvg/50*100,100)+'%"></i></span>'+
     '<span class="val">'+v.quietAvg+'d</span><span class="sub">average · longest '+v.quietMax+"d</span></div>").join("");
-  return '<div class="kick">8 · Nobody has touched these</div>'+
+  return '<div class="kick">9 · Nobody has touched these</div>'+
     "<h2>Quiet is not the same as aged</h2>"+
     '<p class="lede">Days since the last activity on an open task. A three-week task chased yesterday is fine; one nobody has opened in a month is not.</p>'+
     '<div class="body"><div class="cols">'+
@@ -576,17 +576,128 @@ function sRhythm(){
     ["each&nbsp;block","<b>Your receipt</b><span>Every submission emailed back to you. Keep them — they are your file</span>"],
     ["Fri&nbsp;5pm","<b>The week</b><span>Where the week actually went, person by person</span>"]
   ].map(r=>'<div class="t">'+r[0]+'</div><div class="w">'+r[1]+"</div>").join("");
-  return '<div class="kick">9 · How the day is chased</div>'+
+  return '<div class="kick">10 · How the day is chased</div>'+
     "<h2>Nobody has to remember</h2>"+
     '<p class="lede">Six things happen on their own. None of them is a manager walking over to your desk.</p>'+
     '<div class="body"><div class="panel" style="height:100%"><div class="when">'+rows+"</div></div></div>";
+}
+
+// ---- does the entry actually say anything? ------------------------------
+// The same rule KPI.gs applies when it writes the sheet, and the tracker
+// applies when it asks. It is here a third time on purpose: the wall reads
+// the raw text straight from the log, so it can show the branch how the day
+// is being written without waiting on the Apps Script side to be redeployed.
+// tests/test-substance.js runs one corpus through all three and fails if any
+// of them disagrees, which is the only thing keeping three copies honest.
+const FILLER_RE=/^(?:\W|none|n\/?a|nil|nothing|no|yes|ok|okay|done|complete[d]?|finish(?:ed)?|task[s]?|work(?:ing|ed)?|action(?:ed|s)?|remaining|outstanding|same|as\s+above|see\s+above|ditto|all|various|misc(?:ellaneous)?|general|usual|normal|routine|etc|and|the|my|daily)*$/i;
+const COUNT_RE=/\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|dozen)\b/i;
+const COUNT_STRIP=/\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|dozen)\b/gi;
+const VERB_RE=/\b(?:sent|send|sending|process(?:ed|ing)?|chas(?:ed|ing)|chase|resolv(?:ed|ing)|escalat(?:ed|ing)|submit(?:ted|ting)?|upload(?:ed)?|correct(?:ed)?|amend(?:ed)?|follow(?:ed)?[\s-]?up|call(?:ed)?|email(?:ed)?|reconcil(?:ed|ing|iation)?|issu(?:ed)?|prepar(?:ed)?|review(?:ed)?|updat(?:ed)?|clos(?:ed)?|logg?(?:ed)?|fil(?:ed|ing)|scan(?:ned)?|print(?:ed)?|deliver(?:ed)?|collect(?:ed)?|verif(?:ied|y)|approv(?:ed)?|declin(?:ed)?|quot(?:ed)?|renew(?:ed)?|transmit(?:ted)?|receiv(?:ed)?|request(?:ed)?|book(?:ed)?|arrang(?:ed)?|confirm(?:ed)?|check(?:ed)?|contact(?:ed)?|advis(?:ed)?|refer(?:red)?|rais(?:ed)?|cancel(?:led|ed)?|reinstat(?:ed)?|surrender(?:ed)?|paid|pay|banked|deposit(?:ed)?)\b/i;
+const REF_RE=/\b(?:[A-Z]{2,}[-\/]?\d{2,}|\d{5,}|#\s*\d+)\b/;
+const wordsOf=t=>String(t||"").trim().split(/\s+/).filter(w=>/[a-z0-9]/i.test(w));
+function hasProperName(t){
+  const w=String(t||"").split(/\s+/);
+  for(let i=1;i<w.length;i++) if(/^[A-Z][a-z]{2,}/.test(w[i])) return true;
+  return /^[A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}/.test(String(t||"").trim());
+}
+function readSubstance(d,others){
+  d=d||{};
+  const both=(String(d.actioned||"").trim()+" "+String(d.resolved||"").trim()).trim();
+  const words=wordsOf(both);
+  if(!words.length) return {level:"thin",reason:"nothing written"};
+  if(FILLER_RE.test(both)) return {level:"thin",reason:"no answer, only filler"};
+  if(words.length<3) return {level:"thin",reason:"too short to say anything"};
+  if(FILLER_RE.test(both.replace(COUNT_STRIP," "))) return {level:"thin",reason:"a count, but nothing named"};
+  const hasCount=COUNT_RE.test(both),hasRef=REF_RE.test(both),
+        hasVerb=VERB_RE.test(both),hasName=hasProperName(both);
+  if(hasName&&!hasCount&&!hasRef&&!hasVerb) return {level:"thin",reason:"a name, but nothing done with it"};
+  if(!hasCount&&!hasRef&&!hasName) return {level:"thin",reason:"no count or case named"};
+  const norm=both.toLowerCase().replace(/[^a-z0-9 ]/g,"").replace(/\s+/g," ").trim();
+  if(norm.length>8&&others) for(const o of others){
+    const n=String(o||"").toLowerCase().replace(/[^a-z0-9 ]/g,"").replace(/\s+/g," ").trim();
+    if(n&&n===norm) return {level:"thin",reason:"same words as another block today"};
+  }
+  return {level:"full",reason:""};
+}
+function readStandards(d){
+  const out=[]; d=d||{};
+  const owner=String(d.blockerOwner||"").trim();
+  if(owner&&!/\d/.test(owner)) out.push("no date last chased for "+owner);
+  if(COUNT_RE.test(String(d.openOwned||"").trim())&&!String(d.blocker||"").trim())
+    out.push("work carried forward with no blocker named");
+  return out;
+}
+
+// Every block written today, read. The sheet's own reading wins where the
+// Apps Script side has recorded one; otherwise the text is read here.
+function substanceToday(cards){
+  const people=[], counts={full:0,thin:0};
+  cards.forEach(c=>{
+    const row=c.r;
+    if(!row) return;
+    const mine=[], texts=[];
+    BLOCKS.forEach(col=>{
+      if(!blockDone(row,col)) return;
+      texts.push(txt(row[col+"_Actioned"])+" "+txt(row[col+"_Resolved"]));
+    });
+    BLOCKS.forEach(col=>{
+      if(!blockDone(row,col)) return;
+      const a=txt(row[col+"_Actioned"]), rr=txt(row[col+"_Resolved"]);
+      const recorded=txt(row[col+"_Quality"]);
+      let level,reason;
+      if(recorded){ level=recorded.indexOf("thin")===0?"thin":"full";
+                    reason=recorded.replace(/^thin:\s*/,""); }
+      else { const g=readSubstance({actioned:a,resolved:rr},
+               texts.filter(t=>t!==(a+" "+rr))); level=g.level; reason=g.reason; }
+      counts[level]++;
+      if(level==="thin") mine.push({block:LBL[col],reason:reason});
+      readStandards({blockerOwner:txt(row[col+"_Blocker"]).split("·")[1]||"",
+                     openOwned:txt(row[col+"_Open"]),
+                     blocker:txt(row[col+"_Blocker"])})
+        .forEach(b=>mine.push({block:LBL[col],reason:b}));
+    });
+    if(mine.length) people.push({name:c.p.name,tier:c.p.tier,items:mine});
+  });
+  return {people:people,counts:counts};
+}
+
+function sSubstance(cards){
+  const S=substanceToday(cards);
+  const written=S.counts.full+S.counts.thin;
+  const pct=written?Math.round(S.counts.full/written*100):0;
+
+  // Name on the first line of a person's run, blank on the rest, so the eye
+  // groups them the way it does on every other card here.
+  let rows="";
+  S.people.forEach(p=>{
+    p.items.forEach((it,i)=>{
+      rows+='<div class="t">'+(i?"":esc(p.name))+"</div>"+
+            '<div class="w"><b>'+esc(it.block)+"</b><span>"+esc(it.reason)+"</span></div>";
+    });
+  });
+
+  const body = !written
+    ? '<div class="when"><div class="t">—</div><div class="w"><b>Nothing written yet today</b>'+
+      "<span>The first block goes in at ten.</span></div></div>"
+    : rows
+      ? '<div class="when">'+rows+"</div>"
+      : '<div class="when"><div class="t">'+S.counts.full+"</div>"+
+        '<div class="w"><b>Every block today says how many, or which one</b>'+
+        "<span>Nothing to raise.</span></div></div>";
+
+  return '<div class="kick">3 · How the day is being written</div>'+
+    "<h2>"+S.counts.full+" of "+written+" entries name a count or a case</h2>"+
+    '<p class="lede">A block is written when it says how many, or which one. '+
+      '&ldquo;Actioned remaining tasks&rdquo; is a box filled in, not a day recorded'+
+      (written?" — "+pct+"% of today's entries would stand up at a review":"")+".</p>"+
+    '<div class="body"><div class="panel" style="overflow:auto;height:100%">'+body+"</div></div>";
 }
 
 // ---- deck --------------------------------------------------------------
 let cur=0, timer=null, paused=false;
 function render(rows){
   const cards=judge(rows);
-  const slides=[sBlocks(cards),sWaitingToday(cards),sReconcile(cards),sToday(),
+  const slides=[sBlocks(cards),sWaitingToday(cards),sSubstance(cards),sReconcile(cards),sToday(),
                 sOverdue(),sTypes(cards),sWaitingOn(),sInbound(),sRhythm()];
   $("#slides").innerHTML=slides.map(h=>'<section class="slide">'+h+"</section>").join("");
   const nav=$("#dotsNav"); nav.innerHTML="";

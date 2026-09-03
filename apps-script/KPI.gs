@@ -478,7 +478,8 @@ var LOG_HEADERS = ['Timestamp', 'Date', 'StaffId', 'Name', 'Grade', 'Status']
   }, []))
   .concat(['Closed', 'Overdue', 'Aged60', 'ValueAdded', 'Innovation', 'SystemFlags', 'Notes',
            'UpdatedAt', 'Revision'])
-  .concat(BLOCK_IDS.map(function (p) { return p + '_At'; }));
+  .concat(BLOCK_IDS.map(function (p) { return p + '_At'; }))
+  .concat(BLOCK_IDS.map(function (p) { return p + '_Quality'; }));
 
 var TRAINING_HEADERS = ['TrainingDate', 'StaffId', 'Trainer', 'Block', 'Trainee', 'Topic',
                         'Objectives', 'Achieved', 'Test', 'Result', 'Followup', 'LoggedAt'];
@@ -489,6 +490,7 @@ function ensureLogColumns_(sh) {
   var head = headerOf_(sh);
   ['UpdatedAt', 'Revision']
     .concat(BLOCK_IDS.map(function (p) { return p + '_At'; }))
+    .concat(BLOCK_IDS.map(function (p) { return p + '_Quality'; }))
     .forEach(function (col) {
     if (head.indexOf(col) === -1) {
       sh.getRange(1, sh.getLastColumn() + 1).setValue(col);
@@ -899,6 +901,129 @@ function saveEntry_(payload, profile) {
  *  actually happened by 3pm rather than what someone recalls afterwards.
  *
  *  The day's row is still one row. A block never disturbs its neighbours. */
+// ---------------------------------------------------------------------------
+//  Does the entry actually say anything?
+//
+//  The tracker measured whether a block was submitted, never whether what was
+//  written in it meant anything. "Actioned remaining tasks", "3 tasks", "2" and
+//  a bare client name all satisfied it completely, so that is what it started
+//  getting back.
+//
+//  The bar is the branch's own, and it is one question: does this say HOW MANY
+//  or WHICH ONE. A count, or a case. Everything below is that question asked
+//  five ways, and each answer is a sentence a person can act on rather than a
+//  score they have to interpret.
+//
+//  Only "Actioned" and "Resolved" are read, and they are read together — the
+//  honest answer to Resolved is often "None today" and that must never be held
+//  against a block whose Actioned line is full. Blocker and Waiting-on are
+//  never judged: "None" is the right answer there most days.
+// ---------------------------------------------------------------------------
+
+/* Words that fill a box without answering it. */
+var FILLER_RE = /^(?:\W|none|n\/?a|nil|nothing|no|yes|ok|okay|done|complete[d]?|finish(?:ed)?|task[s]?|work(?:ing|ed)?|action(?:ed|s)?|remaining|outstanding|same|as\s+above|see\s+above|ditto|all|various|misc(?:ellaneous)?|general|usual|normal|routine|etc|and|the|my|daily)*$/i;
+
+/* A number, written either way. */
+var COUNT_RE   = /\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|dozen)\b/i;
+var COUNT_STRIP = /\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|dozen)\b/gi;
+
+/* Something done, rather than something merely present. */
+var VERB_RE = /\b(?:sent|send|sending|process(?:ed|ing)?|chas(?:ed|ing)|chase|resolv(?:ed|ing)|escalat(?:ed|ing)|submit(?:ted|ting)?|upload(?:ed)?|correct(?:ed)?|amend(?:ed)?|follow(?:ed)?[\s-]?up|call(?:ed)?|email(?:ed)?|reconcil(?:ed|ing|iation)?|issu(?:ed)?|prepar(?:ed)?|review(?:ed)?|updat(?:ed)?|clos(?:ed)?|logg?(?:ed)?|fil(?:ed|ing)|scan(?:ned)?|print(?:ed)?|deliver(?:ed)?|collect(?:ed)?|verif(?:ied|y)|approv(?:ed)?|declin(?:ed)?|quot(?:ed)?|renew(?:ed)?|transmit(?:ted)?|receiv(?:ed)?|request(?:ed)?|book(?:ed)?|arrang(?:ed)?|confirm(?:ed)?|check(?:ed)?|contact(?:ed)?|advis(?:ed)?|refer(?:red)?|rais(?:ed)?|cancel(?:led|ed)?|reinstat(?:ed)?|surrender(?:ed)?|paid|pay|banked|deposit(?:ed)?)\b/i;
+
+/* A policy number, a quote reference, a code — something you could look up. */
+var REF_RE = /\b(?:[A-Z]{2,}[-\/]?\d{2,}|\d{5,}|#\s*\d+)\b/;
+
+function wordsOf_(t) {
+  return String(t || '').trim().split(/\s+/).filter(function (w) { return /[a-z0-9]/i.test(w); });
+}
+
+/** A capitalised word that is not simply the first word of the sentence —
+ *  a person, a company, a product. Weak on its own, which is the point:
+ *  "just putting in random names" is exactly the entry this has to catch. */
+function hasProperName_(t) {
+  var w = String(t || '').split(/\s+/);
+  for (var i = 1; i < w.length; i++) {
+    if (/^[A-Z][a-z]{2,}/.test(w[i])) return true;
+  }
+  return /^[A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}/.test(String(t || '').trim());
+}
+
+/** One block, read. Returns { level: 'full'|'thin', reason: '' }.
+ *  `others` is the same day's other blocks, so a block copied from the one
+ *  before it can be named as what it is. */
+function readSubstance_(d, others) {
+  d = d || {};
+  var actioned = String(d.actioned || '').trim();
+  var resolved = String(d.resolved || '').trim();
+  var both = (actioned + ' ' + resolved).trim();
+  var words = wordsOf_(both);
+
+  if (!words.length)            return { level: 'thin', reason: 'nothing written' };
+  if (FILLER_RE.test(both))     return { level: 'thin', reason: 'no answer, only filler' };
+  if (words.length < 3)         return { level: 'thin', reason: 'too short to say anything' };
+
+  // A number attached to nothing. "3 tasks" counts something without ever
+  // saying what, and it was the single most common entry in the branch —
+  // so take the numbers out and see whether anything is left standing.
+  if (FILLER_RE.test(both.replace(COUNT_STRIP, ' '))) {
+    return { level: 'thin', reason: 'a count, but nothing named' };
+  }
+
+  var hasCount = COUNT_RE.test(both);
+  var hasRef   = REF_RE.test(both);
+  var hasVerb  = VERB_RE.test(both);
+  var hasName  = hasProperName_(both);
+
+  // A name on its own is the entry that started this. It is not an answer.
+  if (hasName && !hasCount && !hasRef && !hasVerb) {
+    return { level: 'thin', reason: 'a name, but nothing done with it' };
+  }
+  if (!hasCount && !hasRef && !hasName) {
+    return { level: 'thin', reason: 'no count or case named' };
+  }
+
+  // The same words in two blocks means one of them was not written today.
+  var norm = both.toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+  if (norm.length > 8 && others) {
+    for (var i = 0; i < others.length; i++) {
+      var o = String(others[i] || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+      if (o && o === norm) return { level: 'thin', reason: 'same words as another block today' };
+    }
+  }
+
+  return { level: 'full', reason: '' };
+}
+
+/** The branch's written standards, checked rather than merely printed.
+ *  These are breaches of a rule the team already agreed, so they are named
+ *  separately from thinness — a full entry can still breach one. */
+function readStandards_(d, payload) {
+  var out = [];
+  d = d || {}; payload = payload || {};
+
+  var owner = String(d.blockerOwner || '').trim();
+  if (owner && !/\d/.test(owner)) {
+    out.push('waiting on ' + owner + ' with no date last chased');
+  }
+  var open = String(d.openOwned || '').trim();
+  if (COUNT_RE.test(open) && !String(d.blocker || '').trim()) {
+    out.push('carrying work forward with no blocker named');
+  }
+  return out;
+}
+
+/** How the whole day reads, for the checkpoint and the wall. */
+function daySubstance_(row, idx) {
+  var full = 0, thin = [], texts = [];
+  BLOCK_IDS.forEach(function (p) {
+    var q = idx && idx[p + '_Quality'] != null ? String(row[idx[p + '_Quality']] || '') : '';
+    if (!q) return;
+    if (q.indexOf('thin') === 0) thin.push({ block: p, reason: q.replace(/^thin:\s*/, '') });
+    else full++;
+  });
+  return { full: full, thin: thin, written: full + thin.length };
+}
+
 /** Write a patch of named columns into one row.
  *
  *  One setValues per run of adjacent columns, instead of one setValue per
@@ -962,6 +1087,7 @@ function saveBlock_(payload, profile) {
   var d = payload.data || {};
   var now = new Date();
   var done = [];
+  var quality = null, standards = [];
 
   var lock = takeLock_();
   if (!lock) return BUSY_;
@@ -992,6 +1118,23 @@ function saveBlock_(payload, profile) {
     patch[blockId + '_Open'] = d.openOwned || '';
     patch[blockId + '_Blocker'] = joinBlocker_(d.blocker, d.blockerOwner);
     patch[blockId + '_At'] = now;
+
+    // What the day's other blocks say, so a block copied from the one before
+    // it can be named as what it is rather than counted as work.
+    var others = [];
+    if (rowVals) {
+      BLOCK_IDS.forEach(function (pfx) {
+        if (pfx === blockId) return;
+        var a = idx[pfx + '_Actioned'] != null ? rowVals[idx[pfx + '_Actioned']] : '';
+        var r = idx[pfx + '_Resolved'] != null ? rowVals[idx[pfx + '_Resolved']] : '';
+        var t = (String(a || '') + ' ' + String(r || '')).trim();
+        if (t) others.push(t);
+      });
+    }
+    quality = readSubstance_(d, others);
+    standards = readStandards_(d, payload);
+    patch[blockId + '_Quality'] = quality.level === 'full' ? 'full' : 'thin: ' + quality.reason;
+
     patch.UpdatedAt = now;
     patch.Revision = revision + 1;
     patch.Status = 'Submitted';
@@ -1051,6 +1194,8 @@ function saveBlock_(payload, profile) {
       at: Utilities.formatDate(now, CONFIG.TZ, 'HH:mm'),
       blocksDone: done.length,
       submitted: done,
+      quality: quality,
+      standards: standards,
       warning: 'Saved. The emailed copy did not go out.'
     };
   }
@@ -1060,7 +1205,9 @@ function saveBlock_(payload, profile) {
     block: blockId,
     at: Utilities.formatDate(now, CONFIG.TZ, 'HH:mm'),
     blocksDone: done.length,
-    submitted: done
+    submitted: done,
+    quality: quality,
+    standards: standards
   };
 }
 
