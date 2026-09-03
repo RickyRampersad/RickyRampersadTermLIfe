@@ -226,51 +226,82 @@ const DWELL=14000;
 // Salesforce connection is switched on, the same figures flow live into the
 // app; the wall's snapshot is refreshed by rebuilding this block.
 const TASKS={
-  asOf:"2026-08-26",
+  // Read from Salesforce on 3 September 2026. THIS IS A SNAPSHOT, NOT A FEED —
+  // the wall cannot reach Salesforce itself until SF_KEY and SF_SECRET are set
+  // in the Apps Script project, so these numbers are true on the day they were
+  // taken and drift after it. The previous set said 26 August and was still on
+  // screen on 3 September, reading 132 overdue when the real figure was 144.
+  // If asOf is not close to today, say so out loud rather than presenting it.
+  asOf:"2026-09-03",
+
   // Never a sum of days. Adding "days outstanding" across tasks produces a
   // number with no meaning — twenty thousand days is not a fact about anything.
-  // Count, average age and the single oldest are the honest three.
-  today:{ closed:[{n:"Azariah",v:13},{n:"Sasha",v:11},{n:"Kamla",v:2},
-                  {n:"Elizabeth",v:0},{n:"Ricky",v:0}] },
-  week: { closed:[{n:"Azariah",v:93},{n:"Sasha",v:66},{n:"Elizabeth",v:28},
-                  {n:"Kamla",v:9},{n:"Ricky",v:0}] },
-  // The overdue book, by person and task type. Two people carry all of it.
+  // Count, the age band, and the single oldest are the honest three.
+
+  // Closed by hand. The birthday mailer is counted separately and never here.
+  today:{ closed:[{n:"Azariah",v:13},{n:"Pawan",v:6},{n:"Sasha",v:1},
+                  {n:"Elizabeth",v:0},{n:"Kamla",v:0},{n:"Ricky",v:0}] },
+  week: { closed:[{n:"Azariah",v:84},{n:"Sasha",v:60},{n:"Kamla",v:28},
+                  {n:"Elizabeth",v:17},{n:"Pawan",v:14},{n:"Ricky",v:0}] },
+
+  // The overdue book, by owner and task type. Counts are measured; per-row
+  // ages are not carried here because they were not measured per row — the
+  // age facts that ARE measured live in `aged` below.
   overdue:[
-    {who:"Ricky", type:"", n:70, avg:31, oldest:87},
-    {who:"Ricky", type:"Servicing", n:3, avg:153, oldest:153},
-    {who:"Ricky", type:"Lic/Staffing/SA/HR", n:2, avg:121, oldest:148},
-    {who:"Ricky", type:"Renewa/PDl/Bill", n:1, avg:129, oldest:129},
-    {who:"Ricky", type:"Opportunity", n:1, avg:161, oldest:161},
-    {who:"Kamla", type:"Renewa/PDl/Bill", n:24, avg:77, oldest:246},
-    {who:"Kamla", type:"Claims/ Mat", n:12, avg:129, oldest:534},
-    {who:"Kamla", type:"Opportunity", n:8, avg:95, oldest:141},
-    {who:"Kamla", type:"Servicing", n:5, avg:94, oldest:157},
-    {who:"Kamla", type:"Pendings", n:2, avg:72, oldest:140},
-    {who:"Kamla", type:"Lic/Staffing/SA/HR", n:2, avg:79, oldest:120},
-    {who:"Kamla", type:"", n:1, avg:31, oldest:31},
-    {who:"Sasha", type:"Renewa/PDl/Bill", n:1, avg:10, oldest:10}],
-  // Open book per person: how many, not how many days.
+    {who:"Ricky",  type:"",                   n:76},
+    {who:"Kamla",  type:"Renewa/PDl/Bill",    n:12},
+    {who:"Kamla",  type:"Opportunity",        n:11},
+    {who:"Kamla",  type:"Lic/Staffing/SA/HR", n:9},
+    {who:"Kamla",  type:"Claims/ Mat",        n:9},
+    {who:"Kamla",  type:"Pendings",           n:6},
+    {who:"Kamla",  type:"Servicing",          n:5},
+    {who:"Pawan",  type:"Renewa/PDl/Bill",    n:4},
+    {who:"Ricky",  type:"Servicing",          n:3},
+    {who:"Ricky",  type:"Lic/Staffing/SA/HR", n:2},
+    {who:"Kamla",  type:"",                   n:2},
+    {who:"Ricky",  type:"Opportunity",        n:1},
+    {who:"Ricky",  type:"Renewa/PDl/Bill",    n:1},
+    {who:"Pawan",  type:"Servicing",          n:1},
+    {who:"Pawan",  type:"RR Operations",      n:1},
+    {who:"Pawan",  type:"Claims/ Mat",        n:1}],
+
+  // How old the overdue book actually is. Most of it is recent; the genuinely
+  // aged part is small and sits with one person.
+  aged:{ over60:11, over60Who:"Ricky", oldestDays:90, oldestSince:"5 June" },
+
+  // The open book per person: how many, not how many days.
   byPerson:{
-    Kamla:{open:88,overdue:54,quietAvg:27,quietMax:216},
-    Ricky:{open:80,overdue:77,quietAvg:46,quietMax:363},
-    Sasha:{open:47,overdue:1, quietAvg:11,quietMax:366},
-    Azariah:{open:17,overdue:0,quietAvg:2, quietMax:14},
-    Elizabeth:{open:5,overdue:0,quietAvg:3, quietMax:7}},
-  // Who the branch is actually waiting on, named by account rather than by a
-  // status. Head office and one company account carry most of it.
+    Ricky:{open:87,overdue:83},
+    Kamla:{open:74,overdue:54},
+    Sasha:{open:36,overdue:0},
+    Azariah:{open:23,overdue:0},
+    Pawan:{open:16,overdue:7},
+    Elizabeth:{open:12,overdue:0}},
+
+  // Who the branch is actually waiting on, by the person the task sits
+  // against rather than by a status word. Measured 3 September.
   waitingOn:[
-    {who:"D Rampersad & Company",       n:7, oldest:149, quiet:19},
-    {who:"Guardian Life (head office)", n:6, oldest:112, quiet:9},
-    {who:"Ahamad, Shiraze",             n:3, oldest:206, quiet:17},
-    {who:"Samuel, Naila",               n:3, oldest:6,   quiet:0},
-    {who:"Trinrico Steel & Wire",       n:2, oldest:142, quiet:13},
-    {who:"Persad, Dipchan",             n:2, oldest:534, quiet:26},
-    {who:"Ashford's Electrical",        n:2, oldest:128, quiet:34}],
-  // The Branch Manager's untyped pile, looked at rather than assumed.
-  inbound:{ total:70, waiting:67, notStarted:3, avgAge:31, oldest:87 },
+    {who:"Veena Kanhai-Gowdhan", n:9},
+    {who:"Ricky Rampersad",      n:4},
+    {who:"Faustina Cabrera",     n:3},
+    {who:"Genevieve Pierre",     n:3},
+    {who:"Hema Ramdeo",          n:2},
+    {who:"GLOC Actuarial",       n:2},
+    {who:"Sandra Lalchan-Mahipat", n:2},
+    {who:"Kameel Khan",          n:2},
+    {who:"Ryan Maharaj",         n:2},
+    {who:"Lorna Samaroo-Paul",   n:2}],
+
+  // The Branch Manager's untyped pile, looked at rather than assumed. It was
+  // taken for the birthday mailer for weeks. It is not: the birthdays are
+  // Servicing, they close themselves, and they never enter this book at all.
+  // These are inbound emails from clients and agents, waiting on a reply.
+  inbound:{ total:76, waiting:73, notStarted:3, oldestDays:90, oldestSince:"5 June",
+            who:"Ricky" },
+
   // The birthday mailer: it closes its own work and should never be counted
   // as anybody's throughput.
-  robot:{ closedAllTime:5718, closed30:448 }
+  robot:{ closedToday:19, closedWeek:141 }
 };
 
 // The ten Task_Type__c values, in the words the branch uses.
@@ -490,78 +521,112 @@ function sToday(){
 }
 
 function sOverdue(){
-  const O=TASKS.overdue, tot=O.reduce((s,x)=>s+x.n,0);
-  const max=Math.max(...O.map(x=>x.n),1);
-  const rows=O.slice().sort((a,b)=>b.n-a.n).map(x=>{
-    const tone=x.avg>120?"red":x.avg>60?"gold":"teal";
-    return '<div class="row"><span class="nm">'+esc(x.who)+" · "+
-      esc(TYPE_LABEL[x.type]||x.type||"No type")+'</span>'+
-      '<span class="track"><i class="'+tone+'" style="width:'+(x.n/max*100)+'%"></i></span>'+
-      '<span class="val">'+x.n+'</span><span class="sub">avg '+x.avg+"d · oldest "+x.oldest+"d</span></div>";
+  const O=TASKS.overdue, A=TASKS.aged;
+  const tot=O.reduce((s,x)=>s+x.n,0);
+  // Group by owner, and keep what the pile is made of — a bare total tells
+  // nobody what to do on Monday morning.
+  const by={};
+  O.forEach(x=>{ (by[x.who]=by[x.who]||[]).push(x); });
+  const people=Object.entries(by)
+    .map(([who,rows])=>({who,rows:rows.sort((p,q)=>q.n-p.n),n:rows.reduce((s,r)=>s+r.n,0)}))
+    .sort((p,q)=>q.n-p.n);
+  const max=Math.max(...people.map(p=>p.n),1);
+
+  const rows=people.map(p=>{
+    const mix=p.rows.map(r=>esc(TYPE_LABEL[r.type]||r.type||"no type")+" "+r.n).join(" · ");
+    return '<div class="row"><span class="nm">'+esc(p.who)+'</span>'+
+      '<span class="track"><i class="'+(p.n>50?"red":p.n>10?"gold":"teal")+
+      '" style="width:'+(p.n/max*100)+'%"></i></span>'+
+      '<span class="val">'+p.n+'</span><span class="sub">'+mix+"</span></div>";
   }).join("");
+
   return '<div class="kick">6 · The overdue book</div>'+
-    "<h2>"+tot+" tasks past their date — and two people hold them</h2>"+
-    '<p class="lede">By owner and task type, with the average age and the single oldest. Days are never added together: a total of days is a number about nothing.</p>'+
+    "<h2>"+tot+" tasks past their date — and "+people.length+" people hold all of them</h2>"+
+    '<p class="lede">By owner, and what each pile is actually made of. Only <b>'+A.over60+
+      '</b> of the '+tot+' are more than sixty days old, all of them '+esc(A.over60Who)+
+      "'s; the oldest has sat since "+esc(A.oldestSince)+", "+A.oldestDays+
+      ' days. Days are never added together — a total of days is a number about nothing.</p>'+
     '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div></div></div>";
 }
 
 function sTypes(cards){
+  // The same book cut the other way. By owner you see who to talk to; by type
+  // you see what the branch is actually behind on, and who is holding it.
   const agg={};
   TASKS.overdue.forEach(o=>{
     const k=o.type||"";
-    if(!agg[k]) agg[k]={n:0,oldest:0,people:new Set(),logged:0};
-    agg[k].n+=o.n; agg[k].oldest=Math.max(agg[k].oldest,o.oldest); agg[k].people.add(o.who);
+    if(!agg[k]) agg[k]={n:0,people:{},logged:0};
+    agg[k].n+=o.n;
+    agg[k].people[o.who]=(agg[k].people[o.who]||0)+o.n;
   });
   cards.forEach(({r})=>{ if(!r) return;
     loggedTypes(r).forEach(k=>{ if(agg[k]) agg[k].logged++; });
   });
   const T=Object.entries(agg).map(([k,v])=>({k,...v})).sort((a,b)=>b.n-a.n);
   const max=Math.max(...T.map(x=>x.n),1);
-  const rows=T.map(x=>
-    '<div class="row"><span class="nm">'+esc(TYPE_LABEL[x.k]||x.k||"No type recorded")+'</span>'+
-    '<span class="track"><i class="'+(x.logged?"green":"red")+'" style="width:'+(x.n/max*100)+'%"></i></span>'+
-    '<span class="val">'+x.n+'</span><span class="sub">oldest '+x.oldest+"d · "+
-    (x.logged?'<span style="color:var(--green)">worked today</span>'
-             :'<span style="color:var(--red)">nobody on it</span>')+"</span></div>").join("");
+  const rows=T.map(x=>{
+    const who=Object.entries(x.people).sort((p,q)=>q[1]-p[1])
+      .map(([n,c])=>esc(n)+" "+c).join(" · ");
+    return '<div class="row"><span class="nm">'+esc(TYPE_LABEL[x.k]||x.k||"No type recorded")+'</span>'+
+      '<span class="track"><i class="'+(x.logged?"teal":"red")+'" style="width:'+(x.n/max*100)+'%"></i></span>'+
+      '<span class="val">'+x.n+'</span><span class="sub">'+who+" · "+
+      (x.logged?'<span style="color:var(--green)">worked today</span>'
+               :'<span style="color:var(--red)">nobody on it today</span>')+"</span></div>";
+  }).join("");
   const idle=T.filter(x=>!x.logged).length;
   return '<div class="kick">7 · Overdue by task type</div>'+
     "<h2>"+(idle?idle+" types overdue with nobody on them today":"Every overdue type was worked today")+"</h2>"+
-    '<p class="lede">Green means somebody logged a block against that type today. Red means the pile sat.</p>'+
+    '<p class="lede">The same book grouped by what the work is rather than whose it is, with who holds each pile. Green means somebody logged a block against that type today; red means it sat.</p>'+
     '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div></div></div>";
 }
 
 function sWaitingOn(){
   const W=TASKS.waitingOn, max=Math.max(...W.map(x=>x.n),1);
-  const rows=W.map(x=>{
-    const tone=x.quiet>21?"red":x.quiet>7?"gold":"teal";
-    return '<div class="row"><span class="nm">'+esc(x.who)+'</span>'+
-      '<span class="track"><i class="'+tone+'" style="width:'+(x.n/max*100)+'%"></i></span>'+
-      '<span class="val">'+x.n+'</span><span class="sub">oldest '+x.oldest+"d · quiet "+x.quiet+"d</span></div>";
-  }).join("");
+  const tot=W.reduce((s,x)=>s+x.n,0);
+  const rows=W.map(x=>
+    '<div class="row"><span class="nm">'+esc(x.who)+'</span>'+
+    '<span class="track"><i class="'+(x.n>=5?"red":x.n>=3?"gold":"teal")+
+    '" style="width:'+(x.n/max*100)+'%"></i></span>'+
+    '<span class="val">'+x.n+'</span><span class="sub">'+
+    (x.n===1?"task waiting on a reply":"tasks waiting on a reply")+"</span></div>").join("");
   return '<div class="kick">8 · Who we are waiting on</div>'+
-    "<h2>The reply is with somebody else</h2>"+
-    '<p class="lede">Open tasks grouped by the account they sit against — head office, a company, a client. Quiet is days since anyone chased it.</p>'+
+    "<h2>"+W[0].n+" of them are with one person</h2>"+
+    '<p class="lede">Named, because &ldquo;waiting on someone else&rdquo; is a status, not an answer. '+
+      'These are the people the branch is actually waiting on — '+tot+
+      ' tasks across the ten who hold the most. A name and a number is something you can chase.</p>'+
     '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div></div></div>";
 }
 
 function sInbound(){
   const I=TASKS.inbound, B=TASKS.byPerson;
-  const rows=Object.entries(B).map(([n,v])=>
-    '<div class="row"><span class="nm">'+esc(n)+'</span>'+
-    '<span class="track"><i class="'+(v.quietAvg>21?"red":v.quietAvg>7?"gold":"teal")+
-      '" style="width:'+Math.min(v.quietAvg/50*100,100)+'%"></i></span>'+
-    '<span class="val">'+v.quietAvg+'d</span><span class="sub">average · longest '+v.quietMax+"d</span></div>").join("");
-  return '<div class="kick">9 · Nobody has touched these</div>'+
-    "<h2>Quiet is not the same as aged</h2>"+
-    '<p class="lede">Days since the last activity on an open task. A three-week task chased yesterday is fine; one nobody has opened in a month is not.</p>'+
+  const E=Object.entries(B).sort((p,q)=>q[1].open-p[1].open);
+  const max=Math.max(...E.map(([,v])=>v.open),1);
+  // Open is the whole book; overdue is the part of it that is late. Showing
+  // the two together stops a big book reading as a bad one — Sasha carries
+  // thirty-six and none of it is late.
+  const rows=E.map(([n,v])=>{
+    const pct=v.open?Math.round(v.overdue/v.open*100):0;
+    return '<div class="row"><span class="nm">'+esc(n)+'</span>'+
+      '<span class="track"><i class="'+(pct>60?"red":pct>20?"gold":"teal")+
+      '" style="width:'+(v.open/max*100)+'%"></i></span>'+
+      '<span class="val">'+v.open+'</span><span class="sub">'+
+      (v.overdue?v.overdue+" late · "+pct+"% of the book":'<span style="color:var(--green)">nothing late</span>')+
+      "</span></div>";
+  }).join("");
+  return '<div class="kick">9 · The open book, and what is late in it</div>'+
+    "<h2>A big book is not a bad book</h2>"+
+    '<p class="lede">Everything still open, per person, with the share of it that is past its date. Three of the six carry nothing late at all.</p>'+
     '<div class="body"><div class="cols">'+
-    '<div class="panel"><h3>Days quiet, by person</h3><div class="rows">'+rows+"</div></div>"+
-    '<div class="panel"><h3>The inbound pile</h3>'+
+    '<div class="panel"><h3>Open now · and how much is late</h3><div class="rows">'+rows+"</div></div>"+
+    '<div class="panel"><h3>The pile that was assumed to be birthdays</h3>'+
     '<div style="font-size:5.2vh;font-weight:800;color:var(--gold)">'+I.total+"</div>"+
     '<div style="font-size:1.9vh;color:var(--muted);line-height:1.5;margin-top:1vh">'+
-      "emails logged to the Branch Manager — <b style=\"color:#fff\">"+I.waiting+
-      "</b> waiting on a reply, average "+I.avgAge+" days, oldest "+I.oldest+
-      ". These are agents and clients, not birthday mail: that closes itself.</div>"+
+      "untyped tasks logged to "+esc(I.who)+" &mdash; <b style=\"color:#fff\">"+I.waiting+
+      "</b> of them waiting on somebody else&rsquo;s reply, "+I.notStarted+
+      " not started, the oldest sitting since "+esc(I.oldestSince)+" &mdash; <b style=\"color:#fff\">"+
+      I.oldestDays+" days</b>.<br><br>These are inbound emails from agents and clients. "+
+      "They are <b style=\"color:#fff\">not</b> the birthday mailer: that is typed Servicing, "+
+      "it closes its own work, and it never enters this book at all.</div>"+
     "</div></div></div>";
 }
 
