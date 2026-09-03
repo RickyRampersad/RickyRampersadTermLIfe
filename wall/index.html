@@ -248,6 +248,33 @@ const TASKS={
   // number with no meaning — twenty thousand days is not a fact about anything.
   // Count, the age band, and the single oldest are the honest three.
 
+  // What was WORKED today, not only what closed.
+  //
+  // The Branch Manager's correction, and he is right: the branch is driven by
+  // Salesforce tasks, and a task that was moved is work. Counting only closures
+  // showed Kamla and Elizabeth as zero on a day they each moved three or four
+  // tasks, and showed Sasha as one when she had moved six. Nobody should have
+  // to close a task to be seen to have done a day.
+  //
+  // Measured on LastModifiedDate = today, split by the status it was left in:
+  //   closed   — Completed
+  //   moving   — In Progress, still with us
+  //   waiting  — Waiting on someone else, chased and now blocked
+  //
+  // The birthday mailer closes 19 of its own and is counted nowhere here.
+  worked:[
+    {n:"Azariah",  worked:17, closed:13, moving:4, waiting:0,
+     types:{"":11,"Renewa/PDl/Bill":6}},
+    {n:"Sasha",    worked:7,  closed:1,  moving:6, waiting:0,
+     types:{"Pendings":5,"Renewa/PDl/Bill":2}},
+    {n:"Pawan",    worked:7,  closed:6,  moving:0, waiting:1,
+     types:{"":4,"Renewa/PDl/Bill":3}},
+    {n:"Kamla",    worked:4,  closed:0,  moving:2, waiting:2,
+     types:{"Lic/Staffing/SA/HR":4}},
+    {n:"Elizabeth",worked:3,  closed:0,  moving:2, waiting:1,
+     types:{"Servicing":3}},
+    {n:"Ricky",    worked:0,  closed:0,  moving:0, waiting:0, types:{}}],
+
   // Closed by hand. The birthday mailer is counted separately and never here.
   today:{ closed:[{n:"Azariah",v:13},{n:"Pawan",v:6},{n:"Sasha",v:1},
                   {n:"Elizabeth",v:0},{n:"Kamla",v:0},{n:"Ricky",v:0}] },
@@ -531,20 +558,46 @@ function sReconcile(cards){
 }
 
 function sToday(){
-  const T=TASKS.today.closed, W=TASKS.week.closed;
-  const tot=T.reduce((s,x)=>s+x.v,0), wtot=W.reduce((s,x)=>s+x.v,0);
-  const max=Math.max(...W.map(x=>x.v),1);
-  const rows=W.map(x=>{
-    const t=(T.find(y=>y.n===x.n)||{v:0}).v;
+  const K=TASKS.worked, W=TASKS.week.closed;
+  const tot=K.reduce((s,x)=>s+x.worked,0), closed=K.reduce((s,x)=>s+x.closed,0);
+  const wtot=W.reduce((s,x)=>s+x.v,0);
+  const max=Math.max(...K.map(x=>x.worked),1);
+  const seen={};
+
+  const rows=K.filter(x=>x.worked||x.closed).map(x=>{
+    // One bar, three states, because closing is one outcome of working and not
+    // the only one worth seeing. A day of chasing that closed nothing is still
+    // a day of work, and it used to read as zero.
+    const seg=(v,c,t)=>v>0?'<span title="'+esc(t)+'" style="width:'+(v/max*100)+
+      '%;background:'+c+'"></span>':"";
+    const types=Object.entries(x.types).sort((p,q)=>q[1]-p[1])
+      .map(([t,c])=>{ seen[t]=1; return esc(TYPE_LABEL[t]||t||"no type")+" "+c; }).join(" · ");
     return '<div class="row"><span class="nm">'+esc(x.n)+'</span>'+
-      '<span class="track"><i class="teal" style="width:'+(x.v/max*100)+'%"></i>'+
-      '<i class="green" style="width:'+(t/max*100)+'%"></i></span>'+
-      '<span class="val">'+t+'</span><span class="sub">today · '+x.v+" this week</span></div>";
+      '<span class="stack">'+
+        seg(x.closed,"var(--green)", x.n+" — "+x.closed+" closed")+
+        seg(x.moving,"var(--gold)",  x.n+" — "+x.moving+" moved on, still with us")+
+        seg(x.waiting,"var(--teal)", x.n+" — "+x.waiting+" chased, now waiting on a reply")+
+      "</span>"+
+      '<span class="val">'+x.worked+'</span><span class="sub">'+
+      (x.closed?x.closed+" closed":'<span style="color:var(--gold)">nothing closed — but '+
+        (x.moving+x.waiting)+" moved</span>")+
+      (types?" · "+types:"")+"</span></div>";
   }).join("");
-  return '<div class="kick">5 · Closed today</div>'+
-    "<h2>"+tot+" tasks closed today · "+wtot+" this week</h2>"+
-    '<p class="lede">Real work only. The birthday mailer closes its own tasks in the hundreds and is counted nowhere on this wall. Green is today, teal is the week behind it.</p>'+
-    '<div class="body"><div class="panel"><div class="rows">'+rows+"</div></div></div>";
+
+  const key=Object.keys(seen).sort().map(t=>
+    '<b><i style="background:'+typeColour(t)+'"></i>'+
+    esc(TYPE_LABEL[t]||t||"No type recorded")+"</b>").join("");
+
+  return '<div class="kick">5 · Worked today</div>'+
+    "<h2>"+tot+" tasks moved today · "+closed+" of them closed</h2>"+
+    '<p class="lede">A task is worked when somebody touches it, which is what Salesforce&rsquo;s '+
+      'last-modified date records. Closing is one outcome of working and not the only one that '+
+      'counts &mdash; <b style="color:var(--green)">green closed</b>, '+
+      '<b style="color:var(--gold)">gold moved on and still with us</b>, '+
+      '<b style="color:var(--teal)">teal chased and now waiting on somebody else</b>. '+
+      wtot+' closed by hand this week. The birthday mailer closes its own and is counted nowhere here.</p>'+
+    '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div>"+
+    (key?'<div class="key">'+key+"</div>":"")+"</div></div>";
 }
 
 function sOverdue(){
@@ -603,9 +656,22 @@ function sTypes(cards){
     agg[k].n+=o.n;
     agg[k].people[o.who]=(agg[k].people[o.who]||0)+o.n;
   });
+  // Two different questions, and the wall used to answer only the weaker one.
+  //
+  //   touched — Salesforce's last-modified date says somebody moved a task of
+  //             this type today. True whether or not anybody filled in the
+  //             tracker, so it cannot be gamed and cannot be forgotten.
+  //   logged  — somebody chose this type on a KPI block.
+  //
+  // A type touched but not logged means the work happened and the record does
+  // not show it. A type logged but not touched means the opposite. Both are
+  // worth seeing, and only the first is evidence.
+  const touched={};
+  TASKS.worked.forEach(w=>Object.keys(w.types).forEach(t=>{ touched[t]=(touched[t]||0)+w.types[t]; }));
   cards.forEach(({r})=>{ if(!r) return;
     loggedTypes(r).forEach(k=>{ if(agg[k]) agg[k].logged++; });
   });
+  Object.keys(agg).forEach(k=>{ agg[k].touched=touched[k]||0; });
   const T=Object.entries(agg).map(([k,v])=>({k,...v})).sort((a,b)=>b.n-a.n);
   const max=Math.max(...T.map(x=>x.n),1);
 
@@ -623,14 +689,17 @@ function sTypes(cards){
       '">'+esc(TYPE_LABEL[x.k]||x.k||"No type recorded")+'</span>'+
       '<span class="stack">'+segs+"</span>"+
       '<span class="val">'+x.n+'</span><span class="sub">'+who+" · oldest "+worst+"d · "+
-      (x.logged?'<span style="color:var(--green)">worked today</span>'
-               :'<span style="color:var(--red)">nobody on it today</span>')+"</span></div>";
+      (x.touched
+        ? '<span style="color:var(--green)">'+x.touched+" moved today</span>"+
+          (x.logged?"":' <span style="color:var(--gold)">· not logged on a block</span>')
+        : '<span style="color:var(--red)">nobody on it today</span>')+"</span></div>";
   }).join("");
-  const idle=T.filter(x=>!x.logged).length;
+  const idle=T.filter(x=>!x.touched).length;
   return '<div class="kick">7 · Overdue by task type</div>'+
     "<h2>"+(idle?idle+" types overdue with nobody on them today":"Every overdue type was worked today")+"</h2>"+
     '<p class="lede">The same book grouped by what the work is, never a type twice. Each row names who holds it, '+
-      'how old the oldest holder&rsquo;s pile is, and whether anybody logged a block against it today.</p>'+
+      'how old the oldest holder&rsquo;s pile is, and whether anybody actually moved one today &mdash; '+
+      'read from Salesforce&rsquo;s last-modified date, not from whether somebody remembered to log it.</p>'+
     '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div></div></div>";
 }
 
