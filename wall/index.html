@@ -390,11 +390,15 @@ const TASKS={
   // Started since the day it was created — not late, never begun, which is the
   // one an overdue count never distinguishes.
   //
-  // ONE ITEM IS DELIBERATELY MASKED. The 108-day one is a staff salary review.
-  // This wall hangs in an open office; a person's pay does not go on it. It is
-  // counted, it is aged, and it is named only in the Branch Manager's own
-  // list. Anything HR or personal gets the same treatment — if a subject
-  // names a member of staff about their pay, conduct or contract, mask it.
+  // ONE ITEM IS DELIBERATELY MASKED — the row carrying masked:true.
+  //
+  // Do not write here what it is. This file is served publicly and the comment
+  // goes with it; describing the masked item in a comment undoes the mask, and
+  // that is exactly what the first version of this block did.
+  //
+  // The rule: if a task names a member of staff about their pay, conduct or
+  // contract, it is counted and aged on the wall but never described on it.
+  // The Branch Manager gets the real subject in his own list, not here.
   endOfDay:{
     inHand:[
       {who:"Azariah", what:"Premium — Leila Jailal 8004023177", state:"In Progress"},

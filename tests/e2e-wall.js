@@ -101,6 +101,11 @@ const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(
   ok('it separates never-started from late', /Never started/i.test(eod), eod.slice(0,60));
   ok('the staffing matter is not named on the wall',
      !/salary/i.test(eod) && /named privately/i.test(eod));
+  // The mask has to hold in the source too. The first version of this card
+  // masked the row and then explained what it was in a comment, in a file
+  // that is served publicly from a public repository.
+  const src = fs.readFileSync(path.join(ROOT,'wall','index.html'),'utf8');
+  ok('and not described anywhere in the served file', !/salary/i.test(src));
   const real = errs.filter(e => !/favicon|Failed to load/i.test(e));
   ok('no javascript errors', real.length === 0, real.slice(0,2).join(' | '));
 
