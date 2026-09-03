@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-03b';
+var SCRIPT_VERSION = '2026-09-03c';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -1767,6 +1767,16 @@ function handle_(action, data, token) {
       return { ok: true, training: tr };
     }
 
+    // The office wall. Manager only: it carries client names and everybody's
+    // book, which is the Branch Manager's view and nobody else's.
+    case 'wall': {
+      if (!profile.manager) return { ok: false, error: 'Branch Manager only.' };
+      var w = wallDataSafe_();
+      return w ? { ok: true, tasks: w }
+               : { ok: true, tasks: null,
+                   note: 'Salesforce did not answer. The wall keeps the last figures it had.' };
+    }
+
     case 'checkpoint':
       if (!profile.manager) return { ok: false, error: 'Branch Manager only.' };
       return { ok: true, report: checkpointReport_(data.date) };
@@ -2649,6 +2659,256 @@ function sfkNeedsReason_(date) {
   });
   cache.put(key, JSON.stringify(out), SFK.CACHE_MIN * 60);
   return out;
+}
+
+// ---------------------------------------------------------------------------
+//  The wall's data, live
+//
+//  Everything on slides 5 to 12 used to be a constant in wall/index.html with
+//  an asOf date on it. It was refreshed by hand, which meant it was right on
+//  the day it was written and wrong every day after — on 3 September the wall
+//  was still showing 26 August and reading 132 overdue when the real number
+//  was 144. A photograph presented as a window.
+//
+//  This answers all of it in one pass and caches for ten minutes. The wall
+//  polls every five, so most requests never leave Apps Script.
+//
+//  It must never take the wall down. Every branch is guarded and the whole
+//  thing is wrapped: if Salesforce is slow, unreachable, or a query changes
+//  shape, this returns null and the wall keeps showing the last good data it
+//  had. A blank slide is worse than a stale one, but a wrong one is worst.
+// ---------------------------------------------------------------------------
+
+/** Subjects that must never appear on a screen in an open office.
+ *  Pay, conduct and contract are between a person and their manager. The item
+ *  is still counted and still aged — only the words are withheld. */
+var MASK_RE = /salary|pay\s*review|remuneration|disciplin|grievance|contract\s*review|warning\s*letter|termination|probation\s*review/i;
+
+function maskSubject_(subject) {
+  return MASK_RE.test(String(subject || '')) ? null : String(subject || '');
+}
+
+function wallData_() {
+  var cache = CacheService.getScriptCache();
+  var hit = cache.get('sfk_wall');
+  if (hit) return JSON.parse(hit);
+  if (!sfkConfigured_()) return null;
+
+  var users = sfkUsers_();
+  var ids = [], byId = {}, firstName = {};
+  Object.keys(users).forEach(function (k) {
+    ids.push("'" + users[k].id + "'");
+    byId[users[k].id] = k;
+    firstName[k] = k.charAt(0).toUpperCase() + k.slice(1);
+  });
+  if (!ids.length) return null;
+  var IN = '(' + ids.join(',') + ')';
+  var who = function (id) { return firstName[byId[id]] || null; };
+
+  var out = { asOf: todayISO_(), live: true };
+
+  // --- the overdue book, by owner and type -------------------------------
+  out.overdue = [];
+  sfkQuery_(
+    'SELECT OwnerId, Task_Type__c, COUNT(Id) n FROM Task ' +
+    "WHERE Status != 'Completed' AND ActivityDate < TODAY AND OwnerId IN " + IN +
+    ' GROUP BY OwnerId, Task_Type__c'
+  ).forEach(function (r) {
+    var n = who(r.OwnerId);
+    if (n) out.overdue.push({ who: n, type: r.Task_Type__c || '', n: Number(r.n) || 0 });
+  });
+
+  // --- how old that book is, per person ----------------------------------
+  // Two bands and the single oldest. Never a sum of days.
+  var band = function (clause) {
+    var m = {};
+    sfkQuery_('SELECT OwnerId, COUNT(Id) n FROM Task ' +
+      "WHERE Status != 'Completed' AND OwnerId IN " + IN + ' AND ' + clause +
+      ' GROUP BY OwnerId').forEach(function (r) {
+      var n = who(r.OwnerId); if (n) m[n] = Number(r.n) || 0;
+    });
+    return m;
+  };
+  var over30 = band('ActivityDate < LAST_N_DAYS:30');
+  var over60 = band('ActivityDate < LAST_N_DAYS:60');
+  var oldest = {};
+  sfkQuery_('SELECT OwnerId, ActivityDate FROM Task ' +
+    "WHERE Status != 'Completed' AND ActivityDate < TODAY AND OwnerId IN " + IN +
+    ' ORDER BY ActivityDate ASC LIMIT 400').forEach(function (r) {
+    var n = who(r.OwnerId);
+    if (n && !oldest[n] && r.ActivityDate) oldest[n] = r.ActivityDate;
+  });
+  out.age = {};
+  Object.keys(firstName).forEach(function (k) {
+    var n = firstName[k];
+    if (!over30[n] && !over60[n] && !oldest[n]) return;
+    out.age[n] = { over30: over30[n] || 0, over60: over60[n] || 0,
+                   oldestDays: oldest[n] ? daysSince_(oldest[n]) : 0,
+                   oldestSince: oldest[n] ? prettyDay_(oldest[n]) : '' };
+  });
+
+  // --- the open book, and how much of it is late -------------------------
+  out.byPerson = {};
+  sfkQuery_('SELECT OwnerId, COUNT(Id) n FROM Task ' +
+    "WHERE Status != 'Completed' AND OwnerId IN " + IN + ' GROUP BY OwnerId')
+    .forEach(function (r) {
+      var n = who(r.OwnerId);
+      if (n) out.byPerson[n] = { open: Number(r.n) || 0, overdue: 0 };
+    });
+  out.overdue.forEach(function (o) {
+    if (out.byPerson[o.who]) out.byPerson[o.who].overdue += o.n;
+  });
+
+  // --- worked today, by the state each task was left in -------------------
+  // A task that was moved is work. Counting only closures showed two people
+  // as zero on a day they each moved three or four.
+  var w = {};
+  var seed = function (n) {
+    if (!w[n]) w[n] = { n: n, worked: 0, closed: 0, moving: 0, waiting: 0, written: 0, types: {} };
+    return w[n];
+  };
+  sfkQuery_('SELECT OwnerId, Status, COUNT(Id) n FROM Task ' +
+    'WHERE LastModifiedDate = TODAY AND OwnerId IN ' + IN + ' GROUP BY OwnerId, Status')
+    .forEach(function (r) {
+      var n = who(r.OwnerId); if (!n) return;
+      var c = Number(r.n) || 0, row = seed(n);
+      row.worked += c;
+      if (r.Status === 'Completed') row.closed += c;
+      else if (/waiting/i.test(r.Status || '')) row.waiting += c;
+      else row.moving += c;
+    });
+  sfkQuery_('SELECT OwnerId, Task_Type__c, COUNT(Id) n FROM Task ' +
+    'WHERE LastModifiedDate = TODAY AND OwnerId IN ' + IN + ' GROUP BY OwnerId, Task_Type__c')
+    .forEach(function (r) {
+      var n = who(r.OwnerId); if (!n) return;
+      seed(n).types[r.Task_Type__c || ''] = Number(r.n) || 0;
+    });
+
+  // Written up. Description cannot be filtered in SOQL, so the tasks touched
+  // today are read back and checked here; Chatter is counted alongside it,
+  // because that is where half this branch actually writes and counting only
+  // one of the two put a false accusation on the wall once already.
+  try {
+    sfkQuery_('SELECT OwnerId, Description FROM Task ' +
+      'WHERE LastModifiedDate = TODAY AND OwnerId IN ' + IN + ' LIMIT 300')
+      .forEach(function (r) {
+        var n = who(r.OwnerId);
+        if (n && String(r.Description || '').trim()) seed(n).written++;
+      });
+    var posted = {};
+    sfkQuery_("SELECT CreatedById FROM FeedItem WHERE Type = 'TextPost' " +
+      'AND CreatedDate = TODAY LIMIT 200').forEach(function (r) {
+        posted[r.CreatedById] = (posted[r.CreatedById] || 0) + 1;
+      });
+    Object.keys(posted).forEach(function (uid) {
+      var n = who(uid);
+      if (n) seed(n).chatter = posted[uid];
+    });
+  } catch (e) { /* the counts stand without it */ }
+  out.worked = Object.keys(w).map(function (k) { return w[k]; })
+    .sort(function (a, b) { return b.worked - a.worked; });
+
+  // --- thirty days in against out ----------------------------------------
+  // The card that says how to read the others. The birthday mailer creates
+  // and closes its own work and is nobody's throughput, so Servicing that was
+  // both created and completed by the same automation is left out of `out`.
+  var flowIn = {}, flowOut = {};
+  sfkQuery_('SELECT OwnerId, COUNT(Id) n FROM Task ' +
+    'WHERE CreatedDate = LAST_N_DAYS:30 AND OwnerId IN ' + IN + ' GROUP BY OwnerId')
+    .forEach(function (r) { var n = who(r.OwnerId); if (n) flowIn[n] = Number(r.n) || 0; });
+  sfkQuery_('SELECT OwnerId, COUNT(Id) n FROM Task ' +
+    "WHERE Status = 'Completed' AND LastModifiedDate = LAST_N_DAYS:30 AND OwnerId IN " + IN +
+    ' GROUP BY OwnerId').forEach(function (r) {
+      var n = who(r.OwnerId); if (n) flowOut[n] = Number(r.n) || 0;
+    });
+  var robot = {};
+  sfkQuery_('SELECT OwnerId, COUNT(Id) n FROM Task ' +
+    "WHERE CreatedDate = LAST_N_DAYS:30 AND Task_Type__c = 'Servicing' " +
+    "AND Subject LIKE '%Happy Birthday%' AND OwnerId IN " + IN + ' GROUP BY OwnerId')
+    .forEach(function (r) { var n = who(r.OwnerId); if (n) robot[n] = Number(r.n) || 0; });
+  out.flow = Object.keys(firstName).map(function (k) {
+    var n = firstName[k], bot = robot[n] || 0;
+    var row = { n: n, in: Math.max((flowIn[n] || 0) - bot, 0),
+                out: Math.max((flowOut[n] || 0) - bot, 0) };
+    if (bot) row.note = 'robot excluded — ' + bot + ' in, ' + bot + ' out';
+    return row;
+  }).filter(function (r) { return r.in || r.out; })
+    .sort(function (a, b) { return b.in - a.in; });
+
+  // --- who we are waiting on ---------------------------------------------
+  out.waitingOn = [];
+  sfkQuery_('SELECT Who.Name, OwnerId, COUNT(Id) n FROM Task ' +
+    "WHERE Status = 'Waiting on someone else' AND Who.Name != null AND OwnerId IN " + IN +
+    ' GROUP BY Who.Name, OwnerId ORDER BY COUNT(Id) DESC LIMIT 12')
+    .forEach(function (r) {
+      var n = who(r.OwnerId);
+      if (n && r.Name) out.waitingOn.push({ who: r.Name, agent: n, n: Number(r.n) || 0, days: 0 });
+    });
+
+  // --- before you leave ---------------------------------------------------
+  out.endOfDay = { inHand: [], waitingDueToday: 0, neverStarted: [] };
+  sfkQuery_('SELECT OwnerId, Subject, Status FROM Task ' +
+    "WHERE Status != 'Completed' AND ActivityDate = TODAY AND OwnerId IN " + IN + ' LIMIT 40')
+    .forEach(function (r) {
+      var n = who(r.OwnerId); if (!n) return;
+      if (/waiting/i.test(r.Status || '')) { out.endOfDay.waitingDueToday++; return; }
+      out.endOfDay.inHand.push({ who: n, what: shorten_(maskSubject_(r.Subject) || 'a private matter', 64),
+                                 state: r.Status });
+    });
+  sfkQuery_('SELECT OwnerId, Subject, ActivityDate FROM Task ' +
+    "WHERE Status = 'Not Started' AND ActivityDate < TODAY AND OwnerId IN " + IN +
+    ' ORDER BY ActivityDate ASC LIMIT 20').forEach(function (r) {
+      var n = who(r.OwnerId); if (!n) return;
+      var clean = maskSubject_(r.Subject);
+      out.endOfDay.neverStarted.push({
+        who: n, days: daysSince_(r.ActivityDate),
+        what: clean ? shorten_(clean, 64) : 'a staffing matter',
+        masked: clean ? undefined : true });
+    });
+
+  // --- the untyped inbound pile ------------------------------------------
+  var inb = sfkQuery_('SELECT OwnerId, Status, COUNT(Id) n FROM Task ' +
+    "WHERE Status != 'Completed' AND Task_Type__c = null AND ActivityDate < TODAY " +
+    'AND OwnerId IN ' + IN + ' GROUP BY OwnerId, Status');
+  var best = null, tot = {}, wait = {};
+  inb.forEach(function (r) {
+    var n = who(r.OwnerId); if (!n) return;
+    var c = Number(r.n) || 0;
+    tot[n] = (tot[n] || 0) + c;
+    if (/waiting/i.test(r.Status || '')) wait[n] = (wait[n] || 0) + c;
+  });
+  Object.keys(tot).forEach(function (n) { if (!best || tot[n] > tot[best]) best = n; });
+  if (best) {
+    out.inbound = { who: best, total: tot[best], waiting: wait[best] || 0,
+                    notStarted: tot[best] - (wait[best] || 0),
+                    oldestDays: (out.age[best] || {}).oldestDays || 0,
+                    oldestSince: (out.age[best] || {}).oldestSince || '' };
+  }
+
+  cache.put('sfk_wall', JSON.stringify(out), 600);
+  return out;
+}
+
+/** Never lets the wall fall over. Stale beats blank; blank beats wrong. */
+function wallDataSafe_() {
+  try { return wallData_(); } catch (e) { return null; }
+}
+
+function daysSince_(iso) {
+  if (!iso) return 0;
+  var then = new Date(String(iso).slice(0, 10) + 'T12:00:00');
+  return Math.max(0, Math.round((new Date() - then) / 864e5));
+}
+
+function prettyDay_(iso) {
+  if (!iso) return '';
+  return Utilities.formatDate(new Date(String(iso).slice(0, 10) + 'T12:00:00'),
+                              CONFIG.TZ, 'd MMMM');
+}
+
+function shorten_(t, n) {
+  t = String(t || '').replace(/\s+/g, ' ').trim();
+  return t.length > n ? t.slice(0, n - 1) + '…' : t;
 }
 
 function sfkNeedsReasonSafe_(date) {
