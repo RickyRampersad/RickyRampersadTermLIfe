@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-03';
+var SCRIPT_VERSION = '2026-09-03b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2083,7 +2083,8 @@ function sendWeekly(dateOpt) {
 /** Run once from the editor. Safe to re-run: it clears its own triggers first. */
 /** Everything this tool installs. Anything else in the project is somebody
  *  else's and is left alone. */
-var MY_TRIGGERS = ['sendCheckpoint', 'sendWeekly', 'remindMidday', 'remindCheckpoint'];
+var MY_TRIGGERS = ['sendCheckpoint', 'sendWeekly', 'remindMidday', 'remindCheckpoint',
+                   'keepWarm'];
 
 /** Handlers from earlier versions of this tool. Replacing the code does not
  *  remove the triggers that call it — they are stored against the project, not
@@ -2111,6 +2112,28 @@ function listTriggers() {
   var msg = out.join('\n');
   Logger.log(msg);
   return msg;
+}
+
+/** Keep the container awake during working hours.
+ *
+ *  Apps Script puts a project to sleep when nobody has touched it, and the
+ *  next person to arrive pays the start-up. Measured on 3 September: a bare
+ *  ping — a function that only returns today's date — took 26 seconds cold,
+ *  then 2.1 and 1.4 warm. Almost everybody in a nine-person branch arrives
+ *  cold, because nobody logs in twice in five minutes.
+ *
+ *  This does the cheapest possible thing often enough that the project never
+ *  goes cold between eight and six. It reads one cell and stops.
+ *
+ *  It is not a guarantee — Google does not promise a warm container — but it
+ *  costs one trivial execution every ten minutes and the alternative is a
+ *  member of staff staring at "Signing in" for half a minute. */
+function keepWarm() {
+  var h = Number(Utilities.formatDate(new Date(), CONFIG.TZ, 'H'));
+  var d = new Date().getDay();
+  if (d === 0 || d === 6) return;      // not at the weekend
+  if (h < 7 || h > 18) return;         // not overnight
+  try { ss_().getSheets()[0].getRange(1, 1).getValue(); } catch (e) {}
 }
 
 function installTriggers() {
@@ -2144,7 +2167,10 @@ function installTriggers() {
   ScriptApp.newTrigger('sendWeekly').timeBased()
     .onWeekDay(ScriptApp.WeekDay.FRIDAY).atHour(17).create();
 
-  var msg = 'Triggers installed. Staff nudges weekdays at 12:00 and ' +
+  // And one that keeps the project awake, so nobody pays the cold start.
+  ScriptApp.newTrigger('keepWarm').timeBased().everyMinutes(10).create();
+
+  var msg = 'Triggers installed. Warm-up every 10 minutes 7am-6pm weekdays. Staff nudges weekdays at 12:00 and ' +
             CONFIG.CHECKPOINT_HOUR + ':00, branch checkpoint ' + CONFIG.CHECKPOINT_HOUR +
             ':00, weekly summary Friday 17:00 (' + CONFIG.TZ + ').';
   if (removed.length) {

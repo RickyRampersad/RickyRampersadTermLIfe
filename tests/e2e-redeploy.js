@@ -19,6 +19,11 @@ const srv = http.createServer((q,r)=>{
   fs.createReadStream(f).pipe(r);
 });
 
+// The expected version is read out of the page itself, so bumping
+// SCRIPT_VERSION never leaves this test asserting a stale string.
+const WANT = (fs.readFileSync(path.join(ROOT,'redeploy','index.html'),'utf8')
+  .match(/const WANT="([^"]+)"/) || [])[1];
+if (!WANT) { console.log('  FAIL  could not read WANT from the page'); process.exit(1); }
 let mode = 'old', fails = 0;
 const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(!c)fails++;};
 
@@ -31,7 +36,7 @@ const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(
   await page.route('**/macros/s/**', async r => {
     if (mode === 'dead') return r.abort();
     const body = { ok:true, today:'2026-09-03' };
-    if (mode === 'new')  body.version = '2026-09-03';
+    if (mode === 'new')  body.version = WANT;
     if (mode === 'other') body.version = '2026-08-30';
     return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)});
   });
@@ -55,14 +60,14 @@ const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(
   mode='new';
   t = await run();
   ok('it says done', /Done — the new script is live/.test(t), t.split('\n')[0]);
-  ok('it names the version', /2026-09-03/.test(t));
+  ok('it names the version', t.indexOf(WANT) > -1, WANT);
   ok('and reports the speed', /Timed at/.test(t) && /average/.test(t));
 
   console.log('\nShe copied an older file:\n');
   mode='other';
   t = await run();
   ok('it says the versions do not match', /A different version is live/.test(t), t.split('\n')[0]);
-  ok('and shows both numbers', /2026-08-30/.test(t) && /2026-09-03/.test(t));
+  ok('and shows both numbers', /2026-08-30/.test(t) && t.indexOf(WANT) > -1);
 
   console.log('\nThe workbook cannot be reached:\n');
   mode='dead';

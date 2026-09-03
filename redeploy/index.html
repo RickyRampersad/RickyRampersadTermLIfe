@@ -95,7 +95,7 @@
   <p class="eyebrow">Ricky Rampersad Branch</p>
   <h1>Updating the tracker's script</h1>
   <p class="stand">Ten minutes, once. You are copying one file into Google Apps
-     Script and pressing deploy. Nothing on this page can break the tracker or
+     Script, pressing deploy, and running one function. Nothing on this page can break the tracker or
      touch anybody's data — and there is a button at the bottom that tells you
      whether it worked.</p>
 </div></header>
@@ -165,9 +165,28 @@
     </div></div>
 
     <div class="step"><div class="num">5</div><div>
+      <h3>Switch the warm-up on</h3>
+      <p>Still in the Apps Script tab. In the function dropdown at the top
+         (it probably says <code>doGet</code>), choose <b>installTriggers</b>,
+         then press <b>Run</b>.</p>
+      <p>This is what stops the tracker falling asleep. Google puts the script
+         to sleep when nobody has used it for a while, and the next person to
+         sign in waits half a minute while it wakes up. This wakes it every ten
+         minutes during working hours so nobody has to.</p>
+      <div class="note warn"><span class="lbl">It may ask permission</span>
+        Press <b>Review permissions</b>, choose the workbook owner's account,
+        then <b>Advanced &rarr; Go to&nbsp;… (unsafe)</b> and <b>Allow</b>. It says
+        unsafe because the script is not published on the Google store. It is
+        our own file.</div>
+      <p class="seen">You should see: an execution log ending
+         &ldquo;Triggers installed. Warm-up every 10 minutes…&rdquo;</p>
+    </div></div>
+
+    <div class="step"><div class="num">6</div><div>
       <h3>Check it</h3>
       <p>Come back here and press the button below. It asks the workbook
-         directly and tells you whether the new script is the one answering.</p>
+         directly and tells you whether the new script is the one answering,
+         and how fast it is now.</p>
     </div></div>
 
   </div>
@@ -211,7 +230,7 @@ const EXEC="https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66Q
 
 // Bumped in the same commit as apps-script/KPI.gs. The check is simply:
 // does the workbook say it is running this, or something older?
-const WANT="2026-09-03";
+const WANT="2026-09-03b";
 
 const out=document.getElementById("out"), go=document.getElementById("go");
 
