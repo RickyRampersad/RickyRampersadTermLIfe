@@ -302,7 +302,21 @@ async function apiOnce(action, payload) {
     headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify({ action, ...payload })
   });
-  if (!res.ok) return { ok: false, error: "Server returned " + res.status + ".", _retry: res.status >= 500 };
+  // Apps Script answers a POST with a 302 to a one-shot result URL. When the
+  // script is busy that result is not always there yet, and the browser sees a
+  // 404 — which is not "no such endpoint", it is "not ready". Treating it as
+  // final is what put "Server returned 404." in front of somebody who had just
+  // typed out a whole block. 404, 429 and 5xx all get another go.
+  if (!res.ok) {
+    const again = res.status === 404 || res.status === 429 || res.status >= 500;
+    return {
+      ok: false,
+      error: again
+        ? "The sheet is busy. Trying again…"
+        : "Server returned " + res.status + ".",
+      _retry: again
+    };
+  }
   const text = await res.text();
   try { return JSON.parse(text); }
   catch {
@@ -326,6 +340,13 @@ async function api(action, payload) {
         error: "The sheet did not answer in time. It can take a few seconds — press Sign in once more." };
     }
   }
+  // Every attempt is spent. "Trying again..." was true a moment ago and is not
+  // any more, so do not leave it on the screen as if something were still
+  // happening.
+  if (last && last._retry) {
+    last = { ok: false,
+      error: "The sheet did not answer after three tries. It is busy, not broken — wait a moment and press Submit again." };
+  }
   return last;
 }
 
@@ -342,6 +363,98 @@ const storeToken = t => {
     t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY);
   } catch {}
 };
+
+// ---------------------------------------------------------------------------
+//  The draft, kept on the phone
+//
+//  Two people lost an afternoon's typing on 2 September: the sheet did not
+//  answer, and what they had written existed nowhere but in the page. A block
+//  can take five minutes to write and a second to lose.
+//
+//  So every keystroke is now kept on the device, per person per day. It is
+//  read back when the day is opened, and it only ever fills a box the sheet
+//  returned empty — a saved block always wins over a draft of itself. A block
+//  that comes back confirmed is dropped from the draft.
+//
+//  This is deliberately the dumbest possible mechanism. It has to work when
+//  the network does not.
+// ---------------------------------------------------------------------------
+const draftKey = (staffId, date) => "rrb_kpi_draft_" + staffId + "_" + date;
+
+const readDraft = (staffId, date) => {
+  try {
+    const raw = localStorage.getItem(draftKey(staffId, date));
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeDraft = (staffId, date, entry) => {
+  if (!staffId || !date || !entry) return;
+  try {
+    localStorage.setItem(draftKey(staffId, date), JSON.stringify({
+      blocks: entry.blocks || {},
+      valueAdded: entry.valueAdded || "",
+      innovation: entry.innovation || "",
+      systemFlags: entry.systemFlags || "",
+      notes: entry.notes || "",
+      metrics: entry.metrics || {},
+      savedAt: Date.now()
+    }));
+  } catch {}
+};
+
+// One block landed. Forget our copy of it, keep the rest.
+const clearDraftBlock = (staffId, date, bid) => {
+  try {
+    const d = readDraft(staffId, date);
+    if (!d || !d.blocks) return;
+    delete d.blocks[bid];
+    localStorage.setItem(draftKey(staffId, date), JSON.stringify(d));
+  } catch {}
+};
+
+// Old drafts are not worth keeping — a fortnight is well past the point where
+// anybody is still going back to finish a block.
+const pruneDrafts = () => {
+  try {
+    const cutoff = Date.now() - 14 * 864e5;
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (!k || k.indexOf("rrb_kpi_draft_") !== 0) continue;
+      let d = null;
+      try { d = JSON.parse(localStorage.getItem(k)); } catch {}
+      if (!d || !d.savedAt || d.savedAt < cutoff) localStorage.removeItem(k);
+    }
+  } catch {}
+};
+
+// The sheet is the record; the draft only speaks where the sheet is silent.
+function overlayDraft(entry, draft) {
+  if (!draft) return entry;
+  const keep = (a, b) => (String(a || "").trim() ? a : (b || ""));
+  const out = {
+    ...entry,
+    valueAdded: keep(entry.valueAdded, draft.valueAdded),
+    innovation: keep(entry.innovation, draft.innovation),
+    systemFlags: keep(entry.systemFlags, draft.systemFlags),
+    notes: keep(entry.notes, draft.notes),
+    blocks: { ...entry.blocks },
+    metrics: { ...(entry.metrics || {}) }
+  };
+  Object.keys(draft.metrics || {}).forEach(k => {
+    out.metrics[k] = keep(out.metrics[k], draft.metrics[k]);
+  });
+  Object.keys(draft.blocks || {}).forEach(bid => {
+    const server = out.blocks[bid] || {};
+    const mine = draft.blocks[bid] || {};
+    const merged = { ...server };
+    Object.keys(mine).forEach(f => { merged[f] = keep(server[f], mine[f]); });
+    out.blocks[bid] = merged;
+  });
+  return out;
+}
 
 // A sheet row becomes an entry the form understands.
 function rowToEntry(row) {
@@ -565,6 +678,7 @@ function App() {
   // Resume a session if the token is still good.
   useEffect(() => {
     let off = false;
+    pruneDrafts();
     (async () => {
       if (!token) {
         setBooting(false);
@@ -635,12 +749,21 @@ function App() {
     };
   }, [view, token]);
 
-  // Load one day into the form.
+  // Load one day into the form. Anything typed on this device and never
+  // acknowledged by the sheet is put back before the form is shown.
   useEffect(() => {
     if (view !== "entry" || !active) return;
     const found = rows.map(rowToEntry).find(e => e.staffId === active && e.date === date);
-    setEntry(withSchedule(withTraining(found || blankEntry(active, date), training), active));
+    const base = withSchedule(withTraining(found || blankEntry(active, date), training), active);
+    setEntry(overlayDraft(base, readDraft(active, date)));
   }, [view, active, date, rows, training]);
+
+  // Every change is kept on the device. This is the whole safety net: if the
+  // sheet refuses the save, the words are still here when they come back.
+  useEffect(() => {
+    if (view !== "entry" || !entry || !active) return;
+    writeDraft(active, date, entry);
+  }, [entry, active, date, view]);
   const patchBlock = (bid, f, v) => setEntry(e => ({
     ...e,
     blocks: {
@@ -687,6 +810,7 @@ function App() {
       metrics: entry.metrics
     });
     if (res.ok) {
+      clearDraftBlock(active, entry.date, b.id);
       setBlockState(s => ({
         ...s,
         [b.id]: {
@@ -703,13 +827,22 @@ function App() {
         }
       })), 6000);
     } else if (res.authRequired) {
-      signOut();
+      // The draft is already on the device, so signing out no longer costs
+      // anybody their afternoon — but say so, or they will assume it did.
+      setBlockState(s => ({
+        ...s,
+        [b.id]: {
+          tone: "bad",
+          text: "Signed out. What you typed is saved on this phone — sign in again and press Submit."
+        }
+      }));
+      setTimeout(signOut, 2500);
     } else {
       setBlockState(s => ({
         ...s,
         [b.id]: {
           tone: "bad",
-          text: res.error || "Did not send."
+          text: (res.error || "Did not send.") + " Your words are saved on this phone — press Submit again."
         }
       }));
     }

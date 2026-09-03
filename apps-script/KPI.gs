@@ -49,10 +49,27 @@ function ss_() { return SpreadsheetApp.getActive(); }
 //  a guess, find each one by the columns it carries.
 // ---------------------------------------------------------------------------
 
+/* The header row is read over and over inside a single save: logSheet_ reads
+   it to check the columns exist, saveBlock_ reads it to build the row, and
+   colMap_ reads it again to find the column numbers. Three round trips for a
+   row that cannot change mid-request. Remember it like the tab name. */
+var _headMemo = {};
 function headerOf_(sheet) {
-  if (sheet.getLastRow() < 1 || sheet.getLastColumn() < 1) return [];
-  return sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
-    .map(function (h) { return String(h || '').trim(); });
+  var key;
+  try { key = sheet.getSheetId(); } catch (e) { key = null; }
+  if (key != null && _headMemo.hasOwnProperty(key)) return _headMemo[key];
+  var head = [];
+  if (sheet.getLastRow() >= 1 && sheet.getLastColumn() >= 1) {
+    head = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+      .map(function (h) { return String(h || '').trim(); });
+  }
+  if (key != null) _headMemo[key] = head;
+  return head;
+}
+
+/** A column was just appended, so the remembered header is now a row short. */
+function forgetHeader_(sheet) {
+  try { delete _headMemo[sheet.getSheetId()]; } catch (e) { _headMemo = {}; }
 }
 
 /* Finding a tab means reading the header row of every sheet in the workbook,
@@ -476,6 +493,7 @@ function ensureLogColumns_(sh) {
     if (head.indexOf(col) === -1) {
       sh.getRange(1, sh.getLastColumn() + 1).setValue(col);
       head.push(col);
+      forgetHeader_(sh);
     }
   });
   return sh;
@@ -810,8 +828,8 @@ function saveEntry_(payload, profile) {
   var date = isoDay_(payload.date);
   if (!staffId || !date) return { ok: false, error: 'Missing staff or date.' };
 
-  var lock = LockService.getScriptLock();
-  lock.waitLock(20000);
+  var lock = takeLock_();
+  if (!lock) return BUSY_;
   try {
     var sh = logSheet_();
     var head = headerOf_(sh);
@@ -881,6 +899,59 @@ function saveEntry_(payload, profile) {
  *  actually happened by 3pm rather than what someone recalls afterwards.
  *
  *  The day's row is still one row. A block never disturbs its neighbours. */
+/** Write a patch of named columns into one row.
+ *
+ *  One setValues per run of adjacent columns, instead of one setValue per
+ *  column. A block save touches up to sixteen cells; written one at a time
+ *  that is sixteen round trips to Sheets — and every one of them happens
+ *  while the script lock is held and the rest of the branch is queued behind
+ *  it. The block's own five columns sit together in the header, so in
+ *  practice this is about five writes instead of sixteen.
+ *
+ *  Only the named columns are touched. Nothing is read back and rewritten,
+ *  so a cell this block does not own cannot be disturbed. */
+function writeRow_(sh, row, idx, patch) {
+  var byIndex = {}, cols = [];
+  Object.keys(patch).forEach(function (col) {
+    if (idx[col] == null) return;
+    byIndex[idx[col]] = patch[col];
+    cols.push(idx[col]);
+  });
+  if (!cols.length) return;
+  cols.sort(function (a, b) { return a - b; });
+
+  var run = [cols[0]];
+  for (var i = 1; i <= cols.length; i++) {
+    if (i < cols.length && cols[i] === cols[i - 1] + 1) { run.push(cols[i]); continue; }
+    sh.getRange(row, run[0] + 1, 1, run.length)
+      .setValues([run.map(function (c) { return byIndex[c]; })]);
+    if (i < cols.length) run = [cols[i]];
+  }
+}
+
+/** Take the script lock, or say plainly that the branch is busy.
+ *
+ *  One lock covers every submission in the branch, so at four o'clock — when
+ *  the whole team files its last block within the same few minutes — people
+ *  queue behind each other. When the wait runs out, waitLock throws a Google
+ *  error with wording no member of staff should ever be shown, and the tracker
+ *  treated it as a final answer.
+ *
+ *  _retry tells the browser to come back on its own. The person sees nothing
+ *  but a slightly slower save. */
+function takeLock_() {
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(20000);
+    return lock;
+  } catch (e) {
+    return null;
+  }
+}
+
+var BUSY_ = { ok: false, _retry: true,
+  error: 'Another submission is going in just now. Trying again…' };
+
 function saveBlock_(payload, profile) {
   var staffId = profile.manager && payload.staffId ? payload.staffId : profile.staffId;
   var date = isoDay_(payload.date);
@@ -888,16 +959,18 @@ function saveBlock_(payload, profile) {
   if (!staffId || !date) return { ok: false, error: 'Missing staff or date.' };
   if (BLOCK_IDS.indexOf(blockId) === -1) return { ok: false, error: 'Unknown block: ' + blockId };
 
-  var lock = LockService.getScriptLock();
-  lock.waitLock(20000);
+  var d = payload.data || {};
+  var now = new Date();
+  var done = [];
+
+  var lock = takeLock_();
+  if (!lock) return BUSY_;
   try {
     var sh = logSheet_();
     var head = headerOf_(sh);
     var idx = colMap_(sh);
-    var now = new Date();
-    var d = payload.data || {};
 
-    var targetRow = 0, revision = 0;
+    var targetRow = 0, revision = 0, rowVals = null;
     if (sh.getLastRow() > 1) {
       var vals = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
       for (var i = 0; i < vals.length; i++) {
@@ -905,6 +978,7 @@ function saveBlock_(payload, profile) {
         if (sid === staffId && isoDay_(vals[i][idx['Date']]) === date) {
           targetRow = i + 2;
           revision = Number(vals[i][idx['Revision']]) || 0;
+          rowVals = vals[i];
           break;
         }
       }
@@ -936,9 +1010,7 @@ function saveBlock_(payload, profile) {
 
     if (targetRow) {
       // Touch only the columns this block owns; leave every other cell alone.
-      Object.keys(patch).forEach(function (col) {
-        if (idx[col] != null) sh.getRange(targetRow, idx[col] + 1).setValue(patch[col]);
-      });
+      writeRow_(sh, targetRow, idx, patch);
     } else {
       patch.Timestamp = now;
       patch.Date = date;
@@ -951,19 +1023,45 @@ function saveBlock_(payload, profile) {
 
     saveBlockTraining_(staffId, date, payload.name || profile.name, blockId, d, now);
 
-    var done = blocksSubmittedOn_(staffId, date);
-    emailBlockReceipt_(staffId, date, blockId, d, payload, done);
+    // Which blocks are in, counted from the row already in memory. Asking
+    // blocksSubmittedOn_ meant reading the whole log back a second time to
+    // learn something this request had just finished deciding.
+    BLOCK_IDS.forEach(function (pfx) {
+      if (pfx === blockId) { done.push(pfx); return; }
+      if (!rowVals) return;
+      var at  = idx[pfx + '_At'] != null ? rowVals[idx[pfx + '_At']] : '';
+      var kpi = idx[pfx] != null ? rowVals[idx[pfx]] : '';
+      var act = idx[pfx + '_Actioned'] != null ? rowVals[idx[pfx + '_Actioned']] : '';
+      if (at || hasText_(kpi) || hasText_(act)) done.push(pfx);
+    });
+  } finally {
+    lock.releaseLock();
+  }
 
+  // The receipt is the slowest thing in a save and it needs no lock. Sending
+  // it while holding one put every other member of staff behind a mail server.
+  // And a receipt that fails must not report a saved block as unsaved — that
+  // is what makes somebody type their afternoon out twice.
+  try {
+    emailBlockReceipt_(staffId, date, blockId, d, payload, done);
+  } catch (mailErr) {
     return {
       ok: true,
       block: blockId,
       at: Utilities.formatDate(now, CONFIG.TZ, 'HH:mm'),
       blocksDone: done.length,
-      submitted: done
+      submitted: done,
+      warning: 'Saved. The emailed copy did not go out.'
     };
-  } finally {
-    lock.releaseLock();
   }
+
+  return {
+    ok: true,
+    block: blockId,
+    at: Utilities.formatDate(now, CONFIG.TZ, 'HH:mm'),
+    blocksDone: done.length,
+    submitted: done
+  };
 }
 
 /** The day's own fields — task position, value added, the idea, the flag.
@@ -974,8 +1072,8 @@ function saveDay_(payload, profile) {
   var date = isoDay_(payload.date);
   if (!staffId || !date) return { ok: false, error: 'Missing staff or date.' };
 
-  var lock = LockService.getScriptLock();
-  lock.waitLock(20000);
+  var lock = takeLock_();
+  if (!lock) return BUSY_;
   try {
     var sh = logSheet_();
     var head = headerOf_(sh);
@@ -1398,7 +1496,7 @@ function json_(obj) {
    that a property of the code rather than of the runtime — which matters
    because the test harness runs many simulated requests in one process, and a
    memo that outlives its request is a memo serving yesterday's roster. */
-function resetRequestMemo_() { _tabMemo = {}; _rosterMemo = null; }
+function resetRequestMemo_() { _tabMemo = {}; _rosterMemo = null; _headMemo = {}; }
 
 function doGet(e) {
   resetRequestMemo_();
