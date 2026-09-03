@@ -20,7 +20,7 @@ get asked of it every week and none of them could be answered from it directly:
 4. Which policies mature soon — pensions and life, separately?
 5. Which term benefits and conversion rights expire before anybody notices?
 
-### It reads seven tabs, and only seven
+### It reads eight tabs, and only eight
 
 | What it needs | The branch calls it | The columns it finds it by |
 |---|---|---|
@@ -30,6 +30,7 @@ get asked of it every week and none of them could be answered from it directly:
 | Requirements | `URPPBIEX - Reqt` | `insured_requirement_id`, `requirement_code`, `policy_number` |
 | Tasks (the chase log) | `SFTASK MGT` | `Subject`, `Task Type`, `Days O/S` |
 | Settled production | `Branch Settlement Exp PBI Production` | `API_AMT`, `COUNT`, `YEAR`, `MONTH` |
+| Underwriting decisions | `RR_UWPRO_MAGNUM` | `overall_decision_code`, `policy_number` |
 | Access | `Agent Codes`, `App Users` | `Email`, `Name`, `Role` + a code or password column |
 
 The middle column is what those tabs happen to be called today. Nothing reads
@@ -321,6 +322,44 @@ Agent codes are folded — `A00427` and `U00427` are one person, four agents in
 this extract appear under both, and grouping on the raw code split Varun
 Seegolam's August into TT$296,745 and TT$65,393 when he had written
 TT$362,138.
+
+## 3f. First time — why half the work exists
+
+The pending desk, the 1,425 open requirements and everything the desk chases
+all begin in the same place: **a case that did not go through first time**.
+Only about a third of what the branch submits is accepted as it stands.
+
+`RR_UWPRO_MAGNUM` holds 3,438 decisions in five columns, with no date and no
+agent. Both come from the dues book, which the policy number joins at **99%**.
+
+| Decision | 2026 share |
+|---|---|
+| Referred | 46% |
+| Standard — accepted as submitted | **36%** |
+| Additional Information | 11% |
+| Terms Offered | 6% |
+
+**Rates are the current year's, deliberately.** A decision from three years ago
+says nothing about how somebody prepares a case today, and the two views
+genuinely disagree — one agent sits at 33% across four years and 8% across this
+one. The four-year figure is kept beside it, labelled for comparison only.
+
+**The direction is wrong.** Straight-through ran 39%, 39%, 42% and is 36% so
+far in 2026, with referrals up from 43% to 46%. The backlog is being fed faster
+this year than last.
+
+### Before treating a low rate as a verdict
+
+The obvious explanation is that some agents write bigger, more complex cases.
+It does not hold: the correlation between an agent's straight-through rate and
+their median sum assured is **−0.28**. Five agents all write a median case of
+TT$1,000,000 with rates from 7% to 53%.
+
+What the screen cannot see is **client age and health**, which genuinely do
+drive referrals. So the median case size sits in the table beside every rate,
+and the number is a question to ask an agent rather than a judgement on them.
+An agent below ten decisions in the year is not shown at all — below that a
+rate is noise.
 
 ## 4. How it is put together
 

@@ -56,9 +56,16 @@ header.top{background:linear-gradient(135deg,#00254d,#00458c);border-bottom:1px 
 .top .spacer{flex:1}
 .who{font-size:12.5px;color:#c8d6e8;text-align:right;line-height:1.4}
 .who b{display:block;color:#fff;font:700 13.5px 'Montserrat'}
+/* The nav is chrome, not prose — it does not have to line up with the 1,220px
+   text column, and holding it there is what made every new screen a fight for
+   pixels. It takes the window instead, still scrolls on a narrow one, and
+   fades at the right edge so it is obvious when there is more. */
 nav.tabs{background:var(--bg2);border-bottom:1px solid var(--line);position:sticky;top:63px;z-index:35;
-  overflow-x:auto;-webkit-overflow-scrolling:touch}
-nav.tabs .in{max-width:1220px;margin:0 auto;display:flex;gap:2px;padding:0 12px}
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
+  -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 34px),transparent);
+          mask-image:linear-gradient(90deg,#000 calc(100% - 34px),transparent)}
+nav.tabs.fits{-webkit-mask-image:none;mask-image:none}
+nav.tabs .in{margin:0 auto;display:flex;gap:2px;padding:0 16px;width:max-content;min-width:100%}
 /* Twelve tabs at 15px of padding each need 1,329px against the 1,220 the
    content column allows, so the last one clipped at every window size. The
    padding gives the width back without shortening any more labels. */
@@ -246,6 +253,7 @@ footer.foot{max-width:1220px;margin:0 auto;padding:0 16px 40px;color:var(--dim);
     <div class="view" id="v-client"></div>
     <div class="view" id="v-pulse"></div>
     <div class="view" id="v-production"></div>
+    <div class="view" id="v-uw"></div>
     <div class="view" id="v-dues"></div>
     <div class="view" id="v-pending"></div>
     <div class="view" id="v-reqs"></div>
@@ -530,6 +538,9 @@ var TABS = [
   { id: 'pulse',    label: 'Pulse' },
   { id: 'client',   label: 'Find a client' },
   { id: 'production', label: 'Settled',  count: function (d) { return (d.production || {}).apps; } },
+  { id: 'uw',       label: 'First time',
+    count: function (d) { var u = d.underwriting || {};
+      return u.rate === undefined ? 0 : Math.round(u.rate * 100); } },
   { id: 'dues',     label: 'Dues',  count: function (d) { return (d.dues || {}).chaseCount; } },
   { id: 'pending',  label: 'Pending',       count: function (d) { return (d.pending || {}).total; } },
   { id: 'reqs',     label: 'Requirements',  count: function (d) { return (d.reqs || {}).openCount; } },
@@ -543,12 +554,23 @@ var TABS = [
 ];
 
 function renderTabs() {
+  fitTabs();
   $('tabbar').innerHTML = TABS.map(function (t) {
     var n = t.count ? t.count(DATA) : null;
     return '<button data-view="' + t.id + '" class="' + (VIEW === t.id ? 'on' : '') + '">' +
       esc(t.label) + (n ? '<span class="n">' + num(n) + '</span>' : '') + '</button>';
   }).join('');
 }
+
+/* The right-edge fade only earns its place when something is actually cut off. */
+function fitTabs() {
+  var nav = document.querySelector('nav.tabs');
+  if (!nav) return;
+  setTimeout(function () {
+    nav.classList.toggle('fits', nav.scrollWidth <= nav.clientWidth + 2);
+  }, 0);
+}
+window.addEventListener('resize', fitTabs);
 
 function show(view) {
   VIEW = view;
@@ -557,7 +579,7 @@ function show(view) {
   var el = $('v-' + view);
   el.classList.add('on');
   ({ today: viewToday, pulse: viewPulse, client: viewClient, production: viewProduction,
-     dues: viewDues, pending: viewPending,
+     uw: viewUnderwriting, dues: viewDues, pending: viewPending,
      reqs: viewReqs, maturity: viewMaturity, expiry: viewExpiry, xsell: viewXsell,
      moves: viewMoves, health: viewHealth }[view])(el);
   window.scrollTo(0, 0);
@@ -952,6 +974,15 @@ function todayJobs() {
           cols: 'health' });
 
     var worst = (d.byAgent || []).filter(function (a) { return a.rate > 0.2; });
+    var uw = DATA.underwriting || {};
+    var weak = (uw.byAgent || []).filter(function (a) { return a.rate < 0.3; });
+    job({ key: 'uw', count: weak.length, tone: 'warn', view: 'uw',
+          label: 'Agents whose cases rarely go through first time',
+          why: 'Under 30% straight through this year against a branch ' +
+               Math.round((uw.rate || 0) * 100) + '%. Every case that comes back becomes a ' +
+               'requirement to chase — this is where the pending desk is made.',
+          rows: weak.slice(0, 5), cols: 'uwleague' });
+
     job({ key: 'worst', count: worst.length, tone: 'warn', view: 'dues',
           label: 'Agents with more than a fifth of their book in arrears',
           why: 'A conversation about method, not effort — the billing type is usually what is failing.',
@@ -1065,6 +1096,12 @@ function todayTable(j) {
         render: function (r) { return r.quiet === null ? '—' : num(r.quiet) + 'd'; } }],
     load: [{ key: 'who', label: 'Person' },
       { key: 'n', label: 'Open follow-ups', num: true, render: function (r) { return num(r.n); } }],
+    uwleague: [{ key: 'agent', label: 'Agent' },
+      { key: 'n', label: 'Cases', num: true, render: function (r) { return num(r.n); } },
+      { key: 'rate', label: 'First time', num: true,
+        render: function (r) { return '<span class="pill p-bad">' + Math.round(r.rate * 100) + '%</span>'; } },
+      { key: 'medianSA', label: 'Median case', num: true,
+        render: function (r) { return r.medianSA ? money(r.medianSA) : '—'; } }],
     agentleague: [{ key: 'agent', label: 'Agent' },
       { key: 'book', label: 'Book', num: true, render: function (r) { return num(r.book); } },
       { key: 'chase', label: 'Chasing', num: true, render: function (r) { return num(r.chase); } },
@@ -1409,6 +1446,121 @@ function viewProduction(el) {
 
   el.innerHTML = html;
 }
+
+/* ── First time ────────────────────────────────────────────────────────────
+   The screen that explains the pending desk. Only about a third of what the
+   branch submits is accepted as it stands; the rest comes back, and that
+   coming back is the backlog everybody spends their day on.
+
+   Rates are the current year's on purpose. A decision from three years ago
+   says nothing about how somebody prepares a case now, and the two views
+   genuinely disagree — one agent sits at 33% across four years and 8% across
+   this one.                                                                 */
+function viewUnderwriting(el) {
+  var u = DATA.underwriting || {};
+  if (u.error) { el.innerHTML = errCard(u.error); return; }
+  var solo = soloAgent();
+  var pct1 = function (x) { return Math.round((x || 0) * 100) + '%'; };
+
+  var html =
+    '<div class="card"><h2>How often a case goes through first time</h2>' +
+    '<p class="sub">Every case the branch submits gets a decision. Accepted as it stands is one ' +
+    'outcome; everything else comes back as a referral or a request for more.</p>' +
+    '<div class="stats">' +
+      stat('Straight through', pct1(u.rate), esc(u.year) + ' — accepted as submitted',
+           (u.rate || 0) >= 0.5 ? 'good' : (u.rate || 0) >= 0.35 ? 'warn' : 'bad') +
+      stat('Comes back', pct1(u.comeBack), 'referred, or asked for more', 'bad') +
+      stat('Decisions', num(u.yearTotal || 0), 'this year' +
+           (u.total ? ' · ' + num(u.total) + ' on record' : '')) +
+      (u.rateAll !== null && u.rateAll !== undefined
+        ? stat('Four-year average', pct1(u.rateAll), 'for comparison only') : '') +
+    '</div>' +
+    '<div class="note red"><b>This is where the pending desk comes from.</b> ' +
+    'Every case that comes back becomes a requirement to chase, a case sitting in pending, and ' +
+    'a client waiting. The ' + num((DATA.pending || {}).total || 0) + ' pending cases and ' +
+    num((DATA.reqs || {}).openCount || 0) + ' open requirements all start here — so a point of ' +
+    'straight-through is work that never arrives, rather than work done faster.</div>' +
+    '</div>';
+
+  if ((u.mix || []).length) {
+    html += '<div class="card"><h2>What the decisions were</h2>' +
+      '<p class="sub">' + esc(u.year) + ', ' + num(u.yearTotal) + ' decisions.</p>' +
+      table('uwMix', [
+        { key: 'code', label: 'Decision' },
+        { key: 'n', label: 'Cases', num: true, render: function (r) { return num(r.n); } },
+        { key: 'share', label: 'Share', num: true, render: function (r) { return pct1(r.share); } },
+        { key: 'means', label: 'What it means', sortable: false,
+          render: function (r) { return esc(UW_MEANS[r.code] || ''); },
+          value: function (r) { return UW_MEANS[r.code] || ''; } }
+      ], u.mix, { sort: 'n', dir: 'desc' }) + '</div>';
+  }
+
+  if ((u.years || []).length > 1) {
+    html += '<div class="card"><h2>Which way it is going</h2>' +
+      '<p class="sub">Straight-through rate by the year the application came in. Only years with ' +
+      '40 or more decisions are shown.</p>' +
+      bars(u.years.map(function (y) {
+        return { label: String(y.year), value: Math.round(y.rate * 100),
+                 display: Math.round(y.rate * 100) + '%  ·  ' + num(y.n) + ' cases',
+                 bad: y.year === u.year && y.rate < 0.4 };
+      }), { note: 'The current year is marked when it is running below 40%. ' +
+                  'Referrals have gone from 43% to ' + pct1((u.years[u.years.length - 1] || {}).refRate) +
+                  ' over the same period.' }) + '</div>';
+  }
+
+  if (!solo && (u.byAgent || []).length) {
+    html += '<div class="card"><h2>By agent, this year</h2>' +
+      '<p class="sub">Agents with ' + num(u.minCases) + ' or more decisions in ' + esc(u.year) +
+      '. Below that a rate is noise. Median sum assured is shown because the obvious ' +
+      'explanation — bigger cases get referred — does not hold: the correlation across the ' +
+      'branch is −0.28.</p>' +
+      table('uwAgents', [
+        { key: 'agent', label: 'Agent' },
+        { key: 'n', label: 'Cases', num: true, render: function (r) { return num(r.n); } },
+        { key: 'rate', label: 'First time', num: true,
+          render: function (r) {
+            var t = r.rate >= 0.5 ? 'p-good' : r.rate >= 0.3 ? 'p-warn' : 'p-bad';
+            return '<span class="pill ' + t + '">' + pct1(r.rate) + '</span>';
+          }, value: function (r) { return pct1(r.rate); } },
+        { key: 'back', label: 'Comes back', num: true, render: function (r) { return pct1(r.back); } },
+        { key: 'ref', label: 'Referred', num: true, render: function (r) { return num(r.ref); } },
+        { key: 'info', label: 'More info', num: true, render: function (r) { return num(r.info); } },
+        { key: 'medianSA', label: 'Median case', num: true,
+          render: function (r) { return r.medianSA ? money(r.medianSA) : '<span style="color:var(--dim)">—</span>'; } }
+      ], u.byAgent, { sort: 'rate', dir: 'asc', limit: 60 }) + '</div>';
+  }
+
+  html += '<div class="card"><h2>Every decision this year</h2>' +
+    table('uwRows', [].concat([
+      { key: 'received', label: 'App received' },
+      { key: 'code', label: 'Decision',
+        render: function (r) {
+          var t = r.firstTime ? 'p-good' : r.code === 'Decline' ? 'p-bad' : 'p-warn';
+          return '<span class="pill ' + t + '">' + esc(r.code) + '</span>';
+        } },
+      { key: 'client', label: 'Client' },
+      { key: 'policy', label: 'Policy' },
+      { key: 'plan', label: 'Plan' }
+    ], solo ? [] : [{ key: 'agent', label: 'Agent' }], [
+      { key: 'sumAssured', label: 'Sum assured', num: true,
+        render: function (r) { return r.sumAssured ? money(r.sumAssured) : '<span style="color:var(--dim)">—</span>'; } },
+      { key: 'act', label: '', sortable: false, value: function () { return ''; },
+        render: function (r) { return logBtn('underwriting', r.policy, r.client); } }
+    ]), u.rows || [], { sort: 'received', dir: 'desc', limit: 300,
+                        empty: 'No decisions on record for ' + u.year + '.' }) + '</div>';
+
+  el.innerHTML = html;
+}
+
+var UW_MEANS = {
+  'Standard': 'Accepted as submitted. No second round.',
+  'Referred': 'Sent to an underwriter for a decision.',
+  'Additional Information': 'Came back asking for more.',
+  'Terms Offered': 'Accepted on altered terms.',
+  'Loaded': 'Accepted at an increased premium.',
+  'Decline': 'Not accepted.',
+  'Postpone': 'Deferred to a later date.'
+};
 
 /* ── Premium dues ──────────────────────────────────────────────────────────
    The chase list, and the three cuts that turn it from a list into a decision:

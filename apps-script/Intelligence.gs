@@ -227,6 +227,7 @@ function iTabReqs_()     { return iFindTab_('REQS',     ['insured_requirement_id
 function iTabTasks_()    { return iFindTab_('TASKS',    ['subject', 'task type', 'days o/s']); }
 function iTabAccess_()   { return iFindTab_('ACCESS',   ['email', 'name', 'role']); }
 function iTabSettled_()  { return iFindTab_('SETTLED',  ['api_amt', 'count', 'year', 'month']); }
+function iTabMagnum_()   { return iFindTab_('MAGNUM',   ['overall_decision_code', 'policy_number']); }
 
 /* Column index by name, tolerant of the trailing spaces and the (2)-style
    suffixes the extracts carry. Returns -1 when the column is absent, and every
@@ -331,6 +332,7 @@ function intelRebuild() {
   delete out.maturity.expiry;
   /* Cross-sell reads every in-force record, not just the maturing ones. The
      raw list is dropped straight after so it never reaches a browser. */
+  out.underwriting = iBuildUnderwriting_(today);
   out.crosssell = iBuildCrossSell_(today, out.maturity.all);
   /* Built here because it needs the in-force rows, and shipped in the cache so
      scoping and the digests all agree on who is who. */
@@ -1554,6 +1556,8 @@ var INTEL_SOURCES = [
   { key: 'settled',  label: 'Branch Settlement — production',    tab: iTabSettled_,
     cols: ['effective_dt', 'pol_app_recv_dt'], dayFirst: true,
     feeds: 'everything on the Production screen' },
+  /* RR_UWPRO_MAGNUM carries no date of its own — its recency is only visible
+     through the dues book it joins to, which is already measured above. */
   { key: 'tasks',    label: 'SFTASK MGT — the chase log',        tab: iTabTasks_,
     cols: ['last modified date', 'date'],
     feeds: 'who is chasing which pending case' }
@@ -1746,6 +1750,158 @@ function iCodeNames_() {
     }
   }
   return out;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   WHY HALF THE WORK EXISTS
+   The pending desk, the 1,425 open requirements and everything Sasha and
+   Azariah chase all begin at the same place: a case that did not go through
+   first time. Only 40% of this branch's submissions are accepted as they
+   stand. The other 60% come back, and that coming back IS the backlog.
+
+   Nothing measured it, because the decisions sit in their own tab and nobody
+   joined it up. Five columns, no dates, no agent — but the policy number
+   joins to the dues book at 99%, which supplies both.
+
+   MEASURED ON THE CURRENT YEAR, NOT ALL FOUR. A decision from 2023 says
+   nothing about how somebody prepares a case today, and the two views
+   genuinely disagree: one agent sits at 33% across four years and 8% across
+   this one. The all-time figures are kept for context and clearly labelled,
+   but the coachable number is this year's.
+
+   And the direction is the wrong way. Straight-through ran 39%, 39%, 42% and
+   is 36% so far in 2026, with referrals up from 43% to 46% — the backlog is
+   being fed faster this year than last.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var IUW_MIN_CASES = 10;   /* below this an agent's rate is noise, not a signal */
+
+function iBuildUnderwriting_(today) {
+  var sh = iTabMagnum_();
+  if (!sh) return { error: 'No underwriting tab found (needs overall_decision_code, policy_number).' };
+  var dues = iTabDues_();
+  if (!dues) return { error: 'The dues book is needed to date a decision and attach an agent.' };
+
+  /* The decision tab carries neither a date nor an agent. Both come from the
+     dues book, which holds every policy the branch has. */
+  var dd = iReadCols_(dues, {
+    number: ['number'], agent: ['agent'], recv: ['app received date'],
+    issue: ['issue date'], plan: ['plan code'], client: ['client'],
+    sumAssured: ['sum assured'], premium: ['premium']
+  });
+  var pol = {};
+  for (var i = 0; i < dd.rows; i++) {
+    var num = dd.get('number', i);
+    if (iBadNumber_(num)) continue;
+    var key = String(num).trim();
+    if (!key || pol[key]) continue;
+    pol[key] = {
+      agent: String(dd.get('agent', i)).trim(),
+      recv: iDate_(dd.get('recv', i)),
+      plan: String(dd.get('plan', i)).trim(),
+      client: String(dd.get('client', i)).trim(),
+      sumAssured: iNum_(dd.get('sumAssured', i)),
+      premium: iNum_(dd.get('premium', i))
+    };
+  }
+
+  var d = iReadCols_(sh, {
+    policy: ['policy_number'], code: ['overall_decision_code'],
+    desc: ['overall_decision_code_description'], id: ['magnum_decision_id']
+  });
+
+  var thisYear = today.getFullYear();
+  var mixAll = {}, mixYear = {}, byYear = {}, byAgent = {}, rows = [];
+  var total = 0, dated = 0, yearTotal = 0, seen = {};
+
+  for (var r = 0; r < d.rows; r++) {
+    var p = String(d.get('policy', r)).trim();
+    var code = String(d.get('code', r)).trim();
+    if (!p || !code) continue;
+    var id = String(d.get('id', r)).trim() || (p + code);
+    if (seen[id]) continue;
+    seen[id] = 1;
+    total++;
+    mixAll[code] = (mixAll[code] || 0) + 1;
+
+    var info = pol[p];
+    if (!info || !info.recv) continue;
+    dated++;
+    var y = info.recv.getFullYear();
+    if (!byYear[y]) byYear[y] = { year: y, n: 0, std: 0, ref: 0, info: 0 };
+    var b = byYear[y];
+    b.n++;
+    if (code === 'Standard') b.std++;
+    if (code === 'Referred') b.ref++;
+    if (code === 'Additional Information') b.info++;
+
+    if (y !== thisYear) continue;
+    yearTotal++;
+    mixYear[code] = (mixYear[code] || 0) + 1;
+
+    var a = info.agent || '(unattributed)';
+    if (!byAgent[a]) byAgent[a] = { agent: a, n: 0, std: 0, ref: 0, info: 0, sa: [] };
+    var ab = byAgent[a];
+    ab.n++;
+    if (code === 'Standard') ab.std++;
+    if (code === 'Referred') ab.ref++;
+    if (code === 'Additional Information') ab.info++;
+    if (info.sumAssured > 0) ab.sa.push(info.sumAssured);
+
+    rows.push({
+      policy: p, code: code, agent: a,
+      client: info.client, plan: info.plan,
+      received: iIso_(info.recv),
+      sumAssured: info.sumAssured, modal: info.premium,
+      firstTime: code === 'Standard'
+    });
+  }
+
+  rows.sort(function (x, y2) { return String(y2.received).localeCompare(String(x.received)); });
+
+  function median(a) {
+    if (!a.length) return 0;
+    var s2 = a.slice().sort(function (x, y3) { return x - y3; });
+    return s2[Math.floor(s2.length / 2)];
+  }
+  var agents = Object.keys(byAgent).map(function (k) {
+    var v = byAgent[k];
+    return { agent: v.agent, n: v.n, std: v.std, ref: v.ref, info: v.info,
+             rate: v.n ? v.std / v.n : 0,
+             back: v.n ? (v.ref + v.info) / v.n : 0,
+             medianSA: median(v.sa) };
+  }).filter(function (v) { return v.n >= IUW_MIN_CASES; })
+    .sort(function (a, b2) { return a.rate - b2.rate; });
+
+  var years = Object.keys(byYear).map(function (k) {
+    var v = byYear[k];
+    return { year: v.year, n: v.n, rate: v.n ? v.std / v.n : 0,
+             refRate: v.n ? v.ref / v.n : 0 };
+  }).filter(function (v) { return v.n >= 40; })
+    .sort(function (a, b2) { return a.year - b2.year; });
+
+  function mixRows(m, n) {
+    return Object.keys(m).map(function (k) {
+      return { code: k, n: m[k], share: n ? m[k] / n : 0 };
+    }).sort(function (a, b2) { return b2.n - a.n; });
+  }
+
+  var stdYear = mixYear['Standard'] || 0;
+  return {
+    year: thisYear,
+    total: total, dated: dated, yearTotal: yearTotal,
+    rate: yearTotal ? stdYear / yearTotal : 0,
+    rateAll: total ? (mixAll['Standard'] || 0) / total : 0,
+    comeBack: yearTotal ? ((mixYear['Referred'] || 0) + (mixYear['Additional Information'] || 0)) / yearTotal : 0,
+    mix: mixRows(mixYear, yearTotal),
+    mixAll: mixRows(mixAll, total),
+    years: years, byAgent: agents,
+    minCases: IUW_MIN_CASES,
+    rows: rows.slice(0, 1500),
+    note: 'Rates are this year\'s. A decision from three years ago says nothing ' +
+          'about how somebody prepares a case today, and the two views disagree — ' +
+          'one agent sits at 33% across four years and 8% across this one.'
+  };
 }
 
 /* ── Data health ──────────────────────────────────────────────────────────
@@ -2523,6 +2679,30 @@ function iScope_(cache, session) {
     mv.counts = { lapsed: mv.lapsed.length, slipped: mv.slipped.length,
                   cleared: mv.cleared.length, newPending: mv.newPending.length,
                   donePending: null, vanished: null };
+  }
+
+  /* ── underwriting ────────────────────────────────────────────────────────
+     An agent sees their own decisions and their own rate. The year trend is
+     the branch's shape and stays — one agent's 38 cases cannot draw a trend,
+     and knowing the branch is at 36% is what makes their own number mean
+     something. */
+  if (c.underwriting && !c.underwriting.error) {
+    var uw = c.underwriting;
+    uw.rows = mine(uw.rows);
+    uw.byAgent = mine(uw.byAgent);
+    uw.yearTotal = uw.rows.length;
+    var std = uw.rows.filter(function (r) { return r.firstTime; }).length;
+    var back = uw.rows.filter(function (r) {
+      return r.code === 'Referred' || r.code === 'Additional Information'; }).length;
+    uw.rate = uw.yearTotal ? std / uw.yearTotal : 0;
+    uw.comeBack = uw.yearTotal ? back / uw.yearTotal : 0;
+    var mm = {};
+    uw.rows.forEach(function (r) { mm[r.code] = (mm[r.code] || 0) + 1; });
+    uw.mix = Object.keys(mm).map(function (k) {
+      return { code: k, n: mm[k], share: uw.yearTotal ? mm[k] / uw.yearTotal : 0 };
+    }).sort(function (a, b) { return b.n - a.n; });
+    /* Branch-wide counts an agent has no use for. */
+    uw.total = null; uw.dated = null; uw.mixAll = null; uw.rateAll = null;
   }
 
   /* ── production ──────────────────────────────────────────────────────────
@@ -3570,7 +3750,8 @@ function intelSelfTest() {
 
   line('Tabs resolved by their columns:');
   [['Dues', iTabDues_()], ['In-force book', iTabInforce_()], ['Pending', iTabPending_()],
-   ['Requirements', iTabReqs_()], ['Tasks', iTabTasks_()]].forEach(function (p) {
+   ['Requirements', iTabReqs_()], ['Tasks', iTabTasks_()],
+   ['Settlement', iTabSettled_()], ['Underwriting', iTabMagnum_()]].forEach(function (p) {
     line('  ' + (p[0] + ':                ').slice(0, 16) +
          (p[1] ? p[1].getName() + '  (' + (p[1].getLastRow() - 1) + ' rows)' : 'NOT FOUND — this domain will be empty'));
   });
