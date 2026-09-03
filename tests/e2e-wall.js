@@ -36,9 +36,9 @@ const SCHEDULE = {};
 const ROWS = [
   { Date:today, StaffId:'sasha', Name:'Sasha Lalla',
     KPI1_Actioned:'Actioned remaining tasks', KPI1_Resolved:'3 tasks', KPI1_At:today+'T11:07:00',
-    PM2_Actioned:'Ramkissoon family and Mrs Balgobin', PM2_Resolved:'', PM2_At:today+'T15:25:00' },
+    PM2_Actioned:'Head Office and Underwriting', PM2_Resolved:'', PM2_At:today+'T15:25:00' },
   { Date:today, StaffId:'liz', Name:'Elizabeth Lee',
-    KPI1_Actioned:'Premium dues, 14 processed and 2 returned to Ramdeen',
+    KPI1_Actioned:'Premium dues, 14 processed and 2 returned to the advisor',
     KPI1_Resolved:'12 cleared', KPI1_At:today+'T09:40:00' }
 ];
 

@@ -80,7 +80,7 @@ const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(
   await page.waitForTimeout(400);
   t = await page.locator('textarea:visible').all();
   await t[0].fill('Premium dues, 14 processed and 2 returned to the advisor');
-  await t[1].fill('12 cleared, 2 back to Ramdeen');
+  await t[1].fill('12 cleared, 2 back to the advisor');
   await page.waitForTimeout(300);
   await page.click('button:has-text("Submit block")');
   await page.waitForTimeout(2200);
