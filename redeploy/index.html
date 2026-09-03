@@ -126,13 +126,18 @@
       <h3>Open the script</h3>
       <p>Open the KPI workbook in Google Sheets. In the menu:
          <b>Extensions → Apps Script</b>.</p>
-      <p class="seen">You should see: a code editor, with <code>KPI.gs</code>
-         in the list on the left.</p>
+      <p class="seen">You should see: a code editor titled <b>RRB KPI Tracker</b>,
+         with <code>Code.gs</code> at the top of the file list on the left.</p>
+      <div class="note warn"><span class="lbl">The file is Code.gs</span>
+        In the repository this file is called <code>KPI.gs</code>; in the Apps
+        Script project it is called <b>Code.gs</b>. Same file, two names. The
+        others — <code>Reports.gs</code>, <code>KPI-Waiting.gs</code>,
+        <code>KPI-Write.gs</code> — are separate and must not be touched.</div>
     </div></div>
 
     <div class="step"><div class="num">2</div><div>
       <h3>Get the new file</h3>
-      <p>Open <a href="https://raw.githubusercontent.com/RickyRampersad/RickyRampersadTermLIfe/main/apps-script/KPI.gs">the new KPI.gs</a>
+      <p>Open <a href="https://raw.githubusercontent.com/RickyRampersad/RickyRampersadTermLIfe/main/apps-script/KPI.gs">the new code</a>
          in another tab. Click anywhere in the text, then press
          <b>Ctrl&nbsp;+&nbsp;A</b> and <b>Ctrl&nbsp;+&nbsp;C</b>
          (on a Mac, <b>⌘&nbsp;A</b> then <b>⌘&nbsp;C</b>).</p>
@@ -141,14 +146,19 @@
 
     <div class="step"><div class="num">3</div><div>
       <h3>Replace what is there</h3>
-      <p>Back in the Apps Script tab, click once inside the code, press
-         <b>Ctrl&nbsp;+&nbsp;A</b> to select all of the old code, then
-         <b>Ctrl&nbsp;+&nbsp;V</b> to paste the new over it. Then the
-         <b>save icon</b> (💾), or <b>Ctrl&nbsp;+&nbsp;S</b>.</p>
-      <div class="note warn"><span class="lbl">This bit matters</span>
-        Select <b>all</b> of the old code first. Pasting on top of it without
-        selecting leaves two copies in the file and it will not run.</div>
-      <p class="seen">You should see: no red marks down the left-hand side.</p>
+      <p>Back in the Apps Script tab, click <b>Code.gs</b> in the list, click
+         once inside the code, press <b>Ctrl&nbsp;+&nbsp;A</b> to select all of
+         the old code, then <b>Delete</b>. The file should be <b>completely
+         empty</b> before you paste. Then <b>Ctrl&nbsp;+&nbsp;V</b>, and the
+         <b>save icon</b> (💾) or <b>Ctrl&nbsp;+&nbsp;S</b>.</p>
+      <div class="note stop"><span class="lbl">Delete first. This is the one that goes wrong</span>
+        On 3 September the new code was pasted <b>underneath</b> the old instead
+        of over it, leaving one file with both scripts in it — 5,729 lines where
+        there should have been 3,135. Everything looked saved and nothing
+        changed. Emptying the file first makes that impossible.</div>
+      <p class="seen">You should see: the last line number is about
+         <b>3,135</b>. If it is five or six thousand, the old code is still
+         in there — select all, delete, paste again.</p>
     </div></div>
 
     <div class="step"><div class="num">4</div><div>
