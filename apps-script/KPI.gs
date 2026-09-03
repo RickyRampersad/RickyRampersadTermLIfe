@@ -21,6 +21,16 @@
  * =============================================================================
  */
 
+/* The deployed script is the only one that matters, and from outside it is
+   invisible — you cannot tell by looking at the site whether a paste-and-
+   redeploy actually took. That cost us a day: Kamla redeployed, it was still
+   slow, and nobody could say whether the new code was running or the old.
+   
+   So the script now says who it is. Bump this in the same commit as any
+   change to this file, and /redeploy will tell whoever did the deployment
+   whether it worked, without them having to ask anybody. */
+var SCRIPT_VERSION = '2026-09-03';
+
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
   TOKEN_HOURS: 12,
@@ -1667,7 +1677,7 @@ function doPost(e) {
 }
 
 function handle_(action, data, token) {
-  if (action === 'ping') return { ok: true, today: todayISO_() };
+  if (action === 'ping') return { ok: true, today: todayISO_(), version: SCRIPT_VERSION };
   if (action === 'login') return login_(data.who || data.email, data.password);
 
   var profile = readToken_(token);
