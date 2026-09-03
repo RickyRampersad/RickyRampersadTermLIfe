@@ -383,6 +383,35 @@ const TASKS={
   inbound:{ total:76, waiting:73, notStarted:3, oldestDays:90, oldestSince:"5 June",
             who:"Ricky" },
 
+  // What has to move before people go home, read on 3 September.
+  //
+  // Two lists, because they are two different failures. "In our hands" is due
+  // today and nobody else is holding it up. "Never started" has status Not
+  // Started since the day it was created — not late, never begun, which is the
+  // one an overdue count never distinguishes.
+  //
+  // ONE ITEM IS DELIBERATELY MASKED. The 108-day one is a staff salary review.
+  // This wall hangs in an open office; a person's pay does not go on it. It is
+  // counted, it is aged, and it is named only in the Branch Manager's own
+  // list. Anything HR or personal gets the same treatment — if a subject
+  // names a member of staff about their pay, conduct or contract, mask it.
+  endOfDay:{
+    inHand:[
+      {who:"Azariah", what:"Premium — Leila Jailal 8004023177", state:"In Progress"},
+      {who:"Kamla",   what:"Confirm funds — Ralna Romany-Thomas", state:"Escalated"}],
+    waitingDueToday:8,
+    neverStarted:[
+      {who:"Ricky", what:"Investment discussions — Neal Balroop",              days:162},
+      {who:"Ricky", what:"A staffing matter",                                  days:108, masked:true},
+      {who:"Ricky", what:"Formal escalation — client complaint of 11 May",     days:98},
+      {who:"Ricky", what:"HR — agent signature discrepancies on scripts",      days:90},
+      {who:"Ricky", what:"Agents portal — two links, never opened",            days:65},
+      {who:"Kamla", what:"Pre-approval for health claim — S. Bhagwansingh",    days:2},
+      {who:"Kamla", what:"FV projections — Samuel pensions",                   days:2},
+      {who:"Kamla", what:"Proposal to present — Anand Ramroop",                days:1},
+      {who:"Kamla", what:"Premium due reminder — S. Roopnarine",               days:1}]
+  },
+
   // The birthday mailer: it closes its own work and should never be counted
   // as anybody's throughput.
   robot:{ closedToday:19, closedWeek:141 }
@@ -954,12 +983,44 @@ function sSubstance(cards){
     '<div class="body"><div class="panel" style="overflow:auto;height:100%">'+body+"</div></div>";
 }
 
+function sBeforeYouLeave(){
+  const E=TASKS.endOfDay;
+  const hand=E.inHand.map(x=>
+    '<div class="row"><span class="nm">'+esc(x.who)+'</span>'+
+    '<span class="w" style="grid-column:span 2">'+esc(x.what)+"</span>"+
+    '<span class="sub" style="color:'+(x.state==="Escalated"?"var(--red)":"var(--gold)")+
+    '">'+esc(x.state)+"</span></div>").join("");
+
+  // Oldest first. A thing never begun in March is not the same problem as one
+  // never begun on Tuesday, and the number of days is the whole difference.
+  const never=E.neverStarted.slice().sort((a,b)=>b.days-a.days).map(x=>{
+    const tone=x.days>60?"var(--red)":x.days>7?"var(--gold)":"var(--teal)";
+    return '<div class="row"><span class="nm">'+esc(x.who)+'</span>'+
+      '<span class="w" style="grid-column:span 2">'+esc(x.what)+
+      (x.masked?' <span style="color:var(--muted);font-size:1.5vh">· named privately</span>':"")+"</span>"+
+      '<span class="sub" style="color:'+tone+';font-weight:700">'+x.days+"d</span></div>";
+  }).join("");
+
+  const old=E.neverStarted.filter(x=>x.days>60).length;
+  return '<div class="kick">11 · Before you leave</div>'+
+    "<h2>"+E.inHand.length+" to finish today · "+old+" that were never started at all</h2>"+
+    '<p class="lede">Left is due today with nobody else holding it up. Right has sat at '+
+      '<b>Not Started</b> since the day it was created &mdash; not late, never begun, which is the '+
+      'one an overdue count cannot tell you. '+E.waitingDueToday+
+      ' more are due today but parked with somebody else: chase them or let them run.</p>'+
+    '<div class="body"><div class="cols">'+
+    '<div class="panel"><h3>In our hands, today</h3><div class="rows">'+hand+"</div></div>"+
+    '<div class="panel" style="overflow:auto"><h3>Never started &mdash; oldest first</h3>'+
+      '<div class="rows">'+never+"</div></div>"+
+    "</div></div>";
+}
+
 // ---- deck --------------------------------------------------------------
 let cur=0, timer=null, paused=false;
 function render(rows){
   const cards=judge(rows);
   const slides=[sBlocks(cards),sWaitingToday(cards),sSubstance(cards),sReconcile(cards),sToday(),
-                sOverdue(),sTypes(cards),sWaitingOn(),sInbound(),sRhythm()];
+                sOverdue(),sTypes(cards),sWaitingOn(),sInbound(),sRhythm(),sBeforeYouLeave()];
   $("#slides").innerHTML=slides.map(h=>'<section class="slide">'+h+"</section>").join("");
   const nav=$("#dotsNav"); nav.innerHTML="";
   slides.forEach((_,i)=>{const d=document.createElement("i");

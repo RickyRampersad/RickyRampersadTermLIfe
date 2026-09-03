@@ -69,8 +69,8 @@ const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(
 
   console.log('\nThe deck:\n');
   const n = await page.locator('.slide').count();
-  ok('ten slides', n === 10, n + ' slides');
-  ok('ten dots to match', await page.locator('#dotsNav i').count() === 10);
+  ok('eleven slides', n === 11, n + ' slides');
+  ok('eleven dots to match', await page.locator('#dotsNav i').count() === 11);
 
   console.log('\nSlide three — how the day is being written:\n');
   await page.evaluate(() => go(2));
@@ -90,13 +90,17 @@ const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(
   await page.evaluate(() => fetch('/wall/audio/s' + (cur+1) + '.mp3'));
   await page.waitForTimeout(600);
   ok('slide 3 asks for s3.mp3', asked.has('s3.mp3'), [...asked].join(', ') || 'none asked');
-  ok('a tenth narration file exists', fs.existsSync(path.join(ROOT,'wall','audio','s10.mp3')));
+  ok('an eleventh narration file exists', fs.existsSync(path.join(ROOT,'wall','audio','s11.mp3')));
 
   console.log('\nAnd the rest of the deck still works:\n');
-  await page.evaluate(() => go(9));
+  await page.evaluate(() => go(10));
   await page.waitForTimeout(600);
-  ok('the last card is 10', (await page.locator('.slide.on .kick').innerText()).indexOf('10 ·') === 0,
+  ok('the last card is 11', (await page.locator('.slide.on .kick').innerText()).indexOf('11 ·') === 0,
      await page.locator('.slide.on .kick').innerText());
+  const eod = await page.locator('.slide.on').innerText();
+  ok('it separates never-started from late', /Never started/i.test(eod), eod.slice(0,60));
+  ok('the staffing matter is not named on the wall',
+     !/salary/i.test(eod) && /named privately/i.test(eod));
   const real = errs.filter(e => !/favicon|Failed to load/i.test(e));
   ok('no javascript errors', real.length === 0, real.slice(0,2).join(' | '));
 
