@@ -40,4 +40,6 @@ say s8  "Who the branch is actually waiting on, by name. Waiting on someone else
 say s9  "The open book, and how much of it is late. A big book is not a bad book. What matters is the share of it that is past its date."
 say s10 "How the day is chased. Six things happen on their own — the midday nudge goes only to you, never to the branch."
 
-echo "Done — 10 lines, matching the 10 slides in render()."
+say s11 "Before you leave. On the left, what is due today with nobody else holding it up. On the right, the work that was never started at all — not late, never begun, which is the one an overdue count cannot tell you."
+
+echo "Done — 11 lines, matching the 11 slides in render()."
