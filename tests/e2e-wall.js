@@ -69,8 +69,8 @@ const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(
 
   console.log('\nThe deck:\n');
   const n = await page.locator('.slide').count();
-  ok('eleven slides', n === 11, n + ' slides');
-  ok('eleven dots to match', await page.locator('#dotsNav i').count() === 11);
+  ok('twelve slides', n === 12, n + ' slides');
+  ok('twelve dots to match', await page.locator('#dotsNav i').count() === 12);
 
   console.log('\nSlide three — how the day is being written:\n');
   await page.evaluate(() => go(2));
@@ -90,13 +90,24 @@ const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(
   await page.evaluate(() => fetch('/wall/audio/s' + (cur+1) + '.mp3'));
   await page.waitForTimeout(600);
   ok('slide 3 asks for s3.mp3', asked.has('s3.mp3'), [...asked].join(', ') || 'none asked');
-  ok('an eleventh narration file exists', fs.existsSync(path.join(ROOT,'wall','audio','s11.mp3')));
+  ok('a twelfth narration file exists', fs.existsSync(path.join(ROOT,'wall','audio','s12.mp3')));
 
   console.log('\nAnd the rest of the deck still works:\n');
+  await page.evaluate(() => go(11));
+  await page.waitForTimeout(600);
+  ok('the last card is 12', (await page.locator('.slide.on .kick').innerText()).indexOf('12 ·') === 0,
+     await page.locator('.slide.on .kick').innerText());
+  const flow = await page.locator('.slide.on').innerText();
+  ok('it says the book is not a volume problem', /not<\/b>? a volume problem|not a volume problem/i.test(flow), flow.slice(0,50));
+  ok('and keeps the robot out of it', /birthday mailer is excluded/i.test(flow));
+  // The sign has to be the right way round: closing more than arrived means
+  // the book shrank. It shipped backwards once.
+  ok('closing more than arrived reads as the book shrinking',
+     /Sasha[\s\S]{0,120}the book shrank/i.test(flow), flow.replace(/\n/g,' | ').slice(0,150));
+  ok('and taking in more than went out reads as growth',
+     /Ricky[\s\S]{0,140}the book grew/i.test(flow));
   await page.evaluate(() => go(10));
   await page.waitForTimeout(600);
-  ok('the last card is 11', (await page.locator('.slide.on .kick').innerText()).indexOf('11 ·') === 0,
-     await page.locator('.slide.on .kick').innerText());
   const eod = await page.locator('.slide.on').innerText();
   ok('it separates never-started from late', /Never started/i.test(eod), eod.slice(0,60));
   ok('the staffing matter is not named on the wall',
