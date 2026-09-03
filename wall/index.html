@@ -147,9 +147,15 @@
      bar itself says what the pile is made of instead of only how big it is.
      Every segment carries a title, so hovering names it on a laptop; the
      legend under the card names them for the room, where nobody can hover. */
-  .stack{height:2.6vh;background:rgba(36,53,95,.6);border-radius:99px;overflow:hidden;display:flex}
-  .stack span{height:100%;display:block;min-width:2px}
-  .stack span:hover{filter:brightness(1.35)}
+  /* Taller, because the label goes inside it. A legend at the side makes the
+     eye travel; a word in the segment does not. Segments too narrow for text
+     stay blank and keep their title for hovering. */
+  .stack{height:3.4vh;background:rgba(36,53,95,.6);border-radius:99px;overflow:hidden;display:flex}
+  .stack span{height:100%;display:flex;align-items:center;justify-content:center;
+    min-width:2px;font-size:1.45vh;font-weight:700;color:#0D1838;
+    white-space:nowrap;overflow:hidden;letter-spacing:.01em}
+  .stack span.pale{color:#F7F5EF}
+  .stack span:hover{filter:brightness(1.2)}
   .key{display:flex;flex-wrap:wrap;gap:.4vw 1.4vw;margin-top:1.2vh;font-size:1.5vh;color:var(--muted)}
   .key b{display:inline-flex;align-items:center;gap:.4vw;font-weight:500}
   .key i{width:1.1vh;height:1.1vh;border-radius:3px;display:inline-block}
@@ -262,18 +268,37 @@ const TASKS={
   //   waiting  — Waiting on someone else, chased and now blocked
   //
   // The birthday mailer closes 19 of its own and is counted nowhere here.
+  // `written` is the count of those tasks that carry any record of what was
+  // actually done — an email in the Description, or a typed note.
+  //
+  // This is the control the Branch Manager asked for, and it matters more than
+  // any of the counts beside it. A task can be moved in two seconds: change the
+  // status, push the due date into next week, and the wall reads it as work.
+  // Today, 22 of the 38 tasks moved were moved with nothing written, and the
+  // due dates on many of them were pushed to the 8th, 9th and 10th.
+  //
+  // The branch's own standard already says it: a rolled due date is not an
+  // actioned task. This is that standard, counted.
+  //
+  // Pawan is the model, and it costs him a sentence: "Spoke with Mr Russell he
+  // said to renew as is." Twelve words and the next person knows everything.
   worked:[
-    {n:"Azariah",  worked:17, closed:13, moving:4, waiting:0,
+    {n:"Azariah",  worked:17, closed:13, moving:4, waiting:0, written:12,
      types:{"":11,"Renewa/PDl/Bill":6}},
-    {n:"Sasha",    worked:7,  closed:1,  moving:6, waiting:0,
+    {n:"Sasha",    worked:7,  closed:1,  moving:6, waiting:0, written:0,
      types:{"Pendings":5,"Renewa/PDl/Bill":2}},
-    {n:"Pawan",    worked:7,  closed:6,  moving:0, waiting:1,
+    {n:"Pawan",    worked:7,  closed:6,  moving:0, waiting:1, written:4,
      types:{"":4,"Renewa/PDl/Bill":3}},
-    {n:"Kamla",    worked:4,  closed:0,  moving:2, waiting:2,
+    {n:"Kamla",    worked:4,  closed:0,  moving:2, waiting:2, written:0,
      types:{"Lic/Staffing/SA/HR":4}},
-    {n:"Elizabeth",worked:3,  closed:0,  moving:2, waiting:1,
+    {n:"Elizabeth",worked:3,  closed:0,  moving:2, waiting:1, written:0,
      types:{"Servicing":3}},
-    {n:"Ricky",    worked:0,  closed:0,  moving:0, waiting:0, types:{}}],
+    {n:"Ricky",    worked:0,  closed:0,  moving:0, waiting:0, written:0, types:{}}],
+
+  // Task_Update_Reason_c__c exists on every task and is filterable. 1,534 of
+  // the 1,555 tasks touched in the last thirty days have it blank — 98.6%.
+  // The field built to record why a task moved is not being used at all.
+  updateReason:{ blank:1534, of:1555 },
 
   // Closed by hand. The birthday mailer is counted separately and never here.
   today:{ closed:[{n:"Azariah",v:13},{n:"Pawan",v:6},{n:"Sasha",v:1},
@@ -407,6 +432,16 @@ const TYPE_COLOUR={
   "Servicing":"#59C2C9", "RR Operations":"#E07A5F", "Scripts/CB":"#A0A6B8",
   "Training":"#D98BA0", "Query Pal":"#8FBF7F"};
 const typeColour=t=>TYPE_COLOUR[t||""]||"#8E96A6";
+
+// A bar segment that labels itself when there is room for the label. Under
+// about a tenth of the width there is no room, so it shows nothing and keeps
+// the title — the legend under the card is what covers those for the room.
+function seg(pct,colour,label,title,pale){
+  if(pct<=0) return "";
+  const room = pct >= 9 && String(label).length <= Math.floor(pct/2.6);
+  return '<span class="'+(pale?"pale":"")+'" title="'+esc(title)+'" style="width:'+pct+
+    "%;background:"+colour+'">'+(room?esc(label):"")+"</span>";
+}
 
 const LBL={KPI1:"KPI 1",KPI2:"KPI 2",PM1:"Afternoon 1",PM2:"Afternoon 2"};
 const ROLE={bm:"Branch Manager",abm:"Assistant Branch Manager",um:"Unit Manager",
@@ -558,46 +593,47 @@ function sReconcile(cards){
 }
 
 function sToday(){
-  const K=TASKS.worked, W=TASKS.week.closed;
-  const tot=K.reduce((s,x)=>s+x.worked,0), closed=K.reduce((s,x)=>s+x.closed,0);
-  const wtot=W.reduce((s,x)=>s+x.v,0);
+  const K=TASKS.worked.filter(x=>x.worked), U=TASKS.updateReason;
+  const tot=K.reduce((s,x)=>s+x.worked,0);
+  const closed=K.reduce((s,x)=>s+x.closed,0);
+  const written=K.reduce((s,x)=>s+x.written,0);
   const max=Math.max(...K.map(x=>x.worked),1);
-  const seen={};
 
-  const rows=K.filter(x=>x.worked||x.closed).map(x=>{
-    // One bar, three states, because closing is one outcome of working and not
-    // the only one worth seeing. A day of chasing that closed nothing is still
-    // a day of work, and it used to read as zero.
-    const seg=(v,c,t)=>v>0?'<span title="'+esc(t)+'" style="width:'+(v/max*100)+
-      '%;background:'+c+'"></span>':"";
+  const rows=K.map(x=>{
+    const w=v=>v/max*100;
+    // Three states in the bar, each labelling itself where it fits.
+    const bar=seg(w(x.closed),"var(--green)",x.closed+" closed",
+                  x.n+" — "+x.closed+" closed")+
+              seg(w(x.moving),"var(--gold)",x.moving+" moved",
+                  x.n+" — "+x.moving+" moved on, still with us")+
+              seg(w(x.waiting),"var(--teal)",x.waiting+" waiting",
+                  x.n+" — "+x.waiting+" chased, now waiting on a reply");
     const types=Object.entries(x.types).sort((p,q)=>q[1]-p[1])
-      .map(([t,c])=>{ seen[t]=1; return esc(TYPE_LABEL[t]||t||"no type")+" "+c; }).join(" · ");
+      .map(([t,c])=>esc(TYPE_LABEL[t]||t||"no type")+" "+c).join(" · ");
+    // The part that cannot be faked by moving a task.
+    const note = x.written
+      ? '<span style="color:var(--green)">'+x.written+" of "+x.worked+" written up</span>"
+      : '<span style="color:var(--red)">nothing written on any of them</span>';
     return '<div class="row"><span class="nm">'+esc(x.n)+'</span>'+
-      '<span class="stack">'+
-        seg(x.closed,"var(--green)", x.n+" — "+x.closed+" closed")+
-        seg(x.moving,"var(--gold)",  x.n+" — "+x.moving+" moved on, still with us")+
-        seg(x.waiting,"var(--teal)", x.n+" — "+x.waiting+" chased, now waiting on a reply")+
-      "</span>"+
-      '<span class="val">'+x.worked+'</span><span class="sub">'+
-      (x.closed?x.closed+" closed":'<span style="color:var(--gold)">nothing closed — but '+
-        (x.moving+x.waiting)+" moved</span>")+
+      '<span class="stack">'+bar+"</span>"+
+      '<span class="val">'+x.worked+'</span><span class="sub">'+note+
       (types?" · "+types:"")+"</span></div>";
   }).join("");
 
-  const key=Object.keys(seen).sort().map(t=>
-    '<b><i style="background:'+typeColour(t)+'"></i>'+
-    esc(TYPE_LABEL[t]||t||"No type recorded")+"</b>").join("");
-
   return '<div class="kick">5 · Worked today</div>'+
-    "<h2>"+tot+" tasks moved today · "+closed+" of them closed</h2>"+
-    '<p class="lede">A task is worked when somebody touches it, which is what Salesforce&rsquo;s '+
-      'last-modified date records. Closing is one outcome of working and not the only one that '+
-      'counts &mdash; <b style="color:var(--green)">green closed</b>, '+
-      '<b style="color:var(--gold)">gold moved on and still with us</b>, '+
-      '<b style="color:var(--teal)">teal chased and now waiting on somebody else</b>. '+
-      wtot+' closed by hand this week. The birthday mailer closes its own and is counted nowhere here.</p>'+
+    "<h2>"+tot+" tasks moved · "+closed+" closed · <span style=\"color:var(--red)\">only "+
+      written+" say what was done</span></h2>"+
+    '<p class="lede">Green closed, gold moved on and still with us, teal chased and now waiting '+
+      'on somebody else &mdash; read from Salesforce&rsquo;s last-modified date. But a task can be '+
+      'moved in two seconds: change the status, push the due date into next week, and it counts as '+
+      'work. So the line under each bar is the one that matters &mdash; how many carried an email or '+
+      'a typed note saying what actually happened.</p>'+
     '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div>"+
-    (key?'<div class="key">'+key+"</div>":"")+"</div></div>";
+    '<div class="key" style="margin-top:2vh;font-size:1.6vh;line-height:1.5">'+
+      '<b style="color:var(--gold)">A rolled due date is not an actioned task &mdash; the branch&rsquo;s own standard.</b>'+
+      '<b>Pawan sets it: &ldquo;Spoke with Mr Russell he said to renew as is.&rdquo; Twelve words.</b>'+
+      '<b>'+U.blank+' of the last '+U.of+' tasks touched have no update reason at all.</b>'+
+    "</div></div></div>";
 }
 
 function sOverdue(){
@@ -617,9 +653,9 @@ function sOverdue(){
     // share of the branch's whole overdue book, so two bars are comparable.
     const segs=p.rows.map(r=>{
       seen[r.type]=1;
-      return '<span title="'+esc(TYPE_LABEL[r.type]||r.type||"No type recorded")+
-        ' — '+r.n+' overdue, '+esc(p.who)+'" style="width:'+(r.n/max*100)+
-        '%;background:'+typeColour(r.type)+'"></span>';
+      const name=TYPE_LABEL[r.type]||r.type||"No type recorded";
+      return seg(r.n/max*100, typeColour(r.type), name+" "+r.n,
+                 name+" — "+r.n+" overdue, "+p.who);
     }).join("");
     // Age is what tells one pile from another. Say it on the row.
     const age = A.over30
