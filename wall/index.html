@@ -141,8 +141,18 @@
   .rows .row{display:grid;grid-template-columns:1.15fr 2fr auto auto;gap:1vw;
              align-items:center;margin-bottom:1.5vh;font-size:2vh}
   .rows .nm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .track{height:1.6vh;background:rgba(36,53,95,.6);border-radius:99px;overflow:hidden;position:relative}
+  .track{height:2.6vh;background:rgba(36,53,95,.6);border-radius:99px;overflow:hidden;position:relative}
   .track i{display:block;height:100%;border-radius:99px;position:absolute;left:0;top:0}
+  /* A segmented bar: each piece is one task type, sized by its share, so the
+     bar itself says what the pile is made of instead of only how big it is.
+     Every segment carries a title, so hovering names it on a laptop; the
+     legend under the card names them for the room, where nobody can hover. */
+  .stack{height:2.6vh;background:rgba(36,53,95,.6);border-radius:99px;overflow:hidden;display:flex}
+  .stack span{height:100%;display:block;min-width:2px}
+  .stack span:hover{filter:brightness(1.35)}
+  .key{display:flex;flex-wrap:wrap;gap:.4vw 1.4vw;margin-top:1.2vh;font-size:1.5vh;color:var(--muted)}
+  .key b{display:inline-flex;align-items:center;gap:.4vw;font-weight:500}
+  .key i{width:1.1vh;height:1.1vh;border-radius:3px;display:inline-block}
   .track .gold{background:var(--gold)} .track .teal{background:var(--teal)}
   .track .red{background:var(--red)} .track .green{background:var(--green)}
   .rows .val{font-weight:800;font-variant-numeric:tabular-nums;text-align:right}
@@ -265,8 +275,15 @@ const TASKS={
     {who:"Pawan",  type:"RR Operations",      n:1},
     {who:"Pawan",  type:"Claims/ Mat",        n:1}],
 
-  // How old the overdue book actually is. Most of it is recent; the genuinely
-  // aged part is small and sits with one person.
+  // How old the overdue book actually is, per person. This is the number that
+  // was missing, and without it the wall was actively misleading: Ricky's 83
+  // and Kamla's 54 drew almost the same bar, and they are opposite situations.
+  // 53 of Ricky's are over a month old and 11 are over two. Every one of
+  // Kamla's is one or two days past its date — yesterday's work, not neglect.
+  age:{
+    Ricky:{ over30:53, over60:11, oldestDays:90, oldestSince:"5 June" },
+    Kamla:{ over30:0,  over60:0,  oldestDays:2,  oldestSince:"1 September" },
+    Pawan:{ over30:0,  over60:0,  oldestDays:6,  oldestSince:"28 August" }},
   aged:{ over60:11, over60Who:"Ricky", oldestDays:90, oldestSince:"5 June" },
 
   // The open book per person: how many, not how many days.
@@ -281,16 +298,16 @@ const TASKS={
   // Who the branch is actually waiting on, by the person the task sits
   // against rather than by a status word. Measured 3 September.
   waitingOn:[
-    {who:"Veena Kanhai-Gowdhan", n:9},
-    {who:"Ricky Rampersad",      n:4},
-    {who:"Faustina Cabrera",     n:3},
-    {who:"Genevieve Pierre",     n:3},
-    {who:"Hema Ramdeo",          n:2},
-    {who:"GLOC Actuarial",       n:2},
-    {who:"Sandra Lalchan-Mahipat", n:2},
-    {who:"Kameel Khan",          n:2},
-    {who:"Ryan Maharaj",         n:2},
-    {who:"Lorna Samaroo-Paul",   n:2}],
+    {who:"Veena Kanhai-Gowdhan",   n:9, agent:"Kamla", days:1},
+    {who:"Ricky Rampersad",        n:4, agent:"Kamla", days:2},
+    {who:"Faustina Cabrera",       n:3, agent:"Kamla", days:2},
+    {who:"Genevieve Pierre",       n:3, agent:"Kamla", days:2},
+    {who:"Hema Ramdeo",            n:2, agent:"Kamla", days:2},
+    {who:"GLOC Actuarial",         n:2, agent:"Kamla", days:2},
+    {who:"Sandra Lalchan-Mahipat", n:2, agent:"Kamla", days:2},
+    {who:"Samlal Ramsamooj",       n:1, agent:"Pawan", days:6},
+    {who:"Robert Boodoo",          n:1, agent:"Pawan", days:2},
+    {who:"Dipchan Persad",         n:1, agent:"Kamla", days:2}],
 
   // The Branch Manager's untyped pile, looked at rather than assumed. It was
   // taken for the birthday mailer for weeks. It is not: the birthdays are
@@ -354,6 +371,16 @@ function blockState(row,sch,col,nowMin){
 }
 
 let roster=[], schedule={}, lastGood=null;
+// One colour per task type, used on every card that shows types. A pile that
+// is Renewals on card six has to be the same colour on card seven or the eye
+// learns nothing.
+const TYPE_COLOUR={
+  "":"#8E96A6", "Renewa/PDl/Bill":"#C7A34A", "Opportunity":"#5FC493",
+  "Lic/Staffing/SA/HR":"#7BA7E0", "Claims/ Mat":"#E0A93F", "Pendings":"#B98BD9",
+  "Servicing":"#59C2C9", "RR Operations":"#E07A5F", "Scripts/CB":"#A0A6B8",
+  "Training":"#D98BA0", "Query Pal":"#8FBF7F"};
+const typeColour=t=>TYPE_COLOUR[t||""]||"#8E96A6";
+
 const LBL={KPI1:"KPI 1",KPI2:"KPI 2",PM1:"Afternoon 1",PM2:"Afternoon 2"};
 const ROLE={bm:"Branch Manager",abm:"Assistant Branch Manager",um:"Unit Manager",
             bma:"Branch Manager's Assistant",pa:"Personal Assistant",ssa:"Sales Support"};
@@ -521,38 +548,55 @@ function sToday(){
 }
 
 function sOverdue(){
-  const O=TASKS.overdue, A=TASKS.aged;
+  const O=TASKS.overdue, AGE=TASKS.age;
   const tot=O.reduce((s,x)=>s+x.n,0);
-  // Group by owner, and keep what the pile is made of — a bare total tells
-  // nobody what to do on Monday morning.
   const by={};
   O.forEach(x=>{ (by[x.who]=by[x.who]||[]).push(x); });
   const people=Object.entries(by)
     .map(([who,rows])=>({who,rows:rows.sort((p,q)=>q.n-p.n),n:rows.reduce((s,r)=>s+r.n,0)}))
     .sort((p,q)=>q.n-p.n);
   const max=Math.max(...people.map(p=>p.n),1);
+  const seen={};
 
   const rows=people.map(p=>{
-    const mix=p.rows.map(r=>esc(TYPE_LABEL[r.type]||r.type||"no type")+" "+r.n).join(" · ");
+    const A=AGE[p.who]||{};
+    // The bar is the pile, cut into the types that make it. Width is the
+    // share of the branch's whole overdue book, so two bars are comparable.
+    const segs=p.rows.map(r=>{
+      seen[r.type]=1;
+      return '<span title="'+esc(TYPE_LABEL[r.type]||r.type||"No type recorded")+
+        ' — '+r.n+' overdue, '+esc(p.who)+'" style="width:'+(r.n/max*100)+
+        '%;background:'+typeColour(r.type)+'"></span>';
+    }).join("");
+    // Age is what tells one pile from another. Say it on the row.
+    const age = A.over30
+      ? '<b style="color:var(--red)">'+A.over30+" over a month</b>"+
+        (A.over60?" · "+A.over60+" over two":"")+" · oldest "+A.oldestDays+"d"
+      : '<span style="color:var(--green)">none older than '+(A.oldestDays||1)+
+        " day"+((A.oldestDays||1)===1?"":"s")+"</span> — this week's work";
     return '<div class="row"><span class="nm">'+esc(p.who)+'</span>'+
-      '<span class="track"><i class="'+(p.n>50?"red":p.n>10?"gold":"teal")+
-      '" style="width:'+(p.n/max*100)+'%"></i></span>'+
-      '<span class="val">'+p.n+'</span><span class="sub">'+mix+"</span></div>";
+      '<span class="stack">'+segs+"</span>"+
+      '<span class="val">'+p.n+'</span><span class="sub">'+age+"</span></div>";
   }).join("");
 
+  const key=Object.keys(seen).sort().map(t=>
+    '<b><i style="background:'+typeColour(t)+'"></i>'+
+    esc(TYPE_LABEL[t]||t||"No type recorded")+"</b>").join("");
+
   return '<div class="kick">6 · The overdue book</div>'+
-    "<h2>"+tot+" tasks past their date — and "+people.length+" people hold all of them</h2>"+
-    '<p class="lede">By owner, and what each pile is actually made of. Only <b>'+A.over60+
-      '</b> of the '+tot+' are more than sixty days old, all of them '+esc(A.over60Who)+
-      "'s; the oldest has sat since "+esc(A.oldestSince)+", "+A.oldestDays+
-      ' days. Days are never added together — a total of days is a number about nothing.</p>'+
-    '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div></div></div>";
+    "<h2>"+tot+" past their date — but only one of these piles is actually old</h2>"+
+    '<p class="lede">Each bar is one person&rsquo;s pile, cut into the task types that make it. '+
+      'The number beside it is the count; the line under it is the age, which is the part that '+
+      'decides what to do. Days are never added together.</p>'+
+    '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div>"+
+    '<div class="key">'+key+"</div></div></div>";
 }
 
 function sTypes(cards){
-  // The same book cut the other way. By owner you see who to talk to; by type
-  // you see what the branch is actually behind on, and who is holding it.
-  const agg={};
+  // The same book by what the work is rather than whose it is, with who holds
+  // each pile and how old the oldest holder's is. One row per type — a type is
+  // never listed twice.
+  const AGE=TASKS.age, agg={};
   TASKS.overdue.forEach(o=>{
     const k=o.type||"";
     if(!agg[k]) agg[k]={n:0,people:{},logged:0};
@@ -564,60 +608,87 @@ function sTypes(cards){
   });
   const T=Object.entries(agg).map(([k,v])=>({k,...v})).sort((a,b)=>b.n-a.n);
   const max=Math.max(...T.map(x=>x.n),1);
+
   const rows=T.map(x=>{
-    const who=Object.entries(x.people).sort((p,q)=>q[1]-p[1])
-      .map(([n,c])=>esc(n)+" "+c).join(" · ");
-    return '<div class="row"><span class="nm">'+esc(TYPE_LABEL[x.k]||x.k||"No type recorded")+'</span>'+
-      '<span class="track"><i class="'+(x.logged?"teal":"red")+'" style="width:'+(x.n/max*100)+'%"></i></span>'+
-      '<span class="val">'+x.n+'</span><span class="sub">'+who+" · "+
+    const holders=Object.entries(x.people).sort((p,q)=>q[1]-p[1]);
+    // Oldest across whoever holds this type — the pile is only as fresh as
+    // its worst holder.
+    const worst=holders.reduce((d,[n])=>Math.max(d,(AGE[n]||{}).oldestDays||0),0);
+    const who=holders.map(([n,c])=>esc(n)+" "+c).join(" · ");
+    const segs=holders.map(([n,c])=>
+      '<span title="'+esc(n)+" — "+c+" "+esc(TYPE_LABEL[x.k]||x.k||"untyped")+
+      ' overdue" style="width:'+(c/max*100)+'%;background:'+typeColour(x.k)+
+      ';opacity:'+(holders.length>1?0.55+0.45/holders.length:1)+'"></span>').join("");
+    return '<div class="row"><span class="nm" title="'+esc(TYPE_LABEL[x.k]||x.k||"No type recorded")+
+      '">'+esc(TYPE_LABEL[x.k]||x.k||"No type recorded")+'</span>'+
+      '<span class="stack">'+segs+"</span>"+
+      '<span class="val">'+x.n+'</span><span class="sub">'+who+" · oldest "+worst+"d · "+
       (x.logged?'<span style="color:var(--green)">worked today</span>'
                :'<span style="color:var(--red)">nobody on it today</span>')+"</span></div>";
   }).join("");
   const idle=T.filter(x=>!x.logged).length;
   return '<div class="kick">7 · Overdue by task type</div>'+
     "<h2>"+(idle?idle+" types overdue with nobody on them today":"Every overdue type was worked today")+"</h2>"+
-    '<p class="lede">The same book grouped by what the work is rather than whose it is, with who holds each pile. Green means somebody logged a block against that type today; red means it sat.</p>'+
+    '<p class="lede">The same book grouped by what the work is, never a type twice. Each row names who holds it, '+
+      'how old the oldest holder&rsquo;s pile is, and whether anybody logged a block against it today.</p>'+
     '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div></div></div>";
 }
 
 function sWaitingOn(){
   const W=TASKS.waitingOn, max=Math.max(...W.map(x=>x.n),1);
   const tot=W.reduce((s,x)=>s+x.n,0);
-  const rows=W.map(x=>
-    '<div class="row"><span class="nm">'+esc(x.who)+'</span>'+
-    '<span class="track"><i class="'+(x.n>=5?"red":x.n>=3?"gold":"teal")+
-    '" style="width:'+(x.n/max*100)+'%"></i></span>'+
-    '<span class="val">'+x.n+'</span><span class="sub">'+
-    (x.n===1?"task waiting on a reply":"tasks waiting on a reply")+"</span></div>").join("");
+  const agents={};
+  W.forEach(x=>{ agents[x.agent]=(agents[x.agent]||0)+x.n; });
+  const rows=W.map(x=>{
+    const tone=x.days>5?"red":x.days>2?"gold":"teal";
+    return '<div class="row"><span class="nm" title="'+esc(x.who)+'">'+esc(x.who)+'</span>'+
+      '<span class="track" title="'+x.n+' waiting on '+esc(x.who)+', chased by '+esc(x.agent)+
+      '"><i class="'+tone+'" style="width:'+(x.n/max*100)+'%"></i></span>'+
+      '<span class="val">'+x.n+'</span><span class="sub">'+x.days+"d · ours is "+
+      esc(x.agent)+"</span></div>";
+  }).join("");
+  const byAgent=Object.entries(agents).sort((p,q)=>q[1]-p[1])
+    .map(([n,c])=>esc(n)+" "+c).join(" · ");
   return '<div class="kick">8 · Who we are waiting on</div>'+
-    "<h2>"+W[0].n+" of them are with one person</h2>"+
-    '<p class="lede">Named, because &ldquo;waiting on someone else&rdquo; is a status, not an answer. '+
-      'These are the people the branch is actually waiting on — '+tot+
-      ' tasks across the ten who hold the most. A name and a number is something you can chase.</p>'+
+    "<h2>"+W[0].n+" of them sit with one person</h2>"+
+    '<p class="lede">The client or the office we are waiting on, how many days it has sat, '+
+      'and which of ours is chasing it &mdash; because a name with nobody attached is not an action. '+
+      '<b>'+esc(byAgent)+"</b> across these "+tot+" tasks.</p>"+
     '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div></div></div>";
 }
 
 function sInbound(){
-  const I=TASKS.inbound, B=TASKS.byPerson;
+  const I=TASKS.inbound, B=TASKS.byPerson, AGE=TASKS.age;
   const E=Object.entries(B).sort((p,q)=>q[1].open-p[1].open);
   const max=Math.max(...E.map(([,v])=>v.open),1);
-  // Open is the whole book; overdue is the part of it that is late. Showing
-  // the two together stops a big book reading as a bad one — Sasha carries
-  // thirty-six and none of it is late.
+  // Two segments in one bar: what is on time, and what is late. The eye reads
+  // the split without reading a number, which is the point of a wall.
   const rows=E.map(([n,v])=>{
+    const A=AGE[n]||{}, onTime=v.open-v.overdue;
     const pct=v.open?Math.round(v.overdue/v.open*100):0;
+    const seg=(w,c,t)=>w>0?'<span title="'+esc(t)+'" style="width:'+(w/max*100)+
+      '%;background:'+c+'"></span>':"";
+    const note = !v.overdue ? '<span style="color:var(--green)">nothing late</span>'
+      : A.over30 ? v.overdue+" late · "+A.over30+" of them over a month"
+      : v.overdue+" late · none older than "+(A.oldestDays||1)+"d";
     return '<div class="row"><span class="nm">'+esc(n)+'</span>'+
-      '<span class="track"><i class="'+(pct>60?"red":pct>20?"gold":"teal")+
-      '" style="width:'+(v.open/max*100)+'%"></i></span>'+
-      '<span class="val">'+v.open+'</span><span class="sub">'+
-      (v.overdue?v.overdue+" late · "+pct+"% of the book":'<span style="color:var(--green)">nothing late</span>')+
-      "</span></div>";
+      '<span class="stack">'+
+        seg(onTime,"var(--teal)",n+" — "+onTime+" open and on time")+
+        seg(v.overdue, A.over30?"var(--red)":"var(--gold)",
+            n+" — "+v.overdue+" past their date")+
+      "</span>"+
+      '<span class="val">'+v.open+'</span><span class="sub">'+note+"</span></div>";
   }).join("");
   return '<div class="kick">9 · The open book, and what is late in it</div>'+
     "<h2>A big book is not a bad book</h2>"+
-    '<p class="lede">Everything still open, per person, with the share of it that is past its date. Three of the six carry nothing late at all.</p>'+
+    '<p class="lede">Everything still open per person. Teal is on time, gold is late, '+
+      'red is late and over a month old. Three of the six carry nothing late at all &mdash; '+
+      'the size of a bar is workload, the colour in it is the problem.</p>'+
     '<div class="body"><div class="cols">'+
-    '<div class="panel"><h3>Open now · and how much is late</h3><div class="rows">'+rows+"</div></div>"+
+    '<div class="panel"><h3>Open now · on time against late</h3><div class="rows">'+rows+"</div>"+
+    '<div class="key"><b><i style="background:var(--teal)"></i>on time</b>'+
+      '<b><i style="background:var(--gold)"></i>late, under a month</b>'+
+      '<b><i style="background:var(--red)"></i>late, over a month</b></div></div>'+
     '<div class="panel"><h3>The pile that was assumed to be birthdays</h3>'+
     '<div style="font-size:5.2vh;font-weight:800;color:var(--gold)">'+I.total+"</div>"+
     '<div style="font-size:1.9vh;color:var(--muted);line-height:1.5;margin-top:1vh">'+
