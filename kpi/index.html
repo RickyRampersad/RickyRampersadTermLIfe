@@ -325,11 +325,16 @@ async function apiOnce(action, payload) {
   }
 }
 
-async function api(action, payload) {
+// onAttempt is told which try is starting, so a screen can show that
+// something is still happening. Sasha pressed Sign in five times on 3
+// September because one static label sat there for half a minute and there
+// was no way to tell the difference between working and frozen.
+async function api(action, payload, onAttempt) {
   if (!configured()) return { ok: false, error: "No Apps Script URL set in this file." };
   let last = null;
   for (let attempt = 0; attempt < 3; attempt++) {
     if (attempt) await new Promise(r => setTimeout(r, attempt * 1500));
+    if (onAttempt) { try { onAttempt(attempt + 1); } catch (e) {} }
     try {
       const out = await apiOnce(action, payload);
       if (out && out.ok) return out;
@@ -2757,17 +2762,20 @@ function Login({
   const [who, setWho] = useState("");
   const [pw, setPw] = useState("");
   const [busy, setBusy] = useState(false);
+  const [tryNo, setTryNo] = useState(0);
   const [err, setErr] = useState("");
   async function go(ev) {
     if (ev) ev.preventDefault();
     if (busy) return;
     setBusy(true);
+    setTryNo(1);
     setErr("");
     const r = await api("login", {
       who: who.trim(),
       password: pw
-    });
+    }, setTryNo);
     setBusy(false);
+    setTryNo(0);
     if (r.ok) {
       if (r.schedule) SCHEDULE = r.schedule;
       if (r.kpis) KPI_CHOICES = r.kpis;
@@ -2861,7 +2869,11 @@ function Login({
       flex: "none",
       opacity: busy ? 0.65 : 1
     }
-  }, busy ? "Signing in… this can take a few seconds" : "Sign in"), /*#__PURE__*/React.createElement("p", {
+  }, busy
+       ? (tryNo > 1
+            ? "Still trying… (" + tryNo + " of 3)"
+            : "Signing in… this can take a few seconds")
+       : "Sign in"), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 11.5,
       color: MUTED,
