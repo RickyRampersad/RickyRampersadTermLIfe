@@ -21,16 +21,16 @@ check('"Three contracts Recieved and Macro sent"',
     resolved: 'Macro sent and contracts logged and placed in agent dip' }, 'full');
 check('"Premium dues — 14 processed, 2 returned"',
   { actioned: 'Premium dues, 14 processed', resolved: '2 returned to advisor' }, 'full');
-check('"Called Ramdeen re lapsed policy, reinstated"',
-  { actioned: 'Called Ramdeen about the lapsed policy', resolved: 'Reinstated' }, 'full');
-check('"Billing recon for Massy, 3 mismatches corrected"',
-  { actioned: 'Billing recon for Massy Group', resolved: '3 mismatches corrected' }, 'full');
+check('"Called on POL-88213, lapse reinstated"',
+  { actioned: 'Called on the POL-88213 lapse', resolved: 'Reinstated' }, 'full');
+check('"Billing recon for a group scheme, 3 corrected"',
+  { actioned: 'Billing recon, Group Health scheme', resolved: '3 mismatches corrected' }, 'full');
 check('worked all morning, nothing closed yet (honest)',
   { actioned: 'Chased head office on 4 outstanding transmittals', resolved: 'None today' }, 'full');
 check('a policy number and an action',
   { actioned: 'Followed up POL-88213 with underwriting', resolved: 'Awaiting medical' }, 'full');
 check('long narrative, no digits',
-  { actioned: 'Sent the renewal pack to Guardian General and collected the signed forms from Mrs Balgobin',
+  { actioned: 'Sent the renewal pack to Head Office and collected the signed forms from the advisor',
     resolved: 'Filed' }, 'full');
 
 console.log('\nThe entries that started this — these must read THIN:\n');
@@ -127,11 +127,11 @@ console.log('\nThe sheet, the tracker and the wall must read every entry the sam
   const corpus = [
     { actioned: 'Three contracts Recieved and Macro sent', resolved: 'Macro sent and contracts logged' },
     { actioned: 'Premium dues, 14 processed', resolved: '2 returned to advisor' },
-    { actioned: 'Called Ramdeen about the lapsed policy', resolved: 'Reinstated' },
-    { actioned: 'Billing recon for Massy Group', resolved: '3 mismatches corrected' },
+    { actioned: 'Called on the POL-88213 lapse', resolved: 'Reinstated' },
+    { actioned: 'Billing recon, Group Health scheme', resolved: '3 mismatches corrected' },
     { actioned: 'Chased head office on 4 outstanding transmittals', resolved: 'None today' },
     { actioned: 'Followed up POL-88213 with underwriting', resolved: 'Awaiting medical' },
-    { actioned: 'Sent the renewal pack to Guardian General and collected the signed forms from Mrs Balgobin', resolved: 'Filed' },
+    { actioned: 'Sent the renewal pack to Head Office and collected the signed forms from the advisor', resolved: 'Filed' },
     { actioned: 'Actioned remaining tasks', resolved: '3 tasks' },
     { actioned: 'Sasha Lalla', resolved: '' },
     { actioned: 'Kamla, Azariah', resolved: '' },
@@ -143,7 +143,7 @@ console.log('\nThe sheet, the tracker and the wall must read every entry the sam
     { actioned: 'Task Management', resolved: '' },
     { actioned: 'Adopt an Orphan calls, 6 made, 2 appointments set', resolved: '2 booked for Thursday' },
     { actioned: 'nothing much', resolved: '' },
-    { actioned: 'Quotations prepared for the Ramkissoon family', resolved: 'Two sent' }
+    { actioned: 'Quotations prepared for a Group Health enquiry', resolved: 'Two sent' }
   ];
   let drift = 0;
   corpus.forEach(d => {
