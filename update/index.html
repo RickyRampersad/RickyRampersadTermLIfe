@@ -76,7 +76,7 @@
     .then(r => r.ok ? r.json() : Promise.reject())
     .then(marks => {
       // One mark per plate is too many to scan. Keep the turns of the film.
-      const keep = new Set([1, 2, 4, 6, 9, 10, 14]);
+      const keep = new Set([1, 2, 4, 6, 10, 11, 13, 18]);
       marks.filter(m => keep.has(m.n)).forEach(m => {
         const b = document.createElement('button');
         b.className = 'ch';

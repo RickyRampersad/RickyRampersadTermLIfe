@@ -1,111 +1,58 @@
 [
- {
-  "n": 1,
-  "say": "The tracker is fixed. Here is what changed.",
-  "kicker": "",
-  "cap": "What changed",
-  "sub": "The daily tracker · September 2026",
-  "shot": null
- },
- {
-  "n": 2,
-  "say": "Blocks would not save. You would type the whole thing, press send, and get an error. That is gone.",
-  "kicker": "Fixed",
-  "cap": "Blocks save.",
-  "shot": "sent.png"
- },
- {
-  "n": 3,
-  "say": "Signing in took up to thirty seconds. It now takes about one.",
-  "kicker": "Fixed",
-  "cap": "Signing in takes\nabout a second.",
-  "shot": "signin.png"
- },
- {
-  "n": 4,
-  "say": "Your typing is saved as you type. Close the page. Lose signal. Come back. What you wrote is still there.",
-  "kicker": "New",
-  "cap": "Nothing you type is lost.",
-  "shot": "draft.png"
- },
- {
-  "n": 5,
-  "say": "If a send fails it tries again on its own. You will see it counting.",
-  "kicker": "New",
-  "cap": "It retries by itself.",
-  "shot": "retry.png"
- },
- {
-  "n": 6,
-  "say": "One thing is new. If a block reads thin, it asks once.",
-  "kicker": "New",
-  "cap": "It asks once.",
-  "shot": "askonce.png"
- },
- {
-  "n": 7,
-  "say": "A name on its own. A number attached to nothing. Three words.",
-  "kicker": "What it questions",
-  "cap": "“John”\n“3 tasks”\n“Did my work”",
-  "shot": null
- },
- {
-  "n": 8,
-  "say": "It asks what was done. Then it sends whatever you write. It is a prompt, not a gate.",
-  "kicker": "",
-  "cap": "You are never blocked.",
-  "shot": "anyway.png"
- },
- {
-  "n": 9,
-  "say": "This is what a block looks like when it is right.",
-  "kicker": "The standard",
-  "cap": "What was done.\nWhat came of it.",
-  "shot": "good.png"
- },
- {
-  "n": 10,
-  "say": "Now why it matters.",
-  "kicker": "",
-  "cap": "Why it matters",
-  "sub": "",
-  "shot": null
- },
- {
-  "n": 11,
-  "say": "Salesforce shows that a task moved. It does not show the work.",
-  "kicker": "",
-  "cap": "Salesforce shows a task moved.\nIt does not show the work.",
-  "shot": null
- },
- {
-  "n": 12,
-  "say": "Your block is the record. It is what the branch reports. It is what stands behind your name.",
-  "kicker": "",
-  "cap": "Your block is the record.",
-  "sub": "It is what the branch reports.\nIt is what stands behind your name.",
-  "shot": null
- },
- {
-  "n": 13,
-  "say": "This is part of the job, not extra to it.",
-  "kicker": "",
-  "cap": "Part of the job.\nNot extra to it.",
-  "shot": null
- },
- {
-  "n": 14,
-  "say": "Four blocks. Two minutes each. Written while you still remember it.",
-  "kicker": "Every working day",
-  "cap": "Four blocks. Two minutes each.",
-  "shot": "day.png"
- },
- {
-  "n": 15,
-  "say": "Starting tomorrow morning.",
-  "kicker": "",
-  "cap": "Starting tomorrow morning.",
-  "sub": "rickyrampersadbranch.com",
-  "shot": null
- }
+ {"n":1,  "say":"The tracker is fixed. Here is what changed.",
+  "kicker":"", "cap":"What changed", "sub":"The daily tracker · September 2026", "shot":null},
+
+ {"n":2,  "say":"Blocks would not save. You would type the whole thing, press send, and get an error. That is gone.",
+  "kicker":"Fixed", "cap":"Blocks save.", "shot":"sent.png"},
+
+ {"n":3,  "say":"Signing in took up to thirty seconds. It now takes about one.",
+  "kicker":"Fixed", "cap":"Signing in takes\nabout a second.", "shot":"signin.png"},
+
+ {"n":4,  "say":"Your typing is saved as you type. Close the page. Lose signal. Come back. What you wrote is still there.",
+  "kicker":"New", "cap":"Nothing you type is lost.", "shot":"draft.png"},
+
+ {"n":5,  "say":"If a send fails it tries again on its own. You will see it counting.",
+  "kicker":"New", "cap":"It retries by itself.", "shot":"retry.png"},
+
+ {"n":6,  "say":"One thing is new. If a block reads thin, it asks once.",
+  "kicker":"New", "cap":"It asks once.", "shot":"askonce.png"},
+
+ {"n":7,  "say":"A name on its own. A number attached to nothing. Three words.",
+  "kicker":"What it questions", "cap":"“John”\n“3 tasks”\n“Did my work”", "shot":null},
+
+ {"n":8,  "say":"Three tasks. Which three. For whom. And what came of them. That is the whole difference.",
+  "kicker":"What to write instead", "cap":"Which three.\nFor whom.\nWhat came of them.", "shot":null},
+
+ {"n":9,  "say":"It asks what was done. Then it sends whatever you write. It is a prompt, not a gate.",
+  "kicker":"", "cap":"You are never blocked.", "shot":"anyway.png"},
+
+ {"n":10, "say":"This is what a block looks like when it is right.",
+  "kicker":"The standard", "cap":"What was done.\nWhat came of it.", "shot":"good.png"},
+
+ {"n":11, "say":"Now why it matters.",
+  "kicker":"", "cap":"Why it matters", "sub":"", "shot":null},
+
+ {"n":12, "say":"Salesforce shows that a task moved. It does not show the work.",
+  "kicker":"", "cap":"Salesforce shows a task moved.\nIt does not show the work.", "shot":null},
+
+ {"n":13, "say":"So your block and Salesforce have to agree. If your block says three closed, Salesforce should show three.",
+  "kicker":"The check", "cap":"Your block and Salesforce\nhave to agree.", "sub":"If the block says three closed,\nSalesforce should show three.", "shot":null},
+
+ {"n":14, "say":"Moving a task forward with nothing written on it leaves no record that anything was done.",
+  "kicker":"", "cap":"A task moved with nothing\nwritten on it is not\na record of work.", "shot":null},
+
+ {"n":15, "say":"A line in the description, or a note in the chatter feed. Either one counts. Neither one is optional.",
+  "kicker":"Either counts", "cap":"Description.\nOr a Chatter note.", "sub":"One of the two, on every task you touch.", "shot":null},
+
+ {"n":16, "say":"Your block is the record. It is what the branch reports. It is what stands behind your name.",
+  "kicker":"", "cap":"Your block is the record.", "sub":"It is what the branch reports.\nIt is what stands behind your name.", "shot":null},
+
+ {"n":17, "say":"This is part of the job, not extra to it.",
+  "kicker":"", "cap":"Part of the job.\nNot extra to it.", "shot":null},
+
+ {"n":18, "say":"Four blocks. Two minutes each. Written while you still remember it.",
+  "kicker":"Every working day", "cap":"Four blocks. Two minutes each.", "shot":"day.png"},
+
+ {"n":19, "say":"Starting tomorrow morning.",
+  "kicker":"", "cap":"Starting tomorrow morning.", "sub":"rickyrampersadbranch.com", "shot":null}
 ]

@@ -37,41 +37,61 @@
  {
   "n": 8,
   "start": 39.33,
-  "label": "You are never blocked."
+  "label": "Which three. For whom. What came of them."
  },
  {
   "n": 9,
-  "start": 45.29,
-  "label": "What was done. What came of it."
+  "start": 46.49,
+  "label": "You are never blocked."
  },
  {
   "n": 10,
-  "start": 48.78,
-  "label": "Why it matters"
+  "start": 52.45,
+  "label": "What was done. What came of it."
  },
  {
   "n": 11,
-  "start": 51.07,
-  "label": "Salesforce shows a task moved. It does not show the work."
+  "start": 55.94,
+  "label": "Why it matters"
  },
  {
   "n": 12,
-  "start": 56.09,
-  "label": "Your block is the record."
+  "start": 58.23,
+  "label": "Salesforce shows a task moved. It does not show the work."
  },
  {
   "n": 13,
-  "start": 62.36,
-  "label": "Part of the job. Not extra to it."
+  "start": 63.25,
+  "label": "Your block and Salesforce have to agree."
  },
  {
   "n": 14,
-  "start": 65.82,
-  "label": "Four blocks. Two minutes each."
+  "start": 70.94,
+  "label": "A task moved with nothing written on it is not a record of work."
  },
  {
   "n": 15,
-  "start": 70.99,
+  "start": 76.92,
+  "label": "Description. Or a Chatter note."
+ },
+ {
+  "n": 16,
+  "start": 84.7,
+  "label": "Your block is the record."
+ },
+ {
+  "n": 17,
+  "start": 90.97,
+  "label": "Part of the job. Not extra to it."
+ },
+ {
+  "n": 18,
+  "start": 94.43,
+  "label": "Four blocks. Two minutes each."
+ },
+ {
+  "n": 19,
+  "start": 99.6,
   "label": "Starting tomorrow morning."
  }
 ]
