@@ -276,6 +276,14 @@ const guideFor = kpi => KPI_GUIDE[kpi] || GUIDE_FALLBACK;
 // Everything that groups by KPI splits here rather than guessing.
 const kpiList = v => String(v || "").split(",").map(x => x.trim()).filter(Boolean);
 const kpiJoin = list => list.join(", ");
+// One reader for the metrics shape, so a second caller cannot get it wrong the
+// way the first one did. The server sends {ok, date, staff:{staffId:{...}}};
+// reading metrics[staffId] is silently null against the real thing and only
+// works against a stub that repeats the mistake.
+const byTypeFor = (metrics, staffId) =>
+  (metrics && metrics.ok && metrics.staff && metrics.staff[staffId] &&
+   metrics.staff[staffId].byType) || null;
+
 const kpiToggle = (v, k) => {
   const list = kpiList(v);
   const i = list.indexOf(k);
@@ -288,10 +296,27 @@ const kpiToggle = (v, k) => {
 // number they are about to write has something to be checked against.
 // Chips rather than a select. A multiple-select box is close to unusable on a
 // phone, and every one of these is filled on a phone.
-function KpiPicker({ value, opts, onToggle }) {
+function KpiPicker({ value, opts, onToggle, mine, branch }) {
   const on = kpiList(value);
   const chip = k => {
     const live = on.indexOf(k.value) > -1;
+    const m = mine && mine[k.value];
+    const b = branch && branch[k.value];
+
+    // The count is the point of the chip, not decoration. A block set aside
+    // for licensing with three tasks in it does not need two hours, and the
+    // only way anyone knew that before was to go and look.
+    const tail = [];
+    if (m && (m.open || m.overdue)) {
+      tail.push(React.createElement("span", {
+        key: "m", style: { fontWeight: 700, color: m.overdue ? AMBER : (live ? INK : MUTED) }
+      }, " \u00b7 " + (m.open || 0) + " open" + (m.overdue ? ", " + m.overdue + " late" : "")));
+    }
+    if (b && b.open) {
+      tail.push(React.createElement("span", {
+        key: "b", style: { color: MUTED, fontWeight: 500 }
+      }, "  " + b.open + " in the branch"));
+    }
     return React.createElement("button", {
       key: k.value, type: "button", onClick: () => onToggle(k.value),
       style: { font: "inherit", fontSize: 12.5, fontWeight: live ? 700 : 500, cursor: "pointer",
@@ -299,7 +324,7 @@ function KpiPicker({ value, opts, onToggle }) {
                border: "1px solid " + (live ? GOLD : LINE),
                background: live ? "#FBF3DF" : "#FFFFFF",
                color: live ? INK : MUTED }
-    }, (live ? "\u2713 " : "") + k.label);
+    }, (live ? "\u2713 " : "") + k.label, tail);
   };
   const group = (label, list) => !list.length ? null : React.createElement("div", { key: label },
     React.createElement("div", {
@@ -1587,11 +1612,12 @@ function App() {
       }, /*#__PURE__*/React.createElement(KpiPicker, {
         value: bl.kpi,
         opts: opts,
+        mine: byTypeFor(metrics, active),
+        branch: metrics && metrics.branch ? metrics.branch.byType : null,
         onToggle: k => patchBlock(b.id, "kpi", kpiToggle(bl.kpi, k))
       })), bl.kpi ? /*#__PURE__*/React.createElement(KpiHint, {
         kpi: bl.kpi,
-        live: metrics && metrics[active] && metrics[active].byType
-          ? metrics[active].byType[bl.kpi] : null
+        live: byTypeFor(metrics, active) ? byTypeFor(metrics, active)[bl.kpi] : null
       }) : null, /*#__PURE__*/React.createElement(Field, {
         label: "Actioned"
       }, /*#__PURE__*/React.createElement("textarea", {

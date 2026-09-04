@@ -32,9 +32,17 @@ const SCH = { demo: { start:'08:00', end:'16:00', lunch:'12:30-13:30',
             PM1: {time:'1 – 3pm',   focus:'Adopt an Orphan'},
             PM2: {time:'3 – 4pm',   focus:'Task Mgmt / Branch Meeting Reports'} } } };
 // Shaped like the real thing: sfkMetrics_ returns byType per person.
-const METRICS = { demo: { closed:0, open:23, overdue:1, aged60:0, noDate:0,
-                          byType: { 'Renewa/PDl/Bill': { open:17, overdue:1 },
-                                    'Servicing': { open:3, overdue:0 } } } };
+// The shape sfkMetrics_ actually returns — {ok, date, staff:{...}}, plus the
+// branch roll-up. An earlier version of this stub was keyed by staffId at the
+// top level, which is not what the server sends: the test passed and the
+// feature was dead in production. Copy the server, not the caller.
+const METRICS = { ok:true, date:'2026-09-04', staff: {
+  demo: { closed:0, open:23, overdue:1, aged60:0, noDate:0,
+          byType: { 'Renewa/PDl/Bill': { open:17, overdue:1 },
+                    'Servicing': { open:3, overdue:0 } } } },
+  branch: { byType: { 'Renewa/PDl/Bill': { open:52, overdue:18 },
+                      'Servicing': { open:24, overdue:11 },
+                      'Lic/Staffing/SA/HR': { open:17, overdue:9 } } } };
 
 // The same shape allKpiChoices_ serves: the Salesforce task types first, then
 // the job-document responsibilities that carry no live numbers.
@@ -101,6 +109,20 @@ const ok = (what, cond, extra) => {
   ok('it says what Salesforce has them at',
      await page.locator('text=/17 open here/').count() > 0);
   ok('and names the overdue one', await page.locator('text=/1 overdue/').count() > 0);
+
+  console.log('\nAnd the chip itself carries the count:\n');
+  const renew = page.locator('button:has-text("Renewals / Premium Dues / Billing")').first();
+  const chip = await renew.textContent();
+  ok('their own open book is on the chip', /17 open/.test(chip), chip);
+  ok('with the late ones called out', /1 late/.test(chip), chip);
+  ok('and the branch beside it', /52 in the branch/.test(chip), chip);
+
+  // The whole point: a block set aside for licensing with a handful of tasks
+  // in it should say so before two hours go into it.
+  const lic = await page.locator('button:has-text("Licensing / Staffing")').first().textContent();
+  ok('a thin type reads thin before the block starts', /17 in the branch/.test(lic), lic);
+  ok('and shows nothing of their own when they hold none',
+     !/\d+ open/.test(lic), lic);
 
   console.log('\nA second type can be added to the same block:\n');
   await pick('Claims / Maturities');
