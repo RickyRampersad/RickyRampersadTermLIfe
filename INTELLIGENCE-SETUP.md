@@ -361,6 +361,72 @@ and the number is a question to ask an agent rather than a judgement on them.
 An agent below ten decisions in the year is not shown at all — below that a
 rate is noise.
 
+## 3g. The 45-day wall
+
+`/intelligence/wall/` — a rotating seven-slide board for the branch screen,
+about one thing: **premiums crossing 45 days**. Same design system as `/board/`
+and the benefits wall, so the three read as one product on adjacent screens.
+
+Forty-five days is the useful line to watch. It is past the grace period, so the
+policy is genuinely in trouble; it is early enough that a phone call still fixes
+it. The slides:
+
+1. **Today** — how many crossed, the modal premium behind them, how many clients
+2. **The wave** — the biggest cohort still ahead of the line, and when it lands
+3. **Day by day** — the line from a week back to a week forward
+4. **How long in force** — the answer to "is this a bad sale or a broken instruction"
+5. **Why they stopped** — billing method, standing instructions picked out
+6. **By unit**, 7. **By agent**
+
+### It has no sign-in, so it must not carry anything worth signing in for
+
+A wall screen cannot sign itself in — there is nobody sitting at it — and a
+token written into a page served from a **public repository** is a token anyone
+can read. So the feed action, `intel.wall`, takes **no token at all**, and in
+exchange it returns **only aggregates**: counts, money, bands, and the names of
+our own agents and units. No client names, no policy numbers, no phone numbers,
+no client-level rows of any kind. Somebody who finds the URL learns the branch's
+arrears summary and nothing whatsoever about any client.
+
+**If you extend this screen, that is the rule to keep.** Before adding a field
+to `iBuildWall45_`, ask whether it could identify a client. If it could, it does
+not belong on an unauthenticated feed — put it behind the app instead. The
+builder reads the client number, but only ever to count distinct clients; the
+number itself never leaves the function.
+
+The same logic applies to the screen in the room. A wall in a branch office is
+read by whoever walks past it, clients included. Agent and unit names are ours
+to show. Client names are not.
+
+### It measures arrears from Paid To Date, not from the Days column
+
+This is the part that decides whether the wall is right or a week and a half
+wrong. The tab carries its own `Days` column, and that column is **frozen at
+whatever moment the extract was cut**. When this was built the extract was ten
+days old, so the policies genuinely at 45 days that morning read **35** in the
+sheet, and the twelve rows showing 45 were really at 55.
+
+`Paid To Date` is a fact about the policy rather than about the export, so
+`today − Paid To Date` stays correct however stale the tab is. That is what the
+wall uses.
+
+What staleness still costs is the **set** of policies, and no arithmetic fixes
+that: a premium paid since the cut is not in the file at all. So every count on
+this wall is an **upper bound**, and the wall says so. `asOf` tells you the day
+the extract was frozen — derived by taking `Paid To Date + Days` across the
+book and using the date thousands of rows agree on, rather than the newest date
+present, which is only a floor.
+
+### Pointing it at live data
+
+Same pattern as `/board/`: paste the `/exec` URL into `WALL45_URL` at the top of
+`intelligence/wall/index.html`. It refreshes every 30 minutes and falls back to
+the committed snapshot if the feed is unreachable, so the screen is never blank.
+The badge in the header reads `live` or `snapshot` so nobody quotes a stale
+figure believing it is current.
+
+Keyboard: `←` `→` change slide, `space` pauses, `F` full screen.
+
 ## 4. How it is put together
 
 A nightly trigger reads every source tab once, computes all five domains, and

@@ -2789,6 +2789,15 @@ function intelRoute_(b) {
 
   if (action === 'intel.signin') return iActSignin_(b);
 
+  /* The wall screen is unauthenticated on purpose. It hangs on a wall — there is
+     nobody to sign it in, and a token baked into a page served from a public
+     repository would be a token anyone could read. So this action carries no
+     token, and in exchange it returns ONLY aggregates: counts, money, bands and
+     the names of our own agents and units. No client rows ever reach it. Anyone
+     who finds the URL learns the branch's arrears summary and nothing about a
+     single client. Keep it that way — see iBuildWall45_. */
+  if (action === 'intel.wall') return iActWall45_(b);
+
   var session = iSession_(b.token);
   if (!session) return iErr_('Your session has expired — sign in again.');
 
@@ -2830,6 +2839,201 @@ function iActSignout_(b) {
     if (String(vals[r][0]) === String(b.token)) { sh.deleteRow(r + 2); break; }
   }
   return iOk_({});
+}
+
+/* ── The 45-day wall ──────────────────────────────────────────────────────
+   Feeds /intelligence/wall/. Unauthenticated by design — see the note in
+   intelRoute_ — so the ONE rule this function has to keep is that nothing
+   client-level leaves it. It returns counts, money, bands, and the names of
+   our own agents and units. If you add a field here, ask first whether it
+   would identify a client, and if it would, do not add it.
+
+   Arrears are measured from Paid To Date against today, NOT from the tab's
+   own Days column. Days is frozen at whatever moment the extract was cut —
+   it read 35 for the policies that were genuinely at 45 days on the day this
+   was written, because the extract was ten days old. Paid To Date is a fact
+   about the policy rather than about the export, so it stays right no matter
+   how stale the tab is. What staleness still costs is the policy SET: a
+   premium paid since the cut is not in the file, so every count here is an
+   upper bound. The wall says so, and asOf tells it when the tab was cut. */
+function iActWall45_(b) {
+  var d = iBuildWall45_();
+  if (d.error) return iErr_(d.error);
+  return iOk_({ data: d });
+}
+
+function iBuildWall45_() {
+  var sh = iTabDues_();
+  if (!sh) return { error: 'No dues tab found.' };
+
+  var d = iReadCols_(sh, {
+    agent: ['agent'], clientNo: ['client number'], premium: ['premium'],
+    issue: ['issue date'], status: ['status'], paidTo: ['paid to date'],
+    billing: ['billing type'], days: ['days']
+  });
+
+  var today = iToday_(), DAY = 86400000, TARGET = 45;
+
+  /* unit map, keyed on the same normalised name the rest of the file uses */
+  var units = iBuildUnits_(), unitOf = {};
+  Object.keys(units).forEach(function (u) {
+    units[u].forEach(function (m) {
+      var k = iNameKey_(m.name);
+      if (k) unitOf[k] = u;
+    });
+  });
+  /* An agent written one way on the access list and another on the dues book
+     still has to land in their unit — "Joy Barbara Sammah" against a book that
+     says "Joy Sammah". Match on every name token being present in the other,
+     which joins a dropped middle name and refuses two different people who
+     merely share a surname. */
+  function unitFor(agent) {
+    var k = iNameKey_(agent);
+    if (!k) return 'Unassigned';
+    if (unitOf[k]) return unitOf[k];
+    var ks = k.split(' '), hit = null, n = 0;
+    Object.keys(unitOf).forEach(function (o) {
+      var os = o.split(' ');
+      if (os[os.length - 1] !== ks[ks.length - 1]) return;
+      var all = ks.every(function (t) { return os.indexOf(t) >= 0; })
+             || os.every(function (t) { return ks.indexOf(t) >= 0; });
+      if (all) { hit = unitOf[o]; n++; }
+    });
+    return n === 1 ? hit : 'Unassigned';
+  }
+
+  var sel = [], line = {};
+  var over45 = 0, over45Prem = 0, overdue = 0;
+  var waveBy = {};   // paid-to date → the cohort crossing together
+  /* When the extract was cut. Not the newest Paid To Date — a policy only
+     appears here BECAUSE it is unpaid, so the newest of those is a floor, not
+     the cut date. Paid To Date plus the tab's own frozen Days column names the
+     day it was frozen, and thousands of rows agree on one answer; take the
+     value they agree on. */
+  var cutVotes = {};
+
+  for (var r = 0; r < d.rows; r++) {
+    if (String(d.get('status', r)).trim() !== '2') continue;
+    var paid = iDate_(d.get('paidTo', r));
+    if (!paid) continue;
+    var days = Math.round((today - paid) / DAY);
+    if (days <= 0 || days > 4000) continue;
+    overdue++;
+    var frozen = iNum_(d.get('days', r));
+    if (frozen > 0 && frozen < 2000) {
+      var vote = iIso_(new Date(paid.getTime() + frozen * DAY));
+      cutVotes[vote] = (cutVotes[vote] || 0) + 1;
+    }
+
+    var prem = iNum_(d.get('premium', r));
+    if (days >= TARGET) { over45++; over45Prem += prem; }
+
+    /* offset: how many days from today this policy crosses 45 */
+    var off = TARGET - days;
+    if (off >= -7 && off <= 7) {
+      if (!line[off]) line[off] = { off: off, n: 0, prem: 0 };
+      line[off].n++; line[off].prem += prem;
+    }
+    if (off > 0 && off <= 14) {
+      var key = iIso_(paid);
+      if (!waveBy[key]) waveBy[key] = { date: iIso_(new Date(paid.getTime() + TARGET * DAY)),
+                                        paidTo: paid, n: 0, prem: 0 };
+      waveBy[key].n++; waveBy[key].prem += prem;
+    }
+    if (days === TARGET) {
+      sel.push({ agent: String(d.get('agent', r)).trim(),
+                 clientNo: String(d.get('clientNo', r)).trim(),
+                 prem: prem,
+                 billing: String(d.get('billing', r)).trim() || '(none)',
+                 issue: iDate_(d.get('issue', r)) });
+    }
+  }
+
+  /* tenure bands */
+  var BANDS = [['Under 1 year', 0, 1], ['1–2 years', 1, 2], ['2–5 years', 2, 5],
+               ['5–10 years', 5, 10], ['10–20 years', 10, 20], ['20 years +', 20, 999]];
+  var yrs = [];
+  var tenure = BANDS.map(function (b) { return { k: b[0], n: 0, prem: 0 }; });
+  sel.forEach(function (x) {
+    if (!x.issue) return;
+    var y = (today - x.issue) / DAY / 365.25;
+    yrs.push(y);
+    for (var i = 0; i < BANDS.length; i++) {
+      if (y >= BANDS[i][1] && y < BANDS[i][2]) { tenure[i].n++; tenure[i].prem += x.prem; break; }
+    }
+  });
+  yrs.sort(function (a, b) { return a - b; });
+  function medianOf(a) { return a.length ? Math.round(a[Math.floor(a.length / 2)] * 10) / 10 : null; }
+
+  /* billing, units, agents */
+  var AUTO = { 'Bankers Order': 1, 'Pre Authorized Cheque': 1, 'Salary Deduction': 1,
+               'Military Pay': 1, 'Post Dated Cheque': 1 };
+  function tally(keyFn, extra) {
+    var m = {};
+    sel.forEach(function (x) {
+      var k = keyFn(x);
+      if (!m[k]) { m[k] = { k: k, n: 0, prem: 0, _y: [], _a: {} }; }
+      m[k].n++; m[k].prem += x.prem;
+      if (x.issue) m[k]._y.push((today - x.issue) / DAY / 365.25);
+      m[k]._a[x.agent] = 1;
+    });
+    return Object.keys(m).map(function (k) {
+      var o = m[k]; o._y.sort(function (a, b) { return a - b; });
+      var out = { k: o.k, n: o.n, prem: Math.round(o.prem * 100) / 100 };
+      if (extra) extra(out, o);
+      return out;
+    }).sort(function (a, b) { return b.n - a.n || b.prem - a.prem; });
+  }
+
+  var billing = tally(function (x) { return x.billing; },
+                      function (out) { out.auto = !!AUTO[out.k]; });
+  var unitRows = tally(function (x) { return unitFor(x.agent); },
+                       function (out, o) { out.agents = Object.keys(o._a).length; });
+  var agentRows = tally(function (x) { return x.agent; },
+                        function (out, o) { out.med = medianOf(o._y); out.unit = unitFor(o.k); });
+
+  /* the day-by-day line, -7 .. +7, zero-filled so the chart has no holes */
+  var lineRows = [];
+  for (var off = -7; off <= 7; off++) {
+    var e = line[off] || { off: off, n: 0, prem: 0 };
+    lineRows.push({ off: off, date: iIso_(new Date(today.getTime() + off * DAY)),
+                    n: e.n, prem: Math.round(e.prem * 100) / 100 });
+  }
+
+  /* the wave — the biggest single cohort still ahead of the line */
+  var wave = null;
+  Object.keys(waveBy).forEach(function (k) {
+    if (!wave || waveBy[k].n > wave.n) wave = waveBy[k];
+  });
+  var next7 = 0, next7Prem = 0;
+  lineRows.forEach(function (x) { if (x.off > 0) { next7 += x.n; next7Prem += x.prem; } });
+
+  var autoN = 0;
+  billing.forEach(function (x) { if (x.auto) autoN += x.n; });
+  var clients = {};
+  sel.forEach(function (x) { if (x.clientNo) clients[x.clientNo] = 1; });
+
+  var cut = '', cutN = 0;
+  Object.keys(cutVotes).forEach(function (k) { if (cutVotes[k] > cutN) { cutN = cutVotes[k]; cut = k; } });
+
+  return {
+    generatedAt: iIso_(today),
+    asOf: cut,                    // the day the extract was frozen — everything here is as of then
+    headline: { policies: sel.length,
+                modal: Math.round(sel.reduce(function (a, x) { return a + x.prem; }, 0) * 100) / 100,
+                clients: Object.keys(clients).length },
+    wave: wave ? { date: wave.date,
+                   label: Utilities.formatDate(new Date(wave.date + 'T12:00:00'), iTz_(), 'EEEE d MMMM'),
+                   policies: wave.n, modal: Math.round(wave.prem * 100) / 100,
+                   paidTo: Utilities.formatDate(wave.paidTo, iTz_(), 'd MMMM') } : null,
+    line: lineRows,
+    tenure: tenure.map(function (t) { return { k: t.k, n: t.n, prem: Math.round(t.prem * 100) / 100 }; }),
+    tenureMedian: medianOf(yrs),
+    billing: billing, autoFail: autoN, units: unitRows, agents: agentRows,
+    context: { overdueTotal: overdue, over45: over45,
+               over45Prem: Math.round(over45Prem * 100) / 100,
+               next7: next7, next7Prem: Math.round(next7Prem * 100) / 100 }
+  };
 }
 
 function iActData_(b, session) {
