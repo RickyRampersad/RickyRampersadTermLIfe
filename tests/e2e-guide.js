@@ -84,7 +84,8 @@ const ok = (what, cond, extra) => {
   ok('no example is shown yet', await page.locator('text=A good entry reads like').count() === 0);
 
   console.log('\nRenewals / Premium Dues / Billing:\n');
-  await page.locator('select:visible').first().selectOption('Renewa/PDl/Bill');
+  const pick = t => page.locator('button:has-text("' + t + '")').first().click();
+  await pick('Renewals / Premium Dues / Billing');
   await page.waitForTimeout(400);
   ok('the worked example appears', await page.locator('text=A good entry reads like').count() > 0);
   ok('and it is the one for this type',
@@ -101,27 +102,40 @@ const ok = (what, cond, extra) => {
      await page.locator('text=/17 open here/').count() > 0);
   ok('and names the overdue one', await page.locator('text=/1 overdue/').count() > 0);
 
-  console.log('\nChanging the KPI changes the question:\n');
-  await page.locator('select:visible').first().selectOption('Claims/ Mat');
+  console.log('\nA second type can be added to the same block:\n');
+  await pick('Claims / Maturities');
   await page.waitForTimeout(400);
-  ok('the example follows the type',
+  ok('both are asked about, not one', await page.locator('text=Say something for each').count() > 0);
+  ok('the renewals question is there',
+     await page.locator('text=/How many, and for whom/').count() > 0);
+  ok('and the claims one beside it',
+     await page.locator('text=/Which claim, and what moved/').count() > 0);
+  ok('the long example steps aside for two',
+     await page.locator('text=A good entry reads like').count() === 0);
+
+  console.log('\nDropping one back to a single type:\n');
+  await pick('Renewals / Premium Dues / Billing');
+  await page.waitForTimeout(400);
+  ok('the worked example comes back',
      await page.locator('text=/medical report received/').count() > 0);
-  ok('the old one is gone', await page.locator('text=/direct debits sent/').count() === 0);
+  ok('and it is the claims one', await page.locator('text=/direct debits sent/').count() === 0);
   const t2 = await page.locator('textarea:visible').all();
-  ok('and so does the placeholder',
+  ok('the placeholder follows it',
      /Which claim/.test(await t2[0].getAttribute('placeholder')));
   ok('no live figure is invented for a type with none',
      await page.locator('text=/open here/').count() === 0);
 
   console.log('\nA type with no line of its own still gets asked properly:\n');
-  await page.locator('select:visible').first().selectOption('Reporting');
+  await pick('Claims / Maturities');
+  await pick('Reporting');
   await page.waitForTimeout(400);
   const t3 = await page.locator('textarea:visible').all();
   ok('the fallback question is used',
      /What you did, for whom, and how many/.test(await t3[0].getAttribute('placeholder')));
 
   if (process.env.SHOT) {
-    await page.locator('select:visible').first().selectOption('Renewa/PDl/Bill');
+    await pick('Reporting');
+    await pick('Renewals / Premium Dues / Billing');
     await page.waitForTimeout(500);
     await page.screenshot({ path: process.env.SHOT, fullPage: false });
   }

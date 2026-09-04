@@ -270,11 +270,71 @@ const GUIDE_FALLBACK = {
 };
 const guideFor = kpi => KPI_GUIDE[kpi] || GUIDE_FALLBACK;
 
+// A two-hour block rarely holds one kind of work. The stored value stays a
+// single string — comma-joined — so the sheet column, the Apps Script and
+// every report that already reads it keep working without a redeployment.
+// Everything that groups by KPI splits here rather than guessing.
+const kpiList = v => String(v || "").split(",").map(x => x.trim()).filter(Boolean);
+const kpiJoin = list => list.join(", ");
+const kpiToggle = (v, k) => {
+  const list = kpiList(v);
+  const i = list.indexOf(k);
+  if (i < 0) list.push(k); else list.splice(i, 1);
+  return kpiJoin(list);
+};
+
 // Sits under the KPI picker once one is chosen: the worked example, and — when
 // Salesforce is reachable — that person's real position in that type, so the
 // number they are about to write has something to be checked against.
+// Chips rather than a select. A multiple-select box is close to unusable on a
+// phone, and every one of these is filled on a phone.
+function KpiPicker({ value, opts, onToggle }) {
+  const on = kpiList(value);
+  const chip = k => {
+    const live = on.indexOf(k.value) > -1;
+    return React.createElement("button", {
+      key: k.value, type: "button", onClick: () => onToggle(k.value),
+      style: { font: "inherit", fontSize: 12.5, fontWeight: live ? 700 : 500, cursor: "pointer",
+               padding: "7px 11px", borderRadius: 999, textAlign: "left",
+               border: "1px solid " + (live ? GOLD : LINE),
+               background: live ? "#FBF3DF" : "#FFFFFF",
+               color: live ? INK : MUTED }
+    }, (live ? "\u2713 " : "") + k.label);
+  };
+  const group = (label, list) => !list.length ? null : React.createElement("div", { key: label },
+    React.createElement("div", {
+      style: { fontSize: 10, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase",
+               color: MUTED, margin: "2px 0 6px" }
+    }, label),
+    React.createElement("div", {
+      style: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }
+    }, list.map(chip)));
+  return React.createElement("div", null,
+    group("Salesforce task types \u2014 these carry live numbers", opts.filter(k => k.salesforce)),
+    group("Logged in words only", opts.filter(k => !k.salesforce)));
+}
+
 function KpiHint({ kpi, live }) {
-  const g = guideFor(kpi);
+  const picked = kpiList(kpi);
+
+  // With more than one type in the block, the long worked example stops being
+  // an example and becomes a wall. Ask the question for each instead.
+  if (picked.length > 1) {
+    return React.createElement("div", {
+      style: { background: "#FBF9F3", border: "1px solid " + LINE, borderLeft: "3px solid " + GOLD,
+               borderRadius: 8, padding: "9px 11px", margin: "0 0 12px" }
+    },
+      React.createElement("div", {
+        style: { fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase",
+                 color: GOLD, marginBottom: 5 }
+      }, "Say something for each"),
+      picked.map(k => React.createElement("div", {
+        key: k, style: { fontSize: 12.5, color: INK, lineHeight: 1.5 }
+      }, React.createElement("b", null, k), " — ", guideFor(k).actioned))
+    );
+  }
+
+  const g = guideFor(picked[0] || kpi);
   return React.createElement("div", {
     style: { background: "#FBF9F3", border: "1px solid " + LINE, borderLeft: "3px solid " + GOLD,
              borderRadius: 8, padding: "9px 11px", margin: "0 0 12px" }
@@ -795,7 +855,7 @@ const blockersOf = e => BLOCKS.map(b => ({
   kpi: x.d.kpi || "",
   text: [txt(x.d.blocker), txt(x.d.blockerOwner)].filter(Boolean).join(" · ")
 }));
-const trainingCount = e => BLOCKS.reduce((n, b) => n + (e.blocks?.[b.id]?.kpi === "Training delivered" ? 1 : 0), 0);
+const trainingCount = e => BLOCKS.reduce((n, b) => n + (kpiList(e.blocks?.[b.id]?.kpi).includes("Training delivered") ? 1 : 0), 0);
 function ShieldLogo({
   size = 34
 }) {
@@ -1523,24 +1583,12 @@ function App() {
           padding: "0 14px 14px"
         }
       }, /*#__PURE__*/React.createElement(Field, {
-        label: "KPI worked"
-      }, /*#__PURE__*/React.createElement("select", {
+        label: "KPI worked \u2014 pick every one this block touched"
+      }, /*#__PURE__*/React.createElement(KpiPicker, {
         value: bl.kpi,
-        onChange: e => patchBlock(b.id, "kpi", e.target.value),
-        style: selectBox
-      }, /*#__PURE__*/React.createElement("option", {
-        value: ""
-      }, "Select\u2026"), /*#__PURE__*/React.createElement("optgroup", {
-        label: "Salesforce task types \u2014 these carry live numbers"
-      }, opts.filter(k => k.salesforce).map(k => /*#__PURE__*/React.createElement("option", {
-        key: k.value,
-        value: k.value
-      }, k.label))), /*#__PURE__*/React.createElement("optgroup", {
-        label: "Logged in words only"
-      }, opts.filter(k => !k.salesforce).map(k => /*#__PURE__*/React.createElement("option", {
-        key: k.value,
-        value: k.value
-      }, k.label))))), bl.kpi ? /*#__PURE__*/React.createElement(KpiHint, {
+        opts: opts,
+        onToggle: k => patchBlock(b.id, "kpi", kpiToggle(bl.kpi, k))
+      })), bl.kpi ? /*#__PURE__*/React.createElement(KpiHint, {
         kpi: bl.kpi,
         live: metrics && metrics[active] && metrics[active].byType
           ? metrics[active].byType[bl.kpi] : null
@@ -1584,12 +1632,12 @@ function App() {
         onChange: e => patchBlock(b.id, "blockerOwner", e.target.value),
         placeholder: "Name + date",
         style: inp
-      }))), bl.kpi === "Renewa/PDl/Bill" && /*#__PURE__*/React.createElement(BillingCheck, {
+      }))), kpiList(bl.kpi).includes("Renewa/PDl/Bill") && /*#__PURE__*/React.createElement(BillingCheck, {
         data: billing[active],
         api: api,
         token: token,
         onSaved: loadRows
-      }), bl.kpi === "Training delivered" && /*#__PURE__*/React.createElement("div", {
+      }), kpiList(bl.kpi).includes("Training delivered") && /*#__PURE__*/React.createElement("div", {
         style: trainBox
       }, /*#__PURE__*/React.createElement("div", {
         style: {
@@ -2121,8 +2169,7 @@ function App() {
     const overdueByDay = days.map(d => inWeek([d]).reduce((n, e) => n + (num(e.metrics.overdue) || 0), 0));
     const mix = {};
     thisRows.forEach(e => BLOCKS.forEach(b => {
-      const k = txt(e.blocks?.[b.id]?.kpi);
-      if (k) mix[k] = (mix[k] || 0) + 1;
+      kpiList(e.blocks?.[b.id]?.kpi).forEach(k => { mix[k] = (mix[k] || 0) + 1; });
     }));
     const mixList = Object.keys(mix).map(k => ({
       kpi: k,
@@ -2152,7 +2199,7 @@ function App() {
     const trainingThisWeek = [];
     thisRows.forEach(e => BLOCKS.forEach(b => {
       const d = e.blocks?.[b.id];
-      if (!d || d.kpi !== "Training delivered") return;
+      if (!d || !kpiList(d.kpi).includes("Training delivered")) return;
       const reg = training.find(t => t.StaffId === e.staffId && String(t.TrainingDate || "").slice(0, 10) === e.date && String(t.Block || "").trim() === BLOCK_COL[b.id]);
       trainingThisWeek.push({
         date: e.date,
@@ -3290,7 +3337,7 @@ function ReviewCard({
   }), txt(d.actioned) && /*#__PURE__*/React.createElement(Line, {
     k: "Actioned",
     v: d.actioned
-  }), d.kpi === "Training delivered" && (txt(d.tr_trainee) || txt(d.tr_topic)) && /*#__PURE__*/React.createElement(Line, {
+  }), kpiList(d.kpi).includes("Training delivered") && (txt(d.tr_trainee) || txt(d.tr_topic)) && /*#__PURE__*/React.createElement(Line, {
     k: "Trained",
     v: (d.tr_trainee || "?") + " — " + (d.tr_topic || ""),
     tone: GOLD
