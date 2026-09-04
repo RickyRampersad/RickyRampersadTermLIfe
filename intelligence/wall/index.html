@@ -3,31 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>45-Day Premium Wall | Ricky Rampersad Branch</title>
-<meta name="description" content="Rotating branch wall for premium dues crossing the 45-day line — today's cohort, the week ahead, and who carries it.">
+<title>The 45-Day Line | Ricky Rampersad Branch</title>
+<meta name="description" content="One interactive branch wall for premiums crossing the 45-day line — tenure, how they pay, who carries them, and the appreciation survey.">
 <meta name="theme-color" content="#061c31">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  /* Same design system as the branch board and the benefits wall — on a screen
-     beside them the three should read as one product.
+  /* One screen, not a slideshow. The seven-slide version put the answer to
+     "which unit is worst on bank orders" seven slides apart from the question,
+     and nobody standing at a wall waits ninety seconds for a panel to come
+     round. Everything is on at once and any bar filters the rest.
 
-     Chart colours: blue #37b1ec (the accent — today) and gold #f5b93b (what is
-     coming) are the only two hues that carry meaning. Validated as a pair on
-     this surface: CVD separation ΔE 25.0 protan / 24.3 tritan, well past the 8
-     the checks want, and both clear 3:1 against #061c31. Everything else is the
-     de-emphasis grey #5b7590, which clears 3:1 on its own. Every bar is direct-
-     labelled, so identity is never colour alone. */
+     Chart colours: blue #37b1ec is the accent, gold #f5b93b is what is coming
+     or what is broken, and everything else is the de-emphasis grey #5b7590.
+     Validated as a pair on this surface — CVD separation ΔE 25.0 protan,
+     24.3 tritan, both clearing 3:1 contrast. Every bar is direct-labelled, so
+     identity never rests on colour. */
   :root{
     --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
     --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
     --blue:#37b1ec; --blue2:#0b7fd4; --gold:#f5b93b; --grey:#5b7590;
-    --good:#34d399; --bad:#fb7185;
+    --good:#34d399;
     --grad:linear-gradient(120deg,#37b1ec,#0b7fd4);
     --grad-gold:linear-gradient(120deg,#f5b93b,#e08b1e);
-    --r:18px; --ease:cubic-bezier(.16,1,.3,1);
+    --r:16px; --ease:cubic-bezier(.16,1,.3,1);
     --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
     --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
   }
@@ -37,122 +38,136 @@
     overflow:hidden;-webkit-font-smoothing:antialiased}
   body::before{content:"";position:fixed;inset:0;z-index:-1;
     background:
-      radial-gradient(1200px 700px at 12% -8%,rgba(55,177,236,.22),transparent 60%),
-      radial-gradient(900px 600px at 92% 4%,rgba(11,127,212,.20),transparent 62%),
-      radial-gradient(800px 700px at 60% 108%,rgba(245,185,59,.10),transparent 60%),
+      radial-gradient(1200px 700px at 10% -8%,rgba(55,177,236,.20),transparent 60%),
+      radial-gradient(900px 600px at 94% 2%,rgba(11,127,212,.18),transparent 62%),
+      radial-gradient(800px 700px at 55% 108%,rgba(245,185,59,.09),transparent 60%),
       linear-gradient(165deg,#061c31 0%,#08243f 55%,#061a2d 100%)}
 
-  header{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;gap:16px;padding:16px 26px}
-  header .mark{width:44px;height:44px;flex:none;border-radius:13px;background:var(--grad);
-    display:grid;place-items:center;font-family:var(--font-d);font-weight:800;font-size:15px;color:#04223b;
+  header{display:flex;align-items:center;gap:14px;padding:14px 26px 10px}
+  header .mark{width:40px;height:40px;flex:none;border-radius:12px;background:var(--grad);
+    display:grid;place-items:center;font-family:var(--font-d);font-weight:800;font-size:14px;color:#04223b;
     box-shadow:0 6px 20px rgba(11,127,212,.45)}
-  header h1{margin:0;font-family:var(--font-d);font-size:18px;font-weight:800;letter-spacing:-.3px}
-  header .sub{font-size:12px;color:var(--dim);margin-top:2px}
-  header .right{margin-left:auto;display:flex;align-items:center;gap:16px}
-  .live{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--dim);white-space:nowrap}
-  .live i{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+  header h1{margin:0;font-family:var(--font-d);font-size:17px;font-weight:800;letter-spacing:-.3px}
+  header .sub{font-size:11.5px;color:var(--dim);margin-top:1px}
+  header .right{margin-left:auto;display:flex;align-items:center;gap:14px}
+  .live{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--dim)}
+  .live i{width:7px;height:7px;border-radius:50%;background:var(--gold)}
   .live.on i{background:var(--good);animation:pulse 2.2s infinite}
   @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(52,211,153,.5)}50%{opacity:.55;box-shadow:0 0 0 7px rgba(52,211,153,0)}}
-  #clock{font-family:var(--font-d);font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;color:var(--dim)}
+  #clock{font-family:var(--font-d);font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;color:var(--dim)}
+  .btn{background:var(--card);border:1px solid var(--line);color:var(--dim);border-radius:9px;
+    padding:7px 13px;font:600 12px var(--font-b);cursor:pointer;transition:.2s}
+  .btn:hover:not(:disabled){color:var(--ink);border-color:rgba(255,255,255,.25)}
+  .btn:disabled{opacity:.4;cursor:default}
+  .btn.on{background:var(--grad);color:#04223b;border-color:transparent}
 
-  .dots{position:fixed;bottom:22px;left:0;right:0;z-index:20;display:flex;justify-content:center;gap:9px}
-  .dots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.18);cursor:pointer;transition:.3s var(--ease)}
-  .dots i.on{background:var(--blue);transform:scale(1.25)}
-  #bar{position:fixed;bottom:0;left:0;z-index:20;height:3px;background:var(--grad);width:0%}
-  #bar.run{transition:width linear}
+  /* the filter chip — the wall's one piece of state, always visible */
+  #chip{display:none;align-items:center;gap:9px;background:rgba(55,177,236,.16);
+    border:1px solid rgba(55,177,236,.42);border-radius:999px;padding:6px 8px 6px 15px;
+    font:600 13px var(--font-b);color:var(--ink);cursor:pointer}
+  #chip.on{display:inline-flex}
+  #chip b{font-weight:700}
+  #chip span{width:19px;height:19px;border-radius:50%;background:rgba(255,255,255,.16);
+    display:grid;place-items:center;font-size:12px;line-height:1}
 
-  .slide{position:fixed;inset:0;padding:92px 70px 74px;display:flex;flex-direction:column;justify-content:center;
-    opacity:0;visibility:hidden;transform:translateY(16px);transition:opacity .7s var(--ease),transform .7s var(--ease),visibility .7s}
-  .slide.on{opacity:1;visibility:visible;transform:none}
-  .slide .kick{font-size:13px;letter-spacing:.24em;text-transform:uppercase;color:var(--blue);font-weight:700;margin-bottom:10px}
-  .slide .kick.warn{color:var(--gold)}
-  .slide h2{margin:0 0 8px;font-family:var(--font-d);font-size:46px;font-weight:800;letter-spacing:-1.2px;line-height:1.06}
-  .slide .lede{font-size:17px;color:var(--dim);max-width:980px;line-height:1.55;margin:0 0 26px}
-  .slide .lede b{color:var(--ink);font-weight:600}
+  main{display:grid;grid-template-columns:288px 1fr 1fr 1fr;
+    grid-template-rows:auto 1fr auto;gap:13px;padding:0 26px 20px;height:calc(100vh - 66px)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+    padding:16px 18px;min-height:0;display:flex;flex-direction:column}
+  .card h3{margin:0 0 2px;font:700 12px var(--font-b);letter-spacing:.16em;
+    text-transform:uppercase;color:var(--blue)}
+  .card .cap{font-size:11.5px;color:var(--faint);margin:0 0 12px;line-height:1.45}
+  .card.warn h3{color:var(--gold)}
 
-  /* hero + stat tiles */
-  .hero{font-family:var(--font-d);font-weight:800;font-size:150px;line-height:.92;letter-spacing:-5px;
-    background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .hero.gold{background:var(--grad-gold);-webkit-background-clip:text;background-clip:text}
-  .tiles{display:flex;gap:16px;flex-wrap:wrap}
-  .tile{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 24px;min-width:210px}
-  .tile .v{font-family:var(--font-d);font-weight:800;font-size:42px;letter-spacing:-1.4px;line-height:1.05}
-  .tile .k{font-size:12.5px;color:var(--dim);margin-top:6px;letter-spacing:.02em}
-  .tile.accent .v{color:var(--blue)} .tile.gold .v{color:var(--gold)}
+  .hero{grid-row:1/3;justify-content:center}
+  .hero .big{font-family:var(--font-d);font-weight:800;font-size:96px;line-height:.9;
+    letter-spacing:-4px;background:var(--grad);-webkit-background-clip:text;background-clip:text;
+    color:transparent;transition:.4s var(--ease)}
+  .hero .cap2{font-size:14px;color:var(--dim);margin-top:8px;line-height:1.5}
+  .hero .cap2 b{color:var(--ink)}
+  .hero .split{display:flex;gap:20px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+  .hero .split div{flex:1}
+  .hero .split .v{font-family:var(--font-d);font-weight:800;font-size:23px;letter-spacing:-.6px}
+  .hero .split .k{font-size:10.5px;color:var(--faint);margin-top:2px;line-height:1.35}
 
-  /* horizontal bar rows */
-  .rows{display:flex;flex-direction:column;gap:11px;max-width:1180px}
-  .row{display:grid;grid-template-columns:210px 1fr 150px;align-items:center;gap:16px}
-  .row .lbl{font-size:15.5px;color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .row .track{height:26px;background:rgba(255,255,255,.06);border-radius:7px;overflow:hidden}
-  .row .track i{display:block;height:100%;border-radius:7px;background:var(--grey);
-    width:0;transition:width 1s var(--ease) .15s}
+  .wave{grid-column:2/5;flex-direction:row;align-items:center;gap:24px;
+    background:linear-gradient(100deg,rgba(245,185,59,.15),rgba(245,185,59,.04));
+    border-color:rgba(245,185,59,.34)}
+  .wave .n{font-family:var(--font-d);font-weight:800;font-size:62px;line-height:.9;
+    letter-spacing:-2.4px;color:var(--gold);flex:none}
+  .wave .txt{font-size:15px;color:var(--dim);line-height:1.5}
+  .wave .txt b{color:var(--ink);font-weight:600}
+  .wave .txt .hd{font-family:var(--font-d);font-weight:800;font-size:20px;color:var(--ink);
+    letter-spacing:-.4px;margin-bottom:3px}
+  .spark{display:flex;align-items:flex-end;gap:3px;height:56px;flex:none;margin-left:auto}
+  .spark i{width:11px;background:var(--grey);border-radius:2px 2px 0 0}
+  .spark i.t{background:var(--blue)} .spark i.w{background:var(--gold)}
+
+  /* clickable bar rows */
+  /* Top-aligned, not centred. The three panels carry six, four and five rows;
+     centring each in its own card staggers every one of them against the other
+     two and the eye has to re-find the baseline at each panel. */
+  .rows{display:flex;flex-direction:column;gap:7px;overflow:hidden;flex:1;justify-content:flex-start}
+  .row{display:grid;grid-template-columns:1fr 46px;align-items:center;gap:10px;
+    cursor:pointer;padding:3px 5px;margin:0 -5px;border-radius:8px;transition:.16s}
+  .row:hover{background:rgba(255,255,255,.05)}
+  .row.sel{background:rgba(55,177,236,.15)}
+  .row .lbl{font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .lbl em{font-style:normal;color:var(--faint);font-size:11.5px}
+  .row .track{height:7px;background:rgba(255,255,255,.07);border-radius:4px;margin-top:4px;overflow:hidden}
+  .row .track i{display:block;height:100%;border-radius:4px;background:var(--grey);
+    transition:width .55s var(--ease)}
   .row .track i.accent{background:var(--grad)} .row .track i.gold{background:var(--grad-gold)}
-  .row .val{font-family:var(--font-d);font-weight:700;font-size:17px;text-align:right;font-variant-numeric:tabular-nums}
-  .row .val small{display:block;font-family:var(--font-b);font-weight:500;font-size:12px;color:var(--faint);margin-top:1px}
-  .slide:not(.on) .row .track i{width:0!important}
+  .row .val{font-family:var(--font-d);font-weight:700;font-size:16px;text-align:right;
+    font-variant-numeric:tabular-nums}
+  .row .val small{display:block;font:500 10px var(--font-b);color:var(--faint);margin-top:1px}
+  .row.zero{opacity:.35;cursor:default}
 
-  /* vertical column chart */
-  .cols{display:flex;align-items:flex-end;gap:9px;height:340px;max-width:1180px}
-  .col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:8px}
-  .col .n{font-family:var(--font-d);font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;color:var(--dim)}
-  .col .b{width:100%;border-radius:6px 6px 0 0;background:var(--grey);height:0;transition:height .9s var(--ease) .15s}
-  .col.today .b{background:var(--grad)} .col.today .n{color:var(--blue);font-size:19px}
-  .col.wave .b{background:var(--grad-gold);
-    border-top:3px dashed rgba(255,255,255,.55)} .col.wave .n{color:var(--gold);font-size:19px}
-  .col .d{font-size:11.5px;color:var(--faint);white-space:nowrap}
-  .col.today .d,.col.wave .d{color:var(--ink);font-weight:600}
-  .slide:not(.on) .col .b{height:0!important}
-  .brk{width:2px;align-self:stretch;margin:0 4px;background:repeating-linear-gradient(180deg,var(--line) 0 7px,transparent 7px 14px)}
+  /* agents */
+  .agents{grid-column:1/3}
+  .alist{display:grid;grid-auto-flow:column;grid-template-rows:repeat(6,auto);
+    gap:0 26px;overflow:hidden;flex:1;align-content:start}
+  .arow{display:grid;grid-template-columns:1fr 30px 74px;align-items:baseline;gap:8px;
+    padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
+  .arow .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .arow .nm em{font-style:normal;font-size:10.5px;color:var(--faint);display:block}
+  .arow .n{font-family:var(--font-d);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+  .arow .m{text-align:right;color:var(--dim);font-size:12px;font-variant-numeric:tabular-nums}
+  .arow.top .n{color:var(--blue)}
 
-  /* two-column table — column flow so the ranking reads DOWN each column,
-     not left-right-left-right the way row-wise grid fill would order it */
-  .tbl{display:grid;grid-auto-flow:column;gap:0 52px;max-width:1560px}
-  .tbl .r{display:grid;grid-template-columns:26px 1fr 58px 116px 62px;align-items:baseline;gap:10px;
-    padding:8px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:15px}
-  .tbl .r .i{color:var(--faint);font-size:12.5px;font-variant-numeric:tabular-nums}
-  .tbl .r .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .tbl .r .nm em{display:block;font-style:normal;font-size:11.5px;color:var(--faint);margin-top:1px}
-  .tbl .r .n{font-family:var(--font-d);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
-  .tbl .r .m{text-align:right;color:var(--dim);font-variant-numeric:tabular-nums;font-size:14px}
-  .tbl .r .y{text-align:right;color:var(--faint);font-size:13px;font-variant-numeric:tabular-nums}
-  .tbl .r.top .n{color:var(--blue)}
+  /* survey */
+  .survey{grid-column:3/5}
+  .sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:12px}
+  .sgrid .v{font-family:var(--font-d);font-weight:800;font-size:30px;letter-spacing:-1px;line-height:1}
+  .sgrid .k{font-size:10.5px;color:var(--faint);margin-top:4px;line-height:1.35}
+  .sgrid .accent .v{color:var(--blue)} .sgrid .gold .v{color:var(--gold)}
+  .stars{display:flex;gap:5px;align-items:flex-end;height:46px;margin-top:auto}
+  .stars div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;text-align:center}
+  .stars i{display:block;background:var(--grad);border-radius:3px 3px 0 0;min-height:2px}
+  .stars b{font:600 10px var(--font-b);color:var(--faint)}
+  .empty{flex:1;display:flex;flex-direction:column;justify-content:center;
+    color:var(--faint);font-size:13px;line-height:1.6}
+  .empty b{color:var(--dim);display:block;margin-bottom:5px;font-size:14px}
 
-  .note{margin-top:24px;font-size:13px;color:var(--faint);max-width:1000px;line-height:1.6}
-  .note b{color:var(--dim);font-weight:600}
-  footer{position:fixed;left:26px;bottom:20px;z-index:20;font-size:11.5px;color:var(--faint)}
-  .hint{position:fixed;right:26px;bottom:20px;z-index:20;font-size:11.5px;color:var(--faint);opacity:.75}
+  footer{position:fixed;left:26px;bottom:5px;font-size:10.5px;color:var(--faint)}
+  .hint{position:fixed;right:26px;bottom:5px;font-size:10.5px;color:var(--faint);opacity:.7}
 
-  /* A wall is read from across a room, and a branch screen is 1080p or better.
-     Step everything up once there is room for it rather than leaving a third of
-     the screen empty at the size that actually gets used. */
-  @media (min-width:1500px){
-    .slide{padding:120px 96px 92px}
-    .slide h2{font-size:62px;letter-spacing:-1.8px}
-    .slide .kick{font-size:15px;margin-bottom:14px}
-    .slide .lede{font-size:22px;max-width:1400px;margin-bottom:36px}
-    .hero{font-size:210px;letter-spacing:-7px}
-    .tile{padding:26px 32px;min-width:270px}
-    .tile .v{font-size:56px} .tile .k{font-size:15px}
-    .rows{max-width:1660px;gap:15px}
-    .row{grid-template-columns:290px 1fr 210px;gap:22px}
-    .row .lbl{font-size:20px} .row .track{height:34px}
-    .row .val{font-size:23px} .row .val small{font-size:14px}
-    .cols{height:440px;max-width:1660px;gap:12px}
-    .col .n{font-size:20px} .col.today .n,.col.wave .n{font-size:26px} .col .d{font-size:14.5px}
-    .tbl .r{font-size:19px;padding:11px 0;grid-template-columns:32px 1fr 62px 138px 70px}
-    .tbl .r .nm em{font-size:14px} .tbl .r .m{font-size:17px} .tbl .r .y{font-size:16px}
-    .tbl .r .i{font-size:15px}
-    .note{font-size:16px;max-width:1400px;margin-top:32px}
-    header{padding:22px 34px} header h1{font-size:22px} header .sub{font-size:14px}
-    footer,.hint{font-size:13.5px}
+  @media (min-width:1700px){
+    main{grid-template-columns:340px 1fr 1fr 1fr;gap:16px;padding:0 34px 24px}
+    .hero .big{font-size:120px} .card{padding:20px 24px}
+    .card h3{font-size:13px} .card .cap{font-size:12.5px}
+    .row .lbl{font-size:15px} .row .val{font-size:19px} .row .track{height:8px}
+    .wave .n{font-size:78px} .wave .txt{font-size:17px} .wave .txt .hd{font-size:24px}
+    .arow{font-size:15px} .alist{grid-template-rows:repeat(6,auto)}
+    .sgrid .v{font-size:38px} .hero .split .v{font-size:27px}
+    header{padding:18px 34px 12px} main{height:calc(100vh - 74px)}
   }
-
-  @media (max-width:1100px){
-    .slide{padding:86px 34px 70px} .slide h2{font-size:32px} .hero{font-size:96px;letter-spacing:-3px}
-    .row{grid-template-columns:150px 1fr 110px}
-    .tbl{grid-auto-flow:row!important;grid-template-rows:none!important}
-    .cols{height:250px} .slide:not(.on) .col .b{height:auto!important} .slide:not(.on) .row .track i{width:auto!important}}
+  @media (max-width:1200px){
+    body{overflow:auto}
+    main{grid-template-columns:1fr 1fr;height:auto}
+    .hero{grid-row:auto} .wave{grid-column:1/3;flex-wrap:wrap}
+    .agents,.survey{grid-column:1/3} .alist{grid-auto-flow:row;grid-template-rows:none}
+  }
 </style>
 </head>
 <body data-palette="#37b1ec,#f5b93b">
@@ -164,324 +179,316 @@
     <div class="sub">Premium dues · Ricky Rampersad Branch, Chaguanas</div>
   </div>
   <div class="right">
+    <div id="chip" onclick="clearFilter()"><b id="chipTxt"></b><span>✕</span></div>
+    <button class="btn" id="sound" onclick="toggleSound()">▶ Narrate</button>
     <span class="live" id="live"><i></i><span id="liveTxt">snapshot</span></span>
     <span id="clock"></span>
   </div>
 </header>
 
-<div id="slides"></div>
-<div class="dots" id="dots"></div>
-<div id="bar"></div>
+<main>
+  <section class="card hero">
+    <h3 id="heroKick">At 45 days today</h3>
+    <div class="big" id="heroN">—</div>
+    <div class="cap2" id="heroCap"></div>
+    <div class="split">
+      <div><div class="v" id="heroPrem">—</div><div class="k">modal premium held up</div></div>
+      <div><div class="v" id="heroAuto">—</div><div class="k">on a standing instruction that failed</div></div>
+    </div>
+  </section>
+
+  <section class="card wave" id="waveCard">
+    <div class="n" id="waveN">—</div>
+    <div class="txt">
+      <div class="hd" id="waveHd"></div>
+      <div id="waveTxt"></div>
+    </div>
+    <div class="spark" id="spark"></div>
+  </section>
+
+  <section class="card"><h3>How long in force</h3>
+    <p class="cap">Click a band to hold the whole wall to it.</p>
+    <div class="rows" id="rTenure"></div></section>
+
+  <section class="card"><h3>How they pay</h3>
+    <p class="cap">Gold is money that should collect itself and did not.</p>
+    <div class="rows" id="rBilling"></div></section>
+
+  <section class="card"><h3>By unit</h3>
+    <p class="cap">Policies at 45 days, and the premium behind them.</p>
+    <div class="rows" id="rUnits"></div></section>
+
+  <section class="card agents"><h3>By agent</h3>
+    <p class="cap" id="agentCap"></p>
+    <div class="alist" id="aList"></div></section>
+
+  <section class="card survey"><h3>The appreciation survey</h3>
+    <p class="cap" id="surveyCap"></p>
+    <div id="surveyBody"></div></section>
+</main>
+
 <footer id="src"></footer>
-<div class="hint">←&nbsp;→ change &nbsp;·&nbsp; space pause &nbsp;·&nbsp; F full screen</div>
+<div class="hint">click a bar to filter · esc clears · F full screen</div>
 
 <script>
 /* ── DATA ────────────────────────────────────────────────────────────────────
-   The wall renders from WALL45. What ships in this file is a snapshot of the
-   branch workbook's premium-dues tab, and it is AGGREGATES ONLY — counts, money,
-   bands, and the names of our own agents and units. No client names, no policy
-   numbers, no phone numbers, ever. This file sits in a public repository and it
-   also hangs on a wall the public can see; both reasons point the same way.
+   AGGREGATES ONLY. Counts, money, bands, and the names of our own agents and
+   units. No client names, no policy numbers, no phone numbers, and — because
+   this screen can be clicked into — no per-policy rows either: a wall filtered
+   down to one line of a 41-policy cohort would be a client in all but name.
+   Every filtered view is a cross-tab the server computed, never a row filter.
 
    For live numbers, deploy apps-script/Intelligence.gs and paste its /exec URL
-   here. The wall then refreshes every 30 minutes and falls back to this snapshot
-   if the feed is unreachable, so the screen is never blank.
-
-   The feed action is `intel.wall`, and it takes NO session token — a token in
-   this file would be a token in a public repo. That action returns the same
-   aggregate shape you see below and nothing else, so it is safe unauthenticated.  */
-var WALL45_URL = "";   // ← Apps Script /exec URL, or leave "" for the snapshot
+   below. Refreshes every 30 minutes; falls back to this snapshot if the feed is
+   unreachable, so the screen is never blank. The feed action is `intel.wall`
+   and it takes NO token — a token in a page served from a public repository is
+   a token anyone can read.                                                    */
+var WALL45_URL = "";   // ← Apps Script /exec URL, or "" for the snapshot
 
 var WALL45 = {
-  generatedAt: "2026-09-04",
-  asOf: "2026-08-25",          // the date the dues extract was cut
-  headline: { policies: 41, modal: 37012.20, clients: 38 },
-
-  /* the wave — the largest single billing cohort still ahead of the line */
-  wave: { date: "2026-09-11", label: "Friday 11 September",
-          policies: 345, modal: 248064.68, paidTo: "28 July" },
-
-  /* how many policies cross 45 days on each day, -7 .. +7 */
-  line: [
-    {off:-7,date:"2026-08-28",n:20 }, {off:-6,date:"2026-08-29",n:40 },
-    {off:-5,date:"2026-08-30",n:29 }, {off:-4,date:"2026-08-31",n:27 },
-    {off:-3,date:"2026-09-01",n:28 }, {off:-2,date:"2026-09-02",n:32 },
-    {off:-1,date:"2026-09-03",n:37 }, {off: 0,date:"2026-09-04",n:41 },
-    {off: 1,date:"2026-09-05",n:41 }, {off: 2,date:"2026-09-06",n:44 },
-    {off: 3,date:"2026-09-07",n:41 }, {off: 4,date:"2026-09-08",n:63 },
-    {off: 5,date:"2026-09-09",n:55 }, {off: 6,date:"2026-09-10",n:67 },
-    {off: 7,date:"2026-09-11",n:345}
-  ],
-
-  tenure: [
-    {k:"Under 1 year", n:5,  prem:2579.31},
-    {k:"1–2 years",    n:4,  prem:8391.01},
-    {k:"2–5 years",    n:13, prem:11333.64},
-    {k:"5–10 years",   n:18, prem:14254.99},
-    {k:"10–20 years",  n:1,  prem:453.25},
-    {k:"20 years +",   n:0,  prem:0}
-  ],
-  tenureMedian: 4.9,
-
-  billing: [
-    {k:"Bankers Order",         n:18, prem:11085.89, auto:true},
-    {k:"Pre Authorized Cheque", n:9,  prem:5001.53,  auto:true},
-    {k:"Salary Deduction",      n:7,  prem:7635.14,  auto:true},
-    {k:"Direct Bill",           n:7,  prem:13289.64, auto:false}
-  ],
-
-  units: [
-    {k:"Ricky Rampersad",  n:15, prem:17720.79, agents:5},
-    {k:"Kerwyn Ramroach",  n:12, prem:5488.63,  agents:4},
-    {k:"Akaash Kalladeen", n:6,  prem:6851.99,  agents:3},
-    {k:"Gary Sookdeo",     n:6,  prem:5995.94,  agents:3},
-    {k:"Unassigned",       n:2,  prem:954.85,   agents:2}
-  ],
-
-  agents: [
-    {k:"Aleema Mohammed-Ali",n:5,prem:3822.80,med:4.4,unit:"Ricky Rampersad"},
-    {k:"Kerwyn Ramroach",    n:5,prem:2293.93,med:7.6,unit:"Kerwyn Ramroach"},
-    {k:"Gary Sookdeo",       n:4,prem:3813.53,med:6.7,unit:"Gary Sookdeo"},
-    {k:"Meera Persad-Khan",  n:4,prem:2391.14,med:6.7,unit:"Ricky Rampersad"},
-    {k:"Dhalina Heeraman",   n:4,prem:1961.12,med:0.8,unit:"Kerwyn Ramroach"},
-    {k:"Akaash Kalladeen",   n:3,prem:5384.03,med:5.3,unit:"Akaash Kalladeen"},
-    {k:"Randolph Gonzales",  n:2,prem:7815.17,med:5.2,unit:"Ricky Rampersad"},
-    {k:"Premchand Dookran",  n:2,prem:3349.01,med:7.2,unit:"Ricky Rampersad"},
-    {k:"Fawwaz Mohamed",     n:2,prem:1167.96,med:2.3,unit:"Akaash Kalladeen"},
-    {k:"Aidan Eugene",       n:2,prem:431.49, med:1.9,unit:"Kerwyn Ramroach"},
-    {k:"Joy Sammah",         n:2,prem:342.67, med:4.9,unit:"Ricky Rampersad"},
-    {k:"Chris Badaloo",      n:1,prem:1139.08,med:3.0,unit:"Gary Sookdeo"},
-    {k:"John Boodhoo",       n:1,prem:1043.33,med:2.2,unit:"Gary Sookdeo"},
-    {k:"Anthony Simmons",    n:1,prem:802.09, med:8.2,unit:"Kerwyn Ramroach"},
-    {k:"Carlton Aloy Wong",  n:1,prem:500.00, med:7.5,unit:"Unassigned"},
-    {k:"Karan Ramsundar",    n:1,prem:454.85, med:9.0,unit:"Unassigned"},
-    {k:"Stephanie Rajkumar", n:1,prem:300.00, med:5.0,unit:"Akaash Kalladeen"}
-  ],
-
-  context: { overdueTotal:4438, over45:2210, over45Prem:6191708.89,
-             next7:656, next7Prem:731237.80 }
+  generatedAt:"2026-09-04", asOf:"2026-08-25",
+  headline:{policies:41,modal:37012.20,clients:38},
+  wave:{date:"2026-09-11",label:"Friday 11 September",policies:345,modal:248064.68,paidTo:"28 July"},
+  line:[{off:-7,n:20},{off:-6,n:40},{off:-5,n:29},{off:-4,n:27},{off:-3,n:28},{off:-2,n:32},
+        {off:-1,n:37},{off:0,n:41},{off:1,n:41},{off:2,n:44},{off:3,n:41},{off:4,n:63},
+        {off:5,n:55},{off:6,n:67},{off:7,n:345}],
+  tenure:[{k:"Under 1 year",n:5,prem:2579.31},{k:"1–2 years",n:4,prem:8391.01},
+          {k:"2–5 years",n:13,prem:11333.64},{k:"5–10 years",n:18,prem:14254.99},
+          {k:"10–20 years",n:1,prem:453.25},{k:"20 years +",n:0,prem:0}],
+  tenureMedian:4.9, autoFail:34,
+  billing:[{k:"Bankers Order",n:18,prem:11085.89,auto:true},
+           {k:"Pre Authorized Cheque",n:9,prem:5001.53,auto:true},
+           {k:"Salary Deduction",n:7,prem:7635.14,auto:true},
+           {k:"Direct Bill",n:7,prem:13289.64,auto:false}],
+  units:[{k:"Ricky Rampersad",n:15,prem:17720.79,agents:5},
+         {k:"Kerwyn Ramroach",n:12,prem:5488.63,agents:4},
+         {k:"Akaash Kalladeen",n:6,prem:6851.99,agents:3},
+         {k:"Gary Sookdeo",n:6,prem:5995.94,agents:3},
+         {k:"Unassigned",n:2,prem:954.85,agents:2}],
+  agents:[{k:"Aleema Mohammed-Ali",n:5,prem:3822.80,med:4.4,unit:"Ricky Rampersad"},
+    {k:"Kerwyn Ramroach",n:5,prem:2293.93,med:7.6,unit:"Kerwyn Ramroach"},
+    {k:"Gary Sookdeo",n:4,prem:3813.53,med:6.7,unit:"Gary Sookdeo"},
+    {k:"Meera Persad-Khan",n:4,prem:2391.14,med:6.7,unit:"Ricky Rampersad"},
+    {k:"Dhalina Heeraman",n:4,prem:1961.12,med:0.8,unit:"Kerwyn Ramroach"},
+    {k:"Akaash Kalladeen",n:3,prem:5384.03,med:5.3,unit:"Akaash Kalladeen"},
+    {k:"Randolph Gonzales",n:2,prem:7815.17,med:5.2,unit:"Ricky Rampersad"},
+    {k:"Premchand Dookran",n:2,prem:3349.01,med:7.2,unit:"Ricky Rampersad"},
+    {k:"Fawwaz Mohamed",n:2,prem:1167.96,med:2.3,unit:"Akaash Kalladeen"},
+    {k:"Aidan Eugene",n:2,prem:431.49,med:1.9,unit:"Kerwyn Ramroach"},
+    {k:"Joy Sammah",n:2,prem:342.67,med:4.9,unit:"Ricky Rampersad"},
+    {k:"Chris Badaloo",n:1,prem:1139.08,med:3.0,unit:"Gary Sookdeo"},
+    {k:"John Boodhoo",n:1,prem:1043.33,med:2.2,unit:"Gary Sookdeo"},
+    {k:"Anthony Simmons",n:1,prem:802.09,med:8.2,unit:"Kerwyn Ramroach"},
+    {k:"Carlton Aloy Wong",n:1,prem:500.00,med:7.5,unit:"Unassigned"},
+    {k:"Karan Ramsundar",n:1,prem:454.85,med:9.0,unit:"Unassigned"},
+    {k:"Stephanie Rajkumar",n:1,prem:300.00,med:5.0,unit:"Akaash Kalladeen"}],
+  context:{overdueTotal:4438,over45:2210,over45Prem:6191708.89,next7:656,next7Prem:731237.80},
+  cross:{unit:{},tenure:{},billing:{}},
+  /* Nothing has gone out yet. The panel says so rather than showing a
+     plausible-looking zero that reads as "nobody replied". */
+  survey:{sent:0,responded:0,rate:0,avg:null,dist:[0,0,0,0,0],heardYes:0,heardNo:0,
+          byBand:[],byUnit:[],live:0,latest:""},
+  surveyPool:{ready:26,noEmail:13,letters:[{k:"first-year",n:4},{k:"settling",n:3},
+    {k:"established",n:12},{k:"longstanding",n:7},{k:"decade-plus",n:0},{k:"lifetime",n:0}]}
 };
 
+/* ── NARRATION ───────────────────────────────────────────────────────────────
+   Andrew at -3%, the branch voice, per CLAUDE.md. The MP3s are NOT in this
+   file yet — run intelligence/wall/audio/build-voice.sh to render them and
+   embed-audio.py to fold them in as data URIs. They must be inline: the wall
+   plays in an iframe and a linked MP3 is silent in exactly the two places
+   that matter. Until then the button is disabled and says so. */
+var NARRATION = [];   // ← embed-audio.py fills this with {t:"line", a:"data:audio/mpeg;base64,…"}
+
 /* ── helpers ── */
-function $(s,el){return (el||document).querySelector(s)}
+function $(s){return document.querySelector(s)}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){
   return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
-function money(n){return "TT$" + Math.round(n).toLocaleString("en-US")}
-function moneyShort(n){
-  if(n>=1e6) return "TT$" + (n/1e6).toFixed(n>=1e7?0:1) + "m";
-  if(n>=1e3) return "TT$" + Math.round(n/1e3) + "k";
-  return "TT$" + Math.round(n);
-}
-function dayLabel(iso,off){
-  if(off===0) return "Today";
-  var d=new Date(iso+"T12:00:00");
-  return d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric"});
-}
-/* one horizontal bar row */
-function barRow(label,pct,valTop,valSub,tone){
-  return '<div class="row"><div class="lbl">'+esc(label)+'</div>'
-       + '<div class="track"><i class="'+(tone||"")+'" style="width:'+pct.toFixed(1)+'%"></i></div>'
-       + '<div class="val">'+valTop+(valSub?'<small>'+valSub+'</small>':'')+'</div></div>';
+function money(n){return "TT$"+Math.round(n).toLocaleString("en-US")}
+function short(n){
+  if(n>=1e6) return "TT$"+(n/1e6).toFixed(n>=1e7?0:1)+"m";
+  if(n>=1e3) return "TT$"+Math.round(n/1e3)+"k";
+  return "TT$"+Math.round(n);
 }
 
-/* ── slide builders — each returns inner HTML for one full-screen slide ── */
+/* ── the wall's one piece of state ── */
+var FILTER = null;   // {dim:'unit'|'tenure'|'billing', key:'…'}
 
-function sToday(D){
-  var h=D.headline;
-  return '<div class="kick">Premium dues · the 45-day line</div>'
-   + '<h2>'+h.policies+' policies crossed 45 days today</h2>'
-   + '<p class="lede">Forty-five days is past the grace period and still inside the window where a '
-   + 'phone call works. After this the file moves toward lapse and the conversation gets harder.</p>'
-   + '<div class="tiles">'
-   +   '<div class="tile accent"><div class="v">'+h.policies+'</div><div class="k">policies at 45 days</div></div>'
-   +   '<div class="tile"><div class="v">'+money(h.modal)+'</div><div class="k">modal premium held up</div></div>'
-   +   '<div class="tile"><div class="v">'+h.clients+'</div><div class="k">clients — some hold more than one</div></div>'
-   +   '<div class="tile"><div class="v">'+D.context.over45.toLocaleString("en-US")+'</div><div class="k">already past 45 days</div></div>'
-   + '</div>'
-   + '<div class="note">Premium is <b>one instalment</b>, not an annual figure — the workbook\'s Mode '
-   + 'column is empty, so the book cannot be annualised. Counts are an upper bound: the extract was cut '
-   + '<b>'+D.asOf+'</b> and payments made since are not in it.</div>';
+function view(){
+  if(!FILTER) return {
+    n: WALL45.headline.policies, prem: WALL45.headline.modal,
+    autoFail: WALL45.autoFail, tenure: WALL45.tenure, billing: WALL45.billing,
+    units: WALL45.units, agents: WALL45.agents, whole: true };
+  var c = ((WALL45.cross||{})[FILTER.dim]||{})[FILTER.key];
+  if(!c) return Object.assign(view.call(null), {whole:true});
+  return { n:c.n, prem:c.prem, autoFail:c.autoFail, tenure:c.tenure,
+           billing:c.billing, units:c.units, agents:c.agents, whole:false };
 }
-
-function sWave(D){
-  var w=D.wave;
-  return '<div class="kick warn">One week out</div>'
-   + '<h2>'+w.policies+' policies hit the line on '+esc(w.label)+'</h2>'
-   + '<p class="lede">They are one monthly billing cohort — everything paid to <b>'+esc(w.paidTo)+'</b> — '
-   + 'and they cross together. That is <b>eight times</b> a normal day, on a single Friday.</p>'
-   + '<div style="display:flex;align-items:center;gap:56px;flex-wrap:wrap">'
-   +   '<div class="hero gold">'+w.policies+'</div>'
-   +   '<div class="tiles" style="flex-direction:column">'
-   +     '<div class="tile gold"><div class="v">'+money(w.modal)+'</div><div class="k">modal premium landing that day</div></div>'
-   +     '<div class="tile"><div class="v">'+D.context.next7+'</div><div class="k">cross the line in the next 7 days</div></div>'
-   +   '</div>'
-   + '</div>'
-   + '<div class="note">Work it <b>before</b> Friday, not after. A cohort this size cannot be called in a '
-   + 'day, and most of it is on a standing instruction that failed rather than a client who refused.</div>';
+function setFilter(dim,key){
+  if(FILTER && FILTER.dim===dim && FILTER.key===key) return clearFilter();
+  if(!((WALL45.cross||{})[dim]||{})[key]) return;   // nothing to show — leave it alone
+  FILTER={dim:dim,key:key}; paint();
 }
-
-function sLine(D){
-  /* Emphasis chart: today in blue, the wave in gold, the rest de-emphasised.
-     The wave is ~8x the tallest other day, so a shared scale would flatten the
-     other fourteen to nothing. The run-rate days are scaled among themselves and
-     the wave sits past a visible axis break, drawn full height with a dashed cap
-     so nobody reads it as merely tall. Every column carries its own number. */
-  var run=D.line.filter(function(x){return x.off<7}),
-      wave=D.line[D.line.length-1],
-      max=Math.max.apply(null,run.map(function(x){return x.n}));
-  var cols=run.map(function(x){
-    var cls=x.off===0?"col today":"col";
-    return '<div class="'+cls+'"><div class="n">'+x.n+'</div>'
-         + '<div class="b" style="height:'+(x.n/max*100).toFixed(1)+'%"></div>'
-         + '<div class="d">'+esc(dayLabel(x.date,x.off))+'</div></div>';
-  }).join("");
-  cols += '<div class="brk"></div>'
-        + '<div class="col wave"><div class="n">'+wave.n+'</div>'
-        + '<div class="b" style="height:100%"></div>'
-        + '<div class="d">Fri 11</div></div>';
-  return '<div class="kick">The line, day by day</div>'
-   + '<h2>A steady 20 to 67 a day — then Friday</h2>'
-   + '<p class="lede">Policies crossing 45 days, the past week and the week ahead. '
-   + 'Today is blue. Friday sits past the break because it will not share a scale with the rest.</p>'
-   + '<div class="cols">'+cols+'</div>'
-   + '<div class="note">Left of today has already crossed and is still open. '
-   + '<b>'+D.context.next7+' policies</b> carrying <b>'+money(D.context.next7Prem)+'</b> cross in the next seven days.</div>';
-}
-
-function sTenure(D){
-  var max=Math.max.apply(null,D.tenure.map(function(x){return x.n}));
-  var rows=D.tenure.map(function(x){
-    var tone=(x.k==="2–5 years"||x.k==="5–10 years")?"accent":"";
-    return barRow(x.k, max?x.n/max*100:0, x.n, moneyShort(x.prem), tone);
-  }).join("");
-  return '<div class="kick">How long they have been in force</div>'
-   + '<h2>These are not bad sales. They are old clients who stopped.</h2>'
-   + '<p class="lede">Thirty-one of the forty-one have been on the books between <b>two and ten years</b>. '
-   + 'Median <b>'+D.tenureMedian+' years</b>. Only five are inside their first year.</p>'
-   + '<div class="rows">'+rows+'</div>'
-   + '<div class="note">A long-standing client who stops paying usually has a broken instruction, not a '
-   + 'change of heart. The five first-year cases are the opposite problem and want a different conversation.</div>';
-}
-
-function sBilling(D){
-  var max=Math.max.apply(null,D.billing.map(function(x){return x.n}));
-  var auto=D.billing.filter(function(x){return x.auto})
-                    .reduce(function(a,x){return a+x.n},0);
-  var rows=D.billing.map(function(x){
-    return barRow(x.k, x.n/max*100, x.n, moneyShort(x.prem), x.auto?"gold":"");
-  }).join("");
-  return '<div class="kick warn">Why they stopped</div>'
-   + '<h2>'+auto+' of '+D.headline.policies+' were on a standing instruction</h2>'
-   + '<p class="lede">Gold is money that was supposed to collect itself — a bank order, a pre-authorised '
-   + 'cheque, a salary deduction — and did not. A card expired, an account changed, somebody changed jobs.</p>'
-   + '<div class="rows">'+rows+'</div>'
-   + '<div class="note">That is a <b>bank problem to fix</b>, not a client who will not pay — and it is the '
-   + 'most recoverable money on this wall. Only '+(D.headline.policies-auto)+' were billed direct.</div>';
-}
-
-function sUnits(D){
-  var max=Math.max.apply(null,D.units.map(function(x){return x.n}));
-  var rows=D.units.map(function(x,i){
-    return barRow(x.k, x.n/max*100, x.n, moneyShort(x.prem)+" · "+x.agents+" agents", i===0?"accent":"");
-  }).join("");
-  return '<div class="kick">Whose line it is</div>'
-   + '<h2>By unit</h2>'
-   + '<p class="lede">Policies at 45 days today, and the modal premium behind them.</p>'
-   + '<div class="rows">'+rows+'</div>'
-   + '<div class="note">Everyone not in Kerwyn\'s, Akaash\'s or Gary\'s unit sits under the branch manager, '
-   + 'so that row is the unassigned pool rather than one person\'s team. <b>Unassigned</b> are agents on the '
-   + 'dues book who are not on the access list at all — worth knowing why.</div>';
-}
-
-function sAgents(D){
-  /* Exact premium here, not the short form — TT$3,823 and TT$3,814 both round to
-     "TT$4k", and on a leaderboard that reads as a tie when it is not one. */
-  var rows=D.agents.map(function(x,i){
-    return '<div class="r'+(i<3?" top":"")+'">'
-      + '<div class="i">'+(i+1)+'</div>'
-      + '<div class="nm">'+esc(x.k)+'<em>'+esc(x.unit)+'</em></div>'
-      + '<div class="n">'+x.n+'</div>'
-      + '<div class="m">'+money(x.prem)+'</div>'
-      + '<div class="y">'+(x.med!=null?x.med+"y":"—")+'</div></div>';
-  }).join("");
-  var perCol=Math.ceil(D.agents.length/2);
-  return '<div class="kick">Whose line it is</div>'
-   + '<h2>By agent — '+D.agents.length+' people carry today\'s '+D.headline.policies+'</h2>'
-   + '<p class="lede">Policies, modal premium, and the median years in force of that agent\'s cases.</p>'
-   + '<div class="tbl" style="grid-template-rows:repeat('+perCol+',auto)">'+rows+'</div>'
-   + '<div class="note">Count is not the whole story. <b>Randolph Gonzales</b> holds two policies carrying '
-   + 'TT$7,815 — a fifth of the day\'s money on a twentieth of the files. <b>Dhalina Heeraman</b>\'s four '
-   + 'have a median of 0.8 years, the only set that is mostly first-year business.</div>';
-}
-
-var BUILDERS=[sToday,sWave,sLine,sTenure,sBilling,sUnits,sAgents];
-
-/* ── render & rotate ── */
-var cur=0, timer=null, paused=false, DWELL=13000;
-
-function render(D){
-  var host=$("#slides"); host.innerHTML="";
-  BUILDERS.forEach(function(b){
-    var el=document.createElement("div");
-    el.className="slide"; el.innerHTML=b(D);
-    host.appendChild(el);
-  });
-  var dots=$("#dots"); dots.innerHTML="";
-  BUILDERS.forEach(function(_,i){
-    var d=document.createElement("i");
-    d.onclick=function(){go(i)};
-    dots.appendChild(d);
-  });
-  $("#src").textContent="Premium dues extract cut "+D.asOf+" · built "+D.generatedAt
-    + " · aggregates only, no client detail";
-  cur=0; show();
-}
-
-function show(){
-  var slides=document.querySelectorAll(".slide"), dots=document.querySelectorAll(".dots i");
-  slides.forEach(function(s,j){s.classList.toggle("on",j===cur)});
-  dots.forEach(function(d,j){d.classList.toggle("on",j===cur)});
-  var bar=$("#bar");
-  bar.classList.remove("run"); bar.style.width="0%";
-  void bar.offsetWidth;
-  if(!paused){ bar.classList.add("run");
-    bar.style.transitionDuration=DWELL+"ms"; bar.style.width="100%"; }
-  clearTimeout(timer);
-  if(!paused) timer=setTimeout(function(){go(cur+1)},DWELL);
-}
-function go(i){
-  var n=BUILDERS.length;
-  cur=((i%n)+n)%n; show();
-}
-
+function clearFilter(){ FILTER=null; paint(); }
 document.addEventListener("keydown",function(e){
-  if(e.key==="ArrowRight") go(cur+1);
-  else if(e.key==="ArrowLeft") go(cur-1);
-  else if(e.key===" "){ e.preventDefault(); paused=!paused; show(); }
-  else if(e.key==="f"||e.key==="F"){
+  if(e.key==="Escape") clearFilter();
+  if(e.key==="f"||e.key==="F"){
     if(document.fullscreenElement) document.exitFullscreen();
     else document.documentElement.requestFullscreen();
   }
 });
 
-function tick(){
-  $("#clock").textContent=new Date().toLocaleTimeString("en-GB",
-    {hour:"2-digit",minute:"2-digit"});
+/* ── bar rows ── */
+function bars(host,list,dim,tone){
+  var max=0; list.forEach(function(x){ if(x.n>max) max=x.n; });
+  host.innerHTML = list.map(function(x){
+    var t = tone==="auto" ? (x.auto?"gold":"") : (tone||"");
+    var sel = FILTER && FILTER.dim===dim && FILTER.key===x.k;
+    var has = !!((WALL45.cross||{})[dim]||{})[x.k];
+    return '<div class="row'+(sel?' sel':'')+(x.n&&has?'':' zero')+'" '
+      + (x.n&&has?'data-dim="'+dim+'" data-key="'+esc(x.k)+'"':'')+'>'
+      + '<div><div class="lbl">'+esc(x.k)+(x.agents?' <em>· '+x.agents+' agents</em>':'')+'</div>'
+      + '<div class="track"><i class="'+t+'" style="width:'+(max?x.n/max*100:0).toFixed(1)+'%"></i></div></div>'
+      + '<div class="val">'+x.n+'<small>'+short(x.prem)+'</small></div></div>';
+  }).join("");
+  Array.prototype.forEach.call(host.querySelectorAll(".row[data-dim]"),function(el){
+    el.onclick=function(){ setFilter(el.dataset.dim, el.dataset.key) };
+  });
 }
+
+/* ── paint ── */
+function paint(){
+  var v=view(), D=WALL45;
+
+  $("#chip").className = FILTER ? "on" : "";
+  if(FILTER) $("#chipTxt").textContent = FILTER.key;
+  $("#heroKick").textContent = FILTER ? FILTER.key+" · at 45 days today" : "At 45 days today";
+  $("#heroN").textContent = v.n;
+  $("#heroPrem").textContent = money(v.prem);
+  $("#heroAuto").textContent = v.autoFail + " of " + v.n;
+  $("#heroCap").innerHTML = FILTER
+    ? 'policies, of <b>'+D.headline.policies+'</b> on the line today'
+    : 'policies crossed the line today, across <b>'+D.headline.clients+'</b> clients. '
+      + '<b>'+D.context.over45.toLocaleString("en-US")+'</b> are already past it.';
+
+  /* the wave — branch-wide always, because a cohort landing on Friday is not a
+     property of whichever unit is being looked at */
+  var w=D.wave;
+  if(w){
+    $("#waveN").textContent = w.policies;
+    $("#waveHd").textContent = w.policies+" more cross on "+w.label;
+    $("#waveTxt").innerHTML = 'One billing cohort — everything paid to <b>'+esc(w.paidTo)
+      + '</b> — landing together, carrying <b>'+money(w.modal)+'</b>. Eight times a normal day. '
+      + 'Work it before Friday.';
+    var mx=0; D.line.forEach(function(x){ if(x.n>mx) mx=x.n; });
+    $("#spark").innerHTML = D.line.map(function(x){
+      var cls = x.off===0?"t" : (x.n===w.policies?"w":"");
+      return '<i class="'+cls+'" style="height:'+Math.max(3,x.n/mx*100).toFixed(0)+'%"></i>';
+    }).join("");
+  }
+
+  bars($("#rTenure"), v.tenure, "tenure", "accent");
+  bars($("#rBilling"), v.billing, "billing", "auto");
+  bars($("#rUnits"),  v.units,   "unit",    "accent");
+
+  var ag=v.agents.slice(0,12);
+  $("#agentCap").textContent = v.agents.length+" carry "+(FILTER?"this slice":"today's line")
+    + (v.agents.length>12?" — top 12 shown":"");
+  $("#aList").innerHTML = ag.map(function(x,i){
+    return '<div class="arow'+(i<3?' top':'')+'"><div class="nm">'+esc(x.k)
+      + (x.unit?'<em>'+esc(x.unit)+(x.med!=null?' · '+x.med+'y':'')+'</em>':'')
+      + '</div><div class="n">'+x.n+'</div><div class="m">'+money(x.prem)+'</div></div>';
+  }).join("");
+
+  paintSurvey();
+}
+
+function paintSurvey(){
+  var s=WALL45.survey||{}, host=$("#surveyBody");
+  if(!s.sent){
+    var P=WALL45.surveyPool||{ready:0,noEmail:0,letters:[]};
+    var LN={"first-year":"Under 1 year","settling":"1–2 years","established":"2–5 years",
+            "longstanding":"5–10 years","decade-plus":"10–20 years","lifetime":"20 years +"};
+    var mx=Math.max.apply(null,P.letters.map(function(x){return x.n}).concat([1]));
+    $("#surveyCap").textContent = "One letter per client, worded by how long they have held cover. "
+      + "Nothing has been sent.";
+    host.innerHTML =
+      '<div class="sgrid" style="grid-template-columns:repeat(3,1fr)">'
+      + '<div class="accent"><div class="v">'+P.ready+'</div><div class="k">clients ready for a letter</div></div>'
+      + '<div><div class="v">6</div><div class="k">versions, one per tenure band</div></div>'
+      + '<div class="gold"><div class="v">'+P.noEmail+'</div><div class="k">on the line with no usable address</div></div>'
+      + '</div>'
+      + '<div class="rows" style="flex:0;margin-top:2px">'
+      + P.letters.map(function(x){
+          return '<div class="row'+(x.n?'':' zero')+'" style="cursor:default">'
+            + '<div><div class="lbl">'+esc(LN[x.k]||x.k)+'</div>'
+            + '<div class="track"><i class="accent" style="width:'+(x.n/mx*100).toFixed(1)+'%"></i></div></div>'
+            + '<div class="val">'+x.n+'</div></div>';
+        }).join("")
+      + '</div>'
+      + '<p class="cap" style="margin:10px 0 0">Sending stays off until <b style="color:var(--dim)">'
+      + 'INTEL_SURVEY_LIVE</b> is set deliberately. Run <b style="color:var(--dim)">intelSurveyPreview()</b> '
+      + 'first — it renders the real letters with nothing sent.</p>';
+    return;
+  }
+  $("#surveyCap").textContent = "Sent to clients on the line, copying the agent, the desk and the unit manager."
+    + (s.latest?" Latest reply "+s.latest+".":"");
+  var mx=Math.max.apply(null,s.dist.concat([1]));
+  host.innerHTML =
+    '<div class="sgrid">'
+    + '<div><div class="v">'+s.sent+'</div><div class="k">letters sent</div></div>'
+    + '<div class="accent"><div class="v">'+s.responded+'</div><div class="k">clicked a rating</div></div>'
+    + '<div><div class="v">'+s.rate+'%</div><div class="k">response rate</div></div>'
+    + '<div class="'+(s.avg!=null&&s.avg<3.5?'gold':'accent')+'"><div class="v">'
+    +   (s.avg!=null?s.avg:'—')+'</div><div class="k">average rating out of 5</div></div>'
+    + '</div>'
+    + '<div class="stars">'+s.dist.map(function(n,i){
+        return '<div><i style="height:'+Math.max(2,n/mx*40).toFixed(0)+'px"></i><b>'+(i+1)+'</b></div>';
+      }).join("")+'</div>'
+    + (s.heardYes+s.heardNo ? '<p class="cap" style="margin:12px 0 0">Heard from their agent in the '
+        + 'last year: <b style="color:var(--ink)">'+s.heardYes+' yes</b>, '
+        + '<b style="color:var(--ink)">'+s.heardNo+' no</b>.</p>' : '');
+}
+
+/* ── narration ── */
+var audio=null, aIdx=0, playing=false;
+function toggleSound(){
+  if(!NARRATION.length) return;
+  if(playing){ playing=false; if(audio) audio.pause(); $("#sound").classList.remove("on");
+               $("#sound").textContent="▶ Narrate"; return; }
+  playing=true; aIdx=0; $("#sound").classList.add("on"); $("#sound").textContent="■ Stop";
+  next();
+}
+function next(){
+  if(!playing||aIdx>=NARRATION.length){ playing=false;
+    $("#sound").classList.remove("on"); $("#sound").textContent="▶ Narrate"; return; }
+  audio=new Audio(NARRATION[aIdx].a);
+  audio.onended=function(){ aIdx++; setTimeout(next,700); };   // a beat after each line
+  audio.play().catch(function(){ playing=false; $("#sound").textContent="▶ Narrate"; });
+}
+
+function tick(){ $("#clock").textContent=new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}) }
 setInterval(tick,10000); tick();
 
-/* live feed — falls back to the snapshot, so the wall is never blank */
+function boot(){
+  paint();
+  $("#src").textContent = "Premium dues extract cut "+WALL45.asOf+" · built "+WALL45.generatedAt
+    + " · aggregates only, no client detail";
+  var b=$("#sound");
+  b.disabled = !NARRATION.length;
+  b.title = NARRATION.length ? "" : "Narration not built yet — run audio/build-voice.sh";
+}
 function load(){
-  if(!WALL45_URL){ render(WALL45); return; }
+  if(!WALL45_URL){ boot(); return; }
   fetch(WALL45_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
                     body:JSON.stringify({action:"intel.wall"})})
     .then(function(r){return r.json()})
     .then(function(j){
       if(!j||!j.ok||!j.data) throw new Error("bad feed");
-      WALL45=j.data; render(WALL45);
+      WALL45=j.data; FILTER=null; boot();
       $("#live").classList.add("on"); $("#liveTxt").textContent="live";
     })
-    .catch(function(){ render(WALL45);
+    .catch(function(){ boot();
       $("#live").classList.remove("on"); $("#liveTxt").textContent="snapshot"; });
 }
 load();

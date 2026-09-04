@@ -363,69 +363,159 @@ rate is noise.
 
 ## 3g. The 45-day wall
 
-`/intelligence/wall/` — a rotating seven-slide board for the branch screen,
-about one thing: **premiums crossing 45 days**. Same design system as `/board/`
-and the benefits wall, so the three read as one product on adjacent screens.
+`/intelligence/wall/` — **one screen**, not a slideshow, about premiums crossing
+the 45-day line. Same design system as `/board/` and the benefits wall.
 
-Forty-five days is the useful line to watch. It is past the grace period, so the
-policy is genuinely in trouble; it is early enough that a phone call still fixes
-it. The slides:
+Forty-five days is the line worth watching. Past the grace period, so the policy
+is genuinely in trouble; early enough that a phone call still fixes it.
 
-1. **Today** — how many crossed, the modal premium behind them, how many clients
-2. **The wave** — the biggest cohort still ahead of the line, and when it lands
-3. **Day by day** — the line from a week back to a week forward
-4. **How long in force** — the answer to "is this a bad sale or a broken instruction"
-5. **Why they stopped** — billing method, standing instructions picked out
-6. **By unit**, 7. **By agent**
+Everything is on at once: the count and the premium behind it, the wave still
+ahead, tenure, how they pay, the units, the agents, and the survey. **Click any
+bar and the whole wall holds to it** — click Bankers Order and every other panel
+re-reads for those 18 policies; `Esc` clears it; `F` is full screen.
+
+It is one screen rather than seven slides because the seven-slide version put
+"which unit is worst on bank orders" seven slides away from the question, and
+nobody at a wall waits ninety seconds for a panel to come round.
+
+### Clicking into it never touches a row
+
+Ship the 41 policies as rows and a screen in a public room can be filtered down
+to a single line — agent, tenure, premium — which for a cohort this small is a
+client in all but name. So the wall holds **no rows at all**. Every filtered
+view is a cross-tab the server computed: eighteen small aggregate objects, one
+per unit, band and billing method, each already broken down by the other
+dimensions. Clicking re-renders from those.
 
 ### It has no sign-in, so it must not carry anything worth signing in for
 
-A wall screen cannot sign itself in — there is nobody sitting at it — and a
-token written into a page served from a **public repository** is a token anyone
-can read. So the feed action, `intel.wall`, takes **no token at all**, and in
-exchange it returns **only aggregates**: counts, money, bands, and the names of
-our own agents and units. No client names, no policy numbers, no phone numbers,
-no client-level rows of any kind. Somebody who finds the URL learns the branch's
-arrears summary and nothing whatsoever about any client.
+A wall screen cannot sign itself in, and a token written into a page served from
+a **public repository** is a token anyone can read. So `intel.wall` takes **no
+token**, and returns **only aggregates** — counts, money, bands, and the names
+of our own agents and units. Never a client name, policy number or phone number.
 
-**If you extend this screen, that is the rule to keep.** Before adding a field
-to `iBuildWall45_`, ask whether it could identify a client. If it could, it does
-not belong on an unauthenticated feed — put it behind the app instead. The
-builder reads the client number, but only ever to count distinct clients; the
-number itself never leaves the function.
+**That is the rule to keep if you extend this.** Before adding a field to
+`iBuildWall45_`, ask whether it could identify a client. If it could, it belongs
+behind the app's sign-in instead. The same logic covers the room the screen
+hangs in, where clients walk past it.
 
-The same logic applies to the screen in the room. A wall in a branch office is
-read by whoever walks past it, clients included. Agent and unit names are ours
-to show. Client names are not.
+### Arrears come from Paid To Date, not the Days column
 
-### It measures arrears from Paid To Date, not from the Days column
-
-This is the part that decides whether the wall is right or a week and a half
-wrong. The tab carries its own `Days` column, and that column is **frozen at
-whatever moment the extract was cut**. When this was built the extract was ten
-days old, so the policies genuinely at 45 days that morning read **35** in the
-sheet, and the twelve rows showing 45 were really at 55.
+This decides whether the wall is right or a week and a half wrong. The tab's own
+`Days` column is **frozen at the moment the extract was cut**. When this was
+built the extract was ten days old, so the policies genuinely at 45 days that
+morning read **35** in the sheet, and the twelve rows showing 45 were at 55.
 
 `Paid To Date` is a fact about the policy rather than about the export, so
-`today − Paid To Date` stays correct however stale the tab is. That is what the
-wall uses.
+`today − Paid To Date` stays right however stale the tab is. What staleness
+still costs is the **set** of policies — a premium paid since the cut is not in
+the file — so every count is an **upper bound** and the wall says so. `asOf` is
+derived by taking `Paid To Date + Days` across the book and using the date
+thousands of rows agree on, rather than the newest date present, which is only
+a floor.
 
-What staleness still costs is the **set** of policies, and no arithmetic fixes
-that: a premium paid since the cut is not in the file at all. So every count on
-this wall is an **upper bound**, and the wall says so. `asOf` tells you the day
-the extract was frozen — derived by taking `Paid To Date + Days` across the
-book and using the date thousands of rows agree on, rather than the newest date
-present, which is only a floor.
+### Narration
+
+`audio/build-voice.sh` renders ten lines in the branch voice — Andrew at −3%,
+the same as the films — and `audio/embed-audio.py` folds them in as data URIs.
+They **must** be inline: the wall shows in an iframe and a linked MP3 is silent
+there. Until they are built the Narrate button stays disabled and says why.
+
+Both scripts have to run on a machine with direct network. `edge-tts` talks to
+the speech endpoint over a WebSocket, which the sandboxed session that wrote
+this cannot open.
 
 ### Pointing it at live data
 
-Same pattern as `/board/`: paste the `/exec` URL into `WALL45_URL` at the top of
-`intelligence/wall/index.html`. It refreshes every 30 minutes and falls back to
-the committed snapshot if the feed is unreachable, so the screen is never blank.
-The badge in the header reads `live` or `snapshot` so nobody quotes a stale
-figure believing it is current.
+Paste the `/exec` URL into `WALL45_URL` at the top of `intelligence/wall/index.html`.
+It refreshes every 30 minutes and falls back to the committed snapshot if the
+feed is unreachable, so the screen is never blank. The header badge reads `live`
+or `snapshot`, so nobody quotes a stale figure believing it is current.
 
-Keyboard: `←` `→` change slide, `space` pauses, `F` full screen.
+## 3h. The appreciation survey
+
+One letter per client on the 45-day line, asking for a single click, copying the
+agent, the support desk and the unit manager.
+
+### It is not a collections letter, and that is deliberate
+
+Thirty-four of the forty-one were on a standing instruction that failed. Opening
+with money owed treats a broken bank mandate like a refusal to pay, and that is
+how it reads to somebody who has held cover for seven years. So the letter opens
+with the years, mentions the collection as a piece of admin we noticed **on
+their behalf**, and asks one question about the service. The premium usually
+fixes itself once somebody rings the bank. The goodwill does not come back if
+the first contact in seven years was a demand.
+
+### Six letters, by how long they have held cover
+
+| Band | Letter | Opens with |
+|---|---|---|
+| Under 1 year | `first-year` | the first year tells us whether we explained things properly |
+| 1–2 years | `settling` | long enough that we should be getting this right |
+| 2–5 years | `established` | a decision you have quietly renewed every month |
+| 5–10 years | `longstanding` | premiums went out without you having to think about it |
+| 10–20 years | `decade-plus` | most things do not last that long |
+| 20 years + | `lifetime` | you were a client before most of us arrived |
+
+Each merges the client's actual tenure, issue month, agent, and **how they pay**
+in the client's own terms — "a standing order from your bank", "a deduction from
+your salary". One letter per client, not per policy: somebody holding four gets
+one note about the longest-standing of them.
+
+### One click
+
+Five numbered links, nothing else. The rating lands, and only then does the
+thank-you page ask the optional second question — have you heard from your agent
+this year. Progressive, because a form in an e-mail gets no responses at all.
+
+### It is built so that following it carelessly cannot hurt
+
+An insurance e-mail saying a payment failed is exactly the shape a phishing mail
+takes. So this one asks for nothing a forged copy could use: no password field,
+no payment link, no attachment, no request for a number the client already gave
+us. The landing page shows **nothing about the client** — a leaked link tells
+the finder that somebody is a client of this branch and no more. The letter says
+in plain words that we will never ask for a password or a card number by e-mail.
+
+Set `INTEL_BRANCH_PHONE` and the letter tells clients where to ring instead.
+
+### Sending to clients is off, and stays off until somebody types a sentence
+
+`iSend_` routes staff mail to `INTEL_TEST_TO`. That is the right guard for
+digests and the **wrong** one here: the day somebody clears it to let the agent
+digests go live, client mail would start flowing too. So client mail has its own
+switch, unrelated to the internal one:
+
+```
+INTEL_SURVEY_LIVE = send to clients
+```
+
+Exactly that phrase. Anything else — unset, `yes`, `true`, `1` — and the run is
+a rehearsal: it builds every letter, writes every row, and delivers to
+`INTEL_TEST_TO`, or to nobody at all if that is unset too, while still reporting
+what it would have done.
+
+| Function | What it does |
+|---|---|
+| `intelSurveyPreview()` | mails **you** one real letter per tenure band, rendered from live data. Nothing reaches a client. **Run this first.** |
+| `intelSurveySend()` | the run. Obeys the switch above. Stops outright above 60 clients — that means a billing cohort has landed, not a normal day |
+
+Also excluded: anyone with no usable address, anyone surveyed in the last 120
+days, and any policy under 90 days old — a brand-new client whose first
+collection failed needs a call from their agent, not a letter about how long
+they have been with us.
+
+### What the wall shows
+
+Counts and rates: sent, clicked, response rate, average rating, the 1–5
+distribution, and the heard-from-your-agent split. **No comment text and no
+client** — a comment is one person's words about a named colleague and belongs
+in the app behind the sign-in, not on a screen in a room clients walk through.
+
+Before anything is sent, the panel shows what *would* go: how many clients are
+ready, how they split across the six letters, and how many are on the line with
+no usable address. Today that is **26 ready, 13 unreachable**.
 
 ## 4. How it is put together
 

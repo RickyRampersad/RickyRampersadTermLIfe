@@ -3030,10 +3030,61 @@ function iBuildWall45_() {
     tenure: tenure.map(function (t) { return { k: t.k, n: t.n, prem: Math.round(t.prem * 100) / 100 }; }),
     tenureMedian: medianOf(yrs),
     billing: billing, autoFail: autoN, units: unitRows, agents: agentRows,
+    /* Cross-tabs, so the wall can be clicked into without ever holding a row.
+       Ship the 41 rows and a screen in a public room could be filtered down to
+       one line — agent, tenure, premium — which for a cohort this small is a
+       client in all but name. These are the same slices computed server-side:
+       pick any unit, band or billing method and the wall re-renders from a
+       breakdown that was always an aggregate. Eighteen small objects. */
+    cross: iWall45Cross_(sel, unitFor, BANDS, AUTO),
+    survey: iBuildSurveyStats_(), surveyPool: iSurveyPoolSummary_(),
     context: { overdueTotal: overdue, over45: over45,
                over45Prem: Math.round(over45Prem * 100) / 100,
                next7: next7, next7Prem: Math.round(next7Prem * 100) / 100 }
   };
+}
+
+/* One breakdown per value of each dimension, each broken down by the other
+   two plus its agents. Nothing here is finer than a group. */
+function iWall45Cross_(sel, unitFor, BANDS, AUTO) {
+  var DAY = 86400000, today = iToday_();
+  function bandOf(x) {
+    if (!x.issue) return null;
+    var y = (today - x.issue) / DAY / 365.25;
+    for (var i = 0; i < BANDS.length; i++) if (y >= BANDS[i][1] && y < BANDS[i][2]) return BANDS[i][0];
+    return null;
+  }
+  function slice(rows) {
+    function count(keyFn) {
+      var m = {};
+      rows.forEach(function (x) {
+        var k = keyFn(x); if (k == null) return;
+        if (!m[k]) m[k] = { k: k, n: 0, prem: 0 };
+        m[k].n++; m[k].prem += x.prem;
+      });
+      return Object.keys(m).map(function (k) {
+        return { k: k, n: m[k].n, prem: Math.round(m[k].prem * 100) / 100 };
+      }).sort(function (a, b) { return b.n - a.n || b.prem - a.prem; });
+    }
+    var auto = 0;
+    rows.forEach(function (x) { if (AUTO[x.billing]) auto++; });
+    return { n: rows.length,
+             prem: Math.round(rows.reduce(function (a, x) { return a + x.prem; }, 0) * 100) / 100,
+             autoFail: auto,
+             tenure: count(bandOf), billing: count(function (x) { return x.billing; }),
+             units: count(function (x) { return unitFor(x.agent); }),
+             agents: count(function (x) { return x.agent; }) };
+  }
+  var out = { unit: {}, tenure: {}, billing: {} };
+  function group(dim, keyFn) {
+    var m = {};
+    sel.forEach(function (x) { var k = keyFn(x); if (k == null) return; (m[k] = m[k] || []).push(x); });
+    Object.keys(m).forEach(function (k) { out[dim][k] = slice(m[k]); });
+  }
+  group('unit', function (x) { return unitFor(x.agent); });
+  group('tenure', bandOf);
+  group('billing', function (x) { return x.billing; });
+  return out;
 }
 
 function iActData_(b, session) {
@@ -4123,6 +4174,10 @@ function iDialog_(title, text) {
    ══════════════════════════════════════════════════════════════════════════ */
 
 function doGet(e) {
+  /* A survey click arrives here — it is a link in a mail client, so it can
+     only ever be a GET. Everything else keeps the old health response. */
+  var hit = iSurveyClick_(e);
+  if (hit) return hit;
   return iJson_({ ok: true, service: 'Branch Intelligence',
                   built: iProp_('INTEL_LAST_BUILD') || 'never' });
 }
@@ -4136,4 +4191,561 @@ function doPost(e) {
   } catch (err) {
     return iErr_(String(err && err.message ? err.message : err));
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE APPRECIATION SURVEY
+   ══════════════════════════════════════════════════════════════════════════
+   Every client on the 45-day line gets one e-mail, built from what the
+   workbook already knows about them, asking for a single click.
+
+   The framing is deliberate and it is not a collections letter. These are
+   mostly people who have paid for years and whose bank mandate quietly
+   stopped working — 34 of the 41 on the day this was written. Opening with
+   money owed treats a broken standing order like a refusal to pay, and it
+   reads that way to somebody who has held cover with us for seven years.
+   So the e-mail opens with the years, mentions the collection as a piece of
+   admin we noticed on their behalf, and asks one question about the service.
+   The premium usually fixes itself once somebody rings the bank; the goodwill
+   does not come back if the first contact in seven years was a demand.
+
+   ONE CLICK. Five stars, five links, no form, no login, no app. Whatever
+   else is asked comes AFTER the click has landed, on the thank-you page,
+   where it is optional.
+
+   ──────────────────────────────────────────────────────────────────────────
+   SENDING TO CLIENTS IS OFF BY DEFAULT AND STAYS OFF UNTIL SOMEBODY TYPES A
+   SENTENCE.
+
+   iSend_ already routes everything to INTEL_TEST_TO when that property is
+   set. That is the right guard for staff digests and the wrong one here,
+   because the day somebody clears INTEL_TEST_TO to let the agent digests go
+   live, client mail would start flowing too. Client mail therefore has its
+   own switch that has nothing to do with the internal one:
+
+     INTEL_SURVEY_LIVE = send to clients        ← exactly this, or nothing sends
+
+   Anything else — unset, "yes", "true", "1" — and the run is a rehearsal:
+   it builds every message, writes every row, and delivers to INTEL_TEST_TO
+   or, if that is unset too, to nobody at all while still reporting exactly
+   what it would have done. Run intelSurveyPreview() first; it renders the
+   real messages for real clients into a document you can read without a
+   single one of them being sent.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var ISURVEY = {
+  TAB:        'Intel Surveys',
+  LIVE_PHRASE:'send to clients',
+  COOLDOWN:   120,   // days before the same client may be surveyed again
+  MAX_RUN:    60     // never fire more than this in one go without asking again
+};
+
+function iSurveyTab_() {
+  return iSheet_(ISURVEY.TAB,
+    ['Token', 'Sent', 'Client number', 'Client', 'E-mail', 'Policy', 'Agent', 'Unit',
+     'Years in force', 'Band', 'Billing', 'Premium', 'Template',
+     'Rating', 'Rated at', 'Heard from agent', 'Comment', 'Mode']);
+}
+
+/* ── The six letters ───────────────────────────────────────────────────────
+   One per tenure band, because "thank you for your first eight months" and
+   "thank you for your twenty-two years" are not the same sentence and a
+   client can tell when a mail merge has not noticed which of them they are.
+
+   Each carries: the subject, the opening, and the line that names what the
+   relationship has actually been. `y` is years in force, already rounded. */
+var ISURVEY_TEMPLATES = [
+  { id: 'first-year', max: 1,
+    subject: function (d) { return 'A question about your first year with us'; },
+    open: function (d) {
+      return 'You took out your policy with the Ricky Rampersad Branch ' +
+             (d.months <= 1 ? 'last month' : d.months + ' months ago') +
+             '. The first year tells us more than any other about whether we ' +
+             'explained things properly at the start.';
+    },
+    line: function (d) { return 'Cover in force since ' + d.issued + '.'; } },
+
+  { id: 'settling', max: 2,
+    subject: function (d) { return 'Two years with the branch — how are we doing?'; },
+    open: function (d) {
+      return 'You have held cover with us for a little over ' + d.yWord + '. ' +
+             'Long enough that we should be getting this right, and early ' +
+             'enough that we can still fix anything we are not.';
+    },
+    line: function (d) { return 'Cover in force since ' + d.issued + '.'; } },
+
+  { id: 'established', max: 5,
+    subject: function (d) { return d.yWord + ' with us — thank you'; },
+    open: function (d) {
+      return 'You have been with the Ricky Rampersad Branch for ' + d.yWord +
+             '. That is long past the point where a policy is a purchase — ' +
+             'it is a decision you have quietly renewed every month since.';
+    },
+    line: function (d) { return 'Cover in force since ' + d.issued + ' — ' + d.yWord + '.'; } },
+
+  { id: 'longstanding', max: 10,
+    subject: function (d) { return d.yWord + ' of cover — thank you'; },
+    open: function (d) {
+      return 'You have held cover with this branch for ' + d.yWord + '. ' +
+             'In that time premiums have gone out every month without you ' +
+             'having to think about it, which is exactly how it should work ' +
+             'and exactly why we so rarely say thank you for it.';
+    },
+    line: function (d) { return 'Cover in force since ' + d.issued + ' — ' + d.yWord + '.'; } },
+
+  { id: 'decade-plus', max: 20,
+    subject: function (d) { return d.yWord + ' with the branch — thank you'; },
+    open: function (d) {
+      return 'You have been insured through this branch for ' + d.yWord + '. ' +
+             'Most things do not last that long. We would like to make sure ' +
+             'the cover still fits the life you have now, and that whoever ' +
+             'looks after you is doing it well.';
+    },
+    line: function (d) { return 'Cover in force since ' + d.issued + ' — ' + d.yWord + '.'; } },
+
+  { id: 'lifetime', max: 999,
+    subject: function (d) { return d.yWord + '. Thank you.'; },
+    open: function (d) {
+      return d.yWord + ' with the same branch. You were a client here before ' +
+             'most of the people now working on your file arrived, and the ' +
+             'cover you took out then has been running quietly ever since. ' +
+             'We do not take that lightly.';
+    },
+    line: function (d) { return 'Cover in force since ' + d.issued + ' — ' + d.yWord + '.'; } }
+];
+
+function iSurveyTemplate_(years) {
+  for (var i = 0; i < ISURVEY_TEMPLATES.length; i++) {
+    if (years < ISURVEY_TEMPLATES[i].max) return ISURVEY_TEMPLATES[i];
+  }
+  return ISURVEY_TEMPLATES[ISURVEY_TEMPLATES.length - 1];
+}
+
+/* How the premium is collected, said the way the client experiences it. The
+   standing-instruction wording is the whole point of the exercise: it tells
+   somebody their bank stopped paying us without once implying they did. */
+var ISURVEY_BILLING = {
+  'Bankers Order':         { auto: true,  says: 'a standing order from your bank' },
+  'Pre Authorized Cheque': { auto: true,  says: 'a pre-authorised debit' },
+  'Salary Deduction':      { auto: true,  says: 'a deduction from your salary' },
+  'Military Pay':          { auto: true,  says: 'a deduction from your pay' },
+  'Post Dated Cheque':     { auto: false, says: 'post-dated cheques' },
+  'Direct Bill':           { auto: false, says: 'a bill sent directly to you' }
+};
+
+function iSurveyYearsWord_(y) {
+  if (y < 1) { var m = Math.max(1, Math.round(y * 12)); return m + (m === 1 ? ' month' : ' months'); }
+  var n = Math.floor(y);
+  return n + (n === 1 ? ' year' : ' years');
+}
+
+/* ── The message ───────────────────────────────────────────────────────────
+   Plain, table-based HTML because it has to survive Gmail, Outlook and a
+   phone. Inline styles only; no images, no web fonts, no tracking pixel.
+
+   It asks for nothing that a fraudulent copy of it could use. There is no
+   password field, no payment link, no attachment and no request for a
+   number the client already gave us. The only thing to click is a rating,
+   and the page it lands on shows nothing about the client. That matters:
+   an insurance e-mail telling somebody their payment failed is exactly the
+   shape a phishing mail takes, so this one is built so that following it
+   cannot hurt them even if they follow it carelessly. */
+function iSurveyHtml_(d) {
+  var t = d.tpl, bill = ISURVEY_BILLING[d.billing] || { auto: false, says: d.billing };
+  var stars = '';
+  for (var i = 1; i <= 5; i++) {
+    stars += '<a href="' + d.base + '?s=' + d.token + '&r=' + i + '" ' +
+      'style="display:inline-block;width:52px;height:52px;line-height:52px;margin:0 5px;' +
+      'text-align:center;font:700 20px Georgia,serif;color:#00254d;background:#f2c14e;' +
+      'border-radius:26px;text-decoration:none">' + i + '</a>';
+  }
+
+  var payment = bill.auto
+    ? '<p style="margin:0 0 14px">Your premium is collected by <b>' + iEsc_(bill.says) +
+      '</b>. Our records show the last one did not come through. Nine times out of ten ' +
+      'that is the bank rather than anything you have done — a card reissued, an account ' +
+      'moved, a change of employer — and a short call to ' + iEsc_(bill.says.indexOf('salary') >= 0 ? 'your payroll office' : 'your bank') +
+      ' usually settles it. We wanted you to hear it from us first.</p>'
+    : '<p style="margin:0 0 14px">Your premium is billed to you as <b>' + iEsc_(bill.says) +
+      '</b>, and our records show the most recent one is outstanding. If it has crossed ' +
+      'in the post with this note, please ignore this paragraph.</p>';
+
+  return ''
+  + '<div style="font:15px/1.62 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;'
+  + 'color:#16202b;max-width:600px;margin:0 auto;padding:0 4px">'
+
+  + '<div style="border-left:4px solid #0b7fd4;padding:2px 0 2px 14px;margin:0 0 22px">'
+  +   '<div style="font:700 17px Georgia,serif;color:#00254d">Ricky Rampersad Branch</div>'
+  +   '<div style="font-size:12.5px;color:#5c6b7a">Guardian Life · Chaguanas, Trinidad</div>'
+  + '</div>'
+
+  + '<p style="margin:0 0 14px">Dear ' + iEsc_(d.greeting) + ',</p>'
+  + '<p style="margin:0 0 14px">' + t.open(d) + '</p>'
+  + payment
+
+  + '<div style="background:#f4f7fa;border-radius:10px;padding:16px 18px;margin:20px 0">'
+  +   '<div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#5c6b7a;'
+  +   'font-weight:700;margin-bottom:8px">Your policy with us</div>'
+  +   '<div style="font-size:14px;color:#16202b">' + iEsc_(t.line(d)) + '<br>'
+  +   'Looked after by <b>' + iEsc_(d.agent) + '</b>.<br>'
+  +   'Premium collected by ' + iEsc_(bill.says) + '.</div>'
+  + '</div>'
+
+  + '<p style="margin:0 0 6px"><b>One question, one click.</b></p>'
+  + '<p style="margin:0 0 16px">How would you rate the service you have had from '
+  +   iEsc_(d.agent) + '? Tap a number — that is the whole survey.</p>'
+
+  + '<div style="text-align:center;margin:0 0 8px">' + stars + '</div>'
+  + '<table role="presentation" style="width:100%;max-width:340px;margin:0 auto 22px">'
+  +   '<tr><td style="font-size:11.5px;color:#5c6b7a;text-align:left">1 — poor</td>'
+  +   '<td style="font-size:11.5px;color:#5c6b7a;text-align:right">5 — excellent</td></tr>'
+  + '</table>'
+
+  + '<p style="margin:0 0 14px;font-size:13.5px;color:#5c6b7a">'
+  +   'Nothing is asked of you beyond that click. We will never ask you for a password, '
+  +   'a card number or a payment through an e-mail link — if anything claiming to be '
+  +   'from us ever does, it is not from us. To pay a premium or change a bank mandate, '
+  +   (d.branchPhone ? 'call the branch on ' + iEsc_(d.branchPhone) + '.' : 'call the branch directly.')
+  +   '</p>'
+
+  + '<hr style="border:0;border-top:1px solid #e2e8ee;margin:22px 0 14px">'
+  + '<div style="font-size:12.5px;color:#5c6b7a">'
+  +   'Ricky Rampersad Branch · Guardian Life of the Caribbean<br>'
+  +   'Chaguanas, Trinidad and Tobago' + (d.branchPhone ? ' · ' + iEsc_(d.branchPhone) : '') + '<br>'
+  +   'Your agent: ' + iEsc_(d.agent) + (d.agentEmail ? ' · ' + iEsc_(d.agentEmail) : '') + '<br>'
+  +   '<span style="color:#8b98a6">Sent because you hold cover with this branch. '
+  +   'Reply to this e-mail if you would rather not hear from us again.</span>'
+  + '</div></div>';
+}
+
+/* ── Preview ───────────────────────────────────────────────────────────────
+   Renders one real message per tenure band, for real clients, and mails the
+   set to whoever runs it. Nothing reaches a client. Read this before even
+   thinking about the live switch. */
+function intelSurveyPreview() {
+  var pool = iSurveyPool_();
+  if (pool.error) return pool.error;
+  var seen = {}, out = [], n = 0;
+  pool.rows.forEach(function (d) {
+    if (seen[d.tpl.id] || n >= 6) return;
+    seen[d.tpl.id] = 1; n++;
+    d.token = 'PREVIEW'; d.base = iSurveyBase_();
+    out.push('<div style="margin:0 0 10px;font:700 13px sans-serif;color:#00254d;'
+      + 'background:#e8eef4;padding:8px 12px;border-radius:6px">'
+      + iEsc_(d.tpl.id) + ' · ' + iEsc_(d.yWord) + ' · ' + iEsc_(d.billing)
+      + ' · would go to ' + iEsc_(d.email || '(no address)') + '</div>'
+      + iSurveyHtml_(d)
+      + '<hr style="border:0;border-top:2px dashed #c9d4de;margin:34px 0">');
+  });
+  var to = Session.getActiveUser().getEmail() || iProp_('INTEL_TEST_TO');
+  if (!to) return 'No address to send the preview to.';
+  MailApp.sendEmail({ to: to, name: 'Branch Intelligence',
+    subject: '[PREVIEW] The ' + out.length + ' appreciation letters — nothing has been sent',
+    htmlBody: '<div style="font:14px sans-serif;background:#fff8e6;border:1px solid #f2c14e;'
+      + 'padding:14px 16px;border-radius:8px;margin-bottom:26px">'
+      + '<b>This is a preview.</b> These are the real letters for real clients, rendered '
+      + 'from live data. Not one has been sent. ' + pool.rows.length + ' clients are in '
+      + 'today\'s pool.</div>' + out.join('') });
+  return 'Preview of ' + out.length + ' letters sent to ' + to + '. ' +
+         pool.rows.length + ' clients would receive one. Nothing went to a client.';
+}
+
+function iSurveyBase_() {
+  return iProp_('INTEL_EXEC_URL') || ScriptApp.getService().getUrl() || '';
+}
+
+/* ── Who gets one ──────────────────────────────────────────────────────────
+   Today's 45-day cohort, which is the whole idea: the moment a long-standing
+   client's payment stops is the moment worth reaching out, and it is early
+   enough that the reaching out is a courtesy rather than a chase.
+
+   Excluded: anybody with no usable e-mail, anybody surveyed inside the
+   cooldown, and anybody whose policy has been in force less than 90 days —
+   a brand-new client whose first collection failed is a servicing call from
+   their agent, not a letter about how long they have been with us. */
+function iSurveyPool_() {
+  var sh = iTabDues_();
+  if (!sh) return { error: 'No dues tab found.' };
+  var d = iReadCols_(sh, {
+    agent: ['agent'], number: ['number'], clientNo: ['client number'], client: ['client'],
+    premium: ['premium'], issue: ['issue date'], status: ['status'],
+    paidTo: ['paid to date'], billing: ['billing type'], email: ['email']
+  });
+
+  var today = iToday_(), DAY = 86400000;
+  var units = iBuildUnits_(), unitOf = {}, mailOf = {};
+  Object.keys(units).forEach(function (u) {
+    units[u].forEach(function (m) { var k = iNameKey_(m.name); if (k) unitOf[k] = u; });
+  });
+  iAccessTabs_().forEach(function (sh2) {
+    var head = iHeaders_(sh2), last = sh2.getLastRow();
+    if (last < 2) return;
+    var cN = iCol_(head, ['name']), cE = iCol_(head, ['email']);
+    if (cN < 0 || cE < 0) return;
+    sh2.getRange(2, 1, last - 1, sh2.getLastColumn()).getValues().forEach(function (row) {
+      var id = iIdentity_(row[cN], '', '');
+      var k = iNameKey_(id.agentName || row[cN]);
+      if (k && row[cE]) mailOf[k] = iEmail_(row[cE]);
+    });
+  });
+
+  var recent = {}, sh3 = iSurveyTab_(), last3 = sh3.getLastRow();
+  if (last3 > 1) {
+    sh3.getRange(2, 1, last3 - 1, 4).getValues().forEach(function (r) {
+      var when = r[1];
+      if (when instanceof Date && (today - when) / DAY < ISURVEY.COOLDOWN) recent[String(r[2]).trim()] = 1;
+    });
+  }
+
+  var rows = [], skipped = { noEmail: 0, cooldown: 0, tooNew: 0 };
+  for (var r = 0; r < d.rows; r++) {
+    if (String(d.get('status', r)).trim() !== '2') continue;
+    var paid = iDate_(d.get('paidTo', r));
+    if (!paid || Math.round((today - paid) / DAY) !== 45) continue;
+
+    var issue = iDate_(d.get('issue', r));
+    var years = issue ? (today - issue) / DAY / 365.25 : 0;
+    if (years * 365.25 < 90) { skipped.tooNew++; continue; }
+
+    var clientNo = String(d.get('clientNo', r)).trim();
+    if (recent[clientNo]) { skipped.cooldown++; continue; }
+
+    var email = iEmail_(d.get('email', r));
+    if (!email) { skipped.noEmail++; continue; }
+
+    var agent = String(d.get('agent', r)).trim();
+    var client = String(d.get('client', r)).trim();
+    var nk = iNameKey_(agent);
+    rows.push({
+      clientNo: clientNo, client: client,
+      greeting: iSurveyGreeting_(client),
+      email: email, policy: String(d.get('number', r)).trim(),
+      agent: agent, agentEmail: mailOf[nk] || '',
+      unit: unitOf[nk] || 'Unassigned',
+      years: Math.round(years * 10) / 10, yWord: iSurveyYearsWord_(years),
+      months: Math.max(1, Math.round(years * 12)),
+      issued: issue ? Utilities.formatDate(issue, iTz_(), 'MMMM yyyy') : 'record unclear',
+      billing: String(d.get('billing', r)).trim() || 'Direct Bill',
+      premium: iNum_(d.get('premium', r)),
+      /* Set INTEL_BRANCH_PHONE and the letter tells clients where to ring
+         instead of pointing at a number that is not there. Without it the
+         wording changes rather than leaving a dangling "see below". */
+      branchPhone: iProp_('INTEL_BRANCH_PHONE'),
+      tpl: iSurveyTemplate_(years)
+    });
+  }
+  /* One letter per client, not per policy. Somebody holding four policies
+     gets one note about the longest-standing of them, because four identical
+     thank-yous in one inbox is the opposite of feeling looked after. */
+  var byClient = {};
+  rows.forEach(function (x) {
+    var k = x.clientNo || x.email;
+    if (!byClient[k] || x.years > byClient[k].years) byClient[k] = x;
+  });
+  return { rows: Object.keys(byClient).map(function (k) { return byClient[k]; }), skipped: skipped };
+}
+
+/* "MOHAMMED, FATIMA" and "RAMPERSAD-SINGH, ANN MARIE" both have to come out
+   as something you would actually write at the top of a letter. Surname-first
+   with a comma is the extract's format; take the given names, title-case
+   them, and fall back to a neutral greeting rather than shouting a name in
+   capitals at somebody who has been a client for twenty years. */
+function iSurveyGreeting_(name) {
+  var s = String(name || '').trim();
+  if (!s) return 'Valued client';
+  var parts = s.split(',');
+  var given = parts.length > 1 ? parts[1] : parts[0];
+  given = String(given).trim().split(/\s+/)[0] || '';
+  if (!/^[A-Za-z'’-]{2,}$/.test(given)) return 'Valued client';
+  return given.charAt(0).toUpperCase() + given.slice(1).toLowerCase();
+}
+
+/* ── Sending ───────────────────────────────────────────────────────────────
+   Copies the agent, the support desk and the unit manager on every letter,
+   so the three people who might get a reply all know it went out and what it
+   said. The client is the only address in To; the rest are Cc, because a
+   client should be able to see who at the branch is looking after them. */
+function intelSurveySend() {
+  var live = iProp_('INTEL_SURVEY_LIVE').trim().toLowerCase() === ISURVEY.LIVE_PHRASE;
+  var test = iProp_('INTEL_TEST_TO');
+  var pool = iSurveyPool_();
+  if (pool.error) return pool.error;
+
+  var rows = pool.rows;
+  if (!rows.length) return 'Nobody is on the 45-day line with a usable address today.';
+  if (rows.length > ISURVEY.MAX_RUN) {
+    return 'STOPPED. ' + rows.length + ' clients are in the pool, over the ' + ISURVEY.MAX_RUN +
+           ' cap. That usually means a billing cohort has landed rather than a normal day. ' +
+           'Look at it, then raise ISURVEY.MAX_RUN deliberately if it is right.';
+  }
+
+  var sh = iSurveyTab_(), base = iSurveyBase_(), sent = 0;
+  var support = iSurveySupport_(), mode = live ? 'live' : (test ? 'test' : 'dry');
+
+  rows.forEach(function (d) {
+    d.token = Utilities.getUuid().replace(/-/g, '');
+    d.base = base;
+    var html = iSurveyHtml_(d);
+    var cc = [d.agentEmail, support.desk, support.managerFor(d.unit)]
+               .filter(function (x) { return x; })
+               .filter(function (x, i, a) { return a.indexOf(x) === i; }).join(',');
+
+    if (mode === 'live') {
+      MailApp.sendEmail({ to: d.email, cc: cc, name: 'Ricky Rampersad Branch',
+                          subject: d.tpl.subject(d), htmlBody: html });
+      sent++;
+    } else if (mode === 'test') {
+      MailApp.sendEmail({ to: test, name: 'Branch Intelligence',
+        subject: '[TEST] ' + d.tpl.subject(d),
+        htmlBody: '<div style="background:#E8A020;color:#00254d;padding:10px 14px;'
+          + 'font:700 13px sans-serif;border-radius:8px;margin-bottom:14px">TEST MODE — '
+          + 'this would have gone to ' + iEsc_(d.email) + ', copying ' + iEsc_(cc || 'nobody')
+          + '</div>' + html });
+      sent++;
+    }
+    sh.appendRow([d.token, new Date(), d.clientNo, d.client, d.email, d.policy, d.agent,
+                  d.unit, d.years, d.tpl.id, d.billing, d.premium, d.tpl.id,
+                  '', '', '', '', mode]);
+  });
+
+  if (mode === 'live') return 'Sent ' + sent + ' letters to clients, copying agents, the desk and unit managers.';
+  if (mode === 'test') return 'TEST MODE. ' + sent + ' letters built and routed to ' + test +
+    '. No client was written to. Set INTEL_SURVEY_LIVE to "' + ISURVEY.LIVE_PHRASE + '" when you mean it.';
+  return 'DRY RUN. ' + rows.length + ' letters built and logged, none delivered — ' +
+    'INTEL_SURVEY_LIVE is not set to "' + ISURVEY.LIVE_PHRASE + '" and INTEL_TEST_TO is empty.';
+}
+
+/* The desk and the unit managers, read off the access list rather than typed
+   into code, so somebody joining or leaving the branch does not need a
+   developer. */
+function iSurveySupport_() {
+  var desk = [], mgr = {};
+  iAccessTabs_().forEach(function (sh) {
+    var head = iHeaders_(sh), last = sh.getLastRow();
+    if (last < 2) return;
+    var cN = iCol_(head, ['name']), cE = iCol_(head, ['email']),
+        cR = iCol_(head, ['role (agent/manager/staff)', 'role']), cU = iCol_(head, ['unit']);
+    if (cE < 0) return;
+    sh.getRange(2, 1, last - 1, sh.getLastColumn()).getValues().forEach(function (row) {
+      var email = iEmail_(row[cE]); if (!email) return;
+      var role = cR >= 0 ? iRoleOf_(row[cR]) : 'agent';
+      var unit = cU >= 0 ? String(row[cU]).trim() : '';
+      if (role === 'staff' || role === 'staff-lead') desk.push(email);
+      var id = iIdentity_(cN >= 0 ? row[cN] : '', '', '');
+      if ((role === 'unit' || role === 'branch') && unit &&
+          iNameKey_(id.agentName || (cN >= 0 ? row[cN] : '')) === iNameKey_(unit)) mgr[unit] = email;
+    });
+  });
+  return { desk: desk.join(','), managerFor: function (u) { return mgr[u] || ''; } };
+}
+
+/* ── The click ─────────────────────────────────────────────────────────────
+   A GET, because that is all a mail client will do. The landing page names
+   the agent — the client already knows who that is — and says nothing else
+   about anybody. A link that leaks tells the finder that somebody, somewhere,
+   is a client of this branch, and no more than that. */
+function iSurveyClick_(e) {
+  var p = (e && e.parameter) || {};
+  var token = String(p.s || '').trim();
+  if (!token) return null;
+  var sh = iSurveyTab_(), last = sh.getLastRow();
+  if (last < 2) return iSurveyPage_('That link has expired.', '', '');
+  var vals = sh.getRange(2, 1, last - 1, 18).getValues();
+  for (var r = 0; r < vals.length; r++) {
+    if (String(vals[r][0]) !== token) continue;
+    var agent = String(vals[r][6] || 'your agent');
+    if (p.r) {
+      var n = Math.max(1, Math.min(5, parseInt(p.r, 10) || 0));
+      sh.getRange(r + 2, 14).setValue(n);
+      sh.getRange(r + 2, 15).setValue(new Date());
+      return iSurveyPage_('Thank you.', 'Your rating of ' + n + ' out of 5 has been recorded ' +
+        'and will be read by the branch. Nothing further is needed.', token, agent);
+    }
+    if (p.c) {
+      sh.getRange(r + 2, 16).setValue(String(p.c).toLowerCase() === 'yes' ? 'Yes' : 'No');
+      return iSurveyPage_('Thank you — that is genuinely useful.',
+        'The branch will see it alongside your rating.', '', '');
+    }
+    return iSurveyPage_('Thank you.', 'Your response has been recorded.', '', '');
+  }
+  return iSurveyPage_('That link has expired.',
+    'Ratings are recorded once. If you would like to tell us something, call the branch.', '', '');
+}
+
+function iSurveyPage_(head, body, token, agent) {
+  var follow = token && agent
+    ? '<div style="margin-top:26px;padding-top:22px;border-top:1px solid #e2e8ee">'
+      + '<p style="margin:0 0 12px;font-size:15px">One more, only if you have a moment — '
+      + 'have you heard from <b>' + iEsc_(agent) + '</b> in the last year?</p>'
+      + '<a href="?s=' + iEsc_(token) + '&c=yes" style="display:inline-block;padding:11px 26px;'
+      + 'margin-right:8px;background:#0b7fd4;color:#fff;border-radius:8px;text-decoration:none;'
+      + 'font-weight:600">Yes</a>'
+      + '<a href="?s=' + iEsc_(token) + '&c=no" style="display:inline-block;padding:11px 26px;'
+      + 'background:#eef2f6;color:#16202b;border-radius:8px;text-decoration:none;'
+      + 'font-weight:600">No</a></div>'
+    : '';
+  return HtmlService.createHtmlOutput(
+    '<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<div style="font:16px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;'
+    + 'color:#16202b;max-width:520px;margin:9vh auto;padding:0 22px">'
+    + '<div style="font:700 15px Georgia,serif;color:#00254d;margin-bottom:26px">'
+    + 'Ricky Rampersad Branch<span style="display:block;font:400 12.5px sans-serif;color:#5c6b7a">'
+    + 'Guardian Life · Chaguanas</span></div>'
+    + '<h1 style="font:700 27px Georgia,serif;color:#00254d;margin:0 0 12px">' + iEsc_(head) + '</h1>'
+    + '<p style="margin:0;color:#3d4c5a">' + iEsc_(body) + '</p>' + follow
+    + '</div>').setTitle('Thank you — Ricky Rampersad Branch');
+}
+
+/* ── What the wall shows ───────────────────────────────────────────────────
+   Counts and rates. No client, no policy, no comment text — a comment is
+   one person's words about a named colleague and it belongs in the app
+   behind the sign-in, not on a screen in a room clients walk through. */
+function iBuildSurveyStats_() {
+  var sh = iSurveyTab_(), last = sh.getLastRow();
+  var out = { sent: 0, responded: 0, rate: 0, avg: null, dist: [0, 0, 0, 0, 0],
+              heardYes: 0, heardNo: 0, byBand: [], byUnit: [], live: 0, latest: '' };
+  if (last < 2) return out;
+  var vals = sh.getRange(2, 1, last - 1, 18).getValues();
+  var band = {}, unit = {}, sum = 0, latest = null;
+  vals.forEach(function (r) {
+    if (String(r[17]) === 'live') out.live++;
+    out.sent++;
+    var b = String(r[9] || '—'), u = String(r[7] || 'Unassigned');
+    if (!band[b]) band[b] = { k: b, sent: 0, resp: 0, sum: 0 };
+    if (!unit[u]) unit[u] = { k: u, sent: 0, resp: 0, sum: 0 };
+    band[b].sent++; unit[u].sent++;
+    var n = Number(r[13]);
+    if (n >= 1 && n <= 5) {
+      out.responded++; sum += n; out.dist[n - 1]++;
+      band[b].resp++; band[b].sum += n; unit[u].resp++; unit[u].sum += n;
+      if (r[14] instanceof Date && (!latest || r[14] > latest)) latest = r[14];
+    }
+    if (String(r[15]) === 'Yes') out.heardYes++;
+    if (String(r[15]) === 'No') out.heardNo++;
+  });
+  out.rate = out.sent ? Math.round(out.responded / out.sent * 1000) / 10 : 0;
+  out.avg = out.responded ? Math.round(sum / out.responded * 10) / 10 : null;
+  out.latest = latest ? iIso_(latest) : '';
+  function fold(m) {
+    return Object.keys(m).map(function (k) {
+      var o = m[k];
+      return { k: o.k, sent: o.sent, resp: o.resp,
+               avg: o.resp ? Math.round(o.sum / o.resp * 10) / 10 : null };
+    }).sort(function (a, b) { return b.sent - a.sent; });
+  }
+  out.byBand = fold(band); out.byUnit = fold(unit);
+  return out;
+}
+
+/* What WOULD go out, so the wall has something true to show before anything
+   has been sent. Counts per letter only — how many clients sit in each tenure
+   band today, and how many are unreachable. No client, no policy, no address. */
+function iSurveyPoolSummary_() {
+  var pool = iSurveyPool_();
+  if (pool.error) return { ready: 0, letters: [], noEmail: 0 };
+  var m = {};
+  ISURVEY_TEMPLATES.forEach(function (t) { m[t.id] = { k: t.id, n: 0 }; });
+  pool.rows.forEach(function (d) { if (m[d.tpl.id]) m[d.tpl.id].n++; });
+  return { ready: pool.rows.length, noEmail: pool.skipped.noEmail,
+           letters: ISURVEY_TEMPLATES.map(function (t) { return m[t.id]; }) };
 }
