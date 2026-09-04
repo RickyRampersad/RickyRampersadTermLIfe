@@ -135,6 +135,11 @@
   .kpi.gold::after{background:var(--gold)} .kpi.red::after{background:var(--red)}
   .kpi.green::after{background:var(--green)} .kpi.teal::after{background:var(--teal)}
   .when{display:grid;grid-template-columns:auto 1fr;gap:1vw 1.2vw;align-items:baseline}
+  /* The Salesforce side of card 3, under the blocks: same question, other
+     system. Sits apart from the rows so it does not read as one of them. */
+  .foot{margin-top:1.6vh;padding-top:1.4vh;border-top:1px solid var(--line);
+        font-size:2.5vh;line-height:1.45;color:var(--muted)}
+  .foot b{color:var(--ink);font-weight:800}
   .when .t{font-size:3.4vh;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums;white-space:nowrap}
   .when .w{font-size:2.1vh;line-height:1.35}
   .when .w b{color:#fff} .when .w span{color:var(--muted);display:block;font-size:1.7vh;margin-top:.3vh}
@@ -242,198 +247,112 @@ const DWELL=14000;
 // Salesforce connection is switched on, the same figures flow live into the
 // app; the wall's snapshot is refreshed by rebuilding this block.
 const TASKS={
-  // Read from Salesforce on 3 September 2026. THIS IS A SNAPSHOT, NOT A FEED —
-  // the wall cannot reach Salesforce itself until SF_KEY and SF_SECRET are set
-  // in the Apps Script project, so these numbers are true on the day they were
-  // taken and drift after it. The previous set said 26 August and was still on
-  // screen on 3 September, reading 132 overdue when the real figure was 144.
-  // If asOf is not close to today, say so out loud rather than presenting it.
-  asOf:"2026-09-03",
+  // Read from Salesforce on 4 September 2026, early afternoon. THIS IS A
+  // SNAPSHOT, NOT A FEED — the wall cannot reach Salesforce itself until the
+  // client credentials Run As user takes on the External Client App, so these
+  // are true at the moment they were taken and drift after it. Every figure
+  // below came out of one pass, so they agree with each other; mixing a fresh
+  // count with a stale one is how the 132-against-144 error happened.
+  asOf:"2026-09-04",
 
   // Never a sum of days. Adding "days outstanding" across tasks produces a
-  // number with no meaning — twenty thousand days is not a fact about anything.
-  // Count, the age band, and the single oldest are the honest three.
+  // number with no meaning. Count, the age band, and the single oldest are the
+  // honest three.
 
-  // What was WORKED today, not only what closed.
-  //
-  // The Branch Manager's correction, and he is right: the branch is driven by
-  // Salesforce tasks, and a task that was moved is work. Counting only closures
-  // showed Kamla and Elizabeth as zero on a day they each moved three or four
-  // tasks, and showed Sasha as one when she had moved six. Nobody should have
-  // to close a task to be seen to have done a day.
-  //
-  // Measured on LastModifiedDate = today, split by the status it was left in:
-  //   closed   — Completed
-  //   moving   — In Progress, still with us
-  //   waiting  — Waiting on someone else, chased and now blocked
-  //
-  // The birthday mailer closes 19 of its own and is counted nowhere here.
-  // `written` is the count of those tasks that carry any record of what was
-  // actually done — an email or note in the Description, OR a Chatter post.
-  //
-  // CORRECTION, 3 September. The first version of this counted the Description
-  // field alone and put "nothing written on any of them" on the office wall
-  // against Sasha, Kamla and Elizabeth. That was wrong about two of the three.
-  // Sasha had written three Chatter notes that day and Elizabeth two — real
-  // ones: "Kindly provide an UW decision on case as today would make the TAT",
-  // "From Claim Officer: the claim is not yet approved, we are reviewing with a
-  // second CMO". They were writing things up in the place the branch actually
-  // uses, and the wall called them out for not doing it.
-  //
-  // Measure the thing people do, not the field you happened to query first.
-  //
-  // This is the control the Branch Manager asked for, and it matters more than
-  // any of the counts beside it. A task can be moved in two seconds: change the
-  // status, push the due date into next week, and the wall reads it as work.
-  // Today, 17 of the 38 tasks moved were moved with nothing written anywhere,
-  // and the due dates on many of them were pushed to the 8th, 9th and 10th.
-  //
-  // The branch's own standard already says it: a rolled due date is not an
-  // actioned task. This is that standard, counted.
-  //
-  // Pawan is the model, and it costs him a sentence: "Spoke with Mr Russell he
-  // said to renew as is." Twelve words and the next person knows everything.
+  // What was WORKED today, not only what closed. Ricky's 16 closures are the
+  // birthday flow and are held in `robot` instead — counting them here would
+  // put the branch's biggest closer at the top of a board he did no hand work
+  // on today.
   worked:[
-    {n:"Azariah",  worked:17, closed:13, moving:4, waiting:0, written:12,
-     types:{"":11,"Renewa/PDl/Bill":6}},
-    {n:"Sasha",    worked:7,  closed:1,  moving:6, waiting:0, written:3,
-     types:{"Pendings":5,"Renewa/PDl/Bill":2}},
-    {n:"Pawan",    worked:7,  closed:6,  moving:0, waiting:1, written:4,
-     types:{"":4,"Renewa/PDl/Bill":3}},
-    {n:"Kamla",    worked:4,  closed:0,  moving:2, waiting:2, written:0,
-     types:{"Lic/Staffing/SA/HR":4}},
-    // Elizabeth's two Chatter notes sit on tasks she did not otherwise change,
-    // and posting Chatter does not touch LastModifiedDate — so those two do
-    // not appear in `worked` at all. Her day is larger than any field here
-    // shows, which is the whole argument for reading the feed.
-    {n:"Elizabeth",worked:3,  closed:0,  moving:2, waiting:1, written:2, alsoChattered:2,
-     types:{"Servicing":3}},
-    {n:"Ricky",    worked:0,  closed:0,  moving:0, waiting:0, written:0, types:{}}],
+    {n:"Sasha",    worked:10, closed:4, moving:6, waiting:0, written:11,
+     types:{"Pendings":6,"Renewa/PDl/Bill":4}},
+    {n:"Pawan",    worked:8,  closed:5, moving:0, waiting:3, written:8,
+     types:{"Renewa/PDl/Bill":5,"Servicing":3}},
+    {n:"Kamla",    worked:6,  closed:0, moving:1, waiting:5, written:1,
+     types:{"Renewa/PDl/Bill":3,"Claims/ Mat":2,"Servicing":1}},
+    {n:"Azariah",  worked:5,  closed:1, moving:4, waiting:0, written:8,
+     types:{"Renewa/PDl/Bill":4,"Servicing":1}},
+    {n:"Elizabeth",worked:1,  closed:0, moving:0, waiting:1, written:0,
+     types:{"Servicing":1}},
+    {n:"Ricky",    worked:0,  closed:0, moving:0, waiting:0, written:0, types:{}}],
 
-  // Task_Update_Reason_c__c exists on every task and is filterable. 1,534 of
-  // the 1,555 tasks touched in the last thirty days have it blank — 98.6%.
-  // The field built to record why a task moved is not being used at all.
+  // Notes are counted two ways because they are two different facts: how many
+  // notes went on, and how many separate tasks now carry one. Thirty-eight
+  // notes across twenty-eight tasks is not thirty-eight tasks written up.
+  notes:{ posts:38, tasks:28,
+          by:[{n:"Azariah",posts:14,tasks:8},{n:"Sasha",posts:14,tasks:11},
+              {n:"Pawan",posts:9,tasks:8},{n:"Kamla",posts:1,tasks:1},
+              {n:"Elizabeth",posts:0,tasks:0},{n:"Ricky",posts:0,tasks:0}] },
+
+  // Task_Type__c — the branch's own field, not the standard Type, which is
+  // empty on almost everything and is not the one in use. 156 of 247 open
+  // tasks carry a type. Of the 91 that do not, 77 are the Branch Manager's,
+  // and they are inbound email that lands untyped.
+  untyped:{ total:91, of:247,
+            by:[{n:"Ricky",v:77},{n:"Sasha",v:8},{n:"Kamla",v:4},
+                {n:"Azariah",v:2},{n:"Elizabeth",v:0},{n:"Pawan",v:0}] },
+
   updateReason:{ blank:1534, of:1555 },
-
-  // Closed by hand. The birthday mailer is counted separately and never here.
-  today:{ closed:[{n:"Azariah",v:13},{n:"Pawan",v:6},{n:"Sasha",v:1},
+  today:{ closed:[{n:"Pawan",v:5},{n:"Sasha",v:4},{n:"Azariah",v:1},
                   {n:"Elizabeth",v:0},{n:"Kamla",v:0},{n:"Ricky",v:0}] },
   week: { closed:[{n:"Azariah",v:84},{n:"Sasha",v:60},{n:"Kamla",v:28},
                   {n:"Elizabeth",v:17},{n:"Pawan",v:14},{n:"Ricky",v:0}] },
-
-  // The overdue book, by owner and task type. Counts are measured; per-row
-  // ages are not carried here because they were not measured per row — the
-  // age facts that ARE measured live in `aged` below.
   overdue:[
-    {who:"Ricky",  type:"",                   n:76},
-    {who:"Kamla",  type:"Renewa/PDl/Bill",    n:12},
+    {who:"Ricky",  type:"",                   n:77},
+    {who:"Kamla",  type:"Renewa/PDl/Bill",    n:13},
     {who:"Kamla",  type:"Opportunity",        n:11},
-    {who:"Kamla",  type:"Lic/Staffing/SA/HR", n:9},
     {who:"Kamla",  type:"Claims/ Mat",        n:9},
-    {who:"Kamla",  type:"Pendings",           n:6},
-    {who:"Kamla",  type:"Servicing",          n:5},
+    {who:"Kamla",  type:"Servicing",          n:8},
+    {who:"Kamla",  type:"Lic/Staffing/SA/HR", n:7},
+    {who:"Kamla",  type:"Pendings",           n:5},
     {who:"Pawan",  type:"Renewa/PDl/Bill",    n:4},
     {who:"Ricky",  type:"Servicing",          n:3},
     {who:"Ricky",  type:"Lic/Staffing/SA/HR", n:2},
+    {who:"Pawan",  type:"RR Operations",      n:2},
     {who:"Kamla",  type:"",                   n:2},
     {who:"Ricky",  type:"Opportunity",        n:1},
-    {who:"Ricky",  type:"Renewa/PDl/Bill",    n:1},
-    {who:"Pawan",  type:"Servicing",          n:1},
-    {who:"Pawan",  type:"RR Operations",      n:1},
-    {who:"Pawan",  type:"Claims/ Mat",        n:1}],
-
-  // How old the overdue book actually is, per person. This is the number that
-  // was missing, and without it the wall was actively misleading: Ricky's 83
-  // and Kamla's 54 drew almost the same bar, and they are opposite situations.
-  // 53 of Ricky's are over a month old and 11 are over two. Every one of
-  // Kamla's is one or two days past its date — yesterday's work, not neglect.
+    {who:"Ricky",  type:"Renewa/PDl/Bill",    n:1}],
   age:{
-    Ricky:{ over30:53, over60:11, oldestDays:90, oldestSince:"5 June" },
-    Kamla:{ over30:0,  over60:0,  oldestDays:2,  oldestSince:"1 September" },
-    Pawan:{ over30:0,  over60:0,  oldestDays:6,  oldestSince:"28 August" }},
-  aged:{ over60:11, over60Who:"Ricky", oldestDays:90, oldestSince:"5 June" },
-
-  // The open book per person: how many, not how many days.
+    Ricky:{ over30:55, over60:11, oldestDays:91, oldestSince:"5 June" },
+    Kamla:{ over30:0,  over60:0,  oldestDays:3,  oldestSince:"1 September" },
+    Pawan:{ over30:0,  over60:0,  oldestDays:7,  oldestSince:"28 August" }},
+  aged:{ over60:11, over60Who:"Ricky", oldestDays:91, oldestSince:"5 June" },
   byPerson:{
-    Ricky:{open:87,overdue:83},
-    Kamla:{open:74,overdue:54},
-    Sasha:{open:36,overdue:0},
-    Azariah:{open:23,overdue:0},
-    Pawan:{open:16,overdue:7},
-    Elizabeth:{open:12,overdue:0}},
-
-  // Who the branch is actually waiting on, by the person the task sits
-  // against rather than by a status word. Measured 3 September.
+    Ricky:{open:88,overdue:84},
+    Kamla:{open:78,overdue:55},
+    Sasha:{open:34,overdue:0},
+    Azariah:{open:24,overdue:0},
+    Pawan:{open:14,overdue:6},
+    Elizabeth:{open:9,overdue:0}},
   waitingOn:[
-    {who:"Veena Kanhai-Gowdhan",   n:9, agent:"Kamla", days:1},
-    {who:"Ricky Rampersad",        n:4, agent:"Kamla", days:2},
-    {who:"Faustina Cabrera",       n:3, agent:"Kamla", days:2},
-    {who:"Genevieve Pierre",       n:3, agent:"Kamla", days:2},
-    {who:"Hema Ramdeo",            n:2, agent:"Kamla", days:2},
-    {who:"GLOC Actuarial",         n:2, agent:"Kamla", days:2},
-    {who:"Sandra Lalchan-Mahipat", n:2, agent:"Kamla", days:2},
-    {who:"Samlal Ramsamooj",       n:1, agent:"Pawan", days:6},
-    {who:"Robert Boodoo",          n:1, agent:"Pawan", days:2},
-    {who:"Dipchan Persad",         n:1, agent:"Kamla", days:2}],
-
-  // The Branch Manager's untyped pile, looked at rather than assumed. It was
-  // taken for the birthday mailer for weeks. It is not: the birthdays are
-  // Servicing, they close themselves, and they never enter this book at all.
-  // These are inbound emails from clients and agents, waiting on a reply.
-  inbound:{ total:76, waiting:73, notStarted:3, oldestDays:90, oldestSince:"5 June",
+    {who:"Veena Kanhai-Gowdhan",   n:9, agent:"Kamla", days:2},
+    {who:"Ricky Rampersad",        n:4, agent:"Kamla", days:3},
+    {who:"Faustina Cabrera",       n:3, agent:"Kamla", days:3},
+    {who:"Genevieve Pierre",       n:3, agent:"Kamla", days:3},
+    {who:"Hema Ramdeo",            n:2, agent:"Kamla", days:3},
+    {who:"GLOC Actuarial",         n:2, agent:"Kamla", days:3},
+    {who:"Sandra Lalchan-Mahipat", n:2, agent:"Kamla", days:3},
+    {who:"Samlal Ramsamooj",       n:1, agent:"Pawan", days:7},
+    {who:"Robert Boodoo",          n:1, agent:"Pawan", days:3},
+    {who:"Dipchan Persad",         n:1, agent:"Kamla", days:3}],
+  inbound:{ total:77, waiting:74, notStarted:3, oldestDays:91, oldestSince:"5 June",
             who:"Ricky" },
-
-  // What has to move before people go home, read on 3 September.
-  //
-  // Two lists, because they are two different failures. "In our hands" is due
-  // today and nobody else is holding it up. "Never started" has status Not
-  // Started since the day it was created — not late, never begun, which is the
-  // one an overdue count never distinguishes.
-  //
-  // ONE ITEM IS DELIBERATELY MASKED — the row carrying masked:true.
-  //
-  // Do not write here what it is. This file is served publicly and the comment
-  // goes with it; describing the masked item in a comment undoes the mask, and
-  // that is exactly what the first version of this block did.
-  //
-  // The rule: if a task names a member of staff about their pay, conduct or
-  // contract, it is counted and aged on the wall but never described on it.
-  // The Branch Manager gets the real subject in his own list, not here.
   endOfDay:{
     inHand:[
-      {who:"Azariah", what:"Premium — Leila Jailal 8004023177", state:"In Progress"},
-      {who:"Kamla",   what:"Confirm funds — Ralna Romany-Thomas", state:"Escalated"}],
+      {who:"Kamla", what:"Xtra Foods — August and September group billing", state:"Due today"},
+      {who:"Kamla", what:"Confirm funds — Ralna Romany-Thomas", state:"Escalated"}],
     waitingDueToday:8,
     neverStarted:[
-      {who:"Ricky", what:"Investment discussions — Neal Balroop",              days:162},
-      {who:"Ricky", what:"A staffing matter",                                  days:108, masked:true},
-      {who:"Ricky", what:"Formal escalation — client complaint of 11 May",     days:98},
-      {who:"Ricky", what:"HR — agent signature discrepancies on scripts",      days:90},
-      {who:"Ricky", what:"Agents portal — two links, never opened",            days:65},
-      {who:"Kamla", what:"Pre-approval for health claim — S. Bhagwansingh",    days:2},
-      {who:"Kamla", what:"FV projections — Samuel pensions",                   days:2},
-      {who:"Kamla", what:"Proposal to present — Anand Ramroop",                days:1},
-      {who:"Kamla", what:"Premium due reminder — S. Roopnarine",               days:1}]
+      {who:"Ricky", what:"Investment discussions — Neal Balroop",              days:163},
+      {who:"Ricky", what:"A staffing matter",                                  days:109, masked:true},
+      {who:"Ricky", what:"Formal escalation — client complaint of 11 May",     days:99},
+      {who:"Ricky", what:"HR — agent signature discrepancies on scripts",      days:91},
+      {who:"Ricky", what:"Agents portal — two links, never opened",            days:66},
+      {who:"Kamla", what:"Pre-approval for health claim — S. Bhagwansingh",    days:3},
+      {who:"Kamla", what:"FV projections — Samuel pensions",                   days:3},
+      {who:"Kamla", what:"Proposal to present — Anand Ramroop",                days:2},
+      {who:"Kamla", what:"Premium due reminder — S. Roopnarine",               days:2}]
   },
-
-  // Is the branch keeping up? Thirty days, what came in against what went out.
-  //
-  // This is the card that decides how every other card should be read, and it
-  // says the opposite of what an overdue count implies. Four of the six are at
-  // or below break-even. Kamla closed twenty-one more than arrived. Sasha
-  // eleven more. The support team is not the reason the book is 144.
-  //
-  // The Branch Manager's own line is the one that matters, and it needs the
-  // robot taken out of it or it lies: of 582 tasks created in his name, 551
-  // are the birthday mailer, which creates and closes its own work. His real
-  // intake is 31 in thirty days — one a day, all inbound email — and his real
-  // closures by hand are close to none. That is where the 76-strong untyped
-  // pile comes from, and it is not a capacity problem: it is one a day, not
-  // being answered.
-  //
-  // So the action this card points at is not "work harder". Nobody here is
-  // behind on volume. It is: clear the specific old items, because they are
-  // not being carried by a tide, they are just sitting.
   flow:[
     {n:"Sasha",     in:361, out:372},
     {n:"Azariah",   in:225, out:225},
@@ -441,10 +360,7 @@ const TASKS={
     {n:"Pawan",     in:49,  out:55},
     {n:"Kamla",     in:35,  out:56},
     {n:"Ricky",     in:31,  out:1, note:"robot excluded — 551 in, 551 out"}],
-
-  // The birthday mailer: it closes its own work and should never be counted
-  // as anybody's throughput.
-  robot:{ closedToday:19, closedWeek:141 }
+  robot:{ closedToday:16, closedWeek:141 }
 };
 
 // The ten Task_Type__c values, in the words the branch uses.
@@ -1005,12 +921,38 @@ function sSubstance(cards){
         '<div class="w"><b>Every block today says how many, or which one</b>'+
         "<span>Nothing to raise.</span></div></div>";
 
+  // The Salesforce side of the same question. A block says what you did; the
+  // task record is where anyone else can see it. Chatter counts the same as a
+  // description — reading descriptions alone once put a false line about three
+  // people on this wall.
+  const N=TASKS.notes, U=TASKS.untyped;
+
+  // Naming somebody costs them something, so the bar is a day's worth of work
+  // with nothing written on any of it — not a quiet morning. Touching one task
+  // and not writing on it yet is not a finding, and putting that name on a
+  // screen in the office would be the same mistake as reading descriptions
+  // without Chatter.
+  const NAME_AT=3;
+  const workedBy={}; (TASKS.worked||[]).forEach(w=>workedBy[w.n]=w.worked||0);
+  const silent=N?(N.by||[]).filter(x=>!x.tasks&&(workedBy[x.n]||0)>=NAME_AT)
+                           .map(x=>x.n):[];
+  const foot = !N ? "" :
+    '<div class="foot">'+
+      "<b>"+N.tasks+" task"+(N.tasks===1?"":"s")+" carry a note today</b>, from "+
+      N.posts+" written"+
+      (silent.length?" &middot; nothing written by "+silent.map(esc).join(", "):"")+
+      (U?" &middot; "+U.total+" of "+U.of+" open tasks still carry no type":"")+
+    "</div>";
+
   return '<div class="kick">3 · How the day is being written</div>'+
     "<h2>"+S.counts.full+" of "+written+" entries name a count or a case</h2>"+
     '<p class="lede">A block is written when it says how many, or which one. '+
       '&ldquo;Actioned remaining tasks&rdquo; is a box filled in, not a day recorded'+
-      (written?" — "+pct+"% of today's entries would stand up at a review":"")+".</p>"+
-    '<div class="body"><div class="panel" style="overflow:auto;height:100%">'+body+"</div></div>";
+      (written?" — "+pct+"% of today's entries would stand up at a review":"")+
+      ". A task moved with nothing written on it is not a record of work either."+
+      "</p>"+
+    '<div class="body"><div class="panel" style="overflow:auto;height:100%">'+
+      body+foot+"</div></div>";
 }
 
 function sBeforeYouLeave(){
