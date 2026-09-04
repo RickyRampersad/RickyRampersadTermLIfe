@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-03c';
+var SCRIPT_VERSION = '2026-09-04a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -1725,13 +1725,7 @@ function handle_(action, data, token) {
 
     case 'metrics': {
       // Staff see their own position; the manager sees the branch.
-      var m = sfkMetricsSafe_(data.date);
-      if (m.ok && !profile.manager) {
-        var only = {};
-        if (m.staff[profile.staffId]) only[profile.staffId] = m.staff[profile.staffId];
-        m = { ok: true, date: m.date, staff: only };
-      }
-      return { ok: true, metrics: m };
+      return { ok: true, metrics: metricsFor_(profile, data.date) };
     }
 
     case 'rows': {
@@ -1753,7 +1747,7 @@ function handle_(action, data, token) {
       return { ok: true, rows: rows, training: tr, profile: profile,
                roster: publicRoster_(), schedule: SCHEDULE,
                kpis: allKpiChoices_(),
-               metrics: sfkMetricsSafe_(data.date),
+               metrics: metricsFor_(profile, data.date),
                needsReason: sfkNeedsReasonSafe_(data.date),
                billing: sfkBillingCheckSafe_(data.date) };
     }
@@ -2547,6 +2541,21 @@ function sfkCount_(soql) {
 
 /** Everyone's task position, in one round trip per question rather than one
  *  per person. Cached for a few minutes so a page refresh is not a new query. */
+/** What this person is allowed to see of the branch's Salesforce position.
+ *
+ *  Everyone gets the per-type roll-up and their own card. Only the manager
+ *  gets everyone's cards. This used to be decided in two places that
+ *  disagreed — the metrics action filtered and the rows action did not — so
+ *  the filtering was doing nothing. One function now, called by both.
+ */
+function metricsFor_(profile, date) {
+  var m = sfkMetricsSafe_(date);
+  if (!m || !m.ok || profile.manager) return m;
+  var only = {};
+  if (m.staff && m.staff[profile.staffId]) only[profile.staffId] = m.staff[profile.staffId];
+  return { ok: true, date: m.date, staff: only, branch: m.branch };
+}
+
 function sfkMetrics_(date) {
   var day = date || todayISO_();
   var cache = CacheService.getScriptCache();
@@ -2615,7 +2624,33 @@ function sfkMetrics_(date) {
     Object.keys(out).forEach(function (k) { out[k].needsReason = (nr[k] || []).length; });
   } catch (e) { /* the position is still worth returning without it */ }
 
-  var res = { ok: true, date: day, staff: out, users: users };
+  // The branch's position per task type, with who holds it. Everyone sees this
+  // — it is the answer to "my block is licensing and there are three of them,
+  // is that the whole picture or my corner of it". Names are already on the
+  // wall in the office, so this is not new exposure; what it replaces is
+  // walking over to ask.
+  //
+  // The per-person cards below carry more (closed today, 60-day ageing, tasks
+  // with no due date) and stay manager-only.
+  var branch = { byType: {} };
+  Object.keys(out).forEach(function (sid) {
+    var name = (users[sid] && users[sid].name) || sid;
+    Object.keys(out[sid].byType || {}).forEach(function (t) {
+      var src = out[sid].byType[t];
+      var b = branch.byType[t] || (branch.byType[t] = { open: 0, overdue: 0, closed: 0, who: [] });
+      b.open += src.open || 0;
+      b.overdue += src.overdue || 0;
+      b.closed += src.closed || 0;
+      if (src.open || src.overdue) {
+        b.who.push({ n: name, open: src.open || 0, overdue: src.overdue || 0 });
+      }
+    });
+  });
+  Object.keys(branch.byType).forEach(function (t) {
+    branch.byType[t].who.sort(function (a, b) { return b.open - a.open; });
+  });
+
+  var res = { ok: true, date: day, staff: out, users: users, branch: branch };
   cache.put(key, JSON.stringify(res), SFK.CACHE_MIN * 60);
   return res;
 }

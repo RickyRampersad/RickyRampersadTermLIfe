@@ -173,6 +173,212 @@ let KPI_CHOICES = {
 const fnFor = role => KPI_CHOICES[role] || KPI_CHOICES.ssa || [];
 const STANDARDS = ["Completed applications to Head Office within 2 days of receipt.", "Policy documents processed with 100% accuracy.", "Documents to the relevant party within 1 day of receipt.", "A rolled due date is not an actioned task — log the genuine blocker + owner.", "\"Waiting on someone\" needs a named person and the date last chased.", "Value Added is logged every day — even if the honest entry is \"None today\"."];
 
+
+// What a good entry looks like, per KPI. A blank box asks "what did you do
+// today" and gets "3 tasks" back. These ask the question the work itself
+// answers — how many, for whom, and where it stands — and show one worked
+// example, so the standard is visible rather than described.
+//
+// Written from the branch's own open book rather than invented: the largest
+// type is Renewals/Premium Dues/Billing, and it is direct debits, stop
+// payments, premium receipts and group billing, so that is what its example
+// says. Keeping these here rather than in the Apps Script means a wording
+// change ships on push, with no redeployment.
+const KPI_GUIDE = {
+  "Renewa/PDl/Bill": {
+    actioned: "How many, and for whom — DDs, stop payments, premium chases",
+    resolved: "How many actually cleared, and what is still with the bank",
+    eg: "8 direct debits sent, 2 stop payment forms filed for one client, September group billing chased with the administrator."
+  },
+  "Servicing": {
+    actioned: "Which client, and what stage it reached",
+    resolved: "Which are confirmed complete",
+    eg: "3 changes of beneficiary submitted, portal access fault escalated to IT, 1 address change confirmed."
+  },
+  "Pendings": {
+    actioned: "Who you chased, when, and what they said",
+    resolved: "Which came off pending",
+    eg: "5 pending cases chased, 3 replied with documents, 1 lapsing Friday."
+  },
+  "Claims/ Mat": {
+    actioned: "Which claim, and what moved on it",
+    resolved: "Which were paid, declined or matured",
+    eg: "CI claim — medical report received and sent to underwriting. Maturity letter issued on one policy."
+  },
+  "Opportunity": {
+    actioned: "Who you spoke to, and what was quoted",
+    resolved: "What was written, declined or deferred",
+    eg: "Two client reviews held, one quotation issued for critical illness cover."
+  },
+  "Scripts/CB": {
+    actioned: "Which script or clawback, and what stage",
+    resolved: "Which are settled",
+    eg: "Two clawbacks queried with Head Office, one settled."
+  },
+  "Lic/Staffing/SA/HR": {
+    actioned: "Which matter, and what moved",
+    resolved: "What is signed off or closed",
+    eg: "Two licence renewals submitted. One staffing matter with HR since Monday."
+  },
+  "RR Operations": {
+    actioned: "What you ran or fixed, and for whom",
+    resolved: "What is now working",
+    eg: "August branch report rebuilt. Printer fault logged with IT."
+  },
+  "Training": {
+    actioned: "Who was trained, on what, for how long",
+    resolved: "Who is signed off",
+    eg: "One hour on the new fact find with two advisors."
+  },
+  "Innovation&Creativity": {
+    actioned: "What you tried or proposed, and who has seen it",
+    resolved: "What was adopted",
+    eg: "Drafted a one-page checklist for new applications, shown to the BMA."
+  },
+  "New Application Process": {
+    actioned: "How many applications, and where each one stopped",
+    resolved: "How many reached Head Office",
+    eg: "4 applications checked, 3 to Head Office, 1 back to the advisor for a missing signature."
+  },
+  "Document Management (Scan / Classify / Verify)": {
+    actioned: "How many documents, and what you did to them",
+    resolved: "How many are filed and verified",
+    eg: "22 documents scanned and classified, 3 rejected as unreadable and re-requested."
+  },
+  "Quotations & Proposals": {
+    actioned: "For whom, and what cover",
+    resolved: "Which went out",
+    eg: "Two proposals prepared, one issued to the client, one waiting on a date of birth."
+  },
+  "Orphan Adoption Listing": {
+    actioned: "How many orphans worked, and who you reached",
+    resolved: "How many are now assigned or contacted",
+    eg: "12 orphan policies called, 6 reached, 2 appointments set."
+  },
+  "Task Management": {
+    actioned: "Which tasks you cleared, and what you reassigned",
+    resolved: "How many closed, and what moved to someone else",
+    eg: "9 tasks closed, 2 reassigned to the person who owns the relationship, 1 duplicate closed."
+  }
+};
+
+// Everything without a line of its own still gets the same question asked.
+const GUIDE_FALLBACK = {
+  actioned: "What you did, for whom, and how many",
+  resolved: "What is genuinely finished",
+  eg: "Name the work, the number, and where it now stands."
+};
+const guideFor = kpi => KPI_GUIDE[kpi] || GUIDE_FALLBACK;
+
+// A two-hour block rarely holds one kind of work. The stored value stays a
+// single string — comma-joined — so the sheet column, the Apps Script and
+// every report that already reads it keep working without a redeployment.
+// Everything that groups by KPI splits here rather than guessing.
+const kpiList = v => String(v || "").split(",").map(x => x.trim()).filter(Boolean);
+const kpiJoin = list => list.join(", ");
+// One reader for the metrics shape, so a second caller cannot get it wrong the
+// way the first one did. The server sends {ok, date, staff:{staffId:{...}}};
+// reading metrics[staffId] is silently null against the real thing and only
+// works against a stub that repeats the mistake.
+const byTypeFor = (metrics, staffId) =>
+  (metrics && metrics.ok && metrics.staff && metrics.staff[staffId] &&
+   metrics.staff[staffId].byType) || null;
+
+const kpiToggle = (v, k) => {
+  const list = kpiList(v);
+  const i = list.indexOf(k);
+  if (i < 0) list.push(k); else list.splice(i, 1);
+  return kpiJoin(list);
+};
+
+// Sits under the KPI picker once one is chosen: the worked example, and — when
+// Salesforce is reachable — that person's real position in that type, so the
+// number they are about to write has something to be checked against.
+// Chips rather than a select. A multiple-select box is close to unusable on a
+// phone, and every one of these is filled on a phone.
+function KpiPicker({ value, opts, onToggle, mine, branch }) {
+  const on = kpiList(value);
+  const chip = k => {
+    const live = on.indexOf(k.value) > -1;
+    const m = mine && mine[k.value];
+    const b = branch && branch[k.value];
+
+    // The count is the point of the chip, not decoration. A block set aside
+    // for licensing with three tasks in it does not need two hours, and the
+    // only way anyone knew that before was to go and look.
+    const tail = [];
+    if (m && (m.open || m.overdue)) {
+      tail.push(React.createElement("span", {
+        key: "m", style: { fontWeight: 700, color: m.overdue ? AMBER : (live ? INK : MUTED) }
+      }, " \u00b7 " + (m.open || 0) + " open" + (m.overdue ? ", " + m.overdue + " late" : "")));
+    }
+    if (b && b.open) {
+      tail.push(React.createElement("span", {
+        key: "b", style: { color: MUTED, fontWeight: 500 }
+      }, "  " + b.open + " in the branch"));
+    }
+    return React.createElement("button", {
+      key: k.value, type: "button", onClick: () => onToggle(k.value),
+      style: { font: "inherit", fontSize: 12.5, fontWeight: live ? 700 : 500, cursor: "pointer",
+               padding: "7px 11px", borderRadius: 999, textAlign: "left",
+               border: "1px solid " + (live ? GOLD : LINE),
+               background: live ? "#FBF3DF" : "#FFFFFF",
+               color: live ? INK : MUTED }
+    }, (live ? "\u2713 " : "") + k.label, tail);
+  };
+  const group = (label, list) => !list.length ? null : React.createElement("div", { key: label },
+    React.createElement("div", {
+      style: { fontSize: 10, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase",
+               color: MUTED, margin: "2px 0 6px" }
+    }, label),
+    React.createElement("div", {
+      style: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }
+    }, list.map(chip)));
+  return React.createElement("div", null,
+    group("Salesforce task types \u2014 these carry live numbers", opts.filter(k => k.salesforce)),
+    group("Logged in words only", opts.filter(k => !k.salesforce)));
+}
+
+function KpiHint({ kpi, live }) {
+  const picked = kpiList(kpi);
+
+  // With more than one type in the block, the long worked example stops being
+  // an example and becomes a wall. Ask the question for each instead.
+  if (picked.length > 1) {
+    return React.createElement("div", {
+      style: { background: "#FBF9F3", border: "1px solid " + LINE, borderLeft: "3px solid " + GOLD,
+               borderRadius: 8, padding: "9px 11px", margin: "0 0 12px" }
+    },
+      React.createElement("div", {
+        style: { fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase",
+                 color: GOLD, marginBottom: 5 }
+      }, "Say something for each"),
+      picked.map(k => React.createElement("div", {
+        key: k, style: { fontSize: 12.5, color: INK, lineHeight: 1.5 }
+      }, React.createElement("b", null, k), " — ", guideFor(k).actioned))
+    );
+  }
+
+  const g = guideFor(picked[0] || kpi);
+  return React.createElement("div", {
+    style: { background: "#FBF9F3", border: "1px solid " + LINE, borderLeft: "3px solid " + GOLD,
+             borderRadius: 8, padding: "9px 11px", margin: "0 0 12px" }
+  },
+    React.createElement("div", {
+      style: { fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase",
+               color: GOLD, marginBottom: 4 }
+    }, "A good entry reads like"),
+    React.createElement("div", {
+      style: { fontSize: 12.5, color: INK, lineHeight: 1.45 }
+    }, g.eg),
+    live && (live.open || live.overdue)
+      ? React.createElement("div", {
+          style: { fontSize: 11.5, color: live.overdue ? AMBER : MUTED, marginTop: 6, fontWeight: 600 }
+        }, "Salesforce has you at " + (live.open || 0) + " open here"
+           + (live.overdue ? " \u00b7 " + live.overdue + " overdue" : ""))
+      : null
+  );
+}
 // The four blocks, in order. Their times and what each is for come from the
 // branch schedule the Apps Script serves — the same DILO the BMA has been
 // emailing out every morning. One copy, held where the reports read it.
@@ -674,7 +880,7 @@ const blockersOf = e => BLOCKS.map(b => ({
   kpi: x.d.kpi || "",
   text: [txt(x.d.blocker), txt(x.d.blockerOwner)].filter(Boolean).join(" · ")
 }));
-const trainingCount = e => BLOCKS.reduce((n, b) => n + (e.blocks?.[b.id]?.kpi === "Training delivered" ? 1 : 0), 0);
+const trainingCount = e => BLOCKS.reduce((n, b) => n + (kpiList(e.blocks?.[b.id]?.kpi).includes("Training delivered") ? 1 : 0), 0);
 function ShieldLogo({
   size = 34
 }) {
@@ -751,7 +957,11 @@ function App() {
     if (me && !me.manager && view === "home" && !active) {
       setActive(me.staffId);
       setDate(todayISO());
-      setView("entry");
+      // Before the first block is due, the useful screen is the plan; after
+      // that it is the day itself. Nobody wants to be planned at half past
+      // three.
+      const h = new Date().getHours();
+      setView(h < 10 ? "plan" : "entry");
     }
   }, [me, view, active]);
 
@@ -832,24 +1042,30 @@ function App() {
   // Load one day into the form. Anything typed on this device and never
   // acknowledged by the sheet is put back before the form is shown.
   useEffect(() => {
-    if (view !== "entry" || !active) return;
+    if ((view !== "entry" && view !== "plan") || !active) return;
     const found = rows.map(rowToEntry).find(e => e.staffId === active && e.date === date);
-    const base = withSchedule(withTraining(found || blankEntry(active, date), training), active);
-    setEntry(overlayDraft(base, readDraft(active, date)));
+    // Order matters. The schedule's KPI is a guess at what the block is for;
+    // the draft is what the person actually chose. Filling the guess in first
+    // made it non-empty, and overlayDraft keeps a non-empty value over a
+    // draft — so changing a block's KPI and coming back silently put the
+    // schedule's answer back. Real row, then draft, then fill what is still
+    // blank.
+    const base = withTraining(found || blankEntry(active, date), training);
+    setEntry(withSchedule(overlayDraft(base, readDraft(active, date)), active));
   }, [view, active, date, rows, training]);
 
   // Every change is kept on the device. This is the whole safety net: if the
   // sheet refuses the save, the words are still here when they come back.
   useEffect(() => {
-    if (view !== "entry" || !entry || !active) return;
+    if ((view !== "entry" && view !== "plan") || !entry || !active) return;
     writeDraft(active, date, entry);
   }, [entry, active, date, view]);
-  const patchBlock = (bid, f, v) => setEntry(e => ({
+  const patchBlock = (bid, f, v) => setEntry(e => !e ? e : ({
     ...e,
     blocks: {
-      ...e.blocks,
+      ...(e.blocks || {}),
       [bid]: {
-        ...e.blocks[bid],
+        ...((e.blocks || {})[bid] || blankBlock()),
         [f]: v
       }
     }
@@ -1232,6 +1448,121 @@ function App() {
     }
   }, "9\u201313 Endeavour 1st Street, Chaguanas")));
 
+  // ---- plan: the day before it happens ------------------------------------
+  //
+  // The old shape was a diary — four write-ups at four o'clock, from memory.
+  // This is the other half: at eight, the book is already known, so the day
+  // can be laid against it rather than recalled after it.
+  //
+  // Nothing new is stored. Planning is picking the KPI chips in the morning
+  // instead of at the end, and those already live on the block. What changes
+  // is that the size of the work is on screen while the choice is made: a
+  // block set aside for licensing with three tasks in it says so at eight
+  // rather than at four.
+  if (view === "plan" && active) {
+    const prof = profileFor(active);
+    const person = roster.find(p => p.staffId === active);
+    const opts = fnFor(prof.role);
+    const mine = me.manager || me.staffId === active;
+    if (!mine) return /*#__PURE__*/React.createElement(Denied, {
+      onBack: () => setView("home")
+    });
+    const filled = (entry && entry.blocks) || {};
+    const byType = byTypeFor(metrics, active);
+    const branchType = metrics && metrics.branch ? metrics.branch.byType : null;
+    const late = (needsReason && needsReason[active]) || [];
+
+    // What the person has picked across the whole day, so the same task type
+    // in two blocks is counted once.
+    const chosen = {};
+    BLOCKS.forEach(b => kpiList((filled[b.id] || {}).kpi).forEach(k => { chosen[k] = 1; }));
+    const covered = Object.keys(chosen);
+    const sum = f => covered.reduce((n, k) => n + ((byType && byType[k] && byType[k][f]) || 0), 0);
+
+    return /*#__PURE__*/React.createElement(Shell, {
+      wide: vp.desktop ? 1160 : vp.tablet ? 760 : 560
+    }, /*#__PURE__*/React.createElement(SubHeader, {
+      title: person ? person.name : active,
+      sub: "Planning " + prettyDate(date),
+      tenure: prof.tenure,
+      onBack: () => setView("home")
+    }), /*#__PURE__*/React.createElement("div", { style: { padding: "0 18px 40px" } },
+
+      /*#__PURE__*/React.createElement("p", {
+        style: { fontSize: 13.5, color: MUTED, lineHeight: 1.55, margin: "14px 0 16px" }
+      }, "Set the day before it starts. Tick what each block is for and the",
+         " tracker shows how much of it there actually is \u2014 so two hours",
+         " does not go into three tasks."),
+
+      // What the picked types add up to. Absent when Salesforce is silent,
+      // rather than a zero that reads like an empty book.
+      byType ? /*#__PURE__*/React.createElement("div", {
+        style: { background: NAVY, color: GOLD_SOFT, borderRadius: 12,
+                 padding: "13px 15px", marginBottom: 16 }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: { fontSize: 11, fontWeight: 800, letterSpacing: ".14em",
+                 textTransform: "uppercase", color: GOLD, marginBottom: 5 }
+      }, covered.length ? "What you have planned holds" : "Nothing picked yet"),
+        /*#__PURE__*/React.createElement("div", { style: { fontSize: 15, lineHeight: 1.5 } },
+          covered.length
+            ? sum("open") + " open \u00b7 " + sum("overdue") + " already late"
+            : "Tick a block below and this fills in.")) : null,
+
+      // The blocks themselves.
+      BLOCKS.map(b => {
+        const bl = filled[b.id] || blankBlock();
+        const sc = blockSched(active, b.col) || {};
+        const picked = kpiList(bl.kpi);
+        const open = picked.reduce((n, k) => n + ((byType && byType[k] && byType[k].open) || 0), 0);
+        const od = picked.reduce((n, k) => n + ((byType && byType[k] && byType[k].overdue) || 0), 0);
+        return /*#__PURE__*/React.createElement("div", { key: b.id, style: card },
+          /*#__PURE__*/React.createElement("div", { style: cardHead },
+            /*#__PURE__*/React.createElement("span", { style: cardTitle },
+              b.label, sc.time ? " \u00b7 " + sc.time : ""),
+            byType && picked.length ? /*#__PURE__*/React.createElement("span", {
+              style: { fontSize: 11.5, fontWeight: 700, color: od ? AMBER : MUTED }
+            }, open + " open" + (od ? " \u00b7 " + od + " late" : "")) : null),
+          sc.focus ? /*#__PURE__*/React.createElement("p", {
+            style: { fontSize: 12, color: MUTED, margin: "0 0 9px" }
+          }, sc.focus) : null,
+          /*#__PURE__*/React.createElement(KpiPicker, {
+            value: bl.kpi, opts: opts, mine: byType, branch: branchType,
+            onToggle: k => patchBlock(b.id, "kpi", kpiToggle(bl.kpi, k))
+          }));
+      }),
+
+      // The exceptions, and only those. Nothing is asked about the work that
+      // is running fine.
+      late.length ? /*#__PURE__*/React.createElement("div", { style: card },
+        /*#__PURE__*/React.createElement("div", { style: cardHead },
+          /*#__PURE__*/React.createElement("span", { style: cardTitle },
+            "Late, and no reason on it yet"),
+          /*#__PURE__*/React.createElement("span", {
+            style: { fontSize: 11.5, fontWeight: 700, color: AMBER }
+          }, late.length)),
+        /*#__PURE__*/React.createElement("p", {
+          style: { fontSize: 12, color: MUTED, margin: "0 0 10px", lineHeight: 1.45 }
+        }, "These are the only ones being asked about. Give the reason once",
+           " and it goes back to Salesforce with the task."),
+        late.slice(0, 8).map(t => /*#__PURE__*/React.createElement("div", {
+          key: t.id,
+          style: { borderTop: "1px solid " + LINE, padding: "9px 0" }
+        }, /*#__PURE__*/React.createElement("div", {
+          style: { fontSize: 13, color: INK, fontWeight: 600, lineHeight: 1.35 }
+        }, t.subject || "(no subject)"),
+          /*#__PURE__*/React.createElement("div", {
+            style: { fontSize: 11.5, color: AMBER, fontWeight: 700, margin: "3px 0 0" }
+          }, t.type, " \u00b7 ", t.age, " day", t.age === 1 ? "" : "s", " over",
+             t.status ? " \u00b7 " + t.status : "")))) : null,
+
+      /*#__PURE__*/React.createElement("button", {
+        onClick: () => setView("entry"),
+        style: { width: "100%", marginTop: 8, padding: "15px 16px", borderRadius: 12,
+                 border: "none", background: NAVY_DEEP, color: "#FFFFFF",
+                 font: "inherit", fontSize: 15, fontWeight: 800, cursor: "pointer" }
+      }, "Start the day")));
+  }
+
   // ---- entry: one block at a time -----------------------------------------
   if (view === "entry" && active) {
     const prof = profileFor(active);
@@ -1255,7 +1586,12 @@ function App() {
       style: {
         padding: "0 18px 40px"
       }
-    }, /*#__PURE__*/React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("button", {
+      onClick: () => setView("plan"),
+      style: { background: "none", border: "none", padding: "12px 0 2px",
+               cursor: "pointer", font: "inherit", fontSize: 12.5,
+               fontWeight: 700, color: GOLD }
+    }, "\u2190 Plan the day"), /*#__PURE__*/React.createElement("div", {
       style: dateBar
     }, /*#__PURE__*/React.createElement("label", {
       style: {
@@ -1402,30 +1738,23 @@ function App() {
           padding: "0 14px 14px"
         }
       }, /*#__PURE__*/React.createElement(Field, {
-        label: "KPI worked"
-      }, /*#__PURE__*/React.createElement("select", {
+        label: "KPI worked \u2014 pick every one this block touched"
+      }, /*#__PURE__*/React.createElement(KpiPicker, {
         value: bl.kpi,
-        onChange: e => patchBlock(b.id, "kpi", e.target.value),
-        style: selectBox
-      }, /*#__PURE__*/React.createElement("option", {
-        value: ""
-      }, "Select\u2026"), /*#__PURE__*/React.createElement("optgroup", {
-        label: "Salesforce task types \u2014 these carry live numbers"
-      }, opts.filter(k => k.salesforce).map(k => /*#__PURE__*/React.createElement("option", {
-        key: k.value,
-        value: k.value
-      }, k.label))), /*#__PURE__*/React.createElement("optgroup", {
-        label: "Logged in words only"
-      }, opts.filter(k => !k.salesforce).map(k => /*#__PURE__*/React.createElement("option", {
-        key: k.value,
-        value: k.value
-      }, k.label))))), /*#__PURE__*/React.createElement(Field, {
+        opts: opts,
+        mine: byTypeFor(metrics, active),
+        branch: metrics && metrics.branch ? metrics.branch.byType : null,
+        onToggle: k => patchBlock(b.id, "kpi", kpiToggle(bl.kpi, k))
+      })), bl.kpi ? /*#__PURE__*/React.createElement(KpiHint, {
+        kpi: bl.kpi,
+        live: byTypeFor(metrics, active) ? byTypeFor(metrics, active)[bl.kpi] : null
+      }) : null, /*#__PURE__*/React.createElement(Field, {
         label: "Actioned"
       }, /*#__PURE__*/React.createElement("textarea", {
         rows: 2,
         value: bl.actioned,
         onChange: e => patchBlock(b.id, "actioned", e.target.value),
-        placeholder: "In your own words \u2014 names, counts, cases",
+        placeholder: guideFor(bl.kpi).actioned,
         style: ta
       })), /*#__PURE__*/React.createElement(Field, {
         label: "Resolved / closed"
@@ -1433,7 +1762,7 @@ function App() {
         rows: 2,
         value: bl.resolved,
         onChange: e => patchBlock(b.id, "resolved", e.target.value),
-        placeholder: "What is genuinely complete",
+        placeholder: guideFor(bl.kpi).resolved,
         style: ta
       })), /*#__PURE__*/React.createElement(Field, {
         label: "Still open & owned by you"
@@ -1459,12 +1788,12 @@ function App() {
         onChange: e => patchBlock(b.id, "blockerOwner", e.target.value),
         placeholder: "Name + date",
         style: inp
-      }))), bl.kpi === "Renewa/PDl/Bill" && /*#__PURE__*/React.createElement(BillingCheck, {
+      }))), kpiList(bl.kpi).includes("Renewa/PDl/Bill") && /*#__PURE__*/React.createElement(BillingCheck, {
         data: billing[active],
         api: api,
         token: token,
         onSaved: loadRows
-      }), bl.kpi === "Training delivered" && /*#__PURE__*/React.createElement("div", {
+      }), kpiList(bl.kpi).includes("Training delivered") && /*#__PURE__*/React.createElement("div", {
         style: trainBox
       }, /*#__PURE__*/React.createElement("div", {
         style: {
@@ -1996,8 +2325,7 @@ function App() {
     const overdueByDay = days.map(d => inWeek([d]).reduce((n, e) => n + (num(e.metrics.overdue) || 0), 0));
     const mix = {};
     thisRows.forEach(e => BLOCKS.forEach(b => {
-      const k = txt(e.blocks?.[b.id]?.kpi);
-      if (k) mix[k] = (mix[k] || 0) + 1;
+      kpiList(e.blocks?.[b.id]?.kpi).forEach(k => { mix[k] = (mix[k] || 0) + 1; });
     }));
     const mixList = Object.keys(mix).map(k => ({
       kpi: k,
@@ -2027,7 +2355,7 @@ function App() {
     const trainingThisWeek = [];
     thisRows.forEach(e => BLOCKS.forEach(b => {
       const d = e.blocks?.[b.id];
-      if (!d || d.kpi !== "Training delivered") return;
+      if (!d || !kpiList(d.kpi).includes("Training delivered")) return;
       const reg = training.find(t => t.StaffId === e.staffId && String(t.TrainingDate || "").slice(0, 10) === e.date && String(t.Block || "").trim() === BLOCK_COL[b.id]);
       trainingThisWeek.push({
         date: e.date,
@@ -3165,7 +3493,7 @@ function ReviewCard({
   }), txt(d.actioned) && /*#__PURE__*/React.createElement(Line, {
     k: "Actioned",
     v: d.actioned
-  }), d.kpi === "Training delivered" && (txt(d.tr_trainee) || txt(d.tr_topic)) && /*#__PURE__*/React.createElement(Line, {
+  }), kpiList(d.kpi).includes("Training delivered") && (txt(d.tr_trainee) || txt(d.tr_topic)) && /*#__PURE__*/React.createElement(Line, {
     k: "Trained",
     v: (d.tr_trainee || "?") + " — " + (d.tr_topic || ""),
     tone: GOLD
