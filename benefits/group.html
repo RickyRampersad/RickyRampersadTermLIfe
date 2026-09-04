@@ -133,7 +133,11 @@ dl.kv dt{margin-bottom:.15rem} dl.kv dd{margin:0;font-size:14px}
 .tabs button.on{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600}
 :root[data-theme="dark"] .tabs button.on{color:var(--paper)}
 .scroll{max-height:420px;overflow:auto}
-@media print{.demobar,header,.tabs,.btn,.noprint{display:none!important} body{background:#fff} .card,.tw{break-inside:avoid}}
+@media print{.demobar,header,.tabs,.btn,.noprint{display:none!important} body{background:#fff} .card,.tw{break-inside:avoid}
+  /* The page furniture is hidden when printing, so a statement handed to an
+     employee would otherwise arrive with no idea who sent it. */
+  .printonly{display:block!important;border-bottom:2px solid #0B3C46;padding-bottom:.5rem;margin-bottom:1rem}}
+.printonly{display:none}
 </style>
 </head>
 <body>
@@ -1347,7 +1351,8 @@ function goMovement(){
   location.href = 'movement.html';
 }
 const TABS={employer:[['overview','Overview'],['billing','Billing'],['history','History'],['people','People'],['check','Check my month']],
-            employer_live:[['history','History'],['pending','Pending applications'],
+            employer_live:[['history','History'],['members','Your people'],
+                           ['pending','Pending applications'],
                            ['leavers','Terminations'],['pension','Pension'],['check','Check my month']],
             employee:[['mycover','My benefits']]};
 
@@ -1519,7 +1524,7 @@ function render(){
     : as==='employer'
     ? `<b>${esc(GROUP.company)}</b><span class="label">Employer account</span>`
     : `<b>${esc(ME.first+' '+ME.last)}</b><span class="label">Cert ${esc(ME.cert)}</span>`;
-  $('main').innerHTML = ({overview,billing,history,people,check,mycover,pending,leavers,pension})[tab]();
+  $('main').innerHTML = ({overview,billing,history,people,members,check,mycover,pending,leavers,pension})[tab]();
   if(as==='employer_live' && $('barTag')){
     $('barTag').textContent = 'YOUR ACCOUNT';
     $('barText').textContent = 'Signed in with your company portal code. These are your months as the branch holds them.';
@@ -1583,6 +1588,152 @@ function gvCard(){
     ${GV_WHY ? `<p class="note" style="margin-top:.5rem">${esc(GV_WHY)}</p>` : ''}</div>`;
 }
 function gvWaiting(title, blurb){ return gvShell(title, blurb, gvCard()); }
+
+/* ══════════════ YOUR PEOPLE, AND WHAT EACH IS COVERED FOR ══════════════
+   Until now the only person who could say what an employee was covered for
+   was Guardian, and only by looking it up. The employer buys the cover and
+   could not see it; the employee it belongs to had never been told.
+
+   The figures are Guardian's own — Life_Coverage__c, ADDAP_Coverage__c,
+   Health_Cover__c — read, never written. Where Guardian has not filled a
+   field the screen says so rather than printing a zero. Xtra Foods' health
+   scheme carries no sum on any of its 158 records, and "TT$0.00" against
+   somebody's medical cover is not a smaller mistake than a wrong number,
+   it is a worse one. */
+let MSEARCH = '', MPICK = null;
+
+const covered = m => (m.holds.life && m.lifeCover) || (m.holds.adnd && m.adndCover);
+
+function members(){
+  const title = 'Your people';
+  const blurb = 'Everyone the branch holds on your schemes, and what each one is actually covered for. '
+    + 'Read from Guardian\'s records — the same records your billing is checked against.';
+  if(GV_STATE !== 'ready') return gvWaiting(title, blurb);
+  const all = (GV.members || []).filter(m => m.inForce);
+  if(!all.length) return gvShell(title, blurb, `<div class="card"><p><b>No members on cover.</b>
+    Anyone whose application is still in appears under Pending applications.</p></div>`);
+
+  if(MPICK){
+    const m = all.find(x => x.name === MPICK);
+    if(m) return statement(m);
+  }
+
+  const q = MSEARCH.trim().toLowerCase();
+  const rows = q ? all.filter(m => m.name.toLowerCase().includes(q)
+                                || m.certs.some(c => c.toLowerCase().includes(q))) : all;
+  /* Somebody on medical with no life cover is the finding an employer wants
+     off this screen, not a row in the middle of four hundred. */
+  const noLife = all.filter(m => m.lines.includes('health') && !m.lines.includes('life'));
+  const noSum  = all.filter(m => m.lines.includes('life') && !covered(m));
+
+  return gvShell(title, blurb, `
+    <div class="stats" style="margin-bottom:1rem">
+      <div class="card"><span class="label">On cover</span><div class="v">${all.length}</div>
+        <div class="note">${GV.inForce.life} life · ${GV.inForce.health} health</div></div>
+      <div class="card"><span class="label">Medical but no life</span><div class="v">${noLife.length}</div>
+        <div class="note">${noLife.length ? 'worth checking' : 'none'}</div></div>
+      <div class="card"><span class="label">No sum assured on record</span><div class="v">${noSum.length}</div>
+        <div class="note">${noSum.length ? 'we are asking Guardian' : 'all present'}</div></div>
+    </div>
+    ${noLife.length ? `<div class="card" style="border-color:var(--gold);margin-bottom:1rem">
+      <b>${noLife.length === 1 ? 'One person is' : noLife.length + ' people are'} on the medical plan with no life
+      cover.</b> That is usually an enrolment that went in on one plan and not the other.
+      <p class="note" style="margin-top:.4rem">${noLife.slice(0,12).map(m=>esc(m.name)).join(' · ')}${
+        noLife.length>12 ? ' · and '+(noLife.length-12)+' more' : ''}</p></div>` : ''}
+    <div class="card" style="margin-bottom:1rem">
+      <label class="label" for="msearch">Find someone</label>
+      <input id="msearch" placeholder="Name or certificate number" value="${esc(MSEARCH)}"
+        style="width:100%;padding:.6rem .8rem;border:1.5px solid var(--line);border-radius:8px;font:inherit;margin-top:.3rem">
+      <p class="note" style="margin-top:.5rem">Open anyone to see their own benefits statement — the page you can
+        print and hand them.</p>
+    </div>
+    <div class="card" style="overflow-x:auto"><table><thead><tr>
+      <th>Member</th><th>Cover</th><th class="r">If they die</th><th class="r">Accident</th><th></th>
+    </tr></thead><tbody>
+      ${rows.map(m => `<tr>
+        <td><b>${esc(m.name)}</b>${m.certs.length ? `<br><span class="note mono">${esc(m.certs.join(' · '))}</span>` : ''}</td>
+        <td>${m.lines.map(l => l==='health' ? '🩺' : l==='pension' ? '🏦' : '🛡').join(' ')}
+          <span class="note">${esc(m.lines.join(', '))}</span></td>
+        <td class="r mono">${m.holds.life ? money(m.lifeCover) : '<span class="note">not on record</span>'}</td>
+        <td class="r mono">${m.holds.adnd ? money(m.adndCover) : '<span class="note">—</span>'}</td>
+        <td class="r"><button class="btn ghost" style="padding:.3rem .7rem;font-size:12px"
+          data-member="${esc(m.name)}">Statement →</button></td></tr>`).join('')}
+    </tbody></table>
+    ${q && !rows.length ? '<p class="note" style="margin-top:.8rem">Nobody matches that.</p>' : ''}</div>
+    <p class="note" style="margin-top:.7rem">Read ${esc(String(GV.read||'').slice(0,10))}. Figures are Guardian's own.
+      Where one is not on the record we say so rather than print a zero — a blank means Guardian has not filled it in,
+      not that somebody is uncovered.</p>`);
+}
+
+/* One member's statement, written to be handed to them. It answers the four
+   things an employee actually asks, in the order they ask them: what am I
+   covered for, what does it cost me, what happens if I leave, and who do I
+   call. Nothing here is editable and nothing is inferred. */
+function statement(m){
+  const co = LIVE ? LIVE.name : GROUP.company;
+  const fig = (ok, v, missing) => ok
+    ? `<div class="v">${money(v)}</div>`
+    : `<div class="v" style="font-size:1rem;color:var(--slate)">${missing}</div>`;
+  return `<p><button class="btn ghost" data-member="">← All ${((GV.members||[]).filter(x=>x.inForce)).length} people</button>
+      <button class="btn" style="margin-left:.5rem" onclick="window.print()">🖨️ Print this statement</button></p>
+    <div class="printonly">
+      <b style="font-size:1rem;color:#0B3C46">Guardian Life of the Caribbean</b> ·
+      Ricky Rampersad Branch, Chaguanas · 678-5921
+      <div style="font-size:11px;color:#5a6a7a;margin-top:.15rem">Your employee benefits statement</div>
+    </div>
+    <p class="label" style="margin-top:1rem">${esc(co)}</p>
+    <h1 class="page">${esc(m.name)}</h1>
+    <p class="note" style="margin:.3rem 0 1.2rem">${m.certs.length ? 'Certificate ' + esc(m.certs.join(' · ')) + ' · ' : ''}
+      ${esc(m.lines.join(' · '))}${m.statusClash ? ' · <b style="color:var(--gold)">record under review</b>' : ''}</p>
+
+    ${m.statusClash ? `<div class="card" style="border-color:var(--gold);margin-bottom:1rem">
+      <b>This record needs checking before it is handed over.</b> Guardian holds two different statuses for it —
+      ${esc(m.statusClash)} — so we are not stating cover from it until that is settled. We are asking Guardian now.
+      </div>` : `
+    <div class="stats" style="margin-bottom:1rem">
+      <div class="card"><span class="label">If you die</span>
+        ${fig(m.holds.life, m.lifeCover, 'Not on the record')}
+        <p class="note">${m.holds.life ? 'paid to your beneficiaries' : 'we are asking Guardian for this figure'}</p></div>
+      <div class="card"><span class="label">Accidental death or injury</span>
+        ${fig(m.holds.adnd, m.adndCover, m.holds.life ? 'Not on the record' : '—')}
+        <p class="note">${m.holds.adnd ? 'on top of the above, 24 hours a day' : 'not held against this member'}</p></div>
+      <div class="card"><span class="label">Costs you each month</span>
+        ${fig(m.holds.monthly, m.monthly, 'Not on the record')}
+        <p class="note">${m.holds.monthly ? 'the premium on your certificate' : ''}</p></div>
+    </div>`}
+
+    ${m.lines.includes('health') && !m.holds.health ? `<div class="card" style="margin-bottom:1rem">
+      <h2 style="font-size:1.05rem;color:var(--navy)">Your medical plan</h2>
+      <p style="font-size:14px;margin-top:.5rem">Medical cover is not a single sum — it pays against a schedule of
+        benefits, item by item, and Guardian does not hold one figure for it on this record. Your schedule of
+        benefits is the document that answers "is this covered", and we will send you yours on request.</p>
+      <p class="note" style="margin-top:.5rem">Claims, your card and your claim history are on Guardian's member
+        site. <a href="https://easiconnect.myguardiangroup.com" target="_blank" rel="noopener">easiconnect ↗</a></p>
+    </div>` : ''}
+
+    <div class="grid2">
+      <div class="card">
+        <h2 style="font-size:1.05rem;color:var(--navy)">If you leave ${esc(co)}</h2>
+        <p style="font-size:14px;margin-top:.5rem">Your cover ends with your employment. You then have a short
+          window — commonly 31 days — to convert your life cover into a policy of your own
+          <b>with no medical questions asked</b>. After that window it depends on your health at the time,
+          and that is the difference between cover you can keep and cover you have to qualify for again.</p>
+        <p class="note" style="margin-top:.6rem">We write to every leaver with their exact date. If you are
+          thinking about moving on, ask us first.</p>
+      </div>
+      <div class="card">
+        <h2 style="font-size:1.05rem;color:var(--navy)">Anything at all</h2>
+        <p style="font-size:14px;margin-top:.5rem">A benefit you do not understand, a claim that has stalled, a
+          newborn to add, a beneficiary to name — that is what the branch is for, and it is not a queue.</p>
+        <p style="font-size:14px;margin-top:.6rem"><b>Ricky Rampersad Branch</b><br>
+          Guardian Life of the Caribbean, Chaguanas<br>
+          <b>678-5921</b> — any hour</p>
+      </div>
+    </div>
+    <p class="note" style="margin-top:1rem">Prepared for ${esc(m.name)} from Guardian's records on
+      ${esc(String(GV.read||'').slice(0,10))}. Figures are as Guardian holds them today and can change when your
+      salary or your plan changes. This statement describes your cover; it is not the policy itself.</p>`;
+}
 
 function pending(){
   const title = 'Pending applications';
@@ -1827,7 +1978,7 @@ function liveRow(r){
 function syncBar(){ document.querySelectorAll('[data-as]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.as===as))); }
 
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-go],[data-as],[data-signin],[data-movement],#theme'); if(!t) return;
+  const t=e.target.closest('[data-go],[data-as],[data-signin],[data-movement],[data-member],#theme'); if(!t) return;
   if(t.id==='theme'){ const r=document.documentElement;
     r.dataset.theme = r.dataset.theme==='dark' ? 'light' : 'dark'; return; }
   /* The link's href already points at the form, so this only adds the
@@ -1835,9 +1986,23 @@ document.addEventListener('click',e=>{
      prints both of Guardian's forms — the employer is never left without a
      way to report a leaver. */
   if(t.hasAttribute('data-movement')){ e.preventDefault(); goMovement(); return; }
+  if(t.hasAttribute('data-member')){ MPICK = t.dataset.member || null; render();
+    window.scrollTo({top:0,behavior:'smooth'}); return; }
   if(t.dataset.as){ as=t.dataset.as; authed=true; ME=GROUP.people[3]; tab=TABS[as][0][0]; syncBar(); render(); return; }
   if(t.hasAttribute('data-signin')){ signIn($('code').value, $('pw') ? $('pw').value : ''); return; }
-  if(t.dataset.go){ tab=t.dataset.go; render(); window.scrollTo({top:0,behavior:'smooth'}); }
+  if(t.dataset.go){ tab=t.dataset.go; MPICK=null; MSEARCH=''; render();
+    window.scrollTo({top:0,behavior:'smooth'}); }
+});
+/* Typed, not submitted — a search that makes you press a button is a search
+   nobody uses on a list of four hundred. Repainting the table tears out the
+   box being typed into, so the value and the caret go back afterwards. */
+document.addEventListener('input', e => {
+  if(e.target.id !== 'msearch') return;
+  MSEARCH = e.target.value;
+  const at = e.target.selectionStart;
+  render();
+  const box = $('msearch');
+  if(box){ box.focus(); try{ box.setSelectionRange(at, at); }catch(err){} }
 });
 document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.id==='code') signIn(e.target.value); });
 

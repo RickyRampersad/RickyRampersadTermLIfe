@@ -1263,9 +1263,17 @@ var BEN_PENDING = ['Pending', 'Postponed', 'RFC', 'RDE', 'ANT', 'ANP', 'RDC',
                    'Underwriting complete, Missing Settlement Reqts'];
 
 /* Finished, one way or another. Death is here because the record has ended;
-   the claim it becomes is a different process and a different department. */
+   the claim it becomes is a different process and a different department.
+
+   Lapsed belongs here and was missing. It is not an unreadable code like
+   ELV or a bare "1" — it says plainly that cover ceased for non-payment —
+   but with no list to fall into it classified as unknown, which means 18
+   members across the branch's group book were neither counted as covered
+   nor shown to their employer as ended. They were simply not there. The
+   employer screens list what has ended; that is where these belong. */
 var BEN_ENDED   = ['Matured', 'Expired', 'Converted', 'Not taken', 'Rejected',
-                   'Not Proceeded With', 'Death', 'Surrendered', 'File Closed'];
+                   'Not Proceeded With', 'Death', 'Surrendered', 'File Closed',
+                   'Lapsed', 'LAPSE W/VALUE'];
 
 /* Three lines, but only two of them have a group record type.
 
@@ -1425,6 +1433,12 @@ function bRosterRows_(group, bills) {
     + "Policy_Status_Description_R__c, Policy_Status_Description__c, "
     + "Status_Change_Date__c, Employment_Status__c, Pension_Premiums__c, "
     + "Ownership__c, POLICY_OWNER__c, PLAN_NAME__c, List_Bill__c, "
+    /* What a member is actually covered for. Guardian keeps the sum assured
+       on the record and the branch has never shown it to anybody — an
+       employee who cannot say what they are covered for does not know
+       whether they are underinsured, which is the entire conversation this
+       branch exists to have. Read, never written. */
+    + "Life_Coverage__c, ADDAP_Coverage__c, Health_Cover__c, Total_Premiums__c, "
     + "CreatedDate, LastModifiedDate "
     + "FROM CLIENT_PORTFOLIO__c "
     + "WHERE (ACCOUNTS_NAME__c LIKE '" + like + "' OR Account__r.Name LIKE '" + like + "'"
@@ -1458,13 +1472,28 @@ function bRosterRows_(group, bills) {
       status: st,
       state:  stClash ? 'unknown' : bClassify_(st),
       statusClash: stClash ? (stA + ' / ' + stB) : null,
-      inForce: bClassify_(st) === 'inforce',
+      /* The clash has to stop inForce as well as state. It read the picklist
+         alone, so a record whose picklist said Premium Paying and whose text
+         said Lapsed was counted as covered — the disagreement declared
+         everywhere and then ignored by the one field that decides whether we
+         tell somebody they are covered. Dansteel's nine only escaped it
+         because their picklist happens to be the Lapsed side. */
+      inForce: !stClash && bClassify_(st) === 'inforce',
       statusAt: r.Status_Change_Date__c || null,
       employment: r.Employment_Status__c || '',
       premium: Number(r.Pension_Premiums__c) || 0,
       plan:    String(r.PLAN_NAME__c || ''),
       bill:    String(r.List_Bill__c || ''),
       owner:   String(r.Ownership__c || r.POLICY_OWNER__c || ''),
+      /* null, not zero. A member with no sum assured on the record and a
+         member covered for nothing are different facts, and printing $0.00
+         for the first would be telling somebody they have no cover when all
+         we know is that Guardian never filled the field. Every screen that
+         shows these has to distinguish the two. */
+      lifeCover:  r.Life_Coverage__c  == null ? null : Number(r.Life_Coverage__c),
+      adndCover:  r.ADDAP_Coverage__c == null ? null : Number(r.ADDAP_Coverage__c),
+      healthCover:r.Health_Cover__c   == null ? null : Number(r.Health_Cover__c),
+      monthly:    r.Total_Premiums__c == null ? null : Number(r.Total_Premiums__c),
       since:  created ? String(r.CreatedDate).slice(0, 10) : null,
       days:   created ? Math.floor((now - created) / BEN_DAY) : null,
       modified: String(r.LastModifiedDate || '').slice(0, 10)
@@ -1824,6 +1853,76 @@ function bClientRow_(code, password) {
   return hit;
 }
 
+/* ── one person, everything they are covered for ──
+   The roster arrives as one row per policy, so a member on life and health
+   is two rows and reads as two people. An employee asking "what am I
+   covered for" is asking one question, so fold them: one person, the lines
+   they hold, and the figures Guardian actually has for each.
+
+   Where a figure is missing it stays missing. Xtra Foods' health scheme
+   carries no Health_Cover__c on any of its 158 records, and printing $0.00
+   there would tell 158 people they have no medical cover when what is
+   true is that the benefit is a schedule, not a sum, and Guardian never
+   filled the field. `holds` says which figures are real so a screen can
+   show a number or say plainly that it is not on the record. */
+function bMemberCover_(rows) {
+  var by = {};
+  (rows || []).forEach(function (r) {
+    if (!r.name) return;
+    var k = bSameKey_(r.name);
+    var m = by[k] || (by[k] = { name: r.name, lines: [], certs: [], plans: [],
+                                inForce: false, pending: false,
+                                lifeCover: null, adndCover: null, healthCover: null,
+                                monthly: 0, monthlyKnown: false, statusClash: null });
+    /* The name a person would recognise, which is not simply the longest
+       string: Guardian files some records surname-first, and "Ramdath,
+       Harripersad" is longer than "Harripersad Ramdath" while being the
+       one nobody would introduce themselves as. So the form without a
+       comma wins outright, and only then does the fuller spelling — which
+       is what puts "Kamelia Kissoonsingh" ahead of "K Kissoonsingh". */
+    var filed = function (s) { return s.indexOf(',') !== -1; };
+    if (filed(m.name) && !filed(r.name)) m.name = r.name;
+    else if (filed(m.name) === filed(r.name) && r.name.length > m.name.length) m.name = r.name;
+    if (m.lines.indexOf(r.line) === -1) m.lines.push(r.line);
+    if (r.policy && m.certs.indexOf(r.policy) === -1) m.certs.push(r.policy);
+    if (r.plan && m.plans.indexOf(r.plan) === -1) m.plans.push(r.plan);
+    if (r.inForce) m.inForce = true;
+    if (r.state === 'pending') m.pending = true;
+    if (r.statusClash) m.statusClash = r.statusClash;
+    /* Only cover on a policy that is actually in force. A lapsed record
+       still carries last year's sum assured, and showing it would tell
+       somebody they are covered for money nobody would pay out. */
+    if (!r.inForce) return;
+    if (r.lifeCover   != null) m.lifeCover   = (m.lifeCover   || 0) + r.lifeCover;
+    if (r.adndCover   != null) m.adndCover   = (m.adndCover   || 0) + r.adndCover;
+    if (r.healthCover != null) m.healthCover = (m.healthCover || 0) + r.healthCover;
+    if (r.monthly     != null) { m.monthly += r.monthly; m.monthlyKnown = true; }
+  });
+  return Object.keys(by).map(function (k) {
+    var m = by[k];
+    m.holds = { life: m.lifeCover != null, adnd: m.adndCover != null,
+                health: m.healthCover != null, monthly: m.monthlyKnown };
+    if (!m.monthlyKnown) m.monthly = null;
+    delete m.monthlyKnown;
+    return m;
+  }).sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; });
+}
+
+/* The key is the whole name as a sorted set of words, so "Ramdath,
+   Harripersad" and "Harripersad Ramdath" fold together and Suraj Roopchand
+   and Vedish Roopchand do not. Single initials are dropped, so a stray
+   middle initial does not split a person in two.
+
+   This is deliberately stricter than bSameName_'s "share two words". That
+   rule is right for asking "have we already reported this leaver", where a
+   near miss costs a duplicate. Here a wrong match merges two people's sums
+   assured into one figure and hands it to somebody, so a full middle name
+   splitting one person into two rows is the failure to prefer. */
+function bSameKey_(name) {
+  return String(name || '').toUpperCase().replace(/[^A-Z ]/g, ' ')
+    .split(/\s+/).filter(function (w) { return w.length > 1; }).sort().join(' ');
+}
+
 function benGroupView_(p) {
   /* An employer proves who they are the same way they signed in. Whatever
      group they ask for, they get their own — the company is read off their
@@ -1899,6 +1998,7 @@ function benGroupView_(p) {
   return bok_({
     group: group, shown: true, read: new Date().toISOString(),
     inForce: counts, pending: pending, ended: ended, tracked: tracked,
+    members: bMemberCover_(rows),
     billsByLine: byLine,
     /* owned  — demonstrably the employer's, by the ownership field
        unclear — no owner recorded, so it could be either
