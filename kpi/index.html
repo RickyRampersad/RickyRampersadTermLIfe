@@ -331,6 +331,39 @@ const MET_OPTS = [{ v: "met", label: "Met" }, { v: "partly", label: "Partly" },
                   { v: "no", label: "Not yet" }];
 const MET_TONE = { met: GREEN, partly: AMBER, no: RED };
 
+// The overdue items, gathered by the agent the work is for. Six chases to one
+// agent is one conversation; six rows in a list is six of them. Agent__c is
+// set on about six in ten open tasks and nothing has ever shown it to the
+// person doing the work.
+function LateByAgent({ items }) {
+  const by = {};
+  items.forEach(t => {
+    const who = t.agent || "\u2014";
+    (by[who] = by[who] || []).push(t);
+  });
+  const order = Object.keys(by).sort((a, b) => by[b].length - by[a].length);
+  return React.createElement("div", null, order.map(who => {
+    const rows = by[who];
+    return React.createElement("div", {
+      key: who, style: { borderTop: "1px solid " + LINE, padding: "9px 0" }
+    },
+      React.createElement("div", {
+        style: { fontSize: 11.5, fontWeight: 800, color: GOLD, marginBottom: 4 }
+      }, who === "\u2014" ? "No agent on the task" : who,
+         rows.length > 1 ? "  \u00b7 " + rows.length + " together" : ""),
+      rows.slice(0, 6).map(t => React.createElement("div", {
+        key: t.id, style: { margin: "0 0 6px" }
+      },
+        React.createElement("div", {
+          style: { fontSize: 13, color: INK, fontWeight: 600, lineHeight: 1.35 }
+        }, t.subject || "(no subject)"),
+        React.createElement("div", {
+          style: { fontSize: 11.5, color: AMBER, fontWeight: 700, marginTop: 2 }
+        }, t.type, " \u00b7 ", t.age, " day", t.age === 1 ? "" : "s", " over",
+           t.status ? " \u00b7 " + t.status : ""))));
+  }));
+}
+
 function KpiPicker({ value, opts, onToggle, mine, branch }) {
   const on = kpiList(value);
   const chip = k => {
@@ -1600,16 +1633,7 @@ function App() {
           style: { fontSize: 12, color: MUTED, margin: "0 0 10px", lineHeight: 1.45 }
         }, "These are the only ones being asked about. Give the reason once",
            " and it goes back to Salesforce with the task."),
-        late.slice(0, 8).map(t => /*#__PURE__*/React.createElement("div", {
-          key: t.id,
-          style: { borderTop: "1px solid " + LINE, padding: "9px 0" }
-        }, /*#__PURE__*/React.createElement("div", {
-          style: { fontSize: 13, color: INK, fontWeight: 600, lineHeight: 1.35 }
-        }, t.subject || "(no subject)"),
-          /*#__PURE__*/React.createElement("div", {
-            style: { fontSize: 11.5, color: AMBER, fontWeight: 700, margin: "3px 0 0" }
-          }, t.type, " \u00b7 ", t.age, " day", t.age === 1 ? "" : "s", " over",
-             t.status ? " \u00b7 " + t.status : "")))) : null,
+        /*#__PURE__*/React.createElement(LateByAgent, { items: late })) : null,
 
       /*#__PURE__*/React.createElement("button", {
         onClick: () => setView("entry"),

@@ -2907,8 +2907,13 @@ function sfkNeedsReason_(date) {
   var byId = {};
   Object.keys(users).forEach(function (k) { byId[users[k].id] = k; });
 
+  // Agent__c is who the work is for. It is set on about six in ten open
+  // tasks, and until now nothing has ever shown it to the person doing the
+  // work — so "six of these are for one agent" was never a thing anyone
+  // could see, and chasing them one at a time was the only option.
   var recs = sfkQuery_(
-    'SELECT Id, OwnerId, Subject, Status, Task_Type__c, ActivityDate, Days_O_S__c ' +
+    'SELECT Id, OwnerId, Subject, Status, Task_Type__c, ActivityDate, Days_O_S__c, ' +
+    'Agent__r.Name ' +
     'FROM Task WHERE OwnerId IN (' + ids.join(',') + ") AND Status != 'Completed' " +
     'AND ActivityDate < ' + day + ' AND Task_Update_Reason_c__c = NULL ' +
     'ORDER BY Days_O_S__c DESC NULLS LAST LIMIT 400');
@@ -2920,7 +2925,8 @@ function sfkNeedsReason_(date) {
     (out[sid] = out[sid] || []).push({
       id: r.Id, subject: r.Subject, status: r.Status,
       type: r.Task_Type__c || 'No type', due: r.ActivityDate,
-      age: Number(r.Days_O_S__c || 0)
+      age: Number(r.Days_O_S__c || 0),
+      agent: (r.Agent__r && r.Agent__r.Name) || ''
     });
   });
   cache.put(key, JSON.stringify(out), SFK.CACHE_MIN * 60);
