@@ -334,9 +334,16 @@ function KpiPicker({ value, opts, onToggle, mine, branch }) {
     React.createElement("div", {
       style: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }
     }, list.map(chip)));
+  // The two groups are not "types" and "other" — they are work Salesforce
+  // holds tasks for, and work it does not. Say that, and only promise numbers
+  // when there are numbers to show.
+  const numbered = opts.filter(k => k.salesforce);
+  const anyCount = numbered.some(k => (mine && mine[k.value]) || (branch && branch[k.value]));
   return React.createElement("div", null,
-    group("Salesforce task types \u2014 these carry live numbers", opts.filter(k => k.salesforce)),
-    group("Logged in words only", opts.filter(k => !k.salesforce)));
+    group(anyCount ? "Your Salesforce tasks \u2014 open, and how many are late"
+                   : "Work Salesforce holds tasks for", numbered),
+    group("Work with no Salesforce task \u2014 write these in words",
+          opts.filter(k => !k.salesforce)));
 }
 
 function KpiHint({ kpi, live }) {
