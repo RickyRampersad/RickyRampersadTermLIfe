@@ -208,7 +208,7 @@
    figure to complete one.
    ══════════════════════════════════════════════════════════════════════════ */
 
-const API = "";   /* set to the branch /exec URL to send from here */
+const API = "https://script.google.com/macros/s/AKfycbzxAl-EP_stXYGHZkkxWnei6idJ04bM5ZIUKfGxDTr-cHPH7Tt9trmAYVNPzeq9k4U56w/exec";
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -561,7 +561,11 @@ function showStep(n){
   $('backbtn').style.visibility = n === 1 ? 'hidden' : 'visible';
   $('nextbtn').style.display = n === LAST ? 'none' : '';
   $('printbtn').style.display = n === LAST ? '' : 'none';
-  $('sendbtn').style.display = (n === LAST && API) ? '' : 'none';
+  /* Send only when we hold the login the branch will accept. Someone who
+     opened this page directly still gets both forms — the printing is the
+     part Guardian needs, and offering a button that can only answer "not on
+     the access list" would be worse than not offering it. */
+  $('sendbtn').style.display = (n === LAST && API && HANDOFF.code) ? '' : 'none';
   $('err').style.display = 'none';
   if(n === LAST){ summary(); renderForms(); }
   window.scrollTo(0,0);
@@ -575,24 +579,56 @@ $('printbtn').addEventListener('click', () => window.print());
 
 /* Sending records the leavers with the branch, so a termination is tracked
    from the moment it is reported rather than from whenever somebody
-   remembers to type it in. */
+   remembers to type it in.
+
+   One person on both plans is two terminations, not one. Life ends on the
+   last day and health credits back the month already billed, and they are
+   chased separately because Guardian actions them in two departments — so
+   a leaver on both goes up as a life row and a health row. Sending only
+   one of the two is exactly how an employer ends up still paying health
+   premium for somebody whose life cover ended months ago, which is the
+   thing this whole screen exists to stop.
+
+   Each row carries that person's own last day and reason. They differ
+   within a month far more often than not. */
+function leaverRows(){
+  const out = [];
+  PEOPLE.filter(p => p.kind === 'leave' && p.name.trim()).forEach(p => {
+    const lines = [p.life && 'life', p.health && 'health'].filter(Boolean);
+    (lines.length ? lines : ['life']).forEach(line => out.push({
+      name: p.name.trim(), line, lastDay: p.lastDay, reason: p.reason || ''
+    }));
+  });
+  return out;
+}
+
 $('sendbtn').addEventListener('click', async () => {
   const b = $('sendbtn'); b.disabled = true; b.textContent = 'Sending…';
   const d = plan();
-  const leavers = PEOPLE.filter(p => p.kind === 'leave' && p.name.trim());
+  const members = leaverRows();
+  if(!members.length){
+    $('sendout').innerHTML = `<div class="flag"><b>Nothing to send.</b> The branch tracks leavers; joiners and
+      cover changes go to Guardian on the printed forms. Print them and we will take it from there.</div>`;
+    b.disabled = false; b.textContent = '✓ Send to the branch'; return;
+  }
   try{
     const r = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify({ action:'reportleaver', code: (localStorage.getItem('rrb-code')||''),
-        password: (localStorage.getItem('rrb-pw')||''), group: d.employer,
-        members: leavers.map(p => ({ name:p.name, line: p.life ? 'life' : 'health' })),
-        lastDay: leavers[0] ? leavers[0].lastDay : '',
-        reason: leavers[0] ? leavers[0].reason : '',
-        note: d.note }) });
+      body: JSON.stringify({ action:'reportleaver', code: HANDOFF.code, password: HANDOFF.pw,
+        group: d.employer, members, note: d.note }) });
     const j = await r.json();
+    /* made counts rows, and one person on both plans is two of them. Said in
+       people and lines, because "4 terminations" for two leavers reads like
+       a mistake to the person who typed two names. */
+    const heads = new Set(members.map(m => m.name.toLowerCase())).size;
     $('sendout').innerHTML = (j && j.ok)
-      ? `<div class="flag" style="border-color:var(--ok);background:#EDF8F2">
-          <b>Sent.</b> ${j.made||0} termination${j.made===1?'':'s'} now tracked with the branch — you can watch
-          each one through on your portal. Print both forms, sign and stamp them, and they go to Guardian.</div>`
+      ? (j.made
+          ? `<div class="flag" style="border-color:var(--ok);background:#EDF8F2">
+              <b>Sent.</b> ${heads} ${heads===1?'leaver':'leavers'} reported, tracked as ${j.made}
+              ${j.made===1?'termination':'terminations'} — life and health are followed separately because
+              Guardian actions them separately. You can watch each one through on your portal.
+              Print both forms, sign and stamp them, and they go to Guardian.</div>`
+          : `<div class="flag"><b>Already reported.</b> ${esc(j.note||'Nothing new was added.')} Nothing is
+              duplicated — print the forms if the department still needs them.</div>`)
       : `<div class="flag"><b>Not sent.</b> ${esc((j&&j.error)||'The branch could not be reached.')}
           Print the forms and send them the usual way; nothing is lost.</div>`;
   }catch(e){
@@ -602,11 +638,37 @@ $('sendbtn').addEventListener('click', async () => {
   b.disabled = false; b.textContent = '✓ Send to the branch';
 });
 
+/* ── arriving from the group portal ──
+   An employer who has just signed in has already told us who they are. Making
+   them type the company name and both policy numbers again is how the two get
+   typed differently, and a movement filed under a name we do not recognise is
+   a movement nobody can match to a scheme.
+
+   The hand-off is sessionStorage, not localStorage: the login has to travel
+   for the branch to accept the report, and a client's password has no
+   business surviving on an HR machine after the browser closes. It is cleared
+   the moment it has been read. */
+const HANDOFF = (function(){
+  const empty = { code:'', pw:'', company:'', life:'', health:'', admin:'' };
+  let raw = null;
+  try{ raw = sessionStorage.getItem('rrb-movement'); sessionStorage.removeItem('rrb-movement'); }
+  catch(e){ return empty; }
+  if(!raw) return empty;
+  try{ return Object.assign(empty, JSON.parse(raw)); }catch(e){ return empty; }
+})();
+
 /* Today, and this month, are right far more often than not. */
 (function start(){
   const t = new Date(), iso = t.toISOString().slice(0,10);
   $('signDate').value = iso;
   $('month').value = iso.slice(0,7);
+  if(HANDOFF.company)  $('employer').value  = HANDOFF.company;
+  if(HANDOFF.life)     $('polLife').value   = HANDOFF.life;
+  if(HANDOFF.health)   $('polHealth').value = HANDOFF.health;
+  if(HANDOFF.admin)    $('adminName').value = HANDOFF.admin;
+  if(!HANDOFF.code) $('sendout').innerHTML = `<div class="flag">Both forms print from here whoever you are.
+    To have the leavers <b>tracked</b> as well — so you can watch each one come off your billing — start from
+    <a href="group.html">your group account</a> and open this from the Terminations tab.</div>`;
   paintPeople(); showStep(1);
 })();
 </script>

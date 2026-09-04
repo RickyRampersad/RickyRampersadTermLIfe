@@ -1587,29 +1587,53 @@ function benReportTermination_(b) {
   var members = [].concat(b.member || b.members || []);
   if (!members.length) return berr_('Who has left?');
   if (members.length > 25) return berr_('Twenty-five at a time, so each one gets its own notice.');
+
+  /* Three people leaving on three different dates are three different
+     premiums. A caller sending one date for the whole batch still works —
+     that is what batchDay is — but a member carrying their own last day
+     keeps it. Before this, whatever date arrived on the batch was written
+     onto everybody, so every leaver after the first was credited to the
+     wrong day and the statement of adjustments came back short. */
+  var batchDay = String(b.lastDay || '').trim();
+  var batchWhy = String(b.reason || '');
+  var memDay_  = function (m) { return String((m && m.lastDay) || batchDay).trim(); };
+  var memWhy_  = function (m) { return String((m && m.reason)  || batchWhy); };
+  var memName_ = function (m) { return String(m && m.name ? m.name : m).trim(); };
+
   /* A death in service is a claim, not an administrative leaver. It is
      urgent, it goes to a different department, and the family is owed a
-     benefit rather than a conversion offer. Refused here on purpose. */
-  if (/death|deceased|passed away/i.test(String(b.reason || '')))
+     benefit rather than a conversion offer. Refused here on purpose — and
+     tested against every reason on the batch, not only the batch's own,
+     because one death among five resignations is still a death. */
+  var death_ = function (s) { return /death|deceased|passed away/i.test(String(s || '')); };
+  if (death_(batchWhy) || members.some(function (m) { return death_(memWhy_(m)); }))
     return berr_('A death in service is a claim, not a termination — call the branch on 678-5921 and we will start it today.');
 
-  var lastDay = String(b.lastDay || '').trim();
-  if (!lastDay) return berr_('A termination needs the last day — the premium stops from that date.');
+  /* Refuse the whole batch rather than write some of it: a half-reported
+     set of leavers is worse than none, because it reads as complete. */
+  var undated = members.filter(function (m) { return !memDay_(m); })
+                       .map(function (m) { return memName_(m) || 'one unnamed entry'; });
+  if (undated.length) return berr_('A termination needs the last day — the premium stops from that date. '
+    + 'Missing for ' + undated.join(', ') + '.');
 
   var open = bTermRows_(group), made = [];
   members.forEach(function (m) {
-    var name = String(m && m.name ? m.name : m).trim();
+    var name = memName_(m);
     if (!name) return;
     var line = String((m && m.line) || b.line || 'life');
+    var lastDay = memDay_(m);
     /* Reporting the same person twice does not make two terminations. */
     if (open.some(function (t) {
       return t.state !== 'SETTLED' && t.line === line && bSameName_(t.member, name);
     })) return;
     var t = { id: 'T' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36),
               group: group, member: name, line: line, lastDay: lastDay,
-              reason: String(b.reason || ''), by: byName, at: bdate_(new Date()),
+              reason: memWhy_(m), by: byName, at: bdate_(new Date()),
               state: 'REPORTED', note: String(b.note || '') };
     bTermWrite_(t); made.push(t);
+    /* Written into open too, so a caller sending the same person on life and
+       on health in one batch does not get two rows for the same line. */
+    open.push(t);
     blog_(byName, who ? who.code : '', 'LEAVER REPORTED', group, '', name + ' — last day ' + lastDay);
   });
   if (!made.length) return bok_({ made: 0, note: 'Already reported — nothing added.' });
@@ -1620,10 +1644,16 @@ function benReportTermination_(b) {
     if (to.length) MailApp.sendEmail({
       to: to.join(','), name: BEN.FROM_NAME,
       subject: 'Leaver reported: ' + group + ' — ' + made.length + ' member' + (made.length === 1 ? '' : 's'),
+      /* Each line carries its own last day. They can differ inside one batch,
+         and the date is the fact the department acts on, so it is printed
+         beside the name rather than once at the top where a second date
+         would quietly contradict it. */
       body: byName + ' reported ' + made.length + ' leaver' + (made.length === 1 ? '' : 's')
-        + ' at ' + group + ', last day ' + lastDay + ':\n\n'
-        + made.map(function (t) { return '  • ' + t.member + ' (' + t.line + ')'; }).join('\n')
-        + (b.reason ? '\n\nReason: ' + b.reason : '')
+        + ' at ' + group + ':\n\n'
+        + made.map(function (t) {
+            return '  • ' + t.member + ' (' + t.line + ') — last day ' + t.lastDay
+                 + (t.reason ? ', ' + t.reason : '');
+          }).join('\n')
         + '\n\nPut it through to the department, then mark it sent on the month-end screen.\n'
         + bprop_('BEN_SITE') + 'upload.html'
     });
@@ -1853,9 +1883,23 @@ function benGroupView_(p) {
     });
   } catch (e) {}
 
+  /* Which bill number belongs to which line, so a movement form can be filled
+     with the scheme's own number instead of the employer typing it from
+     memory — a movement filed under a number nobody recognises is a movement
+     that sits on somebody's desk. A line carrying more than one is reported
+     as more than one, not resolved here: Xtra Foods holds TGM1526 and
+     TGM 1526, one scheme spelled two ways, and picking a spelling is
+     Guardian's decision to confirm rather than ours to guess. */
+  var byLine = { life: [], health: [], pension: [] };
+  rows.forEach(function (r) {
+    if (!r.bill || !byLine[r.line]) return;
+    if (byLine[r.line].indexOf(r.bill) === -1) byLine[r.line].push(r.bill);
+  });
+
   return bok_({
     group: group, shown: true, read: new Date().toISOString(),
     inForce: counts, pending: pending, ended: ended, tracked: tracked,
+    billsByLine: byLine,
     /* owned  — demonstrably the employer's, by the ownership field
        unclear — no owner recorded, so it could be either
        personal — an employee's own plan, which is not the scheme
