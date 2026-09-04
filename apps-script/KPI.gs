@@ -489,25 +489,37 @@ var LOG_HEADERS = ['Timestamp', 'Date', 'StaffId', 'Name', 'Grade', 'Status']
   .concat(['Closed', 'Overdue', 'Aged60', 'ValueAdded', 'Innovation', 'SystemFlags', 'Notes',
            'UpdatedAt', 'Revision'])
   .concat(BLOCK_IDS.map(function (p) { return p + '_At'; }))
-  .concat(BLOCK_IDS.map(function (p) { return p + '_Quality'; }));
+  .concat(BLOCK_IDS.map(function (p) { return p + '_Quality'; }))
+  // Set in the morning, answered at the close. Four equal two-hour blocks are
+  // a shape nobody in the branch actually works — 62% of the week's task
+  // activity lands before noon, and no two people have the same day — so what
+  // is measured is the person's own estimate against their own answer, not
+  // the clock against a grid.
+  .concat(BLOCK_IDS.map(function (p) { return p + '_Plan'; }))
+  .concat(BLOCK_IDS.map(function (p) { return p + '_Met'; }));
 
 var TRAINING_HEADERS = ['TrainingDate', 'StaffId', 'Trainer', 'Block', 'Trainee', 'Topic',
                         'Objectives', 'Achieved', 'Test', 'Result', 'Followup', 'LoggedAt'];
 
 /** UpdatedAt and Revision are new. Add them to an existing log without
  *  disturbing a single cell of what is already recorded. */
+/** Columns the log has grown since it was created, added to an existing tab.
+ *
+ *  One write and one cache drop for all of them together. Adding them a cell
+ *  at a time cost a round trip and a header re-read each — invisible while it
+ *  was two columns, and the bench guard caught it the moment it was ten.
+ */
 function ensureLogColumns_(sh) {
   var head = headerOf_(sh);
-  ['UpdatedAt', 'Revision']
+  var want = ['UpdatedAt', 'Revision']
     .concat(BLOCK_IDS.map(function (p) { return p + '_At'; }))
     .concat(BLOCK_IDS.map(function (p) { return p + '_Quality'; }))
-    .forEach(function (col) {
-    if (head.indexOf(col) === -1) {
-      sh.getRange(1, sh.getLastColumn() + 1).setValue(col);
-      head.push(col);
-      forgetHeader_(sh);
-    }
-  });
+    .concat(BLOCK_IDS.map(function (p) { return p + '_Plan'; }))
+    .concat(BLOCK_IDS.map(function (p) { return p + '_Met'; }));
+  var missing = want.filter(function (col) { return head.indexOf(col) === -1; });
+  if (!missing.length) return sh;
+  sh.getRange(1, sh.getLastColumn() + 1, 1, missing.length).setValues([missing]);
+  forgetHeader_(sh);
   return sh;
 }
 
@@ -889,6 +901,8 @@ function saveEntry_(payload, profile) {
       vals2[p + '_Resolved'] = d.resolved || '';
       vals2[p + '_Open'] = d.openOwned || '';
       vals2[p + '_Blocker'] = joinBlocker_(d.blocker, d.blockerOwner);
+      vals2[p + '_Plan'] = d.planMins || '';
+      vals2[p + '_Met'] = d.met || '';
     });
 
     var row = head.map(function (h) { return (h in vals2) ? vals2[h] : ''; });
@@ -1126,6 +1140,8 @@ function saveBlock_(payload, profile) {
     patch[blockId + '_Actioned'] = d.actioned || '';
     patch[blockId + '_Resolved'] = d.resolved || '';
     patch[blockId + '_Open'] = d.openOwned || '';
+    patch[blockId + '_Plan'] = d.planMins || '';
+    patch[blockId + '_Met'] = d.met || '';
     patch[blockId + '_Blocker'] = joinBlocker_(d.blocker, d.blockerOwner);
     patch[blockId + '_At'] = now;
 

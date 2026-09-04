@@ -114,6 +114,14 @@ const ok = (what, cond, extra) => {
   ok('the day total follows the picking',
      await page.locator('text=/20 open . 1 already late/').count() > 0);
 
+  console.log('\nThe estimate is theirs, made against the counts in front of them:\n');
+  ok('it is asked once a type is picked',
+     await page.locator('text=How long do you think this needs').count() > 0);
+  ok('and it says what they are estimating against',
+     await page.locator('text=/open in what you picked/').count() > 0);
+  await page.locator('button:has-text("40 min")').first().click();
+  await page.waitForTimeout(300);
+
   console.log('\nAnd the day starts from here:\n');
   await page.click('button:has-text("Start the day")');
   await page.waitForTimeout(900);
@@ -124,6 +132,20 @@ const ok = (what, cond, extra) => {
   await page.waitForTimeout(500);
   const carried = await page.locator('button:has-text("Licensing / Staffing")').first().textContent();
   ok('the morning plan is carried into the block', /\u2713/.test(carried), carried);
+
+  console.log('\nThe block closes on a question, not a blank box:\n');
+  ok('it asks whether the objective was met',
+     await page.locator('text=Was the objective met').count() > 0);
+  ok('and reminds them what they planned',
+     await page.locator('text=/you planned 40 min/').count() > 0);
+  await page.locator('button:has-text("Partly")').first().click();
+  await page.waitForTimeout(300);
+  const met = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem(Object.keys(localStorage).find(k => k.indexOf('draft') > -1))));
+  ok('both answers are kept on the device like everything else',
+     met && met.blocks && met.blocks.kpi1 &&
+     met.blocks.kpi1.planMins === '40' && met.blocks.kpi1.met === 'partly',
+     JSON.stringify(met && met.blocks && met.blocks.kpi1));
 
   console.log('\nAnd the plan is reachable again at two o’clock:\n');
   await page.click('button:has-text("Plan the day")');

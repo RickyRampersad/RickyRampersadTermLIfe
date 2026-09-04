@@ -296,6 +296,41 @@ const kpiToggle = (v, k) => {
 // number they are about to write has something to be checked against.
 // Chips rather than a select. A multiple-select box is close to unusable on a
 // phone, and every one of these is filled on a phone.
+// A row of taps, not a text box. Both of these have to cost a second or they
+// will not get filled in, and a control nobody fills in is worse than none.
+function Chips({ label, hint, options, value, onPick, tone }) {
+  return React.createElement("div", { style: { margin: "10px 0 2px" } },
+    React.createElement("div", {
+      style: { fontSize: 11.5, fontWeight: 800, color: MUTED, marginBottom: 6 }
+    }, label, hint ? React.createElement("span", {
+      style: { fontWeight: 500, color: MUTED, opacity: .85 }
+    }, "  " + hint) : null),
+    React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 } },
+      options.map(o => {
+        const on = String(value || "") === String(o.v);
+        const c = on ? (tone && tone[o.v]) || GOLD : LINE;
+        return React.createElement("button", {
+          key: o.v, type: "button",
+          onClick: () => onPick(on ? "" : o.v),
+          style: { font: "inherit", fontSize: 12.5, fontWeight: on ? 700 : 500,
+                   cursor: "pointer", padding: "7px 13px", borderRadius: 999,
+                   border: "1px solid " + c, background: on ? "#FBF3DF" : "#FFFFFF",
+                   color: on ? INK : MUTED }
+        }, o.label);
+      })));
+}
+
+// The estimate is the person's, made against the real counts in front of them.
+const PLAN_MINS = [{ v: "20", label: "20 min" }, { v: "40", label: "40 min" },
+                   { v: "60", label: "1 hr" },   { v: "90", label: "1½ hr" },
+                   { v: "120", label: "2 hr" },  { v: "180", label: "3 hr +" }];
+
+// Three answers, not a score. "Partly" is the honest one most days and it has
+// to be as easy to press as the other two.
+const MET_OPTS = [{ v: "met", label: "Met" }, { v: "partly", label: "Partly" },
+                  { v: "no", label: "Not yet" }];
+const MET_TONE = { met: GREEN, partly: AMBER, no: RED };
+
 function KpiPicker({ value, opts, onToggle, mine, branch }) {
   const on = kpiList(value);
   const chip = k => {
@@ -465,6 +500,12 @@ const isRealVA = v => {
 };
 const blankBlock = () => ({
   kpi: "",
+  // planMins is what the person expected the work to take, set in the morning
+  // from the real counts. met is their own answer at the close. Neither is a
+  // clock reading — the point is the person's estimate against their own
+  // judgement, which is a measure they own.
+  planMins: "",
+  met: "",
   actioned: "",
   resolved: "",
   openOwned: "",
@@ -767,6 +808,8 @@ function rowToEntry(row) {
       actioned: g(p + "_Actioned"),
       resolved: g(p + "_Resolved"),
       openOwned: g(p + "_Open"),
+      planMins: g(p + "_Plan"),
+      met: g(p + "_Met"),
       blocker,
       blockerOwner: owner
     };
@@ -1535,7 +1578,13 @@ function App() {
           /*#__PURE__*/React.createElement(KpiPicker, {
             value: bl.kpi, opts: opts, mine: byType, branch: branchType,
             onToggle: k => patchBlock(b.id, "kpi", kpiToggle(bl.kpi, k))
-          }));
+          }),
+          picked.length ? /*#__PURE__*/React.createElement(Chips, {
+            label: "How long do you think this needs?",
+            hint: byType && open ? "\u2014 " + open + " open in what you picked" : "",
+            options: PLAN_MINS, value: bl.planMins,
+            onPick: v => patchBlock(b.id, "planMins", v)
+          }) : null);
       }),
 
       // The exceptions, and only those. Nothing is asked about the work that
@@ -1872,7 +1921,12 @@ function App() {
         onChange: e => patchBlock(b.id, "tr_followup", e.target.value),
         placeholder: "What happens next / when to re-check",
         style: inp
-      }))), /*#__PURE__*/React.createElement("div", {
+      }))), /*#__PURE__*/React.createElement(Chips, {
+        label: "Was the objective met?",
+        hint: bl.planMins ? "\u2014 you planned " + bl.planMins + " min" : "",
+        options: MET_OPTS, tone: MET_TONE, value: bl.met,
+        onPick: v => patchBlock(b.id, "met", v)
+      }), /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
           alignItems: "center",
