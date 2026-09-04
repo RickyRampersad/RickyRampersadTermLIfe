@@ -12,13 +12,19 @@ function makeEnv(opts = {}) {
   const sheets = {};
 
   function mkSheet(name, id, headers, rows) {
-    const grid = [headers.slice(), ...rows.map(r => r.slice())];
+    // A sheet that has just been inserted is empty — no rows at all, so the
+    // first appendRow lands in row 1 and becomes the header. Modelling it as
+    // one blank row put every generated tab's header in row 2, which nothing
+    // caught because the tests pre-made their tabs.
+    const grid = headers.length ? [headers.slice(), ...rows.map(r => r.slice())]
+                                : rows.map(r => r.slice());
     const sh = {
       _grid: grid,
       getName: () => name,
       getSheetId: () => id,
       getLastRow: () => { calls.getLastRow++; return grid.length; },
-      getLastColumn: () => { calls.getLastColumn++; return Math.max(...grid.map(r => r.length)); },
+      getLastColumn: () => { calls.getLastColumn++;
+        return grid.length ? Math.max(...grid.map(r => r.length)) : 0; },
       setFrozenRows: () => sh,
       appendRow: r => { calls.appendRow++; grid.push(r.slice()); return sh; },
       deleteRow: n => { calls.deleteRow++; grid.splice(n - 1, 1); return sh; },
