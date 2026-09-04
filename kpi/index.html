@@ -173,6 +173,127 @@ let KPI_CHOICES = {
 const fnFor = role => KPI_CHOICES[role] || KPI_CHOICES.ssa || [];
 const STANDARDS = ["Completed applications to Head Office within 2 days of receipt.", "Policy documents processed with 100% accuracy.", "Documents to the relevant party within 1 day of receipt.", "A rolled due date is not an actioned task — log the genuine blocker + owner.", "\"Waiting on someone\" needs a named person and the date last chased.", "Value Added is logged every day — even if the honest entry is \"None today\"."];
 
+
+// What a good entry looks like, per KPI. A blank box asks "what did you do
+// today" and gets "3 tasks" back. These ask the question the work itself
+// answers — how many, for whom, and where it stands — and show one worked
+// example, so the standard is visible rather than described.
+//
+// Written from the branch's own open book rather than invented: the largest
+// type is Renewals/Premium Dues/Billing, and it is direct debits, stop
+// payments, premium receipts and group billing, so that is what its example
+// says. Keeping these here rather than in the Apps Script means a wording
+// change ships on push, with no redeployment.
+const KPI_GUIDE = {
+  "Renewa/PDl/Bill": {
+    actioned: "How many, and for whom — DDs, stop payments, premium chases",
+    resolved: "How many actually cleared, and what is still with the bank",
+    eg: "8 direct debits sent, 2 stop payment forms filed for one client, September group billing chased with the administrator."
+  },
+  "Servicing": {
+    actioned: "Which client, and what stage it reached",
+    resolved: "Which are confirmed complete",
+    eg: "3 changes of beneficiary submitted, portal access fault escalated to IT, 1 address change confirmed."
+  },
+  "Pendings": {
+    actioned: "Who you chased, when, and what they said",
+    resolved: "Which came off pending",
+    eg: "5 pending cases chased, 3 replied with documents, 1 lapsing Friday."
+  },
+  "Claims/ Mat": {
+    actioned: "Which claim, and what moved on it",
+    resolved: "Which were paid, declined or matured",
+    eg: "CI claim — medical report received and sent to underwriting. Maturity letter issued on one policy."
+  },
+  "Opportunity": {
+    actioned: "Who you spoke to, and what was quoted",
+    resolved: "What was written, declined or deferred",
+    eg: "Two client reviews held, one quotation issued for critical illness cover."
+  },
+  "Scripts/CB": {
+    actioned: "Which script or clawback, and what stage",
+    resolved: "Which are settled",
+    eg: "Two clawbacks queried with Head Office, one settled."
+  },
+  "Lic/Staffing/SA/HR": {
+    actioned: "Which matter, and what moved",
+    resolved: "What is signed off or closed",
+    eg: "Two licence renewals submitted. One staffing matter with HR since Monday."
+  },
+  "RR Operations": {
+    actioned: "What you ran or fixed, and for whom",
+    resolved: "What is now working",
+    eg: "August branch report rebuilt. Printer fault logged with IT."
+  },
+  "Training": {
+    actioned: "Who was trained, on what, for how long",
+    resolved: "Who is signed off",
+    eg: "One hour on the new fact find with two advisors."
+  },
+  "Innovation&Creativity": {
+    actioned: "What you tried or proposed, and who has seen it",
+    resolved: "What was adopted",
+    eg: "Drafted a one-page checklist for new applications, shown to the BMA."
+  },
+  "New Application Process": {
+    actioned: "How many applications, and where each one stopped",
+    resolved: "How many reached Head Office",
+    eg: "4 applications checked, 3 to Head Office, 1 back to the advisor for a missing signature."
+  },
+  "Document Management (Scan / Classify / Verify)": {
+    actioned: "How many documents, and what you did to them",
+    resolved: "How many are filed and verified",
+    eg: "22 documents scanned and classified, 3 rejected as unreadable and re-requested."
+  },
+  "Quotations & Proposals": {
+    actioned: "For whom, and what cover",
+    resolved: "Which went out",
+    eg: "Two proposals prepared, one issued to the client, one waiting on a date of birth."
+  },
+  "Orphan Adoption Listing": {
+    actioned: "How many orphans worked, and who you reached",
+    resolved: "How many are now assigned or contacted",
+    eg: "12 orphan policies called, 6 reached, 2 appointments set."
+  },
+  "Task Management": {
+    actioned: "Which tasks you cleared, and what you reassigned",
+    resolved: "How many closed, and what moved to someone else",
+    eg: "9 tasks closed, 2 reassigned to the person who owns the relationship, 1 duplicate closed."
+  }
+};
+
+// Everything without a line of its own still gets the same question asked.
+const GUIDE_FALLBACK = {
+  actioned: "What you did, for whom, and how many",
+  resolved: "What is genuinely finished",
+  eg: "Name the work, the number, and where it now stands."
+};
+const guideFor = kpi => KPI_GUIDE[kpi] || GUIDE_FALLBACK;
+
+// Sits under the KPI picker once one is chosen: the worked example, and — when
+// Salesforce is reachable — that person's real position in that type, so the
+// number they are about to write has something to be checked against.
+function KpiHint({ kpi, live }) {
+  const g = guideFor(kpi);
+  return React.createElement("div", {
+    style: { background: "#FBF9F3", border: "1px solid " + LINE, borderLeft: "3px solid " + GOLD,
+             borderRadius: 8, padding: "9px 11px", margin: "0 0 12px" }
+  },
+    React.createElement("div", {
+      style: { fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase",
+               color: GOLD, marginBottom: 4 }
+    }, "A good entry reads like"),
+    React.createElement("div", {
+      style: { fontSize: 12.5, color: INK, lineHeight: 1.45 }
+    }, g.eg),
+    live && (live.open || live.overdue)
+      ? React.createElement("div", {
+          style: { fontSize: 11.5, color: live.overdue ? AMBER : MUTED, marginTop: 6, fontWeight: 600 }
+        }, "Salesforce has you at " + (live.open || 0) + " open here"
+           + (live.overdue ? " \u00b7 " + live.overdue + " overdue" : ""))
+      : null
+  );
+}
 // The four blocks, in order. Their times and what each is for come from the
 // branch schedule the Apps Script serves — the same DILO the BMA has been
 // emailing out every morning. One copy, held where the reports read it.
@@ -1419,13 +1540,17 @@ function App() {
       }, opts.filter(k => !k.salesforce).map(k => /*#__PURE__*/React.createElement("option", {
         key: k.value,
         value: k.value
-      }, k.label))))), /*#__PURE__*/React.createElement(Field, {
+      }, k.label))))), bl.kpi ? /*#__PURE__*/React.createElement(KpiHint, {
+        kpi: bl.kpi,
+        live: metrics && metrics[active] && metrics[active].byType
+          ? metrics[active].byType[bl.kpi] : null
+      }) : null, /*#__PURE__*/React.createElement(Field, {
         label: "Actioned"
       }, /*#__PURE__*/React.createElement("textarea", {
         rows: 2,
         value: bl.actioned,
         onChange: e => patchBlock(b.id, "actioned", e.target.value),
-        placeholder: "In your own words \u2014 names, counts, cases",
+        placeholder: guideFor(bl.kpi).actioned,
         style: ta
       })), /*#__PURE__*/React.createElement(Field, {
         label: "Resolved / closed"
@@ -1433,7 +1558,7 @@ function App() {
         rows: 2,
         value: bl.resolved,
         onChange: e => patchBlock(b.id, "resolved", e.target.value),
-        placeholder: "What is genuinely complete",
+        placeholder: guideFor(bl.kpi).resolved,
         style: ta
       })), /*#__PURE__*/React.createElement(Field, {
         label: "Still open & owned by you"
