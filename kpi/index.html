@@ -957,7 +957,11 @@ function App() {
     if (me && !me.manager && view === "home" && !active) {
       setActive(me.staffId);
       setDate(todayISO());
-      setView("entry");
+      // Before the first block is due, the useful screen is the plan; after
+      // that it is the day itself. Nobody wants to be planned at half past
+      // three.
+      const h = new Date().getHours();
+      setView(h < 10 ? "plan" : "entry");
     }
   }, [me, view, active]);
 
@@ -1038,24 +1042,30 @@ function App() {
   // Load one day into the form. Anything typed on this device and never
   // acknowledged by the sheet is put back before the form is shown.
   useEffect(() => {
-    if (view !== "entry" || !active) return;
+    if ((view !== "entry" && view !== "plan") || !active) return;
     const found = rows.map(rowToEntry).find(e => e.staffId === active && e.date === date);
-    const base = withSchedule(withTraining(found || blankEntry(active, date), training), active);
-    setEntry(overlayDraft(base, readDraft(active, date)));
+    // Order matters. The schedule's KPI is a guess at what the block is for;
+    // the draft is what the person actually chose. Filling the guess in first
+    // made it non-empty, and overlayDraft keeps a non-empty value over a
+    // draft — so changing a block's KPI and coming back silently put the
+    // schedule's answer back. Real row, then draft, then fill what is still
+    // blank.
+    const base = withTraining(found || blankEntry(active, date), training);
+    setEntry(withSchedule(overlayDraft(base, readDraft(active, date)), active));
   }, [view, active, date, rows, training]);
 
   // Every change is kept on the device. This is the whole safety net: if the
   // sheet refuses the save, the words are still here when they come back.
   useEffect(() => {
-    if (view !== "entry" || !entry || !active) return;
+    if ((view !== "entry" && view !== "plan") || !entry || !active) return;
     writeDraft(active, date, entry);
   }, [entry, active, date, view]);
-  const patchBlock = (bid, f, v) => setEntry(e => ({
+  const patchBlock = (bid, f, v) => setEntry(e => !e ? e : ({
     ...e,
     blocks: {
-      ...e.blocks,
+      ...(e.blocks || {}),
       [bid]: {
-        ...e.blocks[bid],
+        ...((e.blocks || {})[bid] || blankBlock()),
         [f]: v
       }
     }
@@ -1438,6 +1448,121 @@ function App() {
     }
   }, "9\u201313 Endeavour 1st Street, Chaguanas")));
 
+  // ---- plan: the day before it happens ------------------------------------
+  //
+  // The old shape was a diary — four write-ups at four o'clock, from memory.
+  // This is the other half: at eight, the book is already known, so the day
+  // can be laid against it rather than recalled after it.
+  //
+  // Nothing new is stored. Planning is picking the KPI chips in the morning
+  // instead of at the end, and those already live on the block. What changes
+  // is that the size of the work is on screen while the choice is made: a
+  // block set aside for licensing with three tasks in it says so at eight
+  // rather than at four.
+  if (view === "plan" && active) {
+    const prof = profileFor(active);
+    const person = roster.find(p => p.staffId === active);
+    const opts = fnFor(prof.role);
+    const mine = me.manager || me.staffId === active;
+    if (!mine) return /*#__PURE__*/React.createElement(Denied, {
+      onBack: () => setView("home")
+    });
+    const filled = (entry && entry.blocks) || {};
+    const byType = byTypeFor(metrics, active);
+    const branchType = metrics && metrics.branch ? metrics.branch.byType : null;
+    const late = (needsReason && needsReason[active]) || [];
+
+    // What the person has picked across the whole day, so the same task type
+    // in two blocks is counted once.
+    const chosen = {};
+    BLOCKS.forEach(b => kpiList((filled[b.id] || {}).kpi).forEach(k => { chosen[k] = 1; }));
+    const covered = Object.keys(chosen);
+    const sum = f => covered.reduce((n, k) => n + ((byType && byType[k] && byType[k][f]) || 0), 0);
+
+    return /*#__PURE__*/React.createElement(Shell, {
+      wide: vp.desktop ? 1160 : vp.tablet ? 760 : 560
+    }, /*#__PURE__*/React.createElement(SubHeader, {
+      title: person ? person.name : active,
+      sub: "Planning " + prettyDate(date),
+      tenure: prof.tenure,
+      onBack: () => setView("home")
+    }), /*#__PURE__*/React.createElement("div", { style: { padding: "0 18px 40px" } },
+
+      /*#__PURE__*/React.createElement("p", {
+        style: { fontSize: 13.5, color: MUTED, lineHeight: 1.55, margin: "14px 0 16px" }
+      }, "Set the day before it starts. Tick what each block is for and the",
+         " tracker shows how much of it there actually is \u2014 so two hours",
+         " does not go into three tasks."),
+
+      // What the picked types add up to. Absent when Salesforce is silent,
+      // rather than a zero that reads like an empty book.
+      byType ? /*#__PURE__*/React.createElement("div", {
+        style: { background: NAVY, color: GOLD_SOFT, borderRadius: 12,
+                 padding: "13px 15px", marginBottom: 16 }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: { fontSize: 11, fontWeight: 800, letterSpacing: ".14em",
+                 textTransform: "uppercase", color: GOLD, marginBottom: 5 }
+      }, covered.length ? "What you have planned holds" : "Nothing picked yet"),
+        /*#__PURE__*/React.createElement("div", { style: { fontSize: 15, lineHeight: 1.5 } },
+          covered.length
+            ? sum("open") + " open \u00b7 " + sum("overdue") + " already late"
+            : "Tick a block below and this fills in.")) : null,
+
+      // The blocks themselves.
+      BLOCKS.map(b => {
+        const bl = filled[b.id] || blankBlock();
+        const sc = blockSched(active, b.col) || {};
+        const picked = kpiList(bl.kpi);
+        const open = picked.reduce((n, k) => n + ((byType && byType[k] && byType[k].open) || 0), 0);
+        const od = picked.reduce((n, k) => n + ((byType && byType[k] && byType[k].overdue) || 0), 0);
+        return /*#__PURE__*/React.createElement("div", { key: b.id, style: card },
+          /*#__PURE__*/React.createElement("div", { style: cardHead },
+            /*#__PURE__*/React.createElement("span", { style: cardTitle },
+              b.label, sc.time ? " \u00b7 " + sc.time : ""),
+            byType && picked.length ? /*#__PURE__*/React.createElement("span", {
+              style: { fontSize: 11.5, fontWeight: 700, color: od ? AMBER : MUTED }
+            }, open + " open" + (od ? " \u00b7 " + od + " late" : "")) : null),
+          sc.focus ? /*#__PURE__*/React.createElement("p", {
+            style: { fontSize: 12, color: MUTED, margin: "0 0 9px" }
+          }, sc.focus) : null,
+          /*#__PURE__*/React.createElement(KpiPicker, {
+            value: bl.kpi, opts: opts, mine: byType, branch: branchType,
+            onToggle: k => patchBlock(b.id, "kpi", kpiToggle(bl.kpi, k))
+          }));
+      }),
+
+      // The exceptions, and only those. Nothing is asked about the work that
+      // is running fine.
+      late.length ? /*#__PURE__*/React.createElement("div", { style: card },
+        /*#__PURE__*/React.createElement("div", { style: cardHead },
+          /*#__PURE__*/React.createElement("span", { style: cardTitle },
+            "Late, and no reason on it yet"),
+          /*#__PURE__*/React.createElement("span", {
+            style: { fontSize: 11.5, fontWeight: 700, color: AMBER }
+          }, late.length)),
+        /*#__PURE__*/React.createElement("p", {
+          style: { fontSize: 12, color: MUTED, margin: "0 0 10px", lineHeight: 1.45 }
+        }, "These are the only ones being asked about. Give the reason once",
+           " and it goes back to Salesforce with the task."),
+        late.slice(0, 8).map(t => /*#__PURE__*/React.createElement("div", {
+          key: t.id,
+          style: { borderTop: "1px solid " + LINE, padding: "9px 0" }
+        }, /*#__PURE__*/React.createElement("div", {
+          style: { fontSize: 13, color: INK, fontWeight: 600, lineHeight: 1.35 }
+        }, t.subject || "(no subject)"),
+          /*#__PURE__*/React.createElement("div", {
+            style: { fontSize: 11.5, color: AMBER, fontWeight: 700, margin: "3px 0 0" }
+          }, t.type, " \u00b7 ", t.age, " day", t.age === 1 ? "" : "s", " over",
+             t.status ? " \u00b7 " + t.status : "")))) : null,
+
+      /*#__PURE__*/React.createElement("button", {
+        onClick: () => setView("entry"),
+        style: { width: "100%", marginTop: 8, padding: "15px 16px", borderRadius: 12,
+                 border: "none", background: NAVY_DEEP, color: "#FFFFFF",
+                 font: "inherit", fontSize: 15, fontWeight: 800, cursor: "pointer" }
+      }, "Start the day")));
+  }
+
   // ---- entry: one block at a time -----------------------------------------
   if (view === "entry" && active) {
     const prof = profileFor(active);
@@ -1461,7 +1586,12 @@ function App() {
       style: {
         padding: "0 18px 40px"
       }
-    }, /*#__PURE__*/React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("button", {
+      onClick: () => setView("plan"),
+      style: { background: "none", border: "none", padding: "12px 0 2px",
+               cursor: "pointer", font: "inherit", fontSize: 12.5,
+               fontWeight: 700, color: GOLD }
+    }, "\u2190 Plan the day"), /*#__PURE__*/React.createElement("div", {
       style: dateBar
     }, /*#__PURE__*/React.createElement("label", {
       style: {

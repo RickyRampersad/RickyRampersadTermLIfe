@@ -78,5 +78,32 @@ try { ctx2.writeDraft('s','2026-09-02',typed); ctx2.readDraft('s','2026-09-02');
 ok('all four survive a blocked localStorage', !threw);
 ok('overlay with no draft is a no-op', ctx2.overlayDraft(blank, null) === blank);
 
+
+// The schedule's KPI is a guess at what a block is for. What the person picked
+// is not. overlayDraft keeps a non-empty server value over a draft, so filling
+// the guess in before the overlay made the guess win — pick a different KPI,
+// come back, and the schedule's answer was silently back. The fix is ordering,
+// which is easy to undo by accident, so it is pinned here.
+console.log('\nThe schedule fills blanks; it does not overrule a choice:\n');
+{
+  const schedule = { blocks: { PM2: { kpi: 'Servicing', actioned: '', resolved: '' } },
+                     valueAdded:'', innovation:'', systemFlags:'', notes:'', metrics:{} };
+  const chose = { blocks: { PM2: { kpi: 'Servicing, Claims/ Mat' } } };
+
+  // Wrong order: the guess is already in place, so it outranks the choice.
+  const wrong = ctx.overlayDraft(schedule, chose);
+  ok('the old order loses the choice', wrong.blocks.PM2.kpi === 'Servicing',
+     wrong.blocks.PM2.kpi);
+
+  // Right order: overlay the draft onto the real row, then fill what is blank.
+  const empty = { blocks: { PM2: { kpi: '', actioned: '', resolved: '' } },
+                  valueAdded:'', innovation:'', systemFlags:'', notes:'', metrics:{} };
+  const right = ctx.overlayDraft(empty, chose);
+  ok('the draft survives when the blank comes first',
+     right.blocks.PM2.kpi === 'Servicing, Claims/ Mat', right.blocks.PM2.kpi);
+  ok('and a block the person never touched is still free to be prefilled',
+     ctx.overlayDraft(empty, { blocks: {} }).blocks.PM2.kpi === '');
+}
+
 console.log('\n' + (fails ? fails + ' FAILED' : 'all green') + '\n');
 process.exit(fails ? 1 : 0);
