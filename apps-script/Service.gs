@@ -96,6 +96,27 @@ var SVC = {
   CHECKUP_DAYS: 182,
   DHAA_URL: 'https://donthaveanagent.com/start',
 
+  /* ── The campaign ─────────────────────────────────────────────────
+     Agreed at the branch meeting: we work our own orphan book, and the
+     team dedicates time to it. This is the branch's core KPI, so the wall
+     leads on it rather than burying it behind activity counts.
+
+     The measured unit is a REVIEW FILED by an orphan policyholder, because
+     that is the only thing the system can see end to end. A conversation
+     nobody files does not count, which is the point.
+
+     BOOK and TARGET ship at zero. While they are zero the wall says the
+     target has not been set rather than inventing one — a fabricated number
+     on a screen the whole branch walks past is worse than no number.       */
+  CAMPAIGN: {
+    name:    'The Orphan Campaign',
+    agreed:  'Agreed at the branch meeting',
+    book:    0,      // orphan policies the branch holds — the size of the job
+    target:  0,      // how many of them we intend to reach this campaign
+    endsOn:  '',     // 'yyyy-mm-dd', the date we said we would be done by
+    perAgentWeek: 0, // reviews each agent commits to per week
+  },
+
   FROM_NAME:    'Ricky Rampersad',
   AGENT_NAME:   'Ricky Rampersad',
   AGENT_NO:     '',                      // agent number, if you want it on the letter
@@ -376,6 +397,66 @@ function agentBookFor_(agent, code) {
    code — never open. Names and counts only: no client answers, no contact
    details, nothing that would matter if the screen were photographed.   */
 
+/**
+ * The campaign, measured.
+ *
+ * Everything here is derived — nothing is typed in and nothing is estimated.
+ * `reached` is reviews actually filed, because a conversation nobody files
+ * cannot be counted and the branch agreed that filing is the job.
+ *
+ * When the target has not been set the numbers are still returned, but `set`
+ * is false and the wall says the target is not set rather than showing a
+ * percentage of zero, which would read as failure.
+ */
+function campaignStats_(t, agents, now, tz) {
+  var C = SVC.CAMPAIGN || {};
+  var book = Number(C.book) || 0;
+  var target = Number(C.target) || 0;
+  var perWeek = Number(C.perAgentWeek) || 0;
+  var reached = t.reviews;
+
+  var daysLeft = null, endLabel = '';
+  if (C.endsOn) {
+    var end = new Date(String(C.endsOn) + 'T23:59:59');
+    if (!isNaN(end.getTime())) {
+      daysLeft = Math.max(0, Math.ceil((end - now) / 86400000));
+      endLabel = Utilities.formatDate(end, tz, 'd MMMM');
+    }
+  }
+
+  /* what the branch must file per week from here to finish on time */
+  var needWeek = null;
+  if (target && daysLeft !== null) {
+    var weeksLeft = Math.max(1, daysLeft / 7);
+    needWeek = Math.ceil(Math.max(0, target - reached) / weeksLeft);
+  }
+
+  /* who has met their own commitment this week, and who has not */
+  var met = 0, short = [];
+  if (perWeek) {
+    agents.forEach(function (a) {
+      if (a.week >= perWeek) met++;
+      else short.push({ name: a.name, done: a.week, needs: perWeek - a.week });
+    });
+    short.sort(function (x, y) { return y.needs - x.needs; });
+  }
+
+  return {
+    set: !!(book && target),
+    name: String(C.name || 'The campaign'),
+    agreed: String(C.agreed || ''),
+    book: book, target: target, reached: reached,
+    pct: target ? Math.min(100, Math.round((reached / target) * 100)) : 0,
+    bookPct: book ? Math.min(100, Math.round((reached / book) * 100)) : 0,
+    remaining: Math.max(0, target - reached),
+    daysLeft: daysLeft, endsOn: endLabel,
+    week: t.week, perAgentWeek: perWeek, needWeek: needWeek,
+    onTrack: (needWeek === null) ? null : (t.week >= needWeek),
+    agentsMet: met, agentsShort: short.slice(0, 6),
+  };
+}
+
+
 function wallData_(code) {
   code = String(code || '').trim().toUpperCase();
   var branch = String(SVC.TEAM_CODE || '').trim().toUpperCase();
@@ -394,14 +475,20 @@ function wallData_(code) {
   var dayKey = function (d) { return Utilities.formatDate(d, tz, 'yyyy-MM-dd'); };
   var todayKey = dayKey(now);
   var monthKey = Utilities.formatDate(now, tz, 'yyyy-MM');
+  /* the campaign week runs Monday to Sunday, which is how the branch meeting
+     talks about it — not a rolling seven days */
+  var weekStart = new Date(now.getTime());
+  weekStart.setHours(0, 0, 0, 0);
+  weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
 
   var t = { reviews: 0, open: 0, completed: 0, urgent: 0, overdue: 0, today: 0, month: 0, monthDone: 0,
-            tracing: 0, letters: 0, unassigned: 0 };
+            tracing: 0, letters: 0, unassigned: 0, week: 0 };
   var byAgent = {}, queue = [], stream = [], dayCount = {};
   var agentRow = function (name) {
     if (!byAgent[name]) {
       byAgent[name] = { name: name, assigned: 0, open: 0, completed: 0,
-                        sent: 0, opened: 0, started: 0, own: 0, ownDone: 0 };
+                        sent: 0, opened: 0, started: 0, own: 0, ownDone: 0,
+                        week: 0 };   /* reviews credited to them this week */
     }
     return byAgent[name];
   };
@@ -444,8 +531,18 @@ function wallData_(code) {
                       kind: 'review', who: who, note: ref + (sentBy ? ' · sent by ' + sentBy : ''), pri: pri });
       }
 
-      if (look) { var A = agentRow(look); A.assigned++; if (done) A.completed++; else A.open++; }
-      if (sentBy) { var S = agentRow(sentBy); S.own++; if (done) S.ownDone++; }
+      var thisWeek = !!(when && when >= weekStart);
+      if (thisWeek) t.week++;
+      if (look) {
+        var A = agentRow(look); A.assigned++; if (done) A.completed++; else A.open++;
+        if (thisWeek) A.week++;
+      }
+      if (sentBy) {
+        var S = agentRow(sentBy); S.own++; if (done) S.ownDone++;
+        /* only credit the week once when an agent both introduced and was
+           assigned the same client */
+        if (thisWeek && sentBy.toLowerCase() !== look.toLowerCase()) S.week++;
+      }
 
       if (!done) {
         var days = when ? Math.floor((now - when) / DAY) : 0;
@@ -524,6 +621,7 @@ function wallData_(code) {
     roster: bank.length,
     /* if this is false the branch is not being chased and nobody would know */
     automation: automationOn_(),
+    campaign: campaignStats_(t, agents, now, tz),
   };
 }
 

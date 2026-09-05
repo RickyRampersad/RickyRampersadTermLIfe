@@ -173,9 +173,28 @@
     padding:12px clamp(26px,5vw,90px);background:#5A1A14;border-top:2px solid var(--coral);
     font-family:var(--disp);font-weight:700;font-size:clamp(12px,1.15vw,16px);color:#FFE9E5}
   .aoff.on{display:flex}
+  /* both are pinned to the bottom, so the chrome steps up out of the way
+     rather than being covered by the warning */
+  body.warned .chrome{bottom:clamp(44px,5.4vh,58px)}
   .aoff b{color:#fff}
   .aoff span{margin-left:auto;font-weight:800;font-size:clamp(10px,.9vw,12px);letter-spacing:.16em;
     text-transform:uppercase;color:var(--coral);white-space:nowrap}
+  /* The wall is built for a television. On a phone the campaign slides carry
+     enough that four stacked tiles run under the footer, so they go two-up and
+     the slide gets more room beneath it. */
+  @media(max-width:640px){
+    .slide{padding-bottom:clamp(112px,16vh,150px)}
+    .tiles{grid-template-columns:repeat(2,1fr);gap:10px;margin-top:clamp(14px,2.4vh,26px)}
+    .tile{padding:13px 12px;border-radius:14px}
+    .tile b{font-size:clamp(28px,8.5vw,44px)}
+    .tile span{font-size:9px;margin-top:6px}
+    .say{font-size:15px;margin-top:10px}
+    .huge{font-size:clamp(96px,26vh,150px)}
+    .feed{gap:6px}
+    .ev{padding:8px 10px}
+    .ev .tx b{font-size:14px}
+    .side b{font-size:clamp(24px,7vw,38px)}
+  }
   @media(max-width:700px){.brand,.clk{display:none}}
 
   /* ── gate ────────────────────────────────────────────────────── */
@@ -215,8 +234,40 @@
 <div class="tick" id="tick"></div>
 
 <div id="deck">
-  <!-- 1 · waiting -->
+  <!-- 1 · the campaign -->
   <section class="slide" id="s1">
+    <div class="eyebrow r d1">The campaign <span id="cAgreed"></span></div>
+    <h2 class="r d2" id="cName">The Orphan Campaign</h2>
+    <p class="say r d3" style="max-width:34ch" id="cSay"></p>
+    <div class="tiles">
+      <div class="tile r d4"><b id="cBook">—</b><span>Orphan policies we hold</span></div>
+      <div class="tile hot r d5"><b id="cTarget">—</b><span>To reach this campaign</span></div>
+      <div class="tile win r d6"><b id="cReached">0</b><span>Reached so far</span></div>
+      <div class="tile due r d7"><b id="cDays">—</b><span>Days left</span></div>
+    </div>
+  </section>
+
+  <!-- 2 · are we on track -->
+  <section class="slide" id="s2">
+    <div class="eyebrow r d1">Core KPI <span id="cWeekOf"></span></div>
+    <h2 class="r d2" id="cTrackHead">This week.</h2>
+    <div class="hero" style="margin-top:clamp(14px,2.4vh,30px)">
+      <div>
+        <div class="huge r d3" id="cWeek">0</div>
+        <p class="say r d4" style="max-width:26ch" id="cWeekSay"></p>
+      </div>
+      <div class="sidestats">
+        <div class="side r d5"><b id="cNeed">—</b><span>Needed per week</span></div>
+        <div class="side win r d6"><b id="cMet">0</b><span>Agents on their number</span></div>
+        <div class="side due r d7"><b id="cShortN">0</b><span>Not there yet</span></div>
+        <div class="side r d8"><b id="cPct">0%</b><span>Of target reached</span></div>
+      </div>
+    </div>
+    <div id="cShortList" class="r d9" style="margin-top:clamp(10px,1.8vh,20px)"></div>
+  </section>
+
+  <!-- 3 · waiting -->
+  <section class="slide" id="s3">
     <div class="hero">
       <div>
         <div class="eyebrow r d1">Right now</div>
@@ -234,7 +285,7 @@
   </section>
 
   <!-- 2 · the day -->
-  <section class="slide" id="s2">
+  <section class="slide" id="s4">
     <div class="eyebrow r d1">The day so far</div>
     <h2 class="r d2">What came in.</h2>
     <div class="tiles">
@@ -247,21 +298,21 @@
   </section>
 
   <!-- 3 · the team -->
-  <section class="slide" id="s3">
+  <section class="slide" id="s5">
     <div class="eyebrow r d1">The team <span id="rosterNote"></span></div>
     <h2 class="r d2">Who is doing the work.</h2>
     <div id="teamWrap"></div>
   </section>
 
   <!-- 4 · waiting on us -->
-  <section class="slide" id="s4">
+  <section class="slide" id="s6">
     <div class="eyebrow r d1">Waiting on us <span id="qNote"></span></div>
     <h2 class="r d2">Oldest first.</h2>
     <div id="queueWrap"></div>
   </section>
 
   <!-- 5 · thirty days -->
-  <section class="slide" id="s5">
+  <section class="slide" id="s7">
     <div class="eyebrow r d1">Thirty days</div>
     <h2 class="r d2">The rhythm.</h2>
     <div class="bars r d3" id="bars"></div>
@@ -269,14 +320,14 @@
   </section>
 
   <!-- 6 · live -->
-  <section class="slide" id="s6">
+  <section class="slide" id="s8">
     <div class="eyebrow r d1">As it happens <span id="asOf"></span></div>
     <h2 class="r d2">Live.</h2>
     <div class="feed" id="feed"></div>
   </section>
 
   <!-- 7 · the promise -->
-  <section class="slide" id="s7">
+  <section class="slide" id="s9">
     <div class="eyebrow r d1">The promise</div>
     <h2 class="r d2" id="pHead">Nobody waits.</h2>
     <p class="say r d3" style="max-width:40ch" id="pSay"></p>
@@ -326,7 +377,7 @@ const KEY = "dhaa.wall.code";
 let CODE = "";
 try { CODE = localStorage.getItem(KEY) || ""; } catch (e) {}
 
-const SLIDES = 7;
+const SLIDES = 9;
 const HOLD = 13000;          /* how long each slide holds before advancing */
 const RELOAD = 45000;        /* how often the data is re-read */
 let at = 0, paused = 0, tickStart = Date.now();
@@ -360,7 +411,7 @@ const seen = new IntersectionObserver(es => {
     if (e.isIntersecting && e.intersectionRatio > .5) {
       const n = Number(e.target.id.slice(1)) - 1;
       if (n !== at) { at = n; mark(); tickStart = Date.now(); }
-      if (e.target.id === "s5") drawBars();
+      if (e.target.id === "s7") drawBars();
     }
   });
 }, { threshold: [.5], root: deck });
@@ -400,6 +451,43 @@ function drawBars() {
 
 function paint(w) {
   const t = w.totals;
+  const C = w.campaign || {};
+
+  /* 1 & 2 — the campaign. Until a target is set the wall says so plainly
+     rather than showing a percentage of nothing, which reads as failure. */
+  $("#cName").textContent = C.name || "The campaign";
+  $("#cAgreed").textContent = C.agreed ? "· " + C.agreed : "";
+  set("cBook", C.book || "—");
+  set("cTarget", C.target || "—");
+  set("cReached", C.reached || 0);
+  set("cDays", C.daysLeft === null || C.daysLeft === undefined ? "—" : C.daysLeft);
+  set("cSay", C.set
+    ? "Every one of these is a policy of ours that nobody has looked after. We agreed to work our own book, and this is the number we agreed to."
+    : "The target has not been set yet. Put the book size and the target in Service.gs and this wall starts counting.");
+
+  const week = C.week || 0, need = C.needWeek;
+  set("cWeek", week);
+  set("cNeed", need === null || need === undefined ? "—" : need);
+  set("cMet", C.agentsMet || 0);
+  set("cShortN", (C.agentsShort || []).length);
+  set("cPct", (C.pct || 0) + "%");
+  set("cWeekOf", C.endsOn ? "· due " + C.endsOn : "");
+  set("cTrackHead", C.onTrack === null || C.onTrack === undefined ? "This week."
+    : C.onTrack ? "We are ahead of it." : "We are behind it.");
+  set("cWeekSay", need
+    ? (week >= need
+        ? "Filed this week, against the " + need + " we need to stay on time. Keep it there."
+        : "Filed this week. We need " + need + " to finish on time — that is " + (need - week) + " more.")
+    : "Reviews filed this week.");
+
+  const shortList = (C.agentsShort || []).slice(0, innerWidth < 640 ? 3 : 6);
+  $("#cShortList").innerHTML = shortList.length
+    ? '<div class="feed">' + shortList.map(a =>
+        '<div class="ev"><span class="ico open">' + a.done + "</span>" +
+        '<div class="tx"><b>' + esc(a.name) + "</b><span>needs " + a.needs +
+        " more this week</span></div></div>").join("") + "</div>"
+    : (C.perAgentWeek
+        ? '<div class="empty">Everybody is on their number this week.</div>' : "");
 
   /* 1 */
   set("hOpen", t.open);
@@ -430,6 +518,7 @@ function paint(w) {
           "<td" + (a.sent ? "" : ' class="z"') + ">" + a.sent + "</td>" +
           "<td" + (a.started ? "" : ' class="z"') + ">" + a.started + "</td>" +
           "<td" + (a.open ? "" : ' class="z"') + ">" + a.open + "</td>" +
+          "<td" + (a.week ? "" : ' class="z"') + ">" + (a.week || 0) + "</td>" +
           '<td class="' + (done ? "dn" : "z") + '">' + done + "</td></tr>";
       }).join("") + "</tbody></table>"
     : '<div class="empty r d3">No agents on the roster yet. Add them to the <b>Agent Skill Bank</b> tab ' +
@@ -455,7 +544,7 @@ function paint(w) {
   set("b0", DAYS[0] ? DAYS[0].d : "");
   set("bPeak", peak && peak.n ? "Busiest " + peak.d + " · " + peak.n : "");
   set("b1", DAYS.length ? "Today" : "");
-  if ($("#s5").classList.contains("on")) drawBars();
+  if ($("#s7").classList.contains("on")) drawBars();
 
   /* 6 */
   $("#asOf").textContent = "· " + w.asOf;
@@ -480,7 +569,9 @@ function paint(w) {
   set("pHead", t.overdue ? (t.overdue === 1 ? "One is late." : t.overdue + " are late.") : "Nobody is waiting past the promise.");
   /* false only when the daily trigger is missing; undefined on an older
      deployment that predates the check, which must not raise a false alarm */
-  document.getElementById("aoff").classList.toggle("on", w.automation === false);
+  const warned = w.automation === false;
+  document.getElementById("aoff").classList.toggle("on", warned);
+  document.body.classList.toggle("warned", warned);
 
   set("pSay", t.overdue
     ? "Everyone on that list was told they would hear from a person. Mark the row Handled once it genuinely is."

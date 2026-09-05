@@ -146,6 +146,22 @@ Service — until it is set, everything routes to the branch alone and says so),
 Questionnaires, Agent Skill Bank, Link Activity, Callback Requests, Service
 Activity.
 
+### The campaign is the wall's first two slides
+
+The branch agreed to work its own orphan book, and that is the core KPI, so
+the wall opens on it rather than on activity counts. `SVC.CAMPAIGN` holds the
+book size, the target, the end date and the per-agent weekly commitment;
+`campaignStats_` derives everything else — progress, days left, the weekly pace
+needed to finish on time, who has met their number this week and who has not.
+
+The measured unit is **a review filed**, because that is the only thing the
+system can see end to end. A conversation nobody files does not count.
+
+`book` and `target` ship at zero and the wall says the target is not set rather
+than showing a percentage of nothing. Do not put a placeholder number there —
+a fabricated target on a screen the whole branch walks past is worse than no
+target.
+
 ### The lifetime promise runs off one trigger
 
 "A review every six months and every birthday month, for life" is on eight
