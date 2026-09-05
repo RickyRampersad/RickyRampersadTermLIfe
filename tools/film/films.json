@@ -173,5 +173,65 @@
   ],
   "sfx": "sfx-wall.wav",
   "start": 176
+ },
+ "reel": {
+  "cap": "adcap",
+  "vox": "voad",
+  "music": "bed-reel.wav",
+  "mix": "reel-mix.wav",
+  "ass": "captions-reel.ass",
+  "dur": 23.4,
+  "durs": [
+   3.7,
+   4.4,
+   4.0,
+   4.7,
+   3.4,
+   3.2
+  ],
+  "out": "dhaa-ad-reel.mp4",
+  "w": 1080,
+  "h": 1920,
+  "capmode": "over",
+  "capwrap": 26,
+  "capsize": 52,
+  "musicgain": 0.62,
+  "duck": 0.3,
+  "start": 176,
+  "dark": [
+   0,
+   4
+  ],
+  "sfx": "sfx-reel.wav"
+ },
+ "feed": {
+  "cap": "feedcap",
+  "vox": "voad",
+  "music": "bed-feed.wav",
+  "mix": "feed-mix.wav",
+  "ass": "captions-feed.ass",
+  "dur": 23.4,
+  "durs": [
+   3.7,
+   4.4,
+   4.0,
+   4.7,
+   3.4,
+   3.2
+  ],
+  "out": "dhaa-ad-feed.mp4",
+  "w": 1080,
+  "h": 1350,
+  "capmode": "over",
+  "capwrap": 30,
+  "capsize": 44,
+  "musicgain": 0.62,
+  "duck": 0.3,
+  "start": 176,
+  "dark": [
+   0,
+   4
+  ],
+  "sfx": "sfx-feed.wav"
  }
 }

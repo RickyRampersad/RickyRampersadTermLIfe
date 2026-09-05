@@ -30,6 +30,12 @@ STARTS = [sum(DURS[:i]) for i in range(len(DURS)+1)]
 OFF = 0.4
 CAP, VOX, MUSIC = CFG['cap'], CFG['vox'], CFG['music']
 ASS = CFG['ass']
+# The films are 1280x720 with captions in a strip below the picture. A social
+# cut is vertical and burns them over the frame, because that is the convention
+# and because a strip wastes height a phone does not have.
+W, H = CFG.get('w', 1280), CFG.get('h', 720)
+CAPMODE = CFG.get('capmode', 'strip')          # 'strip' | 'over'
+PIC_H = CFG.get('pic', 616) if CAPMODE == 'strip' else H
 
 def rd(p):
     with wave.open(p) as w:
@@ -76,9 +82,14 @@ with wave.open(CFG['mix'],'wb') as w:
 
 # ── measure the capture's own timeline ──
 webm = glob.glob(CAP+'/*.webm')[0]
+# sample the middle of the frame, whatever shape it is, and keep the sample
+# small — we are looking for cuts, not detail
+_dw, _dh = 160, max(24, int(round(160 * H / W)))
+_cy = int(H * 0.08)
 r = subprocess.run([FF,'-hide_banner','-i',webm,'-vf',
-    'fps=10,crop=1280:540:0:60,scale=160:68','-f','rawvideo','-pix_fmt','gray','-'],capture_output=True)
-fr = np.frombuffer(r.stdout,dtype=np.uint8).reshape(-1,68,160).astype(float)
+    f'fps=10,crop={W}:{H - 2*_cy}:0:{_cy},scale={_dw}:{_dh}','-f','rawvideo','-pix_fmt','gray','-'],
+    capture_output=True)
+fr = np.frombuffer(r.stdout,dtype=np.uint8).reshape(-1,_dh,_dw).astype(float)
 d = np.abs(np.diff(fr,axis=0)).mean(axis=(1,2))
 det=[]
 for i in np.argsort(d)[::-1]:
@@ -144,7 +155,7 @@ for i, st in enumerate(STARTS, 1):
         b=int(g[4])*3600+int(g[5])*60+int(g[6])+int(g[7])/1000
         cues.append([st+OFF+a, st+OFF+b, g[8].strip()])
 esc = lambda t: t.replace('\\','/').replace('{','(').replace('}',')')
-def wrap(t, w=58):
+def wrap(t, w=CFG.get('capwrap', 58)):
     if len(t) <= w: return t
     ws=t.split(); half=len(t)/2; best=None; run=0
     for k,word in enumerate(ws):
@@ -156,10 +167,15 @@ lines=[]
 for i,(a,b,t) in enumerate(cues):
     nxt = cues[i+1][0] if i+1 < len(cues) else DUR
     lines.append([a, min(b+0.35, nxt-0.02, DUR), wrap(esc(t))])
-ass=['[Script Info]','ScriptType: v4.00+','PlayResX: 1280','PlayResY: 720','WrapStyle: 2',
+_fs   = CFG.get('capsize', 30 if CAPMODE == 'strip' else int(H * 0.030))
+_out  = 0 if CAPMODE == 'strip' else max(2, int(H * 0.0035))
+_mv   = 26 if CAPMODE == 'strip' else int(H * 0.16)
+_mlr  = 60 if CAPMODE == 'strip' else int(W * 0.09)
+_col  = '&H00ECDFD2' if CAPMODE == 'strip' else '&H00FFFFFF'
+ass=['[Script Info]','ScriptType: v4.00+',f'PlayResX: {W}',f'PlayResY: {H}','WrapStyle: 2',
  'ScaledBorderAndShadow: yes','','[V4+ Styles]',
  'Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding',
- 'Style: Cap,DejaVu Sans,30,&H00ECDFD2,&H00ECDFD2,&H00000000,&H00000000,-1,0,0,0,100,100,0.4,0,1,0,0,2,60,60,26,1',
+ f'Style: Cap,DejaVu Sans,{_fs},{_col},{_col},&H00000000,&H80000000,-1,0,0,0,100,100,0.4,0,1,{_out},0,2,{_mlr},{_mlr},{_mv},1',
  '','[Events]',
  'Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text']
 for a,b,t in lines:
@@ -168,9 +184,14 @@ open(ASS,'w',encoding='utf-8').write('\n'.join(ass)+'\n')
 print(f'captions: {len(lines)} cues, 0 overlaps by construction, last ends {lines[-1][1]:.1f}s')
 
 # ── encode ──
+# strip: fit the whole frame, take the picture off the top, pad the band back
+# on underneath. over: fit the frame and leave it alone.
+_geom = (f'scale={W}:{H}:force_original_aspect_ratio=decrease,'
+         f'crop={W}:{PIC_H}:0:0,pad={W}:{H}:0:0:color=0x1B2A44,'
+         if CAPMODE == 'strip' else
+         f'scale={W}:{H}:force_original_aspect_ratio=decrease,')
 VF = (f'trim=start={LEAD},setpts=(PTS-STARTPTS)/{STRETCH},'
-      'scale=1280:720:force_original_aspect_ratio=decrease,'
-      'crop=1280:616:0:0,pad=1280:720:0:0:color=0x1B2A44,'
+      + _geom +
       # the page's film grain is temporal noise the encoder would otherwise
       # pay full price for; this removes the flicker and leaves type sharp
       'hqdn3d=1.2:1.2:6:6,'

@@ -55,6 +55,20 @@ bed level under the voice; the wall film uses `0.62`, about −21 dB RMS).
 sit at public URLs even when the pages are `noindex`. Every number on screen
 is illustrative.
 
+### The social ad
+
+Two cuts of one 23-second spot, both from `donthaveanagent/ad-reel.html`:
+`dhaa-ad-reel.mp4` (9:16, Reels and Stories) and `dhaa-ad-feed.mp4` (4:5,
+feed). The 4:5 rules are a `@media (max-height:1400px)` block in the same
+page, so recording it at 1080×1350 gives the feed cut with nothing to keep in
+step. Copy, targeting and the rebuild commands are in
+`tools/film/AD-COPY.md`.
+
+`mixany.py` takes `w`, `h`, `capmode`, `capsize` and `capwrap`. The films use
+`capmode: "strip"` — picture cropped, captions in a band beneath. The ads use
+`"over"` — captions burned across the frame with an outline, because most of
+the audience watches with the sound off.
+
 ### Rebuilding one
 
 The pipeline is in `tools/film/`. It needs `edge-tts`, `ffmpeg` **with
