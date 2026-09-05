@@ -280,6 +280,41 @@ const kpiJoin = list => list.join(", ");
 // way the first one did. The server sends {ok, date, staff:{staffId:{...}}};
 // reading metrics[staffId] is silently null against the real thing and only
 // works against a stub that repeats the mistake.
+// How long the waiting work is, against this person's own pace across
+// everything they do.
+//
+// Salesforce records WHEN a task closed, never how long it took, so this is
+// throughput and not effort and is worded that way on screen — "about two
+// hours at your rate", never "this takes 41 minutes". Where the history is too
+// thin to mean anything the estimate is withheld rather than guessed: a rate
+// built on two closures in sixty days is noise wearing a number's clothes.
+//
+// It deliberately uses the whole desk rather than the picked type. A per-type
+// rate measures how OFTEN somebody does that kind of work, not how long one
+// takes, and dividing a backlog by it produces nonsense — three of Azariah's
+// renewals came out at thirty-five hours before this was caught.
+const estimateFor = (rateAll, byType, picked) => {
+  if (!rateAll || !rateAll.enough || !(rateAll.perHour > 0)) return null;
+  let needs = 0;
+  picked.forEach(k => { needs += (byType && byType[k] && (byType[k].needs || 0)) || 0; });
+  if (!needs) return null;
+  return { hours: needs / rateAll.perHour, needs: needs, sample: rateAll.closed };
+};
+
+// Deliberately coarse. Half-hours below three, whole hours above, and a plain
+// statement when the work will not fill a focused block — that last one is the
+// point of the whole line: three licensing tasks do not need two hours, and
+// until now the only way to know that was to go and look.
+const sayHowLong = est => {
+  if (!est) return "";
+  const h = est.hours;
+  if (h < 0.35) return "About twenty minutes at your rate \u2014 too small for its own block.";
+  if (h < 0.85) return "About " + (Math.round(h * 2) / 2 === 0.5 ? "half an hour" : "an hour") +
+                       " at your rate \u2014 not a two-hour block on its own.";
+  if (h < 3) return "About " + (Math.round(h * 2) / 2) + " hours at your rate.";
+  return "About " + Math.round(h) + " hours at your rate \u2014 more than one block.";
+};
+
 const byTypeFor = (metrics, staffId) =>
   (metrics && metrics.ok && metrics.staff && metrics.staff[staffId] &&
    metrics.staff[staffId].byType) || null;
@@ -411,7 +446,12 @@ function OpenList({ items }) {
       }, t.late ? t.age + " day" + (t.age === 1 ? "" : "s") + " over"
                 : (t.due ? "due " + shortDate(t.due) : "no due date"),
          t.agent ? " \u00b7 " + t.agent : "",
-         t.status ? " \u00b7 " + t.status : ""))),
+         t.status ? " \u00b7 " + t.status : "",
+         // The queue is ordered by this, so it has to be visible. Everything
+         // without it was worked in the last week and is somebody's already.
+         t.needs ? /*#__PURE__*/React.createElement("span", {
+           style: { color: AMBER }
+         }, "  \u00b7 untouched " + t.touched + " days") : null))),
     items.length > SHOW ? React.createElement("div", {
       style: { fontSize: 11.5, color: MUTED, paddingTop: 7 }
     }, "and " + (items.length - SHOW) + " more") : null);
@@ -427,11 +467,18 @@ function KpiPicker({ value, opts, onToggle, mine, branch }) {
     // The count is the point of the chip, not decoration. A block set aside
     // for licensing with three tasks in it does not need two hours, and the
     // only way anyone knew that before was to go and look.
+    // What the chip says is the number a person can act on, not the number
+    // that frightens them. Kamla holds seventy open tasks and nine that have
+    // not been touched in a week; "70 open" is true and useless, "9 need you"
+    // is true and is her morning.
     const tail = [];
     if (m && (m.open || m.overdue)) {
+      const need = m.needs || 0;
+      const head = need ? need + " need you of " + (m.open || 0)
+                        : (m.open || 0) + " open, all in hand";
       tail.push(React.createElement("span", {
-        key: "m", style: { fontWeight: 700, color: m.overdue ? AMBER : (live ? INK : MUTED) }
-      }, " \u00b7 " + (m.open || 0) + " open" + (m.overdue ? ", " + m.overdue + " late" : "")));
+        key: "m", style: { fontWeight: 700, color: need ? AMBER : (live ? INK : MUTED) }
+      }, " \u00b7 " + head + (m.overdue ? ", " + m.overdue + " late" : "")));
     }
     if (b && b.open) {
       tail.push(React.createElement("span", {
@@ -1610,6 +1657,8 @@ function App() {
     const branchType = metrics && metrics.branch ? metrics.branch.byType : null;
     const late = (needsReason && needsReason[active]) || [];
     const book = (openBook && openBook[active]) || null;
+    const rateAll = (metrics && metrics.ok && metrics.staff && metrics.staff[active] &&
+                     metrics.staff[active].rateAll) || null;
 
     // What the person has picked across the whole day, so the same task type
     // in two blocks is counted once.
@@ -1668,6 +1717,18 @@ function App() {
             value: bl.kpi, opts: opts, mine: byType, branch: branchType,
             onToggle: k => patchBlock(b.id, "kpi", kpiToggle(bl.kpi, k))
           }),
+          (() => {
+            const est = estimateFor(rateAll, byType, picked);
+            if (!est) return null;
+            return /*#__PURE__*/React.createElement("p", {
+              style: { fontSize: 12.5, color: GOLD, fontWeight: 700,
+                       margin: "9px 0 0", lineHeight: 1.45 }
+            }, sayHowLong(est),
+               /*#__PURE__*/React.createElement("span", {
+                 style: { color: MUTED, fontWeight: 500 }
+               }, "  " + est.needs + " waiting, against " + est.sample +
+                  " you closed in the last 60 days."));
+          })(),
           book ? /*#__PURE__*/React.createElement(OpenList, {
             items: picked.reduce((a, k) => a.concat(book[k] || []), [])
           }) : null,
