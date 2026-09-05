@@ -106,6 +106,7 @@
   @media (prefers-reduced-motion:reduce){
     .scene.bleed.on img{animation:none;object-position:center 20%;transform:none}
   }
+  @keyframes shotrise{from{transform:translateY(22px);opacity:0} to{transform:none;opacity:1}}
   /* The caption sits on a wall that is itself dense text, so the bottom third
      has to go genuinely dark or the two compete and neither reads. Almost
      opaque under the words, clearing fast enough that the top half of the wall
@@ -164,6 +165,82 @@
   #replay button{background:linear-gradient(120deg,var(--gold),var(--gold2));color:#3a2404;
     border:0;border-radius:14px;padding:20px 46px;font:800 25px var(--b);cursor:pointer}
   #hint{position:absolute;left:36px;bottom:24px;font:500 14px var(--b);color:var(--faint);z-index:5}
+
+  /* ══════════════════════════════════════════════════════════════════════
+     PORTRAIT: A DIFFERENT SHAPE, NOT A SMALLER ONE
+     ══════════════════════════════════════════════════════════════════════
+     A 16:9 stage on a 19.5:9 phone held upright is a band using 26% of the
+     screen — measured, on a 390x844 viewport, against 82% in landscape. No
+     amount of scaling fixes that, because the shape is wrong: the film is
+     landscape and the phone is not. A tablet held upright is the same problem
+     and was worse: an iPad at 834x1194 used 39%, so the query reaches to 1080.
+
+     So on a narrow portrait screen the stage BECOMES portrait and the scenes
+     re-lay into it. Same film, same timings, same audio; the composition just
+     stops being letterboxed into a quarter of the display. The 1620 below is the
+     scripting-off fallback — fit() replaces the height with the device's own
+     ratio so the frame fills the screen edge to edge, and it reads the stage's
+     box back rather than assuming 1920x1080, so there is one place the numbers
+     live.
+
+     THE WALL SHOTS ARE SHOWN WHOLE, and that reverses the first attempt. Cover
+     was chosen on the theory that a 1920px dashboard is unreadable at phone size
+     either way, so it may as well crop and stay big. On the device it read as a
+     fault: a 16:9 wall cover-cropped into a 2:3 frame shows 44% of its width, so
+     every panel was cut mid-word down both edges and the caption sat on top of
+     the wreckage. Nobody sees "dense figures" there, they see a broken picture.
+     Contained inside its own framed 960x540 box the wall is small but whole, and
+     small-but-whole reads as a dashboard. The caption then gets clean navy under
+     it instead of fighting body text for contrast. */
+  @media (orientation:portrait) and (max-width:1080px){
+    #stage{width:1080px;height:1620px}
+    .scene{padding:110px 70px}
+    /* Sized for a frame that is now the whole phone. At 1080 units wide on a
+       390px handset everything here divides by 2.77, so 210 is a 76px title and
+       80 is a 29px line — a trailer read at arm's length, not a caption. */
+    h1{font-size:126px;line-height:1.03}
+    h1.huge{font-size:210px;letter-spacing:-6px}
+    h2{font-size:80px;line-height:1.12}
+    .lede{font-size:40px;max-width:960px}
+    .kick{font-size:26px;letter-spacing:.26em;margin-bottom:28px}
+    .names div{font-size:88px}
+    .mark i,.mark i img{width:96px;height:96px}
+    .mark span{font-size:32px}
+    /* Shot and caption become one stacked group and the group is centred, so a
+       two-line caption and a three-line one both sit balanced in the frame
+       instead of leaving 370px of dead navy under the shorter one. Static flow
+       rather than absolute insets is what makes that automatic. */
+    .bleed{display:flex;flex-direction:column;justify-content:center;
+      align-items:stretch;gap:88px;padding:0 36px}
+    .bleed img{position:static;inset:auto;width:100%;height:auto;object-fit:contain;
+      transform:none;border-radius:18px;border:1px solid rgba(255,255,255,.16);
+      box-shadow:0 34px 90px -28px rgba(0,0,0,.9)}
+    /* The pan is a landscape idea — it slides a picture that overflows its box.
+       Nothing overflows here, so the shot arrives instead of travelling. */
+    .scene.bleed.on img{animation:shotrise .72s var(--ease) both}
+    @media (prefers-reduced-motion:reduce){
+      .scene.bleed.on img{animation:none}
+    }
+    /* The scrim exists to rescue white words laid over a bright wall. In
+       portrait the words are not over the wall, so it would only be dimming the
+       evidence. */
+    .bleed::after{background:none}
+    .bleed .say{position:static;left:auto;right:auto;bottom:auto;padding:0 12px}
+    /* The frame is a whole phone screen now and the shot can only ever be as
+       wide as it is, so the height that is left goes into the words. */
+    .bleed .say h2{font-size:84px;line-height:1.1}
+    .bleed .say .k{font-size:28px;margin-bottom:22px}
+    #gate .pb{width:150px;height:150px}
+    #gate .pb svg{width:60px;height:60px}
+    #gate .lbl{font-size:34px}
+    #gate .sub{font-size:23px;margin-top:-8px;padding:0 60px;text-align:center}
+    #chrome{right:44px;top:40px;gap:20px}
+    #mute{width:76px;height:76px;font-size:30px}
+    #voice{font-size:22px}
+    #hint{left:44px;bottom:34px;font-size:21px}
+    #replay button{padding:30px 66px;font-size:36px}
+    #prog{height:8px}
+  }
 </style>
 </head>
 <body>

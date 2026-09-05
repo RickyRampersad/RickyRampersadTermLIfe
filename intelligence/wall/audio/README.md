@@ -51,6 +51,21 @@ the audio does not, so a spoken count is confidently wrong within a day over a
 screen showing the right one. The only numbers in either script are band
 definitions and the statutory twenty business days.
 
+**A phone gets a portrait cut, not a smaller landscape one.** A 16:9 stage on a
+handset held upright filled 26% of the screen; an iPad upright, 39%. Scaling
+cannot fix a wrong shape. So under `(orientation:portrait) and (max-width:1080px)`
+the stage becomes 1080 wide by the *device's own ratio* — `fit()` sets the height
+and clamps it to 1.30–2.25 — and the scenes re-lay into it. Same timings, same
+audio, 100% of every phone and tablet tested. The `1620` in the stylesheet is the
+scripting-off fallback and nothing else reads it.
+
+**Portrait shows the wall whole.** Cover-cropping a 16:9 capture into a portrait
+frame shows 44% of its width and cuts every panel mid-word — it reads as a fault,
+not as detail. Contained in its own framed box the wall is small but coherent,
+and the caption gets clean navy underneath instead of fighting body text. The
+landscape pan is a landscape idea; nothing overflows in portrait, so the shot
+arrives rather than travels.
+
 **Stills ship as JPEG, the mark as PNG.** Straight PNG took the explainer to
 9.5 MB. Quality 82 puts it at 2.6 MB and the difference is invisible across a
 room. The shield keeps its alpha.

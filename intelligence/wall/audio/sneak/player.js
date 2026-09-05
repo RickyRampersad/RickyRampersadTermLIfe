@@ -141,11 +141,34 @@ document.addEventListener('keydown',function(e){
   }
   if(e.key==='r'||e.key==='R') restart();
 });
+/* The stage is 1920x1080 in landscape and 1080x1620 in portrait, both set in
+   CSS. Reading its own box means the scale is right for whichever applies, and
+   there is no second place for the dimensions to be wrong. */
+/* THE FRAME TAKES THE SHAPE OF THE SCREEN IT IS ON.
+   A fixed portrait stage still letterboxes, because no two phones agree on a
+   ratio: 1080x1620 filled 69% of a 390x844 handset and left a navy band top and
+   bottom that reads exactly like something failing to load. So in portrait the
+   stage is 1080 wide by whatever the device's own ratio makes it, and the film
+   fills the screen edge to edge. The clamp is the whole judgement here — below
+   1.45 the composition would have to crop, and past 2.25 a centred group is
+   swimming in margin, so the two extremes letterbox slightly on purpose rather
+   than deform. Landscape and desktop keep the 16:9 frame the film was cut for;
+   clearing the inline height is what hands them back. */
+const PORTRAIT = '(orientation:portrait) and (max-width:1080px)';
 function fit(){
-  const s=Math.min(innerWidth/1920,innerHeight/1080);
-  document.getElementById('stage').style.transform='translate(-50%,-50%) scale('+s+')';
+  const st=document.getElementById('stage');
+  if (matchMedia(PORTRAIT).matches){
+    const r = Math.min(Math.max(innerHeight/innerWidth, 1.30), 2.25);
+    st.style.height = Math.round(1080*r)+'px';
+  } else {
+    st.style.height = '';
+  }
+  const w=st.offsetWidth||1920, h=st.offsetHeight||1080;
+  const s=Math.min(innerWidth/w,innerHeight/h);
+  st.style.transform='translate(-50%,-50%) scale('+s+')';
 }
 addEventListener('resize',fit);
+addEventListener('orientationchange',fit);
 
 /* ══════════════════════════════════════════════════════════════════════════
    DO NOT START THE CLOCK UNTIL THERE IS SOUND

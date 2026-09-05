@@ -168,6 +168,63 @@
   #replay button{background:linear-gradient(120deg,var(--blue),var(--blue2));color:#04223b;
     border:0;border-radius:14px;padding:20px 46px;font:700 25px var(--b);cursor:pointer}
   #hint{position:absolute;left:36px;bottom:24px;font:500 14px var(--b);color:var(--faint);z-index:5}
+
+  /* ══════════════════════════════════════════════════════════════════════
+     PORTRAIT: A DIFFERENT SHAPE, NOT A SMALLER ONE
+     ══════════════════════════════════════════════════════════════════════
+     A 16:9 stage on a 19.5:9 phone held upright is a band using 26% of the
+     screen — measured, on a 390x844 viewport, against 82% in landscape. No
+     amount of scaling fixes that, because the shape is wrong: the film is
+     landscape and the phone is not. A tablet held upright is the same problem
+     and was worse: an iPad at 834x1194 used 39%, so the query reaches to 1080.
+
+     So on a narrow portrait screen the stage BECOMES portrait and the scenes
+     re-lay into it. Same film, same timings, same audio; the composition just
+     stops being letterboxed into a quarter of the display. The 1620 below is the
+     scripting-off fallback — fit() replaces the height with the device's own
+     ratio so the frame fills the screen edge to edge, and it reads the stage's
+     box back rather than assuming 1920x1080, so there is one place the numbers
+     live.
+
+     The wall shots keep their frame and are shown whole. They are small at this
+     size, and that is the right trade: a wall cropped to fill a portrait frame
+     shows less than half its width and cuts every panel mid-word, which reads as
+     a fault rather than as detail. The caption under each shot is what carries
+     the finding on a phone, so it is sized to be read at arm's length. */
+  @media (orientation:portrait) and (max-width:1080px){
+    #stage{width:1080px;height:1620px}
+    .scene{padding:110px 70px}
+    /* Sized for a frame that is now the whole phone: 1080 units across a 390px
+       handset divides by 2.77, so 132 reads as a 48px headline. */
+    h1{font-size:132px;line-height:1.02}
+    h2{font-size:84px;line-height:1.1}
+    .lede{font-size:40px;max-width:960px}
+    .kick{font-size:26px;letter-spacing:.26em;margin-bottom:28px}
+    .mark i,.mark i img{width:96px;height:96px}
+    .mark span{font-size:32px}
+    /* A wall shot at 960 is 540 tall, so a portrait frame has room to spare
+       around it — the picture gets its margins back and the caption gets to be
+       a size somebody reads rather than squints at. */
+    .scene.shotscene{padding:70px 36px}
+    .shot.wide,.pair .shot.wide{width:1008px}
+    .shotscene .cap{margin-top:34px;font-size:36px}
+    .pair{flex-direction:column;gap:30px}
+    .pair .shot.paper{width:560px;max-height:700px}
+    .cap{font-size:36px;max-width:1008px}
+    .why div{font-size:46px}
+    .quote blockquote{font-size:48px}
+    .quote .after{font-size:32px}
+    #gate .pb{width:150px;height:150px}
+    #gate .pb svg{width:60px;height:60px}
+    #gate .lbl{font-size:34px}
+    #gate .sub{font-size:23px;margin-top:-8px;padding:0 60px;text-align:center}
+    #chrome{right:44px;top:40px;gap:20px}
+    #mute{width:76px;height:76px;font-size:30px}
+    #voice{font-size:22px}
+    #hint{left:44px;bottom:34px;font-size:21px}
+    #replay button{padding:30px 66px;font-size:36px}
+    #prog{height:8px}
+  }
 </style>
 </head>
 <body>
