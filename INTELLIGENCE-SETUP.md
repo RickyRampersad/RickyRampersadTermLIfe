@@ -527,6 +527,44 @@ days, and any policy under 90 days old — a brand-new client whose first
 collection failed needs a call from their agent, not a letter about how long
 they have been with us.
 
+### The four taps under the rating, and the private line
+
+A rating out of five is a temperature. It does not tell you the plan is wrong,
+that somebody has died, that they cannot afford it this year, or that they will
+not say any of that to their own agent. So four more taps sit under it.
+
+| Tap | Goes to | Promise |
+|---|---|---|
+| A review of my cover | their agent + the desk | called within 5 working days |
+| Something is not right | the desk + the manager | answered within 5 working days |
+| **Write to the branch manager, privately** | **the branch manager, alone** | acknowledged in 5 days, answered in 4 weeks |
+| Do not contact me again | the desk | stops immediately, on every policy |
+
+**The first one is not a cross-sell, and must not become one.** Everybody
+receiving this letter is 45 days in arrears, and `iXsellScore_` already refuses
+to treat anyone more than 30 days behind as a lead — "this is a collections
+call". Putting a product in front of them here would contradict a rule this same
+system enforces. It offers a **review of what they already hold**, at their
+request, and says on the landing page that nothing will be sold on the call.
+
+**The private line is genuinely private.** What the client writes is e-mailed to
+the branch manager and is **not written into the workbook** — the sheet records
+only that a message was sent and when, so the branch can still prove it answered.
+"Confidential" that anyone with the sheet open can read is a lie told to a client
+who trusted it. That path deliberately does **not** go through `iSend_`, because
+`iSend_` honours `INTEL_TEST_TO` and a client's confidential message must never
+be redirected to a test inbox.
+
+**If the concern is about the branch manager**, a route that ends with him is not
+a route. The private page names the onward one — Guardian Life's own complaints
+unit, and then the Office of the Financial Services Ombudsman, which is free and
+independent of the branch.
+
+**The opt-out means it.** Tapping it stops future surveys for that client on
+every policy they hold, not just the one they were written to about. It does not
+stop the reply to something they have just raised — answering a question someone
+asked is not unsolicited contact.
+
 ### After they answer — the thank-you and getting back to them
 
 A survey that collects a complaint and does nothing with it is worse than no

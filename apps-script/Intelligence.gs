@@ -4284,6 +4284,12 @@ function doGet(e) {
 
 function doPost(e) {
   try {
+    /* The private-message form posts form-encoded, not JSON — handle it before
+       trying to parse a body that was never JSON in the first place. */
+    if (e && e.parameter && e.parameter.s && e.parameter.msg) {
+      var page = iSurveyPrivateSend_(e);
+      if (page) return page;
+    }
     var b = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     var hit = intelRoute_(b);
     if (hit) return hit;
@@ -4346,7 +4352,11 @@ function iSurveyTab_() {
      'Years in force', 'Band', 'Billing', 'Premium', 'Template',
      'Rating', 'Rated at', 'Heard from agent', 'Comment', 'Mode',
      /* what happened AFTER they answered — see intelSurveyFollowUp */
-     'Thanked', 'Follow-up', 'Owner', 'Due', 'Closed', 'Closed by', 'Outcome']);
+     'Thanked', 'Follow-up', 'Owner', 'Due', 'Closed', 'Closed by', 'Outcome',
+     /* Which of the four taps they used, and WHEN a private message was sent.
+        The private message itself is deliberately not here — see the note above
+        iSurveyOptionsHtml_. A confidential channel everybody can read is a lie. */
+     'Asked for', 'Asked at', 'Private sent', 'Opted out']);
 }
 
 /* Columns, by number, because Apps Script counts from 1 and getting this wrong
@@ -4355,7 +4365,7 @@ var ISCOL = { TOKEN:1, SENT:2, CLIENTNO:3, CLIENT:4, EMAIL:5, POLICY:6, AGENT:7,
               UNIT:8, YEARS:9, BAND:10, BILLING:11, PREMIUM:12, TEMPLATE:13,
               RATING:14, RATEDAT:15, HEARD:16, COMMENT:17, MODE:18,
               THANKED:19, FOLLOWUP:20, OWNER:21, DUE:22, CLOSED:23,
-              CLOSEDBY:24, OUTCOME:25 };
+              CLOSEDBY:24, OUTCOME:25, ASKED:26, ASKEDAT:27, PRIVATE:28, OPTOUT:29 };
 
 /* ── The six letters ───────────────────────────────────────────────────────
    One per tenure band, because "thank you for your first eight months" and
@@ -4460,6 +4470,68 @@ function iSurveyYearsWord_(y) {
    an insurance e-mail telling somebody their payment failed is exactly the
    shape a phishing mail takes, so this one is built so that following it
    cannot hurt them even if they follow it carelessly. */
+/* ══════════════════════════════════════════════════════════════════════════
+   THE FOUR TAPS UNDER THE RATING
+   ══════════════════════════════════════════════════════════════════════════
+   A rating out of five tells you a temperature. It does not tell you that the
+   plan is wrong, that somebody has died, that they cannot afford it this year,
+   or that they do not want to say any of that to their own agent. So the letter
+   offers four more taps, and each one is a different kind of thing.
+
+   WHY THIS IS NOT A CROSS-SELL. Every person receiving this letter is 45 days
+   behind on a premium, and iXsellScore_ already scores anyone more than 30 days
+   in arrears at ZERO with the reason "behind on existing premiums — this is a
+   collections call". Putting a product in front of them here would contradict a
+   rule this same system already enforces, and it is poor conduct besides:
+   selling to somebody whose payment just failed is how a branch loses the sale
+   and the client. So the first tap offers a REVIEW of what they already hold —
+   service, and their decision to ask for it — never a product.
+
+   WHY THE PRIVATE LINE IS GENUINELY PRIVATE. "Confidential" that everyone with
+   the workbook open can read is a lie told to a client who trusted it. What
+   they write is e-mailed to the branch manager and is NOT written into the
+   sheet. The sheet records only that a private message was sent and when, so
+   the branch can still prove it was received and answered.
+
+   AND IF IT IS ABOUT THE BRANCH MANAGER. A complaints route that ends at the
+   person being complained about is not a route. The private page names the
+   onward one — the insurer's own complaints unit and the Office of the
+   Financial Services Ombudsman — so the client always has somewhere else to go.
+   ══════════════════════════════════════════════════════════════════════════ */
+var ISURVEY_OPTIONS = [
+  { key: 'review',  emoji: '',
+    label: 'I would like someone to go through my cover with me',
+    note:  'A review of what you already hold. No obligation, and nothing will be sold to you on the call.',
+    to:    'agent' },
+  { key: 'issue',   emoji: '',
+    label: 'Something about my policy is not right',
+    note:  'Wrong plan, wrong details, a claim or a change that did not happen.',
+    to:    'desk' },
+  { key: 'private', emoji: '',
+    label: 'I would like to write to the branch manager, privately',
+    note:  'Goes to the branch manager and to nobody else. Not to your agent, and not to the office.',
+    to:    'manager' },
+  { key: 'stop',    emoji: '',
+    label: 'Please do not contact me like this again',
+    note:  'We will stop. Your cover is not affected in any way.',
+    to:    'desk' }
+];
+
+function iSurveyOptionsHtml_(d) {
+  var rows = ISURVEY_OPTIONS.map(function (o) {
+    return '<a href="' + d.base + '?s=' + d.token + '&o=' + o.key + '" '
+      + 'style="display:block;text-decoration:none;color:#16202b;border:1px solid #dde4ec;'
+      + 'border-radius:10px;padding:13px 16px;margin:0 0 9px">'
+      + '<span style="font-weight:600;color:#00254d">' + iEsc_(o.label) + '</span>'
+      + '<span style="display:block;font-size:13px;color:#5c6b7a;margin-top:3px">'
+      + iEsc_(o.note) + '</span></a>';
+  }).join('');
+  return '<div style="margin:26px 0 0"><p style="margin:0 0 4px;font-weight:600">'
+    + 'Anything else?</p><p style="margin:0 0 12px;font-size:14px;color:#5c6b7a">'
+    + 'Tap one. It goes to the branch, and somebody will be back to you within '
+    + '<b>five working days</b>.</p>' + rows + '</div>';
+}
+
 function iSurveyHtml_(d) {
   var t = d.tpl, bill = ISURVEY_BILLING[d.billing] || { auto: false, says: d.billing };
   var stars = '';
@@ -4511,7 +4583,9 @@ function iSurveyHtml_(d) {
   +   '<td style="font-size:11.5px;color:#5c6b7a;text-align:right">5 — excellent</td></tr>'
   + '</table>'
 
-  + '<p style="margin:0 0 14px;font-size:13.5px;color:#5c6b7a">'
+  + iSurveyOptionsHtml_(d)
+
+  + '<p style="margin:22px 0 14px;font-size:13.5px;color:#5c6b7a">'
   +   'Nothing is asked of you beyond that click. We will never ask you for a password, '
   +   'a card number or a payment through an e-mail link — if anything claiming to be '
   +   'from us ever does, it is not from us. To pay a premium or change a bank mandate, '
@@ -4596,6 +4670,7 @@ function iSurveyHash_() {
      — otherwise the letter is reviewed and the reply nobody read is not. */
   parts.push(iSurveyThanksHtml_({ greeting: 'NAME', agent: 'AGENT', rating: 5, low: false }));
   parts.push(iSurveyThanksHtml_({ greeting: 'NAME', agent: 'AGENT', rating: 1, low: true }));
+  ISURVEY_OPTIONS.forEach(function (o) { parts.push(o.key, o.label, o.note); });
   var raw = parts.join('\u0001');
   var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, raw);
   return bytes.map(function (b) {
@@ -4673,16 +4748,21 @@ function iSurveyPool_() {
     });
   });
 
-  var recent = {}, sh3 = iSurveyTab_(), last3 = sh3.getLastRow();
+  var recent = {}, stopped = {}, sh3 = iSurveyTab_(), last3 = sh3.getLastRow();
   if (last3 > 1) {
-    sh3.getRange(2, 1, last3 - 1, 4).getValues().forEach(function (r) {
-      var when = r[1];
-      if (when instanceof Date && (today - when) / DAY < ISURVEY.COOLDOWN) recent[String(r[2]).trim()] = 1;
+    var wide3 = Math.max(sh3.getLastColumn(), ISCOL.OPTOUT);
+    sh3.getRange(2, 1, last3 - 1, wide3).getValues().forEach(function (r) {
+      var when = r[ISCOL.SENT - 1], who = String(r[ISCOL.CLIENTNO - 1]).trim();
+      if (when instanceof Date && (today - when) / DAY < ISURVEY.COOLDOWN) recent[who] = 1;
+      /* "Please do not contact me like this again" has to mean it, on every
+         policy they hold and not just the one they were written to about.
+         An opt-out that still sends is worse than never offering one. */
+      if (String(r[ISCOL.OPTOUT - 1] || '').trim() && who) stopped[who] = 1;
     });
   }
 
   var skip = iExcluded_();
-  var rows = [], skipped = { noEmail: 0, cooldown: 0, tooNew: 0, excluded: 0 };
+  var rows = [], skipped = { noEmail: 0, cooldown: 0, tooNew: 0, excluded: 0, optedOut: 0 };
   for (var r = 0; r < d.rows; r++) {
     if (String(d.get('status', r)).trim() !== '2') continue;
     var paid = iDate_(d.get('paidTo', r));
@@ -4697,6 +4777,7 @@ function iSurveyPool_() {
     if (years * 365.25 < 90) { skipped.tooNew++; continue; }
 
     var clientNo = String(d.get('clientNo', r)).trim();
+    if (stopped[clientNo]) { skipped.optedOut++; continue; }
     if (recent[clientNo]) { skipped.cooldown++; continue; }
 
     var email = iEmail_(d.get('email', r));
@@ -4846,7 +4927,7 @@ function iSurveyClick_(e) {
   if (last < 2) return iSurveyPage_('That link has expired.', '', '');
   /* Read the whole row, not a fixed 18 — the tab grew a follow-up block and a
      hardcoded width silently returns blanks for every column past it. */
-  var vals = sh.getRange(2, 1, last - 1, Math.max(sh.getLastColumn(), ISCOL.OUTCOME)).getValues();
+  var vals = sh.getRange(2, 1, last - 1, Math.max(sh.getLastColumn(), ISCOL.OPTOUT)).getValues();
   for (var r = 0; r < vals.length; r++) {
     if (String(vals[r][0]) !== token) continue;
     var agent = String(vals[r][6] || 'your agent');
@@ -4858,10 +4939,11 @@ function iSurveyClick_(e) {
         'and will be read by the branch. Nothing further is needed.', token, agent);
     }
     if (p.c) {
-      sh.getRange(r + 2, 16).setValue(String(p.c).toLowerCase() === 'yes' ? 'Yes' : 'No');
+      sh.getRange(r + 2, ISCOL.HEARD).setValue(String(p.c).toLowerCase() === 'yes' ? 'Yes' : 'No');
       return iSurveyPage_('Thank you — that is genuinely useful.',
         'The branch will see it alongside your rating.', '', '');
     }
+    if (p.o) return iSurveyOption_(sh, r, String(p.o), vals[r]);
     return iSurveyPage_('Thank you.', 'Your response has been recorded.', '', '');
   }
   return iSurveyPage_('That link has expired.',
@@ -4890,6 +4972,152 @@ function iSurveyPage_(head, body, token, agent) {
     + '<h1 style="font:700 27px Georgia,serif;color:#00254d;margin:0 0 12px">' + iEsc_(head) + '</h1>'
     + '<p style="margin:0;color:#3d4c5a">' + iEsc_(body) + '</p>' + follow
     + '</div>').setTitle('Thank you — Ricky Rampersad Branch');
+}
+
+/* One of the four taps. Everything except the private line is recorded and
+   routed the same day; the private line opens a page to write on instead. */
+function iSurveyOption_(sh, r, key, row) {
+  var opt = null;
+  ISURVEY_OPTIONS.forEach(function (o) { if (o.key === key) opt = o; });
+  if (!opt) return iSurveyPage_('That link has expired.', '', '', '');
+
+  var prev = String(row[ISCOL.ASKED - 1] || '');
+  if (prev.indexOf(key) < 0) {
+    sh.getRange(r + 2, ISCOL.ASKED).setValue(prev ? prev + ', ' + key : key);
+    sh.getRange(r + 2, ISCOL.ASKEDAT).setValue(new Date());
+  }
+
+  if (key === 'private') return iSurveyPrivatePage_(String(row[ISCOL.TOKEN - 1]));
+
+  if (key === 'stop') {
+    sh.getRange(r + 2, ISCOL.OPTOUT).setValue(new Date());
+    iSurveyOptionAlert_(opt, row, '');
+    return iSurveyPage_('Done — we will stop.',
+      'You will not get another note like this from the branch. Your cover is not ' +
+      'affected in any way, and your agent remains the person looking after it.', '', '');
+  }
+
+  iSurveyOptionAlert_(opt, row, '');
+  return iSurveyPage_('Thank you — that is on its way to the branch.',
+    key === 'review'
+      ? 'Somebody will call to arrange a time to go through your cover. Nothing will ' +
+        'be sold to you on that call — it is a review of what you already have.'
+      : 'Somebody will be in touch within five working days to put it right.', '', '');
+}
+
+/* Where the client writes. A form rather than a link, because a message in a
+   web address ends up in server logs, in browser history and in whatever sits
+   between — which is the opposite of confidential. */
+function iSurveyPrivatePage_(token) {
+  var base = iSurveyBase_();
+  return HtmlService.createHtmlOutput(
+    '<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<div style="font:16px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;'
+    + 'color:#16202b;max-width:560px;margin:7vh auto;padding:0 22px">'
+    + '<div style="font:700 15px Georgia,serif;color:#00254d;margin-bottom:24px">'
+    + 'Ricky Rampersad Branch<span style="display:block;font:400 12.5px sans-serif;'
+    + 'color:#5c6b7a">Guardian Life · Chaguanas</span></div>'
+    + '<h1 style="font:700 26px Georgia,serif;color:#00254d;margin:0 0 10px">'
+    + 'Write to the branch manager</h1>'
+    + '<p style="margin:0 0 8px;color:#3d4c5a">This goes to the branch manager and to '
+    + 'nobody else. Not to your agent. Not to the office. It is not stored on any '
+    + 'branch spreadsheet — only the fact that you wrote, so we can prove we answered.</p>'
+    + '<p style="margin:0 0 18px;color:#3d4c5a">You will get an acknowledgement within '
+    + '<b>five working days</b> and an answer within <b>four weeks</b>.</p>'
+    + '<form method="post" action="' + iEsc_(base) + '">'
+    + '<input type="hidden" name="s" value="' + iEsc_(token) + '">'
+    + '<textarea name="msg" rows="9" required maxlength="4000" '
+    + 'placeholder="Tell us what happened, in your own words." '
+    + 'style="width:100%;padding:14px;border:1.5px solid #dde4ec;border-radius:11px;'
+    + 'font:15px/1.55 inherit;resize:vertical"></textarea>'
+    + '<label style="display:block;margin:12px 0 16px;font-size:14px;color:#5c6b7a">'
+    + '<input type="checkbox" name="callme" value="1" style="margin-right:7px">'
+    + 'I would rather be called than written to</label>'
+    + '<button type="submit" style="width:100%;padding:15px;border:0;border-radius:11px;'
+    + 'background:#0b7fd4;color:#fff;font:700 16px inherit;cursor:pointer">'
+    + 'Send to the branch manager</button></form>'
+    + '<p style="margin:22px 0 0;font-size:13px;color:#5c6b7a;border-top:1px solid #e2e8ee;'
+    + 'padding-top:16px"><b>If your concern is about the branch manager</b>, or you are '
+    + 'not satisfied with the answer, you can take it to Guardian Life\u2019s own complaints '
+    + 'unit, and after that to the <b>Office of the Financial Services Ombudsman</b> of '
+    + 'Trinidad and Tobago, which is free and independent of us.</p>'
+    + '</div>').setTitle('Write to the branch manager');
+}
+
+/* The message itself goes to one inbox. Nowhere else, and not to the sheet. */
+function iSurveyPrivateSend_(e) {
+  var p = (e && e.parameter) || {};
+  var token = String(p.s || '').trim(), msg = String(p.msg || '').trim();
+  if (!token || !msg) return null;
+  var sh = iSurveyTab_(), last = sh.getLastRow();
+  if (last < 2) return iSurveyPage_('That link has expired.', '', '', '');
+  var wide = Math.max(sh.getLastColumn(), ISCOL.OPTOUT);
+  var vals = sh.getRange(2, 1, last - 1, wide).getValues();
+  for (var r = 0; r < vals.length; r++) {
+    if (String(vals[r][ISCOL.TOKEN - 1]) !== token) continue;
+    var to = iProp_('INTEL_MANAGER_EMAIL');
+    if (to) {
+      /* Deliberately not through iSend_ — that one honours INTEL_TEST_TO, and a
+         client's confidential message must never be redirected to a test inbox. */
+      MailApp.sendEmail({ to: to.split(',')[0].trim(), name: 'Branch Intelligence',
+        subject: 'PRIVATE — a client has written to you',
+        htmlBody: '<div style="font:15px/1.65 sans-serif;color:#16202b;max-width:640px">'
+          + '<div style="background:#fdf6ec;border:1px solid #f0d9b5;border-left:3px solid '
+          + '#a45a06;border-radius:9px;padding:13px 16px;margin-bottom:20px">'
+          + '<b>Confidential.</b> This client used the private line on the survey. It has '
+          + 'been sent to you and to nobody else, and the text is not on any branch sheet. '
+          + 'Do not forward it to their agent.</div>'
+          + '<p><b>Client:</b> ' + iEsc_(String(vals[r][ISCOL.CLIENT - 1])) + '<br>'
+          + '<b>Their agent:</b> ' + iEsc_(String(vals[r][ISCOL.AGENT - 1])) + '<br>'
+          + '<b>Unit:</b> ' + iEsc_(String(vals[r][ISCOL.UNIT - 1])) + '<br>'
+          + '<b>Reply to:</b> ' + iEsc_(String(vals[r][ISCOL.EMAIL - 1]))
+          + (p.callme ? '<br><b>They would rather be called.</b>' : '') + '</p>'
+          + '<p style="white-space:pre-wrap;background:#f4f7fa;border-radius:10px;'
+          + 'padding:16px 18px">' + iEsc_(msg) + '</p>'
+          + '<p style="font-size:13px;color:#5c6b7a">Acknowledge within five working days '
+          + 'and answer within four weeks — that is what the page promised them.</p></div>' });
+    }
+    sh.getRange(r + 2, ISCOL.PRIVATE).setValue(new Date());
+    return iSurveyPage_('Sent. Only the branch manager will see it.',
+      'You will get an acknowledgement within five working days, and an answer within ' +
+      'four weeks. If you are not satisfied, you can take it to Guardian Life\u2019s ' +
+      'complaints unit and then to the Office of the Financial Services Ombudsman.', '', '');
+  }
+  return iSurveyPage_('That link has expired.', '', '', '');
+}
+
+/* The desk and the agent hear about the other three the same day — never the
+   private one, and never with the client's words in it. */
+function iSurveyOptionAlert_(opt, row, extra) {
+  var support = iSurveySupport_();
+  var to = opt.to === 'agent'
+    ? [iSurveyAgentEmail_(String(row[ISCOL.AGENT - 1])), support.desk]
+    : [support.desk, iProp_('INTEL_MANAGER_EMAIL')];
+  to = to.filter(function (x) { return x; }).join(',');
+  if (!to) return;
+  iSend_(to, 'Survey: ' + opt.label,
+    '<div style="font:15px/1.6 sans-serif;color:#16202b">'
+    + '<p>A client has tapped <b>' + iEsc_(opt.label) + '</b> on the survey.</p>'
+    + '<p><b>Their agent:</b> ' + iEsc_(String(row[ISCOL.AGENT - 1])) + '<br>'
+    + '<b>Unit:</b> ' + iEsc_(String(row[ISCOL.UNIT - 1])) + '<br>'
+    + '<b>Reference:</b> ' + iEsc_(String(row[ISCOL.TOKEN - 1]).slice(0, 8)) + '</p>'
+    + '<p>They were told somebody would be back to them within <b>five working days</b>. '
+    + 'Open the client in Branch Intelligence to see who they are.</p></div>');
+}
+
+function iSurveyAgentEmail_(name) {
+  var out = '';
+  iAccessTabs_().forEach(function (sh) {
+    var head = iHeaders_(sh), last = sh.getLastRow();
+    if (last < 2) return;
+    var cN = iCol_(head, ['name']), cE = iCol_(head, ['email']);
+    if (cN < 0 || cE < 0) return;
+    sh.getRange(2, 1, last - 1, sh.getLastColumn()).getValues().forEach(function (row) {
+      var id = iIdentity_(row[cN], '', '');
+      if (iNameKey_(id.agentName || row[cN]) === iNameKey_(name)) out = iEmail_(row[cE]) || out;
+    });
+  });
+  return out;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -4967,7 +5195,7 @@ function intelSurveyFollowUp() {
 
   var sh = iSurveyTab_(), last = sh.getLastRow();
   if (last < 2) return 'Nothing has been sent yet.';
-  var wide = Math.max(sh.getLastColumn(), ISCOL.OUTCOME);
+  var wide = Math.max(sh.getLastColumn(), ISCOL.OPTOUT);
   var vals = sh.getRange(2, 1, last - 1, wide).getValues();
   var today = iToday_(), DAY = 86400000;
   var thanked = 0, opened = 0, alerts = [];
@@ -5054,7 +5282,7 @@ function intelSurveyClose(token, who, outcome) {
   if (!token || !who) return 'intelSurveyClose("<ref>", "your name", "what you did")';
   var sh = iSurveyTab_(), last = sh.getLastRow();
   if (last < 2) return 'Nothing to close.';
-  var wide = Math.max(sh.getLastColumn(), ISCOL.OUTCOME);
+  var wide = Math.max(sh.getLastColumn(), ISCOL.OPTOUT);
   var vals = sh.getRange(2, 1, last - 1, wide).getValues();
   for (var r = 0; r < vals.length; r++) {
     var t = String(vals[r][ISCOL.TOKEN - 1]);
@@ -5071,7 +5299,7 @@ function intelSurveyClose(token, who, outcome) {
 function iSurveyOpenRows_() {
   var sh = iSurveyTab_(), last = sh.getLastRow();
   if (last < 2) return [];
-  var wide = Math.max(sh.getLastColumn(), ISCOL.OUTCOME);
+  var wide = Math.max(sh.getLastColumn(), ISCOL.OPTOUT);
   var vals = sh.getRange(2, 1, last - 1, wide).getValues();
   var today = iToday_(), out = [];
   vals.forEach(function (row) {
@@ -5116,7 +5344,7 @@ function iBuildSurveyStats_() {
   if (last < 2) return out;
   /* Read the whole row, not a fixed 18 — the tab grew a follow-up block and a
      hardcoded width silently returns blanks for every column past it. */
-  var vals = sh.getRange(2, 1, last - 1, Math.max(sh.getLastColumn(), ISCOL.OUTCOME)).getValues();
+  var vals = sh.getRange(2, 1, last - 1, Math.max(sh.getLastColumn(), ISCOL.OPTOUT)).getValues();
   var band = {}, unit = {}, sum = 0, latest = null;
   vals.forEach(function (r) {
     if (String(r[17]) === 'live') out.live++;
