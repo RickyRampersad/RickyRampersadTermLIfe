@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contract Delivery 2026</title>
+<meta name="description" content="Contracts dispatched in 2026 — what reached the client, what has not, and whose.">
+<meta name="theme-color" content="#061c31">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Sister to the 45-day wall — same grid, same tokens, same click-to-filter,
+     so the two read as one product on adjacent screens. The accent shifts to
+     the branch gold because this wall is about a promise the branch has broken
+     rather than a client who has stopped paying: the fault is ours, and the
+     screen should not use the same colour it uses for somebody else's bank. */
+  :root{
+    --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
+    --blue:#37b1ec; --blue2:#0b7fd4; --gold:#efc24b; --gold2:#c9942c;
+    --grey:#5b7590; --good:#34d399;
+    --grad:linear-gradient(120deg,#37b1ec,#0b7fd4);
+    --grad-gold:linear-gradient(120deg,#efc24b,#c9942c);
+    --r:16px; --ease:cubic-bezier(.16,1,.3,1);
+    --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;min-height:100vh}
+  body{margin:0;font-family:var(--font-b);color:var(--ink);background:#061c31;
+    overflow:hidden;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:
+      radial-gradient(1200px 700px at 10% -8%,rgba(239,194,75,.16),transparent 60%),
+      radial-gradient(900px 600px at 94% 2%,rgba(11,127,212,.18),transparent 62%),
+      linear-gradient(165deg,#061c31 0%,#08243f 55%,#061a2d 100%)}
+
+  header{display:flex;align-items:center;gap:14px;padding:14px 26px 10px}
+  header .mark{width:40px;height:40px;flex:none;border-radius:12px;overflow:hidden;
+    background:#07131f;display:grid;place-items:center}
+  header .mark img{width:40px;height:40px;display:block}
+  header h1{margin:0;font-family:var(--font-d);font-size:17px;font-weight:800;letter-spacing:-.3px}
+  header .sub{font-size:11.5px;color:var(--dim);margin-top:1px}
+  header .right{margin-left:auto;display:flex;align-items:center;gap:14px}
+  .live{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--dim)}
+  .live i{width:7px;height:7px;border-radius:50%;background:var(--gold)}
+  .live.on i{background:var(--good);animation:pulse 2.2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+  #clock{font-family:var(--font-d);font-weight:700;font-size:15px;
+    font-variant-numeric:tabular-nums;color:var(--dim)}
+
+  #chip{display:none;align-items:center;gap:9px;background:rgba(239,194,75,.16);
+    border:1px solid rgba(239,194,75,.42);border-radius:999px;padding:6px 8px 6px 15px;
+    font:600 13px var(--font-b);color:var(--ink);cursor:pointer}
+  #chip.on{display:inline-flex}
+  #chip span{width:19px;height:19px;border-radius:50%;background:rgba(255,255,255,.16);
+    display:grid;place-items:center;font-size:12px;line-height:1}
+
+  main{display:grid;grid-template-columns:300px 1fr 1fr 1fr;
+    grid-template-rows:auto 1fr auto;gap:13px;padding:0 26px 20px;height:calc(100vh - 66px)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+    padding:16px 18px;min-height:0;display:flex;flex-direction:column}
+  .card h3{margin:0 0 2px;font:700 12px var(--font-b);letter-spacing:.16em;
+    text-transform:uppercase;color:var(--gold)}
+  .card .cap{font-size:11.5px;color:var(--faint);margin:0 0 9px;line-height:1.4}
+
+  .hero{grid-row:1/3;justify-content:center}
+  .hero .big{font-family:var(--font-d);font-weight:800;font-size:96px;line-height:.9;
+    letter-spacing:-4px;background:var(--grad-gold);-webkit-background-clip:text;
+    background-clip:text;color:transparent}
+  .hero .cap2{font-size:14px;color:var(--dim);margin-top:8px;line-height:1.5}
+  .hero .cap2 b{color:var(--ink)}
+  .hero .split{display:flex;gap:20px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+  .hero .split div{flex:1}
+  .hero .split .v{font-family:var(--font-d);font-weight:800;font-size:23px;letter-spacing:-.6px}
+  .hero .split .k{font-size:10.5px;color:var(--faint);margin-top:2px;line-height:1.35}
+
+  .law{grid-column:2/5;flex-direction:row;align-items:center;gap:26px;
+    background:linear-gradient(100deg,rgba(239,194,75,.14),rgba(239,194,75,.03));
+    border-color:rgba(239,194,75,.32)}
+  /* Kept deliberately short. It sits in the row above the three bar panels and
+     every pixel it takes is a bar those panels cannot show — the first cut of
+     this clipped "by unit" to two of five, which is worse than useless on a
+     wall nobody can scroll. */
+  .law{padding:12px 18px}
+  .law .n{font-family:var(--font-d);font-weight:800;font-size:44px;line-height:.9;
+    letter-spacing:-1.8px;color:var(--gold);flex:none}
+  .law .txt{font-size:15px;color:var(--dim);line-height:1.5}
+  .law .txt b{color:var(--ink);font-weight:600}
+  .law .txt{font-size:14px}
+  .law .txt .hd{font-family:var(--font-d);font-weight:800;font-size:18px;color:var(--ink);
+    letter-spacing:-.4px;margin-bottom:2px}
+  .law .quote{margin-left:auto;flex:none;max-width:400px;font-size:12.5px;color:var(--faint);
+    border-left:2px solid rgba(239,194,75,.4);padding-left:14px;line-height:1.5;font-style:italic}
+
+  .rows{display:flex;flex-direction:column;gap:5px;overflow:hidden;flex:1;justify-content:flex-start}
+  .row{display:grid;grid-template-columns:1fr 74px;align-items:center;gap:10px;
+    cursor:pointer;padding:3px 5px;margin:0 -5px;border-radius:8px;transition:.16s}
+  .row:hover{background:rgba(255,255,255,.05)}
+  .row.sel{background:rgba(239,194,75,.15)}
+  .row .lbl{font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .lbl em{font-style:normal;color:var(--faint);font-size:11.5px}
+  .row .track{height:6px;background:rgba(255,255,255,.07);border-radius:3px;margin-top:3px;overflow:hidden}
+  .row .track i{display:block;height:100%;border-radius:4px;background:var(--grey);
+    transition:width .55s var(--ease)}
+  .row .track i.gold{background:var(--grad-gold)} .row .track i.accent{background:var(--grad)}
+  .row .val{font-family:var(--font-d);font-weight:700;font-size:16px;text-align:right;
+    font-variant-numeric:tabular-nums}
+  /* Inline, not stacked. As a block this doubled the height of every row in
+     the unit and plan panels and clipped both — and a wall cannot be scrolled. */
+  .row .val small{font:500 10px var(--font-b);color:var(--faint);margin-left:5px}
+  .row.zero{opacity:.35;cursor:default}
+
+  .agents{grid-column:1/3}
+  .alist{display:grid;grid-auto-flow:column;grid-template-rows:repeat(9,auto);
+    gap:0 26px;overflow:hidden;flex:1;align-content:start}
+  .arow{display:grid;grid-template-columns:1fr 30px 48px;align-items:baseline;gap:8px;
+    padding:3px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12.5px}
+  .arow .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .arow .nm em{font-style:normal;font-size:10.5px;color:var(--faint);display:block}
+  .arow .n{font-family:var(--font-d);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+  .arow .d{text-align:right;color:var(--dim);font-size:12px;font-variant-numeric:tabular-nums}
+  .arow.top .n{color:var(--gold)}
+  /* An agent with nothing outstanding still belongs on the wall — dimmed, so
+     the eye lands on the rows that need somebody without pretending the clean
+     ones do not exist. */
+  .arow.quiet{opacity:.5} .arow.quiet .n{color:var(--faint)}
+
+  .hist{grid-column:3/5}
+  .sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:12px}
+  .sgrid .v{font-family:var(--font-d);font-weight:800;font-size:30px;letter-spacing:-1px;line-height:1}
+  .sgrid .k{font-size:10.5px;color:var(--faint);margin-top:4px;line-height:1.35}
+  .sgrid .gold .v{color:var(--gold)} .sgrid .accent .v{color:var(--blue)}
+  .note{font-size:11.5px;color:var(--faint);line-height:1.5;margin:10px 0 0}
+  .note b{color:var(--dim)}
+
+  footer{position:fixed;left:26px;bottom:5px;font-size:10.5px;color:var(--faint)}
+  .hint{position:fixed;right:26px;bottom:5px;font-size:10.5px;color:var(--faint);opacity:.7}
+
+  @media (min-width:1700px){
+    main{grid-template-columns:350px 1fr 1fr 1fr;gap:16px;padding:0 34px 24px}
+    .hero .big{font-size:118px} .card{padding:20px 24px}
+    .row .lbl{font-size:15px} .row .val{font-size:19px} .arow{font-size:15px}
+    .law .n{font-size:72px} .law .txt{font-size:17px} .sgrid .v{font-size:38px}
+    header{padding:18px 34px 12px} main{height:calc(100vh - 74px)}
+  }
+  @media (max-width:1200px){
+    body{overflow:auto} main{grid-template-columns:1fr 1fr;height:auto}
+    .hero{grid-row:auto} .law{grid-column:1/3;flex-wrap:wrap}
+    .agents,.hist{grid-column:1/3} .alist{grid-auto-flow:row;grid-template-rows:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mark"><img src="../../logo-mark.png" alt=""></div>
+  <div>
+    <h1>Contract Delivery <span id="hYear">2026</span></h1>
+    <div class="sub">Policy delivery · active agents · Ricky Rampersad Branch, Chaguanas</div>
+  </div>
+  <div class="right">
+    <div id="chip" onclick="clearFilter()"><b id="chipTxt"></b><span>✕</span></div>
+    <span class="live" id="live"><i></i><span id="liveTxt">snapshot</span></span>
+    <span id="clock"></span>
+  </div>
+</header>
+
+<main>
+  <section class="card hero">
+    <h3 id="heroKick">In the cabinet</h3>
+    <div class="big" id="heroN">—</div>
+    <div class="cap2" id="heroCap"></div>
+    <div class="split">
+      <div><div class="v" id="heroOld">—</div><div class="k">days, the oldest one here</div></div>
+      <div><div class="v" id="heroMed">—</div><div class="k">days, the middle one</div></div>
+    </div>
+  </section>
+
+  <section class="card law">
+    <div class="n" id="lawN">—</div>
+    <div class="txt">
+      <div class="hd" id="lawHd"></div>
+      <div id="lawTxt"></div>
+    </div>
+    <div class="quote" id="lawQuote"></div>
+  </section>
+
+  <section class="card"><h3>How long we have held it</h3>
+    <p class="cap">Days since head office dispatched it to us. Click a band to hold the wall.</p>
+    <div class="rows" id="rAge"></div></section>
+
+  <section class="card"><h3>By unit</h3>
+    <p class="cap">Whose clients are waiting, and the oldest in each.</p>
+    <div class="rows" id="rUnit"></div></section>
+
+  <section class="card"><h3>By plan</h3>
+    <p class="cap">What kind of contract is sitting here.</p>
+    <div class="rows" id="rPlan"></div></section>
+
+  <section class="card agents"><h3>By agent</h3>
+    <p class="cap" id="agentCap"></p>
+    <div class="alist" id="aList"></div></section>
+
+  <section class="card hist"><h3>How we have done, and what the records say</h3>
+    <p class="cap">Every contract this book has a delivery band for.</p>
+    <div id="histBody"></div></section>
+</main>
+
+<footer id="src"></footer>
+<div class="hint">click a bar to filter · esc clears · F full screen</div>
+
+<script>
+/* ── DATA ────────────────────────────────────────────────────────────────────
+   AGGREGATES ONLY, exactly like the 45-day wall: counts, ages, and the names of
+   our own agents and units. No client, no policy number. A wall in a branch is
+   read by whoever walks past it.
+
+   Paste the Apps Script /exec URL below for live figures. The action is
+   `intel.delivery` and it takes no token — see the note in intelRoute_.       */
+var DLV_URL = "";
+
+/* Fallback shown only when the API is unreachable. GENERATED FROM THE REAL
+   BUILD, not typed — a hand-written snapshot drifts from what the backend
+   serves, and the first version of this one already had two counts wrong. */
+var DLV = {"generatedAt": "2026-09-05", "fromYear": 2026, "promise": 10, "split": {"configured": false, "inCabinet": null, "withAgent": null}, "statutoryBusinessDays": 20, "headline": {"inCabinet": 34, "dispatchPending": 15, "overPromise": 34, "oldest": 222, "median": 51}, "ageing": [ {"k": "Under 20 days", "n": 0}, {"k": "20-30", "n": 0}, {"k": "31-60", "n": 23}, {"k": "61-90", "n": 4}, {"k": "91-180", "n": 4}, {"k": "Over 180", "n": 3} ], "agents": [ {"k": "Felicia Rampersad", "n": 6, "oldest": 44, "done": 4, "fast": 3, "unit": "Gary Sookdeo"}, {"k": "John Boodhoo", "n": 5, "oldest": 120, "done": 20, "fast": 8, "unit": "Gary Sookdeo"}, {"k": "Aidan Eugene", "n": 3, "oldest": 218, "done": 21, "fast": 10, "unit": "Kerwyn Ramroach"}, {"k": "Gary Sookdeo", "n": 3, "oldest": 65, "done": 22, "fast": 10, "unit": "Gary Sookdeo"}, {"k": "Varun Seegolam", "n": 3, "oldest": 54, "done": 6, "fast": 1, "unit": "Ricky Rampersad"}, {"k": "Darryl Manick", "n": 2, "oldest": 212, "done": 4, "fast": 3, "unit": "Akaash Kalladeen"}, {"k": "Akaash Kalladeen", "n": 2, "oldest": 100, "done": 3, "fast": 3, "unit": "Akaash Kalladeen"}, {"k": "Naila Samuel", "n": 2, "oldest": 65, "done": 10, "fast": 10, "unit": "Gary Sookdeo"}, {"k": "Ricky Rampersad", "n": 2, "oldest": 51, "done": 4, "fast": 2, "unit": "Ricky Rampersad"}, {"k": "Dhalina Heeraman", "n": 1, "oldest": 222, "done": 1, "fast": 0, "unit": "Kerwyn Ramroach"}, {"k": "Alyssa Joseph", "n": 1, "oldest": 94, "done": 3, "fast": 2, "unit": "Gary Sookdeo"}, {"k": "Randolph Gonzales", "n": 1, "oldest": 64, "done": 7, "fast": 3, "unit": "Ricky Rampersad"}, {"k": "Chris Badaloo", "n": 1, "oldest": 51, "done": 4, "fast": 2, "unit": "Gary Sookdeo"}, {"k": "Fawwaz Mohamed", "n": 1, "oldest": 33, "done": 5, "fast": 2, "unit": "Akaash Kalladeen"}, {"k": "Stephanie Rajkumar", "n": 1, "oldest": 31, "done": 1, "fast": 1, "unit": "Akaash Kalladeen"}, {"k": "Anthony Simmons", "n": 0, "oldest": 0, "done": 37, "fast": 33, "unit": "Kerwyn Ramroach"}, {"k": "Daniel Bhagwandas", "n": 0, "oldest": 0, "done": 12, "fast": 12, "unit": "Akaash Kalladeen"}, {"k": "Narissa Mohammed", "n": 0, "oldest": 0, "done": 9, "fast": 6, "unit": "Ricky Rampersad"}, {"k": "Tricia Baksh", "n": 0, "oldest": 0, "done": 9, "fast": 6, "unit": "Gary Sookdeo"}, {"k": "Jamil Khan", "n": 0, "oldest": 0, "done": 8, "fast": 7, "unit": "Ricky Rampersad"}, {"k": "Joy Barbara Sammah", "n": 0, "oldest": 0, "done": 5, "fast": 4, "unit": "Ricky Rampersad"}, {"k": "Malcolm Sooknanan", "n": 0, "oldest": 0, "done": 5, "fast": 4, "unit": "Akaash Kalladeen"}, {"k": "Premchand Dookran", "n": 0, "oldest": 0, "done": 5, "fast": 5, "unit": "Ricky Rampersad"}, {"k": "Neil Ramnanan", "n": 0, "oldest": 0, "done": 4, "fast": 3, "unit": "Ricky Rampersad"} ], "units": [ {"k": "Gary Sookdeo", "n": 18, "oldest": 120}, {"k": "Akaash Kalladeen", "n": 6, "oldest": 212}, {"k": "Ricky Rampersad", "n": 6, "oldest": 64}, {"k": "Kerwyn Ramroach", "n": 4, "oldest": 222} ], "plans": [ {"k": "ECONO LIFE", "n": 12, "oldest": 218}, {"k": "UNREG ANNUITY", "n": 5, "oldest": 212}, {"k": "EVOL TO 65", "n": 4, "oldest": 222}, {"k": "PA DTH/DIS", "n": 3, "oldest": 94}, {"k": "LIFE SECURE", "n": 2, "oldest": 120} ], "history": {"delivered": 216, "within30": 144, "pct": 66.7, "dispatched": 250, "rate": 86.4, "bands": [ {"k": "0-30 Days", "n": 144}, {"k": "31-45 Days", "n": 37}, {"k": "46-60 Days", "n": 24}, {"k": "61-90 Days", "n": 8}, {"k": "91-180 Days", "n": 3} ]}, "before": {"rows": 2096, "delivered": 1978, "undelivered": 118, "oldestYears": 26.6}, "departed": {"n": 0, "oldest": 0, "rows": []}, "roster": {"active": 33, "inactive": 19, "vested": 9}};
+
+function $(s){return document.querySelector(s)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+var FILTER=null;
+function clearFilter(){ FILTER=null; paint(); }
+document.addEventListener("keydown",function(e){
+  if(e.key==="Escape") clearFilter();
+  if(e.key==="f"||e.key==="F"){
+    if(document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen();
+  }
+});
+
+/* Bars carry the count and the oldest one in that group, because a band with
+   three contracts in it where one has been here eight months is not the same
+   problem as three that arrived last week. */
+function bars(host,list,dim,tone){
+  var max=0; list.forEach(function(x){ if(x.n>max) max=x.n; });
+  host.innerHTML=list.map(function(x){
+    var sel=FILTER&&FILTER.dim===dim&&FILTER.key===x.k;
+    return '<div class="row'+(sel?' sel':'')+(x.n?'':' zero')+'"'
+      + (x.n?' data-dim="'+dim+'" data-key="'+esc(x.k)+'"':'')+'>'
+      + '<div><div class="lbl">'+esc(x.k)+'</div>'
+      + '<div class="track"><i class="'+(tone||"")+'" style="width:'
+      + (max?x.n/max*100:0).toFixed(1)+'%"></i></div></div>'
+      + '<div class="val">'+x.n+(x.oldest?'<small>'+x.oldest+'d</small>':'')+'</div></div>';
+  }).join("");
+  Array.prototype.forEach.call(host.querySelectorAll(".row[data-dim]"),function(el){
+    el.onclick=function(){
+      if(FILTER&&FILTER.dim===el.dataset.dim&&FILTER.key===el.dataset.key) return clearFilter();
+      FILTER={dim:el.dataset.dim,key:el.dataset.key}; paint();
+    };
+  });
+}
+
+function paint(){
+  var D=DLV, h=D.headline;
+  $("#chip").className = FILTER?"on":"";
+  if(FILTER) $("#chipTxt").textContent=FILTER.key;
+
+  $("#heroN").textContent=h.inCabinet;
+  /* Two states live inside this one number until the client-portfolio fields
+     are named. Saying so is the difference between a desk that searches the
+     right shelf and one that searches every shelf. */
+  var sp=D.split||{};
+  $("#heroKick").textContent = sp.configured ? "In the cabinet" : "Not with the client";
+  $("#heroCap").innerHTML = (sp.configured
+    ? '<b>'+sp.inCabinet+'</b> on our shelf, <b>'+sp.withAgent+'</b> with an agent and '
+      + 'not acknowledged.'
+    : 'contracts dispatched in <b>'+D.fromYear+'</b> that the client does not have — '
+      + '<b>on our shelf or with an agent</b>, this export cannot tell which.')
+    + ' <b>'+h.dispatchPending+'</b> more are still with head office, undispatched.';
+  $("#heroOld").textContent=h.oldest;
+  $("#heroMed").textContent=h.median;
+
+  /* The two clocks are shown apart on purpose. The statutory one is the
+     company's and is quoted as written; the branch promise is ours. */
+  $("#lawN").textContent=h.overPromise;
+  $("#lawHd").textContent=h.overPromise===h.inCabinet
+    ? "Every one is past our own standard"
+    : h.overPromise+" are past our own standard";
+  $("#lawTxt").innerHTML='We aim to have a contract in the client’s hands within '
+    + '<b>'+D.promise+' days</b> of it reaching us. The youngest one here is '
+    + '<b>'+(D.ageing.find(function(x){return x.n})||{k:"—"}).k.toLowerCase()+'</b>.';
+  $("#lawQuote").innerHTML='Insurance Act 2018, s268(1): an insurer shall issue a policy '
+    + 'within <b style="color:var(--dim)">twenty business days</b> of acceptance of the risk. '
+    + 'That is the company’s clock and it starts earlier — not this one.';
+
+  bars($("#rAge"), D.ageing, "age", "gold");
+  bars($("#rUnit"), D.units, "unit", "gold");
+  bars($("#rPlan"), D.plans, "plan", "accent");
+
+  /* Outstanding beside delivered, because six waiting against four delivered
+     is a different conversation from six against forty. Sorted with the
+     outstanding first — an agent with none has nothing to answer for and
+     belongs further down, not off the wall. */
+  var ag=D.agents.filter(function(x){ return !FILTER||FILTER.dim!=="unit"||x.unit===FILTER.key; });
+  var out=ag.filter(function(x){return x.n}), total=ag.length;
+  ag=ag.slice(0,18);
+  $("#agentCap").innerHTML=out.length+' of the '+total+' active agents who handled a '
+    + D.fromYear+' contract still have one waiting'+(total>18?', top 18 shown':'')
+    + '. <b style="color:var(--dim)">out</b> · <b style="color:var(--dim)">delivered</b> '
+    + '· <b style="color:var(--dim)">oldest</b>';
+  $("#aList").innerHTML=ag.map(function(x,i){
+    return '<div class="arow'+(x.n&&i<3?' top':'')+(x.n?'':' quiet')+'"><div class="nm">'+esc(x.k)
+      + '<em>'+esc(x.unit||"")+(x.done?' · '+x.done+' delivered, '+x.fast+' inside 30 days':'')+'</em></div>'
+      + '<div class="n">'+(x.n||'·')+'</div>'
+      + '<div class="d">'+(x.oldest?x.oldest+'d':'—')+'</div></div>';
+  }).join("");
+
+  var H=D.history, B=D.before||{}, DP=D.departed||{n:0}, RO=D.roster||{};
+  $("#histBody").innerHTML=
+    '<div class="sgrid">'
+    + '<div class="'+(H.rate>=85?'accent':'gold')+'"><div class="v">'+H.rate+'%</div>'
+    +   '<div class="k">of the '+H.dispatched+' dispatched in '+D.fromYear+' reached the client</div></div>'
+    + '<div><div class="v">'+H.delivered+'</div>'
+    +   '<div class="k">delivered, '+H.pct+'% of them inside 30 days</div></div>'
+    + '<div class="gold"><div class="v">'+h.inCabinet+'</div>'
+    +   '<div class="k">still out, every one past our 10 days</div></div>'
+    + '</div>'
+    + '<div class="rows" style="flex:0">'
+    + H.bands.map(function(b2){
+        var mx=Math.max.apply(null,H.bands.map(function(x){return x.n}));
+        return '<div class="row zero" style="cursor:default"><div>'
+          + '<div class="lbl">'+esc(b2.k)+'</div><div class="track"><i class="'
+          + (b2.k==="0-30 Days"?"accent":"")+'" style="width:'+(b2.n/mx*100).toFixed(1)
+          + '%"></i></div></div><div class="val">'+b2.n+'</div></div>';
+      }).join("")
+    + '</div>'
+    + (DP.n ? '<p class="note" style="border-left:2px solid var(--gold);padding-left:12px">'
+        + '<b>'+DP.n+' belong to an agent who has left.</b> Off the roster above, because the '
+        + 'roster is active agents; on this wall, because somebody still has to deliver them '
+        + 'and there is no agent to ask. Oldest '+DP.oldest+' days.</p>' : '')
+    + (sp.configured ? '' :
+        '<p class="note" style="border-left:2px solid var(--gold);padding-left:12px">'
+        + '<b>The split is not wired yet.</b> This export knows a contract is undelivered '
+        + 'but not whether it is on our shelf or already with the agent awaiting an '
+        + 'acknowledgement letter. Those are two different jobs — one is ours, one is the '
+        + 'agent\'s. Naming the handover and acknowledgement dates on the client portfolio '
+        + '(<b>intelContractDiscover()</b>) splits this number in two.</p>')
+    + '<p class="note"><b>Why '+D.fromYear+' only.</b> Before it the book carries '
+    + B.rows.toLocaleString("en-US")+' more rows, '+B.undelivered+' of them still marked '
+    + 'undelivered and the oldest dispatched <b>'+B.oldestYears+' years</b> ago. Those are '
+    + 'deliveries that happened and were never recorded — a records job, not a delivery one — '
+    + 'so counting them would send the desk hunting through 2018. '
+    + 'Roster is the <b>'+RO.active+' active</b> agents; '+RO.inactive+' inactive and '
+    + RO.vested+' vested are not shown.</p>';
+}
+
+function tick(){ $("#clock").textContent=new Date().toLocaleTimeString("en-GB",
+  {hour:"2-digit",minute:"2-digit"}) }
+setInterval(tick,10000); tick();
+
+function boot(){
+  paint();
+  $("#hYear").textContent=DLV.fromYear;
+  $("#src").textContent="In-force export · "+DLV.fromYear+" onward · built "+DLV.generatedAt
+    + " · active agents only · aggregates, no client detail · branch standard "
+    + DLV.promise+" days";
+}
+function load(){
+  if(!DLV_URL){ boot(); return; }
+  fetch(DLV_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
+                 body:JSON.stringify({action:"intel.delivery"})})
+    .then(function(r){return r.json()})
+    .then(function(j){
+      if(!j||!j.ok||!j.data) throw new Error("bad feed");
+      DLV=j.data; FILTER=null; boot();
+      $("#live").classList.add("on"); $("#liveTxt").textContent="live";
+    })
+    .catch(function(){ boot();
+      $("#live").classList.remove("on"); $("#liveTxt").textContent="snapshot"; });
+}
+load();
+setInterval(load,30*60*1000);
+</script>
+</body>
+</html>

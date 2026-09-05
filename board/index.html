@@ -37,9 +37,14 @@
 
   header{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;gap:16px;
     padding:16px 26px}
-  header .mark{width:44px;height:44px;flex:none;border-radius:13px;background:var(--grad);
-    display:grid;place-items:center;font-family:var(--font-d);font-weight:800;font-size:15px;color:#04223b;
-    box-shadow:0 6px 20px rgba(11,127,212,.45)}
+  /* THE BRANCH MARK — a gold shield with a check, not a monogram. These three
+     board screens were the last places still drawing an invented "RR" tile on
+     a blue gradient. The intelligence walls and the films all carry the real
+     mark; a branch whose screens disagree about its own logo is the one thing
+     everybody in the room notices. */
+  header .mark{width:44px;height:44px;flex:none;border-radius:13px;overflow:hidden;
+    background:#07131f;display:grid;place-items:center}
+  header .mark img{width:44px;height:44px;display:block}
   header h1{margin:0;font-family:var(--font-d);font-size:18px;font-weight:800;letter-spacing:-.3px}
   header .sub{font-size:12px;color:var(--dim);margin-top:2px}
   header .right{margin-left:auto;display:flex;align-items:center;gap:16px}
@@ -143,7 +148,7 @@
 <body>
 
 <header>
-  <div class="mark">RR</div>
+  <div class="mark"><img src="../logo-mark.png" alt=""></div>
   <div>
     <h1>Branch Wall Board</h1>
     <div class="sub">Ricky Rampersad Branch · Guardian Group · Salesforce</div>
