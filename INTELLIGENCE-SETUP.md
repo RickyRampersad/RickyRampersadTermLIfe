@@ -432,6 +432,27 @@ It refreshes every 30 minutes and falls back to the committed snapshot if the
 feed is unreachable, so the screen is never blank. The header badge reads `live`
 or `snapshot`, so nobody quotes a stale figure believing it is current.
 
+### Taking an agent out of the branch view
+
+Set `INTEL_EXCLUDE_AGENTS` to a comma-separated list of names **as the dues book
+writes them** — matching is on the same normalised key used everywhere, so
+capitals and punctuation do not matter.
+
+```
+INTEL_EXCLUDE_AGENTS = Aleema Mohammed-Ali, Javid Ali
+```
+
+**Excluding an agent does not settle their premiums.** On the current book those
+two carry **420 overdue policies and TT$360,782** between them, across 268
+clients. Taking them out removes that from every screen and every count — the
+money is still owed, and now nobody is looking at it. So an exclusion is a
+decision to hand that book to somebody, not a way to make it disappear.
+
+Because that is easy to forget three months later, nothing about it is silent:
+the wall's footer names how many agents are excluded and exactly what they took
+with them, and the appreciation survey skips their clients rather than sending a
+letter signed by somebody who has left.
+
 ## 3h. The appreciation survey
 
 One letter per client on the 45-day line, asking for a single click, copying the

@@ -195,6 +195,9 @@
       <div><div class="v" id="heroPrem">—</div><div class="k">modal premium held up</div></div>
       <div><div class="v" id="heroAuto">—</div><div class="k">on a standing instruction that failed</div></div>
     </div>
+    <div class="split">
+      <div><div class="v" id="heroCalls">—</div><div class="k" id="heroCallsK">calls, not policies</div></div>
+    </div>
   </section>
 
   <section class="card wave" id="waveCard">
@@ -282,14 +285,17 @@ var WALL45 = {
     {k:"Carlton Aloy Wong",n:1,prem:500.00,med:7.5,unit:"Unassigned"},
     {k:"Karan Ramsundar",n:1,prem:454.85,med:9.0,unit:"Unassigned"},
     {k:"Stephanie Rajkumar",n:1,prem:300.00,med:5.0,unit:"Akaash Kalladeen"}],
-  context:{overdueTotal:4438,over45:2210,over45Prem:6191708.89,next7:656,next7Prem:731237.80},
+  context:{overdueTotal:4018,over45:2013,over45Prem:5830927.00,next7:656,next7Prem:731237.80},
+  households:{clients:33,multi:3,multiPolicies:6,multiPrem:2180.22,
+              oneMandate:2,oneMandatePolicies:4,oneMandatePrem:1360.87},
+  excluded:{names:2,policies:420,prem:360782.01,onLine:5},
   cross:{unit:{},tenure:{},billing:{}},
   /* Nothing has gone out yet. The panel says so rather than showing a
      plausible-looking zero that reads as "nobody replied". */
   survey:{sent:0,responded:0,rate:0,avg:null,dist:[0,0,0,0,0],heardYes:0,heardNo:0,
           byBand:[],byUnit:[],live:0,latest:""},
-  surveyPool:{ready:26,noEmail:13,letters:[{k:"first-year",n:4},{k:"settling",n:3},
-    {k:"established",n:12},{k:"longstanding",n:7},{k:"decade-plus",n:0},{k:"lifetime",n:0}]}
+  surveyPool:{ready:23,noEmail:11,letters:[{k:"first-year",n:4},{k:"settling",n:3},
+    {k:"established",n:9},{k:"longstanding",n:7},{k:"decade-plus",n:0},{k:"lifetime",n:0}]}
 };
 
 /* ── NARRATION ───────────────────────────────────────────────────────────────
@@ -387,6 +393,20 @@ function paint(){
   $("#heroN").textContent = v.n;
   $("#heroPrem").textContent = money(v.prem);
   $("#heroAuto").textContent = v.autoFail + " of " + v.n;
+  /* The day is fewer conversations than it is policies, and where a client's
+     policies all sit on one billing method it is one failed collection rather
+     than several lapses — the cheapest calls on the list. */
+  var H = D.households || {};
+  if (!FILTER && H.clients) {
+    $("#heroCalls").textContent = H.clients;
+    $("#heroCallsK").innerHTML = "calls, not " + D.headline.policies + " policies"
+      + (H.multi ? " — <b style='color:var(--ink)'>" + H.multi + "</b> hold more than one"
+         + (H.oneMandate ? ", " + H.oneMandate + " on a single failed mandate" : "") : "");
+  } else {
+    $("#heroCalls").textContent = v.n;
+    $("#heroCallsK").textContent = "policies in this slice";
+  }
+
   $("#heroCap").innerHTML = FILTER
     ? 'policies, of <b>'+D.headline.policies+'</b> on the line today'
     : 'policies crossed the line today, across <b>'+D.headline.clients+'</b> clients. '
@@ -559,8 +579,12 @@ setInterval(tick,10000); tick();
 
 function boot(){
   paint();
+  var X = WALL45.excluded || {};
   $("#src").textContent = "Premium dues extract cut "+WALL45.asOf+" · built "+WALL45.generatedAt
-    + " · aggregates only, no client detail";
+    + " · aggregates only, no client detail"
+    + (X.policies ? " · excludes " + X.names + " agent" + (X.names>1?"s":"")
+        + ": " + X.policies.toLocaleString("en-US") + " overdue policies, "
+        + money(X.prem) + " — still owed, just not counted here" : "");
   var b=$("#sound");
   b.disabled = !NARRATION.length;
   b.title = NARRATION.length ? "" : "Narration not built yet — run audio/build-voice.sh";

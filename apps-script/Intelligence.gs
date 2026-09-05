@@ -2862,6 +2862,26 @@ function iActWall45_(b) {
   return iOk_({ data: d });
 }
 
+/* ── Agents whose book should not count in the branch view ─────────────────
+   Set INTEL_EXCLUDE_AGENTS to a comma-separated list of names as the DUES BOOK
+   writes them. Matching is on the same normalised key as everywhere else, so
+   "Aleema Mohammed-Ali" and "ALEEMA MOHAMMED ALI" are the same person.
+
+   Read this before adding a name. Excluding an agent does NOT settle their
+   premiums — it only stops them being counted here. Their clients still owe
+   the money and nobody is now looking at it, so an exclusion is a decision to
+   hand that book to somebody, not a way to make it disappear. Every screen
+   that excludes says how much it removed, for exactly that reason. */
+function iExcluded_() {
+  var raw = iProp_('INTEL_EXCLUDE_AGENTS');
+  var out = {};
+  String(raw || '').split(',').forEach(function (n) {
+    var k = iNameKey_(n);
+    if (k) out[k] = true;
+  });
+  return out;
+}
+
 function iBuildWall45_() {
   var sh = iTabDues_();
   if (!sh) return { error: 'No dues tab found.' };
@@ -2912,12 +2932,19 @@ function iBuildWall45_() {
      value they agree on. */
   var cutVotes = {};
 
+  var skip = iExcluded_(), removed = { policies: 0, prem: 0, onLine: 0 };
+
   for (var r = 0; r < d.rows; r++) {
     if (String(d.get('status', r)).trim() !== '2') continue;
     var paid = iDate_(d.get('paidTo', r));
     if (!paid) continue;
     var days = Math.round((today - paid) / DAY);
     if (days <= 0 || days > 4000) continue;
+    if (skip[iNameKey_(d.get('agent', r))]) {
+      removed.policies++; removed.prem += iNum_(d.get('premium', r));
+      if (days === TARGET) removed.onLine++;
+      continue;
+    }
     overdue++;
     var frozen = iNum_(d.get('days', r));
     if (frozen > 0 && frozen < 2000) {
@@ -3010,6 +3037,39 @@ function iBuildWall45_() {
 
   var autoN = 0;
   billing.forEach(function (x) { if (x.auto) autoN += x.n; });
+
+  /* ── The line is fewer conversations than it is policies ──────────────────
+     Nearly a third of the branch's overdue book is the same client more than
+     once, and worked as policies an agent rings the same person twice in an
+     afternoon. Worse, where every one of a client's overdue policies shares a
+     billing method AND a paid-to date, it is not several lapses at all — it is
+     ONE collection that failed, carrying two or three policies with it. Those
+     are the cheapest calls on the list: one conversation, one bank, several
+     policies back on the books. Counted here so the screen can say how many
+     calls the day actually is. */
+  var byClient = {};
+  sel.forEach(function (x) {
+    var k = x.clientNo || ('_' + x.agent + x.prem);
+    (byClient[k] = byClient[k] || []).push(x);
+  });
+  var households = { clients: 0, multi: 0, multiPolicies: 0, multiPrem: 0,
+                     oneMandate: 0, oneMandatePolicies: 0, oneMandatePrem: 0 };
+  Object.keys(byClient).forEach(function (k) {
+    var v = byClient[k];
+    households.clients++;
+    if (v.length < 2) return;
+    households.multi++; households.multiPolicies += v.length;
+    v.forEach(function (x) { households.multiPrem += x.prem; });
+    var bills = {};
+    v.forEach(function (x) { bills[x.billing] = 1; });
+    if (Object.keys(bills).length === 1) {
+      households.oneMandate++; households.oneMandatePolicies += v.length;
+      v.forEach(function (x) { households.oneMandatePrem += x.prem; });
+    }
+  });
+  households.multiPrem = Math.round(households.multiPrem * 100) / 100;
+  households.oneMandatePrem = Math.round(households.oneMandatePrem * 100) / 100;
+
   var clients = {};
   sel.forEach(function (x) { if (x.clientNo) clients[x.clientNo] = 1; });
 
@@ -3030,6 +3090,12 @@ function iBuildWall45_() {
     tenure: tenure.map(function (t) { return { k: t.k, n: t.n, prem: Math.round(t.prem * 100) / 100 }; }),
     tenureMedian: medianOf(yrs),
     billing: billing, autoFail: autoN, units: unitRows, agents: agentRows,
+    households: households,
+    /* Never silent about what an exclusion took out — see iExcluded_. */
+    excluded: { names: Object.keys(iExcluded_()).length,
+                policies: removed.policies,
+                prem: Math.round(removed.prem * 100) / 100,
+                onLine: removed.onLine },
     /* Cross-tabs, so the wall can be clicked into without ever holding a row.
        Ship the 41 rows and a screen in a public room could be filtered down to
        one line — agent, tenure, premium — which for a cohort this small is a
@@ -4497,11 +4563,16 @@ function iSurveyPool_() {
     });
   }
 
-  var rows = [], skipped = { noEmail: 0, cooldown: 0, tooNew: 0 };
+  var skip = iExcluded_();
+  var rows = [], skipped = { noEmail: 0, cooldown: 0, tooNew: 0, excluded: 0 };
   for (var r = 0; r < d.rows; r++) {
     if (String(d.get('status', r)).trim() !== '2') continue;
     var paid = iDate_(d.get('paidTo', r));
     if (!paid || Math.round((today - paid) / DAY) !== 45) continue;
+    /* A letter names the agent looking after them. Sending one under the name
+       of somebody the branch has taken off its books invites the reply nobody
+       wants: "she left months ago, who has my file now?" */
+    if (skip[iNameKey_(d.get('agent', r))]) { skipped.excluded++; continue; }
 
     var issue = iDate_(d.get('issue', r));
     var years = issue ? (today - issue) / DAY / 365.25 : 0;
