@@ -59,6 +59,12 @@ and clamps it to 1.30–2.25 — and the scenes re-lay into it. Same timings, sa
 audio, 100% of every phone and tablet tested. The `1620` in the stylesheet is the
 scripting-off fallback and nothing else reads it.
 
+**An embed in a page column is not a phone-sized film.** The sneak peek sat in a
+16:9 frame inside the demo page's text column: 336x189 on a 390x844 handset,
+**19% of the screen**. (The commit that fixed it says 9% — that figure is wrong;
+the measurement is 19%.) Tapping it now takes the whole viewport, which is the
+only reason the portrait stage above ever gets used on that page.
+
 **Portrait shows the wall whole.** Cover-cropping a 16:9 capture into a portrait
 frame shows 44% of its width and cuts every panel mid-word — it reads as a fault,
 not as detail. Contained in its own framed box the wall is small but coherent,
