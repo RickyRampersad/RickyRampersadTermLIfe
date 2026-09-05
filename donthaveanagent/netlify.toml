@@ -67,6 +67,24 @@
   to = "/wall-film.html"
   status = 302
 
+# The Facebook / Instagram ad, both cuts, as links you can send to check.
+[[redirects]]
+  from = "/ad"
+  to = "/dhaa-ad-reel.mp4"
+  status = 302
+
+[[redirects]]
+  from = "/ad-feed"
+  to = "/dhaa-ad-feed.mp4"
+  status = 302
+
+# Every film and ad on one page, to review before anything goes out. Not
+# linked from the public site and not indexed.
+[[redirects]]
+  from = "/preview"
+  to = "/preview.html"
+  status = 302
+
 # Where a client goes to watch their request move — reference + access code.
 [[redirects]]
   from = "/track"
