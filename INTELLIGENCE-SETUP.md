@@ -840,6 +840,94 @@ hand-edit the timings in `film.html`; they are measured off the rendered audio
 and regenerated. The README beside those scripts carries the rest, including
 the edge-tts proxy fix.
 
+## 3c. What the Act actually says, per wall
+
+Read out of the Act itself, not recalled. Earlier drafts of this file got s268
+wrong three separate times, so every quotation below was checked against the
+text and the section numbers are load-bearing.
+
+### The dues walls — 45, 60, 90
+
+**An arrears clock is not a lapse clock**, and that is the single most useful
+thing on the screen.
+
+> **s180(1)** — "An ordinary policy shall not be forfeited by reason only of
+> non-payment of any premiums where the surrender value of the policy … exceeds
+> the sum of the amount of the debts owing to the insurer under, or secured by,
+> the policy and the amount of the overdue premium."
+
+Where the surrender value does **not** cover what is owed, s180(4) still bars
+forfeiture unless the insurer serves a **late-payment notice** stating the date,
+the due date, the amount, and that the policy will be forfeited **twenty
+business days** after the notice. s180(2) lets the insurer charge compound
+interest meanwhile, and s180(3) makes the unpaid premium a debt under the policy.
+
+> **s177(1)** — a policyholder discontinuing premiums "on a policy on which not
+> less than three years' premiums have been paid in cash shall, where the policy
+> has a cash surrender value, be entitled on application to the insurer to
+> receive … a paid-up policy."
+
+So the paid-up option the 90-day letter offers is the client's **entitlement**
+after three years of premiums, not a concession. Saying otherwise in a letter
+would be a market-conduct problem in itself. s178 does the same for surrender.
+
+The branch writes at 45 days because a call still works — **not** because the
+Act requires it. Nothing here obliges a letter at 45, 60 or 90.
+
+### The contract walls — possession and delivery
+
+> **s268(1)** — "In the case of an individual life policy, upon acceptance of
+> the risk, an insurer shall issue a policy within twenty business days of
+> acceptance of the risk."
+
+The insurer's clock, starting at acceptance of the risk, governing **issuing**
+not delivering. The Act then goes silent: no deadline anywhere on getting the
+issued contract into the client's hands. That gap is the branch's, which is what
+the 10-day standard is for.
+
+And it binds the agent personally, by three definitions: **s2** "intermediary"
+means an agent, agency, broker, brokerage, sales representative and adjuster;
+**s2** "registrant" means any person registered as an insurer or intermediary;
+**s266** registrants "shall comply with the standards on market conduct as
+prescribed in Schedule 11". Schedule 11 has five parts and **no delivery
+deadline** — do not invent one.
+
+### The licence wall
+
+> **s114(6)** — "No person shall perform the functions of a sales representative
+> during any period in which he is not registered."
+
+That is why the wall exists, and it is on the screen verbatim.
+
+> **s119(1)** — "A certificate of registration shall not be renewed if the sales
+> representative, agent, broker or adjuster to whom it is issued has not complied
+> with continuing professional development requirements."
+
+**The wall does not track CPD.** Every date on it can be green and a renewal
+still refused, so CPD standing is checked outside this screen. The Central Bank
+may audit CPD Returns "during the processing of applications for renewal of a
+certificate of registration".
+
+**s117(2)(a)** caps a certificate at **three years** from issue — not one. The
+month and day held against each agent is the anniversary their certificate
+actually states, which is what the branch works to; the wall does not claim the
+Act mandates an annual cycle.
+
+**s118** requires an intermediary to "continuously meet all registration
+requirements" between renewals. **s120** requires the certificate to be produced
+on request by the Central Bank, the insurer, and "an actual or a prospective
+consumer". **s117(4)** requires it displayed at the principal place of business
+and at every office.
+
+Provisional certificates, which matter because the branch runs recruits:
+**s114(5)** requires the application for full registration "no later than twenty
+business days before the expiry of the provisional certificate"; **s114(4)(b)**
+caps provisional status at an aggregate of three years; **s114(4)(c)** requires
+the person to "immediately stop performing the functions of a sales
+representative" once it expires. The contact record does not say who holds a
+provisional certificate rather than a full one, so the wall names the rule and
+admits it cannot apply it.
+
 ## 4. How it is put together
 
 A nightly trigger reads every source tab once, computes all five domains, and

@@ -74,7 +74,12 @@
     display:grid;place-items:center;font-size:12px;line-height:1}
 
   main{display:grid;grid-template-columns:288px 1fr 1fr 1fr;
-    grid-template-rows:auto 1fr auto;gap:13px;padding:0 26px 20px;height:calc(100vh - 66px)}
+    /* minmax ON ROW 2, NOT 1fr. A plain 1fr lets the bottom row grow until the
+       middle one has nothing left — adding the Act to the survey card clipped
+       "How long in force" to four bands of six. The floor guarantees the bar
+       panels their height and makes the tall card give way instead. */
+    grid-template-rows:auto minmax(318px,1fr) auto;gap:13px;padding:0 26px 20px;
+    height:calc(100vh - 66px)}
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
     padding:16px 18px;min-height:0;display:flex;flex-direction:column}
   .card h3{margin:0 0 2px;font:700 12px var(--font-b);letter-spacing:.16em;
@@ -111,8 +116,11 @@
      centring each in its own card staggers every one of them against the other
      two and the eye has to re-find the baseline at each panel. */
   .rows{display:flex;flex-direction:column;gap:7px;overflow:hidden;flex:1;justify-content:flex-start}
+  /* 2px, not 3. Six bands x 2px x 2 sides is the twelve pixels the Act note
+     needed, and it comes out of padding nobody can see rather than out of a
+     band nobody can then read. */
   .row{display:grid;grid-template-columns:1fr 46px;align-items:center;gap:10px;
-    cursor:pointer;padding:3px 5px;margin:0 -5px;border-radius:8px;transition:.16s}
+    cursor:pointer;padding:2px 5px;margin:0 -5px;border-radius:8px;transition:.16s}
   .row:hover{background:rgba(255,255,255,.05)}
   .row.sel{background:rgba(55,177,236,.15)}
   .row .lbl{font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -128,10 +136,10 @@
 
   /* agents */
   .agents{grid-column:1/3}
-  .alist{display:grid;grid-auto-flow:column;grid-template-rows:repeat(6,auto);
+  .alist{display:grid;grid-auto-flow:column;grid-template-rows:repeat(5,auto);
     gap:0 26px;overflow:hidden;flex:1;align-content:start}
   .arow{display:grid;grid-template-columns:1fr 30px 74px;align-items:baseline;gap:8px;
-    padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
+    padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
   .arow .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .arow .nm em{font-style:normal;font-size:10.5px;color:var(--faint);display:block}
   .arow .n{font-family:var(--font-d);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
@@ -439,9 +447,9 @@ function paint(){
   bars($("#rBilling"), v.billing, "billing", "auto");
   bars($("#rUnits"),  v.units,   "unit",    "accent");
 
-  var ag=v.agents.slice(0,12);
+  var ag=v.agents.slice(0,10);
   $("#agentCap").textContent = v.agents.length+" carry "+(FILTER?"this slice":"today's line")
-    + (v.agents.length>12?" — top 12 shown":"");
+    + (v.agents.length>10?" — top 10 shown":"");
   $("#aList").innerHTML = ag.map(function(x,i){
     return '<div class="arow'+(i<3?' top':'')+'"><div class="nm">'+esc(x.k)
       + (x.unit?'<em>'+esc(x.unit)+(x.med!=null?' · '+x.med+'y':'')+'</em>':'')
@@ -474,11 +482,21 @@ function paintSurvey(){
             + '<div class="val">'+x.n+'</div></div>';
         }).join("")
       + '</div>'
-      + '<p class="cap" style="margin:10px 0 0"><b style="color:var(--gold)">Market conduct.</b> '
-      + 'These letters ask a client to rate a named adviser, so nothing goes out until a '
-      + 'reviewer has read the exact wording: <b style="color:var(--dim)">intelSurveyPreview()</b>, '
-      + 'then <b style="color:var(--dim)">intelSurveyApprove("name")</b>. Approval is bound to the '
-      + 'wording — change one word and it lapses. Every letter sent records who cleared it.</p>';
+      /* Trimmed to the rule and the gate. The full procedure — the two function
+         names, what approval binds to — is in INTELLIGENCE-SETUP.md; a wall
+         does not need to carry a runbook. */
+      + '<p class="cap" style="margin:9px 0 0"><b style="color:var(--gold)">Market conduct.</b> '
+      + 'These letters ask a client to rate a named adviser, so nothing goes out until a reviewer '
+      + 'has read the exact wording. Approval is bound to it — change one word and it lapses — '
+      + 'and every letter sent records who cleared it.</p>'
+      + '<p class="cap" style="margin:8px 0 0;padding-left:12px;line-height:1.4;'
+      + 'border-left:2px solid rgba(239,194,75,.45)">'
+      + '<b style="color:var(--gold)">Insurance Act 2018, s180.</b> An arrears clock is not a '
+      + 'lapse clock — a policy <i>"shall not be forfeited by reason only of non-payment"</i> '
+      + 'while its surrender value covers what is owed, and otherwise needs a late-payment '
+      + 'notice plus <b style="color:var(--dim)">twenty business days</b>. '
+      + 'We write at forty five because a call still works.</p>'
+      ;
     return;
   }
   $("#surveyCap").textContent = "Sent to clients on the line, copying the agent, the desk and the unit manager."
