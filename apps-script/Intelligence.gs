@@ -4342,7 +4342,8 @@ function doPost(e) {
 var ISURVEY = {
   TAB:        'Intel Surveys',
   LIVE_PHRASE:'send to clients',
-  COOLDOWN:   120,   // days before the same client may be surveyed again
+  COOLDOWN:   120,   // days between arrears EPISODES — not between 45/60/90
+  EPISODE:    150,   // a letter this recent belongs to the same conversation
   MAX_RUN:    60     // never fire more than this in one go without asking again
 };
 
@@ -4356,7 +4357,7 @@ function iSurveyTab_() {
      /* Which of the four taps they used, and WHEN a private message was sent.
         The private message itself is deliberately not here — see the note above
         iSurveyOptionsHtml_. A confidential channel everybody can read is a lie. */
-     'Asked for', 'Asked at', 'Private sent', 'Opted out']);
+     'Asked for', 'Asked at', 'Private sent', 'Opted out', 'Stage']);
 }
 
 /* Columns, by number, because Apps Script counts from 1 and getting this wrong
@@ -4365,7 +4366,8 @@ var ISCOL = { TOKEN:1, SENT:2, CLIENTNO:3, CLIENT:4, EMAIL:5, POLICY:6, AGENT:7,
               UNIT:8, YEARS:9, BAND:10, BILLING:11, PREMIUM:12, TEMPLATE:13,
               RATING:14, RATEDAT:15, HEARD:16, COMMENT:17, MODE:18,
               THANKED:19, FOLLOWUP:20, OWNER:21, DUE:22, CLOSED:23,
-              CLOSEDBY:24, OUTCOME:25, ASKED:26, ASKEDAT:27, PRIVATE:28, OPTOUT:29 };
+              CLOSEDBY:24, OUTCOME:25, ASKED:26, ASKEDAT:27, PRIVATE:28, OPTOUT:29,
+              STAGE:30 };
 
 /* ── The six letters ───────────────────────────────────────────────────────
    One per tenure band, because "thank you for your first eight months" and
@@ -4511,11 +4513,48 @@ var ISURVEY_OPTIONS = [
     label: 'I would like to write to the branch manager, privately',
     note:  'Goes to the branch manager and to nobody else. Not to your agent, and not to the office.',
     to:    'manager' },
+  { key: 'help',    emoji: '',
+    label: 'I would like to talk about my options',
+    note:  'Reducing the cover, making it paid-up, or a short arrangement.',
+    to:    'manager' },
   { key: 'stop',    emoji: '',
     label: 'Please do not contact me like this again',
     note:  'We will stop. Your cover is not affected in any way.',
     to:    'desk' }
 ];
+
+/* At 90 days the policy is close to lapsing, and a third letter asking somebody
+   to rate the service would be tone-deaf. What a client three months behind
+   needs is options, and there are real ones: most of these policies can be
+   reduced, paused or made paid-up rather than lost. Offering them is both the
+   decent thing and the thing that keeps the policy on the books — a lapsed
+   policy earns nothing and a reduced one earns something.
+
+   This is the vulnerability case in every conduct framework worth the name: a
+   customer in financial difficulty is offered help before being chased. */
+function iSurvey90OptionsHtml_(d) {
+  var rows = [
+    ['Pay what is outstanding', 'Bring it up to date and nothing changes.'],
+    ['Reduce the cover', 'A smaller sum assured and a smaller premium. The policy stays alive.'],
+    ['Make it paid-up', 'Stop paying, and keep a reduced amount of cover for the rest of the term with nothing more to pay.'],
+    ['Ask for time', 'A short arrangement while things settle. Tell us what is realistic.']
+  ].map(function (o) {
+    return '<tr><td style="padding:9px 12px 9px 0;vertical-align:top;white-space:nowrap;'
+      + 'font-weight:600;color:#00254d;border-bottom:1px solid #e2e8ee">' + iEsc_(o[0])
+      + '</td><td style="padding:9px 0;border-bottom:1px solid #e2e8ee;color:#3d4c5a">'
+      + iEsc_(o[1]) + '</td></tr>';
+  }).join('');
+  return '<div style="margin:22px 0 0"><p style="margin:0 0 4px;font-weight:600">'
+    + 'There is more than one way out of this.</p>'
+    + '<p style="margin:0 0 12px;font-size:14px;color:#5c6b7a">Most policies can be '
+    + 'reduced or paused rather than lost. Which one is right depends on your plan, '
+    + 'so the call is worth having.</p>'
+    + '<table style="border-collapse:collapse;width:100%;font-size:14.5px">' + rows + '</table>'
+    + '<div style="margin:18px 0 0"><a href="' + d.base + '?s=' + d.token + '&o=help" '
+    + 'style="display:block;text-align:center;text-decoration:none;background:#0b7fd4;'
+    + 'color:#fff;border-radius:11px;padding:15px;font-weight:700">'
+    + 'Ask the branch to call me about my options</a></div></div>';
+}
 
 function iSurveyOptionsHtml_(d) {
   var rows = ISURVEY_OPTIONS.map(function (o) {
@@ -4552,6 +4591,16 @@ function iSurveyHtml_(d) {
       '</b>, and our records show the most recent one is outstanding. If it has crossed ' +
       'in the post with this note, please ignore this paragraph.</p>';
 
+  var stage = Number(d.stage) || 45;
+  var st = ISURVEY_STAGES[stage] || ISURVEY_STAGES[45];
+  /* The second and third letters open on what went before, so the client is
+     never asked to start the conversation over. */
+  var carried = (!st.first && d.hist)
+    ? '<div style="background:#eef4fa;border-left:3px solid #0b7fd4;border-radius:0 9px 9px 0;'
+      + 'padding:14px 17px;margin:0 0 16px;font-size:14.5px;color:#3d4c5a">'
+      + iEsc_(st.kicker(d.hist)) + '</div>'
+    : '';
+
   return ''
   + '<div style="font:15px/1.62 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;'
   + 'color:#16202b;max-width:600px;margin:0 auto;padding:0 4px">'
@@ -4562,7 +4611,8 @@ function iSurveyHtml_(d) {
   + '</div>'
 
   + '<p style="margin:0 0 14px">Dear ' + iEsc_(d.greeting) + ',</p>'
-  + '<p style="margin:0 0 14px">' + t.open(d) + '</p>'
+  + carried
+  + (st.first ? '<p style="margin:0 0 14px">' + t.open(d) + '</p>' : '')
   + payment
 
   + '<div style="background:#f4f7fa;border-radius:10px;padding:16px 18px;margin:20px 0">'
@@ -4573,16 +4623,16 @@ function iSurveyHtml_(d) {
   +   'Premium collected by ' + iEsc_(bill.says) + '.</div>'
   + '</div>'
 
-  + '<p style="margin:0 0 6px"><b>One question, one click.</b></p>'
-  + '<p style="margin:0 0 16px">How would you rate the service you have had from '
-  +   iEsc_(d.agent) + '? Tap a number — that is the whole survey.</p>'
-
-  + '<div style="text-align:center;margin:0 0 8px">' + stars + '</div>'
-  + '<table role="presentation" style="width:100%;max-width:340px;margin:0 auto 22px">'
-  +   '<tr><td style="font-size:11.5px;color:#5c6b7a;text-align:left">1 — poor</td>'
-  +   '<td style="font-size:11.5px;color:#5c6b7a;text-align:right">5 — excellent</td></tr>'
-  + '</table>'
-
+  + (stage >= 90
+     ? iSurvey90OptionsHtml_(d)
+     : '<p style="margin:0 0 6px"><b>One question, one click.</b></p>'
+       + '<p style="margin:0 0 16px">How would you rate the service you have had from '
+       + iEsc_(d.agent) + '? Tap a number — that is the whole survey.</p>'
+       + '<div style="text-align:center;margin:0 0 8px">' + stars + '</div>'
+       + '<table role="presentation" style="width:100%;max-width:340px;margin:0 auto 22px">'
+       + '<tr><td style="font-size:11.5px;color:#5c6b7a;text-align:left">1 — poor</td>'
+       + '<td style="font-size:11.5px;color:#5c6b7a;text-align:right">5 — excellent</td></tr>'
+       + '</table>')
   + iSurveyOptionsHtml_(d)
 
   + '<p style="margin:22px 0 14px;font-size:13.5px;color:#5c6b7a">'
@@ -4709,6 +4759,117 @@ function iSurveyBlocked_() {
   return '';
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   45 → 60 → 90: ONE CONVERSATION, NOT THREE SURVEYS
+   ══════════════════════════════════════════════════════════════════════════
+   A client who is still unpaid at 60 days has already had a letter at 45. The
+   second one has to know that. Writing again as though nothing happened is
+   what makes a branch look like a system rather than people, and it is exactly
+   the complaint clients make about insurers.
+
+   So each letter after the first opens with what went before: that we wrote,
+   what they told us, and what was done about it. That last part is the one
+   that matters — a client who complained at 45 days and reads a 60-day letter
+   that never mentions it has learned the branch does not listen.
+
+   THE PRIVATE MESSAGE IS NEVER QUOTED BACK. If they wrote to the branch
+   manager, the later letter says only that they wrote and that it was
+   answered. The words stay between them and him. Repeating a confidential
+   message in a letter that copies the agent and the desk would break the
+   promise the first letter made.
+
+   WHO DOES NOT GET A SECOND LETTER
+     opted out                    they asked us to stop; that holds for good
+     an open follow-up            we owe THEM a call — see below
+     already written at this stage no repeats
+
+   THE OPEN-FOLLOW-UP RULE IS THE IMPORTANT ONE. Asking a client to rate the
+   branch again while their unresolved complaint sits open is the single worst
+   thing this system could do. Answer them first; the letter waits.
+
+   AND THE COOLDOWN HAD TO CHANGE. It was 120 days between letters, which
+   silently made the 60 and 90 day letters impossible — the sequence would have
+   stopped dead after the first one and nobody would have seen why. It now
+   governs the gap between ARREARS EPISODES, while 45/60/90 inside one episode
+   run as the single conversation they are.
+   ══════════════════════════════════════════════════════════════════════════ */
+var ISURVEY_STAGES = {
+  45: { stage: 45, first: true,
+        kicker: function () { return ''; } },
+  60: { stage: 60, first: false,
+        kicker: function (h) {
+          return 'We wrote to you on ' + h.when + '. ' + h.said +
+                 ' The premium is still outstanding, which is why you are hearing from us again.';
+        } },
+  90: { stage: 90, first: false,
+        kicker: function (h) {
+          return 'This is our third note. We wrote on ' + h.when + '. ' + h.said +
+                 ' Three months of premiums are now outstanding, and at this point the ' +
+                 'policy is close to lapsing — so this letter is about what we can do ' +
+                 'about that, not about asking you to rate us again.';
+        } }
+};
+
+/* What to say about what happened last time. Never the private words. */
+function iSurveyHistoryLine_(row) {
+  var rating = Number(row[ISCOL.RATING - 1]);
+  var asked  = String(row[ISCOL.ASKED - 1] || '');
+  var closed = row[ISCOL.CLOSED - 1];
+  var outcome = String(row[ISCOL.OUTCOME - 1] || '').trim();
+  var bits = [];
+
+  if (asked.indexOf('private') >= 0) {
+    bits.push('You wrote to the branch manager privately' +
+      (row[ISCOL.PRIVATE - 1] instanceof Date ? '' : '') + ', and he has your note.');
+  }
+  if (rating >= 1 && rating <= 5) bits.push('You rated us ' + rating + ' out of 5.');
+  if (asked.indexOf('review') >= 0) bits.push('You asked for a review of your cover.');
+  if (asked.indexOf('issue') >= 0)  bits.push('You told us something was not right.');
+  if (!bits.length) bits.push('We did not hear back, which is fair enough — you may not have wanted to.');
+  if (closed instanceof Date && outcome && outcome !== '(none recorded)') {
+    bits.push('What we did about it: ' + outcome + '.');
+  } else if (closed instanceof Date) {
+    bits.push('That has since been dealt with.');
+  }
+  return bits.join(' ');
+}
+
+/* Everything already sent to this client in the current arrears episode. */
+function iSurveyHistory_(sh, clientNo, today) {
+  var last = sh.getLastRow();
+  if (last < 2 || !clientNo) return null;
+  var wide = Math.max(sh.getLastColumn(), ISCOL.STAGE);
+  var vals = sh.getRange(2, 1, last - 1, wide).getValues();
+  var DAY = 86400000, best = null;
+  for (var r = 0; r < vals.length; r++) {
+    if (String(vals[r][ISCOL.CLIENTNO - 1]).trim() !== clientNo) continue;
+    var sent = vals[r][ISCOL.SENT - 1];
+    if (!(sent instanceof Date)) continue;
+    if ((today - sent) / DAY > ISURVEY.EPISODE) continue;      // a previous episode
+    if (!best || sent > best.sent) {
+      best = { sent: sent, row: vals[r], idx: r,
+               stage: Number(vals[r][ISCOL.STAGE - 1]) || 45,
+               open: !!String(vals[r][ISCOL.FOLLOWUP - 1]).trim() &&
+                     !String(vals[r][ISCOL.CLOSED - 1]).trim() };
+    }
+    /* any stage already used in this episode blocks a repeat of it */
+    best = best || null;
+  }
+  if (!best) return null;
+  var stages = {};
+  vals.forEach(function (v) {
+    if (String(v[ISCOL.CLIENTNO - 1]).trim() !== clientNo) return;
+    var st = v[ISCOL.SENT - 1];
+    if (st instanceof Date && (today - st) / DAY <= ISURVEY.EPISODE) {
+      stages[Number(v[ISCOL.STAGE - 1]) || 45] = 1;
+    }
+  });
+  best.stagesUsed = stages;
+  best.when = Utilities.formatDate(best.sent, iTz_(), 'd MMMM');
+  best.said = iSurveyHistoryLine_(best.row);
+  return best;
+}
+
 function iSurveyBase_() {
   return iProp_('INTEL_EXEC_URL') || ScriptApp.getService().getUrl() || '';
 }
@@ -4722,7 +4883,9 @@ function iSurveyBase_() {
    cooldown, and anybody whose policy has been in force less than 90 days —
    a brand-new client whose first collection failed is a servicing call from
    their agent, not a letter about how long they have been with us. */
-function iSurveyPool_() {
+function iSurveyPool_(stage) {
+  stage = Math.round(iNum_(stage)) || 45;
+  if (!ISURVEY_STAGES[stage]) return { error: 'Stage must be 45, 60 or 90.' };
   var sh = iTabDues_();
   if (!sh) return { error: 'No dues tab found.' };
   var d = iReadCols_(sh, {
@@ -4762,11 +4925,12 @@ function iSurveyPool_() {
   }
 
   var skip = iExcluded_();
-  var rows = [], skipped = { noEmail: 0, cooldown: 0, tooNew: 0, excluded: 0, optedOut: 0 };
+  var rows = [], skipped = { noEmail: 0, cooldown: 0, tooNew: 0, excluded: 0,
+                             optedOut: 0, openFollowUp: 0, alreadyAtStage: 0 };
   for (var r = 0; r < d.rows; r++) {
     if (String(d.get('status', r)).trim() !== '2') continue;
     var paid = iDate_(d.get('paidTo', r));
-    if (!paid || Math.round((today - paid) / DAY) !== 45) continue;
+    if (!paid || Math.round((today - paid) / DAY) !== stage) continue;
     /* A letter names the agent looking after them. Sending one under the name
        of somebody the branch has taken off its books invites the reply nobody
        wants: "she left months ago, who has my file now?" */
@@ -4778,7 +4942,18 @@ function iSurveyPool_() {
 
     var clientNo = String(d.get('clientNo', r)).trim();
     if (stopped[clientNo]) { skipped.optedOut++; continue; }
-    if (recent[clientNo]) { skipped.cooldown++; continue; }
+
+    var hist = iSurveyHistory_(sh3, clientNo, today);
+    if (hist) {
+      /* We owe them a call. Asking them to rate us again while their complaint
+         sits open is the worst thing this could do — answer them first. */
+      if (hist.open) { skipped.openFollowUp++; continue; }
+      if (hist.stagesUsed[stage]) { skipped.alreadyAtStage++; continue; }
+    } else if (recent[clientNo]) {
+      /* No history inside this episode but written to recently — a previous
+         arrears episode that is still inside the cooldown. */
+      skipped.cooldown++; continue;
+    }
 
     var email = iEmail_(d.get('email', r));
     if (!email) { skipped.noEmail++; continue; }
@@ -4801,6 +4976,7 @@ function iSurveyPool_() {
          instead of pointing at a number that is not there. Without it the
          wording changes rather than leaving a dangling "see below". */
       branchPhone: iProp_('INTEL_BRANCH_PHONE'),
+      stage: stage, hist: hist,
       tpl: iSurveyTemplate_(years)
     });
   }
@@ -4835,7 +5011,8 @@ function iSurveyGreeting_(name) {
    so the three people who might get a reply all know it went out and what it
    said. The client is the only address in To; the rest are Cc, because a
    client should be able to see who at the branch is looking after them. */
-function intelSurveySend() {
+function intelSurveySend(stage) {
+  stage = Math.round(iNum_(stage)) || 45;
   var live = iProp_('INTEL_SURVEY_LIVE').trim().toLowerCase() === ISURVEY.LIVE_PHRASE;
   var test = iProp_('INTEL_TEST_TO');
   /* A live send with no current approval is the one thing this must not do,
@@ -4843,11 +5020,12 @@ function intelSurveySend() {
      is exactly what they are for. */
   var blocked = iSurveyBlocked_();
   if (live && blocked) return 'STOPPED — ' + blocked;
-  var pool = iSurveyPool_();
+  var pool = iSurveyPool_(stage);
   if (pool.error) return pool.error;
 
   var rows = pool.rows;
-  if (!rows.length) return 'Nobody is on the 45-day line with a usable address today.';
+  if (!rows.length) return 'Nobody is on the ' + stage + '-day line with a usable address today. '
+    + JSON.stringify(pool.skipped);
   if (rows.length > ISURVEY.MAX_RUN) {
     return 'STOPPED. ' + rows.length + ' clients are in the pool, over the ' + ISURVEY.MAX_RUN +
            ' cap. That usually means a billing cohort has landed rather than a normal day. ' +
@@ -4880,11 +5058,15 @@ function intelSurveySend() {
     }
     sh.appendRow([d.token, new Date(), d.clientNo, d.client, d.email, d.policy, d.agent,
                   d.unit, d.years, d.tpl.id, d.billing, d.premium, d.tpl.id,
-                  '', '', '', '', mode + (live ? ' · cleared ' + iSurveyHash_() + ' by ' + iProp_('INTEL_SURVEY_APPROVED_BY') : '')]);
+                  '', '', '', '', mode + (live ? ' · cleared ' + iSurveyHash_() + ' by ' + iProp_('INTEL_SURVEY_APPROVED_BY') : ''),
+                  '', '', '', '', '', '', '',      // follow-up block, filled later
+                  '', '', '', '',                   // the four taps
+                  stage]);
   });
 
-  if (mode === 'live') return 'Sent ' + sent + ' letters to clients, copying agents, the desk and unit managers.';
-  if (mode === 'test') return 'TEST MODE. ' + sent + ' letters built and routed to ' + test +
+  if (mode === 'live') return 'Sent ' + sent + ' day-' + stage + ' letters to clients, copying agents, '
+    + 'the desk and unit managers. ' + JSON.stringify(pool.skipped);
+  if (mode === 'test') return 'TEST MODE. ' + sent + ' day-' + stage + ' letters built and routed to ' + test +
     '. No client was written to. Set INTEL_SURVEY_LIVE to "' + ISURVEY.LIVE_PHRASE + '" when you mean it.';
   return 'DRY RUN. ' + rows.length + ' letters built and logged, none delivered — ' +
     'INTEL_SURVEY_LIVE is not set to "' + ISURVEY.LIVE_PHRASE + '" and INTEL_TEST_TO is empty.';
@@ -4927,7 +5109,7 @@ function iSurveyClick_(e) {
   if (last < 2) return iSurveyPage_('That link has expired.', '', '');
   /* Read the whole row, not a fixed 18 — the tab grew a follow-up block and a
      hardcoded width silently returns blanks for every column past it. */
-  var vals = sh.getRange(2, 1, last - 1, Math.max(sh.getLastColumn(), ISCOL.OPTOUT)).getValues();
+  var vals = sh.getRange(2, 1, last - 1, Math.max(sh.getLastColumn(), ISCOL.STAGE)).getValues();
   for (var r = 0; r < vals.length; r++) {
     if (String(vals[r][0]) !== token) continue;
     var agent = String(vals[r][6] || 'your agent');
@@ -5051,7 +5233,7 @@ function iSurveyPrivateSend_(e) {
   if (!token || !msg) return null;
   var sh = iSurveyTab_(), last = sh.getLastRow();
   if (last < 2) return iSurveyPage_('That link has expired.', '', '', '');
-  var wide = Math.max(sh.getLastColumn(), ISCOL.OPTOUT);
+  var wide = Math.max(sh.getLastColumn(), ISCOL.STAGE);
   var vals = sh.getRange(2, 1, last - 1, wide).getValues();
   for (var r = 0; r < vals.length; r++) {
     if (String(vals[r][ISCOL.TOKEN - 1]) !== token) continue;
@@ -5195,7 +5377,7 @@ function intelSurveyFollowUp() {
 
   var sh = iSurveyTab_(), last = sh.getLastRow();
   if (last < 2) return 'Nothing has been sent yet.';
-  var wide = Math.max(sh.getLastColumn(), ISCOL.OPTOUT);
+  var wide = Math.max(sh.getLastColumn(), ISCOL.STAGE);
   var vals = sh.getRange(2, 1, last - 1, wide).getValues();
   var today = iToday_(), DAY = 86400000;
   var thanked = 0, opened = 0, alerts = [];
@@ -5282,7 +5464,7 @@ function intelSurveyClose(token, who, outcome) {
   if (!token || !who) return 'intelSurveyClose("<ref>", "your name", "what you did")';
   var sh = iSurveyTab_(), last = sh.getLastRow();
   if (last < 2) return 'Nothing to close.';
-  var wide = Math.max(sh.getLastColumn(), ISCOL.OPTOUT);
+  var wide = Math.max(sh.getLastColumn(), ISCOL.STAGE);
   var vals = sh.getRange(2, 1, last - 1, wide).getValues();
   for (var r = 0; r < vals.length; r++) {
     var t = String(vals[r][ISCOL.TOKEN - 1]);
@@ -5299,7 +5481,7 @@ function intelSurveyClose(token, who, outcome) {
 function iSurveyOpenRows_() {
   var sh = iSurveyTab_(), last = sh.getLastRow();
   if (last < 2) return [];
-  var wide = Math.max(sh.getLastColumn(), ISCOL.OPTOUT);
+  var wide = Math.max(sh.getLastColumn(), ISCOL.STAGE);
   var vals = sh.getRange(2, 1, last - 1, wide).getValues();
   var today = iToday_(), out = [];
   vals.forEach(function (row) {
@@ -5344,7 +5526,7 @@ function iBuildSurveyStats_() {
   if (last < 2) return out;
   /* Read the whole row, not a fixed 18 — the tab grew a follow-up block and a
      hardcoded width silently returns blanks for every column past it. */
-  var vals = sh.getRange(2, 1, last - 1, Math.max(sh.getLastColumn(), ISCOL.OPTOUT)).getValues();
+  var vals = sh.getRange(2, 1, last - 1, Math.max(sh.getLastColumn(), ISCOL.STAGE)).getValues();
   var band = {}, unit = {}, sum = 0, latest = null;
   vals.forEach(function (r) {
     if (String(r[17]) === 'live') out.live++;
