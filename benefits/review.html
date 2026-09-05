@@ -100,7 +100,8 @@
     background:var(--slate)}
   .tl li.did-SUBMITTED::before{background:var(--blue)}
   .tl li.did-RETURNED::before{background:var(--stop)}
-  .tl li.did-APPROVED::before,.tl li.did-SENT::before{background:var(--go)}
+  .tl li.did-APPROVED::before,.tl li.did-SENT::before,.tl li.did-CONFIRMED::before{background:var(--go)}
+  .tl li.did-QUERIED::before{background:var(--stop)}
   .row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
   .filters{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
   .filters select,.filters input{border:1px solid var(--line);border-radius:5px;background:var(--surface);
@@ -144,7 +145,10 @@
         <option value="">Everything</option>
         <option value="SUBMITTED">Waiting for review</option>
         <option value="RETURNED">Sent back</option>
-        <option value="SENT">Verified &amp; sent</option>
+        <option value="APPROVED">Approved — with staff to send</option>
+        <option value="SENT">Sent to the client</option>
+        <option value="CONFIRMED">Client confirmed</option>
+        <option value="QUERIED">Client queried it</option>
       </select>
       <input id="f-text" placeholder="Find a group" autocomplete="off">
       <button class="btn ghost" id="theme">Theme</button>
@@ -170,8 +174,13 @@
    figures, each check and the answer given, the movement on last month,
    the arrears, the email word for word — and then does one of two things:
 
-     approve  →  the month is SENT to the client, under their name
+     approve  →  the month is CLEARED and handed back to staff to send
      return   →  it goes back to staff with a reason, and nothing is sent
+
+   Approving is not posting. The assistant who built the month reads the
+   approver's note, satisfies herself nothing moved under her, and presses
+   send — so the last pair of eyes on a billing before a client reads it
+   belongs to somebody who has not already signed it off.
 
    Whoever submitted a month cannot approve it. Verification by the person
    being verified is not verification; the block is by name below.
@@ -233,7 +242,9 @@ function flowSave(d){
   try{ localStorage.setItem(FLOW_KEY, JSON.stringify(d)); }catch(e){}
 }
 
-const STATE = { SUBMITTED:['Waiting for review','p-wait'], RETURNED:['Sent back','p-back'], SENT:['Verified & sent','p-sent'] };
+const STATE = { SUBMITTED:['Waiting for review','p-wait'], RETURNED:['Sent back','p-back'],
+                APPROVED:['Approved — with staff to send','p-wait'], SENT:['Sent to the client','p-sent'],
+                CONFIRMED:['Client confirmed','p-sent'], QUERIED:['Client queried it','p-back'] };
 
 function filtered(){
   const st = $('f-state').value, t = ($('f-text').value||'').toLowerCase().trim();
@@ -244,13 +255,19 @@ function filtered(){
 function paint(){
   const all = subs();
   const waiting = all.filter(x => x.state === 'SUBMITTED');
-  const back    = all.filter(x => x.state === 'RETURNED');
-  const sent    = all.filter(x => x.state === 'SENT');
+  const back    = all.filter(x => x.state === 'RETURNED' || x.state === 'APPROVED');
+  const out     = all.filter(x => x.state === 'SENT' || x.state === 'CONFIRMED' || x.state === 'QUERIED');
+  const queried = all.filter(x => x.state === 'QUERIED');
+  /* "With staff" is the queue this flow creates and the one nobody was
+     watching: approved months that have not been posted, and returned
+     months that have not been answered. Both are the client waiting. */
   $('kpis').innerHTML =
     kpi(waiting.length, 'Waiting for review', waiting.length ? 'oldest ' + ago(waiting[0].events[0].at) : 'nothing in the queue', waiting.length>0) +
-    kpi(back.length, 'Sent back to staff', back.length ? 'needs a fix and a resubmit' : 'none') +
-    kpi(sent.length, 'Verified & sent', sent.length ? 'latest ' + ago(last(sent[sent.length-1],'APPROVED').at||Date.now()) : 'none yet') +
-    kpi([...new Set(all.map(x => x.group.name))].length || '—', 'Groups with activity', '');
+    kpi(back.length, 'With staff', back.length
+      ? back.filter(x=>x.state==='APPROVED').length + ' approved and unsent' : 'none', back.length>0) +
+    kpi(out.length, 'Out with clients', out.length
+      ? out.filter(x=>x.state==='CONFIRMED').length + ' confirmed' : 'none yet') +
+    kpi(queried.length, 'Queried', queried.length ? 'a client has asked something' : 'none', queried.length>0);
 
   const rows = filtered();
   $('list').innerHTML = rows.length ? `<div class="tw"><table>
@@ -277,7 +294,8 @@ function paint(){
     .sort((a,b) => b.at - a.at).slice(0, 30);
   $('activity').innerHTML = `<h2 style="font-size:1.05rem;color:var(--navy)">Everything that has happened</h2>
     ${events.length ? `<ul class="tl">${events.map(e => `<li class="did-${esc(e.did)}">
-      <b>${esc(e.by)}</b> ${({SUBMITTED:'submitted',RETURNED:'sent back',APPROVED:'approved',SENT:'sent'})[e.did]||esc(e.did)}
+      <b>${esc(e.by)}</b> ${({SUBMITTED:'submitted',RETURNED:'sent back',APPROVED:'approved',SENT:'sent',
+          CONFIRMED:'confirmed',QUERIED:'queried'})[e.did]||esc(e.did)}
       <b>${esc(e.group)}</b> — ${esc(e.month)} · <span class="note">${when(e.at)}</span>
       ${e.note ? `<br><span class="note">&ldquo;${esc(e.note)}&rdquo;</span>` : ''}</li>`).join('')}</ul>`
     : '<p class="note" style="margin-top:.5rem">The trail of submissions, returns and approvals shows here.</p>'}`;
@@ -337,7 +355,8 @@ function detail(x){
 
     <h3 style="font-size:.95rem;margin-top:1.1rem;color:var(--navy)">Trail</h3>
     <ul class="tl">${x.events.map(e => `<li class="did-${esc(e.did)}"><b>${esc(e.by)}</b>
-      ${({SUBMITTED:'submitted',RETURNED:'sent back',APPROVED:'approved',SENT:'sent to the client'})[e.did]||esc(e.did)}
+      ${({SUBMITTED:'submitted',RETURNED:'sent back',APPROVED:'approved',SENT:'sent to the client',
+          CONFIRMED:'confirmed the billing is correct',QUERIED:'raised a query'})[e.did]||esc(e.did)}
       · <span class="note">${when(e.at)}</span>${e.note?`<br><span class="note">&ldquo;${esc(e.note)}&rdquo;</span>`:''}</li>`).join('')}</ul>
 
     ${x.state === 'SUBMITTED' ? (mine
@@ -345,10 +364,12 @@ function detail(x){
          to approve it.</b> Verification by the person being verified is not verification — another
          administrator has to look at it.</div>`
       : `<div class="row" style="margin-top:1.1rem">
-           <button class="btn go" data-approve="${esc(x.id)}">Approve — send to the client</button>
-           <button class="btn stop" data-return="${esc(x.id)}">Return to staff</button>
+           <button class="btn go" data-approve="${esc(x.id)}">Approve — hand back to staff to send</button>
+           <button class="btn stop" data-return="${esc(x.id)}">Return with questions</button>
          </div>
-         <textarea class="ret" id="retnote" placeholder="If returning it — what needs fixing? Staff see this word for word."></textarea>`)
+         <textarea class="ret" id="retnote" placeholder="Anything to say — a question to answer before it goes, or what needs fixing if you are returning it. Staff see this word for word."></textarea>
+         <p class="note" style="margin-top:.4rem">Approving does not send. It clears the month and puts it
+           back with staff, who read your note and press send.</p>`)
     : ''}
     <div id="dout"></div>
   </div>`;
@@ -390,9 +411,8 @@ async function decide(id, approve){
     if(!x || x.state !== 'SUBMITTED') return;
     if(IDENTITY && x.events[0].by === by) return;  // belt and braces; the UI already hides the buttons
     if(approve){
-      x.state = 'SENT';
-      x.events.push({ at:Date.now(), by, code:IDENTITY?IDENTITY.code:null, did:'APPROVED' });
-      x.events.push({ at:Date.now(), by, code:IDENTITY?IDENTITY.code:null, did:'SENT' });
+      x.state = 'APPROVED';
+      x.events.push({ at:Date.now(), by, code:IDENTITY?IDENTITY.code:null, did:'APPROVED', note });
     }else{
       x.state = 'RETURNED';
       x.events.push({ at:Date.now(), by, code:IDENTITY?IDENTITY.code:null, did:'RETURNED', note });
@@ -404,9 +424,9 @@ async function decide(id, approve){
   if(box){
     const out = box.querySelector('#dout') || box;
     out.insertAdjacentHTML('beforeend', approve
-      ? `<div class="alert a-ok" style="margin-top:.7rem"><b>Approved.</b> ${API
-          ? esc(serverNote || 'The client has been emailed.')
-          : 'Test run — live, this is the moment the branch script emails ' + esc(x.group.name) + '.'}</div>`
+      ? `<div class="alert a-ok" style="margin-top:.7rem"><b>Approved.</b> It is back with staff to send —
+          nothing has gone to ${esc(x.group.name)} yet.${API ? '' :
+          ' <span class="note">Test run.</span>'}</div>`
       : `<div class="alert a-info" style="margin-top:.7rem"><b>Returned.</b> Staff see your note on the upload page and can resubmit.</div>`);
   }
 }
