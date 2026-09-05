@@ -52,18 +52,27 @@ def b64(path, mime):
 
 
 def shot_uri(path):
-    """A wall screenshot as a JPEG data URI.
+    """A wall screenshot as a JPEG data URI, at the size it is actually shown.
 
-    Straight PNG took the explainer to 9.5 MB — a file nobody waits for over
-    branch wifi, for a difference invisible on a screen across a room."""
+    Straight PNG took the explainer to 9.5 MB. Quality-82 at full 1920 took it
+    to 2.6 MB, which sounds fine until you watch it load: a single inline script
+    carrying that much base64 took THIRTEEN SECONDS to parse in an iframe, and
+    for all of it the visitor sat looking at a blank frame having just pressed
+    play. A film nobody has the patience to reach is not a film.
+
+    No still is ever displayed above 1600px — the framed ones are 1500 wide and
+    the full-bleed ones sit on a stage that is itself scaled down on every
+    screen smaller than 1920. So they are stored at the size they are used."""
     from io import BytesIO
     try:
         from PIL import Image
     except ImportError:
         return b64(path, 'image/png')
     im = Image.open(path).convert('RGB')
+    if im.width > 1600:
+        im = im.resize((1600, round(im.height * 1600 / im.width)), Image.LANCZOS)
     buf = BytesIO()
-    im.save(buf, 'JPEG', quality=82, optimize=True, progressive=True)
+    im.save(buf, 'JPEG', quality=74, optimize=True, progressive=True)
     return 'data:image/jpeg;base64,' + base64.b64encode(buf.getvalue()).decode()
 
 

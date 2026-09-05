@@ -127,7 +127,9 @@ function restart(){
   fired=new Set(); t0=null; pausedAt=0; paused=false; ended=false;
   document.getElementById('replay').style.display='none';
   document.getElementById('hint').textContent='space pauses · R replays';
-  startMusic(); paintSound(); raf=requestAnimationFrame(tick);
+  started=false; startMusic(); paintSound();
+  if(audioReady()) begin();
+  else { var g=document.getElementById('gate'); if(g) g.classList.add('on'); }
 }
 document.addEventListener('keydown',function(e){
   if(e.key===' '){
@@ -143,5 +145,82 @@ function fit(){
   const s=Math.min(innerWidth/1920,innerHeight/1080);
   document.getElementById('stage').style.transform='translate(-50%,-50%) scale('+s+')';
 }
-addEventListener('resize',fit); fit();
-paintSound(); startMusic(); raf=requestAnimationFrame(tick);
+addEventListener('resize',fit);
+
+/* ══════════════════════════════════════════════════════════════════════════
+   DO NOT START THE CLOCK UNTIL THERE IS SOUND
+   ══════════════════════════════════════════════════════════════════════════
+   This film used to start its timeline the moment it loaded. Every browser
+   blocks audio on a page the visitor has not yet clicked, so what actually
+   happened was: the clock ran, the opening cues fired into an <audio> element
+   whose play() had been rejected, those lines were LOST, and the film played
+   on in silence with the music context suspended. Clicking later resumed the
+   context but could never replay what had already gone past — so the film was
+   silent for the first few lines and then partially silent for the rest.
+
+   It was invisible in testing because the test browser was launched with
+   --autoplay-policy=no-user-gesture-required, which is the one condition a real
+   browser never gives you. Tested without that flag it reproduces every time.
+
+   So the film now holds on frame one until the browser has actually granted
+   audio, and only then starts the clock. Nothing is ever missed, because
+   nothing has begun. */
+let started = false;
+
+function audioReady(){ return !!actx && actx.state === 'running'; }
+
+function begin(){
+  if (started) return;
+  started = true;
+  var g = document.getElementById('gate'); if (g) g.classList.remove('on');
+  t0 = null; pausedAt = 0; fired = new Set();
+  paintSound();
+  raf = requestAnimationFrame(tick);
+}
+
+/* Called from a real user gesture, which is the only place the unlocking works.
+   The <audio> elements are primed muted inside the gesture so that the later
+   play() calls the cues make are already permitted. */
+function unlock(){
+  soundBlocked = false;
+  try {
+    if (!actx) startMusic();
+    else if (actx.state === 'suspended') actx.resume();
+  } catch (e) {}
+  Object.keys(audio).forEach(function (k) {
+    var a = audio[k];
+    try {
+      a.muted = true;
+      var pr = a.play();
+      if (pr && pr.then) pr.then(function(){ a.pause(); a.currentTime = 0; a.muted = false; })
+                           .catch(function(){ a.muted = false; });
+      else { a.pause(); a.currentTime = 0; a.muted = false; }
+    } catch (e) { a.muted = false; }
+  });
+  paintSound();
+  begin();
+}
+
+['click','touchstart','keydown'].forEach(function (ev) {
+  document.addEventListener(ev, function () { if (!started) unlock(); }, { passive: true });
+});
+
+function boot(){
+  fit();
+  startMusic();
+  paintSound();
+  /* Some contexts DO grant audio straight away — the film opened from a click
+     on the page that embeds it, or a screen the branch has already touched. In
+     those, start immediately and never show the gate. */
+  if (audioReady()) { begin(); return; }
+  var g = document.getElementById('gate'); if (g) g.classList.add('on');
+  /* A suspended context can resume on its own once the page gets a gesture
+     anywhere, so keep checking briefly rather than demanding the tap. */
+  var tries = 0;
+  var poll = setInterval(function () {
+    if (started || tries++ > 40) return clearInterval(poll);
+    if (audioReady()) { clearInterval(poll); begin(); }
+  }, 250);
+}
+boot();
+

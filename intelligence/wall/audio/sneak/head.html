@@ -9,7 +9,15 @@
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Inter:wght@400;500;600;700;800;900&display=swap">
+<!-- THE FONT MUST NOT BLOCK THE PICTURE. A plain stylesheet link in the head is
+     render-blocking: until it answers, the screen is blank. Measured at 12.5s on
+     a link that was merely slow, and a wall screen on branch wifi is exactly
+     where that happens. Loading it as print media and promoting it on load makes
+     it non-blocking — the system fallback in every font stack shows instantly
+     and the webfont swaps in when it arrives. noscript keeps it working with
+     scripting off. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Inter:wght@400;500;600;700;800;900&display=swap" media="print" onload="this.media='all';this.onload=null">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Inter:wght@400;500;600;700;800;900&display=swap"></noscript>
 <style>
   /* Sister to the explainer — same palette, same voice, same chord length. What
      differs is PACE. Lines land 0.36s apart instead of 0.55, scenes cut rather
@@ -133,6 +141,18 @@
   .mark i img{width:74px;height:74px;display:block}
   .mark span{font:600 26px var(--d);color:var(--dim)}
 
+  /* THE SOUND GATE. See the note in player.js — the film must not start its
+     clock until the browser has actually let it make a sound. */
+  #gate{position:absolute;inset:0;display:none;place-items:center;z-index:7;
+    background:rgba(4,9,26,.72);cursor:pointer;backdrop-filter:blur(2px)}
+  #gate.on{display:grid}
+  #gate .inner{display:flex;flex-direction:column;align-items:center;gap:22px}
+  #gate .pb{width:104px;height:104px;border-radius:50%;display:grid;place-items:center;
+    background:linear-gradient(120deg,var(--gold),var(--gold2));color:#3a2404;
+    box-shadow:0 18px 50px rgba(0,0,0,.6);transition:transform .3s var(--ease)}
+  #gate:hover .pb{transform:scale(1.06)}
+  #gate .lbl{font:700 22px var(--b);color:var(--ink)}
+  #gate .sub{font:500 15px var(--b);color:var(--faint);margin-top:-12px}
   #prog{position:absolute;left:0;bottom:0;height:4px;width:0;
     background:linear-gradient(90deg,var(--blue),var(--gold))}
   #chrome{position:absolute;right:36px;top:30px;display:flex;align-items:center;gap:14px;z-index:5}
