@@ -796,6 +796,20 @@ shared. For the same reason `licence.html` is the one wall that ships **no
 baked-in snapshot** — this repository is public, so it is live or nothing, and
 "nothing" explains itself on screen.
 
+### The launch film — `intelligence/wall/film.html`
+
+Ninety five seconds, nineteen lines, one self-contained 2.6 MB file. It opens on
+the problem it replaces — the same reports built by hand every Friday, out of
+date by Monday — announces the wall, then walks all four screens: premium dues
+at 45, 60 and 90; the contracts we hold and the contracts agents hold; the
+Insurance Act quoted on screen; and the licence year, life and general.
+
+Rebuild it from `intelligence/wall/audio/film/` — `./render.py` for the voice,
+`./build-film.py <shots-dir>` to fold in the stills and write the film. Never
+hand-edit the timings in `film.html`; they are measured off the rendered audio
+and regenerated. The README beside those scripts carries the rest, including
+the edge-tts proxy fix.
+
 ## 4. How it is put together
 
 A nightly trigger reads every source tab once, computes all five domains, and
