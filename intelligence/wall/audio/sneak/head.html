@@ -154,12 +154,35 @@
   #gate:hover .pb{transform:scale(1.06)}
   #gate .lbl{font:700 22px var(--b);color:var(--ink)}
   #gate .sub{font:500 15px var(--b);color:var(--faint);margin-top:-12px}
+  /* WHAT THE NUMBERS ARE. Real branch figures on a public page: saying whose
+     they are and when they were read is the only honest caption for them. */
+  /* Clear of the hint, which sits bottom left. Full width and centred, the two
+     ran straight through each other. */
+  #prov{position:absolute;left:300px;right:300px;bottom:24px;text-align:center;z-index:4;
+    font:500 14px var(--b);color:var(--faint);letter-spacing:.03em;
+    opacity:0;transition:opacity .6s var(--ease)}
+  #prov.on{opacity:1}
+  #prov b{color:var(--dim);font-weight:600}
   #prog{position:absolute;left:0;bottom:0;height:4px;width:0;
     background:linear-gradient(90deg,var(--blue),var(--gold))}
-  #chrome{position:absolute;right:36px;top:30px;display:flex;align-items:center;gap:14px;z-index:5}
-  #mute{width:48px;height:48px;border-radius:50%;border:1px solid var(--line);
-    background:rgba(255,255,255,.07);color:var(--ink);font-size:20px;cursor:pointer}
-  #voice{font:500 14px var(--b);color:var(--faint)}
+  /* TWO CONTROLS, NO CAPTION. The reader's name sat up here and it is not
+     information anybody watching needs; what they do need is a way to stop the
+     film, which there was no button for at all. */
+  #chrome{position:absolute;right:36px;top:30px;display:flex;align-items:center;gap:12px;z-index:5}
+  #chrome button{width:48px;height:48px;border-radius:50%;border:1px solid var(--line);
+    background:rgba(255,255,255,.07);color:var(--ink);cursor:pointer;padding:0;
+    display:grid;place-items:center;transition:background .2s var(--ease)}
+  #chrome button:hover{background:rgba(255,255,255,.15)}
+  #chrome svg{width:22px;height:22px;fill:currentColor;stroke:currentColor;
+    stroke-width:1.9;stroke-linecap:round;fill-rule:evenodd}
+  #chrome svg path{fill:currentColor;stroke:none}
+  #mute svg .i-on,#mute svg .i-off{fill:none;stroke:currentColor}
+  #pp .i-play{display:none}
+  #pp.paused .i-pause{display:none}
+  #pp.paused .i-play{display:block}
+  #mute .i-off{display:none}
+  #mute.off .i-on{display:none}
+  #mute.off .i-off{display:block}
   #replay{position:absolute;inset:0;display:none;place-items:center;z-index:6;
     background:rgba(4,9,26,.78)}
   #replay button{background:linear-gradient(120deg,var(--gold),var(--gold2));color:#3a2404;
@@ -235,9 +258,10 @@
     #gate .lbl{font-size:34px}
     #gate .sub{font-size:23px;margin-top:-8px;padding:0 60px;text-align:center}
     #chrome{right:44px;top:40px;gap:20px}
-    #mute{width:76px;height:76px;font-size:30px}
-    #voice{font-size:22px}
+    #chrome button{width:76px;height:76px}
+    #chrome svg{width:34px;height:34px}
     #hint{left:44px;bottom:34px;font-size:21px}
+    #prov{left:40px;right:40px;bottom:96px;font-size:20px;line-height:1.4}
     #replay button{padding:30px 66px;font-size:36px}
     #prog{height:8px}
   }

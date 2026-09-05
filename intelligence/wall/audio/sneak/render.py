@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """Narration for the sneak peek — the short one that announces Monday.
 
-SAME VOICE, SAME RATE. Andrew at -3%, exactly as the explainer and the other
-branch films. The energy of a sneak peek comes from how SHORT the lines are and
-how fast the cuts land, not from a different voice or a faster read — a branch
-that suddenly sounds like somebody else for one film sounds like two branches.
+SAME VOICE AS THE EXPLAINER, one notch quicker. Andrew at -8% against the
+explainer's -12%: a trailer is allowed to move, but the -3% this used to run at
+was rushing, and the multilingual variant it used to use would occasionally read
+a phrase in another language. Neither of those is energy. The energy comes from
+how SHORT the lines are and how fast the cuts land.
 """
 import asyncio, os, ssl
 import edge_tts, edge_tts.communicate as C
 
-VOICE, RATE = "en-US-AndrewMultilingualNeural", "-3%"
+VOICE, RATE = "en-US-AndrewNeural", "-8%"
 CA = "/root/.ccr/ca-bundle.crt"
 if os.path.exists(CA):
     C._SSL_CTX = ssl.create_default_context(cafile=CA)

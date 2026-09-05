@@ -6,9 +6,11 @@ thirteen of them go past in the time the explainer takes to say five.
 """
 OUT      = 'sneak.html'
 LEAD     = 0.80
-GAP      = 0.36     # tight. This is what makes it read as a trailer.
+GAP      = 0.55     # was 0.36. A trailer can be quick; it cannot be rushed,
+                    # and 0.36 was rushed — the note back said so.
 CHORD    = 8.70     # same chord length as every other branch film
-NCHORDS  = 5        # 5 x 8.7 = 43.5s, and five lands home: D F#m Bm G D
+NCHORDS  = 5        # 5 x 8.7 = 43.5s and the slower read still fits inside it.
+                    # D F#m Bm G D lands home on the last chord.
 
 LINES = [
     "Monday.",
@@ -32,6 +34,6 @@ SCENE_LINES = [
     ('s9', [11]),     ('s10', [12]),     ('s11', [13]),
 ]
 
-SHOT_FILES = {'w45': 'f-w45.png', 'poss': 'f-poss.png',
-              'dlv': 'f-dlv.png', 'lic': 'f-lic.png', 'filt': 'f-possfilt.png'}
+SHOT_FILES = {'w45': 'f2-w45.png', 'poss': 'f2-poss.png',
+              'dlv': 'f2-dlv.png', 'lic': 'f2-lic.png', 'filt': 'f2-possfilt.png'}
 MARK = 'mark.png'

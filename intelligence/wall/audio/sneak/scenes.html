@@ -19,28 +19,28 @@
 
   <!-- s4 · premium dues -->
   <div class="scene bleed" id="s4">
-    <img id="i-w45" alt="">
+    <img data-shot="w45" alt="">
     <div class="say"><div class="k">Premium dues</div>
       <h2>Forty five days. Sixty. <em>Ninety.</em></h2></div>
   </div>
 
   <!-- s5 · the cabinet -->
   <div class="scene bleed" id="s5">
-    <img id="i-poss" alt="">
+    <img data-shot="poss" alt="">
     <div class="say"><div class="k">In our possession</div>
       <h2>Every contract <em>sitting in our cabinet.</em></h2></div>
   </div>
 
   <!-- s6 · not delivered -->
   <div class="scene bleed" id="s6">
-    <img id="i-dlv" alt="">
+    <img data-shot="dlv" alt="">
     <div class="say"><div class="k">With the agent</div>
       <h2>Every contract <em>the client has not signed for.</em></h2></div>
   </div>
 
   <!-- s7 · licences -->
   <div class="scene bleed" id="s7">
-    <img id="i-lic" alt="">
+    <img data-shot="lic" alt="">
     <div class="say"><div class="k">The licence year</div>
       <h2>Life and general. <em>Month by month.</em></h2></div>
   </div>
@@ -68,12 +68,19 @@
 
   <!-- s11 · close -->
   <div class="scene" id="s11">
-    <div class="mark"><i><img src="" id="i-mark1" alt=""></i><span>Ricky Rampersad Branch</span></div>
+    <div class="mark"><i><img src="" alt=""></i><span>Ricky Rampersad Branch</span></div>
     <h1 class="huge">Monday.</h1>
   </div>
 
-  <div id="chrome"><span id="voice">Andrew</span><button id="mute" title="Sound">&#128266;</button></div>
-  <div id="hint">space pauses · R replays</div>
+  <div id="chrome">
+    <button id="pp" type="button" title="Pause" aria-label="Pause">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path class="i-pause" d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/><path class="i-play" d="M8 5.2v13.6L19 12z"/></svg></button>
+    <button id="mute" type="button" title="Sound off" aria-label="Sound">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.6L12 5.4v13.2L7.6 14.5H4z"/><path class="i-on" d="M15.4 8.6a4.6 4.6 0 0 1 0 6.8M17.9 6a8 8 0 0 1 0 12"/><path class="i-off" d="M15.6 9.4l5 5.2M20.6 9.4l-5 5.2"/></svg></button>
+  </div>
+  <div id="prov">Real branch figures, read from Salesforce on <b>5 September 2026</b>
+    &nbsp;·&nbsp; the wall itself is live &nbsp;·&nbsp; internal</div>
+  <div id="hint">space or tap pauses · R replays</div>
   <div id="prog"></div>
   <div id="gate" onclick="unlock()"><div class="inner">
     <div class="pb"><svg viewBox="0 0 24 24" width="42" height="42" aria-hidden="true">

@@ -9,13 +9,17 @@ const SCENES = [
 const DUR = /*__DUR__*/;
 
 let muted=false, fired=new Set(), audio={}, actx=null, music=null, soundBlocked=false;
+let paused=false, started=false, startedAt=0;
 
-Object.keys(IMGS).forEach(function(k){
-  var el=document.getElementById('i-'+k); if(el) el.src=IMGS[k];
+/* Addressed by attribute, not by id, because a wall now appears three times in
+   this film — once whole to place it, then zoomed into two different panels —
+   and ids cannot repeat. */
+document.querySelectorAll('[data-shot]').forEach(function(el){
+  var k=el.getAttribute('data-shot'); if(IMGS[k]) el.src=IMGS[k];
 });
 /* The branch mark appears on the opening and closing cards. */
-['i-mark1','i-mark2'].forEach(function(id){
-  var el=document.getElementById(id); if(el && IMGS.mark) el.src=IMGS.mark;
+document.querySelectorAll('.mark img').forEach(function(el){
+  if(IMGS.mark) el.src=IMGS.mark;
 });
 Object.keys(VO_DATA).forEach(function(k){
   if(!VO_DATA[k]) return;
@@ -23,28 +27,62 @@ Object.keys(VO_DATA).forEach(function(k){
 });
 
 /* ── the bed ──
-   The branch theme on soft pads: two detuned saws through a 900Hz low-pass for
-   warmth, a triangle an octave up for air, a sine underneath for weight.
-   ELEVEN chords rather than the eight the shorter films use, because this one
-   runs to ninety five seconds and the progression has to LAND. Eleven takes
-   D F#m Bm G D A G D and adds Bm G D, so the last chord is home instead of the
-   bed being cut off mid-phrase.
-   The overlap is 2.8s because the release is 2.4s — at 1.6s the outgoing chord
-   has finished dying before the incoming one is audible and the bed drops into
-   a hole at every change. */
+   SOFTER, AND IT MOVES. The first cut was pads only, held flat under the whole
+   read at a level that competed with the voice. Three changes, all from the
+   same note back — nice, soft, motivational, and let him be heard.
+
+   WARMER. The low-pass comes down from 900Hz to 680, which takes the edge off
+   the saws; what is left is body rather than buzz.
+
+   A PLUCK, NOT JUST A PAD. Four soft triangle notes per chord, fast attack and
+   a long decay through their own gentle filter. A pad alone is atmosphere; it
+   is the pluck that gives a bed forward motion, which is the whole difference
+   between "ambient" and "motivational".
+
+   AND IT DUCKS AROUND THE VOICE AUTOMATICALLY. The gain used to be a hand-typed
+   list of times that had to be re-tuned every time a line changed length — and
+   was therefore wrong the moment the script moved. It is now computed from the
+   cue list the build measured: low while a line is being spoken, up in every
+   gap longer than 1.7s, and open for the close. The swell cannot drift out of
+   sync with the read because it is derived from it. */
 const CH_D=[146.83,220.00,293.66], CH_Fsm=[185.00,277.18,369.99],
       CH_Bm=[123.47,185.00,246.94], CH_G=[196.00,293.66,392.00],
       CH_A=[220.00,329.63,440.00];
-const PROG=[CH_D,CH_Fsm,CH_Bm,CH_G,CH_D,CH_A,CH_G,CH_D,CH_Bm,CH_G,CH_D];
+const PROG=[CH_D,CH_Fsm,CH_Bm,CH_G, CH_D,CH_A,CH_G,CH_D,
+            CH_D,CH_Fsm,CH_Bm,CH_G, CH_D,CH_A,CH_G,CH_D,
+            CH_Bm,CH_G, CH_D,CH_A, CH_G,CH_D,CH_D];
 const CHORD=/*__CHORD__*/;
+
+/* Low while he speaks, up in the gaps. Both numbers are quiet on purpose: a
+   bed a room notices is a bed that is too loud. */
+const BED_LO = 0.085, BED_HI = 0.30;
+function bedGain(g, T){
+  const pts = [[0, 0], [Math.max(0.35, (CUES[0] ? CUES[0].at : 1) - 0.35), BED_HI]];
+  CUES.forEach(function(c, i){
+    const end  = c.at + (c.dur || 2.2);
+    const next = (i + 1 < CUES.length) ? CUES[i + 1].at : DUR;
+    pts.push([c.at + 0.15, BED_LO]);
+    pts.push([end   + 0.15, BED_LO]);
+    if (next - end > 1.7){ pts.push([end + 1.0, BED_HI]); pts.push([next - 0.6, BED_HI]); }
+  });
+  pts.push([DUR - 4.0, BED_HI], [DUR - 0.9, BED_HI], [DUR - 0.05, 0]);
+  let last = -1;
+  pts.forEach(function(pt){
+    if (pt[0] > last){ g.linearRampToValueAtTime(pt[1], T + pt[0]); last = pt[0]; }
+  });
+}
 
 function startMusic(){
   if(music) return;
   try{
     actx=new (window.AudioContext||window.webkitAudioContext)();
     const bus=actx.createGain(); bus.gain.value=0;
-    const lp=actx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=900; lp.Q.value=0.4;
+    const lp=actx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=680; lp.Q.value=0.4;
     bus.connect(lp); lp.connect(actx.destination);
+    /* the pluck has its own path so the pad filter does not swallow it */
+    const plk=actx.createGain(); plk.gain.value=1;
+    const plp=actx.createBiquadFilter(); plp.type='lowpass'; plp.frequency.value=2200; plp.Q.value=0.5;
+    plk.connect(plp); plp.connect(bus);
     const t0=actx.currentTime+0.05;
     PROG.forEach(function(chord,ci){
       const on=t0+ci*CHORD, off=on+CHORD+2.8;
@@ -62,43 +100,59 @@ function startMusic(){
       const sub=actx.createOscillator(), sg=actx.createGain();
       sub.type='sine'; sub.frequency.value=chord[0]/2;
       sg.gain.setValueAtTime(0.0001,on);
-      sg.gain.exponentialRampToValueAtTime(0.075,on+2.6);
-      sg.gain.setValueAtTime(0.075,off-2.4);
+      sg.gain.exponentialRampToValueAtTime(0.070,on+2.6);
+      sg.gain.setValueAtTime(0.070,off-2.4);
       sg.gain.exponentialRampToValueAtTime(0.0001,off);
       sub.connect(sg); sg.connect(bus); sub.start(on); sub.stop(off+0.1);
+
+      /* four notes across the chord — root, third, fifth, root an octave up */
+      const notes=[chord[0]*2, chord[1]*2, chord[2]*2, chord[0]*4];
+      notes.forEach(function(f,ni){
+        const when=on+0.35+ni*(CHORD/4.2);
+        const o=actx.createOscillator(), g=actx.createGain();
+        o.type='triangle'; o.frequency.value=f;
+        g.gain.setValueAtTime(0.0001,when);
+        g.gain.exponentialRampToValueAtTime(0.026/(1+ni*0.25), when+0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, when+1.9);
+        o.connect(g); g.connect(plk); o.start(when); o.stop(when+2.0);
+      });
     });
-    /* Under the voice throughout; up only where the picture carries the line on
-       its own — the announcement, the Act, and the close. Those are the three
-       places a bed like this should be noticed and nowhere else. */
-    const g=bus.gain, T=actx.currentTime;
-    const at=(v,s,r)=>g.linearRampToValueAtTime(v,T+s+(r||0));
-    g.setValueAtTime(0,T);
-    at(0.30, 0, 2.4);  at(0.30, 5.0); at(0.16, 6.8);
-    at(0.16,13.6); at(0.38,15.2); at(0.38,18.4); at(0.17,19.9);
-    at(0.17,59.8); at(0.34,61.2); at(0.34,65.0); at(0.17,66.4);
-    at(0.17,86.2); at(0.40,87.8); at(0.40,92.6); at(0.0, 95.2);
+    bedGain(bus.gain, actx.currentTime);
     music={bus,lp};
     if(actx.state==='suspended') soundBlocked=true;
   }catch(e){ music=null; }
 }
 function stopMusic(){ try{ actx&&actx.close(); }catch(e){} actx=null; music=null; }
+/* ONE VOICE AT A TIME, ALWAYS.
+   Nothing in the layout should ever start a second line over the top of one
+   already speaking, and the timeline is laid out so that it cannot — but a
+   phone that stalls arrives at the next frame with the clock already past two
+   or three cues, and firing all of them is exactly what "scrambled voices"
+   sounds like. Stopping everything before speaking makes overlap impossible
+   whatever the clock does; the cue loop below stops the backlog happening at
+   all. Two guards for one fault, because the fault is the film sounding
+   broken to a room of executives. */
 function say(k){
   if(muted) return;
+  hush();
   const a=audio[k]; if(!a) return;
-  try{ a.currentTime=0; const p=a.play();
+  try{ a.muted=false; a.currentTime=0; const p=a.play();
        if(p&&p.catch) p.catch(()=>{soundBlocked=true;paintSound();}); }catch(e){}
 }
 function hush(){ Object.values(audio).forEach(a=>{try{a.pause();a.currentTime=0;}catch(e){}}); }
+/* No name on the screen. The chrome is two controls and nothing else. */
 function paintSound(){
-  const b=document.getElementById('mute'), l=document.getElementById('voice');
-  b.textContent = muted?'\uD83D\uDD07':'\uD83D\uDD0A';
-  l.textContent = muted?'sound off':soundBlocked?'tap for sound'
-                : Object.keys(audio).length?'Andrew':'music only';
+  const m=document.getElementById('mute'), p=document.getElementById('pp'),
+        h=document.getElementById('hint');
+  if(m){ m.classList.toggle('off',muted); m.title = muted?'Sound on':'Sound off'; }
+  if(p){ p.classList.toggle('paused',paused||!started); p.title = paused?'Play':'Pause'; }
+  if(h && soundBlocked && !muted) h.textContent='tap for sound';
 }
-document.getElementById('mute').onclick=function(){
+document.getElementById('mute').onclick=function(e){
+  e.stopPropagation();
   muted=!muted;
   if(muted){ hush(); if(music) music.bus.gain.value=0; }
-  else { soundBlocked=false; try{ actx&&actx.state==='suspended'&&actx.resume(); }catch(e){} }
+  else { soundBlocked=false; try{ actx&&actx.state==='suspended'&&actx.resume(); }catch(e2){} }
   paintSound();
 };
 document.addEventListener('click',function(){
@@ -106,15 +160,37 @@ document.addEventListener('click',function(){
   try{ actx&&actx.state==='suspended'&&actx.resume(); }catch(e){}
   paintSound();
 });
+/* Tapping the picture pauses, the way every player behaves — but NOT the tap
+   that starts it. The gate carries its own inline onclick, and an inline
+   handler on the target runs before any listener on the document, so the
+   opening tap arrived here with started already true and paused the film on
+   frame one. Every scene and every line was lost behind that. Half a second is
+   longer than any real double-tap and shorter than anyone's second thought. */
+document.addEventListener('click',function(){
+  if(started && !paused && performance.now()-startedAt < 500) return;
+  if(started) togglePause();
+});
 
-let t0=null,paused=false,pausedAt=0,raf=null,ended=false;
+let t0=null,pausedAt=0,raf=null,ended=false;
 function tick(ts){
   if(paused) return;
   if(!t0) t0=ts-pausedAt*1000;
   const t=(ts-t0)/1000;
   document.getElementById('prog').style.width=Math.min(100,t/DUR*100)+'%';
   SCENES.forEach(([id,a,b])=>document.getElementById(id).classList.toggle('on',t>=a&&t<b));
-  CUES.forEach((c,i)=>{ if(t>=c.at&&!fired.has(i)){ fired.add(i); say(c.key); } });
+  /* The provenance line belongs against the evidence, not against a title card
+     — it is answering "where did these numbers come from", and that question is
+     only being asked while a wall is on the screen. */
+  const pv=document.getElementById('prov');
+  if(pv) pv.classList.toggle('on', !!document.querySelector('.scene.shotscene.on'));
+  /* Collapse a backlog rather than playing it. If the clock has jumped — a
+     phone waking, a tab coming back, a slow first frame — several cues can be
+     due in the same tick. Speak only the one the film has actually reached and
+     count the rest as gone; a line half a second late is worth hearing, three
+     lines together is not worth anything. */
+  let due=-1;
+  CUES.forEach((c,i)=>{ if(t>=c.at && !fired.has(i)){ fired.add(i); due=i; } });
+  if(due>=0) say(CUES[due].key);
   if(t>=DUR){
     ended=true;
     document.getElementById('replay').style.display='grid';
@@ -125,22 +201,28 @@ function tick(ts){
   raf=requestAnimationFrame(tick);
 }
 function restart(){
-  hush(); stopMusic();
+  stopLoop(); hush(); stopMusic();
   fired=new Set(); t0=null; pausedAt=0; paused=false; ended=false;
   document.getElementById('replay').style.display='none';
-  document.getElementById('hint').textContent='space pauses · R replays';
+  document.getElementById('hint').textContent='space or tap pauses · R replays';
   started=false; startMusic(); paintSound();
   if(audioReady()) begin();
   else { var g=document.getElementById('gate'); if(g) g.classList.add('on'); }
 }
+/* Pause and play, from the button or the space bar — one implementation, so
+   the two can never disagree about what state the film is in. */
+function togglePause(){
+  if(!started || ended) return;
+  paused=!paused;
+  if(paused){ stopLoop(); pausedAt=(performance.now()-t0)/1000; hush();
+              try{actx&&actx.suspend();}catch(e){} }
+  else { t0=null; try{actx&&actx.resume();}catch(e){}
+         stopLoop(); raf=requestAnimationFrame(tick); }
+  paintSound();
+}
+document.getElementById('pp').onclick=function(e){ e.stopPropagation(); togglePause(); };
 document.addEventListener('keydown',function(e){
-  if(e.key===' '){
-    e.preventDefault(); if(ended) return;
-    paused=!paused;
-    if(paused){ pausedAt=(performance.now()-t0)/1000; hush();
-                try{actx&&actx.suspend();}catch(e2){} }
-    else { t0=null; try{actx&&actx.resume();}catch(e2){} raf=requestAnimationFrame(tick); }
-  }
+  if(e.key===' '){ e.preventDefault(); togglePause(); }
   if(e.key==='r'||e.key==='R') restart();
 });
 /* The stage is 1920x1080 in landscape and 1080x1620 in portrait, both set in
@@ -190,15 +272,19 @@ addEventListener('orientationchange',fit);
    So the film now holds on frame one until the browser has actually granted
    audio, and only then starts the clock. Nothing is ever missed, because
    nothing has begun. */
-let started = false;
-
 function audioReady(){ return !!actx && actx.state === 'running'; }
+
+/* Never leave a second clock running. Two rAF loops both calling say() is the
+   other half of what a duplicated voice sounds like. */
+function stopLoop(){ if(raf) cancelAnimationFrame(raf); raf=null; }
 
 function begin(){
   if (started) return;
   started = true;
+  startedAt = performance.now();
   var g = document.getElementById('gate'); if (g) g.classList.remove('on');
   t0 = null; pausedAt = 0; fired = new Set();
+  stopLoop();
   paintSound();
   raf = requestAnimationFrame(tick);
 }
@@ -217,10 +303,14 @@ function unlock(){
     try {
       a.muted = true;
       var pr = a.play();
-      if (pr && pr.then) pr.then(function(){ a.pause(); a.currentTime = 0; a.muted = false; })
-                           .catch(function(){ a.muted = false; });
-      else { a.pause(); a.currentTime = 0; a.muted = false; }
-    } catch (e) { a.muted = false; }
+      /* The primer leaves every line MUTED and say() unmutes the one it is
+         about to speak. Handing the mute back here opened a window in which a
+         primed element that had not finished pausing was audible — thirteen of
+         them, at once, on the tap. */
+      if (pr && pr.then) pr.then(function(){ a.pause(); a.currentTime = 0; })
+                           .catch(function(){});
+      else { a.pause(); a.currentTime = 0; }
+    } catch (e) {}
   });
   paintSound();
   begin();

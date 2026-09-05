@@ -51,7 +51,7 @@ def b64(path, mime):
     return 'data:%s;base64,%s' % (mime, base64.b64encode(path.read_bytes()).decode())
 
 
-def shot_uri(path):
+def shot_uri(path, cap=1600):
     """A wall screenshot as a JPEG data URI, at the size it is actually shown.
 
     Straight PNG took the explainer to 9.5 MB. Quality-82 at full 1920 took it
@@ -62,15 +62,20 @@ def shot_uri(path):
 
     No still is ever displayed above 1600px — the framed ones are 1500 wide and
     the full-bleed ones sit on a stage that is itself scaled down on every
-    screen smaller than 1920. So they are stored at the size they are used."""
+    screen smaller than 1920. So they are stored at the size they are used.
+
+    A FILM WITH ZOOM SCENES IS THE EXCEPTION, because magnifying a still to 2x
+    displays it well above the width it is stored at and the panel being zoomed
+    into turns to mush. Those films set SHOT_MAX in config.py and are captured
+    at device scale 2 to have the pixels to give."""
     from io import BytesIO
     try:
         from PIL import Image
     except ImportError:
         return b64(path, 'image/png')
     im = Image.open(path).convert('RGB')
-    if im.width > 1600:
-        im = im.resize((1600, round(im.height * 1600 / im.width)), Image.LANCZOS)
+    if im.width > cap:
+        im = im.resize((cap, round(im.height * cap / im.width)), Image.LANCZOS)
     buf = BytesIO()
     im.save(buf, 'JPEG', quality=74, optimize=True, progressive=True)
     return 'data:image/jpeg;base64,' + base64.b64encode(buf.getvalue()).decode()
@@ -107,12 +112,17 @@ def main():
     bounds = []
     for idx, (sid, lns) in enumerate(cfg.SCENE_LINES):
         bounds.append((sid, 0.0 if idx == 0 else round(cues[lns[0] - 1] - 0.30, 2)))
-    SCENES = [(sid, start, bounds[i + 1][1] if i + 1 < len(bounds) else 99.0)
+    # The last scene runs to the end of the film. This was a hard-coded 99.0 —
+    # fine while every film was under ninety nine seconds, and silently fatal the
+    # first time one was not: the closing card's window ended ninety seconds
+    # before it opened, so it never appeared at all.
+    SCENES = [(sid, start, bounds[i + 1][1] if i + 1 < len(bounds) else DUR + 1)
               for i, (sid, start) in enumerate(bounds)]
 
     VO = '\n'.join("  '%02d': '%s'," % (i + 1, b64(film / ('line%02d.mp3' % (i + 1)), 'audio/mpeg'))
                    for i in range(len(cfg.LINES)))
-    IMGS = '\n'.join("  %s: '%s'," % (k, shot_uri(shots / v))
+    cap = getattr(cfg, 'SHOT_MAX', 1600)
+    IMGS = '\n'.join("  %s: '%s'," % (k, shot_uri(shots / v, cap))
                      for k, v in cfg.SHOT_FILES.items() if (shots / v).exists())
     mark = shots / getattr(cfg, 'MARK', 'mark.png')
     if mark.exists():
@@ -120,7 +130,8 @@ def main():
 
     script = ((film / 'player.js').read_text(encoding='utf-8')
         .replace('/*__CUES__*/', ',\n  '.join(
-            "{at:%5.2f,key:'%02d'}" % (c, i + 1) for i, c in enumerate(cues)))
+            "{at:%6.2f,dur:%5.2f,key:'%02d'}" % (c, durs[i], i + 1)
+            for i, c in enumerate(cues)))
         .replace('/*__SCENES__*/', ',\n  '.join("['%s',%6.2f,%6.2f]" % s for s in SCENES))
         .replace('/*__DUR__*/', '%.2f' % DUR)
         .replace('/*__CHORD__*/', '%.2f' % cfg.CHORD))

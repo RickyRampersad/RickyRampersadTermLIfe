@@ -133,6 +133,81 @@
   .mark i img{width:60px;height:60px;display:block}
   .mark span{font:600 22px var(--d);color:var(--dim)}
 
+  /* ══════════════════════════════════════════════════════════════════════
+     THE ZOOM
+     ══════════════════════════════════════════════════════════════════════
+     A wall shown whole for four seconds is a picture of a wall. Nobody reads a
+     panel at a fifth of its size, so the film said "look at this" about things
+     that could not be looked at — which is why the first cut felt like slides
+     flicking past. A zoom scene shows the whole wall for a beat, then travels
+     into ONE panel and holds there while the line about it is spoken.
+
+     The origins are measured, not guessed. Each panel's rect was read off the
+     rendered wall and the transform-origin computed so that the panel lands in
+     the middle of the frame: for a card centred at C, scaling by S about
+     P = (S·C − F)/(S − 1) puts C exactly on the frame centre F.
+
+     AND THEN CLAMPED TO THE PICTURE. That formula puts the origin outside the
+     image for a card near an edge, and scaling about a point outside the image
+     slides it off its own frame: the hero panel came out centred with 440px of
+     bare navy beside it. An origin inside 0-100% always covers the frame, so
+     edge panels are taken as close to centre as coverage allows and no further.
+
+     Which is also why the stills are captured at device scale 2 and stored at
+     2600px rather than 1600: a 2.4x zoom displays a 1500px frame at 3600, and
+     from a 1600px source that is mush. */
+  .shot.zoom{overflow:hidden}
+  .shot.zoom img{transform-origin:var(--zx) var(--zy);transform:scale(1)}
+  .scene.on .shot.zoom img{animation:zoomin 6.6s var(--ease) forwards}
+  @keyframes zoomin{
+    0%   {transform:scale(1)}
+    18%  {transform:scale(1)}
+    100% {transform:scale(var(--zs))}
+  }
+  /* A zoom that never comes back is disorienting on the next scene, so the two
+     panels of the same wall pull out slightly before the cut. */
+  .shot.zoom.out img{transform:scale(var(--zs))}
+  .scene.on .shot.zoom.out img{animation:zoomout 6.6s var(--ease) forwards}
+  @keyframes zoomout{
+    0%   {transform:scale(var(--zs))}
+    72%  {transform:scale(var(--zs))}
+    100% {transform:scale(calc((var(--zs) + 1) / 2))}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .scene.on .shot.zoom img,.scene.on .shot.zoom.out img{
+      animation:none;transform:scale(var(--zs))}
+  }
+  /* The chip that says which of the four walls is on screen. The notes back
+     were that the walls ran together; naming each one every time it appears is
+     most of the cure. */
+  .wallid{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+  .wallid .n{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;
+    background:linear-gradient(120deg,var(--gold),var(--gold2));color:#3a2404;
+    font:800 20px var(--b)}
+  .wallid .t{font:800 17px var(--b);letter-spacing:.26em;text-transform:uppercase;color:var(--gold)}
+  .wallid .t em{font-style:normal;color:var(--dim);letter-spacing:.12em}
+  .wallid.blue .n{background:linear-gradient(120deg,var(--blue),var(--blue2));color:#04202e}
+  .wallid.blue .t{color:var(--blue)}
+  /* "Look closer" — the visual cue that a zoom is happening, so the movement
+     reads as deliberate rather than as the picture drifting. */
+  .closer{display:inline-flex;align-items:center;gap:10px;margin-bottom:14px;
+    padding:7px 16px 7px 12px;border-radius:999px;border:1px solid rgba(245,185,59,.4);
+    background:rgba(245,185,59,.09);color:var(--gold);
+    font:700 14px var(--b);letter-spacing:.18em;text-transform:uppercase}
+  .closer svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2}
+
+  /* WHAT THE NUMBERS ARE. Every figure on these walls is the branch's own, read
+     out of Salesforce on the day of capture. Saying so on the film is the only
+     honest answer to "is this real or is it a mock-up" — and it is also the
+     reason the film is not shown to anyone outside the branch. */
+  /* Clear of the hint, which sits bottom left. Full width and centred, the two
+     ran straight through each other. */
+  #prov{position:absolute;left:300px;right:300px;bottom:24px;text-align:center;z-index:4;
+    font:500 14px var(--b);color:var(--faint);letter-spacing:.03em;
+    opacity:0;transition:opacity .6s var(--ease)}
+  #prov.on{opacity:1}
+  #prov b{color:var(--dim);font-weight:600}
+
   /* THE ACT SCENE. A statute on a wall has to be readable as a statute: set in
      the serif, hung off a rule, and attributed. The line under it is the point
      being made and is deliberately in the sans, so nobody reads our argument as
@@ -159,10 +234,24 @@
   #gate .sub{font:500 15px var(--b);color:var(--faint);margin-top:-12px}
   #prog{position:absolute;left:0;bottom:0;height:4px;width:0;
     background:linear-gradient(90deg,var(--blue),var(--gold))}
-  #chrome{position:absolute;right:36px;top:30px;display:flex;align-items:center;gap:14px;z-index:5}
-  #mute{width:48px;height:48px;border-radius:50%;border:1px solid var(--line);
-    background:rgba(255,255,255,.07);color:var(--ink);font-size:20px;cursor:pointer}
-  #voice{font:500 14px var(--b);color:var(--faint)}
+  /* TWO CONTROLS, NO CAPTION. The reader's name sat up here and it is not
+     information anybody watching needs; what they do need is a way to stop the
+     film, which there was no button for at all. */
+  #chrome{position:absolute;right:36px;top:30px;display:flex;align-items:center;gap:12px;z-index:5}
+  #chrome button{width:48px;height:48px;border-radius:50%;border:1px solid var(--line);
+    background:rgba(255,255,255,.07);color:var(--ink);cursor:pointer;padding:0;
+    display:grid;place-items:center;transition:background .2s var(--ease)}
+  #chrome button:hover{background:rgba(255,255,255,.15)}
+  #chrome svg{width:22px;height:22px;fill:currentColor;stroke:currentColor;
+    stroke-width:1.9;stroke-linecap:round;fill-rule:evenodd}
+  #chrome svg path{fill:currentColor;stroke:none}
+  #mute svg .i-on,#mute svg .i-off{fill:none;stroke:currentColor}
+  #pp .i-play{display:none}
+  #pp.paused .i-pause{display:none}
+  #pp.paused .i-play{display:block}
+  #mute .i-off{display:none}
+  #mute.off .i-on{display:none}
+  #mute.off .i-off{display:block}
   #replay{position:absolute;inset:0;display:none;place-items:center;z-index:6;
     background:rgba(4,9,26,.76)}
   #replay button{background:linear-gradient(120deg,var(--blue),var(--blue2));color:#04223b;
@@ -206,6 +295,32 @@
        around it — the picture gets its margins back and the caption gets to be
        a size somebody reads rather than squints at. */
     .scene.shotscene{padding:70px 36px}
+    .wallid{margin-bottom:22px;gap:18px}
+    .wallid .n{width:56px;height:56px;border-radius:16px;font-size:28px}
+    .wallid .t{font-size:24px}
+    .closer{font-size:20px;padding:10px 22px 10px 18px;margin-bottom:20px}
+    .closer svg{width:22px;height:22px}
+    .quote blockquote{font-size:52px;padding-left:34px}
+    .quote .after{font-size:34px;padding-left:37px}
+    .quote .cite{font-size:22px}
+    /* stacked, not overlapping — there is no room to sit side by side */
+    #prov{left:40px;right:40px;bottom:96px;font-size:20px;line-height:1.4}
+    /* A PHONE NEEDS A CLOSER ZOOM THAN A WALL SCREEN DOES. At the desktop
+       scale a panel is legible across a room and merely small on a handset, so
+       portrait goes 1.4x further in: at 3.4x the frame holds one card and its
+       heading and nothing else, which is what somebody reading a phone wants. */
+    .scene.on .shot.zoom img{animation:zoominP 6.6s var(--ease) forwards}
+    .scene.on .shot.zoom.out img{animation:zoomoutP 6.6s var(--ease) forwards}
+    @keyframes zoominP{
+      0%{transform:scale(1.1)} 18%{transform:scale(1.1)}
+      100%{transform:scale(calc(var(--zs) * 1.4))}}
+    @keyframes zoomoutP{
+      0%{transform:scale(calc(var(--zs) * 1.4))} 72%{transform:scale(calc(var(--zs) * 1.4))}
+      100%{transform:scale(calc(var(--zs) * 1.05))}}
+    @media (prefers-reduced-motion:reduce){
+      .scene.on .shot.zoom img,.scene.on .shot.zoom.out img{
+        animation:none;transform:scale(calc(var(--zs) * 1.4))}
+    }
     .shot.wide,.pair .shot.wide{width:1008px}
     .shotscene .cap{margin-top:34px;font-size:36px}
     .pair{flex-direction:column;gap:30px}
@@ -219,8 +334,8 @@
     #gate .lbl{font-size:34px}
     #gate .sub{font-size:23px;margin-top:-8px;padding:0 60px;text-align:center}
     #chrome{right:44px;top:40px;gap:20px}
-    #mute{width:76px;height:76px;font-size:30px}
-    #voice{font-size:22px}
+    #chrome button{width:76px;height:76px}
+    #chrome svg{width:34px;height:34px}
     #hint{left:44px;bottom:34px;font-size:21px}
     #replay button{padding:30px 66px;font-size:36px}
     #prog{height:8px}

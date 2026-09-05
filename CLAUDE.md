@@ -44,17 +44,25 @@ clearing before it goes on WhatsApp, YouTube or a wall screen.
 ```
 pip install edge-tts
 
-VOICE="en-US-AndrewMultilingualNeural"
-RATE="-3%"
+VOICE="en-US-AndrewNeural"     # NOT the Multilingual variant — see below
+RATE="-12%"                    # -8% for a trailer; -3% was rushing
 
 edge-tts --voice "$VOICE" --rate="$RATE" --text "…" --write-media line01.mp3
 ```
 
+**Never the Multilingual variant.** `en-US-AndrewMultilingualNeural` detects
+language from the text and will read a phrase in another one. It was used for
+the first cut of both wall films and the note back was "I am hearing a different
+language" — which was exactly what it was. `en-US-AndrewNeural` is the same warm,
+confident read with no language detection in it.
+
 Output is 24 kHz mono MP3 — plenty for speech over a music bed.
 
-**Why these settings.** Andrew at `-3%` reads slightly under natural pace, lets
-a full stop land, and does not smile. The delivery comes from the voice and the
-rate, not from punctuation tricks.
+**Why these settings.** Andrew at `-12%` reads under natural pace, lets a full
+stop land, and does not smile. `-3%` was the first setting and it rushed: thirty
+lines at that rate with half a second between them is a briefing, not a
+walkthrough. The pauses come from the film's `GAP` — the silence between lines —
+not from punctuation tricks in the text.
 
 **Writing for it.** Short declarative sentences. State the fact and trust it —
 do not sell. If a line needs to breathe more, split it into two sentences

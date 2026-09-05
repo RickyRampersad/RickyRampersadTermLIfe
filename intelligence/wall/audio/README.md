@@ -39,11 +39,37 @@ not hand-edit numbers in the output.
 (95.7 s), five for the sneak peek (43.5 s). Both land home on D. If a film does
 not fit its bed, change the film or add a chord — never the chord.
 
-**The pace is the only difference in tone.** Same voice, same rate: Andrew at
--3%. The sneak peek reads as a trailer because `GAP` is 0.36 s against the
-explainer's 0.55, the scenes cut in 0.28 s rather than dissolving in 0.8, and
-the wall shots go full bleed with the words on them. A branch that suddenly
-sounds like somebody else for one film sounds like two branches.
+**The pace is the only difference in tone.** Same voice: `en-US-AndrewNeural`,
+the explainer at -12% and the trailer at -8%. The sneak peek reads as a trailer
+because `GAP` is 0.55 s against the explainer's 0.85, the scenes cut in 0.28 s
+rather than dissolving in 0.8, and the wall shots go full bleed with the words
+on them. A branch that suddenly sounds like somebody else for one film sounds
+like two branches.
+
+**NOT the Multilingual voice.** `en-US-AndrewMultilingualNeural` detects language
+from the text and will read a phrase in another one — heard, reported, and the
+reason both films moved to the plain `en-US-AndrewNeural`. It is the same warm
+read with no language detection in it at all.
+
+**One voice at a time, enforced twice.** The cue layout cannot overlap two lines
+— but a phone that stalls arrives at the next frame with the clock past two or
+three cues, and firing the backlog is exactly what "scrambled voices" sounds
+like. `tick()` speaks only the cue the film has actually reached and counts the
+rest as gone; `say()` stops every other line before it starts one. Either guard
+alone would do; both are there because the failure mode is the film sounding
+broken in front of a room.
+
+**And nothing may pause the film on the tap that starts it.** The gate carries an
+inline `onclick`, and an inline handler on the target runs before any listener
+on the document — so tap-to-pause saw `started` already true on the opening tap
+and paused on frame one, losing every scene and every line behind it. Tap-to-pause
+ignores anything within 500 ms of the start.
+
+**The bed ducks itself.** The gain envelope used to be a hand-typed list of
+times, which was wrong the moment any line changed length. It is now computed in
+`bedGain()` from the cue list the build measured: low while a line is spoken, up
+in every gap over 1.7 s, open for the close. It cannot drift out of sync with the
+read because it is derived from it.
 
 **No changing numbers are spoken.** The screen carries the arithmetic, the voice
 carries the meaning. Every figure on these walls moves on the next rebuild and
@@ -64,6 +90,26 @@ scripting-off fallback and nothing else reads it.
 **19% of the screen**. (The commit that fixed it says 9% — that figure is wrong;
 the measurement is 19%.) Tapping it now takes the whole viewport, which is the
 only reason the portrait stage above ever gets used on that page.
+
+**The zoom is what stops it being slides.** A wall shown whole for four seconds
+is a photograph of a wall; nobody reads a panel at a fifth of its size. A zoom
+scene holds the whole wall for a beat, then travels into ONE panel and stays
+there while the line about it is spoken. Origins are measured, not guessed —
+each card's rect is read off the rendered wall and the origin computed as
+`P = (S·C − F)/(S − 1)`, which puts the card centre C on the frame centre F.
+**Then clamped to 0–100%**: that formula lands outside the image for a card near
+an edge, and scaling about a point outside the image slides it off its own
+frame, which is how the hero panel came out centred with 440 px of bare navy
+beside it.
+
+**A film with zooms needs bigger stills.** `SHOT_MAX` in `config.py` — 2600 for
+the explainer against the default 1600 — and the captures taken at device scale
+2. A 2.4x zoom shows a 1500 px frame at 3600; from a 1600 px source that is mush.
+
+**A film longer than 99 seconds used to lose its last scene.** The closing
+scene's end time was a hard-coded 99.0 sentinel. Fine while every film was
+shorter than that, and silently fatal the first time one was not: the card's
+window ended ninety seconds before it opened. It is `DUR + 1` now.
 
 **Portrait shows the wall whole.** Cover-cropping a 16:9 capture into a portrait
 frame shows 44% of its width and cuts every panel mid-word — it reads as a fault,
