@@ -4653,6 +4653,18 @@ function iLicIsLicence_(subject) {
   return /renewal|renew|expir|registration|salesman|provisional|state licen|cpd|reminder|change from/.test(s);
 }
 
+/* Which licence a task is about. The branch writes "GUARDIAN GENERAL LICENSE
+   APPLICATION", "CBTT Application Dispatched General License" and, for the life
+   side, "Salesman License Renewal" or "Sales License Renewal". Anything naming
+   general is general; everything else is the life licence, which is the one
+   every agent holds. A task naming both — "CPD Platform Renewal (General and
+   Life)" — is left on the life side rather than counted twice. */
+function iLicKind_(subject) {
+  var s = String(subject || '').toLowerCase();
+  if (/\bgeneral\b/.test(s) && !/general and life|life and general/.test(s)) return 'General';
+  return 'Life';
+}
+
 /* The renewal date the branch wrote into the task subject, so it can be held
    against the date on the contact record. Seen in the wild as (13/Oct/2026),
    8/Sept/2026, (7.Jul.2026), (4/June/2026) and "due 18/Aug/2026". */
@@ -4784,6 +4796,7 @@ function iBuildLicence_() {
     });
     licTasks.push({ code: who, subject: subj, status: String(t.Status || ''),
                     closed: !!t.IsClosed,
+                    kind: iLicKind_(subj),
                     due: t.ActivityDate ? iIso_(iDate_(t.ActivityDate)) : '',
                     named: iLicSubjectDate_(subj) });
   });
@@ -4795,67 +4808,103 @@ function iBuildLicence_() {
     if (!t.closed) (openByCode[t.code] = openByCode[t.code] || []).push(t);
   });
 
-  /* ONE ROW PER ACTIVE AGENT. */
-  var seen = {}, agents = [], noField = [];
+  /* ONE ROW PER LICENCE, NOT PER AGENT.
+     An agent may hold two: a life licence and a general insurance licence, on
+     separate anniversaries kept in separate fields. Fourteen of this branch's
+     thirty do. Keyed on the agent, half of those renewals would never appear —
+     and a general licence lapsing stops general business just as completely.
+
+     So the unit of this wall is the LICENCE. The month strip counts licences,
+     the due list names the agent and which of their licences it is, and an
+     agent with both shows up twice because they have two dates to keep. */
+  var LKINDS = [
+    { kind: 'Life',    m: 'License_Renewal_Month_Life__c',
+      d: 'License_Life_Renewal_Day__c',      since: 'License_Date_Life__c' },
+    { kind: 'General', m: 'License_General_Month_General__c',
+      d: 'License_General_Renewal_Day__c',   since: 'License_Date_General__c' }
+  ];
+  var seen = {}, agents = [], noField = [], placeholder = [];
   contacts.forEach(function (c) {
     var code = iCode_(c.Agent__c);
     if (!roster[code] || seen[code]) return;
     seen[code] = 1;
-    var due = iLicNextDue_(c.License_Renewal_Month_Life__c, c.License_Life_Renewal_Day__c, today);
-    if (!due) return;
-    var days = Math.round((due - today) / DAY);
 
-    /* Did the date just go past? The anniversary rolls to next year the moment
-       it passes, so without this a licence that lapsed last week reads as 360
-       days away — the single most dangerous thing this screen could do. */
-    var last = new Date(due.getFullYear() - 1, due.getMonth(), due.getDate());
-    var sinceLast = Math.round((today - last) / DAY);
-    var justPassed = sinceLast >= 0 && sinceLast <= ILIC.GRACE;
+    LKINDS.forEach(function (K) {
+      var since = c[K.since] ? String(c[K.since]) : '';
+      /* 1901-01-01 IS NOT A DATE, IT IS AN EMPTY FIELD WEARING ONE. Randolph
+         Gonzales's general licence reads 1901-01-01 with month 1 day 1, which
+         would put a confident "renews 1 January" on the wall for a licence
+         nothing else suggests he holds. Anything before 1950 is a placeholder
+         and is reported as a gap rather than a date. */
+      if (since && Number(since.slice(0, 4)) < 1950) {
+        placeholder.push({ name: roster[code].name, kind: K.kind, value: since.slice(0, 10) });
+        return;
+      }
+      var due = iLicNextDue_(c[K.m], c[K.d], today);
+      if (!due) return;
+      var days = Math.round((due - today) / DAY);
 
-    var open = openByCode[code] || [], any = anyByCode[code] || [];
-    /* A task that covers the renewal just gone: closed, and dated in the run-up
-       to it. That is the branch's own evidence the renewal was handled. */
-    var covered = false;
-    any.forEach(function (t) {
-      if (!t.closed) return;
-      var td = t.named || (t.due ? new Date(t.due) : null);
-      if (!td) return;
-      var gap = Math.round((last - td) / DAY);
-      if (gap >= -ILIC.GRACE && gap <= 120) covered = true;
-    });
+      /* Did the date just go past? The anniversary rolls to next year the moment
+         it passes, so without this a licence that lapsed last week reads as 360
+         days away — the single most dangerous thing this screen could do. */
+      var last = new Date(due.getFullYear() - 1, due.getMonth(), due.getDate());
+      var sinceLast = Math.round((today - last) / DAY);
+      var justPassed = sinceLast >= 0 && sinceLast <= ILIC.GRACE;
 
-    /* The task subject often carries its own renewal date. Where it disagrees
-       with the contact record by more than a couple of days, one of them is
-       wrong and somebody should look — Meera Persad-Khan's differ by fourteen. */
-    var clash = null;
-    any.forEach(function (t) {
-      if (!t.named || clash) return;
-      var sameYear = new Date(due.getFullYear(), t.named.getMonth(), t.named.getDate());
-      var off = Math.round((sameYear - due) / DAY);
-      if (Math.abs(off) > 2 && Math.abs(off) < 200) clash = { days: off, said: iIso_(t.named) };
-    });
+      /* Tasks are matched on agent AND kind: a general licence application does
+         not close out a life renewal, and counting it as though it did would
+         report a lapse as handled. */
+      function mine(t) { return t.kind === K.kind; }
+      var open = (openByCode[code] || []).filter(mine),
+          any  = (anyByCode[code] || []).filter(mine);
 
-    agents.push({
-      name: roster[code].name, code: code, unit: roster[code].unit,
-      role: roster[code].role,
-      /* Salesforce stores the picklist VALUE, which is "Part_Time" — the label
-         is "Part Time". An underscore on a wall reads as a broken field. */
-      type: String(c.Agent_Type__c || '').replace(/_/g, ' '),
-      licensedSince: c.License_Date_Life__c ? String(c.License_Date_Life__c).slice(0, 4) : '',
-      month: Math.round(c.License_Renewal_Month_Life__c),
-      day: Math.round(c.License_Life_Renewal_Day__c) || 1,
-      due: iIso_(due), days: days,
-      /* The anniversary that has just gone by. Without it the screen prints
-         next September beside "passed yesterday", which reads as a typo and
-         undermines the one row that matters. */
-      lastDue: iIso_(last),
-      justPassed: justPassed, sinceLast: justPassed ? sinceLast : null,
-      covered: covered,
-      openTasks: open.length,
-      openSubjects: open.slice(0, 2).map(function (t) { return t.subject.slice(0, 90); }),
-      clash: clash
+      /* A task that covers the renewal just gone: closed, and dated in the run-up
+         to it. That is the branch's own evidence the renewal was handled. */
+      var covered = false;
+      any.forEach(function (t) {
+        if (!t.closed) return;
+        var td = t.named || (t.due ? new Date(t.due) : null);
+        if (!td) return;
+        var gap = Math.round((last - td) / DAY);
+        if (gap >= -ILIC.GRACE && gap <= 120) covered = true;
+      });
+
+      /* The task subject often carries its own renewal date. Where it disagrees
+         with the contact record by more than a couple of days, one of them is
+         wrong and somebody should look — Meera Persad-Khan's differ by fourteen. */
+      var clash = null;
+      any.forEach(function (t) {
+        if (!t.named || clash) return;
+        var sameYear = new Date(due.getFullYear(), t.named.getMonth(), t.named.getDate());
+        var off = Math.round((sameYear - due) / DAY);
+        if (Math.abs(off) > 2 && Math.abs(off) < 200) clash = { days: off, said: iIso_(t.named) };
+      });
+
+      agents.push({
+        name: roster[code].name, code: code, unit: roster[code].unit,
+        role: roster[code].role,
+        kind: K.kind,
+        /* Salesforce stores the picklist VALUE, which is "Part_Time" — the label
+           is "Part Time". An underscore on a wall reads as a broken field. */
+        type: String(c.Agent_Type__c || '').replace(/_/g, ' '),
+        licensedSince: since ? since.slice(0, 4) : '',
+        month: Math.round(c[K.m]),
+        day: Math.round(c[K.d]) || 1,
+        due: iIso_(due), days: days,
+        /* The anniversary that has just gone by. Without it the screen prints
+           next September beside "passed yesterday", which reads as a typo and
+           undermines the one row that matters. */
+        lastDue: iIso_(last),
+        justPassed: justPassed, sinceLast: justPassed ? sinceLast : null,
+        covered: covered,
+        openTasks: open.length,
+        openSubjects: open.slice(0, 2).map(function (t) { return t.subject.slice(0, 90); }),
+        clash: clash
+      });
     });
   });
+  /* seen[] is set per CONTACT, so a code missing from it has no licence record
+     at all — not merely a missing general one. */
   codes.forEach(function (c) { if (!seen[c]) noField.push(roster[c].name); });
 
   agents.sort(function (a, b) { return a.days - b.days; });
@@ -4904,7 +4953,10 @@ function iBuildLicence_() {
     taskType: ILIC.TASKTYPE,
     headline: {
       active: codes.length,
+      /* Licences, not agents — fourteen of the thirty hold two. */
       tracked: agents.length,
+      general: agents.filter(function (a) { return a.kind === 'General'; }).length,
+      life: agents.filter(function (a) { return a.kind === 'Life'; }).length,
       thisMonth: thisMonth.length,
       soon: count(function (a) { return a.days <= ILIC.SOON; }),
       openTasks: agents.reduce(function (s, a) { return s + a.openTasks; }, 0),
@@ -4926,6 +4978,7 @@ function iBuildLicence_() {
     agents: agents,
     months: months,
     units: tally(function (a) { return a.unit; }),
+    kinds: tally(function (a) { return a.kind; }),
     types: tally(function (a) { return a.type || 'Not set'; }),
     /* How long each has held a life licence. The branch runs recruits beside
        people licensed since 1993, and the two need reminding differently — a
@@ -4949,7 +5002,26 @@ function iBuildLicence_() {
        is reminding. */
     gaps: { noField: noField,
             licenceTasks: licTasks.length, allTasks: tasks.length,
-            unmatched: licTasks.filter(function (t) { return !t.code; }).length },
+            unmatched: licTasks.filter(function (t) { return !t.code; }).length,
+            /* A general licence field holding 1901-01-01 — an empty field with
+               a date in it. Named, because the alternative is a confident wrong
+               renewal date on a wall. */
+            placeholder: placeholder,
+            /* An agent the branch has raised a GENERAL licence task for who has
+               no general licence date on their record. Either the date was never
+               filled in or the application did not complete — both are worth a
+               look, and neither is visible anywhere else. */
+            generalNoDate: (function () {
+              var haveGen = {};
+              agents.forEach(function (a) { if (a.kind === 'General') haveGen[a.code] = 1; });
+              var out = {}, list = [];
+              licTasks.forEach(function (t) {
+                if (t.kind !== 'General' || !t.code || haveGen[t.code] || out[t.code]) return;
+                out[t.code] = 1;
+                if (roster[t.code]) list.push(roster[t.code].name);
+              });
+              return list;
+            })() },
     roster: { active: codes.length, inactive: dropped.inactive, vested: dropped.vested,
               dropped: dropped.names }
   };

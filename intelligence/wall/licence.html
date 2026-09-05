@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Licensing Year</title>
-<meta name="description" content="Life licence renewals across the branch — the month each agent renews, what is coming, and what is still open.">
+<meta name="description" content="Life and general insurance licence renewals across the branch — the month each comes up, what is coming, and what is still open.">
 <meta name="theme-color" content="#061c31">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -168,7 +168,7 @@
   <div class="mark"><img src="../../logo-mark.png" alt=""></div>
   <div>
     <h1>Licensing Year</h1>
-    <div class="sub">Life licence renewals · active agents · Ricky Rampersad Branch, Chaguanas</div>
+    <div class="sub">Life and general licence renewals · active agents · Ricky Rampersad Branch, Chaguanas</div>
   </div>
   <div class="right">
     <div id="chip" onclick="clearFilter()"><b id="chipTxt"></b><span>✕</span></div>
@@ -184,21 +184,21 @@
     <div class="cap2" id="heroCap"></div>
     <div class="split">
       <div><div class="v" id="heroSoon">—</div><div class="k" id="heroSoonK">in the next 45 days</div></div>
-      <div><div class="v" id="heroTracked">—</div><div class="k">active agents tracked</div></div>
+      <div><div class="v" id="heroTracked">—</div><div class="k" id="heroTrackedK">licences tracked</div></div>
     </div>
   </section>
 
   <section class="card year"><h3>The year ahead</h3>
-    <p class="cap">Life licence renewals by month. Click a month to hold the wall.</p>
+    <p class="cap">Every licence the branch holds, by renewal month. Click a month to hold the wall.</p>
     <div class="ygrid" id="yGrid"></div></section>
 
   <section class="card"><h3>By unit</h3>
     <p class="cap">Whose people renew, and how many are inside 45 days.</p>
     <div class="rows" id="rUnit"></div></section>
 
-  <section class="card"><h3>By contract type</h3>
-    <p class="cap">Recruits renew a provisional licence, not the full one.</p>
-    <div class="rows" id="rType"></div></section>
+  <section class="card"><h3>Life and general</h3>
+    <p class="cap">Two separate licences on two separate anniversaries. Fourteen agents hold both.</p>
+    <div class="rows" id="rKind"></div></section>
 
   <section class="card"><h3>Years licensed</h3>
     <p class="cap">A first renewal is a form nobody has filled in before.</p>
@@ -286,7 +286,7 @@ function pool(){
   var A=LIC.agents;
   if(!FILTER) return A;
   if(FILTER.dim==="unit")  return A.filter(function(a){return a.unit===FILTER.key});
-  if(FILTER.dim==="type")  return A.filter(function(a){return (a.type||"Not set")===FILTER.key});
+  if(FILTER.dim==="kind")  return A.filter(function(a){return a.kind===FILTER.key});
   if(FILTER.dim==="tenure") return A.filter(function(a){
     if(!a.licensedSince) return false;
     var y=new Date(LIC.generatedAt+"T00:00:00").getFullYear()-Number(a.licensedSince);
@@ -318,7 +318,7 @@ function paint(){
     $("#heroSoonK").textContent="active agents waiting on it";
     $("#heroTracked").textContent="0";
     $("#yGrid").innerHTML=''; $("#dList").innerHTML='';
-    $("#rUnit").innerHTML=''; $("#rType").innerHTML=''; $("#rTen").innerHTML='';
+    $("#rUnit").innerHTML=''; $("#rKind").innerHTML=''; $("#rTen").innerHTML='';
     $("#openCap").textContent="";
     $("#openBody").innerHTML='<p class="note flag"><b>What is missing.</b> '
       + esc(D.error||"Salesforce returned nothing.")+' The field is '
@@ -343,15 +343,17 @@ function paint(){
     $("#heroN").textContent=passed.length;
     $("#heroCap").innerHTML='renewal date'+(passed.length>1?'s have':' has')+' passed with no '
       + 'completed licence task against '+(passed.length>1?'them':'it')+' — '
-      + '<b>'+esc(passed.map(function(a){return a.name}).join(", "))+'</b>. Check before they write.';
+      + '<b>'+esc(passed.map(function(a){return a.name+" ("+a.kind.toLowerCase()+")"}).join(", "))
+      + '</b>. Check before they write.';
   } else {
-    $("#heroKick").textContent="Renewing this month";
+    $("#heroKick").textContent="Licences up this month";
     $("#heroN").textContent=thisMo.length;
     var doneMo=thisMo.filter(function(a){return a.justPassed});
     $("#heroCap").innerHTML = thisMo.length
-      ? 'life licence'+(thisMo.length>1?'s':'')+' come up this month — <b>'
+      ? 'licence'+(thisMo.length>1?'s':'')+' come up this month — <b>'
         + esc(thisMo.map(function(a){
-            return a.name+" "+nice(a.justPassed?a.lastDue:a.due)+(a.justPassed?" ✓":"");
+            return a.name+" "+nice(a.justPassed?a.lastDue:a.due)
+                 + (a.kind==="General"?" (gen)":"")+(a.justPassed?" ✓":"");
           }).join(", "))+'</b>.'
         + (doneMo.length?' <b>'+doneMo.length+'</b> already done.':'')
       : 'nothing comes up this month.';
@@ -359,6 +361,8 @@ function paint(){
   $("#heroSoon").textContent=A.filter(function(a){return a.days<=D.soonDays}).length;
   $("#heroSoonK").textContent="in the next "+D.soonDays+" days";
   $("#heroTracked").textContent=A.length;
+  $("#heroTrackedK").innerHTML = FILTER ? 'licences in this cut'
+    : D.headline.life+' life · '+D.headline.general+' general';
 
   /* THE YEAR — counted from whatever is filtered, not from the server's full
      roster. Leaving it on the whole branch while every other panel narrowed to
@@ -397,7 +401,7 @@ function paint(){
     return a.days-b.days;
   }).slice(0,9);
   $("#dueHd").textContent = FILTER ? "Renewing — "+FILTER.key : "Next to renew";
-  $("#dueCap").innerHTML = A.length+' active agent'+(A.length===1?'':'s')
+  $("#dueCap").innerHTML = A.length+' licence'+(A.length===1?'':'s')
     + (FILTER?' in this cut':'')+', soonest first. A date already gone by sits at the top.';
   $("#dList").innerHTML=list.map(function(a){
     var pill, when;
@@ -408,7 +412,10 @@ function paint(){
     else if(a.days<=D.soonDays){ pill='<span class="pill warn">'+a.days+' days</span>'; when=nice(a.due); }
     else { pill='<span class="pill flat">'+a.days+' days</span>'; when=nice(a.due); }
     return '<div class="drow"><div class="nm">'+esc(a.name)
-      + '<em>'+esc(a.unit)+(a.licensedSince?' · licensed since '+a.licensedSince:'')
+      + (a.kind==="General"?' <b style="font:700 9.5px var(--font-b);letter-spacing:.08em;'
+          + 'color:var(--blue);border:1px solid rgba(55,177,236,.45);border-radius:4px;'
+          + 'padding:1px 4px;vertical-align:1px">GEN</b>':'')
+      + '<em>'+esc(a.unit)+(a.licensedSince?' · since '+a.licensedSince:'')
       + (a.openTasks?' · '+a.openTasks+' open task'+(a.openTasks>1?'s':''):'')+'</em></div>'
       + pill+'<div class="when">'+when+'</div></div>';
   }).join("");
@@ -446,15 +453,27 @@ function paint(){
       + 'The month and day are the parts the branch keeps current, so the next renewal is '
       + 'computed from those.</p>'
     + '<p class="note">'+D.gaps.licenceTasks+' of '+D.gaps.allTasks+' tasks in that type '
-      + 'name a licence; the rest are staffing and HR. '
+      + 'name a licence; the rest are staffing and HR. A task is read as general only if its '
+      + 'subject says so, because a general application does not close out a life renewal.'
       + (D.gaps.noField.length
-          ? '<b>'+D.gaps.noField.length+' active agents have no renewal month set</b> — '
+          ? ' <b>'+D.gaps.noField.length+' active agents have no renewal month set</b> — '
             + esc(D.gaps.noField.join(", "))+' — so nothing here reminds them.'
-          : 'Every active agent has a renewal month set.')
-      + '</p>';
+          : ' Every active agent has a life renewal month set.')
+      + '</p>'
+    + ((D.gaps.placeholder||[]).length
+        ? '<p class="note flag"><b>An empty field with a date in it.</b> '
+          + esc(D.gaps.placeholder.map(function(x){
+              return x.name+"’s "+x.kind.toLowerCase()+" licence reads "+x.value; }).join("; "))
+          + ' — a placeholder, not an anniversary. Left off the calendar rather than shown as '
+          + 'a confident renewal date for a licence nothing else says they hold.</p>' : '')
+    + ((D.gaps.generalNoDate||[]).length
+        ? '<p class="note flag"><b>General licence work with no general licence date.</b> '
+          + esc(D.gaps.generalNoDate.join(", "))+' — the branch has raised a general licence '
+          + 'task, but the record carries no general renewal month, so nothing will remind '
+          + 'anyone next year.</p>' : '');
 
   bars($("#rUnit"), D.units, "unit", "gold");
-  bars($("#rType"), D.types, "type", "accent");
+  bars($("#rKind"), D.kinds, "kind", "accent");
   bars($("#rTen"),  D.tenure, "tenure", "accent");
 }
 

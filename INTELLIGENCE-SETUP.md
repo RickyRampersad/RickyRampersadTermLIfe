@@ -721,16 +721,41 @@ against a compliance obligation and the repository is public.
 Action `intel.licence`. Paste the `/exec` URL into `LIC_URL`.
 
 **This one reads Salesforce, not the workbook.** Nothing in the branch
-spreadsheet carries a licence date. Two fields and one task type:
+spreadsheet carries a licence date.
+
+**Two licences, not one.** An agent may hold a life licence and a general
+insurance licence, on separate anniversaries in separate fields — fourteen of
+the branch's thirty do. So **the unit of this wall is the licence, not the
+agent**: 30 life + 13 general = **43 tracked**, an agent with both appears
+twice, and the month strip counts licences.
 
 | | |
 |---|---|
-| `License_Renewal_Month_Life__c` | month, on Contact — a number, not a date |
-| `License_Life_Renewal_Day__c` | day of that month |
+| `License_Renewal_Month_Life__c` / `License_Life_Renewal_Day__c` | the life anniversary |
+| `License_General_Month_General__c` / `License_General_Renewal_Day__c` | the general anniversary |
+| `License_Date_Life__c` / `License_Date_General__c` | first licensed — used for tenure |
 | `Task_Type__c = 'Lic/Staffing/SA/HR'` | where the chase is logged |
 
+Ignore `License_Renewal_Month__c` (the string one): it mirrors the **life**
+month in words, so reading it as the general month is wrong for every agent who
+holds both.
+
 The renewal is an **anniversary**, so the next occurrence is computed from the
-month and day. Currently 30 active agents, all 30 with a month set.
+month and day.
+
+**Tasks are matched on agent AND licence kind.** A subject naming "general" is
+a general task; everything else is life. Without that split a general licence
+application closes out a life renewal and reports a lapse as handled.
+
+**And this is what the split found.** On the life side every recently passed
+renewal has a completed task against it. On the general side three do not —
+**Tricia Baksh (13 days), Malcolm Sooknanan (35), Gary Sookdeo (43)**. Keyed on
+the agent rather than the licence, all three were invisible.
+
+**`1901-01-01` is an empty field wearing a date.** Randolph Gonzales's general
+licence reads 1901-01-01 with month 1, day 1, which would put a confident
+"renews 1 January" on the wall for a licence nothing else says he holds.
+Anything before 1950 is treated as a placeholder and reported as a gap.
 
 **Do not use `License_Expiry__c`.** It reads 2020–2023 for most of the roster;
 it stopped being maintained years ago. A wall driven off it would report almost
@@ -748,7 +773,7 @@ clause.
 requisitions, appraisals, resignations and receipt books. Only subjects that
 actually name a licence are counted: 40 of 49. The wall says so.
 
-Three things it surfaces that nothing else does:
+Four things it surfaces that nothing else does:
 
 1. **A date that has just gone by with no completed task against it.** The
    anniversary rolls forward the moment it passes, so without this a licence
@@ -759,6 +784,9 @@ Three things it surfaces that nothing else does:
    how a licence lapses.
 3. **Any active agent with no renewal month set** — nothing reminds them.
    Currently none.
+4. **A general licence task raised for an agent with no general licence date**
+   — the application was logged but the record never filled in, so nothing will
+   remind anyone next year. Currently none, and the check stays.
 
 **The `/exec` URL exposes this feed without a sign-in**, like the other two
 walls, because a screen on a wall has nobody to sign it in. Unlike the other
