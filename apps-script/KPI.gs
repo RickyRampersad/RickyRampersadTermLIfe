@@ -1921,23 +1921,14 @@ function handle_(action, data, token) {
         : sfkWaitingFor_(profile.staffId, data.date) };
     }
 
-    case 'billing': {
-      var bc = sfkBillingCheckSafe_(data.date);
-      if (!profile.manager) {
-        var m2 = {};
-        if (bc[profile.staffId]) m2[profile.staffId] = bc[profile.staffId];
-        bc = m2;
-      }
-      return { ok: true, billing: bc };
-    }
+    case 'billing':
+      return { ok: true, billing: billingFor_(profile, data.date) };
+
+    case 'openBook':
+      return { ok: true, book: openBookFor_(profile, data.date) };
 
     case 'needsReason': {
-      var nr = sfkNeedsReasonSafe_(data.date);
-      if (!profile.manager) {
-        var mine = {};
-        if (nr[profile.staffId]) mine[profile.staffId] = nr[profile.staffId];
-        nr = mine;
-      }
+      var nr = needsReasonFor_(profile, data.date);
       return { ok: true, needsReason: nr };
     }
 
@@ -1979,8 +1970,9 @@ function handle_(action, data, token) {
                roster: publicRoster_(), schedule: SCHEDULE,
                kpis: allKpiChoices_(),
                metrics: metricsFor_(profile, data.date),
-               needsReason: sfkNeedsReasonSafe_(data.date),
-               billing: sfkBillingCheckSafe_(data.date) };
+               needsReason: needsReasonFor_(profile, data.date),
+               billing: billingFor_(profile, data.date),
+               openBook: openBookFor_(profile, data.date) };
     }
 
     case 'training': {
@@ -2931,6 +2923,116 @@ function sfkNeedsReason_(date) {
   });
   cache.put(key, JSON.stringify(out), SFK.CACHE_MIN * 60);
   return out;
+}
+
+// ---------------------------------------------------------------------------
+//  The open book
+//
+//  Every other Salesforce read here counts. This one names.
+//
+//  The morning screen told a person how many tasks they held and not one of
+//  their titles, because the only list it had was overdue-with-no-reason.
+//  Three of the four support staff carry no overdue at all — their work is
+//  dated ahead, not late — so three of the four opened the tracker to a
+//  scoreboard: "Pendings · 16 open", and nothing to act on. A number you
+//  cannot click is not an assignment.
+//
+//  So: the whole open book, grouped by the type it is filed under, in the
+//  order it falls due. The same shape for everybody, whether their book is
+//  late or clean.
+// ---------------------------------------------------------------------------
+
+/* Subjects carry a policy number, a client and sometimes a branch. They are
+   read in a list, not a document, so they are bounded here rather than in the
+   browser — the whole book goes through CacheService, which stops at 100KB,
+   and one unbounded field is all it takes to silently lose the cache. */
+var OPEN_SUBJECT_MAX = 110;
+
+function sfkOpenBook_(date) {
+  var day = date || todayISO_();
+  var cache = CacheService.getScriptCache();
+  var key = 'sfk_ob_' + day;
+  var hit = cache.get(key);
+  if (hit) return JSON.parse(hit);
+
+  var users = sfkUsers_();
+  var ids = Object.keys(users).map(function (k) { return "'" + users[k].id + "'"; });
+  if (!ids.length) return {};
+  var byId = {};
+  Object.keys(users).forEach(function (k) { byId[users[k].id] = k; });
+
+  var recs = sfkQuery_(
+    'SELECT Id, OwnerId, Subject, Status, Task_Type__c, ActivityDate, Days_O_S__c, ' +
+    'Agent__r.Name, What.Name, Task_Update_Reason_c__c ' +
+    'FROM Task WHERE OwnerId IN (' + ids.join(',') + ") AND Status != 'Completed' " +
+    'ORDER BY ActivityDate ASC NULLS LAST LIMIT 600');
+
+  var out = {};
+  recs.forEach(function (r) {
+    var sid = byId[r.OwnerId];
+    if (!sid) return;
+    var type = r.Task_Type__c || 'Untyped';
+    var book = out[sid] || (out[sid] = {});
+    (book[type] = book[type] || []).push({
+      id: r.Id,
+      subject: shorten_(r.Subject, OPEN_SUBJECT_MAX),
+      status: r.Status || '',
+      due: r.ActivityDate || '',
+      // Compared against the branch's own day, not the browser's. A phone in
+      // another timezone must not colour Monday's work red on Sunday night.
+      late: !!(r.ActivityDate && r.ActivityDate < day),
+      age: Number(r.Days_O_S__c || 0),
+      agent: (r.Agent__r && r.Agent__r.Name) || '',
+      account: (r.What && r.What.Name) || '',
+      hasReason: !!String(r.Task_Update_Reason_c__c || '').trim()
+    });
+  });
+
+  // A book that will not fit the cache is still a book. Serve it, just do not
+  // remember it — the alternative is throwing away the whole read.
+  try { cache.put(key, JSON.stringify(out), SFK.CACHE_MIN * 60); } catch (e) {}
+  return out;
+}
+
+function sfkOpenBookSafe_(date) {
+  if (!sfkConfigured_()) return {};
+  try { return sfkOpenBook_(date); } catch (e) { return {}; }
+}
+
+/** Who may see whose book. The same rule as metricsFor_, and deliberately in
+ *  one place: staff see their own, the Branch Manager sees the branch. Two
+ *  functions deciding this separately is what made the filtering a no-op the
+ *  first time. */
+function openBookFor_(profile, date) {
+  return onlyMine_(sfkOpenBookSafe_(date), profile);
+}
+
+/* Every one of these reads is keyed by staffId and every one of them is
+   filtered by the same rule, so the rule is written once.
+
+   It was not, and the cost was real: the `metrics` action filtered while the
+   `rows` response did not, so the filtering did nothing at all until that was
+   found. needsReason and billing were left behind by that fix and carried the
+   same hole for longer — the rows response has been handing every member of
+   staff the whole branch's overdue and billing books, client names and policy
+   numbers included, on every sign-in. Nobody noticed because the screen only
+   ever renders your own.
+
+   A screen that does not draw the data is not the same thing as a server that
+   does not send it. */
+function onlyMine_(byStaff, profile) {
+  if (profile.manager) return byStaff;
+  var mine = {};
+  if (byStaff && byStaff[profile.staffId]) mine[profile.staffId] = byStaff[profile.staffId];
+  return mine;
+}
+
+function needsReasonFor_(profile, date) {
+  return onlyMine_(sfkNeedsReasonSafe_(date), profile);
+}
+
+function billingFor_(profile, date) {
+  return onlyMine_(sfkBillingCheckSafe_(date), profile);
 }
 
 // ---------------------------------------------------------------------------

@@ -47,6 +47,24 @@ const METRICS = { ok:true, date:'2026-09-04', staff: {
   branch: { byType: { 'Renewa/PDl/Bill': { open:52, overdue:18 },
                       'Lic/Staffing/SA/HR': { open:17, overdue:9 } } } };
 
+// The whole open book, which is what sfkOpenBook_ returns. Note that not one
+// of the Renewals items is late: work dated ahead is the normal case in this
+// branch, and it is exactly the case that used to leave the morning screen
+// showing a count and no titles.
+const BOOK = { demo: {
+  'Renewa/PDl/Bill': [
+    { id:'00B1', subject:'T- PENSIONS GROUP - R&C ENTERPRISES LIMITED',
+      status:'In Progress', due:'2026-09-07', late:false, age:40, agent:'A. Advisor' },
+    { id:'00B2', subject:'Confirm funds in DISB & SUSP - one client',
+      status:'In Progress', due:'2026-09-07', late:false, age:22, agent:'A. Advisor' },
+    { id:'00B3', subject:'Review of smoker rates - another client',
+      status:'In Progress', due:'2026-09-08', late:false, age:12, agent:'A. Advisor' },
+    { id:'00B4', subject:'Group renewal - a third client',
+      status:'In Progress', due:'2026-09-09', late:false, age:5, agent:'C. Advisor' } ],
+  'Lic/Staffing/SA/HR': [
+    { id:'00B5', subject:'Licence renewal - one agent', status:'Not Started',
+      due:'2026-08-30', late:true, age:6, agent:'' } ] } };
+
 // The overdue-with-no-reason list sfkNeedsReason_ already returns.
 const NEEDS = { demo: [
   { id:'00T1', subject:'Premium — one client, 8004023177', status:'In Progress',
@@ -80,7 +98,7 @@ const ok = (what, cond, extra) => {
     if (body.action==='login' || body.action==='me')
       return j({ ok:true, token:'t', profile:P, roster:[P], schedule:SCH, kpis:KPIS });
     if (body.action==='rows')
-      return j({ ok:true, rows:[], metrics:METRICS, needsReason:NEEDS });
+      return j({ ok:true, rows:[], metrics:METRICS, needsReason:NEEDS, openBook:BOOK });
     return j({ ok:true });
   });
 
@@ -101,6 +119,18 @@ const ok = (what, cond, extra) => {
   ok('the day total adds up what is picked',
      await page.locator('text=/17 open . 1 already late/').count() > 0);
 
+  console.log('\nAnd the work itself, not only how much of it there is:\n');
+  // The whole point of the change. Nothing in this block is late, so before
+  // the open book existed this person saw "17 open" and not one title.
+  const plan = await page.locator('body').innerText();
+  ok('the tasks in the picked block are named',
+     /T- PENSIONS GROUP - R&C ENTERPRISES LIMITED/.test(plan));
+  ok('a second one too', /Confirm funds in DISB & SUSP/.test(plan));
+  ok('with its due date rather than a red age',
+     /due 7 Sep|due 07 Sep/i.test(plan), (plan.match(/due [^\n]{0,14}/) || [''])[0]);
+  ok('three for one agent is called out as one conversation',
+     /3 of them for A\. Advisor/.test(plan),
+     (plan.match(/\d+ of them for [^\n]{0,20}/) || ['not found'])[0]);
   console.log('\nA thin block says so before two hours go into it:\n');
   const lic = await page.locator('button:has-text("Licensing / Staffing")').first();
   ok('licensing shows three of their own', /3 open/.test(await lic.textContent()));
@@ -125,6 +155,13 @@ const ok = (what, cond, extra) => {
   await page.waitForTimeout(400);
   ok('the day total follows the picking',
      await page.locator('text=/20 open . 1 already late/').count() > 0);
+  // And the second block's work arrives with it. This one IS late, so it
+  // reads as days over rather than as a due date — the same list, both cases.
+  const picked2 = await page.locator('body').innerText();
+  ok('the newly picked block lists its work too',
+     /Licence renewal - one agent/.test(picked2));
+  ok('and a late item reads as days over, not a due date',
+     /6 days over/.test(picked2), (picked2.match(/Licence[^\n]*\n[^\n]*/) || ['not found'])[0]);
 
   console.log('\nThe estimate is theirs, made against the counts in front of them:\n');
   ok('it is asked once a type is picked',

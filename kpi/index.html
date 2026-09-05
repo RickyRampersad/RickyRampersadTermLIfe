@@ -364,6 +364,59 @@ function LateByAgent({ items }) {
   }));
 }
 
+// The book itself, rather than a count of it.
+//
+// Three of the four support staff carry no overdue work at all — theirs is
+// dated ahead, not late — so the morning screen showed them "Pendings · 16
+// open" and no way on earth to see what the sixteen were. The chip says how
+// much there is. This says which.
+//
+// Capped, because a block can hold seventy-six. A list nobody scrolls to the
+// bottom of teaches people the screen is decorative.
+function OpenList({ items }) {
+  if (!items.length) return null;
+  const SHOW = 8;
+  const late = items.filter(t => t.late).length;
+
+  // One agent holding several of them is one conversation, not several. Same
+  // reasoning as LateByAgent, and it matters more here: this is the list you
+  // work from, so the grouping has to be visible before you start.
+  const by = {};
+  items.forEach(t => { if (t.agent) by[t.agent] = (by[t.agent] || 0) + 1; });
+  const top = Object.keys(by).sort((a, b) => by[b] - by[a])[0];
+  const together = top && by[top] > 2 ? by[top] + " of them for " + top : "";
+
+  return React.createElement("div", { style: { marginTop: 11 } },
+    React.createElement("div", {
+      style: { fontSize: 11, fontWeight: 800, letterSpacing: ".1em",
+               textTransform: "uppercase", color: GOLD, marginBottom: 5 }
+    }, "What is in it",
+       late ? React.createElement("span", {
+         key: "l", style: { color: AMBER }
+       }, "  \u00b7 " + late + " late") : null),
+    // Not in the uppercase label. That is somebody's name, and this is the
+    // line that turns six separate chases into one conversation.
+    together ? React.createElement("div", {
+      style: { fontSize: 12, color: MUTED, fontWeight: 700, margin: "0 0 7px" }
+    }, together) : null,
+    items.slice(0, SHOW).map(t => React.createElement("div", {
+      key: t.id, style: { borderTop: "1px solid " + LINE, padding: "7px 0" }
+    },
+      React.createElement("div", {
+        style: { fontSize: 13, color: INK, fontWeight: 600, lineHeight: 1.35 }
+      }, t.subject || "(no subject)"),
+      React.createElement("div", {
+        style: { fontSize: 11.5, marginTop: 2, fontWeight: 700,
+                 color: t.late ? AMBER : MUTED }
+      }, t.late ? t.age + " day" + (t.age === 1 ? "" : "s") + " over"
+                : (t.due ? "due " + shortDate(t.due) : "no due date"),
+         t.agent ? " \u00b7 " + t.agent : "",
+         t.status ? " \u00b7 " + t.status : ""))),
+    items.length > SHOW ? React.createElement("div", {
+      style: { fontSize: 11.5, color: MUTED, paddingTop: 7 }
+    }, "and " + (items.length - SHOW) + " more") : null);
+}
+
 function KpiPicker({ value, opts, onToggle, mine, branch }) {
   const on = kpiList(value);
   const chip = k => {
@@ -1011,6 +1064,7 @@ function App() {
   const [training, setTraining] = useState([]);
   const [metrics, setMetrics] = useState(null);
   const [needsReason, setNeedsReason] = useState({});
+  const [openBook, setOpenBook] = useState({});
   const [billing, setBilling] = useState({});
   const [waiting, setWaiting] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -1096,6 +1150,7 @@ function App() {
       if (r.kpis) KPI_CHOICES = r.kpis;
       if (r.metrics) setMetrics(r.metrics);
       if (r.needsReason) setNeedsReason(r.needsReason);
+      if (r.openBook) setOpenBook(r.openBook);
       if (r.billing) setBilling(r.billing);
     } else if (r.authRequired) {
       signOut();
@@ -1554,6 +1609,7 @@ function App() {
     const byType = byTypeFor(metrics, active);
     const branchType = metrics && metrics.branch ? metrics.branch.byType : null;
     const late = (needsReason && needsReason[active]) || [];
+    const book = (openBook && openBook[active]) || null;
 
     // What the person has picked across the whole day, so the same task type
     // in two blocks is counted once.
@@ -1612,6 +1668,9 @@ function App() {
             value: bl.kpi, opts: opts, mine: byType, branch: branchType,
             onToggle: k => patchBlock(b.id, "kpi", kpiToggle(bl.kpi, k))
           }),
+          book ? /*#__PURE__*/React.createElement(OpenList, {
+            items: picked.reduce((a, k) => a.concat(book[k] || []), [])
+          }) : null,
           picked.length ? /*#__PURE__*/React.createElement(Chips, {
             label: "How long do you think this needs?",
             hint: byType && open ? "\u2014 " + open + " open in what you picked" : "",
