@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Branch Intelligence Wall — Ricky Rampersad Branch</title>
-<meta name="description" content="Premium dues, contracts and licences — the reports this branch used to build by hand every Friday, now live on the branch floor twenty four hours a day.">
+<meta name="description" content="Premium dues, contracts and licences — the reports this branch used to build by hand every Friday. Live on the branch floor from Monday, twenty four hours a day.">
 <meta name="theme-color" content="#07131f">
 <!-- A demonstration page. It is public, so it carries no client detail of any
      kind: every figure shown is an aggregate or a member of our own staff. -->
@@ -74,9 +74,11 @@
      text everywhere — a play button dropped on any title card collided with the
      words underneath it. Darkening the middle gives the button a place to sit
      while the wall stays legible enough to be the point. */
+  /* The sneak peek's own closing card is the poster now — a title card with a
+     clear middle, so it needs far less scrim than a wall capture did. */
   .poster::after{content:"";position:absolute;inset:0;pointer-events:none;
-    background:radial-gradient(closest-side at 50% 46%,rgba(4,9,26,.82),rgba(4,9,26,.42) 70%,
-      rgba(4,9,26,.30) 100%)}
+    background:radial-gradient(closest-side at 50% 46%,rgba(4,9,26,.55),rgba(4,9,26,.25) 72%,
+      rgba(4,9,26,.18) 100%)}
   .poster:hover img{transform:scale(1.02)}
   .poster .pb{position:absolute;z-index:2;left:50%;top:46%;transform:translate(-50%,-50%);
     width:88px;height:88px;border-radius:50%;display:grid;place-items:center;
@@ -169,7 +171,7 @@
 </header>
 
 <div class="hero">
-  <div class="kick">Launching next week</div>
+  <div class="kick">Live from Monday</div>
   <h1>The reports we built every Friday,<br><em>now live twenty four seven.</em></h1>
   <p class="lede">Premium dues. Contracts. Licences. The same three questions every week,
     built by hand and <b>out of date by Monday morning</b>. They are a wall now.</p>
@@ -182,21 +184,23 @@
      downloads the 2.6 MB. -->
 <div class="film" id="film">
   <div class="frame">
-    <button class="poster" id="play" aria-label="Play the film">
-      <img src="shots/poster.jpg" alt="" width="1920" height="1080">
+    <button class="poster" id="play" aria-label="Play the sneak peek">
+      <img src="shots/sneak-poster.jpg" alt="" width="1920" height="1080">
       <span class="pb"><svg viewBox="0 0 24 24" width="34" height="34" aria-hidden="true">
         <path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></span>
-      <span class="pl">Watch the film · 95 seconds</span>
+      <span class="pl">Sneak peek · 40 seconds</span>
     </button>
   </div>
 </div>
 <p class="filmnote">Press <b>space</b> to pause, <b>R</b> to replay · sound plays
-  when you start it</p>
+  when you start it &nbsp;·&nbsp;
+  <a href="/intelligence/wall/film.html" style="color:var(--blue);text-decoration:none">
+    Or watch the full 95-second walkthrough &rarr;</a></p>
 <script>
   document.getElementById('play').addEventListener('click', function () {
     var f = document.createElement('iframe');
-    f.src = '/intelligence/wall/film.html';
-    f.title = 'The Branch Intelligence Wall';
+    f.src = '/intelligence/wall/sneak.html';
+    f.title = 'Sneak peek — The Branch Intelligence Wall';
     f.setAttribute('allow', 'autoplay');
     this.parentNode.replaceChild(f, this);
     /* The film listens on its own document, so keyboard control only reaches it
