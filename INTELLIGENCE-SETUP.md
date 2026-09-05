@@ -450,10 +450,10 @@ decision to hand that book to somebody, not a way to make it disappear.
 
 Because that is easy to forget three months later, nothing about it is silent:
 the wall's footer names how many agents are excluded and exactly what they took
-with them, and the appreciation survey skips their clients rather than sending a
+with them, and the client survey skips their clients rather than sending a
 letter signed by somebody who has left.
 
-## 3h. The appreciation survey
+## 3h. The client survey
 
 One letter per client on the 45-day line, asking for a single click, copying the
 agent, the support desk and the unit manager.

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The 45-Day Line | Ricky Rampersad Branch</title>
-<meta name="description" content="One interactive branch wall for premiums crossing the 45-day line — tenure, how they pay, who carries them, and the appreciation survey.">
+<meta name="description" content="One interactive branch wall for premiums crossing the 45-day line — tenure, how they pay, who carries them, and the client survey.">
 <meta name="theme-color" content="#061c31">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -175,8 +175,8 @@
 <header>
   <div class="mark">RR</div>
   <div>
-    <h1>The 45-Day Line</h1>
-    <div class="sub">Premium dues · Ricky Rampersad Branch, Chaguanas</div>
+    <h1 id="wallTitle">The 45-Day Line</h1>
+    <div class="sub">Premium dues · Ricky Rampersad Branch, Chaguanas <span id="series"></span></div>
   </div>
   <div class="right">
     <div id="chip" onclick="clearFilter()"><b id="chipTxt"></b><span>✕</span></div>
@@ -225,7 +225,7 @@
     <p class="cap" id="agentCap"></p>
     <div class="alist" id="aList"></div></section>
 
-  <section class="card survey"><h3>The appreciation survey</h3>
+  <section class="card survey"><h3>Client survey</h3>
     <p class="cap" id="surveyCap"></p>
     <div id="surveyBody"></div></section>
 </main>
@@ -285,6 +285,10 @@ var WALL45 = {
     {k:"Carlton Aloy Wong",n:1,prem:500.00,med:7.5,unit:"Unassigned"},
     {k:"Karan Ramsundar",n:1,prem:454.85,med:9.0,unit:"Unassigned"},
     {k:"Stephanie Rajkumar",n:1,prem:300.00,med:5.0,unit:"Akaash Kalladeen"}],
+  band:45,
+  bands:[{band:45,onLine:36,prem:33189.40,past:2013,pastPrem:6015787.00},
+         {band:60,onLine:15,prem:7869.41, past:1630,pastPrem:5680843.00},
+         {band:90,onLine:9, prem:9871.59, past:1019,pastPrem:5121693.00}],
   context:{overdueTotal:4018,over45:2013,over45Prem:5830927.00,next7:656,next7Prem:731237.80},
   households:{clients:33,multi:3,multiPolicies:6,multiPrem:2180.22,
               oneMandate:2,oneMandatePolicies:4,oneMandatePrem:1360.87},
@@ -467,9 +471,11 @@ function paintSurvey(){
             + '<div class="val">'+x.n+'</div></div>';
         }).join("")
       + '</div>'
-      + '<p class="cap" style="margin:10px 0 0">Sending stays off until <b style="color:var(--dim)">'
-      + 'INTEL_SURVEY_LIVE</b> is set deliberately. Run <b style="color:var(--dim)">intelSurveyPreview()</b> '
-      + 'first — it renders the real letters with nothing sent.</p>';
+      + '<p class="cap" style="margin:10px 0 0"><b style="color:var(--gold)">Market conduct.</b> '
+      + 'These letters ask a client to rate a named adviser, so nothing goes out until a '
+      + 'reviewer has read the exact wording: <b style="color:var(--dim)">intelSurveyPreview()</b>, '
+      + 'then <b style="color:var(--dim)">intelSurveyApprove("name")</b>. Approval is bound to the '
+      + 'wording — change one word and it lapses. Every letter sent records who cleared it.</p>';
     return;
   }
   $("#surveyCap").textContent = "Sent to clients on the line, copying the agent, the desk and the unit manager."
@@ -578,6 +584,18 @@ function tick(){ $("#clock").textContent=new Date().toLocaleTimeString("en-GB",{
 setInterval(tick,10000); tick();
 
 function boot(){
+  /* The first of a series — 60 and 90 follow and read the same feed with a
+     different band. Naming the other two here stops this wall being mistaken
+     for the whole arrears picture. */
+  var B = WALL45.bands || [], me = WALL45.band || 45;
+  $("#wallTitle").textContent = "The " + me + "-Day Line";
+  $("#series").innerHTML = B.length
+    ? "· " + B.map(function(x){
+        return x.band === me
+          ? '<b style="color:var(--blue)">' + x.band + ' days</b>'
+          : '<span style="color:var(--faint)">' + x.band + ': ' + x.onLine + '</span>';
+      }).join(" · ")
+    : "";
   paint();
   var X = WALL45.excluded || {};
   $("#src").textContent = "Premium dues extract cut "+WALL45.asOf+" · built "+WALL45.generatedAt

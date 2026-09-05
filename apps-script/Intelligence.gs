@@ -2856,11 +2856,28 @@ function iActSignout_(b) {
    how stale the tab is. What staleness still costs is the policy SET: a
    premium paid since the cut is not in the file, so every count here is an
    upper bound. The wall says so, and asOf tells it when the tab was cut. */
+/* The 45-day wall is the first of a series — 60 and 90 follow, and they are
+   the same question asked further down the same line. So the band is a
+   parameter, not a constant, and one deployed action serves every wall:
+
+     {action:'intel.wall'}             -> 45, the default
+     {action:'intel.wall', band:60}    -> the 60-day line
+     {action:'intel.wall', band:90}    -> the 90-day line
+
+   Each response also carries `bands`, a one-line summary of all three, so a
+   wall can show where its own band sits against the other two without a
+   second call. */
 function iActWall45_(b) {
-  var d = iBuildWall45_();
+  var band = Math.round(iNum_((b && b.band) || 45)) || 45;
+  if (IWALL_BANDS.indexOf(band) < 0) {
+    return iErr_('Band must be one of ' + IWALL_BANDS.join(', ') + ' — got ' + band + '.');
+  }
+  var d = iBuildWall45_(band);
   if (d.error) return iErr_(d.error);
   return iOk_({ data: d });
 }
+
+var IWALL_BANDS = [45, 60, 90];
 
 /* ── Agents whose book should not count in the branch view ─────────────────
    Set INTEL_EXCLUDE_AGENTS to a comma-separated list of names as the DUES BOOK
@@ -2882,7 +2899,7 @@ function iExcluded_() {
   return out;
 }
 
-function iBuildWall45_() {
+function iBuildWall45_(target) {
   var sh = iTabDues_();
   if (!sh) return { error: 'No dues tab found.' };
 
@@ -2892,7 +2909,8 @@ function iBuildWall45_() {
     billing: ['billing type'], days: ['days']
   });
 
-  var today = iToday_(), DAY = 86400000, TARGET = 45;
+  var today = iToday_(), DAY = 86400000;
+  var TARGET = Math.round(iNum_(target)) || 45;
 
   /* unit map, keyed on the same normalised name the rest of the file uses */
   var units = iBuildUnits_(), unitOf = {};
@@ -2924,6 +2942,8 @@ function iBuildWall45_() {
 
   var sel = [], line = {};
   var over45 = 0, over45Prem = 0, overdue = 0;
+  var bandTally = {};
+  IWALL_BANDS.forEach(function (b) { bandTally[b] = { band: b, onLine: 0, prem: 0, past: 0, pastPrem: 0 }; });
   var waveBy = {};   // paid-to date → the cohort crossing together
   /* When the extract was cut. Not the newest Paid To Date — a policy only
      appears here BECAUSE it is unpaid, so the newest of those is a floor, not
@@ -2954,6 +2974,10 @@ function iBuildWall45_() {
 
     var prem = iNum_(d.get('premium', r));
     if (days >= TARGET) { over45++; over45Prem += prem; }
+    IWALL_BANDS.forEach(function (b) {
+      if (days === b) { bandTally[b].onLine++; bandTally[b].prem += prem; }
+      if (days >= b)  { bandTally[b].past++;   bandTally[b].pastPrem += prem; }
+    });
 
     /* offset: how many days from today this policy crosses 45 */
     var off = TARGET - days;
@@ -3090,6 +3114,12 @@ function iBuildWall45_() {
     tenure: tenure.map(function (t) { return { k: t.k, n: t.n, prem: Math.round(t.prem * 100) / 100 }; }),
     tenureMedian: medianOf(yrs),
     billing: billing, autoFail: autoN, units: unitRows, agents: agentRows,
+    band: TARGET,
+    bands: IWALL_BANDS.map(function (b) {
+      var x = bandTally[b];
+      return { band: b, onLine: x.onLine, prem: Math.round(x.prem * 100) / 100,
+               past: x.past, pastPrem: Math.round(x.pastPrem * 100) / 100 };
+    }),
     households: households,
     /* Never silent about what an exclusion took out — see iExcluded_. */
     excluded: { names: Object.keys(iExcluded_()).length,
@@ -4260,7 +4290,7 @@ function doPost(e) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   THE APPRECIATION SURVEY
+   THE CLIENT SURVEY
    ══════════════════════════════════════════════════════════════════════════
    Every client on the 45-day line gets one e-mail, built from what the
    workbook already knows about them, asking for a single click.
@@ -4506,7 +4536,7 @@ function intelSurveyPreview() {
   var to = Session.getActiveUser().getEmail() || iProp_('INTEL_TEST_TO');
   if (!to) return 'No address to send the preview to.';
   MailApp.sendEmail({ to: to, name: 'Branch Intelligence',
-    subject: '[PREVIEW] The ' + out.length + ' appreciation letters — nothing has been sent',
+    subject: '[PREVIEW] The ' + out.length + ' client survey letters — nothing has been sent',
     htmlBody: '<div style="font:14px sans-serif;background:#fff8e6;border:1px solid #f2c14e;'
       + 'padding:14px 16px;border-radius:8px;margin-bottom:26px">'
       + '<b>This is a preview.</b> These are the real letters for real clients, rendered '
@@ -4514,6 +4544,76 @@ function intelSurveyPreview() {
       + 'today\'s pool.</div>' + out.join('') });
   return 'Preview of ' + out.length + ' letters sent to ' + to + '. ' +
          pool.rows.length + ' clients would receive one. Nothing went to a client.';
+}
+
+/* ── MARKET CONDUCT ────────────────────────────────────────────────────────
+   These letters go to clients of a regulated insurer and ask them to rate a
+   named adviser. That is market-conduct territory: what goes out has to be
+   reviewed by a person before it goes, the branch has to be able to show
+   afterwards exactly what was sent, and nobody should be able to change the
+   wording after it was cleared.
+
+   So approval is bound to the WORDING, not given once and left. iSurveyHash_
+   fingerprints every subject line and every sentence of every template plus
+   the rating scale. Approve, and that fingerprint is what gets stored. Change
+   a single word and it no longer matches, approval lapses, and the send stops
+   until somebody reviews the new wording. That is the control that matters —
+   an approval that survives an edit is not an approval.
+
+     INTEL_SURVEY_APPROVED_BY    who reviewed it (a name, recorded on every row)
+     INTEL_SURVEY_APPROVED_HASH  the wording they approved — set by intelSurveyApprove()
+     INTEL_SURVEY_LIVE           "send to clients", the separate go switch
+
+   All three must be right. Missing or stale approval is a hard stop even when
+   the live switch is on, and the reason is reported rather than silently
+   swallowed. */
+function iSurveyHash_() {
+  var parts = [];
+  var probe = { yWord: 'X years', months: 9, issued: 'MONTH YEAR', agent: 'AGENT',
+                greeting: 'NAME', billing: 'Bankers Order', years: 5 };
+  ISURVEY_TEMPLATES.forEach(function (t) {
+    parts.push(t.id, String(t.subject(probe)), String(t.open(probe)), String(t.line(probe)));
+  });
+  Object.keys(ISURVEY_BILLING).sort().forEach(function (k) {
+    parts.push(k, ISURVEY_BILLING[k].says, String(ISURVEY_BILLING[k].auto));
+  });
+  parts.push('scale:1-5');
+  var raw = parts.join('\u0001');
+  var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, raw);
+  return bytes.map(function (b) {
+    return ('0' + (b & 0xFF).toString(16)).slice(-2);
+  }).join('').slice(0, 16);
+}
+
+/* Run this after reading intelSurveyPreview(). It records WHO approved WHICH
+   wording, and prints the fingerprint so it can be quoted in a compliance file. */
+function intelSurveyApprove(reviewer) {
+  var who = String(reviewer || iProp_('INTEL_SURVEY_APPROVED_BY') || '').trim();
+  if (!who) return 'Pass the reviewer\'s name: intelSurveyApprove("Kamla Dookran").';
+  var h = iSurveyHash_();
+  var props = PropertiesService.getScriptProperties();
+  props.setProperty('INTEL_SURVEY_APPROVED_BY', who);
+  props.setProperty('INTEL_SURVEY_APPROVED_HASH', h);
+  props.setProperty('INTEL_SURVEY_APPROVED_ON', iIso_(iToday_()));
+  return 'Wording ' + h + ' approved by ' + who + ' on ' + iIso_(iToday_()) +
+         '. Any change to a subject line, a letter or the scale voids this.';
+}
+
+/* Why a send may not go. Returns '' when everything is in order. */
+function iSurveyBlocked_() {
+  var approvedHash = iProp_('INTEL_SURVEY_APPROVED_HASH').trim();
+  var who = iProp_('INTEL_SURVEY_APPROVED_BY').trim();
+  var now = iSurveyHash_();
+  if (!approvedHash || !who) {
+    return 'No approved wording on file. Read intelSurveyPreview(), then run ' +
+           'intelSurveyApprove("<reviewer name>"). Market conduct: somebody has to ' +
+           'have seen what goes to clients.';
+  }
+  if (approvedHash !== now) {
+    return 'The wording has changed since ' + who + ' approved it (' + approvedHash +
+           ' approved, ' + now + ' now). Re-read intelSurveyPreview() and approve again.';
+  }
+  return '';
 }
 
 function iSurveyBase_() {
@@ -4639,6 +4739,11 @@ function iSurveyGreeting_(name) {
 function intelSurveySend() {
   var live = iProp_('INTEL_SURVEY_LIVE').trim().toLowerCase() === ISURVEY.LIVE_PHRASE;
   var test = iProp_('INTEL_TEST_TO');
+  /* A live send with no current approval is the one thing this must not do,
+     however the switch is set. Test and dry runs still go, because reviewing
+     is exactly what they are for. */
+  var blocked = iSurveyBlocked_();
+  if (live && blocked) return 'STOPPED — ' + blocked;
   var pool = iSurveyPool_();
   if (pool.error) return pool.error;
 
@@ -4676,7 +4781,7 @@ function intelSurveySend() {
     }
     sh.appendRow([d.token, new Date(), d.clientNo, d.client, d.email, d.policy, d.agent,
                   d.unit, d.years, d.tpl.id, d.billing, d.premium, d.tpl.id,
-                  '', '', '', '', mode]);
+                  '', '', '', '', mode + (live ? ' · cleared ' + iSurveyHash_() + ' by ' + iProp_('INTEL_SURVEY_APPROVED_BY') : '')]);
   });
 
   if (mode === 'live') return 'Sent ' + sent + ' letters to clients, copying agents, the desk and unit managers.';
