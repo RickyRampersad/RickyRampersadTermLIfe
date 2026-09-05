@@ -391,9 +391,49 @@ function healthPersons(){
   });
   return ps;
 }
+/* ── "nothing to declare" ──
+   Most people enrolling on a group plan are well, and the declaration asks
+   them fourteen questions about strokes and tuberculosis to establish it.
+   Answering fourteen Nos by hand is where an enrollment form gets abandoned
+   on a kitchen table, and it is also where a rushed one gets a stray Yes
+   that sends a healthy member to underwriting for a fortnight.
+
+   So there is one tick. It fills every answer with No, for every person on
+   the application, and says plainly what has just been declared — because
+   this is a declaration, not a convenience, and a member who ticks it is
+   signing that it is true. Any single answer can still be changed
+   afterwards, and changing one clears the tick rather than leaving a claim
+   on screen that is no longer accurate. */
+function setAllWell(on){
+  const ps=healthPersons();
+  ps.forEach(function(p){
+    if(!MED.answers[p.key]) MED.answers[p.key]={};
+    QA.concat(QB).forEach(function(q){ MED.answers[p.key][q[0]] = on ? 'N' : ''; });
+  });
+  MED.allWell = !!on;
+  if(on){ MED.medUse='N'; MED.detailNote=''; MED.medNote=''; }
+  buildHealth();
+}
+function wellBanner(){
+  const n=healthPersons().length;
+  return '<div style="border:1.5px solid '+(MED.allWell?'var(--go,#1F7A55)':'var(--line)')+
+    ';border-radius:9px;padding:.8rem .9rem;margin-bottom:.9rem;background:'+
+    (MED.allWell?'#EDF8F2':'transparent')+'">'+
+    '<label style="display:flex;gap:.6rem;align-items:flex-start;cursor:pointer">'+
+    '<input type="checkbox" id="allwell" style="margin-top:.2rem;transform:scale(1.25)"'+
+    (MED.allWell?' checked':'')+'>'+
+    '<span><b style="font-size:14px;color:var(--navy)">Nothing to declare</b>'+
+    '<div style="font-size:12.5px;color:var(--slate);margin-top:.2rem">'+
+    'Tick this if '+(n===1?'you have':'nobody on this application has')+
+    ' ever been treated for, or had any indication of, any of the conditions below, '+
+    'and '+(n===1?'you are':'no one is')+' taking or expecting to take medication. '+
+    'Every answer is set to No for '+(n===1?'you':'all '+n+' people')+
+    ' — check them and change any that is not right.</div></span></label></div>';
+}
+
 function buildHealth(){
   const ps=healthPersons();
-  let h='';
+  let h=wellBanner();
   ps.forEach(function(p){
     if(!MED.answers[p.key]) MED.answers[p.key]={};
     const a=MED.answers[p.key];
@@ -463,7 +503,18 @@ function buildHealth(){
       captureHealth();
     });
   });
-  $('healthhost').addEventListener('change',captureHealth);
+  const aw=$('allwell');
+  if(aw) aw.addEventListener('change',function(){ setAllWell(aw.checked); });
+  /* A single answer changed after the tick means the tick is no longer a
+     true statement, so it comes off rather than sitting there claiming
+     something the form no longer says. */
+  $('healthhost').addEventListener('change',function(e){
+    const n=e.target && e.target.name;
+    if(MED.allWell && n && (/^q_/.test(n) || n==='medUse') && e.target.value!=='N'){
+      MED.allWell=false; captureHealth(); buildHealth(); return;
+    }
+    captureHealth();
+  });
 }
 function sigPad(id,key){
   const c=$(id); if(!c) return;

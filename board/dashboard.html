@@ -37,8 +37,14 @@
 
   .wrap{max-width:1560px;margin:0 auto;padding:20px 28px 60px}
   header{display:flex;align-items:center;gap:16px;padding:6px 0 22px;flex-wrap:wrap}
-  header .mark{width:44px;height:44px;flex:none;border-radius:13px;background:var(--grad);
-    display:grid;place-items:center;font-family:var(--font-d);font-weight:800;font-size:15px;color:#04223b}
+  /* THE BRANCH MARK — a gold shield with a check, not a monogram. These three
+     board screens were the last places still drawing an invented "RR" tile on
+     a blue gradient. The intelligence walls and the films all carry the real
+     mark; a branch whose screens disagree about its own logo is the one thing
+     everybody in the room notices. */
+  header .mark{width:44px;height:44px;flex:none;border-radius:13px;overflow:hidden;
+    background:#07131f;display:grid;place-items:center}
+  header .mark img{width:44px;height:44px;display:block}
   header h1{margin:0;font-family:var(--font-d);font-size:20px;font-weight:800;letter-spacing:-.4px}
   header .sub{font-size:12px;color:var(--dim);margin-top:2px}
   header .right{margin-left:auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
@@ -154,7 +160,7 @@
 <div class="wrap">
 
 <header>
-  <div class="mark">RR</div>
+  <div class="mark"><img src="../logo-mark.png" alt=""></div>
   <div>
     <h1>Production Dashboard</h1>
     <div class="sub">Ricky Rampersad Branch · Total API (new business + increases) · Salesforce</div>

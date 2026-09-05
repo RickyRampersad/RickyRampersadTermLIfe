@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Branch Intelligence Wall</title>
+<meta name="description" content="Ninety seconds on the Branch Intelligence Wall — premium dues at 45, 60 and 90 days, the contracts we hold, and the licence year. Everything that used to be a Friday report, live.">
+<meta name="theme-color" content="#061c31">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- THE FONT MUST NOT BLOCK THE PICTURE. A plain stylesheet link in the head is
+     render-blocking: until it answers, the screen is blank. Measured at 12.5s on
+     a link that was merely slow, and a wall screen on branch wifi is exactly
+     where that happens. Loading it as print media and promoting it on load makes
+     it non-blocking — the system fallback in every font stack shows instantly
+     and the webfont swaps in when it arrives. noscript keeps it working with
+     scripting off. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Inter:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all';this.onload=null">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Inter:wght@400;500;600;700;800&display=swap"></noscript>
+<style>
+  /* The wall's own palette, because this film is about the wall. The pictures
+     are the subject — every scene that has one gives it the room and puts the
+     words underneath, rather than competing with it. */
+  :root{
+    --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --blue:#37b1ec; --blue2:#0b7fd4; --gold:#f5b93b;
+    --line:rgba(255,255,255,.12); --card:rgba(255,255,255,.05);
+    --ease:cubic-bezier(.16,1,.3,1);
+    --d:'Newsreader',Georgia,serif; --b:Inter,system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  /* THE PAGE BEHIND THE FILM, not a void — a 16:9 stage on a phone in portrait
+     is a band with 60% of the screen around it, and flat black there reads as
+     something failing to load. */
+  body{color:var(--ink);font-family:var(--b);overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+    background:
+      radial-gradient(900px 600px at 20% 0%,rgba(55,177,236,.10),transparent 60%),
+      radial-gradient(700px 500px at 85% 8%,rgba(245,185,59,.07),transparent 62%),
+      linear-gradient(165deg,#050f22 0%,#04091a 60%,#03060f 100%)}
+
+  #stage{position:fixed;left:50%;top:50%;width:1920px;height:1080px;
+    transform-origin:center;overflow:hidden;
+    background:
+      radial-gradient(1200px 760px at 12% -6%,rgba(55,177,236,.20),transparent 60%),
+      radial-gradient(1000px 640px at 90% 4%,rgba(11,127,212,.17),transparent 62%),
+      radial-gradient(900px 700px at 58% 108%,rgba(245,185,59,.09),transparent 60%),
+      linear-gradient(165deg,#061c31 0%,#08243f 55%,#050f22 100%)}
+
+  .scene{position:absolute;inset:0;padding:86px 96px;display:flex;flex-direction:column;
+    justify-content:center;align-items:center;text-align:center;
+    opacity:0;visibility:hidden;transform:translateY(20px);
+    transition:opacity .8s var(--ease),transform .8s var(--ease),visibility .8s}
+  .scene.on{opacity:1;visibility:visible;transform:none}
+  .scene.left{align-items:flex-start;text-align:left}
+
+  .kick{font:700 16px var(--b);letter-spacing:.26em;text-transform:uppercase;
+    color:var(--blue);margin-bottom:20px}
+  /* A scene built around a wall shot needs its margins back — the default
+     86px top and bottom is 172px the picture cannot use. */
+  .scene.shotscene{padding:40px 56px}
+  .shotscene .kick{margin-bottom:14px}
+  .shotscene .cap{margin-top:20px;font-size:23px}
+  .kick.gold{color:var(--gold)}
+  h1{font:600 92px/1.05 var(--d);margin:0 0 20px;letter-spacing:-1.6px}
+  h2{font:600 60px/1.12 var(--d);margin:0 0 16px;letter-spacing:-1px}
+  .lede{font:400 29px/1.5 var(--b);color:var(--dim);max-width:1180px;margin:0}
+  .lede b{color:var(--ink);font-weight:600}
+
+  /* pictures */
+  .shot{border-radius:14px;overflow:hidden;border:1px solid var(--line);
+    box-shadow:0 30px 90px -30px rgba(0,0,0,.85);background:#0b1626}
+  .shot img{display:block;width:100%;height:auto}
+  /* THE SHOT MOVES. A wall capture held still for six seconds is a photograph
+     of a screen; a slow push in keeps the frame alive without turning the
+     evidence into an effect. The scene is the viewport, so the image scales
+     inside its own rounded box and nothing spills. */
+  .shot{overflow:hidden}
+  .scene.on .shot img{animation:push 7.6s var(--ease) forwards}
+  @keyframes push{from{transform:scale(1.045)} to{transform:scale(1)}}
+  /* The caption arrives after the picture rather than with it, so the eye lands
+     on the wall first and reads the line second. */
+  .scene .cap{opacity:0;transform:translateY(12px)}
+  .scene.on .cap{opacity:1;transform:none;
+    transition:opacity .5s var(--ease) .35s,transform .6s var(--ease) .35s}
+  .scene.on h1,.scene.on h2{animation:settle 3.4s var(--ease) forwards}
+  @keyframes settle{from{transform:scale(1.012)} to{transform:scale(1)}}
+  @media (prefers-reduced-motion:reduce){
+    .scene.on .shot img,.scene.on h1,.scene.on h2{animation:none}
+    .scene .cap{opacity:1;transform:none} .scene.on .cap{transition:none}
+  }
+  /* THE WALL SHOT IS THE POINT OF THIS FILM, so it gets the frame. At 1290px a
+     1920-wide wall renders at two thirds and the panel labels stop being
+     readable across a room, which makes the shot decoration rather than
+     evidence. 1500px is the widest that still leaves room for a kicker above
+     and a caption below inside 1080. */
+  .wide{width:1500px}
+  .paper{width:600px;background:#fff}
+  .cap{font:500 24px/1.45 var(--b);color:var(--dim);margin:26px 0 0;max-width:1200px}
+  .cap b{color:var(--ink);font-weight:600}
+  /* A wall shot is wide and short; a letter is narrow and very tall. Left to
+     themselves in a row they leave half the frame empty and the eye goes to the
+     gap. The letter is capped and shows its top — which is the part being
+     talked about — so both sides finish at the same line. */
+  .pair{display:flex;gap:40px;align-items:center;justify-content:center}
+  .pair .shot.wide{width:900px}
+  .pair .shot.paper{width:430px;max-height:660px}
+  .pair .shot.paper img{object-fit:cover;object-position:top;max-height:660px}
+
+  /* the three-band strip */
+  .bands{display:flex;gap:26px;justify-content:center;margin-top:8px}
+  .bandcard{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:26px 34px;min-width:250px}
+  .bandcard .n{font:800 66px var(--b);letter-spacing:-2.4px;line-height:1;color:var(--blue)}
+  .bandcard.g .n{color:var(--gold)}
+  .bandcard .k{font:500 20px var(--b);color:var(--dim);margin-top:10px}
+
+  /* the reveal used on the "why" scene */
+  .why{display:flex;flex-direction:column;gap:18px;margin-top:10px}
+  .why div{font:400 38px/1.35 var(--b);color:var(--dim);opacity:0;
+    transform:translateY(10px);transition:opacity .6s var(--ease),transform .6s var(--ease)}
+  .scene.on .why div{opacity:1;transform:none}
+  .scene.on .why div:nth-child(1){transition-delay:.2s}
+  .scene.on .why div:nth-child(2){transition-delay:1.3s}
+  .scene.on .why div:nth-child(3){transition-delay:2.4s}
+  .why b{color:var(--ink);font-weight:600}
+
+  .mark{display:flex;align-items:center;gap:18px;margin-bottom:40px}
+  .mark i{width:60px;height:60px;border-radius:17px;font-style:normal;overflow:hidden;
+    background:#07131f;display:grid;place-items:center}
+  .mark i img{width:60px;height:60px;display:block}
+  .mark span{font:600 22px var(--d);color:var(--dim)}
+
+  /* THE ACT SCENE. A statute on a wall has to be readable as a statute: set in
+     the serif, hung off a rule, and attributed. The line under it is the point
+     being made and is deliberately in the sans, so nobody reads our argument as
+     part of the quotation. */
+  .quote{max-width:1500px;text-align:left}
+  .quote .cite{font:700 15px var(--b);letter-spacing:.24em;text-transform:uppercase;
+    color:var(--gold);margin-bottom:22px}
+  .quote blockquote{margin:0;padding-left:38px;border-left:3px solid rgba(245,185,59,.55);
+    font:400 46px/1.42 var(--d);color:var(--ink)}
+  .quote .after{font:400 30px/1.5 var(--b);color:var(--dim);margin:34px 0 0;padding-left:41px}
+  .quote .after b{color:var(--ink);font-weight:600}
+
+  /* THE SOUND GATE. See the note in player.js — the film must not start its
+     clock until the browser has actually let it make a sound. */
+  #gate{position:absolute;inset:0;display:none;place-items:center;z-index:7;
+    background:rgba(4,9,26,.72);cursor:pointer;backdrop-filter:blur(2px)}
+  #gate.on{display:grid}
+  #gate .inner{display:flex;flex-direction:column;align-items:center;gap:22px}
+  #gate .pb{width:104px;height:104px;border-radius:50%;display:grid;place-items:center;
+    background:linear-gradient(120deg,var(--gold),var(--gold2));color:#3a2404;
+    box-shadow:0 18px 50px rgba(0,0,0,.6);transition:transform .3s var(--ease)}
+  #gate:hover .pb{transform:scale(1.06)}
+  #gate .lbl{font:700 22px var(--b);color:var(--ink)}
+  #gate .sub{font:500 15px var(--b);color:var(--faint);margin-top:-12px}
+  #prog{position:absolute;left:0;bottom:0;height:4px;width:0;
+    background:linear-gradient(90deg,var(--blue),var(--gold))}
+  #chrome{position:absolute;right:36px;top:30px;display:flex;align-items:center;gap:14px;z-index:5}
+  #mute{width:48px;height:48px;border-radius:50%;border:1px solid var(--line);
+    background:rgba(255,255,255,.07);color:var(--ink);font-size:20px;cursor:pointer}
+  #voice{font:500 14px var(--b);color:var(--faint)}
+  #replay{position:absolute;inset:0;display:none;place-items:center;z-index:6;
+    background:rgba(4,9,26,.76)}
+  #replay button{background:linear-gradient(120deg,var(--blue),var(--blue2));color:#04223b;
+    border:0;border-radius:14px;padding:20px 46px;font:700 25px var(--b);cursor:pointer}
+  #hint{position:absolute;left:36px;bottom:24px;font:500 14px var(--b);color:var(--faint);z-index:5}
+</style>
+</head>
+<body>

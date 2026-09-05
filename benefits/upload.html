@@ -119,6 +119,36 @@
   .step.on{border-color:var(--gold);box-shadow:inset 3px 0 0 var(--gold)}
   .step.done .n{color:var(--go)}
 
+  /* The journey a month takes, and how long it has been standing still at
+     each stop. The waiting time is the point: a billing that is late is
+     almost never late because it was hard. */
+  .fbar{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin:.9rem 0 .3rem}
+  .fnode{flex:1;min-width:132px;border:1px solid var(--line);border-radius:6px;padding:.5rem .6rem;
+    background:var(--surface);display:flex;flex-direction:column;gap:.1rem}
+  .fnode .dot{width:16px;height:16px;border-radius:50%;background:var(--surface2);color:var(--slate);
+    font-size:10px;line-height:16px;text-align:center;font-weight:700}
+  .fnode .ft{font-size:12.5px;font-weight:600;line-height:1.35}
+  .fnode .fw{font-size:11px;color:var(--slate);font-variant-numeric:tabular-nums}
+  .fnode.done .dot{background:var(--go);color:#fff}
+  .fnode.now{border-color:var(--gold);box-shadow:inset 3px 0 0 var(--gold)}
+  .fnode.now .dot{background:var(--gold);color:#fff}
+  .fnode.warn{border-color:var(--stop)} .fnode.warn .dot{background:var(--stop);color:#fff}
+  .fnode.todo{opacity:.55}
+  .fline{width:12px;align-self:center;border-top:1px solid var(--line)}
+  @media(max-width:640px){.fline{display:none}}
+
+  /* Everything in flight, across the whole book, at the top of the screen. */
+  .board{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:.7rem;margin-bottom:1rem}
+  .bcard{border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:.7rem .8rem;
+    cursor:pointer;text-align:left;font:inherit;color:inherit}
+  .bcard:hover{border-color:var(--blue)}
+  .bcard.mine{border-color:var(--gold);box-shadow:inset 3px 0 0 var(--gold)}
+  .bcard .bg{font-size:13.5px;font-weight:600;line-height:1.3}
+  .bcard .bm{font-size:11.5px;color:var(--slate)}
+  .bcard .bs{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;margin-top:.35rem}
+  .bcard .bw{font-size:11px;color:var(--slate);font-variant-numeric:tabular-nums}
+  .s-wait{color:var(--warn)} .s-you{color:var(--gold)} .s-sent{color:var(--go)} .s-stop{color:var(--stop)}
+
   .gate{max-width:420px;margin:12vh auto;background:var(--surface);border:1px solid var(--line);
     border-radius:8px;padding:2rem 1.9rem;text-align:center}
   .gate h2{font-family:var(--display);font-size:1.3rem;color:var(--navy);margin-bottom:.4rem}
@@ -152,6 +182,7 @@
 </header>
 
 <main class="stack">
+  <div id="board"></div>
   <div class="steps" id="steps"></div>
 
   <div class="card">
@@ -281,8 +312,13 @@ const LINES = {
 const DOC_KINDS = {
   life:        { line:'life',    label:'Group life billing',       hint:'The monthly schedule, one line per member.' },
   adjustments: { line:'life',    label:'Statement of adjustments', hint:'Additions and terminations since the last run.' },
-  health:      { line:'health',  label:'Group health invoice',     hint:'Members by tier, with any credits.' },
-  pension:     { line:'pension', label:'Pension schedule',         hint:'Contributions for the month.' }
+  health:      { line:'health',  label:'Group health invoice',     hint:'Members by tier, with any credits. Its adjustments are inside it, not beside it.' },
+  /* Pension is not a Guardian print run. The schedule comes out of Salesforce,
+     which means the figures already exist as data on our own side of the
+     fence — the export is a copy, and copying is where a month goes wrong.
+     Until the branch's pension report reads straight into this space, the
+     export drops here like any other document. */
+  pension:     { line:'pension', label:'Pension schedule',         hint:'The Salesforce export of contributions for the month.' }
 };
 /* What each line comes to this month, once its own documents are read. */
 function lineTotal(key){
@@ -290,6 +326,7 @@ function lineTotal(key){
                           + (got.adjustments && got.adjustments.ok ? got.adjustments.doc.computed.net : 0);
   if(key==='health')  return got.health && got.health.ok ? got.health.doc.computed.payable : 0;
   if(key==='pension') return got.pension && got.pension.ok ? (got.pension.doc.computed.total||0) : 0;
+
   return 0;
 }
 
@@ -575,7 +612,11 @@ const gmoney = s => { const n = parseFloat(String(s).replace(/[^0-9.\-]/g,'')); 
    (806.00)  ($806.00)  and  $(806.00). Any bracket means a credit. */
 const neg   = s => String(s).includes('(');
 const amt   = s => { const v = gmoney(s); return v === null ? null : (neg(s) ? -v : v); };
-const AMT   = String.raw`[$(]{0,2}[\d,]+\.\d{2}\)?`;
+/* Guardian writes a negative two ways: (2,788.00) on the health invoice and
+   -778.45 on the statement of adjustments. Reading only the bracketed form
+   turned every credit on a statement into a charge — before + net no longer
+   equalled after, and the document was called unreliable when it was right. */
+const AMT   = String.raw`[-$(]{0,2}[\d,]+\.\d{2}\)?`;
 
 /* Guardian writes names two ways: "SURNAME ; GIVEN" on the life billing and
    "SURNAME, GIVEN" on the health invoice, with middle names on one and not
@@ -603,23 +644,73 @@ function samePerson(a, b){
   return [...aAll].filter(w => bAll.has(w)).length >= 2;
 }
 /* A name Guardian's own report writer cut off at the column edge. */
-const isClipped = n => !/[,;]/.test(String(n)) || String(n).trim().length < 4;
+/* A name Guardian's own report writer cut off at the column edge. Three
+   shapes of it: no separator at all, too short to be a name, or a separator
+   with nothing after it — "JOSEPH," is a surname whose given name did not
+   fit, and reporting it as a rename told a client their employee had
+   changed name when the truth was a short page. */
+const isClipped = n => { const s = String(n||'').trim();
+  return !/[,;]/.test(s) || s.length < 4 || /[,;]\s*$/.test(s); };
 
 /* ── Group life monthly billing ── */
 function parseLifeBilling(lines){
   const out = { kind:'life', policy:null, month:null, members:[], stated:{}, problems:[] };
-  for(const l of lines){
+  for(let i = 0; i < lines.length; i++){
+    const l = lines[i];
     const p = /POLICY\s*NO:?\s*([A-Z]{2,4}\s?\d+)/i.exec(l);   if(p && !out.policy) out.policy = p[1].trim();
     const m = /Monthly Billing:\s*([A-Za-z]+\s*,?\s*\d{4})/i.exec(l); if(m && !out.month) out.month = m[1].replace(/\s*,\s*/,' ').trim();
-    const g = /GRAND TOTAL:\s*([\d,]+\.\d{2})\s*([\d,]+\.\d{2})?\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})/i.exec(l);
-    if(g) out.stated = { sumAssured:gmoney(g[1]), adndSum:gmoney(g[2]||g[1]), basic:gmoney(g[3]),
-                         basicExtra:gmoney(g[4]), adnd:gmoney(g[5]), adndExtra:gmoney(g[6]), total:gmoney(g[7]) };
-    const lv = /No of Lives:\s*(\d+)/i.exec(l); if(lv) out.stated.lives = +lv[1];
-    // 187  ABDULLAH MUHAMMED ; NADIRA  100,000.00  100,000.00  32.00  0.00  8.00  0.00  40.00
+    /* Two producers, two layouts. One prints GRAND TOTAL: followed by its
+       figures; the other prints the figures on the line ABOVE the label, and
+       shuffles the columns between the summary and the grand-total page. So
+       take the row of figures wherever it sits and read it by shape rather
+       than by position: the total premium is the last amount on the line and
+       the sum assured the largest, which holds in both layouts. */
+    /* Both producers print the same summary row; they disagree only on where
+       the label sits and how the columns are ordered. One writes
+         No of Lives: 156  15,600,000.00 … 6,240.00
+       with everything on the label's line; the other writes the figures on
+       the line above and repeats them under GRAND TOTAL: with the columns in
+       a different order again.
+
+       So find the row of figures — on the label's line or the one above it —
+       and read it by shape, never by position: the total premium is the last
+       amount and the sum assured the largest. Reading basic and AD&D by
+       column index would be checking a number against whichever column that
+       producer happened to draw there, which is worse than not checking. */
+    if(/No of Lives:|GRAND TOTAL:/i.test(l)){
+      const figs = t => (String(t||'').match(new RegExp(AMT,'g')) || []).map(amt);
+      const row = figs(l).length >= 3 ? figs(l) : figs(lines[i-1]);
+      if(row.length >= 3){
+        if(out.stated.total == null)      out.stated.total = row[row.length-1];
+        if(out.stated.sumAssured == null) out.stated.sumAssured = Math.max.apply(null, row);
+      }
+      if(out.stated.lives == null){
+        const inline = /No of Lives:\s*(\d+)/i.exec(l);
+        const above  = /^\s*(\d{1,5})[\s,]/.exec(lines[i-1] || '');
+        if(inline) out.stated.lives = +inline[1];
+        else if(/No of Lives:/i.test(l) && above) out.stated.lives = +above[1];
+      }
+    }
+    // 187  ABDULLAH MUHAMMED ; NADIRA  100,000.00 … 40.00   (name first)
     const r = /^\s*(\d{3})\s+(.+?)\s{2,}([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s*$/.exec(l);
     if(r) out.members.push({ cert:r[1], name:r[2].replace(/\s+/g,' ').trim(),
       sumAssured:gmoney(r[3]), adndSum:gmoney(r[4]), basic:gmoney(r[5]),
       adnd:gmoney(r[7]), premium:gmoney(r[9]) });
+    /* 204 206,000.00 206,000.00 100,000.00GAYADEEN ; SHELDON 0.00 78.28 … 173.76
+       The other producer puts the sums BEFORE the name and leaves no space
+       between the last of them and the surname, so the name has to be cut out
+       of the middle of the line rather than matched at its start. */
+    if(!r){
+      const r2 = /^\s*(\d{2,4})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})([A-Z][A-Za-z\-'\. ]*;[A-Za-z\-'\. ]+?)\s+(.+)$/.exec(l);
+      if(r2){
+        const tail = (r2[6].match(new RegExp(AMT,'g')) || []).map(amt);
+        if(tail.length >= 3) out.members.push({
+          cert:r2[1], name:r2[5].replace(/\s*;\s*/,', ').replace(/\s+/g,' ').trim(),
+          sumAssured:gmoney(r2[2]), adndSum:gmoney(r2[3]),
+          basic:tail.length>1?tail[1]:0, adnd:tail.length>2?tail[2]:0,
+          premium:tail[tail.length-1] });
+      }
+    }
   }
   // de-duplicate: totals pages repeat the schedule
   const seen = new Set();
@@ -721,7 +812,12 @@ function parseHealthPages(pages){
       const inCol = i => nameX != null && i.x >= nameX - 4 && i.x < dateX - 10 && !FURNITURE.test(i.t);
       const pick = tol => band.filter(i => inCol(i) && Math.abs(i.y - it.y) <= tol)
                               .map(i => i.t).join('').replace(/\s+/g,' ').trim();
-      const name = pick(0.35) || pick(1.4);
+      /* The loose band sometimes sweeps the start date in behind the name —
+         "BABOOLAL, LINDA01-Nov-2011". Harmless to the money, which is read
+         from its own column, but it is the name every comparison runs on:
+         against the life billing, and against our own record. Cut it. */
+      const name = String(pick(0.35) || pick(1.4) || '')
+        .replace(/\s*\d{2}-[A-Za-z]{3}-\d{4}.*$/, '').trim();
       /* Take the figure on this row's own baseline, not merely the rightmost
          one in the band. Where two members are drawn a hair apart, the loose
          band holds both their premiums, and the rightmost is as likely to be
@@ -769,16 +865,25 @@ function parseHealthInvoice(lines){
     let l = lines[i];
     const gid = /Employer Group ID:\s*(\S+)/i.exec(l);        if(gid && !out.groupId) out.groupId = gid[1];
     const cov = /Coverage for:\s*([A-Za-z]+\s+\d{4})/i.exec(l); if(cov && !out.month) out.month = cov[1];
-    const cr  = /Credits\/Adjustments\s*\(\$([\d,]+\.\d{2})\)/i.exec(l); if(cr) out.stated.credits = -gmoney(cr[1]);
+    const cr  = /Credits\/Adjustments\s*\(\$([\d,]+\.\d{2})\)/i.exec(l);
+    if(cr) out.stated.credits = (out.stated.credits || 0) - gmoney(cr[1]);
     /* The summary page draws a label and its figure as separate lines, and not
        always in that order, so a single-line regex finds neither. Look at the
        neighbours. Getting this wrong is not cosmetic: without stated totals
        there is nothing to check the parse against, and a short read passes as
        clean — which is exactly what it did before this. */
     const near = () => [lines[i-1], l, lines[i+1]].filter(Boolean).join('  ');
+    /* An account can be billed in several divisions — D Rampersad is split
+       STAFF and MANAGERS — and each prints its own "Total for current month"
+       and its own outstanding amount. Taking the first of each read one
+       division and called the invoice wrong; these are sums. */
     const tot = /Total for current month\s+(\d+)\s+\$([\d,]+\.\d{2})/i.exec(l)
              || /Total for current month/i.test(l) && /(\d+)\s+\$([\d,]+\.\d{2})/.exec(near());
-    if(tot){ out.stated.lives = +tot[1]; out.stated.gross = gmoney(tot[2]); }
+    if(tot){
+      out.stated.lives = (out.stated.lives || 0) + (+tot[1]);
+      out.stated.gross = (out.stated.gross || 0) + gmoney(tot[2]);
+      out.divisions = (out.divisions || 0) + 1;
+    }
     /* Finding the figure that belongs to a label is not as simple as looking
        nearby. This writer puts it on the label's own line sometimes, and on
        the line BEFORE it other times — the right-aligned column is drawn
@@ -800,8 +905,10 @@ function parseHealthInvoice(lines){
        up to. Distinct from the balance, which carries arrears forward. */
     if(/Total Premium for current month/i.test(l) && out.stated.payable == null)
       out.stated.payable = figure();
-    if(/Total Division Outstanding Amount/i.test(l) && out.stated.outstanding == null)
-      out.stated.outstanding = figure();
+    if(/Total Division Outstanding Amount/i.test(l)){
+      const v = figure();
+      if(v != null) out.stated.outstanding = (out.stated.outstanding || 0) + v;
+    }
     /* An outstanding line names its invoice and amount, with the month it
        belongs to on the line after. A figure in brackets is a credit. */
     if(ledger){
@@ -844,6 +951,9 @@ function parseHealthInvoice(lines){
   if(out.stated.payable == null && !out.arrears.length) out.stated.payable = out.stated.balance;
   const tierSum = TIERS.reduce((s,t) => s + ((out.tiers[t] && out.tiers[t].stated) || 0), 0);
   if(tierSum && out.stated.lives == null) out.stated.lives = tierSum;
+  /* Tier headings repeat per division, so their sum is only a safe stand-in
+     for a single-division invoice. */
+  if(out.divisions > 1 && out.tierStatedUnreliable !== false) out.tierStatedUnreliable = true;
   out.computed = {
     lives: out.members.length,
     gross: out.members.reduce((s,m)=>s+(m.premium||0),0),
@@ -893,18 +1003,31 @@ function parseAdjustments(lines){
   const out = { kind:'adjustments', items:[], stated:{}, problems:[] };
   let context = '';
   for(const l of lines){
-    const b = /PREMIUM DUE BEFORE ADJUSTMENTS:\s*([\d,]+\.\d{2}).*?([\d,]+\.\d{2})\s*$/i.exec(l);
-    if(b) out.stated.before = gmoney(l.match(/([\d,]+\.\d{2})\s*$/)[1]);
-    const a = /PREMIUM DUE AFTER ADJUSTMENT:.*?([\d,]+\.\d{2})\s*$/i.exec(l); if(a) out.stated.after = gmoney(a[1]);
-    const n = /NET ADJUSTMENTS:.*?(\(?[\d,]+\.\d{2}\)?)\s*$/i.exec(l); if(n) out.stated.net = amt(n[1]);
+    /* Every one of these lines ends with the figure that matters — the total
+       premium column — whatever the columns before it hold. Reading the last
+       amount on the line survives both producers' column orders, and the
+       pattern now carries a leading minus so a credit stays a credit. */
+    const lastAmt = t => { const m = String(t||'').match(new RegExp(AMT,'g')); return m ? amt(m[m.length-1]) : null; };
+    if(/PREMIUM DUE BEFORE ADJUSTMENTS:/i.test(l)) out.stated.before = lastAmt(l);
+    if(/PREMIUM DUE AFTER ADJUSTMENT:/i.test(l))   out.stated.after  = lastAmt(l);
+    if(/NET ADJUSTMENTS:/i.test(l))                out.stated.net    = lastAmt(l);
     const c = /\b(TERMINATION|ADDITION|INCREASE|DECREASE)\b.*?AS AT/i.exec(l); if(c) context = c[1].toUpperCase();
     const d = /AS AT\s*$|^(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)\s+\d{1,2}(ST|ND|RD|TH)?\s+\d{4}/i.exec(l.trim());
     if(d && d[1]) out.effective = l.trim();
-    // 156  AMEERA KHAN  1  (100,000.00)  (100,000.00)  (31.00)  0.00  (8.00)  0.00  (39.00)
-    const r = /^\s*(\d{2,4})\s+([A-Z][A-Za-z\-'\. ]+?)\s{2,}(\d+)\s+(\(?[\d,]+\.\d{2}\)?)\s+(\(?[\d,]+\.\d{2}\)?)\s+(\(?[\d,]+\.\d{2}\)?)\s+(\(?[\d,]+\.\d{2}\)?)\s+(\(?[\d,]+\.\d{2}\)?)\s+(\(?[\d,]+\.\d{2}\)?)\s+(\(?[\d,]+\.\d{2}\)?)\s*$/.exec(l);
-    if(r) out.items.push({ cert:r[1], name:r[2].replace(/\s+/g,' ').trim(), periods:+r[3],
-      coverage:amt(r[4]), basic:amt(r[6]), adnd:amt(r[8]), total:amt(r[10]),
-      type: context || 'ADJUSTMENT', effective: out.effective || null });
+    /* 156  AMEERA KHAN  1  (100,000.00) … (39.00)      brackets, and
+       224  SURAJ ROOPCHAND  1  -226,000.00 … -182.96     minus signs.
+       Both are the same row: a certificate, a name, a period count, then a
+       run of figures ending in the total. Matching the run rather than a
+       fixed number of columns reads both without knowing which producer
+       drew it. */
+    const r = /^\s*(\d{2,4})\s+([A-Z][A-Za-z\-'\. ]+?)\s{2,}(\d+)\s+(.+)$/.exec(l);
+    if(r){
+      const f = (r[4].match(new RegExp(AMT,'g')) || []).map(amt);
+      if(f.length >= 5) out.items.push({
+        cert:r[1], name:r[2].replace(/\s+/g,' ').trim(), periods:+r[3],
+        coverage:f[0], basic:f[3], adnd:f[5], total:f[f.length-1],
+        type: context || 'ADJUSTMENT', effective: out.effective || null });
+    }
   }
   out.computed = { net: out.items.reduce((s,i)=>s+(i.total||0),0) };
   return out;
@@ -921,6 +1044,10 @@ function verify(doc){
     checks.push(['Basic premium',      doc.computed.basic,      doc.stated.basic]);
     checks.push(['AD&D premium',       doc.computed.adnd,       doc.stated.adnd]);
     checks.push(['Monthly total',      doc.computed.total,      doc.stated.total]);
+    /* A document that states no totals cannot be checked at all, and "0 of 0
+       agree" reads like success. Say what it is instead. */
+    if(!checks.filter(c => c[2] != null).length)
+      doc.problems.push('This billing prints no totals of its own, so nothing read from it could be verified.');
   }
   if(doc.kind === 'health'){
     checks.push(['Lives',   doc.computed.lives,   doc.stated.lives]);
@@ -944,6 +1071,12 @@ function verify(doc){
        can only come from section headings, which page breaks interrupt. The
        gmoney is what has to reconcile; the split is shown as read. */
   }
+  if(doc.kind === 'pension'){
+    checks.push(['Rows',     doc.computed.rows,  doc.stated.rows]);
+    checks.push(['Total contribution', doc.computed.total, doc.stated.total]);
+    if(!checks.filter(c => c[2] != null).length)
+      doc.problems.push('This sheet prints no total of its own, so nothing read from it could be verified.');
+  }
   if(doc.kind === 'adjustments'){
     checks.push(['Net adjustment', doc.computed.net, doc.stated.net]);
     if(doc.stated.before != null && doc.stated.after != null)
@@ -961,6 +1094,230 @@ function verify(doc){
    document prints on itself. If none agrees, say so — a confident wrong
    number is worse than an honest failure. */
 const TOLERANCES = [0.8, 1.2, 1.6, 2.2, 3, 4, 6, 8];
+
+/* ══════════════ THE PENSION BILLING ══════════════
+   Group pension does not arrive as a Guardian PDF. It arrives as a
+   spreadsheet, and the reason an assistant keeps her own copy of it is that
+   Salesforce cannot be counted on for the same figures — on Servus, 204 of
+   the 407 records under the scheme's bill number are empty shells with no
+   contact, no plan and no premium, and across both schemes the contribution
+   field is filled on about a tenth of what is actually billed.
+
+   So the billing is the truth about the scheme, exactly as the life
+   schedule and the health invoice are the truth about theirs. It is read
+   the same way and held to the same standard: it must agree with the total
+   printed at the foot of its own sheet before a figure from it is used.
+
+   No library. An .xlsx is a zip of XML, and the browser already has
+   DecompressionStream — the same one the PDF reader uses for FlateDecode. */
+
+/* Minimal zip reader: enough to pull named entries out of an .xlsx. */
+async function unzip(bytes){
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  /* Find the end-of-central-directory record, then walk the directory. It is
+     the only reliable way in — local headers can lie about sizes when the
+     writer streamed the file. */
+  let eocd = -1;
+  for(let i = bytes.length - 22; i >= 0 && i > bytes.length - 66000; i--){
+    if(dv.getUint32(i, true) === 0x06054b50){ eocd = i; break; }
+  }
+  if(eocd < 0) throw new Error('Not a readable spreadsheet.');
+  let n = dv.getUint16(eocd + 10, true), off = dv.getUint32(eocd + 16, true);
+  const out = {};
+  for(let k = 0; k < n; k++){
+    if(dv.getUint32(off, true) !== 0x02014b50) break;
+    const method  = dv.getUint16(off + 10, true);
+    const csize   = dv.getUint32(off + 20, true);
+    const nameLen = dv.getUint16(off + 28, true);
+    const extLen  = dv.getUint16(off + 30, true);
+    const cmtLen  = dv.getUint16(off + 32, true);
+    const lho     = dv.getUint32(off + 42, true);
+    const name    = new TextDecoder().decode(bytes.subarray(off + 46, off + 46 + nameLen));
+    /* The local header repeats the name and extra field, at its own lengths. */
+    const lNameLen = dv.getUint16(lho + 26, true), lExtLen = dv.getUint16(lho + 28, true);
+    const start = lho + 30 + lNameLen + lExtLen;
+    const raw = bytes.subarray(start, start + csize);
+    out[name] = method === 0 ? raw : await inflate(raw);
+    off += 46 + nameLen + extLen + cmtLen;
+  }
+  return out;
+}
+
+/* A sheet as rows of cells keyed by column letter. Shared strings resolved,
+   everything left as text — the parser decides what is a number. */
+async function xlsxRows(bytes){
+  const files = await unzip(bytes);
+  const txt = k => files[k] ? new TextDecoder().decode(files[k]) : '';
+  const shared = [];
+  const ss = txt('xl/sharedStrings.xml');
+  if(ss){
+    /* Each <si> may hold several <t> runs; the string is all of them joined. */
+    const re = /<si>([\s\S]*?)<\/si>/g; let m;
+    while((m = re.exec(ss))){
+      let s = '', t; const tr = /<t[^>]*>([\s\S]*?)<\/t>/g;
+      while((t = tr.exec(m[1]))) s += t[1];
+      shared.push(s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+                   .replace(/&quot;/g,'"').replace(/&#39;/g,"'"));
+    }
+  }
+  /* A workbook may hold one sheet or twenty-eight. Servus's carries every
+     month back to November 2023, plus the employer's payroll file and a
+     variance report — so the right sheet has to be chosen rather than
+     assumed. Return them all, named, and let the caller pick. */
+  const wb = txt('xl/workbook.xml'), names = [];
+  const nRe = /<sheet[^>]*name="([^"]*)"[^>]*r:id="([^"]*)"/g; let nm;
+  while((nm = nRe.exec(wb))) names.push({ name: nm[1], rid: nm[2] });
+  const rel = txt('xl/_rels/workbook.xml.rels'), target = {};
+  const rRe = /<Relationship[^>]*Id="([^"]*)"[^>]*Target="([^"]*)"/g; let rr;
+  while((rr = rRe.exec(rel))) target[rr[1]] = rr[2];
+  const sheets = names.map(x => ({ name: x.name,
+    path: 'xl/' + String(target[x.rid] || '').replace(/^\/?xl\//, '').replace(/^\//, '') }))
+    .filter(x => files[x.path]);
+  if(!sheets.length) sheets.push({ name:'Sheet1', path:
+    Object.keys(files).find(k => /^xl\/worksheets\/.*\.xml$/.test(k)) });
+  return sheets.map(sh => ({ name: sh.name, rows: sheetRows(txt(sh.path), shared) }));
+}
+
+function sheetRows(sheet, shared){
+  const rows = [];
+  const rowRe = /<row[^>]*>([\s\S]*?)<\/row>/g; let r;
+  while((r = rowRe.exec(sheet))){
+    const cells = {};
+    /* An empty cell is written self-closing — <c r="A1" s="1"/> — and a
+       pattern that treats the slash as just another attribute character
+       never fires the self-closing branch. It then runs on to the next
+       </c> and swallows every cell in between, which read a whole sheet
+       as blank. Match the tag first, then decide. */
+    const cRe = /<c\b([^>]*?)(\/)?>/g; let c;
+    while((c = cRe.exec(r[1]))){
+      const attrs = c[1] || '';
+      const ref = /r="([A-Z]+)\d+"/.exec(attrs);
+      if(!ref) continue;
+      if(c[2]) continue;                                  // self-closing: empty
+      const end = r[1].indexOf('</c>', cRe.lastIndex);
+      if(end < 0) continue;
+      const body = r[1].slice(cRe.lastIndex, end);
+      cRe.lastIndex = end + 4;
+      const v = /<v>([\s\S]*?)<\/v>/.exec(body);
+      const inline = /<is>[\s\S]*?<t[^>]*>([\s\S]*?)<\/t>/.exec(body);
+      let val = v ? v[1] : (inline ? inline[1] : '');
+      if(/\bt="s"/.test(attrs) && v) val = shared[+v[1]] ?? '';
+      if(val !== '') cells[ref[1]] = String(val)
+        .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+        .replace(/&quot;/g,'"').replace(/&#39;/g,"'");
+    }
+    rows.push(cells);
+  }
+  return rows;
+}
+
+/* Which sheet is this month's billing. A workbook of twenty-eight is a
+   filing cabinet, and the wrong drawer is last November. Prefer the sheet
+   that parses to the most member rows AND names a list bill; fall back to
+   the most rows. */
+function pickPensionSheet(sheets){
+  const read = [];
+  sheets.forEach(sh => {
+    let doc; try{ doc = parsePensionBilling(sh.rows); }catch(e){ return; }
+    if(!doc.members.length) return;
+    /* The month comes from the sheet's own billing date first, and from its
+       tab name only as a fallback — "JULY 2026" is a label somebody typed. */
+    let n = doc.month ? monthOf(doc) : null;
+    if(n == null){
+      const m = /([A-Za-z]{3,9})[^A-Za-z0-9]{0,3}(\d{4})/.exec(sh.name || '');
+      if(m){ const d = new Date(m[1] + ' 1, ' + m[2]);
+        if(!isNaN(+d)){ n = d.getFullYear()*12 + d.getMonth();
+          if(!doc.month) doc.month = d.toLocaleDateString('en-GB',{month:'long',year:'numeric'}); } }
+    }
+    read.push({ sheet: sh.name, doc, n });
+  });
+  if(!read.length) return null;
+  /* Newest month wins. Where nothing dates itself, the fullest sheet does. */
+  const dated = read.filter(x => x.n != null);
+  if(dated.length) return dated.sort((a,b) => a.n - b.n).pop();
+  return read.sort((a,b) => a.doc.members.length - b.doc.members.length).pop();
+}
+
+/* ── the pension billing itself ──
+   Guardian's list-bill extract, one row per policy:
+
+     Contact: Full Name | Record Type | POLICY # | ISSUE DATE | Total Premiums | List Bill #
+
+   and a Total row at the foot carrying the row count and the sum. That
+   total is what makes this document checkable, and nothing is used from a
+   sheet whose own total does not agree. */
+function parsePensionBilling(rows){
+  const out = { kind:'pension', members:[], stated:{}, bills:[], problems:[] };
+  /* The header row names the columns wherever it happens to sit. */
+  let col = null;
+  for(const r of rows){
+    /* Servus's sheet names the bill in a header line of its own —
+       "LISTBILL | S072" — above the columns. Bankers' carries it in a column
+       on every row. Take it from either. */
+    const vals0 = Object.values(r);
+    /* "BILLING DATE | 1--JULY--2026". The sheet knows which month it is, and
+       a workbook holding every month back to November 2023 makes guessing
+       from size exactly the wrong idea. */
+    const di = vals0.findIndex(v => /^\s*billing\s*date/i.test(String(v)));
+    if(di >= 0 && vals0[di+1] && !out.month){
+      const m = /([A-Za-z]{3,9})[^A-Za-z0-9]*(\d{4})/.exec(String(vals0[di+1]));
+      if(m){ const d = new Date(m[1] + ' 1, ' + m[2]);
+        if(!isNaN(+d)) out.month = d.toLocaleDateString('en-GB',{month:'long',year:'numeric'}); }
+      continue;
+    }
+    const li = vals0.findIndex(v => /^\s*list\s*bill/i.test(String(v)));
+    if(li >= 0 && vals0[li+1]){
+      const b = String(vals0[li+1]).trim();
+      if(b && out.bills.indexOf(b) === -1) out.bills.push(b);
+      out.stated.bill = b;
+      continue;
+    }
+    const vals = Object.entries(r);
+    const find = re => (vals.find(([,v]) => re.test(String(v))) || [])[0];
+    const name = find(/^\s*contact\s*:?\s*full\s*name/i) || find(/^\s*(employee|member)\s*name/i);
+    if(name){
+      col = { name, rt:find(/^\s*record\s*type/i), policy:find(/^\s*policy\s*#?/i),
+              issued:find(/^\s*issue\s*date/i),
+              prem:find(/^\s*total\s*premium/i) || find(/^\s*premium/i),
+              bill:find(/^\s*list\s*bill/i) };
+      continue;
+    }
+    if(!col) continue;
+    const nm = String(r[col.name] || '').trim();
+    if(!nm) continue;
+    /* The foot of the sheet: the count sits where the record type does and
+       the sum where the premiums do. */
+    if(/^total/i.test(nm)){
+      const cnt = col.rt ? +String(r[col.rt]).replace(/[^\d]/g,'') : NaN;
+      if(!isNaN(cnt)) out.stated.rows = cnt;
+      const sum = col.prem ? +String(r[col.prem]).replace(/[^\d.\-]/g,'') : NaN;
+      if(!isNaN(sum)) out.stated.total = round2(sum);
+      continue;
+    }
+    const prem = col.prem ? +String(r[col.prem]).replace(/[^\d.\-]/g,'') : NaN;
+    const bill = col.bill ? String(r[col.bill] || '').trim() : '';
+    if(bill && out.bills.indexOf(bill) === -1) out.bills.push(bill);
+    out.members.push({ name:nm, empId:String(r[col.policy] || '').trim(),
+                       policy:String(r[col.policy] || '').trim(),
+                       recordType:col.rt ? String(r[col.rt] || '').trim() : '',
+                       bill, premium: isNaN(prem) ? null : prem });
+  }
+  const people = new Set(out.members.map(m => nameKey(m.name).display.toUpperCase()));
+  out.computed = { rows: out.members.length, people: people.size,
+                   total: round2(out.members.reduce((s,m) => s + (m.premium||0), 0)),
+                   lives: people.size };
+  /* Two policies to a person is normal on a Section 134 arrangement — one
+     leg each. More than two is worth a look. */
+  const per = {};
+  out.members.forEach(m => { const k = nameKey(m.name).display.toUpperCase();
+    per[k] = (per[k]||0) + 1; });
+  const many = Object.keys(per).filter(k => per[k] > 2);
+  if(many.length) out.problems.push(many.length + ' member' + (many.length===1?' has':'s have')
+    + ' more than two policies on this bill: ' + many.slice(0,5).join(', '));
+  if(out.bills.length > 1) out.problems.push('This sheet carries more than one list bill number: '
+    + out.bills.join(', ') + '. Each scheme is billed on its own.');
+  return out;
+}
 
 const PARSERS = { life:parseLifeBilling, health:parseHealthInvoice, adjustments:parseAdjustments };
 
@@ -1062,6 +1419,245 @@ function leakage(adjustments, health){
 }
 
 
+/* ══════════════ WHERE THE PACK REPEATS ITSELF ══════════════
+   Guardian sends the same figure more than once, in more than one shape.
+   Most of those repeats are a gift — they are the only way to catch a bad
+   month without a second system to check against. Two of them are traps,
+   and both are expensive.
+
+   THE LIFE TOTAL IS PRINTED FOUR TIMES:
+     the billing's section subtotal   "No of Lives: 156 … 6,240.00"
+     the billing's grand total        "GRAND TOTAL: … 6,240.00"
+     the statement of adjustments     "PREMIUM DUE BEFORE ADJUSTMENTS: … 6,240.00"
+     the covering letter              the figure AFTER adjustment
+   The statement is not a second invoice. It opens on the life billing's own
+   bottom line, moves it, and prints the answer. Billing the life schedule
+   AND the statement charges the client twice for one month. The right sum is
+   billing + net — which the statement then prints as "premium due after
+   adjustment", so it can be checked rather than trusted.
+
+   HEALTH WORKS THE OTHER WAY ROUND. Its credits sit inside its own "total
+   premium for current month" already. Applying them the way life's are
+   applied credits the client twice.
+
+   AND THE HEALTH TRANSMITTAL IS NOT THE BILL. It totals the current month
+   per division and stops. On D Rampersad's September that is $64,740 against
+   a payable balance of $206,766 — key from the transmittal and you drop the
+   whole arrears.
+
+   THE LEAVERS APPEAR IN BOTH LINES, A MONTH APART. Life terminates from the
+   date they left; health credits back the month already billed. So a leaver
+   should show up twice, and the interesting case is when they do not:
+   terminated on life, still on the health invoice, no credit — that is a
+   client paying for somebody who has gone.
+
+   None of this can be seen from inside one document, which is why staff have
+   been doing it by eye. */
+function crossChecks(){
+  const out = [], life = got.life, adj = got.adjustments, health = got.health;
+  const push = (id, kind, text) => out.push({ id, kind, text });
+
+  /* Two names are the same person only when they share two words. One is not
+     enough: Suraj Roopchand terminated on life and Vedish Roopchand still
+     employed share a surname and nothing else. */
+  const words = s => new Set(String(s||'').toUpperCase().replace(/[^A-Z ]/g,' ')
+    .split(/\s+/).filter(w => w.length > 1));
+  const same = (a,b) => { const A = words(a), B = words(b);
+    return [...A].filter(w => B.has(w)).length >= 2; };
+
+  /* ── the life schedule and its statement must be the same run ── */
+  if(life && adj && life.ok && adj.ok && life.doc.stated.total != null && adj.doc.stated.before != null){
+    const agree = near(life.doc.stated.total, adj.doc.stated.before, 0.02);
+    push('x-run', agree ? 'ok' : 'blocker', agree
+      ? `The statement of adjustments opens on ${money(adj.doc.stated.before)} — the same figure the life `
+        + `schedule closes on. Both documents are from the same run.`
+      : `The life schedule totals ${money(life.doc.stated.total)}, but the statement of adjustments says the `
+        + `premium before adjustments is ${money(adj.doc.stated.before)}. They are not from the same run — `
+        + `one of them is last month's.`);
+    if(adj.doc.stated.after != null){
+      const derived = round2(life.doc.stated.total + (adj.doc.computed.net||0));
+      const ties = near(derived, adj.doc.stated.after, 0.02);
+      push('x-after', ties ? 'ok' : 'blocker', ties
+        ? `Schedule ${money(life.doc.stated.total)} less ${money(Math.abs(adj.doc.computed.net||0))} in `
+          + `adjustments comes to ${money(derived)} — exactly what the statement prints as due after `
+          + `adjustment. The life line is billed once, at that figure.`
+        : `Schedule plus adjustments comes to ${money(derived)}, but the statement says `
+          + `${money(adj.doc.stated.after)} is due after adjustment.`);
+    }
+  }
+
+  /* ── the leavers, across both lines ── */
+  if(adj && adj.ok && health && health.ok && (adj.doc.items||[]).length){
+    const leavers = adj.doc.items.filter(i => /TERMIN/i.test(i.type||'') || (i.total||0) < 0);
+    const credited = [], stillBilled = [], notOnHealth = [];
+    leavers.forEach(l => {
+      if((health.doc.credits||[]).some(c => same(c.name, l.name))) credited.push(l);
+      else if((health.doc.members||[]).some(m => same(m.name, l.name))) stillBilled.push(l);
+      else notOnHealth.push(l);
+    });
+    if(credited.length) push('x-leavers-ok', 'ok',
+      `${credited.length === 1 ? 'The leaver on the life statement is' : 'All ' + credited.length + ' of these leavers are'} `
+      + `credited on the health invoice as well — ${credited.map(l => l.name).join(', ')}. `
+      + `Both lines have been told.`);
+    if(notOnHealth.length) push('x-leavers-nohealth', 'ok',
+      `${notOnHealth.map(l => l.name).join(', ')} ${notOnHealth.length === 1 ? 'is' : 'are'} terminated on life `
+      + `with no health credit — and ${notOnHealth.length === 1 ? 'is' : 'are'} not on the health invoice at all, `
+      + `so there is nothing to credit. Correct.`);
+    if(stillBilled.length) push('x-leavers-billed', 'blocker',
+      `${stillBilled.map(l => l.name).join(', ')} ${stillBilled.length === 1 ? 'has' : 'have'} been terminated on `
+      + `the life statement but ${stillBilled.length === 1 ? 'is' : 'are'} still on this month's health invoice, `
+      + `with no credit. The client is being billed for health cover on somebody who has left.`);
+  }
+
+  /* ── credited and billed in the same breath ── */
+  if(health && health.ok && (health.doc.credits||[]).length){
+    const both = (health.doc.credits||[]).filter(c =>
+      (health.doc.members||[]).some(m => m.empId && c.empId && m.empId === c.empId));
+    if(both.length) push('x-credit-billed', 'blocker',
+      `${both.map(c => c.name).join(', ')} ${both.length === 1 ? 'appears' : 'appear'} on this invoice as both a `
+      + `credit and a charge. One of the two is wrong.`);
+  }
+
+  /* ── the transmittal figure is not the bill ── */
+  if(health && health.ok && health.doc.stated.balance != null && health.doc.stated.payable != null
+     && !near(health.doc.stated.balance, health.doc.stated.payable, 0.02)){
+    push('x-transmittal', 'ok',
+      `The health invoice prints ${money(health.doc.stated.payable)} as this month's premium and `
+      + `${money(health.doc.stated.balance)} as the payable balance. The payment transmittal at the back shows `
+      + `only the first. ${money(health.doc.stated.balance)} is what the client owes, and it is what the email says.`);
+  }
+
+  return out;
+}
+
+/* ══════════════ AND WHAT SALESFORCE BELIEVES ══════════════
+   The documents are one half of the question. The other half is the branch's
+   own record: who do we think is covered? Nobody has put the two side by
+   side, and on D Rampersad they do not agree — Salesforce holds 71 life and
+   78 health records reading "Premium Paying" against a September billing of
+   67 lives on each line.
+
+   Every name in that gap is either a leaver whose status was never changed —
+   so the branch is quoting cover that stopped, and the conversion notice the
+   person was owed never went — or cover that lapsed with nobody watching.
+
+   The strongest case is the one this month actually contains: a member
+   terminated on the statement of adjustments whose Salesforce record still
+   reads in force. The document is the notification. If the status did not
+   move, the process stopped halfway: no termination went to the department,
+   no conversion notice went to the member, and next month the same name
+   comes round again.
+
+   Read-only, and never a reason to hold a month. If Salesforce cannot be
+   reached the check says so and the billing goes on. */
+let ROSTER = null, ROSTER_WHY = '';
+async function loadRoster(){
+  ROSTER = null; ROSTER_WHY = '';
+  if(!API) return;
+  try{
+    const r = await fetch(API + '?action=roster&auth=' + encodeURIComponent(AUTH || '')
+      + '&group=' + encodeURIComponent(group.name));
+    const d = await r.json();
+    if(d && d.ok && d.roster) ROSTER = d.roster;
+    else ROSTER_WHY = (d && (d.why || d.error)) || 'The roster could not be read.';
+  }catch(e){ ROSTER_WHY = 'Could not reach the branch script for the roster.'; }
+}
+
+/* The termination form the employer and the branch already use. Pre-filled
+   so reporting a leaver is one click from the month that found them. */
+const QUERYPAL = 'https://querymypolicies.netlify.app/';
+const reportLink = name => `${QUERYPAL}?action=leaver&name=${encodeURIComponent(name)}`;
+
+function rosterChecks(){
+  const out = [], push = (id,kind,text,extra) => out.push(Object.assign({id,kind,text}, extra||{}));
+  if(!ROSTER){
+    if(ROSTER_WHY) push('r-off','note',
+      `The branch record was not read this month — ${ROSTER_WHY} The documents were still checked `
+      + `against each other; only the comparison with Salesforce is missing.`);
+    return out;
+  }
+  const words = s => new Set(String(s||'').toUpperCase().replace(/[^A-Z ]/g,' ')
+    .split(/\s+/).filter(w => w.length > 1));
+  const same = (a,b) => { const A = words(a), B = words(b);
+    return [...A].filter(w => B.has(w)).length >= 2; };
+  const inForce = line => ROSTER.filter(r => r.line === line && r.inForce);
+  const billed  = line => (line === 'life'
+    ? (got.life   && got.life.ok   ? got.life.doc.members   : null)
+    : (got.health && got.health.ok ? got.health.doc.members : null));
+
+  /* ── terminated on the statement, still in force on our side ── */
+  const adj = got.adjustments;
+  if(adj && adj.ok && (adj.doc.items||[]).length){
+    const leavers = adj.doc.items.filter(i => /TERMIN/i.test(i.type||'') || (i.total||0) < 0);
+    const stuck = [];
+    leavers.forEach(l => {
+      const rows = ROSTER.filter(r => same(r.name, l.name) && r.inForce);
+      if(rows.length) stuck.push({ name:l.name, rows });
+    });
+    if(stuck.length) push('r-terminated-inforce', 'blocker',
+      `${stuck.map(s => `${s.name} still reads "${s.rows[0].status}" on our own record`
+        + (s.rows[0].modified ? ` (last touched ${s.rows[0].modified})` : '')).join('; ')}. `
+      + `Guardian has terminated ${stuck.length === 1 ? 'them' : 'them'} on this statement, so the `
+      + `termination was never put through on our side — which means no conversion notice went to `
+      + `${stuck.length === 1 ? 'them' : 'any of them'} either.`,
+      { leavers: stuck.map(s => s.name) });
+    if(leavers.length && !stuck.length) push('r-terminated-ok','ok',
+      `All ${leavers.length === 1 ? 'the leaver on this statement is' : leavers.length + ' leavers on this statement are'} `
+      + `already off our own record. The process was followed.`);
+  }
+
+  /* ── in force with us, not on the bill ──
+     Anyone already named as a stuck termination is left out: they are the
+     same problem, and stating it twice is how a screen teaches people to
+     skim it. */
+  const named = new Set([].concat.apply([], out.filter(c => c.leavers).map(c => c.leavers)));
+  const alreadyNamed = n => [...named].some(x => same(x, n));
+  ['life','health'].forEach(line => {
+    if(!group.lines.includes(line)) return;
+    const mine = billed(line); if(!mine) return;
+    const ghosts = inForce(line).filter(r =>
+      !mine.some(m => same(m.name, r.name)) && !alreadyNamed(r.name));
+    if(!ghosts.length) return;
+    push('r-ghosts-'+line, 'flag',
+      `${ghosts.length} ${ghosts.length === 1 ? 'person reads' : 'people read'} as covered on our `
+      + `${LINES[line].label.toLowerCase()} record but ${ghosts.length === 1 ? 'is' : 'are'} not on this `
+      + `month's billing: ${ghosts.slice(0,8).map(r => r.name).join(', ')}`
+      + `${ghosts.length > 8 ? ` and ${ghosts.length - 8} more` : ''}. `
+      + `Guardian stopped charging for them and nobody changed the status.`,
+      { people: ghosts.map(r => r.name) });
+  });
+
+  /* ── on the bill, nothing in force with us ──
+     With one caveat that matters more than the check itself: if most of a
+     billing comes back unknown, the roster did not find this account — a
+     name the book spells differently, or a query that came back short. Say
+     that, once, instead of accusing sixty people of not existing. A check
+     that fires on everybody teaches staff to scroll past it. */
+  ['life','health'].forEach(line => {
+    if(!group.lines.includes(line)) return;
+    const mine = billed(line); if(!mine) return;
+    const unknown = mine.filter(m => !ROSTER.some(r => r.line === line && same(r.name, m.name)));
+    if(!unknown.length) return;
+    if(unknown.length > mine.length / 2){
+      if(!out.some(c => c.id === 'r-nomatch')) push('r-nomatch','note',
+        `The branch record came back with little of this group in it — ${
+          ROSTER.filter(r => r.inForce).length} in-force ${
+          ROSTER.filter(r => r.inForce).length === 1 ? 'record' : 'records'} against ${mine.length} billed. `
+        + `Salesforce almost certainly holds this account under a different spelling, so the roster `
+        + `comparison has been left out of this month rather than reported as ${unknown.length} missing people.`);
+      return;
+    }
+    push('r-unknown-'+line, 'flag',
+      `${unknown.length} ${unknown.length === 1 ? 'person is' : 'people are'} on this month's `
+      + `${LINES[line].label.toLowerCase()} with no record on our side at all: `
+      + `${unknown.slice(0,8).map(m => m.name).join(', ')}`
+      + `${unknown.length > 8 ? ` and ${unknown.length - 8} more` : ''}. `
+      + `New members are the usual reason — but until the record exists, nothing we run can see them.`);
+  });
+
+  return out;
+}
+
 /* ══════════════ SCREEN ══════════════ */
 function expected(){
   const e = ['life','adjustments'];
@@ -1098,7 +1694,11 @@ function paintDocs(){
 }
 
 function paintSteps(){
-  const exp = expected(), have = exp.filter(k => got[k] && got[k].ok).length;
+  /* Progress follows the documents that ARRIVED, not only the ones that
+     reconciled. A month whose documents do not add up is exactly the month
+     an administrator most needs to see — leaving staff stuck on step 1 with
+     no way forward was the opposite of the point. */
+  const exp = expected(), have = exp.filter(k => got[k]).length;
   const qs = questions(), answered = qs.filter(q => answers[q.id]).length;
   const done = [ true, have>0, have===exp.length, qs.length===0 || answered===qs.length ];
   const now  = have===0 ? 1 : have<exp.length ? 2 : (answered<qs.length ? 3 : 4);
@@ -1114,6 +1714,27 @@ async function take(fileList, hintLine){
   for(const f of fileList){
     try{
       const bytes = new Uint8Array(await f.arrayBuffer());
+      /* A spreadsheet is the pension billing — it is the one line Guardian
+         does not send as a PDF. Recognised by the zip signature rather than
+         the file name, because names get changed and PK never does. */
+      if(bytes[0] === 0x50 && bytes[1] === 0x4B){
+        let b64x = '';
+        if(API){ let bin = '';
+          for(let i = 0; i < bytes.length; i += 0x8000)
+            bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+          b64x = btoa(bin); }
+        const sheets = await xlsxRows(bytes);
+        const pick = pickPensionSheet(sheets);
+        if(!pick){ got['?'+f.name] = { file:f.name, ok:false,
+          why:'No sheet in that workbook reads as a pension billing.' }; continue; }
+        const doc = pick.doc;
+        doc.sheet = pick.sheet;
+        doc.sheetCount = sheets.length;
+        const ver = verify(doc);
+        got.pension = { file:f.name + ' — ' + pick.sheet, kind:'pension', doc, ver, ok:ver.ok,
+                        b64:b64x, namesGroup:true, addedUnder: hintLine || null };
+        continue;
+      }
       /* Live, approval emails the documents — so the submission has to carry
          them. Chunked, because spreading a 100KB file overflows the stack. */
       let b64 = '';
@@ -1215,27 +1836,36 @@ function monthOf(doc){
 const docMonth = doc => (doc && doc.month) || 'last month';
 
 function matchMembers(before, after){
-  const byCert = new Map(before.map(m => [m.empId, m]));
+  /* A health invoice identifies a member by employee id; the life schedule
+     by certificate number. Reading only empId meant every life member keyed
+     on `undefined`, so the map held one entry — the last person in the list
+     — and all 158 September members "matched" them. Life has therefore never
+     had a month-over-month comparison: no joiners, no leavers, and 157
+     phantom renames that went into the client's email. */
+  const idOf = m => String((m && (m.empId || m.cert)) || '');
+  const byCert = new Map();
+  before.forEach(m => { const k = idOf(m); if(k) byCert.set(k, m); });
   const takenBefore = new Set(), pairs = [];
   after.forEach(m => {
-    let hit = byCert.get(m.empId);
-    if(!hit){
+    let hit = idOf(m) ? byCert.get(idOf(m)) : null;
+    if(!hit && idOf(m)){
       /* One side's certificate was cut off, so the short one is a prefix of the
          long one. A prefix on its own is far too weak to match on: TPG0185-003
          opens 00311, 00340, 00304 and more, and the first of those to be tried
          wins — which quietly swaps two people and reports both a joiner and a
          leaver who never moved. Accept it only when exactly one candidate fits
          and the premium and start date agree as well. */
-      const cands = before.filter(b => !takenBefore.has(b.empId) &&
-        b.empId.length !== m.empId.length &&
-        (m.empId.startsWith(b.empId) || b.empId.startsWith(m.empId)) &&
+      const mid = idOf(m);
+      const cands = before.filter(b => idOf(b) && !takenBefore.has(idOf(b)) &&
+        idOf(b).length !== mid.length &&
+        (mid.startsWith(idOf(b)) || idOf(b).startsWith(mid)) &&
         b.premium === m.premium && b.started === m.started);
       if(cands.length === 1) hit = cands[0];
     }
-    if(hit) takenBefore.add(hit.empId);
+    if(hit) takenBefore.add(idOf(hit));
     pairs.push({ before:hit || null, after:m });
   });
-  const left = before.filter(b => !takenBefore.has(b.empId));
+  const left = before.filter(b => idOf(b) && !takenBefore.has(idOf(b)));
   return { pairs, left };
 }
 
@@ -1246,9 +1876,27 @@ function movement(kind){
   const joined  = pairs.filter(p => !p.before).map(p => p.after);
   const changed = pairs.filter(p => p.before && p.before.premium !== p.after.premium)
                        .map(p => ({ ...p.after, wasPremium:p.before.premium, wasTier:p.before.tier }));
-  const renamed = pairs.filter(p => p.before && p.before.name !== p.after.name && p.before.premium === p.after.premium)
+  /* "Printed differently" has to mean differently, not merely re-spaced.
+     Guardian's life schedule puts a space before the semicolon one month and
+     not the next, so comparing the raw strings called 157 of 158 members
+     renamed and put every one of their names in the client's email. Compare
+     the words, which is what a person reading the two pages would do. */
+  const printed = s => String(s||'').toUpperCase().replace(/[^A-Z ]/g,' ')
+    .split(/\s+/).filter(Boolean).sort().join(' ');
+  const renamed = pairs.filter(p => p.before && p.before.premium === p.after.premium
+                       && printed(p.before.name) !== printed(p.after.name)
+                       /* A name Guardian's report cut off at the column edge
+                          was not renamed, it was clipped. Telling a client
+                          five of their staff were renamed when the truth is
+                          last month's page was short is worse than silence. */
+                       && !isClipped(p.before.name) && !isClipped(p.after.name))
                        .map(p => ({ ...p.after, wasName:p.before.name }));
-  const delta = (now.doc.computed.gross||0) - (was.doc.computed.gross||0);
+  /* Each line's own cash figure. Life documents carry no `gross`, so reading
+     one made every life month move by exactly zero — and an unexplained
+     movement on life could never be raised, because there was never a
+     movement to explain. */
+  const cash = d => d.computed.gross != null ? d.computed.gross : (d.computed.total || 0);
+  const delta = round2(cash(now.doc) - cash(was.doc));
   const explained = joined.reduce((s,m)=>s+(m.premium||0),0)
                   - left.reduce((s,m)=>s+(m.premium||0),0)
                   + changed.reduce((s,m)=>s+((m.premium||0)-(m.wasPremium||0)),0);
@@ -1348,24 +1996,93 @@ function questions(){
       opts:['Confirmed unpaid — say so in the email','Paid already, I will get the invoice corrected'] });
   });
 
+  /* What one document cannot see about another. These are the ones staff have
+     always done by eye, between two printouts on a desk. */
+  crossChecks().filter(c => c.kind === 'blocker').forEach(c => qs.push({
+    id:c.id, kind:'blocker', q:c.text,
+    opts:['I will get this checked','Publish anyway, I have checked it'] }));
+
+  /* And what the branch's own record says. A termination Guardian has made
+     that our side never made is the process stopping halfway, so it blocks;
+     a roster that has drifted is worth an answer but not worth holding a
+     client's billing over. */
+  rosterChecks().forEach(c => {
+    if(c.kind === 'blocker') qs.push({ id:c.id, kind:'blocker', q:c.text,
+      opts:['I will put the termination through','Already done, it has not synced yet','Publish anyway, I have checked it'],
+      links:(c.leavers||[]).map(n => ({ label:'Report ' + n, href:reportLink(n) })) });
+    if(c.kind === 'flag') qs.push({ id:c.id, kind:'check', q:c.text,
+      opts:['Known — I will get the records tidied','New to me, flag it for the client'] });
+  });
+
   exp.forEach(k => { if(!got[k]) qs.push({ id:'missing-'+k, kind:'blocker',
     q:`No ${DOC_KINDS[k].label.toLowerCase()} yet.`,
     opts:['It is coming','There was none this month'] }); });
   return qs;
 }
 
+/* The one number, and the only path to it. Written out because the pack
+   states the same figures several ways and staff have had to hold in their
+   heads which restatement is the bill — the schedule, the statement, the
+   transmittal, the letter. Shown as a derivation, nobody re-keys and nobody
+   adds a document twice. */
+function derivation(){
+  const rows = [];
+  const life = got.life, adj = got.adjustments, health = got.health;
+  if(life && life.ok){
+    rows.push({ what:'Life schedule', from:life.file, amt:round2(life.doc.computed.total) });
+    if(adj && adj.ok) rows.push({ what:'Statement of adjustments — the same bill, moved',
+      from:adj.file, amt:adj.doc.computed.net,
+      note:(adj.doc.items||[]).length ? (adj.doc.items.length===1?'1 change':adj.doc.items.length+' changes') : '' });
+  }
+  if(health && health.ok){
+    rows.push({ what:'Health, this month', from:health.file, amt:round2(health.doc.computed.payable),
+      note:health.doc.computed.credits ? 'credits of ' + money(Math.abs(health.doc.computed.credits)) + ' already inside this' : '' });
+    const ar = health.doc.stated.outstanding;
+    /* The months, once each. A multi-division account lists July and August
+       under every division, so reading the raw ledger prints them twice. */
+    if(ar) rows.push({ what:'Health, still outstanding', from:health.file + ' — ledger page', amt:ar,
+      note:[...new Set((health.doc.arrears||[]).map(a=>a.month).filter(Boolean))].join(', ') });
+  }
+  if(got.pension && got.pension.ok)
+    rows.push({ what:'Pension', from:got.pension.file, amt:got.pension.doc.computed.total||0 });
+  return { rows, total: round2(rows.reduce((s,r)=>s+(r.amt||0),0)) };
+}
+
 function paintChecks(){
   const qs = questions();
-  if(!qs.length){ $('checks').innerHTML = Object.keys(got).length
-    ? '<div class="card"><div class="alert a-ok"><b>Everything agrees.</b> Each document adds up against its own totals, the headcounts match last month, and life and health line up. Nothing needs a decision.</div></div>' : '';
+  const agreed = crossChecks().filter(c => c.kind === 'ok')
+    .concat(rosterChecks().filter(c => c.kind === 'ok' || c.kind === 'note'));
+  const der = derivation();
+  const tiesCard = (agreed.length || der.rows.length) ? `<div class="card">
+    <h2 style="font-size:1.05rem;color:var(--navy)">What the pack agrees on</h2>
+    <p class="note" style="margin-top:.25rem">Guardian prints these figures more than once. Where two documents
+      state the same thing, they have been read against each other rather than taken on trust — and against
+      what the branch's own record in Salesforce says is in force.</p>
+    ${agreed.length ? `<ul class="checks" style="margin:.7rem 0 0;padding-left:1.1rem">
+      ${agreed.map(c => `<li><span class="${c.kind==='note'?'noans':'ans'}">${c.kind==='note'?'–':'✓'}</span> ${esc(c.text)}</li>`).join('')}</ul>` : ''}
+    ${der.rows.length ? `<div class="tw" style="margin-top:.9rem"><table><thead><tr>
+        <th>What is billed</th><th>Read from</th><th class="r">Amount</th></tr></thead><tbody>
+      ${der.rows.map(r => `<tr><td>${esc(r.what)}${r.note?`<br><small class="note">${esc(r.note)}</small>`:''}</td>
+        <td><small class="note">${esc(r.from)}</small></td>
+        <td class="r mono">${r.amt < 0 ? '−' + money(-r.amt) : money(r.amt)}</td></tr>`).join('')}
+      <tr><td colspan="2"><b>Payable</b></td><td class="r mono"><b>${money(der.total)}</b></td></tr>
+    </tbody></table></div>
+    <p class="note" style="margin-top:.5rem">Every figure is used once. The statement of adjustments moves the
+      life schedule, it is not a second bill; the health credits are already inside the health figure.</p>` : ''}
+  </div>` : '';
+
+  if(!qs.length){ $('checks').innerHTML = tiesCard + (Object.keys(got).length
+    ? '<div class="card"><div class="alert a-ok"><b>Everything agrees.</b> Each document adds up against its own totals, the documents agree with each other, the headcounts match last month, and life and health line up. Nothing needs a decision.</div></div>' : '');
     paintSteps(); return; }
-  $('checks').innerHTML = `<div class="card">
+  $('checks').innerHTML = tiesCard + `<div class="card">
     <h2 style="font-size:1.05rem;color:var(--navy)">Before this goes out</h2>
     <p class="note" style="margin-top:.25rem">${qs.length} thing${qs.length>1?'s':''} the screen cannot decide on its own.</p>
     ${qs.map(q => `<div class="q">
       <p>${q.kind==='blocker'?'<b>⚠ </b>':''}${esc(q.q)}</p>
       <div class="ans">${q.opts.map((o,i) =>
         `<button data-q="${esc(q.id)}" data-a="${i}" class="${answers[q.id]===String(i)?'on':''}">${esc(o)}</button>`).join('')}</div>
+      ${(q.links||[]).length ? `<div class="row" style="margin-top:.5rem">${q.links.map(l =>
+        `<a class="btn ghost" href="${esc(l.href)}" target="_blank" rel="noopener">${esc(l.label)} →</a>`).join('')}</div>` : ''}
       ${answers[q.id]!=null?'<textarea data-note="'+esc(q.id)+'" placeholder="Anything to record with that?">'+esc(answers['n-'+q.id]||'')+'</textarea>':''}
     </div>`).join('')}
   </div>`;
@@ -1399,8 +2116,11 @@ let FLOWCACHE = { subs: [] };
 async function flowRefresh(){
   if(!API){ FLOWCACHE = flowLoad(); return; }
   try{
-    const r = await fetch(API + '?action=monthflow&auth=' + encodeURIComponent(AUTH || '')
-      + '&group=' + encodeURIComponent(group.id));
+    /* The whole book, not this group — the board at the top of the screen is
+       every month in flight, and an assistant needs to see the one that has
+       been sitting approved for three days even while she is working another
+       client. flowFor() narrows it back down where that is what is wanted. */
+    const r = await fetch(API + '?action=monthflow&auth=' + encodeURIComponent(AUTH || ''));
     const d = await r.json();
     FLOWCACHE = { subs: (d && d.subs) || [] };
   }catch(e){ FLOWCACHE = { subs: [] }; }
@@ -1425,11 +2145,130 @@ function monthKey(){
   return $('mon').value || '';
 }
 
+/* ── the board ──
+   Every month in flight, across the whole book, at the top of the screen —
+   because the month that needs an assistant is almost never the one she has
+   open. What each card answers is "whose desk is this on, and for how long":
+   a billing that goes out late was hardly ever hard, it was waiting, and
+   nobody could see where.
+
+   Ordered by what needs a hand first. Clicking one opens that group. */
+const BOARD = {
+  APPROVED: { label:'Yours to send',      cls:'s-you',  mine:true,  rank:0 },
+  RETURNED: { label:'Back with you',      cls:'s-stop', mine:true,  rank:1 },
+  QUERIED:  { label:'Client queried it',  cls:'s-stop', mine:true,  rank:2 },
+  SUBMITTED:{ label:'With the approver',  cls:'s-wait', mine:false, rank:3 },
+  SENT:     { label:'Awaiting the client',cls:'s-sent', mine:false, rank:4 },
+  CONFIRMED:{ label:'Client confirmed',   cls:'s-sent', mine:false, rank:5 }
+};
+function paintBoard(){
+  const subs = ((API ? FLOWCACHE : flowLoad()).subs || []).slice();
+  if(!subs.length){ $('board').innerHTML = ''; return; }
+  /* One card per group and month — the newest submission wins, older ones
+     are the trail behind it. */
+  const newest = {};
+  subs.forEach(s => { const k = s.group.id + '|' + s.monthKey;
+    const at = (s.events && s.events[s.events.length-1] || {}).at || 0;
+    if(!newest[k] || at >= newest[k]._at) newest[k] = Object.assign({ _at:at }, s); });
+  const rows = Object.values(newest).filter(s => BOARD[s.state])
+    .sort((a,b) => BOARD[a.state].rank - BOARD[b.state].rank || a._at - b._at);
+  if(!rows.length){ $('board').innerHTML = ''; return; }
+  const needs = rows.filter(s => BOARD[s.state].mine).length;
+  $('board').innerHTML = `<div class="card" style="margin-bottom:0">
+    <h2 style="font-size:1.05rem;color:var(--navy)">Months in flight</h2>
+    <p class="note" style="margin-top:.25rem">${
+      needs ? `<b style="color:var(--gold)">${needs} need${needs===1?'s':''} you.</b> ` : ''
+    }${rows.length} month${rows.length===1?'':'s'} on the go. The time is how long it has been standing where it is.</p>
+    <div class="board" style="margin-top:.8rem">
+      ${rows.map(s => { const B = BOARD[s.state];
+        return `<button class="bcard ${B.mine?'mine':''}" data-open="${esc(s.group.id)}">
+          <div class="bg">${esc(s.group.name)}</div>
+          <div class="bm">${esc(s.monthLabel)}</div>
+          <div class="bs ${B.cls}">${esc(B.label)}</div>
+          <div class="bw">${esc(s._at ? dur(Date.now()-s._at) : '')}</div>
+        </button>`; }).join('')}
+    </div></div>`;
+}
+
+/* The newest month for a group that is still going somewhere — what an
+   assistant opening the screen cold should be looking at. */
+function flowOpen(groupId){
+  const subs = ((API ? FLOWCACHE : flowLoad()).subs || [])
+    .filter(s => s.group.id === groupId && BOARD[s.state]);
+  return subs.sort((a,b) =>
+    ((a.events[a.events.length-1]||{}).at||0) - ((b.events[b.events.length-1]||{}).at||0)).pop() || null;
+}
+
+/* The month as it stands, with no documents open. Read from the submission,
+   which is the record of what was actually approved — not from a re-read
+   that might now say something different. */
+function standingCard(x){
+  const banner = {
+    APPROVED:`<div class="alert a-ok"><b>Approved — and it is back with you.</b>
+      ${esc(last(x,'APPROVED').by)} cleared it ${ago(last(x,'APPROVED').at)}.
+      ${last(x,'APPROVED').note ? `Their note: &ldquo;${esc(last(x,'APPROVED').note)}&rdquo;<br>` : ''}
+      Nothing has gone to ${esc(x.group.name)} yet. Read it once more, then send it.</div>`,
+    RETURNED:`<div class="alert a-warn"><b>Sent back by ${esc(last(x,'RETURNED').by)}:</b>
+      &ldquo;${esc(last(x,'RETURNED').note||'')}&rdquo;<br>
+      Load this month's documents again, answer it, and submit.</div>`,
+    SUBMITTED:`<div class="alert a-info"><b>With the approver.</b>
+      Submitted by ${esc(x.events[0].by)} ${ago(x.events[0].at)}.${reviewLinkHtml(x.id)}</div>`,
+    SENT:`<div class="alert a-ok"><b>Sent to ${esc(x.group.name)}</b> ${ago(last(x,'SENT').at)}.
+      Waiting for them to confirm it is right.</div>`,
+    CONFIRMED:`<div class="alert a-ok"><b>${esc(x.group.name)} confirmed this billing is correct.</b>
+      Payment is what the follow-ups now chase.</div>`,
+    QUERIED:`<div class="alert a-bad"><b>${esc(x.group.name)} has raised a query.</b>
+      ${esc(last(x,'QUERIED').note || 'No detail given.')}<br>
+      Reminders on this month have stopped until it is settled.</div>`
+  }[x.state] || '';
+  const lines = Object.keys(x.lineTotals || {});
+  return `<div class="card">
+    <h2 style="font-size:1.05rem;color:var(--navy)">${esc(x.group.name)} — ${esc(x.monthLabel)}</h2>
+    <p class="note" style="margin-top:.25rem">Where this month stands. Nothing is open on the screen;
+      this is the submission as it was approved.</p>
+    ${flowBar(x)}
+    ${banner}
+    ${lines.length ? `<div class="tw" style="margin-top:.9rem"><table><thead><tr>
+        <th>Line</th><th class="r">Billed</th></tr></thead><tbody>
+      ${lines.map(k => `<tr><td>${esc(k)}</td><td class="r mono">${money(x.lineTotals[k])}</td></tr>`).join('')}
+      ${x.arrears && x.arrears.balance ? `<tr><td><b>Payable including arrears</b></td>
+        <td class="r mono"><b>${money(x.arrears.balance)}</b></td></tr>` : ''}
+    </tbody></table></div>` : ''}
+    ${x.email ? `<div class="mail">
+      <div class="hdr"><b>Subject</b> ${esc(x.email.subject)}<br><b>To</b> the billing contact on this account</div>
+      <pre>${esc(x.email.body)}</pre>
+      <div class="att">${(x.email.atts||[]).map(a => `<span>📎 ${esc(a)}</span>`).join('')}</div>
+    </div>` : ''}
+    ${x.state === 'APPROVED' ? `<div class="row" style="margin-top:1rem">
+      <button class="btn go" id="send">Send to ${esc(x.group.name)}</button>
+      <span class="note">This is the click that puts it in front of the client.</span>
+    </div>` : ''}
+    <div id="pubout"></div>
+  </div>`;
+}
+function wireSend(x){
+  const s = $('send');
+  if(s) s.addEventListener('click', () => sendToClient(x));
+}
+
 function paintPublish(){
   const qs = questions(), unanswered = qs.filter(q => answers[q.id] == null);
   const blocked = qs.some(q => q.kind==='blocker' && answers[q.id] !== '1' && q.id.startsWith('recon'));
-  const have = Object.values(got).filter(r => r.ok).length;
-  if(!have){ $('publish').innerHTML = ''; return; }
+  const read = Object.values(got).filter(r => r.ver);
+  const have = read.filter(r => r.ok).length;
+  const shaky = read.filter(r => !r.ok);
+  /* A month already in the flow does not need its documents re-read to be
+     acted on. An assistant coming in on Monday to a month approved on Friday
+     has nothing open — asking her to upload four PDFs again before she can
+     press send would be a dead end dressed as a screen. Everything needed is
+     in the submission: the journey, the approver's note, the email word for
+     word. */
+  if(!read.length){
+    const open = flowOpen(group.id);
+    $('publish').innerHTML = open ? standingCard(open) : '';
+    if(open) wireSend(open);
+    return;
+  }
   const life = got.life, health = got.health, adj = got.adjustments;
   /* What the client owes is the life billing plus the health invoice plus the
      adjustments — the statement is a credit note, so leaving it out overstates
@@ -1441,43 +2280,42 @@ function paintPublish(){
   /* The journey, drawn: staff and the manager should see where a month
      stands without reading a trail — submitted, with the approver, back
      with staff to answer her notes, approved, sent. */
-  function flowBar(x){
-    if(!x) return '';
-    const returned = x.state === 'RETURNED';
-    const sent = x.state === 'SENT';
-    const ret = last(x, 'RETURNED'), ap = last(x, 'APPROVED');
-    const steps = [
-      { t:'Submitted', st:'done', when: x.events[0] && ago(x.events[0].at) },
-      returned
-        ? { t:'Approver reviewed', st:'done', when: ret.at && ago(ret.at) }
-        : { t:'With the approver', st: sent ? 'done' : 'now', when: sent && ap.at ? ago(ap.at) : 'waiting' },
-      ...(returned ? [{ t:'Back with staff — answer & resubmit', st:'warn', when:'now' }] : []),
-      { t:'Approved', st: sent ? 'done' : 'todo', when: sent && ap.at ? ago(ap.at) : '' },
-      { t:'Sent to client', st: sent ? 'done' : 'todo', when:'' }
-    ];
-    return `<div class="fbar">${steps.map(st => `
-      <div class="fnode ${st.st}"><span class="dot">${st.st==='done'?'✓':st.st==='warn'?'!':''}</span>
-        <span class="ft">${esc(st.t)}</span>${st.when?`<span class="fw">${esc(st.when)}</span>`:''}</div>`).join('<div class="fline"></div>')}
-    </div>`;
-  }
   const stateLine = (sub ? flowBar(sub) : '') + (sub ? ({
-    SUBMITTED:`<div class="alert a-info"><b>This month is with the administrators.</b>
+    SUBMITTED:`<div class="alert a-info"><b>This month is with the approver.</b>
       Submitted by ${esc(sub.events[0].by)} ${ago(sub.events[0].at)} — waiting to be verified.
       ${reviewLinkHtml(sub.id)}</div>`,
     RETURNED:`<div class="alert a-warn"><b>Sent back by ${esc(last(sub,'RETURNED').by)}:</b>
-      &ldquo;${esc(last(sub,'RETURNED').note||'')}&rdquo;<br>Fix it and submit again.</div>`,
-    SENT:`<div class="alert a-ok"><b>Verified and sent.</b> Approved by ${esc(last(sub,'APPROVED').by)}
-      ${ago(last(sub,'APPROVED').at)}. Submitting again sends a corrected version for review.
-      ${reviewLinkHtml(sub.id)}</div>`
+      &ldquo;${esc(last(sub,'RETURNED').note||'')}&rdquo;<br>Answer it and submit again.</div>`,
+    APPROVED:`<div class="alert a-ok"><b>Approved — and it is back with you.</b>
+      ${esc(last(sub,'APPROVED').by)} cleared it ${ago(last(sub,'APPROVED').at)}.
+      ${last(sub,'APPROVED').note ? `Their note: &ldquo;${esc(last(sub,'APPROVED').note)}&rdquo;<br>` : ''}
+      Nothing has gone to ${esc(group.name)} yet. Read it once more, then send it.</div>`,
+    SENT:`<div class="alert a-ok"><b>Sent to ${esc(group.name)}.</b>
+      Approved by ${esc(last(sub,'APPROVED').by)}, sent by ${esc(last(sub,'SENT').by)}
+      ${ago(last(sub,'SENT').at)}. Waiting for them to confirm.
+      ${reviewLinkHtml(sub.id)}</div>`,
+    CONFIRMED:`<div class="alert a-ok"><b>${esc(group.name)} has confirmed this billing is correct.</b>
+      Confirmed ${ago(last(sub,'CONFIRMED').at)}. Payment is what the follow-ups now chase.</div>`,
+    QUERIED:`<div class="alert a-bad"><b>${esc(group.name)} has raised a query.</b>
+      ${esc(last(sub,'QUERIED').note || 'No detail given.')}<br>
+      Reminders on this month have stopped until it is settled.</div>`
   })[sub.state] || '' : '');
   $('publish').innerHTML = `<div class="card">
     <h2 style="font-size:1.05rem;color:var(--navy)">Send ${esc(group.name)} for verification</h2>
     <p class="note" style="margin-top:.25rem">Nothing goes to the client from here. An administrator checks this
       month first, and it is their approval that sends it.</p>
     ${stateLine}
+    ${shaky.length ? `<div class="alert a-bad">
+      <b>${shaky.length === 1 ? 'One document does not add up' : shaky.length + ' documents do not add up'}
+      against ${shaky.length === 1 ? 'its' : 'their'} own printed totals</b> —
+      ${shaky.map(r => esc(r.file)).join(', ')}.
+      Nothing read from ${shaky.length === 1 ? 'it' : 'them'} can be trusted, so no figure from
+      ${shaky.length === 1 ? 'that line' : 'those lines'} is quoted to the client. You can still send this for
+      review: the administrator sees exactly this, and decides whether to chase Guardian for a clean copy.</div>` : ''}
     <div class="alert a-info">
-      <b>What the administrator will see:</b> ${have} document${have>1?'s':''} for ${esc(monthName())},
-      ${total ? money(total)+' payable' : 'the month\'s figures'}, every check and how you answered it,
+      <b>What the administrator will see:</b> ${read.length} document${read.length>1?'s':''} for ${esc(monthName())},
+      ${have ? (total ? money(total)+' from the lines that reconcile' : 'the figures that reconcile')
+             : 'no trustworthy figures yet'}, every check and how you answered it,
       and the email exactly as it will go out.
     </div>
     ${unanswered.length ? `<div class="alert a-warn">${unanswered.length} question${unanswered.length>1?'s':''}
@@ -1491,13 +2329,22 @@ function paintPublish(){
     <p class="note" style="margin-top:.5rem">Written from what was read this month. This is the text the
       administrator approves — their approval sends it with those attachments.</p>`; })()}
     <div class="row" style="margin-top:1rem">
-      <button class="btn go" id="pub" ${busy?'disabled':''}>${sub && sub.state==='SUBMITTED' ? 'Replace what is waiting' : sub && sub.state==='SENT' ? 'Submit a correction' : 'Submit for review'}</button>
+      ${sub && sub.state === 'APPROVED'
+        ? `<button class="btn go" id="send" ${busy?'disabled':''}>Send to ${esc(group.name)}</button>
+           <button class="btn ghost" id="pub">Something changed — submit again</button>`
+        : `<button class="btn go" id="pub" ${busy?'disabled':''}>${
+             sub && sub.state==='SUBMITTED' ? 'Replace what is waiting'
+             : sub && (sub.state==='SENT'||sub.state==='CONFIRMED'||sub.state==='QUERIED') ? 'Submit a correction'
+             : 'Submit for review'}</button>`}
       <button class="btn ghost" id="copy">Copy the email</button>
-      <span class="note">${blocked ? 'A document that does not add up will be flagged to the administrator as such.' : ''}</span>
+      <span class="note">${sub && sub.state === 'APPROVED'
+        ? 'This is the click that puts it in front of the client.'
+        : blocked ? 'A document that does not add up will be flagged to the approver as such.' : ''}</span>
     </div>
     <div id="pubout"></div>
   </div>`;
   const b = $('pub'); if(b) b.addEventListener('click', publish);
+  const s = $('send'); if(s) s.addEventListener('click', () => sendToClient(sub));
   const c = $('copy'); if(c) c.addEventListener('click', () => {
     const e = draftEmail();
     const text = e.subject + '\n\n' + e.body;
@@ -1524,7 +2371,14 @@ function paintPublish(){
    employer reading this on a phone wants the number, the attachments, and
    anything that needs them to act. */
 function draftEmail(){
-  const lines = Object.keys(LINES).filter(k => group.lines.includes(k) && lineTotal(k));
+  /* A line is only quoted when the documents behind it agreed with their own
+     totals. Billing a client a figure the screen could not verify — or worse,
+     a zero it read from a document it failed on — is the one mistake this
+     whole process exists to prevent. */
+  const lineOk = k => LINES[k].docs.some(d => got[d] && got[d].ok);
+  const lines = Object.keys(LINES).filter(k => group.lines.includes(k) && lineOk(k) && lineTotal(k));
+  const unverified = Object.keys(LINES).filter(k => group.lines.includes(k) && !lineOk(k)
+    && LINES[k].docs.some(d => got[d]));
   const total = lines.reduce((s,k) => s + lineTotal(k), 0);
   const m = monthName();
   const atts = Object.values(got).filter(r => r.ver && r.ok).map(r => r.file);
@@ -1532,7 +2386,9 @@ function draftEmail(){
   const body = [];
   body.push(`Good day,`, ``, `Your ${m} group billing is attached and is also on your portal.`, ``);
   lines.forEach(k => body.push(`  ${LINES[k].label}   ${money(lineTotal(k))}`));
-  if(lines.length > 1) body.push(`  ${''.padEnd(0)}Total   ${money(total)}`);
+  unverified.forEach(k => body.push(`  ${LINES[k].label}   see the attached billing`));
+  if(lines.length > 1) body.push(`  ${''.padEnd(0)}Total   ${money(total)}${
+    unverified.length ? '   (the lines above only)' : ''}`);
   body.push(``);
 
   /* An invoice carrying arrears asks for more than this month, and the figure
@@ -1610,7 +2466,47 @@ function monthName(){
 const ago = at => { const m = Math.round((Date.now()-at)/60000);
   return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m/60) + ' h ago'
     : Math.round(m/1440) + ' d ago'; };
+const dur = ms => { const m = Math.round(ms/60000);
+  return m < 1 ? 'under a minute' : m < 60 ? m + ' min' : m < 1440 ? Math.round(m/60) + ' h'
+    : Math.round(m/1440) + ' d'; };
 const last = (sub, did) => sub.events.slice().reverse().find(e => e.did === did) || {};
+
+/* The journey, drawn — with the clock on every stop.
+   Submitted → with the approver → back with staff to send → sent → the
+   client answers. Approval clears a month; it does not post it. The last
+   person to touch a billing before a client reads it is the assistant who
+   built it, which is also the only place a swapped document would still be
+   caught. The waiting figures are the useful part: they are what turns
+   "the billing went out late" into "it sat approved for four days". */
+function flowBar(x){
+  if(!x || !x.events || !x.events.length) return '';
+  const at = did => (x.events.slice().reverse().find(e => e.did === did) || {}).at;
+  const S = x.state;
+  const t0 = x.events[0].at, tA = at('APPROVED'), tR = at('RETURNED'), tS = at('SENT');
+  const tC = at('CONFIRMED') || at('QUERIED');
+  const span = (from, to) => from ? dur((to || Date.now()) - from) : '';
+  const open = (from) => from ? span(from) + ' so far' : '';
+  const steps = [
+    { t:'Submitted', st:'done', when: ago(t0) },
+    S === 'RETURNED'
+      ? { t:'Approver sent it back', st:'warn', when: span(t0, tR) }
+      : { t:'With the approver', st: S === 'SUBMITTED' ? 'now' : (tA ? 'done' : 'todo'),
+          when: S === 'SUBMITTED' ? open(t0) : span(t0, tA) },
+    S === 'RETURNED'
+      ? { t:'Back with you — answer and resubmit', st:'warn', when: open(tR) }
+      : { t:'Yours to send', st: S === 'APPROVED' ? 'now' : (tS ? 'done' : 'todo'),
+          when: S === 'APPROVED' ? open(tA) : (tA && tS ? span(tA, tS) : '') },
+    { t:'Sent to the client', st: tS ? 'done' : 'todo', when: tS ? ago(tS) : '' },
+    { t: S === 'QUERIED' ? 'Client raised a query'
+       : S === 'CONFIRMED' ? 'Client confirmed it' : 'With the client',
+      st: S === 'QUERIED' ? 'warn' : S === 'CONFIRMED' ? 'done' : (tS ? 'now' : 'todo'),
+      when: tC ? span(tS, tC) : (tS ? open(tS) : '') }
+  ];
+  return `<div class="fbar">${steps.map(st => `
+    <div class="fnode ${st.st}"><span class="dot">${st.st==='done'?'✓':st.st==='warn'?'!':''}</span>
+      <span class="ft">${esc(st.t)}</span>${st.when?`<span class="fw">${esc(st.when)}</span>`:''}</div>`)
+    .join('<div class="fline"></div>')}</div>`;
+}
 function reviewLinkHtml(id){
   const url = new URL('review.html#' + id, location.href).href;
   return `<br><span class="mono" style="font-size:11.5px">${esc(url)}</span>
@@ -1628,6 +2524,49 @@ document.addEventListener('click', e => {
     navigator.clipboard.writeText(b.dataset.copylink).then(done).catch(fb);
   else fb();
 });
+
+/* The send. Approval cleared the month; this is the assistant putting it in
+   front of the client, and it is deliberately a separate hand — an approver
+   who could also post would be signing off and posting in one motion, with
+   nobody left to notice a document swapped between the two. */
+async function sendToClient(sub){
+  if(!sub) return;
+  const btn = $('send'); btn.disabled = true; btn.textContent = 'Sending…';
+  if(API){
+    let ok = false, why = '', note = '';
+    try{
+      const r = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ action:'sendmonth', auth:AUTH, id:sub.id,
+                               by: IDENTITY ? IDENTITY.name : null }) });
+      const d = await r.json();
+      ok = d && d.ok; why = (d && d.error) || ''; note = (d && d.note) || '';
+    }catch(e){ why = 'Could not reach the branch script.'; }
+    if(!ok){
+      btn.disabled = false; btn.textContent = 'Send to ' + group.name;
+      $('pubout').innerHTML = `<div class="alert a-bad"><b>Not sent.</b> ${esc(why || 'The branch script refused it.')}</div>`;
+      return;
+    }
+    await flowRefresh();
+    paintPublish();
+    $('pubout').innerHTML = `<div class="alert a-ok"><b>Sent.</b> ${esc(note)}
+      ${esc(group.name)} has been asked to confirm it is right — their answer lands here and on the
+      activity trail.</div>`;
+    paintBoard();
+    return;
+  }
+  /* Test run: move it the same way the script would, so the whole journey
+     can be walked with nothing behind it. */
+  const d = flowLoad();
+  const x = d.subs.find(s => s.id === sub.id);
+  if(x){ x.state = 'SENT';
+    x.events.push({ at:Date.now(), by: IDENTITY ? IDENTITY.name : 'Branch staff',
+                    code: IDENTITY ? IDENTITY.code : null, did:'SENT' });
+    flowSave(d); }
+  FLOWCACHE = flowLoad();
+  paintPublish(); paintBoard();
+  $('pubout').innerHTML = `<div class="alert a-ok"><b>Sent.</b>
+    <span class="note">Test run — nothing left this machine.</span></div>`;
+}
 
 async function publish(){
   const btn = $('pub'); btn.disabled = true; btn.textContent = 'Submitting…';
@@ -1651,6 +2590,15 @@ async function publish(){
     adjItems: (got.adjustments && got.adjustments.ok && got.adjustments.doc.items)
       ? got.adjustments.doc.items.map(i => ({ type:i.type, name:i.name, total:i.total, periods:i.periods }))
       : [],
+    /* Members Guardian has terminated whose cover our own record still shows
+       in force, where staff have said they will put it through. Naming them
+       on the submission is what turns that answer from a promise into a row
+       that gets chased. */
+    stuckLeavers: (() => {
+      const c = crossChecks().concat(rosterChecks()).find(x => x.id === 'r-terminated-inforce');
+      return (c && answers['r-terminated-inforce'] === '0') ? (c.leavers || []) : [];
+    })(),
+    leaverLastDay: (got.adjustments && got.adjustments.ok && got.adjustments.doc.effective) || null,
     movement: Object.keys(LINES).map(k => movement(k)).find(Boolean) || null,
     arrears: Object.keys(LINES).map(k => arrears(k)).find(a => a && a.owed.length) || null,
     email: draftEmail(),
@@ -1698,9 +2646,9 @@ async function publish(){
     d.subs.push(sub); flowSave(d);
   }
   btn.textContent = 'Submitted ✓';
-  /* Repaint so the journey bar and the with-the-administrators banner appear
+  /* Repaint so the journey bar and the with-the-approver banner appear
      immediately, then lay the confirmation under them. */
-  paintPublish();
+  paintPublish(); paintBoard();
   $('pubout').innerHTML = `<div class="alert a-ok">
     <b>${esc(sub.monthLabel)} is in for review.</b> Send an administrator this link — they sign in,
     verify, and their approval sends it to ${esc(group.name)}.${notifiedLine}
@@ -1710,13 +2658,21 @@ async function publish(){
 
 /* ── wiring ── */
 if(!API) $('grp').innerHTML = BOOK.map(g => `<option value="${g.id}">${esc(g.name)}</option>`).join('');
-$('grp').addEventListener('change', e => {
-  group = BOOK.find(g => g.id === e.target.value); got = {}; answers = {};
+function switchGroup(id){
+  const g = BOOK.find(x => x.id === id);
+  if(!g) return;
+  group = g; $('grp').value = id; got = {}; answers = {};
   $('readout').innerHTML=''; $('checks').innerHTML=''; $('publish').innerHTML='';
   paintDocs();
-  flowRefresh().then(paintPublish);
+  Promise.all([flowRefresh(), loadRoster()]).then(() => {
+    paintPublish(); paintBoard(); paintChecks(); });
+}
+$('grp').addEventListener('change', e => switchGroup(e.target.value));
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-open]');
+  if(b){ switchGroup(b.dataset.open); window.scrollTo({ top:0, behavior:'smooth' }); }
 });
-$('mon').addEventListener('change', () => { flowRefresh().then(paintPublish); });
+$('mon').addEventListener('change', () => { flowRefresh().then(() => { paintPublish(); paintBoard(); }); });
 /* Each line card is its own upload space. The Add button and a drop onto
    the card both hint which line staff MEANT — detection still decides what
    a file actually is, and a mismatch is called out rather than obeyed. */
@@ -1769,7 +2725,8 @@ function open_(){
     const sub = document.querySelector('header .sub');
     if(sub) sub.textContent = 'Signed in as ' + IDENTITY.name + ' — ' + sub.textContent;
   }
-  loadBook().then(() => { paintDocs(); return flowRefresh(); }).then(paintPublish);
+  loadBook().then(() => { paintDocs(); return Promise.all([flowRefresh(), loadRoster()]); })
+    .then(() => { paintPublish(); paintBoard(); paintChecks(); });
 }
 function tryCode(){
   const v = ($('code').value||'').trim().toUpperCase();
