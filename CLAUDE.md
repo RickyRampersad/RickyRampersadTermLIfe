@@ -3,6 +3,39 @@
 Standing decisions for this repository. Read before regenerating narration,
 scoring a film, or adding a product to the fact find.
 
+## The mark — a gold shield with a check
+
+`logo-mark.png` at the repository root, rasterised 4x from `favicon.svg`: a
+**gold shield carrying a white check**, on the branch navy `#07131f`. That is
+the branch's logo. It is not a monogram and there is no "RR" tile.
+
+**Every screen and every letter uses that file.** Nothing draws a substitute.
+Twice now a new screen has shipped with an invented "RR" on a blue gradient,
+and both times it went out beside three screens carrying the real mark — a
+branch whose own walls disagree about its logo is the first thing anybody in
+the room notices.
+
+```html
+<div class="mark"><img src="<path>/logo-mark.png" alt=""></div>
+```
+```css
+.mark{border-radius:13px;overflow:hidden;background:#07131f;display:grid;place-items:center}
+.mark img{width:100%;height:100%;display:block}
+```
+
+The palette that goes with it: navy `#07131f`, gold `#efc24b` into `#c9942c`,
+teal `#00CFEA`. Those are the values in `IBRAND` in `Intelligence.gs`, which is
+what the client letters read.
+
+**In e-mail the logo must be a hosted PNG**, never SVG and never a `data:` URI —
+Gmail strips the first and blocks the second, so the masthead arrives empty.
+`IBRAND.LOGO` points at `https://rickyrampersadbranch.com/logo-mark.png` for
+exactly that reason.
+
+**In a film it has to be embedded**, because the film is one file played in an
+iframe and a linked image does not load there. The builder folds it in as a
+data URI under the `mark` key.
+
 ## The voice — narration on every film
 
 Rendered with **edge-tts**. Free, no account, no licence, so nothing here needs
