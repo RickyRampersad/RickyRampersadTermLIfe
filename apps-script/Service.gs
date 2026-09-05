@@ -178,7 +178,8 @@ function bad_(msg) {
 function doGet(e) {
   var p = (e && e.parameter) || {};
   if (p.action === 'ping') {
-    return json_({ ok: true, service: 'Service Questionnaire', configured: !!SVC.CS_EMAIL });
+    return json_({ ok: true, service: 'Service Questionnaire', configured: !!SVC.CS_EMAIL,
+                   automation: automationOn_() });
   }
   if (p.action === 'status') {
     return json_(statusFor_(p.ref, p.code));
@@ -521,6 +522,8 @@ function wallData_(code) {
     stream: stream.slice(0, 40).map(function (s) { delete s.at; return s; }),
     days: days,
     roster: bank.length,
+    /* if this is false the branch is not being chased and nobody would know */
+    automation: automationOn_(),
   };
 }
 
@@ -3172,6 +3175,13 @@ function setupService() {
   teamBankSheet_();
   linkSheet_();
 
+  /* The lifetime promise is the whole product — a review every six months and
+     every birthday month, and a chase whenever we miss our own deadline. All
+     of it runs off one daily trigger, so setup installs it rather than leaving
+     it as a menu item nobody is told to click. */
+  var automation = false;
+  try { automation = installTriggers_(); } catch (e) { log_('setup', 'trigger-failed', String(e)); }
+
   var warn = SVC.CS_EMAIL ? '' :
     '<p style="color:#b3261e"><b>SVC.CS_EMAIL is still empty.</b> Submissions will route to the branch only ' +
     'until you set Guardian Life\'s Customer Service address and redeploy. That is deliberate — better than ' +
@@ -3186,19 +3196,52 @@ function setupService() {
       '<li><b>Deploy → New deployment → Web app</b> (Execute as: <b>Me</b>, Access: <b>Anyone</b>) and copy the /exec URL.</li>' +
       '<li>Paste it into <code>CONFIG.API_URL</code> in <code>service/index.html</code>, then commit.</li>' +
       '</ol>' + warn +
+      (automation
+        ? box_('good', '<b>The morning watchdog is running.</b> From about 8am daily it chases anything past ' +
+            'the deadline we set, keeps open files updated, and books the six-month check-up and the review in ' +
+            'each client’s birthday month. That is the promise the whole site makes — it is now automatic.')
+        : box_('warn', '<b>The morning watchdog could not be scheduled.</b> Without it nothing is chased, no ' +
+            'check-up is booked and no birthday review fires — and nothing would tell you. Run ' +
+            '<b>Install triggers</b> from the Guardian Service menu.')) +
       '<p>Until that URL is in place the form still works — it falls back to a pre-filled email, so no client is ' +
       'ever turned away.</p>' + sig_(), 'Setup'),
   });
 
   SpreadsheetApp.getUi().alert('Tabs are ready and a confirmation email is on its way.\n\n' +
+    (automation ? 'The morning follow-up watchdog is scheduled.\n\n'
+                : 'WARNING: the follow-up watchdog could not be scheduled — run "Install triggers" from the menu.\n\n') +
     'Next: Deploy → New deployment → Web app, then paste the /exec URL into CONFIG.API_URL in service/index.html.');
 }
 
-function installServiceTriggers() {
+/**
+ * Is the morning pass actually scheduled?
+ *
+ * Everything we promise a client past the first email depends on it: the
+ * chase when we miss the deadline we set ourselves, the "we are still on it"
+ * note while a file is open, the six-month check-up, and the review in their
+ * birthday month. Without the trigger, all of that silently never happens and
+ * nothing anywhere says so — which is why it is reported on the ping and shown
+ * on the wall.
+ */
+function automationOn_() {
+  try {
+    return ScriptApp.getProjectTriggers().some(function (t) {
+      return t.getHandlerFunction() === 'dailyServiceFollowUp';
+    });
+  } catch (e) { return false; }
+}
+
+/** Idempotent, and free of any UI so setup can call it too. */
+function installTriggers_() {
   ScriptApp.getProjectTriggers().forEach(function (t) {
     if (t.getHandlerFunction() === 'dailyServiceFollowUp') ScriptApp.deleteTrigger(t);
   });
   ScriptApp.newTrigger('dailyServiceFollowUp').timeBased().atHour(8).everyDays(1).create();
+  return true;
+}
+
+function installServiceTriggers() {
+  installTriggers_();
   SpreadsheetApp.getUi().alert('The follow-up watchdog will run each morning around 8am.');
 }
 

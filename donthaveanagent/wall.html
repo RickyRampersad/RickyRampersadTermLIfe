@@ -166,6 +166,16 @@
   @keyframes pulse{0%{box-shadow:0 0 0 0 var(--glow)}70%{box-shadow:0 0 0 11px rgba(255,92,77,0)}100%{box-shadow:0 0 0 0 rgba(255,92,77,0)}}
   .tick{position:fixed;top:0;left:0;height:3px;background:var(--coral);z-index:21;width:0;
     box-shadow:0 0 16px var(--glow)}
+  /* The lifetime promise runs off one daily trigger. If it is not scheduled,
+     nothing is chased and no check-up is booked — so the wall says so where
+     the whole branch can see it, rather than letting it fail quietly. */
+  .aoff{position:fixed;left:0;right:0;bottom:0;z-index:22;display:none;align-items:center;gap:12px;
+    padding:12px clamp(26px,5vw,90px);background:#5A1A14;border-top:2px solid var(--coral);
+    font-family:var(--disp);font-weight:700;font-size:clamp(12px,1.15vw,16px);color:#FFE9E5}
+  .aoff.on{display:flex}
+  .aoff b{color:#fff}
+  .aoff span{margin-left:auto;font-weight:800;font-size:clamp(10px,.9vw,12px);letter-spacing:.16em;
+    text-transform:uppercase;color:var(--coral);white-space:nowrap}
   @media(max-width:700px){.brand,.clk{display:none}}
 
   /* ── gate ────────────────────────────────────────────────────── */
@@ -277,6 +287,13 @@
       <div class="tile r d7"><b id="pLetter">0</b><span>Letters outstanding</span></div>
     </div>
   </section>
+</div>
+
+<div class="aoff" id="aoff">
+  <b>Follow-up automation is off.</b>
+  <span style="margin-left:8px;font-weight:700;color:#FFE9E5;letter-spacing:0;text-transform:none">
+    Nothing is being chased, no check-up or birthday review is booked.</span>
+  <span>Run “Install triggers”</span>
 </div>
 
 <div class="chrome" id="chrome" style="display:none">
@@ -461,6 +478,10 @@ function paint(w) {
   set("pKept", Math.round((kept / total) * 100) + "%");
   set("pLate", t.overdue); set("pTrace", t.tracing); set("pLetter", t.letters);
   set("pHead", t.overdue ? (t.overdue === 1 ? "One is late." : t.overdue + " are late.") : "Nobody is waiting past the promise.");
+  /* false only when the daily trigger is missing; undefined on an older
+     deployment that predates the check, which must not raise a false alarm */
+  document.getElementById("aoff").classList.toggle("on", w.automation === false);
+
   set("pSay", t.overdue
     ? "Everyone on that list was told they would hear from a person. Mark the row Handled once it genuinely is."
     : "Every client who filed has been answered inside the time we promised them. Keep it there.");

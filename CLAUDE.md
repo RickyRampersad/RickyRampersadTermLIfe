@@ -146,6 +146,19 @@ Service — until it is set, everything routes to the branch alone and says so),
 Questionnaires, Agent Skill Bank, Link Activity, Callback Requests, Service
 Activity.
 
+### The lifetime promise runs off one trigger
+
+"A review every six months and every birthday month, for life" is on eight
+pages and in every film, and all of it — plus the chase when we miss our own
+deadline, and the "still on it" note while a file is open — hangs on the daily
+`dailyServiceFollowUp` trigger.
+
+`setupService()` installs it. It used to be a menu item nobody was told to
+click, which meant the central promise of the product could silently never
+fire. `automationOn_()` reports whether it is scheduled, the `ping` returns it
+as `automation`, and the wall shows a red banner across the bottom when it is
+off. Never remove those; a quiet failure here is invisible for months.
+
 ### The documents are the point
 
 Form **2000-03-147** is reproduced exactly — same title, same twenty questions
