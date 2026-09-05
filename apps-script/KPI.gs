@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-04b';
+var SCRIPT_VERSION = '2026-09-05a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3081,9 +3081,20 @@ function wallData_() {
     .sort(function (a, b) { return b.worked - a.worked; });
 
   // --- thirty days in against out ----------------------------------------
-  // The card that says how to read the others. The birthday mailer creates
-  // and closes its own work and is nobody's throughput, so Servicing that was
-  // both created and completed by the same automation is left out of `out`.
+  // The card that says how to read the others, and it has to answer two
+  // different questions without folding one into the other.
+  //
+  // A client servicing run is real work and a real contact the client
+  // receives: 550 clients in a month, one task each, every one typed
+  // Servicing, and triggered by the Branch Manager rather than by nobody.
+  // The first version of this card subtracted it and printed "robot
+  // excluded", which took the branch's largest servicing book off the wall
+  // and told the room its author had closed one thing in thirty days.
+  //
+  // So it is counted and named, never netted away. `in` and `out` are the
+  // case book — work opened and carried to a close one at a time. `serviced`
+  // is the contact book, reported beside it. Two kinds of work, two figures,
+  // neither one hidden inside the other.
   var flowIn = {}, flowOut = {};
   sfkQuery_('SELECT OwnerId, COUNT(Id) n FROM Task ' +
     'WHERE CreatedDate = LAST_N_DAYS:30 AND OwnerId IN ' + IN + ' GROUP BY OwnerId')
@@ -3093,19 +3104,24 @@ function wallData_() {
     ' GROUP BY OwnerId').forEach(function (r) {
       var n = who(r.OwnerId); if (n) flowOut[n] = Number(r.n) || 0;
     });
-  var robot = {};
-  sfkQuery_('SELECT OwnerId, COUNT(Id) n FROM Task ' +
+  var serviced = {}, servedClients = {};
+  sfkQuery_('SELECT OwnerId, COUNT(Id) n, COUNT_DISTINCT(WhoId) c FROM Task ' +
     "WHERE CreatedDate = LAST_N_DAYS:30 AND Task_Type__c = 'Servicing' " +
     "AND Subject LIKE '%Happy Birthday%' AND OwnerId IN " + IN + ' GROUP BY OwnerId')
-    .forEach(function (r) { var n = who(r.OwnerId); if (n) robot[n] = Number(r.n) || 0; });
+    .forEach(function (r) {
+      var n = who(r.OwnerId);
+      if (!n) return;
+      serviced[n] = Number(r.n) || 0;
+      servedClients[n] = Number(r.c) || 0;      // one contact per client, counted
+    });
   out.flow = Object.keys(firstName).map(function (k) {
-    var n = firstName[k], bot = robot[n] || 0;
-    var row = { n: n, in: Math.max((flowIn[n] || 0) - bot, 0),
-                out: Math.max((flowOut[n] || 0) - bot, 0) };
-    if (bot) row.note = 'robot excluded — ' + bot + ' in, ' + bot + ' out';
+    var n = firstName[k], sv = serviced[n] || 0;
+    var row = { n: n, in: Math.max((flowIn[n] || 0) - sv, 0),
+                out: Math.max((flowOut[n] || 0) - sv, 0), serviced: sv };
+    if (sv) row.clients = servedClients[n] || sv;
     return row;
-  }).filter(function (r) { return r.in || r.out; })
-    .sort(function (a, b) { return b.in - a.in; });
+  }).filter(function (r) { return r.in || r.out || r.serviced; })
+    .sort(function (a, b) { return (b.in + b.serviced) - (a.in + a.serviced); });
 
   // --- who we are waiting on ---------------------------------------------
   out.waitingOn = [];
