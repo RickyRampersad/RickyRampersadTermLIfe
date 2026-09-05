@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Licensing Year</title>
+<meta name="description" content="Life licence renewals across the branch — the month each agent renews, what is coming, and what is still open.">
+<meta name="theme-color" content="#061c31">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Third wall in the set — same tokens, same grid, same click-to-filter as the
+     45-day and delivery walls, so all three read as one product on adjacent
+     screens. Gold is the accent again: like delivery, this is a promise the
+     branch owes rather than a client who has stopped paying. */
+  :root{
+    --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
+    --blue:#37b1ec; --blue2:#0b7fd4; --gold:#efc24b; --gold2:#c9942c;
+    --grey:#5b7590; --good:#34d399; --bad:#f87171;
+    --grad:linear-gradient(120deg,#37b1ec,#0b7fd4);
+    --grad-gold:linear-gradient(120deg,#efc24b,#c9942c);
+    --r:16px; --ease:cubic-bezier(.16,1,.3,1);
+    --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;min-height:100vh}
+  body{margin:0;font-family:var(--font-b);color:var(--ink);background:#061c31;
+    overflow:hidden;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:
+      radial-gradient(1200px 700px at 10% -8%,rgba(239,194,75,.16),transparent 60%),
+      radial-gradient(900px 600px at 94% 2%,rgba(11,127,212,.18),transparent 62%),
+      linear-gradient(165deg,#061c31 0%,#08243f 55%,#061a2d 100%)}
+
+  header{display:flex;align-items:center;gap:14px;padding:14px 26px 10px}
+  header .mark{width:40px;height:40px;flex:none;border-radius:12px;overflow:hidden;
+    background:#07131f;display:grid;place-items:center}
+  header .mark img{width:40px;height:40px;display:block}
+  header h1{margin:0;font-family:var(--font-d);font-size:17px;font-weight:800;letter-spacing:-.3px}
+  header .sub{font-size:11.5px;color:var(--dim);margin-top:1px}
+  header .right{margin-left:auto;display:flex;align-items:center;gap:14px}
+  .live{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--dim)}
+  .live i{width:7px;height:7px;border-radius:50%;background:var(--gold)}
+  .live.on i{background:var(--good);animation:pulse 2.2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+  #clock{font-family:var(--font-d);font-weight:700;font-size:15px;
+    font-variant-numeric:tabular-nums;color:var(--dim)}
+
+  #chip{display:none;align-items:center;gap:9px;background:rgba(239,194,75,.16);
+    border:1px solid rgba(239,194,75,.42);border-radius:999px;padding:6px 8px 6px 15px;
+    font:600 13px var(--font-b);color:var(--ink);cursor:pointer}
+  #chip.on{display:inline-flex}
+  #chip span{width:19px;height:19px;border-radius:50%;background:rgba(255,255,255,.16);
+    display:grid;place-items:center;font-size:12px;line-height:1}
+
+  main{display:grid;grid-template-columns:300px 1fr 1fr 1fr;
+    grid-template-rows:auto 1fr auto;gap:13px;padding:0 26px 20px;height:calc(100vh - 66px)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+    padding:16px 18px;min-height:0;display:flex;flex-direction:column}
+  .card h3{margin:0 0 2px;font:700 12px var(--font-b);letter-spacing:.16em;
+    text-transform:uppercase;color:var(--gold)}
+  .card .cap{font-size:11.5px;color:var(--faint);margin:0 0 7px;line-height:1.4}
+
+  .hero{grid-row:1/3;justify-content:center}
+  .hero .big{font-family:var(--font-d);font-weight:800;font-size:96px;line-height:.9;
+    letter-spacing:-4px;background:var(--grad-gold);-webkit-background-clip:text;
+    background-clip:text;color:transparent}
+  .hero .cap2{font-size:14px;color:var(--dim);margin-top:8px;line-height:1.5}
+  .hero .cap2 b{color:var(--ink)}
+  .hero .split{display:flex;gap:20px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+  .hero .split div{flex:1}
+  .hero .split .v{font-family:var(--font-d);font-weight:800;font-size:23px;letter-spacing:-.6px}
+  .hero .split .k{font-size:10.5px;color:var(--faint);margin-top:2px;line-height:1.35}
+
+  /* THE YEAR. Twelve months across the top — the thing the branch actually
+     asked to see, so it gets the whole width and the tallest bars. */
+  .year{grid-column:2/5}
+  .ygrid{display:grid;grid-template-columns:repeat(12,1fr);gap:8px;flex:1;align-items:end;
+    min-height:64px;max-height:104px}
+  .ycol{display:flex;flex-direction:column;justify-content:flex-end;height:100%;
+    cursor:pointer;border-radius:9px;padding:4px 2px 0;transition:.16s}
+  .ycol:hover{background:rgba(255,255,255,.05)}
+  .ycol.sel{background:rgba(239,194,75,.15)}
+  .ycol.now{background:rgba(239,194,75,.09)}
+  .ycol .n{font-family:var(--font-d);font-weight:800;font-size:17px;text-align:center;
+    line-height:1;margin-bottom:5px;font-variant-numeric:tabular-nums}
+  .ycol.now .n,.ycol.sel .n{color:var(--gold)}
+  .ycol .bar{background:var(--grey);border-radius:5px 5px 0 0;transition:height .55s var(--ease);
+    min-height:3px}
+  .ycol.now .bar,.ycol.sel .bar{background:var(--grad-gold)}
+  /* line-height matters here: at 10.5px with the default the descender on
+     'p' in Sep was being clipped by the column box. */
+  .ycol .m{font-size:10.5px;line-height:1.5;color:var(--faint);text-align:center;
+    padding:5px 0 3px;white-space:nowrap;overflow:visible}
+  .ycol.now .m{color:var(--gold);font-weight:700}
+  .ycol.zero{opacity:.4;cursor:default}
+
+  .rows{display:flex;flex-direction:column;gap:5px;overflow:hidden;flex:1;justify-content:flex-start}
+  .row{display:grid;grid-template-columns:1fr 74px;align-items:center;gap:10px;
+    cursor:pointer;padding:2px 5px;margin:0 -5px;border-radius:8px;transition:.16s}
+  .row:hover{background:rgba(255,255,255,.05)}
+  .row.sel{background:rgba(239,194,75,.15)}
+  .row .lbl{font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .track{height:6px;background:rgba(255,255,255,.07);border-radius:3px;margin-top:3px;overflow:hidden}
+  .row .track i{display:block;height:100%;border-radius:4px;background:var(--grey);
+    transition:width .55s var(--ease)}
+  .row .track i.gold{background:var(--grad-gold)} .row .track i.accent{background:var(--grad)}
+  .row .val{font-family:var(--font-d);font-weight:700;font-size:16px;text-align:right;
+    font-variant-numeric:tabular-nums}
+  .row .val small{font:500 10px var(--font-b);color:var(--faint);margin-left:5px}
+  .row.zero{opacity:.35;cursor:default}
+
+  /* The due list. One line per agent, date on the right, and a state pill that
+     is the whole point: a date coming is routine, a date gone by with nothing
+     closed against it is the only emergency this wall can show. */
+  .due{grid-column:1/3}
+  .dlist{display:flex;flex-direction:column;gap:0;overflow:hidden;flex:1}
+  .drow{display:grid;grid-template-columns:1fr auto 78px;align-items:center;gap:10px;
+    padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13.5px}
+  .drow .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .drow .nm em{font-style:normal;font-size:10.5px;color:var(--faint);display:block}
+  .drow .when{font-family:var(--font-d);font-weight:700;text-align:right;
+    font-variant-numeric:tabular-nums;font-size:15px}
+  .pill{font:700 10px var(--font-b);letter-spacing:.06em;text-transform:uppercase;
+    padding:3px 8px;border-radius:999px;white-space:nowrap;justify-self:start}
+  .pill.ok{background:rgba(52,211,153,.15);color:var(--good);border:1px solid rgba(52,211,153,.35)}
+  .pill.warn{background:rgba(239,194,75,.16);color:var(--gold);border:1px solid rgba(239,194,75,.4)}
+  .pill.bad{background:rgba(248,113,113,.16);color:var(--bad);border:1px solid rgba(248,113,113,.42)}
+  .pill.flat{background:rgba(255,255,255,.06);color:var(--faint);border:1px solid var(--line)}
+
+  .open{grid-column:3/5}
+  .sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:12px}
+  .sgrid .v{font-family:var(--font-d);font-weight:800;font-size:30px;letter-spacing:-1px;line-height:1}
+  .sgrid .k{font-size:10.5px;color:var(--faint);margin-top:4px;line-height:1.35}
+  .sgrid .gold .v{color:var(--gold)} .sgrid .accent .v{color:var(--blue)}
+  .sgrid .good .v{color:var(--good)} .sgrid .bad .v{color:var(--bad)}
+  .tlist{font-size:12px;color:var(--dim);line-height:1.5;overflow:hidden}
+  .tlist div{padding:3px 0 3px 12px;border-left:2px solid rgba(239,194,75,.4);margin-bottom:5px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .note{font-size:11.5px;color:var(--faint);line-height:1.5;margin:9px 0 0}
+  .note b{color:var(--dim)}
+  .note.flag{border-left:2px solid var(--gold);padding-left:12px}
+
+  footer{position:fixed;left:26px;bottom:5px;font-size:10.5px;color:var(--faint)}
+  .hint{position:fixed;right:26px;bottom:5px;font-size:10.5px;color:var(--faint);opacity:.7}
+
+  @media (min-width:1700px){
+    main{grid-template-columns:350px 1fr 1fr 1fr;gap:16px;padding:0 34px 24px}
+    .hero .big{font-size:118px} .card{padding:20px 24px}
+    .row .lbl{font-size:15px} .row .val{font-size:19px} .drow{font-size:15px}
+    .ycol .n{font-size:21px} .ycol .m{font-size:12px} .sgrid .v{font-size:38px}
+    header{padding:18px 34px 12px} main{height:calc(100vh - 74px)}
+  }
+  @media (max-width:1200px){
+    body{overflow:auto} main{grid-template-columns:1fr 1fr;height:auto}
+    .hero{grid-row:auto} .year{grid-column:1/3}
+    .due,.open{grid-column:1/3}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mark"><img src="../../logo-mark.png" alt=""></div>
+  <div>
+    <h1>Licensing Year</h1>
+    <div class="sub">Life licence renewals · active agents · Ricky Rampersad Branch, Chaguanas</div>
+  </div>
+  <div class="right">
+    <div id="chip" onclick="clearFilter()"><b id="chipTxt"></b><span>✕</span></div>
+    <span class="live" id="live"><i></i><span id="liveTxt">snapshot</span></span>
+    <span id="clock"></span>
+  </div>
+</header>
+
+<main>
+  <section class="card hero">
+    <h3 id="heroKick">Renewing this month</h3>
+    <div class="big" id="heroN">—</div>
+    <div class="cap2" id="heroCap"></div>
+    <div class="split">
+      <div><div class="v" id="heroSoon">—</div><div class="k" id="heroSoonK">in the next 45 days</div></div>
+      <div><div class="v" id="heroTracked">—</div><div class="k">active agents tracked</div></div>
+    </div>
+  </section>
+
+  <section class="card year"><h3>The year ahead</h3>
+    <p class="cap">Life licence renewals by month. Click a month to hold the wall.</p>
+    <div class="ygrid" id="yGrid"></div></section>
+
+  <section class="card"><h3>By unit</h3>
+    <p class="cap">Whose people renew, and how many are inside 45 days.</p>
+    <div class="rows" id="rUnit"></div></section>
+
+  <section class="card"><h3>By contract type</h3>
+    <p class="cap">Recruits renew a provisional licence, not the full one.</p>
+    <div class="rows" id="rType"></div></section>
+
+  <section class="card"><h3>Years licensed</h3>
+    <p class="cap">A first renewal is a form nobody has filled in before.</p>
+    <div class="rows" id="rTen"></div></section>
+
+  <section class="card due"><h3 id="dueHd">Next to renew</h3>
+    <p class="cap" id="dueCap"></p>
+    <div class="dlist" id="dList"></div></section>
+
+  <section class="card open"><h3>Open licence work, and what disagrees</h3>
+    <p class="cap" id="openCap"></p>
+    <div id="openBody"></div></section>
+</main>
+
+<footer id="src"></footer>
+<div class="hint">click a month or bar to filter · esc clears · F full screen</div>
+
+<script>
+/* ── DATA ────────────────────────────────────────────────────────────────────
+   AGGREGATES AND OUR OWN STAFF, exactly like the other two walls. Agent names,
+   renewal months and units — no client ever appears here. A wall in a branch is
+   read by whoever walks past it.
+
+   Paste the Apps Script /exec URL below for live figures. The action is
+   `intel.licence` and it takes no token — see the note in intelRoute_.
+
+   THE SOURCE IS SALESFORCE, not the workbook: the renewal month lives on the
+   agent's contact record (License_Renewal_Month_Life__c) and the chase lives in
+   a task. Nothing in the branch spreadsheet carries either, so if the Salesforce
+   credentials are not set this wall says so rather than drawing an empty year. */
+var LIC_URL = "";
+
+/* NO SNAPSHOT HERE, DELIBERATELY, AND IT IS THE ONE WALL THAT HAS NONE.
+   The other two fall back to generated aggregates because they count policies.
+   This one counts PEOPLE — thirty named agents and the month each of their
+   licences comes up — and it is read straight out of Salesforce. This
+   repository is public, so that does not get baked into a file anyone can
+   download. Live or nothing, and "nothing" says why. */
+var LIC = { configured:false,
+  error:"No feed. Paste the Apps Script /exec URL into LIC_URL above." };
+
+function $(s){return document.querySelector(s)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function nice(iso){
+  if(!iso) return "—";
+  var d=new Date(iso+"T00:00:00");
+  if(isNaN(d)) return iso;
+  return d.getDate()+" "+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()];
+}
+
+var FILTER=null;
+function clearFilter(){ FILTER=null; paint(); }
+document.addEventListener("keydown",function(e){
+  if(e.key==="Escape") clearFilter();
+  if(e.key==="f"||e.key==="F"){
+    if(document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen();
+  }
+});
+
+function bars(host,list,dim,tone){
+  var max=0; list.forEach(function(x){ if(x.n>max) max=x.n; });
+  host.innerHTML=list.map(function(x){
+    var sel=FILTER&&FILTER.dim===dim&&FILTER.key===x.k;
+    return '<div class="row'+(sel?' sel':'')+(x.n?'':' zero')+'"'
+      + (x.n?' data-dim="'+dim+'" data-key="'+esc(x.k)+'"':'')+'>'
+      + '<div><div class="lbl">'+esc(x.k)+'</div>'
+      + '<div class="track"><i class="'+(tone||"")+'" style="width:'
+      + (max?x.n/max*100:0).toFixed(1)+'%"></i></div></div>'
+      + '<div class="val">'+x.n+(x.soon?'<small>'+x.soon+' soon</small>':'')+'</div></div>';
+  }).join("");
+  Array.prototype.forEach.call(host.querySelectorAll(".row[data-dim]"),function(el){
+    el.onclick=function(){
+      if(FILTER&&FILTER.dim===el.dataset.dim&&FILTER.key===el.dataset.key) return clearFilter();
+      FILTER={dim:el.dataset.dim,key:el.dataset.key}; paint();
+    };
+  });
+}
+
+/* Which agents survive the current filter. Filtering is done here rather than
+   server-side because the whole roster is thirty rows — there is nothing to
+   protect and nothing to save. */
+function pool(){
+  var A=LIC.agents;
+  if(!FILTER) return A;
+  if(FILTER.dim==="unit")  return A.filter(function(a){return a.unit===FILTER.key});
+  if(FILTER.dim==="type")  return A.filter(function(a){return (a.type||"Not set")===FILTER.key});
+  if(FILTER.dim==="tenure") return A.filter(function(a){
+    if(!a.licensedSince) return false;
+    var y=new Date(LIC.generatedAt+"T00:00:00").getFullYear()-Number(a.licensedSince);
+    var B={"Under 2 years":[0,2],"2-5":[2,5],"5-10":[5,10],"10-20":[10,20],"Over 20 years":[20,999]}[FILTER.key];
+    return B && y>=B[0] && y<B[1];
+  });
+  /* By anniversary month, matching the strip — see the note in iBuildLicence_. */
+  if(FILTER.dim==="month") return A.filter(function(a){ return a.month-1===FILTER.month });
+  return A;
+}
+
+function paint(){
+  var D=LIC;
+  $("#chip").className = FILTER?"on":"";
+  if(FILTER) $("#chipTxt").textContent=FILTER.key;
+
+  /* NOT CONFIGURED. The whole wall depends on one system, so say which one and
+     what to do — an empty grid teaches nobody anything. */
+  if(!D.configured){
+    $("#heroKick").textContent="Not wired yet";
+    /* Plain colour, not the clipped gradient: an em-dash under
+       background-clip:text paints as a solid gold bar rather than a dash. */
+    $("#heroN").style.cssText="background:none;color:var(--faint);font-size:56px";
+    $("#heroN").textContent="—";
+    $("#heroCap").innerHTML='The renewal dates live in <b>Salesforce</b>, on the agent’s '
+      + 'contact record. Nothing in the branch workbook carries them, so this wall stays '
+      + 'blank until the Salesforce credentials are set.';
+    $("#heroSoon").textContent=(D.roster||{}).active||"—";
+    $("#heroSoonK").textContent="active agents waiting on it";
+    $("#heroTracked").textContent="0";
+    $("#yGrid").innerHTML=''; $("#dList").innerHTML='';
+    $("#rUnit").innerHTML=''; $("#rType").innerHTML=''; $("#rTen").innerHTML='';
+    $("#openCap").textContent="";
+    $("#openBody").innerHTML='<p class="note flag"><b>What is missing.</b> '
+      + esc(D.error||"Salesforce returned nothing.")+' The field is '
+      + '<b>License_Renewal_Month_Life__c</b> on Contact and the chase is a task of type '
+      + '<b>Lic/Staffing/SA/HR</b>. Set the Salesforce credentials in SalesforceSync.gs and '
+      + 'this fills in on the next refresh.</p>';
+    $("#src").textContent="Salesforce · not configured";
+    return;
+  }
+
+  var A=pool(), h=D.headline;
+  var passed=A.filter(function(a){return a.justPassed&&!a.covered});
+  var thisMo=A.filter(function(a){
+    return a.month-1===new Date(D.generatedAt+"T00:00:00").getMonth();
+  });
+
+  /* The hero leads with the alarm when there is one. A count of renewals this
+     month is useful; a licence date that went by with nothing closed against it
+     is the only thing on this wall that can stop somebody selling. */
+  if(passed.length){
+    $("#heroKick").textContent="Went by, nothing closed";
+    $("#heroN").textContent=passed.length;
+    $("#heroCap").innerHTML='renewal date'+(passed.length>1?'s have':' has')+' passed with no '
+      + 'completed licence task against '+(passed.length>1?'them':'it')+' — '
+      + '<b>'+esc(passed.map(function(a){return a.name}).join(", "))+'</b>. Check before they write.';
+  } else {
+    $("#heroKick").textContent="Renewing this month";
+    $("#heroN").textContent=thisMo.length;
+    var doneMo=thisMo.filter(function(a){return a.justPassed});
+    $("#heroCap").innerHTML = thisMo.length
+      ? 'life licence'+(thisMo.length>1?'s':'')+' come up this month — <b>'
+        + esc(thisMo.map(function(a){
+            return a.name+" "+nice(a.justPassed?a.lastDue:a.due)+(a.justPassed?" ✓":"");
+          }).join(", "))+'</b>.'
+        + (doneMo.length?' <b>'+doneMo.length+'</b> already done.':'')
+      : 'nothing comes up this month.';
+  }
+  $("#heroSoon").textContent=A.filter(function(a){return a.days<=D.soonDays}).length;
+  $("#heroSoonK").textContent="in the next "+D.soonDays+" days";
+  $("#heroTracked").textContent=A.length;
+
+  /* THE YEAR — counted from whatever is filtered, not from the server's full
+     roster. Leaving it on the whole branch while every other panel narrowed to
+     one unit made the wall disagree with itself in the most visible place. The
+     month a filter selects still shows, so clicking twice clears rather than
+     stranding the strip empty. */
+  var dt=new Date(D.generatedAt+"T00:00:00");
+  var months=D.months.map(function(m,i){
+    var mo=(dt.getMonth()+i)%12, yr=dt.getFullYear()+Math.floor((dt.getMonth()+i)/12);
+    var hit=A.filter(function(a){ return a.month-1===mo; });
+    return { mo:mo, yr:yr, k:m.k, short:m.short, current:i===0, n:hit.length,
+             done:hit.filter(function(a){return a.justPassed}).length,
+             sel:FILTER&&FILTER.dim==="month"&&FILTER.month===mo&&FILTER.year===yr };
+  });
+  var mx=0; months.forEach(function(m){ if(m.n>mx) mx=m.n; });
+  $("#yGrid").innerHTML=months.map(function(m){
+    var live=m.n||m.sel;
+    return '<div class="ycol'+(m.current?' now':'')+(m.sel?' sel':'')+(live?'':' zero')+'"'
+      + (live?' data-mo="'+m.mo+'" data-yr="'+m.yr+'" data-k="'+esc(m.k)+'"':'')+'>'
+      + '<div class="n">'+m.n+(m.done?'<b style="font-size:10px;color:var(--good)"> '+m.done+'\u2713</b>':'')+'</div>'
+      + '<div class="bar" style="height:'+(mx?Math.max(m.n/mx*100,2):2).toFixed(0)+'%"></div>'
+      + '<div class="m">'+esc(m.short)+(m.yr!==dt.getFullYear()?" "+String(m.yr).slice(2):"")+'</div></div>';
+  }).join("");
+  Array.prototype.forEach.call($("#yGrid").querySelectorAll(".ycol[data-mo]"),function(el){
+    el.onclick=function(){
+      var mo=+el.dataset.mo, yr=+el.dataset.yr;
+      if(FILTER&&FILTER.dim==="month"&&FILTER.month===mo&&FILTER.year===yr) return clearFilter();
+      FILTER={dim:"month",month:mo,year:yr,key:el.dataset.k}; paint();
+    };
+  });
+
+  /* THE DUE LIST. Just-passed first — see the sort in iBuildLicence_. */
+  var list=A.slice().sort(function(a,b){
+    if(a.justPassed!==b.justPassed) return a.justPassed?-1:1;
+    if(a.justPassed) return a.sinceLast-b.sinceLast;
+    return a.days-b.days;
+  }).slice(0,9);
+  $("#dueHd").textContent = FILTER ? "Renewing — "+FILTER.key : "Next to renew";
+  $("#dueCap").innerHTML = A.length+' active agent'+(A.length===1?'':'s')
+    + (FILTER?' in this cut':'')+', soonest first. A date already gone by sits at the top.';
+  $("#dList").innerHTML=list.map(function(a){
+    var pill, when;
+    if(a.justPassed && !a.covered){ pill='<span class="pill bad">'+a.sinceLast+'d ago · unconfirmed</span>';
+      when=nice(a.lastDue); }
+    else if(a.justPassed){ pill='<span class="pill ok">renewed</span>'; when=nice(a.lastDue); }
+    else if(a.days<=14){ pill='<span class="pill bad">'+a.days+' days</span>'; when=nice(a.due); }
+    else if(a.days<=D.soonDays){ pill='<span class="pill warn">'+a.days+' days</span>'; when=nice(a.due); }
+    else { pill='<span class="pill flat">'+a.days+' days</span>'; when=nice(a.due); }
+    return '<div class="drow"><div class="nm">'+esc(a.name)
+      + '<em>'+esc(a.unit)+(a.licensedSince?' · licensed since '+a.licensedSince:'')
+      + (a.openTasks?' · '+a.openTasks+' open task'+(a.openTasks>1?'s':''):'')+'</em></div>'
+      + pill+'<div class="when">'+when+'</div></div>';
+  }).join("");
+
+  /* OPEN WORK AND DISAGREEMENTS. */
+  var open=A.filter(function(a){return a.openTasks}),
+      openN=open.reduce(function(s,a){return s+a.openTasks},0),
+      inPool={}, cl;
+  A.forEach(function(a){ inPool[a.code]=1; });
+  /* By code, not by reference. These come back from JSON as separate objects,
+     so indexOf against the agent array matched nothing and the count read zero
+     while the panel underneath listed three. */
+  cl=D.clashes.filter(function(c){return inPool[c.code]});
+  $("#openCap").innerHTML='Salesforce tasks of type <b>'+esc(D.taskType)+'</b> whose subject '
+    + 'actually names a licence.';
+  $("#openBody").innerHTML=
+    '<div class="sgrid">'
+    + '<div class="'+(openN?'gold':'good')+'"><div class="v">'+openN+'</div>'
+    +   '<div class="k">open licence tasks across the branch</div></div>'
+    + '<div class="'+(h.unconfirmed?'bad':'good')+'"><div class="v">'+h.unconfirmed+'</div>'
+    +   '<div class="k">dates gone by with no completed task</div></div>'
+    + '<div class="'+(cl.length?'gold':'accent')+'"><div class="v">'+cl.length+'</div>'
+    +   '<div class="k">where the record and the task name different dates</div></div>'
+    + '</div>'
+    + (open.length ? '<div class="tlist">'+open.slice(0,3).map(function(a){
+        return '<div><b style="color:var(--ink)">'+esc(a.name)+'</b> — '
+          + esc(a.openSubjects[0]||"licence task open")+'</div>'; }).join("")+'</div>' : '')
+    + (cl.length ? '<p class="note flag"><b>Two dates, one licence.</b> '
+        + cl.map(function(a){ return esc(a.name)+' — the contact record says <b>'+nice(a.due)
+            + '</b>, a licence task named <b>'+nice(a.clash.said)+'</b>'; }).join('; ')
+        + '. Working to the later one is how a licence lapses; worth settling which is right.</p>' : '')
+    + '<p class="note"><b>Read from the anniversary, not the expiry field.</b> '
+      + 'License_Expiry__c reads 2020–2023 for most of the roster — it stopped being maintained '
+      + 'years ago, and a wall driven off it would report almost every agent as unlicensed. '
+      + 'The month and day are the parts the branch keeps current, so the next renewal is '
+      + 'computed from those.</p>'
+    + '<p class="note">'+D.gaps.licenceTasks+' of '+D.gaps.allTasks+' tasks in that type '
+      + 'name a licence; the rest are staffing and HR. '
+      + (D.gaps.noField.length
+          ? '<b>'+D.gaps.noField.length+' active agents have no renewal month set</b> — '
+            + esc(D.gaps.noField.join(", "))+' — so nothing here reminds them.'
+          : 'Every active agent has a renewal month set.')
+      + '</p>';
+
+  bars($("#rUnit"), D.units, "unit", "gold");
+  bars($("#rType"), D.types, "type", "accent");
+  bars($("#rTen"),  D.tenure, "tenure", "accent");
+}
+
+function tick(){ $("#clock").textContent=new Date().toLocaleTimeString("en-GB",
+  {hour:"2-digit",minute:"2-digit"}) }
+setInterval(tick,10000); tick();
+
+function boot(){
+  paint();
+  if(!LIC.configured) return;
+  var r=LIC.roster||{};
+  $("#src").textContent="Salesforce contact records and tasks · built "+LIC.generatedAt
+    + " · "+r.active+" active agents"
+    + (r.inactive||r.vested ? " · "+r.inactive+" inactive and "+r.vested+" vested excluded" : "")
+    + " · no client detail";
+}
+function load(){
+  if(!LIC_URL){ boot(); return; }
+  fetch(LIC_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
+                 body:JSON.stringify({action:"intel.licence"})})
+    .then(function(r){return r.json()})
+    .then(function(j){
+      if(!j||!j.ok||!j.data) throw new Error("bad feed");
+      LIC=j.data; FILTER=null; boot();
+      $("#live").classList.add("on"); $("#liveTxt").textContent="live";
+    })
+    .catch(function(){
+      LIC={configured:false,error:"The licence feed did not answer."}; paint();
+      $("#live").classList.remove("on"); $("#liveTxt").textContent="no feed"; });
+}
+load();
+setInterval(load,30*60*1000);
+</script>
+</body>
+</html>

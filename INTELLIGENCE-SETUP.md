@@ -615,6 +615,96 @@ Before anything is sent, the panel shows what *would* go: how many clients are
 ready, how they split across the six letters, and how many are on the line with
 no usable address. Today that is **26 ready, 13 unreachable**.
 
+## 3b. The other two walls
+
+Three screens now, all built the same way: static HTML on GitHub Pages, posting
+`text/plain` to the same `/exec`, receiving aggregates and no client rows.
+
+### Contract delivery — `intelligence/wall/delivery.html`
+
+Action `intel.delivery`. Paste the `/exec` URL into `DLV_URL`.
+
+**Scoped to 2026 and nothing earlier**, which is the whole reason the figures
+are usable. Across all time the in-force book shows 179 undelivered contracts —
+but 138 of those were dispatched more than a year ago, median eight and a half
+years. They are not contracts in a cabinet; they are deliveries that happened
+and were never recorded, and counting them sends the desk hunting through 2018.
+
+From 2026: **250 dispatched, 216 delivered (86%), 34 still out** — and every
+one of the 34 is past the branch's own ten-day standard. Change the floor with
+`INTEL_DELIVERY_FROM_YEAR`.
+
+Two things it deliberately does not fold together:
+
+- **Dispatch Pending has no year.** Those rows carry no dispatch date at all —
+  all 31 of them, checked — because head office has not dispatched yet. They
+  are reported on their own line rather than being silently dropped by a year
+  filter or silently counted as ours.
+- **Active agents only**, read from `Servicing Agent Status` in the in-force
+  book, which is more current than the access list: Jesus Boodhoo went Inactive
+  on 25 February 2026 and the access list still says Active. Vested agents earn
+  renewals but do not sell, so they are out too. **A departed agent's
+  outstanding contract still shows**, on its own line — those are precisely the
+  ones nobody is chasing, and hiding them with the agent would be the one
+  genuinely dangerous thing this filter could do.
+
+Names come from the agent code, not the agent name. The in-force book services
+business against the agency — `ADVANCED INVESTMENTS MANAGEMENT LIMITED` — so
+the wall used to name a company where the branch expects a person. Every row
+carries a Servicing Agent Id and the access list maps it to the human.
+
+### Licensing — `intelligence/wall/licence.html`
+
+Action `intel.licence`. Paste the `/exec` URL into `LIC_URL`.
+
+**This one reads Salesforce, not the workbook.** Nothing in the branch
+spreadsheet carries a licence date. Two fields and one task type:
+
+| | |
+|---|---|
+| `License_Renewal_Month_Life__c` | month, on Contact — a number, not a date |
+| `License_Life_Renewal_Day__c` | day of that month |
+| `Task_Type__c = 'Lic/Staffing/SA/HR'` | where the chase is logged |
+
+The renewal is an **anniversary**, so the next occurrence is computed from the
+month and day. Currently 30 active agents, all 30 with a month set.
+
+**Do not use `License_Expiry__c`.** It reads 2020–2023 for most of the roster;
+it stopped being maintained years ago. A wall driven off it would report almost
+every agent in the branch as unlicensed — wrong, and the kind of wrong that
+gets acted on. `Last_Renewed_License_Date__c` is stale the same way. The month
+and day are the parts the branch keeps current, so they are the only parts used.
+
+**`Agent__c` on Contact is the servicing agent code, not an agent flag.** It is
+set on the agent's own record *and on every client that agent services* — the
+first run of this query returned 195 rows for 31 codes. The licence month is
+what separates the agent from their book, which is why it is in the `WHERE`
+clause.
+
+**The task type is a mixed bucket** — licence renewals sit alongside staff
+requisitions, appraisals, resignations and receipt books. Only subjects that
+actually name a licence are counted: 40 of 49. The wall says so.
+
+Three things it surfaces that nothing else does:
+
+1. **A date that has just gone by with no completed task against it.** The
+   anniversary rolls forward the moment it passes, so without this a licence
+   that lapsed last week reads as 360 days away. Currently zero.
+2. **Where the contact record and the task subject name different dates.**
+   Three of them: Meera Persad-Khan (record 27 Oct, task said 13 Oct), Darryl
+   Manick (13 days), Daniel Bhagwandas (16 days). Working to the later one is
+   how a licence lapses.
+3. **Any active agent with no renewal month set** — nothing reminds them.
+   Currently none.
+
+**The `/exec` URL exposes this feed without a sign-in**, like the other two
+walls, because a screen on a wall has nobody to sign it in. Unlike the other
+two, what it returns is a *staff roster with licence dates* rather than pure
+aggregates. That is a deliberate trade and worth knowing before the URL is
+shared. For the same reason `licence.html` is the one wall that ships **no
+baked-in snapshot** — this repository is public, so it is live or nothing, and
+"nothing" explains itself on screen.
+
 ## 4. How it is put together
 
 A nightly trigger reads every source tab once, computes all five domains, and

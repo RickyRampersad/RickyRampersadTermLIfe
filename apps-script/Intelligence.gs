@@ -2798,6 +2798,7 @@ function intelRoute_(b) {
      single client. Keep it that way — see iBuildWall45_. */
   if (action === 'intel.wall') return iActWall45_(b);
   if (action === 'intel.delivery') return iActDelivery_(b);
+  if (action === 'intel.licence')  return iActLicence_(b);
 
   var session = iSession_(b.token);
   if (!session) return iErr_('Your session has expired — sign in again.');
@@ -4342,64 +4343,134 @@ function doPost(e) {
      Dispatch Pending   head office has it. Nothing for the branch to do yet.
      Undelivered        it is in our cabinet and the client does not have it.
 
-   AND THE BIG ONE: 138 OF THE 179 "UNDELIVERED" WERE DISPATCHED OVER A YEAR
-   AGO — median eight and a half years. Those are not contracts in a cabinet.
-   They are deliveries that happened and were never recorded, and a wall that
-   counts them sends the branch hunting through 2018. They are separated out
-   and reported as what they are: a records problem, not a delivery problem.
+   SCOPED TO ONE YEAR, AND THAT CHANGES THE ANSWER COMPLETELY.
+   Across all time the book shows 179 undelivered, of which 138 were dispatched
+   over a year ago — median eight and a half years. Those are not contracts in
+   a cabinet. They are deliveries that happened and were never recorded, and a
+   wall counting them sends the branch hunting through 2018.
 
-   The live cabinet is the rest, and every one of those is already past twenty
-   business days — the youngest is thirty days old. */
+   From 2026 the picture is real and it is good: 250 contracts dispatched, 216
+   delivered, 34 still out. That is a number a branch can work in a morning.
+   Set INTEL_DELIVERY_FROM_YEAR to move the floor; everything before it is
+   counted once, as history, and never mixed into the live figures.
+
+   DISPATCH PENDING CANNOT BE YEAR-SCOPED, AND PRETENDING OTHERWISE WOULD HIDE
+   IT. Those rows carry no dispatch date at all — checked, all 31 of them —
+   because head office has not dispatched yet, so there is no date to scope by.
+   They are reported on their own line, outside the year, as what they are:
+   waiting on head office, with no clock the branch controls.
+
+   NAMES, NOT AGENCIES. The in-force book services business against the agency
+   — "ADVANCED INVESTMENTS MANAGEMENT LIMITED" — so the wall used to name a
+   company where the branch expects a person. Every row carries a Servicing
+   Agent Id, and the access list maps that code to the human, so the join is
+   exact and needs no name matching at all. A code that is not on the access
+   list keeps whatever name the book gave it, rather than vanishing. */
 function iBuildDelivery_() {
   var sh = iTabInforce_();
   if (!sh) return { error: 'No in-force tab found.' };
   var d = iReadCols_(sh, {
     policy: ['policy id'], given: ['given name'], surname: ['surname'], plan: ['plan'],
     email: ['email'], agentId: ['servicing agent id'], agent: ['servcing agent name', 'servicing agent name'],
-    dispatch: ['dispatch date'], cat: ['delivery category']
+    dispatch: ['dispatch date'], cat: ['delivery category'],
+    aStatus: ['servicing agent status'], aEnd: ['servicing agent contract end date']
   });
   var today = iToday_(), DAY = 86400000;
-  var STALE = 365;                       // older than this and it is a records problem
+  var fromYear = iDlvFromYear_();        // live figures start here
   var promise = iDlvDays_();             // the BRANCH promise, in calendar days
   var skip = iExcluded_();
 
-  var live = [], stale = 0, staleOldest = 0, byCat = {}, dispatchPending = 0;
-  var delivered = 0, deliveredWithin = 0;
+  /* Code → person, and code → unit, both off the access list in one pass. The
+     unit map is keyed on the code as well as the name: the name key misses
+     every agent whose book is filed under a company. */
+  var units = iBuildUnits_(), unitOfCode = {}, unitOfName = {}, personOfCode = {};
+  Object.keys(units).forEach(function (u) {
+    units[u].forEach(function (m) {
+      var c = iCode_(m.id); if (c) { unitOfCode[c] = u; if (m.name) personOfCode[c] = m.name; }
+      var k = iNameKey_(m.name); if (k) unitOfName[k] = u;
+    });
+  });
+  function personFor(code, fallback) {
+    var p = personOfCode[iCode_(code)];
+    return p || String(fallback || '').trim() || '(none)';
+  }
+  function unitFor(code, name) {
+    return unitOfCode[iCode_(code)] || unitOfName[iNameKey_(name)] || 'Unassigned';
+  }
+
+  /* ACTIVE ONLY, AND THE IN-FORCE BOOK IS THE ONE THAT KNOWS.
+     The book carries Servicing Agent Status against every row — Active,
+     Inactive or Vested — and it is more current than the access list: Jesus
+     Boodhoo went Inactive on 25 February 2026 and the access list still reads
+     Active. Vested is a retired agent still earning renewals; their book is
+     serviced but they are not selling, so they are not an active agent either.
+
+     A DEPARTED AGENT'S CONTRACT IS STILL IN OUR CABINET. Filtering them out of
+     the roster is right; letting their outstanding contracts vanish with them
+     is not — those are precisely the ones nobody is chasing. So they come out
+     of the per-agent tallies and go onto their own line. */
+  var statusOf = {};
+  for (var sr = 0; sr < d.rows; sr++) {
+    var sc = iCode_(String(d.get('agentId', sr)).trim());
+    if (!sc || statusOf[sc]) continue;
+    statusOf[sc] = { status: String(d.get('aStatus', sr)).trim() || 'Unknown',
+                     ended: String(d.get('aEnd', sr)).trim() };
+  }
+  function isActive(code) {
+    var st = statusOf[iCode_(code)];
+    return !st || /^active$/i.test(st.status);
+  }
+
+  var live = [], before = 0, beforeOldest = 0, byCat = {}, dispatchPending = 0;
+  var delivered = 0, deliveredWithin = 0, deliveredBefore = 0;
+  var gone = [];                         // outstanding, agent no longer active
 
   for (var r = 0; r < d.rows; r++) {
     var cat = String(d.get('cat', r)).trim();
     if (!cat) continue;
-    var agent = String(d.get('agent', r)).trim();
-    if (iExcludes_(skip, agent)) continue;
+    var rawAgent = String(d.get('agent', r)).trim();
+    if (iExcludes_(skip, rawAgent)) continue;
+    var code = String(d.get('agentId', r)).trim();
+
+    /* No dispatch date and no year. Head office has not sent it, so it is not
+       the branch's clock and not in the branch's year. */
+    if (cat === 'Dispatch Pending') { dispatchPending++; continue; }
+
+    var disp = iDate_(d.get('dispatch', r), true);
+    var year = disp ? disp.getFullYear() : 0;
+    if (year < fromYear) {
+      /* History. Counted so the screen can say how much it set aside, and by
+         how far, but never mixed into a live figure. */
+      before++;
+      var oldAge = disp ? Math.round((today - disp) / DAY) : 0;
+      if (oldAge > beforeOldest) beforeOldest = oldAge;
+      if (cat !== 'Undelivered') deliveredBefore++;
+      continue;
+    }
 
     byCat[cat] = (byCat[cat] || 0) + 1;
 
-    /* Everything that is not Undelivered or Dispatch Pending is a delivery that
-       happened, and the band says how long it took — which is the only measure
-       of the branch's own service standard that this export supports. */
-    if (cat !== 'Undelivered' && cat !== 'Dispatch Pending') {
+    /* Everything that is not Undelivered is a delivery that happened, and the
+       band says how long it took — the only measure of the branch's own
+       service standard this export supports. */
+    if (cat !== 'Undelivered') {
       delivered++;
       if (cat === '0-30 Days') deliveredWithin++;
       continue;
     }
-    if (cat === 'Dispatch Pending') { dispatchPending++; continue; }
 
-    var disp = iDate_(d.get('dispatch', r), true);
-    var age = disp ? Math.round((today - disp) / DAY) : null;
-    if (age !== null && age > STALE) {
-      stale++; if (age > staleOldest) staleOldest = age;
-      continue;
-    }
-    live.push({ agent: agent, age: age,
+    var row = { agent: personFor(code, rawAgent), code: iCode_(code),
+                unit: unitFor(code, rawAgent),
+                age: disp ? Math.round((today - disp) / DAY) : null,
                 plan: String(d.get('plan', r)).trim(),
-                policy: String(d.get('policy', r)).trim() });
+                policy: String(d.get('policy', r)).trim() };
+    if (isActive(code)) live.push(row);
+    else {
+      row.status = (statusOf[iCode_(code)] || {}).status || 'Unknown';
+      row.ended  = (statusOf[iCode_(code)] || {}).ended || '';
+      gone.push(row);
+    }
   }
-
-  var units = iBuildUnits_(), unitOf = {};
-  Object.keys(units).forEach(function (u) {
-    units[u].forEach(function (m) { var k = iNameKey_(m.name); if (k) unitOf[k] = u; });
-  });
-  function unitFor(a) { return unitOf[iNameKey_(a)] || 'Unassigned'; }
 
   function tally(keyFn) {
     var m = {};
@@ -4412,6 +4483,25 @@ function iBuildDelivery_() {
       .sort(function (a, b) { return b.n - a.n || b.oldest - a.oldest; });
   }
 
+  /* Delivered per agent too, so a name with contracts out can be read beside
+     what that same person has already got signed for. Six outstanding against
+     four delivered is a different conversation from six against forty. */
+  var doneBy = {};
+  for (var r2 = 0; r2 < d.rows; r2++) {
+    var c2 = String(d.get('cat', r2)).trim();
+    if (!c2 || c2 === 'Undelivered' || c2 === 'Dispatch Pending') continue;
+    var a2 = String(d.get('agent', r2)).trim();
+    if (iExcludes_(skip, a2)) continue;
+    var dd = iDate_(d.get('dispatch', r2), true);
+    if (!dd || dd.getFullYear() < fromYear) continue;
+    var id2 = String(d.get('agentId', r2)).trim();
+    if (!isActive(id2)) continue;
+    var nm2 = personFor(id2, a2);
+    if (!doneBy[nm2]) doneBy[nm2] = { done: 0, fast: 0, unit: unitFor(id2, a2) };
+    doneBy[nm2].done++;
+    if (c2 === '0-30 Days') doneBy[nm2].fast++;
+  }
+
   var BANDS = [['Under 20 days', 0, 20], ['20-30', 20, 31], ['31-60', 31, 61],
                ['61-90', 61, 91], ['91-180', 91, 181], ['Over 180', 181, 99999]];
   var ageing = BANDS.map(function (b) {
@@ -4420,6 +4510,28 @@ function iBuildDelivery_() {
   });
   var ages = live.map(function (x) { return x.age; })
                  .filter(function (a) { return a !== null; }).sort(function (a, b) { return a - b; });
+
+  /* Every agent who touched a 2026 contract, outstanding or not — so the wall
+     can show the whole roster rather than only the people in trouble. */
+  var agentRows = tally(function (x) { return x.agent; });
+  var seen = {};
+  agentRows.forEach(function (a) {
+    seen[a.k] = 1;
+    a.done = (doneBy[a.k] || {}).done || 0;
+    a.fast = (doneBy[a.k] || {}).fast || 0;
+    a.unit = (live.filter(function (x) { return x.agent === a.k; })[0] || {}).unit ||
+             (doneBy[a.k] || {}).unit || 'Unassigned';
+  });
+  /* An agent with nothing outstanding still belongs on the wall — and their
+     unit comes off the delivered rows, because they have no live row to read
+     it from. Reading it only from `live` filed every clean agent under
+     Unassigned, which reads as a data fault rather than a good month. */
+  Object.keys(doneBy).forEach(function (nm) {
+    if (seen[nm]) return;
+    agentRows.push({ k: nm, n: 0, oldest: 0, done: doneBy[nm].done, fast: doneBy[nm].fast,
+                     unit: doneBy[nm].unit || 'Unassigned' });
+  });
+  agentRows.sort(function (a, b) { return b.n - a.n || b.oldest - a.oldest || b.done - a.done; });
 
   /* THREE STATES, AND THIS EXPORT ONLY KNOWS ONE OF THEM.
        in the cabinet          received from head office, still on our shelf
@@ -4435,6 +4547,7 @@ function iBuildDelivery_() {
 
   return {
     generatedAt: iIso_(today),
+    fromYear: fromYear,
     promise: promise,
     split: split,
     /* s268(1) of the Insurance Act 2018 — twenty BUSINESS days from acceptance
@@ -4447,13 +4560,15 @@ function iBuildDelivery_() {
                 oldest: ages.length ? ages[ages.length - 1] : 0,
                 median: ages.length ? ages[Math.floor(ages.length / 2)] : 0 },
     ageing: ageing,
-    agents: tally(function (x) { return x.agent || '(none)'; }).slice(0, 20),
-    units: tally(function (x) { return unitFor(x.agent); }),
+    agents: agentRows.slice(0, 24),
+    units: tally(function (x) { return x.unit; }),
     plans: tally(function (x) { return x.plan || '(none)'; }).slice(0, 5),
     /* Delivered, and how quickly — the only service-standard measure this
        export supports. */
     history: { delivered: delivered, within30: deliveredWithin,
                pct: delivered ? Math.round(deliveredWithin / delivered * 1000) / 10 : 0,
+               dispatched: delivered + live.length,
+               rate: (delivered + live.length) ? Math.round(delivered / (delivered + live.length) * 1000) / 10 : 0,
                /* Only bands that describe a completed delivery. Undelivered and
                   Dispatch Pending are states, not durations — listing them beside
                   "0-30 Days" invites reading them as how long delivery took. */
@@ -4461,13 +4576,387 @@ function iBuildDelivery_() {
                         .filter(function (k) { return k !== 'Undelivered' && k !== 'Dispatch Pending'; })
                         .map(function (k) { return { k: k, n: byCat[k] }; })
                         .sort(function (a, b) { return b.n - a.n; }) },
-    records: { unrecorded: stale, oldestYears: Math.round(staleOldest / 365 * 10) / 10 }
+    /* What the year floor set aside, said out loud rather than silently
+       dropped — a wall that quietly shrinks its own denominator is worse than
+       one that shows an ugly number. */
+    before: { rows: before, delivered: deliveredBefore,
+              undelivered: before - deliveredBefore,
+              oldestYears: Math.round(beforeOldest / 365 * 10) / 10 },
+    /* Contracts still out against an agent who has left. Off the roster,
+       because the roster is active agents; on the screen, because somebody
+       has to deliver these and there is no agent left to ask. */
+    departed: { n: gone.length,
+                oldest: gone.reduce(function (m, x) { return Math.max(m, x.age || 0); }, 0),
+                rows: gone.map(function (x) {
+                  return { agent: x.agent, status: x.status, ended: x.ended,
+                           age: x.age, unit: x.unit }; }) },
+    roster: { active: Object.keys(statusOf).filter(function (c) { return isActive(c); }).length,
+              inactive: Object.keys(statusOf).filter(function (c) {
+                return /^inactive$/i.test((statusOf[c] || {}).status); }).length,
+              vested: Object.keys(statusOf).filter(function (c) {
+                return /^vested$/i.test((statusOf[c] || {}).status); }).length }
   };
 }
 
 function iActDelivery_(b) {
   var d = iBuildDelivery_();
   if (d.error) return iErr_(d.error);
+  return iOk_({ data: d });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LICENSING — who renews when, and what is still open
+   ══════════════════════════════════════════════════════════════════════════
+   An agent whose licence lapses cannot write business, and in Trinidad cannot
+   lawfully solicit it. The branch already tracks this, in two places that do
+   not talk to each other: a field on the agent's Salesforce contact record,
+   and a Salesforce task somebody opens a month or two before the date. This
+   joins them and puts the year on a wall.
+
+   THE FIELD IS License_Renewal_Month_Life__c, AND IT IS A NUMBER, NOT A DATE.
+   Month in that field, day in License_Life_Renewal_Day__c. So the renewal is a
+   recurring anniversary, not a one-off — 7 September every year, not
+   7 September 2021. The next occurrence is computed here; nothing is read off
+   a stored expiry.
+
+   AND DO NOT USE License_Expiry__c. It reads 2020, 2021, 2022 for most of the
+   roster — it stopped being maintained years ago. A wall driven off it would
+   report almost every agent in the branch as unlicensed, which is both wrong
+   and the kind of wrong that gets acted on. Same for
+   Last_Renewed_License_Date__c: last renewed 2021 against a licence that has
+   plainly been renewed since. The month-and-day anniversary is the only part
+   of that record the branch keeps current, so it is the only part used.
+
+   THE TASK TYPE IS A MIXED BUCKET. Lic/Staffing/SA/HR carries licence
+   renewals, staff requisitions, appraisals, resignations, device collections
+   and receipt books. Counting the bucket would say the branch has sixty open
+   licence matters when it has a handful. Only subjects that actually name a
+   licence are counted, and the wall says that is what it did.
+
+   ACTIVE AGENTS ONLY. A vested agent still earns renewals but does not sell;
+   an inactive one has gone. Neither needs a licence chased, and the in-force
+   book's Servicing Agent Status is more current than the access list.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var ILIC = {
+  SOON:     45,   // days ahead that counts as "coming up"
+  GRACE:    45,   // days after a renewal date that we still ask "was it done?"
+  TASKTYPE: 'Lic/Staffing/SA/HR'
+};
+
+/* A subject line that is genuinely about a licence. Everything else in that
+   task type is staffing or HR and does not belong on this wall. */
+function iLicIsLicence_(subject) {
+  var s = String(subject || '').toLowerCase();
+  if (!/licen[cs]e/.test(s)) return false;
+  return /renewal|renew|expir|registration|salesman|provisional|state licen|cpd|reminder|change from/.test(s);
+}
+
+/* The renewal date the branch wrote into the task subject, so it can be held
+   against the date on the contact record. Seen in the wild as (13/Oct/2026),
+   8/Sept/2026, (7.Jul.2026), (4/June/2026) and "due 18/Aug/2026". */
+function iLicSubjectDate_(subject) {
+  var m = String(subject || '').match(
+    /(\d{1,2})\s*[\/.\- ]\s*(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s*[\/.\- ]\s*(\d{4})/i);
+  if (!m) return null;
+  var MON = { jan:0, feb:1, mar:2, apr:3, may:4, jun:5, jul:6, aug:7, sep:8, oct:9, nov:10, dec:11 };
+  var d = new Date(Number(m[3]), MON[m[2].toLowerCase()], Number(m[1]));
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/* Next occurrence of a month/day anniversary, on or after today. A day past
+   the end of a short month lands on that month's last day rather than rolling
+   into the next one — 31 in a 30-day month is a data entry, not a date. */
+function iLicNextDue_(month, day, today) {
+  if (!month) return null;
+  var m = Math.round(month), dy = Math.round(day) || 1;
+  if (m < 1 || m > 12) return null;
+  function make(y) {
+    var last = new Date(y, m, 0).getDate();
+    return new Date(y, m - 1, Math.min(dy, last));
+  }
+  var d = make(today.getFullYear());
+  if (d < today) d = make(today.getFullYear() + 1);
+  return d;
+}
+
+function iBuildLicence_() {
+  var today = iToday_(), DAY = 86400000;
+  var skip = iExcluded_();
+
+  /* THE ROSTER: the access list says who the branch is, the in-force book says
+     who is still active. Both, joined on the agent code. */
+  var units = iBuildUnits_(), roster = {}, codes = [];
+  Object.keys(units).forEach(function (u) {
+    units[u].forEach(function (m) {
+      var c = iCode_(m.id);
+      if (!c || !m.name) return;
+      /* Staff have an access code (KD001, SL002) but no agent licence — this
+         wall is about people who may lawfully solicit business. Counting the
+         desk as four agents missing a licence field is a false alarm four
+         times over. */
+      if (iRoleOf_(m.role) === 'staff' || iRoleOf_(m.role) === 'staff-lead') return;
+      if (!/^A\d/.test(c)) return;                      // agent codes only
+      if (iExcludes_(skip, m.name)) return;
+      if (roster[c]) return;
+      roster[c] = { code: c, name: m.name, unit: u, role: m.role || '' };
+      codes.push(c);
+    });
+  });
+
+  var statusOf = {}, sh = iTabInforce_();
+  if (sh) {
+    var d = iReadCols_(sh, { agentId: ['servicing agent id'],
+                             aStatus: ['servicing agent status'],
+                             aEnd: ['servicing agent contract end date'] });
+    for (var r = 0; r < d.rows; r++) {
+      var c = iCode_(String(d.get('agentId', r)).trim());
+      if (!c || statusOf[c]) continue;
+      statusOf[c] = { status: String(d.get('aStatus', r)).trim() || 'Unknown',
+                      ended: String(d.get('aEnd', r)).trim() };
+    }
+  }
+  var dropped = { inactive: 0, vested: 0, names: [] };
+  codes = codes.filter(function (c) {
+    var st = (statusOf[c] || {}).status || '';
+    var out = /^inactive$/i.test(st) || /^vested$/i.test(st);
+    if (!out) return true;
+    if (/^inactive$/i.test(st)) dropped.inactive++; else dropped.vested++;
+    dropped.names.push({ name: roster[c].name, status: st,
+                         ended: (statusOf[c] || {}).ended || '' });
+    /* Out of the roster as well as the query. Filtering only the SOQL would
+       leave the record here, and one row returned for any other reason would
+       put a departed agent back on the wall. */
+    delete roster[c];
+    return false;
+  });
+
+  if (!codes.length) return { error: 'No active agents found on the access list.' };
+
+  /* SALESFORCE. Everything above comes out of the workbook; the licence dates
+     themselves exist nowhere else, so if this is not wired the wall says so
+     rather than drawing an empty year. */
+  var quoted = codes.map(function (c) { return "'" + c.replace(/'/g, '') + "'"; }).join(',');
+  var contacts = [], tasks = [], sfError = '';
+  try {
+    contacts = sfQuery_(
+      'SELECT Name, Agent__c, Agent_Type__c, License_Renewal_Month_Life__c, ' +
+      'License_Life_Renewal_Day__c, License_Date_Life__c ' +
+      'FROM Contact WHERE Agent__c IN (' + quoted + ') ' +
+      'AND License_Renewal_Month_Life__c != null');
+    /* Agent__c on Contact is the SERVICING agent code, so it is set on the
+       agent's own record and on every client that agent services — 195 rows
+       came back for 31 codes the first time this was run. The licence month is
+       what separates the agent from their book, which is why it is in the
+       WHERE clause and not filtered afterwards. */
+    tasks = sfQuery_(
+      'SELECT Id, Subject, Status, ActivityDate, IsClosed FROM Task ' +
+      "WHERE Task_Type__c = '" + ILIC.TASKTYPE + "' " +
+      'AND ActivityDate >= LAST_N_MONTHS:15 ORDER BY ActivityDate DESC');
+  } catch (err) {
+    sfError = String(err && err.message ? err.message : err);
+  }
+
+  if (sfError || !contacts.length) {
+    return { generatedAt: iIso_(today), configured: false,
+             error: sfError || 'Salesforce returned no licence records.',
+             roster: { active: codes.length, inactive: dropped.inactive, vested: dropped.vested } };
+  }
+
+  /* Licence tasks only, and which agent each one names. Matching is on the
+     agent's name appearing in the subject, because the task is not linked to
+     the agent's contact record — WhoId is usually the head-office person the
+     branch is waiting on, not the agent. */
+  var licTasks = [];
+  tasks.forEach(function (t) {
+    if (!iLicIsLicence_(t.Subject)) return;
+    var subj = String(t.Subject || ''), sk = iNameKey_(subj);
+    var who = '';
+    codes.forEach(function (c) {
+      var nm = iNameKey_(roster[c].name);
+      if (!nm) return;
+      var parts = nm.split(' ');
+      /* First name AND surname both present in the subject. Surname alone puts
+         every Mohammed on one agent's row. */
+      if (parts.length >= 2 &&
+          sk.indexOf(parts[0]) >= 0 && sk.indexOf(parts[parts.length - 1]) >= 0) who = c;
+    });
+    licTasks.push({ code: who, subject: subj, status: String(t.Status || ''),
+                    closed: !!t.IsClosed,
+                    due: t.ActivityDate ? iIso_(iDate_(t.ActivityDate)) : '',
+                    named: iLicSubjectDate_(subj) });
+  });
+
+  var openByCode = {}, anyByCode = {};
+  licTasks.forEach(function (t) {
+    if (!t.code) return;
+    (anyByCode[t.code] = anyByCode[t.code] || []).push(t);
+    if (!t.closed) (openByCode[t.code] = openByCode[t.code] || []).push(t);
+  });
+
+  /* ONE ROW PER ACTIVE AGENT. */
+  var seen = {}, agents = [], noField = [];
+  contacts.forEach(function (c) {
+    var code = iCode_(c.Agent__c);
+    if (!roster[code] || seen[code]) return;
+    seen[code] = 1;
+    var due = iLicNextDue_(c.License_Renewal_Month_Life__c, c.License_Life_Renewal_Day__c, today);
+    if (!due) return;
+    var days = Math.round((due - today) / DAY);
+
+    /* Did the date just go past? The anniversary rolls to next year the moment
+       it passes, so without this a licence that lapsed last week reads as 360
+       days away — the single most dangerous thing this screen could do. */
+    var last = new Date(due.getFullYear() - 1, due.getMonth(), due.getDate());
+    var sinceLast = Math.round((today - last) / DAY);
+    var justPassed = sinceLast >= 0 && sinceLast <= ILIC.GRACE;
+
+    var open = openByCode[code] || [], any = anyByCode[code] || [];
+    /* A task that covers the renewal just gone: closed, and dated in the run-up
+       to it. That is the branch's own evidence the renewal was handled. */
+    var covered = false;
+    any.forEach(function (t) {
+      if (!t.closed) return;
+      var td = t.named || (t.due ? new Date(t.due) : null);
+      if (!td) return;
+      var gap = Math.round((last - td) / DAY);
+      if (gap >= -ILIC.GRACE && gap <= 120) covered = true;
+    });
+
+    /* The task subject often carries its own renewal date. Where it disagrees
+       with the contact record by more than a couple of days, one of them is
+       wrong and somebody should look — Meera Persad-Khan's differ by fourteen. */
+    var clash = null;
+    any.forEach(function (t) {
+      if (!t.named || clash) return;
+      var sameYear = new Date(due.getFullYear(), t.named.getMonth(), t.named.getDate());
+      var off = Math.round((sameYear - due) / DAY);
+      if (Math.abs(off) > 2 && Math.abs(off) < 200) clash = { days: off, said: iIso_(t.named) };
+    });
+
+    agents.push({
+      name: roster[code].name, code: code, unit: roster[code].unit,
+      role: roster[code].role,
+      /* Salesforce stores the picklist VALUE, which is "Part_Time" — the label
+         is "Part Time". An underscore on a wall reads as a broken field. */
+      type: String(c.Agent_Type__c || '').replace(/_/g, ' '),
+      licensedSince: c.License_Date_Life__c ? String(c.License_Date_Life__c).slice(0, 4) : '',
+      month: Math.round(c.License_Renewal_Month_Life__c),
+      day: Math.round(c.License_Life_Renewal_Day__c) || 1,
+      due: iIso_(due), days: days,
+      /* The anniversary that has just gone by. Without it the screen prints
+         next September beside "passed yesterday", which reads as a typo and
+         undermines the one row that matters. */
+      lastDue: iIso_(last),
+      justPassed: justPassed, sinceLast: justPassed ? sinceLast : null,
+      covered: covered,
+      openTasks: open.length,
+      openSubjects: open.slice(0, 2).map(function (t) { return t.subject.slice(0, 90); }),
+      clash: clash
+    });
+  });
+  codes.forEach(function (c) { if (!seen[c]) noField.push(roster[c].name); });
+
+  agents.sort(function (a, b) { return a.days - b.days; });
+
+  /* THE YEAR AHEAD, twelve months from this one. */
+  var MN = ['January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'];
+  /* BUCKET BY THE ANNIVERSARY MONTH, NOT BY THE COMPUTED DATE.
+     A licence that came up last week has a next-due date thirteen months out,
+     which falls off the end of a twelve-month window — so the strip totalled
+     28 of 30 and the two missing were the two the branch had just dealt with.
+     Bucketing on the month number puts everyone in exactly one column and
+     matches how a branch reads it: who comes up in September. */
+  var months = [], y = today.getFullYear(), mo = today.getMonth();
+  for (var i = 0; i < 12; i++) {
+    var yy = y + Math.floor((mo + i) / 12), mm = (mo + i) % 12;
+    var inMonth = agents.filter(function (a) { return a.month - 1 === mm; });
+    months.push({ k: MN[mm] + (yy !== y ? ' ' + yy : ''), short: MN[mm].slice(0, 3),
+                  year: yy, month: mm, n: inMonth.length, current: i === 0,
+                  done: inMonth.filter(function (a) { return a.justPassed; }).length,
+                  who: inMonth.map(function (a) { return a.name; }) });
+  }
+
+  function count(fn) { return agents.filter(fn).length; }
+  /* Same rule as the strip. Reading it off the next-due date instead put
+     Aidan Eugene and Joy Sammah — who both renewed on the 4th — outside their
+     own month. */
+  var thisMonth = agents.filter(function (a) { return a.month - 1 === today.getMonth(); });
+
+  function tally(keyFn, pool) {
+    var m = {};
+    (pool || agents).forEach(function (a) {
+      var k = keyFn(a); if (k == null) return;
+      if (!m[k]) m[k] = { k: k, n: 0, soon: 0 };
+      m[k].n++;
+      if (a.days <= ILIC.SOON) m[k].soon++;
+    });
+    return Object.keys(m).map(function (k) { return m[k]; })
+      .sort(function (a, b) { return b.soon - a.soon || b.n - a.n; });
+  }
+
+  return {
+    generatedAt: iIso_(today),
+    configured: true,
+    soonDays: ILIC.SOON,
+    taskType: ILIC.TASKTYPE,
+    headline: {
+      active: codes.length,
+      tracked: agents.length,
+      thisMonth: thisMonth.length,
+      soon: count(function (a) { return a.days <= ILIC.SOON; }),
+      openTasks: agents.reduce(function (s, a) { return s + a.openTasks; }, 0),
+      /* The alarm: a renewal date that has just gone by with no closed task to
+         show for it. */
+      unconfirmed: count(function (a) { return a.justPassed && !a.covered; })
+    },
+    thisMonth: thisMonth,
+    /* Just-passed first, then by date. A renewal date rolls to next year the
+       instant it passes, so sorting on days alone buries last week's lapse at
+       the bottom of the list — 360 days away, and the one row that actually
+       needs somebody today. */
+    soon: agents.filter(function (a) { return a.days <= ILIC.SOON || a.justPassed; })
+                .sort(function (a, b) {
+                  if (a.justPassed !== b.justPassed) return a.justPassed ? -1 : 1;
+                  if (a.justPassed) return a.sinceLast - b.sinceLast;
+                  return a.days - b.days;
+                }),
+    agents: agents,
+    months: months,
+    units: tally(function (a) { return a.unit; }),
+    types: tally(function (a) { return a.type || 'Not set'; }),
+    /* How long each has held a life licence. The branch runs recruits beside
+       people licensed since 1993, and the two need reminding differently — a
+       first renewal is a form nobody has filled in before. */
+    tenure: (function () {
+      var B = [['Under 2 years', 0, 2], ['2-5', 2, 5], ['5-10', 5, 10],
+               ['10-20', 10, 20], ['Over 20 years', 20, 999]];
+      var yr = today.getFullYear();
+      return B.map(function (b) {
+        var hit = agents.filter(function (a) {
+          if (!a.licensedSince) return false;
+          var y = yr - Number(a.licensedSince);
+          return y >= b[1] && y < b[2];
+        });
+        return { k: b[0], n: hit.length,
+                 soon: hit.filter(function (a) { return a.days <= ILIC.SOON; }).length };
+      });
+    })(),
+    clashes: agents.filter(function (a) { return a.clash; }),
+    /* Said out loud, because a name missing from this wall is a name nobody
+       is reminding. */
+    gaps: { noField: noField,
+            licenceTasks: licTasks.length, allTasks: tasks.length,
+            unmatched: licTasks.filter(function (t) { return !t.code; }).length },
+    roster: { active: codes.length, inactive: dropped.inactive, vested: dropped.vested,
+              dropped: dropped.names }
+  };
+}
+
+function iActLicence_(b) {
+  var d = iBuildLicence_();
+  if (d.error && !d.roster) return iErr_(d.error);
   return iOk_({ data: d });
 }
 
@@ -4506,6 +4995,7 @@ function iActDelivery_(b) {
 var IDLV = {
   TAB:        'Contract Delivery',
   DAYS:       10,          // the BRANCH promise, in calendar days — not the Act's
+  FROM_YEAR:  2026,        // live figures start here; everything before is history
   NUDGE:      10,          // second letter this many days after the first
   FINAL:      20,          // third letter this many days after the first
   LIVE_PHRASE:'send to clients',
@@ -4513,6 +5003,7 @@ var IDLV = {
 };
 
 function iDlvDays_()  { return Math.round(iNum_(iProp_('INTEL_DELIVERY_DAYS'))) || IDLV.DAYS; }
+function iDlvFromYear_() { return Math.round(iNum_(iProp_('INTEL_DELIVERY_FROM_YEAR'))) || IDLV.FROM_YEAR; }
 function iDlvTab_() {
   return iSheet_(IDLV.TAB,
     ['Token', 'Received', 'Policy', 'Client', 'E-mail', 'Agent', 'Agent e-mail', 'Unit',
