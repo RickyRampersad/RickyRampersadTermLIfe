@@ -2797,6 +2797,7 @@ function intelRoute_(b) {
      who finds the URL learns the branch's arrears summary and nothing about a
      single client. Keep it that way — see iBuildWall45_. */
   if (action === 'intel.wall') return iActWall45_(b);
+  if (action === 'intel.delivery') return iActDelivery_(b);
 
   var session = iSession_(b.token);
   if (!session) return iErr_('Your session has expired — sign in again.');
@@ -2899,6 +2900,36 @@ function iExcluded_() {
   return out;
 }
 
+/* Does this agent name fall under an exclusion?
+
+   Exact keys are not enough, and the delivery wall proved it: the dues book
+   writes "Aleema Mohammed-Ali" and the in-force book writes "ALEEMA LEYYA
+   MOHAMMED-ALI" — same person, one middle name apart. An exclusion that
+   matched one book and not the other put a removed agent back on a screen,
+   which is exactly the instruction not being honoured.
+
+   So: exact, or every token of the excluded name present in the candidate
+   (and the surnames equal). "Aleema Mohammed Ali" is inside "Aleema Leyya
+   Mohammed Ali"; "Meera Persad Khan" is not inside "Mohan Khan". This is
+   deliberately NOT the surname-plus-initial test that the security review
+   flagged — that one matched different people. */
+function iExcludes_(skip, name) {
+  var k = iNameKey_(name);
+  if (!k) return false;
+  if (skip[k]) return true;
+  var ks = k.split(' ');
+  for (var ex in skip) {
+    if (!skip.hasOwnProperty(ex)) continue;
+    var es = ex.split(' ');
+    if (es.length < 2 || ks.length < 2) continue;
+    if (es[es.length - 1] !== ks[ks.length - 1]) continue;   // surnames must match
+    var all = true;
+    for (var i = 0; i < es.length; i++) if (ks.indexOf(es[i]) < 0) { all = false; break; }
+    if (all) return true;
+  }
+  return false;
+}
+
 function iBuildWall45_(target) {
   var sh = iTabDues_();
   if (!sh) return { error: 'No dues tab found.' };
@@ -2960,7 +2991,7 @@ function iBuildWall45_(target) {
     if (!paid) continue;
     var days = Math.round((today - paid) / DAY);
     if (days <= 0 || days > 4000) continue;
-    if (skip[iNameKey_(d.get('agent', r))]) {
+    if (iExcludes_(skip, d.get('agent', r))) {
       removed.policies++; removed.prem += iNum_(d.get('premium', r));
       if (days === TARGET) removed.onLine++;
       continue;
@@ -4300,6 +4331,147 @@ function doPost(e) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
+   WHAT IS IN OUR POSSESSION — the cabinet, from the in-force book
+   ══════════════════════════════════════════════════════════════════════════
+   This reads the branch's own in-force export rather than Salesforce, so the
+   cabinet wall works today instead of waiting on a field name. When
+   intelContractDiscover() settles that field, the Salesforce feed becomes the
+   trigger for the LETTERS; this stays the picture of what is sitting here.
+
+   TWO STATES, AND THEY ARE NOT THE SAME JOB
+     Dispatch Pending   head office has it. Nothing for the branch to do yet.
+     Undelivered        it is in our cabinet and the client does not have it.
+
+   AND THE BIG ONE: 138 OF THE 179 "UNDELIVERED" WERE DISPATCHED OVER A YEAR
+   AGO — median eight and a half years. Those are not contracts in a cabinet.
+   They are deliveries that happened and were never recorded, and a wall that
+   counts them sends the branch hunting through 2018. They are separated out
+   and reported as what they are: a records problem, not a delivery problem.
+
+   The live cabinet is the rest, and every one of those is already past twenty
+   business days — the youngest is thirty days old. */
+function iBuildDelivery_() {
+  var sh = iTabInforce_();
+  if (!sh) return { error: 'No in-force tab found.' };
+  var d = iReadCols_(sh, {
+    policy: ['policy id'], given: ['given name'], surname: ['surname'], plan: ['plan'],
+    email: ['email'], agentId: ['servicing agent id'], agent: ['servcing agent name', 'servicing agent name'],
+    dispatch: ['dispatch date'], cat: ['delivery category']
+  });
+  var today = iToday_(), DAY = 86400000;
+  var STALE = 365;                       // older than this and it is a records problem
+  var promise = iDlvDays_();             // the BRANCH promise, in calendar days
+  var skip = iExcluded_();
+
+  var live = [], stale = 0, staleOldest = 0, byCat = {}, dispatchPending = 0;
+  var delivered = 0, deliveredWithin = 0;
+
+  for (var r = 0; r < d.rows; r++) {
+    var cat = String(d.get('cat', r)).trim();
+    if (!cat) continue;
+    var agent = String(d.get('agent', r)).trim();
+    if (iExcludes_(skip, agent)) continue;
+
+    byCat[cat] = (byCat[cat] || 0) + 1;
+
+    /* Everything that is not Undelivered or Dispatch Pending is a delivery that
+       happened, and the band says how long it took — which is the only measure
+       of the branch's own service standard that this export supports. */
+    if (cat !== 'Undelivered' && cat !== 'Dispatch Pending') {
+      delivered++;
+      if (cat === '0-30 Days') deliveredWithin++;
+      continue;
+    }
+    if (cat === 'Dispatch Pending') { dispatchPending++; continue; }
+
+    var disp = iDate_(d.get('dispatch', r), true);
+    var age = disp ? Math.round((today - disp) / DAY) : null;
+    if (age !== null && age > STALE) {
+      stale++; if (age > staleOldest) staleOldest = age;
+      continue;
+    }
+    live.push({ agent: agent, age: age,
+                plan: String(d.get('plan', r)).trim(),
+                policy: String(d.get('policy', r)).trim() });
+  }
+
+  var units = iBuildUnits_(), unitOf = {};
+  Object.keys(units).forEach(function (u) {
+    units[u].forEach(function (m) { var k = iNameKey_(m.name); if (k) unitOf[k] = u; });
+  });
+  function unitFor(a) { return unitOf[iNameKey_(a)] || 'Unassigned'; }
+
+  function tally(keyFn) {
+    var m = {};
+    live.forEach(function (x) {
+      var k = keyFn(x); if (k == null) return;
+      if (!m[k]) m[k] = { k: k, n: 0, oldest: 0 };
+      m[k].n++; if (x.age > m[k].oldest) m[k].oldest = x.age;
+    });
+    return Object.keys(m).map(function (k) { return m[k]; })
+      .sort(function (a, b) { return b.n - a.n || b.oldest - a.oldest; });
+  }
+
+  var BANDS = [['Under 20 days', 0, 20], ['20-30', 20, 31], ['31-60', 31, 61],
+               ['61-90', 61, 91], ['91-180', 91, 181], ['Over 180', 181, 99999]];
+  var ageing = BANDS.map(function (b) {
+    return { k: b[0], n: live.filter(function (x) {
+      return x.age !== null && x.age >= b[1] && x.age < b[2]; }).length };
+  });
+  var ages = live.map(function (x) { return x.age; })
+                 .filter(function (a) { return a !== null; }).sort(function (a, b) { return a - b; });
+
+  /* THREE STATES, AND THIS EXPORT ONLY KNOWS ONE OF THEM.
+       in the cabinet          received from head office, still on our shelf
+       with the agent          handed over, no acknowledgement letter back
+       delivered               acknowledged
+     "Undelivered" in the in-force book covers the first two together — it has
+     no idea whether a contract is on our shelf or in an agent's car. Splitting
+     them needs INTEL_SF_HANDED_FIELD and INTEL_SF_ACK_FIELD from the client
+     portfolio. Until those are set the screen says undelivered and says why,
+     rather than inventing a split and sending the desk to the wrong shelf. */
+  var split = { configured: !!(iProp_('INTEL_SF_HANDED_FIELD') && iProp_('INTEL_SF_ACK_FIELD')),
+                inCabinet: null, withAgent: null };
+
+  return {
+    generatedAt: iIso_(today),
+    promise: promise,
+    split: split,
+    /* s268(1) of the Insurance Act 2018 — twenty BUSINESS days from acceptance
+       of the risk, which is roughly 28 calendar days and is the INSURER's duty,
+       not the agent's. Carried here as a number the screen can show without
+       claiming the branch clock and the statutory clock are the same thing. */
+    statutoryBusinessDays: 20,
+    headline: { inCabinet: live.length, dispatchPending: dispatchPending,
+                overPromise: live.filter(function (x) { return x.age !== null && x.age > promise; }).length,
+                oldest: ages.length ? ages[ages.length - 1] : 0,
+                median: ages.length ? ages[Math.floor(ages.length / 2)] : 0 },
+    ageing: ageing,
+    agents: tally(function (x) { return x.agent || '(none)'; }).slice(0, 20),
+    units: tally(function (x) { return unitFor(x.agent); }),
+    plans: tally(function (x) { return x.plan || '(none)'; }).slice(0, 5),
+    /* Delivered, and how quickly — the only service-standard measure this
+       export supports. */
+    history: { delivered: delivered, within30: deliveredWithin,
+               pct: delivered ? Math.round(deliveredWithin / delivered * 1000) / 10 : 0,
+               /* Only bands that describe a completed delivery. Undelivered and
+                  Dispatch Pending are states, not durations — listing them beside
+                  "0-30 Days" invites reading them as how long delivery took. */
+               bands: Object.keys(byCat)
+                        .filter(function (k) { return k !== 'Undelivered' && k !== 'Dispatch Pending'; })
+                        .map(function (k) { return { k: k, n: byCat[k] }; })
+                        .sort(function (a, b) { return b.n - a.n; }) },
+    records: { unrecorded: stale, oldestYears: Math.round(staleOldest / 365 * 10) / 10 }
+  };
+}
+
+function iActDelivery_(b) {
+  var d = iBuildDelivery_();
+  if (d.error) return iErr_(d.error);
+  return iOk_({ data: d });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
    CONTRACTS IN OUR POSSESSION — the cabinet
    ══════════════════════════════════════════════════════════════════════════
    Head office sets a contract-received date in Salesforce. Today somebody
@@ -4364,6 +4536,11 @@ function intelContractDiscover() {
   var objs = String(iProp_('INTEL_SF_OBJECTS') ||
     'Policy__c,Client_Portfolio__c,Risk_Details__c,Opportunity,Submission__c,Policy_Increases__c')
     .split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+  /* Three states, so three dates to find, not one:
+       received   head office → our cabinet
+       handed     our cabinet → the agent
+       acknowledged  the agent → the client, letter back to us
+     A field list that only looks for "received" finds a third of the answer. */
   var out = [], missing = [];
   objs.forEach(function (o) {
     var url = tok.instance_url + '/services/data/' + SF.API + '/sobjects/' + o + '/describe';
@@ -4374,7 +4551,7 @@ function intelContractDiscover() {
     (d.fields || []).forEach(function (f) {
       if (f.type !== 'date' && f.type !== 'datetime') return;
       var hay = (f.label + ' ' + f.name).toLowerCase();
-      if (!/contract|deliver|receiv|dispatch/.test(hay)) return;
+      if (!/contract|deliver|receiv|dispatch|acknowledg|ack\b|handed|hand.?over|collect|sign/.test(hay)) return;
       out.push({ obj: o, name: f.name, label: f.label, type: f.type });
     });
   });
@@ -4387,10 +4564,14 @@ function intelContractDiscover() {
     return '  ' + f.obj + '.' + f.name + '   (' + f.type + ')   "' + f.label + '"';
   });
   return 'Candidate fields:\n' + lines.join('\n') +
-    '\n\nPick the one that is the contract-received date and set:\n' +
-    '  INTEL_SF_OBJECT = ' + out[0].obj + '\n' +
-    '  INTEL_SF_RECEIVED_FIELD = ' + out[0].name +
-    '\nThen run intelContractScan() — it reports what it can see before sending anything.';
+    '\n\nThere are three dates to name, not one:\n' +
+    '  INTEL_SF_OBJECT           = ' + out[0].obj + '\n' +
+    '  INTEL_SF_RECEIVED_FIELD   = when head office\'s contract reached our cabinet\n' +
+    '  INTEL_SF_HANDED_FIELD     = when we handed it to the agent\n' +
+    '  INTEL_SF_ACK_FIELD        = when the agent\'s acknowledgement came back\n' +
+    '\nThe middle two are what split "in the cabinet" from "with the agent, ' +
+    'unacknowledged" — the in-force export cannot tell those apart.\n' +
+    'Then run intelContractScan().';
 }
 
 /* ── Reading the cabinet out of Salesforce ─────────────────────────────────
@@ -5114,7 +5295,7 @@ function iSurveyPool_(stage) {
     /* A letter names the agent looking after them. Sending one under the name
        of somebody the branch has taken off its books invites the reply nobody
        wants: "she left months ago, who has my file now?" */
-    if (skip[iNameKey_(d.get('agent', r))]) { skipped.excluded++; continue; }
+    if (iExcludes_(skip, d.get('agent', r))) { skipped.excluded++; continue; }
 
     var issue = iDate_(d.get('issue', r));
     var years = issue ? (today - issue) / DAY / 365.25 : 0;
