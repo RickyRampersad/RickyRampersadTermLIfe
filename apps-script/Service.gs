@@ -605,11 +605,20 @@ function handleSubmission_(body) {
     }
   }
 
+  /* The Policy Location Record, when they asked for it. The form promises it
+     free "whether or not we ever speak again", so it is built here rather
+     than left as something somebody has to remember to do by hand. */
+  var locatorPdf = null;
+  if (!isGroup && /^yes/i.test(String(rawById_(body).wantLocator || ''))) {
+    try { locatorPdf = locatorPdf_(ref, now, body, accessCode); }
+    catch (err) { log_(ref, 'locator-failed', String(err)); }
+  }
+
   /* 3 — the client hears from us immediately */
   var clientEmailed = false;
   if (core.email) {
     try {
-      sendClientThanks_(ref, priority, body, formPdf, letterPdf, accessCode);
+      sendClientThanks_(ref, priority, body, formPdf, letterPdf, accessCode, locatorPdf);
       clientEmailed = true;
     } catch (err) {
       log_(ref, 'client-email-failed', String(err));
@@ -986,7 +995,7 @@ function answerTables_(body) {
    happens next, in their case, with dates and a name attached. Vague
    reassurance is what makes people ring back a week later to check.        */
 
-function sendClientThanks_(ref, priority, body, formPdf, letterPdf, accessCode) {
+function sendClientThanks_(ref, priority, body, formPdf, letterPdf, accessCode, locatorPdf) {
   var c = body.core || {};
   var a = answersById_(body);
   var isGroup = body.kind === 'group';
@@ -1146,6 +1155,7 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf, accessCode) 
   var atts = [];
   if (formPdf) atts.push(formPdf);
   if (letterPdf) atts.push(letterPdf);
+  if (locatorPdf) atts.push(locatorPdf);
 
   MailApp.sendEmail({
     to: c.email,
@@ -2228,6 +2238,130 @@ function paperFacsimilePdf_(ref, priority, now, body) {
                 '</style></head><body>' + h + '</body></html>',
                 'Service Questionnaire ' + ref);
 }
+
+/**
+ * The Policy Location Record.
+ *
+ * The form asks "would that person know this policy exists, and where to find
+ * it?" and quotes the reason it matters: only 29% of beneficiaries know the
+ * name of the insurer, and roughly one policy in six hundred is never claimed.
+ * A client who answers no is offered this page, free, whether or not they ever
+ * speak to us again — so it has to actually arrive.
+ *
+ * It is a household document, not a form. One US Letter sheet, printable in
+ * black and white, with what we already know filled in and ruled lines for
+ * everything we do not. The client completes it and gives it to their family;
+ * it sits in a drawer for years with our number on it.
+ */
+function locatorPdf_(ref, now, body, accessCode) {
+  var c = body.core || {};
+  var a = answersById_(body);
+  var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
+  var when = Utilities.formatDate(new Date(now), tz, 'd MMMM yyyy');
+  var who = String(a.lifeAssured || c.clientName || '').trim();
+
+  /* a ruled line the client writes on, optionally pre-filled by us */
+  var line = function (v) {
+    return v ? '<span class="w">' + esc_(String(v)) + '</span>' : '&nbsp;';
+  };
+  var blankRows = function (n) {
+    var out = '';
+    for (var i = 0; i < n; i++) {
+      out += '<tr><td class="r"></td><td class="r"></td><td class="r"></td><td class="r"></td></tr>';
+    }
+    return out;
+  };
+
+  var css =
+    '@page{size:8.5in 11in;margin:0}' +
+    'body{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:#0F1A2B;margin:0;' +
+      'padding:.5in .6in;font-size:10.5pt;line-height:1.42}' +
+    '.top{display:flex;align-items:flex-start;border-bottom:3px solid #FF5C4D;padding-bottom:11px}' +
+    '.ttl{font-size:22pt;font-weight:800;letter-spacing:-.6px;line-height:1.02}' +
+    '.ttl span{color:#FF5C4D}' +
+    '.for{margin-left:auto;text-align:right;font-size:9pt;color:#6B7C96;padding-top:5px}' +
+    '.for b{display:block;color:#0F1A2B;font-size:12pt;font-weight:700}' +
+    '.lede{margin:13px 0 4px;font-size:11.5pt;font-weight:600}' +
+    '.sub{color:#6B7C96;font-size:9.5pt;margin-bottom:15px}' +
+    'h2{font-size:9pt;letter-spacing:.16em;text-transform:uppercase;color:#FF5C4D;' +
+      'margin:17px 0 7px;font-weight:800}' +
+    'table{width:100%;border-collapse:collapse}' +
+    'th{font-size:7.6pt;letter-spacing:.11em;text-transform:uppercase;color:#6B7C96;' +
+      'text-align:left;font-weight:700;padding:0 6px 4px 0;border-bottom:1px solid #0F1A2B}' +
+    'td{padding:0 6px 0 0;vertical-align:bottom}' +
+    'td.r{height:26px;border-bottom:1px dotted #98A6B8}' +
+    '.w{font-weight:700}' +
+    '.two{display:flex;gap:24px}.two>div{flex:1}' +
+    '.card{border:1px solid #E4D6C6;border-left:5px solid #FF5C4D;border-radius:7px;' +
+      'padding:11px 13px;background:#FFF6F4}' +
+    '.card b{font-size:12pt;display:block}' +
+    '.card div{font-size:10pt;color:#0F1A2B}' +
+    '.card .m{color:#6B7C96;font-size:8.6pt;letter-spacing:.08em;text-transform:uppercase;' +
+      'font-weight:700;margin-bottom:3px}' +
+    '.rule{height:26px;border-bottom:1px dotted #98A6B8}' +
+    '.why{margin-top:16px;border-top:1px solid #E4D6C6;padding-top:9px;' +
+      'font-size:8.8pt;color:#6B7C96;line-height:1.5}' +
+    '.why b{color:#0F1A2B}' +
+    '.trk{margin-top:9px;border:1px solid #E4D6C6;border-radius:7px;padding:9px 12px;font-size:9pt}' +
+    '.trk b{font-family:"Courier New",monospace;font-size:11pt;letter-spacing:1px}';
+
+  var h =
+    '<div class="top"><div class="ttl">Policy<br>Location <span>Record</span></div>' +
+      '<div class="for">This page belongs to<b>' + esc_(who || '&nbsp;') + '</b>' +
+      'Prepared ' + esc_(when) + '</div></div>' +
+
+    '<div class="lede">If something happens to me, this is what I hold and who to call.</div>' +
+    '<div class="sub">Keep it with your important papers, and tell one person where it is. ' +
+      'Nothing on this page is confidential enough to be worth hiding — and everything on it is ' +
+      'worth finding.</div>' +
+
+    '<h2>What I hold</h2>' +
+    '<table><tr><th style="width:31%">Company</th><th style="width:22%">Policy number</th>' +
+      '<th style="width:20%">What it is</th><th>Who to call</th></tr>' +
+    '<tr><td class="r">' + line('Guardian Life of the Caribbean') + '</td>' +
+      '<td class="r">' + line(a.policyNos || c.policyNos || '') + '</td>' +
+      '<td class="r">' + line('Life policy') + '</td>' +
+      '<td class="r">' + line(SVC.AGENT_NAME) + '</td></tr>' +
+    blankRows(4) + '</table>' +
+
+    '<h2>Who to call first</h2>' +
+    '<div class="two">' +
+      '<div class="card"><div class="m">Your servicing agent</div>' +
+        '<b>' + esc_(SVC.AGENT_NAME) + '</b>' +
+        '<div>' + esc_(SVC.AGENT_PHONE) + (SVC.AGENT_WHATSAPP ? ' &middot; WhatsApp' : '') + '</div>' +
+        '<div>' + esc_(SVC.AGENT_EMAIL) + '</div></div>' +
+      '<div class="card"><div class="m">If you cannot reach them</div>' +
+        '<b>The branch</b>' +
+        '<div>' + esc_(SVC.SUPPORT_EMAIL) + '</div>' +
+        '<div>' + esc_(SVC.DHAA_URL.replace(/^https?:\/\//, '').replace(/\/start$/, '')) + '</div></div>' +
+    '</div>' +
+
+    '<h2>The person who should know</h2>' +
+    '<table><tr><th style="width:42%">Name</th><th style="width:26%">Relationship</th>' +
+      '<th>Their number</th></tr>' +
+    '<tr><td class="r">' + line(a.benName || '') + '</td>' +
+      '<td class="r">' + line(a.benRel || '') + '</td><td class="r"></td></tr>' +
+    '<tr><td class="r"></td><td class="r"></td><td class="r"></td></tr></table>' +
+
+    '<h2>Where my documents are</h2>' +
+    '<div class="rule"></div><div class="rule"></div>' +
+
+    (ref ? '<div class="trk">This record was prepared alongside reference <b>' + esc_(ref) + '</b>' +
+      (accessCode ? ' with access code <b>' + esc_(accessCode) + '</b>' : '') +
+      '.<br>Anyone holding both can see the progress of that request at ' +
+      esc_(SVC.DHAA_URL.replace(/^https?:\/\//, '').replace(/\/start$/, '/track')) + '.</div>' : '') +
+
+    '<div class="why"><b>Why this page exists.</b> Only about 29% of beneficiaries know the name of ' +
+      'the insurance company, and only a quarter know what the policy would pay. Roughly one policy in ' +
+      'every six hundred is never claimed at all — not because the cover failed, but because nobody ' +
+      'knew it was there. This sheet costs nothing and it is yours to keep, whether or not we ever ' +
+      'speak again.</div>';
+
+  return toPdf_('<!DOCTYPE html><html><head><meta charset="utf-8"><style>' + css +
+                '</style></head><body>' + h + '</body></html>',
+                'Policy Location Record ' + (ref || ''));
+}
+
 
 /**
  * Everything the client told us, as a separate document.
