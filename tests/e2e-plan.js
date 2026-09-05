@@ -50,9 +50,13 @@ const METRICS = { ok:true, date:'2026-09-04', staff: {
 // The overdue-with-no-reason list sfkNeedsReason_ already returns.
 const NEEDS = { demo: [
   { id:'00T1', subject:'Premium — one client, 8004023177', status:'In Progress',
-    type:'Renewa/PDl/Bill', due:'2026-09-03', age:1 },
+    type:'Renewa/PDl/Bill', due:'2026-09-03', age:1, agent:'A. Advisor' },
   { id:'00T2', subject:'Stop payment form — one client', status:'Waiting on someone else',
-    type:'Renewa/PDl/Bill', due:'2026-08-21', age:14 } ] };
+    type:'Renewa/PDl/Bill', due:'2026-08-21', age:14, agent:'A. Advisor' },
+  { id:'00T3', subject:'Increment — another client', status:'In Progress',
+    type:'Pendings', due:'2026-09-02', age:2, agent:'B. Advisor' },
+  { id:'00T4', subject:'An inbound email nobody tagged', status:'In Progress',
+    type:'No type', due:'2026-09-01', age:3, agent:'' } ] };
 
 let fails = 0;
 const ok = (what, cond, extra) => {
@@ -105,6 +109,14 @@ const ok = (what, cond, extra) => {
   console.log('\nOnly the exceptions are asked about:\n');
   ok('the late ones are listed', await page.locator('text=Late, and no reason on it yet').count() > 0);
   ok('with how far over each is', await page.locator('text=/14 days over/').count() > 0);
+
+  // Six chases to one agent is one conversation, not six rows.
+  ok('they are grouped by the agent the work is for',
+     await page.locator('text=/A. Advisor.*2 together/').count() > 0);
+  ok('an agent with one is not padded with a count',
+     await page.locator('text=/B. Advisor \\u00b7 1 together/').count() === 0);
+  ok('and a task with no agent says so plainly',
+     await page.locator('text=No agent on the task').count() > 0);
   ok('and nothing is asked about the rest',
      await page.locator('text=/17 questions|reason for each/').count() === 0);
 
@@ -113,6 +125,14 @@ const ok = (what, cond, extra) => {
   await page.waitForTimeout(400);
   ok('the day total follows the picking',
      await page.locator('text=/20 open . 1 already late/').count() > 0);
+
+  console.log('\nThe estimate is theirs, made against the counts in front of them:\n');
+  ok('it is asked once a type is picked',
+     await page.locator('text=How long do you think this needs').count() > 0);
+  ok('and it says what they are estimating against',
+     await page.locator('text=/open in what you picked/').count() > 0);
+  await page.locator('button:has-text("40 min")').first().click();
+  await page.waitForTimeout(300);
 
   console.log('\nAnd the day starts from here:\n');
   await page.click('button:has-text("Start the day")');
@@ -124,6 +144,20 @@ const ok = (what, cond, extra) => {
   await page.waitForTimeout(500);
   const carried = await page.locator('button:has-text("Licensing / Staffing")').first().textContent();
   ok('the morning plan is carried into the block', /\u2713/.test(carried), carried);
+
+  console.log('\nThe block closes on a question, not a blank box:\n');
+  ok('it asks whether the objective was met',
+     await page.locator('text=Was the objective met').count() > 0);
+  ok('and reminds them what they planned',
+     await page.locator('text=/you planned 40 min/').count() > 0);
+  await page.locator('button:has-text("Partly")').first().click();
+  await page.waitForTimeout(300);
+  const met = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem(Object.keys(localStorage).find(k => k.indexOf('draft') > -1))));
+  ok('both answers are kept on the device like everything else',
+     met && met.blocks && met.blocks.kpi1 &&
+     met.blocks.kpi1.planMins === '40' && met.blocks.kpi1.met === 'partly',
+     JSON.stringify(met && met.blocks && met.blocks.kpi1));
 
   console.log('\nAnd the plan is reachable again at two o’clock:\n');
   await page.click('button:has-text("Plan the day")');

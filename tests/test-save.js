@@ -4,7 +4,13 @@ const LOGH = ['Timestamp','Date','StaffId','Name','Grade','Status']
   .concat(['KPI1','KPI2','PM1','PM2'].reduce((a,p)=>a.concat([p,p+'_Actioned',p+'_Resolved',p+'_Open',p+'_Blocker']),[]))
   .concat(['Closed','Overdue','Aged60','ValueAdded','Innovation','SystemFlags','Notes','UpdatedAt','Revision'])
   .concat(['KPI1_At','KPI2_At','PM1_At','PM2_At'])
-  .concat(['KPI1_Quality','KPI2_Quality','PM1_Quality','PM2_Quality']);
+  .concat(['KPI1_Quality','KPI2_Quality','PM1_Quality','PM2_Quality'])
+  // Where ensureLogColumns_ puts them on the branch's existing sheet: appended
+  // at the end, grouped by field. This is the shape from the first save after
+  // a deploy onwards, so it is the one worth measuring — the migration write
+  // happens once and the bench covers it.
+  .concat(['KPI1_Plan','KPI2_Plan','PM1_Plan','PM2_Plan'])
+  .concat(['KPI1_Met','KPI2_Met','PM1_Met','PM2_Met']);
 const TRH = ['TrainingDate','StaffId','Trainer','Block','Trainee','Topic','Objectives','Achieved','Test','Result','Followup','LoggedAt'];
 
 function seed(env, existingRow) {
@@ -50,7 +56,13 @@ const ok = (label, cond, extra='') => { console.log((cond?'  PASS  ':'  FAIL  ')
   console.log('\n  PM2 save — writes: ' + writes + '   grid reads: ' + reads + '   mails: ' + c.mail);
   ok('save succeeded', res.ok, JSON.stringify(res.ok ? {at:res.at, blocksDone:res.blocksDone} : res));
   ok('all four blocks counted in', res.blocksDone === 4, 'got ' + res.blocksDone);
-  ok('block writes batched under 6', writes < 6, 'writes=' + writes);
+  // Seven, not five, since the block gained a planned-minutes and an
+  // objective-met column. Both land in their own field-grouped runs at the end
+  // of the branch's existing sheet, so each costs one write that cannot be
+  // merged with the block's contiguous run. Two fields, two writes — if this
+  // climbs again without a field to show for it, something has stopped
+  // batching.
+  ok('block writes batched under 8', writes < 8, 'writes=' + writes);
   ok('log not re-read to count the day', reads <= 5, 'reads=' + reads);
 
   const g = env.__sheets['KPI Log']._grid[1];

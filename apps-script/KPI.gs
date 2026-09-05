@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-04a';
+var SCRIPT_VERSION = '2026-09-04b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -126,8 +126,20 @@ function findTabBy_(mustHave) {
   if (found && cache) {
     try { cache.put('tab_' + key, found.getName(), 6 * 3600); } catch (e) {}
   }
-  _tabMemo[key] = found;
+  // A miss is not remembered. A tab that is missing now is usually one about
+  // to be created — remembering the miss meant the creator looked again,
+  // found nothing, and made a second tab, silently discarding what the first
+  // call had just written. Cheap to re-scan; expensive to get wrong.
+  if (found) _tabMemo[key] = found;
   return found;
+}
+
+/** Tell the finder about a tab that has just been created, so the next call
+ *  in the same execution gets it instead of making another one. */
+function rememberTab_(mustHave, sh) {
+  _tabMemo[mustHave.join('|').toLowerCase()] = sh;
+  try { tabNameCache_().put('tab_' + mustHave.join('|').toLowerCase(), sh.getName(), 6 * 3600); } catch (e) {}
+  return sh;
 }
 
 function headerMatches_(sheet, mustHave) {
@@ -143,7 +155,7 @@ function logSheet_() {
   sh = ss_().insertSheet(CONFIG.LOG_TAB);
   sh.appendRow(LOG_HEADERS);
   sh.setFrozenRows(1);
-  return sh;
+  return rememberTab_(['StaffId', 'KPI1_Actioned'], sh);
 }
 
 /** The credentials tab. Identified by Email + Password. */
@@ -160,7 +172,197 @@ function trainingSheet_() {
   sh = ss_().insertSheet(CONFIG.TRAINING_TAB);
   sh.appendRow(TRAINING_HEADERS);
   sh.setFrozenRows(1);
-  return sh;
+  return rememberTab_(['TrainingDate', 'Trainee'], sh);
+}
+
+// ---------------------------------------------------------------------------
+//  The job document, and the quarter measured against it
+//
+//  The documents themselves live in the workbook, not in this file and not in
+//  the repository — the repository is public and these are Guardian Group's
+//  internal HR documents. A "Job Docs" tab holds them as rows, which also
+//  means Human Capital can revise a document and somebody updates a row
+//  instead of waiting on a redeployment.
+//
+//  Tab: Role | Section | Order | Item | Detail
+//    Role     ssa, bma, bm, abm, um — the same role keys the roster uses
+//    Section  Header · Overview · Responsibility · Core value ·
+//             Performance expectation
+// ---------------------------------------------------------------------------
+
+var JOB_TAB = 'Job Docs';
+var APPRAISAL_HEADERS = ['StaffId', 'Quarter', 'Value', 'SelfRating', 'SelfNote',
+                         'MgrRating', 'MgrNote', 'UpdatedAt'];
+
+function jobDocsSheet_() { return findTabBy_(['Role', 'Section', 'Item']); }
+
+/** Any tab as plain objects, keyed by its header row. */
+function sheetObjects_(sh) {
+  if (!sh || sh.getLastRow() < 2) return [];
+  var head = headerOf_(sh);
+  return sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues()
+    .map(function (r) {
+      var o = {};
+      head.forEach(function (h, c) { if (h) o[h] = r[c]; });
+      return o;
+    });
+}
+
+/** The role on the roster, for a manager opening somebody else's document. */
+function roleFor_id_(staffId) {
+  var hit = publicRoster_().filter(function (p) { return p.staffId === staffId; })[0];
+  return hit ? hit.role : '';
+}
+
+/** One role's document, grouped by section and in the order the paper is in. */
+function jobDoc_(role) {
+  var sh = jobDocsSheet_();
+  if (!sh) return null;
+  var mine = sheetObjects_(sh).filter(function (r) {
+    return String(r.Role || '').trim().toLowerCase() === String(role || '').trim().toLowerCase();
+  });
+  if (!mine.length) return null;
+  mine.sort(function (a, b) { return (Number(a.Order) || 0) - (Number(b.Order) || 0); });
+  var out = {};
+  mine.forEach(function (r) {
+    var sec = String(r.Section || 'Other').trim();
+    (out[sec] = out[sec] || []).push({ item: String(r.Item || ''), detail: String(r.Detail || '') });
+  });
+  return out;
+}
+
+/** Staff see their own document. The manager may open anyone's, because
+ *  holding a one-to-one without the paper in front of you is the thing this
+ *  is meant to stop. */
+function jobDocFor_(profile, data) {
+  var wantRole = (profile.manager && data && data.role) ? data.role : profile.role;
+  var doc = jobDoc_(wantRole);
+  return doc ? { ok: true, role: wantRole, doc: doc }
+             : { ok: false, error: 'No job document on file for ' + wantRole +
+                 '. Add its rows to the "Job Docs" tab of the workbook.' };
+}
+
+/** Which quarter a date falls in, as the branch would say it. */
+function quarterOf_(iso) {
+  var d = iso ? new Date(iso + 'T12:00:00') : new Date();
+  return d.getFullYear() + '-Q' + (Math.floor(d.getMonth() / 3) + 1);
+}
+
+function quarterRange_(q) {
+  var bits = String(q).split('-Q');
+  var y = Number(bits[0]), n = Number(bits[1] || 1);
+  var from = new Date(Date.UTC(y, (n - 1) * 3, 1));
+  var to = new Date(Date.UTC(y, n * 3, 1));
+  return { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10) };
+}
+
+function appraisalSheet_() {
+  var sh = findTabBy_(['StaffId', 'Quarter', 'Value']);
+  if (sh) return sh;
+  sh = ss_().insertSheet('Appraisals');
+  sh.appendRow(APPRAISAL_HEADERS);
+  sh.setFrozenRows(1);
+  return rememberTab_(['StaffId', 'Quarter', 'Value'], sh);
+}
+
+/** A quarter for one person: the document, what they wrote, and the ratings.
+ *
+ *  Two of the six core values — Continuous Improvement and Curiosity — have no
+ *  number anywhere in the job document. What they do have is a quarter of
+ *  Value Added and Innovation entries that nobody has ever read together, so
+ *  those are gathered here as the evidence for exactly those two.
+ */
+function appraisal_(staffId, quarter, role) {
+  var q = quarter || quarterOf_();
+  var span = quarterRange_(q);
+  var rows = allEntries_().filter(function (r) {
+    var d = String(r.Date || '').slice(0, 10);
+    return String(r.StaffId) === String(staffId) && d >= span.from && d < span.to;
+  });
+
+  var evidence = { valueAdded: [], innovation: [], blocks: 0, met: { met: 0, partly: 0, no: 0 } };
+  rows.forEach(function (r) {
+    if (isSubstantive_(r.ValueAdded)) evidence.valueAdded.push({ date: String(r.Date).slice(0, 10), text: String(r.ValueAdded) });
+    if (isSubstantive_(r.Innovation)) evidence.innovation.push({ date: String(r.Date).slice(0, 10), text: String(r.Innovation) });
+    BLOCK_IDS.forEach(function (p) {
+      if (String(r[p + '_Actioned'] || '').trim()) evidence.blocks++;
+      var m = String(r[p + '_Met'] || '').trim();
+      if (evidence.met[m] != null) evidence.met[m]++;
+    });
+  });
+
+  var saved = sheetObjects_(appraisalSheet_()).filter(function (r) {
+    return String(r.StaffId) === String(staffId) && String(r.Quarter) === q;
+  });
+  var ratings = {};
+  saved.forEach(function (r) {
+    ratings[String(r.Value)] = {
+      selfRating: String(r.SelfRating || ''), selfNote: String(r.SelfNote || ''),
+      mgrRating: String(r.MgrRating || ''), mgrNote: String(r.MgrNote || '')
+    };
+  });
+
+  return { ok: true, quarter: q, from: span.from, to: span.to,
+           doc: jobDoc_(role), evidence: evidence, ratings: ratings, days: rows.length };
+}
+
+/** "None today" is an honest entry and must not be counted as evidence. */
+function isSubstantive_(v) {
+  var t = String(v || '').replace(/\s+/g, ' ').trim();
+  if (!t) return false;
+  if (/^(none|none today|n\/?a|nil|-+|\.+)$/i.test(t)) return false;
+  return t.split(' ').length >= 3;
+}
+
+/** The person writes theirs first; the manager writes the other half.
+ *
+ *  Nobody may write the other's column. That is not only a permission — an
+ *  appraisal where the manager can edit the self-assessment is not a
+ *  self-assessment.
+ */
+function saveAppraisal_(data, profile) {
+  var staffId = String(data.staffId || profile.staffId);
+  var q = String(data.quarter || quarterOf_());
+  var value = String(data.value || '');
+  if (!value) return { ok: false, error: 'Which core value?' };
+
+  var asManager = !!profile.manager;
+  if (!asManager && staffId !== profile.staffId) {
+    return { ok: false, error: 'You can only write your own half of an appraisal.' };
+  }
+
+  var lock = takeLock_();
+  if (!lock) return BUSY_;
+  try {
+    var sh = appraisalSheet_();
+    var idx = colMap_(sh);
+    var rows = sheetObjects_(sh);
+    var at = -1;
+    for (var i = 0; i < rows.length; i++) {
+      if (String(rows[i].StaffId) === staffId && String(rows[i].Quarter) === q &&
+          String(rows[i].Value) === value) { at = i + 2; break; }
+    }
+    var patch = { UpdatedAt: new Date() };
+    if (asManager) {
+      patch.MgrRating = String(data.rating || '');
+      patch.MgrNote = String(data.note || '');
+    } else {
+      patch.SelfRating = String(data.rating || '');
+      patch.SelfNote = String(data.note || '');
+    }
+    if (at < 0) {
+      var row = APPRAISAL_HEADERS.map(function (h) {
+        if (h === 'StaffId') return staffId;
+        if (h === 'Quarter') return q;
+        if (h === 'Value') return value;
+        return patch[h] != null ? patch[h] : '';
+      });
+      sh.appendRow(row);
+    } else {
+      writeRow_(sh, at, idx, patch);
+    }
+    return { ok: true, saved: value };
+  } finally { lock.releaseLock(); }
 }
 
 // ---------------------------------------------------------------------------
@@ -489,25 +691,37 @@ var LOG_HEADERS = ['Timestamp', 'Date', 'StaffId', 'Name', 'Grade', 'Status']
   .concat(['Closed', 'Overdue', 'Aged60', 'ValueAdded', 'Innovation', 'SystemFlags', 'Notes',
            'UpdatedAt', 'Revision'])
   .concat(BLOCK_IDS.map(function (p) { return p + '_At'; }))
-  .concat(BLOCK_IDS.map(function (p) { return p + '_Quality'; }));
+  .concat(BLOCK_IDS.map(function (p) { return p + '_Quality'; }))
+  // Set in the morning, answered at the close. Four equal two-hour blocks are
+  // a shape nobody in the branch actually works — 62% of the week's task
+  // activity lands before noon, and no two people have the same day — so what
+  // is measured is the person's own estimate against their own answer, not
+  // the clock against a grid.
+  .concat(BLOCK_IDS.map(function (p) { return p + '_Plan'; }))
+  .concat(BLOCK_IDS.map(function (p) { return p + '_Met'; }));
 
 var TRAINING_HEADERS = ['TrainingDate', 'StaffId', 'Trainer', 'Block', 'Trainee', 'Topic',
                         'Objectives', 'Achieved', 'Test', 'Result', 'Followup', 'LoggedAt'];
 
 /** UpdatedAt and Revision are new. Add them to an existing log without
  *  disturbing a single cell of what is already recorded. */
+/** Columns the log has grown since it was created, added to an existing tab.
+ *
+ *  One write and one cache drop for all of them together. Adding them a cell
+ *  at a time cost a round trip and a header re-read each — invisible while it
+ *  was two columns, and the bench guard caught it the moment it was ten.
+ */
 function ensureLogColumns_(sh) {
   var head = headerOf_(sh);
-  ['UpdatedAt', 'Revision']
+  var want = ['UpdatedAt', 'Revision']
     .concat(BLOCK_IDS.map(function (p) { return p + '_At'; }))
     .concat(BLOCK_IDS.map(function (p) { return p + '_Quality'; }))
-    .forEach(function (col) {
-    if (head.indexOf(col) === -1) {
-      sh.getRange(1, sh.getLastColumn() + 1).setValue(col);
-      head.push(col);
-      forgetHeader_(sh);
-    }
-  });
+    .concat(BLOCK_IDS.map(function (p) { return p + '_Plan'; }))
+    .concat(BLOCK_IDS.map(function (p) { return p + '_Met'; }));
+  var missing = want.filter(function (col) { return head.indexOf(col) === -1; });
+  if (!missing.length) return sh;
+  sh.getRange(1, sh.getLastColumn() + 1, 1, missing.length).setValues([missing]);
+  forgetHeader_(sh);
   return sh;
 }
 
@@ -889,6 +1103,8 @@ function saveEntry_(payload, profile) {
       vals2[p + '_Resolved'] = d.resolved || '';
       vals2[p + '_Open'] = d.openOwned || '';
       vals2[p + '_Blocker'] = joinBlocker_(d.blocker, d.blockerOwner);
+      vals2[p + '_Plan'] = d.planMins || '';
+      vals2[p + '_Met'] = d.met || '';
     });
 
     var row = head.map(function (h) { return (h in vals2) ? vals2[h] : ''; });
@@ -1126,6 +1342,8 @@ function saveBlock_(payload, profile) {
     patch[blockId + '_Actioned'] = d.actioned || '';
     patch[blockId + '_Resolved'] = d.resolved || '';
     patch[blockId + '_Open'] = d.openOwned || '';
+    patch[blockId + '_Plan'] = d.planMins || '';
+    patch[blockId + '_Met'] = d.met || '';
     patch[blockId + '_Blocker'] = joinBlocker_(d.blocker, d.blockerOwner);
     patch[blockId + '_At'] = now;
 
@@ -1722,6 +1940,19 @@ function handle_(action, data, token) {
       }
       return { ok: true, needsReason: nr };
     }
+
+    case 'jobDoc':
+      return jobDocFor_(profile, data);
+
+    case 'appraisal': {
+      var who = profile.manager && data.staffId ? String(data.staffId) : profile.staffId;
+      var whoRole = who === profile.staffId ? profile.role
+                  : (roleFor_id_(who) || profile.role);
+      return appraisal_(who, data.quarter, whoRole);
+    }
+
+    case 'saveAppraisal':
+      return saveAppraisal_(data, profile);
 
     case 'metrics': {
       // Staff see their own position; the manager sees the branch.
@@ -2676,8 +2907,13 @@ function sfkNeedsReason_(date) {
   var byId = {};
   Object.keys(users).forEach(function (k) { byId[users[k].id] = k; });
 
+  // Agent__c is who the work is for. It is set on about six in ten open
+  // tasks, and until now nothing has ever shown it to the person doing the
+  // work — so "six of these are for one agent" was never a thing anyone
+  // could see, and chasing them one at a time was the only option.
   var recs = sfkQuery_(
-    'SELECT Id, OwnerId, Subject, Status, Task_Type__c, ActivityDate, Days_O_S__c ' +
+    'SELECT Id, OwnerId, Subject, Status, Task_Type__c, ActivityDate, Days_O_S__c, ' +
+    'Agent__r.Name ' +
     'FROM Task WHERE OwnerId IN (' + ids.join(',') + ") AND Status != 'Completed' " +
     'AND ActivityDate < ' + day + ' AND Task_Update_Reason_c__c = NULL ' +
     'ORDER BY Days_O_S__c DESC NULLS LAST LIMIT 400');
@@ -2689,7 +2925,8 @@ function sfkNeedsReason_(date) {
     (out[sid] = out[sid] || []).push({
       id: r.Id, subject: r.Subject, status: r.Status,
       type: r.Task_Type__c || 'No type', due: r.ActivityDate,
-      age: Number(r.Days_O_S__c || 0)
+      age: Number(r.Days_O_S__c || 0),
+      agent: (r.Agent__r && r.Agent__r.Name) || ''
     });
   });
   cache.put(key, JSON.stringify(out), SFK.CACHE_MIN * 60);
