@@ -23,8 +23,15 @@
   }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0}
-  body{background:#04091a;color:var(--ink);font-family:var(--b);overflow:hidden;
-    -webkit-font-smoothing:antialiased}
+  /* THE PAGE BEHIND THE FILM, not a void — a 16:9 stage on a phone in portrait
+     is a band with 60% of the screen around it, and flat black there reads as
+     something failing to load. */
+  body{color:var(--ink);font-family:var(--b);overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+    background:
+      radial-gradient(900px 600px at 20% 0%,rgba(55,177,236,.10),transparent 60%),
+      radial-gradient(700px 500px at 85% 8%,rgba(245,185,59,.07),transparent 62%),
+      linear-gradient(165deg,#050f22 0%,#04091a 60%,#03060f 100%)}
 
   #stage{position:fixed;left:50%;top:50%;width:1920px;height:1080px;
     transform-origin:center;overflow:hidden;
@@ -58,6 +65,24 @@
   .shot{border-radius:14px;overflow:hidden;border:1px solid var(--line);
     box-shadow:0 30px 90px -30px rgba(0,0,0,.85);background:#0b1626}
   .shot img{display:block;width:100%;height:auto}
+  /* THE SHOT MOVES. A wall capture held still for six seconds is a photograph
+     of a screen; a slow push in keeps the frame alive without turning the
+     evidence into an effect. The scene is the viewport, so the image scales
+     inside its own rounded box and nothing spills. */
+  .shot{overflow:hidden}
+  .scene.on .shot img{animation:push 7.6s var(--ease) forwards}
+  @keyframes push{from{transform:scale(1.045)} to{transform:scale(1)}}
+  /* The caption arrives after the picture rather than with it, so the eye lands
+     on the wall first and reads the line second. */
+  .scene .cap{opacity:0;transform:translateY(12px)}
+  .scene.on .cap{opacity:1;transform:none;
+    transition:opacity .5s var(--ease) .35s,transform .6s var(--ease) .35s}
+  .scene.on h1,.scene.on h2{animation:settle 3.4s var(--ease) forwards}
+  @keyframes settle{from{transform:scale(1.012)} to{transform:scale(1)}}
+  @media (prefers-reduced-motion:reduce){
+    .scene.on .shot img,.scene.on h1,.scene.on h2{animation:none}
+    .scene .cap{opacity:1;transform:none} .scene.on .cap{transition:none}
+  }
   /* THE WALL SHOT IS THE POINT OF THIS FILM, so it gets the frame. At 1290px a
      1920-wide wall renders at two thirds and the panel labels stop being
      readable across a room, which makes the shot decoration rather than

@@ -26,8 +26,16 @@
   }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0}
-  body{background:#04091a;color:var(--ink);font-family:var(--b);overflow:hidden;
-    -webkit-font-smoothing:antialiased}
+  /* THE PAGE BEHIND THE FILM, not a void. A 16:9 stage on a phone in portrait
+     is a band across the middle with 60% of the screen around it; flat black
+     there reads as something failing to load. The same gradient the stage uses
+     makes the letterbox look intended. */
+  body{color:var(--ink);font-family:var(--b);overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+    background:
+      radial-gradient(900px 600px at 20% 0%,rgba(55,177,236,.10),transparent 60%),
+      radial-gradient(700px 500px at 85% 8%,rgba(245,185,59,.07),transparent 62%),
+      linear-gradient(165deg,#050f22 0%,#04091a 60%,#03060f 100%)}
 
   #stage{position:fixed;left:50%;top:50%;width:1920px;height:1080px;
     transform-origin:center;overflow:hidden;
@@ -53,6 +61,14 @@
   h1.huge{font-size:186px;letter-spacing:-6px;
     background:linear-gradient(120deg,var(--gold),var(--gold2));
     -webkit-background-clip:text;background-clip:text;color:transparent}
+  /* A title card that does not move at all looks like a stall on a screen
+     across a room. A 1.5% settle over three seconds is enough to read as alive
+     and too little to read as an effect. */
+  .scene.on h1,.scene.on h2{animation:settle 3.2s var(--ease) forwards}
+  @keyframes settle{from{transform:scale(1.015)} to{transform:scale(1)}}
+  @media (prefers-reduced-motion:reduce){
+    .scene.on h1,.scene.on h2{animation:none}
+  }
   h2{font:800 62px/1.14 var(--b);margin:0;letter-spacing:-1.6px}
   .lede{font:400 32px/1.45 var(--b);color:var(--dim);max-width:1250px;margin:16px 0 0}
   .lede b{color:var(--ink);font-weight:600}
@@ -61,8 +77,27 @@
      screens go past in twelve seconds without the eye having to re-find the
      picture each time. */
   .bleed{position:absolute;inset:0;padding:0;display:block}
+  /* THE SHOT SCROLLS. A wall capture is 1920x1080 of dense panels, and holding
+     it still for four seconds is a photograph of a screen. Panning slowly down
+     it reads the way somebody actually reads a wall — top row, then the detail
+     underneath — and gives a static JPEG the motion the piece needs without
+     shipping video. Paired with a slow push in, so the frame is never still. */
   .bleed img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-    object-position:center top}
+    object-position:center 30%;transform:scale(1.045);transform-origin:center center}
+  .scene.bleed.on img{animation:wallpan 6.4s var(--ease) forwards}
+  /* 4.5% of scale, not 10%. The shot is 16:9 inside a 16:9 frame, so panning at
+     all requires overscanning — and every percent of overscan is a slice off
+     the wall's own edges. At 10% the left-hand hero column was cut in half,
+     which turns evidence into wallpaper. 4.5% is enough travel to read as
+     movement and little enough that nothing on the wall is lost. */
+  @keyframes wallpan{
+    from{object-position:center 14%; transform:scale(1.045)}
+    to  {object-position:center 74%; transform:scale(1.000)}
+  }
+  /* Anybody who has asked their device to stop moving things gets a still. */
+  @media (prefers-reduced-motion:reduce){
+    .scene.bleed.on img{animation:none;object-position:center 20%;transform:none}
+  }
   /* The caption sits on a wall that is itself dense text, so the bottom third
      has to go genuinely dark or the two compete and neither reads. Almost
      opaque under the words, clearing fast enough that the top half of the wall
@@ -70,7 +105,13 @@
   .bleed::after{content:"";position:absolute;inset:0;
     background:linear-gradient(to top,rgba(4,9,26,.985) 0%,rgba(4,9,26,.94) 14%,
       rgba(4,9,26,.62) 30%,rgba(4,9,26,.08) 55%,rgba(4,9,26,.36) 100%)}
-  .bleed .say{position:absolute;left:90px;right:90px;bottom:88px;z-index:2;text-align:left}
+  .bleed .say{position:absolute;left:90px;right:90px;bottom:88px;z-index:2;text-align:left;
+    opacity:0;transform:translateY(18px)}
+  .scene.bleed.on .say{opacity:1;transform:none;
+    transition:opacity .42s var(--ease) .12s,transform .52s var(--ease) .12s}
+  @media (prefers-reduced-motion:reduce){
+    .scene.bleed.on .say{transition:none}
+  }
   .bleed .say .k{font:800 16px var(--b);letter-spacing:.3em;text-transform:uppercase;
     color:var(--gold);margin-bottom:14px}
   .bleed .say h2{font-size:68px}
