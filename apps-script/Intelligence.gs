@@ -2799,6 +2799,7 @@ function intelRoute_(b) {
   if (action === 'intel.wall') return iActWall45_(b);
   if (action === 'intel.delivery') return iActDelivery_(b);
   if (action === 'intel.licence')  return iActLicence_(b);
+  if (action === 'intel.possession') return iActPossession_(b);
 
   var session = iSession_(b.token);
   if (!session) return iErr_('Your session has expired — sign in again.');
@@ -4959,6 +4960,203 @@ function iActLicence_(b) {
   if (d.error && !d.roster) return iErr_(d.error);
   return iOk_({ data: d });
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   WHOSE HANDS IS IT IN — the three states of a contract
+   ══════════════════════════════════════════════════════════════════════════
+   The in-force book knows a contract is "Undelivered" and nothing more. The
+   client portfolio in Salesforce knows the three dates that actually matter,
+   and they are the three states the branch manages:
+
+     Date_Policy_Contract_Recieved__c        head office sent it, we have it
+     Date_Contract_Given_to_Agent__c         an agent collected it
+     Date_Ack_Letter_Received_from_Agent__c  the client signed for it
+
+   So:
+     IN OUR CABINET     received, not given to any agent. Ours to chase.
+     WITH THE AGENT     collected, no acknowledgement letter back. Theirs.
+     ACKNOWLEDGED       the client has it and signed.
+
+   THE TWO SOURCES DISAGREE AND IT IS NOT A BUG. The in-force export counts 34
+   undelivered in 2026; the portfolio counts 216 not acknowledged. They measure
+   different populations — the export is policies still in force and still
+   serviced by a branch agent, the portfolio is every contract received. The
+   portfolio holds the actual handover and acknowledgement dates, so it is the
+   system of record for this question and the wall prefers it. If Salesforce
+   does not answer, the wall falls back to the in-force view and says so.
+
+   THE LAW, AND THE HONEST VERSION OF IT — verified against the Act itself, not
+   recalled, because earlier drafts of this got it wrong three times.
+
+     s268(1): "In the case of an individual life policy, upon acceptance of the
+     risk, an insurer shall issue a policy within twenty business days of
+     acceptance of the risk."
+
+   That is the INSURER's clock, it starts at acceptance of the risk, and it
+   governs ISSUING — not delivering. Read the Act right through and there is no
+   deadline anywhere on getting the issued contract into the client's hands.
+
+   Which is the stronger point, not the weaker one: the statutory clock stops
+   at our cabinet door. Everything after it is the branch's, and nobody else's,
+   which is exactly why the branch sets its own ten days.
+
+   And it is not only the company's problem, because of a chain of three
+   definitions:
+
+     s2:   "intermediary" means an agent, agency, broker, brokerage, sales
+           representative and adjuster
+     s2:   "registrant" means any person who is registered as an insurer or
+           intermediary under this Act
+     s266: Registrants and insurance consultants shall comply with the
+           standards on market conduct as prescribed in Schedule 11.
+
+   So every agent on this wall is personally a registrant, personally bound by
+   the market conduct standards. A contract sitting in a car for eight months
+   is that agent's market conduct matter, not the branch's alone.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var IPOSS = {
+  OBJECT: 'CLIENT_PORTFOLIO__c',
+  OLD:    90        // days with an agent past which it stops being a backlog
+};
+
+/* Salesforce writes the unit underscored — "Ricky_Rampersad" — and the access
+   list writes it plain. Compared on the key, so neither has to change. */
+function iPossUnitKey_(u) { return iNameKey_(String(u || '').replace(/_/g, ' ')); }
+
+function iBuildPossession_() {
+  var today = iToday_(), DAY = 86400000;
+  var skip = iExcluded_();
+  var fromYear = iDlvFromYear_(), promise = iDlvDays_();
+
+  /* The branch's own units, and the code → person and code → unit maps, from
+     the access list — same joins as every other screen. */
+  var units = iBuildUnits_(), unitKeys = {}, personOfCode = {}, unitOfCode = {};
+  Object.keys(units).forEach(function (u) {
+    unitKeys[iPossUnitKey_(u)] = u;
+    units[u].forEach(function (m) {
+      var c = iCode_(m.id);
+      if (c) { unitOfCode[c] = u; if (m.name) personOfCode[c] = m.name; }
+    });
+  });
+
+  /* Employment status from the in-force book, which is more current than the
+     access list — see the note in iBuildDelivery_. */
+  var statusOf = {}, sh = iTabInforce_();
+  if (sh) {
+    var f = iReadCols_(sh, { agentId: ['servicing agent id'],
+                             aStatus: ['servicing agent status'] });
+    for (var r = 0; r < f.rows; r++) {
+      var sc = iCode_(String(f.get('agentId', r)).trim());
+      if (sc && !statusOf[sc]) statusOf[sc] = String(f.get('aStatus', r)).trim();
+    }
+  }
+  function active(code) { var s = statusOf[iCode_(code)]; return !s || /^active$/i.test(s); }
+
+  var rows = [], sfError = '';
+  try {
+    rows = sfQuery_(
+      'SELECT AgentName__c, Unit__c, Date_Policy_Contract_Recieved__c, ' +
+      'Date_Contract_Given_to_Agent__c, Date_Ack_Letter_Received_from_Agent__c ' +
+      'FROM ' + IPOSS.OBJECT + ' ' +
+      'WHERE Date_Policy_Contract_Recieved__c >= ' + fromYear + '-01-01');
+  } catch (err) {
+    sfError = String(err && err.message ? err.message : err);
+  }
+  if (sfError || !rows.length) return { configured: false, error: sfError || 'No portfolio rows.' };
+
+  var cabinet = [], withAgent = [], acked = 0, offBranch = 0, notActive = 0;
+
+  rows.forEach(function (x) {
+    var raw = String(x.AgentName__c || '').trim();
+    var id = iIdentity_(raw, '', '');
+    var code = iCode_(id.agentId), name = personOfCode[code] || id.agentName || '(none)';
+    var unit = unitOfCode[code] || unitKeys[iPossUnitKey_(x.Unit__c)] || '';
+
+    if (!unit) { offBranch++; return; }          // another branch's book
+    if (iExcludes_(skip, name) || iExcludes_(skip, id.agentName)) return;
+    if (!active(code)) { notActive++; return; }
+
+    if (x.Date_Ack_Letter_Received_from_Agent__c) { acked++; return; }
+
+    var got = iDate_(x.Date_Policy_Contract_Recieved__c);
+    var gave = iDate_(x.Date_Contract_Given_to_Agent__c);
+    if (gave) {
+      withAgent.push({ agent: name, code: code, unit: unit,
+                       age: Math.round((today - gave) / DAY),
+                       held: got ? Math.round((gave - got) / DAY) : null });
+    } else {
+      cabinet.push({ agent: name, code: code, unit: unit,
+                     age: got ? Math.round((today - got) / DAY) : null });
+    }
+  });
+
+  function stat(list) {
+    var a = list.map(function (x) { return x.age; })
+                .filter(function (v) { return v !== null; }).sort(function (p, q) { return p - q; });
+    return { n: list.length, oldest: a.length ? a[a.length - 1] : 0,
+             median: a.length ? a[Math.floor(a.length / 2)] : 0,
+             overPromise: a.filter(function (v) { return v > promise; }).length,
+             over90: a.filter(function (v) { return v > IPOSS.OLD; }).length };
+  }
+  function tally(list, keyFn) {
+    var m = {};
+    list.forEach(function (x) {
+      var k = keyFn(x); if (k == null) return;
+      if (!m[k]) m[k] = { k: k, n: 0, oldest: 0, over90: 0 };
+      m[k].n++;
+      if (x.age > m[k].oldest) m[k].oldest = x.age;
+      if (x.age > IPOSS.OLD) m[k].over90++;
+    });
+    return Object.keys(m).map(function (k) { return m[k]; })
+      .sort(function (a, b) { return b.n - a.n || b.oldest - a.oldest; });
+  }
+
+  var BANDS = [['Under 10 days', 0, 10], ['10-30', 10, 31], ['31-60', 31, 61],
+               ['61-90', 61, 91], ['91-180', 91, 181], ['Over 180', 181, 99999]];
+  function ageing(list) {
+    return BANDS.map(function (b) {
+      return { k: b[0], n: list.filter(function (x) {
+        return x.age !== null && x.age >= b[1] && x.age < b[2]; }).length };
+    });
+  }
+
+  /* How long WE take to hand it over, measured only on contracts that were
+     handed over — the one part of this the branch controls end to end. */
+  var handed = withAgent.map(function (x) { return x.held; })
+                        .filter(function (v) { return v !== null && v >= 0; })
+                        .sort(function (a, b) { return a - b; });
+
+  var total = cabinet.length + withAgent.length + acked;
+  return {
+    generatedAt: iIso_(today),
+    configured: true,
+    fromYear: fromYear,
+    promise: promise,
+    statutoryBusinessDays: 20,
+    total: total,
+    acknowledged: acked,
+    ackRate: total ? Math.round(acked / total * 1000) / 10 : 0,
+    cabinet: stat(cabinet),
+    withAgent: stat(withAgent),
+    cabinetAgeing: ageing(cabinet),
+    agentAgeing: ageing(withAgent),
+    byAgent: tally(withAgent, function (x) { return x.agent; }).slice(0, 24),
+    byUnit: tally(withAgent, function (x) { return x.unit; }),
+    cabinetBy: tally(cabinet, function (x) { return x.agent; }).slice(0, 8),
+    handover: { n: handed.length,
+                median: handed.length ? handed[Math.floor(handed.length / 2)] : 0,
+                sameDay: handed.filter(function (v) { return v === 0; }).length,
+                overPromise: handed.filter(function (v) { return v > promise; }).length },
+    excluded: { offBranch: offBranch, notActive: notActive }
+  };
+}
+
+function iActPossession_(b) {
+  var d = iBuildPossession_();
+  return iOk_({ data: d });
+}
+
 
 /* ══════════════════════════════════════════════════════════════════════════
    CONTRACTS IN OUR POSSESSION — the cabinet

@@ -653,6 +653,69 @@ business against the agency — `ADVANCED INVESTMENTS MANAGEMENT LIMITED` — so
 the wall used to name a company where the branch expects a person. Every row
 carries a Servicing Agent Id and the access list maps it to the human.
 
+### Whose hands is it in — `intelligence/wall/possession.html`
+
+Action `intel.possession`. Paste the `/exec` URL into `POSS_URL`.
+
+The delivery wall above reads the in-force book, which knows only that a
+contract is "Undelivered". **`CLIENT_PORTFOLIO__c` in Salesforce knows the three
+dates the branch actually manages**, and they give the three states:
+
+| field | state it settles |
+|---|---|
+| `Date_Policy_Contract_Recieved__c` | head office sent it — **in our cabinet** |
+| `Date_Contract_Given_to_Agent__c` | an agent collected it — **with the agent** |
+| `Date_Ack_Letter_Received_from_Agent__c` | the client signed — **acknowledged** |
+
+2026, active agents, excluding the two: **9 still in our cabinet, 206 with an
+agent and unsigned, 435 of 650 acknowledged (66.9%)**. The longest has been with
+an agent **243 days**; 179 are past the branch's ten days and 79 past ninety.
+
+**And the delay is not the branch's.** We hand a contract over in a median of
+**two days** — 61 the same day it arrived, only 14 of 205 slower than our ten
+days. Everything after that is agent-side. That is the whole argument of this
+wall, which is why the two halves are measured and shown apart.
+
+**The two sources disagree and it is not a bug.** The in-force export counts 34
+undelivered in 2026; the portfolio counts 215 not acknowledged. They measure
+different populations — the export is policies still in force and still serviced
+by a branch agent, the portfolio is every contract received. The portfolio holds
+the actual handover and acknowledgement dates, so it is the system of record for
+this question.
+
+#### The Act, quoted rather than paraphrased
+
+Checked against the Act itself, because earlier drafts got this wrong three
+times. Three things, and the third is the one that does the work:
+
+**s268(1)** — *"In the case of an individual life policy, upon acceptance of the
+risk, an insurer shall issue a policy within twenty business days of acceptance
+of the risk."* That is the **insurer's** clock, it starts at **acceptance of the
+risk**, and it governs **issuing** — not delivering.
+
+**Then the Act stops.** Read right through, there is no deadline anywhere on
+getting the issued contract into the client's hands. Which is the stronger
+point, not the weaker one: the statutory clock ends at our cabinet door and
+everything after it is the branch's alone. That is what the ten-day standard is
+for.
+
+**s266** — *"Registrants and insurance consultants shall comply with the
+standards on market conduct as prescribed in Schedule 11."* Follow the
+definitions in s2: an **intermediary** is *"an agent, agency, broker, brokerage,
+sales representative and adjuster"*; a **registrant** is *"any person who is
+registered as an insurer or intermediary under this Act"*. So **every agent on
+that wall is personally a registrant and personally bound** by the market
+conduct standards. A contract sitting in a car for eight months is that agent's
+market conduct matter, not the branch's alone.
+
+Schedule 11 itself has five parts — sales and marketing materials, understanding
+consumers, privacy, agent training, post-sale communication — and **no delivery
+deadline**. Do not invent one; the honest framing above is sharper than a made-up
+number and survives being checked.
+
+Like the licence wall, this one ships **no baked-in snapshot**: it names agents
+against a compliance obligation and the repository is public.
+
 ### Licensing — `intelligence/wall/licence.html`
 
 Action `intel.licence`. Paste the `/exec` URL into `LIC_URL`.
