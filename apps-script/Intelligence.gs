@@ -4762,10 +4762,13 @@ function iBuildLicence_() {
        came back for 31 codes the first time this was run. The licence month is
        what separates the agent from their book, which is why it is in the
        WHERE clause and not filtered afterwards. */
+    /* CreatedDate and Who are what turn this from a list into an insight:
+       how long a thing has been outstanding, and who it is sitting with. */
     tasks = sfQuery_(
-      'SELECT Id, Subject, Status, ActivityDate, IsClosed FROM Task ' +
+      'SELECT Id, Subject, Status, ActivityDate, CreatedDate, LastModifiedDate, ' +
+      'IsClosed, Who.Name FROM Task ' +
       "WHERE Task_Type__c = '" + ILIC.TASKTYPE + "' " +
-      'AND ActivityDate >= LAST_N_MONTHS:15 ORDER BY ActivityDate DESC');
+      'AND CreatedDate >= LAST_N_MONTHS:24 ORDER BY CreatedDate DESC');
   } catch (err) {
     sfError = String(err && err.message ? err.message : err);
   }
@@ -4798,6 +4801,12 @@ function iBuildLicence_() {
                     closed: !!t.IsClosed,
                     kind: iLicKind_(subj),
                     due: t.ActivityDate ? iIso_(iDate_(t.ActivityDate)) : '',
+                    opened: t.CreatedDate ? iDate_(String(t.CreatedDate).slice(0, 10)) : null,
+                    moved: t.LastModifiedDate ? iDate_(String(t.LastModifiedDate).slice(0, 10)) : null,
+                    /* Who the branch is waiting on. Salesforce nests it, and it is
+                       almost never the agent — it is the head-office desk that has
+                       to act next, which is the useful half. */
+                    waiting: (t.Who && t.Who.Name) ? String(t.Who.Name) : '',
                     named: iLicSubjectDate_(subj) });
   });
 
@@ -4928,6 +4937,87 @@ function iBuildLicence_() {
                   who: inMonth.map(function (a) { return a.name; }) });
   }
 
+  /* ══════════════════════════════════════════════════════════════════════
+     WHAT IS OUTSTANDING, HOW LONG, AND WHETHER THAT IS NORMAL
+     ══════════════════════════════════════════════════════════════════════
+     A list of open tasks is a to-do list. What makes it an insight is the
+     benchmark beside it: this branch's own history says what a licence task
+     takes, so a number of days can be read as early, normal or late instead
+     of just large.
+
+     AND THE HISTORY SAYS SOMETHING UNCOMFORTABLE. The branch opens a licence
+     task a median of 48 days before the renewal date. A licence task takes a
+     median of 50 days to reach its last movement. Those are the same number,
+     which is why 8 of the 18 that named a date closed AFTER it. It is not
+     that anyone is slow — it is that the runway was never long enough, and
+     nothing until now measured the two against each other.
+
+     "Closed" is measured as the last time the task moved, because Salesforce
+     stores no completion timestamp on a task. Said plainly on screen rather
+     than presented as a clean close date. */
+  function med(a) {
+    if (!a.length) return 0;
+    var b = a.slice().sort(function (x, y) { return x - y; });
+    return b[Math.floor(b.length / 2)];
+  }
+
+  var closedLic = licTasks.filter(function (t) { return t.closed && t.opened && t.moved; });
+  var closeDays = closedLic.map(function (t) { return Math.round((t.moved - t.opened) / DAY); })
+                           .filter(function (n) { return n >= 0; });
+  var medClose = med(closeDays);
+
+  /* Runway: how long before the renewal date the branch opened the task —
+     only countable where the subject named a date. */
+  var runway = [], landedLate = 0, landedTotal = 0;
+  closedLic.forEach(function (t) {
+    if (!t.named || !t.opened || !t.moved) return;
+    var r = Math.round((t.named - t.opened) / DAY);
+    if (r < 0 || r > 365) return;
+    runway.push(r);
+    landedTotal++;
+    if (t.moved > t.named) landedLate++;
+  });
+
+  /* Who the branch waits on, and how long they have historically taken. Not a
+     league table of people — several of these are head-office desks and one is
+     the agent themselves — but it does say where a licence sits longest. */
+  var byWho = {};
+  closedLic.forEach(function (t) {
+    var w = t.waiting || 'Not recorded';
+    if (!byWho[w]) byWho[w] = [];
+    byWho[w].push(Math.round((t.moved - t.opened) / DAY));
+  });
+  var waits = Object.keys(byWho).map(function (w) {
+    return { k: w, n: byWho[w].length, median: med(byWho[w]),
+             slowest: Math.max.apply(null, byWho[w]) };
+  }).filter(function (x) { return x.n >= 3; })
+    .sort(function (a, b) { return b.median - a.median; });
+
+  /* THE OUTSTANDING LIST. One row per open licence task: what it is, whose it
+     is, how long it has been open, and who it is sitting with. */
+  var outstanding = licTasks.filter(function (t) { return !t.closed; })
+    .map(function (t) {
+      var age = t.opened ? Math.round((today - t.opened) / DAY) : null;
+      var r = roster[t.code];
+      return { subject: t.subject.slice(0, 120),
+               agent: r ? r.name : '', unit: r ? r.unit : '',
+               kind: t.kind, status: t.status, waiting: t.waiting,
+               opened: t.opened ? iIso_(t.opened) : '',
+               days: age,
+               /* Past what this branch normally takes — the only honest way to
+                  call a number of days good or bad. */
+               overdue: age !== null && medClose > 0 && age > medClose,
+               /* The renewal it is for, and whether the days left are already
+                  fewer than the branch typically needs. */
+               forDate: t.named ? iIso_(t.named) : '',
+               left: t.named ? Math.round((t.named - today) / DAY) : null };
+    })
+    .sort(function (a, b) { return (b.days || 0) - (a.days || 0); });
+
+  outstanding.forEach(function (o) {
+    o.tight = o.left !== null && medClose > 0 && o.left < medClose;
+  });
+
   function count(fn) { return agents.filter(fn).length; }
   /* Same rule as the strip. Reading it off the next-due date instead put
      Aidan Eugene and Joy Sammah — who both renewed on the 4th — outside their
@@ -4998,6 +5088,19 @@ function iBuildLicence_() {
       });
     })(),
     clashes: agents.filter(function (a) { return a.clash; }),
+    /* The open list, and the history that says whether those numbers are bad. */
+    outstanding: outstanding,
+    turnaround: {
+      closed: closeDays.length,
+      median: medClose,
+      fastest: closeDays.length ? Math.min.apply(null, closeDays) : 0,
+      slowest: closeDays.length ? Math.max.apply(null, closeDays) : 0,
+      within30: closeDays.filter(function (n) { return n <= 30; }).length,
+      over90: closeDays.filter(function (n) { return n > 90; }).length,
+      runwayMedian: med(runway),
+      landedLate: landedLate, landedTotal: landedTotal,
+      waits: waits.slice(0, 6)
+    },
     /* Said out loud, because a name missing from this wall is a name nobody
        is reminding. */
     gaps: { noField: noField,

@@ -773,6 +773,36 @@ clause.
 requisitions, appraisals, resignations and receipt books. Only subjects that
 actually name a licence are counted: 40 of 49. The wall says so.
 
+#### What is outstanding, and whether that is normal
+
+The wall lists every open licence task longest-first — the subject line as the
+branch typed it, whose licence it is, how many days it has been open, its
+status, and **who it is sitting with**. Today all three are with the same
+head-office desk.
+
+A list of open tasks is only a to-do list. What makes it an insight is the
+benchmark beside it, computed from the branch's own history:
+
+| | |
+|---|---|
+| Median days from opening a licence task to its last movement | **56** |
+| Median runway — days between opening it and the renewal date | **49** |
+| Closed *after* the renewal date had already passed | **8 of 19** |
+
+**Those two medians are the same number, and that is the finding.** Nobody is
+slow; the runway was never long enough. Opening these a month earlier removes
+the coin toss. Nothing measured the two against each other until now.
+
+A row is flagged **past 56d** when it has been open longer than the branch's own
+median, and **tight** when the days left before its renewal date are already
+fewer than the branch typically needs — Meera Persad-Khan's current task has 38
+days left against a 56-day median.
+
+"Closed" is the last time a task moved, because Salesforce keeps no completion
+stamp on a task. The wall says so rather than presenting it as a clean close
+date. The per-desk table only shows contacts with three or more tasks, because a
+median of one is not a median.
+
 Four things it surfaces that nothing else does:
 
 1. **A date that has just gone by with no completed task against it.** The

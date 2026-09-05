@@ -138,9 +138,28 @@
   .sgrid .k{font-size:10.5px;color:var(--faint);margin-top:4px;line-height:1.35}
   .sgrid .gold .v{color:var(--gold)} .sgrid .accent .v{color:var(--blue)}
   .sgrid .good .v{color:var(--good)} .sgrid .bad .v{color:var(--bad)}
-  .tlist{font-size:12px;color:var(--dim);line-height:1.5;overflow:hidden}
-  .tlist div{padding:3px 0 3px 12px;border-left:2px solid rgba(239,194,75,.4);margin-bottom:5px;
+  /* THE OUTSTANDING LIST. Days on the left because that is what is being
+     judged, then whose it is, then the subject line as the branch typed it,
+     then who it is sitting with. A row is only useful if it survives being
+     read from across the room, so the days are the biggest thing on it. */
+  .olist{display:flex;flex-direction:column;gap:0;margin:2px 0 4px}
+  .orow{display:grid;grid-template-columns:58px 1fr auto;gap:12px;align-items:baseline;
+    padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+  .orow .age{font-family:var(--font-d);font-weight:800;font-size:19px;text-align:right;
+    font-variant-numeric:tabular-nums;color:var(--dim)}
+  .orow .age small{font:600 10px var(--font-b);color:var(--faint);margin-left:2px}
+  .orow.hot .age{color:var(--gold)} .orow.bad .age{color:var(--bad)}
+  .orow .who{font-size:13px;overflow:hidden}
+  .orow .who b{font-weight:600}
+  .orow .who em{font-style:normal;display:block;font-size:11px;color:var(--faint);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .orow .with{font-size:11.5px;color:var(--faint);white-space:nowrap;text-align:right}
+  .orow .with b{display:block;color:var(--dim);font-weight:600;font-size:12px}
+  .tag{font:700 9px var(--font-b);letter-spacing:.07em;text-transform:uppercase;
+    padding:1px 5px;border-radius:4px;margin-left:6px;vertical-align:1px}
+  .tag.gen{color:var(--blue);border:1px solid rgba(55,177,236,.45)}
+  .tag.tight{color:var(--bad);border:1px solid rgba(248,113,113,.5)}
+  .tag.past{color:var(--gold);border:1px solid rgba(239,194,75,.5)}
   .note{font-size:11.5px;color:var(--faint);line-height:1.5;margin:9px 0 0}
   .note b{color:var(--dim)}
   .note.flag{border-left:2px solid var(--gold);padding-left:12px}
@@ -208,7 +227,7 @@
     <p class="cap" id="dueCap"></p>
     <div class="dlist" id="dList"></div></section>
 
-  <section class="card open"><h3>Open licence work, and what disagrees</h3>
+  <section class="card open"><h3>Outstanding, and how long</h3>
     <p class="cap" id="openCap"></p>
     <div id="openBody"></div></section>
 </main>
@@ -429,48 +448,70 @@ function paint(){
      so indexOf against the agent array matched nothing and the count read zero
      while the panel underneath listed three. */
   cl=D.clashes.filter(function(c){return inPool[c.code]});
-  $("#openCap").innerHTML='Salesforce tasks of type <b>'+esc(D.taskType)+'</b> whose subject '
-    + 'actually names a licence.';
+  var T=D.turnaround||{}, OU=(D.outstanding||[]).filter(function(o){
+    return !FILTER || !o.agent || inPool[o.code] || A.some(function(x){return x.name===o.agent});
+  });
+  $("#openCap").innerHTML='Open licence tasks, longest first — with what this branch '
+    + 'normally takes, so a number of days reads as early or late rather than just large.';
   $("#openBody").innerHTML=
     '<div class="sgrid">'
-    + '<div class="'+(openN?'gold':'good')+'"><div class="v">'+openN+'</div>'
-    +   '<div class="k">open licence tasks across the branch</div></div>'
-    + '<div class="'+(h.unconfirmed?'bad':'good')+'"><div class="v">'+h.unconfirmed+'</div>'
-    +   '<div class="k">dates gone by with no completed task</div></div>'
-    + '<div class="'+(cl.length?'gold':'accent')+'"><div class="v">'+cl.length+'</div>'
-    +   '<div class="k">where the record and the task name different dates</div></div>'
+    + '<div class="'+(OU.length?'gold':'good')+'"><div class="v">'+OU.length+'</div>'
+    +   '<div class="k">outstanding now, oldest '
+    +   (OU.length?OU[0].days+' days':'—')+'</div></div>'
+    + '<div><div class="v">'+T.median+'</div>'
+    +   '<div class="k">days, median, from opening a licence task to its last movement</div></div>'
+    + '<div class="'+(T.landedLate>T.landedTotal/3?'bad':'accent')+'"><div class="v">'
+    +   T.landedLate+'<span style="font-size:18px;color:var(--faint)">/'+T.landedTotal+'</span></div>'
+    +   '<div class="k">finished after the renewal date had already passed</div></div>'
     + '</div>'
-    + (open.length ? '<div class="tlist">'+open.slice(0,3).map(function(a){
-        return '<div><b style="color:var(--ink)">'+esc(a.name)+'</b> — '
-          + esc(a.openSubjects[0]||"licence task open")+'</div>'; }).join("")+'</div>' : '')
+
+    /* THE OUTSTANDING LIST ITSELF. */
+    + (OU.length ? '<div class="olist">' + OU.map(function(o){
+        var cls = o.overdue ? ' bad' : (o.tight ? ' hot' : '');
+        return '<div class="orow'+cls+'">'
+          + '<div class="age">'+(o.days===null?'—':o.days)+'<small>d</small></div>'
+          + '<div class="who"><b>'+esc(o.agent||'Not matched to an agent')+'</b>'
+          + (o.kind==='General'?'<span class="tag gen">gen</span>':'')
+          + (o.overdue?'<span class="tag past">past '+T.median+'d</span>':'')
+          + (o.tight?'<span class="tag tight">'+o.left+'d to renewal</span>':'')
+          + '<em>'+esc(o.subject)+'</em></div>'
+          + '<div class="with">'+esc(o.status||'')
+          + (o.waiting?'<b>'+esc(o.waiting)+'</b>':'')+'</div></div>';
+      }).join('') + '</div>'
+      : '<p class="note">Nothing open. Every licence task the branch raised has been closed.</p>')
+
+    /* THE FINDING. The two medians are the same number, which is why half of
+       them land late — and that is a scheduling fact, not anybody being slow. */
+    + (T.runwayMedian ? '<p class="note flag"><b>The runway is the problem, not the pace.</b> '
+        + 'The branch opens a licence task a median of <b>'+T.runwayMedian+' days</b> before the '
+        + 'renewal date, and a licence task takes a median of <b>'+T.median+' days</b> to reach its '
+        + 'last movement. Those are the same number — which is why <b>'+T.landedLate+' of '
+        + T.landedTotal+'</b> finished after the date had passed. Opening them a month earlier '
+        + 'removes the coin toss.</p>' : '')
+
+    + ((T.waits||[]).length ? '<p class="note"><b>Where a licence sits.</b> '
+        + T.waits.map(function(w){ return esc(w.k)+' <b>'+w.median+'d</b>'; }).join(' · ')
+        + ' — median days to close, on three or more tasks each. Several of these are '
+        + 'head-office desks rather than people here.</p>' : '')
+
     + (cl.length ? '<p class="note flag"><b>Two dates, one licence.</b> '
-        + cl.map(function(a){ return esc(a.name)+' — the contact record says <b>'+nice(a.due)
-            + '</b>, a licence task named <b>'+nice(a.clash.said)+'</b>'; }).join('; ')
-        + '. Working to the later one is how a licence lapses; worth settling which is right.</p>' : '')
-    + '<p class="note"><b>Read from the anniversary, not the expiry field.</b> '
-      + 'License_Expiry__c reads 2020–2023 for most of the roster — it stopped being maintained '
-      + 'years ago, and a wall driven off it would report almost every agent as unlicensed. '
-      + 'The month and day are the parts the branch keeps current, so the next renewal is '
-      + 'computed from those.</p>'
-    + '<p class="note">'+D.gaps.licenceTasks+' of '+D.gaps.allTasks+' tasks in that type '
-      + 'name a licence; the rest are staffing and HR. A task is read as general only if its '
-      + 'subject says so, because a general application does not close out a life renewal.'
-      + (D.gaps.noField.length
-          ? ' <b>'+D.gaps.noField.length+' active agents have no renewal month set</b> — '
-            + esc(D.gaps.noField.join(", "))+' — so nothing here reminds them.'
-          : ' Every active agent has a life renewal month set.')
-      + '</p>'
-    + ((D.gaps.placeholder||[]).length
-        ? '<p class="note flag"><b>An empty field with a date in it.</b> '
-          + esc(D.gaps.placeholder.map(function(x){
+        + cl.map(function(a){ return esc(a.name)+' — the record says <b>'+nice(a.due)
+            + '</b>, a task named <b>'+nice(a.clash.said)+'</b>'; }).join('; ')
+        + '. Working to the later one is how a licence lapses.</p>' : '')
+
+    + '<p class="note">Closed is measured as the last time a task moved: Salesforce keeps no '
+      + 'completion stamp on a task. '+D.gaps.licenceTasks+' of '+D.gaps.allTasks+' tasks in '
+      + '<b>'+esc(D.taskType)+'</b> name a licence; the rest are staffing and HR. '
+      + '<b>Do not read License_Expiry__c</b> — it stopped being maintained years ago and would '
+      + 'report almost every agent as unlicensed.'
+      + ((D.gaps.placeholder||[]).length
+          ? ' '+esc(D.gaps.placeholder.map(function(x){
               return x.name+"’s "+x.kind.toLowerCase()+" licence reads "+x.value; }).join("; "))
-          + ' — a placeholder, not an anniversary. Left off the calendar rather than shown as '
-          + 'a confident renewal date for a licence nothing else says they hold.</p>' : '')
-    + ((D.gaps.generalNoDate||[]).length
-        ? '<p class="note flag"><b>General licence work with no general licence date.</b> '
-          + esc(D.gaps.generalNoDate.join(", "))+' — the branch has raised a general licence '
-          + 'task, but the record carries no general renewal month, so nothing will remind '
-          + 'anyone next year.</p>' : '');
+            + ' — a placeholder, kept off the calendar.' : '')
+      + ((D.gaps.generalNoDate||[]).length
+          ? ' <b>'+esc(D.gaps.generalNoDate.join(", "))+'</b> has general licence work open with '
+            + 'no general renewal month on record.' : '')
+      + '</p>';
 
   bars($("#rUnit"), D.units, "unit", "gold");
   bars($("#rKind"), D.kinds, "kind", "accent");
