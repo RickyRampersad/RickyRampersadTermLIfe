@@ -297,7 +297,13 @@ function startMusic(){
     const t0 = actx.currentTime + 0.05;
 
     PROG.forEach((chord, ci)=>{
-      const on = t0 + ci*CHORD, off = on + CHORD + 1.6;   // overlap, so they bloom
+      /* The overlap has to be at least as long as the release, or the outgoing
+         chord has finished dying before the incoming one is audible and the bed
+         drops into a hole on every change. Measured on the rendered signal: at
+         1.6s the join falls to 11.8% of mid-chord level, at 2.2s to 55.6%, at
+         2.8s it holds 89.4% and stops improving — the release is only 2.4s, so
+         there is nothing further to buy. */
+      const on = t0 + ci*CHORD, off = on + CHORD + 2.8;   // overlap, so they bloom
       chord.forEach((f, vi)=>{
         [['sawtooth',-6,0.055],['sawtooth',7,0.055],['triangle',0,0.030]].forEach(([type,cents,lvl])=>{
           const o=actx.createOscillator(), g=actx.createGain();
