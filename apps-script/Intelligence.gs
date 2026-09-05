@@ -4300,6 +4300,146 @@ function doPost(e) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
+   CONTRACTS IN OUR POSSESSION — the cabinet
+   ══════════════════════════════════════════════════════════════════════════
+   Head office sets a contract-received date in Salesforce. Today somebody
+   notices, and types an e-mail. This does it instead: the moment that date is
+   populated, the client hears from the branch and the agent is copied.
+
+   WHAT THE LAW ACTUALLY SAYS, because the first draft of this got it wrong in
+   three ways and they were all client-facing.
+
+     Insurance Act 2018, s268(1): "In the case of an individual life policy,
+     upon acceptance of the risk, an insurer shall issue a policy within twenty
+     business days of acceptance of the risk."
+
+   1. TWENTY BUSINESS DAYS, not twenty days. That is about 28 calendar days. A
+      letter counting calendar days tells a client a deadline has passed when
+      it has not — in writing, about a legal obligation.
+   2. THE CLOCK STARTS AT ACCEPTANCE OF THE RISK, not when the contract reaches
+      our cabinet. By then the insurer has already issued it. Cabinet receipt
+      is a later event on a different clock.
+   3. THE DUTY IS THE INSURER'S. The Act says "an insurer shall issue". Telling
+      a client "your agent must, under the Act" names the wrong party.
+
+   So two clocks, kept apart. The statutory one belongs to the company and is
+   quoted accurately or not at all. The branch delivery clock starts when the
+   contract lands in our cabinet, and it is OUR service promise — which is the
+   honest and stronger thing to write: the law allows twenty business days, we
+   aim to be quicker.
+
+   Set INTEL_DELIVERY_DAYS to the branch standard in calendar days (default 10).
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var IDLV = {
+  TAB:        'Contract Delivery',
+  DAYS:       10,          // the BRANCH promise, in calendar days — not the Act's
+  NUDGE:      10,          // second letter this many days after the first
+  FINAL:      20,          // third letter this many days after the first
+  LIVE_PHRASE:'send to clients',
+  MAX_RUN:    80
+};
+
+function iDlvDays_()  { return Math.round(iNum_(iProp_('INTEL_DELIVERY_DAYS'))) || IDLV.DAYS; }
+function iDlvTab_() {
+  return iSheet_(IDLV.TAB,
+    ['Token', 'Received', 'Policy', 'Client', 'E-mail', 'Agent', 'Agent e-mail', 'Unit',
+     'Plan', 'Sent day 0', 'Sent day 10', 'Sent day 20', 'Delivered', 'Delivered by',
+     'Asked for', 'Asked at', 'Private sent', 'Opted out', 'Mode']);
+}
+var IDCOL = { TOKEN:1, RECEIVED:2, POLICY:3, CLIENT:4, EMAIL:5, AGENT:6, AGENTMAIL:7,
+              UNIT:8, PLAN:9, D0:10, D10:11, D20:12, DELIVERED:13, DELIVEREDBY:14,
+              ASKED:15, ASKEDAT:16, PRIVATE:17, OPTOUT:18, MODE:19 };
+
+/* ── Finding the field, rather than guessing its API name ──────────────────
+   "Policy Contract Received date" is the label somebody sees in Salesforce.
+   The API name behind it could be anything, and a wrong guess in production
+   silently returns nothing rather than failing loudly. So ask Salesforce.
+
+   Run this once. It lists every date field on every object whose label or name
+   mentions a contract being received, and prints the two lines to paste into
+   Script Properties. */
+function intelContractDiscover() {
+  var tok = sfToken_();
+  var objs = String(iProp_('INTEL_SF_OBJECTS') ||
+    'Policy__c,Client_Portfolio__c,Risk_Details__c,Opportunity,Submission__c,Policy_Increases__c')
+    .split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+  var out = [], missing = [];
+  objs.forEach(function (o) {
+    var url = tok.instance_url + '/services/data/' + SF.API + '/sobjects/' + o + '/describe';
+    var res = UrlFetchApp.fetch(url, { muteHttpExceptions: true,
+      headers: { Authorization: 'Bearer ' + tok.access_token } });
+    if (res.getResponseCode() !== 200) { missing.push(o); return; }
+    var d = JSON.parse(res.getContentText());
+    (d.fields || []).forEach(function (f) {
+      if (f.type !== 'date' && f.type !== 'datetime') return;
+      var hay = (f.label + ' ' + f.name).toLowerCase();
+      if (!/contract|deliver|receiv|dispatch/.test(hay)) return;
+      out.push({ obj: o, name: f.name, label: f.label, type: f.type });
+    });
+  });
+  if (!out.length) {
+    return 'No date field on ' + objs.join(', ') + ' mentions contract, delivery, receipt or ' +
+      'dispatch.' + (missing.length ? ' Could not read: ' + missing.join(', ') + '.' : '') +
+      ' Set INTEL_SF_OBJECTS to a comma-separated list of the objects to look in and run again.';
+  }
+  var lines = out.map(function (f) {
+    return '  ' + f.obj + '.' + f.name + '   (' + f.type + ')   "' + f.label + '"';
+  });
+  return 'Candidate fields:\n' + lines.join('\n') +
+    '\n\nPick the one that is the contract-received date and set:\n' +
+    '  INTEL_SF_OBJECT = ' + out[0].obj + '\n' +
+    '  INTEL_SF_RECEIVED_FIELD = ' + out[0].name +
+    '\nThen run intelContractScan() — it reports what it can see before sending anything.';
+}
+
+/* ── Reading the cabinet out of Salesforce ─────────────────────────────────
+   Everything is a Script Property because the field names belong to the
+   branch's Salesforce, not to this file. Nothing is guessed into a query. */
+function iDlvSoql_(sinceDays) {
+  var obj = iProp_('INTEL_SF_OBJECT'), fld = iProp_('INTEL_SF_RECEIVED_FIELD');
+  if (!obj || !fld) return null;
+  var f = {
+    received: fld,
+    policy:   iProp_('INTEL_SF_POLICY_FIELD')   || 'Name',
+    client:   iProp_('INTEL_SF_CLIENT_FIELD')   || 'Client_Name__c',
+    email:    iProp_('INTEL_SF_EMAIL_FIELD')    || 'Email__c',
+    agent:    iProp_('INTEL_SF_AGENT_FIELD')    || 'Agent_Name__c',
+    plan:     iProp_('INTEL_SF_PLAN_FIELD')     || 'Plan__c'
+  };
+  var cols = [];
+  Object.keys(f).forEach(function (k) { if (cols.indexOf(f[k]) < 0) cols.push(f[k]); });
+  var since = new Date(iToday_().getTime() - sinceDays * 86400000);
+  return { fields: f,
+    soql: 'SELECT Id, ' + cols.join(', ') + ' FROM ' + obj +
+          ' WHERE ' + fld + ' != NULL AND ' + fld + ' >= ' + iIso_(since) +
+          ' ORDER BY ' + fld + ' DESC' };
+}
+
+/* Look, and report. Sends nothing. Run this before ever running the sender. */
+function intelContractScan() {
+  var q = iDlvSoql_(90);
+  if (!q) return 'Not configured yet. Run intelContractDiscover() and set ' +
+                 'INTEL_SF_OBJECT and INTEL_SF_RECEIVED_FIELD.';
+  var recs;
+  try { recs = sfQuery_(q.soql); }
+  catch (e) { return 'Salesforce said: ' + e.message + '\n\nQuery was:\n' + q.soql; }
+  var sh = iDlvTab_(), known = {};
+  var last = sh.getLastRow();
+  if (last > 1) {
+    sh.getRange(2, IDCOL.POLICY, last - 1, 1).getValues()
+      .forEach(function (r) { known[String(r[0]).trim()] = 1; });
+  }
+  var fresh = recs.filter(function (r) { return !known[String(r[q.fields.policy] || '').trim()]; });
+  var noMail = fresh.filter(function (r) { return !iEmail_(r[q.fields.email]); }).length;
+  return 'Salesforce returned ' + recs.length + ' contracts received in the last 90 days.\n' +
+         fresh.length + ' are not yet in the ' + IDLV.TAB + ' tab' +
+         (noMail ? ', of which ' + noMail + ' have no usable client e-mail' : '') + '.\n' +
+         'Nothing has been sent. intelContractRun() does the sending, and obeys ' +
+         'INTEL_SURVEY_LIVE exactly like the client survey.';
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
    THE CLIENT SURVEY
    ══════════════════════════════════════════════════════════════════════════
    Every client on the 45-day line gets one e-mail, built from what the
@@ -4532,6 +4672,48 @@ var ISURVEY_OPTIONS = [
 
    This is the vulnerability case in every conduct framework worth the name: a
    customer in financial difficulty is offered help before being chased. */
+/* ── The branch's own mark and colours ─────────────────────────────────────
+   Taken from the site, not invented: favicon.svg is the branch mark — a gold
+   shield with a check on near-black navy — and index.html carries the palette.
+
+     --bg    #07131f   near-black navy, the ground everywhere else
+     --gold  #efc24b   the brand accent
+     --teal  #00CFEA   secondary
+     --card  #163553
+
+   Letters stay on white with navy text, because a dark-ground e-mail is hard
+   to read and prints badly; the brand arrives through the mark and the gold.
+
+   THE MARK IS A HOSTED PNG, NOT AN SVG AND NOT A DATA URI. Gmail strips SVG
+   entirely and blocks data: images, so either choice is a broken logo in the
+   client most of the branch's clients use. It is served from the site instead,
+   and every letter still reads correctly with images switched off — which is
+   the default in most inboxes — because the branch name sits beside it as
+   text, not inside the image. */
+var IBRAND = {
+  NAVY:  '#07131f',
+  GOLD:  '#efc24b',
+  GOLD2: '#c9942c',
+  TEAL:  '#00CFEA',
+  INK:   '#16202b',
+  MUTED: '#5c6b7a',
+  RULE:  '#e2e8ee',
+  LOGO:  'https://rickyrampersadbranch.com/logo-mark.png'
+};
+
+/* The masthead every client-facing letter opens with. */
+function iBrandHead_() {
+  return '<table role="presentation" cellpadding="0" cellspacing="0" '
+    + 'style="border-collapse:collapse;margin:0 0 22px"><tr>'
+    + '<td style="padding-right:13px;vertical-align:middle">'
+    + '<img src="' + IBRAND.LOGO + '" width="46" height="46" alt="" '
+    + 'style="display:block;width:46px;height:46px;border:0;border-radius:11px"></td>'
+    + '<td style="vertical-align:middle;border-left:3px solid ' + IBRAND.GOLD + ';padding-left:13px">'
+    + '<div style="font:700 17px Georgia,serif;color:' + IBRAND.NAVY + '">Ricky Rampersad Branch</div>'
+    + '<div style="font-size:12.5px;color:' + IBRAND.MUTED + '">Guardian Life &middot; Chaguanas, Trinidad</div>'
+    + '</td></tr></table>';
+}
+
 function iSurvey90OptionsHtml_(d) {
   var rows = [
     ['Pay what is outstanding', 'Bring it up to date and nothing changes.'],
@@ -4551,8 +4733,8 @@ function iSurvey90OptionsHtml_(d) {
     + 'so the call is worth having.</p>'
     + '<table style="border-collapse:collapse;width:100%;font-size:14.5px">' + rows + '</table>'
     + '<div style="margin:18px 0 0"><a href="' + d.base + '?s=' + d.token + '&o=help" '
-    + 'style="display:block;text-align:center;text-decoration:none;background:#0b7fd4;'
-    + 'color:#fff;border-radius:11px;padding:15px;font-weight:700">'
+    + 'style="display:block;text-align:center;text-decoration:none;background:' + IBRAND.GOLD + ';'
+    + 'color:' + IBRAND.NAVY + ';border-radius:11px;padding:15px;font-weight:700">'
     + 'Ask the branch to call me about my options</a></div></div>';
 }
 
@@ -4577,7 +4759,8 @@ function iSurveyHtml_(d) {
   for (var i = 1; i <= 5; i++) {
     stars += '<a href="' + d.base + '?s=' + d.token + '&r=' + i + '" ' +
       'style="display:inline-block;width:52px;height:52px;line-height:52px;margin:0 5px;' +
-      'text-align:center;font:700 20px Georgia,serif;color:#00254d;background:#f2c14e;' +
+      'text-align:center;font:700 20px Georgia,serif;color:' + IBRAND.NAVY + ';'
+      + 'background:' + IBRAND.GOLD + ';' +
       'border-radius:26px;text-decoration:none">' + i + '</a>';
   }
 
@@ -4605,10 +4788,7 @@ function iSurveyHtml_(d) {
   + '<div style="font:15px/1.62 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;'
   + 'color:#16202b;max-width:600px;margin:0 auto;padding:0 4px">'
 
-  + '<div style="border-left:4px solid #0b7fd4;padding:2px 0 2px 14px;margin:0 0 22px">'
-  +   '<div style="font:700 17px Georgia,serif;color:#00254d">Ricky Rampersad Branch</div>'
-  +   '<div style="font-size:12.5px;color:#5c6b7a">Guardian Life · Chaguanas, Trinidad</div>'
-  + '</div>'
+  + iBrandHead_()
 
   + '<p style="margin:0 0 14px">Dear ' + iEsc_(d.greeting) + ',</p>'
   + carried
@@ -5216,7 +5396,7 @@ function iSurveyPrivatePage_(token) {
     + '<input type="checkbox" name="callme" value="1" style="margin-right:7px">'
     + 'I would rather be called than written to</label>'
     + '<button type="submit" style="width:100%;padding:15px;border:0;border-radius:11px;'
-    + 'background:#0b7fd4;color:#fff;font:700 16px inherit;cursor:pointer">'
+    + 'background:' + IBRAND.GOLD + ';color:' + IBRAND.NAVY + ';font:700 16px inherit;cursor:pointer">'
     + 'Send to the branch manager</button></form>'
     + '<p style="margin:22px 0 0;font-size:13px;color:#5c6b7a;border-top:1px solid #e2e8ee;'
     + 'padding-top:16px"><b>If your concern is about the branch manager</b>, or you are '
@@ -5337,10 +5517,7 @@ function iSurveyThanksHtml_(d) {
   return ''
   + '<div style="font:15px/1.62 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;'
   + 'color:#16202b;max-width:600px;margin:0 auto;padding:0 4px">'
-  + '<div style="border-left:4px solid #0b7fd4;padding:2px 0 2px 14px;margin:0 0 22px">'
-  +   '<div style="font:700 17px Georgia,serif;color:#00254d">Ricky Rampersad Branch</div>'
-  +   '<div style="font-size:12.5px;color:#5c6b7a">Guardian Life · Chaguanas, Trinidad</div>'
-  + '</div>'
+  + iBrandHead_()
   + '<p style="margin:0 0 14px">Dear ' + iEsc_(d.greeting) + ',</p>'
   + '<p style="margin:0 0 14px">Thank you for answering — it reached us, and a person '
   +   'at the branch has read it.</p>'
