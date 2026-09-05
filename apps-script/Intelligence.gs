@@ -3564,7 +3564,7 @@ function iRecentActions_(session) {
 
 function intelInstallTriggers() {
   var wanted = ['intelRebuild', 'intelAgentDigest', 'intelManagerDigest',
-                'intelHorizonWatch', 'intelCrossSellDigest'];
+                'intelHorizonWatch', 'intelCrossSellDigest', 'intelSurveyFollowUp'];
   ScriptApp.getProjectTriggers().forEach(function (t) {
     if (wanted.indexOf(t.getHandlerFunction()) !== -1) ScriptApp.deleteTrigger(t);
   });
@@ -3573,6 +3573,10 @@ function intelInstallTriggers() {
   ScriptApp.newTrigger('intelManagerDigest').timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(7).create();
   ScriptApp.newTrigger('intelHorizonWatch').timeBased().onMonthDay(1).atHour(8).create();
   ScriptApp.newTrigger('intelCrossSellDigest').timeBased().onMonthDay(8).atHour(8).create();
+  /* Thanks and follow-ups go out the morning after somebody answers, not at the
+     end of the month — a thank-you a fortnight late reads as an audit, not a
+     courtesy, and the two-day promise has already been broken by then. */
+  ScriptApp.newTrigger('intelSurveyFollowUp').timeBased().atHour(9).everyDays(1).create();
   return 'Installed. Check Project Settings → Time zone reads (GMT-04:00) Atlantic Time, ' +
          'or every one of these fires an hour out.';
 }
@@ -4340,8 +4344,18 @@ function iSurveyTab_() {
   return iSheet_(ISURVEY.TAB,
     ['Token', 'Sent', 'Client number', 'Client', 'E-mail', 'Policy', 'Agent', 'Unit',
      'Years in force', 'Band', 'Billing', 'Premium', 'Template',
-     'Rating', 'Rated at', 'Heard from agent', 'Comment', 'Mode']);
+     'Rating', 'Rated at', 'Heard from agent', 'Comment', 'Mode',
+     /* what happened AFTER they answered — see intelSurveyFollowUp */
+     'Thanked', 'Follow-up', 'Owner', 'Due', 'Closed', 'Closed by', 'Outcome']);
 }
+
+/* Columns, by number, because Apps Script counts from 1 and getting this wrong
+   writes a rating into somebody's e-mail address. */
+var ISCOL = { TOKEN:1, SENT:2, CLIENTNO:3, CLIENT:4, EMAIL:5, POLICY:6, AGENT:7,
+              UNIT:8, YEARS:9, BAND:10, BILLING:11, PREMIUM:12, TEMPLATE:13,
+              RATING:14, RATEDAT:15, HEARD:16, COMMENT:17, MODE:18,
+              THANKED:19, FOLLOWUP:20, OWNER:21, DUE:22, CLOSED:23,
+              CLOSEDBY:24, OUTCOME:25 };
 
 /* ── The six letters ───────────────────────────────────────────────────────
    One per tenure band, because "thank you for your first eight months" and
@@ -4578,6 +4592,10 @@ function iSurveyHash_() {
     parts.push(k, ISURVEY_BILLING[k].says, String(ISURVEY_BILLING[k].auto));
   });
   parts.push('scale:1-5');
+  /* The thank-you is client-facing too, so it is approved with everything else
+     — otherwise the letter is reviewed and the reply nobody read is not. */
+  parts.push(iSurveyThanksHtml_({ greeting: 'NAME', agent: 'AGENT', rating: 5, low: false }));
+  parts.push(iSurveyThanksHtml_({ greeting: 'NAME', agent: 'AGENT', rating: 1, low: true }));
   var raw = parts.join('\u0001');
   var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, raw);
   return bytes.map(function (b) {
@@ -4826,7 +4844,9 @@ function iSurveyClick_(e) {
   if (!token) return null;
   var sh = iSurveyTab_(), last = sh.getLastRow();
   if (last < 2) return iSurveyPage_('That link has expired.', '', '');
-  var vals = sh.getRange(2, 1, last - 1, 18).getValues();
+  /* Read the whole row, not a fixed 18 — the tab grew a follow-up block and a
+     hardcoded width silently returns blanks for every column past it. */
+  var vals = sh.getRange(2, 1, last - 1, Math.max(sh.getLastColumn(), ISCOL.OUTCOME)).getValues();
   for (var r = 0; r < vals.length; r++) {
     if (String(vals[r][0]) !== token) continue;
     var agent = String(vals[r][6] || 'your agent');
@@ -4872,6 +4892,219 @@ function iSurveyPage_(head, body, token, agent) {
     + '</div>').setTitle('Thank you — Ricky Rampersad Branch');
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   AFTER THEY ANSWER — the thank-you, and getting back to them
+   ══════════════════════════════════════════════════════════════════════════
+   A survey that collects a complaint and does nothing with it is worse than no
+   survey at all. It tells a client the branch asked, heard, and did not care —
+   and in a market-conduct file that is the version somebody reads back to you.
+
+   So every answer gets two things. A thank-you, on the day, so the client knows
+   it arrived and did not vanish. And where the answer says something is wrong,
+   a follow-up with a name against it and a date it is due, which stays open and
+   visible until somebody closes it with what they did.
+
+   WHAT COUNTS AS SOMETHING WRONG
+     a rating of 3 or less                — they are telling you plainly
+     "no" to hearing from their agent     — a servicing gap, whatever the rating
+
+   A 4 or 5 with no other flag gets a plain thank-you and nothing else. Promising
+   a call to somebody who is content is how a good survey becomes a nuisance.
+
+   THE THANK-YOU FOR A LOW SCORE PROMISES A CALL, so the follow-up it opens is a
+   promise the branch has made in writing. It is due in two working days and the
+   wall shows it until it is closed. Never let this run without the follow-up
+   list being worked — an unkept written promise is worse than the silence it
+   replaced.
+
+     intelSurveyFollowUp()          the daily run: thanks, flags, alerts
+     intelSurveyClose(token, who, outcome)   close one, with what was done
+     intelSurveyOpen()              what is still open, oldest first
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function iSurveyThanksHtml_(d) {
+  var low = !!d.low;
+  return ''
+  + '<div style="font:15px/1.62 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;'
+  + 'color:#16202b;max-width:600px;margin:0 auto;padding:0 4px">'
+  + '<div style="border-left:4px solid #0b7fd4;padding:2px 0 2px 14px;margin:0 0 22px">'
+  +   '<div style="font:700 17px Georgia,serif;color:#00254d">Ricky Rampersad Branch</div>'
+  +   '<div style="font-size:12.5px;color:#5c6b7a">Guardian Life · Chaguanas, Trinidad</div>'
+  + '</div>'
+  + '<p style="margin:0 0 14px">Dear ' + iEsc_(d.greeting) + ',</p>'
+  + '<p style="margin:0 0 14px">Thank you for answering — it reached us, and a person '
+  +   'at the branch has read it.</p>'
+  + (low
+     ? '<p style="margin:0 0 14px">You told us the service has not been what it should be. '
+     +   'That is worth a conversation rather than another e-mail, so <b>somebody from the '
+     +   'branch will call you within two working days</b>. Not ' + iEsc_(d.agent)
+     +   ' — one of the managers here.</p>'
+     + '<p style="margin:0 0 14px">If it is easier to reach you at a particular time, reply '
+     +   'to this note and say when.</p>'
+     : '<p style="margin:0 0 14px">Nothing further is needed from you. Your cover carries on '
+     +   'as it is, and ' + iEsc_(d.agent) + ' remains the person looking after it.</p>')
+  + '<hr style="border:0;border-top:1px solid #e2e8ee;margin:22px 0 14px">'
+  + '<div style="font-size:12.5px;color:#5c6b7a">'
+  +   'Ricky Rampersad Branch · Guardian Life of the Caribbean<br>'
+  +   'Chaguanas, Trinidad and Tobago'
+  +   (d.branchPhone ? ' · ' + iEsc_(d.branchPhone) : '') + '<br>'
+  +   '<span style="color:#8b98a6">We will never ask you for a password or a card number '
+  +   'by e-mail.</span></div></div>';
+}
+
+function iSurveyFollowUp_isLow_(rating, heard) {
+  var n = Number(rating);
+  if (n >= 1 && n <= 3) return 'rated ' + n + ' out of 5';
+  if (String(heard) === 'No') return 'has not heard from their agent in a year';
+  return '';
+}
+
+function intelSurveyFollowUp() {
+  var live = iProp_('INTEL_SURVEY_LIVE').trim().toLowerCase() === ISURVEY.LIVE_PHRASE;
+  var test = iProp_('INTEL_TEST_TO');
+  var blocked = iSurveyBlocked_();
+  if (live && blocked) return 'STOPPED — ' + blocked;
+
+  var sh = iSurveyTab_(), last = sh.getLastRow();
+  if (last < 2) return 'Nothing has been sent yet.';
+  var wide = Math.max(sh.getLastColumn(), ISCOL.OUTCOME);
+  var vals = sh.getRange(2, 1, last - 1, wide).getValues();
+  var today = iToday_(), DAY = 86400000;
+  var thanked = 0, opened = 0, alerts = [];
+  var support = iSurveySupport_(), phone = iProp_('INTEL_BRANCH_PHONE');
+
+  for (var r = 0; r < vals.length; r++) {
+    var row = vals[r], rating = Number(row[ISCOL.RATING - 1]);
+    var answered = (rating >= 1 && rating <= 5) || row[ISCOL.HEARD - 1];
+    if (!answered) continue;
+    if (String(row[ISCOL.THANKED - 1]).trim()) continue;   // already handled
+
+    var why = iSurveyFollowUp_isLow_(rating, row[ISCOL.HEARD - 1]);
+    var d = { greeting: iSurveyGreeting_(row[ISCOL.CLIENT - 1]),
+              agent: String(row[ISCOL.AGENT - 1] || 'your agent'),
+              rating: rating, low: !!why, branchPhone: phone };
+    var html = iSurveyThanksHtml_(d);
+    var to = iEmail_(row[ISCOL.EMAIL - 1]);
+
+    if (live && to) {
+      MailApp.sendEmail({ to: to, name: 'Ricky Rampersad Branch',
+        subject: why ? 'Thank you — we will call you' : 'Thank you',
+        htmlBody: html });
+    } else if (test) {
+      MailApp.sendEmail({ to: test, name: 'Branch Intelligence',
+        subject: '[TEST] ' + (why ? 'Thank you — we will call you' : 'Thank you'),
+        htmlBody: '<div style="background:#E8A020;color:#00254d;padding:10px 14px;'
+          + 'font:700 13px sans-serif;border-radius:8px;margin-bottom:14px">TEST MODE — '
+          + 'would have gone to ' + iEsc_(to || '(no address)') + '</div>' + html });
+    }
+    sh.getRange(r + 2, ISCOL.THANKED).setValue(new Date());
+    thanked++;
+
+    if (why) {
+      /* Two working days, and the owner is the unit manager rather than the
+         agent being rated — asking somebody to investigate their own score is
+         not a follow-up. */
+      var due = new Date(today.getTime() + (today.getDay() >= 4 ? 4 : 2) * DAY);
+      sh.getRange(r + 2, ISCOL.FOLLOWUP).setValue(why);
+      sh.getRange(r + 2, ISCOL.OWNER).setValue(
+        support.managerFor(String(row[ISCOL.UNIT - 1])) || iProp_('INTEL_MANAGER_EMAIL') || 'branch');
+      sh.getRange(r + 2, ISCOL.DUE).setValue(due);
+      opened++;
+      alerts.push({ why: why, agent: d.agent, unit: String(row[ISCOL.UNIT - 1]),
+                    token: String(row[ISCOL.TOKEN - 1]), due: due,
+                    comment: String(row[ISCOL.COMMENT - 1] || '') });
+    }
+  }
+
+  if (alerts.length) iSurveyAlert_(alerts, support);
+  var mode = live ? 'live' : (test ? 'test' : 'dry');
+  return mode.toUpperCase() + '. Thanked ' + thanked + ', opened ' + opened +
+         ' follow-up' + (opened === 1 ? '' : 's') + '. ' + iSurveyOpenSummary_();
+}
+
+/* The branch hears about a low score the same day, not at the end of the month.
+   Client names are deliberately absent — the token identifies the row and the
+   app looks it up behind the sign-in. */
+function iSurveyAlert_(alerts, support) {
+  var rows = alerts.map(function (a) {
+    return '<tr><td style="padding:7px 10px;border-bottom:1px solid #e2e8ee">'
+      + iEsc_(a.why) + '</td><td style="padding:7px 10px;border-bottom:1px solid #e2e8ee">'
+      + iEsc_(a.agent) + '</td><td style="padding:7px 10px;border-bottom:1px solid #e2e8ee">'
+      + iEsc_(a.unit) + '</td><td style="padding:7px 10px;border-bottom:1px solid #e2e8ee;'
+      + 'font:12px monospace">' + iEsc_(a.token.slice(0, 8)) + '</td></tr>';
+  }).join('');
+  var to = [support.desk, iProp_('INTEL_MANAGER_EMAIL')].filter(function (x) { return x; }).join(',');
+  if (!to) return;
+  iSend_(to, alerts.length + ' client survey follow-up' + (alerts.length === 1 ? '' : 's') + ' to make',
+    '<div style="font:15px/1.6 sans-serif;color:#16202b">'
+    + '<p><b>' + alerts.length + '</b> client' + (alerts.length === 1 ? ' has' : 's have')
+    + ' answered the survey in a way that needs a call. Each has been told in writing that '
+    + 'somebody from the branch will ring within <b>two working days</b>.</p>'
+    + '<table style="border-collapse:collapse;font-size:14px"><tr>'
+    + '<th style="text-align:left;padding:7px 10px">What they said</th>'
+    + '<th style="text-align:left;padding:7px 10px">Their agent</th>'
+    + '<th style="text-align:left;padding:7px 10px">Unit</th>'
+    + '<th style="text-align:left;padding:7px 10px">Ref</th></tr>' + rows + '</table>'
+    + '<p style="color:#5c6b7a;font-size:13px">Open the client in Branch Intelligence to see '
+    + 'who they are. Close it with <b>intelSurveyClose(ref, "your name", "what you did")</b>.</p></div>');
+}
+
+function intelSurveyClose(token, who, outcome) {
+  token = String(token || '').trim(); who = String(who || '').trim();
+  if (!token || !who) return 'intelSurveyClose("<ref>", "your name", "what you did")';
+  var sh = iSurveyTab_(), last = sh.getLastRow();
+  if (last < 2) return 'Nothing to close.';
+  var wide = Math.max(sh.getLastColumn(), ISCOL.OUTCOME);
+  var vals = sh.getRange(2, 1, last - 1, wide).getValues();
+  for (var r = 0; r < vals.length; r++) {
+    var t = String(vals[r][ISCOL.TOKEN - 1]);
+    if (t !== token && t.slice(0, 8) !== token) continue;
+    if (!String(vals[r][ISCOL.FOLLOWUP - 1]).trim()) return 'That one has no follow-up open.';
+    sh.getRange(r + 2, ISCOL.CLOSED).setValue(new Date());
+    sh.getRange(r + 2, ISCOL.CLOSEDBY).setValue(who);
+    sh.getRange(r + 2, ISCOL.OUTCOME).setValue(String(outcome || '').trim() || '(none recorded)');
+    return 'Closed by ' + who + '. ' + iSurveyOpenSummary_();
+  }
+  return 'No survey with reference ' + token + '.';
+}
+
+function iSurveyOpenRows_() {
+  var sh = iSurveyTab_(), last = sh.getLastRow();
+  if (last < 2) return [];
+  var wide = Math.max(sh.getLastColumn(), ISCOL.OUTCOME);
+  var vals = sh.getRange(2, 1, last - 1, wide).getValues();
+  var today = iToday_(), out = [];
+  vals.forEach(function (row) {
+    if (!String(row[ISCOL.FOLLOWUP - 1]).trim()) return;
+    if (String(row[ISCOL.CLOSED - 1]).trim()) return;
+    var due = row[ISCOL.DUE - 1];
+    out.push({ ref: String(row[ISCOL.TOKEN - 1]).slice(0, 8),
+               why: String(row[ISCOL.FOLLOWUP - 1]),
+               agent: String(row[ISCOL.AGENT - 1]), unit: String(row[ISCOL.UNIT - 1]),
+               owner: String(row[ISCOL.OWNER - 1]),
+               due: due instanceof Date ? iIso_(due) : '',
+               overdue: due instanceof Date && due < today });
+  });
+  return out.sort(function (a, b) { return (a.due || '').localeCompare(b.due || ''); });
+}
+
+function iSurveyOpenSummary_() {
+  var o = iSurveyOpenRows_();
+  if (!o.length) return 'No follow-ups open.';
+  var late = o.filter(function (x) { return x.overdue; }).length;
+  return o.length + ' follow-up' + (o.length === 1 ? '' : 's') + ' open' +
+         (late ? ', ' + late + ' past due' : '') + '.';
+}
+
+function intelSurveyOpen() {
+  var o = iSurveyOpenRows_();
+  if (!o.length) return 'No follow-ups open.';
+  return o.map(function (x) {
+    return (x.overdue ? 'PAST DUE ' : '') + x.ref + '  ' + x.why +
+           '  [' + x.agent + ' · ' + x.unit + ']  due ' + x.due + '  owner ' + x.owner;
+  }).join('\n');
+}
+
 /* ── What the wall shows ───────────────────────────────────────────────────
    Counts and rates. No client, no policy, no comment text — a comment is
    one person's words about a named colleague and it belongs in the app
@@ -4881,7 +5114,9 @@ function iBuildSurveyStats_() {
   var out = { sent: 0, responded: 0, rate: 0, avg: null, dist: [0, 0, 0, 0, 0],
               heardYes: 0, heardNo: 0, byBand: [], byUnit: [], live: 0, latest: '' };
   if (last < 2) return out;
-  var vals = sh.getRange(2, 1, last - 1, 18).getValues();
+  /* Read the whole row, not a fixed 18 — the tab grew a follow-up block and a
+     hardcoded width silently returns blanks for every column past it. */
+  var vals = sh.getRange(2, 1, last - 1, Math.max(sh.getLastColumn(), ISCOL.OUTCOME)).getValues();
   var band = {}, unit = {}, sum = 0, latest = null;
   vals.forEach(function (r) {
     if (String(r[17]) === 'live') out.live++;
@@ -4910,6 +5145,13 @@ function iBuildSurveyStats_() {
     }).sort(function (a, b) { return b.sent - a.sent; });
   }
   out.byBand = fold(band); out.byUnit = fold(unit);
+  /* Open promises, counted. A follow-up past its due date is a call the branch
+     told a client in writing it would make and has not made. */
+  var open = iSurveyOpenRows_();
+  out.openFollowUps = open.length;
+  out.overdueFollowUps = open.filter(function (x) { return x.overdue; }).length;
+  out.thanked = 0;
+  vals.forEach(function (r) { if (String(r[ISCOL.THANKED - 1] || '').trim()) out.thanked++; });
   return out;
 }
 

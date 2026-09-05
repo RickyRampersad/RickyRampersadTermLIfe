@@ -527,6 +527,45 @@ days, and any policy under 90 days old — a brand-new client whose first
 collection failed needs a call from their agent, not a letter about how long
 they have been with us.
 
+### After they answer — the thank-you and getting back to them
+
+A survey that collects a complaint and does nothing with it is worse than no
+survey. `intelSurveyFollowUp()` runs at 09:00 daily and closes that gap.
+
+**Everyone who answers gets a thank-you the next morning**, so they know it
+arrived. A 4 or 5 with nothing else flagged gets a plain thank-you and no
+promise — telling a contented client somebody will ring is how a good survey
+becomes a nuisance.
+
+**Two answers open a follow-up:**
+
+| Trigger | Why |
+|---|---|
+| A rating of **3 or less** | they are telling you plainly |
+| **"No"** to hearing from their agent | a servicing gap, whatever the rating |
+
+Those clients get a different thank-you that says **somebody from the branch
+will call within two working days — and not their own agent, one of the
+managers**. That is a promise the branch has now made in writing, so the
+follow-up carries an owner (the unit manager, never the agent being rated), a
+due date, and it stays on the wall until closed.
+
+The desk and the manager get an alert the same day, listing what was said, the
+agent and the unit — **no client names**, just a reference; the app looks the
+client up behind the sign-in.
+
+```
+intelSurveyOpen()                              what is still open, oldest first
+intelSurveyClose("<ref>", "your name", "what you did")
+```
+
+**Never run this without working the list.** An unkept written promise is worse
+than the silence it replaced, which is exactly why overdue follow-ups are shown
+in the warning colour on the wall rather than quietly counted.
+
+The thank-you wording sits under the same approval fingerprint as the survey
+itself, so a reviewer who clears the letter has also cleared the reply.
+
 ### What the wall shows
 
 Counts and rates: sent, clicked, response rate, average rating, the 1–5

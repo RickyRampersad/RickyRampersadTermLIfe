@@ -494,7 +494,17 @@ function paintSurvey(){
       }).join("")+'</div>'
     + (s.heardYes+s.heardNo ? '<p class="cap" style="margin:12px 0 0">Heard from their agent in the '
         + 'last year: <b style="color:var(--ink)">'+s.heardYes+' yes</b>, '
-        + '<b style="color:var(--ink)">'+s.heardNo+' no</b>.</p>' : '');
+        + '<b style="color:var(--ink)">'+s.heardNo+' no</b>.</p>' : '')
+    /* An open follow-up is a call the branch told a client in writing it would
+       make. Past its due date it is a promise broken, so it gets the warning
+       colour and sits on the wall until somebody closes it. */
+    + (s.openFollowUps ? '<p class="cap" style="margin:8px 0 0">'
+        + '<b style="color:' + (s.overdueFollowUps ? 'var(--gold)' : 'var(--ink)') + '">'
+        + s.openFollowUps + ' follow-up' + (s.openFollowUps===1?'':'s') + ' open</b>'
+        + (s.overdueFollowUps ? ' — <b style="color:var(--gold)">' + s.overdueFollowUps
+            + ' past due</b>. Each was promised a call within two working days.'
+          : '. Each was promised a call within two working days.')
+        + '</p>' : '');
 }
 
 /* ── narration, and the bed under it ─────────────────────────────────────────
