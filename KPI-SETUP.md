@@ -309,6 +309,58 @@ when you have already done the thing is how people learn to ignore reminders.
 `Pawan Probhu` is on the DILO but not on the Access tab, so he is not in the
 app and gets none of this. Add him to Access if he should be.
 
+## Performance: the tabs the form lives in
+
+The Performance Evaluation form's contents are Guardian's HR papers. They live
+in the workbook, never in this repository, which is public. The script reads
+two tabs you paste in and creates five it writes to.
+
+**You paste these** (a TSV for each was provided — new tab, exact name, click
+A1, paste):
+
+| Tab | Columns | What it is |
+|---|---|---|
+| `Goals` | Role · Order · Goal · Description · TargetType · Weight · Target · KpiTypes | The performance goals per role, weights summing to 100. `KpiTypes` is the comma-separated list of tracker KPI types whose activity is evidence for the goal. Only `ssa` is supplied; add the other roles' forms as rows. |
+| `Competencies` | Order · Competency · Definition · Behaviours | The eight core competencies and the dictionary. Behaviours separated by ` · `. |
+
+**The script creates these** on first use: `Reviews`, `Review Goals`,
+`Review Competencies`, `Development`, `Training Plan`. The training plan can
+also be pasted in (a TSV was provided as the example) — one row per activity,
+`StaffId` as on the Access tab.
+
+Roles come from the Access tab as before. Note that "Sales Support Assistant"
+is now read as a support desk (`ssa`); it used to fall through to the BMA.
+
+The People Leader is whoever the person reports to in `REPORTS_TO`, plus the
+Branch Manager for everyone. Each side writes only its own half of a review.
+
+## Your quarter and moments
+
+`standing` reads the quarter so far for one person — every goal on the
+`Goals` tab for their role with what the record says under it (blocks,
+landed, closed in Salesforce, open, untouched), and every competency on the
+`Competencies` tab with signals read by its name (reliability from the
+`Attendance` tab and the blocks; responsiveness from untouched, late and
+no-reason; quality from landed and billing flags; customer service from
+value-added lines and servicing closed; growth from `KPI Training` and the
+development actions; innovation from the innovation lines). A competency
+whose name matches nothing carries moments only.
+
+`Moments` is a tab the script creates on first use: `MomentId · StaffId ·
+Date · Competency · What · By · UpdatedAt`. A person or their People Leader
+notes a line against a competency on the day; reviews show the moments that
+fall in their period.
+
+## Attendance
+
+Signing in is the attendance register. The script creates an `Attendance`
+tab on first sign-in: `Date · StaffId · Name · FirstSignIn · LastSeen ·
+Status · Reason · MarkedBy · UpdatedAt`. The first sign-in of the day is the
+start time; later ones refresh `LastSeen`. "Not in today" writes `Status =
+absent` with the reason, by the person or their People Leader. Start time is
+compared with the first token of the person's `hours` in `SCHEDULE`, with a
+ten-minute grace. The JotForm register can be retired once this is live.
+
 ## What changed
 
 **Submit now tells you the truth.** It used to post with `mode: "no-cors"`,

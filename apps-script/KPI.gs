@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-05a';
+var SCRIPT_VERSION = '2026-09-06c';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -558,6 +558,15 @@ var SCHEDULE = {
       PM2:  { time: '2:30 – 4pm',focus: 'Scripts, transmittals, office',         kpi: 'Scripts & transmittals' }
     }
   },
+  ashley: {
+    hours: '9am – 5pm', lunch: '1:00 – 2:00pm',
+    blocks: {
+      KPI1: { time: '9 – 10am',  focus: 'Client Portfolio creation / Macros / Surveys', kpi: 'Client Portfolios / Macros' },
+      KPI2: { time: '10 – 1pm',  focus: 'Scripts / Clawbacks / Servicing Lines',        kpi: 'Scripts/CB' },
+      PM1:  { time: '2 – 3:30pm',focus: 'Renewals / Premium Dues / Billing',            kpi: 'Renewa/PDl/Bill' },
+      PM2:  { time: '3:30 – 5pm',focus: 'Task Mgmt / Reporting',                        kpi: 'Reporting' }
+    }
+  },
   elizabeth: {
     hours: '9am – 5pm', lunch: '1:00 – 2:00pm',
     blocks: {
@@ -624,7 +633,7 @@ var DEFAULT_SCHEDULE = {
 var REPORTS_TO = {
   kerwyn: 'ricky', akaash: 'ricky', gary: 'kerwyn',
   kamla: 'ricky',
-  sasha: 'kamla', azariah: 'kamla', elizabeth: 'kamla',
+  sasha: 'kamla', azariah: 'kamla', elizabeth: 'kamla', ashley: 'kamla',
   pawan: 'ricky'      // and works to Kamla day to day; see TIER below
 };
 
@@ -870,6 +879,11 @@ function roleFor_(person) {
   if (/branch manager assistant|\bbma\b/.test(t)) return 'bma';
   if (/branch manager/.test(t)) return 'bm';
   if (/unit manager|sales manager|agency manager|\bmanager\b/.test(t)) return 'um';
+  // "Sales Support Assistant" is the title on the job document, the appraisal
+  // form and the manual. It contains the word assistant and is not a BMA —
+  // the fallback below would have handed a support desk the BMA's KPI list
+  // the first time the Access tab was written the way HR writes it.
+  if (/sales support|support assistant|\bssa\b/.test(t)) return 'ssa';
   if (/assistant/.test(t)) return 'bma';
   return 'ssa';
 }
@@ -962,6 +976,10 @@ function login_(who, password) {
 
   clearFailures_(key);
   var t = issueToken_(person);
+  // Signing in is the attendance register. The profile carries today's
+  // record so the browser knows whether this is the first sign-in of the day.
+  try { t.profile.attendance = recordAttendance_(t.profile); } catch (e) {}
+  t.profile.leads = leads_(t.profile);
   return { ok: true, token: t.token, profile: t.profile,
            roster: publicRoster_(), schedule: SCHEDULE };
 }
@@ -1675,13 +1693,19 @@ function checkpointReport_(date) {
   // sheet is only used where Salesforce could not be reached.
   var sf = sfkMetricsSafe_(day);
   var live = sf.ok ? sf.staff : {};
+  var att = {};
+  try { attendanceFor_({ staffId: '', manager: true }, day, shiftDays_(day, 1)).forEach(function (o) { att[o.staffId] = o; }); } catch (e) {}
 
   var lines = people.map(function (p) {
     var e = byId[p.staffId];
     var done = e ? blocksDone_(e) : 0;
     var L = live[p.staffId];
+    var a = att[p.staffId];
     return {
       staffId: p.staffId, name: p.name, unit: p.unit,
+      signedIn: a && a.at ? a.at : '',
+      absent: a && a.status === 'absent' ? (a.reason || 'not in') : '',
+      late: a ? a.late : 0,
       status: !e ? 'No entry' : (String(e.Status) === 'Submitted' ? 'Submitted' : 'Draft'),
       blocksDone: done,
       onTrack: done >= 3,
@@ -1871,7 +1895,7 @@ function json_(obj) {
    that a property of the code rather than of the runtime — which matters
    because the test harness runs many simulated requests in one process, and a
    memo that outlives its request is a memo serving yesterday's roster. */
-function resetRequestMemo_() { _tabMemo = {}; _rosterMemo = null; _headMemo = {}; }
+function resetRequestMemo_() { _tabMemo = {}; _rosterMemo = null; _headMemo = {}; _hrMemo = {}; }
 
 function doGet(e) {
   resetRequestMemo_();
@@ -1903,8 +1927,28 @@ function handle_(action, data, token) {
 
   switch (action) {
     case 'me':
+      // Resuming a session is a sign-in for the register's purposes: the
+      // first activity of the day is the start of the day.
+      try { profile.attendance = recordAttendance_(profile); } catch (e) {}
+      profile.leads = leads_(profile);
       return { ok: true, profile: profile, roster: publicRoster_(), schedule: SCHEDULE,
                kpis: allKpiChoices_() };
+
+    case 'absent':
+      return markAbsent_(data, profile);
+
+    case 'standing':
+      return standing_(profile, data.staffId);
+
+    case 'noteMoment':
+      return noteMoment_(data, profile);
+
+    case 'attendance': {
+      var aFrom = isoDay_(data.from) || weekStart_(todayISO_());
+      var aTo = isoDay_(data.to) || shiftDays_(todayISO_(), 1);
+      return { ok: true, from: aFrom, to: aTo, attendance: attendanceFor_(profile, aFrom, aTo),
+               people: attVisible_(profile) };
+    }
 
     case 'updateTask':
       if (typeof updateTask_ !== 'function') {
@@ -1926,6 +1970,15 @@ function handle_(action, data, token) {
 
     case 'openBook':
       return { ok: true, book: openBookFor_(profile, data.date) };
+
+    // Performance: the form, the evidence, the two halves.
+    case 'hr':            return hrBundle_(profile);
+    case 'review':        return review_(profile, String(data.reviewId || ''));
+    case 'openReview':    return openReview_(data, profile);
+    case 'saveRating':    return saveReviewRating_(data, profile);
+    case 'saveComment':   return saveReviewComment_(data, profile);
+    case 'saveDevelopment': return saveDevelopment_(data, profile);
+    case 'saveTraining':  return saveTraining_(data, profile);
 
     case 'needsReason': {
       var nr = needsReasonFor_(profile, data.date);
@@ -1972,7 +2025,8 @@ function handle_(action, data, token) {
                metrics: metricsFor_(profile, data.date),
                needsReason: needsReasonFor_(profile, data.date),
                billing: billingFor_(profile, data.date),
-               openBook: openBookFor_(profile, data.date) };
+               openBook: openBookFor_(profile, data.date),
+               attendance: attendanceToday_(profile) };
     }
 
     case 'training': {
@@ -2142,6 +2196,10 @@ function checkpointHtml_(r) {
           (l.updatedAt ? ' · last saved ' + esc_(l.updatedAt) : '') + '</span></td>' +
         '<td align="right" style="font-size:11px;font-weight:700;color:' + tone + '">' + esc_(l.status) + '</td>' +
       '</tr></table>' +
+      '<div style="font-size:12px;color:' + (l.absent ? MAIL.amber : MAIL.muted) + ';margin-top:5px">' +
+        (l.absent ? 'Not in — ' + esc_(l.absent)
+                  : l.signedIn ? 'In at ' + esc_(l.signedIn) + (l.late ? ' · ' + l.late + ' min after their start' : '')
+                  : 'No sign-in today') + '</div>' +
       '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:5px">' +
         'Closed ' + (l.closed == null ? '—' : l.closed) +
         ' · Open ' + (l.openNow == null ? '—' : l.openNow) +
@@ -3153,6 +3211,830 @@ function needsReasonFor_(profile, date) {
 
 function billingFor_(profile, date) {
   return onlyMine_(sfkBillingCheckSafe_(date), profile);
+}
+
+// ---------------------------------------------------------------------------
+//  Performance: the form, the evidence, and the two halves
+//
+//  Guardian's Performance Evaluation form (Administration v8.3) has three
+//  parts: weighted performance goals rated 1 to 5, eight behavioural
+//  competencies rated 1 to 5, and development goals on the 70-20-10 model.
+//  A signed one for this branch showed the arithmetic exactly: a goal scores
+//  weight x rating / 4, so "Meets Expectations" is the whole weight and a 5
+//  is a quarter over; competencies are the mean rating / 4; and the overall
+//  rating is 80% goals and 20% competencies, against a minimum of 72.
+//
+//  What this adds to that paper is evidence. The ten goals for a Sales
+//  Support Assistant are the same work the tracker already counts — new
+//  applications, premium dues, contracts and scripts, mail by three,
+//  reporting — so for any review period the daily record can say, per goal:
+//  blocks worked and how many landed, tasks of that kind closed in the
+//  period, and what is open, untouched or late right now. That sits beside
+//  the goal. The rating is still a person's; the evidence is what they rate
+//  against instead of recollection.
+//
+//  Two rules that are not conveniences. The form's contents are Guardian's
+//  HR papers and live in the workbook, never in this public repository, so
+//  the goals and the dictionary are read from tabs and their absence is a
+//  plain answer. And each side writes its own half and only its own half —
+//  a review where the People Leader can edit the self-assessment is not a
+//  self-assessment. The People Leader is whoever the person reports to.
+// ---------------------------------------------------------------------------
+
+var HR = {
+  GOALS:     { must: ['Role', 'Goal', 'Weight'],          name: 'Goals' },
+  COMPS:     { must: ['Competency', 'Definition'],        name: 'Competencies' },
+  REVIEWS:   { must: ['ReviewId', 'StaffId', 'Type'],     name: 'Reviews',
+               head: ['ReviewId', 'StaffId', 'Type', 'From', 'To', 'Status', 'OpenedBy',
+                      'SelfComment', 'PLComment', 'SelfSignedAt', 'PLSignedAt', 'CreatedAt', 'UpdatedAt'] },
+  RGOALS:    { must: ['ReviewId', 'Goal', 'SelfRating'],  name: 'Review Goals',
+               head: ['ReviewId', 'Goal', 'Actual', 'SelfRating', 'SelfNote', 'PLRating', 'PLNote', 'UpdatedAt'] },
+  RCOMPS:    { must: ['ReviewId', 'Competency', 'SelfRating'], name: 'Review Competencies',
+               head: ['ReviewId', 'Competency', 'SelfRating', 'SelfNote', 'PLRating', 'PLNote', 'UpdatedAt'] },
+  DEVELOP:   { must: ['StaffId', 'Source', 'Action'],     name: 'Development',
+               head: ['DevId', 'StaffId', 'ReviewId', 'Source', 'Action', 'Why', 'Success', 'Status', 'UpdatedAt'] },
+  TRAINING:  { must: ['StaffId', 'Activity', 'Objective'], name: 'Training Plan',
+               head: ['StaffId', 'Order', 'Activity', 'Objective', 'Facilitator', 'Dates', 'Venue',
+                      'Evidence', 'Evaluation', 'SignedOff', 'UpdatedAt'] }
+};
+
+/* The form's own numbers. Not tunable from the browser: they are Guardian's. */
+var OPR_GOALS_SHARE = 0.8, OPR_COMPS_SHARE = 0.2, OPR_MIN = 0.72, RATING_FULL = 4;
+
+/* The assessment types on the form, plus the branch's quarterly rhythm. */
+var REVIEW_TYPES = ['Mid Probation', 'End of Probation', 'Quarterly', 'Mid Year', 'End of Year',
+                    'End of Contract'];
+
+var SOURCES = ['Experiential', 'Social', 'Formal'];
+
+/** A tab the app writes is created on first use. A tab the branch pastes in
+ *  (Goals, Competencies) is not — an empty one would read as "no goals", which
+ *  is a different thing from "not set up yet". */
+function hrTab_(spec, create) {
+  var sh = findTabBy_(spec.must);
+  if (sh || !create) return sh;
+  sh = ss_().insertSheet(spec.name);
+  sh.appendRow(spec.head);
+  sh.setFrozenRows(1);
+  return rememberTab_(spec.must, sh);
+}
+
+var _hrMemo = {};
+function hrRows_(spec, create) {
+  var k = spec.name;
+  if (_hrMemo[k]) return _hrMemo[k];
+  var sh = hrTab_(spec, create);
+  return (_hrMemo[k] = sh ? sheetObjects_(sh) : null);
+}
+function forgetHr_(spec) { delete _hrMemo[spec.name]; }
+
+function goalsFor_(role) {
+  var rows = hrRows_(HR.GOALS, false);
+  if (!rows) return null;
+  var r = String(role || '').trim().toLowerCase();
+  return rows.filter(function (g) { return String(g.Role || '').trim().toLowerCase() === r; })
+    .sort(function (a, b) { return (Number(a.Order) || 0) - (Number(b.Order) || 0); })
+    .map(function (g) {
+      return { goal: String(g.Goal || ''), description: String(g.Description || ''),
+               targetType: String(g.TargetType || ''), weight: Number(g.Weight) || 0,
+               target: g.Target === '' || g.Target == null ? '' : Number(g.Target),
+               kpiTypes: String(g.KpiTypes || '').split(',').map(function (t) { return t.trim(); }).filter(String) };
+    });
+}
+
+function competencies_() {
+  var rows = hrRows_(HR.COMPS, false);
+  if (!rows) return null;
+  return rows.filter(function (c) { return String(c.Competency || '').trim(); })
+    .sort(function (a, b) { return (Number(a.Order) || 0) - (Number(b.Order) || 0); })
+    .map(function (c) {
+      return { competency: String(c.Competency), definition: String(c.Definition || ''),
+               behaviours: String(c.Behaviours || '').split(/\s*·\s*|\n/).map(function (b) { return b.trim(); }).filter(String) };
+    });
+}
+
+// ---- who may see and write what -------------------------------------------
+
+/** Who this person is People Leader to. The Branch Manager leads everyone. */
+function leads_(profile) {
+  var all = publicRoster_().map(function (p) { return p.staffId; });
+  if (profile.manager) return all.filter(function (s) { return s !== profile.staffId; });
+  return all.filter(function (s) { return REPORTS_TO[s] === profile.staffId; });
+}
+function isLeadOf_(profile, staffId) {
+  return staffId !== profile.staffId && leads_(profile).indexOf(staffId) > -1;
+}
+function canSee_(profile, staffId) {
+  return staffId === profile.staffId || isLeadOf_(profile, staffId);
+}
+/** Which half a person writes on somebody's review: their own, their report's, or none. */
+function sideFor_(profile, staffId) {
+  if (staffId === profile.staffId) return 'self';
+  if (isLeadOf_(profile, staffId)) return 'pl';
+  return '';
+}
+
+// ---- the evidence -----------------------------------------------------------
+
+/** Tasks closed in a period, by type, for one person. Cached by the period,
+ *  so a review page does not re-ask Salesforce on every rating saved. */
+function sfkClosedInPeriod_(staffId, from, to) {
+  var users = sfkUsers_();
+  var u = users[staffId];
+  if (!u) return {};
+  var cache = CacheService.getScriptCache();
+  var key = 'sfk_cp_' + staffId + '_' + from + '_' + to;
+  var hit = cache.get(key);
+  if (hit) return JSON.parse(hit);
+  var out = {};
+  sfkQuery_("SELECT Task_Type__c, COUNT(Id) FROM Task WHERE OwnerId = '" + u.id + "' " +
+    "AND Status = 'Completed' AND LastModifiedDate >= " + from + 'T00:00:00Z AND LastModifiedDate < ' +
+    to + "T00:00:00Z AND (NOT Subject LIKE '%Happy Birthday%') GROUP BY Task_Type__c")
+    .forEach(function (r) { out[r.Task_Type__c || 'Untyped'] = Number(r.expr0 || 0); });
+  try { cache.put(key, JSON.stringify(out), SFK.CACHE_MIN * 60); } catch (e) {}
+  return out;
+}
+function sfkClosedInPeriodSafe_(staffId, from, to) {
+  if (!sfkConfigured_()) return null;
+  try { return sfkClosedInPeriod_(staffId, from, to); } catch (e) { return null; }
+}
+
+/** What the record says about one goal over a period. Nothing here is a
+ *  rating. It is what the person and the People Leader rate against. */
+function goalEvidence_(staffId, from, to, kpiTypes, entries, closedByType, nowByType) {
+  var types = {};
+  (kpiTypes || []).forEach(function (t) { types[t] = 1; });
+  var ev = { blocks: 0, planned: 0, met: { met: 0, partly: 0, no: 0 }, lines: [],
+             closed: null, open: null, needs: null, late: null };
+  entries.forEach(function (r) {
+    BLOCK_IDS.forEach(function (p) {
+      var picked = String(r[p] || '').split(',').map(function (t) { return t.trim(); });
+      if (!picked.some(function (t) { return types[t]; })) return;
+      ev.blocks++;
+      ev.planned += Number(r[p + '_Plan']) || 0;
+      var m = String(r[p + '_Met'] || '').trim();
+      if (ev.met[m] != null) ev.met[m]++;
+      var a = String(r[p + '_Actioned'] || '').trim();
+      if (a && ev.lines.length < 3) ev.lines.push({ date: String(r.Date).slice(0, 10), text: a.slice(0, 140) });
+    });
+  });
+  if (closedByType) {
+    ev.closed = 0;
+    Object.keys(types).forEach(function (t) { ev.closed += closedByType[t] || 0; });
+  }
+  if (nowByType) {
+    ev.open = 0; ev.needs = 0; ev.late = 0;
+    Object.keys(types).forEach(function (t) {
+      var b = nowByType[t]; if (!b) return;
+      ev.open += b.open || 0; ev.needs += b.needs || 0; ev.late += b.overdue || 0;
+    });
+  }
+  return ev;
+}
+
+// ---- the arithmetic, exactly as the form does it ---------------------------
+
+function ratingNum_(v) { var n = Number(String(v || '').trim()); return n >= 1 && n <= 5 ? n : 0; }
+
+/** goals: [{weight, selfRating, plRating}]  comps: [{selfRating, plRating}] */
+function scoreReview_(goals, comps) {
+  function side(k) {
+    var goal = 0, wsum = 0, rated = 0;
+    goals.forEach(function (g) {
+      var r = ratingNum_(g[k]);
+      wsum += g.weight || 0;
+      if (r) { rated++; goal += (g.weight || 0) / 100 * r / RATING_FULL; }
+    });
+    var csum = 0, cn = 0;
+    comps.forEach(function (c) { var r = ratingNum_(c[k]); if (r) { csum += r; cn++; } });
+    var comp = cn ? (csum / cn) / RATING_FULL : 0;
+    var opr = OPR_GOALS_SHARE * goal + OPR_COMPS_SHARE * comp;
+    return { goalScore: round4_(goal), compScore: round4_(comp), opr: round4_(opr),
+             goalsRated: rated, goalsTotal: goals.length, compsRated: cn, compsTotal: comps.length,
+             weightsSum: wsum, meetsStandard: opr >= OPR_MIN };
+  }
+  return { self: side('selfRating'), pl: side('plRating'), standard: OPR_MIN };
+}
+function round4_(x) { return Math.round(x * 10000) / 10000; }
+
+// ---- reviews ------------------------------------------------------------------
+
+function reviewsFor_(profile, staffId) {
+  if (!canSee_(profile, staffId)) return [];
+  var rows = hrRows_(HR.REVIEWS, true) || [];
+  return rows.filter(function (r) { return String(r.StaffId) === staffId; })
+    .map(function (r) { return reviewHeader_(r); })
+    .sort(function (a, b) { return String(b.from).localeCompare(String(a.from)); });
+}
+function reviewHeader_(r) {
+  return { id: String(r.ReviewId), staffId: String(r.StaffId), type: String(r.Type || ''),
+           from: isoDay_(r.From), to: isoDay_(r.To), status: String(r.Status || 'open'),
+           selfSigned: r.SelfSignedAt ? String(r.SelfSignedAt) : '',
+           plSigned: r.PLSignedAt ? String(r.PLSignedAt) : '' };
+}
+function findReview_(reviewId) {
+  var rows = hrRows_(HR.REVIEWS, true) || [];
+  for (var i = 0; i < rows.length; i++) if (String(rows[i].ReviewId) === String(reviewId)) return rows[i];
+  return null;
+}
+
+/** The People Leader opens a review for somebody they lead. */
+function openReview_(data, profile) {
+  var staffId = String(data.staffId || '');
+  if (!isLeadOf_(profile, staffId)) return { ok: false, error: 'Only the People Leader opens a review.' };
+  var type = String(data.type || '').trim();
+  if (REVIEW_TYPES.indexOf(type) === -1) return { ok: false, error: 'Which kind of review? ' + REVIEW_TYPES.join(', ') + '.' };
+  var from = isoDay_(data.from), to = isoDay_(data.to);
+  if (!from || !to || to <= from) return { ok: false, error: 'The period needs a start and an end, in that order.' };
+  var id = staffId + '-' + from + '-' + type.toLowerCase().replace(/[^a-z]+/g, '-');
+  if (findReview_(id)) return { ok: true, id: id, existed: true };
+  var lock = takeLock_();
+  if (!lock) return BUSY_;
+  try {
+    var sh = hrTab_(HR.REVIEWS, true), now = new Date();
+    var o = { ReviewId: id, StaffId: staffId, Type: type, From: from, To: to, Status: 'open',
+              OpenedBy: profile.staffId, CreatedAt: now, UpdatedAt: now };
+    sh.appendRow(HR.REVIEWS.head.map(function (h) { return o[h] != null ? o[h] : ''; }));
+    forgetHr_(HR.REVIEWS);
+    return { ok: true, id: id };
+  } finally { lock.releaseLock(); }
+}
+
+/** One review, whole: the goals with their evidence and both halves, the
+ *  competencies with the dictionary and both halves, development actions,
+ *  the training plan, and the scores. */
+function review_(profile, reviewId) {
+  var r = findReview_(reviewId);
+  if (!r) return { ok: false, error: 'No such review.' };
+  var staffId = String(r.StaffId);
+  if (!canSee_(profile, staffId)) return { ok: false, error: 'Not yours to see.' };
+  var head = reviewHeader_(r);
+  var role = roleFor_id_(staffId);
+  var goals = goalsFor_(role), comps = competencies_();
+  if (!goals) return { ok: false, error: 'No "Goals" tab in the workbook yet. Paste the goals for each role into it.' };
+  if (!comps) return { ok: false, error: 'No "Competencies" tab in the workbook yet.' };
+  if (!goals.length) return { ok: false, error: 'No goals on the Goals tab for role "' + role + '".' };
+
+  var entries = allEntries_().filter(function (e) {
+    var d = String(e.Date || '').slice(0, 10);
+    return String(e.StaffId) === staffId && d >= head.from && d < head.to;
+  });
+  var closed = sfkClosedInPeriodSafe_(staffId, head.from, head.to);
+  var mm = sfkMetricsSafe_();
+  var nowByType = (mm && mm.ok && mm.staff && mm.staff[staffId] && mm.staff[staffId].byType) || null;
+
+  var savedG = {};
+  (hrRows_(HR.RGOALS, true) || []).forEach(function (x) { if (String(x.ReviewId) === head.id) savedG[String(x.Goal)] = x; });
+  var savedC = {};
+  (hrRows_(HR.RCOMPS, true) || []).forEach(function (x) { if (String(x.ReviewId) === head.id) savedC[String(x.Competency)] = x; });
+
+  var outGoals = goals.map(function (g) {
+    var s = savedG[g.goal] || {};
+    return { goal: g.goal, description: g.description, targetType: g.targetType, weight: g.weight,
+             target: g.target, kpiTypes: g.kpiTypes,
+             actual: s.Actual == null ? '' : String(s.Actual),
+             selfRating: String(s.SelfRating || ''), selfNote: String(s.SelfNote || ''),
+             plRating: String(s.PLRating || ''), plNote: String(s.PLNote || ''),
+             evidence: goalEvidence_(staffId, head.from, head.to, g.kpiTypes, entries, closed, nowByType) };
+  });
+  var needsNow = (sfkNeedsReasonSafe_(todayISO_()) || {})[staffId] || null;
+  var billingNow = ((sfkBillingCheckSafe_(todayISO_()) || {})[staffId] || {}).items || null;
+  var facts = facts_(staffId, head.from, head.to, entries, closed,
+                     (mm && mm.ok && mm.staff && mm.staff[staffId]) || null, needsNow, billingNow);
+  var moments = momentsFor_(staffId, head.from, head.to);
+  var outComps = comps.map(function (c) {
+    var s = savedC[c.competency] || {};
+    return { competency: c.competency, definition: c.definition, behaviours: c.behaviours,
+             selfRating: String(s.SelfRating || ''), selfNote: String(s.SelfNote || ''),
+             plRating: String(s.PLRating || ''), plNote: String(s.PLNote || ''),
+             signals: competencySignals_(c.competency, facts), lines: competencyLines_(c.competency, facts),
+             moments: moments.filter(function (m) { return m.competency === c.competency; }) };
+  });
+  var dev = (hrRows_(HR.DEVELOP, true) || []).filter(function (d) {
+    return String(d.StaffId) === staffId && (!d.ReviewId || String(d.ReviewId) === head.id);
+  }).map(devRow_);
+  var training = trainingFor_(staffId);
+
+  return { ok: true, review: head, role: role, side: sideFor_(profile, staffId),
+           selfComment: String(r.SelfComment || ''), plComment: String(r.PLComment || ''),
+           goals: outGoals, competencies: outComps, development: dev, training: training,
+           scores: scoreReview_(outGoals, outComps), days: entries.length,
+           salesforce: !!closed, types: REVIEW_TYPES, sources: SOURCES };
+}
+
+function devRow_(d) {
+  return { id: String(d.DevId || ''), reviewId: String(d.ReviewId || ''), source: String(d.Source || ''),
+           action: String(d.Action || ''), why: String(d.Why || ''), success: String(d.Success || ''),
+           status: String(d.Status || 'planned') };
+}
+function trainingFor_(staffId) {
+  return (hrRows_(HR.TRAINING, true) || []).filter(function (t) { return String(t.StaffId) === staffId; })
+    .sort(function (a, b) { return (Number(a.Order) || 0) - (Number(b.Order) || 0); })
+    .map(function (t) {
+      return { order: Number(t.Order) || 0, activity: String(t.Activity || ''), objective: String(t.Objective || ''),
+               facilitator: String(t.Facilitator || ''), dates: String(t.Dates || ''), venue: String(t.Venue || ''),
+               evidence: String(t.Evidence || ''), evaluation: String(t.Evaluation || ''),
+               signedOff: String(t.SignedOff || '') };
+    });
+}
+
+/** Upsert one row of a review tab, writing only the columns the side owns. */
+function writeHalf_(spec, keyCols, keyVals, patch) {
+  var lock = takeLock_();
+  if (!lock) return BUSY_;
+  try {
+    var sh = hrTab_(spec, true);
+    var idx = colMap_(sh), rows = sheetObjects_(sh), at = -1;
+    for (var i = 0; i < rows.length; i++) {
+      var hit = keyCols.every(function (k, j) { return String(rows[i][k]) === String(keyVals[j]); });
+      if (hit) { at = i + 2; break; }
+    }
+    patch.UpdatedAt = new Date();
+    if (at < 0) {
+      var o = {}; keyCols.forEach(function (k, j) { o[k] = keyVals[j]; });
+      Object.keys(patch).forEach(function (k) { o[k] = patch[k]; });
+      sh.appendRow(spec.head.map(function (h) { return o[h] != null ? o[h] : ''; }));
+    } else {
+      writeRow_(sh, at, idx, patch);
+    }
+    forgetHr_(spec);
+    return { ok: true };
+  } finally { lock.releaseLock(); }
+}
+
+/** A rating and a note, on one goal or one competency, from one side. */
+function saveReviewRating_(data, profile) {
+  var r = findReview_(String(data.reviewId || ''));
+  if (!r) return { ok: false, error: 'No such review.' };
+  if (String(r.Status) === 'signed') return { ok: false, error: 'This review is signed off. Nothing on it changes now.' };
+  var side = sideFor_(profile, String(r.StaffId));
+  if (!side) return { ok: false, error: 'Not yours to write.' };
+  var rating = String(data.rating || '').trim();
+  if (rating && !ratingNum_(rating)) return { ok: false, error: 'A rating is 1 to 5.' };
+  var patch = {};
+  if (side === 'self') { patch.SelfRating = rating; patch.SelfNote = String(data.note || ''); }
+  else { patch.PLRating = rating; patch.PLNote = String(data.note || '');
+         if (data.actual != null && data.kind === 'goal') patch.Actual = String(data.actual); }
+  var res = data.kind === 'competency'
+    ? writeHalf_(HR.RCOMPS, ['ReviewId', 'Competency'], [r.ReviewId, String(data.name || '')], patch)
+    : writeHalf_(HR.RGOALS, ['ReviewId', 'Goal'], [r.ReviewId, String(data.name || '')], patch);
+  if (res.ok) res.side = side;
+  return res;
+}
+
+/** The overall comment, and the signature. Signing is per side; the review
+ *  is "signed" when both have. */
+function saveReviewComment_(data, profile) {
+  var r = findReview_(String(data.reviewId || ''));
+  if (!r) return { ok: false, error: 'No such review.' };
+  var side = sideFor_(profile, String(r.StaffId));
+  if (!side) return { ok: false, error: 'Not yours to write.' };
+  var patch = {};
+  if (side === 'self') patch.SelfComment = String(data.comment || '');
+  else patch.PLComment = String(data.comment || '');
+  if (data.sign) {
+    if (side === 'self') patch.SelfSignedAt = new Date(); else patch.PLSignedAt = new Date();
+    var other = side === 'self' ? r.PLSignedAt : r.SelfSignedAt;
+    patch.Status = other ? 'signed' : (side === 'self' ? 'self-signed' : 'pl-signed');
+  }
+  return writeHalf_(HR.REVIEWS, ['ReviewId'], [r.ReviewId], patch);
+}
+
+/** A development action on the 70-20-10 model. The People Leader writes
+ *  them, in the framework's three parts — what, why, what success looks
+ *  like. The person may mark one done. */
+function saveDevelopment_(data, profile) {
+  var staffId = String(data.staffId || profile.staffId);
+  var side = sideFor_(profile, staffId);
+  if (!side) return { ok: false, error: 'Not yours to write.' };
+  var id = String(data.id || '');
+  if (side === 'self') {
+    if (!id) return { ok: false, error: 'Your People Leader writes the action; you mark it done.' };
+    // The id alone is not proof of ownership — ids are a staffId and a
+    // timestamp, which is guessable. The row has to be this person's.
+    var own = (hrRows_(HR.DEVELOP, true) || []).some(function (d) {
+      return String(d.DevId) === id && String(d.StaffId) === profile.staffId;
+    });
+    if (!own) return { ok: false, error: 'Not yours to mark.' };
+    return writeHalf_(HR.DEVELOP, ['DevId'], [id], { Status: String(data.status || 'planned') });
+  }
+  if (SOURCES.indexOf(String(data.source)) === -1) return { ok: false, error: 'Experiential, Social or Formal.' };
+  if (!String(data.action || '').trim() || !String(data.why || '').trim() || !String(data.success || '').trim()) {
+    return { ok: false, error: 'Say what they will do, why, and what success looks like.' };
+  }
+  if (!id) id = staffId + '-' + new Date().getTime();
+  return writeHalf_(HR.DEVELOP, ['DevId'], [id], {
+    StaffId: staffId, ReviewId: String(data.reviewId || ''), Source: String(data.source),
+    Action: String(data.action), Why: String(data.why), Success: String(data.success),
+    Status: String(data.status || 'planned') });
+}
+
+/** A training-plan row: the People Leader keeps it; sign-off is theirs. */
+function saveTraining_(data, profile) {
+  var staffId = String(data.staffId || '');
+  if (!isLeadOf_(profile, staffId)) return { ok: false, error: 'The People Leader keeps the training plan.' };
+  var order = Number(data.order) || 0;
+  if (!order) return { ok: false, error: 'Which row?' };
+  var patch = {};
+  ['Activity', 'Objective', 'Facilitator', 'Dates', 'Venue', 'Evidence', 'Evaluation', 'SignedOff']
+    .forEach(function (k) { var v = data[k.toLowerCase()]; if (v != null) patch[k] = String(v); });
+  return writeHalf_(HR.TRAINING, ['StaffId', 'Order'], [staffId, order], patch);
+}
+
+/** Everything the performance screen needs on open: this person's goals and
+ *  competencies, their reviews, development and training, and — if they lead
+ *  anyone — those people with the state of their latest review. */
+function hrBundle_(profile) {
+  var goals = goalsFor_(profile.role), comps = competencies_();
+  var me = { staffId: profile.staffId, role: profile.role,
+             goals: goals || [], competencies: comps || [],
+             reviews: reviewsFor_(profile, profile.staffId),
+             development: (hrRows_(HR.DEVELOP, true) || []).filter(function (d) { return String(d.StaffId) === profile.staffId; }).map(devRow_),
+             training: trainingFor_(profile.staffId) };
+  var reports = leads_(profile).map(function (sid) {
+    var p = publicRoster_().filter(function (x) { return x.staffId === sid; })[0] || {};
+    var rv = reviewsFor_(profile, sid);
+    return { staffId: sid, name: p.name || sid, role: p.role || '', latest: rv[0] || null, reviews: rv };
+  });
+  return { ok: true, me: me, reports: reports, types: REVIEW_TYPES, sources: SOURCES,
+           setup: { goals: !!goals, competencies: !!comps }, standard: OPR_MIN };
+}
+
+// ---------------------------------------------------------------------------
+//  Standing: the quarter so far, on the form's own terms
+//
+//  The appraisal form asks two questions — what did you deliver against each
+//  weighted goal, and how did you show each competency. The tracker already
+//  holds most of the answer: the blocks worked and whether they landed, what
+//  Salesforce closed, the days in and the days not, the value-added and the
+//  innovation lines, the training given and received. This reads all of it
+//  for the quarter so far and lays it under the goals and competencies, so
+//  the quarterly is a read-off rather than a memory test.
+//
+//  What the record cannot see — a client calmed down, a colleague helped at
+//  four o'clock — the person or their People Leader notes as a "moment"
+//  against the competency it showed, on the day it happened.
+// ---------------------------------------------------------------------------
+
+var MOM = { must: ['MomentId', 'StaffId', 'Competency'], name: 'Moments',
+            head: ['MomentId', 'StaffId', 'Date', 'Competency', 'What', 'By', 'UpdatedAt'] };
+var MOMENT_MAX = 300;
+
+/** Mondays to Fridays in [from, to). */
+function workdays_(from, to) {
+  var n = 0, d = from;
+  while (d < to) {
+    var dow = new Date(d + 'T12:00:00Z').getUTCDay();
+    if (dow >= 1 && dow <= 5) n++;
+    d = shiftDays_(d, 1);
+  }
+  return n;
+}
+
+function momentsFor_(staffId, from, to) {
+  return (hrRows_(MOM, true) || []).filter(function (m) {
+    var d = isoDay_(m.Date);
+    return String(m.StaffId) === staffId && d >= from && d < to;
+  }).map(function (m) {
+    return { id: String(m.MomentId || ''), date: isoDay_(m.Date), competency: String(m.Competency || ''),
+             what: String(m.What || ''), by: String(m.By || '') };
+  }).sort(function (a, b) { return b.date.localeCompare(a.date); });
+}
+
+/** A line about a competency, by the person or their People Leader. */
+function noteMoment_(data, profile) {
+  var staffId = String(data.staffId || profile.staffId);
+  if (!canSee_(profile, staffId)) return { ok: false, error: 'Not yours to note.' };
+  var comps = competencies_();
+  if (!comps) return { ok: false, error: 'No "Competencies" tab in the workbook yet.' };
+  var name = String(data.competency || '').trim();
+  if (!comps.some(function (c) { return c.competency === name; })) return { ok: false, error: 'Pick one of the competencies on the form.' };
+  var what = String(data.what || '').replace(/\s+/g, ' ').trim();
+  if (what.split(' ').length < 3) return { ok: false, error: 'Say what happened — a line, not a word.' };
+  what = what.slice(0, MOMENT_MAX);
+  var day = isoDay_(data.date) || todayISO_();
+  var id = staffId + '-' + Utilities.getUuid().replace(/-/g, '').slice(0, 8);
+  var sh = hrTab_(MOM, true), now = new Date();
+  sh.appendRow([id, staffId, day, name, what, profile.staffId, now]);
+  forgetHr_(MOM);
+  return { ok: true, id: id, date: day, competency: name, what: what, by: profile.staffId };
+}
+
+/** Training logged in the period: sessions this person gave, and sessions
+ *  where they were the trainee. The trainee column is typed, so it is
+ *  matched on the first name or the staff id. */
+function trainingLog_(staffId, from, to) {
+  var out = { given: 0, received: 0 };
+  var sh;
+  try { sh = trainingSheet_(); } catch (e) { return out; }
+  if (!sh) return out;
+  var p = publicRoster_().filter(function (x) { return x.staffId === staffId; })[0] || {};
+  var first = String(p.name || staffId).split(' ')[0].toLowerCase();
+  sheetObjects_(sh).forEach(function (r) {
+    var d = isoDay_(r.TrainingDate);
+    if (!d || d < from || d >= to) return;
+    if (String(r.StaffId) === staffId) out.given++;
+    var t = String(r.Trainee || '').toLowerCase();
+    if (t && (t.indexOf(first) > -1 || t.indexOf(staffId.toLowerCase()) > -1)) out.received++;
+  });
+  return out;
+}
+
+/** Everything the record holds about one person over a period, in one
+ *  object. Both the standing and a review read from it. */
+function facts_(staffId, from, to, entries, closedByType, nowBlock, needs, billing) {
+  var f = { blocks: 0, met: 0, partly: 0, no: 0, planned: 0, landed: null,
+            valueAdded: [], innovation: [],
+            daysIn: 0, absent: 0, late: 0,
+            closed: null, servicing: null, open: null, needs: null, lateTasks: null, noReason: null, billingFlags: null,
+            trainingGiven: 0, trainingReceived: 0, devDone: 0, devTotal: 0 };
+  entries.forEach(function (r) {
+    BLOCK_IDS.forEach(function (p) {
+      if (!hasText_(r[p + '_Actioned']) && !hasText_(r[p])) return;
+      f.blocks++;
+      f.planned += Number(r[p + '_Plan']) || 0;
+      var m = String(r[p + '_Met'] || '').trim();
+      if (m === 'met') f.met++; else if (m === 'partly') f.partly++; else if (m === 'no') f.no++;
+    });
+    var d = String(r.Date || '').slice(0, 10);
+    if (isSubstantive_(r.ValueAdded) && f.valueAdded.length < 3) f.valueAdded.push({ date: d, text: String(r.ValueAdded).slice(0, 140) });
+    if (isSubstantive_(r.Innovation) && f.innovation.length < 3) f.innovation.push({ date: d, text: String(r.Innovation).slice(0, 140) });
+  });
+  f.valueAddedN = entries.filter(function (r) { return isSubstantive_(r.ValueAdded); }).length;
+  f.innovationN = entries.filter(function (r) { return isSubstantive_(r.Innovation); }).length;
+  var rated = f.met + f.partly + f.no;
+  f.landed = rated ? Math.round(f.met / rated * 100) / 100 : null;
+
+  try {
+    attendanceFor_({ staffId: staffId, manager: false }, from, to).forEach(function (a) {
+      if (a.staffId !== staffId) return;
+      if (a.status === 'absent') f.absent++;
+      else if (a.at) { f.daysIn++; if (a.late) f.late++; }
+    });
+  } catch (e) {}
+
+  if (closedByType) {
+    f.closed = 0;
+    Object.keys(closedByType).forEach(function (t) { f.closed += closedByType[t] || 0; });
+    f.servicing = closedByType.Servicing || 0;
+  }
+  if (nowBlock) {
+    f.open = nowBlock.open || 0; f.needs = nowBlock.needs || 0; f.lateTasks = nowBlock.overdue || 0;
+  }
+  if (needs) f.noReason = needs.length;
+  if (billing) f.billingFlags = billing.length;
+
+  var tl = trainingLog_(staffId, from, to);
+  f.trainingGiven = tl.given; f.trainingReceived = tl.received;
+  (hrRows_(HR.DEVELOP, true) || []).forEach(function (d) {
+    if (String(d.StaffId) !== staffId) return;
+    f.devTotal++;
+    if (String(d.Status || '') === 'done') f.devDone++;
+  });
+  return f;
+}
+
+/** What the record says about one competency, read by the competency's
+ *  name. A name that matches nothing gets moments only, and says so. */
+function competencySignals_(name, f) {
+  var n = String(name || '').toLowerCase(), s = [];
+  function sig(label, value, tone) { s.push({ label: label, value: value, tone: tone || '' }); }
+  var pc = function (x) { return Math.round(x * 100) + '%'; };
+  if (/reliab|attend|punctual|depend/.test(n)) {
+    sig('Days in', f.daysIn); sig('Not in', f.absent, f.absent ? 'amber' : 'green');
+    sig('After your start', f.late, f.late ? 'amber' : 'green');
+    if (f.daysIn) sig('Blocks submitted', f.blocks + ' of ' + f.daysIn * BLOCK_IDS.length, f.blocks >= f.daysIn * BLOCK_IDS.length * 0.8 ? 'green' : 'amber');
+  }
+  if (/respons|timel|follow.?up/.test(n)) {
+    if (f.needs != null) sig('Untouched 7+ days', f.needs, f.needs ? 'amber' : 'green');
+    if (f.lateTasks != null) sig('Late', f.lateTasks, f.lateTasks ? 'amber' : 'green');
+    if (f.noReason != null) sig('Late with no reason', f.noReason, f.noReason ? 'amber' : 'green');
+    if (f.closed != null) sig('Closed this quarter', f.closed);
+  }
+  if (/quality|accura|detail/.test(n)) {
+    if (f.landed != null) sig('Blocks landed', pc(f.landed), f.landed >= 0.8 ? 'green' : 'amber');
+    if (f.noReason != null) sig('Late with no reason', f.noReason, f.noReason ? 'amber' : 'green');
+    if (f.billingFlags != null) sig('Billing flags', f.billingFlags, f.billingFlags ? 'amber' : 'green');
+  }
+  if (/customer|service|client/.test(n)) {
+    sig('Value-added lines', f.valueAddedN);
+    if (f.servicing != null) sig('Servicing closed', f.servicing);
+    if (f.closed != null) sig('Closed this quarter', f.closed);
+  }
+  if (/growth|learn|develop/.test(n)) {
+    sig('Training received', f.trainingReceived);
+    sig('Development actions done', f.devDone + ' of ' + f.devTotal, f.devTotal && f.devDone < f.devTotal ? 'amber' : '');
+  }
+  if (/innovat|creativ|improve/.test(n)) sig('Innovation lines', f.innovationN, f.innovationN ? 'green' : '');
+  if (/courtesy|interpersonal|positive|energy|team|collab/.test(n)) sig('Training given', f.trainingGiven);
+  return s;
+}
+function competencyLines_(name, f) {
+  var n = String(name || '').toLowerCase();
+  if (/customer|service|client/.test(n)) return f.valueAdded;
+  if (/innovat|creativ|improve/.test(n)) return f.innovation;
+  return [];
+}
+
+/** The quarter so far for one person: every goal with what the record says
+ *  under it, every competency with its signals and moments. */
+function standing_(profile, staffId) {
+  staffId = String(staffId || profile.staffId);
+  if (!canSee_(profile, staffId)) return { ok: false, error: 'Not yours to see.' };
+  var today = todayISO_(), q = quarterOf_(today), qr = quarterRange_(q);
+  var from = qr.from, to = shiftDays_(today, 1);
+  var role = staffId === profile.staffId ? profile.role : roleFor_id_(staffId);
+  var goals = goalsFor_(role), comps = competencies_();
+
+  var entries = allEntries_().filter(function (e) {
+    var d = String(e.Date || '').slice(0, 10);
+    return String(e.StaffId) === staffId && d >= from && d < to;
+  });
+  var closed = sfkClosedInPeriodSafe_(staffId, from, to);
+  var mm = sfkMetricsSafe_();
+  var nowBlock = (mm && mm.ok && mm.staff && mm.staff[staffId]) || null;
+  var needs = (sfkNeedsReasonSafe_(today) || {})[staffId] || null;
+  var billing = ((sfkBillingCheckSafe_(today) || {})[staffId] || {}).items || null;
+  var f = facts_(staffId, from, to, entries, closed, nowBlock, needs, billing);
+  var moments = momentsFor_(staffId, from, to);
+
+  var outGoals = (goals || []).map(function (g) {
+    var ev = goalEvidence_(staffId, from, to, g.kpiTypes, entries, closed, nowBlock && nowBlock.byType);
+    var rated = ev.met.met + ev.met.partly + ev.met.no;
+    return { goal: g.goal, description: g.description, targetType: g.targetType, weight: g.weight,
+             target: g.target, kpiTypes: g.kpiTypes, evidence: ev,
+             landed: rated ? Math.round(ev.met.met / rated * 100) / 100 : null };
+  });
+  var outComps = (comps || []).map(function (c) {
+    return { competency: c.competency, definition: c.definition, behaviours: c.behaviours,
+             signals: competencySignals_(c.competency, f), lines: competencyLines_(c.competency, f),
+             moments: moments.filter(function (m) { return m.competency === c.competency; }) };
+  });
+  return { ok: true, staffId: staffId, role: role, quarter: q, from: from, to: to, today: today,
+           daysIn: workdays_(from, to), daysLeft: workdays_(to, qr.to),
+           goals: outGoals, competencies: outComps, facts: f,
+           salesforce: !!closed, setup: { goals: !!goals, competencies: !!comps },
+           side: sideFor_(profile, staffId) };
+}
+
+// ---------------------------------------------------------------------------
+//  Attendance
+//
+//  Signing in is the attendance register. The first sign-in of the day is the
+//  time the person started; every later one only refreshes "last seen". There
+//  is no second form to fill: the JotForm register this replaces asked people
+//  to sign in twice, and a register nobody signs is a register with holes.
+//
+//  Somebody who is not in signs in anyway and says so — "not in today", and
+//  why. Their People Leader may mark it for them if they phoned in. The start
+//  time is read against the person's own hours from the schedule, so an
+//  eight o'clock desk and a nine o'clock desk are each measured against their
+//  own day and nobody is "late" for a start that was never theirs.
+// ---------------------------------------------------------------------------
+
+var ATT = { must: ['Date', 'StaffId', 'FirstSignIn'], name: 'Attendance',
+            head: ['Date', 'StaffId', 'Name', 'FirstSignIn', 'LastSeen', 'Status', 'Reason',
+                   'MarkedBy', 'UpdatedAt'] };
+var ATT_GRACE_MIN = 10;
+
+/** "8am – 4pm" -> 480. The first token of the hours string, in minutes. */
+function startFor_(staffId) {
+  var h = String(scheduleFor_(staffId).hours || '8am');
+  var m = /^\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i.exec(h);
+  if (!m) return 8 * 60;
+  var hr = Number(m[1]) % 12, mn = Number(m[2] || 0);
+  if ((m[3] || 'am').toLowerCase() === 'pm') hr += 12;
+  return hr * 60 + mn;
+}
+function hhmm_(d) { return Utilities.formatDate(d, CONFIG.TZ, 'HH:mm'); }
+function minutesOf_(hhmm) {
+  var m = /^(\d{1,2}):(\d{2})/.exec(String(hhmm || ''));
+  return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+}
+function lateBy_(staffId, at) {
+  var mins = minutesOf_(at);
+  if (mins == null) return 0;
+  var over = mins - startFor_(staffId);
+  return over > ATT_GRACE_MIN ? over : 0;
+}
+
+function attSheet_() {
+  var sh = hrTab_(ATT, false);
+  if (sh) return sh;
+  sh = hrTab_(ATT, true);
+  // "08:07" typed into a fresh cell becomes a time value; kept as text the
+  // register reads back exactly what was written.
+  try { sh.getRange('D:E').setNumberFormat('@'); } catch (e) {}
+  return sh;
+}
+
+/** A time cell, whichever shape the sheet hands back: the text that was
+ *  written, or a time value the sheet made of it. */
+function timeStr_(v) {
+  if (v == null || v === '') return '';
+  if (Object.prototype.toString.call(v) === '[object Date]') {
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return p(v.getHours()) + ':' + p(v.getMinutes());
+  }
+  var m = /^(\d{1,2}):(\d{2})/.exec(String(v).trim());
+  return m ? (m[1].length < 2 ? '0' : '') + m[1] + ':' + m[2] : String(v).trim();
+}
+
+/** Today's row for one person, earliest sign-in winning if two devices raced. */
+function attRow_(rows, day, staffId) {
+  var best = null;
+  rows.forEach(function (r, i) {
+    if (isoDay_(r.Date) !== day || String(r.StaffId) !== staffId) return;
+    var t = timeStr_(r.FirstSignIn) || '99:99', b = best ? timeStr_(best.row.FirstSignIn) || '99:99' : null;
+    if (!best || t < b) best = { row: r, at: i + 2 };
+  });
+  return best;
+}
+
+function attOut_(r, staffId) {
+  var at = timeStr_(r.FirstSignIn);
+  return { at: at, lastSeen: timeStr_(r.LastSeen), status: String(r.Status || 'in'),
+           reason: String(r.Reason || ''), late: at ? lateBy_(staffId, at) : 0 };
+}
+
+/** Called on sign-in and on session resume. Cheap on repeats: the day's
+ *  answer is cached for half an hour, so the read only happens once. */
+function recordAttendance_(profile) {
+  var day = todayISO_(), sid = profile.staffId;
+  var cache = null, key = 'att_' + sid + '_' + day;
+  try { cache = CacheService.getScriptCache(); var hit = cache.get(key); if (hit) return JSON.parse(hit); } catch (e) {}
+
+  var sh = attSheet_(), rows = sheetObjects_(sh), now = new Date();
+  var found = attRow_(rows, day, sid), out;
+  if (found) {
+    writeRow_(sh, found.at, colMap_(sh), { LastSeen: hhmm_(now), UpdatedAt: now });
+    out = attOut_(found.row, sid); out.first = false;
+  } else {
+    var o = { Date: day, StaffId: sid, Name: profile.name || sid, FirstSignIn: hhmm_(now),
+              LastSeen: hhmm_(now), Status: 'in', Reason: '', MarkedBy: sid, UpdatedAt: now };
+    sh.appendRow(ATT.head.map(function (h) { return o[h] != null ? o[h] : ''; }));
+    out = attOut_(o, sid); out.first = true;
+  }
+  forgetHr_(ATT);
+  // The cached copy says "not first" — a second sign-in five minutes later
+  // must land on the day, not the plan.
+  try { cache.put(key, JSON.stringify(Object.assign({}, out, { first: false })), 1800); } catch (e) {}
+  return out;
+}
+
+/** "Not in today", with the reason. Self, or the People Leader for a report. */
+function markAbsent_(data, profile) {
+  var staffId = String(data.staffId || profile.staffId);
+  if (staffId !== profile.staffId && !isLeadOf_(profile, staffId)) return { ok: false, error: 'Not yours to mark.' };
+  var day = isoDay_(data.date) || todayISO_();
+  var reason = String(data.reason || '').trim();
+  if (!reason) return { ok: false, error: 'Say why — sick, on leave, or what it is.' };
+  var sh = attSheet_(), rows = sheetObjects_(sh), now = new Date();
+  var found = attRow_(rows, day, staffId);
+  var patch = { Status: 'absent', Reason: reason, MarkedBy: profile.staffId, UpdatedAt: now };
+  if (found) writeRow_(sh, found.at, colMap_(sh), patch);
+  else {
+    var name = (publicRoster_().filter(function (p) { return p.staffId === staffId; })[0] || {}).name || staffId;
+    var o = Object.assign({ Date: day, StaffId: staffId, Name: name, FirstSignIn: '', LastSeen: '' }, patch);
+    sh.appendRow(ATT.head.map(function (h) { return o[h] != null ? o[h] : ''; }));
+  }
+  forgetHr_(ATT);
+  try { CacheService.getScriptCache().remove('att_' + staffId + '_' + day); } catch (e) {}
+  return { ok: true, date: day, staffId: staffId, status: 'absent', reason: reason };
+}
+
+/** Who a person may see the register for: themselves, the people they lead,
+ *  everyone for the Branch Manager. */
+function attVisible_(profile) {
+  var v = [profile.staffId].concat(leads_(profile));
+  var seen = {}; return v.filter(function (s) { if (seen[s]) return false; seen[s] = true; return true; });
+}
+
+/** The register for a date range. */
+function attendanceFor_(profile, from, to) {
+  var who = {}; attVisible_(profile).forEach(function (s) { who[s] = 1; });
+  var out = [];
+  (hrRows_(ATT, true) || []).forEach(function (r) {
+    var d = isoDay_(r.Date), sid = String(r.StaffId);
+    if (!who[sid] || d < from || d >= to) return;
+    var o = attOut_(r, sid); o.date = d; o.staffId = sid; o.markedBy = String(r.MarkedBy || '');
+    out.push(o);
+  });
+  // Two rows for one day (two devices raced) collapse to the earliest sign-in.
+  var byKey = {};
+  out.forEach(function (o) {
+    var k = o.date + '|' + o.staffId, cur = byKey[k];
+    if (!cur || (o.at && (!cur.at || o.at < cur.at))) byKey[k] = o;
+  });
+  return Object.keys(byKey).map(function (k) { return byKey[k]; })
+    .sort(function (a, b) { return a.date === b.date ? a.staffId.localeCompare(b.staffId) : b.date.localeCompare(a.date); });
+}
+
+/** Today, keyed by staffId, for the rows response. */
+function attendanceToday_(profile) {
+  var day = todayISO_(), m = {};
+  attendanceFor_(profile, day, shiftDays_(day, 1)).forEach(function (o) { m[o.staffId] = o; });
+  return m;
 }
 
 // ---------------------------------------------------------------------------

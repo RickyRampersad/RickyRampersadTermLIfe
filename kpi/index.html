@@ -110,6 +110,11 @@ const PROFILES = {
     role: "ssa",
     tenure: "probation"
   },
+  ashley: {
+    grade: "Sales Support Assistant · G3",
+    role: "ssa",
+    tenure: "experienced"
+  },
   kamla: {
     grade: "Branch Manager's Assistant · G4",
     role: "bma",
@@ -455,6 +460,498 @@ function OpenList({ items }) {
     items.length > SHOW ? React.createElement("div", {
       style: { fontSize: 11.5, color: MUTED, paddingTop: 7 }
     }, "and " + (items.length - SHOW) + " more") : null);
+}
+
+// ---------------------------------------------------------------------------
+//  Attendance
+//
+//  Signing in is the register. This line says what today's sign-in recorded
+//  and lets somebody who is not in say so, with a reason, instead of filling
+//  a second form somewhere else.
+// ---------------------------------------------------------------------------
+const ABSENT_REASONS = ["Sick", "On leave", "Off-site / training", "Other"];
+
+function AttendanceLine({ me, api, onChange, onRegister }) {
+  const a = me.attendance;
+  const [open, setOpen] = useState(false);
+  const [why, setWhy] = useState("Sick");
+  const [more, setMore] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const send = () => {
+    const reason = why === "Other" ? more.trim() : (why + (more.trim() ? " — " + more.trim() : ""));
+    if (!reason) { setErr("Say why."); return; }
+    setBusy(true); setErr("");
+    api("absent", { reason }).then(r => {
+      setBusy(false);
+      if (r && r.ok) { setOpen(false); onChange(Object.assign({}, a || {}, { status: "absent", reason: r.reason })); }
+      else setErr((r && r.error) || "Not recorded.");
+    });
+  };
+  const leads = (me.leads || []).length > 0;
+  const text = !a ? "" : a.status === "absent"
+    ? "Not in today · " + a.reason
+    : a.at ? "In at " + a.at + (a.late ? " · " + a.late + " minutes after your start" : " · on time") : "";
+  const linkBtn = (color, onClick, label) => React.createElement("button", { type: "button", onClick,
+    style: { background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit", fontSize: 12, fontWeight: 700, color } }, label);
+  return React.createElement("div", { style: { margin: "12px 0 0" } },
+    React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" } },
+      React.createElement("div", { style: { fontSize: 12.5, fontWeight: 700, color: a && a.status === "absent" ? AMBER : a && a.late ? AMBER : GREEN } },
+        text || "Signed in"),
+      React.createElement("div", { style: { display: "flex", gap: 14 } },
+        leads ? linkBtn(GOLD, onRegister, "Team register →") : null,
+        !(a && a.status === "absent") ? linkBtn(MUTED, () => setOpen(!open), open ? "Cancel" : "Not in today?") : null)),
+    open ? React.createElement("div", { style: { ...card, marginTop: 8 } },
+      React.createElement(Chips, { label: "Why", options: ABSENT_REASONS.map(r => ({ v: r, label: r })), value: why, onPick: v => setWhy(v || "Sick") }),
+      React.createElement("input", { value: more, onChange: e => setMore(e.target.value), placeholder: why === "Other" ? "What it is" : "Anything to add (optional)",
+        style: { width: "100%", boxSizing: "border-box", font: "inherit", fontSize: 13, padding: "8px 10px", border: "1px solid " + LINE, borderRadius: 8, marginTop: 8 } }),
+      err ? React.createElement("div", { style: { fontSize: 12, color: RED, marginTop: 6 } }, err) : null,
+      React.createElement("button", { type: "button", disabled: busy, onClick: send, style: { ...primaryWide, marginTop: 10 } },
+        busy ? "Recording…" : "Record: not in today")) : null);
+}
+
+function RegisterView({ me, roster, reg, weekOf, setWeekOf, vp, onBack }) {
+  const days = weekDaysOf(weekOf);
+  const people = (reg && reg.ok && reg.people) || [];
+  const byKey = {};
+  ((reg && reg.ok && reg.attendance) || []).forEach(o => { byKey[o.date + "|" + o.staffId] = o; });
+  const name = sid => (roster.find(p => p.staffId === sid) || {}).name || sid;
+  const cell = o => !o ? "—" : o.status === "absent" ? "not in · " + o.reason : o.at + (o.late ? " (+" + o.late + ")" : "");
+  const tone = o => !o ? MUTED : o.status === "absent" ? AMBER : o.late ? AMBER : INK;
+  return React.createElement(Shell, { wide: vp.desktop ? 1160 : vp.tablet ? 820 : 560 },
+    React.createElement(SubHeader, { title: "Attendance register", sub: "Signing in is the register. First sign-in, or the reason for not being in.", onBack: onBack }),
+    React.createElement("div", { style: { padding: "0 18px 40px" } },
+      React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", margin: "12px 0" } },
+        React.createElement("button", { type: "button", onClick: () => setWeekOf(shiftDays(weekOf, -7)), style: trendChip }, "← Week"),
+        React.createElement("span", { style: { fontSize: 12.5, fontWeight: 700, color: INK } }, "Week of " + shortDate(weekOf)),
+        React.createElement("button", { type: "button", onClick: () => setWeekOf(shiftDays(weekOf, 7)), style: trendChip }, "Week →")),
+      !reg ? React.createElement("p", { style: { color: MUTED, textAlign: "center", padding: 24 } }, "Reading…") : null,
+      reg && !reg.ok ? React.createElement("p", { style: { color: RED } }, reg.error) : null,
+      reg && reg.ok ? React.createElement("div", { style: { overflowX: "auto", border: "1px solid " + LINE, borderRadius: 11 } },
+        React.createElement("table", { style: { borderCollapse: "collapse", width: "100%", fontSize: 12.5, minWidth: 560 } },
+          React.createElement("thead", null, React.createElement("tr", null,
+            React.createElement("th", { style: regTh }, ""),
+            days.map(d => React.createElement("th", { key: d, style: regTh }, dowShort(d) + " " + shortDate(d))))),
+          React.createElement("tbody", null, people.map(sid => React.createElement("tr", { key: sid },
+            React.createElement("td", { style: { ...regTd, fontWeight: 700, whiteSpace: "nowrap" } }, name(sid)),
+            days.map(d => { const o = byKey[d + "|" + sid];
+              return React.createElement("td", { key: d, style: { ...regTd, color: tone(o), fontWeight: o ? 600 : 400 } }, cell(o)); })))))) : null,
+      React.createElement("p", { style: { fontSize: 11.5, color: MUTED, marginTop: 10, lineHeight: 1.5 } },
+        "A time is the first sign-in of the day. (+n) is minutes after that person's own start, past a ten-minute grace. — is no sign-in and nothing said.")));
+}
+const regTh = { textAlign: "left", padding: "9px 11px", fontSize: 10.5, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid " + LINE, background: "#FBFAF5", whiteSpace: "nowrap" };
+const regTd = { padding: "9px 11px", borderBottom: "1px solid " + LINE, verticalAlign: "top" };
+
+// ---------------------------------------------------------------------------
+//  Performance
+//
+//  Guardian's Performance Evaluation form, with the daily record beside it.
+//  Ten weighted goals rated 1 to 5, eight competencies rated 1 to 5,
+//  development on 70-20-10, the training plan, and a review that both halves
+//  sign. The evidence under each goal — blocks worked, how many landed, tasks
+//  closed in the period, what is open or untouched now — is what the rating is
+//  made against. It is never the rating.
+//
+//  Each side edits only its own column. The other column is shown, read-only,
+//  because a review is a conversation and both halves belong on one page.
+// ---------------------------------------------------------------------------
+const h = React.createElement;
+const RATE_OPTS = ["1", "2", "3", "4", "5"].map(v => ({ v, label: v }));
+const RATE_WORDS = { "1": "Unacceptable", "2": "Needs improvement", "3": "Meets most",
+                     "4": "Meets expectations", "5": "Exceeds" };
+const pct = x => Math.round((Number(x) || 0) * 1000) / 10 + "%";
+
+function Half({ label, mine, rating, note, extra, onSave, busy }) {
+  const [r, setR] = useState(rating || "");
+  const [n, setN] = useState(note || "");
+  const [x, setX] = useState(extra != null ? extra.value : null);
+  useEffect(() => { setR(rating || ""); setN(note || ""); if (extra) setX(extra.value); }, [rating, note, extra && extra.value]);
+  const dirty = r !== (rating || "") || n !== (note || "") || (extra && x !== extra.value);
+  return h("div", { style: { flex: 1, minWidth: 240, borderTop: "1px solid " + LINE, paddingTop: 8 } },
+    h("div", { style: { fontSize: 11, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase",
+                        color: mine ? GOLD : MUTED, marginBottom: 4 } }, label, mine ? "  · yours" : ""),
+    mine
+      ? h(Chips, { label: "", options: RATE_OPTS, value: r, onPick: setR })
+      : h("div", { style: { fontSize: 14, fontWeight: 700, color: rating ? INK : MUTED, margin: "4px 0" } },
+          rating ? rating + " · " + RATE_WORDS[rating] : "Not yet rated"),
+    mine && r ? h("div", { style: { fontSize: 11.5, color: MUTED, margin: "2px 0 6px" } }, RATE_WORDS[r]) : null,
+    extra ? (mine
+      ? h("input", { value: x == null ? "" : x, onChange: e => setX(e.target.value), placeholder: extra.label,
+                     style: { width: "100%", font: "inherit", fontSize: 13, padding: "7px 10px",
+                              border: "1px solid " + LINE, borderRadius: 8, margin: "4px 0 6px" } })
+      : (extra.value ? h("div", { style: { fontSize: 12.5, color: MUTED, marginBottom: 6 } }, extra.label + ": " + extra.value) : null)) : null,
+    mine
+      ? h("textarea", { value: n, onChange: e => setN(e.target.value), rows: 3,
+                        placeholder: "Which cases, how many, what came of it",
+                        style: { width: "100%", font: "inherit", fontSize: 13, padding: "8px 10px",
+                                 border: "1px solid " + LINE, borderRadius: 8, resize: "vertical" } })
+      : h("p", { style: { fontSize: 13, color: note ? INK : MUTED, margin: "2px 0 0", lineHeight: 1.45 } },
+          note || "Nothing written yet"),
+    mine ? h("button", { type: "button", disabled: !dirty || busy,
+                         onClick: () => onSave({ rating: r, note: n, actual: extra ? x : undefined }),
+                         style: { ...primaryWide, marginTop: 8, opacity: !dirty || busy ? .5 : 1 } },
+             busy ? "Saving…" : "Save") : null);
+}
+
+// ---- the quarter so far ------------------------------------------------------
+
+const evidenceLine = (ev, sf) => {
+  const b = [ev.blocks + " block" + (ev.blocks === 1 ? "" : "s")];
+  if (ev.closed != null) b.push(ev.closed + " closed"); else if (!sf) b.push("Salesforce unreachable");
+  if (ev.open != null) b.push(ev.open + " open" + (ev.needs ? ", " + ev.needs + " untouched" : ""));
+  return b.join(" · ");
+};
+
+/** On the day view: every goal with what the record says under it, the
+ *  competencies with how much sits behind each, and the two doors. */
+function YourQuarter({ s, onPerf, onMoments }) {
+  if (!s || !s.ok || !Array.isArray(s.goals) || !s.setup) return null;
+  const tone = g => g.landed == null ? MUTED : (g.target && g.landed < Number(g.target)) ? AMBER : GREEN;
+  return h("div", { style: { ...card, marginTop: 16, borderLeft: "4px solid " + GOLD } },
+    h("div", { style: cardHead },
+      h("span", { style: cardTitle }, "Your quarter · " + s.quarter.replace("-", " ")),
+      h("span", { style: { fontSize: 11.5, fontWeight: 800, color: GOLD } }, s.daysIn + " days in · " + s.daysLeft + " left")),
+    !s.setup.goals ? h("p", { style: { fontSize: 12.5, color: MUTED, margin: "4px 0" } },
+      "The goals for this role are not on the Goals tab of the workbook yet.") : null,
+    s.goals.map(g => h("div", { key: g.goal, style: { display: "flex", justifyContent: "space-between", gap: 10, padding: "6px 0", borderBottom: "1px solid " + LINE } },
+      h("div", { style: { flex: 1, minWidth: 0 } },
+        h("div", { style: { fontSize: 12.5, fontWeight: 700, color: INK } }, g.goal),
+        h("div", { style: { fontSize: 11.5, color: MUTED } }, evidenceLine(g.evidence, s.salesforce))),
+      h("div", { style: { textAlign: "right", whiteSpace: "nowrap" } },
+        h("div", { style: { fontSize: 11.5, fontWeight: 800, color: GOLD } }, g.weight + "%"),
+        h("div", { style: { fontSize: 11.5, fontWeight: 700, color: tone(g) } },
+          g.landed == null ? "no blocks yet" : "landed " + pct(g.landed) + (g.target ? " · target " + pct(g.target) : ""))))),
+    s.competencies.length ? h("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 } },
+      s.competencies.map(c => {
+        const n = (c.signals || []).length + (c.moments || []).length;
+        return h("span", { key: c.competency, style: pillOutline(n ? INK : MUTED) },
+          c.competency + (c.moments && c.moments.length ? " · " + c.moments.length + " moment" + (c.moments.length === 1 ? "" : "s") : ""));
+      })) : null,
+    h("div", { style: { display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" } },
+      h("button", { type: "button", onClick: onMoments, style: trendChip }, "Note a moment"),
+      h("button", { type: "button", onClick: onPerf, style: trendChip }, "Where you stand →")));
+}
+
+/** On the plan: the goals that are behind, so the day is planned against
+ *  them rather than in spite of them. */
+function QuarterStrip({ s }) {
+  if (!s || !s.ok || !Array.isArray(s.goals) || !s.goals.length) return null;
+  const behind = s.goals.filter(g => g.landed != null && g.target && g.landed < Number(g.target));
+  const none = s.goals.every(g => g.landed == null);
+  return h("div", { style: { fontSize: 12, color: behind.length ? AMBER : MUTED, fontWeight: 700, margin: "10px 0 0" } },
+    "Your quarter · " + s.daysIn + " days in, " + s.daysLeft + " left · " +
+    (none ? "nothing landed yet" : behind.length ? "behind on " + behind.map(g => g.goal + " (" + pct(g.landed) + " of " + pct(g.target) + ")").join(", ")
+                                                : "on target on every goal with blocks so far"));
+}
+
+function CompEvidence({ c, who }) {
+  const sig = c.signals || [], lines = c.lines || [], mom = c.moments || [];
+  const lbl = t => h("div", { style: { fontSize: 10.5, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: GOLD, marginBottom: 3 } }, t);
+  if (!sig.length && !lines.length && !mom.length)
+    return h("div", { style: { fontSize: 11.5, color: MUTED, margin: "6px 0 4px" } }, "Nothing on record yet. Note a moment when this shows.");
+  return h("div", { style: { background: "#FBF8F0", border: "1px solid " + LINE, borderRadius: 9, padding: "9px 12px", margin: "8px 0 4px" } },
+    sig.length ? h("div", null, lbl("What the record says"),
+      h("div", { style: { fontSize: 12.5, color: INK, lineHeight: 1.5 } },
+        sig.map((x, i) => h("span", { key: i, style: { color: x.tone === "amber" ? AMBER : x.tone === "green" ? GREEN : INK } },
+          x.label + " " + x.value + (i < sig.length - 1 ? "  ·  " : ""))))) : null,
+    lines.map((l, i) => h("div", { key: "l" + i, style: { fontSize: 12, color: MUTED } }, shortDate(l.date) + " — " + l.text)),
+    mom.length ? h("div", { style: { marginTop: sig.length || lines.length ? 6 : 0 } }, lbl("Moments"),
+      mom.map(m => h("div", { key: m.id, style: { fontSize: 12, color: INK } },
+        shortDate(m.date) + " — " + m.what + (m.by && m.by !== who ? " · noted by their People Leader" : "")))) : null);
+}
+
+function MomentForm({ comps, mine, onSave, busy }) {
+  const [c, setC] = useState(comps[0] ? comps[0].competency : "");
+  const [what, setWhat] = useState("");
+  const ready = c && what.trim().split(/\s+/).length >= 3;
+  return h("div", { style: card },
+    h("div", { style: cardHead }, h("span", { style: cardTitle }, "Note a moment")),
+    h("p", { style: { fontSize: 12.5, color: MUTED, margin: "0 0 4px", lineHeight: 1.5 } },
+      (mine ? "Something you did" : "Something they did") + " that shows one of these. A line, on the day it happened, so the quarterly is a read-off and not a memory test."),
+    h(Chips, { label: "Competency", options: comps.map(x => ({ v: x.competency, label: x.competency })), value: c, onPick: v => setC(v || c) }),
+    h("input", { value: what, onChange: e => setWhat(e.target.value), placeholder: "What happened, in a line",
+      style: { width: "100%", boxSizing: "border-box", font: "inherit", fontSize: 13, padding: "8px 10px", border: "1px solid " + LINE, borderRadius: 8, marginTop: 8 } }),
+    h("button", { type: "button", disabled: busy || !ready, onClick: () => { onSave({ competency: c, what: what.trim() }); setWhat(""); },
+      style: { ...trendChip, marginTop: 8, opacity: busy || !ready ? .5 : 1 } }, busy ? "Noting…" : "Note it"));
+}
+
+function Evidence({ ev, sf }) {
+  const bits = [];
+  bits.push(ev.blocks + " block" + (ev.blocks === 1 ? "" : "s") + " worked");
+  if (ev.blocks) bits.push(ev.met.met + " met · " + ev.met.partly + " partly · " + ev.met.no + " not yet");
+  if (ev.planned) bits.push(Math.round(ev.planned / 60 * 10) / 10 + " hours planned");
+  if (ev.closed != null) bits.push(ev.closed + " closed in Salesforce in the period");
+  if (ev.open != null) bits.push(ev.open + " open now · " + ev.needs + " untouched · " + ev.late + " late");
+  return h("div", { style: { background: "#FBF8F0", border: "1px solid " + LINE, borderRadius: 9,
+                             padding: "9px 12px", margin: "8px 0 4px" } },
+    h("div", { style: { fontSize: 10.5, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase",
+                        color: GOLD, marginBottom: 3 } }, "What the record says"),
+    h("div", { style: { fontSize: 12.5, color: INK, lineHeight: 1.5 } }, bits.join("  ·  ")),
+    !sf ? h("div", { style: { fontSize: 11, color: MUTED, marginTop: 2 } },
+            "Salesforce was not reachable, so closed counts are not shown rather than shown as zero.") : null,
+    ev.lines && ev.lines.length ? h("div", { style: { marginTop: 5 } },
+      ev.lines.map((l, i) => h("div", { key: i, style: { fontSize: 12, color: MUTED } },
+        shortDate(l.date) + " — " + l.text))) : null);
+}
+
+function GoalCard({ g, side, sf, onSave, busy }) {
+  return h("div", { style: card },
+    h("div", { style: cardHead },
+      h("span", { style: cardTitle }, g.goal),
+      h("span", { style: { fontSize: 11.5, fontWeight: 800, color: GOLD } },
+        g.weight + "%" + (g.target !== "" && g.target != null ? " · target " + pct(g.target) : ""))),
+    g.description ? h("p", { style: { fontSize: 12.5, color: MUTED, margin: "0 0 4px", lineHeight: 1.45 } }, g.description) : null,
+    g.evidence ? h(Evidence, { ev: g.evidence, sf: sf }) : null,
+    side ? h("div", { style: { display: "flex", gap: 16, flexWrap: "wrap", marginTop: 6 } },
+      h(Half, { label: "Self assessment", mine: side === "self", rating: g.selfRating, note: g.selfNote,
+                busy: busy, onSave: v => onSave("goal", g.goal, v) }),
+      h(Half, { label: "People Leader", mine: side === "pl", rating: g.plRating, note: g.plNote,
+                extra: { label: "Actual value, e.g. 92", value: g.actual || "" },
+                busy: busy, onSave: v => onSave("goal", g.goal, v) })) : null);
+}
+
+function CompCard({ c, who, side, onSave, busy }) {
+  return h("div", { style: card },
+    h("div", { style: cardHead }, h("span", { style: cardTitle }, c.competency)),
+    c.definition ? h("p", { style: { fontSize: 12.5, color: INK, margin: "0 0 4px", lineHeight: 1.45 } }, c.definition) : null,
+    c.behaviours && c.behaviours.length ? h("ul", { style: { margin: "0 0 4px", paddingLeft: 18 } },
+      c.behaviours.map((b, i) => h("li", { key: i, style: { fontSize: 12, color: MUTED, lineHeight: 1.4 } }, b))) : null,
+    c.signals || c.moments ? h(CompEvidence, { c: c, who: who }) : null,
+    side ? h("div", { style: { display: "flex", gap: 16, flexWrap: "wrap", marginTop: 6 } },
+      h(Half, { label: "Self assessment", mine: side === "self", rating: c.selfRating, note: c.selfNote,
+                busy: busy, onSave: v => onSave("competency", c.competency, v) }),
+      h(Half, { label: "People Leader", mine: side === "pl", rating: c.plRating, note: c.plNote,
+                busy: busy, onSave: v => onSave("competency", c.competency, v) })) : null);
+}
+
+function Scores({ s }) {
+  const line = (label, x, strong) => h("div", { style: { display: "flex", justifyContent: "space-between",
+      fontSize: strong ? 15 : 13, fontWeight: strong ? 800 : 500, padding: "3px 0", color: INK } },
+    h("span", null, label), h("span", null, pct(x)));
+  const pl = s.pl, self = s.self;
+  return h("div", { style: { background: NAVY, color: GOLD_SOFT, borderRadius: 12, padding: "13px 15px", marginBottom: 12 } },
+    h("div", { style: { fontSize: 11, fontWeight: 800, letterSpacing: ".14em", textTransform: "uppercase", color: GOLD, marginBottom: 6 } },
+      "Overall performance rating"),
+    h("div", { style: { display: "flex", gap: 22, flexWrap: "wrap" } },
+      h("div", { style: { flex: 1, minWidth: 200 } },
+        h("div", { style: { fontSize: 11.5, color: GOLD_SOFT, opacity: .8 } }, "People Leader — the rating of record"),
+        h("div", { style: { fontSize: 30, fontWeight: 800, color: "#fff", lineHeight: 1.1 } }, pct(pl.opr)),
+        h("div", { style: { fontSize: 12, color: pl.meetsStandard ? "#9BE3B8" : "#F5B0A8", fontWeight: 700, marginTop: 2 } },
+          pl.goalsRated + " of " + pl.goalsTotal + " goals and " + pl.compsRated + " of " + pl.compsTotal + " competencies rated · " +
+          (pl.meetsStandard ? "meets" : "below") + " the standard of " + pct(s.standard)),
+        h("div", { style: { fontSize: 12, color: GOLD_SOFT, marginTop: 4 } },
+          "Goals " + pct(pl.goalScore) + " × 80  +  competencies " + pct(pl.compScore) + " × 20")),
+      h("div", { style: { flex: 1, minWidth: 200 } },
+        h("div", { style: { fontSize: 11.5, color: GOLD_SOFT, opacity: .8 } }, "Self assessment"),
+        h("div", { style: { fontSize: 30, fontWeight: 800, color: "#fff", lineHeight: 1.1 } }, pct(self.opr)),
+        h("div", { style: { fontSize: 12, color: GOLD_SOFT, marginTop: 2 } },
+          self.goalsRated + " of " + self.goalsTotal + " goals and " + self.compsRated + " of " + self.compsTotal + " competencies rated"))));
+}
+
+function DevList({ items, side, sources, onSave, busy }) {
+  const [src, setSrc] = useState("Experiential");
+  const [a, setA] = useState(""), [w, setW] = useState(""), [s, setS] = useState("");
+  const box = { width: "100%", font: "inherit", fontSize: 13, padding: "8px 10px", border: "1px solid " + LINE, borderRadius: 8, marginTop: 6 };
+  return h("div", null,
+    h("p", { style: { fontSize: 12.5, color: MUTED, lineHeight: 1.5, margin: "0 0 10px" } },
+      "70% of learning is on the job, 20% is from other people, 10% is formal. Every action says what, why, and what success looks like."),
+    items.length === 0 ? h("p", { style: { fontSize: 13, color: MUTED } }, "No development actions yet.") : null,
+    items.map(d => h("div", { key: d.id, style: card },
+      h("div", { style: cardHead },
+        h("span", { style: cardTitle }, d.source + (d.source === "Experiential" ? " · 70%" : d.source === "Social" ? " · 20%" : " · 10%")),
+        h("span", { style: pillOutline(d.status === "done" ? GREEN : AMBER) }, d.status || "planned")),
+      h("div", { style: { fontSize: 13.5, fontWeight: 700, color: INK } }, d.action),
+      h("div", { style: { fontSize: 12.5, color: MUTED, marginTop: 3 } }, "Why: " + d.why),
+      h("div", { style: { fontSize: 12.5, color: MUTED, marginTop: 2 } }, "Success looks like: " + d.success),
+      side === "self" && d.status !== "done" ? h("button", { type: "button", disabled: busy,
+        onClick: () => onSave({ id: d.id, status: "done" }), style: { ...trendChip, marginTop: 8 } }, "Mark done") : null,
+      side === "pl" && d.status !== "done" ? h("button", { type: "button", disabled: busy,
+        onClick: () => onSave({ id: d.id, source: d.source, action: d.action, why: d.why, success: d.success, status: "done" }),
+        style: { ...trendChip, marginTop: 8 } }, "Mark done") : null)),
+    side === "pl" ? h("div", { style: card },
+      h("div", { style: cardHead }, h("span", { style: cardTitle }, "Add an action")),
+      h(Chips, { label: "Learning source", options: sources.map(x => ({ v: x, label: x })), value: src, onPick: v => setSrc(v || "Experiential") }),
+      h("textarea", { value: a, onChange: e => setA(e.target.value), rows: 2, placeholder: "What they will do", style: box }),
+      h("textarea", { value: w, onChange: e => setW(e.target.value), rows: 2, placeholder: "Why — the gap or the need", style: box }),
+      h("textarea", { value: s, onChange: e => setS(e.target.value), rows: 2, placeholder: "What success looks like — observable, measurable", style: box }),
+      h("button", { type: "button", disabled: busy || !a.trim() || !w.trim() || !s.trim(),
+        onClick: () => { onSave({ source: src, action: a, why: w, success: s }); setA(""); setW(""); setS(""); },
+        style: { ...primaryWide, marginTop: 10, opacity: busy || !a.trim() || !w.trim() || !s.trim() ? .5 : 1 } }, "Add")) : null);
+}
+
+function TrainingList({ rows, side, onSave, busy }) {
+  return h("div", null,
+    rows.length === 0 ? h("p", { style: { fontSize: 13, color: MUTED } },
+      "No training plan on file yet. The People Leader pastes it into the Training Plan tab of the workbook.") : null,
+    rows.map(t => h(TrainingRow, { key: t.order, t: t, side: side, onSave: onSave, busy: busy })));
+}
+function TrainingRow({ t, side, onSave, busy }) {
+  const [ev, setEv] = useState(t.evidence || ""), [ex, setEx] = useState(t.evaluation || ""), [so, setSo] = useState(t.signedOff || "");
+  const box = { width: "100%", font: "inherit", fontSize: 12.5, padding: "7px 10px", border: "1px solid " + LINE, borderRadius: 8, marginTop: 5 };
+  const dirty = ev !== (t.evidence || "") || ex !== (t.evaluation || "") || so !== (t.signedOff || "");
+  return h("div", { style: card },
+    h("div", { style: cardHead },
+      h("span", { style: cardTitle }, t.order + ". " + t.activity),
+      t.signedOff ? h("span", { style: pillOutline(GREEN) }, "Signed " + t.signedOff) : h("span", { style: pillOutline(AMBER) }, "Open")),
+    h("div", { style: { fontSize: 12.5, color: INK, lineHeight: 1.45 } }, t.objective),
+    h("div", { style: { fontSize: 12, color: MUTED, marginTop: 4 } },
+      [t.facilitator, t.dates, t.venue].filter(Boolean).join("  ·  ")),
+    side === "pl"
+      ? h("div", null,
+          h("input", { value: ev, onChange: e => setEv(e.target.value), placeholder: "Evidence of learning", style: box }),
+          h("input", { value: ex, onChange: e => setEx(e.target.value), placeholder: "Evaluation / comments", style: box }),
+          h("input", { value: so, onChange: e => setSo(e.target.value), placeholder: "Signed off — name and date", style: box }),
+          h("button", { type: "button", disabled: !dirty || busy, onClick: () => onSave({ order: t.order, evidence: ev, evaluation: ex, signedoff: so }),
+                        style: { ...trendChip, marginTop: 8, opacity: !dirty || busy ? .5 : 1 } }, busy ? "Saving…" : "Save"))
+      : h("div", { style: { marginTop: 6 } },
+          t.evidence ? h("div", { style: { fontSize: 12.5, color: MUTED } }, "Evidence: " + t.evidence) : null,
+          t.evaluation ? h("div", { style: { fontSize: 12.5, color: MUTED } }, "Evaluation: " + t.evaluation) : null));
+}
+
+function PerfView({ me, roster, hr, setHr, who, setWho, standing, loadStanding, rv, setRv, tab, setTab, note, setNote, api, vp, onBack }) {
+  const [busy, setBusy] = useState(false);
+  const [openType, setOpenType] = useState("Quarterly");
+  const [from, setFrom] = useState(""), [to, setTo] = useState("");
+  const person = roster.find(p => p.staffId === who) || { name: who };
+  const mine = who === me.staffId;
+  const report = hr && hr.ok ? hr.reports.find(r => r.staffId === who) : null;
+  const reviews = mine ? (hr && hr.ok ? hr.me.reviews : []) : (report ? report.reviews : []);
+  // Outside a review, the goals and competencies come with the quarter so
+  // far under them; inside one, with the review's period.
+  const st = standing && standing.ok && Array.isArray(standing.goals) ? standing : null;
+  const goals = rv ? rv.goals : (st && st.goals.length ? st.goals : (mine && hr && hr.ok ? hr.me.goals : []));
+  const comps = rv ? rv.competencies : (st && st.competencies.length ? st.competencies : (mine && hr && hr.ok ? hr.me.competencies : []));
+  const dev = rv ? rv.development : (mine && hr && hr.ok ? hr.me.development : []);
+  const training = rv ? rv.training : (mine && hr && hr.ok ? hr.me.training : []);
+  const side = rv ? rv.side : (mine ? "self" : (report ? "pl" : ""));
+  const sources = (hr && hr.ok && hr.sources) || ["Experiential", "Social", "Formal"];
+  const types = (hr && hr.ok && hr.types) || [];
+
+  const say = (tone, text) => setNote({ tone, text });
+  const reload = () => api("hr", {}).then(r => setHr(r && r.ok ? r : hr));
+  const openReview = id => { setRv(null); api("review", { reviewId: id }).then(r => { if (r && r.ok) setRv(r); else say("bad", (r && r.error) || "Could not open it."); }); };
+  const refresh = () => rv && api("review", { reviewId: rv.review.id }).then(r => { if (r && r.ok) setRv(r); });
+  const saveRating = (kind, name, v) => {
+    if (!rv) return;
+    setBusy(true);
+    api("saveRating", { reviewId: rv.review.id, kind, name, rating: v.rating, note: v.note, actual: v.actual })
+      .then(r => { setBusy(false); if (r && r.ok) { say("ok", "Saved."); refresh(); } else say("bad", (r && r.error) || "Not saved."); });
+  };
+  const saveComment = (comment, sign) => {
+    if (!rv) return;
+    setBusy(true);
+    api("saveComment", { reviewId: rv.review.id, comment, sign })
+      .then(r => { setBusy(false); if (r && r.ok) { say("ok", sign ? "Signed." : "Saved."); refresh(); reload(); } else say("bad", (r && r.error) || "Not saved."); });
+  };
+  const saveDev = d => {
+    setBusy(true);
+    api("saveDevelopment", { ...d, staffId: who, reviewId: rv ? rv.review.id : "" })
+      .then(r => { setBusy(false); if (r && r.ok) { say("ok", "Saved."); rv ? refresh() : reload(); } else say("bad", (r && r.error) || "Not saved."); });
+  };
+  const saveTrain = t => {
+    setBusy(true);
+    api("saveTraining", { ...t, staffId: who })
+      .then(r => { setBusy(false); if (r && r.ok) { say("ok", "Saved."); rv ? refresh() : reload(); } else say("bad", (r && r.error) || "Not saved."); });
+  };
+  const noteMoment = m => {
+    setBusy(true);
+    api("noteMoment", { ...m, staffId: who })
+      .then(r => { setBusy(false); if (r && r.ok) { say("ok", "Noted."); loadStanding(who); if (rv) refresh(); } else say("bad", (r && r.error) || "Not noted."); });
+  };
+  const doOpen = () => {
+    setBusy(true);
+    api("openReview", { staffId: who, type: openType, from, to })
+      .then(r => { setBusy(false); if (r && r.ok) { say("ok", r.existed ? "That review already exists — opening it." : "Review opened."); reload(); openReview(r.id); }
+                   else say("bad", (r && r.error) || "Not opened."); });
+  };
+
+  const tabs = [["goals", "Goals"], ["competencies", "Competencies"], ["development", "Development"], ["training", "Training plan"], ["reviews", "Reviews"]];
+  const tabBtn = ([k, label]) => h("button", { key: k, type: "button", onClick: () => setTab(k),
+    style: { font: "inherit", fontSize: 12.5, fontWeight: tab === k ? 800 : 500, cursor: "pointer", padding: "7px 12px",
+             borderRadius: 999, border: "1px solid " + (tab === k ? GOLD : LINE), background: tab === k ? "#FBF3DF" : "#fff",
+             color: tab === k ? INK : MUTED } }, label);
+
+  return h(Shell, { wide: vp.desktop ? 1160 : vp.tablet ? 760 : 560 },
+    h(SubHeader, { title: person.name || who, sub: mine ? "Your performance" : "Performance · " + (side === "pl" ? "you are the People Leader" : "read only"), onBack: onBack }),
+    h("div", { style: { padding: "0 18px 40px" } },
+      !hr ? h("p", { style: { color: MUTED, textAlign: "center", padding: 24 } }, "Reading…") : null,
+      hr && !hr.ok ? h("p", { style: { color: RED, padding: 12 } }, hr.error) : null,
+      hr && hr.ok && (!hr.setup.goals || !hr.setup.competencies) ? h("div", { style: { ...card, borderLeft: "4px solid " + AMBER } },
+        h("div", { style: cardTitle }, "Not set up yet"),
+        h("p", { style: { fontSize: 13, color: MUTED, margin: "4px 0 0" } },
+          "The form's goals and competencies are read from the Goals and Competencies tabs of the workbook. " +
+          (hr.setup.goals ? "" : "The Goals tab is missing. ") + (hr.setup.competencies ? "" : "The Competencies tab is missing."))) : null,
+
+      // A lead can move between the people they lead.
+      hr && hr.ok && hr.reports.length ? h("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", margin: "12px 0" } },
+        [{ staffId: me.staffId, name: "Me" }].concat(hr.reports).map(p => h("button", { key: p.staffId, type: "button",
+          onClick: () => { setWho(p.staffId); setRv(null); },
+          style: { font: "inherit", fontSize: 12.5, fontWeight: who === p.staffId ? 800 : 500, cursor: "pointer",
+                   padding: "6px 11px", borderRadius: 999, border: "1px solid " + (who === p.staffId ? GOLD : LINE),
+                   background: who === p.staffId ? "#FBF3DF" : "#fff", color: INK } },
+          p.name + (p.latest ? " · " + p.latest.status : "")))) : null,
+
+      note.text ? h("p", { style: { fontSize: 12.5, fontWeight: 700, color: note.tone === "bad" ? RED : GREEN, margin: "6px 0" } }, note.text) : null,
+
+      rv ? h("div", { style: { margin: "10px 0 4px" } },
+        h("div", { style: { fontSize: 11, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: GOLD } },
+          rv.review.type + " · " + shortDate(rv.review.from) + " – " + shortDate(rv.review.to) + " · " + rv.review.status +
+          (rv.days ? " · " + rv.days + " days logged" : "")),
+        h(Scores, { s: rv.scores })) : null,
+
+      h("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", margin: "10px 0 12px" } }, tabs.map(tabBtn)),
+
+      tab === "goals" ? h("div", null,
+        !rv ? h("p", { style: { fontSize: 12.5, color: MUTED, margin: "0 0 10px", lineHeight: 1.5 } },
+          st ? "Where " + (mine ? "you stand" : "they stand") + " this quarter — " + st.quarter.replace("-", " ") + ", " + st.daysIn + " working days in, " + st.daysLeft + " left. " +
+               "What the record says sits under each goal; the rating happens in a review, under Reviews."
+             : "What you are measured on, with its weight and target. Open a review under Reviews to rate against a period.") : null,
+        goals.length === 0 ? h("p", { style: { fontSize: 13, color: MUTED } }, "No goals on file for this role.") : null,
+        goals.map(g => h(GoalCard, { key: g.goal, g: g, side: rv ? side : "", sf: rv ? rv.salesforce : (st ? st.salesforce : true), onSave: saveRating, busy: busy }))) : null,
+
+      tab === "competencies" ? h("div", null,
+        comps.length === 0 ? h("p", { style: { fontSize: 13, color: MUTED } }, "No competencies on file.") : null,
+        comps.length && (side === "self" || side === "pl") ? h(MomentForm, { comps: comps, mine: mine, onSave: noteMoment, busy: busy }) : null,
+        comps.map(c => h(CompCard, { key: c.competency, c: c, who: who, side: rv ? side : "", onSave: saveRating, busy: busy }))) : null,
+
+      tab === "development" ? h(DevList, { items: dev, side: side, sources: sources, onSave: saveDev, busy: busy }) : null,
+      tab === "training" ? h(TrainingList, { rows: training, side: side, onSave: saveTrain, busy: busy }) : null,
+
+      tab === "reviews" ? h("div", null,
+        reviews.length === 0 ? h("p", { style: { fontSize: 13, color: MUTED } }, "No reviews yet.") : null,
+        reviews.map(r => h("div", { key: r.id, style: { ...card, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 } },
+          h("div", null,
+            h("div", { style: { fontSize: 14, fontWeight: 700, color: INK } }, r.type),
+            h("div", { style: { fontSize: 12, color: MUTED } }, shortDate(r.from) + " – " + shortDate(r.to) + " · " + r.status)),
+          h("button", { type: "button", onClick: () => openReview(r.id), style: trendChip }, rv && rv.review.id === r.id ? "Open" : "Open ›"))),
+        side === "pl" ? h("div", { style: card },
+          h("div", { style: cardHead }, h("span", { style: cardTitle }, "Open a review")),
+          h(Chips, { label: "Kind", options: types.map(t => ({ v: t, label: t })), value: openType, onPick: v => setOpenType(v || "Quarterly") }),
+          h("div", { style: { display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" } },
+            h("label", { style: { fontSize: 12, color: MUTED } }, "From ", h("input", { type: "date", value: from, onChange: e => setFrom(e.target.value), style: { font: "inherit" } })),
+            h("label", { style: { fontSize: 12, color: MUTED } }, "To ", h("input", { type: "date", value: to, onChange: e => setTo(e.target.value), style: { font: "inherit" } }))),
+          h("button", { type: "button", disabled: busy || !from || !to, onClick: doOpen,
+            style: { ...primaryWide, marginTop: 10, opacity: busy || !from || !to ? .5 : 1 } }, "Open the review")) : null,
+        rv && side ? h(Signoff, { rv: rv, side: side, onSave: saveComment, busy: busy }) : null) : null));
+}
+
+function Signoff({ rv, side, onSave, busy }) {
+  const own = side === "self" ? rv.selfComment : rv.plComment;
+  const other = side === "self" ? rv.plComment : rv.selfComment;
+  const signed = side === "self" ? rv.review.selfSigned : rv.review.plSigned;
+  const [c, setC] = useState(own || "");
+  useEffect(() => setC(own || ""), [own]);
+  return h("div", { style: card },
+    h("div", { style: cardHead }, h("span", { style: cardTitle }, "Overall comment and signature")),
+    other ? h("div", { style: { fontSize: 12.5, color: MUTED, marginBottom: 8 } },
+      (side === "self" ? "People Leader: " : "Employee: ") + other) : null,
+    signed ? h("p", { style: { fontSize: 13, color: GREEN, fontWeight: 700 } }, "Signed " + String(signed).slice(0, 10)) :
+      h("div", null,
+        h("textarea", { value: c, onChange: e => setC(e.target.value), rows: 4, placeholder: "Your overall comment",
+          style: { width: "100%", font: "inherit", fontSize: 13, padding: "8px 10px", border: "1px solid " + LINE, borderRadius: 8 } }),
+        h("div", { style: { display: "flex", gap: 8, marginTop: 8 } },
+          h("button", { type: "button", disabled: busy, onClick: () => onSave(c, false), style: trendChip }, "Save comment"),
+          h("button", { type: "button", disabled: busy, onClick: () => onSave(c, true), style: primaryWide }, "Sign my half"))));
 }
 
 function KpiPicker({ value, opts, onToggle, mine, branch }) {
@@ -1112,6 +1609,32 @@ function App() {
   const [metrics, setMetrics] = useState(null);
   const [needsReason, setNeedsReason] = useState({});
   const [openBook, setOpenBook] = useState({});
+  // Performance: the form, the evidence, the two halves.
+  const [hr, setHr] = useState(null);
+  const [perfWho, setPerfWho] = useState(null);
+  const [rv, setRv] = useState(null);
+  const [perfTab, setPerfTab] = useState("goals");
+  const [perfNote, setPerfNote] = useState({ tone: "idle", text: "" });
+  // Where each person stands this quarter, read once per person per session
+  // and again after a moment is noted.
+  const [standing, setStanding] = useState({});
+  const loadStanding = useCallback(sid => {
+    if (!sid) return;
+    api("standing", { staffId: sid }).then(r => { if (r && r.ok && Array.isArray(r.goals)) setStanding(prev => ({ ...prev, [sid]: r })); });
+  }, []);
+  useEffect(() => {
+    if (!me || !active) return;
+    if ((view === "entry" || view === "plan") && !standing[active]) loadStanding(active);
+  }, [me, view, active]);
+  useEffect(() => {
+    if (view !== "perf" || !me) return;
+    const sid = perfWho || me.staffId;
+    if (!standing[sid]) loadStanding(sid);
+  }, [view, perfWho, me]);
+  useEffect(() => {
+    if (view !== "perf" || hr) return;
+    api("hr", {}).then(r => setHr(r && r.ok ? r : { ok: false, error: (r && r.error) || "Could not read." }));
+  }, [view]);
   const [billing, setBilling] = useState({});
   const [waiting, setWaiting] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -1123,6 +1646,13 @@ function App() {
   const [openBlock, setOpenBlock] = useState(null);
   const [reviewDate, setReviewDate] = useState(todayISO());
   const [weekOf, setWeekOf] = useState(weekStartOf(todayISO()));
+  const [attToday, setAttToday] = useState(null);   // null: the server has not said
+  const [register, setRegister] = useState(null);
+  useEffect(() => {
+    if (view !== "register") return;
+    setRegister(null);
+    api("attendance", { from: weekOf, to: shiftDays(weekOf, 7) }).then(r => setRegister(r && r.ok ? r : { ok: false, error: (r && r.error) || "Could not read." }));
+  }, [view, weekOf]);
   const [trendStaff, setTrendStaff] = useState(null);
   const signOut = useCallback(() => {
     storeToken("");
@@ -1141,11 +1671,14 @@ function App() {
     if (me && !me.manager && view === "home" && !active) {
       setActive(me.staffId);
       setDate(todayISO());
-      // Before the first block is due, the useful screen is the plan; after
-      // that it is the day itself. Nobody wants to be planned at half past
-      // three.
-      const h = new Date().getHours();
-      setView(h < 10 ? "plan" : "entry");
+      // The first sign-in of the day opens on the plan, whatever the clock
+      // says — an eight o'clock desk and a nine o'clock desk both start their
+      // day by planning it. A later sign-in lands on the day itself. Signing
+      // in is the attendance register, so the server knows which this is;
+      // an older server that does not say falls back to the clock.
+      const att = me.attendance;
+      const first = att && typeof att.first === "boolean" ? att.first : new Date().getHours() < 10;
+      setView(first ? "plan" : "entry");
     }
   }, [me, view, active]);
 
@@ -1198,6 +1731,7 @@ function App() {
       if (r.metrics) setMetrics(r.metrics);
       if (r.needsReason) setNeedsReason(r.needsReason);
       if (r.openBook) setOpenBook(r.openBook);
+      if (r.attendance) setAttToday(r.attendance);
       if (r.billing) setBilling(r.billing);
     } else if (r.authRequired) {
       signOut();
@@ -1544,7 +2078,10 @@ function App() {
       setView("review");
     },
     style: primaryWide
-  }, "Full day review \u2192"), /*#__PURE__*/React.createElement(SectionLabel, null, "The team")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", {
+  }, "Full day review \u2192"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setView("register"),
+    style: primaryWide
+  }, "Attendance register \u2192"), /*#__PURE__*/React.createElement(SectionLabel, null, "The team")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", {
     style: {
       color: MUTED,
       fontSize: 13.5,
@@ -1578,6 +2115,7 @@ function App() {
       key: p.staffId,
       p: p,
       today: today,
+      att: attToday ? attToday[p.staffId] || null : undefined,
       onOpen: () => {
         setActive(p.staffId);
         setDate(todayISO());
@@ -1592,9 +2130,23 @@ function App() {
       onTrend: () => {
         setTrendStaff(p.staffId);
         setView("trend");
+      },
+      onPerf: () => {
+        setPerfWho(p.staffId);
+        setRv(null);
+        setPerfTab("goals");
+        setView("perf");
       }
     });
-  })), /*#__PURE__*/React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setPerfWho(me.staffId);
+      setRv(null);
+      setPerfTab("goals");
+      setView("perf");
+    },
+    style: { ...primaryWide, marginTop: 14 }
+  }, "My performance \u2192"), /*#__PURE__*/React.createElement("div", {
     style: standardsBox
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1644,6 +2196,24 @@ function App() {
   // is that the size of the work is on screen while the choice is made: a
   // block set aside for licensing with three tasks in it says so at eight
   // rather than at four.
+  // ---- the attendance register ----------------------------------------------
+  if (view === "register") {
+    return /*#__PURE__*/React.createElement(RegisterView, {
+      me: me, roster: roster, reg: register, weekOf: weekOf, setWeekOf: setWeekOf, vp: vp,
+      onBack: () => setView(me.manager ? "home" : "entry")
+    });
+  }
+
+  // ---- performance: the form, the evidence, the two halves ----------------
+  if (view === "perf") {
+    return /*#__PURE__*/React.createElement(PerfView, {
+      me: me, roster: roster, hr: hr, setHr: setHr, who: perfWho || me.staffId, setWho: setPerfWho,
+      standing: standing[perfWho || me.staffId], loadStanding: loadStanding,
+      rv: rv, setRv: setRv, tab: perfTab, setTab: setPerfTab, note: perfNote, setNote: setPerfNote,
+      api: api, vp: vp, onBack: () => setView("home")
+    });
+  }
+
   if (view === "plan" && active) {
     const prof = profileFor(active);
     const person = roster.find(p => p.staffId === active);
@@ -1676,6 +2246,11 @@ function App() {
       onBack: () => setView("home")
     }), /*#__PURE__*/React.createElement("div", { style: { padding: "0 18px 40px" } },
 
+      active === me.staffId ? /*#__PURE__*/React.createElement(AttendanceLine, {
+        me: me, api: api, onChange: a => { me.attendance = a; setAttToday(Object.assign({}, attToday || {}, { [me.staffId]: a })); },
+        onRegister: () => setView("register")
+      }) : null,
+      /*#__PURE__*/React.createElement(QuarterStrip, { s: standing[active] }),
       /*#__PURE__*/React.createElement("p", {
         style: { fontSize: 13.5, color: MUTED, lineHeight: 1.55, margin: "14px 0 16px" }
       }, "Set the day before it starts. Tick what each block is for and the",
@@ -2096,6 +2671,10 @@ function App() {
       }, st.tone === "saving" ? "Sending…"
          : st.tone === "ask" ? "Send it anyway"
          : at ? "Update block" : "Submit block"))));
+    }), /*#__PURE__*/React.createElement(YourQuarter, {
+      s: standing[active],
+      onPerf: () => { setPerfWho(active); setPerfTab("goals"); setView("perf"); },
+      onMoments: () => { setPerfWho(active); setPerfTab("competencies"); setView("perf"); }
     })), /*#__PURE__*/React.createElement("div", {
       style: vp.desktop ? {
         position: "sticky",
@@ -3547,8 +4126,10 @@ function SubHeader({
 function PersonRow({
   p,
   today,
+  att,
   onOpen,
-  onTrend
+  onTrend,
+  onPerf
 }) {
   const prof = profileFor(p.staffId);
   const tag = prof.tenure === "probation" ? "Probation" : prof.tenure === "training" ? "Training" : null;
@@ -3592,12 +4173,23 @@ function PersonRow({
       fontWeight: 700,
       marginTop: 2
     }
-  }, today ? done + "/4 blocks today" : "Nothing logged today"))), tag && /*#__PURE__*/React.createElement("span", {
+  }, today ? done + "/4 blocks today" : "Nothing logged today"), att === undefined ? null : /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: att ? (att.status === "absent" ? AMBER : att.late ? AMBER : MUTED) : RED,
+      fontWeight: 700,
+      marginTop: 2
+    }
+  }, att ? (att.status === "absent" ? "Not in · " + att.reason : "In at " + att.at + (att.late ? " · " + att.late + " min after start" : ""))
+         : "No sign-in yet"))), tag && /*#__PURE__*/React.createElement("span", {
     style: pillOutline(AMBER)
   }, tag), /*#__PURE__*/React.createElement("button", {
     onClick: onTrend,
     style: trendChip
-  }, "Trends"), /*#__PURE__*/React.createElement("button", {
+  }, "Trends"), onPerf ? /*#__PURE__*/React.createElement("button", {
+    onClick: onPerf,
+    style: trendChip
+  }, "Performance") : null, /*#__PURE__*/React.createElement("button", {
     onClick: onOpen,
     style: {
       background: "none",
