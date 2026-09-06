@@ -946,6 +946,36 @@ Which is the argument for the wall rather than against it: the conversation has
 to start from what the client already holds, and this is the screen that shows
 it.
 
+#### Birthdays are the top of the wall, by client and by agent
+
+The hero is how many clients have a birthday **today**, with the milestone ages
+beside it — turning 30, 40, 50, 65 are advice triggers, not greetings. The age
+comes from the birth year rather than `Current_Age__c`, which is ambiguous on
+the day itself.
+
+Next to it, **today by agent**: whose clients they are, how many of those
+already carry the life-without-critical-illness gap, and how many have bought
+nothing in five years. A birthday on its own is a greeting; a birthday beside a
+gap is a conversation, and that is the whole reason the three numbers sit on one
+row.
+
+#### Three readings of the same book
+
+| Panel | What it answers |
+|---|---|
+| **The gap, by age** | Where the 4,501 actually sit. The dim bar is everyone that age, the bright one is the gap, so 900 in a band of 3,000 does not read the same as 900 in a band of 1,100. |
+| **Since their last policy** | How cold the call is. |
+| **Aged since they bought** | The distance between the decision and the person who made it — `Current_Age__c` minus the `Issue_Age__c` on their *first* policy. |
+
+That last one is the least obvious and the most useful. A client who took cover
+at twenty eight and is fifty five today is carrying a twenty seven year old
+decision: different income, different dependants, different everything.
+`Issue_Age__c` is on **76%** of rows, which is what makes it possible.
+
+The age has to travel with the first policy rather than being the smallest issue
+age on the book — otherwise a rider written years later on a different life gets
+picked up as the start of the relationship.
+
 #### One property
 
 | Property | Default | What it does |

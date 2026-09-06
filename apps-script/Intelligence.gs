@@ -5444,7 +5444,7 @@ function iBuildBook_() {
   try {
     rows = sfQuery_(
       'SELECT Contact__c, AgentName__c, Unit__c, Date_Of_Birth__c, Current_Age__c, ' +
-      'ISSUE_DATE__c, Policy_Status_Description_R__c, Life_Coverage__c, ' +
+      'ISSUE_DATE__c, Issue_Age__c, Policy_Status_Description_R__c, Life_Coverage__c, ' +
       'Critical_Illness_Coverage__c, Health_Premium__c, ADDAP_Coverage__c, ' +
       'Pension_Premiums__c, Savings_Coverage__c, Total_Personal_Accident_Premium__c ' +
       'FROM ' + IBOOK.OBJECT + ' WHERE Contact__c != null');
@@ -5474,7 +5474,8 @@ function iBuildBook_() {
 
     var c = byClient[key];
     if (!c) c = byClient[key] = { agent: name, unit: unit, n: 0, age: null,
-                                  dobM: 0, dobD: 0, first: null, last: null,
+                                  dobY: 0, dobM: 0, dobD: 0, first: null, last: null,
+                                  firstAge: null,
                                   life: false, ci: false, health: false, add: false,
                                   pa: false, pension: false, savings: false };
     c.n++;
@@ -5482,11 +5483,19 @@ function iBuildBook_() {
     if (c.age === null && iNum_(x.Current_Age__c) > 0) c.age = Math.round(iNum_(x.Current_Age__c));
     if (!c.dobM) {
       var dob = iDate_(x.Date_Of_Birth__c);
-      if (dob && dob.getFullYear() > 1900) { c.dobM = dob.getMonth() + 1; c.dobD = dob.getDate(); }
+      if (dob && dob.getFullYear() > 1900) {
+        c.dobY = dob.getFullYear(); c.dobM = dob.getMonth() + 1; c.dobD = dob.getDate();
+      }
     }
     var iss = iBookDate_(x.ISSUE_DATE__c, today);
     if (iss) {
-      if (!c.first || iss < c.first) c.first = iss;
+      /* The age they were when they FIRST bought travels with the first policy,
+         so the two have to move together — taking the smallest issue age on the
+         book would pick up a rider written years later on a different life. */
+      if (!c.first || iss < c.first) {
+        c.first = iss;
+        c.firstAge = iNum_(x.Issue_Age__c) > 0 ? Math.round(iNum_(x.Issue_Age__c)) : null;
+      }
       if (!c.last  || iss > c.last)  c.last  = iss;
     }
     if (iNum_(x.Life_Coverage__c) > 0)                   c.life = true;
@@ -5512,12 +5521,23 @@ function iBuildBook_() {
   }
   var tenure = tally(TEN), ages = tally(AGE), lastBuy = tally(LAST);
 
+
+  /* Cover the client is missing, banded by their age — because the gap is not
+     spread evenly and the wall should say where it actually sits. A forty year
+     old with no critical illness is a different conversation from a
+     seventy year old with none, and only one of them is a sale. */
+  var AGED = [['Same age or close',6],['6-10 years older',11],
+              ['11-20 years older',21],['Over 20 years older',1e9]];
+  var gapAge = {}, agedBand = tally(AGED);
+  AGE.forEach(function (b) { gapAge[b[0]] = 0; });
+
   var cover = { Life:0, 'Critical illness':0, Health:0, 'Accident (ADD&P)':0,
                 'Personal accident':0, Pension:0, Savings:0 };
   var gapLifeNoCi = 0, gapLifeNoHealth = 0, gapOne = 0, gapQuiet = 0, gapNoCover = 0;
-  var mm = today.getMonth() + 1, dd = today.getDate();
-  var bdayToday = 0, bdayWeek = 0, bdayAges = [];
-  var agents = {}, noDob = 0, noIssue = 0, tenures = [];
+  var mm = today.getMonth() + 1, dd = today.getDate(), yy = today.getFullYear();
+  var bdayToday = 0, bdayWeek = 0, bdayAges = [], bdayAgents = {}, milestones = {};
+  var MILES = [21, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70];
+  var agents = {}, noDob = 0, noIssue = 0, tenures = [], noIssueAge = 0;
 
   keys.forEach(function (k) {
     var c = byClient[k];
@@ -5548,16 +5568,42 @@ function iBuildBook_() {
     if (c.pension) cover.Pension++;
     if (c.savings) cover.Savings++;
 
-    if (c.life && !c.ci)     { gapLifeNoCi++; a.gap++; }
+    if (c.life && !c.ci) {
+      gapLifeNoCi++; a.gap++;
+      if (c.age !== null) gapAge[iBookBand_(c.age, AGE)]++;
+    }
     if (c.life && !c.health) gapLifeNoHealth++;
     if (c.n === 1)           gapOne++;
     if (!c.life && !c.ci && !c.health && !c.add && !c.pa && !c.pension && !c.savings)
       gapNoCover++;
 
+    /* HOW MUCH THEY HAVE AGED SINCE THEY BOUGHT. A client who took cover at
+       twenty eight and is now fifty five is carrying a twenty seven year old
+       decision — different income, different dependants, different everything.
+       Issue_Age__c is on 76% of rows, which makes this one of the few genuinely
+       new things the portfolio can say. */
+    if (c.age !== null && c.firstAge !== null && c.age >= c.firstAge)
+      agedBand[iBookBand_(c.age - c.firstAge, AGED)]++;
+    else noIssueAge++;
+
     if (!c.dobM) { noDob++; return; }
     if (c.dobM === mm && c.dobD === dd) {
       bdayToday++; a.bday++;
       if (c.age !== null) bdayAges.push(c.age);
+      /* by agent, and whether that client is one of the ones carrying the gap —
+         which is the difference between a greeting and a reason to call */
+      var ba = bdayAgents[c.agent];
+      if (!ba) ba = bdayAgents[c.agent] = { k: c.agent, unit: c.unit, n: 0, gap: 0, quiet: 0 };
+      ba.n++;
+      if (c.life && !c.ci) ba.gap++;
+      if (c.last && (today - c.last) / DAY / YEAR >= quietYears) ba.quiet++;
+      /* the age they are turning, from the birth year — not from Current_Age__c,
+         which is ambiguous on the day itself */
+      if (c.dobY) {
+        var turning = yy - c.dobY;
+        if (MILES.indexOf(turning) > -1)
+          milestones[turning] = (milestones[turning] || 0) + 1;
+      }
     } else {
       /* "this week" walks forward day by day rather than comparing dates, so
          it crosses a month end and a year end without a special case. */
@@ -5586,7 +5632,17 @@ function iBuildBook_() {
     quietYears: quietYears,
     clients:  keys.length,
     policies: keys.reduce(function (s, k) { return s + byClient[k].n; }, 0),
-    birthdays: { today: bdayToday, week: bdayWeek, medianAge: med(bdayAges) },
+    birthdays: {
+      today: bdayToday, week: bdayWeek, medianAge: med(bdayAges),
+      byAgent: Object.keys(bdayAgents).map(function (k) { return bdayAgents[k]; })
+                 .sort(function (a, b) { return b.gap - a.gap || b.n - a.n; }),
+      milestones: MILES.filter(function (m) { return milestones[m]; })
+                       .map(function (m) { return { k: 'Turning ' + m, n: milestones[m] }; })
+    },
+    gapByAge: AGE.map(function (b) {
+      return { k: b[0], n: gapAge[b[0]], of: ages[b[0]] };
+    }),
+    aged: AGED.map(function (b) { return { k: b[0], n: agedBand[b[0]] }; }),
     tenure:  TEN.map(function (b) { return { k: b[0], n: tenure[b[0]] }; }),
     ages:    AGE.map(function (b) { return { k: b[0], n: ages[b[0]] }; }),
     lastBuy: LAST.map(function (b) { return { k: b[0], n: lastBuy[b[0]] }; }),
@@ -5602,7 +5658,8 @@ function iBuildBook_() {
     byAgent: byAgent,
     quality: {
       unknownStatus: unknown, deadDropped: dead, offBranch: offBranch,
-      notActive: notActive, noClientLink: noClient, noDob: noDob, noIssueDate: noIssue
+      notActive: notActive, noClientLink: noClient, noDob: noDob, noIssueDate: noIssue,
+      noIssueAge: noIssueAge
     }
   };
 }

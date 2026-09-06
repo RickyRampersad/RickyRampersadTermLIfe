@@ -68,8 +68,12 @@
   #chip span{width:19px;height:19px;border-radius:50%;background:rgba(255,255,255,.16);
     display:grid;place-items:center;font-size:12px;line-height:1}
 
-  main{display:grid;grid-template-columns:300px 1fr 1fr 1fr;
-    grid-template-rows:auto 1fr auto;gap:13px;padding:0 26px 20px;height:calc(100vh - 66px)}
+  /* Five columns, not four. The fourth panel on row two is today's birthdays
+     broken out by agent, and that is the one somebody acts on before lunch —
+     it does not belong folded into a footnote at the bottom of the screen. */
+  main{display:grid;grid-template-columns:290px 1fr 1fr 1fr 1fr;
+    grid-template-rows:auto minmax(330px,1fr) minmax(0,430px);
+    gap:13px;padding:0 26px 20px;height:calc(100vh - 66px)}
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
     padding:16px 18px;min-height:0;display:flex;flex-direction:column}
   .card h3{margin:0 0 2px;font:700 12px var(--font-b);letter-spacing:.16em;
@@ -87,7 +91,7 @@
   .hero .split .v{font-family:var(--font-d);font-weight:800;font-size:23px;letter-spacing:-.6px}
   .hero .split .k{font-size:10.5px;color:var(--faint);margin-top:2px;line-height:1.35}
 
-  .law{grid-column:2/5;flex-direction:row;align-items:center;gap:26px;
+  .law{grid-column:2/6;flex-direction:row;align-items:center;gap:26px;
     background:linear-gradient(100deg,rgba(239,194,75,.14),rgba(239,194,75,.03));
     border-color:rgba(239,194,75,.32)}
   /* Kept deliberately short. It sits in the row above the three bar panels and
@@ -128,6 +132,9 @@
      the value column needs more room than the other three walls give it —
      "9,592 72%" was clipping to "9,592 7:". */
   #rCover .row{grid-template-columns:1fr 104px}
+  /* "1,188" and its share on ONE line. Wrapped, the suffix took every row in
+     this panel from 33px to 50 and the card overflowed by exactly that. */
+  #rGapAge .row{grid-template-columns:1fr 96px}
   #rTen .row,#rAge .row,#rLast .row{grid-template-columns:1fr 86px}
   /* Seven kinds of cover against six tenure bands, in a box sized for six:
      measured at 261px of rows in 240px of panel. The two smallest rows are the
@@ -164,7 +171,7 @@
     text-transform:uppercase;color:var(--dim)}
   .two .sub{font-size:11px;color:var(--faint);margin:0 0 8px;line-height:1.4}
 
-  .hist{grid-column:3/5}
+  .hist{grid-column:3/6}
   .sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:12px}
   .sgrid .v{font-family:var(--font-d);font-weight:800;font-size:30px;letter-spacing:-1px;line-height:1}
   .sgrid .k{font-size:10.5px;color:var(--faint);margin-top:4px;line-height:1.35}
@@ -176,7 +183,7 @@
   .hint{position:fixed;right:26px;bottom:5px;font-size:10.5px;color:var(--faint);opacity:.7}
 
   @media (min-width:1700px){
-    main{grid-template-columns:350px 1fr 1fr 1fr;gap:16px;padding:0 34px 24px}
+    main{grid-template-columns:340px 1fr 1fr 1fr 1fr;gap:16px;padding:0 34px 24px}
     .hero .big{font-size:118px} .card{padding:20px 24px}
     .row .lbl{font-size:15px} .row .val{font-size:19px} .arow{font-size:15px}
     .law .n{font-size:72px} .law .txt{font-size:17px} .sgrid .v{font-size:38px}
@@ -186,6 +193,7 @@
     body{overflow:auto} main{grid-template-columns:1fr 1fr;height:auto}
     .hero{grid-row:auto} .law{grid-column:1/3;flex-wrap:wrap}
     .agents,.hist{grid-column:1/3} .alist{grid-auto-flow:row;grid-template-rows:none}
+    .three{grid-template-columns:1fr}
   }
   /* Four columns here, not three: this wall's agent row carries a birthday
      count, a gap count and a quiet count, and unlabelled numbers in a row are
@@ -199,7 +207,47 @@
   /* Two columns of nine, not three of six. At three the name column was 150px
      and every agent past "Premchand" truncated — a wall that abbreviates the
      names on it is not naming anybody. */
-  .alist{grid-template-rows:repeat(9,auto);gap:0 34px}
+  /* Eight rows a column, not nine. The bottom row's card lost 90px when the
+     three-up went in beside it, and the ninth name was being cut in half —
+     which is the one thing a wall that names people must never do. */
+  .alist{grid-template-rows:repeat(8,auto);gap:0 26px}
+
+  .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;flex:1;min-height:0}
+  .three > div{display:flex;flex-direction:column;min-height:0}
+  .three h4{margin:0 0 2px;font:700 11px var(--font-b);letter-spacing:.14em;
+    text-transform:uppercase;color:var(--dim)}
+  .three .sub{font-size:10.5px;color:var(--faint);margin:0 0 6px;line-height:1.3}
+  .hist .note{margin-top:8px;font-size:11px;line-height:1.45}
+
+  /* TODAY, BY AGENT. Three numbers per row and all three are a reason to pick
+     up the phone: whose client, how many of those already carry the gap, and
+     how many have bought nothing in years. A birthday on its own is a greeting;
+     a birthday next to a gap is a conversation. */
+  .bday .brow{display:grid;grid-template-columns:1fr 26px 30px 30px;align-items:baseline;
+    gap:7px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
+  .bday .brow .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bday .brow .nm em{font-style:normal;font-size:10px;color:var(--faint);display:block}
+  .bday .brow .v{font-family:var(--font-d);font-weight:700;text-align:right;
+    font-variant-numeric:tabular-nums}
+  .bday .brow .v.n{color:var(--teal);font-size:15px}
+  .bday .brow .v.g{color:var(--gold)}
+  .bday .brow .v.q{color:var(--faint)}
+  .bday .bhead{display:grid;grid-template-columns:1fr 26px 30px 30px;gap:7px;
+    font:700 9.5px var(--font-b);letter-spacing:.12em;text-transform:uppercase;
+    color:var(--faint);padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,.12)}
+  .bday .bhead div+div{text-align:right}
+  .hero .miles{margin-top:12px;padding-top:11px;border-top:1px solid var(--line);
+    display:flex;flex-wrap:wrap;gap:6px}
+  .hero .mile{font:700 11px var(--font-b);color:var(--gold);
+    border:1px solid rgba(239,194,75,.4);background:rgba(239,194,75,.10);
+    border-radius:999px;padding:3px 10px}
+  .hero .miles:empty{display:none}
+  .bday .none{font-size:12px;color:var(--faint);line-height:1.5;margin-top:4px}
+
+  /* a bar with a ghost behind it — the gap against the whole band it sits in */
+  .row .track i.ghost{background:rgba(255,255,255,.10)}
+  .row .track.stack{position:relative}
+  .row .track.stack i.fg{position:absolute;left:0;top:0}
 
   /* THE GAP PANEL IS THE POINT OF THE WALL, so its rows are bigger than the
      others and the count leads rather than trails. Every other panel on every
@@ -242,6 +290,7 @@
       <div><div class="v" id="heroWeek">&mdash;</div><div class="k">more inside seven days</div></div>
       <div><div class="v" id="heroAge">&mdash;</div><div class="k">the middle one’s age today</div></div>
     </div>
+    <div class="miles" id="bMiles"></div>
     <div class="who" id="heroWho"></div>
   </section>
 
@@ -253,6 +302,11 @@
     </div>
     <div class="acts" id="lawActs"></div>
   </section>
+
+  <section class="card bday"><h3>Today, by agent</h3>
+    <p class="cap">Whose clients &mdash; and which of them carry the gap.</p>
+    <div class="bhead"><div>Agent</div><div>Bday</div><div>Gap</div><div>Quiet</div></div>
+    <div class="rows" id="bList"></div></section>
 
   <section class="card"><h3>How long they have been with us</h3>
     <p class="cap">Years since their first policy. Click a band to hold the whole wall to it.</p>
@@ -271,8 +325,9 @@
     <div class="ahead"><div>Agent</div><div>Bday</div><div>Gap</div><div>Quiet</div></div>
     <div class="alist" id="aList"></div></section>
 
-  <section class="card hist"><h3>Age, and how long since they last bought</h3>
-    <p class="cap">The two things that decide which conversation this is.</p>
+  <section class="card hist"><h3>Where the gap actually sits</h3>
+    <p class="cap">Three readings of the same book: by age, by how cold the call is,
+      and by how old the decision they made is.</p>
     <div id="histBody"></div></section>
 </main>
 
@@ -341,6 +396,30 @@ function bars(host,list,dim,tone,pct){
   });
 }
 
+/* A bar drawn inside a ghost of the band it belongs to. A count on its own says
+   how many; a count against its own band says whether that is most of them. */
+function ghosts(host,list){
+  if(!host) return;
+  var max=0; list.forEach(function(x){ if((x.of||x.n)>max) max=x.of||x.n; });
+  host.innerHTML=list.map(function(x){
+    var sel=FILTER&&FILTER.dim==="gapage"&&FILTER.key===x.k;
+    var share=x.of?Math.round(x.n/x.of*100):0;
+    return '<div class="row'+(sel?' sel':'')+(x.n?'':' zero')+'"'
+      + (x.n?' data-dim="gapage" data-key="'+esc(x.k)+'"':'')+'>'
+      + '<div><div class="lbl">'+esc(x.k)+'</div>'
+      + '<div class="track stack"><i class="ghost" style="width:'
+      + (max?(x.of||x.n)/max*100:0).toFixed(1)+'%"></i>'
+      + '<i class="fg teal" style="width:'+(max?x.n/max*100:0).toFixed(1)+'%"></i></div></div>'
+      + '<div class="val">'+n(x.n)+(x.of?'<small>'+share+'%</small>':'')+'</div></div>';
+  }).join("");
+  Array.prototype.forEach.call(host.querySelectorAll(".row[data-dim]"),function(el){
+    el.onclick=function(){
+      if(FILTER&&FILTER.dim===el.dataset.dim&&FILTER.key===el.dataset.key) return clearFilter();
+      FILTER={dim:el.dataset.dim,key:el.dataset.key}; paint();
+    };
+  });
+}
+
 /* s131 is the section that governs this wall, and it is the sharpest one in the
    Act for a branch that is about to go cross-selling: it is not about failing
    to sell, it is about what happens when a sale REPLACES cover the client
@@ -376,7 +455,7 @@ function paint(){
       + 'conversation starts from what they hold.';
     $("#lawActs").innerHTML=ACTS.map(function(a){
       return '<div class="act"><b>'+a[0]+'</b> &mdash; '+a[1]+'</div>'; }).join("");
-    ["#rTen","#rCover","#rGap","#aList"].forEach(function(s){ $(s).innerHTML=""; });
+    ["#rTen","#rCover","#rGap","#aList","#bList","#bMiles"].forEach(function(s){ $(s).innerHTML=""; });
     $("#agentCap").textContent="";
     $("#histBody").innerHTML='<p class="note">Set the Salesforce credentials in '
       + '<b>SalesforceSync.gs</b>, deploy the script, and paste the <b>/exec</b> URL into '
@@ -409,11 +488,28 @@ function paint(){
   $("#lawActs").innerHTML=ACTS.map(function(a){
     return '<div class="act"><b>'+a[0]+'</b> &mdash; '+a[1]+'</div>'; }).join("");
 
+  var BA=(D.birthdays&&D.birthdays.byAgent)||[];
+  /* Six, not nine: the panel is a morning list, and an agent below the sixth
+     line on a screen across the room is not being read anyway. The full column
+     is in the by-agent table underneath. */
+  $("#bList").innerHTML = BA.length ? BA.slice(0,6).map(function(a){
+      return '<div class="brow">'
+        + '<div class="nm">'+esc(a.k)+'<em>'+esc(a.unit||"")+'</em></div>'
+        + '<div class="v n">'+n(a.n)+'</div>'
+        + '<div class="v g">'+n(a.gap)+'</div>'
+        + '<div class="v q">'+n(a.quiet)+'</div></div>'; }).join("")
+    : '<p class="none">Nobody on the branch book has a birthday today. '
+      + n((D.birthdays||{}).week)+' do inside the next seven days.</p>';
+  var MI=(D.birthdays&&D.birthdays.milestones)||[];
+  $("#bMiles").innerHTML = MI.length
+    ? MI.map(function(m){ return '<span class="mile">'+esc(m.k)+' &middot; '+n(m.n)+'</span>'; }).join("")
+    : '';
+
   bars($("#rTen"),   D.tenure||[], "tenure", "accent");
   bars($("#rCover"), D.cover||[],  "cover",  "teal", true);
   bars($("#rGap"),   D.gaps||[],   "gap",    "teal");
 
-  var ag=(D.byAgent||[]).slice(0,18), maxGap=0;
+  var ag=(D.byAgent||[]).slice(0,16), maxGap=0;
   ag.forEach(function(a){ if(a.gap>maxGap) maxGap=a.gap; });
   $("#agentCap").innerHTML=n((D.byAgent||[]).length)+' agents carry this book. '
     + 'Sorted by the gap, not by size — <b>bday</b> is today, <b>gap</b> is life without '
@@ -428,20 +524,26 @@ function paint(){
 
   var Q=D.quality||{};
   $("#histBody").innerHTML=
-      '<div class="two">'
-    + '<div><h4>Age today</h4><p class="sub">Who the book actually is.</p>'
-    +   '<div class="rows" id="rAge"></div></div>'
+      '<div class="three">'
+    + '<div><h4>The gap, by age</h4><p class="sub">Life and no critical illness. The dim '
+    +   'bar is everyone that age, the bright one is the gap.</p>'
+    +   '<div class="rows" id="rGapAge"></div></div>'
     + '<div><h4>Since their last policy</h4><p class="sub">How cold the call is.</p>'
     +   '<div class="rows" id="rLast"></div></div>'
+    + '<div><h4>Aged since they bought</h4>'
+    +   '<p class="sub">The distance between the decision and the person who made it.</p>'
+    +   '<div class="rows" id="rAged"></div></div>'
     + '</div>'
-    + '<p class="note"><b>What the status field cannot tell us.</b> '
-    + n(Q.unknownStatus)+' policies on this wall carry a status this branch cannot read '
-    + '— a raw AS400 code or a blank — so they are counted as on the book rather '
-    + 'than assumed dead. '+n(Q.deadDropped)+' that plainly say surrendered, lapsed, matured '
-    + 'or not taken were dropped. Until the in-force export is joined on policy number, '
-    + '<b>treat the counts as the book, not as cover in force</b>.</p>';
-  bars($("#rAge"),  D.ages||[],    "age",  "accent");
-  bars($("#rLast"), D.lastBuy||[], "last", "gold");
+    + '<p class="note"><b>'+n(Q.unknownStatus)+' policies carry a status this branch '
+    + 'cannot read</b> — a raw AS400 code or a blank — so they are counted as on the book '
+    + 'rather than assumed dead; '+n(Q.deadDropped)+' that plainly say surrendered, lapsed '
+    + 'or matured were dropped. Until the in-force export is joined on policy number, '
+    + '<b>these are the book, not cover in force</b>.</p>';
+  /* The gap bar carries a ghost of its whole age band behind it, because 900 in
+     a band of 3,000 and 900 in a band of 1,100 are not the same finding. */
+  ghosts($("#rGapAge"), D.gapByAge||[]);
+  bars($("#rLast"), D.lastBuy||[], "last",  "gold");
+  bars($("#rAged"), D.aged||[],    "aged",  "accent");
 }
 
 function tick(){ $("#clock").textContent=new Date().toLocaleTimeString("en-GB",
