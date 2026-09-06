@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RD's Academy — S.E.A. Past Papers &amp; Practice</title>
+<meta name="description" content="Every official Trinidad and Tobago S.E.A. past paper in one place, plus timed practice built to the Ministry's own assessment framework.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%23134E5A'/><text x='50' y='68' font-size='52' font-family='Georgia,serif' font-weight='700' fill='%23F2A03D' text-anchor='middle'>RD</text></svg>">
+<style>
+:root{
+  --ink:#12242C; --paper:#F4F7F7; --surface:#FFFFFF; --surface2:#E9F0F1;
+  --brand:#134E5A; --brand2:#1D7D8F; --accent:#E08A20; --accent2:#F2A03D;
+  --slate:#5E7681; --line:#D2DFE2;
+  --go:#1D7A52; --goBg:#E4F3EC; --stop:#B03A2B; --stopBg:#FBE9E6; --warn:#9A6B14;
+  --sans:"Avenir Next","Segoe UI",Inter,system-ui,-apple-system,sans-serif;
+  --display:Optima,"Palatino Linotype",Georgia,serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ink:#DEE9EC; --paper:#08181D; --surface:#0E262E; --surface2:#143540;
+  --brand:#68B8C9; --brand2:#4FA5B8; --accent:#F2A03D; --accent2:#E08A20;
+  --slate:#90A8B2; --line:#1E4351;
+  --go:#57B78A; --goBg:#123328; --stop:#D97364; --stopBg:#36201C; --warn:#D3A155;
+}}
+:root[data-theme="dark"]{
+  --ink:#DEE9EC; --paper:#08181D; --surface:#0E262E; --surface2:#143540;
+  --brand:#68B8C9; --brand2:#4FA5B8; --accent:#F2A03D; --accent2:#E08A20;
+  --slate:#90A8B2; --line:#1E4351;
+  --go:#57B78A; --goBg:#123328; --stop:#D97364; --stopBg:#36201C; --warn:#D3A155;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.6}
+h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;line-height:1.22}
+p{margin:0}
+a{color:var(--brand2)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.label{font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--slate)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--slate)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---- header ---- */
+header{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.hin{max-width:1120px;margin:0 auto;padding:.7rem 1.25rem;display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:.6rem;margin-right:auto}
+.brand .tile{width:38px;height:38px;border-radius:9px;background:var(--brand);color:var(--accent2);
+  display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.02em;flex:none}
+.brand b{display:block;font-family:var(--display);font-size:16px;font-weight:600;line-height:1.1}
+.brand small{display:block;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--slate);font-weight:700}
+nav{display:flex;gap:.3rem;flex-wrap:wrap}
+nav button{background:none;border:1px solid transparent;border-radius:999px;padding:.35rem .8rem;cursor:pointer;
+  font-size:13.5px;color:var(--slate);font-weight:600}
+nav button:hover{background:var(--surface2);color:var(--ink)}
+nav button[aria-current="page"]{background:var(--brand);border-color:var(--brand);color:#fff}
+:root[data-theme="dark"] nav button[aria-current="page"]{color:#08181D}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) nav button[aria-current="page"]{color:#08181D}}
+.themebtn{background:none;border:1px solid var(--line);border-radius:999px;width:32px;height:32px;cursor:pointer;
+  display:grid;place-items:center;font-size:14px;flex:none}
+
+main{max-width:1120px;margin:0 auto;padding:1.75rem 1.25rem 5rem}
+.view[hidden]{display:none}
+.stack{display:flex;flex-direction:column;gap:1.25rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1.35rem}
+.card h2{font-size:1.25rem;color:var(--brand)}
+.pagehead{margin-bottom:1.25rem}
+.pagehead h1{font-size:1.85rem;color:var(--brand);margin:.15rem 0 .3rem}
+.pagehead p{color:var(--slate);max-width:62ch}
+
+.btn{background:var(--brand);color:#fff;border:1px solid var(--brand);border-radius:7px;
+  padding:.55rem 1.1rem;cursor:pointer;font-size:13.5px;font-weight:700}
+:root[data-theme="dark"] .btn{color:#08181D}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn{color:#08181D}}
+.btn:hover{background:var(--brand2);border-color:var(--brand2)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:none;color:var(--brand2);border-color:var(--line)}
+.btn.ghost:hover{background:var(--surface2);border-color:var(--brand2)}
+.btn.warm{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.warm:hover{background:var(--accent2);border-color:var(--accent2)}
+.btnrow{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+
+.chips{display:flex;gap:.4rem;flex-wrap:wrap}
+.chip{background:var(--surface2);border:1px solid var(--line);border-radius:999px;padding:.3rem .8rem;
+  cursor:pointer;font-size:12.5px;font-weight:600;color:var(--slate)}
+.chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+:root[data-theme="dark"] .chip[aria-pressed="true"]{color:#08181D}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .chip[aria-pressed="true"]{color:#08181D}}
+
+.grid{display:grid;gap:1rem}
+.g2{grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem}
+.stat .n{font-family:var(--display);font-size:1.9rem;font-weight:600;color:var(--brand);line-height:1.05}
+.stat .n.warm{color:var(--accent)}
+
+.bar{height:7px;border-radius:99px;background:var(--surface2);overflow:hidden;margin-top:.5rem}
+.bar i{display:block;height:100%;background:var(--brand2);border-radius:99px;transition:width .35s}
+.bar i.warm{background:var(--accent)}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:.55rem .6rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--slate);font-weight:700}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+.tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:.15rem .5rem;border-radius:4px;background:var(--surface2);color:var(--slate)}
+.tag.n{background:#DCEEF2;color:#0F5464}
+.tag.g{background:#EAE6F6;color:#4A3E7A}
+.tag.m{background:#FBEEDC;color:#8A5C12}
+.tag.s{background:#E2F1E7;color:#1C6444}
+:root[data-theme="dark"] .tag.n{background:#123945;color:#8FD3E2}
+:root[data-theme="dark"] .tag.g{background:#28224A;color:#B7ACE4}
+:root[data-theme="dark"] .tag.m{background:#3B2C12;color:#EDBE76}
+:root[data-theme="dark"] .tag.s{background:#133324;color:#87CFA8}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tag.n{background:#123945;color:#8FD3E2}
+:root:not([data-theme="light"]) .tag.g{background:#28224A;color:#B7ACE4}
+:root:not([data-theme="light"]) .tag.m{background:#3B2C12;color:#EDBE76}
+:root:not([data-theme="light"]) .tag.s{background:#133324;color:#87CFA8}}
+
+/* ---- question ---- */
+.qcard{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.qtop{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;padding:.75rem 1.15rem;
+  background:var(--surface2);border-bottom:1px solid var(--line);font-size:12.5px;color:var(--slate)}
+.qtop .no{font-family:var(--display);font-size:1.05rem;font-weight:700;color:var(--brand)}
+.qbody{padding:1.25rem 1.15rem}
+.qtext{font-size:17px;line-height:1.55}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;
+  font-size:.72em;line-height:1.12;margin:0 .12em;position:relative;top:-.05em}
+.frac span:first-child{border-bottom:1.4px solid currentColor;padding:0 .25em}
+figure{margin:1rem 0 0;padding:0;max-width:300px}
+figure.wide{max-width:420px}
+figure svg{max-width:100%;height:auto;display:block}
+.answerrow{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-top:1.15rem}
+.answerrow label{font-weight:700;font-size:13.5px}
+input[type=text].ans{background:var(--paper);border:1.5px solid var(--line);border-radius:7px;
+  padding:.55rem .8rem;width:min(240px,100%);font-family:var(--mono);font-size:16px}
+input[type=text].ans:focus{border-color:var(--brand2)}
+.verdict{margin-top:1.1rem;border-radius:8px;padding:.9rem 1.05rem;font-size:14.5px;border:1px solid transparent}
+.verdict.ok{background:var(--goBg);border-color:var(--go);color:var(--go)}
+.verdict.no{background:var(--stopBg);border-color:var(--stop);color:var(--stop)}
+.verdict > b{display:block;font-size:13px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.3rem}
+.verdict .exp{color:var(--ink);margin-top:.45rem;line-height:1.6}
+
+/* ---- exam ---- */
+.exambar{position:sticky;top:57px;z-index:20;background:var(--brand);color:#fff;border-radius:10px;
+  padding:.7rem 1.1rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin-bottom:1.1rem}
+:root[data-theme="dark"] .exambar{color:#08181D}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .exambar{color:#08181D}}
+.exambar .clock{font-family:var(--mono);font-size:1.4rem;font-weight:700;font-variant-numeric:tabular-nums}
+.exambar .clock.low{color:#FFD9D2}
+.exambar button{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);color:inherit;
+  border-radius:6px;padding:.35rem .85rem;cursor:pointer;font-size:12.5px;font-weight:700;margin-left:auto}
+.secbanner{background:var(--surface2);border:1px solid var(--line);border-left:4px solid var(--accent);
+  border-radius:8px;padding:.7rem 1rem;margin:1.25rem 0 .85rem}
+.secbanner b{color:var(--brand)}
+.examq{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:1.05rem 1.15rem;margin-bottom:.8rem}
+.examq .qtext{font-size:16px}
+.palette{display:flex;gap:.28rem;flex-wrap:wrap;margin-top:.5rem}
+.palette a{width:26px;height:26px;border-radius:5px;display:grid;place-items:center;font-size:11.5px;
+  font-weight:700;background:var(--surface2);color:var(--slate);text-decoration:none;border:1px solid var(--line)}
+.palette a.done{background:var(--brand2);color:#fff;border-color:var(--brand2)}
+
+/* ---- writing ---- */
+.prompt{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--brand2);
+  border-radius:8px;padding:.9rem 1.1rem;margin-bottom:.7rem;cursor:pointer}
+.prompt[aria-pressed="true"]{border-left-color:var(--accent);background:var(--surface2)}
+.prompt .n{font-family:var(--display);font-weight:700;color:var(--brand);margin-right:.4rem}
+textarea.essay{width:100%;min-height:340px;background:var(--paper);border:1.5px solid var(--line);
+  border-radius:9px;padding:1rem 1.1rem;line-height:1.85;font-size:16px;resize:vertical;font-family:var(--sans)}
+textarea.essay:focus{border-color:var(--brand2)}
+.crit{display:flex;gap:.6rem;align-items:flex-start;padding:.55rem 0;border-bottom:1px solid var(--line)}
+.crit:last-child{border-bottom:0}
+.crit input{margin-top:.35rem;width:17px;height:17px;accent-color:var(--brand2);flex:none}
+
+/* ---- papers ---- */
+.paper{display:flex;gap:.9rem;align-items:center;padding:.7rem .1rem;border-bottom:1px solid var(--line)}
+.paper:last-child{border-bottom:0}
+.paper .yr{font-family:var(--display);font-size:1.2rem;font-weight:700;color:var(--brand);width:3.2rem;flex:none}
+.paper .nm{flex:1;min-width:150px}
+.paper .nm b{display:block;font-size:14.5px}
+.paper .nm small{color:var(--slate);font-size:12px}
+.paper a.dl{white-space:nowrap;text-decoration:none;font-size:12.5px;font-weight:700;
+  border:1px solid var(--line);border-radius:6px;padding:.4rem .75rem;color:var(--brand2)}
+.paper a.dl:hover{background:var(--surface2);border-color:var(--brand2)}
+
+/* ---- syllabus ---- */
+.strand{border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--surface)}
+.strand > summary{padding:.85rem 1.1rem;cursor:pointer;font-weight:700;display:flex;gap:.7rem;
+  align-items:center;background:var(--surface2);list-style:none}
+.strand > summary::-webkit-details-marker{display:none}
+.strand > summary::before{content:"▸";color:var(--accent);font-size:13px;transition:transform .15s}
+.strand[open] > summary::before{transform:rotate(90deg)}
+.strand ul{margin:0;padding:.65rem 1.1rem 1rem 2.4rem}
+.strand li{margin:.3rem 0;font-size:14.5px}
+
+.note{border-left:3px solid var(--accent);background:var(--surface2);border-radius:0 8px 8px 0;
+  padding:.8rem 1rem;font-size:13.5px;color:var(--slate)}
+footer{border-top:1px solid var(--line);margin-top:3rem;padding:1.5rem 1.25rem 3rem;color:var(--slate);font-size:13px}
+footer .fin{max-width:1120px;margin:0 auto;display:flex;gap:1rem;flex-wrap:wrap;justify-content:space-between}
+@media (max-width:600px){
+  main{padding:1.25rem .9rem 4rem}
+  .hin{padding:.6rem .9rem;gap:.7rem}
+  .pagehead h1{font-size:1.5rem}
+  .exambar{top:0}
+}
+@media print{header,nav,.btnrow,.exambar,footer{display:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="hin">
+    <div class="brand">
+      <div class="tile">RD</div>
+      <div><b>RD&rsquo;s Academy</b><small>S.E.A. Practice</small></div>
+    </div>
+    <nav id="nav" aria-label="Sections">
+      <button data-view="home" aria-current="page">Home</button>
+      <button data-view="practice">Practice</button>
+      <button data-view="exam">Mock Exam</button>
+      <button data-view="writing">Writing</button>
+      <button data-view="papers">Past Papers</button>
+      <button data-view="syllabus">Syllabus</button>
+    </nav>
+    <button class="themebtn" id="themeBtn" title="Switch light / dark" aria-label="Switch light or dark theme">◐</button>
+  </div>
+</header>
+
+<main>
+
+<!-- ================= HOME ================= -->
+<section class="view" id="v-home">
+  <div class="pagehead">
+    <p class="label">Secondary Entrance Assessment &middot; Trinidad &amp; Tobago</p>
+    <h1>Knowledge comes, but wisdom lingers.</h1>
+    <p>Every official past paper the Ministry publishes, in one list. Then practice built to
+       the Ministry&rsquo;s own assessment framework &mdash; the same four strands, the same three
+       sections, the same seventy-five marks.</p>
+  </div>
+
+  <div class="grid g4" style="margin-bottom:1.25rem">
+    <div class="stat"><p class="label">Questions in the bank</p><div class="n" id="hStatQ">0</div></div>
+    <div class="stat"><p class="label">You have answered</p><div class="n" id="hStatA">0</div>
+      <div class="bar"><i id="hStatBar" style="width:0%"></i></div></div>
+    <div class="stat"><p class="label">Right first time</p><div class="n warm" id="hStatP">&mdash;</div></div>
+    <div class="stat"><p class="label">Official papers listed</p><div class="n" id="hStatP2">0</div></div>
+  </div>
+
+  <div class="grid g2">
+    <div class="card">
+      <p class="label">Start here</p>
+      <h2 style="margin:.2rem 0 .7rem">Three ways to work</h2>
+      <p style="margin-bottom:1rem;color:var(--slate)">Pick the one that matches how much time you have.</p>
+      <div class="btnrow">
+        <button class="btn" data-go="practice">Practice by topic</button>
+        <button class="btn warm" data-go="exam">Sit a timed paper</button>
+        <button class="btn ghost" data-go="writing">Write an essay</button>
+      </div>
+      <p style="margin-top:1rem;font-size:13.5px;color:var(--slate)">
+        Ten minutes? Practice one strand. An hour and a quarter? Sit the full Mathematics paper
+        against the clock. Fifty minutes? Write.</p>
+    </div>
+
+    <div class="card">
+      <p class="label">How you are doing</p>
+      <h2 style="margin:.2rem 0 .8rem">By strand</h2>
+      <div id="hStrands"></div>
+      <div class="btnrow" style="margin-top:1rem">
+        <button class="btn ghost" id="resetBtn">Clear my progress</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:1.25rem">
+    <p class="label">The examination itself</p>
+    <h2 style="margin:.2rem 0 .9rem">What the day looks like</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Paper</th><th>Working time</th><th>Items</th><th>Marks</th><th>Weighting</th></tr></thead>
+        <tbody>
+          <tr><td><b>English Language Arts Writing</b><br><small class="muted">Three prompts, all narrative or all expository &mdash; answer one</small></td>
+              <td class="mono">50 min</td><td class="mono">1</td><td class="mono">&mdash;</td><td class="mono">40&thinsp;%</td></tr>
+          <tr><td><b>Mathematics</b><br><small class="muted">Number, Geometry, Measurement, Statistics &mdash; three sections</small></td>
+              <td class="mono">75 min</td><td class="mono">40</td><td class="mono">75</td><td class="mono">100&thinsp;%</td></tr>
+          <tr><td><b>English Language Arts</b><br><small class="muted">Spelling, punctuation, capitalisation, grammar, reading comprehension</small></td>
+              <td class="mono">75 min</td><td class="mono">36</td><td class="mono">64</td><td class="mono">60&thinsp;%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note" style="margin-top:1rem">
+      Working time is 3 hours 20 minutes; the whole administration runs about 4&nbsp;hours 30&nbsp;minutes
+      including a 30-minute break. Scores are converted to standard scores, weighted 100&thinsp;:&thinsp;60&thinsp;:&thinsp;40,
+      and combined into the composite score used for placement.
+      <a href="https://storage.moe.gov.tt/wpdevelopment/2023/10/ASSESSMENT-FRAMEWORK-FOR-SEA-2025-2028.pdf" target="_blank" rel="noopener">Assessment Framework for SEA 2025&ndash;2028</a>.
+    </p>
+  </div>
+</section>
+
+<!-- ================= PRACTICE ================= -->
+<section class="view" id="v-practice" hidden>
+  <div class="pagehead">
+    <p class="label">Practice</p>
+    <h1>One question at a time</h1>
+    <p>Work it out on paper first, the way you will on the day. Type the answer, then check it.
+       Every question tells you which strand and which thinking process it is testing.</p>
+  </div>
+
+  <div class="card" style="margin-bottom:1.1rem">
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">
+      <div>
+        <p class="label" style="margin-bottom:.4rem">Strand</p>
+        <div class="chips" id="pStrand"></div>
+      </div>
+      <div style="margin-left:auto">
+        <p class="label" style="margin-bottom:.4rem">Topic</p>
+        <select id="pTopic" style="background:var(--paper);border:1.5px solid var(--line);border-radius:7px;padding:.5rem .7rem;min-width:190px"></select>
+      </div>
+      <button class="btn ghost" id="pShuffle">Shuffle</button>
+    </div>
+    <p style="margin-top:.9rem;font-size:13px;color:var(--slate)" id="pCount"></p>
+  </div>
+
+  <div id="pHost"></div>
+
+  <div class="btnrow" style="margin-top:1rem">
+    <button class="btn ghost" id="pPrev">&larr; Previous</button>
+    <button class="btn" id="pNext">Next &rarr;</button>
+    <span class="mono" style="margin-left:auto;color:var(--slate);font-size:13.5px" id="pSession"></span>
+  </div>
+</section>
+
+<!-- ================= EXAM ================= -->
+<section class="view" id="v-exam" hidden>
+  <div id="examIntro">
+    <div class="pagehead">
+      <p class="label">Mock Exam</p>
+      <h1>The Mathematics paper, against the clock</h1>
+      <p>Forty items, seventy-five marks, seventy-five minutes &mdash; built to the Ministry&rsquo;s blueprint.
+         Section&nbsp;I is twenty one-mark items. Section&nbsp;II is sixteen items worth two or three marks.
+         Section&nbsp;III is four items worth four marks each.</p>
+    </div>
+    <div class="card">
+      <h2 style="margin-bottom:.8rem">Before you start</h2>
+      <div class="scroll" style="margin-bottom:1.1rem">
+        <table>
+          <thead><tr><th>Strand</th><th>Section I</th><th>Section II</th><th>Section III</th><th>Items</th><th>Marks</th></tr></thead>
+          <tbody>
+            <tr><td>Number</td><td class="mono">10</td><td class="mono">8</td><td class="mono">1</td><td class="mono">19</td><td class="mono">34</td></tr>
+            <tr><td>Geometry</td><td class="mono">3</td><td class="mono">2</td><td class="mono">1</td><td class="mono">6</td><td class="mono">11</td></tr>
+            <tr><td>Measurement</td><td class="mono">4</td><td class="mono">4</td><td class="mono">1</td><td class="mono">9</td><td class="mono">18</td></tr>
+            <tr><td>Statistics</td><td class="mono">3</td><td class="mono">2</td><td class="mono">1</td><td class="mono">6</td><td class="mono">12</td></tr>
+            <tr><td><b>Total</b></td><td class="mono"><b>20</b></td><td class="mono"><b>16</b></td><td class="mono"><b>4</b></td><td class="mono"><b>40</b></td><td class="mono"><b>75</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="color:var(--slate);margin-bottom:1.1rem">Have paper and a pencil beside you. The clock does not stop.</p>
+      <div class="btnrow">
+        <button class="btn warm" id="examStart">Start the paper</button>
+        <label style="display:flex;align-items:center;gap:.45rem;font-size:13.5px;color:var(--slate)">
+          <input type="checkbox" id="examUntimed" style="width:16px;height:16px;accent-color:var(--brand2)"> Untimed
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div id="examLive" hidden>
+    <div class="exambar">
+      <div><p class="label" style="color:inherit;opacity:.8">Time remaining</p>
+        <div class="clock" id="examClock">75:00</div></div>
+      <div><p class="label" style="color:inherit;opacity:.8">Answered</p>
+        <div class="clock" id="examProg">0 / 40</div></div>
+      <button id="examSubmit">Hand in</button>
+    </div>
+    <div class="palette" id="examPalette"></div>
+    <div id="examHost"></div>
+    <div class="btnrow" style="margin-top:1.25rem">
+      <button class="btn warm" id="examSubmit2">Hand in the paper</button>
+    </div>
+  </div>
+
+  <div id="examResult" hidden></div>
+</section>
+
+<!-- ================= WRITING ================= -->
+<section class="view" id="v-writing" hidden>
+  <div class="pagehead">
+    <p class="label">English Language Arts Writing</p>
+    <h1>Fifty minutes, one essay</h1>
+    <p>The paper gives three prompts &mdash; either three narrative or three expository, never a mix.
+       You answer one. Two people mark it, on content, language use, grammar and mechanics, and organisation.</p>
+  </div>
+
+  <div class="card" style="margin-bottom:1.1rem">
+    <div style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:center">
+      <div class="chips" id="wType"></div>
+      <button class="btn ghost" id="wNewSet" style="margin-left:auto">Another set</button>
+    </div>
+  </div>
+
+  <div class="grid g2">
+    <div>
+      <div class="card" style="margin-bottom:1rem">
+        <p class="label" id="wSetLabel">Narrative &middot; choose one</p>
+        <div id="wPrompts" style="margin-top:.7rem"></div>
+      </div>
+      <div class="card">
+        <p class="label">What the markers look for</p>
+        <div style="margin-top:.6rem" id="wCrit"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin-bottom:.8rem">
+          <div><p class="label">Time left</p><div class="clock mono" id="wClock" style="font-size:1.35rem;font-weight:700;color:var(--brand)">50:00</div></div>
+          <div><p class="label">Words</p><div class="clock mono" id="wWords" style="font-size:1.35rem;font-weight:700;color:var(--accent)">0</div></div>
+          <div class="btnrow" style="margin-left:auto">
+            <button class="btn" id="wStart">Start</button>
+            <button class="btn ghost" id="wReset">Clear</button>
+          </div>
+        </div>
+        <textarea class="essay" id="wEssay" placeholder="Plan for five minutes. Write for forty. Read it back for five."></textarea>
+        <p style="margin-top:.6rem;font-size:12.5px;color:var(--slate)">Saved in this browser as you type. It never leaves your device.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PAPERS ================= -->
+<section class="view" id="v-papers" hidden>
+  <div class="pagehead">
+    <p class="label">Past Papers</p>
+    <h1>Straight from the Ministry</h1>
+    <p>Every link below points at the Ministry of Education&rsquo;s own copy of the paper.
+       Nothing is re-hosted here, so you always get the official document.</p>
+  </div>
+
+  <div class="card" style="margin-bottom:1.1rem">
+    <div class="chips" id="paperFilter"></div>
+  </div>
+
+  <div class="card" id="paperList"></div>
+
+  <div class="card" style="margin-top:1.1rem">
+    <p class="label">Older papers</p>
+    <h2 style="margin:.2rem 0 .7rem">2001 to 2020</h2>
+    <p style="color:var(--slate);margin-bottom:.8rem">
+      The Ministry&rsquo;s public download page carries 2021 onwards. Earlier papers &mdash; the ones in the
+      2001&ndash;2017 binder &mdash; sit behind a login on the Ministry&rsquo;s School Learning Management System,
+      alongside its own SEA Mathematics practice sets for 2010&ndash;2019.</p>
+    <div class="paper">
+      <div class="yr" style="font-size:.95rem">SLMS</div>
+      <div class="nm"><b>SEA Mathematics practice papers 2010&ndash;2019</b>
+        <small>Ministry of Education SLMS &mdash; free account required</small></div>
+      <a class="dl" href="https://learn.moe.gov.tt/course/section.php?id=338382" target="_blank" rel="noopener">Open &nearr;</a>
+    </div>
+    <div class="paper">
+      <div class="yr" style="font-size:.95rem">MOE</div>
+      <div class="nm"><b>Primary school resources index</b>
+        <small>Where the Ministry posts new papers first</small></div>
+      <a class="dl" href="https://www.moe.gov.tt/primary-school-resources/" target="_blank" rel="noopener">Open &nearr;</a>
+    </div>
+    <p class="note" style="margin-top:1rem">
+      Twelve items from the 2001 Mathematics paper are typed into the Practice and Mock Exam sections
+      of this app, marked <b>SEA 2001</b>. Papers published by commercial preparation companies are not
+      reproduced here &mdash; those are their copyright, and belong in the printed booklet you bought.</p>
+  </div>
+</section>
+
+<!-- ================= SYLLABUS ================= -->
+<section class="view" id="v-syllabus" hidden>
+  <div class="pagehead">
+    <p class="label">Syllabus</p>
+    <h1>Everything that can be asked</h1>
+    <p>Taken from the Ministry&rsquo;s Assessment Framework for SEA 2025&ndash;2028. Tick a topic when you
+       are confident with it; the ticks are saved in this browser.</p>
+  </div>
+  <div class="grid g2" style="align-items:start">
+    <div class="stack" id="sylMath"></div>
+    <div class="stack" id="sylEla"></div>
+  </div>
+</section>
+
+</main>
+
+<footer><div class="fin">
+  <div><b>RD&rsquo;s Academy</b> &middot; S.E.A. practice &middot; <i>Knowledge comes but wisdom lingers.</i></div>
+  <div>Past papers &copy; Ministry of Education, Trinidad &amp; Tobago. Linked, not re-hosted.</div>
+</div></footer>
+<script>
+"use strict";
+
+/* ============================================================
+   Fractions and figures
+   ============================================================ */
+const F = (n,d) => `<span class="frac"><span>${n}</span><span>${d}</span></span>`;
+
+const SVG = {
+  rect43: `<svg viewBox="0 0 220 150" role="img" aria-label="A rectangle four metres long and three metres high">
+    <g fill="none" stroke="currentColor" stroke-width="1.6">
+      <rect x="40" y="45" width="120" height="72" fill="rgba(127,127,127,.14)"/>
+      <path d="M40 30 h120 M40 25 v10 M160 25 v10"/>
+      <path d="M178 45 v72 M173 45 h10 M173 117 h10"/>
+    </g>
+    <text x="100" y="22" text-anchor="middle" font-size="13" fill="currentColor">4 m</text>
+    <text x="196" y="86" text-anchor="middle" font-size="13" fill="currentColor">3 m</text>
+  </svg>`,
+
+  clock445: `<svg viewBox="0 0 130 130" role="img" aria-label="An analogue clock face">
+    <circle cx="60" cy="60" r="52" fill="none" stroke="currentColor" stroke-width="1.6"/>
+    <g font-size="10.5" fill="currentColor" text-anchor="middle" dominant-baseline="central">
+      <text x="60" y="21">12</text><text x="79.5" y="26.2">1</text><text x="93.8" y="40.5">2</text>
+      <text x="99" y="60">3</text><text x="93.8" y="79.5">4</text><text x="79.5" y="93.8">5</text>
+      <text x="60" y="99">6</text><text x="40.5" y="93.8">7</text><text x="26.2" y="79.5">8</text>
+      <text x="21" y="60">9</text><text x="26.2" y="40.5">10</text><text x="40.5" y="26.2">11</text>
+    </g>
+    <g stroke="currentColor" stroke-linecap="round" fill="none">
+      <line x1="60" y1="60" x2="22" y2="60" stroke-width="2.2"/>
+      <line x1="60" y1="60" x2="75.8" y2="80.6" stroke-width="3.4"/>
+    </g>
+    <circle cx="60" cy="60" r="2.6" fill="currentColor"/>
+  </svg>`,
+
+  netPyramid: `<svg viewBox="0 0 135 135" role="img" aria-label="A net made of one square with a triangle on each side">
+    <g fill="rgba(127,127,127,.12)" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <rect x="42" y="42" width="50" height="50"/>
+      <path d="M42 42 L92 42 L67 7 Z"/>
+      <path d="M92 42 L92 92 L127 67 Z"/>
+      <path d="M42 92 L92 92 L67 127 Z"/>
+      <path d="M42 42 L42 92 L7 67 Z"/>
+    </g>
+  </svg>`,
+
+  lshape: `<svg viewBox="0 0 275 178" role="img" aria-label="An L-shaped figure made from rectangles">
+    <g transform="translate(36,24)">
+      <path d="M0 0 H120 V60 H200 V120 H0 Z" fill="rgba(127,127,127,.14)" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+      <g font-size="12" fill="currentColor" text-anchor="middle">
+        <text x="60" y="-8">6 cm</text>
+        <text x="100" y="132" >10 cm</text>
+        <text x="160" y="52">4 cm</text>
+      </g>
+      <g font-size="12" fill="currentColor">
+        <text x="-30" y="64">6 cm</text>
+        <text x="128" y="34">3 cm</text>
+        <text x="206" y="94">3 cm</text>
+      </g>
+    </g>
+  </svg>`,
+
+  barFruit: `<svg viewBox="0 0 300 215" role="img" aria-label="Bar graph of favourite fruits: mango 12, orange 8, banana 15, apple 5">
+    <g stroke="currentColor" stroke-width=".5" opacity=".3">
+      <line x1="45" y1="180" x2="278" y2="180"/><line x1="45" y1="160" x2="278" y2="160"/>
+      <line x1="45" y1="140" x2="278" y2="140"/><line x1="45" y1="120" x2="278" y2="120"/>
+      <line x1="45" y1="100" x2="278" y2="100"/><line x1="45" y1="80"  x2="278" y2="80"/>
+      <line x1="45" y1="60"  x2="278" y2="60"/><line x1="45" y1="40"  x2="278" y2="40"/>
+      <line x1="45" y1="20"  x2="278" y2="20"/>
+    </g>
+    <g fill="currentColor" opacity=".72">
+      <rect x="60"  y="60"  width="34" height="120"/>
+      <rect x="112" y="100" width="34" height="80"/>
+      <rect x="164" y="30"  width="34" height="150"/>
+      <rect x="216" y="130" width="34" height="50"/>
+    </g>
+    <g stroke="currentColor" stroke-width="1.5" fill="none">
+      <path d="M45 12 V180 H278"/>
+    </g>
+    <g font-size="10.5" fill="currentColor" text-anchor="end">
+      <text x="39" y="184">0</text><text x="39" y="164">2</text><text x="39" y="144">4</text>
+      <text x="39" y="124">6</text><text x="39" y="104">8</text><text x="39" y="84">10</text>
+      <text x="39" y="64">12</text><text x="39" y="44">14</text><text x="39" y="24">16</text>
+    </g>
+    <g font-size="11" fill="currentColor" text-anchor="middle">
+      <text x="77"  y="196">Mango</text><text x="129" y="196">Orange</text>
+      <text x="181" y="196">Banana</text><text x="233" y="196">Apple</text>
+      <text x="161" y="212" font-size="10.5" opacity=".8">Favourite fruit chosen by a Standard 5 class</text>
+    </g>
+  </svg>`
+};
+
+/* ============================================================
+   Question bank
+   sec 1 = 1 mark · sec 2 = 2 or 3 marks · sec 3 = 4 marks
+   ============================================================ */
+const QUESTIONS = [
+
+/* ---------------- NUMBER ---------------- */
+{id:"N01",src:"SEA 2001",strand:"Number",topic:"Place value",proc:"Knowing",sec:1,marks:1,
+ q:"Write in figures: five hundred and three thousand, one hundred and fifty&#8209;six.",
+ a:["503156"],
+ exp:"Five hundred and three thousand is 503&nbsp;000. One hundred and fifty-six is 156. Together: <b>503&nbsp;156</b>."},
+
+{id:"N02",src:"SEA 2001",strand:"Number",topic:"Place value",proc:"Knowing",sec:1,marks:1,
+ q:"What is the value of the digit 4 in the number 1&nbsp;048&nbsp;736?",
+ a:["40000"],
+ exp:"Reading from the right: 6 ones, 3 tens, 7 hundreds, 8 thousands, then <b>4 ten&nbsp;thousands</b>. Its value is 4 &times; 10&nbsp;000 = <b>40&nbsp;000</b>."},
+
+{id:"N03",src:"SEA 2001",strand:"Number",topic:"Percent",proc:"Knowing",sec:1,marks:1,
+ q:`Write ${F(3,100)} as a percentage.`, unit:"%",
+ a:["3","3%"],
+ exp:"Per cent means &ldquo;out of a hundred&rdquo;, so a fraction with 100 underneath is already a percentage. " + F(3,100) + " = <b>3&thinsp;%</b>."},
+
+{id:"N04",src:"SEA 2001",strand:"Number",topic:"Fractions",proc:"Applying",sec:1,marks:1,
+ q:`${F(15,60)} = ${F("N",4)}. What is N?`,
+ a:["1"],
+ exp:"Simplify the left side: 15 &divide; 15 = 1 and 60 &divide; 15 = 4, so " + F(15,60) + " = " + F(1,4) + ". Comparing with " + F("N",4) + " gives <b>N = 1</b>."},
+
+{id:"N05",src:"SEA 2001",strand:"Number",topic:"Expanded notation",proc:"Knowing",sec:1,marks:1,
+ q:"What number is missing from the box?<br><span class='mono' style='font-size:15px'>9618 = (9 &times; 1000) + (6 &times; &#9633;) + (1 &times; 10) + (8 &times; 1)</span>",
+ a:["100"],
+ exp:"9618 breaks up as 9000 + 600 + 10 + 8. The 6 stands for 600, and 6 &times; <b>100</b> = 600."},
+
+{id:"N06",strand:"Number",topic:"Rounding",proc:"Knowing",sec:1,marks:1,
+ q:"Round 47&nbsp;682 to the nearest thousand.",
+ a:["48000"],
+ exp:"The thousands digit is 7. Look at the hundreds digit: 6, which is 5 or more, so round up. 47&nbsp;682 &rarr; <b>48&nbsp;000</b>."},
+
+{id:"N07",strand:"Number",topic:"Place value",proc:"Knowing",sec:1,marks:1,
+ q:"Write in figures: two hundred thousand and nine.",
+ a:["200009"],
+ exp:"Two hundred thousand is 200&nbsp;000. Add 9 in the ones place, keeping zeros everywhere else: <b>200&nbsp;009</b>."},
+
+{id:"N08",strand:"Number",topic:"Place value",proc:"Reasoning",sec:2,marks:2,
+ q:"What is the smallest whole number that can be made using all four of the digits 7, 0, 4 and 9?",
+ a:["4079"],
+ exp:"Put the digits in order: 0, 4, 7, 9. A number cannot start with 0, so the smallest first digit is 4, then the rest in order: <b>4079</b>."},
+
+{id:"N09",strand:"Number",topic:"Factors and multiples",proc:"Knowing",sec:2,marks:2,
+ q:"List <b>all</b> the factors of 24.",
+ a:["1, 2, 3, 4, 6, 8, 12, 24","1234681224"],
+ exp:"Work in pairs that multiply to 24: 1&times;24, 2&times;12, 3&times;8, 4&times;6. The factors are <b>1, 2, 3, 4, 6, 8, 12 and 24</b> &mdash; eight of them."},
+
+{id:"N10",strand:"Number",topic:"Factors and multiples",proc:"Knowing",sec:1,marks:1,
+ q:"Which one of these is a prime number? &nbsp; 21 &nbsp; 27 &nbsp; 29 &nbsp; 33",
+ a:["29"],
+ exp:"21 = 3&times;7, 27 = 3&times;9 and 33 = 3&times;11, so each has factors besides 1 and itself. <b>29</b> has only 1 and 29, so it is prime."},
+
+{id:"N11",strand:"Number",topic:"Square numbers",proc:"Knowing",sec:1,marks:1,
+ q:"What is the square of 9?",
+ a:["81"],
+ exp:"The square of a number is the number times itself: 9 &times; 9 = <b>81</b>."},
+
+{id:"N12",strand:"Number",topic:"Fractions",proc:"Knowing",sec:1,marks:1,
+ q:`Write ${F(8,12)} in its lowest terms.`,
+ a:["2/3"],
+ exp:"8 and 12 share a highest common factor of 4. 8 &divide; 4 = 2 and 12 &divide; 4 = 3, giving <b>" + F(2,3) + "</b>."},
+
+{id:"N13",strand:"Number",topic:"Fractions",proc:"Applying",sec:2,marks:2,
+ q:`${F(3,4)} + ${F(5,8)} = ? &nbsp; Give your answer as a mixed number.`,
+ a:["1 3/8","13/8","11/8"],
+ exp:"Make the denominators the same: " + F(3,4) + " = " + F(6,8) + ". Then " + F(6,8) + " + " + F(5,8) + " = " + F(11,8) + ". As a mixed number that is <b>1" + F(3,8) + "</b>."},
+
+{id:"N14",strand:"Number",topic:"Fractions",proc:"Knowing",sec:1,marks:1,
+ q:`Write 2${F(1,2)} as an improper fraction.`,
+ a:["5/2"],
+ exp:"Two wholes make " + F(4,2) + ". Add the extra " + F(1,2) + " to get <b>" + F(5,2) + "</b>."},
+
+{id:"N15",strand:"Number",topic:"Fractions",proc:"Applying",sec:1,marks:1,
+ q:`Find ${F(3,5)} of 45.`,
+ a:["27"],
+ exp:"Divide by the bottom, multiply by the top: 45 &divide; 5 = 9, then 9 &times; 3 = <b>27</b>."},
+
+{id:"N16",strand:"Number",topic:"Fractions",proc:"Applying",sec:2,marks:2,
+ q:`A tank holds 60 litres of water. ${F(2,5)} of the water is used. How many litres are left?`, unit:"litres",
+ a:["36"],
+ exp:"Used: 60 &divide; 5 = 12, then 12 &times; 2 = 24 litres. Left: 60 &minus; 24 = <b>36 litres</b>. (Or find " + F(3,5) + " of 60 straight away.)"},
+
+{id:"N17",strand:"Number",topic:"Decimals",proc:"Applying",sec:1,marks:1,
+ q:"0&middot;7 &times; 0&middot;4 = ?",
+ a:["0.28",".28"],
+ exp:"Multiply as whole numbers: 7 &times; 4 = 28. There is one decimal place in each factor, so two altogether: <b>0&middot;28</b>."},
+
+{id:"N18",strand:"Number",topic:"Decimals",proc:"Applying",sec:2,marks:2,
+ q:"Write 0&middot;45 as a fraction in its lowest terms.",
+ a:["9/20"],
+ exp:"0&middot;45 is 45 hundredths, so " + F(45,100) + ". Divide top and bottom by 5: <b>" + F(9,20) + "</b>."},
+
+{id:"N19",strand:"Number",topic:"Decimals",proc:"Knowing",sec:1,marks:1,
+ q:"State the value of the digit 6 in 23&middot;86.",
+ a:["0.06",".06","6/100","6hundredths","sixhundredths"],
+ exp:"After the point come tenths then hundredths. The 8 is 8 tenths and the 6 is 6 hundredths, so its value is <b>0&middot;06</b>."},
+
+{id:"N20",strand:"Number",topic:"Decimals",proc:"Applying",sec:2,marks:2,
+ q:"Arrange in ascending order: &nbsp; 0&middot;5 &nbsp; 0&middot;45 &nbsp; 0&middot;505 &nbsp; 0&middot;4",
+ a:["0.4,0.45,0.5,0.505","0.40.450.50.505"],
+ exp:"Give them all three decimal places: 0&middot;500, 0&middot;450, 0&middot;505, 0&middot;400. In order: <b>0&middot;4, 0&middot;45, 0&middot;5, 0&middot;505</b>."},
+
+{id:"N21",strand:"Number",topic:"Percent",proc:"Applying",sec:1,marks:1,
+ q:"Find 15&thinsp;% of $400.", unit:"$",
+ a:["60"],
+ exp:"10&thinsp;% of 400 is 40, and 5&thinsp;% is half of that, 20. Together 40 + 20 = <b>$60</b>."},
+
+{id:"N22",strand:"Number",topic:"Percent",proc:"Reasoning",sec:2,marks:3,
+ q:"A shirt is marked $250. VAT of 12&middot;5&thinsp;% is added at the till. What is the total price?", unit:"$",
+ a:["281.25"],
+ exp:"10&thinsp;% of 250 = 25. 2&middot;5&thinsp;% is a quarter of that = 6&middot;25. VAT = 25 + 6&middot;25 = $31&middot;25. Total = 250 + 31&middot;25 = <b>$281&middot;25</b>."},
+
+{id:"N23",strand:"Number",topic:"Percent",proc:"Reasoning",sec:2,marks:3,
+ q:"A shop buys a book for $40 and sells it for $52. What is the percentage profit?", unit:"%",
+ a:["30"],
+ exp:"Profit = 52 &minus; 40 = $12. As a fraction of the <i>cost</i>: " + F(12,40) + " = " + F(3,10) + " = <b>30&thinsp;%</b>."},
+
+{id:"N24",strand:"Number",topic:"Problem solving",proc:"Reasoning",sec:2,marks:3,
+ q:"Five pens cost $32&middot;50. Find the cost of eight pens.", unit:"$",
+ a:["52","52.00"],
+ exp:"One pen: 32&middot;50 &divide; 5 = $6&middot;50. Eight pens: 6&middot;50 &times; 8 = <b>$52&middot;00</b>. This is the unitary method &mdash; find one, then find many."},
+
+{id:"N25",strand:"Number",topic:"Number patterns",proc:"Reasoning",sec:1,marks:1,
+ q:"What is the next number in the pattern? &nbsp; 4, 9, 16, 25, &hellip;",
+ a:["36"],
+ exp:"These are square numbers: 2&sup2;, 3&sup2;, 4&sup2;, 5&sup2;. The next is 6&sup2; = <b>36</b>."},
+
+{id:"N26",strand:"Number",topic:"Number patterns",proc:"Reasoning",sec:2,marks:2,
+ q:"What is the next number in the pattern? &nbsp; 2, 5, 11, 23, &hellip;",
+ a:["47"],
+ exp:"Each number is doubled and then 1 is added: 2&times;2+1 = 5, 5&times;2+1 = 11, 11&times;2+1 = 23. So 23&times;2+1 = <b>47</b>."},
+
+{id:"N27",strand:"Number",topic:"Problem solving",proc:"Reasoning",sec:3,marks:4,
+ q:"$1&nbsp;800 is shared between Anil and Bea so that Bea receives twice as much as Anil. How much does Bea receive?", unit:"$",
+ a:["1200"],
+ exp:"Anil is 1 share and Bea is 2 shares, so there are 3 shares altogether. One share = 1800 &divide; 3 = $600. Bea has two shares: 600 &times; 2 = <b>$1&nbsp;200</b>."},
+
+{id:"N28",strand:"Number",topic:"Money and rate",proc:"Reasoning",sec:3,marks:4,
+ q:`Mrs Khan is paid $84 an hour. She works 7${F(1,2)} hours a day, five days a week. What are her wages for the week?`, unit:"$",
+ a:["3150"],
+ exp:"One day: 84 &times; 7&middot;5 = 84 &times; 7 + 84 &times; 0&middot;5 = 588 + 42 = $630. Five days: 630 &times; 5 = <b>$3&nbsp;150</b>."},
+
+{id:"N29",strand:"Number",topic:"Problem solving",proc:"Reasoning",sec:2,marks:3,
+ q:"A crate holds 24 mangoes. A vendor has 350 mangoes. How many mangoes will be left over after she fills as many crates as she can?",
+ a:["14"],
+ exp:"350 &divide; 24 = 14 remainder 14, because 24 &times; 14 = 336 and 350 &minus; 336 = 14. She fills 14 crates and <b>14 mangoes</b> are left over."},
+
+{id:"N30",strand:"Number",topic:"Estimation",proc:"Reasoning",sec:1,marks:1,
+ q:"Estimate 4&nbsp;987 + 3&nbsp;021 by first rounding each number to the nearest thousand.",
+ a:["8000"],
+ exp:"4&nbsp;987 rounds to 5&nbsp;000 and 3&nbsp;021 rounds to 3&nbsp;000. The estimate is 5&nbsp;000 + 3&nbsp;000 = <b>8&nbsp;000</b>."},
+
+/* ---------------- GEOMETRY ---------------- */
+{id:"G01",src:"SEA 2001",strand:"Geometry",topic:"Circles",proc:"Knowing",sec:1,marks:1,
+ q:"If the diameter of a circle is 24 cm, calculate the radius.", unit:"cm",
+ a:["12"],
+ exp:"The diameter runs right across the circle through the centre; the radius is half of it. 24 &divide; 2 = <b>12 cm</b>."},
+
+{id:"G02",src:"SEA 2001",strand:"Geometry",topic:"Solids",proc:"Applying",sec:2,marks:2,
+ q:"What is the name given to the shape that can be formed by the net below?", fig:"netPyramid",
+ a:["square-based pyramid","square pyramid","squarebasedpyramid","pyramid"],
+ exp:"Fold the four triangles up and their tips meet above the square. A square base with triangular faces meeting at a point is a <b>square-based pyramid</b>."},
+
+{id:"G03",strand:"Geometry",topic:"Solids",proc:"Knowing",sec:1,marks:1,
+ q:"How many faces does a cube have?",
+ a:["6","six"],
+ exp:"Top, bottom and four sides &mdash; <b>6</b> square faces. (It also has 12 edges and 8 vertices.)"},
+
+{id:"G04",strand:"Geometry",topic:"Solids",proc:"Knowing",sec:1,marks:1,
+ q:"How many edges does a triangular prism have?",
+ a:["9","nine"],
+ exp:"Two triangular ends give 3 + 3 = 6 edges, and 3 more edges join them. 6 + 3 = <b>9 edges</b>."},
+
+{id:"G05",strand:"Geometry",topic:"Solids",proc:"Knowing",sec:1,marks:1,
+ q:"Name the solid that has one circular base and one curved surface rising to a point.",
+ a:["cone"],
+ exp:"A circular base and a curved surface meeting at a single apex describes a <b>cone</b>."},
+
+{id:"G06",strand:"Geometry",topic:"Symmetry",proc:"Knowing",sec:1,marks:1,
+ q:"How many lines of symmetry does a square have?",
+ a:["4","four"],
+ exp:"Two through the middle of opposite sides and two along the diagonals: <b>4</b> lines of symmetry."},
+
+{id:"G07",strand:"Geometry",topic:"Plane shapes",proc:"Applying",sec:2,marks:2,
+ q:"A quadrilateral has four equal sides but none of its angles is a right angle. Name the shape.",
+ a:["rhombus"],
+ exp:"Four equal sides with right angles would be a square. Four equal sides <i>without</i> right angles is a <b>rhombus</b>."},
+
+{id:"G08",strand:"Geometry",topic:"Angles",proc:"Applying",sec:2,marks:2,
+ q:"Two angles of a triangle measure 65&deg; and 40&deg;. Find the third angle.", unit:"°",
+ a:["75"],
+ exp:"The three angles of any triangle add to 180&deg;. 65 + 40 = 105, and 180 &minus; 105 = <b>75&deg;</b>."},
+
+{id:"G09",strand:"Geometry",topic:"Plane shapes",proc:"Knowing",sec:1,marks:1,
+ q:"What is the size of each angle in a rectangle?", unit:"°",
+ a:["90"],
+ exp:"A rectangle has four right angles, and a right angle is <b>90&deg;</b>. Four of them make 360&deg;."},
+
+{id:"G10",strand:"Geometry",topic:"Solids",proc:"Knowing",sec:1,marks:1,
+ q:"How many vertices does a square-based pyramid have?",
+ a:["5","five"],
+ exp:"Four corners on the square base and one apex at the top: <b>5 vertices</b>."},
+
+{id:"G11",strand:"Geometry",topic:"Solids",proc:"Reasoning",sec:3,marks:4,
+ q:"A solid has two identical pentagonal faces and five rectangular faces. How many edges does it have?",
+ a:["15","fifteen"],
+ exp:"It is a pentagonal prism. Each pentagon has 5 edges, giving 10, and 5 more edges join the two ends. 10 + 5 = <b>15 edges</b>."},
+
+{id:"G12",strand:"Geometry",topic:"Plane shapes",proc:"Applying",sec:2,marks:2,
+ q:"Which of these has exactly one pair of parallel sides? &nbsp; rhombus &nbsp; trapezium &nbsp; rectangle &nbsp; kite",
+ a:["trapezium"],
+ exp:"A rhombus and a rectangle each have two pairs of parallel sides; a kite has none. A <b>trapezium</b> has exactly one pair."},
+
+{id:"G13",strand:"Geometry",topic:"Symmetry",proc:"Reasoning",sec:2,marks:3,
+ q:"A regular octagon is drawn with every one of its lines of symmetry. How many lines are drawn?",
+ a:["8","eight"],
+ exp:"A regular polygon has as many lines of symmetry as it has sides. An octagon has 8 sides, so <b>8 lines</b> &mdash; four through opposite vertices and four through the midpoints of opposite sides."},
+
+/* ---------------- MEASUREMENT ---------------- */
+{id:"M01",src:"SEA 2001",strand:"Measurement",topic:"Area",proc:"Applying",sec:1,marks:1,
+ q:"Calculate the area of the rectangle shown below.", fig:"rect43", unit:"m²",
+ a:["12"],
+ exp:"Area of a rectangle = length &times; width = 4 &times; 3 = <b>12 m&sup2;</b>."},
+
+{id:"M02",src:"SEA 2001",strand:"Measurement",topic:"Time",proc:"Knowing",sec:1,marks:1,
+ q:"State the time on the clock below in digital notation.", fig:"clock445",
+ a:["4:45","445","4.45"],
+ exp:"The long hand is on the 9, which is 45 minutes past. The short hand has almost reached 5, so the hour is still 4. The time is <b>4:45</b>."},
+
+{id:"M03",src:"SEA 2001",strand:"Measurement",topic:"Mass",proc:"Knowing",sec:1,marks:1,
+ q:"1000 grams = 1 kg. Convert 7&nbsp;500 grams to kilograms.", unit:"kg",
+ a:["7.5","7½","71/2"],
+ exp:"Divide by 1000: 7500 &divide; 1000 = <b>7&middot;5 kg</b>."},
+
+{id:"M04",src:"SEA 2001",strand:"Measurement",topic:"Capacity",proc:"Applying",sec:2,marks:2,
+ q:`A bucket contains 12 litres of water. How many containers each having a capacity of ${F(1,2)} litre can be filled from this bucket?`,
+ a:["24"],
+ exp:"Every litre fills two half-litre containers, so 12 &divide; " + F(1,2) + " = 12 &times; 2 = <b>24 containers</b>."},
+
+{id:"M05",strand:"Measurement",topic:"Linear measure",proc:"Knowing",sec:1,marks:1,
+ q:"Convert 2&middot;4 metres to centimetres.", unit:"cm",
+ a:["240"],
+ exp:"1 m = 100 cm, so multiply by 100: 2&middot;4 &times; 100 = <b>240 cm</b>."},
+
+{id:"M06",strand:"Measurement",topic:"Linear measure",proc:"Knowing",sec:1,marks:1,
+ q:"Convert 45 millimetres to centimetres.", unit:"cm",
+ a:["4.5"],
+ exp:"1 cm = 10 mm, so divide by 10: 45 &divide; 10 = <b>4&middot;5 cm</b>."},
+
+{id:"M07",strand:"Measurement",topic:"Perimeter",proc:"Applying",sec:1,marks:1,
+ q:"A rectangle is 9 cm long and 5 cm wide. Find its perimeter.", unit:"cm",
+ a:["28"],
+ exp:"Perimeter = 2 &times; (length + width) = 2 &times; (9 + 5) = 2 &times; 14 = <b>28 cm</b>."},
+
+{id:"M08",strand:"Measurement",topic:"Area",proc:"Reasoning",sec:2,marks:3,
+ q:"A square has a perimeter of 36 cm. Find its area.", unit:"cm²",
+ a:["81"],
+ exp:"All four sides are equal, so one side = 36 &divide; 4 = 9 cm. Area = 9 &times; 9 = <b>81 cm&sup2;</b>."},
+
+{id:"M09",strand:"Measurement",topic:"Area",proc:"Reasoning",sec:3,marks:4,
+ q:"Calculate the area of the figure below.", fig:"lshape", unit:"cm²",
+ a:["48"],
+ exp:"Complete it into a full rectangle 10 cm by 6 cm, area 60 cm&sup2;. The piece cut out of the corner is 4 cm by 3 cm, area 12 cm&sup2;. So 60 &minus; 12 = <b>48 cm&sup2;</b>."},
+
+{id:"M10",strand:"Measurement",topic:"Volume",proc:"Applying",sec:2,marks:2,
+ q:"Find the volume of a cuboid measuring 6 cm by 4 cm by 3 cm.", unit:"cm³",
+ a:["72"],
+ exp:"Volume = length &times; width &times; height = 6 &times; 4 &times; 3 = 24 &times; 3 = <b>72 cm&sup3;</b>."},
+
+{id:"M11",strand:"Measurement",topic:"Volume",proc:"Knowing",sec:1,marks:1,
+ q:"A cube has an edge of 5 cm. Find its volume.", unit:"cm³",
+ a:["125"],
+ exp:"Every edge of a cube is the same, so 5 &times; 5 &times; 5 = <b>125 cm&sup3;</b>."},
+
+{id:"M12",strand:"Measurement",topic:"Capacity",proc:"Knowing",sec:1,marks:1,
+ q:"1 litre = 1000 cm&sup3;. A container holds 2&middot;5 litres. What is its volume in cubic centimetres?", unit:"cm³",
+ a:["2500"],
+ exp:"Multiply by 1000: 2&middot;5 &times; 1000 = <b>2&nbsp;500 cm&sup3;</b>."},
+
+{id:"M13",strand:"Measurement",topic:"Mass",proc:"Applying",sec:2,marks:2,
+ q:"Find the total mass of three parcels weighing 250 g, 1&middot;5 kg and 800 g. Give your answer in kilograms.", unit:"kg",
+ a:["2.55"],
+ exp:"Change everything to grams: 250 + 1500 + 800 = 2550 g. Divide by 1000: <b>2&middot;55 kg</b>."},
+
+{id:"M14",strand:"Measurement",topic:"Time",proc:"Applying",sec:2,marks:2,
+ q:"A film starts at 6:45 p.m. and lasts 1 hour 50 minutes. At what time does it end?",
+ a:["8:35","835","8.35","8:35pm","8:35p.m."],
+ exp:"Add the hour first: 6:45 + 1 h = 7:45. Then add 50 min: 7:45 + 15 min = 8:00, and 35 min more = <b>8:35 p.m.</b>"},
+
+{id:"M15",strand:"Measurement",topic:"Time",proc:"Knowing",sec:1,marks:1,
+ q:`How many minutes are there in 3${F(1,4)} hours?`, unit:"minutes",
+ a:["195"],
+ exp:"3 hours = 180 minutes, and " + F(1,4) + " of an hour = 15 minutes. 180 + 15 = <b>195 minutes</b>."},
+
+{id:"M16",strand:"Measurement",topic:"Capacity",proc:"Applying",sec:2,marks:2,
+ q:"A tap fills a 45-litre drum at 3 litres per minute. How long does it take to fill the drum?", unit:"minutes",
+ a:["15"],
+ exp:"Divide the total by the rate: 45 &divide; 3 = <b>15 minutes</b>."},
+
+{id:"M17",strand:"Measurement",topic:"Perimeter",proc:"Reasoning",sec:3,marks:4,
+ q:"A rectangular garden measures 12 m by 8 m. Fencing costs $35 a metre. Find the total cost of fencing right around the garden.", unit:"$",
+ a:["1400"],
+ exp:"First the perimeter: 2 &times; (12 + 8) = 2 &times; 20 = 40 m. Then the cost: 40 &times; 35 = <b>$1&nbsp;400</b>."},
+
+/* ---------------- STATISTICS ---------------- */
+{id:"S01",src:"SEA 2001",strand:"Statistics",topic:"Mode",proc:"Knowing",sec:1,marks:1,
+ q:"The numbers below are the goals scored by a team in 6 different matches.<br><span class='mono' style='font-size:16px'>3 &nbsp; 3 &nbsp; 6 &nbsp; 5 &nbsp; 4 &nbsp; 3</span><br>What is the mode of the scores?",
+ a:["3"],
+ exp:"The mode is the value that appears most often. 3 appears three times; every other score appears once. The mode is <b>3</b>."},
+
+{id:"S02",strand:"Statistics",topic:"Mean",proc:"Applying",sec:1,marks:1,
+ q:"Find the mean of 4, 7, 9 and 12.",
+ a:["8"],
+ exp:"Add them: 4 + 7 + 9 + 12 = 32. Divide by how many there are: 32 &divide; 4 = <b>8</b>."},
+
+{id:"S03",strand:"Statistics",topic:"Mean",proc:"Applying",sec:2,marks:2,
+ q:"Find the mean of 12, 15, 18, 11 and 14.",
+ a:["14"],
+ exp:"Total: 12 + 15 + 18 + 11 + 14 = 70. There are 5 numbers, so 70 &divide; 5 = <b>14</b>."},
+
+{id:"S04",strand:"Statistics",topic:"Interpreting graphs",proc:"Knowing",sec:1,marks:1,
+ q:"How many more children chose banana than orange?", fig:"barFruit",
+ a:["7"],
+ exp:"Read the bars against the scale: banana 15, orange 8. 15 &minus; 8 = <b>7</b> children."},
+
+{id:"S05",strand:"Statistics",topic:"Interpreting graphs",proc:"Applying",sec:2,marks:2,
+ q:"How many children were surveyed altogether?", fig:"barFruit",
+ a:["40"],
+ exp:"Add every bar: mango 12 + orange 8 + banana 15 + apple 5 = <b>40 children</b>."},
+
+{id:"S06",strand:"Statistics",topic:"Interpreting graphs",proc:"Reasoning",sec:2,marks:3,
+ q:"What fraction of the children chose mango? Give your answer in its lowest terms.", fig:"barFruit",
+ a:["3/10"],
+ exp:"Mango was chosen by 12 out of 40 children, so " + F(12,40) + ". Divide top and bottom by 4: <b>" + F(3,10) + "</b>."},
+
+{id:"S07",strand:"Statistics",topic:"Tally charts",proc:"Knowing",sec:1,marks:1,
+ q:"A tally chart shows <span class='mono' style='font-size:17px'>&#8741;&#8741; &#8741;&#8741; &#8741;</span> &mdash; that is two complete groups of five and two more strokes. How many does it stand for?",
+ a:["12","twelve"],
+ exp:"Each complete group is 5, so two groups make 10. Add the 2 extra strokes: <b>12</b>."},
+
+{id:"S08",strand:"Statistics",topic:"Mean",proc:"Reasoning",sec:3,marks:4,
+ q:"The mean of five numbers is 20. Four of the numbers are 18, 22, 15 and 25. Find the fifth number.",
+ a:["20"],
+ exp:"If the mean of five numbers is 20, their total is 20 &times; 5 = 100. The four given add to 18 + 22 + 15 + 25 = 80. The fifth is 100 &minus; 80 = <b>20</b>."},
+
+{id:"S09",strand:"Statistics",topic:"Mean",proc:"Applying",sec:2,marks:2,
+ q:"For the set 6, 8, 8, 9, 14, find the <b>mean</b>.",
+ a:["9"],
+ exp:"Total: 6 + 8 + 8 + 9 + 14 = 45. There are 5 numbers: 45 &divide; 5 = <b>9</b>. (The mode of this set is 8 &mdash; do not confuse the two.)"},
+
+{id:"S10",strand:"Statistics",topic:"Interpreting graphs",proc:"Applying",sec:1,marks:1,
+ q:"In a survey of 60 students, 25&thinsp;% chose cricket. How many students chose cricket?",
+ a:["15"],
+ exp:"25&thinsp;% is a quarter. 60 &divide; 4 = <b>15 students</b>."},
+
+{id:"S11",strand:"Statistics",topic:"Interpreting graphs",proc:"Applying",sec:2,marks:2,
+ q:"On a bar graph each square stands for 4 people. One bar is 7 squares tall. How many people does that bar represent?",
+ a:["28"],
+ exp:"Multiply the number of squares by the scale: 7 &times; 4 = <b>28 people</b>."}
+];
+
+/* ============================================================
+   Official papers — every link points at the Ministry's own copy
+   Verified 6 September 2026
+   ============================================================ */
+const PAPERS = [
+ {y:"2025",k:"ela",  t:"English Language Arts",        s:"Spelling · punctuation · grammar · comprehension", u:"https://storage.moe.gov.tt/wpdevelopment/2026/05/SEA-ENGLISH-LANGUAGE-ARTS-2025.pdf"},
+ {y:"2025",k:"wri",  t:"English Language Arts Writing", s:"The 50-minute essay paper",                       u:"https://storage.moe.gov.tt/wpdevelopment/2026/05/SEA-ENGLISH-LANGUAGE-ARTS-WRITING-PAPER-2025.pdf"},
+ {y:"2025",k:"math", t:"Mathematics",                   s:"40 items · 75 marks",                             u:"https://storage.moe.gov.tt/wpdevelopment/2026/05/SEA-MATHEMATICS-2025.pdf"},
+ {y:"2024",k:"ela",  t:"English Language Arts",        s:"Spelling · punctuation · grammar · comprehension", u:"https://storage.moe.gov.tt/wpdevelopment/2026/05/SEA-ENGLISH-LANGUAGE-ARTS-2024.pdf"},
+ {y:"2024",k:"wri",  t:"English Language Arts Writing", s:"Listed by the Ministry as the 2024 writing paper", u:"https://storage.moe.gov.tt/wpdevelopment/2026/05/SEA-ENGLISH-LANGUAGE-ARTS.pdf"},
+ {y:"2024",k:"math", t:"Mathematics",                   s:"40 items · 75 marks",                             u:"https://storage.moe.gov.tt/wpdevelopment/2026/05/SEA-MATHEMATICS-2024.pdf"},
+ {y:"2023",k:"ela",  t:"English Language Arts",        s:"Spelling · punctuation · grammar · comprehension", u:"https://storage.moe.gov.tt/wpdevelopment/2023/10/SEA-2023-ELA.pdf"},
+ {y:"2023",k:"wri",  t:"English Language Arts Writing", s:"The 50-minute essay paper",                       u:"https://storage.moe.gov.tt/wpdevelopment/2023/10/SEA-2023-ELAW.pdf"},
+ {y:"2023",k:"math", t:"Mathematics",                   s:"40 items · 75 marks",                             u:"https://storage.moe.gov.tt/wpdevelopment/2023/10/SEA-2023-MATH.pdf"},
+ {y:"2022",k:"ela",  t:"English Language Arts",        s:"Spelling · punctuation · grammar · comprehension", u:"https://storage.moe.gov.tt/wpdevelopment/2023/10/TTSEA-2022-ELA.pdf"},
+ {y:"2022",k:"wri",  t:"English Language Arts Writing", s:"The 50-minute essay paper",                       u:"https://storage.moe.gov.tt/wpdevelopment/2023/10/TTSEA-2022-ELAW.pdf"},
+ {y:"2022",k:"math", t:"Mathematics",                   s:"40 items · 75 marks",                             u:"https://storage.moe.gov.tt/wpdevelopment/2023/10/TTSEA-2022-Math.pdf"},
+ {y:"2021",k:"ela",  t:"English Language Arts",        s:"Spelling · punctuation · grammar · comprehension", u:"https://storage.moe.gov.tt/wpdevelopment/2023/10/SEA2021-ELA.pdf"},
+ {y:"2021",k:"wri",  t:"English Language Arts Writing", s:"The 50-minute essay paper",                       u:"https://storage.moe.gov.tt/wpdevelopment/2023/10/SEA2021-ELAW.pdf"},
+ {y:"2021",k:"math", t:"Mathematics",                   s:"40 items · 75 marks",                             u:"https://storage.moe.gov.tt/wpdevelopment/2023/10/SEA2021-MATH.pdf"},
+ {y:"2021",k:"spec", t:"Mathematics specimen paper",    s:"Published with the revised framework",            u:"https://wpuploadstorageaccount.blob.core.windows.net/corporate/2022/04/SEA-2021-MATHEMATICS-SPECIMEN-PAPER-FINAL.pdf"},
+ {y:"2021",k:"spec", t:"English Language Arts specimen paper", s:"Published with the revised framework",     u:"https://wpuploadstorageaccount.blob.core.windows.net/corporate/2022/04/SEA-2021-ELA-SPECIMEN-PAPER-FINAL-6267408abfc3a.pdf"},
+ {y:"2019",k:"spec", t:"ELA specimen paper 1",          s:"Specimen",                                        u:"https://storage.moe.gov.tt/corporate/2022/09/SEA-2019-ELA-Specimen-Paper-1.pdf"},
+ {y:"2019",k:"spec", t:"ELA specimen paper 2",          s:"Specimen",                                        u:"https://storage.moe.gov.tt/corporate/2022/09/SEA-2019-ELA-SPECIMEN-PAPER-2.pdf"},
+ {y:"2019",k:"spec", t:"Writing exemplars",             s:"Real scripts showing how essays are marked",       u:"https://wpuploadstorageaccount.blob.core.windows.net/corporate/2022/05/SEA-2019-WRITING-EXEMPLARS.pdf"},
+ {y:"2025",k:"fw",   t:"Assessment Framework 2025–2028", s:"What can be asked, and how the marks are split",  u:"https://storage.moe.gov.tt/wpdevelopment/2023/10/ASSESSMENT-FRAMEWORK-FOR-SEA-2025-2028.pdf"},
+ {y:"2021",k:"fw",   t:"Revised Assessment Framework 2021–2023", s:"The framework the 2021–2023 papers followed", u:"https://storage.moe.gov.tt/corporate/2022/09/SEA-2021-2023-Revised-Assessment-Framework-1.pdf"},
+ {y:"2019",k:"fw",   t:"Assessment Framework 2019–2023", s:"The earlier framework",                          u:"https://storage.moe.gov.tt/corporate/2022/09/ASSESSMENT-FRAMEWORK-FOR-SEA-2019_2023.pdf"}
+];
+
+/* ============================================================
+   Writing — three prompts of one type, as the real paper gives them
+   ============================================================ */
+const WRITING = {
+  narrative: [
+    ["Write a story which ends with the words: &ldquo;&hellip;and from that day I never doubted her again.&rdquo;",
+     "Write a story about a day on which everything went wrong.",
+     "Write a story which begins: The lights went out just as the music started."],
+    ["Write a story about finding something valuable that did not belong to you.",
+     "Write a story which ends with the words: &ldquo;It was the best decision I had ever made.&rdquo;",
+     "Write a story about a storm that changed your village."],
+    ["Write a story about a promise you had to keep.",
+     "Write a story which begins: I heard the knock at exactly midnight.",
+     "Write a story about the day a stranger came to the school."]
+  ],
+  expository: [
+    ["Write a report on the ways your school could reduce the rubbish it produces.",
+     "Write a report explaining why exercise is important for children of your age.",
+     "Write a report on what you believe is the most useful invention of the last hundred years."],
+    ["Write a report on how young people in Trinidad and Tobago can help to protect the sea and the beaches.",
+     "Write a report explaining the qualities that make somebody a good friend.",
+     "Write a report on the advantages and the disadvantages of allowing mobile phones in school."],
+    ["Write a report on a festival celebrated in Trinidad and Tobago and explain why it matters.",
+     "Write a report explaining how students can keep themselves safe online.",
+     "Write a report on why reading is important."]
+  ]
+};
+
+const CRITERIA = [
+  ["Content","Ideas that answer the prompt, developed with detail rather than listed."],
+  ["Language Use","Descriptive and sensory language in a story; factual, formal language in a report."],
+  ["Grammar and Mechanics","Spelling, punctuation, capitals, and a variety of sentence types."],
+  ["Organisation","A clear beginning, middle and end, with paragraphs that follow each other."]
+];
+
+/* ============================================================
+   Syllabus — from the Assessment Framework for SEA 2025–2028
+   ============================================================ */
+const SYL_MATH = [
+  ["Number — 19 items, 34 marks",[
+    "Number concepts, place value and rounding to one million",
+    "Expanded notation, ordering and number lines",
+    "Factors, multiples, prime and composite, square numbers to 144",
+    "Money: coins, bills and combinations",
+    "The four operations on whole numbers, one-step and multi-step",
+    "Interpreting a remainder in context",
+    "Estimation and checking that an answer is reasonable",
+    "Number patterns: repeating, increasing, decreasing",
+    "Fractions: equivalence, ordering, improper and mixed numbers",
+    "Adding, subtracting, multiplying and dividing fractions",
+    "Decimals: place value, ordering, rounding, the four operations",
+    "Percent: of a quantity, as a fraction, as a decimal",
+    "Profit and loss, best buy, discount, savings, wages, loans, simple interest, VAT",
+    "Direct proportion and unequal sharing"]],
+  ["Geometry — 6 items, 11 marks",[
+    "Recognising and naming solids from pictures",
+    "Faces, edges, vertices, cross-sections, base, height",
+    "Nets of solids",
+    "Plane shapes: regular and irregular polygons",
+    "Parallel and perpendicular lines, angles",
+    "Classifying shapes and giving reasons"]],
+  ["Measurement — 9 items, 18 marks",[
+    "Linear measure and converting mm, cm, m, km",
+    "Perimeter of squares, rectangles and compound figures",
+    "Area of squares, rectangles and compound figures",
+    "Volume of cubes and cuboids; capacity in litres and millilitres",
+    "Mass in grams and kilograms, including balances",
+    "Time: analogue and digital, 24-hour clock, elapsed time, schedules"]],
+  ["Statistics — 6 items, 12 marks",[
+    "Tally charts, frequency tables, pictographs, block and bar graphs",
+    "Choosing and reading a scale, and recording it in a key",
+    "Interpreting graphs and drawing conclusions from them",
+    "Mode of a set of data",
+    "Mean: the rule, the calculation, and problems using it"]]
+];
+
+const SYL_ELA = [
+  ["Section I — 18 items, 30 marks",[
+    "Spelling within context — 6 items, 12 marks",
+    "Punctuation and capitalisation within context — 6 items, 6 marks",
+    "Grammar within context — 6 items, 12 marks"]],
+  ["Section II — Reading comprehension, 18 items, 34 marks",[
+    "Non-fiction or fiction text — 7 items, 13 marks",
+    "Poetry — 7 items, 13 marks",
+    "Graphic text — 4 items, 8 marks"]],
+  ["The three thinking processes",[
+    "Literal — 28&thinsp;% — the answer is stated in the text",
+    "Inferential — 44&thinsp;% — the answer is in the text but not spelled out",
+    "Evaluation and appreciation — 28&thinsp;% — your own judgement, grounded in the text"]],
+  ["Writing — 40&thinsp;% of the composite score",[
+    "Three prompts, all narrative or all expository — answer one",
+    "Marked by two people on content, language use, grammar and mechanics, organisation",
+    "Fifty minutes: plan, write, then read it back"]]
+];
+
+/* ============================================================
+   Storage
+   ============================================================ */
+const KEY = "rd.sea.v1";
+let store = {seen:{}, syl:{}, essay:"", theme:null};
+try{ const raw = localStorage.getItem(KEY); if(raw) store = Object.assign(store, JSON.parse(raw)); }catch(e){}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){} }
+
+/* ============================================================
+   Answer matching
+   ============================================================ */
+function norm(s){
+  return String(s).toLowerCase()
+    .replace(/[   ]/g," ")
+    .replace(/[·]/g,".")
+    .replace(/[\s,$]/g,"")
+    .replace(/−|–|—/g,"-")
+    .replace(/[.]$/,"");
+}
+const UNIT_WORDS = ["cm³","cm3","m³","m3","cm²","cm2","m²","m2","kg","cm","mm","km","litres","litre","l","ml","g",
+                    "minutes","minute","mins","min","hours","hour","people","students","children","containers",
+                    "crates","mangoes","pens","edges","faces","vertices","lines","%","°","degrees","$"];
+function stripUnits(s){
+  let v = s;
+  for(let i=0;i<3;i++){
+    for(const u of UNIT_WORDS){
+      const n = norm(u);
+      if(n && v.endsWith(n) && v.length > n.length) v = v.slice(0, -n.length);
+    }
+  }
+  return v;
+}
+const alpha = s => /[a-z]/.test(s) ? s.replace(/[^a-z0-9]/g,"") : s;
+function isRight(q, typed){
+  if(!typed || !typed.trim()) return false;
+  const t  = norm(typed);
+  const ts = stripUnits(t);
+  for(const acc of q.a){
+    const A  = norm(acc);
+    const As = stripUnits(A);
+    if(t === A || ts === A || t === As || ts === As) return true;
+    if(/[a-z]/.test(As) && alpha(ts) === alpha(As)) return true;
+    const na = parseFloat(As.replace(/[^0-9.\-]/g,""));
+    const nt = parseFloat(ts.replace(/[^0-9.\-]/g,""));
+    if(!isNaN(na) && !isNaN(nt) && /^-?[0-9.]+$/.test(As) && /^-?[0-9.]+$/.test(ts)
+       && Math.abs(na-nt) < 1e-9) return true;
+  }
+  return false;
+}
+
+/* ============================================================
+   Small helpers
+   ============================================================ */
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const STRANDS = ["Number","Geometry","Measurement","Statistics"];
+const TAGCLS  = {Number:"n",Geometry:"g",Measurement:"m",Statistics:"s"};
+const shuffle = a => { const b=a.slice(); for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; };
+const mmss = s => String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+const esc  = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+function qMeta(q){
+  return `<span class="tag ${TAGCLS[q.strand]}">${q.strand}</span>
+          <span>${q.topic}</span><span>&middot;</span><span>${q.proc}</span>
+          ${q.src ? `<span>&middot;</span><span><b>${q.src}</b></span>` : ""}
+          <span style="margin-left:auto">${q.marks} mark${q.marks>1?"s":""}</span>`;
+}
+const WIDE_FIGS = ["barFruit","lshape"];
+function figHTML(q){ return q.fig ? `<figure class="${WIDE_FIGS.includes(q.fig)?"wide":""}">${SVG[q.fig]}</figure>` : ""; }
+
+/* ============================================================
+   Theme
+   ============================================================ */
+function applyTheme(){
+  if(store.theme) document.documentElement.setAttribute("data-theme", store.theme);
+  else document.documentElement.removeAttribute("data-theme");
+}
+$("#themeBtn").addEventListener("click", () => {
+  const dark = document.documentElement.getAttribute("data-theme") === "dark" ||
+    (!store.theme && matchMedia("(prefers-color-scheme:dark)").matches);
+  store.theme = dark ? "light" : "dark"; save(); applyTheme();
+});
+applyTheme();
+
+/* ============================================================
+   Views
+   ============================================================ */
+function show(name){
+  $$(".view").forEach(v => v.hidden = (v.id !== "v-"+name));
+  $$("#nav button").forEach(b => b.setAttribute("aria-current", b.dataset.view===name ? "page" : "false"));
+  if(location.hash.slice(1) !== name) history.replaceState(null,"","#"+name);
+  window.scrollTo({top:0,behavior:"instant"});
+  if(name==="home") renderHome();
+}
+$("#nav").addEventListener("click", e => { const b=e.target.closest("button"); if(b) show(b.dataset.view); });
+$$("[data-go]").forEach(b => b.addEventListener("click", () => show(b.dataset.go)));
+
+/* ============================================================
+   Home
+   ============================================================ */
+function renderHome(){
+  const ids = Object.keys(store.seen);
+  const answered = ids.length;
+  const right = ids.filter(k => store.seen[k].first).length;
+  $("#hStatQ").textContent  = QUESTIONS.length;
+  $("#hStatA").textContent  = answered;
+  $("#hStatBar").style.width = (QUESTIONS.length ? Math.round(answered/QUESTIONS.length*100) : 0) + "%";
+  $("#hStatP").textContent  = answered ? Math.round(right/answered*100)+"%" : "—";
+  $("#hStatP2").textContent = PAPERS.length;
+
+  $("#hStrands").innerHTML = STRANDS.map(s => {
+    const pool = QUESTIONS.filter(q => q.strand===s);
+    const done = pool.filter(q => store.seen[q.id]).length;
+    const ok   = pool.filter(q => store.seen[q.id] && store.seen[q.id].first).length;
+    const pct  = pool.length ? Math.round(done/pool.length*100) : 0;
+    return `<div style="margin-bottom:.85rem">
+      <div style="display:flex;justify-content:space-between;font-size:13.5px">
+        <b>${s}</b><span class="mono muted">${done} / ${pool.length}${done?` &middot; ${Math.round(ok/done*100)}% right`:""}</span>
+      </div>
+      <div class="bar"><i style="width:${pct}%"></i></div></div>`;
+  }).join("");
+}
+$("#resetBtn").addEventListener("click", () => {
+  if(!confirm("Clear every answer, tick and saved essay on this device?")) return;
+  store = {seen:{}, syl:{}, essay:"", theme:store.theme}; save();
+  renderHome(); renderSyllabus(); $("#wEssay").value=""; countWords(); pRender();
+});
+
+/* ============================================================
+   Practice
+   ============================================================ */
+let pFilter = "All", pTopic = "All", pList = [], pIdx = 0;
+
+function pPool(){
+  return QUESTIONS.filter(q =>
+    (pFilter==="All" || q.strand===pFilter) &&
+    (pTopic ==="All" || q.topic ===pTopic));
+}
+function pBuild(reshuffle){
+  const pool = pPool();
+  pList = reshuffle ? shuffle(pool) : pool;
+  pIdx = 0; pRender();
+}
+function pTopics(){
+  const set = new Set(QUESTIONS.filter(q => pFilter==="All"||q.strand===pFilter).map(q => q.topic));
+  const opts = ["All", ...Array.from(set).sort()];
+  if(!opts.includes(pTopic)) pTopic = "All";
+  $("#pTopic").innerHTML = opts.map(t => `<option${t===pTopic?" selected":""}>${t}</option>`).join("");
+}
+$("#pStrand").innerHTML = ["All",...STRANDS]
+  .map(s => `<button class="chip" data-s="${s}" aria-pressed="${s==="All"}">${s}</button>`).join("");
+$("#pStrand").addEventListener("click", e => {
+  const b = e.target.closest(".chip"); if(!b) return;
+  pFilter = b.dataset.s;
+  $$("#pStrand .chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.s===pFilter));
+  pTopics(); pBuild(true);
+});
+$("#pTopic").addEventListener("change", e => { pTopic = e.target.value; pBuild(true); });
+$("#pShuffle").addEventListener("click", () => pBuild(true));
+$("#pPrev").addEventListener("click", () => { if(pIdx>0){ pIdx--; pRender(); } });
+$("#pNext").addEventListener("click", () => { if(pIdx<pList.length-1){ pIdx++; pRender(); } });
+
+let pSession = {n:0, ok:0};
+function pRender(){
+  const host = $("#pHost");
+  $("#pCount").textContent = pList.length
+    ? `Question ${pIdx+1} of ${pList.length} in this set.`
+    : "No questions match that filter.";
+  $("#pSession").textContent = pSession.n ? `This session: ${pSession.ok} of ${pSession.n} right` : "";
+  $("#pPrev").disabled = pIdx<=0;
+  $("#pNext").disabled = pIdx>=pList.length-1;
+  if(!pList.length){ host.innerHTML = ""; return; }
+
+  const q = pList[pIdx];
+  const rec = store.seen[q.id];
+  host.innerHTML = `<div class="qcard">
+    <div class="qtop"><span class="no">${pIdx+1}</span>${qMeta(q)}</div>
+    <div class="qbody">
+      <div class="qtext">${q.q}</div>
+      ${figHTML(q)}
+      <div class="answerrow">
+        <label for="pAns">Answer</label>
+        <input type="text" class="ans" id="pAns" autocomplete="off" autocapitalize="off" spellcheck="false"
+               placeholder="type it here">
+        ${q.unit ? `<span class="muted mono">${q.unit}</span>` : ""}
+        <button class="btn" id="pCheck">Check</button>
+        <button class="btn ghost" id="pShow">Show me</button>
+        ${rec ? `<span class="muted" style="font-size:12.5px">${rec.first?"You had this right first time.":"You have seen this one before."}</span>` : ""}
+      </div>
+      <div id="pVerdict"></div>
+    </div></div>`;
+
+  const input = $("#pAns");
+  input.addEventListener("keydown", e => { if(e.key==="Enter") check(); });
+  $("#pCheck").addEventListener("click", check);
+  $("#pShow").addEventListener("click", () => reveal(false));
+  input.focus();
+
+  function check(){
+    const ok = isRight(q, input.value);
+    if(!store.seen[q.id]) { store.seen[q.id] = {first: ok}; save(); }
+    pSession.n++; if(ok) pSession.ok++;
+    $("#pSession").textContent = `This session: ${pSession.ok} of ${pSession.n} right`;
+    reveal(true, ok);
+  }
+  function reveal(marked, ok){
+    $("#pVerdict").innerHTML = `<div class="verdict ${marked && ok ? "ok":"no"}">
+      <b>${marked ? (ok ? "Correct" : "Not quite") : "The answer"}</b>
+      <div>Answer: <b class="mono">${esc(q.a[0])}${q.unit?" "+q.unit:""}</b></div>
+      <div class="exp">${q.exp}</div></div>`;
+    if(!store.seen[q.id]){ store.seen[q.id] = {first:false}; save(); }
+    renderHome();
+  }
+}
+pTopics(); pBuild(true);
+
+/* ============================================================
+   Mock exam
+   ============================================================ */
+const BLUEPRINT = {
+  1:{Number:10,Geometry:3,Measurement:4,Statistics:3},
+  2:{Number:8, Geometry:2,Measurement:4,Statistics:2},
+  3:{Number:1, Geometry:1,Measurement:1,Statistics:1}
+};
+let exam = null, examTimer = null;
+
+function poolFor(sec,strand){ return QUESTIONS.filter(q => q.sec===sec && q.strand===strand); }
+
+function buildPaper(){
+  const picked = {1:[],2:[],3:[]}, short = [];
+  for(const sec of [1,2,3]){
+    for(const st of STRANDS){
+      const want = BLUEPRINT[sec][st];
+      const pool = shuffle(poolFor(sec,st));
+      if(pool.length < want) short.push(`${st} Section ${sec}: ${pool.length} of ${want}`);
+      picked[sec] = picked[sec].concat(pool.slice(0, want));
+    }
+  }
+  // Nudge Section II towards its official 39 marks by swapping within the same strand.
+  let total = picked[2].reduce((s,q)=>s+q.marks,0), guard = 0;
+  while(total !== 39 && guard++ < 200){
+    const need = 39 - total; let moved = false;
+    for(let i=0;i<picked[2].length && !moved;i++){
+      const cur = picked[2][i];
+      for(const cand of poolFor(2, cur.strand)){
+        if(picked[2].some(c => c.id === cand.id)) continue;
+        const d = cand.marks - cur.marks;
+        if((need>0 && d>0) || (need<0 && d<0)){ picked[2][i] = cand; total += d; moved = true; break; }
+      }
+    }
+    if(!moved) break;
+  }
+  const items = [...shuffle(picked[1]), ...shuffle(picked[2]), ...shuffle(picked[3])];
+  return {items, short, marks: items.reduce((s,q)=>s+q.marks,0)};
+}
+
+function startExam(){
+  const p = buildPaper();
+  exam = {items:p.items, answers:{}, left: 75*60, untimed: $("#examUntimed").checked,
+          marks:p.marks, short:p.short, done:false};
+  $("#examIntro").hidden = true; $("#examResult").hidden = true; $("#examLive").hidden = false;
+  renderExam();
+  clearInterval(examTimer);
+  if(!exam.untimed){
+    examTimer = setInterval(() => {
+      exam.left--;
+      const c = $("#examClock");
+      if(c){ c.textContent = mmss(Math.max(0,exam.left)); c.classList.toggle("low", exam.left <= 300); }
+      if(exam.left <= 0){ clearInterval(examTimer); finishExam(true); }
+    }, 1000);
+  } else { $("#examClock").textContent = "—"; }
+}
+
+function renderExam(){
+  const host = $("#examHost"); let html = ""; let n = 0; let sec = 0;
+  const secText = {
+    1:["Section I","Twenty items, one mark each. Write the answer only."],
+    2:["Section II","Sixteen items worth two or three marks. Show your working on paper."],
+    3:["Section III","Four items worth four marks each. These carry the most credit — read them twice."]
+  };
+  for(const q of exam.items){
+    if(q.sec !== sec){
+      sec = q.sec;
+      html += `<div class="secbanner"><b>${secText[sec][0]}</b> &mdash; ${secText[sec][1]}</div>`;
+    }
+    n++;
+    html += `<div class="examq" id="eq${n}">
+      <div class="qtop" style="background:none;border:0;padding:0 0 .55rem">
+        <span class="no">${n}</span>${qMeta(q)}</div>
+      <div class="qtext">${q.q}</div>${figHTML(q)}
+      <div class="answerrow">
+        <label for="ea${n}">Answer</label>
+        <input type="text" class="ans" id="ea${n}" data-n="${n}" autocomplete="off" spellcheck="false">
+        ${q.unit ? `<span class="muted mono">${q.unit}</span>` : ""}
+      </div></div>`;
+  }
+  host.innerHTML = html;
+  host.addEventListener("input", e => {
+    const i = e.target.closest("input.ans"); if(!i) return;
+    exam.answers[i.dataset.n] = i.value;
+    updateExamProgress();
+  });
+  updateExamProgress();
+  $("#examClock").textContent = exam.untimed ? "—" : mmss(exam.left);
+}
+
+function updateExamProgress(){
+  const done = Object.values(exam.answers).filter(v => v && v.trim()).length;
+  $("#examProg").textContent = `${done} / ${exam.items.length}`;
+  $("#examPalette").innerHTML = exam.items.map((q,i) => {
+    const k = i+1, filled = exam.answers[k] && exam.answers[k].trim();
+    return `<a href="#eq${k}" class="${filled?"done":""}" title="Question ${k}">${k}</a>`;
+  }).join("");
+}
+
+function finishExam(auto){
+  if(exam.done) return;
+  if(!auto && !confirm("Hand in the paper and see your marks?")) return;
+  exam.done = true; clearInterval(examTimer);
+
+  let got = 0;
+  const byStrand = {}, byProc = {}, wrong = [];
+  STRANDS.forEach(s => byStrand[s] = {got:0,max:0});
+  ["Knowing","Applying","Reasoning"].forEach(p => byProc[p] = {got:0,max:0});
+
+  exam.items.forEach((q,i) => {
+    const typed = exam.answers[i+1] || "";
+    const ok = isRight(q, typed);
+    byStrand[q.strand].max += q.marks; byProc[q.proc].max += q.marks;
+    if(ok){ got += q.marks; byStrand[q.strand].got += q.marks; byProc[q.proc].got += q.marks; }
+    else wrong.push({n:i+1, q, typed});
+    if(!store.seen[q.id]) store.seen[q.id] = {first: ok};
+  });
+  save();
+
+  const pct = exam.marks ? Math.round(got/exam.marks*100) : 0;
+  const row = (label,o) => `<div style="margin-bottom:.7rem">
+      <div style="display:flex;justify-content:space-between;font-size:13.5px"><b>${label}</b>
+        <span class="mono muted">${o.got} / ${o.max}</span></div>
+      <div class="bar"><i style="width:${o.max?Math.round(o.got/o.max*100):0}%"></i></div></div>`;
+
+  $("#examLive").hidden = true;
+  $("#examResult").hidden = false;
+  $("#examResult").innerHTML = `
+    <div class="pagehead"><p class="label">${auto ? "Time was called" : "Paper handed in"}</p>
+      <h1>${got} out of ${exam.marks}</h1>
+      <p>${pct}&thinsp;% on this paper. ${wrong.length ? `Work through the ${wrong.length} you missed &mdash; that is where the marks are.` : "A clean sheet. Sit another with different questions."}</p></div>
+    <div class="grid g2" style="margin-bottom:1.25rem">
+      <div class="card"><p class="label">By strand</p><div style="margin-top:.7rem">${STRANDS.map(s=>row(s,byStrand[s])).join("")}</div></div>
+      <div class="card"><p class="label">By thinking process</p><div style="margin-top:.7rem">${["Knowing","Applying","Reasoning"].map(p=>row(p,byProc[p])).join("")}</div>
+        <p class="note" style="margin-top:.4rem">The real paper is 45&thinsp;% knowing, 35&thinsp;% applying, 20&thinsp;% reasoning.</p></div>
+    </div>
+    ${exam.short.length ? `<p class="note" style="margin-bottom:1.25rem">The bank is short of items for ${exam.short.join("; ")}, so this paper is a little smaller than the official 40 items / 75 marks.</p>` : ""}
+    ${wrong.length ? `<div class="card"><p class="label">What to go back over</p>
+      <h2 style="margin:.2rem 0 1rem">${wrong.length} question${wrong.length>1?"s":""} to look at again</h2>
+      ${wrong.map(w => `<div style="border-top:1px solid var(--line);padding:1rem 0">
+        <div class="qtop" style="background:none;border:0;padding:0 0 .5rem"><span class="no">${w.n}</span>${qMeta(w.q)}</div>
+        <div class="qtext" style="font-size:15.5px">${w.q.q}</div>${figHTML(w.q)}
+        <div class="verdict no" style="margin-top:.8rem">
+          <b>${w.typed.trim() ? "You wrote &ldquo;"+esc(w.typed)+"&rdquo;" : "Left blank"}</b>
+          <div>Answer: <b class="mono">${esc(w.q.a[0])}${w.q.unit?" "+w.q.unit:""}</b></div>
+          <div class="exp">${w.q.exp}</div></div></div>`).join("")}</div>` : ""}
+    <div class="btnrow" style="margin-top:1.25rem">
+      <button class="btn warm" id="examAgain">Sit another paper</button>
+      <button class="btn ghost" data-go="practice">Practice the weak strand</button>
+    </div>
+    <p class="note" style="margin-top:1rem">This app marks the final answer only. In the real examination
+       Sections II and III award marks for correct working even when the final answer slips, so keep
+       showing every step.</p>`;
+  $("#examAgain").addEventListener("click", () => { $("#examResult").hidden = true; $("#examIntro").hidden = false; });
+  $("#examResult").querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => show(b.dataset.go)));
+  renderHome();
+  window.scrollTo({top:0,behavior:"instant"});
+}
+$("#examStart").addEventListener("click", startExam);
+$("#examSubmit").addEventListener("click", () => finishExam(false));
+$("#examSubmit2").addEventListener("click", () => finishExam(false));
+
+/* ============================================================
+   Writing
+   ============================================================ */
+let wKind = "narrative", wSet = 0, wTimer = null, wLeft = 50*60;
+
+$("#wType").innerHTML = [["narrative","Narrative"],["expository","Expository"]]
+  .map(([k,l]) => `<button class="chip" data-k="${k}" aria-pressed="${k===wKind}">${l}</button>`).join("");
+$("#wType").addEventListener("click", e => {
+  const b = e.target.closest(".chip"); if(!b) return;
+  wKind = b.dataset.k; wSet = 0;
+  $$("#wType .chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.k===wKind));
+  renderPrompts();
+});
+$("#wNewSet").addEventListener("click", () => {
+  wSet = (wSet + 1) % WRITING[wKind].length; renderPrompts();
+});
+
+function renderPrompts(){
+  const set = WRITING[wKind][wSet];
+  $("#wSetLabel").innerHTML = `${wKind==="narrative"?"Narrative":"Expository"} &middot; set ${wSet+1} of ${WRITING[wKind].length} &middot; choose one`;
+  $("#wPrompts").innerHTML = set.map((p,i) =>
+    `<div class="prompt" role="button" tabindex="0" data-i="${i}" aria-pressed="false">
+       <span class="n">${i+1}.</span>${p}</div>`).join("");
+}
+$("#wPrompts").addEventListener("click", e => {
+  const p = e.target.closest(".prompt"); if(!p) return;
+  const on = p.getAttribute("aria-pressed") === "true";
+  $$("#wPrompts .prompt").forEach(x => x.setAttribute("aria-pressed","false"));
+  p.setAttribute("aria-pressed", on ? "false" : "true");
+});
+$("#wPrompts").addEventListener("keydown", e => {
+  if(e.key===" " || e.key==="Enter"){ e.preventDefault(); e.target.click(); }
+});
+
+$("#wCrit").innerHTML = CRITERIA.map(([t,d],i) =>
+  `<label class="crit"><input type="checkbox" data-c="${i}">
+     <span><b>${t}</b><br><span class="muted" style="font-size:13.5px">${d}</span></span></label>`).join("");
+
+function countWords(){
+  const v = $("#wEssay").value.trim();
+  $("#wWords").textContent = v ? v.split(/\s+/).length : 0;
+}
+$("#wEssay").value = store.essay || "";
+$("#wEssay").addEventListener("input", () => {
+  store.essay = $("#wEssay").value; save(); countWords();
+});
+countWords();
+
+$("#wStart").addEventListener("click", () => {
+  if(wTimer){ clearInterval(wTimer); wTimer = null; $("#wStart").textContent = "Start"; return; }
+  $("#wStart").textContent = "Pause";
+  wTimer = setInterval(() => {
+    wLeft--;
+    $("#wClock").textContent = mmss(Math.max(0,wLeft));
+    if(wLeft <= 0){ clearInterval(wTimer); wTimer = null; $("#wStart").textContent = "Start";
+      alert("Fifty minutes. Pencils down — read it back."); }
+  }, 1000);
+  $("#wEssay").focus();
+});
+$("#wReset").addEventListener("click", () => {
+  if(!confirm("Clear the essay and reset the clock?")) return;
+  clearInterval(wTimer); wTimer = null; wLeft = 50*60;
+  $("#wStart").textContent = "Start"; $("#wClock").textContent = "50:00";
+  $("#wEssay").value = ""; store.essay = ""; save(); countWords();
+  $$("#wCrit input").forEach(c => c.checked = false);
+});
+renderPrompts();
+
+/* ============================================================
+   Papers
+   ============================================================ */
+const PFILTERS = [["all","All"],["math","Mathematics"],["ela","English Language Arts"],
+                  ["wri","Writing"],["spec","Specimen"],["fw","Frameworks"]];
+let pfk = "all";
+$("#paperFilter").innerHTML = PFILTERS
+  .map(([k,l]) => `<button class="chip" data-k="${k}" aria-pressed="${k===pfk}">${l}</button>`).join("");
+$("#paperFilter").addEventListener("click", e => {
+  const b = e.target.closest(".chip"); if(!b) return;
+  pfk = b.dataset.k;
+  $$("#paperFilter .chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.k===pfk));
+  renderPapers();
+});
+function renderPapers(){
+  const rows = PAPERS.filter(p => pfk==="all" || p.k===pfk);
+  if(!rows.length){ $("#paperList").innerHTML = `<p class="muted">Nothing under that filter.</p>`; return; }
+  const years = Array.from(new Set(rows.map(r => r.y))).sort().reverse();
+  $("#paperList").innerHTML = years.map(y => `
+    <p class="label" style="margin:${y===years[0]?"0":"1.4rem"} 0 .3rem">${y}</p>
+    ${rows.filter(r => r.y===y).map(r => `<div class="paper">
+        <div class="yr">${r.y}</div>
+        <div class="nm"><b>${r.t}</b><small>${r.s}</small></div>
+        <a class="dl" href="${r.u}" target="_blank" rel="noopener">PDF &nearr;</a>
+      </div>`).join("")}`).join("");
+}
+renderPapers();
+
+/* ============================================================
+   Syllabus
+   ============================================================ */
+function renderSyllabus(){
+  const block = (data, heading) => `
+    <div class="card"><p class="label">${heading}</p></div>` +
+    data.map(([title, items], gi) => `
+      <details class="strand"${gi===0?" open":""}>
+        <summary>${title}</summary>
+        <ul>${items.map((it,ii) => {
+          const key = heading[0]+gi+"-"+ii;
+          return `<li><label style="display:flex;gap:.55rem;align-items:flex-start;cursor:pointer">
+            <input type="checkbox" data-syl="${key}" ${store.syl[key]?"checked":""}
+                   style="margin-top:.3rem;width:16px;height:16px;accent-color:var(--brand2);flex:none">
+            <span>${it}</span></label></li>`;
+        }).join("")}</ul>
+      </details>`).join("");
+  $("#sylMath").innerHTML = block(SYL_MATH, "Mathematics — 40 items, 75 marks, 75 minutes");
+  $("#sylEla").innerHTML  = block(SYL_ELA,  "English Language Arts — 36 items, 64 marks, 75 minutes");
+}
+document.addEventListener("change", e => {
+  const c = e.target.closest("input[data-syl]"); if(!c) return;
+  store.syl[c.dataset.syl] = c.checked; save();
+});
+renderSyllabus();
+
+/* ============================================================
+   Boot
+   ============================================================ */
+const startView = location.hash.slice(1);
+show(["home","practice","exam","writing","papers","syllabus"].includes(startView) ? startView : "home");
+window.addEventListener("beforeunload", e => {
+  if(exam && !exam.done){ e.preventDefault(); e.returnValue = ""; }
+});
+</script>
+</body>
+</html>
