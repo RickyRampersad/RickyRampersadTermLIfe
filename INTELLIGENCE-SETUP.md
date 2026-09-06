@@ -908,6 +908,72 @@ an invented insight on a quiet day costs more than a blank space.
 Every branch of it is a fact about the cohort. None of them is a claim about a
 product, and none is a claim about a person.
 
+#### Every agent is on the wall, by name
+
+The branch's note on the first cut was that it could only see the four unit
+heads, and it was right about what mattered: **a wall meant to move agents has
+to have the agents on it.** Two things were happening.
+
+The **demo screenshot** was mock data, and the mock listed the four managers —
+so the picture said "managers only" while the code said otherwise. That was mine
+and it is fixed; the mock now carries a realistic roll and the month
+leaderboard is keyed on the agent, exactly as the builder keys it.
+
+But **four names is four names**, however they are chosen. There are 22 agents
+with a client having a birthday on 6 September and a ranked top-four shows
+eighteen of them nothing. So the years card now carries **the roll**: every
+agent with a birthday today, named, with their count, gold if at least one of
+theirs carries a gap. An agent walking past looks for one thing on this wall and
+it is their own name.
+
+The ranked panel underneath stays, because it answers a different question —
+*who should be pushed today*, sorted by gaps rather than by count — and it now
+shows the unit only when the unit is not the agent's own name.
+
+**The town line was removed to make room.** It was never asked for and was the
+least actionable thing on the screen. `today.towns` is still in the feed for the
+app.
+
+#### Vested and inactive books are on the wall too
+
+Asked for by the branch — *"include inactive agents that we need to assign"* —
+and it turned out to be the largest thing this wall was hiding.
+
+The in-force extract carries a servicing-agent status. The builder used it as a
+filter and dropped every row whose agent was not Active, so those clients
+vanished from the wall entirely. Measured on the branch book:
+
+| | |
+|---|---|
+| Servicing agent codes on the in-force extract | 61 |
+| Active | 33 |
+| Inactive | 19 |
+| Vested | 9 |
+| **Clients behind those 28 agents** | **2,266** |
+| **Live policies they hold** | **3,216** |
+| **With a September birthday** | **184** |
+
+So 2,266 clients holding 3,216 live policies were invisible, and 184 of them got
+the branch's birthday email this month with nobody assigned to follow it up. A
+vested or inactive servicing agent is not a reason to hide the client — it is
+the reason to call them.
+
+The row is kept and flagged now. On the wall it reads as a gold line: *N sit on
+a book whose agent has vested or left — **assign them***, with the agents named
+and their status, and the branch-wide figure beside it. In the feed it is
+`today.unassigned`, `today.unassignedAgents` and `unassigned{clients, policies,
+month}`.
+
+**A client can sit on two books at once.** If any of their policies is serviced
+by somebody still working, that is the name the wall prints and the client is
+not counted as unassigned — they simply also have history with somebody who
+left. Only a client with no active servicer anywhere is one the branch has to
+reassign, and the test covers the case where the inactive row is read first.
+
+The header and the footer used to say **active agents only**. They do not any
+more, because that is no longer true and a wall whose footer disagrees with its
+figures is worse than one with no footer at all.
+
 #### Who is calling today
 
 The branch's own question in one panel: today is the sixth, these are the agents
@@ -1142,7 +1208,8 @@ month than twenty with twenty.
 
 **Where today's clients are** — town, from the mailing address, populated on
 **72%** of the branch's rows. Chaguanas leads the book at 1,303 clients, then
-Couva, Sangre Grande, Cunupia and Arima.
+Couva, Sangre Grande, Cunupia and Arima. **In the feed only** — it was on the
+wall and the agent roll took its place.
 
 **What today's already hold** — the cover carried by the people on this list,
 not by the branch.

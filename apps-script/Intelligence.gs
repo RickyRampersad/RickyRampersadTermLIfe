@@ -5633,7 +5633,15 @@ function iBuildBook_() {
     var unit = unitOfCode[code] || unitKeys[iPossUnitKey_(x.Unit__c)] || '';
     if (!unit) { offBranch++; return; }
     if (iExcludes_(skip, name) || iExcludes_(skip, id.agentName)) return;
-    if (!activeAgent(code)) { notActive++; return; }
+    /* A VESTED OR INACTIVE SERVICING AGENT IS NOT A REASON TO HIDE THE CLIENT.
+       This used to drop the row, and dropping it hid 2,266 clients holding
+       3,216 live policies behind 28 agents who have retired or left — 184 of
+       them with a September birthday, every one of whom got the branch's email
+       this morning with nobody assigned to follow it up. The row stays and is
+       flagged instead, which is the difference between a wall that reports the
+       branch and a wall that reports the roster. */
+    var isActive = activeAgent(code);
+    if (!isActive) notActive++;
 
     var state = iBookState_(x.Policy_Status_Description_R__c);
     if (state === 'dead') {
@@ -5648,11 +5656,17 @@ function iBuildBook_() {
 
     var c = byClient[key];
     if (!c) c = byClient[key] = { agent: name, unit: unit, n: 0, age: null,
+                                  live: isActive, status: isActive ? '' : (statusOf[code] || 'Inactive'),
                                   dobY: 0, dobM: 0, dobD: 0, first: null, last: null,
                                   firstAge: null, ini: '', town: '', months: [], onBday: false,
                                   boughtThisMonth: 0,
                                   life: false, ci: false, health: false, add: false,
                                   pa: false, pension: false, savings: false };
+    /* A client can sit on two books at once. If any of them belongs to somebody
+       still working, that is the name to put on the wall — the client is not
+       unassigned, they simply also have history with somebody who left. Only a
+       client with no active servicer anywhere is one the branch has to reassign. */
+    else if (!c.live && isActive) { c.agent = name; c.unit = unit; c.live = true; c.status = ''; }
     c.n++;
 
     if (c.age === null && iNum_(x.Current_Age__c) > 0) c.age = Math.round(iNum_(x.Current_Age__c));
@@ -5766,6 +5780,12 @@ function iBuildBook_() {
      branch sends the emails either way; this is the only line on the wall that
      says whether anything came back. */
   var mtdBdays = 0, mtdSold = 0, mtdSoldPol = 0, branchSold = 0, branchSoldPol = 0;
+  /* THE BOOKS WITH NOBODY ON THEM. A servicing agent who has vested or left
+     still has clients, and those clients still get the birthday email. Counted
+     branch-wide, for the month, and for today with the agent named, because the
+     branch's question is not how many there are — it is which books to hand
+     out. */
+  var unClients = 0, unPolicies = 0, unMonth = 0, unToday = 0, unAgents = {};
 
   keys.forEach(function (k) {
     var c = byClient[k];
@@ -5797,6 +5817,16 @@ function iBuildBook_() {
       sevenYearEmails += Math.max(0, Math.min(7, yrsClient));
     }
     if (c.boughtThisMonth) { branchSold++; branchSoldPol += c.boughtThisMonth; }
+    if (!c.live) {
+      unClients++; unPolicies += c.n;
+      if (c.dobM === mm) unMonth++;
+      if (c.dobM === mm && c.dobD === dd) {
+        unToday++;
+        var ua = unAgents[c.agent];
+        if (!ua) ua = unAgents[c.agent] = { k: c.agent, status: c.status || 'Inactive', n: 0 };
+        ua.n++;
+      }
+    }
     if (c.dobM === mm && c.dobD <= dd) {
       mtdBdays++;
       if (c.boughtThisMonth) { mtdSold++; mtdSoldPol += c.boughtThisMonth; }
@@ -6008,6 +6038,12 @@ function iBuildBook_() {
          matured. The email reached them this morning like everybody else. They
          are not in any band, because they hold nothing to band, so they are
          reported on their own with the agent who last had them. */
+      /* Today's clients whose servicing agent has vested or left. Named, because
+         "four need reassigning" is a statistic and "Narada Latchman, vested, 2"
+         is a decision the branch manager can make standing in front of it. */
+      unassigned: unToday,
+      unassignedAgents: Object.keys(unAgents).map(function (k) { return unAgents[k]; })
+                          .sort(function (a, b) { return b.n - a.n; }),
       lapsed: goneToday,
       lapsedAgents: Object.keys(goneAgents).map(function (k) {
                       return { k: k, n: goneAgents[k] }; })
@@ -6059,6 +6095,10 @@ function iBuildBook_() {
        branch could not defend if anybody asked. */
     lettersAYear: withDob,
     sevenYearEmails: sevenYearEmails,
+    /* The branch's orphan book, whole: clients and live policies whose
+       servicing agent is no longer active, and how many of them have a birthday
+       in the month on screen. */
+    unassigned: { clients: unClients, policies: unPolicies, month: unMonth },
     /* Reported with its baseline, because a percentage on its own invites the
        reader to see a pattern in one in twelve. */
     birthdayEffect: { same: bdaySame, of: bdayBase,

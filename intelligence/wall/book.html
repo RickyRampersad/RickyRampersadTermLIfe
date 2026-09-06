@@ -279,8 +279,19 @@
   .years .mile u{text-decoration:none;font-family:var(--font-d);font-weight:800;font-size:14px;
     color:var(--ink);line-height:1}
   .years .mile b{font:600 10.5px var(--font-b);color:var(--dim)}
-  .years .where{font-size:11.5px;color:var(--faint);line-height:1.5}
-  .years .where b{color:var(--dim);font-weight:600}
+  /* EVERY AGENT WITH A BIRTHDAY TODAY, BY NAME. The branch's note was that it
+     could only see the four unit heads, and it was right about what mattered:
+     a wall meant to move agents has to have the agents on it. The ranked panel
+     below shows four; this shows all twenty-two, because the one an agent looks
+     for is their own. Gold means at least one of theirs carries a gap. */
+  .years .roll{margin-top:10px;font-size:11px;color:var(--faint);line-height:1.75}
+  .years .roll > b{color:var(--dim);font-weight:600;margin-right:4px}
+  .years .ag{display:inline-block;border:1px solid rgba(255,255,255,.13);
+    border-radius:7px;padding:0 7px;margin:0 4px 0 0;color:var(--dim)}
+  .years .ag u{text-decoration:none;font-weight:700;color:var(--ink);margin-left:5px}
+  .years .ag.g{border-color:rgba(239,194,75,.42);background:rgba(239,194,75,.09)}
+  .years .ag.g u{color:var(--gold)}
+  .years .roll:empty{display:none}
   .years .yside{flex:none;width:340px;display:flex;flex-direction:column;gap:12px}
   /* THE POINTER. One line, chosen every morning from the people actually on the
      screen — a wall that prints the same advice daily stops being read by the
@@ -465,10 +476,10 @@
      the hero, and that is a measurement rather than a preference: the hero
      column is 290px, where this paragraph runs to six lines and pushed the card
      164px past a row that has none to give. Here it is one line. */
-  .years .ylapse{margin-top:9px;padding:8px 12px;border-radius:10px;
+  .years .ylapse{margin-top:9px;padding:7px 12px;border-radius:10px;
     background:linear-gradient(120deg,rgba(239,194,75,.15),rgba(239,194,75,.03));
     border:1px solid rgba(239,194,75,.32);font-size:11.5px;color:var(--dim);
-    line-height:1.4}
+    line-height:1.45}
   .years .ylapse b{color:var(--gold);font-weight:700}
   .years .ylapse em{font-style:normal;color:var(--faint);font-size:10.5px}
   .years .ylapse:empty{display:none}
@@ -566,7 +577,7 @@
   <div class="mark"><img src="../../logo-mark.png" alt=""></div>
   <div>
     <h1>Birthdays Today</h1>
-    <div class="sub" id="hSub">The day's list &middot; active agents &middot; Ricky Rampersad Branch, Chaguanas</div>
+    <div class="sub" id="hSub">The day's list &middot; every book, assigned or not &middot; Ricky Rampersad Branch, Chaguanas</div>
   </div>
   <div class="right">
     <div id="chip" onclick="clearFilter()"><b id="chipTxt"></b><span>&#10005;</span></div>
@@ -587,15 +598,16 @@
     <div class="yn">7</div>
     <div class="ytxt">
       <div class="hd">years of birthday emails have already gone out</div>
-      <p>The branch has wished these clients a happy birthday every year, automatically,
-        for the better part of a decade. <b>Nobody had to be reminded and nobody had to
-        write it.</b> The relationship is built and it is paid for.</p>
-      <p class="last">What the email has never done is ask a question.
-        <b>That part is yours, today.</b></p>
+      <!-- ONE LINE OF NARRATIVE, NOT THREE. The headline above already states the
+           seven years and the count; the hero states "nothing beats a call". What
+           this card owes the room now is the agents' names, and they cost lines. -->
+      <p class="last">Every year, automatically, for the better part of a decade &mdash;
+        <b>nobody had to be reminded and nobody had to write them.</b>
+        What they have never done is ask a question. <b>That part is yours, today.</b></p>
       <div class="ystrip">
         <div class="miles" id="bMiles"></div>
-        <div class="where" id="heroWhere"></div>
       </div>
+      <div class="roll" id="heroWhere"></div>
       <div class="ylapse" id="heroLapse"></div>
     </div>
     <div class="yside">
@@ -772,14 +784,26 @@ function paint(){
   $("#heroCap").innerHTML='birthday emails, triggered first thing this morning '
     + '<b>in your name</b>. <b>'+n(T.n)+'</b> hold cover, <b>'+n(T.withGap)
     + '</b> of those carry a gap.';
-  var LA=(T.lapsedAgents||[]);
-  $("#heroLapse").innerHTML = T.lapsed
-    ? '<b>'+n(T.lapsed)+'</b> of this morning&rsquo;s '+n(T.emails!=null?T.emails:T.n)
-      + ' hold nothing with us any more &mdash; surrendered, lapsed or matured. '
-      + 'The email still found them. <b>Easiest call on this wall.</b>'
-      + (LA.length ? ' <em>'+LA.slice(0,4).map(function(a){
-            return esc(a.k)+' '+n(a.n); }).join(' &middot; ')+'</em>' : '')
-    : '';
+  /* THE TWO EXCEPTIONS, IN ONE BOX. Both are people the wall would otherwise
+     not mention and both are calls somebody should make today; two separate
+     panels cost 25px of border and padding the years card does not have. */
+  var LA=(T.lapsedAgents||[]), UA=(T.unassignedAgents||[]), UN=(D.unassigned||{}), ex=[];
+  /* ONE LINE EACH. At 1018px the card gives these two about 150 characters
+     apiece, and a third line on either of them pushes the whole card past the
+     row. Everything cut from here is still in the feed. */
+  if(T.lapsed) ex.push('<div><b>'+n(T.lapsed)+'</b> of this morning&rsquo;s '
+    + n(T.emails!=null?T.emails:T.n)+' hold nothing with us any more. '
+    + '<b>Easiest call on the wall.</b>'
+    + (LA.length ? ' <em>'+LA.slice(0,3).map(function(a){
+          return esc(a.k)+' '+n(a.n); }).join(' &middot; ')+'</em>' : '')+'</div>');
+  if(T.unassigned) ex.push('<div><b>'+n(T.unassigned)+'</b> sit on a book whose agent has '
+    + 'vested or left &mdash; <b>assign them.</b>'
+    + (UA.length ? ' <em>'+UA.slice(0,3).map(function(a){
+          return esc(a.k)+' '+esc(a.status||'inactive').toLowerCase()+' '+n(a.n);
+        }).join(' &middot; ')+'</em>' : '')
+    + (UN.clients ? ' <em>&middot; branch-wide <b>'+n(UN.clients)+'</b> clients on <b>'
+          + n(UN.policies)+'</b> policies</em>' : '')+'</div>');
+  $("#heroLapse").innerHTML = ex.join('');
   var MI=T.milestones||[];
   $("#bMiles").innerHTML = MI.length
     ? MI.map(function(m){
@@ -793,8 +817,8 @@ function paint(){
      sixth, these are the people whose clients are having it, and this is how
      many of theirs are worth more than a greeting. */
   var TB=(T.byAgent||[]);
-  $("#wCap").innerHTML='Today is the <b>'+n((D.month||{}).day)+'</b>. Gold is how many of '
-    + 'theirs carry a gap.';
+  $("#wCap").innerHTML='Today is the <b>'+n((D.month||{}).day)+'</b>. Gold carries a gap; '
+    + '<i>quiet</i> has bought nothing in five years.';
   $("#mList").innerHTML = TB.length ? TB.slice(0,4).map(function(a){
       return '<div class="mrow"><div class="age">'+n(a.n)+'</div><div class="mt">'
         + '<div class="t">'+esc(a.k)+'</div>'
@@ -802,14 +826,24 @@ function paint(){
            branch's agents run their own unit, so the row read "Ricky Rampersad
            / Ricky Rampersad · 3 with a gap · 4 gone quiet" and the line that
            mattered was the half that fell off the end. */
+        /* Short labels. The column is 203px, which is about 34 characters, and
+           "Ricky Rampersad · 1 with a gap · 1 gone quiet" is 44 — so the half
+           that mattered fell off the end. The caption above names what gold
+           means, so the number does not have to. */
         + '<div class="a">'+(a.unit&&a.unit!==a.k?esc(a.unit)+' &middot; ':'')
-        + (a.gap?'<em>'+n(a.gap)+' with a gap</em>':'')
-        + (a.quiet?(a.gap?' &middot; ':'')+n(a.quiet)+' gone quiet':'')+'</div>'
+        + (a.gap?'<em>'+n(a.gap)+' gap</em>':'')
+        + (a.quiet?(a.gap?' &middot; ':'')+n(a.quiet)+' quiet':'')+'</div>'
         + '</div></div>'; }).join("")
     : '<p class="none">Nobody on the branch book has a birthday today.</p>';
-  var TW=(T.towns||[]).slice(0,5);
-  $("#heroWhere").innerHTML = TW.length
-    ? '<b>Where they are.</b> '+TW.map(function(t){ return esc(t.k)+' '+n(t.n); }).join(' &middot; ')
+  /* THE ROLL. Every agent with a client having a birthday today, named, because
+     the branch's whole point is that the agent walking past should find their
+     own name on it. The town line that used to sit here was never asked for and
+     was the least actionable thing on the wall; the towns are still in the feed
+     for the app. Ranked by count, so the biggest books read first. */
+  $("#heroWhere").innerHTML = TB.length
+    ? '<b>Calling today.</b> '+TB.map(function(a){
+        return '<span class="ag'+(a.gap?' g':'')+'">'+esc(a.k)+'<u>'+n(a.n)+'</u></span>';
+      }).join('')
     : '';
 
   /* The seven-year claim, with the measurement that qualifies it beside it. */
@@ -957,9 +991,12 @@ setInterval(tick,10000); tick();
 function boot(){
   paint();
   if(!BOOK.configured) return;
+  /* NOT "active agents only" any more. Vested and inactive servicing agents keep
+     their clients on this wall, because those clients still hold cover and still
+     got the email — hiding them hid 2,266 of them. */
   $("#src").innerHTML="Salesforce client portfolio · built "+BOOK.generatedAt
-    + " · active agents only · <b>counts and bands only</b> — no client reaches this wall, "
-    + "because the agent already has them in their portal";
+    + " · every servicing agent, vested and inactive included · <b>counts and bands only</b>"
+    + " — no client reaches this wall, because the agent already has them in their portal";
 }
 function load(){
   if(!BOOK_URL){ boot(); return; }
