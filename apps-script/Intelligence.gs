@@ -2886,7 +2886,12 @@ var IWALL_BANDS = [45, 60, 90];
 /* ── Agents whose book should not count in the branch view ─────────────────
    Set INTEL_EXCLUDE_AGENTS to a comma-separated list of names as the DUES BOOK
    writes them. Matching is on the same normalised key as everywhere else, so
-   "Aleema Mohammed-Ali" and "ALEEMA MOHAMMED ALI" are the same person.
+   "Anne Mohammed-Ali" and "ANNE MOHAMMED ALI" are the same person.
+
+   THE SURNAMES HAVE TO MATCH — see iExcludes_ below. A given name typed against
+   the wrong surname excludes nobody, and the failure is silent: the agent
+   simply stays on every wall. Copy the name off the dues book rather than
+   typing it from memory, and check quality.excluded on the next build.
 
    Read this before adding a name. Excluding an agent does NOT settle their
    premiums — it only stops them being counted here. Their clients still owe
@@ -2906,13 +2911,13 @@ function iExcluded_() {
 /* Does this agent name fall under an exclusion?
 
    Exact keys are not enough, and the delivery wall proved it: the dues book
-   writes "Aleema Mohammed-Ali" and the in-force book writes "ALEEMA LEYYA
-   MOHAMMED-ALI" — same person, one middle name apart. An exclusion that
-   matched one book and not the other put a removed agent back on a screen,
-   which is exactly the instruction not being honoured.
+   writes a name as "Given Surname-Surname" and the in-force book writes
+   "GIVEN MIDDLE SURNAME-SURNAME" — same person, one middle name apart. An
+   exclusion that matched one book and not the other put a removed agent back
+   on a screen, which is exactly the instruction not being honoured.
 
    So: exact, or every token of the excluded name present in the candidate
-   (and the surnames equal). "Aleema Mohammed Ali" is inside "Aleema Leyya
+   (and the surnames equal). "Anne Mohammed Ali" is inside "Anne Leyya
    Mohammed Ali"; "Meera Persad Khan" is not inside "Mohan Khan". This is
    deliberately NOT the surname-plus-initial test that the security review
    flagged — that one matched different people. */
@@ -5621,7 +5626,7 @@ function iBuildBook_() {
      anything. The other four were clients once and are not now, and on a
      birthday they are the easiest call of the day. Kept aside here, then
      cleared of anyone who turns out to hold something live. */
-  var gone = {};
+  var gone = {}, excluded = 0;
 
   rows.forEach(function (x) {
     var key = String(x.Contact__c || '');
@@ -5632,7 +5637,14 @@ function iBuildBook_() {
     var name = personOfCode[code] || id.agentName || '(none)';
     var unit = unitOfCode[code] || unitKeys[iPossUnitKey_(x.Unit__c)] || '';
     if (!unit) { offBranch++; return; }
-    if (iExcludes_(skip, name) || iExcludes_(skip, id.agentName)) return;
+    /* AGENTS WHO HAVE LEFT THE BRANCH ARE DROPPED OUTRIGHT — not flagged like a
+       vested servicer, removed. The list is INTEL_EXCLUDE_AGENTS and it is a
+       Script Property, so the wall is only as right as that cell: iExcludes_
+       requires the SURNAMES to match, so a given name typed against the wrong
+       surname excludes nobody and does it silently. Counted from here on, so the feed can
+       prove the property is doing its job instead of the branch discovering it
+       from a name on the wall. */
+    if (iExcludes_(skip, name) || iExcludes_(skip, id.agentName)) { excluded++; return; }
     /* A VESTED OR INACTIVE SERVICING AGENT IS NOT A REASON TO HIDE THE CLIENT.
        This used to drop the row, and dropping it hid 2,266 clients holding
        3,216 live policies behind 28 agents who have retired or left — 184 of
@@ -6123,7 +6135,9 @@ function iBuildBook_() {
     byAgent: byAgent,
     quality: {
       unknownStatus: unknown, deadDropped: dead, offBranch: offBranch,
-      notActive: notActive, noClientLink: noClient, noDob: noDob, noIssueDate: noIssue,
+      notActive: notActive, excluded: excluded,
+      excludedNames: Object.keys(skip).length,
+      noClientLink: noClient, noDob: noDob, noIssueDate: noIssue,
       noIssueAge: noIssueAge,
       noTown: todayList.filter(function (t) { return !t.town; }).length
     }

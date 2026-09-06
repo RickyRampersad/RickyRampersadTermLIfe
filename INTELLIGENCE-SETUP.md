@@ -934,6 +934,39 @@ shows the unit only when the unit is not the agent's own name.
 least actionable thing on the screen. `today.towns` is still in the feed for the
 app.
 
+#### Agents who have left the branch
+
+`INTEL_EXCLUDE_AGENTS` is the list, it is a **Script Property**, and the walls
+are only ever as right as that one cell. Two things to know about it:
+
+**The surnames have to match.** `iExcludes_` compares surname first and only
+then the given names, so a given name typed against the wrong surname excludes
+nobody — and it fails silently, leaving the agent on every wall. The unit test's
+stub carried exactly that typo against one of the two names, which meant the
+test named the agent it was supposed to be proving and proved nothing about
+them. The stub now matches the documented value and there is an assertion that
+neither name reaches the feed — not a client, not a policy, not a birthday, not
+a name.
+
+**The feed now counts what it dropped.** `quality.excluded` is the number of
+rows removed and `quality.excludedNames` is how many names the property held, so
+a blank or misspelled property shows up as a zero in the feed rather than as a
+name on a wall in front of the branch.
+
+Everywhere else these two appeared was a **baked snapshot**, not a live feed —
+`WALL45_URL`, `WALL_DATA_URL` on both boards, and the benefits roster are all
+static:
+
+| Where | What changed |
+|---|---|
+| `intelligence/wall/index.html` | The name comes off the agent list, and the headline was **double-counting** them: it read 41 policies / 37,012.20 / 38 clients while `bands[0]` read 36 / 33,189.40 and `households` read 33 — a difference of exactly one excluded agent's 5 policies at 3,822.80. All three agree now. `tenure` and `billing` still sum to 41 and need the source to re-split; wire `WALL45_URL` and the snapshot rebuilds with the exclusion applied in one pass. |
+| `benefits/index.html` | Both roster rows removed, so neither appears in the advisor picker. |
+| `board/dashboard.html` | Every total on that board is reduced from `advisors`, so deleting the rows outright would have quietly restated the branch year by **104 applications and TT$466,940**. They are folded into one unnamed row instead, flagged `left` so no leaderboard prints it. |
+| `board/production.html` | Rows removed from the leaderboard and the latest list. Its year total is baked and its `monthly` breakdown cannot be re-split from the file, so the branch figure is unchanged and the page now says why: *the branch year includes business written by agents who have since left.* |
+
+The rule underneath all of it: **a name comes off a wall the day somebody leaves;
+the business they wrote stays in the branch's year, because the branch wrote it.**
+
 #### Vested and inactive books are on the wall too
 
 Asked for by the branch — *"include inactive agents that we need to assign"* —

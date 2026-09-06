@@ -335,8 +335,6 @@ var D = {
       {a:"Dhalina H.",   n:3, api:14632},
       {a:"Premchand D.", n:1, api:11623},
       {a:"Narissa M.",   n:1, api:9026},
-      {a:"Aleema M.",    n:2, api:4187},
-      {a:"Javid A.",     n:2, api:4187},
       {a:"Felicia R.",   n:1, api:2400}
     ]
   },
@@ -365,10 +363,17 @@ var D = {
     {a:"Fawwaz M.",    t:"akaash", wN:0,wApi:0, lwN:0,lwApi:0,     mN:3,mApi:90521,  yN:28,yApi:352783, ly:346241,  hbN:4, hbApi:333480},
     {a:"Randolph G.",  t:"ricky",  wN:0,wApi:0, lwN:0,lwApi:0,     mN:0,mApi:0,      yN:23,yApi:347321, ly:533805,  hbN:0, hbApi:0},
     {a:"Ricky R.",     t:"ricky",  wN:0,wApi:0, lwN:0,lwApi:0,     mN:0,mApi:0,      yN:22,yApi:309970, ly:1449157, hbN:40,hbApi:3334300},
-    {a:"Aleema M.",    t:"ricky",  wN:0,wApi:0, lwN:2,lwApi:4187,  mN:2,mApi:4187,   yN:58,yApi:254893, ly:321276,  hbN:7, hbApi:168772},
     {a:"Premchand D.", t:"ricky",  wN:0,wApi:0, lwN:1,lwApi:11623, mN:1,mApi:11623,  yN:20,yApi:234947, ly:412100,  hbN:0, hbApi:0},
     {a:"John B.",      t:"gary",   wN:0,wApi:0, lwN:0,lwApi:0,     mN:0,mApi:0,      yN:55,yApi:214990, ly:232734,  hbN:7, hbApi:143671},
-    {a:"Javid A.",     t:"ricky",  wN:0,wApi:0, lwN:2,lwApi:4187,  mN:2,mApi:4187,   yN:46,yApi:212047, ly:320076,  hbN:0, hbApi:0},
+    /* TWO AGENTS HAVE LEFT THE BRANCH, and their names come off every list here.
+       Their business does not: the branch wrote it in 2026 and every total on
+       this board is reduced from this array, so deleting the rows outright would
+       quietly restate the year by 104 applications and TT$466,940. Folded into
+       one unnamed row instead — it reconciles the unit and branch figures and is
+       kept out of the leaderboards by `left`. */
+    {a:"Agents who have left", t:"ricky", left:true,
+       wN:0,wApi:0, lwN:4,lwApi:8374, mN:4,mApi:8374, yN:104,yApi:466940,
+       ly:641352, hbN:7, hbApi:168772},
     {a:"Neil R.",      t:"ricky",  wN:0,wApi:0, lwN:2,lwApi:19250, mN:4,mApi:27089,  yN:25,yApi:190868, ly:422596,  hbN:0, hbApi:0},
     {a:"Naila S.",     t:"gary",   wN:0,wApi:0, lwN:2,lwApi:18681, mN:3,mApi:21711,  yN:29,yApi:188059, ly:35764,   hbN:0, hbApi:0},
     {a:"Akaash K.",    t:"akaash", wN:0,wApi:0, lwN:0,lwApi:0,     mN:0,mApi:0,      yN:12,yApi:166996, ly:228680,  hbN:6, hbApi:4305200},
@@ -398,7 +403,7 @@ var D = {
     {n:"171", red:false, t:"<b>Held-back apps with no policy status.</b> Only 5 of 176 say why they're stuck. Set Policy Status Description on each so the wall can show what's blocking, not just how long."},
     {n:"6",   red:false, t:"<b>Advisors' pickups entered late last week</b> (TT$23.7k landed in Salesforce after the Monday report was cut). Enter pickups the same day — the wall refreshes every 15 minutes, the report only sees what's in by Monday."},
     {n:"77",  red:false, t:"<b>Increase records missing the agent's name</b> (77 of 78 this year). The boards recover it through the parent policy — fill Agent Full Name on the increase so every report agrees."},
-    {n:"2×",  red:true,  t:"<b>Mirrored full-value records</b>: Faizal/Joy and Jamil/Meera carry identical policies at full API each, and Javid/Aleema share mirrored cases. If these are split cases, each half should carry half the API — as entered, branch totals count them twice."},
+    {n:"2×",  red:true,  t:"<b>Mirrored full-value records</b>: Faizal/Joy and Jamil/Meera carry identical policies at full API each. If these are split cases, each half should carry half the API — as entered, branch totals count them twice."},
     {n:"168", red:false, t:"<b>Open opportunities dated 2019–2024</b> (TT$3.5m of stale pipeline). Close the dead ones or refresh the close dates — the pipeline slide is only as honest as this list."},
     {n:"$65k",red:false, t:"<b>The two increase-API fields disagree</b> by TT$64.9k YTD. The branch standard is API Increase (Total API) — keep the joint-split field maintained or retire it, so nobody reports off the wrong one again."}
   ]
@@ -703,7 +708,7 @@ function buildXls(){
   var rows=[], tot={lwN:0,lwApi:0,mN:0,mApi:0,yN:0,yApi:0};
   // who did well — the branch leader (green) and top three (gold) per API column
   function topSet(key){
-    return D.advisors.slice().filter(function(a){return a[key]>0})
+    return D.advisors.slice().filter(function(a){return a[key]>0 && !a.left})
       .sort(function(x,y){return y[key]-x[key]}).slice(0,3).map(function(a){return a.a});
   }
   var tops={lwApi:topSet("lwApi"), mApi:topSet("mApi"), yApi:topSet("yApi")};
@@ -784,8 +789,8 @@ var TEAM_BY_NAME={
   "Chris Badaloo":"gary","John Boodhoo":"gary","Alyssa Joseph":"gary","Jesus Boodhoo":"gary",
   "Anthony Simmons":"kerwyn","Kerwyn Ramroach":"kerwyn","Dhalina Heeraman":"kerwyn",
   "Aidan Eugene":"kerwyn","Crystal Stephanie Fraser":"kerwyn",
-  "Neil Ramnanan":"ricky","Premchand Dookran":"ricky","Varun Seegolam":"ricky","Javid Ali":"ricky",
-  "Aleema Mohammed-Ali":"ricky","Ricky Rampersad":"ricky","Narissa (Agent) Mohammed":"ricky",
+  "Neil Ramnanan":"ricky","Premchand Dookran":"ricky","Varun Seegolam":"ricky",
+  "Ricky Rampersad":"ricky","Narissa (Agent) Mohammed":"ricky",
   "Joy Barbara Sammah":"ricky","Faizal Mohammed":"ricky","Meera Persad Khan":"ricky",
   "Randolph Gonzales":"ricky","Jamil Sean Khan":"ricky",
   "Akaash Kalladeen":"akaash","Darryl Manick":"akaash","Malcolm Sooknanan":"akaash",
