@@ -48,9 +48,12 @@ Object.keys(VO_DATA).forEach(function(k){
 const CH_D=[146.83,220.00,293.66], CH_Fsm=[185.00,277.18,369.99],
       CH_Bm=[123.47,185.00,246.94], CH_G=[196.00,293.66,392.00],
       CH_A=[220.00,329.63,440.00];
-const PROG=[CH_D,CH_Fsm,CH_Bm,CH_G, CH_D,CH_A,CH_G,CH_D,
-            CH_D,CH_Fsm,CH_Bm,CH_G, CH_D,CH_A,CH_G,CH_D,
-            CH_Bm,CH_G, CH_D,CH_A, CH_G,CH_D,CH_D];
+/* Thirty three chords, not twenty three: the fifth wall added eight lines and
+   the read now runs to 275s, so the bed is four full turns of the phrase and a
+   final D to ring out under the close. The extra length went into MORE chords,
+   never into the chord — same key, same 8.7s, and it still lands home on D. */
+const CYCLE=[CH_D,CH_Fsm,CH_Bm,CH_G, CH_D,CH_A,CH_G,CH_D];
+const PROG=[].concat(CYCLE,CYCLE,CYCLE,CYCLE,[CH_D]);
 const CHORD=/*__CHORD__*/;
 
 /* Low while he speaks, up in the gaps. Both numbers are quiet on purpose: a

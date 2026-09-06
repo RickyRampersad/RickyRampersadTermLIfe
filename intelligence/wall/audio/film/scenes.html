@@ -1,7 +1,7 @@
 <div id="stage">
 
   <!-- ══════════════════════════════════════════════════════════════════════
-       Twenty two scenes. The shape is deliberate: nothing goes past as a slide.
+       Twenty nine scenes. The shape is deliberate: nothing goes past as a slide.
        Every wall gets a full view to place it, then a zoom into the panel the
        line is about, and every claim about a duty is followed by the section of
        the Act that imposes it.
@@ -23,7 +23,7 @@
   <div class="scene" id="s2">
     <div class="kick gold">That stops now</div>
     <h1>The Branch<br>Intelligence Wall.</h1>
-    <p class="lede"><b>Four screens.</b> Live on the branch floor,
+    <p class="lede"><b>Five screens.</b> Live on the branch floor,
       <b>twenty four hours a day</b>.</p>
   </div>
 
@@ -200,8 +200,80 @@
     </div>
   </div>
 
-  <!-- s20 · 30-31 · it names -->
-  <div class="scene" id="s20">
+  <!-- s20 · 30-31 · WALL FIVE, whole. ORIGINS ARE MEASURED (bookzoom.js):
+       every --zx/--zy below is P = (S·C − F)/(S − 1) off the rendered wall's
+       card rects with the preview banner in place, then clamped to 0–100%. -->
+  <div class="scene shotscene" id="s20">
+    <div class="wallid"><span class="n">5</span>
+      <span class="t">Birthdays <em>· whose birthday it is, today</em></span></div>
+    <div class="shot wide"><img data-shot="book" alt="Birthdays today"></div>
+    <p class="cap">Every morning, for years, this branch has emailed every client
+      whose birthday it is — <b>in your name</b>. Nobody had to be reminded, and
+      nobody had to write it.</p>
+  </div>
+
+  <!-- s21 · 32 · zoom: nothing beats a call -->
+  <div class="scene shotscene" id="s21">
+    <span class="closer"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M15.8 15.8 21 21"/></svg>Look closer</span>
+    <div class="shot wide zoom" style="--zx:0.0%;--zy:11.4%;--zs:1.99">
+      <img data-shot="book" alt="Nothing beats a call"></div>
+    <p class="cap">What the email has never done is <b>ask a question</b>.
+      That part is yours.</p>
+  </div>
+
+  <!-- s22 · 33 · zoom: the five bands -->
+  <div class="scene shotscene" id="s22">
+    <span class="closer"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M15.8 15.8 21 21"/></svg>Look closer</span>
+    <div class="shot wide zoom" style="--zx:50.0%;--zy:61.7%;--zs:1.55">
+      <img data-shot="book" alt="Today, by where they are in life"></div>
+    <p class="cap">Everyone with a birthday today, <b>in the band their age puts
+      them in</b> — what that band is short of, and the conversation it is owed.</p>
+  </div>
+
+  <!-- s23 · 34 · zoom: the roll -->
+  <div class="scene shotscene" id="s23">
+    <span class="closer"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M15.8 15.8 21 21"/></svg>Your name is on it</span>
+    <div class="shot wide zoom out" style="--zx:53.0%;--zy:0.0%;--zs:1.90">
+      <img data-shot="book" alt="Every agent, named"></div>
+    <p class="cap">Every agent with a client on this list is <b>named on it</b>.
+      Find yourself from across the room.</p>
+  </div>
+
+  <!-- s24 · 35 · zoom: growth on plans we already have -->
+  <div class="scene shotscene" id="s24">
+    <span class="closer"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M15.8 15.8 21 21"/></svg>What a call is worth</span>
+    <div class="shot wide zoom" style="--zx:100.0%;--zy:100.0%;--zs:2.20">
+      <img data-shot="book" alt="Growth on plans we already have"></div>
+    <p class="cap">Growth on the plans the branch already holds — and
+      <b>the age of a plan does not decide the size of the increase</b>.
+      Every client is worth the same call.</p>
+  </div>
+
+  <!-- s25 · 36 · the Act on replacing cover -->
+  <div class="scene left" id="s25">
+    <div class="quote">
+      <div class="cite">Insurance Act 2018 · s131(1)(c) &amp; s131(2)</div>
+      <blockquote>“… shall not … cause a policyholder to replace a long-term
+        insurance policy without first discussing the advantages and
+        disadvantages of the discontinuance of the policy.”</blockquote>
+      <p class="after">A wall of existing clients is an invitation to sell — and
+        s131 is about the sale that <b>replaces</b> cover the client already
+        had. A contravention is <b>a fine of one million, five hundred thousand
+        dollars and imprisonment for two years</b>. Add to it. Never replace it.</p>
+    </div>
+  </div>
+
+  <!-- s26 · 37 · no client is on this wall -->
+  <div class="scene" id="s26">
+    <div class="kick gold">Nothing about a client</div>
+    <h1>No name. No policy number.<br><em>No date of birth.</em></h1>
+    <p class="lede">Counts and bands only. <b>You already have your own
+      clients</b>, in your portal — and this wall hangs in a room they walk
+      through.</p>
+  </div>
+
+  <!-- s27 · 38-39 · it names -->
+  <div class="scene" id="s27">
     <div class="kick gold">On every wall</div>
     <h1>It names the agent.<br>The unit. <em>The manager.</em></h1>
     <p class="lede">Nobody on this wall is <b>only being watched</b>.
@@ -209,8 +281,8 @@
       time as everybody else.</p>
   </div>
 
-  <!-- s21 · 32 · it is interactive -->
-  <div class="scene shotscene" id="s21">
+  <!-- s28 · 40 · it is interactive -->
+  <div class="scene shotscene" id="s28">
     <div class="wallid"><span class="n">↺</span>
       <span class="t">Not a picture <em>· click anything</em></span></div>
     <div class="shot wide"><img data-shot="filt" alt="The wall filtered to one unit"></div>
@@ -218,8 +290,8 @@
       one unit, one agent, one band. Every panel re-reads at once.</p>
   </div>
 
-  <!-- s22 · 33 · close -->
-  <div class="scene" id="s22">
+  <!-- s29 · 41 · close -->
+  <div class="scene" id="s29">
     <div class="mark" style="justify-content:center"><i><img src="" alt=""></i><span>Ricky Rampersad Branch</span></div>
     <h1>Not a Friday report.<br><em>A wall that does not wait.</em></h1>
   </div>
@@ -231,7 +303,8 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.6L12 5.4v13.2L7.6 14.5H4z"/><path class="i-on" d="M15.4 8.6a4.6 4.6 0 0 1 0 6.8M17.9 6a8 8 0 0 1 0 12"/><path class="i-off" d="M15.6 9.4l5 5.2M20.6 9.4l-5 5.2"/></svg></button>
   </div>
   <div id="prov">Real branch figures, read from Salesforce on <b>5 September 2026</b>
-    &nbsp;·&nbsp; the wall itself is live &nbsp;·&nbsp; internal</div>
+    &nbsp;·&nbsp; the fifth wall is a layout preview until its feed is connected
+    &nbsp;·&nbsp; internal</div>
   <div id="hint">space or tap pauses · R replays</div>
   <div id="prog"></div>
   <div id="replay"><button onclick="restart()">Play again</button></div>
