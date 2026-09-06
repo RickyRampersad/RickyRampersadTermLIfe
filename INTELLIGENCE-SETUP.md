@@ -859,117 +859,38 @@ for.
 years, so the relationship is already built. What the letter has never done is
 ask for the second policy. That part is the agent's, on the day.
 
-#### Initials, and the reasoning behind them
+#### Nothing about a client reaches this wall
 
-**This is the one wall that carries anything about an individual client, and the
-decision was the branch's.** Every other figure on every other wall is a count.
-Here each row shows:
+It carried two initials per client for a day, and the branch's answer was the
+right one: **an agent already has these clients in their own portal**, so the
+wall does not need to identify anybody — it needs to say which conversation to
+have. What goes out is what every other wall sends, counts and bands:
 
 | On the wall | Never on the wall |
 |---|---|
-| Two initials | The name |
-| The age they turn today | The date of birth |
-| How many years a client | |
-| The town, from the mailing address | The street |
-| The servicing agent | |
-| How many policies, what cover they hold | Policy number, premium, sum assured |
-| One prompt — the most sellable true thing | |
+| How many people are in each life stage | Any name or initial |
+| What that stage is short of, with a count | Any date of birth |
+| How many policies they hold between them | Any policy number, premium or sum assured |
+| Which towns they are in, as counts | Any address |
+| Which agents they belong to | |
 
-Two letters and a town identifies the client to the agent who already knows
-them, and to nobody else. **The walls are unauthenticated and the site is
-public**, so that trade is worth stating plainly rather than burying: anyone
-with the URL sees twenty eight rows of initials, towns and agent names.
+`INTEL_BOOK_INITIALS` still exists and now has nothing to switch off. It is kept
+because a version of this wall on a screen that is not public may want the
+letters back.
 
-`INTEL_BOOK_INITIALS` set to `off` replaces the letters with a dash. Everything
-else on the wall keeps working, and it is one property rather than a rebuild.
+#### Seven years of birthday letters, and what they did not do
 
-#### Three things decide whether the numbers come out right
+The branch has wished these clients a happy birthday automatically for the
+better part of a decade. That is the argument for the wall and it is on it: the
+relationship is already built and already paid for, and what the letter has
+never done is ask a question.
 
-**`Contact__c` is the client key.** It is set on **98.6%** of rows.
-`Client_Number__c` is on 33% and `Client_ID__c` on 35%, so either of those as
-the key silently drops two thirds of the book.
-
-**Cover is read from the coverage columns, never from a product name.**
-`TYPE__c` looks like exactly the right field — its picklist is PENSION, WHOLE
-LIFE, CI, INVESTMENT, HEALTH, TERM, UNIT LINKED — and it is populated on **627
-of 55,062 rows across the org**. One per cent. So cover comes from the amounts:
-
-| | |
-|---|---|
-| `Life_Coverage__c > 0` | carries life cover |
-| `Critical_Illness_Coverage__c > 0` | carries critical illness |
-| `Health_Premium__c > 0` | carries health |
-| `ADDAP_Coverage__c > 0` | carries accident |
-| `Pension_Premiums__c`, `Savings_Coverage__c`, `Total_Personal_Accident_Premium__c` | the rest |
-
-That is also the house rule from `CLAUDE.md` — check the type, never the name,
-because Life Secure and Tophat both read as life products and neither is one.
-
-**And the status field cannot be trusted.** This is the most important caveat on
-the wall and it is printed on the wall itself.
-`Policy_Status_Description_R__c` mixes proper picklist labels with raw AS400
-codes and blanks. On the branch's own 24,680 rows:
-
-| | | | | | |
-|---|---|---|---|---|---|
-| Premium Paying | 3,639 | `1` | 5,284 | *(blank)* | 5,412 |
-| Surrendered | 1,451 | `E` | 1,229 | `ELV` | 1,473 |
-| Lapsed | 494 | `B` | 1,162 | `RFC` | 770 |
-
-So a fifth of the book says `1` and another fifth says nothing at all. Anything
-that plainly reads surrendered, lapsed, matured, expired, not taken, not
-proceeded with, declined, rejected, file closed or death is dropped. Everything
-else is counted **and the number that could not be read is shown**. Nothing is
-assumed alive and nothing is assumed dead.
-
-Until the in-force export is joined on policy number, **treat the counts as the
-book, not as cover in force.** A cross-sell wall that quietly treats a
-surrendered policy as cover in force sends an agent to a client who cancelled
-two years ago, and that call is worse than no call.
-
-`Is_Plan_Active__c` looks like the answer and is not: it is `true` on **20** of
-the branch's 24,680 rows.
-
-**Dates the book cannot have reached are not dates.** Four rows carry issue
-dates in 2035, 2047 and 2076. Left alone the 2076 one makes its client
-permanently "bought this year" and drags the branch's median tenure with it, so
-anything after today or before 1940 is discarded and counted as a missing date.
-
-#### What it found
-
-| | |
-|---|---|
-| Clients on the book | **13,304** carrying 24,680 policies |
-| Birthdays today | **28** — and 216 in the next seven days |
-| Hold life cover | 9,592 · **72%** |
-| Hold critical illness | 5,905 · 44% |
-| Hold health | 779 · **5.9%** |
-| Hold personal accident | 16 |
-| **Life cover and no critical illness** | **4,501** |
-| **Life cover and no health** | **9,121** |
-
-That last pair is the wall. Four and a half thousand people this branch has
-already sold life cover to, who carry nothing against a critical illness.
-
-#### The Act quote on this wall is s131, and it is the sharpest one
-
-Every other wall quotes a section about a duty the branch owes. This one quotes
-the section about what an agent must not do **when they sell to somebody who
-already has a policy** — which is precisely what a cross-sell wall invites:
-
-> **s131.** (1) An agent, agency, broker, brokerage or a sales representative
-> shall not … (b) cause a policyholder to **discontinue** an insurance policy
-> without first discussing the advantages and disadvantages of the
-> discontinuance of the policy; or (c) cause a policyholder to **replace a
-> long-term insurance policy** without first discussing the advantages and
-> disadvantages of the discontinuance of the policy.
->
-> (2) … liable on conviction on indictment to a fine of **one million, five
-> hundred thousand dollars** and to **imprisonment for two years**.
-
-Which is the argument for the wall rather than against it: the conversation has
-to start from what the client already holds, and this is the screen that shows
-it.
+**And they do not buy at birthday time**, which is worth knowing before anybody
+builds a campaign on the idea. Measured across the branch: **8.7%** of policies
+were issued in the client's own birth month against a one-in-twelve baseline of
+**8.3%**. That is nothing. The birthday is the reason to call. It is not the
+reason they buy — so the call has to carry a question rather than a greeting,
+and the wall says so beside the claim rather than leaving it to be assumed.
 
 #### Five bands, and what each one is short of
 

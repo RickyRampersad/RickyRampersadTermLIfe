@@ -5576,7 +5576,7 @@ function iBuildBook_() {
     var c = byClient[key];
     if (!c) c = byClient[key] = { agent: name, unit: unit, n: 0, age: null,
                                   dobY: 0, dobM: 0, dobD: 0, first: null, last: null,
-                                  firstAge: null, ini: '', town: '',
+                                  firstAge: null, ini: '', town: '', months: [], onBday: false,
                                   life: false, ci: false, health: false, add: false,
                                   pa: false, pension: false, savings: false };
     c.n++;
@@ -5598,6 +5598,14 @@ function iBuildBook_() {
     }
     var iss = iBookDate_(x.ISSUE_DATE__c, today);
     if (iss) {
+      c.months.push(iss.getMonth() + 1);
+      /* DO THEY BUY AT BIRTHDAY TIME? Measured rather than assumed, because the
+         whole wall rests on the answer. Same calendar month as their birthday,
+         against a one-in-twelve baseline. On this branch it comes out at 8.7%
+         against 8.3% — which is nothing. The birthday is the reason to call.
+         It is not the reason they buy, and a wall that implied otherwise would
+         be selling its own agents a story. */
+      if (c.dobM && iss.getMonth() + 1 === c.dobM) c.onBday = true;
       /* The age they were when they FIRST bought travels with the first policy,
          so the two have to move together — taking the smallest issue age on the
          book would pick up a rider written years later on a different life. */
@@ -5651,6 +5659,11 @@ function iBuildBook_() {
   var todayList = [], todayTowns = {}, todayHolds = {}, monthN = 0, monthAgents = {};
   var MILES = [21, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70];
   var agents = {}, noDob = 0, noIssue = 0, tenures = [], noIssueAge = 0;
+  /* WHEN THIS BOOK BUYS. Every policy the branch holds, by the month it was
+     issued — the honest answer to "when do they purchase insurance", and it is
+     a branch-wide question rather than a today question, so it is measured
+     across the whole book and not across twenty eight people. */
+  var season = [0,0,0,0,0,0,0,0,0,0,0,0], bdaySame = 0, bdayBase = 0;
 
   keys.forEach(function (k) {
     var c = byClient[k];
@@ -5672,6 +5685,9 @@ function iBuildBook_() {
       lastBuy[iBookBand_(since, LAST)]++;
       if (since >= quietYears) { gapQuiet++; a.quiet++; }
     }
+
+    c.months.forEach(function (m) { season[m - 1]++; });
+    if (c.dobM && c.months.length) { bdayBase++; if (c.onBday) bdaySame++; }
 
     if (c.life)    cover.Life++;
     if (c.ci)      cover['Critical illness']++;
@@ -5728,15 +5744,19 @@ function iBuildBook_() {
       holds.forEach(function (h) { todayHolds[h] = (todayHolds[h] || 0) + 1; });
       if (c.town) todayTowns[c.town] = (todayTowns[c.town] || 0) + 1;
 
+      /* NO PERSON REACHES THE FEED ANY MORE. The wall carried two initials for
+         a while and the branch's answer was the right one: an agent already has
+         these clients in their portal, so the wall does not need to identify
+         anybody — it needs to tell them which conversation to have. What goes
+         out now is what every other wall sends: counts and bands. */
       todayList.push({
-        ini: c.ini || '—',
         life: c.life, ci: c.ci, health: c.health, pension: c.pension,
         stale: !!(c.last && (today - c.last) / DAY / YEAR >= quietYears),
         turning: c.dobY ? yy - c.dobY : null,
         years: c.first ? Math.floor((today - c.first) / DAY / YEAR) : null,
         town: c.town || '',
         agent: c.agent, unit: c.unit,
-        holds: holds, policies: c.n,
+        holds: holds, policies: c.n, onBday: c.onBday,
         last: c.last ? Math.floor((today - c.last) / DAY / YEAR) : null,
         prompt: iBookPrompt_(c, quietYears, today)
       });
@@ -5809,10 +5829,14 @@ function iBuildBook_() {
                         .filter(function (y) { return y != null; });
         return {
           k: b.k, range: b.range, talk: b.talk, n: inBand.length,
-          people: inBand.map(function (t) {
-            return { ini: t.ini, turning: t.turning, years: t.years,
-                     town: t.town, agent: t.agent, gap: !!t.prompt };
-          }).sort(function (x, y) { return (y.years || 0) - (x.years || 0); }),
+          gap: inBand.filter(function (t) { return !!t.prompt; }).length,
+          policies: inBand.reduce(function (a, t) { return a + t.policies; }, 0),
+          medianYears: (function () {
+            var y = inBand.map(function (t) { return t.years; })
+                          .filter(function (v) { return v != null; })
+                          .sort(function (a, b) { return a - b; });
+            return y.length ? y[Math.floor(y.length / 2)] : null;
+          })(),
           missing: iBookMissing_(inBand, b.want),
           longest: yrs.length ? Math.max.apply(null, yrs) : null,
           agents: Object.keys(byAg).map(function (k) { return { k: k, n: byAg[k] }; })
@@ -5823,6 +5847,24 @@ function iBuildBook_() {
          their birthday — but a client whose birth year never made it into
          Salesforce would fall through every band, so they are counted. */
       unbanded: todayList.filter(function (t) { return t.turning == null; }).length,
+      /* CAPACITY. How many policies the people on today's list already carry —
+         one is a relationship that was never built on, four is a client who
+         says yes. */
+      policiesHeld: (function () {
+        var b = { '1 policy': 0, '2 policies': 0, '3 policies': 0, '4 or more': 0 };
+        todayList.forEach(function (t) {
+          b[t.policies === 1 ? '1 policy' : t.policies === 2 ? '2 policies'
+            : t.policies === 3 ? '3 policies' : '4 or more']++;
+        });
+        return Object.keys(b).map(function (k) { return { k: k, n: b[k] }; });
+      })(),
+      lastBought: (function () {
+        var b = tally(LAST);
+        todayList.forEach(function (t) {
+          if (t.last != null) b[iBookBand_(t.last, LAST)]++;
+        });
+        return LAST.map(function (x) { return { k: x[0], n: b[x[0]] }; });
+      })(),
       towns: Object.keys(todayTowns).map(function (k) { return { k: k, n: todayTowns[k] }; })
                .sort(function (a, b) { return b.n - a.n; }),
       holds: Object.keys(todayHolds).map(function (k) { return { k: k, n: todayHolds[k] }; })
@@ -5844,6 +5886,14 @@ function iBuildBook_() {
       milestones: MILES.filter(function (m) { return milestones[m]; })
                        .map(function (m) { return { k: 'Turning ' + m, n: milestones[m] }; })
     },
+    season: season.map(function (v, i) {
+      return { k: ['January','February','March','April','May','June','July','August','September','October','November','December'][i], n: v, now: i === today.getMonth() };
+    }),
+    /* Reported with its baseline, because a percentage on its own invites the
+       reader to see a pattern in one in twelve. */
+    birthdayEffect: { same: bdaySame, of: bdayBase,
+                      pct: bdayBase ? Math.round(bdaySame / bdayBase * 1000) / 10 : null,
+                      baseline: 8.3 },
     gapByAge: AGE.map(function (b) {
       return { k: b[0], n: gapAge[b[0]], of: ages[b[0]] };
     }),

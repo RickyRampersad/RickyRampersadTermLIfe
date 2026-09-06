@@ -75,7 +75,15 @@
     /* Seven rows of people need 450; the bottom three panels need 300 to show
        five lines each. The first cut gave row two everything and left row three
        showing four of five with the fifth sliced. */
-    grid-template-rows:auto minmax(0,430px) minmax(0,250px);
+    /* Measured, not guessed: the hero needs 290 once the big number comes down,
+       five band cards need 344, and the four bottom lists need 280 to show five
+       rows each without slicing the fifth. 1080 less the header, the gaps and
+       the padding is 968. */
+    /* The slack goes to the bands, not to the top row. With every row a fixed
+       size the grid stretches whichever one is auto, and eighty eight spare
+       pixels were being spent on white space above the wall instead of on the
+       five cards that carry it. */
+    grid-template-rows:auto minmax(344px,1fr) minmax(0,280px);
     gap:13px;padding:0 26px 20px;height:calc(100vh - 66px)}
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
     padding:16px 18px;min-height:0;display:flex;flex-direction:column}
@@ -84,10 +92,10 @@
   .card .cap{font-size:11.5px;color:var(--faint);margin:0 0 9px;line-height:1.4}
 
   .hero{grid-column:1;justify-content:center}
-  .hero .big{font-family:var(--font-d);font-weight:800;font-size:74px;line-height:.9;
+  .hero .big{font-family:var(--font-d);font-weight:800;font-size:58px;line-height:.9;
     letter-spacing:-4px;background:var(--grad-teal);-webkit-background-clip:text;
     background-clip:text;color:transparent}
-  .hero .cap2{font-size:14px;color:var(--dim);margin-top:8px;line-height:1.5}
+  .hero .cap2{font-size:13px;color:var(--dim);margin-top:6px;line-height:1.45}
   .hero .cap2 b{color:var(--ink)}
   .hero .split{display:flex;gap:20px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
   .hero .split div{flex:1}
@@ -154,7 +162,9 @@
   .row.zero{opacity:.35;cursor:default}
 
   .today{grid-column:1/6;grid-row:2}
-  .month{grid-column:1/3}
+  .years{grid-column:2/6}
+  .season{grid-column:3/5}
+  .month{grid-column:5/6}
   .alist{display:grid;grid-auto-flow:column;grid-template-rows:repeat(9,auto);
     gap:0 26px;overflow:hidden;flex:1;align-content:start}
   .arow{display:grid;grid-template-columns:1fr 30px 48px;align-items:baseline;gap:8px;
@@ -175,8 +185,6 @@
     text-transform:uppercase;color:var(--dim)}
   .two .sub{font-size:11px;color:var(--faint);margin:0 0 8px;line-height:1.4}
 
-  .towns{grid-column:3/4}
-  .holds{grid-column:4/6}
   .sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:12px}
   .sgrid .v{font-family:var(--font-d);font-weight:800;font-size:30px;letter-spacing:-1px;line-height:1}
   .sgrid .k{font-size:10.5px;color:var(--faint);margin-top:4px;line-height:1.35}
@@ -226,11 +234,54 @@
      the door, then the two facts that decide the call — the age they turn and
      how long they have been ours — then where and whose, then the one thing to
      say. Nothing else fits and nothing else is needed. */
+  /* THE SEVEN YEARS. Not decoration — it is the argument for the whole wall,
+     and the branch made it: the letter has gone out automatically since before
+     most of these agents were on the book, so the relationship is already there
+     and already paid for. The wall's job is to convert it. */
+  .years{flex-direction:row;align-items:flex-start;gap:24px;
+    background:linear-gradient(100deg,rgba(0,207,234,.13),rgba(0,207,234,.02));
+    border-color:rgba(0,207,234,.30);padding:15px 22px}
+  .years .yn{font-family:var(--font-d);font-weight:800;font-size:62px;line-height:.86;
+    letter-spacing:-3px;color:var(--teal);flex:none}
+  .years .ytxt{flex:1;min-width:0}
+  .years .hd{font-family:var(--font-d);font-weight:800;font-size:19px;color:var(--ink);
+    letter-spacing:-.4px;margin-bottom:6px}
+  .years p{margin:0;font-size:13px;color:var(--dim);line-height:1.5}
+  .years p.last{margin-top:6px;color:var(--ink)}
+  .years b{color:var(--ink);font-weight:600}
+  /* the measured finding, kept beside the claim so the claim can be checked */
+  .years .ystrip{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.12);
+    display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+  .years .miles{display:flex;flex-wrap:wrap;gap:6px}
+  .years .mile{font:700 11px var(--font-b);color:var(--gold);
+    border:1px solid rgba(239,194,75,.4);background:rgba(239,194,75,.10);
+    border-radius:999px;padding:3px 10px}
+  .years .where{font-size:11.5px;color:var(--faint);line-height:1.5}
+  .years .where b{color:var(--dim);font-weight:600}
+  .years .yfind{flex:none;max-width:330px;font-size:11.5px;color:var(--faint);
+    border-left:2px solid rgba(0,207,234,.4);padding-left:13px;line-height:1.5}
+  .years .yfind b{color:var(--dim);font-weight:600}
+
+  /* twelve months, as a strip rather than twelve rows */
+  .mrows{display:grid;grid-template-columns:repeat(12,1fr);gap:6px;align-items:end;
+    flex:1;min-height:0;padding-top:4px}
+  .mcol{display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:5px}
+  .mcol .bar{background:rgba(255,255,255,.13);border-radius:4px 4px 2px 2px;min-height:3px}
+  .mcol.now .bar{background:var(--grad-teal)}
+  .mcol .ml{font:600 9.5px var(--font-b);color:var(--faint);text-align:center}
+  .mcol.now .ml{color:var(--teal);font-weight:800}
+  .mcol .mv{font:700 10px var(--font-d);color:var(--dim);text-align:center;
+    font-variant-numeric:tabular-nums}
+  .mcol.now .mv{color:var(--ink)}
+
   /* FIVE BANDS ACROSS, ALWAYS THE SAME FIVE. An empty band is drawn dim rather
      than dropped: panels that move around from day to day cannot be read at a
      glance, and a morning with nobody approaching retirement is itself worth
      seeing. */
-  .clist{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;
+  /* minmax(0,1fr), not 1fr. A grid column's default minimum is its content, and
+     the agent line is nowrap — so the band with the longest names set a floor
+     wide enough to push the fifth band off the edge of the card. */
+  .clist{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;
     overflow:hidden;flex:1;align-content:stretch}
   .band{display:flex;flex-direction:column;min-height:0;
     border:1px solid var(--line);border-radius:13px;padding:13px 14px;
@@ -241,13 +292,17 @@
   .band .br{font-size:10.5px;color:var(--faint);margin-top:1px}
   .band .bn{font-family:var(--font-d);font-weight:800;font-size:32px;line-height:1;
     letter-spacing:-1.4px;margin:5px 0 8px}
-  /* the people, as chips — initials and the age they turn, nothing else */
-  .chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
-  .chip{font:700 11px var(--font-b);border-radius:7px;padding:4px 7px;line-height:1;
-    background:rgba(255,255,255,.09);color:var(--dim);white-space:nowrap}
-  .chip.gap{background:var(--grad-gold);color:#3a2404}
-  .chip i{font-style:normal;font-weight:800;font-family:var(--font-d)}
-  .chip b{font-weight:500;opacity:.75;margin-left:3px}
+  /* NO CHIPS. Two initials per person were on here for a day and the branch's
+     answer was the right one: an agent already has these clients in their
+     portal, so the wall does not need to identify anybody — it needs to say
+     which conversation to have. What is left is the shape of the day. */
+  .band .meter{height:7px;border-radius:4px;background:rgba(255,255,255,.09);
+    overflow:hidden;margin-bottom:9px}
+  .band .meter i{display:block;height:100%;background:var(--grad-gold);border-radius:4px}
+  .band .facts{display:flex;gap:16px;margin-bottom:9px}
+  .band .facts div{font-size:10.5px;color:var(--faint);line-height:1.3}
+  .band .facts b{display:block;font-family:var(--font-d);font-weight:800;font-size:17px;
+    color:var(--ink);letter-spacing:-.4px}
   .band .miss{font-size:11.5px;color:var(--gold);line-height:1.4;margin-bottom:7px}
   .band .miss b{font-family:var(--font-d);font-weight:800}
   /* NO margin-bottom:auto HERE, deliberately. Pinning the agent line to the
@@ -307,9 +362,9 @@
   .bday .bhead div+div{text-align:right}
   .hero .miles{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);
     display:flex;flex-wrap:wrap;gap:6px}
-  .hero .mile{font:700 11px var(--font-b);color:var(--gold);
+  .hero .mile{font:700 10px var(--font-b);color:var(--gold);
     border:1px solid rgba(239,194,75,.4);background:rgba(239,194,75,.10);
-    border-radius:999px;padding:3px 10px}
+    border-radius:999px;padding:2px 8px}
   .hero .miles:empty{display:none}
   .bday .none{font-size:12px;color:var(--faint);line-height:1.5;margin-top:4px}
 
@@ -329,8 +384,8 @@
   .gaps .row .lbl{font-size:14.5px}
   .gaps .row .track{margin-top:5px}
   /* the birthday hero's second line */
-  .hero .who{margin-top:14px;padding-top:13px;border-top:1px solid var(--line);
-    font-size:12px;color:var(--faint);line-height:1.5}
+  .hero .who{margin-top:9px;padding-top:9px;border-top:1px solid var(--line);
+    font-size:11px;color:var(--faint);line-height:1.45}
   .hero .who b{color:var(--dim);font-weight:600}
 
 </style>
@@ -356,38 +411,49 @@
     <div class="big" id="heroN">&mdash;</div>
     <div class="cap2" id="heroCap"></div>
     <div class="split">
-      <div><div class="v" id="heroGap">&mdash;</div><div class="k">of them carry a gap worth a call</div></div>
-      <div><div class="v" id="heroQuiet">&mdash;</div><div class="k">have bought nothing in years</div></div>
+      <div><div class="v" id="heroGap">&mdash;</div><div class="k">carry a gap worth a call</div></div>
+      <div><div class="v" id="heroPol">&mdash;</div><div class="k">policies between them</div></div>
     </div>
-    <div class="miles" id="bMiles"></div>
   </section>
 
-  <section class="card law">
-    <div class="n" id="lawN">&mdash;</div>
-    <div class="txt">
-      <div class="hd" id="lawHd"></div>
-      <div id="lawTxt"></div>
+  <section class="card years">
+    <div class="yn">7</div>
+    <div class="ytxt">
+      <div class="hd">years of birthday letters have already gone out</div>
+      <p>The branch has wished these clients a happy birthday every year, automatically,
+        for the better part of a decade. <b>Nobody had to be reminded and nobody had to
+        write it.</b> The relationship is built and it is paid for.</p>
+      <p class="last">What the letter has never done is ask a question.
+        <b>That part is yours, today.</b></p>
+      <div class="ystrip">
+        <div class="miles" id="bMiles"></div>
+        <div class="where" id="heroWhere"></div>
+      </div>
     </div>
-    <div class="acts" id="lawActs"></div>
+    <div class="yfind" id="yFind"></div>
   </section>
 
   <section class="card today"><h3 id="tHead">Today, by where they are in life</h3>
     <p class="cap">Everyone with a birthday today, in the band their age puts them in &mdash;
-      what that band is short of, and the conversation it is owed.
-      <b>Gold means that person is carrying a gap.</b></p>
+      what that band is short of, and the conversation it is owed.</p>
     <div class="clist" id="cList"></div></section>
+
+  <section class="card"><h3>How many policies they already hold</h3>
+    <p class="cap">One is a relationship nobody built on. Four is a client who says yes.</p>
+    <div class="rows" id="rPol"></div></section>
+
+  <section class="card"><h3>When they last bought</h3>
+    <p class="cap">How cold the call is, for the people on today&rsquo;s list.</p>
+    <div class="rows" id="rLast"></div></section>
+
+  <section class="card season"><h3>When this book buys</h3>
+    <p class="cap">Every policy the branch holds, by the month it was issued. The lit bar
+      is the month we are in.</p>
+    <div class="mrows" id="rSeason"></div></section>
 
   <section class="card month"><h3>Most birthdays this month</h3>
     <p class="cap" id="monthCap"></p>
     <div class="rows" id="rMonth"></div></section>
-
-  <section class="card towns"><h3>Where today&rsquo;s clients are</h3>
-    <p class="cap">Town, from the mailing address. Chaguanas is the branch&rsquo;s own.</p>
-    <div class="rows" id="rTown"></div></section>
-
-  <section class="card holds"><h3>What today&rsquo;s already hold</h3>
-    <p class="cap">Cover carried by the people on this list &mdash; not by the branch.</p>
-    <div class="rows" id="rHold"></div></section>
 </main>
 
 <footer id="src"></footer>
@@ -503,17 +569,12 @@ function paint(){
     $("#heroKick").textContent="Not wired yet";
     $("#heroN").style.cssText="background:none;color:var(--faint);font-size:56px";
     $("#heroN").textContent="—";
-    $("#heroCap").innerHTML='Birth date, town and the coverage columns all live on '
-      + '<b>CLIENT_PORTFOLIO__c</b> and the Contact behind it. Nothing in the branch '
+    $("#heroCap").innerHTML='Birth date, town, issue date and the coverage columns all live '
+      + 'on <b>CLIENT_PORTFOLIO__c</b> and the Contact behind it. Nothing in the branch '
       + 'workbook carries them.';
-    $("#bMiles").innerHTML='';
-    $("#lawN").textContent="s131";
-    $("#lawHd").textContent="The letter has gone out for years. This is the call.";
-    $("#lawTxt").innerHTML='And the Act is specific about what must not happen when you '
-      + 'sell to somebody who already holds a policy.';
-    $("#lawActs").innerHTML=ACTS.map(function(a){
-      return '<div class="act"><b>'+a[0]+'</b> &mdash; '+a[1]+'</div>'; }).join("");
-    ["#rMonth","#rTown","#rHold"].forEach(function(x){ $(x).innerHTML=""; });
+    $("#bMiles").innerHTML=''; $("#heroWhere").innerHTML='';
+    $("#yFind").innerHTML='';
+    ["#rPol","#rLast","#rSeason","#rMonth"].forEach(function(x){ $(x).innerHTML=""; });
     $("#monthCap").textContent="";
     $("#cList").innerHTML='<p class="none">Set the Salesforce credentials in '
       + '<b>SalesforceSync.gs</b>, deploy the script, and paste the <b>/exec</b> URL into '
@@ -529,48 +590,47 @@ function paint(){
   $("#heroN").style.cssText="";
   $("#heroN").textContent=n(T.n);
   $("#heroCap").innerHTML='clients of this branch have a birthday <b>today</b>, and <b>'
-    + n(T.week)+'</b> more inside seven days. The letter goes out on its own. '
-    + '<b>The call does not.</b>';
+    + n(T.week)+'</b> more inside seven days.';
   $("#heroGap").textContent=n(T.withGap);
-  $("#heroQuiet").textContent=n(T.quiet);
+  var pol=(T.policiesHeld||[]).reduce(function(a,x){ return a+x.n; },0);
+  $("#heroPol").textContent=n((T.bands||[]).reduce(function(a,b){ return a+(b.policies||0); },0));
   var MI=T.milestones||[];
   $("#bMiles").innerHTML = MI.length
     ? MI.map(function(m){ return '<span class="mile">'+esc(m.k)+' &middot; '+n(m.n)+'</span>'; }).join("")
     : '';
+  var TW=(T.towns||[]).slice(0,5);
+  $("#heroWhere").innerHTML = TW.length
+    ? '<b>Where they are.</b> '+TW.map(function(t){ return esc(t.k)+' '+n(t.n); }).join(' &middot; ')
+    : '';
 
+  /* The seven-year claim, with the measurement that qualifies it beside it. */
+  var BE=D.birthdayEffect||{};
+  $("#yFind").innerHTML = BE.pct!=null
+    ? '<b>And they do not buy at birthday time.</b> '+BE.pct+'% of policies were issued in '
+      + 'the client&rsquo;s own birth month, against a one-in-twelve baseline of '
+      + BE.baseline+'%. The birthday is the reason to call. <b>It is not the reason they '
+      + 'buy</b> — so the call has to carry a question, not a greeting.'
+    : '';
 
-  $("#lawN").textContent=n(T.withGap);
-  $("#lawHd").textContent="of today's list are carrying a gap worth a call";
-  $("#lawTxt").innerHTML='The birthday letter has gone to these clients for years and the '
-    + 'relationship is already built. <b>What it has never done is ask for the second '
-    + 'policy.</b> That part is the agent\u2019s, today \u2014 and the Act is specific about '
-    + 'what must not happen when you sell to somebody who already holds one.';
-  $("#lawActs").innerHTML=ACTS.map(function(a){
-    return '<div class="act"><b>'+a[0]+'</b> &mdash; '+a[1]+'</div>'; }).join("");
-
-  /* Bands, not rows. Filtering by agent, town or cover thins the people inside
-     each band rather than reordering one long list, so the shape of the day
-     survives the filter — an agent holding the wall to their own name still
-     sees which stages of life their four are in. */
-  function keep(c){
-    if(!FILTER) return true;
-    if(FILTER.dim==="agent") return c.agent===FILTER.key;
-    if(FILTER.dim==="town")  return c.town===FILTER.key;
-    return true;
-  }
+  function keep(c){ return !FILTER || FILTER.dim!=="agent" || c.k===FILTER.key; }
   $("#tHead").textContent = FILTER ? "Today · "+FILTER.key : "Today, by where they are in life";
   var bands=(T.bands||[]);
   $("#cList").innerHTML = bands.length ? bands.map(function(b){
-      var people=(b.people||[]).filter(keep);
-      var agents=(b.agents||[]).filter(function(a){ return !FILTER||FILTER.dim!=="agent"||a.k===FILTER.key; });
-      return '<div class="band'+(people.length?'':' empty')+'">'
+      var agents=(b.agents||[]).filter(keep);
+      var mine=FILTER&&FILTER.dim==="agent"
+        ? (agents[0]?agents[0].n:0) : b.n;
+      var pct=b.n?Math.round((b.gap||0)/b.n*100):0;
+      return '<div class="band'+(mine?'':' empty')+'">'
         + '<div class="bk">'+esc(b.k)+'</div>'
         + '<div class="br">'+esc(b.range)+'</div>'
-        + '<div class="bn">'+n(people.length)+'</div>'
-        + '<div class="chips">'+people.map(function(c){
-            return '<span class="chip'+(c.gap?' gap':'')+'"><i>'+esc(c.ini)+'</i>'
-                 + (c.turning!=null?'<b>'+c.turning+'</b>':'')+'</span>'; }).join("")+'</div>'
-        + (b.missing && people.length
+        + '<div class="bn">'+n(mine)+'</div>'
+        + '<div class="meter"><i style="width:'+pct+'%"></i></div>'
+        + '<div class="facts">'
+        +   '<div><b>'+n(b.gap||0)+'</b>carry a gap</div>'
+        +   '<div><b>'+n(b.policies||0)+'</b>policies held</div>'
+        +   '<div><b>'+(b.medianYears==null?'—':b.medianYears)+'</b>years, median</div>'
+        + '</div>'
+        + (b.missing && b.n
             ? '<div class="miss">Missing <b>'+esc(b.missing.k)+'</b> — '
               + n(b.missing.n)+' of '+n(b.n)+'</div>' : '')
         + '<div class="talk">'+esc(b.talk)+'</div>'
@@ -584,14 +644,27 @@ function paint(){
     : '<p class="none">Nobody on the branch book has a birthday today. '
       + n(T.week)+' do inside the next seven days.</p>';
 
+  bars($("#rPol"),  T.policiesHeld||[], "pol",  "teal");
+  bars($("#rLast"), T.lastBought||[],   "last", "gold");
+  season($("#rSeason"), D.season||[]);
+
   var M=(D.month||{});
-  $("#monthCap").innerHTML='<b>'+n(M.n)+'</b> birthdays fall in this month across the '
-    + 'branch. Push the top of this list &mdash; the second number is how many of theirs '
-    + 'carry a gap.';
-  /* Five, not seven: the bottom row is 250px and a wall does not scroll. */
+  $("#monthCap").innerHTML='<b>'+n(M.n)+'</b> fall in this month. Push the top of this '
+    + 'list — the second number is how many of theirs carry a gap.';
   monthBars($("#rMonth"), (M.byAgent||[]).slice(0,4));
-  bars($("#rTown"), (T.towns||[]).slice(0,4), "town", "accent");
-  bars($("#rHold"), T.holds||[],               "hold", "teal");
+}
+
+/* Twelve months as a strip. A wall reads a shape faster than it reads a column
+   of numbers, and the only thing worth reading here is the shape. */
+function season(host,list){
+  if(!host) return;
+  var max=0; list.forEach(function(x){ if(x.n>max) max=x.n; });
+  host.innerHTML=list.map(function(x){
+    return '<div class="mcol'+(x.now?' now':'')+'">'
+      + '<div class="mv">'+n(x.n)+'</div>'
+      + '<div class="bar" style="height:'+(max?Math.max(3,x.n/max*100):3).toFixed(1)+'%"></div>'
+      + '<div class="ml">'+esc(x.k.slice(0,3))+'</div></div>';
+  }).join("");
 }
 
 /* The month leaderboard carries two numbers per row, so it cannot use bars() */
@@ -622,8 +695,8 @@ function boot(){
   paint();
   if(!BOOK.configured) return;
   $("#src").innerHTML="Salesforce client portfolio · built "+BOOK.generatedAt
-    + " · active agents only · <b>initials only</b> — no name, policy number, premium or "
-    + "date of birth, so the agent whose client it is knows and nobody else does";
+    + " · active agents only · <b>counts and bands only</b> — no client reaches this wall, "
+    + "because the agent already has them in their portal";
 }
 function load(){
   if(!BOOK_URL){ boot(); return; }
