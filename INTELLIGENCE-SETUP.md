@@ -971,6 +971,59 @@ Which is the argument for the wall rather than against it: the conversation has
 to start from what the client already holds, and this is the screen that shows
 it.
 
+#### Five bands, and what each one is short of
+
+The wall was a list before this, and a list is a spreadsheet. Twenty eight rows
+sorted by tenure tells an agent nothing an export could not. What makes it a
+wall is the grouping: **five life stages**, each with the cover that stage is
+typically missing, the people in it as initials, and one sentence about what to
+say. An agent scans for their own initials, reads the line above them, and knows
+the conversation before they dial.
+
+| Band | Age | What it checks | What the wall says to do |
+|---|---|---|---|
+| Starting out | under 30 | critical illness | The cheapest CI they will ever buy, and a health plan before anything is on the record |
+| Family years | 30 to 44 | critical illness | A mortgage and children behind the cover. CI first, then education savings |
+| Peak earning | 45 to 54 | nothing bought recently | The sum assured was set on an older salary. Review it, and ask about income protection |
+| Retirement in sight | 55 to 64 | a pension | The annuity window is closing. Pension top-up while contributions still have years to run |
+| Already retired | 65 and over | a health plan | Health and final expenses. **Do not touch the life cover** — s131 makes replacing it personal |
+
+**Each band checks its own gap, not the biggest one.** The first cut took
+whichever gap had the highest count in the band and four of the five came out
+saying "a health plan", because almost nobody in this book holds health. True,
+and useless — a wall that gives every life stage the same answer has stopped
+being a segmentation. Each band now names the gap its own advice is about, so
+the evidence line and the conversation line agree.
+
+Age is the band because it is present on 100% of rows, true of everybody on the
+list, and the thing that actually decides which product is right. The talking
+points are branch policy rather than data, so they live in `IBOOK_BANDS` in the
+script — once — instead of in the wall's HTML, and the screen and the app cannot
+drift apart on what the branch says about a sixty five year old.
+
+**Empty bands are drawn dim, not dropped.** A morning with nobody approaching
+retirement is worth seeing, and a wall whose panels move about from day to day
+cannot be read at a glance.
+
+#### Households: the data will not carry it
+
+Asked for and not built, because three candidate keys were tested and none of
+them is a household:
+
+| | |
+|---|---|
+| `Relationship_Group__c` | 127 rows of 24,680, 20 distinct — the object exists and is not used |
+| `Account__c` | on 100% of rows, but one account holds **2,953** clients and the next 507 — it is a group or corporate key, not a family |
+| `Contact.MailingStreet` | 8,654 distinct strings across 9,367 clients — 92% unique, so it groups almost nobody, and what it does group could as easily be an apartment block |
+
+Surname plus town was considered and rejected: 3,408 surnames across 9,367
+clients in a country where Mohammed, Persad and Ramnarine are common would
+manufacture families that do not exist, and a wrong household in front of an
+agent is worse than none.
+
+`Relationship_Groups__c` is the right home for it and it is empty. If the branch
+starts populating it, the wall can read it.
+
 #### The three panels underneath
 
 **Most birthdays this month, by agent** — the branch asked to see who has the

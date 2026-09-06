@@ -75,7 +75,7 @@
     /* Seven rows of people need 450; the bottom three panels need 300 to show
        five lines each. The first cut gave row two everything and left row three
        showing four of five with the fifth sliced. */
-    grid-template-rows:auto minmax(0,470px) minmax(0,300px);
+    grid-template-rows:auto minmax(0,430px) minmax(0,250px);
     gap:13px;padding:0 26px 20px;height:calc(100vh - 66px)}
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
     padding:16px 18px;min-height:0;display:flex;flex-direction:column}
@@ -83,8 +83,8 @@
     text-transform:uppercase;color:var(--teal)}
   .card .cap{font-size:11.5px;color:var(--faint);margin:0 0 9px;line-height:1.4}
 
-  .hero{grid-row:1/3;justify-content:center}
-  .hero .big{font-family:var(--font-d);font-weight:800;font-size:96px;line-height:.9;
+  .hero{grid-column:1;justify-content:center}
+  .hero .big{font-family:var(--font-d);font-weight:800;font-size:74px;line-height:.9;
     letter-spacing:-4px;background:var(--grad-teal);-webkit-background-clip:text;
     background-clip:text;color:transparent}
   .hero .cap2{font-size:14px;color:var(--dim);margin-top:8px;line-height:1.5}
@@ -153,7 +153,7 @@
   .row .val small{font:500 10px var(--font-b);color:var(--faint);margin-left:5px}
   .row.zero{opacity:.35;cursor:default}
 
-  .today{grid-column:2/6;grid-row:2}
+  .today{grid-column:1/6;grid-row:2}
   .month{grid-column:1/3}
   .alist{display:grid;grid-auto-flow:column;grid-template-rows:repeat(9,auto);
     gap:0 26px;overflow:hidden;flex:1;align-content:start}
@@ -175,7 +175,8 @@
     text-transform:uppercase;color:var(--dim)}
   .two .sub{font-size:11px;color:var(--faint);margin:0 0 8px;line-height:1.4}
 
-  .hist{grid-column:3/6}
+  .towns{grid-column:3/4}
+  .holds{grid-column:4/6}
   .sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:12px}
   .sgrid .v{font-family:var(--font-d);font-weight:800;font-size:30px;letter-spacing:-1px;line-height:1}
   .sgrid .k{font-size:10.5px;color:var(--faint);margin-top:4px;line-height:1.35}
@@ -184,6 +185,7 @@
   .note b{color:var(--dim)}
 
   footer{position:fixed;left:26px;bottom:5px;font-size:10.5px;color:var(--faint)}
+  footer b{color:var(--dim);font-weight:600}
   .hint{position:fixed;right:26px;bottom:5px;font-size:10.5px;color:var(--faint);opacity:.7}
 
   @media (min-width:1700px){
@@ -224,8 +226,44 @@
      the door, then the two facts that decide the call — the age they turn and
      how long they have been ours — then where and whose, then the one thing to
      say. Nothing else fits and nothing else is needed. */
-  .clist{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,auto);
-    gap:4px 24px;overflow:hidden;flex:1;align-content:start}
+  /* FIVE BANDS ACROSS, ALWAYS THE SAME FIVE. An empty band is drawn dim rather
+     than dropped: panels that move around from day to day cannot be read at a
+     glance, and a morning with nobody approaching retirement is itself worth
+     seeing. */
+  .clist{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;
+    overflow:hidden;flex:1;align-content:stretch}
+  .band{display:flex;flex-direction:column;min-height:0;
+    border:1px solid var(--line);border-radius:13px;padding:13px 14px;
+    background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015))}
+  .band.empty{opacity:.42}
+  .band .bk{font:800 11.5px var(--font-b);letter-spacing:.15em;text-transform:uppercase;
+    color:var(--teal)}
+  .band .br{font-size:10.5px;color:var(--faint);margin-top:1px}
+  .band .bn{font-family:var(--font-d);font-weight:800;font-size:32px;line-height:1;
+    letter-spacing:-1.4px;margin:5px 0 8px}
+  /* the people, as chips — initials and the age they turn, nothing else */
+  .chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+  .chip{font:700 11px var(--font-b);border-radius:7px;padding:4px 7px;line-height:1;
+    background:rgba(255,255,255,.09);color:var(--dim);white-space:nowrap}
+  .chip.gap{background:var(--grad-gold);color:#3a2404}
+  .chip i{font-style:normal;font-weight:800;font-family:var(--font-d)}
+  .chip b{font-weight:500;opacity:.75;margin-left:3px}
+  .band .miss{font-size:11.5px;color:var(--gold);line-height:1.4;margin-bottom:7px}
+  .band .miss b{font-family:var(--font-d);font-weight:800}
+  /* NO margin-bottom:auto HERE, deliberately. Pinning the agent line to the
+     bottom of the card looked tidier and hid a real fault twice over: the line
+     was being pushed past the bottom edge on the band with eleven people in it,
+     AND neither scrollHeight nor a sum of the children could see it, because
+     an auto margin absorbs the overflow into itself. Content that simply flows
+     is content a check can measure. */
+  .band .talk{font-size:12px;color:var(--ink);line-height:1.45;
+    border-left:2px solid rgba(0,207,234,.55);padding-left:10px}
+  /* One line, clipped with an ellipsis, and the overflow counted rather than
+     wrapped — a second line here is drawn below the bottom of the card. */
+  .band .who{font-size:10px;color:var(--faint);line-height:1.45;margin-top:10px;
+    padding-top:8px;border-top:1px solid rgba(255,255,255,.08);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .band .who b{color:var(--dim);font-weight:600}
   .crow{display:grid;grid-template-columns:38px 1fr;gap:10px;align-items:start;
     padding:4px 6px;border-radius:8px;transition:.16s;cursor:default}
   .crow:hover{background:rgba(255,255,255,.05)}
@@ -267,7 +305,7 @@
     font:700 9.5px var(--font-b);letter-spacing:.12em;text-transform:uppercase;
     color:var(--faint);padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,.12)}
   .bday .bhead div+div{text-align:right}
-  .hero .miles{margin-top:12px;padding-top:11px;border-top:1px solid var(--line);
+  .hero .miles{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);
     display:flex;flex-wrap:wrap;gap:6px}
   .hero .mile{font:700 11px var(--font-b);color:var(--gold);
     border:1px solid rgba(239,194,75,.4);background:rgba(239,194,75,.10);
@@ -322,7 +360,6 @@
       <div><div class="v" id="heroQuiet">&mdash;</div><div class="k">have bought nothing in years</div></div>
     </div>
     <div class="miles" id="bMiles"></div>
-    <div class="who" id="heroWho"></div>
   </section>
 
   <section class="card law">
@@ -334,20 +371,21 @@
     <div class="acts" id="lawActs"></div>
   </section>
 
-  <section class="card today"><h3 id="tHead">Today, one row each</h3>
-    <p class="cap">Initials, the age they turn, how long they have been ours, where they are,
-      whose they are &mdash; and the one thing to say.</p>
+  <section class="card today"><h3 id="tHead">Today, by where they are in life</h3>
+    <p class="cap">Everyone with a birthday today, in the band their age puts them in &mdash;
+      what that band is short of, and the conversation it is owed.
+      <b>Gold means that person is carrying a gap.</b></p>
     <div class="clist" id="cList"></div></section>
 
   <section class="card month"><h3>Most birthdays this month</h3>
     <p class="cap" id="monthCap"></p>
     <div class="rows" id="rMonth"></div></section>
 
-  <section class="card"><h3>Where today&rsquo;s clients are</h3>
+  <section class="card towns"><h3>Where today&rsquo;s clients are</h3>
     <p class="cap">Town, from the mailing address. Chaguanas is the branch&rsquo;s own.</p>
     <div class="rows" id="rTown"></div></section>
 
-  <section class="card"><h3>What today&rsquo;s already hold</h3>
+  <section class="card holds"><h3>What today&rsquo;s already hold</h3>
     <p class="cap">Cover carried by the people on this list &mdash; not by the branch.</p>
     <div class="rows" id="rHold"></div></section>
 </main>
@@ -468,7 +506,6 @@ function paint(){
     $("#heroCap").innerHTML='Birth date, town and the coverage columns all live on '
       + '<b>CLIENT_PORTFOLIO__c</b> and the Contact behind it. Nothing in the branch '
       + 'workbook carries them.';
-    $("#heroWho").innerHTML='';
     $("#bMiles").innerHTML='';
     $("#lawN").textContent="s131";
     $("#lawHd").textContent="The letter has gone out for years. This is the call.";
@@ -500,9 +537,7 @@ function paint(){
   $("#bMiles").innerHTML = MI.length
     ? MI.map(function(m){ return '<span class="mile">'+esc(m.k)+' &middot; '+n(m.n)+'</span>'; }).join("")
     : '';
-  $("#heroWho").innerHTML='<b>Initials only.</b> No name, no policy number, no premium, '
-    + 'no date of birth. Two letters and a town, so the agent whose client it is knows '
-    + 'and nobody else does.';
+
 
   $("#lawN").textContent=n(T.withGap);
   $("#lawHd").textContent="of today's list are carrying a gap worth a call";
@@ -513,30 +548,38 @@ function paint(){
   $("#lawActs").innerHTML=ACTS.map(function(a){
     return '<div class="act"><b>'+a[0]+'</b> &mdash; '+a[1]+'</div>'; }).join("");
 
-  /* One row per person. Filtering by agent or town holds the list to them,
-     which is how an agent finds their own four out of twenty eight. */
-  var list=(T.clients||[]).filter(function(c){
+  /* Bands, not rows. Filtering by agent, town or cover thins the people inside
+     each band rather than reordering one long list, so the shape of the day
+     survives the filter — an agent holding the wall to their own name still
+     sees which stages of life their four are in. */
+  function keep(c){
     if(!FILTER) return true;
     if(FILTER.dim==="agent") return c.agent===FILTER.key;
     if(FILTER.dim==="town")  return c.town===FILTER.key;
-    if(FILTER.dim==="hold")  return (c.holds||[]).indexOf(FILTER.key)>-1;
     return true;
-  });
-  $("#tHead").textContent = FILTER ? "Today · "+FILTER.key : "Today, one row each";
-  $("#cList").innerHTML = list.length ? list.slice(0,28).map(function(c){
-      var bits=[];
-      if(c.turning!=null) bits.push('turning <b>'+c.turning+'</b>');
-      if(c.years!=null)   bits.push('<b>'+c.years+'</b> years a client');
-      if(c.policies)      bits.push('<b>'+c.policies+'</b> '+(c.policies===1?'policy':'policies'));
-      var where=[c.town||'—', c.agent].filter(Boolean).join(' · ');
-      return '<div class="crow'+(c.prompt?' gap':'')+'">'
-        + '<div class="ini">'+esc(c.ini||'—')+'</div>'
-        + '<div><div class="l1">'+bits.join(' · ')+'</div>'
-        + '<div class="l2">'+esc(where)+'</div>'
-        + '<div class="tag'+(c.prompt?'':' ok')+'">'
-        +   (c.prompt ? '&#9656; '+esc(c.prompt)
-                      : 'holds '+esc((c.holds||[]).join(', ')||'nothing we can read'))
-        + '</div></div></div>';
+  }
+  $("#tHead").textContent = FILTER ? "Today · "+FILTER.key : "Today, by where they are in life";
+  var bands=(T.bands||[]);
+  $("#cList").innerHTML = bands.length ? bands.map(function(b){
+      var people=(b.people||[]).filter(keep);
+      var agents=(b.agents||[]).filter(function(a){ return !FILTER||FILTER.dim!=="agent"||a.k===FILTER.key; });
+      return '<div class="band'+(people.length?'':' empty')+'">'
+        + '<div class="bk">'+esc(b.k)+'</div>'
+        + '<div class="br">'+esc(b.range)+'</div>'
+        + '<div class="bn">'+n(people.length)+'</div>'
+        + '<div class="chips">'+people.map(function(c){
+            return '<span class="chip'+(c.gap?' gap':'')+'"><i>'+esc(c.ini)+'</i>'
+                 + (c.turning!=null?'<b>'+c.turning+'</b>':'')+'</span>'; }).join("")+'</div>'
+        + (b.missing && people.length
+            ? '<div class="miss">Missing <b>'+esc(b.missing.k)+'</b> — '
+              + n(b.missing.n)+' of '+n(b.n)+'</div>' : '')
+        + '<div class="talk">'+esc(b.talk)+'</div>'
+        + (agents.length
+            ? '<div class="who">'+agents.slice(0,3).map(function(a){
+                return '<b>'+esc(a.k)+'</b> '+n(a.n); }).join(' &middot; ')
+              + (agents.length>3?' &middot; +'+(agents.length-3)+' more':'')+'</div>'
+            : '<div class="who">nobody today</div>')
+        + '</div>';
     }).join("")
     : '<p class="none">Nobody on the branch book has a birthday today. '
       + n(T.week)+' do inside the next seven days.</p>';
@@ -546,8 +589,8 @@ function paint(){
     + 'branch. Push the top of this list &mdash; the second number is how many of theirs '
     + 'carry a gap.';
   /* Five, not seven: the bottom row is 250px and a wall does not scroll. */
-  monthBars($("#rMonth"), (M.byAgent||[]).slice(0,5));
-  bars($("#rTown"), (T.towns||[]).slice(0,5), "town", "accent");
+  monthBars($("#rMonth"), (M.byAgent||[]).slice(0,4));
+  bars($("#rTown"), (T.towns||[]).slice(0,4), "town", "accent");
   bars($("#rHold"), T.holds||[],               "hold", "teal");
 }
 
@@ -578,9 +621,9 @@ setInterval(tick,10000); tick();
 function boot(){
   paint();
   if(!BOOK.configured) return;
-  $("#src").textContent="Salesforce client portfolio · built "+BOOK.generatedAt
-    + " · active agents only · initials and town only — no name, policy number or premium"
-    + (BOOK.clients?" · "+n(BOOK.clients)+" clients on the book":"");
+  $("#src").innerHTML="Salesforce client portfolio · built "+BOOK.generatedAt
+    + " · active agents only · <b>initials only</b> — no name, policy number, premium or "
+    + "date of birth, so the agent whose client it is knows and nobody else does";
 }
 function load(){
   if(!BOOK_URL){ boot(); return; }

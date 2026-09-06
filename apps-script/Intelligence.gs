@@ -5455,6 +5455,61 @@ function iBookPrompt_(c, quietYears, today) {
   return '';
 }
 
+/* ── the bands, and what each one is actually short of ───────────────────────
+   THE WALL WAS A LIST AND A LIST IS A SPREADSHEET. Twenty eight rows sorted by
+   tenure tells an agent nothing they could not have got from an export. What
+   makes it a wall is the grouping: five life stages, each with the cover that
+   stage is typically missing, the people in it, and one sentence about what to
+   say. An agent scans for their own initials, reads the line above them, and
+   knows the conversation before they dial.
+
+   AGE IS THE BAND because it is the one thing that is true of everybody on the
+   list, present on 100% of rows, and the thing that actually decides which
+   product is right. What they are missing is then read out of the coverage
+   columns within the band, so the prompt is derived from the two of them
+   together rather than asserted.
+
+   The talking points are branch policy, not data — they are written here, once,
+   rather than pasted into the wall's HTML, so the screen and the app cannot
+   drift apart on what the branch says about a sixty five year old. */
+var IBOOK_BANDS = [
+  { k: 'Starting out',      range: 'under 30',  lo: 0,  hi: 30, want: 'ci',
+    talk: 'The cheapest critical illness they will ever buy, and a health plan '
+        + 'before anything is on the record.' },
+  { k: 'Family years',      range: '30 to 44',  lo: 30, hi: 45, want: 'ci',
+    talk: 'A mortgage and children behind the cover. Critical illness first, '
+        + 'then education savings.' },
+  { k: 'Peak earning',      range: '45 to 54',  lo: 45, hi: 55, want: 'stale',
+    talk: 'The sum assured was set on an older salary. Review it, and ask about '
+        + 'income protection.' },
+  { k: 'Retirement in sight', range: '55 to 64', lo: 55, hi: 65, want: 'pension',
+    talk: 'The annuity window is closing. Pension top-up while contributions '
+        + 'still have years to run.' },
+  { k: 'Already retired',   range: '65 and over', lo: 65, hi: 999, want: 'health',
+    talk: 'Health and final expenses. Do not touch the life cover — s131 makes '
+        + 'replacing it personal.' }
+];
+
+/* What this band is short of — THE THING ITS OWN TALKING POINT IS ABOUT, not
+   the biggest number in it. The first cut took whichever gap had the highest
+   count and four of the five bands came out saying "a health plan", because
+   almost nobody in this book holds health. True, and useless: a wall that gives
+   every life stage the same answer has stopped being a segmentation. Each band
+   now names the gap its own advice is about, so the evidence line and the
+   conversation line agree. */
+var IBOOK_WANTS = {
+  ci:      ['critical illness', function (p) { return p.life && !p.ci; }],
+  life:    ['life cover',       function (p) { return !p.life; }],
+  health:  ['a health plan',    function (p) { return !p.health; }],
+  pension: ['a pension',        function (p) { return !p.pension; }],
+  stale:   ['anything recent',  function (p) { return p.stale; }]
+};
+function iBookMissing_(people, want) {
+  var t = IBOOK_WANTS[want] || IBOOK_WANTS.ci;
+  var n = people.filter(t[1]).length;
+  return n ? { k: t[0], n: n } : null;
+}
+
 function iBookBand_(years, bands) {
   for (var i = 0; i < bands.length; i++) if (years < bands[i][1]) return bands[i][0];
   return bands[bands.length - 1][0];
@@ -5675,6 +5730,8 @@ function iBuildBook_() {
 
       todayList.push({
         ini: c.ini || '—',
+        life: c.life, ci: c.ci, health: c.health, pension: c.pension,
+        stale: !!(c.last && (today - c.last) / DAY / YEAR >= quietYears),
         turning: c.dobY ? yy - c.dobY : null,
         years: c.first ? Math.floor((today - c.first) / DAY / YEAR) : null,
         town: c.town || '',
@@ -5736,6 +5793,36 @@ function iBuildBook_() {
         var ap = a.prompt ? 0 : 1, bp = b.prompt ? 0 : 1;
         return ap - bp || (b.years || 0) - (a.years || 0);
       }),
+      /* FIVE BANDS, EVERY PERSON IN EXACTLY ONE. Age decides the band and the
+         coverage columns decide what the band is short of, so the prompt comes
+         out of the two together. Empty bands are kept rather than dropped: a
+         morning with nobody in the retirement band is itself worth seeing, and
+         a wall whose panels move around from day to day cannot be read at a
+         glance. */
+      bands: IBOOK_BANDS.map(function (b) {
+        var inBand = todayList.filter(function (t) {
+          return t.turning != null && t.turning >= b.lo && t.turning < b.hi;
+        });
+        var byAg = {};
+        inBand.forEach(function (t) { byAg[t.agent] = (byAg[t.agent] || 0) + 1; });
+        var yrs = inBand.map(function (t) { return t.years; })
+                        .filter(function (y) { return y != null; });
+        return {
+          k: b.k, range: b.range, talk: b.talk, n: inBand.length,
+          people: inBand.map(function (t) {
+            return { ini: t.ini, turning: t.turning, years: t.years,
+                     town: t.town, agent: t.agent, gap: !!t.prompt };
+          }).sort(function (x, y) { return (y.years || 0) - (x.years || 0); }),
+          missing: iBookMissing_(inBand, b.want),
+          longest: yrs.length ? Math.max.apply(null, yrs) : null,
+          agents: Object.keys(byAg).map(function (k) { return { k: k, n: byAg[k] }; })
+                    .sort(function (x, y) { return y.n - x.n; })
+        };
+      }),
+      /* Nobody's age is unknown on this list — they are on it because it is
+         their birthday — but a client whose birth year never made it into
+         Salesforce would fall through every band, so they are counted. */
+      unbanded: todayList.filter(function (t) { return t.turning == null; }).length,
       towns: Object.keys(todayTowns).map(function (k) { return { k: k, n: todayTowns[k] }; })
                .sort(function (a, b) { return b.n - a.n; }),
       holds: Object.keys(todayHolds).map(function (k) { return { k: k, n: todayHolds[k] }; })
