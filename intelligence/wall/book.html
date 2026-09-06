@@ -991,7 +991,7 @@ function paint(){
     : '<p class="none">Nobody on the branch book has a birthday today. '
       + n(T.week)+' do inside the next seven days.</p>';
 
-  var SD=(M0.sold||{}), SB=(M0.soldBranch||{}), FC=(M0.forecast||{}), RV=D.reviews;
+  var SD=(M0.sold||{}), SB=(M0.soldBranch||{}), FC=(M0.forecast||{}), G=D.growth;
   $("#ledHead").textContent=(M0.name||'The month')+', reviewed';
   /* One line. The card is 345px wide inside its padding and every line the
      heading takes is a line the last row loses at the bottom edge. */
@@ -1017,16 +1017,17 @@ function paint(){
     +   '<div class="t">'+(SB.policies===1?'policy':'policies')+' the branch wrote in '
     +   'the same <b>'+n(FC.basis||0)+' days</b>, to <b>'+n(SB.clients)+'</b> '
     +   (SB.clients===1?'client':'clients')+'.</div></div>'
-    /* AND WAS ANY OF IT REVIEWED? The branch asked the question directly. The
-       answer is not a zero, it is that nothing is written down: Review__c died
-       in 2022 and the only live object stops in June. A wall that printed "0
-       reviews" would be reporting an absence of records as if it were an
-       absence of work, so this row says which it is. */
-    + '<div class="led seen"><div class="n">'+(RV?n(RV.month):'&mdash;')+'</div>'
-    +   '<div class="t">'+(RV
-        ? 'reviews logged this month'+(RV.daysSince!=null&&!RV.month
-            ? ' &mdash; <b>the last one was '+n(RV.daysSince)+' days ago.</b>' : '.')
-        : 'no review record reaches this wall.')+'</div></div>';
+    /* WHAT CAME BACK, THE SECOND WAY. Nobody logs a call and agents are not
+       Salesforce users, so a "reviews logged" row here measured the absence of
+       a record, not the absence of work. The evidence a conversation happened
+       is a sale: an additional policy (row two) or an increase on a plan the
+       client already had (this row). Both are measured; neither is inferred. */
+    + '<div class="led seen"><div class="n">'+(G?n(G.month.n):'&mdash;')+'</div>'
+    +   '<div class="t">'+(G
+        ? 'existing plans increased this month'+(G.daysSince!=null&&!G.month.n
+            ? ' &mdash; <b>the last was '+n(G.daysSince)+' days ago.</b>'
+            : (G.month.n?' &mdash; <b>'+money(G.month.api)+'</b>.':'.'))
+        : 'no increase record reaches this wall.')+'</div></div>';
 
   var M=M0;
   $("#dHead").textContent=(M.name||'This month')+', day by day';
@@ -1035,7 +1036,6 @@ function paint(){
     + n(M.ahead)+'</b> of them.';
   daybars($("#rDays"), M.days||[]);
 
-  var G=D.growth;
   if(G){
     $("#mHead").textContent='Growth on plans we already have';
     $("#monthCap").innerHTML='Increased in '+G.year+' &mdash; <b>not new clients</b>.';

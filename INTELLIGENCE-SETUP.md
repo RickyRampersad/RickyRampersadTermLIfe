@@ -968,21 +968,28 @@ where exactly one person carries that first name — every first name on this
 branch's roster is unique, so nothing is guessed, and an unmatched one keeps the
 first name rather than being attributed to somebody.
 
-#### Was the client reviewed? Nothing says so
+#### Nobody logs a call, so the wall does not count one
 
-The branch asked how many clients had been reviewed this month, and the answer is
-not a number, it is that **nothing is written down**:
+A *"reviews logged this month"* row stood on the ledger for a day, and the
+branch's answer to it was the right one: **nobody logs a call, and agents are
+not Salesforce users.** A zero there did not mean nobody called — it meant
+nobody writes calls down, which is a fact about the system and not about the
+agents. For the record, the objects that might have held one:
 
 | Object | Rows | Last entry |
 |---|---|---|
 | `Review__c` | 147 | meeting dated **16 November 2022** |
 | `Fact_Finds__c` | 1 | — |
-| `Fact_Finding_Interviews__c` | 253 | **22 June 2026** |
+| `Fact_Finding_Interviews__c` | 253 | 22 June 2026, entered by staff |
 
-So the wall says *"0 reviews logged this month — the last one was N days ago"*
-rather than printing a zero as though it were a result. **A review that happened
-and was never written down is invisible to every system the branch owns**, and
-that is itself worth putting on a wall.
+So the wall measures **what came back**, which is the only evidence a
+conversation happened: an **additional policy** taken out (the ledger's second
+row — of the birthdays already gone by this month, how many bought anything
+since) and an **increase on a plan the client already had** (the fourth row —
+how many this month, and how long since the last). Both are read from the
+portfolio and the increases object; neither is inferred. The review query is
+gone from the builder and there is an assertion that no review count reaches
+the feed, so it cannot creep back.
 
 #### A coverless row is not a policy
 

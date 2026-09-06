@@ -5603,32 +5603,14 @@ function iBookBand_(years, bands) {
    where exactly one person carries that first name — every first name on this
    branch's roster is unique, so nothing is guessed; anything unmatched keeps
    the first name rather than being attributed to somebody. */
-/* WAS THE CLIENT ACTUALLY REVIEWED? The branch asked the question and the answer
-   is not in the place anybody would look. Review__c holds 147 records and the
-   last meeting on it is dated 16 November 2022 — the object is dead. Fact_Finds__c
-   holds one row. Fact_Finding_Interviews__c is the only live one, 253 rows, and
-   it stops in June. So the wall reports what the record says, which is that
-   nothing has been logged, rather than reporting a zero as if it were a result.
-   A review that happened and was never written down is invisible to every system
-   the branch owns, and that is itself the finding. */
-function iBookReviews_(today) {
-  var yy = today.getFullYear(), rows = [];
-  try {
-    rows = sfQuery_('SELECT CreatedDate FROM Fact_Finding_Interviews__c ' +
-                    'WHERE CreatedDate >= ' + yy + '-01-01T00:00:00Z');
-  } catch (err) { return null; }
-  var mm = today.getMonth() + 1, month = 0, year = 0, last = null;
-  (rows || []).forEach(function (x) {
-    var d = iDate_(String(x.CreatedDate || '').slice(0, 10));
-    if (!d || d.getFullYear() !== yy) return;
-    year++;
-    if (d.getMonth() + 1 === mm) month++;
-    if (!last || d > last) last = d;
-  });
-  return { month: month, year: year, lastAt: last ? iIso_(last) : null,
-           daysSince: last ? Math.round((today - last) / 86400000) : null };
-}
-
+/* NO REVIEW COUNT, ON PURPOSE. A "reviews logged this month" row stood on the
+   wall for a day and the branch's answer was the right one: nobody logs a call,
+   agents are not Salesforce users, and Review__c died in November 2022. A zero
+   there did not mean nobody called — it meant nobody writes calls down, which
+   is a fact about the system and not about the agents. The only evidence that a
+   conversation happened is what came back from it: an additional policy, or an
+   increase on a plan the client already had. Both are measured below and both
+   are what the ledger reports instead. */
 /*  ── the growth query ── */
 function iBookGrowth_(today, unitKeys, skip, roster) {
   var yy = today.getFullYear(), rows = [];
@@ -6277,7 +6259,6 @@ function iBuildBook_() {
        argument the birthday wall makes, and the only place either screen can
        say what a call is actually worth. */
     growth: iBookGrowth_(today, unitKeys, skip, roster),
-    reviews: iBookReviews_(today),
     /* Reported with its baseline, because a percentage on its own invites the
        reader to see a pattern in one in twelve. */
     birthdayEffect: { same: bdaySame, of: bdayBase,
