@@ -12,6 +12,11 @@ will see them.
 Both are −14 LUFS with a −1.9 dBTP ceiling, which is what the platforms
 normalise to, so neither will be turned down or clipped on playback.
 
+**Voice:** `en-US-AndrewNeural` at `-8%` — the house rule in `CLAUDE.md`,
+never the Multilingual variant, which will read a line in another language
+without warning. This is paid media in front of the public; that is not a
+risk to carry.
+
 ---
 
 ## What it says

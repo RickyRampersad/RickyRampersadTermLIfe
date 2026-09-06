@@ -180,14 +180,14 @@
   "music": "bed-reel.wav",
   "mix": "reel-mix.wav",
   "ass": "captions-reel.ass",
-  "dur": 23.4,
+  "dur": 23.5,
   "durs": [
    3.7,
-   4.4,
-   4.0,
-   4.7,
-   3.4,
-   3.2
+   4.2,
+   4.2,
+   4.6,
+   3.5,
+   3.3
   ],
   "out": "dhaa-ad-reel.mp4",
   "w": 1080,
@@ -210,14 +210,14 @@
   "music": "bed-feed.wav",
   "mix": "feed-mix.wav",
   "ass": "captions-feed.ass",
-  "dur": 23.4,
+  "dur": 23.5,
   "durs": [
    3.7,
-   4.4,
-   4.0,
-   4.7,
-   3.4,
-   3.2
+   4.2,
+   4.2,
+   4.6,
+   3.5,
+   3.3
   ],
   "out": "dhaa-ad-feed.mp4",
   "w": 1080,
