@@ -5657,17 +5657,22 @@ function iBuildBook_() {
      And the month, by agent, because the branch wants to see who has the most
      of them coming and push that person. */
   var todayList = [], todayTowns = {}, todayHolds = {}, monthN = 0, monthAgents = {};
+  /* THE MONTH, DAY BY DAY. The wall's horizon is today and the rest of this
+     month — not the year. An agent standing in front of it on the sixth wants
+     to know what today is and what is coming before the month runs out, and a
+     twelve-month graph answers neither. Days in the month first, so the last
+     day of a thirty-one day month is not silently dropped in a thirty day one. */
+  var daysInMonth = new Date(yy, mm, 0).getDate();
+  var monthDays = [];
+  for (var di = 1; di <= daysInMonth; di++) monthDays.push(0);
+  var monthAhead = 0;
   /* ROUND NUMBERS ARE THE ONES WORTH A CALL RATHER THAN A LETTER, and the
      branch asked for them by name. Tracked with the agent attached, because a
      milestone nobody is told about is just another Tuesday. */
   var MILES = [21, 25, 30, 40, 50, 60, 65, 70, 75, 80];
   var mileAgents = {};
   var agents = {}, noDob = 0, noIssue = 0, tenures = [], noIssueAge = 0;
-  /* WHEN THIS BOOK BUYS. Every policy the branch holds, by the month it was
-     issued — the honest answer to "when do they purchase insurance", and it is
-     a branch-wide question rather than a today question, so it is measured
-     across the whole book and not across twenty eight people. */
-  var season = [0,0,0,0,0,0,0,0,0,0,0,0], bdaySame = 0, bdayBase = 0, withDob = 0;
+  var bdaySame = 0, bdayBase = 0, withDob = 0;
 
   keys.forEach(function (k) {
     var c = byClient[k];
@@ -5691,7 +5696,6 @@ function iBuildBook_() {
     }
 
     if (c.dobM) withDob++;
-    c.months.forEach(function (m) { season[m - 1]++; });
     if (c.dobM && c.months.length) { bdayBase++; if (c.onBday) bdaySame++; }
 
     if (c.life)    cover.Life++;
@@ -5723,10 +5727,16 @@ function iBuildBook_() {
     if (!c.dobM) { noDob++; return; }
     if (c.dobM === mm) {
       monthN++;
+      if (c.dobD >= 1 && c.dobD <= daysInMonth) monthDays[c.dobD - 1]++;
       var ma = monthAgents[c.agent];
-      if (!ma) ma = monthAgents[c.agent] = { k: c.agent, unit: c.unit, n: 0, gap: 0 };
+      if (!ma) ma = monthAgents[c.agent] = { k: c.agent, unit: c.unit, n: 0, gap: 0,
+                                             today: 0, ahead: 0 };
       ma.n++;
       if (c.life && !c.ci) ma.gap++;
+      /* Today is today; anything after it is the runway. Yesterday is neither —
+         it is already spent, and a wall that counts it is padding a number. */
+      if (c.dobD === dd) ma.today++;
+      else if (c.dobD > dd) { ma.ahead++; monthAhead++; }
     }
     if (c.dobM === mm && c.dobD === dd) {
       bdayToday++; a.bday++;
@@ -5889,8 +5899,19 @@ function iBuildBook_() {
     },
     month: {
       n: monthN,
+      name: ['January','February','March','April','May','June','July','August',
+             'September','October','November','December'][mm - 1],
+      day: dd,
+      ahead: monthAhead,
+      days: monthDays.map(function (v, i) {
+        var d = new Date(yy, mm - 1, i + 1);
+        return { d: i + 1, n: v, past: i + 1 < dd, today: i + 1 === dd,
+                 dow: ['S','M','T','W','T','F','S'][d.getDay()] };
+      }),
+      /* Sorted by what is still to come rather than by the month's total: the
+         agent with forty already behind them is not the one to push today. */
       byAgent: Object.keys(monthAgents).map(function (k) { return monthAgents[k]; })
-                 .sort(function (a, b) { return b.n - a.n || b.gap - a.gap; })
+                 .sort(function (a, b) { return b.ahead - a.ahead || b.n - a.n; })
     },
     birthdays: {
       today: bdayToday, week: bdayWeek, medianAge: med(bdayAges),
@@ -5904,9 +5925,6 @@ function iBuildBook_() {
        every client has been on the book for all seven and a total would be
        a number the branch could not defend if anybody asked. */
     lettersAYear: withDob,
-    season: season.map(function (v, i) {
-      return { k: ['January','February','March','April','May','June','July','August','September','October','November','December'][i], n: v, now: i === today.getMonth() };
-    }),
     /* Reported with its baseline, because a percentage on its own invites the
        reader to see a pattern in one in twelve. */
     birthdayEffect: { same: bdaySame, of: bdayBase,

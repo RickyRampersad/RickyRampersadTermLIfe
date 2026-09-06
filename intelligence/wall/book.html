@@ -267,16 +267,27 @@
   .years .yfind b{color:var(--dim);font-weight:600}
 
   /* twelve months, as a strip rather than twelve rows */
-  .mrows{display:grid;grid-template-columns:repeat(12,1fr);gap:6px;align-items:end;
+  /* A DAY STRIP, NOT A YEAR. The wall's horizon is today and the rest of this
+     month: an agent standing in front of it on the sixth wants to know what
+     today is and what is left before the month runs out. Thirty one columns
+     rather than twelve, spent days dimmed, today lit — so the runway is the
+     bright part of the picture and the part already gone is visibly gone. */
+  .mrows{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:3px;align-items:end;
     flex:1;min-height:0;padding-top:4px}
   .mcol{display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:5px}
-  .mcol .bar{background:rgba(255,255,255,.13);border-radius:4px 4px 2px 2px;min-height:3px}
-  .mcol.now .bar{background:var(--grad-teal)}
-  .mcol .ml{font:600 9.5px var(--font-b);color:var(--faint);text-align:center}
-  .mcol.now .ml{color:var(--teal);font-weight:800}
-  .mcol .mv{font:700 10px var(--font-d);color:var(--dim);text-align:center;
+  .mcol .bar{background:linear-gradient(180deg,rgba(55,177,236,.85),rgba(11,127,212,.6));
+    border-radius:3px 3px 1px 1px;min-height:2px}
+  .mcol.past .bar{background:rgba(255,255,255,.09)}
+  .mcol.now .bar{background:var(--grad-teal);box-shadow:0 0 14px rgba(0,207,234,.5)}
+  .mcol .ml{font:600 8.5px var(--font-b);color:var(--faint);text-align:center;
     font-variant-numeric:tabular-nums}
-  .mcol.now .mv{color:var(--ink)}
+  .mcol.past .ml{opacity:.38}
+  .mcol.now .ml{color:var(--teal);font-weight:800;font-size:10px}
+  .mcol .mv{font:700 9px var(--font-d);color:var(--dim);text-align:center;
+    font-variant-numeric:tabular-nums;min-height:11px}
+  .mcol.past .mv{opacity:.30}
+  .mcol.now .mv{color:var(--ink);font-size:12px}
+  .mcol .dw{font:600 7.5px var(--font-b);color:var(--faint);text-align:center;opacity:.5}
 
   /* FIVE BANDS ACROSS, ALWAYS THE SAME FIVE. An empty band is drawn dim rather
      than dropped: panels that move around from day to day cannot be read at a
@@ -442,10 +453,6 @@
     <h3 id="heroKick">Letters sent this morning</h3>
     <div class="big" id="heroN">&mdash;</div>
     <div class="cap2" id="heroCap"></div>
-    <div class="split">
-      <div><div class="v" id="heroGap">&mdash;</div><div class="k">carry a gap worth a call</div></div>
-      <div><div class="v" id="heroPol">&mdash;</div><div class="k">policies between them</div></div>
-    </div>
     <div class="callout">Nothing beats a call.<span>The letter is sent. The review is not.</span></div>
   </section>
 
@@ -479,12 +486,11 @@
     <p class="cap">One is a relationship nobody built on.</p>
     <div class="rows" id="rPol"></div></section>
 
-  <section class="card season"><h3>When this book buys</h3>
-    <p class="cap">Every policy the branch holds, by the month it was issued. The lit bar
-      is the month we are in.</p>
-    <div class="mrows" id="rSeason"></div></section>
+  <section class="card season"><h3 id="dHead">The month, day by day</h3>
+    <p class="cap" id="dCap"></p>
+    <div class="mrows" id="rDays"></div></section>
 
-  <section class="card month"><h3>Most birthdays this month</h3>
+  <section class="card month"><h3 id="mHead">Still ahead this month</h3>
     <p class="cap" id="monthCap"></p>
     <div class="rows" id="rMonth"></div></section>
 </main>
@@ -607,7 +613,7 @@ function paint(){
       + 'workbook carries them.';
     $("#bMiles").innerHTML=''; $("#heroWhere").innerHTML='';
     $("#yFind").innerHTML='';
-    ["#rPol","#rSeason","#rMonth","#mList"].forEach(function(x){ $(x).innerHTML=""; });
+    ["#rPol","#rDays","#rMonth","#mList"].forEach(function(x){ $(x).innerHTML=""; });
     $("#monthCap").textContent="";
     $("#cList").innerHTML='<p class="none">Set the Salesforce credentials in '
       + '<b>SalesforceSync.gs</b>, deploy the script, and paste the <b>/exec</b> URL into '
@@ -622,11 +628,15 @@ function paint(){
   $("#heroKick").textContent="Letters sent this morning";
   $("#heroN").style.cssText="";
   $("#heroN").textContent=n(T.n);
+  /* Computed before it is read. It was declared below this line and var hoists,
+     so the wall confidently reported that twenty eight clients hold 0 policies
+     between them — which is the kind of wrong a wall states with a straight
+     face. */
+  var polN=(T.bands||[]).reduce(function(a,b){ return a+(b.policies||0); },0);
   $("#heroCap").innerHTML='went out from the branch this morning, <b>in your name</b>. '
-    + '<b>'+n(T.week)+'</b> more inside seven days.';
-  $("#heroGap").textContent=n(T.withGap);
-  var pol=(T.policiesHeld||[]).reduce(function(a,x){ return a+x.n; },0);
-  $("#heroPol").textContent=n((T.bands||[]).reduce(function(a,b){ return a+(b.policies||0); },0));
+    + '<b>'+n(T.withGap)+'</b> of them carry a gap worth a call, and they hold <b>'
+    + n(polN)+'</b> policies between them. <b>'+n(T.week)+'</b> more letters go inside '
+    + 'seven days.';
   var MI=T.milestones||[];
   $("#bMiles").innerHTML = MI.length
     ? MI.map(function(m){ return '<span class="mile">'+esc(m.k)+' &middot; '+n(m.n)+'</span>'; }).join("")
@@ -690,38 +700,49 @@ function paint(){
       + n(T.week)+' do inside the next seven days.</p>';
 
   bars($("#rPol"),  T.policiesHeld||[], "pol",  "teal");
-  season($("#rSeason"), D.season||[]);
 
   var M=(D.month||{});
-  $("#monthCap").innerHTML='<b>'+n(M.n)+'</b> fall in this month. Push the top of this '
-    + 'list — the second number is how many of theirs carry a gap.';
+  $("#dHead").textContent=(M.name||'This month')+', day by day';
+  $("#dCap").innerHTML='Every birthday on the branch book this month. <b>Today is the '
+    + n(M.day)+'</b>. The dim days are spent; the bright ones are still to come — <b>'
+    + n(M.ahead)+'</b> of them.';
+  daybars($("#rDays"), M.days||[]);
+
+  $("#mHead").textContent='Still ahead in '+(M.name||'this month');
+  $("#monthCap").innerHTML='<b>'+n(M.ahead)+'</b> of the month&rsquo;s <b>'+n(M.n)
+    + '</b> are still to come. Sorted by what is left, not by the total &mdash; the agent '
+    + 'with forty already behind them is not the one to push today.';
   monthBars($("#rMonth"), (M.byAgent||[]).slice(0,4));
 }
 
-/* Twelve months as a strip. A wall reads a shape faster than it reads a column
-   of numbers, and the only thing worth reading here is the shape. */
-function season(host,list){
+/* The month as a strip of days. Spent days are dimmed rather than dropped: the
+   shape of a month half gone is the point of looking at it. */
+function daybars(host,list){
   if(!host) return;
   var max=0; list.forEach(function(x){ if(x.n>max) max=x.n; });
   host.innerHTML=list.map(function(x){
-    return '<div class="mcol'+(x.now?' now':'')+'">'
-      + '<div class="mv">'+n(x.n)+'</div>'
-      + '<div class="bar" style="height:'+(max?Math.max(3,x.n/max*100):3).toFixed(1)+'%"></div>'
-      + '<div class="ml">'+esc(x.k.slice(0,3))+'</div></div>';
+    return '<div class="mcol'+(x.past?' past':'')+(x.today?' now':'')+'">'
+      + '<div class="mv">'+(x.n||'')+'</div>'
+      + '<div class="bar" style="height:'+(max?Math.max(2,x.n/max*100):2).toFixed(1)+'%"></div>'
+      + '<div class="ml">'+x.d+'</div>'
+      + '<div class="dw">'+esc(x.dow)+'</div></div>';
   }).join("");
 }
 
 /* The month leaderboard carries two numbers per row, so it cannot use bars() */
 function monthBars(host,list){
   if(!host) return;
-  var max=0; list.forEach(function(x){ if(x.n>max) max=x.n; });
+  var max=0; list.forEach(function(x){ if((x.ahead||0)>max) max=x.ahead||0; });
   host.innerHTML=list.map(function(x){
     var sel=FILTER&&FILTER.dim==="agent"&&FILTER.key===x.k;
+    /* The bar is what is still ahead; the number beside it is the month total,
+       so an agent can see both what is left and what it is out of. */
     return '<div class="row'+(sel?' sel':'')+'" data-dim="agent" data-key="'+esc(x.k)+'">'
-      + '<div><div class="lbl">'+esc(x.k)+' <em>'+esc(x.unit||"")+'</em></div>'
+      + '<div><div class="lbl">'+esc(x.k)+' <em>'+(x.today?x.today+' today · ':'')
+      +   'of '+n(x.n)+' this month</em></div>'
       + '<div class="track"><i class="teal" style="width:'
-      + (max?x.n/max*100:0).toFixed(1)+'%"></i></div></div>'
-      + '<div class="val">'+n(x.n)+(x.gap?'<small>'+n(x.gap)+' gap</small>':'')+'</div></div>';
+      + (max?(x.ahead||0)/max*100:0).toFixed(1)+'%"></i></div></div>'
+      + '<div class="val">'+n(x.ahead||0)+(x.gap?'<small>'+n(x.gap)+' gap</small>':'')+'</div></div>';
   }).join("");
   Array.prototype.forEach.call(host.querySelectorAll(".row[data-dim]"),function(el){
     el.onclick=function(){

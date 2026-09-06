@@ -976,6 +976,27 @@ agent is worse than none.
 `Relationship_Groups__c` is the right home for it and it is empty. If the branch
 starts populating it, the wall can read it.
 
+#### The horizon is today and the rest of this month
+
+The wall carried a twelve-month graph of when the book buys. It does not any
+more, because the branch's horizon is not the year: an agent standing in front
+of the screen on the sixth wants to know what today is and what is left before
+the month runs out, and January to December answers neither.
+
+**The month, day by day.** One column per day — thirty or thirty-one, taken from
+the month itself so the last day of a long month is never silently dropped.
+Spent days are dimmed rather than removed, because the shape of a month half
+gone is the point of looking at it; today is lit; the days ahead are the runway.
+Weekday letters underneath, so a Saturday reads as a Saturday.
+
+**Still ahead this month, by agent** — and sorted by what is left rather than by
+the month's total. The agent with forty birthdays already behind them is not the
+one to push today. Each row shows how many are still to come, how many of those
+are today, and the month's total behind it.
+
+(If the buying-season graph is wanted back, it is four lines in the builder —
+November and December were the peak, 1,494 and 1,460 against February's 1,091.)
+
 #### The three panels underneath
 
 **Most birthdays this month, by agent** — the branch asked to see who has the
