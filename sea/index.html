@@ -3,307 +3,408 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>RD's Academy — S.E.A. Past Papers &amp; Practice</title>
-<meta name="description" content="Every official Trinidad and Tobago S.E.A. past paper in one place, plus timed practice built to the Ministry's own assessment framework.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%23134E5A'/><text x='50' y='68' font-size='52' font-family='Georgia,serif' font-weight='700' fill='%23F2A03D' text-anchor='middle'>RD</text></svg>">
+<title>RRB Academy — S.E.A. Practice</title>
+<meta name="description" content="Ricky Rampersad Branch Academy. Every official S.E.A. past paper, and practice built to the Ministry's own assessment framework — for students, parents and teachers.">
+<link rel="icon" href="../favicon.svg">
+<meta name="theme-color" content="#07131f">
 <style>
 :root{
-  --ink:#12242C; --paper:#F4F7F7; --surface:#FFFFFF; --surface2:#E9F0F1;
-  --brand:#134E5A; --brand2:#1D7D8F; --accent:#E08A20; --accent2:#F2A03D;
-  --slate:#5E7681; --line:#D2DFE2;
-  --go:#1D7A52; --goBg:#E4F3EC; --stop:#B03A2B; --stopBg:#FBE9E6; --warn:#9A6B14;
+  /* The branch palette — the values in IBRAND, which the client letters read. */
+  --navy:#07131f; --gold:#efc24b; --gold2:#c9942c; --teal:#00CFEA;
+  --ink:#16202b; --muted:#5c6b7a; --rule:#e2e8ee;
+  --paper:#F5F7FA; --surface:#FFFFFF; --surface2:#EDF1F6;
+  --tealInk:#0A7C8C;                 /* teal dark enough to read on white */
+  --goldInk:#8A6410;
+  --go:#1C7A52; --goBg:#E6F4EC; --stop:#A8362A; --stopBg:#FBEAE7; --warn:#8A6410;
   --sans:"Avenir Next","Segoe UI",Inter,system-ui,-apple-system,sans-serif;
   --display:Optima,"Palatino Linotype",Georgia,serif;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --shadow:0 1px 2px rgba(7,19,31,.05),0 6px 18px rgba(7,19,31,.06);
 }
+/* Dark: the navy becomes the ground, and gold and teal lift off it. */
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --ink:#DEE9EC; --paper:#08181D; --surface:#0E262E; --surface2:#143540;
-  --brand:#68B8C9; --brand2:#4FA5B8; --accent:#F2A03D; --accent2:#E08A20;
-  --slate:#90A8B2; --line:#1E4351;
-  --go:#57B78A; --goBg:#123328; --stop:#D97364; --stopBg:#36201C; --warn:#D3A155;
+  --ink:#DDE6ED; --paper:#07131f; --surface:#0F2131; --surface2:#17303F;
+  --muted:#8FA3B3; --rule:#22394A;
+  --tealInk:#4FD8EE; --goldInk:#efc24b;
+  --go:#4FB489; --goBg:#0F2E24; --stop:#DE8477; --stopBg:#321915; --warn:#D9AC57;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.28);
 }}
 :root[data-theme="dark"]{
-  --ink:#DEE9EC; --paper:#08181D; --surface:#0E262E; --surface2:#143540;
-  --brand:#68B8C9; --brand2:#4FA5B8; --accent:#F2A03D; --accent2:#E08A20;
-  --slate:#90A8B2; --line:#1E4351;
-  --go:#57B78A; --goBg:#123328; --stop:#D97364; --stopBg:#36201C; --warn:#D3A155;
+  --ink:#DDE6ED; --paper:#07131f; --surface:#0F2131; --surface2:#17303F;
+  --muted:#8FA3B3; --rule:#22394A;
+  --tealInk:#4FD8EE; --goldInk:#efc24b;
+  --go:#4FB489; --goBg:#0F2E24; --stop:#DE8477; --stopBg:#321915; --warn:#D9AC57;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.28);
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.6}
-h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;line-height:1.22}
+h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;line-height:1.2}
 p{margin:0}
-a{color:var(--brand2)}
+a{color:var(--tealInk)}
 button,input,select,textarea{font:inherit;color:inherit}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.label{font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--slate)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.label{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
-.muted{color:var(--slate)}
+.muted{color:var(--muted)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+[hidden]{display:none!important}
 
-/* ---- header ---- */
-header{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
-.hin{max-width:1120px;margin:0 auto;padding:.7rem 1.25rem;display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:.6rem;margin-right:auto}
-.brand .tile{width:38px;height:38px;border-radius:9px;background:var(--brand);color:var(--accent2);
-  display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.02em;flex:none}
-.brand b{display:block;font-family:var(--display);font-size:16px;font-weight:600;line-height:1.1}
-.brand small{display:block;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--slate);font-weight:700}
-nav{display:flex;gap:.3rem;flex-wrap:wrap}
-nav button{background:none;border:1px solid transparent;border-radius:999px;padding:.35rem .8rem;cursor:pointer;
-  font-size:13.5px;color:var(--slate);font-weight:600}
-nav button:hover{background:var(--surface2);color:var(--ink)}
-nav button[aria-current="page"]{background:var(--brand);border-color:var(--brand);color:#fff}
-:root[data-theme="dark"] nav button[aria-current="page"]{color:#08181D}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) nav button[aria-current="page"]{color:#08181D}}
-.themebtn{background:none;border:1px solid var(--line);border-radius:999px;width:32px;height:32px;cursor:pointer;
-  display:grid;place-items:center;font-size:14px;flex:none}
+/* The branch mark — logo-mark.png, never a substitute. */
+.mark{border-radius:13px;overflow:hidden;background:#07131f;display:grid;place-items:center}
+.mark img{width:100%;height:100%;display:block}
 
-main{max-width:1120px;margin:0 auto;padding:1.75rem 1.25rem 5rem}
+/* ================= gate ================= */
+#gate{position:fixed;inset:0;z-index:100;background:
+   radial-gradient(1100px 620px at 50% -10%,#12293d 0%,#07131f 62%);
+  color:#EAF1F6;display:grid;place-items:center;padding:1.5rem;overflow:auto}
+.gatebox{width:min(660px,100%);text-align:center}
+.gatebox .mark{width:74px;height:74px;margin:0 auto 1.15rem;box-shadow:0 10px 34px rgba(0,0,0,.42)}
+.gatebox h1{font-size:2rem;color:#fff;letter-spacing:.01em}
+.gatebox .kicker{font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:.5rem}
+.gatebox .sub{color:#9FB3C4;margin:.5rem auto 2rem;max-width:44ch;font-size:14.5px}
+.roles{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1.5rem}
+@media (max-width:560px){.roles{grid-template-columns:1fr}}
+.role{background:rgba(255,255,255,.055);border:1px solid rgba(239,194,75,.24);border-radius:12px;
+  padding:1.05rem .8rem;cursor:pointer;text-align:center;color:inherit;transition:.16s}
+.role:hover{background:rgba(255,255,255,.1);border-color:var(--gold)}
+.role[aria-pressed="true"]{background:rgba(239,194,75,.14);border-color:var(--gold);
+  box-shadow:0 0 0 1px var(--gold) inset}
+.role .ic{font-size:24px;line-height:1;display:block;margin-bottom:.45rem}
+.role b{display:block;font-size:14.5px;font-family:var(--display)}
+.role small{display:block;color:#8FA5B8;font-size:11.5px;margin-top:.15rem;line-height:1.35}
+.gatebox input{width:min(300px,100%);background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.2);
+  border-radius:9px;padding:.7rem .95rem;color:#fff;text-align:center;letter-spacing:.16em;
+  font-family:var(--mono);font-size:15px;text-transform:uppercase}
+.gatebox input:focus{border-color:var(--gold);background:rgba(255,255,255,.11)}
+.gatebox input::placeholder{letter-spacing:.16em;color:#6E8497}
+.gatego{background:linear-gradient(180deg,var(--gold),var(--gold2));color:#07131f;border:0;border-radius:9px;
+  padding:.72rem 1.6rem;font-weight:800;cursor:pointer;font-size:14px;letter-spacing:.04em;margin-left:.5rem}
+.gatego:hover{filter:brightness(1.07)}
+#gateErr{color:#F0A79B;font-size:13.5px;min-height:1.3em;margin-top:.85rem}
+.gatefoot{margin-top:1.9rem;font-size:12px;color:#6E8497;line-height:1.7}
+.gatefoot b{color:#9FB3C4}
+
+/* ================= header ================= */
+header{background:var(--navy);position:sticky;top:0;z-index:40;box-shadow:0 1px 0 rgba(255,255,255,.07)}
+.hin{max-width:1160px;margin:0 auto;padding:.6rem 1.25rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:.65rem;margin-right:auto;min-width:0}
+.brand .mark{width:36px;height:36px;flex:none;box-shadow:0 0 0 1px rgba(239,194,75,.3)}
+.brand b{display:block;font-family:var(--display);font-size:15.5px;color:#fff;line-height:1.15}
+.brand small{display:block;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:700}
+nav{display:flex;gap:.15rem;flex-wrap:wrap}
+nav button{background:none;border:0;border-radius:7px;padding:.4rem .75rem;cursor:pointer;
+  font-size:13.5px;color:#9FB3C4;font-weight:600}
+nav button:hover{background:rgba(255,255,255,.09);color:#fff}
+nav button[aria-current="page"]{background:var(--gold);color:#07131f;font-weight:700}
+.whoami{display:flex;align-items:center;gap:.5rem}
+.whoami .pill{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+  background:rgba(0,207,234,.16);color:var(--teal);border:1px solid rgba(0,207,234,.3);
+  border-radius:99px;padding:.2rem .6rem}
+.whoami button{background:none;border:1px solid rgba(255,255,255,.22);color:#9FB3C4;border-radius:7px;
+  padding:.28rem .6rem;font-size:11.5px;cursor:pointer;font-weight:600}
+.whoami button:hover{border-color:var(--gold);color:#fff}
+
+main{max-width:1160px;margin:0 auto;padding:1.75rem 1.25rem 5rem}
 .view[hidden]{display:none}
-.stack{display:flex;flex-direction:column;gap:1.25rem}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1.35rem}
-.card h2{font-size:1.25rem;color:var(--brand)}
-.pagehead{margin-bottom:1.25rem}
-.pagehead h1{font-size:1.85rem;color:var(--brand);margin:.15rem 0 .3rem}
-.pagehead p{color:var(--slate);max-width:62ch}
+.stack{display:flex;flex-direction:column;gap:1.15rem}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:1.4rem;box-shadow:var(--shadow)}
+.card h2{font-size:1.22rem;color:var(--ink)}
+.card.gold{border-left:4px solid var(--gold)}
+.card.teal{border-left:4px solid var(--teal)}
+.pagehead{margin-bottom:1.3rem}
+.pagehead h1{font-size:1.95rem;margin:.15rem 0 .35rem}
+.pagehead p{color:var(--muted);max-width:64ch}
 
-.btn{background:var(--brand);color:#fff;border:1px solid var(--brand);border-radius:7px;
+.btn{background:var(--navy);color:#fff;border:1px solid var(--navy);border-radius:8px;
   padding:.55rem 1.1rem;cursor:pointer;font-size:13.5px;font-weight:700}
-:root[data-theme="dark"] .btn{color:#08181D}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn{color:#08181D}}
-.btn:hover{background:var(--brand2);border-color:var(--brand2)}
-.btn:disabled{opacity:.45;cursor:not-allowed}
-.btn.ghost{background:none;color:var(--brand2);border-color:var(--line)}
-.btn.ghost:hover{background:var(--surface2);border-color:var(--brand2)}
-.btn.warm{background:var(--accent);border-color:var(--accent);color:#fff}
-.btn.warm:hover{background:var(--accent2);border-color:var(--accent2)}
-.btnrow{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+.btn:hover{background:#12293d;border-color:#12293d}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.gold{background:linear-gradient(180deg,var(--gold),var(--gold2));border-color:var(--gold2);color:#07131f;font-weight:800}
+.btn.gold:hover{filter:brightness(1.07)}
+.btn.ghost{background:none;color:var(--tealInk);border-color:var(--rule)}
+.btn.ghost:hover{background:var(--surface2);border-color:var(--teal)}
+.btn.sm{padding:.38rem .8rem;font-size:12.5px}
+.btnrow{display:flex;gap:.55rem;flex-wrap:wrap;align-items:center}
 
 .chips{display:flex;gap:.4rem;flex-wrap:wrap}
-.chip{background:var(--surface2);border:1px solid var(--line);border-radius:999px;padding:.3rem .8rem;
-  cursor:pointer;font-size:12.5px;font-weight:600;color:var(--slate)}
-.chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
-:root[data-theme="dark"] .chip[aria-pressed="true"]{color:#08181D}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .chip[aria-pressed="true"]{color:#08181D}}
+.chip{background:var(--surface2);border:1px solid var(--rule);border-radius:99px;padding:.32rem .85rem;
+  cursor:pointer;font-size:12.5px;font-weight:600;color:var(--muted)}
+.chip:hover{border-color:var(--teal);color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
 
 .grid{display:grid;gap:1rem}
-.g2{grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
-.g3{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
-.g4{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.g2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(215px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(158px,1fr))}
 
-.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem}
-.stat .n{font-family:var(--display);font-size:1.9rem;font-weight:600;color:var(--brand);line-height:1.05}
-.stat .n.warm{color:var(--accent)}
+.stat{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:1rem 1.1rem;box-shadow:var(--shadow)}
+.stat .n{font-family:var(--display);font-size:1.95rem;font-weight:600;line-height:1.05;color:var(--ink)}
+.stat .n.gold{color:var(--gold2)}
+.stat .n.teal{color:var(--tealInk)}
 
-.bar{height:7px;border-radius:99px;background:var(--surface2);overflow:hidden;margin-top:.5rem}
-.bar i{display:block;height:100%;background:var(--brand2);border-radius:99px;transition:width .35s}
-.bar i.warm{background:var(--accent)}
+.bar{height:8px;border-radius:99px;background:var(--surface2);overflow:hidden;margin-top:.5rem}
+.bar i{display:block;height:100%;border-radius:99px;background:var(--teal);transition:width .4s}
+.bar i.gold{background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.bar i.go{background:var(--go)}
 
 table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{text-align:left;padding:.55rem .6rem;border-bottom:1px solid var(--line);vertical-align:top}
-th{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--slate);font-weight:700}
+th,td{text-align:left;padding:.55rem .6rem;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);font-weight:700}
 .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 
-.tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
-  padding:.15rem .5rem;border-radius:4px;background:var(--surface2);color:var(--slate)}
-.tag.n{background:#DCEEF2;color:#0F5464}
-.tag.g{background:#EAE6F6;color:#4A3E7A}
-.tag.m{background:#FBEEDC;color:#8A5C12}
-.tag.s{background:#E2F1E7;color:#1C6444}
-:root[data-theme="dark"] .tag.n{background:#123945;color:#8FD3E2}
-:root[data-theme="dark"] .tag.g{background:#28224A;color:#B7ACE4}
-:root[data-theme="dark"] .tag.m{background:#3B2C12;color:#EDBE76}
-:root[data-theme="dark"] .tag.s{background:#133324;color:#87CFA8}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tag.n{background:#123945;color:#8FD3E2}
-:root:not([data-theme="light"]) .tag.g{background:#28224A;color:#B7ACE4}
-:root:not([data-theme="light"]) .tag.m{background:#3B2C12;color:#EDBE76}
-:root:not([data-theme="light"]) .tag.s{background:#133324;color:#87CFA8}}
+.tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+  padding:.16rem .5rem;border-radius:4px;background:var(--surface2);color:var(--muted)}
+.tag.n{background:#E2F6FA;color:#0A6675}
+.tag.g{background:#EEE7F7;color:#553F86}
+.tag.m{background:#FBF0D9;color:#7A5810}
+.tag.s{background:#E3F2E9;color:#1B6142}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tag.n{background:#0B333C;color:#7FDCEC}
+:root:not([data-theme="light"]) .tag.g{background:#251E3B;color:#B9A9E6}
+:root:not([data-theme="light"]) .tag.m{background:#3A2D11;color:#EFC24B}
+:root:not([data-theme="light"]) .tag.s{background:#12301F;color:#7FCCA4}}
+:root[data-theme="dark"] .tag.n{background:#0B333C;color:#7FDCEC}
+:root[data-theme="dark"] .tag.g{background:#251E3B;color:#B9A9E6}
+:root[data-theme="dark"] .tag.m{background:#3A2D11;color:#EFC24B}
+:root[data-theme="dark"] .tag.s{background:#12301F;color:#7FCCA4}
 
-/* ---- question ---- */
-.qcard{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.qtop{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;padding:.75rem 1.15rem;
-  background:var(--surface2);border-bottom:1px solid var(--line);font-size:12.5px;color:var(--slate)}
-.qtop .no{font-family:var(--display);font-size:1.05rem;font-weight:700;color:var(--brand)}
-.qbody{padding:1.25rem 1.15rem}
-.qtext{font-size:17px;line-height:1.55}
+/* ================= question card ================= */
+.qcard{background:var(--surface);border:1px solid var(--rule);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+.qtop{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;padding:.7rem 1.15rem;
+  background:var(--surface2);border-bottom:1px solid var(--rule);font-size:12.5px;color:var(--muted)}
+.qtop .no{font-family:var(--display);font-size:1.05rem;font-weight:700;color:var(--ink);
+  background:var(--gold);border-radius:6px;min-width:26px;text-align:center;padding:0 .3rem;color:#07131f}
+.qbody{padding:1.3rem 1.15rem}
+.qtext{font-size:17.5px;line-height:1.6}
 .frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;
   font-size:.72em;line-height:1.12;margin:0 .12em;position:relative;top:-.05em}
 .frac span:first-child{border-bottom:1.4px solid currentColor;padding:0 .25em}
-figure{margin:1rem 0 0;padding:0;max-width:300px}
-figure.wide{max-width:420px}
+figure{margin:1.1rem 0 0;padding:0;max-width:310px}
+figure.wide{max-width:430px}
 figure svg{max-width:100%;height:auto;display:block}
-.answerrow{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-top:1.15rem}
+figcaption{font-size:12px;color:var(--muted);margin-top:.35rem}
+
+.answerrow{display:flex;gap:.55rem;flex-wrap:wrap;align-items:center;margin-top:1.2rem}
 .answerrow label{font-weight:700;font-size:13.5px}
-input[type=text].ans{background:var(--paper);border:1.5px solid var(--line);border-radius:7px;
-  padding:.55rem .8rem;width:min(240px,100%);font-family:var(--mono);font-size:16px}
-input[type=text].ans:focus{border-color:var(--brand2)}
-.verdict{margin-top:1.1rem;border-radius:8px;padding:.9rem 1.05rem;font-size:14.5px;border:1px solid transparent}
+input[type=text].ans{background:var(--paper);border:1.6px solid var(--rule);border-radius:8px;
+  padding:.58rem .85rem;width:min(230px,100%);font-family:var(--mono);font-size:16.5px}
+input[type=text].ans:focus{border-color:var(--teal);background:var(--surface)}
+input[type=text].ans.right{border-color:var(--go);background:var(--goBg)}
+input[type=text].ans.wrong{border-color:var(--stop);background:var(--stopBg)}
+
+/* ---- the hint ladder: help before answers ---- */
+.ladder{margin-top:1.15rem;border-top:1px dashed var(--rule);padding-top:1rem}
+.ladder .rungrow{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.rung{background:var(--surface2);border:1px solid var(--rule);border-radius:8px;padding:.42rem .85rem;
+  cursor:pointer;font-size:12.5px;font-weight:700;color:var(--tealInk);display:inline-flex;gap:.4rem;align-items:center}
+.rung:hover{border-color:var(--teal)}
+.rung[data-open="1"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.rung .k{font-size:10px;font-weight:800;letter-spacing:.08em;opacity:.7}
+.rung:disabled{opacity:.4;cursor:not-allowed}
+.rung.reveal{color:var(--goldInk);border-color:var(--gold)}
+.rung.reveal[data-open="1"]{background:var(--gold);border-color:var(--gold2);color:#07131f}
+.hint{margin-top:.75rem;border-left:3px solid var(--teal);background:var(--surface2);
+  border-radius:0 9px 9px 0;padding:.85rem 1rem;font-size:14.5px;line-height:1.65}
+.hint.gold{border-left-color:var(--gold)}
+.hint b.h{display:block;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:.3rem}
+.hint figure{max-width:340px;margin-top:.7rem}
+.locked{font-size:13px;color:var(--muted);margin-top:.6rem;display:flex;gap:.4rem;align-items:flex-start}
+.locked b{color:var(--goldInk)}
+
+.verdict{margin-top:1.1rem;border-radius:9px;padding:.9rem 1.05rem;font-size:14.5px;border:1px solid transparent}
 .verdict.ok{background:var(--goBg);border-color:var(--go);color:var(--go)}
 .verdict.no{background:var(--stopBg);border-color:var(--stop);color:var(--stop)}
-.verdict > b{display:block;font-size:13px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.3rem}
-.verdict .exp{color:var(--ink);margin-top:.45rem;line-height:1.6}
+.verdict > b{display:block;font-size:12.5px;letter-spacing:.07em;text-transform:uppercase;margin-bottom:.25rem}
+.verdict .body{color:var(--ink);margin-top:.4rem;line-height:1.65}
 
-/* ---- exam ---- */
-.exambar{position:sticky;top:57px;z-index:20;background:var(--brand);color:#fff;border-radius:10px;
-  padding:.7rem 1.1rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin-bottom:1.1rem}
-:root[data-theme="dark"] .exambar{color:#08181D}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .exambar{color:#08181D}}
-.exambar .clock{font-family:var(--mono);font-size:1.4rem;font-weight:700;font-variant-numeric:tabular-nums}
-.exambar .clock.low{color:#FFD9D2}
-.exambar button{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);color:inherit;
-  border-radius:6px;padding:.35rem .85rem;cursor:pointer;font-size:12.5px;font-weight:700;margin-left:auto}
-.secbanner{background:var(--surface2);border:1px solid var(--line);border-left:4px solid var(--accent);
-  border-radius:8px;padding:.7rem 1rem;margin:1.25rem 0 .85rem}
-.secbanner b{color:var(--brand)}
-.examq{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:1.05rem 1.15rem;margin-bottom:.8rem}
+/* ================= exam ================= */
+.exambar{position:sticky;top:56px;z-index:30;background:var(--navy);color:#fff;border-radius:11px;
+  padding:.7rem 1.1rem;display:flex;gap:1.1rem;align-items:center;flex-wrap:wrap;margin-bottom:1.1rem;
+  box-shadow:0 6px 20px rgba(7,19,31,.18)}
+.exambar .label{color:var(--gold);opacity:.9}
+.exambar .clock{font-family:var(--mono);font-size:1.45rem;font-weight:700;font-variant-numeric:tabular-nums}
+.exambar .clock.low{color:#F5A79B}
+.exambar button{background:linear-gradient(180deg,var(--gold),var(--gold2));border:0;color:#07131f;
+  border-radius:8px;padding:.42rem .95rem;cursor:pointer;font-size:12.5px;font-weight:800;margin-left:auto}
+.secbanner{background:var(--surface2);border:1px solid var(--rule);border-left:4px solid var(--gold);
+  border-radius:0 9px 9px 0;padding:.75rem 1rem;margin:1.3rem 0 .85rem}
+.secbanner b{font-family:var(--display)}
+.examq{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:1.05rem 1.15rem;
+  margin-bottom:.75rem;box-shadow:var(--shadow)}
 .examq .qtext{font-size:16px}
-.palette{display:flex;gap:.28rem;flex-wrap:wrap;margin-top:.5rem}
-.palette a{width:26px;height:26px;border-radius:5px;display:grid;place-items:center;font-size:11.5px;
-  font-weight:700;background:var(--surface2);color:var(--slate);text-decoration:none;border:1px solid var(--line)}
-.palette a.done{background:var(--brand2);color:#fff;border-color:var(--brand2)}
+.palette{display:flex;gap:.26rem;flex-wrap:wrap;margin-bottom:1rem}
+.palette a{width:27px;height:27px;border-radius:6px;display:grid;place-items:center;font-size:11.5px;
+  font-weight:700;background:var(--surface2);color:var(--muted);text-decoration:none;border:1px solid var(--rule)}
+.palette a.done{background:var(--teal);color:#07131f;border-color:var(--teal)}
 
-/* ---- writing ---- */
-.prompt{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--brand2);
-  border-radius:8px;padding:.9rem 1.1rem;margin-bottom:.7rem;cursor:pointer}
-.prompt[aria-pressed="true"]{border-left-color:var(--accent);background:var(--surface2)}
-.prompt .n{font-family:var(--display);font-weight:700;color:var(--brand);margin-right:.4rem}
-textarea.essay{width:100%;min-height:340px;background:var(--paper);border:1.5px solid var(--line);
-  border-radius:9px;padding:1rem 1.1rem;line-height:1.85;font-size:16px;resize:vertical;font-family:var(--sans)}
-textarea.essay:focus{border-color:var(--brand2)}
-.crit{display:flex;gap:.6rem;align-items:flex-start;padding:.55rem 0;border-bottom:1px solid var(--line)}
+/* ================= writing ================= */
+.prompt{background:var(--surface);border:1px solid var(--rule);border-left:4px solid var(--rule);
+  border-radius:0 9px 9px 0;padding:.9rem 1.1rem;margin-bottom:.65rem;cursor:pointer;box-shadow:var(--shadow)}
+.prompt:hover{border-left-color:var(--teal)}
+.prompt[aria-pressed="true"]{border-left-color:var(--gold);background:var(--surface2)}
+.prompt .n{font-family:var(--display);font-weight:700;color:var(--gold2);margin-right:.4rem}
+textarea.essay{width:100%;min-height:330px;background:var(--paper);border:1.6px solid var(--rule);
+  border-radius:10px;padding:1rem 1.1rem;line-height:1.9;font-size:16px;resize:vertical;font-family:var(--sans)}
+textarea.essay:focus{border-color:var(--teal)}
+.crit{display:flex;gap:.6rem;align-items:flex-start;padding:.55rem 0;border-bottom:1px solid var(--rule)}
 .crit:last-child{border-bottom:0}
-.crit input{margin-top:.35rem;width:17px;height:17px;accent-color:var(--brand2);flex:none}
+.crit input{margin-top:.35rem;width:17px;height:17px;accent-color:var(--teal);flex:none}
 
-/* ---- papers ---- */
-.paper{display:flex;gap:.9rem;align-items:center;padding:.7rem .1rem;border-bottom:1px solid var(--line)}
+/* ================= papers ================= */
+.paper{display:flex;gap:.9rem;align-items:center;padding:.7rem .1rem;border-bottom:1px solid var(--rule)}
 .paper:last-child{border-bottom:0}
-.paper .yr{font-family:var(--display);font-size:1.2rem;font-weight:700;color:var(--brand);width:3.2rem;flex:none}
+.paper .yr{font-family:var(--display);font-size:1.2rem;font-weight:700;color:var(--gold2);width:3.2rem;flex:none}
 .paper .nm{flex:1;min-width:150px}
 .paper .nm b{display:block;font-size:14.5px}
-.paper .nm small{color:var(--slate);font-size:12px}
+.paper .nm small{color:var(--muted);font-size:12px}
 .paper a.dl{white-space:nowrap;text-decoration:none;font-size:12.5px;font-weight:700;
-  border:1px solid var(--line);border-radius:6px;padding:.4rem .75rem;color:var(--brand2)}
-.paper a.dl:hover{background:var(--surface2);border-color:var(--brand2)}
+  border:1px solid var(--rule);border-radius:7px;padding:.4rem .75rem;color:var(--tealInk)}
+.paper a.dl:hover{background:var(--surface2);border-color:var(--teal)}
 
-/* ---- syllabus ---- */
-.strand{border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--surface)}
+/* ================= syllabus ================= */
+.strand{border:1px solid var(--rule);border-radius:11px;overflow:hidden;background:var(--surface);box-shadow:var(--shadow)}
 .strand > summary{padding:.85rem 1.1rem;cursor:pointer;font-weight:700;display:flex;gap:.7rem;
-  align-items:center;background:var(--surface2);list-style:none}
+  align-items:center;background:var(--surface2);list-style:none;font-family:var(--display)}
 .strand > summary::-webkit-details-marker{display:none}
-.strand > summary::before{content:"▸";color:var(--accent);font-size:13px;transition:transform .15s}
+.strand > summary::before{content:"▸";color:var(--gold2);font-size:13px;transition:transform .15s}
 .strand[open] > summary::before{transform:rotate(90deg)}
 .strand ul{margin:0;padding:.65rem 1.1rem 1rem 2.4rem}
 .strand li{margin:.3rem 0;font-size:14.5px}
 
-.note{border-left:3px solid var(--accent);background:var(--surface2);border-radius:0 8px 8px 0;
-  padding:.8rem 1rem;font-size:13.5px;color:var(--slate)}
-footer{border-top:1px solid var(--line);margin-top:3rem;padding:1.5rem 1.25rem 3rem;color:var(--slate);font-size:13px}
-footer .fin{max-width:1120px;margin:0 auto;display:flex;gap:1rem;flex-wrap:wrap;justify-content:space-between}
-@media (max-width:600px){
+.note{border-left:3px solid var(--gold);background:var(--surface2);border-radius:0 9px 9px 0;
+  padding:.8rem 1rem;font-size:13.5px;color:var(--muted)}
+.note b{color:var(--ink)}
+
+footer{border-top:1px solid var(--rule);margin-top:3rem;padding:1.5rem 1.25rem 3rem;color:var(--muted);font-size:12.5px}
+footer .fin{max-width:1160px;margin:0 auto;display:flex;gap:1rem;flex-wrap:wrap;justify-content:space-between;align-items:center}
+footer .mark{width:26px;height:26px;flex:none}
+footer .l{display:flex;gap:.6rem;align-items:center}
+
+@media (max-width:620px){
   main{padding:1.25rem .9rem 4rem}
-  .hin{padding:.6rem .9rem;gap:.7rem}
-  .pagehead h1{font-size:1.5rem}
+  .hin{padding:.55rem .9rem;gap:.6rem}
+  .pagehead h1{font-size:1.55rem}
   .exambar{top:0}
+  nav button{padding:.35rem .55rem;font-size:12.5px}
 }
-@media print{header,nav,.btnrow,.exambar,footer{display:none!important}}
+@media print{
+  header,nav,.btnrow,.exambar,.palette,footer,.ladder,#gate{display:none!important}
+  .card,.examq,.qcard{box-shadow:none;break-inside:avoid}
+}
 </style>
 </head>
 <body>
+<!-- ================= GATE ================= -->
+<div id="gate">
+  <div class="gatebox">
+    <div class="mark"><img src="../logo-mark.png" alt="Ricky Rampersad Branch"></div>
+    <p class="kicker">Ricky Rampersad Branch</p>
+    <h1>Academy &middot; S.E.A. Practice</h1>
+    <p class="sub">Every official past paper, and practice built to the Ministry&rsquo;s own
+       assessment framework. Choose who is signing in.</p>
+
+    <div class="roles" id="roles">
+      <button class="role" data-role="student" aria-pressed="true">
+        <span class="ic" aria-hidden="true">✎</span><b>Student</b>
+        <small>Practice, hints and timed papers</small></button>
+      <button class="role" data-role="parent" aria-pressed="false">
+        <span class="ic" aria-hidden="true">☗</span><b>Parent</b>
+        <small>See progress and the full working</small></button>
+      <button class="role" data-role="teacher" aria-pressed="false">
+        <span class="ic" aria-hidden="true">✦</span><b>Teacher</b>
+        <small>Answer key and printable papers</small></button>
+    </div>
+
+    <div>
+      <input id="gateCode" type="password" placeholder="ACCESS CODE" autocomplete="off"
+             aria-label="Access code" spellcheck="false">
+      <button class="gatego" id="gateGo">Sign in</button>
+    </div>
+    <p id="gateErr" role="alert"></p>
+
+    <p class="gatefoot">
+      <b>Students</b> are given hints before answers &mdash; the answer only opens after a real attempt.<br>
+      <b>Parents and teachers</b> see the full working straight away.<br>
+      Codes come from the Academy. Nothing you type here leaves your device.
+    </p>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app" hidden>
 <header>
   <div class="hin">
     <div class="brand">
-      <div class="tile">RD</div>
-      <div><b>RD&rsquo;s Academy</b><small>S.E.A. Practice</small></div>
+      <div class="mark"><img src="../logo-mark.png" alt=""></div>
+      <div><b>RRB Academy</b><small>S.E.A. Practice</small></div>
     </div>
-    <nav id="nav" aria-label="Sections">
-      <button data-view="home" aria-current="page">Home</button>
-      <button data-view="practice">Practice</button>
-      <button data-view="exam">Mock Exam</button>
-      <button data-view="writing">Writing</button>
-      <button data-view="papers">Past Papers</button>
-      <button data-view="syllabus">Syllabus</button>
-    </nav>
-    <button class="themebtn" id="themeBtn" title="Switch light / dark" aria-label="Switch light or dark theme">◐</button>
+    <nav id="nav" aria-label="Sections"></nav>
+    <div class="whoami">
+      <span class="pill" id="rolePill">Student</span>
+      <button id="themeBtn" title="Light or dark" aria-label="Switch light or dark theme">◐</button>
+      <button id="signOut">Sign out</button>
+    </div>
   </div>
 </header>
 
 <main>
 
-<!-- ================= HOME ================= -->
+<!-- ---------- HOME ---------- -->
 <section class="view" id="v-home">
   <div class="pagehead">
-    <p class="label">Secondary Entrance Assessment &middot; Trinidad &amp; Tobago</p>
-    <h1>Knowledge comes, but wisdom lingers.</h1>
-    <p>Every official past paper the Ministry publishes, in one list. Then practice built to
-       the Ministry&rsquo;s own assessment framework &mdash; the same four strands, the same three
-       sections, the same seventy-five marks.</p>
+    <p class="label" id="homeKicker">Student</p>
+    <h1 id="homeTitle">Work the paper, not the answer key.</h1>
+    <p id="homeLead"></p>
   </div>
 
-  <div class="grid g4" style="margin-bottom:1.25rem">
-    <div class="stat"><p class="label">Questions in the bank</p><div class="n" id="hStatQ">0</div></div>
-    <div class="stat"><p class="label">You have answered</p><div class="n" id="hStatA">0</div>
-      <div class="bar"><i id="hStatBar" style="width:0%"></i></div></div>
-    <div class="stat"><p class="label">Right first time</p><div class="n warm" id="hStatP">&mdash;</div></div>
-    <div class="stat"><p class="label">Official papers listed</p><div class="n" id="hStatP2">0</div></div>
+  <div class="grid g4" style="margin-bottom:1.2rem">
+    <div class="stat"><p class="label">Questions available</p><div class="n" id="hQ">0</div>
+      <p class="muted" style="font-size:12.5px;margin-top:.2rem">across four strands</p></div>
+    <div class="stat"><p class="label">Attempted</p><div class="n teal" id="hA">0</div>
+      <div class="bar"><i id="hABar" style="width:0%"></i></div></div>
+    <div class="stat"><p class="label">Right first time</p><div class="n gold" id="hP">&mdash;</div>
+      <p class="muted" style="font-size:12.5px;margin-top:.2rem">without opening a hint</p></div>
+    <div class="stat"><p class="label">Papers sat</p><div class="n" id="hE">0</div>
+      <p class="muted" style="font-size:12.5px;margin-top:.2rem" id="hEBest"></p></div>
   </div>
 
-  <div class="grid g2">
-    <div class="card">
-      <p class="label">Start here</p>
-      <h2 style="margin:.2rem 0 .7rem">Three ways to work</h2>
-      <p style="margin-bottom:1rem;color:var(--slate)">Pick the one that matches how much time you have.</p>
-      <div class="btnrow">
-        <button class="btn" data-go="practice">Practice by topic</button>
-        <button class="btn warm" data-go="exam">Sit a timed paper</button>
-        <button class="btn ghost" data-go="writing">Write an essay</button>
-      </div>
-      <p style="margin-top:1rem;font-size:13.5px;color:var(--slate)">
-        Ten minutes? Practice one strand. An hour and a quarter? Sit the full Mathematics paper
-        against the clock. Fifty minutes? Write.</p>
-    </div>
-
-    <div class="card">
-      <p class="label">How you are doing</p>
-      <h2 style="margin:.2rem 0 .8rem">By strand</h2>
+  <div class="grid g2" style="align-items:start">
+    <div class="card gold">
+      <p class="label">Where the marks are</p>
+      <h2 style="margin:.2rem 0 .9rem">Strand by strand</h2>
       <div id="hStrands"></div>
-      <div class="btnrow" style="margin-top:1rem">
-        <button class="btn ghost" id="resetBtn">Clear my progress</button>
+      <div id="hAdvice" style="margin-top:1rem"></div>
+    </div>
+    <div class="stack">
+      <div class="card teal">
+        <p class="label">Start here</p>
+        <h2 style="margin:.2rem 0 .6rem" id="startTitle">Three ways to work</h2>
+        <p class="muted" style="margin-bottom:1rem" id="startLead"></p>
+        <div class="btnrow" id="startBtns"></div>
+      </div>
+      <div class="card">
+        <p class="label">The examination</p>
+        <h2 style="margin:.2rem 0 .8rem">What the day looks like</h2>
+        <div class="scroll"><table>
+          <thead><tr><th>Paper</th><th>Time</th><th>Items</th><th>Marks</th><th>Weight</th></tr></thead>
+          <tbody>
+            <tr><td><b>ELA Writing</b></td><td class="mono">50 min</td><td class="mono">1 of 3</td><td class="mono">&mdash;</td><td class="mono">40&thinsp;%</td></tr>
+            <tr><td><b>Mathematics</b></td><td class="mono">75 min</td><td class="mono">40</td><td class="mono">75</td><td class="mono">100&thinsp;%</td></tr>
+            <tr><td><b>English Language Arts</b></td><td class="mono">75 min</td><td class="mono">36</td><td class="mono">64</td><td class="mono">60&thinsp;%</td></tr>
+          </tbody></table></div>
+        <p class="note" style="margin-top:.9rem">Weighted 100&thinsp;:&thinsp;60&thinsp;:&thinsp;40 into one
+          composite score. Mathematics carries the most, which is why it is the paper practised here.</p>
       </div>
     </div>
-  </div>
-
-  <div class="card" style="margin-top:1.25rem">
-    <p class="label">The examination itself</p>
-    <h2 style="margin:.2rem 0 .9rem">What the day looks like</h2>
-    <div class="scroll">
-      <table>
-        <thead><tr><th>Paper</th><th>Working time</th><th>Items</th><th>Marks</th><th>Weighting</th></tr></thead>
-        <tbody>
-          <tr><td><b>English Language Arts Writing</b><br><small class="muted">Three prompts, all narrative or all expository &mdash; answer one</small></td>
-              <td class="mono">50 min</td><td class="mono">1</td><td class="mono">&mdash;</td><td class="mono">40&thinsp;%</td></tr>
-          <tr><td><b>Mathematics</b><br><small class="muted">Number, Geometry, Measurement, Statistics &mdash; three sections</small></td>
-              <td class="mono">75 min</td><td class="mono">40</td><td class="mono">75</td><td class="mono">100&thinsp;%</td></tr>
-          <tr><td><b>English Language Arts</b><br><small class="muted">Spelling, punctuation, capitalisation, grammar, reading comprehension</small></td>
-              <td class="mono">75 min</td><td class="mono">36</td><td class="mono">64</td><td class="mono">60&thinsp;%</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="note" style="margin-top:1rem">
-      Working time is 3 hours 20 minutes; the whole administration runs about 4&nbsp;hours 30&nbsp;minutes
-      including a 30-minute break. Scores are converted to standard scores, weighted 100&thinsp;:&thinsp;60&thinsp;:&thinsp;40,
-      and combined into the composite score used for placement.
-      <a href="https://storage.moe.gov.tt/wpdevelopment/2023/10/ASSESSMENT-FRAMEWORK-FOR-SEA-2025-2028.pdf" target="_blank" rel="noopener">Assessment Framework for SEA 2025&ndash;2028</a>.
-    </p>
   </div>
 </section>
 
-<!-- ================= PRACTICE ================= -->
+<!-- ---------- PRACTICE ---------- -->
 <section class="view" id="v-practice" hidden>
   <div class="pagehead">
     <p class="label">Practice</p>
     <h1>One question at a time</h1>
-    <p>Work it out on paper first, the way you will on the day. Type the answer, then check it.
-       Every question tells you which strand and which thinking process it is testing.</p>
+    <p id="practiceLead"></p>
   </div>
 
   <div class="card" style="margin-bottom:1.1rem">
@@ -314,11 +415,11 @@ footer .fin{max-width:1120px;margin:0 auto;display:flex;gap:1rem;flex-wrap:wrap;
       </div>
       <div style="margin-left:auto">
         <p class="label" style="margin-bottom:.4rem">Topic</p>
-        <select id="pTopic" style="background:var(--paper);border:1.5px solid var(--line);border-radius:7px;padding:.5rem .7rem;min-width:190px"></select>
+        <select id="pTopic" style="background:var(--paper);border:1.6px solid var(--rule);border-radius:8px;padding:.5rem .7rem;min-width:200px"></select>
       </div>
       <button class="btn ghost" id="pShuffle">Shuffle</button>
     </div>
-    <p style="margin-top:.9rem;font-size:13px;color:var(--slate)" id="pCount"></p>
+    <p style="margin-top:.9rem;font-size:13px" class="muted" id="pCount"></p>
   </div>
 
   <div id="pHost"></div>
@@ -326,69 +427,64 @@ footer .fin{max-width:1120px;margin:0 auto;display:flex;gap:1rem;flex-wrap:wrap;
   <div class="btnrow" style="margin-top:1rem">
     <button class="btn ghost" id="pPrev">&larr; Previous</button>
     <button class="btn" id="pNext">Next &rarr;</button>
-    <span class="mono" style="margin-left:auto;color:var(--slate);font-size:13.5px" id="pSession"></span>
+    <span class="mono muted" style="margin-left:auto;font-size:13.5px" id="pSession"></span>
   </div>
 </section>
 
-<!-- ================= EXAM ================= -->
+<!-- ---------- EXAM ---------- -->
 <section class="view" id="v-exam" hidden>
   <div id="examIntro">
     <div class="pagehead">
-      <p class="label">Mock Exam</p>
+      <p class="label">Mock Examination</p>
       <h1>The Mathematics paper, against the clock</h1>
-      <p>Forty items, seventy-five marks, seventy-five minutes &mdash; built to the Ministry&rsquo;s blueprint.
-         Section&nbsp;I is twenty one-mark items. Section&nbsp;II is sixteen items worth two or three marks.
-         Section&nbsp;III is four items worth four marks each.</p>
+      <p>Forty items, seventy-five marks, seventy-five minutes, built to the Ministry&rsquo;s blueprint.
+         <b>No hints and no answers while the clock runs</b> &mdash; exactly as on the day.</p>
     </div>
     <div class="card">
-      <h2 style="margin-bottom:.8rem">Before you start</h2>
-      <div class="scroll" style="margin-bottom:1.1rem">
-        <table>
-          <thead><tr><th>Strand</th><th>Section I</th><th>Section II</th><th>Section III</th><th>Items</th><th>Marks</th></tr></thead>
-          <tbody>
-            <tr><td>Number</td><td class="mono">10</td><td class="mono">8</td><td class="mono">1</td><td class="mono">19</td><td class="mono">34</td></tr>
-            <tr><td>Geometry</td><td class="mono">3</td><td class="mono">2</td><td class="mono">1</td><td class="mono">6</td><td class="mono">11</td></tr>
-            <tr><td>Measurement</td><td class="mono">4</td><td class="mono">4</td><td class="mono">1</td><td class="mono">9</td><td class="mono">18</td></tr>
-            <tr><td>Statistics</td><td class="mono">3</td><td class="mono">2</td><td class="mono">1</td><td class="mono">6</td><td class="mono">12</td></tr>
-            <tr><td><b>Total</b></td><td class="mono"><b>20</b></td><td class="mono"><b>16</b></td><td class="mono"><b>4</b></td><td class="mono"><b>40</b></td><td class="mono"><b>75</b></td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p style="color:var(--slate);margin-bottom:1.1rem">Have paper and a pencil beside you. The clock does not stop.</p>
+      <h2 style="margin-bottom:.85rem">The blueprint this paper is built to</h2>
+      <div class="scroll" style="margin-bottom:1.1rem"><table>
+        <thead><tr><th>Strand</th><th>Section I</th><th>Section II</th><th>Section III</th><th>Items</th><th>Marks</th></tr></thead>
+        <tbody>
+          <tr><td>Number</td><td class="mono">10</td><td class="mono">8</td><td class="mono">1</td><td class="mono">19</td><td class="mono">34</td></tr>
+          <tr><td>Geometry</td><td class="mono">3</td><td class="mono">2</td><td class="mono">1</td><td class="mono">6</td><td class="mono">11</td></tr>
+          <tr><td>Measurement</td><td class="mono">4</td><td class="mono">4</td><td class="mono">1</td><td class="mono">9</td><td class="mono">18</td></tr>
+          <tr><td>Statistics</td><td class="mono">3</td><td class="mono">2</td><td class="mono">1</td><td class="mono">6</td><td class="mono">12</td></tr>
+          <tr><td><b>Total</b></td><td class="mono"><b>20</b></td><td class="mono"><b>16</b></td><td class="mono"><b>4</b></td><td class="mono"><b>40</b></td><td class="mono"><b>75</b></td></tr>
+        </tbody></table></div>
+      <p class="muted" style="margin-bottom:1.1rem">Paper and pencil beside you. The clock does not stop.</p>
       <div class="btnrow">
-        <button class="btn warm" id="examStart">Start the paper</button>
-        <label style="display:flex;align-items:center;gap:.45rem;font-size:13.5px;color:var(--slate)">
-          <input type="checkbox" id="examUntimed" style="width:16px;height:16px;accent-color:var(--brand2)"> Untimed
+        <button class="btn gold" id="examStart">Start the paper</button>
+        <label style="display:flex;align-items:center;gap:.45rem;font-size:13.5px" class="muted">
+          <input type="checkbox" id="examUntimed" style="width:16px;height:16px;accent-color:var(--teal)"> Untimed
         </label>
+        <button class="btn ghost" id="examPrint" hidden>Print a blank paper</button>
       </div>
     </div>
   </div>
 
   <div id="examLive" hidden>
     <div class="exambar">
-      <div><p class="label" style="color:inherit;opacity:.8">Time remaining</p>
-        <div class="clock" id="examClock">75:00</div></div>
-      <div><p class="label" style="color:inherit;opacity:.8">Answered</p>
-        <div class="clock" id="examProg">0 / 40</div></div>
+      <div><p class="label">Time remaining</p><div class="clock" id="examClock">75:00</div></div>
+      <div><p class="label">Answered</p><div class="clock" id="examProg">0 / 40</div></div>
       <button id="examSubmit">Hand in</button>
     </div>
     <div class="palette" id="examPalette"></div>
     <div id="examHost"></div>
     <div class="btnrow" style="margin-top:1.25rem">
-      <button class="btn warm" id="examSubmit2">Hand in the paper</button>
+      <button class="btn gold" id="examSubmit2">Hand in the paper</button>
     </div>
   </div>
 
   <div id="examResult" hidden></div>
 </section>
 
-<!-- ================= WRITING ================= -->
+<!-- ---------- WRITING ---------- -->
 <section class="view" id="v-writing" hidden>
   <div class="pagehead">
     <p class="label">English Language Arts Writing</p>
     <h1>Fifty minutes, one essay</h1>
-    <p>The paper gives three prompts &mdash; either three narrative or three expository, never a mix.
-       You answer one. Two people mark it, on content, language use, grammar and mechanics, and organisation.</p>
+    <p>Three prompts &mdash; either all narrative or all expository, never a mix. Answer one.
+       Two people mark it, on content, language use, grammar and mechanics, and organisation.</p>
   </div>
 
   <div class="card" style="margin-bottom:1.1rem">
@@ -398,11 +494,16 @@ footer .fin{max-width:1120px;margin:0 auto;display:flex;gap:1rem;flex-wrap:wrap;
     </div>
   </div>
 
-  <div class="grid g2">
-    <div>
-      <div class="card" style="margin-bottom:1rem">
+  <div class="grid g2" style="align-items:start">
+    <div class="stack">
+      <div class="card">
         <p class="label" id="wSetLabel">Narrative &middot; choose one</p>
         <div id="wPrompts" style="margin-top:.7rem"></div>
+      </div>
+      <div class="card gold">
+        <p class="label">Before you write</p>
+        <h2 style="margin:.2rem 0 .7rem">Five minutes of planning</h2>
+        <div id="wPlan"></div>
       </div>
       <div class="card">
         <p class="label">What the markers look for</p>
@@ -411,69 +512,59 @@ footer .fin{max-width:1120px;margin:0 auto;display:flex;gap:1rem;flex-wrap:wrap;
     </div>
     <div>
       <div class="card">
-        <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin-bottom:.8rem">
-          <div><p class="label">Time left</p><div class="clock mono" id="wClock" style="font-size:1.35rem;font-weight:700;color:var(--brand)">50:00</div></div>
-          <div><p class="label">Words</p><div class="clock mono" id="wWords" style="font-size:1.35rem;font-weight:700;color:var(--accent)">0</div></div>
+        <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin-bottom:.85rem">
+          <div><p class="label">Time left</p><div class="mono" id="wClock" style="font-size:1.4rem;font-weight:700">50:00</div></div>
+          <div><p class="label">Words</p><div class="mono" id="wWords" style="font-size:1.4rem;font-weight:700;color:var(--gold2)">0</div></div>
           <div class="btnrow" style="margin-left:auto">
-            <button class="btn" id="wStart">Start</button>
+            <button class="btn gold" id="wStart">Start</button>
             <button class="btn ghost" id="wReset">Clear</button>
           </div>
         </div>
         <textarea class="essay" id="wEssay" placeholder="Plan for five minutes. Write for forty. Read it back for five."></textarea>
-        <p style="margin-top:.6rem;font-size:12.5px;color:var(--slate)">Saved in this browser as you type. It never leaves your device.</p>
+        <p class="muted" style="margin-top:.6rem;font-size:12.5px">Saved in this browser as you type. It never leaves your device.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ================= PAPERS ================= -->
+<!-- ---------- PAPERS ---------- -->
 <section class="view" id="v-papers" hidden>
   <div class="pagehead">
     <p class="label">Past Papers</p>
     <h1>Straight from the Ministry</h1>
-    <p>Every link below points at the Ministry of Education&rsquo;s own copy of the paper.
+    <p>Every link points at the Ministry of Education&rsquo;s own copy of the paper.
        Nothing is re-hosted here, so you always get the official document.</p>
   </div>
-
-  <div class="card" style="margin-bottom:1.1rem">
-    <div class="chips" id="paperFilter"></div>
-  </div>
-
+  <div class="card" style="margin-bottom:1.1rem"><div class="chips" id="paperFilter"></div></div>
   <div class="card" id="paperList"></div>
-
   <div class="card" style="margin-top:1.1rem">
-    <p class="label">Older papers</p>
+    <p class="label">Older papers, and what is not public</p>
     <h2 style="margin:.2rem 0 .7rem">2001 to 2020</h2>
-    <p style="color:var(--slate);margin-bottom:.8rem">
+    <p class="muted" style="margin-bottom:.85rem">
       The Ministry&rsquo;s public download page carries 2021 onwards. Earlier papers &mdash; the ones in the
-      2001&ndash;2017 binder &mdash; sit behind a login on the Ministry&rsquo;s School Learning Management System,
-      alongside its own SEA Mathematics practice sets for 2010&ndash;2019.</p>
-    <div class="paper">
-      <div class="yr" style="font-size:.95rem">SLMS</div>
-      <div class="nm"><b>SEA Mathematics practice papers 2010&ndash;2019</b>
-        <small>Ministry of Education SLMS &mdash; free account required</small></div>
-      <a class="dl" href="https://learn.moe.gov.tt/course/section.php?id=338382" target="_blank" rel="noopener">Open &nearr;</a>
-    </div>
-    <div class="paper">
-      <div class="yr" style="font-size:.95rem">MOE</div>
-      <div class="nm"><b>Primary school resources index</b>
-        <small>Where the Ministry posts new papers first</small></div>
-      <a class="dl" href="https://www.moe.gov.tt/primary-school-resources/" target="_blank" rel="noopener">Open &nearr;</a>
-    </div>
+      2001&ndash;2017 binders &mdash; sit behind a free login on its School Learning Management System,
+      alongside the Ministry&rsquo;s own Mathematics practice sets for 2010&ndash;2019.</p>
+    <div class="paper"><div class="yr" style="font-size:.9rem">SLMS</div>
+      <div class="nm"><b>SEA Mathematics practice papers 2010&ndash;2019</b><small>Free Ministry account required</small></div>
+      <a class="dl" href="https://learn.moe.gov.tt/course/section.php?id=338382" target="_blank" rel="noopener">Open &nearr;</a></div>
+    <div class="paper"><div class="yr" style="font-size:.9rem">MOE</div>
+      <div class="nm"><b>Primary school resources index</b><small>Where the Ministry posts new papers first</small></div>
+      <a class="dl" href="https://www.moe.gov.tt/primary-school-resources/" target="_blank" rel="noopener">Open &nearr;</a></div>
     <p class="note" style="margin-top:1rem">
-      Twelve items from the 2001 Mathematics paper are typed into the Practice and Mock Exam sections
-      of this app, marked <b>SEA 2001</b>. Papers published by commercial preparation companies are not
-      reproduced here &mdash; those are their copyright, and belong in the printed booklet you bought.</p>
+      <b>2026 papers are not out yet.</b> The Ministry posted the 2025 papers in May 2026, so 2026&rsquo;s are
+      expected around May 2027. Twelve items from the 2001 Mathematics paper are typed into Practice and
+      the Mock Examination, marked <b>SEA 2001</b>. Papers published by commercial preparation companies
+      are not reproduced here &mdash; those are their copyright.</p>
   </div>
 </section>
 
-<!-- ================= SYLLABUS ================= -->
+<!-- ---------- SYLLABUS ---------- -->
 <section class="view" id="v-syllabus" hidden>
   <div class="pagehead">
     <p class="label">Syllabus</p>
     <h1>Everything that can be asked</h1>
-    <p>Taken from the Ministry&rsquo;s Assessment Framework for SEA 2025&ndash;2028. Tick a topic when you
-       are confident with it; the ticks are saved in this browser.</p>
+    <p>From the Ministry&rsquo;s Assessment Framework for SEA 2025&ndash;2028. Tick a topic when it is
+       secure; the ticks are saved in this browser.</p>
   </div>
   <div class="grid g2" style="align-items:start">
     <div class="stack" id="sylMath"></div>
@@ -481,101 +572,223 @@ footer .fin{max-width:1120px;margin:0 auto;display:flex;gap:1rem;flex-wrap:wrap;
   </div>
 </section>
 
+<!-- ---------- ANSWER KEY (teacher / parent) ---------- -->
+<section class="view" id="v-key" hidden>
+  <div class="pagehead">
+    <p class="label" id="keyKicker">Teacher</p>
+    <h1>Answer key and working</h1>
+    <p id="keyLead"></p>
+  </div>
+  <div class="card" style="margin-bottom:1.1rem">
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center">
+      <div class="chips" id="kStrand"></div>
+      <button class="btn ghost sm" id="kPrint" style="margin-left:auto">Print this key</button>
+    </div>
+  </div>
+  <div id="kHost"></div>
+</section>
+
 </main>
 
 <footer><div class="fin">
-  <div><b>RD&rsquo;s Academy</b> &middot; S.E.A. practice &middot; <i>Knowledge comes but wisdom lingers.</i></div>
-  <div>Past papers &copy; Ministry of Education, Trinidad &amp; Tobago. Linked, not re-hosted.</div>
+  <div class="l"><div class="mark"><img src="../logo-mark.png" alt=""></div>
+    <div><b>Ricky Rampersad Branch Academy</b> &middot; S.E.A. Practice</div></div>
+  <div>Past papers &copy; Ministry of Education, Trinidad &amp; Tobago. Linked, never re-hosted.</div>
 </div></footer>
+</div>
 <script>
 "use strict";
 
 /* ============================================================
-   Fractions and figures
+   Access. One place to change the codes the Academy hands out.
+   A static site can only gate, not authenticate — see SEA-SETUP.md.
+   ============================================================ */
+const ROLES = {
+  student: {code:"RRB2027",     label:"Student"},
+  parent:  {code:"RRBPARENT",   label:"Parent"},
+  teacher: {code:"RRBTEACHER",  label:"Teacher"}
+};
+
+/* ============================================================
+   Fractions and figures. Some figures ask the question; the ones
+   marked "teaching" only ever appear inside a hint, to show the
+   child the move rather than tell them the number.
    ============================================================ */
 const F = (n,d) => `<span class="frac"><span>${n}</span><span>${d}</span></span>`;
 
 const SVG = {
-  rect43: `<svg viewBox="0 0 220 150" role="img" aria-label="A rectangle four metres long and three metres high">
-    <g fill="none" stroke="currentColor" stroke-width="1.6">
-      <rect x="40" y="45" width="120" height="72" fill="rgba(127,127,127,.14)"/>
-      <path d="M40 30 h120 M40 25 v10 M160 25 v10"/>
-      <path d="M178 45 v72 M173 45 h10 M173 117 h10"/>
-    </g>
-    <text x="100" y="22" text-anchor="middle" font-size="13" fill="currentColor">4 m</text>
-    <text x="196" y="86" text-anchor="middle" font-size="13" fill="currentColor">3 m</text>
-  </svg>`,
+/* ---------- figures that ask ---------- */
+rect43:`<svg viewBox="0 0 220 150" role="img" aria-label="A rectangle 4 metres long and 3 metres high">
+  <g fill="none" stroke="currentColor" stroke-width="1.6">
+    <rect x="40" y="45" width="120" height="72" fill="rgba(0,207,234,.12)"/>
+    <path d="M40 30 h120 M40 25 v10 M160 25 v10"/><path d="M178 45 v72 M173 45 h10 M173 117 h10"/></g>
+  <text x="100" y="22" text-anchor="middle" font-size="13" fill="currentColor">4 m</text>
+  <text x="196" y="86" text-anchor="middle" font-size="13" fill="currentColor">3 m</text></svg>`,
 
-  clock445: `<svg viewBox="0 0 130 130" role="img" aria-label="An analogue clock face">
-    <circle cx="60" cy="60" r="52" fill="none" stroke="currentColor" stroke-width="1.6"/>
-    <g font-size="10.5" fill="currentColor" text-anchor="middle" dominant-baseline="central">
-      <text x="60" y="21">12</text><text x="79.5" y="26.2">1</text><text x="93.8" y="40.5">2</text>
-      <text x="99" y="60">3</text><text x="93.8" y="79.5">4</text><text x="79.5" y="93.8">5</text>
-      <text x="60" y="99">6</text><text x="40.5" y="93.8">7</text><text x="26.2" y="79.5">8</text>
-      <text x="21" y="60">9</text><text x="26.2" y="40.5">10</text><text x="40.5" y="26.2">11</text>
-    </g>
-    <g stroke="currentColor" stroke-linecap="round" fill="none">
-      <line x1="60" y1="60" x2="22" y2="60" stroke-width="2.2"/>
-      <line x1="60" y1="60" x2="75.8" y2="80.6" stroke-width="3.4"/>
-    </g>
-    <circle cx="60" cy="60" r="2.6" fill="currentColor"/>
-  </svg>`,
+clock445:`<svg viewBox="0 0 130 130" role="img" aria-label="An analogue clock face">
+  <circle cx="60" cy="60" r="52" fill="none" stroke="currentColor" stroke-width="1.6"/>
+  <g font-size="10.5" fill="currentColor" text-anchor="middle" dominant-baseline="central">
+    <text x="60" y="21">12</text><text x="79.5" y="26.2">1</text><text x="93.8" y="40.5">2</text>
+    <text x="99" y="60">3</text><text x="93.8" y="79.5">4</text><text x="79.5" y="93.8">5</text>
+    <text x="60" y="99">6</text><text x="40.5" y="93.8">7</text><text x="26.2" y="79.5">8</text>
+    <text x="21" y="60">9</text><text x="26.2" y="40.5">10</text><text x="40.5" y="26.2">11</text></g>
+  <g stroke="currentColor" stroke-linecap="round" fill="none">
+    <line x1="60" y1="60" x2="22" y2="60" stroke-width="2.2"/>
+    <line x1="60" y1="60" x2="75.8" y2="80.6" stroke-width="3.4"/></g>
+  <circle cx="60" cy="60" r="2.6" fill="currentColor"/></svg>`,
 
-  netPyramid: `<svg viewBox="0 0 135 135" role="img" aria-label="A net made of one square with a triangle on each side">
-    <g fill="rgba(127,127,127,.12)" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
-      <rect x="42" y="42" width="50" height="50"/>
-      <path d="M42 42 L92 42 L67 7 Z"/>
-      <path d="M92 42 L92 92 L127 67 Z"/>
-      <path d="M42 92 L92 92 L67 127 Z"/>
-      <path d="M42 42 L42 92 L7 67 Z"/>
-    </g>
-  </svg>`,
+netPyramid:`<svg viewBox="0 0 135 135" role="img" aria-label="A net of one square with a triangle on each side">
+  <g fill="rgba(0,207,234,.12)" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+    <rect x="42" y="42" width="50" height="50"/><path d="M42 42 L92 42 L67 7 Z"/>
+    <path d="M92 42 L92 92 L127 67 Z"/><path d="M42 92 L92 92 L67 127 Z"/>
+    <path d="M42 42 L42 92 L7 67 Z"/></g></svg>`,
 
-  lshape: `<svg viewBox="0 0 275 178" role="img" aria-label="An L-shaped figure made from rectangles">
-    <g transform="translate(36,24)">
-      <path d="M0 0 H120 V60 H200 V120 H0 Z" fill="rgba(127,127,127,.14)" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
-      <g font-size="12" fill="currentColor" text-anchor="middle">
-        <text x="60" y="-8">6 cm</text>
-        <text x="100" y="132" >10 cm</text>
-        <text x="160" y="52">4 cm</text>
-      </g>
-      <g font-size="12" fill="currentColor">
-        <text x="-30" y="64">6 cm</text>
-        <text x="128" y="34">3 cm</text>
-        <text x="206" y="94">3 cm</text>
-      </g>
-    </g>
-  </svg>`,
+lshape:`<svg viewBox="0 0 275 178" role="img" aria-label="An L-shaped figure">
+  <g transform="translate(36,24)">
+    <path d="M0 0 H120 V60 H200 V120 H0 Z" fill="rgba(0,207,234,.12)" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+    <g font-size="12" fill="currentColor" text-anchor="middle">
+      <text x="60" y="-8">6 cm</text><text x="100" y="132">10 cm</text><text x="160" y="52">4 cm</text></g>
+    <g font-size="12" fill="currentColor">
+      <text x="-30" y="64">6 cm</text><text x="128" y="34">3 cm</text><text x="206" y="94">3 cm</text></g></g></svg>`,
 
-  barFruit: `<svg viewBox="0 0 300 215" role="img" aria-label="Bar graph of favourite fruits: mango 12, orange 8, banana 15, apple 5">
-    <g stroke="currentColor" stroke-width=".5" opacity=".3">
-      <line x1="45" y1="180" x2="278" y2="180"/><line x1="45" y1="160" x2="278" y2="160"/>
-      <line x1="45" y1="140" x2="278" y2="140"/><line x1="45" y1="120" x2="278" y2="120"/>
-      <line x1="45" y1="100" x2="278" y2="100"/><line x1="45" y1="80"  x2="278" y2="80"/>
-      <line x1="45" y1="60"  x2="278" y2="60"/><line x1="45" y1="40"  x2="278" y2="40"/>
-      <line x1="45" y1="20"  x2="278" y2="20"/>
-    </g>
-    <g fill="currentColor" opacity=".72">
-      <rect x="60"  y="60"  width="34" height="120"/>
-      <rect x="112" y="100" width="34" height="80"/>
-      <rect x="164" y="30"  width="34" height="150"/>
-      <rect x="216" y="130" width="34" height="50"/>
-    </g>
-    <g stroke="currentColor" stroke-width="1.5" fill="none">
-      <path d="M45 12 V180 H278"/>
-    </g>
-    <g font-size="10.5" fill="currentColor" text-anchor="end">
-      <text x="39" y="184">0</text><text x="39" y="164">2</text><text x="39" y="144">4</text>
-      <text x="39" y="124">6</text><text x="39" y="104">8</text><text x="39" y="84">10</text>
-      <text x="39" y="64">12</text><text x="39" y="44">14</text><text x="39" y="24">16</text>
-    </g>
+barFruit:`<svg viewBox="0 0 300 215" role="img" aria-label="Bar graph: mango 12, orange 8, banana 15, apple 5">
+  <g stroke="currentColor" stroke-width=".5" opacity=".3">
+    <line x1="45" y1="180" x2="278" y2="180"/><line x1="45" y1="160" x2="278" y2="160"/>
+    <line x1="45" y1="140" x2="278" y2="140"/><line x1="45" y1="120" x2="278" y2="120"/>
+    <line x1="45" y1="100" x2="278" y2="100"/><line x1="45" y1="80" x2="278" y2="80"/>
+    <line x1="45" y1="60" x2="278" y2="60"/><line x1="45" y1="40" x2="278" y2="40"/>
+    <line x1="45" y1="20" x2="278" y2="20"/></g>
+  <g fill="#00CFEA" opacity=".8">
+    <rect x="60" y="60" width="34" height="120"/><rect x="112" y="100" width="34" height="80"/>
+    <rect x="164" y="30" width="34" height="150"/><rect x="216" y="130" width="34" height="50"/></g>
+  <path d="M45 12 V180 H278" stroke="currentColor" stroke-width="1.5" fill="none"/>
+  <g font-size="10.5" fill="currentColor" text-anchor="end">
+    <text x="39" y="184">0</text><text x="39" y="164">2</text><text x="39" y="144">4</text>
+    <text x="39" y="124">6</text><text x="39" y="104">8</text><text x="39" y="84">10</text>
+    <text x="39" y="64">12</text><text x="39" y="44">14</text><text x="39" y="24">16</text></g>
+  <g font-size="11" fill="currentColor" text-anchor="middle">
+    <text x="77" y="196">Mango</text><text x="129" y="196">Orange</text>
+    <text x="181" y="196">Banana</text><text x="233" y="196">Apple</text>
+    <text x="161" y="212" font-size="10.5" opacity=".8">Favourite fruit chosen by a Standard 5 class</text></g></svg>`,
+
+triangle180:`<svg viewBox="0 0 240 150" role="img" aria-label="A triangle with angles of 65 and 40 degrees and one unknown">
+  <path d="M25 122 H215 L95 22 Z" fill="rgba(0,207,234,.12)" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+  <path d="M52 122 A28 28 0 0 0 42 100" fill="none" stroke="#c9942c" stroke-width="1.6"/>
+  <path d="M187 122 A28 28 0 0 1 199 106" fill="none" stroke="#c9942c" stroke-width="1.6"/>
+  <path d="M83 40 A24 24 0 0 0 111 42" fill="none" stroke="#c9942c" stroke-width="1.6"/>
+  <g font-size="13" fill="currentColor">
+    <text x="46" y="112">65°</text><text x="168" y="112">40°</text><text x="88" y="60">?</text></g></svg>`,
+
+cuboid643:`<svg viewBox="0 0 230 165" role="img" aria-label="A cuboid 6 cm by 4 cm by 3 cm">
+  <g stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round">
+    <path d="M30 55 H150 V125 H30 Z" fill="rgba(0,207,234,.12)"/>
+    <path d="M30 55 L70 25 H190 L150 55" fill="rgba(0,207,234,.06)"/>
+    <path d="M150 125 L190 95 V25" fill="none"/>
+    <path d="M70 25 L70 95 L30 125 M70 95 H190" stroke-dasharray="4 3" opacity=".55"/></g>
+  <g font-size="12.5" fill="currentColor">
+    <text x="80" y="145">6 cm</text><text x="160" y="97">4 cm</text><text x="8" y="95">3 cm</text></g></svg>`,
+
+/* ---------- teaching figures: hints only ---------- */
+placeValue:`<svg viewBox="0 0 424 104" role="img" aria-label="Place value chart for 1 048 736 with the ten thousands column marked">
+  <g font-size="9.5" fill="currentColor" text-anchor="middle">
+    <text x="30" y="14">Millions</text><text x="88" y="14">H Th</text><text x="146" y="14">T Th</text>
+    <text x="204" y="14">Th</text><text x="262" y="14">H</text><text x="320" y="14">T</text><text x="378" y="14">O</text></g>
+  <rect x="117" y="20" width="58" height="46" fill="#efc24b" opacity=".28"/>
+  <g stroke="currentColor" stroke-width="1.2" fill="none" opacity=".7">
+    <rect x="1" y="20" width="406" height="46"/>
+    <path d="M59 20 v46 M117 20 v46 M175 20 v46 M233 20 v46 M291 20 v46 M349 20 v46"/></g>
+  <g font-size="21" fill="currentColor" text-anchor="middle" font-family="ui-monospace,monospace">
+    <text x="30" y="52">1</text><text x="88" y="52">0</text><text x="146" y="52">4</text>
+    <text x="204" y="52">8</text><text x="262" y="52">7</text><text x="320" y="52">3</text><text x="378" y="52">6</text></g>
+  <text x="146" y="88" font-size="11" fill="#c9942c" text-anchor="middle" font-weight="700">4 ten thousands</text></svg>`,
+
+lshapeSplit:`<svg viewBox="0 0 285 180" role="img" aria-label="The L-shape completed into a full rectangle, with the missing corner shaded">
+  <g transform="translate(36,26)">
+    <rect x="120" y="0" width="80" height="60" fill="#efc24b" opacity=".3"/>
+    <path d="M0 0 H120 V60 H200 V120 H0 Z" fill="rgba(0,207,234,.14)" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+    <rect x="0" y="0" width="200" height="120" fill="none" stroke="#c9942c" stroke-width="1.5" stroke-dasharray="5 4"/>
     <g font-size="11" fill="currentColor" text-anchor="middle">
-      <text x="77"  y="196">Mango</text><text x="129" y="196">Orange</text>
-      <text x="181" y="196">Banana</text><text x="233" y="196">Apple</text>
-      <text x="161" y="212" font-size="10.5" opacity=".8">Favourite fruit chosen by a Standard 5 class</text>
-    </g>
-  </svg>`
+      <text x="160" y="34" fill="#c9942c" font-weight="700">cut out</text>
+      <text x="160" y="47" fill="#c9942c">4 × 3</text>
+      <text x="60" y="66">the L-shape</text>
+      <text x="100" y="140">whole rectangle 10 × 6</text></g></g></svg>`,
+
+fracEighths:`<svg viewBox="0 0 300 118" role="img" aria-label="Fraction bars showing three quarters as six eighths, and five eighths">
+  <g stroke="currentColor" stroke-width="1.3">
+    <g fill="#00CFEA" fill-opacity=".55">
+      <rect x="30" y="14" width="180" height="26"/></g>
+    <rect x="30" y="14" width="240" height="26" fill="none"/>
+    <path d="M60 14v26 M90 14v26 M120 14v26 M150 14v26 M180 14v26 M210 14v26 M240 14v26"/>
+    <g fill="#efc24b" fill-opacity=".75"><rect x="30" y="68" width="150" height="26"/></g>
+    <rect x="30" y="68" width="240" height="26" fill="none"/>
+    <path d="M60 68v26 M90 68v26 M120 68v26 M150 68v26 M180 68v26 M210 68v26 M240 68v26"/></g>
+  <g font-size="11.5" fill="currentColor">
+    <text x="30" y="9">three quarters = six eighths</text>
+    <text x="30" y="63">five eighths</text>
+    <text x="276" y="32">6</text><text x="276" y="86">5</text></g></svg>`,
+
+numberLineDec:`<svg viewBox="0 0 400 96" role="img" aria-label="A number line from 0.40 to 0.52 with four decimals placed on it">
+  <path d="M20 56 H380" stroke="currentColor" stroke-width="1.6"/>
+  <g stroke="currentColor" stroke-width="1" opacity=".55">
+    <path d="M50 51v10 M80 51v10 M110 51v10 M140 51v10 M200 51v10 M230 51v10 M260 51v10 M290 51v10 M350 51v10"/></g>
+  <g stroke="currentColor" stroke-width="1.7">
+    <path d="M20 46v20 M170 46v20 M320 46v20"/></g>
+  <g font-size="10.5" fill="currentColor" text-anchor="middle">
+    <text x="20" y="80">0·40</text><text x="170" y="80">0·45</text><text x="320" y="80">0·50</text></g>
+  <g fill="#c9942c">
+    <circle cx="20" cy="56" r="4"/><circle cx="170" cy="56" r="4"/>
+    <circle cx="320" cy="56" r="4"/><circle cx="335" cy="56" r="4"/></g>
+  <g font-size="10.5" fill="#c9942c" text-anchor="middle" font-weight="700">
+    <text x="20" y="34">0·4</text><text x="170" y="34">0·45</text>
+    <text x="308" y="34">0·5</text><text x="352" y="20">0·505</text></g>
+  <path d="M348 26 L336 50" stroke="#c9942c" stroke-width="1"/></svg>`,
+
+circleRD:`<svg viewBox="0 0 210 140" role="img" aria-label="A circle with its diameter and radius marked">
+  <circle cx="100" cy="70" r="52" fill="rgba(0,207,234,.1)" stroke="currentColor" stroke-width="1.6"/>
+  <path d="M48 70 H152" stroke="currentColor" stroke-width="1.4" stroke-dasharray="4 3"/>
+  <path d="M100 70 H152" stroke="#c9942c" stroke-width="2.6"/>
+  <circle cx="100" cy="70" r="3" fill="currentColor"/>
+  <g font-size="11.5" fill="currentColor" text-anchor="middle">
+    <text x="100" y="136">diameter = 24 cm, right across</text>
+    <text x="126" y="62" fill="#c9942c" font-weight="700">radius</text></g></svg>`,
+
+percentGrid:`<svg viewBox="0 0 190 140" role="img" aria-label="A hundred square with fifteen squares shaded">
+  <g>${(()=>{let o="";for(let r=0;r<10;r++)for(let c=0;c<10;c++){
+    const on=r*10+c<15;o+=`<rect x="${10+c*12}" y="${10+r*12}" width="12" height="12" fill="${on?"#efc24b":"none"}" fill-opacity="${on?".8":"0"}" stroke="currentColor" stroke-width=".6" opacity="${on?1:.55}"/>`;}return o;})()}</g>
+  <g font-size="11" fill="currentColor">
+    <text x="10" y="146">15 squares out of 100 — that is 15&#8201;%</text></g></svg>`,
+
+sharing3:`<svg viewBox="0 0 320 132" role="img" aria-label="A bar model splitting 1800 dollars into three equal shares">
+  <g stroke="currentColor" stroke-width="1.5">
+    <rect x="20" y="30" width="88" height="34" fill="rgba(0,207,234,.35)"/>
+    <rect x="108" y="30" width="88" height="34" fill="#efc24b" fill-opacity=".55"/>
+    <rect x="196" y="30" width="88" height="34" fill="#efc24b" fill-opacity=".55"/></g>
+  <path d="M20 76 H284 M20 71v10 M284 71v10" stroke="currentColor" stroke-width="1.2"/>
+  <g font-size="11.5" fill="currentColor" text-anchor="middle">
+    <text x="64" y="22">Anil</text><text x="196" y="22">Bea — twice as much</text>
+    <text x="152" y="94">$1 800 altogether</text>
+    <text x="152" y="112" font-size="11" fill="#c9942c" font-weight="700">3 equal shares</text></g></svg>`,
+
+perimeterRect:`<svg viewBox="0 0 250 150" role="img" aria-label="A rectangle 9 cm by 5 cm with every side labelled">
+  <rect x="45" y="38" width="150" height="78" fill="rgba(0,207,234,.12)" stroke="#c9942c" stroke-width="2.2"/>
+  <g font-size="12.5" fill="currentColor" text-anchor="middle">
+    <text x="120" y="30">9 cm</text><text x="120" y="134">9 cm</text></g>
+  <g font-size="12.5" fill="currentColor">
+    <text x="12" y="82">5 cm</text><text x="202" y="82">5 cm</text></g>
+  <text x="120" y="83" font-size="11" fill="#c9942c" text-anchor="middle" font-weight="700">all the way round</text></svg>`,
+
+barScale:`<svg viewBox="0 0 260 150" role="img" aria-label="One bar seven squares tall against a scale where each square is four people">
+  <g stroke="currentColor" stroke-width=".8" opacity=".45">
+    ${(()=>{let o="";for(let i=0;i<=8;i++)o+=`<line x1="60" y1="${118-i*13}" x2="200" y2="${118-i*13}"/>`;return o;})()}</g>
+  <rect x="95" y="27" width="46" height="91" fill="#00CFEA" opacity=".75"/>
+  <path d="M60 10 V118 H205" stroke="currentColor" stroke-width="1.5" fill="none"/>
+  <g font-size="10" fill="currentColor" text-anchor="end">
+    ${(()=>{let o="";for(let i=0;i<=7;i++)o+=`<text x="55" y="${122-i*13}">${i}</text>`;return o;})()}</g>
+  <g font-size="11" fill="currentColor">
+    <text x="72" y="136">7 squares tall</text>
+    <text x="60" y="150" fill="#c9942c" font-weight="700">Key: 1 square = 4 people</text></g></svg>`
 };
+const WIDE_FIGS = ["barFruit","lshape","lshapeSplit","numberLineDec","placeValue","sharing3","fracEighths","barScale"];
 
 /* ============================================================
    Question bank
@@ -771,7 +984,7 @@ const QUESTIONS = [
  exp:"Four equal sides with right angles would be a square. Four equal sides <i>without</i> right angles is a <b>rhombus</b>."},
 
 {id:"G08",strand:"Geometry",topic:"Angles",proc:"Applying",sec:2,marks:2,
- q:"Two angles of a triangle measure 65&deg; and 40&deg;. Find the third angle.", unit:"°",
+ q:"Two angles of a triangle measure 65&deg; and 40&deg;. Find the third angle.", fig:"triangle180", unit:"°",
  a:["75"],
  exp:"The three angles of any triangle add to 180&deg;. 65 + 40 = 105, and 180 &minus; 105 = <b>75&deg;</b>."},
 
@@ -847,7 +1060,7 @@ const QUESTIONS = [
  exp:"Complete it into a full rectangle 10 cm by 6 cm, area 60 cm&sup2;. The piece cut out of the corner is 4 cm by 3 cm, area 12 cm&sup2;. So 60 &minus; 12 = <b>48 cm&sup2;</b>."},
 
 {id:"M10",strand:"Measurement",topic:"Volume",proc:"Applying",sec:2,marks:2,
- q:"Find the volume of a cuboid measuring 6 cm by 4 cm by 3 cm.", unit:"cm³",
+ q:"Find the volume of a cuboid measuring 6 cm by 4 cm by 3 cm.", fig:"cuboid643", unit:"cm³",
  a:["72"],
  exp:"Volume = length &times; width &times; height = 6 &times; 4 &times; 3 = 24 &times; 3 = <b>72 cm&sup3;</b>."},
 
@@ -942,7 +1155,6 @@ const QUESTIONS = [
  a:["28"],
  exp:"Multiply the number of squares by the scale: 7 &times; 4 = <b>28 people</b>."}
 ];
-
 /* ============================================================
    Official papers — every link points at the Ministry's own copy
    Verified 6 September 2026
@@ -1068,50 +1280,205 @@ const SYL_ELA = [
     "Fifty minutes: plan, write, then read it back"]]
 ];
 
-/* ============================================================
-   Storage
-   ============================================================ */
-const KEY = "rd.sea.v1";
-let store = {seen:{}, syl:{}, essay:"", theme:null};
-try{ const raw = localStorage.getItem(KEY); if(raw) store = Object.assign(store, JSON.parse(raw)); }catch(e){}
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){} }
 
 /* ============================================================
-   Answer matching
+   The hint ladder.
+
+   A practice test that hands over the answer teaches nothing. Every
+   question therefore has two rungs before the working:
+
+     ask   — what is this question actually asking? A reframe. No method.
+     step  — the first move. A method. No numbers, and never the answer.
+
+   hfig is a teaching diagram shown with the step: the picture that makes
+   the move obvious without doing it for them.
+   ============================================================ */
+const HINTS = {
+N01:{ask:"You are turning words into digits. The word “thousand” tells you where the split falls.",
+     step:"Write the thousands part first, then the part after it — and keep every column filled, even with a zero."},
+N02:{ask:"Not which column the 4 sits in — what that 4 is actually worth.",
+     step:"Count the columns from the right: ones, tens, hundreds, thousands… and stop when you reach the 4.", hfig:"placeValue"},
+N03:{ask:"Per cent means “out of a hundred”. Look at what is underneath the line.",
+     step:"A fraction already written out of 100 needs almost no working at all."},
+N04:{ask:"This is one fraction written two ways. What was 60 divided by to become 4?",
+     step:"Simplify the left-hand fraction as far as it will go, then compare the two tops."},
+N05:{ask:"Which part of 9618 is that 6 standing for?",
+     step:"Break 9618 into 9000 + 600 + 10 + 8, then match each piece to its bracket."},
+N06:{ask:"Which two thousands does 47 682 sit between — and which is it nearer?",
+     step:"Look only at the hundreds digit. It alone decides whether you go up or stay."},
+N07:{ask:"Where does the 9 go, and what fills the gap in between?",
+     step:"Put the 2 in the hundred thousands column and the 9 in the ones, then fill every column between with zeros."},
+N08:{ask:"Smallest means the smallest digit in the biggest column — but there is a catch with the 0.",
+     step:"Put the four digits in order, then ask yourself whether a whole number can begin with 0."},
+N09:{ask:"Which whole numbers divide into 24 leaving nothing over?",
+     step:"Work in pairs. Start at 1 × 24 and climb until the two halves of the pair meet."},
+N10:{ask:"A prime number has exactly two factors — 1 and itself.",
+     step:"Try dividing each one by 3. Three of these four give a whole number."},
+N11:{ask:"Squaring is not the same as doubling.",
+     step:"Multiply the number by itself."},
+N12:{ask:"The same amount of the same thing, written with smaller numbers.",
+     step:"Find the biggest number that divides into both 8 and 12, then divide both by it."},
+N13:{ask:"You cannot add eighths to quarters while they are different sizes.",
+     step:"Change the quarters into eighths first. Then add the tops and leave the bottom alone.", hfig:"fracEighths"},
+N14:{ask:"How many halves are there altogether?",
+     step:"Count the halves inside the two whole ones, then add the half that is left over."},
+N15:{ask:"“Of” means multiply — but there is an easier order to do it in.",
+     step:"Divide by the bottom number first, then multiply by the top. The numbers stay small that way."},
+N16:{ask:"Read it again: it asks how much is left, not how much was used.",
+     step:"Find the amount used and take it off the total — or work out the fraction left and find that instead."},
+N17:{ask:"Multiply as though the points were not there, then put the point back.",
+     step:"Count the decimal places in both numbers. The answer needs that many altogether."},
+N18:{ask:"How many hundredths is 0·45?",
+     step:"Write it as a fraction over 100 first, then simplify it."},
+N19:{ask:"Which column after the point is the 6 sitting in?",
+     step:"After the point comes tenths, then hundredths. Name the column, then say what the digit is worth."},
+N20:{ask:"Ascending means smallest first.",
+     step:"Give every number the same number of decimal places by adding zeros. Then they line up and compare easily.", hfig:"numberLineDec"},
+N21:{ask:"15&#8201;% is 10&#8201;% and 5&#8201;% put together.",
+     step:"Find 10&#8201;% by dividing by 10, halve that for the 5&#8201;%, then add the two.", hfig:"percentGrid"},
+N22:{ask:"The VAT is added on top, so the answer must be more than $250.",
+     step:"Find 10&#8201;%, then a quarter of that for the 2·5&#8201;%. Add them for the VAT, then add the VAT to the price."},
+N23:{ask:"Percentage profit is measured against what the shop paid, not what it charged.",
+     step:"Find the profit in dollars first, then write it as a fraction of the cost price and turn that into a percentage."},
+N24:{ask:"You cannot get from 5 pens to 8 pens in one jump.",
+     step:"Find the cost of one pen first, then multiply up. That is the unitary method."},
+N25:{ask:"These are not going up by the same amount each time, so look for a different rule.",
+     step:"Ask yourself what each number is the square of."},
+N26:{ask:"The gaps are 3, then 6, then 12 — they are doubling.",
+     step:"Try doubling each number and adding the same small amount every time."},
+N27:{ask:"How many equal shares is the money split into altogether?",
+     step:"Anil is one share and Bea is two, so draw three boxes. Find what one box is worth first.", hfig:"sharing3"},
+N28:{ask:"Two steps: one day first, then the whole week.",
+     step:"Work out a single day's pay before anything else — seven hours, plus the half hour."},
+N29:{ask:"It asks what is left over, not how many crates she fills.",
+     step:"Divide 350 by 24 and look at the remainder, not at the whole-number part."},
+N30:{ask:"It says estimate. Round first, add second — that is the whole point of the question.",
+     step:"Round each number to the nearest thousand before you add anything at all."},
+
+G01:{ask:"The diameter goes right across the circle; the radius only reaches from the middle to the edge.",
+     step:"The radius is half of the diameter.", hfig:"circleRD"},
+G02:{ask:"Fold it up in your head. What does the square become?",
+     step:"The square is the base, and the four triangles fold up until their tips meet at one point above it."},
+G03:{ask:"Faces are the flat surfaces — not the corners, and not the lines.",
+     step:"Count the top, the bottom, and the four sides."},
+G04:{ask:"Edges are the lines where two faces meet.",
+     step:"Count the edges around each triangular end, then add the ones joining the two ends together."},
+G05:{ask:"One circular base, and one point at the top.",
+     step:"Picture an ice-cream cone turned the right way up."},
+G06:{ask:"A line of symmetry folds the shape exactly onto itself.",
+     step:"Try folding across the middle both ways, and then along both diagonals."},
+G07:{ask:"Four equal sides — but this one is not a square.",
+     step:"Think of a square pushed over to one side. It still has four equal sides, but no square corners."},
+G08:{ask:"The three angles of any triangle always add up to the same total.",
+     step:"Add the two angles you were given, then take that away from 180°."},
+G09:{ask:"Every corner of a rectangle is the same size.",
+     step:"A square corner has a special name and a special number."},
+G10:{ask:"Vertices are the corners — points, not lines.",
+     step:"Count the four corners of the square base, then the tip at the top."},
+G11:{ask:"Name the solid first. Once you know what it is, counting is easy.",
+     step:"Count the edges around each pentagon, then add the edges joining the two ends."},
+G12:{ask:"Parallel sides run alongside each other and never meet, however far you stretch them.",
+     step:"Take each shape in turn and count how many pairs of its sides are parallel."},
+G13:{ask:"A regular shape is symmetrical in every direction.",
+     step:"For any regular polygon, the number of lines of symmetry matches something you already know about it."},
+
+M01:{ask:"Area is the space inside the shape, measured in squares.",
+     step:"Multiply the length by the width."},
+M02:{ask:"The long hand gives the minutes; the short hand gives the hour.",
+     step:"The long hand on the 9 means 45 minutes past. Now decide which hour it has not quite finished."},
+M03:{ask:"Grams are small and kilograms are big, so the number should get smaller.",
+     step:"There are 1000 grams in a kilogram, so divide."},
+M04:{ask:"How many halves fit inside each single litre?",
+     step:"Dividing by a half is the same as multiplying by 2."},
+M05:{ask:"Metres to centimetres — the number should get bigger.",
+     step:"There are 100 centimetres in a metre, so multiply."},
+M06:{ask:"Millimetres to centimetres — the number should get smaller.",
+     step:"There are 10 millimetres in a centimetre, so divide."},
+M07:{ask:"Perimeter is the distance all the way round the outside.",
+     step:"Add the length and the width, then double it — or just add all four sides.", hfig:"perimeterRect"},
+M08:{ask:"Two steps. You cannot go straight from perimeter to area.",
+     step:"Find the length of one side first, then use that side to find the area."},
+M09:{ask:"Length × width only works on a rectangle, and this shape is not one.",
+     step:"Fill in the missing corner to make a full rectangle, find its area, then take the corner back off.", hfig:"lshapeSplit"},
+M10:{ask:"Volume is the space inside, measured in cubes.",
+     step:"Multiply all three measurements together."},
+M11:{ask:"Every edge of a cube is the same length.",
+     step:"Multiply the edge by itself, and then by itself again."},
+M12:{ask:"Litres to cubic centimetres — the number should get much bigger.",
+     step:"There are 1000 cubic centimetres in a litre, so multiply."},
+M13:{ask:"You cannot add grams to kilograms while they are different units.",
+     step:"Change everything into grams first, add them, then turn the total back into kilograms."},
+M14:{ask:"Adding time is not like adding ordinary numbers — an hour is 60, not 100.",
+     step:"Add the whole hour first. Then add the minutes in two goes: up to the next o'clock, then whatever is left."},
+M15:{ask:"How many minutes are in one whole hour, and how many in a quarter of one?",
+     step:"Turn the three whole hours into minutes first, then add the quarter on."},
+M16:{ask:"How many lots of 3 litres are there in 45 litres?",
+     step:"Divide the total by the rate."},
+M17:{ask:"You are buying fence for the distance round the outside, not for the space inside.",
+     step:"Find the perimeter first, then multiply it by the price of one metre."},
+
+S01:{ask:"The mode is the score that happens most often — not the biggest one.",
+     step:"Count how many times each different number appears."},
+S02:{ask:"The mean is what everybody would get if it were all shared out evenly.",
+     step:"Add them all together, then divide by how many there are."},
+S03:{ask:"Same idea as before — but count carefully how many numbers you have.",
+     step:"Add them all together, then divide by how many there are."},
+S04:{ask:"“How many more” means a difference, so there will be a subtraction.",
+     step:"Read both bars against the scale up the left-hand side, then take one from the other."},
+S05:{ask:"Every child in the class chose exactly one fruit.",
+     step:"Read all four bars and add them together."},
+S06:{ask:"Mango out of the whole class — so you need the class total first.",
+     step:"Put the mango number on top and the total underneath, then simplify the fraction."},
+S07:{ask:"A tally is grouped in fives so that it is quick to count.",
+     step:"Count the complete groups in fives first, then add on the loose strokes."},
+S08:{ask:"Work backwards. If you know the mean, you can find the total.",
+     step:"Multiply the mean by how many numbers there are to get the total, then take away the four you were given."},
+S09:{ask:"Read it again — this one asks for the mean, not the mode.",
+     step:"Add all five numbers, then divide by how many there are."},
+S10:{ask:"25&#8201;% is a quarter.",
+     step:"Divide by 4."},
+S11:{ask:"The height of the bar is not the answer on its own — the key changes it.",
+     step:"Multiply the number of squares by whatever one square stands for.", hfig:"barScale"}
+};
+QUESTIONS.forEach(q => Object.assign(q, HINTS[q.id] || {}));
+
+/* ============================================================
+   Storage — per device, per browser. Nothing leaves it.
+   ============================================================ */
+const KEY = "rrb.sea.v2";
+let store = {seen:{}, syl:{}, essay:"", theme:null, exams:[]};
+try{ const raw = localStorage.getItem(KEY); if(raw) store = Object.assign(store, JSON.parse(raw)); }catch(e){}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){} }
+function rec(id){ return store.seen[id] || (store.seen[id] = {att:0, right:false, clean:false, hints:0}); }
+
+/* ============================================================
+   Marking
    ============================================================ */
 function norm(s){
   return String(s).toLowerCase()
-    .replace(/[   ]/g," ")
-    .replace(/[·]/g,".")
-    .replace(/[\s,$]/g,"")
-    .replace(/−|–|—/g,"-")
-    .replace(/[.]$/,"");
+    .replace(/[   ]/g," ").replace(/[·]/g,".")
+    .replace(/[\s,$]/g,"").replace(/[−–—]/g,"-").replace(/[.]$/,"");
 }
 const UNIT_WORDS = ["cm³","cm3","m³","m3","cm²","cm2","m²","m2","kg","cm","mm","km","litres","litre","l","ml","g",
-                    "minutes","minute","mins","min","hours","hour","people","students","children","containers",
-                    "crates","mangoes","pens","edges","faces","vertices","lines","%","°","degrees","$"];
+  "minutes","minute","mins","min","hours","hour","people","students","children","containers",
+  "crates","mangoes","pens","edges","faces","vertices","lines","%","°","degrees","$"];
 function stripUnits(s){
   let v = s;
-  for(let i=0;i<3;i++){
-    for(const u of UNIT_WORDS){
-      const n = norm(u);
-      if(n && v.endsWith(n) && v.length > n.length) v = v.slice(0, -n.length);
-    }
+  for(let i=0;i<3;i++) for(const u of UNIT_WORDS){
+    const n = norm(u);
+    if(n && v.endsWith(n) && v.length > n.length) v = v.slice(0, -n.length);
   }
   return v;
 }
 const alpha = s => /[a-z]/.test(s) ? s.replace(/[^a-z0-9]/g,"") : s;
 function isRight(q, typed){
   if(!typed || !typed.trim()) return false;
-  const t  = norm(typed);
-  const ts = stripUnits(t);
+  const t = norm(typed), ts = stripUnits(t);
   for(const acc of q.a){
-    const A  = norm(acc);
-    const As = stripUnits(A);
-    if(t === A || ts === A || t === As || ts === As) return true;
-    if(/[a-z]/.test(As) && alpha(ts) === alpha(As)) return true;
-    const na = parseFloat(As.replace(/[^0-9.\-]/g,""));
-    const nt = parseFloat(ts.replace(/[^0-9.\-]/g,""));
+    const A = norm(acc), As = stripUnits(A);
+    if(t===A || ts===A || t===As || ts===As) return true;
+    if(/[a-z]/.test(As) && alpha(ts)===alpha(As)) return true;
+    const na = parseFloat(As.replace(/[^0-9.\-]/g,"")), nt = parseFloat(ts.replace(/[^0-9.\-]/g,""));
     if(!isNaN(na) && !isNaN(nt) && /^-?[0-9.]+$/.test(As) && /^-?[0-9.]+$/.test(ts)
        && Math.abs(na-nt) < 1e-9) return true;
   }
@@ -1119,7 +1486,7 @@ function isRight(q, typed){
 }
 
 /* ============================================================
-   Small helpers
+   Helpers
    ============================================================ */
 const $  = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -1128,19 +1495,83 @@ const TAGCLS  = {Number:"n",Geometry:"g",Measurement:"m",Statistics:"s"};
 const shuffle = a => { const b=a.slice(); for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; };
 const mmss = s => String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
 const esc  = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-
-function qMeta(q){
-  return `<span class="tag ${TAGCLS[q.strand]}">${q.strand}</span>
-          <span>${q.topic}</span><span>&middot;</span><span>${q.proc}</span>
-          ${q.src ? `<span>&middot;</span><span><b>${q.src}</b></span>` : ""}
-          <span style="margin-left:auto">${q.marks} mark${q.marks>1?"s":""}</span>`;
+const fig  = (k,cap) => k ? `<figure class="${WIDE_FIGS.includes(k)?"wide":""}">${SVG[k]}${cap?`<figcaption>${cap}</figcaption>`:""}</figure>` : "";
+// The papers write 1 800, not 1800. Format for display only — a[0] stays bare
+// so tests can recompute it and check no hint leaks it.
+function fmtAns(q){
+  const v = String(q.a[0]);
+  return /^[0-9]{4,}$/.test(v) ? v.replace(/\B(?=(\d{3})+(?!\d))/g, "\u2009") : v;
 }
-const WIDE_FIGS = ["barFruit","lshape"];
-function figHTML(q){ return q.fig ? `<figure class="${WIDE_FIGS.includes(q.fig)?"wide":""}">${SVG[q.fig]}</figure>` : ""; }
+function qMeta(q){
+  return `<span class="tag ${TAGCLS[q.strand]}">${q.strand}</span><span>${q.topic}</span>
+    <span>&middot;</span><span>${q.proc}</span>
+    ${q.src?`<span>&middot;</span><span><b>${q.src}</b></span>`:""}
+    <span style="margin-left:auto">${q.marks} mark${q.marks>1?"s":""}</span>`;
+}
 
 /* ============================================================
-   Theme
+   Who is signed in
    ============================================================ */
+const SKEY = "rrb.sea.role";
+let role = null;
+const CAN = {
+  student:{views:["home","practice","exam","writing","papers","syllabus"], openAnswers:false},
+  parent: {views:["home","practice","papers","syllabus","key"],            openAnswers:true},
+  teacher:{views:["home","practice","exam","writing","papers","syllabus","key"], openAnswers:true}
+};
+const NAV_LABEL = {home:"Home", practice:"Practice", exam:"Mock Exam", writing:"Writing",
+                   papers:"Past Papers", syllabus:"Syllabus", key:"Answer Key"};
+
+let pickedRole = "student";
+$("#roles").addEventListener("click", e => {
+  const b = e.target.closest(".role"); if(!b) return;
+  pickedRole = b.dataset.role;
+  $$("#roles .role").forEach(r => r.setAttribute("aria-pressed", r.dataset.role === pickedRole));
+  $("#gateCode").focus();
+});
+function tryGate(){
+  const typed = $("#gateCode").value.trim().toUpperCase();
+  if(!typed){ $("#gateErr").textContent = "Enter the access code for that role."; return; }
+  if(typed === ROLES[pickedRole].code){
+    sessionStorage.setItem(SKEY, pickedRole);
+    enter(pickedRole);
+  } else {
+    $("#gateErr").textContent = `That is not the ${ROLES[pickedRole].label.toLowerCase()} code. Check with the Academy.`;
+    $("#gateCode").select();
+  }
+}
+$("#gateGo").addEventListener("click", tryGate);
+$("#gateCode").addEventListener("keydown", e => { if(e.key === "Enter") tryGate(); });
+$("#signOut").addEventListener("click", () => { sessionStorage.removeItem(SKEY); location.reload(); });
+
+function enter(r){
+  role = r;
+  $("#gate").hidden = true;
+  $("#app").hidden = false;
+  $("#rolePill").textContent = ROLES[r].label;
+  $("#nav").innerHTML = CAN[r].views
+    .map(v => `<button data-view="${v}">${NAV_LABEL[v]}</button>`).join("");
+  renderRoleCopy();
+  pTopics(); pBuild(true);      // needs the role: it decides which rungs open
+  renderKey();
+  $("#examPrint").hidden = (r !== "teacher");
+  const want = location.hash.slice(1);
+  show(CAN[r].views.includes(want) ? want : "home");
+}
+
+/* ============================================================
+   Views
+   ============================================================ */
+function show(name){
+  if(!CAN[role].views.includes(name)) name = "home";
+  $$(".view").forEach(v => v.hidden = (v.id !== "v-"+name));
+  $$("#nav button").forEach(b => b.setAttribute("aria-current", b.dataset.view===name ? "page" : "false"));
+  if(location.hash.slice(1) !== name) history.replaceState(null,"","#"+name);
+  window.scrollTo({top:0,behavior:"instant"});
+  if(name === "home") renderHome();
+}
+$("#nav").addEventListener("click", e => { const b = e.target.closest("button"); if(b) show(b.dataset.view); });
+
 function applyTheme(){
   if(store.theme) document.documentElement.setAttribute("data-theme", store.theme);
   else document.documentElement.removeAttribute("data-theme");
@@ -1153,180 +1584,287 @@ $("#themeBtn").addEventListener("click", () => {
 applyTheme();
 
 /* ============================================================
-   Views
+   Role copy — the same data, addressed to the right reader
    ============================================================ */
-function show(name){
-  $$(".view").forEach(v => v.hidden = (v.id !== "v-"+name));
-  $$("#nav button").forEach(b => b.setAttribute("aria-current", b.dataset.view===name ? "page" : "false"));
-  if(location.hash.slice(1) !== name) history.replaceState(null,"","#"+name);
-  window.scrollTo({top:0,behavior:"instant"});
-  if(name==="home") renderHome();
+const COPY = {
+  student:{
+    kicker:"Student", title:"Work the paper, not the answer key.",
+    lead:"Every question here will help you before it tells you. Ask what it wants, take the first step, "+
+         "then see the working. The answer opens once you have had a real try — that is how the marks come.",
+    startTitle:"Three ways to work", startLead:"Pick the one that fits the time you have.",
+    practice:"Work it out on paper first, the way you will on the day. If you are stuck, climb the ladder — "+
+             "the pointers come before the working, and the answer comes last."
+  },
+  parent:{
+    kicker:"Parent", title:"How the practice is going.",
+    lead:"Everything below comes from this device — the questions attempted here, and how they went. "+
+         "You can see every answer and every worked solution straight away, so you can sit beside them and help.",
+    startTitle:"Sitting down together", startLead:"The two things worth doing in twenty minutes.",
+    practice:"You see the working and the answer without waiting. Ask the child the pointer question first — "+
+             "“what is it actually asking?” — before you show them anything."
+  },
+  teacher:{
+    kicker:"Teacher", title:"The bank, the blueprint and the key.",
+    lead:"Seventy-one questions mapped to the Ministry's four strands and three thinking processes. "+
+         "Generate a paper to the official blueprint, print it blank for the class, and keep the key beside you.",
+    startTitle:"For the classroom", startLead:"Build a paper, or take the key.",
+    practice:"Full working and answers are open. Each question carries its strand, topic, thinking process "+
+             "and section, so you can pull a set for exactly what you are teaching."
+  }
+};
+function renderRoleCopy(){
+  const c = COPY[role];
+  $("#homeKicker").textContent = c.kicker;
+  $("#homeTitle").textContent  = c.title;
+  $("#homeLead").textContent   = c.lead;
+  $("#startTitle").textContent = c.startTitle;
+  $("#startLead").textContent  = c.startLead;
+  $("#practiceLead").textContent = c.practice;
+  $("#keyKicker").textContent = ROLES[role] ? ROLES[role].label : "";
+  $("#keyLead").textContent = role === "parent"
+    ? "Every question with its pointer, its first step and its full working — so you can guide rather than simply tell."
+    : "Every question with its pointer, first step, working and answer. Print it and keep it beside you.";
+  const btns = {
+    student:[["practice","Practice by topic","gold"],["exam","Sit a timed paper",""],["writing","Write an essay","ghost"]],
+    parent: [["practice","Go through questions","gold"],["key","Open the answer key",""],["papers","Download a past paper","ghost"]],
+    teacher:[["exam","Build a paper","gold"],["key","Open the answer key",""],["papers","Download a past paper","ghost"]]
+  }[role];
+  $("#startBtns").innerHTML = btns.map(([v,l,k]) => `<button class="btn ${k}" data-go="${v}">${l}</button>`).join("");
+  $$("#startBtns [data-go]").forEach(b => b.addEventListener("click", () => show(b.dataset.go)));
 }
-$("#nav").addEventListener("click", e => { const b=e.target.closest("button"); if(b) show(b.dataset.view); });
-$$("[data-go]").forEach(b => b.addEventListener("click", () => show(b.dataset.go)));
 
 /* ============================================================
    Home
    ============================================================ */
+function strandStat(s){
+  const pool = QUESTIONS.filter(q => q.strand === s);
+  const done = pool.filter(q => store.seen[q.id] && store.seen[q.id].att > 0);
+  const clean = done.filter(q => store.seen[q.id].clean).length;
+  return {pool:pool.length, done:done.length, clean,
+          pct: pool.length ? Math.round(done.length/pool.length*100) : 0,
+          acc: done.length ? Math.round(clean/done.length*100) : null};
+}
 function renderHome(){
-  const ids = Object.keys(store.seen);
-  const answered = ids.length;
-  const right = ids.filter(k => store.seen[k].first).length;
-  $("#hStatQ").textContent  = QUESTIONS.length;
-  $("#hStatA").textContent  = answered;
-  $("#hStatBar").style.width = (QUESTIONS.length ? Math.round(answered/QUESTIONS.length*100) : 0) + "%";
-  $("#hStatP").textContent  = answered ? Math.round(right/answered*100)+"%" : "—";
-  $("#hStatP2").textContent = PAPERS.length;
+  const ids = Object.keys(store.seen).filter(k => store.seen[k].att > 0);
+  const clean = ids.filter(k => store.seen[k].clean).length;
+  $("#hQ").textContent = QUESTIONS.length;
+  $("#hA").textContent = ids.length;
+  $("#hABar").style.width = (QUESTIONS.length ? Math.round(ids.length/QUESTIONS.length*100) : 0) + "%";
+  $("#hP").textContent = ids.length ? Math.round(clean/ids.length*100) + "%" : "—";
+  $("#hE").textContent = store.exams.length;
+  const best = store.exams.length ? Math.max(...store.exams.map(e => e.score)) : null;
+  $("#hEBest").textContent = best === null ? "none sat yet" : `best ${best} / 75`;
 
   $("#hStrands").innerHTML = STRANDS.map(s => {
-    const pool = QUESTIONS.filter(q => q.strand===s);
-    const done = pool.filter(q => store.seen[q.id]).length;
-    const ok   = pool.filter(q => store.seen[q.id] && store.seen[q.id].first).length;
-    const pct  = pool.length ? Math.round(done/pool.length*100) : 0;
-    return `<div style="margin-bottom:.85rem">
-      <div style="display:flex;justify-content:space-between;font-size:13.5px">
-        <b>${s}</b><span class="mono muted">${done} / ${pool.length}${done?` &middot; ${Math.round(ok/done*100)}% right`:""}</span>
-      </div>
-      <div class="bar"><i style="width:${pct}%"></i></div></div>`;
+    const t = strandStat(s);
+    return `<div style="margin-bottom:.9rem">
+      <div style="display:flex;justify-content:space-between;font-size:13.5px;gap:.5rem">
+        <b>${s}</b><span class="mono muted">${t.done} / ${t.pool}${t.acc!==null?` &middot; ${t.acc}% clean`:""}</span></div>
+      <div class="bar"><i class="${t.acc!==null&&t.acc>=70?"go":""}" style="width:${t.pct}%"></i></div></div>`;
   }).join("");
+
+  // Say the one useful thing, rather than showing four bars and leaving it there.
+  const tried = STRANDS.map(s => ({s, ...strandStat(s)})).filter(t => t.done >= 3);
+  let advice;
+  if(!tried.length){
+    advice = `<p class="note">Nothing attempted yet. Answer three questions in a strand and this will start
+      telling you where the marks are going.</p>`;
+  } else {
+    const worst = tried.reduce((a,b) => a.acc <= b.acc ? a : b);
+    const marks = {Number:34, Geometry:11, Measurement:18, Statistics:12}[worst.s];
+    advice = `<p class="note"><b>${worst.s}</b> is the weakest so far — ${worst.acc}&thinsp;% clean over
+      ${worst.done} question${worst.done>1?"s":""}. It is worth <b>${marks} of the 75 marks</b> on the paper.
+      ${role === "student" ? "Filter Practice to that strand next." : "That is the strand to sit down with."}</p>`;
+  }
+  $("#hAdvice").innerHTML = advice;
 }
-$("#resetBtn").addEventListener("click", () => {
-  if(!confirm("Clear every answer, tick and saved essay on this device?")) return;
-  store = {seen:{}, syl:{}, essay:"", theme:store.theme}; save();
-  renderHome(); renderSyllabus(); $("#wEssay").value=""; countWords(); pRender();
-});
+$("#hAdvice") && 0;
 
 /* ============================================================
-   Practice
+   Practice — the hint ladder
    ============================================================ */
-let pFilter = "All", pTopic = "All", pList = [], pIdx = 0;
+let pFilter = "All", pTopic = "All", pList = [], pIdx = 0, pSession = {n:0, ok:0};
 
-function pPool(){
-  return QUESTIONS.filter(q =>
-    (pFilter==="All" || q.strand===pFilter) &&
-    (pTopic ==="All" || q.topic ===pTopic));
-}
+const pPool = () => QUESTIONS.filter(q =>
+  (pFilter === "All" || q.strand === pFilter) && (pTopic === "All" || q.topic === pTopic));
 function pBuild(reshuffle){
   const pool = pPool();
   pList = reshuffle ? shuffle(pool) : pool;
   pIdx = 0; pRender();
 }
 function pTopics(){
-  const set = new Set(QUESTIONS.filter(q => pFilter==="All"||q.strand===pFilter).map(q => q.topic));
+  const set = new Set(QUESTIONS.filter(q => pFilter === "All" || q.strand === pFilter).map(q => q.topic));
   const opts = ["All", ...Array.from(set).sort()];
   if(!opts.includes(pTopic)) pTopic = "All";
-  $("#pTopic").innerHTML = opts.map(t => `<option${t===pTopic?" selected":""}>${t}</option>`).join("");
+  $("#pTopic").innerHTML = opts.map(t => `<option${t === pTopic ? " selected" : ""}>${t}</option>`).join("");
 }
-$("#pStrand").innerHTML = ["All",...STRANDS]
-  .map(s => `<button class="chip" data-s="${s}" aria-pressed="${s==="All"}">${s}</button>`).join("");
+$("#pStrand").innerHTML = ["All", ...STRANDS]
+  .map(s => `<button class="chip" data-s="${s}" aria-pressed="${s === "All"}">${s}</button>`).join("");
 $("#pStrand").addEventListener("click", e => {
   const b = e.target.closest(".chip"); if(!b) return;
   pFilter = b.dataset.s;
-  $$("#pStrand .chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.s===pFilter));
+  $$("#pStrand .chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.s === pFilter));
   pTopics(); pBuild(true);
 });
 $("#pTopic").addEventListener("change", e => { pTopic = e.target.value; pBuild(true); });
 $("#pShuffle").addEventListener("click", () => pBuild(true));
-$("#pPrev").addEventListener("click", () => { if(pIdx>0){ pIdx--; pRender(); } });
-$("#pNext").addEventListener("click", () => { if(pIdx<pList.length-1){ pIdx++; pRender(); } });
+$("#pPrev").addEventListener("click", () => { if(pIdx > 0){ pIdx--; pRender(); } });
+$("#pNext").addEventListener("click", () => { if(pIdx < pList.length-1){ pIdx++; pRender(); } });
 
-let pSession = {n:0, ok:0};
+// One rung per row. For a student each is earned; for a parent or teacher all are open.
+const RUNGS = [
+  {k:"ask",  n:"What is it asking?", cls:""},
+  {k:"step", n:"The first step",     cls:""},
+  {k:"work", n:"Show the working",   cls:""},
+  {k:"ans",  n:"The answer",         cls:"reveal"}
+];
+
 function pRender(){
-  const host = $("#pHost");
   $("#pCount").textContent = pList.length
-    ? `Question ${pIdx+1} of ${pList.length} in this set.`
-    : "No questions match that filter.";
+    ? `Question ${pIdx+1} of ${pList.length} in this set.` : "No questions match that filter.";
   $("#pSession").textContent = pSession.n ? `This session: ${pSession.ok} of ${pSession.n} right` : "";
-  $("#pPrev").disabled = pIdx<=0;
-  $("#pNext").disabled = pIdx>=pList.length-1;
-  if(!pList.length){ host.innerHTML = ""; return; }
+  $("#pPrev").disabled = pIdx <= 0;
+  $("#pNext").disabled = pIdx >= pList.length - 1;
+  if(!pList.length){ $("#pHost").innerHTML = ""; return; }
 
-  const q = pList[pIdx];
-  const rec = store.seen[q.id];
-  host.innerHTML = `<div class="qcard">
+  const q = pList[pIdx], r = rec(q.id);
+  const open = CAN[role].openAnswers;
+  const st = {tried:false, opened:{}};   // per-render state, reset on every question
+
+  $("#pHost").innerHTML = `<div class="qcard">
     <div class="qtop"><span class="no">${pIdx+1}</span>${qMeta(q)}</div>
     <div class="qbody">
       <div class="qtext">${q.q}</div>
-      ${figHTML(q)}
+      ${fig(q.fig)}
       <div class="answerrow">
         <label for="pAns">Answer</label>
-        <input type="text" class="ans" id="pAns" autocomplete="off" autocapitalize="off" spellcheck="false"
-               placeholder="type it here">
+        <input type="text" class="ans" id="pAns" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type it here">
         ${q.unit ? `<span class="muted mono">${q.unit}</span>` : ""}
         <button class="btn" id="pCheck">Check</button>
-        <button class="btn ghost" id="pShow">Show me</button>
-        ${rec ? `<span class="muted" style="font-size:12.5px">${rec.first?"You had this right first time.":"You have seen this one before."}</span>` : ""}
+        ${r.att ? `<span class="muted" style="font-size:12.5px">Tried ${r.att} time${r.att>1?"s":""}${r.clean?" — clean first time":""}</span>` : ""}
       </div>
       <div id="pVerdict"></div>
+      <div class="ladder">
+        <div class="rungrow" id="pRungs">${RUNGS.map(g =>
+          `<button class="rung ${g.cls}" data-k="${g.k}"><span class="k">${RUNGS.indexOf(g)+1}</span>${g.n}</button>`).join("")}</div>
+        <div id="pHints"></div>
+        <div class="locked" id="pLocked"></div>
+      </div>
     </div></div>`;
 
   const input = $("#pAns");
-  input.addEventListener("keydown", e => { if(e.key==="Enter") check(); });
+  input.addEventListener("keydown", e => { if(e.key === "Enter") check(); });
+  input.addEventListener("input", () => { input.classList.remove("right","wrong"); });
   $("#pCheck").addEventListener("click", check);
-  $("#pShow").addEventListener("click", () => reveal(false));
+  $("#pRungs").addEventListener("click", e => {
+    const b = e.target.closest(".rung"); if(!b || b.disabled) return;
+    const k = b.dataset.k;
+    st.opened[k] = !st.opened[k];
+    if(st.opened[k] && (k === "step" || k === "work")) { r.hints++; save(); }
+    paintRungs(); paintHints();
+  });
   input.focus();
+  paintRungs(); paintHints();
 
+  // A rung is available to a student only once it has been earned.
+  // Gated on THIS encounter, not on the stored history. Having once attempted a
+  // question — in a mock paper, say, which marks all forty — must not leave its
+  // answer standing open for good. Every time you meet it, you try before you see.
+  function allowed(k){
+    if(open) return true;                       // parents and teachers
+    if(k === "ask")  return true;
+    if(k === "step") return !!(st.opened.ask || st.tried);
+    return st.tried;                            // working and answer
+  }
+  function paintRungs(){
+    $$("#pRungs .rung").forEach(b => {
+      const k = b.dataset.k, can = allowed(k);
+      b.disabled = !can;
+      b.setAttribute("data-open", st.opened[k] && can ? "1" : "0");
+    });
+    const blocked = RUNGS.filter(g => !allowed(g.k));
+    $("#pLocked").innerHTML = blocked.length
+      ? `<span aria-hidden="true">🔒</span><span>${
+          allowed("step")
+            ? "<b>Have a go first.</b> Type an answer and press Check — the working and the answer open straight after, right or wrong."
+            : "<b>Read the pointer first,</b> or type an answer and press Check. The rest of the ladder opens from there."
+        }</span>`
+      : "";
+  }
+  function paintHints(){
+    let h = "";
+    if(st.opened.ask)  h += `<div class="hint"><b class="h">What is it asking?</b>${q.ask}</div>`;
+    if(st.opened.step) h += `<div class="hint"><b class="h">The first step</b>${q.step}${fig(q.hfig)}</div>`;
+    if(st.opened.work) h += `<div class="hint gold"><b class="h">The working</b>${q.exp}</div>`;
+    if(st.opened.ans)  h += `<div class="hint gold"><b class="h">The answer</b>
+        <span class="mono" style="font-size:17px;font-weight:700">${fmtAns(q)}${q.unit ? " " + q.unit : ""}</span></div>`;
+    $("#pHints").innerHTML = h;
+  }
   function check(){
     const ok = isRight(q, input.value);
-    if(!store.seen[q.id]) { store.seen[q.id] = {first: ok}; save(); }
+    const firstGo = r.att === 0;
+    r.att++;
+    if(ok){ r.right = true; if(firstGo && r.hints === 0) r.clean = true; }
+    save();
+    st.tried = true;
     pSession.n++; if(ok) pSession.ok++;
     $("#pSession").textContent = `This session: ${pSession.ok} of ${pSession.n} right`;
-    reveal(true, ok);
-  }
-  function reveal(marked, ok){
-    $("#pVerdict").innerHTML = `<div class="verdict ${marked && ok ? "ok":"no"}">
-      <b>${marked ? (ok ? "Correct" : "Not quite") : "The answer"}</b>
-      <div>Answer: <b class="mono">${esc(q.a[0])}${q.unit?" "+q.unit:""}</b></div>
-      <div class="exp">${q.exp}</div></div>`;
-    if(!store.seen[q.id]){ store.seen[q.id] = {first:false}; save(); }
-    renderHome();
+    input.classList.toggle("right", ok);
+    input.classList.toggle("wrong", !ok);
+    $("#pVerdict").innerHTML = `<div class="verdict ${ok ? "ok" : "no"}"><b>${ok ? "Correct" : "Not yet"}</b>
+      <div class="body">${ok
+        ? "Open <b>the working</b> below anyway — check your method matched, not just your number."
+        : "Nothing is lost. Open <b>the first step</b> below and try it again before you look at the answer."}</div></div>`;
+    if(!ok && !st.opened.step) st.opened.step = true;
+    paintRungs(); paintHints(); renderHome();
   }
 }
-pTopics(); pBuild(true);
 
 /* ============================================================
-   Mock exam
+   Mock exam — no hints, no answers, while the clock runs
    ============================================================ */
 const BLUEPRINT = {
-  1:{Number:10,Geometry:3,Measurement:4,Statistics:3},
-  2:{Number:8, Geometry:2,Measurement:4,Statistics:2},
-  3:{Number:1, Geometry:1,Measurement:1,Statistics:1}
+  1:{Number:10, Geometry:3, Measurement:4, Statistics:3},
+  2:{Number:8,  Geometry:2, Measurement:4, Statistics:2},
+  3:{Number:1,  Geometry:1, Measurement:1, Statistics:1}
 };
 let exam = null, examTimer = null;
-
-function poolFor(sec,strand){ return QUESTIONS.filter(q => q.sec===sec && q.strand===strand); }
+const poolFor = (sec,strand) => QUESTIONS.filter(q => q.sec === sec && q.strand === strand);
 
 function buildPaper(){
   const picked = {1:[],2:[],3:[]}, short = [];
-  for(const sec of [1,2,3]){
-    for(const st of STRANDS){
-      const want = BLUEPRINT[sec][st];
-      const pool = shuffle(poolFor(sec,st));
-      if(pool.length < want) short.push(`${st} Section ${sec}: ${pool.length} of ${want}`);
-      picked[sec] = picked[sec].concat(pool.slice(0, want));
-    }
+  for(const sec of [1,2,3]) for(const st of STRANDS){
+    const want = BLUEPRINT[sec][st], pool = shuffle(poolFor(sec,st));
+    if(pool.length < want) short.push(`${st} Section ${sec}: ${pool.length} of ${want}`);
+    picked[sec] = picked[sec].concat(pool.slice(0, want));
   }
-  // Nudge Section II towards its official 39 marks by swapping within the same strand.
-  let total = picked[2].reduce((s,q)=>s+q.marks,0), guard = 0;
+  // Section II is 39 marks over 16 items officially. Swap within a strand until it lands.
+  let total = picked[2].reduce((s,q) => s + q.marks, 0), guard = 0;
   while(total !== 39 && guard++ < 200){
     const need = 39 - total; let moved = false;
-    for(let i=0;i<picked[2].length && !moved;i++){
+    for(let i = 0; i < picked[2].length && !moved; i++){
       const cur = picked[2][i];
       for(const cand of poolFor(2, cur.strand)){
         if(picked[2].some(c => c.id === cand.id)) continue;
         const d = cand.marks - cur.marks;
-        if((need>0 && d>0) || (need<0 && d<0)){ picked[2][i] = cand; total += d; moved = true; break; }
+        if((need > 0 && d > 0) || (need < 0 && d < 0)){ picked[2][i] = cand; total += d; moved = true; break; }
       }
     }
     if(!moved) break;
   }
   const items = [...shuffle(picked[1]), ...shuffle(picked[2]), ...shuffle(picked[3])];
-  return {items, short, marks: items.reduce((s,q)=>s+q.marks,0)};
+  return {items, short, marks: items.reduce((s,q) => s + q.marks, 0)};
 }
+
+const SECTXT = {
+  1:["Section I","Twenty items, one mark each. Write the answer only."],
+  2:["Section II","Sixteen items worth two or three marks. Show your working on paper."],
+  3:["Section III","Four items worth four marks each. These carry the most credit — read them twice."]
+};
 
 function startExam(){
   const p = buildPaper();
-  exam = {items:p.items, answers:{}, left: 75*60, untimed: $("#examUntimed").checked,
+  exam = {items:p.items, answers:{}, left:75*60, untimed:$("#examUntimed").checked,
           marks:p.marks, short:p.short, done:false};
   $("#examIntro").hidden = true; $("#examResult").hidden = true; $("#examLive").hidden = false;
   renderExam();
@@ -1335,51 +1873,39 @@ function startExam(){
     examTimer = setInterval(() => {
       exam.left--;
       const c = $("#examClock");
-      if(c){ c.textContent = mmss(Math.max(0,exam.left)); c.classList.toggle("low", exam.left <= 300); }
+      if(c){ c.textContent = mmss(Math.max(0, exam.left)); c.classList.toggle("low", exam.left <= 300); }
       if(exam.left <= 0){ clearInterval(examTimer); finishExam(true); }
     }, 1000);
   } else { $("#examClock").textContent = "—"; }
 }
 
 function renderExam(){
-  const host = $("#examHost"); let html = ""; let n = 0; let sec = 0;
-  const secText = {
-    1:["Section I","Twenty items, one mark each. Write the answer only."],
-    2:["Section II","Sixteen items worth two or three marks. Show your working on paper."],
-    3:["Section III","Four items worth four marks each. These carry the most credit — read them twice."]
-  };
+  let html = "", n = 0, sec = 0;
   for(const q of exam.items){
-    if(q.sec !== sec){
-      sec = q.sec;
-      html += `<div class="secbanner"><b>${secText[sec][0]}</b> &mdash; ${secText[sec][1]}</div>`;
-    }
+    if(q.sec !== sec){ sec = q.sec; html += `<div class="secbanner"><b>${SECTXT[sec][0]}</b> &mdash; ${SECTXT[sec][1]}</div>`; }
     n++;
     html += `<div class="examq" id="eq${n}">
-      <div class="qtop" style="background:none;border:0;padding:0 0 .55rem">
-        <span class="no">${n}</span>${qMeta(q)}</div>
-      <div class="qtext">${q.q}</div>${figHTML(q)}
-      <div class="answerrow">
-        <label for="ea${n}">Answer</label>
+      <div class="qtop" style="background:none;border:0;padding:0 0 .55rem"><span class="no">${n}</span>${qMeta(q)}</div>
+      <div class="qtext">${q.q}</div>${fig(q.fig)}
+      <div class="answerrow"><label for="ea${n}">Answer</label>
         <input type="text" class="ans" id="ea${n}" data-n="${n}" autocomplete="off" spellcheck="false">
-        ${q.unit ? `<span class="muted mono">${q.unit}</span>` : ""}
-      </div></div>`;
+        ${q.unit ? `<span class="muted mono">${q.unit}</span>` : ""}</div></div>`;
   }
+  const host = $("#examHost");
   host.innerHTML = html;
-  host.addEventListener("input", e => {
+  host.oninput = e => {
     const i = e.target.closest("input.ans"); if(!i) return;
-    exam.answers[i.dataset.n] = i.value;
-    updateExamProgress();
-  });
+    exam.answers[i.dataset.n] = i.value; updateExamProgress();
+  };
   updateExamProgress();
   $("#examClock").textContent = exam.untimed ? "—" : mmss(exam.left);
 }
-
 function updateExamProgress(){
   const done = Object.values(exam.answers).filter(v => v && v.trim()).length;
   $("#examProg").textContent = `${done} / ${exam.items.length}`;
   $("#examPalette").innerHTML = exam.items.map((q,i) => {
     const k = i+1, filled = exam.answers[k] && exam.answers[k].trim();
-    return `<a href="#eq${k}" class="${filled?"done":""}" title="Question ${k}">${k}</a>`;
+    return `<a href="#eq${k}" class="${filled ? "done" : ""}" title="Question ${k}">${k}</a>`;
   }).join("");
 }
 
@@ -1390,85 +1916,112 @@ function finishExam(auto){
 
   let got = 0;
   const byStrand = {}, byProc = {}, wrong = [];
-  STRANDS.forEach(s => byStrand[s] = {got:0,max:0});
-  ["Knowing","Applying","Reasoning"].forEach(p => byProc[p] = {got:0,max:0});
+  STRANDS.forEach(s => byStrand[s] = {got:0, max:0});
+  ["Knowing","Applying","Reasoning"].forEach(p => byProc[p] = {got:0, max:0});
 
   exam.items.forEach((q,i) => {
-    const typed = exam.answers[i+1] || "";
-    const ok = isRight(q, typed);
+    const typed = exam.answers[i+1] || "", ok = isRight(q, typed);
     byStrand[q.strand].max += q.marks; byProc[q.proc].max += q.marks;
     if(ok){ got += q.marks; byStrand[q.strand].got += q.marks; byProc[q.proc].got += q.marks; }
     else wrong.push({n:i+1, q, typed});
-    if(!store.seen[q.id]) store.seen[q.id] = {first: ok};
+    const r = rec(q.id); r.att++; if(ok) r.right = true;
   });
+  store.exams.push({score:got, max:exam.marks, at:Date.now()});
   save();
 
   const pct = exam.marks ? Math.round(got/exam.marks*100) : 0;
-  const row = (label,o) => `<div style="margin-bottom:.7rem">
+  const row = (label,o) => `<div style="margin-bottom:.75rem">
       <div style="display:flex;justify-content:space-between;font-size:13.5px"><b>${label}</b>
         <span class="mono muted">${o.got} / ${o.max}</span></div>
-      <div class="bar"><i style="width:${o.max?Math.round(o.got/o.max*100):0}%"></i></div></div>`;
+      <div class="bar"><i class="${o.max&&o.got/o.max>=.7?"go":""}" style="width:${o.max?Math.round(o.got/o.max*100):0}%"></i></div></div>`;
 
-  $("#examLive").hidden = true;
-  $("#examResult").hidden = false;
+  $("#examLive").hidden = true; $("#examResult").hidden = false;
   $("#examResult").innerHTML = `
     <div class="pagehead"><p class="label">${auto ? "Time was called" : "Paper handed in"}</p>
       <h1>${got} out of ${exam.marks}</h1>
-      <p>${pct}&thinsp;% on this paper. ${wrong.length ? `Work through the ${wrong.length} you missed &mdash; that is where the marks are.` : "A clean sheet. Sit another with different questions."}</p></div>
+      <p>${pct}&thinsp;% on this paper. ${wrong.length
+        ? `Every one you missed is below with its pointer, its first step and the full working. That is where the marks are.`
+        : "A clean sheet. Sit another — the questions change every time."}</p></div>
     <div class="grid g2" style="margin-bottom:1.25rem">
-      <div class="card"><p class="label">By strand</p><div style="margin-top:.7rem">${STRANDS.map(s=>row(s,byStrand[s])).join("")}</div></div>
-      <div class="card"><p class="label">By thinking process</p><div style="margin-top:.7rem">${["Knowing","Applying","Reasoning"].map(p=>row(p,byProc[p])).join("")}</div>
-        <p class="note" style="margin-top:.4rem">The real paper is 45&thinsp;% knowing, 35&thinsp;% applying, 20&thinsp;% reasoning.</p></div>
-    </div>
-    ${exam.short.length ? `<p class="note" style="margin-bottom:1.25rem">The bank is short of items for ${exam.short.join("; ")}, so this paper is a little smaller than the official 40 items / 75 marks.</p>` : ""}
+      <div class="card gold"><p class="label">By strand</p><div style="margin-top:.7rem">${STRANDS.map(s => row(s, byStrand[s])).join("")}</div></div>
+      <div class="card teal"><p class="label">By thinking process</p><div style="margin-top:.7rem">${["Knowing","Applying","Reasoning"].map(p => row(p, byProc[p])).join("")}</div>
+        <p class="note" style="margin-top:.4rem">By item count the real paper is 45&thinsp;% knowing, 35&thinsp;% applying, 20&thinsp;% reasoning. These bars are by mark.</p></div></div>
+    ${exam.short.length ? `<p class="note" style="margin-bottom:1.25rem">The bank is short of items for ${exam.short.join("; ")}, so this paper is smaller than the official 40 items / 75 marks.</p>` : ""}
     ${wrong.length ? `<div class="card"><p class="label">What to go back over</p>
       <h2 style="margin:.2rem 0 1rem">${wrong.length} question${wrong.length>1?"s":""} to look at again</h2>
-      ${wrong.map(w => `<div style="border-top:1px solid var(--line);padding:1rem 0">
+      ${wrong.map(w => `<div style="border-top:1px solid var(--rule);padding:1.1rem 0">
         <div class="qtop" style="background:none;border:0;padding:0 0 .5rem"><span class="no">${w.n}</span>${qMeta(w.q)}</div>
-        <div class="qtext" style="font-size:15.5px">${w.q.q}</div>${figHTML(w.q)}
-        <div class="verdict no" style="margin-top:.8rem">
-          <b>${w.typed.trim() ? "You wrote &ldquo;"+esc(w.typed)+"&rdquo;" : "Left blank"}</b>
-          <div>Answer: <b class="mono">${esc(w.q.a[0])}${w.q.unit?" "+w.q.unit:""}</b></div>
-          <div class="exp">${w.q.exp}</div></div></div>`).join("")}</div>` : ""}
+        <div class="qtext" style="font-size:15.5px">${w.q.q}</div>${fig(w.q.fig)}
+        <div class="verdict no" style="margin-top:.8rem"><b>${w.typed.trim() ? "You wrote &ldquo;" + esc(w.typed) + "&rdquo;" : "Left blank"}</b></div>
+        <div class="hint"><b class="h">What is it asking?</b>${w.q.ask}</div>
+        <div class="hint"><b class="h">The first step</b>${w.q.step}${fig(w.q.hfig)}</div>
+        <div class="hint gold"><b class="h">The working</b>${w.q.exp}</div>
+        <div class="hint gold"><b class="h">The answer</b><span class="mono" style="font-size:16px;font-weight:700">${fmtAns(w.q)}${w.q.unit ? " " + w.q.unit : ""}</span></div>
+      </div>`).join("")}</div>` : ""}
     <div class="btnrow" style="margin-top:1.25rem">
-      <button class="btn warm" id="examAgain">Sit another paper</button>
-      <button class="btn ghost" data-go="practice">Practice the weak strand</button>
-    </div>
-    <p class="note" style="margin-top:1rem">This app marks the final answer only. In the real examination
-       Sections II and III award marks for correct working even when the final answer slips, so keep
-       showing every step.</p>`;
+      <button class="btn gold" id="examAgain">Sit another paper</button>
+      <button class="btn ghost" id="examToPractice">Practise the weak strand</button></div>
+    <p class="note" style="margin-top:1rem">This marks the final answer only. The real paper awards marks for
+      correct working in Sections II and III even when the last number slips &mdash; so keep showing every step.</p>`;
   $("#examAgain").addEventListener("click", () => { $("#examResult").hidden = true; $("#examIntro").hidden = false; });
-  $("#examResult").querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => show(b.dataset.go)));
+  $("#examToPractice").addEventListener("click", () => {
+    const worst = STRANDS.map(s => ({s, ...byStrand[s]}))
+      .reduce((a,b) => (a.max ? a.got/a.max : 1) <= (b.max ? b.got/b.max : 1) ? a : b);
+    pFilter = worst.s;
+    $$("#pStrand .chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.s === pFilter));
+    pTopics(); pBuild(true); show("practice");
+  });
   renderHome();
-  window.scrollTo({top:0,behavior:"instant"});
+  window.scrollTo({top:0, behavior:"instant"});
 }
 $("#examStart").addEventListener("click", startExam);
 $("#examSubmit").addEventListener("click", () => finishExam(false));
 $("#examSubmit2").addEventListener("click", () => finishExam(false));
+$("#examPrint").addEventListener("click", () => {
+  const p = buildPaper();
+  let html = "", n = 0, sec = 0;
+  for(const q of p.items){
+    if(q.sec !== sec){ sec = q.sec; html += `<div class="secbanner"><b>${SECTXT[sec][0]}</b> &mdash; ${SECTXT[sec][1]}</div>`; }
+    n++;
+    html += `<div class="examq"><div class="qtop" style="background:none;border:0;padding:0 0 .5rem">
+      <span class="no">${n}</span>${qMeta(q)}</div><div class="qtext">${q.q}</div>${fig(q.fig)}
+      <div style="border-bottom:1px solid var(--rule);margin-top:1.6rem"></div></div>`;
+  }
+  const w = window.open("", "_blank");
+  if(!w){ alert("Allow pop-ups to print a paper."); return; }
+  w.document.write(`<!DOCTYPE html><title>RRB Academy — Mathematics mock paper</title>
+    <style>${$$("style").map(s => s.textContent).join("")}</style>
+    <body style="padding:24px"><h1 style="font-family:Georgia,serif">RRB Academy &mdash; Mathematics</h1>
+    <p class="muted">40 items &middot; ${p.marks} marks &middot; 75 minutes &middot; Name: ______________________</p>
+    ${html}</body>`);
+  w.document.close(); w.focus();
+});
 
 /* ============================================================
    Writing
    ============================================================ */
 let wKind = "narrative", wSet = 0, wTimer = null, wLeft = 50*60;
-
+const PLAN = [
+  ["Read all three, choose one","Pick the one you have most to say about, not the one that sounds cleverest."],
+  ["Two minutes of notes","Beginning, middle, end. Three or four words each — no sentences yet."],
+  ["Who, where, when","A story needs a person and a place in the first two lines. A report needs its subject named at once."],
+  ["Write forty minutes","Paragraphs. A new one whenever the time, the place or the speaker changes."],
+  ["Five minutes back over it","Capitals, full stops, and one word you can make better."]
+];
 $("#wType").innerHTML = [["narrative","Narrative"],["expository","Expository"]]
-  .map(([k,l]) => `<button class="chip" data-k="${k}" aria-pressed="${k===wKind}">${l}</button>`).join("");
+  .map(([k,l]) => `<button class="chip" data-k="${k}" aria-pressed="${k === wKind}">${l}</button>`).join("");
 $("#wType").addEventListener("click", e => {
   const b = e.target.closest(".chip"); if(!b) return;
   wKind = b.dataset.k; wSet = 0;
-  $$("#wType .chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.k===wKind));
+  $$("#wType .chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.k === wKind));
   renderPrompts();
 });
-$("#wNewSet").addEventListener("click", () => {
-  wSet = (wSet + 1) % WRITING[wKind].length; renderPrompts();
-});
-
+$("#wNewSet").addEventListener("click", () => { wSet = (wSet + 1) % WRITING[wKind].length; renderPrompts(); });
 function renderPrompts(){
   const set = WRITING[wKind][wSet];
-  $("#wSetLabel").innerHTML = `${wKind==="narrative"?"Narrative":"Expository"} &middot; set ${wSet+1} of ${WRITING[wKind].length} &middot; choose one`;
+  $("#wSetLabel").innerHTML = `${wKind === "narrative" ? "Narrative" : "Expository"} &middot; set ${wSet+1} of ${WRITING[wKind].length} &middot; choose one`;
   $("#wPrompts").innerHTML = set.map((p,i) =>
-    `<div class="prompt" role="button" tabindex="0" data-i="${i}" aria-pressed="false">
-       <span class="n">${i+1}.</span>${p}</div>`).join("");
+    `<div class="prompt" role="button" tabindex="0" data-i="${i}" aria-pressed="false"><span class="n">${i+1}.</span>${p}</div>`).join("");
 }
 $("#wPrompts").addEventListener("click", e => {
   const p = e.target.closest(".prompt"); if(!p) return;
@@ -1476,30 +2029,27 @@ $("#wPrompts").addEventListener("click", e => {
   $$("#wPrompts .prompt").forEach(x => x.setAttribute("aria-pressed","false"));
   p.setAttribute("aria-pressed", on ? "false" : "true");
 });
-$("#wPrompts").addEventListener("keydown", e => {
-  if(e.key===" " || e.key==="Enter"){ e.preventDefault(); e.target.click(); }
-});
-
+$("#wPrompts").addEventListener("keydown", e => { if(e.key === " " || e.key === "Enter"){ e.preventDefault(); e.target.click(); } });
+$("#wPlan").innerHTML = PLAN.map(([t,d],i) =>
+  `<div style="display:flex;gap:.7rem;padding:.45rem 0;border-bottom:${i===PLAN.length-1?"0":"1px solid var(--rule)"}">
+     <b class="mono" style="color:var(--gold2)">${i+1}</b>
+     <span><b>${t}</b><br><span class="muted" style="font-size:13.5px">${d}</span></span></div>`).join("");
 $("#wCrit").innerHTML = CRITERIA.map(([t,d],i) =>
   `<label class="crit"><input type="checkbox" data-c="${i}">
      <span><b>${t}</b><br><span class="muted" style="font-size:13.5px">${d}</span></span></label>`).join("");
-
 function countWords(){
   const v = $("#wEssay").value.trim();
   $("#wWords").textContent = v ? v.split(/\s+/).length : 0;
 }
 $("#wEssay").value = store.essay || "";
-$("#wEssay").addEventListener("input", () => {
-  store.essay = $("#wEssay").value; save(); countWords();
-});
+$("#wEssay").addEventListener("input", () => { store.essay = $("#wEssay").value; save(); countWords(); });
 countWords();
-
 $("#wStart").addEventListener("click", () => {
   if(wTimer){ clearInterval(wTimer); wTimer = null; $("#wStart").textContent = "Start"; return; }
   $("#wStart").textContent = "Pause";
   wTimer = setInterval(() => {
     wLeft--;
-    $("#wClock").textContent = mmss(Math.max(0,wLeft));
+    $("#wClock").textContent = mmss(Math.max(0, wLeft));
     if(wLeft <= 0){ clearInterval(wTimer); wTimer = null; $("#wStart").textContent = "Start";
       alert("Fifty minutes. Pencils down — read it back."); }
   }, 1000);
@@ -1520,25 +2070,23 @@ renderPrompts();
 const PFILTERS = [["all","All"],["math","Mathematics"],["ela","English Language Arts"],
                   ["wri","Writing"],["spec","Specimen"],["fw","Frameworks"]];
 let pfk = "all";
-$("#paperFilter").innerHTML = PFILTERS
-  .map(([k,l]) => `<button class="chip" data-k="${k}" aria-pressed="${k===pfk}">${l}</button>`).join("");
+$("#paperFilter").innerHTML = PFILTERS.map(([k,l]) =>
+  `<button class="chip" data-k="${k}" aria-pressed="${k === pfk}">${l}</button>`).join("");
 $("#paperFilter").addEventListener("click", e => {
   const b = e.target.closest(".chip"); if(!b) return;
   pfk = b.dataset.k;
-  $$("#paperFilter .chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.k===pfk));
+  $$("#paperFilter .chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.k === pfk));
   renderPapers();
 });
 function renderPapers(){
-  const rows = PAPERS.filter(p => pfk==="all" || p.k===pfk);
+  const rows = PAPERS.filter(p => pfk === "all" || p.k === pfk);
   if(!rows.length){ $("#paperList").innerHTML = `<p class="muted">Nothing under that filter.</p>`; return; }
   const years = Array.from(new Set(rows.map(r => r.y))).sort().reverse();
   $("#paperList").innerHTML = years.map(y => `
-    <p class="label" style="margin:${y===years[0]?"0":"1.4rem"} 0 .3rem">${y}</p>
-    ${rows.filter(r => r.y===y).map(r => `<div class="paper">
-        <div class="yr">${r.y}</div>
-        <div class="nm"><b>${r.t}</b><small>${r.s}</small></div>
-        <a class="dl" href="${r.u}" target="_blank" rel="noopener">PDF &nearr;</a>
-      </div>`).join("")}`).join("");
+    <p class="label" style="margin:${y === years[0] ? "0" : "1.4rem"} 0 .3rem">${y}</p>
+    ${rows.filter(r => r.y === y).map(r => `<div class="paper">
+        <div class="yr">${r.y}</div><div class="nm"><b>${r.t}</b><small>${r.s}</small></div>
+        <a class="dl" href="${r.u}" target="_blank" rel="noopener">PDF &nearr;</a></div>`).join("")}`).join("");
 }
 renderPapers();
 
@@ -1546,19 +2094,17 @@ renderPapers();
    Syllabus
    ============================================================ */
 function renderSyllabus(){
-  const block = (data, heading) => `
-    <div class="card"><p class="label">${heading}</p></div>` +
+  const block = (data, heading) =>
+    `<div class="card teal"><p class="label">${heading}</p></div>` +
     data.map(([title, items], gi) => `
-      <details class="strand"${gi===0?" open":""}>
-        <summary>${title}</summary>
-        <ul>${items.map((it,ii) => {
-          const key = heading[0]+gi+"-"+ii;
+      <details class="strand"${gi === 0 ? " open" : ""}><summary>${title}</summary>
+        <ul>${items.map((it, ii) => {
+          const key = heading[0] + gi + "-" + ii;
           return `<li><label style="display:flex;gap:.55rem;align-items:flex-start;cursor:pointer">
-            <input type="checkbox" data-syl="${key}" ${store.syl[key]?"checked":""}
-                   style="margin-top:.3rem;width:16px;height:16px;accent-color:var(--brand2);flex:none">
+            <input type="checkbox" data-syl="${key}" ${store.syl[key] ? "checked" : ""}
+              style="margin-top:.3rem;width:16px;height:16px;accent-color:var(--teal);flex:none">
             <span>${it}</span></label></li>`;
-        }).join("")}</ul>
-      </details>`).join("");
+        }).join("")}</ul></details>`).join("");
   $("#sylMath").innerHTML = block(SYL_MATH, "Mathematics — 40 items, 75 marks, 75 minutes");
   $("#sylEla").innerHTML  = block(SYL_ELA,  "English Language Arts — 36 items, 64 marks, 75 minutes");
 }
@@ -1569,10 +2115,45 @@ document.addEventListener("change", e => {
 renderSyllabus();
 
 /* ============================================================
+   Answer key — parents and teachers only
+   ============================================================ */
+let kFilter = "All";
+$("#kStrand").innerHTML = ["All", ...STRANDS]
+  .map(s => `<button class="chip" data-s="${s}" aria-pressed="${s === "All"}">${s}</button>`).join("");
+$("#kStrand").addEventListener("click", e => {
+  const b = e.target.closest(".chip"); if(!b) return;
+  kFilter = b.dataset.s;
+  $$("#kStrand .chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.s === kFilter));
+  renderKey();
+});
+function renderKey(){
+  if(!role || !CAN[role].views.includes("key")) return;
+  const rows = QUESTIONS.filter(q => kFilter === "All" || q.strand === kFilter);
+  $("#kHost").innerHTML = `<div class="card">${rows.map((q,i) => `
+    <div style="border-top:${i ? "1px solid var(--rule)" : "0"};padding:1.15rem 0">
+      <div class="qtop" style="background:none;border:0;padding:0 0 .5rem">
+        <span class="no">${q.id}</span>${qMeta(q)}
+        <span class="tag">Section ${q.sec}</span></div>
+      <div class="qtext" style="font-size:15.5px">${q.q}</div>${fig(q.fig)}
+      <div class="hint"><b class="h">Pointer — ask them this first</b>${q.ask}</div>
+      <div class="hint"><b class="h">The first step</b>${q.step}${fig(q.hfig)}</div>
+      <div class="hint gold"><b class="h">Working</b>${q.exp}</div>
+      <div class="hint gold"><b class="h">Answer</b><span class="mono" style="font-size:16px;font-weight:700">${fmtAns(q)}${q.unit ? " " + q.unit : ""}</span>
+        ${q.a.length > 1 ? `<br><span class="muted" style="font-size:12.5px">also accepted: ${q.a.slice(1).map(esc).join(" · ")}</span>` : ""}</div>
+    </div>`).join("")}</div>`;
+}
+$("#kPrint").addEventListener("click", () => window.print());
+
+/* ============================================================
    Boot
    ============================================================ */
-const startView = location.hash.slice(1);
-show(["home","practice","exam","writing","papers","syllabus"].includes(startView) ? startView : "home");
+const resumed = sessionStorage.getItem(SKEY);
+if(resumed && ROLES[resumed]) enter(resumed);
+else {
+  const want = location.hash.slice(1);
+  $("#gateCode").focus();
+  if(want) history.replaceState(null,"","#");
+}
 window.addEventListener("beforeunload", e => {
   if(exam && !exam.done){ e.preventDefault(); e.returnValue = ""; }
 });

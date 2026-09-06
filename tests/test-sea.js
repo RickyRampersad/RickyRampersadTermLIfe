@@ -21,15 +21,20 @@ const html = fs.readFileSync(FILE, 'utf8');
 // The page is one file, so the data lives inside its <script>. Take everything
 // up to the first DOM-touching line and run that much.
 const script = html.slice(html.indexOf('<script>') + 8, html.lastIndexOf('</script>'));
-const cut = script.indexOf('/* ============================================================\n   Small helpers');
+const cut = script.indexOf('/* ============================================================\n   Storage —');
 if (cut < 0) { console.error('  FAIL could not find the data/behaviour boundary in sea/index.html'); process.exit(1); }
+// isRight lives below the boundary now, so bring a copy of the marker up with the data.
+const markerStart = script.indexOf('function norm(s){');
+const markerEnd   = script.indexOf('/* ============================================================\n   Helpers');
+if (markerStart < 0 || markerEnd < 0) { console.error('  FAIL could not find the marker in sea/index.html'); process.exit(1); }
 
 const sandbox = { localStorage: { getItem: () => null, setItem: () => {} } };
 vm.createContext(sandbox);
 // The file is in strict mode, so its top-level const bindings never reach the
 // sandbox global on their own — hand them over explicitly.
-vm.runInContext(script.slice(0, cut) + '\nglobalThis.__bank = { QUESTIONS, PAPERS, isRight };', sandbox);
-const { QUESTIONS, PAPERS, isRight } = sandbox.__bank;
+vm.runInContext(script.slice(0, cut) + script.slice(markerStart, markerEnd) +
+  '\nglobalThis.__bank = { QUESTIONS, PAPERS, HINTS, ROLES, SVG, isRight };', sandbox);
+const { QUESTIONS, PAPERS, HINTS, ROLES, SVG, isRight } = sandbox.__bank;
 
 let fails = 0;
 const ok = (what, cond, extra) => {
@@ -156,6 +161,60 @@ for (const [id, typed, want] of CASES) {
   if (isRight(q, typed) !== want) misjudged.push(`${id} "${typed}" judged ${!want}`);
 }
 ok(`${CASES.length} marking cases judged correctly`, misjudged.length === 0, misjudged.join('; '));
+
+// ---- the hint ladder ---------------------------------------------------------
+// The whole premise is that a practice test helps before it tells. A question
+// with no ladder hands the answer straight over, which is the thing this app
+// exists not to do.
+const noLadder = QUESTIONS.filter(q => !q.ask || !q.step).map(q => q.id);
+ok('every question has a pointer and a first step before its working', noLadder.length === 0,
+   'missing: ' + noLadder.join(', '));
+const orphanHint = Object.keys(HINTS).filter(id => !QUESTIONS.some(q => q.id === id));
+ok('no hint is written for a question that is not in the bank', orphanHint.length === 0, orphanHint.join(', '));
+
+// A hint that contains the answer is not a hint. This is the check that keeps
+// the ladder honest as questions get edited.
+const leaks = [];
+for (const q of QUESTIONS) {
+  const answer = String(q.a[0]).trim();
+  if (!/^[0-9][0-9.]*$/.test(answer)) continue;      // numeric answers only
+  const pattern = new RegExp('(^|[^0-9.])' + answer.replace('.', '[.\u00b7]') + '([^0-9.]|$)');
+  for (const rung of ['ask', 'step']) {
+    const text = String(q[rung] || '').replace(/&#8201;|&nbsp;/g, ' ');
+    if (pattern.test(text)) leaks.push(`${q.id}.${rung} contains its own answer ${answer}`);
+  }
+}
+ok('no pointer or first step gives the answer away', leaks.length === 0, leaks.join('; '));
+
+// ---- figures -----------------------------------------------------------------
+const badFig = [];
+for (const q of QUESTIONS) {
+  if (q.fig  && !(q.fig  in SVG)) badFig.push(`${q.id} fig ${q.fig}`);
+  if (q.hfig && !(q.hfig in SVG)) badFig.push(`${q.id} hfig ${q.hfig}`);
+}
+ok('every figure a question names actually exists', badFig.length === 0, badFig.join('; '));
+const usedFigs = new Set(QUESTIONS.flatMap(q => [q.fig, q.hfig]).filter(Boolean));
+ok(`${usedFigs.size} of ${Object.keys(SVG).length} figures are in use`,
+   usedFigs.size === Object.keys(SVG).length,
+   'unused: ' + Object.keys(SVG).filter(k => !usedFigs.has(k)).join(', '));
+
+// ---- roles -------------------------------------------------------------------
+const roleNames = Object.keys(ROLES);
+ok('three roles are defined', roleNames.length === 3 &&
+   ['student','parent','teacher'].every(r => roleNames.includes(r)), roleNames.join(', '));
+const codes = roleNames.map(r => ROLES[r].code);
+ok('each role has its own distinct code', new Set(codes).size === 3 && codes.every(c => c && c.length >= 6));
+
+// ---- the branch mark ---------------------------------------------------------
+// CLAUDE.md: every screen uses logo-mark.png. Twice a screen has shipped with an
+// invented monogram beside three screens carrying the real mark.
+const page = html;
+const markRefs = (page.match(/logo-mark\.png/g) || []).length;
+ok(`the branch mark is used on the gate, the header and the footer (${markRefs} references)`, markRefs >= 3);
+ok('no substitute mark is drawn in place of it',
+   !/<text[^>]*>\s*RR\s*</.test(page) && !/<text[^>]*>\s*RD\s*</.test(page));
+ok('the mark is styled the way CLAUDE.md sets out',
+   /\.mark\{[^}]*border-radius:13px/.test(page) && /\.mark img\{[^}]*width:100%/.test(page));
 
 // ---- the past-paper links ---------------------------------------------------
 // These are somebody else's files. If one is ever re-hosted here instead of

@@ -8,9 +8,15 @@
 // The generator shuffles and swaps to hit those numbers, so it is checked here
 // on real papers rather than on the blueprint it was written from.
 //
-// The rest is the promise the page makes to a child working alone: a paper
+// The rest is the promise the page makes. To a child working alone: a paper
 // answered correctly scores full marks, a blank one scores nothing and hands
 // back every worked explanation, and nothing typed is lost on reload.
+//
+// And the promise made to whoever is paying for it — that a student is helped
+// before they are told. The answer rung must be shut until the child has
+// actually tried, and must open the moment they do, right or wrong. A parent
+// or a teacher signing in sees everything at once. If the student gate ever
+// springs open on its own, the app is an answer key with a clock on it.
 //
 // Run: node tests/e2e-sea.js   (needs playwright + a chromium on disk)
 const { chromium } = require('playwright');
@@ -49,11 +55,33 @@ const ok = (what, cond, extra) => {
   const URL = `http://localhost:${PORT}/sea/`;
   await page.goto(URL, { waitUntil: 'networkidle' });
 
+  // ---- the gate ------------------------------------------------------------
+  ok('the app is behind the gate until somebody signs in', await page.isHidden('#app'));
+  await page.fill('#gateCode', 'NOPE');
+  await page.click('#gateGo');
+  ok('a wrong code is refused', (await page.textContent('#gateErr')).length > 0 && await page.isHidden('#app'));
+  const signIn = async (roleName, code) => {
+    await page.evaluate(() => { sessionStorage.clear(); });
+    await page.goto(URL, { waitUntil: 'networkidle' });
+    await page.click(`#roles .role[data-role="${roleName}"]`);
+    await page.fill('#gateCode', code);
+    await page.click('#gateGo');
+    await page.waitForSelector('#app:not([hidden])');
+  };
+  await signIn('student', 'RRB2027');
+  ok('the student code opens the app', await page.isVisible('#app') &&
+     (await page.textContent('#rolePill')) === 'Student');
+
   // ---- every section opens -------------------------------------------------
   for (const v of ['practice', 'exam', 'writing', 'papers', 'syllabus', 'home']) {
     await page.click(`#nav button[data-view="${v}"]`);
     ok(`the ${v} section opens`, await page.isVisible(`#v-${v}`));
   }
+  ok('a student is not offered the answer key',
+     (await page.$('#nav button[data-view="key"]')) === null);
+  await page.goto(URL + '#key', { waitUntil: 'networkidle' });
+  ok('a student typing the answer key straight into the address bar lands on Home',
+     await page.isVisible('#v-home') && await page.isHidden('#v-key'));
 
   // ---- the mock paper keeps the Ministry's shape, three papers running ------
   page.on('dialog', d => d.accept());
@@ -108,22 +136,46 @@ const ok = (what, cond, extra) => {
   await page.waitForSelector('#examResult h1');
   ok('a blank paper scores 0 out of 75',
      (await page.textContent('#examResult h1')).trim() === '0 out of 75');
-  ok('every missed question comes back with its worked explanation',
-     (await page.$$eval('#examResult .verdict.no .exp', n => n.length)) === 40);
+  ok('every missed question comes back with all four rungs',
+     (await page.$$eval('#examResult .hint', n => n.length)) === 40 * 4);
 
-  // ---- practice marks, and remembers ---------------------------------------
+  // ---- the ladder: helped before told --------------------------------------
   await page.click('#nav button[data-view="practice"]');
+  const rungState = () => page.$$eval('#pRungs .rung',
+    n => n.map(b => ({ k: b.dataset.k, locked: b.disabled })));
+  let rungs = await rungState();
+  ok('the ladder offers four rungs', rungs.length === 4);
+  ok('the pointer is open from the start', !rungs.find(r => r.k === 'ask').locked);
+  ok('the answer is shut before any attempt', rungs.find(r => r.k === 'ans').locked);
+  ok('the working is shut before any attempt', rungs.find(r => r.k === 'work').locked);
+  ok('a locked ladder says what to do about it',
+     (await page.textContent('#pLocked')).length > 20);
+
+  await page.click('#pRungs .rung[data-k="ask"]');
+  ok('the pointer opens without giving a number', await page.isVisible('#pHints .hint'));
+  rungs = await rungState();
+  ok('reading the pointer unlocks the first step', !rungs.find(r => r.k === 'step').locked);
+  ok('reading the pointer does NOT unlock the answer', rungs.find(r => r.k === 'ans').locked);
+
   await page.fill('#pAns', 'definitely not the answer');
   await page.click('#pCheck');
-  ok('a wrong answer in practice is marked wrong', await page.isVisible('#pVerdict .verdict.no'));
-  await page.click('#pShow');
-  ok('“Show me” gives the answer and the working',
-     /Answer:/.test(await page.textContent('#pVerdict')) &&
-     (await page.$('#pVerdict .exp')) !== null);
+  ok('a wrong answer is marked wrong', await page.isVisible('#pVerdict .verdict.no'));
+  rungs = await rungState();
+  ok('a real attempt — even a wrong one — opens the working and the answer',
+     !rungs.find(r => r.k === 'work').locked && !rungs.find(r => r.k === 'ans').locked);
+  await page.click('#pRungs .rung[data-k="ans"]');
+  ok('the answer rung then shows the answer',
+     (await page.$$eval('#pHints .hint', n => n.length)) >= 2);
+
+  // Moving on must re-lock — otherwise one attempt unlocks the whole bank.
+  await page.click('#pNext');
+  rungs = await rungState();
+  ok('the next question starts locked again', rungs.find(r => r.k === 'ans').locked);
+
   await page.click('#pStrand .chip[data-s="Geometry"]');
   ok('the strand filter narrows the set',
      /of \d+ in this set/.test(await page.textContent('#pCount')) &&
-     await page.$$eval('#pStrand .chip[aria-pressed="true"]', n => n.length) === 1);
+     (await page.$$eval('#pStrand .chip[aria-pressed="true"]', n => n.length)) === 1);
 
   // ---- the essay is not lost -----------------------------------------------
   await page.click('#nav button[data-view="writing"]');
@@ -143,6 +195,42 @@ const ok = (what, cond, extra) => {
   ok('every past paper link leaves for the Ministry',
      links.every(u => /moe\.gov\.tt|wpuploadstorageaccount\.blob\.core\.windows\.net/.test(u)),
      links.filter(u => !/moe\.gov\.tt|wpuploadstorageaccount/.test(u)).join(' '));
+
+  // ---- parent and teacher see everything at once ---------------------------
+  await signIn('parent', 'RRBPARENT');
+  ok('the parent code opens the app', (await page.textContent('#rolePill')) === 'Parent');
+  await page.click('#nav button[data-view="practice"]');
+  const parentRungs = await page.$$eval('#pRungs .rung', n => n.map(b => b.disabled));
+  ok('a parent has the whole ladder open without attempting anything',
+     parentRungs.every(d => d === false));
+  await page.click('#nav button[data-view="key"]');
+  ok('a parent gets the answer key', await page.isVisible('#v-key') &&
+     (await page.$$eval('#kHost .hint', n => n.length)) > 200);
+  ok('a parent is not given the mock exam', (await page.$('#nav button[data-view="exam"]')) === null);
+
+  await signIn('teacher', 'RRBTEACHER');
+  ok('the teacher code opens the app', (await page.textContent('#rolePill')) === 'Teacher');
+  const tViews = await page.$$eval('#nav button', n => n.map(b => b.dataset.view));
+  ok('a teacher gets every section including the key',
+     ['home','practice','exam','writing','papers','syllabus','key'].every(v => tViews.includes(v)),
+     tViews.join(','));
+  await page.click('#nav button[data-view="exam"]');
+  ok('only the teacher is offered a printable blank paper', await page.isVisible('#examPrint'));
+
+  // Every question in the key must carry all four rungs.
+  await page.click('#nav button[data-view="key"]');
+  const keyBlocks = await page.$$eval('#kHost > .card > div', n => n.length);
+  const keyHints  = await page.$$eval('#kHost .hint', n => n.length);
+  ok(`the key holds all 71 questions with four rungs each (${keyBlocks} blocks, ${keyHints} rungs)`,
+     keyBlocks === 71 && keyHints === 71 * 4);
+
+  // ---- the branch mark, on screen ------------------------------------------
+  const marks = await page.$$eval('.mark img', n => n.map(i => ({ src: i.getAttribute('src'), w: i.naturalWidth })));
+  ok(`the branch mark file loads everywhere it is used (${marks.length} places)`,
+     marks.length >= 2 && marks.every(m => /logo-mark\.png$/.test(m.src) && m.w > 0),
+     JSON.stringify(marks));
+
+  await signIn('student', 'RRB2027');
 
   // ---- a phone has to be able to use it ------------------------------------
   await page.setViewportSize({ width: 390, height: 844 });
