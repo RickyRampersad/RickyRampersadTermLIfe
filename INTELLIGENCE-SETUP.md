@@ -895,22 +895,53 @@ Every one of them starts with the same word on purpose. The hero carries the
 same point in three: **nothing beats a call — the letter is sent, the review is
 not.**
 
-#### Round numbers get their own panel
+#### Today's pointer
+
+One line, chosen every morning from the people actually on the screen. It tests,
+in order of how much it should change what somebody does: a whole band missing
+the same cover, then one agent holding a third or more of the morning, then how
+many have gone quiet, then how many hold a single policy, then the median
+tenure. **If nothing clears its threshold it says nothing at all** — a wall that
+prints the same advice daily stops being read by the end of the first week, and
+an invented insight on a quiet day costs more than a blank space.
+
+Every branch of it is a fact about the cohort. None of them is a claim about a
+product, and none is a claim about a person.
+
+#### Who is calling today
+
+The branch's own question in one panel: today is the sixth, these are the agents
+whose clients are having it, how many of theirs carry a gap, and how many have
+gone quiet. The round-number birthdays moved up to the top of the wall and now
+carry the agent's name on the chip itself — a milestone nobody is told about is
+just another Tuesday.
+
+#### Round numbers get their own chip
 
 Milestone birthdays — 21, 25, 30, 40, 50, 60, 65, 70, 75, 80 — with the agent
-whose client it is beside each one. A round number is the birthday somebody
-remembers being called on, and a milestone nobody is told about is just another
-Tuesday.
+whose client it is on the chip. A round number is the birthday somebody
+remembers being called on.
 
-#### Seven years of birthday letters, and what they did not do
+#### It is a phone as well as a wall
+
+Below 1200px the grid unwinds to two columns and the page is allowed to scroll;
+below 760 it is one column, the seven-year card stacks, and the day strip thins
+its labels to every fifth day. **Every media query lives at the end of the
+stylesheet**, which is not tidiness: they used to sit in the middle, above rules
+of the same specificity, so `.years .yside{width:340px}` two hundred lines below
+beat `width:auto` inside the phone query and the wall silently kept its desktop
+widths on a 390px screen. Media queries add no specificity; only source order
+decides.
+
+#### Seven years of birthday emails, and what they did not do
 
 The branch has wished these clients a happy birthday automatically for the
 better part of a decade. That is the argument for the wall and it leads it: the
 relationship is already built and already paid for, and what the letter has
 never done is ask a question.
 
-**About 10,010 letters a year**, which is the number of branch clients with a
-birth date on file — one client, one letter, every year. Stated as the annual
+**About 10,010 emails a year**, which is the number of branch clients with a
+birth date on file — one client, one email, every year. Stated as the annual
 rate rather than a seven year total, because not every client has been on the
 book for all seven and a total is a number the branch could not defend if
 anybody asked. The hero counts today's: **twenty eight went out this morning,

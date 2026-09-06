@@ -83,10 +83,20 @@
        size the grid stretches whichever one is auto, and eighty eight spare
        pixels were being spent on white space above the wall instead of on the
        five cards that carry it. */
-    grid-template-rows:auto minmax(370px,1fr) minmax(0,262px);
+    /* THE BUDGET IS 968px AND IT IS NOT NEGOTIABLE: 1080 less the 66px header,
+       the 20px bottom padding and the two 13px gaps. Measured needs are 292 for
+       the hero once its paragraph is one sentence, 376 for the band cards — the
+       tallest wants 299 inside 76 of card chrome — and 300 for the bottom row
+       with four rows in the calling panel. Fixed rows rather than 1fr, so
+       nothing silently borrows height from a neighbour and clips it. */
+    grid-template-rows:294px 378px 296px;align-content:start;
     gap:13px;padding:0 26px 20px;height:calc(100vh - 66px)}
+  /* min-width:0 as well as min-height:0. A grid item's default minimum is its
+     content in BOTH axes, and the day strip is thirty one columns wide — left
+     to itself it set a floor of 630px on a 390px phone and pushed every card
+     off the side of the screen. */
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
-    padding:16px 18px;min-height:0;display:flex;flex-direction:column}
+    padding:16px 18px;min-height:0;min-width:0;display:flex;flex-direction:column}
   .card h3{margin:0 0 2px;font:700 12px var(--font-b);letter-spacing:.16em;
     text-transform:uppercase;color:var(--teal)}
   .card .cap{font-size:11.5px;color:var(--faint);margin:0 0 9px;line-height:1.4}
@@ -146,6 +156,22 @@
   /* "1,188" and its share on ONE line. Wrapped, the suffix took every row in
      this panel from 33px to 50 and the card overflowed by exactly that. */
   #rGapAge .row{grid-template-columns:1fr 96px}
+  /* The leaderboard sits in the narrowest column on the wall and its labels are
+     the longest — a name, a unit and two counts. Left as 1fr the label's own
+     content set the floor and pushed the number off the card. */
+  #rMonth .row{grid-template-columns:minmax(0,1fr) 58px}
+  #rMonth .lbl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #rMonth .lbl em{display:block;font-size:10px;line-height:1.3;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #rMonth .val{font-size:18px}
+  /* The label already wraps to two lines; a block suffix here makes the row
+     three deep and four of them no longer fit the bottom row's 296px. */
+  #rMonth .val small{margin-left:3px}
+  /* Two-line labels make a 48px row and four of those need 207 in 181. The
+     row's own padding and the bar's margin are the only slack there is. */
+  #rMonth .row{padding:1px 5px}
+  #rMonth .track{margin-top:2px;height:5px}
+  #rMonth{gap:3px}
   #rTen .row,#rAge .row,#rLast .row{grid-template-columns:1fr 86px}
   /* Seven kinds of cover against six tenure bands, in a box sized for six:
      measured at 261px of rows in 240px of panel. The two smallest rows are the
@@ -200,19 +226,6 @@
   footer b{color:var(--dim);font-weight:600}
   .hint{position:fixed;right:26px;bottom:5px;font-size:10.5px;color:var(--faint);opacity:.7}
 
-  @media (min-width:1700px){
-    main{grid-template-columns:340px 1fr 1fr 1fr 1fr;gap:16px;padding:0 34px 24px}
-    .hero .big{font-size:118px} .card{padding:20px 24px}
-    .row .lbl{font-size:15px} .row .val{font-size:19px} .arow{font-size:15px}
-    .law .n{font-size:72px} .law .txt{font-size:17px} .sgrid .v{font-size:38px}
-    header{padding:18px 34px 12px} main{height:calc(100vh - 74px)}
-  }
-  @media (max-width:1200px){
-    body{overflow:auto} main{grid-template-columns:1fr 1fr;height:auto}
-    .hero{grid-row:auto} .law{grid-column:1/3;flex-wrap:wrap}
-    .agents,.hist{grid-column:1/3} .alist{grid-auto-flow:row;grid-template-rows:none}
-    .three{grid-template-columns:1fr}
-  }
   /* Four columns here, not three: this wall's agent row carries a birthday
      count, a gap count and a quiet count, and unlabelled numbers in a row are
      a guessing game — so the panel gets a header line naming them. */
@@ -239,7 +252,7 @@
      how long they have been ours — then where and whose, then the one thing to
      say. Nothing else fits and nothing else is needed. */
   /* THE SEVEN YEARS. Not decoration — it is the argument for the whole wall,
-     and the branch made it: the letter has gone out automatically since before
+     and the branch made it: the email has gone out automatically since before
      most of these agents were on the book, so the relationship is already there
      and already paid for. The wall's job is to convert it. */
   .years{flex-direction:row;align-items:flex-start;gap:24px;
@@ -257,12 +270,29 @@
   .years .ystrip{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.12);
     display:flex;align-items:center;gap:22px;flex-wrap:wrap}
   .years .miles{display:flex;flex-wrap:wrap;gap:6px}
-  .years .mile{font:700 11px var(--font-b);color:var(--gold);
+  /* The chip names the agent. A round-number birthday nobody is told about is
+     just another Tuesday, and the branch asked for the names on the big ones. */
+  .years .mile{display:inline-flex;align-items:baseline;gap:8px;
     border:1px solid rgba(239,194,75,.4);background:rgba(239,194,75,.10);
-    border-radius:999px;padding:3px 10px}
+    border-radius:999px;padding:4px 13px}
+  .years .mile i{font-style:normal;font:800 11.5px var(--font-b);color:var(--gold)}
+  .years .mile b{font:600 10.5px var(--font-b);color:var(--dim)}
   .years .where{font-size:11.5px;color:var(--faint);line-height:1.5}
   .years .where b{color:var(--dim);font-weight:600}
-  .years .yfind{flex:none;max-width:330px;font-size:11.5px;color:var(--faint);
+  .years .yside{flex:none;width:340px;display:flex;flex-direction:column;gap:12px}
+  /* THE POINTER. One line, chosen every morning from the people actually on the
+     screen — a wall that prints the same advice daily stops being read by the
+     end of the first week, and an invented insight on a quiet day costs more
+     than a blank space, so it says nothing when nothing clears the bar. */
+  .years .tip{border-radius:11px;padding:11px 13px;
+    background:linear-gradient(120deg,rgba(239,194,75,.17),rgba(239,194,75,.04));
+    border:1px solid rgba(239,194,75,.34)}
+  .years .tip .tk{font:800 10px var(--font-b);letter-spacing:.2em;text-transform:uppercase;
+    color:var(--gold);margin-bottom:5px}
+  .years .tip .tt{font-size:12.5px;color:var(--ink);line-height:1.45}
+  .years .tip .tt b{font-family:var(--font-d);font-weight:800}
+  .years .tip:empty{display:none}
+  .years .yfind{flex:none;max-width:340px;font-size:11.5px;color:var(--faint);
     border-left:2px solid rgba(0,207,234,.4);padding-left:13px;line-height:1.5}
   .years .yfind b{color:var(--dim);font-weight:600}
 
@@ -272,9 +302,9 @@
      today is and what is left before the month runs out. Thirty one columns
      rather than twelve, spent days dimmed, today lit — so the runway is the
      bright part of the picture and the part already gone is visibly gone. */
-  .mrows{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:3px;align-items:end;
+  .mrows{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:3px;align-items:end;
     flex:1;min-height:0;padding-top:4px}
-  .mcol{display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:5px}
+  .mcol{display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:5px;min-width:0}
   .mcol .bar{background:linear-gradient(180deg,rgba(55,177,236,.85),rgba(11,127,212,.6));
     border-radius:3px 3px 1px 1px;min-height:2px}
   .mcol.past .bar{background:rgba(255,255,255,.09)}
@@ -326,7 +356,7 @@
      AND neither scrollHeight nor a sum of the children could see it, because
      an auto margin absorbs the overflow into itself. Content that simply flows
      is content a check can measure. */
-  .band .talk{font-size:12px;color:var(--ink);line-height:1.45;
+  .band .talk{font-size:12px;color:var(--ink);line-height:1.38;
     border-left:2px solid rgba(0,207,234,.55);padding-left:10px}
   /* One line, clipped with an ellipsis, and the overflow counted rather than
      wrapped — a second line here is drawn below the bottom of the card. */
@@ -411,7 +441,7 @@
     font-size:11px;color:var(--dim);letter-spacing:0;margin-top:2px}
 
   /* round-number birthdays, with whose they are */
-  .mrow{display:flex;align-items:baseline;gap:11px;padding:7px 0;
+  .mrow{display:flex;align-items:baseline;gap:11px;padding:5px 0;
     border-bottom:1px solid rgba(255,255,255,.07)}
   .mrow:last-child{border-bottom:0}
   .mrow .age{font-family:var(--font-d);font-weight:800;font-size:26px;line-height:1;
@@ -420,17 +450,81 @@
   .mrow .mt .t{font:700 11.5px var(--font-b);color:var(--ink);letter-spacing:.02em}
   .mrow .mt .a{font-size:10.5px;color:var(--faint);margin-top:2px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mrow .mt .a em{font-style:normal;color:var(--gold);font-weight:700}
+  .mrow .mt .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .miles .none{font-size:12px;color:var(--faint);line-height:1.55}
 
   /* the instruction, which is the point of the band */
   .band .act{font-family:var(--font-d);font-weight:800;font-size:12.5px;color:var(--teal);
-    line-height:1.35;margin-top:9px;padding-top:9px;
+    line-height:1.32;margin-top:7px;padding-top:7px;
     border-top:1px solid rgba(0,207,234,.24)}
 
   .hero .who{margin-top:9px;padding-top:9px;border-top:1px solid var(--line);
     font-size:11px;color:var(--faint);line-height:1.45}
   .hero .who b{color:var(--dim);font-weight:600}
 
+
+  /* ══════════════════════════════════════════════════════════════════════
+     EVERY MEDIA QUERY LIVES HERE, AT THE END, AND THAT IS NOT A TIDINESS
+     PREFERENCE. These blocks used to sit in the middle of the stylesheet, above
+     rules of the same specificity — so `.years .yside{width:340px}` two hundred
+     lines further down beat `.years .yside{width:auto}` inside the phone query,
+     and the wall quietly kept its desktop widths on a 390px screen while every
+     other mobile rule appeared to work. Media queries add no specificity. Only
+     source order decides, so they go last.
+     ══════════════════════════════════════════════════════════════════════ */
+  @media (min-width:1700px){
+    main{grid-template-columns:340px 1fr 1fr 1fr 1fr;gap:16px;padding:0 34px 24px}
+    .hero .big{font-size:118px} .card{padding:20px 24px}
+    .row .lbl{font-size:15px} .row .val{font-size:19px} .arow{font-size:15px}
+    .law .n{font-size:72px} .law .txt{font-size:17px} .sgrid .v{font-size:38px}
+    header{padding:18px 34px 12px} main{height:calc(100vh - 74px)}
+  }
+  /* ══════════════════════════════════════════════════════════════════════
+     THE WALL IS ALSO A PHONE
+     ══════════════════════════════════════════════════════════════════════
+     Five columns and three fixed rows are right for a screen on a wall and
+     wrong for everything else. Below 1200 the grid unwinds and the page is
+     allowed to scroll — a fixed 968px of rows on a laptop crushes every card;
+     on a handset it is unreadable. The fixed heights are released together with
+     the columns, because they only ever made sense as a pair. */
+  @media (max-width:1200px){
+    body{overflow:auto}
+    main{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:none;height:auto;
+      align-content:start;padding-bottom:36px}
+    .hero{grid-column:1/3}
+    .years{grid-column:1/3;grid-row:auto}
+    .years .yside{width:auto;flex:1 1 300px}
+    .today{grid-column:1/3;grid-row:auto}
+    .clist{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+    .miles,.pol,.season,.month{grid-column:auto}
+    .season{grid-column:1/3}
+  }
+  @media (max-width:760px){
+    header{padding:12px 16px 8px}
+    header h1{font-size:16px} header .sub{font-size:10.5px}
+    main{grid-template-columns:minmax(0,1fr);gap:11px;padding:0 16px 30px}
+    .hero,.years,.today,.miles,.pol,.season,.month{grid-column:1}
+    .card{padding:14px 15px}
+    .hero .big{font-size:64px}
+    /* The seven-year card is three columns on a wall and three rows here. */
+    .years{flex-direction:column;gap:14px}
+    .years .yn{font-size:46px}
+    .years .yside{width:auto}
+    .years .ystrip{flex-direction:column;align-items:flex-start;gap:10px}
+    .clist{grid-template-columns:minmax(0,1fr);gap:11px}
+    /* Thirty one columns on a 390px screen is 11px a bar. The bars survive
+       that; the day numbers do not, so they thin out to every fifth and the
+       weekday letters go entirely. */
+    .mrows{gap:2px;min-height:150px}
+    .mcol .ml{font-size:0}
+    .mcol.now .ml,.mcol.fifth .ml{font-size:8.5px}
+    .mcol .dw{display:none}
+    .mcol .mv{font-size:0}
+    .mcol.now .mv{font-size:12px}
+    footer,.hint{position:static;display:block;padding:10px 16px 0;font-size:10px}
+    .hint{display:none}
+  }
 </style>
 </head>
 <body>
@@ -450,27 +544,30 @@
 
 <main>
   <section class="card hero">
-    <h3 id="heroKick">Letters sent this morning</h3>
+    <h3 id="heroKick">Emails sent this morning</h3>
     <div class="big" id="heroN">&mdash;</div>
     <div class="cap2" id="heroCap"></div>
-    <div class="callout">Nothing beats a call.<span>The letter is sent. The review is not.</span></div>
+    <div class="callout">Nothing beats a call.<span>The email is sent. The review is not.</span></div>
   </section>
 
   <section class="card years">
     <div class="yn">7</div>
     <div class="ytxt">
-      <div class="hd">years of birthday letters have already gone out</div>
+      <div class="hd">years of birthday emails have already gone out</div>
       <p>The branch has wished these clients a happy birthday every year, automatically,
         for the better part of a decade. <b>Nobody had to be reminded and nobody had to
         write it.</b> The relationship is built and it is paid for.</p>
-      <p class="last">What the letter has never done is ask a question.
+      <p class="last">What the email has never done is ask a question.
         <b>That part is yours, today.</b></p>
       <div class="ystrip">
         <div class="miles" id="bMiles"></div>
         <div class="where" id="heroWhere"></div>
       </div>
     </div>
-    <div class="yfind" id="yFind"></div>
+    <div class="yside">
+      <div class="tip" id="yTip"></div>
+      <div class="yfind" id="yFind"></div>
+    </div>
   </section>
 
   <section class="card today"><h3 id="tHead">Today, by where they are in life</h3>
@@ -478,8 +575,8 @@
       what that band is short of, and the conversation it is owed.</p>
     <div class="clist" id="cList"></div></section>
 
-  <section class="card miles"><h3>Round numbers today</h3>
-    <p class="cap">Special occasions. The birthdays worth a call rather than a letter.</p>
+  <section class="card miles"><h3>Who is calling today</h3>
+    <p class="cap" id="wCap"></p>
     <div id="mList"></div></section>
 
   <section class="card pol"><h3>How many policies they already hold</h3>
@@ -625,7 +722,7 @@ function paint(){
   $("#chip").className = FILTER?"on":"";
   if(FILTER) $("#chipTxt").textContent=FILTER.key;
 
-  $("#heroKick").textContent="Letters sent this morning";
+  $("#heroKick").textContent="Emails sent this morning";
   $("#heroN").style.cssText="";
   $("#heroN").textContent=n(T.n);
   /* Computed before it is read. It was declared below this line and var hoists,
@@ -633,22 +730,27 @@ function paint(){
      between them — which is the kind of wrong a wall states with a straight
      face. */
   var polN=(T.bands||[]).reduce(function(a,b){ return a+(b.policies||0); },0);
-  $("#heroCap").innerHTML='went out from the branch this morning, <b>in your name</b>. '
-    + '<b>'+n(T.withGap)+'</b> of them carry a gap worth a call, and they hold <b>'
-    + n(polN)+'</b> policies between them. <b>'+n(T.week)+'</b> more letters go inside '
-    + 'seven days.';
+  $("#heroCap").innerHTML='birthday emails, triggered first thing this morning '
+    + '<b>in your name</b>. <b>'+n(T.withGap)+'</b> carry a gap worth a call.';
   var MI=T.milestones||[];
   $("#bMiles").innerHTML = MI.length
-    ? MI.map(function(m){ return '<span class="mile">'+esc(m.k)+' &middot; '+n(m.n)+'</span>'; }).join("")
+    ? MI.map(function(m){
+        var who=(m.agents||[]).map(function(a){ return esc(a.k)+(a.n>1?' '+n(a.n):''); }).join(', ');
+        return '<span class="mile"><i>'+esc(m.k)+'</i>'+(who?'<b>'+who+'</b>':'')+'</span>'; }).join("")
     : '';
-  $("#mList").innerHTML = MI.length ? MI.map(function(m){
-      return '<div class="mrow"><div class="age">'+n(m.age)+'</div><div class="mt">'
-        + '<div class="t">'+n(m.n)+' turning '+n(m.age)+' today</div>'
-        + '<div class="a">'+((m.agents||[]).map(function(a){
-            return esc(a.k)+(a.n>1?' '+n(a.n):''); }).join(' &middot; ')||'—')+'</div>'
+  /* WHOSE PHONE SHOULD RING. The branch's question in one panel: today is the
+     sixth, these are the people whose clients are having it, and this is how
+     many of theirs are worth more than a greeting. */
+  var TB=(T.byAgent||[]);
+  $("#wCap").innerHTML='Today is the <b>'+n((D.month||{}).day)+'</b>. Gold is how many of '
+    + 'theirs carry a gap.';
+  $("#mList").innerHTML = TB.length ? TB.slice(0,4).map(function(a){
+      return '<div class="mrow"><div class="age">'+n(a.n)+'</div><div class="mt">'
+        + '<div class="t">'+esc(a.k)+'</div>'
+        + '<div class="a">'+esc(a.unit||'')+(a.gap?' &middot; <em>'+n(a.gap)+' with a gap</em>':'')
+        + (a.quiet?' &middot; '+n(a.quiet)+' gone quiet':'')+'</div>'
         + '</div></div>'; }).join("")
-    : '<p class="none">No round numbers today. Every other birthday is still a reason '
-      + 'to pick up the phone — it is the round ones that are remembered.</p>';
+    : '<p class="none">Nobody on the branch book has a birthday today.</p>';
   var TW=(T.towns||[]).slice(0,5);
   $("#heroWhere").innerHTML = TW.length
     ? '<b>Where they are.</b> '+TW.map(function(t){ return esc(t.k)+' '+n(t.n); }).join(' &middot; ')
@@ -656,8 +758,13 @@ function paint(){
 
   /* The seven-year claim, with the measurement that qualifies it beside it. */
   var BE=D.birthdayEffect||{};
+  var TIP=T.tip;
+  $("#yTip").innerHTML = TIP
+    ? '<div class="tk">Today&rsquo;s pointer</div><div class="tt"><b>'+esc(TIP.k)+'</b> '
+      + esc(TIP.t)+'</div>'
+    : '';
   var LY=D.lettersAYear;
-  if(LY) $(".years .hd").innerHTML='years of birthday letters &mdash; about <b>'
+  if(LY) $(".years .hd").innerHTML='years of birthday emails &mdash; about <b>'
     + n(LY)+'</b> of them a year, every year';
   $("#yFind").innerHTML = BE.pct!=null
     ? '<b>And they do not buy at birthday time.</b> '+BE.pct+'% of policies were issued in '
@@ -710,8 +817,7 @@ function paint(){
 
   $("#mHead").textContent='Still ahead in '+(M.name||'this month');
   $("#monthCap").innerHTML='<b>'+n(M.ahead)+'</b> of the month&rsquo;s <b>'+n(M.n)
-    + '</b> are still to come. Sorted by what is left, not by the total &mdash; the agent '
-    + 'with forty already behind them is not the one to push today.';
+    + '</b> still to come. Sorted by what is left, not the total.';
   monthBars($("#rMonth"), (M.byAgent||[]).slice(0,4));
 }
 
@@ -721,7 +827,8 @@ function daybars(host,list){
   if(!host) return;
   var max=0; list.forEach(function(x){ if(x.n>max) max=x.n; });
   host.innerHTML=list.map(function(x){
-    return '<div class="mcol'+(x.past?' past':'')+(x.today?' now':'')+'">'
+    return '<div class="mcol'+(x.past?' past':'')+(x.today?' now':'')
+      + (x.d%5===0?' fifth':'')+'">'
       + '<div class="mv">'+(x.n||'')+'</div>'
       + '<div class="bar" style="height:'+(max?Math.max(2,x.n/max*100):2).toFixed(1)+'%"></div>'
       + '<div class="ml">'+x.d+'</div>'

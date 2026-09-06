@@ -5510,6 +5510,58 @@ function iBookMissing_(people, want) {
   return n ? { k: t[0], n: n } : null;
 }
 
+/* ── the tip ──────────────────────────────────────────────────────────────
+   ONE POINTER, CHOSEN FROM TODAY'S ACTUAL PEOPLE. A wall that prints the same
+   piece of advice every morning stops being read by the end of the first week.
+   This picks the most striking thing that is TRUE OF THE TWENTY EIGHT ON THE
+   SCREEN, tested in order of how much it should change what somebody does, and
+   says nothing at all if none of the tests clears its threshold — an invented
+   insight on a quiet day costs more than a blank line.
+
+   Every branch of this is a fact about the cohort, never a claim about a
+   product and never a claim about an individual. */
+function iBookTip_(list, bands, byAgent, quietYears) {
+  if (!list.length) return null;
+  var n = list.length;
+
+  /* A whole band missing the same cover is the strongest thing a day can say. */
+  for (var i = 0; i < bands.length; i++) {
+    var b = bands[i];
+    if (b.n >= 3 && b.missing && b.missing.n === b.n)
+      return { k: 'Every one of them',
+               t: 'All ' + b.n + ' in ' + b.k.toLowerCase() + ' are missing '
+                  + b.missing.k + '. One call, one script, ' + b.n + ' times.' };
+  }
+
+  /* One agent holding most of the morning. */
+  var top = byAgent[0];
+  if (top && top.n >= 3 && top.n / n >= 0.3)
+    return { k: top.k,
+             t: 'has ' + top.n + ' of today\u2019s ' + n + '. That is one sitting, '
+                + 'not a day of phone calls.' };
+
+  var quiet = list.filter(function (t) { return t.stale; }).length;
+  if (quiet >= Math.max(3, n * 0.3))
+    return { k: quiet + ' have gone quiet',
+             t: 'nothing new in ' + quietYears + ' years or more. The birthday is the '
+                + 'reason to ring; the review is the reason to visit.' };
+
+  var one = list.filter(function (t) { return t.policies === 1; }).length;
+  if (one >= Math.max(3, n * 0.3))
+    return { k: one + ' hold one policy',
+             t: 'and nothing else. They bought once and were never asked a second time.' };
+
+  var yrs = list.map(function (t) { return t.years; })
+                .filter(function (v) { return v != null; })
+                .sort(function (a, b) { return a - b; });
+  if (yrs.length && yrs[Math.floor(yrs.length / 2)] >= 10)
+    return { k: yrs[Math.floor(yrs.length / 2)] + ' years, median',
+             t: 'is how long today\u2019s list has been with this branch. Half of them '
+                + 'were clients before the wall existed.' };
+
+  return null;
+}
+
 function iBookBand_(years, bands) {
   for (var i = 0; i < bands.length; i++) if (years < bands[i][1]) return bands[i][0];
   return bands[bands.length - 1][0];
@@ -5807,7 +5859,7 @@ function iBuildBook_() {
   var byAgent = Object.keys(agents).map(function (k) { return agents[k]; })
     .sort(function (a, b) { return b.gap - a.gap || b.clients - a.clients; });
 
-  return {
+  var out = {
     configured: true,
     generatedAt: iIso_(today),
     quietYears: quietYears,
@@ -5861,6 +5913,7 @@ function iBuildBook_() {
                     .sort(function (x, y) { return y.n - x.n; })
         };
       }),
+      tip: null,   /* filled in below, once the bands exist */
       /* Nobody's age is unknown on this list — they are on it because it is
          their birthday — but a client whose birth year never made it into
          Salesforce would fall through every band, so they are counted. */
@@ -5954,6 +6007,11 @@ function iBuildBook_() {
       noTown: todayList.filter(function (t) { return !t.town; }).length
     }
   };
+
+  /* The tip needs the bands, and the bands are built inside the object above —
+     so it is filled in once, here, rather than computing the bands twice. */
+  out.today.tip = iBookTip_(todayList, out.today.bands, out.today.byAgent, quietYears);
+  return out;
 }
 
 function iActBook_(b) {
