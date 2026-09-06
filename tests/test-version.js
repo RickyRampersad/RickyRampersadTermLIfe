@@ -22,7 +22,7 @@ ok('the script names its version', !!scriptVersion, 'no SCRIPT_VERSION in KPI.gs
 ok('the redeploy page names the one it expects', !!want, 'no WANT in redeploy/index.html');
 ok('and they are the same', scriptVersion === want, scriptVersion + ' vs ' + want);
 ok('the version reads as a date with a letter', /^\d{4}-\d{2}-\d{2}[a-z]$/.test(scriptVersion || ''), scriptVersion);
-ok('the setup notes say to bump both in one commit', /Bump it in the same commit/.test(setup));
+ok('the setup notes say to bump both in one commit', /Bump it in the same\s+commit/.test(setup));
 
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');
 process.exit(fails ? 1 : 0);
