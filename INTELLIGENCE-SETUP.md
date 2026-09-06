@@ -841,22 +841,47 @@ and regenerated. The README beside those scripts carries the rest, including
 the edge-tts proxy fix.
 
 
-### The client book — `intelligence/wall/book.html`
+### Birthdays today — `intelligence/wall/book.html`
 
 Action `intel.book`. Paste the `/exec` URL into `BOOK_URL`.
 
-**The only wall that is not about something going wrong.** The other four
-measure a premium that stopped, a contract nobody delivered, a licence nobody
-renewed. This one measures what the branch already has: **13,304 clients**
-carrying **24,680 policies**, their age, how long they have been with us, the
-cover they hold, and the cover beside it that they do not.
+**A day's work, not a year's position.** The other four walls measure a premium
+that stopped, a contract nobody delivered, a licence nobody renewed. This one is
+a prompt: whose birthday it is **today**, and what to say to them. It was built
+first as a branch-wide client analysis — 13,304 clients, tenure bands, cover mix
+— and that was the wrong shape. A daily prompt that opens with how many clients
+the branch has ever had is a report. So the wall shows today and only today: the
+twenty eight people, one row each. The branch-wide bands are still computed and
+still in the feed for the app to read; they are simply not what this screen is
+for.
 
-**It names nobody, and that rule is stricter here than on the other four.**
-Those walls name agents, who are staff. This one is about clients, and it hangs
-in a room clients walk through. Every figure on it is a count or a band. The
-named list — who the twenty-eight birthdays actually are — stays behind the
-sign-in on the app, scoped to the agent whose clients they are. The wall says so
-on itself, under the hero number, so nobody looks for a name that is not coming.
+**Why it exists at all.** The birthday letter has gone to these clients for
+years, so the relationship is already built. What the letter has never done is
+ask for the second policy. That part is the agent's, on the day.
+
+#### Initials, and the reasoning behind them
+
+**This is the one wall that carries anything about an individual client, and the
+decision was the branch's.** Every other figure on every other wall is a count.
+Here each row shows:
+
+| On the wall | Never on the wall |
+|---|---|
+| Two initials | The name |
+| The age they turn today | The date of birth |
+| How many years a client | |
+| The town, from the mailing address | The street |
+| The servicing agent | |
+| How many policies, what cover they hold | Policy number, premium, sum assured |
+| One prompt — the most sellable true thing | |
+
+Two letters and a town identifies the client to the agent who already knows
+them, and to nobody else. **The walls are unauthenticated and the site is
+public**, so that trade is worth stating plainly rather than burying: anyone
+with the URL sees twenty eight rows of initials, towns and agent names.
+
+`INTEL_BOOK_INITIALS` set to `off` replaces the letters with a dash. Everything
+else on the wall keeps working, and it is one property rather than a rebuild.
 
 #### Three things decide whether the numbers come out right
 
@@ -946,6 +971,40 @@ Which is the argument for the wall rather than against it: the conversation has
 to start from what the client already holds, and this is the screen that shows
 it.
 
+#### The three panels underneath
+
+**Most birthdays this month, by agent** — the branch asked to see who has the
+most coming so that person can be pushed. The second number on each row is how
+many of theirs carry a gap, because forty birthdays with no gaps is a quieter
+month than twenty with twenty.
+
+**Where today's clients are** — town, from the mailing address, populated on
+**72%** of the branch's rows. Chaguanas leads the book at 1,303 clients, then
+Couva, Sangre Grande, Cunupia and Arima.
+
+**What today's already hold** — the cover carried by the people on this list,
+not by the branch.
+
+Clicking an agent, a town or a kind of cover holds the whole list to it, which
+is how an agent finds their own four out of the twenty eight.
+
+#### The one prompt per row
+
+An agent reading a wall across a room takes one thing away from a row, so each
+row says the most sellable true thing and stops. The order matters — no cover at
+all beats a missing rider, and a missing rider beats a client who has simply
+gone quiet:
+
+1. `no cover we can read`
+2. `no life cover`
+3. `no critical illness`
+4. `nothing new in N years`
+5. `no health`
+6. `one policy only`
+
+Rows with a prompt sort to the top, then by how long they have been a client: a
+thirty year client with a gap is the best call on the wall.
+
 #### Birthdays are the top of the wall, by client and by agent
 
 The hero is how many clients have a birthday **today**, with the milestone ages
@@ -981,6 +1040,7 @@ picked up as the start of the relationship.
 | Property | Default | What it does |
 |---|---|---|
 | `INTEL_BOOK_QUIET_YEARS` | `5` | Years since a client's last policy before they count as quiet |
+| `INTEL_BOOK_INITIALS` | `on` | `off` replaces every client's initials with a dash |
 
 ## 3c. What the Act actually says, per wall
 

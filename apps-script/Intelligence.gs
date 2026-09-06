@@ -5410,6 +5410,51 @@ function iBookDate_(v, today) {
   return d;
 }
 
+/* ── initials, and the reasoning behind them ──────────────────────────────
+   THE WALL IS UNAUTHENTICATED AND THE SITE IS PUBLIC. Every other figure that
+   reaches it is a count. These two letters are the one exception, and they are
+   there because the branch asked for them and gave the reason: the birthday
+   letter has gone out to these clients for years, the relationship is already
+   built, and an agent standing in front of the wall has to know which of their
+   own clients today is. Two letters and a town does that for the person who
+   already knows them and for nobody else.
+
+   What still never reaches the wall: the name, the date of birth, the policy
+   number, the premium, the sum assured, the street. Age is the age they turn
+   today, which is the reason they are on the screen at all.
+
+   Set INTEL_BOOK_INITIALS to "off" and the letters become a dash, everything
+   else on the wall keeps working, and it is one property rather than a rebuild. */
+function iBookInitials_(first, last) {
+  if (!/^on$/i.test(iProp_('INTEL_BOOK_INITIALS') || 'on')) return '—';
+  var a = String(first || '').trim(), b = String(last || '').trim();
+  var i = (a ? a.charAt(0) : '') + (b ? b.charAt(0) : '');
+  return i.toUpperCase() || '—';
+}
+
+/* Salesforce stores the town shouted — CHAGUANAS, SANGRE GRANDE. A wall in
+   title case reads as a place rather than as a database. */
+function iBookTown_(t) {
+  return String(t || '').trim().toLowerCase().replace(/(^|[\s-])([a-z])/g,
+    function (m, p, ch) { return p + ch.toUpperCase(); });
+}
+
+/* One reason to call, not five. An agent reading a wall across a room takes one
+   thing away from a row, so the row says the most sellable true thing about
+   that client and stops. Order matters: no cover at all beats a missing rider,
+   and a missing rider beats a client who has simply gone quiet. */
+function iBookPrompt_(c, quietYears, today) {
+  var DAY = 86400000, YEAR = 365.25;
+  var since = c.last ? (today - c.last) / DAY / YEAR : null;
+  if (!c.life && !c.ci && !c.health && !c.pension) return 'no cover we can read';
+  if (!c.life)                return 'no life cover';
+  if (c.life && !c.ci)        return 'no critical illness';
+  if (since !== null && since >= quietYears) return 'nothing new in ' + Math.floor(since) + ' years';
+  if (c.life && !c.health)    return 'no health';
+  if (c.n === 1)              return 'one policy only';
+  return '';
+}
+
 function iBookBand_(years, bands) {
   for (var i = 0; i < bands.length; i++) if (years < bands[i][1]) return bands[i][0];
   return bands[bands.length - 1][0];
@@ -5446,7 +5491,8 @@ function iBuildBook_() {
       'SELECT Contact__c, AgentName__c, Unit__c, Date_Of_Birth__c, Current_Age__c, ' +
       'ISSUE_DATE__c, Issue_Age__c, Policy_Status_Description_R__c, Life_Coverage__c, ' +
       'Critical_Illness_Coverage__c, Health_Premium__c, ADDAP_Coverage__c, ' +
-      'Pension_Premiums__c, Savings_Coverage__c, Total_Personal_Accident_Premium__c ' +
+      'Pension_Premiums__c, Savings_Coverage__c, Total_Personal_Accident_Premium__c, ' +
+      'Contact__r.FirstName, Contact__r.LastName, Contact__r.MailingCity ' +
       'FROM ' + IBOOK.OBJECT + ' WHERE Contact__c != null');
   } catch (err) {
     sfError = String(err && err.message ? err.message : err);
@@ -5475,12 +5521,20 @@ function iBuildBook_() {
     var c = byClient[key];
     if (!c) c = byClient[key] = { agent: name, unit: unit, n: 0, age: null,
                                   dobY: 0, dobM: 0, dobD: 0, first: null, last: null,
-                                  firstAge: null,
+                                  firstAge: null, ini: '', town: '',
                                   life: false, ci: false, health: false, add: false,
                                   pa: false, pension: false, savings: false };
     c.n++;
 
     if (c.age === null && iNum_(x.Current_Age__c) > 0) c.age = Math.round(iNum_(x.Current_Age__c));
+
+    /* INITIALS, NOT NAMES. See the note above iBookInitials_ — this is the only
+       thing about a client that reaches the wall, and it reaches it because the
+       branch asked for it: an agent reads their own client out of two letters
+       and a town, and nobody else does. */
+    if (!c.ini && x.Contact__r) c.ini = iBookInitials_(x.Contact__r.FirstName, x.Contact__r.LastName);
+    if (!c.town && x.Contact__r && x.Contact__r.MailingCity)
+      c.town = iBookTown_(x.Contact__r.MailingCity);
     if (!c.dobM) {
       var dob = iDate_(x.Date_Of_Birth__c);
       if (dob && dob.getFullYear() > 1900) {
@@ -5536,6 +5590,10 @@ function iBuildBook_() {
   var gapLifeNoCi = 0, gapLifeNoHealth = 0, gapOne = 0, gapQuiet = 0, gapNoCover = 0;
   var mm = today.getMonth() + 1, dd = today.getDate(), yy = today.getFullYear();
   var bdayToday = 0, bdayWeek = 0, bdayAges = [], bdayAgents = {}, milestones = {};
+  /* Today's people, in full — this wall is a day's work, not a year's summary.
+     And the month, by agent, because the branch wants to see who has the most
+     of them coming and push that person. */
+  var todayList = [], todayTowns = {}, todayHolds = {}, monthN = 0, monthAgents = {};
   var MILES = [21, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70];
   var agents = {}, noDob = 0, noIssue = 0, tenures = [], noIssueAge = 0;
 
@@ -5587,6 +5645,13 @@ function iBuildBook_() {
     else noIssueAge++;
 
     if (!c.dobM) { noDob++; return; }
+    if (c.dobM === mm) {
+      monthN++;
+      var ma = monthAgents[c.agent];
+      if (!ma) ma = monthAgents[c.agent] = { k: c.agent, unit: c.unit, n: 0, gap: 0 };
+      ma.n++;
+      if (c.life && !c.ci) ma.gap++;
+    }
     if (c.dobM === mm && c.dobD === dd) {
       bdayToday++; a.bday++;
       if (c.age !== null) bdayAges.push(c.age);
@@ -5597,6 +5662,27 @@ function iBuildBook_() {
       ba.n++;
       if (c.life && !c.ci) ba.gap++;
       if (c.last && (today - c.last) / DAY / YEAR >= quietYears) ba.quiet++;
+
+      var holds = [];
+      if (c.life)    holds.push('Life');
+      if (c.ci)      holds.push('CI');
+      if (c.health)  holds.push('Health');
+      if (c.add)     holds.push('Accident');
+      if (c.pension) holds.push('Pension');
+      if (c.savings) holds.push('Savings');
+      holds.forEach(function (h) { todayHolds[h] = (todayHolds[h] || 0) + 1; });
+      if (c.town) todayTowns[c.town] = (todayTowns[c.town] || 0) + 1;
+
+      todayList.push({
+        ini: c.ini || '—',
+        turning: c.dobY ? yy - c.dobY : null,
+        years: c.first ? Math.floor((today - c.first) / DAY / YEAR) : null,
+        town: c.town || '',
+        agent: c.agent, unit: c.unit,
+        holds: holds, policies: c.n,
+        last: c.last ? Math.floor((today - c.last) / DAY / YEAR) : null,
+        prompt: iBookPrompt_(c, quietYears, today)
+      });
       /* the age they are turning, from the birth year — not from Current_Age__c,
          which is ambiguous on the day itself */
       if (c.dobY) {
@@ -5632,6 +5718,38 @@ function iBuildBook_() {
     quietYears: quietYears,
     clients:  keys.length,
     policies: keys.reduce(function (s, k) { return s + byClient[k].n; }, 0),
+    /* TODAY IS THE WALL. The branch-wide bands below it are still computed and
+       still in the feed — the app reads them — but they are not what this screen
+       shows any more. A daily prompt that opens with how many clients the branch
+       has ever had is a report; this one opens with the twenty eight people
+       whose birthday it is and what to say to them. */
+    today: {
+      n: bdayToday,
+      week: bdayWeek,
+      medianAge: med(bdayAges),
+      withGap: todayList.filter(function (t) { return /critical illness|life cover|no cover/.test(t.prompt); }).length,
+      quiet:   todayList.filter(function (t) { return /nothing new/.test(t.prompt); }).length,
+      /* Sorted so the sellable rows are at the top of the list an agent reads
+         first, then by how long they have been a client — a thirty year client
+         with a gap is the best call on the wall. */
+      clients: todayList.sort(function (a, b) {
+        var ap = a.prompt ? 0 : 1, bp = b.prompt ? 0 : 1;
+        return ap - bp || (b.years || 0) - (a.years || 0);
+      }),
+      towns: Object.keys(todayTowns).map(function (k) { return { k: k, n: todayTowns[k] }; })
+               .sort(function (a, b) { return b.n - a.n; }),
+      holds: Object.keys(todayHolds).map(function (k) { return { k: k, n: todayHolds[k] }; })
+               .sort(function (a, b) { return b.n - a.n; }),
+      byAgent: Object.keys(bdayAgents).map(function (k) { return bdayAgents[k]; })
+                 .sort(function (a, b) { return b.gap - a.gap || b.n - a.n; }),
+      milestones: MILES.filter(function (m) { return milestones[m]; })
+                       .map(function (m) { return { k: 'Turning ' + m, n: milestones[m] }; })
+    },
+    month: {
+      n: monthN,
+      byAgent: Object.keys(monthAgents).map(function (k) { return monthAgents[k]; })
+                 .sort(function (a, b) { return b.n - a.n || b.gap - a.gap; })
+    },
     birthdays: {
       today: bdayToday, week: bdayWeek, medianAge: med(bdayAges),
       byAgent: Object.keys(bdayAgents).map(function (k) { return bdayAgents[k]; })
@@ -5659,7 +5777,8 @@ function iBuildBook_() {
     quality: {
       unknownStatus: unknown, deadDropped: dead, offBranch: offBranch,
       notActive: notActive, noClientLink: noClient, noDob: noDob, noIssueDate: noIssue,
-      noIssueAge: noIssueAge
+      noIssueAge: noIssueAge,
+      noTown: todayList.filter(function (t) { return !t.town; }).length
     }
   };
 }

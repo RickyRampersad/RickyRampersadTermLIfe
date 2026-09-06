@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Client Book</title>
-<meta name="description" content="Who this branch already has — age, tenure, the cover they carry and the gap worth a call.">
+<title>Birthdays Today</title>
+<meta name="description" content="Whose birthday it is today, what they already hold, and the one thing to say to them.">
 <meta name="theme-color" content="#061c31">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -72,7 +72,10 @@
      broken out by agent, and that is the one somebody acts on before lunch —
      it does not belong folded into a footnote at the bottom of the screen. */
   main{display:grid;grid-template-columns:290px 1fr 1fr 1fr 1fr;
-    grid-template-rows:auto minmax(330px,1fr) minmax(0,430px);
+    /* Seven rows of people need 450; the bottom three panels need 300 to show
+       five lines each. The first cut gave row two everything and left row three
+       showing four of five with the fifth sliced. */
+    grid-template-rows:auto minmax(0,470px) minmax(0,300px);
     gap:13px;padding:0 26px 20px;height:calc(100vh - 66px)}
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
     padding:16px 18px;min-height:0;display:flex;flex-direction:column}
@@ -150,7 +153,8 @@
   .row .val small{font:500 10px var(--font-b);color:var(--faint);margin-left:5px}
   .row.zero{opacity:.35;cursor:default}
 
-  .agents{grid-column:1/3}
+  .today{grid-column:2/6;grid-row:2}
+  .month{grid-column:1/3}
   .alist{display:grid;grid-auto-flow:column;grid-template-rows:repeat(9,auto);
     gap:0 26px;overflow:hidden;flex:1;align-content:start}
   .arow{display:grid;grid-template-columns:1fr 30px 48px;align-items:baseline;gap:8px;
@@ -212,6 +216,33 @@
      which is the one thing a wall that names people must never do. */
   .alist{grid-template-rows:repeat(8,auto);gap:0 26px}
 
+  /* ══════════════════════════════════════════════════════════════════════
+     TODAY, ONE ROW EACH
+     ══════════════════════════════════════════════════════════════════════
+     Four columns of seven. Twenty eight people is a morning, not a report, and
+     it has to be readable standing up: two letters big enough to recognise from
+     the door, then the two facts that decide the call — the age they turn and
+     how long they have been ours — then where and whose, then the one thing to
+     say. Nothing else fits and nothing else is needed. */
+  .clist{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,auto);
+    gap:4px 24px;overflow:hidden;flex:1;align-content:start}
+  .crow{display:grid;grid-template-columns:38px 1fr;gap:10px;align-items:start;
+    padding:4px 6px;border-radius:8px;transition:.16s;cursor:default}
+  .crow:hover{background:rgba(255,255,255,.05)}
+  .crow .ini{font-family:var(--font-d);font-weight:800;font-size:15px;letter-spacing:-.4px;
+    color:#04202e;background:var(--grad-teal);border-radius:8px;text-align:center;
+    padding:5px 0 6px;line-height:1}
+  .crow.gap .ini{background:var(--grad-gold);color:#3a2404}
+  .crow .l1{font-size:12.5px;color:var(--ink);white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis}
+  .crow .l1 b{font-family:var(--font-d);font-weight:700}
+  .crow .l2{font-size:10.5px;color:var(--faint);white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis;margin-top:1px}
+  .crow .tag{font:700 10px var(--font-b);letter-spacing:.05em;margin-top:2px;
+    color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .crow .tag.ok{color:var(--faint);font-weight:500}
+  .clist .none{font-size:13px;color:var(--faint);line-height:1.6}
+
   .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;flex:1;min-height:0}
   .three > div{display:flex;flex-direction:column;min-height:0}
   .three h4{margin:0 0 2px;font:700 11px var(--font-b);letter-spacing:.14em;
@@ -271,8 +302,8 @@
 <header>
   <div class="mark"><img src="../../logo-mark.png" alt=""></div>
   <div>
-    <h1>The Client Book</h1>
-    <div class="sub">Who we already have &middot; active agents &middot; Ricky Rampersad Branch, Chaguanas</div>
+    <h1>Birthdays Today</h1>
+    <div class="sub" id="hSub">The day's list &middot; active agents &middot; Ricky Rampersad Branch, Chaguanas</div>
   </div>
   <div class="right">
     <div id="chip" onclick="clearFilter()"><b id="chipTxt"></b><span>&#10005;</span></div>
@@ -287,8 +318,8 @@
     <div class="big" id="heroN">&mdash;</div>
     <div class="cap2" id="heroCap"></div>
     <div class="split">
-      <div><div class="v" id="heroWeek">&mdash;</div><div class="k">more inside seven days</div></div>
-      <div><div class="v" id="heroAge">&mdash;</div><div class="k">the middle one’s age today</div></div>
+      <div><div class="v" id="heroGap">&mdash;</div><div class="k">of them carry a gap worth a call</div></div>
+      <div><div class="v" id="heroQuiet">&mdash;</div><div class="k">have bought nothing in years</div></div>
     </div>
     <div class="miles" id="bMiles"></div>
     <div class="who" id="heroWho"></div>
@@ -303,32 +334,22 @@
     <div class="acts" id="lawActs"></div>
   </section>
 
-  <section class="card bday"><h3>Today, by agent</h3>
-    <p class="cap">Whose clients &mdash; and which of them carry the gap.</p>
-    <div class="bhead"><div>Agent</div><div>Bday</div><div>Gap</div><div>Quiet</div></div>
-    <div class="rows" id="bList"></div></section>
+  <section class="card today"><h3 id="tHead">Today, one row each</h3>
+    <p class="cap">Initials, the age they turn, how long they have been ours, where they are,
+      whose they are &mdash; and the one thing to say.</p>
+    <div class="clist" id="cList"></div></section>
 
-  <section class="card"><h3>How long they have been with us</h3>
-    <p class="cap">Years since their first policy. Click a band to hold the whole wall to it.</p>
-    <div class="rows" id="rTen"></div></section>
+  <section class="card month"><h3>Most birthdays this month</h3>
+    <p class="cap" id="monthCap"></p>
+    <div class="rows" id="rMonth"></div></section>
 
-  <section class="card"><h3>What they already hold</h3>
-    <p class="cap">Clients, not policies. Read from the coverage carried, never from a product name.</p>
-    <div class="rows" id="rCover"></div></section>
+  <section class="card"><h3>Where today&rsquo;s clients are</h3>
+    <p class="cap">Town, from the mailing address. Chaguanas is the branch&rsquo;s own.</p>
+    <div class="rows" id="rTown"></div></section>
 
-  <section class="card gaps"><h3>The gap worth a call</h3>
-    <p class="cap">Cover this branch has already sold them, and the cover beside it that it has not.</p>
-    <div class="rows" id="rGap"></div></section>
-
-  <section class="card agents"><h3>By agent</h3>
-    <p class="cap" id="agentCap"></p>
-    <div class="ahead"><div>Agent</div><div>Bday</div><div>Gap</div><div>Quiet</div></div>
-    <div class="alist" id="aList"></div></section>
-
-  <section class="card hist"><h3>Where the gap actually sits</h3>
-    <p class="cap">Three readings of the same book: by age, by how cold the call is,
-      and by how old the decision they made is.</p>
-    <div id="histBody"></div></section>
+  <section class="card"><h3>What today&rsquo;s already hold</h3>
+    <p class="cap">Cover carried by the people on this list &mdash; not by the branch.</p>
+    <div class="rows" id="rHold"></div></section>
 </main>
 
 <footer id="src"></footer>
@@ -437,27 +458,27 @@ var ACTS = [
 ];
 
 function paint(){
-  var D=BOOK;
+  var D=BOOK, T=(D&&D.today)||{};
 
   if(!D.configured){
     $("#chip").className="";
     $("#heroKick").textContent="Not wired yet";
     $("#heroN").style.cssText="background:none;color:var(--faint);font-size:56px";
     $("#heroN").textContent="—";
-    $("#heroCap").innerHTML='Client age, birth date, issue date and the coverage columns all '
-      + 'live on <b>CLIENT_PORTFOLIO__c</b> in Salesforce. Nothing in the branch workbook '
-      + 'carries them.';
+    $("#heroCap").innerHTML='Birth date, town and the coverage columns all live on '
+      + '<b>CLIENT_PORTFOLIO__c</b> and the Contact behind it. Nothing in the branch '
+      + 'workbook carries them.';
     $("#heroWho").innerHTML='';
+    $("#bMiles").innerHTML='';
     $("#lawN").textContent="s131";
-    $("#lawHd").textContent="Cross-selling is where the Act bites";
-    $("#lawTxt").innerHTML='Not for failing to sell &mdash; for <b>replacing</b> cover a client '
-      + 'already had without first discussing what they lose. This wall exists so that '
-      + 'conversation starts from what they hold.';
+    $("#lawHd").textContent="The letter has gone out for years. This is the call.";
+    $("#lawTxt").innerHTML='And the Act is specific about what must not happen when you '
+      + 'sell to somebody who already holds a policy.';
     $("#lawActs").innerHTML=ACTS.map(function(a){
       return '<div class="act"><b>'+a[0]+'</b> &mdash; '+a[1]+'</div>'; }).join("");
-    ["#rTen","#rCover","#rGap","#aList","#bList","#bMiles"].forEach(function(s){ $(s).innerHTML=""; });
-    $("#agentCap").textContent="";
-    $("#histBody").innerHTML='<p class="note">Set the Salesforce credentials in '
+    ["#rMonth","#rTown","#rHold"].forEach(function(x){ $(x).innerHTML=""; });
+    $("#monthCap").textContent="";
+    $("#cList").innerHTML='<p class="none">Set the Salesforce credentials in '
       + '<b>SalesforceSync.gs</b>, deploy the script, and paste the <b>/exec</b> URL into '
       + '<b>BOOK_URL</b>. This fills in on the next refresh.</p>';
     $("#src").textContent="Salesforce client portfolio · not configured";
@@ -467,83 +488,87 @@ function paint(){
   $("#chip").className = FILTER?"on":"";
   if(FILTER) $("#chipTxt").textContent=FILTER.key;
 
-  var B=D.birthdays||{};
   $("#heroKick").textContent="Birthdays today";
   $("#heroN").style.cssText="";
-  $("#heroN").textContent=n(B.today);
-  $("#heroCap").innerHTML='clients of this branch have a birthday today, out of <b>'
-    + n(D.clients)+'</b> on the book carrying <b>'+n(D.policies)+'</b> policies.';
-  $("#heroWeek").textContent=n(B.week);
-  $("#heroAge").textContent=B.medianAge==null?"—":B.medianAge;
-  $("#heroWho").innerHTML='This wall does not say who. <b>The names are in the app</b>, '
-    + 'signed in, scoped to the agent whose clients they are.';
-
-  var gapCI=(D.gaps||[]).filter(function(x){return /no critical illness/i.test(x.k)})[0];
-  $("#lawN").textContent=gapCI?n(gapCI.n):"—";
-  $("#lawHd").textContent="clients hold life cover and no critical illness";
-  $("#lawTxt").innerHTML='The median client has been with this branch <b>'
-    + (D.medianTenure==null?"—":D.medianTenure)+' years</b>. '
-    + 'That is a relationship to build on &mdash; and the Act is specific about '
-    + 'what must not happen when you do.';
-  $("#lawActs").innerHTML=ACTS.map(function(a){
-    return '<div class="act"><b>'+a[0]+'</b> &mdash; '+a[1]+'</div>'; }).join("");
-
-  var BA=(D.birthdays&&D.birthdays.byAgent)||[];
-  /* Six, not nine: the panel is a morning list, and an agent below the sixth
-     line on a screen across the room is not being read anyway. The full column
-     is in the by-agent table underneath. */
-  $("#bList").innerHTML = BA.length ? BA.slice(0,6).map(function(a){
-      return '<div class="brow">'
-        + '<div class="nm">'+esc(a.k)+'<em>'+esc(a.unit||"")+'</em></div>'
-        + '<div class="v n">'+n(a.n)+'</div>'
-        + '<div class="v g">'+n(a.gap)+'</div>'
-        + '<div class="v q">'+n(a.quiet)+'</div></div>'; }).join("")
-    : '<p class="none">Nobody on the branch book has a birthday today. '
-      + n((D.birthdays||{}).week)+' do inside the next seven days.</p>';
-  var MI=(D.birthdays&&D.birthdays.milestones)||[];
+  $("#heroN").textContent=n(T.n);
+  $("#heroCap").innerHTML='clients of this branch have a birthday <b>today</b>, and <b>'
+    + n(T.week)+'</b> more inside seven days. The letter goes out on its own. '
+    + '<b>The call does not.</b>';
+  $("#heroGap").textContent=n(T.withGap);
+  $("#heroQuiet").textContent=n(T.quiet);
+  var MI=T.milestones||[];
   $("#bMiles").innerHTML = MI.length
     ? MI.map(function(m){ return '<span class="mile">'+esc(m.k)+' &middot; '+n(m.n)+'</span>'; }).join("")
     : '';
+  $("#heroWho").innerHTML='<b>Initials only.</b> No name, no policy number, no premium, '
+    + 'no date of birth. Two letters and a town, so the agent whose client it is knows '
+    + 'and nobody else does.';
 
-  bars($("#rTen"),   D.tenure||[], "tenure", "accent");
-  bars($("#rCover"), D.cover||[],  "cover",  "teal", true);
-  bars($("#rGap"),   D.gaps||[],   "gap",    "teal");
+  $("#lawN").textContent=n(T.withGap);
+  $("#lawHd").textContent="of today's list are carrying a gap worth a call";
+  $("#lawTxt").innerHTML='The birthday letter has gone to these clients for years and the '
+    + 'relationship is already built. <b>What it has never done is ask for the second '
+    + 'policy.</b> That part is the agent\u2019s, today \u2014 and the Act is specific about '
+    + 'what must not happen when you sell to somebody who already holds one.';
+  $("#lawActs").innerHTML=ACTS.map(function(a){
+    return '<div class="act"><b>'+a[0]+'</b> &mdash; '+a[1]+'</div>'; }).join("");
 
-  var ag=(D.byAgent||[]).slice(0,16), maxGap=0;
-  ag.forEach(function(a){ if(a.gap>maxGap) maxGap=a.gap; });
-  $("#agentCap").innerHTML=n((D.byAgent||[]).length)+' agents carry this book. '
-    + 'Sorted by the gap, not by size — <b>bday</b> is today, <b>gap</b> is life without '
-    + 'critical illness, <b>quiet</b> is nothing new in '+D.quietYears+' years.';
-  $("#aList").innerHTML=ag.map(function(a){
-    return '<div class="arow'+(a.gap===maxGap&&maxGap?' top':'')+(a.gap?'':' quiet')+'">'
-      + '<div class="nm">'+esc(a.k)+'<em>'+esc(a.unit||"")+' · '+n(a.clients)+' clients</em></div>'
-      + '<div class="n'+(a.bday?' hot':'')+'">'+n(a.bday)+'</div>'
-      + '<div class="d">'+n(a.gap)+'</div>'
-      + '<div class="d">'+n(a.quiet)+'</div></div>';
+  /* One row per person. Filtering by agent or town holds the list to them,
+     which is how an agent finds their own four out of twenty eight. */
+  var list=(T.clients||[]).filter(function(c){
+    if(!FILTER) return true;
+    if(FILTER.dim==="agent") return c.agent===FILTER.key;
+    if(FILTER.dim==="town")  return c.town===FILTER.key;
+    if(FILTER.dim==="hold")  return (c.holds||[]).indexOf(FILTER.key)>-1;
+    return true;
+  });
+  $("#tHead").textContent = FILTER ? "Today · "+FILTER.key : "Today, one row each";
+  $("#cList").innerHTML = list.length ? list.slice(0,28).map(function(c){
+      var bits=[];
+      if(c.turning!=null) bits.push('turning <b>'+c.turning+'</b>');
+      if(c.years!=null)   bits.push('<b>'+c.years+'</b> years a client');
+      if(c.policies)      bits.push('<b>'+c.policies+'</b> '+(c.policies===1?'policy':'policies'));
+      var where=[c.town||'—', c.agent].filter(Boolean).join(' · ');
+      return '<div class="crow'+(c.prompt?' gap':'')+'">'
+        + '<div class="ini">'+esc(c.ini||'—')+'</div>'
+        + '<div><div class="l1">'+bits.join(' · ')+'</div>'
+        + '<div class="l2">'+esc(where)+'</div>'
+        + '<div class="tag'+(c.prompt?'':' ok')+'">'
+        +   (c.prompt ? '&#9656; '+esc(c.prompt)
+                      : 'holds '+esc((c.holds||[]).join(', ')||'nothing we can read'))
+        + '</div></div></div>';
+    }).join("")
+    : '<p class="none">Nobody on the branch book has a birthday today. '
+      + n(T.week)+' do inside the next seven days.</p>';
+
+  var M=(D.month||{});
+  $("#monthCap").innerHTML='<b>'+n(M.n)+'</b> birthdays fall in this month across the '
+    + 'branch. Push the top of this list &mdash; the second number is how many of theirs '
+    + 'carry a gap.';
+  /* Five, not seven: the bottom row is 250px and a wall does not scroll. */
+  monthBars($("#rMonth"), (M.byAgent||[]).slice(0,5));
+  bars($("#rTown"), (T.towns||[]).slice(0,5), "town", "accent");
+  bars($("#rHold"), T.holds||[],               "hold", "teal");
+}
+
+/* The month leaderboard carries two numbers per row, so it cannot use bars() */
+function monthBars(host,list){
+  if(!host) return;
+  var max=0; list.forEach(function(x){ if(x.n>max) max=x.n; });
+  host.innerHTML=list.map(function(x){
+    var sel=FILTER&&FILTER.dim==="agent"&&FILTER.key===x.k;
+    return '<div class="row'+(sel?' sel':'')+'" data-dim="agent" data-key="'+esc(x.k)+'">'
+      + '<div><div class="lbl">'+esc(x.k)+' <em>'+esc(x.unit||"")+'</em></div>'
+      + '<div class="track"><i class="teal" style="width:'
+      + (max?x.n/max*100:0).toFixed(1)+'%"></i></div></div>'
+      + '<div class="val">'+n(x.n)+(x.gap?'<small>'+n(x.gap)+' gap</small>':'')+'</div></div>';
   }).join("");
-
-  var Q=D.quality||{};
-  $("#histBody").innerHTML=
-      '<div class="three">'
-    + '<div><h4>The gap, by age</h4><p class="sub">Life and no critical illness. The dim '
-    +   'bar is everyone that age, the bright one is the gap.</p>'
-    +   '<div class="rows" id="rGapAge"></div></div>'
-    + '<div><h4>Since their last policy</h4><p class="sub">How cold the call is.</p>'
-    +   '<div class="rows" id="rLast"></div></div>'
-    + '<div><h4>Aged since they bought</h4>'
-    +   '<p class="sub">The distance between the decision and the person who made it.</p>'
-    +   '<div class="rows" id="rAged"></div></div>'
-    + '</div>'
-    + '<p class="note"><b>'+n(Q.unknownStatus)+' policies carry a status this branch '
-    + 'cannot read</b> — a raw AS400 code or a blank — so they are counted as on the book '
-    + 'rather than assumed dead; '+n(Q.deadDropped)+' that plainly say surrendered, lapsed '
-    + 'or matured were dropped. Until the in-force export is joined on policy number, '
-    + '<b>these are the book, not cover in force</b>.</p>';
-  /* The gap bar carries a ghost of its whole age band behind it, because 900 in
-     a band of 3,000 and 900 in a band of 1,100 are not the same finding. */
-  ghosts($("#rGapAge"), D.gapByAge||[]);
-  bars($("#rLast"), D.lastBuy||[], "last",  "gold");
-  bars($("#rAged"), D.aged||[],    "aged",  "accent");
+  Array.prototype.forEach.call(host.querySelectorAll(".row[data-dim]"),function(el){
+    el.onclick=function(){
+      if(FILTER&&FILTER.dim===el.dataset.dim&&FILTER.key===el.dataset.key) return clearFilter();
+      FILTER={dim:el.dataset.dim,key:el.dataset.key}; paint();
+    };
+  });
 }
 
 function tick(){ $("#clock").textContent=new Date().toLocaleTimeString("en-GB",
@@ -554,7 +579,8 @@ function boot(){
   paint();
   if(!BOOK.configured) return;
   $("#src").textContent="Salesforce client portfolio · built "+BOOK.generatedAt
-    + " · active agents only · counts of clients, no client detail";
+    + " · active agents only · initials and town only — no name, policy number or premium"
+    + (BOOK.clients?" · "+n(BOOK.clients)+" clients on the book":"");
 }
 function load(){
   if(!BOOK_URL){ boot(); return; }
