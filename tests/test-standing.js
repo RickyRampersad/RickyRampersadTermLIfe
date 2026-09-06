@@ -134,6 +134,13 @@ ok('courtesy reads training given', sig('Courtesy & Interpersonal Skills', 'Trai
 ok('positive energy has the same, and no moments yet', sig('Positive Energy', 'Training given') === '1' && comp('Positive Energy').moments.length === 0);
 ok('last quarter\'s training did not count', sig('Growth', 'Training received') === '1');
 
+console.log('\nTrained on, and still to cover:\n');
+ok('what was covered this quarter, with whom', st.training.covered.length === 1 && st.training.covered[0].topic === 'AS400 screens' && /Kamla/.test(st.training.covered[0].trainer), JSON.stringify(st.training.covered));
+ok('and what was taught to others', st.training.taught.length === 1 && st.training.taught[0].trainee === 'Azariah');
+ok('the development action still open is still to cover', st.training.actions.length === 1 && /dues list alone/.test(st.training.actions[0].action) && st.training.actionsDone === 1, JSON.stringify(st.training.actions));
+ok('no training plan on file reads as nothing planned, not an error', st.training.planned.length === 0 && st.training.planTotal === 0);
+ok('and whether a job document is on file', st.jobDoc === false);
+
 console.log('\nWho sees it:\n');
 env.resetRequestMemo_();
 const byLead = env.standing_(KAMLA, 'sasha');

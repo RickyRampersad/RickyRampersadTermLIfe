@@ -42,7 +42,10 @@ const COMPS = [
     moments:[{ id:'m1', date:'2026-08-20', competency:'Customer Service', what:'Calmed a client who had been told three different things', by:'demo' }] },
   { competency:'Positive Energy', definition:'Lifts the room.', behaviours:['Smiles'], signals:[], lines:[], moments:[] } ];
 const STANDING = { ok:true, staffId:'demo', role:'ssa', quarter:'2026-Q3', from:'2026-07-01', to:'2026-09-08', today:'2026-09-07',
-                   daysIn:49, daysLeft:17, goals:GOALS, competencies:COMPS, salesforce:true, setup:{ goals:true, competencies:true }, side:'self' };
+                   daysIn:49, daysLeft:17, goals:GOALS, competencies:COMPS, salesforce:true, setup:{ goals:true, competencies:true }, side:'self',
+                   training:{ covered:[{ date:'2026-08-12', topic:'AS400 screens', trainer:'Demo Lead', achieved:'', result:'Confident' }], taught:[],
+                              planned:[{ activity:'Ingenium end to end', objective:'', dates:'Sept – Oct', facilitator:'' }], signedOff:1, planTotal:2,
+                              actions:[{ action:'Run the dues list alone', source:'Experiential', why:'' }], actionsDone:0 }, jobDoc:true };
 const HR = { ok:true, me:{ staffId:'demo', role:'ssa', goals: GOALS.map(g => ({ goal:g.goal, weight:g.weight, target:g.target, kpiTypes:g.kpiTypes })),
              competencies: COMPS.map(c => ({ competency:c.competency, definition:c.definition, behaviours:c.behaviours })), reviews:[], development:[], training:[] },
              reports:[], types:['Quarterly'], sources:['Experiential','Social','Formal'], setup:{ goals:true, competencies:true }, standard:0.72 };
@@ -89,6 +92,10 @@ async function session(b, withStanding, noted) {
   ok('and how it stands against the target', /landed 78% · target 90%/.test(t) && /landed 100% · target 90%/.test(t));
   ok('a goal with no blocks says so', /no blocks yet/.test(t));
   ok('the competencies with how much sits behind each', /Customer Service · 1 moment/.test(t));
+  ok('what they were trained on this quarter', /12 Aug — AS400 screens · with Demo Lead · Confident/.test(t), (t.match(/12 Aug[^\n]*/) || [''])[0]);
+  ok('and what is still to cover, from the plan and the development actions', /Ingenium end to end · Sept – Oct/.test(t) && /Run the dues list alone · experiential/.test(t));
+  ok('with the plan\'s count', /1 of 2 on the training plan signed off/.test(t));
+  ok('and the door to the job document', await s.page.locator('button:has-text("Your job document")').count() === 1);
   ok('no javascript errors', s.errors.length === 0, s.errors.join(' | '));
 
   console.log('\nThe plan says what is behind:\n');
