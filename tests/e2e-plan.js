@@ -40,12 +40,42 @@ const LIST = Object.keys(SF).map(v => ({ value:v, label:SF[v], salesforce:true }
 const KPIS = { ssa:LIST, bma:LIST, bm:LIST, abm:LIST, um:LIST };
 
 const METRICS = { ok:true, date:'2026-09-04', staff: {
-  demo: { closed:0, open:23, overdue:1, byType: {
-    'Renewa/PDl/Bill': { open:17, overdue:1 },
-    'Servicing':       { open:3,  overdue:0 },
-    'Lic/Staffing/SA/HR': { open:3, overdue:0 } } } },
+  demo: { closed:0, open:23, overdue:1, needs:7, byType: {
+    // Seventeen open, four of them untouched in a week. That gap is the point.
+    'Renewa/PDl/Bill': { open:17, overdue:1, needs:4 },
+    'Servicing':       { open:3,  overdue:0, needs:1 },
+    'Lic/Staffing/SA/HR': { open:3, overdue:0, needs:1 } },
+    // Volume per type, shown as context. Never divided into a backlog — a
+    // per-type rate says how often somebody does that work, not how long one
+    // piece of it takes.
+    rate: {
+      'Renewa/PDl/Bill':    { closed:120, days:60 },
+      'Lic/Staffing/SA/HR': { closed:26,  days:60 },
+      'Servicing':          { closed:3,   days:60 } },
+    // The whole desk, which is what the estimate is built on. Two an hour, so
+    // four waiting is two hours and one waiting is half of one.
+    rateAll: { closed:150, days:60, enough:true, perDay:14, perHour:2 } } },
   branch: { byType: { 'Renewa/PDl/Bill': { open:52, overdue:18 },
                       'Lic/Staffing/SA/HR': { open:17, overdue:9 } } } };
+
+// The whole open book, which is what sfkOpenBook_ returns. Note that not one
+// of the Renewals items is late: work dated ahead is the normal case in this
+// branch, and it is exactly the case that used to leave the morning screen
+// showing a count and no titles.
+const BOOK = { demo: {
+  'Renewa/PDl/Bill': [
+    { id:'00B1', subject:'T- PENSIONS GROUP - R&C ENTERPRISES LIMITED',
+      status:'In Progress', due:'2026-09-07', late:false, age:40, agent:'A. Advisor',
+      touched:21, needs:true },
+    { id:'00B2', subject:'Confirm funds in DISB & SUSP - one client',
+      status:'In Progress', due:'2026-09-07', late:false, age:22, agent:'A. Advisor' },
+    { id:'00B3', subject:'Review of smoker rates - another client',
+      status:'In Progress', due:'2026-09-08', late:false, age:12, agent:'A. Advisor' },
+    { id:'00B4', subject:'Group renewal - a third client',
+      status:'In Progress', due:'2026-09-09', late:false, age:5, agent:'C. Advisor' } ],
+  'Lic/Staffing/SA/HR': [
+    { id:'00B5', subject:'Licence renewal - one agent', status:'Not Started',
+      due:'2026-08-30', late:true, age:6, agent:'' } ] } };
 
 // The overdue-with-no-reason list sfkNeedsReason_ already returns.
 const NEEDS = { demo: [
@@ -80,7 +110,7 @@ const ok = (what, cond, extra) => {
     if (body.action==='login' || body.action==='me')
       return j({ ok:true, token:'t', profile:P, roster:[P], schedule:SCH, kpis:KPIS });
     if (body.action==='rows')
-      return j({ ok:true, rows:[], metrics:METRICS, needsReason:NEEDS });
+      return j({ ok:true, rows:[], metrics:METRICS, needsReason:NEEDS, openBook:BOOK });
     return j({ ok:true });
   });
 
@@ -97,13 +127,37 @@ const ok = (what, cond, extra) => {
   console.log('\nThe size of the work is on screen while the day is set:\n');
   const renew = await page.locator('button:has-text("Renewals / Premium Dues")').first().textContent();
   ok('the scheduled type is already ticked', /\u2713/.test(renew), renew);
-  ok('with its size beside it', /17 open/.test(renew), renew);
+  ok('the chip leads with what needs them, not the whole pile',
+     /4 need you of 17/.test(renew), renew);
   ok('the day total adds up what is picked',
      await page.locator('text=/17 open . 1 already late/').count() > 0);
 
+  console.log('\nHow long it is, at the rate this person actually works:\n');
+  const sized = await page.locator('body').innerText();
+  ok('the picked block is sized from their own closures',
+     /About 2 hours at your rate/.test(sized),
+     (sized.match(/About [^\n]{0,60}/) || ['not found'])[0]);
+  // The estimate shows its working. A number with no provenance gets argued
+  // with; one that says what it was built from does not.
+  ok('and it says what the estimate was built from',
+     /4 waiting, against 150 you closed in the last 60 days/.test(sized),
+     (sized.match(/\d+ waiting[^\n]{0,60}/) || ['not found'])[0]);
+
+  console.log('\nAnd the work itself, not only how much of it there is:\n');
+  // The whole point of the change. Nothing in this block is late, so before
+  // the open book existed this person saw "17 open" and not one title.
+  const plan = await page.locator('body').innerText();
+  ok('the tasks in the picked block are named',
+     /T- PENSIONS GROUP - R&C ENTERPRISES LIMITED/.test(plan));
+  ok('a second one too', /Confirm funds in DISB & SUSP/.test(plan));
+  ok('with its due date rather than a red age',
+     /due 7 Sep|due 07 Sep/i.test(plan), (plan.match(/due [^\n]{0,14}/) || [''])[0]);
+  ok('three for one agent is called out as one conversation',
+     /3 of them for A\. Advisor/.test(plan),
+     (plan.match(/\d+ of them for [^\n]{0,20}/) || ['not found'])[0]);
   console.log('\nA thin block says so before two hours go into it:\n');
   const lic = await page.locator('button:has-text("Licensing / Staffing")').first();
-  ok('licensing shows three of their own', /3 open/.test(await lic.textContent()));
+  ok('licensing shows one of three needing them', /1 need you of 3/.test(await lic.textContent()));
   ok('and seventeen across the branch', /17 in the branch/.test(await lic.textContent()));
 
   console.log('\nOnly the exceptions are asked about:\n');
@@ -125,6 +179,33 @@ const ok = (what, cond, extra) => {
   await page.waitForTimeout(400);
   ok('the day total follows the picking',
      await page.locator('text=/20 open . 1 already late/').count() > 0);
+  // And the second block's work arrives with it. This one IS late, so it
+  // reads as days over rather than as a due date — the same list, both cases.
+  const picked2 = await page.locator('body').innerText();
+  ok('the newly picked block lists its work too',
+     /Licence renewal - one agent/.test(picked2));
+  ok('and a late item reads as days over, not a due date',
+     /6 days over/.test(picked2), (picked2.match(/Licence[^\n]*\n[^\n]*/) || ['not found'])[0]);
+  ok('and the untouched ones are marked in the list',
+     /untouched 21 days/.test(picked2));
+  // Two types in one block is 2h of renewals plus half an hour of licensing,
+  // and 2.5 hours needs no warning at all.
+  ok('two types in a block are sized together',
+     /About 2.5 hours at your rate/.test(picked2),
+     (picked2.match(/About [^\n]{0,60}/g) || ['not found']).join(' | '));
+
+  console.log('\nHalf an hour of work must not be handed a two-hour block:\n');
+  // Licensing alone is half an hour. Renewals comes back out so the block is
+  // sized on licensing by itself — the case the warning exists for.
+  const renewChip = page.locator('button:has-text("Renewals / Premium Dues")').first();
+  await renewChip.click();
+  await page.waitForTimeout(400);
+  const alone = await page.locator('body').innerText();
+  ok('and the screen says so rather than leaving them to work it out',
+     /not a two-hour block on its own/.test(alone),
+     (alone.match(/About [^\n]{0,70}/g) || ['not found']).join(' | '));
+  await renewChip.click();
+  await page.waitForTimeout(400);
 
   console.log('\nThe estimate is theirs, made against the counts in front of them:\n');
   ok('it is asked once a type is picked',

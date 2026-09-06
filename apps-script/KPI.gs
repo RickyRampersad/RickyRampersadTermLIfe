@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-04b';
+var SCRIPT_VERSION = '2026-09-05a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -1921,23 +1921,14 @@ function handle_(action, data, token) {
         : sfkWaitingFor_(profile.staffId, data.date) };
     }
 
-    case 'billing': {
-      var bc = sfkBillingCheckSafe_(data.date);
-      if (!profile.manager) {
-        var m2 = {};
-        if (bc[profile.staffId]) m2[profile.staffId] = bc[profile.staffId];
-        bc = m2;
-      }
-      return { ok: true, billing: bc };
-    }
+    case 'billing':
+      return { ok: true, billing: billingFor_(profile, data.date) };
+
+    case 'openBook':
+      return { ok: true, book: openBookFor_(profile, data.date) };
 
     case 'needsReason': {
-      var nr = sfkNeedsReasonSafe_(data.date);
-      if (!profile.manager) {
-        var mine = {};
-        if (nr[profile.staffId]) mine[profile.staffId] = nr[profile.staffId];
-        nr = mine;
-      }
+      var nr = needsReasonFor_(profile, data.date);
       return { ok: true, needsReason: nr };
     }
 
@@ -1979,8 +1970,9 @@ function handle_(action, data, token) {
                roster: publicRoster_(), schedule: SCHEDULE,
                kpis: allKpiChoices_(),
                metrics: metricsFor_(profile, data.date),
-               needsReason: sfkNeedsReasonSafe_(data.date),
-               billing: sfkBillingCheckSafe_(data.date) };
+               needsReason: needsReasonFor_(profile, data.date),
+               billing: billingFor_(profile, data.date),
+               openBook: openBookFor_(profile, data.date) };
     }
 
     case 'training': {
@@ -2787,6 +2779,32 @@ function metricsFor_(profile, date) {
   return { ok: true, date: m.date, staff: only, branch: m.branch };
 }
 
+/* How long an open task can sit untouched before it stops being work in
+   progress and becomes work again.
+
+   Seven days, and it is the most useful number in this file. Kamla holds
+   seventy open tasks and nine of them have not been touched in a week; Sasha
+   holds thirty-seven and the same nine. Elizabeth holds six and none. The open
+   count frightens people and tells them nothing about their morning — "you
+   have thirty-seven" and "three of these need you" are the same book read two
+   ways, and only one of them can be acted on. */
+var STALE_DAYS = 7;
+
+/* The window the rate is measured over, and roughly how many working days
+   fall inside it. Sixty calendar days is about forty-three working ones. */
+var RATE_DAYS = 60, RATE_WORKING_DAYS = 43;
+
+/* A working day of case work. Eight to four less an hour for lunch — not
+   everybody's day, and it is only ever used to turn a per-day rate into "how
+   many of these fit in a focused couple of hours". Precision here would be
+   false: Salesforce records WHEN a task was closed, never how long it took. */
+var WORK_HOURS = 7;
+
+/* Under this many closures in the window, the rate is noise and no estimate is
+   offered at all. Two closures in sixty days is not a measurement, and a tool
+   that dresses one up as one gets stopped being believed. */
+var RATE_MIN_SAMPLE = 8;
+
 function sfkMetrics_(date) {
   var day = date || todayISO_();
   var cache = CacheService.getScriptCache();
@@ -2801,7 +2819,9 @@ function sfkMetrics_(date) {
   var byId = {};
   Object.keys(users).forEach(function (k) { byId[users[k].id] = k; });
 
-  function blank() { return { closed: 0, open: 0, overdue: 0, aged60: 0, noDate: 0, byType: {} }; }
+  function blank() {
+    return { closed: 0, open: 0, overdue: 0, aged60: 0, noDate: 0, needs: 0, byType: {} };
+  }
   var out = {};
   Object.keys(users).forEach(function (k) { out[k] = blank(); });
 
@@ -2813,7 +2833,8 @@ function sfkMetrics_(date) {
       out[sid][field] += n;
       if (typed) {
         var t = r.Task_Type__c || 'Untyped';
-        out[sid].byType[t] = out[sid].byType[t] || { closed: 0, open: 0, overdue: 0 };
+        out[sid].byType[t] = out[sid].byType[t] ||
+          { closed: 0, open: 0, overdue: 0, needs: 0 };
         out[sid].byType[t][field] += n;
       }
     });
@@ -2837,6 +2858,17 @@ function sfkMetrics_(date) {
     " AND Status != 'Completed' AND ActivityDate < " + day +
     ' GROUP BY OwnerId, Task_Type__c'), 'overdue', true);
 
+  // Open, and not touched in a week.
+  //
+  // This is the one that decides what the morning is actually for. An open
+  // task modified yesterday is in somebody's hands; the same task untouched
+  // for three weeks is not, whatever its due date says. Age cannot tell those
+  // two apart and the open count certainly cannot.
+  add(sfkQuery_(
+    'SELECT OwnerId, Task_Type__c, COUNT(Id) FROM Task WHERE OwnerId IN ' + IN +
+    " AND Status != 'Completed' AND LastModifiedDate < LAST_N_DAYS:" + STALE_DAYS +
+    ' GROUP BY OwnerId, Task_Type__c'), 'needs', true);
+
   // Open with no due date at all. These can never be overdue, so they never
   // appear in an overdue report — they simply sit there. Worth seeing.
   add(sfkQuery_(
@@ -2855,6 +2887,66 @@ function sfkMetrics_(date) {
     Object.keys(out).forEach(function (k) { out[k].needsReason = (nr[k] || []).length; });
   } catch (e) { /* the position is still worth returning without it */ }
 
+  // What this person actually gets through, per type, from their own history.
+  //
+  // Sasha closed 401 renewals and 40 pendings in the same sixty days. Same
+  // person, same desk, ten times the rate — a renewal is a send-and-file and a
+  // pending is real work. Nothing in the branch has ever seen that difference,
+  // so every block got the same two hours regardless.
+  //
+  // Bulk servicing runs are measured on their own line and not in this one.
+  // That is not the exclusion this file made before and then had to undo: the
+  // servicing book is counted in full, in `closed` and on the wall. It is kept
+  // out of THIS number because this number sizes hand work, and an automation
+  // that contacts 550 clients at once would say a person clears nine servicing
+  // tasks an hour. Two kinds of work, two measurements — mixing them is the
+  // mistake, in either direction.
+  try {
+    var rate = {};
+    sfkQuery_(
+      'SELECT OwnerId, Task_Type__c, COUNT(Id) FROM Task WHERE OwnerId IN ' + IN +
+      " AND Status = 'Completed' AND LastModifiedDate = LAST_N_DAYS:" + RATE_DAYS +
+      " AND (NOT Subject LIKE '%Happy Birthday%') " +
+      'GROUP BY OwnerId, Task_Type__c').forEach(function (r) {
+        var sid = byId[r.OwnerId];
+        if (!sid) return;
+        (rate[sid] = rate[sid] || {})[r.Task_Type__c || 'Untyped'] = Number(r.expr0 || 0);
+      });
+    Object.keys(out).forEach(function (sid) {
+      var mine = rate[sid] || {};
+      var total = 0;
+
+      // Per type, this is VOLUME and nothing else: how much of this kind of
+      // work this person happens to do. It is shown as context and must never
+      // be divided into a backlog to make a time.
+      //
+      // Dividing by it is wrong and the branch's own numbers say so. Azariah
+      // closed 26 renewals in sixty days, so her per-type renewal rate is 0.6
+      // a day — divide her three untouched renewals by that and the screen
+      // claims thirty-five hours. It does not take her thirty-five hours. She
+      // simply does not spend her week on renewals.
+      out[sid].rate = {};
+      Object.keys(mine).forEach(function (t) {
+        total += mine[t];
+        out[sid].rate[t] = { closed: mine[t], days: RATE_DAYS };
+      });
+
+      // The time estimate comes from the whole desk instead: what this person
+      // actually clears in a working day, across everything. Sasha 17 a day,
+      // Kamla 3 — and Kamla's three is not slowness, it is that her work is
+      // escalations and licensing while Sasha's is renewals. Sizing a morning
+      // against a person's own overall pace is defensible. Claiming to know
+      // the minutes in one licensing email is not.
+      out[sid].rateAll = {
+        closed: total,
+        days: RATE_DAYS,
+        enough: total >= RATE_MIN_SAMPLE,
+        perDay: Math.round((total / RATE_WORKING_DAYS) * 100) / 100,
+        perHour: Math.round((total / RATE_WORKING_DAYS / WORK_HOURS) * 100) / 100
+      };
+    });
+  } catch (e) { /* the position is still worth returning without a rate */ }
+
   // The branch's position per task type, with who holds it. Everyone sees this
   // — it is the answer to "my block is licensing and there are three of them,
   // is that the whole picture or my corner of it". Names are already on the
@@ -2868,10 +2960,12 @@ function sfkMetrics_(date) {
     var name = (users[sid] && users[sid].name) || sid;
     Object.keys(out[sid].byType || {}).forEach(function (t) {
       var src = out[sid].byType[t];
-      var b = branch.byType[t] || (branch.byType[t] = { open: 0, overdue: 0, closed: 0, who: [] });
+      var b = branch.byType[t] ||
+        (branch.byType[t] = { open: 0, overdue: 0, closed: 0, needs: 0, who: [] });
       b.open += src.open || 0;
       b.overdue += src.overdue || 0;
       b.closed += src.closed || 0;
+      b.needs += src.needs || 0;
       if (src.open || src.overdue) {
         b.who.push({ n: name, open: src.open || 0, overdue: src.overdue || 0 });
       }
@@ -2931,6 +3025,134 @@ function sfkNeedsReason_(date) {
   });
   cache.put(key, JSON.stringify(out), SFK.CACHE_MIN * 60);
   return out;
+}
+
+// ---------------------------------------------------------------------------
+//  The open book
+//
+//  Every other Salesforce read here counts. This one names.
+//
+//  The morning screen told a person how many tasks they held and not one of
+//  their titles, because the only list it had was overdue-with-no-reason.
+//  Three of the four support staff carry no overdue at all — their work is
+//  dated ahead, not late — so three of the four opened the tracker to a
+//  scoreboard: "Pendings · 16 open", and nothing to act on. A number you
+//  cannot click is not an assignment.
+//
+//  So: the whole open book, grouped by the type it is filed under, in the
+//  order it falls due. The same shape for everybody, whether their book is
+//  late or clean.
+// ---------------------------------------------------------------------------
+
+/* Subjects carry a policy number, a client and sometimes a branch. They are
+   read in a list, not a document, so they are bounded here rather than in the
+   browser — the whole book goes through CacheService, which stops at 100KB,
+   and one unbounded field is all it takes to silently lose the cache. */
+var OPEN_SUBJECT_MAX = 110;
+
+function sfkOpenBook_(date) {
+  var day = date || todayISO_();
+  var cache = CacheService.getScriptCache();
+  var key = 'sfk_ob_' + day;
+  var hit = cache.get(key);
+  if (hit) return JSON.parse(hit);
+
+  var users = sfkUsers_();
+  var ids = Object.keys(users).map(function (k) { return "'" + users[k].id + "'"; });
+  if (!ids.length) return {};
+  var byId = {};
+  Object.keys(users).forEach(function (k) { byId[users[k].id] = k; });
+
+  var recs = sfkQuery_(
+    'SELECT Id, OwnerId, Subject, Status, Task_Type__c, ActivityDate, Days_O_S__c, ' +
+    'LastModifiedDate, Agent__r.Name, What.Name, Task_Update_Reason_c__c ' +
+    'FROM Task WHERE OwnerId IN (' + ids.join(',') + ") AND Status != 'Completed' " +
+    'ORDER BY ActivityDate ASC NULLS LAST LIMIT 600');
+
+  var out = {};
+  recs.forEach(function (r) {
+    var sid = byId[r.OwnerId];
+    if (!sid) return;
+    var type = r.Task_Type__c || 'Untyped';
+    var book = out[sid] || (out[sid] = {});
+    (book[type] = book[type] || []).push({
+      id: r.Id,
+      subject: shorten_(r.Subject, OPEN_SUBJECT_MAX),
+      status: r.Status || '',
+      due: r.ActivityDate || '',
+      // Compared against the branch's own day, not the browser's. A phone in
+      // another timezone must not colour Monday's work red on Sunday night.
+      late: !!(r.ActivityDate && r.ActivityDate < day),
+      age: Number(r.Days_O_S__c || 0),
+      // When it was last actually done, which is a different question from how
+      // old it is. A forty-day task worked yesterday is in hand; a nine-day
+      // task nobody has opened in three weeks is not.
+      touched: daysSince_(r.LastModifiedDate),
+      needs: daysSince_(r.LastModifiedDate) >= STALE_DAYS,
+      agent: (r.Agent__r && r.Agent__r.Name) || '',
+      account: (r.What && r.What.Name) || '',
+      hasReason: !!String(r.Task_Update_Reason_c__c || '').trim()
+    });
+  });
+
+  // The ones nobody has touched come first — this list is a queue, and the
+  // top of it should be the work that is actually waiting. Within that, the
+  // earliest due date. A task with no date sorts last rather than first: it
+  // has no claim on today over one that has a date and has passed it.
+  Object.keys(out).forEach(function (sid) {
+    Object.keys(out[sid]).forEach(function (t) {
+      out[sid][t].sort(function (a, b) {
+        if (a.needs !== b.needs) return a.needs ? -1 : 1;
+        return String(a.due || '9999-99-99').localeCompare(String(b.due || '9999-99-99'));
+      });
+    });
+  });
+
+  // A book that will not fit the cache is still a book. Serve it, just do not
+  // remember it — the alternative is throwing away the whole read.
+  try { cache.put(key, JSON.stringify(out), SFK.CACHE_MIN * 60); } catch (e) {}
+  return out;
+}
+
+function sfkOpenBookSafe_(date) {
+  if (!sfkConfigured_()) return {};
+  try { return sfkOpenBook_(date); } catch (e) { return {}; }
+}
+
+/** Who may see whose book. The same rule as metricsFor_, and deliberately in
+ *  one place: staff see their own, the Branch Manager sees the branch. Two
+ *  functions deciding this separately is what made the filtering a no-op the
+ *  first time. */
+function openBookFor_(profile, date) {
+  return onlyMine_(sfkOpenBookSafe_(date), profile);
+}
+
+/* Every one of these reads is keyed by staffId and every one of them is
+   filtered by the same rule, so the rule is written once.
+
+   It was not, and the cost was real: the `metrics` action filtered while the
+   `rows` response did not, so the filtering did nothing at all until that was
+   found. needsReason and billing were left behind by that fix and carried the
+   same hole for longer — the rows response has been handing every member of
+   staff the whole branch's overdue and billing books, client names and policy
+   numbers included, on every sign-in. Nobody noticed because the screen only
+   ever renders your own.
+
+   A screen that does not draw the data is not the same thing as a server that
+   does not send it. */
+function onlyMine_(byStaff, profile) {
+  if (profile.manager) return byStaff;
+  var mine = {};
+  if (byStaff && byStaff[profile.staffId]) mine[profile.staffId] = byStaff[profile.staffId];
+  return mine;
+}
+
+function needsReasonFor_(profile, date) {
+  return onlyMine_(sfkNeedsReasonSafe_(date), profile);
+}
+
+function billingFor_(profile, date) {
+  return onlyMine_(sfkBillingCheckSafe_(date), profile);
 }
 
 // ---------------------------------------------------------------------------
@@ -3081,9 +3303,20 @@ function wallData_() {
     .sort(function (a, b) { return b.worked - a.worked; });
 
   // --- thirty days in against out ----------------------------------------
-  // The card that says how to read the others. The birthday mailer creates
-  // and closes its own work and is nobody's throughput, so Servicing that was
-  // both created and completed by the same automation is left out of `out`.
+  // The card that says how to read the others, and it has to answer two
+  // different questions without folding one into the other.
+  //
+  // A client servicing run is real work and a real contact the client
+  // receives: 550 clients in a month, one task each, every one typed
+  // Servicing, and triggered by the Branch Manager rather than by nobody.
+  // The first version of this card subtracted it and printed "robot
+  // excluded", which took the branch's largest servicing book off the wall
+  // and told the room its author had closed one thing in thirty days.
+  //
+  // So it is counted and named, never netted away. `in` and `out` are the
+  // case book — work opened and carried to a close one at a time. `serviced`
+  // is the contact book, reported beside it. Two kinds of work, two figures,
+  // neither one hidden inside the other.
   var flowIn = {}, flowOut = {};
   sfkQuery_('SELECT OwnerId, COUNT(Id) n FROM Task ' +
     'WHERE CreatedDate = LAST_N_DAYS:30 AND OwnerId IN ' + IN + ' GROUP BY OwnerId')
@@ -3093,19 +3326,24 @@ function wallData_() {
     ' GROUP BY OwnerId').forEach(function (r) {
       var n = who(r.OwnerId); if (n) flowOut[n] = Number(r.n) || 0;
     });
-  var robot = {};
-  sfkQuery_('SELECT OwnerId, COUNT(Id) n FROM Task ' +
+  var serviced = {}, servedClients = {};
+  sfkQuery_('SELECT OwnerId, COUNT(Id) n, COUNT_DISTINCT(WhoId) c FROM Task ' +
     "WHERE CreatedDate = LAST_N_DAYS:30 AND Task_Type__c = 'Servicing' " +
     "AND Subject LIKE '%Happy Birthday%' AND OwnerId IN " + IN + ' GROUP BY OwnerId')
-    .forEach(function (r) { var n = who(r.OwnerId); if (n) robot[n] = Number(r.n) || 0; });
+    .forEach(function (r) {
+      var n = who(r.OwnerId);
+      if (!n) return;
+      serviced[n] = Number(r.n) || 0;
+      servedClients[n] = Number(r.c) || 0;      // one contact per client, counted
+    });
   out.flow = Object.keys(firstName).map(function (k) {
-    var n = firstName[k], bot = robot[n] || 0;
-    var row = { n: n, in: Math.max((flowIn[n] || 0) - bot, 0),
-                out: Math.max((flowOut[n] || 0) - bot, 0) };
-    if (bot) row.note = 'robot excluded — ' + bot + ' in, ' + bot + ' out';
+    var n = firstName[k], sv = serviced[n] || 0;
+    var row = { n: n, in: Math.max((flowIn[n] || 0) - sv, 0),
+                out: Math.max((flowOut[n] || 0) - sv, 0), serviced: sv };
+    if (sv) row.clients = servedClients[n] || sv;
     return row;
-  }).filter(function (r) { return r.in || r.out; })
-    .sort(function (a, b) { return b.in - a.in; });
+  }).filter(function (r) { return r.in || r.out || r.serviced; })
+    .sort(function (a, b) { return (b.in + b.serviced) - (a.in + a.serviced); });
 
   // --- who we are waiting on ---------------------------------------------
   out.waitingOn = [];
