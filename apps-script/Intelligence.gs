@@ -5567,9 +5567,150 @@ function iBookTip_(list, bands, byAgent, quietYears) {
   return null;
 }
 
+/* Does this row carry any cover at all? Seven columns, and a row with nothing in
+   any of them is not a policy — it is the second agent's half of a split case. */
+function iBookCovered_(x) {
+  return iNum_(x.Life_Coverage__c) > 0 || iNum_(x.Critical_Illness_Coverage__c) > 0 ||
+         iNum_(x.Health_Premium__c) > 0 || iNum_(x.ADDAP_Coverage__c) > 0 ||
+         iNum_(x.Pension_Premiums__c) > 0 || iNum_(x.Savings_Coverage__c) > 0 ||
+         iNum_(x.Total_Personal_Accident_Premium__c) > 0;
+}
+
 function iBookBand_(years, bands) {
   for (var i = 0; i < bands.length; i++) if (years < bands[i][1]) return bands[i][0];
   return bands[bands.length - 1][0];
+}
+
+/* ── GROWTH ON PLANS THE BRANCH ALREADY HAS ────────────────────────────────
+   Policy_Increases__c is the branch's own record of an existing plan being
+   increased — 1,113 rows in the org, 49 of them on this branch in 2026. It
+   carries Years_In_Force__c, which is the only field anywhere that says how old
+   the plan was when somebody grew it, and that is the question the birthday
+   wall is really asking: is it worth calling a client you have had for years?
+
+   TWO CORRECTIONS ARE APPLIED HERE AND BOTH CHANGE THE ANSWER.
+
+   MIRRORED CASES. A split case is entered once per agent at the FULL amount —
+   same day, same figure, two names. Counting both doubles it. Three of the 46
+   branch rows for 2026 are the second half of a pair, and the branch's own
+   dashboard already flags the pattern. Same date + same amount + same plan age
+   + a different agent is treated as one case.
+
+   AGENTS WHO HAVE LEFT are dropped first, and one whole case disappears when
+   they are: a TT$9,000 increase entered by two agents who have both gone.
+
+   The names on this object are FIRST NAMES ONLY. They are mapped to the roster
+   where exactly one person carries that first name — every first name on this
+   branch's roster is unique, so nothing is guessed; anything unmatched keeps
+   the first name rather than being attributed to somebody. */
+/* WAS THE CLIENT ACTUALLY REVIEWED? The branch asked the question and the answer
+   is not in the place anybody would look. Review__c holds 147 records and the
+   last meeting on it is dated 16 November 2022 — the object is dead. Fact_Finds__c
+   holds one row. Fact_Finding_Interviews__c is the only live one, 253 rows, and
+   it stops in June. So the wall reports what the record says, which is that
+   nothing has been logged, rather than reporting a zero as if it were a result.
+   A review that happened and was never written down is invisible to every system
+   the branch owns, and that is itself the finding. */
+function iBookReviews_(today) {
+  var yy = today.getFullYear(), rows = [];
+  try {
+    rows = sfQuery_('SELECT CreatedDate FROM Fact_Finding_Interviews__c ' +
+                    'WHERE CreatedDate >= ' + yy + '-01-01T00:00:00Z');
+  } catch (err) { return null; }
+  var mm = today.getMonth() + 1, month = 0, year = 0, last = null;
+  (rows || []).forEach(function (x) {
+    var d = iDate_(String(x.CreatedDate || '').slice(0, 10));
+    if (!d || d.getFullYear() !== yy) return;
+    year++;
+    if (d.getMonth() + 1 === mm) month++;
+    if (!last || d > last) last = d;
+  });
+  return { month: month, year: year, lastAt: last ? iIso_(last) : null,
+           daysSince: last ? Math.round((today - last) / 86400000) : null };
+}
+
+/*  ── the growth query ── */
+function iBookGrowth_(today, unitKeys, skip, roster) {
+  var yy = today.getFullYear(), rows = [];
+  try {
+    rows = sfQuery_(
+      'SELECT Agent__c, Unit__c, Submitted_Date__c, API_Increase__c, Years_In_Force__c ' +
+      'FROM Policy_Increases__c WHERE Submitted_Date__c >= ' + yy + '-01-01');
+  } catch (err) { return null; }
+  if (!rows || !rows.length) return null;
+
+  var seen = {}, kept = [];
+  rows.forEach(function (x) {
+    if (!unitKeys[iPossUnitKey_(x.Unit__c)]) return;
+    var who = String(x.Agent__c || '').trim();
+    var full = roster[iNameKey_(who)] || who;
+    if (iExcludes_(skip, full) || iExcludes_(skip, who)) return;
+    var d = iDate_(x.Submitted_Date__c); if (!d) return;
+    var api = iNum_(x.API_Increase__c), yrs = Math.max(0, Math.round(iNum_(x.Years_In_Force__c)));
+    var key = d.getTime() + '|' + api.toFixed(2) + '|' + yrs;
+    if (seen[key] && seen[key] !== full) return;              // the mirror half
+    seen[key] = full;
+    kept.push({ who: full, at: d, api: api, yrs: yrs });
+  });
+  if (!kept.length) return null;
+
+  var mm = today.getMonth() + 1;
+  var byMonth = [], MON = ['January','February','March','April','May','June','July',
+                           'August','September','October','November','December'];
+  for (var i = 0; i < 12; i++) byMonth.push({ m: i + 1, k: MON[i].slice(0, 3), n: 0, api: 0 });
+  var AGE = [['Under 1 year',1],['1-2 years',3],['3-5 years',6],['6-10 years',11],
+             ['11-20 years',21],['Over 20 years',1e9]];
+  var ages = {}, byAgent = {}, older = [], younger = [], last = null;
+  AGE.forEach(function (b) { ages[b[0]] = { k: b[0], n: 0, api: 0 }; });
+
+  kept.forEach(function (r) {
+    if (r.at.getFullYear() !== yy) return;
+    var b = byMonth[r.at.getMonth()];
+    b.n++; b.api += r.api;
+    var band = ages[iBookBand_(r.yrs, AGE)];
+    band.n++; band.api += r.api;
+    (r.yrs >= 11 ? older : younger).push(r.api);
+    var a = byAgent[r.who];
+    if (!a) a = byAgent[r.who] = { k: r.who, n: 0, api: 0 };
+    a.n++; a.api += r.api;
+    if (!last || r.at > last) last = r.at;
+  });
+
+  function med(v) {
+    if (!v.length) return null;
+    var w = v.slice().sort(function (x, y) { return x - y; }), h = w.length >> 1;
+    return w.length % 2 ? w[h] : Math.round((w[h - 1] + w[h]) / 2);
+  }
+  var all = kept.filter(function (r) { return r.at.getFullYear() === yy; });
+  var thisMonth = byMonth[mm - 1];
+
+  /* THE FINDING, AND IT IS NOT THE ONE ANYBODY EXPECTS. A plan in force eleven
+     years or more does NOT carry a bigger increase — the medians are within a
+     few dollars of each other. The totals look otherwise only because three
+     large cases sit in the young bands. So the instruction that comes out of
+     this is the opposite of rationing the call to old clients: the size of the
+     increase does not depend on the age of the plan, so every client is worth
+     the same call. */
+  return {
+    year: yy,
+    cases: all.length,
+    api: Math.round(all.reduce(function (s, r) { return s + r.api; }, 0)),
+    median: med(all.map(function (r) { return r.api; })),
+    month: { n: thisMonth.n, api: Math.round(thisMonth.api) },
+    lastAt: last ? iIso_(last) : null,
+    daysSince: last ? Math.round((today - last) / 86400000) : null,
+    byMonth: byMonth.map(function (b) {
+      return { m: b.m, k: b.k, n: b.n, api: Math.round(b.api), now: b.m === mm };
+    }),
+    ages: AGE.map(function (b) {
+      return { k: b[0], n: ages[b[0]].n, api: Math.round(ages[b[0]].api) };
+    }),
+    byAgent: Object.keys(byAgent).map(function (k) {
+      return { k: k, n: byAgent[k].n, api: Math.round(byAgent[k].api) }; })
+      .sort(function (a, b) { return b.api - a.api; }),
+    ageEffect: { old: med(older), young: med(younger),
+                 oldN: older.length, youngN: younger.length }
+  };
 }
 
 function iBuildBook_() {
@@ -5585,6 +5726,20 @@ function iBuildBook_() {
       if (c) { unitOfCode[c] = u; if (m.name) personOfCode[c] = m.name; }
     });
   });
+
+  /* First name -> roster name. Every first name on this branch's roster is
+     unique, so nothing here is a guess; a first name carried by two people maps
+     to neither. Policy_Increases__c stores first names only. */
+  var roster = {}, firstSeen = {};
+  Object.keys(units).forEach(function (u) {
+    units[u].forEach(function (m) {
+      var fn = iNameKey_(String(m.name || '').split(' ')[0]);
+      if (!fn) return;
+      firstSeen[fn] = (firstSeen[fn] || 0) + 1;
+      roster[fn] = m.name;
+    });
+  });
+  Object.keys(firstSeen).forEach(function (fn) { if (firstSeen[fn] > 1) delete roster[fn]; });
 
   var statusOf = {}, sh = iTabInforce_();
   if (sh) {
@@ -5707,8 +5862,15 @@ function iBuildBook_() {
          be selling its own agents a story. */
       if (c.dobM && iss.getMonth() + 1 === c.dobM) c.onBday = true;
       /* Issued inside the month we are standing in — the measure of whether the
-         birthday campaign converts, rather than whether it is delivered. */
-      if (iss.getFullYear() === yy && iss.getMonth() + 1 === mm) c.boughtThisMonth++;
+         birthday campaign converts, rather than whether it is delivered.
+
+         ONLY A ROW THAT CARRIES COVER COUNTS AS A POLICY. A split case is
+         entered once per agent and only one of the two halves carries the sum
+         assured; the other is an attribution shell with every coverage column
+         empty. Counting rows made September read 12 policies to 7 clients when
+         the branch had actually written 4 policies to 4 clients. */
+      if (iss.getFullYear() === yy && iss.getMonth() + 1 === mm && iBookCovered_(x))
+        c.boughtThisMonth++;
       /* The age they were when they FIRST bought travels with the first policy,
          so the two have to move together — taking the smallest issue age on the
          book would pick up a rider written years later on a different life. */
@@ -6111,6 +6273,11 @@ function iBuildBook_() {
        servicing agent is no longer active, and how many of them have a birthday
        in the month on screen. */
     unassigned: { clients: unClients, policies: unPolicies, month: unMonth },
+    /* Growth on plans the branch already holds — the other half of the same
+       argument the birthday wall makes, and the only place either screen can
+       say what a call is actually worth. */
+    growth: iBookGrowth_(today, unitKeys, skip, roster),
+    reviews: iBookReviews_(today),
     /* Reported with its baseline, because a percentage on its own invites the
        reader to see a pattern in one in twelve. */
     birthdayEffect: { same: bdaySame, of: bdayBase,

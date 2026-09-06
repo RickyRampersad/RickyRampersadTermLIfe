@@ -177,22 +177,6 @@
   /* "1,188" and its share on ONE line. Wrapped, the suffix took every row in
      this panel from 33px to 50 and the card overflowed by exactly that. */
   #rGapAge .row{grid-template-columns:1fr 96px}
-  /* The leaderboard sits in the narrowest column on the wall and its labels are
-     the longest — a name, a unit and two counts. Left as 1fr the label's own
-     content set the floor and pushed the number off the card. */
-  #rMonth .row{grid-template-columns:minmax(0,1fr) 58px}
-  #rMonth .lbl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #rMonth .lbl em{display:block;font-size:10px;line-height:1.3;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #rMonth .val{font-size:18px}
-  /* The label already wraps to two lines; a block suffix here makes the row
-     three deep and four of them no longer fit the bottom row's 296px. */
-  #rMonth .val small{margin-left:3px}
-  /* Two-line labels make a 48px row and four of those need 207 in 181. The
-     row's own padding and the bar's margin are the only slack there is. */
-  #rMonth .row{padding:1px 5px}
-  #rMonth .track{margin-top:2px;height:5px}
-  #rMonth{gap:3px}
   #rTen .row,#rAge .row,#rLast .row{grid-template-columns:1fr 86px}
   /* Seven kinds of cover against six tenure bands, in a box sized for six:
      measured at 261px of rows in 240px of panel. The two smallest rows are the
@@ -243,9 +227,21 @@
   .note{font-size:11.5px;color:var(--faint);line-height:1.5;margin:10px 0 0}
   .note b{color:var(--dim)}
 
-  footer{position:fixed;left:26px;bottom:5px;font-size:10.5px;color:var(--faint)}
+  /* THE CONFIDENTIALITY LINE COMES FIRST AND READS FIRST. This wall hangs in a
+     room clients walk through, and the branch asked for the promise to be on it
+     rather than implied by its absence. Teal, bordered, ahead of the source
+     line — a footnote nobody can read is not a disclaimer. */
+  footer{position:fixed;left:26px;right:26px;bottom:5px;font-size:10.5px;
+    color:var(--faint);display:flex;align-items:center;gap:14px}
   footer b{color:var(--dim);font-weight:600}
-  .hint{position:fixed;right:26px;bottom:5px;font-size:10.5px;color:var(--faint);opacity:.7}
+  #priv{flex:none;padding:3px 11px;border-radius:999px;font-size:10.5px;
+    color:var(--dim);border:1px solid rgba(0,207,234,.34);
+    background:linear-gradient(120deg,rgba(0,207,234,.13),rgba(0,207,234,.03))}
+  #priv b{color:var(--teal);font-weight:700}
+  #src{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+  /* The hint used to sit at the same bottom-right the footer now spans. It is a
+     wall, not an app — nobody standing in front of it needs the keyboard. */
+  .hint{display:none}
 
   /* Four columns here, not three: this wall's agent row carries a birthday
      count, a gap count and a quiet count, and unlabelled numbers in a row are
@@ -349,7 +345,8 @@
   .mcol .bar{background:linear-gradient(180deg,#4cc3f5,rgba(11,127,212,.55));
     border-radius:4px 4px 1px 1px;min-height:2px;
     box-shadow:0 0 10px rgba(55,177,236,.30), inset 0 1px 0 rgba(255,255,255,.35)}
-  .mcol.past .bar{background:rgba(255,255,255,.085);box-shadow:none}
+  .mcol.past .bar,.mcol.void .bar{background:rgba(255,255,255,.085);box-shadow:none}
+  .mcol.void .ml,.mcol.void .mv{opacity:.34}
   .mcol.now .bar{background:var(--grad-teal);
     box-shadow:0 0 22px rgba(0,207,234,.75), inset 0 1px 0 rgba(255,255,255,.6)}
   .mcol .ml{font:600 8.5px var(--font-b);color:var(--faint);text-align:center;
@@ -414,6 +411,24 @@
   .led.sent .n{color:var(--teal)}
   .led.back .n{color:var(--gold)}
   .led.branch .n{color:var(--faint)}
+  .led.seen .n{color:var(--blue)}
+
+  /* GROWTH ON EXISTING PLANS. One hero figure, a twelve-month rhythm underneath
+     it, and the finding. The month strip reuses the day strip's grammar on
+     purpose — the wall already teaches the room that a dim bar is spent, a
+     bright one is live and the lit one is now, and a second visual language for
+     the same idea is exactly the clutter the branch asked us to take out. */
+  .gsum{display:flex;align-items:baseline;gap:11px;margin-bottom:9px}
+  .gsum .v{font-family:var(--font-d);font-weight:800;font-size:30px;line-height:1;
+    letter-spacing:-1.3px;background:var(--grad-gold);-webkit-background-clip:text;
+    background-clip:text;color:transparent;filter:drop-shadow(0 0 15px rgba(239,194,75,.42))}
+  .gsum .k{font-size:11px;color:var(--dim);line-height:1.35}
+  .gsum .k b{color:var(--ink);font-weight:600}
+  .mrows.tight{min-height:86px;flex:none}
+  .gnote{margin-top:9px;padding-top:8px;border-top:1px solid var(--line);
+    font-size:11px;color:var(--faint);line-height:1.45}
+  .gnote b{color:var(--gold);font-weight:700}
+  .gnote i{font-style:normal;color:var(--dim)}
   /* NOT .led.ahead. `.ahead` is already the column-header row in the agents
      panel — uppercase, letter-spaced, four columns, right-aligned children —
      and it matched this row on the second class name, so the projection came
@@ -592,7 +607,12 @@
      allowed to scroll — a fixed 968px of rows on a laptop crushes every card;
      on a handset it is unreadable. The fixed heights are released together with
      the columns, because they only ever made sense as a pair. */
-  @media (max-width:1200px){
+  /* 1500, NOT 1200. Between the two the wall keeps its five fixed columns, and
+     at 1280 the fifth is 221px wide — the growth card's note wrapped to four
+     lines and hung out of a row that has no slack. A laptop is not a wall; it
+     gets the two-column scrolling layout, and the fixed-row grid is reserved
+     for the screen it was measured for. */
+  @media (max-width:1500px){
     body{overflow:auto}
     main{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:none;height:auto;
       align-content:start;padding-bottom:36px}
@@ -621,6 +641,9 @@
        that; the day numbers do not, so they thin out to every fifth and the
        weekday letters go entirely. */
     .mrows{gap:2px;min-height:150px}
+    /* Twelve month labels survive a 390px card; thirty-one day numbers do not,
+       which is why the rule above thins those and this one holds these. */
+    .mrows.tight .ml{font-size:8px}
     .mcol .ml{font-size:0}
     .mcol.now .ml,.mcol.fifth .ml{font-size:8.5px}
     .mcol .dw{display:none}
@@ -658,12 +681,12 @@
     <div class="yn">7</div>
     <div class="ytxt">
       <div class="hd">years of birthday emails have already gone out</div>
-      <!-- ONE LINE OF NARRATIVE, NOT THREE. The headline above already states the
-           seven years and the count; the hero states "nothing beats a call". What
-           this card owes the room now is the agents' names, and they cost lines. -->
-      <p class="last">Every year, automatically, for the better part of a decade &mdash;
-        <b>nobody had to be reminded and nobody had to write them.</b>
-        What they have never done is ask a question. <b>That part is yours, today.</b></p>
+      <!-- NO NARRATIVE PARAGRAPH. The headline states the seven years and the
+           count, the hero states "nothing beats a call", and the branch asked for
+           less on this wall rather than more. What this card owes the room is the
+           names and the exceptions; prose was the first thing to go. -->
+      <p class="last">What the email has never done is ask a question.
+        <b>That part is yours, today.</b></p>
       <div class="ystrip">
         <div class="miles" id="bMiles"></div>
       </div>
@@ -693,12 +716,20 @@
     <p class="cap" id="dCap"></p>
     <div class="mrows" id="rDays"></div></section>
 
-  <section class="card month"><h3 id="mHead">Still ahead this month</h3>
+  <!-- WHAT A CALL IS ACTUALLY WORTH. "Still ahead this month, by agent" stood
+       here and said the same thing as the day strip beside it and the roll above
+       it. This says something no other panel can: the branch's own record of
+       growing plans it already holds. -->
+  <section class="card month"><h3 id="mHead">Growth on plans we already have</h3>
     <p class="cap" id="monthCap"></p>
-    <div class="rows" id="rMonth"></div></section>
+    <div class="gsum" id="rGrow"></div>
+    <div class="mrows tight" id="rGrowM"></div>
+    <div class="gnote" id="rGrowN"></div></section>
 </main>
 
-<footer id="src"></footer>
+<footer><span id="priv"><b>No client is on this wall.</b> No name, no policy number,
+  no date of birth, no premium &mdash; counts and bands only, because the agent already
+  has their own clients in their portal.</span><span id="src"></span></footer>
 <div class="hint">click a bar to filter &middot; esc clears &middot; F full screen</div>
 <script>
 /* ── DATA ────────────────────────────────────────────────────────────────────
@@ -816,7 +847,7 @@ function paint(){
       + 'workbook carries them.';
     $("#bMiles").innerHTML=''; $("#heroWhere").innerHTML='';
     $("#yFind").innerHTML='';
-    ["#rLedger","#rDays","#rMonth","#mList"].forEach(function(x){ $(x).innerHTML=""; });
+    ["#rLedger","#rDays","#rGrow","#rGrowM","#rGrowN","#mList"].forEach(function(x){ $(x).innerHTML=""; });
     $("#monthCap").textContent="";
     $("#cList").innerHTML='<p class="none">Set the Salesforce credentials in '
       + '<b>SalesforceSync.gs</b>, deploy the script, and paste the <b>/exec</b> URL into '
@@ -922,10 +953,9 @@ function paint(){
   if(LY) $(".years .hd").innerHTML='years of birthday emails &mdash; <b>'
     + n(SY||0)+'</b> of them, <b>'+n(LY)+'</b> more every year';
   $("#yFind").innerHTML = BE.pct!=null
-    ? '<b>And they do not buy at birthday time.</b> '+BE.pct+'% of policies were issued in '
-      + 'the client&rsquo;s own birth month, against a one-in-twelve baseline of '
-      + BE.baseline+'%. The birthday is the reason to call. <b>It is not the reason they '
-      + 'buy</b> — so the call has to carry a question, not a greeting.'
+    ? '<b>They do not buy at birthday time</b> &mdash; '+BE.pct+'% against a '
+      + 'one-in-twelve baseline of '+BE.baseline+'%. The birthday is the reason to '
+      + 'call, not the reason they buy.'
     : '';
 
   function keep(c){ return !FILTER || FILTER.dim!=="agent" || c.k===FILTER.key; }
@@ -946,9 +976,9 @@ function paint(){
         +   '<div><b>'+n(b.policies||0)+'</b>policies held</div>'
         +   '<div><b>'+(b.medianYears==null?'—':b.medianYears)+'</b>years, median</div>'
         + '</div>'
-        + (b.missing && b.n
-            ? '<div class="miss">Missing <b>'+esc(b.missing.k)+'</b> — '
-              + n(b.missing.n)+' of '+n(b.n)+'</div>' : '')
+        /* The "Missing X — 4 of 4" line said what the facts row above it already
+           said with "4 carry a gap". Two ways of saying one number is clutter,
+           and the branch asked for less of it. b.missing is still in the feed. */
         + '<div class="talk">'+esc(b.talk)+'</div>'
         + (b.act ? '<div class="act">'+esc(b.act)+'</div>' : '')
         + (agents.length
@@ -961,7 +991,7 @@ function paint(){
     : '<p class="none">Nobody on the branch book has a birthday today. '
       + n(T.week)+' do inside the next seven days.</p>';
 
-  var SD=(M0.sold||{}), SB=(M0.soldBranch||{}), FC=(M0.forecast||{});
+  var SD=(M0.sold||{}), SB=(M0.soldBranch||{}), FC=(M0.forecast||{}), RV=D.reviews;
   $("#ledHead").textContent=(M0.name||'The month')+', reviewed';
   /* One line. The card is 345px wide inside its padding and every line the
      heading takes is a line the last row loses at the bottom edge. */
@@ -987,11 +1017,16 @@ function paint(){
     +   '<div class="t">'+(SB.policies===1?'policy':'policies')+' the branch wrote in '
     +   'the same <b>'+n(FC.basis||0)+' days</b>, to <b>'+n(SB.clients)+'</b> '
     +   (SB.clients===1?'client':'clients')+'.</div></div>'
-    /* The birthdays still to come are on two other cards already. This row is
-       the only forecast on the wall, so it says one thing. */
-    + '<div class="led proj"><div class="n">'+n(FC.policies||0)+'</div><div class="t">'
-    +   'policies by the <b>'+n(FC.of||0)+'th</b> if the branch holds that pace.'
-    +   '</div></div>';
+    /* AND WAS ANY OF IT REVIEWED? The branch asked the question directly. The
+       answer is not a zero, it is that nothing is written down: Review__c died
+       in 2022 and the only live object stops in June. A wall that printed "0
+       reviews" would be reporting an absence of records as if it were an
+       absence of work, so this row says which it is. */
+    + '<div class="led seen"><div class="n">'+(RV?n(RV.month):'&mdash;')+'</div>'
+    +   '<div class="t">'+(RV
+        ? 'reviews logged this month'+(RV.daysSince!=null&&!RV.month
+            ? ' &mdash; <b>the last one was '+n(RV.daysSince)+' days ago.</b>' : '.')
+        : 'no review record reaches this wall.')+'</div></div>';
 
   var M=M0;
   $("#dHead").textContent=(M.name||'This month')+', day by day';
@@ -1000,10 +1035,65 @@ function paint(){
     + n(M.ahead)+'</b> of them.';
   daybars($("#rDays"), M.days||[]);
 
-  $("#mHead").textContent='Still ahead in '+(M.name||'this month');
-  $("#monthCap").innerHTML='<b>'+n(M.ahead)+'</b> of the month&rsquo;s <b>'+n(M.n)
-    + '</b> still to come. Sorted by what is left, not the total.';
-  monthBars($("#rMonth"), (M.byAgent||[]).slice(0,4));
+  var G=D.growth;
+  if(G){
+    $("#mHead").textContent='Growth on plans we already have';
+    $("#monthCap").innerHTML='Increased in '+G.year+' &mdash; <b>not new clients</b>.';
+    $("#rGrow").innerHTML='<div class="v">'+money(G.api)+'</div>'
+      + '<div class="k"><b>'+n(G.cases)+'</b> plans grown this year &middot; '
+      + 'median <b>'+money(G.median)+'</b></div>';
+    growbars($("#rGrowM"), G.byMonth||[]);
+    /* TWO LINES. The card is 333px wide inside its padding, which is about 57
+       characters a line, and a third line puts it past the row.
+
+       THE FINDING IS THE OPPOSITE OF WHAT THE ROOM EXPECTS. Measured: the median
+       increase on a plan eleven years or older is within a few dollars of one
+       under eleven. Age does not decide the size, so nobody should be rationing
+       the call to the long-standing clients. */
+    var AE=G.ageEffect||{}, note=[];
+    if(G.daysSince!=null)
+      note.push('<b>'+(G.month.n?n(G.month.n)+' this month.':'None in '+G.daysSince
+                +' days.')+'</b>');
+    if(AE.old!=null&&AE.young!=null)
+      note.push('Over 11 years <i>'+money(AE.old)+'</i>, under <i>'+money(AE.young)
+        + '</i> &mdash; <b>age does not decide the size.</b>');
+    $("#rGrowN").innerHTML=note.join(' ');
+  } else {
+    $("#mHead").textContent='Growth on plans we already have';
+    $("#monthCap").textContent='No increase records reached this build.';
+    $("#rGrow").innerHTML=''; $("#rGrowM").innerHTML=''; $("#rGrowN").innerHTML='';
+  }
+}
+
+/* TT dollars, short. A wall read from the back of a room cannot use cents. */
+function money(v){
+  if(v==null) return '\u2014';
+  if(v>=1e6) return 'TT$'+(v/1e6).toFixed(v>=1e7?0:1)+'m';
+  /* Not below ten thousand. 1,816 and 1,858 both round to "TT$2k", and the one
+     line on this card that compares them then reads as though they were equal
+     by coincidence rather than by measurement. */
+  if(v>=1e4) return 'TT$'+Math.round(v/1e3)+'k';
+  return 'TT$'+n(Math.round(v));
+}
+
+/* The year's rhythm of increases, one column a month. Same grammar as the day
+   strip: months gone are dim, this month is lit, and an empty month is drawn as
+   an empty month rather than skipped — July and September being blank IS the
+   thing worth seeing. */
+function growbars(host,list){
+  if(!host) return;
+  var max=0, now=0;
+  list.forEach(function(x){ if(x.n>max) max=x.n; if(x.now) now=x.m; });
+  host.innerHTML=list.map(function(x){
+    /* NOT THE DAY STRIP'S RULE, AND THE FIRST CUT HAD IT BACKWARDS. On the day
+       strip a spent day is dim because the birthday has gone. Here the months
+       behind us are the work the branch actually did, so they are the bright
+       ones; what is dim is the part of the year nobody has written yet. */
+    return '<div class="mcol'+(x.m>now?' void':'')+(x.now?' now':'')+' fifth">'
+      + '<div class="mv">'+(x.n||'')+'</div>'
+      + '<div class="bar" style="height:'+(max?Math.max(2,x.n/max*100):2).toFixed(1)+'%"></div>'
+      + '<div class="ml">'+esc(x.k)+'</div></div>';
+  }).join("");
 }
 
 /* The month as a strip of days. Spent days are dimmed rather than dropped: the
@@ -1021,29 +1111,6 @@ function daybars(host,list){
   }).join("");
 }
 
-/* The month leaderboard carries two numbers per row, so it cannot use bars() */
-function monthBars(host,list){
-  if(!host) return;
-  var max=0; list.forEach(function(x){ if((x.ahead||0)>max) max=x.ahead||0; });
-  host.innerHTML=list.map(function(x){
-    var sel=FILTER&&FILTER.dim==="agent"&&FILTER.key===x.k;
-    /* The bar is what is still ahead; the number beside it is the month total,
-       so an agent can see both what is left and what it is out of. */
-    return '<div class="row'+(sel?' sel':'')+'" data-dim="agent" data-key="'+esc(x.k)+'">'
-      + '<div><div class="lbl">'+esc(x.k)+' <em>'+(x.today?x.today+' today · ':'')
-      +   'of '+n(x.n)+' this month</em></div>'
-      + '<div class="track"><i class="teal" style="width:'
-      + (max?(x.ahead||0)/max*100:0).toFixed(1)+'%"></i></div></div>'
-      + '<div class="val">'+n(x.ahead||0)+(x.gap?'<small>'+n(x.gap)+' gap</small>':'')+'</div></div>';
-  }).join("");
-  Array.prototype.forEach.call(host.querySelectorAll(".row[data-dim]"),function(el){
-    el.onclick=function(){
-      if(FILTER&&FILTER.dim===el.dataset.dim&&FILTER.key===el.dataset.key) return clearFilter();
-      FILTER={dim:el.dataset.dim,key:el.dataset.key}; paint();
-    };
-  });
-}
-
 function tick(){ $("#clock").textContent=new Date().toLocaleTimeString("en-GB",
   {hour:"2-digit",minute:"2-digit"}) }
 setInterval(tick,10000); tick();
@@ -1054,9 +1121,12 @@ function boot(){
   /* NOT "active agents only" any more. Vested and inactive servicing agents keep
      their clients on this wall, because those clients still hold cover and still
      got the email — hiding them hid 2,266 of them. */
-  $("#src").innerHTML="Salesforce client portfolio · built "+BOOK.generatedAt
-    + " · every servicing agent, vested and inactive included · <b>counts and bands only</b>"
-    + " — no client reaches this wall, because the agent already has them in their portal";
+  /* The confidentiality line is markup now, not a string built here — it is the
+     one sentence on this wall that must be true whether or not a feed answered,
+     and it is the branch's answer to a screen of client data hanging in a room
+     clients walk through. This half only says where the figures came from. */
+  $("#src").innerHTML="Salesforce client portfolio &middot; built "+BOOK.generatedAt
+    + " &middot; every servicing agent, vested and inactive included";
 }
 function load(){
   if(!BOOK_URL){ boot(); return; }

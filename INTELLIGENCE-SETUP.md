@@ -934,6 +934,65 @@ shows the unit only when the unit is not the agent's own name.
 least actionable thing on the screen. `today.towns` is still in the feed for the
 app.
 
+#### Growth on plans the branch already has
+
+The branch asked what a call is actually worth, and `Policy_Increases__c` is the
+only object that answers it — 1,113 rows in the org, 49 on this branch in 2026,
+and it carries `Years_In_Force__c`, the one field anywhere that says how old a
+plan was when somebody grew it.
+
+**Two corrections are applied and both change the answer.** *Mirrored cases*: a
+split case is entered once per agent at the full amount — same day, same figure,
+two names — so three of the 46 rows are second halves and are folded. *Agents who
+have left* are dropped first, and one whole case disappears with them, a TT$9,000
+increase entered by two agents who have both gone. What survives is **43 plans
+grown in 2026 for TT$310,184, median TT$1,858**.
+
+| Month | Plans grown |
+|---|---|
+| Jan–Jun | 5, 5, 9, 14, 6, 2 |
+| **July** | **none** |
+| Aug | 2 |
+| **September** | **none — 16 days since the last one** |
+
+**And the finding is the opposite of what the room expects.** The median increase
+on a plan in force eleven years or more is **TT$1,816**; on a plan under eleven
+it is **TT$1,858**. They are the same number. The totals look otherwise only
+because three large cases sit in the young bands. So the instruction is not
+*chase the twenty-year clients* — it is that **the age of the plan does not
+decide the size of the increase, so every client is worth the same call.** That
+is the line on the card, and it is the sharpest argument the birthday wall has.
+
+The names on this object are **first names only**. They resolve to the roster
+where exactly one person carries that first name — every first name on this
+branch's roster is unique, so nothing is guessed, and an unmatched one keeps the
+first name rather than being attributed to somebody.
+
+#### Was the client reviewed? Nothing says so
+
+The branch asked how many clients had been reviewed this month, and the answer is
+not a number, it is that **nothing is written down**:
+
+| Object | Rows | Last entry |
+|---|---|---|
+| `Review__c` | 147 | meeting dated **16 November 2022** |
+| `Fact_Finds__c` | 1 | — |
+| `Fact_Finding_Interviews__c` | 253 | **22 June 2026** |
+
+So the wall says *"0 reviews logged this month — the last one was N days ago"*
+rather than printing a zero as though it were a result. **A review that happened
+and was never written down is invisible to every system the branch owns**, and
+that is itself worth putting on a wall.
+
+#### A coverless row is not a policy
+
+September read *12 policies to 7 clients* and the branch had actually written
+**4 policies to 4 clients**. Two causes, both now handled: the two agents who
+have left carried three of those clients, and a split case is entered once per
+agent where **only one half carries the sum assured** — the other has every
+coverage column empty. `iBookCovered_` tests all seven columns, and a row with
+nothing in any of them no longer counts as a policy sold.
+
 #### Agents who have left the branch
 
 `INTEL_EXCLUDE_AGENTS` is the list, it is a **Script Property**, and the walls
@@ -1006,6 +1065,23 @@ reassign, and the test covers the case where the inactive row is read first.
 The header and the footer used to say **active agents only**. They do not any
 more, because that is no longer true and a wall whose footer disagrees with its
 figures is worse than one with no footer at all.
+
+#### Less on it, not more
+
+The branch's note was that it had begun to look cluttered, and it was right.
+Removed: the narrative paragraph on the seven-year card (the headline already
+says it), the *"Missing critical illness — 4 of 4"* line on every band (the facts
+row above it already says *4 carry a gap*), four of the five lines in the
+birthday-effect finding, the keyboard hint, and the whole *"Still ahead this
+month, by agent"* panel — which said what the day strip beside it and the agent
+roll above it were both already saying. The growth card took its place.
+
+**And the confidentiality line is on the wall now, not under it.** It used to be
+half of a grey source line. It is a bordered teal pill at the front of the
+footer: *No client is on this wall. No name, no policy number, no date of birth,
+no premium — counts and bands only, because the agent already has their own
+clients in their portal.* This screen hangs in a room clients walk through, and
+the branch asked for the promise to be legible rather than implied.
 
 #### How it is meant to look from the door
 
