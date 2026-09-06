@@ -5607,7 +5607,21 @@ function iBuildBook_() {
   if (sfError || !rows.length) return { configured: false, error: sfError || 'No portfolio rows.' };
 
   /* ── fold policies into clients ───────────────────────────────────────── */
+  /* THE MONTH CURSOR IS DECLARED HERE, ABOVE THE ROW LOOP, AND THAT MATTERS.
+     It was written below the loop and read inside it, so `var` hoisting handed
+     the comparison `undefined` on every row and "bought this month" came out
+     zero for the whole branch — a plausible number for a quiet month, and
+     wrong. Nothing on the wall could have shown it; the unit test did. */
+  var mm = today.getMonth() + 1, dd = today.getDate(), yy = today.getFullYear();
   var byClient = {}, offBranch = 0, notActive = 0, dead = 0, unknown = 0, noClient = 0;
+  /* CLIENTS WHOSE EVERY POLICY IS GONE. They are dropped from the book, and
+     they should be — a surrendered policy is not cover. But the birthday email
+     still goes to them, because the automation mails a contact and not a
+     policy: 28 went out on 6 September and only 24 of those people hold
+     anything. The other four were clients once and are not now, and on a
+     birthday they are the easiest call of the day. Kept aside here, then
+     cleared of anyone who turns out to hold something live. */
+  var gone = {};
 
   rows.forEach(function (x) {
     var key = String(x.Contact__c || '');
@@ -5622,13 +5636,21 @@ function iBuildBook_() {
     if (!activeAgent(code)) { notActive++; return; }
 
     var state = iBookState_(x.Policy_Status_Description_R__c);
-    if (state === 'dead') { dead++; return; }
+    if (state === 'dead') {
+      dead++;
+      var gd = iDate_(x.Date_Of_Birth__c);
+      if (gd && gd.getFullYear() > 1900 && !gone[key])
+        gone[key] = { agent: name, dobM: gd.getMonth() + 1, dobD: gd.getDate(),
+                      dobY: gd.getFullYear() };
+      return;
+    }
     if (state === 'unknown') unknown++;
 
     var c = byClient[key];
     if (!c) c = byClient[key] = { agent: name, unit: unit, n: 0, age: null,
                                   dobY: 0, dobM: 0, dobD: 0, first: null, last: null,
                                   firstAge: null, ini: '', town: '', months: [], onBday: false,
+                                  boughtThisMonth: 0,
                                   life: false, ci: false, health: false, add: false,
                                   pa: false, pension: false, savings: false };
     c.n++;
@@ -5658,6 +5680,9 @@ function iBuildBook_() {
          It is not the reason they buy, and a wall that implied otherwise would
          be selling its own agents a story. */
       if (c.dobM && iss.getMonth() + 1 === c.dobM) c.onBday = true;
+      /* Issued inside the month we are standing in — the measure of whether the
+         birthday campaign converts, rather than whether it is delivered. */
+      if (iss.getFullYear() === yy && iss.getMonth() + 1 === mm) c.boughtThisMonth++;
       /* The age they were when they FIRST bought travels with the first policy,
          so the two have to move together — taking the smallest issue age on the
          book would pick up a rider written years later on a different life. */
@@ -5678,6 +5703,18 @@ function iBuildBook_() {
 
   var keys = Object.keys(byClient);
   if (!keys.length) return { configured: false, error: 'No branch clients matched.' };
+
+  /* Anyone holding something live is not "gone", however many lapsed policies
+     sits behind them. What is left is the former client, and the ones with a
+     birthday today are counted with their agent attached. */
+  keys.forEach(function (k) { delete gone[k]; });
+  var goneToday = 0, goneAgents = {};
+  Object.keys(gone).forEach(function (k) {
+    var gc = gone[k];
+    if (gc.dobM !== mm || gc.dobD !== dd) return;
+    goneToday++;
+    goneAgents[gc.agent] = (goneAgents[gc.agent] || 0) + 1;
+  });
 
   /* ── the bands ────────────────────────────────────────────────────────── */
   var TEN = [['Under 1 year',1],['1-2 years',2],['2-5 years',5],['5-10 years',10],
@@ -5703,7 +5740,6 @@ function iBuildBook_() {
   var cover = { Life:0, 'Critical illness':0, Health:0, 'Accident (ADD&P)':0,
                 'Personal accident':0, Pension:0, Savings:0 };
   var gapLifeNoCi = 0, gapLifeNoHealth = 0, gapOne = 0, gapQuiet = 0, gapNoCover = 0;
-  var mm = today.getMonth() + 1, dd = today.getDate(), yy = today.getFullYear();
   var bdayToday = 0, bdayWeek = 0, bdayAges = [], bdayAgents = {}, milestones = {};
   /* Today's people, in full — this wall is a day's work, not a year's summary.
      And the month, by agent, because the branch wants to see who has the most
@@ -5724,7 +5760,12 @@ function iBuildBook_() {
   var MILES = [21, 25, 30, 40, 50, 60, 65, 70, 75, 80];
   var mileAgents = {};
   var agents = {}, noDob = 0, noIssue = 0, tenures = [], noIssueAge = 0;
-  var bdaySame = 0, bdayBase = 0, withDob = 0;
+  var bdaySame = 0, bdayBase = 0, withDob = 0, sevenYearEmails = 0;
+  /* WHAT THE MONTH HAS ACTUALLY DONE. Birthdays whose day has already gone,
+     against what those same clients bought while the month was running. The
+     branch sends the emails either way; this is the only line on the wall that
+     says whether anything came back. */
+  var mtdBdays = 0, mtdSold = 0, mtdSoldPol = 0, branchSold = 0, branchSoldPol = 0;
 
   keys.forEach(function (k) {
     var c = byClient[k];
@@ -5747,7 +5788,19 @@ function iBuildBook_() {
       if (since >= quietYears) { gapQuiet++; a.quiet++; }
     }
 
-    if (c.dobM) withDob++;
+    if (c.dobM) {
+      withDob++;
+      /* One birthday a year for as long as they have been a client, capped at
+         the seven years the automation has been running. Counted rather than
+         estimated — a client of two years got two, not seven. */
+      var yrsClient = c.first ? Math.floor((today - c.first) / DAY / YEAR) : 0;
+      sevenYearEmails += Math.max(0, Math.min(7, yrsClient));
+    }
+    if (c.boughtThisMonth) { branchSold++; branchSoldPol += c.boughtThisMonth; }
+    if (c.dobM === mm && c.dobD <= dd) {
+      mtdBdays++;
+      if (c.boughtThisMonth) { mtdSold++; mtdSoldPol += c.boughtThisMonth; }
+    }
     if (c.dobM && c.months.length) { bdayBase++; if (c.onBday) bdaySame++; }
 
     if (c.life)    cover.Life++;
@@ -5949,6 +6002,17 @@ function iBuildBook_() {
                              .map(function (a) { return { k: a, n: mileAgents[m][a] }; })
                              .sort(function (x, y) { return y.n - x.n; }) };
         })
+      ,
+      /* THE FOUR THE WALL WOULD OTHERWISE NEVER MENTION. Everyone with a
+         birthday today whose every policy has gone — surrendered, lapsed,
+         matured. The email reached them this morning like everybody else. They
+         are not in any band, because they hold nothing to band, so they are
+         reported on their own with the agent who last had them. */
+      lapsed: goneToday,
+      lapsedAgents: Object.keys(goneAgents).map(function (k) {
+                      return { k: k, n: goneAgents[k] }; })
+                      .sort(function (a, b) { return b.n - a.n; }),
+      emails: bdayToday + goneToday
     },
     month: {
       n: monthN,
@@ -5956,6 +6020,20 @@ function iBuildBook_() {
              'September','October','November','December'][mm - 1],
       day: dd,
       ahead: monthAhead,
+      /* The month reviewed from the first to today, which is the branch's own
+         way of asking it. */
+      soFar: mtdBdays,
+      sold: { clients: mtdSold, policies: mtdSoldPol },
+      soldBranch: { clients: branchSold, policies: branchSoldPol },
+      /* WHERE THE MONTH LANDS IF NOTHING CHANGES. The plainest projection there
+         is — what has been written, over the share of the month that has been
+         used. It is deliberately not a trend line: six days is not enough shape
+         to fit one to, and a straight run rate is a claim anybody in the room
+         can check in their head. The basis is published beside it for exactly
+         that reason. */
+      forecast: { policies: Math.round(branchSoldPol / dd * daysInMonth),
+                  clients:  Math.round(branchSold / dd * daysInMonth),
+                  basis: dd, of: daysInMonth },
       days: monthDays.map(function (v, i) {
         var d = new Date(yy, mm - 1, i + 1);
         return { d: i + 1, n: v, past: i + 1 < dd, today: i + 1 === dd,
@@ -5973,11 +6051,14 @@ function iBuildBook_() {
       milestones: MILES.filter(function (m) { return milestones[m]; })
                        .map(function (m) { return { k: 'Turning ' + m, n: milestones[m] }; })
     },
-    /* One client with a birth date on file is one letter a year, every year.
-       Stated as the annual rate rather than a seven year total, because not
-       every client has been on the book for all seven and a total would be
-       a number the branch could not defend if anybody asked. */
+    /* One client with a birth date on file is one letter a year, every year —
+       and the seven year total beside it is a sum, not a multiplication. Every
+       client contributes one a year for as long as they have actually been on
+       the book, capped at the seven years the automation has run, so a client
+       of two years adds two. 10,010 x 7 would be a bigger number and one the
+       branch could not defend if anybody asked. */
     lettersAYear: withDob,
+    sevenYearEmails: sevenYearEmails,
     /* Reported with its baseline, because a percentage on its own invites the
        reader to see a pattern in one in twelve. */
     birthdayEffect: { same: bdaySame, of: bdayBase,

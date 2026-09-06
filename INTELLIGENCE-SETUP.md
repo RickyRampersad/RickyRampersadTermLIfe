@@ -922,6 +922,42 @@ Milestone birthdays — 21, 25, 30, 40, 50, 60, 65, 70, 75, 80 — with the agen
 whose client it is on the chip. A round number is the birthday somebody
 remembers being called on.
 
+**Every count is stated.** The chip read `Turning 50 · Gary Sookdeo, Tricia
+Baksh` and the branch's own question back was *"actually how much? Is it two
+giving fifty?"* — which is exactly what that chip left open. It reads
+`Turning 50 | 2 | Gary Sookdeo 1 · Tricia Baksh 1` now: the total on the chip,
+and a number against every name on it. On 6 September the branch's three are one
+client each at 40, 50 and 65.
+
+#### Two that bit
+
+**`var` hoisting made "bought this month" zero for the whole branch.** The month
+cursor — `mm`, `dd`, `yy` — was declared below the row loop and read inside it,
+so every comparison ran against `undefined` and no policy was ever counted as
+issued this month. Zero is a plausible number for a quiet month; nothing on the
+wall could have shown it was wrong. The unit test did, because the fixture was
+built with clients who *had* bought. The declaration is above the loop now with
+a note saying why it has to stay there. This is the second time hoisting has put
+a confident wrong number on this wall (the first printed "0 policies") — in a
+file this long, compute before you read, and test the number rather than the
+shape.
+
+**A modifier class collided with a standalone rule.** The projection row was
+`<div class="led ahead">` and `.ahead` was already the agents panel's column
+header — uppercase, letter-spaced, four columns, children right-aligned. It
+matched on the second class name, so the forecast rendered as a table header and
+ran out of the bottom of the card. It is `.led.proj` now. One file, one
+stylesheet, one namespace: a modifier has to be unique across the whole wall,
+and `booku.js` now fails any body-text slot that comes out uppercase or
+right-aligned.
+
+**And `flex:1` hides an overflow from both measurements.** `.ledger` is a column
+flex with `flex:1;min-height:0`, so it shrank to its allotted height and let its
+last row hang below the card. `offsetHeight` reported the height it was given,
+`scrollHeight` reported no overflow, and both harnesses passed a card that was
+visibly cut in the screenshot. `fit3.js` now asks any column flex with
+`flex-grow > 0` what its own children come to, rather than what it was handed.
+
 #### It is a phone as well as a wall
 
 Below 1200px the grid unwinds to two columns and the page is allowed to scroll;
@@ -940,12 +976,66 @@ better part of a decade. That is the argument for the wall and it leads it: the
 relationship is already built and already paid for, and what the letter has
 never done is ask a question.
 
-**About 10,010 emails a year**, which is the number of branch clients with a
-birth date on file — one client, one email, every year. Stated as the annual
-rate rather than a seven year total, because not every client has been on the
-book for all seven and a total is a number the branch could not defend if
-anybody asked. The hero counts today's: **twenty eight went out this morning,
-from the branch, in the agent's name**, before anybody sat down.
+**46,790 emails over the seven years, and about 9,387 more every year.** The
+annual figure is the number of branch clients with a birth date on file — one
+client, one email, every year. The seven-year total beside it is a sum and not a
+multiplication: every client contributes one a year for as long as they have
+actually been on the book, capped at the seven years the automation has run, so
+a client of two years adds two and not seven. 9,387 x 7 is 65,709 and the branch
+could not defend it, which is why the wall does not print it. The hero counts
+today's: **twenty eight went out this morning, from the branch, in the agent's
+name**, before anybody sat down.
+
+Measured on the branch book on 6 September 2026, one query per year:
+
+| Clients with a birth date whose first policy is at least | |
+|---|---|
+| 1 year old | 8,408 |
+| 2 years | 7,779 |
+| 3 years | 7,165 |
+| 4 years | 6,624 |
+| 5 years | 6,062 |
+| 6 years | 5,534 |
+| 7 years | 5,218 |
+| **Total emails** | **46,790** |
+
+#### Twenty eight emails, twenty four clients
+
+The automation mails a **contact** with a birthday. It does not check whether
+that contact still holds anything, and four of the twenty eight who got one this
+morning hold nothing at all — every policy surrendered, lapsed or matured. So a
+hero reading 24 under the words "emails sent this morning" would quietly
+disagree with the branch's own send report, and the four people it dropped are
+the most interesting names on the list: a former client, on their birthday, who
+has just heard from the branch.
+
+They are kept out of the bands, because they hold nothing to band and nothing to
+count, and reported on their own line with the agent who last had them. The
+number is `today.emails` (28) against `today.n` (24) and `today.lapsed` (4);
+every band total, policy count and gap on the wall is of the 24.
+
+#### The month, reviewed
+
+The branch asked it plainly: *from the first to the first, has anything been
+sold to these clients?* Four rows, and the third is why the fourth is honest.
+
+| Row | 6 September |
+|---|---|
+| Birthdays whose day has already gone this month | 117 — that many emails |
+| Of those clients, who bought while the month was running | 1 client, 2 policies |
+| What the branch wrote in the same six days | 12 policies, 7 clients |
+| Where the month lands at that pace | 60 policies by the 30th |
+
+**No percentage.** One client in a hundred and seventeen printed as 0.9% reads
+like a measured conversion rate, and six days is not long enough to have one.
+The counts say the same thing and cannot be mistaken for a finding. The
+seasonality measurement above already answers the question a rate would be
+reaching for: birthday month and buying month are barely related.
+
+**The forecast is a run rate, not a trend.** What has been written, over the
+share of the month that has been used. Six days is not enough shape to fit a
+trend line to, and a straight run rate is a claim anybody in the room can check
+in their head — so the basis is printed beside it, *6 of 30 days*.
 
 **And they do not buy at birthday time**, which is worth knowing before anybody
 builds a campaign on the idea. Measured across the branch: **8.7%** of policies
@@ -959,9 +1049,9 @@ and the wall says so beside the claim rather than leaving it to be assumed.
 The wall was a list before this, and a list is a spreadsheet. Twenty eight rows
 sorted by tenure tells an agent nothing an export could not. What makes it a
 wall is the grouping: **five life stages**, each with the cover that stage is
-typically missing, the people in it as initials, and one sentence about what to
-say. An agent scans for their own initials, reads the line above them, and knows
-the conversation before they dial.
+typically missing, how many of them carry it, and one sentence about what to
+say. An agent finds their own name on the band, reads the line above it, and
+knows the conversation before they open their portal.
 
 | Band | Age | What it checks | What the wall says to do |
 |---|---|---|---|

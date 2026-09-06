@@ -276,6 +276,8 @@
     border:1px solid rgba(239,194,75,.4);background:rgba(239,194,75,.10);
     border-radius:999px;padding:4px 13px}
   .years .mile i{font-style:normal;font:800 11.5px var(--font-b);color:var(--gold)}
+  .years .mile u{text-decoration:none;font-family:var(--font-d);font-weight:800;font-size:14px;
+    color:var(--ink);line-height:1}
   .years .mile b{font:600 10.5px var(--font-b);color:var(--dim)}
   .years .where{font-size:11.5px;color:var(--faint);line-height:1.5}
   .years .where b{color:var(--dim);font-weight:600}
@@ -341,6 +343,25 @@
      answer was the right one: an agent already has these clients in their
      portal, so the wall does not need to identify anybody — it needs to say
      which conversation to have. What is left is the shape of the day. */
+  /* THE MONTH REVIEWED. Three numbers and the one that matters is the third:
+     the branch sends the emails whatever happens, and this is the only line on
+     the wall that says whether anything came back. */
+  .ledger{display:flex;flex-direction:column;gap:8px;flex:1;min-height:0}
+  .led{display:grid;grid-template-columns:58px minmax(0,1fr);gap:10px;align-items:baseline}
+  .led .n{font-family:var(--font-d);font-weight:800;font-size:27px;line-height:1;
+    letter-spacing:-1.2px;text-align:right}
+  .led .t{font-size:11.5px;color:var(--dim);line-height:1.35}
+  .led .t b{color:var(--ink);font-weight:600}
+  .led.sent .n{color:var(--teal)}
+  .led.back .n{color:var(--gold)}
+  .led.branch .n{color:var(--faint)}
+  /* NOT .led.ahead. `.ahead` is already the column-header row in the agents
+     panel — uppercase, letter-spaced, four columns, right-aligned children —
+     and it matched this row on the second class name, so the projection came
+     out set as a table header and overflowed the card. One stylesheet, one
+     namespace: a modifier here has to be unique across the whole wall. */
+  .led.proj .n{color:var(--blue)}
+
   .band .meter{height:7px;border-radius:4px;background:rgba(255,255,255,.09);
     overflow:hidden;margin-bottom:9px}
   .band .meter i{display:block;height:100%;background:var(--grad-gold);border-radius:4px}
@@ -432,7 +453,7 @@
   /* THE ONE LINE THE WALL EXISTS TO SAY. The branch's own words, and the reason
      the rest of the screen is arranged the way it is: the letter went out by
      itself this morning, and the letter has never asked anybody a question. */
-  .hero .callout{margin-top:12px;padding:11px 13px;border-radius:11px;
+  .hero .callout{margin-top:10px;padding:11px 13px;border-radius:11px;
     background:linear-gradient(120deg,rgba(0,207,234,.16),rgba(0,207,234,.04));
     border:1px solid rgba(0,207,234,.34);
     font-family:var(--font-d);font-weight:800;font-size:15px;color:var(--ink);
@@ -440,8 +461,20 @@
   .hero .callout span{display:block;font-family:var(--font-b);font-weight:500;
     font-size:11px;color:var(--dim);letter-spacing:0;margin-top:2px}
 
+  /* FORMER CLIENTS WITH A BIRTHDAY TODAY. It lives on the years card and not in
+     the hero, and that is a measurement rather than a preference: the hero
+     column is 290px, where this paragraph runs to six lines and pushed the card
+     164px past a row that has none to give. Here it is one line. */
+  .years .ylapse{margin-top:9px;padding:8px 12px;border-radius:10px;
+    background:linear-gradient(120deg,rgba(239,194,75,.15),rgba(239,194,75,.03));
+    border:1px solid rgba(239,194,75,.32);font-size:11.5px;color:var(--dim);
+    line-height:1.4}
+  .years .ylapse b{color:var(--gold);font-weight:700}
+  .years .ylapse em{font-style:normal;color:var(--faint);font-size:10.5px}
+  .years .ylapse:empty{display:none}
+
   /* round-number birthdays, with whose they are */
-  .mrow{display:flex;align-items:baseline;gap:11px;padding:5px 0;
+  .mrow{display:flex;align-items:baseline;gap:11px;padding:4px 0;
     border-bottom:1px solid rgba(255,255,255,.07)}
   .mrow:last-child{border-bottom:0}
   .mrow .age{font-family:var(--font-d);font-weight:800;font-size:26px;line-height:1;
@@ -563,6 +596,7 @@
         <div class="miles" id="bMiles"></div>
         <div class="where" id="heroWhere"></div>
       </div>
+      <div class="ylapse" id="heroLapse"></div>
     </div>
     <div class="yside">
       <div class="tip" id="yTip"></div>
@@ -579,9 +613,9 @@
     <p class="cap" id="wCap"></p>
     <div id="mList"></div></section>
 
-  <section class="card pol"><h3>How many policies they already hold</h3>
-    <p class="cap">One is a relationship nobody built on.</p>
-    <div class="rows" id="rPol"></div></section>
+  <section class="card pol"><h3 id="ledHead">The month, reviewed</h3>
+    <p class="cap" id="ledCap">From the first to today &mdash; and what came back.</p>
+    <div class="ledger" id="rLedger"></div></section>
 
   <section class="card season"><h3 id="dHead">The month, day by day</h3>
     <p class="cap" id="dCap"></p>
@@ -710,7 +744,7 @@ function paint(){
       + 'workbook carries them.';
     $("#bMiles").innerHTML=''; $("#heroWhere").innerHTML='';
     $("#yFind").innerHTML='';
-    ["#rPol","#rDays","#rMonth","#mList"].forEach(function(x){ $(x).innerHTML=""; });
+    ["#rLedger","#rDays","#rMonth","#mList"].forEach(function(x){ $(x).innerHTML=""; });
     $("#monthCap").textContent="";
     $("#cList").innerHTML='<p class="none">Set the Salesforce credentials in '
       + '<b>SalesforceSync.gs</b>, deploy the script, and paste the <b>/exec</b> URL into '
@@ -724,19 +758,36 @@ function paint(){
 
   $("#heroKick").textContent="Emails sent this morning";
   $("#heroN").style.cssText="";
-  $("#heroN").textContent=n(T.n);
+  /* THE NUMBER THE BRANCH COUNTS IS EMAILS, NOT CLIENTS ON THE BOOK. The
+     automation mails a contact with a birthday; it does not check whether that
+     contact still holds anything. On 6 September 28 went out and 24 of those
+     people hold cover — so a wall showing 24 under the words "emails sent"
+     would be quietly disagreeing with the branch's own send report. */
+  $("#heroN").textContent=n(T.emails!=null?T.emails:T.n);
   /* Computed before it is read. It was declared below this line and var hoists,
      so the wall confidently reported that twenty eight clients hold 0 policies
      between them — which is the kind of wrong a wall states with a straight
      face. */
   var polN=(T.bands||[]).reduce(function(a,b){ return a+(b.policies||0); },0);
   $("#heroCap").innerHTML='birthday emails, triggered first thing this morning '
-    + '<b>in your name</b>. <b>'+n(T.withGap)+'</b> carry a gap worth a call.';
+    + '<b>in your name</b>. <b>'+n(T.n)+'</b> hold cover, <b>'+n(T.withGap)
+    + '</b> of those carry a gap.';
+  var LA=(T.lapsedAgents||[]);
+  $("#heroLapse").innerHTML = T.lapsed
+    ? '<b>'+n(T.lapsed)+'</b> of this morning&rsquo;s '+n(T.emails!=null?T.emails:T.n)
+      + ' hold nothing with us any more &mdash; surrendered, lapsed or matured. '
+      + 'The email still found them. <b>Easiest call on this wall.</b>'
+      + (LA.length ? ' <em>'+LA.slice(0,4).map(function(a){
+            return esc(a.k)+' '+n(a.n); }).join(' &middot; ')+'</em>' : '')
+    : '';
   var MI=T.milestones||[];
   $("#bMiles").innerHTML = MI.length
     ? MI.map(function(m){
-        var who=(m.agents||[]).map(function(a){ return esc(a.k)+(a.n>1?' '+n(a.n):''); }).join(', ');
-        return '<span class="mile"><i>'+esc(m.k)+'</i>'+(who?'<b>'+who+'</b>':'')+'</span>'; }).join("")
+        /* "Turning 50 · Gary Sookdeo, Tricia Baksh" left it open whether that
+           was two clients or four. Every count is stated now. */
+        var who=(m.agents||[]).map(function(a){ return esc(a.k)+' '+n(a.n); }).join(' &middot; ');
+        return '<span class="mile"><i>'+esc(m.k)+'</i><u>'+n(m.n)+'</u>'
+             + (who?'<b>'+who+'</b>':'')+'</span>'; }).join("")
     : '';
   /* WHOSE PHONE SHOULD RING. The branch's question in one panel: today is the
      sixth, these are the people whose clients are having it, and this is how
@@ -747,8 +798,13 @@ function paint(){
   $("#mList").innerHTML = TB.length ? TB.slice(0,4).map(function(a){
       return '<div class="mrow"><div class="age">'+n(a.n)+'</div><div class="mt">'
         + '<div class="t">'+esc(a.k)+'</div>'
-        + '<div class="a">'+esc(a.unit||'')+(a.gap?' &middot; <em>'+n(a.gap)+' with a gap</em>':'')
-        + (a.quiet?' &middot; '+n(a.quiet)+' gone quiet':'')+'</div>'
+        /* The unit only when it is not the agent's own name. Four of the
+           branch's agents run their own unit, so the row read "Ricky Rampersad
+           / Ricky Rampersad · 3 with a gap · 4 gone quiet" and the line that
+           mattered was the half that fell off the end. */
+        + '<div class="a">'+(a.unit&&a.unit!==a.k?esc(a.unit)+' &middot; ':'')
+        + (a.gap?'<em>'+n(a.gap)+' with a gap</em>':'')
+        + (a.quiet?(a.gap?' &middot; ':'')+n(a.quiet)+' gone quiet':'')+'</div>'
         + '</div></div>'; }).join("")
     : '<p class="none">Nobody on the branch book has a birthday today.</p>';
   var TW=(T.towns||[]).slice(0,5);
@@ -758,14 +814,19 @@ function paint(){
 
   /* The seven-year claim, with the measurement that qualifies it beside it. */
   var BE=D.birthdayEffect||{};
+  var M0=(D.month||{});
   var TIP=T.tip;
   $("#yTip").innerHTML = TIP
     ? '<div class="tk">Today&rsquo;s pointer</div><div class="tt"><b>'+esc(TIP.k)+'</b> '
       + esc(TIP.t)+'</div>'
     : '';
-  var LY=D.lettersAYear;
-  if(LY) $(".years .hd").innerHTML='years of birthday emails &mdash; about <b>'
-    + n(LY)+'</b> of them a year, every year';
+  /* "About 10,010 a year" invited the question the branch could not answer: how
+     many altogether? It is countable — a client with a birth date on file gets one
+     a year for as long as they have been on the book, capped at the seven years the
+     automation has run. Both figures are stated now, the total first. */
+  var LY=D.lettersAYear, SY=D.sevenYearEmails;
+  if(LY) $(".years .hd").innerHTML='years of birthday emails &mdash; <b>'
+    + n(SY||0)+'</b> of them, <b>'+n(LY)+'</b> more every year';
   $("#yFind").innerHTML = BE.pct!=null
     ? '<b>And they do not buy at birthday time.</b> '+BE.pct+'% of policies were issued in '
       + 'the client&rsquo;s own birth month, against a one-in-twelve baseline of '
@@ -806,9 +867,33 @@ function paint(){
     : '<p class="none">Nobody on the branch book has a birthday today. '
       + n(T.week)+' do inside the next seven days.</p>';
 
-  bars($("#rPol"),  T.policiesHeld||[], "pol",  "teal");
+  var SD=(M0.sold||{}), SB=(M0.soldBranch||{}), FC=(M0.forecast||{});
+  $("#ledHead").textContent=(M0.name||'The month')+', reviewed';
+  /* One line. The card is 345px wide inside its padding and every line the
+     heading takes is a line the last row loses at the bottom edge. */
+  $("#ledCap").innerHTML='The first to today &mdash; <b>'+n(FC.basis||0)+' of '
+    + n(FC.of||0)+' days.</b>';
+  $("#rLedger").innerHTML=
+      '<div class="led sent"><div class="n">'+n(M0.soFar)+'</div><div class="t">'
+    +   'birthdays have already gone by this month. <b>That many emails went out.</b></div></div>'
+    + '<div class="led back"><div class="n">'+n(SD.clients)+'</div><div class="t">'
+    +   'of those clients bought something while the month was running &mdash; <b>'
+    +   n(SD.policies)+'</b> '+(SD.policies===1?'policy':'policies')+'.</div></div>'
+    /* NO PERCENTAGE HERE. One client out of a hundred and seventeen is one
+       client; printed as 0.9% it reads like a measured conversion rate, and
+       six days of a month is not enough to have one. The counts say the same
+       thing and cannot be mistaken for a finding. */
+    + '<div class="led branch"><div class="n">'+n(SB.policies)+'</div>'
+    +   '<div class="t">'+(SB.policies===1?'policy':'policies')+' the branch wrote in '
+    +   'the same <b>'+n(FC.basis||0)+' days</b>, to <b>'+n(SB.clients)+'</b> '
+    +   (SB.clients===1?'client':'clients')+'.</div></div>'
+    /* The birthdays still to come are on two other cards already. This row is
+       the only forecast on the wall, so it says one thing. */
+    + '<div class="led proj"><div class="n">'+n(FC.policies||0)+'</div><div class="t">'
+    +   'policies by the <b>'+n(FC.of||0)+'th</b> if the branch holds that pace.'
+    +   '</div></div>';
 
-  var M=(D.month||{});
+  var M=M0;
   $("#dHead").textContent=(M.name||'This month')+', day by day';
   $("#dCap").innerHTML='Every birthday on the branch book this month. <b>Today is the '
     + n(M.day)+'</b>. The dim days are spent; the bright ones are still to come — <b>'
