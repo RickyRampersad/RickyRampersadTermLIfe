@@ -334,6 +334,16 @@ is now read as a support desk (`ssa`); it used to fall through to the BMA.
 The People Leader is whoever the person reports to in `REPORTS_TO`, plus the
 Branch Manager for everyone. Each side writes only its own half of a review.
 
+## Attendance
+
+Signing in is the attendance register. The script creates an `Attendance`
+tab on first sign-in: `Date · StaffId · Name · FirstSignIn · LastSeen ·
+Status · Reason · MarkedBy · UpdatedAt`. The first sign-in of the day is the
+start time; later ones refresh `LastSeen`. "Not in today" writes `Status =
+absent` with the reason, by the person or their People Leader. Start time is
+compared with the first token of the person's `hours` in `SCHEDULE`, with a
+ten-minute grace. The JotForm register can be retired once this is live.
+
 ## What changed
 
 **Submit now tells you the truth.** It used to post with `mode: "no-cors"`,

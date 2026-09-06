@@ -458,6 +458,86 @@ function OpenList({ items }) {
 }
 
 // ---------------------------------------------------------------------------
+//  Attendance
+//
+//  Signing in is the register. This line says what today's sign-in recorded
+//  and lets somebody who is not in say so, with a reason, instead of filling
+//  a second form somewhere else.
+// ---------------------------------------------------------------------------
+const ABSENT_REASONS = ["Sick", "On leave", "Off-site / training", "Other"];
+
+function AttendanceLine({ me, api, onChange, onRegister }) {
+  const a = me.attendance;
+  const [open, setOpen] = useState(false);
+  const [why, setWhy] = useState("Sick");
+  const [more, setMore] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const send = () => {
+    const reason = why === "Other" ? more.trim() : (why + (more.trim() ? " — " + more.trim() : ""));
+    if (!reason) { setErr("Say why."); return; }
+    setBusy(true); setErr("");
+    api("absent", { reason }).then(r => {
+      setBusy(false);
+      if (r && r.ok) { setOpen(false); onChange(Object.assign({}, a || {}, { status: "absent", reason: r.reason })); }
+      else setErr((r && r.error) || "Not recorded.");
+    });
+  };
+  const leads = (me.leads || []).length > 0;
+  const text = !a ? "" : a.status === "absent"
+    ? "Not in today · " + a.reason
+    : a.at ? "In at " + a.at + (a.late ? " · " + a.late + " minutes after your start" : " · on time") : "";
+  const linkBtn = (color, onClick, label) => React.createElement("button", { type: "button", onClick,
+    style: { background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit", fontSize: 12, fontWeight: 700, color } }, label);
+  return React.createElement("div", { style: { margin: "12px 0 0" } },
+    React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" } },
+      React.createElement("div", { style: { fontSize: 12.5, fontWeight: 700, color: a && a.status === "absent" ? AMBER : a && a.late ? AMBER : GREEN } },
+        text || "Signed in"),
+      React.createElement("div", { style: { display: "flex", gap: 14 } },
+        leads ? linkBtn(GOLD, onRegister, "Team register →") : null,
+        !(a && a.status === "absent") ? linkBtn(MUTED, () => setOpen(!open), open ? "Cancel" : "Not in today?") : null)),
+    open ? React.createElement("div", { style: { ...card, marginTop: 8 } },
+      React.createElement(Chips, { label: "Why", options: ABSENT_REASONS.map(r => ({ v: r, label: r })), value: why, onPick: v => setWhy(v || "Sick") }),
+      React.createElement("input", { value: more, onChange: e => setMore(e.target.value), placeholder: why === "Other" ? "What it is" : "Anything to add (optional)",
+        style: { width: "100%", boxSizing: "border-box", font: "inherit", fontSize: 13, padding: "8px 10px", border: "1px solid " + LINE, borderRadius: 8, marginTop: 8 } }),
+      err ? React.createElement("div", { style: { fontSize: 12, color: RED, marginTop: 6 } }, err) : null,
+      React.createElement("button", { type: "button", disabled: busy, onClick: send, style: { ...primaryWide, marginTop: 10 } },
+        busy ? "Recording…" : "Record: not in today")) : null);
+}
+
+function RegisterView({ me, roster, reg, weekOf, setWeekOf, vp, onBack }) {
+  const days = weekDaysOf(weekOf);
+  const people = (reg && reg.ok && reg.people) || [];
+  const byKey = {};
+  ((reg && reg.ok && reg.attendance) || []).forEach(o => { byKey[o.date + "|" + o.staffId] = o; });
+  const name = sid => (roster.find(p => p.staffId === sid) || {}).name || sid;
+  const cell = o => !o ? "—" : o.status === "absent" ? "not in · " + o.reason : o.at + (o.late ? " (+" + o.late + ")" : "");
+  const tone = o => !o ? MUTED : o.status === "absent" ? AMBER : o.late ? AMBER : INK;
+  return React.createElement(Shell, { wide: vp.desktop ? 1160 : vp.tablet ? 820 : 560 },
+    React.createElement(SubHeader, { title: "Attendance register", sub: "Signing in is the register. First sign-in, or the reason for not being in.", onBack: onBack }),
+    React.createElement("div", { style: { padding: "0 18px 40px" } },
+      React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", margin: "12px 0" } },
+        React.createElement("button", { type: "button", onClick: () => setWeekOf(shiftDays(weekOf, -7)), style: trendChip }, "← Week"),
+        React.createElement("span", { style: { fontSize: 12.5, fontWeight: 700, color: INK } }, "Week of " + shortDate(weekOf)),
+        React.createElement("button", { type: "button", onClick: () => setWeekOf(shiftDays(weekOf, 7)), style: trendChip }, "Week →")),
+      !reg ? React.createElement("p", { style: { color: MUTED, textAlign: "center", padding: 24 } }, "Reading…") : null,
+      reg && !reg.ok ? React.createElement("p", { style: { color: RED } }, reg.error) : null,
+      reg && reg.ok ? React.createElement("div", { style: { overflowX: "auto", border: "1px solid " + LINE, borderRadius: 11 } },
+        React.createElement("table", { style: { borderCollapse: "collapse", width: "100%", fontSize: 12.5, minWidth: 560 } },
+          React.createElement("thead", null, React.createElement("tr", null,
+            React.createElement("th", { style: regTh }, ""),
+            days.map(d => React.createElement("th", { key: d, style: regTh }, dowShort(d) + " " + shortDate(d))))),
+          React.createElement("tbody", null, people.map(sid => React.createElement("tr", { key: sid },
+            React.createElement("td", { style: { ...regTd, fontWeight: 700, whiteSpace: "nowrap" } }, name(sid)),
+            days.map(d => { const o = byKey[d + "|" + sid];
+              return React.createElement("td", { key: d, style: { ...regTd, color: tone(o), fontWeight: o ? 600 : 400 } }, cell(o)); })))))) : null,
+      React.createElement("p", { style: { fontSize: 11.5, color: MUTED, marginTop: 10, lineHeight: 1.5 } },
+        "A time is the first sign-in of the day. (+n) is minutes after that person's own start, past a ten-minute grace. — is no sign-in and nothing said.")));
+}
+const regTh = { textAlign: "left", padding: "9px 11px", fontSize: 10.5, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid " + LINE, background: "#FBFAF5", whiteSpace: "nowrap" };
+const regTd = { padding: "9px 11px", borderBottom: "1px solid " + LINE, verticalAlign: "top" };
+
+// ---------------------------------------------------------------------------
 //  Performance
 //
 //  Guardian's Performance Evaluation form, with the daily record beside it.
@@ -1451,6 +1531,13 @@ function App() {
   const [openBlock, setOpenBlock] = useState(null);
   const [reviewDate, setReviewDate] = useState(todayISO());
   const [weekOf, setWeekOf] = useState(weekStartOf(todayISO()));
+  const [attToday, setAttToday] = useState(null);   // null: the server has not said
+  const [register, setRegister] = useState(null);
+  useEffect(() => {
+    if (view !== "register") return;
+    setRegister(null);
+    api("attendance", { from: weekOf, to: shiftDays(weekOf, 7) }).then(r => setRegister(r && r.ok ? r : { ok: false, error: (r && r.error) || "Could not read." }));
+  }, [view, weekOf]);
   const [trendStaff, setTrendStaff] = useState(null);
   const signOut = useCallback(() => {
     storeToken("");
@@ -1469,11 +1556,14 @@ function App() {
     if (me && !me.manager && view === "home" && !active) {
       setActive(me.staffId);
       setDate(todayISO());
-      // Before the first block is due, the useful screen is the plan; after
-      // that it is the day itself. Nobody wants to be planned at half past
-      // three.
-      const h = new Date().getHours();
-      setView(h < 10 ? "plan" : "entry");
+      // The first sign-in of the day opens on the plan, whatever the clock
+      // says — an eight o'clock desk and a nine o'clock desk both start their
+      // day by planning it. A later sign-in lands on the day itself. Signing
+      // in is the attendance register, so the server knows which this is;
+      // an older server that does not say falls back to the clock.
+      const att = me.attendance;
+      const first = att && typeof att.first === "boolean" ? att.first : new Date().getHours() < 10;
+      setView(first ? "plan" : "entry");
     }
   }, [me, view, active]);
 
@@ -1526,6 +1616,7 @@ function App() {
       if (r.metrics) setMetrics(r.metrics);
       if (r.needsReason) setNeedsReason(r.needsReason);
       if (r.openBook) setOpenBook(r.openBook);
+      if (r.attendance) setAttToday(r.attendance);
       if (r.billing) setBilling(r.billing);
     } else if (r.authRequired) {
       signOut();
@@ -1872,7 +1963,10 @@ function App() {
       setView("review");
     },
     style: primaryWide
-  }, "Full day review \u2192"), /*#__PURE__*/React.createElement(SectionLabel, null, "The team")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", {
+  }, "Full day review \u2192"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setView("register"),
+    style: primaryWide
+  }, "Attendance register \u2192"), /*#__PURE__*/React.createElement(SectionLabel, null, "The team")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", {
     style: {
       color: MUTED,
       fontSize: 13.5,
@@ -1906,6 +2000,7 @@ function App() {
       key: p.staffId,
       p: p,
       today: today,
+      att: attToday ? attToday[p.staffId] || null : undefined,
       onOpen: () => {
         setActive(p.staffId);
         setDate(todayISO());
@@ -1986,6 +2081,14 @@ function App() {
   // is that the size of the work is on screen while the choice is made: a
   // block set aside for licensing with three tasks in it says so at eight
   // rather than at four.
+  // ---- the attendance register ----------------------------------------------
+  if (view === "register") {
+    return /*#__PURE__*/React.createElement(RegisterView, {
+      me: me, roster: roster, reg: register, weekOf: weekOf, setWeekOf: setWeekOf, vp: vp,
+      onBack: () => setView(me.manager ? "home" : "entry")
+    });
+  }
+
   // ---- performance: the form, the evidence, the two halves ----------------
   if (view === "perf") {
     return /*#__PURE__*/React.createElement(PerfView, {
@@ -2027,6 +2130,10 @@ function App() {
       onBack: () => setView("home")
     }), /*#__PURE__*/React.createElement("div", { style: { padding: "0 18px 40px" } },
 
+      active === me.staffId ? /*#__PURE__*/React.createElement(AttendanceLine, {
+        me: me, api: api, onChange: a => { me.attendance = a; setAttToday(Object.assign({}, attToday || {}, { [me.staffId]: a })); },
+        onRegister: () => setView("register")
+      }) : null,
       /*#__PURE__*/React.createElement("p", {
         style: { fontSize: 13.5, color: MUTED, lineHeight: 1.55, margin: "14px 0 16px" }
       }, "Set the day before it starts. Tick what each block is for and the",
@@ -3898,6 +4005,7 @@ function SubHeader({
 function PersonRow({
   p,
   today,
+  att,
   onOpen,
   onTrend,
   onPerf
@@ -3944,7 +4052,15 @@ function PersonRow({
       fontWeight: 700,
       marginTop: 2
     }
-  }, today ? done + "/4 blocks today" : "Nothing logged today"))), tag && /*#__PURE__*/React.createElement("span", {
+  }, today ? done + "/4 blocks today" : "Nothing logged today"), att === undefined ? null : /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: att ? (att.status === "absent" ? AMBER : att.late ? AMBER : MUTED) : RED,
+      fontWeight: 700,
+      marginTop: 2
+    }
+  }, att ? (att.status === "absent" ? "Not in · " + att.reason : "In at " + att.at + (att.late ? " · " + att.late + " min after start" : ""))
+         : "No sign-in yet"))), tag && /*#__PURE__*/React.createElement("span", {
     style: pillOutline(AMBER)
   }, tag), /*#__PURE__*/React.createElement("button", {
     onClick: onTrend,

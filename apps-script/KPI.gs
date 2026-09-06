@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-06a';
+var SCRIPT_VERSION = '2026-09-06b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -967,6 +967,10 @@ function login_(who, password) {
 
   clearFailures_(key);
   var t = issueToken_(person);
+  // Signing in is the attendance register. The profile carries today's
+  // record so the browser knows whether this is the first sign-in of the day.
+  try { t.profile.attendance = recordAttendance_(t.profile); } catch (e) {}
+  t.profile.leads = leads_(t.profile);
   return { ok: true, token: t.token, profile: t.profile,
            roster: publicRoster_(), schedule: SCHEDULE };
 }
@@ -1680,13 +1684,19 @@ function checkpointReport_(date) {
   // sheet is only used where Salesforce could not be reached.
   var sf = sfkMetricsSafe_(day);
   var live = sf.ok ? sf.staff : {};
+  var att = {};
+  try { attendanceFor_({ staffId: '', manager: true }, day, shiftDays_(day, 1)).forEach(function (o) { att[o.staffId] = o; }); } catch (e) {}
 
   var lines = people.map(function (p) {
     var e = byId[p.staffId];
     var done = e ? blocksDone_(e) : 0;
     var L = live[p.staffId];
+    var a = att[p.staffId];
     return {
       staffId: p.staffId, name: p.name, unit: p.unit,
+      signedIn: a && a.at ? a.at : '',
+      absent: a && a.status === 'absent' ? (a.reason || 'not in') : '',
+      late: a ? a.late : 0,
       status: !e ? 'No entry' : (String(e.Status) === 'Submitted' ? 'Submitted' : 'Draft'),
       blocksDone: done,
       onTrack: done >= 3,
@@ -1908,8 +1918,22 @@ function handle_(action, data, token) {
 
   switch (action) {
     case 'me':
+      // Resuming a session is a sign-in for the register's purposes: the
+      // first activity of the day is the start of the day.
+      try { profile.attendance = recordAttendance_(profile); } catch (e) {}
+      profile.leads = leads_(profile);
       return { ok: true, profile: profile, roster: publicRoster_(), schedule: SCHEDULE,
                kpis: allKpiChoices_() };
+
+    case 'absent':
+      return markAbsent_(data, profile);
+
+    case 'attendance': {
+      var aFrom = isoDay_(data.from) || weekStart_(todayISO_());
+      var aTo = isoDay_(data.to) || shiftDays_(todayISO_(), 1);
+      return { ok: true, from: aFrom, to: aTo, attendance: attendanceFor_(profile, aFrom, aTo),
+               people: attVisible_(profile) };
+    }
 
     case 'updateTask':
       if (typeof updateTask_ !== 'function') {
@@ -1986,7 +2010,8 @@ function handle_(action, data, token) {
                metrics: metricsFor_(profile, data.date),
                needsReason: needsReasonFor_(profile, data.date),
                billing: billingFor_(profile, data.date),
-               openBook: openBookFor_(profile, data.date) };
+               openBook: openBookFor_(profile, data.date),
+               attendance: attendanceToday_(profile) };
     }
 
     case 'training': {
@@ -2156,6 +2181,10 @@ function checkpointHtml_(r) {
           (l.updatedAt ? ' · last saved ' + esc_(l.updatedAt) : '') + '</span></td>' +
         '<td align="right" style="font-size:11px;font-weight:700;color:' + tone + '">' + esc_(l.status) + '</td>' +
       '</tr></table>' +
+      '<div style="font-size:12px;color:' + (l.absent ? MAIL.amber : MAIL.muted) + ';margin-top:5px">' +
+        (l.absent ? 'Not in — ' + esc_(l.absent)
+                  : l.signedIn ? 'In at ' + esc_(l.signedIn) + (l.late ? ' · ' + l.late + ' min after their start' : '')
+                  : 'No sign-in today') + '</div>' +
       '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:5px">' +
         'Closed ' + (l.closed == null ? '—' : l.closed) +
         ' · Open ' + (l.openNow == null ? '—' : l.openNow) +
@@ -3607,6 +3636,166 @@ function hrBundle_(profile) {
   });
   return { ok: true, me: me, reports: reports, types: REVIEW_TYPES, sources: SOURCES,
            setup: { goals: !!goals, competencies: !!comps }, standard: OPR_MIN };
+}
+
+// ---------------------------------------------------------------------------
+//  Attendance
+//
+//  Signing in is the attendance register. The first sign-in of the day is the
+//  time the person started; every later one only refreshes "last seen". There
+//  is no second form to fill: the JotForm register this replaces asked people
+//  to sign in twice, and a register nobody signs is a register with holes.
+//
+//  Somebody who is not in signs in anyway and says so — "not in today", and
+//  why. Their People Leader may mark it for them if they phoned in. The start
+//  time is read against the person's own hours from the schedule, so an
+//  eight o'clock desk and a nine o'clock desk are each measured against their
+//  own day and nobody is "late" for a start that was never theirs.
+// ---------------------------------------------------------------------------
+
+var ATT = { must: ['Date', 'StaffId', 'FirstSignIn'], name: 'Attendance',
+            head: ['Date', 'StaffId', 'Name', 'FirstSignIn', 'LastSeen', 'Status', 'Reason',
+                   'MarkedBy', 'UpdatedAt'] };
+var ATT_GRACE_MIN = 10;
+
+/** "8am – 4pm" -> 480. The first token of the hours string, in minutes. */
+function startFor_(staffId) {
+  var h = String(scheduleFor_(staffId).hours || '8am');
+  var m = /^\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i.exec(h);
+  if (!m) return 8 * 60;
+  var hr = Number(m[1]) % 12, mn = Number(m[2] || 0);
+  if ((m[3] || 'am').toLowerCase() === 'pm') hr += 12;
+  return hr * 60 + mn;
+}
+function hhmm_(d) { return Utilities.formatDate(d, CONFIG.TZ, 'HH:mm'); }
+function minutesOf_(hhmm) {
+  var m = /^(\d{1,2}):(\d{2})/.exec(String(hhmm || ''));
+  return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+}
+function lateBy_(staffId, at) {
+  var mins = minutesOf_(at);
+  if (mins == null) return 0;
+  var over = mins - startFor_(staffId);
+  return over > ATT_GRACE_MIN ? over : 0;
+}
+
+function attSheet_() {
+  var sh = hrTab_(ATT, false);
+  if (sh) return sh;
+  sh = hrTab_(ATT, true);
+  // "08:07" typed into a fresh cell becomes a time value; kept as text the
+  // register reads back exactly what was written.
+  try { sh.getRange('D:E').setNumberFormat('@'); } catch (e) {}
+  return sh;
+}
+
+/** A time cell, whichever shape the sheet hands back: the text that was
+ *  written, or a time value the sheet made of it. */
+function timeStr_(v) {
+  if (v == null || v === '') return '';
+  if (Object.prototype.toString.call(v) === '[object Date]') {
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return p(v.getHours()) + ':' + p(v.getMinutes());
+  }
+  var m = /^(\d{1,2}):(\d{2})/.exec(String(v).trim());
+  return m ? (m[1].length < 2 ? '0' : '') + m[1] + ':' + m[2] : String(v).trim();
+}
+
+/** Today's row for one person, earliest sign-in winning if two devices raced. */
+function attRow_(rows, day, staffId) {
+  var best = null;
+  rows.forEach(function (r, i) {
+    if (isoDay_(r.Date) !== day || String(r.StaffId) !== staffId) return;
+    var t = timeStr_(r.FirstSignIn) || '99:99', b = best ? timeStr_(best.row.FirstSignIn) || '99:99' : null;
+    if (!best || t < b) best = { row: r, at: i + 2 };
+  });
+  return best;
+}
+
+function attOut_(r, staffId) {
+  var at = timeStr_(r.FirstSignIn);
+  return { at: at, lastSeen: timeStr_(r.LastSeen), status: String(r.Status || 'in'),
+           reason: String(r.Reason || ''), late: at ? lateBy_(staffId, at) : 0 };
+}
+
+/** Called on sign-in and on session resume. Cheap on repeats: the day's
+ *  answer is cached for half an hour, so the read only happens once. */
+function recordAttendance_(profile) {
+  var day = todayISO_(), sid = profile.staffId;
+  var cache = null, key = 'att_' + sid + '_' + day;
+  try { cache = CacheService.getScriptCache(); var hit = cache.get(key); if (hit) return JSON.parse(hit); } catch (e) {}
+
+  var sh = attSheet_(), rows = sheetObjects_(sh), now = new Date();
+  var found = attRow_(rows, day, sid), out;
+  if (found) {
+    writeRow_(sh, found.at, colMap_(sh), { LastSeen: hhmm_(now), UpdatedAt: now });
+    out = attOut_(found.row, sid); out.first = false;
+  } else {
+    var o = { Date: day, StaffId: sid, Name: profile.name || sid, FirstSignIn: hhmm_(now),
+              LastSeen: hhmm_(now), Status: 'in', Reason: '', MarkedBy: sid, UpdatedAt: now };
+    sh.appendRow(ATT.head.map(function (h) { return o[h] != null ? o[h] : ''; }));
+    out = attOut_(o, sid); out.first = true;
+  }
+  forgetHr_(ATT);
+  // The cached copy says "not first" — a second sign-in five minutes later
+  // must land on the day, not the plan.
+  try { cache.put(key, JSON.stringify(Object.assign({}, out, { first: false })), 1800); } catch (e) {}
+  return out;
+}
+
+/** "Not in today", with the reason. Self, or the People Leader for a report. */
+function markAbsent_(data, profile) {
+  var staffId = String(data.staffId || profile.staffId);
+  if (staffId !== profile.staffId && !isLeadOf_(profile, staffId)) return { ok: false, error: 'Not yours to mark.' };
+  var day = isoDay_(data.date) || todayISO_();
+  var reason = String(data.reason || '').trim();
+  if (!reason) return { ok: false, error: 'Say why — sick, on leave, or what it is.' };
+  var sh = attSheet_(), rows = sheetObjects_(sh), now = new Date();
+  var found = attRow_(rows, day, staffId);
+  var patch = { Status: 'absent', Reason: reason, MarkedBy: profile.staffId, UpdatedAt: now };
+  if (found) writeRow_(sh, found.at, colMap_(sh), patch);
+  else {
+    var name = (publicRoster_().filter(function (p) { return p.staffId === staffId; })[0] || {}).name || staffId;
+    var o = Object.assign({ Date: day, StaffId: staffId, Name: name, FirstSignIn: '', LastSeen: '' }, patch);
+    sh.appendRow(ATT.head.map(function (h) { return o[h] != null ? o[h] : ''; }));
+  }
+  forgetHr_(ATT);
+  try { CacheService.getScriptCache().remove('att_' + staffId + '_' + day); } catch (e) {}
+  return { ok: true, date: day, staffId: staffId, status: 'absent', reason: reason };
+}
+
+/** Who a person may see the register for: themselves, the people they lead,
+ *  everyone for the Branch Manager. */
+function attVisible_(profile) {
+  var v = [profile.staffId].concat(leads_(profile));
+  var seen = {}; return v.filter(function (s) { if (seen[s]) return false; seen[s] = true; return true; });
+}
+
+/** The register for a date range. */
+function attendanceFor_(profile, from, to) {
+  var who = {}; attVisible_(profile).forEach(function (s) { who[s] = 1; });
+  var out = [];
+  (hrRows_(ATT, true) || []).forEach(function (r) {
+    var d = isoDay_(r.Date), sid = String(r.StaffId);
+    if (!who[sid] || d < from || d >= to) return;
+    var o = attOut_(r, sid); o.date = d; o.staffId = sid; o.markedBy = String(r.MarkedBy || '');
+    out.push(o);
+  });
+  // Two rows for one day (two devices raced) collapse to the earliest sign-in.
+  var byKey = {};
+  out.forEach(function (o) {
+    var k = o.date + '|' + o.staffId, cur = byKey[k];
+    if (!cur || (o.at && (!cur.at || o.at < cur.at))) byKey[k] = o;
+  });
+  return Object.keys(byKey).map(function (k) { return byKey[k]; })
+    .sort(function (a, b) { return a.date === b.date ? a.staffId.localeCompare(b.staffId) : b.date.localeCompare(a.date); });
+}
+
+/** Today, keyed by staffId, for the rows response. */
+function attendanceToday_(profile) {
+  var day = todayISO_(), m = {};
+  attendanceFor_(profile, day, shiftDays_(day, 1)).forEach(function (o) { m[o.staffId] = o; });
+  return m;
 }
 
 // ---------------------------------------------------------------------------
