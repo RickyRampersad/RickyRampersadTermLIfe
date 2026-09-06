@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Reporting your day · Ricky Rampersad Branch</title>
+<title>How we work · Ricky Rampersad Branch</title>
 <link rel="icon" href="../../favicon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,23 +30,28 @@
   *{box-sizing:border-box}
   body{margin:0;background:var(--paper);color:var(--ink);
     font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.6}
-  .wrap{max-width:720px;margin:0 auto;padding:0 20px 70px}
+  .wrap{max-width:760px;margin:0 auto;padding:0 20px 70px}
   .mast{background:linear-gradient(158deg,var(--navy) 0%,var(--deep) 100%);
-    border-bottom:3px solid var(--gold);color:#fff;padding:32px 0 28px;margin-bottom:30px}
+    border-bottom:3px solid var(--gold);color:#fff;padding:30px 0 28px;margin-bottom:30px}
   .mast .wrap{padding-bottom:0}
+  .masthead{display:flex;gap:16px;align-items:center;margin-bottom:14px}
+  .mark{width:46px;height:46px;flex:0 0 auto;border-radius:13px;overflow:hidden;background:#07131f;
+    display:grid;place-items:center}
+  .mark img{width:100%;height:100%;display:block}
   .eyebrow{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
-    color:var(--soft);margin:0 0 6px}
+    color:var(--soft);margin:0}
   h1{font-family:Newsreader,Georgia,serif;font-weight:600;font-size:clamp(28px,5.2vw,40px);
     line-height:1.12;margin:0 0 10px;color:#fff;text-wrap:balance}
-  .stand{margin:0;font-size:15.5px;color:#D9DEEA;max-width:58ch}
-  h2{font-family:Newsreader,Georgia,serif;font-weight:600;font-size:23px;margin:40px 0 4px;
+  .stand{margin:0;font-size:15.5px;color:#D9DEEA;max-width:60ch}
+  h2{font-family:Newsreader,Georgia,serif;font-weight:600;font-size:23px;margin:42px 0 4px;
     text-wrap:balance}
   h3{font-size:16px;font-weight:700;margin:24px 0 6px}
   .sub{margin:0 0 16px;color:var(--muted);font-size:14.5px}
   p{color:var(--ink2);margin:0 0 12px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:13px;
     box-shadow:var(--shadow);padding:18px 20px;margin-bottom:13px}
-  .step{display:flex;gap:14px;align-items:flex-start}
+  .card h3:first-child{margin-top:0}
+  .step{display:flex;gap:14px;align-items:flex-start;margin-bottom:10px}
   .num{flex:0 0 auto;width:29px;height:29px;border-radius:50%;border:1.5px solid var(--gold);
     color:var(--gold);font-size:13px;font-weight:700;display:grid;place-items:center;margin-top:2px}
   .note{border-left:3px solid var(--gold);background:var(--sunk);border-radius:0 9px 9px 0;
@@ -55,264 +60,447 @@
   .note.warn{border-left-color:var(--warn)}
   .note.stop{border-left-color:var(--stop)}
   .lbl{display:block;font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;
-    margin-bottom:3px}
+    margin-bottom:3px;color:var(--gold)}
   .note.good .lbl{color:var(--good)} .note.warn .lbl{color:var(--warn)} .note.stop .lbl{color:var(--stop)}
   .note b{color:var(--ink)}
   .tw{overflow-x:auto;border:1px solid var(--line);border-radius:11px;margin:0 0 14px}
-  table{border-collapse:collapse;width:100%;font-size:14px;min-width:440px}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:460px}
   th,td{padding:10px 13px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
   th{background:var(--sunk);font-size:10.5px;font-weight:700;letter-spacing:.1em;
     text-transform:uppercase;color:var(--muted)}
   tr:last-child td{border-bottom:none}
+  td:first-child{font-weight:600;color:var(--ink);white-space:nowrap}
   code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13.5px;
     background:var(--sunk);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
   ul{margin:0 0 12px;padding-left:20px;color:var(--ink2)}
   li{margin-bottom:5px}
-  .quote{border-left:3px solid var(--gold);padding:2px 0 2px 14px;margin:0 0 12px;
-    font-style:italic;color:var(--ink2)}
+  .screen{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;line-height:1.55;
+    background:var(--sunk);border:1px solid var(--line);border-radius:9px;padding:12px 14px;
+    margin:0 0 12px;color:var(--ink);white-space:pre-wrap;overflow-x:auto}
+  .screen .g{color:var(--gold);font-weight:700}
+  .screen .w{color:var(--warn);font-weight:700}
+  .screen .m{color:var(--muted)}
   .flow{display:grid;gap:9px;margin:0 0 14px}
-  .flow-row{display:flex;gap:12px;align-items:center;background:var(--card);
+  .flow-row{display:flex;gap:12px;align-items:flex-start;background:var(--card);
     border:1px solid var(--line);border-radius:11px;padding:12px 14px}
-  .flow-when{flex:0 0 92px;font-size:12px;font-weight:700;color:var(--gold);
-    font-variant-numeric:tabular-nums}
-  .flow-what{font-size:14px}
+  .flow-when{flex:0 0 96px;font-size:12px;font-weight:700;color:var(--gold);
+    font-variant-numeric:tabular-nums;padding-top:2px}
+  .flow-what{font-size:14px;color:var(--ink2)}
+  .flow-what b{color:var(--ink)}
+  .principles{display:grid;gap:10px;margin:0 0 14px}
+  .pr{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--gold);
+    border-radius:0 11px 11px 0;padding:12px 16px}
+  .pr b{display:block;color:var(--ink);font-size:15px;margin-bottom:2px}
+  .pr span{font-size:14px;color:var(--ink2)}
+  .role{margin-top:26px}
+  .role .who{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin:0 0 2px}
+  .toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin:0 0 6px}
+  .toc a{display:block;background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 13px;font-size:14px;text-decoration:none;color:var(--ink)}
+  .toc a:hover{border-color:var(--gold)}
+  .toc a span{display:block;font-size:12px;color:var(--muted)}
   hr{border:none;border-top:1px solid var(--line);margin:38px 0 0}
   footer{margin-top:24px;font-size:12.5px;color:var(--muted);text-align:center}
   a{color:var(--navy);text-decoration-color:var(--gold);text-underline-offset:2px}
   :root[data-theme="dark"] a,:root:not([data-theme="light"]) a{color:var(--gold)}
   @media (prefers-color-scheme:light){:root:not([data-theme="dark"]) a{color:var(--navy)}}
-  @media print{.mast{background:var(--navy)!important;-webkit-print-color-adjust:exact}}
+  @media print{.mast{background:var(--navy)!important;-webkit-print-color-adjust:exact}.toc{display:none}}
 </style>
 </head>
 <body>
 
 <div class="mast"><div class="wrap">
-  <p class="eyebrow">Ricky Rampersad's Branch · A Ricky Rampersad Project</p>
-  <h1>Reporting your day</h1>
-  <p class="stand">Four blocks. Four short reports. Under five minutes across a whole day —
-  and it is the difference between saying you did the work and showing it.</p>
+  <div class="masthead">
+    <div class="mark"><img src="/logo-mark.png" alt=""></div>
+    <p class="eyebrow">Ricky Rampersad Branch · How we work</p>
+  </div>
+  <h1>Plan the day before it starts. Work what needs you. Say whether it landed.</h1>
+  <p class="stand">The branch's operating model from September 2026, for everyone who signs in —
+  Branch Manager to Sales Support. What the tracker shows you, what it asks of you, and why.</p>
 </div></div>
 
 <div class="wrap">
 
-  <h2>Why this exists</h2>
-  <p class="sub">It is not extra admin. It is already in your job document.</p>
-
-  <div class="card">
-    <p>Your job document lists your responsibilities, and <b>Reporting is one of them</b>.
-    For Sales Support it is number four of six: New Application Process · Pending, Lapse &amp;
-    Follow-ups · Document Management · <b>Reporting</b> · Administrative Support · and other
-    duties as assigned. Every job document in the branch — Branch Manager's Assistant,
-    Personal Assistant, Unit Manager — carries the same line in its own words.</p>
-    <p>Your four KPI blocks are those same responsibilities, in the order your day runs. So
-    reporting on your work is part of the job, not something added on top of it.</p>
-    <div class="note">
-      <span class="lbl">From your job document</span>
-      <div class="quote">"All completed applications must be submitted to Head Office within
-      2 days of receipt from agent."</div>
-      <div class="quote">"All policy related documents to be submitted to the relevant party
-      within one (1) day of receipt."</div>
-      <div class="quote">"All policy related documents to be prepared or processed with 100%
-      accuracy at all times."</div>
-      Those are the standards you are measured against. A block report is how anyone —
-      including you — knows whether they were met.
-    </div>
+  <div class="toc">
+    <a href="#why">Why we changed<span>Three findings from our own book</span></a>
+    <a href="#day">The shape of a day<span>From sign-in to Friday</span></a>
+    <a href="#plan">The morning plan<span>Every line on the screen</span></a>
+    <a href="#block">Working a block<span>The list, the reason, the close</span></a>
+    <a href="#roles">What is required of you<span>By role, from your job document</span></a>
+    <a href="#rules">The rules<span>Short, and not optional</span></a>
+    <a href="#auto">What the system does itself<span>Emails, the wall, Salesforce</span></a>
+    <a href="#wrong">If something goes wrong<span>What to do, in order</span></a>
   </div>
 
-  <h2>Your day</h2>
-  <p class="sub">Already set up. You do not build it each morning.</p>
+  <h2 id="why">Why we changed</h2>
+  <p class="sub">Not a new form. A different question.</p>
 
-  <div class="card">
-    <p>Open <code>/kpi/</code> and sign in with your email or agent number. You land on your own
-    day, and only your own — nobody else's record is visible to you.</p>
-    <p>Your hours, your lunch and your four blocks are already there, each showing what it is
-    for. Sasha's 8–10 says
-    <i>Premium Dues / Surveys</i>. That comes from the branch schedule, so it no longer has to be
-    emailed out and read off a table every morning.</p>
-    <div class="note good">
-      <span class="lbl">The four squares</span>
-      The strip at the top of your day shows one square per block. Grey means not yet reported,
-      green means in. Four green is a finished day.
-    </div>
+  <p>The old tracker asked four times a day: <i>what did you do?</i> It was answered from memory
+  at four o'clock, the Salesforce numbers were typed by hand, and it counted whether a box had
+  been filled rather than whether any work had moved. We read our own book in Salesforce on
+  5 September and three things were plain.</p>
+
+  <div class="principles">
+    <div class="pr"><b>Most of what is open is already in hand.</b>
+      <span>Across the branch, only about one open task in three has gone a week without being
+      touched. The rest is being worked. "Thirty-seven open" frightens people and tells them
+      nothing about their morning. "Nine need you" is true, and can be acted on.</span></div>
+    <div class="pr"><b>The clock is not the constraint.</b>
+      <span>One desk clears seventeen tasks a day; another clears three, because its work is
+      escalations and licensing rather than renewals. The same four two-hour blocks for both
+      is a schedule, not a plan.</span></div>
+    <div class="pr"><b>Retyping is the waste.</b>
+      <span>Salesforce already holds what was done, on which task, for which client. Asking a
+      person to write it out again at four o'clock produced "3 tasks" and a name — and cost the
+      branch the record it thought it was keeping.</span></div>
   </div>
 
-  <h2>Reporting a block</h2>
-  <p class="sub">At the end of the block — not at four o'clock from memory.</p>
+  <p>So the model turned around. The day is planned before it starts, against the book as it
+  actually is. Each block shows the work itself. At the close, one question. And the record of
+  what was done lives where it was done — in Salesforce — with the tracker asking only whether
+  the objective landed.</p>
 
-  <div class="card"><div class="step"><span class="num">1</span><div>
-    <h3 style="margin-top:0">Open the block you just finished</h3>
-    <p>Tap its row. The <b>KPI worked</b> is already chosen from your schedule, so you are
-    confirming it rather than starting from a blank page. If the block went somewhere else,
-    change it — that is what the list is for.</p>
-  </div></div></div>
-
-  <div class="card"><div class="step"><span class="num">2</span><div>
-    <h3 style="margin-top:0">Three lines that are not the same line</h3>
-    <div class="tw"><table>
-      <tr><th>Field</th><th>What belongs there</th></tr>
-      <tr><td><b>Actioned</b></td><td>What you worked on. Names, counts, cases —
-        "18 premium dues sent out", not "worked on premium dues".</td></tr>
-      <tr><td><b>Resolved / closed</b></td><td>What is <i>genuinely</i> finished. If it is
-        still moving, it is not resolved.</td></tr>
-      <tr><td><b>Still open &amp; owned by you</b></td><td>What you carry into tomorrow.
-        Being honest here is not a bad mark — it is how work gets help.</td></tr>
-    </table></div>
-  </div></div></div>
-
-  <div class="card"><div class="step"><span class="num">3</span><div>
-    <h3 style="margin-top:0">If you are waiting on somebody</h3>
-    <p>Name them, and say when you last chased. "Waiting on Head Office" is not a blocker;
-    "Kerwyn — chased Tuesday and again today" is.</p>
-    <div class="note stop">
-      <span class="lbl">The branch rule</span>
-      A rolled due date is not an actioned task. Moving a date without a genuine blocker and a
-      named owner reads as work done when nothing moved.
-    </div>
-  </div></div></div>
-
-  <div class="card"><div class="step"><span class="num">4</span><div>
-    <h3 style="margin-top:0">Submit the block</h3>
-    <p>Press <b>Submit block</b>. That block is written and stamped with the time; the other
-    three are untouched. You can submit again later to correct it — it updates rather than
-    adding a second entry.</p>
-    <div class="note good">
-      <span class="lbl">You get your own copy</span>
-      The moment you submit, your own words arrive in your inbox: what you wrote, how many
-      blocks are in, and which are still to come. <b>That is the copy to post to the branch
-      group</b> — no retyping.
-    </div>
-  </div></div></div>
-
-  <h3>If the block included training</h3>
-  <p>Choose <b>Training delivered</b> as the KPI and a training record opens: who you trained,
-  the topic, objectives set against met, whether you tested them and the result, and the
-  follow-up. It is kept as its own line in the branch's training register, so the branch has a
-  record of who was brought up to speed on what.</p>
-
-  <h2>The day's own fields</h2>
-  <p class="sub">These belong to the day, not to any one block. Save them once — <b>Save the day</b>.</p>
-
-  <div class="card">
-    <div class="tw"><table>
-      <tr><th>Field</th><th>What it is for</th></tr>
-      <tr><td><b>Task position</b></td><td>Closed today, overdue now, and how many of those
-        are 60+ days. Straight from Salesforce.</td></tr>
-      <tr><td><b>Value Added</b></td><td>Something the branch would not have unless you brought
-        it. If there genuinely was nothing, write "None today" — the honest entry counts.</td></tr>
-      <tr><td><b>Innovation / idea</b></td><td>A tool, tracker, checklist, macro or process fix
-        you spotted. The friction, and your fix.</td></tr>
-      <tr><td><b>System flags</b></td><td>What broke, and who you flagged it to.</td></tr>
-    </table></div>
-    <div class="note">
-      <span class="lbl">Why the last two are not optional decoration</span>
-      Your job document, under <b>Continuous Improvement</b>: <i>"demonstrate by making
-      recommendations."</i> Under <b>Curiosity</b>: <i>"be proactive in sharing views or
-      different perspectives to aid with improving service offerings."</i>
-      Those two boxes are where you get the credit for exactly that.
-    </div>
+  <div class="note">
+    <span class="lbl">The principle under all of it</span>
+    <b>Focus on what matters, not on activity for its own sake.</b> The tracker's job is to put in
+    front of you the smallest true list of what needs you today, and to get out of the way.
   </div>
 
-  <h2>What happens after you submit</h2>
-  <p class="sub">Who sees what, and when.</p>
+  <h2 id="day">The shape of a day</h2>
+  <p class="sub">The same rhythm for everyone. Only the work inside it differs.</p>
 
   <div class="flow">
-    <div class="flow-row"><span class="flow-when">On submit</span>
-      <span class="flow-what"><b>You</b> get your block back by email — your copy for the branch group.</span></div>
-    <div class="flow-row"><span class="flow-when">12:00</span>
-      <span class="flow-what">If your morning is still blank, <b>you</b> get a reminder naming which blocks are outstanding.</span></div>
-    <div class="flow-row"><span class="flow-when">15:00</span>
-      <span class="flow-what">If blocks 1–3 are not all in, <b>you</b> get asked for them, and for your final block.</span></div>
-    <div class="flow-row"><span class="flow-when">15:00</span>
-      <span class="flow-what">The <b>Branch Manager</b> gets the branch at the cut — who logged, who did not, every blocker raised.</span></div>
-    <div class="flow-row"><span class="flow-when">Friday 17:00</span>
-      <span class="flow-what">The <b>week</b>, against the week before — closed, overdue, aged, value added, ideas, training.</span></div>
+    <div class="flow-row"><div class="flow-when">Before 10:00</div>
+      <div class="flow-what"><b>Set the day before it starts.</b> Sign in and the tracker opens on
+      the plan. Your open book has already been read from Salesforce. Tick what each block is for,
+      see how much of it actually needs you and how long that is at your own pace, and press
+      <b>Start the day</b>.</div></div>
+    <div class="flow-row"><div class="flow-when">Each block</div>
+      <div class="flow-what"><b>Work the list, then close it.</b> The block shows its tasks. As each
+      one moves, the record goes on the task in Salesforce. When the block ends, answer
+      <b>Was the objective met?</b> — Met, Partly, or Not yet — and submit. A receipt lands in your
+      inbox.</div></div>
+    <div class="flow-row"><div class="flow-when">12:00</div>
+      <div class="flow-what">If a morning block has not been submitted, one reminder. If both are
+      in, nothing — you will not be written to for work you have already done.</div></div>
+    <div class="flow-row"><div class="flow-when">15:00</div>
+      <div class="flow-what">The Branch Manager's <b>3pm checkpoint</b> goes out: who has reported,
+      who is behind, the branch's task position, live from Salesforce. Anyone with three blocks
+      still outstanding gets one chase.</div></div>
+    <div class="flow-row"><div class="flow-when">Before you leave</div>
+      <div class="flow-what"><b>Save the day.</b> Value added, an idea if you had one, anything to
+      flag. Three fields; most days two are "none".</div></div>
+    <div class="flow-row"><div class="flow-when">Friday 17:00</div>
+      <div class="flow-what">The <b>weekly summary</b>: the week person by person, where the time
+      went, value added, ideas, training, blockers, and movement on the week before.</div></div>
   </div>
 
   <div class="note good">
-    <span class="lbl">If you are up to date you hear nothing</span>
-    The reminders look at what has actually been submitted and skip anyone who is current.
-    They only arrive when something is genuinely missing.
+    <span class="lbl">How long it takes</span>
+    Two minutes to plan the morning. Under a minute to close a block. The rest of the day is the
+    work, not the reporting of it.
   </div>
 
-  <h2>What it becomes</h2>
-  <p class="sub">This is the part worth caring about.</p>
+  <h2 id="plan">The morning plan</h2>
+  <p class="sub">Every line on the screen, and what it is telling you.</p>
+
+  <p>Sign in before ten and this is what opens. It is the same four blocks you have always had,
+  with their times — what has changed is that each one now shows you the size and the shape of the
+  work before you commit two hours to it.</p>
+
+  <div class="screen"><span class="g">KPI 1 · 8 – 10am</span>                                  <span class="m">17 open · 1 late</span>
+Premium Dues / Surveys
+
+<span class="m">YOUR SALESFORCE TASKS — OPEN, AND HOW MANY ARE LATE</span>
+ ✓ Renewals / Premium Dues / Billing · <span class="w">4 need you of 17, 1 late</span>  <span class="m">52 in the branch</span>
+   Servicing lines · <span class="w">1 need you of 3</span>  <span class="m">24 in the branch</span>
+   Claims / Maturities  <span class="m">8 in the branch</span>
+
+<span class="g">About 2 hours at your rate.</span> <span class="m">4 waiting, against 150 you closed in the last 60 days.</span>
+
+<span class="g">WHAT IS IN IT</span>
+3 of them for one agent
+  Group renewal – a group client        due 7 Sept · In Progress · <span class="w">untouched 21 days</span>
+  Confirm funds in DISB & SUSP          due 7 Sept · In Progress
+  …
+
+How long do you think this needs?   <span class="m">20 min · 40 min · 1 hr · 1½ hr · 2 hr · 3 hr +</span></div>
 
   <div class="card">
-    <p>Every block you report builds a record — closed against overdue, days logged, value added,
-    ideas raised, training delivered. Your <b>Trends</b> view is that record, and it is in your
-    own words with the dates attached.</p>
-    <p>When your appraisal comes round, that is the evidence. Not a memory of a good month —
-    a hundred small entries you made at the time.</p>
-    <div class="note">
-      <span class="lbl">A week reported properly</span>
-      Reports in <b>25/25</b> · closed <b>236 → 463</b> · overdue <b>146 → 68</b> ·
-      60+ days <b>44 → 16</b> · value added <b>0 → 10</b>.
-      Nobody was argued into that. The blocks were reported as they were worked, so the branch
-      could see what was actually happening while there was still time to act on it.
+    <h3>The chip: "4 need you of 17, 1 late"</h3>
+    <p><b>Need you</b> is the number to plan around. It counts open tasks of that type that nobody
+    has touched in seven days. An open task modified yesterday is in somebody's hands — the same
+    task untouched for three weeks is not, whatever its due date says. When nothing has gone quiet,
+    the chip says <b>"17 open, all in hand"</b>, and that is a good morning.</p>
+    <p><b>Late</b> is past its due date. <b>In the branch</b> is the same type across everyone, so you
+    can tell whether your three are the whole picture or your corner of it.</p>
+
+    <h3>The estimate: "About 2 hours at your rate"</h3>
+    <p>Built from what <i>you</i> actually clear in a day, from your own last sixty days — not a
+    branch average, and not a guess about minutes. It shows its working beside it so it can be
+    argued with. Where the history is too thin to mean anything, no estimate is offered at all.</p>
+    <p>If the work will not fill focused time, it says so: <i>"About half an hour at your rate — not a
+    two-hour block on its own."</i> That is the cue to pair it with something, not to stretch it.</p>
+
+    <h3>What is in it</h3>
+    <p>The tasks themselves, untouched-first, in the order they fall due, with the agent each is for.
+    Where one agent holds three or more, that is named on its own line: six chases to one agent is
+    one conversation, not six.</p>
+
+    <h3>Late, and no reason on it yet</h3>
+    <p>Below the blocks, only the exceptions: overdue tasks carrying no reason, grouped by agent.
+    Nothing is asked about work that is running fine.</p>
+
+    <h3>How long do you think this needs?</h3>
+    <p>Your own estimate, made with the counts in front of you. It is kept against the outcome you
+    give at the close, and over the coming weeks that pairing — what you planned against what
+    landed — becomes the branch's most honest measure of how long our work really takes.</p>
+  </div>
+
+  <div class="note warn">
+    <span class="lbl">Signed in after ten</span>
+    The tracker opens on the day instead, with the plan one tap away at the top: <b>Plan the day</b>.
+    Nobody is planned at half past three.
+  </div>
+
+  <h2 id="block">Working a block</h2>
+  <p class="sub">The list, the reason, the close.</p>
+
+  <div class="step"><div class="num">1</div><div>
+    <p><b>The work is on the task, not in the box.</b> As each task moves, put a line on it in
+    Salesforce — in the description, or as a Chatter note. Either counts. Neither is optional. A
+    task moved forward with nothing written on it is not a record that anything was done.</p></div></div>
+  <div class="step"><div class="num">2</div><div>
+    <p><b>An overdue task with no reason gets a box.</b> The tracker lists them — <i>Overdue with no
+    reason given</i> — with one line to fill: what it is waiting on, and who owns the next step.
+    What you write goes straight into the task's <i>Task Update Reason</i> in Salesforce. A rolled
+    date is not an actioned task.</p></div></div>
+  <div class="step"><div class="num">3</div><div>
+    <p><b>Three lines, which are not the same line.</b> <i>Actioned</i> — which matter, and what
+    moved. <i>Resolved / closed</i> — what came of it, or "none today", which is an honest answer.
+    <i>Still open &amp; owned by you</i> — what you are carrying forward, and if it is waiting on
+    somebody, who, and the date you last chased.</p></div></div>
+  <div class="step"><div class="num">4</div><div>
+    <p><b>Was the objective met?</b> Met, Partly, or Not yet. If not, one line on what stopped it.
+    That is the whole close. Then <b>Submit block</b>.</p></div></div>
+
+  <div class="note">
+    <span class="lbl">The standard for anything you write</span>
+    <b>How many, or which one.</b> A count, or a case. "Actioned remaining tasks" is neither. "5
+    pending cases chased, 3 replied with documents, 1 lapsing Friday" is both. If a block reads
+    thin the tracker asks once, and then sends whatever you write — it is a prompt, not a gate.
+  </div>
+
+  <p>If the block included training, four more fields open: who, what was covered, objectives set
+  against met, and the check or test. Those go to the training register, which is the record the
+  branch reports from.</p>
+
+  <h2 id="roles">What is required of you</h2>
+  <p class="sub">By role. Your KPI list is your job document, in the order your day runs.</p>
+
+  <p>The types you tick are not a menu somebody invented for the tracker. Ten of them are the
+  Salesforce task types the branch already files every task under, so they carry live numbers. The
+  rest are the responsibilities in your job document that Salesforce does not hold — those are
+  written in words, and no number is expected against them.</p>
+
+  <div class="tw"><table>
+    <tr><th>Everyone</th><th>Each morning</th><th>Each block</th><th>Each day</th></tr>
+    <tr><td>Whatever your role</td>
+        <td>Sign in before ten. Tick what each block is for. Read "need you" before "open". Give
+            each block an honest estimate. Start the day.</td>
+        <td>Work the list. A line on every task you touch, in Salesforce. A reason on every overdue.
+            Answer "did it land" and submit before the next block starts.</td>
+        <td>Save the day before you leave. Read your receipts — they are your copy of your own
+            record.</td></tr>
+  </table></div>
+
+  <div class="role">
+    <p class="who">Sales Support Assistant</p>
+    <div class="card">
+      <p><b>You own:</b> the new application process · client portfolios and macros · document
+      management (scan, classify, verify) · reporting · administrative support · mail and contracts
+      · quotations and proposals · the orphan adoption listing · OFT collation · surveys and Query
+      Pal · task management.</p>
+      <p><b>Your book is mostly case work:</b> pendings, renewals and billing, servicing lines. It is
+      the fastest-moving book in the branch and, on the day we read it, the cleanest — the
+      tracker should say "all in hand" often. When it says "need you", that is the exception to
+      go to first.</p>
+      <p><b>What you see:</b> your own days, your own book, your own trend. Your team's position is on
+      the office wall and in the Branch Manager's checkpoint.</p>
     </div>
   </div>
 
-  <h2>The standard</h2>
+  <div class="role">
+    <p class="who">Personal Assistant to the Branch Manager</p>
+    <div class="card">
+      <p><b>You own:</b> mail and contracts · document delivery and collection · the diary,
+      appointments and travel · Branch Manager support · scripts and transmittals · banking, errands
+      and office runs · supplies and facilities · meeting preparation and branch events.</p>
+      <p><b>Your book is movement:</b> most of it never becomes a Salesforce task, so most of your
+      blocks are written in words — where a thing went, and who has it now. The Salesforce-backed
+      types on your list are the scripts and transmittals and the RR Operations items; those carry
+      numbers.</p>
+      <p><b>What you see:</b> your own days and book.</p>
+    </div>
+  </div>
+
+  <div class="role">
+    <p class="who">Branch Manager's Assistant</p>
+    <div class="card">
+      <p><b>You own:</b> new application oversight · surveys and Query Pal · pending, re-date and
+      persistency · new agent activity (recruitment, OFT, licensing) · reporting (production, RDAR)
+      · budget and expense · people management and staff leadership · orphan policy management ·
+      issues resolution and future payments · administrative support · escalations · task
+      distribution.</p>
+      <p><b>Your book is the heaviest per item in the branch.</b> Licensing, staffing and HR,
+      escalations, claims. Your rate will read low beside a support desk's and that is the shape
+      of the work, not a judgement — the estimate is built against <i>your</i> pace, not theirs.
+      When "need you" is high on Licensing / Staffing / SA / HR, that is where the branch's risk
+      sits.</p>
+      <p><b>Task distribution is yours.</b> Work arriving untyped, or landing on the wrong desk, is
+      yours to file and to move. The wall's "untyped inbound" card is a measure of this.</p>
+      <p><b>What you see:</b> your own days and book. The support team's position is on the wall
+      and in the Branch Manager's checkpoint; the daily DILO you send them is now the block
+      schedule the tracker shows.</p>
+    </div>
+  </div>
+
+  <div class="role">
+    <p class="who">Unit Manager</p>
+    <div class="card">
+      <p><b>You own:</b> unit recruitment · joint field work · unit production and activity · agent
+      licensing and development · unit persistency · your personal production and own book · the
+      unit meeting and coaching · client escalations.</p>
+      <p><b>Most of your day is not a Salesforce task,</b> and it should not be forced into one. Field
+      work, one-on-ones and coaching are written in words, and the standard is the same: which
+      agent, what was covered, what was agreed. The Salesforce-backed types that do apply —
+      opportunity, pendings, licensing — carry numbers.</p>
+      <p><b>Your unit's persistency is a KPI on your list.</b> Log it against the block it was
+      worked in, with the case names.</p>
+      <p><b>What you see:</b> your own days and book. Your unit's agents are not tracker users; your
+      view of them is Salesforce and the wall.</p>
+    </div>
+  </div>
+
+  <div class="role">
+    <p class="who">Assistant Branch Manager</p>
+    <div class="card">
+      <p><b>You own:</b> recruitment intake and selection · agent school and onboarding · unit
+      manager supervision · joint field work · production and pipeline · persistency and
+      conservation · agent licensing and compliance · personal production · client escalations ·
+      reporting (production, RDAR) · deputising for the Branch Manager.</p>
+      <p><b>You carry the programmes.</b> Intake, agent school, licensing — work with a calendar
+      rather than a task list. Block it, name the cohort and the stage, and say what moved.</p>
+      <p><b>When you deputise, you deputise for the rhythm too:</b> the 3pm checkpoint and the wall
+      are read by whoever is running the branch that day.</p>
+      <p><b>What you see:</b> your own days and book. The branch view — every person's days, the
+      checkpoint, the weekly, the wall — is the Branch Manager's, and yours when the Branch
+      Manager's address is set to you for the day.</p>
+    </div>
+  </div>
+
+  <div class="role">
+    <p class="who">Branch Manager</p>
+    <div class="card">
+      <p><b>You own:</b> recruitment and selection · agent development and field training ·
+      production and pipeline · activity management (one-on-ones, joint field work) · persistency
+      and conservation · compliance, licensing and market conduct · budget and expense · the branch
+      team · your personal production and own book · client escalations · reporting (production,
+      RDAR, branch meeting) · business planning.</p>
+      <p><b>Your book is the branch's largest and its least typed,</b> and the day we read it, most
+      of its overdue sat there. Two things follow. Give every task on your desk a type — an untyped
+      task is invisible to every count on every screen. And get the case work off your desk: a
+      billing task belongs on a support desk, and the tracker will show you whose.</p>
+      <p><b>Your servicing runs are counted, and counted separately.</b> A run that reaches hundreds
+      of clients at once is real work and a real contact — it is reported on its own line, never
+      netted against case work and never subtracted from it.</p>
+      <p><b>What you see:</b> everything. Every person's days and book, the 3pm checkpoint, the
+      weekly summary, trends per person, and the wall. That reach is yours alone, so that what is
+      on the wall was put there by one accountable pair of eyes.</p>
+    </div>
+  </div>
+
+  <div class="note">
+    <span class="lbl">Where the job document goes next</span>
+    Your KPI list already is your job document. The quarterly appraisal will read from this same
+    record — closed, in hand, late, and your own planned-against-met — so that when the quarter
+    is reviewed, it is measured against the document you were handed and the days you actually
+    logged, not against recollection.
+  </div>
+
+  <h2 id="rules">The rules</h2>
+  <p class="sub">Short. Agreed. Not optional.</p>
+
   <div class="card">
     <ul>
-      <li>Completed applications to Head Office within <b>2 days</b> of receipt.</li>
-      <li>Policy documents processed with <b>100% accuracy</b>.</li>
-      <li>Documents to the relevant party within <b>1 day</b> of receipt.</li>
-      <li>A rolled due date is not an actioned task — log the genuine blocker and the owner.</li>
-      <li>"Waiting on someone" needs a <b>named person</b> and the date last chased.</li>
-      <li>Value Added is logged every day — even when the honest entry is "None today".</li>
-      <li>Report each block <b>as it ends</b>, not at the end of the day.</li>
-      <li>Every entry says <b>how many</b>, or <b>which one</b>.</li>
+      <li><b>A line on every task you touch.</b> Description or Chatter. A task moved with nothing
+          written on it did not happen.</li>
+      <li><b>A reason on every overdue.</b> What it is waiting on and who owns the next step. In
+          the box the tracker gives you, which writes it to Salesforce.</li>
+      <li><b>A block is submitted when it ends</b>, not at four o'clock from memory.</li>
+      <li><b>How many, or which one.</b> A count or a case in every line you write.</li>
+      <li><b>Waiting on somebody is not a blocker until it has a name and a date last chased.</b></li>
+      <li><b>An untyped task is an invisible task.</b> File it, or it is in nobody's count.</li>
+      <li><b>Two kinds of work are never added together or subtracted from each other.</b> Case
+          work, one at a time. Servicing runs, hundreds at once. Both are the branch's work; they
+          are not the same measurement.</li>
+      <li><b>No estimate is better than a wrong one.</b> Where the tracker has too little history
+          it says nothing, and so should you.</li>
     </ul>
   </div>
 
-  <h2>How many, or which one</h2>
+  <h2 id="auto">What the system does itself</h2>
+  <p class="sub">So you know what is yours and what is not.</p>
+
+  <div class="tw"><table>
+    <tr><th>It does</th><th>You do not</th></tr>
+    <tr><td>Reads your open book from Salesforce before you sign in</td><td>Type a task count, ever</td></tr>
+    <tr><td>Marks what needs you — untouched seven days</td><td>Decide it by feel</td></tr>
+    <tr><td>Sizes a block at your own rate, and shows the sample</td><td>Guess the minutes</td></tr>
+    <tr><td>Writes your reason into the Salesforce task</td><td>Open Salesforce to do it twice</td></tr>
+    <tr><td>Emails a receipt for every block you submit</td><td>Keep your own copy</td></tr>
+    <tr><td>Reminds at 12:00 and 15:00 — only if something is missing</td><td>Chase yourself</td></tr>
+    <tr><td>Sends the 3pm checkpoint and Friday weekly to the Branch Manager</td><td>Compile either</td></tr>
+    <tr><td>Keeps the office wall live: twelve cards, ten minutes stale at most</td><td>Update a slide</td></tr>
+    <tr><td>Saves what you type on your phone as you type it</td><td>Lose a block to a dropped signal</td></tr>
+  </table></div>
+
+  <p><b>The wall</b> is the Branch Manager's view of the branch on the office screen: today block by
+  block, accountability, how the day is being written up, worked today, the overdue book by person
+  and by type, who we are waiting on, the open book and what is late in it, how the day is chased,
+  before you leave, and whether we are keeping up — thirty days in against out, with servicing runs
+  on their own line. Pay, conduct and contract matters are counted on it but never named.</p>
+
+  <h2 id="wrong">If something goes wrong</h2>
+  <p class="sub">In this order.</p>
+
   <div class="card">
-    <p>An entry is a record of your day, and in six months it is the only record
-       there is. "Actioned remaining tasks" will not remind you of anything, and
-       it will not stand up at a review. So the tracker now reads what you write
-       and asks once when it cannot tell what you did.</p>
-
-    <table>
-      <tr><th>Instead of</th><th>Write</th></tr>
-      <tr><td>Actioned remaining tasks</td><td>Cleared 6 of the 8 premium-due queries, 2 back to the advisor</td></tr>
-      <tr><td>3 tasks</td><td>3 contracts checked and sent to Head Office</td></tr>
-      <tr><td>Head Office</td><td>Chased Head Office on POL-88213 — medical still outstanding</td></tr>
-      <tr><td>2</td><td>2 still with underwriting, chased Tuesday</td></tr>
-    </table>
-
-    <p>If a block reads thin you will see one line telling you what is missing —
-       <i>a count, but nothing named</i>, or <i>a name, but nothing done with
-       it</i>. Add a line if you can. If it really was that kind of block, press
-       <b>Send it anyway</b> and it goes in exactly as you wrote it.</p>
-
-    <div class="note"><span class="lbl">Nothing is ever blocked.</span>
-      The tracker asks once and then does as it is told. A quiet day is a fine
-      thing to log — it just has to be logged honestly rather than vaguely.</div>
-
-    <p>"None today" is always a good answer where it is the true one. Resolved
-       nothing this block because the work is still running? Say so. The prompt
-       reads Actioned and Resolved together and never counts an honest "None"
-       against you.</p>
-  </div>
-
-  <h2>If something goes wrong</h2>
-  <div class="card">
-    <div class="note warn"><span class="lbl">"Session expired. Sign in again."</span>
-      Sign-ins last 12 hours. Expected each morning.</div>
-    <div class="note warn"><span class="lbl">You submitted the wrong thing</span>
-      Open the block again, correct it, and submit. It updates the same entry — it does not
-      add a second one.</div>
-    <div class="note warn"><span class="lbl">You forgot yesterday</span>
-      Change the <b>Reporting day</b> at the top and submit against that date. Late is better
-      than missing, and the time stamp is honest about when it was written.</div>
-    <div class="note stop"><span class="lbl">You cannot sign in</span>
-      Five wrong tries locks the account for fifteen minutes. Wait it out, or ask the Branch
-      Manager — your log-in is on the Access tab of the branch workbook.</div>
+    <h3>"Salesforce could not be reached, so type them for now."</h3>
+    <p>The tracker keeps working without Salesforce: the counts go dark and the three position
+    numbers become boxes to type. Everything else — the blocks, the close, the receipts — carries
+    on. Tell the Branch Manager; it is usually the connection, not you.</p>
+    <h3>The chip says "17 open" but no tasks are listed under the block</h3>
+    <p>The page is newer than the script behind it. The Branch Manager redeploys the script; nothing
+    on your side.</p>
+    <h3>You typed a block and the page closed</h3>
+    <p>Sign in again. What you typed is still there — it is saved on the phone as you type.</p>
+    <h3>"Another submission is going in just now"</h3>
+    <p>Somebody else pressed Submit in the same second. It retries by itself; you will see it
+    counting. Do nothing.</p>
+    <h3>The block "reads thin"</h3>
+    <p>It is asking for a count or a case. Add one, or press <b>Send it anyway</b> — it is a prompt,
+    not a gate.</p>
+    <h3>"Too many attempts"</h3>
+    <p>Five wrong passwords. Wait fifteen minutes, or ask the Branch Manager.</p>
   </div>
 
   <hr>
-  <footer>Ricky Rampersad's Branch · 9–13 Endeavour 1st Street, Chaguanas</footer>
+  <footer>
+    <a href="/kpi/">The tracker</a> · <a href="/sneak/">The two-minute film</a> ·
+    <a href="/training/">The full training film</a> · <a href="/wall/">The wall</a><br>
+    Ricky Rampersad Branch · How we work · September 2026
+  </footer>
+
 </div>
 </body>
 </html>
