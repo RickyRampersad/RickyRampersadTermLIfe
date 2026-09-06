@@ -334,6 +334,23 @@ is now read as a support desk (`ssa`); it used to fall through to the BMA.
 The People Leader is whoever the person reports to in `REPORTS_TO`, plus the
 Branch Manager for everyone. Each side writes only its own half of a review.
 
+## Your quarter and moments
+
+`standing` reads the quarter so far for one person — every goal on the
+`Goals` tab for their role with what the record says under it (blocks,
+landed, closed in Salesforce, open, untouched), and every competency on the
+`Competencies` tab with signals read by its name (reliability from the
+`Attendance` tab and the blocks; responsiveness from untouched, late and
+no-reason; quality from landed and billing flags; customer service from
+value-added lines and servicing closed; growth from `KPI Training` and the
+development actions; innovation from the innovation lines). A competency
+whose name matches nothing carries moments only.
+
+`Moments` is a tab the script creates on first use: `MomentId · StaffId ·
+Date · Competency · What · By · UpdatedAt`. A person or their People Leader
+notes a line against a competency on the day; reviews show the moments that
+fall in their period.
+
 ## Attendance
 
 Signing in is the attendance register. The script creates an `Attendance`

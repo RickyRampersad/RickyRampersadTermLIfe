@@ -110,6 +110,11 @@ const PROFILES = {
     role: "ssa",
     tenure: "probation"
   },
+  ashley: {
+    grade: "Sales Support Assistant · G3",
+    role: "ssa",
+    tenure: "experienced"
+  },
   kamla: {
     grade: "Branch Manager's Assistant · G4",
     role: "bma",
@@ -588,6 +593,88 @@ function Half({ label, mine, rating, note, extra, onSave, busy }) {
              busy ? "Saving…" : "Save") : null);
 }
 
+// ---- the quarter so far ------------------------------------------------------
+
+const evidenceLine = (ev, sf) => {
+  const b = [ev.blocks + " block" + (ev.blocks === 1 ? "" : "s")];
+  if (ev.closed != null) b.push(ev.closed + " closed"); else if (!sf) b.push("Salesforce unreachable");
+  if (ev.open != null) b.push(ev.open + " open" + (ev.needs ? ", " + ev.needs + " untouched" : ""));
+  return b.join(" · ");
+};
+
+/** On the day view: every goal with what the record says under it, the
+ *  competencies with how much sits behind each, and the two doors. */
+function YourQuarter({ s, onPerf, onMoments }) {
+  if (!s || !s.ok || !Array.isArray(s.goals) || !s.setup) return null;
+  const tone = g => g.landed == null ? MUTED : (g.target && g.landed < Number(g.target)) ? AMBER : GREEN;
+  return h("div", { style: { ...card, marginTop: 16, borderLeft: "4px solid " + GOLD } },
+    h("div", { style: cardHead },
+      h("span", { style: cardTitle }, "Your quarter · " + s.quarter.replace("-", " ")),
+      h("span", { style: { fontSize: 11.5, fontWeight: 800, color: GOLD } }, s.daysIn + " days in · " + s.daysLeft + " left")),
+    !s.setup.goals ? h("p", { style: { fontSize: 12.5, color: MUTED, margin: "4px 0" } },
+      "The goals for this role are not on the Goals tab of the workbook yet.") : null,
+    s.goals.map(g => h("div", { key: g.goal, style: { display: "flex", justifyContent: "space-between", gap: 10, padding: "6px 0", borderBottom: "1px solid " + LINE } },
+      h("div", { style: { flex: 1, minWidth: 0 } },
+        h("div", { style: { fontSize: 12.5, fontWeight: 700, color: INK } }, g.goal),
+        h("div", { style: { fontSize: 11.5, color: MUTED } }, evidenceLine(g.evidence, s.salesforce))),
+      h("div", { style: { textAlign: "right", whiteSpace: "nowrap" } },
+        h("div", { style: { fontSize: 11.5, fontWeight: 800, color: GOLD } }, g.weight + "%"),
+        h("div", { style: { fontSize: 11.5, fontWeight: 700, color: tone(g) } },
+          g.landed == null ? "no blocks yet" : "landed " + pct(g.landed) + (g.target ? " · target " + pct(g.target) : ""))))),
+    s.competencies.length ? h("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 } },
+      s.competencies.map(c => {
+        const n = (c.signals || []).length + (c.moments || []).length;
+        return h("span", { key: c.competency, style: pillOutline(n ? INK : MUTED) },
+          c.competency + (c.moments && c.moments.length ? " · " + c.moments.length + " moment" + (c.moments.length === 1 ? "" : "s") : ""));
+      })) : null,
+    h("div", { style: { display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" } },
+      h("button", { type: "button", onClick: onMoments, style: trendChip }, "Note a moment"),
+      h("button", { type: "button", onClick: onPerf, style: trendChip }, "Where you stand →")));
+}
+
+/** On the plan: the goals that are behind, so the day is planned against
+ *  them rather than in spite of them. */
+function QuarterStrip({ s }) {
+  if (!s || !s.ok || !Array.isArray(s.goals) || !s.goals.length) return null;
+  const behind = s.goals.filter(g => g.landed != null && g.target && g.landed < Number(g.target));
+  const none = s.goals.every(g => g.landed == null);
+  return h("div", { style: { fontSize: 12, color: behind.length ? AMBER : MUTED, fontWeight: 700, margin: "10px 0 0" } },
+    "Your quarter · " + s.daysIn + " days in, " + s.daysLeft + " left · " +
+    (none ? "nothing landed yet" : behind.length ? "behind on " + behind.map(g => g.goal + " (" + pct(g.landed) + " of " + pct(g.target) + ")").join(", ")
+                                                : "on target on every goal with blocks so far"));
+}
+
+function CompEvidence({ c, who }) {
+  const sig = c.signals || [], lines = c.lines || [], mom = c.moments || [];
+  const lbl = t => h("div", { style: { fontSize: 10.5, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: GOLD, marginBottom: 3 } }, t);
+  if (!sig.length && !lines.length && !mom.length)
+    return h("div", { style: { fontSize: 11.5, color: MUTED, margin: "6px 0 4px" } }, "Nothing on record yet. Note a moment when this shows.");
+  return h("div", { style: { background: "#FBF8F0", border: "1px solid " + LINE, borderRadius: 9, padding: "9px 12px", margin: "8px 0 4px" } },
+    sig.length ? h("div", null, lbl("What the record says"),
+      h("div", { style: { fontSize: 12.5, color: INK, lineHeight: 1.5 } },
+        sig.map((x, i) => h("span", { key: i, style: { color: x.tone === "amber" ? AMBER : x.tone === "green" ? GREEN : INK } },
+          x.label + " " + x.value + (i < sig.length - 1 ? "  ·  " : ""))))) : null,
+    lines.map((l, i) => h("div", { key: "l" + i, style: { fontSize: 12, color: MUTED } }, shortDate(l.date) + " — " + l.text)),
+    mom.length ? h("div", { style: { marginTop: sig.length || lines.length ? 6 : 0 } }, lbl("Moments"),
+      mom.map(m => h("div", { key: m.id, style: { fontSize: 12, color: INK } },
+        shortDate(m.date) + " — " + m.what + (m.by && m.by !== who ? " · noted by their People Leader" : "")))) : null);
+}
+
+function MomentForm({ comps, mine, onSave, busy }) {
+  const [c, setC] = useState(comps[0] ? comps[0].competency : "");
+  const [what, setWhat] = useState("");
+  const ready = c && what.trim().split(/\s+/).length >= 3;
+  return h("div", { style: card },
+    h("div", { style: cardHead }, h("span", { style: cardTitle }, "Note a moment")),
+    h("p", { style: { fontSize: 12.5, color: MUTED, margin: "0 0 4px", lineHeight: 1.5 } },
+      (mine ? "Something you did" : "Something they did") + " that shows one of these. A line, on the day it happened, so the quarterly is a read-off and not a memory test."),
+    h(Chips, { label: "Competency", options: comps.map(x => ({ v: x.competency, label: x.competency })), value: c, onPick: v => setC(v || c) }),
+    h("input", { value: what, onChange: e => setWhat(e.target.value), placeholder: "What happened, in a line",
+      style: { width: "100%", boxSizing: "border-box", font: "inherit", fontSize: 13, padding: "8px 10px", border: "1px solid " + LINE, borderRadius: 8, marginTop: 8 } }),
+    h("button", { type: "button", disabled: busy || !ready, onClick: () => { onSave({ competency: c, what: what.trim() }); setWhat(""); },
+      style: { ...trendChip, marginTop: 8, opacity: busy || !ready ? .5 : 1 } }, busy ? "Noting…" : "Note it"));
+}
+
 function Evidence({ ev, sf }) {
   const bits = [];
   bits.push(ev.blocks + " block" + (ev.blocks === 1 ? "" : "s") + " worked");
@@ -623,12 +710,13 @@ function GoalCard({ g, side, sf, onSave, busy }) {
                 busy: busy, onSave: v => onSave("goal", g.goal, v) })) : null);
 }
 
-function CompCard({ c, side, onSave, busy }) {
+function CompCard({ c, who, side, onSave, busy }) {
   return h("div", { style: card },
     h("div", { style: cardHead }, h("span", { style: cardTitle }, c.competency)),
     c.definition ? h("p", { style: { fontSize: 12.5, color: INK, margin: "0 0 4px", lineHeight: 1.45 } }, c.definition) : null,
     c.behaviours && c.behaviours.length ? h("ul", { style: { margin: "0 0 4px", paddingLeft: 18 } },
       c.behaviours.map((b, i) => h("li", { key: i, style: { fontSize: 12, color: MUTED, lineHeight: 1.4 } }, b))) : null,
+    c.signals || c.moments ? h(CompEvidence, { c: c, who: who }) : null,
     side ? h("div", { style: { display: "flex", gap: 16, flexWrap: "wrap", marginTop: 6 } },
       h(Half, { label: "Self assessment", mine: side === "self", rating: c.selfRating, note: c.selfNote,
                 busy: busy, onSave: v => onSave("competency", c.competency, v) }),
@@ -720,7 +808,7 @@ function TrainingRow({ t, side, onSave, busy }) {
           t.evaluation ? h("div", { style: { fontSize: 12.5, color: MUTED } }, "Evaluation: " + t.evaluation) : null));
 }
 
-function PerfView({ me, roster, hr, setHr, who, setWho, rv, setRv, tab, setTab, note, setNote, api, vp, onBack }) {
+function PerfView({ me, roster, hr, setHr, who, setWho, standing, loadStanding, rv, setRv, tab, setTab, note, setNote, api, vp, onBack }) {
   const [busy, setBusy] = useState(false);
   const [openType, setOpenType] = useState("Quarterly");
   const [from, setFrom] = useState(""), [to, setTo] = useState("");
@@ -728,8 +816,11 @@ function PerfView({ me, roster, hr, setHr, who, setWho, rv, setRv, tab, setTab, 
   const mine = who === me.staffId;
   const report = hr && hr.ok ? hr.reports.find(r => r.staffId === who) : null;
   const reviews = mine ? (hr && hr.ok ? hr.me.reviews : []) : (report ? report.reviews : []);
-  const goals = rv ? rv.goals : (mine && hr && hr.ok ? hr.me.goals : []);
-  const comps = rv ? rv.competencies : (mine && hr && hr.ok ? hr.me.competencies : []);
+  // Outside a review, the goals and competencies come with the quarter so
+  // far under them; inside one, with the review's period.
+  const st = standing && standing.ok && Array.isArray(standing.goals) ? standing : null;
+  const goals = rv ? rv.goals : (st && st.goals.length ? st.goals : (mine && hr && hr.ok ? hr.me.goals : []));
+  const comps = rv ? rv.competencies : (st && st.competencies.length ? st.competencies : (mine && hr && hr.ok ? hr.me.competencies : []));
   const dev = rv ? rv.development : (mine && hr && hr.ok ? hr.me.development : []);
   const training = rv ? rv.training : (mine && hr && hr.ok ? hr.me.training : []);
   const side = rv ? rv.side : (mine ? "self" : (report ? "pl" : ""));
@@ -761,6 +852,11 @@ function PerfView({ me, roster, hr, setHr, who, setWho, rv, setRv, tab, setTab, 
     setBusy(true);
     api("saveTraining", { ...t, staffId: who })
       .then(r => { setBusy(false); if (r && r.ok) { say("ok", "Saved."); rv ? refresh() : reload(); } else say("bad", (r && r.error) || "Not saved."); });
+  };
+  const noteMoment = m => {
+    setBusy(true);
+    api("noteMoment", { ...m, staffId: who })
+      .then(r => { setBusy(false); if (r && r.ok) { say("ok", "Noted."); loadStanding(who); if (rv) refresh(); } else say("bad", (r && r.error) || "Not noted."); });
   };
   const doOpen = () => {
     setBusy(true);
@@ -807,13 +903,16 @@ function PerfView({ me, roster, hr, setHr, who, setWho, rv, setRv, tab, setTab, 
 
       tab === "goals" ? h("div", null,
         !rv ? h("p", { style: { fontSize: 12.5, color: MUTED, margin: "0 0 10px", lineHeight: 1.5 } },
-          "What you are measured on, with its weight and target. Open a review under Reviews to rate against a period.") : null,
+          st ? "Where " + (mine ? "you stand" : "they stand") + " this quarter — " + st.quarter.replace("-", " ") + ", " + st.daysIn + " working days in, " + st.daysLeft + " left. " +
+               "What the record says sits under each goal; the rating happens in a review, under Reviews."
+             : "What you are measured on, with its weight and target. Open a review under Reviews to rate against a period.") : null,
         goals.length === 0 ? h("p", { style: { fontSize: 13, color: MUTED } }, "No goals on file for this role.") : null,
-        goals.map(g => h(GoalCard, { key: g.goal, g: g, side: rv ? side : "", sf: rv ? rv.salesforce : true, onSave: saveRating, busy: busy }))) : null,
+        goals.map(g => h(GoalCard, { key: g.goal, g: g, side: rv ? side : "", sf: rv ? rv.salesforce : (st ? st.salesforce : true), onSave: saveRating, busy: busy }))) : null,
 
       tab === "competencies" ? h("div", null,
         comps.length === 0 ? h("p", { style: { fontSize: 13, color: MUTED } }, "No competencies on file.") : null,
-        comps.map(c => h(CompCard, { key: c.competency, c: c, side: rv ? side : "", onSave: saveRating, busy: busy }))) : null,
+        comps.length && (side === "self" || side === "pl") ? h(MomentForm, { comps: comps, mine: mine, onSave: noteMoment, busy: busy }) : null,
+        comps.map(c => h(CompCard, { key: c.competency, c: c, who: who, side: rv ? side : "", onSave: saveRating, busy: busy }))) : null,
 
       tab === "development" ? h(DevList, { items: dev, side: side, sources: sources, onSave: saveDev, busy: busy }) : null,
       tab === "training" ? h(TrainingList, { rows: training, side: side, onSave: saveTrain, busy: busy }) : null,
@@ -1516,6 +1615,22 @@ function App() {
   const [rv, setRv] = useState(null);
   const [perfTab, setPerfTab] = useState("goals");
   const [perfNote, setPerfNote] = useState({ tone: "idle", text: "" });
+  // Where each person stands this quarter, read once per person per session
+  // and again after a moment is noted.
+  const [standing, setStanding] = useState({});
+  const loadStanding = useCallback(sid => {
+    if (!sid) return;
+    api("standing", { staffId: sid }).then(r => { if (r && r.ok && Array.isArray(r.goals)) setStanding(prev => ({ ...prev, [sid]: r })); });
+  }, []);
+  useEffect(() => {
+    if (!me || !active) return;
+    if ((view === "entry" || view === "plan") && !standing[active]) loadStanding(active);
+  }, [me, view, active]);
+  useEffect(() => {
+    if (view !== "perf" || !me) return;
+    const sid = perfWho || me.staffId;
+    if (!standing[sid]) loadStanding(sid);
+  }, [view, perfWho, me]);
   useEffect(() => {
     if (view !== "perf" || hr) return;
     api("hr", {}).then(r => setHr(r && r.ok ? r : { ok: false, error: (r && r.error) || "Could not read." }));
@@ -2093,6 +2208,7 @@ function App() {
   if (view === "perf") {
     return /*#__PURE__*/React.createElement(PerfView, {
       me: me, roster: roster, hr: hr, setHr: setHr, who: perfWho || me.staffId, setWho: setPerfWho,
+      standing: standing[perfWho || me.staffId], loadStanding: loadStanding,
       rv: rv, setRv: setRv, tab: perfTab, setTab: setPerfTab, note: perfNote, setNote: setPerfNote,
       api: api, vp: vp, onBack: () => setView("home")
     });
@@ -2134,6 +2250,7 @@ function App() {
         me: me, api: api, onChange: a => { me.attendance = a; setAttToday(Object.assign({}, attToday || {}, { [me.staffId]: a })); },
         onRegister: () => setView("register")
       }) : null,
+      /*#__PURE__*/React.createElement(QuarterStrip, { s: standing[active] }),
       /*#__PURE__*/React.createElement("p", {
         style: { fontSize: 13.5, color: MUTED, lineHeight: 1.55, margin: "14px 0 16px" }
       }, "Set the day before it starts. Tick what each block is for and the",
@@ -2554,6 +2671,10 @@ function App() {
       }, st.tone === "saving" ? "Sending…"
          : st.tone === "ask" ? "Send it anyway"
          : at ? "Update block" : "Submit block"))));
+    }), /*#__PURE__*/React.createElement(YourQuarter, {
+      s: standing[active],
+      onPerf: () => { setPerfWho(active); setPerfTab("goals"); setView("perf"); },
+      onMoments: () => { setPerfWho(active); setPerfTab("competencies"); setView("perf"); }
     })), /*#__PURE__*/React.createElement("div", {
       style: vp.desktop ? {
         position: "sticky",
