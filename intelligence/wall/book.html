@@ -876,9 +876,15 @@ function paint(){
   $("#rLedger").innerHTML=
       '<div class="led sent"><div class="n">'+n(M0.soFar)+'</div><div class="t">'
     +   'birthdays have already gone by this month. <b>That many emails went out.</b></div></div>'
+    /* THE ZERO IS THE POINT, so it gets its own sentence rather than reading
+       "0 of those clients bought something ... 0 policies". On 6 September none
+       of the 172 had, and that is the whole argument for the wall. */
     + '<div class="led back"><div class="n">'+n(SD.clients)+'</div><div class="t">'
-    +   'of those clients bought something while the month was running &mdash; <b>'
-    +   n(SD.policies)+'</b> '+(SD.policies===1?'policy':'policies')+'.</div></div>'
+    +   (SD.clients
+        ? 'of those clients bought something while the month was running &mdash; <b>'
+          + n(SD.policies)+'</b> '+(SD.policies===1?'policy':'policies')+'.'
+        : 'have bought anything since. <b>The email went, the call did not.</b>')
+    +   '</div></div>'
     /* NO PERCENTAGE HERE. One client out of a hundred and seventeen is one
        client; printed as 0.9% it reads like a measured conversion rate, and
        six days of a month is not enough to have one. The counts say the same

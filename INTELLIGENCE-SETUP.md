@@ -1019,14 +1019,29 @@ every band total, policy count and gap on the wall is of the 24.
 The branch asked it plainly: *from the first to the first, has anything been
 sold to these clients?* Four rows, and the third is why the fourth is honest.
 
-| Row | 6 September |
+| Row | 6 September 2026 |
 |---|---|
-| Birthdays whose day has already gone this month | 117 — that many emails |
-| Of those clients, who bought while the month was running | 1 client, 2 policies |
+| Birthdays whose day has already gone this month | **172** — that many emails |
+| Of those clients, who bought while the month was running | **none** |
 | What the branch wrote in the same six days | 12 policies, 7 clients |
 | Where the month lands at that pace | 60 policies by the 30th |
 
-**No percentage.** One client in a hundred and seventeen printed as 0.9% reads
+899 clients on the branch book have a September birthday; 172 have already had
+it and 727 are still to come.
+
+**The zero is the point, so it gets its own sentence** rather than reading "0 of
+those clients bought something — 0 policies". *The email went, the call did
+not.* That is the whole argument for the wall, stated in the branch's own
+numbers on the morning it is true.
+
+**One near miss worth recording.** A client with a **22 September** birthday
+took out two policies on the 2nd, and an earlier reading of this counted them as
+a birthday client who converted. They are not: their birthday has not happened
+yet this month, so no email has been sent to them and nothing about the campaign
+explains the sale. The month ledger counts only birthdays whose day has already
+passed, which is why it reads zero and not one.
+
+**No percentage.** Zero out of a hundred and seventy-two printed as 0.0% reads
 like a measured conversion rate, and six days is not long enough to have one.
 The counts say the same thing and cannot be mistaken for a finding. The
 seasonality measurement above already answers the question a rate would be
