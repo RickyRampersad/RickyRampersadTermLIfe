@@ -69,7 +69,11 @@ const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(
             age:{ Sasha:{over30:900, over60:5, oldestDays:7, oldestSince:'27 August'} },
             byPerson:{ Sasha:{open:1000, overdue:999} },
             worked:[{n:'Sasha', worked:42, closed:40, moving:2, waiting:0, written:41, types:{Pendings:42}}],
-            flow:[{n:'Sasha', in:10, out:20}, {n:'Ricky', in:31, out:1}],
+            // Ricky carries a servicing run. The server reports it beside the
+            // case book rather than subtracting it, so the stub must too — a
+            // stub that models the old shape is how the old bug passes.
+            flow:[{n:'Sasha', in:10, out:20},
+                  {n:'Ricky', in:31, out:1, serviced:550, clients:550}],
             waitingOn:[{who:'A Named Client', agent:'Sasha', n:3, days:2}],
             endOfDay:{ inHand:[{who:'Sasha', what:'A live item', state:'In Progress'}],
                        waitingDueToday:1,
@@ -117,7 +121,17 @@ const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(
      await page.locator('.slide.on .kick').innerText());
   const flow = await page.locator('.slide.on').innerText();
   ok('it says the book is not a volume problem', /not<\/b>? a volume problem|not a volume problem/i.test(flow), flow.slice(0,50));
-  ok('and keeps the robot out of it', /birthday mailer is excluded/i.test(flow));
+  // This card used to print "the birthday mailer is excluded throughout" and
+  // subtract 550 client contacts from the Branch Manager's own figures, which
+  // took the branch's largest servicing book off the office screen and left
+  // him reading as one closure in thirty days. A servicing run is work, and a
+  // contact the client actually receives. Both halves are asserted: that the
+  // credit is on the wall, and that the exclusion never creeps back.
+  ok('it credits the servicing run rather than hiding it',
+     /Ricky[\s\S]{0,220}plus 550 clients serviced/i.test(flow),
+     flow.replace(/\n/g,' | ').slice(0,240));
+  ok('and never calls a servicing run excluded, or a robot',
+     !/excluded|robot/i.test(flow), flow.replace(/\n/g,' | ').slice(0,240));
   // The sign has to be the right way round: closing more than arrived means
   // the book shrank. It shipped backwards once.
   ok('closing more than arrived reads as the book shrinking',

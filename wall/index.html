@@ -259,10 +259,10 @@ const TASKS={
   // number with no meaning. Count, the age band, and the single oldest are the
   // honest three.
 
-  // What was WORKED today, not only what closed. Ricky's 16 closures are the
-  // birthday flow and are held in `robot` instead — counting them here would
-  // put the branch's biggest closer at the top of a board he did no hand work
-  // on today.
+  // What was WORKED today, not only what closed. Servicing runs count here
+  // like any other work; where a day's figure is mostly one servicing run,
+  // the flow card on slide 12 says so in as many words rather than the
+  // number being quietly trimmed.
   worked:[
     {n:"Sasha",    worked:10, closed:4, moving:6, waiting:0, written:11,
      types:{"Pendings":6,"Renewa/PDl/Bill":4}},
@@ -359,8 +359,7 @@ const TASKS={
     {n:"Elizabeth", in:128, out:118},
     {n:"Pawan",     in:49,  out:55},
     {n:"Kamla",     in:35,  out:56},
-    {n:"Ricky",     in:31,  out:1, note:"robot excluded — 551 in, 551 out"}],
-  robot:{ closedToday:16, closedWeek:141 }
+    {n:"Ricky",     in:31,  out:1, serviced:550, clients:550}]
 };
 
 // The ten Task_Type__c values, in the words the branch uses.
@@ -1011,7 +1010,8 @@ function sFlow(){
       '<span class="val" style="color:'+(net>0?"var(--red)":"var(--green)")+'">'+
         (net>0?"+":"")+net+"</span>"+
       '<span class="sub">'+(net>0?"the book grew":net<0?"the book shrank":"level")+
-      (x.note?' · <span style="color:var(--muted)">'+esc(x.note)+"</span>":"")+"</span></div>";
+      (x.serviced?' · <span style="color:var(--gold)">plus '+(x.clients||x.serviced)+
+        " client"+((x.clients||x.serviced)===1?"":"s")+" serviced</span>":"")+"</span></div>";
   }).join("");
 
   return '<div class="kick">12 · Are we keeping up?</div>'+
@@ -1022,8 +1022,11 @@ function sFlow(){
       'small number of specific old items that are simply sitting, and those are named on card 11.</p>'+
     '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div>"+
     '<div class="key" style="margin-top:1.6vh;font-size:1.6vh">'+
-      '<b>The birthday mailer is excluded throughout — it creates and closes its own work, '+
-      '551 of each in thirty days, and it is nobody&rsquo;s throughput.</b></div>'+
+      '<b>Client servicing runs are counted separately, never netted away.</b> Case work is '+
+      'opened and carried to a close one at a time; a servicing run reaches hundreds of '+
+      'clients at once, on an automation the Branch Manager triggers. Both are the '+
+      'branch&rsquo;s work &mdash; they are simply not the same measurement, so they do '+
+      'not share a bar.</div>'+
     "</div></div>";
 }
 
