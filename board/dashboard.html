@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Production Dashboard | Ricky Rampersad Branch</title>
+<meta name="description" content="Interactive production dashboard — Total API picked up by advisor, team and period, with held-back pipeline and data health, from Salesforce.">
+<meta name="theme-color" content="#061c31">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Same design system as /wall/ — the interactive sibling.
+     Team colors are a validated categorical palette (six-check pass on this
+     surface): blue #2a8bd0, gold #b57f16, teal #16a396, violet #8f74dd. */
+  :root{
+    --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
+    --surface:#0b2540;
+    --c-gary:#2a8bd0; --c-kerwyn:#16a396; --c-ricky:#b57f16; --c-akaash:#8f74dd;
+    --new:#2a8bd0; --inc:#b57f16;
+    --good:#34d399; --bad:#fb7185; --warn:#fbbf24;
+    --grad:linear-gradient(120deg,#37b1ec,#0b7fd4);
+    --grad-gold:linear-gradient(120deg,#f5b93b,#e08b1e);
+    --r:16px; --ease:cubic-bezier(.16,1,.3,1);
+    --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-b);color:var(--ink);background:#061c31;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:
+      radial-gradient(1200px 700px at 12% -8%,rgba(55,177,236,.20),transparent 60%),
+      radial-gradient(900px 600px at 92% 4%,rgba(11,127,212,.18),transparent 62%),
+      linear-gradient(165deg,#061c31 0%,#08243f 55%,#061a2d 100%)}
+
+  .wrap{max-width:1560px;margin:0 auto;padding:20px 28px 60px}
+  header{display:flex;align-items:center;gap:16px;padding:6px 0 22px;flex-wrap:wrap}
+  /* THE BRANCH MARK — a gold shield with a check, not a monogram. These three
+     board screens were the last places still drawing an invented "RR" tile on
+     a blue gradient. The intelligence walls and the films all carry the real
+     mark; a branch whose screens disagree about its own logo is the one thing
+     everybody in the room notices. */
+  header .mark{width:44px;height:44px;flex:none;border-radius:13px;overflow:hidden;
+    background:#07131f;display:grid;place-items:center}
+  header .mark img{width:44px;height:44px;display:block}
+  header h1{margin:0;font-family:var(--font-d);font-size:20px;font-weight:800;letter-spacing:-.4px}
+  header .sub{font-size:12px;color:var(--dim);margin-top:2px}
+  header .right{margin-left:auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .live{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--dim)}
+  .live i{width:8px;height:8px;border-radius:50%;background:var(--warn)}
+  .live.on i{background:var(--good)}
+  .navbtn{font:inherit;font-size:12.5px;font-weight:650;color:var(--ink);text-decoration:none;border:1px solid var(--line);
+    background:rgba(0,0,0,.25);padding:8px 15px;border-radius:20px;cursor:pointer}
+  .navbtn:hover{border-color:rgba(255,255,255,.3)}
+  .navbtn.on{background:var(--grad);color:#04223b;border-color:transparent}
+
+  /* KPI hero tiles */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-bottom:16px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px}
+  .kpi .k{font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);font-weight:650}
+  .kpi .v{font-family:var(--font-d);font-size:38px;font-weight:800;letter-spacing:-1.4px;margin-top:8px;
+    font-variant-numeric:tabular-nums;line-height:1}
+  .kpi .d{font-size:12.5px;color:var(--dim);margin-top:8px;line-height:1.5}
+  .kpi .d b{color:var(--ink)}
+  .up{color:var(--good)} .down{color:var(--bad)}
+
+  /* insight strip */
+  .insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:16px;margin:6px 0 22px}
+  .insight{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--new);
+    border-radius:var(--r);padding:16px 18px;font-size:13.5px;color:var(--dim);line-height:1.55}
+  .insight b{color:var(--ink)}
+  .insight.gold{border-left-color:var(--inc)}
+  .insight.red{border-left-color:var(--bad)}
+
+  .grid2{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;margin-bottom:16px}
+  @media (max-width:1100px){.grid2{grid-template-columns:1fr}}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px;min-width:0}
+  .panel h3{margin:0 0 4px;font-family:var(--font-d);font-size:15px;font-weight:750}
+  .panel .note{font-size:12px;color:var(--faint);margin:0 0 14px}
+  .legend{display:flex;gap:16px;font-size:12px;color:var(--dim);margin-top:10px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:11px;height:11px;border-radius:3px}
+
+  /* charts */
+  .chart{position:relative}
+  .bars{display:flex;align-items:flex-end;gap:10px;height:230px}
+  .bars .col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:7px;height:100%;cursor:pointer}
+  .bars .amt{font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums;font-weight:650;white-space:nowrap}
+  .bars .stack{width:100%;max-width:56px;display:flex;flex-direction:column;justify-content:flex-end;gap:2px}
+  .bars .seg{border-radius:4px 4px 2px 2px;min-height:2px}
+  .bars .seg.new{background:var(--new)}
+  .bars .seg.inc{background:var(--inc)}
+  .bars .seg.set{background:var(--good)}
+  .bars .seg.pen{background:var(--warn)}
+  .bars .col:hover .seg{filter:brightness(1.25)}
+  .bars .lab{font-size:11.5px;color:var(--faint);font-weight:600;white-space:nowrap}
+  .bars .col.now .lab{color:var(--ink)}
+  .tip{position:absolute;pointer-events:none;background:#04182b;border:1px solid var(--line);border-radius:10px;
+    padding:10px 13px;font-size:12.5px;color:var(--dim);z-index:5;display:none;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+  .tip b{color:var(--ink)} .tip .row2{display:flex;align-items:center;gap:7px;margin-top:4px}
+  .tip i{width:9px;height:9px;border-radius:2px;display:inline-block}
+
+  /* controls */
+  .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:4px 0 14px}
+  .seg-ctl{display:inline-flex;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:rgba(0,0,0,.25)}
+  .seg-ctl button{font:inherit;font-size:12.5px;font-weight:650;color:var(--dim);background:none;border:none;
+    padding:8px 15px;cursor:pointer}
+  .seg-ctl button.on{background:var(--grad);color:#04223b}
+  .chipbar{display:flex;gap:8px;flex-wrap:wrap}
+  .tchip{display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:12.5px;font-weight:650;color:var(--dim);
+    background:rgba(0,0,0,.25);border:1px solid var(--line);padding:8px 14px;border-radius:20px;cursor:pointer}
+  .tchip i{width:10px;height:10px;border-radius:3px}
+  .tchip.on{color:var(--ink);border-color:rgba(255,255,255,.4)}
+
+  /* team cards */
+  .teams{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:16px}
+  .team{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;cursor:pointer;
+    transition:border-color .2s}
+  .team:hover,.team.on{border-color:rgba(255,255,255,.4)}
+  .team .nm{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700}
+  .team .nm i{width:11px;height:11px;border-radius:3px}
+  .team .v{font-family:var(--font-d);font-size:26px;font-weight:800;letter-spacing:-1px;margin-top:8px;font-variant-numeric:tabular-nums}
+  .team .d{font-size:11.5px;color:var(--faint);margin-top:4px}
+
+  /* advisor table */
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:650;text-align:left;
+    padding:0 12px 10px;cursor:pointer;user-select:none;white-space:nowrap}
+  th.num,td.num{text-align:right}
+  th:hover{color:var(--ink)}
+  th .arrow{font-size:9px}
+  td{padding:9px 12px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums;white-space:nowrap}
+  td.adv{font-weight:650}
+  td .dot{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:8px;vertical-align:1px}
+  .apibar{display:inline-block;height:9px;border-radius:5px;background:var(--new);vertical-align:1px;margin-right:10px}
+  tr:hover td{background:rgba(255,255,255,.03)}
+  .delta{font-size:12px;font-weight:650}
+
+  /* held back + health */
+  .hbband{display:flex;flex-direction:column;gap:10px}
+  .hbrow{display:flex;align-items:center;gap:12px;font-size:13px}
+  .hbrow .nm{width:120px;color:var(--dim)}
+  .hbrow .track{flex:1;height:11px;background:rgba(255,255,255,.07);border-radius:6px;overflow:hidden}
+  .hbrow .track i{display:block;height:100%;background:var(--bad);border-radius:6px}
+  .hbrow .val{width:90px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+  .hbrow .n{width:64px;text-align:right;font-size:11.5px;color:var(--faint)}
+  .health{display:flex;flex-direction:column;gap:0}
+  .hitem{display:flex;gap:12px;padding:11px 0;border-top:1px solid var(--line);font-size:13px;line-height:1.5;color:var(--dim)}
+  .hitem:first-child{border-top:none}
+  .hitem .badge{flex:none;min-width:52px;text-align:center;font-family:var(--font-d);font-weight:800;font-size:15px;
+    color:var(--warn);padding-top:1px}
+  .hitem .badge.red{color:var(--bad)}
+  .hitem b{color:var(--ink)}
+  footer{font-size:11.5px;color:var(--faint);margin-top:24px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="mark"><img src="../logo-mark.png" alt=""></div>
+  <div>
+    <h1>Production Dashboard</h1>
+    <div class="sub">Ricky Rampersad Branch · Total API (new business + increases) · Salesforce</div>
+  </div>
+  <div class="right">
+    <button class="navbtn" id="runBtn" title="Cycle through the sections like a wall">▶ Run</button>
+    <button class="navbtn" id="xlsBtn" title="Download the head-office weekly as Excel">⬇ Head-office weekly</button>
+    <a class="navbtn" href="production.html">Wall mode</a>
+    <span class="live" id="live"><i></i><span id="liveTxt">Snapshot</span></span>
+  </div>
+</header>
+
+<div class="kpis" id="kpis"></div>
+<div class="insights" id="insights"></div>
+
+<div class="grid2">
+  <div class="panel">
+    <h3>Total API picked up by month · 2026</h3>
+    <p class="note">Hover a bar for the split. Increases sit on top of new business.</p>
+    <div class="chart"><div class="bars" id="monthly"></div><div class="tip" id="tipM"></div></div>
+    <div class="legend"><span><i style="background:var(--new)"></i>New business</span><span><i style="background:var(--inc)"></i>Increases</span></div>
+  </div>
+  <div class="panel">
+    <h3>⚠ Held-back API — written, waiting on requirements</h3>
+    <p class="note" id="hbNote"></p>
+    <div class="hbband" id="hbBands"></div>
+    <div style="margin-top:16px"><h3 style="font-size:13px">Largest held-back books</h3></div>
+    <div class="hbband" id="hbAgents" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<div class="grid2" id="secSettle">
+  <div class="panel">
+    <h3>Settled vs pending — the picked-up book, month by month</h3>
+    <p class="note">Green settled (the record has a Date Settled), amber still pending. Hover a bar for the settle-through rate.</p>
+    <div class="chart"><div class="bars" id="settleChart"></div><div class="tip" id="tipS"></div></div>
+    <div class="legend"><span><i style="background:var(--good)"></i>✓ Settled</span><span><i style="background:var(--warn)"></i>⏳ Pending</span></div>
+  </div>
+  <div class="panel">
+    <h3>Settlement engine</h3>
+    <p class="note" id="settleNote"></p>
+    <div class="hbband" id="settleBands"></div>
+    <div style="margin-top:16px"><h3 style="font-size:13px">Largest pending books — the settle chase list</h3></div>
+    <div class="hbband" id="settleAgents" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<div class="grid2" id="secPickups">
+  <div class="panel">
+    <h3>Who picked up — August</h3>
+    <p class="note">Total API picked up per advisor this month, every advisor who scored.</p>
+    <div class="hbband" id="pickMonth"></div>
+  </div>
+  <div class="panel">
+    <h3>Who picked up — this week</h3>
+    <p class="note" id="pickWeekNote"></p>
+    <div style="overflow-x:auto"><table id="pickWeekTable"><thead><tr>
+      <th>Advisor</th><th>API</th><th>Picked up</th><th>Entered by</th></tr></thead><tbody></tbody></table></div>
+    <div style="margin-top:18px"><h3 style="font-size:13px">Data accuracy — trends to watch</h3></div>
+    <div class="health" id="trends" style="margin-top:6px"></div>
+  </div>
+</div>
+
+<div class="panel" style="margin-bottom:16px" id="secAdvisors">
+  <h3>Advisors</h3>
+  <p class="note">Pick a period, click a team to filter, click any column to sort. “vs LY” compares the same period last year.</p>
+  <div class="controls">
+    <div class="seg-ctl" id="periodCtl"></div>
+    <div class="chipbar" id="teamChips"></div>
+  </div>
+  <div class="teams" id="teamCards"></div>
+  <div style="overflow-x:auto"><table id="advTable"><thead></thead><tbody></tbody></table></div>
+</div>
+
+<div class="panel">
+  <h3>Data health — what to check and update in Salesforce this week</h3>
+  <p class="note">Every row below moves a wall number when it's fixed. Counts are live from the same queries the boards use.</p>
+  <div class="health" id="health"></div>
+</div>
+
+<footer id="src"></footer>
+</div>
+
+<script>
+/* ── DATA — snapshot queried from Salesforce (see footer date). Basis is the
+   branch report's: Total_API__c on Production_Picked_up_Date__c plus
+   API_Increase__c on Increase_Production_Picked_Up_Date__c ("Total API").
+   Advisors are first name + initial in this committed snapshot (public repo);
+   the live feed carries full names.                                        */
+var WALL_DATA_URL = "";
+
+var D = {
+  generatedAt: "2026-08-26T14:10:00Z",
+  asOf: "2026-08-26",
+  kpi: {
+    week:  { api:25557,  n:3,  prevApi:101521, prevN:15 },
+    month: { label:"August", api:833799, n:46, lyApi:675895 },
+    ytd:   { api:6298355, n:784, lyApi:9383926, lyFull:16306047, dayOfYear:238 },
+    heldBack: { api:10022580, n:176, avgDays:207, over60Api:8750515, over60N:125 }
+  },
+  monthly: [
+    {m:"Jan", nApi:921362, nN:118, iApi:132330, iN:11},
+    {m:"Feb", nApi:717399, nN:96,  iApi:34092,  iN:10},
+    {m:"Mar", nApi:694176, nN:81,  iApi:47430,  iN:15},
+    {m:"Apr", nApi:685817, nN:98,  iApi:139841, iN:19},
+    {m:"May", nApi:769186, nN:112, iApi:87190,  iN:14},
+    {m:"Jun", nApi:449384, nN:62,  iApi:52435,  iN:5},
+    {m:"Jul", nApi:729421, nN:93,  iApi:4493,   iN:4},
+    {m:"Aug", nApi:833799, nN:46,  iApi:0,      iN:0}
+  ],
+  hbBands: [
+    {k:"Under 2 weeks", n:28,  api:1070133},
+    {k:"2 – 4 weeks",   n:7,   api:80265},
+    {k:"1 – 2 months",  n:16,  api:121667},
+    {k:"Over 2 months", n:125, api:8750515}
+  ],
+  hbAgents: [
+    {a:"Akaash K.", n:6,  api:4305200},
+    {a:"Ricky R.",  n:40, api:3334300},
+    {a:"Fawwaz M.", n:4,  api:333480},
+    {a:"Varun S.",  n:17, api:317573},
+    {a:"Gary S.",   n:7,  api:238182}
+  ],
+  /* settlement — Date_Settled__c on the picked-up book */
+  settle: {
+    settledN:348, settledApi:2544797, avgDays:22,
+    pendingN:358, pendingApi:3255748,
+    bands: [
+      {k:"Within a week", n:121},
+      {k:"8 – 30 days",   n:156},
+      {k:"Over 30 days",  n:71}
+    ],
+    monthly: [
+      {m:"Jan", sN:97, sApi:769749, pN:21, pApi:151613},
+      {m:"Feb", sN:62, sApi:367166, pN:34, pApi:350233},
+      {m:"Mar", sN:17, sApi:107571, pN:64, pApi:586605},
+      {m:"Apr", sN:74, sApi:531656, pN:24, pApi:154162},
+      {m:"May", sN:35, sApi:195776, pN:77, pApi:573410},
+      {m:"Jun", sN:6,  sApi:61903,  pN:56, pApi:387481},
+      {m:"Jul", sN:44, sApi:396493, pN:49, pApi:332928},
+      {m:"Aug", sN:13, sApi:114484, pN:33, pApi:719315}
+    ],
+    pendingByAgent: [
+      {a:"Varun S.",     n:12, api:440785},
+      {a:"Gary S.",      n:28, api:303706},
+      {a:"Fawwaz M.",    n:15, api:248577},
+      {a:"Aidan E.",     n:35, api:244054},
+      {a:"Premchand D.", n:20, api:234947},
+      {a:"Malcolm S.",   n:9,  api:125781}
+    ]
+  },
+  /* who picked up — the log, with who keyed each record (data ownership) */
+  pickups: {
+    week: [
+      {a:"Daniel B.", api:15402, d:"2026-08-25", by:"Sasha L."},
+      {a:"Rajiv S.",  api:5543,  d:"2026-08-25", by:"Azariah G."},
+      {a:"Rajiv S.",  api:4613,  d:"2026-08-25", by:"Azariah G."}
+    ],
+    monthByAgent: [
+      {a:"Varun S.",     n:4, api:353262},
+      {a:"Fawwaz M.",    n:3, api:90521},
+      {a:"Rajiv S.",     n:3, api:89303},
+      {a:"Gary S.",      n:5, api:45551},
+      {a:"Daniel B.",    n:3, api:32610},
+      {a:"Joy S.",       n:1, api:28541},
+      {a:"Faizal M.",    n:1, api:28541},
+      {a:"Anthony S.",   n:5, api:27920},
+      {a:"Neil R.",      n:4, api:27089},
+      {a:"Aidan E.",     n:3, api:26526},
+      {a:"Naila S.",     n:3, api:21711},
+      {a:"Darryl M.",    n:1, api:16168},
+      {a:"Dhalina H.",   n:3, api:14632},
+      {a:"Premchand D.", n:1, api:11623},
+      {a:"Narissa M.",   n:1, api:9026},
+      {a:"Aleema M.",    n:2, api:4187},
+      {a:"Javid A.",     n:2, api:4187},
+      {a:"Felicia R.",   n:1, api:2400}
+    ]
+  },
+  /* accuracy trends — every figure computed from the record-level data */
+  trends: [
+    {n:"44%", red:true, t:"<b>Late entry is hiding the month.</b> TT$365k of August's TT$834k reached Salesforce after its pickup date — six records, led by Varun's month-topping TT$308k case, entered 14 days after it was picked up. Until 21 Aug the wall showed a quiet month that was actually the year's best."},
+    {n:"2.3×", red:false, t:"<b>Cases are getting bigger.</b> Average case TT$7.8k in January (118 policies), TT$18.1k in August (46). Fewer, larger cases — which makes every single held-back or late-entered record move the branch number visibly."},
+    {n:"▼", red:true, t:"<b>Settle-through is sliding.</b> January's pickups are 84% settled by value; March sits at 15%, May 25%, June 14% — months old and still mostly unsettled. The chase list on the settlement panel is where the slide reverses."},
+    {n:"$4.5k", red:false, t:"<b>Increases have flatlined.</b> TT$4.5k picked up since 1 July, after TT$493k in the first half. Last year increases were a TT$1.02m engine by this date."},
+    {n:"3", red:false, t:"<b>Three people key the branch's production.</b> August's 46 pickups: Azariah G. entered 28, Sasha L. 15, Ashley R. 3 — and Sasha holds 97 of the 176 held-back records. Their entry rhythm IS the wall's accuracy; same-day entry is the single habit that fixes the late-entry trend."},
+    {n:"134", red:false, t:"<b>Intake keeps outrunning pickup.</b> 840 apps received this year, 706 picked up — the gap grew again with Monday's TT$330k intake still sitting in the tray after two days."}
+  ],
+  teams: {
+    gary:   {label:"Gary's team",   color:"var(--c-gary)"},
+    kerwyn: {label:"Kerwyn's team", color:"var(--c-kerwyn)"},
+    ricky:  {label:"Ricky's team",  color:"var(--c-ricky)"},
+    akaash: {label:"Akaash's team", color:"var(--c-akaash)"}
+  },
+  /* per advisor: [team, thisWeek n/api, lastWeek n/api, month n/api,
+     ytd n/api (Total API), ly same-period api, heldBack n/api] */
+  advisors: [
+    {a:"Varun S.",     t:"ricky",  wN:0,wApi:0, lwN:1,lwApi:5960,  mN:4,mApi:353262, yN:27,yApi:637563, ly:791286,  hbN:17,hbApi:317573},
+    {a:"Gary S.",      t:"gary",   wN:0,wApi:0, lwN:3,lwApi:31778, mN:5,mApi:45551,  yN:50,yApi:462011, ly:555419,  hbN:7, hbApi:238182},
+    {a:"Anthony S.",   t:"kerwyn", wN:0,wApi:0, lwN:1,lwApi:3455,  mN:5,mApi:27920,  yN:64,yApi:454380, ly:722180,  hbN:8, hbApi:209208},
+    {a:"Aidan E.",     t:"kerwyn", wN:0,wApi:0, lwN:0,lwApi:0,     mN:3,mApi:26526,  yN:66,yApi:380307, ly:342339,  hbN:14,hbApi:125780},
+    {a:"Fawwaz M.",    t:"akaash", wN:0,wApi:0, lwN:0,lwApi:0,     mN:3,mApi:90521,  yN:28,yApi:352783, ly:346241,  hbN:4, hbApi:333480},
+    {a:"Randolph G.",  t:"ricky",  wN:0,wApi:0, lwN:0,lwApi:0,     mN:0,mApi:0,      yN:23,yApi:347321, ly:533805,  hbN:0, hbApi:0},
+    {a:"Ricky R.",     t:"ricky",  wN:0,wApi:0, lwN:0,lwApi:0,     mN:0,mApi:0,      yN:22,yApi:309970, ly:1449157, hbN:40,hbApi:3334300},
+    {a:"Aleema M.",    t:"ricky",  wN:0,wApi:0, lwN:2,lwApi:4187,  mN:2,mApi:4187,   yN:58,yApi:254893, ly:321276,  hbN:7, hbApi:168772},
+    {a:"Premchand D.", t:"ricky",  wN:0,wApi:0, lwN:1,lwApi:11623, mN:1,mApi:11623,  yN:20,yApi:234947, ly:412100,  hbN:0, hbApi:0},
+    {a:"John B.",      t:"gary",   wN:0,wApi:0, lwN:0,lwApi:0,     mN:0,mApi:0,      yN:55,yApi:214990, ly:232734,  hbN:7, hbApi:143671},
+    {a:"Javid A.",     t:"ricky",  wN:0,wApi:0, lwN:2,lwApi:4187,  mN:2,mApi:4187,   yN:46,yApi:212047, ly:320076,  hbN:0, hbApi:0},
+    {a:"Neil R.",      t:"ricky",  wN:0,wApi:0, lwN:2,lwApi:19250, mN:4,mApi:27089,  yN:25,yApi:190868, ly:422596,  hbN:0, hbApi:0},
+    {a:"Naila S.",     t:"gary",   wN:0,wApi:0, lwN:2,lwApi:18681, mN:3,mApi:21711,  yN:29,yApi:188059, ly:35764,   hbN:0, hbApi:0},
+    {a:"Akaash K.",    t:"akaash", wN:0,wApi:0, lwN:0,lwApi:0,     mN:0,mApi:0,      yN:12,yApi:166996, ly:228680,  hbN:6, hbApi:4305200},
+    {a:"Narissa M.",   t:"ricky",  wN:0,wApi:0, lwN:0,lwApi:0,     mN:1,mApi:9026,   yN:15,yApi:163859, ly:31012,   hbN:0, hbApi:0},
+    {a:"Tricia B.",    t:"gary",   wN:0,wApi:0, lwN:0,lwApi:0,     mN:0,mApi:0,      yN:23,yApi:149492, ly:146607,  hbN:0, hbApi:0},
+    {a:"Malcolm S.",   t:"akaash", wN:0,wApi:0, lwN:0,lwApi:0,     mN:0,mApi:0,      yN:11,yApi:148006, ly:169168,  hbN:0, hbApi:0},
+    {a:"Faizal M.",    t:"ricky",  wN:0,wApi:0, lwN:0,lwApi:0,     mN:1,mApi:28541,  yN:16,yApi:136328, ly:233045,  hbN:0, hbApi:0},
+    {a:"Joy S.",       t:"ricky",  wN:0,wApi:0, lwN:0,lwApi:0,     mN:1,mApi:28541,  yN:16,yApi:136328, ly:233045,  hbN:0, hbApi:0},
+    {a:"Daniel B.",    t:"akaash", wN:1,wApi:15402, lwN:0,lwApi:0, mN:3,mApi:32610,  yN:18,yApi:135973, ly:8310,    hbN:0, hbApi:0},
+    {a:"Dhalina H.",   t:"kerwyn", wN:0,wApi:0, lwN:0,lwApi:0,     mN:3,mApi:14632,  yN:19,yApi:135616, ly:191777,  hbN:0, hbApi:0},
+    {a:"Felicia R.",   t:"gary",   wN:0,wApi:0, lwN:1,lwApi:2400,  mN:1,mApi:2400,   yN:31,yApi:130761, ly:35159,   hbN:0, hbApi:0},
+    {a:"Jamil K.",     t:"ricky",  wN:0,wApi:0, lwN:0,lwApi:0,     mN:0,mApi:0,      yN:20,yApi:105423, ly:166498,  hbN:0, hbApi:0},
+    {a:"Meera K.",     t:"ricky",  wN:0,wApi:0, lwN:0,lwApi:0,     mN:0,mApi:0,      yN:19,yApi:103881, ly:160498,  hbN:0, hbApi:0},
+    {a:"Darryl M.",    t:"akaash", wN:0,wApi:0, lwN:0,lwApi:0,     mN:1,mApi:16168,  yN:12,yApi:102944, ly:151798,  hbN:3, hbApi:110349},
+    {a:"Kerwyn R.",    t:"kerwyn", wN:0,wApi:0, lwN:0,lwApi:0,     mN:0,mApi:0,      yN:7, yApi:96638,  ly:359291,  hbN:0, hbApi:0},
+    {a:"Chris B.",     t:"gary",   wN:0,wApi:0, lwN:0,lwApi:0,     mN:0,mApi:0,      yN:20,yApi:93789,  ly:210730,  hbN:0, hbApi:0},
+    {a:"Rajiv S.",     t:"akaash", wN:2,wApi:10155, lwN:0,lwApi:0, mN:3,mApi:89303,  yN:3, yApi:89303,  ly:0,       hbN:0, hbApi:0},
+    {a:"Alyssa J.",    t:"gary",   wN:0,wApi:0, lwN:0,lwApi:0,     mN:0,mApi:0,      yN:19,yApi:77371,  ly:206400,  hbN:0, hbApi:0},
+    {a:"Stephanie R.", t:"akaash", wN:0,wApi:0, lwN:0,lwApi:0,     mN:0,mApi:0,      yN:7, yApi:72590,  ly:187551,  hbN:0, hbApi:0},
+    {a:"Jesus B.",     t:"gary",   wN:0,wApi:0, lwN:0,lwApi:0,     mN:0,mApi:0,      yN:2, yApi:10869,  ly:0,       hbN:0, hbApi:0},
+    {a:"Crystal F.",   t:"kerwyn", wN:0,wApi:0, lwN:0,lwApi:0,     mN:0,mApi:0,      yN:1, yApi:2048,   ly:25202,   hbN:0, hbApi:0}
+  ],
+  health: [
+    {n:"700", red:true,  t:"<b>Picked-up policies with no Policy Status Description</b> — 700 of this year's 706. Set the status at every stage change (Pending → Premium Paying → …) so the settled/pending picture reads from status, not only the settle date. This is the single highest-value field to keep current."},
+    {n:"358", red:true,  t:"<b>Picked-up policies with no Date Settled</b> holding TT$3.26m. Some are genuinely pending — chase those to settlement — but any policy already settled and missing the date is understating the branch. Update Date Settled the day the case settles."},
+    {n:"176", red:true,  t:"<b>Apps with no pickup date</b> holding TT$10.0m — 125 of them waiting over two months. Chase the requirement, or close the dead ones (NPW / declined) so held-back is real money, not history."},
+    {n:"171", red:false, t:"<b>Held-back apps with no policy status.</b> Only 5 of 176 say why they're stuck. Set Policy Status Description on each so the wall can show what's blocking, not just how long."},
+    {n:"6",   red:false, t:"<b>Advisors' pickups entered late last week</b> (TT$23.7k landed in Salesforce after the Monday report was cut). Enter pickups the same day — the wall refreshes every 15 minutes, the report only sees what's in by Monday."},
+    {n:"77",  red:false, t:"<b>Increase records missing the agent's name</b> (77 of 78 this year). The boards recover it through the parent policy — fill Agent Full Name on the increase so every report agrees."},
+    {n:"2×",  red:true,  t:"<b>Mirrored full-value records</b>: Faizal/Joy and Jamil/Meera carry identical policies at full API each, and Javid/Aleema share mirrored cases. If these are split cases, each half should carry half the API — as entered, branch totals count them twice."},
+    {n:"168", red:false, t:"<b>Open opportunities dated 2019–2024</b> (TT$3.5m of stale pipeline). Close the dead ones or refresh the close dates — the pipeline slide is only as honest as this list."},
+    {n:"$65k",red:false, t:"<b>The two increase-API fields disagree</b> by TT$64.9k YTD. The branch standard is API Increase (Total API) — keep the joint-split field maintained or retire it, so nobody reports off the wrong one again."}
+  ]
+};
+
+/* helpers */
+function $(s){return document.querySelector(s)}
+function money(n){return "TT$"+Math.round(n).toLocaleString("en-US")}
+function mS(n){
+  if(Math.abs(n)>=1e6) return "TT$"+(n/1e6).toFixed(2)+"m";
+  if(Math.abs(n)>=1e3) return "TT$"+Math.round(n/1e3)+"k";
+  return "TT$"+Math.round(n);
+}
+function pct(a,b){return b?((a-b)/b*100):0}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* KPI tiles */
+function renderKpis(){
+  var k=D.kpi, wD=pct(k.week.api,k.week.prevApi), mD=pct(k.month.api,k.month.lyApi), yD=pct(k.ytd.api,k.ytd.lyApi);
+  var pace=k.ytd.api/k.ytd.dayOfYear*365, paceShare=pace/k.ytd.lyFull*100;
+  function delta(v,label){return '<span class="'+(v>=0?"up":"down")+'">'+(v>=0?"▲ +":"▼ ")+Math.abs(v).toFixed(1)+"%</span> "+label}
+  $("#kpis").innerHTML=
+    '<div class="kpi"><div class="k">This week</div><div class="v">'+mS(k.week.api)+'</div><div class="d"><b>'+k.week.n+' pickups</b> · '+delta(wD,"vs last week")+'</div></div>'
+   +'<div class="kpi"><div class="k">'+k.month.label+'</div><div class="v">'+mS(k.month.api)+'</div><div class="d"><b>'+k.month.n+' pickups</b> · '+delta(mD,"vs "+k.month.label+" last year")+'</div></div>'
+   +'<div class="kpi"><div class="k">Year to date</div><div class="v">'+mS(k.ytd.api)+'</div><div class="d"><b>'+k.ytd.n+' pickups</b> · '+delta(yD,"vs this point 2025")+'</div></div>'
+   +'<div class="kpi"><div class="k">Full-year pace</div><div class="v">'+mS(pace)+'</div><div class="d">at today’s run rate · <b>'+paceShare.toFixed(0)+'%</b> of 2025’s '+mS(k.ytd.lyFull)+'</div></div>'
+   +'<div class="kpi"><div class="k">⚠ Held-back API</div><div class="v" style="color:var(--bad)">'+mS(k.heldBack.api)+'</div><div class="d"><b>'+k.heldBack.n+' apps</b> waiting on requirements · avg '+k.heldBack.avgDays+' days</div></div>';
+}
+
+/* insight strip — every claim computed from the data above */
+function renderInsights(){
+  var k=D.kpi;
+  var varun=D.advisors[0];
+  var pace=k.ytd.api/k.ytd.dayOfYear*365;
+  $("#insights").innerHTML=
+    '<div class="insight red"><b>The year’s gap is not sales — it’s pickup.</b> Pacing '+mS(pace)+' ('+(pace/k.ytd.lyFull*100).toFixed(0)+'% of 2025) while '+mS(k.heldBack.api)+' sits written and waiting. Releasing the held-back book alone beats last year.</div>'
+   +'<div class="insight"><b>'+esc(varun.a)+' owns August:</b> '+mS(varun.mApi)+' — '+(varun.mApi/k.month.api*100).toFixed(0)+'% of the month on '+varun.mN+' policies. Value profile: '+mS(varun.yApi/varun.yN)+' average case, the branch’s largest.</div>'
+   +'<div class="insight gold"><b>The increases engine has stalled.</b> TT$1.02m by this point last year, TT$498k now — July wrote TT$4.5k, August none. Every in-force review is an increase opportunity.</div>'
+   +'<div class="insight"><b>Two ways to win are both on the board:</b> Aidan (66) and Anthony (64) lead on cases; Varun leads on value. The month says a big-case week (Wk 32: TT$405k on 6 policies) changes everything.</div>'
+   +'<div class="insight red"><b>Settlement is the second bottleneck.</b> '+D.settle.pendingN+' of the year’s picked-up policies ('+mS(D.settle.pendingApi)+') still have no settle date — Premchand’s entire year is pending. When cases do settle, they settle in '+D.settle.avgDays+' days on average.</div>';
+}
+
+/* monthly stacked chart with hover tooltip */
+function renderMonthly(){
+  var max=Math.max.apply(null,D.monthly.map(function(x){return x.nApi+x.iApi}));
+  var H=180;
+  $("#monthly").innerHTML=D.monthly.map(function(x,i){
+    var tot=x.nApi+x.iApi, now=i===D.monthly.length-1;
+    var hN=x.nApi/max*H, hI=x.iApi/max*H;
+    return '<div class="col'+(now?" now":"")+'" data-i="'+i+'"><div class="amt">'+mS(tot)+'</div>'
+      +'<div class="stack">'+(x.iApi>0?'<div class="seg inc" style="height:'+Math.max(2,hI)+'px"></div>':'')
+      +'<div class="seg new" style="height:'+Math.max(2,hN)+'px"></div></div>'
+      +'<div class="lab">'+x.m+'</div></div>';
+  }).join("");
+  var tip=$("#tipM");
+  $("#monthly").addEventListener("mousemove",function(e){
+    var col=e.target.closest(".col"); if(!col){tip.style.display="none";return}
+    var x=D.monthly[+col.dataset.i];
+    tip.innerHTML='<b>'+x.m+' · '+mS(x.nApi+x.iApi)+'</b>'
+      +'<div class="row2"><i style="background:var(--new)"></i>New business '+money(x.nApi)+' · '+x.nN+' policies</div>'
+      +'<div class="row2"><i style="background:var(--inc)"></i>Increases '+money(x.iApi)+' · '+x.iN+' records</div>';
+    tip.style.display="block";
+    var r=$("#monthly").getBoundingClientRect(), cr=col.getBoundingClientRect();
+    tip.style.left=Math.min(cr.left-r.left, r.width-260)+"px";
+    tip.style.top=(cr.top-r.top-8)+"px";
+  });
+  $("#monthly").addEventListener("mouseleave",function(){tip.style.display="none"});
+}
+
+/* held-back */
+function renderHeldBack(){
+  var k=D.kpi.heldBack;
+  $("#hbNote").innerHTML="<b style='color:var(--ink)'>"+money(k.api)+"</b> across "+k.n+" apps — "+mS(k.over60Api)+" of it ("+k.over60N+" apps) older than two months.";
+  var max=Math.max.apply(null,D.hbBands.map(function(b){return b.api}));
+  $("#hbBands").innerHTML=D.hbBands.map(function(b){
+    return '<div class="hbrow"><span class="nm">'+esc(b.k)+'</span><span class="track"><i style="width:'+Math.max(2,b.api/max*100)+'%"></i></span><span class="val">'+mS(b.api)+'</span><span class="n">'+b.n+' apps</span></div>';
+  }).join("");
+  var amax=Math.max.apply(null,D.hbAgents.map(function(b){return b.api}));
+  $("#hbAgents").innerHTML=D.hbAgents.map(function(b){
+    return '<div class="hbrow"><span class="nm">'+esc(b.a)+'</span><span class="track"><i style="width:'+Math.max(2,b.api/amax*100)+'%"></i></span><span class="val">'+mS(b.api)+'</span><span class="n">'+b.n+' apps</span></div>';
+  }).join("");
+}
+
+/* settlement panel */
+function renderSettle(){
+  var S=D.settle;
+  $("#settleNote").innerHTML="<b style='color:var(--ink)'>"+S.settledN+" settled</b> ("+mS(S.settledApi)+", avg "+S.avgDays+" days) · <b style='color:var(--ink)'>"+S.pendingN+" pending</b> ("+mS(S.pendingApi)+").";
+  var bmax=Math.max.apply(null,S.bands.map(function(b){return b.n}));
+  $("#settleBands").innerHTML=S.bands.map(function(b){
+    return '<div class="hbrow"><span class="nm">'+esc(b.k)+'</span><span class="track"><i style="width:'+Math.max(2,b.n/bmax*100)+'%;background:var(--good)"></i></span><span class="val">'+b.n+'</span><span class="n">settled</span></div>';
+  }).join("");
+  var amax=Math.max.apply(null,S.pendingByAgent.map(function(b){return b.api}));
+  $("#settleAgents").innerHTML=S.pendingByAgent.map(function(b){
+    return '<div class="hbrow"><span class="nm">'+esc(b.a)+'</span><span class="track"><i style="width:'+Math.max(2,b.api/amax*100)+'%;background:var(--warn)"></i></span><span class="val">'+mS(b.api)+'</span><span class="n">'+b.n+' pending</span></div>';
+  }).join("");
+  var max=Math.max.apply(null,S.monthly.map(function(x){return x.sApi+x.pApi}));
+  var H=180;
+  $("#settleChart").innerHTML=S.monthly.map(function(x,i){
+    var tot=x.sApi+x.pApi;
+    return '<div class="col" data-i="'+i+'"><div class="amt">'+Math.round(x.sApi/(tot||1)*100)+'%</div>'
+      +'<div class="stack">'+(x.pApi>0?'<div class="seg pen" style="height:'+Math.max(2,x.pApi/max*H)+'px"></div>':'')
+      +(x.sApi>0?'<div class="seg set" style="height:'+Math.max(2,x.sApi/max*H)+'px"></div>':'')
+      +'</div><div class="lab">'+x.m+'</div></div>';
+  }).join("");
+  var tip=$("#tipS");
+  $("#settleChart").onmousemove=function(e){
+    var col=e.target.closest(".col"); if(!col){tip.style.display="none";return}
+    var x=S.monthly[+col.dataset.i], tot=x.sApi+x.pApi;
+    tip.innerHTML='<b>'+x.m+' pickups · '+Math.round(x.sApi/(tot||1)*100)+'% settled by value</b>'
+      +'<div class="row2"><i style="background:var(--good)"></i>Settled '+money(x.sApi)+' · '+x.sN+' policies</div>'
+      +'<div class="row2"><i style="background:var(--warn)"></i>Pending '+money(x.pApi)+' · '+x.pN+' policies</div>';
+    tip.style.display="block";
+    var r=$("#settleChart").getBoundingClientRect(), cr=col.getBoundingClientRect();
+    tip.style.left=Math.min(cr.left-r.left, r.width-260)+"px";
+    tip.style.top=(cr.top-r.top-8)+"px";
+  };
+  $("#settleChart").onmouseleave=function(){tip.style.display="none"};
+}
+
+/* who picked up + accuracy trends */
+function renderPickups(){
+  var P=D.pickups;
+  var max=Math.max.apply(null,P.monthByAgent.map(function(x){return x.api}));
+  $("#pickMonth").innerHTML=P.monthByAgent.map(function(x){
+    return '<div class="hbrow"><span class="nm">'+esc(x.a)+'</span>'
+      +'<span class="track"><i style="width:'+Math.max(2,x.api/max*100)+'%;background:var(--new)"></i></span>'
+      +'<span class="val">'+mS(x.api)+'</span><span class="n">'+x.n+' pol</span></div>';
+  }).join("");
+  var tot=P.week.reduce(function(s,x){return s+x.api},0);
+  $("#pickWeekNote").innerHTML=P.week.length
+    ? "<b style='color:var(--ink)'>"+money(tot)+"</b> across "+P.week.length+" pickups so far — with who keyed each record."
+    : "No pickups logged yet this week.";
+  $("#pickWeekTable tbody").innerHTML=P.week.map(function(x){
+    return "<tr><td class='adv'>"+esc(x.a)+"</td><td class='num'>"+money(x.api)+"</td>"
+      +"<td>"+dstr2(x.d)+"</td><td>"+esc(x.by||"—")+"</td></tr>";
+  }).join("");
+  $("#trends").innerHTML=D.trends.map(function(h){
+    return '<div class="hitem"><div class="badge'+(h.red?" red":"")+'">'+h.n+'</div><div>'+h.t+'</div></div>';
+  }).join("");
+}
+function dstr2(iso){
+  return new Date(iso+"T12:00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
+}
+
+/* advisor explorer */
+var PERIODS=[
+  {id:"w", label:"This week", api:"wApi", n:"wN"},
+  {id:"lw",label:"Last week", api:"lwApi",n:"lwN"},
+  {id:"m", label:"August",    api:"mApi", n:"mN"},
+  {id:"y", label:"Year to date", api:"yApi", n:"yN"}
+];
+var state={period:"y", team:null, sort:"api", dir:-1};
+
+function renderControls(){
+  $("#periodCtl").innerHTML=PERIODS.map(function(p){
+    return '<button class="'+(state.period===p.id?"on":"")+'" data-p="'+p.id+'">'+p.label+'</button>';
+  }).join("");
+  $("#periodCtl").onclick=function(e){
+    var b=e.target.closest("button"); if(!b) return;
+    state.period=b.dataset.p; renderControls(); renderTeams(); renderTable();
+  };
+  $("#teamChips").innerHTML=Object.keys(D.teams).map(function(t){
+    return '<button class="tchip '+(state.team===t?"on":"")+'" data-t="'+t+'"><i style="background:'+D.teams[t].color+'"></i>'+D.teams[t].label+'</button>';
+  }).join("");
+  $("#teamChips").onclick=function(e){
+    var b=e.target.closest(".tchip"); if(!b) return;
+    state.team = state.team===b.dataset.t ? null : b.dataset.t;
+    renderControls(); renderTeams(); renderTable();
+  };
+}
+function periodDef(){return PERIODS.find(function(p){return p.id===state.period})}
+function renderTeams(){
+  var p=periodDef();
+  $("#teamCards").innerHTML=Object.keys(D.teams).map(function(t){
+    var rows=D.advisors.filter(function(a){return a.t===t});
+    var api=rows.reduce(function(s,a){return s+a[p.api]},0);
+    var n=rows.reduce(function(s,a){return s+a[p.n]},0);
+    return '<div class="team '+(state.team===t?"on":"")+'" data-t="'+t+'">'
+      +'<div class="nm"><i style="background:'+D.teams[t].color+'"></i>'+D.teams[t].label+'</div>'
+      +'<div class="v">'+mS(api)+'</div><div class="d">'+n+' pickups · '+p.label+'</div></div>';
+  }).join("");
+  $("#teamCards").onclick=function(e){
+    var c=e.target.closest(".team"); if(!c) return;
+    state.team = state.team===c.dataset.t ? null : c.dataset.t;
+    renderControls(); renderTeams(); renderTable();
+  };
+}
+function renderTable(){
+  var p=periodDef();
+  var rows=D.advisors.filter(function(a){return !state.team||a.t===state.team});
+  var cols=[
+    {id:"adv", label:"Advisor", num:false},
+    {id:"api", label:"Total API · "+p.label, num:true},
+    {id:"n", label:"Pickups", num:true},
+    {id:"avg", label:"Avg case", num:true},
+    {id:"ly", label:"vs LY (YTD)", num:true},
+    {id:"hb", label:"Held back", num:true}
+  ];
+  function val(a,c){
+    if(c==="adv") return a.a;
+    if(c==="api") return a[p.api];
+    if(c==="n") return a[p.n];
+    if(c==="avg") return a[p.n]?a[p.api]/a[p.n]:0;
+    if(c==="ly") return a.ly?(a.yApi-a.ly)/a.ly:(a.yApi?9:0);
+    if(c==="hb") return a.hbApi;
+    return 0;
+  }
+  rows.sort(function(x,y){
+    var a=val(x,state.sort), b=val(y,state.sort);
+    return (a<b?-1:a>b?1:0)*state.dir*(state.sort==="adv"?-1:1);
+  });
+  var maxApi=Math.max.apply(null,rows.map(function(a){return a[p.api]}))||1;
+  $("#advTable thead").innerHTML="<tr>"+cols.map(function(c){
+    var on=state.sort===c.id;
+    return '<th class="'+(c.num?"num":"")+'" data-s="'+c.id+'">'+c.label+(on?' <span class="arrow">'+(state.dir<0?"▼":"▲")+'</span>':"")+"</th>";
+  }).join("")+"</tr>";
+  $("#advTable tbody").innerHTML=rows.map(function(a){
+    var api=a[p.api], n=a[p.n];
+    var lyD=a.ly?pct(a.yApi,a.ly):null;
+    var lyCell=lyD===null?'<span style="color:var(--faint)">new</span>'
+      :'<span class="delta '+(lyD>=0?"up":"down")+'">'+(lyD>=0?"▲ +":"▼ ")+Math.abs(lyD).toFixed(0)+"%</span>";
+    return "<tr><td class='adv'><span class='dot' style='background:"+D.teams[a.t].color+"'></span>"+esc(a.a)+"</td>"
+      +"<td class='num'><span class='apibar' style='width:"+Math.max(2,api/maxApi*110)+"px'></span>"+(api?money(api):"—")+"</td>"
+      +"<td class='num'>"+(n||"—")+"</td>"
+      +"<td class='num'>"+(n?mS(api/n):"—")+"</td>"
+      +"<td class='num'>"+lyCell+"</td>"
+      +"<td class='num'>"+(a.hbApi?mS(a.hbApi)+" <span style='color:var(--faint);font-size:11px'>("+a.hbN+")</span>":"—")+"</td></tr>";
+  }).join("");
+  $("#advTable thead").onclick=function(e){
+    var th=e.target.closest("th"); if(!th) return;
+    if(state.sort===th.dataset.s) state.dir*=-1; else {state.sort=th.dataset.s; state.dir=-1;}
+    renderTable();
+  };
+}
+
+function renderHealth(){
+  $("#health").innerHTML=D.health.map(function(h){
+    return '<div class="hitem"><div class="badge'+(h.red?" red":"")+'">'+h.n+'</div><div>'+h.t+'</div></div>';
+  }).join("");
+}
+
+function renderAll(){
+  renderKpis(); renderInsights(); renderMonthly(); renderHeldBack();
+  renderSettle(); renderPickups(); renderControls(); renderTeams(); renderTable(); renderHealth();
+  var t=new Date(D.generatedAt);
+  $("#src").textContent="Data: Salesforce · client portfolio + policy increases (Total API basis, matching the branch report) · pulled "
+    +t.toLocaleDateString("en-GB",{day:"numeric",month:"short"})+" "
+    +t.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})
+    +" · advisors shown as first name + initial on this public snapshot";
+}
+renderAll();
+
+document.addEventListener("keydown",function(e){
+  if(e.key==="f"||e.key==="F"){
+    if(document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen();
+  }
+});
+
+/* ── RUN MODE — the dashboard as a running wall ─────────────────────────────
+   Cycles section to section every 12 s. Any real interaction (click, wheel,
+   touch, key) hands control back to the person at the screen. */
+var running=false, runTimer=null, runIdx=0;
+function runSections(){
+  return [ $("#kpis"), $("#secSettle").previousElementSibling, $("#secSettle"), $("#secPickups"), $("#secAdvisors"), $("#health").parentElement ];
+}
+function runStep(){
+  var secs=runSections();
+  secs[runIdx%secs.length].scrollIntoView({behavior:"smooth",block:"start"});
+  runIdx++;
+  runTimer=setTimeout(runStep,12000);
+}
+function setRunning(on){
+  running=on;
+  clearTimeout(runTimer);
+  var b=$("#runBtn");
+  b.classList.toggle("on",on);
+  b.textContent=on?"⏸ Running":"▶ Run";
+  if(on){runIdx=0;runStep();}
+}
+$("#runBtn").onclick=function(e){e.stopPropagation();setRunning(!running)};
+["pointerdown","wheel","touchstart"].forEach(function(ev){
+  document.addEventListener(ev,function(e){
+    if(running && !e.target.closest("#runBtn")) setRunning(false);
+  },{passive:true});
+});
+
+/* ── HEAD-OFFICE WEEKLY — downloadable Excel ────────────────────────────────
+   Rebuilds the Monday hierarchy sheet (Apps/API for last week, the month and
+   YTD, advisor rows grouped under each unit) from whatever the dashboard is
+   showing — snapshot initials, or full names once the live feed is wired.
+   SpreadsheetML keeps it dependency-free; Excel opens it directly. */
+function xmlEsc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function xlsCell(v,style,num){
+  return num
+    ? '<Cell ss:StyleID="'+style+'"><Data ss:Type="Number">'+(v||0)+'</Data></Cell>'
+    : '<Cell ss:StyleID="'+style+'"><Data ss:Type="String">'+xmlEsc(v)+'</Data></Cell>';
+}
+function xlsRow(cells){return "<Row>"+cells.join("")+"</Row>"}
+function buildXls(){
+  var order=["gary","kerwyn","ricky","akaash"];
+  var rows=[], tot={lwN:0,lwApi:0,mN:0,mApi:0,yN:0,yApi:0};
+  // who did well — the branch leader (green) and top three (gold) per API column
+  function topSet(key){
+    return D.advisors.slice().filter(function(a){return a[key]>0})
+      .sort(function(x,y){return y[key]-x[key]}).slice(0,3).map(function(a){return a.a});
+  }
+  var tops={lwApi:topSet("lwApi"), mApi:topSet("mApi"), yApi:topSet("yApi")};
+  function apiStyle(a,key){
+    var t=tops[key], i=t.indexOf(a.a);
+    return i===0?"sBest":i>0?"sGold":"sMon";
+  }
+  rows.push(xlsRow([xlsCell("SUBMITTED — Ricky Rampersad Branch (Total API: new business + increases)","sTitle")]));
+  var cut=new Date(); cut.setDate(cut.getDate()-cut.getDay()-1);   // last Saturday
+  rows.push(xlsRow([xlsCell("Week ending "+cut.toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})
+    +" · month: "+D.kpi.month.label+" · generated "+new Date().toLocaleDateString("en-GB"),"sSub")]));
+  rows.push(xlsRow([xlsCell("Green — leads the branch for the period · Gold — top three","sSub")]));
+  rows.push(xlsRow([xlsCell("Hierarchy","sHead"),xlsCell("Apps - W","sHead"),xlsCell("API - W","sHead"),
+    xlsCell("Apps - M","sHead"),xlsCell("API - M","sHead"),xlsCell("Apps - Y","sHead"),xlsCell("API - Y","sHead")]));
+  order.forEach(function(t){
+    var advs=D.advisors.filter(function(a){return a.t===t}).slice()
+      .sort(function(x,y){return y.yApi-x.yApi});
+    var u={lwN:0,lwApi:0,mN:0,mApi:0,yN:0,yApi:0};
+    advs.forEach(function(a){["lwN","lwApi","mN","mApi","yN","yApi"].forEach(function(k){u[k]+=a[k]||0})});
+    rows.push(xlsRow([xlsCell(D.teams[t].label,"sUnit"),
+      xlsCell(u.lwN,"sUnitN",1),xlsCell(u.lwApi,"sUnitM",1),
+      xlsCell(u.mN,"sUnitN",1),xlsCell(u.mApi,"sUnitM",1),
+      xlsCell(u.yN,"sUnitN",1),xlsCell(u.yApi,"sUnitM",1)]));
+    advs.forEach(function(a){
+      rows.push(xlsRow([xlsCell("    "+a.a,"sAdv"),
+        xlsCell(a.lwN,"sNum",1),xlsCell(a.lwApi,apiStyle(a,"lwApi"),1),
+        xlsCell(a.mN,"sNum",1),xlsCell(a.mApi,apiStyle(a,"mApi"),1),
+        xlsCell(a.yN,"sNum",1),xlsCell(a.yApi,apiStyle(a,"yApi"),1)]));
+    });
+    ["lwN","lwApi","mN","mApi","yN","yApi"].forEach(function(k){tot[k]+=u[k]});
+  });
+  rows.push(xlsRow([xlsCell("Total","sTot"),
+    xlsCell(tot.lwN,"sTotN",1),xlsCell(tot.lwApi,"sTotM",1),
+    xlsCell(tot.mN,"sTotN",1),xlsCell(tot.mApi,"sTotM",1),
+    xlsCell(tot.yN,"sTotN",1),xlsCell(tot.yApi,"sTotM",1)]));
+  rows.push(xlsRow([xlsCell("","sAdv")]));
+  rows.push(xlsRow([xlsCell("Held-back API (apps received, not yet picked up): "
+    +D.kpi.heldBack.n+" apps · TT$"+D.kpi.heldBack.api.toLocaleString("en-US")
+    +" — settled this year: "+D.settle.settledN+" policies · pending: "+D.settle.pendingN,"sSub")]));
+  var xml='<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>'
+    +'<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'
+    +'<Styles>'
+    +'<Style ss:ID="sTitle"><Font ss:Bold="1" ss:Size="14"/></Style>'
+    +'<Style ss:ID="sSub"><Font ss:Color="#666666"/></Style>'
+    +'<Style ss:ID="sHead"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#1E7145" ss:Pattern="Solid"/></Style>'
+    +'<Style ss:ID="sUnit"><Font ss:Bold="1"/><Interior ss:Color="#E2EFDA" ss:Pattern="Solid"/></Style>'
+    +'<Style ss:ID="sUnitN"><Font ss:Bold="1"/><Interior ss:Color="#E2EFDA" ss:Pattern="Solid"/></Style>'
+    +'<Style ss:ID="sUnitM"><Font ss:Bold="1"/><Interior ss:Color="#E2EFDA" ss:Pattern="Solid"/><NumberFormat ss:Format="#,##0"/></Style>'
+    +'<Style ss:ID="sAdv"/>'
+    +'<Style ss:ID="sNum"/>'
+    +'<Style ss:ID="sMon"><NumberFormat ss:Format="#,##0"/></Style>'
+    +'<Style ss:ID="sBest"><Font ss:Bold="1" ss:Color="#1E6B3A"/><Interior ss:Color="#C6EFCE" ss:Pattern="Solid"/><NumberFormat ss:Format="#,##0"/></Style>'
+    +'<Style ss:ID="sGold"><Font ss:Bold="1" ss:Color="#7F6000"/><Interior ss:Color="#FFF2CC" ss:Pattern="Solid"/><NumberFormat ss:Format="#,##0"/></Style>'
+    +'<Style ss:ID="sTot"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#1E7145" ss:Pattern="Solid"/></Style>'
+    +'<Style ss:ID="sTotN"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#1E7145" ss:Pattern="Solid"/></Style>'
+    +'<Style ss:ID="sTotM"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#1E7145" ss:Pattern="Solid"/><NumberFormat ss:Format="#,##0"/></Style>'
+    +'</Styles>'
+    +'<Worksheet ss:Name="Submitted"><Table>'
+    +'<Column ss:Width="190"/><Column ss:Width="60"/><Column ss:Width="80"/><Column ss:Width="60"/><Column ss:Width="80"/><Column ss:Width="60"/><Column ss:Width="90"/>'
+    +rows.join("")
+    +'</Table></Worksheet></Workbook>';
+  return xml;
+}
+$("#xlsBtn").onclick=function(){
+  var blob=new Blob([buildXls()],{type:"application/vnd.ms-excel"});
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="RRB-production-weekly-"+new Date().toISOString().slice(0,10)+".xls";
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500);
+};
+
+/* live feed — same /exec URL as the walls. The feed sends full advisor names;
+   this map assigns them to teams (the report's hierarchy). Unknown names fold
+   into Ricky's unit's color-free "other" — update the map when the team changes. */
+var TEAM_BY_NAME={
+  "Gary Sookdeo":"gary","Naila Samuel":"gary","Felicia Rampersad":"gary","Tricia Baksh":"gary",
+  "Chris Badaloo":"gary","John Boodhoo":"gary","Alyssa Joseph":"gary","Jesus Boodhoo":"gary",
+  "Anthony Simmons":"kerwyn","Kerwyn Ramroach":"kerwyn","Dhalina Heeraman":"kerwyn",
+  "Aidan Eugene":"kerwyn","Crystal Stephanie Fraser":"kerwyn",
+  "Neil Ramnanan":"ricky","Premchand Dookran":"ricky","Varun Seegolam":"ricky","Javid Ali":"ricky",
+  "Aleema Mohammed-Ali":"ricky","Ricky Rampersad":"ricky","Narissa (Agent) Mohammed":"ricky",
+  "Joy Barbara Sammah":"ricky","Faizal Mohammed":"ricky","Meera Persad Khan":"ricky",
+  "Randolph Gonzales":"ricky","Jamil Sean Khan":"ricky",
+  "Akaash Kalladeen":"akaash","Darryl Manick":"akaash","Malcolm Sooknanan":"akaash",
+  "Fawwaz Mohamed":"akaash","Stephanie Rajkumar":"akaash","Daniel Bhagwandas":"akaash","Rajiv Soodoo":"akaash"
+};
+function refresh(){
+  if(!WALL_DATA_URL) return;
+  fetch(WALL_DATA_URL,{redirect:"follow"}).then(function(r){return r.json()})
+    .then(function(j){
+      var p=j&&j.production, adv=j&&j.dashboardAdvisors;
+      if(!p||!adv||!p.ytd) return;
+      var now=new Date(j.generatedAt||Date.now());
+      var start=new Date(now.getFullYear(),0,0);
+      D.generatedAt=j.generatedAt;
+      D.kpi.week={api:p.week.api+p.week.inc, n:p.week.n+p.week.incN,
+                  prevApi:p.week.prevApi+p.week.prevInc, prevN:p.week.prevN};
+      D.kpi.month={label:p.month.label, api:p.month.api+p.month.inc, n:p.month.n+p.month.incN,
+                   lyApi:p.month.lastYearApi+p.month.lastYearInc};
+      D.kpi.ytd.api=p.ytd.api+p.ytd.inc; D.kpi.ytd.n=p.ytd.n+p.ytd.incN;
+      D.kpi.ytd.lyApi=p.ytd.lastYearApi+p.ytd.lastYearInc;
+      D.kpi.ytd.dayOfYear=Math.max(1,Math.round((now-start)/864e5));
+      if(p.heldBack){
+        D.kpi.heldBack={api:p.heldBack.api, n:p.heldBack.n, avgDays:p.heldBack.avgDays,
+          over60Api:(p.heldBack.bands[3]||{}).api||0, over60N:(p.heldBack.bands[3]||{}).n||0};
+        D.hbBands=p.heldBack.bands;
+        D.hbAgents=p.heldBack.byAgent.slice(0,5).map(function(x){return {a:x.a,n:x.n,api:x.api}});
+      }
+      D.monthly=p.monthly.map(function(x){return {m:x.m,nApi:x.api,nN:x.n,iApi:x.inc||0,iN:x.incN||0}});
+      D.advisors=adv.map(function(x){
+        return {a:x.a, t:TEAM_BY_NAME[x.a]||"ricky", wN:x.wN,wApi:x.wApi, lwN:x.lwN,lwApi:x.lwApi,
+                mN:x.mN,mApi:x.mApi, yN:x.yN,yApi:x.yApi, ly:x.ly||0, hbN:x.hbN||0, hbApi:x.hbApi||0};
+      });
+      if(j.settlement && j.settlement.monthly) D.settle=j.settlement;
+      // who-picked-up panels from the same feed
+      var weekStart=new Date(now); weekStart.setDate(now.getDate()-now.getDay()); // Sunday
+      D.pickups.monthByAgent=D.advisors.filter(function(a){return a.mApi>0})
+        .map(function(a){return {a:a.a,n:a.mN,api:a.mApi}})
+        .sort(function(x,y){return y.api-x.api});
+      if(p.latest) D.pickups.week=p.latest
+        .filter(function(x){return new Date(x.d+"T12:00:00")>=weekStart})
+        .map(function(x){return {a:x.a,api:x.api,d:x.d,by:x.by||"—"}});
+      renderAll();
+      $("#live").classList.add("on"); $("#liveTxt").textContent="Live";
+    }).catch(function(){});
+}
+refresh(); setInterval(refresh,15*60*1000);
+</script>
+</body>
+</html>

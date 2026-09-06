@@ -1,0 +1,155 @@
+<title>The Fixed Fact Find</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,600&family=Inter:wght@400;600;700;800&display=swap">
+<style>
+:root{--navy:#0B1836;--teal:#0D9488;--teal-lt:#2DD4BF;--gold:#F5B324;--good:#0E8A5F;--crit:#C0392B;
+ --paper:#fff;--ground:#F4F6FA;--sunk:#EEF2F8;--ink:#0F172A;--ink-2:#3F4A5C;--muted:#69748A;
+ --line:#DFE4EC;--shadow:0 1px 2px rgba(11,24,54,.06),0 12px 32px -14px rgba(11,24,54,.22)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#111A2E;--ground:#080D1A;
+ --sunk:#0D1526;--ink:#EAEEF6;--ink-2:#C3CBDA;--muted:#8B95A9;--line:#222C42;--teal:#2DD4BF;
+ --good:#34D399;--crit:#F87171;--shadow:0 1px 2px rgba(0,0,0,.4),0 12px 34px -16px rgba(0,0,0,.8)}}
+:root[data-theme="dark"]{--paper:#111A2E;--ground:#080D1A;--sunk:#0D1526;--ink:#EAEEF6;
+ --ink-2:#C3CBDA;--muted:#8B95A9;--line:#222C42;--teal:#2DD4BF;--good:#34D399;--crit:#F87171;
+ --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 34px -16px rgba(0,0,0,.8)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+ font:16.5px/1.62 Inter,-apple-system,"Segoe UI",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:0 18px 70px}
+header{background:radial-gradient(660px 340px at 86% -18%,rgba(45,212,191,.20),transparent 60%),
+ var(--navy);color:#fff;padding:26px 18px 30px;margin-bottom:26px}
+.hin{max-width:724px;margin:0 auto}
+h1{font-family:Newsreader,Georgia,serif;font-size:clamp(29px,7vw,40px);font-weight:600;
+ line-height:1.14;letter-spacing:-.02em;margin:0 0 12px}
+header p{margin:0;font-size:16px;color:rgba(255,255,255,.76);line-height:1.6}
+h2{font-family:Newsreader,Georgia,serif;font-size:26px;font-weight:600;margin:0 0 6px;letter-spacing:-.015em}
+.eyebrow{font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;
+ color:var(--teal);margin:0 0 9px}
+.lede{font-size:15.5px;color:var(--ink-2);margin:0 0 18px;line-height:1.6}
+section{margin:0 0 38px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:12px}
+.big{display:block;text-align:center;text-decoration:none;border:0;border-radius:14px;
+ font:800 17px Inter,sans-serif;padding:19px;cursor:pointer;width:100%}
+.big.try{background:var(--teal);color:#fff;box-shadow:0 10px 26px -10px rgba(13,148,136,.85)}
+.big.dl{background:var(--good);color:#fff;box-shadow:0 10px 26px -10px rgba(14,138,95,.85)}
+.big:hover{filter:brightness(1.06)}
+.big:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.note{font-size:13.5px;color:var(--muted);text-align:center;margin:0}
+.warn{background:rgba(192,57,43,.09);border:1.5px solid rgba(192,57,43,.4);
+ border-radius:14px;padding:17px 19px;margin:0 0 24px}
+.warn h3{margin:0 0 6px;font-size:16px;font-weight:800;color:var(--crit)}
+.warn p{margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.55}
+.fx{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--teal);
+ border-radius:0 13px 13px 0;padding:15px 18px;margin-bottom:10px;box-shadow:var(--shadow)}
+.fx.hot{border-left-color:var(--crit)}
+.fx h3{margin:0 0 4px;font-size:16.5px;font-weight:800}
+.fx.hot h3{color:var(--crit)}
+.fx p{margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.55}
+.st{display:grid;grid-template-columns:38px 1fr;gap:15px;padding:15px 0;border-top:1px solid var(--line)}
+.st:first-of-type{border-top:0}
+.st .n{width:32px;height:32px;border-radius:50%;background:var(--navy);color:#fff;
+ font:800 14px/32px Inter,sans-serif;text-align:center}
+.st h3{margin:2px 0 4px;font-size:17px;font-weight:800;line-height:1.3}
+.st p{margin:0;font-size:15px;color:var(--ink-2);line-height:1.55}
+.st code{background:var(--sunk);border:1px solid var(--line);border-radius:5px;padding:1px 6px;
+ font:600 13.5px ui-monospace,SFMono-Regular,Menlo,monospace}
+footer{text-align:center;font-size:13px;color:var(--muted);padding:22px 0 0}
+@media (max-width:520px){.two{grid-template-columns:1fr}}
+</style>
+
+<header><div class="hin">
+<h1>The fixed fact find</h1>
+<p>Shipped on 23 August 2026. This is the build advisors now open at
+factfind360.com/ffproject &mdash; the copy below is kept only as a reference. Nothing on
+this page needs doing any more.</p>
+</div></header>
+
+<div class="wrap">
+
+<div class="two">
+  <a class="big try" href="https://factfind360.com/ffproject">Open the live fact find</a>
+  <a class="big dl" href="FFPROJECT.html" download="FFPROJECT.html">Download this copy</a>
+</div>
+<p class="note">893 KB &middot; live since 23 August 2026 &middot; identical to what is deployed</p>
+
+<section style="margin-top:32px">
+<div class="warn">
+<h3>Do not deploy from this page</h3>
+<p>These buttons are a reference copy, not a release. factfind360.com is now built from
+<b>github.com/RickyRampersad/fact-find-analyzer</b>, and a file dragged onto Netlify by hand
+would overwrite the site and put it out of step with the repository. Changes go through git
+&mdash; the steps are below.</p>
+</div>
+
+<p class="eyebrow">What is repaired</p>
+<h2>Five things</h2>
+
+<div class="fx"><h3>Replacement &mdash; a note, not a lecture</h3>
+<p>Guardian policies only. When a client is replacing one, the advisor sees a single line
+&mdash; <em>&ldquo;Replacing an existing Guardian policy. Complete and sign the disclosure
+form at the back of the pack.&rdquo;</em> No citations, no stacked warnings, and it does not
+block submission.</p></div>
+
+<div class="fx hot"><h3>The Central Bank disclosure form</h3>
+<p>Did not exist in the live build. It now renders automatically whenever a replacement is
+detected, prefilled from the fact find &mdash; insurer, year, type, sums, premiums &mdash;
+with the verbatim caps warning, the nineteen-row comparison, the cost table and three
+signature blocks.</p></div>
+
+<div class="fx"><h3>Guardian&rsquo;s page five stops at four rows</h3>
+<p>Recommendations five and six were overrunning the printed form. Page five now hard-stops
+at four and prints a line saying where the rest are; the overflow is set out in full on the
+addendum with priority, need, plan, amount, premium and reason.</p></div>
+
+<div class="fx"><h3>The reason that would not save</h3>
+<p>Premchand&rsquo;s bug. <code>dec{N}Reason</code> had no schema entry, so every reason an
+advisor typed was silently dropped on the way to the sheet &mdash; and the checks then
+re-raised &ldquo;no reason given&rdquo; on a case that had just been fixed. The reason is
+the compliance artefact; it now has a column and it saves.</p></div>
+
+<div class="fx"><h3>Seventeen needs, and the addendum that carries them</h3>
+<p>Seventeen rules read the fact find the advisor has already filled in and surface what
+nobody asked about &mdash; the business with no buy-sell, the mortgaged rental, the
+uninsured card, the child with nothing costed &mdash; each with the question that opens it.
+Four go on Guardian&rsquo;s form; the rest go in the advisor&rsquo;s bag as the next
+appointment.</p></div>
+</section>
+
+<section>
+<p class="eyebrow">Changing the form from here on</p>
+<h2>Four steps, in a browser</h2>
+
+<div class="st"><div class="n">1</div><div><h3>Open the file in the repository</h3>
+<p><b>github.com/RickyRampersad/fact-find-analyzer</b> &rarr; <code>ffproject.html</code>
+&rarr; the pencil icon. That file <em>is</em> the live form; there is no build step and no
+copy to keep in step with it. Leave the name alone &mdash; it is lowercase because
+factfind360.com/ffproject is the address advisors already have, and renaming it moves that
+address.</p></div></div>
+
+<div class="st"><div class="n">2</div><div><h3>Commit to a new branch, not the live one</h3>
+<p>At the bottom of the edit screen choose <b>Create a new branch for this commit</b>, give
+it a name, and open the pull request GitHub offers. The production branch is
+<code>compliance-panel</code>; committing straight to it publishes to advisors with nothing
+in between.</p></div></div>
+
+<div class="st"><div class="n">3</div><div><h3>Netlify builds a preview by itself</h3>
+<p>Within a minute the pull request shows a <b>Deploy Preview</b> link &mdash; the whole site
+with your change on it, on its own address, touching nothing live. Open a real case on it:
+put a replacement through, print the pack, check the compliance panel.</p></div></div>
+
+<div class="st"><div class="n">4</div><div><h3>Merge when the preview is right</h3>
+<p>Merging publishes it, and every advisor has the change on their next reload. If it turns
+out wrong, <b>Deploys</b> &rarr; the previous deploy &rarr; <b>Publish deploy</b> puts the
+site back in about thirty seconds, and you fix it in the repository.</p></div></div>
+
+<div class="fx hot" style="margin-top:22px"><h3>Never drag a folder onto Netlify again</h3>
+<p>That is how this site was published until 23 August 2026, and a manual deploy
+<b>replaces every file</b> &mdash; anything missing from the folder is deleted. It is what
+removed <code>walkthrough.html</code>, <code>insights.html</code>, <code>wall.html</code>
+and the tour video that day. Two of those are not linked from the home page, so nothing on
+screen said they were gone. Git is the way in now.</p></div>
+</section>
+
+<footer><b>Ricky Rampersad Branch</b><br>
+This page is a record of a change already shipped. The live form is at
+factfind360.com/ffproject and its source is github.com/RickyRampersad/fact-find-analyzer.</footer>
+</div>

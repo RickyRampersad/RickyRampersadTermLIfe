@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Month-end Review | Ricky Rampersad Branch</title>
+<style>
+  :root{
+    --navy:#08333D; --blue:#0E8FA3; --gold:#F08A24; --lightblue:#E4F4F6;
+    --ink:#0E1F2E; --paper:#F7F9FB; --surface:#FFF; --surface2:#EDF2F7;
+    --slate:#5C7080; --line:#D3DEE7;
+    --go:#1F7A55; --warn:#A9701F; --stop:#A93B2B;
+    --sans:"Gill Sans MT","Avenir Next","Segoe UI",system-ui,sans-serif;
+    --display:Optima,"Palatino Linotype",Georgia,serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --ink:#DCE7EF; --paper:#081520; --surface:#0E2231; --surface2:#142E40;
+    --navy:#7FB2D9; --blue:#5FA8DC; --lightblue:#12293A; --slate:#8FA6B8; --line:#1E3B50;
+    --go:#4FAE83; --warn:#D4A055; --stop:#D4685A;
+  }}
+  :root[data-theme="dark"]{
+    --ink:#DCE7EF; --paper:#081520; --surface:#0E2231; --surface2:#142E40;
+    --navy:#7FB2D9; --blue:#5FA8DC; --lightblue:#12293A; --slate:#8FA6B8; --line:#1E3B50;
+    --go:#4FAE83; --warn:#D4A055; --stop:#D4685A;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6}
+  h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;line-height:1.25}
+  p{margin:0}
+  button,input,select,textarea{font:inherit;color:inherit}
+  :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .label{font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--slate)}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  a{color:var(--blue)}
+
+  header{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+  .hin{max-width:1160px;margin:0 auto;padding:.85rem 1.5rem;display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap}
+  .hin .brand{margin-right:auto}
+  .hin h1{font-size:1.05rem;color:var(--navy)}
+  .hin .sub{font-size:12px;color:var(--slate)}
+  main{max-width:1160px;margin:0 auto;padding:1.8rem 1.5rem 4rem;display:flex;flex-direction:column;gap:1.2rem}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:1.3rem 1.4rem}
+  .btn{background:var(--blue);color:#fff;border:1px solid var(--blue);border-radius:4px;padding:.45rem .9rem;
+    cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+  .btn:hover{background:var(--navy);border-color:var(--navy)}
+  .btn.ghost{background:none;color:var(--blue);border-color:var(--line)}
+  .btn.ghost:hover{background:var(--lightblue)}
+  .btn.go{background:var(--go);border-color:var(--go)} .btn.go:hover{filter:brightness(1.08)}
+  .btn.stop{background:none;color:var(--stop);border-color:var(--stop)}
+  .btn.stop:hover{background:var(--stop);color:#fff}
+  .btn:disabled{opacity:.45;cursor:default}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.9rem}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.9rem 1rem}
+  .kpi .v{font-family:var(--mono);font-size:1.6rem;color:var(--navy);line-height:1.1;margin-top:.15rem}
+  .kpi .v.hot{color:var(--warn)}
+  .kpi .n{font-size:11.5px;color:var(--slate);margin-top:.2rem}
+
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+  table{width:100%;border-collapse:collapse;font-size:14px;min-width:820px}
+  th,td{padding:.6rem .8rem;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:var(--surface2);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--slate);font-weight:700;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:0}
+  tbody tr{cursor:pointer}
+  tbody tr:hover{background:var(--surface2)}
+  tbody tr.open{background:var(--lightblue)}
+  td.r,th.r{text-align:right}
+
+  .pill{display:inline-block;border-radius:3px;padding:.15rem .5rem;font-size:10px;font-weight:700;
+    letter-spacing:.09em;text-transform:uppercase;white-space:nowrap}
+  .p-wait{background:#FDF6E7;color:var(--warn)}
+  .p-back{background:#FBEEEB;color:var(--stop)}
+  .p-sent{background:#EDF8F2;color:var(--go)}
+  :root[data-theme="dark"] .p-wait{background:#2A2113}
+  :root[data-theme="dark"] .p-back{background:#2E1A16}
+  :root[data-theme="dark"] .p-sent{background:#16302A}
+
+  .alert{border-radius:6px;padding:.9rem 1.1rem;font-size:13.5px;line-height:1.6;border:1px solid}
+  .a-info{border-color:#A8CEDA;background:#EEF7FA} .a-flag{border-color:#E8C98A;background:#FDF6E7}
+  .a-ok{border-color:#A9D8BF;background:#EDF8F2} .a-bad{border-color:#E3B0A8;background:#FBEEEB}
+  :root[data-theme="dark"] .a-info,:root[data-theme="dark"] .a-flag,
+  :root[data-theme="dark"] .a-ok,:root[data-theme="dark"] .a-bad{background:var(--surface2)}
+  .alert b{color:var(--ink)}
+  .note{font-size:12.5px;color:var(--slate)}
+
+  .mail{border:1px solid var(--line);border-radius:6px;background:var(--paper);margin-top:.8rem}
+  .mail .hdr{padding:.6rem .9rem;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--slate)}
+  .mail pre{margin:0;padding:.9rem;white-space:pre-wrap;font:13px/1.65 var(--sans)}
+  .mail .att{padding:.55rem .9rem;border-top:1px solid var(--line);display:flex;gap:.6rem;flex-wrap:wrap;font-size:12px}
+
+  .checks li{margin:.3rem 0}
+  .checks .ans{color:var(--go);font-weight:600}
+  .checks .noans{color:var(--stop);font-weight:600}
+  .tl{list-style:none;margin:.4rem 0 0;padding:0;font-size:13px}
+  .tl li{padding:.3rem 0 .3rem 1.1rem;border-left:2px solid var(--line);margin-left:.3rem;position:relative}
+  .tl li::before{content:'';position:absolute;left:-5px;top:.85em;width:8px;height:8px;border-radius:50%;
+    background:var(--slate)}
+  .tl li.did-SUBMITTED::before{background:var(--blue)}
+  .tl li.did-RETURNED::before{background:var(--stop)}
+  .tl li.did-APPROVED::before,.tl li.did-SENT::before,.tl li.did-CONFIRMED::before{background:var(--go)}
+  .tl li.did-QUERIED::before{background:var(--stop)}
+  .row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+  .filters{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+  .filters select,.filters input{border:1px solid var(--line);border-radius:5px;background:var(--surface);
+    padding:.35rem .55rem;font-size:13px}
+  textarea.ret{width:100%;border:1px solid var(--line);border-radius:5px;background:var(--paper);
+    padding:.5rem .6rem;font-size:13.5px;min-height:56px;font-family:inherit;margin-top:.5rem}
+
+  .gate{max-width:430px;margin:12vh auto;background:var(--surface);border:1px solid var(--line);
+    border-radius:8px;padding:2rem 1.9rem;text-align:center}
+  .gate h2{font-size:1.3rem;color:var(--navy);margin-bottom:.4rem}
+  .gate p{font-size:13.5px;color:var(--slate);line-height:1.6;margin-bottom:1rem}
+  .gate input{width:100%;padding:.7rem .8rem;border:1px solid var(--line);border-radius:6px;
+    background:var(--paper);text-align:center;letter-spacing:.22em;font-family:var(--mono);text-transform:uppercase}
+  .gate .btn{width:100%;margin-top:.7rem}
+  .gate .err{color:var(--stop);font-size:12.5px;min-height:1.3em;margin-top:.7rem;font-weight:600}
+  @media print{header,.btn,.filters{display:none!important}}
+</style>
+</head>
+<body>
+
+<div id="gate" class="gate">
+  <h2>Administrators only</h2>
+  <p>Verifying a month is an administrator's job — what is approved here goes to the client.
+     Managers: sign in on the <a href="index.html">portal</a> and this gate never appears.
+     The code below is the branch fallback.</p>
+  <input id="code" placeholder="ADMIN CODE" autocomplete="off">
+  <button class="btn" id="go">Open</button>
+  <div class="err" id="gerr"></div>
+</div>
+
+<div id="app" hidden>
+<header>
+  <div class="hin">
+    <div class="brand">
+      <h1>Month-end review</h1>
+      <div class="sub">Staff submit a month; an administrator verifies it; approval is what sends it.</div>
+    </div>
+    <div class="filters">
+      <span class="note" id="who" style="align-self:center"></span>
+      <select id="f-state">
+        <option value="">Everything</option>
+        <option value="SUBMITTED">Waiting for review</option>
+        <option value="RETURNED">Sent back</option>
+        <option value="APPROVED">Approved — with staff to send</option>
+        <option value="SENT">Sent to the client</option>
+        <option value="CONFIRMED">Client confirmed</option>
+        <option value="QUERIED">Client queried it</option>
+      </select>
+      <input id="f-text" placeholder="Find a group" autocomplete="off">
+      <button class="btn ghost" id="theme">Theme</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="stats" id="kpis"></div>
+  <div id="list"></div>
+  <div id="detail"></div>
+  <div class="card" id="activity"></div>
+</main>
+</div>
+
+<script>
+"use strict";
+/* ═══════════════════════════════════════════════════════════════════════
+   THE ADMINISTRATOR'S SIDE OF THE MONTH-END FLOW
+
+   Staff read the documents on upload.html, answer its checks, and submit.
+   That lands here. The administrator sees everything staff saw — the
+   figures, each check and the answer given, the movement on last month,
+   the arrears, the email word for word — and then does one of two things:
+
+     approve  →  the month is CLEARED and handed back to staff to send
+     return   →  it goes back to staff with a reason, and nothing is sent
+
+   Approving is not posting. The assistant who built the month reads the
+   approver's note, satisfies herself nothing moved under her, and presses
+   send — so the last pair of eyes on a billing before a client reads it
+   belongs to somebody who has not already signed it off.
+
+   Whoever submitted a month cannot approve it. Verification by the person
+   being verified is not verification; the block is by name below.
+
+   The manager sees every group's activity on this same page — the list is
+   the queue, the stream underneath is who did what, when, on which group.
+
+   The store is same-origin browser storage so the whole process runs with
+   nothing behind it. Live, submit/approve/return become branch-script
+   calls (submitmonth / reviewmonth), the script re-checks the identity on
+   each against the administrators sheet server-side, and approval is when
+   the script actually emails the client — this page merely asks. The
+   store block is duplicated in upload.html; change both together.
+   ═══════════════════════════════════════════════════════════════════════ */
+const API = "https://script.google.com/macros/s/AKfycbzxAl-EP_stXYGHZkkxWnei6idJ04bM5ZIUKfGxDTr-cHPH7Tt9trmAYVNPzeq9k4U56w/exec";
+const ADMIN_CODE = "RRB-ADMIN-2026";
+const SESSION_KEY = "rrb-review-ok";
+const HANDOFF_KEY = "rrb-signin";
+const FLOW_KEY = "rrb-monthflow";
+let IDENTITY = null, openSub = null, AUTH = null;
+/* With a branch script configured this cache is the truth; without one the
+   same-origin store is, so the flow still runs with nothing behind it. */
+let CACHE = { subs: [] };
+async function refresh(){
+  if(API){
+    try{
+      const r = await fetch(API + '?action=monthflow&auth=' + encodeURIComponent(AUTH || ''));
+      const d = await r.json();
+      CACHE = { subs: (d && d.subs) || [] };
+    }catch(e){ CACHE = { subs: [] }; }
+  }
+  paint();
+}
+function subs(){ return API ? CACHE.subs : flowLoad().subs; }
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money = n => 'TT$' + Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const ago = at => { const m = Math.round((Date.now()-at)/60000);
+  return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m/60) + ' h ago'
+    : Math.round(m/1440) + ' d ago'; };
+const when = at => new Date(at).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) + ' ' +
+  new Date(at).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+const last = (sub, did) => sub.events.slice().reverse().find(e => e.did === did) || {};
+
+function handoff(){
+  try{
+    const d = JSON.parse(localStorage.getItem(HANDOFF_KEY) || 'null');
+    if(!d || !d.at || (Date.now() - d.at) > 12*3600*1000) return null;
+    return d;
+  }catch(e){ return null; }
+}
+function flowLoad(){
+  try{ return JSON.parse(localStorage.getItem(FLOW_KEY) || '{"subs":[]}'); }
+  catch(e){ return { subs:[] }; }
+}
+function flowSave(d){
+  d.subs = d.subs.slice(-20);
+  try{ localStorage.setItem(FLOW_KEY, JSON.stringify(d)); }catch(e){}
+}
+
+const STATE = { SUBMITTED:['Waiting for review','p-wait'], RETURNED:['Sent back','p-back'],
+                APPROVED:['Approved — with staff to send','p-wait'], SENT:['Sent to the client','p-sent'],
+                CONFIRMED:['Client confirmed','p-sent'], QUERIED:['Client queried it','p-back'] };
+
+function filtered(){
+  const st = $('f-state').value, t = ($('f-text').value||'').toLowerCase().trim();
+  return subs().slice().reverse().filter(x =>
+    (!st || x.state === st) && (!t || x.group.name.toLowerCase().includes(t)));
+}
+
+function paint(){
+  const all = subs();
+  const waiting = all.filter(x => x.state === 'SUBMITTED');
+  const back    = all.filter(x => x.state === 'RETURNED' || x.state === 'APPROVED');
+  const out     = all.filter(x => x.state === 'SENT' || x.state === 'CONFIRMED' || x.state === 'QUERIED');
+  const queried = all.filter(x => x.state === 'QUERIED');
+  /* "With staff" is the queue this flow creates and the one nobody was
+     watching: approved months that have not been posted, and returned
+     months that have not been answered. Both are the client waiting. */
+  $('kpis').innerHTML =
+    kpi(waiting.length, 'Waiting for review', waiting.length ? 'oldest ' + ago(waiting[0].events[0].at) : 'nothing in the queue', waiting.length>0) +
+    kpi(back.length, 'With staff', back.length
+      ? back.filter(x=>x.state==='APPROVED').length + ' approved and unsent' : 'none', back.length>0) +
+    kpi(out.length, 'Out with clients', out.length
+      ? out.filter(x=>x.state==='CONFIRMED').length + ' confirmed' : 'none yet') +
+    kpi(queried.length, 'Queried', queried.length ? 'a client has asked something' : 'none', queried.length>0);
+
+  const rows = filtered();
+  $('list').innerHTML = rows.length ? `<div class="tw"><table>
+    <thead><tr><th>Group</th><th>Month</th><th>Submitted by</th><th>When</th>
+      <th class="r">Payable</th><th>State</th></tr></thead>
+    <tbody>${rows.map(x => {
+      const total = Object.values(x.lineTotals||{}).reduce((s,v)=>s+v,0);
+      const [lbl,cls] = STATE[x.state] || [x.state,''];
+      return `<tr data-open="${esc(x.id)}" class="${openSub===x.id?'open':''}">
+        <td><b>${esc(x.group.name)}</b></td>
+        <td>${esc(x.monthLabel)}</td>
+        <td>${esc(x.events[0].by)}</td>
+        <td class="note">${ago(x.events[0].at)}</td>
+        <td class="r mono">${x.arrears ? money(x.arrears.balance) : money(total)}</td>
+        <td><span class="pill ${cls}">${lbl}</span></td>
+      </tr>`; }).join('')}</tbody></table></div>`
+  : `<div class="card"><div class="alert a-info"><b>Nothing here yet.</b> When staff submit a month from the
+     billing upload it appears in this queue with everything needed to verify it — and this page is also the
+     record of every month that has been through.</div></div>`;
+
+  $('detail').innerHTML = openSub ? detail(subs().find(x => x.id === openSub)) : '';
+
+  const events = all.flatMap(x => x.events.map(e => ({...e, group:x.group.name, month:x.monthLabel})))
+    .sort((a,b) => b.at - a.at).slice(0, 30);
+  $('activity').innerHTML = `<h2 style="font-size:1.05rem;color:var(--navy)">Everything that has happened</h2>
+    ${events.length ? `<ul class="tl">${events.map(e => `<li class="did-${esc(e.did)}">
+      <b>${esc(e.by)}</b> ${({SUBMITTED:'submitted',RETURNED:'sent back',APPROVED:'approved',SENT:'sent',
+          CONFIRMED:'confirmed',QUERIED:'queried'})[e.did]||esc(e.did)}
+      <b>${esc(e.group)}</b> — ${esc(e.month)} · <span class="note">${when(e.at)}</span>
+      ${e.note ? `<br><span class="note">&ldquo;${esc(e.note)}&rdquo;</span>` : ''}</li>`).join('')}</ul>`
+    : '<p class="note" style="margin-top:.5rem">The trail of submissions, returns and approvals shows here.</p>'}`;
+}
+
+function detail(x){
+  if(!x) return '';
+  const [lbl,cls] = STATE[x.state] || [x.state,''];
+  const mine = IDENTITY && x.events[0].by === IDENTITY.name;
+  const unanswered = (x.checks||[]).filter(c => !c.answer);
+  return `<div class="card" id="d-${esc(x.id)}">
+    <div class="row" style="justify-content:space-between">
+      <h2 style="font-size:1.15rem;color:var(--navy)">${esc(x.group.name)} — ${esc(x.monthLabel)}</h2>
+      <span class="pill ${cls}">${lbl}</span>
+    </div>
+    <p class="note">Submitted by ${esc(x.events[0].by)} ${ago(x.events[0].at)}.</p>
+
+    <h3 style="font-size:.95rem;margin-top:1rem;color:var(--navy)">The figures</h3>
+    <ul class="checks">
+      ${Object.entries(x.lineTotals||{}).map(([l,v]) => `<li>${esc(l)} — <b class="mono">${money(v)}</b></li>`).join('')}
+      ${x.arrears ? `<li><span class="noans">Carrying arrears:</span> ${money(x.arrears.outstanding)} outstanding
+        from ${esc(x.arrears.months.join(', '))} — the client is being asked for <b>${money(x.arrears.balance)}</b>,
+        not ${money(x.arrears.thisMonth)}.</li>` : ''}
+      ${x.movement ? `<li>Against ${esc(x.movement.from)}: ${x.movement.joined.length} joined${
+          x.movement.joined.length ? ` (${esc(x.movement.joined.join('; '))})` : ''},
+        ${x.movement.left.length} left${x.movement.left.length ? ` (${esc(x.movement.left.join('; '))})` : ''},
+        ${x.movement.changed.length} changed cover —
+        ${x.movement.accountsFor ? '<span class="ans">every dollar accounted for</span>'
+                                  : '<span class="noans">movement NOT fully accounted for</span>'}.</li>` : ''}
+    </ul>
+
+    ${(x.adjItems && x.adjItems.length) ? `
+    <h3 style="font-size:.95rem;margin-top:1rem;color:var(--navy)">Statement of adjustments, item by item</h3>
+    <ul class="checks">${x.adjItems.map(i => `<li>${esc(i.type || 'ADJUSTMENT')} — <b>${esc(i.name)}</b>
+      · <span class="mono">${money(i.total)}</span>${i.periods > 1 ? ` · ${i.periods} periods` : ''}${
+      /TERMIN/i.test(i.type || '') ? `<br><span class="noans">→ confirm this person is off next month's invoices — a termination that keeps billing is the commonest leak.</span>` : ''}</li>`).join('')}</ul>` : ''}
+    <h3 style="font-size:.95rem;margin-top:1rem;color:var(--navy)">Documents as read</h3>
+    <ul class="checks">${(x.docs||[]).map(d => `<li>${esc(d.file)} — ${d.ok
+      ? '<span class="ans">agrees with its own totals</span>'
+      : '<span class="noans">does NOT reconcile</span>'}${
+      d.problems && d.problems.length ? `<br><span class="note">${esc(d.problems.join(' · '))}</span>` : ''}</li>`).join('')}</ul>
+
+    <h3 style="font-size:.95rem;margin-top:1rem;color:var(--navy)">The checks, and what staff said</h3>
+    ${(x.checks||[]).length ? `<ul class="checks">${x.checks.map(c => `<li>${esc(c.q)}<br>
+      ${c.answer ? `<span class="ans">→ ${esc(c.answer)}</span>` : '<span class="noans">→ left unanswered</span>'}
+      ${c.note ? ` · <span class="note">&ldquo;${esc(c.note)}&rdquo;</span>` : ''}</li>`).join('')}</ul>`
+    : '<p class="note">The screen had nothing to query this month.</p>'}
+    ${unanswered.length ? `<div class="alert a-flag" style="margin-top:.6rem"><b>${unanswered.length}
+      check${unanswered.length>1?'s':''} came through unanswered.</b> Returning this is usually the right call.</div>` : ''}
+
+    <h3 style="font-size:.95rem;margin-top:1rem;color:var(--navy)">The email that goes out</h3>
+    <div class="mail">
+      <div class="hdr"><b>Subject</b> ${esc(x.email.subject)}</div>
+      <pre>${esc(x.email.body)}</pre>
+      <div class="att">${(x.email.atts||[]).map(a => `<span>📎 ${esc(a)}</span>`).join('')}</div>
+    </div>
+
+    <h3 style="font-size:.95rem;margin-top:1.1rem;color:var(--navy)">Trail</h3>
+    <ul class="tl">${x.events.map(e => `<li class="did-${esc(e.did)}"><b>${esc(e.by)}</b>
+      ${({SUBMITTED:'submitted',RETURNED:'sent back',APPROVED:'approved',SENT:'sent to the client',
+          CONFIRMED:'confirmed the billing is correct',QUERIED:'raised a query'})[e.did]||esc(e.did)}
+      · <span class="note">${when(e.at)}</span>${e.note?`<br><span class="note">&ldquo;${esc(e.note)}&rdquo;</span>`:''}</li>`).join('')}</ul>
+
+    ${x.state === 'SUBMITTED' ? (mine
+      ? `<div class="alert a-flag" style="margin-top:1rem"><b>You submitted this month, so you cannot be the one
+         to approve it.</b> Verification by the person being verified is not verification — another
+         administrator has to look at it.</div>`
+      : `<div class="row" style="margin-top:1.1rem">
+           <button class="btn go" data-approve="${esc(x.id)}">Approve — hand back to staff to send</button>
+           <button class="btn stop" data-return="${esc(x.id)}">Return with questions</button>
+         </div>
+         <textarea class="ret" id="retnote" placeholder="Anything to say — a question to answer before it goes, or what needs fixing if you are returning it. Staff see this word for word."></textarea>
+         <p class="note" style="margin-top:.4rem">Approving does not send. It clears the month and puts it
+           back with staff, who read your note and press send.</p>`)
+    : ''}
+    <div id="dout"></div>
+  </div>`;
+}
+
+function kpi(v, k, n, hot){
+  return `<div class="kpi"><span class="label">${esc(k)}</span>
+    <div class="v${hot?' hot':''}">${esc(v)}</div><div class="n">${esc(n||'')}</div></div>`;
+}
+
+async function decide(id, approve){
+  const by = IDENTITY ? IDENTITY.name : 'Branch admin';
+  const note = ($('retnote') && $('retnote').value.trim()) || null;
+  if(!approve && !note){
+    $('dout').innerHTML = '<div class="alert a-bad" style="margin-top:.7rem">Returning it needs a reason — staff have to know what to fix.</div>';
+    return;
+  }
+  let x, serverNote = '';
+  if(API){
+    /* The script decides — it re-checks who is asking and that they are not
+       the submitter, and approval is the moment it actually emails. */
+    let d = null;
+    try{
+      const r = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ action:'reviewmonth', id, decision: approve?'approve':'return',
+          note, by, auth: AUTH }) });
+      d = await r.json();
+    }catch(e){}
+    if(!d || !d.ok){
+      $('dout').innerHTML = `<div class="alert a-bad" style="margin-top:.7rem">${esc((d && d.error) || 'Could not reach the branch script — nothing was decided.')}</div>`;
+      return;
+    }
+    serverNote = d.note || '';
+    await refresh();
+    x = subs().find(s => s.id === id) || { group:{name:''} };
+  } else {
+    const d = flowLoad();
+    x = d.subs.find(s => s.id === id);
+    if(!x || x.state !== 'SUBMITTED') return;
+    if(IDENTITY && x.events[0].by === by) return;  // belt and braces; the UI already hides the buttons
+    if(approve){
+      x.state = 'APPROVED';
+      x.events.push({ at:Date.now(), by, code:IDENTITY?IDENTITY.code:null, did:'APPROVED', note });
+    }else{
+      x.state = 'RETURNED';
+      x.events.push({ at:Date.now(), by, code:IDENTITY?IDENTITY.code:null, did:'RETURNED', note });
+    }
+    flowSave(d);
+  }
+  paint();
+  const box = $('d-'+id);
+  if(box){
+    const out = box.querySelector('#dout') || box;
+    out.insertAdjacentHTML('beforeend', approve
+      ? `<div class="alert a-ok" style="margin-top:.7rem"><b>Approved.</b> It is back with staff to send —
+          nothing has gone to ${esc(x.group.name)} yet.${API ? '' :
+          ' <span class="note">Test run.</span>'}</div>`
+      : `<div class="alert a-info" style="margin-top:.7rem"><b>Returned.</b> Staff see your note on the upload page and can resubmit.</div>`);
+  }
+}
+
+document.addEventListener('click', e => {
+  const row = e.target.closest('[data-open]');
+  if(row){ openSub = openSub === row.dataset.open ? null : row.dataset.open; paint();
+    if(openSub){ const el = $('d-'+openSub); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); } return; }
+  const ap = e.target.closest('[data-approve]'); if(ap){ decide(ap.dataset.approve, true); return; }
+  const rt = e.target.closest('[data-return]');  if(rt){ decide(rt.dataset.return, false); return; }
+});
+['f-state','f-text'].forEach(id => $(id).addEventListener('input', paint));
+/* A link can land in a tab that is already open — only the hash changes and
+   the page does not reload. Follow it. */
+window.addEventListener('hashchange', () => {
+  if(location.hash.length > 1 && subs().some(x => x.id === location.hash.slice(1))){
+    openSub = location.hash.slice(1); paint();
+    const el = $('d-'+openSub); if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+});
+$('theme').addEventListener('click', () => {
+  const r = document.documentElement; r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark';
+});
+
+/* ── the door — same rules as pendings ── */
+function open_(){
+  $('gate').hidden = true; $('app').hidden = false;
+  $('who').innerHTML = IDENTITY
+    ? `Signed in as <b>${esc(IDENTITY.name)}</b> · <a id="out" style="cursor:pointer">sign out</a>`
+    : `Branch admin code · <a id="out" style="cursor:pointer">sign out</a>`;
+  const o = $('out');
+  if(o) o.addEventListener('click', () => {
+    try{ sessionStorage.removeItem(SESSION_KEY); localStorage.removeItem(HANDOFF_KEY); }catch(e){}
+    location.reload();
+  });
+  refresh().then(() => {
+    if(location.hash.length > 1){
+      openSub = location.hash.slice(1);
+      if(!subs().some(x => x.id === openSub)) openSub = null;
+      paint();
+    }
+    if(openSub){ const el = $('d-'+openSub); if(el) el.scrollIntoView({block:'start'}); }
+  });
+}
+function tryCode(){
+  const v = ($('code').value||'').trim().toUpperCase();
+  if(v === ADMIN_CODE){ AUTH = v; try{ sessionStorage.setItem(SESSION_KEY,'1'); }catch(e){} open_(); }
+  else $('gerr').textContent = 'That code is not an administrator code.';
+}
+$('go').addEventListener('click', tryCode);
+$('code').addEventListener('keydown', e => { if(e.key==='Enter') tryCode(); });
+const ho = handoff();
+if(ho && ho.role === 'manager'){ IDENTITY = ho; AUTH = ho.code; open_(); }
+else { try{ if(sessionStorage.getItem(SESSION_KEY)==='1'){ AUTH = ADMIN_CODE; open_(); } }catch(e){} }
+</script>
+</body>
+</html>

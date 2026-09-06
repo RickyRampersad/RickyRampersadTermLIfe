@@ -1,0 +1,2385 @@
+<title>Ricky Rampersad Branch — Employee Benefits (Preview)</title>
+
+<style>
+:root{
+  --navy:#08333D; --blue:#0E8FA3; --gold:#F08A24; --lightblue:#E4F4F6;
+  --ink:#0E1F2E; --paper:#F7F9FB; --surface:#FFF; --surface2:#EDF2F7;
+  --slate:#5C7080; --line:#D3DEE7;
+  --go:#1F7A55; --warn:#A9701F; --stop:#A93B2B;
+  --sans:"Gill Sans MT","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --display:Optima,"Palatino Linotype",Georgia,serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --ink:#DCE7EF; --paper:#081520; --surface:#0E2231; --surface2:#142E40;
+  --navy:#7FB2D9; --blue:#5FA8DC; --lightblue:#12293A; --slate:#8FA6B8; --line:#1E3B50;
+  --go:#4FAE83; --warn:#D4A055; --stop:#D4685A;
+}}
+:root[data-theme="dark"]{
+  --ink:#DCE7EF; --paper:#081520; --surface:#0E2231; --surface2:#142E40;
+  --navy:#7FB2D9; --blue:#5FA8DC; --lightblue:#12293A; --slate:#8FA6B8; --line:#1E3B50;
+  --go:#4FAE83; --warn:#D4A055; --stop:#D4685A;
+}
+:root[data-theme="light"]{
+  --ink:#0E1F2E; --paper:#F7F9FB; --surface:#FFF; --surface2:#EDF2F7;
+  --navy:#08333D; --blue:#0E8FA3; --lightblue:#E4F4F6; --slate:#5C7080; --line:#D3DEE7;
+  --go:#1F7A55; --warn:#A9701F; --stop:#A93B2B;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6}
+h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;line-height:1.2}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.label{font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--slate)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* demo bar */
+.demobar{background:var(--navy);color:#fff;padding:.5rem 1.5rem;display:flex;
+  align-items:center;gap:1rem;flex-wrap:wrap;font-size:12.5px}
+.demobar b{font-weight:700;letter-spacing:.05em}
+.demobar .who{margin-left:auto;display:flex;gap:.35rem;align-items:center;flex-wrap:wrap}
+.demobar button{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);
+  color:#fff;border-radius:3px;padding:.25rem .7rem;cursor:pointer;font-size:11px;
+  letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.demobar button[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#1a1a1a}
+
+header{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.hin{max-width:1180px;margin:0 auto;padding:.85rem 1.5rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:.65rem;margin-right:auto;cursor:pointer}
+.logo svg{width:34px;height:34px}
+.logo b{display:block;font-family:var(--display);font-size:15.5px;font-weight:600;color:var(--navy);line-height:1.1}
+.logo span span{display:block;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--slate);font-weight:600}
+nav{display:flex;gap:1.25rem;font-size:14px}
+nav a{color:inherit;text-decoration:none;cursor:pointer;padding-bottom:2px;border-bottom:2px solid transparent}
+nav a:hover{color:var(--blue)}
+nav a.on{border-bottom-color:var(--gold);color:var(--navy);font-weight:600}
+.me{text-align:right;line-height:1.25}
+.me b{display:block;font-size:13.5px}
+
+main{max-width:1180px;margin:0 auto;padding:2.5rem 1.5rem 4rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:1.5rem}
+.stack{display:flex;flex-direction:column;gap:1.5rem}
+.head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:1rem}
+h1.page{font-size:1.9rem;color:var(--navy);margin-top:.2rem}
+
+.btn{background:var(--blue);color:#fff;border:1px solid var(--blue);border-radius:4px;
+  padding:.5rem 1rem;cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.btn:hover{background:var(--navy);border-color:var(--navy)}
+.btn.ghost{background:none;color:var(--blue);border-color:var(--line)}
+.btn.ghost:hover{background:var(--lightblue);border-color:var(--blue)}
+.btn.wide{width:100%;text-align:center}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+th,td{padding:.65rem .9rem;text-align:left;border-bottom:1px solid var(--line)}
+thead th{background:var(--surface2);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--slate);font-weight:700}
+tbody tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right}
+.ref{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue);cursor:pointer}
+.ref:hover{text-decoration:underline}
+
+.pill{display:inline-block;border-radius:3px;padding:.15rem .45rem;font-size:10px;
+  font-weight:700;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+.s-submitted{background:var(--lightblue);color:var(--navy)}
+.s-assigned{background:var(--lightblue);color:var(--blue)}
+.s-in_review,.s-quoted{background:#FDF0D8;color:var(--warn)}
+.s-presented{background:#DCEBF8;color:var(--blue)}
+.s-won{background:#D8F0E3;color:var(--go)}
+.s-lost{background:#F8DEDA;color:var(--stop)}
+.age-ok{background:var(--surface2);color:var(--slate)}
+.age-warn{background:#FDF0D8;color:var(--warn)}
+.age-bad{background:#F8DEDA;color:var(--stop)}
+.age-done{background:#D8F0E3;color:var(--go)}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem}
+.stats .card{padding:1.1rem}
+.stats .v{font-family:var(--mono);font-size:1.9rem;font-variant-numeric:tabular-nums;color:var(--navy);margin-top:.2rem}
+.grid2{display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;align-items:start}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1rem}
+label.f{display:block}
+label.f>.label{display:block;margin-bottom:.25rem}
+.inp{width:100%;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:.5rem .6rem;font-size:14px}
+.inp:hover{border-color:var(--slate)}
+textarea.inp{min-height:80px;resize:vertical}
+.check{display:flex;gap:.7rem;border:1px solid var(--line);border-radius:5px;padding:.7rem;cursor:pointer}
+.check:hover{border-color:var(--blue)}
+.check b{display:block;font-size:13.5px}
+.check small{color:var(--slate);font-size:12px}
+.decisive{border-left:3px solid var(--gold);padding-left:.9rem}
+.timeline{list-style:none;margin:1rem 0 0;padding:0;display:flex;flex-direction:column;gap:1rem}
+.timeline li{border-left:2px solid var(--line);padding-left:1rem}
+.timeline .meta{display:flex;gap:.6rem;align-items:baseline;flex-wrap:wrap}
+.alert{border:1px solid var(--stop);background:#F8DEDA22;border-radius:6px;padding:1.2rem}
+.ok{border:1px solid var(--go);background:#D8F0E322;border-radius:6px;padding:1rem;font-size:14px}
+dl.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.9rem 1.5rem;margin:1rem 0 0}
+dl.kv dt{margin-bottom:.15rem}
+dl.kv dd{margin:0;font-size:14px}
+.note{font-size:12.5px;color:var(--slate)}
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--slate)}
+
+/* ---- wow pass ---- */
+#view{animation:viewin .28s ease}
+@keyframes viewin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.card{transition:box-shadow .18s ease,transform .18s ease}
+.card:hover{box-shadow:0 4px 18px rgba(0,20,40,.08)}
+.btn{transition:background .15s,border-color .15s,transform .1s}
+.btn:active{transform:scale(.97)}
+
+/* ---- wizard stepper ---- */
+.stepper{display:flex;align-items:flex-start;margin:.5rem 0 .2rem}
+.step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;min-width:0}
+.step::before{content:'';position:absolute;top:14px;left:-50%;width:100%;height:3px;background:var(--line);z-index:0;transition:background .3s}
+.step:first-child::before{display:none}
+.step.done::before,.step.cur::before{background:var(--gold)}
+.dot{width:28px;height:28px;border-radius:50%;background:var(--surface);border:2px solid var(--line);
+  display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--slate);z-index:1;transition:all .25s}
+.step.done .dot{background:var(--gold);border-color:var(--gold);color:#1a1a1a}
+.step.cur .dot{border-color:var(--navy);color:var(--navy);box-shadow:0 0 0 4px var(--lightblue)}
+.slabel{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--slate);margin-top:.35rem;text-align:center}
+.step.cur .slabel{color:var(--navy)}
+@media(max-width:620px){.slabel{display:none}.step.cur .slabel{display:block}}
+
+/* ---- request progress tracker ---- */
+.tracker{display:flex;align-items:flex-start;margin-top:.8rem}
+.tstep{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;min-width:0}
+.tstep::before{content:'';position:absolute;top:9px;left:-50%;width:100%;height:3px;background:var(--line)}
+.tstep:first-child::before{display:none}
+.tstep.done::before,.tstep.cur::before{background:var(--go)}
+.tdot{width:18px;height:18px;border-radius:50%;background:var(--surface);border:2px solid var(--line);z-index:1;
+  display:grid;place-items:center;font-size:9px;font-weight:800;color:#fff;transition:all .25s}
+.tstep.done .tdot{background:var(--go);border-color:var(--go)}
+.tstep.cur .tdot{border-color:var(--go);box-shadow:0 0 0 4px #D8F0E366}
+.tlabel{font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--slate);margin-top:.3rem;text-align:center}
+.tstep.done .tlabel,.tstep.cur .tlabel{color:var(--go)}
+@media(max-width:620px){.tlabel{display:none}.tstep.cur .tlabel{display:block}}
+
+/* ---- RAI assistant ---- */
+#raibtn{position:fixed;right:1.2rem;bottom:1.2rem;z-index:60;display:flex;align-items:center;gap:.5rem;
+  background:var(--navy);color:#fff;border:0;border-radius:999px;padding:.65rem 1.15rem;cursor:pointer;
+  font-weight:700;font-size:13px;letter-spacing:.04em;box-shadow:0 6px 20px rgba(0,20,40,.28);transition:transform .15s}
+#raibtn:hover{transform:translateY(-2px)}
+#fbbtn{position:fixed;left:1.2rem;bottom:1.2rem;z-index:60;display:none;align-items:center;gap:.5rem;
+  background:var(--gold);color:var(--navy);border:0;border-radius:999px;padding:.65rem 1.15rem;cursor:pointer;
+  font-weight:800;font-size:13px;letter-spacing:.04em;box-shadow:0 6px 20px rgba(0,20,40,.28);transition:transform .15s}
+#fbbtn:hover{transform:translateY(-2px)}
+#fbpanel{position:fixed;left:1.2rem;bottom:4.7rem;z-index:60;width:min(360px,calc(100vw - 2rem));
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 44px rgba(0,20,40,.3);
+  display:none;flex-direction:column;overflow:hidden}
+#fbpanel.open{display:flex}
+#fbpanel .bd{padding:.9rem 1rem;display:flex;flex-direction:column;gap:.6rem}
+#fbpanel label{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--slate)}
+#raipanel{position:fixed;right:1.2rem;bottom:4.7rem;z-index:60;width:min(370px,calc(100vw - 2rem));
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 44px rgba(0,20,40,.3);
+  display:none;flex-direction:column;overflow:hidden;max-height:min(560px,calc(100vh - 8rem))}
+#raipanel.open{display:flex}
+.raihead{background:var(--navy);color:#fff;padding:.8rem 1rem;display:flex;align-items:center;gap:.6rem}
+.raihead b{font-size:14.5px;display:block}
+.raihead .sub{color:#B9CBD8;font-size:10.5px}
+.raimsgs{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.6rem;background:var(--paper);min-height:120px}
+.rmsg{max-width:90%;padding:.55rem .85rem;border-radius:10px;font-size:13px;line-height:1.55}
+.rmsg.bot{background:var(--surface);border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:3px}
+.rmsg.me{background:var(--blue);color:#fff;align-self:flex-end;border-bottom-right-radius:3px}
+.raichips{display:flex;flex-wrap:wrap;gap:.4rem;padding:.6rem 1rem;border-top:1px solid var(--line);background:var(--surface)}
+.raichips button{background:var(--lightblue);color:var(--navy);border:1px solid transparent;border-radius:999px;
+  padding:.32rem .7rem;font-size:11px;font-weight:600;cursor:pointer}
+.raichips button:hover{border-color:var(--blue)}
+#raiform{display:flex;gap:.5rem;padding:.7rem 1rem .4rem;background:var(--surface)}
+#raiform input{flex:1;border:1px solid var(--line);border-radius:999px;padding:.48rem .85rem;font-size:13px;background:var(--paper)}
+.raifoot{font-size:9.5px;color:var(--slate);padding:.35rem 1rem .7rem;background:var(--surface);line-height:1.45}
+@media (prefers-reduced-motion:reduce){#view{animation:none}.card,.btn,.dot,.tdot{transition:none}}
+</style>
+
+<div class="demobar">
+  <b>PREVIEW</b>
+  <span>Sample data, in your browser only. Switch role to see each login:</span>
+  <span class="who">
+    <button data-role="client" aria-pressed="true">Client</button>
+    <button data-role="agent" aria-pressed="false">Agent</button>
+    <button data-role="manager" aria-pressed="false">Manager</button>
+    <button data-go="flow" style="margin-left:.6rem">Workflow &amp; Templates</button>
+    <button id="theme" aria-pressed="false">Theme</button>
+  </span>
+</div>
+
+<header>
+  <div class="hin">
+    <div class="logo" data-go="home">
+      <svg viewBox="0 0 64 64" aria-label="Ricky Rampersad Branch">
+        <defs>
+          <linearGradient id="rrbNavy" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#0D5361"/><stop offset="1" stop-color="#04252C"/>
+          </linearGradient>
+          <linearGradient id="rrbBlue" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#16A5BB"/><stop offset="1" stop-color="#086274"/>
+          </linearGradient>
+          <linearGradient id="rrbGold" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#FFB558"/><stop offset="1" stop-color="#DE6F0E"/>
+          </linearGradient>
+        </defs>
+        <path d="M32 4 L56 12.5 V30 C56 45.5 46 56.5 32 61 C18 56.5 8 45.5 8 30 V12.5 Z" fill="url(#rrbNavy)"/>
+        <path d="M32 9.5 L50.7 16.2 V30 C50.7 42.4 42.5 51.6 32 55.5 C21.5 51.6 13.3 42.4 13.3 30 V16.2 Z" fill="url(#rrbBlue)" stroke="#F08A24" stroke-width="1.1"/>
+        <g fill="#BDEBEA">
+          <circle cx="22.3" cy="26.8" r="3.3"/>
+          <path d="M17.1 42.6 v-1.9 a5.2 5.2 0 0 1 10.4 0 v1.9 Z"/>
+          <circle cx="41.7" cy="26.8" r="3.3"/>
+          <path d="M36.5 42.6 v-1.9 a5.2 5.2 0 0 1 10.4 0 v1.9 Z"/>
+        </g>
+        <g fill="url(#rrbGold)">
+          <circle cx="32" cy="25" r="4.8"/>
+          <path d="M24.2 46 v-2.7 a7.8 7.8 0 0 1 15.6 0 v2.7 Z"/>
+        </g>
+      </svg>
+      <span><b>Ricky Rampersad Branch</b><span>Employee Benefits · Guardian Life</span></span>
+    </div>
+    <nav id="nav"></nav>
+    <div class="me" id="me"></div>
+  </div>
+</header>
+
+<main id="view"></main>
+
+<button id="raibtn" type="button" aria-expanded="false" aria-controls="raipanel">
+  <svg width="18" height="18" viewBox="0 0 64 64" aria-hidden="true">
+    <path d="M32 4 L56 12.5 V30 C56 45.5 46 56.5 32 61 C18 56.5 8 45.5 8 30 V12.5 Z" fill="url(#rrbGold)"/>
+    <circle cx="32" cy="25.5" r="6.4" fill="#07303A"/>
+    <path d="M20.5 48 v-3 a11.5 11.5 0 0 1 23 0 v3 Z" fill="#07303A"/>
+  </svg>
+  Ask RAI
+</button>
+
+<button id="fbbtn" type="button" aria-expanded="false" aria-controls="fbpanel">💬 Feedback</button>
+
+<div id="fbpanel" role="dialog" aria-label="Portal testing feedback">
+  <div class="raihead"><div><b>Help us improve</b><span class="sub" style="display:block;font-size:11px;opacity:.85">Goes straight to the Branch Manager — you'll get email updates until it's resolved</span></div></div>
+  <div class="bd" id="fbform">
+    <div><label>Your name</label><input class="inp" id="fb_name" placeholder="Your name"></div>
+    <div><label>Your email (for updates)</label><input class="inp" id="fb_email" type="email" placeholder="you@myguardiangroup.com"></div>
+    <div><label>Type</label><select class="inp" id="fb_cat"><option>Bug — something broke</option><option>Confusing — hard to use</option><option>Idea — make it better</option><option>Other</option></select></div>
+    <div><label>What happened / your suggestion</label><textarea class="inp" id="fb_msg" style="min-height:84px" placeholder="The more detail the better — which screen, what you expected…"></textarea></div>
+    <p class="note" id="fb_status" style="display:none;font-weight:600"></p>
+    <div style="display:flex;gap:.5rem"><button class="btn" type="button" data-fbsend style="flex:1">Send feedback</button><button class="btn ghost" type="button" data-fbclose>Close</button></div>
+  </div>
+</div>
+
+<div id="raipanel" role="dialog" aria-label="RAI — Ricky's Artificial Intelligence">
+  <div class="raihead">
+    <svg width="26" height="26" viewBox="0 0 64 64" aria-hidden="true">
+      <path d="M32 4 L56 12.5 V30 C56 45.5 46 56.5 32 61 C18 56.5 8 45.5 8 30 V12.5 Z" fill="url(#rrbGold)"/>
+      <circle cx="32" cy="25.5" r="6.4" fill="#07303A"/>
+      <path d="M20.5 48 v-3 a11.5 11.5 0 0 1 23 0 v3 Z" fill="#07303A"/>
+    </svg>
+    <div><b>RAI</b><span class="sub">Ricky's Artificial Intelligence — ask me anything about benefits</span></div>
+  </div>
+  <div class="raimsgs" id="raimsgs"></div>
+  <div class="raichips" id="raichips"></div>
+  <form id="raiform">
+    <input id="raiinput" placeholder="Ask about any benefit…" autocomplete="off">
+    <button class="btn" type="submit" style="border-radius:999px">Send</button>
+  </form>
+  <div class="raifoot">RAI gives general guidance, not financial or legal advice — your adviser confirms everything.
+  Demo answers come from the branch knowledge base; the live portal connects RAI to Claude.</div>
+</div>
+
+<script>
+"use strict";
+
+/* ---------------- sample data ---------------- */
+/* Branch roster — from the staff access sheet. Agent number + password sign-in.
+   Emails deliberately excluded from this public file; the live app holds them server-side. */
+/* Administrators the branch maintains on its sheet sign in through the
+   branch script — agent number and the password kept THERE, checked
+   server-side. The roster below stays for the demo/preview people. */
+const BRANCH_API = "https://script.google.com/macros/s/AKfycbzxAl-EP_stXYGHZkkxWnei6idJ04bM5ZIUKfGxDTr-cHPH7Tt9trmAYVNPzeq9k4U56w/exec";
+const ROSTER=[
+ ['A00427','Ricky Rampersad','1','manager','Ricky Rampersad','Branch Manager'],
+ ['A01066','Narissa Mohammed','2','agent','Ricky Rampersad','Agent'],
+ ['A01363','Kerwyn Ramroach','3','manager','Kerwyn Ramroach','Assistant Branch Manager'],
+ ['A03522','Premchand Dookran','4','agent','Ricky Rampersad','Agent'],
+ ['A04020','Javid Ali','5','agent','Ricky Rampersad','Agent'],
+ ['A04028','Aleema Mohammed-Ali','6','agent','Ricky Rampersad','Agent'],
+ ['A06869','Akaash Kalladeen','7','manager','Akaash Kalladeen','Unit Manager'],
+ ['A07347','Joy Barbara Sammah','8','agent','Ricky Rampersad','Agent'],
+ ['A07350','Faizal Mohammed','9','agent','Ricky Rampersad','Agent'],
+ ['A08413','Meera Persad Khan','10','agent','Ricky Rampersad','Agent'],
+ ['A09088','Petra Chadee','11','agent','Ricky Rampersad','Agent'],
+ ['A09281','Gary Sookdeo','12','manager','Gary Sookdeo','Unit Manager'],
+ ['A09311','Randolph Gonzales','13','agent','Ricky Rampersad','Agent'],
+ ['A10024','Neil Ramnanan','14','agent','Ricky Rampersad','Agent'],
+ ['A10338','Dhalina Heeraman','15','agent','Kerwyn Ramroach','Agent'],
+ ['A10428','Varun Seegolam','16','agent','Ricky Rampersad','Agent'],
+ ['A10934','Anthony Simmons','17','agent','Kerwyn Ramroach','Agent'],
+ ['A11238','Darryl Manick','18','agent','Akaash Kalladeen','Agent'],
+ ['A11801','Tricia Baksh','19','agent','Gary Sookdeo','Agent'],
+ ['A12001','Malcolm Sooknanan','20','agent','Akaash Kalladeen','Agent'],
+ ['A12173','Chris Badaloo','21','agent','Gary Sookdeo','Agent'],
+ ['A12397','Fawwaz Mohamed','22','agent','Akaash Kalladeen','Agent'],
+ ['A12408','Stephanie Rajkumar','23','agent','Akaash Kalladeen','Agent'],
+ ['A12530','John Boodhoo','24','agent','Gary Sookdeo','Agent'],
+ ['A12663','Jamil Khan','25','agent','Ricky Rampersad','Agent'],
+ ['A12749','Aidan Eugene','26','agent','Kerwyn Ramroach','Agent'],
+ ['A13063','Crystal Fraser','27','agent','Kerwyn Ramroach','Agent'],
+ ['A13064','Roberta Laltoo','28','agent','Kerwyn Ramroach','Agent'],
+ ['A13088','Alyssa Joseph','29','agent','Gary Sookdeo','Agent'],
+ ['A13617','Naila Samuel','30','agent','Gary Sookdeo','Agent'],
+ ['A13682','Daniel Bhagwandas','31','agent','Akaash Kalladeen','Agent'],
+ ['A13710','Felicia Rampersad','32','agent','Ricky Rampersad','Agent'],
+ ['A13777','Jesus Boodhoo','33','agent','Gary Sookdeo','Agent'],
+];
+
+const AGENTS = [
+  {id:'a1', name:'Varun Seegolam'},
+  {id:'a2', name:'Anisa Mohammed'},
+];
+/* All client companies and contacts below are FICTIONAL — invented for this
+   demo. Branch staff (Ricky, Varun) are the only real names, by design. */
+const ME = {
+  client:  {name:'Sunita Ramlal',  sub:'Harbourview Trading Ltd', role:'client', email:'s.ramlal@hvtrading.tt'},
+  agent:   {name:'Varun Seegolam',sub:'Employee Benefits',       role:'agent',  id:'a1'},
+  manager: {name:'Ricky Rampersad',sub:'Branch Manager, Chaguanas', role:'manager'},
+};
+
+const daysAgo = (n) => { const d=new Date(); d.setDate(d.getDate()-n); return d; };
+
+let REQUESTS = [
+  { id:'r1', ref:'RRB-2026-0001', org:'Harbourview Trading Ltd', contact:'Sunita Ramlal',
+    email:'s.ramlal@hvtrading.tt', phone:'868-555-0104', industry:'Distribution',
+    staff:146, salary:102000, contractPct:40, ages:[34,52,38,18,4], tiers:[66,37,43],
+    lines:['Group Health','Pension','Group Life'], status:'submitted', agent:null,
+    submitted:daysAgo(9), firstResponse:null, followUps:4, paused:false, mine:true,
+    forfeiture:true, existing:'none', union:false, trustee:null, erPct:5, eePct:5, turnover:12,
+    notes:'Moving health from optional to a mandatory condition of employment. No pension plan at present.',
+    events:[{k:'created',b:'Request submitted by Sunita Ramlal.',d:daysAgo(9),vis:true}] },
+
+  { id:'r2', ref:'RRB-2026-0002', org:'Northgate Logistics Ltd', contact:'Dinesh Ramcharan',
+    email:'d.ramcharan@northgate.tt', phone:'868-555-0212', industry:'Logistics',
+    staff:210, salary:118000, contractPct:15, ages:[48,72,55,30,5], tiers:[90,55,65],
+    lines:['Pension'], status:'quoted', agent:'a1', via:'agent', enteredBy:'Varun Seegolam',
+    submitted:daysAgo(21), firstResponse:daysAgo(19), followUps:0, paused:false, mine:false,
+    forfeiture:false, existing:'none', union:false, trustee:false, erPct:5, eePct:5, turnover:8,
+    notes:'Wants the Section 134 comparison against a trust-based DC plan.',
+    docs:[{name:'Comparative Analysis — LifeSecure vs Group DC.pdf',size:412000,by:'Varun Seegolam',at:daysAgo(6),vis:true,note:'Quotation package for review'}],
+    quotes:{'Pension':{doc:{name:'Pension Quotation — Group DC vs Section 134.pdf',size:842000,by:'Varun Seegolam',at:daysAgo(6)},approved:false,
+      qa:[{who:'Dinesh Ramcharan',role:'client',text:'Does the Section 134 option include inflation protection at retirement?'},
+          {who:'Varun Seegolam',role:'agent',text:'Yes — it can be included as an option at retirement. Page 4 of the pack shows how it changes the projected income.'}]}},
+    events:[
+      {k:'created',b:'Entered by Varun Seegolam on behalf of Dinesh Ramcharan.',d:daysAgo(21),vis:true},
+      {k:'assigned',b:'Varun Seegolam picked up this request.',d:daysAgo(19),vis:true},
+      {k:'status',b:'Comparative analysis prepared — LifeSecure vs Group DC.',d:daysAgo(6),vis:true}] },
+
+  { id:'r3', ref:'RRB-2026-0003', org:'Island Fresh Foods Ltd', contact:'Keisha Thomas',
+    email:'k.thomas@islandfresh.tt', phone:'868-555-0333', industry:'Food processing',
+    staff:64, salary:86000, contractPct:25, ages:[14,22,18,8,2], tiers:[30,16,18],
+    lines:['Group Health','Income Protection'], status:'submitted', agent:null,
+    submitted:daysAgo(6), firstResponse:null, followUps:1, paused:false, mine:false,
+    forfeiture:null, existing:'unsure', union:true, trustee:null, erPct:null, eePct:null, turnover:20,
+    notes:'Union agreement in place — needs checking whether it specifies a registered plan.',
+    events:[{k:'created',b:'Request submitted by Keisha Thomas.',d:daysAgo(6),vis:true}] },
+
+  { id:'r4', ref:'RRB-2026-0004', org:'Palm Ridge Manufacturing', contact:'Alicia George',
+    email:'a.george@palmridge.tt', phone:'868-555-0441', industry:'Manufacturing',
+    staff:38, salary:74000, contractPct:55, ages:[12,14,8,3,1], tiers:[22,8,8],
+    lines:['Group Health','Group Life','Critical Illness'], status:'presented', agent:'a1',
+    submitted:daysAgo(34), firstResponse:daysAgo(32), followUps:0, paused:false, mine:false,
+    forfeiture:false, existing:'none', union:false, trustee:false, erPct:4, eePct:4, turnover:28,
+    notes:'High turnover, mostly contract. Portability matters more than vesting.',
+    quotes:{'Group Health':{doc:{name:'Group Health Quotation — Provisor.pdf',size:512000,by:'Varun Seegolam',at:daysAgo(4)},approved:true,qa:[]},
+            'Group Life':{doc:{name:'Group Life Quotation.pdf',size:301000,by:'Varun Seegolam',at:daysAgo(4)},approved:false,qa:[]}},
+    events:[
+      {k:'created',b:'Request submitted by Alicia George.',d:daysAgo(34),vis:true},
+      {k:'assigned',b:'Varun Seegolam picked up this request.',d:daysAgo(32),vis:true},
+      {k:'status',b:'Quotation presented to the board.',d:daysAgo(3),vis:true}] },
+
+  { id:'r5', ref:'RRB-2026-0005', org:'Coral Bay Auto Supplies', contact:'Marcus Lee',
+    email:'m.lee@coralbay.tt', phone:'868-555-0555', industry:'Automotive',
+    staff:92, salary:69000, contractPct:10, ages:[26,30,24,10,2], tiers:[44,22,26],
+    lines:['Group Health','Pension'], status:'won', agent:'a2',
+    submitted:daysAgo(58), firstResponse:daysAgo(56), followUps:0, paused:false, mine:false,
+    forfeiture:true, existing:'group_dc', union:false, trustee:true, erPct:6, eePct:6, turnover:9,
+    notes:'Existing DC plan being reviewed at renewal.',
+    events:[
+      {k:'created',b:'Request submitted by Marcus Lee.',d:daysAgo(58),vis:true},
+      {k:'status',b:'Accepted — placing cover.',d:daysAgo(4),vis:true}] },
+
+  { id:'r6', ref:'RRB-2026-0006', org:'Steelport Fabrication Ltd', contact:'Ravi Persad',
+    email:'r.persad@steelport.tt', phone:'868-555-0662', industry:'Fabrication',
+    staff:120, salary:81000, contractPct:35, ages:[30,40,32,15,3], tiers:[55,30,35],
+    lines:['Group Health'], status:'submitted', agent:null,
+    submitted:daysAgo(14), firstResponse:null, followUps:7, paused:true, mine:false,
+    forfeiture:null, existing:'none', union:false, trustee:null, erPct:null, eePct:null, turnover:15,
+    notes:'',
+    events:[
+      {k:'created',b:'Request submitted by Ravi Persad.',d:daysAgo(14),vis:true},
+      {k:'email',b:'Reminder schedule exhausted after 7 attempts — escalated to the branch manager and auto-chasing stopped.',d:daysAgo(1),vis:false}] },
+];
+
+const STATUS = {submitted:'Submitted',assigned:'With an adviser',in_review:'Being reviewed',
+  quoted:'Quoted',presented:'Presented',won:'Accepted',lost:'Not proceeding',withdrawn:'Withdrawn'};
+
+/* ── LIVE MODE ─────────────────────────────────────────────────────
+   Paste the branch Google Apps Script web-app URL between the quotes
+   and every real submission is logged to the branch Sheet and triggers
+   real emails (client thank-you + branch alert with the Guardian census
+   attached). Blank = demo mode: nothing leaves this page.            */
+const SHEET_WEBHOOK='https://script.google.com/macros/s/AKfycbxMuWSrsMPhvF4Al19q87S545ocCeI5VptX8lPoke7eNe__gomBx2vWsqZHTLJhryBbrw/exec';
+
+/* Query Pal — the company portal. Joiners are handled here in enroll.html;
+   leavers are handled there, where the group roster, the department routing
+   and the case tracking already live. One journey, two doors. */
+const QUERYPAL_URL='https://querymypolicies.netlify.app/';
+
+function postToSheet(req,d){
+  if(!SHEET_WEBHOOK) return;
+  let censusB64='';
+  try{
+    if(d.census&&d.census.length){
+      const u8=guardianCensusXlsx({census:d.census}); let s='';
+      for(let i=0;i<u8.length;i+=0x8000) s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));
+      censusB64=btoa(s);
+    }
+  }catch(e){}
+  const clean=v=>(v&&v!=='—')?v:'';
+  const payload={
+    ref:req.ref, company:clean(req.org), contact:clean(req.contact),
+    email:clean(req.email), phone:clean(req.phone), staff:req.staff||'',
+    benefits:req.lines||[],
+    structure:req.forfeiture===true?'Trust plan (group-owned)':req.forfeiture===false?'Section 134 (individually-owned)':'Undecided',
+    via:req.via, enteredBy:req.enteredBy||'', agentName:req.agentName||'', notes:req.notes||'',
+    coverLevels:coverSummaryText(req),
+    ratingBasis:req.basis?`${req.basis.source==='census'?'From census':'Estimated'} · ${req.basis.lives} lives · avg age ${req.basis.avgAge.toFixed(1)} · payroll ${Math.round(req.basis.payroll)}`+
+      (req.basis.lifeSA?` · total sum assured ${Math.round(req.basis.lifeSA)}`:''):'',
+    censusB64:censusB64
+  };
+  try{
+    fetch(SHEET_WEBHOOK,{method:'POST',mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)}).catch(function(){});
+  }catch(e){}
+}
+
+/* ── INDICATIVE PRICING ────────────────────────────────────────────
+   Every rate below is deliberately null. While they are null the
+   portal shows the client the *basis* of their quote — lives per age
+   band, insured payroll, total sum assured, family split — and says
+   plainly that the adviser returns the priced quotation.
+
+   Fill a rate in and the cost panel switches itself on. Nothing else
+   in this file needs changing.
+
+   Units:
+     bands[].life / bands[].ci   TT$ per month, per TT$1,000 of sum assured
+     ip                          TT$ per month, per TT$100 of MONTHLY benefit
+     tpdFactor                   share of the group life premium (e.g. 0.15)
+     health / dental             TT$ per member, per month
+     maxLifeSum, freeCover[].fcl TT$ (null = no limit applied)
+     occLoadPerFieldPct          extra load per 1% of field/manual roles
+                                 (e.g. 0.004 = +40% at 100% field staff)
+   ─────────────────────────────────────────────────────────────────── */
+const PRICING={
+  bands:[
+    {key:'18-24',lo:18,hi:24,life:null,ci:null},
+    {key:'25-29',lo:25,hi:29,life:null,ci:null},
+    {key:'30-34',lo:30,hi:34,life:null,ci:null},
+    {key:'35-39',lo:35,hi:39,life:null,ci:null},
+    {key:'40-44',lo:40,hi:44,life:null,ci:null},
+    {key:'45-49',lo:45,hi:49,life:null,ci:null},
+    {key:'50-54',lo:50,hi:54,life:null,ci:null},
+    {key:'55-59',lo:55,hi:59,life:null,ci:null},
+    {key:'60-64',lo:60,hi:64,life:null,ci:null},
+    {key:'65-69',lo:65,hi:69,life:null,ci:null}
+  ],
+  ip:null, tpdFactor:null,
+  health:{ quantum:null, provisor:null },   // {emp,plus1,fam} each
+  dental:null,                              // {emp,plus1,fam}
+  maxLifeSum:null,
+  occLoadPerFieldPct:null,
+  sizeCredit:[ {min:0,max:9,f:1},{min:10,max:24,f:1},{min:25,max:49,f:1},
+               {min:50,max:99,f:1},{min:100,max:249,f:1},{min:250,max:1e9,f:1} ],
+  freeCover:[ {min:0,max:9,fcl:null},{min:10,max:24,fcl:null},{min:25,max:49,fcl:null},
+              {min:50,max:99,fcl:null},{min:100,max:249,fcl:null},{min:250,max:1e9,fcl:null} ]
+};
+
+const HEALTH_PLANS={
+  quantum :{name:'Quantum',  blurb:'You pay the provider and claim the cost back. Widest choice of doctors — staff are not tied to a network.'},
+  provisor:{name:'Provisor', blurb:'A network of 450+ providers where staff pay only a co-payment at the counter. No claim forms, no waiting for reimbursement.'}
+};
+
+/* A line can be priced only when the rates it needs are present. */
+function ratesFor(line){
+  const anyBand=k=>PRICING.bands.some(b=>b[k]!=null);
+  if(line==='life')    return anyBand('life');
+  if(line==='ci')      return anyBand('ci');
+  if(line==='ip')      return PRICING.ip!=null;
+  if(line==='health')  return !!(PRICING.health.quantum||PRICING.health.provisor);
+  if(line==='dental')  return !!PRICING.dental;
+  if(line==='pension') return true;                 // a % of payroll needs no rate table
+  return false;
+}
+const anyRates=()=>['life','ci','ip','health'].some(ratesFor);
+
+/* Cover levels the employer chooses — the wizard never asked before,
+   and Guardian cannot quote group life without the multiple. */
+const COVER_DEFAULTS={lifeMult:2,ciSum:100000,ipPct:70,ipWait:26,healthPlan:'provisor',dental:false};
+const coverOf=d=>Object.assign({},COVER_DEFAULTS,d.cover||{});
+
+/* One line for the branch Sheet and the underwriting email — without the
+   cover level Guardian cannot rate group life or income protection. */
+function coverSummaryText(req){
+  const c=req.cover||COVER_DEFAULTS, L=req.lines||[], has=n=>L.includes(n), out=[];
+  if(has('Group Life'))         out.push('Life '+c.lifeMult+'× salary');
+  if(has('Critical Illness'))   out.push('CI '+money(c.ciSum)+' each');
+  if(has('Income Protection'))  out.push('IP '+c.ipPct+'% after '+c.ipWait+' weeks');
+  if(has('Group Health'))       out.push('Health '+((HEALTH_PLANS[c.healthPlan]||{}).name||c.healthPlan)+(c.dental?' + dental/vision':''));
+  if(has('Pension'))            out.push('Pension '+(req.erPct||0)+'% employer');
+  return out.join(' · ');
+}
+
+/* Normal CDF (Abramowitz & Stegun 7.1.26) — spreads a headcount across
+   age bands when there is no census to read real ages from. */
+function normCdf(x,mu,sd){
+  const z=(x-mu)/(sd*Math.SQRT2), s=z<0?-1:1, a=Math.abs(z);
+  const t=1/(1+0.3275911*a);
+  const y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-a*a);
+  return 0.5*(1+s*y);
+}
+function largestRemainder(weights,total){
+  const raw=weights.map(w=>w*total), counts=raw.map(Math.floor);
+  let left=total-counts.reduce((a,b)=>a+b,0);
+  const order=raw.map((v,i)=>({i,frac:v-Math.floor(v)})).sort((a,b)=>b.frac-a.frac);
+  for(let k=0;left>0&&k<order.length;k++,left--) counts[order[k].i]++;
+  if(left>0) counts[0]+=left;
+  return counts;
+}
+
+/* The rating basis — exact when a census was uploaded, modelled when not. */
+function ratingBasis(d){
+  const cover=coverOf(d);
+  const cap=PRICING.maxLifeSum;
+  const capped=sa=>cap?Math.min(sa,cap):sa;
+  let rows,source;
+
+  if(d.census&&d.census.length){
+    source='census';
+    rows=PRICING.bands.map(b=>({...b,count:0,payroll:0}));
+    d.census.forEach(e=>{
+      const b=rows.find(x=>e.age>=x.lo&&e.age<=x.hi)
+            ||(e.age<rows[0].lo?rows[0]:rows[rows.length-1]);
+      b.count++; b.payroll+=e.salaryAnnual;
+    });
+  }else{
+    source='estimate';
+    const n=Math.max(0,Math.round(+d.staff||0)), avg=+d.avgAge||38, sal=+d.salary||0;
+    const w=PRICING.bands.map(b=>Math.max(0,normCdf(b.hi+1,avg,9)-normCdf(b.lo,avg,9)));
+    const tot=w.reduce((a,b)=>a+b,0)||1;
+    const counts=largestRemainder(w.map(x=>x/tot),n);
+    rows=PRICING.bands.map((b,i)=>({...b,count:counts[i],payroll:counts[i]*sal}));
+  }
+
+  const lives=rows.reduce((s,r)=>s+r.count,0);
+  const payroll=rows.reduce((s,r)=>s+r.payroll,0);
+
+  // family split: exact from the census, modelled from "% with dependants" otherwise
+  let tiers;
+  if(source==='census'){
+    tiers={emp:d.census.filter(e=>e.tier==='single').length,
+           plus1:d.census.filter(e=>e.tier==='plus1').length,
+           fam:d.census.filter(e=>e.tier==='family').length};
+  }else{
+    const dep=Math.min(100,Math.max(0,+d.depPct||0))/100;
+    const c=largestRemainder([1-dep,dep*0.4,dep*0.6],lives);
+    tiers={emp:c[0],plus1:c[1],fam:c[2]};
+  }
+
+  // sums assured
+  const lifeSA=source==='census'
+    ? d.census.reduce((s,e)=>s+capped(e.salaryAnnual*cover.lifeMult),0)
+    : rows.reduce((s,r)=>s+r.count*capped((+d.salary||0)*cover.lifeMult),0);
+  const ipMonthly=payroll/12*(cover.ipPct/100);
+
+  const size=PRICING.sizeCredit.find(s=>lives>=s.min&&lives<=s.max)||{f:1};
+  const fclRow=PRICING.freeCover.find(s=>lives>=s.min&&lives<=s.max)||{fcl:null};
+  let overFCL=0;
+  if(fclRow.fcl&&source==='census')
+    overFCL=d.census.filter(e=>capped(e.salaryAnnual*cover.lifeMult)>fclRow.fcl).length;
+
+  const fieldPct=Math.min(100,Math.max(0,+d.fieldPct||0));
+  const occLoad=PRICING.occLoadPerFieldPct!=null?1+fieldPct*PRICING.occLoadPerFieldPct:1;
+  // exact when we have real dates of birth; band midpoints only when modelling
+  const avgAge=!lives?0
+    :source==='census'?d.census.reduce((s,e)=>s+e.age,0)/d.census.length
+    :rows.reduce((s,r)=>s+r.count*((r.lo+r.hi)/2),0)/lives;
+
+  return {source,rows,lives,payroll,tiers,lifeSA,ipMonthly,cover,
+          size,fcl:fclRow.fcl,overFCL,occLoad,avgAge,
+          avgSalary:lives?payroll/lives:0,
+          ciSA:lives*cover.ciSum, capped};
+}
+
+/* Indicative monthly premium per line. Returns {priced:false} for any
+   line whose rates have not been entered yet. */
+function estimateCost(basis,d){
+  const chosen=(d.incl||[]).slice();
+  const want=k=>chosen.includes(LINE_NAMES[k]);
+  const cover=basis.cover, risk=basis.size.f*basis.occLoad, out=[];
+  const add=(key,label,level,monthly,priced)=>out.push({key,label,level,monthly,priced});
+
+  if(want('life')){
+    const priced=ratesFor('life');
+    let m=null;
+    if(priced){
+      m=basis.rows.reduce((s,r)=>{
+        if(!r.count||r.life==null) return s;
+        const sa=basis.source==='census'
+          ? d.census.filter(e=>e.age>=r.lo&&e.age<=r.hi)
+                    .reduce((t,e)=>t+basis.capped(e.salaryAnnual*cover.lifeMult),0)
+          : r.count*basis.capped((+d.salary||0)*cover.lifeMult);
+        return s+(sa/1000)*r.life;
+      },0)*risk;
+      if(PRICING.tpdFactor!=null) m*=1+PRICING.tpdFactor;
+    }
+    add('life','Group Life',cover.lifeMult+'× annual salary — '+money(Math.round(basis.lifeSA))+' total sum assured',m,priced);
+  }
+  if(want('ci')){
+    const priced=ratesFor('ci');
+    let m=null;
+    if(priced) m=basis.rows.reduce((s,r)=>
+      (!r.count||r.ci==null)?s:s+r.count*(cover.ciSum/1000)*r.ci,0)*risk;
+    add('ci','Critical Illness',money(cover.ciSum)+' lump sum each',m,priced);
+  }
+  if(want('ip')){
+    const priced=ratesFor('ip');
+    const m=priced?(basis.ipMonthly/100)*PRICING.ip*risk:null;
+    add('ip','Income Protection',cover.ipPct+'% of salary after '+cover.ipWait+' weeks — '+
+        money(Math.round(basis.ipMonthly))+'/mo of benefit',m,priced);
+  }
+  if(want('health')){
+    const priced=ratesFor('health');
+    const t=PRICING.health[cover.healthPlan];
+    const m=(priced&&t)?(basis.tiers.emp*t.emp+basis.tiers.plus1*t.plus1+basis.tiers.fam*t.fam)*basis.size.f:null;
+    add('health','Group Health — '+HEALTH_PLANS[cover.healthPlan].name,
+        basis.tiers.emp+' single · '+basis.tiers.plus1+' +1 · '+basis.tiers.fam+' family',m,priced&&!!t);
+  }
+  if(cover.dental&&want('health')){
+    const priced=ratesFor('dental'), t=PRICING.dental;
+    const m=priced?(basis.tiers.emp*t.emp+basis.tiers.plus1*t.plus1+basis.tiers.fam*t.fam)*basis.size.f:null;
+    add('dental','Dental & Vision','Rider on the health plan',m,priced);
+  }
+  if(want('pension')){
+    const pct=+d.erPct||0;
+    add('pension','Pension',pct+'% of salary, employer contribution',basis.payroll/12*(pct/100),pct>0);
+  }
+
+  const pricedLines=out.filter(l=>l.priced&&l.monthly!=null);
+  return {lines:out,
+          total:pricedLines.reduce((s,l)=>s+l.monthly,0),
+          allPriced:out.length>0&&pricedLines.length===out.length,
+          anyPriced:pricedLines.length>0};
+}
+
+/* ---------------- working days (TT) ---------------- */
+const TT_HOLIDAYS_2026=['2026-02-16','2026-02-17','2026-03-20','2026-04-03','2026-04-06','2026-06-04','2026-11-08'];
+const FIXED=[[1,1],[3,30],[5,30],[6,19],[8,1],[8,31],[9,24],[12,25],[12,26]];
+function isWorking(d){
+  const dow=d.getDay(); if(dow===0||dow===6) return false;
+  if(FIXED.some(([m,dd])=>m===d.getMonth()+1&&dd===d.getDate())) return false;
+  return !TT_HOLIDAYS_2026.includes(d.toISOString().slice(0,10));
+}
+function workingDays(from,to){
+  let c=0; const cur=new Date(from); cur.setHours(0,0,0,0);
+  const end=new Date(to); end.setHours(0,0,0,0);
+  while(cur<end){ cur.setDate(cur.getDate()+1); if(isWorking(cur)) c++; }
+  return c;
+}
+
+/* ---------------- state ---------------- */
+let role='client', screen='login', openId=null, authed=false, loginTab='client', guest=false;
+
+function loadSampleForm(){
+  role='client'; authed=true;
+  document.querySelectorAll('[data-role]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.role==='client')));
+  const text=sampleCensus();
+  const {rows}=parseCensus(text);
+  const d={
+    org:'Sample Manufacturing Ltd', industry:'Manufacturing',
+    contact:ME.client.name, email:ME.client.email, phone:'868-555-0100',
+    staff:rows.length,
+    salary:Math.round(rows.reduce((s,r)=>s+r.salaryAnnual,0)/rows.length),
+    contractPct:Math.round(rows.filter(r=>r.type==='Contract').length/rows.length*100),
+    turnover:14, fieldPct:35,
+    depPct:Math.round(rows.filter(r=>r.tier!=='single').length/rows.length*100),
+    hasHealth:true, healthMandatory:false, hasLife:false, hasPension:false, hasIP:false, hasCI:false,
+    sickPay:1, forfeiture:null, existing:'none', erPct:5, trustee:null, union:null,
+    census:rows, censusText:text,
+    notes:'Sample only — this is where your notes to the adviser appear.'
+  };
+  WIZ={step:7, data:d, sample:true};
+  WIZ.rec=recommend(d);
+  d.incl=Object.keys(WIZ.rec).filter(k=>['essential','recommended'].includes(WIZ.rec[k].v)).map(k=>LINE_NAMES[k]);
+  screen='new'; render();
+}
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money=n=>n==null?'—':'TT$'+Number(n).toLocaleString('en-US');
+const dmy=d=>new Date(d).toLocaleDateString('en-GB');
+const agentName=id=>id?(AGENTS.find(a=>a.id===id)?.name??'Unknown'):'Unassigned';
+
+function visible(){
+  if(role==='client')  return REQUESTS.filter(r=>r.mine);
+  if(role==='agent')   return REQUESTS.filter(r=>r.agent===ME.agent.id||!r.agent);
+  return REQUESTS;
+}
+function statusPill(s){ return `<span class="pill s-${s}">${STATUS[s]}</span>`; }
+function ageChip(r){
+  if(r.firstResponse) return '<span class="pill age-done">Responded</span>';
+  const d=workingDays(r.submitted,new Date());
+  const c=d>=5?'age-bad':d>=3?'age-warn':'age-ok';
+  return `<span class="pill ${c}">${d}d waiting</span>`;
+}
+
+/* ---------------- chrome ---------------- */
+function renderChrome(){
+  if(!authed){ $('nav').innerHTML=''; $('me').innerHTML='<span class="label">Not signed in</span>'; return; }
+  const links = role==='client'
+    ? [['home','Dashboard'],['new','New request']]
+    : role==='agent' ? [['pipeline','Pipeline'],['new','New for client']]
+    : [['overview','Branch overview'],['pipeline','Pipeline'],['new','New for client']];
+  $('nav').innerHTML = links.map(([k,l])=>
+    `<a data-go="${k}" class="${screen===k?'on':''}">${l}</a>`).join('')
+    // the wall is a branch display, not something a client should be handed
+    + (role==='manager' ? '<a href="review.html" target="_blank" rel="noopener">Review ↗</a>'
+                        + '<a href="pendings.html" target="_blank" rel="noopener">Pendings ↗</a>'
+                        + '<a href="upload.html" target="_blank" rel="noopener">Billing upload ↗</a>' : '')
+    + (role!=='client' ? '<a href="wall.html" target="_blank" rel="noopener">Wall ↗</a>' : '');
+  const m=ME[role];
+  $('me').innerHTML = `<b>${m.name}</b><span class="label">${m.sub}</span>
+    <a data-logout style="cursor:pointer;font-size:11px;color:var(--blue);text-decoration:underline">Sign out</a>`;
+}
+
+function loginScreen(){
+  const staffTab=loginTab==='staff';
+  return `<div style="max-width:440px;margin:2rem auto 0">
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <svg viewBox="0 0 64 64" width="60" height="60" aria-label="Ricky Rampersad Branch">
+        <path d="M32 4 L56 12.5 V30 C56 45.5 46 56.5 32 61 C18 56.5 8 45.5 8 30 V12.5 Z" fill="url(#rrbNavy)"/>
+        <path d="M32 9.5 L50.7 16.2 V30 C50.7 42.4 42.5 51.6 32 55.5 C21.5 51.6 13.3 42.4 13.3 30 V16.2 Z" fill="url(#rrbBlue)" stroke="#F08A24" stroke-width="1.1"/>
+        <g fill="#BDEBEA">
+          <circle cx="22.3" cy="26.8" r="3.3"/>
+          <path d="M17.1 42.6 v-1.9 a5.2 5.2 0 0 1 10.4 0 v1.9 Z"/>
+          <circle cx="41.7" cy="26.8" r="3.3"/>
+          <path d="M36.5 42.6 v-1.9 a5.2 5.2 0 0 1 10.4 0 v1.9 Z"/>
+        </g>
+        <g fill="url(#rrbGold)">
+          <circle cx="32" cy="25" r="4.8"/>
+          <path d="M24.2 46 v-2.7 a7.8 7.8 0 0 1 15.6 0 v2.7 Z"/>
+        </g>
+      </svg>
+      <h1 class="page" style="margin-top:.6rem">Ricky Rampersad Branch</h1>
+      <p class="note" style="margin-top:.4rem">Employee benefit quotations · Guardian Life, Chaguanas</p>
+    </div>
+
+    <div style="display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-bottom:1rem">
+      <button type="button" data-logintab="client" style="flex:1;padding:.6rem;border:0;cursor:pointer;font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;background:${staffTab?'var(--surface)':'var(--navy)'};color:${staffTab?'var(--slate)':'#fff'}">Employer</button>
+      <button type="button" data-logintab="staff" style="flex:1;padding:.6rem;border:0;cursor:pointer;font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;background:${staffTab?'var(--navy)':'var(--surface)'};color:${staffTab?'#fff':'var(--slate)'}">Agent / Manager</button>
+    </div>
+
+    ${staffTab?'':`<div class="card stack" style="border-color:var(--gold)">
+      <div><h2 style="font-size:1.05rem;color:var(--navy)">New here? No account needed.</h2>
+      <p class="note" style="margin-top:.3rem">Answer the guided questions and submit — no password, no sign-up.
+      When your request is in, we <b>email you your sign-in details</b> so you can come back any
+      time to track it and view the documents your adviser shares.</p></div>
+      <button class="btn wide" type="button" data-guestnew>Request a quotation</button>
+      <button class="btn ghost wide" type="button" data-sampleform>See a sample filled form first</button>
+      <button class="btn ghost wide" type="button" data-go="flow">See the workflow &amp; email templates</button>
+    </div>`}
+
+    <div class="card stack">
+      <p class="note">${staffTab
+        ?'Branch staff sign-in — your agent number and branch password from the roster. Your role and unit come with it.'
+        :'Already submitted a request? Sign in with the details we emailed you.'}</p>
+      <label class="f"><span class="label">${staffTab?'Agent number':'Work email'}</span>
+        <input class="inp" id="l_email" placeholder="${staffTab?'e.g. A10428':'you@company.co.tt'}" autocomplete="off"></label>
+      <label class="f"><span class="label">Password</span>
+        <input class="inp" type="password" id="l_pass" placeholder="••••••••"></label>
+      <p id="l_err" class="note" style="color:var(--stop);display:none"></p>
+      <button class="btn ${staffTab?'':'ghost '}wide" data-login>Sign in</button>
+      <p class="note" style="text-align:center">${staffTab
+        ?'All 33 branch staff are on the roster — Branch and Unit Managers get the manager view, agents get the pipeline.'
+        :'Preview only — any email and password signs you in as a client.'}</p>
+    </div>
+
+    <div style="text-align:center;margin:1.2rem 0 .6rem"><span class="label">Or try a demo account</span></div>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+      <button class="btn ghost" style="flex:1" data-demo="client">Employer<br><small style="text-transform:none;letter-spacing:0">Sunita · Harbourview</small></button>
+      <button class="btn ghost" style="flex:1" data-demo="agent">Agent<br><small style="text-transform:none;letter-spacing:0">Varun</small></button>
+      <button class="btn ghost" style="flex:1" data-demo="manager">Manager<br><small style="text-transform:none;letter-spacing:0">Ricky</small></button>
+    </div>
+    <p class="note" style="text-align:center;margin-top:1.1rem">
+      <a href="compare.html" style="color:var(--blue)">Pension structure comparator</a> ·
+      <a href="census-sample.html" style="color:var(--blue)">Sample Guardian census form</a> ·
+      <a href="enroll.html" style="color:var(--blue)">Employee enrollment form</a>
+    </p>
+  </div>`;
+}
+
+/* ---------------- screens ---------------- */
+function homeClient(){
+  const rows=visible();
+  return `<div class="stack">
+    <div class="head">
+      <div><span class="label">Your requests</span><h1 class="page">Good day, ${esc(ME.client.name.split(' ')[0])}</h1></div>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+        <button class="btn ghost" type="button" data-sampleform>View a sample form</button>
+        <a class="btn ghost" href="group.html" style="text-decoration:none">📋 Plans &amp; billing</a>
+        <a class="btn ghost" href="enroll.html" style="text-decoration:none">➕ Enroll employees</a>
+        <a class="btn ghost" href="${QUERYPAL_URL}" target="_blank" rel="noopener"
+           style="text-decoration:none">➖ Report leavers</a>
+        <button class="btn" data-go="new">Request a quotation</button>
+      </div>
+    </div>
+    <p class="note" style="max-width:74ch;margin-top:-.6rem">Taking someone <b>off</b> cover happens in
+      <b>Query Pal</b>, your company portal — sign in with your branch access code, pick the leavers from your
+      own staff list and set their last day. Everyone you report is emailed what they can do next, including
+      their right to take the cover into their own name before that window closes.</p>
+    ${rows.length?`<div class="tw"><table>
+      <thead><tr><th>Reference</th><th>Company</th><th class="r">Employees</th><th>Status</th><th class="r">Submitted</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr>
+        <td><span class="ref" data-open="${r.id}">${r.ref}</span></td>
+        <td>${esc(r.org)}</td><td class="r mono">${r.staff}</td>
+        <td>${statusPill(r.status)}</td><td class="r mono">${dmy(r.submitted)}</td>
+      </tr>`).join('')}</tbody></table></div>`
+    :`<div class="card empty">Nothing here yet.</div>`}
+    <div class="card">
+      <h2 style="font-size:1.1rem;color:var(--navy)">What happens next</h2>
+      <div class="fgrid" style="margin-top:.9rem">
+        ${[['We receive it','You get a confirmation with your reference straight away.'],
+           ['An adviser picks it up','Someone from the branch takes ownership and contacts you.'],
+           ['We build the quotation','Market comparison, plan options and costings.'],
+           ['We present it','In person or online, with your team if you want them there.']]
+          .map(([h,b],i)=>`<div style="border-left:2px solid var(--gold);padding-left:.8rem">
+            <span class="label">Step ${i+1}</span><p style="font-weight:600;font-size:14px">${h}</p>
+            <p class="note">${b}</p></div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------------- guided wizard ---------------- */
+let WIZ=null;
+const LINE_NAMES={health:'Group Health',pension:'Pension',life:'Group Life',ip:'Income Protection',ci:'Critical Illness'};
+
+function recommend(x){
+  const R={};
+  R.health = x.hasHealth
+    ? (x.healthMandatory
+        ? {v:'covered', why:'Already in place and mandatory — benchmark the schedule of benefits and the rate at renewal.'}
+        : {v:'recommended', why:'In place but optional. Making it a condition of employment removes anti-selection — the single biggest lever on the rate — and needs a plan attractive enough to carry staff with it.'})
+    : {v:'essential', why:'No medical cover in place. This is the foundation the rest of the package builds on.'};
+  R.pension = x.hasPension
+    ? {v:'covered', why:'A plan exists — worth reviewing structure and charges at the next renewal rather than replacing outright.'}
+    : {v:'essential', why:'No retirement provision. Contributions attract tax relief, and the forfeiture answer decides trust-based plan vs Section 134 contracts.'};
+  R.life = x.hasLife
+    ? {v:'covered', why:'In place — benchmark the sum assured against salary. Many groups are under-insured at 1× salary.'}
+    : (x.depPct>=30
+        ? {v:'essential', why:x.depPct+'% of staff have dependants and there is no life cover. It is the cheapest protection per dollar of benefit you can buy.'}
+        : {v:'recommended', why:'No life cover in place. Cheapest protection per dollar; typically 2× salary with AD&D.'});
+  R.ip = x.hasIP
+    ? {v:'covered', why:'In place — check the benefit level and waiting period still match salaries.'}
+    : (x.fieldPct>=30
+        ? {v:'essential', why:x.fieldPct+'% of roles are field or manual. A long disability is far likelier than a death claim — health insurance pays the hospital, income protection pays the mortgage.'}
+        : (x.sickPay<3
+            ? {v:'recommended', why:'Salary continues for less than three months in a long illness. Income protection answers how an absent employee keeps getting paid — and for how long the company must.'}
+            : {v:'recommended', why:'Replaces salary in a long illness or injury, and settles the awkward question of how long to keep paying an absent employee.'}));
+  R.ci = x.hasCI
+    ? {v:'covered', why:'In place — review whether the sum assured still fits.'}
+    : ((x.depPct>=30 || !x.hasIP)
+        ? {v:'recommended', why:'A lump sum on diagnosis, paid regardless of medical bills — covers travel for treatment, a spouse\'s lost income, and the gap health insurance leaves.'}
+        : {v:'consider', why:'Worth costing alongside the rest — cheap per unit of cover at group rates.'});
+  return R;
+}
+
+/* ---- .xlsx reading (pure browser: ZIP walk + DecompressionStream) ---- */
+function decodeXml(s){return String(s).replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'");}
+async function readXlsxGrid(buf){
+  const u=new Uint8Array(buf), dv=new DataView(buf);
+  let eocd=-1;
+  for(let i=u.length-22;i>=Math.max(0,u.length-22-65536);i--){
+    if(u[i]===0x50&&u[i+1]===0x4B&&u[i+2]===0x05&&u[i+3]===0x06){eocd=i;break;}
+  }
+  if(eocd<0) throw new Error('not a valid .xlsx file');
+  const cnt=dv.getUint16(eocd+10,true);
+  let off=dv.getUint32(eocd+16,true);
+  const entries={};
+  for(let i=0;i<cnt;i++){
+    if(dv.getUint32(off,true)!==0x02014b50) break;
+    const method=dv.getUint16(off+10,true), csize=dv.getUint32(off+20,true);
+    const nlen=dv.getUint16(off+28,true), elen=dv.getUint16(off+30,true), clen=dv.getUint16(off+32,true);
+    const lho=dv.getUint32(off+42,true);
+    entries[new TextDecoder().decode(u.subarray(off+46,off+46+nlen))]={method,csize,lho};
+    off+=46+nlen+elen+clen;
+  }
+  async function get(name){
+    const e=entries[name]; if(!e) return null;
+    const nl=dv.getUint16(e.lho+26,true), el=dv.getUint16(e.lho+28,true);
+    const data=u.subarray(e.lho+30+nl+el, e.lho+30+nl+el+e.csize);
+    if(e.method===0) return new TextDecoder().decode(data);
+    if(e.method===8){
+      const stream=new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+      return await new Response(stream).text();
+    }
+    throw new Error('unsupported compression');
+  }
+  const sst=[];
+  const sstXml=await get('xl/sharedStrings.xml');
+  if(sstXml){
+    for(const si of sstXml.split('<si>').slice(1)){
+      sst.push(decodeXml([...si.matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map(m=>m[1]).join('')));
+    }
+  }
+  const sheetName=entries['xl/worksheets/sheet1.xml']?'xl/worksheets/sheet1.xml'
+    :Object.keys(entries).find(n=>/^xl\/worksheets\/sheet\d+\.xml$/.test(n));
+  const sheetXml=sheetName?await get(sheetName):null;
+  if(!sheetXml) throw new Error('no worksheet found');
+  const rows=[];
+  for(const rm of sheetXml.matchAll(/<row[^>]*>([\s\S]*?)<\/row>/g)){
+    const cells=[];
+    for(const cm of rm[1].matchAll(/<c([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)){
+      const attrs=cm[1], inner=cm[2]||'';
+      const ref=/r="([A-Z]+)\d+"/.exec(attrs);
+      let col=cells.length;
+      if(ref){col=0;for(const ch of ref[1])col=col*26+(ch.charCodeAt(0)-64);col--;}
+      const t=(/t="([^"]+)"/.exec(attrs)||[])[1]||'';
+      let val='';
+      if(t==='inlineStr'){ val=[...inner.matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map(m=>m[1]).join(''); }
+      else{ const v=/<v>([\s\S]*?)<\/v>/.exec(inner); val=v?v[1]:''; if(t==='s') val=sst[+val]??''; }
+      while(cells.length<col) cells.push('');
+      cells[col]=decodeXml(String(val)).trim();
+    }
+    rows.push(cells);
+  }
+  return rows;
+}
+function excelSerialToISO(n){
+  const d=new Date(Math.round((n-25569)*86400*1000));
+  return isNaN(d.getTime())?String(n):d.toISOString().slice(0,10);
+}
+/* Grid → CSV text: finds the header row wherever it sits (the Guardian form
+   has four title rows above it) and converts Excel date serials in the DOB
+   column to real dates. */
+function gridToCsvText(grid){
+  let hi=-1,best=0;
+  for(let i=0;i<Math.min(grid.length,12);i++){
+    const line=(grid[i]||[]).join(' ').toLowerCase();
+    let sc=0;
+    for(const k of ['name','salary','birth','dob','age','sex','gender','dependent','dependant','occupation','wage'])
+      if(line.includes(k)) sc++;
+    if(sc>best){best=sc;hi=i;}
+  }
+  if(best<2||hi<0) throw new Error('could not find the header row — the sheet needs Name / DOB (or Age) / Salary headings');
+  const head=grid[hi].map(h=>String(h).toLowerCase());
+  const dobCol=head.findIndex(h=>h.includes('dob')||h.includes('birth'));
+  const out=[];
+  for(let i=hi;i<grid.length;i++){
+    const row=(grid[i]||[]).map(c=>String(c));
+    if(i>hi&&row.every(c=>!c.trim())) continue;
+    if(i>hi&&dobCol>=0&&row[dobCol]&&/^\d+(\.\d+)?$/.test(row[dobCol])){
+      const n=parseFloat(row[dobCol]);
+      if(n>18000&&n<60000) row[dobCol]=excelSerialToISO(n);
+    }
+    out.push(row.map(c=>/[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c).join(','));
+  }
+  return out.join('\n');
+}
+
+/* ---- census parsing (columns matched by heading, order-independent) ---- */
+function splitLine(line,delim){
+  const out=[]; let cur='',q=false;
+  for(let i=0;i<line.length;i++){const ch=line[i];
+    if(q){ if(ch==='"'&&line[i+1]==='"'){cur+='"';i++;} else if(ch==='"'){q=false;} else cur+=ch; }
+    else if(ch==='"')q=true; else if(ch===delim){out.push(cur);cur='';} else cur+=ch;}
+  out.push(cur); return out.map(s=>s.trim());
+}
+function parseCensus(text){
+  const lines=text.split(/\r?\n/).filter(l=>l.trim()!=='');
+  if(lines.length<2) throw new Error('Need a heading row and at least one employee row.');
+  // The heading row is not always line 1 — the Guardian form has title rows above it.
+  let hl=0,hbest=0;
+  for(let i=0;i<Math.min(lines.length,12);i++){
+    const low=lines[i].toLowerCase(); let sc=0;
+    for(const k of ['name','salary','birth','dob','age','sex','gender','dependent','dependant','occupation','wage'])
+      if(low.includes(k)) sc++;
+    if(sc>hbest){hbest=sc;hl=i;}
+  }
+  const delim=(lines[hl].match(/\t/g)||[]).length>=(lines[hl].match(/,/g)||[]).length?'\t':',';
+  const head=splitLine(lines[hl],delim).map(h=>h.toLowerCase().replace(/[^a-z# ]/g,'').trim());
+  const find=(...keys)=>head.findIndex(h=>keys.some(k=>h.includes(k)));
+  const iName=find('name','employee'), iDob=find('dob','date of birth','birth'), iAge=find('age');
+  const iSal=find('salary','basic','wage','income'), iSex=find('gender','sex');
+  const iDep=find('dependant','dependent','# of dep','tier','coverage','family');
+  const iOcc=find('occupation','job title','position','job','role');
+  const iTyp=find('employment','type','status','contract');
+  if(iDob<0&&iAge<0) throw new Error('No date-of-birth or age column found.');
+  if(iSal<0) throw new Error('No salary column found.');
+  // Guardian's own form carries MONTHLY salary; payroll exports are usually annual.
+  const salaryIsMonthly=/monthly/.test(head[iSal]);
+  const today=new Date(); const rows=[]; let skipped=0;
+  for(let i=hl+1;i<lines.length;i++){
+    const cols=splitLine(lines[i],delim);
+    let age=null, dobIso='';
+    if(iAge>=0&&cols[iAge]) age=parseFloat(cols[iAge]);
+    if(iDob>=0&&cols[iDob]){
+      const dt=new Date(String(cols[iDob]).replace(/\//g,'-'));
+      if(!isNaN(dt.getTime())){
+        dobIso=dt.toISOString().slice(0,10);
+        if(age==null||!(age>0&&age<100)) age=(today-dt)/(365.25*24*3600*1000);
+      }
+    }
+    const salRaw=parseFloat(String(cols[iSal]||'').replace(/[^0-9.\-]/g,''));
+    if(age==null||!(age>15&&age<90)||!(salRaw>0)){ skipped++; continue; }
+    const salaryAnnual=salaryIsMonthly?Math.round(salRaw*12):Math.round(salRaw);
+    const depRaw=(iDep>=0?String(cols[iDep]||''):'').toLowerCase().trim();
+    // Guardian counts dependents (N/A, 0–3); payroll exports often say None/+1/Family.
+    let deps=null;
+    const depNum=parseInt(depRaw,10);
+    if(!isNaN(depNum)) deps=Math.max(0,Math.min(9,depNum));
+    else if(/n\/?a|none|nil|single|self|employee only/.test(depRaw)) deps=0;
+    else if(/\+ ?1|spouse|partner|couple|one/.test(depRaw)) deps=1;
+    else if(/fam|child|full|two|three/.test(depRaw)) deps=2;
+    const tier=deps===null?'single':deps===0?'single':deps===1?'plus1':'family';
+    const typRaw=(iTyp>=0?String(cols[iTyp]||''):'').toLowerCase();
+    rows.push({
+      name:iName>=0?String(cols[iName]||'Employee '+i):'Employee '+i,
+      dobIso, age:Math.round(age),
+      gender:iSex>=0?(String(cols[iSex]||'').trim().charAt(0).toUpperCase()||''):'',
+      salaryAnnual, salaryMonthly:Math.round(salaryAnnual/12),
+      deps, tier,
+      occupation:iOcc>=0?String(cols[iOcc]||'').trim():'',
+      type:/contract|temp|fixed/.test(typRaw)?'Contract':'Permanent'
+    });
+  }
+  if(!rows.length) throw new Error('No usable rows — check the age/date-of-birth and salary columns.');
+  return {rows,skipped};
+}
+function sampleCensus(){
+  const first=['A. Ramnarine','K. Joseph','S. Mohammed','D. Charles','P. Maharaj','J. Alexander',
+    'M. Boodram','T. Phillip','N. Seepersad','C. John','V. Ali','L. Thomas','F. Guerra','G. Cummings'];
+  const occ=['Technician','Driver','Accounts Clerk','Warehouse Attendant','Sales Representative',
+    'Supervisor','Administrative Assistant','Welder','Electrician','Manager'];
+  const out=['Employee,Date of Birth,Gender,Annual Salary,Dependants,Occupation,Employment Type'];
+  for(let i=0;i<36;i++){
+    const nm=first[i%first.length]+(i>=first.length?' '+(i+1):'');
+    const age=24+((i*7)%38), yr=2026-age;
+    const mo=String(((i*5)%12)+1).padStart(2,'0'), dy=String(((i*3)%27)+1).padStart(2,'0');
+    const sal=60000+((i*13)%9)*11000;
+    const dep=['0','1','2','None','Family'][i%5];
+    out.push([nm,yr+'-'+mo+'-'+dy,i%2?'M':'F',sal,dep,occ[i%occ.length],i%5<2?'Contract':'Permanent'].join(','));
+  }
+  return out.join('\n');
+}
+function applyCensus(text){
+  const st=$('c_status');
+  try{
+    const {rows,skipped}=parseCensus(text);
+    WIZ.data.census=rows; WIZ.data.censusText=text;
+    WIZ.data.staff=rows.length;
+    WIZ.data.salary=Math.round(rows.reduce((s,r)=>s+r.salaryAnnual,0)/rows.length);
+    WIZ.data.contractPct=Math.round(rows.filter(r=>r.type==='Contract').length/rows.length*100);
+    WIZ.data.depPct=Math.round(rows.filter(r=>r.tier!=='single').length/rows.length*100);
+    const set=(id,v)=>{const el=$(id); if(el) el.value=v;};
+    set('w_staff',WIZ.data.staff); set('w_salary',WIZ.data.salary);
+    set('w_contract',WIZ.data.contractPct); set('w_dep',WIZ.data.depPct);
+    if(st){st.textContent='✓ Census read — '+rows.length+' employees'+(skipped?' ('+skipped+' row(s) skipped for missing age or salary)':'')+'. The numbers below were filled from your file.'; st.style.color='var(--go)';}
+  }catch(err){
+    if(st){st.textContent=err.message; st.style.color='var(--stop)';}
+  }
+}
+/* Guardian "Census data form v3.3" — exact layout of the Census sheet,
+   generated as a genuine .xlsx (a stored ZIP of OOXML parts, built by hand)
+   so it opens in Excel, Numbers and Google Sheets alike. */
+function fmtMMDDYY(iso){
+  if(!iso) return '';
+  const [y,m,d]=iso.split('-');
+  return m+'/'+d+'/'+y.slice(2);
+}
+function xmlEsc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+/* ---- minimal ZIP writer (stored, no compression) ---- */
+const CRC_TABLE=(()=>{const t=new Uint32Array(256);
+  for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[n]=c>>>0;}
+  return t;})();
+function crc32(bytes){let c=0xFFFFFFFF;
+  for(let i=0;i<bytes.length;i++)c=CRC_TABLE[(c^bytes[i])&0xFF]^(c>>>8);
+  return (c^0xFFFFFFFF)>>>0;}
+function zipStore(files){ // files: [{name, text}]
+  const enc=new TextEncoder();
+  const chunks=[], central=[]; let offset=0;
+  const u16=v=>[v&255,(v>>8)&255], u32=v=>[v&255,(v>>8)&255,(v>>16)&255,(v>>>24)&255];
+  const DOSDATE=u16(((2026-1980)<<9)|(1<<5)|1), DOSTIME=u16(0);
+  for(const f of files){
+    const name=enc.encode(f.name), data=enc.encode(f.text), crc=crc32(data);
+    const head=new Uint8Array([0x50,0x4B,0x03,0x04, ...u16(20), ...u16(0), ...u16(0),
+      ...DOSTIME, ...DOSDATE, ...u32(crc), ...u32(data.length), ...u32(data.length),
+      ...u16(name.length), ...u16(0)]);
+    chunks.push(head,name,data);
+    central.push({name,crc,size:data.length,offset});
+    offset+=head.length+name.length+data.length;
+  }
+  const cdStart=offset; let cdLen=0;
+  for(const c of central){
+    const rec=new Uint8Array([0x50,0x4B,0x01,0x02, ...u16(20), ...u16(20), ...u16(0), ...u16(0),
+      ...DOSTIME, ...DOSDATE, ...u32(c.crc), ...u32(c.size), ...u32(c.size),
+      ...u16(c.name.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(c.offset)]);
+    chunks.push(rec,c.name); cdLen+=rec.length+c.name.length;
+  }
+  chunks.push(new Uint8Array([0x50,0x4B,0x05,0x06, ...u16(0), ...u16(0),
+    ...u16(central.length), ...u16(central.length), ...u32(cdLen), ...u32(cdStart), ...u16(0)]));
+  let total=0; for(const ch of chunks) total+=ch.length;
+  const out=new Uint8Array(total); let p=0;
+  for(const ch of chunks){ out.set(ch,p); p+=ch.length; }
+  return out;
+}
+
+/* ---- xlsx parts ---- */
+function colLetter(i){let s='';i++;while(i>0){const m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=Math.floor((i-1)/26);}return s;}
+function guardianCensusXlsx(r){
+  const rows=[];
+  const push=(cells,style)=>rows.push({cells,style}); // cells: array of {v, num}
+  push([{v:'GUARDIAN LIFE OF THE CARIBBEAN LIMITED'}],1);
+  push([{v:'GROUP INSURANCE OPERATIONS'}],1);
+  push([{v:'GROUP LIFE & HEALTH CENSUS DATA FORM'}],1);
+  push([{v:''},{v:'Please ensure that the information below is submitted in excel format via email to: EBCustomercare@myguardiangroup.com in order for a Proposal to be completed'}],0);
+  push(['#','Name','Date of Birth MM/DD/YY','Age','Sex','# of Dependents','Occupation','Monthly Salary'].map(v=>({v})),1);
+  r.census.forEach((e,i)=>push([
+    {v:i+1,num:true},{v:e.name},{v:fmtMMDDYY(e.dobIso)},{v:e.age,num:true},{v:e.gender},
+    e.deps==null?{v:'N/A'}:{v:e.deps,num:true},{v:e.occupation},{v:e.salaryMonthly,num:true}
+  ],0));
+  const sheetRows=rows.map((row,ri)=>{
+    const cells=row.cells.map((c,ci)=>{
+      const ref=colLetter(ci)+(ri+1), s=row.style?' s="1"':'';
+      if(c.v===''||c.v==null||(c.num&&isNaN(c.v))) return '';
+      if(c.num) return '<c r="'+ref+'"'+s+'><v>'+c.v+'</v></c>';
+      return '<c r="'+ref+'" t="inlineStr"'+s+'><is><t xml:space="preserve">'+xmlEsc(c.v)+'</t></is></c>';
+    }).join('');
+    return '<row r="'+(ri+1)+'">'+cells+'</row>';
+  }).join('');
+  const sheet='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+    '<sheetData>'+sheetRows+'</sheetData></worksheet>';
+  const styles='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+    '<fonts count="2"><font><sz val="11"/><name val="Arial"/></font><font><b/><sz val="11"/><name val="Arial"/></font></fonts>'+
+    '<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>'+
+    '<borders count="1"><border/></borders><cellStyleXfs count="1"><xf/></cellStyleXfs>'+
+    '<cellXfs count="2"><xf/><xf fontId="1" applyFont="1"/></cellXfs></styleSheet>';
+  const workbook='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '+
+    'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'+
+    '<sheets><sheet name="Census" sheetId="1" r:id="rId1"/></sheets></workbook>';
+  const wbRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'+
+    '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'+
+    '</Relationships>';
+  const rootRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'+
+    '</Relationships>';
+  const types='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'+
+    '<Default Extension="xml" ContentType="application/xml"/>'+
+    '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+
+    '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'+
+    '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+
+    '</Types>';
+  return zipStore([
+    {name:'[Content_Types].xml',text:types},
+    {name:'_rels/.rels',text:rootRels},
+    {name:'xl/workbook.xml',text:workbook},
+    {name:'xl/_rels/workbook.xml.rels',text:wbRels},
+    {name:'xl/styles.xml',text:styles},
+    {name:'xl/worksheets/sheet1.xml',text:sheet}
+  ]);
+}
+
+function wizVal(id){ const el=document.getElementById(id); return el?el.value:undefined; }
+function wizChk(id){ const el=document.getElementById(id); return el?el.checked:undefined; }
+function wizRadio(name){ const el=document.querySelector(`[name="${name}"]:checked`); return el?el.value:''; }
+
+function saveStep(){
+  const d=WIZ.data, s=WIZ.step;
+  if(s===1){ d.org=wizVal('w_org'); d.industry=wizVal('w_industry'); d.contact=wizVal('w_contact'); d.email=wizVal('w_email'); d.phone=wizVal('w_phone'); d.agentName=wizVal('w_agent')||'Ricky Rampersad'; }
+  if(s===2){ d.staff=+wizVal('w_staff')||0; d.salary=+wizVal('w_salary')||0; d.contractPct=+wizVal('w_contract')||0;
+             d.turnover=+wizVal('w_turnover')||0; d.fieldPct=+wizVal('w_field')||0; d.depPct=+wizVal('w_dep')||0;
+             d.avgAge=+wizVal('w_avgage')||0; }
+  if(s===3){ d.hasHealth=wizChk('w_hasHealth'); d.hasLife=wizChk('w_hasLife'); d.hasPension=wizChk('w_hasPension');
+             d.hasIP=wizChk('w_hasIP'); d.hasCI=wizChk('w_hasCI');
+             d.healthMandatory=wizRadio('w_hmand')==='yes'; d.sickPay=+wizRadio('w_sick')||0; }
+  if(s===4){ const f=wizRadio('w_forf'); d.forfeiture=f==='yes'?true:f==='no'?false:null;
+             d.existing=wizVal('w_existing'); d.erPct=+wizVal('w_erPct')||null;
+             const tr=wizRadio('w_trustee'); d.trustee=tr==='yes'?true:tr==='no'?false:null;
+             const un=wizRadio('w_union'); d.union=un==='yes'?true:un==='no'?false:null; }
+  if(s===5){ d.incl=[...document.querySelectorAll('[name="w_incl"]:checked')].map(i=>i.value); }
+  if(s===6){
+    // Only touch a control that is actually on screen — lines the client did
+    // not ask for render no control, and must keep whatever they had.
+    const c=coverOf(d);
+    const setNum=(id,k)=>{const v=wizVal(id); if(v!==undefined&&v!=='') c[k]=+v;};
+    setNum('w_lifeMult','lifeMult'); setNum('w_ciSum','ciSum'); setNum('w_ipPct','ipPct');
+    const w=wizRadio('w_ipWait'); if(w) c.ipWait=+w;
+    const hp=wizVal('w_healthPlan'); if(hp) c.healthPlan=hp;
+    const dv=wizChk('w_dental'); if(dv!==undefined) c.dental=dv;
+    d.cover=c;
+  }
+  if(s===7){ const n=wizVal('w_notes'); if(n!==undefined) d.notes=n; }
+}
+
+function newRequest(){
+  const staffMode = role!=='client';
+  const d=WIZ.data;
+  const steps=['Who it is for','The workforce','What is in place','Retirement structure','Recommendation','Cover levels & what it costs','Review & submit'];
+  const head=`${WIZ.sample?`<div class="ok" style="border-color:var(--gold);background:#FDF0D822">
+      <b>Sample form.</b> This is exactly what a completed request looks like at the final step —
+      filled with example data, nothing sent. Use the Edit buttons to look inside each step, or
+      start your own request when ready.</div>`:''}
+    <div><span class="label">${WIZ.sample?'Sample':staffMode?'New request — entered for a client':'New request'} · step ${WIZ.step} of ${steps.length}</span>
+    <h1 class="page">${steps[WIZ.step-1]}</h1></div>
+    <div class="stepper">${['Who','Workforce','In place','Structure','Recommend','Cover & cost','Review'].map((s,i)=>{
+      const st=i+1<WIZ.step?'done':i+1===WIZ.step?'cur':'';
+      return `<div class="step ${st}"><div class="dot">${i+1<WIZ.step?'✓':i+1}</div><div class="slabel">${s}</div></div>`;}).join('')}</div>`;
+  const nav=(last)=>WIZ.sample&&last
+    ? `<div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+        <button class="btn ghost" type="button" data-wback>← Back through the steps</button>
+        <button class="btn" type="button" data-wstartblank>Start my own request</button>
+        <span class="note">Submitting is disabled in the sample view — nothing here is sent.</span>
+      </div>`
+    : `<div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+    ${WIZ.step>1?'<button class="btn ghost" type="button" data-wback>← Back</button>':''}
+    ${last?'<button class="btn" type="button" data-wsubmit>Submit request</button>'
+          :'<button class="btn" type="button" data-wnext>Next →</button>'}
+    ${last?`<span class="note">${staffMode?'The client will be emailed a confirmation and can sign in with their address to track it.':'You will get a confirmation email with your reference.'}</span>`:''}
+  </div>`;
+  const v=(x,fb)=>x!==undefined?x:fb;
+
+  let body='';
+  if(WIZ.step===1){
+    body=`<div class="card stack">
+      ${staffMode?`<div class="ok"><b>You are entering this on behalf of a client.</b> The request is recorded as entered by ${esc(ME[role].name)}, the client gets the confirmation email, and they can sign in with the address below to track progress themselves.</div>`:''}
+      <div class="fgrid">
+        <label class="f"><span class="label">${staffMode?'Client company *':'Company name *'}</span><input class="inp" id="w_org" value="${esc(v(d.org,''))}"></label>
+        <label class="f"><span class="label">Industry</span><input class="inp" id="w_industry" value="${esc(v(d.industry,''))}"></label>
+        <label class="f"><span class="label">${staffMode?'Client contact name *':'Your name'}</span><input class="inp" id="w_contact" value="${esc(v(d.contact, (staffMode||WIZ.guest)?'':ME.client.name))}"></label>
+        <label class="f"><span class="label">${staffMode?'Client email *':'Your email *'}</span><input class="inp" type="email" id="w_email" value="${esc(v(d.email, (staffMode||WIZ.guest)?'':ME.client.email))}"></label>
+        ${WIZ.guest?'<p class="note" style="grid-column:1/-1">Your email is how you get your reference, your sign-in details, and your adviser’s documents — no password needed now.</p>':''}
+        <label class="f"><span class="label">Phone</span><input class="inp" id="w_phone" value="${esc(v(d.phone,''))}"></label>
+        <label class="f"><span class="label">Your Guardian agent</span>
+          <select class="inp" id="w_agent">${ROSTER.map(r=>`<option${(d.agentName?d.agentName===r[1]:r[1]==='Ricky Rampersad')?' selected':''}>${esc(r[1])}</option>`).join('')}</select>
+        </label>
+        <p class="note" style="grid-column:1/-1;margin-top:-.3rem">Already working with one of our agents? Pick them — they'll be copied on everything. Not sure? Leave it on Ricky Rampersad.</p>
+      </div>
+    </div>`;
+  }
+  if(WIZ.step===2){
+    const c=d.census;
+    body=`<div class="card stack">
+      <div>
+        <h2 style="font-size:1.05rem;color:var(--navy)">Fastest way: upload your employee list</h2>
+        <p class="note" style="max-width:64ch;margin-top:.3rem">Export the employee list from your payroll or HR
+        system — Excel (.xlsx) or CSV both work — and drop it here. The Guardian census form itself uploads fine too. Column headings are matched automatically, the numbers below
+        auto-populate, and the data is mapped straight onto the <strong>Guardian Census Data Form</strong> —
+        annual salaries converted to monthly, dependants converted to counts — ready to send to Guardian.</p>
+      </div>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+        <label class="btn ghost" style="cursor:pointer">Choose file<input type="file" id="w_censusfile" accept=".xlsx,.xlsm,.xls,.csv,.tsv,.txt" hidden></label>
+        <button class="btn ghost" type="button" data-samplecensus>Load a sample file</button>
+        <button class="btn" type="button" data-parsecensus>Read file</button>
+      </div>
+      <textarea class="inp" id="w_censustext" spellcheck="false" style="font-family:var(--mono);font-size:12px;min-height:96px"
+        placeholder="…or copy the rows straight from Excel and paste them here.
+Employee, Date of Birth, Gender, Annual Salary, Dependants, Employment Type">${esc(d.censusText||'')}</textarea>
+      <p class="note" id="c_status" style="font-weight:600">${c?`✓ Census read — ${c.length} employees. The numbers below were filled from your file.`:''}</p>
+      <p class="note" style="max-width:62ch">No file handy? Approximate numbers below work fine — the census can follow later.</p>
+      <div class="fgrid">
+        <label class="f"><span class="label">Number of employees</span><input class="inp" type="number" id="w_staff" min="1" value="${v(d.staff,50)}"></label>
+        <label class="f"><span class="label">Average salary (TT$)</span><input class="inp" type="number" id="w_salary" step="1000" value="${v(d.salary,90000)}"></label>
+        <label class="f"><span class="label">Average age${c?' (read from your file)':''}</span><input class="inp" type="number" id="w_avgage" min="18" max="69" ${c?'disabled':''} value="${c?Math.round(c.reduce((s,e)=>s+e.age,0)/c.length):v(d.avgAge,38)}"></label>
+        <label class="f"><span class="label">On contract (%)</span><input class="inp" type="number" id="w_contract" min="0" max="100" value="${v(d.contractPct,20)}"></label>
+        <label class="f"><span class="label">Annual staff turnover (%)</span><input class="inp" type="number" id="w_turnover" min="0" max="100" value="${v(d.turnover,12)}"></label>
+        <label class="f"><span class="label">Field / manual roles (%)</span><input class="inp" type="number" id="w_field" min="0" max="100" value="${v(d.fieldPct,30)}"></label>
+        <label class="f"><span class="label">Staff with dependants (%)</span><input class="inp" type="number" id="w_dep" min="0" max="100" value="${v(d.depPct,50)}"></label>
+      </div>
+      <p class="note">Field and manual share decides how hard we push income protection — those roles carry the disability exposure. Dependants decide how much life cover matters. Age drives the price of life and critical illness more than anything else, so a census beats an average every time.</p>
+    </div>`;
+  }
+  if(WIZ.step===3){
+    body=`<div class="card stack">
+      <p class="note" style="max-width:62ch">Tick what the company already provides. The recommendation only pushes what is actually missing.</p>
+      <div class="fgrid">
+        ${[['w_hasHealth','Group health plan',d.hasHealth],['w_hasLife','Group life cover',d.hasLife],
+           ['w_hasPension','Pension / retirement plan',d.hasPension],['w_hasIP','Income protection',d.hasIP],
+           ['w_hasCI','Critical illness cover',d.hasCI]].map(([id,l,c])=>
+          `<label class="check"><input type="checkbox" id="${id}" ${c?'checked':''}><span><b>${l}</b></span></label>`).join('')}
+      </div>
+      <div class="fgrid">
+        <div class="decisive">
+          <span class="label">If there is a health plan — is it mandatory?</span>
+          <div style="margin-top:.4rem;font-size:14px">
+            <label style="margin-right:1rem"><input type="radio" name="w_hmand" value="yes" ${d.healthMandatory?'checked':''}> Mandatory</label>
+            <label><input type="radio" name="w_hmand" value="no" ${d.healthMandatory===false||d.healthMandatory===undefined?'checked':''}> Optional</label>
+          </div>
+        </div>
+        <div class="decisive">
+          <span class="label">If someone is off sick long-term, salary continues for…</span>
+          <div style="margin-top:.4rem;font-size:14px">
+            ${[['0','No formal policy'],['1','About a month'],['3','About 3 months'],['6','6 months or more']].map(([val,l])=>
+              `<label style="display:block"><input type="radio" name="w_sick" value="${val}" ${String(v(d.sickPay,0))===val?'checked':''}> ${l}</label>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+  if(WIZ.step===4){
+    body=`<div class="card stack">
+      <div class="decisive">
+        <p style="font-weight:600;font-size:14px">If someone leaves early, should the company's contributions stay with the company?</p>
+        <p class="note" style="margin:.3rem 0 .5rem">The decisive one. Yes needs a trust-based plan with vesting — Section 134 contracts belong to the employee from the day the premium is paid and cannot be recovered.</p>
+        <label style="margin-right:1rem"><input type="radio" name="w_forf" value="yes" ${d.forfeiture===true?'checked':''}> Yes</label>
+        <label style="margin-right:1rem"><input type="radio" name="w_forf" value="no" ${d.forfeiture===false?'checked':''}> No</label>
+        <label><input type="radio" name="w_forf" value="" ${d.forfeiture==null?'checked':''}> Not sure</label>
+      </div>
+      <div class="fgrid">
+        <label class="f"><span class="label">Existing plan type</span>
+          <select class="inp" id="w_existing">
+            ${[['none','No plan at present'],['group_dc','Group — defined contribution'],['group_db','Group — defined benefit'],
+               ['individual','Individually-owned'],['unsure','Not sure']].map(([val,l])=>
+              `<option value="${val}" ${v(d.existing,'none')===val?'selected':''}>${l}</option>`).join('')}
+          </select></label>
+        <label class="f"><span class="label">Employer contribution (%)</span><input class="inp" type="number" id="w_erPct" step="0.5" value="${v(d.erPct,5)}"></label>
+        <div class="decisive"><span class="label">Directors willing to act as trustees?</span>
+          <div style="margin-top:.4rem;font-size:14px">
+            <label style="margin-right:1rem"><input type="radio" name="w_trustee" value="yes" ${d.trustee===true?'checked':''}> Yes</label>
+            <label style="margin-right:1rem"><input type="radio" name="w_trustee" value="no" ${d.trustee===false?'checked':''}> No</label>
+            <label><input type="radio" name="w_trustee" value="" ${d.trustee==null?'checked':''}> Not sure</label>
+          </div></div>
+        <div class="decisive"><span class="label">Union agreement or tender requires a registered plan?</span>
+          <div style="margin-top:.4rem;font-size:14px">
+            <label style="margin-right:1rem"><input type="radio" name="w_union" value="yes" ${d.union===true?'checked':''}> Yes</label>
+            <label style="margin-right:1rem"><input type="radio" name="w_union" value="no" ${d.union===false?'checked':''}> No</label>
+            <label><input type="radio" name="w_union" value="" ${d.union==null?'checked':''}> Not sure</label>
+          </div></div>
+      </div>
+    </div>`;
+  }
+  if(WIZ.step===5){
+    const R=recommend(d); WIZ.rec=R;
+    const order=['health','pension','life','ip','ci'];
+    const pill=vv=>vv==='essential'?'s-won':vv==='recommended'?'s-assigned':vv==='covered'?'age-ok':'age-warn';
+    const pre=vv=>vv==='essential'||vv==='recommended';
+    const structure = d.forfeiture===true
+      ? 'Forfeiture wanted → a trust-based group plan with a vesting schedule. Section 134 is ruled out.'
+      : d.forfeiture===false
+        ? 'No forfeiture needed → both structures work; the Section 134 comparison usually wins on running cost at this size.'
+        : 'Forfeiture undecided → the adviser will settle this first; it rules one structure out entirely.';
+    body=`<div class="card stack">
+      <p class="note" style="max-width:64ch">Built from the answers so far — what is missing, what is already in place, and why. Untick anything you do not want quoted; nothing here is a commitment.</p>
+      ${order.map(k=>{const rr=R[k];return `
+        <label class="check" style="align-items:flex-start">
+          <input type="checkbox" name="w_incl" value="${LINE_NAMES[k]}" ${pre(rr.v)?'checked':''} ${d.incl?(d.incl.includes(LINE_NAMES[k])?'checked':''):''}>
+          <span><span class="pill ${pill(rr.v)}">${rr.v}</span> <b style="margin-left:.3rem">${LINE_NAMES[k]}</b>
+          <small style="display:block;margin-top:.25rem">${rr.why}</small></span>
+        </label>`;}).join('')}
+      <div class="decisive"><span class="label">Pension structure read</span>
+        <p style="font-size:14px;margin-top:.3rem">${structure}</p></div>
+    </div>`;
+  }
+  if(WIZ.step===6){
+    const basis=ratingBasis(d), cost=estimateCost(basis,d), cover=basis.cover;
+    const want=k=>(d.incl||[]).includes(LINE_NAMES[k]);
+    const maxBand=Math.max(1,...basis.rows.map(r=>r.count));
+    const nothing=!(d.incl&&d.incl.length);
+
+    const controls=[
+      want('life')?`<label class="f"><span class="label">Group life — multiple of annual salary</span>
+          <select class="inp" id="w_lifeMult">${[1,1.5,2,2.5,3,4,5].map(m=>
+            `<option value="${m}" ${cover.lifeMult===m?'selected':''}>${m}× salary</option>`).join('')}</select>
+          <span class="note">Most groups here settle at 2× or 3×. At ${cover.lifeMult}× this scheme insures <b>${money(Math.round(basis.lifeSA))}</b> in total.</span></label>`:'',
+      want('ci')?`<label class="f"><span class="label">Critical illness — lump sum each</span>
+          <select class="inp" id="w_ciSum">${[50000,75000,100000,150000,200000,250000].map(s=>
+            `<option value="${s}" ${cover.ciSum===s?'selected':''}>${money(s)}</option>`).join('')}</select>
+          <span class="note">Paid on diagnosis and spendable on anything — treatment abroad, the mortgage, a spouse's lost income.</span></label>`:'',
+      want('ip')?`<label class="f"><span class="label">Income protection — share of salary replaced</span>
+          <select class="inp" id="w_ipPct">${[50,60,66.67,70,75].map(p=>
+            `<option value="${p}" ${Math.abs(cover.ipPct-p)<0.01?'selected':''}>${p===66.67?'66⅔':p}% of salary</option>`).join('')}</select>
+          <span class="note">About <b>${money(Math.round(basis.ipMonthly))}</b> a month of benefit across the group.</span></label>`:'',
+      want('health')?`<label class="f"><span class="label">Health plan style</span>
+          <select class="inp" id="w_healthPlan">${Object.keys(HEALTH_PLANS).map(k=>
+            `<option value="${k}" ${cover.healthPlan===k?'selected':''}>${HEALTH_PLANS[k].name}</option>`).join('')}</select>
+          <span class="note">${HEALTH_PLANS[cover.healthPlan].blurb}</span></label>`:''
+    ].filter(Boolean).join('');
+
+    const extras=[
+      want('ip')?`<div class="decisive"><span class="label">Income protection starts paying after…</span>
+          <div style="margin-top:.4rem;font-size:14px">${[[13,'13 weeks'],[26,'26 weeks'],[52,'52 weeks']].map(([val,l])=>
+            `<label style="margin-right:1rem"><input type="radio" name="w_ipWait" value="${val}" ${cover.ipWait===val?'checked':''}> ${l}</label>`).join('')}</div>
+          <p class="note" style="margin-top:.35rem">A longer wait is cheaper, but the company carries the salary until it starts.</p></div>`:'',
+      want('health')?`<label class="check" style="align-items:flex-start"><input type="checkbox" id="w_dental" ${cover.dental?'checked':''}>
+          <span><b>Add dental &amp; vision</b><small>Routine dental, an eye test and a frames allowance, as a rider on the health plan. Small money, and the benefit staff notice every year.</small></span></label>`:''
+    ].filter(Boolean).join('');
+
+    const bandRows=basis.rows.filter(r=>r.count>0).map(r=>`<tr>
+        <td class="mono">${r.key}</td>
+        <td class="r mono">${r.count}</td>
+        <td style="width:52%"><div style="background:var(--surface2);border-radius:3px;height:14px;overflow:hidden">
+          <div style="width:${Math.round(r.count/maxBand*100)}%;height:100%;background:var(--blue)"></div></div></td>
+        <td class="r mono">${r.count?money(Math.round(r.payroll/r.count)):'—'}</td>
+      </tr>`).join('');
+
+    const costRows=cost.lines.map(l=>`<tr>
+        <td><b>${esc(l.label)}</b></td>
+        <td class="note">${esc(l.level)}</td>
+        <td class="r mono">${l.priced&&l.monthly!=null
+          ? money(Math.round(l.monthly))+'<span class="note"> /mo</span>'
+          : '<span class="pill age-ok">Priced by your adviser</span>'}</td>
+      </tr>`).join('');
+
+    body=`<div class="stack">
+      ${nothing?`<div class="alert"><b>No benefits selected.</b> Go back a step and tick at least one line to quote —
+        there is nothing to set a cover level on yet.</div>`:`
+      <div class="card stack">
+        <div>
+          <h2 style="font-size:1.05rem;color:var(--navy)">How much cover?</h2>
+          <p class="note" style="max-width:64ch">You picked <em>what</em> to quote. This is <em>how much</em> — and Guardian
+          cannot price group life or income protection without it. The defaults are what most employers here choose;
+          change anything and the basis below updates with it.</p>
+        </div>
+        <div class="fgrid">${controls}</div>
+        ${extras?`<div class="fgrid">${extras}</div>`:''}
+      </div>
+
+      <div class="card stack">
+        <div>
+          <h2 style="font-size:1.05rem;color:var(--navy)">The basis of your quote</h2>
+          <p class="note" style="max-width:66ch">${basis.source==='census'
+            ? `Read straight from the <b>${basis.lives}</b> employees in your file — real ages, real salaries, real dependants. This is exactly what Guardian rates against, so nothing here is a guess.`
+            : `Modelled from the averages you gave. <b>Upload your employee list at step 2</b> and every figure below becomes exact — age is the single biggest driver of what life and critical illness cost.`}</p>
+        </div>
+        <div class="stats">
+          <div class="card"><span class="label">Lives to insure</span><div class="v">${basis.lives}</div></div>
+          <div class="card"><span class="label">Insured payroll</span><div class="v" style="font-size:1.3rem">${money(Math.round(basis.payroll))}</div></div>
+          <div class="card"><span class="label">Average age</span><div class="v">${basis.avgAge?basis.avgAge.toFixed(1):'—'}</div></div>
+          ${want('life')?`<div class="card"><span class="label">Total sum assured</span><div class="v" style="font-size:1.3rem">${money(Math.round(basis.lifeSA))}</div></div>`:''}
+        </div>
+
+        <div>
+          <span class="label">Age distribution${basis.source==='estimate'?' (modelled)':''}</span>
+          <div class="tw" style="margin-top:.4rem">
+            <table><thead><tr><th>Band</th><th class="r">Staff</th><th>Spread</th><th class="r">Avg salary</th></tr></thead>
+            <tbody>${bandRows||'<tr><td colspan="4" class="note">No employee numbers yet.</td></tr>'}</tbody></table>
+          </div>
+        </div>
+
+        ${want('health')?`<div>
+          <span class="label">Who the health plan covers${basis.source==='census'?' (from your dependant column)':' (modelled from % with dependants)'}</span>
+          <p style="font-size:14px;margin-top:.3rem"><b>${basis.tiers.emp}</b> employee only ·
+             <b>${basis.tiers.plus1}</b> employee +1 · <b>${basis.tiers.fam}</b> family</p>
+        </div>`:''}
+
+        ${basis.fcl&&want('life')?`<div class="decisive"><span class="label">Free cover limit</span>
+          <p style="font-size:14px;margin-top:.3rem">${basis.overFCL
+            ? `<b>${basis.overFCL}</b> ${basis.overFCL===1?'employee is':'employees are'} insured above the ${money(basis.fcl)} free cover limit and would complete a short health declaration. Everyone else goes on risk from day one.`
+            : `Every employee sits under the ${money(basis.fcl)} free cover limit — the whole scheme goes on risk with no medical questions.`}</p></div>`:''}
+      </div>
+
+      <div class="card stack">
+        <div>
+          <h2 style="font-size:1.05rem;color:var(--navy)">What it costs</h2>
+          <p class="note" style="max-width:66ch">${cost.allPriced
+            ? 'An indicative monthly figure on the basis above. It is a budgeting number, not a quotation — the real one comes back from Guardian underwriting.'
+            : 'Everything going to Guardian, and the cover level each line is quoted at.'}</p>
+        </div>
+        <div class="tw">
+          <table><thead><tr><th>Benefit</th><th>Cover level</th><th class="r">Indicative cost</th></tr></thead>
+          <tbody>${costRows}</tbody>
+          ${cost.allPriced?`<tfoot><tr><td colspan="2"><b>Total</b></td>
+            <td class="r mono"><b>${money(Math.round(cost.total))}</b><span class="note"> /mo</span></td></tr></tfoot>`:''}
+          </table>
+        </div>
+        ${cost.allPriced?`<p class="note">Indicative only. Final rates depend on Guardian's underwriting of your actual
+          census, claims experience and plan wording, and will differ. No cover exists until a policy is issued and the
+          first premium paid.</p>`:''}
+        ${cost.allPriced?'':`
+        <div class="ok"><b>Your adviser returns the priced quotation.</b> Guardian rates a group on its real census —
+          ages, salaries, dependants and occupations — so the honest answer for the insured benefits is the basis above,
+          not a number we made up here. Everything you have set is on its way to them; the quotation comes back benefit
+          by benefit, and you approve it line by line.</div>`}
+      </div>`}
+    </div>`;
+  }
+  if(WIZ.step===7){
+    const R=WIZ.rec||{};
+    const yn=(x)=>x===true?'Yes':x===false?'No':'Not sure';
+    const sick={0:'No formal policy',1:'About a month',3:'About 3 months',6:'6 months or more'}[v(d.sickPay,0)]||'—';
+    const inPlace=[d.hasHealth&&('Group health'+(d.healthMandatory?' (mandatory)':' (optional)')),
+      d.hasLife&&'Group life',d.hasPension&&'Pension',d.hasIP&&'Income protection',d.hasCI&&'Critical illness']
+      .filter(Boolean).join(' · ')||'Nothing in place yet';
+    const sec=(title,goto,rows)=>`<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:1rem">
+        <h2 style="font-size:1.02rem;color:var(--navy)">${title}</h2>
+        <button class="btn ghost" type="button" data-wgoto="${goto}" style="padding:.25rem .6rem">Edit</button>
+      </div>
+      <dl class="kv">${rows.map(([k,val])=>`<div><dt class="label">${k}</dt><dd>${val??'—'}</dd></div>`).join('')}</dl>
+    </div>`;
+    body=`<p class="note" style="max-width:64ch">Check everything before it goes to the branch — the Edit buttons jump straight back to that step. Nothing is sent until you press Submit.</p>
+    ${sec(staffMode?'The client':'Your company',1,[
+      ['Company',esc(v(d.org,'—'))],['Industry',esc(v(d.industry,'—'))],
+      ['Contact',esc(v(d.contact,'—'))],['Email',esc(v(d.email,'—'))],['Phone',esc(v(d.phone,'—'))]])}
+    ${sec('Workforce',2,[
+      ['Employees',v(d.staff,'—')],['Average salary',d.salary?money(d.salary):'—'],
+      ['On contract',v(d.contractPct,'—')+'%'],['Turnover',v(d.turnover,'—')+'%'],
+      ['Field / manual',v(d.fieldPct,'—')+'%'],['With dependants',v(d.depPct,'—')+'%'],
+      ['Census',d.census?`<b style="color:var(--go)">${d.census.length} employees uploaded</b> — the filled Guardian form is previewed below`:'Not uploaded — can follow later']])}
+    ${d.census?`<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap">
+        <h2 style="font-size:1.02rem;color:var(--navy)">Guardian Census Data Form — your data, on their form</h2>
+        <div style="display:flex;gap:.5rem">
+          <button class="btn ghost" type="button" data-wgoto="2" style="padding:.25rem .6rem">Edit</button>
+          <button class="btn ghost" type="button" data-censusdraft style="padding:.25rem .6rem">Download (Excel)</button>
+        </div>
+      </div>
+      <p class="note" style="margin-top:.3rem">This is exactly the form that is generated and attached the moment you press Submit — check it first. Spot a wrong salary or date? Edit takes you back to the upload.</p>
+      <div style="border:1px solid var(--line);border-radius:6px;margin-top:.8rem;overflow:hidden">
+        <div style="padding:.9rem 1rem .5rem;background:var(--surface)">
+          <p style="font-weight:700;color:var(--navy);font-size:13px">GUARDIAN LIFE OF THE CARIBBEAN LIMITED</p>
+          <p style="font-weight:700;color:var(--navy);font-size:11.5px">GROUP INSURANCE OPERATIONS</p>
+          <p style="font-weight:700;color:var(--navy);font-size:11.5px">GROUP LIFE &amp; HEALTH CENSUS DATA FORM</p>
+          <p class="note" style="font-style:italic;margin-top:.3rem">Please ensure that the information below is submitted in excel format via email to: EBCustomercare@myguardiangroup.com in order for a Proposal to be completed</p>
+        </div>
+        <div class="tw" style="border:0;border-top:1px solid var(--line);border-radius:0;max-height:300px;overflow:auto">
+          <table>
+            <thead><tr><th class="r">#</th><th>Name</th><th>Date of Birth MM/DD/YY</th><th class="r">Age</th><th>Sex</th><th class="r"># of Dependents</th><th>Occupation</th><th class="r">Monthly Salary</th></tr></thead>
+            <tbody>${d.census.map((e,i)=>`<tr><td class="r mono">${i+1}</td><td>${esc(e.name)}</td><td class="mono">${fmtMMDDYY(e.dobIso)||'—'}</td><td class="r mono">${e.age}</td><td>${e.gender||'—'}</td><td class="r mono">${e.deps==null?'N/A':e.deps}</td><td>${esc(e.occupation)||'—'}</td><td class="r mono">${e.salaryMonthly.toLocaleString()}</td></tr>`).join('')}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>`:''}
+    ${sec('What is in place today',3,[
+      ['Current cover',inPlace],['Sick pay continues for',sick]])}
+    ${sec('Retirement structure',4,[
+      ['Employer share forfeitable on early exit',yn(d.forfeiture)],
+      ['Existing plan',String(v(d.existing,'none')).replace(/_/g,' ')],
+      ['Employer contribution',v(d.erPct,'—')+'%'],
+      ['Willing trustees',yn(d.trustee)],['Union / tender requires a plan',yn(d.union)]])}
+    ${sec('To be quoted',5,[
+      ['Lines',(d.incl&&d.incl.length)?d.incl.map(l=>`<span class="pill s-assigned" style="margin-right:.3rem">${l}</span>`).join(''):'<span class="pill age-warn">Nothing selected</span>']])}
+    ${(()=>{
+      const cv=coverOf(d), w=k=>(d.incl||[]).includes(LINE_NAMES[k]), bs=ratingBasis(d), rows=[];
+      if(w('life'))   rows.push(['Group life',cv.lifeMult+'× salary — '+money(Math.round(bs.lifeSA))+' total sum assured']);
+      if(w('ci'))     rows.push(['Critical illness',money(cv.ciSum)+' lump sum each']);
+      if(w('ip'))     rows.push(['Income protection',cv.ipPct+'% of salary, after '+cv.ipWait+' weeks']);
+      if(w('health')) rows.push(['Health plan',HEALTH_PLANS[cv.healthPlan].name+(cv.dental?' + dental &amp; vision':'')]);
+      if(w('pension'))rows.push(['Pension',(v(d.erPct,0))+'% employer contribution']);
+      if(!rows.length) return '';
+      rows.push(['Rating basis',bs.source==='census'
+        ? `<b style="color:var(--go)">${bs.lives} lives from your census</b> — average age ${bs.avgAge.toFixed(1)}, insured payroll ${money(Math.round(bs.payroll))}`
+        : `Modelled from averages — ${bs.lives} lives, average age ${bs.avgAge.toFixed(1)}`]);
+      return sec('Cover levels',6,rows);
+    })()}
+    <div class="card">
+      <label class="f"><span class="label">Anything else the adviser should know?</span>
+        <textarea class="inp" id="w_notes" placeholder="Renewal dates, current provider, what is prompting the review.">${esc(v(d.notes,''))}</textarea></label>
+    </div>`;
+  }
+  return `<div class="stack">${head}${body}${nav(WIZ.step===7)}</div>`;
+}
+
+function submitWizard(){
+  const d=WIZ.data, staffMode=role!=='client', wasGuest=!!WIZ.guest;
+  const n=REQUESTS.length+1;
+  // Live mode needs refs that cannot collide across visitors' browsers.
+  const now=new Date();
+  const liveRef='RRB-'+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0')+'-'+String(Date.now()).slice(-5);
+  const req={
+    id:'r'+Date.now(), ref:SHEET_WEBHOOK?liveRef:'RRB-2026-'+String(n).padStart(4,'0'),
+    org:d.org||'New company', contact:d.contact||'—', email:d.email||'—', phone:d.phone||'—',
+    industry:d.industry||'—', staff:d.staff||0, salary:d.salary||0, contractPct:d.contractPct||0,
+    ages:d.census?[
+      d.census.filter(e=>e.age<30).length, d.census.filter(e=>e.age>=30&&e.age<40).length,
+      d.census.filter(e=>e.age>=40&&e.age<50).length, d.census.filter(e=>e.age>=50&&e.age<60).length,
+      d.census.filter(e=>e.age>=60).length]:[0,0,0,0,0],
+    tiers:d.census?[
+      d.census.filter(e=>e.tier==='single').length, d.census.filter(e=>e.tier==='plus1').length,
+      d.census.filter(e=>e.tier==='family').length]:[0,0,0],
+    census:d.census||null,
+    lines:(d.incl&&d.incl.length)?d.incl:['Not specified'],
+    status:staffMode?'assigned':'submitted',
+    agent:staffMode?(role==='agent'?ME.agent.id:'a1'):null,
+    submitted:new Date(), firstResponse:staffMode?new Date():null,
+    followUps:0, paused:false, mine:true,
+    via:staffMode?'agent':'client', enteredBy:staffMode?ME[role].name:null,
+    agentName:d.agentName||(staffMode?ME[role].name:'Ricky Rampersad'),
+    forfeiture:d.forfeiture, existing:d.existing||'none', union:d.union, trustee:d.trustee,
+    erPct:d.erPct, eePct:null, turnover:d.turnover||null,
+    fieldPct:d.fieldPct, depPct:d.depPct, sickPay:d.sickPay, rec:WIZ.rec,
+    cover:coverOf(d), basis:(()=>{const b=ratingBasis(d);
+      return {source:b.source,lives:b.lives,payroll:b.payroll,avgAge:b.avgAge,
+              lifeSA:b.lifeSA,ipMonthly:b.ipMonthly,tiers:b.tiers,fcl:b.fcl,overFCL:b.overFCL};})(),
+    notes:d.notes||'',
+    events: staffMode
+      ? [{k:'created',b:`Entered by ${ME[role].name} on behalf of ${d.contact||'the client'}.`,d:new Date(),vis:true},
+         {k:'email',b:`Confirmation and tracking invitation emailed to ${d.email||'the client'} — they can sign in with that address to follow progress.`,d:new Date(),vis:true},
+         {k:'email',b:'Department notified.',d:new Date(),vis:false}]
+      : wasGuest
+      ? [{k:'created',b:`Request submitted by ${d.contact||'the client'} — no account needed.`,d:new Date(),vis:true},
+         {k:'email',b:`Account created for ${d.email||'the client'} and a temporary password emailed, so they can sign in any time to track this request and view documents.`,d:new Date(),vis:true},
+         {k:'email',b:'Department notified.',d:new Date(),vis:false}]
+      : [{k:'created',b:`Request submitted by ${d.contact||'the client'}.`,d:new Date(),vis:true},
+         {k:'email',b:'Confirmation emailed to the client; department notified.',d:new Date(),vis:false}]
+  };
+  if(wasGuest){
+    req.justCreds=d.email||'your email';
+    // The guest is now signed in as themselves.
+    ME.client={name:d.contact||'Employer', sub:d.org||'Your company', role:'client', email:d.email||''};
+    authed=true; guest=false;
+    document.querySelectorAll('[data-role]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.role==='client')));
+  }
+  postToSheet(req,d);
+  REQUESTS.push(req); WIZ=null; openId=req.id; screen='detail'; render();
+}
+
+function pipeline(){
+  const now=new Date();
+  const list=visible().filter(r=>!['won','lost','withdrawn'].includes(r.status));
+  const un=list.filter(r=>!r.agent), mine=list.filter(r=>r.agent===ME.agent.id);
+  const tbl=(rows,claim)=>`<div class="tw"><table>
+    <thead><tr><th>Ref</th><th>Company</th><th class="r">Staff</th><th>Status</th><th>Waiting</th><th>Chasers</th><th></th></tr></thead>
+    <tbody>${rows.length?rows.map(r=>`<tr>
+      <td><span class="ref" data-open="${r.id}">${r.ref}</span></td>
+      <td><b style="font-size:14px">${esc(r.org)}</b><br><span class="note">${esc(r.contact)}</span></td>
+      <td class="r mono">${r.staff}</td><td>${statusPill(r.status)}</td>
+      <td>${ageChip(r)}</td>
+      <td class="mono note">${r.paused?'paused':(r.followUps||'—')}</td>
+      <td class="r">${claim?`<button class="btn ghost" data-claim="${r.id}">Pick up</button>`
+        :`<button class="btn ghost" data-open="${r.id}">Open</button>`}</td>
+    </tr>`).join(''):`<tr><td colspan="7" class="empty">Nothing here.</td></tr>`}</tbody></table></div>`;
+  return `<div class="stack">
+    <div><span class="label">Pipeline</span><h1 class="page">Your queue</h1>
+      <p class="note" style="max-width:62ch;margin-top:.4rem">Anything at five working days or more is being chased automatically. Picking a request up stops the reminders.</p></div>
+    <div><h2 style="font-size:1.1rem;color:var(--navy);margin-bottom:.7rem">Unassigned (${un.length})</h2>${tbl(un,true)}</div>
+    <div><h2 style="font-size:1.1rem;color:var(--navy);margin-bottom:.7rem">Assigned to you (${mine.length})</h2>${tbl(mine,false)}</div>
+  </div>`;
+}
+
+function overview(){
+  const now=new Date(), rows=REQUESTS;
+  const open=rows.filter(r=>!['won','lost','withdrawn'].includes(r.status));
+  const awaiting=open.filter(r=>!r.firstResponse);
+  const breach=awaiting.filter(r=>workingDays(r.submitted,now)>=5);
+  const closed=rows.filter(r=>['won','lost'].includes(r.status));
+  const won=rows.filter(r=>r.status==='won').length;
+  const resp=rows.filter(r=>r.firstResponse).map(r=>workingDays(r.submitted,r.firstResponse)).sort((a,b)=>a-b);
+  const med=resp.length?resp[Math.floor(resp.length/2)]:null;
+  const stat=(k,v,c)=>`<div class="card"><span class="label">${k}</span><div class="v" ${c?`style="color:${c}"`:''}>${v}</div></div>`;
+  return `<div class="stack">
+    <div><span class="label">Branch overview</span><h1 class="page">Chaguanas — ${rows.length} requests all time</h1></div>
+    <div class="stats">
+      ${stat('Open',open.length)}
+      ${stat('Awaiting first response',awaiting.length)}
+      ${stat('Past 5 working days',breach.length,breach.length?'var(--stop)':'')}
+      ${stat('Median response',med==null?'—':med+'d')}
+      ${stat('Closed won',closed.length?Math.round(won/closed.length*100)+'%':'—','var(--go)')}
+    </div>
+    ${breach.length?`<div class="alert">
+      <h2 style="font-size:1.1rem;color:var(--stop)">${breach.length} request${breach.length>1?'s':''} past the five-day mark</h2>
+      <p class="note" style="margin-top:.35rem">Chased daily at 3 p.m. Reminders stop once someone picks the request up; after seven attempts it escalates to you rather than being chased further.</p>
+      <ul style="margin:.7rem 0 0;padding-left:1.1rem;font-size:14px">${breach.map(r=>
+        `<li><span class="ref" data-open="${r.id}">${r.ref}</span> — ${esc(r.org)} · ${workingDays(r.submitted,now)} working days · ${r.paused?'<b style="color:var(--stop)">chasing stopped, escalated</b>':r.followUps+' reminders sent'}</li>`).join('')}</ul>
+    </div>`:''}
+    <div><h2 style="font-size:1.1rem;color:var(--navy);margin-bottom:.7rem">By adviser</h2>
+      <div class="tw"><table><thead><tr><th>Adviser</th><th class="r">Open</th><th class="r">Won</th><th class="r">Lost</th></tr></thead>
+      <tbody>${AGENTS.map(a=>{const m=rows.filter(r=>r.agent===a.id);return `<tr><td>${a.name}</td>
+        <td class="r mono">${m.filter(r=>!['won','lost','withdrawn'].includes(r.status)).length}</td>
+        <td class="r mono" style="color:var(--go)">${m.filter(r=>r.status==='won').length}</td>
+        <td class="r mono" style="color:var(--stop)">${m.filter(r=>r.status==='lost').length}</td></tr>`}).join('')}
+      </tbody></table></div></div>
+    <div><h2 style="font-size:1.1rem;color:var(--navy);margin-bottom:.7rem">All requests</h2>
+      <div class="tw"><table><thead><tr><th>Ref</th><th>Company</th><th>Adviser</th><th>Status</th><th>Age</th><th class="r">Submitted</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr><td><span class="ref" data-open="${r.id}">${r.ref}</span></td>
+        <td>${esc(r.org)}</td><td class="note">${agentName(r.agent)}</td>
+        <td>${statusPill(r.status)}</td><td>${ageChip(r)}</td>
+        <td class="r mono">${dmy(r.submitted)}</td></tr>`).join('')}</tbody></table></div></div>
+  </div>`;
+}
+
+function detail(){
+  const r=REQUESTS.find(x=>x.id===openId); if(!r) return '<p>Not found.</p>';
+  const staff=role!=='client';
+  const yn=v=>v===null||v===undefined?'Not sure':v?'Yes':'No';
+  const forfNote = r.forfeiture===true
+    ? '→ needs a trust-based plan with vesting; Section 134 is ruled out.'
+    : r.forfeiture===false ? '→ individually-owned is viable on this test.'
+    : '→ ask this before quoting anything.';
+  const qlines=(r.lines||[]).filter(l=>l&&l!=='Not specified');
+  r.quotes=r.quotes||{};
+  const quotesCard = qlines.length?`<div class="card">
+      <h2 style="font-size:1.1rem;color:var(--navy)">Quotations — benefit by benefit</h2>
+      <p class="note" style="margin-top:.3rem">${staff
+        ?'Upload each quotation as it comes back from underwriting. The client is emailed, reviews each benefit, asks questions right here, and approves line by line.'
+        :'Each benefit you asked for gets its own quotation. Review it, ask your adviser anything, and approve the ones you are happy with — line by line.'}</p>
+      ${qlines.map((ln,li)=>{
+        const q=r.quotes[ln];
+        const status=q&&q.approved?'<span class="pill s-won">✓ Approved</span>'
+          :q&&q.doc?'<span class="pill s-presented">Ready for review</span>'
+          :'<span class="pill age-ok">Awaiting quotation</span>';
+        return `<div style="border:1px solid var(--line);border-radius:6px;padding:.9rem 1rem;margin-top:.8rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:.8rem;flex-wrap:wrap">
+            <b style="font-size:14px;color:var(--navy)">${esc(ln)}</b>${status}
+          </div>
+          ${q&&q.doc?`<div style="margin-top:.5rem;font-size:13px">📄 <b>${esc(q.doc.name)}</b>
+            <span class="note">· ${Math.round(q.doc.size/1024)} KB · ${esc(q.doc.by)} · ${dmy(q.doc.at)}</span></div>`
+          :staff?'':'<p class="note" style="margin-top:.4rem">Your adviser uploads this quotation as soon as it comes back — you get an email the moment it is ready.</p>'}
+          ${staff?`<div style="margin-top:.6rem"><label class="btn ghost" style="cursor:pointer;padding:.3rem .7rem">${q&&q.doc?'Replace quotation':'Upload quotation'}<input type="file" class="qfile" data-line="${esc(ln)}" hidden></label></div>`:''}
+          ${!staff&&q&&q.doc&&!q.approved?`<div style="margin-top:.6rem"><button class="btn" type="button" data-qapprove="${esc(ln)}" style="padding:.35rem .8rem">Looks good — approve this benefit</button></div>`:''}
+          ${q&&(q.qa||[]).length?`<div style="margin-top:.7rem;display:flex;flex-direction:column;gap:.5rem">
+            ${q.qa.map(m=>`<div style="border-left:3px solid ${m.role==='client'?'var(--blue)':'var(--gold)'};padding:.15rem 0 .15rem .7rem">
+              <span class="label" style="font-size:9px">${esc(m.who)} · ${m.role==='client'?'Client':'Adviser'}</span>
+              <p style="font-size:13px;margin-top:.1rem">${esc(m.text)}</p></div>`).join('')}
+          </div>`:''}
+          ${q&&q.doc?`<div style="display:flex;gap:.5rem;margin-top:.7rem">
+            <input class="inp" id="qq_${li}" placeholder="${staff?'Reply to the client…':'Ask your adviser about this quotation…'}" style="flex:1">
+            <button class="btn ghost" type="button" data-qask="${esc(ln)}" data-inp="qq_${li}">${staff?'Reply':'Ask'}</button>
+          </div>`:''}
+        </div>`;}).join('')}
+    </div>`:'';
+  const docs=(r.docs||[]).filter(doc=>staff||doc.vis);
+  const docsCard=`<div class="card">
+      <h2 style="font-size:1.1rem;color:var(--navy)">Documents${docs.length?` — ${docs.length}`:''}</h2>
+      <p class="note" style="margin-top:.3rem">${staff
+        ?'Upload quotations, proposals and comparisons here. Anything marked visible appears in the client’s portal and they are emailed that it is ready.'
+        :'Everything your adviser shares appears here — quotations, comparisons and plan documents.'}</p>
+      ${docs.length?`<div class="tw" style="margin-top:.8rem"><table>
+        <thead><tr><th>Document</th><th>By</th><th class="r">Size</th><th class="r">Date</th>${staff?'<th>Client</th>':''}</tr></thead>
+        <tbody>${docs.map(doc=>`<tr>
+          <td><b style="font-size:13.5px">${esc(doc.name)}</b>${doc.note?`<br><span class="note">${esc(doc.note)}</span>`:''}</td>
+          <td class="note">${esc(doc.by)}</td>
+          <td class="r mono">${doc.size?Math.round(doc.size/1024)+' KB':'—'}</td>
+          <td class="r mono">${dmy(doc.at)}</td>
+          ${staff?`<td>${doc.vis?'<span class="pill s-won">Visible</span>':'<span class="pill age-ok">Internal</span>'}</td>`:''}
+        </tr>`).join('')}</tbody></table></div>`
+      :`<p class="note" style="margin-top:.6rem">${staff?'Nothing uploaded yet.':'Nothing shared yet — your adviser will upload documents here.'}</p>`}
+      ${staff?`<div style="margin-top:1rem;display:flex;gap:.8rem;align-items:center;flex-wrap:wrap">
+        <label class="btn ghost" style="cursor:pointer">Attach document<input type="file" id="d_file" hidden></label>
+        <label style="display:flex;gap:.4rem;font-size:13px;align-items:center"><input type="checkbox" id="d_vis" checked> Visible to the client (they get an email)</label>
+        <input class="inp" id="d_note" placeholder="Short note, e.g. Quotation package v1" style="flex:1;min-width:180px">
+      </div>`:''}
+    </div>`;
+  return `<div class="stack">
+    ${r.justCreds?`<div class="ok"><b>Request submitted — and your account is ready.</b>
+      Sign-in details have been emailed to <b>${esc(r.justCreds)}</b>. Use them any time to check
+      progress and view documents your adviser shares. Your reference is <span class="mono"><b>${r.ref}</b></span>.</div>`:''}
+    <div class="head">
+      <div><span class="label">${r.ref}</span><h1 class="page">${esc(r.org)}</h1>
+        <div style="display:flex;gap:.4rem;margin-top:.5rem;flex-wrap:wrap">
+          ${statusPill(r.status)}${ageChip(r)}
+          ${r.paused?'<span class="pill age-ok">Chasing stopped</span>':''}</div>
+        <p class="note" style="margin-top:.5rem">${r.via==='agent'
+          ?`Entered by <b>${esc(r.enteredBy)}</b> (agent) on behalf of ${esc(r.contact)} — client notified by email`
+          :`Submitted by <b>${esc(r.contact)}</b> (client)`} · ${dmy(r.submitted)}</p></div>
+      ${staff&&!r.agent?`<button class="btn" data-claim="${r.id}">Pick this up</button>`:''}
+    </div>
+    ${(r.status==='lost'||r.status==='withdrawn')
+      ?`<div class="card" style="border-color:var(--stop)"><span class="label" style="color:var(--stop)">${r.status==='lost'?'Not proceeding':'Withdrawn'}</span>
+         <p class="note" style="margin-top:.3rem">This request was closed — the history below tells the story.</p></div>`
+      :(()=>{const TS=['Submitted','With adviser','Reviewed','Quoted','Presented','Accepted'];
+        const ti={submitted:0,assigned:1,in_review:2,quoted:3,presented:4,won:5}[r.status]??0;
+        return `<div class="card"><span class="label">Where this request has reached</span>
+          <div class="tracker">${TS.map((t,i)=>
+            `<div class="tstep ${i<ti?'done':i===ti?'cur':''}"><div class="tdot">${i<ti?'✓':''}</div><div class="tlabel">${t}</div></div>`).join('')}</div>
+        </div>`;})()}
+    <div class="grid2">
+      <div class="stack">
+        <div class="card">
+          <h2 style="font-size:1.1rem;color:var(--navy)">What they asked for</h2>
+          <p style="margin-top:.4rem;font-size:14px">${r.lines.join(' · ')}</p>
+          ${r.cover&&coverSummaryText(r)?`<p class="note" style="margin-top:.35rem"><b>At these levels:</b> ${esc(coverSummaryText(r))}</p>`:''}
+          <dl class="kv">
+            <div><dt class="label">Employees</dt><dd class="mono">${r.staff}</dd></div>
+            <div><dt class="label">Average salary</dt><dd class="mono">${money(r.salary)}</dd></div>
+            <div><dt class="label">On contract</dt><dd class="mono">${r.contractPct}%</dd></div>
+            <div><dt class="label">Annual turnover</dt><dd class="mono">${r.turnover}%</dd></div>
+            <div><dt class="label">Age split</dt><dd class="mono">${r.ages.join('/')}</dd></div>
+            <div><dt class="label">Tiers (1/+1/fam)</dt><dd class="mono">${r.tiers.join('/')}</dd></div>
+            ${r.basis?`<div><dt class="label">Rating basis</dt><dd class="mono">${r.basis.source==='census'?'Census':'Estimated'} · avg age ${r.basis.avgAge.toFixed(1)}</dd></div>`:''}
+            ${r.basis&&r.basis.lifeSA?`<div><dt class="label">Total sum assured</dt><dd class="mono">${money(Math.round(r.basis.lifeSA))}</dd></div>`:''}
+          </dl>
+        </div>
+        ${r.census?`<div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap">
+            <h2 style="font-size:1.1rem;color:var(--navy)">Guardian census — ${r.census.length} employees</h2>
+            <button class="btn ghost" type="button" data-censusdl="${r.id}">Download Guardian census (Excel)</button>
+          </div>
+          <p class="note" style="margin-top:.3rem">Auto-populated from the uploaded employee list, in the exact layout of the
+          Guardian <em>Census Data Form</em> — sequence, name, DOB (MM/DD/YY), age, sex, number of dependents, occupation,
+          <strong>monthly</strong> salary. In the live app this file is attached automatically and emailed to
+          <span class="mono">EBCustomercare@myguardiangroup.com</span>.</p>
+          <div class="tw" style="margin-top:.8rem"><table>
+            <thead><tr><th class="r">#</th><th>Name</th><th>DOB</th><th class="r">Age</th><th>Sex</th><th class="r">Deps</th><th>Occupation</th><th class="r">Monthly</th></tr></thead>
+            <tbody>${r.census.slice(0,6).map((e,i)=>`<tr><td class="r mono">${i+1}</td><td>${esc(e.name)}</td><td class="mono">${fmtMMDDYY(e.dobIso)||'—'}</td>
+              <td class="r mono">${e.age}</td><td>${e.gender||'—'}</td><td class="r mono">${e.deps==null?'N/A':e.deps}</td>
+              <td>${esc(e.occupation)||'—'}</td><td class="r mono">${money(e.salaryMonthly)}</td></tr>`).join('')}
+            ${r.census.length>6?`<tr><td colspan="8" class="note" style="text-align:center">… and ${r.census.length-6} more — all included in the download</td></tr>`:''}</tbody>
+          </table></div>
+        </div>`:''}
+        ${r.rec?`<div class="card">
+          <h2 style="font-size:1.1rem;color:var(--navy)">Recommended package</h2>
+          <p class="note" style="margin-top:.3rem">Generated from the guided questions when the request was made — what is missing, what is covered, and why.</p>
+          ${['health','pension','life','ip','ci'].map(k=>{const rr=r.rec[k];
+            const pc=rr.v==='essential'?'s-won':rr.v==='recommended'?'s-assigned':rr.v==='covered'?'age-ok':'age-warn';
+            return `<div style="margin-top:.9rem"><span class="pill ${pc}">${rr.v}</span>
+              <b style="font-size:14px;margin-left:.3rem">${LINE_NAMES[k]}</b>
+              <p class="note" style="margin-top:.2rem">${rr.why}</p></div>`;}).join('')}
+        </div>`:''}
+        <div class="card">
+          <h2 style="font-size:1.1rem;color:var(--navy)">Retirement structure signals</h2>
+          <div class="decisive" style="margin-top:.8rem">
+            <span class="label">Wants employer share forfeitable on early exit</span>
+            <p style="font-size:14px;font-weight:600;margin-top:.2rem">${yn(r.forfeiture)}
+              <span style="font-weight:400;color:var(--slate)">${forfNote}</span></p>
+          </div>
+          <dl class="kv">
+            <div><dt class="label">Existing plan</dt><dd>${String(r.existing).replace(/_/g,' ')}</dd></div>
+            <div><dt class="label">Union / tender requires a plan</dt><dd>${yn(r.union)}</dd></div>
+            <div><dt class="label">Willing trustee available</dt><dd>${yn(r.trustee)}</dd></div>
+            <div><dt class="label">Employer contribution</dt><dd class="mono">${r.erPct!=null?r.erPct+'%':'—'}</dd></div>
+          </dl>
+          ${r.notes?`<span class="label" style="display:block;margin-top:1rem">Their notes</span>
+            <p style="font-size:14px;margin-top:.2rem">${esc(r.notes)}</p>`:''}
+        </div>
+        ${quotesCard}
+        ${docsCard}
+        <div class="card">
+          <h2 style="font-size:1.1rem;color:var(--navy)">History</h2>
+          <ul class="timeline">${r.events.filter(e=>staff||e.vis).slice().reverse().map(e=>`<li>
+            <div class="meta"><span class="label">${e.k}</span>
+              <span class="note">${new Date(e.d).toLocaleString('en-GB')}</span>
+              ${!e.vis&&staff?'<span class="pill age-ok">Internal</span>':''}</div>
+            <p style="font-size:14px;margin-top:.2rem">${esc(e.b)}</p></li>`).join('')}</ul>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="card"><h2 style="font-size:1.1rem;color:var(--navy)">Contact</h2>
+          <dl class="kv" style="grid-template-columns:1fr">
+            <div><dt class="label">Name</dt><dd>${esc(r.contact)}</dd></div>
+            <div><dt class="label">Email</dt><dd style="word-break:break-all">${esc(r.email)}</dd></div>
+            <div><dt class="label">Phone</dt><dd class="mono">${esc(r.phone)}</dd></div>
+            <div><dt class="label">Industry</dt><dd>${esc(r.industry)}</dd></div>
+          </dl></div>
+        ${staff?`<div class="card"><h2 style="font-size:1.1rem;color:var(--navy)">Move it on</h2>
+          <label class="f" style="margin-top:.8rem"><span class="label">Status</span>
+            <select class="inp" id="newstatus">${Object.entries(STATUS).map(([k,v])=>
+              `<option value="${k}" ${k===r.status?'selected':''}>${v}</option>`).join('')}</select></label>
+          <label class="f" style="margin-top:.7rem"><span class="label">Message</span>
+            <textarea class="inp" id="statusmsg" style="min-height:60px"></textarea></label>
+          <label style="display:flex;gap:.5rem;font-size:14px;margin:.7rem 0"><input type="checkbox" id="notify" checked> Email the client this update</label>
+          <button class="btn wide" data-status="${r.id}">Update</button></div>
+        ${!r.paused?`<div class="card"><h2 style="font-size:1.1rem;color:var(--navy)">Follow-ups</h2>
+          <p class="note" style="margin-top:.3rem">${r.followUps} reminder${r.followUps===1?'':'s'} sent. Moving the status off <em>Submitted</em> stops these on its own.</p>
+          <button class="btn ghost wide" style="margin-top:.7rem" data-pause="${r.id}">Stop chasing this one</button></div>`:''}`
+        :`<div class="card"><h2 style="font-size:1.1rem;color:var(--navy)">Your adviser</h2>
+          <p style="font-size:14px;margin-top:.3rem">${agentName(r.agent)}</p>
+          <p class="note" style="margin-top:.5rem">You will be contacted directly. Everything above is what we have on file.</p></div>`}
+      </div>
+    </div>
+    <div><button class="btn ghost" data-go="${role==='client'?'home':role==='agent'?'pipeline':'overview'}">← Back</button></div>
+  </div>`;
+}
+
+/* ---------------- RAI — Ricky's Artificial Intelligence ---------------- */
+const RAI_KB=[
+ {k:['health','medical','doctor','hospital','quantum','provisor','clinic','drug','dental','vision','surgery'],
+  a:'Group Health covers your staff\'s medical costs — hospital stays, surgery, GP and specialist visits, diagnostics, prescription drugs, with dental and vision available as riders. Guardian offers two plan styles: Quantum (you pay, then claim reimbursement) and Provisor (a network of 450+ providers where staff pay only a co-payment — no claim forms). One tip from the branch: making the plan a condition of employment usually gets a better rate than keeping it optional, because everyone joins, not just those expecting to claim.'},
+ {k:['income protection','disability','sick','salary continu','off work','injury','absent'],
+  a:'Income Protection replaces 50%–66⅔% of an employee\'s salary when illness or injury keeps them off work long-term — after a waiting period (90 or 180 days), payable until recovery or age 60. Health insurance pays the hospital; income protection pays the mortgage. It matters most for field and manual roles, where a long absence is far likelier than a death claim — and it settles the awkward question of how long the company keeps paying an absent employee.'},
+ {k:['critical illness','cancer','heart','stroke','diagnos','lump sum'],
+  a:'Critical Illness pays a tax-free lump sum the moment a covered condition is diagnosed — cancer, heart attack, stroke, kidney failure and others — regardless of any medical bills. Staff can spend it on anything: travel for treatment, a spouse\'s lost income, the gap while on reduced pay. It covers exactly what health insurance doesn\'t.'},
+ {k:['life','death','beneficiar','funeral','ad&d','accidental'],
+  a:'Group Life pays a lump sum to an employee\'s family if they die in service — typically 2× annual salary, and it\'s the cheapest protection per dollar you can buy. Accidental Death & Dismemberment doubles the payout on accidental death and covers loss of limbs or sight. A critical-illness rider (New Life) can pay part of the sum early on diagnosis. No medicals are needed up to the plan\'s free-cover limit, so every employee qualifies.'},
+ {k:['pension','retirement','134','annuit','trust','forfeit','vest','cbtt','trustee','actuar'],
+  a:'There are two ways to give staff a pension. A trust-based group plan (registered with the Central Bank, with trustees and a three-yearly actuarial review) lets the company\'s contributions vest over time — leave early, forfeit the employer share. Individually-owned plans under Section 134 have no setup or annual fees, are fully portable, and each employee owns their contract from day one — but paid is paid; nothing comes back. The deciding question: should the company\'s money stay with the company if someone leaves early? Yes → trust plan. No → Section 134 usually wins on running cost. Tax relief under Section 134 is the greater of ⅓ of chargeable income or 20% of emoluments — your adviser confirms the current BIR position.'},
+ {k:['census','upload','spreadsheet','excel','payroll','employee list','csv'],
+  a:'Easy: export your employee list from payroll or HR (Excel or CSV) and drop it into step 2 of the request. Columns are matched automatically — name, date of birth or age, salary, dependants, occupation — and the numbers fill themselves. The system then maps it straight onto the Guardian Census Data Form (salaries converted to monthly, dependants to counts) and attaches it to your request. No retyping, and names can be left out if you prefer.'},
+ {k:['submit','how long','process','next','happens','quote','turnaround','wait'],
+  a:'Here\'s the journey: answer the guided questions and submit — no password needed. Your sign-in details are emailed instantly, and the request lands with the employee benefits team. An adviser picks it up (if it sits unanswered 5 working days, the system chases the team daily at 3pm until someone does), builds your quotation, and shares documents right here in your portal. You can sign in any time to see exactly which stage you\'ve reached.'},
+ {k:['password','account','login','sign in','track','progress'],
+  a:'You don\'t need an account to submit — just your email. The moment your request is in, we create your account and email you a temporary password. Sign in with it any time to track progress on the live tracker, read updates, and view every document your adviser shares. Change the password after first sign-in.'},
+ {k:['document','proposal','download','file','share'],
+  a:'Your adviser uploads quotations, comparisons and plan documents directly to your request — you get an email the moment something\'s ready, and it appears in the Documents section when you sign in. Everything in one place, nothing lost in an inbox.'},
+ {k:['safe','privacy','data','secure','confidential'],
+  a:'In this demo, everything you type stays in your browser — nothing is sent anywhere. In the live portal, your data is held securely with role-based access: you see only your company\'s requests, advisers see only their own case load, and census details go only to underwriting. Names can be redacted from the census if you prefer.'},
+ {k:['minimum','how many','small company','staff size','qualify'],
+  a:'Guardian\'s group plans start at 10 employees for both health and life cover. Smaller than that? Individually-owned plans (like Section 134 retirement contracts) have no minimum — worth a conversation with the adviser about what fits.'},
+ {k:['cost','price','premium','how much','expensive','rate'],
+  a:'Premiums depend on your workforce — ages, salaries, dependants — and on the cover levels you choose. Step 6 of the request, "Cover levels & what it costs", shows you exactly what Guardian rates against: how many staff sit in each age band, your insured payroll, the total sum assured at the multiple you picked, and how many take single, +1 or family cover. Upload your census at step 2 and every one of those figures is read from your real data rather than modelled. Your adviser then returns the priced quotation on that basis, benefit by benefit. Seeing the number costs nothing and commits you to nothing.'},
+ {k:['human','person','adviser','talk','call','contact','ricky','agent'],
+  a:'Of course — real people are the point. Your request is handled by the Ricky Rampersad Branch of Guardian Life in Chaguanas. Submit and an adviser contacts you directly, or add a note asking for a call and they\'ll ring you. I\'m just here for the quick questions in between.'},
+];
+const RAI_CHIPS=['What does Income Protection cover?','Group plan or Section 134?','How do I upload my census?','What happens after I submit?'];
+let raiOpened=false;
+
+function raiAnswer(q){
+  const s=q.toLowerCase();
+  let best=null,score=0;
+  for(const e of RAI_KB){
+    const n=e.k.reduce((c,kw)=>c+(s.includes(kw)?(kw.length>6?2:1):0),0);
+    if(n>score){score=n;best=e;}
+  }
+  if(best) return best.a;
+  return 'That one\'s beyond my notes — your adviser will have the answer. Add it to your request, or try me on: the benefits themselves, the census upload, tracking, or how the pension structures compare.';
+}
+function raiPush(who,text){
+  const box=document.getElementById('raimsgs');
+  const d=document.createElement('div');
+  d.className='rmsg '+who; d.textContent=text;
+  box.appendChild(d); box.scrollTop=box.scrollHeight;
+}
+function raiSend(q){
+  if(!q.trim())return;
+  raiPush('me',q);
+  setTimeout(()=>raiPush('bot',raiAnswer(q)),260);
+}
+function raiSeed(){
+  const hello = role==='client'
+    ? 'Good day! I\'m RAI — Ricky\'s Artificial Intelligence. Ask me about any of the benefits, the census upload, or how tracking works. Tap a question below to start.'
+    : 'RAI here. I answer client questions about the benefits, the census, and the process — try the chips below to see what clients see.';
+  raiPush('bot',hello);
+  document.getElementById('raichips').innerHTML=RAI_CHIPS.map(c=>
+    `<button type="button" data-raiq="${c.replace(/"/g,'&quot;')}">${c}</button>`).join('');
+}
+
+/* ---------------- workflow & templates gallery ---------------- */
+function tplShell(title,body,foot){
+  const NAVY='#08333D',SLATE='#5C7080',LINE='#D3DEE7';
+  return `<div style="margin:0 auto;max-width:600px;background:#fff;border:1px solid ${LINE};border-radius:6px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;color:#0E1F2E;text-align:left">
+    <div style="padding:18px 24px;border-bottom:1px solid ${LINE};display:flex;gap:10px;align-items:center">
+      <svg viewBox="0 0 64 64" width="34" height="34">
+        <path d="M32 4 L56 12.5 V30 C56 45.5 46 56.5 32 61 C18 56.5 8 45.5 8 30 V12.5 Z" fill="#08333D"/>
+        <path d="M32 9.5 L50.7 16.2 V30 C50.7 42.4 42.5 51.6 32 55.5 C21.5 51.6 13.3 42.4 13.3 30 V16.2 Z" fill="#0E8FA3"/>
+        <path d="M22 31.5 L29.2 38.8 L43 23.5" stroke="#F08A24" stroke-width="5.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div><div style="font-size:15px;font-weight:600;color:${NAVY};line-height:1.1">Ricky Rampersad Branch</div>
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:${SLATE}">Employee Benefits · Guardian Life</div></div>
+    </div>
+    <div style="padding:22px 24px">
+      <h1 style="margin:0 0 14px;font-size:18px;line-height:1.3;color:${NAVY};font-weight:600">${title}</h1>${body}
+    </div>
+    <div style="padding:14px 24px;border-top:1px solid ${LINE};font-size:10.5px;color:${SLATE};line-height:1.5">
+      ${foot||''}Ricky Rampersad Branch · Guardian Life, Chaguanas<br>
+      This message relates to a request for a quotation. It is not an offer of insurance, and no cover is in force until a policy is issued and the first premium paid.
+    </div>
+  </div>`;
+}
+function tplDl(rows){
+  const SLATE='#5C7080',LINE='#D3DEE7';
+  return `<table style="width:100%;margin:14px 0;border-collapse:collapse">${rows.map(([k,v])=>
+    `<tr><td style="padding:6px 0;border-bottom:1px solid ${LINE};font-size:10px;letter-spacing:1px;text-transform:uppercase;color:${SLATE};width:44%">${k}</td>
+    <td style="padding:6px 0;border-bottom:1px solid ${LINE};font-size:13px;text-align:right;font-weight:600">${v}</td></tr>`).join('')}</table>`;
+}
+function tplBtn(label){
+  return `<span style="display:inline-block;margin-top:6px;padding:10px 18px;background:#0E8FA3;color:#fff;border-radius:4px;font-size:12px;font-weight:600;letter-spacing:.5px">${label}</span>`;
+}
+const P=(t)=>`<p style="margin:0 0 12px;font-size:14px;line-height:1.6">${t}</p>`;
+
+function flowScreen(){
+  const REF='RRB-2026-0001', CO='Harbourview Trading Ltd', WHO='Sunita Ramlal';
+  const mails=[
+    {n:1,label:'To the NEW employer, the moment they submit — with their sign-in details',
+     from:'benefits@branch', to:'s.ramlal@hvtrading.tt',
+     subject:`Your request is in — and here are your sign-in details (${REF})`,
+     html:tplShell(`Thank you, ${WHO}.`,
+       P(`We have your request for a group benefits quotation for <b>${CO}</b>. No forms to print, nothing to chase — your adviser takes it from here.`)+
+       tplDl([['Your reference',REF],['Benefits requested','Group Health, Pension, Group Life, Income Protection'],['Received','Mon 3 Aug 2026']])+
+       P(`<b>We created your account so you can follow progress</b> and view every document your adviser shares:`)+
+       tplDl([['Sign in with','s.ramlal@hvtrading.tt'],['Temporary password','Kp7•••••••2f']])+
+       `<p style="margin:6px 0 4px;font-size:12px;color:#5C7080">Please change this password after your first sign-in.</p>`+
+       tplBtn('Sign in to track your request'))},
+    {n:2,label:'To a RETURNING client on submission',
+     from:'benefits@branch', to:'client',
+     subject:`We have your benefits request (${REF})`,
+     html:tplShell(`Thank you, ${WHO}.`,
+       P(`We have your request for a group benefits quotation for <b>${CO}</b>, and it is with our employee benefits team now.`)+
+       P(`An adviser will be in touch. You can check where things stand at any time — no need to wait for us to call.`)+
+       tplDl([['Your reference',REF],['Employees','36'],['Benefits requested','Group Health, Pension'],['Received','Mon 3 Aug 2026']])+
+       tplBtn('Track your request'))},
+    {n:3,label:'To the client when an AGENT enters the request on their behalf',
+     from:'benefits@branch', to:'client',
+     subject:`Varun Seegolam has started your benefits request (${REF})`,
+     html:tplShell(`Your request is underway, ${WHO}.`,
+       P(`<b>Varun Seegolam</b> from our employee benefits team has entered a group benefits request for <b>${CO}</b> on your behalf, from the details you discussed.`)+
+       P(`Nothing is committed — this starts the quotation, and your adviser will come back to you with options and costs.`)+
+       tplDl([['Your reference',REF],['Your adviser','Varun Seegolam'],['Benefits being quoted','Pension'],['Entered','Mon 3 Aug 2026']])+
+       P(`To follow progress yourself, create an account using <b>this email address</b> — your request will be waiting when you sign in.`)+
+       tplBtn('Create your account'))},
+    {n:4,label:'To the DEPARTMENT the moment a request lands — census attached when uploaded',
+     from:'benefits@branch', to:'employee benefits team',
+     subject:`New quote request — ${CO} (${REF})`,
+     html:tplShell(`New request: ${CO}`,
+       P(`A new group benefits request has been submitted through the branch portal and routed to employee benefits.`)+
+       tplDl([['Reference',REF],['Company',CO],['Contact',WHO],['Employees','36'],['Benefits requested','Health, Pension, Life, Income Protection'],['Assigned to','Unassigned'],['Received','Mon 3 Aug 2026']])+
+       `<p style="margin:10px 0 0;font-size:12px;color:#5C7080">📎 ${REF}-Guardian-census.xlsx attached</p>`+
+       tplBtn('Open the request'),
+       `<b>Follow-up schedule:</b> a reminder is sent after 5 working days with no response, then daily at 3:00 p.m. until the request is picked up.<br>`)},
+    {n:5,label:'The CHASE — after 5 working days unanswered, then daily at 3:00 p.m. (tone escalates)',
+     from:'benefits@branch', to:'employee benefits team',
+     subject:`Reminder 4 — ${CO} still waiting (${REF})`,
+     html:tplShell(`Still unanswered: ${CO}`,
+       P(`This is reminder 4 of 7. <b>${CO}</b> has now been waiting 9 working days and has had no contact from us.`)+
+       tplDl([['Reference',REF],['Company',CO],['Status','Submitted'],['Assigned to','Unassigned'],['Working days waiting','9'],['Reminder','4 of 7']])+
+       tplBtn('Respond now')+
+       `<p style="margin:14px 0 0;font-size:11.5px;color:#5C7080">Moving the request out of <i>Submitted</i> stops these reminders automatically.</p>`)},
+    {n:6,label:'To the MANAGER once the chase is exhausted — auto-chasing stops, a decision is needed',
+     from:'benefits@branch', to:'ricky.rampersad@…',
+     subject:`Escalation — ${CO} unanswered (${REF})`,
+     html:tplShell(`Escalation: ${CO}`,
+       P(`This request has exhausted its reminder schedule without being picked up. It is no longer being chased automatically and needs a decision.`)+
+       tplDl([['Reference',REF],['Company',CO],['Assigned to','Unassigned'],['Working days waiting','12']])+
+       tplBtn('Review in the portal'))},
+    {n:7,label:'To the client when their adviser shares a DOCUMENT',
+     from:'benefits@branch', to:'client',
+     subject:`A document is ready for you (${REF})`,
+     html:tplShell('Your adviser has shared a document',
+       P(`A new document is ready on your request for <b>${CO}</b>:`)+
+       tplDl([['Document','Quotation Package v1.pdf'],['Reference',REF],['From','Varun Seegolam']])+
+       tplBtn('Sign in to view it'))},
+  ];
+  const stage=(n,t,b)=>`<div class="card" style="padding:1rem">
+    <span class="label" style="color:var(--gold)">Stage ${n}</span>
+    <p style="font-weight:600;font-size:14px;margin-top:.2rem">${t}</p>
+    <p class="note" style="margin-top:.2rem">${b}</p></div>`;
+  return `<div class="stack">
+    <div><span class="label">The full journey</span><h1 class="page">Workflow &amp; email templates</h1>
+    <p class="note" style="max-width:66ch;margin-top:.4rem">Every stage of the process and every email the system sends,
+    rendered exactly as they arrive. Nothing here needs a sign-in — this page is the map.</p></div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:.8rem">
+      ${stage(1,'Employer submits — no password','Guided questions, census upload optional. An agent can also enter it on a client’s behalf. Email #1 or #3 goes out instantly; the department gets #4 with the Guardian census attached.')}
+      ${stage(2,'Account issued automatically','Sign-in details are created and emailed at submission. The client tracks progress and documents from day one.')}
+      ${stage(3,'Agent picks it up','Claiming the request stops the chase and stamps the response time. Status moves: Assigned → Being reviewed → Quoted.')}
+      ${stage(4,'Documents shared','The adviser uploads the quotation package; client-visible files trigger email #7 and appear in the client portal.')}
+      ${stage(5,'Presented → Won / Lost','Every status change can email the client. The manager sees response times, adviser workloads and win rate live.')}
+    </div>
+    <div class="card" style="border-color:var(--gold)">
+      <span class="label" style="color:var(--warn)">Running underneath, automatically</span>
+      <p style="font-size:14px;margin-top:.3rem"><b>The chase:</b> 5 working days' grace (Trinidad public holidays excluded) → then email #5 every working day at 3:00 p.m. → after 7 reminders, email #6 escalates to the manager and auto-chasing stops. Picking the request up at any point silences it.</p>
+    </div>
+
+    ${mails.map(m=>`<div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:.8rem 1.2rem;border-bottom:1px solid var(--line);background:var(--surface2)">
+        <span class="label">Email ${m.n} · ${m.label}</span>
+        <div style="font-size:13px;margin-top:.35rem"><b>To:</b> ${esc(m.to)} &nbsp;·&nbsp; <b>Subject:</b> ${esc(m.subject)}</div>
+      </div>
+      <div style="background:#EDF2F7;padding:1.2rem;overflow-x:auto">${m.html}</div>
+    </div>`).join('')}
+
+    <div><button class="btn ghost" data-go="${authed?(role==='client'?'home':role==='agent'?'pipeline':'overview'):'home'}">← Back</button></div>
+  </div>`;
+}
+
+/* ---------------- render ---------------- */
+function render(){
+  renderChrome();
+  const v=$('view');
+  if(screen==='flow'){ v.innerHTML=flowScreen(); window.scrollTo(0,0); return; }
+  if(!authed && !(guest && screen==='new')){ v.innerHTML=loginScreen(); window.scrollTo(0,0); return; }
+  if(screen==='detail')      v.innerHTML=detail();
+  else if(screen==='new')    v.innerHTML=newRequest();
+  else if(screen==='pipeline')v.innerHTML=pipeline();
+  else if(screen==='overview')v.innerHTML=overview();
+  else v.innerHTML = role==='client'?homeClient():role==='agent'?pipeline():overview();
+  // Feedback button: permanent, for everyone — clients, staff and visitors.
+  const fb=$('fbbtn');
+  if(fb){
+    fb.style.display='flex';
+    const nm=$('fb_name');
+    if(nm&&!nm.value&&authed&&ME[role]) nm.value=ME[role].name||'';
+  }
+  window.scrollTo(0,0);
+}
+
+/* ---------------- events ---------------- */
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-go],[data-open],[data-claim],[data-status],[data-pause],[data-role],[data-wnext],[data-wback],[data-wgoto],[data-wsubmit],[data-login],[data-demo],[data-logout],[data-logintab],[data-sampleform],[data-wstartblank],[data-guestnew],[data-samplecensus],[data-parsecensus],[data-censusdl],[data-censusdraft],[data-qask],[data-qapprove],[data-raiq],[data-fbsend],[data-fbclose],#fbbtn,#raibtn,#theme');
+  if(!t) return;
+
+  if(t.id==='fbbtn'){
+    const p=document.getElementById('fbpanel');
+    const open=!p.classList.contains('open');
+    p.classList.toggle('open',open);
+    t.setAttribute('aria-expanded',String(open));
+    return;
+  }
+  if(t.hasAttribute('data-fbclose')){ document.getElementById('fbpanel').classList.remove('open'); return; }
+  if(t.hasAttribute('data-fbsend')){
+    const name=$('fb_name').value.trim(), email=$('fb_email').value.trim(),
+          cat=$('fb_cat').value, msg=$('fb_msg').value.trim(), st=$('fb_status');
+    st.style.display='block';
+    if(!msg){ st.textContent='Tell us what happened first — the message box is empty.'; st.style.color='var(--stop)'; return; }
+    if(!/@/.test(email)){ st.textContent='Add your email so the updates can reach you.'; st.style.color='var(--stop)'; return; }
+    const now=new Date();
+    const ref='FB-'+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0')+'-'+String(Date.now()).slice(-4);
+    if(SHEET_WEBHOOK){
+      try{
+        fetch(SHEET_WEBHOOK,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},
+          body:JSON.stringify({kind:'feedback',ref:ref,agent:name||'Unnamed tester',email:email,category:cat,message:msg,via:role})}).catch(function(){});
+      }catch(err){}
+      st.textContent='✓ Sent — '+ref+'. Check your email for the confirmation; updates every few days until it\'s resolved.';
+    } else {
+      st.textContent='Demo mode — feedback is not sent from the preview.';
+    }
+    st.style.color='var(--ok)';
+    $('fb_msg').value='';
+    return;
+  }
+  if(t.id==='raibtn'){
+    const p=document.getElementById('raipanel');
+    const open=!p.classList.contains('open');
+    p.classList.toggle('open',open);
+    t.setAttribute('aria-expanded',String(open));
+    if(open&&!raiOpened){raiOpened=true;raiSeed();}
+    return;
+  }
+  if(t.dataset.raiq){ raiSend(t.dataset.raiq); return; }
+  if(t.dataset.qapprove){
+    const r=REQUESTS.find(x=>x.id===openId);
+    if(r&&r.quotes&&r.quotes[t.dataset.qapprove]){
+      r.quotes[t.dataset.qapprove].approved=true;
+      r.events.push({k:'note',b:`${ME[role].name} approved the ${t.dataset.qapprove} quotation.`,d:new Date(),vis:true});
+      render();
+    } return;
+  }
+  if(t.dataset.qask){
+    const r=REQUESTS.find(x=>x.id===openId);
+    const inp=document.getElementById(t.dataset.inp);
+    const txt=inp?inp.value.trim():'';
+    if(r&&txt){
+      const line=t.dataset.qask;
+      r.quotes=r.quotes||{}; r.quotes[line]=r.quotes[line]||{qa:[],approved:false};
+      r.quotes[line].qa=r.quotes[line].qa||[];
+      r.quotes[line].qa.push({who:ME[role].name,role:role==='client'?'client':'agent',text:txt});
+      r.events.push({k:'note',b:`${role==='client'?'Question from the client':'Adviser reply'} on the ${line} quotation: “${txt.slice(0,80)}${txt.length>80?'…':''}”`,d:new Date(),vis:true});
+      if(role==='client') r.events.push({k:'email',b:'Adviser notified of your question.',d:new Date(),vis:false});
+      render();
+    } return;
+  }
+  if(t.hasAttribute('data-censusdraft')){
+    if(WIZ&&WIZ.data&&WIZ.data.census){
+      const blob=new Blob([guardianCensusXlsx({census:WIZ.data.census})],
+        {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+      a.download='Guardian-census-draft.xlsx'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    }
+    return;
+  }
+
+  const syncRole=()=>document.querySelectorAll('[data-role]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.role===role)));
+  if(t.hasAttribute('data-login')){
+    const err=$('l_err');
+    if(loginTab==='staff'){
+      let num=(($('l_email')||{}).value||'').trim().toUpperCase();
+      /* Agent numbers are typed without their A often enough to be worth
+         restoring — but only for a bare number. Logins on the Access tab
+         are not all agent codes (KD001, VK001), and prefixing those turned
+         Kamla's login into AKD001 and refused her. */
+      if(/^\d+$/.test(num)) num='A'+num;
+      const pw=(($('l_pass')||{}).value||'').trim();
+      const row=ROSTER.find(x=>x[0]===num);
+      if(!row||row[2]!==pw){
+        /* Not a preview login — ask the branch script, which checks the
+           number and password against the Administrators tab. */
+        if(BRANCH_API && num && pw){
+          if(err){err.textContent='Checking with the branch…';err.style.display='block';}
+          fetch(BRANCH_API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+            body:JSON.stringify({action:'signin',code:num,password:pw})})
+            .then(r=>r.json())
+            .then(d=>{
+              if(d && d.ok){
+                /* The sheet's Role column travels with the sign-in: agents
+                   get the agent view, everyone else the administrator's.
+                   The hand-off carries the same role, so the admin pages
+                   stay shut to an agent who browses to them directly. */
+                if(d.role === 'agent'){
+                  role='agent';
+                  let a=AGENTS.find(x=>x.name===d.name);
+                  if(!a){ a={id:'sheet'+num,name:d.name}; AGENTS.push(a); }
+                  ME.agent={name:d.name,sub:(d.title||'Agent')+' · branch sheet',role:'agent',id:a.id};
+                }else{
+                  role='manager';
+                  ME.manager={name:d.name,sub:(d.title||'Administrator')+' · branch sheet',role:'manager'};
+                }
+                try{ localStorage.setItem('rrb-signin',
+                  JSON.stringify({ code:num, name:d.name, role:d.role==='agent'?'agent':'manager',
+                                   title:d.title||'Administrator', at:Date.now() })); }catch(e){}
+                authed=true; screen='home'; syncRole(); render();
+              } else if(err){
+                err.textContent=(d && d.error) || 'Not recognised — check the agent number and password.';
+                err.style.display='block';
+              }
+            })
+            .catch(()=>{ if(err){err.textContent='Could not reach the branch just now — try again.';err.style.display='block';} });
+          return;
+        }
+        if(err){err.textContent='Not on the branch roster — check the agent number and password.';err.style.display='block';}
+        return;
+      }
+      const [anum,name,,rrole,unit,title]=row;
+      /* Hand the signed-in identity to the sibling pages (pendings, upload)
+         so an administrator signs in once, here, rather than keeping a
+         second code per page. Same-origin only — nothing leaves the site —
+         and pages decide for themselves which roles they admit. */
+      try{ localStorage.setItem('rrb-signin',
+        JSON.stringify({ code:anum, name, role:rrole, title, at:Date.now() })); }catch(e){}
+      if(rrole==='manager'){
+        role='manager';
+        ME.manager={name:name,sub:title+' · Chaguanas',role:'manager'};
+      }else{
+        role='agent';
+        let a=AGENTS.find(x=>x.name===name);
+        if(!a){a={id:'r'+anum,name:name};AGENTS.push(a);}
+        ME.agent={name:name,sub:'Agent · '+unit+' unit',role:'agent',id:a.id};
+      }
+    }else{
+      role='client';
+    }
+    authed=true; screen='home'; syncRole(); render(); return;
+  }
+  if(t.dataset.demo){ role=t.dataset.demo; authed=true; screen='home'; syncRole(); render(); return; }
+  if(t.hasAttribute('data-logout')){ authed=false; screen='login'; WIZ=null; openId=null;
+    try{ localStorage.removeItem('rrb-signin'); }catch(e){}
+    render(); return; }
+
+  if(t.hasAttribute('data-wnext')){ saveStep(); WIZ.step++; render(); return; }
+  if(t.hasAttribute('data-wback')){ saveStep(); WIZ.step--; render(); return; }
+  if(t.dataset.wgoto){ saveStep(); WIZ.step=+t.dataset.wgoto; render(); return; }
+  if(t.hasAttribute('data-wsubmit')){ saveStep(); submitWizard(); return; }
+  if(t.dataset.logintab){ loginTab=t.dataset.logintab; render(); return; }
+  if(t.hasAttribute('data-sampleform')){ loadSampleForm(); return; }
+  if(t.hasAttribute('data-wstartblank')){ WIZ={step:1,data:{}}; render(); return; }
+  if(t.hasAttribute('data-guestnew')){ role='client'; guest=true; WIZ={step:1,data:{},guest:true}; screen='new'; render(); return; }
+  if(t.hasAttribute('data-samplecensus')){ const ta=$('w_censustext'); ta.value=sampleCensus(); applyCensus(ta.value); return; }
+  if(t.hasAttribute('data-parsecensus')){ const ta=$('w_censustext');
+    if(!ta.value.trim()){ const st=$('c_status'); if(st){st.textContent='Nothing to read — choose a file or paste rows first.'; st.style.color='var(--stop)';} return; }
+    applyCensus(ta.value); return; }
+  if(t.dataset.censusdl){
+    const r=REQUESTS.find(x=>x.id===t.dataset.censusdl);
+    if(r&&r.census){
+      const blob=new Blob([guardianCensusXlsx(r)],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+      a.download=r.ref+'-Guardian-census.xlsx'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    } return;
+  }
+
+  if(t.id==='theme'){
+    const cur=document.documentElement.getAttribute('data-theme');
+    const dark=cur?cur==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.setAttribute('data-theme',dark?'light':'dark'); return;
+  }
+  if(t.dataset.role){
+    role=t.dataset.role; screen='home'; openId=null; WIZ=null; authed=true;
+    document.querySelectorAll('[data-role]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.role===role)));
+    render(); return;
+  }
+  if(t.dataset.go){ screen=t.dataset.go==='home'?'home':t.dataset.go; openId=null;
+    if(screen==='new') WIZ={step:1,data:{}}; render(); return; }
+  if(t.dataset.open){ openId=t.dataset.open; screen='detail'; render(); return; }
+
+  if(t.dataset.claim){
+    const r=REQUESTS.find(x=>x.id===t.dataset.claim);
+    r.agent=ME.agent.id; r.status='assigned';
+    r.firstResponse=r.firstResponse||new Date();
+    r.events.push({k:'assigned',b:'Varun Seegolam picked up this request.',d:new Date(),vis:true});
+    render(); return;
+  }
+  if(t.dataset.status){
+    const r=REQUESTS.find(x=>x.id===t.dataset.status);
+    const to=$('newstatus').value, msg=$('statusmsg').value.trim(), notify=$('notify').checked;
+    if(to!==r.status && !r.firstResponse) r.firstResponse=new Date();
+    r.events.push({k:'status',b:msg||`Status moved to ${STATUS[to]}.`,d:new Date(),vis:true});
+    if(notify) r.events.push({k:'email',b:`Progress update emailed to ${r.contact}.`,d:new Date(),vis:false});
+    r.status=to; render(); return;
+  }
+  if(t.dataset.pause){
+    const r=REQUESTS.find(x=>x.id===t.dataset.pause);
+    r.paused=true;
+    r.events.push({k:'note',b:'Automatic follow-up reminders paused.',d:new Date(),vis:false});
+    render(); return;
+  }
+});
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter' && !authed && document.getElementById('l_email') && document.activeElement?.id!=='raiinput'){
+    const b=document.querySelector('[data-login]'); if(b) b.click();
+  }
+});
+
+document.addEventListener('submit',e=>{
+  if(e.target.id==='raiform'){
+    e.preventDefault();
+    const inp=document.getElementById('raiinput');
+    raiSend(inp.value); inp.value='';
+  }
+});
+
+document.addEventListener('change',e=>{
+  if(e.target && e.target.classList && e.target.classList.contains('qfile')){
+    const f=e.target.files&&e.target.files[0]; if(!f) return;
+    const r=REQUESTS.find(x=>x.id===openId); if(!r) return;
+    const line=e.target.dataset.line;
+    r.quotes=r.quotes||{};
+    const existed=r.quotes[line]&&r.quotes[line].doc;
+    r.quotes[line]=r.quotes[line]||{qa:[],approved:false};
+    r.quotes[line].doc={name:f.name,size:f.size,by:ME[role].name,at:new Date()};
+    r.quotes[line].approved=false;
+    if(r.status==='assigned'||r.status==='in_review') r.status='quoted';
+    r.events.push({k:'note',b:`${ME[role].name} uploaded the ${line} quotation${existed?' (replaced)':''} — “${f.name}”.`,d:new Date(),vis:true});
+    r.events.push({k:'email',b:`Client emailed: your ${line} quotation is ready to review.`,d:new Date(),vis:true});
+    render(); return;
+  }
+  if(e.target && e.target.id==='d_file'){
+    const f=e.target.files && e.target.files[0]; if(!f) return;
+    const r=REQUESTS.find(x=>x.id===openId); if(!r) return;
+    const vis=!!(document.getElementById('d_vis')||{}).checked;
+    const note=(document.getElementById('d_note')||{}).value||'';
+    r.docs=r.docs||[];
+    r.docs.push({name:f.name,size:f.size,by:ME[role].name,at:new Date(),vis,note});
+    r.events.push({k:'note',b:`${ME[role].name} uploaded “${f.name}”${vis?' — visible to the client':' (internal)'}${note?': '+note:''}.`,d:new Date(),vis});
+    if(vis) r.events.push({k:'email',b:`Client emailed: a new document is ready to view — “${f.name}”.`,d:new Date(),vis:true});
+    render(); return;
+  }
+  if(e.target && e.target.id==='w_censusfile'){
+    const f=e.target.files && e.target.files[0]; if(!f) return;
+    const nm=f.name.toLowerCase();
+    const st=$('c_status');
+    if(nm.endsWith('.xlsx')||nm.endsWith('.xlsm')){
+      if(st){st.textContent='Reading '+f.name+'…'; st.style.color='var(--slate)';}
+      f.arrayBuffer()
+        .then(readXlsxGrid)
+        .then(grid=>{ const text=gridToCsvText(grid); const ta=$('w_censustext'); ta.value=text; applyCensus(text); })
+        .catch(err=>{ if(st){st.textContent='Could not read that Excel file — '+err.message+'. You can also copy the rows in Excel and paste them below.'; st.style.color='var(--stop)';} });
+      e.target.value='';
+      return;
+    }
+    if(nm.endsWith('.xls')){
+      if(st){st.textContent='That is the old .xls format. In Excel do File → Save As → .xlsx (or CSV) and upload that — or just copy the rows and paste them below.'; st.style.color='var(--stop)';}
+      e.target.value='';
+      return;
+    }
+    const fr=new FileReader();
+    fr.onload=()=>{ const ta=$('w_censustext'); ta.value=String(fr.result); applyCensus(ta.value); };
+    fr.onerror=()=>{ if(st){st.textContent='Could not read that file.'; st.style.color='var(--stop)';} };
+    fr.readAsText(f);
+    e.target.value='';
+  }
+});
+
+render();
+</script>

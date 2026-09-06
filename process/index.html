@@ -1,0 +1,604 @@
+<title>The Revised Process</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600;6..72,700&family=Inter:wght@400;500;600;700;800&display=swap">
+
+<style>
+  :root{
+    --navy:#0B1836; --teal:#0D9488; --teal-lt:#2DD4BF; --gold:#F5B324;
+    --good:#0E8A5F; --warn:#B8791A; --crit:#C0392B;
+    --paper:#FFFFFF; --ground:#F4F6FA; --sunk:#EEF2F8;
+    --ink:#0F172A; --ink-2:#3F4A5C; --muted:#69748A; --faint:#98A2B3; --line:#DFE4EC;
+    --shadow:0 1px 2px rgba(11,24,54,.06), 0 12px 32px -14px rgba(11,24,54,.22);
+  }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+    --paper:#111A2E; --ground:#080D1A; --sunk:#0D1526;
+    --ink:#EAEEF6; --ink-2:#C3CBDA; --muted:#8B95A9; --faint:#6A7488;
+    --line:#222C42; --teal:#2DD4BF; --good:#34D399; --warn:#F5B324; --crit:#F87171;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 34px -16px rgba(0,0,0,.8); } }
+  :root[data-theme="dark"]{
+    --paper:#111A2E; --ground:#080D1A; --sunk:#0D1526;
+    --ink:#EAEEF6; --ink-2:#C3CBDA; --muted:#8B95A9; --faint:#6A7488;
+    --line:#222C42; --teal:#2DD4BF; --good:#34D399; --warn:#F5B324; --crit:#F87171;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 34px -16px rgba(0,0,0,.8); }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);
+    font:16.5px/1.62 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:790px;margin:0 auto;padding:0 18px 70px}
+  h2{font-family:Newsreader,Georgia,serif;font-size:clamp(24px,5vw,31px);font-weight:600;
+    letter-spacing:-.015em;margin:0 0 6px;line-height:1.2;text-wrap:balance}
+  h3{font-size:17.5px;font-weight:800;margin:0 0 5px;line-height:1.3}
+  .eyebrow{font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--teal);margin:0 0 9px}
+  .lede{font-size:16px;color:var(--ink-2);margin:0 0 22px;line-height:1.6}
+  section{margin:0 0 46px}
+  .rule{height:1px;background:var(--line);margin:0 0 34px}
+
+  header{background:radial-gradient(680px 360px at 86% -18%, rgba(45,212,191,.20), transparent 60%),
+      var(--navy);color:#fff;padding:26px 18px 30px;margin-bottom:28px}
+  .hin{max-width:754px;margin:0 auto}
+  .stamp{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.16em;
+    text-transform:uppercase;background:var(--gold);color:#3D2A00;padding:5px 11px;
+    border-radius:6px;margin-bottom:16px}
+  header h1{font-family:Newsreader,Georgia,serif;font-size:clamp(30px,7vw,42px);
+    font-weight:600;line-height:1.14;letter-spacing:-.02em;margin:0 0 12px}
+  header p{margin:0;font-size:16px;color:rgba(255,255,255,.74);line-height:1.6}
+  .toc{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+  .toc a{font-size:13px;font-weight:700;text-decoration:none;color:rgba(255,255,255,.9);
+    background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);
+    border-radius:999px;padding:7px 14px}
+  .toc a:hover{background:rgba(45,212,191,.22);border-color:var(--teal-lt)}
+
+  .part{font-size:12px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--faint);margin:0 0 4px}
+
+  /* ── the flow ─────────────────────────────────────────────────────────── */
+  .flow{list-style:none;margin:0;padding:0}
+  .st{position:relative;display:grid;grid-template-columns:52px 1fr;gap:16px;
+    padding-bottom:26px}
+  .st::before{content:"";position:absolute;left:25px;top:52px;bottom:0;width:3px;
+    border-radius:3px;background:var(--line)}
+  .st:last-child::before{display:none}
+  .st.mgr::before{background:var(--gold)}
+  .st.client::before{background:var(--teal)}
+  .num{width:52px;height:52px;border-radius:15px;display:grid;place-items:center;
+    background:var(--paper);border:2.5px solid var(--teal);color:var(--teal);
+    font:800 21px Inter,sans-serif;box-shadow:var(--shadow);position:relative;z-index:1}
+  .st.mgr .num{border-color:var(--gold);color:var(--warn);background:#FFFBF2}
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .st.mgr .num{
+    background:rgba(245,179,36,.12);color:var(--gold)} }
+  :root[data-theme="dark"] .st.mgr .num{background:rgba(245,179,36,.12);color:var(--gold)}
+  .who{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.13em;
+    text-transform:uppercase;padding:3px 8px;border-radius:5px;margin-bottom:7px;
+    background:rgba(13,148,136,.13);color:var(--teal)}
+  .st.mgr .who{background:rgba(245,179,36,.20);color:var(--warn)}
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .st.mgr .who{color:var(--gold)} }
+  :root[data-theme="dark"] .st.mgr .who{color:var(--gold)}
+  .st p{margin:0 0 9px;font-size:15.5px;color:var(--ink-2);line-height:1.58}
+  .st p:last-child{margin-bottom:0}
+  .out{margin-top:11px;display:grid;gap:6px}
+  .out div{font-size:14px;color:var(--muted);display:grid;grid-template-columns:auto 1fr;
+    gap:9px;align-items:baseline}
+  .out b{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--faint);white-space:nowrap;padding-top:2px}
+
+  .callout{background:rgba(245,179,36,.10);border:1.5px solid rgba(245,179,36,.38);
+    border-radius:14px;padding:17px 19px;margin-top:13px}
+  .callout h4{margin:0 0 7px;font-size:15.5px;font-weight:800;color:var(--warn)}
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .callout h4{color:var(--gold)} }
+  :root[data-theme="dark"] .callout h4{color:var(--gold)}
+  .callout p{margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.55}
+
+  /* email mocks */
+  .mail{background:var(--paper);border:1px solid var(--line);border-radius:13px;
+    overflow:hidden;margin-top:13px;box-shadow:var(--shadow)}
+  .mail .mh{padding:13px 16px;border-bottom:1px solid var(--line);background:var(--sunk)}
+  .mail .mf{font-size:12.5px;color:var(--muted)}
+  .mail .ms{font-size:16px;font-weight:800;margin-top:3px;line-height:1.3}
+  .mail .mb{padding:14px 16px}
+  .mail .rec{border-left:3px solid var(--teal);background:var(--sunk);border-radius:0 9px 9px 0;
+    padding:11px 13px;margin-bottom:9px}
+  .mail .rec.up{border-left-color:var(--gold);background:rgba(245,179,36,.09)}
+  .mail .rec b{display:block;font-size:14.5px}
+  .mail .rec i{display:block;font-style:italic;font-size:13.5px;color:var(--muted);margin-top:2px}
+  .mail .rec u{display:block;text-decoration:none;font-weight:800;color:var(--teal);
+    margin-top:4px;font-variant-numeric:tabular-nums}
+  .mail .rec.up u{color:var(--warn)}
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .mail .rec.up u{color:var(--gold)} }
+  :root[data-theme="dark"] .mail .rec.up u{color:var(--gold)}
+  .acts{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .acts span{flex:1;min-width:112px;text-align:center;border-radius:9px;padding:11px 8px;
+    font-size:13.5px;font-weight:800}
+  .acts .p{background:var(--good);color:#fff}
+  .acts .g{background:var(--gold);color:#3D2A00}
+  .acts .s{background:var(--paper);border:1.5px solid var(--line);color:var(--ink-2)}
+  .acts .d{background:var(--paper);border:1.5px solid var(--crit);color:var(--crit)}
+  .sigline{margin-top:11px;padding-top:10px;border-top:1px dashed var(--line);
+    font-size:13px;color:var(--muted);line-height:1.5}
+  .stars{font-size:22px;letter-spacing:5px;color:var(--gold);margin:4px 0 2px}
+  .pick{display:grid;gap:7px;margin-top:4px}
+  .pick label{display:grid;grid-template-columns:20px 1fr;gap:10px;align-items:start;
+    font-size:14px;background:var(--sunk);border:1px solid var(--line);border-radius:9px;
+    padding:10px 12px}
+  .pick i{width:17px;height:17px;border:2px solid var(--muted);border-radius:4px;
+    display:block;margin-top:2px}
+  .pick label.on i{background:var(--teal);border-color:var(--teal)}
+  .pick b{font-weight:700}
+  .pick em{display:block;font-style:normal;color:var(--muted);font-size:13px;margin-top:2px}
+
+  /* the client's own tracker */
+  .track{display:grid;gap:9px}
+  .tk{display:grid;grid-template-columns:34px 1fr auto;gap:13px;align-items:center;
+    background:var(--paper);border:1px solid var(--line);border-radius:12px;
+    padding:13px 16px;box-shadow:var(--shadow)}
+  .tk .n{width:30px;height:30px;border-radius:50%;background:var(--sunk);color:var(--muted);
+    font:800 13px/30px Inter,sans-serif;text-align:center}
+  .tk.done .n{background:var(--good);color:#fff}
+  .tk.now{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal) inset,var(--shadow)}
+  .tk.now .n{background:var(--teal);color:#fff}
+  .tk .l{font-size:15.5px;font-weight:700;line-height:1.3}
+  .tk .l em{display:block;font-style:normal;font-weight:400;font-size:13.5px;
+    color:var(--muted);margin-top:2px}
+  .tk .w{font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--faint);white-space:nowrap}
+
+  /* the calendar */
+  .cal{display:grid;gap:9px}
+  .cl{display:grid;grid-template-columns:126px 1fr;gap:15px;align-items:start;
+    background:var(--paper);border:1px solid var(--line);border-radius:12px;
+    padding:14px 16px;box-shadow:var(--shadow)}
+  .cl .when{font-size:12px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+    color:var(--teal);line-height:1.4;padding-top:2px}
+  .cl.trig .when{color:var(--warn)}
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .cl.trig .when{color:var(--gold)} }
+  :root[data-theme="dark"] .cl.trig .when{color:var(--gold)}
+  .cl .what{font-size:15.5px;font-weight:700;line-height:1.35}
+  .cl .what em{display:block;font-style:normal;font-weight:400;font-size:14px;
+    color:var(--muted);margin-top:3px;line-height:1.5}
+  .fld{display:inline-block;font:600 12.5px ui-monospace,SFMono-Regular,Menlo,monospace;
+    background:var(--sunk);border:1px solid var(--line);border-radius:5px;padding:1px 6px;
+    color:var(--ink-2)}
+
+  /* manager insight */
+  .ins{display:grid;gap:9px}
+  .in{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--gold);
+    border-radius:0 13px 13px 0;padding:15px 18px;box-shadow:var(--shadow)}
+  .in h3{font-size:16px}
+  .in p{margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.55}
+  .in .tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.1em;
+    text-transform:uppercase;background:rgba(245,179,36,.18);color:var(--warn);
+    padding:3px 8px;border-radius:5px;margin-bottom:7px}
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .in .tag{color:var(--gold)} }
+  :root[data-theme="dark"] .in .tag{color:var(--gold)}
+
+  /* status */
+  .stat{display:grid;gap:8px}
+  .sr{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:baseline;
+    background:var(--paper);border:1px solid var(--line);border-radius:11px;
+    padding:12px 15px;box-shadow:var(--shadow)}
+  .pill{font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+    padding:4px 9px;border-radius:5px;white-space:nowrap}
+  .pill.ok{background:rgba(14,138,95,.14);color:var(--good)}
+  .pill.no{background:rgba(192,57,43,.13);color:var(--crit)}
+  .pill.part{background:rgba(184,121,26,.16);color:var(--warn)}
+  .sr .d{font-size:14.5px;line-height:1.5}
+  .sr .d em{display:block;font-style:normal;color:var(--muted);font-size:13.5px;margin-top:2px}
+
+  .qq{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--crit);
+    border-radius:0 13px 13px 0;padding:15px 18px;margin-bottom:10px;box-shadow:var(--shadow)}
+  .qq h3{color:var(--crit)}
+  .qq p{margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.55}
+
+  footer{text-align:center;font-size:13px;color:var(--muted);line-height:1.6;padding:24px 0 0}
+  @media (max-width:560px){ .cl{grid-template-columns:1fr;gap:6px} }
+</style>
+
+<header>
+  <div class="hin">
+    <div class="stamp">Draft for review — not sent to agents</div>
+    <h1>From first contact to the annual review</h1>
+    <p>The whole life of a client, written down. Two signatures from the client,
+      one from the manager, and nobody left wondering where their policy is.</p>
+    <div class="toc">
+      <a href="#sale">The sale</a>
+      <a href="#insight">What the manager sees</a>
+      <a href="#tracker">The client&rsquo;s tracker</a>
+      <a href="#calendar">The calendar</a>
+      <a href="#safe">Safeguards</a>
+      <a href="#status">Status</a>
+      <a href="#decide">Decide</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section id="sale">
+    <p class="part">Part one</p>
+    <h2>The sale &mdash; two client signatures, one manager</h2>
+    <p class="lede">The client confirms and rates <em>before</em> the manager sees it, so the
+      manager is reviewing a conversation the client has already agreed happened. Then the
+      manager signs and adds what he can see that the advisor could not. Then the client
+      chooses.</p>
+
+    <ol class="flow">
+      <li class="st"><div class="num">1</div><div>
+        <span class="who">Advisor</span>
+        <h3>Sends the prospect their link</h3>
+        <p>From the board. First name in, tap Send on WhatsApp &mdash; the link and message
+          write themselves with the advisor&rsquo;s code and a token unique to that send.</p>
+        <div class="out"><div><b>Recorded</b><span>Sent · opened · watched · what they picked · booked</span></div></div>
+      </div></li>
+
+      <li class="st"><div class="num">2</div><div>
+        <span class="who">Advisor and client</span>
+        <h3>The appointment &mdash; written live, then one tap</h3>
+        <p>Typed while they talk, figures moving as the client answers. Every recommendation
+          carries its reason. One tap sends it &mdash; and nothing is printed or signed yet.</p>
+      </div></li>
+
+      <li class="st client"><div class="num">3</div><div>
+        <span class="who">Client &mdash; and the manager, copied</span>
+        <h3>The draft lands with both of them</h3>
+        <p>The client reads back <b>their own facts</b> &mdash; income, debts, dependants,
+          what was discussed &mdash; rates the interview, and certifies it is accurate. They
+          are not signing for the advice at this point. The email says plainly it is a
+          <b>draft with the direct manager for approval</b>.</p>
+        <p>Schedule 11 asks for exactly this: <em>&ldquo;An insurer shall endeavour to have the
+          consumer certify the accuracy of the information it has provided.&rdquo;</em> Almost
+          nobody does it. It also means the manager is reviewing a file the client has already
+          agreed is correct.</p>
+        <p>The manager receives the same draft at the same moment, marked <em>awaiting the
+          client&rsquo;s confirmation</em>. He can read it early; he cannot sign it yet.</p>
+
+        <div class="mail">
+          <div class="mh"><div class="mf">From <b>factfind360</b> &middot; to the client, copy to the direct manager</div>
+            <div class="ms">Please check your details &mdash; then with your manager for approval</div></div>
+          <div class="mb">
+            <div class="rec"><b>1 &middot; Family income</b>
+              <i>&ldquo;Ten years so they do not have to move.&rdquo;</i><u>$1,400,000</u></div>
+            <div class="rec"><b>2 &middot; The mortgage</b>
+              <i>&ldquo;Clears the house outright.&rdquo;</i><u>$912,000</u></div>
+            <div class="sigline"><b style="color:var(--ink)">Is this right, and how was the interview?</b>
+              <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+              Your income, your debts, who depends on you &mdash; and whether your advisor
+              explained everything clearly.</div>
+            <div class="acts">
+              <span class="p">Yes &mdash; that is correct</span>
+              <span class="s">Something is wrong</span>
+            </div>
+            <div class="sigline">This confirms your details, not your decision. Your
+              direct manager reviews and signs the advice before you are asked anything else.</div>
+          </div>
+        </div>
+      </div></li>
+
+      <li class="st client"><div class="num">4</div><div>
+        <span class="who">Client</span>
+        <h3>Certifies, rates, and signs the first time</h3>
+        <p>That signature says <em>this is my situation, accurately recorded</em>. It buys
+          nothing and accepts nothing. It is the foundation the suitability of everything
+          else rests on.</p>
+        <div class="out"><div><b>Copied</b><span>The advisor, the direct manager and the client &mdash; with the rating attached</span></div></div>
+      </div></li>
+
+      <li class="st mgr"><div class="num">5</div><div>
+        <span class="who">Direct manager</span>
+        <h3>Reviews, signs &mdash; and sends what he spotted to the advisor</h3>
+        <p>He does not log in. The email carries the case, the client&rsquo;s certification,
+          the star rating, and <b>the insight panel</b> &mdash; needs sitting in the fact find
+          that the advisor did not raise.</p>
+        <p>He approves the advice as it stands. Anything he spotted goes <b>to the advisor,
+          never to the client</b>: it lands on the advisor&rsquo;s board as work to go back
+          for. The client&rsquo;s email from him says one thing &mdash; approved, checked,
+          signed.</p>
+
+        <div class="callout" style="border-color:rgba(13,148,136,.4);background:rgba(13,148,136,.08)">
+          <h4 style="color:var(--teal)">Why he does not sell to the client</h4>
+          <p>The whole proposition is that a second person reads the file and is
+            <em>not selling you anything</em>. The first time a client sees that same person
+            increase the bill, the promise dies &mdash; for the branch, not one case. Worse,
+            advisors learn the manager tops up and start under-recommending. The needs still
+            get raised; the advisor raises them, in a conversation, where they belong.</p>
+        </div>
+
+        <div class="mail">
+          <div class="mh"><div class="mf">From <b>factfind360</b> &middot; to the direct manager</div>
+            <div class="ms">Certified by the client &mdash; your approval &middot; Devon Ramkissoon &middot; &#9733;&#9733;&#9733;&#9733;&#9733;</div></div>
+          <div class="mb">
+            <div class="rec"><b>Advisor recommended</b><i>Family income and the mortgage</i>
+              <u>$2,312,000</u></div>
+            <div class="rec up"><b>Not raised &mdash; 60% of a business, no buy-sell</b>
+              <i>&ldquo;If he dies tomorrow his family owns a share they cannot sell.&rdquo;</i>
+              <u>to the advisor</u></div>
+            <div class="rec up"><b>Not raised &mdash; group cover only</b>
+              <i>&ldquo;It ends the day the job does.&rdquo;</i><u>to the advisor</u></div>
+            <div class="acts">
+              <span class="p">Approve &amp; sign</span>
+              <span class="g">Approve + send these back</span>
+              <span class="s">Send back to fix</span>
+            </div>
+            <div class="sigline">Approving signs it in his name with the date and time, and
+              writes that signature back onto the fact find.</div>
+          </div>
+        </div>
+
+        <div class="callout">
+          <h4>Send back is not a rejection</h4>
+          <p>One line saying what is missing. The case reopens at the point it failed, the
+            advisor fixes it, and the manager is told it has come back. The client is not
+            told, and their confirmation stands.</p>
+        </div>
+      </div></li>
+
+      <li class="st client"><div class="num">6</div><div>
+        <span class="who">Client</span>
+        <h3>Gets a clean approval &mdash; and accepts or declines</h3>
+        <p>Approved, checked, signed, with the manager&rsquo;s name on it. Nothing has been
+          added and nothing is being sold. The client accepts the advice, takes part of it,
+          or declines &mdash; and their reason is recorded as carefully as the recommendation
+          was.</p>
+
+        <div class="mail">
+          <div class="mh"><div class="mf">From <b>factfind360</b> &middot; to the client</div>
+            <div class="ms">Approved and signed by your direct manager</div></div>
+          <div class="mb">
+            <div class="pick">
+              <label class="on"><i></i><div><b>Go ahead as recommended</b>
+                <em>$2,312,000 &mdash; what you and your advisor agreed</em></div></label>
+              <label><i></i><div><b>Take part of it</b>
+                <em>Tell us which, and why</em></div></label>
+              <label><i></i><div><b>Not right now</b>
+                <em>Your reason is recorded with the advice</em></div></label>
+            </div>
+            <div class="acts"><span class="p">Sign and confirm</span></div>
+            <div class="sigline">This second signature is the final one.</div>
+          </div>
+        </div>
+      </div></li>
+
+      <li class="st"><div class="num">7</div><div>
+        <span class="who">Advisor</span>
+        <h3>The advisor goes back for what the manager spotted</h3>
+        <p>Those needs are on his board with the reason attached. He books the follow-up and
+          works each one through properly &mdash; a conversation, not a bigger form. Anything
+          he sells re-enters at step 2 and gets the same two signatures and the same check.</p>
+      </div></li>
+
+      <li class="st"><div class="num">8</div><div>
+        <span class="who">Advisor and client</span>
+        <h3>Print, wet signature, submit</h3>
+        <p>Guardian&rsquo;s six-page form plus the RR Branch addendum. The paperwork comes
+          last, not first.</p>
+      </div></li>
+    </ol>
+  </section>
+
+  <div class="rule"></div>
+
+  <section id="insight">
+    <p class="part">Part two</p>
+    <h2>What the manager sees that the advisor did not</h2>
+    <p class="lede">Every rule below reads the fact find the advisor already filled in. None
+      of it needs new questions &mdash; it needs somebody to notice. That is the manager&rsquo;s
+      job, and this puts it in front of him in the approval email.</p>
+
+    <div class="ins">
+      <div class="in"><div class="tag">Ownership</div>
+        <h3>A business share with nothing behind it</h3>
+        <p>Business owner on the file, no buy-sell recorded. The family inherits a share
+          they cannot sell to a partner who cannot afford to buy it.</p></div>
+      <div class="in"><div class="tag">Timing</div>
+        <h3>Cover that ends with the job</h3>
+        <p>Group cover recorded and no personal policy. It ends the day the employment
+          does &mdash; usually the same day the income does.</p></div>
+      <div class="in"><div class="tag">Arithmetic</div>
+        <h3>Debt costed, the income behind it not</h3>
+        <p>The mortgage is covered but there is no income replacement. The house is safe
+          and the family cannot eat in it.</p></div>
+      <div class="in"><div class="tag">Age</div>
+        <h3>A child close to the education cliff</h3>
+        <p>A dependant within five years of university and nothing costed against them.
+          The cheapest year to start was last year.</p></div>
+      <div class="in"><div class="tag">Affordability</div>
+        <h3>Surplus well above the premium recommended</h3>
+        <p>Monthly surplus is more than three times what was recommended. Either the client
+          was under-advised, or the advisor did not ask about the rest.</p></div>
+      <div class="in"><div class="tag">Risk</div>
+        <h3>No critical illness on a sole earner</h3>
+        <p>One income, dependants, and only death cover. The likelier event is not covered.</p></div>
+      <div class="in"><div class="tag">Compliance</div>
+        <h3>A replacement not declared</h3>
+        <p>An in-force policy on the file and new cover recommended, with no disclosure
+          form. This one is not an opportunity &mdash; it is a stop.</p></div>
+    </div>
+  </section>
+
+  <div class="rule"></div>
+
+  <section id="tracker">
+    <p class="part">Part three</p>
+    <h2>The client&rsquo;s own tracker &mdash; six steps to delivery</h2>
+    <p class="lede">They log in and see exactly where their policy is. No phone call needed
+      to find out.</p>
+    <div class="track">
+      <div class="tk done"><div class="n">&#10003;</div><div class="l">Advice confirmed
+        <em>You signed the draft</em></div><div class="w">Day 0</div></div>
+      <div class="tk done"><div class="n">&#10003;</div><div class="l">Manager approved and signed
+        <em>Checked independently</em></div><div class="w">Day 1</div></div>
+      <div class="tk done"><div class="n">&#10003;</div><div class="l">You made your final choice
+        <em>Signed a second time</em></div><div class="w">Day 2</div></div>
+      <div class="tk now"><div class="n">4</div><div class="l">Application submitted
+        <em>With Guardian Life head office</em></div><div class="w">Now</div></div>
+      <div class="tk"><div class="n">5</div><div class="l">Policy dispatched
+        <em>Released from head office to the branch</em></div><div class="w">Next</div></div>
+      <div class="tk"><div class="n">6</div><div class="l">Policy delivered and explained
+        <em>Signed for, and walked through with you</em></div><div class="w">Final</div></div>
+    </div>
+  </section>
+
+  <div class="rule"></div>
+
+  <section id="calendar">
+    <p class="part">Part four</p>
+    <h2>The communication calendar</h2>
+    <p class="lede">Nobody is ever left wondering. Each line is either a clock or a field
+      in the branch portfolio &mdash; the ones marked in gold fire off data, not a timer.</p>
+
+    <div class="cal">
+      <div class="cl"><div class="when">Day 1</div><div class="what">Welcome and what happens next
+        <em>The six steps, who to call, and roughly how long each one takes. Carries the
+          complaints route &mdash; who to contact if they are ever unhappy, and how.</em></div></div>
+
+      <div class="cl"><div class="when">Every 10 days<br>from submission</div>
+        <div class="what">Where your application is
+        <em>Starts when the application goes in, not on day one &mdash; a status email while
+          somebody is still deciding is noise. Always names the current step. Stops the day
+          the policy is delivered.</em></div></div>
+
+      <div class="cl trig"><div class="when">On issue</div><div class="what">Your policy has been issued
+        <em>Fires when <span class="fld">Issue Date</span> appears against the policy in
+          <span class="fld">Branch Portfolio</span>. There is no dispatch field in the data,
+          and issue is the honest proxy &mdash; the policy exists and is on its way.</em></div></div>
+
+      <div class="cl trig"><div class="when">The 20-day clock</div>
+        <div class="what">Delivery chasers, against a legal deadline
+        <em>Not an arbitrary cadence. The branch&rsquo;s own document log has every agent
+          declare delivery within <b>20 days under Section 155(6) of the Insurance
+          (Amendment) Act 2020</b>. So: day 5 a reminder, day 10 firm, <b>day 15 copies the
+          branch manager</b>, day 18 flagged as heading for breach.</em></div></div>
+
+      <div class="cl trig"><div class="when">On delivery</div><div class="what">Did we explain it properly?
+        <em>Fires when <span class="fld">Document Delivered</span> and
+          <span class="fld">Date Signed</span> are filled in
+          <span class="fld">Log Book Digital</span>. Asks whether the contract was walked
+          through &mdash; the sections, the exclusions, how to claim, who to call. The
+          chasers stop here.</em></div></div>
+
+      <div class="cl"><div class="when">Two weeks before their birthday, every year</div>
+        <div class="what">Annual review
+        <em>Recaps every discussion and every recommendation since day one &mdash; including
+          the ones they declined and the reason they gave. Then asks what has changed:
+          income, dependants, debts, health, work.</em></div></div>
+    </div>
+
+    <div class="callout" style="margin-top:16px;border-color:rgba(13,148,136,.4);background:rgba(13,148,136,.08)">
+      <h4 style="color:var(--teal)">Where these actually live</h4>
+      <p><b>Branch Portfolio</b> is the policy master &mdash; <span class="fld">Number</span>,
+        <span class="fld">Client Number</span>, <span class="fld">Issue Date</span>,
+        <span class="fld">Status</span>, <span class="fld">Sum Assured</span>,
+        <span class="fld">email</span>. It has no delivery fields at all.
+        <b>Log Book Digital</b> is the delivery record &mdash; that is where
+        <span class="fld">Document Delivered</span> and <span class="fld">Date Signed</span>
+        sit. The two join on policy number. Two things needed: the script needs access to
+        the Log Book, and its policy number currently sits inside a free-text blob rather
+        than its own column.</p>
+    </div>
+
+    <div class="callout" style="display:none">
+      <h4>The annual review is where the addendum finally pays</h4>
+      <p>Every need that never made the form is sitting in that recap with the question
+        that opens it. A year later, with a changed circumstance beside it, it is not a
+        cross-sell &mdash; it is a follow-up.</p>
+    </div>
+  </section>
+
+  <div class="rule"></div>
+
+  <section id="safe">
+    <p class="part">Part five</p>
+    <h2>The safeguards</h2>
+    <p class="lede">Four things that stop this failing quietly.</p>
+
+    <div class="ins">
+      <div class="in" style="border-left-color:var(--crit)">
+        <div class="tag" style="background:rgba(192,57,43,.14);color:var(--crit)">Silence</div>
+        <h3>Nothing waits forever</h3>
+        <p>Client has not certified after <b>3 days</b> &mdash; reminder. After <b>7</b> the
+          advisor rings and records a verbal certification. After <b>14</b> the case parks
+          and shows on your dash. The manager gets the same treatment: chased at
+          <b>24 hours</b>, and at <b>48</b> it goes to the deputy.</p></div>
+
+      <div class="in" style="border-left-color:var(--crit)">
+        <div class="tag" style="background:rgba(192,57,43,.14);color:var(--crit)">Single point of failure</div>
+        <h3>A named deputy approver</h3>
+        <p>One gate and one manager means one holiday stops every case in the branch.
+          Somebody other than you needs the authority, named now rather than on the day it
+          matters.</p></div>
+
+      <div class="in" style="border-left-color:var(--crit)">
+        <div class="tag" style="background:rgba(192,57,43,.14);color:var(--crit)">Privacy</div>
+        <h3>Links, not figures</h3>
+        <p>A client&rsquo;s income, debts, dependants and shortfall do not go in an email
+          body copied to three people. The email carries the headline and a secure link;
+          the figures live on the page. Schedule 11 Part C is Privacy and Data Protection,
+          and this was the weakest point in the design.</p></div>
+
+      <div class="in" style="border-left-color:var(--crit)">
+        <div class="tag" style="background:rgba(192,57,43,.14);color:var(--crit)">Right of complaint</div>
+        <h3>Every client email says how to complain</h3>
+        <p>One line in the footer: who to contact, and that they can escalate. Market
+          conduct expects the client to be told. Not one of our emails currently says it.</p></div>
+    </div>
+  </section>
+
+  <div class="rule"></div>
+
+  <section id="status">
+    <p class="part">Part six</p>
+    <h2>What actually works today</h2>
+    <div class="stat">
+      <div class="sr"><span class="pill ok">Live</span><div class="d">The prospecting link, the films, the agent board
+        <em>/meet/ and /prospecting/</em></div></div>
+      <div class="sr"><span class="pill ok">Live</span><div class="d">The daily dash and the 5pm message
+        <em>/dash/ &mdash; on sample data</em></div></div>
+      <div class="sr"><span class="pill no">Not wired</span><div class="d">Tracking, bookings, advisor alerts
+        <em>RRB_Prospect.gs written, not deployed</em></div></div>
+      <div class="sr"><span class="pill part">Partly</span><div class="d">The fact find itself
+        <em>Live, but the fixed version &mdash; including the replacement check &mdash; is not deployed</em></div></div>
+      <div class="sr"><span class="pill part">Partly</span><div class="d">Manager approves and signs in the email
+        <em>Built; the two-signature order in this draft is new and not built yet</em></div></div>
+      <div class="sr"><span class="pill no">Not built</span><div class="d">The manager insight panel in the approval email
+        <em>The rules exist in the fact find; they have never been put in front of the manager</em></div></div>
+      <div class="sr"><span class="pill no">Not built</span><div class="d">The client tracker, the calendar, the annual review
+        <em>Needs the portfolio fields below</em></div></div>
+    </div>
+  </section>
+
+  <div class="rule"></div>
+
+  <section id="decide">
+    <p class="part">Part seven</p>
+    <h2>What I need from you</h2>
+
+    <div class="in" style="border-left-color:var(--good);margin-bottom:10px">
+      <div class="tag" style="background:rgba(14,138,95,.14);color:var(--good)">Settled</div>
+      <h3>1. Where the dates live &mdash; answered</h3>
+      <p>There is no dispatch or acknowledgment field in Branch Portfolio. Delivery is
+        tracked in <b>Log Book Digital</b> as <span class="fld">Document Delivered</span> and
+        <span class="fld">Date Signed</span>; <span class="fld">Issue Date</span> in the
+        Portfolio is the dispatch proxy. The clock is the statutory 20 days your own form
+        already commits agents to.</p></div>
+
+    <div class="in" style="border-left-color:var(--good);margin-bottom:10px">
+      <div class="tag" style="background:rgba(14,138,95,.14);color:var(--good)">Settled</div>
+      <h3>2. The manager does not sell to the client &mdash; agreed</h3>
+      <p>He raises the need to the advisor with the reason. The advisor books the follow-up
+        and works the product. The independent check stays independent.</p></div>
+
+    <div class="qq"><h3>3. Does the star rating go anywhere the advisor can see?</h3>
+      <p>It is on the case and on your dash. Should a low rating notify you at the time, and
+        does the advisor see his own average?</p></div>
+
+    <div class="qq"><h3>4. Who is sales support on the thread, and the real agent list</h3>
+      <p>One shared address or a named person per case. And I still need every agent&rsquo;s
+        name, code and email &mdash; nothing can go branch-wide without it.</p></div>
+  </section>
+
+  <footer>
+    <b>Ricky Rampersad Branch</b><br>
+    Draft &mdash; for review. Nothing on this page has been sent to agents.
+  </footer>
+</div>

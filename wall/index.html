@@ -1,0 +1,1198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>RRB · The Wall</title>
+<style>
+  /* One wall for the office screen: seven slides, fourteen seconds each.
+     People first — the day's blocks, who is behind, the ideas raised — then
+     the task operation from Salesforce: who carries what, by type, how long
+     it has aged, who the branch is waiting on, and what actually got done.
+     Staff and agents both watch this, so every slide answers "what needs
+     doing" rather than decorating a number. The general-insurance book has
+     its own deep dive at /board. */
+  :root{
+    --navy:#0D1838; --navy2:#16264F; --line:#24355F;
+    --gold:#C7A34A; --gold-soft:#E7D9AE; --ink:#F2EFE6; --muted:#8FA0C5;
+    --green:#3FA46A; --amber:#D99A2B; --grey:#4A5A7E; --red:#C75450; --teal:#4FA3A5;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--navy);color:var(--ink);
+       font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       display:flex;flex-direction:column;overflow:hidden}
+
+  header{display:flex;align-items:baseline;justify-content:space-between;
+         padding:2vh 2.6vw 1.1vh;border-bottom:1px solid var(--line);position:relative}
+  .brand{font-size:1.7vh;font-weight:800;letter-spacing:.35em;color:var(--gold-soft);text-transform:uppercase}
+  .brand b{color:#fff}
+  .brand .sub{letter-spacing:.6em;color:var(--muted);margin-top:.5vh;font-size:1.5vh}
+  #clock{font-size:5vh;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  #date{font-size:1.8vh;color:var(--muted);text-align:right}
+  #bar{position:absolute;left:0;bottom:-1px;height:3px;width:0%;background:var(--gold)}
+  #bar.run{transition-property:width;transition-timing-function:linear}
+
+  main{flex:1;position:relative;min-height:0}
+  .slide{position:absolute;inset:0;padding:2.4vh 2.8vw;opacity:0;
+         transition:opacity .45s ease;pointer-events:none;display:flex;flex-direction:column}
+  .slide.on{opacity:1;pointer-events:auto}
+  .kick{font-size:1.5vh;font-weight:800;letter-spacing:.25em;text-transform:uppercase;color:var(--gold)}
+  .slide h2{font-size:4vh;font-weight:800;letter-spacing:-.02em;margin:.6vh 0 .4vh}
+  .lede{font-size:1.9vh;color:var(--muted);max-width:64em;line-height:1.45}
+  .body{flex:1;margin-top:1.6vh;min-height:0}
+
+  /* slide 1 — people */
+  #people{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+          gap:1.5vh;align-content:start}
+  .card{background:var(--navy2);border:1px solid var(--line);border-radius:12px;
+        padding:1.1vh 1vw;display:flex;flex-direction:column;gap:.7vh}
+  .name{font-size:2.2vh;font-weight:800;line-height:1.1}
+  .role{font-size:1.35vh;color:var(--muted);margin-top:.15vh}
+  .meter{display:flex;align-items:center;justify-content:space-between}
+  .dots-b{display:flex;gap:.6vw}
+  .dot{width:1.9vh;height:1.9vh;border-radius:50%;border:.3vh solid var(--grey)}
+  .dot.on{background:var(--gold);border-color:var(--gold)}
+  .dot.due{border-color:var(--red);background:rgba(199,84,80,.18)}
+  .count{font-size:2.7vh;font-weight:800;font-variant-numeric:tabular-nums}
+  .count small{font-size:.5em;color:var(--muted);font-weight:700}
+  .c-full .count{color:var(--green)} .c-full .dot.on{background:var(--green);border-color:var(--green)}
+  .c-some .count{color:var(--amber)} .c-none .count{color:var(--grey)}
+  .late{font-size:1.5vh;font-weight:800;color:var(--red)}
+  /* the day as a grid: four blocks across, everybody down */
+  .dayline{margin:.6vh 0 0}
+  .dbar{height:.8vh;background:rgba(36,53,95,.7);border-radius:99px;overflow:hidden}
+  .dbar i{display:block;height:100%;background:var(--gold);border-radius:99px}
+  .dtxt{font-size:1.6vh;color:var(--muted);margin-top:.5vh}
+  .dtxt b{font-weight:800} .dtxt b.ok{color:var(--green)}
+  .dtxt b.part{color:var(--amber)} .dtxt b.none{color:var(--red)}
+  .prow{display:grid;grid-template-columns:15vw 1fr 4vw;gap:1vw;align-items:center;
+        margin-bottom:.75vh}
+  .pname{font-size:1.95vh;font-weight:800;line-height:1.1;white-space:nowrap;
+         overflow:hidden;text-overflow:ellipsis}
+  .pname span{display:block;font-size:1.25vh;font-weight:600;color:var(--muted)}
+  .pcells{display:grid;grid-template-columns:repeat(4,1fr);gap:.6vw}
+  .cell{border-radius:8px;padding:.5vh .5vw;text-align:center;border:1px solid var(--line);
+        background:rgba(22,38,79,.55)}
+  .cell .ct{font-size:1.2vh;color:var(--muted);white-space:nowrap;
+            overflow:hidden;text-overflow:ellipsis}
+  .cell .cm{font-size:2vh;font-weight:800;line-height:1.1}
+  .c-in{background:rgba(63,164,106,.18);border-color:var(--green)}
+  .c-in .cm{color:var(--green)}
+  .c-late{background:rgba(199,84,80,.18);border-color:var(--red)}
+  .c-late .cm{color:var(--red)}
+  .c-wait .cm{color:var(--grey)}
+  .pcount{font-size:2.2vh;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+  .pcount small{font-size:.55em;color:var(--muted)}
+  .pcount.ok{color:var(--green)} .pcount.part{color:var(--amber)} .pcount.none{color:var(--grey)}
+  /* the branch has a shape; the wall shows it rather than listing nine names */
+  .tier{margin-bottom:1.1vh}
+  .tierhead{display:flex;justify-content:space-between;align-items:baseline;
+            font-size:1.35vh;font-weight:800;letter-spacing:.22em;text-transform:uppercase;
+            color:var(--gold);border-bottom:1px solid var(--line);
+            padding-bottom:.45vh;margin-bottom:.8vh}
+  .tierhead span{letter-spacing:.04em;text-transform:none;color:var(--muted);font-weight:700}
+  .tiergrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:1vh}
+  tr.grouprow td{font-size:1.4vh;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
+                 color:var(--gold);padding-top:1.6vh;border-bottom:1px solid var(--line)}
+
+  .cols{display:grid;grid-template-columns:1.4fr 1fr;gap:2vh;height:100%;min-height:0}
+  .panel{background:var(--navy2);border:1px solid var(--line);border-radius:14px;
+         padding:2vh 1.4vw;overflow:hidden}
+  .panel h3{font-size:1.5vh;font-weight:800;letter-spacing:.22em;text-transform:uppercase;
+            color:var(--gold);margin-bottom:1.3vh}
+  .owe{border-left:.35vw solid var(--red);padding:.3vh 0 .3vh .9vw;margin-bottom:1.5vh}
+  .owe .t{font-size:2.5vh;font-weight:800}
+  .owe .w{font-size:1.7vh;color:var(--muted);margin-top:.3vh;font-weight:700}
+  .allin{color:var(--green);font-size:2.4vh;font-weight:800}
+  #cpBig{font-size:9vh;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+  #cpNote{font-size:1.9vh;color:var(--muted);margin-top:1vh;line-height:1.5}
+
+  .idea{border-left:.35vw solid var(--gold);padding:.3vh 0 .3vh .9vw;margin-bottom:1.7vh}
+  .idea .t{font-size:2.5vh;line-height:1.4}
+  .idea .w{font-size:1.6vh;color:var(--muted);margin-top:.4vh;font-weight:700}
+  .none{color:var(--muted);font-size:2.2vh}
+  td.dim{color:var(--muted)}
+  .chip.bad{background:rgba(199,84,80,.2);color:#E79490}
+  .chip.warn{background:rgba(217,154,43,.18);color:#E7C27B}
+  .chip.good{background:rgba(63,164,106,.16);color:#7FCF9F}
+  .chip{font-size:1.5vh;font-weight:800;padding:.3vh .7vw;border-radius:99px;white-space:nowrap}
+  table{width:100%;border-collapse:collapse;font-size:1.95vh}
+  th{font-size:1.35vh;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:left;padding:.7vh .6vw;border-bottom:1px solid var(--line)}
+  td{padding:.9vh .6vw;border-bottom:1px solid rgba(36,53,95,.55)}
+
+  /* task slides */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1.8vh}
+  .kpi{background:var(--navy2);border:1px solid var(--line);border-radius:14px;padding:2vh 1.3vw}
+  .kpi .k{font-size:1.5vh;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+  .kpi .v{font-size:5.6vh;font-weight:800;letter-spacing:-.02em;margin:.7vh 0 .3vh}
+  .kpi .d{font-size:1.7vh;color:var(--muted)}
+  .kpi.gold .v{color:var(--gold)} .kpi.red .v{color:var(--red)} .kpi.green .v{color:var(--green)}
+  .kpi.teal .v{color:var(--teal)}
+  .kpi{position:relative;overflow:hidden}
+  .kpi::after{content:"";position:absolute;left:0;top:0;bottom:0;width:.35vw;background:var(--line)}
+  .kpi.gold::after{background:var(--gold)} .kpi.red::after{background:var(--red)}
+  .kpi.green::after{background:var(--green)} .kpi.teal::after{background:var(--teal)}
+  .when{display:grid;grid-template-columns:auto 1fr;gap:1vw 1.2vw;align-items:baseline}
+  /* The Salesforce side of card 3, under the blocks: same question, other
+     system. Sits apart from the rows so it does not read as one of them. */
+  .foot{margin-top:1.6vh;padding-top:1.4vh;border-top:1px solid var(--line);
+        font-size:2.5vh;line-height:1.45;color:var(--muted)}
+  .foot b{color:var(--ink);font-weight:800}
+  .when .t{font-size:3.4vh;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .when .w{font-size:2.1vh;line-height:1.35}
+  .when .w b{color:#fff} .when .w span{color:var(--muted);display:block;font-size:1.7vh;margin-top:.3vh}
+  .rows .row{display:grid;grid-template-columns:1.15fr 2fr auto auto;gap:1vw;
+             align-items:center;margin-bottom:1.5vh;font-size:2vh}
+  .rows .nm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .track{height:2.6vh;background:rgba(36,53,95,.6);border-radius:99px;overflow:hidden;position:relative}
+  .track i{display:block;height:100%;border-radius:99px;position:absolute;left:0;top:0}
+  /* A segmented bar: each piece is one task type, sized by its share, so the
+     bar itself says what the pile is made of instead of only how big it is.
+     Every segment carries a title, so hovering names it on a laptop; the
+     legend under the card names them for the room, where nobody can hover. */
+  /* Taller, because the label goes inside it. A legend at the side makes the
+     eye travel; a word in the segment does not. Segments too narrow for text
+     stay blank and keep their title for hovering. */
+  .stack{height:3.4vh;background:rgba(36,53,95,.6);border-radius:99px;overflow:hidden;display:flex}
+  .stack span{height:100%;display:flex;align-items:center;justify-content:center;
+    min-width:2px;font-size:1.45vh;font-weight:700;color:#0D1838;
+    white-space:nowrap;overflow:hidden;letter-spacing:.01em}
+  .stack span.pale{color:#F7F5EF}
+  .stack span:hover{filter:brightness(1.2)}
+  .key{display:flex;flex-wrap:wrap;gap:.4vw 1.4vw;margin-top:1.2vh;font-size:1.5vh;color:var(--muted)}
+  .key b{display:inline-flex;align-items:center;gap:.4vw;font-weight:500}
+  .key i{width:1.1vh;height:1.1vh;border-radius:3px;display:inline-block}
+  .track .gold{background:var(--gold)} .track .teal{background:var(--teal)}
+  .track .red{background:var(--red)} .track .green{background:var(--green)}
+  .rows .val{font-weight:800;font-variant-numeric:tabular-nums;text-align:right}
+  .rows .sub{color:var(--muted);font-size:1.6vh;text-align:right;min-width:8em}
+
+  footer{border-top:1px solid var(--line);padding:1.1vh 2.6vw;display:flex;
+         justify-content:space-between;align-items:center;font-size:1.6vh;color:var(--muted)}
+  .dots-nav{display:flex;gap:.7vw}
+  .dots-nav i{width:1.5vh;height:1.5vh;border-radius:50%;background:var(--grey);
+              opacity:.5;cursor:pointer}
+  .dots-nav i.on{background:var(--gold);opacity:1}
+  #stale{color:var(--amber);font-weight:700;display:none;margin-right:1vw}
+  .ctl{background:var(--navy2);border:1px solid var(--line);color:var(--ink);
+       border-radius:99px;width:4.2vh;height:4.2vh;font-size:1.9vh;cursor:pointer;
+       display:flex;align-items:center;justify-content:center;line-height:1;padding:0}
+  .ctl:hover{border-color:var(--gold)}
+  .ctl.on{border-color:var(--gold);color:var(--gold)}
+
+  #gate{position:fixed;inset:0;background:var(--navy);display:flex;z-index:10;
+        align-items:center;justify-content:center;flex-direction:column;gap:2vh}
+  #gate h1{font-size:3vh;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-soft)}
+  #gate p{color:var(--muted);font-size:1.9vh;max-width:36em;text-align:center;line-height:1.5}
+  #gate input{font-size:2.4vh;padding:1.2vh 1vw;border-radius:10px;border:1px solid var(--line);
+              background:var(--navy2);color:var(--ink);width:16em;text-align:center}
+  #gate button{font-size:2.2vh;font-weight:800;padding:1.3vh 3vw;border-radius:10px;border:0;
+               background:var(--gold);color:var(--navy);cursor:pointer}
+  #gErr{color:#E27D7D;font-size:1.8vh;min-height:2.2vh}
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+  <div id="gate">
+    <h1>The Wall</h1>
+    <p>Sign in once as the Branch Manager and leave the screen open.
+       Seven slides, fourteen seconds each — the day's blocks, who is behind,
+       the ideas raised, then the Salesforce task operation: who carries what,
+       how long it has aged, and what got done.</p>
+    <input id="gUser" placeholder="Agent number" autocomplete="username">
+    <input id="gPass" placeholder="Password" type="password" autocomplete="current-password">
+    <div id="gErr"></div>
+    <button id="gGo">Open the wall</button>
+  </div>
+
+  <header class="hidden" id="hdr">
+    <div>
+      <div class="brand"><b>Ricky Rampersad Branch</b></div>
+      <div class="brand sub">The Wall</div>
+    </div>
+    <div style="text-align:right">
+      <div id="clock">–:–</div>
+      <div id="date"></div>
+    </div>
+    <div id="bar"></div>
+  </header>
+
+  <main class="hidden" id="mn"><div id="slides"></div></main>
+
+  <footer class="hidden" id="ftr">
+    <div>Submit each block as it ends · <span style="opacity:.75">←&nbsp;→ slides · space pause · F full screen · 🔊 for the voice</span></div>
+    <div style="display:flex;align-items:center;gap:1.2vw">
+      <button id="btnPlay" class="ctl" title="Pause / play (space)">⏸</button>
+      <button id="btnSound" class="ctl" title="Sound on / off">🔇</button>
+      <div class="dots-nav" id="dotsNav"></div>
+    </div>
+    <div><span id="stale">Connection lost — showing the last good picture</span>
+         <span id="asof"></span></div>
+  </footer>
+
+<script>
+// Same backend as the tracker. The wall only ever reads.
+const EXEC="https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66QVurol0rSQvIBTRBQpFT3LwvClCAOm6jiTW5tflDdg/exec";
+const TZ="America/Port_of_Spain";
+const CHECKPOINT_HOUR=15;
+const BLOCKS=["KPI1","KPI2","PM1","PM2"];
+const REFRESH_MS=5*60*1000;
+const DWELL=14000;
+
+// ---- the task operation, read from the branch's Salesforce org ---------
+// A dated snapshot: this file sits in a public repository, so it carries
+// staff first names and counts, never a client. When the tracker's own
+// Salesforce connection is switched on, the same figures flow live into the
+// app; the wall's snapshot is refreshed by rebuilding this block.
+const TASKS={
+  // Read from Salesforce on 4 September 2026, early afternoon. THIS IS A
+  // SNAPSHOT, NOT A FEED — the wall cannot reach Salesforce itself until the
+  // client credentials Run As user takes on the External Client App, so these
+  // are true at the moment they were taken and drift after it. Every figure
+  // below came out of one pass, so they agree with each other; mixing a fresh
+  // count with a stale one is how the 132-against-144 error happened.
+  asOf:"2026-09-04",
+
+  // Never a sum of days. Adding "days outstanding" across tasks produces a
+  // number with no meaning. Count, the age band, and the single oldest are the
+  // honest three.
+
+  // What was WORKED today, not only what closed. Servicing runs count here
+  // like any other work; where a day's figure is mostly one servicing run,
+  // the flow card on slide 12 says so in as many words rather than the
+  // number being quietly trimmed.
+  worked:[
+    {n:"Sasha",    worked:10, closed:4, moving:6, waiting:0, written:11,
+     types:{"Pendings":6,"Renewa/PDl/Bill":4}},
+    {n:"Pawan",    worked:8,  closed:5, moving:0, waiting:3, written:8,
+     types:{"Renewa/PDl/Bill":5,"Servicing":3}},
+    {n:"Kamla",    worked:6,  closed:0, moving:1, waiting:5, written:1,
+     types:{"Renewa/PDl/Bill":3,"Claims/ Mat":2,"Servicing":1}},
+    {n:"Azariah",  worked:5,  closed:1, moving:4, waiting:0, written:8,
+     types:{"Renewa/PDl/Bill":4,"Servicing":1}},
+    {n:"Elizabeth",worked:1,  closed:0, moving:0, waiting:1, written:0,
+     types:{"Servicing":1}},
+    {n:"Ricky",    worked:0,  closed:0, moving:0, waiting:0, written:0, types:{}}],
+
+  // Notes are counted two ways because they are two different facts: how many
+  // notes went on, and how many separate tasks now carry one. Thirty-eight
+  // notes across twenty-eight tasks is not thirty-eight tasks written up.
+  notes:{ posts:38, tasks:28,
+          by:[{n:"Azariah",posts:14,tasks:8},{n:"Sasha",posts:14,tasks:11},
+              {n:"Pawan",posts:9,tasks:8},{n:"Kamla",posts:1,tasks:1},
+              {n:"Elizabeth",posts:0,tasks:0},{n:"Ricky",posts:0,tasks:0}] },
+
+  // Task_Type__c — the branch's own field, not the standard Type, which is
+  // empty on almost everything and is not the one in use. 156 of 247 open
+  // tasks carry a type. Of the 91 that do not, 77 are the Branch Manager's,
+  // and they are inbound email that lands untyped.
+  untyped:{ total:91, of:247,
+            by:[{n:"Ricky",v:77},{n:"Sasha",v:8},{n:"Kamla",v:4},
+                {n:"Azariah",v:2},{n:"Elizabeth",v:0},{n:"Pawan",v:0}] },
+
+  updateReason:{ blank:1534, of:1555 },
+  today:{ closed:[{n:"Pawan",v:5},{n:"Sasha",v:4},{n:"Azariah",v:1},
+                  {n:"Elizabeth",v:0},{n:"Kamla",v:0},{n:"Ricky",v:0}] },
+  week: { closed:[{n:"Azariah",v:84},{n:"Sasha",v:60},{n:"Kamla",v:28},
+                  {n:"Elizabeth",v:17},{n:"Pawan",v:14},{n:"Ricky",v:0}] },
+  overdue:[
+    {who:"Ricky",  type:"",                   n:77},
+    {who:"Kamla",  type:"Renewa/PDl/Bill",    n:13},
+    {who:"Kamla",  type:"Opportunity",        n:11},
+    {who:"Kamla",  type:"Claims/ Mat",        n:9},
+    {who:"Kamla",  type:"Servicing",          n:8},
+    {who:"Kamla",  type:"Lic/Staffing/SA/HR", n:7},
+    {who:"Kamla",  type:"Pendings",           n:5},
+    {who:"Pawan",  type:"Renewa/PDl/Bill",    n:4},
+    {who:"Ricky",  type:"Servicing",          n:3},
+    {who:"Ricky",  type:"Lic/Staffing/SA/HR", n:2},
+    {who:"Pawan",  type:"RR Operations",      n:2},
+    {who:"Kamla",  type:"",                   n:2},
+    {who:"Ricky",  type:"Opportunity",        n:1},
+    {who:"Ricky",  type:"Renewa/PDl/Bill",    n:1}],
+  age:{
+    Ricky:{ over30:55, over60:11, oldestDays:91, oldestSince:"5 June" },
+    Kamla:{ over30:0,  over60:0,  oldestDays:3,  oldestSince:"1 September" },
+    Pawan:{ over30:0,  over60:0,  oldestDays:7,  oldestSince:"28 August" }},
+  aged:{ over60:11, over60Who:"Ricky", oldestDays:91, oldestSince:"5 June" },
+  byPerson:{
+    Ricky:{open:88,overdue:84},
+    Kamla:{open:78,overdue:55},
+    Sasha:{open:34,overdue:0},
+    Azariah:{open:24,overdue:0},
+    Pawan:{open:14,overdue:6},
+    Elizabeth:{open:9,overdue:0}},
+  waitingOn:[
+    {who:"Veena Kanhai-Gowdhan",   n:9, agent:"Kamla", days:2},
+    {who:"Ricky Rampersad",        n:4, agent:"Kamla", days:3},
+    {who:"Faustina Cabrera",       n:3, agent:"Kamla", days:3},
+    {who:"Genevieve Pierre",       n:3, agent:"Kamla", days:3},
+    {who:"Hema Ramdeo",            n:2, agent:"Kamla", days:3},
+    {who:"GLOC Actuarial",         n:2, agent:"Kamla", days:3},
+    {who:"Sandra Lalchan-Mahipat", n:2, agent:"Kamla", days:3},
+    {who:"Samlal Ramsamooj",       n:1, agent:"Pawan", days:7},
+    {who:"Robert Boodoo",          n:1, agent:"Pawan", days:3},
+    {who:"Dipchan Persad",         n:1, agent:"Kamla", days:3}],
+  inbound:{ total:77, waiting:74, notStarted:3, oldestDays:91, oldestSince:"5 June",
+            who:"Ricky" },
+  endOfDay:{
+    inHand:[
+      {who:"Kamla", what:"Xtra Foods — August and September group billing", state:"Due today"},
+      {who:"Kamla", what:"Confirm funds — Ralna Romany-Thomas", state:"Escalated"}],
+    waitingDueToday:8,
+    neverStarted:[
+      {who:"Ricky", what:"Investment discussions — Neal Balroop",              days:163},
+      {who:"Ricky", what:"A staffing matter",                                  days:109, masked:true},
+      {who:"Ricky", what:"Formal escalation — client complaint of 11 May",     days:99},
+      {who:"Ricky", what:"HR — agent signature discrepancies on scripts",      days:91},
+      {who:"Ricky", what:"Agents portal — two links, never opened",            days:66},
+      {who:"Kamla", what:"Pre-approval for health claim — S. Bhagwansingh",    days:3},
+      {who:"Kamla", what:"FV projections — Samuel pensions",                   days:3},
+      {who:"Kamla", what:"Proposal to present — Anand Ramroop",                days:2},
+      {who:"Kamla", what:"Premium due reminder — S. Roopnarine",               days:2}]
+  },
+  flow:[
+    {n:"Sasha",     in:361, out:372},
+    {n:"Azariah",   in:225, out:225},
+    {n:"Elizabeth", in:128, out:118},
+    {n:"Pawan",     in:49,  out:55},
+    {n:"Kamla",     in:35,  out:56},
+    {n:"Ricky",     in:31,  out:1, serviced:550, clients:550}]
+};
+
+// The ten Task_Type__c values, in the words the branch uses.
+const TYPE_LABEL={
+  "Pendings":"Pendings","Renewa/PDl/Bill":"Renewals / PD / Billing",
+  "Servicing":"Servicing","Claims/ Mat":"Claims / Maturities",
+  "Scripts/CB":"Scripts / Clawbacks","Opportunity":"Opportunity",
+  "Lic/Staffing/SA/HR":"Licensing / Staffing / HR","RR Operations":"RR Operations",
+  "Training":"Training","Innovation&Creativity":"Innovation","":"No type recorded"
+};
+
+const $=s=>document.querySelector(s);
+const store={get:()=>{try{return localStorage.getItem("kpiwall_token")||""}catch(e){return ""}},
+             set:t=>{try{localStorage.setItem("kpiwall_token",t)}catch(e){}}};
+async function call(body){
+  const r=await fetch(EXEC,{method:"POST",headers:{"Content-Type":"text/plain"},
+                            body:JSON.stringify(body)});
+  return r.json();
+}
+function trini(){
+  if(window.__now) return new Date(window.__now);   // test hook, unused in life
+  return new Date(new Date().toLocaleString("en-US",{timeZone:TZ}));
+}
+function todayISO(){ const d=trini();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+const txt=v=>String(v==null?"":v).trim();
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const dstr=iso=>new Date(iso+"T12:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+
+// A block counts when it was submitted, or carries real text; a prefilled
+// KPI name alone does not.
+function blockDone(row,c){
+  if(txt(row[c+"_At"])) return true;
+  return !!(txt(row[c+"_Actioned"])||txt(row[c+"_Resolved"])||txt(row[c+"_Open"]));
+}
+// '9 – 11am' / '3:30 – 5pm' → minutes from midnight when the block ends.
+function blockEndMin(sch,col){
+  const t=sch&&sch.blocks&&sch.blocks[col]&&sch.blocks[col].time;
+  if(!t) return null;
+  const m=String(t).split("–").pop().match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i);
+  if(!m) return null;
+  let h=+m[1]%12; if(/pm/i.test(m[3])) h+=12;
+  return h*60+(+(m[2]||0));
+}
+const GRACE_MIN=10;   // typing at two past the hour is not "missing"
+function blockState(row,sch,col,nowMin){
+  if(row&&blockDone(row,col)) return "on";
+  const end=blockEndMin(sch,col);
+  return (end!=null&&nowMin>end+GRACE_MIN)?"due":"off";
+}
+
+let roster=[], schedule={}, lastGood=null;
+// One colour per task type, used on every card that shows types. A pile that
+// is Renewals on card six has to be the same colour on card seven or the eye
+// learns nothing.
+const TYPE_COLOUR={
+  "":"#8E96A6", "Renewa/PDl/Bill":"#C7A34A", "Opportunity":"#5FC493",
+  "Lic/Staffing/SA/HR":"#7BA7E0", "Claims/ Mat":"#E0A93F", "Pendings":"#B98BD9",
+  "Servicing":"#59C2C9", "RR Operations":"#E07A5F", "Scripts/CB":"#A0A6B8",
+  "Training":"#D98BA0", "Query Pal":"#8FBF7F"};
+const typeColour=t=>TYPE_COLOUR[t||""]||"#8E96A6";
+
+// A bar segment that labels itself when there is room for the label. Under
+// about a tenth of the width there is no room, so it shows nothing and keeps
+// the title — the legend under the card is what covers those for the room.
+function seg(pct,colour,label,title,pale){
+  if(pct<=0) return "";
+  const room = pct >= 9 && String(label).length <= Math.floor(pct/2.6);
+  return '<span class="'+(pale?"pale":"")+'" title="'+esc(title)+'" style="width:'+pct+
+    "%;background:"+colour+'">'+(room?esc(label):"")+"</span>";
+}
+
+const LBL={KPI1:"KPI 1",KPI2:"KPI 2",PM1:"Afternoon 1",PM2:"Afternoon 2"};
+const ROLE={bm:"Branch Manager",abm:"Assistant Branch Manager",um:"Unit Manager",
+            bma:"Branch Manager's Assistant",pa:"Personal Assistant",ssa:"Sales Support"};
+
+function judge(rows){
+  const day=todayISO(), today={};
+  (rows||[]).forEach(r=>{ if(txt(r.Date).slice(0,10)===day) today[r.StaffId]=r; });
+  const nw=trini(), nowMin=nw.getHours()*60+nw.getMinutes();
+  return roster.map(p=>{
+    const r=today[p.staffId], sch=schedule[p.staffId];
+    const states=BLOCKS.map(c=>blockState(r,sch,c,nowMin));
+    return {p,r,states,done:states.filter(x=>x==="on").length,
+            late:BLOCKS.filter((c,i)=>states[i]==="due")};
+  }).sort((a,b)=>b.late.length-a.late.length||a.done-b.done||a.p.name.localeCompare(b.p.name));
+}
+
+// ---- the slides ---------------------------------------------------------
+const TIER_ORDER=["management","bma","pa","support"];
+const TIER_LABEL={management:"Management",bma:"Branch Manager's Assistant",
+                  pa:"Personal Assistant",support:"Sales Support"};
+function byTier(cards){
+  const g={};
+  cards.forEach(c=>{ const t=c.p.tier||"support"; (g[t]=g[t]||[]).push(c); });
+  return TIER_ORDER.filter(t=>g[t]&&g[t].length).map(t=>({tier:t,label:TIER_LABEL[t],rows:g[t]}));
+}
+
+function sBlocks(cards){
+  const nw=trini(), nowMin=nw.getHours()*60+nw.getMinutes();
+  // How far through the working day we are, so the wall reads as a day
+  // filling in rather than a scoreboard that was always going to be red.
+  const DAY_START=8*60, DAY_END=17*60;
+  const through=Math.max(0,Math.min(1,(nowMin-DAY_START)/(DAY_END-DAY_START)));
+  const dueCells=cards.reduce((n,c)=>n+c.states.filter(x=>x!=="off").length,0);
+  const inCells =cards.reduce((n,c)=>n+c.states.filter(x=>x==="on").length,0);
+  const pct=dueCells?Math.round(inCells/dueCells*100):100;
+
+  const groups=byTier(cards).map(g=>{
+    const rows=g.rows.map(({p,states,done,late})=>{
+      const cells=BLOCKS.map((col,i)=>{
+        const sch=schedule[p.staffId], b=(sch&&sch.blocks&&sch.blocks[col])||{};
+        const st=states[i];
+        const cls=st==="on"?"c-in":st==="due"?"c-late":"c-wait";
+        const mark=st==="on"?"✓":st==="due"?"!":"·";
+        return '<div class="cell '+cls+'"><div class="ct">'+esc(b.time||LBL[col])+'</div>'+
+               '<div class="cm">'+mark+"</div></div>";
+      }).join("");
+      return '<div class="prow"><div class="pname">'+esc(p.name)+
+        '<span>'+(ROLE[p.role]||"")+"</span></div>"+
+        '<div class="pcells">'+cells+"</div>"+
+        '<div class="pcount '+(done>=4?"ok":done?"part":"none")+'">'+done+"<small>/4</small></div></div>";
+    }).join("");
+    const inG=g.rows.filter(c=>c.done>0).length;
+    return '<div class="tier"><div class="tierhead">'+esc(g.label)+
+      '<span>'+inG+" of "+g.rows.length+" logging</span></div>"+rows+"</div>";
+  }).join("");
+
+  return '<div class="kick">1 · Today, block by block</div>'+
+    "<h2>The day, as it lands</h2>"+
+    '<div class="dayline"><div class="dbar"><i style="width:'+(through*100)+'%"></i></div>'+
+      '<div class="dtxt">'+nw.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})+
+      " · "+inCells+" of "+dueCells+" blocks due are in"+
+      (dueCells?' <b class="'+(pct>=80?"ok":pct>=50?"part":"none")+'">'+pct+"%</b>":"")+"</div></div>"+
+    '<div class="body" style="margin-top:.8vh">'+groups+"</div>";
+}
+
+function sWaitingToday(cards){
+  const groups=byTier(cards).map(g=>{
+    const owing=g.rows.filter(c=>c.late.length);
+    const body=owing.length
+      ? owing.map(c=>'<div class="owe"><div class="t">'+esc(c.p.name)+
+          '</div><div class="w">'+c.late.map(b=>LBL[b]).join(" · ")+"</div></div>").join("")
+      : '<div class="allin">All in</div>';
+    return '<div class="tier"><div class="tierhead">'+esc(g.label)+
+      '<span>'+owing.length+" owing</span></div>"+body+"</div>";
+  }).join("");
+  const nw=trini(); const cp=new Date(nw); cp.setHours(CHECKPOINT_HOUR,0,0,0);
+  let big,note;
+  if(nw<cp){ const m=Math.round((cp-nw)/60000);
+    big=(Math.floor(m/60)?Math.floor(m/60)+"h ":"")+(m%60)+"m";
+    note="until the 3pm checkpoint. What is in by then is the day's story.";
+  } else { big="Sent"; note="the checkpoint has gone. Finish the day before you leave."; }
+  const inAll=cards.filter(c=>c.done>0).length;
+  return '<div class="kick">2 · Accountability today</div>'+
+    "<h2>Who owes a block</h2>"+
+    '<p class="lede">Blocks whose time has passed with nothing submitted, by where each person sits.</p>'+
+    '<div class="body"><div class="cols">'+
+    '<div class="panel" style="overflow:auto">'+groups+"</div>"+
+    '<div style="display:flex;flex-direction:column;gap:2vh;min-height:0">'+
+    '<div class="panel"><h3>3pm checkpoint</h3><div id="cpBig">'+big+'</div><div id="cpNote">'+note+"</div></div>"+
+    '<div class="panel"><h3>Logging today</h3><div style="font-size:5vh;font-weight:800;color:'+
+      (inAll?"var(--green)":"var(--red)")+'">'+inAll+" of "+cards.length+"</div></div>"+
+    '<div class="panel" style="flex:1;overflow:auto"><h3>Value added &amp; ideas</h3>'+ideasHtml(cards)+"</div>"+
+    "</div></div></div>";
+}
+
+// The task types a person actually worked today: the KPI on each block they
+// submitted. A prefilled KPI on an unsubmitted block does not count.
+function loggedTypes(row){
+  const out=[];
+  BLOCKS.forEach(c=>{
+    const k=txt(row&&row[c]);
+    if(k&&blockDone(row,c)&&out.indexOf(k)<0) out.push(k);
+  });
+  return out;
+}
+function ideasHtml(cards){
+  const ideas=[];
+  cards.forEach(({r})=>{ if(!r) return;
+    ["ValueAdded","Innovation"].forEach(k=>{
+      const v=txt(r[k]);
+      if(v&&!/^none( today)?\.?$/i.test(v))
+        ideas.push({who:r.Name,text:v.length>110?v.slice(0,107)+"…":v});
+    });
+  });
+  return ideas.length
+    ? ideas.slice(0,4).map(i=>'<div class="idea"><div class="t">'+esc(i.text)+
+        '</div><div class="w">'+esc(i.who)+"</div></div>").join("")
+    : '<div class="none">Nothing logged yet. Even "none today" is an entry.</div>';
+}
+
+function sReconcile(cards){
+  const rows=byTier(cards).map(g=>{
+    const inner=g.rows.map(({p,r,done})=>{
+      const T=TASKS.byPerson[p.name.split(" ")[0]];
+      const logged=r?loggedTypes(r):[];
+      if(!logged.length){
+        return '<tr><td><b>'+esc(p.name.split(" ")[0])+'</b></td>'+
+          '<td class="dim">nothing logged yet</td><td class="dim">—</td>'+
+          '<td>'+(T?T.open+" open":"—")+"</td></tr>";
+      }
+      return logged.map((k,ix)=>{
+        const od=TASKS.overdue.filter(o=>o.who===p.name.split(" ")[0]&&o.type===k)[0];
+        return '<tr><td>'+(ix?"":'<b>'+esc(p.name.split(" ")[0])+'</b>')+'</td>'+
+          '<td>'+esc(TYPE_LABEL[k]||k)+'</td>'+
+          '<td><span class="chip good">'+done+'/4 in</span></td>'+
+          '<td>'+(od?'<span class="chip warn">'+od.n+" overdue · avg "+od.avg+'d</span>'
+                    :'<span class="chip good">none overdue</span>')+"</td></tr>";
+      }).join("");
+    }).join("");
+    return '<tr class="grouprow"><td colspan="4">'+esc(g.label)+"</td></tr>"+inner;
+  }).join("");
+  return '<div class="kick">4 · Logged today vs still open</div>'+
+    "<h2>Does the day match the book?</h2>"+
+    '<p class="lede">The KPI on a block is a Salesforce task type — so each line reads what somebody worked on today beside what is overdue in exactly that type.</p>'+
+    '<div class="body"><div class="panel" style="height:100%;overflow:auto"><table><thead><tr>'+
+    "<th>Who</th><th>Logged against</th><th>Blocks</th><th>Overdue in that type</th>"+
+    "</tr></thead><tbody>"+rows+"</tbody></table></div></div>";
+}
+
+function sToday(){
+  const K=TASKS.worked.filter(x=>x.worked), U=TASKS.updateReason;
+  const tot=K.reduce((s,x)=>s+x.worked,0);
+  const closed=K.reduce((s,x)=>s+x.closed,0);
+  const written=K.reduce((s,x)=>s+x.written,0);
+  const max=Math.max(...K.map(x=>x.worked),1);
+
+  const rows=K.map(x=>{
+    const w=v=>v/max*100;
+    // Three states in the bar, each labelling itself where it fits.
+    const bar=seg(w(x.closed),"var(--green)",x.closed+" closed",
+                  x.n+" — "+x.closed+" closed")+
+              seg(w(x.moving),"var(--gold)",x.moving+" moved",
+                  x.n+" — "+x.moving+" moved on, still with us")+
+              seg(w(x.waiting),"var(--teal)",x.waiting+" waiting",
+                  x.n+" — "+x.waiting+" chased, now waiting on a reply");
+    const types=Object.entries(x.types).sort((p,q)=>q[1]-p[1])
+      .map(([t,c])=>esc(TYPE_LABEL[t]||t||"no type")+" "+c).join(" · ");
+    // The part that cannot be faked by moving a task. "Written up" means an
+    // email or note on the task, or a Chatter post — whichever the person
+    // actually uses. Counting only one of them is how this card libelled two
+    // people who had written plenty, in the other place.
+    const extra = x.alsoChattered
+      ? ' <span style="color:var(--teal)">+'+x.alsoChattered+" more commented elsewhere</span>" : "";
+    const note = x.written
+      ? '<span style="color:var(--green)">'+x.written+" of "+x.worked+" written up</span>"+extra
+      : '<span style="color:var(--red)">nothing written on any of them</span>';
+    return '<div class="row"><span class="nm">'+esc(x.n)+'</span>'+
+      '<span class="stack">'+bar+"</span>"+
+      '<span class="val">'+x.worked+'</span><span class="sub">'+note+
+      (types?" · "+types:"")+"</span></div>";
+  }).join("");
+
+  return '<div class="kick">5 · Worked today</div>'+
+    "<h2>"+tot+" tasks moved · "+closed+" closed · <span style=\"color:var(--gold)\">"+
+      written+" say what was done</span></h2>"+
+    '<p class="lede">Green closed, gold moved on and still with us, teal chased and now waiting '+
+      'on somebody else &mdash; read from Salesforce&rsquo;s last-modified date. But a task can be '+
+      'moved in two seconds: change the status, push the due date into next week, and it counts as '+
+      'work. So the line under each bar is the one that matters &mdash; how many carried a note '+
+      'saying what actually happened, whether that was written on the task or posted to its feed.</p>'+
+    '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div>"+
+    '<div class="key" style="margin-top:2vh;font-size:1.6vh;line-height:1.5">'+
+      '<b style="color:var(--gold)">A rolled due date is not an actioned task &mdash; the branch&rsquo;s own standard.</b>'+
+      '<b>Pawan sets it: &ldquo;Spoke with Mr Russell he said to renew as is.&rdquo; Twelve words.</b>'+
+      '<b>'+U.blank+' of the last '+U.of+' tasks touched have no update reason at all.</b>'+
+    "</div></div></div>";
+}
+
+function sOverdue(){
+  const O=TASKS.overdue, AGE=TASKS.age;
+  const tot=O.reduce((s,x)=>s+x.n,0);
+  const by={};
+  O.forEach(x=>{ (by[x.who]=by[x.who]||[]).push(x); });
+  const people=Object.entries(by)
+    .map(([who,rows])=>({who,rows:rows.sort((p,q)=>q.n-p.n),n:rows.reduce((s,r)=>s+r.n,0)}))
+    .sort((p,q)=>q.n-p.n);
+  const max=Math.max(...people.map(p=>p.n),1);
+  const seen={};
+
+  const rows=people.map(p=>{
+    const A=AGE[p.who]||{};
+    // The bar is the pile, cut into the types that make it. Width is the
+    // share of the branch's whole overdue book, so two bars are comparable.
+    const segs=p.rows.map(r=>{
+      seen[r.type]=1;
+      const name=TYPE_LABEL[r.type]||r.type||"No type recorded";
+      return seg(r.n/max*100, typeColour(r.type), name+" "+r.n,
+                 name+" — "+r.n+" overdue, "+p.who);
+    }).join("");
+    // Age is what tells one pile from another. Say it on the row.
+    const age = A.over30
+      ? '<b style="color:var(--red)">'+A.over30+" over a month</b>"+
+        (A.over60?" · "+A.over60+" over two":"")+" · oldest "+A.oldestDays+"d"
+      : '<span style="color:var(--green)">none older than '+(A.oldestDays||1)+
+        " day"+((A.oldestDays||1)===1?"":"s")+"</span> — this week's work";
+    return '<div class="row"><span class="nm">'+esc(p.who)+'</span>'+
+      '<span class="stack">'+segs+"</span>"+
+      '<span class="val">'+p.n+'</span><span class="sub">'+age+"</span></div>";
+  }).join("");
+
+  const key=Object.keys(seen).sort().map(t=>
+    '<b><i style="background:'+typeColour(t)+'"></i>'+
+    esc(TYPE_LABEL[t]||t||"No type recorded")+"</b>").join("");
+
+  return '<div class="kick">6 · The overdue book</div>'+
+    "<h2>"+tot+" past their date — but only one of these piles is actually old</h2>"+
+    '<p class="lede">Each bar is one person&rsquo;s pile, cut into the task types that make it. '+
+      'The number beside it is the count; the line under it is the age, which is the part that '+
+      'decides what to do. Days are never added together.</p>'+
+    '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div>"+
+    '<div class="key">'+key+"</div></div></div>";
+}
+
+function sTypes(cards){
+  // The same book by what the work is rather than whose it is, with who holds
+  // each pile and how old the oldest holder's is. One row per type — a type is
+  // never listed twice.
+  const AGE=TASKS.age, agg={};
+  TASKS.overdue.forEach(o=>{
+    const k=o.type||"";
+    if(!agg[k]) agg[k]={n:0,people:{},logged:0};
+    agg[k].n+=o.n;
+    agg[k].people[o.who]=(agg[k].people[o.who]||0)+o.n;
+  });
+  // Two different questions, and the wall used to answer only the weaker one.
+  //
+  //   touched — Salesforce's last-modified date says somebody moved a task of
+  //             this type today. True whether or not anybody filled in the
+  //             tracker, so it cannot be gamed and cannot be forgotten.
+  //   logged  — somebody chose this type on a KPI block.
+  //
+  // A type touched but not logged means the work happened and the record does
+  // not show it. A type logged but not touched means the opposite. Both are
+  // worth seeing, and only the first is evidence.
+  const touched={};
+  TASKS.worked.forEach(w=>Object.keys(w.types).forEach(t=>{ touched[t]=(touched[t]||0)+w.types[t]; }));
+  cards.forEach(({r})=>{ if(!r) return;
+    loggedTypes(r).forEach(k=>{ if(agg[k]) agg[k].logged++; });
+  });
+  Object.keys(agg).forEach(k=>{ agg[k].touched=touched[k]||0; });
+  const T=Object.entries(agg).map(([k,v])=>({k,...v})).sort((a,b)=>b.n-a.n);
+  const max=Math.max(...T.map(x=>x.n),1);
+
+  const rows=T.map(x=>{
+    const holders=Object.entries(x.people).sort((p,q)=>q[1]-p[1]);
+    // Oldest across whoever holds this type — the pile is only as fresh as
+    // its worst holder.
+    const worst=holders.reduce((d,[n])=>Math.max(d,(AGE[n]||{}).oldestDays||0),0);
+    const who=holders.map(([n,c])=>esc(n)+" "+c).join(" · ");
+    const segs=holders.map(([n,c])=>
+      '<span title="'+esc(n)+" — "+c+" "+esc(TYPE_LABEL[x.k]||x.k||"untyped")+
+      ' overdue" style="width:'+(c/max*100)+'%;background:'+typeColour(x.k)+
+      ';opacity:'+(holders.length>1?0.55+0.45/holders.length:1)+'"></span>').join("");
+    return '<div class="row"><span class="nm" title="'+esc(TYPE_LABEL[x.k]||x.k||"No type recorded")+
+      '">'+esc(TYPE_LABEL[x.k]||x.k||"No type recorded")+'</span>'+
+      '<span class="stack">'+segs+"</span>"+
+      '<span class="val">'+x.n+'</span><span class="sub">'+who+" · oldest "+worst+"d · "+
+      (x.touched
+        ? '<span style="color:var(--green)">'+x.touched+" moved today</span>"+
+          (x.logged?"":' <span style="color:var(--gold)">· not logged on a block</span>')
+        : '<span style="color:var(--red)">nobody on it today</span>')+"</span></div>";
+  }).join("");
+  const idle=T.filter(x=>!x.touched).length;
+  return '<div class="kick">7 · Overdue by task type</div>'+
+    "<h2>"+(idle?idle+" types overdue with nobody on them today":"Every overdue type was worked today")+"</h2>"+
+    '<p class="lede">The same book grouped by what the work is, never a type twice. Each row names who holds it, '+
+      'how old the oldest holder&rsquo;s pile is, and whether anybody actually moved one today &mdash; '+
+      'read from Salesforce&rsquo;s last-modified date, not from whether somebody remembered to log it.</p>'+
+    '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div></div></div>";
+}
+
+function sWaitingOn(){
+  const W=TASKS.waitingOn, max=Math.max(...W.map(x=>x.n),1);
+  const tot=W.reduce((s,x)=>s+x.n,0);
+  const agents={};
+  W.forEach(x=>{ agents[x.agent]=(agents[x.agent]||0)+x.n; });
+  const rows=W.map(x=>{
+    const tone=x.days>5?"red":x.days>2?"gold":"teal";
+    return '<div class="row"><span class="nm" title="'+esc(x.who)+'">'+esc(x.who)+'</span>'+
+      '<span class="track" title="'+x.n+' waiting on '+esc(x.who)+', chased by '+esc(x.agent)+
+      '"><i class="'+tone+'" style="width:'+(x.n/max*100)+'%"></i></span>'+
+      '<span class="val">'+x.n+'</span><span class="sub">'+x.days+"d · ours is "+
+      esc(x.agent)+"</span></div>";
+  }).join("");
+  const byAgent=Object.entries(agents).sort((p,q)=>q[1]-p[1])
+    .map(([n,c])=>esc(n)+" "+c).join(" · ");
+  return '<div class="kick">8 · Who we are waiting on</div>'+
+    "<h2>"+W[0].n+" of them sit with one person</h2>"+
+    '<p class="lede">The client or the office we are waiting on, how many days it has sat, '+
+      'and which of ours is chasing it &mdash; because a name with nobody attached is not an action. '+
+      '<b>'+esc(byAgent)+"</b> across these "+tot+" tasks.</p>"+
+    '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div></div></div>";
+}
+
+function sInbound(){
+  const I=TASKS.inbound, B=TASKS.byPerson, AGE=TASKS.age;
+  const E=Object.entries(B).sort((p,q)=>q[1].open-p[1].open);
+  const max=Math.max(...E.map(([,v])=>v.open),1);
+  // Two segments in one bar: what is on time, and what is late. The eye reads
+  // the split without reading a number, which is the point of a wall.
+  const rows=E.map(([n,v])=>{
+    const A=AGE[n]||{}, onTime=v.open-v.overdue;
+    const pct=v.open?Math.round(v.overdue/v.open*100):0;
+    const seg=(w,c,t)=>w>0?'<span title="'+esc(t)+'" style="width:'+(w/max*100)+
+      '%;background:'+c+'"></span>':"";
+    const note = !v.overdue ? '<span style="color:var(--green)">nothing late</span>'
+      : A.over30 ? v.overdue+" late · "+A.over30+" of them over a month"
+      : v.overdue+" late · none older than "+(A.oldestDays||1)+"d";
+    return '<div class="row"><span class="nm">'+esc(n)+'</span>'+
+      '<span class="stack">'+
+        seg(onTime,"var(--teal)",n+" — "+onTime+" open and on time")+
+        seg(v.overdue, A.over30?"var(--red)":"var(--gold)",
+            n+" — "+v.overdue+" past their date")+
+      "</span>"+
+      '<span class="val">'+v.open+'</span><span class="sub">'+note+"</span></div>";
+  }).join("");
+  return '<div class="kick">9 · The open book, and what is late in it</div>'+
+    "<h2>A big book is not a bad book</h2>"+
+    '<p class="lede">Everything still open per person. Teal is on time, gold is late, '+
+      'red is late and over a month old. Three of the six carry nothing late at all &mdash; '+
+      'the size of a bar is workload, the colour in it is the problem.</p>'+
+    '<div class="body"><div class="cols">'+
+    '<div class="panel"><h3>Open now · on time against late</h3><div class="rows">'+rows+"</div>"+
+    '<div class="key"><b><i style="background:var(--teal)"></i>on time</b>'+
+      '<b><i style="background:var(--gold)"></i>late, under a month</b>'+
+      '<b><i style="background:var(--red)"></i>late, over a month</b></div></div>'+
+    '<div class="panel"><h3>The pile that was assumed to be birthdays</h3>'+
+    '<div style="font-size:5.2vh;font-weight:800;color:var(--gold)">'+I.total+"</div>"+
+    '<div style="font-size:1.9vh;color:var(--muted);line-height:1.5;margin-top:1vh">'+
+      "untyped tasks logged to "+esc(I.who)+" &mdash; <b style=\"color:#fff\">"+I.waiting+
+      "</b> of them waiting on somebody else&rsquo;s reply, "+I.notStarted+
+      " not started, the oldest sitting since "+esc(I.oldestSince)+" &mdash; <b style=\"color:#fff\">"+
+      I.oldestDays+" days</b>.<br><br>These are inbound emails from agents and clients. "+
+      "They are <b style=\"color:#fff\">not</b> the birthday mailer: that is typed Servicing, "+
+      "it closes its own work, and it never enters this book at all.</div>"+
+    "</div></div></div>";
+}
+
+// The tracker chases the day on its own. Staff should know exactly what
+// arrives and when, so nothing feels like being singled out.
+function sRhythm(){
+  const rows=[
+    ["8am","<b>Your blocks are waiting</b><span>You land on your own day — the KPI already set from the schedule</span>"],
+    ["12pm","<b>Midday nudge</b><span>Nothing logged yet? An email, only to you. Never to the branch</span>"],
+    ["3pm","<b>Finish the day</b><span>Blocks still open? A second reminder, while there is a working hour left</span>"],
+    ["3pm","<b>Branch checkpoint</b><span>Who is in, who is missing, what is blocked — to the Branch Manager</span>"],
+    ["each&nbsp;block","<b>Your receipt</b><span>Every submission emailed back to you. Keep them — they are your file</span>"],
+    ["Fri&nbsp;5pm","<b>The week</b><span>Where the week actually went, person by person</span>"]
+  ].map(r=>'<div class="t">'+r[0]+'</div><div class="w">'+r[1]+"</div>").join("");
+  return '<div class="kick">10 · How the day is chased</div>'+
+    "<h2>Nobody has to remember</h2>"+
+    '<p class="lede">Six things happen on their own. None of them is a manager walking over to your desk.</p>'+
+    '<div class="body"><div class="panel" style="height:100%"><div class="when">'+rows+"</div></div></div>";
+}
+
+// ---- does the entry actually say anything? ------------------------------
+// The same rule KPI.gs applies when it writes the sheet, and the tracker
+// applies when it asks. It is here a third time on purpose: the wall reads
+// the raw text straight from the log, so it can show the branch how the day
+// is being written without waiting on the Apps Script side to be redeployed.
+// tests/test-substance.js runs one corpus through all three and fails if any
+// of them disagrees, which is the only thing keeping three copies honest.
+const FILLER_RE=/^(?:\W|none|n\/?a|nil|nothing|no|yes|ok|okay|done|complete[d]?|finish(?:ed)?|task[s]?|work(?:ing|ed)?|action(?:ed|s)?|remaining|outstanding|same|as\s+above|see\s+above|ditto|all|various|misc(?:ellaneous)?|general|usual|normal|routine|etc|and|the|my|daily)*$/i;
+const COUNT_RE=/\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|dozen)\b/i;
+const COUNT_STRIP=/\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|dozen)\b/gi;
+const VERB_RE=/\b(?:sent|send|sending|process(?:ed|ing)?|chas(?:ed|ing)|chase|resolv(?:ed|ing)|escalat(?:ed|ing)|submit(?:ted|ting)?|upload(?:ed)?|correct(?:ed)?|amend(?:ed)?|follow(?:ed)?[\s-]?up|call(?:ed)?|email(?:ed)?|reconcil(?:ed|ing|iation)?|issu(?:ed)?|prepar(?:ed)?|review(?:ed)?|updat(?:ed)?|clos(?:ed)?|logg?(?:ed)?|fil(?:ed|ing)|scan(?:ned)?|print(?:ed)?|deliver(?:ed)?|collect(?:ed)?|verif(?:ied|y)|approv(?:ed)?|declin(?:ed)?|quot(?:ed)?|renew(?:ed)?|transmit(?:ted)?|receiv(?:ed)?|request(?:ed)?|book(?:ed)?|arrang(?:ed)?|confirm(?:ed)?|check(?:ed)?|contact(?:ed)?|advis(?:ed)?|refer(?:red)?|rais(?:ed)?|cancel(?:led|ed)?|reinstat(?:ed)?|surrender(?:ed)?|paid|pay|banked|deposit(?:ed)?)\b/i;
+const REF_RE=/\b(?:[A-Z]{2,}[-\/]?\d{2,}|\d{5,}|#\s*\d+)\b/;
+const wordsOf=t=>String(t||"").trim().split(/\s+/).filter(w=>/[a-z0-9]/i.test(w));
+function hasProperName(t){
+  const w=String(t||"").split(/\s+/);
+  for(let i=1;i<w.length;i++) if(/^[A-Z][a-z]{2,}/.test(w[i])) return true;
+  return /^[A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}/.test(String(t||"").trim());
+}
+function readSubstance(d,others){
+  d=d||{};
+  const both=(String(d.actioned||"").trim()+" "+String(d.resolved||"").trim()).trim();
+  const words=wordsOf(both);
+  if(!words.length) return {level:"thin",reason:"nothing written"};
+  if(FILLER_RE.test(both)) return {level:"thin",reason:"no answer, only filler"};
+  if(words.length<3) return {level:"thin",reason:"too short to say anything"};
+  if(FILLER_RE.test(both.replace(COUNT_STRIP," "))) return {level:"thin",reason:"a count, but nothing named"};
+  const hasCount=COUNT_RE.test(both),hasRef=REF_RE.test(both),
+        hasVerb=VERB_RE.test(both),hasName=hasProperName(both);
+  if(hasName&&!hasCount&&!hasRef&&!hasVerb) return {level:"thin",reason:"a name, but nothing done with it"};
+  if(!hasCount&&!hasRef&&!hasName) return {level:"thin",reason:"no count or case named"};
+  const norm=both.toLowerCase().replace(/[^a-z0-9 ]/g,"").replace(/\s+/g," ").trim();
+  if(norm.length>8&&others) for(const o of others){
+    const n=String(o||"").toLowerCase().replace(/[^a-z0-9 ]/g,"").replace(/\s+/g," ").trim();
+    if(n&&n===norm) return {level:"thin",reason:"same words as another block today"};
+  }
+  return {level:"full",reason:""};
+}
+function readStandards(d){
+  const out=[]; d=d||{};
+  const owner=String(d.blockerOwner||"").trim();
+  if(owner&&!/\d/.test(owner)) out.push("no date last chased for "+owner);
+  if(COUNT_RE.test(String(d.openOwned||"").trim())&&!String(d.blocker||"").trim())
+    out.push("work carried forward with no blocker named");
+  return out;
+}
+
+// Every block written today, read. The sheet's own reading wins where the
+// Apps Script side has recorded one; otherwise the text is read here.
+function substanceToday(cards){
+  const people=[], counts={full:0,thin:0};
+  cards.forEach(c=>{
+    const row=c.r;
+    if(!row) return;
+    const mine=[], texts=[];
+    BLOCKS.forEach(col=>{
+      if(!blockDone(row,col)) return;
+      texts.push(txt(row[col+"_Actioned"])+" "+txt(row[col+"_Resolved"]));
+    });
+    BLOCKS.forEach(col=>{
+      if(!blockDone(row,col)) return;
+      const a=txt(row[col+"_Actioned"]), rr=txt(row[col+"_Resolved"]);
+      const recorded=txt(row[col+"_Quality"]);
+      let level,reason;
+      if(recorded){ level=recorded.indexOf("thin")===0?"thin":"full";
+                    reason=recorded.replace(/^thin:\s*/,""); }
+      else { const g=readSubstance({actioned:a,resolved:rr},
+               texts.filter(t=>t!==(a+" "+rr))); level=g.level; reason=g.reason; }
+      counts[level]++;
+      if(level==="thin") mine.push({block:LBL[col],reason:reason});
+      readStandards({blockerOwner:txt(row[col+"_Blocker"]).split("·")[1]||"",
+                     openOwned:txt(row[col+"_Open"]),
+                     blocker:txt(row[col+"_Blocker"])})
+        .forEach(b=>mine.push({block:LBL[col],reason:b}));
+    });
+    if(mine.length) people.push({name:c.p.name,tier:c.p.tier,items:mine});
+  });
+  return {people:people,counts:counts};
+}
+
+function sSubstance(cards){
+  const S=substanceToday(cards);
+  const written=S.counts.full+S.counts.thin;
+  const pct=written?Math.round(S.counts.full/written*100):0;
+
+  // Name on the first line of a person's run, blank on the rest, so the eye
+  // groups them the way it does on every other card here.
+  let rows="";
+  S.people.forEach(p=>{
+    p.items.forEach((it,i)=>{
+      rows+='<div class="t">'+(i?"":esc(p.name))+"</div>"+
+            '<div class="w"><b>'+esc(it.block)+"</b><span>"+esc(it.reason)+"</span></div>";
+    });
+  });
+
+  const body = !written
+    ? '<div class="when"><div class="t">—</div><div class="w"><b>Nothing written yet today</b>'+
+      "<span>The first block goes in at ten.</span></div></div>"
+    : rows
+      ? '<div class="when">'+rows+"</div>"
+      : '<div class="when"><div class="t">'+S.counts.full+"</div>"+
+        '<div class="w"><b>Every block today says how many, or which one</b>'+
+        "<span>Nothing to raise.</span></div></div>";
+
+  // The Salesforce side of the same question. A block says what you did; the
+  // task record is where anyone else can see it. Chatter counts the same as a
+  // description — reading descriptions alone once put a false line about three
+  // people on this wall.
+  const N=TASKS.notes, U=TASKS.untyped;
+
+  // Naming somebody costs them something, so the bar is a day's worth of work
+  // with nothing written on any of it — not a quiet morning. Touching one task
+  // and not writing on it yet is not a finding, and putting that name on a
+  // screen in the office would be the same mistake as reading descriptions
+  // without Chatter.
+  const NAME_AT=3;
+  const workedBy={}; (TASKS.worked||[]).forEach(w=>workedBy[w.n]=w.worked||0);
+  const silent=N?(N.by||[]).filter(x=>!x.tasks&&(workedBy[x.n]||0)>=NAME_AT)
+                           .map(x=>x.n):[];
+  const foot = !N ? "" :
+    '<div class="foot">'+
+      "<b>"+N.tasks+" task"+(N.tasks===1?"":"s")+" carry a note today</b>, from "+
+      N.posts+" written"+
+      (silent.length?" &middot; nothing written by "+silent.map(esc).join(", "):"")+
+      (U?" &middot; "+U.total+" of "+U.of+" open tasks still carry no type":"")+
+    "</div>";
+
+  return '<div class="kick">3 · How the day is being written</div>'+
+    "<h2>"+S.counts.full+" of "+written+" entries name a count or a case</h2>"+
+    '<p class="lede">A block is written when it says how many, or which one. '+
+      '&ldquo;Actioned remaining tasks&rdquo; is a box filled in, not a day recorded'+
+      (written?" — "+pct+"% of today's entries would stand up at a review":"")+
+      ". A task moved with nothing written on it is not a record of work either."+
+      "</p>"+
+    '<div class="body"><div class="panel" style="overflow:auto;height:100%">'+
+      body+foot+"</div></div>";
+}
+
+function sBeforeYouLeave(){
+  const E=TASKS.endOfDay;
+  const hand=E.inHand.map(x=>
+    '<div class="row"><span class="nm">'+esc(x.who)+'</span>'+
+    '<span class="w" style="grid-column:span 2">'+esc(x.what)+"</span>"+
+    '<span class="sub" style="color:'+(x.state==="Escalated"?"var(--red)":"var(--gold)")+
+    '">'+esc(x.state)+"</span></div>").join("");
+
+  // Oldest first. A thing never begun in March is not the same problem as one
+  // never begun on Tuesday, and the number of days is the whole difference.
+  const never=E.neverStarted.slice().sort((a,b)=>b.days-a.days).map(x=>{
+    const tone=x.days>60?"var(--red)":x.days>7?"var(--gold)":"var(--teal)";
+    return '<div class="row"><span class="nm">'+esc(x.who)+'</span>'+
+      '<span class="w" style="grid-column:span 2">'+esc(x.what)+
+      (x.masked?' <span style="color:var(--muted);font-size:1.5vh">· named privately</span>':"")+"</span>"+
+      '<span class="sub" style="color:'+tone+';font-weight:700">'+x.days+"d</span></div>";
+  }).join("");
+
+  const old=E.neverStarted.filter(x=>x.days>60).length;
+  return '<div class="kick">11 · Before you leave</div>'+
+    "<h2>"+E.inHand.length+" to finish today · "+old+" that were never started at all</h2>"+
+    '<p class="lede">Left is due today with nobody else holding it up. Right has sat at '+
+      '<b>Not Started</b> since the day it was created &mdash; not late, never begun, which is the '+
+      'one an overdue count cannot tell you. '+E.waitingDueToday+
+      ' more are due today but parked with somebody else: chase them or let them run.</p>'+
+    '<div class="body"><div class="cols">'+
+    '<div class="panel"><h3>In our hands, today</h3><div class="rows">'+hand+"</div></div>"+
+    '<div class="panel" style="overflow:auto"><h3>Never started &mdash; oldest first</h3>'+
+      '<div class="rows">'+never+"</div></div>"+
+    "</div></div>";
+}
+
+function sFlow(){
+  const F=TASKS.flow;
+  const max=Math.max(...F.map(x=>Math.max(x.in,x.out)),1);
+  const keeping=F.filter(x=>x.out>=x.in).length;
+
+  const rows=F.map(x=>{
+    // The book grows when more arrives than leaves. in minus out, not the
+    // other way round — the first version had this backwards and told the
+    // room Sasha's book had grown on a month she closed eleven more than
+    // came in.
+    const net=x.in-x.out;
+    // Two bars, in over out, so the eye reads the gap rather than a number.
+    const bar=(v,c,label,title)=>
+      '<div class="stack" style="height:1.5vh;margin-bottom:.3vh">'+
+      seg(v/max*100,c,label,title)+"</div>";
+    return '<div class="row"><span class="nm">'+esc(x.n)+'</span>'+
+      "<span>"+
+        bar(x.in,"var(--muted)",  x.in+" in",  x.n+" — "+x.in+" arrived")+
+        bar(x.out,net<=0?"var(--green)":"var(--gold)", x.out+" out",
+            x.n+" — "+x.out+" closed")+
+      "</span>"+
+      '<span class="val" style="color:'+(net>0?"var(--red)":"var(--green)")+'">'+
+        (net>0?"+":"")+net+"</span>"+
+      '<span class="sub">'+(net>0?"the book grew":net<0?"the book shrank":"level")+
+      (x.serviced?' · <span style="color:var(--gold)">plus '+(x.clients||x.serviced)+
+        " client"+((x.clients||x.serviced)===1?"":"s")+" serviced</span>":"")+"</span></div>";
+  }).join("");
+
+  return '<div class="kick">12 · Are we keeping up?</div>'+
+    "<h2>"+keeping+" of "+F.length+" closed at least as much as arrived</h2>"+
+    '<p class="lede">Thirty days, in against out. Grey is what arrived, green or gold is what was '+
+      'closed, and the number is the difference. This is the card that says how to read the others: '+
+      'the overdue book is <b>not</b> a volume problem. Nobody here is drowning. What is wrong is a '+
+      'small number of specific old items that are simply sitting, and those are named on card 11.</p>'+
+    '<div class="body"><div class="panel" style="overflow:auto;height:100%"><div class="rows">'+rows+"</div>"+
+    '<div class="key" style="margin-top:1.6vh;font-size:1.6vh">'+
+      '<b>Client servicing runs are counted separately, never netted away.</b> Case work is '+
+      'opened and carried to a close one at a time; a servicing run reaches hundreds of '+
+      'clients at once, on an automation the Branch Manager triggers. Both are the '+
+      'branch&rsquo;s work &mdash; they are simply not the same measurement, so they do '+
+      'not share a bar.</div>'+
+    "</div></div>";
+}
+
+// ---- deck --------------------------------------------------------------
+let cur=0, timer=null, paused=false;
+function render(rows){
+  const cards=judge(rows);
+  const slides=[sBlocks(cards),sWaitingToday(cards),sSubstance(cards),sReconcile(cards),sToday(),
+                sOverdue(),sTypes(cards),sWaitingOn(),sInbound(),sRhythm(),sBeforeYouLeave(),
+                sFlow()];
+  $("#slides").innerHTML=slides.map(h=>'<section class="slide">'+h+"</section>").join("");
+  const nav=$("#dotsNav"); nav.innerHTML="";
+  slides.forEach((_,i)=>{const d=document.createElement("i");
+    d.onclick=()=>go(i,true); nav.appendChild(d);});
+  const keep=spokenFor;
+  go(Math.min(cur,slides.length-1),false);
+  spokenFor=keep;
+  $("#asof").textContent="Updated "+trini().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+  $("#stale").style.display="none";
+}
+function go(i){
+  const slides=document.querySelectorAll(".slide"), dots=document.querySelectorAll("#dotsNav i");
+  if(!slides.length) return;
+  cur=(i+slides.length)%slides.length;
+  slides.forEach((s,j)=>s.classList.toggle("on",j===cur));
+  dots.forEach((d,j)=>d.classList.toggle("on",j===cur));
+  speak(cur);
+  arm();
+}
+function arm(){
+  clearTimeout(timer);
+  const bar=$("#bar");
+  bar.classList.remove("run"); bar.style.width="0%";
+  if(paused) return;
+  void bar.offsetWidth;
+  bar.classList.add("run");
+  bar.style.transitionDuration=DWELL+"ms"; bar.style.width="100%";
+  timer=setTimeout(()=>go(cur+1),DWELL);
+}
+document.addEventListener("keydown",e=>{
+  if(!$("#gate").classList.contains("hidden")) return;
+  if(e.key==="ArrowRight") go(cur+1);
+  else if(e.key==="ArrowLeft") go(cur-1);
+  else if(e.key===" "){e.preventDefault();paused=!paused;syncPlayBtn();applyPause();arm();}
+  else if(e.key==="f"||e.key==="F"){
+    if(document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen();
+  }
+});
+// a TV with only a mouse: click the right half to advance, left to go back
+$("#mn").addEventListener("click",e=>{
+  if(e.target.closest("a,button,input")) return;
+  go(cur+(e.clientX>innerWidth/2?1:-1));
+});
+
+// ---- voice and bed ------------------------------------------------------
+// Andrew narrates what each slide is for; the branch theme sits underneath.
+// Both are off until somebody asks, because a screen that starts talking on
+// its own in an open office is a screen people unplug. The sign-in click is
+// the browser gesture that lets audio play at all, so the toggle works from
+// the first press rather than failing silently.
+let sound=false, bed=null, voice=null, spokenFor=-1;
+function initAudio(){
+  if(bed) return;
+  bed=new Audio("/rr-branch-theme.mp3");
+  bed.loop=true; bed.volume=0.10;
+  voice=new Audio(); voice.volume=1.0;
+  // duck the bed while Andrew is speaking, lift it after
+  voice.addEventListener("play",()=>{ if(bed) bed.volume=0.045; });
+  ["ended","pause","error"].forEach(e=>voice.addEventListener(e,()=>{ if(bed) bed.volume=0.10; }));
+}
+function speak(i){
+  if(!sound||!voice) return;
+  if(spokenFor===i) return;          // do not repeat on a data refresh
+  spokenFor=i;
+  voice.src="/wall/audio/s"+(i+1)+".mp3";
+  voice.play().catch(()=>{});
+}
+function setSound(on){
+  sound=on; initAudio();
+  const b=$("#btnSound");
+  b.textContent=on?"🔊":"🔇"; b.classList.toggle("on",on);
+  if(on&&!paused){ bed.play().catch(()=>{}); spokenFor=-1; speak(cur); }
+  else { bed.pause(); voice.pause(); }
+}
+$("#btnSound").onclick=()=>setSound(!sound);
+$("#btnPlay").onclick=()=>{ paused=!paused; syncPlayBtn(); applyPause(); arm(); };
+
+// Pausing the deck pauses everything it is doing. A wall that freezes the
+// slides but keeps the music playing has not paused — it has half stopped,
+// which is worse than either.
+function applyPause(){
+  if(!sound||!bed) return;
+  if(paused){ bed.pause(); if(voice) voice.pause(); }
+  else { bed.play().catch(()=>{}); if(voice&&voice.currentTime>0&&!voice.ended) voice.play().catch(()=>{}); }
+}
+function syncPlayBtn(){
+  const b=$("#btnPlay");
+  b.textContent=paused?"▶":"⏸"; b.classList.toggle("on",paused);
+}
+
+function tick(){
+  const n=trini();
+  $("#clock").textContent=n.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+  $("#date").textContent=n.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
+}
+// TASKS above is the fallback, not the source. It is whatever was true when
+// somebody last wrote it down, and it is here so a slide is never blank when
+// Salesforce is slow. The live figures come from the script, which reads the
+// org directly and caches for ten minutes.
+//
+// Anything the live answer does not carry keeps its old value rather than
+// disappearing — a card that half-vanishes is worse than one that says it is
+// showing yesterday.
+function adoptLive(t){
+  if(!t) return false;
+  ["overdue","age","byPerson","worked","flow","waitingOn","endOfDay","inbound","asOf"]
+    .forEach(k=>{ if(t[k]!=null) TASKS[k]=t[k]; });
+  TASKS.live=true;
+  return true;
+}
+
+async function refresh(){
+  try{
+    const res=await call({action:"rows",token:store.get()});
+    if(res&&res.authRequired){ gate(true); return; }
+    if(!res||!res.ok) throw new Error(res&&res.error||"no response");
+    roster=res.roster||roster;
+    schedule=res.schedule||schedule;
+    lastGood=res.rows||[];
+
+    // The Salesforce half, asked for separately so a slow org cannot hold up
+    // the blocks. If it fails the wall carries on with what it had.
+    try{
+      const w=await call({action:"wall",token:store.get()});
+      if(w&&w.ok&&w.tasks) adoptLive(w.tasks);
+    }catch(e){}
+
+    render(lastGood);
+    const stale = TASKS.asOf !== todayISO();
+    $("#stale").style.display = stale ? "inline" : "none";
+    $("#stale").textContent = stale ? "Salesforce figures from "+TASKS.asOf : "";
+  }catch(e){ if(lastGood) $("#stale").style.display="inline"; }
+}
+function gate(show){
+  $("#gate").classList.toggle("hidden",!show);
+  ["#hdr","#mn","#ftr"].forEach(s=>$(s).classList.toggle("hidden",show));
+}
+$("#gGo").onclick=async()=>{
+  $("#gErr").textContent="";
+  try{
+    const res=await call({action:"login",who:$("#gUser").value.trim(),password:$("#gPass").value});
+    if(!res.ok){ $("#gErr").textContent=res.error||"Could not sign in."; return; }
+    store.set(res.token);
+    if(!res.profile.manager)
+      $("#gErr").textContent="Signed in — note only the Branch Manager's sign-in shows the whole branch.";
+    gate(false); refresh();
+  }catch(e){ $("#gErr").textContent="Could not reach the sheet. Check the connection."; }
+};
+$("#gPass").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#gGo").click(); });
+
+tick(); setInterval(tick,1000);
+setInterval(refresh,REFRESH_MS);
+// lateness is re-judged on the minute, between refreshes
+setInterval(()=>{ if(lastGood) render(lastGood); },60*1000);
+if(store.get()){ gate(false); refresh(); } else gate(true);
+</script>
+</body>
+</html>

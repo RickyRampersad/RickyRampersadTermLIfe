@@ -1,6 +1,26 @@
-# Netlify configuration for the renewal portal.
+# Netlify configuration for the renewal portal and Claims TT.
 
-# Short personal links: /r/<token> → renewal portal with the token attached.
+# ── Client data must never be served ────────────────────────────────
+# /data/ holds the Salesforce exports — client names, emails, mobiles,
+# chassis numbers, policy numbers and premiums. The publish directory is
+# the repository root, so without this rule every one of those files is
+# downloadable by anyone who guesses the path. They live in the repo so
+# the register can be rebuilt and imported into the private Claims sheet;
+# they are not, and must not become, part of the website.
+[[redirects]]
+  from = "/data/*"
+  to = "/"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/apps-script/*"
+  to = "/"
+  status = 404
+  force = true
+
+# ── Short links ─────────────────────────────────────────────────────
+# Personal renewal links: /r/<token> → renewal portal with the token attached.
 # These are the links stored in the Google Sheet's "Portal Link" column.
 [[redirects]]
   from = "/r/*"
@@ -30,6 +50,38 @@
   to = "/service/?type=group"
   status = 302
 
+# KPI tracker short links — what staff are told in the training film:
+# /kpi is the tracker, /training this film, /manual the written guide,
+# /wall the live office screen. The rotating Salesforce board that used to
+# live at /wall/ is now /board/ — see WALL-SETUP.md.
+# (donthaveanagent.com has its own /wall on its own site; the two never meet.)
+[[redirects]]
+  from = "/training"
+  to = "/kpi/training/"
+  status = 302
+
+[[redirects]]
+  from = "/manual"
+  to = "/kpi/manual/"
+  status = 302
+
+[[redirects]]
+  from = "/wall"
+  to = "/kpi/wall/"
+  status = 302
+
+# Claims short links: /claim, and /claim/motor → the motor claim pre-selected.
+[[redirects]]
+  from = "/claim"
+  to = "/claims/"
+  status = 302
+
+[[redirects]]
+  from = "/claim/:type"
+  to = "/claims/?type=:type"
+  status = 302
+
+# ── Headers ─────────────────────────────────────────────────────────
 [[headers]]
   for = "/renewal/*"
   [headers.values]
@@ -38,11 +90,38 @@
     Referrer-Policy = "no-referrer"
 
 # The service questionnaire carries client records and a signature — same
-# treatment. no-referrer also stops policy numbers leaking through the
-# Referer header if a client taps a link from the page.
+# treatment as claims: never framed, never cached on a shared branch machine,
+# and no-referrer so policy numbers cannot leak through the Referer header if
+# a client taps a link from the page.
 [[headers]]
   for = "/service/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer"
+    Cache-Control = "no-store"
+    Permissions-Policy = "geolocation=(), microphone=(), payment=()"
+
+# Claims carries ID documents, medical detail and bank particulars.
+# no-store keeps it out of shared-device browser caches; no-referrer stops
+# the claim reference leaking to anything the page links out to.
+[[headers]]
+  for = "/claims/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    Cache-Control = "no-store"
+    Permissions-Policy = "geolocation=(), microphone=(), payment=()"
+
+# The KPI tracker holds staff performance records and keeps a session token in
+# the browser. Same treatment as the renewal and claims portals: never framed,
+# never cached on a shared branch machine, and no referrer leaking the page on
+# the way out.
+[[headers]]
+  for = "/kpi/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    Cache-Control = "no-store"

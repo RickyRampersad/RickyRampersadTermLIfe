@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Reporting your day · Ricky Rampersad Branch</title>
+<link rel="icon" href="../../favicon.svg"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+  :root{
+    --navy:#16264F; --deep:#0D1838; --gold:#C7A34A; --soft:#E7D9AE;
+    --paper:#F7F5EF; --card:#FFFFFF; --sunk:#FBFAF5;
+    --ink:#1F2433; --ink2:#3D4457; --muted:#6A7180; --line:#E5E1D6;
+    --good:#2C7A57; --warn:#B0791C; --stop:#AE3A33;
+    --shadow:0 1px 2px rgba(13,24,56,.05), 0 10px 26px -18px rgba(13,24,56,.30);
+  }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+    --paper:#0B1226; --card:#131C33; --sunk:#0F1729;
+    --ink:#ECEAE2; --ink2:#C4C8D4; --muted:#8E96A6; --line:#26304A; --gold:#D9B863;
+    --good:#5FC493; --warn:#E0A93F; --stop:#F08A82;
+    --shadow:0 1px 2px rgba(0,0,0,.45), 0 12px 30px -18px rgba(0,0,0,.85); }}
+  :root[data-theme="dark"]{
+    --paper:#0B1226; --card:#131C33; --sunk:#0F1729;
+    --ink:#ECEAE2; --ink2:#C4C8D4; --muted:#8E96A6; --line:#26304A; --gold:#D9B863;
+    --good:#5FC493; --warn:#E0A93F; --stop:#F08A82;
+    --shadow:0 1px 2px rgba(0,0,0,.45), 0 12px 30px -18px rgba(0,0,0,.85); }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.6}
+  .wrap{max-width:720px;margin:0 auto;padding:0 20px 70px}
+  .mast{background:linear-gradient(158deg,var(--navy) 0%,var(--deep) 100%);
+    border-bottom:3px solid var(--gold);color:#fff;padding:32px 0 28px;margin-bottom:30px}
+  .mast .wrap{padding-bottom:0}
+  .eyebrow{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--soft);margin:0 0 6px}
+  h1{font-family:Newsreader,Georgia,serif;font-weight:600;font-size:clamp(28px,5.2vw,40px);
+    line-height:1.12;margin:0 0 10px;color:#fff;text-wrap:balance}
+  .stand{margin:0;font-size:15.5px;color:#D9DEEA;max-width:58ch}
+  h2{font-family:Newsreader,Georgia,serif;font-weight:600;font-size:23px;margin:40px 0 4px;
+    text-wrap:balance}
+  h3{font-size:16px;font-weight:700;margin:24px 0 6px}
+  .sub{margin:0 0 16px;color:var(--muted);font-size:14.5px}
+  p{color:var(--ink2);margin:0 0 12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:13px;
+    box-shadow:var(--shadow);padding:18px 20px;margin-bottom:13px}
+  .step{display:flex;gap:14px;align-items:flex-start}
+  .num{flex:0 0 auto;width:29px;height:29px;border-radius:50%;border:1.5px solid var(--gold);
+    color:var(--gold);font-size:13px;font-weight:700;display:grid;place-items:center;margin-top:2px}
+  .note{border-left:3px solid var(--gold);background:var(--sunk);border-radius:0 9px 9px 0;
+    padding:11px 14px;margin:0 0 12px;font-size:14px;color:var(--ink2)}
+  .note.good{border-left-color:var(--good)}
+  .note.warn{border-left-color:var(--warn)}
+  .note.stop{border-left-color:var(--stop)}
+  .lbl{display:block;font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;
+    margin-bottom:3px}
+  .note.good .lbl{color:var(--good)} .note.warn .lbl{color:var(--warn)} .note.stop .lbl{color:var(--stop)}
+  .note b{color:var(--ink)}
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:11px;margin:0 0 14px}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:440px}
+  th,td{padding:10px 13px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--sunk);font-size:10.5px;font-weight:700;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted)}
+  tr:last-child td{border-bottom:none}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13.5px;
+    background:var(--sunk);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+  ul{margin:0 0 12px;padding-left:20px;color:var(--ink2)}
+  li{margin-bottom:5px}
+  .quote{border-left:3px solid var(--gold);padding:2px 0 2px 14px;margin:0 0 12px;
+    font-style:italic;color:var(--ink2)}
+  .flow{display:grid;gap:9px;margin:0 0 14px}
+  .flow-row{display:flex;gap:12px;align-items:center;background:var(--card);
+    border:1px solid var(--line);border-radius:11px;padding:12px 14px}
+  .flow-when{flex:0 0 92px;font-size:12px;font-weight:700;color:var(--gold);
+    font-variant-numeric:tabular-nums}
+  .flow-what{font-size:14px}
+  hr{border:none;border-top:1px solid var(--line);margin:38px 0 0}
+  footer{margin-top:24px;font-size:12.5px;color:var(--muted);text-align:center}
+  a{color:var(--navy);text-decoration-color:var(--gold);text-underline-offset:2px}
+  :root[data-theme="dark"] a,:root:not([data-theme="light"]) a{color:var(--gold)}
+  @media (prefers-color-scheme:light){:root:not([data-theme="dark"]) a{color:var(--navy)}}
+  @media print{.mast{background:var(--navy)!important;-webkit-print-color-adjust:exact}}
+</style>
+</head>
+<body>
+
+<div class="mast"><div class="wrap">
+  <p class="eyebrow">Ricky Rampersad's Branch · A Ricky Rampersad Project</p>
+  <h1>Reporting your day</h1>
+  <p class="stand">Four blocks. Four short reports. Under five minutes across a whole day —
+  and it is the difference between saying you did the work and showing it.</p>
+</div></div>
+
+<div class="wrap">
+
+  <h2>Why this exists</h2>
+  <p class="sub">It is not extra admin. It is already in your job document.</p>
+
+  <div class="card">
+    <p>Your job document lists your responsibilities, and <b>Reporting is one of them</b>.
+    For Sales Support it is number four of six: New Application Process · Pending, Lapse &amp;
+    Follow-ups · Document Management · <b>Reporting</b> · Administrative Support · and other
+    duties as assigned. Every job document in the branch — Branch Manager's Assistant,
+    Personal Assistant, Unit Manager — carries the same line in its own words.</p>
+    <p>Your four KPI blocks are those same responsibilities, in the order your day runs. So
+    reporting on your work is part of the job, not something added on top of it.</p>
+    <div class="note">
+      <span class="lbl">From your job document</span>
+      <div class="quote">"All completed applications must be submitted to Head Office within
+      2 days of receipt from agent."</div>
+      <div class="quote">"All policy related documents to be submitted to the relevant party
+      within one (1) day of receipt."</div>
+      <div class="quote">"All policy related documents to be prepared or processed with 100%
+      accuracy at all times."</div>
+      Those are the standards you are measured against. A block report is how anyone —
+      including you — knows whether they were met.
+    </div>
+  </div>
+
+  <h2>Your day</h2>
+  <p class="sub">Already set up. You do not build it each morning.</p>
+
+  <div class="card">
+    <p>Open <code>/kpi/</code> and sign in with your email or agent number. You land on your own
+    day, and only your own — nobody else's record is visible to you.</p>
+    <p>Your hours, your lunch and your four blocks are already there, each showing what it is
+    for. Sasha's 8–10 says
+    <i>Premium Dues / Surveys</i>. That comes from the branch schedule, so it no longer has to be
+    emailed out and read off a table every morning.</p>
+    <div class="note good">
+      <span class="lbl">The four squares</span>
+      The strip at the top of your day shows one square per block. Grey means not yet reported,
+      green means in. Four green is a finished day.
+    </div>
+  </div>
+
+  <h2>Reporting a block</h2>
+  <p class="sub">At the end of the block — not at four o'clock from memory.</p>
+
+  <div class="card"><div class="step"><span class="num">1</span><div>
+    <h3 style="margin-top:0">Open the block you just finished</h3>
+    <p>Tap its row. The <b>KPI worked</b> is already chosen from your schedule, so you are
+    confirming it rather than starting from a blank page. If the block went somewhere else,
+    change it — that is what the list is for.</p>
+  </div></div></div>
+
+  <div class="card"><div class="step"><span class="num">2</span><div>
+    <h3 style="margin-top:0">Three lines that are not the same line</h3>
+    <div class="tw"><table>
+      <tr><th>Field</th><th>What belongs there</th></tr>
+      <tr><td><b>Actioned</b></td><td>What you worked on. Names, counts, cases —
+        "18 premium dues sent out", not "worked on premium dues".</td></tr>
+      <tr><td><b>Resolved / closed</b></td><td>What is <i>genuinely</i> finished. If it is
+        still moving, it is not resolved.</td></tr>
+      <tr><td><b>Still open &amp; owned by you</b></td><td>What you carry into tomorrow.
+        Being honest here is not a bad mark — it is how work gets help.</td></tr>
+    </table></div>
+  </div></div></div>
+
+  <div class="card"><div class="step"><span class="num">3</span><div>
+    <h3 style="margin-top:0">If you are waiting on somebody</h3>
+    <p>Name them, and say when you last chased. "Waiting on Head Office" is not a blocker;
+    "Kerwyn — chased Tuesday and again today" is.</p>
+    <div class="note stop">
+      <span class="lbl">The branch rule</span>
+      A rolled due date is not an actioned task. Moving a date without a genuine blocker and a
+      named owner reads as work done when nothing moved.
+    </div>
+  </div></div></div>
+
+  <div class="card"><div class="step"><span class="num">4</span><div>
+    <h3 style="margin-top:0">Submit the block</h3>
+    <p>Press <b>Submit block</b>. That block is written and stamped with the time; the other
+    three are untouched. You can submit again later to correct it — it updates rather than
+    adding a second entry.</p>
+    <div class="note good">
+      <span class="lbl">You get your own copy</span>
+      The moment you submit, your own words arrive in your inbox: what you wrote, how many
+      blocks are in, and which are still to come. <b>That is the copy to post to the branch
+      group</b> — no retyping.
+    </div>
+  </div></div></div>
+
+  <h3>If the block included training</h3>
+  <p>Choose <b>Training delivered</b> as the KPI and a training record opens: who you trained,
+  the topic, objectives set against met, whether you tested them and the result, and the
+  follow-up. It is kept as its own line in the branch's training register, so the branch has a
+  record of who was brought up to speed on what.</p>
+
+  <h2>The day's own fields</h2>
+  <p class="sub">These belong to the day, not to any one block. Save them once — <b>Save the day</b>.</p>
+
+  <div class="card">
+    <div class="tw"><table>
+      <tr><th>Field</th><th>What it is for</th></tr>
+      <tr><td><b>Task position</b></td><td>Closed today, overdue now, and how many of those
+        are 60+ days. Straight from Salesforce.</td></tr>
+      <tr><td><b>Value Added</b></td><td>Something the branch would not have unless you brought
+        it. If there genuinely was nothing, write "None today" — the honest entry counts.</td></tr>
+      <tr><td><b>Innovation / idea</b></td><td>A tool, tracker, checklist, macro or process fix
+        you spotted. The friction, and your fix.</td></tr>
+      <tr><td><b>System flags</b></td><td>What broke, and who you flagged it to.</td></tr>
+    </table></div>
+    <div class="note">
+      <span class="lbl">Why the last two are not optional decoration</span>
+      Your job document, under <b>Continuous Improvement</b>: <i>"demonstrate by making
+      recommendations."</i> Under <b>Curiosity</b>: <i>"be proactive in sharing views or
+      different perspectives to aid with improving service offerings."</i>
+      Those two boxes are where you get the credit for exactly that.
+    </div>
+  </div>
+
+  <h2>What happens after you submit</h2>
+  <p class="sub">Who sees what, and when.</p>
+
+  <div class="flow">
+    <div class="flow-row"><span class="flow-when">On submit</span>
+      <span class="flow-what"><b>You</b> get your block back by email — your copy for the branch group.</span></div>
+    <div class="flow-row"><span class="flow-when">12:00</span>
+      <span class="flow-what">If your morning is still blank, <b>you</b> get a reminder naming which blocks are outstanding.</span></div>
+    <div class="flow-row"><span class="flow-when">15:00</span>
+      <span class="flow-what">If blocks 1–3 are not all in, <b>you</b> get asked for them, and for your final block.</span></div>
+    <div class="flow-row"><span class="flow-when">15:00</span>
+      <span class="flow-what">The <b>Branch Manager</b> gets the branch at the cut — who logged, who did not, every blocker raised.</span></div>
+    <div class="flow-row"><span class="flow-when">Friday 17:00</span>
+      <span class="flow-what">The <b>week</b>, against the week before — closed, overdue, aged, value added, ideas, training.</span></div>
+  </div>
+
+  <div class="note good">
+    <span class="lbl">If you are up to date you hear nothing</span>
+    The reminders look at what has actually been submitted and skip anyone who is current.
+    They only arrive when something is genuinely missing.
+  </div>
+
+  <h2>What it becomes</h2>
+  <p class="sub">This is the part worth caring about.</p>
+
+  <div class="card">
+    <p>Every block you report builds a record — closed against overdue, days logged, value added,
+    ideas raised, training delivered. Your <b>Trends</b> view is that record, and it is in your
+    own words with the dates attached.</p>
+    <p>When your appraisal comes round, that is the evidence. Not a memory of a good month —
+    a hundred small entries you made at the time.</p>
+    <div class="note">
+      <span class="lbl">A week reported properly</span>
+      Reports in <b>25/25</b> · closed <b>236 → 463</b> · overdue <b>146 → 68</b> ·
+      60+ days <b>44 → 16</b> · value added <b>0 → 10</b>.
+      Nobody was argued into that. The blocks were reported as they were worked, so the branch
+      could see what was actually happening while there was still time to act on it.
+    </div>
+  </div>
+
+  <h2>The standard</h2>
+  <div class="card">
+    <ul>
+      <li>Completed applications to Head Office within <b>2 days</b> of receipt.</li>
+      <li>Policy documents processed with <b>100% accuracy</b>.</li>
+      <li>Documents to the relevant party within <b>1 day</b> of receipt.</li>
+      <li>A rolled due date is not an actioned task — log the genuine blocker and the owner.</li>
+      <li>"Waiting on someone" needs a <b>named person</b> and the date last chased.</li>
+      <li>Value Added is logged every day — even when the honest entry is "None today".</li>
+      <li>Report each block <b>as it ends</b>, not at the end of the day.</li>
+      <li>Every entry says <b>how many</b>, or <b>which one</b>.</li>
+    </ul>
+  </div>
+
+  <h2>How many, or which one</h2>
+  <div class="card">
+    <p>An entry is a record of your day, and in six months it is the only record
+       there is. "Actioned remaining tasks" will not remind you of anything, and
+       it will not stand up at a review. So the tracker now reads what you write
+       and asks once when it cannot tell what you did.</p>
+
+    <table>
+      <tr><th>Instead of</th><th>Write</th></tr>
+      <tr><td>Actioned remaining tasks</td><td>Cleared 6 of the 8 premium-due queries, 2 back to the advisor</td></tr>
+      <tr><td>3 tasks</td><td>3 contracts checked and sent to Head Office</td></tr>
+      <tr><td>Head Office</td><td>Chased Head Office on POL-88213 — medical still outstanding</td></tr>
+      <tr><td>2</td><td>2 still with underwriting, chased Tuesday</td></tr>
+    </table>
+
+    <p>If a block reads thin you will see one line telling you what is missing —
+       <i>a count, but nothing named</i>, or <i>a name, but nothing done with
+       it</i>. Add a line if you can. If it really was that kind of block, press
+       <b>Send it anyway</b> and it goes in exactly as you wrote it.</p>
+
+    <div class="note"><span class="lbl">Nothing is ever blocked.</span>
+      The tracker asks once and then does as it is told. A quiet day is a fine
+      thing to log — it just has to be logged honestly rather than vaguely.</div>
+
+    <p>"None today" is always a good answer where it is the true one. Resolved
+       nothing this block because the work is still running? Say so. The prompt
+       reads Actioned and Resolved together and never counts an honest "None"
+       against you.</p>
+  </div>
+
+  <h2>If something goes wrong</h2>
+  <div class="card">
+    <div class="note warn"><span class="lbl">"Session expired. Sign in again."</span>
+      Sign-ins last 12 hours. Expected each morning.</div>
+    <div class="note warn"><span class="lbl">You submitted the wrong thing</span>
+      Open the block again, correct it, and submit. It updates the same entry — it does not
+      add a second one.</div>
+    <div class="note warn"><span class="lbl">You forgot yesterday</span>
+      Change the <b>Reporting day</b> at the top and submit against that date. Late is better
+      than missing, and the time stamp is honest about when it was written.</div>
+    <div class="note stop"><span class="lbl">You cannot sign in</span>
+      Five wrong tries locks the account for fifteen minutes. Wait it out, or ask the Branch
+      Manager — your log-in is on the Access tab of the branch workbook.</div>
+  </div>
+
+  <hr>
+  <footer>Ricky Rampersad's Branch · 9–13 Endeavour 1st Street, Chaguanas</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,20 @@
+1
+00:00:00,050 --> 00:00:04,213
+So every month, we read both documents and compare them.
+
+2
+00:00:04,213 --> 00:00:06,082
+A hundred and forty-nine matched.
+
+3
+00:00:06,082 --> 00:00:09,162
+Three spelled differently in the two systems.
+
+4
+00:00:09,162 --> 00:00:11,237
+Two with no life cover at all.
+
+5
+00:00:11,237 --> 00:00:16,430
+And eight hundred and forty-five dollars in premium, paid on someone who had already left.
+

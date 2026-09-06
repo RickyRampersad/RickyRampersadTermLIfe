@@ -1,89 +1,179 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="utf-8">
 <base target="_top">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-:root{--navy:#003366;--blue:#005EB8;--gold:#E8A020;--light:#E8F0F8;--ink:#1a2433;--ink2:#5a6b80;--ink3:#8a97a8;--line:#dde5ee;--green:#1e7d4f;--red:#b3261e;--amber:#a05e03}
+:root{
+  --bg:#07131f; --bg2:#0d2137; --card:#163553; --card2:#1b3d61;
+  --gold:#efc24b; --gold2:#dca530; --teal:#00CFEA; --teal2:#00A8C5;
+  --text:#edf4fb; --muted:#a9bbcf; --faint:#7a90a8; --line:rgba(255,255,255,.10);
+  --green:#35d07f; --red:#ff7a7a; --amber:#efc24b;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font:14px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:var(--ink);background:#f4f7fa;padding-bottom:70px}
-.head{background:var(--navy);color:#fff;padding:14px 18px;position:sticky;top:0;z-index:30}
+body{font:14px/1.55 'DM Sans',sans-serif;color:var(--text);
+  background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 70%,var(--bg) 100%);
+  min-height:100vh;padding-bottom:70px}
+h1,h2,h3,h4{font-family:'Montserrat',sans-serif}
+.head{background:rgba(7,19,31,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:12px 18px;position:sticky;top:0;z-index:30}
 .head .in{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.gmark{width:38px;height:38px;display:flex;align-items:center;justify-content:center}
-.head h1{font-size:16px}
-.head .sub{font-size:11.5px;color:#b7c9de}
-.head .me{margin-left:auto;font-size:12.5px;color:#b7c9de}
-.head .me b{color:#fff}
+.gmark{width:38px;height:38px;flex-shrink:0}
+.head h1{font:800 15px/1.2 'Montserrat';color:var(--gold);letter-spacing:.3px}
+.head .sub{font-size:11.5px;color:var(--muted)}
+.thpick{margin-left:auto}
+.head .me{margin-left:0;font-size:12.5px;color:var(--muted)}
+.head .me b{color:var(--text)}
+.head .me a{color:var(--teal)}
 .wrap{max-width:1180px;margin:0 auto;padding:16px 14px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
-.kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer}
-.kpi.active{border-color:var(--blue);box-shadow:0 0 0 2px #e5eefb}
-.kpi .n{font-size:23px;font-weight:800;color:var(--navy)}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;cursor:pointer;transition:.15s}
+.kpi:hover{border-color:var(--teal2)}
+.kpi.active{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal)}
+.kpi .n{font:800 23px 'Montserrat';color:var(--teal)}
 .kpi.warn .n{color:var(--red)}
-.kpi.gold .n{color:var(--amber)}
-.kpi .l{font-size:11.5px;color:var(--ink2)}
+.kpi.gold .n{color:var(--gold)}
+.kpi .l{font-size:11.5px;color:var(--muted)}
 .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
-.bar input[type=search]{flex:1;min-width:180px;border:1px solid var(--line);border-radius:9px;padding:9px 12px;font:inherit}
-.abtn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 13px;font-size:13px;font-weight:600;color:var(--navy);cursor:pointer}
-.abtn:hover{border-color:var(--blue);background:var(--light)}
-.abtn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
-.abtn.gold{background:var(--gold);border-color:var(--gold);color:var(--navy)}
+.bar input[type=search]{flex:1;min-width:180px;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit;background:var(--bg);color:var(--text);outline:none}
+.bar input[type=search]:focus{border-color:var(--teal)}
+.abtn{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:8px 13px;font:600 13px 'DM Sans';color:var(--text);cursor:pointer;transition:.15s}
+.abtn:hover{border-color:var(--teal)}
+.abtn.primary{background:linear-gradient(135deg,var(--teal),var(--teal2));border-color:transparent;color:#04202b;font-weight:700}
+.abtn.gold{background:linear-gradient(135deg,var(--gold),var(--gold2));border-color:transparent;color:#3a2c05;font-weight:700}
 .abtn.sm{padding:5px 10px;font-size:12px}
-.card{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:14px;overflow:hidden}
-.card h2{font-size:12.5px;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em;padding:12px 16px;border-bottom:1px solid #eef2f7}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:14px;overflow:hidden}
+.card h2{font:800 11.5px 'Montserrat';color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:12px 16px;border-bottom:1px solid var(--line)}
 table{width:100%;border-collapse:collapse}
-th{background:var(--light);color:var(--navy);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;text-align:left;padding:9px 12px;white-space:nowrap}
-td{padding:9px 12px;border-bottom:1px solid #f0f4f8;font-size:13px;vertical-align:middle}
+th{background:var(--bg2);color:var(--teal);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;text-align:left;padding:9px 12px;white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle}
 tbody tr{cursor:pointer}
-tbody tr:hover{background:#f7fafd}
-.chip{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap}
-.c-over{background:#fbe9e7;color:var(--red)}
-.c-due{background:#fdf1dc;color:var(--amber)}
-.c-wait{background:#e5eefb;color:var(--blue)}
-.c-done{background:#e3f2ea;color:var(--green)}
-.c-up{background:#eef2f7;color:var(--ink2)}
-.mini{font-size:11px;color:var(--ink3)}
-.login{max-width:420px;margin:70px auto;background:#fff;border:1px solid var(--line);border-radius:14px;padding:26px}
-.login h2{color:var(--navy);margin-bottom:6px}
-.login p{font-size:13px;color:var(--ink2);margin-bottom:14px}
-.login input{width:100%;border:1px solid var(--line);border-radius:9px;padding:11px 12px;font:inherit;margin-bottom:10px}
-.err{background:#fbe9e7;color:var(--red);border-radius:9px;padding:10px 13px;margin-top:10px;font-size:13px;display:none}
+tbody tr:hover{background:rgba(0,207,234,.05)}
+.chip{display:inline-block;font:700 10.5px 'Montserrat';padding:2px 9px;border-radius:99px;white-space:nowrap}
+.c-over{background:rgba(255,122,122,.15);color:var(--red)}
+.c-due{background:rgba(239,194,75,.15);color:var(--gold)}
+.c-wait{background:rgba(0,207,234,.15);color:var(--teal)}
+.c-done{background:rgba(53,208,127,.15);color:var(--green)}
+.c-up{background:rgba(255,255,255,.08);color:var(--muted)}
+.mini{font-size:11px;color:var(--faint)}
+.login{max-width:420px;margin:70px auto;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px}
+.login h2{color:var(--gold);margin-bottom:6px}
+.login p{font-size:13px;color:var(--muted);margin-bottom:14px}
+.login input{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font:inherit;background:var(--bg);color:var(--text);margin-bottom:10px;outline:none}
+.login input:focus{border-color:var(--teal)}
+.err{background:rgba(255,122,122,.12);color:var(--red);border-radius:10px;padding:10px 13px;margin-top:10px;font-size:13px;display:none}
 /* drawer */
-.ov{position:fixed;inset:0;background:rgba(10,25,45,.4);z-index:40;display:none}
+.ov{position:fixed;inset:0;background:rgba(2,8,14,.6);z-index:40;display:none}
 .ov.open{display:block}
-.dr{position:fixed;top:0;right:-540px;width:540px;max-width:96vw;height:100vh;background:#fff;z-index:50;box-shadow:-8px 0 30px rgba(0,20,40,.2);transition:right .2s;display:flex;flex-direction:column}
+.dr{position:fixed;top:0;right:-540px;width:540px;max-width:96vw;height:100vh;background:var(--bg2);border-left:1px solid var(--line);z-index:50;box-shadow:-8px 0 30px rgba(0,0,0,.5);transition:right .2s;display:flex;flex-direction:column}
 .dr.open{right:0}
-.dr .dh{background:var(--navy);color:#fff;padding:16px 20px}
-.dr .dh h3{font-size:16px}
+.dr .dh{background:var(--bg);border-bottom:1px solid var(--line);padding:16px 20px}
+.dr .dh h3{font-size:16px;color:var(--gold)}
 .dr .db{flex:1;overflow-y:auto;padding:16px 20px 40px}
 .sec{margin-bottom:18px}
-.sec h4{font-size:11.5px;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px}
+.sec h4{font:800 11px 'Montserrat';color:var(--teal);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px}
 .kv{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;font-size:13px}
-.kv .k{color:var(--ink3);font-size:11px;text-transform:uppercase}
+.kv .k{color:var(--faint);font-size:11px;text-transform:uppercase}
 .kv .v{font-weight:600}
 .tl{border-left:2px solid var(--line);padding-left:12px}
 .tl .it{margin-bottom:9px;font-size:12.5px}
-.tl .it .w{color:var(--ink3);font-size:11px}
-textarea,select,input[type=text],input[type=date],input[type=email]{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;background:#fff}
+.tl .it .w{color:var(--faint);font-size:11px}
+.tl b{color:var(--teal)}
+textarea,select,input[type=text],input[type=date],input[type=email]{width:100%;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font:inherit;background:var(--bg);color:var(--text);outline:none}
+textarea:focus,select:focus,input[type=text]:focus,input[type=date]:focus,input[type=email]:focus{border-color:var(--teal)}
+select option{background:var(--bg2);color:var(--text)}
 textarea{min-height:56px;resize:vertical}
-label{display:block;font-size:12px;color:var(--ink2);font-weight:600;margin:9px 0 3px}
+label{display:block;font-size:12px;color:var(--muted);font-weight:600;margin:9px 0 3px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.task{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--line);border-radius:9px;padding:8px 11px;margin-bottom:6px;font-size:13px}
-.task.over{border-color:#f0c4c0;background:#fdf6f5}
+.task{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 11px;margin-bottom:6px;font-size:13px}
+.task.over{border-color:rgba(255,122,122,.5);background:rgba(255,122,122,.07)}
 .task .t{flex:1}
-.modal{position:fixed;inset:0;z-index:60;background:rgba(10,25,45,.5);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px}
+.modal{position:fixed;inset:0;z-index:60;background:rgba(2,8,14,.7);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px}
 .modal.open{display:flex}
-.mw{background:#fff;border-radius:14px;max-width:520px;width:100%;padding:22px}
-.mw h3{color:var(--navy);margin-bottom:12px}
+.mw{background:var(--bg2);border:1px solid var(--line);border-radius:16px;max-width:520px;width:100%;padding:22px}
+.mw h3{color:var(--gold);margin-bottom:12px}
 .grid2col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:900px){.grid2col{grid-template-columns:1fr}}
-.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 20px;border-radius:99px;font-size:13px;z-index:80;display:none}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--gold);color:#3a2c05;font-weight:700;padding:10px 20px;border-radius:99px;font-size:13px;z-index:80;display:none}
+/* production — head office's own look */
+.pbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.pwrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+.ptable{width:100%;border-collapse:collapse;font:13px 'DM Sans';min-width:720px;background:#fff;color:#1a2433}
+.ptable th,.ptable td{border:1px solid #c9d4c4;padding:5px 9px;white-space:nowrap}
+.ptable thead tr.ptitle th{background:#4a7c2f;color:#fff;font:800 12.5px 'Montserrat';letter-spacing:.14em;text-align:center;padding:6px}
+.ptable thead tr:last-child th{background:#dfe9d8;color:#1f3d14;font:700 11.5px 'DM Sans';text-align:right}
+.ptable thead tr:last-child th.pname{text-align:left}
+.ptable td.pname{text-align:left}
+.ptable td.pnum{text-align:right;font-variant-numeric:tabular-nums}
+.ptable tr.lvl-branch td{background:#eef3ea;font-weight:800}
+.ptable tr.lvl-unit td{background:#f6f9f4;font-weight:700}
+.ptable tr.lvl-agent td{background:#fff}
+.ptable td.pnum.hot{background:#ffe9a8;font-weight:700}
+.ptable tr.lvl-branch td.pnum.hot,.ptable tr.lvl-unit td.pnum.hot{background:#f8c9c2}
+.ptable tfoot tr.ptotal td{background:#cfe3c4;font-weight:800;border-top:2px solid #4a7c2f}
+/* reports */
+.rept{font:800 11px 'Montserrat';color:var(--teal);text-transform:uppercase;letter-spacing:.08em;margin:18px 0 8px}
+.chart{display:flex;align-items:flex-end;gap:8px;padding:6px 2px 0;min-height:150px}
+.chart .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;cursor:pointer;min-width:0}
+.chart .col:hover .seg{filter:brightness(1.25)}
+.chart .stack{display:flex;flex-direction:column;gap:2px;width:100%;max-width:34px;justify-content:flex-end}
+.chart .seg{width:100%;border-radius:4px 4px 2px 2px}
+.chart .seg.done{background:#35d07f}
+.chart .seg.open{background:#00A8C5}
+.chart .cnt{font:700 11px 'Montserrat';color:var(--text)}
+.chart .ml{font-size:10px;color:var(--faint)}
+.legend{display:flex;gap:16px;margin-top:8px;font-size:12px;color:var(--muted)}
+.legend .sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.legend .sw.done{background:#35d07f}.legend .sw.open{background:#00A8C5}
+.frow{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:13px}
+.frow .fl{width:80px;color:var(--muted)}
+.frow .fbar{height:14px;background:#00A8C5;border-radius:4px;min-width:3px}
+.frow b{color:var(--text)}
+tr[data-who]{cursor:pointer}
+.rasg{background:var(--bg);border:1px solid var(--line);border-radius:6px;color:var(--muted);font:11px 'DM Sans';padding:2px 4px;max-width:110px;width:auto}
+
+/* ---- colour themes: Midnight (default) · Ocean · Daylight ---- */
+html[data-theme="ocean"]{
+  --bg:#03151c; --bg2:#062430; --card:#0b3140; --card2:#0e3c4e;
+  --gold:#ffd166; --gold2:#e6b34a; --teal:#2ee6c8; --teal2:#19b89e;
+  --text:#eafffa; --muted:#9cc4bd; --faint:#6f948e; --line:rgba(255,255,255,.10);
+  --good:#3ce08a; --bad:#ff8585; --green:#3ce08a; --red:#ff8585; --amber:#ffd166;
+  --navy:#eafffa; --blue:#2ee6c8; --light:#062430; --ink:#eafffa; --ink2:#9cc4bd;
+}
+html[data-theme="daylight"]{
+  --bg:#eef3f8; --bg2:#ffffff; --card:#ffffff; --card2:#f4f8fc;
+  --gold:#a1720a; --gold2:#8a5f06; --teal:#0092b0; --teal2:#006e86;
+  --text:#152738; --muted:#54677b; --faint:#7d8fa3; --line:rgba(16,42,70,.14);
+  --good:#1e7d4f; --bad:#b3261e; --green:#1e7d4f; --red:#b3261e; --amber:#a1720a;
+  --navy:#152738; --blue:#0092b0; --light:#eef3f8; --ink:#152738; --ink2:#54677b;
+}
+html[data-theme="daylight"] body{background:linear-gradient(180deg,#eef3f8,#ffffff 55%,#eef3f8)}
+html[data-theme="daylight"] .card{box-shadow:0 2px 14px rgba(20,50,90,.07)}
+.thpick{display:flex;gap:7px;align-items:center}
+.thpick button{width:22px;height:22px;border-radius:50%;border:2px solid rgba(127,127,127,.35);cursor:pointer;padding:0}
+.thpick button.on{border-color:var(--teal);box-shadow:0 0 0 2px rgba(0,160,190,.35)}
+html[data-theme="daylight"] .head{background:rgba(255,255,255,.92)}
+html[data-theme="ocean"] .head{background:rgba(3,21,28,.92)}
 </style>
 </head>
 <body>
 <div class="head"><div class="in">
-  <div class="gmark"><svg viewBox="0 0 24 24" width="38" height="38" aria-label="Shield with tick"><path d="M12 1.8l8.2 3v6.4c0 5.1-3.5 9.6-8.2 11.3C7.3 20.8 3.8 16.3 3.8 11.2V4.8z" fill="#E8A020"/><path d="M8 12.2l2.9 2.9 5.3-6" stroke="#003366" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-  <div><h1>Guardian Renewals — Staff</h1><div class="sub" id="subT">Motor renewal operations · a Ricky Rampersad initiative</div></div>
-  <div class="me" id="meBox"></div>
+  <svg class="gmark" viewBox="0 0 88 88" aria-hidden="true">
+    <defs><linearGradient id="gn" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
+    </linearGradient></defs>
+    <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#gn)"/>
+    <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <div><h1>Ricky Rampersad Branch — Staff</h1><div class="sub" id="subT">Renewal operations · Guardian Group</div></div>
+  <div class="thpick" title="Colour theme" aria-label="Colour theme">
+  <button data-th="" style="background:linear-gradient(135deg,#0d2137 55%,#efc24b 55%)" title="Midnight"></button>
+  <button data-th="ocean" style="background:linear-gradient(135deg,#062430 55%,#2ee6c8 55%)" title="Ocean"></button>
+  <button data-th="daylight" style="background:linear-gradient(135deg,#ffffff 55%,#0092b0 55%)" title="Daylight"></button>
+</div>
+  <div class="me" id="meBox" style="margin-left:14px"></div>
 </div></div>
 <div id="app"></div>
 <div class="ov" id="ov"></div>
@@ -96,7 +186,13 @@ const BOOT = JSON.parse(<?!= JSON.stringify(payload) ?>);
 const $ = s => document.querySelector(s);
 const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money = v => { const n=Number(v); return (!v&&v!==0)||isNaN(n) ? esc(v) : 'TT$'+n.toLocaleString('en-US',{maximumFractionDigits:0}); };
-let D = null, ME = localStorage.getItem('gg_staff_email')||'', FILTER='action', Q='';
+let D = null, ME = localStorage.getItem('gg_staff_email')||'', PIN = localStorage.getItem('gg_staff_pin')||'', FILTER='action', Q='';
+let AUDIT = { on:false, by:'', type:'', q:'' };
+let PIPE = { month:'', cov:'', who:'' };
+let REP = { on:false };
+let PROD = { on:false, data:null, loading:false, err:'' };
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const monthOf=s=>{const m=String(s||'').match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/);return m?m[1]:'';};
 
 function toast(m){ const t=$('#toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
 
@@ -117,24 +213,28 @@ function boot(){
 }
 function renderLogin(msg){
   $('#app').innerHTML = `<div class="login"><h2>Staff sign-in</h2>
-    <p>Enter your work email. It must be listed on the <b>Staff</b> tab of the renewals sheet — every action you take is logged under this identity.</p>
+    <p>Enter your work email and your personal access code (the code beside your name on the <b>Staff</b> tab) — every action you take is logged under this identity.</p>
     <input type="email" id="lEmail" placeholder="you@myguardiangroup.com" value="${esc(ME)}">
+    <input type="password" id="lPin" inputmode="numeric" autocomplete="off" placeholder="Access code">
     <button class="abtn primary" style="width:100%;padding:11px" id="lGo">Enter dashboard</button>
     <div class="err" id="lErr" ${msg?'style="display:block"':''}>${esc(msg||'')}</div></div>`;
-  $('#lGo').onclick = ()=>{ ME = $('#lEmail').value.trim().toLowerCase(); if(!ME) return; localStorage.setItem('gg_staff_email',ME); load(); };
+  const go=()=>{ ME = $('#lEmail').value.trim().toLowerCase(); PIN = $('#lPin').value.trim(); if(!ME) return;
+    localStorage.setItem('gg_staff_email',ME); localStorage.setItem('gg_staff_pin',PIN); load(); };
+  $('#lGo').onclick = go;
+  $('#lPin').addEventListener('keydown',e=>{ if(e.key==='Enter') go(); });
 }
 function load(){
   $('#subT').textContent = 'Loading…';
   google.script.run
     .withSuccessHandler(d=>{ D=d; $('#subT').textContent='Motor renewal operations'; renderApp(); })
-    .withFailureHandler(e=>{ ME=''; localStorage.removeItem('gg_staff_email'); renderLogin(e&&e.message?e.message:String(e)); $('#subT').textContent='Motor renewal operations'; })
-    .staffData(BOOT.key, ME);
+    .withFailureHandler(e=>{ PIN=''; localStorage.removeItem('gg_staff_pin'); renderLogin(e&&e.message?e.message:String(e)); $('#subT').textContent='Motor renewal operations'; })
+    .staffData(BOOT.key, ME, true, PIN);
 }
 function act(action, params, okMsg){
   google.script.run
     .withSuccessHandler(d=>{ D=d; renderApp(); if(okMsg) toast(okMsg); })
     .withFailureHandler(e=>toast('⚠ '+(e&&e.message?e.message:e)))
-    .staffAction(BOOT.key, ME, action, params||{});
+    .staffAction(BOOT.key, ME, action, params||{}, PIN);
 }
 
 function filtered(){
@@ -144,26 +244,51 @@ function filtered(){
   else if(FILTER==='overdue') rows = rows.filter(r=>r.st.k==='overdue');
   else if(FILTER==='due14') rows = rows.filter(r=>['due7','due14'].includes(r.st.k));
   else if(FILTER==='renewed') rows = rows.filter(r=>r.st.k==='done');
+  if(PIPE.month) rows = rows.filter(r=>monthOf(r.nextDue)===PIPE.month);
+  if(PIPE.cov) rows = rows.filter(r=>r.coverage===PIPE.cov);
+  if(PIPE.who==='unassigned') rows = rows.filter(r=>!(r.assignedTo||'').trim());
+  else if(PIPE.who) rows = rows.filter(r=>(r.assignedTo||'').toLowerCase()===PIPE.who);
   if(Q) rows = rows.filter(r=>(r.client+' '+r.policy+' '+r.coverage+' '+r.assignedTo).toLowerCase().includes(Q));
   rows.sort((a,b)=>a.st.ord-b.st.ord || (a.days??999)-(b.days??999));
   return rows;
 }
+function filteredProps(){
+  let ps = D.properties||[];
+  if(PIPE.month) ps = ps.filter(p=>monthOf(p.renewalDate)===PIPE.month);
+  if(PIPE.who==='unassigned') ps = ps.filter(p=>!(p.assignedTo||'').trim());
+  else if(PIPE.who) ps = ps.filter(p=>(p.assignedTo||'').toLowerCase()===PIPE.who);
+  if(PIPE.cov && PIPE.cov!=='__prop') return [];   // a motor coverage is selected — property table empties
+  if(Q) ps = ps.filter(p=>(p.client+' '+p.policy+' '+(p.assignedTo||'')).toLowerCase().includes(Q));
+  return ps;
+}
 
 function renderApp(){
-  $('#meBox').innerHTML = `Signed in as <b>${esc(D.me.name)}</b> · <a href="#" id="lo" style="color:#b7c9de">switch</a>`;
+  $('#meBox').innerHTML = `Signed in as <b>${esc(D.me.name)}</b> (${esc(D.me.role)}) · <a href="#" id="lo">switch</a>`;
   const rows = D.renewals.map(r=>({...r, st:statusOf(r)}));
   const n = k => rows.filter(r=>r.st.k===k).length;
   const myTasks = D.tasks.filter(t=>t.status==='Open' && (t.assignee||'').toLowerCase()===ME).length;
   const openTasks = D.tasks.filter(t=>t.status==='Open');
   const renewedMonth = rows.filter(r=>r.st.k==='done').length;
 
+  const myQ = (D.queries||[]).filter(q=>q.status==='Open' && q.of===ME);
+  const openQAll = (D.queries||[]).filter(q=>q.status==='Open');
+
   $('#app').innerHTML = `<div class="wrap">
+    ${myQ.length?`<div class="card" style="border-color:rgba(239,194,75,.5)"><h2 style="color:var(--gold)">❓ Needs your answer (${myQ.length}) — these are on the audit trail</h2><div style="padding:12px 16px">
+      ${myQ.map(q=>`<div class="task"><div class="t"><b>${esc(q.client||'General')}</b> — ${esc(q.question)}
+        <div class="mini">asked by ${esc(q.by.split('@')[0])} · ${esc(q.created)}</div>
+        <textarea id="qa_${esc(q.id)}" placeholder="Your answer — logged under your name"></textarea>
+        <button class="abtn primary sm" data-qans="${esc(q.id)}" style="margin-top:6px">Send answer</button>
+      </div></div>`).join('')}
+    </div></div>`:''}
     <div class="kpis">
       ${kpi('instructed','⚡ '+n('instructed'),'Client instructed — process now','warn')}
       ${kpi('overdue',n('overdue'),'Overdue','warn')}
       ${kpi('due14',n('due7')+n('due14'),'Due in 14 days','gold')}
       ${kpi('renewed',renewedMonth,'Renewed','')}
       <div class="kpi ${myTasks?'gold':''}" id="kTasks"><div class="n">${myTasks}</div><div class="l">My open tasks</div></div>
+      <div class="kpi ${(D.properties||[]).filter(p=>p.stage&&p.stage!=='issued').length?'gold':''}"><div class="n">${(D.properties||[]).filter(p=>p.stage&&p.stage!=='issued').length}</div><div class="l">🏠 Property files open</div></div>
+      <div class="kpi ${openQAll.length?'warn':''}"><div class="n">${openQAll.length}</div><div class="l">❓ Open queries</div></div>
       <div class="kpi"><div class="n">${D.surveys.count?D.surveys.avgSat+'★':'—'}</div><div class="l">Avg satisfaction (${D.surveys.count})</div></div>
     </div>
 
@@ -171,8 +296,20 @@ function renderApp(){
       <input type="search" id="q" placeholder="Search client, policy, staff…" value="${esc(Q)}">
       <button class="abtn ${FILTER==='action'?'primary':''}" data-f="action">Needs action</button>
       <button class="abtn ${FILTER==='all'?'primary':''}" data-f="all">All</button>
+      <button class="abtn ${REP.on?'primary':''}" id="repBtn">📊 Reports</button>
+      ${/admin|manager/i.test(D.me.role||'')?`<button class="abtn ${PROD.on?'primary':''}" id="prodBtn">📈 Production</button>`:''}
+      <button class="abtn ${AUDIT.on?'primary':''}" id="audBtn">🔍 Audit</button>
       <button class="abtn gold" id="addBtn">＋ Add renewal</button>
     </div>
+    <div class="bar">
+      <select id="fMon" style="width:auto"><option value="">📅 All months</option>${MONTHS.map(m=>`<option ${m===PIPE.month?'selected':''}>${m}</option>`).join('')}</select>
+      <select id="fCov" style="width:auto"><option value="">🚗🏠 All types</option>${[...new Set(D.renewals.map(r=>r.coverage).filter(Boolean))].sort().map(c=>`<option ${c===PIPE.cov?'selected':''} value="${esc(c)}">${esc(c.replace(' (assumed)',''))}</option>`).join('')}</select>
+      <select id="fWho" style="width:auto"><option value="">👤 Everyone</option><option value="unassigned" ${PIPE.who==='unassigned'?'selected':''}>— Unassigned —</option>${D.staff.map(s=>`<option value="${esc(s.email)}" ${s.email===PIPE.who?'selected':''}>${esc(s.name)}</option>`).join('')}</select>
+      ${(PIPE.month||PIPE.cov||PIPE.who)?`<button class="abtn sm" id="fClear">✕ Clear filters</button>`:''}
+    </div>
+    ${PROD.on?productionView():''}
+    ${REP.on?reportView():''}
+    ${AUDIT.on?auditView():''}
 
     <div class="grid2col">
       <div>
@@ -183,10 +320,22 @@ function renderApp(){
             <td>${esc(r.coverage.replace(' (assumed)',''))}</td>
             <td>${esc(r.nextDue)}</td>
             <td><span class="chip ${r.st.cls}">${r.st.label}</span></td>
-            <td class="mini">${esc((r.assignedTo||'').split('@')[0]||'—')}</td>
+            <td><select class="rasg" data-rw="${r.rowIndex}" data-tok="${esc(r.token)}" data-cl="${esc(r.client)}"><option value="">—</option>${D.staff.map(s=>`<option value="${esc(s.email)}" ${s.email===(r.assignedTo||'').toLowerCase()?'selected':''}>${esc(s.name.split(' ')[0])}</option>`).join('')}</select></td>
             <td class="mini">${D.lastTouch[r.token]?esc(D.lastTouch[r.token].when+' · '+D.lastTouch[r.token].by.split('@')[0]):'—'}</td>
           </tr>`).join('')}</tbody></table></div>
         </div>
+        ${(D.properties&&D.properties.length)?`<div class="card"><h2>🏠 Property renewals (${filteredProps().length})</h2>
+          <div style="overflow-x:auto"><table><thead><tr><th>Client</th><th>Policy</th><th>Due</th><th>Stage</th><th>Assigned</th></tr></thead>
+          <tbody>${filteredProps().slice(0,80).map(pp=>{
+            const st=propStatus(pp);
+            return `<tr data-prop="${esc(pp.token)}">
+              <td><b>${esc(pp.client)}</b><div class="mini">${pp.locations} location${pp.locations===1?'':'s'} · ${money(pp.premium)}</div></td>
+              <td class="mini">${esc(pp.policy||'—')}</td>
+              <td>${esc(pp.renewalDate)}</td>
+              <td><span class="chip ${st.cls}">${st.label}</span></td>
+              <td><select class="prasg" data-tok="${esc(pp.token)}"><option value="">—</option>${D.staff.map(s=>`<option value="${esc(s.email)}" ${s.email===(pp.assignedTo||'').toLowerCase()?'selected':''}>${esc(s.name.split(' ')[0])}</option>`).join('')}</select></td>
+            </tr>`;}).join('')}</tbody></table></div>
+        </div>`:''}
       </div>
       <div>
         <div class="card"><h2>Open tasks (${openTasks.length})</h2><div style="padding:12px 14px">
@@ -210,10 +359,297 @@ function renderApp(){
   document.querySelectorAll('[data-f]').forEach(el=>el.onclick=()=>{ FILTER=el.dataset.f; renderApp(); });
   $('#q').oninput = e=>{ Q=e.target.value.toLowerCase(); renderApp(); const qq=$('#q'); qq.focus(); qq.setSelectionRange(qq.value.length,qq.value.length); };
   $('#addBtn').onclick = addRenewalModal;
-  $('#lo').onclick = e=>{ e.preventDefault(); ME=''; localStorage.removeItem('gg_staff_email'); renderLogin(); };
+  $('#lo').onclick = e=>{ e.preventDefault(); ME=''; PIN=''; localStorage.removeItem('gg_staff_email'); localStorage.removeItem('gg_staff_pin'); renderLogin(); };
   document.querySelectorAll('[data-done]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); act('completeTask',{id:b.dataset.done},'Task completed'); });
-  document.querySelectorAll('tbody tr').forEach(tr=>tr.onclick=()=>openDetail(Number(tr.dataset.row)));
+  document.querySelectorAll('tbody tr[data-row]').forEach(tr=>tr.onclick=()=>openDetail(Number(tr.dataset.row)));
+  document.querySelectorAll('tbody tr[data-prop]').forEach(tr=>tr.onclick=()=>openProp(tr.dataset.prop));
+  document.querySelectorAll('.rasg').forEach(s=>{ s.onclick=e=>e.stopPropagation();
+    s.onchange=e=>{ e.stopPropagation(); act('assign',{rowIndex:Number(s.dataset.rw),token:s.dataset.tok,client:s.dataset.cl,assignee:s.value},'Assigned'); }; });
+  document.querySelectorAll('.prasg').forEach(s=>{ s.onclick=e=>e.stopPropagation();
+    s.onchange=e=>{ e.stopPropagation(); act('propAssign',{token:s.dataset.tok,assignee:s.value},'Assigned'); }; });
   $('#kTasks').onclick=()=>{ Q=ME.split('@')[0]; renderApp(); };
+  $('#audBtn').onclick=()=>{ AUDIT.on=!AUDIT.on; renderApp(); };
+  $('#repBtn').onclick=()=>{ REP.on=!REP.on; renderApp(); };
+  const pb=$('#prodBtn');
+  if(pb) pb.onclick=()=>{ PROD.on=!PROD.on; renderApp(); if(PROD.on&&!PROD.data&&!PROD.loading) loadProduction(); };
+  const pd=$('#prodDl'); if(pd) pd.onclick=downloadProduction;
+  if(REP.on){
+    document.querySelectorAll('.chart .col').forEach(c=>c.onclick=()=>{ PIPE.month=c.dataset.m; REP.on=false; renderApp(); });
+    document.querySelectorAll('[data-who]').forEach(tr=>tr.onclick=()=>{ PIPE.who=tr.dataset.who; REP.on=false; renderApp(); });
+    document.querySelectorAll('[data-fuopen]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); openDetail(Number(b.dataset.fuopen)); });
+  }
+  $('#fMon').onchange=e=>{ PIPE.month=e.target.value; renderApp(); };
+  $('#fCov').onchange=e=>{ PIPE.cov=e.target.value; renderApp(); };
+  $('#fWho').onchange=e=>{ PIPE.who=e.target.value; renderApp(); };
+  const fc=$('#fClear'); if(fc) fc.onclick=()=>{ PIPE={month:'',cov:'',who:''}; renderApp(); };
+  document.querySelectorAll('[data-qans]').forEach(b=>b.onclick=()=>{
+    const t=document.getElementById('qa_'+b.dataset.qans).value.trim();
+    if(!t){ toast('Type your answer first'); return; }
+    act('answer',{id:b.dataset.qans,answer:t},'Answer logged on the audit trail');
+  });
+  if(AUDIT.on){
+    const aq=$('#audQ');
+    if(aq) aq.oninput=e=>{ AUDIT.q=e.target.value.toLowerCase(); renderApp(); const x=$('#audQ'); x.focus(); x.setSelectionRange(x.value.length,x.value.length); };
+    const ab=$('#audBy'); if(ab) ab.onchange=e=>{ AUDIT.by=e.target.value; renderApp(); };
+    const at=$('#audType'); if(at) at.onchange=e=>{ AUDIT.type=e.target.value; renderApp(); };
+  }
+}
+
+/* ---------- production: head office format, management only ---------- */
+function prodMoney(v){ return v?Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):''; }
+function prodMoney0(v){ return v?'$'+Number(v).toLocaleString('en-US',{maximumFractionDigits:0}):''; }
+function prodCount(v){ return v?String(v):''; }
+function productionView(){
+  if(PROD.err) return `<div class="card"><h2>📈 Production</h2><div style="padding:16px"><div class="err" style="display:block">${esc(PROD.err)}</div></div></div>`;
+  if(!PROD.data) return `<div class="card"><h2>📈 Production</h2><div style="padding:18px" class="mini">Loading the submitted figures…</div></div>`;
+  const d=PROD.data, m=d.marks||{};
+  const cell=(v,f,fmt)=>{
+    const hot = v && m[f] && v>=m[f];
+    return `<td class="pnum${hot?' hot':''}">${fmt(v)}</td>`;
+  };
+  const row=r=>{
+    const cls = r.level==='branch'?'lvl-branch':(r.level==='unit'?'lvl-unit':'lvl-agent');
+    const label = r.level==='agent'&&r.code ? `${esc(r.code)} - ${esc(r.name)}` : esc(r.name||r.code);
+    return `<tr class="${cls}"><td class="pname" style="padding-left:${12+r.depth*20}px">${label}</td>
+      ${cell(r.appsW,'appsW',prodCount)}${cell(r.apiW,'apiW',prodMoney)}
+      ${cell(r.appsM,'appsM',prodCount)}${cell(r.apiM,'apiM',prodMoney)}
+      ${cell(r.appsY,'appsY',prodCount)}${cell(r.apiY,'apiY',prodMoney)}</tr>`;
+  };
+  const t=d.total;
+  return `<div class="card"><h2>📈 Production — SUBMITTED</h2>
+    <div style="padding:12px 16px 16px">
+      <div class="pbar">
+        <div class="mini">As at <b style="color:var(--text)">${esc(d.asOf)}</b> · viewed by ${esc(d.by)} (${esc(d.role)})
+          · <span style="color:var(--gold)">confidential — branch management only</span></div>
+        <button class="abtn gold sm" id="prodDl">⬇ Download</button>
+      </div>
+      <div class="pwrap"><table class="ptable">
+        <thead>
+          <tr class="ptitle"><th colspan="7">SUBMITTED</th></tr>
+          <tr><th class="pname">Hierachy</th><th>Apps -W</th><th>API - W</th><th>Apps -M</th><th>Api -M</th><th>Apps -Y</th><th>API</th></tr>
+        </thead>
+        <tbody>${d.rows.map(row).join('')}</tbody>
+        <tfoot><tr class="ptotal"><td class="pname">Total</td>
+          <td class="pnum">${prodCount(t.appsW)}</td><td class="pnum">${prodMoney(t.apiW)}</td>
+          <td class="pnum">${prodCount(t.appsM)}</td><td class="pnum">${prodMoney(t.apiM)}</td>
+          <td class="pnum">${prodCount(t.appsY)}</td><td class="pnum">${prodMoney(t.apiY)}</td></tr></tfoot>
+      </table></div>
+      <div class="mini" style="margin-top:10px">Every view and download is recorded on the Activity tab under your name.</div>
+    </div></div>`;
+}
+function loadProduction(){
+  PROD.loading=true; PROD.err='';
+  google.script.run
+    .withSuccessHandler(d=>{ PROD.data=d; PROD.loading=false; renderApp(); })
+    .withFailureHandler(e=>{ PROD.err=(e&&e.message)?e.message:String(e); PROD.loading=false; renderApp(); })
+    .productionData(BOOT.key, ME, PIN);
+}
+function downloadProduction(){
+  toast('Preparing the download…');
+  google.script.run
+    .withSuccessHandler(r=>{
+      /* A real workbook, not a CSV of one: the report is recognised by the
+         green banner, the shaded unit lines and the gold standouts, so it has
+         to arrive looking like the report it is. */
+      const blob=new Blob([r.xml],{type:'application/vnd.ms-excel'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob); a.download=r.filename;
+      document.body.appendChild(a); a.click();
+      setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},1500);
+      toast('Downloaded — logged under your name');
+    })
+    .withFailureHandler(e=>toast('⚠ '+((e&&e.message)?e.message:e)))
+    .productionWorkbook(BOOT.key, ME, PIN);
+}
+
+/* ---------- reports: the book, the team, the money, the follow-ups ---------- */
+function money0(v){ const n=Number(v); return isNaN(n)?'—':'TT$'+n.toLocaleString('en-US',{maximumFractionDigits:0}); }
+function reportView(){
+  const rows=D.renewals.map(r=>({...r,st:statusOf(r)}));
+  const props=D.properties||[];
+  // --- money tiles ---
+  const bookPrem=rows.reduce((s,r)=>s+(Number(r.premium)||0),0)+props.reduce((s,p)=>s+(Number(p.premium)||0),0);
+  const renewedPrem=rows.filter(r=>r.st.k==='done').reduce((s,r)=>s+(Number(r.premium)||0),0);
+  const riskPrem=rows.filter(r=>r.st.k==='overdue').reduce((s,r)=>s+(Number(r.premium)||0),0);
+  // --- funnel ---
+  const invited=rows.filter(r=>(r.remindersSent||'').trim()).length;
+  const instructed=rows.filter(r=>r.st.k==='instructed').length;
+  const renewed=rows.filter(r=>r.st.k==='done').length;
+  const fmax=Math.max(invited,instructed+renewed,renewed,1);
+  const funnel=[['Invited',invited],['Instructed',instructed+renewed],['Renewed',renewed]];
+  // --- by month (motor + property), renewed split ---
+  const mon={}; MONTHS.forEach(m=>mon[m]={total:0,done:0});
+  rows.forEach(r=>{const m=monthOf(r.nextDue); if(m){mon[m].total++; if(r.st.k==='done')mon[m].done++;}});
+  props.forEach(p=>{const m=monthOf(p.renewalDate); if(m){mon[m].total++; if(p.stage==='issued')mon[m].done++;}});
+  const mmax=Math.max(...MONTHS.map(m=>mon[m].total),1);
+  // --- team workload ---
+  const team=[...D.staff.map(s=>({email:s.email,name:s.name})),{email:'',name:'— Unassigned —'}];
+  const wl=team.map(t=>{
+    const mine=r=>String(r.assignedTo||'').toLowerCase()===t.email;
+    const mineP=p=>String(p.assignedTo||'').toLowerCase()===t.email;
+    return { name:t.name, email:t.email,
+      files:rows.filter(r=>mine(r)&&r.st.k!=='done').length,
+      instructed:rows.filter(r=>mine(r)&&r.st.k==='instructed').length,
+      overdue:rows.filter(r=>mine(r)&&r.st.k==='overdue').length,
+      prop:props.filter(p=>mineP(p)&&p.stage!=='issued').length,
+      tasks:D.tasks.filter(x=>x.status==='Open'&&String(x.assignee||'').toLowerCase()===t.email).length,
+      queries:(D.queries||[]).filter(q=>q.status==='Open'&&q.of===t.email).length,
+      renewed:rows.filter(r=>mine(r)&&r.st.k==='done').length };
+  }).filter(t=>t.files||t.instructed||t.overdue||t.prop||t.tasks||t.queries||t.renewed||t.email==='');
+  // --- follow-up radar ---
+  const today=new Date();
+  const days=s=>{const d=new Date(s); return isNaN(d.getTime())?null:Math.round((today-d)/86400000);};
+  const fu=[];
+  rows.forEach(r=>{
+    if(r.st.k==='instructed'){const m=(r.renewalStatus||'').match(/— (\d{1,2} \w{3} \d{4})\s*$/);const dd=m?days(m[1]):null;
+      fu.push({r,why:'⚡ Instructed '+(dd!=null?dd+'d ago':'')+' — process now',ord:0,age:dd??0});}
+    else if(r.st.k==='overdue') fu.push({r,why:'Overdue '+Math.abs(r.days)+'d — call '+(r.mobile||'client'),ord:1,age:Math.abs(r.days)});
+    else if(['due7','due14'].includes(r.st.k)){const lt=D.lastTouch[r.token];const dd=lt?days(lt.when):null;
+      if(dd===null||dd>7) fu.push({r,why:'Due '+r.days+'d — '+(dd===null?'never touched':'no touch in '+dd+'d'),ord:2,age:dd??99});}
+  });
+  fu.sort((a,b)=>a.ord-b.ord||b.age-a.age);
+  return `<div class="card"><h2>📊 Reports — the book, the team, the follow-ups</h2><div style="padding:14px 16px">
+    <div class="kpis" style="margin-bottom:16px">
+      <div class="kpi" style="cursor:default"><div class="n" style="font-size:19px">${money0(bookPrem)}</div><div class="l">Book premium (motor + property)</div></div>
+      <div class="kpi" style="cursor:default"><div class="n" style="font-size:19px;color:var(--green)">${money0(renewedPrem)}</div><div class="l">Renewed premium</div></div>
+      <div class="kpi warn" style="cursor:default"><div class="n" style="font-size:19px">${money0(riskPrem)}</div><div class="l">At risk — overdue files</div></div>
+      <div class="kpi" style="cursor:default"><div class="n">${invited?Math.round(renewed/invited*100)+'%':'—'}</div><div class="l">Invited → renewed</div></div>
+    </div>
+
+    <h4 class="rept">Renewals by month — click a bar to open that month</h4>
+    <div class="chart">${MONTHS.map(m=>{const d=mon[m];const open=d.total-d.done;
+      return `<div class="col" data-m="${m}" title="${m}: ${d.total} renewal${d.total===1?'':'s'} — ${d.done} renewed, ${open} open">
+        ${d.total?`<div class="cnt">${d.total}</div>`:''}
+        <div class="stack">
+          ${open?`<div class="seg open" style="height:${Math.round(open/mmax*120)||2}px"></div>`:''}
+          ${d.done?`<div class="seg done" style="height:${Math.round(d.done/mmax*120)||2}px"></div>`:''}
+        </div><div class="ml">${m}</div></div>`;}).join('')}
+    </div>
+    <div class="legend"><span><i class="sw done"></i>Renewed</span><span><i class="sw open"></i>Open</span></div>
+
+    <h4 class="rept">The funnel</h4>
+    ${funnel.map(([l,v])=>`<div class="frow"><span class="fl">${l}</span><div class="fbar" style="width:${Math.round(v/fmax*100)}%"></div><b>${v}</b>${l!=='Invited'&&invited?`<span class="mini">${Math.round(v/invited*100)}%</span>`:''}</div>`).join('')}
+
+    <h4 class="rept">Team workload — click a name to see their files</h4>
+    <div style="overflow-x:auto"><table><thead><tr><th>Staff</th><th>Open files</th><th>⚡ Instructed</th><th>Overdue</th><th>🏠 Property</th><th>Tasks</th><th>❓ Queries</th><th>Renewed</th></tr></thead>
+    <tbody>${wl.map(t=>`<tr data-who="${esc(t.email||'unassigned')}"><td><b>${esc(t.name)}</b></td>
+      <td>${t.files}</td><td>${t.instructed?`<span class="chip c-wait">${t.instructed}</span>`:'0'}</td>
+      <td>${t.overdue?`<span class="chip c-over">${t.overdue}</span>`:'0'}</td><td>${t.prop}</td>
+      <td>${t.tasks}</td><td>${t.queries?`<span class="chip c-due">${t.queries}</span>`:'0'}</td><td>${t.renewed}</td></tr>`).join('')}</tbody></table></div>
+
+    <h4 class="rept">🔥 Follow-up radar — who needs contact now (${fu.length})</h4>
+    ${fu.slice(0,12).map((x,i)=>`<div class="task ${x.ord<2?'over':''}"><div class="t"><b>${esc(x.r.client)}</b> <span class="mini">${esc(x.r.policy||'')}${x.r.mobile?' · 📞 '+esc(x.r.mobile):''}</span>
+      <div class="mini">${esc(x.why)} · assigned: ${esc((x.r.assignedTo||'nobody').split('@')[0])}</div></div>
+      <button class="abtn sm" data-fuopen="${x.r.rowIndex}">Open file</button></div>`).join('')||'<p class="mini">Nothing waiting — the book is being worked.</p>'}
+    ${D.surveys.count?`<h4 class="rept">Client scores (${D.surveys.count} surveys)</h4>
+    <div class="kpis">${D.surveys.avgSat?`<div class="kpi" style="cursor:default"><div class="n">${D.surveys.avgSat}★</div><div class="l">Satisfaction</div></div>`:''}
+    ${D.surveys.avgEase?`<div class="kpi" style="cursor:default"><div class="n">${D.surveys.avgEase}★</div><div class="l">Ease</div></div>`:''}
+    ${D.surveys.avgSpeed?`<div class="kpi" style="cursor:default"><div class="n">${D.surveys.avgSpeed}★</div><div class="l">Speed</div></div>`:''}</div>`:''}
+  </div></div>`;
+}
+
+/* ---------- interactive audit view: every action, filterable ---------- */
+function auditView(){
+  const feed=D.feed||[];
+  const people=[...new Set(feed.map(a=>a.by))].sort();
+  const types=[...new Set(feed.map(a=>a.type.replace(/^TEST:/,'')))].sort();
+  const rows=feed.filter(a=>{
+    if(AUDIT.by && a.by!==AUDIT.by) return false;
+    if(AUDIT.type && a.type.replace(/^TEST:/,'')!==AUDIT.type) return false;
+    if(AUDIT.q && !(a.client+' '+a.details+' '+a.by+' '+a.type).toLowerCase().includes(AUDIT.q)) return false;
+    return true;
+  });
+  const qOpen=(D.queries||[]).filter(q=>q.status==='Open');
+  const qDone=(D.queries||[]).filter(q=>q.status!=='Open');
+  return `<div class="card"><h2>🔍 Audit trail — showing ${rows.length} of ${feed.length} actions</h2>
+    <div style="padding:12px 16px">
+    <div class="bar" style="margin-bottom:10px">
+      <input type="search" id="audQ" placeholder="Filter by client, policy, detail…" value="${esc(AUDIT.q)}">
+      <select id="audBy" style="width:auto"><option value="">Everyone</option>${people.map(p=>`<option ${p===AUDIT.by?'selected':''} value="${esc(p)}">${esc(p.split('@')[0])}</option>`).join('')}</select>
+      <select id="audType" style="width:auto"><option value="">All actions</option>${types.map(t=>`<option ${t===AUDIT.type?'selected':''}>${esc(t)}</option>`).join('')}</select>
+    </div>
+    <div style="overflow-x:auto;max-height:420px;overflow-y:auto"><table><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Client</th><th>Details</th></tr></thead>
+    <tbody>${rows.slice(0,200).map(a=>`<tr style="cursor:default"><td class="mini" style="white-space:nowrap">${esc(a.when)}</td><td><b>${esc(a.by.split('@')[0])}</b></td><td><span class="chip ${/query/.test(a.type)?'c-due':/login/.test(a.type)?'c-up':/instruction|renewed|survey/.test(a.type)?'c-done':'c-wait'}">${esc(a.type.replace(/^TEST:/,''))}</span></td><td>${esc(a.client)}</td><td class="mini">${esc(a.details.slice(0,140))}</td></tr>`).join('')}</tbody></table></div>
+    <h4 style="font:800 11px 'Montserrat';color:var(--teal);text-transform:uppercase;letter-spacing:.08em;margin:16px 0 6px">Queries — open (${qOpen.length}) · answered (${qDone.length})</h4>
+    ${[...qOpen,...qDone].slice(0,30).map(q=>`<div class="task ${q.status==='Open'?'over':''}"><div class="t">
+      <b>${esc(q.client||'General')}</b> — ${esc(q.question)}
+      <div class="mini">${esc(q.by.split('@')[0])} → ${esc(q.of.split('@')[0])} · ${esc(q.created)} · <b>${q.status}</b>${q.answer?` — “${esc(q.answer.slice(0,140))}” (${esc(q.answeredBy.split('@')[0])}, ${esc(q.answered)})`:''}</div>
+    </div></div>`).join('')||'<p class="mini">No queries yet.</p>'}
+  </div></div>`;
+}
+
+function propStatus(pp){
+  const stages=D.propStages||[];
+  const i=stages.findIndex(x=>x.key===pp.stage);
+  if(pp.stage==='issued') return {label:'✓ Issued',cls:'c-done'};
+  if(i>=0) return {label:stages[i].label,cls:'c-wait'};
+  if(pp.days!==null&&pp.days<0) return {label:'Overdue '+Math.abs(pp.days)+'d',cls:'c-over'};
+  if(pp.days!==null&&pp.days<=14) return {label:'Due '+pp.days+'d',cls:'c-due'};
+  return {label:pp.status?pp.status.slice(0,18):'Not invited',cls:'c-up'};
+}
+
+function openProp(token){
+  const pp=(D.properties||[]).find(x=>x.token===token); if(!pp) return;
+  const st=propStatus(pp);
+  const stages=D.propStages||[];
+  const at=stages.findIndex(x=>x.key===pp.stage);
+  const link=D.portalBase? D.portalBase+(D.portalBase.includes('?')?'&':'?')+'p='+encodeURIComponent(pp.token):'';
+  $('#dr').innerHTML=`
+    <div class="dh"><h3>🏠 ${esc(pp.client)} <span class="chip ${st.cls}" style="vertical-align:middle">${st.label}</span></h3>
+    <div style="font-size:12px;color:var(--muted)">${esc(pp.policy||'no policy #')} · ${pp.locations} location(s) · renews ${esc(pp.renewalDate)}</div></div>
+    <div class="db">
+      <div class="sec"><div class="kv">
+        <div><div class="k">Premium (all locations)</div><div class="v">${money(pp.premium)}</div></div>
+        <div><div class="k">Email</div><div class="v">${esc(pp.email||'—')}</div></div>
+        <div><div class="k">Stage since</div><div class="v">${esc(pp.stageUpdated||'—')}</div></div>
+        <div><div class="k">Assigned to</div><div class="v">
+          <select id="pAssign">${['',...D.staff.map(x=>x.email)].map(e=>`<option ${e===(pp.assignedTo||'').toLowerCase()?'selected':''}>${e}</option>`).join('')}</select>
+        </div></div>
+      </div></div>
+      <div class="sec"><h4>Renewal journey</h4>
+        ${stages.map((x,i)=>`<div class="task" style="${i===at?'border-color:var(--gold);background:rgba(239,194,75,.08)':''}">
+          <div class="t"><b>${i<at?'✅ ':i===at?'🟡 ':''}${esc(x.label)}</b><div class="mini">${esc(x.blurb)}</div></div>
+          ${i===at+1?`<button class="abtn sm" data-adv="${x.key}">Advance →</button>`:''}
+        </div>`).join('')}
+        <label>Note for the client's progress update (optional)</label>
+        <input type="text" id="pNote" placeholder="e.g. Terms received from Guardian — reviewing now">
+      </div>
+      ${pp.rate?`<div class="sec"><h4>Rate check</h4>
+        <div class="task"><div class="t"><b>$${pp.rate.toFixed(2)} per $1,000</b> before tax
+          <div class="mini">${(pp.premiumHistory||[]).map(h=>h.year+': '+money(h.amount)).join(' · ')||'no history on file'}${pp.years?' · '+pp.years+' yrs with us':''}</div>
+        </div></div></div>`:''}
+      <div class="sec"><h4>❓ Raise a query — the person named must answer, on the record</h4>
+        <label>Who must answer</label><select id="pAskWho">${D.staff.map(s=>`<option value="${esc(s.email)}">${esc(s.name)}</option>`).join('')}</select>
+        <label>Question</label><textarea id="pAskT" placeholder="e.g. Terms overdue from Guardian — please chase and advise"></textarea>
+        <button class="abtn sm" id="pAskGo" style="margin-top:8px">❓ Send query</button>
+      </div>
+      <div class="sec" style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="abtn primary" id="pInvite">✉ Send/resend renewal invite</button>
+        <button class="abtn gold" id="pRate">⚖ Request loyalty rate review</button>
+        ${pp.mobile?`<button class="abtn" id="pWa">📱 WhatsApp the link</button>`:''}
+        ${link?`<button class="abtn" id="pLink">⧉ Copy portal link</button>`:''}
+      </div>
+    </div>`;
+  $('#ov').classList.add('open'); $('#dr').classList.add('open');
+  document.querySelectorAll('[data-adv]').forEach(btn=>btn.onclick=()=>{
+    closeDr(); act('propStage',{token:pp.token,stage:btn.dataset.adv,note:$('#pNote').value},'Stage advanced — client updated by email');
+  });
+  $('#pInvite').onclick=()=>{ closeDr(); act('propInvite',{token:pp.token},'Invitation sent to '+(pp.email||'client')); };
+  $('#pRate').onclick=()=>{ closeDr(); act('propRateReview',{token:pp.token},'Rate review request sent to Guardian'); };
+  const wa=$('#pWa');
+  if(wa) wa.onclick=()=>{
+    let d=(pp.mobile||'').replace(/\D/g,'');
+    if(d.length===7) d='1868'+d;
+    else if(d.length===10&&d.startsWith('868')) d='1'+d;
+    if(d.length!==11||!d.startsWith('1868')){ toast('Check the mobile number format: '+pp.mobile); return; }
+    const first=(pp.client||'').split(/[ ,]/).filter(Boolean)[1]||(pp.client||'').split(/[ ,]/)[0]||'there';
+    const msg=`Hi, this is the Ricky Rampersad Branch (Guardian Group). Your property renewal${pp.policy?' — policy '+pp.policy:''} is due ${pp.renewalDate}. You can review your cover, check your values and send us your instructions in about 2 minutes here:\n\n${link}\n\nAny questions, just reply here or call (868) 678-5921.`;
+    window.open('https://wa.me/'+d+'?text='+encodeURIComponent(msg),'_blank');
+    act('comment',{token:pp.token,client:pp.client,text:'WhatsApp renewal link sent to '+pp.mobile},'WhatsApp opened — press send there');
+  };
+  $('#pAssign').onchange=e=>act('propAssign',{token:pp.token,assignee:e.target.value},'Assigned');
+  $('#pAskGo').onclick=()=>{ const t=$('#pAskT').value.trim(); if(!t){ toast('Type the question first'); return; } closeDr(); act('ask',{token:pp.token,client:pp.client,assignee:$('#pAskWho').value,text:t},'Query sent — it must be answered'); };
+  const pl=$('#pLink'); if(pl) pl.onclick=async()=>{ try{ await navigator.clipboard.writeText(link); toast('Portal link copied'); }catch(e){ prompt('Copy the link:', link); } };
 }
 
 function openDetail(rowIndex){
@@ -224,7 +660,7 @@ function openDetail(rowIndex){
   const link = D.portalBase ? D.portalBase + (D.portalBase.includes('?')?'&':'?') + 't=' + encodeURIComponent(r.token) : '';
   $('#dr').innerHTML = `
     <div class="dh"><h3>${esc(r.client)} <span class="chip ${st.cls}" style="vertical-align:middle">${st.label}</span></h3>
-    <div style="font-size:12px;color:#b7c9de">${esc(r.coverage)} · ${esc(r.policy||'no policy #')} · due ${esc(r.nextDue)}</div></div>
+    <div style="font-size:12px;color:var(--muted)">${esc(r.coverage)} · ${esc(r.policy||'no policy #')} · due ${esc(r.nextDue)}</div></div>
     <div class="db">
       <div class="sec"><div class="kv">
         <div><div class="k">Premium</div><div class="v">${money(r.premium)}</div></div>
@@ -255,6 +691,11 @@ function openDetail(rowIndex){
         <div><label>Due</label><input type="date" id="dTaskD"></div></div>
         <button class="abtn sm" id="dTaskAdd" style="margin-top:8px">＋ Add task</button>
       </div>
+      <div class="sec"><h4>❓ Raise a query — the person named must answer, on the record</h4>
+        <label>Who must answer</label><select id="dAskWho">${D.staff.map(s=>`<option value="${esc(s.email)}">${esc(s.name)}</option>`).join('')}</select>
+        <label>Question</label><textarea id="dAskT" placeholder="e.g. Client called twice — please advise status"></textarea>
+        <button class="abtn sm" id="dAskGo" style="margin-top:8px">❓ Send query</button>
+      </div>
       <div class="sec"><h4>Comments & history</h4>
         <div class="tl">${acts.map(a=>`<div class="it"><b>${esc(a.by.split('@')[0])}</b> · ${esc(a.type)}<div class="w">${esc(a.when)} · ${esc(a.details.slice(0,120))}</div></div>`).join('')||'<p class="mini">No activity yet.</p>'}</div>
         <label>Add comment</label><textarea id="dCom" placeholder="Spoke to client, awaiting docs…"></textarea>
@@ -268,6 +709,7 @@ function openDetail(rowIndex){
   $('#dAssign').onchange=e=>act('assign',{rowIndex:r.rowIndex,token:r.token,client:r.client,assignee:e.target.value},'Assigned');
   $('#dTaskAdd').onclick=()=>{ const t=$('#dTaskT').value.trim(); if(!t) return; closeDr(); act('addTask',{title:t,assignee:$('#dTaskA').value,due:$('#dTaskD').value,client:r.client,token:r.token},'Task created'); };
   $('#dComAdd').onclick=()=>{ const t=$('#dCom').value.trim(); if(!t) return; closeDr(); act('comment',{token:r.token,client:r.client,text:t},'Comment logged'); };
+  $('#dAskGo').onclick=()=>{ const t=$('#dAskT').value.trim(); if(!t){ toast('Type the question first'); return; } closeDr(); act('ask',{token:r.token,client:r.client,assignee:$('#dAskWho').value,text:t},'Query sent — it must be answered'); };
   document.querySelectorAll('[data-ddone]').forEach(b=>b.onclick=()=>{ closeDr(); act('completeTask',{id:b.dataset.ddone},'Task completed'); });
 }
 function closeDr(){ $('#ov').classList.remove('open'); $('#dr').classList.remove('open'); }
@@ -309,6 +751,17 @@ function addRenewalModal(){
   };
 }
 boot();
+</script>
+<script>
+(function(){
+  var saved=''; try{saved=localStorage.getItem('rrb_theme')||'';}catch(e){}
+  function apply(v){ if(v)document.documentElement.setAttribute('data-theme',v);
+    else document.documentElement.removeAttribute('data-theme');
+    document.querySelectorAll('.thpick button').forEach(function(b){b.classList.toggle('on',(b.getAttribute('data-th')||'')===v);}); }
+  apply(saved);
+  document.querySelectorAll('.thpick button').forEach(function(b){
+    b.onclick=function(){var v=b.getAttribute('data-th')||''; apply(v); try{localStorage.setItem('rrb_theme',v);}catch(e){}};});
+})();
 </script>
 </body>
 </html>

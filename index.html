@@ -1,10 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NTJV1S98PS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-NTJV1S98PS');
+</script>
+
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Ricky Rampersad Branch | Life, Health, Motor & Property Insurance</title>
 <meta name="description" content="Ricky Rampersad Branch — instant life insurance quotes, online applications, health enrollment, motor & property quotations, and client services. Get covered today."/>
+<link rel="canonical" href="https://rickyrampersadbranch.com/"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="Ricky Rampersad Branch"/>
+<meta property="og:title" content="Ricky Rampersad Branch | Life, Health, Motor & Property Insurance"/>
+<meta property="og:description" content="Protecting your family, your business, your future. Quotes and claims online — Chaguanas, Trinidad."/>
+<meta property="og:url" content="https://rickyrampersadbranch.com/"/>
+<meta property="og:image" content="https://rickyrampersadbranch.com/og-image.png"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://rickyrampersadbranch.com/og-image.png"/>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -455,6 +476,59 @@
     .reveal { opacity: 1; transform: none; }
     html { scroll-behavior: auto; }
   }
+
+  /* ── ORPHAN POLICY BANNER ── */
+  .orphan {
+    display: flex; gap: 20px; align-items: flex-start;
+    background:
+      radial-gradient(ellipse 60% 100% at 0% 0%, rgba(239,194,75,.13), transparent 70%),
+      linear-gradient(135deg, rgba(0,207,234,.07), rgba(0,207,234,.02));
+    border: 1px solid rgba(239,194,75,.32); border-radius: 20px;
+    padding: 26px 26px 24px; margin-bottom: 22px; text-decoration: none;
+    position: relative; overflow: hidden;
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+  }
+  .orphan:hover {
+    transform: translateY(-4px); border-color: rgba(239,194,75,.6);
+    box-shadow: 0 18px 44px rgba(0,0,0,.4);
+  }
+  .orphan-mark { flex-shrink: 0; }
+  .orphan-mark svg {
+    width: 52px; height: 52px;
+    filter: drop-shadow(0 6px 18px rgba(239,194,75,.35));
+    animation: floaty 6s ease-in-out infinite;
+  }
+  @media (max-width: 620px) { .orphan { flex-direction: column; gap: 14px; } }
+  .orphan-tag {
+    display: inline-block; font-family: 'Montserrat', sans-serif;
+    font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--gold); background: rgba(239,194,75,.1);
+    border: 1px solid rgba(239,194,75,.3); border-radius: 50px;
+    padding: 5px 12px; margin-bottom: 11px;
+  }
+  .orphan-body h3 {
+    font-family: 'Montserrat', sans-serif; font-weight: 800;
+    font-size: clamp(17px, 2.8vw, 22px); color: var(--text);
+    margin-bottom: 9px; letter-spacing: -.3px;
+  }
+  .orphan-body p { font-size: 13.5px; color: var(--muted); line-height: 1.65; margin-bottom: 13px; }
+  .orphan-body p b { color: var(--gold); font-weight: 700; }
+  .orphan-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 15px; }
+  .orphan-chips span {
+    font-size: 11.5px; color: var(--muted); font-weight: 500;
+    background: rgba(255,255,255,.05); border: 1px solid var(--line);
+    border-radius: 50px; padding: 5px 11px;
+  }
+  .orphan-go {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 800;
+    letter-spacing: .3px; color: #1d1503;
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    border-radius: 12px; padding: 12px 20px;
+    box-shadow: 0 8px 24px rgba(239,194,75,.28);
+    transition: transform .18s ease;
+  }
+  .orphan:hover .orphan-go { transform: translateX(3px); }
 
   /* ── CAREERS ── */
   .careers {
@@ -1081,7 +1155,42 @@
     <div class="section-label reveal">Existing Clients</div>
     <h2 class="reveal">We're here after the sale too</h2>
     <p class="section-sub reveal">Already insured with us? File a claim, respond to a premium notice, or tell us how we're doing.</p>
+
+    <a class="orphan reveal" href="https://donthaveanagent.com" target="_blank" rel="noopener">
+      <div class="orphan-mark" aria-hidden="true">
+        <svg viewBox="0 0 88 88">
+          <defs><linearGradient id="gorph" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
+          </linearGradient></defs>
+          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#gorph)"/>
+          <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="orphan-body">
+        <span class="orphan-tag">Don't have an agent?</span>
+        <h3>Your agent left. Your policy didn't.</h3>
+        <p>If the person who sold you your policy retired, resigned or simply stopped calling, you have an <b>orphan policy</b> — whichever company it's with. We trace it, fix your records, and tell you honestly what we can and cannot do.</p>
+        <div class="orphan-chips">
+          <span>No cost, ever</span><span>No obligation to buy</span><span>About 4 minutes</span><span>No policy number needed</span>
+        </div>
+        <span class="orphan-go">Claim my free policy review ↗</span>
+      </div>
+    </a>
     <div class="grid">
+      <a class="tile gold-tile reveal" href="claims/">
+        <span class="badge">New</span>
+        <div class="ico">🛡️</div>
+        <h3>File a Claim — Claims TT</h3>
+        <p>Motor, health, property, life or pension. Photograph your documents, upload them from your phone, and get a claim reference in about ten minutes.</p>
+        <span class="go">Start My Claim</span>
+      </a>
+      <a class="tile reveal" href="claims/#track">
+        <div class="ico">🔎</div>
+        <h3>Track a Claim</h3>
+        <p>Already filed? Check where your claim stands and see exactly what documents we are still waiting on.</p>
+        <span class="go">Check My Claim</span>
+      </a>
       <a class="tile gold-tile reveal" href="service/">
         <span class="badge">New</span>
         <div class="ico">📋</div>
@@ -1095,12 +1204,6 @@
         <h3>Don't Have An Agent?</h3>
         <p>Agent retired or stopped calling? Our branch project for policyholders nobody calls. Free review, your records fixed, an agent assigned if you want one. We service policies issued by Guardian Life of the Caribbean — anything else, we tell you plainly and point you home.</p>
         <span class="go">donthaveanagent.com</span>
-      </a>
-      <a class="tile reveal" href="https://form.jotform.com/230135714666051" target="_blank" rel="noopener">
-        <div class="ico">🏥</div>
-        <h3>Health Claim E-Form</h3>
-        <p>Submit your health insurance claim online — no need to visit the branch to hand in paperwork.</p>
-        <span class="go">File a Claim</span>
       </a>
       <a class="tile reveal" href="https://form.jotform.com/232374116479056" target="_blank" rel="noopener">
         <div class="ico">💬</div>
@@ -1342,9 +1445,14 @@
       <span class="hr-txt"><b>Renew my policy</b><span>Motor & property renewals</span></span>
       <span class="hr-go">→</span>
     </a>
-    <a class="help-row" href="https://form.jotform.com/230135714666051" target="_blank" rel="noopener">
-      <span class="hr-ico">🏥</span>
-      <span class="hr-txt"><b>Make a claim</b><span>Health claim e-form</span></span>
+    <a class="help-row" href="claims/">
+      <span class="hr-ico">🛡️</span>
+      <span class="hr-txt"><b>Make a claim</b><span>Motor, health, property, life &amp; pension</span></span>
+      <span class="hr-go">→</span>
+    </a>
+    <a class="help-row" href="https://donthaveanagent.com" target="_blank" rel="noopener">
+      <span class="hr-ico">🙋</span>
+      <span class="hr-txt"><b>I don't have an agent</b><span>Free review for orphan policies — any company</span></span>
       <span class="hr-go">→</span>
     </a>
     <a class="help-row" href="https://factfind360.com" target="_blank" rel="noopener">
@@ -1389,7 +1497,8 @@
         { ico: '🏠', label: 'My home or property', desc: 'Buildings & contents cover', url: 'https://form.jotform.com/201953408200849' },
         { ico: '🦺', label: 'My income, against accidents', desc: 'Personal accident & income protection', url: 'https://personalaccident.netlify.app/' },
         { ico: '👥', label: 'My business & employees', desc: 'Key person & group benefits', go: 'business' },
-        { ico: '🏦', label: 'My retirement', desc: 'Pensions & long-term savings', go: 'retirement' }
+        { ico: '🏦', label: 'My retirement', desc: 'Pensions & long-term savings', go: 'retirement' },
+        { ico: '🙋', label: 'I already have a policy — but no agent', desc: 'Free review for orphan policies, whichever company they are with', url: 'https://donthaveanagent.com' }
       ]
     },
     life: {

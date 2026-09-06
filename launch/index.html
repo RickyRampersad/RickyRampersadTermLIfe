@@ -1,0 +1,383 @@
+<title>The Launch Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+:root{--navy:#0B1836;--teal:#0D9488;--teal-lt:#2DD4BF;--gold:#F5B324;--wa:#25D366;
+ --good:#0E8A5F;--warn:#B8791A;--crit:#C0392B;
+ --paper:#fff;--ground:#F4F6FA;--sunk:#EEF2F8;--ink:#0F172A;--ink-2:#3F4A5C;
+ --muted:#69748A;--faint:#98A2B3;--line:#DFE4EC;
+ --shadow:0 1px 2px rgba(11,24,54,.06),0 12px 32px -14px rgba(11,24,54,.22)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#111A2E;
+ --ground:#080D1A;--sunk:#0D1526;--ink:#EAEEF6;--ink-2:#C3CBDA;--muted:#8B95A9;
+ --faint:#6A7488;--line:#222C42;--teal:#2DD4BF;--good:#34D399;--warn:#F5B324;--crit:#F87171;
+ --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 34px -16px rgba(0,0,0,.8)}}
+:root[data-theme="dark"]{--paper:#111A2E;--ground:#080D1A;--sunk:#0D1526;--ink:#EAEEF6;
+ --ink-2:#C3CBDA;--muted:#8B95A9;--faint:#6A7488;--line:#222C42;--teal:#2DD4BF;
+ --good:#34D399;--warn:#F5B324;--crit:#F87171;
+ --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 34px -16px rgba(0,0,0,.8)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+ font:16.5px/1.62 Inter,-apple-system,"Segoe UI",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:800px;margin:0 auto;padding:0 18px 70px}
+h2{font-family:Newsreader,Georgia,serif;font-size:clamp(24px,5vw,31px);font-weight:600;
+ letter-spacing:-.015em;margin:0 0 6px;line-height:1.2;text-wrap:balance}
+.eyebrow{font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;
+ color:var(--teal);margin:0 0 9px}
+.lede{font-size:16px;color:var(--ink-2);margin:0 0 20px;line-height:1.6}
+section{margin:0 0 44px}
+.rule{height:1px;background:var(--line);margin:0 0 34px}
+.part{font-size:12px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
+ color:var(--faint);margin:0 0 4px}
+
+header{background:radial-gradient(700px 370px at 86% -18%,rgba(45,212,191,.22),transparent 60%),
+ radial-gradient(540px 320px at 4% 112%,rgba(245,179,36,.13),transparent 58%),
+ var(--navy);color:#fff;padding:28px 18px 32px;margin-bottom:28px}
+.hin{max-width:764px;margin:0 auto}
+.stamp{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.16em;
+ text-transform:uppercase;background:var(--good);color:#fff;padding:5px 11px;
+ border-radius:6px;margin-bottom:16px}
+h1{font-family:Newsreader,Georgia,serif;font-size:clamp(30px,7vw,42px);font-weight:600;
+ line-height:1.14;letter-spacing:-.02em;margin:0 0 13px}
+header p{margin:0;font-size:16.5px;color:rgba(255,255,255,.76);line-height:1.6}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.toc a{font-size:13px;font-weight:700;text-decoration:none;color:rgba(255,255,255,.9);
+ background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);
+ border-radius:999px;padding:7px 14px}
+.toc a:hover{background:rgba(45,212,191,.22);border-color:var(--teal-lt)}
+
+/* go / no-go */
+.chk{display:grid;gap:9px}
+.ck{display:grid;grid-template-columns:30px 1fr;gap:14px;align-items:start;
+ background:var(--paper);border:1px solid var(--line);border-radius:13px;
+ padding:14px 16px;box-shadow:var(--shadow)}
+.ck.done{border-left:4px solid var(--good)}
+.ck.todo{border-left:4px solid var(--gold)}
+.ck .m{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;
+ font:800 13px Inter,sans-serif;margin-top:1px}
+.ck.done .m{background:var(--good);color:#fff}
+.ck.todo .m{background:var(--gold);color:#3D2A00}
+.ck b{display:block;font-size:16px;font-weight:800;line-height:1.3}
+.ck span{display:block;font-size:14.5px;color:var(--ink-2);margin-top:3px;line-height:1.55}
+
+/* copy blocks */
+.msg{background:var(--paper);border:1px solid var(--line);border-radius:16px;
+ overflow:hidden;box-shadow:var(--shadow);margin-bottom:14px}
+.msg .mh{display:flex;justify-content:space-between;align-items:center;gap:12px;
+ padding:13px 17px;background:var(--sunk);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.msg .mh b{font-size:14.5px;font-weight:800}
+.msg .mh span{font-size:12px;color:var(--muted)}
+.msg pre{margin:0;padding:17px;font:14px/1.66 ui-monospace,SFMono-Regular,Menlo,monospace;
+ white-space:pre-wrap;color:var(--ink-2);max-height:420px;overflow:auto}
+.cp{border:0;border-radius:9px;background:var(--teal);color:#fff;
+ font:800 13px Inter,sans-serif;padding:9px 15px;cursor:pointer;flex:none}
+.cp:hover{filter:brightness(1.07)}
+.cp:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.cp.done{background:var(--good)}
+
+.note{background:rgba(245,179,36,.10);border:1.5px solid rgba(245,179,36,.36);
+ border-radius:14px;padding:16px 19px;margin:0 0 20px}
+.note b{color:var(--warn)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .note b{color:var(--gold)}}
+:root[data-theme="dark"] .note b{color:var(--gold)}
+.note p{margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.55}
+
+/* day one */
+.day{display:grid;grid-template-columns:104px 1fr;gap:15px;align-items:start;
+ background:var(--paper);border:1px solid var(--line);border-radius:12px;
+ padding:14px 16px;box-shadow:var(--shadow);margin-bottom:9px}
+.day .w{font-size:12px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+ color:var(--teal);padding-top:2px}
+.day .x{font-size:15.5px;font-weight:700;line-height:1.35}
+.day .x em{display:block;font-style:normal;font-weight:400;font-size:14px;
+ color:var(--muted);margin-top:3px;line-height:1.5}
+@media (max-width:520px){.day{grid-template-columns:1fr;gap:5px}}
+footer{text-align:center;font-size:13px;color:var(--muted);padding:26px 0 0}
+</style>
+
+<header><div class="hin">
+<div class="stamp">Ready to launch</div>
+<h1>The launch pack</h1>
+<p>Everything to say, to three audiences, with the messages written. Check the four
+things at the top first, then send.</p>
+<div class="toc">
+  <a href="#go">Before you send</a>
+  <a href="#agents">The agents</a>
+  <a href="#staff">The staff</a>
+  <a href="#clients">The clients</a>
+  <a href="#after">Week one</a>
+</div>
+</div></header>
+
+<div class="wrap">
+
+<section id="go">
+<p class="part">First</p>
+<h2>Four things, then you are clear</h2>
+<p class="lede">Two are done. Two take about fifteen minutes between them.</p>
+
+<div class="chk">
+  <div class="ck done"><div class="m">&#10003;</div><div>
+    <b>The link records what happens to it</b>
+    <span>Deployed and tested end to end &mdash; opens, watches, taps and bookings all
+      reach the sheet, and the advisor is emailed with their unit manager copied.</span></div></div>
+
+  <div class="ck done"><div class="m">&#10003;</div><div>
+    <b>The roster is read from your sheet</b>
+    <span>34 active agents across four units, off the Access tab. Adding somebody is a
+      row, not a code change.</span></div></div>
+
+  <div class="ck todo"><div class="m">!</div><div>
+    <b>Send yourself a link and book it</b>
+    <span>Open <b>/prospecting/</b>, put your own name and number in, send it, then walk
+      the whole thing through as a client would. You should land on your own board within
+      a minute, and get the email. Do this before thirty-four people do it for you.</span></div></div>
+
+  <div class="ck todo"><div class="m">!</div><div>
+    <b>Name a deputy</b>
+    <span>One manager, one gate. If you are away, every case stops. Tell the branch who
+      signs when you cannot &mdash; it belongs in the message below.</span></div></div>
+</div>
+
+<div class="note" style="margin-top:18px">
+<p><b>What this launch is, and is not.</b> This launches <b>prospecting</b> &mdash; the link
+an advisor sends before the first appointment, and the board they watch it on. The fact find
+changes and the delivery chasers are built and waiting, and they go out separately once you
+have branched and merged them. Say that plainly to the branch and nobody is disappointed
+later.</p>
+</div>
+</section>
+
+<div class="rule"></div>
+
+<section id="agents">
+<p class="part">Audience one</p>
+<h2>The agents</h2>
+<p class="lede">Post this to the branch group with both films attached. It gives them the
+two links, tells them what the board does, and says what is not live yet.</p>
+
+<div class="msg">
+  <div class="mh"><b>WhatsApp &mdash; branch group</b>
+    <span>post the two films with it</span>
+    <button class="cp" data-c="ag">Copy</button></div>
+  <pre id="ag">*It is live. Two links, and they are yours from today.*
+
+*1. What you send a client, before you meet them*
+https://rickyrampersadbranch.com/meet/
+
+Your name and your registration at the top. A film. Three taps that show them
+what their own family would need. Then they tap what is actually on their mind
+and book you from the page.
+
+*2. Where you send it from*
+https://rickyrampersadbranch.com/prospecting/
+
+Type their first name, tap *Send on WhatsApp* &mdash; the link and the message
+write themselves with your code on them. Your own QR code is on the same card
+for your business card.
+
+*Then the board tells you what happened.*
+Who opened it &middot; who watched it &middot; what they tapped &middot; who booked &mdash; and a
+line telling you who to ring and why. You will get an email the moment someone
+opens your link, and again when they say what they want. Your unit manager is
+copied, so nobody has to chase you for an update.
+
+*Watch both films first.* One is what your client sees. The other is yours &mdash;
+do not send that one out.
+
+*3. The manual &mdash; how the whole thing works*
+https://rickyrampersadbranch.com/manual/
+
+Nine steps from a name in your phone to a policy in their hands. What your
+manager checks and how fast. What every email means. What to do when something
+does not work. Read it once, then keep it open.
+
+*What is not live yet:* the fact find changes and the delivery reminders. They
+are built and coming separately. This is prospecting only &mdash; the manual says
+which parts are which.
+
+Send one link today. Tell me what breaks.
+
+&mdash; Ricky</pre>
+</div>
+
+<div class="msg">
+  <div class="mh"><b>Email &mdash; the same thing, for the file</b>
+    <span>to all advisors</span>
+    <button class="cp" data-c="ag2">Copy</button></div>
+  <pre id="ag2">Subject: Your prospecting link is live
+
+Two links from today.
+
+The one you send a client, before you have met them:
+https://rickyrampersadbranch.com/meet/
+
+The one you send it from:
+https://rickyrampersadbranch.com/prospecting/
+
+The page opens in your name, with your registration on it. It carries a film,
+a three-tap calculation that shows the client what their own family would need,
+and a place for them to tell you what they actually want to talk about before
+you sit down. They can book you from it.
+
+Your board then shows you who opened it, who watched it, what they picked and
+who booked, with a line saying who to ring and why. You are emailed on the
+first open and again when somebody says what they want. Your unit manager is
+copied on both.
+
+Watch both films before you send anything. One is for clients. One is for you.
+
+The manual is at rickyrampersadbranch.com/manual/ and it covers the whole
+thing: the nine steps from a name in your phone to a policy in their hands,
+what your manager checks and how quickly, what every email means, and what to
+do when something does not work. Read it once and keep it open.
+
+Not live yet: the fact find changes and the delivery reminders. Those follow
+separately, and the manual marks which parts are which.
+
+If something does not work, tell me the same day.
+
+Ricky Rampersad
+Branch Manager</pre>
+</div>
+</section>
+
+<div class="rule"></div>
+
+<section id="staff">
+<p class="part">Audience two</p>
+<h2>The staff</h2>
+<p class="lede">Kamla, Sasha, Azariah and Jenny need to know what arrives, where it lands,
+and what to do when an advisor asks. Short, because their day is already full.</p>
+
+<div class="msg">
+  <div class="mh"><b>Briefing &mdash; branch operations</b>
+    <span>email or read out at the huddle</span>
+    <button class="cp" data-c="st">Copy</button></div>
+  <pre id="st">Subject: Prospecting goes live &mdash; what it means for the desk
+
+From today every advisor can send a client a link before their first
+appointment. Two things you should know.
+
+WHERE IT LANDS
+Everything the client does &mdash; opens the page, watches the film, taps what they
+want, books &mdash; writes to a new tab called *Prospects* in the fact find
+workbook. One row per person, not a log. It updates itself.
+
+WHAT ARRIVES IN INBOXES
+The advisor is emailed on the first open, again when the client says what they
+want, and again when they book. Their unit manager is copied. Nobody needs to
+be told by phone.
+
+WHEN AN ADVISOR ASKS YOU
+&bull; "How do I send it?" &mdash; rickyrampersadbranch.com/prospecting/, type the
+  first name, tap Send on WhatsApp.
+&bull; "Why is my name not on it?" &mdash; they are on the Access tab; check the row
+  says Active.
+&bull; "The board is empty" &mdash; they have not sent one yet. The board only shows
+  their own.
+&bull; "Nothing arrived" &mdash; check their email on the Access tab is right.
+
+All four of those, and everything else, are written out at
+rickyrampersadbranch.com/manual/ &mdash; there is a page in it for the desk. Send
+an advisor that link rather than explaining it twice.
+
+WHAT IS NOT LIVE
+The fact find changes and the delivery reminders. Do not tell advisors those
+are running yet.
+
+NOTHING CHANGES ON YOUR SIDE TODAY
+No new form to fill, no report to run. This is the desk knowing what advisors
+are being told.
+
+Ricky</pre>
+</div>
+</section>
+
+<div class="rule"></div>
+
+<section id="clients">
+<p class="part">Audience three</p>
+<h2>The clients</h2>
+<p class="lede">There is no announcement to clients, and there should not be. A client
+meets this the moment their advisor sends them the link &mdash; the page introduces itself,
+which is the whole point of it.</p>
+
+<div class="msg">
+  <div class="mh"><b>What the client receives</b>
+    <span>written for them by the board &mdash; nothing to send yourself</span>
+    <button class="cp" data-c="cl">Copy</button></div>
+  <pre id="cl">Hi Devon &mdash; before we meet, this is how I work and what happens in the
+appointment. About a minute. There is a spot at the bottom to tell me what you
+want to talk about, so I come with the right numbers.
+
+https://rickyrampersadbranch.com/meet/?a=A03522&n=Premchand+Dookran&c=Devon
+
+Premchand Dookran, Ricky Rampersad Branch</pre>
+</div>
+
+<div class="note">
+<p><b>The one thing to hold back.</b> Do not put the client link on the branch&rsquo;s
+public pages or social media yet. Every link carries the advisor&rsquo;s code, and a
+generic one credits nobody &mdash; opens and bookings would land on no board at all. Let
+it run through advisors for a fortnight first.</p>
+</div>
+</section>
+
+<div class="rule"></div>
+
+<section id="after">
+<p class="part">After</p>
+<h2>Week one</h2>
+<p class="lede">What to expect, and what to look at.</p>
+
+<div class="day"><div class="w">Day one</div><div class="x">Everybody opens it, nobody sends it
+  <em>Normal. Ask at the huddle who has sent one; the first send is the hard one.</em></div></div>
+
+<div class="day"><div class="w">Day two</div><div class="x">The first questions arrive
+  <em>Mostly &ldquo;my name is not on it&rdquo; and &ldquo;nothing arrived&rdquo;. Both are
+  the Access tab &mdash; check Active and check the email.</em></div></div>
+
+<div class="day"><div class="w">Day three</div><div class="x">Somebody picks needs and does not book
+  <em>That is the whole point of the thing. Ring them that day &mdash; the board tells
+  the advisor to.</em></div></div>
+
+<div class="day"><div class="w">End of week</div><div class="x">Look at one number
+  <em>Of the links sent, how many were opened? Below half is a timing problem, not a
+  content one &mdash; they are sending at the wrong hour.</em></div></div>
+
+<div class="day"><div class="w">Then</div><div class="x">Branch and merge the fact find
+  <em>rickyrampersadbranch.com/fix/ &mdash; test it, put it on a branch, check the
+  preview, merge. That is the next release.</em></div></div>
+</section>
+
+<footer><b>Ricky Rampersad Branch</b><br>
+Launch pack &mdash; prospecting. Written to be sent, not filed.</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  // Copy the message, not the page around it — these are meant to be pasted
+  // into WhatsApp and an email client, in one action, with nothing tidied up
+  // afterwards.
+  Array.prototype.forEach.call(document.querySelectorAll('.cp'), function(b){
+    b.addEventListener('click', function(){
+      var el = document.getElementById(b.dataset.c);
+      if (!el) return;
+      var text = el.textContent;
+      function ok(){ b.textContent = 'Copied'; b.classList.add('done');
+                     setTimeout(function(){ b.textContent = 'Copy';
+                                            b.classList.remove('done'); }, 1800); }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(ok).catch(sel);
+      } else { sel(); }
+      function sel(){
+        var r = document.createRange(); r.selectNodeContents(el);
+        var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        try { document.execCommand('copy'); ok(); }
+        catch(e){ b.textContent = 'Select it'; }
+      }
+    });
+  });
+})();
+</script>

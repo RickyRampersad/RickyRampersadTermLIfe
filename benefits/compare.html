@@ -1,0 +1,598 @@
+<title>Canopy — Choosing a Retirement Structure for Your Staff</title>
+
+<style>
+:root{
+  --navy:#08333D; --blue:#0E8FA3; --gold:#F08A24; --lightblue:#E4F4F6;
+  --ink:#0E1F2E; --paper:#F7F9FB; --surface:#FFFFFF; --surface-2:#EDF2F7;
+  --slate:#5C7080; --line:#D3DEE7; --line-soft:#E4EBF1;
+  --go:#1F7A55; --warn:#A9701F; --stop:#A93B2B;
+  --sans:"Gill Sans MT","Avenir Next","Segoe UI",system-ui,-apple-system,sans-serif;
+  --serif:Optima,"Palatino Linotype",Palatino,Georgia,serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --s1:.35rem; --s2:.7rem; --s3:1.1rem; --s4:1.7rem; --s5:2.6rem; --s6:4rem;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ink:#DCE7EF; --paper:#081520; --surface:#0E2231; --surface-2:#142E40;
+    --navy:#7FB2D9; --blue:#5FA8DC; --gold:#F08A24; --lightblue:#12293A;
+    --slate:#8FA6B8; --line:#1E3B50; --line-soft:#17334A;
+    --go:#4FAE83; --warn:#D4A055; --stop:#D4685A;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#DCE7EF; --paper:#081520; --surface:#0E2231; --surface-2:#142E40;
+  --navy:#7FB2D9; --blue:#5FA8DC; --gold:#F08A24; --lightblue:#12293A;
+  --slate:#8FA6B8; --line:#1E3B50; --line-soft:#17334A;
+  --go:#4FAE83; --warn:#D4A055; --stop:#D4685A;
+}
+:root[data-theme="light"]{
+  --ink:#0E1F2E; --paper:#F7F9FB; --surface:#FFFFFF; --surface-2:#EDF2F7;
+  --navy:#08333D; --blue:#0E8FA3; --gold:#F08A24; --lightblue:#E4F4F6;
+  --slate:#5C7080; --line:#D3DEE7; --line-soft:#E4EBF1;
+  --go:#1F7A55; --warn:#A9701F; --stop:#A93B2B;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.62;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--serif);font-weight:600;margin:0;line-height:1.2;text-wrap:balance}
+p{margin:0}
+a{color:var(--blue)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:2px}
+.tick{font-family:var(--sans);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--slate);font-weight:600}
+.num{font-variant-numeric:tabular-nums;font-family:var(--mono)}
+
+/* header */
+header{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.hin{max-width:1120px;margin:0 auto;padding:var(--s3) var(--s4);display:flex;align-items:center;gap:var(--s3)}
+.logo{display:flex;align-items:center;gap:.7rem;margin-right:auto}
+.logo svg{width:40px;height:40px;flex:none}
+.logo b{font-family:var(--serif);font-size:1.3rem;font-weight:600;letter-spacing:.01em;display:block;color:var(--navy)}
+.logo .sub{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--slate);font-weight:600}
+.themebtn{background:none;border:1px solid var(--line);color:var(--slate);border-radius:3px;
+  padding:.35rem .6rem;cursor:pointer;font-size:.62rem;letter-spacing:.13em;text-transform:uppercase;font-weight:600}
+.themebtn:hover{border-color:var(--blue);color:var(--blue)}
+
+.wrap{max-width:1120px;margin:0 auto;padding:0 var(--s4) var(--s6)}
+section{margin-top:var(--s6);scroll-margin-top:90px}
+.eyebrow{display:flex;align-items:baseline;gap:.8rem;margin-bottom:var(--s2)}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
+h2{font-size:clamp(1.5rem,3vw,2rem);margin-bottom:var(--s3)}
+h3{font-size:1.1rem}
+.lede{font-size:1.06rem;color:var(--slate);max-width:66ch}
+.prose{max-width:68ch;display:flex;flex-direction:column;gap:var(--s3)}
+
+/* hero */
+.hero{padding:var(--s5) 0 0}
+.hero h1{font-size:clamp(2rem,4.6vw,3rem);letter-spacing:-.01em;max-width:19ch;color:var(--navy)}
+.hero .lede{margin-top:var(--s3);font-size:1.12rem}
+
+/* structure cards */
+.three{display:grid;grid-template-columns:repeat(auto-fit,minmax(272px,1fr));gap:var(--s3)}
+.sc{background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:var(--s4);
+  display:flex;flex-direction:column;gap:var(--s2);border-top:3px solid var(--line)}
+.sc.db{border-top-color:var(--slate)}
+.sc.dc{border-top-color:var(--blue)}
+.sc.ind{border-top-color:var(--gold)}
+.sc h3{color:var(--navy)}
+.sc .who{font-size:.85rem;color:var(--slate)}
+.sc ul{margin:0;padding-left:1.05rem;display:flex;flex-direction:column;gap:.3rem;font-size:.9rem}
+.sc .flag{font-size:.6rem;letter-spacing:.13em;text-transform:uppercase;font-weight:700;
+  padding:.2rem .45rem;border-radius:3px;align-self:flex-start}
+.flag.db{background:var(--surface-2);color:var(--slate)}
+.flag.dc{background:var(--lightblue);color:var(--blue)}
+.flag.ind{background:color-mix(in srgb,var(--gold) 20%,transparent);color:var(--warn)}
+
+/* law */
+.law{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.lr{background:var(--surface);padding:var(--s3) var(--s4);display:grid;
+  grid-template-columns:180px minmax(0,1fr);gap:var(--s3);align-items:baseline}
+@media(max-width:640px){.lr{grid-template-columns:1fr;gap:.3rem}}
+.lr dt{font-size:.68rem;letter-spacing:.13em;text-transform:uppercase;color:var(--slate);font-weight:700}
+.lr dd{margin:0;font-size:.94rem}
+.lr dd .cite{display:block;margin-top:.3rem;font-size:.76rem;color:var(--slate)}
+
+/* comparator */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:var(--s4);
+  display:flex;flex-direction:column;gap:var(--s3)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--s3)}
+label.f{display:flex;flex-direction:column;gap:.28rem}
+label.f > span{font-size:.64rem;letter-spacing:.13em;text-transform:uppercase;color:var(--slate);font-weight:600}
+input[type=number],select{background:var(--paper);border:1px solid var(--line);border-radius:3px;
+  padding:.5rem .6rem;width:100%;font-family:var(--mono);font-size:.92rem;font-variant-numeric:tabular-nums}
+input:hover,select:hover{border-color:var(--slate)}
+.assump{border-left:3px solid var(--gold);padding-left:var(--s3);margin-top:var(--s2)}
+.assump .tick{color:var(--warn)}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:5px;background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{padding:.62rem .85rem;text-align:right;border-bottom:1px solid var(--line-soft);white-space:nowrap}
+th:first-child,td:first-child{text-align:left;white-space:normal}
+thead th{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--slate);
+  font-weight:700;background:var(--surface-2);border-bottom:1px solid var(--line)}
+tbody td{font-family:var(--mono);font-variant-numeric:tabular-nums}
+tbody td:first-child{font-family:var(--sans)}
+tr.total td{border-top:2px solid var(--line);font-weight:700;background:var(--surface-2)}
+tr.sub td{color:var(--slate);font-size:.84rem}
+.verdict{background:var(--lightblue);border:1px solid var(--blue);border-radius:5px;padding:var(--s4);
+  display:flex;flex-direction:column;gap:var(--s2)}
+.verdict .big{font-family:var(--serif);font-size:1.35rem;color:var(--navy);line-height:1.25}
+.verdict .num{font-size:1.1rem;color:var(--blue);font-weight:700}
+
+/* balance */
+.bal{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3)}
+@media(max-width:720px){.bal{grid-template-columns:1fr}}
+.bal > div{background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:var(--s4)}
+.bal h3{margin-bottom:var(--s2)}
+.bal ul{margin:0;padding-left:1.05rem;display:flex;flex-direction:column;gap:.42rem;font-size:.92rem}
+.bal .for h3{color:var(--go)}
+.bal .against h3{color:var(--stop)}
+
+.note{border-left:3px solid var(--gold);padding:.4rem 0 .4rem var(--s3);font-size:.9rem;
+  color:var(--slate);max-width:66ch}
+.warnbox{background:color-mix(in srgb,var(--stop) 8%,transparent);border:1px solid color-mix(in srgb,var(--stop) 35%,transparent);
+  border-radius:5px;padding:var(--s4);font-size:.9rem;display:flex;flex-direction:column;gap:var(--s2)}
+.warnbox h3{color:var(--stop);font-size:1rem}
+footer{border-top:1px solid var(--line);background:var(--surface);margin-top:var(--s6);
+  padding:var(--s5) var(--s4)}
+.fin{max-width:1120px;margin:0 auto;font-size:.84rem;color:var(--slate);display:flex;
+  flex-direction:column;gap:var(--s2);max-width:80ch}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.001ms!important}}
+</style>
+
+<header>
+  <div class="hin">
+    <div class="logo">
+      <svg viewBox="0 0 64 64" aria-label="Canopy">
+        <defs><clipPath id="c1"><rect x="0" y="0" width="64" height="43"/></clipPath></defs>
+        <g clip-path="url(#c1)" fill="#08333D">
+          <circle cx="20" cy="32" r="13"/><circle cx="44" cy="32" r="13"/><circle cx="32" cy="23" r="15"/>
+        </g>
+        <g clip-path="url(#c1)" fill="#0E8FA3">
+          <circle cx="24" cy="35" r="8"/><circle cx="40" cy="35" r="8"/><circle cx="32" cy="28" r="9.5"/>
+        </g>
+        <rect x="30" y="43" width="4" height="10" rx="1.6" fill="#F08A24"/>
+      </svg>
+      <span><b>Canopy</b><span class="sub">Group Benefits</span></span>
+    </div>
+    <button class="themebtn" type="button" id="themebtn">Theme</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="hero">
+    <div class="tick">Retirement structures · Trinidad &amp; Tobago</div>
+    <h1>There is more than one way to give your staff a pension.</h1>
+    <p class="lede">
+      Most employers are quoted a trust-based group pension plan and never told there is an
+      alternative. The alternative is not always better — but the difference in running cost is
+      large enough that you should see both before you decide. This page explains the three
+      structures, what the law requires of each, and what they cost you every year.
+    </p>
+  </div>
+
+  <!-- ============ THE THREE STRUCTURES ============ -->
+  <section id="structures">
+    <div class="eyebrow"><span class="tick">01 — The three structures</span></div>
+    <h2>What you are actually choosing between</h2>
+    <p class="lede" style="margin-bottom:var(--s4)">
+      The first two are occupational pension plans held in trust and registered with the Central
+      Bank. The third is not a pension plan at all in the legal sense — it is a set of individual
+      contracts your company pays into.
+    </p>
+
+    <div class="three">
+      <div class="sc db">
+        <span class="flag db">Group · Trust</span>
+        <h3>Defined Benefit</h3>
+        <p class="who">The employer promises a pension — typically a formula on final salary and years of service.</p>
+        <ul>
+          <li>The <strong>employer carries the investment risk</strong>. If the fund underperforms, the company funds the shortfall.</li>
+          <li>Actuarial valuation is not optional — it establishes whether the plan can meet its promise.</li>
+          <li>Highest governance load and the least predictable cost.</li>
+          <li>Largely closed to new entrants across the market. Rarely the right answer for a new plan.</li>
+        </ul>
+      </div>
+
+      <div class="sc dc">
+        <span class="flag dc">Group · Trust</span>
+        <h3>Defined Contribution</h3>
+        <p class="who">The employer promises a contribution, not an outcome. Whatever the fund grows to is the pension.</p>
+        <ul>
+          <li>The <strong>employee carries the investment risk</strong>. Cost to the company is predictable.</li>
+          <li>Still a trust: trustees, registration, triennial actuarial review, audited accounts.</li>
+          <li><strong>Vesting is available</strong> — you can make the employer share earn out over time.</li>
+          <li>Institutional pricing on investment management, spread across the whole group.</li>
+        </ul>
+      </div>
+
+      <div class="sc ind">
+        <span class="flag ind">Individually owned</span>
+        <h3>Corporate-paid individual plans</h3>
+        <p class="who">The company pays premiums into a BIR-approved deferred annuity owned by each employee.</p>
+        <ul>
+          <li><strong>No trust, no trustees, no plan registration, no triennial valuation, no plan audit.</strong></li>
+          <li>The employee owns the contract from day one — fully portable, no leaver administration.</li>
+          <li><strong>No vesting.</strong> Once a premium is paid it belongs to the employee. You cannot claw it back.</li>
+          <li>Charges sit inside each contract and are typically front-loaded into the early years.</li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="note" style="margin-top:var(--s3)">
+      A fourth route exists and is worth naming: a <strong>Corporate Tax Incentive Savings Plan</strong>
+      arrangement, where bonus and allowance earnings are paid by the employer into the employee's
+      approved plan without first being taxed. It is a variant of the third column rather than a
+      structure of its own.
+    </p>
+  </section>
+
+  <!-- ============ THE LAW ============ -->
+  <section id="law">
+    <div class="eyebrow"><span class="tick">02 — What the law requires</span></div>
+    <h2>The position in Trinidad and Tobago</h2>
+    <p class="lede" style="margin-bottom:var(--s4)">
+      This is where the cost difference comes from. Everything below applies to a trust-based
+      occupational plan — columns one and two. Almost none of it applies to column three.
+    </p>
+
+    <dl class="law">
+      <div class="lr">
+        <dt>Who regulates it</dt>
+        <dd>Occupational pension plans established under trust are registered and supervised by the
+          <strong>Central Bank of Trinidad and Tobago</strong> under the <strong>Insurance Act, 2018</strong>.
+          The Central Bank oversees trustees' compliance with the Act.
+          <span class="cite">As at Dec 2021 there were 177 active private occupational pension plans registered.</span></dd>
+      </div>
+      <div class="lr">
+        <dt>Trust deed and rules</dt>
+        <dd>To qualify for registration the deed must provide for the objects of the plan, the
+          appointment and removal of trustees, the vesting of all plan property in the trustees,
+          investment of capital moneys in the trustees' names, and employer contributions.</dd>
+      </div>
+      <div class="lr">
+        <dt>Actuarial review</dt>
+        <dd><strong>Section 185(2) of the Insurance Act</strong> requires an actuarial investigation into the
+          financial condition of the plan, and a report of the findings, <strong>every three years</strong> —
+          or more often if the Central Bank specifies.
+          <span class="cite">This is the single largest recurring professional cost in a small plan.</span></dd>
+      </div>
+      <div class="lr">
+        <dt>Tax approval</dt>
+        <dd>Separately from Central Bank registration, the plan must be approved by the
+          <strong>Board of Inland Revenue</strong> to be an Approved Pension Fund Plan. Employer contributions
+          are deductible. Approved deferred annuities must likewise be BIR-approved for the
+          contributions to be deductible.</dd>
+      </div>
+      <div class="lr">
+        <dt>Section 134</dt>
+        <dd>Individually owned approved annuities written under <strong>Section 134</strong> are
+          tax-deductible up to <strong>the greater of one third of chargeable income or 20% of
+          emolument income</strong>, and can be transferred to another approved plan when the employee
+          changes employer.
+          <span class="cite">This is the provision the LifeSecure corporate route relies on.</span></dd>
+      </div>
+      <div class="lr">
+        <dt>The TT$60,000 ceiling</dt>
+        <dd>Published guidance also states that an individual's relief on approved pension fund
+          plans, approved annuity plans and National Insurance is <strong>aggregated and capped at
+          TT$60,000</strong>.
+          <span class="cite"><strong>Unresolved:</strong> this ceiling and the Section 134 formula above do not
+          obviously reconcile. Before any Canopy quote computes a tax figure, confirm with BIR which
+          limit governs, and whether the $60,000 cap sits over the Section 134 calculation or beside
+          it. Getting this wrong overstates the client's saving.</span></dd>
+      </div>
+      <div class="lr">
+        <dt>Fees</dt>
+        <dd>There are <strong>no legal limits</strong> on fees charged by plan or scheme managers and other
+          service providers. Annuity charges are commonly deducted from premiums across the first
+          one to ten years of the contract.
+          <span class="cite">Which is exactly why the comparison below has to be done on real numbers, not defaults.</span></dd>
+      </div>
+      <div class="lr">
+        <dt>Reform in train</dt>
+        <dd>An <strong>Occupational Pension Plans Bill</strong> has been under policy development, and the Central
+          Bank has published work on national pension reform. Any structural advice should be
+          re-tested against the law in force on the day it is given.</dd>
+      </div>
+    </dl>
+  </section>
+
+  <!-- ============ COMPARATOR ============ -->
+  <section id="cost">
+    <div class="eyebrow"><span class="tick">03 — What it costs to run</span></div>
+    <h2>Cost comparison</h2>
+    <p class="lede" style="margin-bottom:var(--s4)">
+      Enter your group, then set the fee assumptions. <strong>The fee figures below are blank-slate
+      placeholders, not market rates</strong> — replace every one of them with the actual quoted cost
+      before this is shown to a client.
+    </p>
+
+    <div class="panel">
+      <div class="grid">
+        <label class="f"><span>Employees in the plan</span><input type="number" id="lives" min="1" max="10000" value="146"></label>
+        <label class="f"><span>Average annual salary (TT$)</span><input type="number" id="sal" min="0" step="1000" value="102000"></label>
+        <label class="f"><span>Total contribution rate</span>
+          <select id="rate">
+            <option value="5">5% (2.5 + 2.5)</option>
+            <option value="10" selected>10% (5 + 5)</option>
+            <option value="15">15% (7.5 + 7.5)</option>
+            <option value="20">20% (10 + 10)</option>
+          </select></label>
+        <label class="f"><span>Years to compare over</span>
+          <select id="yrs"><option>5</option><option selected>10</option><option>20</option></select></label>
+      </div>
+
+      <div class="assump">
+        <div class="tick">Trust-based group plan — Guardian branch figures</div>
+        <div class="grid" style="margin-top:.6rem">
+          <label class="f"><span>Actuarial valuation (per triennial review)</span><input type="number" id="act" min="0" step="1000" value="50000"></label>
+          <label class="f"><span>CBTT annual fee</span><input type="number" id="cbtt" min="0" step="500" value="7500"></label>
+          <label class="f"><span>CBTT registration (one-off)</span><input type="number" id="setup" min="0" step="500" value="2500"></label>
+          <label class="f"><span>Annual plan audit</span><input type="number" id="aud" min="0" step="1000" value="22000"></label>
+          <label class="f"><span>Trustee &amp; secretarial</span><input type="number" id="tru" min="0" step="1000" value="18000"></label>
+          <label class="f"><span>Administration per member</span><input type="number" id="adm" min="0" step="10" value="260"></label>
+          <label class="f"><span>Investment management (% of fund)</span><input type="number" id="inv" min="0" max="5" step="0.05" value="1.10"></label>
+        </div>
+        <p style="font-size:.8rem;color:var(--slate);margin-top:.5rem">
+          Actuarial, CBTT registration and CBTT annual fees are the figures used in the Ramps
+          Logistics analysis. Audit, trustee and per-member administration are still placeholders —
+          confirm them before quoting.</p>
+      </div>
+
+      <div class="assump">
+        <div class="tick">LifeSecure — individually owned under Section 134</div>
+        <div class="grid" style="margin-top:.6rem">
+          <label class="f"><span>Explicit charges (% of premium)</span><input type="number" id="ichg" min="0" max="30" step="0.25" value="0"></label>
+          <label class="f"><span>Implicit cost — spread on credited rate (%)</span><input type="number" id="ifund" min="0" max="5" step="0.05" value="1.00"></label>
+          <label class="f"><span>Employer admin time (annual)</span><input type="number" id="iadm" min="0" step="1000" value="6000"></label>
+        </div>
+        <p style="font-size:.8rem;color:var(--slate);margin-top:.5rem">
+          LifeSecure carries <strong>no setup fee, no ongoing fee and no exit fee — 100% of
+          contributions are allocated.</strong> Its cost to the member is therefore not an explicit
+          charge but the <strong>spread</strong> between what the fund earns and the rate declared and
+          credited to the contract. Set that spread honestly; if you set it to zero the comparison
+          is not a comparison.</p>
+      </div>
+    </div>
+
+    <h3 style="margin:var(--s5) 0 var(--s2)">Running cost, year by year</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr>
+          <th>Cost line</th><th>Group DC (trust)</th><th>Individually owned</th><th>Difference</th>
+        </tr></thead>
+        <tbody id="costbody"></tbody>
+      </table>
+    </div>
+
+    <div class="verdict" id="verdict" style="margin-top:var(--s3)"></div>
+
+    <h3 style="margin:var(--s5) 0 var(--s2)">Cost as a share of what goes in</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Measure</th><th>Group DC (trust)</th><th>Individually owned</th></tr></thead>
+        <tbody id="ratiobody"></tbody>
+      </table>
+    </div>
+    <p class="note" style="margin-top:.6rem">
+      The bottom row is the one that matters to the employee. Fixed plan costs fall on the company;
+      fund charges fall on the member's retirement pot. A structure can be cheaper for the employer
+      and worse for the employee at the same time.
+    </p>
+  </section>
+
+  <!-- ============ THE HONEST BALANCE ============ -->
+  <section id="balance">
+    <div class="eyebrow"><span class="tick">04 — The honest balance</span></div>
+    <h2>Where individually-owned wins, and where it costs you</h2>
+
+    <div class="bal">
+      <div class="for">
+        <h3>Genuine advantages</h3>
+        <ul>
+          <li><strong>No fixed plan overhead.</strong> No triennial actuarial review, no plan audit, no trustees, no Central Bank registration to maintain.</li>
+          <li><strong>Scales down cleanly.</strong> Fixed costs spread over few members are brutal; removing them helps a small group most.</li>
+          <li><strong>No leaver administration.</strong> The contract belongs to the employee and simply travels with them.</li>
+          <li><strong>Fits contract-based employment.</strong> Staff on renewable annual contracts are covered from day one with no eligibility or vesting machinery.</li>
+          <li><strong>Simple to explain.</strong> Every employee has their own plan and their own statement.</li>
+          <li><strong>No trustee liability</strong> sitting on your directors or managers.</li>
+        </ul>
+      </div>
+      <div class="against">
+        <h3>What you give up</h3>
+        <ul>
+          <li><strong>No vesting, no forfeiture.</strong> The retention lever is gone — paid is paid, even if someone leaves in month three. This is the decisive trade-off.</li>
+          <li><strong>The cost is implicit, not absent.</strong> LifeSecure charges no setup, ongoing or exit fee and allocates 100% of contributions — but the insurer still earns, through the spread between the fund's return and the rate credited. A nil-fee plan is not a nil-cost plan, and a client who is told otherwise will feel misled later.</li>
+          <li><strong>No employer control</strong> over investment strategy, and no single governance point.</li>
+          <li><strong>Individual tax relief is capped</strong> and shared with NIS and any personal annuity already held. Higher earners may get no relief on the top slice.</li>
+          <li><strong>Fragmented reporting.</strong> No consolidated plan view, no group-level member data, harder to demonstrate the benefit at a staff meeting.</li>
+          <li><strong>Not an occupational pension plan</strong> in the legal sense — which matters if a tender, union agreement or collective agreement specifies one.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="warnbox" style="margin-top:var(--s3)">
+      <h3>Say this out loud to every client</h3>
+      <p>"Cheaper to run" and "better for your people" are two different questions. Removing the
+      trust removes the employer's fixed costs, but it moves the member onto retail contract
+      charges. On a large group with strong institutional pricing, the trust often wins on the
+      member's net outcome even though it costs the company more to administer. On a small group,
+      it usually does not.</p>
+      <p>The number that settles it is the <strong>total charge borne by the member over the full term</strong> —
+      not the employer's annual admin bill. That comparison is the last table above, and it needs
+      real quoted charges in it, not the placeholders shipped with this page.</p>
+    </div>
+  </section>
+
+  <!-- ============ WHAT THE FORM MUST ASK ============ -->
+  <section id="intake">
+    <div class="eyebrow"><span class="tick">05 — What the intake must establish</span></div>
+    <h2>The deep-dive questions</h2>
+    <p class="lede" style="margin-bottom:var(--s4)">
+      Structure cannot be chosen from headcount and payroll alone. These are the questions that
+      actually decide it, and they belong in the guided flow before any quote is produced.
+    </p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Question</th><th>Why it decides the structure</th></tr></thead>
+        <tbody>
+          <tr><td>Is there an existing registered plan, and is it DB or DC?</td><td style="text-align:left;white-space:normal">An existing DB plan cannot simply be swapped — it carries accrued liabilities and a wind-up process.</td></tr>
+          <tr><td>Do you want the employer share to be forfeitable if someone leaves early?</td><td style="text-align:left;white-space:normal">A yes rules out individually-owned outright. This is the single most decisive question.</td></tr>
+          <tr><td>What proportion of staff are on contract, and what is your annual turnover?</td><td style="text-align:left;white-space:normal">High turnover makes vesting valuable; low turnover makes it near-worthless and the trust hard to justify.</td></tr>
+          <tr><td>Are any employees already contributing to a personal annuity or NIS at a high salary?</td><td style="text-align:left;white-space:normal">Drives the TT$60,000 aggregate relief cap and who actually gets tax benefit.</td></tr>
+          <tr><td>Is a pension plan required by a collective agreement, union agreement or client tender?</td><td style="text-align:left;white-space:normal">If yes, individually-owned contracts may not satisfy the requirement at all.</td></tr>
+          <tr><td>Who would act as trustee, and is the board willing to accept trustee duties?</td><td style="text-align:left;white-space:normal">No willing trustee means no trust-based plan, whatever the economics say.</td></tr>
+          <tr><td>What in-house capacity exists to administer enrolment and remittance?</td><td style="text-align:left;white-space:normal">Determines whether third-party administration is a cost line or a necessity.</td></tr>
+          <tr><td>Is the intention to retire staff in-house, or is portability the priority?</td><td style="text-align:left;white-space:normal">Portability favours individually-owned; a retirement-age workforce favours the trust.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="fin">
+    <p><strong>What this page is.</strong> An education and comparison tool. It sets out the structural
+    and regulatory differences between retirement arrangements available to employers in Trinidad
+    and Tobago, and models their cost on assumptions you supply.</p>
+    <p><strong>What it is not.</strong> It is not financial, legal, actuarial or tax advice, and it does not
+    recommend a structure. Choosing between a registered occupational pension plan and individually
+    owned contracts has tax, legal and employment consequences specific to each employer. Confirm
+    the current position with the Board of Inland Revenue and the Central Bank of Trinidad and
+    Tobago, and take licensed advice, before acting.</p>
+    <p><strong>On the numbers.</strong> Every fee input on this page ships as a placeholder for you to
+    replace. None of them is a quoted or market rate. Legislative references were current as at
+    August 2026 and an Occupational Pension Plans Bill has been under development — re-check before
+    relying on them.</p>
+    <p style="color:var(--navy);font-weight:600">Canopy · a Ricky Rampersad branch project</p>
+  </div>
+</footer>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const n=(v,d=0)=>{const x=parseFloat(v);return Number.isFinite(x)?x:d;};
+const money=(v,dp=0)=>!Number.isFinite(v)?"—":"TT$"+v.toLocaleString("en-US",{minimumFractionDigits:dp,maximumFractionDigits:dp});
+
+function calc(){
+  const lives=Math.max(1,n($("lives").value,1));
+  const sal=Math.max(0,n($("sal").value));
+  const rate=n($("rate").value,10)/100;
+  const yrs=n($("yrs").value,10);
+
+  const actEach=n($("act").value), aud=n($("aud").value), tru=n($("tru").value);
+  const admPer=n($("adm").value), invPct=n($("inv").value)/100, setup=n($("setup").value);
+  const cbtt=n($("cbtt").value);
+  const iChg=n($("ichg").value)/100, iFund=n($("ifund").value)/100, iAdm=n($("iadm").value);
+
+  const annualContrib=lives*sal*rate;
+
+  // Average fund over the period, contributions only, no investment return assumed here so the
+  // charge comparison is not flattered by growth on either side.
+  const avgFund=annualContrib*(yrs+1)/2;
+
+  // --- trust-based group DC ---
+  const gAct=actEach/3;                    // triennial requirement, annualised
+  const gAdm=admPer*lives;
+  const gInv=avgFund*invPct;
+  const gSetup=setup/yrs;                  // one-off spread over the comparison period
+  const gEmployer=gAct+cbtt+aud+tru+gAdm+gSetup;
+  const gMember=gInv;
+  const gTotal=gEmployer+gMember;
+
+  // --- individually owned (LifeSecure) ---
+  // Explicit charges are typically nil; the member's real cost is the spread between what the
+  // fund earns and the rate credited to the contract, applied to the average fund.
+  const iEarly=annualContrib*iChg;
+  const iFundChg=avgFund*iFund;
+  const iEmployer=iAdm;
+  const iMember=iEarly+iFundChg;
+  const iTotal=iEmployer+iMember;
+
+  const rows=[
+    ["Actuarial review (triennial, annualised)",gAct,0],
+    ["CBTT annual fee",cbtt,0],
+    ["Plan audit",aud,0],
+    ["Trustee &amp; secretarial",tru,0],
+    ["Member administration",gAdm,0],
+    ["CBTT registration, spread over "+yrs+" years",gSetup,0],
+    ["Employer administration time",0,iEmployer],
+    ["SUB1",gEmployer,iEmployer],
+    ["Investment management charge",gInv,0],
+    ["Implicit cost — spread on credited rate",0,iFundChg],
+    ["Explicit contract charges",0,iEarly],
+    ["SUB2",gMember,iMember],
+    ["TOTAL",gTotal,iTotal]
+  ];
+
+  const tb=$("costbody"); tb.innerHTML="";
+  for(const [label,a,b] of rows){
+    const tr=document.createElement("tr");
+    const diff=a-b;
+    if(label==="TOTAL"){
+      tr.className="total";
+      tr.innerHTML="<td>Total annual cost</td><td>"+money(a)+"</td><td>"+money(b)+"</td><td>"+
+        (diff>0?"+":"")+money(diff)+"</td>";
+    } else if(label==="SUB1"||label==="SUB2"){
+      tr.className="sub";
+      tr.innerHTML="<td>"+(label==="SUB1"?"Borne by the employer":"Borne by the member")+
+        "</td><td>"+money(a)+"</td><td>"+money(b)+"</td><td>"+(diff>0?"+":"")+money(diff)+"</td>";
+    } else {
+      tr.innerHTML="<td>"+label+"</td><td>"+(a?money(a):"—")+"</td><td>"+(b?money(b):"—")+
+        "</td><td>"+(diff?((diff>0?"+":"")+money(diff)):"—")+"</td>";
+    }
+    tb.appendChild(tr);
+  }
+
+  // verdict
+  const saving=gTotal-iTotal;
+  const empSaving=gEmployer-iEmployer;
+  const memCost=iMember-gMember;
+  const v=$("verdict");
+  let head, body;
+  if(empSaving>0 && memCost>0){
+    head="Cheaper for the company, dearer for the member.";
+    body="Individually-owned saves the employer <span class='num'>"+money(empSaving)+
+      "</span> a year in fixed plan costs, but adds <span class='num'>"+money(memCost)+
+      "</span> a year in charges borne by employees' funds. Net across everyone: "+
+      (saving>0?"still <span class='num'>"+money(saving)+"</span> cheaper overall."
+              :"<span class='num'>"+money(-saving)+"</span> more expensive overall.");
+  } else if(empSaving>0){
+    head="Individually-owned is cheaper on both sides.";
+    body="It saves the employer <span class='num'>"+money(empSaving)+
+      "</span> a year and costs members <span class='num'>"+money(-memCost)+
+      "</span> a year less in charges. At this size and on these assumptions the trust is hard to justify on cost alone.";
+  } else {
+    head="The trust wins on these assumptions.";
+    body="Group pricing more than absorbs the fixed plan overhead. The trust-based plan is <span class='num'>"+
+      money(-saving)+"</span> a year cheaper in total — and it keeps vesting available to you.";
+  }
+  v.innerHTML="<div class='big'>"+head+"</div><p>"+body+"</p>"+
+    "<p style='font-size:.86rem;color:var(--slate)'>Annual contributions into the plan: <span class='num'>"+
+    money(annualContrib)+"</span> · comparison run over "+yrs+" years on contributions only, so neither side is flattered by assumed investment growth.</p>";
+
+  // ratio table
+  const rb=$("ratiobody"); rb.innerHTML="";
+  const pct=(x)=>annualContrib?((x/annualContrib)*100).toFixed(2)+"%":"—";
+  const add=(l,a,b)=>{const tr=document.createElement("tr");
+    tr.innerHTML="<td>"+l+"</td><td>"+a+"</td><td>"+b+"</td>";rb.appendChild(tr);};
+  add("Total cost per employee, per year",money(gTotal/lives),money(iTotal/lives));
+  add("Employer cost as % of contributions",pct(gEmployer),pct(iEmployer));
+  add("Total cost as % of contributions",pct(gTotal),pct(iTotal));
+  const tr=document.createElement("tr"); tr.className="total";
+  tr.innerHTML="<td>Charge borne by the member, as % of contributions</td><td>"+pct(gMember)+"</td><td>"+pct(iMember)+"</td>";
+  rb.appendChild(tr);
+}
+
+document.querySelectorAll("input,select").forEach(el=>el.addEventListener("input",calc));
+$("themebtn").addEventListener("click",()=>{
+  const cur=document.documentElement.getAttribute("data-theme");
+  const dark=cur?cur==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.setAttribute("data-theme",dark?"light":"dark");
+});
+calc();
+</script>

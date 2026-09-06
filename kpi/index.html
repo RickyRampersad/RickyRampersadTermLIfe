@@ -1,0 +1,4827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>RRB · Daily KPI &amp; Innovation Tracker</title>
+<link rel="icon" href="../favicon.svg"/>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:#F7F5EF;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:#1F2433}
+  textarea,input,select,button{font-family:inherit}
+  textarea{resize:vertical}
+  a{color:inherit}
+  @media print{
+    .noprint{display:none!important}
+    body{background:#fff}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+
+<!-- React is served from this site and the app is compiled ahead of time.
+     It used to pull React, ReactDOM and Babel from a CDN and compile 87KB of
+     JSX in the browser on every load — three requests that all had to succeed,
+     and several seconds of work on a phone before anything drew. Now it is
+     this origin only, with nothing to compile. -->
+<script src="/kpi/vendor/react.js"></script>
+<script src="/kpi/vendor/react-dom.js"></script>
+<script>
+const {
+  useState,
+  useEffect,
+  useCallback
+} = React;
+
+// The branch reads this on three things: a phone at a desk, a tablet in a
+// meeting, and a laptop for the reports. Same app, three shapes — the phone
+// layout stretched across a monitor wastes the room the reports need.
+function useViewport() {
+  const read = () => {
+    const w = typeof window !== "undefined" ? window.innerWidth : 560;
+    return {
+      w,
+      phone: w < 680,
+      tablet: w >= 680 && w < 1024,
+      desktop: w >= 1024,
+      wide: w >= 680
+    };
+  };
+  const [v, setV] = useState(read);
+  useEffect(() => {
+    let f = null;
+    const on = () => {
+      if (f) cancelAnimationFrame(f);
+      f = requestAnimationFrame(() => setV(read()));
+    };
+    window.addEventListener("resize", on);
+    window.addEventListener("orientationchange", on);
+    return () => {
+      window.removeEventListener("resize", on);
+      window.removeEventListener("orientationchange", on);
+      if (f) cancelAnimationFrame(f);
+    };
+  }, []);
+  return v;
+}
+
+// Grid that fills the width it is given rather than a fixed column count.
+const autoGrid = (min, gap) => ({
+  display: "grid",
+  gap: gap || 12,
+  gridTemplateColumns: "repeat(auto-fit,minmax(" + min + "px,1fr))"
+});
+
+// ===========================================================================
+//   Paste the Apps Script /exec URL here after deploying apps-script/KPI.gs.
+//   Deploy > New deployment > Web app > Execute as Me > Access: Anyone.
+// ===========================================================================
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66QVurol0rSQvIBTRBQpFT3LwvClCAOm6jiTW5tflDdg/exec";
+// ===========================================================================
+
+const NAVY = "#16264F",
+  NAVY_DEEP = "#0D1838",
+  GOLD = "#C7A34A",
+  GOLD_SOFT = "#E7D9AE",
+  PAPER = "#F7F5EF",
+  CARD = "#FFFFFF",
+  INK = "#1F2433",
+  MUTED = "#6A7180",
+  GREEN = "#2C7A57",
+  AMBER = "#B0791C",
+  RED = "#AE3A33",
+  LINE = "#E5E1D6";
+
+// ---------------------------------------------------------------------------
+//  Who does what. The Access tab in the workbook decides who may sign in;
+//  this map carries the things the tab does not hold — grade, which function
+//  list to show, and the shift a person works.
+// ---------------------------------------------------------------------------
+const PROFILES = {
+  sasha: {
+    grade: "Sales Support Assistant · G3",
+    role: "ssa",
+    tenure: "experienced"
+  },
+  azariah: {
+    grade: "Sales Support Assistant · G3",
+    role: "ssa",
+    tenure: "probation"
+  },
+  kamla: {
+    grade: "Branch Manager's Assistant · G4",
+    role: "bma",
+    tenure: "experienced"
+  },
+  elizabeth: {
+    grade: "Branch Manager's Assistant · G4",
+    role: "bma",
+    tenure: "training"
+  },
+  ricky: {
+    grade: "Branch Manager",
+    role: "bm",
+    tenure: "experienced"
+  },
+  kerwyn: {
+    grade: "Assistant Branch Manager",
+    role: "abm",
+    tenure: "experienced"
+  },
+  akaash: {
+    grade: "Unit Manager",
+    role: "um",
+    tenure: "experienced"
+  },
+  gary: {
+    grade: "Unit Manager",
+    role: "um",
+    tenure: "experienced"
+  }
+};
+const DEFAULT_PROFILE = {
+  grade: "Branch Team",
+  role: "ssa",
+  tenure: "experienced"
+};
+
+// The Access tab is the authority on who somebody is. PROFILES only supplies
+// what the sheet does not carry, and covers anyone not yet described there.
+let ROSTER_ROLES = {};
+const profileFor = staffId => {
+  const base = PROFILES[staffId] || DEFAULT_PROFILE;
+  const fromSheet = ROSTER_ROLES[staffId];
+  return fromSheet ? {
+    ...base,
+    role: fromSheet.role || base.role,
+    grade: fromSheet.grade || base.grade
+  } : base;
+};
+
+// The KPI list is served by the script: the ten Salesforce Task_Type__c values
+// first — those carry live numbers — then the job-document responsibilities
+// Salesforce does not track, which are logged in words only.
+let KPI_CHOICES = {
+  ssa: [],
+  bma: [],
+  bm: [],
+  abm: [],
+  um: []
+};
+const fnFor = role => KPI_CHOICES[role] || KPI_CHOICES.ssa || [];
+const STANDARDS = ["Completed applications to Head Office within 2 days of receipt.", "Policy documents processed with 100% accuracy.", "Documents to the relevant party within 1 day of receipt.", "A rolled due date is not an actioned task — log the genuine blocker + owner.", "\"Waiting on someone\" needs a named person and the date last chased.", "Value Added is logged every day — even if the honest entry is \"None today\"."];
+
+
+// What a good entry looks like, per KPI. A blank box asks "what did you do
+// today" and gets "3 tasks" back. These ask the question the work itself
+// answers — how many, for whom, and where it stands — and show one worked
+// example, so the standard is visible rather than described.
+//
+// Written from the branch's own open book rather than invented: the largest
+// type is Renewals/Premium Dues/Billing, and it is direct debits, stop
+// payments, premium receipts and group billing, so that is what its example
+// says. Keeping these here rather than in the Apps Script means a wording
+// change ships on push, with no redeployment.
+const KPI_GUIDE = {
+  "Renewa/PDl/Bill": {
+    actioned: "How many, and for whom — DDs, stop payments, premium chases",
+    resolved: "How many actually cleared, and what is still with the bank",
+    eg: "8 direct debits sent, 2 stop payment forms filed for one client, September group billing chased with the administrator."
+  },
+  "Servicing": {
+    actioned: "Which client, and what stage it reached",
+    resolved: "Which are confirmed complete",
+    eg: "3 changes of beneficiary submitted, portal access fault escalated to IT, 1 address change confirmed."
+  },
+  "Pendings": {
+    actioned: "Who you chased, when, and what they said",
+    resolved: "Which came off pending",
+    eg: "5 pending cases chased, 3 replied with documents, 1 lapsing Friday."
+  },
+  "Claims/ Mat": {
+    actioned: "Which claim, and what moved on it",
+    resolved: "Which were paid, declined or matured",
+    eg: "CI claim — medical report received and sent to underwriting. Maturity letter issued on one policy."
+  },
+  "Opportunity": {
+    actioned: "Who you spoke to, and what was quoted",
+    resolved: "What was written, declined or deferred",
+    eg: "Two client reviews held, one quotation issued for critical illness cover."
+  },
+  "Scripts/CB": {
+    actioned: "Which script or clawback, and what stage",
+    resolved: "Which are settled",
+    eg: "Two clawbacks queried with Head Office, one settled."
+  },
+  "Lic/Staffing/SA/HR": {
+    actioned: "Which matter, and what moved",
+    resolved: "What is signed off or closed",
+    eg: "Two licence renewals submitted. One staffing matter with HR since Monday."
+  },
+  "RR Operations": {
+    actioned: "What you ran or fixed, and for whom",
+    resolved: "What is now working",
+    eg: "August branch report rebuilt. Printer fault logged with IT."
+  },
+  "Training": {
+    actioned: "Who was trained, on what, for how long",
+    resolved: "Who is signed off",
+    eg: "One hour on the new fact find with two advisors."
+  },
+  "Innovation&Creativity": {
+    actioned: "What you tried or proposed, and who has seen it",
+    resolved: "What was adopted",
+    eg: "Drafted a one-page checklist for new applications, shown to the BMA."
+  },
+  "New Application Process": {
+    actioned: "How many applications, and where each one stopped",
+    resolved: "How many reached Head Office",
+    eg: "4 applications checked, 3 to Head Office, 1 back to the advisor for a missing signature."
+  },
+  "Document Management (Scan / Classify / Verify)": {
+    actioned: "How many documents, and what you did to them",
+    resolved: "How many are filed and verified",
+    eg: "22 documents scanned and classified, 3 rejected as unreadable and re-requested."
+  },
+  "Quotations & Proposals": {
+    actioned: "For whom, and what cover",
+    resolved: "Which went out",
+    eg: "Two proposals prepared, one issued to the client, one waiting on a date of birth."
+  },
+  "Orphan Adoption Listing": {
+    actioned: "How many orphans worked, and who you reached",
+    resolved: "How many are now assigned or contacted",
+    eg: "12 orphan policies called, 6 reached, 2 appointments set."
+  },
+  "Task Management": {
+    actioned: "Which tasks you cleared, and what you reassigned",
+    resolved: "How many closed, and what moved to someone else",
+    eg: "9 tasks closed, 2 reassigned to the person who owns the relationship, 1 duplicate closed."
+  }
+};
+
+// Everything without a line of its own still gets the same question asked.
+const GUIDE_FALLBACK = {
+  actioned: "What you did, for whom, and how many",
+  resolved: "What is genuinely finished",
+  eg: "Name the work, the number, and where it now stands."
+};
+const guideFor = kpi => KPI_GUIDE[kpi] || GUIDE_FALLBACK;
+
+// A two-hour block rarely holds one kind of work. The stored value stays a
+// single string — comma-joined — so the sheet column, the Apps Script and
+// every report that already reads it keep working without a redeployment.
+// Everything that groups by KPI splits here rather than guessing.
+const kpiList = v => String(v || "").split(",").map(x => x.trim()).filter(Boolean);
+const kpiJoin = list => list.join(", ");
+// One reader for the metrics shape, so a second caller cannot get it wrong the
+// way the first one did. The server sends {ok, date, staff:{staffId:{...}}};
+// reading metrics[staffId] is silently null against the real thing and only
+// works against a stub that repeats the mistake.
+// How long the waiting work is, against this person's own pace across
+// everything they do.
+//
+// Salesforce records WHEN a task closed, never how long it took, so this is
+// throughput and not effort and is worded that way on screen — "about two
+// hours at your rate", never "this takes 41 minutes". Where the history is too
+// thin to mean anything the estimate is withheld rather than guessed: a rate
+// built on two closures in sixty days is noise wearing a number's clothes.
+//
+// It deliberately uses the whole desk rather than the picked type. A per-type
+// rate measures how OFTEN somebody does that kind of work, not how long one
+// takes, and dividing a backlog by it produces nonsense — three of Azariah's
+// renewals came out at thirty-five hours before this was caught.
+const estimateFor = (rateAll, byType, picked) => {
+  if (!rateAll || !rateAll.enough || !(rateAll.perHour > 0)) return null;
+  let needs = 0;
+  picked.forEach(k => { needs += (byType && byType[k] && (byType[k].needs || 0)) || 0; });
+  if (!needs) return null;
+  return { hours: needs / rateAll.perHour, needs: needs, sample: rateAll.closed };
+};
+
+// Deliberately coarse. Half-hours below three, whole hours above, and a plain
+// statement when the work will not fill a focused block — that last one is the
+// point of the whole line: three licensing tasks do not need two hours, and
+// until now the only way to know that was to go and look.
+const sayHowLong = est => {
+  if (!est) return "";
+  const h = est.hours;
+  if (h < 0.35) return "About twenty minutes at your rate \u2014 too small for its own block.";
+  if (h < 0.85) return "About " + (Math.round(h * 2) / 2 === 0.5 ? "half an hour" : "an hour") +
+                       " at your rate \u2014 not a two-hour block on its own.";
+  if (h < 3) return "About " + (Math.round(h * 2) / 2) + " hours at your rate.";
+  return "About " + Math.round(h) + " hours at your rate \u2014 more than one block.";
+};
+
+const byTypeFor = (metrics, staffId) =>
+  (metrics && metrics.ok && metrics.staff && metrics.staff[staffId] &&
+   metrics.staff[staffId].byType) || null;
+
+const kpiToggle = (v, k) => {
+  const list = kpiList(v);
+  const i = list.indexOf(k);
+  if (i < 0) list.push(k); else list.splice(i, 1);
+  return kpiJoin(list);
+};
+
+// Sits under the KPI picker once one is chosen: the worked example, and — when
+// Salesforce is reachable — that person's real position in that type, so the
+// number they are about to write has something to be checked against.
+// Chips rather than a select. A multiple-select box is close to unusable on a
+// phone, and every one of these is filled on a phone.
+// A row of taps, not a text box. Both of these have to cost a second or they
+// will not get filled in, and a control nobody fills in is worse than none.
+function Chips({ label, hint, options, value, onPick, tone }) {
+  return React.createElement("div", { style: { margin: "10px 0 2px" } },
+    React.createElement("div", {
+      style: { fontSize: 11.5, fontWeight: 800, color: MUTED, marginBottom: 6 }
+    }, label, hint ? React.createElement("span", {
+      style: { fontWeight: 500, color: MUTED, opacity: .85 }
+    }, "  " + hint) : null),
+    React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 } },
+      options.map(o => {
+        const on = String(value || "") === String(o.v);
+        const c = on ? (tone && tone[o.v]) || GOLD : LINE;
+        return React.createElement("button", {
+          key: o.v, type: "button",
+          onClick: () => onPick(on ? "" : o.v),
+          style: { font: "inherit", fontSize: 12.5, fontWeight: on ? 700 : 500,
+                   cursor: "pointer", padding: "7px 13px", borderRadius: 999,
+                   border: "1px solid " + c, background: on ? "#FBF3DF" : "#FFFFFF",
+                   color: on ? INK : MUTED }
+        }, o.label);
+      })));
+}
+
+// The estimate is the person's, made against the real counts in front of them.
+const PLAN_MINS = [{ v: "20", label: "20 min" }, { v: "40", label: "40 min" },
+                   { v: "60", label: "1 hr" },   { v: "90", label: "1½ hr" },
+                   { v: "120", label: "2 hr" },  { v: "180", label: "3 hr +" }];
+
+// Three answers, not a score. "Partly" is the honest one most days and it has
+// to be as easy to press as the other two.
+const MET_OPTS = [{ v: "met", label: "Met" }, { v: "partly", label: "Partly" },
+                  { v: "no", label: "Not yet" }];
+const MET_TONE = { met: GREEN, partly: AMBER, no: RED };
+
+// The overdue items, gathered by the agent the work is for. Six chases to one
+// agent is one conversation; six rows in a list is six of them. Agent__c is
+// set on about six in ten open tasks and nothing has ever shown it to the
+// person doing the work.
+function LateByAgent({ items }) {
+  const by = {};
+  items.forEach(t => {
+    const who = t.agent || "\u2014";
+    (by[who] = by[who] || []).push(t);
+  });
+  const order = Object.keys(by).sort((a, b) => by[b].length - by[a].length);
+  return React.createElement("div", null, order.map(who => {
+    const rows = by[who];
+    return React.createElement("div", {
+      key: who, style: { borderTop: "1px solid " + LINE, padding: "9px 0" }
+    },
+      React.createElement("div", {
+        style: { fontSize: 11.5, fontWeight: 800, color: GOLD, marginBottom: 4 }
+      }, who === "\u2014" ? "No agent on the task" : who,
+         rows.length > 1 ? "  \u00b7 " + rows.length + " together" : ""),
+      rows.slice(0, 6).map(t => React.createElement("div", {
+        key: t.id, style: { margin: "0 0 6px" }
+      },
+        React.createElement("div", {
+          style: { fontSize: 13, color: INK, fontWeight: 600, lineHeight: 1.35 }
+        }, t.subject || "(no subject)"),
+        React.createElement("div", {
+          style: { fontSize: 11.5, color: AMBER, fontWeight: 700, marginTop: 2 }
+        }, t.type, " \u00b7 ", t.age, " day", t.age === 1 ? "" : "s", " over",
+           t.status ? " \u00b7 " + t.status : ""))));
+  }));
+}
+
+// The book itself, rather than a count of it.
+//
+// Three of the four support staff carry no overdue work at all — theirs is
+// dated ahead, not late — so the morning screen showed them "Pendings · 16
+// open" and no way on earth to see what the sixteen were. The chip says how
+// much there is. This says which.
+//
+// Capped, because a block can hold seventy-six. A list nobody scrolls to the
+// bottom of teaches people the screen is decorative.
+function OpenList({ items }) {
+  if (!items.length) return null;
+  const SHOW = 8;
+  const late = items.filter(t => t.late).length;
+
+  // One agent holding several of them is one conversation, not several. Same
+  // reasoning as LateByAgent, and it matters more here: this is the list you
+  // work from, so the grouping has to be visible before you start.
+  const by = {};
+  items.forEach(t => { if (t.agent) by[t.agent] = (by[t.agent] || 0) + 1; });
+  const top = Object.keys(by).sort((a, b) => by[b] - by[a])[0];
+  const together = top && by[top] > 2 ? by[top] + " of them for " + top : "";
+
+  return React.createElement("div", { style: { marginTop: 11 } },
+    React.createElement("div", {
+      style: { fontSize: 11, fontWeight: 800, letterSpacing: ".1em",
+               textTransform: "uppercase", color: GOLD, marginBottom: 5 }
+    }, "What is in it",
+       late ? React.createElement("span", {
+         key: "l", style: { color: AMBER }
+       }, "  \u00b7 " + late + " late") : null),
+    // Not in the uppercase label. That is somebody's name, and this is the
+    // line that turns six separate chases into one conversation.
+    together ? React.createElement("div", {
+      style: { fontSize: 12, color: MUTED, fontWeight: 700, margin: "0 0 7px" }
+    }, together) : null,
+    items.slice(0, SHOW).map(t => React.createElement("div", {
+      key: t.id, style: { borderTop: "1px solid " + LINE, padding: "7px 0" }
+    },
+      React.createElement("div", {
+        style: { fontSize: 13, color: INK, fontWeight: 600, lineHeight: 1.35 }
+      }, t.subject || "(no subject)"),
+      React.createElement("div", {
+        style: { fontSize: 11.5, marginTop: 2, fontWeight: 700,
+                 color: t.late ? AMBER : MUTED }
+      }, t.late ? t.age + " day" + (t.age === 1 ? "" : "s") + " over"
+                : (t.due ? "due " + shortDate(t.due) : "no due date"),
+         t.agent ? " \u00b7 " + t.agent : "",
+         t.status ? " \u00b7 " + t.status : "",
+         // The queue is ordered by this, so it has to be visible. Everything
+         // without it was worked in the last week and is somebody's already.
+         t.needs ? /*#__PURE__*/React.createElement("span", {
+           style: { color: AMBER }
+         }, "  \u00b7 untouched " + t.touched + " days") : null))),
+    items.length > SHOW ? React.createElement("div", {
+      style: { fontSize: 11.5, color: MUTED, paddingTop: 7 }
+    }, "and " + (items.length - SHOW) + " more") : null);
+}
+
+function KpiPicker({ value, opts, onToggle, mine, branch }) {
+  const on = kpiList(value);
+  const chip = k => {
+    const live = on.indexOf(k.value) > -1;
+    const m = mine && mine[k.value];
+    const b = branch && branch[k.value];
+
+    // The count is the point of the chip, not decoration. A block set aside
+    // for licensing with three tasks in it does not need two hours, and the
+    // only way anyone knew that before was to go and look.
+    // What the chip says is the number a person can act on, not the number
+    // that frightens them. Kamla holds seventy open tasks and nine that have
+    // not been touched in a week; "70 open" is true and useless, "9 need you"
+    // is true and is her morning.
+    const tail = [];
+    if (m && (m.open || m.overdue)) {
+      const need = m.needs || 0;
+      const head = need ? need + " need you of " + (m.open || 0)
+                        : (m.open || 0) + " open, all in hand";
+      tail.push(React.createElement("span", {
+        key: "m", style: { fontWeight: 700, color: need ? AMBER : (live ? INK : MUTED) }
+      }, " \u00b7 " + head + (m.overdue ? ", " + m.overdue + " late" : "")));
+    }
+    if (b && b.open) {
+      tail.push(React.createElement("span", {
+        key: "b", style: { color: MUTED, fontWeight: 500 }
+      }, "  " + b.open + " in the branch"));
+    }
+    return React.createElement("button", {
+      key: k.value, type: "button", onClick: () => onToggle(k.value),
+      style: { font: "inherit", fontSize: 12.5, fontWeight: live ? 700 : 500, cursor: "pointer",
+               padding: "7px 11px", borderRadius: 999, textAlign: "left",
+               border: "1px solid " + (live ? GOLD : LINE),
+               background: live ? "#FBF3DF" : "#FFFFFF",
+               color: live ? INK : MUTED }
+    }, (live ? "\u2713 " : "") + k.label, tail);
+  };
+  const group = (label, list) => !list.length ? null : React.createElement("div", { key: label },
+    React.createElement("div", {
+      style: { fontSize: 10, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase",
+               color: MUTED, margin: "2px 0 6px" }
+    }, label),
+    React.createElement("div", {
+      style: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }
+    }, list.map(chip)));
+  // The two groups are not "types" and "other" — they are work Salesforce
+  // holds tasks for, and work it does not. Say that, and only promise numbers
+  // when there are numbers to show.
+  const numbered = opts.filter(k => k.salesforce);
+  const anyCount = numbered.some(k => (mine && mine[k.value]) || (branch && branch[k.value]));
+  return React.createElement("div", null,
+    group(anyCount ? "Your Salesforce tasks \u2014 open, and how many are late"
+                   : "Work Salesforce holds tasks for", numbered),
+    group("Work with no Salesforce task \u2014 write these in words",
+          opts.filter(k => !k.salesforce)));
+}
+
+function KpiHint({ kpi, live }) {
+  const picked = kpiList(kpi);
+
+  // With more than one type in the block, the long worked example stops being
+  // an example and becomes a wall. Ask the question for each instead.
+  if (picked.length > 1) {
+    return React.createElement("div", {
+      style: { background: "#FBF9F3", border: "1px solid " + LINE, borderLeft: "3px solid " + GOLD,
+               borderRadius: 8, padding: "9px 11px", margin: "0 0 12px" }
+    },
+      React.createElement("div", {
+        style: { fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase",
+                 color: GOLD, marginBottom: 5 }
+      }, "Say something for each"),
+      picked.map(k => React.createElement("div", {
+        key: k, style: { fontSize: 12.5, color: INK, lineHeight: 1.5 }
+      }, React.createElement("b", null, k), " — ", guideFor(k).actioned))
+    );
+  }
+
+  const g = guideFor(picked[0] || kpi);
+  return React.createElement("div", {
+    style: { background: "#FBF9F3", border: "1px solid " + LINE, borderLeft: "3px solid " + GOLD,
+             borderRadius: 8, padding: "9px 11px", margin: "0 0 12px" }
+  },
+    React.createElement("div", {
+      style: { fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase",
+               color: GOLD, marginBottom: 4 }
+    }, "A good entry reads like"),
+    React.createElement("div", {
+      style: { fontSize: 12.5, color: INK, lineHeight: 1.45 }
+    }, g.eg),
+    live && (live.open || live.overdue)
+      ? React.createElement("div", {
+          style: { fontSize: 11.5, color: live.overdue ? AMBER : MUTED, marginTop: 6, fontWeight: 600 }
+        }, "Salesforce has you at " + (live.open || 0) + " open here"
+           + (live.overdue ? " \u00b7 " + live.overdue + " overdue" : ""))
+      : null
+  );
+}
+// The four blocks, in order. Their times and what each is for come from the
+// branch schedule the Apps Script serves — the same DILO the BMA has been
+// emailing out every morning. One copy, held where the reports read it.
+const BLOCK_ORDER = [{
+  id: "kpi1",
+  col: "KPI1",
+  label: "KPI 1"
+}, {
+  id: "kpi2",
+  col: "KPI2",
+  label: "KPI 2"
+}, {
+  id: "pm1",
+  col: "PM1",
+  label: "Afternoon 1"
+}, {
+  id: "pm2",
+  col: "PM2",
+  label: "Afternoon 2"
+}];
+const BLOCKS = BLOCK_ORDER;
+let SCHEDULE = {};
+const schedFor = staffId => SCHEDULE[staffId] || null;
+const blockSched = (staffId, col) => {
+  const s = schedFor(staffId);
+  return s && s.blocks && s.blocks[col] || {};
+};
+// Each block carries its own time and focus for this person.
+const blocksFor = staffId => BLOCK_ORDER.map(b => {
+  const sc = blockSched(staffId, b.col);
+  return {
+    ...b,
+    time: sc.time || "",
+    focus: sc.focus || "",
+    kpi: sc.kpi || ""
+  };
+});
+// Blocks 1–3 are behind you at the 3pm cut; the last one is still running.
+const CHECKPOINT_BLOCKS = 3;
+
+// ---------------------------------------------------------------------------
+//  Dates
+// ---------------------------------------------------------------------------
+const todayISO = () => {
+  const d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+};
+const prettyDate = iso => !iso ? "" : new Date(iso + "T00:00:00").toLocaleDateString("en-GB", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric"
+});
+const shortDate = iso => !iso ? "" : new Date(iso + "T00:00:00").toLocaleDateString("en-GB", {
+  day: "numeric",
+  month: "short"
+});
+const dowShort = iso => !iso ? "" : new Date(iso + "T00:00:00").toLocaleDateString("en-GB", {
+  weekday: "short"
+});
+const shiftDays = (iso, n) => {
+  const d = new Date(iso + "T00:00:00");
+  d.setDate(d.getDate() + n);
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+};
+const weekStartOf = iso => {
+  const d = new Date(iso + "T00:00:00");
+  const dow = d.getDay();
+  return shiftDays(iso, -(dow === 0 ? 6 : dow - 1));
+};
+const weekDaysOf = mon => [0, 1, 2, 3, 4].map(i => shiftDays(mon, i));
+const num = v => v === "" || v == null || isNaN(Number(v)) ? null : Number(v);
+const txt = v => String(v == null ? "" : v).trim();
+const isRealVA = v => {
+  const s = txt(v).toLowerCase();
+  return !!s && s !== "none today" && s !== "none" && s !== "n/a" && s !== "na" && s !== "-";
+};
+const blankBlock = () => ({
+  kpi: "",
+  // planMins is what the person expected the work to take, set in the morning
+  // from the real counts. met is their own answer at the close. Neither is a
+  // clock reading — the point is the person's estimate against their own
+  // judgement, which is a measure they own.
+  planMins: "",
+  met: "",
+  actioned: "",
+  resolved: "",
+  openOwned: "",
+  blocker: "",
+  blockerOwner: "",
+  tr_trainee: "",
+  tr_topic: "",
+  tr_objectives: "",
+  tr_achieved: "",
+  tr_test: "",
+  tr_result: "",
+  tr_followup: ""
+});
+const blankEntry = (staffId, date) => ({
+  staffId,
+  date,
+  submitted: false,
+  blocks: BLOCKS.reduce((a, b) => {
+    a[b.id] = blankBlock();
+    return a;
+  }, {}),
+  metrics: {
+    closed: "",
+    overdue: "",
+    aged60: ""
+  },
+  valueAdded: "",
+  innovation: "",
+  systemFlags: "",
+  notes: ""
+});
+const configured = () => APPS_SCRIPT_URL && APPS_SCRIPT_URL.indexOf("PASTE_") !== 0;
+
+// ---------------------------------------------------------------------------
+//  Talking to the sheet
+//  Everything goes through POST so the reply can actually be read. The old
+//  version posted with no-cors, which returns an opaque response — the Submit
+//  button could never tell whether the save landed, so it always claimed it had.
+// ---------------------------------------------------------------------------
+// Apps Script is not fast and a branch is not always on good signal. A single
+// dropped request used to read as "could not reach the sheet", which sends
+// somebody who has just typed out a whole block back to a login screen — the
+// most expensive possible failure. So: try again once, quietly, before saying
+// anything went wrong.
+async function apiOnce(action, payload) {
+  const res = await fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action, ...payload })
+  });
+  // Apps Script answers a POST with a 302 to a one-shot result URL. When the
+  // script is busy that result is not always there yet, and the browser sees a
+  // 404 — which is not "no such endpoint", it is "not ready". Treating it as
+  // final is what put "Server returned 404." in front of somebody who had just
+  // typed out a whole block. 404, 429 and 5xx all get another go.
+  if (!res.ok) {
+    const again = res.status === 404 || res.status === 429 || res.status >= 500;
+    return {
+      ok: false,
+      error: again
+        ? "The sheet is busy. Trying again…"
+        : "Server returned " + res.status + ".",
+      _retry: again
+    };
+  }
+  const text = await res.text();
+  try { return JSON.parse(text); }
+  catch {
+    return { ok: false,
+      error: "Unreadable reply from the sheet. Re-deploy the Apps Script with access set to Anyone." };
+  }
+}
+
+// onAttempt is told which try is starting, so a screen can show that
+// something is still happening. Sasha pressed Sign in five times on 3
+// September because one static label sat there for half a minute and there
+// was no way to tell the difference between working and frozen.
+async function api(action, payload, onAttempt) {
+  if (!configured()) return { ok: false, error: "No Apps Script URL set in this file." };
+  let last = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt) await new Promise(r => setTimeout(r, attempt * 1500));
+    if (onAttempt) { try { onAttempt(attempt + 1); } catch (e) {} }
+    try {
+      const out = await apiOnce(action, payload);
+      if (out && out.ok) return out;
+      if (out && !out._retry) return out;      // a real answer, just not a happy one
+      last = out;
+    } catch (e) {
+      // A thrown fetch is not the same as a refusal — the request never
+      // completed. On a phone over LTE that is usually the connection
+      // dropping a slow request. Say both, and blame neither: the last time
+      // this message mentioned a connection, somebody restarted their phone
+      // over a fault in this script.
+      last = { ok: false,
+        error: "The sheet did not answer. It is slow today, so a weak signal can drop the request — press Sign in once more, and tell the Branch Manager if it keeps happening." };
+    }
+  }
+  // Every attempt is spent. "Trying again..." was true a moment ago and is not
+  // any more, so do not leave it on the screen as if something were still
+  // happening.
+  if (last && last._retry) {
+    last = { ok: false,
+      error: "The sheet did not answer after three tries. It is busy, not broken — wait a moment and press Submit again." };
+  }
+  return last;
+}
+
+const TOKEN_KEY = "rrb_kpi_token";
+const readStoredToken = () => {
+  try {
+    return localStorage.getItem(TOKEN_KEY) || "";
+  } catch {
+    return "";
+  }
+};
+const storeToken = t => {
+  try {
+    t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY);
+  } catch {}
+};
+
+// ---------------------------------------------------------------------------
+//  The draft, kept on the phone
+//
+//  Two people lost an afternoon's typing on 2 September: the sheet did not
+//  answer, and what they had written existed nowhere but in the page. A block
+//  can take five minutes to write and a second to lose.
+//
+//  So every keystroke is now kept on the device, per person per day. It is
+//  read back when the day is opened, and it only ever fills a box the sheet
+//  returned empty — a saved block always wins over a draft of itself. A block
+//  that comes back confirmed is dropped from the draft.
+//
+//  This is deliberately the dumbest possible mechanism. It has to work when
+//  the network does not.
+// ---------------------------------------------------------------------------
+const draftKey = (staffId, date) => "rrb_kpi_draft_" + staffId + "_" + date;
+
+const readDraft = (staffId, date) => {
+  try {
+    const raw = localStorage.getItem(draftKey(staffId, date));
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeDraft = (staffId, date, entry) => {
+  if (!staffId || !date || !entry) return;
+  try {
+    localStorage.setItem(draftKey(staffId, date), JSON.stringify({
+      blocks: entry.blocks || {},
+      valueAdded: entry.valueAdded || "",
+      innovation: entry.innovation || "",
+      systemFlags: entry.systemFlags || "",
+      notes: entry.notes || "",
+      metrics: entry.metrics || {},
+      savedAt: Date.now()
+    }));
+  } catch {}
+};
+
+// One block landed. Forget our copy of it, keep the rest.
+const clearDraftBlock = (staffId, date, bid) => {
+  try {
+    const d = readDraft(staffId, date);
+    if (!d || !d.blocks) return;
+    delete d.blocks[bid];
+    localStorage.setItem(draftKey(staffId, date), JSON.stringify(d));
+  } catch {}
+};
+
+// Old drafts are not worth keeping — a fortnight is well past the point where
+// anybody is still going back to finish a block.
+const pruneDrafts = () => {
+  try {
+    const cutoff = Date.now() - 14 * 864e5;
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (!k || k.indexOf("rrb_kpi_draft_") !== 0) continue;
+      let d = null;
+      try { d = JSON.parse(localStorage.getItem(k)); } catch {}
+      if (!d || !d.savedAt || d.savedAt < cutoff) localStorage.removeItem(k);
+    }
+  } catch {}
+};
+
+// The sheet is the record; the draft only speaks where the sheet is silent.
+function overlayDraft(entry, draft) {
+  if (!draft) return entry;
+  const keep = (a, b) => (String(a || "").trim() ? a : (b || ""));
+  const out = {
+    ...entry,
+    valueAdded: keep(entry.valueAdded, draft.valueAdded),
+    innovation: keep(entry.innovation, draft.innovation),
+    systemFlags: keep(entry.systemFlags, draft.systemFlags),
+    notes: keep(entry.notes, draft.notes),
+    blocks: { ...entry.blocks },
+    metrics: { ...(entry.metrics || {}) }
+  };
+  Object.keys(draft.metrics || {}).forEach(k => {
+    out.metrics[k] = keep(out.metrics[k], draft.metrics[k]);
+  });
+  Object.keys(draft.blocks || {}).forEach(bid => {
+    const server = out.blocks[bid] || {};
+    const mine = draft.blocks[bid] || {};
+    const merged = { ...server };
+    Object.keys(mine).forEach(f => { merged[f] = keep(server[f], mine[f]); });
+    out.blocks[bid] = merged;
+  });
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+//  Does the entry actually say anything?
+//
+//  The same rule the sheet applies, run here so the answer is instant and
+//  nobody waits on a round trip to be told their block reads thin. KPI.gs
+//  holds the authoritative copy and records it; tests/test-substance.js runs
+//  the branch's real entries through both.
+//
+//  The bar is one question: does this say HOW MANY or WHICH ONE. Only
+//  Actioned and Resolved are read, and they are read together — "None today"
+//  is often the honest answer to Resolved and must never count against a
+//  block whose Actioned line is full. Blocker and Waiting-on are never
+//  judged; "None" is the right answer there most days.
+// ---------------------------------------------------------------------------
+const FILLER_RE = /^(?:\W|none|n\/?a|nil|nothing|no|yes|ok|okay|done|complete[d]?|finish(?:ed)?|task[s]?|work(?:ing|ed)?|action(?:ed|s)?|remaining|outstanding|same|as\s+above|see\s+above|ditto|all|various|misc(?:ellaneous)?|general|usual|normal|routine|etc|and|the|my|daily)*$/i;
+const COUNT_RE = /\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|dozen)\b/i;
+const COUNT_STRIP = /\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|dozen)\b/gi;
+const VERB_RE = /\b(?:sent|send|sending|process(?:ed|ing)?|chas(?:ed|ing)|chase|resolv(?:ed|ing)|escalat(?:ed|ing)|submit(?:ted|ting)?|upload(?:ed)?|correct(?:ed)?|amend(?:ed)?|follow(?:ed)?[\s-]?up|call(?:ed)?|email(?:ed)?|reconcil(?:ed|ing|iation)?|issu(?:ed)?|prepar(?:ed)?|review(?:ed)?|updat(?:ed)?|clos(?:ed)?|logg?(?:ed)?|fil(?:ed|ing)|scan(?:ned)?|print(?:ed)?|deliver(?:ed)?|collect(?:ed)?|verif(?:ied|y)|approv(?:ed)?|declin(?:ed)?|quot(?:ed)?|renew(?:ed)?|transmit(?:ted)?|receiv(?:ed)?|request(?:ed)?|book(?:ed)?|arrang(?:ed)?|confirm(?:ed)?|check(?:ed)?|contact(?:ed)?|advis(?:ed)?|refer(?:red)?|rais(?:ed)?|cancel(?:led|ed)?|reinstat(?:ed)?|surrender(?:ed)?|paid|pay|banked|deposit(?:ed)?)\b/i;
+const REF_RE = /\b(?:[A-Z]{2,}[-\/]?\d{2,}|\d{5,}|#\s*\d+)\b/;
+
+const wordsOf = t => String(t || "").trim().split(/\s+/).filter(w => /[a-z0-9]/i.test(w));
+
+function hasProperName(t) {
+  const w = String(t || "").split(/\s+/);
+  for (let i = 1; i < w.length; i++) if (/^[A-Z][a-z]{2,}/.test(w[i])) return true;
+  return /^[A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}/.test(String(t || "").trim());
+}
+
+function readSubstance(d, others) {
+  d = d || {};
+  const both = (String(d.actioned || "").trim() + " " + String(d.resolved || "").trim()).trim();
+  const words = wordsOf(both);
+
+  if (!words.length)        return { level: "thin", reason: "nothing written" };
+  if (FILLER_RE.test(both)) return { level: "thin", reason: "no answer, only filler" };
+  if (words.length < 3)     return { level: "thin", reason: "too short to say anything" };
+  if (FILLER_RE.test(both.replace(COUNT_STRIP, " ")))
+    return { level: "thin", reason: "a count, but nothing named" };
+
+  const hasCount = COUNT_RE.test(both),
+        hasRef   = REF_RE.test(both),
+        hasVerb  = VERB_RE.test(both),
+        hasName  = hasProperName(both);
+
+  if (hasName && !hasCount && !hasRef && !hasVerb)
+    return { level: "thin", reason: "a name, but nothing done with it" };
+  if (!hasCount && !hasRef && !hasName)
+    return { level: "thin", reason: "no count or case named" };
+
+  const norm = both.toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+  if (norm.length > 8 && others) {
+    for (const o of others) {
+      const n = String(o || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+      if (n && n === norm) return { level: "thin", reason: "same words as another block today" };
+    }
+  }
+  return { level: "full", reason: "" };
+}
+
+/** The branch's written standards, checked rather than merely printed. */
+function readStandards(d) {
+  const out = [];
+  d = d || {};
+  const owner = String(d.blockerOwner || "").trim();
+  if (owner && !/\d/.test(owner)) out.push("name the date you last chased " + owner);
+  if (COUNT_RE.test(String(d.openOwned || "").trim()) && !String(d.blocker || "").trim())
+    out.push("say what is holding the work you are carrying forward");
+  return out;
+}
+
+// A sheet row becomes an entry the form understands.
+function rowToEntry(row) {
+  const g = k => row[k] != null ? String(row[k]) : "";
+  const blk = p => {
+    const raw = g(p + "_Blocker");
+    let blocker = raw,
+      owner = "";
+    if (raw.indexOf(" · ") > -1) {
+      const parts = raw.split(" · ");
+      blocker = parts[0];
+      owner = parts.slice(1).join(" · ");
+    }
+    return {
+      ...blankBlock(),
+      kpi: g(p),
+      actioned: g(p + "_Actioned"),
+      resolved: g(p + "_Resolved"),
+      openOwned: g(p + "_Open"),
+      planMins: g(p + "_Plan"),
+      met: g(p + "_Met"),
+      blocker,
+      blockerOwner: owner
+    };
+  };
+  let date = g("Date");
+  if (date && date.indexOf("T") > -1) date = date.slice(0, 10);
+  const at = {};
+  BLOCK_ORDER.forEach(b => {
+    at[b.id] = g(b.col + "_At");
+  });
+  return {
+    staffId: g("StaffId"),
+    date,
+    name: g("Name"),
+    grade: g("Grade"),
+    blockAt: at,
+    submitted: g("Status") === "Submitted",
+    blocks: {
+      kpi1: blk("KPI1"),
+      kpi2: blk("KPI2"),
+      pm1: blk("PM1"),
+      pm2: blk("PM2")
+    },
+    metrics: {
+      closed: g("Closed"),
+      overdue: g("Overdue"),
+      aged60: g("Aged60")
+    },
+    valueAdded: g("ValueAdded"),
+    innovation: g("Innovation"),
+    systemFlags: g("SystemFlags"),
+    notes: g("Notes"),
+    updatedAt: g("UpdatedAt")
+  };
+}
+// A block whose KPI is still blank gets the one the schedule says it is for,
+// so opening a block is a confirmation rather than a blank page. Anything the
+// person has already chosen — or already reported — is left exactly as it is.
+function withSchedule(entry, staffId) {
+  if (!entry) return entry;
+  const blocks = {
+    ...entry.blocks
+  };
+  BLOCK_ORDER.forEach(b => {
+    const cur = blocks[b.id] || blankBlock();
+    if (txt(cur.kpi)) return;
+    const want = blockSched(staffId, b.col).kpi;
+    if (want) blocks[b.id] = {
+      ...cur,
+      kpi: want,
+      prefilled: true
+    };
+  });
+  return {
+    ...entry,
+    blocks
+  };
+}
+
+// A day's training lives in its own register. Put it back on the form when the
+// day is re-opened — submitting again rewrites those rows from what is on
+// screen, so anything not loaded back would be erased.
+const BLOCK_COL = {
+  kpi1: "KPI1",
+  kpi2: "KPI2",
+  pm1: "PM1",
+  pm2: "PM2"
+};
+function withTraining(entry, training) {
+  if (!entry || !training || !training.length) return entry;
+  const mine = training.filter(t => t.StaffId === entry.staffId && String(t.TrainingDate || "").slice(0, 10) === entry.date);
+  if (!mine.length) return entry;
+  const blocks = {
+    ...entry.blocks
+  };
+  mine.forEach(t => {
+    const bid = Object.keys(BLOCK_COL).find(k => BLOCK_COL[k] === String(t.Block || "").trim());
+    if (!bid || !blocks[bid]) return;
+    blocks[bid] = {
+      ...blocks[bid],
+      tr_trainee: String(t.Trainee || ""),
+      tr_topic: String(t.Topic || ""),
+      tr_objectives: String(t.Objectives || ""),
+      tr_achieved: String(t.Achieved || ""),
+      tr_test: String(t.Test || ""),
+      tr_result: String(t.Result || ""),
+      tr_followup: String(t.Followup || "")
+    };
+  });
+  return {
+    ...entry,
+    blocks
+  };
+}
+const blockWorked = (e, bid) => {
+  if (txt(e?.blockAt?.[bid])) return true; // it was submitted
+  const d = e?.blocks?.[bid];
+  if (!d) return false;
+  if (txt(d.actioned) || txt(d.resolved) || txt(d.openOwned)) return true;
+  return txt(d.kpi) && !d.prefilled; // a KPI they chose, not one we did
+};
+const blocksDone = e => BLOCK_ORDER.reduce((n, b) => n + (blockWorked(e, b.id) ? 1 : 0), 0);
+const blockTime = (e, bid) => {
+  const raw = txt(e?.blockAt?.[bid]);
+  if (!raw) return "";
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+};
+const blockersOf = e => BLOCKS.map(b => ({
+  b,
+  d: e.blocks?.[b.id]
+})).filter(x => x.d && (txt(x.d.blocker) || txt(x.d.blockerOwner))).map(x => ({
+  block: x.b.label,
+  kpi: x.d.kpi || "",
+  text: [txt(x.d.blocker), txt(x.d.blockerOwner)].filter(Boolean).join(" · ")
+}));
+const trainingCount = e => BLOCKS.reduce((n, b) => n + (kpiList(e.blocks?.[b.id]?.kpi).includes("Training delivered") ? 1 : 0), 0);
+function ShieldLogo({
+  size = 34
+}) {
+  return /*#__PURE__*/React.createElement("svg", {
+    width: size,
+    height: size,
+    viewBox: "0 0 48 52",
+    fill: "none"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M24 2 L44 9 V25 C44 38 35 46 24 50 C13 46 4 38 4 25 V9 Z",
+    fill: NAVY,
+    stroke: GOLD,
+    strokeWidth: "2.5",
+    strokeLinejoin: "round"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M24 7 L39 12 V25 C39 35 32 41 24 44.5 C16 41 9 35 9 25 V12 Z",
+    fill: "none",
+    stroke: GOLD,
+    strokeWidth: "1",
+    opacity: "0.55"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M15 25 L21.5 32 L34 18",
+    fill: "none",
+    stroke: GOLD,
+    strokeWidth: "4.5",
+    strokeLinecap: "round",
+    strokeLinejoin: "round"
+  }));
+}
+
+// ===========================================================================
+//  App
+// ===========================================================================
+function App() {
+  const vp = useViewport();
+  const [booting, setBooting] = useState(true);
+  const [token, setToken] = useState(readStoredToken());
+  const [me, setMe] = useState(null); // {staffId,name,email,manager}
+  const [roster, setRoster] = useState([]);
+  const [view, setView] = useState("home");
+  const [active, setActive] = useState(null); // staffId being viewed/edited
+  const [date, setDate] = useState(todayISO());
+  const [entry, setEntry] = useState(null);
+  const [rows, setRows] = useState([]);
+  const [training, setTraining] = useState([]);
+  const [metrics, setMetrics] = useState(null);
+  const [needsReason, setNeedsReason] = useState({});
+  const [openBook, setOpenBook] = useState({});
+  const [billing, setBilling] = useState({});
+  const [waiting, setWaiting] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [blockState, setBlockState] = useState({}); // per block: idle|saving|ok|bad
+  const [dayState, setDayState] = useState({
+    tone: "idle",
+    text: ""
+  });
+  const [openBlock, setOpenBlock] = useState(null);
+  const [reviewDate, setReviewDate] = useState(todayISO());
+  const [weekOf, setWeekOf] = useState(weekStartOf(todayISO()));
+  const [trendStaff, setTrendStaff] = useState(null);
+  const signOut = useCallback(() => {
+    storeToken("");
+    setToken("");
+    setMe(null);
+    setRows([]);
+    setEntry(null);
+    setView("home");
+  }, []);
+
+  // Somebody who can only see themselves has no list to choose from, so making
+  // them click their own name to reach their own blocks is a step that asks a
+  // question with one answer. Land them on their day; the branch view is still
+  // a tap away for the chasing and trends screens.
+  useEffect(() => {
+    if (me && !me.manager && view === "home" && !active) {
+      setActive(me.staffId);
+      setDate(todayISO());
+      // Before the first block is due, the useful screen is the plan; after
+      // that it is the day itself. Nobody wants to be planned at half past
+      // three.
+      const h = new Date().getHours();
+      setView(h < 10 ? "plan" : "entry");
+    }
+  }, [me, view, active]);
+
+  // Resume a session if the token is still good.
+  useEffect(() => {
+    let off = false;
+    pruneDrafts();
+    (async () => {
+      if (!token) {
+        setBooting(false);
+        return;
+      }
+      const r = await api("me", {
+        token
+      });
+      if (off) return;
+      if (r.ok) {
+        setMe(r.profile);
+        setRoster(r.roster || []);
+        rememberRoles(r.roster);
+        if (r.schedule) SCHEDULE = r.schedule;
+        if (r.kpis) KPI_CHOICES = r.kpis;
+      } else {
+        storeToken("");
+        setToken("");
+      }
+      setBooting(false);
+    })();
+    return () => {
+      off = true;
+    };
+  }, [token]);
+
+  // Pull the rows this person is allowed to see.
+  const loadRows = useCallback(async () => {
+    if (!token) return;
+    setLoading(true);
+    const r = await api("rows", {
+      token
+    });
+    if (r.ok) {
+      setRows(r.rows || []);
+      setTraining(r.training || []);
+      if (r.roster) {
+        setRoster(r.roster);
+        rememberRoles(r.roster);
+      }
+      if (r.schedule) SCHEDULE = r.schedule;
+      if (r.kpis) KPI_CHOICES = r.kpis;
+      if (r.metrics) setMetrics(r.metrics);
+      if (r.needsReason) setNeedsReason(r.needsReason);
+      if (r.openBook) setOpenBook(r.openBook);
+      if (r.billing) setBilling(r.billing);
+    } else if (r.authRequired) {
+      signOut();
+    }
+    setLoading(false);
+  }, [token, signOut]);
+  useEffect(() => {
+    if (me) loadRows();
+  }, [me, loadRows]);
+
+  // Pulled when the view is opened rather than with every page — it is a
+  // different question from "what did you do today".
+  useEffect(() => {
+    if (view !== "waiting" || !token) return;
+    let off = false;
+    (async () => {
+      const r = await api("waiting", {
+        token
+      });
+      if (!off && r.ok) setWaiting(r.waiting);
+    })();
+    return () => {
+      off = true;
+    };
+  }, [view, token]);
+
+  // Load one day into the form. Anything typed on this device and never
+  // acknowledged by the sheet is put back before the form is shown.
+  useEffect(() => {
+    if ((view !== "entry" && view !== "plan") || !active) return;
+    const found = rows.map(rowToEntry).find(e => e.staffId === active && e.date === date);
+    // Order matters. The schedule's KPI is a guess at what the block is for;
+    // the draft is what the person actually chose. Filling the guess in first
+    // made it non-empty, and overlayDraft keeps a non-empty value over a
+    // draft — so changing a block's KPI and coming back silently put the
+    // schedule's answer back. Real row, then draft, then fill what is still
+    // blank.
+    const base = withTraining(found || blankEntry(active, date), training);
+    setEntry(withSchedule(overlayDraft(base, readDraft(active, date)), active));
+  }, [view, active, date, rows, training]);
+
+  // Every change is kept on the device. This is the whole safety net: if the
+  // sheet refuses the save, the words are still here when they come back.
+  useEffect(() => {
+    if ((view !== "entry" && view !== "plan") || !entry || !active) return;
+    writeDraft(active, date, entry);
+  }, [entry, active, date, view]);
+  const patchBlock = (bid, f, v) => setEntry(e => !e ? e : ({
+    ...e,
+    blocks: {
+      ...(e.blocks || {}),
+      [bid]: {
+        ...((e.blocks || {})[bid] || blankBlock()),
+        [f]: v
+      }
+    }
+  }));
+  const patchMetric = (f, v) => setEntry(e => ({
+    ...e,
+    metrics: {
+      ...e.metrics,
+      [f]: v
+    }
+  }));
+
+  // A block goes in on its own, the moment it ends. The reply says what
+  // actually happened — and the staff member gets their own copy by email.
+  async function submitBlock(b) {
+    if (!entry || blockState[b.id]?.tone === "saving") return;
+
+    // Ask once, then send.
+    //
+    // A block that does not say how many or which one gets one question and
+    // one reason. Pressing Submit again sends it exactly as written — nothing
+    // is ever blocked, because somebody having a rotten day must still be able
+    // to log it. The friction is deliberate and it is one tap deep.
+    const mine = entry.blocks[b.id] || blankBlock();
+    if (blockState[b.id]?.tone !== "ask") {
+      const others = Object.keys(entry.blocks || {}).filter(k => k !== b.id)
+        .map(k => ((entry.blocks[k] || {}).actioned || "") + " " + ((entry.blocks[k] || {}).resolved || ""));
+      const read = readSubstance(mine, others);
+      const std = readStandards(mine);
+      if (read.level === "thin" || std.length) {
+        setBlockState(s => ({
+          ...s,
+          [b.id]: {
+            tone: "ask",
+            text: (read.level === "thin"
+                    ? "This reads thin — " + read.reason + "."
+                    : "Before this goes in — " + std.join("; ") + ".")
+                  + " Add a line if you can — or send it anyway, exactly as you wrote it."
+          }
+        }));
+        return;
+      }
+    }
+
+    const prof = profileFor(active);
+    const person = roster.find(p => p.staffId === active);
+    setBlockState(s => ({
+      ...s,
+      [b.id]: {
+        tone: "saving",
+        text: "Sending…"
+      }
+    }));
+    const res = await api("saveBlock", {
+      token,
+      staffId: active,
+      date: entry.date,
+      block: b.col,
+      name: person ? person.name : me ? me.name : "",
+      grade: prof.grade,
+      data: entry.blocks[b.id] || blankBlock(),
+      valueAdded: entry.valueAdded,
+      innovation: entry.innovation,
+      systemFlags: entry.systemFlags,
+      notes: entry.notes,
+      metrics: entry.metrics
+    });
+    if (res.ok) {
+      clearDraftBlock(active, entry.date, b.id);
+      setBlockState(s => ({
+        ...s,
+        [b.id]: {
+          tone: "ok",
+          text: "Sent " + (res.at || "") + " · " + res.blocksDone + "/4 in · copy emailed to you"
+        }
+      }));
+      loadRows();
+      setTimeout(() => setBlockState(s => ({
+        ...s,
+        [b.id]: {
+          tone: "idle",
+          text: ""
+        }
+      })), 6000);
+    } else if (res.authRequired) {
+      // The draft is already on the device, so signing out no longer costs
+      // anybody their afternoon — but say so, or they will assume it did.
+      setBlockState(s => ({
+        ...s,
+        [b.id]: {
+          tone: "bad",
+          text: "Signed out. What you typed is saved on this phone — sign in again and press Submit."
+        }
+      }));
+      setTimeout(signOut, 2500);
+    } else {
+      setBlockState(s => ({
+        ...s,
+        [b.id]: {
+          tone: "bad",
+          text: (res.error || "Did not send.") + " Your words are saved on this phone — press Submit again."
+        }
+      }));
+    }
+  }
+
+  // The day's own fields. Saved on their own so they never overwrite a block.
+  async function saveDay() {
+    if (!entry || dayState.tone === "saving") return;
+    const prof = profileFor(active);
+    const person = roster.find(p => p.staffId === active);
+    setDayState({
+      tone: "saving",
+      text: "Saving…"
+    });
+    const res = await api("saveDay", {
+      token,
+      staffId: active,
+      date: entry.date,
+      name: person ? person.name : me ? me.name : "",
+      grade: prof.grade,
+      metrics: entry.metrics,
+      valueAdded: entry.valueAdded,
+      innovation: entry.innovation,
+      systemFlags: entry.systemFlags,
+      notes: entry.notes
+    });
+    if (res.ok) {
+      setDayState({
+        tone: "ok",
+        text: "Saved ✓"
+      });
+      loadRows();
+      setTimeout(() => setDayState({
+        tone: "idle",
+        text: ""
+      }), 2600);
+    } else if (res.authRequired) {
+      signOut();
+    } else {
+      setDayState({
+        tone: "bad",
+        text: res.error || "Did not save."
+      });
+    }
+  }
+  if (booting) return /*#__PURE__*/React.createElement(Splash, {
+    text: "Checking your session\u2026"
+  });
+  if (!me) return /*#__PURE__*/React.createElement(Login, {
+    onIn: (tok, profile, ros) => {
+      storeToken(tok);
+      setToken(tok);
+      setMe(profile);
+      setRoster(ros || []);
+    }
+  });
+
+  // Everyone on the Access tab logs a day, the Branch Manager included. Being
+  // able to see the branch and having a day of your own are different things —
+  // filtering managers out of this list is what left the person who asked for
+  // the checkpoint with no way to open his own blocks.
+  const staffList = roster;
+  const visible = me.manager ? staffList : staffList.filter(p => p.staffId === me.staffId);
+  const entries = rows.map(rowToEntry);
+
+  // ---- home ---------------------------------------------------------------
+  if (view === "home") return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement("div", {
+    style: mast
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 11
+    }
+  }, /*#__PURE__*/React.createElement(ShieldLogo, {
+    size: 38
+  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: GOLD_SOFT,
+      fontSize: 11,
+      fontWeight: 700,
+      letterSpacing: 1.6,
+      textTransform: "uppercase"
+    }
+  }, "Ricky Rampersad Branch"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "#fff",
+      fontSize: 15,
+      fontWeight: 800,
+      letterSpacing: -0.2
+    }
+  }, "Ricky Rampersad's Branch"))), /*#__PURE__*/React.createElement("button", {
+    onClick: signOut,
+    style: signOutBtn
+  }, "Sign out")), /*#__PURE__*/React.createElement("h1", {
+    style: {
+      color: "#fff",
+      fontSize: 22,
+      fontWeight: 800,
+      margin: "16px 0 2px",
+      letterSpacing: -0.4
+    }
+  }, "Daily KPI & Innovation"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: GOLD_SOFT,
+      fontSize: 13,
+      margin: 0
+    }
+  }, prettyDate(todayISO())), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: "#fff",
+      fontSize: 12.5,
+      margin: "6px 0 0",
+      opacity: 0.75
+    }
+  }, "Signed in as ", me.name, me.manager ? " · Branch Manager" : "")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "0 18px 44px"
+    }
+  }, !configured() && /*#__PURE__*/React.createElement("div", {
+    style: warn
+  }, "\u26A0 ", /*#__PURE__*/React.createElement("b", null, "No sheet connected."), " Paste your Apps Script /exec URL into ", /*#__PURE__*/React.createElement("b", null, "APPS_SCRIPT_URL"), " near the top of this file."), me.manager ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: MUTED,
+      fontSize: 13.5,
+      margin: "16px 0 4px",
+      lineHeight: 1.55
+    }
+  }, "Your branch, as it stands. The ", /*#__PURE__*/React.createElement("b", {
+    style: {
+      color: INK
+    }
+  }, "3pm checkpoint"), " tells you who to chase while there is still a working hour left. The ", /*#__PURE__*/React.createElement("b", {
+    style: {
+      color: INK
+    }
+  }, "weekly summary"), " shows where the week actually went."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 10,
+      marginTop: 16
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setReviewDate(todayISO());
+      setView("checkpoint");
+    },
+    style: {
+      ...bigBtn,
+      background: GOLD,
+      color: NAVY_DEEP
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 19
+    }
+  }, "\u25F7"), /*#__PURE__*/React.createElement("span", null, "3pm Checkpoint")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setWeekOf(weekStartOf(todayISO()));
+      setView("weekly");
+    },
+    style: {
+      ...bigBtn,
+      background: NAVY,
+      color: "#fff"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 19
+    }
+  }, "\u25A4"), /*#__PURE__*/React.createElement("span", null, "Weekly summary"))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setWaiting(null);
+      setView("waiting");
+    },
+    style: {
+      ...primaryWide,
+      marginTop: 10
+    }
+  }, "Who we are waiting on \u2192"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setReviewDate(todayISO());
+      setView("review");
+    },
+    style: primaryWide
+  }, "Full day review \u2192"), /*#__PURE__*/React.createElement(SectionLabel, null, "The team")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: MUTED,
+      fontSize: 13.5,
+      margin: "16px 0 4px",
+      lineHeight: 1.55
+    }
+  }, "Log your day against your KPI blocks \u2014 what was ", /*#__PURE__*/React.createElement("b", {
+    style: {
+      color: INK
+    }
+  }, "actioned and resolved"), ", what you carry forward, and your ", /*#__PURE__*/React.createElement("b", {
+    style: {
+      color: INK
+    }
+  }, "value added"), ". Ideas belong here too."), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setWaiting(null);
+      setView("waiting");
+    },
+    style: {
+      ...primaryWide,
+      marginTop: 14
+    }
+  }, "What you are chasing \u2192"), /*#__PURE__*/React.createElement(SectionLabel, null, "Your day")), visible.length === 0 && /*#__PURE__*/React.createElement(Empty, {
+    text: "Nobody on the roster yet \u2014 add staff to the Access tab of the workbook."
+  }), /*#__PURE__*/React.createElement("div", {
+    style: vp.wide ? autoGrid(300, 10) : null
+  }, visible.map(p => {
+    const today = entries.find(e => e.staffId === p.staffId && e.date === todayISO());
+    return /*#__PURE__*/React.createElement(PersonRow, {
+      key: p.staffId,
+      p: p,
+      today: today,
+      onOpen: () => {
+        setActive(p.staffId);
+        setDate(todayISO());
+        setBlockState({});
+        setDayState({
+          tone: "idle",
+          text: ""
+        });
+        setOpenBlock(null);
+        setView("entry");
+      },
+      onTrend: () => {
+        setTrendStaff(p.staffId);
+        setView("trend");
+      }
+    });
+  })), /*#__PURE__*/React.createElement("div", {
+    style: standardsBox
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 800,
+      letterSpacing: 1,
+      textTransform: "uppercase",
+      color: GOLD,
+      marginBottom: 8
+    }
+  }, "The standard"), STANDARDS.map((s, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 6
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: GOLD,
+      fontWeight: 800,
+      flexShrink: 0
+    }
+  }, "\u2713"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12.5,
+      color: "#E9E6DD",
+      lineHeight: 1.45
+    }
+  }, s)))), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: MUTED,
+      fontSize: 11.5,
+      textAlign: "center",
+      marginTop: 18
+    }
+  }, "9\u201313 Endeavour 1st Street, Chaguanas")));
+
+  // ---- plan: the day before it happens ------------------------------------
+  //
+  // The old shape was a diary — four write-ups at four o'clock, from memory.
+  // This is the other half: at eight, the book is already known, so the day
+  // can be laid against it rather than recalled after it.
+  //
+  // Nothing new is stored. Planning is picking the KPI chips in the morning
+  // instead of at the end, and those already live on the block. What changes
+  // is that the size of the work is on screen while the choice is made: a
+  // block set aside for licensing with three tasks in it says so at eight
+  // rather than at four.
+  if (view === "plan" && active) {
+    const prof = profileFor(active);
+    const person = roster.find(p => p.staffId === active);
+    const opts = fnFor(prof.role);
+    const mine = me.manager || me.staffId === active;
+    if (!mine) return /*#__PURE__*/React.createElement(Denied, {
+      onBack: () => setView("home")
+    });
+    const filled = (entry && entry.blocks) || {};
+    const byType = byTypeFor(metrics, active);
+    const branchType = metrics && metrics.branch ? metrics.branch.byType : null;
+    const late = (needsReason && needsReason[active]) || [];
+    const book = (openBook && openBook[active]) || null;
+    const rateAll = (metrics && metrics.ok && metrics.staff && metrics.staff[active] &&
+                     metrics.staff[active].rateAll) || null;
+
+    // What the person has picked across the whole day, so the same task type
+    // in two blocks is counted once.
+    const chosen = {};
+    BLOCKS.forEach(b => kpiList((filled[b.id] || {}).kpi).forEach(k => { chosen[k] = 1; }));
+    const covered = Object.keys(chosen);
+    const sum = f => covered.reduce((n, k) => n + ((byType && byType[k] && byType[k][f]) || 0), 0);
+
+    return /*#__PURE__*/React.createElement(Shell, {
+      wide: vp.desktop ? 1160 : vp.tablet ? 760 : 560
+    }, /*#__PURE__*/React.createElement(SubHeader, {
+      title: person ? person.name : active,
+      sub: "Planning " + prettyDate(date),
+      tenure: prof.tenure,
+      onBack: () => setView("home")
+    }), /*#__PURE__*/React.createElement("div", { style: { padding: "0 18px 40px" } },
+
+      /*#__PURE__*/React.createElement("p", {
+        style: { fontSize: 13.5, color: MUTED, lineHeight: 1.55, margin: "14px 0 16px" }
+      }, "Set the day before it starts. Tick what each block is for and the",
+         " tracker shows how much of it there actually is \u2014 so two hours",
+         " does not go into three tasks."),
+
+      // What the picked types add up to. Absent when Salesforce is silent,
+      // rather than a zero that reads like an empty book.
+      byType ? /*#__PURE__*/React.createElement("div", {
+        style: { background: NAVY, color: GOLD_SOFT, borderRadius: 12,
+                 padding: "13px 15px", marginBottom: 16 }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: { fontSize: 11, fontWeight: 800, letterSpacing: ".14em",
+                 textTransform: "uppercase", color: GOLD, marginBottom: 5 }
+      }, covered.length ? "What you have planned holds" : "Nothing picked yet"),
+        /*#__PURE__*/React.createElement("div", { style: { fontSize: 15, lineHeight: 1.5 } },
+          covered.length
+            ? sum("open") + " open \u00b7 " + sum("overdue") + " already late"
+            : "Tick a block below and this fills in.")) : null,
+
+      // The blocks themselves.
+      BLOCKS.map(b => {
+        const bl = filled[b.id] || blankBlock();
+        const sc = blockSched(active, b.col) || {};
+        const picked = kpiList(bl.kpi);
+        const open = picked.reduce((n, k) => n + ((byType && byType[k] && byType[k].open) || 0), 0);
+        const od = picked.reduce((n, k) => n + ((byType && byType[k] && byType[k].overdue) || 0), 0);
+        return /*#__PURE__*/React.createElement("div", { key: b.id, style: card },
+          /*#__PURE__*/React.createElement("div", { style: cardHead },
+            /*#__PURE__*/React.createElement("span", { style: cardTitle },
+              b.label, sc.time ? " \u00b7 " + sc.time : ""),
+            byType && picked.length ? /*#__PURE__*/React.createElement("span", {
+              style: { fontSize: 11.5, fontWeight: 700, color: od ? AMBER : MUTED }
+            }, open + " open" + (od ? " \u00b7 " + od + " late" : "")) : null),
+          sc.focus ? /*#__PURE__*/React.createElement("p", {
+            style: { fontSize: 12, color: MUTED, margin: "0 0 9px" }
+          }, sc.focus) : null,
+          /*#__PURE__*/React.createElement(KpiPicker, {
+            value: bl.kpi, opts: opts, mine: byType, branch: branchType,
+            onToggle: k => patchBlock(b.id, "kpi", kpiToggle(bl.kpi, k))
+          }),
+          (() => {
+            const est = estimateFor(rateAll, byType, picked);
+            if (!est) return null;
+            return /*#__PURE__*/React.createElement("p", {
+              style: { fontSize: 12.5, color: GOLD, fontWeight: 700,
+                       margin: "9px 0 0", lineHeight: 1.45 }
+            }, sayHowLong(est),
+               /*#__PURE__*/React.createElement("span", {
+                 style: { color: MUTED, fontWeight: 500 }
+               }, "  " + est.needs + " waiting, against " + est.sample +
+                  " you closed in the last 60 days."));
+          })(),
+          book ? /*#__PURE__*/React.createElement(OpenList, {
+            items: picked.reduce((a, k) => a.concat(book[k] || []), [])
+          }) : null,
+          picked.length ? /*#__PURE__*/React.createElement(Chips, {
+            label: "How long do you think this needs?",
+            hint: byType && open ? "\u2014 " + open + " open in what you picked" : "",
+            options: PLAN_MINS, value: bl.planMins,
+            onPick: v => patchBlock(b.id, "planMins", v)
+          }) : null);
+      }),
+
+      // The exceptions, and only those. Nothing is asked about the work that
+      // is running fine.
+      late.length ? /*#__PURE__*/React.createElement("div", { style: card },
+        /*#__PURE__*/React.createElement("div", { style: cardHead },
+          /*#__PURE__*/React.createElement("span", { style: cardTitle },
+            "Late, and no reason on it yet"),
+          /*#__PURE__*/React.createElement("span", {
+            style: { fontSize: 11.5, fontWeight: 700, color: AMBER }
+          }, late.length)),
+        /*#__PURE__*/React.createElement("p", {
+          style: { fontSize: 12, color: MUTED, margin: "0 0 10px", lineHeight: 1.45 }
+        }, "These are the only ones being asked about. Give the reason once",
+           " and it goes back to Salesforce with the task."),
+        /*#__PURE__*/React.createElement(LateByAgent, { items: late })) : null,
+
+      /*#__PURE__*/React.createElement("button", {
+        onClick: () => setView("entry"),
+        style: { width: "100%", marginTop: 8, padding: "15px 16px", borderRadius: 12,
+                 border: "none", background: NAVY_DEEP, color: "#FFFFFF",
+                 font: "inherit", fontSize: 15, fontWeight: 800, cursor: "pointer" }
+      }, "Start the day")));
+  }
+
+  // ---- entry: one block at a time -----------------------------------------
+  if (view === "entry" && active) {
+    const prof = profileFor(active);
+    const person = roster.find(p => p.staffId === active);
+    const sched = schedFor(active);
+    const opts = fnFor(prof.role);
+    const mine = me.manager || me.staffId === active;
+    if (!mine) return /*#__PURE__*/React.createElement(Denied, {
+      onBack: () => setView("home")
+    });
+    const blocks = blocksFor(active);
+    const done = entry ? blocksDone(entry) : 0;
+    return /*#__PURE__*/React.createElement(Shell, {
+      wide: vp.desktop ? 1160 : vp.tablet ? 760 : 560
+    }, /*#__PURE__*/React.createElement(SubHeader, {
+      title: person ? person.name : active,
+      sub: prof.grade,
+      tenure: prof.tenure,
+      onBack: () => setView("home")
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: "0 18px 40px"
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      onClick: () => setView("plan"),
+      style: { background: "none", border: "none", padding: "12px 0 2px",
+               cursor: "pointer", font: "inherit", fontSize: 12.5,
+               fontWeight: 700, color: GOLD }
+    }, "\u2190 Plan the day"), /*#__PURE__*/React.createElement("div", {
+      style: dateBar
+    }, /*#__PURE__*/React.createElement("label", {
+      style: {
+        fontSize: 12,
+        color: MUTED,
+        fontWeight: 700
+      }
+    }, "Reporting day"), /*#__PURE__*/React.createElement("input", {
+      type: "date",
+      value: date,
+      onChange: e => setDate(e.target.value),
+      style: dateInput
+    })), sched && /*#__PURE__*/React.createElement("div", {
+      style: dayStrip
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        fontWeight: 800,
+        letterSpacing: 1,
+        textTransform: "uppercase",
+        color: GOLD
+      }
+    }, "Your day"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12.5,
+        color: "#E9E6DD",
+        marginTop: 2
+      }
+    }, sched.hours, " \xB7 lunch ", sched.lunch)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 4
+      }
+    }, blocks.map(b => {
+      const t = entry ? blockTime(entry, b.id) : "";
+      const filled = entry && blockWorked(entry, b.id);
+      return /*#__PURE__*/React.createElement("div", {
+        key: b.id,
+        title: b.label,
+        style: {
+          width: 26,
+          height: 26,
+          borderRadius: 7,
+          background: t || filled ? GREEN : "rgba(255,255,255,0.16)",
+          color: "#fff",
+          fontSize: 11,
+          fontWeight: 800,
+          display: "grid",
+          placeItems: "center"
+        }
+      }, t || filled ? "✓" : "–");
+    }))), loading && !entry ? /*#__PURE__*/React.createElement("p", {
+      style: {
+        color: MUTED,
+        padding: 24,
+        textAlign: "center"
+      }
+    }, "Loading\u2026") : !entry ? null : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", {
+      style: {
+        fontSize: 12.5,
+        color: MUTED,
+        margin: "14px 0 2px",
+        lineHeight: 1.5
+      }
+    }, "Submit each block as it ends \u2014 not at four o'clock from memory. Your KPI is already set from the schedule; change it if the block went elsewhere."), /*#__PURE__*/React.createElement("div", {
+      style: vp.desktop ? {
+        display: "grid",
+        gridTemplateColumns: "minmax(0,1.35fr) minmax(0,1fr)",
+        gap: 20,
+        alignItems: "start"
+      } : null
+    }, /*#__PURE__*/React.createElement("div", null, blocks.map(b => {
+      const bl = entry.blocks[b.id] || blankBlock();
+      const at = blockTime(entry, b.id);
+      const filled = blockWorked(entry, b.id);
+      const st = blockState[b.id] || {
+        tone: "idle",
+        text: ""
+      };
+      const open = openBlock === b.id;
+      return /*#__PURE__*/React.createElement("div", {
+        key: b.id,
+        style: {
+          ...card,
+          padding: 0,
+          overflow: "hidden",
+          borderLeft: "4px solid " + (at || filled ? GREEN : LINE)
+        }
+      }, /*#__PURE__*/React.createElement("button", {
+        onClick: () => setOpenBlock(open ? null : b.id),
+        style: blockHead
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          textAlign: "left"
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 8
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 14,
+          fontWeight: 800,
+          color: NAVY
+        }
+      }, b.label), b.time && /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 11,
+          color: MUTED,
+          fontWeight: 600
+        }
+      }, b.time)), b.focus && /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 11.5,
+          color: MUTED,
+          marginTop: 2
+        }
+      }, b.focus)), /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 8
+        }
+      }, at ? /*#__PURE__*/React.createElement("span", {
+        style: pillOutline(GREEN)
+      }, "Sent ", at) : filled ? /*#__PURE__*/React.createElement("span", {
+        style: pillOutline(AMBER)
+      }, "Unsent") : /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 11,
+          color: MUTED,
+          fontWeight: 700
+        }
+      }, "Open"), /*#__PURE__*/React.createElement("span", {
+        style: {
+          color: GOLD,
+          fontSize: 16,
+          fontWeight: 700
+        }
+      }, open ? "⌄" : "›"))), open && /*#__PURE__*/React.createElement("div", {
+        style: {
+          padding: "0 14px 14px"
+        }
+      }, /*#__PURE__*/React.createElement(Field, {
+        label: "KPI worked \u2014 pick every one this block touched"
+      }, /*#__PURE__*/React.createElement(KpiPicker, {
+        value: bl.kpi,
+        opts: opts,
+        mine: byTypeFor(metrics, active),
+        branch: metrics && metrics.branch ? metrics.branch.byType : null,
+        onToggle: k => patchBlock(b.id, "kpi", kpiToggle(bl.kpi, k))
+      })), bl.kpi ? /*#__PURE__*/React.createElement(KpiHint, {
+        kpi: bl.kpi,
+        live: byTypeFor(metrics, active) ? byTypeFor(metrics, active)[bl.kpi] : null
+      }) : null, /*#__PURE__*/React.createElement(Field, {
+        label: "Actioned"
+      }, /*#__PURE__*/React.createElement("textarea", {
+        rows: 2,
+        value: bl.actioned,
+        onChange: e => patchBlock(b.id, "actioned", e.target.value),
+        placeholder: guideFor(bl.kpi).actioned,
+        style: ta
+      })), /*#__PURE__*/React.createElement(Field, {
+        label: "Resolved / closed"
+      }, /*#__PURE__*/React.createElement("textarea", {
+        rows: 2,
+        value: bl.resolved,
+        onChange: e => patchBlock(b.id, "resolved", e.target.value),
+        placeholder: guideFor(bl.kpi).resolved,
+        style: ta
+      })), /*#__PURE__*/React.createElement(Field, {
+        label: "Still open & owned by you"
+      }, /*#__PURE__*/React.createElement("textarea", {
+        rows: 2,
+        value: bl.openOwned,
+        onChange: e => patchBlock(b.id, "openOwned", e.target.value),
+        placeholder: "Carried forward",
+        style: ta
+      })), /*#__PURE__*/React.createElement("div", {
+        style: grid2
+      }, /*#__PURE__*/React.createElement(Field, {
+        label: "Blocker (if waiting)"
+      }, /*#__PURE__*/React.createElement("input", {
+        value: bl.blocker,
+        onChange: e => patchBlock(b.id, "blocker", e.target.value),
+        placeholder: "Genuine blocker",
+        style: inp
+      })), /*#__PURE__*/React.createElement(Field, {
+        label: "Waiting on (named) + last chased"
+      }, /*#__PURE__*/React.createElement("input", {
+        value: bl.blockerOwner,
+        onChange: e => patchBlock(b.id, "blockerOwner", e.target.value),
+        placeholder: "Name + date",
+        style: inp
+      }))), kpiList(bl.kpi).includes("Renewa/PDl/Bill") && /*#__PURE__*/React.createElement(BillingCheck, {
+        data: billing[active],
+        api: api,
+        token: token,
+        onSaved: loadRows
+      }), kpiList(bl.kpi).includes("Training delivered") && /*#__PURE__*/React.createElement("div", {
+        style: trainBox
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 11,
+          fontWeight: 800,
+          letterSpacing: 0.8,
+          textTransform: "uppercase",
+          color: GOLD,
+          marginBottom: 8
+        }
+      }, "Training record"), /*#__PURE__*/React.createElement(Field, {
+        label: "Who you trained"
+      }, /*#__PURE__*/React.createElement("input", {
+        value: bl.tr_trainee,
+        onChange: e => patchBlock(b.id, "tr_trainee", e.target.value),
+        placeholder: "Trainee name(s)",
+        style: inp
+      })), /*#__PURE__*/React.createElement(Field, {
+        label: "Topic / what was covered"
+      }, /*#__PURE__*/React.createElement("textarea", {
+        rows: 2,
+        value: bl.tr_topic,
+        onChange: e => patchBlock(b.id, "tr_topic", e.target.value),
+        placeholder: "e.g. Premium-due processing, end to end",
+        style: ta
+      })), /*#__PURE__*/React.createElement(Field, {
+        label: "Objectives set vs met"
+      }, /*#__PURE__*/React.createElement("textarea", {
+        rows: 2,
+        value: bl.tr_objectives,
+        onChange: e => patchBlock(b.id, "tr_objectives", e.target.value),
+        placeholder: "What they should be able to do \u2014 and whether they can now",
+        style: ta
+      })), /*#__PURE__*/React.createElement(Field, {
+        label: "What was achieved"
+      }, /*#__PURE__*/React.createElement("textarea", {
+        rows: 2,
+        value: bl.tr_achieved,
+        onChange: e => patchBlock(b.id, "tr_achieved", e.target.value),
+        placeholder: "Concrete outcome of the session",
+        style: ta
+      })), /*#__PURE__*/React.createElement("div", {
+        style: grid2
+      }, /*#__PURE__*/React.createElement(Field, {
+        label: "Test / check done?"
+      }, /*#__PURE__*/React.createElement("select", {
+        value: bl.tr_test,
+        onChange: e => patchBlock(b.id, "tr_test", e.target.value),
+        style: selectBox
+      }, /*#__PURE__*/React.createElement("option", {
+        value: ""
+      }, "Select\u2026"), /*#__PURE__*/React.createElement("option", {
+        value: "Yes - passed"
+      }, "Yes \u2014 passed"), /*#__PURE__*/React.createElement("option", {
+        value: "Yes - needs more"
+      }, "Yes \u2014 needs more practice"), /*#__PURE__*/React.createElement("option", {
+        value: "No - not yet"
+      }, "No \u2014 not yet"))), /*#__PURE__*/React.createElement(Field, {
+        label: "Result / score"
+      }, /*#__PURE__*/React.createElement("input", {
+        value: bl.tr_result,
+        onChange: e => patchBlock(b.id, "tr_result", e.target.value),
+        placeholder: "e.g. 5/6, or notes",
+        style: inp
+      }))), /*#__PURE__*/React.createElement(Field, {
+        label: "Follow-up / next step"
+      }, /*#__PURE__*/React.createElement("input", {
+        value: bl.tr_followup,
+        onChange: e => patchBlock(b.id, "tr_followup", e.target.value),
+        placeholder: "What happens next / when to re-check",
+        style: inp
+      }))), /*#__PURE__*/React.createElement(Chips, {
+        label: "Was the objective met?",
+        hint: bl.planMins ? "\u2014 you planned " + bl.planMins + " min" : "",
+        options: MET_OPTS, tone: MET_TONE, value: bl.met,
+        onPick: v => patchBlock(b.id, "met", v)
+      }), /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          marginTop: 4
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          flex: 1,
+          fontSize: 12.5,
+          fontWeight: 700,
+          lineHeight: 1.35,
+          color: st.tone === "bad" ? RED : st.tone === "ok" ? GREEN : st.tone === "ask" ? AMBER : MUTED
+        }
+      }, st.text || (at ? "Sent at " + at + " — submitting again updates it." : "")), /*#__PURE__*/React.createElement("button", {
+        onClick: () => submitBlock(b),
+        disabled: st.tone === "saving",
+        style: {
+          ...submitBtn,
+          padding: "11px 18px",
+          opacity: st.tone === "saving" ? 0.65 : 1
+        }
+      }, st.tone === "saving" ? "Sending…"
+         : st.tone === "ask" ? "Send it anyway"
+         : at ? "Update block" : "Submit block"))));
+    })), /*#__PURE__*/React.createElement("div", {
+      style: vp.desktop ? {
+        position: "sticky",
+        top: 16
+      } : null
+    }, /*#__PURE__*/React.createElement(SectionLabel, null, "The day"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        fontSize: 11.5,
+        color: MUTED,
+        margin: "0 0 10px",
+        lineHeight: 1.45
+      }
+    }, "These belong to the day rather than any one block. Save them once, whenever you have them."), /*#__PURE__*/React.createElement(TaskPosition, {
+      live: metrics,
+      staffId: active,
+      entry: entry,
+      patchMetric: patchMetric
+    }), /*#__PURE__*/React.createElement(NeedsReason, {
+      items: needsReason[active],
+      api: api,
+      token: token,
+      onSaved: loadRows
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        ...card,
+        borderLeft: "4px solid " + GOLD
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: cardHead
+    }, /*#__PURE__*/React.createElement("span", {
+      style: cardTitle
+    }, "Value Added today"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10.5,
+        color: AMBER,
+        fontWeight: 700
+      }
+    }, "log every day")), /*#__PURE__*/React.createElement("p", {
+      style: {
+        fontSize: 11.5,
+        color: MUTED,
+        margin: "0 0 8px",
+        lineHeight: 1.4
+      }
+    }, "Something the branch would not have unless you brought it. If nothing, write \"None today\"."), /*#__PURE__*/React.createElement("textarea", {
+      rows: 2,
+      value: entry.valueAdded,
+      onChange: e => setEntry(x => ({
+        ...x,
+        valueAdded: e.target.value
+      })),
+      placeholder: "e.g. \"Caught a misrouted contract\" \u2014 or \"None today\"",
+      style: ta
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        ...card,
+        borderLeft: "4px solid " + NAVY
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: cardHead
+    }, /*#__PURE__*/React.createElement("span", {
+      style: cardTitle
+    }, "Innovation / idea")), /*#__PURE__*/React.createElement("p", {
+      style: {
+        fontSize: 11.5,
+        color: MUTED,
+        margin: "0 0 8px",
+        lineHeight: 1.4
+      }
+    }, "A tool, tracker, checklist, macro or process fix you spotted. The problem + your fix."), /*#__PURE__*/React.createElement("textarea", {
+      rows: 2,
+      value: entry.innovation,
+      onChange: e => setEntry(x => ({
+        ...x,
+        innovation: e.target.value
+      })),
+      placeholder: "The friction you saw, and your fix",
+      style: ta
+    })), /*#__PURE__*/React.createElement("div", {
+      style: card
+    }, /*#__PURE__*/React.createElement("div", {
+      style: cardHead
+    }, /*#__PURE__*/React.createElement("span", {
+      style: cardTitle
+    }, "System flags & notes")), /*#__PURE__*/React.createElement(Field, {
+      label: "System issue to flag"
+    }, /*#__PURE__*/React.createElement("input", {
+      value: entry.systemFlags,
+      onChange: e => setEntry(x => ({
+        ...x,
+        systemFlags: e.target.value
+      })),
+      placeholder: "What broke + who you flagged it to",
+      style: inp
+    })), /*#__PURE__*/React.createElement(Field, {
+      label: "Note for the Branch Manager"
+    }, /*#__PURE__*/React.createElement("textarea", {
+      rows: 2,
+      value: entry.notes,
+      onChange: e => setEntry(x => ({
+        ...x,
+        notes: e.target.value
+      })),
+      placeholder: "Optional",
+      style: ta
+    }))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        marginTop: 2
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        fontSize: 12.5,
+        fontWeight: 700,
+        color: dayState.tone === "bad" ? RED : dayState.tone === "ok" ? GREEN : MUTED
+      }
+    }, dayState.text || done + " of 4 blocks in"), /*#__PURE__*/React.createElement("button", {
+      onClick: saveDay,
+      disabled: dayState.tone === "saving",
+      style: {
+        ...dayBtn,
+        padding: "11px 18px",
+        opacity: dayState.tone === "saving" ? 0.65 : 1
+      }
+    }, dayState.tone === "saving" ? "Saving…" : "Save the day")))))));
+  }
+
+  // ---- 3pm checkpoint -----------------------------------------------------
+  if (view === "checkpoint") {
+    if (!me.manager) return /*#__PURE__*/React.createElement(Denied, {
+      onBack: () => setView("home")
+    });
+    const day = reviewDate;
+    const byId = {};
+    entries.filter(e => e.date === day).forEach(e => {
+      byId[e.staffId] = e;
+    });
+    const lines = staffList.map(p => {
+      const e = byId[p.staffId];
+      const done = e ? blocksDone(e) : 0;
+      return {
+        p,
+        e,
+        done,
+        onTrack: done >= CHECKPOINT_BLOCKS,
+        status: !e ? "No entry" : e.submitted ? "Submitted" : "Draft",
+        blockers: e ? blockersOf(e) : []
+      };
+    });
+    const silent = lines.filter(l => !l.e);
+    const behind = lines.filter(l => l.e && !l.onTrack);
+    const tot = lines.reduce((a, l) => ({
+      closed: a.closed + (l.e ? num(l.e.metrics.closed) || 0 : 0),
+      overdue: a.overdue + (l.e ? num(l.e.metrics.overdue) || 0 : 0),
+      aged60: a.aged60 + (l.e ? num(l.e.metrics.aged60) || 0 : 0)
+    }), {
+      closed: 0,
+      overdue: 0,
+      aged60: 0
+    });
+    const reported = lines.filter(l => l.e).length;
+    return /*#__PURE__*/React.createElement(Shell, {
+      wide: vp.desktop ? 1120 : vp.tablet ? 820 : 560
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        ...mast,
+        paddingBottom: 16
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      onClick: () => setView("home"),
+      style: backLink
+    }, "\u2190 Branch"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        marginTop: 8
+      }
+    }, /*#__PURE__*/React.createElement(ShieldLogo, {
+      size: 30
+    }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+      style: {
+        color: "#fff",
+        fontSize: 20,
+        fontWeight: 800,
+        margin: 0
+      }
+    }, "3pm Checkpoint"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        color: GOLD_SOFT,
+        fontSize: 12,
+        margin: "2px 0 0"
+      }
+    }, prettyDate(day)))), /*#__PURE__*/React.createElement("div", {
+      className: "noprint",
+      style: {
+        display: "flex",
+        gap: 8,
+        marginTop: 12
+      }
+    }, /*#__PURE__*/React.createElement("input", {
+      type: "date",
+      value: day,
+      onChange: e => setReviewDate(e.target.value),
+      style: {
+        ...dateInput,
+        flex: 1
+      }
+    }), /*#__PURE__*/React.createElement("button", {
+      onClick: loadRows,
+      style: goldBtn
+    }, "Refresh"), /*#__PURE__*/React.createElement("button", {
+      onClick: () => window.print(),
+      style: ghostBtn
+    }, "Print"))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: "0 18px 56px"
+      }
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        fontSize: 12,
+        color: MUTED,
+        margin: "14px 0 0",
+        lineHeight: 1.5
+      }
+    }, "Blocks 1\u20133 are behind them by 3pm; the last block runs to 4. Anyone under ", CHECKPOINT_BLOCKS, " blocks is flagged while there is still time to act on it."), /*#__PURE__*/React.createElement("div", {
+      style: statRow
+    }, /*#__PURE__*/React.createElement(Stat, {
+      label: "Logged",
+      value: reported + "/" + staffList.length,
+      tone: reported === staffList.length ? "green" : "amber"
+    }), /*#__PURE__*/React.createElement(Stat, {
+      label: "Closed",
+      value: tot.closed,
+      tone: "green"
+    }), /*#__PURE__*/React.createElement(Stat, {
+      label: "Overdue",
+      value: tot.overdue,
+      tone: tot.overdue > 0 ? "amber" : "green"
+    }), /*#__PURE__*/React.createElement(Stat, {
+      label: "60+ days",
+      value: tot.aged60,
+      tone: tot.aged60 > 0 ? "red" : "green"
+    })), loading && /*#__PURE__*/React.createElement("p", {
+      style: {
+        color: MUTED,
+        textAlign: "center",
+        padding: 14
+      }
+    }, "Loading\u2026"), silent.length > 0 || behind.length > 0 ? /*#__PURE__*/React.createElement("div", {
+      style: chaseBox
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        fontWeight: 800,
+        letterSpacing: 1,
+        textTransform: "uppercase",
+        color: RED,
+        marginBottom: 7
+      }
+    }, "Chase before close of business"), silent.length > 0 && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        lineHeight: 1.5,
+        marginBottom: 4
+      }
+    }, /*#__PURE__*/React.createElement("b", null, "Nothing logged yet:"), " ", silent.map(l => l.p.name).join(", ")), behind.length > 0 && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        lineHeight: 1.5
+      }
+    }, /*#__PURE__*/React.createElement("b", null, "Behind on blocks:"), " ", behind.map(l => l.p.name + " (" + l.done + "/4)").join(", "))) : /*#__PURE__*/React.createElement("div", {
+      style: clearBox
+    }, "Everyone has logged and is on track at the 3pm cut."), /*#__PURE__*/React.createElement(SectionLabel, null, "Where each person stands"), /*#__PURE__*/React.createElement("div", {
+      style: vp.wide ? autoGrid(330, 12) : null
+    }, lines.map(({
+      p,
+      e,
+      done,
+      onTrack,
+      status,
+      blockers
+    }) => {
+      const tone = !e ? RED : onTrack ? GREEN : AMBER;
+      return /*#__PURE__*/React.createElement("div", {
+        key: p.staffId,
+        style: {
+          ...card,
+          padding: 0,
+          overflow: "hidden"
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "11px 14px",
+          background: "#FBFAF5",
+          borderBottom: "1px solid " + LINE
+        }
+      }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 14,
+          fontWeight: 700,
+          color: INK
+        }
+      }, p.name), /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 11,
+          color: MUTED
+        }
+      }, profileFor(p.staffId).grade)), /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 8
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 11,
+          color: MUTED,
+          fontWeight: 700
+        }
+      }, done, "/4"), /*#__PURE__*/React.createElement("span", {
+        style: pillOutline(tone)
+      }, status))), /*#__PURE__*/React.createElement(BlockPips, {
+        done: done
+      }), e ? /*#__PURE__*/React.createElement("div", {
+        style: {
+          padding: "9px 14px"
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 12,
+          color: MUTED,
+          marginBottom: 4
+        }
+      }, "Closed ", num(e.metrics.closed) ?? "—", " \xB7 Overdue ", num(e.metrics.overdue) ?? "—", " \xB7 60+ ", num(e.metrics.aged60) ?? "—"), blocksFor(p.staffId).map(b => {
+        const d = e.blocks?.[b.id];
+        if (!d || !txt(d.kpi) && !txt(d.actioned)) return null;
+        return /*#__PURE__*/React.createElement("div", {
+          key: b.id,
+          style: {
+            marginTop: 6
+          }
+        }, /*#__PURE__*/React.createElement("div", {
+          style: {
+            fontSize: 11,
+            fontWeight: 700,
+            color: NAVY
+          }
+        }, b.label, " \xB7 ", d.kpi || "—"), txt(d.resolved) && /*#__PURE__*/React.createElement(Line, {
+          k: "Resolved",
+          v: d.resolved,
+          tone: GREEN
+        }), txt(d.actioned) && /*#__PURE__*/React.createElement(Line, {
+          k: "Actioned",
+          v: d.actioned
+        }), txt(d.openOwned) && /*#__PURE__*/React.createElement(Line, {
+          k: "Open",
+          v: d.openOwned,
+          tone: AMBER
+        }));
+      }), blockers.map((b, i) => /*#__PURE__*/React.createElement(Line, {
+        key: i,
+        k: "Blocked",
+        v: b.text,
+        tone: RED
+      })), txt(e.systemFlags) && /*#__PURE__*/React.createElement(Line, {
+        k: "Flag",
+        v: e.systemFlags,
+        tone: RED
+      }), txt(e.notes) && /*#__PURE__*/React.createElement(Line, {
+        k: "Note",
+        v: e.notes,
+        tone: MUTED
+      }), isRealVA(e.valueAdded) && /*#__PURE__*/React.createElement(Line, {
+        k: "Value added",
+        v: e.valueAdded,
+        tone: GOLD
+      })) : /*#__PURE__*/React.createElement("div", {
+        style: {
+          padding: "11px 14px",
+          fontSize: 13,
+          color: MUTED
+        }
+      }, "No entry for this day."));
+    }))));
+  }
+
+  // ---- weekly summary & trends -------------------------------------------
+  if (view === "weekly") {
+    if (!me.manager) return /*#__PURE__*/React.createElement(Denied, {
+      onBack: () => setView("home")
+    });
+    const days = weekDaysOf(weekOf);
+    const prevDays = weekDaysOf(shiftDays(weekOf, -7));
+    const inWeek = ds => entries.filter(e => ds.indexOf(e.date) > -1);
+    const thisRows = inWeek(days),
+      prevRows = inWeek(prevDays);
+    const totals = rs => rs.reduce((t, e) => ({
+      days: t.days + 1,
+      closed: t.closed + (num(e.metrics.closed) || 0),
+      overdue: t.overdue + (num(e.metrics.overdue) || 0),
+      aged60: t.aged60 + (num(e.metrics.aged60) || 0),
+      va: t.va + (isRealVA(e.valueAdded) ? 1 : 0),
+      ideas: t.ideas + (isRealVA(e.innovation) ? 1 : 0),
+      training: t.training + trainingCount(e),
+      blockers: t.blockers + blockersOf(e).length,
+      flags: t.flags + (txt(e.systemFlags) ? 1 : 0)
+    }), {
+      days: 0,
+      closed: 0,
+      overdue: 0,
+      aged60: 0,
+      va: 0,
+      ideas: 0,
+      training: 0,
+      blockers: 0,
+      flags: 0
+    });
+    const T = totals(thisRows),
+      P = totals(prevRows);
+    const expected = staffList.length * days.length;
+    const coverage = expected ? Math.round(T.days / expected * 100) : 0;
+
+    // Closed and overdue across the week, branch-wide
+    const closedByDay = days.map(d => inWeek([d]).reduce((n, e) => n + (num(e.metrics.closed) || 0), 0));
+    const overdueByDay = days.map(d => inWeek([d]).reduce((n, e) => n + (num(e.metrics.overdue) || 0), 0));
+    const mix = {};
+    thisRows.forEach(e => BLOCKS.forEach(b => {
+      kpiList(e.blocks?.[b.id]?.kpi).forEach(k => { mix[k] = (mix[k] || 0) + 1; });
+    }));
+    const mixList = Object.keys(mix).map(k => ({
+      kpi: k,
+      count: mix[k]
+    })).sort((a, b) => b.count - a.count);
+    const maxMix = mixList.length ? mixList[0].count : 1;
+    const harvest = field => thisRows.filter(e => isRealVA(e[field])).sort((a, b) => a.date < b.date ? -1 : 1).map(e => ({
+      name: e.name || e.staffId,
+      date: e.date,
+      text: txt(e[field])
+    }));
+    const flagList = thisRows.filter(e => txt(e.systemFlags)).map(e => ({
+      name: e.name || e.staffId,
+      date: e.date,
+      text: txt(e.systemFlags)
+    }));
+    const blockerList = [];
+    thisRows.forEach(e => blockersOf(e).forEach(b => blockerList.push({
+      name: e.name || e.staffId,
+      date: e.date,
+      kpi: b.kpi,
+      text: b.text
+    })));
+
+    // The register only holds sessions logged since it was added, so anything
+    // older is rebuilt from the block it was recorded in.
+    const trainingThisWeek = [];
+    thisRows.forEach(e => BLOCKS.forEach(b => {
+      const d = e.blocks?.[b.id];
+      if (!d || !kpiList(d.kpi).includes("Training delivered")) return;
+      const reg = training.find(t => t.StaffId === e.staffId && String(t.TrainingDate || "").slice(0, 10) === e.date && String(t.Block || "").trim() === BLOCK_COL[b.id]);
+      trainingThisWeek.push({
+        date: e.date,
+        trainer: e.name || e.staffId,
+        trainee: reg ? String(reg.Trainee || "") : txt(d.tr_trainee),
+        detail: [reg ? String(reg.Topic || "") : txt(d.tr_topic), txt(d.actioned), txt(d.resolved)].filter(Boolean).join(" · ")
+      });
+    }));
+    trainingThisWeek.sort((a, b) => a.date < b.date ? -1 : 1);
+    const isThisWeek = weekOf === weekStartOf(todayISO());
+    return /*#__PURE__*/React.createElement(Shell, {
+      wide: vp.desktop ? 1120 : vp.tablet ? 820 : 560
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        ...mast,
+        paddingBottom: 16
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      onClick: () => setView("home"),
+      style: backLink
+    }, "\u2190 Branch"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        marginTop: 8
+      }
+    }, /*#__PURE__*/React.createElement(ShieldLogo, {
+      size: 30
+    }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+      style: {
+        color: "#fff",
+        fontSize: 20,
+        fontWeight: 800,
+        margin: 0
+      }
+    }, "Weekly summary"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        color: GOLD_SOFT,
+        fontSize: 12,
+        margin: "2px 0 0"
+      }
+    }, shortDate(days[0]), " \u2013 ", shortDate(days[4]), isThisWeek ? " · this week" : ""))), /*#__PURE__*/React.createElement("div", {
+      className: "noprint",
+      style: {
+        display: "flex",
+        gap: 8,
+        marginTop: 12,
+        alignItems: "center"
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      onClick: () => setWeekOf(shiftDays(weekOf, -7)),
+      style: navBtn
+    }, "\u2039 Prev"), /*#__PURE__*/React.createElement("button", {
+      onClick: () => setWeekOf(weekStartOf(todayISO())),
+      style: {
+        ...navBtn,
+        flex: 1
+      }
+    }, "This week"), /*#__PURE__*/React.createElement("button", {
+      onClick: () => setWeekOf(shiftDays(weekOf, 7)),
+      style: navBtn
+    }, "Next \u203A"), /*#__PURE__*/React.createElement("button", {
+      onClick: () => window.print(),
+      style: ghostBtn
+    }, "Print"))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: "0 18px 56px"
+      }
+    }, loading && /*#__PURE__*/React.createElement("p", {
+      style: {
+        color: MUTED,
+        textAlign: "center",
+        padding: 14
+      }
+    }, "Loading\u2026"), /*#__PURE__*/React.createElement("div", {
+      style: statRow
+    }, /*#__PURE__*/React.createElement(Stat, {
+      label: "Reports in",
+      value: T.days + "/" + expected,
+      tone: coverage >= 90 ? "green" : coverage >= 70 ? "amber" : "red"
+    }), /*#__PURE__*/React.createElement(Stat, {
+      label: "Closed",
+      value: T.closed,
+      tone: "green"
+    }), /*#__PURE__*/React.createElement(Stat, {
+      label: "Value adds",
+      value: T.va,
+      tone: "gold"
+    }), /*#__PURE__*/React.createElement(Stat, {
+      label: "Ideas",
+      value: T.ideas,
+      tone: "navy"
+    })), /*#__PURE__*/React.createElement(SectionLabel, null, "Movement on last week"), P.days === 0 && /*#__PURE__*/React.createElement("p", {
+      style: {
+        fontSize: 12.5,
+        color: MUTED,
+        margin: "0 0 8px",
+        lineHeight: 1.45
+      }
+    }, "Nothing was logged the week before, so there is nothing to compare against."), /*#__PURE__*/React.createElement("div", {
+      style: {
+        ...card,
+        padding: 0,
+        overflow: "hidden"
+      }
+    }, [["Tasks closed", T.closed, P.closed, "up"], ["Overdue at week end", T.overdue, P.overdue, "down"], ["Aged 60+ days", T.aged60, P.aged60, "down"], ["Value added logged", T.va, P.va, "up"], ["Ideas logged", T.ideas, P.ideas, "up"], ["Training delivered", T.training, P.training, "up"], ["Blockers raised", T.blockers, P.blockers, "flat"]].map(([label, now, was, good], i) => /*#__PURE__*/React.createElement(MoveRow, {
+      key: label,
+      label: label,
+      now: now,
+      was: was,
+      good: good,
+      first: i === 0,
+      comparable: P.days > 0
+    }))), /*#__PURE__*/React.createElement(SectionLabel, null, "Closed vs overdue, across the week"), /*#__PURE__*/React.createElement(MiniChart, {
+      labels: days.map(dowShort),
+      seriesA: closedByDay,
+      seriesB: overdueByDay,
+      colorA: GREEN,
+      colorB: AMBER,
+      legendA: "Closed",
+      legendB: "Overdue"
+    }), /*#__PURE__*/React.createElement(SectionLabel, null, "The week, person by person"), /*#__PURE__*/React.createElement("div", {
+      style: vp.wide ? autoGrid(330, 12) : null
+    }, staffList.map(p => {
+      const mine = thisRows.filter(e => e.staffId === p.staffId);
+      const mt = totals(mine);
+      const pt = totals(prevRows.filter(e => e.staffId === p.staffId));
+      return /*#__PURE__*/React.createElement("div", {
+        key: p.staffId,
+        style: {
+          ...card,
+          padding: "12px 14px"
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline"
+        }
+      }, /*#__PURE__*/React.createElement("button", {
+        onClick: () => {
+          setTrendStaff(p.staffId);
+          setView("trend");
+        },
+        style: {
+          background: "none",
+          border: "none",
+          padding: 0,
+          fontSize: 14,
+          fontWeight: 700,
+          color: INK,
+          cursor: "pointer",
+          textAlign: "left"
+        }
+      }, p.name, " ", /*#__PURE__*/React.createElement("span", {
+        style: {
+          color: GOLD,
+          fontSize: 12
+        }
+      }, "\u203A")), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 11.5,
+          color: MUTED
+        }
+      }, mt.days, "/5 days \xB7 ", mt.closed, " closed", mt.training ? " · " + mt.training + " training" : "")), /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          gap: 5,
+          marginTop: 10
+        }
+      }, days.map(d => {
+        const e = mine.find(x => x.date === d);
+        const done = e ? blocksDone(e) : 0;
+        const bg = !e ? "#E4E0D6" : done >= CHECKPOINT_BLOCKS ? GREEN : AMBER;
+        return /*#__PURE__*/React.createElement("div", {
+          key: d,
+          style: {
+            flex: 1,
+            textAlign: "center"
+          }
+        }, /*#__PURE__*/React.createElement("div", {
+          title: prettyDate(d),
+          style: {
+            background: bg,
+            borderRadius: 6,
+            height: 28,
+            lineHeight: "28px",
+            color: e ? "#fff" : MUTED,
+            fontSize: 11.5,
+            fontWeight: 800
+          }
+        }, e ? done + "/4" : "–"), /*#__PURE__*/React.createElement("div", {
+          style: {
+            fontSize: 9.5,
+            color: MUTED,
+            marginTop: 3
+          }
+        }, dowShort(d)));
+      })), mt.days > 0 && /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 11.5,
+          color: MUTED,
+          marginTop: 9,
+          lineHeight: 1.45
+        }
+      }, mt.va, " value add", mt.va === 1 ? "" : "s", " \xB7 ", mt.ideas, " idea", mt.ideas === 1 ? "" : "s", " \xB7 ", mt.blockers, " blocker", mt.blockers === 1 ? "" : "s", pt.days > 0 && /*#__PURE__*/React.createElement("span", null, " \xB7 last week ", pt.days, "/5 days, ", pt.closed, " closed")));
+    })), /*#__PURE__*/React.createElement(SectionLabel, null, "Where the time went"), mixList.length === 0 ? /*#__PURE__*/React.createElement(Empty, {
+      text: "No KPI blocks logged this week."
+    }) : /*#__PURE__*/React.createElement("div", {
+      style: {
+        ...card,
+        padding: "14px"
+      }
+    }, mixList.slice(0, 10).map(m => /*#__PURE__*/React.createElement("div", {
+      key: m.kpi,
+      style: {
+        marginBottom: 9
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        fontSize: 12,
+        marginBottom: 3
+      }
+    }, /*#__PURE__*/React.createElement("span", null, m.kpi), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: MUTED,
+        fontWeight: 700
+      }
+    }, m.count)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: "#EDE9DE",
+        borderRadius: 4,
+        height: 7
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: NAVY,
+        width: Math.max(4, Math.round(m.count / maxMix * 100)) + "%",
+        height: 7,
+        borderRadius: 4
+      }
+    }))))), /*#__PURE__*/React.createElement(SectionLabel, null, "Value added"), harvest("valueAdded").length === 0 ? /*#__PURE__*/React.createElement(Empty, {
+      text: "Nothing logged as value added this week."
+    }) : harvest("valueAdded").map((v, i) => /*#__PURE__*/React.createElement(Surfaced, {
+      key: i,
+      name: v.name + " · " + shortDate(v.date),
+      text: v.text,
+      accent: GOLD
+    })), /*#__PURE__*/React.createElement(SectionLabel, null, "Innovations & ideas"), harvest("innovation").length === 0 ? /*#__PURE__*/React.createElement(Empty, {
+      text: "No ideas logged this week."
+    }) : harvest("innovation").map((v, i) => /*#__PURE__*/React.createElement(Surfaced, {
+      key: i,
+      name: v.name + " · " + shortDate(v.date),
+      text: v.text,
+      accent: NAVY
+    })), /*#__PURE__*/React.createElement(SectionLabel, null, "Training delivered"), trainingThisWeek.length === 0 ? /*#__PURE__*/React.createElement(Empty, {
+      text: "No training logged this week."
+    }) : trainingThisWeek.map((t, i) => /*#__PURE__*/React.createElement(Surfaced, {
+      key: i,
+      name: t.trainer + (t.trainee ? " → " + t.trainee : "") + " · " + shortDate(t.date),
+      text: t.detail || "—",
+      accent: GREEN
+    })), /*#__PURE__*/React.createElement(SectionLabel, null, "Blockers raised"), blockerList.length === 0 ? /*#__PURE__*/React.createElement(Empty, {
+      text: "No blockers raised this week."
+    }) : blockerList.map((b, i) => /*#__PURE__*/React.createElement(Surfaced, {
+      key: i,
+      name: b.name + " · " + shortDate(b.date) + (b.kpi ? " · " + b.kpi : ""),
+      text: b.text,
+      accent: RED
+    })), /*#__PURE__*/React.createElement(SectionLabel, null, "System flags"), flagList.length === 0 ? /*#__PURE__*/React.createElement(Empty, {
+      text: "No system issues flagged this week."
+    }) : flagList.map((f, i) => /*#__PURE__*/React.createElement(Surfaced, {
+      key: i,
+      name: f.name + " · " + shortDate(f.date),
+      text: f.text,
+      accent: RED
+    }))));
+  }
+
+  // ---- who we are waiting on ----------------------------------------------
+  if (view === "waiting") {
+    const w = waiting;
+    const ready = w && w.ok;
+    return /*#__PURE__*/React.createElement(Shell, {
+      wide: vp.desktop ? 1120 : vp.tablet ? 820 : 560
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        ...mast,
+        paddingBottom: 16
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      onClick: () => setView("home"),
+      style: backLink
+    }, "\u2190 Branch"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        marginTop: 8
+      }
+    }, /*#__PURE__*/React.createElement(ShieldLogo, {
+      size: 30
+    }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+      style: {
+        color: "#fff",
+        fontSize: 20,
+        fontWeight: 800,
+        margin: 0
+      }
+    }, me.manager ? "Who we are waiting on" : "What you are chasing"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        color: GOLD_SOFT,
+        fontSize: 12,
+        margin: "2px 0 0"
+      }
+    }, "Open tasks sitting at \"waiting on someone else\"")))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: "0 18px 56px"
+      }
+    }, !w && /*#__PURE__*/React.createElement("p", {
+      style: {
+        color: MUTED,
+        textAlign: "center",
+        padding: 24
+      }
+    }, "Reading Salesforce\u2026"), w && !w.ok && /*#__PURE__*/React.createElement("div", {
+      style: {
+        ...warn,
+        marginTop: 16
+      }
+    }, w.reason === "notConfigured" ? "Salesforce is not connected, so there is nothing to read yet." : "Could not reach Salesforce: " + (w.error || "unknown")), ready && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      style: statRow
+    }, /*#__PURE__*/React.createElement(Stat, {
+      label: "Tasks waiting",
+      value: w.total,
+      tone: w.total > 0 ? "amber" : "green"
+    }), /*#__PURE__*/React.createElement(Stat, {
+      label: "Days carried",
+      value: w.totalDays.toLocaleString(),
+      tone: "red"
+    }), /*#__PURE__*/React.createElement(Stat, {
+      label: "People",
+      value: w.named.length,
+      tone: "navy"
+    })), /*#__PURE__*/React.createElement("p", {
+      style: {
+        fontSize: 12.5,
+        color: MUTED,
+        margin: "14px 0 0",
+        lineHeight: 1.5
+      }
+    }, "Grouped by who the task is waiting on \u2014 the agent named on it, or the contact.", /*#__PURE__*/React.createElement("b", {
+      style: {
+        color: INK
+      }
+    }, " Days quiet"), " is how long since anyone touched it: a task waiting three weeks and chased yesterday is fine; one nobody has touched in a month is not, and the age alone cannot tell them apart."), /*#__PURE__*/React.createElement(SectionLabel, null, "Longest first"), /*#__PURE__*/React.createElement("div", {
+      style: vp.wide ? autoGrid(340, 12) : null
+    }, w.named.map(g => /*#__PURE__*/React.createElement("div", {
+      key: g.name,
+      style: {
+        ...card,
+        padding: 0,
+        overflow: "hidden"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: "11px 14px",
+        background: "#FBFAF5",
+        borderBottom: "1px solid " + LINE
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "baseline",
+        gap: 8
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 14.5,
+        fontWeight: 700,
+        color: INK
+      }
+    }, g.name), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11.5,
+        color: MUTED,
+        whiteSpace: "nowrap"
+      }
+    }, g.count, " task", g.count === 1 ? "" : "s")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11.5,
+        color: MUTED,
+        marginTop: 3
+      }
+    }, /*#__PURE__*/React.createElement("b", {
+      style: {
+        color: g.days > 1000 ? RED : AMBER
+      }
+    }, g.days.toLocaleString(), " days"), " carried", " · oldest ", g.oldest, "d", g.noReason > 0 && /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: AMBER
+      }
+    }, " \xB7 ", g.noReason, " with no reason"), g.stale > 0 && /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: RED
+      }
+    }, " \xB7 ", g.stale, " unchased over a month"))), g.tasks.slice(0, 5).map(t => /*#__PURE__*/React.createElement("div", {
+      key: t.id,
+      style: {
+        padding: "9px 14px",
+        borderTop: "1px solid " + LINE
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12.5,
+        color: INK,
+        lineHeight: 1.4
+      }
+    }, t.subject), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: MUTED,
+        marginTop: 2
+      }
+    }, t.type, " \xB7 ", me.manager ? nameOf(roster, t.owner) + " · " : "", /*#__PURE__*/React.createElement("b", {
+      style: {
+        color: t.age > 180 ? RED : t.age > 60 ? AMBER : MUTED
+      }
+    }, t.age, "d old"), t.quiet != null && /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: t.quiet > 30 ? RED : MUTED
+      }
+    }, " \xB7 quiet ", t.quiet, "d"), !t.hasReason && /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: AMBER
+      }
+    }, " \xB7 no reason")))), g.tasks.length > 5 && /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: "8px 14px",
+        borderTop: "1px solid " + LINE,
+        fontSize: 11.5,
+        color: MUTED
+      }
+    }, "and ", g.tasks.length - 5, " more.")))), w.unnamed && w.unnamed.count > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SectionLabel, null, "Waiting on nobody in particular"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        ...card,
+        borderLeft: "4px solid " + RED
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13.5,
+        color: INK,
+        lineHeight: 1.5
+      }
+    }, /*#__PURE__*/React.createElement("b", null, w.unnamed.count, " task", w.unnamed.count === 1 ? "" : "s"), " carrying", " ", /*#__PURE__*/React.createElement("b", null, w.unnamed.days.toLocaleString(), " days"), " have no agent and no contact recorded."), /*#__PURE__*/React.createElement("p", {
+      style: {
+        fontSize: 12,
+        color: MUTED,
+        margin: "7px 0 0",
+        lineHeight: 1.45
+      }
+    }, "A task cannot be chased if the person to chase was never written down. These are the ones to name or close."))))));
+  }
+
+  // ---- full day review ----------------------------------------------------
+  if (view === "review") {
+    if (!me.manager) return /*#__PURE__*/React.createElement(Denied, {
+      onBack: () => setView("home")
+    });
+    const dayRows = entries.filter(e => e.date === reviewDate);
+    const byId = {};
+    dayRows.forEach(e => {
+      byId[e.staffId] = e;
+    });
+    let tC = 0,
+      tO = 0,
+      tA = 0,
+      tS = 0;
+    staffList.forEach(p => {
+      const e = byId[p.staffId];
+      if (!e) return;
+      if (e.submitted) tS++;
+      tC += num(e.metrics.closed) || 0;
+      tO += num(e.metrics.overdue) || 0;
+      tA += num(e.metrics.aged60) || 0;
+    });
+    const vAdds = staffList.map(p => ({
+      p,
+      e: byId[p.staffId]
+    })).filter(x => x.e && isRealVA(x.e.valueAdded));
+    const innovs = staffList.map(p => ({
+      p,
+      e: byId[p.staffId]
+    })).filter(x => x.e && isRealVA(x.e.innovation));
+    return /*#__PURE__*/React.createElement(Shell, {
+      wide: vp.desktop ? 1120 : vp.tablet ? 820 : 560
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        ...mast,
+        paddingBottom: 16
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      onClick: () => setView("home"),
+      style: backLink
+    }, "\u2190 Branch"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        marginTop: 8
+      }
+    }, /*#__PURE__*/React.createElement(ShieldLogo, {
+      size: 30
+    }), /*#__PURE__*/React.createElement("h1", {
+      style: {
+        color: "#fff",
+        fontSize: 20,
+        fontWeight: 800,
+        margin: 0
+      }
+    }, "Day review")), /*#__PURE__*/React.createElement("p", {
+      style: {
+        color: GOLD_SOFT,
+        fontSize: 13,
+        margin: "4px 0 0"
+      }
+    }, prettyDate(reviewDate)), /*#__PURE__*/React.createElement("div", {
+      className: "noprint",
+      style: {
+        display: "flex",
+        gap: 8,
+        marginTop: 12
+      }
+    }, /*#__PURE__*/React.createElement("input", {
+      type: "date",
+      value: reviewDate,
+      onChange: e => setReviewDate(e.target.value),
+      style: {
+        ...dateInput,
+        flex: 1
+      }
+    }), /*#__PURE__*/React.createElement("button", {
+      onClick: loadRows,
+      style: goldBtn
+    }, "Refresh"), /*#__PURE__*/React.createElement("button", {
+      onClick: () => window.print(),
+      style: ghostBtn
+    }, "Print"))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: "0 18px 56px"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: statRow
+    }, /*#__PURE__*/React.createElement(Stat, {
+      label: "Submitted",
+      value: tS + "/" + staffList.length,
+      tone: tS === staffList.length ? "green" : "amber"
+    }), /*#__PURE__*/React.createElement(Stat, {
+      label: "Closed",
+      value: tC,
+      tone: "green"
+    }), /*#__PURE__*/React.createElement(Stat, {
+      label: "Overdue",
+      value: tO,
+      tone: tO > 0 ? "amber" : "green"
+    }), /*#__PURE__*/React.createElement(Stat, {
+      label: "60+ days",
+      value: tA,
+      tone: tA > 0 ? "red" : "green"
+    })), loading && /*#__PURE__*/React.createElement("p", {
+      style: {
+        color: MUTED,
+        textAlign: "center",
+        padding: 18
+      }
+    }, "Loading\u2026"), /*#__PURE__*/React.createElement(SectionLabel, null, "The team"), staffList.map(p => /*#__PURE__*/React.createElement(ReviewCard, {
+      key: p.staffId,
+      p: p,
+      e: byId[p.staffId],
+      onTrend: () => {
+        setTrendStaff(p.staffId);
+        setView("trend");
+      }
+    })), /*#__PURE__*/React.createElement(SectionLabel, null, "Value added today"), vAdds.length === 0 ? /*#__PURE__*/React.createElement(Empty, {
+      text: "No value-added entries for this day yet."
+    }) : vAdds.map((x, i) => /*#__PURE__*/React.createElement(Surfaced, {
+      key: i,
+      name: x.p.name,
+      text: x.e.valueAdded,
+      accent: GOLD
+    })), /*#__PURE__*/React.createElement(SectionLabel, null, "Innovations & ideas"), innovs.length === 0 ? /*#__PURE__*/React.createElement(Empty, {
+      text: "No ideas logged for this day yet."
+    }) : innovs.map((x, i) => /*#__PURE__*/React.createElement(Surfaced, {
+      key: i,
+      name: x.p.name,
+      text: x.e.innovation,
+      accent: NAVY
+    }))));
+  }
+
+  // ---- one person's history ----------------------------------------------
+  if (view === "trend" && trendStaff) {
+    if (!me.manager && me.staffId !== trendStaff) return /*#__PURE__*/React.createElement(Denied, {
+      onBack: () => setView("home")
+    });
+    const person = roster.find(p => p.staffId === trendStaff);
+    const prof = profileFor(trendStaff);
+    const data = entries.filter(e => e.staffId === trendStaff).sort((a, b) => a.date.localeCompare(b.date));
+    const closedS = data.map(e => num(e.metrics.closed) || 0);
+    const overdueS = data.map(e => num(e.metrics.overdue) || 0);
+    const labels = data.map(e => shortDate(e.date));
+    const vaCount = data.filter(e => isRealVA(e.valueAdded)).length;
+    const innovCount = data.filter(e => isRealVA(e.innovation)).length;
+    const trainTotal = data.reduce((n, e) => n + trainingCount(e), 0);
+    return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement(SubHeader, {
+      title: person ? person.name : trendStaff,
+      sub: prof.grade + " · history & trends",
+      tenure: prof.tenure,
+      onBack: () => setView("home")
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: "0 18px 56px"
+      }
+    }, loading ? /*#__PURE__*/React.createElement("p", {
+      style: {
+        color: MUTED,
+        textAlign: "center",
+        padding: 24
+      }
+    }, "Loading history\u2026") : data.length === 0 ? /*#__PURE__*/React.createElement(Empty, {
+      text: "No entries recorded yet for this person."
+    }) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      style: statRow
+    }, /*#__PURE__*/React.createElement(Stat, {
+      label: "Days logged",
+      value: data.length,
+      tone: "navy"
+    }), /*#__PURE__*/React.createElement(Stat, {
+      label: "Value adds",
+      value: vaCount,
+      tone: "green"
+    }), /*#__PURE__*/React.createElement(Stat, {
+      label: "Ideas",
+      value: innovCount,
+      tone: "amber"
+    }), /*#__PURE__*/React.createElement(Stat, {
+      label: "Training",
+      value: trainTotal,
+      tone: "gold"
+    })), /*#__PURE__*/React.createElement(SectionLabel, null, "Closed vs overdue"), /*#__PURE__*/React.createElement(MiniChart, {
+      labels: labels,
+      seriesA: closedS,
+      seriesB: overdueS,
+      colorA: GREEN,
+      colorB: AMBER,
+      legendA: "Closed",
+      legendB: "Overdue"
+    }), /*#__PURE__*/React.createElement(SectionLabel, null, "Daily log"), [...data].reverse().map(e => /*#__PURE__*/React.createElement("div", {
+      key: e.date,
+      style: {
+        ...card,
+        padding: 0,
+        overflow: "hidden"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "10px 14px",
+        background: "#FBFAF5",
+        borderBottom: "1px solid " + LINE
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 13,
+        fontWeight: 800,
+        color: NAVY
+      }
+    }, prettyDate(e.date)), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        color: MUTED
+      }
+    }, num(e.metrics.closed) ?? "—", " closed \xB7 ", num(e.metrics.overdue) ?? "—", " overdue")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: "10px 14px"
+      }
+    }, blocksFor(trendStaff).map(b => {
+      const d = e.blocks?.[b.id];
+      if (!d || !txt(d.kpi) && !txt(d.actioned)) return null;
+      return /*#__PURE__*/React.createElement("div", {
+        key: b.id,
+        style: {
+          marginBottom: 6
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 11,
+          fontWeight: 700,
+          color: NAVY
+        }
+      }, b.label, " \xB7 ", d.kpi || "—"), txt(d.actioned) && /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 12.5,
+          color: INK,
+          lineHeight: 1.45
+        }
+      }, d.actioned));
+    }), txt(e.valueAdded) && /*#__PURE__*/React.createElement(Line, {
+      k: "Value added",
+      v: e.valueAdded,
+      tone: isRealVA(e.valueAdded) ? GOLD : MUTED
+    }), txt(e.innovation) && /*#__PURE__*/React.createElement(Line, {
+      k: "Idea",
+      v: e.innovation,
+      tone: NAVY
+    }), txt(e.systemFlags) && /*#__PURE__*/React.createElement(Line, {
+      k: "Flag",
+      v: e.systemFlags,
+      tone: RED
+    })))))));
+  }
+  return null;
+}
+
+// ===========================================================================
+//  Sign in
+// ===========================================================================
+function Login({
+  onIn
+}) {
+  const [who, setWho] = useState("");
+  const [pw, setPw] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [tryNo, setTryNo] = useState(0);
+  const [err, setErr] = useState("");
+  async function go(ev) {
+    if (ev) ev.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setTryNo(1);
+    setErr("");
+    const r = await api("login", {
+      who: who.trim(),
+      password: pw
+    }, setTryNo);
+    setBusy(false);
+    setTryNo(0);
+    if (r.ok) {
+      if (r.schedule) SCHEDULE = r.schedule;
+      if (r.kpis) KPI_CHOICES = r.kpis;
+      rememberRoles(r.roster);
+      onIn(r.token, r.profile, r.roster);
+    } else setErr(r.error || "Could not sign you in.");
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      minHeight: "100vh",
+      background: "linear-gradient(158deg, " + NAVY + " 0%, " + NAVY_DEEP + " 100%)",
+      display: "grid",
+      placeItems: "center",
+      padding: 20
+    }
+  }, /*#__PURE__*/React.createElement("form", {
+    onSubmit: go,
+    style: {
+      width: "100%",
+      maxWidth: 380
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      marginBottom: 24
+    }
+  }, /*#__PURE__*/React.createElement(ShieldLogo, {
+    size: 54
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: GOLD_SOFT,
+      fontSize: 11,
+      fontWeight: 700,
+      letterSpacing: 1.8,
+      textTransform: "uppercase",
+      marginTop: 10
+    }
+  }, "Ricky Rampersad Branch"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "#fff",
+      fontSize: 19,
+      fontWeight: 800,
+      marginTop: 3
+    }
+  }, "Ricky Rampersad's Branch"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: GOLD_SOFT,
+      fontSize: 13,
+      marginTop: 6
+    }
+  }, "Daily KPI & Innovation Tracker")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: CARD,
+      borderRadius: 14,
+      padding: "20px 18px"
+    }
+  }, /*#__PURE__*/React.createElement(Field, {
+    label: "Email or agent number"
+  }, /*#__PURE__*/React.createElement("input", {
+    value: who,
+    onChange: e => setWho(e.target.value),
+    autoComplete: "username",
+    placeholder: "you@myguardiangroup.com",
+    style: inp
+  })), /*#__PURE__*/React.createElement(Field, {
+    label: "Password"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "password",
+    value: pw,
+    onChange: e => setPw(e.target.value),
+    autoComplete: "current-password",
+    placeholder: "\u2022\u2022\u2022\u2022",
+    style: inp
+  })), err && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#FBE9E7",
+      border: "1px solid " + RED,
+      borderRadius: 9,
+      padding: "9px 11px",
+      fontSize: 12.5,
+      color: "#7A2A24",
+      marginBottom: 10,
+      lineHeight: 1.4
+    }
+  }, err), /*#__PURE__*/React.createElement("button", {
+    type: "submit",
+    disabled: busy,
+    style: {
+      ...submitBtn,
+      width: "100%",
+      flex: "none",
+      opacity: busy ? 0.65 : 1
+    }
+  }, busy
+       ? (tryNo > 1
+            ? "Still trying… (" + tryNo + " of 3)"
+            : "Signing in… this can take a few seconds")
+       : "Sign in"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 11.5,
+      color: MUTED,
+      textAlign: "center",
+      margin: "12px 0 0",
+      lineHeight: 1.45
+    }
+  }, "Your log-in is on the Access tab of the branch workbook. Forgotten it \u2014 ask the Branch Manager.")), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: GOLD_SOFT,
+      fontSize: 11,
+      textAlign: "center",
+      marginTop: 16,
+      opacity: 0.75
+    }
+  }, "9\u201313 Endeavour 1st Street, Chaguanas")));
+}
+
+// ===========================================================================
+//  Pieces
+// ===========================================================================
+function Shell({
+  children,
+  wide
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      minHeight: "100vh",
+      background: PAPER
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      maxWidth: wide || 560,
+      margin: "0 auto",
+      minHeight: "100vh",
+      position: "relative"
+    }
+  }, children));
+}
+const Splash = ({
+  text
+}) => /*#__PURE__*/React.createElement("div", {
+  style: {
+    minHeight: "100vh",
+    background: PAPER,
+    display: "grid",
+    placeItems: "center"
+  }
+}, /*#__PURE__*/React.createElement("div", {
+  style: {
+    textAlign: "center"
+  }
+}, /*#__PURE__*/React.createElement(ShieldLogo, {
+  size: 44
+}), /*#__PURE__*/React.createElement("p", {
+  style: {
+    color: MUTED,
+    fontSize: 13,
+    marginTop: 12
+  }
+}, text)));
+const Denied = ({
+  onBack
+}) => /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement("div", {
+  style: {
+    padding: "60px 24px",
+    textAlign: "center"
+  }
+}, /*#__PURE__*/React.createElement(ShieldLogo, {
+  size: 40
+}), /*#__PURE__*/React.createElement("p", {
+  style: {
+    fontSize: 14,
+    color: INK,
+    marginTop: 14,
+    fontWeight: 700
+  }
+}, "That view is for the Branch Manager."), /*#__PURE__*/React.createElement("button", {
+  onClick: onBack,
+  style: {
+    ...primaryWide,
+    maxWidth: 220,
+    margin: "18px auto 0"
+  }
+}, "Back")));
+function SubHeader({
+  title,
+  sub,
+  tenure,
+  onBack
+}) {
+  const tag = tenure === "probation" ? "Probation" : tenure === "training" ? "In training" : null;
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...mast,
+      paddingBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: onBack,
+    style: backLink
+  }, "\u2190 Branch"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "flex-end",
+      marginTop: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement(ShieldLogo, {
+    size: 30
+  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+    style: {
+      color: "#fff",
+      fontSize: 19,
+      fontWeight: 800,
+      margin: 0
+    }
+  }, title), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: GOLD_SOFT,
+      fontSize: 12,
+      margin: "2px 0 0"
+    }
+  }, sub))), tag && /*#__PURE__*/React.createElement("span", {
+    style: pill(GOLD, NAVY_DEEP)
+  }, tag)));
+}
+function PersonRow({
+  p,
+  today,
+  onOpen,
+  onTrend
+}) {
+  const prof = profileFor(p.staffId);
+  const tag = prof.tenure === "probation" ? "Probation" : prof.tenure === "training" ? "Training" : null;
+  const done = today ? blocksDone(today) : 0;
+  const tone = !today ? LINE : done >= CHECKPOINT_BLOCKS ? GREEN : AMBER;
+  return /*#__PURE__*/React.createElement("div", {
+    style: personRow
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: onOpen,
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      background: "none",
+      border: "none",
+      flex: 1,
+      textAlign: "left",
+      cursor: "pointer",
+      padding: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...avatar,
+      boxShadow: "0 0 0 2px " + tone
+    }
+  }, p.name.split(" ").map(w => w[0]).slice(0, 2).join("")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      fontWeight: 700,
+      color: INK
+    }
+  }, p.name), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: MUTED
+    }
+  }, prof.grade), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: today ? done >= CHECKPOINT_BLOCKS ? GREEN : AMBER : MUTED,
+      fontWeight: 700,
+      marginTop: 2
+    }
+  }, today ? done + "/4 blocks today" : "Nothing logged today"))), tag && /*#__PURE__*/React.createElement("span", {
+    style: pillOutline(AMBER)
+  }, tag), /*#__PURE__*/React.createElement("button", {
+    onClick: onTrend,
+    style: trendChip
+  }, "Trends"), /*#__PURE__*/React.createElement("button", {
+    onClick: onOpen,
+    style: {
+      background: "none",
+      border: "none",
+      color: GOLD,
+      fontSize: 20,
+      fontWeight: 700,
+      cursor: "pointer"
+    }
+  }, "\u203A"));
+}
+function ReviewCard({
+  p,
+  e,
+  onTrend
+}) {
+  const prof = profileFor(p.staffId);
+  const closed = e ? num(e.metrics.closed) ?? "—" : "—",
+    overdue = e ? num(e.metrics.overdue) ?? "—" : "—",
+    aged = e ? num(e.metrics.aged60) ?? "—" : "—";
+  const status = !e ? "No entry" : e.submitted ? "Submitted" : "Draft";
+  const tone = !e ? RED : e.submitted ? GREEN : AMBER;
+  const blocks = e ? blocksFor(p.staffId).map(b => ({
+    b,
+    d: e.blocks?.[b.id]
+  })).filter(x => x.d && (txt(x.d.kpi) || txt(x.d.actioned) || txt(x.d.resolved))) : [];
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...card,
+      padding: 0,
+      overflow: "hidden"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: "11px 14px",
+      background: "#FBFAF5",
+      borderBottom: "1px solid " + LINE
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      fontWeight: 700,
+      color: INK
+    }
+  }, p.name), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: MUTED
+    }
+  }, prof.grade)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: onTrend,
+    style: trendChip
+  }, "Trends"), /*#__PURE__*/React.createElement("span", {
+    style: pillOutline(tone)
+  }, status))), /*#__PURE__*/React.createElement("div", {
+    style: grid3row
+  }, /*#__PURE__*/React.createElement(MiniStat, {
+    label: "Closed",
+    value: closed
+  }), /*#__PURE__*/React.createElement(MiniStat, {
+    label: "Overdue",
+    value: overdue,
+    tone: overdue !== "—" && overdue > 0 ? AMBER : INK
+  }), /*#__PURE__*/React.createElement(MiniStat, {
+    label: "60+ days",
+    value: aged,
+    tone: aged !== "—" && aged > 0 ? RED : INK,
+    last: true
+  })), blocks.map(({
+    b,
+    d
+  }) => /*#__PURE__*/React.createElement("div", {
+    key: b.id,
+    style: {
+      padding: "9px 14px",
+      borderTop: "1px solid " + LINE
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 700,
+      color: NAVY,
+      marginBottom: 2
+    }
+  }, b.label, " \xB7 ", d.kpi || "—"), txt(d.resolved) && /*#__PURE__*/React.createElement(Line, {
+    k: "Resolved",
+    v: d.resolved,
+    tone: GREEN
+  }), txt(d.actioned) && /*#__PURE__*/React.createElement(Line, {
+    k: "Actioned",
+    v: d.actioned
+  }), kpiList(d.kpi).includes("Training delivered") && (txt(d.tr_trainee) || txt(d.tr_topic)) && /*#__PURE__*/React.createElement(Line, {
+    k: "Trained",
+    v: (d.tr_trainee || "?") + " — " + (d.tr_topic || ""),
+    tone: GOLD
+  }), txt(d.openOwned) && /*#__PURE__*/React.createElement(Line, {
+    k: "Open",
+    v: d.openOwned,
+    tone: AMBER
+  }), (txt(d.blocker) || txt(d.blockerOwner)) && /*#__PURE__*/React.createElement(Line, {
+    k: "Blocked",
+    v: [txt(d.blocker) || "—", txt(d.blockerOwner)].filter(Boolean).join(" · "),
+    tone: RED
+  }))), e && txt(e.valueAdded) && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "9px 14px",
+      borderTop: "1px solid " + LINE,
+      background: "#FCFBF7"
+    }
+  }, /*#__PURE__*/React.createElement(Line, {
+    k: "Value added",
+    v: e.valueAdded,
+    tone: isRealVA(e.valueAdded) ? GOLD : MUTED
+  })), e && txt(e.systemFlags) && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "9px 14px",
+      borderTop: "1px solid " + LINE
+    }
+  }, /*#__PURE__*/React.createElement(Line, {
+    k: "Flag",
+    v: e.systemFlags,
+    tone: RED
+  })), e && txt(e.notes) && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "9px 14px",
+      borderTop: "1px solid " + LINE
+    }
+  }, /*#__PURE__*/React.createElement(Line, {
+    k: "Note",
+    v: e.notes,
+    tone: MUTED
+  })));
+}
+
+// The task position, read from Salesforce rather than typed. Where Salesforce
+// cannot be reached the boxes come back, because a tracker that stops working
+// when a connection drops is worse than one that asks.
+function TaskPosition({
+  live,
+  staffId,
+  entry,
+  patchMetric
+}) {
+  const m = live && live.ok && live.staff ? live.staff[staffId] : null;
+  if (m) {
+    return /*#__PURE__*/React.createElement("div", {
+      style: card
+    }, /*#__PURE__*/React.createElement("div", {
+      style: cardHead
+    }, /*#__PURE__*/React.createElement("span", {
+      style: cardTitle
+    }, "Task position"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10.5,
+        color: GREEN,
+        fontWeight: 700
+      }
+    }, "live from Salesforce")), /*#__PURE__*/React.createElement("div", {
+      style: grid3row
+    }, /*#__PURE__*/React.createElement(MiniStat, {
+      label: "Closed today",
+      value: m.closed,
+      tone: GREEN
+    }), /*#__PURE__*/React.createElement(MiniStat, {
+      label: "Open now",
+      value: m.open
+    }), /*#__PURE__*/React.createElement(MiniStat, {
+      label: "Overdue",
+      value: m.overdue,
+      tone: m.overdue > 0 ? AMBER : INK,
+      last: true
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 14,
+        padding: "9px 2px 0",
+        fontSize: 11.5,
+        color: MUTED
+      }
+    }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", {
+      style: {
+        color: m.aged60 > 0 ? RED : INK
+      }
+    }, m.aged60), " at 60+ days"), m.noDate > 0 && /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", {
+      style: {
+        color: AMBER
+      }
+    }, m.noDate), " with no due date")), m.noDate > 0 && /*#__PURE__*/React.createElement("p", {
+      style: {
+        fontSize: 11.5,
+        color: AMBER,
+        margin: "8px 0 0",
+        lineHeight: 1.45
+      }
+    }, "A task with no due date can never be overdue, so it never shows up in any report. Give those a date, or close them."), /*#__PURE__*/React.createElement("p", {
+      style: {
+        fontSize: 11,
+        color: MUTED,
+        margin: "8px 0 0",
+        lineHeight: 1.4
+      }
+    }, "Nothing to type \u2014 these come straight from your Salesforce tasks."));
+  }
+  const why = live && live.reason === "notConfigured" ? "Salesforce is not connected yet, so these are typed for now." : "Salesforce could not be reached, so type them for now.";
+  return /*#__PURE__*/React.createElement("div", {
+    style: card
+  }, /*#__PURE__*/React.createElement("div", {
+    style: cardHead
+  }, /*#__PURE__*/React.createElement("span", {
+    style: cardTitle
+  }, "Task position \xB7 Salesforce"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 10.5,
+      color: AMBER,
+      fontWeight: 700
+    }
+  }, "typed")), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 11.5,
+      color: MUTED,
+      margin: "0 0 8px",
+      lineHeight: 1.4
+    }
+  }, why), /*#__PURE__*/React.createElement("div", {
+    style: grid3
+  }, /*#__PURE__*/React.createElement(Field, {
+    label: "Closed today"
+  }, /*#__PURE__*/React.createElement("input", {
+    inputMode: "numeric",
+    value: entry.metrics.closed,
+    onChange: e => patchMetric("closed", e.target.value),
+    placeholder: "0",
+    style: inp
+  })), /*#__PURE__*/React.createElement(Field, {
+    label: "Overdue now"
+  }, /*#__PURE__*/React.createElement("input", {
+    inputMode: "numeric",
+    value: entry.metrics.overdue,
+    onChange: e => patchMetric("overdue", e.target.value),
+    placeholder: "0",
+    style: inp
+  })), /*#__PURE__*/React.createElement(Field, {
+    label: "Of those, 60+ days"
+  }, /*#__PURE__*/React.createElement("input", {
+    inputMode: "numeric",
+    value: entry.metrics.aged60,
+    onChange: e => patchMetric("aged60", e.target.value),
+    placeholder: "0",
+    style: inp
+  }))));
+}
+
+// A task you can fix from here. The reason and the due date are the two things
+// that make an overdue task legible, and both were a trip to Salesforce. Now
+// they are a line and a button, and the row confirms what it did.
+function TaskRow({
+  t,
+  onSaved,
+  api,
+  token,
+  showDate
+}) {
+  const [reason, setReason] = useState("");
+  const [due, setDue] = useState("");
+  const [st, setSt] = useState({
+    tone: "idle",
+    text: ""
+  });
+  const [done, setDone] = useState(null);
+  async function save(field, value) {
+    if (st.tone === "saving") return;
+    setSt({
+      tone: "saving",
+      text: "Saving…"
+    });
+    const r = await api("updateTask", {
+      token,
+      taskId: t.id,
+      field,
+      value
+    });
+    if (r.ok) {
+      setSt({
+        tone: "ok",
+        text: r.label + " saved to Salesforce ✓"
+      });
+      setDone(d => ({
+        ...(d || {}),
+        [field]: value
+      }));
+      if (onSaved) onSaved();
+    } else setSt({
+      tone: "bad",
+      text: r.error || "Did not save."
+    });
+  }
+  const age = t.age || 0;
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "10px 0",
+      borderTop: "1px solid " + LINE
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      alignItems: "baseline"
+    }
+  }, t.repeat && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9.5,
+      fontWeight: 800,
+      color: RED,
+      border: "1px solid " + RED,
+      borderRadius: 3,
+      padding: "0 4px",
+      flexShrink: 0
+    }
+  }, "REPEAT"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12.5,
+      color: INK,
+      lineHeight: 1.4
+    }
+  }, t.subject)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: MUTED,
+      marginTop: 2
+    }
+  }, t.type || t.status, " \xB7 due ", shortDate(done?.due || t.due), " \xB7", " ", /*#__PURE__*/React.createElement("b", {
+    style: {
+      color: age > 60 ? RED : age > 30 ? AMBER : MUTED
+    }
+  }, age, " days old")), done?.reason ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: GREEN,
+      marginTop: 6,
+      lineHeight: 1.45
+    }
+  }, /*#__PURE__*/React.createElement("b", null, "Reason:"), " ", done.reason) : /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      marginTop: 7
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    value: reason,
+    onChange: e => setReason(e.target.value),
+    placeholder: "What it is waiting on, and who owns the next step",
+    style: {
+      ...inp,
+      fontSize: 12.5,
+      padding: "7px 9px"
+    }
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: () => save("reason", reason),
+    disabled: st.tone === "saving" || reason.trim().length < 4,
+    style: {
+      ...goldBtn,
+      padding: "7px 12px",
+      fontSize: 12,
+      opacity: st.tone === "saving" || reason.trim().length < 4 ? 0.5 : 1
+    }
+  }, "Save")), showDate && !done?.due && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      marginTop: 6,
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: MUTED,
+      fontWeight: 600
+    }
+  }, "New due date"), /*#__PURE__*/React.createElement("input", {
+    type: "date",
+    value: due,
+    onChange: e => setDue(e.target.value),
+    style: {
+      ...inp,
+      fontSize: 12.5,
+      padding: "6px 8px",
+      width: "auto",
+      flex: "0 1 auto"
+    }
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: () => save("due", due),
+    disabled: st.tone === "saving" || !due,
+    style: {
+      ...goldBtn,
+      padding: "7px 12px",
+      fontSize: 12,
+      opacity: st.tone === "saving" || !due ? 0.5 : 1
+    }
+  }, "Set")), st.text && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11.5,
+      fontWeight: 700,
+      marginTop: 6,
+      color: st.tone === "bad" ? RED : st.tone === "ok" ? GREEN : MUTED
+    }
+  }, st.text));
+}
+
+// Overdue tasks carrying nothing in the reason field. The branch built that
+// field for this; it is filled on about one overdue task in twenty. An overdue
+// task with a reason is work in progress. One without is a task nobody has
+// looked at — so those are the ones named here.
+function NeedsReason({
+  items,
+  api,
+  token,
+  onSaved
+}) {
+  if (!items || !items.length) return null;
+  const show = items.slice(0, 6);
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...card,
+      borderLeft: "4px solid " + RED
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: cardHead
+  }, /*#__PURE__*/React.createElement("span", {
+    style: cardTitle
+  }, "Overdue with no reason given"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 10.5,
+      color: RED,
+      fontWeight: 700
+    }
+  }, items.length)), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 11.5,
+      color: MUTED,
+      margin: "0 0 10px",
+      lineHeight: 1.45
+    }
+  }, "The due date has passed and the Task Update Reason is empty. Put a line in Salesforce saying what it is waiting on and who owns the next step \u2014 a rolled date is not an actioned task."), show.map(t => /*#__PURE__*/React.createElement(TaskRow, {
+    key: t.id,
+    t: t,
+    api: api,
+    token: token,
+    showDate: !t.due,
+    onSaved: onSaved
+  })), items.length > show.length && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11.5,
+      color: MUTED,
+      marginTop: 8
+    }
+  }, "and ", items.length - show.length, " more."));
+}
+
+// Billing is the branch's most repetitive work, and its easiest to send twice.
+// The same account carrying more than one open billing task is the signal that
+// the last one was never reconciled — so those come first, by name.
+function BillingCheck({
+  data,
+  api,
+  token,
+  onSaved
+}) {
+  if (!data || !data.items || !data.items.length) return null;
+  const reps = data.repeats || [];
+  const show = data.items.slice(0, 8);
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#F4F7FB",
+      border: "1px solid " + NAVY,
+      borderRadius: 10,
+      padding: "12px 13px",
+      marginTop: 6,
+      marginBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 800,
+      letterSpacing: 0.8,
+      textTransform: "uppercase",
+      color: NAVY,
+      marginBottom: 6
+    }
+  }, "Reference check \xB7 before you send"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 11.5,
+      color: MUTED,
+      margin: "0 0 10px",
+      lineHeight: 1.45
+    }
+  }, "What is already open against these accounts. Check the last one landed before sending the next."), reps.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#FBE9E7",
+      border: "1px solid " + RED,
+      borderRadius: 8,
+      padding: "9px 11px",
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10.5,
+      fontWeight: 800,
+      letterSpacing: 0.6,
+      textTransform: "uppercase",
+      color: RED,
+      marginBottom: 4
+    }
+  }, "Sent more than once, still open"), reps.slice(0, 4).map(r => /*#__PURE__*/React.createElement("div", {
+    key: r.account,
+    style: {
+      fontSize: 12.5,
+      color: INK,
+      lineHeight: 1.5
+    }
+  }, /*#__PURE__*/React.createElement("b", null, r.account), " \u2014 ", r.open, " open billing tasks")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "#7A2A24",
+      marginTop: 5,
+      lineHeight: 1.4
+    }
+  }, "One account, several periods. That is one unreconciled job, not several new ones.")), show.map(t => t.hasReason ? /*#__PURE__*/React.createElement("div", {
+    key: t.id,
+    style: {
+      padding: "8px 0",
+      borderTop: "1px solid " + LINE
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12.5,
+      color: INK,
+      lineHeight: 1.4
+    }
+  }, t.subject), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: MUTED,
+      marginTop: 2
+    }
+  }, t.status, " \xB7 due ", shortDate(t.due), " \xB7", " ", /*#__PURE__*/React.createElement("b", {
+    style: {
+      color: t.age > 60 ? RED : t.age > 30 ? AMBER : MUTED
+    }
+  }, t.age, " days old"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: GREEN
+    }
+  }, " \xB7 reason recorded"))) : /*#__PURE__*/React.createElement(TaskRow, {
+    key: t.id,
+    t: t,
+    api: api,
+    token: token,
+    showDate: !t.due,
+    onSaved: onSaved
+  })), data.items.length > show.length && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11.5,
+      color: MUTED,
+      marginTop: 8
+    }
+  }, "and ", data.items.length - show.length, " more open."));
+}
+const BlockPips = ({
+  done
+}) => /*#__PURE__*/React.createElement("div", {
+  style: {
+    display: "flex",
+    gap: 4,
+    padding: "8px 14px",
+    borderBottom: "1px solid " + LINE
+  }
+}, [0, 1, 2, 3].map(i => /*#__PURE__*/React.createElement("div", {
+  key: i,
+  style: {
+    flex: 1,
+    height: 5,
+    borderRadius: 3,
+    background: i < done ? done >= CHECKPOINT_BLOCKS ? GREEN : AMBER : "#EDE9DE"
+  }
+})));
+function MoveRow({
+  label,
+  now,
+  was,
+  good,
+  first,
+  comparable
+}) {
+  const d = (now || 0) - (was || 0);
+  const better = good === "down" ? d < 0 : d > 0;
+  const tone = d === 0 ? MUTED : good === "flat" ? INK : better ? GREEN : RED;
+  const arrow = d > 0 ? "▲" : d < 0 ? "▼" : "—";
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: "10px 14px",
+      borderTop: first ? "none" : "1px solid " + LINE
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13
+    }
+  }, label), /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: "flex",
+      alignItems: "baseline",
+      gap: 7
+    }
+  }, /*#__PURE__*/React.createElement("b", {
+    style: {
+      fontSize: 15,
+      fontWeight: 800
+    }
+  }, now), comparable && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 10.5,
+      color: tone,
+      fontWeight: 700
+    }
+  }, arrow, d === 0 ? "" : " " + Math.abs(d))));
+}
+function MiniChart({
+  labels,
+  seriesA,
+  seriesB,
+  colorA,
+  colorB,
+  legendA,
+  legendB
+}) {
+  const max = Math.max(...seriesA, ...seriesB, 1),
+    W = 320,
+    H = 120,
+    pad = 8,
+    n = labels.length;
+  const x = i => n <= 1 ? W / 2 : pad + i * (W - pad * 2) / (n - 1);
+  const y = v => H - pad - v / max * (H - pad * 2);
+  const path = s => s.map((v, i) => (i === 0 ? "M" : "L") + " " + x(i).toFixed(1) + " " + y(v).toFixed(1)).join(" ");
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...card,
+      padding: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 16,
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement(Legend, {
+    color: colorA,
+    label: legendA
+  }), /*#__PURE__*/React.createElement(Legend, {
+    color: colorB,
+    label: legendB
+  })), /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 " + W + " " + H,
+    style: {
+      width: "100%",
+      height: "auto"
+    }
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: pad,
+    y1: H - pad,
+    x2: W - pad,
+    y2: H - pad,
+    stroke: LINE,
+    strokeWidth: "1"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: path(seriesA),
+    fill: "none",
+    stroke: colorA,
+    strokeWidth: "2.5",
+    strokeLinejoin: "round",
+    strokeLinecap: "round"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: path(seriesB),
+    fill: "none",
+    stroke: colorB,
+    strokeWidth: "2.5",
+    strokeLinejoin: "round",
+    strokeLinecap: "round"
+  }), seriesA.map((v, i) => /*#__PURE__*/React.createElement("circle", {
+    key: "a" + i,
+    cx: x(i),
+    cy: y(v),
+    r: "3",
+    fill: colorA
+  })), seriesB.map((v, i) => /*#__PURE__*/React.createElement("circle", {
+    key: "b" + i,
+    cx: x(i),
+    cy: y(v),
+    r: "3",
+    fill: colorB
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      marginTop: 4
+    }
+  }, labels.map((l, i) => /*#__PURE__*/React.createElement("span", {
+    key: i,
+    style: {
+      fontSize: 9.5,
+      color: MUTED,
+      flex: 1,
+      textAlign: "center"
+    }
+  }, l))));
+}
+const rememberRoles = roster => {
+  const m = {};
+  (roster || []).forEach(p => {
+    m[p.staffId] = {
+      role: p.role,
+      grade: p.grade || ""
+    };
+  });
+  ROSTER_ROLES = m;
+};
+const nameOf = (roster, sid) => {
+  const p = (roster || []).find(x => x.staffId === sid);
+  return p ? p.name.split(' ')[0] : sid;
+};
+const Legend = ({
+  color,
+  label
+}) => /*#__PURE__*/React.createElement("span", {
+  style: {
+    display: "flex",
+    alignItems: "center",
+    gap: 5,
+    fontSize: 11,
+    color: MUTED,
+    fontWeight: 600
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  style: {
+    width: 10,
+    height: 10,
+    borderRadius: 3,
+    background: color
+  }
+}), label);
+function SectionLabel({
+  children
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      margin: "22px 0 10px"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      fontWeight: 800,
+      letterSpacing: 1.1,
+      textTransform: "uppercase",
+      color: NAVY
+    }
+  }, children), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1,
+      height: 1,
+      background: GOLD,
+      opacity: 0.45
+    }
+  }));
+}
+const Field = ({
+  label,
+  children
+}) => /*#__PURE__*/React.createElement("div", {
+  style: {
+    marginBottom: 10
+  }
+}, /*#__PURE__*/React.createElement("label", {
+  style: {
+    display: "block",
+    fontSize: 11,
+    fontWeight: 600,
+    color: MUTED,
+    marginBottom: 4
+  }
+}, label), children);
+function Stat({
+  label,
+  value,
+  tone
+}) {
+  const c = tone === "green" ? GREEN : tone === "amber" ? AMBER : tone === "red" ? RED : tone === "gold" ? GOLD : NAVY;
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      background: CARD,
+      border: "1px solid " + LINE,
+      borderRadius: 10,
+      padding: "12px 4px",
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 19,
+      fontWeight: 800,
+      color: c,
+      lineHeight: 1
+    }
+  }, value), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 9.5,
+      color: MUTED,
+      marginTop: 4,
+      fontWeight: 600
+    }
+  }, label));
+}
+const MiniStat = ({
+  label,
+  value,
+  tone = INK,
+  last
+}) => /*#__PURE__*/React.createElement("div", {
+  style: {
+    padding: "10px 6px",
+    textAlign: "center",
+    borderRight: last ? "none" : "1px solid " + LINE
+  }
+}, /*#__PURE__*/React.createElement("div", {
+  style: {
+    fontSize: 17,
+    fontWeight: 800,
+    color: tone
+  }
+}, value), /*#__PURE__*/React.createElement("div", {
+  style: {
+    fontSize: 10,
+    color: MUTED,
+    fontWeight: 600
+  }
+}, label));
+const Line = ({
+  k,
+  v,
+  tone = INK
+}) => /*#__PURE__*/React.createElement("div", {
+  style: {
+    fontSize: 12.5,
+    lineHeight: 1.45,
+    marginTop: 2
+  }
+}, /*#__PURE__*/React.createElement("span", {
+  style: {
+    fontWeight: 700,
+    color: tone,
+    fontSize: 10.5,
+    textTransform: "uppercase",
+    letterSpacing: 0.3
+  }
+}, k, ": "), /*#__PURE__*/React.createElement("span", {
+  style: {
+    color: INK
+  }
+}, v));
+const Empty = ({
+  text
+}) => /*#__PURE__*/React.createElement("p", {
+  style: {
+    color: MUTED,
+    fontSize: 13,
+    padding: "2px 2px"
+  }
+}, text);
+const Surfaced = ({
+  name,
+  text,
+  accent
+}) => /*#__PURE__*/React.createElement("div", {
+  style: {
+    ...card,
+    padding: 13,
+    borderLeft: "4px solid " + accent
+  }
+}, /*#__PURE__*/React.createElement("div", {
+  style: {
+    fontSize: 12,
+    fontWeight: 700,
+    color: NAVY,
+    marginBottom: 3
+  }
+}, name), /*#__PURE__*/React.createElement("div", {
+  style: {
+    fontSize: 13.5,
+    color: INK,
+    lineHeight: 1.5
+  }
+}, text));
+const mast = {
+  background: "linear-gradient(158deg, " + NAVY + " 0%, " + NAVY_DEEP + " 100%)",
+  padding: "20px 18px 18px",
+  borderBottom: "3px solid " + GOLD
+};
+const primaryWide = {
+  width: "100%",
+  marginTop: 14,
+  background: NAVY,
+  color: "#fff",
+  border: "none",
+  borderRadius: 12,
+  padding: 15,
+  fontSize: 15,
+  fontWeight: 700,
+  cursor: "pointer",
+  display: "block"
+};
+const bigBtn = {
+  border: "none",
+  borderRadius: 12,
+  padding: "16px 12px",
+  fontSize: 14,
+  fontWeight: 800,
+  cursor: "pointer",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 6,
+  lineHeight: 1.2
+};
+const standardsBox = {
+  marginTop: 22,
+  background: NAVY_DEEP,
+  borderRadius: 12,
+  padding: "14px 16px"
+};
+const warn = {
+  background: "#FBE9E7",
+  border: "1px solid " + RED,
+  borderRadius: 10,
+  padding: "10px 12px",
+  fontSize: 12,
+  color: "#7A2A24",
+  margin: "16px 0 4px",
+  lineHeight: 1.45
+};
+const chaseBox = {
+  background: "#FBE9E7",
+  border: "1px solid " + RED,
+  borderRadius: 11,
+  padding: "12px 14px",
+  marginTop: 14,
+  color: "#7A2A24"
+};
+const clearBox = {
+  background: "#E9F3EE",
+  border: "1px solid " + GREEN,
+  borderRadius: 11,
+  padding: "12px 14px",
+  marginTop: 14,
+  fontSize: 13,
+  color: "#1E5B40"
+};
+const personRow = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  background: CARD,
+  border: "1px solid " + LINE,
+  borderRadius: 12,
+  padding: "11px 13px",
+  marginBottom: 9
+};
+const avatar = {
+  width: 38,
+  height: 38,
+  borderRadius: 9,
+  background: NAVY,
+  color: "#fff",
+  display: "grid",
+  placeItems: "center",
+  fontWeight: 700,
+  fontSize: 14,
+  flexShrink: 0
+};
+const backLink = {
+  background: "transparent",
+  border: "none",
+  color: GOLD_SOFT,
+  fontSize: 13,
+  fontWeight: 600,
+  cursor: "pointer",
+  padding: 0
+};
+const signOutBtn = {
+  background: "rgba(255,255,255,0.12)",
+  border: "1px solid rgba(255,255,255,0.25)",
+  color: "#fff",
+  fontSize: 11.5,
+  fontWeight: 700,
+  borderRadius: 20,
+  padding: "5px 12px",
+  cursor: "pointer"
+};
+const dateBar = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  margin: "16px 0 8px",
+  gap: 12
+};
+const dateInput = {
+  border: "1px solid " + LINE,
+  borderRadius: 9,
+  padding: "9px 11px",
+  fontSize: 14,
+  color: INK,
+  background: "#fff"
+};
+const card = {
+  background: CARD,
+  border: "1px solid " + LINE,
+  borderRadius: 12,
+  padding: 14,
+  marginBottom: 12
+};
+const cardHead = {
+  display: "flex",
+  alignItems: "baseline",
+  justifyContent: "space-between",
+  marginBottom: 10
+};
+const cardTitle = {
+  fontSize: 14,
+  fontWeight: 800,
+  color: NAVY
+};
+const cardTime = {
+  fontSize: 11,
+  color: MUTED,
+  fontWeight: 600
+};
+const inp = {
+  width: "100%",
+  boxSizing: "border-box",
+  border: "1px solid " + LINE,
+  borderRadius: 8,
+  padding: "9px 10px",
+  fontSize: 14,
+  color: INK
+};
+const ta = {
+  ...inp,
+  resize: "vertical",
+  lineHeight: 1.4
+};
+const selectBox = {
+  ...inp,
+  background: "#fff",
+  appearance: "none"
+};
+const grid2 = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: 10
+};
+const grid3 = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr 1fr",
+  gap: 10
+};
+const grid3row = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr 1fr",
+  borderBottom: "1px solid " + LINE
+};
+const footer = {
+  position: "sticky",
+  bottom: 0,
+  display: "flex",
+  gap: 10,
+  alignItems: "center",
+  padding: "12px 18px",
+  background: "rgba(247,245,239,0.96)",
+  borderTop: "1px solid " + LINE,
+  backdropFilter: "blur(6px)"
+};
+const dayBtn = {
+  background: "#fff",
+  color: NAVY,
+  border: "1.5px solid " + NAVY,
+  borderRadius: 11,
+  padding: "13px 18px",
+  fontSize: 14,
+  fontWeight: 700,
+  cursor: "pointer",
+  whiteSpace: "nowrap"
+};
+const submitBtn = {
+  background: NAVY,
+  color: "#fff",
+  border: "none",
+  borderRadius: 11,
+  padding: "13px 22px",
+  fontSize: 14,
+  fontWeight: 800,
+  cursor: "pointer"
+};
+const trainBox = {
+  background: "#FBF8EF",
+  border: "1px solid " + GOLD,
+  borderRadius: 10,
+  padding: "12px 13px",
+  marginTop: 6,
+  marginBottom: 4
+};
+const banner = {
+  background: GOLD_SOFT,
+  border: "1px solid " + GOLD,
+  borderRadius: 10,
+  padding: "10px 12px",
+  fontSize: 12,
+  color: NAVY_DEEP,
+  marginBottom: 12,
+  lineHeight: 1.4
+};
+const statRow = {
+  display: "flex",
+  gap: 7,
+  marginTop: 16
+};
+const goldBtn = {
+  background: GOLD,
+  color: NAVY_DEEP,
+  border: "none",
+  borderRadius: 9,
+  padding: "9px 14px",
+  fontSize: 13,
+  fontWeight: 700,
+  cursor: "pointer"
+};
+const ghostBtn = {
+  background: "rgba(255,255,255,0.12)",
+  border: "1px solid rgba(255,255,255,0.3)",
+  color: "#fff",
+  borderRadius: 9,
+  padding: "9px 12px",
+  fontSize: 13,
+  fontWeight: 700,
+  cursor: "pointer"
+};
+const navBtn = {
+  background: "rgba(255,255,255,0.12)",
+  border: "1px solid rgba(255,255,255,0.25)",
+  color: "#fff",
+  borderRadius: 9,
+  padding: "9px 10px",
+  fontSize: 12.5,
+  fontWeight: 700,
+  cursor: "pointer"
+};
+const dayStrip = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 12,
+  background: NAVY_DEEP,
+  borderRadius: 12,
+  padding: "12px 14px",
+  marginTop: 12
+};
+const blockHead = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  width: "100%",
+  background: "none",
+  border: "none",
+  padding: "13px 14px",
+  cursor: "pointer",
+  gap: 10
+};
+const trendChip = {
+  background: "#F0EEE6",
+  color: NAVY,
+  border: "1px solid " + LINE,
+  borderRadius: 20,
+  padding: "4px 11px",
+  fontSize: 11,
+  fontWeight: 700,
+  cursor: "pointer"
+};
+const pill = (bg, fg) => ({
+  fontSize: 11,
+  fontWeight: 700,
+  color: fg,
+  background: bg,
+  borderRadius: 20,
+  padding: "3px 10px"
+});
+const pillOutline = c => ({
+  fontSize: 11,
+  fontWeight: 700,
+  color: c,
+  border: "1px solid " + c,
+  borderRadius: 20,
+  padding: "3px 10px"
+});
+ReactDOM.createRoot(document.getElementById("root")).render( /*#__PURE__*/React.createElement(App, null));
+</script>
+</body>
+</html>

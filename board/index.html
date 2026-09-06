@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Branch Wall Board | Ricky Rampersad Branch</title>
+<meta name="description" content="Rotating wall board for the branch — production, renewals, claims and pipeline, pulled from Salesforce.">
+<meta name="theme-color" content="#061c31">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Same design system as the Query Pal and Employee Benefits walls — on a
+     screen beside them the three should read as one product. */
+  :root{
+    --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
+    --blue:#37b1ec; --blue2:#0b7fd4; --teal:#0fb5a5;
+    --good:#34d399; --warn:#fbbf24; --bad:#fb7185; --gold:#f5b93b;
+    --grad:linear-gradient(120deg,#37b1ec,#0b7fd4);
+    --grad-gold:linear-gradient(120deg,#f5b93b,#e08b1e);
+    --r:18px; --ease:cubic-bezier(.16,1,.3,1);
+    --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:var(--font-b);color:var(--ink);background:#061c31;
+    overflow:hidden;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:
+      radial-gradient(1200px 700px at 12% -8%,rgba(55,177,236,.22),transparent 60%),
+      radial-gradient(900px 600px at 92% 4%,rgba(11,127,212,.20),transparent 62%),
+      radial-gradient(800px 700px at 60% 108%,rgba(15,181,165,.13),transparent 60%),
+      linear-gradient(165deg,#061c31 0%,#08243f 55%,#061a2d 100%)}
+
+  header{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;gap:16px;
+    padding:16px 26px}
+  /* THE BRANCH MARK — a gold shield with a check, not a monogram. These three
+     board screens were the last places still drawing an invented "RR" tile on
+     a blue gradient. The intelligence walls and the films all carry the real
+     mark; a branch whose screens disagree about its own logo is the one thing
+     everybody in the room notices. */
+  header .mark{width:44px;height:44px;flex:none;border-radius:13px;overflow:hidden;
+    background:#07131f;display:grid;place-items:center}
+  header .mark img{width:44px;height:44px;display:block}
+  header h1{margin:0;font-family:var(--font-d);font-size:18px;font-weight:800;letter-spacing:-.3px}
+  header .sub{font-size:12px;color:var(--dim);margin-top:2px}
+  header .right{margin-left:auto;display:flex;align-items:center;gap:16px}
+  .live{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--dim);white-space:nowrap}
+  .live i{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+  .live.on i{background:var(--good);animation:pulse 2.2s infinite}
+  @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(52,211,153,.5)}50%{opacity:.55;box-shadow:0 0 0 7px rgba(52,211,153,0)}}
+  #clock{font-family:var(--font-d);font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;color:var(--dim)}
+
+  .dots{position:fixed;bottom:22px;left:0;right:0;z-index:20;display:flex;justify-content:center;gap:9px}
+  .dots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.18);cursor:pointer;transition:.3s var(--ease)}
+  .dots i.on{background:var(--blue);transform:scale(1.25)}
+  #bar{position:fixed;bottom:0;left:0;z-index:20;height:3px;background:var(--grad);width:0%}
+  #bar.run{transition:width linear}
+
+  .slide{position:fixed;inset:0;padding:96px 70px 74px;display:flex;flex-direction:column;justify-content:center;
+    opacity:0;visibility:hidden;transform:translateY(16px);transition:opacity .7s var(--ease),transform .7s var(--ease),visibility .7s}
+  .slide.on{opacity:1;visibility:visible;transform:none}
+  .slide .kick{font-size:13px;letter-spacing:.24em;text-transform:uppercase;color:var(--blue);font-weight:700;margin-bottom:10px}
+  .slide h2{margin:0 0 6px;font-family:var(--font-d);font-size:46px;font-weight:800;letter-spacing:-1.2px;line-height:1.06}
+  .slide .lede{font-size:17px;color:var(--dim);max-width:900px;line-height:1.55;margin:0 0 30px}
+  .slide .body{flex:0 0 auto;min-height:0}
+
+  .kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:22px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:38px 42px;backdrop-filter:blur(10px)}
+  .kpi .k{font-size:13px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);font-weight:650}
+  .kpi .v{font-family:var(--font-d);font-size:76px;font-weight:800;letter-spacing:-2.4px;margin-top:12px;
+    font-variant-numeric:tabular-nums;line-height:1}
+  .kpi .v small{font-size:26px;font-weight:700;letter-spacing:-.5px;color:var(--dim)}
+  .kpi .d{font-size:15px;color:var(--dim);margin-top:12px}
+  .kpi .d.up{color:var(--good)}.kpi .d.down{color:var(--bad)}
+  .kpi.accent .v{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .kpi.gold .v{background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  .cols{display:grid;grid-template-columns:1.25fr 1fr;gap:26px;align-items:stretch}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:24px 26px;backdrop-filter:blur(10px)}
+  .panel h3{margin:0 0 16px;font-family:var(--font-d);font-size:15px;font-weight:750;letter-spacing:.02em}
+
+  .bars{display:flex;align-items:flex-end;gap:16px;height:330px}
+  .bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:9px;height:100%}
+  .bar .amt{font-size:13px;color:var(--dim);font-variant-numeric:tabular-nums;font-weight:650;white-space:nowrap}
+  .bar i{display:block;width:100%;max-width:74px;border-radius:10px 10px 4px 4px;background:var(--grad);
+    box-shadow:0 6px 22px rgba(11,127,212,.35);transform-origin:bottom;transition:transform .9s var(--ease)}
+  .slide:not(.on) .bar i{transform:scaleY(0)}
+  .bar .lab{font-size:13px;color:var(--faint);font-weight:600}
+  .bar .n{font-size:11.5px;color:var(--faint)}
+  .bar.now .lab{color:var(--ink)}
+
+  .rows{display:flex;flex-direction:column;gap:13px}
+  .row{display:flex;align-items:center;gap:14px;font-size:16px}
+  .row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+  .row .track{flex:1.4;height:12px;background:rgba(255,255,255,.08);border-radius:7px;overflow:hidden}
+  .row .track i{display:block;height:100%;background:var(--grad);border-radius:7px;transition:width .9s var(--ease)}
+  .row .track i.gold{background:var(--grad-gold)}
+  .row .track i.teal{background:linear-gradient(120deg,#0fb5a5,#0b8f84)}
+  .slide:not(.on) .row .track i{width:0!important}
+  .row .val{width:130px;text-align:right;font-variant-numeric:tabular-nums;font-weight:700;font-size:15px}
+  .row .sub{font-size:12.5px;color:var(--faint);width:96px;text-align:right}
+
+  table{width:100%;border-collapse:collapse;font-size:15.5px}
+  th{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:650;
+    text-align:left;padding:0 14px 12px}
+  td{padding:12px 14px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+  td:last-child,th:last-child{text-align:right}
+  td b{font-weight:700}
+  .chip{display:inline-block;font-size:12px;font-weight:650;padding:4px 12px;border-radius:20px;
+    border:1px solid var(--line);background:rgba(0,0,0,.2);color:var(--dim);white-space:nowrap}
+  .chip.good{color:var(--good);border-color:rgba(52,211,153,.35)}
+  .chip.warn{color:var(--warn);border-color:rgba(251,191,36,.35)}
+  .chip.bad{color:var(--bad);border-color:rgba(251,113,133,.35)}
+
+  .donut{display:flex;align-items:center;gap:34px}
+  .donut svg{flex:none}
+  .dl{display:flex;flex-direction:column;gap:12px;font-size:15.5px;flex:1}
+  .dl div{display:flex;align-items:center;gap:11px}
+  .dl i{width:13px;height:13px;border-radius:4px;flex:none}
+  .dl b{font-variant-numeric:tabular-nums;margin-left:auto;padding-left:16px}
+
+  .big{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+  .big .b{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:32px 30px;text-align:center}
+  .big .v{font-family:var(--font-d);font-size:64px;font-weight:800;letter-spacing:-2px;
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;
+    font-variant-numeric:tabular-nums;line-height:1}
+  .big .b:nth-child(even) .v{background:var(--grad-gold);-webkit-background-clip:text;background-clip:text}
+  .big .k{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:650;margin-top:14px}
+
+  footer{position:fixed;bottom:20px;left:26px;z-index:20;font-size:11.5px;color:var(--faint)}
+  .hint{position:fixed;bottom:20px;right:26px;z-index:20;font-size:11.5px;color:var(--faint)}
+
+  @media (max-width:1100px){
+    .slide{padding:88px 34px 70px}
+    .slide h2{font-size:32px}
+    .cols{grid-template-columns:1fr}
+    .kpi .v{font-size:40px}
+    .big .v{font-size:44px}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}
+    .slide:not(.on) .bar i{transform:none}.slide:not(.on) .row .track i{width:auto!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mark"><img src="../logo-mark.png" alt=""></div>
+  <div>
+    <h1>Branch Wall Board</h1>
+    <div class="sub">Ricky Rampersad Branch · Guardian Group · Salesforce</div>
+  </div>
+  <div class="right">
+    <span class="live" id="live"><i></i><span id="liveTxt">Snapshot</span></span>
+    <span id="clock"></span>
+  </div>
+</header>
+
+<div id="slides"></div>
+<div class="dots" id="dots"></div>
+<div id="bar"></div>
+<footer id="src"></footer>
+<div class="hint">←&nbsp;→ change &nbsp;·&nbsp; space pause &nbsp;·&nbsp; F full screen</div>
+
+<script>
+/* ── DATA ────────────────────────────────────────────────────────────────────
+   The board renders from WALL_DATA. What ships in this file is a snapshot
+   queried straight out of Salesforce (Risk_Details__c, Claims_Revised__c,
+   Opportunity, Submission__c) on the date below.
+
+   For live numbers, deploy apps-script/WallBoard.gs as a web app (see
+   WALL-SETUP.md) and paste its /exec URL here. The board then refreshes
+   itself every 15 minutes and falls back to this snapshot if the feed is
+   unreachable — the wall is never blank.                                    */
+var WALL_DATA_URL = "";   // ← Apps Script /exec URL, or leave "" for snapshot
+
+var WALL_DATA = {
+  generatedAt: "2026-08-26T12:30:00Z",
+  ytd: {
+    year: 2026,
+    risks: 208, premium: 1406025,
+    lastYearRisks: 192, lastYearPremium: 1160091,
+    renewals30: 23, openClaims: 32, claimsClosedYtd: 3,
+    pipelineCount: 168, pipelineValue: 3471023, wonLast12mo: 1
+  },
+  monthly: [
+    {m:"Jan", n:25, prem:88281},
+    {m:"Feb", n:21, prem:419424},
+    {m:"Mar", n:67, prem:185334},
+    {m:"Apr", n:18, prem:165069},
+    {m:"May", n:15, prem:84296},
+    {m:"Jun", n:22, prem:71871},
+    {m:"Jul", n:24, prem:253757},
+    {m:"Aug", n:16, prem:137993}
+  ],
+  classification: [
+    {k:"Renewal", n:93},
+    {k:"New business", n:32},
+    {k:"Not yet classified", n:83}
+  ],
+  carriers: [
+    {k:"Guardian General", n:300},
+    {k:"Not recorded", n:98},
+    {k:"Beacon", n:19},
+    {k:"Gulf", n:9}
+  ],
+  /* The snapshot below is anonymous by design — this file sits in a public
+     repo. Client names (first name + last initial) appear only on the live
+     feed, which is served from Apps Script and never committed here. */
+  renewals: [
+    {who:"Motor", what:"Kia", when:"2026-08-28", prem:3637},
+    {who:"Motor", what:"Jeep", when:"2026-09-04", prem:0},
+    {who:"Motor", what:"Nissan", when:"2026-09-05", prem:9144},
+    {who:"Commercial property", what:"—", when:"2026-09-08", prem:27030},
+    {who:"Motor", what:"3 vehicles", when:"2026-09-09", prem:4783},
+    {who:"Homeowner", what:"—", when:"2026-09-11", prem:11130},
+    {who:"Motor", what:"Kia", when:"2026-09-12", prem:992},
+    {who:"Liability", what:"—", when:"2026-09-12", prem:2650},
+    {who:"All risk property", what:"—", when:"2026-09-13", prem:25578},
+    {who:"Motor", what:"BMW", when:"2026-09-13", prem:1350}
+  ],
+  claimTypes: [
+    {k:"Health", n:28, avgDays:394},
+    {k:"Property", n:1, avgDays:716},
+    {k:"Life", n:1, avgDays:63},
+    {k:"Critical illness", n:1, avgDays:12},
+    {k:"Unclassified", n:1, avgDays:427}
+  ],
+  oldestClaims: [
+    {ref:"Claim …0028", type:"Health", days:1198},
+    {ref:"(no reference)", type:"Health", days:979},
+    {ref:"Best Doctors …503", type:"Health", days:800},
+    {ref:"Claim …0002", type:"Health", days:737},
+    {ref:"(reference TBA)", type:"Property", days:716},
+    {ref:"Pre-certification", type:"Health", days:700}
+  ],
+  topOpps: [
+    {name:"Life", stage:"Prospecting", amt:1000000},
+    {name:"Life", stage:"Prospecting", amt:1000000},
+    {name:"General — commercial", stage:"Proposal / quote", amt:850000},
+    {name:"US Flexi-Term to age 85", stage:"Value proposition", amt:152025},
+    {name:"Life", stage:"Id. decision makers", amt:114000},
+    {name:"Group health", stage:"Proposal / quote", amt:30000},
+    {name:"Investment", stage:"Negotiation / review", amt:25000}
+  ],
+  legacy: {
+    cases: 5523, submittedApi: 94615031, settledApi: 94395745,
+    apps: 3289, years: "2011 – 2017", bestYear: "2016", bestYearApi: 23690537
+  }
+};
+
+/* ── helpers ── */
+function $(s,el){return (el||document).querySelector(s)}
+function money(n){return "TT$" + Math.round(n).toLocaleString("en-US")}
+function moneyShort(n){
+  if(n>=1e6) return "TT$" + (n/1e6).toFixed(n>=1e7?0:1) + "m";
+  if(n>=1e3) return "TT$" + Math.round(n/1e3) + "k";
+  return "TT$" + Math.round(n);
+}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function dstr(iso){
+  var d = new Date(iso + "T12:00:00");
+  return d.toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+}
+function daysUntil(iso){
+  return Math.round((new Date(iso+"T12:00:00") - new Date())/864e5);
+}
+
+/* ── slide builders — each returns inner HTML for one full-screen slide ── */
+function sPulse(D){
+  var y=D.ytd, dR=(y.risks-y.lastYearRisks)/y.lastYearRisks*100, dP=(y.premium-y.lastYearPremium)/y.lastYearPremium*100;
+  function delta(v){return (v>=0?"▲ +":"▼ ")+v.toFixed(1)+"% vs this time last year"}
+  return '<div class="kick">Salesforce · live book</div>'
+    +'<h2>The branch, right now</h2>'
+    +'<p class="lede">General-insurance production year to date, and what needs the team’s attention this month.</p>'
+    +'<div class="body"><div class="kpis">'
+    +'<div class="kpi accent"><div class="k">Risks written · '+y.year+'</div><div class="v">'+y.risks+'</div><div class="d '+(dR>=0?"up":"down")+'">'+delta(dR)+'</div></div>'
+    +'<div class="kpi accent"><div class="k">Premium billed · '+y.year+'</div><div class="v">'+moneyShort(y.premium)+'</div><div class="d '+(dP>=0?"up":"down")+'">'+delta(dP)+'</div></div>'
+    +'<div class="kpi gold"><div class="k">Renewals due · 30 days</div><div class="v">'+y.renewals30+'</div><div class="d">every one is a call to make</div></div>'
+    +'<div class="kpi"><div class="k">Open claims</div><div class="v">'+y.openClaims+'</div><div class="d">'+y.claimsClosedYtd+' closed so far this year</div></div>'
+    +'</div></div>';
+}
+function sTrend(D){
+  var max = Math.max.apply(null, D.monthly.map(function(x){return x.prem}));
+  var bars = D.monthly.map(function(x,i){
+    var h = Math.max(6, x.prem/max*100);
+    var now = i===D.monthly.length-1;
+    return '<div class="bar'+(now?" now":"")+'"><div class="amt">'+moneyShort(x.prem)+'</div>'
+      +'<i style="height:'+h+'%"></i><div class="lab">'+x.m+'</div><div class="n">'+x.n+' risks</div></div>';
+  }).join("");
+  return '<div class="kick">Production</div>'
+    +'<h2>Premium billed, month by month</h2>'
+    +'<p class="lede">Each bar is the premium billed on risks written that month; the count underneath is how many risks carried it.</p>'
+    +'<div class="body"><div class="panel"><div class="bars">'+bars+'</div></div></div>';
+}
+function sMix(D){
+  var tot = D.classification.reduce(function(a,x){return a+x.n},0);
+  var cols = ["#37b1ec","#f5b93b","#48607a"];
+  var r=88, c=2*Math.PI*r, off=0;
+  var segs = D.classification.map(function(x,i){
+    var frac=x.n/tot, seg='<circle r="'+r+'" cx="110" cy="110" fill="none" stroke="'+cols[i]+'" stroke-width="30" '
+      +'stroke-dasharray="'+(frac*c-4)+' '+(c-frac*c+4)+'" stroke-dashoffset="'+(-off*c+c/4)+'" stroke-linecap="round"/>';
+    off+=frac; return seg;
+  }).join("");
+  var leg = D.classification.map(function(x,i){
+    return '<div><i style="background:'+cols[i]+'"></i>'+esc(x.k)+'<b>'+x.n+'</b></div>';
+  }).join("");
+  var cmax = Math.max.apply(null,D.carriers.map(function(x){return x.n}));
+  var crows = D.carriers.map(function(x){
+    return '<div class="row"><span class="nm">'+esc(x.k)+'</span>'
+      +'<span class="track"><i style="width:'+(x.n/cmax*100)+'%"></i></span><span class="val">'+x.n+'</span></div>';
+  }).join("");
+  return '<div class="kick">The book</div>'
+    +'<h2>Where this year’s business comes from</h2>'
+    +'<p class="lede">Renewals against new business for '+D.ytd.year+', and which carriers hold the risks placed over the last twelve months.</p>'
+    +'<div class="body"><div class="cols">'
+    +'<div class="panel"><h3>New business vs renewal · '+D.ytd.year+'</h3><div class="donut">'
+    +'<svg width="220" height="220" viewBox="0 0 220 220">'+segs
+    +'<text x="110" y="104" text-anchor="middle" fill="#eaf4ff" font-size="40" font-weight="800" font-family="Plus Jakarta Sans,Inter,sans-serif">'+tot+'</text>'
+    +'<text x="110" y="130" text-anchor="middle" fill="#6d8ba6" font-size="12" letter-spacing="2">RISKS</text></svg>'
+    +'<div class="dl">'+leg+'</div></div></div>'
+    +'<div class="panel"><h3>Carriers · risks placed, last 12 months</h3><div class="rows">'+crows+'</div></div>'
+    +'</div></div>';
+}
+function sRenewals(D){
+  var rows = D.renewals.slice(0,10).map(function(x){
+    var d = daysUntil(x.when), cls = d<=7?"bad":(d<=21?"warn":"good");
+    return '<tr><td><b>'+esc(x.who)+'</b></td><td>'+esc(x.what)+'</td>'
+      +'<td>'+dstr(x.when)+'</td><td><span class="chip '+cls+'">'+(d<=0?"today":d+" days")+'</span></td>'
+      +'<td>'+(x.prem>0?money(x.prem):"—")+'</td></tr>';
+  }).join("");
+  return '<div class="kick">Renewals radar</div>'
+    +'<h2>'+D.ytd.renewals30+' renewals in the next 30 days</h2>'
+    +'<p class="lede">Renewed on time, a policy is a phone call. Missed, it’s a client shopping around. These are the next ones due.</p>'
+    +'<div class="body"><div class="panel"><table><thead><tr>'
+    +'<th>Renewal</th><th>Detail</th><th>Due</th><th>Countdown</th><th>Premium</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody></table></div></div>';
+}
+function sClaims(D){
+  var max = Math.max.apply(null,D.claimTypes.map(function(x){return x.n}));
+  var rows = D.claimTypes.map(function(x){
+    return '<div class="row"><span class="nm">'+esc(x.k)+'</span>'
+      +'<span class="track"><i class="teal" style="width:'+(x.n/max*100)+'%"></i></span>'
+      +'<span class="val">'+x.n+'</span><span class="sub">avg '+x.avgDays+' d</span></div>';
+  }).join("");
+  var old = D.oldestClaims.map(function(x){
+    var cls = x.days>365?"bad":(x.days>90?"warn":"good");
+    return '<tr><td><b>'+esc(x.ref)+'</b></td><td>'+esc(x.type)+'</td>'
+      +'<td><span class="chip '+cls+'">'+x.days.toLocaleString()+' days</span></td></tr>';
+  }).join("");
+  return '<div class="kick">Claims watch</div>'
+    +'<h2>'+D.ytd.openClaims+' claims still open</h2>'
+    +'<p class="lede">A claim is the product doing its job. The ones below have waited longest — every chase moves a family’s money closer.</p>'
+    +'<div class="body"><div class="cols">'
+    +'<div class="panel"><h3>Open claims by type</h3><div class="rows">'+rows+'</div></div>'
+    +'<div class="panel"><h3>Longest waiting</h3><table><thead><tr><th>Reference</th><th>Type</th><th>Pending</th></tr></thead><tbody>'+old+'</tbody></table></div>'
+    +'</div></div>';
+}
+function sPipeline(D){
+  var max = Math.max.apply(null,D.topOpps.map(function(x){return x.amt}));
+  var rows = D.topOpps.map(function(x){
+    return '<div class="row"><span class="nm">'+esc(x.name)+'</span>'
+      +'<span class="track"><i class="gold" style="width:'+(x.amt/max*100)+'%"></i></span>'
+      +'<span class="val">'+moneyShort(x.amt)+'</span><span class="sub">'+esc(x.stage)+'</span></div>';
+  }).join("");
+  return '<div class="kick">Pipeline</div>'
+    +'<h2>'+D.ytd.pipelineCount+' open opportunities · '+moneyShort(D.ytd.pipelineValue)+'</h2>'
+    +'<p class="lede">The largest conversations still open in Salesforce. Old dates are not dead deals — they’re calls nobody has made yet.</p>'
+    +'<div class="body"><div class="panel"><div class="rows">'+rows+'</div></div></div>';
+}
+function sLegacy(D){
+  var L=D.legacy;
+  return '<div class="kick">The long view · '+L.years+'</div>'
+    +'<h2>What this branch has already done</h2>'
+    +'<p class="lede">The life production record in Salesforce. The best year was '+L.bestYear+' at '+moneyShort(L.bestYearApi)+' submitted — a number a wall full of advisors has beaten before and can beat again.</p>'
+    +'<div class="body"><div class="big">'
+    +'<div class="b"><div class="v">'+L.cases.toLocaleString()+'</div><div class="k">cases submitted</div></div>'
+    +'<div class="b"><div class="v">'+moneyShort(L.submittedApi)+'</div><div class="k">API submitted</div></div>'
+    +'<div class="b"><div class="v">'+moneyShort(L.settledApi)+'</div><div class="k">API settled</div></div>'
+    +'<div class="b"><div class="v">'+L.apps.toLocaleString()+'</div><div class="k">applications</div></div>'
+    +'</div></div>';
+}
+
+/* ── deck ── */
+var BUILDERS=[sPulse,sTrend,sMix,sRenewals,sClaims,sPipeline,sLegacy];
+var DWELL=14000, cur=0, timer=null, paused=false;
+
+function render(D){
+  var host=$("#slides"); host.innerHTML="";
+  BUILDERS.forEach(function(b,i){
+    var el=document.createElement("section");
+    el.className="slide"; el.innerHTML=b(D);
+    host.appendChild(el);
+  });
+  var dots=$("#dots"); dots.innerHTML="";
+  BUILDERS.forEach(function(_,i){
+    var d=document.createElement("i");
+    d.onclick=function(){go(i,true)};
+    dots.appendChild(d);
+  });
+  var t=new Date(D.generatedAt);
+  $("#src").textContent="Data: Salesforce · pulled "
+    +t.toLocaleDateString("en-GB",{day:"numeric",month:"short"})+" "
+    +t.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+  go(Math.min(cur,BUILDERS.length-1),false);
+}
+
+function go(i,user){
+  cur=(i+BUILDERS.length)%BUILDERS.length;
+  var slides=document.querySelectorAll(".slide"), dots=document.querySelectorAll(".dots i");
+  slides.forEach(function(s,j){s.classList.toggle("on",j===cur)});
+  dots.forEach(function(d,j){d.classList.toggle("on",j===cur)});
+  arm();
+}
+function arm(){
+  clearTimeout(timer);
+  var bar=$("#bar");
+  bar.classList.remove("run"); bar.style.width="0%";
+  if(paused) return;
+  void bar.offsetWidth;
+  bar.classList.add("run");
+  bar.style.transitionDuration=DWELL+"ms"; bar.style.width="100%";
+  timer=setTimeout(function(){go(cur+1)},DWELL);
+}
+document.addEventListener("keydown",function(e){
+  if(e.key==="ArrowRight") go(cur+1,true);
+  else if(e.key==="ArrowLeft") go(cur-1,true);
+  else if(e.key===" "){e.preventDefault();paused=!paused;arm();}
+  else if(e.key==="f"||e.key==="F"){
+    if(document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen();
+  }
+});
+
+/* clock */
+function tick(){
+  var n=new Date();
+  $("#clock").textContent=n.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+}
+setInterval(tick,10000); tick();
+
+/* live feed — optional; snapshot always wins if the fetch fails */
+function refresh(){
+  if(!WALL_DATA_URL) return;
+  fetch(WALL_DATA_URL,{redirect:"follow"}).then(function(r){return r.json()})
+    .then(function(j){
+      if(j && j.ytd && j.monthly){
+        WALL_DATA=j; render(j);
+        $("#live").classList.add("on"); $("#liveTxt").textContent="Live";
+      }
+    }).catch(function(){ /* keep the snapshot on screen */ });
+}
+render(WALL_DATA);
+refresh();
+setInterval(refresh, 15*60*1000);
+</script>
+</body>
+</html>

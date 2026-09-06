@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>RRB · Training</title>
+<style>
+  :root{--navy:#0D1838;--navy2:#16264F;--line:#24355F;--gold:#C7A34A;
+        --gold-soft:#E7D9AE;--ink:#F2EFE6;--muted:#8FA0C5}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--navy);color:var(--ink);
+       font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       min-height:100vh;padding:0 0 60px}
+  header{padding:26px 20px 18px;border-bottom:1px solid var(--line)}
+  .brand{font-size:11px;font-weight:800;letter-spacing:.3em;text-transform:uppercase;color:var(--gold-soft)}
+  h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-top:8px}
+  .sub{color:var(--muted);font-size:14px;margin-top:6px;line-height:1.5}
+  main{max-width:960px;margin:0 auto;padding:22px 16px}
+  video{width:100%;border-radius:14px;border:1px solid var(--line);
+        background:#000;display:block;box-shadow:0 30px 80px -30px rgba(0,0,0,.8)}
+  h2{font-size:12px;font-weight:800;letter-spacing:.25em;text-transform:uppercase;
+     color:var(--gold);margin:28px 0 12px}
+  .chapters{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+  .ch{display:flex;gap:12px;align-items:baseline;background:var(--navy2);
+      border:1px solid var(--line);border-radius:10px;padding:11px 14px;cursor:pointer;
+      color:var(--ink);text-align:left;font-size:14px;line-height:1.35;width:100%}
+  .ch:hover{border-color:var(--gold)}
+  .ch .t{color:var(--gold);font-weight:800;font-variant-numeric:tabular-nums;flex:0 0 auto}
+  .links{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+  .lnk{display:block;background:var(--navy2);border:1px solid var(--line);border-radius:12px;
+       padding:16px;text-decoration:none;color:var(--ink)}
+  .lnk:hover{border-color:var(--gold)}
+  .lnk b{display:block;color:var(--gold-soft);font-size:15px;margin-bottom:5px}
+  .lnk span{color:var(--muted);font-size:13px;line-height:1.45}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Ricky Rampersad Branch · A Ricky Rampersad Project</div>
+  <h1>How to use the KPI tracker</h1>
+  <p class="sub">Four minutes. Watch it once before your first block —
+     everything else lives in the written manual.</p>
+</header>
+<main>
+  <video id="v" controls preload="metadata" playsinline
+         src="/kpi/film/kpi-tracker.mp4"></video>
+
+  <h2>Jump to</h2>
+  <div class="chapters" id="chapters"></div>
+
+  <h2>Everything else</h2>
+  <div class="links">
+    <a class="lnk" href="/kpi/"><b>/kpi</b>
+      <span>The tracker itself. Sign in with your agent number.</span></a>
+    <a class="lnk" href="/kpi/manual/"><b>/manual</b>
+      <span>The written manual and workflow — the film in words.</span></a>
+    <a class="lnk" href="/wall/"><b>/wall</b>
+      <span>The live wall for the office screen. Branch Manager signs in once.</span></a>
+  </div>
+</main>
+<script>
+// Chapter starts are generated from the narration segments when the film is
+// cut — each start is the sum of the lines before it plus their beat of air.
+const CHAPTERS=[
+  [0.0,"Sign in"],
+  [21.15,"Your day \u2014 the four blocks"],
+  [36.71,"Filling a block"],
+  [50.28,"Submit + your receipt"],
+  [72.71,"The 12pm and 3pm nudges"],
+  [84.96,"Value added & ideas"],
+  [109.67,"What the Branch Manager sees"],
+  [130.08,"The 3pm checkpoint"],
+  [139.78,"Weekly summary & trends"],
+  [155.61,"The Wall"],
+  [168.84,"Where everything lives"]
+];
+const box=document.getElementById('chapters'), v=document.getElementById('v');
+const mm=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
+CHAPTERS.forEach(c=>{
+  const b=document.createElement('button'); b.className='ch';
+  b.innerHTML='<span class="t">'+mm(c[0])+'</span><span>'+c[1]+'</span>';
+  b.onclick=()=>{v.currentTime=c[0]; v.play();};
+  box.appendChild(b);
+});
+</script>
+</body>
+</html>

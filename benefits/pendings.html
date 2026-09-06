@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Group Pendings | Ricky Rampersad Branch</title>
+<style>
+  :root{
+    --navy:#08333D; --blue:#0E8FA3; --gold:#F08A24; --lightblue:#E4F4F6;
+    --ink:#0E1F2E; --paper:#F7F9FB; --surface:#FFF; --surface2:#EDF2F7;
+    --slate:#5C7080; --line:#D3DEE7;
+    --go:#1F7A55; --warn:#A9701F; --stop:#A93B2B;
+    --sans:"Gill Sans MT","Avenir Next","Segoe UI",system-ui,sans-serif;
+    --display:Optima,"Palatino Linotype",Georgia,serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --ink:#DCE7EF; --paper:#081520; --surface:#0E2231; --surface2:#142E40;
+    --navy:#7FB2D9; --blue:#5FA8DC; --lightblue:#12293A; --slate:#8FA6B8; --line:#1E3B50;
+    --go:#4FAE83; --warn:#D4A055; --stop:#D4685A;
+  }}
+  :root[data-theme="dark"]{
+    --ink:#DCE7EF; --paper:#081520; --surface:#0E2231; --surface2:#142E40;
+    --navy:#7FB2D9; --blue:#5FA8DC; --lightblue:#12293A; --slate:#8FA6B8; --line:#1E3B50;
+    --go:#4FAE83; --warn:#D4A055; --stop:#D4685A;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6}
+  h1,h2{font-family:var(--display);font-weight:600;margin:0;line-height:1.2}
+  p{margin:0}
+  button,input,select,textarea{font:inherit;color:inherit}
+  :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .label{font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--slate)}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  a{color:var(--blue)}
+
+  header{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+  .hin{max-width:1240px;margin:0 auto;padding:.85rem 1.5rem;display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap}
+  .hin .brand{margin-right:auto}
+  .hin h1{font-size:1.05rem;color:var(--navy)}
+  .hin .sub{font-size:12px;color:var(--slate)}
+  main{max-width:1240px;margin:0 auto;padding:1.8rem 1.5rem 4rem}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:1.3rem 1.4rem}
+  .stack{display:flex;flex-direction:column;gap:1.2rem}
+  .btn{background:var(--blue);color:#fff;border:1px solid var(--blue);border-radius:4px;padding:.45rem .9rem;
+    cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+  .btn:hover{background:var(--navy);border-color:var(--navy)}
+  .btn.ghost{background:none;color:var(--blue);border-color:var(--line)}
+  .btn.ghost:hover{background:var(--lightblue)}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.9rem}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.9rem 1rem}
+  .kpi .v{font-family:var(--mono);font-size:1.6rem;color:var(--navy);line-height:1.1;margin-top:.15rem}
+  .kpi .v.bad{color:var(--stop)}
+  .kpi .n{font-size:11.5px;color:var(--slate);margin-top:.2rem}
+
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+  table{width:100%;border-collapse:collapse;font-size:14px;min-width:1050px}
+  th,td{padding:.6rem .8rem;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:var(--surface2);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--slate);font-weight:700;white-space:nowrap;cursor:pointer;user-select:none}
+  thead th:hover{color:var(--navy)}
+  tbody tr:last-child td{border-bottom:0}
+  tbody tr:hover{background:var(--surface2)}
+  td.r,th.r{text-align:right}
+
+  .pill{display:inline-block;border-radius:3px;padding:.15rem .5rem;font-size:10px;font-weight:700;
+    letter-spacing:.09em;text-transform:uppercase;white-space:nowrap}
+  .p-life{background:var(--lightblue);color:var(--navy)}
+  .p-health{background:#EAF3E9;color:var(--go)}
+  :root[data-theme="dark"] .p-health{background:#16302A}
+  .p-pension{background:#F3EDF9;color:#5B3E7A}
+  :root[data-theme="dark"] .p-pension{background:#241C33;color:#B9A3D6}
+  .age{font-family:var(--mono);font-weight:700;white-space:nowrap}
+  .a-ok{color:var(--slate)} .a-warn{color:var(--warn)} .a-bad{color:var(--stop)}
+  .band{display:inline-block;width:52px;height:5px;border-radius:3px;margin-left:.5rem;vertical-align:middle}
+
+  .req{width:100%;border:1px solid var(--line);border-radius:5px;background:var(--paper);
+    padding:.4rem .5rem;font-size:13px;min-height:34px;resize:vertical;font-family:inherit;
+    line-height:1.45;overflow:hidden}
+  .req:hover{border-color:var(--slate)}
+  .req.filled{background:#FFFCF3;border-color:#E8C98A}
+  :root[data-theme="dark"] .req.filled{background:#241E12;border-color:#5A4520}
+  .saved{font-size:11px;color:var(--go);white-space:nowrap}
+  .note{font-size:12.5px;color:var(--slate)}
+  .alert{border-radius:6px;padding:.9rem 1.1rem;font-size:13.5px;line-height:1.6;border:1px solid}
+  .a-info{border-color:#A8CEDA;background:#EEF7FA} .a-flag{border-color:#E8C98A;background:#FDF6E7}
+  :root[data-theme="dark"] .a-info,:root[data-theme="dark"] .a-flag{background:var(--surface2)}
+  .alert b{color:var(--ink)}
+  .a-stop{border-color:#E0A79C;background:#FBEEEB}
+  :root[data-theme="dark"] .a-stop{background:#2E1A16;border-color:#6B3227}
+  tbody tr.misfiled{background:#FDF3F1}
+  :root[data-theme="dark"] tbody tr.misfiled{background:#2A1713}
+  tbody tr.misfiled:hover{background:#F8E7E3}
+  :root[data-theme="dark"] tbody tr.misfiled:hover{background:#331C17}
+  .wrongacct{font-size:11px;color:var(--stop);margin-top:.3rem;line-height:1.4}
+  .filters{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+  .filters select,.filters input{border:1px solid var(--line);border-radius:5px;background:var(--surface);
+    padding:.35rem .55rem;font-size:13px}
+  .gate{max-width:420px;margin:12vh auto;background:var(--surface);border:1px solid var(--line);
+    border-radius:8px;padding:2rem 1.9rem;text-align:center}
+  .gate h2{font-family:var(--display);font-size:1.3rem;color:var(--navy);margin-bottom:.4rem}
+  .gate p{font-size:13.5px;color:var(--slate);line-height:1.6;margin-bottom:1.2rem}
+  .gate input{width:100%;padding:.7rem .8rem;border:1px solid var(--line);border-radius:6px;
+    background:var(--paper);text-align:center;letter-spacing:.22em;font-family:var(--mono);text-transform:uppercase}
+  .gate .btn{width:100%;margin-top:.7rem}
+  .gate .err{color:var(--stop);font-size:12.5px;min-height:1.3em;margin-top:.7rem;font-weight:600}
+  @media print{header,.btn,.filters,.noprint{display:none!important} body{background:#fff}}
+</style>
+</head>
+<body>
+
+<div id="gate" class="gate">
+  <h2>Administrators only</h2>
+  <p>This list spans every group on the book, so it shows one client's members alongside another's.
+     Administrators only — not agents, not employers, not their staff.</p>
+  <p>Managers: sign in on the <a href="index.html">portal</a> and open Pendings from the menu —
+     no code needed. The code below is the branch fallback.</p>
+  <input id="code" placeholder="ADMIN CODE" autocomplete="off">
+  <button class="btn" id="go">Open</button>
+  <div class="err" id="gerr"></div>
+</div>
+
+<div id="app" hidden>
+<header>
+  <div class="hin">
+    <div class="brand">
+      <h1>Group pendings</h1>
+      <div class="sub">Applications sitting at <span class="mono">Policy Status Description = Pending</span></div>
+    </div>
+    <div class="filters">
+      <select id="f-acct"></select>
+      <select id="f-line">
+        <option value="">Every line</option>
+        <option value="LIFE_GROUP">Life</option>
+        <option value="HEALTH_GROUP">Health</option>
+        <option value="PENSION">Pension</option>
+      </select>
+      <input id="f-text" placeholder="Find a name" autocomplete="off">
+      <span class="note" id="who" style="align-self:center"></span>
+      <button class="btn ghost" onclick="window.print()">Print</button>
+      <button class="btn ghost" id="theme">Theme</button>
+    </div>
+  </div>
+</header>
+
+<main class="stack">
+  <div class="stats" id="kpis"></div>
+  <div id="flags"></div>
+  <div class="tw"><table>
+    <thead><tr>
+      <th data-sort="account">Account</th>
+      <th data-sort="member">Member</th>
+      <th data-sort="line">Line</th>
+      <th data-sort="policy">Policy ref</th>
+      <th data-sort="issued">Issued</th>
+      <th data-sort="days" class="r">Outstanding</th>
+      <th style="min-width:280px">What is outstanding</th>
+      <th>Last updated</th>
+    </tr></thead>
+    <tbody id="rows"></tbody>
+  </table></div>
+  <p class="note" id="foot"></p>
+</main>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   WHERE THE DATA COMES FROM
+
+   The snapshot query, for whoever writes the Apps Script:
+
+     SELECT Account__r.Name, Contact__r.Name, RecordType.DeveloperName,
+            POLICY__c, ISSUE_DATE__c, Policy_Requirements__c
+     FROM   CLIENT_PORTFOLIO__c
+     WHERE  Policy_Status_Description_R__c = 'Pending'
+       AND (RecordType.DeveloperName IN ('LIFE_GROUP','HEALTH_GROUP')
+            OR (RecordType.DeveloperName = 'PENSION'
+                AND Account__r.Name IN :PENSION_SCHEME_ACCOUNTS))
+
+   …where PENSION_SCHEME_ACCOUNTS is the named list from the sheet. Match the
+   names exactly as Salesforce stores them, and normalise before comparing:
+   at least one account on the book is stored with a double space in the middle
+   of its name, so an exact string match silently finds nothing.
+
+   ── Do not trust Account__c on its own ──────────────────────────────────
+   The Account__c lookup is not reliable. A portfolio record also carries
+   ACCOUNTS_NAME__c, the account name as the policy administration system
+   holds it, and on a large number of records the two disagree: the lookup
+   points at one account while the record's own source field names another.
+   Where they disagree it is the lookup that is wrong.
+
+   So the snapshot must pull ACCOUNTS_NAME__c alongside, send it as
+   sourceName, and let this page flag any row where the two do not agree.
+   A row whose account cannot be trusted is worse than a missing row: it
+   puts one client's member on another client's list.
+
+   Anything filtering on the account should carry the agreement as a
+   condition rather than assume it, and a reconciliation should be run
+   before the list is read as complete:
+
+       SELECT Id, Account__r.Name, ACCOUNTS_NAME__c, POLICY__c, Contact__r.Name
+       FROM   CLIENT_PORTFOLIO__c
+       WHERE  Account__c = :SOME_ACCOUNT
+         AND (NOT ACCOUNTS_NAME__c LIKE :SOME_ACCOUNT_NAME_FRAGMENT)
+
+   Anything that comes back is mis-filed and should be repaired at source,
+   not worked around here.
+
+
+   API   The branch Apps Script. Two calls:
+           GET  ?action=pendings                → the list below
+           POST {action:'pendingnote', id, text} → what staff typed
+
+         Leave it blank and the page runs on the sample rows at the foot of
+         this file, so the screen can be worked on without touching the org.
+
+   Which records count as group:
+
+     Life and health carry their own record types — LIFE(GROUP) and
+     HEALTH (GROUP) — so those are simply filtered on.
+
+     Pensions do not. There is no group pension record type; a pension is a
+     pension whether it belongs to a person or to a company scheme. What makes
+     one a group pension is the account it hangs off — so it has to be keyed on
+     the company.
+
+     Filtering on the account RECORD TYPE is not good enough. Business and
+     commercial accounts between them hold about 10,700 pension records, and
+     that sweeps in a bank with nearly nine thousand of its own, plus accounts
+     literally named SELF EMPLOYED, PROJECTS and Lapses. The branch runs a
+     handful of group pension schemes, not hundreds.
+
+     So the list of scheme accounts is named, and it is held in the branch
+     sheet rather than here — the page shows whatever pension rows the snapshot
+     sends it. Keeping the list there means client names stay out of a public
+     repository, and the list is maintained by whoever runs the book instead of
+     by editing code.
+
+   The list is a snapshot, not a live query — Apps Script pulls it from
+   Salesforce on a schedule and the browser never holds credentials. A book
+   that moves monthly does not need second-by-second freshness, and this way
+   nothing about the CRM is reachable from a page on the public web.
+
+   Note also: this writes what staff types to the branch sheet, NOT back to
+   Salesforce. Policy_Requirements__c is the field that ought to hold it, and
+   writing there would keep one source of truth — but that is a write into
+   production, so it stays an explicit decision rather than a default.
+   ═══════════════════════════════════════════════════════════════════════ */
+const API = "https://script.google.com/macros/s/AKfycbzxAl-EP_stXYGHZkkxWnei6idJ04bM5ZIUKfGxDTr-cHPH7Tt9trmAYVNPzeq9k4U56w/exec";
+
+/* Administrators only — deliberately narrower than "branch staff". This list
+   crosses every group on the book, which is a management view: an agent has no
+   business reading another agent's clients, and chasing outstanding
+   applications across the whole book is an admin job.
+
+   Change the code here, and change it when someone leaves. It is a door, not a
+   security model — it cannot tell one administrator from another and cannot be
+   revoked for one person. When this screen moves inside the portal it should
+   check the roster instead, where role is already 'manager' or 'agent', and
+   admit only the former. */
+const ADMIN_CODE = "RRB-ADMIN-2026";
+const SESSION_KEY = "rrb-pendings-ok";
+
+/* ── who gets in ──
+   Administrators are the managers on the branch roster, and they sign in at
+   the portal — index.html validates the agent number and password there, and
+   hands the identity to this page through same-origin storage. So the normal
+   path is: sign in once at the portal, open Pendings from the nav, and this
+   gate never appears.
+
+   The typed code below is the break-glass: one shared branch code for the
+   day the portal is down or someone is on a machine mid-crisis. It cannot say
+   WHO opened the page, which is why the roster path is the normal one — notes
+   save with the author's name, and access ends by removing someone from the
+   roster rather than by re-issuing a shared secret to everyone else.
+
+   None of this is cryptography; it is a door on a public static page showing
+   sample rows. The day the branch script serves real rows, the script must
+   check the identity again server-side — read the POST's `by` and `code`
+   against the roster sheet — because anything only the browser checks, the
+   browser can be talked out of. */
+const HANDOFF_KEY = "rrb-signin";
+const HANDOFF_MAX_H = 12;
+let IDENTITY = null;
+
+function handoff(){
+  try{
+    const d = JSON.parse(localStorage.getItem(HANDOFF_KEY) || 'null');
+    if(!d || !d.at || (Date.now() - d.at) > HANDOFF_MAX_H*3600*1000) return null;
+    return d;
+  }catch(e){ return null; }
+}
+
+/* Sample rows — invented people at real ages, so the ageing bands and the
+   sort can be worked on without live data on screen. */
+const SAMPLE = [
+  { id:'a1', account:"Bhagwansingh's Hardware & Steel Industries Limited", member:'S. Narine',
+    line:'HEALTH_GROUP', policy:'TBC - S. Narine', issued:'2023-05-01', note:'' },
+  { id:'a2', account:"Bhagwansingh's Hardware & Steel Industries Limited", member:'I. Deonarine-Balkaran',
+    line:'HEALTH_GROUP', policy:'TPI - Indra', issued:'2023-05-01', note:'' },
+  { id:'a3', account:'D Rampersad & Company Ltd', member:'R. Isaacs',
+    line:'LIFE_GROUP', policy:'212', issued:'2023-11-01', note:'' },
+  { id:'a4', account:'D Rampersad & Company Ltd', member:'J. Rampersad',
+    line:'LIFE_GROUP', policy:'TGM - J. Rampersad', issued:'2023-11-01', note:'' },
+  { id:'a5', account:'D Rampersad & Company Ltd', member:'S. Mohammed',
+    line:'LIFE_GROUP', policy:'TGM1099 - Sherida', issued:'2023-12-01', note:'' },
+  { id:'a6', account:'D Rampersad & Company Ltd', member:'S. Jaggernath',
+    line:'LIFE_GROUP', policy:'TPG Krishna', issued:'2024-06-01',
+    note:'', flag:'Typed as life but carries health cover, and the policy ref names another member.' },
+  { id:'a7', account:'D Rampersad & Company Ltd', member:'K. Ramnarine',
+    line:'LIFE_GROUP', policy:'TGM Krishna', issued:'2024-06-01', note:'' },
+  { id:'a8', account:'D Rampersad & Company Ltd', member:'K. Ramnarine',
+    line:'HEALTH_GROUP', policy:'TPG0278-00104-00', issued:'2024-06-01', note:'' },
+  { id:'a9', account:'D Rampersad & Company Ltd', member:'D. John',
+    line:'HEALTH_GROUP', policy:'TPG0864-00023-00', issued:'2024-08-01', note:'' },
+  { id:'a10', account:'Meridian Supermarkets Limited', member:'A. Boodhoo',
+    line:'PENSION', policy:'TPN0442-00019-00', issued:'2026-06-01', note:'' },
+  { id:'a11', account:'Anchorage Services Limited', member:'R. Seepaul',
+    line:'PENSION', policy:'TPN0771-00204-00', issued:'2026-05-01', note:'' },
+  /* Linked to one account, but the policy system says it belongs to another.
+     Left in the sample deliberately: the real book has thousands like it and
+     the screen has to be able to show one. */
+  { id:'a12', account:'Anchorage Services Limited', sourceName:'Northgate Joinery Limited',
+    member:'V. Sooklal', line:'PENSION', policy:'TPN0771-00311-00', issued:'2026-04-01', note:'' }
+];
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dmy = s => s ? new Date(s+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+const days = s => s ? Math.floor((Date.now() - new Date(s+'T00:00:00')) / 86400000) : null;
+const LINE = { LIFE_GROUP:['Life','p-life'], HEALTH_GROUP:['Health','p-health'], PENSION:['Pension','p-pension'] };
+
+/* Compare account names the way a person would. The policy system writes the
+   same company several ways — trailing LTD against LIMITED, stray double
+   spaces, an apostrophe that is sometimes curly — so a strict equality test
+   reports honest matches as mismatches and buries the real ones. */
+const normAcct = s => String(s??'').toUpperCase()
+  .replace(/[\u2018\u2019]/g, "'").replace(/[.,]/g,'')
+  .replace(/\bLIMITED\b/g,'LTD').replace(/\bCOMPANY\b/g,'CO')
+  .replace(/\s+/g,' ').trim();
+const sameAccount = (a, b) => {
+  const x = normAcct(a), y = normAcct(b);
+  return !x || !y || x === y || x.startsWith(y) || y.startsWith(x);
+};
+
+/* Bands chosen for what this actually is. A group application that has sat
+   for a year is not "slow" — it is almost certainly settled and never
+   updated, or dead. The colour should say that. */
+function ageClass(d){ return d>=365 ? 'a-bad' : d>=90 ? 'a-warn' : 'a-ok'; }
+function ageWord(d){
+  if(d>=730) return Math.floor(d/365.25)+' years';
+  if(d>=365) return 'over a year';
+  if(d>=90)  return Math.floor(d/30)+' months';
+  return d+' days';
+}
+
+let DATA = [], sortKey = 'days', sortDir = -1, saving = {};
+
+function load(){
+  if(!API){ DATA = SAMPLE.map(r => ({...r})); paint(); return; }
+  fetch(API + '?action=pendings')
+    .then(r => r.json())
+    .then(d => { DATA = (d && d.rows) || []; paint(); })
+    .catch(() => { $('rows').innerHTML =
+      '<tr><td colspan="8" class="note" style="padding:1.4rem;text-align:center">Could not reach the branch script. Showing nothing rather than something stale.</td></tr>'; });
+}
+
+function filtered(){
+  const a = $('f-acct').value, l = $('f-line').value, t = ($('f-text').value||'').toLowerCase().trim();
+  return DATA.filter(r =>
+    (!a || r.account === a) && (!l || r.line === l) &&
+    (!t || (r.member+' '+r.policy+' '+r.account).toLowerCase().includes(t))
+  ).sort((x,y) => {
+    const v = k => k==='days' ? days(x.issued) - days(y.issued)
+      : String(x[k]??'').localeCompare(String(y[k]??''));
+    return v(sortKey) * sortDir;
+  });
+}
+
+function paint(){
+  const acct = $('f-acct');
+  if(!acct.options.length){
+    const names = [...new Set(DATA.map(r => r.account))].sort();
+    acct.innerHTML = '<option value="">Every account</option>' +
+      names.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  }
+  const rows = filtered();
+  /* Every figure and flag below describes what is on screen, not the whole
+     book. Filter to pensions and read "9 outstanding over a year" off a
+     life-and-health count and you would chase the wrong thing. */
+  const narrowed = rows.length !== DATA.length;
+  const all = rows.map(r => days(r.issued)).filter(n => n != null);
+  const oldest = all.length ? Math.max(...all) : 0;
+  const overYear = all.filter(n => n >= 365).length;
+  const withNote = rows.filter(r => (r.note||'').trim()).length;
+  const scope = narrowed ? 'of ' + DATA.length + ' on the book' : '';
+
+  $('kpis').innerHTML =
+    kpi(rows.length, narrowed ? 'Pending, filtered' : 'Pending applications',
+        plural([...new Set(rows.map(r=>r.account))].length, 'account') + (scope ? ' · ' + scope : '')) +
+    kpi(overYear, 'Outstanding over a year', overYear ? 'almost certainly stale' : 'none', overYear>0) +
+    kpi(oldest ? ageWord(oldest) : '—', 'Oldest', oldest ? oldest.toLocaleString()+' days' : '') +
+    kpi(withNote + ' of ' + rows.length, 'With a reason recorded',
+        withNote < rows.length ? (rows.length - withNote) + ' still blank' : 'all accounted for');
+
+  /* A row whose account lookup disagrees with the policy system is not a
+     detail — it is this client's list showing another client's member. */
+  rows.forEach(r => { r.misfiled = !!(r.sourceName && !sameAccount(r.sourceName, r.account)); });
+  const misfiled = rows.filter(r => r.misfiled);
+  const flags = rows.filter(r => r.flag);
+  $('flags').innerHTML = [
+    (()=>{ const lines = ['LIFE_GROUP','HEALTH_GROUP','PENSION'].filter(l => !DATA.some(r => r.line===l));
+      return lines.length ? `<div class="alert a-info">Nothing pending on ${
+        lines.map(l => LINE[l][0].toLowerCase()).join(' or ')}.</div>` : ''; })(),
+    misfiled.length ? `<div class="alert a-stop"><b>${misfiled.length === 1
+      ? 'One row is filed against the wrong account.'
+      : misfiled.length + ' rows are filed against the wrong account.'}</b>
+      The account each is linked to is not the account the policy system names
+      — ${misfiled.slice(0,3).map(r => esc(r.member) + ' → ' + esc(r.sourceName)).join(', ')}${
+        misfiled.length > 3 ? ' and ' + (misfiled.length-3) + ' more' : ''}.
+      Treat these as another client's records until they are repaired at source.</div>` : '',
+    overYear ? `<div class="alert a-flag"><b>${overYear} of these have been pending for more than a year.</b>
+      An application that old is rarely still in underwriting — it has usually settled and nobody updated the record,
+      or it lapsed. Worth clearing the list before anyone reads a count off it.</div>` : '',
+    flags.map(f => `<div class="alert a-flag" style="margin-top:.6rem"><b>${esc(f.member)} — check this record.</b>
+      ${esc(f.flag)}</div>`).join('')
+  ].filter(Boolean).join('');
+
+  $('rows').innerHTML = rows.length ? rows.map(r => {
+    const d = days(r.issued), [ln,cls] = LINE[r.line] || [r.line,'p-life'];
+    const pct = d==null ? 0 : Math.min(100, d/1200*100);
+    return `<tr${r.misfiled ? ' class="misfiled"' : ''}>
+      <td>${esc(r.account)}${r.misfiled
+        ? `<div class="wrongacct">policy system says<br><b>${esc(r.sourceName)}</b></div>` : ''}</td>
+      <td><b>${esc(r.member)}</b></td>
+      <td><span class="pill ${cls}">${ln}</span></td>
+      <td class="mono" style="font-size:12.5px">${esc(r.policy||'—')}</td>
+      <td class="mono" style="font-size:12.5px;white-space:nowrap">${dmy(r.issued)}</td>
+      <td class="r"><span class="age ${ageClass(d)}">${d==null?'—':ageWord(d)}</span>
+        <span class="band" style="background:linear-gradient(90deg,currentColor ${pct}%,var(--line) ${pct}%)"></span></td>
+      <td><textarea class="req ${(r.note||'').trim()?'filled':''}" rows="2" data-id="${esc(r.id)}"
+            placeholder="What is holding this up?">${esc(r.note||'')}</textarea></td>
+      <td class="note" id="s-${esc(r.id)}">${r.noteBy ? esc(r.noteBy)+'<br>'+esc(r.noteAt||'') : ''}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="8" class="note" style="padding:1.4rem;text-align:center">Nothing matches that.</td></tr>';
+
+  document.querySelectorAll('.req').forEach(grow);
+  $('foot').innerHTML = (API ? 'Snapshot from the branch record.' : 'Sample rows — invented people at real ages.')
+    + ' Pending means <span class="mono">Policy Status Description = Pending</span> on a group life, group health'
+    + ' or scheme pension portfolio record. What you type here is saved to the branch sheet,'
+    + ' not written back to Salesforce.';
+}
+
+/* Grow the box to its content: a clipped note reads as an empty one. */
+function grow(el){ el.style.height='auto'; el.style.height=Math.max(34, el.scrollHeight)+'px'; }
+document.addEventListener('input', e => { if(e.target.classList && e.target.classList.contains('req')) grow(e.target); });
+
+const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+
+function kpi(v, k, n, bad){
+  return `<div class="kpi"><span class="label">${esc(k)}</span>
+    <div class="v${bad?' bad':''}">${esc(v)}</div><div class="n">${esc(n||'')}</div></div>`;
+}
+
+/* Save on blur rather than on every keystroke — staff are typing sentences,
+   not searching. */
+document.addEventListener('focusout', e => {
+  const t = e.target;
+  if(!t.classList || !t.classList.contains('req')) return;
+  const id = t.dataset.id, text = t.value.trim();
+  const row = DATA.find(r => r.id === id);
+  if(!row || row.note === text) return;
+  row.note = text;
+  /* A note without an author is a note nobody can ask about. */
+  row.noteBy = IDENTITY ? IDENTITY.name : 'Branch admin';
+  row.noteAt = new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short'})
+             + ' ' + new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  t.classList.toggle('filled', !!text);
+  const cell = $('s-'+id);
+  if(cell) cell.innerHTML = '<span class="saved">saving…</span>';
+  const done = ok => { if(cell) cell.innerHTML = ok
+    ? '<span class="saved">saved just now</span><br><span class="note">' + esc(row.noteBy) + '</span>'
+    : '<span class="note" style="color:var(--stop)">not saved — try again</span>'; };
+  if(!API){ setTimeout(()=>done(true), 250); paintKpisOnly(); return; }
+  fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({ action:'pendingnote', id, text,
+      by: row.noteBy, code: IDENTITY ? IDENTITY.code : null }) })
+    .then(r => r.json()).then(d => done(d && d.ok !== false)).catch(() => done(false));
+  paintKpisOnly();
+});
+function paintKpisOnly(){
+  const rows = filtered();
+  const withNote = rows.filter(r => (r.note||'').trim()).length;
+  const el = $('kpis').lastElementChild;
+  if(el) el.querySelector('.v').textContent = withNote + ' of ' + rows.length;
+}
+
+document.querySelectorAll('thead th[data-sort]').forEach(th => {
+  th.addEventListener('click', () => {
+    const k = th.dataset.sort;
+    if(sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = k==='days' ? -1 : 1; }
+    paint();
+  });
+});
+['f-acct','f-line','f-text'].forEach(id => $(id).addEventListener('input', paint));
+$('theme').addEventListener('click', () => {
+  const r = document.documentElement;
+  r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark';
+});
+
+/* ── the door ── */
+function open_(){
+  document.getElementById('gate').hidden = true;
+  document.getElementById('app').hidden = false;
+  const w = document.getElementById('who');
+  if(w) w.innerHTML = IDENTITY
+    ? `Signed in as <b>${esc(IDENTITY.name)}</b> · <a id="out" style="cursor:pointer">sign out</a>`
+    : `Branch admin code · <a id="out" style="cursor:pointer">sign out</a>`;
+  const o = document.getElementById('out');
+  if(o) o.addEventListener('click', () => {
+    try{ sessionStorage.removeItem(SESSION_KEY); localStorage.removeItem(HANDOFF_KEY); }catch(e){}
+    location.reload();
+  });
+  load();
+}
+function tryCode(){
+  const v = (document.getElementById('code').value||'').trim().toUpperCase();
+  if(v === ADMIN_CODE){ try{ sessionStorage.setItem(SESSION_KEY,'1'); }catch(e){} open_(); }
+  else document.getElementById('gerr').textContent = 'That code is not an administrator code.';
+}
+document.getElementById('go').addEventListener('click', tryCode);
+document.getElementById('code').addEventListener('keydown', e => { if(e.key==='Enter') tryCode(); });
+/* Managers signed in at the portal walk straight through; the roster path
+   knows who they are. The break-glass code stays session-only — closing the
+   tab shuts it again, which is what you want on a machine other people use. */
+const ho = handoff();
+if(ho && ho.role === 'manager'){ IDENTITY = ho; open_(); }
+else { try{ if(sessionStorage.getItem(SESSION_KEY)==='1') open_(); }catch(e){} }
+</script>
+</body>
+</html>

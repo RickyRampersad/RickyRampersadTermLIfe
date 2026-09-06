@@ -29,9 +29,15 @@ that track them, the same way a real investor would:
 The live level of the Dow, the Nasdaq Composite, the Nasdaq 100 and the S&P 500
 runs across the ticker at the top of the page for reference.
 
-Alongside those, players can trade about twenty large names — Apple, Microsoft,
-NVIDIA, Tesla, JPMorgan, Coca-Cola, Boeing and so on. Edit the `UNIVERSE` list in
-`Market.gs` to change what is on the menu.
+Alongside those, the league carries **123 individual stocks** — the full Dow
+Jones 30 and the Nasdaq 100, grouped under those headings in the trade menu so
+people can see which index a name belongs to. Edit the `UNIVERSE` list in
+`Market.gs` to change what is on the menu, then regenerate
+[`PASTE-INTO-SHEET.txt`](PASTE-INTO-SHEET.txt) to match.
+
+Tickers are plain (`WMT`, not `NYSE:WMT`). Google resolves US tickers to their
+primary listing on its own, and spelling out the exchange turned out to be a
+reliable way to get a blank cell when the guess was wrong.
 
 ---
 
@@ -46,6 +52,41 @@ to setting it up.
 The catch is that in demo mode **everything lives in that one browser**. There is
 no shared league — your phone and a colleague's phone know nothing about each
 other. For a real competition, do the setup below.
+
+---
+
+## The quick option: real prices, no deployment
+
+If the Apps Script setup below feels like more than you want to take on, this
+gets **real prices** onto the page in about four minutes, with no script editor,
+no permission screens and nothing to deploy. What it does *not* give you is the
+shared leaderboard — a published sheet is read-only, so portfolios stay on each
+person's own device.
+
+1. Open **sheets.new** for a blank spreadsheet.
+2. Copy everything out of [`PASTE-INTO-SHEET.txt`](PASTE-INTO-SHEET.txt) and
+   paste it into cell **A1**. It spreads across the columns and the
+   GOOGLEFINANCE formulas start pulling prices within a few seconds.
+3. **File → Share → Publish to web**, change *Web page* to
+   **Comma-separated values (.csv)**, and press **Publish**.
+4. Copy the URL it gives you into `CONFIG.PRICES_CSV` in `market/index.html`:
+
+```js
+const CONFIG = {
+  API_URL: "",
+  PRICES_CSV: "https://docs.google.com/spreadsheets/d/e/XXXX/pub?output=csv"
+};
+```
+
+The page reads that sheet directly. If it is ever unreachable the last prices
+stay on screen with a note, rather than the game collapsing.
+
+You can do this now and the full setup later — `API_URL` takes precedence over
+`PRICES_CSV`, so filling it in afterwards switches everything over cleanly.
+
+> Worth knowing: portfolios built while prices were simulated will be revalued
+> at real prices the moment you switch, which makes for some odd-looking profit
+> and loss. Cleanest to start a fresh round when you flip this on.
 
 ---
 

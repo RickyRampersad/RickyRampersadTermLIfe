@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="robots" content="noindex,nofollow">
+<title>Updating the tracker's script · RRB</title>
+<link rel="icon" href="../favicon.svg"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+  :root{
+    --navy:#16264F; --deep:#0D1838; --gold:#C7A34A; --soft:#E7D9AE;
+    --paper:#F7F5EF; --card:#FFFFFF; --sunk:#FBFAF5;
+    --ink:#1F2433; --ink2:#3D4457; --muted:#6A7180; --line:#E5E1D6;
+    --good:#2C7A57; --warn:#B0791C; --stop:#AE3A33;
+    --shadow:0 1px 2px rgba(13,24,56,.05), 0 10px 26px -18px rgba(13,24,56,.30);
+  }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+    --paper:#0B1226; --card:#131C33; --sunk:#0F1729;
+    --ink:#ECEAE2; --ink2:#C4C8D4; --muted:#8E96A6; --line:#26304A; --gold:#D9B863;
+    --good:#5FC493; --warn:#E0A93F; --stop:#F08A82;
+    --shadow:0 1px 2px rgba(0,0,0,.45), 0 12px 30px -18px rgba(0,0,0,.85); }}
+  :root[data-theme="dark"]{
+    --paper:#0B1226; --card:#131C33; --sunk:#0F1729;
+    --ink:#ECEAE2; --ink2:#C4C8D4; --muted:#8E96A6; --line:#26304A; --gold:#D9B863;
+    --good:#5FC493; --warn:#E0A93F; --stop:#F08A82;
+    --shadow:0 1px 2px rgba(0,0,0,.45), 0 12px 30px -18px rgba(0,0,0,.85); }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.6}
+  .wrap{max-width:720px;margin:0 auto;padding:0 20px 70px}
+  .mast{background:linear-gradient(158deg,var(--navy) 0%,var(--deep) 100%);
+    border-bottom:3px solid var(--gold);color:#fff;padding:32px 0 28px;margin-bottom:30px}
+  .mast .wrap{padding-bottom:0}
+  .eyebrow{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--soft);margin:0 0 6px}
+  h1{font-family:Newsreader,Georgia,serif;font-weight:600;font-size:clamp(28px,5.2vw,40px);
+    line-height:1.12;margin:0 0 10px;color:#fff;text-wrap:balance}
+  .stand{margin:0;font-size:15.5px;color:#D9DEEA;max-width:58ch}
+  h2{font-family:Newsreader,Georgia,serif;font-weight:600;font-size:23px;margin:40px 0 4px;
+    text-wrap:balance}
+  .sub{margin:0 0 16px;color:var(--muted);font-size:14.5px}
+  p{color:var(--ink2);margin:0 0 12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:13px;
+    box-shadow:var(--shadow);padding:18px 20px;margin-bottom:13px}
+  .step{display:flex;gap:14px;align-items:flex-start;margin-bottom:20px}
+  .step:last-child{margin-bottom:0}
+  .num{flex:0 0 auto;width:29px;height:29px;border-radius:50%;border:1.5px solid var(--gold);
+    color:var(--gold);font-size:13px;font-weight:700;display:grid;place-items:center;margin-top:2px}
+  .step h3{margin:2px 0 4px;font-size:16px;font-weight:700;color:var(--ink)}
+  .step p{margin:0 0 6px;font-size:15px}
+  .note{border-left:3px solid var(--gold);background:var(--sunk);border-radius:0 9px 9px 0;
+    padding:11px 14px;margin:0 0 12px;font-size:14px;color:var(--ink2)}
+  .note.good{border-left-color:var(--good)}
+  .note.warn{border-left-color:var(--warn)}
+  .note.stop{border-left-color:var(--stop)}
+  .lbl{display:block;font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;
+    margin-bottom:3px}
+  .note.good .lbl{color:var(--good)} .note.warn .lbl{color:var(--warn)} .note.stop .lbl{color:var(--stop)}
+  .note b{color:var(--ink)}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13.5px;
+    background:var(--sunk);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+  .seen{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;
+    background:var(--sunk);border:1px solid var(--line);border-radius:8px;
+    padding:9px 12px;color:var(--muted);margin:6px 0 0}
+  ul{margin:0 0 12px;padding-left:20px;color:var(--ink2)}
+  li{margin-bottom:5px}
+  .check{background:linear-gradient(158deg,var(--navy) 0%,var(--deep) 100%);
+    border-radius:14px;padding:24px 22px;color:#fff;margin:6px 0 14px}
+  .check h2{color:#fff;margin:0 0 4px}
+  .check p{color:#C9D0E0;margin:0 0 16px;font-size:15px}
+  button{font:inherit;font-weight:700;font-size:16px;cursor:pointer;
+    background:var(--gold);color:#16264F;border:none;border-radius:10px;
+    padding:14px 26px;width:100%;max-width:320px}
+  button:disabled{opacity:.6;cursor:default}
+  #out{margin-top:16px}
+  #out .r{border-radius:11px;padding:14px 16px;font-size:15px;line-height:1.5}
+  #out .r .hd{display:block;font-weight:700;font-size:17px;margin-bottom:4px}
+  #out .r b{font-weight:700}
+  .r.ok{background:rgba(95,196,147,.15);border:1px solid rgba(95,196,147,.5);color:#DFF5E9}
+  .r.no{background:rgba(240,138,130,.14);border:1px solid rgba(240,138,130,.5);color:#FBDFDD}
+  .r.hm{background:rgba(224,169,63,.14);border:1px solid rgba(224,169,63,.5);color:#FBEEDA}
+  .r small{display:block;margin-top:7px;opacity:.8;font-size:13px}
+  footer{margin-top:38px;padding-top:20px;border-top:1px solid var(--line);
+    font-size:12.5px;color:var(--muted);text-align:center}
+  a{color:var(--gold)}
+</style>
+</head>
+<body>
+
+<header class="mast"><div class="wrap">
+  <p class="eyebrow">Ricky Rampersad Branch</p>
+  <h1>Updating the tracker's script</h1>
+  <p class="stand">Ten minutes, once. You are copying one file into Google Apps
+     Script, pressing deploy, and running one function. Nothing on this page can break the tracker or
+     touch anybody's data — and there is a button at the bottom that tells you
+     whether it worked.</p>
+</div></header>
+
+<div class="wrap">
+
+  <div class="note"><span class="lbl">Before you start</span>
+    You need to be signed in to Google as the person who owns the KPI workbook.
+    If the Apps Script editor opens read-only, you are on the wrong account.</div>
+
+  <h2>What you are doing</h2>
+  <p class="sub">And why it is worth the ten minutes</p>
+  <div class="card">
+    <p>The tracker's website was updated already — that part happens on its own.
+       The <b>script inside the Google workbook</b> does not. It is still the
+       old copy, and it is the reason submitting a block is slow at three
+       o'clock and why people were being knocked out of the tracker.</p>
+    <p>The new copy does the same work in a third of the steps, and stops one
+       person's submission holding everybody else's up.</p>
+  </div>
+
+  <h2>The steps</h2>
+  <p class="sub">Each one says what you should see when it has worked</p>
+
+  <div class="card">
+
+    <div class="step"><div class="num">1</div><div>
+      <h3>Open the script</h3>
+      <p>Open the KPI workbook in Google Sheets. In the menu:
+         <b>Extensions → Apps Script</b>.</p>
+      <p class="seen">You should see: a code editor titled <b>RRB KPI Tracker</b>,
+         with <code>Code.gs</code> at the top of the file list on the left.</p>
+      <div class="note warn"><span class="lbl">The file is Code.gs</span>
+        In the repository this file is called <code>KPI.gs</code>; in the Apps
+        Script project it is called <b>Code.gs</b>. Same file, two names. The
+        others — <code>Reports.gs</code>, <code>KPI-Waiting.gs</code>,
+        <code>KPI-Write.gs</code> — are separate and must not be touched.</div>
+    </div></div>
+
+    <div class="step"><div class="num">2</div><div>
+      <h3>Get the new file</h3>
+      <p>Open <a href="https://raw.githubusercontent.com/RickyRampersad/RickyRampersadTermLIfe/main/apps-script/KPI.gs">the new code</a>
+         in another tab. Click anywhere in the text, then press
+         <b>Ctrl&nbsp;+&nbsp;A</b> and <b>Ctrl&nbsp;+&nbsp;C</b>
+         (on a Mac, <b>⌘&nbsp;A</b> then <b>⌘&nbsp;C</b>).</p>
+      <p class="seen">You should see: the whole page highlighted before you copy.</p>
+    </div></div>
+
+    <div class="step"><div class="num">3</div><div>
+      <h3>Replace what is there</h3>
+      <p>Back in the Apps Script tab, click <b>Code.gs</b> in the list, click
+         once inside the code, press <b>Ctrl&nbsp;+&nbsp;A</b> to select all of
+         the old code, then <b>Delete</b>. The file should be <b>completely
+         empty</b> before you paste. Then <b>Ctrl&nbsp;+&nbsp;V</b>, and the
+         <b>save icon</b> (💾) or <b>Ctrl&nbsp;+&nbsp;S</b>.</p>
+      <div class="note stop"><span class="lbl">Delete first. This is the one that goes wrong</span>
+        On 3 September the new code was pasted <b>underneath</b> the old instead
+        of over it, leaving one file with both scripts in it — 5,729 lines where
+        there should have been about 3,100. Everything looked saved and nothing
+        changed. Emptying the file first makes that impossible.</div>
+      <p class="seen">You should see: the last line number is about
+         <b>3,401</b>. If it is five or six thousand, the old code is still
+         in there — select all, delete, paste again.</p>
+    </div></div>
+
+    <div class="step"><div class="num">4</div><div>
+      <h3>Deploy it</h3>
+      <p>Top right: <b>Deploy → Manage deployments</b>. Click the
+         <b>pencil</b> (✏️) on the deployment that is already there.
+         Under <b>Version</b>, choose <b>New version</b>. Then <b>Deploy</b>.</p>
+      <div class="note stop"><span class="lbl">Do not use "New deployment"</span>
+        That makes a <b>second</b> web address, and the tracker keeps talking to
+        the old one — so nothing changes and it looks like the update failed.
+        It must be <b>Manage deployments → pencil → New version</b>.</div>
+      <p class="seen">You should see: the same Deployment ID as before,
+         ending <code>…flDdg</code>.</p>
+    </div></div>
+
+    <div class="step"><div class="num">5</div><div>
+      <h3>Switch the warm-up on</h3>
+      <p>Still in the Apps Script tab. In the function dropdown at the top
+         (it probably says <code>doGet</code>), choose <b>installTriggers</b>,
+         then press <b>Run</b>.</p>
+      <p>This is what stops the tracker falling asleep. Google puts the script
+         to sleep when nobody has used it for a while, and the next person to
+         sign in waits half a minute while it wakes up. This wakes it every ten
+         minutes during working hours so nobody has to.</p>
+      <div class="note warn"><span class="lbl">It may ask permission</span>
+        Press <b>Review permissions</b>, choose the workbook owner's account,
+        then <b>Advanced &rarr; Go to&nbsp;… (unsafe)</b> and <b>Allow</b>. It says
+        unsafe because the script is not published on the Google store. It is
+        our own file.</div>
+      <p class="seen">You should see: an execution log ending
+         &ldquo;Triggers installed. Warm-up every 10 minutes…&rdquo;</p>
+    </div></div>
+
+    <div class="step"><div class="num">6</div><div>
+      <h3>Check it</h3>
+      <p>Come back here and press the button below. It asks the workbook
+         directly and tells you whether the new script is the one answering,
+         and how fast it is now.</p>
+    </div></div>
+
+  </div>
+
+  <div class="check">
+    <h2>Did it work?</h2>
+    <p>This asks the workbook which version of the script is running, and times
+       it three times. Nothing is written or changed.</p>
+    <button id="go">Check it worked</button>
+    <div id="out"></div>
+  </div>
+
+  <h2>If something goes wrong</h2>
+  <div class="card">
+    <div class="note warn"><span class="lbl">"Authorization required"</span>
+      Press <b>Review permissions</b>, choose the workbook owner's account, then
+      <b>Advanced → Go to … (unsafe)</b> and <b>Allow</b>. It says unsafe because
+      the script is not published on the Google store. It is our own file.</div>
+    <div class="note warn"><span class="lbl">The check says the old script is still answering</span>
+      Almost always step 4 — <b>New deployment</b> was used instead of
+      <b>Manage deployments → pencil → New version</b>. Go back and edit the
+      existing deployment.</div>
+    <div class="note stop"><span class="lbl">Red marks in the editor</span>
+      The paste went in on top of the old code rather than over it. Select all
+      (<b>Ctrl&nbsp;+&nbsp;A</b>) in the editor, delete, then paste again.</div>
+    <div class="note"><span class="lbl">Nothing here can lose data</span>
+      The script reads and writes the workbook, but this update does not change
+      any row that is already there. If a step goes wrong, stop — the tracker
+      carries on running the old script until a deployment succeeds.</div>
+  </div>
+
+  <footer>
+    Ricky Rampersad Branch · 9–13 Endeavour 1st Street, Chaguanas<br>
+    This is a Ricky Rampersad project.
+  </footer>
+</div>
+
+<script>
+// The deployment the tracker and the wall both talk to.
+const EXEC="https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66QVurol0rSQvIBTRBQpFT3LwvClCAOm6jiTW5tflDdg/exec";
+
+// Bumped in the same commit as apps-script/KPI.gs. The check is simply:
+// does the workbook say it is running this, or something older?
+const WANT="2026-09-04b";
+
+const out=document.getElementById("out"), go=document.getElementById("go");
+
+async function ping(){
+  const t0=performance.now();
+  const r=await fetch(EXEC,{method:"POST",headers:{"Content-Type":"text/plain"},
+                            body:JSON.stringify({action:"ping"})});
+  const j=await r.json();
+  return {ms:Math.round(performance.now()-t0), version:j&&j.version||null, ok:!!(j&&j.ok)};
+}
+
+function show(cls,title,body,small){
+  out.innerHTML='<div class="r '+cls+'"><span class="hd">'+title+"</span>"+body+
+    (small?"<small>"+small+"</small>":"")+"</div>";
+}
+
+go.onclick=async()=>{
+  go.disabled=true; go.textContent="Checking…";
+  out.innerHTML="";
+  try{
+    const runs=[];
+    for(let i=0;i<3;i++) runs.push(await ping());
+    const bad=runs.filter(r=>!r.ok).length;
+    if(bad===runs.length){
+      show("no","Could not reach the workbook",
+        "The script did not answer at all. Check the deployment exists under "+
+        "<b>Deploy → Manage deployments</b>, and that Access is set to "+
+        "<b>Anyone</b>.");
+      return;
+    }
+    const v=runs.map(r=>r.version).find(Boolean)||null;
+    const avg=Math.round(runs.reduce((a,r)=>a+r.ms,0)/runs.length);
+    const times=runs.map(r=>(r.ms/1000).toFixed(1)+"s").join(" · ");
+    const speed=avg<2500?"That is the speed it should be."
+              :avg<5000?"Still on the slow side — try once more in a minute; the first call after a quiet spell is always slower."
+              :"Still slow. If it stays like this, tell Mr Rampersad.";
+
+    if(!v){
+      show("no","Not done yet — the old script is still answering",
+        "The workbook is running the previous version, which does not know how "+
+        "to say which one it is. That is the giveaway.<br><br>"+
+        "Nearly always this is step 4: <b>New deployment</b> was used instead of "+
+        "<b>Manage deployments → pencil → New version</b>. Go back and edit the "+
+        "deployment that is already there.",
+        "Timed at "+times);
+    } else if(v===WANT){
+      show("ok","Done — the new script is live",
+        "The workbook is answering as version <b>"+v+"</b>, which is the one "+
+        "you just deployed. Nothing else to do. "+speed,
+        "Timed at "+times+" (average "+(avg/1000).toFixed(1)+"s)");
+    } else {
+      show("hm","A different version is live",
+        "The workbook says <b>"+v+"</b>, and this page expected <b>"+WANT+"</b>. "+
+        "Either the file copied was not the newest one, or this page is behind. "+
+        "Send Mr Rampersad both numbers and he will say which.",
+        "Timed at "+times);
+    }
+  }catch(e){
+    show("no","Could not reach the workbook",
+      "The check could not get an answer. If you are on office wifi, try once "+
+      "more — and check the deployment's Access is set to <b>Anyone</b>.");
+  }finally{
+    go.disabled=false; go.textContent="Check it again";
+  }
+};
+</script>
+</body>
+</html>

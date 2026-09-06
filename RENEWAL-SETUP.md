@@ -96,6 +96,32 @@ The 📋 Renewals menu also has:
 `Responded… — Renew as-is`, etc.), and rows without an email address are always
 skipped with a warning — those clients you call as usual.
 
+## Testing safely (test mode)
+
+The current script ([`apps-script/Code.gs`](apps-script/Code.gs)) has a built-in
+**test mode** — flip it from the sheet: **Guardian Renewals menu → 🧪 Turn test
+mode ON**. While it's on:
+
+- **Every email goes only to you** (or `CONFIG.TEST_INBOX` if set), with a
+  `[TEST]` subject and a red banner naming who it *would* have gone to —
+  clients and Guardian receive nothing.
+- **Live state is untouched** — "Reminders Sent" and "Renewal Status" are not
+  stamped, so a rehearsal never silences a real client's reminder ladder.
+- **Test traffic is labelled** — responses log with Status `TEST`, tasks are
+  titled `[TEST] …`, activity entries are prefixed `TEST:` — easy to spot and
+  delete afterwards.
+
+So you can safely open a real client link, submit the form, and run
+**Run automation now** to preview every reminder that would send today.
+Turning test mode off pops a confirmation; anything the automation rehearsed
+will then send for real on the next 8am run.
+
+**One-time note:** the switch takes effect instantly for menu actions and the
+daily trigger, but the *portal* (client links) runs the deployed web-app
+version — after pasting updated code, publish it with **Deploy → Manage
+deployments → ✏️ Edit → Version: New version → Deploy** (the `/exec` URL and
+all client links stay the same).
+
 ## Managing campaigns
 
 Campaign cards (and the opt-in checkboxes on the form) live in `CONFIG.CAMPAIGNS`
