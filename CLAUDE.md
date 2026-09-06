@@ -106,6 +106,27 @@ licence, no file to ship.
 - Sits well under the voice, lifts into the reveal, opens out for the close —
   the only two places a bed like this should be noticed
 
+## WhatsApp messages to the branch — short, or nobody reads it
+
+Every message written for the branch group follows the same four rules, and the
+first one is the one that keeps getting broken:
+
+| | |
+|---|---|
+| **Compact** | Under about 120 words. A 280-word message is a memo, and a memo in a WhatsApp group is scrolled past. |
+| **Motivating** | Address the agent, not the branch. "Your name is on it", not "agents can see their names". |
+| **Innovative** | Lead with the number nobody in the room already knows. One finding, not five. |
+| **Prompts a comeback** | End with a specific ask that is easy to answer — *"Reply with one client you're calling Monday."* A message with nothing to reply to gets no replies. |
+
+Shape: a bold one-line headline, two or three short paragraphs, one bulletless
+finding, the ask. WhatsApp bold is `*single asterisks*`. No hard line wraps
+inside a paragraph — WhatsApp reflows, and wrapped text arrives ragged on a
+phone. Long-form detail belongs in the reply to the branch manager, not in the
+group message.
+
+If the picture carries a caveat banner ("preview · sample figures"), the message
+does not need to repeat it.
+
 ## Hosting — the two chains never touch
 
 | Source | Host | Serves |
