@@ -2800,6 +2800,7 @@ function intelRoute_(b) {
   if (action === 'intel.delivery') return iActDelivery_(b);
   if (action === 'intel.licence')  return iActLicence_(b);
   if (action === 'intel.possession') return iActPossession_(b);
+  if (action === 'intel.book')       return iActBook_(b);
 
   var session = iSession_(b.token);
   if (!session) return iErr_('Your session has expired — sign in again.');
@@ -5329,6 +5330,285 @@ function iBuildPossession_() {
 
 function iActPossession_(b) {
   var d = iBuildPossession_();
+  return iOk_({ data: d });
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE CLIENT BOOK — who we already have, and what they are missing
+   ══════════════════════════════════════════════════════════════════════════
+   Every other wall in this branch measures something that has gone wrong. This
+   one measures what is already ours: 13,304 people who have bought from this
+   branch, what cover they carry, how long they have been with us, and where
+   the obvious gap is.
+
+   IT NAMES NOBODY. The counts below are clients, and a client is a count — no
+   name, no policy number, no date of birth, no premium reaches this wall. It
+   hangs in a room clients walk through, and this is the one wall whose subject
+   is the client rather than the agent. The agent's own named list lives behind
+   the sign-in on the app, scoped to their book, where it always has.
+
+   COVER IS READ FROM THE COVERAGE COLUMNS, NEVER FROM A PRODUCT NAME. TYPE__c
+   is populated on 627 of 55,062 rows across the org — 1% — so it cannot be the
+   record type, and the house rule is not to guess a classification from a name
+   (Life Secure and Tophat both read as life and are neither). Life_Coverage__c
+   above zero means the policy carries life cover. That is a fact in the data
+   rather than an inference about a product.
+
+   AND THE STATUS FIELD CANNOT BE TRUSTED, which is the single most important
+   thing to know about this wall. Policy_Status_Description_R__c mixes proper
+   picklist labels with raw AS400 codes and blanks — measured on the branch's
+   own 24,680 rows:
+
+       Premium Paying   3,639      1      5,284       (blank)   5,412
+       Surrendered      1,451      E      1,229       ELV       1,473
+       Lapsed             494      B      1,162       RFC         770
+
+   So roughly a fifth of the book says "1" and another fifth says nothing.
+   Anything recognisably dead is dropped; everything else is counted and the
+   number we could not read is put on the wall in the open. A cross-sell wall
+   that quietly treated a surrendered policy as cover in force would send an
+   agent to a client who cancelled two years ago, and that call is worse than
+   no call.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var IBOOK = {
+  OBJECT: 'CLIENT_PORTFOLIO__c',
+  QUIET:  5,      // years since the last policy before a client is "quiet"
+  WEEK:   7       // days ahead counted as "this week" for birthdays
+};
+
+/* Statuses that mean the policy is gone. Written out rather than pattern
+   matched, because "Not taken" and "Not Proceeded With" are different things
+   and neither contains a word the other does. Anything not on either list is
+   counted as unknown and reported — never assumed alive, never assumed dead. */
+var IBOOK_DEAD = ['surrendered', 'lapsed', 'lapse no value', 'lapse w/value',
+                  'death', 'matured', 'expired', 'not taken', 'not proceeded with',
+                  'file closed', 'rejected', 'declined', 'postponed', 'converted',
+                  'vested annuity'];
+var IBOOK_ALIVE = ['premium paying', 'paid up', 'waiver of prem'];
+
+function iBookState_(s) {
+  var t = String(s || '').trim().toLowerCase();
+  if (!t) return 'unknown';
+  if (IBOOK_DEAD.indexOf(t) > -1) return 'dead';
+  if (IBOOK_ALIVE.indexOf(t) > -1) return 'alive';
+  return 'unknown';
+}
+
+function iBookQuiet_() { return Math.round(iNum_(iProp_('INTEL_BOOK_QUIET_YEARS'))) || IBOOK.QUIET; }
+
+/* A date the book cannot have reached yet is not a date. Four rows in the
+   branch's own book carry issue dates in 2035, 2047 and 2076; left alone, the
+   2076 one makes its client permanently "bought this year" and drags the
+   branch's median tenure with it. */
+function iBookDate_(v, today) {
+  var d = iDate_(v);
+  if (!d) return null;
+  var y = d.getFullYear();
+  if (y < 1940 || d.getTime() > today.getTime()) return null;
+  return d;
+}
+
+function iBookBand_(years, bands) {
+  for (var i = 0; i < bands.length; i++) if (years < bands[i][1]) return bands[i][0];
+  return bands[bands.length - 1][0];
+}
+
+function iBuildBook_() {
+  var today = iToday_(), DAY = 86400000, YEAR = 365.25;
+  var skip = iExcluded_(), quietYears = iBookQuiet_();
+
+  /* Same joins as every other screen: the access list is the org chart. */
+  var units = iBuildUnits_(), unitKeys = {}, personOfCode = {}, unitOfCode = {};
+  Object.keys(units).forEach(function (u) {
+    unitKeys[iPossUnitKey_(u)] = u;
+    units[u].forEach(function (m) {
+      var c = iCode_(m.id);
+      if (c) { unitOfCode[c] = u; if (m.name) personOfCode[c] = m.name; }
+    });
+  });
+
+  var statusOf = {}, sh = iTabInforce_();
+  if (sh) {
+    var f = iReadCols_(sh, { agentId: ['servicing agent id'],
+                             aStatus: ['servicing agent status'] });
+    for (var r = 0; r < f.rows; r++) {
+      var sc = iCode_(String(f.get('agentId', r)).trim());
+      if (sc && !statusOf[sc]) statusOf[sc] = String(f.get('aStatus', r)).trim();
+    }
+  }
+  function activeAgent(code) { var s = statusOf[iCode_(code)]; return !s || /^active$/i.test(s); }
+
+  var rows = [], sfError = '';
+  try {
+    rows = sfQuery_(
+      'SELECT Contact__c, AgentName__c, Unit__c, Date_Of_Birth__c, Current_Age__c, ' +
+      'ISSUE_DATE__c, Policy_Status_Description_R__c, Life_Coverage__c, ' +
+      'Critical_Illness_Coverage__c, Health_Premium__c, ADDAP_Coverage__c, ' +
+      'Pension_Premiums__c, Savings_Coverage__c, Total_Personal_Accident_Premium__c ' +
+      'FROM ' + IBOOK.OBJECT + ' WHERE Contact__c != null');
+  } catch (err) {
+    sfError = String(err && err.message ? err.message : err);
+  }
+  if (sfError || !rows.length) return { configured: false, error: sfError || 'No portfolio rows.' };
+
+  /* ── fold policies into clients ───────────────────────────────────────── */
+  var byClient = {}, offBranch = 0, notActive = 0, dead = 0, unknown = 0, noClient = 0;
+
+  rows.forEach(function (x) {
+    var key = String(x.Contact__c || '');
+    if (!key) { noClient++; return; }
+
+    var id   = iIdentity_(String(x.AgentName__c || '').trim(), '', '');
+    var code = iCode_(id.agentId);
+    var name = personOfCode[code] || id.agentName || '(none)';
+    var unit = unitOfCode[code] || unitKeys[iPossUnitKey_(x.Unit__c)] || '';
+    if (!unit) { offBranch++; return; }
+    if (iExcludes_(skip, name) || iExcludes_(skip, id.agentName)) return;
+    if (!activeAgent(code)) { notActive++; return; }
+
+    var state = iBookState_(x.Policy_Status_Description_R__c);
+    if (state === 'dead') { dead++; return; }
+    if (state === 'unknown') unknown++;
+
+    var c = byClient[key];
+    if (!c) c = byClient[key] = { agent: name, unit: unit, n: 0, age: null,
+                                  dobM: 0, dobD: 0, first: null, last: null,
+                                  life: false, ci: false, health: false, add: false,
+                                  pa: false, pension: false, savings: false };
+    c.n++;
+
+    if (c.age === null && iNum_(x.Current_Age__c) > 0) c.age = Math.round(iNum_(x.Current_Age__c));
+    if (!c.dobM) {
+      var dob = iDate_(x.Date_Of_Birth__c);
+      if (dob && dob.getFullYear() > 1900) { c.dobM = dob.getMonth() + 1; c.dobD = dob.getDate(); }
+    }
+    var iss = iBookDate_(x.ISSUE_DATE__c, today);
+    if (iss) {
+      if (!c.first || iss < c.first) c.first = iss;
+      if (!c.last  || iss > c.last)  c.last  = iss;
+    }
+    if (iNum_(x.Life_Coverage__c) > 0)                   c.life = true;
+    if (iNum_(x.Critical_Illness_Coverage__c) > 0)       c.ci = true;
+    if (iNum_(x.Health_Premium__c) > 0)                  c.health = true;
+    if (iNum_(x.ADDAP_Coverage__c) > 0)                  c.add = true;
+    if (iNum_(x.Total_Personal_Accident_Premium__c) > 0) c.pa = true;
+    if (iNum_(x.Pension_Premiums__c) > 0)                c.pension = true;
+    if (iNum_(x.Savings_Coverage__c) > 0)                c.savings = true;
+  });
+
+  var keys = Object.keys(byClient);
+  if (!keys.length) return { configured: false, error: 'No branch clients matched.' };
+
+  /* ── the bands ────────────────────────────────────────────────────────── */
+  var TEN = [['Under 1 year',1],['1-2 years',2],['2-5 years',5],['5-10 years',10],
+             ['10-20 years',20],['Over 20 years',1e9]];
+  var AGE = [['Under 25',25],['25-34',35],['35-44',45],['45-54',55],['55-64',65],['65 +',1e9]];
+  var LAST= [['Under 1 year',1],['1-2 years',2],['2-5 years',5],['5-10 years',10],
+             ['Over 10 years',1e9]];
+  function tally(bands) {
+    var m = {}; bands.forEach(function (b) { m[b[0]] = 0; }); return m;
+  }
+  var tenure = tally(TEN), ages = tally(AGE), lastBuy = tally(LAST);
+
+  var cover = { Life:0, 'Critical illness':0, Health:0, 'Accident (ADD&P)':0,
+                'Personal accident':0, Pension:0, Savings:0 };
+  var gapLifeNoCi = 0, gapLifeNoHealth = 0, gapOne = 0, gapQuiet = 0, gapNoCover = 0;
+  var mm = today.getMonth() + 1, dd = today.getDate();
+  var bdayToday = 0, bdayWeek = 0, bdayAges = [];
+  var agents = {}, noDob = 0, noIssue = 0, tenures = [];
+
+  keys.forEach(function (k) {
+    var c = byClient[k];
+    var a = agents[c.agent];
+    if (!a) a = agents[c.agent] = { k: c.agent, unit: c.unit, clients: 0,
+                                    bday: 0, gap: 0, quiet: 0 };
+    a.clients++;
+
+    if (c.age !== null) ages[iBookBand_(c.age, AGE)]++;
+
+    if (c.first) {
+      var yrs = (today - c.first) / DAY / YEAR;
+      tenure[iBookBand_(yrs, TEN)]++;
+      tenures.push(yrs);
+    } else { noIssue++; }
+
+    if (c.last) {
+      var since = (today - c.last) / DAY / YEAR;
+      lastBuy[iBookBand_(since, LAST)]++;
+      if (since >= quietYears) { gapQuiet++; a.quiet++; }
+    }
+
+    if (c.life)    cover.Life++;
+    if (c.ci)      cover['Critical illness']++;
+    if (c.health)  cover.Health++;
+    if (c.add)     cover['Accident (ADD&P)']++;
+    if (c.pa)      cover['Personal accident']++;
+    if (c.pension) cover.Pension++;
+    if (c.savings) cover.Savings++;
+
+    if (c.life && !c.ci)     { gapLifeNoCi++; a.gap++; }
+    if (c.life && !c.health) gapLifeNoHealth++;
+    if (c.n === 1)           gapOne++;
+    if (!c.life && !c.ci && !c.health && !c.add && !c.pa && !c.pension && !c.savings)
+      gapNoCover++;
+
+    if (!c.dobM) { noDob++; return; }
+    if (c.dobM === mm && c.dobD === dd) {
+      bdayToday++; a.bday++;
+      if (c.age !== null) bdayAges.push(c.age);
+    } else {
+      /* "this week" walks forward day by day rather than comparing dates, so
+         it crosses a month end and a year end without a special case. */
+      for (var i = 1; i <= IBOOK.WEEK; i++) {
+        var d = new Date(today.getTime() + i * DAY);
+        if (c.dobM === d.getMonth() + 1 && c.dobD === d.getDate()) { bdayWeek++; break; }
+      }
+    }
+  });
+
+  function list(map) {
+    return Object.keys(map).map(function (k) { return { k: k, n: map[k] }; });
+  }
+  function med(a) {
+    if (!a.length) return null;
+    var s = a.slice().sort(function (x, y) { return x - y; });
+    return s[Math.floor(s.length / 2)];
+  }
+
+  var byAgent = Object.keys(agents).map(function (k) { return agents[k]; })
+    .sort(function (a, b) { return b.gap - a.gap || b.clients - a.clients; });
+
+  return {
+    configured: true,
+    generatedAt: iIso_(today),
+    quietYears: quietYears,
+    clients:  keys.length,
+    policies: keys.reduce(function (s, k) { return s + byClient[k].n; }, 0),
+    birthdays: { today: bdayToday, week: bdayWeek, medianAge: med(bdayAges) },
+    tenure:  TEN.map(function (b) { return { k: b[0], n: tenure[b[0]] }; }),
+    ages:    AGE.map(function (b) { return { k: b[0], n: ages[b[0]] }; }),
+    lastBuy: LAST.map(function (b) { return { k: b[0], n: lastBuy[b[0]] }; }),
+    medianTenure: med(tenures) === null ? null : Math.round(med(tenures) * 10) / 10,
+    cover: list(cover).sort(function (a, b) { return b.n - a.n; }),
+    gaps: [
+      { k: 'Life, no critical illness', n: gapLifeNoCi },
+      { k: 'Life, no health',           n: gapLifeNoHealth },
+      { k: 'Nothing new in ' + quietYears + ' years', n: gapQuiet },
+      { k: 'One policy only',           n: gapOne },
+      { k: 'No cover we can read',      n: gapNoCover }
+    ],
+    byAgent: byAgent,
+    quality: {
+      unknownStatus: unknown, deadDropped: dead, offBranch: offBranch,
+      notActive: notActive, noClientLink: noClient, noDob: noDob, noIssueDate: noIssue
+    }
+  };
+}
+
+function iActBook_(b) {
+  var d = iBuildBook_();
   return iOk_({ data: d });
 }
 
