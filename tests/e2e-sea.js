@@ -239,6 +239,34 @@ const ok = (what, cond, extra) => {
     document.documentElement.scrollWidth - document.documentElement.clientWidth);
   ok('nothing spills sideways at 390px', spill <= 1, spill + 'px');
 
+  // ---- sponsors: the strip, and its absence ----------------------------------
+  // Free to families means sponsors pay for reach. The strip has to be where a
+  // parent looks and nowhere a child works, and the page must never phone the
+  // sponsor — a children's app that beacons is a children's app that tracks.
+  await page.setViewportSize({ width: 1180, height: 900 });
+  ok('with no sponsor configured, nothing sponsor-shaped is on the page',
+     (await page.$$eval('.sponsor', n => n.length)) === 0);
+  const sponsorHits = [];
+  page.on('request', r => { if (/example-bookstore\.tt/.test(r.url())) sponsorHits.push(r.url()); });
+  await page.addInitScript(() => { window.SPONSORS_OVERRIDE = [
+    { slot: 'title',  name: 'Example Bookstore', tag: 'Books for the S.E.A. year', url: 'https://example-bookstore.tt/',
+      logo: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"/>' },
+    { slot: 'papers', name: 'Example Bookstore', tag: 'The printed booklets', url: 'https://example-bookstore.tt/papers' } ]; });
+  await page.evaluate(() => sessionStorage.clear());
+  await page.goto(URL, { waitUntil: 'networkidle' });
+  ok('the title sponsor is on the sign-in screen', await page.isVisible('#gateSponsor .sponsor[data-slot="title"]'));
+  await page.fill('#gateCode', 'RRB2027'); await page.click('#gateGo');
+  await page.waitForSelector('#app:not([hidden])');
+  ok('and on Home, introduced as the reason the app is free', /thanks to/i.test(await page.textContent('#homeSponsor')));
+  await page.click('#nav button[data-view="papers"]');
+  ok('the papers sponsor sits above the papers', await page.isVisible('#papersSponsor .sponsor[data-slot="papers"]'));
+  const rels = await page.$$eval('.sponsor a', a => a.map(x => [x.getAttribute('rel'), x.getAttribute('target')]));
+  ok('every sponsor link is marked sponsored and opens in a new tab',
+     rels.length >= 2 && rels.every(([r, t]) => /sponsored/.test(r) && /noopener/.test(r) && t === '_blank'));
+  await page.click('#nav button[data-view="practice"]');
+  ok('no sponsor appears inside a question', (await page.$$eval('#pHost .sponsor', n => n.length)) === 0);
+  ok('the page never called the sponsor on its own', sponsorHits.length === 0, sponsorHits.join(' '));
+
   // ---- signing in against the Academy sheet ------------------------------
   // A fake of apps-script/Academy.gs, in memory, behind page.route. The real
   // one is tested in test-academy.js; this is the page's half of the promise —

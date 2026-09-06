@@ -33,8 +33,8 @@ vm.createContext(sandbox);
 // The file is in strict mode, so its top-level const bindings never reach the
 // sandbox global on their own — hand them over explicitly.
 vm.runInContext(script.slice(0, cut) + script.slice(markerStart, markerEnd) +
-  '\nglobalThis.__bank = { QUESTIONS, PAPERS, HINTS, ROLES, SVG, isRight };', sandbox);
-const { QUESTIONS, PAPERS, HINTS, ROLES, SVG, isRight } = sandbox.__bank;
+  '\nglobalThis.__bank = { QUESTIONS, PAPERS, HINTS, ROLES, SVG, SPONSORS, SPONSOR_SLOTS, isRight };', sandbox);
+const { QUESTIONS, PAPERS, HINTS, ROLES, SVG, SPONSORS, SPONSOR_SLOTS, isRight } = sandbox.__bank;
 
 let fails = 0;
 const ok = (what, cond, extra) => {
@@ -215,6 +215,24 @@ ok('no substitute mark is drawn in place of it',
    !/<text[^>]*>\s*RR\s*</.test(page) && !/<text[^>]*>\s*RD\s*</.test(page));
 ok('the mark is styled the way CLAUDE.md sets out',
    /\.mark\{[^}]*border-radius:13px/.test(page) && /\.mark img\{[^}]*width:100%/.test(page));
+
+// ---- sponsors ------------------------------------------------------------------
+const spBad = [];
+for (const sp of SPONSORS) {
+  if (!SPONSOR_SLOTS.includes(sp.slot)) spBad.push(`${sp.name}: unknown slot ${sp.slot}`);
+  if (!sp.name) spBad.push('a sponsor with no name');
+  if (sp.url && !/^https:\/\//.test(sp.url)) spBad.push(`${sp.name}: url must be https`);
+  if (sp.logo && !/^(https:\/\/|data:image\/)/.test(sp.logo)) spBad.push(`${sp.name}: logo must be hosted over https or inline`);
+}
+const slotsUsed = SPONSORS.map(sp => sp.slot);
+if (new Set(slotsUsed).size !== slotsUsed.length) spBad.push('two sponsors in one slot');
+ok(`sponsor entries are well formed, one per slot (${SPONSORS.length} configured)`, spBad.length === 0, spBad.join('; '));
+
+// A children's app that takes sponsors is one careless afternoon away from an
+// ad network. There is none, and the page loads no script from anywhere.
+ok('no ad network or tracker anywhere in the page',
+   !/adsbygoogle|doubleclick|googletagmanager|googlesyndication|facebook\.net|connect\.facebook|hotjar|adsense|taboola|outbrain/i.test(page));
+ok('the page loads no external script', !/<script[^>]+src=/i.test(page));
 
 // ---- the past-paper links ---------------------------------------------------
 // These are somebody else's files. If one is ever re-hosted here instead of

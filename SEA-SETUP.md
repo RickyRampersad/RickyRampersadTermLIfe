@@ -223,6 +223,40 @@ its place, and that the `.mark` rule still matches what CLAUDE.md sets out.
 That check exists because a screen has twice shipped with an invented mark
 beside three screens carrying the real one.
 
+## Sponsors
+
+Families never pay; sponsors pay for the reach. `SPONSORS` at the top of the
+script is the list — one entry per placement:
+
+```js
+{slot:"papers", name:"Charran's Chaguanas", tag:"The printed booklets",
+ cta:"See the booklets", url:"https://…", logo:"https://rickyrampersadbranch.com/sea/sponsors/charrans.png"}
+```
+
+| Slot | Where it appears |
+|---|---|
+| `title` | The sign-in screen and Home, as *"free for every family, thanks to…"* |
+| `papers` | Above the Ministry's past papers |
+| `writing` | The essay paper |
+| `report` | The mock examination report |
+
+The logo is a hosted PNG on the live site, for the same reason the mark in
+e-mail is: a linked file loads everywhere, a data URI is for the demo only.
+Drop the file in `sea/sponsors/` and commit it.
+
+Three rules, and the tests hold them: a sponsor appears only where a parent
+looks and never inside a question, a hint or a mock paper; every link is
+`rel="noopener sponsored"` and opens in a new tab; and the page never contacts
+a sponsor's server — `tests/e2e-sea.js` watches the network for it. The unit
+test also fails if any ad-network or tracker string, or any external
+`<script src>`, ever appears in the page. A children's app that takes sponsors
+is one careless afternoon away from an ad network; that afternoon fails CI.
+
+The sponsorship proposal is a separate page (published beside the demo), and
+the packages in it are what a sponsor is told a sponsor gets: a logo, a line,
+a link, and one paragraph of aggregate numbers a month from the Activity tab.
+Nothing about any child, ever.
+
 ## Before this is sold
 
 With the backend deployed, the app knows who a person is, keeps their progress,

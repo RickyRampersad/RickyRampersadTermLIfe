@@ -283,6 +283,25 @@ textarea.essay:focus{border-color:var(--teal)}
   padding:.8rem 1rem;font-size:13.5px;color:var(--muted)}
 .note b{color:var(--ink)}
 
+/* ---- sponsors: parent-facing, one per slot, never inside a question ---- */
+.sponsor{display:flex;gap:.85rem;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--rule);
+  border-radius:10px;padding:.7rem 1rem;box-shadow:var(--shadow)}
+.sponsor .label{flex:none;max-width:12em;line-height:1.3}
+.sponsor img{width:36px;height:36px;border-radius:7px;object-fit:contain;background:#fff;flex:none;border:1px solid var(--rule)}
+.sponsor .t{flex:1;min-width:160px;font-size:13.5px;line-height:1.35;color:var(--muted)}
+.sponsor .t b{display:block;font-family:var(--display);font-size:15.5px;color:var(--ink)}
+.sponsor a{white-space:nowrap;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--tealInk);
+  border:1px solid var(--rule);border-radius:7px;padding:.38rem .75rem}
+.sponsor a:hover{border-color:var(--teal);background:var(--surface2)}
+.sponsor.example{border-style:dashed}
+#gateSponsor .sponsor{background:rgba(255,255,255,.06);border-color:rgba(239,194,75,.28);box-shadow:none;
+  margin:1.5rem auto 0;max-width:540px;text-align:left}
+#gateSponsor .sponsor .label{color:var(--gold)}
+#gateSponsor .sponsor .t{color:#9FB3C4}
+#gateSponsor .sponsor .t b{color:#fff}
+#gateSponsor .sponsor a{color:#EAF1F6;border-color:rgba(255,255,255,.28)}
+#gateSponsor .sponsor a:hover{border-color:var(--gold);background:rgba(255,255,255,.08)}
+
 footer{border-top:1px solid var(--rule);margin-top:3rem;padding:1.5rem 1.25rem 3rem;color:var(--muted);font-size:12.5px}
 footer .fin{max-width:1160px;margin:0 auto;display:flex;gap:1rem;flex-wrap:wrap;justify-content:space-between;align-items:center}
 footer .mark{width:26px;height:26px;flex:none}
@@ -355,6 +374,7 @@ footer .l{display:flex;gap:.6rem;align-items:center}
     </div>
 
     <p id="gateErr" role="alert"></p>
+    <div id="gateSponsor"></div>
   </div>
 </div>
 
@@ -396,6 +416,8 @@ footer .l{display:flex;gap:.6rem;align-items:center}
     <div class="stat"><p class="label">Papers sat</p><div class="n" id="hE">0</div>
       <p class="muted" style="font-size:12.5px;margin-top:.2rem" id="hEBest"></p></div>
   </div>
+
+  <div id="homeSponsor" style="margin-bottom:1.2rem"></div>
 
   <div class="grid g2" style="align-items:start">
     <div class="card gold">
@@ -519,6 +541,7 @@ footer .l{display:flex;gap:.6rem;align-items:center}
        Two people mark it, on content, language use, grammar and mechanics, and organisation.</p>
   </div>
 
+  <div id="writingSponsor" style="margin-bottom:1.1rem"></div>
   <div class="card" style="margin-bottom:1.1rem">
     <div style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:center">
       <div class="chips" id="wType"></div>
@@ -567,6 +590,7 @@ footer .l{display:flex;gap:.6rem;align-items:center}
     <p>Every link points at the Ministry of Education&rsquo;s own copy of the paper.
        Nothing is re-hosted here, so you always get the official document.</p>
   </div>
+  <div id="papersSponsor" style="margin-bottom:1.1rem"></div>
   <div class="card" style="margin-bottom:1.1rem"><div class="chips" id="paperFilter"></div></div>
   <div class="card" id="paperList"></div>
   <div class="card" style="margin-top:1.1rem">
@@ -647,6 +671,26 @@ const ROLES = {
    (The browser test points this at a fake through the override.) */
 const ACADEMY_API = (typeof window !== "undefined" && window.ACADEMY_API_OVERRIDE) || "";
 const TKEY = "rrb.sea.token";
+
+/* ============================================================
+   Sponsors. Families never pay; sponsors pay for the reach.
+
+   Parent-facing placements only — never inside a question, a hint or a
+   mock paper. One sponsor per slot. No tracking of any kind: the page
+   never calls a sponsor's server, and the only thing that ever happens is
+   a parent choosing to tap the link. The logo is a hosted PNG on the live
+   site (a data URI in the demo), the same rule as the mark in e-mail.
+
+   Slots:  title    the sign-in screen and the Home dashboard
+           papers   above the Ministry's past papers
+           writing  the essay paper
+           report   the mock examination report
+   ============================================================ */
+const SPONSOR_SLOTS = ["title","papers","writing","report"];
+const SPONSORS = (typeof window !== "undefined" && window.SPONSORS_OVERRIDE) || [
+  // {slot:"title", name:"Charran's Chaguanas", tag:"Books for the S.E.A. year", cta:"Visit the store",
+  //  url:"https://charranschaguanas.com/", logo:"https://rickyrampersadbranch.com/sea/sponsors/charrans.png"}
+];
 
 /* ============================================================
    Fractions and figures. Some figures ask the question; the ones
@@ -1579,6 +1623,19 @@ function fmtAns(q){
   const v = String(q.a[0]);
   return /^[0-9]{4,}$/.test(v) ? v.replace(/\B(?=(\d{3})+(?!\d))/g, "\u2009") : v;
 }
+function sponsorStrip(slot, style){
+  const s = SPONSORS.find(x => x.slot === slot); if(!s) return "";
+  const label = (s.example ? "Example — " : "") + (slot === "title" ? "Free for every family, thanks to" : "Sponsor");
+  return `<div class="sponsor${s.example ? " example" : ""}" data-slot="${slot}" style="${style || ""}">
+    <span class="label">${label}</span>
+    ${s.logo ? `<img src="${s.logo}" alt="">` : ""}
+    <span class="t"><b>${esc(s.name)}</b>${s.tag ? esc(s.tag) : ""}</span>
+    ${s.url ? `<a href="${s.url}" target="_blank" rel="noopener sponsored">${esc(s.cta || "Visit")} &nearr;</a>` : ""}</div>`;
+}
+function renderSponsors(){
+  const put = (id, slot) => { const el = document.getElementById(id); if(el) el.innerHTML = sponsorStrip(slot); };
+  put("gateSponsor","title"); put("homeSponsor","title"); put("papersSponsor","papers"); put("writingSponsor","writing");
+}
 function qMeta(q){
   return `<span class="tag ${TAGCLS[q.strand]}">${q.strand}</span><span>${q.topic}</span>
     <span>&middot;</span><span>${q.proc}</span>
@@ -2115,6 +2172,7 @@ function finishExam(auto){
       <div class="card gold"><p class="label">By strand</p><div style="margin-top:.7rem">${STRANDS.map(s => row(s, byStrand[s])).join("")}</div></div>
       <div class="card teal"><p class="label">By thinking process</p><div style="margin-top:.7rem">${["Knowing","Applying","Reasoning"].map(p => row(p, byProc[p])).join("")}</div>
         <p class="note" style="margin-top:.4rem">By item count the real paper is 45&thinsp;% knowing, 35&thinsp;% applying, 20&thinsp;% reasoning. These bars are by mark.</p></div></div>
+    ${sponsorStrip("report", "margin-bottom:1.25rem")}
     ${exam.short.length ? `<p class="note" style="margin-bottom:1.25rem">The bank is short of items for ${exam.short.join("; ")}, so this paper is smaller than the official 40 items / 75 marks.</p>` : ""}
     ${wrong.length ? `<div class="card"><p class="label">What to go back over</p>
       <h2 style="margin:.2rem 0 1rem">${wrong.length} question${wrong.length>1?"s":""} to look at again</h2>
@@ -2317,6 +2375,7 @@ $("#kPrint").addEventListener("click", () => window.print());
    Boot
    ============================================================ */
 (async function boot(){
+  renderSponsors();
   if(ACADEMY_API){
     let saved = null; try{ saved = localStorage.getItem(TKEY); }catch(e){}
     if(saved){
