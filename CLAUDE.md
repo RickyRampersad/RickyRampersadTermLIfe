@@ -149,3 +149,17 @@ system.
 **Products outside `PRODUCT_RULES` get no checks at all.** `Lifestyle Special
 Edition` is not in the library, which is why the row carrying the largest figure
 in a case was the one row nothing validated.
+
+## The recruit tracker — the page holds no data
+
+`recruiting/` is the Recruit Tracker, and it is served from this public repository
+like everything else. So the page holds the app and nothing the app shows: every
+candidate, every uploaded file, every production figure and POP score lives in the
+private **RRB Recruit Tracker** workbook behind `apps-script/Recruiting.gs`, and
+comes down only to a sign-in against its Access tab.
+
+The Netlify build it replaced carried one candidate's complete file — police
+certificate included — and eighteen people's scores inside `index.html`. Do not
+bring that back by pasting a figure into the page "just for the demo", and never
+commit a seed file or a CSV under `recruiting/`; `.gitignore` refuses them.
+`RECRUITING-SETUP.md` has the rest.

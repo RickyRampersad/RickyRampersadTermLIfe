@@ -76,7 +76,7 @@ platform proxies the call, and nowhere else. On Netlify those buttons already fa
 key can never go in the page (the page is public), so these have to move behind Apps
 Script or another server-side proxy.
 
-## Personal data — the thing to settle first
+## Personal data — settled 6 September: split code from data
 
 This repository is public and GitHub Pages serves it at rickyrampersadbranch.com. The
 `.gitignore` already says why client data never goes here: anything committed is
@@ -96,9 +96,9 @@ The bundle **as it stands cannot be committed** without publishing:
   `repeat_offenders` arrays; narrative coaching notes on named agents. 23 people in
   all.
 
-Two ways through:
+Ricky chose the split. What was built:
 
-1. **Split code from data** — the same shape as every other app here. The page holds
+1. **Split code from data** (done) — the same shape as every other app here. The page holds
    the app; the candidate records, agent production, POP cohort and coaching lists live
    in a private Google Sheet and come down through Apps Script to a signed-in user. The
    seed files are imported into that Sheet once and never committed. This also fixes
@@ -114,3 +114,22 @@ Committing the bundle unchanged to this repository is not one of the options.
    17-item official index the course was moved to.
 2. Whether the tracker's Form A routing should be updated to the Feb 2023 language.
 3. The onboarding course file has not arrived.
+
+## What was done (6 September 2026)
+
+- `recruiting/index.html` — the page shell: compiled Tailwind, React, ReactDOM and
+  lucide inline, the branch mark, `app.js`.
+- `recruiting/app.js` — the v5.5-B3 app, prettified, with the IndexedDB backend
+  replaced by an Apps Script one behind the same key/value interface, a sign-in
+  screen, datasets loaded after sign-in, the three Claude calls routed through the
+  server, the felicia auto-seed removed, and the four prose passages that named
+  former recruits with their scores anonymised.
+- `apps-script/Recruiting.gs` — the backend: Access-tab sign-in with tokens,
+  role-scoped candidate CRUD, files to Drive, datasets from five tabs, Claude via
+  `UrlFetchApp` with the key in Script Properties, an AiLog.
+- `RECRUITING-SETUP.md` — how to stand it up.
+- The five dataset CSVs and the seed JSON stay out of the repository; the CSVs were
+  handed over privately and `.gitignore` refuses both under `recruiting/`.
+
+Still open, unchanged by the move: the 0–18 versus 17-item numbering, the Form A
+routing language, and the onboarding course has still not arrived.

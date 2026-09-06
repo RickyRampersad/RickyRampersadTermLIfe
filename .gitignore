@@ -10,3 +10,9 @@ data/*.json
 
 node_modules/
 __pycache__/
+
+# Recruit tracker: the seed candidate and the dataset CSVs are imported into the
+# private workbook, never committed. The page holds no data.
+recruiting/*.json
+recruiting/*.csv
+recruiting/seed/
