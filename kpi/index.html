@@ -450,6 +450,7 @@ function OpenList({ items }) {
                  color: t.late ? AMBER : MUTED }
       }, t.late ? t.age + " day" + (t.age === 1 ? "" : "s") + " over"
                 : (t.due ? "due " + shortDate(t.due) : "no due date"),
+         t["for"] ? /*#__PURE__*/React.createElement("span", { style: { color: GOLD } }, " \u00b7 for the " + t["for"]) : null,
          t.agent ? " \u00b7 " + t.agent : "",
          t.status ? " \u00b7 " + t.status : "",
          // The queue is ordered by this, so it has to be visible. Everything
@@ -593,6 +594,91 @@ function Half({ label, mine, rating, note, extra, onSave, busy }) {
              busy ? "Saving…" : "Save") : null);
 }
 
+// ---- the order of service, and the mail sweep ---------------------------------
+
+const RANK_ROWS = [["bm", "Branch Manager"], ["abm", "Assistant Branch Manager"], ["um", "Unit Managers"],
+                   ["ea", "Executive Agents"], ["ag", "Agents"]];
+
+/** Twice a day, in this order. The record cannot read a mailbox; it records
+ *  that the sweep was done, when, and what each rank got. */
+function MailSweep({ when, mail, onSave }) {
+  const done = mail && mail[when];
+  const [open, setOpen] = useState(false);
+  const [marks, setMarks] = useState({});
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const label = when === "am" ? "Morning mail" : "Afternoon mail";
+  const complete = RANK_ROWS.every(([k]) => marks[k]);
+  const send = () => {
+    setBusy(true); setErr("");
+    onSave(marks).then(r => { setBusy(false); if (r && r.ok) { setOpen(false); setMarks({}); } else setErr((r && r.error) || "Not recorded."); });
+  };
+  if (done && !open) {
+    return h("div", { style: { ...card, padding: "10px 14px", marginBottom: 10 } },
+      h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" } },
+        h("div", { style: { fontSize: 12.5, fontWeight: 700, color: GREEN } }, label + " swept at " + done.at),
+        h("button", { type: "button", onClick: () => setOpen(true),
+          style: { background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit", fontSize: 12, fontWeight: 700, color: MUTED } }, "Redo")),
+      h("div", { style: { fontSize: 11.5, color: MUTED, marginTop: 3 } },
+        RANK_ROWS.map(([k, name]) => name.split(" ")[0] + (done.ranks[k] === "done" ? " ✓" : " –")).join("  ·  ")));
+  }
+  return h("div", { style: { ...card, borderLeft: "4px solid " + GOLD, marginBottom: 10 } },
+    h("div", { style: cardHead },
+      h("span", { style: cardTitle }, label + " — in this order"),
+      done ? h("button", { type: "button", onClick: () => setOpen(false),
+        style: { background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit", fontSize: 12, fontWeight: 700, color: MUTED } }, "Cancel") : null),
+    h("p", { style: { fontSize: 12, color: MUTED, margin: "0 0 8px", lineHeight: 1.45 } },
+      "Answer the mail in this order before anything else. Mark each rank as you clear it, or say nothing was waiting."),
+    RANK_ROWS.map(([k, name], i) => h("div", { key: k, style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "6px 0", borderTop: i ? "1px solid " + LINE : "none" } },
+      h("div", { style: { fontSize: 13, fontWeight: 700, color: INK } }, (i + 1) + ". " + name),
+      h("div", { style: { display: "flex", gap: 6 } },
+        [["done", "Answered"], ["none", "Nothing waiting"]].map(([v, t]) => h("button", { key: v, type: "button", onClick: () => setMarks(m => ({ ...m, [k]: v })),
+          style: { font: "inherit", fontSize: 11.5, fontWeight: marks[k] === v ? 800 : 500, cursor: "pointer", padding: "5px 9px", borderRadius: 999,
+                   border: "1px solid " + (marks[k] === v ? GOLD : LINE), background: marks[k] === v ? "#FBF3DF" : "#fff", color: INK } }, t))))),
+    err ? h("div", { style: { fontSize: 12, color: RED, marginTop: 6 } }, err) : null,
+    h("button", { type: "button", disabled: busy || !complete, onClick: send,
+      style: { ...primaryWide, marginTop: 10, opacity: busy || !complete ? .5 : 1 } },
+      busy ? "Recording…" : complete ? "Mark the " + (when === "am" ? "morning" : "afternoon") + " sweep done" : "Answer all five to mark it"));
+}
+
+/** The job document, read from the workbook. Sections in the order the paper has them. */
+function JobDocView({ me, doc, vp, onBack }) {
+  const ORDER = ["Header", "Overview", "Responsibility", "Core value", "Performance expectation"];
+  const sections = doc && doc.ok ? Object.keys(doc.doc).sort((a, b) => {
+    const ia = ORDER.indexOf(a), ib = ORDER.indexOf(b);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+  }) : [];
+  return h(Shell, { wide: vp.desktop ? 900 : vp.tablet ? 760 : 560 },
+    h(SubHeader, { title: me.name, sub: "Your job document", onBack: onBack }),
+    h("div", { style: { padding: "0 18px 40px" } },
+      !doc ? h("p", { style: { color: MUTED, textAlign: "center", padding: 24 } }, "Reading…") : null,
+      doc && !doc.ok ? h("div", { style: { ...card, borderLeft: "4px solid " + AMBER } },
+        h("div", { style: cardTitle }, "Not on file yet"),
+        h("p", { style: { fontSize: 13, color: MUTED, margin: "4px 0 0" } }, doc.error)) : null,
+      doc && doc.ok ? h("p", { style: { fontSize: 12.5, color: MUTED, lineHeight: 1.5, margin: "12px 0" } },
+        "What the role is for, what it owns, and what it is measured on. The quarter and every review are read against this.") : null,
+      sections.map(sec => h("div", { key: sec, style: card },
+        h("div", { style: cardHead }, h("span", { style: cardTitle }, sec)),
+        doc.doc[sec].map((it, i) => h("div", { key: i, style: { padding: "5px 0", borderTop: i ? "1px solid " + LINE : "none" } },
+          h("div", { style: { fontSize: 13, fontWeight: 700, color: INK } }, it.item),
+          it.detail ? h("div", { style: { fontSize: 12.5, color: MUTED, lineHeight: 1.45, marginTop: 2 } }, it.detail) : null))))));
+}
+
+/** The Branch Manager's own landing: the register, the sweep, the quarter,
+ *  the document — before the branch. What drives his own appraisal sits
+ *  where he signs in, the same as everyone else's does. */
+function YouSection({ me, api, attToday, setAttToday, mail, saveMail, standing, onPerf, onMoments, onJobDoc, onRegister }) {
+  return h("div", { style: { marginBottom: 18 } },
+    h(SectionLabel, null, "You"),
+    h(AttendanceLine, { me: me, api: api, onRegister: onRegister,
+      onChange: a => { me.attendance = a; setAttToday(Object.assign({}, attToday || {}, { [me.staffId]: a })); } }),
+    h("div", { style: { marginTop: 10 } },
+      h(MailSweep, { when: "am", mail: mail, onSave: ranks => saveMail(me.staffId, "am", ranks) }),
+      new Date().getHours() >= 12 || (mail && mail.am) ? h(MailSweep, { when: "pm", mail: mail, onSave: ranks => saveMail(me.staffId, "pm", ranks) }) : null),
+    h(YourQuarter, { s: standing, onPerf: onPerf, onMoments: onMoments }),
+    h("button", { onClick: onJobDoc, style: { ...primaryWide, marginTop: 10 } }, "Your job document →"));
+}
+
 // ---- the quarter so far ------------------------------------------------------
 
 const evidenceLine = (ev, sf) => {
@@ -627,9 +713,30 @@ function YourQuarter({ s, onPerf, onMoments }) {
         return h("span", { key: c.competency, style: pillOutline(n ? INK : MUTED) },
           c.competency + (c.moments && c.moments.length ? " · " + c.moments.length + " moment" + (c.moments.length === 1 ? "" : "s") : ""));
       })) : null,
+    s.training ? h(TrainingStrip, { tr: s.training }) : null,
     h("div", { style: { display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" } },
       h("button", { type: "button", onClick: onMoments, style: trendChip }, "Note a moment"),
       h("button", { type: "button", onClick: onPerf, style: trendChip }, "Where you stand →")));
+}
+
+/** Trained on, and still to cover — from the training log, the training
+ *  plan and the development actions, the same three the review reads. */
+function TrainingStrip({ tr }) {
+  const lbl = t => h("div", { style: { fontSize: 10.5, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: GOLD, margin: "8px 0 3px" } }, t);
+  const still = (tr.planned || []).map(p => p.activity + (p.dates ? " · " + p.dates : "")).concat((tr.actions || []).map(a => a.action + " · " + (a.source || "development").toLowerCase()));
+  const nothing = !(tr.covered || []).length && !still.length && !(tr.taught || []).length;
+  if (nothing) return h("div", { style: { fontSize: 11.5, color: MUTED, marginTop: 8 } }, "No training logged this quarter and nothing on the plan yet.");
+  return h("div", null,
+    (tr.covered || []).length ? h("div", null, lbl("Trained on this quarter"),
+      tr.covered.map((c, i) => h("div", { key: i, style: { fontSize: 12, color: INK } },
+        shortDate(c.date) + " — " + (c.topic || "(no topic)") + (c.trainer ? " · with " + c.trainer : "") + (c.result ? " · " + c.result : "")))) : null,
+    (tr.taught || []).length ? h("div", null, lbl("Trained others on"),
+      tr.taught.map((c, i) => h("div", { key: i, style: { fontSize: 12, color: INK } },
+        shortDate(c.date) + " — " + (c.topic || "(no topic)") + (c.trainee ? " · " + c.trainee : "")))) : null,
+    still.length ? h("div", null, lbl("Still to cover"),
+      still.map((x, i) => h("div", { key: i, style: { fontSize: 12, color: AMBER, fontWeight: 600 } }, x))) : null,
+    tr.planTotal ? h("div", { style: { fontSize: 11.5, color: MUTED, marginTop: 4 } },
+      tr.signedOff + " of " + tr.planTotal + " on the training plan signed off" + (tr.actionsDone ? " · " + tr.actionsDone + " development action" + (tr.actionsDone === 1 ? "" : "s") + " done" : "")) : null);
 }
 
 /** On the plan: the goals that are behind, so the day is planned against
@@ -1623,8 +1730,10 @@ function App() {
     api("standing", { staffId: sid }).then(r => { if (r && r.ok && Array.isArray(r.goals)) setStanding(prev => ({ ...prev, [sid]: r })); });
   }, []);
   useEffect(() => {
-    if (!me || !active) return;
-    if ((view === "entry" || view === "plan") && !standing[active]) loadStanding(active);
+    if (!me) return;
+    if (active && (view === "entry" || view === "plan") && !standing[active]) loadStanding(active);
+    // The Branch Manager's own quarter sits on his landing, before the branch.
+    if (view === "home" && me.manager && !standing[me.staffId]) loadStanding(me.staffId);
   }, [me, view, active]);
   useEffect(() => {
     if (view !== "perf" || !me) return;
@@ -1647,6 +1756,17 @@ function App() {
   const [reviewDate, setReviewDate] = useState(todayISO());
   const [weekOf, setWeekOf] = useState(weekStartOf(todayISO()));
   const [attToday, setAttToday] = useState(null);   // null: the server has not said
+  const [mailToday, setMailToday] = useState({});
+  const [jobDoc, setJobDoc] = useState(null);
+  const saveMail = (sid, when, ranks) => api("saveMail", { staffId: sid, date: todayISO(), when, ranks }).then(r => {
+    if (r && r.ok) setMailToday(m => ({ ...m, [sid]: { ...(m[sid] || {}), [when]: { at: r.at, ranks: r.ranks } } }));
+    return r;
+  });
+  useEffect(() => {
+    if (view !== "jobdoc") return;
+    setJobDoc(null);
+    api("jobDoc", {}).then(r => setJobDoc(r || { ok: false, error: "Could not read." }));
+  }, [view]);
   const [register, setRegister] = useState(null);
   useEffect(() => {
     if (view !== "register") return;
@@ -1732,6 +1852,7 @@ function App() {
       if (r.needsReason) setNeedsReason(r.needsReason);
       if (r.openBook) setOpenBook(r.openBook);
       if (r.attendance) setAttToday(r.attendance);
+      if (r.mail) setMailToday(r.mail);
       if (r.billing) setBilling(r.billing);
     } else if (r.authRequired) {
       signOut();
@@ -2013,7 +2134,13 @@ function App() {
     }
   }, !configured() && /*#__PURE__*/React.createElement("div", {
     style: warn
-  }, "\u26A0 ", /*#__PURE__*/React.createElement("b", null, "No sheet connected."), " Paste your Apps Script /exec URL into ", /*#__PURE__*/React.createElement("b", null, "APPS_SCRIPT_URL"), " near the top of this file."), me.manager ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", {
+  }, "\u26A0 ", /*#__PURE__*/React.createElement("b", null, "No sheet connected."), " Paste your Apps Script /exec URL into ", /*#__PURE__*/React.createElement("b", null, "APPS_SCRIPT_URL"), " near the top of this file."), me.manager ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(YouSection, {
+    me: me, api: api, attToday: attToday, setAttToday: setAttToday, mail: mailToday[me.staffId], saveMail: saveMail,
+    standing: standing[me.staffId],
+    onPerf: () => { setPerfWho(me.staffId); setPerfTab("goals"); setView("perf"); },
+    onMoments: () => { setPerfWho(me.staffId); setPerfTab("competencies"); setView("perf"); },
+    onJobDoc: () => setView("jobdoc"), onRegister: () => setView("register")
+  }), /*#__PURE__*/React.createElement("p", {
     style: {
       color: MUTED,
       fontSize: 13.5,
@@ -2196,6 +2323,13 @@ function App() {
   // is that the size of the work is on screen while the choice is made: a
   // block set aside for licensing with three tasks in it says so at eight
   // rather than at four.
+  // ---- the job document -------------------------------------------------------
+  if (view === "jobdoc") {
+    return /*#__PURE__*/React.createElement(JobDocView, {
+      me: me, doc: jobDoc, vp: vp, onBack: () => setView(me.manager ? "home" : "entry")
+    });
+  }
+
   // ---- the attendance register ----------------------------------------------
   if (view === "register") {
     return /*#__PURE__*/React.createElement(RegisterView, {
@@ -2249,6 +2383,9 @@ function App() {
       active === me.staffId ? /*#__PURE__*/React.createElement(AttendanceLine, {
         me: me, api: api, onChange: a => { me.attendance = a; setAttToday(Object.assign({}, attToday || {}, { [me.staffId]: a })); },
         onRegister: () => setView("register")
+      }) : null,
+      active === me.staffId ? /*#__PURE__*/React.createElement(MailSweep, {
+        when: "am", mail: mailToday[active], onSave: ranks => saveMail(active, "am", ranks)
       }) : null,
       /*#__PURE__*/React.createElement(QuarterStrip, { s: standing[active] }),
       /*#__PURE__*/React.createElement("p", {
@@ -2438,7 +2575,11 @@ function App() {
         gap: 20,
         alignItems: "start"
       } : null
-    }, /*#__PURE__*/React.createElement("div", null, blocks.map(b => {
+    }, /*#__PURE__*/React.createElement("div", null, mine ? /*#__PURE__*/React.createElement(MailSweep, {
+      when: "am", mail: mailToday[active], onSave: ranks => saveMail(active, "am", ranks)
+    }) : null, mine && (new Date().getHours() >= 12 || (mailToday[active] && mailToday[active].am)) ? /*#__PURE__*/React.createElement(MailSweep, {
+      when: "pm", mail: mailToday[active], onSave: ranks => saveMail(active, "pm", ranks)
+    }) : null, blocks.map(b => {
       const bl = entry.blocks[b.id] || blankBlock();
       const at = blockTime(entry, b.id);
       const filled = blockWorked(entry, b.id);
@@ -2675,7 +2816,10 @@ function App() {
       s: standing[active],
       onPerf: () => { setPerfWho(active); setPerfTab("goals"); setView("perf"); },
       onMoments: () => { setPerfWho(active); setPerfTab("competencies"); setView("perf"); }
-    })), /*#__PURE__*/React.createElement("div", {
+    }), active === me.staffId ? /*#__PURE__*/React.createElement("button", {
+      onClick: () => setView("jobdoc"),
+      style: { ...primaryWide, marginTop: 10 }
+    }, "Your job document \u2192") : null), /*#__PURE__*/React.createElement("div", {
       style: vp.desktop ? {
         position: "sticky",
         top: 16
@@ -4618,7 +4762,8 @@ function NeedsReason({
   onSaved
 }) {
   if (!items || !items.length) return null;
-  const show = items.slice(0, 6);
+  // The order of service: who it is for first, then how long it has waited.
+  const show = items.slice().sort((a, b) => (a.rank == null ? 4 : a.rank) - (b.rank == null ? 4 : b.rank) || (b.age || 0) - (a.age || 0)).slice(0, 6);
   return /*#__PURE__*/React.createElement("div", {
     style: {
       ...card,

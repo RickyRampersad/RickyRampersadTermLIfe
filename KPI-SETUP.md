@@ -334,6 +334,21 @@ is now read as a support desk (`ssa`); it used to fall through to the BMA.
 The People Leader is whoever the person reports to in `REPORTS_TO`, plus the
 Branch Manager for everyone. Each side writes only its own half of a review.
 
+## The order of service, and the mail sweep
+
+Every list is served in one order, whatever the KPI: Branch Manager,
+Assistant Branch Manager, Unit Managers, Executive Agents, then agents.
+Salesforce cannot say who is who — its contact titles are free text — so
+the rank comes from the branch: the `Access` tab's roles for the managers,
+and a `Ranks` tab (`Name · Rank`) for the Executive Agents and anyone the
+roster does not cover. Names are matched to the task's Agent, case
+insensitive; a name the tab lacks is an agent.
+
+The morning and afternoon mail sweeps land on the day's row as `MailAM`
+and `MailPM` — `08:25|bm:done,abm:none,um:done,ea:done,ag:done` — written
+by the `saveMail` action. They feed Responsiveness and Courtesy in the
+quarter and the 3pm checkpoint.
+
 ## Your quarter and moments
 
 `standing` reads the quarter so far for one person — every goal on the

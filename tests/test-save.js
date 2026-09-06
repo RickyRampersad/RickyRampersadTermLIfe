@@ -10,7 +10,8 @@ const LOGH = ['Timestamp','Date','StaffId','Name','Grade','Status']
   // a deploy onwards, so it is the one worth measuring — the migration write
   // happens once and the bench covers it.
   .concat(['KPI1_Plan','KPI2_Plan','PM1_Plan','PM2_Plan'])
-  .concat(['KPI1_Met','KPI2_Met','PM1_Met','PM2_Met']);
+  .concat(['KPI1_Met','KPI2_Met','PM1_Met','PM2_Met'])
+  .concat(['MailAM','MailPM']);
 const TRH = ['TrainingDate','StaffId','Trainer','Block','Trainee','Topic','Objectives','Achieved','Test','Result','Followup','LoggedAt'];
 
 function seed(env, existingRow) {

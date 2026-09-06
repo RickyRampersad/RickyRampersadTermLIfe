@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-06c';
+var SCRIPT_VERSION = '2026-09-06d';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -707,7 +707,9 @@ var LOG_HEADERS = ['Timestamp', 'Date', 'StaffId', 'Name', 'Grade', 'Status']
   // is measured is the person's own estimate against their own answer, not
   // the clock against a grid.
   .concat(BLOCK_IDS.map(function (p) { return p + '_Plan'; }))
-  .concat(BLOCK_IDS.map(function (p) { return p + '_Met'; }));
+  .concat(BLOCK_IDS.map(function (p) { return p + '_Met'; }))
+  // The mail sweep, morning and afternoon: "08:25|bm:done,abm:none,…".
+  .concat(['MailAM', 'MailPM']);
 
 var TRAINING_HEADERS = ['TrainingDate', 'StaffId', 'Trainer', 'Block', 'Trainee', 'Topic',
                         'Objectives', 'Achieved', 'Test', 'Result', 'Followup', 'LoggedAt'];
@@ -726,7 +728,8 @@ function ensureLogColumns_(sh) {
     .concat(BLOCK_IDS.map(function (p) { return p + '_At'; }))
     .concat(BLOCK_IDS.map(function (p) { return p + '_Quality'; }))
     .concat(BLOCK_IDS.map(function (p) { return p + '_Plan'; }))
-    .concat(BLOCK_IDS.map(function (p) { return p + '_Met'; }));
+    .concat(BLOCK_IDS.map(function (p) { return p + '_Met'; }))
+    .concat(['MailAM', 'MailPM']);
   var missing = want.filter(function (col) { return head.indexOf(col) === -1; });
   if (!missing.length) return sh;
   sh.getRange(1, sh.getLastColumn() + 1, 1, missing.length).setValues([missing]);
@@ -1706,6 +1709,8 @@ function checkpointReport_(date) {
       signedIn: a && a.at ? a.at : '',
       absent: a && a.status === 'absent' ? (a.reason || 'not in') : '',
       late: a ? a.late : 0,
+      mailAM: (e && parseMail_(e.MailAM) || {}).at || '',
+      mailPM: (e && parseMail_(e.MailPM) || {}).at || '',
       status: !e ? 'No entry' : (String(e.Status) === 'Submitted' ? 'Submitted' : 'Draft'),
       blocksDone: done,
       onTrack: done >= 3,
@@ -1895,7 +1900,7 @@ function json_(obj) {
    that a property of the code rather than of the runtime — which matters
    because the test harness runs many simulated requests in one process, and a
    memo that outlives its request is a memo serving yesterday's roster. */
-function resetRequestMemo_() { _tabMemo = {}; _rosterMemo = null; _headMemo = {}; _hrMemo = {}; }
+function resetRequestMemo_() { _tabMemo = {}; _rosterMemo = null; _headMemo = {}; _hrMemo = {}; _rankMemo = null; }
 
 function doGet(e) {
   resetRequestMemo_();
@@ -1939,6 +1944,9 @@ function handle_(action, data, token) {
 
     case 'standing':
       return standing_(profile, data.staffId);
+
+    case 'saveMail':
+      return saveMail_(data, profile);
 
     case 'noteMoment':
       return noteMoment_(data, profile);
@@ -2026,7 +2034,8 @@ function handle_(action, data, token) {
                needsReason: needsReasonFor_(profile, data.date),
                billing: billingFor_(profile, data.date),
                openBook: openBookFor_(profile, data.date),
-               attendance: attendanceToday_(profile) };
+               attendance: attendanceToday_(profile),
+               mail: mailToday_(profile, data.date), ranks: RANKS };
     }
 
     case 'training': {
@@ -2200,6 +2209,10 @@ function checkpointHtml_(r) {
         (l.absent ? 'Not in — ' + esc_(l.absent)
                   : l.signedIn ? 'In at ' + esc_(l.signedIn) + (l.late ? ' · ' + l.late + ' min after their start' : '')
                   : 'No sign-in today') + '</div>' +
+      '<div style="font-size:12px;color:' + (l.mailAM || l.mailPM ? MAIL.muted : MAIL.amber) + ';margin-top:3px">' +
+        (l.mailAM || l.mailPM
+          ? 'Mail: morning ' + (l.mailAM ? esc_(l.mailAM) : '—') + ' · afternoon ' + (l.mailPM ? esc_(l.mailPM) : '—')
+          : 'No mail sweep recorded') + '</div>' +
       '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:5px">' +
         'Closed ' + (l.closed == null ? '—' : l.closed) +
         ' · Open ' + (l.openNow == null ? '—' : l.openNow) +
@@ -3078,8 +3091,13 @@ function sfkNeedsReason_(date) {
       id: r.Id, subject: r.Subject, status: r.Status,
       type: r.Task_Type__c || 'No type', due: r.ActivityDate,
       age: Number(r.Days_O_S__c || 0),
-      agent: (r.Agent__r && r.Agent__r.Name) || ''
+      agent: (r.Agent__r && r.Agent__r.Name) || '',
+      rank: rankOf_(r.Agent__r && r.Agent__r.Name),
+      'for': rankLabel_(rankOf_(r.Agent__r && r.Agent__r.Name))
     });
+  });
+  Object.keys(out).forEach(function (sid) {
+    out[sid].sort(function (a, b) { return a.rank !== b.rank ? a.rank - b.rank : b.age - a.age; });
   });
   cache.put(key, JSON.stringify(out), SFK.CACHE_MIN * 60);
   return out;
@@ -3148,6 +3166,8 @@ function sfkOpenBook_(date) {
       touched: daysSince_(r.LastModifiedDate),
       needs: daysSince_(r.LastModifiedDate) >= STALE_DAYS,
       agent: (r.Agent__r && r.Agent__r.Name) || '',
+      rank: rankOf_(r.Agent__r && r.Agent__r.Name),
+      'for': rankLabel_(rankOf_(r.Agent__r && r.Agent__r.Name)),
       account: (r.What && r.What.Name) || '',
       hasReason: !!String(r.Task_Update_Reason_c__c || '').trim()
     });
@@ -3158,12 +3178,7 @@ function sfkOpenBook_(date) {
   // earliest due date. A task with no date sorts last rather than first: it
   // has no claim on today over one that has a date and has passed it.
   Object.keys(out).forEach(function (sid) {
-    Object.keys(out[sid]).forEach(function (t) {
-      out[sid][t].sort(function (a, b) {
-        if (a.needs !== b.needs) return a.needs ? -1 : 1;
-        return String(a.due || '9999-99-99').localeCompare(String(b.due || '9999-99-99'));
-      });
-    });
+    Object.keys(out[sid]).forEach(function (t) { orderBook_(out[sid][t]); });
   });
 
   // A book that will not fit the cache is still a book. Serve it, just do not
@@ -3661,6 +3676,164 @@ function hrBundle_(profile) {
 }
 
 // ---------------------------------------------------------------------------
+//  The order of service
+//
+//  Whatever the KPI, the work is served in this order: the Branch Manager,
+//  the Assistant Branch Manager, the Unit Managers, the Executive Agents,
+//  then the agents. It is a flow the branch follows, not a preference, so
+//  every list the tracker hands a person is sorted by it and says who each
+//  item is for.
+//
+//  Salesforce cannot say who is who — its contact titles read "Sales
+//  Representative", "Salesman", "INSURANCE AGENT" and blank — so the rank
+//  comes from the branch: the roster for the managers, and a "Ranks" tab
+//  (Name | Rank) for the Executive Agents and anyone the roster does not
+//  cover. Nobody named anywhere is an agent.
+// ---------------------------------------------------------------------------
+
+var RANKS = ['Branch Manager', 'Assistant Branch Manager', 'Unit Manager', 'Executive Agent', 'Agent'];
+var RANK_TAB = { must: ['Name', 'Rank'], name: 'Ranks', head: ['Name', 'Rank'] };
+var ROLE_RANK = { bm: 0, abm: 1, um: 2 };
+
+/** "Exec. Agent", "unit mgr", "BM" -> the index into RANKS. */
+function rankIndex_(label) {
+  var t = normRole_(label);
+  if (!t) return 4;
+  if (/assistant branch manager|\babm\b/.test(t)) return 1;
+  if (/branch manager assistant|\bbma\b/.test(t)) return 4;
+  if (/branch manager|\bbm\b/.test(t)) return 0;
+  if (/unit manager|\bum\b/.test(t)) return 2;
+  if (/exec/.test(t)) return 3;
+  return 4;
+}
+
+var _rankMemo = null;
+/** Lower-cased full name -> rank index. The roster first, the tab over it. */
+function rankTable_() {
+  if (_rankMemo) return _rankMemo;
+  var t = {};
+  try {
+    publicRoster_().forEach(function (p) {
+      if (ROLE_RANK[p.role] != null && p.name) t[p.name.toLowerCase().trim()] = ROLE_RANK[p.role];
+    });
+  } catch (e) {}
+  try {
+    (hrRows_(RANK_TAB, false) || []).forEach(function (r) {
+      var n = String(r.Name || '').toLowerCase().trim();
+      if (n) t[n] = rankIndex_(r.Rank);
+    });
+  } catch (e) {}
+  return (_rankMemo = t);
+}
+
+/** Who a task is for, ranked. An unnamed or unknown requester is an agent. */
+function rankOf_(agentName) {
+  var n = String(agentName || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  if (!n) return 4;
+  var t = rankTable_();
+  if (t[n] != null) return t[n];
+  var keys = Object.keys(t), best = 4;
+  keys.forEach(function (k) {
+    if (k.length > 5 && (n.indexOf(k) > -1 || k.indexOf(n) > -1) && t[k] < best) best = t[k];
+  });
+  return best;
+}
+function rankLabel_(i) { return i < 4 ? RANKS[i] : ''; }
+
+/** A list of tasks in the order the branch serves them: the ones nobody has
+ *  touched first, then by who they are for, then by due date. */
+function orderBook_(list) {
+  return list.sort(function (a, b) {
+    if (!!a.needs !== !!b.needs) return a.needs ? -1 : 1;
+    var ra = a.rank == null ? 4 : a.rank, rb = b.rank == null ? 4 : b.rank;
+    if (ra !== rb) return ra - rb;
+    return String(a.due || '9999-99-99').localeCompare(String(b.due || '9999-99-99'));
+  });
+}
+
+// ---------------------------------------------------------------------------
+//  Correspondence — the mail sweep, twice a day, in the same order
+//
+//  Answering the morning's mail in the order of service, and again after
+//  lunch, is a core competency here and it has never been on any record.
+//  The tracker cannot read a mailbox; it can record that the sweep was done,
+//  when, and what each rank got — answered, or nothing waiting. That is a
+//  time-stamped claim by the person, like a block, and it sits under
+//  Responsiveness and Courtesy in the quarter.
+// ---------------------------------------------------------------------------
+
+var MAIL_KEYS = ['bm', 'abm', 'um', 'ea', 'ag'];
+var MAIL_STATES = { done: 1, none: 1 };
+
+function parseMail_(v) {
+  var s = String(v == null ? '' : v).trim();
+  if (!s) return null;
+  var bits = s.split('|');
+  var at = timeStr_(bits[0]), ranks = {};
+  String(bits[1] || '').split(',').forEach(function (kv) {
+    var p = kv.split(':');
+    if (p[0] && MAIL_STATES[p[1]]) ranks[p[0].trim()] = p[1].trim();
+  });
+  return at ? { at: at, ranks: ranks } : null;
+}
+
+/** Mark the morning or afternoon sweep on the day's row. */
+function saveMail_(payload, profile) {
+  var staffId = profile.manager && payload.staffId ? String(payload.staffId) : profile.staffId;
+  var date = isoDay_(payload.date) || todayISO_();
+  var when = String(payload.when || '').toLowerCase();
+  if (when !== 'am' && when !== 'pm') return { ok: false, error: 'Morning or afternoon?' };
+  var ranks = {}, given = payload.ranks || {};
+  for (var i = 0; i < MAIL_KEYS.length; i++) {
+    var v = String(given[MAIL_KEYS[i]] || '').toLowerCase();
+    if (!MAIL_STATES[v]) return { ok: false, error: 'Every rank needs an answer — answered, or nothing waiting.' };
+    ranks[MAIL_KEYS[i]] = v;
+  }
+  var now = new Date(), at = hhmm_(now);
+  var col = when === 'am' ? 'MailAM' : 'MailPM';
+  var cell = at + '|' + MAIL_KEYS.map(function (k) { return k + ':' + ranks[k]; }).join(',');
+
+  var lock = takeLock_();
+  if (!lock) return BUSY_;
+  try {
+    var sh = logSheet_();
+    var head = headerOf_(sh), idx = colMap_(sh);
+    var targetRow = 0, revision = 0;
+    if (sh.getLastRow() > 1) {
+      var vals = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
+      for (var r = 0; r < vals.length; r++) {
+        var sid = String(vals[r][idx['StaffId']] || '').trim() || staffIdFor_(vals[r][idx['Name']]);
+        if (sid === staffId && isoDay_(vals[r][idx['Date']]) === date) {
+          targetRow = r + 2; revision = Number(vals[r][idx['Revision']]) || 0; break;
+        }
+      }
+    }
+    var patch = { UpdatedAt: now, Revision: revision + 1 };
+    patch[col] = cell;
+    if (targetRow) writeRow_(sh, targetRow, idx, patch);
+    else {
+      patch.Timestamp = now; patch.Date = date; patch.StaffId = staffId;
+      patch.Name = payload.name || profile.name; patch.Status = 'Draft';
+      sh.appendRow(head.map(function (h) { return (h in patch) ? patch[h] : ''; }));
+    }
+  } finally { lock.releaseLock(); }
+  return { ok: true, when: when, at: at, ranks: ranks, date: date };
+}
+
+/** Today's sweeps for the people this person may see, keyed by staffId. */
+function mailToday_(profile, date) {
+  var day = isoDay_(date) || todayISO_(), who = {};
+  attVisible_(profile).forEach(function (s) { who[s] = 1; });
+  var out = {};
+  latestEntries_().forEach(function (e) {
+    if (e.Date !== day || !who[e.StaffId]) return;
+    var am = parseMail_(e.MailAM), pm = parseMail_(e.MailPM);
+    if (am || pm) out[e.StaffId] = { am: am, pm: pm };
+  });
+  return out;
+}
+
+// ---------------------------------------------------------------------------
 //  Standing: the quarter so far, on the form's own terms
 //
 //  The appraisal form asks two questions — what did you deliver against each
@@ -3724,7 +3897,7 @@ function noteMoment_(data, profile) {
  *  where they were the trainee. The trainee column is typed, so it is
  *  matched on the first name or the staff id. */
 function trainingLog_(staffId, from, to) {
-  var out = { given: 0, received: 0 };
+  var out = { given: 0, received: 0, sessions: [], taught: [] };
   var sh;
   try { sh = trainingSheet_(); } catch (e) { return out; }
   if (!sh) return out;
@@ -3733,11 +3906,41 @@ function trainingLog_(staffId, from, to) {
   sheetObjects_(sh).forEach(function (r) {
     var d = isoDay_(r.TrainingDate);
     if (!d || d < from || d >= to) return;
-    if (String(r.StaffId) === staffId) out.given++;
+    if (String(r.StaffId) === staffId) {
+      out.given++;
+      out.taught.push({ date: d, topic: String(r.Topic || ''), trainee: String(r.Trainee || '') });
+    }
     var t = String(r.Trainee || '').toLowerCase();
-    if (t && (t.indexOf(first) > -1 || t.indexOf(staffId.toLowerCase()) > -1)) out.received++;
+    if (t && (t.indexOf(first) > -1 || t.indexOf(staffId.toLowerCase()) > -1)) {
+      out.received++;
+      out.sessions.push({ date: d, topic: String(r.Topic || ''), trainer: String(r.Trainer || ''),
+                          achieved: String(r.Achieved || ''), result: String(r.Result || '') });
+    }
   });
+  out.sessions.sort(function (a, b) { return b.date.localeCompare(a.date); });
+  out.taught.sort(function (a, b) { return b.date.localeCompare(a.date); });
   return out;
+}
+
+/** What a person was trained on this period, and what is still to be
+ *  covered: the plan's open rows and the development actions not yet done.
+ *  The same three tabs the review reads, so the landing and the appraisal
+ *  never disagree. */
+function trainingStanding_(staffId, from, to) {
+  var log = trainingLog_(staffId, from, to);
+  var plan = trainingFor_(staffId);
+  var dev = (hrRows_(HR.DEVELOP, true) || []).filter(function (d) { return String(d.StaffId) === staffId; }).map(devRow_);
+  return {
+    covered: log.sessions.slice(0, 6),
+    taught: log.taught.slice(0, 4),
+    planned: plan.filter(function (t) { return !t.signedOff; }).map(function (t) {
+      return { activity: t.activity, objective: t.objective, dates: t.dates, facilitator: t.facilitator }; }),
+    signedOff: plan.filter(function (t) { return !!t.signedOff; }).length,
+    planTotal: plan.length,
+    actions: dev.filter(function (d) { return d.status !== 'done' && d.action; }).map(function (d) {
+      return { action: d.action, source: d.source, why: d.why }; }),
+    actionsDone: dev.filter(function (d) { return d.status === 'done'; }).length
+  };
 }
 
 /** Everything the record holds about one person over a period, in one
@@ -3760,6 +3963,15 @@ function facts_(staffId, from, to, entries, closedByType, nowBlock, needs, billi
     if (isSubstantive_(r.ValueAdded) && f.valueAdded.length < 3) f.valueAdded.push({ date: d, text: String(r.ValueAdded).slice(0, 140) });
     if (isSubstantive_(r.Innovation) && f.innovation.length < 3) f.innovation.push({ date: d, text: String(r.Innovation).slice(0, 140) });
   });
+  f.mailAm = 0; f.mailAmEarly = 0; f.mailPm = 0; f.mailDays = 0;
+  var startPlusHour = startFor_(staffId) + 60;
+  entries.forEach(function (r) {
+    var am = parseMail_(r.MailAM), pm = parseMail_(r.MailPM);
+    if (am || pm) f.mailDays++;
+    if (am) { f.mailAm++; var m = minutesOf_(am.at); if (m != null && m <= startPlusHour) f.mailAmEarly++; }
+    if (pm) f.mailPm++;
+  });
+  f.workDays = entries.length;
   f.valueAddedN = entries.filter(function (r) { return isSubstantive_(r.ValueAdded); }).length;
   f.innovationN = entries.filter(function (r) { return isSubstantive_(r.Innovation); }).length;
   var rated = f.met + f.partly + f.no;
@@ -3806,6 +4018,11 @@ function competencySignals_(name, f) {
     if (f.daysIn) sig('Blocks submitted', f.blocks + ' of ' + f.daysIn * BLOCK_IDS.length, f.blocks >= f.daysIn * BLOCK_IDS.length * 0.8 ? 'green' : 'amber');
   }
   if (/respons|timel|follow.?up/.test(n)) {
+    if (f.workDays) {
+      sig('Morning mail sweep', f.mailAm + ' of ' + f.workDays + ' days', f.mailAm >= f.workDays * 0.8 ? 'green' : 'amber');
+      sig('Within an hour of start', f.mailAmEarly);
+      sig('Afternoon sweep', f.mailPm + ' of ' + f.workDays + ' days', f.mailPm >= f.workDays * 0.8 ? 'green' : 'amber');
+    }
     if (f.needs != null) sig('Untouched 7+ days', f.needs, f.needs ? 'amber' : 'green');
     if (f.lateTasks != null) sig('Late', f.lateTasks, f.lateTasks ? 'amber' : 'green');
     if (f.noReason != null) sig('Late with no reason', f.noReason, f.noReason ? 'amber' : 'green');
@@ -3826,7 +4043,10 @@ function competencySignals_(name, f) {
     sig('Development actions done', f.devDone + ' of ' + f.devTotal, f.devTotal && f.devDone < f.devTotal ? 'amber' : '');
   }
   if (/innovat|creativ|improve/.test(n)) sig('Innovation lines', f.innovationN, f.innovationN ? 'green' : '');
-  if (/courtesy|interpersonal|positive|energy|team|collab/.test(n)) sig('Training given', f.trainingGiven);
+  if (/courtesy|interpersonal|positive|energy|team|collab/.test(n)) {
+    if (/courtesy|interpersonal/.test(n) && f.workDays) sig('Mail sweeps done', f.mailAm + f.mailPm);
+    sig('Training given', f.trainingGiven);
+  }
   return s;
 }
 function competencyLines_(name, f) {
@@ -3873,6 +4093,8 @@ function standing_(profile, staffId) {
   return { ok: true, staffId: staffId, role: role, quarter: q, from: from, to: to, today: today,
            daysIn: workdays_(from, to), daysLeft: workdays_(to, qr.to),
            goals: outGoals, competencies: outComps, facts: f,
+           training: trainingStanding_(staffId, from, to),
+           jobDoc: !!jobDoc_(role),
            salesforce: !!closed, setup: { goals: !!goals, competencies: !!comps },
            side: sideFor_(profile, staffId) };
 }
