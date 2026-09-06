@@ -974,6 +974,34 @@ The header and the footer used to say **active agents only**. They do not any
 more, because that is no longer true and a wall whose footer disagrees with its
 figures is worse than one with no footer at all.
 
+#### How it is meant to look from the door
+
+The wall hangs in a room people walk through, and it has to read from the back
+of it. The pass that got it there is all colour and light and **no height** —
+this layout has three fixed rows totalling 968px and not a spare pixel anywhere,
+so every effect below is either a colour, an `inset` shadow or a filter.
+
+- **A spotlight, not a flat field.** One radial gradient on the body gives the
+  cards an edge to catch and the wall a top.
+- **The five bands read as one journey, cool to warm.** Bright teal at the start
+  of a working life through to the branch gold at the end of it, and the accent
+  runs through each band's label, its number, its meter and its instruction. A
+  3px rule on top of five cards would have cost fifteen pixels, so it is an
+  `inset` shadow. **Gold still means a gap on every band** — the accent says
+  which stage, gold says something is missing, and that has to mean one thing
+  across all five.
+- **The runway is lit and the spent days are not.** Today's bar burns, the days
+  ahead glow, the days gone are grey.
+- **Every headline number carries its own light** — the hero, the seven, the
+  ledger's four, the leaderboard's.
+
+**And the footer was sitting on the bottom row.** Fixed rows plus a fixed footer
+means any change to the header height slides the last row underneath it, which
+is exactly what a bigger `h1` did: the source line was drawn across the cards and
+no per-card check could see it, because nothing was clipped. The header gives
+back eight pixels and the gaps four. `booku.js` now fails the whole wall if the
+lowest card's bottom crosses the footer's top.
+
 #### Who is calling today
 
 The branch's own question in one panel: today is the sixth, these are the agents
