@@ -239,6 +239,118 @@ const ok = (what, cond, extra) => {
     document.documentElement.scrollWidth - document.documentElement.clientWidth);
   ok('nothing spills sideways at 390px', spill <= 1, spill + 'px');
 
+  // ---- signing in against the Academy sheet ------------------------------
+  // A fake of apps-script/Academy.gs, in memory, behind page.route. The real
+  // one is tested in test-academy.js; this is the page's half of the promise —
+  // that a family the Academy added by e-mail can choose a password and get
+  // in, that progress goes up and comes back, and that a parent lands on the
+  // child's progress rather than their own.
+  await page.setViewportSize({ width: 1180, height: 900 });
+  const FAKE = 'https://academy.test/exec';
+  const users = {
+    'aisha@example.com': { name: 'Aisha Ali', role: 'student', hash: null, student: '' },
+    'dad@example.com':   { name: 'Imran Ali', role: 'parent',  hash: null, student: 'aisha@example.com' },
+    'off@example.com':   { name: 'Off',       role: 'student', hash: null, status: 'disabled' }
+  };
+  const progress = {}, calls = [];
+  const state = u => !u ? 'unknown' : u.status === 'disabled' ? 'disabled' : !u.hash ? 'new' : 'active';
+  const session = email => {
+    const u = users[email];
+    const out = { ok: true, token: 'tok-' + email, progress: progress[email] || null, child: null,
+      user: { email, name: u.name, role: u.role, student: u.student ? { email: u.student, name: users[u.student].name } : null } };
+    if (u.role === 'parent' && u.student) out.child = { name: users[u.student].name, email: u.student, progress: progress[u.student] || null };
+    return out;
+  };
+  await page.route(FAKE, async route => {
+    const b = JSON.parse(route.request().postData()); calls.push(b.action);
+    const email = String(b.email || '').toLowerCase(), u = users[email]; let out;
+    const who = () => String(b.token || '').replace('tok-', '');
+    if (b.action === 'lookup') out = { ok: true, state: state(u), name: u ? u.name : '' };
+    else if (b.action === 'setpassword') {
+      if (state(u) !== 'new') out = { ok: false, error: 'This account already has a password.' };
+      else if (String(b.password || '').length < 8) out = { ok: false, error: 'Choose a password of at least 8 characters.' };
+      else { u.hash = b.password; out = session(email); }
+    } else if (b.action === 'signin') {
+      if (state(u) !== 'active') out = { ok: false, error: 'not active' };
+      else if (u.hash !== b.password) out = { ok: false, error: 'That password is not right.' };
+      else out = session(email);
+    } else if (b.action === 'load') out = users[who()] ? session(who()) : { ok: false, error: 'Sign in again.' };
+    else if (b.action === 'save') { progress[who()] = b.progress; out = { ok: true, updated: 'now' }; }
+    else out = { ok: false, error: 'Unknown action.' };
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(out) });
+  });
+  await page.addInitScript(() => { window.ACADEMY_API_OVERRIDE = 'https://academy.test/exec'; });
+  await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); });
+  await page.goto(URL, { waitUntil: 'networkidle' });
+
+  ok('with a backend set, the gate asks for an e-mail and hides the codes',
+     await page.isVisible('#gateAccount') && await page.isHidden('#gateCodes') && await page.isHidden('#app'));
+  const before = calls.length;
+  await page.fill('#gEmail', 'not-an-email'); await page.click('#gGo');
+  ok('something that is not an e-mail is stopped before it reaches the sheet',
+     calls.length === before && (await page.textContent('#gateErr')).length > 0);
+  await page.fill('#gEmail', 'nobody@example.com'); await page.click('#gGo');
+  await page.waitForFunction(() => document.querySelector('#gateErr').textContent.length > 0);
+  ok('an e-mail the Academy has not added is told so',
+     /not on the Academy list/.test(await page.textContent('#gateErr')) && await page.isHidden('#app'));
+  await page.fill('#gEmail', 'off@example.com'); await page.click('#gGo');
+  await page.waitForFunction(() => /switched off/.test(document.querySelector('#gateErr').textContent));
+  ok('a switched-off family is told so', true);
+
+  await page.fill('#gEmail', 'Aisha@Example.com'); await page.click('#gGo');
+  await page.waitForSelector('#gCreateRow:not([hidden])');
+  ok('a fresh e-mail is asked to choose a password, by name',
+     await page.isVisible('#gPass1') && /Hello, Aisha/.test(await page.textContent('#gWho')));
+  await page.fill('#gPass1', 'mango-tree-2027'); await page.fill('#gPass2', 'mango-tree-2028'); await page.click('#gGo');
+  ok('two passwords that differ are refused', /do not match/.test(await page.textContent('#gateErr')) && await page.isHidden('#app'));
+  await page.fill('#gPass1', 'short'); await page.fill('#gPass2', 'short'); await page.click('#gGo');
+  ok('a short password is refused', /Eight/.test(await page.textContent('#gateErr')));
+  await page.fill('#gPass1', 'mango-tree-2027'); await page.fill('#gPass2', 'mango-tree-2027'); await page.click('#gGo');
+  await page.waitForSelector('#app:not([hidden])');
+  ok('choosing a password signs the student in, by name',
+     (await page.textContent('#rolePill')) === 'Student · Aisha' && (await page.$('#nav button[data-view="key"]')) === null);
+
+  // Progress goes up after a change, and comes back on the next device.
+  await page.click('#nav button[data-view="practice"]');
+  const right = await page.evaluate(() => pList[pIdx].a[0]);
+  await page.fill('#pAns', right); await page.click('#pCheck');
+  await page.waitForFunction(() => document.querySelector('#syncDot').textContent === 'saved', null, { timeout: 8000 });
+  ok('an answer is pushed to the sheet a moment later',
+     calls.includes('save') && progress['aisha@example.com'] && Object.keys(progress['aisha@example.com'].seen).length === 1);
+  await page.reload({ waitUntil: 'networkidle' });
+  ok('reloading resumes the session from the token, without the gate',
+     await page.isVisible('#app') && calls.filter(c => c === 'load').length >= 1);
+  await page.click('#signOut');
+  await page.waitForSelector('#gateAccount:not([hidden])');
+  ok('signing out returns to the gate and forgets the token',
+     await page.isHidden('#app') && (await page.evaluate(() => localStorage.getItem('rrb.sea.token'))) === null);
+
+  await page.fill('#gEmail', 'aisha@example.com'); await page.click('#gGo');
+  await page.waitForSelector('#gPassRow:not([hidden])');
+  ok('the second time, the e-mail is asked for its password, not a new one',
+     await page.isVisible('#gPass') && await page.isHidden('#gPass1'));
+  await page.fill('#gPass', 'wrong-one'); await page.click('#gGo');
+  await page.waitForFunction(() => /not right/.test(document.querySelector('#gateErr').textContent));
+  ok('a wrong password is refused', await page.isHidden('#app'));
+  await page.fill('#gPass', 'mango-tree-2027'); await page.click('#gGo');
+  await page.waitForSelector('#app:not([hidden])');
+  ok('the right one is in, and the earlier progress came back with it',
+     (await page.textContent('#hA')) === '1');
+  await page.click('#signOut');
+  await page.waitForSelector('#gateAccount:not([hidden])');
+
+  // The parent.
+  await page.fill('#gEmail', 'dad@example.com'); await page.click('#gGo');
+  await page.waitForSelector('#gCreateRow:not([hidden])');
+  await page.fill('#gPass1', 'doubles-and-chutney'); await page.fill('#gPass2', 'doubles-and-chutney'); await page.click('#gGo');
+  await page.waitForSelector('#app:not([hidden])');
+  ok('the parent is in, by name, with the key and without the mock exam',
+     (await page.textContent('#rolePill')) === 'Parent · Imran' &&
+     (await page.$('#nav button[data-view="key"]')) !== null && (await page.$('#nav button[data-view="exam"]')) === null);
+  ok("the parent's home is the child's progress, by the child's name",
+     /Aisha's progress/.test(await page.textContent('#homeKicker')) && (await page.textContent('#hA')) === '1');
+  ok('a parent cannot clear the child\'s progress', await page.isHidden('#resetBtn'));
+
   ok('no errors in the console', errs.length === 0, errs.join(' | '));
 
   await b.close();

@@ -77,6 +77,14 @@ button,input,select,textarea{font:inherit;color:inherit}
   font-family:var(--mono);font-size:15px;text-transform:uppercase}
 .gatebox input:focus{border-color:var(--gold);background:rgba(255,255,255,.11)}
 .gatebox input::placeholder{letter-spacing:.16em;color:#6E8497}
+.gatebox input.plain{text-transform:none;letter-spacing:.02em;font-family:var(--sans);font-size:15px;
+  display:block;margin:0 auto .55rem;width:min(340px,100%)}
+.gatebox input.plain::placeholder{letter-spacing:.02em}
+.gatebox .who{color:var(--gold);font-family:var(--display);font-size:1.05rem;margin-bottom:.7rem;min-height:1.3em}
+.gatebox .back{background:none;border:0;color:#9FB3C4;cursor:pointer;font-size:12.5px;text-decoration:underline;margin-top:.7rem}
+.gatebox .gform .gatego{margin:.35rem 0 0}
+.sync{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7F97A8;min-width:4.5em}
+.sync.bad{color:#F5A79B}
 .gatego{background:linear-gradient(180deg,var(--gold),var(--gold2));color:#07131f;border:0;border-radius:9px;
   padding:.72rem 1.6rem;font-weight:800;cursor:pointer;font-size:14px;letter-spacing:.04em;margin-left:.5rem}
 .gatego:hover{filter:brightness(1.07)}
@@ -300,9 +308,10 @@ footer .l{display:flex;gap:.6rem;align-items:center}
     <div class="mark"><img src="../logo-mark.png" alt="Ricky Rampersad Branch"></div>
     <p class="kicker">Ricky Rampersad Branch</p>
     <h1>Academy &middot; S.E.A. Practice</h1>
-    <p class="sub">Every official past paper, and practice built to the Ministry&rsquo;s own
+    <p class="sub" id="gateSub">Every official past paper, and practice built to the Ministry&rsquo;s own
        assessment framework. Choose who is signing in.</p>
 
+    <div id="gateCodes">
     <div class="roles" id="roles">
       <button class="role" data-role="student" aria-pressed="true">
         <span class="ic" aria-hidden="true">✎</span><b>Student</b>
@@ -320,13 +329,32 @@ footer .l{display:flex;gap:.6rem;align-items:center}
              aria-label="Access code" spellcheck="false">
       <button class="gatego" id="gateGo">Sign in</button>
     </div>
-    <p id="gateErr" role="alert"></p>
-
     <p class="gatefoot">
       <b>Students</b> are given hints before answers &mdash; the answer only opens after a real attempt.<br>
       <b>Parents and teachers</b> see the full working straight away.<br>
       Codes come from the Academy. Nothing you type here leaves your device.
     </p>
+    </div>
+
+    <div id="gateAccount" hidden>
+      <div class="gform">
+        <p class="who" id="gWho"></p>
+        <input class="plain" id="gEmail" type="email" placeholder="Your e-mail" autocomplete="username"
+               aria-label="E-mail" spellcheck="false" autocapitalize="off">
+        <div id="gPassRow" hidden>
+          <input class="plain" id="gPass" type="password" placeholder="Password" autocomplete="current-password" aria-label="Password">
+        </div>
+        <div id="gCreateRow" hidden>
+          <input class="plain" id="gPass1" type="password" placeholder="Choose a password (8 or more characters)" autocomplete="new-password" aria-label="Choose a password">
+          <input class="plain" id="gPass2" type="password" placeholder="Type it again" autocomplete="new-password" aria-label="Type the password again">
+        </div>
+        <button class="gatego" id="gGo">Continue</button>
+        <button class="back" id="gBack" hidden>Not you? Use a different e-mail</button>
+      </div>
+      <p class="gatefoot" id="gHint"></p>
+    </div>
+
+    <p id="gateErr" role="alert"></p>
   </div>
 </div>
 
@@ -341,6 +369,7 @@ footer .l{display:flex;gap:.6rem;align-items:center}
     <nav id="nav" aria-label="Sections"></nav>
     <div class="whoami">
       <span class="pill" id="rolePill">Student</span>
+      <span class="sync" id="syncDot" aria-live="polite"></span>
       <button id="themeBtn" title="Light or dark" aria-label="Switch light or dark theme">◐</button>
       <button id="signOut">Sign out</button>
     </div>
@@ -374,6 +403,9 @@ footer .l{display:flex;gap:.6rem;align-items:center}
       <h2 style="margin:.2rem 0 .9rem">Strand by strand</h2>
       <div id="hStrands"></div>
       <div id="hAdvice" style="margin-top:1rem"></div>
+      <div class="btnrow" style="margin-top:1rem">
+        <button class="btn ghost sm" id="resetBtn">Clear my progress</button>
+      </div>
     </div>
     <div class="stack">
       <div class="card teal">
@@ -608,6 +640,13 @@ const ROLES = {
   parent:  {code:"RRBPARENT",   label:"Parent"},
   teacher: {code:"RRBTEACHER",  label:"Teacher"}
 };
+
+/* Paste the /exec URL of apps-script/Academy.gs here. Once it is set, people
+   sign in by e-mail and password against the Academy's Users sheet, the
+   codes above are ignored, and progress follows them between devices.
+   (The browser test points this at a fake through the override.) */
+const ACADEMY_API = (typeof window !== "undefined" && window.ACADEMY_API_OVERRIDE) || "";
+const TKEY = "rrb.sea.token";
 
 /* ============================================================
    Fractions and figures. Some figures ask the question; the ones
@@ -1448,8 +1487,46 @@ QUESTIONS.forEach(q => Object.assign(q, HINTS[q.id] || {}));
 const KEY = "rrb.sea.v2";
 let store = {seen:{}, syl:{}, essay:"", theme:null, exams:[]};
 try{ const raw = localStorage.getItem(KEY); if(raw) store = Object.assign(store, JSON.parse(raw)); }catch(e){}
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){} }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){} queueSync(); }
 function rec(id){ return store.seen[id] || (store.seen[id] = {att:0, right:false, clean:false, hints:0}); }
+
+/* ---- the Academy backend, when there is one ---- */
+let token = null, syncTimer = null, me = null, childName = "", childProgress = null;
+async function api(action, body){
+  const r = await fetch(ACADEMY_API, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body: JSON.stringify(Object.assign({action}, body || {}))});
+  return r.json();
+}
+function setSync(text, bad){
+  const d = document.getElementById("syncDot");
+  if(d){ d.textContent = text || ""; d.classList.toggle("bad", !!bad); }
+}
+/* Progress goes up a couple of seconds after the last change, not on every
+   keystroke of an essay. A failed push is shown, and retried on the next save. */
+function queueSync(){
+  if(!ACADEMY_API || !token) return;
+  clearTimeout(syncTimer); setSync("saving…");
+  syncTimer = setTimeout(async () => {
+    try{
+      const d = await api("save", {token, progress:{seen:store.seen, syl:store.syl, essay:store.essay, exams:store.exams}});
+      if(d.ok) setSync("saved"); else setSync("not saved", true);
+    }catch(e){ setSync("offline", true); }
+  }, 2500);
+}
+const hasProgress = p => !!(p && ((p.seen && Object.keys(p.seen).length) || (p.exams && p.exams.length) ||
+                                  (p.essay && p.essay.trim()) || (p.syl && Object.keys(p.syl).length)));
+/* On sign-in the sheet wins if it holds anything; otherwise whatever this
+   device already has is pushed up, so a first sign-in never loses work. */
+function adoptProgress(remote){
+  if(hasProgress(remote)){
+    store.seen = remote.seen || {}; store.syl = remote.syl || {};
+    store.essay = remote.essay || ""; store.exams = remote.exams || [];
+    try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){}
+    setSync("saved");
+  } else if(hasProgress(store)) queueSync();
+}
+/* A parent looks at the child's progress, not their own. */
+function viewProgress(){ return (role === "parent" && childProgress) ? childProgress : store; }
 
 /* ============================================================
    Marking
@@ -1542,13 +1619,94 @@ function tryGate(){
 }
 $("#gateGo").addEventListener("click", tryGate);
 $("#gateCode").addEventListener("keydown", e => { if(e.key === "Enter") tryGate(); });
-$("#signOut").addEventListener("click", () => { sessionStorage.removeItem(SKEY); location.reload(); });
+$("#signOut").addEventListener("click", () => {
+  sessionStorage.removeItem(SKEY); try{ localStorage.removeItem(TKEY); }catch(e){}
+  location.reload();
+});
 
-function enter(r){
-  role = r;
+/* ---- the account gate: e-mail, then either a password or the choosing of one ---- */
+let gState = "email";
+const STATE_MSG = {
+  unknown:  "That e-mail is not on the Academy list. Ask the Academy to add you.",
+  disabled: "This account has been switched off. Contact the Academy.",
+  norole:   "This account has no role set yet. Ask the Academy.",
+  expired:  "Your access has ended. Contact the Academy to renew."
+};
+const gErr = m => { $("#gateErr").textContent = m || ""; };
+function gPaint(){
+  $("#gPassRow").hidden   = gState !== "password";
+  $("#gCreateRow").hidden = gState !== "create";
+  $("#gEmail").disabled   = gState !== "email";
+  $("#gBack").hidden      = gState === "email";
+  $("#gGo").textContent   = gState === "email" ? "Continue" : gState === "create" ? "Create my password and sign in" : "Sign in";
+  $("#gHint").innerHTML   = gState === "email"
+    ? "Type the e-mail the Academy has for you. The first time, you will choose your own password.<br>Nothing is e-mailed to anybody."
+    : gState === "create"
+    ? "<b>First time here.</b> Choose a password only you know &mdash; eight characters or more. You will use it every time after this."
+    : "Welcome back. If you have forgotten your password, the Academy can reset it.";
+  (gState === "password" ? $("#gPass") : gState === "create" ? $("#gPass1") : $("#gEmail")).focus();
+}
+async function gGo(){
+  const email = $("#gEmail").value.trim().toLowerCase();
+  gErr(""); $("#gGo").disabled = true;
+  try{
+    if(gState === "email"){
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ gErr("Type the e-mail the Academy has for you."); return; }
+      const d = await api("lookup", {email});
+      if(!d.ok){ gErr(d.error); return; }
+      if(d.state === "new" || d.state === "active"){
+        gState = d.state === "new" ? "create" : "password";
+        $("#gWho").textContent = d.name ? `Hello, ${d.name.split(" ")[0]}.` : "";
+        gPaint();
+      } else gErr(STATE_MSG[d.state] || "Ask the Academy.");
+      return;
+    }
+    if(gState === "create"){
+      const p1 = $("#gPass1").value, p2 = $("#gPass2").value;
+      if(p1.length < 8){ gErr("Eight characters or more."); return; }
+      if(p1 !== p2){ gErr("The two passwords do not match."); return; }
+      const d = await api("setpassword", {email, password:p1});
+      if(!d.ok){ gErr(d.error); return; }
+      finishSignin(d); return;
+    }
+    const d = await api("signin", {email, password:$("#gPass").value});
+    if(!d.ok){ gErr(d.error); $("#gPass").select(); return; }
+    finishSignin(d);
+  }catch(e){ gErr("Could not reach the Academy. Check your connection and try again."); }
+  finally{ $("#gGo").disabled = false; }
+}
+function finishSignin(d){
+  token = d.token;
+  try{ localStorage.setItem(TKEY, token); }catch(e){}
+  enter(d.user.role, d.user, d);
+}
+$("#gGo").addEventListener("click", gGo);
+$("#gateAccount").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); gGo(); } });
+$("#gBack").addEventListener("click", () => {
+  gState = "email"; $("#gWho").textContent = ""; $("#gPass").value = ""; $("#gPass1").value = ""; $("#gPass2").value = "";
+  gErr(""); gPaint();
+});
+function showGate(){
+  $("#gate").hidden = false; $("#app").hidden = true;
+  $("#gateCodes").hidden = !!ACADEMY_API;
+  $("#gateAccount").hidden = !ACADEMY_API;
+  $("#gateSub").innerHTML = ACADEMY_API
+    ? "Every official past paper, and practice built to the Ministry&rsquo;s own assessment framework. Sign in with the e-mail the Academy has for you."
+    : "Every official past paper, and practice built to the Ministry&rsquo;s own assessment framework. Choose who is signing in.";
+  if(ACADEMY_API) gPaint(); else $("#gateCode").focus();
+  if(location.hash) history.replaceState(null, "", "#");
+}
+
+function enter(r, user, payload){
+  role = r; me = user || null;
+  if(payload){
+    adoptProgress(payload.progress);
+    if(r === "parent" && payload.child){ childName = payload.child.name || ""; childProgress = payload.child.progress || {}; }
+  }
   $("#gate").hidden = true;
   $("#app").hidden = false;
-  $("#rolePill").textContent = ROLES[r].label;
+  $("#rolePill").textContent = ROLES[r].label + (me && me.name ? " · " + me.name.split(" ")[0] : "");
+  $("#resetBtn").hidden = (r === "parent");
   $("#nav").innerHTML = CAN[r].views
     .map(v => `<button data-view="${v}">${NAV_LABEL[v]}</button>`).join("");
   renderRoleCopy();
@@ -1637,22 +1795,25 @@ function renderRoleCopy(){
    Home
    ============================================================ */
 function strandStat(s){
+  const seen = viewProgress().seen || {};
   const pool = QUESTIONS.filter(q => q.strand === s);
-  const done = pool.filter(q => store.seen[q.id] && store.seen[q.id].att > 0);
-  const clean = done.filter(q => store.seen[q.id].clean).length;
+  const done = pool.filter(q => seen[q.id] && seen[q.id].att > 0);
+  const clean = done.filter(q => seen[q.id].clean).length;
   return {pool:pool.length, done:done.length, clean,
           pct: pool.length ? Math.round(done.length/pool.length*100) : 0,
           acc: done.length ? Math.round(clean/done.length*100) : null};
 }
 function renderHome(){
-  const ids = Object.keys(store.seen).filter(k => store.seen[k].att > 0);
-  const clean = ids.filter(k => store.seen[k].clean).length;
+  const P = viewProgress(), seen = P.seen || {}, exams = P.exams || [];
+  const ids = Object.keys(seen).filter(k => seen[k].att > 0);
+  const clean = ids.filter(k => seen[k].clean).length;
+  if(role === "parent") $("#homeKicker").textContent = childName ? `Parent · ${childName.split(" ")[0]}'s progress` : "Parent";
   $("#hQ").textContent = QUESTIONS.length;
   $("#hA").textContent = ids.length;
   $("#hABar").style.width = (QUESTIONS.length ? Math.round(ids.length/QUESTIONS.length*100) : 0) + "%";
   $("#hP").textContent = ids.length ? Math.round(clean/ids.length*100) + "%" : "—";
-  $("#hE").textContent = store.exams.length;
-  const best = store.exams.length ? Math.max(...store.exams.map(e => e.score)) : null;
+  $("#hE").textContent = exams.length;
+  const best = exams.length ? Math.max(...exams.map(e => e.score)) : null;
   $("#hEBest").textContent = best === null ? "none sat yet" : `best ${best} / 75`;
 
   $("#hStrands").innerHTML = STRANDS.map(s => {
@@ -1666,7 +1827,10 @@ function renderHome(){
   // Say the one useful thing, rather than showing four bars and leaving it there.
   const tried = STRANDS.map(s => ({s, ...strandStat(s)})).filter(t => t.done >= 3);
   let advice;
-  if(!tried.length){
+  if(role === "parent" && ACADEMY_API && !childProgress){
+    advice = `<p class="note">No student is linked to this account yet. Ask the Academy to put the child's
+      e-mail in the <b>Student Email</b> column beside yours, and their progress will appear here.</p>`;
+  } else if(!tried.length){
     advice = `<p class="note">Nothing attempted yet. Answer three questions in a strand and this will start
       telling you where the marks are going.</p>`;
   } else {
@@ -1678,7 +1842,12 @@ function renderHome(){
   }
   $("#hAdvice").innerHTML = advice;
 }
-$("#hAdvice") && 0;
+
+$("#resetBtn").addEventListener("click", () => {
+  if(!confirm("Clear every answer, tick, paper and saved essay for this account?")) return;
+  store.seen = {}; store.syl = {}; store.essay = ""; store.exams = [];
+  save(); renderHome(); renderSyllabus(); $("#wEssay").value = ""; countWords(); pBuild(true);
+});
 
 /* ============================================================
    Practice — the hint ladder
@@ -2147,13 +2316,19 @@ $("#kPrint").addEventListener("click", () => window.print());
 /* ============================================================
    Boot
    ============================================================ */
-const resumed = sessionStorage.getItem(SKEY);
-if(resumed && ROLES[resumed]) enter(resumed);
-else {
-  const want = location.hash.slice(1);
-  $("#gateCode").focus();
-  if(want) history.replaceState(null,"","#");
-}
+(async function boot(){
+  if(ACADEMY_API){
+    let saved = null; try{ saved = localStorage.getItem(TKEY); }catch(e){}
+    if(saved){
+      try{ const d = await api("load", {token:saved}); if(d.ok){ token = saved; enter(d.user.role, d.user, d); return; } }catch(e){}
+      try{ localStorage.removeItem(TKEY); }catch(e){}
+    }
+  } else {
+    const resumed = sessionStorage.getItem(SKEY);
+    if(resumed && ROLES[resumed]){ enter(resumed); return; }
+  }
+  showGate();
+})();
 window.addEventListener("beforeunload", e => {
   if(exam && !exam.done){ e.preventDefault(); e.returnValue = ""; }
 });

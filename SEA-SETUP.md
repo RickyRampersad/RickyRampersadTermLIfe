@@ -36,27 +36,32 @@ is supposed to be leading towards.
 
 ## Three ways in
 
-`ROLES` at the top of the script holds the codes. **Change them there** — one
-place, and the gate, the tests and the copy all follow.
+Three roles. `ROLES` at the top of the script names them and holds the codes.
 
 | Role | Sees | Does not see |
 |---|---|---|
 | Student | Practice with the ladder, mock exam, writing, papers, syllabus | The answer key |
-| Parent | Practice with everything open, answer key, papers, syllabus | The mock exam |
+| Parent | Practice with everything open, answer key, papers, syllabus — and the child's progress | The mock exam |
 | Teacher | Everything, plus a printable blank paper and a printable key | — |
 
-**This is a gate, not authentication.** The site is static — GitHub Pages serves
-files and runs no code — so the codes live in the page and anybody who reads the
-source can find them. It is the same pattern as `agent.html` and `staff.html`,
-and it is honest for what it does: keeping the answer key away from a child who
-is meant to be practising. It is not a login, it will not carry per-pupil
-records, and it must never be told anything that matters. Real accounts, real
-progress across devices, and anything sold per seat need a backend — the
-Apps Script projects in `apps-script/` are the pattern this branch already uses.
+The gate has two modes, and `const ACADEMY_API` decides which.
 
-Progress, ticks and essays live in `localStorage`, on that device, in that
-browser. A parent signing in on their own phone sees their own device's
-history, not the child's.
+**Blank — the codes.** Each role has a code, and typing it is the sign-in. It
+is the same pattern as `agent.html` and `staff.html`: a gate, not a login. The
+site is static, so the codes are readable in the page source. It keeps the
+answer key away from a child who should be practising; it does not know who
+anybody is, and progress lives only in that browser's `localStorage`.
+
+**Set — the sheet.** Paste in the `/exec` URL of `apps-script/Academy.gs`
+(see `ACADEMY-SETUP.md`) and the gate asks for an e-mail instead. The Academy
+adds a family to the Users tab by e-mail; the first time that e-mail is typed
+in, the person chooses their own password. Role comes from the sheet, progress
+is saved to it a couple of seconds after every change and comes back on any
+device, and a parent signing in on their own phone lands on the child's
+progress, by the child's name. The codes are ignored.
+
+Passwords are never stored or e-mailed; what is protected and what is not is
+set out in `ACADEMY-SETUP.md`.
 
 ## Nothing is re-hosted
 
@@ -186,7 +191,14 @@ or step gives its own answer away, that every figure named exists and every
 figure defined is used, that the three roles have distinct codes, and that the
 branch mark is where CLAUDE.md says it must be.
 
-`e2e-sea.js` signs in as each of the three roles and drives the app. It
+`test-academy.js` runs the real `Academy.gs` under the fake Sheets — see
+`ACADEMY-SETUP.md`.
+
+`e2e-sea.js` signs in as each of the three roles and drives the app. It then
+points the page at a fake of the backend and walks a family through the
+sheet-backed gate: a fresh e-mail choosing a password, an answer pushed up and
+coming back on reload, a wrong password refused, and the parent landing on the
+child's progress. It
 generates three mock papers and checks each is 40 items and 75 marks in the
 20/39/16 and 19/6/9/6 split; that a paper answered from the bank scores full
 marks and a blank one scores nothing and returns all forty questions with all
@@ -213,7 +225,8 @@ beside three screens carrying the real one.
 
 ## Before this is sold
 
-The gate is not a login and `localStorage` is not a record. A paid product needs
-a backend for accounts, per-pupil progress a parent can see from their own
-phone, and codes that are not readable in the page source. Until then the app is
-honest about what it is: practice on the device it is opened on.
+With the backend deployed, the app knows who a person is, keeps their progress,
+and refuses them after a date — which is enough to sell a season by hand: the
+family pays, you put a date in Paid Until, and the app does the rest. What it
+does not do is take the money. Payment stays outside the app until there is a
+reason to bring it in; the sheet is the billing system at this scale.
