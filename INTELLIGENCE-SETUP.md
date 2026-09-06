@@ -1240,8 +1240,7 @@ sold to these clients?* Four rows, and the third is why the fourth is honest.
 it and 727 are still to come.
 
 **The zero is the point, so it gets its own sentence** rather than reading "0 of
-those clients bought something — 0 policies". *The email went, the call did
-not.* That is the whole argument for the wall, stated in the branch's own
+those clients bought something — 0 policies". *The email went; nothing came back yet.* That is the whole argument for the wall, stated in the branch's own
 numbers on the morning it is true.
 
 **One near miss worth recording.** A client with a **22 September** birthday
