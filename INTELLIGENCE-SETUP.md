@@ -878,12 +878,43 @@ have. What goes out is what every other wall sends, counts and bands:
 because a version of this wall on a screen that is not public may want the
 letters back.
 
+#### Every band ends with an instruction
+
+The bands used to name a topic. They give an order now, because a topic is
+something to think about and an order is something to do:
+
+| Band | The line on the wall |
+|---|---|
+| Starting out | Call and quote critical illness at the age they are today. |
+| Family years | Call and ask who depends on this income. Then quote critical illness. |
+| Peak earning | Call and take the sum assured up to what they earn now. |
+| Retirement in sight | Call and book the pension review before the year end. |
+| Already retired | Call and offer health and final expenses. Leave the life cover alone. |
+
+Every one of them starts with the same word on purpose. The hero carries the
+same point in three: **nothing beats a call — the letter is sent, the review is
+not.**
+
+#### Round numbers get their own panel
+
+Milestone birthdays — 21, 25, 30, 40, 50, 60, 65, 70, 75, 80 — with the agent
+whose client it is beside each one. A round number is the birthday somebody
+remembers being called on, and a milestone nobody is told about is just another
+Tuesday.
+
 #### Seven years of birthday letters, and what they did not do
 
 The branch has wished these clients a happy birthday automatically for the
-better part of a decade. That is the argument for the wall and it is on it: the
+better part of a decade. That is the argument for the wall and it leads it: the
 relationship is already built and already paid for, and what the letter has
 never done is ask a question.
+
+**About 10,010 letters a year**, which is the number of branch clients with a
+birth date on file — one client, one letter, every year. Stated as the annual
+rate rather than a seven year total, because not every client has been on the
+book for all seven and a total is a number the branch could not defend if
+anybody asked. The hero counts today's: **twenty eight went out this morning,
+from the branch, in the agent's name**, before anybody sat down.
 
 **And they do not buy at birthday time**, which is worth knowing before anybody
 builds a campaign on the idea. Measured across the branch: **8.7%** of policies

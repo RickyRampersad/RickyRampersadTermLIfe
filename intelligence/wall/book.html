@@ -83,7 +83,7 @@
        size the grid stretches whichever one is auto, and eighty eight spare
        pixels were being spent on white space above the wall instead of on the
        five cards that carry it. */
-    grid-template-rows:auto minmax(344px,1fr) minmax(0,280px);
+    grid-template-rows:auto minmax(370px,1fr) minmax(0,262px);
     gap:13px;padding:0 26px 20px;height:calc(100vh - 66px)}
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
     padding:16px 18px;min-height:0;display:flex;flex-direction:column}
@@ -163,6 +163,10 @@
 
   .today{grid-column:1/6;grid-row:2}
   .years{grid-column:2/6}
+  /* Row three, named explicitly. Left implicit, the milestone panel displaced
+     everything after it and the season graph collided with the leaderboard. */
+  .miles{grid-column:1/2}
+  .pol{grid-column:2/3}
   .season{grid-column:3/5}
   .month{grid-column:5/6}
   .alist{display:grid;grid-auto-flow:column;grid-template-rows:repeat(9,auto);
@@ -384,6 +388,34 @@
   .gaps .row .lbl{font-size:14.5px}
   .gaps .row .track{margin-top:5px}
   /* the birthday hero's second line */
+  /* THE ONE LINE THE WALL EXISTS TO SAY. The branch's own words, and the reason
+     the rest of the screen is arranged the way it is: the letter went out by
+     itself this morning, and the letter has never asked anybody a question. */
+  .hero .callout{margin-top:12px;padding:11px 13px;border-radius:11px;
+    background:linear-gradient(120deg,rgba(0,207,234,.16),rgba(0,207,234,.04));
+    border:1px solid rgba(0,207,234,.34);
+    font-family:var(--font-d);font-weight:800;font-size:15px;color:var(--ink);
+    letter-spacing:-.3px;line-height:1.2}
+  .hero .callout span{display:block;font-family:var(--font-b);font-weight:500;
+    font-size:11px;color:var(--dim);letter-spacing:0;margin-top:2px}
+
+  /* round-number birthdays, with whose they are */
+  .mrow{display:flex;align-items:baseline;gap:11px;padding:7px 0;
+    border-bottom:1px solid rgba(255,255,255,.07)}
+  .mrow:last-child{border-bottom:0}
+  .mrow .age{font-family:var(--font-d);font-weight:800;font-size:26px;line-height:1;
+    letter-spacing:-1px;color:var(--gold);min-width:44px}
+  .mrow .mt{flex:1;min-width:0}
+  .mrow .mt .t{font:700 11.5px var(--font-b);color:var(--ink);letter-spacing:.02em}
+  .mrow .mt .a{font-size:10.5px;color:var(--faint);margin-top:2px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .miles .none{font-size:12px;color:var(--faint);line-height:1.55}
+
+  /* the instruction, which is the point of the band */
+  .band .act{font-family:var(--font-d);font-weight:800;font-size:12.5px;color:var(--teal);
+    line-height:1.35;margin-top:9px;padding-top:9px;
+    border-top:1px solid rgba(0,207,234,.24)}
+
   .hero .who{margin-top:9px;padding-top:9px;border-top:1px solid var(--line);
     font-size:11px;color:var(--faint);line-height:1.45}
   .hero .who b{color:var(--dim);font-weight:600}
@@ -407,13 +439,14 @@
 
 <main>
   <section class="card hero">
-    <h3 id="heroKick">Birthdays today</h3>
+    <h3 id="heroKick">Letters sent this morning</h3>
     <div class="big" id="heroN">&mdash;</div>
     <div class="cap2" id="heroCap"></div>
     <div class="split">
       <div><div class="v" id="heroGap">&mdash;</div><div class="k">carry a gap worth a call</div></div>
       <div><div class="v" id="heroPol">&mdash;</div><div class="k">policies between them</div></div>
     </div>
+    <div class="callout">Nothing beats a call.<span>The letter is sent. The review is not.</span></div>
   </section>
 
   <section class="card years">
@@ -438,13 +471,13 @@
       what that band is short of, and the conversation it is owed.</p>
     <div class="clist" id="cList"></div></section>
 
-  <section class="card"><h3>How many policies they already hold</h3>
-    <p class="cap">One is a relationship nobody built on. Four is a client who says yes.</p>
-    <div class="rows" id="rPol"></div></section>
+  <section class="card miles"><h3>Round numbers today</h3>
+    <p class="cap">Special occasions. The birthdays worth a call rather than a letter.</p>
+    <div id="mList"></div></section>
 
-  <section class="card"><h3>When they last bought</h3>
-    <p class="cap">How cold the call is, for the people on today&rsquo;s list.</p>
-    <div class="rows" id="rLast"></div></section>
+  <section class="card pol"><h3>How many policies they already hold</h3>
+    <p class="cap">One is a relationship nobody built on.</p>
+    <div class="rows" id="rPol"></div></section>
 
   <section class="card season"><h3>When this book buys</h3>
     <p class="cap">Every policy the branch holds, by the month it was issued. The lit bar
@@ -574,7 +607,7 @@ function paint(){
       + 'workbook carries them.';
     $("#bMiles").innerHTML=''; $("#heroWhere").innerHTML='';
     $("#yFind").innerHTML='';
-    ["#rPol","#rLast","#rSeason","#rMonth"].forEach(function(x){ $(x).innerHTML=""; });
+    ["#rPol","#rSeason","#rMonth","#mList"].forEach(function(x){ $(x).innerHTML=""; });
     $("#monthCap").textContent="";
     $("#cList").innerHTML='<p class="none">Set the Salesforce credentials in '
       + '<b>SalesforceSync.gs</b>, deploy the script, and paste the <b>/exec</b> URL into '
@@ -586,11 +619,11 @@ function paint(){
   $("#chip").className = FILTER?"on":"";
   if(FILTER) $("#chipTxt").textContent=FILTER.key;
 
-  $("#heroKick").textContent="Birthdays today";
+  $("#heroKick").textContent="Letters sent this morning";
   $("#heroN").style.cssText="";
   $("#heroN").textContent=n(T.n);
-  $("#heroCap").innerHTML='clients of this branch have a birthday <b>today</b>, and <b>'
-    + n(T.week)+'</b> more inside seven days.';
+  $("#heroCap").innerHTML='went out from the branch this morning, <b>in your name</b>. '
+    + '<b>'+n(T.week)+'</b> more inside seven days.';
   $("#heroGap").textContent=n(T.withGap);
   var pol=(T.policiesHeld||[]).reduce(function(a,x){ return a+x.n; },0);
   $("#heroPol").textContent=n((T.bands||[]).reduce(function(a,b){ return a+(b.policies||0); },0));
@@ -598,6 +631,14 @@ function paint(){
   $("#bMiles").innerHTML = MI.length
     ? MI.map(function(m){ return '<span class="mile">'+esc(m.k)+' &middot; '+n(m.n)+'</span>'; }).join("")
     : '';
+  $("#mList").innerHTML = MI.length ? MI.map(function(m){
+      return '<div class="mrow"><div class="age">'+n(m.age)+'</div><div class="mt">'
+        + '<div class="t">'+n(m.n)+' turning '+n(m.age)+' today</div>'
+        + '<div class="a">'+((m.agents||[]).map(function(a){
+            return esc(a.k)+(a.n>1?' '+n(a.n):''); }).join(' &middot; ')||'—')+'</div>'
+        + '</div></div>'; }).join("")
+    : '<p class="none">No round numbers today. Every other birthday is still a reason '
+      + 'to pick up the phone — it is the round ones that are remembered.</p>';
   var TW=(T.towns||[]).slice(0,5);
   $("#heroWhere").innerHTML = TW.length
     ? '<b>Where they are.</b> '+TW.map(function(t){ return esc(t.k)+' '+n(t.n); }).join(' &middot; ')
@@ -605,6 +646,9 @@ function paint(){
 
   /* The seven-year claim, with the measurement that qualifies it beside it. */
   var BE=D.birthdayEffect||{};
+  var LY=D.lettersAYear;
+  if(LY) $(".years .hd").innerHTML='years of birthday letters &mdash; about <b>'
+    + n(LY)+'</b> of them a year, every year';
   $("#yFind").innerHTML = BE.pct!=null
     ? '<b>And they do not buy at birthday time.</b> '+BE.pct+'% of policies were issued in '
       + 'the client&rsquo;s own birth month, against a one-in-twelve baseline of '
@@ -634,6 +678,7 @@ function paint(){
             ? '<div class="miss">Missing <b>'+esc(b.missing.k)+'</b> — '
               + n(b.missing.n)+' of '+n(b.n)+'</div>' : '')
         + '<div class="talk">'+esc(b.talk)+'</div>'
+        + (b.act ? '<div class="act">'+esc(b.act)+'</div>' : '')
         + (agents.length
             ? '<div class="who">'+agents.slice(0,3).map(function(a){
                 return '<b>'+esc(a.k)+'</b> '+n(a.n); }).join(' &middot; ')
@@ -645,7 +690,6 @@ function paint(){
       + n(T.week)+' do inside the next seven days.</p>';
 
   bars($("#rPol"),  T.policiesHeld||[], "pol",  "teal");
-  bars($("#rLast"), T.lastBought||[],   "last", "gold");
   season($("#rSeason"), D.season||[]);
 
   var M=(D.month||{});

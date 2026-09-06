@@ -5473,19 +5473,19 @@ function iBookPrompt_(c, quietYears, today) {
    rather than pasted into the wall's HTML, so the screen and the app cannot
    drift apart on what the branch says about a sixty five year old. */
 var IBOOK_BANDS = [
-  { k: 'Starting out',      range: 'under 30',  lo: 0,  hi: 30, want: 'ci',
+  { k: 'Starting out', act: 'Call and quote critical illness at the age they are today.',      range: 'under 30',  lo: 0,  hi: 30, want: 'ci',
     talk: 'The cheapest critical illness they will ever buy, and a health plan '
         + 'before anything is on the record.' },
-  { k: 'Family years',      range: '30 to 44',  lo: 30, hi: 45, want: 'ci',
+  { k: 'Family years', act: 'Call and ask who depends on this income. Then quote critical illness.',      range: '30 to 44',  lo: 30, hi: 45, want: 'ci',
     talk: 'A mortgage and children behind the cover. Critical illness first, '
         + 'then education savings.' },
-  { k: 'Peak earning',      range: '45 to 54',  lo: 45, hi: 55, want: 'stale',
+  { k: 'Peak earning', act: 'Call and take the sum assured up to what they earn now.',      range: '45 to 54',  lo: 45, hi: 55, want: 'stale',
     talk: 'The sum assured was set on an older salary. Review it, and ask about '
         + 'income protection.' },
-  { k: 'Retirement in sight', range: '55 to 64', lo: 55, hi: 65, want: 'pension',
+  { k: 'Retirement in sight', act: 'Call and book the pension review before the year end.', range: '55 to 64', lo: 55, hi: 65, want: 'pension',
     talk: 'The annuity window is closing. Pension top-up while contributions '
         + 'still have years to run.' },
-  { k: 'Already retired',   range: '65 and over', lo: 65, hi: 999, want: 'health',
+  { k: 'Already retired', act: 'Call and offer health and final expenses. Leave the life cover alone.',   range: '65 and over', lo: 65, hi: 999, want: 'health',
     talk: 'Health and final expenses. Do not touch the life cover — s131 makes '
         + 'replacing it personal.' }
 ];
@@ -5657,13 +5657,17 @@ function iBuildBook_() {
      And the month, by agent, because the branch wants to see who has the most
      of them coming and push that person. */
   var todayList = [], todayTowns = {}, todayHolds = {}, monthN = 0, monthAgents = {};
-  var MILES = [21, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70];
+  /* ROUND NUMBERS ARE THE ONES WORTH A CALL RATHER THAN A LETTER, and the
+     branch asked for them by name. Tracked with the agent attached, because a
+     milestone nobody is told about is just another Tuesday. */
+  var MILES = [21, 25, 30, 40, 50, 60, 65, 70, 75, 80];
+  var mileAgents = {};
   var agents = {}, noDob = 0, noIssue = 0, tenures = [], noIssueAge = 0;
   /* WHEN THIS BOOK BUYS. Every policy the branch holds, by the month it was
      issued — the honest answer to "when do they purchase insurance", and it is
      a branch-wide question rather than a today question, so it is measured
      across the whole book and not across twenty eight people. */
-  var season = [0,0,0,0,0,0,0,0,0,0,0,0], bdaySame = 0, bdayBase = 0;
+  var season = [0,0,0,0,0,0,0,0,0,0,0,0], bdaySame = 0, bdayBase = 0, withDob = 0;
 
   keys.forEach(function (k) {
     var c = byClient[k];
@@ -5686,6 +5690,7 @@ function iBuildBook_() {
       if (since >= quietYears) { gapQuiet++; a.quiet++; }
     }
 
+    if (c.dobM) withDob++;
     c.months.forEach(function (m) { season[m - 1]++; });
     if (c.dobM && c.months.length) { bdayBase++; if (c.onBday) bdaySame++; }
 
@@ -5764,8 +5769,11 @@ function iBuildBook_() {
          which is ambiguous on the day itself */
       if (c.dobY) {
         var turning = yy - c.dobY;
-        if (MILES.indexOf(turning) > -1)
+        if (MILES.indexOf(turning) > -1) {
           milestones[turning] = (milestones[turning] || 0) + 1;
+          if (!mileAgents[turning]) mileAgents[turning] = {};
+          mileAgents[turning][c.agent] = (mileAgents[turning][c.agent] || 0) + 1;
+        }
       }
     } else {
       /* "this week" walks forward day by day rather than comparing dates, so
@@ -5828,7 +5836,7 @@ function iBuildBook_() {
         var yrs = inBand.map(function (t) { return t.years; })
                         .filter(function (y) { return y != null; });
         return {
-          k: b.k, range: b.range, talk: b.talk, n: inBand.length,
+          k: b.k, range: b.range, talk: b.talk, act: b.act, n: inBand.length,
           gap: inBand.filter(function (t) { return !!t.prompt; }).length,
           policies: inBand.reduce(function (a, t) { return a + t.policies; }, 0),
           medianYears: (function () {
@@ -5872,7 +5880,12 @@ function iBuildBook_() {
       byAgent: Object.keys(bdayAgents).map(function (k) { return bdayAgents[k]; })
                  .sort(function (a, b) { return b.gap - a.gap || b.n - a.n; }),
       milestones: MILES.filter(function (m) { return milestones[m]; })
-                       .map(function (m) { return { k: 'Turning ' + m, n: milestones[m] }; })
+        .map(function (m) {
+          return { k: 'Turning ' + m, age: m, n: milestones[m],
+                   agents: Object.keys(mileAgents[m] || {})
+                             .map(function (a) { return { k: a, n: mileAgents[m][a] }; })
+                             .sort(function (x, y) { return y.n - x.n; }) };
+        })
     },
     month: {
       n: monthN,
@@ -5886,6 +5899,11 @@ function iBuildBook_() {
       milestones: MILES.filter(function (m) { return milestones[m]; })
                        .map(function (m) { return { k: 'Turning ' + m, n: milestones[m] }; })
     },
+    /* One client with a birth date on file is one letter a year, every year.
+       Stated as the annual rate rather than a seven year total, because not
+       every client has been on the book for all seven and a total would be
+       a number the branch could not defend if anybody asked. */
+    lettersAYear: withDob,
     season: season.map(function (v, i) {
       return { k: ['January','February','March','April','May','June','July','August','September','October','November','December'][i], n: v, now: i === today.getMonth() };
     }),
