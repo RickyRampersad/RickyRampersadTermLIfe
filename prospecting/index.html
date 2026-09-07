@@ -224,6 +224,16 @@
         </div>
       </div>
     </div>
+
+    <!-- A third film, and deliberately not in the grid above. Those two are
+         about the fact find and one of them goes to clients. This one is about
+         how prospecting itself works now, it is for the branch, and putting it
+         beside them invites somebody to send the wrong one. -->
+    <p class="lede" style="margin-top:22px">
+      New to this? <a href="film.html" style="color:var(--teal);font-weight:600">Watch the
+      70-second briefing</a> &mdash; your link, the board, and the one prospect worth
+      ringing. For the branch, not for clients.
+    </p>
   </section>
 
   <section>
@@ -360,6 +370,14 @@
         'Open my board</button>' +
         '<p style="color:#697489;font-size:13.5px;margin-top:16px">Bookmark the page once ' +
         'it opens &mdash; the link carries your code, so it works from any device.</p>' +
+        /* The briefing belongs here too. Somebody who lands without a code is
+           exactly the person who has not been shown any of this yet, and the
+           link to it further down the board is on the half of the page they
+           cannot see. */
+        '<p style="color:#697489;font-size:13.5px;margin-top:14px;padding-top:14px;' +
+        'border-top:1px solid #E4E9F0">New to this? ' +
+        '<a href="film.html" style="color:#0D9488;font-weight:600">Watch the ' +
+        '70-second briefing</a> first &mdash; it explains what the board is for.</p>' +
         '</div>';
       document.getElementById('pbGo').onclick = function () {
         var c = (document.getElementById('pbCode').value || '').trim().toUpperCase();

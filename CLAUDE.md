@@ -170,3 +170,43 @@ system.
 **Products outside `PRODUCT_RULES` get no checks at all.** `Lifestyle Special
 Edition` is not in the library, which is why the row carrying the largest figure
 in a case was the one row nothing validated.
+
+## Apps Script — the last definition wins, and that is a trap
+
+The branch backend is one shared namespace across `Code.gs`, `RRBranchOS.gs`,
+`RRBranchEmails.gs` and `RRB_Additions.gs`. Two functions with the same name are
+not an error: **the last one loaded is the one that runs.** Every fix delivered
+to this project is therefore a block appended at the end of a file, because an
+append always wins over whatever is above it.
+
+That works, and it is why nothing here is ever edited in place over WhatsApp —
+a paste that lands inside an existing function eats its closing brace, and the
+whole project stops with a `SyntaxError` on a line nobody typed.
+
+**But an append also silently discards any later fix to the same function.**
+
+On 4 September the settlement board could not find its tab. The spreadsheet id
+had been saved to Script Properties, and the version of `rrbSettleSheet_` that
+reads that property had been pasted and saved. Both were correct. The board was
+running a *different* `rrbSettleSheet_` — an older copy, from a settlement block
+that had been pasted three more times underneath it. Last wins, and last was the
+one that did not know about the property.
+
+It cost an evening, because from outside the script all three possible causes
+look identical: the file not pasted, the version not deployed, and a later copy
+winning. Reading the file settled it in seconds.
+
+So, when appending:
+
+- **Say what the block redefines**, at the top, by name. If a function is being
+  replaced, the next person needs to know without diffing.
+- **Never send the same block twice.** A second paste of an older copy undoes
+  every fix made to those functions since.
+- **Carry a build marker** in `doGet`'s "Unknown action" reply. `?action=zzz`
+  then names the running build from outside, with no sign-in.
+- **Ship a self-check** with anything structural. `String(fn).indexOf('...')`
+  reads the *live* function body, so the script can be asked which copy won
+  instead of it being inferred. `rrbSettlementSelfCheck` is the pattern.
+
+A marker alone is not enough: it lives inside the block being pasted, so it
+cannot tell "never pasted" apart from "never deployed". The self-check can.
